@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.2 1993/05/22 08:00:33 cgd Exp $
+ *	$Id: psl.h,v 1.2.4.1 1993/09/14 17:32:03 mycroft Exp $
  */
 
 /*
@@ -59,3 +59,31 @@
 
 #define	PSL_USERSET	(PSL_IOPL)
 #define	PSL_USERCLR	(PSL_I|PSL_NT)
+
+/*
+ * Software-based interrupt masks
+ */
+extern	int cpl,			/* current priority level mask */
+	    ttymask,			/* interrupt mask for spltty() */
+	    biomask,			/* interrupt mask for splbio() */
+	    netmask,			/* interrupt mask for splnet() */
+	    impmask;			/* interrupt mask for splimp() */
+
+#define SPL(name, newipl) \
+static __inline int name() { \
+	int ipl = newipl | cpl; \
+	__asm __volatile("xchg %0,_cpl" : "=r" (ipl) : "0" (ipl)); \
+	return ipl; \
+}
+
+SPL(spltty, ttymask)
+SPL(splbio, biomask)
+SPL(splnet, netmask)
+SPL(splimp, impmask)
+SPL(splhigh, -1)
+#define	splclock()	splhigh()	/* should not include fast vectors */
+
+int splsoftclock __P((void));		/* XXXX */
+
+void splnone __P((void));
+void splx __P((int));

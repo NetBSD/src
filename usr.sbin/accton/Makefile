@@ -1,9 +1,0 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.3 1993/07/30 22:13:45 mycroft Exp $
-
-PROG=	accton
-MAN8=	accton.0
-LINKS=	${BINDIR}/accton ${BINDIR}/acctoff
-MLINKS= accton.8 acctoff.8
-
-.include <bsd.prog.mk>

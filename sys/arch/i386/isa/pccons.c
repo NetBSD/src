@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31 1993/09/06 05:52:33 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.1 1993/09/14 17:32:48 mycroft Exp $
  */
 
 /*
@@ -48,20 +48,17 @@
 #include "select.h"
 #include "tty.h"
 #include "uio.h"
-#include "i386/isa/isa_device.h"
 #include "callout.h"
 #include "systm.h"
 #include "kernel.h"
 #include "syslog.h"
-#include "i386/isa/icu.h"
+#incldue "sys/device.h"
+#include "machine/cpufunc.h"
+#include "machine/pc/display.h"
 #include "i386/i386/cons.h"
 #include "i386/isa/isa.h"
-#include "i386/isa/ic/i8042.h"
-#include "i386/isa/kbd.h"
-#include "machine/pc/display.h"
-
-#include "pc.h"
-#if NPC > 0
+#include "i386/isa/isavar.h"
+#include "i386/isa/kbdreg.h"
 
 #ifndef BEEP_FREQ
 #define BEEP_FREQ 1500
@@ -72,32 +69,22 @@
 
 #define PCBURST 128
 
-extern u_short *Crtat;
+u_short *Crtat;
 
-#ifdef XSERVER						/* 15 Aug 92*/
-int pc_xmode;
-#endif /* XSERVER */
+struct	pc_softc {
+	struct	device sc_dev;
+	struct	isadev sc_id;
+	struct	intrhand sc_ih;
 
-struct	tty *pc_tty[1];
+	u_short	sc_iobase;
+	struct	tty *sc_tty;
 
-struct	pcconsoftc {
-	char	cs_flags;
-#define	CSF_ACTIVE	0x1	/* timeout active */
-#define	CSF_POLLING	0x2	/* polling for input */
-	char	cs_lastc;	/* last char sent */
-	int	cs_timo;	/* timeouts since interrupt */
-	u_long	cs_wedgecnt;	/* times restarted */
-} pcconsoftc;
+	char	sc_flags;
+#define	PCF_ACTIVE	0x1	/* timeout active */
+#define	PCF_POLLING	0x2	/* polling for input */
+#define	PCF_RAW		0x4	/* send raw scan codes */
+#define	PCF_XMODE	0x8	/* XXX kluge */
 
-struct	kbdsoftc {
-	char	kbd_flags;
-#define	KBDF_ACTIVE	0x1	/* timeout active */
-#define	KBDF_POLLING	0x2	/* polling for input */
-#define	KBDF_RAW	0x4	/* pass thru scan codes for input */
-	char	kbd_lastc;	/* last char sent */
-} kbdsoftc;
-
-static struct video_state {
 	char	esc;	/* seen escape */
 	char	ebrac;	/* seen escape bracket */
 	char	eparm;	/* seen escape and parameters */
@@ -110,13 +97,15 @@ static struct video_state {
 	char	so_at;	/* standout attribute */
 	char	kern_fg_at, kern_bg_at;
 	char	color;	/* color or mono display */
-} vs;
-
-int pcprobe(), pcattach();
-
-struct	isa_driver pcdriver = {
-	pcprobe, pcattach, "pc",
 };
+
+static int pcprobe __P((struct device *, struct cfdata *, void *));
+static void pcforceintr __P((void *));
+static void pcattach __P((struct device *, struct device *, void *));
+static int pcintr __P((void *));
+
+struct	cfdriver pccd =
+{ NULL, "pc", pcprobe, pcattach, sizeof(struct pc_softc) };
 
 /* block cursor so wfj does not go blind on laptop hunting for
 	the verdamnt cursor -wfj */
@@ -387,7 +376,7 @@ pcrint(dev, irq, cpl)
 	} while (*cp);
 }
 
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 #define CONSOLE_X_MODE_ON _IO('t',121)
 #define CONSOLE_X_MODE_OFF _IO('t',122)
 #define CONSOLE_X_BELL _IOW('t',123,int[2])
@@ -400,7 +389,7 @@ pcioctl(dev, cmd, data, flag)
 	register struct tty *tp = pc_tty[0];
 	register error;
 
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 	if (cmd == CONSOLE_X_MODE_ON) {
 		pc_xmode_on ();
 		return (0);
@@ -444,7 +433,6 @@ pcxint(dev)
 	if (!pcconsintr)
 		return;
 	tp->t_state &= ~TS_BUSY;
-	pcconsoftc.cs_timo = 0;
 	if (tp->t_line)
 		(*linesw[tp->t_line].l_start)(tp);
 	else
@@ -545,7 +533,7 @@ pccngetc(dev)
 	register int s;
 	register char *cp;
 
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 	if (pc_xmode)
 		return (0);
 #endif /* XSERVER */
@@ -562,7 +550,7 @@ pcgetchar(tp)
 {
 	char *cp;
 
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 	if (pc_xmode)
 		return (0);
 #endif /* XSERVER */
@@ -611,7 +599,7 @@ static u_short *crtat = 0;
 cursor(int a)
 { 	int pos = crtat - Crtat;
 
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 	if (!pc_xmode) {
 #endif /* XSERVER */
 	outb(addr_6845, 14);
@@ -626,7 +614,7 @@ cursor(int a)
 #endif	FAT_CURSOR
 	if (a == 0)
 		timeout((timeout_t)cursor, (caddr_t)0, hz/10);
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 	}
 #endif /* XSERVER */
 }
@@ -661,7 +649,7 @@ static sputc(c, ka)
 	int sc = 1;	/* do scroll check */
 	char fg_at, bg_at, at;
 
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 	if (pc_xmode)
 		return;
 #endif /* XSERVER */
@@ -1443,7 +1431,7 @@ char *sgetc(noblock)
 	 *   First see if there is something in the keyboard port
 	 */
 loop:
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 	if (inb(KBSTATP) & KBS_DIB) {
 		dt = inb(KBDATAP);
 		if (pc_xmode) {
@@ -1507,7 +1495,7 @@ loop:
 	if (dt == 0xe0)
 	{
 		extended = 1;
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 		goto loop;
 #else	/* !XSERVER*/
 		if (noblock)
@@ -1606,7 +1594,7 @@ loop:
 				ctrl_down = 1;
 				break;
 			case ASCII:
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 /*
  * 18 Sep 92	Terry Lambert	I find that this behaviour is questionable --
  *				I believe that this should be conditional on
@@ -1643,7 +1631,7 @@ loop:
 					more_chars = scan_codes[dt].ctrl;
 				else
 					more_chars = scan_codes[dt].unshift;
-#ifndef XSERVER						/* 15 Aug 92*/
+#ifndef XSERVER
 				/* XXX */
 				if (caps && more_chars[1] == 0
 					&& (more_chars[0] >= 'a'
@@ -1661,14 +1649,14 @@ loop:
 					more_chars = scan_codes[dt].unshift;
 				extended = 0;
 				return(more_chars);
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 			case NONE:
 				break;
 #endif	/* XSERVER*/
 		}
 	}
 	extended = 0;
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 	goto loop;
 #else	/* !XSERVER*/
 	if (noblock)
@@ -1761,7 +1749,7 @@ int pcmmap(dev_t dev, int offset, int nprot)
 	return i386_btop((0xa0000 + offset));
 }
 
-#ifdef XSERVER						/* 15 Aug 92*/
+#ifdef XSERVER
 #include "machine/psl.h"
 #include "machine/frame.h"
 
@@ -1791,5 +1779,3 @@ pc_xmode_off ()
 	fp->sf_eflags &= ~PSL_IOPL;
 }
 #endif	/* XSERVER*/
-
-#endif /* NPC > 0 */

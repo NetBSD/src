@@ -1,6 +1,9 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
+ * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,39 +33,36 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fdreg.h	7.1 (Berkeley) 5/9/91
- *	$Id: fdreg.h,v 1.4.4.1 1993/09/14 17:32:25 mycroft Exp $
+ *	from: @(#)dkbad.c	5.4 (Berkeley) 1/19/91
+ *	$Id: dkbad.c.old,v 1.1.2.2 1993/09/14 17:28:31 mycroft Exp $
  */
+
+
+#ifndef NOBADSECT
+#include "sys/param.h"
+#include "sys/buf.h"
+#include "sys/dkbad.h"
 
 /*
- * AT floppy controller registers and bitfields
+ * Search the bad sector table looking for
+ * the specified sector.  Return index if found.
+ * Return -1 if not found.
  */
 
-/* uses NEC765 controller */
-#include "i386/isa/ic/nec765.h"
+isbad(bt, cyl, trk, sec)
+	register struct dkbad *bt;
+{
+	register int i;
+	register long blk, bblk;
 
-/* registers */
-#define	fdout	2	/* Digital Output Register (W) */
-#define	FDO_FDSEL	0x03	/*  floppy device select */
-#define	FDO_FRST	0x04	/*  floppy controller reset */
-#define	FDO_FDMAEN	0x08	/*  enable floppy DMA and Interrupt */
-#define	FDO_MOEN0	0x10	/*  motor enable drive 0 */
-#define	FDO_MOEN1	0x20	/*  motor enable drive 1 */
-#define	FDO_MOEN2	0x30	/*  motor enable drive 2 */
-#define	FDO_MOEN3	0x40	/*  motor enable drive 3 */
-
-#define	fdsts	4	/* NEC 765 Main Status Register (R) */
-#define	fddata	5	/* NEC 765 Data Register (R/W) */
-
-#define	fdctl	7	/* Control Register (W) */
-#define	FDC_500KBPS	0x00	/* 500KBPS MFM drive transfer rate */
-#define	FDC_300KBPS	0x01	/* 300KBPS MFM drive transfer rate */
-#define	FDC_250KBPS	0x02	/* 250KBPS MFM drive transfer rate */
-#define	FDC_125KBPS	0x03	/* 125KBPS FM drive transfer rate */
-
-#define	fdin	7	/* Digital Input Register (R) */
-#define	FDI_DCHG	0x80	/* diskette has been changed */
-
-#define	FDC_BSIZE	512
-#define	FDC_NPORT	8
-#define	FDC_MAXIOSIZE	FDC_BSIZE	/* XXX this sucks */
+	blk = ((long)cyl << 16) + (trk << 8) + sec;
+	for (i = 0; i < 126; i++) {
+		bblk = ((long)bt->bt_bad[i].bt_cyl << 16) + bt->bt_bad[i].bt_trksec;
+		if (blk == bblk)
+			return (i);
+		if (blk < bblk || bblk < 0)
+			break;
+	}
+	return (-1);
+}
+#endif

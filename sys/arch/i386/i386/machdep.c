@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47 1993/09/05 03:54:11 sef Exp $
+ *	$Id: machdep.c,v 1.47.2.1 1993/09/14 17:28:39 mycroft Exp $
  */
 
 #include "npx.h"
@@ -73,26 +73,19 @@
 
 vm_map_t buffer_map;
 
-#ifndef MACHINE_NONCONTIG
-extern vm_offset_t avail_end;
-#else
 extern vm_offset_t avail_start, avail_end;
 static vm_offset_t hole_start, hole_end;
 static vm_offset_t avail_next;
-static unsigned int avail_remaining;
-#endif /* MACHINE_NONCONTIG */
+static vm_size_t avail_remaining;
 
 #include "machine/cpu.h"
+#include "machine/cpufunc.h"
 #include "machine/reg.h"
 #include "machine/psl.h"
 #include "machine/specialreg.h"
 
 #include "i386/isa/isa.h"
-#include "i386/isa/rtc.h"
-
-
-#define	EXPECT_BASEMEM	640	/* The expected base memory*/
-#define	INFORM_WAIT	1	/* Set to pause berfore crash in weird cases*/
+#include "i386/isa/nvram.h"
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -109,21 +102,12 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 
-/*
- * Machine-dependent startup code
- */
-int boothowto = 0, Maxmem = 0;
-long dumplo;
-int physmem, maxmem;
-extern int bootdev;
-#ifdef SMALL
-extern int forcemaxmem;
-#endif
-int biosmem;
+int	physmem;
+int	boothowto; 
+int	cpu_class;
 
-extern cyloffset;
-
-int cpu_class;
+struct	msgbuf *msgbufp;
+int	msgbufmapped;
 
 void dumpsys __P((void));
 
@@ -137,9 +121,8 @@ cpu_startup()
 	register caddr_t v;
 	int maxbufs, base, residual;
 	extern long Usrptsize;
-	vm_offset_t minaddr, maxaddr;
+	vm_offset_t minaddr, maxaddr, firstaddr;
 	vm_size_t size;
-	int firstaddr;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -147,18 +130,10 @@ cpu_startup()
 
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-#ifndef MACHINE_NONCONTIG
-		pmap_enter(pmap_kernel(), msgbufp, avail_end + i * NBPG,
-			   VM_PROT_ALL, TRUE);
-#else
 		pmap_enter(pmap_kernel(), (caddr_t)msgbufp + i * NBPG,
 			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-#endif
 	msgbufmapped = 1;
 
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
 	printf(version);
 	identifycpu();
 	printf("real mem  = %d\n", ctob(physmem));
@@ -283,10 +258,11 @@ again:
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-/*	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
- *				16*NCARGS, TRUE);
- *	NOT CURRENTLY USED -- cgd
- */
+#if 0 /* XXX not currently used */
+	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+				16*NCARGS, TRUE);
+#endif
+
 	/*
 	 * Allocate a submap for physio
 	 */
@@ -302,6 +278,7 @@ again:
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
+
 	/*
 	 * Initialize callouts
 	 */
@@ -312,11 +289,6 @@ again:
 	printf("avail mem = %d\n", ptoa(vm_page_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
-
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -339,7 +311,7 @@ struct cpu_nameclass i386_cpus[] = {
 	{ "i586",		CPUCLASS_586 },		/* CPU_586   */
 };
 
-identifycpu()	/* translated from hp300 -- cgd */
+identifycpu()
 {
 	printf("CPU: ");
 	if (cpu >= 0 && cpu < (sizeof i386_cpus/sizeof(struct cpu_nameclass))) {
@@ -392,19 +364,17 @@ identifycpu()	/* translated from hp300 -- cgd */
 
 #ifdef PGINPROF
 /*
- * Return the difference (in microseconds)
- * between the  current time and a previous
- * time as represented  by the arguments.
- * If there is a pending clock interrupt
- * which has not been serviced due to high
- * ipl, return error code.
+ * Return the difference (in microseconds) between the current time and a
+ * previous time as represented  by the arguments.  If there is a pending
+ * clock interrupt which has not been serviced due to high ipl, return error
+ * code.
  */
 /*ARGSUSED*/
 vmtime(otime, olbolt, oicr)
 	register int otime, olbolt, oicr;
 {
 
-	return (((time.tv_sec-otime)*60 + lbolt-olbolt)*16667);
+	return (((time.tv_sec-otime)*HZ + lbolt-olbolt)*(1000000/HZ));
 }
 #endif
 
@@ -547,12 +517,10 @@ sigreturn(p, uap, retval)
 	register struct sigframe *fp;
 	register int *regs = p->p_regs;
 
-
 	/*
-	 * (XXX old comment) regs[sESP] points to the return address.
-	 * The user scp pointer is above that.
-	 * The return address is faked in the signal trampoline code
-	 * for consistency.
+	 * The trampoline code hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal handler.
 	 */
 	scp = uap->sigcntxp;
 	fp = (struct sigframe *)
@@ -569,6 +537,7 @@ sigreturn(p, uap, retval)
 	if (useracc((caddr_t)scp, sizeof (*scp), 0) == 0)
 		return(EINVAL);
 #ifdef notyet
+	/* XXX */
 	if ((scp->sc_ps & PSL_MBZ) != 0 || (scp->sc_ps & PSL_MBO) != PSL_MBO) {
 		return(EINVAL);
 	}
@@ -583,52 +552,36 @@ sigreturn(p, uap, retval)
 	return(EJUSTRETURN);
 }
 
-/*
- * a simple function to make the system panic (and dump a vmcore)
- * in a predictable fashion
- */
-void diediedie()
-{
-	panic("because you said to!");
-}
-
 int	waittime = -1;
-struct pcb dumppcb;
 
 void
-boot(arghowto)
-	int arghowto;
+boot(howto)
+	int howto;
 {
-	register long dummy;		/* r12 is reserved */
-	register int howto;		/* r11 == how to boot */
-	register int devtype;		/* r10 == major of root dev */
 	extern int cold;
 
-	if(cold) {
-		printf("hit reset please");
-		for(;;);
-	}
-	howto = arghowto;
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
+	boothowto = howto;
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0 && rootfs) {
 		register struct buf *bp;
 		int iter, nbusy;
 
+#if 1
+		/* XXX protect against curproc->p_stats.foo refs in sync() */
+		extern struct proc proc0;
+		if (curproc == NULL)
+			curproc = &proc0;
+#endif
+
 		waittime = 0;
-		(void) splnet();
+		(void) splnone();
 		printf("syncing disks... ");
 		/*
-		 * Release inodes held by texts before update.
+		 * Release inodes held by texts before sync.
 		 */
 		if (panicstr == 0)
-			vnode_pager_umount(NULL);
-		sync((struct sigcontext *)0);
-		/*
-		 * Unmount filesystems
-		 */
-#if 0
-		if (panicstr == 0)
-			vfs_unmountall();
-#endif
+			vnode_pager_umount((struct mount *)NULL);
+		sync(&proc0, (void *)NULL, (int *)NULL);
+
 		for (iter = 0; iter < 20; iter++) {
 			nbusy = 0;
 			for (bp = &buf[nbuf]; --bp >= buf; )
@@ -643,51 +596,125 @@ boot(arghowto)
 			printf("giving up\n");
 		else
 			printf("done\n");
-		DELAY(10000);			/* wait for printf to finish */
+		resettodr();
 	}
-	splhigh();
-	devtype = major(rootdev);
-	if (howto&RB_HALT) {
+	(void) splhigh();			/* XXX */
+	if (howto & RB_HALT) {
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
+#ifdef DDB
+		Debugger();
+#else
 		cngetc();
-	} else {
-		if (howto & RB_DUMP) {
-			savectx(&dumppcb, 0);
-			dumppcb.pcb_ptd = rcr3();
-			dumpsys();	
-			/*NOTREACHED*/
-		}
-	}
-#ifdef lint
-	dummy = 0; dummy = dummy;
-	printf("howto %d, devtype %d\n", arghowto, devtype);
 #endif
+	} else if (howto & RB_DUMP)
+		dumpsys();	
+	printf("rebooting\n\n");
+	/* XXX need to pass RB_SINGLE, RB_KDB, and RB_ASKNAME */
 	cpu_reset();
-	for(;;) ;
 	/*NOTREACHED*/
+	for(;;);
 }
 
 unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
-int		dumpsize = 0;		/* also for savecore */
+vm_size_t	dumpsize = 0;		/* also for savecore */
+long		dumplo = 0;
+
+void
+dumpconf()
+{
+	int nblks;
+
+	dumpsize = physmem;
+	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
+		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+		/*
+		 * Skip first CLBYTES(?) do avoid smashing disk label.
+		 */
+		if (dumplo < btodb(CLBYTES))
+			dumplo = btodb(CLBYTES);
+		/*
+		 * Make sure dumpsize fits in partition; put padding at
+		 * beginning of partition if any.
+		 */
+		if (dumpsize > btoc(dbtob(nblks - dumplo)))
+			dumpsize = btoc(dbtob(nblks - dumplo));
+		else if (dumplo + ctod(dumpsize) > nblks)
+			dumplo = nblks - ctod(dumpsize);
+	}
+}
+
+#define BYTES_PER_DUMP (32 * 1024)	/* must be a multiple of pagesize */
+static vm_offset_t dumpspace;
+
 /*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
+ * Used by pmap_bootstrap to reserve space in the pmap for mapping pages
+ * during dump.
  */
+vm_offset_t
+reserve_dumppages(p)
+	vm_offset_t p;
+{
+	dumpspace = p;
+	return(p + BYTES_PER_DUMP);
+}
+
+caddr_t
+dumpvaddr(maddr, n)
+	caddr_t maddr;
+	int n;
+{
+	(void) pmap_map(dumpspace, (vm_offset_t)maddr,
+			(vm_offset_t)maddr + (vm_size_t)n, VM_PROT_READ);
+	return((caddr_t)dumpspace);
+}	
+
 void
 dumpsys()
 {
+	vm_size_t bytes, i, n;
+	vm_offset_t maddr;
+	int psize;
+	daddr_t blkno;
+	int (*dump) __P((dev_t, daddr_t, caddr_t, int));
+	int error = 0;
 
 	if (dumpdev == NODEV)
 		return;
-	if ((minor(dumpdev)&07) != 1)
+	if (dumpsize == 0)
+		dumpconf();
+	if (dumplo < 0)
 		return;
-	dumpsize = physmem;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+
+	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	if (psize == -1) {
+		printf("area unavailable\n");
+		return;
+	}
+	/*
+	 * We do all the memory mapping *here*.  There is no excuse for each
+	 * driver having to know how to do this!
+	 */
+	bytes = physmem << PGSHIFT;
+	maddr = 0;
+	blkno = dumplo;
+	dump = bdevsw[major(dumpdev)].d_dump;
+	for (i = 0; i < bytes; i += n) {
+		n = bytes - i;
+		if (n > BYTES_PER_DUMP)
+			n = BYTES_PER_DUMP;
+		if (i && (i % (1024*1024)) == 0)
+			printf("%d ", i / (1024*1024));
+		error = (*dump)(dumpdev, blkno, (caddr_t)maddr, (int)n);
+		if (error)
+			break;
+		maddr += n;
+		blkno += btodb(n);
+	}
+	switch (error) {
 
 	case ENXIO:
 		printf("device bad\n");
@@ -709,12 +736,14 @@ dumpsys()
 		printf("aborted from console\n");
 		break;
 
-	default:
+	case 0:
 		printf("succeeded\n");
 		break;
+
+	default:
+		printf("error %d\n", error);
+		break;
 	}
-	printf("\n\n");
-	DELAY(1000);
 }
 
 #ifdef HZ
@@ -765,10 +794,6 @@ physstrat(bp, strat, prio)
 	splx(s);
 	vunmapbuf(bp);
 	bp->b_un.b_addr = baddr;
-}
-
-initcpu()
-{
 }
 
 /*
@@ -969,12 +994,8 @@ extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
 int lcr0(), lcr3(), rcr0(), rcr2();
 int _udatasel, _ucodesel, _gsel_tss;
 
-#ifndef MACHINE_NONCONTIG
-init386(first)
-#else
 init386(first_avail)
 	vm_offset_t first_avail;
-#endif
 {
 	extern ssdtosd(), lgdt(), lidt(), lldt(), etext; 
 	int x, *pi;
@@ -985,14 +1006,7 @@ init386(first_avail)
 	struct region_descriptor r_gdt, r_idt;
 	int	pagesinbase, pagesinext;
 
-
 	proc0.p_addr = proc0paddr;
-
-	/*
-	 * Initialize the console before we print anything out.
-	 */
-
-	cninit (KERNBASE+0xa0000);
 
 #ifndef LKM		/* don't do this if we're using LKM's */
 	/* make gdt memory segments */
@@ -1040,9 +1054,7 @@ init386(first_avail)
 	setidt(30, &IDTVEC(rsvd13),  SDT_SYS386TGT, SEL_KPL);
 	setidt(31, &IDTVEC(rsvd14),  SDT_SYS386TGT, SEL_KPL);
 
-#if	NISA >0
-	isa_defaultirq();
-#endif
+	disable_intr();
 	r_gdt.rd_limit = sizeof(gdt)-1;
 	r_gdt.rd_base = (int) gdt;
 	lgdt(&r_gdt);
@@ -1061,105 +1073,63 @@ init386(first_avail)
 	    kgdb_connect(0);
 #endif
 
-	/* Use BIOS values stored in RTC CMOS RAM, since probing
+	/*
+	 * Use BIOS values stored in RTC CMOS RAM, since probing
 	 * breaks certain 386 AT relics.
 	 */
-	biosbasemem = rtcin(RTC_BASELO)+ (rtcin(RTC_BASEHI)<<8);
-	biosextmem = rtcin(RTC_EXTLO)+ (rtcin(RTC_EXTHI)<<8);
-/*printf("bios base %d ext %d ", biosbasemem, biosextmem);*/
+	biosbasemem = (nvram(NVRAM_BASEMEM_LO)<<0) |
+		      (nvram(NVRAM_BASEMEM_HI)<<8);
+	biosextmem = (nvram(NVRAM_EXTMEM_LO)<<0) |
+		     (nvram(NVRAM_EXTMEM_HI)<<8);
 
-	/*
-	 * 15 Aug 92	Terry Lambert		The real fix for the CMOS bug
-	 */
-	if( biosbasemem != EXPECT_BASEMEM) {
-		printf( "Warning: Base memory %dK, assuming %dK\n", biosbasemem, EXPECT_BASEMEM);
-		biosbasemem = EXPECT_BASEMEM;		/* assume base*/
-	}
-
-	if( biosextmem > 65536) {
-		printf( "Warning: Extended memory %dK(>64M), assuming 0K\n", biosextmem);
-		biosextmem = 0;				/* assume none*/
-	}
-
-#ifndef MACHINE_NONCONTIG
-	/*
-	 * Go into normal calculation; Note that we try to run in 640K, and
-	 * that invalid CMOS values of non 0xffff are no longer a cause of
-	 * ptdi problems.  I have found a gutted kernel can run in 640K.
-	 */
-	pagesinbase = 640/4 - first/NBPG;
-#ifdef WEIRD_MEMSIZE
-	pagesinext = biosextmem/4;
-#else
-	pagesinext = (biosextmem/1024) * 256;
-			/* basically, round ext. mem size to 1M boundary. */
+#ifndef BIOS_BASEMEM
+#define BIOS_BASEMEM 640
 #endif
-	/* use greater of either base or extended memory. do this
-	 * until I reinstitue discontiguous allocation of vm_page
-	 * array.
-	 */
-	if (pagesinbase > pagesinext)
-		Maxmem = 640/4;
-	else {
-		Maxmem = pagesinext + 0x100000/NBPG;
-		if (first < 0x100000)
-			first = 0x100000; /* skip hole */
+
+	if (biosbasemem != BIOS_BASEMEM) {
+		printf( "Warning: Base memory %dK, assuming %dK\n", biosbasemem, BIOS_BASEMEM);
+		biosbasemem = BIOS_BASEMEM;		/* assume base */
 	}
-#else
+
+	if (biosextmem > 65536) {
+		printf("Warning: Extended memory %dK(>64M), assuming 0K\n",
+		       biosextmem);
+		biosextmem = 0;				/* assume none */
+	}
+
 	avail_start = 0x1000;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
-	avail_end = biosextmem ? 0x100000 + biosextmem * 1024 : biosbasemem * 1024;
-	
-	Maxmem = atop(avail_end);
-#endif /* MACHINE_NONCONTIG */
+	avail_end = biosextmem ? 0x100000 + biosextmem * 1024
+			       : biosbasemem * 1024;
 
-	/* This used to explode, since Maxmem used to be 0 for bas CMOS*/
-	maxmem = Maxmem - 1;	/* highest page of usable memory */
-	physmem = maxmem;	/* number of pages of physmem addr space */
-#ifndef MACHINE_NONCONTIG
-	/*printf("using first 0x%x to 0x%x\n ", first, maxmem*NBPG);*/
-	if (maxmem < 2048/4) {
-#else
+	/* number of pages of physmem addr space; XXX first page unused */
+	physmem = atop(avail_end) - 1;
+
 	/*
 	 *	Initialize for pmap_free_pages and pmap_next_page.
 	 *	These guys should be page-aligned.
 	 */
-	
 	hole_start = biosbasemem * 1024;
-#if	LOAD_ADDRESS == 0xfe000000
-	avail_next = first_avail;
-	hole_end = 0x100000;
-#else
-#if	LOAD_ADDRESS == 0xfe100000
 	hole_end = round_page((vm_offset_t)first_avail);
 	avail_next = avail_start;
-#else
-#error "unsupported load address"
-#endif
-#endif
 	avail_remaining = atop((avail_end - avail_start) -
 			       (hole_end - hole_start));
 	
 	if (avail_remaining < 2048/4) {
-#endif /* MACHINE_NONCONTIG */
-		printf("Too little RAM memory. Warning, running in degraded mode.\n");
-#ifdef INFORM_WAIT
+		printf("Too little RAM available; running in degraded mode.\n"
+		       "Press a key to confirm.\n\n");
 		/*
-		 * People with less than 2 Meg have to hit return; this way
+		 * People with less than 2 Meg have to press a key; this way
 		 * we see the messages and can tell them why they blow up later.
-		 * If they get working well enough to recompile, they can unset
-		 * the flag; otherwise, it's a toy and they have to lump it.
+		 * If they get working well enough to recompile, they can remove
+		 * this; otherwise, it's a toy and they have to lump it.
 		 */
 		cngetc();
-#endif	/* !INFORM_WAIT*/
 	}
+
 	/* call pmap initialization to make new kernel address space */
-#ifndef MACHINE_NONCONTIG
-	pmap_bootstrap (first, 0);
-#else
-	pmap_bootstrap ((vm_offset_t)atdevbase + IOM_SIZE);
+	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
 	
-#endif /* MACHINE_NONCONTIG */
 	/* now running on new page tables, configured,and u/iom is accessible */
 
 	/* make a initial tss so microp can get interrupt stack on syscall! */
@@ -1205,9 +1175,6 @@ clearseg(n) {
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
 	load_cr3(rcr3());
 	bzero(CADDR2,NBPG);
-#ifndef MACHINE_NONCONTIG
-	*(int *) CADDR2 = 0;
-#endif /* MACHINE_NONCONTIG */
 }
 
 /*
@@ -1447,40 +1414,6 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 }
 #endif /* COMPAT_NOMID */
 
-#ifdef MACHINE_NONCONTIG
-unsigned int pmap_free_pages()
-{
-	return avail_remaining;
-}
-
-pmap_next_page(addrp)
-	vm_offset_t	*addrp;
-{
-	if (avail_next == avail_end)
-		return FALSE;
-	
-	/* skip the hole */
-	
-	if (avail_next == hole_start)
-		avail_next = hole_end;
-	
-	*addrp = avail_next;
-	avail_next += PAGE_SIZE;
-	avail_remaining--;
-	return TRUE;
-}
-
-pmap_page_index(pa)
-	vm_offset_t pa;
-{
-	if (pa >= avail_start && pa < hole_start)
-		return i386_btop(pa - avail_start);
-	if (pa >= hole_end && pa < avail_end)
-		return i386_btop(pa - hole_end + hole_start - avail_start);
-	return -1;
-}
-#endif /* MACHINE_NONCONTIG */
-
 /*
  * The registers are in the frame; the frame is in the user area of
  * the process in question; when the process is active, the registers
@@ -1628,4 +1561,38 @@ ptrace_setregs (struct proc *p, unsigned int *addr) {
 		regs.r_ss = sp->sf_ss;
 	}
 	return 0;
+}
+
+/* XXX probably should be in pmap.c */
+
+unsigned int pmap_free_pages()
+{
+	return avail_remaining;
+}
+
+pmap_next_page(addrp)
+	vm_offset_t	*addrp;
+{
+	if (avail_next == avail_end)
+		return FALSE;
+	
+	/* skip the hole */
+	
+	if (avail_next == hole_start)
+		avail_next = hole_end;
+	
+	*addrp = avail_next;
+	avail_next += PAGE_SIZE;
+	avail_remaining--;
+	return TRUE;
+}
+
+pmap_page_index(pa)
+	vm_offset_t pa;
+{
+	if (pa >= avail_start && pa < hole_start)
+		return i386_btop(pa - avail_start);
+	if (pa >= hole_end && pa < avail_end)
+		return i386_btop(pa - hole_end + hole_start - avail_start);
+	return -1;
 }

@@ -34,71 +34,51 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.h	5.6 (Berkeley) 5/9/91
- *	$Id: icu.h,v 1.7 1993/09/09 15:16:14 mycroft Exp $
+ *	$Id: icu.h,v 1.7.2.1 1993/09/14 17:32:27 mycroft Exp $
  */
 
 /*
  * AT/386 Interrupt Control constants
- * W. Jolitz 8/89
  */
 
-#ifndef	__ICU__
-#define	__ICU__
-
 #ifndef	LOCORE
-
 /*
  * Interrupt "level" mechanism variables, masks, and macros
  */
 extern	unsigned imen;		/* interrupt mask enable */
-extern	unsigned cpl;		/* current priority level mask */
 
-extern	unsigned highmask;	/* group of interrupts masked with splhigh() */
-extern	unsigned ttymask;	/* group of interrupts masked with spltty() */
-extern	unsigned biomask;	/* group of interrupts masked with splbio() */
-extern	unsigned netmask;	/* group of interrupts masked with splnet() */
-extern	unsigned impmask;	/* group of interrupts masked with splimp() */
-
-#define	INTREN(s)	do{imen &= ~(s); SET_ICUS();}while(0)
-#define	INTRDIS(s)	do{imen |= (s); SET_ICUS();}while(0)
-#define	INTRMASK(msk,s)	(msk |= (s))
-#if 0
-#define SET_ICUS()	do{outb(IO_ICU1 + 1, imen); outb(IU_ICU2 + 1, imen >> 8);}while(0)
-#else
-/*
- * XXX - IO_ICU* are defined in isa.h, not icu.h, and nothing much bothers to
- * include isa.h, while too many things include icu.h.
- */
-#define SET_ICUS()	do{outb(0x21, imen); outb(0xa1, imen >> 8);}while(0)
-#endif
-
+#define	intr_enable(s)	do {imen &= ~(s); SET_ICUS();} while (0)
+#define	intr_disable(s)	do {imen |= (s); SET_ICUS();} while (0)
+#define SET_ICUS()	do {outb(IO_ICU1 + 1, imen); \
+			    outb(IU_ICU2 + 1, imen >> 8);} while (0)
 #endif
 
 /*
  * Interrupt enable bits -- in order of priority
  */
-#define	IRQ0		0x0001		/* highest priority - timer */
-#define	IRQ1		0x0002
-#define	IRQ_SLAVE	0x0004
-#define	IRQ8		0x0100
-#define	IRQ9		0x0200
+#define	IRQ0		(1<< 0)		/* highest priority - timer */
+#define	IRQ1		(1<< 1)
+#ifndef IRQ_SLAVE
+#define	IRQ_SLAVE	(1<< 2)
+#endif
+#define	IRQ8		(1<< 8)
+#define	IRQ9		(1<< 9)
 #define	IRQ2		IRQ9
-#define	IRQ10		0x0400
-#define	IRQ11		0x0800
-#define	IRQ12		0x1000
-#define	IRQ13		0x2000
-#define	IRQ14		0x4000
-#define	IRQ15		0x8000
-#define	IRQ3		0x0008
-#define	IRQ4		0x0010
-#define	IRQ5		0x0020
-#define	IRQ6		0x0040
-#define	IRQ7		0x0080		/* lowest - parallel printer */
+#define	IRQ10		(1<<10)
+#define	IRQ11		(1<<11)
+#define	IRQ12		(1<<12)
+#define	IRQ13		(1<<13)
+#define	IRQ14		(1<<14)
+#define	IRQ15		(1<<15)
+#define	IRQ3		(1<< 3)		/* XXX serial ports too low */
+#define	IRQ4		(1<< 4)
+#define	IRQ5		(1<< 5)
+#define	IRQ6		(1<< 6)
+#define	IRQ7		(1<< 7)		/* lowest - parallel printer */
+#define NIRQ		16
 
 /*
  * Interrupt Control offset into Interrupt descriptor table (IDT)
  */
-#define	ICU_OFFSET	32		/* 0-31 are processor exceptions */
-#define	ICU_LEN		16		/* 32-47 are ISA interrupts */
-
-#endif	__ICU__
+#define	ICU_OFFSET	NRSVIDT		/* 0-31 are processor exceptions */
+#define	ICU_LEN		NIRQ		/* 32-47 are ISA interrupts */

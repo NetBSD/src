@@ -1,42 +1,3 @@
-/*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * William Jolitz.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	from: @(#)autoconf.c	7.1 (Berkeley) 5/9/91
- *	$Id: autoconf.c,v 1.7 1993/08/10 08:42:25 deraadt Exp $
- */
-
 /*
  * Setup the system to run on the current machine.
  *
@@ -52,27 +13,30 @@
 #include "conf.h"
 #include "dmap.h"
 #include "reboot.h"
-
 #include "machine/pte.h"
+#include "sys/device.h"
 
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
  * the machine.
  */
+int	cold;		/* if 1, still working on cold start */
 int	dkn;		/* number of iostat dk numbers assigned so far */
-extern int	cold;		/* cold start flag initialized in locore.s */
 
-/*
- * Determine i/o configuration for a machine.
- */
+void
 configure()
 {
-
-#include "isa.h"
-#if NISA > 0
-	isa_configure();
+	if (config_rootfound("isa", NULL))
+		return;
+#ifdef notyet
+	if (config_rootfound("eisa", NULL))
+		return;
+	if (config_rootfound("mca", NULL))
+		return;
 #endif
+	panic("configure: no root");
+}
 
 #if GENERIC
 	if ((boothowto & RB_ASKNAME) == 0)
@@ -96,29 +60,15 @@ swapconf()
 {
 	register struct swdevt *swp;
 	register int nblks;
-extern int Maxmem;
 
-	for (swp = swdevt; swp->sw_dev > 0; swp++)
-	{
-		unsigned d = major(swp->sw_dev);
-
-		if (d > nblkdev) break;
-		if (bdevsw[d].d_psize) {
-			nblks = (*bdevsw[d].d_psize)(swp->sw_dev);
-			if (nblks > 0 &&
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
+		if (bdevsw[major(swp->sw_dev)].d_psize) {
+			nblks =
+			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
+			if (nblks != -1 &&
 			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
 				swp->sw_nblks = nblks;
-			else
-				swp->sw_nblks = 0;
 		}
-		swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-	}
-	if (dumplo == 0 && bdevsw[major(dumpdev)].d_psize)
-	/*dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) - physmem;*/
-		dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) -
-			Maxmem*NBPG/512;
-	if (dumplo < 0)
-		dumplo = 0;
 }
 
 #define	DOSWAP			/* change swdevt and dumpdev */

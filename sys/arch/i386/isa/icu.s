@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19 1993/07/11 14:12:40 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.1 1993/09/14 17:32:28 mycroft Exp $
  */
 
 /*
@@ -55,26 +55,32 @@
 #define NSIO 0
 #endif
 
-#define	HIGHMASK	0xffff
+/* XXXX */
 #define	SOFTCLOCKMASK	0x8000
 
 	.data
 	.globl	_cpl
-_cpl:	.long	0xffff			# current priority (all off)
-	.globl	_imen
-_imen:	.long	0xffff			# interrupt mask enable (all off)
-	.globl	_highmask
-_highmask:	.long	HIGHMASK
-	.globl	_ttymask
-_ttymask:	.long	0
-	.globl	_biomask
-_biomask:	.long	0
-	.globl	_netmask
-_netmask:	.long	0
-	.globl	_impmask
-_impmask:	.long	0
+_cpl:
+	.long	-1			# current priority (all off)
 	.globl  _ipending
-_ipending:	.long   0
+_ipending:
+	.long   0
+	.globl	_imen
+_imen:
+	.long	-1			# interrupt mask enable (all off)
+	.globl	_ttymask
+_ttymask:
+	.long	0
+	.globl	_biomask
+_biomask:
+	.long	0
+	.globl	_netmask
+_netmask:
+	.long	0
+	.globl	_impmask
+_impmask:
+	.long	0
+
 vec:
 	.long	INTRLOCAL(vec0), INTRLOCAL(vec1), INTRLOCAL(vec2)
 	.long	INTRLOCAL(vec3), INTRLOCAL(vec4), INTRLOCAL(vec5)
@@ -88,10 +94,9 @@ vec:
 	ALIGN_TEXT ; \
 _spl/**/name: ; \
 	COUNT_EVENT(_intrcnt_spl, event) ; \
-	movl	_cpl,%eax ; \
-	movl	%eax,%edx ; \
-	orl	mask,%edx ; \
-	movl	%edx,_cpl ; \
+	movl	mask,%eax ; \
+	orl	_cpl,%eax ; \
+	xchg	%eax,_cpl ; \
 	SHOW_CPL ; \
 	ret
 
@@ -155,12 +160,12 @@ doreti:
 	andl	_ipending,%eax
 	jne	INTRLOCAL(unpend_v)
 INTRLOCAL(none_to_unpend):
-	testl   %edx,%edx	# returning to zero priority?
-	jne	1f	# nope, going to non-zero priority
+	testl   %edx,%edx		# returning to zero priority?
+	jne	1f			# nope, going to non-zero priority
 	movl	_netisr,%eax
-	testl   %eax,%eax	# check for softint s/traps
-	jne	2f	# there are some
-	jmp	test_resched	# XXX - schedule jumps better
+	testl   %eax,%eax		# check for softint s/traps
+	jne	2f			# there are some
+	jmp	test_resched		# XXX - schedule jumps better
 	COUNT_EVENT(_intrcnt_spl, 2)	# XXX
 
 	ALIGN_TEXT	# XXX
@@ -188,7 +193,8 @@ INTRLOCAL(none_to_unpend):
 /*
  * XXX - might need extra locking while testing reg copy of netisr, but
  * interrupt routines setting it would not cause any new problems (since we
- * don't loop, fresh bits will not be processed until the next doreti or spl0)
+ * don't loop, fresh bits will not be processed until the next doreti or
+ * splnone)
  */
 	testl   $~((1 << NETISR_SCLK) | (1 << NETISR_AST)),%eax
 	je	test_ASTs	# no net stuff, just temporary AST's
@@ -252,25 +258,17 @@ test_resched:
  *	-- ipending = active interrupts currently masked by cpl
  */
 
-	GENSPL(bio, _biomask, 12)
-	GENSPL(clock, $HIGHMASK, 13)	/* splclock == splhigh ex for count */
-	GENSPL(high, $HIGHMASK, 14)
-	GENSPL(imp, _impmask, 15)
-	GENSPL(net, _netmask, 16)
+	/* XXXX */
 	GENSPL(softclock, $SOFTCLOCKMASK, 17)
-	GENSPL(tty, _ttymask, 18)
 
 	.globl _splnone
-	.globl _spl0
 	ALIGN_TEXT
 _splnone:
-_spl0:
 	COUNT_EVENT(_intrcnt_spl, 19)
-in_spl0:
+in_splnone:
 	movl	_cpl,%eax
-	pushl   %eax	# save old priority
 	testl   $~((1 << NETISR_SCLK) | (1 << NETISR_AST)),_netisr
-	jz	INTRLOCAL(over_net_stuff_for_spl0)
+	jz	INTRLOCAL(over_net_stuff_for_splnone)
 	movl	_netmask,%eax	# mask off those network devices
 	movl	%eax,_cpl	# set new priority
 	SHOW_CPL
@@ -287,13 +285,12 @@ in_spl0:
 #ifdef ISO
 	DONET(NETISR_ISO, _clnlintr, 28)
 #endif
-INTRLOCAL(over_net_stuff_for_spl0):
+INTRLOCAL(over_net_stuff_for_splnone):
 	movl	$0,_cpl	# set new priority
 	SHOW_CPL
 	movl	_ipending,%eax
 	testl   %eax,%eax
 	jne	INTRLOCAL(unpend_V)
-	popl	%eax	# return old priority
 	ret
 	
 	.globl _splx
@@ -302,20 +299,16 @@ _splx:
 	COUNT_EVENT(_intrcnt_spl, 22)
 	movl	4(%esp),%eax	# new priority
 	testl   %eax,%eax
-	je	in_spl0	# going to "zero level" is special
+	je	in_splnone	# going to "zero level" is special
 	COUNT_EVENT(_intrcnt_spl, 23)
-	movl	_cpl,%edx	# save old priority
 	movl	%eax,_cpl	# set new priority
 	SHOW_CPL
 	notl	%eax
 	andl	_ipending,%eax
-	jne	INTRLOCAL(unpend_V_result_edx)
-	movl	%edx,%eax	# return old priority
+	jne	INTRLOCAL(unpend_V)
 	ret
 
 	ALIGN_TEXT
-INTRLOCAL(unpend_V_result_edx):
-	pushl   %edx
 INTRLOCAL(unpend_V):
 	COUNT_EVENT(_intrcnt_spl, 24)
 	bsfl    %eax,%eax
@@ -326,6 +319,7 @@ INTRLOCAL(unpend_V):
 	testl   %edx,%edx
 	je      INTRLOCAL(noresumeV)
 /*
+ * XXX
  * We would prefer to call the intr handler directly here but that doesn't
  * work for badly behaved handlers that want the interrupt frame.  Also,
  * there's a problem determining the unit number.  We should change the
@@ -346,15 +340,13 @@ INTRLOCAL(unpend_V_next):
 	notl	%eax
 	andl	_ipending,%eax
 	jne	INTRLOCAL(unpend_V)
-	popl	%eax
 	ret
 
 #define BUILD_VEC(irq_num) \
 	ALIGN_TEXT ; \
 INTRLOCAL(vec/**/irq_num): ; \
-	int     $ICU_OFFSET + (irq_num) ; \
-	popl	%eax ; \
-	ret
+	int     $(ICU_OFFSET + irq_num) ; \
+	jmp	unpend_V_next
 
 	BUILD_VEC(0)
 	BUILD_VEC(1)

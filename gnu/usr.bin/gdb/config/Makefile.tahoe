@@ -1,7 +1,0 @@
-#	from: @(#)Makefile.tahoe	6.1 (Berkeley) 3/11/91
-#	$Id: Makefile.tahoe,v 1.2 1993/08/01 05:42:18 mycroft Exp $
-
-CONFIGSRCS=	default-dep.c tahoe-pinsn.c
-
-param.h:
-	ln -s $(.CURDIR)/config/m-tahoe.h param.h

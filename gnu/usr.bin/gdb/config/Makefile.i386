@@ -1,8 +1,0 @@
-#	from: @(#)Makefile.i386	6.2 (Berkeley) 3/21/91
-#	$Id: Makefile.i386,v 1.3 1993/08/01 05:42:21 mycroft Exp $
-
-CONFIGSRCS=	i386bsd-dep.c i386-pinsn.c
-
-param.h:
-	rm -f param.h
-	ln -s $(.CURDIR)/config/m-i386bsd.h param.h

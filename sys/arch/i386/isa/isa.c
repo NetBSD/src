@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28 1993/08/28 00:13:00 brezak Exp $
+ *	$Id: isa.c,v 1.28.2.1 1993/09/14 17:32:39 mycroft Exp $
  */
 
 /*
@@ -57,18 +57,15 @@
 #include "malloc.h"
 #include "machine/segments.h"
 #include "machine/cpufunc.h"
+#include "sys/device.h"
 #include "vm/vm.h"
-#include "i386/isa/isa_device.h"
 #include "i386/isa/isa.h"
+#include "i386/isa/isavar.h"
 #include "i386/isa/icu.h"
 #include "i386/isa/ic/i8237.h"
 #include "i386/isa/ic/i8042.h"
 #include "i386/isa/timerreg.h"
 #include "i386/isa/spkr_reg.h"
-
-/* sorry, has to be here, no place else really suitable */
-#include "machine/pc/display.h"
-u_short *Crtat = (u_short *)MONO_BUF;
 
 /*
 **  Register definitions for DMA controller 1 (channels 0..3):
@@ -86,31 +83,111 @@ u_short *Crtat = (u_short *)MONO_BUF;
 #define	DMA2_MODE	(IO_DMA2 + 2*11)	/* mode register */
 #define	DMA2_FFC	(IO_DMA2 + 2*12)	/* clear first/last FF */
 
-int config_isadev(struct isa_device *, u_int *);
-void config_attach(struct isa_driver *, struct isa_device *);
-static void sysbeepstop(int);
+isa_type isa_bustype;				/* type of bus */
 
-/*
- * Configure all ISA devices
- */
+static int isaprobe __P((struct device *, struct cfdata *, void *));
+static void icuattach __P((struct device *, struct device *, void *));
+
+struct cfdriver isacd =
+{ NULL, "isa", isaprobe, isaattach, DV_DULL, sizeof(struct isa_softc) };
+
+int
+isaprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+
+	/* XXX should do a real probe */
+	isa_bustype = BUS_ISA;
+	return 1;
+}
+
+static int
+isasubmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct	isa_attach_args *ia = aux;
+	int	rv;
+
+	ia->ia_iobase = cf->cf_iobase;
+	ia->ia_iosize = cf->cf_iosize;
+	if (cf->cf_irq == -1)
+		ia->ia_irq = IRQUNK;
+	else
+		ia->ia_irq = 1 << cf->cf_irq;
+	ia->ia_drq = cf->cf_drq;
+	ia->ia_maddr = cf->cf_maddr;
+	ia->ia_msize = cf->cf_msize;
+
+#ifdef DIAGNOSTIC
+	if (!cf->cf_driver->cd_match) {
+		printf("isasubmatch: no match function for `%s' device\n",
+			cf->cf_driver->cd_name);
+		panic("isasubmatch: no match function\n");
+	}
+#endif
+
+	rv = (*cf->cf_driver->cd_match)(parent, cf, aux);
+
+	if (!rv)
+		return 0;
+
+	if (!isa_reserveports(ia->ia_iobase, ia->ia_iosize))
+		return 0;
+
+	if (!isa_reservemem(ia->ia_maddr, ia->ia_msize)) {
+		isa_unreserveports(ia->ia_iobase, ia->ia_iosize);
+		return 0;
+	}
+
+	return 1;
+}
+
 void
-isa_configure() {
-	struct isa_device *dvp;
-	struct isa_driver *dp;
+isaprint(aux, isaname)
+	void *aux;
+	char *isaname;
+{
+	struct isa_attach_args *ia = aux;
+
+	if (ia->ia_iosize)
+		printf(" port 0x%x", ia->ia_iobase);
+	if (ia->ia_iosize > 1)
+		printf("-0x%x", ia->ia_iobase + ia->ia_iosize - 1);
+	if (ia->ia_irq != IRQUNK)
+		printf(" irq %d", ffs(ia->ia_irq) - 1);
+	if (ia->ia_drq != DRQUNK)
+		printf(" drq %d", ia->ia_drq);
+	if (ia->ia_msize)
+		printf(" iomem 0x%x", ia->ia_maddr);
+	if (ia->ia_msize > 1)
+		printf("-0x%x", ia->ia_maddr + ia->ia_msize - 1);
+	/* XXXX need to print flags */
+}
+
+void
+isaattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+
+	isa_defaultirq();
 
 	enable_intr();
 	splhigh();
-	INTREN(IRQ_SLAVE);
-	for (dvp = isa_devtab_tty; config_isadev(dvp,&ttymask); dvp++)
-		;
-	for (dvp = isa_devtab_bio; config_isadev(dvp,&biomask); dvp++)
-		;
-	for (dvp = isa_devtab_net; config_isadev(dvp,&netmask); dvp++)
-		;
-	for (dvp = isa_devtab_null; config_isadev(dvp, (u_int *) NULL); dvp++)
-		;
+	intr_enable(IRQ_SLAVE);
 
-	impmask = ttymask | netmask;
+	for (;;) {
+		struct cfdata *child
+		struct isa_attach_args ia;
+		child = config_search(isasubmatch, self, &ia);
+		if (!child)
+			break;
+		config_attach(self, child, &ia, isaprint);
+	}
 
 	/* and the problem is... if netmask == 0, then the loopback
 	 * code can do some really ugly things.
@@ -119,115 +196,11 @@ isa_configure() {
 	 * should work until this interrupt system goes away. -- cgd
 	 */
 	if (netmask == 0)
-		netmask = 0x8000;	/* same as for softclock.  XXX */
+		netmask = 0x8000;	/* same as for softclock.  XXXX */
 
-	/* biomask |= ttymask ;  can some tty devices use buffers? */
 	printf("biomask %x ttymask %x netmask %x impmask %x\n",
 	       biomask, ttymask, netmask, impmask);
 	splnone();
-}
-
-/*
- * Configure an ISA device.
- */
-int
-config_isadev(isdp, mp)
-	struct isa_device *isdp;
-	u_int *mp;
-{
-	struct isa_driver *dp;
- 
-	if (dp = isdp->id_driver) {
-		if (isdp->id_maddr) {
-			extern u_int atdevbase;
-
-			isdp->id_maddr -= 0xa0000; /* XXX should be a define */
-			isdp->id_maddr += atdevbase;
-		}
-		isdp->id_alive = (*dp->probe)(isdp);
-		if (isdp->id_irq == (u_short)-1)
-			isdp->id_alive = 0;
-		/*
-		 * Only print the I/O address range if id_alive != -1
-		 * Right now this is a temporary fix just for the new
-		 * NPX code so that if it finds a 486 that can use trap
-		 * 16 it will not report I/O addresses.
-		 * Rod Grimes 04/26/94
-		 *
-		 * XXX -- cgd
-		 */
-		if (isdp->id_alive) {
-			printf("%s%d", dp->name, isdp->id_unit);
-			if (isdp->id_iobase) {
-				printf(" at 0x%x", isdp->id_iobase);
-				if ((isdp->id_iobase + isdp->id_alive - 1) !=
-				    isdp->id_iobase)
-					printf("-0x%x", isdp->id_iobase +
-					    isdp->id_alive - 1);
-			}
-			if (isdp->id_irq != 0)
-				printf(" irq %d", ffs(isdp->id_irq)-1);
-			if (isdp->id_drq != -1)
-				printf(" drq %d", isdp->id_drq);
-			if (isdp->id_maddr != 0)
-				printf(" maddr 0x%x", kvtop(isdp->id_maddr));
-			if (isdp->id_msize != 0)
-				printf("-0x%x", kvtop(isdp->id_maddr) +
-					isdp->id_msize - 1);
-			if (isdp->id_flags != 0)
-				printf(" flags 0x%x", isdp->id_flags);
-			printf(" on isa\n");
-
-			config_attach(dp, isdp);
-
-			if (isdp->id_irq) {
-				int intrno;
-
-				intrno = ffs(isdp->id_irq)-1;
-				setidt(ICU_OFFSET+intrno, isdp->id_intr,
-					 SDT_SYS386IGT, SEL_KPL);
-				if(mp)
-					INTRMASK(*mp,isdp->id_irq);
-				INTREN(isdp->id_irq);
-			}
-		}
-		return (1);
-	} else	return(0);
-}
-
-void
-config_attach(struct isa_driver *dp, struct isa_device *isdp)
-{
-	extern struct isa_device isa_subdev[];
-	struct isa_device *dvp;
-
-	if(isdp->id_masunit==-1) {
-		(void)(*dp->attach)(isdp);
-		return;
-	}
-
-	if(isdp->id_masunit==0) {
-		for(dvp = isa_subdev; dvp->id_driver; dvp++) {
-			if (dvp->id_driver != dp)
-				continue;
-			if (dvp->id_masunit != isdp->id_unit)
-				continue;
-			if (dvp->id_physid == -1)
-				continue;
-			dvp->id_alive = (*dp->attach)(dvp);
-		}
-		for(dvp = isa_subdev; dvp->id_driver; dvp++) {
-			if (dvp->id_driver != dp)
-				continue;
-			if (dvp->id_masunit != isdp->id_unit)
-				continue;
-			if (dvp->id_physid != -1)
-				continue;
-			dvp->id_alive = (*dp->attach)(dvp);
-		}
-		return;
-	}
-	printf("id_masunit has weird value\n");
 }
 
 
@@ -248,25 +221,25 @@ static *defvec[16] = {
 extern	IDTVEC(intrdefault);
 
 /*
- * Fill in default interrupt table (in case of spuruious interrupt
- * during configuration of kernel, setup interrupt control unit
+ * Fill in default interrupt table, and mask all interrupts.
  */
 void
-isa_defaultirq() {
+isa_defaultirq()
+{
 	int i;
 
 	/* icu vectors */
-	for (i = NRSVIDT ; i < NRSVIDT+ICU_LEN ; i++)
+	for (i = ICU_OFFSET; i < ICU_OFFSET + ICU_LEN ; i++)
 		setidt(i, defvec[i],  SDT_SYS386IGT, SEL_KPL);
   
 	/* out of range vectors */
-	for (i = NRSVIDT; i < NIDT; i++)
+	for (; i < NIDT; i++)
 		setidt(i, &IDTVEC(intrdefault), SDT_SYS386IGT, SEL_KPL);
 
 	/* initialize 8259's */
 	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
-	outb(IO_ICU1+1, NRSVIDT);	/* starting at this vector index */
-	outb(IO_ICU1+1, 1<<2);		/* slave on line 2 */
+	outb(IO_ICU1+1, ICU_OFFSET);	/* starting at this vector index */
+	outb(IO_ICU1+1, IRQ_SLAVE);
 #ifdef AUTO_EOI_1
 	outb(IO_ICU1+1, 2 | 1);		/* auto EOI, 8086 mode */
 #else
@@ -279,22 +252,44 @@ isa_defaultirq() {
 #endif
 
 	outb(IO_ICU2, 0x11);		/* reset; program device, four bytes */
-	outb(IO_ICU2+1, NRSVIDT+8);	/* staring at this vector index */
-	outb(IO_ICU2+1,2);		/* my slave id is 2 */
+	outb(IO_ICU2+1, ICU_OFFSET+8);	/* staring at this vector index */
+	outb(IO_ICU2+1, ffs(IRQ_SLAVE)-1);
 #ifdef AUTO_EOI_2
 	outb(IO_ICU2+1, 2 | 1);		/* auto EOI, 8086 mode */
 #else
-	outb(IO_ICU2+1,1);		/* 8086 mode */
+	outb(IO_ICU2+1, 1);		/* 8086 mode */
 #endif
 	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
 	outb(IO_ICU2, 0x0a);		/* default to IRR on read */
 }
 
+
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
+
+int
+config_isadev(isdp, mp)
+	struct isa_device *isdp;
+	u_int *mp;
+{
+	if (isdp->id_irq) {
+		int intrno;
+
+		intrno = ffs(isdp->id_irq)-1;
+		setidt(ICU_OFFSET+intrno, isdp->id_intr,
+			 SDT_SYS386IGT, SEL_KPL);
+		if(mp)
+			INTRMASK(*mp,isdp->id_irq);
+		INTREN(isdp->id_irq);
+	}
+}
+
+
 /* region of physical memory known to be contiguous */
 vm_offset_t isaphysmem;
-static caddr_t dma_bounce[8];		/* XXX */
-static char bounced[8];		/* XXX */
-#define MAXDMASZ 512		/* XXX */
+static caddr_t bouncebuf[8];		/* XXX */
+static caddr_t bounced[8];		/* XXX */
+static vm_size_t bouncesize[8];		/* XXX */
+#define MAXDMASZ 512			/* XXX */
 
 /* high byte of address is stored in this port for i-th dma channel */
 static short dmapageport[8] =
@@ -305,10 +300,13 @@ static short dmapageport[8] =
  * external dma control by a board.
  */
 void
-isa_dmacascade(unsigned chan)
+at_dma_cascade(chan)
+	unsigned chan;
 {
+#ifdef DEBUG
 	if (chan > 7)
-		panic("isa_dmacascade: impossible request"); 
+		panic("at_dma_cascade: impossible request"); 
+#endif
 
 	/* set dma channel mode, and set dma channel mode */
 	if ((chan & 4) == 0) {
@@ -321,32 +319,39 @@ isa_dmacascade(unsigned chan)
 }
 
 /*
- * isa_dmastart(): program 8237 DMA controller channel, avoid page alignment
+ * at_dma(): program 8237 DMA controller channel, avoid page alignment
  * problems by using a bounce buffer.
  */
 void
-isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
-{	vm_offset_t phys;
+at_dma(flags, addr, nbytes, chan)
+	int read;
+	caddr_t addr;
+	vm_size_t nbytes;
+	unsigned chan;
+{
+	vm_offset_t phys;
 	int waport;
 	caddr_t newaddr;
 
-	if (    chan > 7
+ppp	if (    chan > 7
 	    || (chan < 4 && nbytes > (1<<16))
 	    || (chan >= 4 && (nbytes > (1<<17) || (u_int)addr & 1)))
 		panic("isa_dmastart: impossible request"); 
 
-	if (isa_dmarangecheck(addr, nbytes, chan)) {
-		if (dma_bounce[chan] == 0)
-			dma_bounce[chan] =
+	if (at_dma_rangecheck(addr, nbytes, chan)) {
+		panic("bounce buffers don't work yet\n");
+		/* XXX totally braindead; NBPG is not enough */
+		if (bouncebuf[chan] == 0)
+			bouncebuf[chan] =
 				/*(caddr_t)malloc(MAXDMASZ, M_TEMP, M_WAITOK);*/
 				(caddr_t) isaphysmem + NBPG*chan;
-		bounced[chan] = 1;
-		newaddr = dma_bounce[chan];
-		*(int *) newaddr = 0;	/* XXX */
-
+		bouncesize[chan] = nbytes;
+		newaddr = bouncebuf[chan];
 		/* copy bounce buffer on write */
-		if (!(flags & B_READ))
+		if (!read)
 			bcopy(addr, newaddr, nbytes);
+		else
+			bounced[chan] = addr;
 		addr = newaddr;
 	}
 
@@ -359,7 +364,7 @@ isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
 		 * byte mode channels.
 		 */
 		/* set dma channel mode, and reset address ff */
-		if (flags & B_READ)
+		if (read)
 			outb(DMA1_MODE, DMA37MD_SINGLE|DMA37MD_WRITE|chan);
 		else
 			outb(DMA1_MODE, DMA37MD_SINGLE|DMA37MD_READ|chan);
@@ -383,7 +388,7 @@ isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
 		 * word mode channels.
 		 */
 		/* set dma channel mode, and reset address ff */
-		if (flags & B_READ)
+		if (read)
 			outb(DMA2_MODE, DMA37MD_SINGLE|DMA37MD_WRITE|(chan&3));
 		else
 			outb(DMA2_MODE, DMA37MD_SINGLE|DMA37MD_READ|(chan&3));
@@ -406,13 +411,11 @@ isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
 }
 
 void
-isa_dmadone(int flags, caddr_t addr, int nbytes, int chan)
+at_dma_terminate(int flags, caddr_t addr, int nbytes, int chan)
 {
 
-	/* copy bounce buffer on read */
-	/*if ((flags & (B_PHYS|B_READ)) == (B_PHYS|B_READ))*/
 	if (bounced[chan]) {
-		bcopy(dma_bounce[chan], addr, nbytes);
+		bcopy(bouncebuf[chan], bounced[chan], bouncesize[chan]);
 		bounced[chan] = 0;
 	}
 }
@@ -425,17 +428,16 @@ isa_dmadone(int flags, caddr_t addr, int nbytes, int chan)
  */
 
 int
-isa_dmarangecheck(caddr_t va, unsigned length, unsigned chan) {
+at_dma_rangecheck(caddr_t va, unsigned length, unsigned chan) {
 	vm_offset_t phys, priorpage = 0, endva;
 	u_int dma_pgmsk = (chan & 4) ?  ~(128*1024-1) : ~(64*1024-1);
 
 	endva = (vm_offset_t)round_page(va + length);
 	for (; va < (caddr_t) endva ; va += NBPG) {
 		phys = trunc_page(pmap_extract(pmap_kernel(), (vm_offset_t)va));
-#define ISARAM_END	RAM_END
 		if (phys == 0)
 			panic("isa_dmacheck: no physical page present");
-		if (phys > ISARAM_END) 
+		if (phys > physmem) 
 			return (1);
 		if (priorpage) {
 			if (priorpage + NBPG != phys)
@@ -455,7 +457,7 @@ struct buf isa_physmemq;
 /* blocked waiting for resource to become free for exclusive use */
 static isaphysmemflag;
 /* if waited for and call requested when free (B_CALL) */
-static void (*isaphysmemunblock)(); /* needs to be a list */
+static void (*isaphysmemunblock)(); /* XXX needs to be a list */
 
 /*
  * Allocate contiguous physical memory for transfer, returning
@@ -506,122 +508,22 @@ isa_nmi(cd) {
  * Caught a stray interrupt, notify
  */
 void
-isa_strayintr(d) {
+isa_strayintr(d)
+	int d;
+{
 
-	/* DON'T BOTHER FOR NOW! */
-	/* for some reason, we get bursts of intr #7, even if not enabled! */
 	/*
-	 * Well the reason you got bursts of intr #7 is because someone
-	 * raised an interrupt line and dropped it before the 8259 could
-	 * prioritize it.  This is documented in the intel data book.  This
-	 * means you have BAD hardware!  I have changed this so that only
-	 * the first 5 get logged, then it quits logging them, and puts
-	 * out a special message. rgrimes 3/25/1993
+	 * Stray level 7 interrupts occur when someone raises an interrupt
+	 * and then drops it before the CPU acknowledges it.  This means
+	 * either the device is screwed or something is cli'ing too long.
 	 */
 	extern u_long intrcnt_stray;
 
 	intrcnt_stray++;
 	if (intrcnt_stray <= 5)
-		log(LOG_ERR,"ISA strayintr %x\n", d);
+		log(LOG_ERR, "stray interrupt %d\n", d);
 	if (intrcnt_stray == 5)
-		log(LOG_CRIT,"Too many ISA strayintr not logging any more\n");
-}
-
-/*
- * Wait "n" microseconds.
- * Relies on timer 1 counting down from (TIMER_FREQ / hz) at
- * (1 * TIMER_FREQ) Hz.
- * Note: timer had better have been programmed before this is first used!
- * (Note that we use `rate generator' mode, which counts at 1:1; `square
- * wave' mode counts at 2:1).
- */
-#define       CF              (1 * TIMER_FREQ)
-
-extern int hz;                        /* XXX - should be elsewhere */
-
-void
-DELAY(n)
-	int n;
-{
-	int counter_limit;
-	int prev_tick;
-	int tick;
-	int ticks_left;
-	int sec;
-	int usec;
-
-#ifdef DELAYDEBUG
-	int gettick_calls = 1;
-	int n1;
-	static int state = 0;
-
-	if (state == 0) {
-		state = 1;
-		for (n1 = 1; n1 <= 10000000; n1 *= 10)
-			DELAY(n1);
-		state = 2;
-	}
-	if (state == 1)
-		printf("DELAY(%d)...", n);
-#endif
-
-	/*
-	 * Read the counter first, so that the rest of the setup overhead is
-	 * counted.  Guess the initial overhead is 20 usec (on most systems it
-	 * takes about 1.5 usec for each of the i/o's in gettick().  The loop
-	 * takes about 6 usec on a 486/33 and 13 usec on a 386/20.  The
-	 * multiplications and divisions to scale the count take a while).
-	 */
-	prev_tick = gettick();
-	n -= 20;
-
-	/*
-	 * Calculate (n * (CF / 1e6)) without using floating point and without
-	 * any avoidable overflows.
-	 */
-	sec = n / 1000000;
-	usec = n - sec * 1000000;
-	ticks_left = sec * CF
-		+ usec * (CF / 1000000)
-		+ usec * ((CF % 1000000) / 1000) / 1000
-		+ usec * (CF % 1000) / 1000000;
-
-	counter_limit = TIMER_FREQ / hz;
-	while (ticks_left > 0) {
-		tick = gettick();
-#ifdef DELAYDEBUG
-		++gettick_calls;
-#endif
-		if (tick > prev_tick)
-			ticks_left -= prev_tick - (tick - counter_limit);
-		else
-			ticks_left -= prev_tick - tick;
-		prev_tick = tick;
-	}
-#ifdef DELAYDEBUG
-	if (state == 1)
-		printf(" %d calls to gettick() at %d usec each\n",
-			gettick_calls, (n + 5) / gettick_calls);
-#endif
-}
-
-int
-gettick() {
-	int high;
-	int low;
-
-	/*
-	 * Protect ourself against interrupts.
-	 */
-	disable_intr();
-	/*
-	 * Latch the count for 'timer' (cc00xxxx, c = counter, x = any).
-	 */
-	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	low = inb(TIMER_CNTR0);
-	high = inb(TIMER_CNTR0);
-	enable_intr();
-	return ((high << 8) | low);
+		log(LOG_CRIT,"too many stray interrupts; stopped logging\n");
 }
 
 static beeping;
