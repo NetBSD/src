@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3.8.5 2002/05/31 01:45:03 gehenna Exp $	*/
+/*	$NetBSD: defs.h,v 1.3.8.6 2002/06/05 13:27:10 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -364,6 +364,7 @@ struct	hashtab *defparamtab;	/* options that have been "defparam"'d */
 struct	hashtab *deffstab;	/* defined file systems */
 struct	hashtab *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
+struct	hashtab *fixdevmtab;	/* duplication fixed devm lookup */
 struct	hashtab *bdevmtab;	/* block devm lookup */
 struct	hashtab *cdevmtab;	/* character devm lookup */
 
@@ -373,6 +374,7 @@ struct	config *allcf;		/* list of configured kernels */
 struct	devi *alldevi;		/* list of all instances */
 struct	devi *allpseudo;	/* list of all pseudo-devices */
 struct	devm *alldevms;		/* list of all device-majors */
+struct	devm *fixdevms;		/* list of duplication fixed device-majors */
 int	ndevi;			/* number of devi's (before packing) */
 int	npseudo;		/* number of pseudo's */
 int	maxbdevm;		/* max number of block major */

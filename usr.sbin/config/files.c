@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.14.8.3 2002/05/31 01:45:04 gehenna Exp $	*/
+/*	$NetBSD: files.c,v 1.14.8.4 2002/06/05 13:27:10 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -336,10 +336,38 @@ fixobjects(void)
 int
 fixdevm(void)
 {
-	struct devm *dm;
+	struct devm *dm, *res, **next;
 	char mstr[16];
 
+	fixdevms = NULL;
+	next = &fixdevms;
+	fixdevmtab = ht_new();
+
 	for (dm = alldevms ; dm != NULL ; dm = dm->dm_next) {
+		res = ht_lookup(fixdevmtab, intern(dm->dm_name));
+		if (res != NULL) {
+			if (res->dm_cmajor != dm->dm_cmajor ||
+			    res->dm_cmajor != dm->dm_bmajor) {
+				xerror(res->dm_srcfile, res->dm_srcline,
+				       "device-major '%s' is inconsistent: "
+				       "block %d, char %d", res->dm_name,
+				       res->dm_bmajor, res->dm_cmajor);
+				xerror(dm->dm_srcfile, dm->dm_srcline,
+				       "device-major '%s' is inconsistent: "
+				       "block %d, char %d", dm->dm_name,
+				       dm->dm_bmajor, dm->dm_cmajor);
+				return (1);
+			}
+		} else {
+			if (ht_insert(fixdevmtab, intern(dm->dm_name), dm)) {
+				panic("fixdevm: %s char %d block %d",
+				      dm->dm_name, dm->dm_cmajor,
+				      dm->dm_bmajor);
+			}
+			*next = dm;
+			next = &dm->dm_next;
+		}
+
 		if (dm->dm_opts != NULL &&
 		    !expr_eval(dm->dm_opts, fixsel, NULL))
 			continue;
