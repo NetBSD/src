@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1993 Charles Hannum
+ * Copyright (c) 1993 Charles Hannum.
  * Copyright (c) 1992, 1993 Erik Forsberg.
  * All rights reserved.
  *
@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6.2.10 1993/10/11 01:51:28 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.11 1993/10/12 23:30:47 mycroft Exp $
  */
 
 #include "param.h"

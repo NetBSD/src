@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Charles Hannum
+ * Copyright (c) 1993 Charles Hannum.
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
  * All rights reserved.
  *
@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.8 1993/10/11 01:51:30 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.9 1993/10/12 23:30:52 mycroft Exp $
  */
 
 /*

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1993 Charles Hannum
+ * Copyright (c) 1993 Charles Hannum.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.6 1993/10/11 01:51:19 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.7 1993/10/12 23:30:58 mycroft Exp $
  */
 
 /*
@@ -67,10 +67,6 @@ struct com_softc {
 	struct	isadev sc_id;
 	struct	intrhand sc_ih;
 
-	struct	ringbuf {
-		int rb_count, rb_first, rb_last, rb_size;
-		char *rb_data;
-	} sc_q;
 	u_short	sc_iobase;
 	u_char	sc_flags;
 #define	COM_SOFTCAR	0x01
@@ -303,7 +299,7 @@ comopen(dev, flag, mode, p)
 	if (sc->sc_flags & COM_SOFTCAR || inb(iobase + com_msr) & MSR_DCD)
 		tp->t_state |= TS_CARR_ON;
 	else
-		tp->t_state &= ~TS_CARR_ON;
+		tp->t_state &=~ TS_CARR_ON;
 	while ((flag & O_NONBLOCK) == 0 && (tp->t_cflag & CLOCAL) == 0 &&
 	       (tp->t_state & TS_CARR_ON) == 0) {
 		/* wait for carrier; allow signals */
@@ -335,7 +331,6 @@ comclose(dev, flag)
 	if (tp->t_cflag & HUPCL)
 		bic(iobase + com_mcr, MCR_DTR | MCR_RTS);
 	ttyclose(tp);
-	tp->t_state &= ~(TS_ISOPEN | TS_WOPEN);
 #ifdef notyet /* XXXX */
 	if (iobase != comconsole) {
 		ttyfree(tp);
@@ -364,9 +359,11 @@ comwrite(dev, uio, flag)
 {
 	struct	tty *tp = com_tty[COMUNIT(dev)];
  
+#if 0
 	/* XXXX what is this for? */
 	if (constty == tp)
 		constty = NULL;
+#endif
 	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
 }
 
@@ -395,9 +392,11 @@ comioctl(dev, cmd, data, flag)
 	struct	tty *tp = com_tty[unit];
 	int	error;
  
-	if (error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag))
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	if (error >= 0)
 		return error;
-	if (error = ttioctl(tp, cmd, data, flag))
+	error = ttioctl(tp, cmd, data, flag);
+	if (error >= 0)
 		return error;
 
 	switch (cmd) {
@@ -540,7 +539,7 @@ comstart(tp)
 		goto out;
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
+			tp->t_state &=~ TS_ASLEEP;
 			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
@@ -629,10 +628,9 @@ commint(sc)
 }
 
 static int
-comintr(arg)
-	void *arg;
+comintr(sc)
+	struct com_softc *sc;
 {
-	struct	com_softc *sc = arg;
 	u_short	iobase = sc->sc_iobase;
 	struct	tty *tp;
 	u_char	code;

@@ -1,5 +1,5 @@
 /*
- *	$Id: i8042.h,v 1.2 1993/05/22 08:01:55 cgd Exp $
+ *	$Id: i8042.h,v 1.2.4.1 1993/10/12 23:29:14 mycroft Exp $
  */
 
 #define	KBSTATP		0x64	/* kbd controller status port (I) */
@@ -24,4 +24,7 @@
 #define	KC8_IGNSEC	0x08	/* ignore security lock */
 #define	KC8_CPU		0x04	/* exit from protected mode reset */
 #define	KC8_IEN		0x01	/* enable interrupt */
-#define	CMDBYTE	(KC8_TRANS|KC8_IGNSEC|KC8_CPU|KC8_IEN)
+/*
+ * Yes, we obey keyboard locks.  We just provide the gun.
+ */
+#define	CMDBYTE		(KC8_TRANS|KC8_CPU|KC8_IEN)
