@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_update.c,v 1.1.1.3 2000/07/08 20:40:55 mellon Exp $";
+static const char rcsid[] = "$Id: res_update.c,v 1.1.1.4 2000/07/20 05:50:24 mellon Exp $";
 #endif /* not lint */
 
 /*
@@ -80,7 +80,8 @@ void tkey_free (ns_tsig_key **);
 ns_rcode
 res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 	ns_updrec *rrecp;
-	u_char answer[PACKETSZ], packet[2*PACKETSZ];
+	double answer[PACKETSZ / sizeof (double)];
+	double packet[2*PACKETSZ / sizeof (double)];
 	struct zonegrp *zptr, tgrp;
 	int nzones = 0, nscount = 0;
 	unsigned n;
