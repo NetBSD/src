@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2 2001/02/28 18:15:43 bjh21 Exp $	*/
+/*	$NetBSD: pcb.h,v 1.3 2001/08/27 11:39:44 chris Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,15 +43,6 @@ struct trapframe;
 struct pcb {
 	pd_entry_t	*pcb_pagedir;		/* PT hooks */
 	u_int	pcb_flags;			/* Flags */
-	u_int	pcb_spsr;
-	u_int	pcb_r0;				/* Space for register dump */
-	u_int	pcb_r1;
-	u_int	pcb_r2;
-	u_int	pcb_r3;
-	u_int	pcb_r4;
-	u_int	pcb_r5;
-	u_int	pcb_r6;
-	u_int	pcb_r7;
 	u_int	pcb_r8;				/* used */
 	u_int	pcb_r9;				/* used */
 	u_int	pcb_r10;			/* used */
