@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.3 1999/07/03 19:55:03 kleink Exp $	*/
+/*	$NetBSD: pass1.c,v 1.4 2000/01/20 21:32:32 perseant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -77,7 +77,7 @@ pass1()
         struct ifile *ifp;
         CLEANERINFO *cp;
 
-        idinode = lfs_ifind(&sblock,sblock.lfs_ifile,&ifblock);
+        idinode = lfs_difind(&sblock,sblock.lfs_ifile,&ifblock);
 
         /*
          * We now have the ifile's inode block in core.  Read out the
