@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.34 2001/12/16 00:55:40 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.35 2001/12/16 23:55:28 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.34 2001/12/16 00:55:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.35 2001/12/16 23:55:28 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -4485,7 +4485,6 @@ sppp_keepalive(void *dummy)
 
 		if (sp->pp_alivecnt == MAXALIVECNT) {
 			/* No keepalive packets got.  Stop the interface. */
-			printf (SPP_FMT "down\n", SPP_ARGS(ifp));
 			if_down (ifp);
 			IF_PURGE (&sp->pp_cpq);
 			if (! (sp->pp_flags & PP_CISCO)) {
