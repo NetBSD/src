@@ -594,3 +594,26 @@ sys/dev/pci/isp_pci.c				patch
   Jumbo patch to bring release branch up to date with current state
   of Qlogic ISP SCSI/FibreChannel HBA driver.  (Fixes PR#5197 and
   several operational problems.)  (mjacob)
+
+gnu/usr.bin/gcc/common/expr.c			1.2
+
+  Fixes a code generation bug in store_expr() when the rhs is a memory
+  location pointed to by a postincremented (or postdecremented) pointer
+  and the value of the assignment is reused (PR#6373).  (mycroft)
+
+sys/nfs/nfs_syscalls.c				1.33
+
+  Fixes lossage with swapping over NFS.  (mycroft)
+
+sys/vm/vm_swap.c				1.64
+
+  Fixes swapping over NFSv3; previously the server could throw away data
+  because we did `unstable' writes and never committed them.  (mycroft)
+
+sys/kern/vfs_cluster.c				1.19-1.21
+
+  Fixes arithmetic overflows handling files larger than 2GB.  Fixes
+  problems with clustering when the file system block size is less
+  than BUFPAGES/NBUF*NBPG (PR#6332).  (It now tries more aggressively
+  to use buffers that still have extra space, and it theoretically
+  never frees a buffer with b_bcount>fs_bsize.)  (mycroft)
