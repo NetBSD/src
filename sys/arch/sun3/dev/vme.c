@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.4 1996/10/11 00:46:54 christos Exp $	*/
+/*	$NetBSD: vme.c,v 1.5 1996/10/13 03:47:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -92,7 +92,7 @@ vme_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	kprintf("\n");
+	printf("\n");
 
 	/* We know ca_bustype == BUS_VMExx */
 	(void) config_search(bus_scan, self, args);

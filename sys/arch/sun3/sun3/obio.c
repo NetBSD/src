@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.20 1996/10/11 00:46:46 christos Exp $	*/
+/*	$NetBSD: obio.c,v 1.21 1996/10/13 03:47:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -77,7 +77,7 @@ obio_attach(parent, self, aux)
 	struct confargs *ca = aux;
 	int	addr;
 
-	kprintf("\n");
+	printf("\n");
 
 	/* Configure these in order of address. */
 	for (addr = 0; addr < OBIO_END; addr += OBIO_INCR) {
@@ -106,7 +106,7 @@ obio_print(args, name)
 	if (name)
 		return(QUIET);
 
-	kprintf(" addr 0x%x", ca->ca_paddr);
+	printf(" addr 0x%x", ca->ca_paddr);
 
 	return(UNCONF);
 }

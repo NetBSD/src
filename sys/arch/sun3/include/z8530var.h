@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.4 1996/10/11 00:47:08 christos Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.5 1996/10/13 03:47:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -76,7 +76,7 @@ void zs_abort();
 /*
  * Some warts needed by z8530tty.c -
  * The default parity REALLY needs to be the same as the PROM uses,
- * or you can not see messages done with kprintf during boot-up...
+ * or you can not see messages done with printf during boot-up...
  */
 #define	ZSTTY_MAJOR 	12		/* XXX */
 #define	ZSTTY_DEF_CFLAG 	(CREAD | CS8 | HUPCL)
