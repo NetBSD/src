@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.2 1996/12/18 22:27:29 cgd Exp $	*/
+/*	$NetBSD: rtld.c,v 1.3 1997/03/21 05:39:42 cgd Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -45,7 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mman.h>
 #include <dirent.h>
 
@@ -54,6 +54,8 @@
 #include <dlfcn.h>
 #include "debug.h"
 #include "rtld.h"
+
+#include "sysident.h"
 
 #ifndef RTLD_NOW
 #define	RTLD_NOW	(RTLD_LAZY + 1)
