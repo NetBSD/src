@@ -1,4 +1,4 @@
-/* $NetBSD: xy.c,v 1.3 1996/01/07 22:03:05 thorpej Exp $ */
+/* $NetBSD: xy.c,v 1.4 1996/01/12 22:45:04 chuck Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xy.c,v 1.3 1996/01/07 22:03:05 thorpej Exp $
+ * id: $Id: xy.c,v 1.4 1996/01/12 22:45:04 chuck Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -303,14 +303,11 @@ int xycmatch(parent, match, aux)
 
 	if (cputyp == CPU_SUN4) {
 		vaddr = ra->ra_vaddr;
-		if ((u_long) ra->ra_paddr & PGOFSET)
-			(u_long) vaddr |= ((u_long) ra->ra_paddr & PGOFSET);
 		xyc = (struct xyc *) vaddr;
 		if (probeget(&xyc->xyc_rsetup, 1) == -1)
 			return (0);
 		if (xyc_unbusy(xyc, XYC_RESETUSEC) == XY_ERR_FAIL)
 			return(0);
-		ra->ra_len = NBPG;
 	}
 	return (1);
 }
@@ -337,9 +334,6 @@ xycattach(parent, self, aux)
 
 	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
 	    ca->ca_ra.ra_len, ca->ca_bustype);
-	if ((u_long) ca->ca_ra.ra_paddr & PGOFSET)
-		(u_long) ca->ca_ra.ra_vaddr |=
-				((u_long) ca->ca_ra.ra_paddr & PGOFSET);
 
 	xyc->xyc = (struct xyc *) ca->ca_ra.ra_vaddr;
 	pri = ca->ca_ra.ra_intr[0].int_pri;
