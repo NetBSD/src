@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.18 2003/03/01 07:31:35 tron Exp $
+#	$NetBSD: checkflist,v 1.19 2003/07/10 03:19:15 lukem Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -76,7 +76,13 @@ sh makeflist $xargs $dargs > $tmpname
 	find $origin \( -type d -o -type f -o -type l \)
 ) | (
 	while read line; do
-		test "$metalog" = "$line" || echo $line
+		case "$line" in
+		$metalog)
+			;;
+		*)
+			echo $line
+			;;
+		esac
 	done
 ) | sort | diff $diffargs $tmpname -
 rv=$?
