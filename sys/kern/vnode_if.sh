@@ -33,7 +33,7 @@ copyright='
  * SUCH DAMAGE.
  */
 '
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.4.2.2 1994/08/11 23:34:08 mycroft Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.4.2.3 1994/08/29 02:50:59 mycroft Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -111,11 +111,9 @@ awk_parser='
 		i++;
 	} else
 		willrele[argc] = 0;
-	argtype[argc] = "";
+	argtype[argc] = $i; i++;
 	while (i < NF) {
-		argtype[argc] = argtype[argc]$i;
-		if (substr($i, length($i), 1) != "*")
-			argtype[argc] = argtype[argc]" ";
+		argtype[argc] = argtype[argc]" "$i;
 		i++;
 	}
 	argname[argc] = $i;
@@ -135,6 +133,8 @@ warning="
  */
 "
 
+# This is to satisfy McKusick (get rid of evil spaces 8^)
+anal_retentive='s:\([^/]\*\) :\1:g'
 
 #
 # Redirect stdout to the H file.
@@ -155,9 +155,9 @@ sed -e "$sed_prep" $src | $awk "$toupper"'
 function doit() {
 	# Declare arg struct, descriptor.
 	printf("\nstruct %s_args {\n", name);
-	printf("\tstruct vnodeop_desc *a_desc;\n");
+	printf("\tstruct vnodeop_desc * a_desc;\n");
 	for (i=0; i<argc; i++) {
-		printf("\t%sa_%s;\n", argtype[i], argname[i]);
+		printf("\t%s a_%s;\n", argtype[i], argname[i]);
 	}
 	printf("};\n");
 	printf("extern struct vnodeop_desc %s_desc;\n", name);
@@ -169,7 +169,7 @@ function doit() {
 	}
 	printf(")\n");
 	for (i=0; i<argc; i++) {
-		printf("\t%s%s;\n", argtype[i], argname[i]);
+		printf("\t%s %s;\n", argtype[i], argname[i]);
 	}
 	printf("{\n\tstruct %s_args a;\n", name);
 	printf("\ta.a_desc = VDESC(%s);\n", name);
@@ -193,7 +193,7 @@ END	{
 	name="vop_bwrite";
 	doit();
 }
-'"$awk_parser"
+'"$awk_parser" | sed -e "$anal_retentive"
 
 # End stuff
 echo '
@@ -297,7 +297,7 @@ END	{
 	name="vop_bwrite";
 	doit();
 }
-'"$awk_parser"
+'"$awk_parser" | sed -e "$anal_retentive"
 
 # End stuff
 echo '
