@@ -1,5 +1,0 @@
-In order to set up Postfix on a virtual interface address on my own
-BSD/OS or FreeBSD systems I would use:
-
-    # ifconfig interface-name alias virtual.host.addr netmask some.net.mask
-    # route add virtual.host.addr localhost

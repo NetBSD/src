@@ -1,7 +1,0 @@
-#	$NetBSD: Makefile.eisadevs,v 1.1 1998/06/12 23:22:49 cgd Exp $
-
-AWK=	awk
-
-eisadevs.h eisadevs_data.h: eisadevs devlist2h.awk
-	/bin/rm -f eisadevs.h eisadevs_data.h
-	${AWK} -f devlist2h.awk eisadevs

@@ -1,2 +1,0 @@
-SETNAME=man
-PREFIX=/

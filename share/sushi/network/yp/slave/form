@@ -1,4 +1,0 @@
-# $NetBSD: form,v 1.2 2001/08/01 08:04:26 garbled Exp $
-req-entry:40		Hostname of master YP/NIS server
-escript:40,script1	Domainname of YP/NIS server
-entry:50		Comma separated list of YP servers
