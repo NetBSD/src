@@ -1,6 +1,6 @@
-	$NetBSD: README,v 1.2 1995/11/30 00:58:30 jtc Exp $
+	$NetBSD: README,v 1.2.4.1 1996/07/05 19:21:50 chuck Exp $
 
-NetBSD/mvme68k port README for NetBSD 1.1
+NetBSD/mvme68k port README for NetBSD 1.2
 
 supported environment:
 
@@ -14,24 +14,43 @@ requirements:
 	- network connection
 	- NFS server (to serve root and swap)
 
+new mvme68k features in 1.2 (as compared to 1.1):
+	- disk support
+	- SCSI device driver
+	- VME bus support 
+	- new bootblocks
+
 future plans:
-	- VME147 scsi disk support
-	- hopefully, support for the VME162 card
+	- disk/tape installation
+	- support for m68040 boards?
 
 
 how to boot:
+	The "supported" way of installing NetBSD/mvme68k is to boot
+it diskless and then go from there (e.g. install it on your disk, if
+you've got one).    In the next release (1.3) we aim to also support
+the standard NetBSD tape/ramdisk/miniroot booting set up.   However, 
+the disk, tape, and bootstrap support wasn't ready soon enough for me
+to feel comfortable enough to include it as an official part of 
+NetBSD/mvme68k 1.2.  However, I will try and include an "experimental" 
+version of the ramdisk kernel, miniroot, and tape bootblocks in case
+people want to play with it (see the NetBSD/sun3 install docs for ideas
+on how to play with this).    The rest of this document assumes you
+are using the NFS diskless boot.
+
 	Booting NetBSD/mvme68k on a VME147 is somewhat painful because
 the ROM doesn't know how to talk to the ethernet chip.   I have solved
 this problem by downloading a bootstrap into RAM via the console line.
 
 	First, you will need a mvme68k NFS mountable /usr and root
-directory.  Version 1.1 of NetBSD/mvme68k consists of the following files:
+directory.  Version 1.2 of NetBSD/mvme68k consists of the following files:
 	export_exec_mvme68k.tar.gz: /export/exec/mvme68k files (mount on /usr)
 	export_root_mvme68k.tar.gz: /export/root/mvme68k files (mount on /)
 	domestic_mvme68k.tar.gz: domestic crypto stuff (restricted to US)
 	README: this file
+	export_rootbin_mvme68k.tar.gz: /bin, /sbin [for upgrades from 1.1]
 
-These files can be ftp'd from ftp.netbsd.org in mvme68k area of the 1.1
+These files can be ftp'd from ftp.netbsd.org in mvme68k area of the 1.2
 distribution.
 
 	First extract the files in the proper place on your NFS server.   
@@ -59,7 +78,7 @@ Onboard  RAM start = $00000000,  stop = $007FFFFF
 
 
 Make sure the "stop" looks ok (if you've got 8MB you should have the
-same value as I).  Also make sure the clock is ticking:
+same value as I do).  Also make sure the clock is ticking:
 
 147-Bug>time
 Sunday   5/30/27   16:25:14
@@ -88,7 +107,7 @@ away for 11 seconds
 147-Bug>g 4000
 Effective address: 00004000 
 
-sboot: serial line bootstrap program (&end = 5fd8)
+sboot: serial line bootstrap program (&end = 6018)
 
 >>> 
 
@@ -109,46 +128,59 @@ Once you've got the ">>> " prompt you can do commands such as:
 
 A typical boot looks like this:
 
-sboot: serial line bootstrap program (&end = 5fc8)
+sboot: serial line bootstrap program (&end = 6018)
 
 >>> b
 le0: ethernet address: 8:0:3e:20:cb:87
 My ip address is: 128.252.169.63
 Server ip address is: 128.252.169.2
-3a00 
+4800 
 Download was a success!
 Start @ 0x8000 ... 
->> NetBSD netboot [$Revision: 1.2 $]
-boot: client addr: 128.252.169.63
+>> BSD MVME147 netboot (via sboot) [$Revision: 1.2.4.1 $]
+device: le0 attached to 08:00:3e:20:cb:87
+boot: client IP address: 128.252.169.63
 boot: client name: vme147
-boot: subnet mask: 255.255.0.0
-boot: net gateway: 128.252.169.249
-boot: server addr: 128.252.169.2
-boot: server path: /export/root/vme147
-452632+20360+64456+[30120+30477]=0x93809
-Start @ 0x88aa ...
+root addr=128.252.169.2 path=/export/root/vme147
+575480+27016+55884+[35388+36380]=0xb3c30
+Start @ 0x8000 ...
 Copyright (c) 1982, 1986, 1989, 1991, 1993
         The Regents of the University of California.  All rights reserved.
 
-NetBSD 1.1_ALPHA (VME147) #4: Thu Oct 12 19:03:10 CDT 1995
-    chuck@vme147.ccrc.wustl.edu:/ui/netbsd/pain/src/sys/arch/mvme68k/compile/VME147
-Motorola MVME147 MC68030 CPU+MMU, ???MHz MC68882 FPU)
+NetBSD 1.2_BETA (VME147) #0: Wed Jul  3 17:32:30 CDT 1996
+    chuck@vme147.ccrc.wustl.edu:/a/pain/src/sys/arch/mvme68k/compile/VME147
+Motorola MVME147: 20MHz MC68030 CPU+MMU, MC68882 FPU
 real mem = 8388608
-avail mem = 6823936
+avail mem = 6705152
 using 102 buffers containing 417792 bytes of memory
 mainbus0 (root)
-iio0 at mainbus0 addr 0xfffe0000
-pcc0 at iio0 offset 0x1000 rev 0 intbvr 0x40
-clock0 at iio0 offset 0x7f8 ipl 5
-zs0 at iio0 offset 0x3000 ipl 4
-le0 at iio0 offset 0x1800 ipl 2 ler2 0x96000 address 08:00:3e:20:cb:87
+pcc0 at mainbus0: Peripheral Channel Controller, rev 0, vecbase 0x40
+clock0 at pcc0 offset 0x0 ipl 5: Mostek MK48T02, 2048 bytes of NVRAM
+clock0: delay_divisor 102
+zsc0 at pcc0 offset 0x3000 ipl 4: Zilog 8530 SCC
+zstty0 at zsc0 channel 0 (console)
+zstty1 at zsc0 channel 1
+zsc1 at pcc0 offset 0x3800 ipl 4: Zilog 8530 SCC
+zstty2 at zsc1 channel 0
+zstty3 at zsc1 channel 1
+le0 at pcc0 offset 0x1800 ipl 3: address 08:00:3e:20:cb:87
+le0: 8 receive buffers, 2 transmit buffers
+wdsc0 at pcc0 offset 0x4000 ipl 2: WD33C93 SCSI, target 7
+wdsc0: Inhibiting synchronous transfer ff
+scsibus0 at wdsc0
+sd0 at scsibus0 targ 1 lun 0: <DEC, RZ22     (C) DEC, 0A18> SCSI1 0/direct fixed
+sd0: 50MB, 776 cyl, 4 head, 33 sec, 512 bytes/sec
+lpt at pcc0 offset 0x2800 not configured
+vmechip0 at pcc0 offset 0x2000: Type 1 VMEchip, scon jumper enabled
+vmes0 at vmechip0
+vmel0 at vmechip0
+boot device: le0
 nfs_boot: using network interface 'le0'
 nfs_boot: client_addr=0x80fca93f
 nfs_boot: server_addr=0x80fca902
 nfs_boot: hostname=vme147
 root on dworkin:/export/root/vme147
-root time: 0x30538658
-WARNING: clock gained 37 days -- CHECK AND RESET THE DATE!
+root time: 0x31dd664b
 swap on dworkin:/export/swap/vme147
 swap size: 0x4000 (blocks)
 init: copying out path `/sbin/init' 11
