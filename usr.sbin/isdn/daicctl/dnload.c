@@ -59,11 +59,11 @@ download(fd, controller, filename)
 		perror("ctrl info req");
 		exit(1);
 	}
-	if (info.ctrl_type != CTRL_DAIC) {
+	if (strncmp(info.devname, "daic", 4) != 0) {
 		fprintf(stderr, "this is not a Diehl active isdn card...\n");
 		exit(1);
 	}
-	if (info.card_type == CARD_TYPEA_DAIC_QUAD)
+	if (strcmp(info.devname, "daic0 port0") == 0)
 		num_ports = 4;
 
 	memset(&dr, 0, sizeof dr);

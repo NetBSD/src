@@ -27,7 +27,7 @@
  *	i4b daemon - controller state support routines
  *	----------------------------------------------
  *
- *	$Id: controller.c,v 1.1.1.1 2001/01/06 13:00:12 martin Exp $
+ *	$Id: controller.c,v 1.2 2002/03/24 20:37:47 martin Exp $
  *
  * $FreeBSD$
  *
@@ -38,71 +38,8 @@
 #include "isdnd.h"
 
 static int
-init_controller_state(int controller, int ctrl_type, int card_type, int tei);
+init_controller_state(int controller, const char *devname, const char *cardname, int tei);
 
-/*---------------------------------------------------------------------------*
- *	get name of a controller
- *---------------------------------------------------------------------------*/
-const char *
-name_of_controller(int ctrl_type, int card_type)
-{
-	static char *passive_card[] = {
-		"Teles S0/8",
-		"Teles S0/16",
-		"Teles S0/16.3",
-		"AVM A1 or Fritz!Card",
-		"Teles S0/16.3 PnP",
-		"Creatix S0 PnP",
-		"USRobotics Sportster ISDN TA",
-		"Dr. Neuhaus NICCY Go@",
-		"Sedlbauer win speed",
- 		"Dynalink IS64PH",
-		"ISDN Master, MasterII or Blaster",
-		"AVM PCMCIA Fritz!Card",
-		"ELSA QuickStep 1000pro/ISA",
-		"ELSA QuickStep 1000pro/PCI",
-		"Siemens I-Talk",
-		"ELSA MicroLink ISDN/MC",
-		"ELSA MicroLink MCall",
- 		"ITK ix1 micro",
-		"AVM Fritz!Card PCI",
-		"ELSA PCC-16",
-		"AVM Fritz!Card PnP",		
-		"Siemens I-Surf 2.0 PnP",		
- 		"Asuscom ISDNlink 128K PnP",
- 		"ASUSCOM P-IN100-ST-D (Winbond W6692)",
-		"Teles S0/16.3c PnP",
-		"AcerISDN P10 PnP",
-		"TELEINT ISDN SPEED No. 1"
-	};
-
-	static char *daic_card[] = {
-		"EICON.Diehl S",
-		"EICON.Diehl SX/SXn",
-		"EICON.Diehl SCOM",
-		"EICON.Diehl QUADRO",
-	};
-
-	if(ctrl_type == CTRL_PASSIVE)
-	{
-		int index = card_type - CARD_TYPEP_8;
-		if (index >= 0 && index < (sizeof passive_card / sizeof passive_card[0]))
-			return passive_card[index];
-	}
-	else if(ctrl_type == CTRL_DAIC)
-	{
-		int index = card_type - CARD_TYPEA_DAIC_S;
-		if (index >= 0 && index < (sizeof daic_card / sizeof daic_card[0] ))
-			return daic_card[index];
-	}
-	else if(ctrl_type == CTRL_TINADD)
-	{
-		return "Stollmann tina-dd";
-	}
-
-	return "unknown card type";
-}
- 
 /*---------------------------------------------------------------------------*
  *	init controller state array
  *---------------------------------------------------------------------------*/
@@ -123,21 +60,16 @@ init_controller(void)
 			do_exit(1);
 		}
 
-		if((ncontroller = max = mcir.ncontroller) == 0)
+		if(mcir.maxbri < 0)
 		{
 			log(LL_ERR, "init_controller: no ISDN controller found!");
-			do_exit(1);
+			do_exit(1);	/* XXX - fix when we handle attach/detach */
 		}
-
-		if(mcir.ctrl_type == -1 || mcir.card_type == -1)
-		{
-			log(LL_ERR, "init_controller: ctrl/card is invalid!");
-			do_exit(1);
-		}
+		ncontroller = max = mcir.maxbri+1;
 
 		/* init controller tab */
 
-		if((init_controller_state(i, mcir.ctrl_type, mcir.card_type, mcir.tei)) == ERROR)
+		if((init_controller_state(i, mcir.devname, mcir.cardname, mcir.tei)) == ERROR)
 		{
 			log(LL_ERR, "init_controller: init_controller_state for controller %d failed", i);
 			do_exit(1);
@@ -150,7 +82,7 @@ init_controller(void)
  *	init controller state table entry
  *--------------------------------------------------------------------------*/
 static int
-init_controller_state(int controller, int ctrl_type, int card_type, int tei)
+init_controller_state(int controller, const char *devname, const char *cardname, int tei)
 {
 	if((controller < 0) || (controller >= ncontroller))
 	{
@@ -160,72 +92,27 @@ init_controller_state(int controller, int ctrl_type, int card_type, int tei)
 	
 	/* init controller tab */
 		
-	if(ctrl_type == CTRL_PASSIVE)
-	{
-		if((card_type > CARD_TYPEP_UNK) &&
-		   (card_type <= CARD_TYPEP_MAX))
-		{
-			isdn_ctrl_tab[controller].ctrl_type = ctrl_type;
-			isdn_ctrl_tab[controller].card_type = card_type;
-			isdn_ctrl_tab[controller].state = CTRL_UP;
-			isdn_ctrl_tab[controller].stateb1 = CHAN_IDLE;
-			isdn_ctrl_tab[controller].stateb2 = CHAN_IDLE;
-			isdn_ctrl_tab[controller].freechans = MAX_CHANCTRL;
-			isdn_ctrl_tab[controller].tei = tei;
-			isdn_ctrl_tab[controller].l1stat = LAYER_IDLE;
-			isdn_ctrl_tab[controller].l2stat = LAYER_IDLE;
-			DBGL(DL_RCCF, (log(LL_DBG, "init_controller_state: controller %d is %s",
-			  controller, 
-			  name_of_controller(isdn_ctrl_tab[controller].ctrl_type,
-					     isdn_ctrl_tab[controller].card_type))));
-		}
-		else
-		{
-			log(LL_ERR, "init_controller_state: unknown card type %d", card_type);
-			return(ERROR);
-		}
-		
-	}
-	else if(ctrl_type == CTRL_DAIC)
-	{
-		isdn_ctrl_tab[controller].ctrl_type = ctrl_type;
-		isdn_ctrl_tab[controller].card_type = card_type;
-		isdn_ctrl_tab[controller].state = CTRL_DOWN;
-		isdn_ctrl_tab[controller].stateb1 = CHAN_IDLE;
-		isdn_ctrl_tab[controller].stateb2 = CHAN_IDLE;
-		isdn_ctrl_tab[controller].freechans = MAX_CHANCTRL;
-		isdn_ctrl_tab[controller].tei = tei;	
-		isdn_ctrl_tab[controller].l1stat = LAYER_IDLE;
-		isdn_ctrl_tab[controller].l2stat = LAYER_IDLE;
+	memset(isdn_ctrl_tab[controller].device_name, 0, 
+	    sizeof(isdn_ctrl_tab[controller].device_name));
+	strncpy(isdn_ctrl_tab[controller].device_name,
+	    devname, 
+	    sizeof(isdn_ctrl_tab[controller].device_name)-1);
+	memset(isdn_ctrl_tab[controller].controller, 0, 
+	    sizeof(isdn_ctrl_tab[controller].controller));
+	strncpy(isdn_ctrl_tab[controller].controller,
+	    cardname, 
+	    sizeof(isdn_ctrl_tab[controller].controller)-1);
+	isdn_ctrl_tab[controller].present = 1;
+	isdn_ctrl_tab[controller].state = CTRL_UP;
+	isdn_ctrl_tab[controller].stateb1 = CHAN_IDLE;
+	isdn_ctrl_tab[controller].stateb2 = CHAN_IDLE;
+	isdn_ctrl_tab[controller].freechans = MAX_CHANCTRL;
+	isdn_ctrl_tab[controller].tei = tei;
+	isdn_ctrl_tab[controller].l1stat = LAYER_IDLE;
+	isdn_ctrl_tab[controller].l2stat = LAYER_IDLE;
+	DBGL(DL_RCCF, (log(LL_DBG, "init_controller_state: controller %d (%s) is %s",
+	   controller, devname, cardname)));
 
-		log(LL_DMN, "init_controller_state: controller %d is %s",
-		  controller,
-		  name_of_controller(isdn_ctrl_tab[controller].ctrl_type,
-				     isdn_ctrl_tab[controller].card_type));
-	}
-	else if(ctrl_type == CTRL_TINADD)
-	{
-		isdn_ctrl_tab[controller].ctrl_type = ctrl_type;
-		isdn_ctrl_tab[controller].card_type = 0;
-		isdn_ctrl_tab[controller].state = CTRL_DOWN;
-		isdn_ctrl_tab[controller].stateb1 = CHAN_IDLE;
-		isdn_ctrl_tab[controller].stateb2 = CHAN_IDLE;
-		isdn_ctrl_tab[controller].freechans = MAX_CHANCTRL;
-		isdn_ctrl_tab[controller].tei = tei;	
-		isdn_ctrl_tab[controller].l1stat = LAYER_IDLE;
-		isdn_ctrl_tab[controller].l2stat = LAYER_IDLE;
-
-		log(LL_DMN, "init_controller_state: controller %d is %s",
-		  controller,
-		  name_of_controller(isdn_ctrl_tab[controller].ctrl_type,
-				     isdn_ctrl_tab[controller].card_type));
-		
-	}
-	else
-	{
-		log(LL_ERR, "init_controller_state: unknown controller type %d", ctrl_type);
-		return(ERROR);
-	}
 	return(GOOD);
 }	
 
@@ -235,6 +122,8 @@ init_controller_state(int controller, int ctrl_type, int card_type, int tei)
 void
 init_active_controller(void)
 {
+/* XXX - replace by something usefull */
+#if 0
 	int ret;
 	int unit = 0;
 	int controller;
@@ -255,6 +144,7 @@ init_active_controller(void)
 			}
 		}
 	}
+#endif
 }	
 
 /*--------------------------------------------------------------------------*

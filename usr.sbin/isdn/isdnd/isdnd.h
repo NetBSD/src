@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.4 2002/03/16 17:03:43 martin Exp $ 
+ *	$Id: isdnd.h,v 1.5 2002/03/24 20:37:48 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -511,8 +511,9 @@ typedef struct cfg_entry {
  *	this struct describes state of controller with 2 b channels
  *---------------------------------------------------------------------------*/
 typedef struct isdn_ctrl_state {
-	int ctrl_type;			/* type: active/passive 	*/
-	int card_type;			/* manufacturer (CARD_XXXX) 	*/
+	char device_name[80];		/* device name, e.g. "isic0"	*/
+	char controller[80];		/* manufacturer/name	 	*/
+	int present;			/* 0 = detached, 1 = available 	*/
 	int protocol;			/* ISDN D-channel protocol 	*/	
 	int state;			/* controller state		*/
 #define  CTRL_DOWN 	0		/* controller inoparable	*/
@@ -791,7 +792,6 @@ void msg_l12stat_ind(msg_l12stat_ind_t *ml);
 void msg_teiasg_ind(msg_teiasg_ind_t *mt);
 void msg_proceeding_ind ( msg_proceeding_ind_t *mp );
 void msg_packet_ind( msg_packet_ind_t *mp );
-const char * name_of_controller(int ctrl_type, int card_type);
 void next_state ( cfg_entry_t *cep, int event );
 char * print_i4b_cause( cause_t code );
 char * printstate ( cfg_entry_t *cep );
