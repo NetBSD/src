@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.25 1999/07/29 10:37:17 augustss Exp $
+#	$NetBSD: LAGER,v 1.26 2000/02/12 03:32:48 thorpej Exp $
 #
 # LAGER (hpeyerl's hp425s)
 #
@@ -26,7 +26,6 @@ options 	SYSVSHM			# System V-style shared memory
 options 	SYSVSEM			# System V-style semaphores
 options 	SYSVMSG			# System V-style message queues
 options 	KTRACE			# system call tracing support
-options 	NKMEMCLUSTERS=2048	# # 4K pages in kernel malloc pool
 options 	LKM			# loadable kernel modules
 
 # Filesystems

@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.1 2000/02/08 16:17:29 tsutsui Exp $
+# 	$NetBSD: NEWS1200,v 1.2 2000/02/12 03:34:41 thorpej Exp $
 
 #	news1200 config file
 #
@@ -18,7 +18,6 @@ options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 #optoins 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	LKM			# loadable kernel modules
-#options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options 	UCONSOLE		# users can redirect console (unsafe)
 
 # Debugging options
