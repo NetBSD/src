@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sis_reg.h,v 1.7 2001/10/16 08:10:24 tron Exp $	*/
+/*	$NetBSD: pciide_sis_reg.h,v 1.8 2001/10/21 18:49:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -63,10 +63,15 @@
 #define SIS_MISC_GTC		0x04
 #define SIS_MISC_FIFO_SIZE	0x01
 
-static int8_t sis_pio_act[] = {7, 5, 4, 3, 3};
-static int8_t sis_pio_rec[] = {7, 0, 5, 3, 1};
+static const int8_t sis_pio_act[] __attribute__((__unused__)) =
+    {7, 5, 4, 3, 3};
+static const int8_t sis_pio_rec[] __attribute__((__unused__)) =
+    {7, 0, 5, 3, 1};
 #ifdef unused
-static int8_t sis_dma_act[] = {0, 3, 3};
-static int8_t sis_dma_rec[] = {0, 2, 1};
+static const int8_t sis_dma_act[] __attribute__((__unused__)) =
+    {0, 3, 3};
+static const int8_t sis_dma_rec[] __attribute__((__unused__)) =
+    {0, 2, 1};
 #endif
-static int8_t sis_udma_tim[] = {14, 12, 10, 10, 9, 8};
+static const int8_t sis_udma_tim[] __attribute__((__unused__)) =
+    {14, 12, 10, 10, 9, 8};

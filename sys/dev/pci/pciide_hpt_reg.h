@@ -1,4 +1,4 @@
-/*      $NetBSD: pciide_hpt_reg.h,v 1.4 2001/07/23 14:55:27 bouyer Exp $       */
+/*      $NetBSD: pciide_hpt_reg.h,v 1.5 2001/10/21 18:49:20 thorpej Exp $       */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -114,17 +114,17 @@
 #define HPT_CSEL_PCIWR			0x04 /* 370 only */
 #define HPT_CSEL_CBLID(chan)		 (0x01 << (1 - (chan)))
 
-static u_int32_t hpt366_pio[] =
+static const u_int32_t hpt366_pio[] __attribute__((__unused__)) =
 	{0x00d0a7aa, 0x00c8a753, 0x00c8a742, 0x00c8a731};
-static u_int32_t hpt366_dma[] =
+static const u_int32_t hpt366_dma[] __attribute__((__unused__)) =
 	{0x20c8a797, 0x20c8a742, 0x20c8a731};
-static u_int32_t hpt366_udma[] =
+static const u_int32_t hpt366_udma[] __attribute__((__unused__)) =
 	{0x10c8a731, 0x10cba731, 0x10caa731, 0x10cfa731, 0x10c9a731};
 
-static u_int32_t hpt370_pio[] =
+static const u_int32_t hpt370_pio[] __attribute__((__unused__)) =
 	{0x06914e8a, 0x06914e65, 0x06514e33, 0x06514e22, 0x06514e21};
-static u_int32_t hpt370_dma[] =
+static const u_int32_t hpt370_dma[] __attribute__((__unused__)) =
 	{0x26514e97, 0x26514e33, 0x26514e21};
-static u_int32_t hpt370_udma[] = 
+static const u_int32_t hpt370_udma[] __attribute__((__unused__)) =
 	{0x16514e31, 0x164d4e31, 0x16494e31, 0x166d4e31, 0x16454e31,
 	 0x1a85f442};
