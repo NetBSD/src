@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.6 1997/10/18 15:00:17 lukem Exp $	*/
+/*	$NetBSD: fmt.c,v 1.7 1997/10/18 15:01:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.6 1997/10/18 15:00:17 lukem Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.7 1997/10/18 15:01:05 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -308,7 +308,7 @@ split(line)
 		 */
 		if (*cp == '\0') {
 			*cp2++ = ' ';
-			if (index(".:!", cp[-1]))
+			if (strchr(".:!", cp[-1]))
 				*cp2++ = ' ';
 		}
 		while (*cp == ' ')
