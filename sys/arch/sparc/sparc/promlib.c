@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.3.2.2 1999/04/17 10:26:26 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.3.2.3 1999/05/03 12:59:52 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -782,6 +782,7 @@ prom_init_oldmon()
 
 	promops.po_bootcookie = *oldpvec->bootParam; /* deref 1 lvl */
 	promops.po_bootpath = obp_v0_getbootpath;
+	promops.po_bootfile = obp_v0_getbootfile;
 	promops.po_bootargs = obp_v0_getbootargs;
 
 	promops.po_putchar = oldpvec->putChar;
