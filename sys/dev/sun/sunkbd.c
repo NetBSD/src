@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.14 2002/10/21 15:36:35 uwe Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.15 2002/10/26 19:11:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.14 2002/10/21 15:36:35 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.15 2002/10/26 19:11:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.14 2002/10/21 15:36:35 uwe Exp $");
 #include <dev/sun/kbdsunvar.h>
 #include <dev/sun/kbd_ms_ttyvar.h>
 
-
 /****************************************************************
  * Interface to the lower layer (ttycc)
  ****************************************************************/
@@ -90,6 +89,10 @@ static int	sunkbd_match(struct device *, struct cfdata *, void *);
 static void	sunkbd_attach(struct device *, struct device *, void *);
 static void	sunkbd_write_data(struct kbd_sun_softc *, int);
 static int	sunkbdiopen(struct device *, int mode);
+
+#if NWSKBD > 0
+void kbd_wskbd_attach(struct kbd_softc *k, int isconsole);
+#endif
 
 int	sunkbdinput(int, struct tty *);
 int	sunkbdstart(struct tty *);
@@ -103,6 +106,7 @@ CFATTACH_DECL(kbd_tty, sizeof(struct kbd_sun_softc),
 struct  linesw sunkbd_disc =
 	{ "sunkbd", 7, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
 	  sunkbdinput, sunkbdstart, nullmodem, ttpoll }; /* 7- SUNKBDDISC */
+
 
 /*
  * sunkbd_match: how is this tty channel configured?
@@ -181,7 +185,12 @@ sunkbd_attach(parent, self, aux)
 		kd_attach_input(cc);
 	}
 
+
 	printf("\n");
+
+#if NWSKBD > 0
+	kbd_wskbd_attach(&k->k_kbd, args->kmta_consdev != NULL);
+#endif
 
 	/* Do this before any calls to kbd_rint(). */
 	kbd_xlate_init(&k->k_kbd.k_state);

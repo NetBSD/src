@@ -1,4 +1,4 @@
-# $NetBSD: files.sun,v 1.5 2002/10/03 16:13:25 uwe Exp $
+# $NetBSD: files.sun,v 1.6 2002/10/26 19:11:13 martin Exp $
 #
 # Configuration file for devices found on Sun machines.
 #
@@ -15,9 +15,11 @@ file	dev/sun/event.c			firm_events
 # upper layer of sun kbd driver
 # examples for lower and middle layers follows.  cannot move them here
 # because zs/zstty attachments are slightly different on each sun port.
-device kbd: firm_events
+device kbd: firm_events, wskbddev
 file	dev/sun/kbd.c			kbd needs-flag
 file	dev/sun/kbd_tables.c 		kbd
+
+file	dev/sun/wskbdmap_sun.c		kbd & wskbd
 
 # e.g. - lower layer: sun keyboard at zs
 #attach kbd at zs with kbd_zs
