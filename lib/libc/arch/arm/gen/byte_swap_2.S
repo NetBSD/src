@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.1 2000/12/29 20:13:47 bjh21 Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.1.4.1 2002/07/02 06:50:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,9 +42,9 @@ _ENTRY(_C_LABEL(__bswap16))
 _ENTRY(_C_LABEL(ntohs))
 _ENTRY(_C_LABEL(htons))
 _PROF_PROLOGUE
-	and		r1, r0, #0xFF00
-	mov		r0, r0, lsl #8
-	orr		r0, r0, r1, lsr #8
+	and		r1, r0, #0xff
+	mov		r0, r0, lsr #8
+	orr		r0, r0, r1, lsl #8
 #ifdef __APCS_26__
 	movs		pc, lr
 #else
