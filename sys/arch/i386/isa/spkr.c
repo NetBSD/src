@@ -6,7 +6,7 @@
  *      386bsd only clean version, all SYSV stuff removed
  *      use hz value from param.c
  *
- *	$Id: spkr.c,v 1.8 1993/12/20 09:06:42 mycroft Exp $
+ *	$Id: spkr.c,v 1.9 1994/02/09 21:13:53 mycroft Exp $
  */
 
 #include "speaker.h"
@@ -464,10 +464,12 @@ dev_t	dev;
     return(0);
 }
 
-int spkrioctl(dev, cmd, cmdarg)
+int spkrioctl(dev, cmd, data, flag, p)
 dev_t	dev;
 int	cmd;
-caddr_t cmdarg;
+caddr_t data;
+int	flag;
+struct	proc *p;
 {
 #ifdef DEBUG
     printf("spkrioctl: entering with dev = %x, cmd = %x\n", dev, cmd);
@@ -477,7 +479,7 @@ caddr_t cmdarg;
 	return(ENXIO);
     else if (cmd == SPKRTONE)
     {
-	tone_t	*tp = (tone_t *)cmdarg;
+	tone_t	*tp = (tone_t *)data;
 
 	if (tp->frequency == 0)
 	    rest(tp->duration);
@@ -486,7 +488,7 @@ caddr_t cmdarg;
     }
     else if (cmd == SPKRTUNE)
     {
-	tone_t  *tp = (tone_t *)(*(caddr_t *)cmdarg);
+	tone_t  *tp = (tone_t *)(*(caddr_t *)data);
 	tone_t ttp;
 	int error;
 

@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.4 1994/02/06 10:04:47 mycroft Exp $
+ *	$Id: mcd.c,v 1.5 1994/02/09 21:13:48 mycroft Exp $
  */
 
 static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";
@@ -147,7 +147,7 @@ struct mcd_data {
 int	mcdopen(dev_t dev);
 int	mcdclose(dev_t dev);
 int	mcdstrategy(struct buf *bp);
-int	mcdioctl(dev_t dev, int cmd, caddr_t addr, int flags);
+int	mcdioctl(dev_t dev, int cmd, caddr_t addr, int flags, struct proc *p);
 int	mcdsize(dev_t dev);
 static	void	mcd_done(struct mcd_mbx *mbx);
 static	void	mcd_start(int unit);
@@ -406,7 +406,7 @@ static void mcd_start(int unit)
 	return;
 }
 
-int mcdioctl(dev_t dev, int cmd, caddr_t addr, int flags)
+int mcdioctl(dev_t dev, int cmd, caddr_t addr, int flags, struct proc *p)
 {
 	struct mcd_data *cd;
 	int unit,part;

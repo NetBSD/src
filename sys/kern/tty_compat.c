@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_compat.c	7.10 (Berkeley) 5/9/91
- *	$Id: tty_compat.c,v 1.8 1994/01/23 06:06:25 deraadt Exp $
+ *	$Id: tty_compat.c,v 1.9 1994/02/09 21:06:48 mycroft Exp $
  */
 
 /* 
@@ -86,10 +86,12 @@ void ttcompatsetlflags __P((struct tty *tp, struct termios *t));
 
 /*ARGSUSED*/
 int
-ttcompat(tp, com, data, flag)
+ttcompat(tp, com, data, flag, p)
 	register struct tty *tp;
-	int com, flag;
+	int com;
 	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 
 	switch (com) {
@@ -132,7 +134,7 @@ ttcompat(tp, com, data, flag)
 		tp->t_flags = ttcompatgetflags(tp)&0xffff0000 | sg->sg_flags&0xffff;
 		ttcompatsetflags(tp, &term);
 		return (ttioctl(tp, com == TIOCSETP ? TIOCSETAF : TIOCSETA, 
-			(caddr_t)&term, flag));
+			(caddr_t)&term, flag, p));
 	}
 
 	case TIOCGETC: {
@@ -201,7 +203,7 @@ ttcompat(tp, com, data, flag)
 				tp->t_flags &= ~(*(int *)data<<16);
 		}
 		ttcompatsetlflags(tp, &term);
-		return (ttioctl(tp, TIOCSETA, (caddr_t)&term, flag));
+		return (ttioctl(tp, TIOCSETA, (caddr_t)&term, flag, p));
 	}
 	case TIOCLGET:
 		tp->t_flags =
@@ -219,12 +221,13 @@ ttcompat(tp, com, data, flag)
 		int ldisczero = 0;
 
 		return (ttioctl(tp, TIOCSETD, 
-			*(int *)data == 2 ? (caddr_t)&ldisczero : data, flag));
+			*(int *)data == 2 ? (caddr_t)&ldisczero : data, flag,
+			p));
 	    }
 
 	case OTIOCCONS:
 		*(int *)data = 1;
-		return (ttioctl(tp, TIOCCONS, data, flag));
+		return (ttioctl(tp, TIOCCONS, data, flag, p));
 
 	default:
 		return (-1);

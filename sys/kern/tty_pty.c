@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.17 1994/01/27 03:26:48 cgd Exp $
+ *	$Id: tty_pty.c,v 1.18 1994/02/09 21:06:49 mycroft Exp $
  */
 
 /*
@@ -554,10 +554,12 @@ block:
 
 /*ARGSUSED*/
 int
-ptyioctl(dev, cmd, data, flag)
-	caddr_t data;
-	int cmd, flag;
+ptyioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	register struct tty *tp = pt_tty[minor(dev)];
 	register struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
@@ -650,9 +652,9 @@ ptyioctl(dev, cmd, data, flag)
 				ttyinfo(tp);
 			return(0);
 		}
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error < 0)
-		 error = ttioctl(tp, cmd, data, flag);
+		 error = ttioctl(tp, cmd, data, flag, p);
 	/*
 	 * Since we use the tty queues internally,
 	 * pty's can't be switched to disciplines which overwrite

@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt_isa.c,v 1.9 1993/12/20 09:06:23 mycroft Exp $
+ *	$Id: lpt_isa.c,v 1.10 1994/02/09 21:13:46 mycroft Exp $
  */
 
 /*
@@ -432,7 +432,7 @@ lprintf("sts %x ", sts);
 }
 
 int
-lptioctl(dev_t dev, int cmd, caddr_t data, int flag)
+lptioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
 	int	error;
 

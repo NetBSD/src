@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.39 1994/02/01 03:43:41 cgd Exp $
+ *	$Id: pccons.c,v 1.40 1994/02/09 21:13:51 mycroft Exp $
  */
 
 #include "pc.h"
@@ -400,9 +400,12 @@ pcrint(dev, irq, cpl)
 
 
 int
-pcioctl(dev, cmd, data, flag)
+pcioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	int cmd;
 	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	register struct tty *tp = pc_tty[0];
 	register error;
@@ -443,10 +446,10 @@ pcioctl(dev, cmd, data, flag)
 			return(EINVAL);
  	}
  
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	return (ENOTTY);

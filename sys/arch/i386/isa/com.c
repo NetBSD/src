@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.18 1994/02/01 04:38:03 cgd Exp $
+ *	$Id: com.c,v 1.19 1994/02/09 21:13:41 mycroft Exp $
  */
 
 #include "com.h"
@@ -402,9 +402,12 @@ commint(unit, com)
 	}
 }
 
-comioctl(dev, cmd, data, flag)
+comioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	int cmd;
 	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	register struct tty *tp;
 	register int unit = UNIT(dev);
@@ -412,10 +415,10 @@ comioctl(dev, cmd, data, flag)
 	register int error;
  
 	tp = com_tty[unit];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 

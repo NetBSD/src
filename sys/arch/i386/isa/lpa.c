@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpa.c,v 1.6 1993/12/20 09:06:19 mycroft Exp $
+ *	$Id: lpa.c,v 1.7 1994/02/09 21:13:45 mycroft Exp $
  */
 
 /*
@@ -415,7 +415,7 @@ lpawrite(dev, uio)
 }
 
 int
-lpaioctl(dev_t dev, int cmd, caddr_t data, int flag)
+lpaioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
 	int	error;
 

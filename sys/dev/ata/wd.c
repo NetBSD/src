@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.34 1994/02/06 17:46:06 mycroft Exp $
+ *	$Id: wd.c,v 1.35 1994/02/09 21:13:56 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -1294,7 +1294,7 @@ wdclose(dev_t dev, int flags, int fmt)
 }
 
 int
-wdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
+wdioctl(dev_t dev, int cmd, caddr_t addr, int flag, struct proc *p)
 {
 	int lunit = wdunit(dev);
 	register struct disk *du;
