@@ -1,5 +1,5 @@
 /*
- * Core definitions and data structures shareable across OS platforms.
+ * Core definitions and data structures sharable across OS platforms.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
  * Copyright (c) 2000-2001 Adaptec Inc.
@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.43 2003/11/02 11:07:44 wiz Exp $
+ * $Id: aic7xxxvar.h,v 1.44 2004/04/19 12:44:10 wiz Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -906,8 +906,8 @@ struct seeprom_config {
  * BIOS Control Bits
  */
 	uint16_t bios_control;		/* word 16 */
-#define		CFSUPREM	0x0001	/* support all removeable drives */
-#define		CFSUPREMB	0x0002	/* support removeable boot drives */
+#define		CFSUPREM	0x0001	/* support all removable drives */
+#define		CFSUPREMB	0x0002	/* support removable boot drives */
 #define		CFBIOSEN	0x0004	/* BIOS enabled */
 #define		CFBIOS_BUSSCAN	0x0008	/* Have the BIOS Scan the Bus */
 #define		CFSM2DRV	0x0010	/* support more than two drives */
