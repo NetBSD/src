@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.3 1995/05/08 22:01:42 brezak Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.4 1995/07/07 01:58:04 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -130,3 +130,6 @@ extern int	audio_hardware_detach __P((struct audio_hw_if *));
 
 #define AUDIOUNIT(x)		(minor(x)&0x0f)
 #define AUDIODEV(x)		(minor(x)&0xf0)
+
+#define splaudio splbio		/* XXX */
+#define ISA_IPL_AUDIO ISA_IPL_BIO /* XXX */
