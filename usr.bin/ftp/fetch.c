@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.71 1999/09/21 13:17:22 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.72 1999/09/22 03:01:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.71 1999/09/21 13:17:22 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.72 1999/09/22 03:01:53 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -118,7 +118,7 @@ auth_url(challenge, response, guser, gpass)
 	char		*cp, *ep, *clear, *line, *realm, *scheme;
 	char		user[BUFSIZ], *pass;
 	int		rval;
-	size_t		len;
+	size_t		len, clen, rlen;
 
 	*response = NULL;
 	clear = realm = scheme = NULL;
@@ -173,18 +173,21 @@ auth_url(challenge, response, guser, gpass)
 	else
 		pass = getpass("Password: ");
 
-	len = strlen(user) + strlen(pass) + 2;	/* user + ":" + pass + "\0" */
-	clear = (char *)xmalloc(len);
-	snprintf(clear, len, "%s:%s", user, pass);
+	clen = strlen(user) + strlen(pass) + 2;	/* user + ":" + pass + "\0" */
+	clear = (char *)xmalloc(clen);
+	strlcpy(clear, user, clen);
+	strlcat(clear, ":", clen);
+	strlcat(clear, pass, clen);
 	if (gpass == NULL)
 		memset(pass, '\0', strlen(pass));
 
 						/* scheme + " " + enc + "\0" */
-	len = strlen(scheme) + 1 + (len + 2) * 4 / 3 + 1;
-	*response = (char *)xmalloc(len);
-	len = snprintf(*response, len, "%s ", scheme);
-	base64_encode(clear, strlen(clear), *response + len);
-	memset(clear, '\0', strlen(clear));
+	rlen = strlen(scheme) + 1 + (len + 2) * 4 / 3 + 1;
+	*response = (char *)xmalloc(rlen);
+	strlcpy(*response, scheme, rlen);
+	len = strlcat(*response, " ", rlen);
+	base64_encode(clear, clen, *response + len);
+	memset(clear, '\0', clen);
 	rval = 0;
 
 cleanup_auth_url:
@@ -1484,7 +1487,9 @@ fetch_ftp(url)
 	}
 
 	if (dirhasglob) {
-		snprintf(rempath, sizeof(rempath), "%s/%s", dir, file);
+		strlcpy(rempath, dir,	sizeof(rempath));
+		strlcat(rempath, "/",	sizeof(rempath));
+		strlcat(rempath, file,	sizeof(rempath));
 		file = rempath;
 	}
 

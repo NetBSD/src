@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.56 1999/09/21 13:10:16 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.57 1999/09/22 03:01:53 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.56 1999/09/21 13:10:16 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.57 1999/09/22 03:01:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2401,7 +2401,8 @@ page(argc, argv)
 		p = PAGER;
 	len = strlen(p) + 2;
 	pager = xmalloc(len);
-	(void)snprintf(pager, len, "|%s", p);
+	pager[0] = '|';
+	strlcpy(pager + 1, p, len - 1);
 
 	ohash = hash;
 	orestart_point = restart_point;
