@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.20 2002/04/24 19:41:58 bjh21 Exp $
+#	$NetBSD: configure.ac,v 1.21 2002/07/03 17:16:27 pooka Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -42,7 +42,7 @@ AC_CHECK_HEADERS(machine/bswap.h sys/cdefs.h sys/endian.h sys/featuretest.h \
 	err.h inttypes.h libgen.h paths.h stdint.h util.h,,
 	[test -f include/$ac_header || touch include/$ac_header])
 AC_CHECK_HEADERS(rpc/types.h fts.h getopt.h md2.h md4.h md5.h netconfig.h \
-	rmd160.h sha1.h vis.h,,
+	rmd160.h sha1.h,,
 	[echo '#include "config.h"' >include/$ac_header.new
 	echo '#include "'$srcdir/../../include/$ac_header'"' >>include/$ac_header.new
 	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
@@ -98,7 +98,8 @@ AC_CHECK_FUNCS(asprintf asnprintf basename dirfd dirname \
 	fgetln flock fparseln futimes getopt getopt_long \
 	isblank issetugid lchmod lchown lutimes pread pwcache_userdb \
 	pwrite setenv setgroupent setprogname setpassent \
-	snprintf strlcat strlcpy strsep vasprintf vasnprintf vsnprintf)
+	snprintf strlcat strlcpy strsep svis user_from_uid \
+	vasprintf vasnprintf vis vsnprintf)
 
 AC_CHECK_DECLS([setgroupent, setpassent],,, [
 #include <grp.h>

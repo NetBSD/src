@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.15 2002/04/24 19:41:58 bjh21 Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.16 2002/07/03 17:16:27 pooka Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -193,11 +193,9 @@ ssize_t pread(int, void *, size_t, off_t);
 #endif
 
 #if !HAVE_PWCACHE_USERDB
-const char *user_from_uid(uid_t, int);
 int uid_from_user(const char *, uid_t *);
 int pwcache_userdb(int (*)(int), void (*)(void),
 		struct passwd * (*)(const char *), struct passwd * (*)(uid_t));
-const char *group_from_gid(gid_t, int);
 int gid_from_group(const char *, gid_t *);
 int pwcache_groupdb(int (*)(int), void (*)(void),
 		struct group * (*)(const char *), struct group * (*)(gid_t));
@@ -238,6 +236,11 @@ size_t strlcpy(char *, const char *, size_t);
 
 #if !HAVE_STRSEP
 char *strsep(char **, const char *);
+#endif
+
+#if !HAVE_USER_FROM_UID
+const char *user_from_uid(uid_t, int);
+const char *group_from_gid(gid_t, int);
 #endif
 
 #if !HAVE_VASPRINTF
