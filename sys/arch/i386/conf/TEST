@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.23 1993/11/14 19:40:47 mycroft Exp $
+#	$Id: TEST,v 1.24 1993/11/24 03:26:04 mycroft Exp $
 #
 
 # standard options
@@ -103,20 +103,20 @@ fd* at fdc? drive ?
 #mcd0 at isa? port 0x300 irq 10		# Mitsumi
 
 #scsi
-#aha0 at isa? port 0x330 drq 5		# Adaptec 1542
-#aha1 at isa? port 0x334 drq ?
+aha0 at isa? port 0x330			# Adaptec 1542
+aha1 at isa? port 0x334
 #ahb0 at isa? port 0x330 drq 5		# Adaptec 1742
 #bt0 at isa? port 0x330 drq 5		# Bustec 742
 #bt1 at isa? port 0x334 drq ?
 #uha0 at isa? port 0x330 drq 5		# UltraStor 14f, 34f
 #wds0 at isa? port 0x350 drq 5		# WD 7000
 
-#tg* at scsi? target ?
+scsibus* at scsi?
 
-#sd* at tg? drive ?			# SCSI disks
-#st* at tg? drive ?			# SCSI tapes
-#cd* at tg? drive ?			# SCSI CD-ROMs
-#ch* at tg? drive ?			# SCSI autochangers
+sd* at scsibus? target ? lun ?		# SCSI disks
+#st* at scsibus? target ? lun ?		# SCSI tapes
+#cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
+#ch* at scsibus? target ? lun ?		# SCSI autochangers
 
 #ethernet
 ed0 at isa? port 0x300 irq 9			# Novell NE1000, NE2000
