@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.8 1999/08/28 22:49:05 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.9 1999/08/28 23:28:35 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -181,3 +181,11 @@ share/zoneinfo/northamerica			1.1.1.10
 share/zoneinfo/southamerica			1.1.1.9
 
   Update to tzdata1999e.  (kleink)
+
+sys/miscfs/fdesc/fdesc_vnops.c			1.51-1.53
+sys/miscfs/kernfs/kernfs_vnops.c		1.66-1.67
+sys/miscfs/procfs/procfs_vnops.c		1.66-1.68
+
+  Protect {fdesc,kernfs,procfs}_readdir against directory seeks
+  with bogus offsets.  (sommerfeld)
+
