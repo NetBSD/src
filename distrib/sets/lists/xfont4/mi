@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.5 2003/12/28 15:45:59 lukem Exp $
+# $NetBSD: mi,v 1.6 2004/03/05 20:07:27 tron Exp $
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-10.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-13.pcf.gz
@@ -466,6 +466,7 @@
 ./usr/X11R6/lib/X11/fonts/100dpi/encodings.dir
 ./usr/X11R6/lib/X11/fonts/100dpi/fonts.alias
 ./usr/X11R6/lib/X11/fonts/100dpi/fonts.dir
+./usr/X11R6/lib/X11/fonts/100dpi/fonts.scale
 ./usr/X11R6/lib/X11/fonts/100dpi/helvB08-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/helvB08-ISO8859-10.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/helvB08-ISO8859-13.pcf.gz
@@ -1036,6 +1037,15 @@
 ./usr/X11R6/lib/X11/fonts/100dpi/lubB18-ISO8859-4.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/lubB18-ISO8859-9.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/lubB18.pcf.gz
+./usr/X11R6/lib/X11/fonts/100dpi/lubB19-ISO8859-1.pcf.gz
+./usr/X11R6/lib/X11/fonts/100dpi/lubB19-ISO8859-10.pcf.gz
+./usr/X11R6/lib/X11/fonts/100dpi/lubB19-ISO8859-13.pcf.gz
+./usr/X11R6/lib/X11/fonts/100dpi/lubB19-ISO8859-14.pcf.gz
+./usr/X11R6/lib/X11/fonts/100dpi/lubB19-ISO8859-15.pcf.gz
+./usr/X11R6/lib/X11/fonts/100dpi/lubB19-ISO8859-2.pcf.gz
+./usr/X11R6/lib/X11/fonts/100dpi/lubB19-ISO8859-3.pcf.gz
+./usr/X11R6/lib/X11/fonts/100dpi/lubB19-ISO8859-4.pcf.gz
+./usr/X11R6/lib/X11/fonts/100dpi/lubB19-ISO8859-9.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/lubB19.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/lubB24-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/lubB24-ISO8859-10.pcf.gz
@@ -2354,6 +2364,7 @@
 ./usr/X11R6/lib/X11/fonts/75dpi/encodings.dir
 ./usr/X11R6/lib/X11/fonts/75dpi/fonts.alias
 ./usr/X11R6/lib/X11/fonts/75dpi/fonts.dir
+./usr/X11R6/lib/X11/fonts/75dpi/fonts.scale
 ./usr/X11R6/lib/X11/fonts/75dpi/helvB08-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/75dpi/helvB08-ISO8859-10.pcf.gz
 ./usr/X11R6/lib/X11/fonts/75dpi/helvB08-ISO8859-13.pcf.gz
@@ -2924,6 +2935,15 @@
 ./usr/X11R6/lib/X11/fonts/75dpi/lubB18-ISO8859-4.pcf.gz
 ./usr/X11R6/lib/X11/fonts/75dpi/lubB18-ISO8859-9.pcf.gz
 ./usr/X11R6/lib/X11/fonts/75dpi/lubB18.pcf.gz
+./usr/X11R6/lib/X11/fonts/75dpi/lubB19-ISO8859-1.pcf.gz
+./usr/X11R6/lib/X11/fonts/75dpi/lubB19-ISO8859-10.pcf.gz
+./usr/X11R6/lib/X11/fonts/75dpi/lubB19-ISO8859-13.pcf.gz
+./usr/X11R6/lib/X11/fonts/75dpi/lubB19-ISO8859-14.pcf.gz
+./usr/X11R6/lib/X11/fonts/75dpi/lubB19-ISO8859-15.pcf.gz
+./usr/X11R6/lib/X11/fonts/75dpi/lubB19-ISO8859-2.pcf.gz
+./usr/X11R6/lib/X11/fonts/75dpi/lubB19-ISO8859-3.pcf.gz
+./usr/X11R6/lib/X11/fonts/75dpi/lubB19-ISO8859-4.pcf.gz
+./usr/X11R6/lib/X11/fonts/75dpi/lubB19-ISO8859-9.pcf.gz
 ./usr/X11R6/lib/X11/fonts/75dpi/lubB19.pcf.gz
 ./usr/X11R6/lib/X11/fonts/75dpi/lubB24-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/75dpi/lubB24-ISO8859-10.pcf.gz
@@ -3790,6 +3810,15 @@
 ./usr/X11R6/lib/X11/fonts/Speedo/fonts.dir
 ./usr/X11R6/lib/X11/fonts/Speedo/fonts.scale
 ./usr/X11R6/lib/X11/fonts/TTF
+./usr/X11R6/lib/X11/fonts/TTF/Vera.ttf
+./usr/X11R6/lib/X11/fonts/TTF/VeraBI.ttf
+./usr/X11R6/lib/X11/fonts/TTF/VeraBd.ttf
+./usr/X11R6/lib/X11/fonts/TTF/VeraMoBI.ttf
+./usr/X11R6/lib/X11/fonts/TTF/VeraMoBd.ttf
+./usr/X11R6/lib/X11/fonts/TTF/VeraMoIt.ttf
+./usr/X11R6/lib/X11/fonts/TTF/VeraMono.ttf
+./usr/X11R6/lib/X11/fonts/TTF/VeraSe.ttf
+./usr/X11R6/lib/X11/fonts/TTF/VeraSeBd.ttf
 ./usr/X11R6/lib/X11/fonts/TTF/encodings.dir
 ./usr/X11R6/lib/X11/fonts/TTF/fonts.cache-1
 ./usr/X11R6/lib/X11/fonts/TTF/fonts.dir
@@ -3931,6 +3960,7 @@
 ./usr/X11R6/lib/X11/fonts/cyrillic/encodings.dir
 ./usr/X11R6/lib/X11/fonts/cyrillic/fonts.alias
 ./usr/X11R6/lib/X11/fonts/cyrillic/fonts.dir
+./usr/X11R6/lib/X11/fonts/cyrillic/fonts.scale
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi10x16b.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi10x20.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi12x24.pcf.gz
@@ -3957,6 +3987,7 @@
 ./usr/X11R6/lib/X11/fonts/encodings/adobe-dingbats.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/adobe-standard.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/adobe-symbol.enc.gz
+./usr/X11R6/lib/X11/fonts/encodings/ansi-1251.enc
 ./usr/X11R6/lib/X11/fonts/encodings/armscii-8.enc
 ./usr/X11R6/lib/X11/fonts/encodings/dec-special.enc
 ./usr/X11R6/lib/X11/fonts/encodings/encodings.dir
@@ -3967,17 +3998,23 @@
 ./usr/X11R6/lib/X11/fonts/encodings/iso8859-11.enc
 ./usr/X11R6/lib/X11/fonts/encodings/iso8859-13.enc
 ./usr/X11R6/lib/X11/fonts/encodings/iso8859-16.enc
+./usr/X11R6/lib/X11/fonts/encodings/iso8859-6.16.enc
+./usr/X11R6/lib/X11/fonts/encodings/iso8859-6.8x.enc
 ./usr/X11R6/lib/X11/fonts/encodings/large
 ./usr/X11R6/lib/X11/fonts/encodings/large/big5.eten-0.enc.gz
+./usr/X11R6/lib/X11/fonts/encodings/large/big5hkscs-0.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/encodings.dir
+./usr/X11R6/lib/X11/fonts/encodings/large/gb18030.2000-0.enc.gz
+./usr/X11R6/lib/X11/fonts/encodings/large/gb18030.2000-1.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/gb2312.1980-0.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/gbk-0.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/jisx0201.1976-0.enc.gz
-./usr/X11R6/lib/X11/fonts/encodings/large/jisx0208.1983-0.enc.gz
+./usr/X11R6/lib/X11/fonts/encodings/large/jisx0208.1983-0.enc.gz	xfont-obsolete obsolete
 ./usr/X11R6/lib/X11/fonts/encodings/large/jisx0208.1990-0.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/jisx0212.1990-0.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/ksc5601.1987-0.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/ksc5601.1992-3.enc.gz
+./usr/X11R6/lib/X11/fonts/encodings/large/sun.unicode.india-0.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/microsoft-cp1250.enc
 ./usr/X11R6/lib/X11/fonts/encodings/microsoft-cp1251.enc
 ./usr/X11R6/lib/X11/fonts/encodings/microsoft-cp1252.enc
@@ -4393,6 +4430,7 @@
 ./usr/X11R6/lib/X11/fonts/misc/encodings.dir
 ./usr/X11R6/lib/X11/fonts/misc/fonts.alias
 ./usr/X11R6/lib/X11/fonts/misc/fonts.dir
+./usr/X11R6/lib/X11/fonts/misc/fonts.scale
 ./usr/X11R6/lib/X11/fonts/misc/gb16fs.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/gb16st.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/gb24st.pcf.gz

@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.6 2003/12/28 15:46:00 lukem Exp $
+# $NetBSD: md.cats,v 1.7 2004/03/05 20:07:27 tron Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -11,7 +11,7 @@
 ./usr/X11R6/lib/X11/Cards
 ./usr/X11R6/lib/X11/XF86Config.98
 ./usr/X11R6/lib/X11/XF86Config.eg
-./usr/X11R6/lib/X11/XF86Config.indy
+./usr/X11R6/lib/X11/XF86Config.indy		xserver-obsolete obsolete
 ./usr/X11R6/lib/X11/app-defaults/XF86Cfg
 ./usr/X11R6/lib/X11/app-defaults/Xvidtune
 ./usr/X11R6/lib/X11/doc
@@ -22,7 +22,7 @@
 ./usr/X11R6/lib/X11/doc/LICENSE
 ./usr/X11R6/lib/X11/doc/README
 ./usr/X11R6/lib/X11/doc/README.DECtga
-./usr/X11R6/lib/X11/doc/README.DGA
+./usr/X11R6/lib/X11/doc/README.DGA		xserver-obsolete obsolete	
 ./usr/X11R6/lib/X11/doc/README.DRI
 ./usr/X11R6/lib/X11/doc/README.DRIcomp
 ./usr/X11R6/lib/X11/doc/README.I128
@@ -42,8 +42,8 @@
 ./usr/X11R6/lib/X11/doc/README.rendition
 ./usr/X11R6/lib/X11/doc/README.s3virge
 ./usr/X11R6/lib/X11/doc/RELNOTES
-./usr/X11R6/lib/X11/doc/ServersOnly
-./usr/X11R6/lib/X11/doc/Status
+./usr/X11R6/lib/X11/doc/ServersOnly		xserver-obsolete obsolete
+./usr/X11R6/lib/X11/doc/Status			xserver-obsolete obsolete
 ./usr/X11R6/lib/X11/doc/Versions
 ./usr/X11R6/lib/X11/doc/VideoBoard98
 ./usr/X11R6/lib/X11/etc
@@ -70,13 +70,13 @@
 ./usr/X11R6/man/cat4/fbdev.0
 ./usr/X11R6/man/cat4/fbdevhw.0
 ./usr/X11R6/man/cat4/glint.0
-./usr/X11R6/man/cat4/imstt.0
+./usr/X11R6/man/cat4/imstt.0		xserver-obsolete obsolete
 ./usr/X11R6/man/cat4/keyboard.0
 ./usr/X11R6/man/cat4/mga.0
 ./usr/X11R6/man/cat4/microtouch.0
 ./usr/X11R6/man/cat4/mouse.0
 ./usr/X11R6/man/cat4/mutouch.0
-./usr/X11R6/man/cat4/newport.0
+./usr/X11R6/man/cat4/newport.0		xserver-obsolete obsolete
 ./usr/X11R6/man/cat4/penmount.0
 ./usr/X11R6/man/cat4/r128.0
 ./usr/X11R6/man/cat4/s3virge.0
