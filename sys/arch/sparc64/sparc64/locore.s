@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.154 2002/05/31 20:01:28 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.155 2002/06/04 15:04:08 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -60,7 +60,9 @@
 #define	INTR_INTERLOCK		/* Use IH_PEND field to interlock interrupts */
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
+#ifdef DEBUG
 #define	TRAPTRACE		/* Keep history of all traps (unsafe) */
+#endif
 #undef	FLTRACE			/* Keep history of all page faults */
 #undef	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
@@ -7982,29 +7984,16 @@ ENTRY(proc_trampoline)
 	 * have only set npc, in anticipation that trap.c will advance past
 	 * the trap instruction; but we bypass that, so we must do it manually.
 	 */
-!	save	%sp, -CC64FSZ, %sp		! Save a kernel frame to emulate a syscall
-#if 0
-	/* This code doesn't seem to work, but it should. */
 	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1
 	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
-	andn	%g1, CWP, %g1			! Clear the CWP bits
+!	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
+	srl	%g1, 0, %g1			! Clear out the condition codes
 	add	%g2, 4, %g3			! npc = pc+4
-	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
+!	andn	%g1, CWP, %g1			! Clear the CWP bits
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
-	or	%g1, %g5, %g1
+!	or	%g1, %g5, %g1	! Not needed
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
-#else
-	mov	PSTATE_USER, %g1		! XXXX user pstate (no need to load it)
-	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
-	sllx	%g1, TSTATE_PSTATE_SHIFT, %g1	! Shift it into place
-	add	%g2, 4, %g3			! npc = pc+4
-	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
-	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
-	or	%g1, %g5, %g1
-	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
-	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
-#endif
 #ifdef SCHED_DEBUG
 !	set	panicstack-CC64FSZ-STKB, %o0! DEBUG
 !	save	%g0, %o0, %sp	! DEBUG
