@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.31 2002/11/25 09:11:26 jdc Exp $	*/
+/*	$NetBSD: newwin.c,v 1.32 2002/12/05 17:14:34 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.31 2002/11/25 09:11:26 jdc Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.32 2002/12/05 17:14:34 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -193,7 +193,7 @@ __set_subwin(WINDOW *orig, WINDOW *win)
 	}
 
 #ifdef DEBUG
-	__CTRACE("__set_subwin: win->ch_off = %d\n", win->ch_off);
+	__CTRACE("__set_subwin: win %0.2o ch_off = %d\n", win, win->ch_off);
 #endif
 }
 /*
@@ -272,7 +272,7 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub)
 #endif
 			lp->firstchp = &lp->firstch;
 			lp->lastchp = &lp->lastch;
-			lp->firstch = 0;
+			lp->firstch = ncols;
 			lp->lastch = 0;
 		}
 	}
