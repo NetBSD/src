@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.53 2001/08/30 14:37:26 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.54 2001/09/02 01:58:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.53 2001/08/30 14:37:26 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.54 2001/09/02 01:58:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -523,14 +523,11 @@ next:
 	sblock.fs_csaddr = cgdmin(&sblock, 0);
 	sblock.fs_cssize =
 	    fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
-	if (sblock.fs_cssize / sblock.fs_bsize > MAXCSBUFS) {
-		printf("With %d cylinder groups, "
-		    "%d cylinder group summary areas are needed.\n",
-		    sblock.fs_ncg, sblock.fs_cssize / sblock.fs_bsize);
-		printf("Only %ld are available. Reduce the number of cylinder "
-		    "groups.\n", (long)MAXCSBUFS);
-		exit(38);
-	}
+	/*
+	 * The superblock fields 'fs_csmask' and 'fs_csshift' are no
+	 * longer used. However, we still initialise them so that the
+	 * filesystem remains compatible with old kernels.
+	 */
 	i = sblock.fs_bsize / sizeof(struct csum);
 	sblock.fs_csmask = ~(i - 1);
 	for (sblock.fs_csshift = 0; i > 1; i >>= 1)
