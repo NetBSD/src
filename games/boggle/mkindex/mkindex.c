@@ -1,4 +1,4 @@
-/*	$NetBSD: mkindex.c,v 1.4 1998/09/11 13:16:05 hubertf Exp $	*/
+/*	$NetBSD: mkindex.c,v 1.5 1999/09/10 00:18:21 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,10 +46,11 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkindex.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: mkindex.c,v 1.4 1998/09/11 13:16:05 hubertf Exp $";
+static char rcsid[] = "$NetBSD: mkindex.c,v 1.5 1999/09/10 00:18:21 jsm Exp $";
 #endif
 #endif /* not lint */
 
+#include <err.h>
 #include <stdio.h>
 
 #include "bog.h"
@@ -75,6 +76,9 @@ main(void)
 		off += clen + 1;
 	}
 	printf("%c %6ld %6ld\n", prev, start, off - 1);
+	fflush(stdout);
+	if (ferror(stdout))
+		err(1, "writing standard output");
 	exit(0);
 }
 
