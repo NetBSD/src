@@ -1,4 +1,4 @@
-/* $NetBSD: if_prom.c,v 1.11 1999/03/27 09:01:28 ross Exp $ */
+/* $NetBSD: if_prom.c,v 1.12 1999/04/02 03:19:09 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -85,7 +85,7 @@ struct netif_driver prom_netif_driver = {
 	NENTS(prom_ifs)		/* netif_nifs */
 };
 
-int netfd, broken_firmware;
+int broken_firmware;
 
 int
 prom_match(nif, machdep_hint)
@@ -112,7 +112,7 @@ prom_put(desc, pkt, len)
 	int len;
 {
 
-	prom_write(netfd, len, pkt, 0);
+	prom_write(booted_dev_fd, len, pkt, 0);
 
 	return len;
 }
@@ -134,9 +134,9 @@ prom_get(desc, pkt, len, timeout)
 	cc = 0;
 	while (((getsecs() - t) < timeout) && !cc) {
 		if (broken_firmware)
-			ret.bits = prom_read(netfd, 0, hate, 0);
+			ret.bits = prom_read(booted_dev_fd, 0, hate, 0);
 		else
-			ret.bits = prom_read(netfd, sizeof hate, hate, 0);
+			ret.bits = prom_read(booted_dev_fd, sizeof hate, hate, 0);
 		if (ret.u.status == 0)
 			cc = ret.u.retval;
 	}
@@ -156,10 +156,8 @@ prom_init(desc, machdep_hint)
 	struct iodesc *desc;
 	void *machdep_hint;
 {
-	prom_return_t ret;
-	char devname[64];
-	int devlen, i, netbbinfovalid;
-	char *enet_addr;
+	int i, netbbinfovalid;
+	const char *enet_addr;
 	u_int64_t *qp, csum;
 
 	broken_firmware = 0;
@@ -181,11 +179,8 @@ prom_init(desc, machdep_hint)
 		    ether_sprintf(netbbinfo.ether_addr));
 #endif
 
-	ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
-	devlen = ret.u.retval;
-
 	/* Ethernet address is the 9th component of the booted_dev string. */
-	enet_addr = devname;
+	enet_addr = booted_dev_name;
 	for (i = 0; i < 8; i++) {
 		enet_addr = strchr(enet_addr, ' ');
 		if (enet_addr == NULL) {
@@ -223,13 +218,6 @@ prom_init(desc, machdep_hint)
 
 gotit:
 	printf("boot: ethernet address: %s\n", ether_sprintf(desc->myea));
-
-	ret.bits = prom_open(devname, devlen + 1);
-	if (ret.u.status) {
-		printf("prom_init: open failed: %d\n", ret.u.status);
-		goto reallypunt;
-	}
-	netfd = ret.u.retval;
 	return;
 
 punt:
@@ -240,13 +228,14 @@ punt:
                 goto gotit;
         }
 
-reallypunt:
 	printf("\n");
-	printf("Boot device name was: \"%s\"\n", devname);
+	printf("Boot device name was: \"%s\"\n", booted_dev_name);
 	printf("\n");
 	printf("Your firmware may be too old to network-boot NetBSD/Alpha,\n");
 	printf("or you might have to hard-code an ethernet address into\n");
 	printf("your network boot block with setnetbootinfo(8).\n");
+
+	booted_dev_close();
 	halt();
 }
 
@@ -255,12 +244,5 @@ prom_end(nif)
 	struct netif *nif;
 {
 
-	prom_close(netfd);
-}
-
-void
-close_primary_device(fd)
-	int fd;
-{
-	/* do nothing, there is no primary boot stage for us */
+	/* nothing to do */
 }
