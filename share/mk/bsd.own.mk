@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.399 2003/12/05 02:35:24 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.400 2003/12/05 12:14:42 simonb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -21,8 +21,7 @@ NEED_OWN_INSTALL_TARGET?=	yes
 #
 # This lists the platforms which do not have working in-tree toolchains.
 #
-.if ${MACHINE_CPU} == "ns32k" || \
-    ${MACHINE_CPU} == "sh5"
+.if ${MACHINE_CPU} == "sh5"
 TOOLCHAIN_MISSING?=	yes
 .else
 TOOLCHAIN_MISSING=	no
@@ -33,8 +32,7 @@ TOOLCHAIN_MISSING=	no
 #
 # not working:
 #
-.if ${MACHINE_ARCH} == "pc532" || \
-    ${MACHINE_ARCH} == "sh3el" || \
+.if ${MACHINE_ARCH} == "sh3el" || \
     ${MACHINE_ARCH} == "sh3eb" || \
     ${MACHINE_ARCH} == "vax"
 HAVE_GCC3?=	no
@@ -414,10 +412,9 @@ MKPICLIB:=	no
 .endif
 
 #
-# If the ns32k port is using an external toolchain, shared libraries
-# are not yet supported.
+# Shared libraries are not supported on ns32k with current GNU tools.
 #
-.if ${MACHINE_ARCH} == "ns32k" && defined(EXTERNAL_TOOLCHAIN)
+.if ${MACHINE_ARCH} == "ns32k"
 NOPIC=		# defined
 .endif
 
