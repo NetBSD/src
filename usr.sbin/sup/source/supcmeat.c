@@ -27,7 +27,10 @@
  **********************************************************************
  * HISTORY
  * $Log: supcmeat.c,v $
- * Revision 1.1.1.1  1993/05/21 14:52:18  cgd
+ * Revision 1.2  1993/05/24 18:57:50  brezak
+ * Use /var/tmp for NetBSD
+ *
+ * Revision 1.1.1.1  1993/05/21  14:52:18  cgd
  * initial import of CMU's SUP to NetBSD
  *
  * Revision 1.16  92/09/09  22:04:51  mrt
@@ -1087,10 +1090,17 @@ char *from;		/* 0 if reading from network */
 		tof = open (tname,(O_WRONLY|O_CREAT|O_TRUNC),0600);
 		if (thisC->Cprefix)  (void) chdir (thisC->Cprefix);
 		if (tof >= 0)  break;
+#ifdef	VAR_TMP
+	/* try /var/tmp */
+		(void) sprintf (tname,"/var/tmp/#%d.sup",thispid);
+		tof = open (tname,(O_WRONLY|O_CREAT|O_TRUNC),0600);
+		if (tof >= 0)  break;
+#else
 	/* try /usr/tmp */
 		(void) sprintf (tname,"/usr/tmp/#%d.sup",thispid);
 		tof = open (tname,(O_WRONLY|O_CREAT|O_TRUNC),0600);
 		if (tof >= 0)  break;
+#endif
 	/* try /tmp */
 		(void) sprintf (tname,"/tmp/#%d.sup",thispid);
 		tof = open (tname,(O_WRONLY|O_CREAT|O_TRUNC),0600);
