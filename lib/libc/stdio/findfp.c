@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.17 2003/01/21 23:26:02 nathanw Exp $	*/
+/*	$NetBSD: findfp.c,v 1.18 2003/02/01 03:25:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.17 2003/01/21 23:26:02 nathanw Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.18 2003/02/01 03:25:00 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,7 +73,14 @@ static FILE usual[FOPEN_MAX - 3];
 static struct __sfileext usualext[FOPEN_MAX - 3];
 static struct glue uglue = { 0, FOPEN_MAX - 3, usual };
 
+#ifdef _REENTRANT
+#define STDEXT { {0}, {{{0}}}, MUTEX_INITIALIZER, COND_INITIALIZER, NULL, 0}
+struct __sfileext __sFext[3] = { STDEXT,
+				 STDEXT,
+				 STDEXT};
+#else
 struct __sfileext __sFext[3];
+#endif
 
 FILE __sF[3] = {
 	std(__SRD, STDIN_FILENO),		/* stdin */
@@ -197,8 +204,6 @@ __sinit()
 {
 	int i;
 
-	for (i = 0; i < 3; i ++)
-		__smutex_init(&__sFext[i]._lock);
 	for (i = 0; i < FOPEN_MAX - 3; i++)
 		_FILEEXT_SETUP(&usual[i], &usualext[i]);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: flockfile.c,v 1.3 2003/01/21 23:26:03 nathanw Exp $	*/
+/*	$NetBSD: flockfile.c,v 1.4 2003/02/01 03:25:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flockfile.c,v 1.3 2003/01/21 23:26:03 nathanw Exp $");
+__RCSID("$NetBSD: flockfile.c,v 1.4 2003/02/01 03:25:00 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -61,18 +61,6 @@ __weak_alias(funlockfile,_funlockfile)
  * XXX This code makes the assumption that a thr_t (pthread_t) is a 
  * XXX pointer.
  */
-void
-__smutex_init(mutex_t *m)
-{
-	mutexattr_t attr;
-
-	mutexattr_init(&attr);
-	mutexattr_settype(&attr, MUTEX_TYPE_RECURSIVE);
-
-	mutex_init(m, &attr);
-
-	mutexattr_destroy(&attr);
-}
 
 extern int __isthreaded;
 
@@ -84,16 +72,41 @@ flockfile(FILE *fp)
 		return;
 
 	mutex_lock(&_LOCK(fp));
+	
+	if (_LOCKOWNER(fp) == thr_self()) {
+		_LOCKCOUNT(fp)++;
+	} else {
+		while (_LOCKOWNER(fp) != NULL)
+			cond_wait(&_LOCKCOND(fp), &_LOCK(fp));
+		_LOCKOWNER(fp) = thr_self();
+		_LOCKCOUNT(fp) = 1;
+	}
+
+	mutex_unlock(&_LOCK(fp));
 }
 
 int
 ftrylockfile(FILE *fp)
 {
+	int retval;
 
 	if (__isthreaded == 0)
 		return 0;
 
-	return mutex_trylock(&_LOCK(fp));
+	retval = 0;
+	mutex_lock(&_LOCK(fp));
+		
+	if (_LOCKOWNER(fp) == thr_self()) {
+		_LOCKCOUNT(fp)++;
+	} else if (_LOCKOWNER(fp) == NULL) {
+		_LOCKOWNER(fp) = thr_self();
+		_LOCKCOUNT(fp) = 1;
+	} else
+		retval = -1;
+
+	mutex_unlock(&_LOCK(fp));
+
+	return retval;
 }
 
 void
@@ -102,6 +115,14 @@ funlockfile(FILE *fp)
 
 	if (__isthreaded == 0)
 		return;
+
+	mutex_lock(&_LOCK(fp));
+	
+	_LOCKCOUNT(fp)--;
+	if (_LOCKCOUNT(fp) == 0) {
+		_LOCKOWNER(fp) = NULL;
+		cond_signal(&_LOCKCOND(fp));
+	}
 
 	mutex_unlock(&_LOCK(fp));
 }
