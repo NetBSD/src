@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.566 2003/05/12 15:22:53 kleink Exp $
+#	$NetBSD: mi,v 1.567 2003/05/13 15:49:26 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -139,6 +139,8 @@
 ./usr/include/dev/i2o/iopio.h		comp-c-include
 ./usr/include/dev/ic			comp-c-include
 ./usr/include/dev/ic/bt8xx.h		comp-c-include
+./usr/include/dev/ic/icpreg.h		comp-c-include
+./usr/include/dev/ic/icp_ioctl.h	comp-c-include
 ./usr/include/dev/ic/isp_ioctl.h	comp-c-include
 ./usr/include/dev/ic/mlxio.h		comp-c-include
 ./usr/include/dev/ic/mlxreg.h		comp-c-include
