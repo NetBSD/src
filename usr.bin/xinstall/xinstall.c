@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.7 1994/12/20 01:24:38 jtc Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.8 1995/08/10 04:20:57 ghudson Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.7 1994/12/20 01:24:38 jtc Exp $";
+static char rcsid[] = "$NetBSD: xinstall.c,v 1.8 1995/08/10 04:20:57 ghudson Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,7 +69,9 @@ struct passwd *pp;
 struct group *gp;
 int docopy, dodir, dostrip;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-char *group, *owner, pathbuf[MAXPATHLEN];
+char pathbuf[MAXPATHLEN];
+uid_t uid;
+gid_t gid;
 
 #define	DIRECTORY	0x01		/* Tell install it's a directory. */
 #define	SETFLAGS	0x02		/* Tell install to set flags. */
@@ -91,7 +93,7 @@ main(argc, argv)
 	u_long fset;
 	u_int iflags;
 	int ch, no_target;
-	char *flags, *to_name;
+	char *flags, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
 	while ((ch = getopt(argc, argv, "cf:g:m:o:sd")) != EOF)
@@ -138,10 +140,12 @@ main(argc, argv)
 		usage();
 
 	/* get group and owner id's */
-	if (group && !(gp = getgrnam(group)))
+	if (group && !(gp = getgrnam(group)) && !isdigit(*group))
 		errx(1, "unknown group %s", group);
-	if (owner && !(pp = getpwnam(owner)))
+	gid = (group) ? ((gp) ? gp->gr_gid : atoi(group)) : -1;
+	if (owner && !(pp = getpwnam(owner)) && !isdigit(*owner))
 		errx(1, "unknown user %s", owner);
+	uid = (owner) ? ((pp) ? pp->pw_uid : atoi(owner)) : -1;
 
 	if (dodir) {
 		for (; *argv != NULL; ++argv)
@@ -245,8 +249,7 @@ install(from_name, to_name, fset, flags)
 	 * Set owner, group, mode for target; do the chown first,
 	 * chown may lose the setuid bits.
 	 */
-	if ((group || owner) &&
-	    fchown(to_fd, owner ? pp->pw_uid : -1, group ? gp->gr_gid : -1)) {
+	if ((gid != -1 || uid != -1) && fchown(to_fd, uid, gid)) {
 		serrno = errno;
 		(void)unlink(to_name);
 		errx(1, "%s: chown/chgrp: %s", to_name, strerror(serrno));
@@ -364,8 +367,7 @@ install_dir(path)
 				break;
                 }
 
-	if ((group || owner) &&
-            chown(path, owner ? pp->pw_uid : -1, group ? gp->gr_gid : -1) ||
+	if (((gid != -1 || uid != -1) && chown(path, uid, gid)) ||
             chmod(path, mode)) {
                 warn("%s", path);
         }
