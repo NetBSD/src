@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_start.S,v 1.2 2003/05/24 01:59:32 ichiro Exp $ */
+/*	$NetBSD: ixdp425_start.S,v 1.3 2003/12/08 16:15:31 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -119,6 +119,20 @@ Lunmapped:
 
 	add	r0, r0, #(0xf00 * 4)		/* offset to 0xf0000000 */
 	mov	r3, #0xc8000000
+	add	r3, r3, #0x00100000
+	orr	r3, r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
+	str	r3, [r0]
+
+	/*
+	 * Step 4: Map VA 0xf0200000->0xf0300000 to PA 0xcc000000->0xcc100000.
+	 */
+	adr	r0, Ltable			/* r0 = &l1table */
+	ldr	r0, [r0]
+
+	add	r0, r0, #(0xf00 * 4)		/* offset to 0xf0200000 */
+	add	r0, r0, #(0x002 * 4)
+	mov	r3, #0xcc000000
 	add	r3, r3, #0x00100000
 	orr	r3, r3, #(L1_S_AP(AP_KRW))
 	orr	r3, r3, #(L1_TYPE_S)
