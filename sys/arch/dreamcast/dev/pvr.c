@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.7 2001/03/04 01:36:35 marcus Exp $	*/
+/*	$NetBSD: pvr.c,v 1.8 2001/03/05 02:45:24 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.7 2001/03/04 01:36:35 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.8 2001/03/05 02:45:24 marcus Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,7 +410,7 @@ pvrinit(struct fb_devconfig *dc)
 	__volatile u_int32_t *pvr = (__volatile u_int32_t *)
 	    SH3_PHYS_TO_P2SEG(0x005f8000);
 	int display_lines_per_field = 240;
-	int v_absolute_size = 524;
+	int v_absolute_size = 525;
 	int h_absolute_size = 857;
 	int modulo = 1, voffset, hoffset = 164, border = (126 << 16) | 837;
 
@@ -428,7 +428,7 @@ pvrinit(struct fb_devconfig *dc)
 	} else {
 		if(dc->dc_tvsystem & 1) {
 			/* 50 Hz */
-			v_absolute_size = 624;
+			v_absolute_size = 625;
 			h_absolute_size = 863;
 			hoffset = 174;
 			border = (116 << 16) | 843;
