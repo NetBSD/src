@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.37 2002/03/22 20:03:20 drochner Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.38 2002/06/18 13:18:37 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -418,9 +418,15 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_HOTPLUG		0x0c
 
 /*
- * Power Management Control Status Register; access via capability pointer.
+ * Power Management Capability; access via capability pointer.
  */
 
+/* Power Management Capability Register */
+#define PCI_PMCR		0x02
+#define PCI_PMCR_D1SUPP		0x0200
+#define PCI_PMCR_D2SUPP		0x0400
+/* Power Management Control Status Register */
+#define PCI_PMCSR		0x04
 #define PCI_PMCSR_STATE_MASK	0x03
 #define PCI_PMCSR_STATE_D0      0x00
 #define PCI_PMCSR_STATE_D1      0x01
