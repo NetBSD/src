@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.29 2002/11/09 18:12:09 thorpej Exp $
+#	$NetBSD: Makefile.mips,v 1.30 2002/11/09 18:18:22 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -48,11 +48,7 @@ CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
 CFLAGS+=	${ENDIAN} ${GP} -mno-abicalls
-.if defined(HAVE_GCC3)
-AFLAGS+=	${ENDIAN} -x assembler-with-cpp
-.else
-AFLAGS+=	${ENDIAN} -x assembler-with-cpp -traditional-cpp
-.endif
+AFLAGS+=	${ENDIAN} -mno-abicalls -x assembler-with-cpp -traditional-cpp
 
 ##
 ## (3) libkern and compat
