@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.33 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: com.c,v 1.34 2005/01/18 07:28:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.33 2005/01/18 07:12:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.34 2005/01/18 07:28:46 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -158,7 +158,7 @@ int comintr(void *);
 static void compollin(void *);
 static int comparam(struct tty *, struct termios *);
 static void comstart(struct tty *);
-static void cominit(int, int);
+static void cominit(int);
 static int comspeed(long);
 
 static u_char tiocm_xxx2mcr(int);
@@ -167,6 +167,8 @@ CFATTACH_DECL(xcom, sizeof(struct com_softc),
     comprobe, comattach, NULL, NULL);
 
 extern struct cfdriver xcom_cd;
+
+int com_attached;
 
 dev_type_open(comopen);
 dev_type_close(comclose);
@@ -316,21 +318,14 @@ comprobeHAYESP(int iobase, struct com_softc *sc)
 int
 comprobe(struct device *parent, struct cfdata *cfp, void *aux)
 {
-#if 0
-	struct isa_attach_args *ia = aux;
-#endif
 	int iobase = (int)&IODEVbase->psx16550;
 
-	if (strcmp(aux, "com") || cfp->cf_unit > 1)
+	if (strcmp(aux, "com") || com_attached)
 		return 0;
 
 	if (!comprobe1(iobase))
 		return 0;
 
-#if 0
-	ia->ia_iosize = COM_NPORTS;
-	ia->ia_msize = 0;
-#endif
 	return 1;
 }
 
@@ -338,15 +333,13 @@ void
 comattach(struct device *parent, struct device *dev, void *aux)
 {
 	struct com_softc *sc = (struct com_softc *)dev;
-#if 0
-	struct isa_attach_args *ia = aux;
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-#endif
-	int iobase = (int)&IODEVbase->psx16550 + (COM_NPORTS * 2 * sc->sc_dev.dv_unit);
+	int iobase = (int)&IODEVbase->psx16550;
 #ifdef COM_HAYESP
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
 #endif
+
+	com_attached = 1;
 
 	callout_init(&sc->sc_diag_ch);
 
@@ -354,11 +347,6 @@ comattach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 	printf(": iobase %x", sc->sc_iobase);
-
-#if 0
-	if (sc->sc_dev.dv_unit == comconsole)
-		delay(1000);
-#endif
 
 #ifdef COM_HAYESP
 	/* Look for a Hayes ESP board. */
@@ -392,35 +380,7 @@ comattach(struct device *parent, struct device *dev, void *aux)
 	outb(pio(iobase , com_ier), 0);
 	outb(pio(iobase , com_mcr), 0);
 
-	outb(pio(iobase , com_scratch), ((u_char)240 + sc->sc_dev.dv_unit));
-
-#if 0
-	if (ia->ia_irq != IRQUNK)
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY,
-		    comintr, sc);
-
-#ifdef KGDB
-	if (kgdb_dev == makedev(cdevsw_lookup_major(&xcom_cdevsw), unit)) {
-		if (comconsole == unit)
-			kgdb_dev = -1;	/* can't debug over console port */
-		else {
-			cominit(unit, kgdb_rate);
-			if (kgdb_debug_init) {
-				/*
-				 * Print prefix of device name,
-				 * let kgdb_connect print the rest.
-				 */
-				printf("%s: ", sc->sc_dev.dv_xname);
-				kgdb_connect(1);
-			} else
-				printf("%s: kgdb enabled\n",
-				    sc->sc_dev.dv_xname);
-		}
-	}
-#endif
-#endif
-
-	if (sc->sc_dev.dv_unit == comconsole) {
+	if (sc->sc_iobase == CONADDR) {
 		/*
 		 * Need to reset baud rate, etc. of next print so reset
 		 * comconsinit.  Also make sure console is always "hardwired".
@@ -1068,7 +1028,7 @@ comintr(void *arg)
 				data = inb(pio(iobase, com_data));
 				if (ISSET(lsr, LSR_BI)) {
 #ifdef DDB
-					if (sc->sc_dev.dv_unit == comconsole) {
+					if (iobase == CONADDR) {
 						Debugger();
 						goto next;
 					}
@@ -1170,13 +1130,13 @@ void
 comcninit(struct consdev *cp)
 {
 
-	cominit(CONUNIT, comdefaultrate);
+	cominit(comdefaultrate);
 	comconsole = CONUNIT;
 	comconsinit = 0;
 }
 
 static void
-cominit(int unit, int rate)
+cominit(int rate)
 {
 	int s;
 	int iobase = CONADDR;
@@ -1227,7 +1187,7 @@ comcnputc(dev_t dev, int c)
 	if (dev != kgdb_dev)
 #endif
 	if (comconsinit == 0) {
-		(void) cominit(COMUNIT(dev), comdefaultrate);
+		(void) cominit(comdefaultrate);
 		comconsinit = 1;
 	}
 
