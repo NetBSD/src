@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.2 1997/10/14 23:12:21 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.3 1997/10/27 23:31:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ ne_pci_match(parent, match, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_WINBOND) {
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_WINBOND_NEXXX:
+		case PCI_PRODUCT_WINBOND_W89C940F:
 			return (1);
 		}
 	}
