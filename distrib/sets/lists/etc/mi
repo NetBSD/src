@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.66 2000/08/24 05:06:52 enami Exp $
+# $NetBSD: mi,v 1.67 2000/08/26 09:17:00 lukem Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -127,6 +127,7 @@
 ./etc/rc.d/rwho
 ./etc/rc.d/savecore
 ./etc/rc.d/screenblank
+./etc/rc.d/securelevel
 ./etc/rc.d/sendmail
 ./etc/rc.d/swap1
 ./etc/rc.d/swap2
