@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.50 2001/01/23 14:04:13 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.51 2001/02/08 13:24:05 tsutsui Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -867,6 +867,17 @@ USB_ATTACH(umass)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
+	if (sc->drive == INSYSTEM_USBCABLE) {
+		err = usbd_set_interface(sc->iface, 1);
+		if (err) {
+			DPRINTF(UDMASS_USB, ("%s: could not switch to "
+					     "Alt Interface %d\n",
+					     USBDEVNAME(sc->sc_dev), 1));
+			umass_disco(sc);
+			USB_ATTACH_ERROR_RETURN;
+                }
+        }
+
 	/*
 	 * The timeout is based on the maximum expected transfer size
 	 * divided by the expected transfer speed.
@@ -921,17 +932,6 @@ USB_ATTACH(umass)
 	}
 	printf("%s: using %s over %s\n", USBDEVNAME(sc->sc_dev), sSubclass, 
 	       sProto);
-
-	if (sc->drive == INSYSTEM_USBCABLE) {
-		err = usbd_set_interface(0, 1);
-		if (err) {
-			DPRINTF(UDMASS_USB, ("%s: could not switch to "
-					     "Alt Interface %d\n",
-					     USBDEVNAME(sc->sc_dev), 1));
-			umass_disco(sc);
-			USB_ATTACH_ERROR_RETURN;
-                }
-        }
 
 	/*
 	 * In addition to the Control endpoint the following endpoints
