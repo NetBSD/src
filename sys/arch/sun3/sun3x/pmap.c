@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 1997/10/23 02:24:41 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 1998/01/02 20:10:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -578,7 +578,6 @@ boolean_t   pmap_is_referenced __P((vm_offset_t));
 boolean_t   pmap_is_modified __P((vm_offset_t));
 void   pmap_clear_modify __P((vm_offset_t));
 vm_offset_t pmap_extract __P((pmap_t, vm_offset_t));
-void   pmap_activate __P((pmap_t));
 int    pmap_page_index __P((vm_offset_t));
 u_int  pmap_free_pages __P((void));
 #endif /* INCLUDED_IN_PMAP_H */
@@ -3506,27 +3505,44 @@ pmap_pa_exists(pa)
 
 /* pmap_activate			INTERFACE
  **
- * This is called by locore.s:cpu_switch when we are switching to a
- * new process.  This should load the MMU context for the new proc.
+ * This is called to activate the address space for the specified
+ * process.  It is called either from locore.s:cpu_switch after the
+ * process has become curproc, or from machine-independent VM code
+ * when a process is given a new address space.  Note that we do
+ * not reload the MMU context if the process is not the current process;
+ * that will be done for us when the process is switched to.
  *
  * Note: Only used when locore.s is compiled with PMAP_DEBUG.
  */
 void
-pmap_activate(pmap)
-pmap_t	pmap;
+pmap_activate(p)
+struct proc *p;
 {
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	u_long rootpa;
 
 	/* Only do reload/flush if we have to. */
 	rootpa = pmap->pm_a_phys;
-	if (kernel_crp.rp_addr != rootpa) {
-		DPRINT(("pmap_activate(%p)\n", pmap));
+	if (p == curproc && kernel_crp.rp_addr != rootpa) {
+		DPRINT(("pmap_activate(%p)\n", p));
 		kernel_crp.rp_addr = rootpa;
 		loadcrp(&kernel_crp);
 		TBIAU();
 	}
 }
 
+/*
+ * pmap_deactivate			INTERFACE
+ **
+ * This is called to deactivate the specified process's address space.
+ * XXX The semantics of this function are currently not well-defined.
+ */
+void
+pmap_deactivate(p)
+struct proc *p;
+{
+	/* not implemented. */
+}
 
 /* pmap_update
  **
