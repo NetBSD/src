@@ -1,4 +1,4 @@
-/*	$NetBSD: sis85c503.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
+/*	$NetBSD: sis85c503.c,v 1.3 2001/11/15 07:03:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 /*
  * Support for the SiS 85c503 PCI-ISA bridge interrupt controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sis85c503.c,v 1.3 2001/11/15 07:03:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
