@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 1999/11/06 23:18:04 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.76 1999/11/07 19:42:23 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 1999/11/06 23:18:04 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 1999/11/07 19:42:23 mhitch Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2052,10 +2052,14 @@ pmap_remove_pv(pmap, va, pa)
 	}
 	if (CPUISMIPS3 && last != 0) {
 		MachFlushDCache(va, PAGE_SIZE);
-#ifndef MIPS3_L2CACHE_ABSENT
 		if (mips_L2CachePresent)
+			/*
+			 * mips3_MachFlushDCache() converts the address to a KSEG0
+			 * address, and won't properly flush the Level 2 cache.
+			 * Do another flush using the physical adddress to make
+			 * sure the proper secondary cache lines are flushed.  Ugh!
+			 */
 			MachFlushDCache(pa, PAGE_SIZE);
-#endif
 	}
 #endif
 	return;
