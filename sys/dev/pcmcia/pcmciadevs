@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.119 2001/02/11 03:27:49 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.120 2001/02/13 02:07:53 thorpej Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -60,6 +60,7 @@ vendor OLICOM			0x0121	Olicom
 vendor ADAPTEC			0x012f	Adaptec Corporation
 vendor COMPAQ			0x0138	Compaq
 vendor LINKSYS			0x0149	Linksys Corporation
+vendor DLINK_2			0x0143	D-Link
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor LUCENT			0x0156	Lucent Technologies
 vendor AIRONET			0x015f	Aironet Wireless Communications
@@ -122,6 +123,9 @@ product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
 
 /* DIGITAL Products */
 product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
+
+/* D-Link Products */
+product DLINK_2 DMF560TX	0xc0ab D-Link DMF-650TX
 
 /* ELSA Products */
 product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
