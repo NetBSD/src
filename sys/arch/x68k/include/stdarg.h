@@ -1,3 +1,3 @@
-/*	$NetBSD: stdarg.h,v 1.2 1999/01/22 14:12:07 mycroft Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.3 1999/03/16 16:30:21 minoura Exp $	*/
 
 #include <m68k/stdarg.h>

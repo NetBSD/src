@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.14 1999/02/26 22:37:59 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15 1999/03/16 16:30:23 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
