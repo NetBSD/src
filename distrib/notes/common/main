@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.103 2001/02/06 16:08:59 reinoud Exp $
+.\"	$NetBSD: main,v 1.104 2001/02/07 10:59:08 tacha Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1170,6 +1170,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Bob Nestor Ta Mt rnestor@netbsd.org
 .It Ta NONAKA Kimihiro Ta Mt nonaka@netbsd.org
 .It Ta Jesse Off Ta Mt joff@netbsd.org
+.It Ta Tatoku Ogaito Ta Mt tacha@netbsd.org
 .It Ta Masaru Oki Ta Mt oki@netbsd.org
 .It Ta Atsushi Onoe Ta Mt onoe@netbsd.org
 .It Ta Greg Oster Ta Mt oster@netbsd.org
