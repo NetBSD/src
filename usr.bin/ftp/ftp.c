@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.85 1999/10/24 12:31:40 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.86 1999/11/03 02:03:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.85 1999/10/24 12:31:40 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.86 1999/11/03 02:03:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,9 +191,9 @@ hookup(host, port)
 	char hbuf[MAXHOSTNAMELEN];
 #else
 	struct hostent *hp = NULL;
-	struct servent *sp = NULL;
-	char **ptr;
+	char **ptr, *ep;
 	struct sockaddr_in sin;
+	long nport;
 #endif
 	static char hostnamebuf[MAXHOSTNAMELEN];
 	char *cause = "unknown";
@@ -277,11 +277,21 @@ hookup(host, port)
 		return 0;
 	}
 
-	if ((sp = getservbyname(port, "tcp")) == NULL) {
-		sin.sin_port = htons(21);
-	}
-	else
-		sin.sin_port = sp->s_port;
+	nport = strtol(port, &ep, 10);
+	if (*ep != '\0' && ep == port) {
+		struct servent	*svp;
+
+		svp = getservbyname(port, "tcp");
+		if (svp == NULL) {
+			warnx("hookup: unknown port `%s'", port);
+			sin.sin_port = htons(FTP_PORT);
+		} else
+			sin.sin_port = svp->s_port;
+	} else if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0') {
+		warnx("hookup: invalid port `%s'", port);
+		sin.sin_port = htons(FTP_PORT);
+	} else
+		sin.sin_port = htons(nport);
 
 	(void)strlcpy(hostnamebuf, hp->h_name, sizeof(hostnamebuf));
 	hostname = hostnamebuf;
