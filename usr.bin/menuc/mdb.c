@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.34 2003/06/23 13:05:48 agc Exp $	*/
+/*	$NetBSD: mdb.c,v 1.35 2003/07/07 12:20:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mdb.c,v 1.34 2003/06/23 13:05:48 agc Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.35 2003/07/07 12:20:56 dsl Exp $");
 #endif
 
 
@@ -175,7 +175,7 @@ write_menu_file (char *initcode)
 	if (do_dynamic || do_msgxlat)
 		(void)fprintf(out_file, "\n");
 
-	(void) fprintf (out_file,
+	(void)fprintf(out_file,
 		"typedef struct menudesc menudesc;\n"	
 		"typedef struct menu_ent menu_ent;\n"	
 		"struct menu_ent {\n"
@@ -187,6 +187,7 @@ write_menu_file (char *initcode)
 		"#define OPT_SUB	1\n"
 		"#define OPT_ENDWIN	2\n"
 		"#define OPT_EXIT	4\n"
+		"#define OPT_IGNORE	8\n"
 		"#define OPT_NOMENU	-1\n\n"
 		"struct menudesc {\n"
 		"	const char	*title;\n"
@@ -202,6 +203,7 @@ write_menu_file (char *initcode)
 		"	const char	*exitstr;\n"
 		"	void		(*post_act)(menudesc *, void *);\n"
 		"	void		(*exit_act)(menudesc *, void *);\n"
+		"	void		(*draw_line)(menudesc *, int, void *);\n"
 		"};\n"
 		"\n"
 		"/* defines for mopt field. */\n"
@@ -212,7 +214,7 @@ write_menu_file (char *initcode)
 		"#define MC_NOCLEAR 16\n"
 		"#define MC_DFLTEXIT 32\n"
 		"#define MC_VALID 256\n"	
-		);
+	);
 
 	(void) fprintf (out_file, "%s",
 		"\n"
@@ -228,11 +230,12 @@ write_menu_file (char *initcode)
 	if (do_dynamic)
 		(void) fprintf (out_file, "%s",
 			"int new_menu(const char *title, menu_ent *opts, "
-				"int numopts, \n"
-				"\tint x, int y, int h, int w, int mopt,\n"
-				"\tvoid (*post_act)(menudesc *, void *), "
-				"void (*exit_act)(menudesc *, void *), "
-				"const char *help, const char *exit);\n"
+			    "int numopts, \n"
+			    "\tint x, int y, int h, int w, int mopt,\n"
+			    "\tvoid (*post_act)(menudesc *, void *), "
+			    "void (*draw_line)(menudesc *, int, void *),\n"
+			    "\tvoid (*exit_act)(menudesc *, void *), "
+			    "const char *help, const char *exit);\n"
 			"void free_menu(int menu_no);\n"
 			"void set_menu_numopts(int, int);\n"
 			);

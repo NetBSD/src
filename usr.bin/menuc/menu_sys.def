@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.42 2003/06/27 22:06:14 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.43 2003/07/07 12:20:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,8 +68,8 @@ static int num_menus  = 0;
 
 /* prototypes for in here! */
 static void init_menu(menudesc *m);
-static char opt_ch(int op_no);
-static void draw_menu(menudesc *m);
+static char opt_ch(menudesc *m, int op_no);
+static void draw_menu(menudesc *m, void *arg);
 static void process_help(menudesc *m, int num);
 static void process_req(menudesc *m, void *arg, int num, int req);
 static int menucmd(WINDOW *w);
@@ -222,9 +222,13 @@ init_menu(menudesc *m)
 }
 
 static char
-opt_ch(int op_no)
+opt_ch(menudesc *m, int op_no)
 {
 	char c;
+
+	if (op_no == m->numopts)
+		return 'x';
+
 	if (op_no < 25) {
 		c = 'a' + op_no;
 		if (c >= 'x')
@@ -235,24 +239,28 @@ opt_ch(int op_no)
 }
 
 static void
-draw_menu_line(menudesc *m, int i, int cury, char opt, const char *text)
+draw_menu_line(menudesc *m, int opt, int cury, void *arg, const char *text)
 {
 	int hasbox = m->mopt & MC_NOBOX ? 0 : 1;
 
-	if (m->cursel == i) {
+	if (m->cursel == opt) {
 		mvwaddstr(m->mw, cury, hasbox, ">");
 		wstandout(m->mw);
 	} else
 		mvwaddstr(m->mw, cury, hasbox, " ");
 	if (!(m->mopt & MC_NOSHORTCUT))
-		wprintw(m->mw, "%c: ", opt);
-	waddstr(m->mw, text);
-	if (m->cursel == i)
+		wprintw(m->mw, "%c: ", opt_ch(m, opt));
+
+	if (!text && m->draw_line)
+		m->draw_line(m, opt, arg);
+	else
+		waddstr(m->mw, MSG_XLAT(text));
+	if (m->cursel == opt)
 		wstandend(m->mw);
 }
 
 static void
-draw_menu(menudesc *m)
+draw_menu(menudesc *m, void *arg)
 {
 	int opt;
 	int hasbox, cury, maxy;
@@ -273,7 +281,7 @@ draw_menu(menudesc *m)
 
 	if (m->title) {
 		mvwaddstr(m->mw, hasbox, hasbox, " ");
-		mvwaddstr(m->mw, hasbox, hasbox + 1, MSG_XLAT(m->title));
+		waddstr(m->mw, MSG_XLAT(m->title));
 		tadd = 2;
 		cury += tadd;
 		maxy += tadd;
@@ -289,15 +297,13 @@ draw_menu(menudesc *m)
 	for (opt = m->topline; opt < m->numopts; opt++) {
 		if (cury >= maxy)
 			break;
-		draw_menu_line(m, opt, cury++, opt_ch(opt),
-				MSG_XLAT(m->opts[opt].opt_name));
+		draw_menu_line(m, opt, cury++, arg, m->opts[opt].opt_name);
 	}
 
 	/* Add the exit option. */
 	if (!(m->mopt & MC_NOEXITOPT)) {
 		if (cury < maxy)
-			draw_menu_line(m, m->numopts, cury++, 'x',
-				MSG_XLAT(m->exitstr));
+			draw_menu_line(m, m->numopts, cury++, arg, m->exitstr);
 		else
 			opt = 0;
 	}
@@ -411,9 +417,7 @@ process_req(menudesc *m, void *arg, int num, int req)
 			}
 			if (hasexit && ch == m->numopts)
 				break;
-			if (m->opts[ch].opt_flags & OPT_EXIT
-			    || m->opts[ch].opt_menu != -1
-			    || m->opts[ch].opt_action != NULL)
+			if (!(m->opts[ch].opt_flags & OPT_IGNORE))
 				break;
 		}
 		m->cursel = ch;
@@ -429,9 +433,7 @@ process_req(menudesc *m, void *arg, int num, int req)
 				return;
 			}
 			ch--;
-			if (m->opts[ch].opt_flags & OPT_EXIT
-			    || m->opts[ch].opt_menu != -1
-			    || m->opts[ch].opt_action != NULL)
+			if (!(m->opts[ch].opt_flags & OPT_IGNORE))
 				break;
 		}
 		m->cursel = ch;
@@ -493,9 +495,7 @@ process_req(menudesc *m, void *arg, int num, int req)
 			mbeep();
 			return;
 		}
-		if (!(m->opts[ch].opt_flags & OPT_EXIT)
-		    && m->opts[ch].opt_menu == -1
-		    && m->opts[ch].opt_action == NULL) {
+		if (m->opts[ch].opt_flags & OPT_IGNORE) {
 			mbeep();
 			return;
 		}
@@ -508,7 +508,7 @@ process_req(menudesc *m, void *arg, int num, int req)
 	while (m->cursel < m->topline)
 		m->topline = MAX(0, m->topline - m->h);
 
-	draw_menu(m);
+	draw_menu(m, arg);
 }
 
 int
@@ -600,7 +600,7 @@ process_menu(int num, void *arg)
 		/* Process the display action */
 		if (m->post_act)
 			(*m->post_act)(m, arg);
-		draw_menu(m);
+		draw_menu(m, arg);
 
 		while ((req = menucmd(m->mw)) != REQ_EXECUTE)
 			process_req(m, arg, num, req);
@@ -614,6 +614,8 @@ process_menu(int num, void *arg)
 		/* Process the items */
 		if (sel < m->numopts) {
 			opt = &m->opts[sel];
+			if (opt->opt_flags & OPT_IGNORE)
+				continue;
 			if (opt->opt_flags & OPT_ENDWIN) {
 				endwin();
 				__m_endwin = 1;
@@ -679,6 +681,7 @@ int
 new_menu(const char *title, menu_ent *opts, int numopts, 
 	int x, int y, int h, int w, int mopt,
 	void (*post_act)(menudesc *, void *),
+	void (*draw_line)(menudesc *, int, void *),
 	void (*exit_act)(menudesc *, void *),
 	const char * help, const char *exit)
 {
@@ -704,6 +707,7 @@ new_menu(const char *title, menu_ent *opts, int numopts,
 	m->w = w;
 	m->mopt = mopt | MC_VALID;
 	m->post_act = post_act;
+	m->draw_line = draw_line;
 	m->exit_act = exit_act;
 	m->helpstr  = help;
 	m->exitstr  = exit ? exit : "Exit";
