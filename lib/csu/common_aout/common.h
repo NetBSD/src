@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.7 1998/07/24 18:48:14 veego Exp $	*/
+/*	$NetBSD: common.h,v 1.8 1998/07/25 04:23:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -54,7 +54,7 @@
 
 extern struct _dynamic	_DYNAMIC;
 static void		__load_rtld __P((struct _dynamic *));
-extern quad_t		__syscall __P((quad_t, ...));
+extern int		__syscall __P((int, ...));
 int			_callmain __P((void));
 static char		*_strrchr __P((char *, char));
 #ifdef DEBUG
