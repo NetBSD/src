@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.25 2003/10/27 02:03:10 cl Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.26 2003/10/28 20:39:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25 2003/10/27 02:03:10 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.26 2003/10/28 20:39:54 mycroft Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -355,17 +355,21 @@ cpu_setmcontext(l, mcp, flags)
 	__greg_t *gr = mcp->__gregs;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	unsigned int format = mcp->__mc_pad.__mc_frame.__mcf_format;
-	int sz = 0;	/* XXX: gcc */
+	int sz;
 
 	/* Validate the supplied context */
 	if (((flags & _UC_CPU) != 0 &&
-	     (gr[_REG_PS] & (PSL_MBZ|PSL_IPL|PSL_S)) != 0) ||
-	    ((flags & _UC_M68K_UC_USER) == 0 &&
-	     (format > FMTB || (sz = exframesize[format]) < 0)))
+	     (gr[_REG_PS] & (PSL_MBZ|PSL_IPL|PSL_S)) != 0))
 		return (EINVAL);
 
 	/* Restore exception frame information if necessary. */
 	if ((flags & _UC_M68K_UC_USER) == 0 && format >= FMT4) {
+		if (format > FMTB)
+			return (EINVAL);
+		sz = exframesize[format];
+		if (sz < 0)
+			return (EINVAL);
+
 		if (frame->f_stackadj == 0) {
 			reenter_syscall(frame, sz);
 			/* NOTREACHED */
