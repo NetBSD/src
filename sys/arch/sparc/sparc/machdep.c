@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1995/04/25 21:57:10 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.44 1995/05/16 16:06:48 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -518,18 +518,6 @@ sendsig(catcher, sig, mask, code)
 		printf("sendsig: about to return to catcher\n");
 #endif
 }
-
-#ifdef COMPAT_SUNOS
-sunos_sigreturn(p, uap, retval)
-	register struct proc *p;
-	struct sunos_sigreturn_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap;
-	register_t *retval;
-{
-	return sigreturn(p, (struct sigreturn_args *) uap, retval);
-}
-#endif
 
 /*
  * System call to cleanup state after a signal
