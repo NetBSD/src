@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.7 1996/09/17 01:32:26 jonathan Exp $	*/
+/*	$NetBSD: modf.S,v 1.8 1997/08/19 20:49:47 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1995
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)modf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: modf.S,v 1.7 1996/09/17 01:32:26 jonathan Exp $")
+	ASMSTR("$NetBSD: modf.S,v 1.8 1997/08/19 20:49:47 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -53,6 +53,11 @@
  * returns: xxx and n (in *iptr) where val == n.xxx
  */
 LEAF(modf)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
 	cfc1	t0, $31			# get the control register
 	li.d	$f2, 4503599627370496e0 # f2 <- 2^52
 
