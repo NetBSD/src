@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.8 2000/07/10 09:55:36 ragge Exp $ */
+/*	$NetBSD: start.s,v 1.9 2000/07/13 03:17:21 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,7 +43,8 @@
 #include "../include/mtpr.h"
 #include "../include/asm.h"		
 
-_start: .globl _start		# this is the symbolic name for the start
+_C_LABEL(start):
+	.globl _C_LABEL(start)	# this is the symbolic name for the start
 				# of code to be relocated. We can use this
 				# to get the actual/real adress (pc-rel)
 				# or to get the relocated address (abs).
@@ -61,7 +62,7 @@ _start: .globl _start		# this is the symbolic name for the start
 	brb	from_0x08	# skip ...
 
 .org	0x0C			# 11/750  & 8200 starts here
-	movzbl	$1,_from	# We booted from "old" rom.
+	movzbl	$1,_C_LABEL(from)# We booted from "old" rom.
 	brw	cont_750
 
 
@@ -69,7 +70,7 @@ from_0x00:			# uVAX from TK50
 	brw	start_uvax	# all uVAXen continue there
 
 from_0x08:			# Any machine from VMB
-	movzbl	$4,_from	# Booted from full VMB
+	movzbl	$4,_C_LABEL(from)		# Booted from full VMB
 	brw	start_vmb
 
 # the complete area reserved for label
@@ -120,8 +121,9 @@ start_vmb:
 
 
 	.align	2
-	.globl	_from
-_from:	.long	0
+	.globl	_C_LABEL(from)
+_C_LABEL(from):
+	.long	0
 
 /*
  * After bootblock (LBN0) has been loaded into the first page 
@@ -144,10 +146,10 @@ _from:	.long	0
  * cont_750 reads in LBN1-15 for further execution.
  */
 cont_750:
-	movl	$_start, sp	# move stack to avoid clobbering the code
+	movl	$_C_LABEL(start), sp	# move stack to avoid clobbering the code
 	pushr	$0x131		# save clobbered registers
 	clrl	r4		# r4 == # of blocks transferred
-	movab	_start,r5	# r5 have base address for next transfer
+	movab	_C_LABEL(start),r5	# r5 have base address for next transfer
 	pushl	r5		# ...on stack also (Why?)
 1:	incl	r4		# increment block count
 	movl	r4,r8		# LBN is in r8 for rom routine
@@ -169,7 +171,7 @@ cont_750:
 	.org	0x200		# uVAX booted from disk starts here
 
 start_uvax:
-	movzbl	$2,_from	# Booted from subset-VMB
+	movzbl	$2,_C_LABEL(from)	# Booted from subset-VMB
 	brb	start_all
 
 /*
@@ -177,29 +179,31 @@ start_uvax:
  * to RELOC and loads boot.
  */
 start_all:
-	movl	$_start, sp		# move stack to a better 
+	movl	$_C_LABEL(start), sp	# move stack to a better 
 	pushr	$0x1fff			# save all regs, used later.
 
-	subl3	$_start, $_edata, r0	# get size of text+data (w/o bss)
-	moval	_start, r1		# get actual base-address of code
-	subl3	$_start, $_end, r2	# get complete size (incl. bss)
-	movl	$_start, r3		# get relocated base-address of code
+	subl3	$_C_LABEL(start), $_C_LABEL(edata), r0
+					# get size of text+data (w/o bss)
+	moval	_C_LABEL(start), r1	# get actual base-address of code
+	subl3	$_C_LABEL(start), $_C_LABEL(end), r2
+					# get complete size (incl. bss)
+	movl	$_C_LABEL(start), r3	# get relocated base-address of code
 	movc5	r0, (r1), $0, r2, (r3)	# copy code to new location
 	
 	movpsl	-(sp)
 	movl	$relocated, -(sp)	# return-address on top of stack 
 	rei				# can be replaced with new address
 relocated:				# now relocation is done !!!
-	movl	sp, _bootregs
-	calls	$0, _Xmain		# call Xmain (gcc workaround)which is 
+	movl	sp, _C_LABEL(bootregs)
+	calls	$0, _C_LABEL(Xmain)	# call Xmain (gcc workaround)which is 
 	halt				# not intended to return ...
 
 /*
  * hoppabort() is called when jumping to the newly loaded program.
  */
 ENTRY(hoppabort, 0)
-	movl	4(ap),r6
-	movl	_rpb,r11
+	movl    4(ap),r6
+	movl	_C_LABEL(rpb),r11
 	mnegl	$1,ap		# Hack to figure out boot device.
 	jmp	2(r6)
 #	calls	$0,(r6)
