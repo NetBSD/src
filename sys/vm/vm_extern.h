@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.21 1996/11/06 19:33:42 cgd Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.21.2.1 1996/12/07 12:09:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,7 +93,13 @@ int		 swfree __P((struct proc *, int));
 void		 swstrategy __P((struct buf *));
 void		 thread_block __P((void));
 void		 thread_sleep __P((void *, simple_lock_t, boolean_t));
-void		 thread_wakeup __P((void *));
+/*
+ * This define replaces the thread_wakeup prototype, as thread_wakeup
+ * was solely a wrapper around wakeup.
+ *
+ * void           thread_wakeup __P((void *));
+ */
+#define		 thread_wakeup wakeup
 int		 useracc __P((caddr_t, int, int));
 int		 vm_allocate __P((vm_map_t, vm_offset_t *, vm_size_t,
 				  boolean_t));

@@ -1,7 +1,0 @@
-#	$NetBSD: Makefile.main,v 1.1.1.1 1996/08/09 10:14:59 thorpej Exp $
-
-SUBDIR=	
-
-passwd group hosts networks rpc services protocols netid: _SUBDIRUSE
-
-.include <bsd.subdir.mk>

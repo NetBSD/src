@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.20 1996/10/12 21:50:09 christos Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.20.2.1 1996/12/07 12:10:00 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -70,6 +70,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>

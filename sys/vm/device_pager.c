@@ -1,4 +1,4 @@
-/*	$NetBSD: device_pager.c,v 1.23 1996/10/12 21:50:05 christos Exp $	*/
+/*	$NetBSD: device_pager.c,v 1.23.2.1 1996/12/07 12:09:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -49,6 +49,7 @@
 #include <sys/conf.h>
 #include <sys/mman.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>

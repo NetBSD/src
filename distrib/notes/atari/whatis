@@ -1,4 +1,0 @@
-The Atari release stepped in in March 1995. The first official release was
-NetBSD1.1. The NetBSD1.2 release is yet another step along the NetBSD-road!
-It fixes a huge number of bugs in the handling of the serial-port, video,
-Falcon-SCSI and others. Also, finally a parallel printer is supported.
