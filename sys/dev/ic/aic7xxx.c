@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.34 1998/12/09 08:47:18 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.35 1999/02/19 20:58:51 leo Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -119,6 +119,7 @@
 #include <sys/systm.h>
 #if defined(__NetBSD__)
 #include <sys/device.h>
+#include <machine/bswap.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 #endif /* defined(__NetBSD__) */
