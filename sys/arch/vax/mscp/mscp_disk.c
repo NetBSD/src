@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.12 1997/06/07 12:11:38 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.13 1997/06/24 01:12:40 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -957,5 +957,6 @@ rasize(dev)
 		if (ra_putonline(ra) == MSCP_FAILED)
                         return -1;
 
-	return ra->ra_disk.dk_label->d_partitions[rapart(dev)].p_size;
+	return ra->ra_disk.dk_label->d_partitions[rapart(dev)].p_size *
+	    (ra->ra_disk.dk_label->d_secsize / DEV_BSIZE);
 }

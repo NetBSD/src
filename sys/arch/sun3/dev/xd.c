@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.13 1997/06/18 20:45:03 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.14 1997/06/24 00:58:14 thorpej Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.13 1997/06/18 20:45:03 pk Exp $
+ * id: $NetBSD: xd.c,v 1.14 1997/06/24 00:58:14 thorpej Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -993,7 +993,8 @@ xdsize(dev)
 	if (xdsc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;	/* only give valid size for swap partitions */
 	else
-		size = xdsc->sc_dk.dk_label->d_partitions[part].p_size;
+		size = xdsc->sc_dk.dk_label->d_partitions[part].p_size *
+		    (xdsc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	if (omask == 0 && xdclose(dev, 0, S_IFBLK) != 0)
 		return (-1);
 	return (size);
