@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.1 2001/07/13 21:53:40 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.2 2001/07/31 00:07:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-	
+
 #define GETC \
 	movl	%gs,	%eax	; \
 	movl	%eax,  36(%ecx) ; \
@@ -89,8 +89,8 @@
 	pop	%ds		; \
 	lret
 
-		
-		
+
+
 ENTRY(_getcontext_u)
 	movl	4(%esp), %ecx
 	movl	0(%esp), %edx
@@ -100,11 +100,11 @@ ENTRY(_getcontext_u)
 	movl	%eax, 104(%ecx)
 	xorl	%eax,  %eax
 	ret
-	
+
 ENTRY(_setcontext_u)					
 	movl	4(%esp), %ecx
 	SETC
-	
+
 ENTRY(_swapcontext_u)
 	movl	4(%esp), %ecx
 	movl	0(%esp), %edx
@@ -114,4 +114,3 @@ ENTRY(_swapcontext_u)
 	movl	%eax, 104(%ecx)
 	movl	8(%esp), %ecx
 	SETC
-
