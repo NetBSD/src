@@ -2,7 +2,7 @@
 # DECstation (3100 or 5000/xxx)
 #
 #	Generic config.new configuration for NetBSD/pmax
-# 	$NetBSD: NEWCONF,v 1.2 1995/08/04 01:24:39 jonathan Exp $
+# 	$NetBSD: NEWCONF,v 1.3 1995/08/18 10:09:20 jonathan Exp $
 #
 include		"std.pmax"
 
@@ -84,32 +84,32 @@ tc*		at	mainbus0	# All but PMAXes have a turbochannel
 # Common configuration for machines with IO ASIC chips                 #
 # (3MIN, MAXINE, 3MAXPLUS)                                             #
 ########################################################################
-asic0		at	tc?
-clock0	at asic? 			# RTC
-asc0	at asic?			# system SCSI subslot
-scc0	at asic?
-le0	at asic?			# tc onboard lance
-scc1	at asic?			# Not present on Maxine
+ioasic0		at	tc?
+clock0	at ioasic? 			# RTC
+asc0	at ioasic?			# system SCSI subslot
+scc0	at ioasic?
+le0	at ioasic?			# tc onboard lance
+scc1	at ioasic?			# Not present on Maxine
 
 ########################################################################
 # MAXINE-only baseboard devices and on-baseboard "options"             #
 ########################################################################
 xcfb0	at tc?				# TC framebuffer "option"
-dtop0	at asic0
-#isdn	at asic0
-#fdc    at asic0			# floppy disk
+dtop0	at ioasic0
+#isdn	at ioasic0
+#fdc    at ioasic0			# floppy disk
 
 
 ########################################################################
-# Configuration for 3MAX (5000/200) which has turbochannel but no ASIC #
+# Configuration for 3MAX (5000/200) which has turbochannel but no ASIC.#
 # 3MAX (5000/200) baseboard devices and on-baseboard "options"         #
 ########################################################################
 clock0	at mainbus0  			# RTC
 dc0	at mainbus0
 le0	at tc? #slot ?  offset ?	# TC ether "option" on baseboard
 asc0	at tc?				# TC scsi  "option" on baseboard
-# For now, pretend this machine has an ASIC.
-dc0	at asic?			# dc7083 four-port DZ device
+# For now, pretend this machine has an IOASIC.
+dc0	at ioasic?			# dc7083 four-port DZ device
 
 ########################################################################
 #  Supported turbochannel option cards			               #
@@ -118,8 +118,8 @@ cfb0	at tc?
 mfb0	at tc?
 #sfb0	at tc?
 #sfb1	at tc?
-le1	at tc? #slot ?  offset ?		# TC ether option
-tt0	at tc? #slot? offset ?
+le*	at tc? #slot ?  offset ?		# TC ether option
+#tt0	at tc? #slot? offset ?
 
 
 ########################################################################
