@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.2 1998/01/09 08:08:52 perry Exp $	*/
+/*	$NetBSD: vs_refresh.c,v 1.3 1999/07/08 06:09:04 dean Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -728,6 +728,15 @@ vs_modeline(sp)
 	size_t cols, curcol, curlen, endpoint, len, midpoint;
 	const char *t;
 	char *p, buf[20];
+
+	/*
+	 * It's possible that this routine will be called after sp->frp
+	 * has been set to NULL by file_end().  We return immediately
+	 * to avoid a SEGV.
+	 */
+
+	if (sp->frp == NULL)
+		return;
 
 	gp = sp->gp;
 
