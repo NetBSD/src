@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.5 2003/07/15 00:24:59 lukem Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.6 2003/09/06 11:21:44 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -39,7 +39,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.5 2003/07/15 00:24:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.6 2003/09/06 11:21:44 rearnsha Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -361,14 +361,21 @@ delay(u_int n)
 	if (clock_started) {
 		u_int starttime;
 		u_int curtime;
+		u_int delta = 0;
+		u_int count_max = clock_sc->sc_clock_count;
 
 		starttime = getclock();
 
 		n *= IFPGA_TIMER1_FREQ / 1000000;
 
 		do {
+			n -= delta;
 			curtime = getclock();
-		} while (n > (curtime - starttime));
+			delta = curtime - starttime;
+			if (curtime < starttime)
+				delta += count_max;
+			starttime = curtime;
+		} while (n > delta);
 	} else {
 		volatile u_int i;
 
