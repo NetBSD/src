@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.4 2001/11/24 16:22:54 minoura Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.5 2003/04/09 12:57:14 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -214,7 +214,7 @@ load_file_ino(ino, fn, addr, header)
 	unsigned int addr;
 	struct exec *header;
 {
-	struct dinode dinode;
+	union ufs_dinode dinode;
 
 	/* look-up the file */
 	if (ino == 0 || ufs_get_inode(ino, &dinode)) {

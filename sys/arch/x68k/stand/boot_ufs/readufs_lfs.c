@@ -1,26 +1,28 @@
-/*	from Id: readufs_lfs.c,v 1.5 2002/01/26 16:26:44 itohy Exp 	*/
+/*	$NetBSD: readufs_lfs.c,v 1.4 2003/04/09 12:57:14 itohy Exp $	*/
+/*	from Id: readufs_lfs.c,v 1.6 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
  * FS specific support for 4.4BSD Log-structured Filesystem
  *
- * Written by ITOH, Yasufumi (itohy@netbsd.org).
+ * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@netbsd.org).
  * Public domain.
  *
  * Intended to be used for boot programs (first stage).
  * DON'T ADD ANY FANCY FEATURE.  THIS SHALL BE COMPACT.
  */
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/mount.h>
-#include <ufs/ufs/dinode.h>
-#include <ufs/lfs/lfs.h>
-
 #include "readufs.h"
 
-static int get_lfs_inode __P((ino_t ino, struct dinode *dibuf));
+#include <sys/mount.h>
+#include <ufs/lfs/lfs.h>
 
-static struct dinode	ifile_dinode;
+#ifndef USE_UFS1
+ #error LFS currently requires USE_UFS1
+#endif
+
+static int get_lfs_inode __P((ino_t ino, union ufs_dinode *dibuf));
+
+static struct ufs1_dinode	ifile_dinode;
 
 #define fsi	(*ufsinfo)
 #define fsi_lfs	fsi.fs_u.u_lfs
@@ -35,7 +37,7 @@ try_lfs()
 	struct ufs_info	*ufsinfo = &ufs_info;
 	struct dlfs	sblk, sblk2;
 	struct dlfs	*s = &sblk;
-	daddr_t	sbpos;
+	daddr_t		sbpos;
 	int		fsbshift;
 
 #ifdef DEBUG_WITH_STDIO
@@ -46,7 +48,7 @@ try_lfs()
 	/* read primary superblock */
 	for (;;) {
 #ifdef DEBUG_WITH_STDIO
-		printf("LFS: reading primary sblk at: 0x%x\n", sbpos);
+		printf("LFS: reading primary sblk at: 0x%x\n", (unsigned)sbpos);
 #endif
 		RAW_READ(&sblk, sbpos, sizeof sblk);
 
@@ -94,7 +96,8 @@ try_lfs()
 		    sblk.dlfs_sboffs[1] << fsbshift);
 #endif
 		/* read secondary superblock */
-		RAW_READ(&sblk2, sblk.dlfs_sboffs[1] << fsbshift, sizeof sblk2);
+		RAW_READ(&sblk2, (daddr_t) sblk.dlfs_sboffs[1] << fsbshift,
+		    sizeof sblk2);
 
 #ifdef DEBUG_WITH_STDIO
 		printf("LFS: sblk2: magic: 0x%x, version: %d\n",
@@ -140,7 +143,7 @@ try_lfs()
 	fsi_lfs.ioffset = s->dlfs_cleansz + s->dlfs_segtabsz;
 
 	/* ifile is always used to look-up other inodes, so keep its inode. */
-	if (get_lfs_inode(LFS_IFILE_INUM, &ifile_dinode))
+	if (get_lfs_inode(LFS_IFILE_INUM, (union ufs_dinode *)&ifile_dinode))
 		return 1;	/* OOPS, failed to find inode of ifile! */
 
 	fsi.fstype = UFSTYPE_LFS;
@@ -154,12 +157,12 @@ try_lfs()
 static int
 get_lfs_inode(ino, dibuf)
 	ino_t ino;
-	struct dinode *dibuf;
+	union ufs_dinode *dibuf;
 {
 	struct ufs_info *ufsinfo = &ufs_info;
 	daddr_t daddr;
 	char *buf = alloca(fsi.bsize);
-	struct dinode *di, *diend;
+	struct ufs1_dinode *di, *diend;
 	int i;
 
 	/* Get fs block which contains the specified inode. */
@@ -170,7 +173,7 @@ get_lfs_inode(ino, dibuf)
 		printf("LFS: ino: %d\nifpb: %d, bsize: %d\n",
 			ino, fsi_lfs.ifpb, fsi.bsize);
 #endif
-		ufs_read(&ifile_dinode, buf, 
+		ufs_read((union ufs_dinode *) &ifile_dinode, buf, 
 			 ino / fsi_lfs.ifpb + fsi_lfs.ioffset,
 			 fsi.bsize);
 		i = ino % fsi_lfs.ifpb;
@@ -179,7 +182,7 @@ get_lfs_inode(ino, dibuf)
 		    : ((IFILE *) buf + i)->if_daddr;
 	}
 #ifdef DEBUG_WITH_STDIO
-	printf("LFS(%d): daddr: %lld\n", ino, (long long)daddr);
+	printf("LFS(%d): daddr: %d\n", ino, (int) daddr);
 #endif
 
 	if (daddr == LFS_UNUSED_DADDR)
@@ -195,7 +198,7 @@ get_lfs_inode(ino, dibuf)
 	);
 
 	/* Search for the inode. */
-	di = (struct dinode *) buf;
+	di = (struct ufs1_dinode *) buf;
 	diend = di + fsi_lfs.inopb;
 
 	for ( ; di < diend; di++)
@@ -208,10 +211,18 @@ found:
 #ifdef DEBUG_WITH_STDIO
 	printf("LFS: dinode(%d): mode 0%o, nlink %d, inumber %d, size %d, uid %d, gid %d, db[0] %d\n",
 		ino, di->di_mode, di->di_nlink, di->di_inumber,
-		(int)di->di_size, di->di_uid, di->di_gid, di->di_db[0]);
+		(int) di->di_size, di->di_uid, di->di_gid, di->di_db[0]);
 #endif
 
-	*dibuf = *di;
+#if 0	/* currently UFS1 only */
+#if defined(USE_UFS1) && defined(USE_UFS2)
+	/* XXX for DI_SIZE() macro */
+	if (ufsinfo->ufstype != UFSTYPE_UFS1)
+		di->di1.di_size = di->si2.di_size;
+#endif
+#endif
+
+	dibuf->di1 = *di;
 
 	return 0;
 }
