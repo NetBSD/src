@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.36 1994/07/31 19:21:40 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.37 1994/08/03 09:17:12 mycroft Exp $
  */
 
 /*
@@ -606,7 +606,7 @@ uhaprobe(parent, self, aux)
 		ia->ia_drq = uha->uha_dma;
 
 	ia->ia_msize = 0;
-	ia->ia_iosize = 4;
+	ia->ia_iosize = 16;
 	return 1;
 }
 
