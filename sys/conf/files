@@ -1,10 +1,13 @@
-#	$NetBSD: files,v 1.128 1997/07/22 23:33:33 pk Exp $
+#	$NetBSD: files,v 1.129 1997/07/28 22:31:08 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 # options understood by the machine-independent part of the kernel
 # (note, these are case-sensitive)
 defopt	KMEMSTATS
+defopt	TCP_RECVSPACE
+defopt	TCP_SENDSPACE
+
 
 # generic attributes
 define	disk

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.25 1997/07/28 22:18:48 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.26 1997/07/28 22:31:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -67,6 +67,9 @@
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
+
+#include "opt_tcp_recvspace.h"
+#include "opt_tcp_sendspace.h"
 
 /*
  * TCP protocol interface to socket abstraction.
