@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.17 2001/03/12 23:22:37 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.18 2001/03/12 23:27:53 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -187,8 +187,7 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	 */
 	val = OHCI_CSR_READ(sc, OHCI_REG_BusOptions);
 	sc->sc_sc1394.sc1394_link_speed =
-	    (val & OHCI_BusOptions_LinkSpd_MASK)
-		>> OHCI_BusOptions_LinkSpd_BITPOS;
+	    OHCI_BITVAL(val, OHCI_BusOptions_LinkSpd);
 	if (sc->sc_sc1394.sc1394_link_speed < IEEE1394_SPD_MAX) {
 		printf(", %s", ieee1394_speeds[sc->sc_sc1394.sc1394_link_speed]);
 	} else {
@@ -198,8 +197,7 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	/* MaxRec is encoded as log2(max_rec_octets)-1
 	 */
 	sc->sc_sc1394.sc1394_max_receive =
-	    1 << (((val & OHCI_BusOptions_MaxRec_MASK)
-		       >> OHCI_BusOptions_MaxRec_BITPOS) + 1);
+	    1 << (OHCI_BITVAL(val, OHCI_BusOptions_MaxRec) + 1);
 	printf(", %u max_rec", sc->sc_sc1394.sc1394_max_receive);
 
 	/*
@@ -1819,8 +1817,7 @@ fwohci_guidrom_init(struct fwohci_softc *sc)
 			if (!(val1 & OHCI_Guid_AddrReset))
 				break;
 		}
-		off = ((val1 & OHCI_Guid_MiniROM_MASK)
-		    >> OHCI_Guid_MiniROM_BITPOS) + 4;
+		off = OHCI_BITVAL(val1, OHCI_Guid_MiniROM) + 4;
 		val2 = 0;
 		for (n = 0; n < off + sizeof(sc->sc_sc1394.sc1394_guid); n++) {
 			OHCI_CSR_WRITE(sc, OHCI_REG_Guid_Rom,
@@ -1832,8 +1829,7 @@ fwohci_guidrom_init(struct fwohci_softc *sc)
 			}
 			if (n < off)
 				continue;
-			val1 = (val1 & OHCI_Guid_RdData_MASK)
-				>> OHCI_Guid_RdData_BITPOS;
+			val1 = OHCI_BITVAL(val1, OHCI_Guid_RdData);
 			sc->sc_sc1394.sc1394_guid[n - off] = val1;
 			val2 |= val1;
 		}
@@ -2063,17 +2059,18 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 		printf("%s: SelfID Error\n", sc->sc_sc1394.sc1394_dev.dv_xname);
 		return -1;
 	}
-	count = (val & OHCI_SelfID_Size_MASK) >> OHCI_SelfID_Size_BITPOS;
-	gen = (val & OHCI_SelfID_Gen_MASK) >> OHCI_SelfID_Gen_BITPOS;
+	count = OHCI_BITVAL(val, OHCI_SelfID_Size);
+	gen = OHCI_BITVAL(val, OHCI_SelfID_Gen);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_buf_selfid.fb_dmamap,
 	    0, count << 2, BUS_DMASYNC_POSTREAD);
 
 	buf = (u_int32_t *)sc->sc_buf_selfid.fb_buf;
-	if ((val & OHCI_SelfID_Gen_MASK) != (buf[0] & OHCI_SelfID_Gen_MASK)) {
+	if (OHCI_BITVAL(val, OHCI_SelfID_Gen) !=
+	    OHCI_BITVAL(buf[0], OHCI_SelfID_Gen)) {
 		printf("%s: SelfID Gen mismatch (%d, %d)\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname, gen,
-		    (buf[0] & OHCI_SelfID_Gen_MASK) >> OHCI_SelfID_Gen_BITPOS);
+		    OHCI_BITVAL(buf[0], OHCI_SelfID_Gen));
 		return -1;
 	}
 
