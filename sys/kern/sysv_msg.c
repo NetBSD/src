@@ -16,7 +16,7 @@
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
  *
- *	$Id: sysv_msg.c,v 1.4 1994/02/13 11:32:46 mycroft Exp $
+ *	$Id: sysv_msg.c,v 1.5 1994/02/15 13:35:53 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -125,7 +125,7 @@ msg_freehdr(msghdr)
 		next = msgmaps[msghdr->msg_spot].next;
 		msgmaps[msghdr->msg_spot].next = free_msgmaps;
 		free_msgmaps = msghdr->msg_spot;
-		nfree_msgmaps += 1;
+		nfree_msgmaps++;
 		msghdr->msg_spot = next;
 		if (msghdr->msg_ts >= msginfo.msgssz)
 			msghdr->msg_ts -= msginfo.msgssz;
@@ -193,9 +193,6 @@ msgctl(p, uap, retval)
 	switch (cmd) {
 
 	case IPC_RMID:
-#ifdef MSG_DEBUG_OK
-		printf("IPC_RMID\n");
-#endif
 	{
 		struct msg *msghdr;
 
@@ -211,7 +208,7 @@ msgctl(p, uap, retval)
 
 			/* Free the segments of each message */
 			msqptr->msg_cbytes -= msghdr->msg_ts;
-			msqptr->msg_qnum -= 1;
+			msqptr->msg_qnum--;
 			msghdr_tmp = msghdr;
 			msghdr = msghdr->msg_next;
 			msg_freehdr(msghdr_tmp);
@@ -230,9 +227,6 @@ msgctl(p, uap, retval)
 		break;
 
 	case IPC_SET:
-#ifdef MSG_DEBUG_OK
-		printf("IPC_SET\n");
-#endif
 		if (cred->cr_uid != 0 &&
 		    msqptr->msg_perm.cuid != cred->cr_uid &&
 		    msqptr->msg_perm.uid != cred->cr_uid)
@@ -263,16 +257,12 @@ msgctl(p, uap, retval)
 		break;
 
 	case IPC_STAT:
-#ifdef MSG_DEBUG_OK
-		printf("IPC_STAT\n");
-#endif
 		if ((eval = ipcaccess(&msqptr->msg_perm, IPC_R, cred))) {
 #ifdef MSG_DEBUG_OK
 			printf("requester doesn't have read access\n");
 #endif
 			return(eval);
 		}
-		rval = 0;
 		eval = copyout((caddr_t)msqptr, user_msqptr,
 		    sizeof(struct msqid_ds));
 		break;
@@ -286,7 +276,6 @@ msgctl(p, uap, retval)
 
 	if (eval == 0)
 		*retval = rval;
-
 	return(eval);
 }
 
@@ -311,13 +300,8 @@ msgget(p, uap, retval)
 	printf("msgget(0x%x, 0%o)\n", key, msgflg);
 #endif
 
-	if (key == IPC_PRIVATE) {
-#ifdef MSG_DEBUG_OK
-		printf("private key\n");
-#endif
-		msqid = msginfo.msgmni;
-	} else {
-		for (msqid = 0; msqid < msginfo.msgmni; msqid += 1) {
+	if (key != IPC_PRIVATE) {
+		for (msqid = 0; msqid < msginfo.msgmni; msqid++) {
 			msqptr = &msqids[msqid];
 			if (msqptr->msg_qbytes != 0 &&
 			    msqptr->msg_perm.key == key)
@@ -341,67 +325,61 @@ msgget(p, uap, retval)
 #endif
 				return(eval);
 			}
-		} else {
-#ifdef MSG_DEBUG_OK
-			printf("didn't find public key\n");
-#endif
+			goto found;
 		}
 	}
 
-	if (msqid == msginfo.msgmni) {
 #ifdef MSG_DEBUG_OK
-		printf("need to allocate the msqid_ds\n");
+	printf("need to allocate the msqid_ds\n");
 #endif
-		if (key == IPC_PRIVATE || (msgflg & IPC_CREAT)) {
-			for (msqid = 0; msqid < msginfo.msgmni; msqid += 1) {
-				/*
-				 * Look for an unallocated and unlocked
-				 * msqid_ds.  msqid_ds's can be locked by
-				 * msgsnd or msgrcv while they are copying the
-				 * message in/out.  We can't re-use the entry
-				 * until they release it.
-				 */
-
-				msqptr = &msqids[msqid];
-				if (msqptr->msg_qbytes == 0 &&
-				    (msqptr->msg_perm.mode & MSG_LOCKED) == 0)
-					break;
-			}
-			if (msqid == msginfo.msgmni) {
-#ifdef MSG_DEBUG_OK
-				printf("no more msqid_ds's available\n");
-#endif
-				return(ENOSPC);	
-			}
-#ifdef MSG_DEBUG_OK
-			printf("msqid %d is available\n", msqid+1);
-#endif
-			msqptr->msg_perm.key = key;
-			msqptr->msg_perm.cuid = cred->cr_uid;
-			msqptr->msg_perm.uid = cred->cr_uid;
-			msqptr->msg_perm.cgid = cred->cr_gid;
-			msqptr->msg_perm.gid = cred->cr_gid;
-			msqptr->msg_perm.mode = (msgflg & 0777);
-			/* Make sure that the returned msqid is unique */
-			msqptr->msg_perm.seq += 1;
-			msqptr->msg_first = NULL;
-			msqptr->msg_last = NULL;
-			msqptr->msg_cbytes = 0;
-			msqptr->msg_qnum = 0;
-			msqptr->msg_qbytes = msginfo.msgmnb;
-			msqptr->msg_lspid = 0;
-			msqptr->msg_lrpid = 0;
-			msqptr->msg_stime = 0;
-			msqptr->msg_rtime = 0;
-			msqptr->msg_ctime = time.tv_sec;
-		} else {
-#ifdef MSG_DEBUG_OK
-			printf("didn't find it and wasn't asked to create it\n");
-#endif
-			return(ENOENT);
+	if (key == IPC_PRIVATE || (msgflg & IPC_CREAT)) {
+		for (msqid = 0; msqid < msginfo.msgmni; msqid++) {
+			/*
+			 * Look for an unallocated and unlocked msqid_ds.
+			 * msqid_ds's can be locked by msgsnd or msgrcv while
+			 * they are copying the message in/out.  We can't
+			 * re-use the entry until they release it.
+			 */
+			msqptr = &msqids[msqid];
+			if (msqptr->msg_qbytes == 0 &&
+			    (msqptr->msg_perm.mode & MSG_LOCKED) == 0)
+				break;
 		}
+		if (msqid == msginfo.msgmni) {
+#ifdef MSG_DEBUG_OK
+			printf("no more msqid_ds's available\n");
+#endif
+			return(ENOSPC);	
+		}
+#ifdef MSG_DEBUG_OK
+		printf("msqid %d is available\n", msqid);
+#endif
+		msqptr->msg_perm.key = key;
+		msqptr->msg_perm.cuid = cred->cr_uid;
+		msqptr->msg_perm.uid = cred->cr_uid;
+		msqptr->msg_perm.cgid = cred->cr_gid;
+		msqptr->msg_perm.gid = cred->cr_gid;
+		msqptr->msg_perm.mode = (msgflg & 0777);
+		/* Make sure that the returned msqid is unique */
+		msqptr->msg_perm.seq++;
+		msqptr->msg_first = NULL;
+		msqptr->msg_last = NULL;
+		msqptr->msg_cbytes = 0;
+		msqptr->msg_qnum = 0;
+		msqptr->msg_qbytes = msginfo.msgmnb;
+		msqptr->msg_lspid = 0;
+		msqptr->msg_lrpid = 0;
+		msqptr->msg_stime = 0;
+		msqptr->msg_rtime = 0;
+		msqptr->msg_ctime = time.tv_sec;
+	} else {
+#ifdef MSG_DEBUG_OK
+		printf("didn't find it and wasn't asked to create it\n");
+#endif
+		return(ENOENT);
 	}
 
+found:
 	/* Construct the unique msqid */
 	*retval = IXSEQ_TO_IPCID(msqid, msqptr->msg_perm);
 	return(0);
@@ -628,10 +606,10 @@ msgsnd(p, uap, retval)
 		printf("allocating segment %d to message\n", next);
 #endif
 		free_msgmaps = msgmaps[next].next;
-		nfree_msgmaps -= 1;
+		nfree_msgmaps--;
 		msgmaps[next].next = msghdr->msg_spot;
 		msghdr->msg_spot = next;
-		segs_needed -= 1;
+		segs_needed--;
 	}
 
 	/*
@@ -732,7 +710,7 @@ msgsnd(p, uap, retval)
 	msqptr->msg_last->msg_next = NULL;
 
 	msqptr->msg_cbytes += msghdr->msg_ts;
-	msqptr->msg_qnum += 1;
+	msqptr->msg_qnum++;
 	msqptr->msg_lspid = p->p_pid;
 	msqptr->msg_stime = time.tv_sec;
 
@@ -960,7 +938,7 @@ msgrcv(p, uap, retval)
 	 */
 
 	msqptr->msg_cbytes -= msghdr->msg_ts;
-	msqptr->msg_qnum -= 1;
+	msqptr->msg_qnum--;
 	msqptr->msg_lrpid = p->p_pid;
 	msqptr->msg_rtime = time.tv_sec;
 
