@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.106 2004/05/23 08:08:48 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.107 2004/05/24 19:08:07 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.106 2004/05/23 08:08:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.107 2004/05/24 19:08:07 jonathan Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -443,9 +443,14 @@ nfs_send(so, nam, top, rep, p)
 	/* XXX nfs_doio()/nfs_request() calls with  rep->r_procp == NULL */
 	if (p == NULL && rep->r_procp == NULL) {
 #ifdef DIAGNOSTIC
-		printf("nfs_send: proc botch: rep %p arg %p curproc %p\n",
-		       rep->r_procp, p, curproc );
-#endif
+		static int warned = 0;
+		if (!warned) {
+			printf("nfs_send: proc botch: "
+			       "rep %p arg %p curproc %p\n",
+			       rep->r_procp, p, curproc);
+			warned = 1;
+		}
+#endif	/* DIAGNOSTIC */
 		p = curproc;
 	}
 
