@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.188 2004/03/21 18:41:38 cl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.189 2004/03/26 17:13:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.188 2004/03/21 18:41:38 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.189 2004/03/26 17:13:37 drochner Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -301,11 +301,6 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 	if (nsa) {
 		if (nsa->sa_flags & ~SA_ALLBITS)
 			return (EINVAL);
-
-#ifndef __HAVE_SIGINFO
-		if (nsa->sa_flags & SA_SIGINFO)
-			return (EINVAL);
-#endif
 
 		prop = sigprop[signum];
 		if (prop & SA_CANTMASK)
@@ -869,21 +864,6 @@ kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
  * If it will be caught immediately, deliver it with correct code.
  * Otherwise, post it normally.
  */
-#ifndef __HAVE_SIGINFO
-void _trapsignal(struct lwp *, const ksiginfo_t *);
-void
-trapsignal(struct lwp *l, int signum, u_long code)
-{
-#define trapsignal _trapsignal
-	ksiginfo_t ksi;
-
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = signum;
-	ksi.ksi_trap = (int)code;
-	trapsignal(l, &ksi);
-}
-#endif
-
 void
 trapsignal(struct lwp *l, const ksiginfo_t *ksi)
 {
@@ -1365,11 +1345,7 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 		return;
 	}
 
-#ifdef __HAVE_SIGINFO
 	(*p->p_emul->e_sendsig)(ksi, mask);
-#else
-	(*p->p_emul->e_sendsig)(ksi->ksi_signo, mask, KSI_TRAPCODE(ksi));
-#endif
 }
 
 static __inline int firstsig(const sigset_t *);
