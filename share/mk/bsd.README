@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.153 2004/05/22 16:04:58 lukem Exp $
+#	$NetBSD: bsd.README,v 1.154 2004/05/23 01:45:21 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -699,6 +699,11 @@ SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
 USE_SHLIBDIR	If not "no", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
 		as the path to install shared libraries to.
 		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
+		Default: no
+
+MKPRIVATELIB	If not "no", act as "MKPROFILE=no MKPIC=no MKLINT=no",
+		and don't install the (.a) library.
+		This is useful for "build only" helper libraries.
 		Default: no
 
 LINTLIBDIR	Target directory for lint libraries.
