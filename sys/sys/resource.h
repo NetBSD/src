@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.16 1998/03/01 02:24:14 fvdl Exp $	*/
+/*	$NetBSD: resource.h,v 1.17 1998/05/07 16:24:18 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,6 +37,8 @@
 
 #ifndef _SYS_RESOURCE_H_
 #define	_SYS_RESOURCE_H_
+
+#include <sys/time.h>
 
 /*
  * Process priority specifications to get/setpriority.
