@@ -42,7 +42,7 @@
  *	@(#)cons.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: cons.c,v 1.12 93/07/20 00:49:45 torek Exp 
- * $Id: cons.c,v 1.7 1994/05/05 09:53:37 deraadt Exp $
+ * $Id: cons.c,v 1.8 1994/05/13 20:09:00 deraadt Exp $
  */
 
 /*
@@ -84,7 +84,7 @@ static void cnfbstart __P((struct tty *));
 static void cnfbstop __P((struct tty *, int));
 static void cnfbdma __P((void *));
 
-extern char partab[];
+extern char char_type[];
 
 void
 consinit()
@@ -427,8 +427,8 @@ cnrint()
 		/* XXX this should be done elsewhere, if at all */
 		if (tp->t_cflag & PARENB)
 			if (tp->t_cflag & PARODD ?
-			    (partab[c & 0177] & 0200) == (c & 0200) :
-			    (partab[c & 0177] & 0200) != (c & 0200))
+			    (char_type[c & 0177] & 0200) == (c & 0200) :
+			    (char_type[c & 0177] & 0200) != (c & 0200))
 				c |= TTY_PE;
 		c &= ~0200;
 	}
