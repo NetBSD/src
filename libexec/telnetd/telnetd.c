@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.41 2003/07/15 10:14:54 itojun Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.42 2003/07/22 00:03:26 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.41 2003/07/15 10:14:54 itojun Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.42 2003/07/22 00:03:26 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -909,9 +909,6 @@ telnet(f, p)
 	 * gets carriage return null processing, etc., just like all
 	 * other pty --> client data.
 	 */
-
-	if (getenv("USER"))
-		hostinfo = 0;
 
 	if (getent(defent, gettyname) == 1) {
 		char *cp=defstrs;
