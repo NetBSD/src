@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.3 1997/05/06 13:18:15 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.4 1997/05/06 22:55:30 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -265,12 +265,10 @@ sys_swapon(p, v, retval)
 
 		nsdp = (struct swapdev *)malloc(sizeof *nsdp, M_VMSWAP,
 					        M_WAITOK);
-		if (vp->v_type == VBLK)
-			nsdp->swd_dev = (dev_t)vp->v_rdev;
-
 		nsdp->swd_flags = 0;
 		nsdp->swd_priority = priority;
 		nsdp->swd_vp = vp;
+		nsdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
 		if ((error = swap_on(p, nsdp)) != 0) {
 			free((caddr_t)nsdp, M_VMSWAP);
 			if (nspp)
@@ -545,7 +543,7 @@ swap_alloc(size)
 			/* if it's not enabled, then, we can't swap from it */
 			if ((sdp->swd_flags & SWF_ENABLE) == 0 ||
 			    extent_alloc(sdp->swd_ex, size, EX_NOALIGN,
-			    EX_NOBOUNDARY, 0, &result) != 0) {
+					 EX_NOBOUNDARY, 0, &result) != 0) {
 				/*
 				 * XXX
 				 * do something smart to note this partition
@@ -633,7 +631,7 @@ swap_addmap(sdp, size)
 	u_long result;
 
 	sdp->swd_mapoffset = extent_alloc(swapmap, size, EX_NOALIGN,
-	    EX_NOBOUNDARY, 0, &result);
+					  EX_NOBOUNDARY, 0, &result);
 	/* XXX if we fail we should try another swap partition!!! */
 #ifdef DIAGNOSTIC
 	if (result < 0)
@@ -664,9 +662,6 @@ swwrite(dev, uio, ioflag)
 	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
-/*
- * XXX pk says this causes recursion with spec_strategy() at the moment
- */
 void
 swstrategy(bp)
 	struct buf *bp;
@@ -675,7 +670,7 @@ swstrategy(bp)
 	struct vnode *vp;
 	daddr_t addr;
 
-	addr = bp->b_blkno * DEV_BSIZE;
+	addr = dbtob(bp->b_blkno);
 	sdp = swap_getdevfromaddr(addr);
 
 	VHOLD(sdp->swd_vp);
@@ -689,9 +684,13 @@ swstrategy(bp)
 		}
 		sdp->swd_vp->v_numoutput++;
 	}
+
+	bp->b_blkno = btodb(addr - sdp->swd_mapoffset);
 	if (bp->b_vp != NULL)
 		brelvp(bp);
 	bp->b_vp = sdp->swd_vp;
+	if (bp->b_vp->v_type == VBLK)
+		bp->b_dev = sdp->swd_dev;
 	VOP_STRATEGY(bp);
 }
 
