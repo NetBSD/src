@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/10/19 05:51:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2005/01/10 02:58:59 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -11,7 +11,9 @@ CPPFLAGS+=-DLIBWRAP
 LDADD+=	-lwrap
 DPADD+=	${LIBWRAP}
 
+.if (${USE_INET6} != "no")
 CPPFLAGS.rcmd.c=	-DINET6
+.endif
 
 .PATH:	${NETBSDSRCDIR}/lib/libc/net
 
