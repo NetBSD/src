@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.2 2000/02/08 09:18:02 augustss Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.3 2000/04/06 13:32:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,6 +93,8 @@ struct ucom_attach_args {
 	int portno;
 	int bulkin;
 	int bulkout;
+	u_int ibufsize;
+	u_int obufsize;
 	usbd_device_handle device;
 	usbd_interface_handle iface;
 	struct ucom_methods *methods;

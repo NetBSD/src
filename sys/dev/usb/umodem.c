@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.25 2000/03/27 12:33:57 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.26 2000/04/06 13:32:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,6 +80,14 @@ int	umodemdebug = 0;
 #define DPRINTFN(n, x)
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
+
+/*
+ * These are the maximum number of bytes transferred per frame.
+ * If some really high speed devices should use this driver they
+ * may need to be increased, but this is good enough for normal modems.
+ */
+#define UMODEMIBUFSIZE 64
+#define UMODEMOBUFSIZE 256
 
 struct umodem_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
@@ -266,6 +274,8 @@ USB_ATTACH(umodem)
 
 	uca.portno = UCOM_UNK_PORTNO;
 	/* bulkin, bulkout set above */
+	uca.ibufsize = UMODEMIBUFSIZE;
+	uca.obufsize = UMODEMOBUFSIZE;
 	uca.device = sc->sc_udev;
 	uca.iface = sc->sc_data_iface;
 	uca.methods = &umodem_methods;
