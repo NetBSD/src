@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.22.2.1 2004/12/29 17:53:48 kent Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.22.2.2 2004/12/30 16:02:27 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.22.2.1 2004/12/29 17:53:48 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.22.2.2 2004/12/30 16:02:27 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ DEFINE_FILTER(mulaw_to_linear8)
 	stream_filter_t *this;
 	uint8_t *d;
 	const uint8_t *s;
-	int m, err, enc;
+	int m, err;
 	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
@@ -280,9 +280,7 @@ DEFINE_FILTER(mulaw_to_linear8)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc = auconv_normalize_encoding(dst->param.encoding,
-					dst->param.precision);
-	if (enc == AUDIO_ENCODING_ULINEAR_LE) {
+	if (dst->param.encoding == AUDIO_ENCODING_ULINEAR_LE) {
 		while (used_dst < m && used_src > 0) {
 			*d = mulawtolin16[*s][0];
 			audio_stream_add(dst, d, 1);
@@ -309,7 +307,7 @@ DEFINE_FILTER(mulaw_to_linear16)
 	stream_filter_t *this;
 	uint8_t *d;
 	const uint8_t *s;
-	int m, err, enc;
+	int m, err;
 	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
@@ -322,9 +320,7 @@ DEFINE_FILTER(mulaw_to_linear16)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc = auconv_normalize_encoding(dst->param.encoding,
-					dst->param.precision);
-	switch (enc) {
+	switch (dst->param.encoding) {
 	case AUDIO_ENCODING_ULINEAR_LE:
 		while (used_dst < m && used_src >= 1) {
 			d[0] = mulawtolin16[s[0]][1];
@@ -376,7 +372,7 @@ DEFINE_FILTER(linear16_to_mulaw)
 	stream_filter_t *this;
 	uint8_t *d;
 	const uint8_t *s;
-	int m, err, enc;
+	int m, err;
 	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
@@ -388,9 +384,7 @@ DEFINE_FILTER(linear16_to_mulaw)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc = auconv_normalize_encoding(this->src->param.encoding,
-					this->src->param.precision);
-	switch (enc) {
+	switch (this->src->param.encoding) {
 	case AUDIO_ENCODING_SLINEAR_LE:
 		while (used_dst < m && used_src >= 2) {
 			d[0] = lintomulaw[s[1] ^ 0x80];
@@ -438,7 +432,7 @@ DEFINE_FILTER(linear8_to_mulaw)
 	stream_filter_t *this;
 	uint8_t *d;
 	const uint8_t *s;
-	int m, err, enc;
+	int m, err;
 	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
@@ -450,9 +444,7 @@ DEFINE_FILTER(linear8_to_mulaw)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc = auconv_normalize_encoding(this->src->param.encoding,
-					this->src->param.precision);
-	if (enc == AUDIO_ENCODING_ULINEAR_LE) {
+	if (this->src->param.encoding == AUDIO_ENCODING_ULINEAR_LE) {
 		while (used_dst < m && used_src > 0) {
 			*d = lintomulaw[*s];
 			audio_stream_add(dst, d, 1);
@@ -479,7 +471,7 @@ DEFINE_FILTER(alaw_to_linear8)
 	stream_filter_t *this;
 	uint8_t *d;
 	const uint8_t *s;
-	int m, err, enc;
+	int m, err;
 	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
@@ -491,9 +483,7 @@ DEFINE_FILTER(alaw_to_linear8)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc = auconv_normalize_encoding(dst->param.encoding,
-					dst->param.precision);
-	if (enc == AUDIO_ENCODING_ULINEAR_LE) {
+	if (dst->param.encoding == AUDIO_ENCODING_ULINEAR_LE) {
 		while (used_dst < m && used_src > 0) {
 			*d = alawtolin16[*s][0];
 			audio_stream_add(dst, d, 1);
@@ -520,7 +510,7 @@ DEFINE_FILTER(alaw_to_linear16)
 	stream_filter_t *this;
 	uint8_t *d;
 	const uint8_t *s;
-	int m, err, enc;
+	int m, err;
 	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
@@ -533,9 +523,7 @@ DEFINE_FILTER(alaw_to_linear16)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc = auconv_normalize_encoding(dst->param.encoding,
-					dst->param.precision);
-	switch (enc) {
+	switch (dst->param.encoding) {
 	case AUDIO_ENCODING_ULINEAR_LE:
 		while (used_dst < m && used_src >= 1) {
 			d[0] = alawtolin16[s[0]][1];
@@ -587,7 +575,7 @@ DEFINE_FILTER(linear8_to_alaw)
 	stream_filter_t *this;
 	uint8_t *d;
 	const uint8_t *s;
-	int m, err, enc;
+	int m, err;
 	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
@@ -599,9 +587,7 @@ DEFINE_FILTER(linear8_to_alaw)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc = auconv_normalize_encoding(this->src->param.encoding,
-					this->src->param.precision);
-	if (enc == AUDIO_ENCODING_ULINEAR_LE) {
+	if (this->src->param.encoding == AUDIO_ENCODING_ULINEAR_LE) {
 		while (used_dst < m && used_src > 0) {
 			*d = lintoalaw[*s];
 			audio_stream_add(dst, d, 1);
@@ -628,7 +614,7 @@ DEFINE_FILTER(linear16_to_alaw)
 	stream_filter_t *this;
 	uint8_t *d;
 	const uint8_t *s;
-	int m, err, enc;
+	int m, err;
 	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
@@ -640,9 +626,7 @@ DEFINE_FILTER(linear16_to_alaw)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc = auconv_normalize_encoding(this->src->param.encoding,
-					this->src->param.precision);
-	switch (enc) {
+	switch (this->src->param.encoding) {
 	case AUDIO_ENCODING_SLINEAR_LE:
 		while (used_dst < m && used_src >= 2) {
 			d[0] = lintoalaw[s[1] ^ 0x80];

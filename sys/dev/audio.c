@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.15 2004/12/29 19:55:16 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.16 2004/12/30 16:02:26 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.15 2004/12/29 19:55:16 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.16 2004/12/30 16:02:26 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2401,6 +2401,12 @@ audio_check_params(struct audio_params *p)
 		if (p->precision !=  8 && p->precision != 16 &&
 		    p->precision != 24 && p->precision != 32)
 			return EINVAL;
+		if (p->precision == 8 && p->encoding == AUDIO_ENCODING_SLINEAR_BE)
+			p->encoding = AUDIO_ENCODING_SLINEAR_LE;
+		if (p->precision == 8 && p->encoding == AUDIO_ENCODING_ULINEAR_BE)
+			p->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		if (p->validbits > p->precision)
+			return EINVAL;
 		break;
 	case AUDIO_ENCODING_MPEG_L1_STREAM:
 	case AUDIO_ENCODING_MPEG_L1_PACKETS:
@@ -2413,7 +2419,8 @@ audio_check_params(struct audio_params *p)
 		return EINVAL;
 	}
 
-	if (p->channels < 1 || p->channels > 8)	/* sanity check # of channels*/
+	/* sanity check # of channels*/
+	if (p->channels < 1 || p->channels > AUDIO_MAX_CHANNELS)
 		return EINVAL;
 
 	return 0;
@@ -2857,6 +2864,8 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		if (error)
 			return error;
 
+		audio_check_params(&pp);
+		audio_check_params(&rp);
 		if (!indep) {
 			/* XXX for !indep device, we have to use the same
 			 * parameters for the hardware, not userland */
@@ -2875,6 +2884,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		from_param = &pp;
 		for (i = 0; i < pfilters.req_size; i++) {
 			to_param = &pfilters.filters[i].param;
+			audio_check_params(to_param);
 			pf[i] = pfilters.filters[i].factory(sc, from_param,
 							    to_param);
 			if (pf[i] == NULL)
@@ -2895,6 +2905,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		}
 		for (i = 0; i < rfilters.req_size; i++) {
 			from_param = &rfilters.filters[i].param;
+			audio_check_params(from_param);
 			to_param = i + 1 < rfilters.req_size
 				? &rfilters.filters[i + 1].param : &rp;
 			rf[i] = rfilters.filters[i].factory(sc, from_param,
@@ -2942,7 +2953,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			? pp : pfilters.filters[pfilters.req_size - 1].param;
 		sc->sc_rr.s.param = rfilters.req_size <= 0
 			? rp : rfilters.filters[0].param;
-
 	}
 
 	oldpblksize = sc->sc_pr.blksize;
