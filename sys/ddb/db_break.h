@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.h,v 1.8 1996/02/05 01:56:52 christos Exp $	*/
+/*	$NetBSD: db_break.h,v 1.9 1997/06/26 01:12:05 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -45,7 +45,7 @@ typedef struct db_breakpoint {
 	int	flags;			/* flags: */
 #define	BKPT_SINGLE_STEP	0x2	    /* to simulate single step */
 #define	BKPT_TEMP		0x4	    /* temporary */
-	int	bkpt_inst;		/* saved instruction at bkpt */
+	db_expr_t bkpt_inst;		/* saved instruction at bkpt */
 	struct db_breakpoint *link;	/* link in in-use or free chain */
 } *db_breakpoint_t;
 
