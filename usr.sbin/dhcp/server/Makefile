@@ -30,10 +30,6 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
-
 .include <bsd.own.mk>
 
 SRCS   = dhcpd.c dhcp.c bootp.c confpars.c db.c class.c failover.c \
