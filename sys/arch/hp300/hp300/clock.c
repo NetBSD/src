@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 1996/10/13 03:14:27 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.19 1997/04/01 03:12:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,12 +51,16 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/tty.h>
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
 
 #include <hp300/dev/hilreg.h>
+#include <hp300/dev/hilioctl.h>
+#include <hp300/dev/hilvar.h>
 #include <hp300/hp300/clockreg.h>
 
 #ifdef GPROF
@@ -83,12 +87,17 @@ static int statprev;		/* previous value in stat timer */
 static int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
-struct bbc_tm *gmt_to_bbc();
 u_char bbc_registers[13];
-u_char write_bbc_reg(), read_bbc_reg();
 struct hil_dev *bbcaddr = NULL;
 
+void	statintr __P((struct clockframe *));
+
 void	hp300_calibrate_delay __P((void));
+struct bbc_tm *gmt_to_bbc __P((long));
+int	bbc_to_gmt __P((u_long *));
+void	read_bbc __P((void));
+u_char	read_bbc_reg __P((int));
+u_char	write_bbc_reg __P((int, u_int));
 
 /*
  * Machine-dependent clock routines.
@@ -187,10 +196,11 @@ hp300_calibrate_delay()
  * Set up the real-time and statistics clocks.  Leave stathz 0 only if
  * no alternative timer is available.
  */
+void
 cpu_initclocks()
 {
-	register volatile struct clkreg *clk;
-	register int intvl, statint, profint, minint;
+	volatile struct clkreg *clk;
+	int intvl, statint, profint, minint;
 
 	clkstd[0] = IIOV(0x5F8000);		/* XXX grot */
 	clk = (volatile struct clkreg *)clkstd[0];
@@ -276,8 +286,8 @@ void
 statintr(fp)
 	struct clockframe *fp;
 {
-	register volatile struct clkreg *clk;
-	register int newint, r, var;
+	volatile struct clkreg *clk;
+	int newint, r, var;
 
 	clk = (volatile struct clkreg *)clkstd[0];
 	var = statvar;
@@ -306,10 +316,10 @@ statintr(fp)
  */
 void
 microtime(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
-	register volatile struct clkreg *clk;
-	register int s, u, t, u2, s2;
+	volatile struct clkreg *clk;
+	int s, u, t, u2, s2;
 
 	/*
 	 * Read registers from slowest-changing to fastest-changing,
@@ -344,6 +354,7 @@ microtime(tvp)
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
  */
+void
 inittodr(base)
 	time_t base;
 {
@@ -382,10 +393,11 @@ inittodr(base)
 /*
  * Restore the time of day hardware after a time change.
  */
+void
 resettodr()
 {
-	register int i;
-	register struct bbc_tm *tmptr;
+	int i;
+	struct bbc_tm *tmptr;
 
 	tmptr = gmt_to_bbc(time.tv_sec);
 
@@ -412,8 +424,8 @@ struct bbc_tm *
 gmt_to_bbc(tim)
 	long tim;
 {
-	register int i;
-	register long hms, day;
+	int i;
+	long hms, day;
 	static struct bbc_tm rt;
 
 	day = tim / SECDAY;
@@ -443,11 +455,12 @@ gmt_to_bbc(tim)
 	return(&rt);
 }
 
+int
 bbc_to_gmt(timbuf)
 	u_long *timbuf;
 {
-	register int i;
-	register u_long tmp;
+	int i;
+	u_long tmp;
 	int year, month, day, hour, min, sec;
 
 	read_bbc();
@@ -485,9 +498,10 @@ bbc_to_gmt(timbuf)
 	return(1);
 }
 
+void
 read_bbc()
 {
-  	register int i, read_okay;
+  	int i, read_okay;
 
 	read_okay = 0;
 	while (!read_okay) {
