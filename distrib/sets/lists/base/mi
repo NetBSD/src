@@ -91,7 +91,7 @@
 ./sbin/mount_union
 ./sbin/newfs
 ./sbin/newfs_msdos
-./sbin/newfs_lfs
+./sbin/newlfs
 ./sbin/nologin
 ./sbin/ping
 ./sbin/rdump
