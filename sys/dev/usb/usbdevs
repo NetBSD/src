@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.133 2000/12/07 01:02:12 augustss Exp $
+$NetBSD: usbdevs,v 1.134 2000/12/08 08:13:34 itojun Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -218,6 +218,7 @@ vendor SIIG		0x07cc	SIIG
 vendor APTIO		0x07d2	Aptio Products, Inc.
 vendor ARASAN		0x07da	Arasan Chip Systems
 vendor ALLIEDCABLE	0x07e6	Allied Cable Corp.
+vendor STSN		0x07ef	STSN
 vendor ZOOM		0x0803	Zoom Telephonics, Inc.
 vendor BROADLOGIC	0x0827	BroadLogic, Inc.
 vendor HANDSPRING	0x082d	Handspring, Inc.
@@ -740,6 +741,9 @@ product SONY MSC		0x0032	Sony MSC memory stick slot
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
+
+/* STSN products */
+product STSN STSN0001		0x0001	Internet Access Device
 
 /* Sun Microsystems products */
 product SUN KEYBOARD		0x0005	Type 6 USB
