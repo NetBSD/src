@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.5 2002/02/13 08:18:39 ross Exp $
+.\"     $NetBSD: config.9,v 1.6 2002/03/23 22:36:45 heinz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,7 +93,7 @@ additional locators.
 .Pp
 During autoconfiguration, the directed graph is turned into a tree by
 nominating one device as the root node and matching drivers with
-devices by doing a depth-first traversal through the graph stating at
+devices by doing a depth-first traversal through the graph starting at
 this root node.
 .Pp
 However, there must be constraints on the parent/child pairings that
@@ -121,8 +121,8 @@ in
 .Pa sys/dev/\*[Lt]bus\*[Gt]/files.\*[Lt]bus\*[Gt] ,
 where \*[Lt]bus\*[Gt] is the name of the machine-independent bus.
 .Pp
-These files define all legal device and pseuo-deives.  They also
-define all attributes and interfaces, establishign the ule that
+These files define all legal devices and pseudo-devices.  They also
+define all attributes and interfaces, establishing the rules that
 determine allowable machine descriptions, and list the source files
 that make up the kernel.
 .Pp
@@ -232,7 +232,7 @@ to a pseudo-device.
 The file
 .Em pathname
 is added to the list of files used to build the kernel.  If no
-attributes are specific the file is always added to the kernel
+attributes are specified, the file is always added to the kernel
 compilation.  If any of the attributes are specified by other devices
 in the machine descripton file, then the file is included in
 compilation, otherwise it is omitted.  Valid values for the optional
@@ -241,14 +241,14 @@ flags are:
 .It needs-count
 Specify that config should generate a file for each of the attributes
 notifying the driver how many of some particular device or set of
-devices are configured are configured in the kernel.  This flags
+devices are configured in the kernel.  This flag
 allows drivers to make calculations of driver used at compile time.
 This option prevents autoconfiguration cloning.
 .It needs-flag
-This flag performs the same operation and
+This flag performs the same operation as
 .Em needs-count
 but only records if the number is nonzero.  Since the count is not
-extact,
+exact,
 .Em needs-flag
 does not prevent autoconfiguration cloning.
 .El
