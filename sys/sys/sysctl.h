@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.111 2004/03/24 16:55:49 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.112 2004/03/24 17:21:02 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -103,7 +103,8 @@ struct ctlname {
  */
 #define SYSCTL_VERS_MASK	0xff000000
 #define SYSCTL_VERS_0		0x00000000
-#define SYSCTL_VERSION		SYSCTL_VERS_0
+#define SYSCTL_VERS_1		0x01000000
+#define SYSCTL_VERSION		SYSCTL_VERS_1
 #define SYSCTL_VERS(f)		((f) & SYSCTL_VERS_MASK)
 
 /*
@@ -997,32 +998,100 @@ __END_DECLS
 
 #endif	/* !_KERNEL */
 
-struct sysctlnode {
-	uint sysctl_flags;		/* flags and type */
-	int sysctl_num;			/* mib number */ 
-	size_t sysctl_size;		/* size of instrumented data */
-	char sysctl_name[SYSCTL_NAMELEN]; /* node name */
+#ifdef __COMPAT_SYSCTL
+/*
+ * node version 0
+ */
+struct sysctlnode0 {
+	uint sysctl0_flags;		/* flags and type */
+	int sysctl0_num;		/* mib number */ 
+	size_t sysctl0_size;		/* size of instrumented data */
+	char sysctl0_name[SYSCTL_NAMELEN]; /* node name */
 	union {
 		struct {
-			uint scn_csize;	/* size of child node array */
-			uint scn_clen;	/* number of valid children */
-			struct sysctlnode *scn_child; /* array of child nodes */
-		} scu_node;
-		int scu_alias;		/* node this node refers to */
-		int scu_idata;		/* immediate "int" data */
-		u_quad_t scu_qdata;	/* immediate "u_quad_t" data */
-		void *scu_data;		/* pointer to external data */
-	} sysctl_un;
-	sysctlfn sysctl_func;		/* access helper function */
-	struct sysctlnode *sysctl_parent; /* parent of this node */
-	uint sysctl_ver;		/* node's version vs. rest of tree */
+			uint scn0_csize; /* size of child node array */
+			uint scn0_clen;	/* number of valid children */
+			struct sysctlnode0 *scn0_child; /* array of child nodes */
+		} scu0_node;
+		int scu0_alias;		/* node this node refers to */
+		int scu0_idata;		/* immediate "int" data */
+		u_quad_t scu0_qdata;	/* immediate "u_quad_t" data */
+		void *scu0_data;	/* pointer to external data */
+	} sysctl0_un;
+	sysctlfn sysctl0_func;		/* access helper function */
+	struct sysctlnode0 *sysctl0_parent; /* parent of this node */
+	uint sysctl0_ver;		/* node's version vs. rest of tree */
 };
 
-#define sysctl_csize	sysctl_un.scu_node.scn_csize
-#define sysctl_clen	sysctl_un.scu_node.scn_clen
-#define sysctl_child	sysctl_un.scu_node.scn_child
+#define sysctl0_csize	sysctl0_un.scu0_node.scn0_csize
+#define sysctl0_clen	sysctl0_un.scu0_node.scn0_clen
+#define sysctl0_child	sysctl0_un.scu0_node.scn0_child
+#define sysctl0_alias	sysctl0_un.scu0_alias
+#define sysctl0_data	sysctl0_un.scu0_data
+#define sysctl0_idata	sysctl0_un.scu0_idata
+#define sysctl0_qdata	sysctl0_un.scu0_qdata
+
+#endif /* __COMPAT_SYSCTL */
+
+/*
+ * padding makes alignment magically "work" for 32/64 compatibility at
+ * the expense of making things bigger on 32 bit platforms.
+ */
+#if defined(LP64) || (BYTE_ORDER == LITTLE_ENDIAN)
+#define __sysc_pad(type) union { uint64_t __sysc_upad; \
+	struct { type __sysc_sdatum; } __sysc_ustr; }
+#else
+#define __sysc_pad(type) union { uint64_t __sysc_upad; \
+	struct { uint32_t __sysc_spad; type __sysc_sdatum; } __sysc_ustr; }
+#endif
+#define __sysc_unpad(x) x.__sysc_ustr.__sysc_sdatum
+
+struct sysctlnode {
+	uint32_t sysctl_flags;		/* flags and type */
+	int32_t sysctl_num;		/* mib number */
+	char sysctl_name[SYSCTL_NAMELEN]; /* node name */
+	uint32_t sysctl_ver;		/* node's version vs. rest of tree */
+	uint32_t __rsvd;
+	union {
+		struct {
+			uint32_t suc_csize;	/* size of child node array */
+			uint32_t suc_clen;	/* number of valid children */
+			__sysc_pad(struct sysctlnode*) _suc_child; /* array of child nodes */
+		} scu_child;
+		struct {
+			__sysc_pad(void*) _sud_data; /* pointer to external data */
+			__sysc_pad(size_t) _sud_offset; /* offset to data */
+		} scu_data;
+		int32_t scu_alias;		/* node this node refers to */
+		int32_t scu_idata;		/* immediate "int" data */
+		u_quad_t scu_qdata;		/* immediate "u_quad_t" data */
+	} sysctl_un;
+	__sysc_pad(size_t) _sysctl_size;	/* size of instrumented data */
+	__sysc_pad(sysctlfn) _sysctl_func;	/* access helper function */
+	__sysc_pad(struct sysctlnode*) _sysctl_parent; /* parent of this node */
+	__sysc_pad(const char *) _sysctl_desc;	/* description of node */
+};
+
+/*
+ * padded data
+ */
+#define suc_child	__sysc_unpad(_suc_child)
+#define sud_data	__sysc_unpad(_sud_data)
+#define sud_offset	__sysc_unpad(_sud_offset)
+#define sysctl_size	__sysc_unpad(_sysctl_size)
+#define sysctl_func	__sysc_unpad(_sysctl_func)
+#define sysctl_parent	__sysc_unpad(_sysctl_parent)
+#define sysctl_desc	__sysc_unpad(_sysctl_desc)
+
+/*
+ * nested data (may also be padded)
+ */
+#define sysctl_csize	sysctl_un.scu_child.suc_csize
+#define sysctl_clen	sysctl_un.scu_child.suc_clen
+#define sysctl_child	sysctl_un.scu_child.suc_child
+#define sysctl_data	sysctl_un.scu_data.sud_data
+#define sysctl_offset	sysctl_un.scu_data.sud_offset
 #define sysctl_alias	sysctl_un.scu_alias
-#define sysctl_data	sysctl_un.scu_data
 #define sysctl_idata	sysctl_un.scu_idata
 #define sysctl_qdata	sysctl_un.scu_qdata
 
