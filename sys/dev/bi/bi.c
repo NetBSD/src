@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.14 2000/03/26 11:45:04 ragge Exp $ */
+/*	$NetBSD: bi.c,v 1.15 2000/07/06 17:47:02 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -77,9 +77,11 @@ bi_print(aux, name)
 {
 	struct bi_attach_args *ba = aux;
 	struct bi_list *bl;
+	u_int16_t nr;
 
+	nr = bus_space_read_2(ba->ba_iot, ba->ba_ioh, 0);
 	for (bl = &bi_list[0]; bl->bl_nr; bl++)
-		if (bl->bl_nr == bus_space_read_2(ba->ba_iot, ba->ba_ioh, 0))
+		if (bl->bl_nr == nr)
 			break;
 
 	if (name) {
@@ -123,13 +125,13 @@ bi_attach(sc)
 	 */
 	for (nodenr = 0; nodenr < NNODEBI; nodenr++) {
 		if (bus_space_map(sc->sc_iot, sc->sc_addr + BI_NODE(nodenr),
-		    NODESIZE, 0, &ba.ba_ioh)) {
+		    BI_NODESIZE, 0, &ba.ba_ioh)) {
 			printf("bi_attach: bus_space_map failed, node %d\n", 
 			    nodenr);
 			return;
 		}
 		if (badaddr((caddr_t)ba.ba_ioh, 4)) {
-			bus_space_unmap(sc->sc_iot, ba.ba_ioh, NODESIZE);
+			bus_space_unmap(sc->sc_iot, ba.ba_ioh, BI_NODESIZE);
 			continue;
 		}
 		ba.ba_nodenr = nodenr;
