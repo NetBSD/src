@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.459 2004/01/12 03:08:06 lukem Exp $
+# $NetBSD: mi,v 1.460 2004/01/12 09:42:07 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -398,7 +398,7 @@
 ./usr/bin/cpp					base-util-bin
 ./usr/bin/crontab				base-cron-bin
 ./usr/bin/ctags					base-c-bin
-./usr/bin/cu					base-util-bin
+./usr/bin/cu					base-uucp-bin		uucp
 ./usr/bin/cut					base-util-bin
 ./usr/bin/db					base-util-bin
 ./usr/bin/dc					base-util-bin
@@ -597,7 +597,7 @@
 ./usr/bin/telnet				base-netutil-bin
 ./usr/bin/tftp					base-netutil-bin
 ./usr/bin/time					base-util-bin
-./usr/bin/tip					base-uucp-bin
+./usr/bin/tip					base-util-bin
 ./usr/bin/tn3270				base-tn3270-bin
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
@@ -617,16 +617,16 @@
 ./usr/bin/usbhidaction				base-util-bin
 ./usr/bin/usbhidctl				base-util-bin
 ./usr/bin/users					base-util-bin
-./usr/bin/uucp					base-uucp-bin
+./usr/bin/uucp					base-uucp-bin		uucp
 ./usr/bin/uudecode				base-util-bin
 ./usr/bin/uuencode				base-util-bin
-./usr/bin/uulog					base-uucp-bin
-./usr/bin/uuname				base-uucp-bin
-./usr/bin/uupick				base-uucp-bin
-./usr/bin/uusched				base-uucp-bin
-./usr/bin/uustat				base-uucp-bin
-./usr/bin/uuto					base-uucp-bin
-./usr/bin/uux					base-uucp-bin
+./usr/bin/uulog					base-uucp-bin		uucp
+./usr/bin/uuname				base-uucp-bin		uucp
+./usr/bin/uupick				base-uucp-bin		uucp
+./usr/bin/uusched				base-uucp-bin		uucp
+./usr/bin/uustat				base-uucp-bin		uucp
+./usr/bin/uuto					base-uucp-bin		uucp
+./usr/bin/uux					base-uucp-bin		uucp
 ./usr/bin/vacation				base-mail-bin
 ./usr/bin/vi					base-util-bin
 ./usr/bin/view					base-util-bin
@@ -818,9 +818,9 @@
 ./usr/libexec/utmp_update			base-sysutil-bin
 ./usr/libexec/uucp				base-uucp-bin
 ./usr/libexec/uucp/uuchk			base-obsolete		obsolete
-./usr/libexec/uucp/uucico			base-uucp-bin
-./usr/libexec/uucp/uuconv			base-uucp-bin
-./usr/libexec/uucp/uuxqt			base-uucp-bin
+./usr/libexec/uucp/uucico			base-uucp-bin		uucp
+./usr/libexec/uucp/uuconv			base-uucp-bin		uucp
+./usr/libexec/uucp/uuxqt			base-uucp-bin		uucp
 ./usr/libexec/uucpd				base-uucp-bin
 ./usr/libexec/uugetty				base-uucp-bin
 ./usr/libexec/virecover				base-util-bin
@@ -1066,7 +1066,7 @@
 ./usr/sbin/userdel				base-sysutil-bin
 ./usr/sbin/userinfo				base-sysutil-bin
 ./usr/sbin/usermod				base-sysutil-bin
-./usr/sbin/uuchk				base-uucp-bin
+./usr/sbin/uuchk				base-uucp-bin		uucp
 ./usr/sbin/vipw					base-sysutil-bin
 ./usr/sbin/vnconfig				base-sysutil-bin
 ./usr/sbin/wiconfig				base-sysutil-bin

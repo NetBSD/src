@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.24 2004/01/12 03:08:06 lukem Exp $
+#	$NetBSD: sets.subr,v 1.25 2004/01/12 09:42:07 lukem Exp $
 #
 
 #
@@ -46,6 +46,7 @@ MKVARS="\
 	MKSENDMAIL	\
 	MKSHARE		\
 	MKSKEY		\
+	MKUUCP		\
 	MKYP		\
 "
 
@@ -108,7 +109,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.24 2004/01/12 03:08:06 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.25 2004/01/12 09:42:07 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -149,6 +150,7 @@ fi
 #	sendmail		${MKSENDMAIL} != no
 #	share			${MKSHARE} != no
 #	skey			${MKSKEY} != no
+#	uucp			${MKUUCP} != no
 #	yp			${MKYP} != no
 #
 #	.cat			if ${MKMANZ} != "no" && ${MKCATPAGES} != "no"
