@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.13 1998/12/20 18:54:37 christos Exp $
+$NetBSD: isapnpdevs,v 1.14 1998/12/21 07:57:00 christos Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ devlogic	com	ROK0010		Rockwell ?
 devlogic	com	USR2070		USR Sportster 56k
 devlogic	com	ZTIF761		Zoom ComStar 33.6
 devlogic	com	CIR3000		Cirrus Logic V43 
+devlogic	com	MOT0000		Motorolla ModemSurfr
 devcompat	com	PNP0500		Generic 8250/16450
 devcompat	com	PNP0501		Generic 16550A
 
