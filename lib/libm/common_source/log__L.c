@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)log__L.c	5.6 (Berkeley) 10/9/90";*/
-static char rcsid[] = "$Id: log__L.c,v 1.2 1993/08/01 18:34:39 mycroft Exp $";
+static char rcsid[] = "$Id: log__L.c,v 1.3 1993/08/14 13:42:59 mycroft Exp $";
 #endif /* not lint */
 
 /* log__L(Z)

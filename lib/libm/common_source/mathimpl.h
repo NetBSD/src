@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mathimpl.h	5.4 (Berkeley) 3/5/91
- *	$Id: mathimpl.h,v 1.3 1993/08/03 23:05:16 jtc Exp $
+ *	from: @(#)mathimpl.h	5.5 (Berkeley) 12/2/92
+ *	$Id: mathimpl.h,v 1.4 1993/08/14 13:43:01 mycroft Exp $
  */
 
 #include <sys/cdefs.h>
@@ -80,7 +80,7 @@
 
    /* Hooray, we have an IEEE machine */
 #  undef vccast
-#  define vc(name, value, x1,x2,x3,x4, bexp, xval)
+#  define vc(name, value, x1,x2,x3,x4, bexp, xval) ;
 
 #  define ic(name, value, bexp, xval) \
 	const static double name = value;
@@ -94,3 +94,6 @@
 extern double	exp__E();
 extern double	log__L();
 
+struct Double {double a, b;};
+double exp__D __P((double, double));
+struct Double log__D __P((double));
