@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.2 2003/05/16 05:09:11 itojun Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.3 2003/06/07 12:00:07 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.2 2003/05/16 05:09:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.3 2003/06/07 12:00:07 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,7 +672,7 @@ cd9660_readlink(v)
 	 * Now get a buffer
 	 * Abuse a namei buffer for now.
 	 */
-	if (uio->uio_segflg == UIO_SYSSPACE ||
+	if (uio->uio_segflg == UIO_SYSSPACE &&
 	    uio->uio_iov->iov_len >= MAXPATHLEN)
 		symname = uio->uio_iov->iov_base;
 	else
