@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.136 2001/09/17 07:45:00 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.137 2001/09/17 09:15:12 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.136 2001/09/17 07:44:33 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.137 2001/09/17 09:07:53 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -688,3 +688,6 @@
 #define	PCMCIA_CIS_CNET_NE2000	{ "CNet", "CN40BC Ethernet", "D", "NE2000" }
 #define	PCMCIA_PRODUCT_CNET_NE2000	-1
 #define	PCMCIA_STR_CNET_NE2000	"CNet CN40BC NE2000 Compatible"
+#define	PCMCIA_CIS_GEMTEK_WLAN	{ "Intersil", "PRISM 2_5 PCMCIA ADAPTER", "ISL37300P", "Eval-RevA" }
+#define	PCMCIA_PRODUCT_GEMTEK_WLAN	-1
+#define	PCMCIA_STR_GEMTEK_WLAN	"GEMTEK Prism2_5 WaveLAN Card"
