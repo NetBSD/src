@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1 2000/12/29 20:13:45 bjh21 Exp $	*/
+/*	$NetBSD: SYS.h,v 1.2 2001/07/16 05:50:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,13 +47,21 @@
 #define SYSTRAP(x)	swi SYS_/**/x
 #endif
 
+#ifdef __ELF__
+#define	CERROR		_C_LABEL(__cerror)
+#define	CURBRK		_C_LABEL(__curbrk)
+#else
+#define	CERROR		_ASM_LABEL(cerror)
+#define	CURBRK		_ASM_LABEL(curbrk)
+#endif
+
 #define _SYSCALL_NOERROR(x,y)						\
 	ENTRY(x);							\
 	SYSTRAP(y)
 
 #define _SYSCALL(x, y)							\
 	_SYSCALL_NOERROR(x,y);						\
-	bcs cerror
+	bcs PIC_SYM(CERROR, PLT)
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
@@ -89,4 +97,4 @@
 #define RSYSCALL(x)							\
 	PSEUDO(x,x)
 
-	.globl	cerror
+	.globl	CERROR

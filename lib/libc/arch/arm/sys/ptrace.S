@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.2 2001/01/09 19:47:28 bjh21 Exp $ */
+/*	$NetBSD: ptrace.S,v 1.3 2001/07/16 05:50:06 matt Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 ENTRY(ptrace)
 #ifdef _REENTRANT
 	stmfd	sp!, {r0-r3, lr}
-	bl	_C_LABEL(__errno)
+	bl	PIC_SYM(_C_LABEL(__errno), PLT)
 	mov	r1, #0x00000000
 	str	r1, [r0]
 	ldmfd	sp!, {r0-r3, lr}
@@ -50,7 +50,7 @@ ENTRY(ptrace)
 	/* Setup the GOT */
 	ldr	r0, got
 	add	r0, pc, r0
-L1:
+.L1:
 	ldr	r1, Lerrno
 	ldr	r1, [r0, r1]
 #else
@@ -62,7 +62,7 @@ L1:
 #endif /* _REENTRANT */
 
 	SYSTRAP(ptrace)
-	bcs	cerror
+	bcs	PIC_SYM(CERROR, PLT)
 #ifdef __APCS_26__
 	movs	pc, lr
 #else
@@ -73,9 +73,9 @@ L1:
 #ifdef PIC
 	.align	0
 got:
-	.word	__GLOBAL_OFFSET_TABLE_ + (. - (L1+4))
+	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
 #endif /* PIC */
 
 Lerrno:
-	.word	_C_LABEL(errno)
+	.word	PIC_SYM(_C_LABEL(errno), GOT)
 #endif /* !_REENTRANT */
