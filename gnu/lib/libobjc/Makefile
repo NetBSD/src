@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 1998/08/27 21:37:52 tv Exp $
+#	$NetBSD: Makefile,v 1.4 1998/08/28 22:36:56 tv Exp $
+
+HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
+
+.if (${HAVE_GCC28} != "")
 
 LIB=		objc
 SRCS=		hash.c sarray.c class.c sendmsg.c init.c archive.c \
@@ -29,3 +33,11 @@ sendmsg.o sendmsg.so sendmsg.po: runtime-info.h
 .PATH:		${DIST}/objc
 
 .include <bsd.lib.mk>
+
+.else
+
+# XXX Temporary: during an egcs bootstrap, don't try to build with gcc 2.7
+.include <bsd.own.mk>
+${TARGETS}:
+
+.endif
