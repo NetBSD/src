@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.27 1999/04/24 08:01:05 simonb Exp $	*/
+/*	$NetBSD: pm.c,v 1.28 1999/07/25 22:50:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.27 1999/04/24 08:01:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.28 1999/07/25 22:50:28 ad Exp $");
 
 
 #include <sys/param.h>
@@ -113,17 +113,11 @@ void pccCursorOn  __P((struct fbinfo *fi));
 void pccCursorOff __P((struct fbinfo *fi));
 void pmInitColorMap __P((struct fbinfo *fi));
 
-int pminit __P((struct fbinfo *fi, int unit, int cold_console_flag));
+int pminit __P((struct fbinfo *fi, caddr_t base, int unit, int console));
 int pmattach __P((struct fbinfo *fi, int unit, int cold_console_flag));
 
 static int pm_video_on __P ((struct fbinfo *));
 static int pm_video_off __P ((struct fbinfo *));
-
-
-
-#define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
-
 
 /* new-style raster-cons "driver" methods */
 
@@ -184,17 +178,6 @@ pmattach(fi, unit, cold_console_flag)
 	fi->fi_pixelsize =
 		((fi->fi_type.fb_depth == 1) ? 1024 / 8 : 1024) * 864;
 	fi->fi_blanked = 0;
-
-	if (cold_console_flag) {
-  		fi->fi_cmap_bits = (caddr_t)cmap_bits;
-	} else {
-    		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
-		if (fi->fi_cmap_bits == NULL) {
-			printf("pm%d: no memory for cmap\n", unit);
-			return (0);
-		}
-	}
-
 	fi->fi_type.fb_width = 1024;
 	fi->fi_type.fb_height = 864;
 
