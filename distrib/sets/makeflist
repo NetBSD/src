@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.15 1999/03/29 01:20:42 simonb Exp $
+# $NetBSD: makeflist,v 1.15.2.1 1999/09/10 22:10:52 he Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -94,4 +94,4 @@ for setname in $lists; do
 	if [ $setname = misc ]; then
 		grep -v ${machine} $setd/lists/man/md_share
 	fi
-done | sort -u
+done | egrep -v '^#' | sort -u
