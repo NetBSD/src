@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)moddi3.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: moddi3.c,v 1.3 1995/01/06 00:11:18 cgd Exp $";
+static char *rcsid = "$Id: moddi3.c,v 1.4 1995/01/06 00:48:30 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
