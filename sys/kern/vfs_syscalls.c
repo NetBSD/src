@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.116 1998/06/05 20:04:15 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.117 1998/06/05 20:31:36 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2010,6 +2010,32 @@ sys_fsync(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, p);
+	VOP_UNLOCK(vp, 0);
+	return (error);
+}
+
+/*
+ * Sync the data of an open file.
+ */
+/* ARGSUSED */
+int
+sys_fdatasync(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_fdatasync_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
+	struct vnode *vp;
+	struct file *fp;
+	int error;
+
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+	vp = (struct vnode *)fp->f_data;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT|FSYNC_DATAONLY, p);
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }
