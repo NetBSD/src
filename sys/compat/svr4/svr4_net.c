@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.6 1996/02/04 02:01:07 christos Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.7 1996/03/14 19:29:13 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -56,6 +56,7 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_ioctl.h>
 #include <compat/svr4/svr4_stropts.h>
+#include <compat/svr4/svr4_conf.h>
 
 /*
  * Device minor numbers
@@ -70,10 +71,10 @@ enum {
 
 int svr4_netattach __P((int));
 
-static int svr4_netclose __P((struct file *fp, struct proc *p));
+static int svr4_soo_close __P((struct file *fp, struct proc *p));
 
 static struct fileops svr4_netops = {
-	soo_read, soo_write, soo_ioctl, soo_select, svr4_netclose
+	soo_read, soo_write, soo_ioctl, soo_select, svr4_soo_close
 };
 
 
@@ -163,7 +164,7 @@ svr4_netopen(dev, flag, mode, p)
 }
 
 static int
-svr4_netclose(fp, p)
+svr4_soo_close(fp, p)
 	struct file *fp;
 	struct proc *p;
 {
