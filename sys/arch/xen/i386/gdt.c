@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: gdt.c,v 1.1.14.1 2005/02/13 10:20:49 yamt Exp $	*/
 /*	NetBSD: gdt.c,v 1.32 2004/02/13 11:36:13 wiz Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.1.14.1 2005/02/13 10:20:49 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -146,7 +146,8 @@ gdt_init()
 	gdt_free[1] = GNULL_SEL;
 
 	old_gdt = gdt;
-	gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len + max_len);
+	gdt = (union descriptor *)uvm_km_alloc(kernel_map, max_len + max_len, 0,
+	    UVM_KMF_VAONLY);
 	for (va = (vaddr_t)gdt; va < (vaddr_t)gdt + min_len; va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
 		if (pg == NULL) {
@@ -174,7 +175,8 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	struct vm_page *pg;
 	vaddr_t va;
 
-	ci->ci_gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len);
+	ci->ci_gdt = (union descriptor *)uvm_km_alloc(kernel_map, max_len, 0,
+	    UVM_KMF_VAONLY);
 	for (va = (vaddr_t)ci->ci_gdt; va < (vaddr_t)ci->ci_gdt + min_len;
 	    va += PAGE_SIZE) {
 		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO))

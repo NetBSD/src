@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.11 2004/09/15 04:55:21 tls Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.11.8.1 2005/02/13 10:20:50 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.11 2004/09/15 04:55:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.11.8.1 2005/02/13 10:20:50 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -228,7 +228,7 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	sc->sc_net_ring = (net_ring_t *)
-		uvm_km_valloc_align(kernel_map, PAGE_SIZE, PAGE_SIZE);
+	    uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE, UVM_KMF_VAONLY);
 	pmap_kenter_ma((vaddr_t)sc->sc_net_ring,
 	    xneta->xa_netop.u.get_vif_info.ring_mfn << PAGE_SHIFT,
 	    VM_PROT_READ|VM_PROT_WRITE);
@@ -494,8 +494,8 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 	if ((ringidx = sc->sc_net_idx->rx_req_prod) == end)
 		return;
 
-	rxpages = uvm_km_valloc_align(kernel_map, RX_ENTRIES * PAGE_SIZE,
-	    PAGE_SIZE);
+	rxpages = uvm_km_alloc(kernel_map, RX_ENTRIES * PAGE_SIZE,
+	    PAGE_SIZE, UVM_KMF_VAONLY);
 	for (va = rxpages; va < rxpages + RX_ENTRIES * PAGE_SIZE;
 	     va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -551,8 +551,9 @@ network_alloc_tx_buffers(struct xennet_softc *sc)
 	struct xennet_txbuf *txbuf;
 	int i;
 
-	txpages = uvm_km_valloc_align(kernel_map,
-	    (TX_ENTRIES / TXBUF_PER_PAGE) * PAGE_SIZE, PAGE_SIZE);
+	txpages = uvm_km_alloc(kernel_map,
+	    (TX_ENTRIES / TXBUF_PER_PAGE) * PAGE_SIZE, PAGE_SIZE,
+	    UVM_KMF_VAONLY);
 	for (va = txpages;
 	     va < txpages + (TX_ENTRIES / TXBUF_PER_PAGE) * PAGE_SIZE;
 	     va += PAGE_SIZE) {

@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.12 2004/12/10 20:05:05 jmc Exp $ */
+/* $NetBSD: xbd.c,v 1.12.6.1 2005/02/13 10:20:50 yamt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.12 2004/12/10 20:05:05 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.12.6.1 2005/02/13 10:20:50 yamt Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -446,8 +446,8 @@ init_interface(void)
 		op.cmd = BLOCK_IO_OP_RING_ADDRESS;
 		(void)HYPERVISOR_block_io_op(&op);
 
-		blk_ring = (blk_ring_t *)uvm_km_valloc_align(kernel_map,
-		    PAGE_SIZE, PAGE_SIZE);
+		blk_ring = (blk_ring_t *)uvm_km_alloc(kernel_map,
+		    PAGE_SIZE, PAGE_SIZE, UVM_KMF_VAONLY);
 		pmap_kenter_ma((vaddr_t)blk_ring, op.u.ring_mfn << PAGE_SHIFT,
 		    VM_PROT_READ|VM_PROT_WRITE);
 		DPRINTF(XBDB_SETUP, ("init_interface: "
@@ -817,9 +817,8 @@ map_align(struct xbdreq *xr)
 	int s;
 
 	s = splvm();
-	xr->xr_aligned = uvm_km_kmemalloc1(kmem_map, NULL,
-	    xr->xr_bqueue, XEN_BSIZE, UVM_UNKNOWN_OFFSET,
-	    0/*  UVM_KMF_NOWAIT */);
+	xr->xr_aligned = uvm_km_alloc(kmem_map, xr->xr_bqueue, XEN_BSIZE,
+	    UVM_KMF_WIRED);
 	splx(s);
 	DPRINTF(XBDB_IO, ("map_align(%p): bp %p addr %p align 0x%08lx "
 	    "size 0x%04lx\n", xr, xr->xr_bp, xr->xr_bp->b_data,
@@ -842,7 +841,8 @@ unmap_align(struct xbdreq *xr)
 	    "size 0x%04x\n", xr, xr->xr_bp, xr->xr_bp->b_data,
 	    xr->xr_aligned, xr->xr_bp->b_bcount));
 	s = splvm();
-	uvm_km_free(kmem_map, xr->xr_aligned, xr->xr_bp->b_bcount);
+	uvm_km_free(kmem_map, xr->xr_aligned, xr->xr_bp->b_bcount,
+	    UVM_KMF_WIRED);
 	splx(s);
 	xr->xr_aligned = (vaddr_t)0;
 }
