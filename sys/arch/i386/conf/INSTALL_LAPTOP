@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.50 2003/10/13 05:45:59 dyoung Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.51 2003/10/18 08:12:07 lukem Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -371,20 +371,8 @@ wdc*	at pcmcia? function ?
 wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 wdc1	at isa? port 0x170 irq 15 flags 0x00
 
-# ATA bus support
-atabus* at pciide? channel ?
-atabus* at acardide? channel ?
-atabus* at aceride? channel ? 
-atabus* at cmdide? channel ? 
-atabus* at cypide? channel ?
-atabus* at hptide? channel ?
-atabus* at optiide? channel ?
-atabus* at piixide? channel ?
-atabus* at pdcide? channel ?
-atabus* at siside? channel ?
-atabus* at slide? channel ?
-atabus* at viaide? channel ?
-atabus* at wdc? channel ?
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
