@@ -7,6 +7,7 @@
 ./usr/X11R6/bin/Xwrapper
 ./usr/X11R6/lib/X11/XF86Config.eg
 ./usr/X11R6/lib/X11/doc/AccelCards
+./usr/X11R6/lib/X11/doc/BetaReport
 ./usr/X11R6/lib/X11/doc/BUILD
 ./usr/X11R6/lib/X11/doc/Devices
 ./usr/X11R6/lib/X11/doc/Monitors
@@ -38,7 +39,9 @@
 ./usr/X11R6/lib/X11/doc/README.clkprog
 ./usr/X11R6/lib/X11/doc/README.epson
 ./usr/X11R6/lib/X11/doc/README.fbdev
+./usr/X11R6/lib/X11/doc/README.i740
 ./usr/X11R6/lib/X11/doc/README.mouse
+./usr/X11R6/lib/X11/doc/README.neo
 ./usr/X11R6/lib/X11/doc/README.rendition
 ./usr/X11R6/lib/X11/doc/README.trident
 ./usr/X11R6/lib/X11/doc/README.tseng
