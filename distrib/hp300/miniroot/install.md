@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.4 1996/08/26 02:34:40 thorpej Exp $
+#	$NetBSD: install.md,v 1.5 1996/10/11 18:13:03 thorpej Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -53,6 +53,25 @@ md_set_term() {
 	TERM="$resp"
 	export TERM
 	# XXX call tset?
+}
+
+md_makerootwritable() {
+	# Was: do_mfs_mount "/tmp" "2048"
+	# /tmp is the mount point
+	# 2048 is the size in DEV_BIZE blocks
+
+	umount /tmp > /dev/null 2>&1
+	if ! mount_mfs -s 2048 swap /tmp ; then
+		cat << \__mfs_failed_1
+
+FATAL ERROR: Can't mount the memory filesystem.
+
+__mfs_failed_1
+		exit
+	fi
+
+	# Bleh.  Give mount_mfs a chance to DTRT.
+	sleep 2
 }
 
 md_get_diskdevs() {
