@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.2 1995/04/17 17:54:35 cgd Exp $
+#	$NetBSD: files.pci,v 1.3 1995/06/05 01:03:45 cgd Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -14,7 +14,6 @@ file	dev/pci/pci.c			pci
 device	ncr at pci: scsi
 file	dev/pci/ncr.c			ncr
 
-# XXX ???
-# XXX NOT IN TREE?
-#device	de at pci: ether, ifnet
-#file	dev/pci/if_de.c			de
+# Ethernet driver for DC21040-based boards
+device	de at pci: ether, ifnet
+file	dev/pci/if_de.c			de
