@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.20 2004/01/04 22:19:51 martin Exp $
+.\" $NetBSD: ifwatchd.8,v 1.21 2004/11/25 15:55:29 martin Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,7 +104,10 @@ If this option is not given,
 .Nm
 will check all watched interfaces on startup whether they are
 already marked up and, if they are, call the up-script with
-appropriate parameters.
+appropriate parameters. Additionally, if the interface is up and
+has a link,
+.Nm
+will run the carrier script.
 .Pp
 Since ifwatchd typically is started late in the system boot sequence,
 some of the monitored interfaces may already have come up when it
