@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.20 1997/03/13 14:15:40 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.21 1997/03/13 14:29:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$NetBSD: inetd.c,v 1.20 1997/03/13 14:15:40 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.21 1997/03/13 14:29:15 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -524,9 +524,9 @@ main(argc, argv, envp)
 				syslog(deny_severity, "refused "
 				    "connection from %.500s, service %s (%s)",
 				    eval_client(&req), service, sep->se_proto);
-				shutdown(ctrl, 2);
-				close(ctrl);
-				continue;
+				if (sep->se_socktype != SOCK_STREAM)
+					recv(0, buf, sizeof (buf), 0);
+				_exit(1);
 			}
 			if (lflag) {
 				syslog(allow_severity,
