@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.6 1997/10/11 02:07:37 lukem Exp $	*/
+/*	$NetBSD: save.c,v 1.7 1997/10/12 02:06:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: save.c,v 1.6 1997/10/11 02:07:37 lukem Exp $");
+__RCSID("$NetBSD: save.c,v 1.7 1997/10/12 02:06:15 lukem Exp $");
 #endif
 #endif				/* not lint */
 
@@ -62,7 +62,7 @@ restore()
 	}
 	fread(&WEIGHT, sizeof WEIGHT, 1, fp);
 	fread(&CUMBER, sizeof CUMBER, 1, fp);
-	fread(&clock, sizeof clock, 1, fp);
+	fread(&ourclock, sizeof ourclock, 1, fp);
 	fread(&tmp, sizeof tmp, 1, fp);
 	location = tmp ? dayfile : nightfile;
 	for (n = 1; n <= NUMOFROOMS; n++) {
@@ -75,7 +75,7 @@ restore()
 	fread(notes, sizeof notes, 1, fp);
 	fread(&direction, sizeof direction, 1, fp);
 	fread(&position, sizeof position, 1, fp);
-	fread(&time, sizeof time, 1, fp);
+	fread(&ourtime, sizeof ourtime, 1, fp);
 	fread(&fuel, sizeof fuel, 1, fp);
 	fread(&torps, sizeof torps, 1, fp);
 	fread(&carrying, sizeof carrying, 1, fp);
@@ -116,7 +116,7 @@ save()
 	printf("Saved in %s.\n", home1);
 	fwrite(&WEIGHT, sizeof WEIGHT, 1, fp);
 	fwrite(&CUMBER, sizeof CUMBER, 1, fp);
-	fwrite(&clock, sizeof clock, 1, fp);
+	fwrite(&ourclock, sizeof ourclock, 1, fp);
 	tmp = location == dayfile;
 	fwrite(&tmp, sizeof tmp, 1, fp);
 	for (n = 1; n <= NUMOFROOMS; n++) {
@@ -129,7 +129,7 @@ save()
 	fwrite(notes, sizeof notes, 1, fp);
 	fwrite(&direction, sizeof direction, 1, fp);
 	fwrite(&position, sizeof position, 1, fp);
-	fwrite(&time, sizeof time, 1, fp);
+	fwrite(&ourtime, sizeof ourtime, 1, fp);
 	fwrite(&fuel, sizeof fuel, 1, fp);
 	fwrite(&torps, sizeof torps, 1, fp);
 	fwrite(&carrying, sizeof carrying, 1, fp);
