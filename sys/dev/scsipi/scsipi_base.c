@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.94 2003/10/10 05:58:56 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.95 2003/10/12 03:21:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.94 2003/10/10 05:58:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.95 2003/10/12 03:21:56 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -2229,8 +2229,6 @@ scsipi_async_event(chan, event, arg)
 	splx(s);
 }
 
-#define	SCSI_MIN_DT_PERIOD	1250	/* FAST-80 and faster require DT */
-
 /*
  * scsipi_print_xfer_mode:
  *
@@ -2281,15 +2279,6 @@ scsipi_print_xfer_mode(periph)
 		printf(", tagged queueing");
 
 	printf("\n");
-
-	/*
-	 * Warn if a sync period requiring DT was negotiated on a peripheral
-	 * not capable of DT.
-	 */
-	if (period < SCSI_MIN_DT_PERIOD &&
-	    (periph->periph_mode & PERIPH_CAP_DT) == 0)
-		printf("%s: WARNING: %d.%02dns period on non-DT device\n",
-		    periph->periph_dev->dv_xname, period / 100, period % 100);
 }
 
 /*
@@ -2353,7 +2342,7 @@ scsipi_async_event_xfer_mode(chan, xm)
 		 * Clamp the xfer mode down to this periph's capabilities.
 		 */
 		mode = xm->xm_mode & periph->periph_cap;
-		if (mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
+		if (mode & PERIPH_CAP_SYNC) {
 			period = xm->xm_period;
 			offset = xm->xm_offset;
 		} else {
