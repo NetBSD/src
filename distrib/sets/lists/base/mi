@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.397 2003/04/11 11:07:15 jmmv Exp $
+# $NetBSD: mi,v 1.398 2003/04/13 09:48:18 jmmv Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -949,6 +949,12 @@
 ./usr/share/keymaps/x68k			base-sys-share
 ./usr/share/ldscripts				base-util-share
 ./usr/share/locale				base-locale-share
+./usr/share/locale/ca				base-locale-ca
+./usr/share/locale/ca/LC_MESSAGES		base-locale-ca
+./usr/share/locale/ca_ES.ISO8859-1		base-locale-ca
+./usr/share/locale/ca_ES.ISO8859-1/LC_CTYPE	base-locale-ca
+./usr/share/locale/ca_ES.ISO8859-15		base-locale-ca
+./usr/share/locale/ca_ES.ISO8859-15/LC_CTYPE	base-locale-ca
 ./usr/share/locale/cs				base-locale-cs
 ./usr/share/locale/cs/LC_MESSAGES		base-locale-cs
 ./usr/share/locale/cs/LC_MESSAGES/grep.mo	base-util_locale-cs
