@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.60 2002/01/27 13:36:59 is Exp $
+# $NetBSD: DRACO,v 1.61 2002/02/13 12:09:25 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.173 2002/01/27 13:27:51 is Exp $
+# Created from: #NetBSD: GENERIC,v 1.174 2002/02/13 12:08:57 is Exp $
 
 #GENERIC machine description file
 
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.60 $"
+#ident  		"GENERIC-$Revision: 1.61 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -108,7 +108,8 @@ options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
-options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
+
+options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)
 
 #Support for System V IPC facilities.
 
