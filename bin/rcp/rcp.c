@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.22 1998/07/28 11:41:51 mycroft Exp $	*/
+/*	$NetBSD: rcp.c,v 1.23 1998/11/04 19:43:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.22 1998/07/28 11:41:51 mycroft Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.23 1998/11/04 19:43:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -441,9 +441,9 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			if (response() < 0)
 				goto next;
 		}
-#define	MODEMASK	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
+#define	RCPMODEMASK	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
 		(void)snprintf(buf, sizeof(buf), "C%04o %qd %s\n",
-		    stb.st_mode & MODEMASK, (long long)stb.st_size, last);
+		    stb.st_mode & RCPMODEMASK, (long long)stb.st_size, last);
 		(void)write(rem, buf, strlen(buf));
 		if (response() < 0)
 			goto next;
@@ -604,7 +604,7 @@ sink(argc, argv)
 		if (ch == '\n')
 			*--cp = 0;
 
-#define getnum(t) (t) = 0; while (isdigit(*cp)) (t) = (t) * 10 + (*cp++ - '0');
+#define getnum(t) (t) = 0; while (isdigit((unsigned char)*cp)) (t) = (t) * 10 + (*cp++ - '0');
 		cp = buf;
 		if (*cp == 'T') {
 			setimes++;
@@ -647,7 +647,7 @@ sink(argc, argv)
 		if (*cp++ != ' ')
 			SCREWUP("mode not delimited");
 
-		for (size = 0; isdigit(*cp);)
+		for (size = 0; isdigit((unsigned char)*cp);)
 			size = size * 10 + (*cp++ - '0');
 		if (*cp++ != ' ')
 			SCREWUP("size not delimited");
@@ -755,6 +755,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 					run_err("%s: set mode: %s",
 					    np, strerror(errno));
 		}
+#ifndef __SVR4
 		if (setimes && wrerr == NO) {
 			setimes = 0;
 			if (futimes(ofd, tv) < 0) {
@@ -763,7 +764,18 @@ bad:			run_err("%s: %s", np, strerror(errno));
 				wrerr = DISPLAYED;
 			}
 		}
+#endif
 		(void)close(ofd);
+#ifdef __SVR4
+		if (setimes && wrerr == NO) {
+			setimes = 0;
+			if (utimes(np, tv) < 0) {
+				run_err("%s: set times: %s",
+				    np, strerror(errno));
+				wrerr = DISPLAYED;
+			}
+		}
+#endif
 		(void)response();
 		switch(wrerr) {
 		case YES:
