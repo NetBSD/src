@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.615.2.9 2004/07/28 11:17:44 tron Exp $
+$NetBSD: pcidevs,v 1.615.2.10 2004/08/22 14:17:22 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -642,7 +642,8 @@ product 3COM 3C905BCOMBO 0x9058	3c905B-COMBO 10/100 Ethernet
 product 3COM 3C905BFX	0x905a	3c905B-FX 100 Ethernet
 product 3COM 3C905CTX	0x9200	3c905C-TX 10/100 Ethernet with mngmt
 product 3COM 3C905CXTX	0x9201	3c905CX-TX 10/100 Ethernet with mngmt
-product	3COM 3C910SOHOB	0x9300	3c910 OfficeConnect 10/100B Ethernet
+product 3COM 3C920BEMBW 0x9202	3c920B-EMB-WNM Integrated Fast Ethernet
+product 3COM 3C910SOHOB	0x9300	3c910 OfficeConnect 10/100B Ethernet
 product 3COM 3C980SRV	0x9800	3c980 Server Adapter 10/100 Ethernet
 product 3COM 3C980CTXM	0x9805	3c980C-TXM 10/100 Ethernet
 product 3COM 3CR990	0x9900	3c990-TX 10/100 Ethernet with 3XP
