@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.9 1993/10/09 01:35:50 cgd Exp $
+ *	$Id: param.h,v 1.10 1993/12/04 02:04:31 cgd Exp $
  */
 
 /*
@@ -42,6 +42,7 @@
  */
 
 #define MACHINE		"i386"
+#define MACHINE_ARCH	"i386"
 #define MID_MACHINE	MID_I386
 
 /*
