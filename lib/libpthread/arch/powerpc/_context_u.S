@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.1 2001/11/13 20:21:23 briggs Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.2 2001/11/17 19:45:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -86,48 +86,48 @@
 	ori	 9, 9, _UC_CPU				; \
 	stw	 9, (UC_FLAGS)(reg)
 
-#define SETC(reg)					  \
-	lwz	 1, (_REG_R0 +  1*4)(reg)		; \
-	lwz	 2, (_REG_R0 +  2*4)(reg)		; \
-	lwz	 3, (_REG_R0 +  3*4)(reg)		; \
-	lwz	 5, (_REG_R0 +  5*4)(reg)		; \
-	lwz	 6, (_REG_R0 +  6*4)(reg)		; \
-	lwz	 7, (_REG_R0 +  7*4)(reg)		; \
-	lwz	 8, (_REG_R0 +  8*4)(reg)		; \
-	lwz	 9, (_REG_R0 +  9*4)(reg)		; \
-	lwz	10, (_REG_R0 + 10*4)(reg)		; \
-	lwz	11, (_REG_R0 + 11*4)(reg)		; \
-	lwz	12, (_REG_R0 + 12*4)(reg)		; \
-	lwz	13, (_REG_R0 + 13*4)(reg)		; \
-	lwz	14, (_REG_R0 + 14*4)(reg)		; \
-	lwz	15, (_REG_R0 + 15*4)(reg)		; \
-	lwz	16, (_REG_R0 + 16*4)(reg)		; \
-	lwz	17, (_REG_R0 + 17*4)(reg)		; \
-	lwz	18, (_REG_R0 + 18*4)(reg)		; \
-	lwz	19, (_REG_R0 + 19*4)(reg)		; \
-	lwz	20, (_REG_R0 + 20*4)(reg)		; \
-	lwz	21, (_REG_R0 + 21*4)(reg)		; \
-	lwz	22, (_REG_R0 + 22*4)(reg)		; \
-	lwz	23, (_REG_R0 + 23*4)(reg)		; \
-	lwz	24, (_REG_R0 + 24*4)(reg)		; \
-	lwz	25, (_REG_R0 + 25*4)(reg)		; \
-	lwz	26, (_REG_R0 + 26*4)(reg)		; \
-	lwz	27, (_REG_R0 + 27*4)(reg)		; \
-	lwz	28, (_REG_R0 + 28*4)(reg)		; \
-	lwz	29, (_REG_R0 + 29*4)(reg)		; \
-	lwz	30, (_REG_R0 + 30*4)(reg)		; \
-	lwz	31, (_REG_R0 + 31*4)(reg)		; \
-	lwz	 0, _REG_CR(reg)			; \
+#define SETC						  \
+	lwz	 1, (_REG_R0 +  1*4)(4)			; \
+	lwz	 2, (_REG_R0 +  2*4)(4)			; \
+	lwz	 3, (_REG_R0 +  3*4)(4)			; \
+	lwz	 5, (_REG_R0 +  5*4)(4)			; \
+	lwz	 6, (_REG_R0 +  6*4)(4)			; \
+	lwz	 7, (_REG_R0 +  7*4)(4)			; \
+	lwz	 8, (_REG_R0 +  8*4)(4)			; \
+	lwz	 9, (_REG_R0 +  9*4)(4)			; \
+	lwz	10, (_REG_R0 + 10*4)(4)			; \
+	lwz	11, (_REG_R0 + 11*4)(4)			; \
+	lwz	12, (_REG_R0 + 12*4)(4)			; \
+	lwz	13, (_REG_R0 + 13*4)(4)			; \
+	lwz	14, (_REG_R0 + 14*4)(4)			; \
+	lwz	15, (_REG_R0 + 15*4)(4)			; \
+	lwz	16, (_REG_R0 + 16*4)(4)			; \
+	lwz	17, (_REG_R0 + 17*4)(4)			; \
+	lwz	18, (_REG_R0 + 18*4)(4)			; \
+	lwz	19, (_REG_R0 + 19*4)(4)			; \
+	lwz	20, (_REG_R0 + 20*4)(4)			; \
+	lwz	21, (_REG_R0 + 21*4)(4)			; \
+	lwz	22, (_REG_R0 + 22*4)(4)			; \
+	lwz	23, (_REG_R0 + 23*4)(4)			; \
+	lwz	24, (_REG_R0 + 24*4)(4)			; \
+	lwz	25, (_REG_R0 + 25*4)(4)			; \
+	lwz	26, (_REG_R0 + 26*4)(4)			; \
+	lwz	27, (_REG_R0 + 27*4)(4)			; \
+	lwz	28, (_REG_R0 + 28*4)(4)			; \
+	lwz	29, (_REG_R0 + 29*4)(4)			; \
+	lwz	30, (_REG_R0 + 30*4)(4)			; \
+	lwz	31, (_REG_R0 + 31*4)(4)			; \
+	lwz	 0, _REG_CR(4)				; \
 	mtcr	 0					; \
-	lwz	 0, _REG_LR(reg)			; \
+	lwz	 0, _REG_LR(4)				; \
 	mtlr	 0					; \
 	/* PC/SRR0 is not a user-accessible register */	; \
 	/* yet CTR is callee-saved, so we snarf CTR  */	; \
-	lwz	 0, _REG_PC(reg)			; \
+	lwz	 0, _REG_PC(4)				; \
 	mtctr	 0					; \
-	lwz	 0, _REG_XER(reg)			; \
+	lwz	 0, _REG_XER(4)				; \
 	mtxer	 0					; \
-	lwz	 4, (_REG_R0 +  4*4)(reg)		; \
+	lwz	 4, (_REG_R0 +  4*4)(4)			; \
 	bctr						; \
 	/* NOTREACHED */
 
@@ -138,8 +138,8 @@ ENTRY(_getcontext_u)
 
 ENTRY(_setcontext_u)
 	mr 4,3
-	SETC(4)
+	SETC
 
 ENTRY(_swapcontext_u)
 	GETC(3)
-	SETC(4)
+	SETC
