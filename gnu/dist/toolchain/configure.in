@@ -593,7 +593,7 @@ case "${target}" in
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
   sh*-*-netbsd*)
-    noconfigdirs="$noconfigdirs gdb"
+    noconfigdirs="$noconfigdirs"
     ;;
   sh*-*-pe|mips*-*-pe|*arm-wince-pe)
     noconfigdirs="$noconfigdirs target-libjava target-libffi target-zlib"
