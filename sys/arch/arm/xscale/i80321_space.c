@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.1.2.3 2002/04/17 00:02:36 nathanw Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.1.2.4 2002/08/29 19:16:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -128,7 +128,7 @@ const struct bus_space i80321_bs_tag_template = {
 	/* set region */
 	bs_notimpl_bs_sr_1,
 	generic_armv4_bs_sr_2,
-	bs_notimpl_bs_sr_4,
+	generic_bs_sr_4,
 	bs_notimpl_bs_sr_8,
 
 	/* copy */
