@@ -2,8 +2,6 @@
  * Copyright (C) 1992-1993 Jean-loup Gailly.
  * This is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License, see the file COPYING.
- *
- *	$Id: lzw.h,v 1.2 1993/08/02 17:46:23 mycroft Exp $
  */
 
 #if !defined(OF) && defined(lint)

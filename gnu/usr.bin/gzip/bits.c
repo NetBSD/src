@@ -59,8 +59,8 @@
 #  include <stdio.h>
 #endif
 
-#ifndef lint
-static char rcsid[] = "$Id: bits.c,v 1.1.1.1 1993/07/09 15:47:38 jtc Exp $";
+#ifdef RCSID
+static char rcsid[] = "$Id: bits.c,v 1.2 1993/10/15 23:05:26 jtc Exp $";
 #endif
 
 /* ===========================================================================

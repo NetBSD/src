@@ -13,8 +13,8 @@
    either deflated or stored.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: unzip.c,v 1.1.1.1 1993/07/09 15:47:40 jtc Exp $";
+#ifdef RCSID
+static char rcsid[] = "$Id: unzip.c,v 1.2 1993/10/15 23:05:55 jtc Exp $";
 #endif
 
 #include "tailor.h"
@@ -174,7 +174,7 @@ int unzip(in, out)
     if (orig_crc != updcrc(outbuf, 0)) {
 	error("invalid compressed data--crc error");
     }
-    if (orig_len != bytes_out) {
+    if (orig_len != (ulg)bytes_out) {
 	error("invalid compressed data--length error");
     }
 

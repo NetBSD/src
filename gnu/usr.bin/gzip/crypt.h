@@ -1,7 +1,7 @@
 /* crypt.h (dummy version) -- do not perform encryption
  * Hardly worth copyrighting :-)
  *
- *	$Id: crypt.h,v 1.2 1993/08/02 17:46:16 mycroft Exp $
+ *	$Id: crypt.h,v 1.3 1993/10/15 23:05:28 jtc Exp $
  */
 
 #ifdef CRYPT
