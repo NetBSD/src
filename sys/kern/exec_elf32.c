@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.46 1999/10/25 13:55:07 kleink Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.47 2000/02/06 16:49:51 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_freebsd.h"
+#include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +97,10 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
+#ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32_exec.h>
+#endif
+
 #ifdef COMPAT_LINUX
 #include <compat/linux/common/linux_exec.h>
 #endif
@@ -118,7 +123,7 @@ int	ELFNAME(load_file) __P((struct proc *, struct exec_package *, char *,
 void	ELFNAME(load_psection) __P((struct exec_vmcmd_set *, struct vnode *,
 	    Elf_Phdr *, Elf_Addr *, u_long *, int *));
 
-static int ELFNAME2(netbsd,signature) __P((struct proc *, struct exec_package *,
+int ELFNAME2(netbsd,signature) __P((struct proc *, struct exec_package *,
     Elf_Ehdr *));
 static int ELFNAME2(netbsd,probe) __P((struct proc *, struct exec_package *,
     Elf_Ehdr *, char *, Elf_Addr *));
@@ -140,7 +145,7 @@ struct emul ELFNAMEEND(emul_netbsd) = {
 #else
 	NULL,
 #endif
-	howmany(ELF_AUX_ENTRIES * sizeof(AuxInfo), sizeof (char *)),
+	howmany(ELF_AUX_ENTRIES * sizeof(AuxInfo), sizeof (Elf_Addr)),
 	ELFNAME(copyargs),
 	setregs,
 	sigcode,
@@ -149,6 +154,10 @@ struct emul ELFNAMEEND(emul_netbsd) = {
 
 int (*ELFNAME(probe_funcs)[]) __P((struct proc *, struct exec_package *,
     Elf_Ehdr *, char *, Elf_Addr *)) = {
+#if defined(COMPAT_NETBSD32) && (ELFSIZE == 32)
+	    /* This one should go first so it matches instead of netbsd */
+	ELFNAME2(netbsd32,probe),
+#endif
 	ELFNAME2(netbsd,probe),
 #if defined(COMPAT_FREEBSD) && (ELFSIZE == 32)
 	ELFNAME2(freebsd,probe),		/* XXX not 64-bit safe */
@@ -725,7 +734,7 @@ bad:
 	return ENOEXEC;
 }
 
-static int
+int
 ELFNAME2(netbsd,signature)(p, epp, eh)
 	struct proc *p;
 	struct exec_package *epp;
@@ -796,7 +805,6 @@ ELFNAME2(netbsd,probe)(p, epp, eh, itp, pos)
 
 	if ((error = ELFNAME2(netbsd,signature)(p, epp, eh)) != 0)
 		return error;
-
 	epp->ep_emul = &ELFNAMEEND(emul_netbsd);
 	*pos = ELFDEFNNAME(NO_ADDR);
 	return 0;
