@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.104 1998/04/07 19:43:08 is Exp $
+#	$NetBSD: GENERIC,v 1.105 1998/04/11 19:30:56 is Exp $
 
 #
 # GENERIC AMIGA
@@ -219,8 +219,7 @@ com*		at hyper? port ?	# Hypercom3/4 serial ports
 # Amiga Mainboard devices (sans graphics and keyboard)
 #
 
-#XXX ser doesn't compile currenlty:
-#ser0		at mainbus0		# Amiga onboard serial
+ser0		at mainbus0		# Amiga onboard serial
 par0		at mainbus0		# Amiga onboard parallel
 ms*		at mainbus0		# Amiga mice
 fdc0		at mainbus0		# Amiga FDC
