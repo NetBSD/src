@@ -231,16 +231,31 @@ print_operand (stream, x, code)
 	  fputs (reg_names[REGNO (x) + 1], (stream));
 	  break;
 	case MEM:
-	  print_operand_address (stream,
-				 XEXP (adj_offsettable_operand (x, 4), 0));
+	  if (GET_CODE (XEXP (x, 0)) != PRE_DEC
+	      && GET_CODE (XEXP (x, 0)) != POST_INC)
+	    x = adj_offsettable_operand (x, 4);
+	  print_operand_address (stream, XEXP (x, 0));
 	  break;
+	}
+      break;
+    case 'o':
+      switch (GET_CODE (x))
+	{
+	case PLUS:  fputs ("add", stream); break;
+	case MINUS: fputs ("sub", stream); break;
+	case MULT:  fputs ("mul", stream); break;
+	case DIV:   fputs ("div", stream); break;
 	}
       break;
     default:
       switch (GET_CODE (x))
 	{
 	case REG:
-	  fputs (reg_names[REGNO (x)], (stream));
+	  if (REGNO (x) >= FIRST_FP_REG && REGNO (x) <= LAST_FP_REG
+	      && GET_MODE_SIZE (GET_MODE (x)) > 4)
+	    fprintf ((stream), "d%s", reg_names[REGNO (x)]+1);
+	  else
+	    fputs (reg_names[REGNO (x)], (stream));
 	  break;
 	case MEM:
 	  output_address (XEXP (x, 0));
@@ -1603,8 +1618,16 @@ gen_shl_sext (dest, left_rtx, size_rtx, source)
     case 5:
       {
 	int i = 16 - size;
-	emit_insn (gen_shl_sext_ext (dest, source, GEN_INT (16 - insize),
-				     GEN_INT (16)));
+	if (! rtx_equal_function_value_matters
+	    && ! reload_in_progress && ! reload_completed)
+	  emit_insn (gen_shl_sext_ext (dest, source, left_rtx, size_rtx));
+	else
+	  {
+	    operands[0] = dest;
+	    operands[2] = GEN_INT (16 - insize);
+	    gen_shifty_hi_op (ASHIFT, operands);
+	    emit_insn (gen_extendhisi2 (dest, gen_lowpart (HImode, dest)));
+	  }
 	/* Don't use gen_ashrsi3 because it generates new pseudos.  */
 	while (--i >= 0)
 	  gen_ashift (ASHIFTRT, 1, dest);
@@ -2125,7 +2148,7 @@ sfunc_uses_reg (insn)
   for (i = XVECLEN (pattern, 0) - 1; i >= 0; i--)
     {
       part = XVECEXP (pattern, 0, i);
-      if (part == reg_part)
+      if (part == reg_part || GET_CODE (part) == CLOBBER)
 	continue;
       if (reg_mentioned_p (reg, ((GET_CODE (part) == SET
 				  && GET_CODE (SET_DEST (part)) == REG)
@@ -2465,6 +2488,13 @@ gen_far_branch (bp)
     }
   else
     jump = emit_jump_insn_after (gen_return (), insn);
+  /* Emit a barrier so that reorg knows that any following instructions
+     are not reachable via a fall-through path.
+     But don't do this when not optimizing, since we wouldn't supress the
+     alignment for the barrier then, and could end up with out-of-range
+     pc-relative loads.  */
+  if (optimize)
+    emit_barrier_after (jump);
   emit_label_after (bp->near_label, insn);
   JUMP_LABEL (jump) = bp->far_label;
   if (! invert_jump (insn, label))
@@ -2482,7 +2512,7 @@ fixup_addr_diff_vecs (first)
 
   for (insn = first; insn; insn = NEXT_INSN (insn))
     {
-      rtx vec_lab, pat, prev, prevpat, x;
+      rtx vec_lab, pat, prev, prevpat, x, braf_label;
 
       if (GET_CODE (insn) != JUMP_INSN
 	  || GET_CODE (PATTERN (insn)) != ADDR_DIFF_VEC)
@@ -2505,10 +2535,15 @@ fixup_addr_diff_vecs (first)
 	  if (GET_CODE (x) == LABEL_REF && XEXP (x, 0) == vec_lab)
 	    break;
 	}
+
+      /* Emit the reference label of the braf where it belongs, right after
+	 the casesi_jump_2 (i.e. braf).  */
+      braf_label = XEXP (XEXP (SET_SRC (XVECEXP (prevpat, 0, 0)), 1), 0);
+      emit_label_after (braf_label, prev);
+
       /* Fix up the ADDR_DIF_VEC to be relative
 	 to the reference address of the braf.  */
-      XEXP (XEXP (pat, 0), 0)
-	= XEXP (XEXP (SET_SRC (XVECEXP (prevpat, 0, 0)), 1), 0);
+      XEXP (XEXP (pat, 0), 0) = braf_label;
     }
 }
 
