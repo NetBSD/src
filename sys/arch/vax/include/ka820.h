@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.h,v 1.3 2000/01/24 02:40:32 matt Exp $	*/
+/*	$NetBSD: ka820.h,v 1.4 2001/06/03 15:10:34 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -92,6 +92,7 @@
 
 /* interrupt vectors unique for this CPU */
 #define	KA820_INT_RXCD		0x58
+#define KA820_INT_IPINTR	0x80
 
 /* what the heck */
 #define KA820PORT_BITS \
