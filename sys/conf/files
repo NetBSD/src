@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.457 2001/09/10 23:11:05 bjh21 Exp $
+#	$NetBSD: files,v 1.458 2001/09/13 05:19:53 enami Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -145,7 +145,8 @@ defopt	LOCKDEBUG
 defopt	SYSCALL_DEBUG
 
 # memory (ram) disk options
-defopt	opt_md.h	MEMORY_DISK_HOOKS MEMORY_DISK_SERVER MEMORY_DISK_IS_ROOT MEMORY_DISK_DYNAMIC
+defopt	opt_md.h	MEMORY_DISK_HOOKS MEMORY_DISK_SERVER
+			MEMORY_DISK_IS_ROOT MEMORY_DISK_DYNAMIC
 
 defopt	opt_mdsize.h	MINIROOTSIZE
 
@@ -639,7 +640,8 @@ define	bpf_filter
 
 # Attributes used by the ISDN subsystem
 define	isdn		# the ISDN subsystem
-define	passive_isdn	# files needed by passive cards (XXX - protocol specific)
+define	passive_isdn	# files needed by passive cards (XXX - protocol
+			# specific)
 define	spppi4b		# synchronous PPP support
 
 # ISDN cards based on the Siemens ISAC/HSCX chipset (or lookalikes)
