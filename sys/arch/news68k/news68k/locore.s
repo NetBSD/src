@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8.2.1 2000/12/24 07:20:12 jhawk Exp $	*/
+/*	$NetBSD: locore.s,v 1.8.2.2 2000/12/24 08:09:22 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -227,7 +227,7 @@ Lnot1200:
 	jra	2f
 1:
 	RELOC(ectype, %a0)		| yes, we are news1600/1700
-	movl	#EC_PHYS,%a0@		|  and have a phisical address cache
+	movl	#EC_PHYS,%a0@		|  and have a physical address cache
 2:
 	/*
 	 * Fix up the physical addresses of the news1700's onboard
@@ -937,12 +937,6 @@ Laststkadj:
  * Use common m68k sigcode.
  */
 #include <m68k/m68k/sigcode.s>
-#ifdef COMPAT_SUNOS
-#include <m68k/m68k/sunos_sigcode.s>
-#endif
-#ifdef COMPAT_SVR4
-#include <m68k/m68k/svr4_sigcode.s>
-#endif
 
 /*
  * Primitives
