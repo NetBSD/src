@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.2 1996/05/21 15:32:11 oki Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -48,6 +48,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <x68k/dev/grfioctl.h>
@@ -151,6 +152,7 @@ static struct grf_softc	congrf;
  * XXX called from ite console init routine.
  * Does just what configure will do later but without printing anything.
  */
+void
 grfconfig(dp)
 	struct device *dp;
 {
@@ -224,6 +226,7 @@ char *pnp;
 	return(UNCONF);
 }
 
+int
 grfinit(dp, unit)
 	void *dp;
 	int unit;
