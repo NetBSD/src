@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.48 2005/01/31 23:49:36 kim Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.49 2005/02/01 12:13:51 he Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.48 2005/01/31 23:49:36 kim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.49 2005/02/01 12:13:51 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -475,7 +475,9 @@ gif_input(m, af, ifp)
 {
 	int s, isr;
 	struct ifqueue *ifq = NULL;
+#if NBRIDGE > 0
 	struct ether_header *eh;
+#endif
 
 	if (ifp == NULL) {
 		/* just in case */
