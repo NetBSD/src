@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.2 1993/09/07 15:41:33 ws Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.2.2.1 1993/09/24 08:53:28 mycroft Exp $
  */
 
 #include "param.h"
@@ -461,7 +461,7 @@ int
 msdosfs_quotactl(mp, cmds, uid, arg, p)
 	struct mount *mp;
 	int cmds;
-	uid_t uid;
+	int uid;
 	caddr_t arg;
 	struct proc *p;
 {
