@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
+/*	$NetBSD: ping.c,v 1.21 1996/11/06 20:42:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.21 1996/11/06 20:42:17 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,13 +156,14 @@ double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
 
 void fill __P((char *, char *));
-void catcher(), finish();
+void catcher(), finish(), statistics();
 int in_cksum __P((u_short *, int));
 void pinger();
 char *pr_addr __P((u_long));
 void pr_icmph __P((struct icmp *));
 void pr_pack __P((char *, int, struct sockaddr_in *));
 void pr_retip __P((struct ip *));
+void pr_stats __P((void));
 void usage();
 
 int
@@ -381,6 +382,7 @@ main(argc, argv)
 	else
 		(void)printf("PING %s: %d data bytes\n", hostname, datalen);
 
+	(void)signal(SIGINFO, statistics);
 	(void)signal(SIGINT, finish);
 	(void)signal(SIGALRM, catcher);
 
@@ -728,16 +730,14 @@ in_cksum(addr, len)
 }
 
 /*
- * finish --
- *	Print out statistics, and give up.
+ * pr_stats --
+ *	Print out statistics, for statistics() and finish()
  */
 void
-finish()
+pr_stats()
 {
 	register int i;
 
-	(void)signal(SIGINT, SIG_IGN);
-	(void)putchar('\n');
 	(void)fflush(stdout);
 	(void)printf("--- %s ping statistics ---\n", hostname);
 	(void)printf("%ld packets transmitted, ", ntransmitted);
@@ -758,6 +758,34 @@ finish()
 		(void)printf("round-trip min/avg/max = %.3f/%.3f/%.3f ms\n",
 		    tmin, ((double)i) / 1000.0, tmax);
 	}
+}
+
+/*
+ * statistics --
+ *	Print out statistics when requested by SIGINFO.
+ */
+void
+statistics()
+{
+
+	pr_stats();
+	printf("---\n");
+}
+
+/*
+ * finish --
+ *	Print out statistics, and give up.
+ */
+void
+finish()
+{
+
+	(void)signal(SIGINFO, SIG_IGN);
+	(void)signal(SIGINT, SIG_IGN);
+
+	(void)putchar('\n');
+	pr_stats();
+
 	exit(nreceived ? 0 : 1);
 }
 
