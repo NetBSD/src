@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.19 2003/08/07 16:44:30 agc Exp $	*/
+/*	$NetBSD: chared.c,v 1.20 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.19 2003/08/07 16:44:30 agc Exp $");
+__RCSID("$NetBSD: chared.c,v 1.20 2003/10/18 23:48:42 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -456,8 +456,8 @@ ch_init(EditLine *el)
 	el->el_state.argument		= 1;
 	el->el_state.lastcmd		= ED_UNASSIGNED;
 
-	el->el_chared.c_macro.nline	= NULL;
 	el->el_chared.c_macro.level	= -1;
+	el->el_chared.c_macro.offset	= 0;
 	el->el_chared.c_macro.macro	= (char **) el_malloc(EL_MAXMACRO *
 	    sizeof(char *));
 	if (el->el_chared.c_macro.macro == NULL)
