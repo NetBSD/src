@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.10 1997/10/05 15:12:15 mrg Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.11 1997/10/05 15:21:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.10 1997/10/05 15:12:15 mrg Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.11 1997/10/05 15:21:46 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -335,9 +335,10 @@ rcleanup(signo)
 		(void)unlink(tfname);
 	if (dfname[0])
 		do {
-			do
-				(void)unlink(dfname);
-			while (dfname[2]-- != 'A');
+			do {
+				if (strchr(dfname, '/') == 0)
+					(void)unlink(dfname);
+			} while (dfname[2]-- != 'A');
 			dfname[2] = 'z';
 		} while (dfname[0]-- != 'd');
 	dfname[0] = '\0';
