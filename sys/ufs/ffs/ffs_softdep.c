@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.28 2002/02/14 00:49:56 wiz Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.29 2002/02/22 08:23:16 enami Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.28 2002/02/14 00:49:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.29 2002/02/22 08:23:16 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -187,6 +187,9 @@ static	void softdep_collect_pagecache __P((struct inode *));
 static	void softdep_free_pagecache __P((struct inode *));
 static	struct vnode *softdep_lookupvp(struct fs *, ino_t);
 static	struct buf *softdep_lookup_pcbp __P((struct vnode *, ufs_lbn_t));
+#ifdef UVMHIST
+void softdep_pageiodone1 __P((struct buf *));
+#endif
 void softdep_pageiodone __P((struct buf *));
 void softdep_flush_vnode __P((struct vnode *, ufs_lbn_t));
 static void softdep_flush_indir __P((struct vnode *));
@@ -1383,6 +1386,7 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 	struct inodedep *inodedep;
 	struct pagedep *pagedep;
 	struct newblk *newblk;
+	UVMHIST_FUNC("softdep_setup_allocdirect"); UVMHIST_CALLED(ubchist);
 
 	adp = pool_get(&allocdirect_pool, PR_WAITOK);
 	bzero(adp, sizeof(struct allocdirect));
@@ -1428,6 +1432,8 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 
 	if (bp == NULL) {
 		bp = softdep_setup_pagecache(ip, lbn, newsize);
+		UVMHIST_LOG(ubchist, "bp = %p, size = %d -> %d",
+		    bp, (int)oldsize, (int)newsize, 0);
 	}
 	WORKLIST_INSERT(&bp->b_dep, &adp->ad_list);
 	if (lbn >= NDADDR) {
@@ -5286,6 +5292,7 @@ softdep_setup_pagecache(ip, lbn, size)
 	struct vnode *vp = ITOV(ip);
 	struct buf *bp;
 	int s;
+	UVMHIST_FUNC("softdep_setup_pagecache"); UVMHIST_CALLED(ubchist);
 
 	/*
 	 * Enter pagecache dependency buf in hash.
@@ -5306,6 +5313,8 @@ softdep_setup_pagecache(ip, lbn, size)
 		LIST_INSERT_HEAD(&ip->i_pcbufhd, bp, b_vnbufs);
 	}
 	bp->b_bcount = bp->b_resid = size;
+	UVMHIST_LOG(ubchist, "vp = %p, lbn = %d, bp = %p, bcount = resid = %ld",
+	    vp, (int)lbn, bp, size);
 	return bp;
 }
 
@@ -5410,6 +5419,18 @@ softdep_lookup_pcbp(vp, lbn)
 void
 softdep_pageiodone(bp)
 	struct buf *bp;
+#ifdef UVMHIST
+{
+	struct vnode *vp = bp->b_vp;
+
+	if (DOINGSOFTDEP(vp))
+		softdep_pageiodone1(bp);
+}
+
+void
+softdep_pageiodone1(bp)
+	struct buf *bp;
+#endif
 {
 	int npages = bp->b_bufsize >> PAGE_SHIFT;
 	struct vnode *vp = bp->b_vp;
@@ -5423,6 +5444,7 @@ softdep_pageiodone(bp)
 	long iosize = bp->b_bcount;
 	int size, asize, bshift, bsize;
 	int i;
+	UVMHIST_FUNC("softdep_pageiodone"); UVMHIST_CALLED(ubchist);
 
 	KASSERT(!(bp->b_flags & B_READ));
 	bshift = vp->v_mount->mnt_fs_bshift;
@@ -5447,11 +5469,19 @@ softdep_pageiodone(bp)
 			if (pcbp == NULL) {
 				continue;
 			}
+			UVMHIST_LOG(ubchist,
+			    "bcount %d resid %d vp %p lbn %ld",
+			    pcbp ? (int)pcbp->b_bcount : -1,
+			    pcbp ? (int)pcbp->b_resid : -1, vp, lbn);
+			UVMHIST_LOG(ubchist,
+			    "pcbp %p iosize %ld, size %d, asize %d",
+			    pcbp, iosize, size, asize);
 			pcbp->b_resid -= size;
 			if (pcbp->b_resid < 0) {
 				panic("softdep_pageiodone: "
-				      "resid < 0, vp %p lbn 0x%lx pcbp %p",
-				      vp, lbn, pcbp);
+				    "resid < 0, vp %p lbn 0x%lx pcbp %p"
+				    " iosize %ld, size %d, asize %d, bsize %d",
+				    vp, lbn, pcbp, iosize, size, asize, bsize);
 			}
 			if (pcbp->b_resid > 0) {
 				continue;
