@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.3 2000/04/27 14:08:09 bouyer Exp $
+;	$NetBSD: siop.ss,v 1.4 2000/05/04 15:42:42 bouyer Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -32,15 +32,15 @@
 ARCH 720
 
 ; offsets in sym_xfer
-ABSOLUTE t_id = 20;
-ABSOLUTE t_msg_in = 28;
-ABSOLUTE t_ext_msg_in = 36;
-ABSOLUTE t_ext_msg_data = 44;
-ABSOLUTE t_ext_msg_tag = 52;
-ABSOLUTE t_msg_out = 60;
-ABSOLUTE t_cmd = 68;
-ABSOLUTE t_status = 76;
-ABSOLUTE t_data = 84;
+ABSOLUTE t_id = 24;
+ABSOLUTE t_msg_in = 32;
+ABSOLUTE t_ext_msg_in = 40;
+ABSOLUTE t_ext_msg_data = 48;
+ABSOLUTE t_ext_msg_tag = 56;
+ABSOLUTE t_msg_out = 64;
+ABSOLUTE t_cmd = 72;
+ABSOLUTE t_status = 80;
+ABSOLUTE t_data = 88;
 
 ;; interrupt codes
 ABSOLUTE int_done	= 0xff00;
@@ -55,6 +55,8 @@ ABSOLUTE int_err 	= 0xffff;
 
 ; flags for scratcha0
 ABSOLUTE flag_sdp 	= 0x01 ; got save data pointer
+ABSOLUTE flag_data 	= 0x02 ; we're in data phase
+ABSOLUTE flag_data_mask	= 0xfd ; ~flag_data
 
 ENTRY waitphase;
 ENTRY send_msgout;
@@ -145,6 +147,7 @@ status:
 	JUMP REL(waitphase);
 datain:
 	CALL REL(savedsa);
+	MOVE SCRATCHA0 | flag_data TO SCRATCHA0;
 datain_loop:
 	MOVE FROM t_data, WHEN DATA_IN;
 	MOVE SCRATCHA1 + 1 TO SCRATCHA1	; adjust offset
@@ -154,10 +157,12 @@ datain_loop:
 	MOVE DSA3 + 0 to DSA3 WITH CARRY;
 	JUMP REL(datain_loop), WHEN DATA_IN;
 	CALL REL(restoredsa);
+	MOVE SCRATCHA0 & flag_data_mask TO SCRATCHA0;
 	JUMP REL(waitphase);
 
 dataout:
 	CALL REL(savedsa);
+	MOVE SCRATCHA0 | flag_data TO SCRATCHA0;
 dataout_loop:
 	MOVE FROM t_data, WHEN DATA_OUT;
 	MOVE SCRATCHA1 + 1 TO SCRATCHA1	; adjust offset
@@ -167,6 +172,7 @@ dataout_loop:
 	MOVE DSA3 + 0 to DSA3 WITH CARRY;
 	JUMP REL(dataout_loop), WHEN DATA_OUT;
 	CALL REL(restoredsa);
+	MOVE SCRATCHA0 & flag_data_mask TO SCRATCHA0;
 	JUMP REL(waitphase);
 
 savedsa:
