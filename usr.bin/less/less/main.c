@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1997/09/21 12:41:01 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.6.2.1 1999/02/02 05:12:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -112,9 +112,9 @@ main(argc, argv)
 		scan_option("-m");
 		scan_option("-G");
 		scan_option("-f");
-		scan_option(getenv("MORE"));
+		scan_option(lgetenv("MORE"));
 	} else
-		scan_option(getenv("LESS"));
+		scan_option(lgetenv("LESS"));
 
 #if GNU_OPTIONS
 	/*
