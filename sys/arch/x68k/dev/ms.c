@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.16 2002/10/23 09:12:46 jdolecek Exp $ */
+/*	$NetBSD: ms.c,v 1.17 2003/07/15 01:44:52 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * X68k mouse driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.17 2003/07/15 01:44:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gv.c,v 1.6 2001/12/27 02:23:24 wiz Exp $	*/
+/*	$NetBSD: grf_gv.c,v 1.7 2003/07/15 01:44:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,9 @@
 /*
  * Graphics routines for the X68K native custom chip set.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_gv.c,v 1.7 2003/07/15 01:44:51 lukem Exp $");
 
 #include "opt_compat_hpux.h"
 

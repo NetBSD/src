@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.5 2002/10/02 16:02:40 thorpej Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.6 2003/07/15 01:44:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -33,6 +33,9 @@
 /*
  * Ethernet part of Nereid Ethernet/USB/Memory board
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.6 2003/07/15 01:44:51 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

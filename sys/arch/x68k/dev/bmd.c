@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.1 2002/12/01 09:00:36 isaki Exp $	*/
+/*	$NetBSD: bmd.c,v 1.2 2003/07/15 01:44:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -33,6 +33,9 @@
 /*
  * Nereid bank memory disk
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.2 2003/07/15 01:44:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
