@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.6 2000/07/28 20:43:45 castor Exp $	*/
+/*	$NetBSD: puc.c,v 1.7 2000/07/29 17:43:38 jlam Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -157,7 +157,9 @@ puc_attach(parent, self, aux)
 	int i, barindex;
 	bus_addr_t base;
 	bus_space_tag_t tag;
+#ifdef PUCCN
 	bus_space_handle_t ioh;
+#endif
 
 	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	sc->sc_desc = puc_find_description(PCI_VENDOR(pa->pa_id),
@@ -208,7 +210,7 @@ puc_attach(parent, self, aux)
 			tag = pa->pa_memt;
 			base =  PCI_MAPREG_MEM_ADDR(bar);
 		}
-#ifdef	PUCCN
+#ifdef PUCCN
 		if (com_is_console(tag, base, &ioh)) {
 			sc->sc_bar_mappings[i].mapped = 1;
 			sc->sc_bar_mappings[i].a = base;
