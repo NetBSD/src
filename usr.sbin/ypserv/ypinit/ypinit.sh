@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.10 2001/08/01 07:01:03 garbled Exp $
+#	$NetBSD: ypinit.sh,v 1.11 2003/11/12 13:31:08 grant Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
 # Originally written by Mats O Jansson <moj@stacken.kth.se>
-# Modified by Jason R. Thorpe <thorpej@NetBSD.ORG>
-# Reworked by Luke Mewburn <lukem@netbsd.org>
+# Modified by Jason R. Thorpe <thorpej@NetBSD.org>
+# Reworked by Luke Mewburn <lukem@NetBSD.org>
 #
 
 PATH=/bin:/usr/sbin:/usr/bin:${PATH}

@@ -1,10 +1,10 @@
-/*      $NetBSD: scanform.c,v 1.30 2003/10/21 02:55:43 fvdl Exp $       */
+/*      $NetBSD: scanform.c,v 1.31 2003/11/12 13:31:08 grant Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Copyright (c) 2000 Tim Rightnour <garbled@netbsd.org>
+ * Copyright (c) 2000 Tim Rightnour <garbled@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

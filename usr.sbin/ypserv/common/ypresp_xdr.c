@@ -1,13 +1,13 @@
-/*	$NetBSD: ypresp_xdr.c,v 1.3 2002/07/06 21:39:26 wiz Exp $	*/
+/*	$NetBSD: ypresp_xdr.c,v 1.4 2003/11/12 13:31:08 grant Exp $	*/
 
 /*
  * This file was originally generated with rpcgen, then modified
- * by Jason R. Thorpe <thorpej@NetBSD.ORG>. 
+ * by Jason R. Thorpe <thorpej@NetBSD.org>. 
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypresp_xdr.c,v 1.3 2002/07/06 21:39:26 wiz Exp $");
+__RCSID("$NetBSD: ypresp_xdr.c,v 1.4 2003/11/12 13:31:08 grant Exp $");
 #endif
 
 #include <sys/types.h>

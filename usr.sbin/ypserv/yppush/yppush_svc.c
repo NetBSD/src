@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_svc.c,v 1.6 2002/07/06 00:46:12 wiz Exp $	*/
+/*	$NetBSD: yppush_svc.c,v 1.7 2003/11/12 13:31:08 grant Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,12 +33,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppush_svc.c,v 1.6 2002/07/06 00:46:12 wiz Exp $");
+__RCSID("$NetBSD: yppush_svc.c,v 1.7 2003/11/12 13:31:08 grant Exp $");
 #endif
 
 /*
  * Originally from an rpcgen-generated file, then cleaned up
- * by Jason R. Thorpe <thorpej@NetBSD.ORG>.
+ * by Jason R. Thorpe <thorpej@NetBSD.org>.
  */
 
 #include <sys/types.h>

@@ -1,11 +1,11 @@
-/* $NetBSD: istat.c,v 1.4 2003/10/06 09:43:27 itojun Exp $ */
+/* $NetBSD: istat.c,v 1.5 2003/11/12 13:31:07 grant Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

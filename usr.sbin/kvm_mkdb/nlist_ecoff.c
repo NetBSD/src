@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.10 2003/09/19 06:24:04 itojun Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.11 2003/11/12 13:31:07 grant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.10 2003/09/19 06:24:04 itojun Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.11 2003/11/12 13:31:07 grant Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,11 +1,11 @@
-/*      $NetBSD: functions.c,v 1.7 2003/06/13 07:26:41 itojun Exp $       */
+/*      $NetBSD: functions.c,v 1.8 2003/11/12 13:31:08 grant Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Copyright (c) 2000 Tim Rightnour <garbled@netbsd.org>
- * Copyright (c) 2000 Hubert Feyrer <hubertf@netbsd.org>
+ * Copyright (c) 2000 Tim Rightnour <garbled@NetBSD.org>
+ * Copyright (c) 2000 Hubert Feyrer <hubertf@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,7 +48,7 @@
 #include "functions.h"
 
 #ifndef NETBSD_PKG_BASE
-#define NETBSD_PKG_BASE	"ftp://ftp.netbsd.org/pub/NetBSD/packages"
+#define NETBSD_PKG_BASE	"ftp://ftp.NetBSD.org/pub/NetBSD/packages"
 #endif
 
 extern int scripting;
@@ -329,9 +329,9 @@ ftp_pkgcats(char *subdir)
 
 /*
  *	Return patch where binary packages for this OS version/arch
- *	are expected. If mirror is NULL, ftp.netbsd.org is used.
+ *	are expected. If mirror is NULL, ftp.NetBSD.org is used.
  *	If it's set, it's assumed to be the URL where the the
- *	OS version dirs are, e.g. ftp://ftp.netbsd.org/pub/NetBSD/packages.
+ *	OS version dirs are, e.g. ftp://ftp.NetBSD.org/pub/NetBSD/packages.
  *	If $PKG_PATH is set, is returned unchanged, overriding everything.
  *	In any case, a trailing '/' is *not* passed.
  *	See also Appendix B of /usr/pkgsrc/Packages.txt.

@@ -1,11 +1,11 @@
-/*      $NetBSD: menutree.c,v 1.1 2001/01/05 01:28:37 garbled Exp $       */
+/*      $NetBSD: menutree.c,v 1.2 2003/11/12 13:31:08 grant Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Copyright (c) 2000 Dante Profeta <dante@netbsd.org>
- * Copyright (c) 2000 Tim Rightnour <garbled@netbsd.org>
+ * Copyright (c) 2000 Dante Profeta <dante@NetBSD.org>
+ * Copyright (c) 2000 Tim Rightnour <garbled@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

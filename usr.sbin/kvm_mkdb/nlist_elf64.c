@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf64.c,v 1.4 2000/06/14 17:26:10 cgd Exp $ */
+/* $NetBSD: nlist_elf64.c,v 1.5 2003/11/12 13:31:07 grant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __IDSTRING(e64rcsid,
-    "$NetBSD: nlist_elf64.c,v 1.4 2000/06/14 17:26:10 cgd Exp $");
+    "$NetBSD: nlist_elf64.c,v 1.5 2003/11/12 13:31:07 grant Exp $");
 #endif /* not lint */
 
 #define	ELFSIZE		64

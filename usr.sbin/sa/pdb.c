@@ -1,4 +1,4 @@
-/* $NetBSD: pdb.c,v 1.11 2003/05/02 15:15:52 martin Exp $ */
+/* $NetBSD: pdb.c,v 1.12 2003/11/12 13:31:08 grant Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pdb.c,v 1.11 2003/05/02 15:15:52 martin Exp $");
+__RCSID("$NetBSD: pdb.c,v 1.12 2003/11/12 13:31:08 grant Exp $");
 #endif
 
 #include <sys/types.h>
