@@ -1,6 +1,0 @@
-rm -rf $HOME/tmp/*
-cd /b/os/4.4-Lite/usr/src/usr.bin/$1
-cp -r * $HOME/tmp
-cd $HOME/tmp
-
-cvs import -Iobj -m "imported from 44lite2" src/usr.bin/$1 CSRG lite-2 
