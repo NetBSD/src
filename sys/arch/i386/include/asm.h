@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
- *	$Id: asm.h,v 1.1 1993/06/16 21:42:47 mycroft Exp $
+ *	$Id: asm.h,v 1.2 1993/09/08 16:55:17 jtc Exp $
  */
 
 #ifndef _SYS_ASM_H_
@@ -52,7 +52,7 @@
 # define _END_ENTRY
 #endif
 
-#ifdef STDC
+#ifdef __STDC__
 # define _C_FUNC(x)	_ ## x
 #else
 # define _C_FUNC(x)	_/**/x
