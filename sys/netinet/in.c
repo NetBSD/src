@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.21 1995/06/04 04:35:29 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.22 1995/06/04 05:06:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -123,8 +123,6 @@ in_socktrim(ap)
 }
 
 int	in_interfaces;		/* number of external internet interfaces */
-#define	satosin(sa)	((struct sockaddr_in *)(sa))
-#define	sintosa(sin)	((struct sockaddr *)(sin))
 
 /*
  * Generic internet control operations (ioctl's).
@@ -179,7 +177,7 @@ in_control(so, cmd, data, ifp)
 		if (ia == (struct in_ifaddr *)0) {
 			oia = (struct in_ifaddr *)
 				malloc(sizeof *oia, M_IFADDR, M_WAITOK);
-			if (oia == (struct in_ifaddr *)NULL)
+			if (oia == (struct in_ifaddr *)0)
 				return (ENOBUFS);
 			bzero((caddr_t)oia, sizeof *oia);
 			if (ia = in_ifaddr) {
@@ -472,7 +470,7 @@ in_broadcast(in, ifp)
 	 * Look through the list of addresses for a match
 	 * with a broadcast address.
 	 */
-#define ia ((struct in_ifaddr *)ifa)
+#define ia (ifatoia(ifa))
 	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
 		if (ifa->ifa_addr->sa_family == AF_INET &&
 		    (in.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||

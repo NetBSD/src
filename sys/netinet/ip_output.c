@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.23 1995/06/01 21:36:40 mycroft Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.24 1995/06/04 05:07:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -112,7 +112,7 @@ ip_output(m0, opt, ro, flags, imo)
 		ro = &iproute;
 		bzero((caddr_t)ro, sizeof (*ro));
 	}
-	dst = (struct sockaddr_in *)&ro->ro_dst;
+	dst = satosin(&ro->ro_dst);
 	/*
 	 * If there is a cached route,
 	 * check that it is to the same destination
@@ -132,8 +132,6 @@ ip_output(m0, opt, ro, flags, imo)
 	 * If routing to interface only,
 	 * short circuit routing lookup.
 	 */
-#define ifatoia(ifa)	((struct in_ifaddr *)(ifa))
-#define sintosa(sin)	((struct sockaddr *)(sin))
 	if (flags & IP_ROUTETOIF) {
 		if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(dst)))) == 0 &&
 		    (ia = ifatoia(ifa_ifwithnet(sintosa(dst)))) == 0) {
@@ -155,7 +153,7 @@ ip_output(m0, opt, ro, flags, imo)
 		ifp = ro->ro_rt->rt_ifp;
 		ro->ro_rt->rt_use++;
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst = (struct sockaddr_in *)ro->ro_rt->rt_gateway;
+			dst = satosin(ro->ro_rt->rt_gateway);
 	}
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
@@ -166,7 +164,7 @@ ip_output(m0, opt, ro, flags, imo)
 		 * still points to the address in "ro".  (It may have been
 		 * changed to point to a gateway address, above.)
 		 */
-		dst = (struct sockaddr_in *)&ro->ro_dst;
+		dst = satosin(&ro->ro_dst);
 		/*
 		 * See if the caller provided any multicast options
 		 */
@@ -287,8 +285,7 @@ sendit:
 		ip->ip_off = htons((u_int16_t)ip->ip_off);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, hlen);
-		error = (*ifp->if_output)(ifp, m,
-				(struct sockaddr *)dst, ro->ro_rt);
+		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
 	}
 	/*
@@ -370,8 +367,8 @@ sendorfree:
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
 		if (error == 0)
-			error = (*ifp->if_output)(ifp, m,
-			    (struct sockaddr *)dst, ro->ro_rt);
+			error = (*ifp->if_output)(ifp, m, sintosa(dst),
+			    ro->ro_rt);
 		else
 			m_freem(m);
 	}
@@ -843,7 +840,7 @@ ip_setmoptions(optname, imop, m)
 		 */
 		if (mreq->imr_interface.s_addr == INADDR_ANY) {
 			ro.ro_rt = NULL;
-			dst = (struct sockaddr_in *)&ro.ro_dst;
+			dst = satosin(&ro.ro_dst);
 			dst->sin_len = sizeof(*dst);
 			dst->sin_family = AF_INET;
 			dst->sin_addr = mreq->imr_multiaddr;
@@ -1059,6 +1056,6 @@ ip_mloopback(ifp, m, dst)
 		ip->ip_off = htons((u_int16_t)ip->ip_off);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
-		(void) looutput(ifp, copym, (struct sockaddr *)dst, NULL);
+		(void) looutput(ifp, copym, sintosa(dst), NULL);
 	}
 }

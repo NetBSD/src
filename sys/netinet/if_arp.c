@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.24 1995/05/15 01:30:44 cgd Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.25 1995/06/04 05:06:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -568,7 +568,7 @@ arplookup(addr, create, proxy)
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = addr;
 	sin.sin_other = proxy ? SIN_PROXY : 0;
-	rt = rtalloc1((struct sockaddr *)&sin, create);
+	rt = rtalloc1(sintosa(&sin), create);
 	if (rt == 0)
 		return (0);
 	rt->rt_refcnt--;
