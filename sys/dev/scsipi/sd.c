@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: sd.c,v 1.25 1994/03/29 04:29:40 mycroft Exp $
+ *      $Id: sd.c,v 1.26 1994/04/06 00:23:31 mycroft Exp $
  */
 
 /* 
@@ -782,8 +782,9 @@ sd_get_parms(sd, flags)
 	if (scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *) &scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *) &scsi_sense, sizeof(scsi_sense),
 	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN) != 0) {
-		printf("%s: could not mode sense", sd->sc_dev.dv_xname);
-		printf(" (4); using ficticious geometry\n");
+		printf("%s: could not mode sense (4)", sd->sc_dev.dv_xname);
+	fake_it:
+		printf("; using ficticious geometry\n");
 		/*
 		 * use adaptec standard ficticious geometry
 		 * this depends on which controller (e.g. 1542C is
@@ -803,6 +804,14 @@ sd_get_parms(sd, flags)
 		    b2tol(scsi_sense.pages.rigid_geometry.st_cyl_wp),
 		    b2tol(scsi_sense.pages.rigid_geometry.st_cyl_rwc),
 		    b2tol(scsi_sense.pages.rigid_geometry.land_zone)));
+
+		if (!scsi_sense.pages.rigid_geometry.nheads ||
+		    !scsi_sense.pages.rigid_geometry.ncyl_2 ||
+		    !scsi_sense.blk_desc.blklen) {
+			printf("%s: mode sense (4) returned nonsense",
+			    sd->sc_dev.dv_xname);
+			goto fake_it;
+		}
 
 		/*
 		 * KLUDGE!! (for zone recorded disks)
@@ -921,7 +930,6 @@ sddump(dev_t dev)
 	sddoingadump = 1;
 
 	blknum = dumplo + blkoff;
-	/* blkcnt = initialise_me; */
 	while (num > 0) {
 		pmap_enter(kernel_pmap,
 		    MAPTO,
