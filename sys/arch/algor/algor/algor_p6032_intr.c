@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.1 2001/06/22 06:02:54 thorpej Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.2 2001/06/22 14:29:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -448,7 +448,7 @@ algor_p6032_pci_intr_map(struct pci_attach_args *pa,
 	      P6032_IRQ_GPIO2, P6032_IRQ_GPIO3 }, /* 17: southbridge */
 
 	    { P6032_IRQ_GPIO3, P6032_IRQ_GPIO0,
-	      P6032_IRQ_GPIO1, P6032_IRQ_GPIO2 }, /* 19: slot 1 (p8) */
+	      P6032_IRQ_GPIO1, P6032_IRQ_GPIO2 }, /* 18: slot 1 (p8) */
 	};
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;
