@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.12 2003/04/16 09:09:52 wiz Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.13 2003/05/17 19:14:25 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ static const char **scripts[] = {
 	&departure_script,
 	&up_script,
 	&down_script
-    };
+};
 
 struct interface_data {
 	SLIST_ENTRY(interface_data) next;
@@ -170,8 +170,9 @@ main(int argc, char **argv)
 	}
 
 	while (argc > 0) {
-	    list_interfaces(argv[0]);
-	    argv++; argc--;
+		list_interfaces(argv[0]);
+		argv++;
+		argc--;
 	}
 
 	if (!verbose)
@@ -257,28 +258,28 @@ check_addrs(cp, addrs, ev)
 	int ifndx = 0, i;
 
 	if (addrs == 0)
-	    return;
+		return;
 	for (i = 1; i; i <<= 1) {
-	    if (i & addrs) {
-		sa = (struct sockaddr *)cp;
-		if (i == RTA_IFP) {
-		    struct sockaddr_dl * li = (struct sockaddr_dl*)sa;
-		    ifndx = li->sdl_index;
-		    if (!find_interface(ifndx)) {
-			if (verbose)
-			    printf("ignoring change on interface #%d\n", ifndx);
-			return;
-		    }
-		} else if (i == RTA_IFA) {
-		    ifa = sa;
-		} else if (i == RTA_BRD) {
-		    brd = sa;
+		if (i & addrs) {
+			sa = (struct sockaddr *)cp;
+			if (i == RTA_IFP) {
+				struct sockaddr_dl * li = (struct sockaddr_dl*)sa;
+				ifndx = li->sdl_index;
+				if (!find_interface(ifndx)) {
+					if (verbose)
+						printf("ignoring change on interface #%d\n", ifndx);
+					return;
+				}
+			} else if (i == RTA_IFA) {
+				ifa = sa;
+			} else if (i == RTA_BRD) {
+				brd = sa;
+			}
+			ADVANCE(cp, sa);
 		}
-		ADVANCE(cp, sa);
-	    }
 	}
 	if (ifa != NULL)
-	    invoke_script(ifa, brd, ev, ifndx, NULL);
+		invoke_script(ifa, brd, ev, ifndx, NULL);
 }
 
 static void
@@ -294,8 +295,8 @@ invoke_script(sa, dest, ev, ifindex, ifname_hint)
 	int status;
 
 	if (sa != NULL && sa->sa_len == 0) {
-	    fprintf(stderr, "illegal socket address (sa_len == 0)\n");
-	    return;
+		fprintf(stderr, "illegal socket address (sa_len == 0)\n");
+		return;
 	}
 	if (sa != NULL && sa->sa_family == AF_INET6) {
 		struct sockaddr_in6 sin6;
@@ -309,40 +310,42 @@ invoke_script(sa, dest, ev, ifindex, ifname_hint)
 	ifname = if_indextoname(ifindex, ifname_buf);
 	ifname = ifname ? ifname : ifname_hint;
 	if (ifname == NULL)
-	    return;
+		return;
 
 	if (sa != NULL) {
-	if (getnameinfo(sa, sa->sa_len, addr, sizeof addr, NULL, 0, NI_NUMERICHOST)) {
-	    if (verbose)
-		printf("getnameinfo failed\n");
-	    return;	/* this address can not be handled */
-	}
+		if (getnameinfo(sa, sa->sa_len, addr, sizeof addr, NULL, 0,
+		    NI_NUMERICHOST)) {
+			if (verbose)
+				printf("getnameinfo failed\n");
+			return;	/* this address can not be handled */
+		}
 	}
 	if (dest != NULL) {
-	    if (getnameinfo(dest, dest->sa_len, daddr, sizeof daddr, NULL, 0, NI_NUMERICHOST)) {
-		if (verbose)
-		    printf("getnameinfo failed\n");
-		return;	/* this address can not be handled */
-	    }
+		if (getnameinfo(dest, dest->sa_len, daddr, sizeof daddr,
+		    NULL, 0, NI_NUMERICHOST)) {
+			if (verbose)
+				printf("getnameinfo failed\n");
+			return;	/* this address can not be handled */
+		}
 	}
 
 	script = *scripts[ev];
 	if (script == NULL) return;
 
 	if (verbose)
-	    (void) printf("calling: %s %s %s %s %s %s\n",
-		script, ifname, DummyTTY, DummySpeed, addr, daddr);
+		(void) printf("calling: %s %s %s %s %s %s\n",
+		    script, ifname, DummyTTY, DummySpeed, addr, daddr);
 
 	switch (vfork()) {
 	case -1:
-	    fprintf(stderr, "cannot fork\n");
-	    break;
+		fprintf(stderr, "cannot fork\n");
+		break;
 	case 0:
-	    (void) execl(script, script, ifname, DummyTTY, DummySpeed,
-		addr, daddr, NULL);
-	    _exit(EXIT_FAILURE);
+		(void) execl(script, script, ifname, DummyTTY, DummySpeed,
+		    addr, daddr, NULL);
+		_exit(EXIT_FAILURE);
 	default:
-	    (void) wait(&status);
+		(void) wait(&status);
 	}
 }
 
@@ -353,13 +356,16 @@ static void list_interfaces(const char *ifnames)
 	static const char sep[] = " \t";
 	struct interface_data * p;
 
-	for (name = strtok_r(names, sep, &lasts); name != NULL; name = strtok_r(NULL, sep, &lasts)) {
-	    p = malloc(sizeof(*p));
-	    SLIST_INSERT_HEAD(&ifs, p, next);
-	    p->ifname = strdup(name);
-	    p->index = if_nametoindex(p->ifname);
-	    if (verbose)
-		printf("interface \"%s\" has index %d\n", p->ifname, p->index);
+	for (name = strtok_r(names, sep, &lasts);
+	    name != NULL;
+	    name = strtok_r(NULL, sep, &lasts)) {
+		p = malloc(sizeof(*p));
+		SLIST_INSERT_HEAD(&ifs, p, next);
+		p->ifname = strdup(name);
+		p->index = if_nametoindex(p->ifname);
+		if (verbose)
+			printf("interface \"%s\" has index %d\n",
+			    p->ifname, p->index);
 	}
 	free(names);
 }
@@ -371,21 +377,24 @@ check_announce(struct if_announcemsghdr *ifan)
 	const char *ifname = ifan->ifan_name;
 
 	SLIST_FOREACH(p, &ifs, next) {
-	    if (strcmp(p->ifname, ifname) == 0) {
-	        switch (ifan->ifan_what) {
-		case IFAN_ARRIVAL:
-		    invoke_script(NULL, NULL, ARRIVAL, p->index, NULL);
-		    break;
-		case IFAN_DEPARTURE:
-		    invoke_script(NULL, NULL, DEPARTURE, p->index, p->ifname);
-		    break;
-		default:
-		    if (verbose)
-			(void) printf("unknown announce: what=%d\n", ifan->ifan_what);
-		    break;
+		if (strcmp(p->ifname, ifname) == 0) {
+			switch (ifan->ifan_what) {
+			case IFAN_ARRIVAL:
+				invoke_script(NULL, NULL, ARRIVAL, p->index,
+				    NULL);
+				break;
+			case IFAN_DEPARTURE:
+				invoke_script(NULL, NULL, DEPARTURE, p->index,
+				    p->ifname);
+				break;
+			default:
+				if (verbose)
+					(void) printf("unknown announce: "
+					    "what=%d\n", ifan->ifan_what);
+				break;
+			}
+			return;
 		}
-		return;
-	    }
 	}
 }
 
@@ -394,9 +403,10 @@ static void rescan_interfaces()
 	struct interface_data * p;
 	
 	SLIST_FOREACH(p, &ifs, next) {
-	    p->index = if_nametoindex(p->ifname);
-	    if (verbose)
-		printf("interface \"%s\" has index %d\n", p->ifname, p->index);
+		p->index = if_nametoindex(p->ifname);
+		if (verbose)
+			printf("interface \"%s\" has index %d\n", p->ifname,
+			    p->index);
 	}
 }
 
@@ -405,10 +415,10 @@ static void free_interfaces()
 	struct interface_data * p;
 
 	while (!SLIST_EMPTY(&ifs)) {
-	    p = SLIST_FIRST(&ifs);
-	    SLIST_REMOVE_HEAD(&ifs, next);
-	    free(p->ifname);
-	    free(p);
+		p = SLIST_FIRST(&ifs);
+		SLIST_REMOVE_HEAD(&ifs, next);
+		free(p->ifname);
+		free(p);
 	}
 }
 
@@ -418,8 +428,8 @@ static int find_interface(index)
 	struct interface_data * p;
 	
 	SLIST_FOREACH(p, &ifs, next)
-	    if (p->index == index)
-		return 1;
+		if (p->index == index)
+			return 1;
 	return 0;
 }
 
@@ -429,27 +439,29 @@ static void run_initial_ups()
 	struct ifaddrs *res = NULL, *p;
 
 	if (getifaddrs(&res) == 0) {
-	    for (p = res; p; p = p->ifa_next) {
-		SLIST_FOREACH(ifd, &ifs, next) {
-		    if (strcmp(ifd->ifname, p->ifa_name) == 0)
-			break;
+		for (p = res; p; p = p->ifa_next) {
+			SLIST_FOREACH(ifd, &ifs, next) {
+				if (strcmp(ifd->ifname, p->ifa_name) == 0)
+					break;
+			}
+			if (ifd == NULL)
+				continue;
+
+			if (p->ifa_addr && p->ifa_addr->sa_family == AF_LINK)
+				invoke_script(NULL, NULL, ARRIVAL, ifd->index,
+				    NULL);
+
+			if ((p->ifa_flags & IFF_UP) == 0)
+				continue;
+			if (p->ifa_addr == NULL)
+				continue;
+			if (p->ifa_addr->sa_family == AF_LINK)
+				continue;
+			if (if_is_connected(ifd->ifname))
+				invoke_script(p->ifa_addr, p->ifa_dstaddr, UP,
+				    ifd->index, ifd->ifname);
 		}
-		if (ifd == NULL)
-		    continue;
-
-		if (p->ifa_addr && p->ifa_addr->sa_family == AF_LINK)
-		    invoke_script(NULL, NULL, ARRIVAL, ifd->index, NULL);
-
-		if ((p->ifa_flags & IFF_UP) == 0)
-		    continue;
-		if (p->ifa_addr == NULL)
-		    continue;
-		if (p->ifa_addr->sa_family == AF_LINK)
-		    continue;
-		if (if_is_connected(ifd->ifname))
-		    invoke_script(p->ifa_addr, p->ifa_dstaddr, UP, ifd->index, ifd->ifname);
-	    }
-	    freeifaddrs(res);
+		freeifaddrs(res);
 	}
 }
 
@@ -473,11 +485,11 @@ if_is_connected(const char * ifname)
 	strncpy(status.ifname, ifname, sizeof status.ifname);
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s < 0)
-	    return 1;	/* no idea how to handle this... */
+		return 1;	/* no idea how to handle this... */
 	err = ioctl(s, SPPPGETSTATUS, &status);
 	if (err != 0)
-	    /* not if_spppsubr.c based - call it connected */
-	    status.phase = SPPP_PHASE_NETWORK;
+		/* not if_spppsubr.c based - call it connected */
+		status.phase = SPPP_PHASE_NETWORK;
 	close(s);
 	return status.phase == SPPP_PHASE_NETWORK;
 }
