@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.15 1999/05/04 02:12:15 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.16 1999/05/04 02:44:43 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -69,6 +69,7 @@ typedef u_int64_t	osf1_fsid_t;
 typedef u_int64_t	osf1_rlim_t;
 typedef void		*osf1_data_ptr;	/* XXX hard to fix size */
 typedef void		*osf1_fcn_ptr;	/* XXX hard to fix size, bogus */
+typedef	osf1_int	osf1_key_t;
 
 struct osf1_timeval {				/* time.h */
 	osf1_time_t	tv_sec;
