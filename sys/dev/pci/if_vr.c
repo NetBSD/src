@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.11 1999/02/05 02:58:38 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.12 1999/02/05 07:53:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -310,7 +310,7 @@ static int vr_mii_readreg(self, phy, reg)
 	struct vr_softc *sc = (struct vr_softc *)self;
 	int i, ack, s, val = 0;
 
-	s = splimp();
+	s = splnet();
 
 	CSR_WRITE_1(sc, VR_MIICMD, 0);
 	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
@@ -394,7 +394,7 @@ static void vr_mii_writereg(self, phy, reg, val)
 	struct vr_softc *sc = (struct vr_softc *)self;
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	CSR_WRITE_1(sc, VR_MIICMD, 0);
 	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
@@ -1094,7 +1094,7 @@ static void vr_init(xsc)
 	struct ifnet		*ifp = &sc->vr_ec.ec_if;
 	int			s;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1208,7 +1208,7 @@ static int vr_ioctl(ifp, command, data)
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (command) {
 	case SIOCSIFADDR:
@@ -1305,7 +1305,7 @@ vr_tick(arg)
 	struct vr_softc *sc = arg;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	mii_tick(&sc->vr_mii);
 	splx(s);
 
