@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.3 1998/01/12 18:18:14 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.4 1998/02/02 05:54:28 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include "isa.h"
 
-int	pcibmatch __P((struct device *, void *, void *));
+int	pcibmatch __P((struct device *, struct cfdata *, void *));
 void	pcibattach __P((struct device *, struct device *, void *));
 
 struct cfattach pcib_ca = {
@@ -65,7 +65,8 @@ int	pcib_print __P((void *, const char *));
 int
 pcibmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 

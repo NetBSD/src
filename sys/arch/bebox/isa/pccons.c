@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.6 1998/01/19 01:49:43 sakamoto Exp $	*/
+/*	$NetBSD: pccons.c,v 1.7 1998/02/02 05:54:24 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -132,7 +132,7 @@ struct pc_softc {
 };
 
 void fillw __P((short, void *, size_t));
-int pcprobe __P((struct device *, void *, void *));
+int pcprobe __P((struct device *, struct cfdata *, void *));
 void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 void pcinit __P((void));
@@ -438,7 +438,8 @@ async_update()
 int
 pcprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	u_int i;
@@ -941,7 +942,8 @@ pcinit()
 	else
 		vs.so_at = FG_YELLOW | BG_BLACK;
 
-	fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
+	if (pccons_is_console)
+		fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
 }
 
 #define	wrtchar(c, at) do {\
