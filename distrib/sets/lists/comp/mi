@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.706 2004/06/02 14:10:14 pooka Exp $
+#	$NetBSD: mi,v 1.707 2004/06/13 22:28:42 jmc Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -6403,7 +6403,7 @@
 ./usr/share/man/man3/clntudp_create.3		comp-c-man		.man
 ./usr/share/man/man3/clock.3			comp-c-man		.man
 ./usr/share/man/man3/closedir.3			comp-c-man		.man
-./usr/share/man/man3/closefrom.3		comp-c-man		.cat
+./usr/share/man/man3/closefrom.3		comp-c-man		.man
 ./usr/share/man/man3/closelog.3			comp-c-man		.man
 ./usr/share/man/man3/clrtobot.3			comp-c-man		.man
 ./usr/share/man/man3/clrtoeol.3			comp-c-man		.man
