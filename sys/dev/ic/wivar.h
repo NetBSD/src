@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.36 2003/07/06 20:01:18 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.37 2003/10/13 08:07:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -43,6 +43,9 @@ struct wi_softc	{
 	int			(*sc_enable)(struct wi_softc *);
 	void			(*sc_disable)(struct wi_softc *);
 	void			(*sc_reset)(struct wi_softc *);
+
+	int			(*sc_newstate)(struct ieee80211com *,
+				    enum ieee80211_state, int);
 
 	int			sc_attached;
 	int			sc_enabled;
