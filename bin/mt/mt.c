@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.25 1997/10/21 20:04:55 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.26 1998/07/04 02:14:22 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.25 1997/10/21 20:04:55 thorpej Exp $");
+__RCSID("$NetBSD: mt.c,v 1.26 1998/07/04 02:14:22 mjacob Exp $");
 #endif
 #endif /* not lint */
 
@@ -236,9 +236,11 @@ struct tape_desc {
 #ifdef tahoe
 	{ MT_ISCY,	"cipher",	CYS_BITS,	CYCW_BITS },
 #endif
-	{ 0x7,		"SCSI",		"76543210",	"76543210" },
+#define SCSI_DS_BITS	"\20\5WriteProtect\2Mounted"
+	{ 0x7,		"SCSI",		SCSI_DS_BITS,	"76543210" },
 	{ 0 }
 };
+
 
 /*
  * Interpret the status buffer returned
@@ -287,7 +289,7 @@ printreg(s, v, bits)
 	else
 		printf("%s=%x", s, v);
 	bits++;
-	if (v && bits) {
+	if (v && *bits) {
 		putchar('<');
 		while ((i = *bits++)) {
 			if (v & (1 << (i-1))) {
