@@ -1,5 +1,5 @@
-/*	$NetBSD: register.c,v 1.2 2002/08/01 08:47:03 itojun Exp $	*/
-/*	$OpenBSD: register.c,v 1.8 2002/07/30 06:07:06 itojun Exp $	*/
+/*	$NetBSD: register.c,v 1.3 2002/08/28 03:52:46 itojun Exp $	*/
+/*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -77,12 +77,14 @@ systrace_initcb(void)
 	alias = systrace_new_alias("netbsd", "__stat13", "netbsd", "fsread");
 	systrace_alias_add_trans(alias, tl);
 	X(intercept_register_sccb("netbsd", "__lstat13", trans_cb, NULL));
-	tl = intercept_register_translink("netbsd", "__lstat13", 0);
+	tl = intercept_register_translation("netbsd", "__lstat13", 0,
+	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("netbsd", "__lstat13", "netbsd", "fsread");
 	systrace_alias_add_trans(alias, tl);
 
 	X(intercept_register_sccb("netbsd", "unlink", trans_cb, NULL));
-	tl = intercept_register_transfn("netbsd", "unlink", 0);
+	tl = intercept_register_translation("netbsd", "unlink", 0,
+	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("netbsd", "unlink", "netbsd", "fswrite");
 	systrace_alias_add_trans(alias, tl);
 
@@ -109,7 +111,8 @@ systrace_initcb(void)
 	intercept_register_translation("netbsd", "fchmod", 0, &fdt);
 	intercept_register_translation("netbsd", "fchmod", 1, &modeflags);
 	X(intercept_register_sccb("netbsd", "readlink", trans_cb, NULL));
-	tl = intercept_register_translink("netbsd", "readlink", 0);
+	tl = intercept_register_translation("netbsd", "readlink", 0,
+	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("netbsd", "readlink", "netbsd", "fsread");
 	systrace_alias_add_trans(alias, tl);
 
@@ -139,7 +142,7 @@ systrace_initcb(void)
 	intercept_register_transfn("netbsd", "__posix_rename", 1);
 	X(intercept_register_sccb("netbsd", "symlink", trans_cb, NULL));
 	intercept_register_transstring("netbsd", "symlink", 0);
-	intercept_register_translink("netbsd", "symlink", 1);
+	intercept_register_transfn("netbsd", "symlink", 1);
 	X(intercept_register_sccb("netbsd", "link", trans_cb, NULL));
 	intercept_register_transfn("netbsd", "link", 0);
 	intercept_register_transfn("netbsd", "link", 1);
@@ -180,12 +183,14 @@ systrace_initcb(void)
 	systrace_alias_add_trans(alias, tl);
 
 	X(intercept_register_sccb("native", "lstat", trans_cb, NULL));
-	tl = intercept_register_translink("native", "lstat", 0);
+	tl = intercept_register_translation("native", "lstat", 0,
+	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("native", "lstat", "native", "fsread");
 	systrace_alias_add_trans(alias, tl);
 
 	X(intercept_register_sccb("native", "unlink", trans_cb, NULL));
-	tl = intercept_register_transfn("native", "unlink", 0);
+	tl = intercept_register_translation("native", "unlink", 0,
+	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("native", "unlink", "native", "fswrite");
 	systrace_alias_add_trans(alias, tl);
 
@@ -204,7 +209,8 @@ systrace_initcb(void)
 	intercept_register_translation("native", "fchmod", 0, &fdt);
 	intercept_register_translation("native", "fchmod", 1, &modeflags);
 	X(intercept_register_sccb("native", "readlink", trans_cb, NULL));
-	tl = intercept_register_translink("native", "readlink", 0);
+	tl = intercept_register_translation("native", "readlink", 0,
+	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("native", "readlink", "native", "fsread");
 	systrace_alias_add_trans(alias, tl);
 
@@ -231,7 +237,7 @@ systrace_initcb(void)
 	intercept_register_transfn("native", "rename", 1);
 	X(intercept_register_sccb("native", "symlink", trans_cb, NULL));
 	intercept_register_transstring("native", "symlink", 0);
-	intercept_register_translink("native", "symlink", 1);
+	intercept_register_transfn("native", "symlink", 1);
 	X(intercept_register_sccb("native", "link", trans_cb, NULL));
 	intercept_register_transfn("native", "link", 0);
 	intercept_register_transfn("native", "link", 1);

@@ -1,5 +1,5 @@
-.\"	$NetBSD: systrace.1,v 1.11 2002/07/31 00:28:02 itojun Exp $
-.\"	$OpenBSD: systrace.1,v 1.23 2002/07/30 16:27:21 itojun Exp $
+.\"	$NetBSD: systrace.1,v 1.12 2002/08/28 03:52:46 itojun Exp $
+.\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -40,6 +40,7 @@
 .Sh SYNOPSIS
 .Nm systrace
 .Op Fl aAituU
+.Op Fl d Ar policydir
 .Op Fl g Ar gui
 .Op Fl f Ar file
 .Op Fl p Ar pid
@@ -85,6 +86,9 @@ Inherits the policy - child processes inherit policy of the parent binary.
 Uses text mode to ask for interactive policy generation.
 .It Fl U
 Ignore user configured policies and use only global system policies.
+.It Fl d Ar policydir
+Specifies an alternative location for the user's directory from
+which policies are loaded and to which changed policies are stored.
 .It Fl g Ar gui
 Specifies an alternative location for the notification user interface.
 .It Fl f Ar file
@@ -104,7 +108,7 @@ as
 .Ss POLICY
 The policy is specified via the following grammar:
 .Bd -literal -offset 4
-filter = expression "then" action errorcode
+filter = expression "then" action errorcode logcode
 expression = symbol | "not" expression | "(" expression ")" |
     expression "and" expression | expression "or" expression
 symbol = string typeoff "match" cmdstring |
@@ -114,6 +118,7 @@ symbol = string typeoff "match" cmdstring |
 typeoff = /* empty */ | "[" number "]"
 action = "permit" | "deny"
 errorcode = /* empty */ | "[" string "]"
+logcode = /* empty */ | "log"
 .Ed
 .Pp
 The
@@ -176,6 +181,15 @@ This is the logical negation of
 Evaluates to true if the system call argument is a subpath of
 .Va cmdstring .
 .El
+.Pp
+By appending the
+.Va log
+statement to a rule, a matching system call and its arguments
+is logged to
+.Xr syslog 3 .
+This is useful, for example, to log all invocations of the
+.Va execve
+system call.
 .Pp
 Policy entries may contain an appended predicate.
 Predicates have the following format:

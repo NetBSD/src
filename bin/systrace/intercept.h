@@ -1,5 +1,5 @@
-/*	$NetBSD: intercept.h,v 1.3 2002/07/30 16:29:30 itojun Exp $	*/
-/*	$OpenBSD: intercept.h,v 1.9 2002/07/22 04:02:39 provos Exp $	*/
+/*	$NetBSD: intercept.h,v 1.4 2002/08/28 03:52:45 itojun Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -67,11 +67,16 @@ struct intercept_system {
 #define ICPOLICY_KILL	-2
 #define ICPOLICY_NEVER	1	/* overloaded with errno values > 1 */
 
+#define ICLINK_NONE	0	/* do not resolve symlinks */
+#define ICLINK_ALL	1	/* resolve all symlinks */
+#define ICLINK_NOLAST	2	/* do not resolve last component */
+
 #define ICFLAGS_RESULT	1
 
 struct intercept_pid {
 	SPLAY_ENTRY(intercept_pid) next;
 	pid_t pid;
+	pid_t ppid;		/* parent pid */
 
 	short policynr;
 	int execve_code;
@@ -157,6 +162,7 @@ char *intercept_translate_print(struct intercept_translate *);
 extern struct intercept_translate ic_translate_string;
 extern struct intercept_translate ic_translate_filename;
 extern struct intercept_translate ic_translate_linkname;
+extern struct intercept_translate ic_translate_unlinkname;
 extern struct intercept_translate ic_translate_connect;
 
 void intercept_freepid(pid_t);
