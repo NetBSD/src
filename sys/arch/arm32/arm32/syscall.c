@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.26 2000/03/13 23:52:27 soren Exp $	*/
+/*	$NetBSD: syscall.c,v 1.27 2000/05/27 00:40:31 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -300,7 +300,7 @@ syscall(frame, code)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, argsize, args);
+		ktrsyscall(p, code, argsize, args);
 #endif
 	rval[0] = 0;
 	rval[1] = frame->tf_r1;
@@ -349,7 +349,7 @@ bad:
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
@@ -369,7 +369,7 @@ child_return(arg)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }
 

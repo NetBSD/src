@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.40 2000/05/08 20:07:37 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.41 2000/05/27 00:40:45 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -293,14 +293,15 @@ chgproccnt(uid, diff)
 }
 
 /*
- * Is p an inferior of the current process?
+ * Is p an inferior of q?
  */
 int
-inferior(p)
+inferior(p, q)
 	struct proc *p;
+	struct proc *q;
 {
 
-	for (; p != curproc; p = p->p_pptr)
+	for (; p != q; p = p->p_pptr)
 		if (p->p_pid == 0)
 			return (0);
 	return (1);

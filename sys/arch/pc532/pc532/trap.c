@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 2000/05/26 21:20:10 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.40 2000/05/27 00:40:37 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -530,7 +530,7 @@ syscall(frame)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, argsize, args);
+		ktrsyscall(p, code, argsize, args);
 #endif
 	if (error)
 		goto bad;
@@ -572,7 +572,7 @@ syscall(frame)
 	userret(p, frame.sf_regs.r_pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
@@ -588,6 +588,6 @@ child_return(arg)
 	userret(p, p->p_md.md_regs->r_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }

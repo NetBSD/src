@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.33 2000/03/30 09:27:15 augustss Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.34 2000/05/27 00:40:47 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -129,7 +129,7 @@ namei(ndp)
 
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
-		ktrnamei(cnp->cn_proc->p_tracep, cnp->cn_pnbuf);
+		ktrnamei(cnp->cn_proc, cnp->cn_pnbuf);
 #endif
 
 	/*

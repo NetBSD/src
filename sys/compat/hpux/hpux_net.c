@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.18 1999/06/13 21:34:32 oster Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.19 2000/05/27 00:40:44 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -160,7 +160,7 @@ hpux_sys_netioctl(p, v, retval)
 	    (error = copyin((caddr_t)args, (caddr_t)uap, (u_int)i))) {
 #ifdef KTRACE
                 if (KTRPOINT(p, KTR_SYSCALL))
-                        ktrsyscall(p->p_tracep, code + MINBSDIPCCODE,
+                        ktrsyscall(p, code + MINBSDIPCCODE,
 				   hpuxtobsdipc[code].nargs,
 				   (register_t *)uap);
 #endif
@@ -168,7 +168,7 @@ hpux_sys_netioctl(p, v, retval)
 	}
 #ifdef KTRACE
         if (KTRPOINT(p, KTR_SYSCALL))
-                ktrsyscall(p->p_tracep, code + MINBSDIPCCODE,
+                ktrsyscall(p, code + MINBSDIPCCODE,
 			   hpuxtobsdipc[code].nargs,
 			   (register_t *)uap);
 #endif

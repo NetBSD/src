@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.51 2000/03/30 09:27:14 augustss Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.52 2000/05/27 00:40:47 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -571,8 +571,7 @@ sendit(p, s, mp, flags, retsize)
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p->p_tracep, s, UIO_WRITE,
-				ktriov, *retsize, error);
+			ktrgenio(p, s, UIO_WRITE, ktriov, *retsize, error);
 		FREE(ktriov, M_TEMP);
 	}
 #endif
@@ -740,8 +739,8 @@ recvit(p, s, mp, namelenp, retsize)
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p->p_tracep, s, UIO_READ,
-				ktriov, len - auio.uio_resid, error);
+			ktrgenio(p, s, UIO_READ, ktriov,
+			    len - auio.uio_resid, error);
 		FREE(ktriov, M_TEMP);
 	}
 #endif
