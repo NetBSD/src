@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.436 2001/05/02 13:08:06 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.437 2001/05/02 21:07:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -231,62 +231,79 @@ int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
-void	identifycpu __P((void));
+void	identifycpu __P((struct cpu_info *));
 void	init386 __P((paddr_t));
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void	add_mem_cluster	__P((u_int64_t, u_int64_t, u_int32_t));
 #endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
-const struct i386_cache_info *cpu_itlb_info, *cpu_dtlb_info, *cpu_icache_info,
-    *cpu_dcache_info, *cpu_l2cache_info;
-
-const struct i386_cache_info {
-	u_int8_t	cai_desc;
-	const struct i386_cache_info **cai_var;
+struct i386_cache_info {
+	size_t		cai_offset;
+	u_int32_t	cai_desc;
 	const char	*cai_string;
 	u_int		cai_totalsize;
+	u_int		cai_associativity;
 	u_int		cai_linesize;
-} i386_cache_info[] = {
-	{ 0x01,		&cpu_itlb_info,		"32 4K entries 4-way",
-	  32,		4 * 1024 },
-	{ 0x02,		&cpu_itlb_info,		"2 4M entries",
-	  2,		4 * 1024 * 1024 },
-	{ 0x03,		&cpu_dtlb_info,		"64 4K entries 4-way",
-	  64,		4 * 1024 },
-	{ 0x04,		&cpu_dtlb_info,		"8 4M entries 4-way",
-	  8,		4 * 1024 * 1024 },
-	{ 0x06,		&cpu_icache_info,	"8K 32b/line 4-way",
-	  8 * 1024,	32 },
-	{ 0x08,		&cpu_icache_info,	"16K 32b/line 4-way",
-	  16 * 1024,	32 },
-	{ 0x0a,		&cpu_dcache_info,	"8K 32b/line 2-way",
-	  8 * 1024,	32 },
-	{ 0x0c,		&cpu_dcache_info,	"16K 32b/line 2/4-way",
-	  16 * 1024,	32 },
-	{ 0x40,		&cpu_l2cache_info,	"not present",
-	  0,		0 },
-	{ 0x41,		&cpu_l2cache_info,	"128K 32b/line 4-way",
-	  128 * 1024,	32 },
-	{ 0x42,		&cpu_l2cache_info,	"256K 32b/line 4-way",
-	  256 * 1024,	32 },
-	{ 0x43,		&cpu_l2cache_info,	"512K 32b/line 4-way",
-	  512 * 1024,	32 },
-	{ 0x44,		&cpu_l2cache_info,	"1M 32b/line 4-way",
-	  1 * 1024 * 1024, 32 },
-	{ 0x45,		&cpu_l2cache_info,	"2M 32b/line 4-way",
-	  2 * 1024 * 1024, 32 },
-	{ 0x82,		&cpu_l2cache_info,	"256K 32b/line 8-way",
-	  256 * 1024,	32 },
-	{ 0x84,		&cpu_l2cache_info,	"1M 32b/line 8-way",
-	  1 * 1024 * 1024, 32 },
-	{ 0x85,		&cpu_l2cache_info,	"2M 32b/line 8-way",
-	  2 * 1024 * 1024, 32 },
-
-	{ 0,		NULL,		NULL,	0,	0 },
 };
 
-const struct i386_cache_info *i386_cache_info_lookup __P((u_int8_t));
+static const struct i386_cache_info intel_cpuid_cache_info[] = {
+	{ offsetof(struct cpu_info, ci_itlb_info),
+	  0x01,		"4K: 32 entries 4-way",
+	  32,		4,			4 * 1024 },
+	{ offsetof(struct cpu_info, ci_itlb2_info),
+	  0x02,		"4M: 2 entries",
+	  2,		1,			4 * 1024 * 1024 },
+	{ offsetof(struct cpu_info, ci_dtlb_info),
+	  0x03,		"4K: 64 entries 4-way",
+	  64,		4,			4 * 1024 },
+	{ offsetof(struct cpu_info, ci_dtlb2_info),
+	  0x04,		"4M: 8 entries 4-way",
+	  8,		4,			4 * 1024 * 1024 },
+	{ offsetof(struct cpu_info, ci_icache_info),
+	  0x06,		"8K 32b/line 4-way",
+	  8 * 1024,	4,			32 },
+	{ offsetof(struct cpu_info, ci_icache_info),
+	  0x08,		"16K 32b/line 4-way",
+	  16 * 1024,	4,			32 },
+	{ offsetof(struct cpu_info, ci_dcache_info),
+	  0x0a,		"8K 32b/line 2-way",
+	  8 * 1024,	2,			32 },
+	{ offsetof(struct cpu_info, ci_dcache_info),
+	  0x0c,		"16K 32b/line 2/4-way",
+	  16 * 1024,	2,			32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x40,		"not present",
+	  0,		1,			0 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x41,		"128K 32b/line 4-way",
+	  128 * 1024,	4,			32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x42,		"256K 32b/line 4-way",
+	  256 * 1024,	4,			32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x43,		"512K 32b/line 4-way",
+	  512 * 1024,	4,			32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x44,		"1M 32b/line 4-way",
+	  1 * 1024 * 1024, 4,			32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x45,		"2M 32b/line 4-way",
+	  2 * 1024 * 1024, 4,			32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x82,		"256K 32b/line 8-way",
+	  256 * 1024,	8,			32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x84,		"1M 32b/line 8-way",
+	  1 * 1024 * 1024, 8,			32 },
+	{ offsetof(struct cpu_info, ci_l2cache_info),
+	  0x85,		"2M 32b/line 8-way",
+	  2 * 1024 * 1024, 8,			32 },
+
+	{ 0,
+	  0,		NULL,
+	  0,		1,			0 },
+};
 
 /*
  * Map Brand ID from cpuid instruction to brand name.
@@ -305,6 +322,8 @@ static int exec_nomid	__P((struct proc *, struct exec_package *));
 
 void cyrix6x86_cpu_setup __P((void));
 void winchip_cpu_setup __P((void));
+
+void intel_cpuid_cpu_cacheinfo __P((struct cpu_info *));
 
 static __inline u_char
 cyrix_read_reg(u_char reg)
@@ -326,6 +345,7 @@ cyrix_write_reg(u_char reg, u_char data)
 void
 cpu_startup()
 {
+	struct cpu_info *ci = curcpu();
 	caddr_t v;
 	int sz, x;
 	vaddr_t minaddr, maxaddr;
@@ -355,18 +375,18 @@ cpu_startup()
 		printf(", %qd.%02qd MHz", (cpu_tsc_freq + 4999) / 1000000,
 		    ((cpu_tsc_freq + 4999) / 10000) % 100);
 	printf("\n");
-	if (cpu_icache_info != NULL || cpu_dcache_info != NULL) {
+	if (ci->ci_icache_info != NULL || ci->ci_dcache_info != NULL) {
 		printf("cpu0:");
-		if (cpu_icache_info)
-			printf(" I-cache %s", cpu_icache_info->cai_string);
-		if (cpu_dcache_info)
+		if (ci->ci_icache_info)
+			printf(" I-cache %s", ci->ci_icache_info->cai_string);
+		if (ci->ci_dcache_info)
 			printf("%sD-cache %s",
-			    (cpu_icache_info != NULL) ? ", " : " ",
-			    cpu_dcache_info->cai_string);
+			    (ci->ci_icache_info != NULL) ? ", " : " ",
+			    ci->ci_dcache_info->cai_string);
 		printf("\n");
 	}
-	if (cpu_l2cache_info)
-		printf("cpu0: L2 cache %s\n", cpu_l2cache_info->cai_string);
+	if (ci->ci_l2cache_info)
+		printf("cpu0: L2 cache %s\n", ci->ci_l2cache_info->cai_string);
 	if ((cpu_feature & CPUID_MASK1) != 0) {
 		bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
 		    buf, sizeof(buf));
@@ -540,19 +560,6 @@ i386_bufinit()
 	bufinit();
 }
 
-const struct i386_cache_info *
-i386_cache_info_lookup(u_int8_t desc)
-{
-	const struct i386_cache_info *cai;
-
-	for (cai = i386_cache_info; cai->cai_string != NULL; cai++) {
-		if (cai->cai_desc == desc)
-			return (cai);
-	}
-
-	return (NULL);
-}
-
 /*  
  * Info for CTL_HW
  */
@@ -564,19 +571,19 @@ char	cpu_model[120];
  */
 const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386,
-		NULL},				/* CPU_386SX */
+		NULL, NULL},			/* CPU_386SX */
 	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386,
-		NULL},				/* CPU_386   */
+		NULL, NULL},			/* CPU_386   */
 	{ CPUVENDOR_INTEL, "Intel", "486SX",	CPUCLASS_486,
-		NULL},				/* CPU_486SX */
+		NULL, NULL},			/* CPU_486SX */
 	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486,
-		NULL},				/* CPU_486   */
+		NULL, NULL},			/* CPU_486   */
 	{ CPUVENDOR_CYRIX, "Cyrix", "486DLC",	CPUCLASS_486,
-		NULL},				/* CPU_486DLC */
-	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",		CPUCLASS_486,
-		cyrix6x86_cpu_setup},	/* CPU_6x86 */
+		NULL, NULL},			/* CPU_486DLC */
+	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",	CPUCLASS_486,
+		cyrix6x86_cpu_setup, NULL},	/* CPU_6x86 */
 	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_386,
-		NULL},				/* CPU_NX586 */
+		NULL, NULL},			/* CPU_NX586 */
 };
 
 const char *classnames[] = {
@@ -607,7 +614,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"486DX4", 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
 			},
-			NULL
+			NULL,
+			intel_cpuid_cpu_cacheinfo,
 		},
 		/* Family 5 */
 		{
@@ -620,7 +628,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0,
 				"Pentium"	/* Default */
 			},
-			NULL
+			NULL,
+			intel_cpuid_cpu_cacheinfo,
 		},
 		/* Family 6 */
 		{
@@ -636,7 +645,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
-			NULL
+			NULL,
+			intel_cpuid_cpu_cacheinfo,
 		},
 		/* Family > 6 */
 		{
@@ -646,7 +656,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium 4"	/* Default */
 			},
-			NULL
+			NULL,
+			intel_cpuid_cpu_cacheinfo,
 		} }
 	},
 	{
@@ -665,7 +676,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Am5x86 W/B 133/160",
 				"Am486 or Am5x86"	/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		},
 		/* Family 5 */
 		{
@@ -676,7 +688,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"K6-2+/III+", 0, 0,
 				"K5 or K6"		/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		},
 		/* Family 6 */
 		{
@@ -687,7 +700,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"K7 (Athlon)"	/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		},
 		/* Family > 6 */
 		{
@@ -697,7 +711,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Unknown K7 (Athlon)"	/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		} }
 	},
 	{
@@ -713,7 +728,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		},
 		/* Family 5 */
 		{
@@ -724,7 +740,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"6x86"		/* Default */
 			},
-			cyrix6x86_cpu_setup
+			cyrix6x86_cpu_setup,
+			NULL,
 		},
 		/* Family 6 */
 		{
@@ -733,7 +750,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"6x86MX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"6x86MX"		/* Default */
 			},
-			cyrix6x86_cpu_setup
+			cyrix6x86_cpu_setup,
+			NULL,
 		},
 		/* Family > 6 */
 		{
@@ -742,7 +760,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Unknown 6x86MX"		/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		} }
 	},
 	{
@@ -757,7 +776,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"486 compatible"	/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		},
 		/* Family 5 */
 		{
@@ -767,7 +787,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"WinChip 2", "WinChip 3", 0, 0, 0, 0, 0, 0,
 				"WinChip"		/* Default */
 			},
-			winchip_cpu_setup
+			winchip_cpu_setup,
+			NULL,
 		},
 		/* Family 6, not yet available from IDT */
 		{
@@ -777,7 +798,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		},
 		/* Family > 6, not yet available from IDT */
 		{
@@ -787,10 +809,43 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		} }
 	}
 };
+
+static void
+do_cpuid(u_int which, u_int *rv)
+{
+	register u_int eax __asm("%eax") = which;
+
+	__asm __volatile(
+	"	cpuid			;"
+	"	movl	%%eax,0(%2)	;"
+	"	movl	%%ebx,4(%2)	;"
+	"	movl	%%ecx,8(%2)	;"
+	"	movl	%%edx,12(%2)	"
+	: "=a" (eax)
+	: "0" (eax), "S" (rv)
+	: "ebx", "ecx", "edx");
+}
+
+static void
+do_cpuid_serial(u_int *serial)
+{
+	__asm __volatile(
+	"	movl	$1,%%eax	;"
+	"	cpuid			;"
+	"	movl	%%eax,0(%0)	;"
+	"	movl	$3,%%eax	;"
+	"	cpuid			;"
+	"	movl	%%edx,4(%0)	;"
+	"	movl	%%ecx,8(%0)	"
+	: /* no inputs */
+	: "S" (serial)
+	: "eax", "ebx", "ecx", "edx");
+}
 
 void
 cyrix6x86_cpu_setup()
@@ -829,40 +884,57 @@ winchip_cpu_setup()
 #endif
 }
 
-static void
-do_cpuid(u_int which, u_int *rv)
+static const struct i386_cache_info *
+cache_info_lookup(const struct i386_cache_info *cai, u_int8_t desc)
 {
-	register u_int eax __asm("%eax") = which;
 
-	__asm __volatile(
-	"	cpuid			;"
-	"	movl	%%eax,0(%2)	;"
-	"	movl	%%ebx,4(%2)	;"
-	"	movl	%%ecx,8(%2)	;"
-	"	movl	%%edx,12(%2)	"
-	: "=a" (eax)
-	: "0" (eax), "S" (rv)
-	: "ebx", "ecx", "edx");
-}
+	for (; cai->cai_string != NULL; cai++) {
+		if (cai->cai_desc == desc)
+			return (cai);
+	}
 
-static void
-do_cpuid_serial(u_int *serial)
-{
-	__asm __volatile(
-	"	movl	$1,%%eax	;"
-	"	cpuid			;"
-	"	movl	%%eax,0(%0)	;"
-	"	movl	$3,%%eax	;"
-	"	cpuid			;"
-	"	movl	%%edx,4(%0)	;"
-	"	movl	%%ecx,8(%0)	"
-	: /* no imputs */
-	: "S" (serial)
-	: "eax", "ebx", "ecx", "edx");
+	return (NULL);
 }
 
 void
-identifycpu()
+intel_cpuid_cpu_cacheinfo(struct cpu_info *ci)
+{
+	const struct i386_cache_info *cai;
+	u_int descs[4];
+	int iterations, i, j;
+	u_int8_t desc;
+
+	/*
+	 * Parse the cache info from `cpuid'.
+	 * XXX This is kinda ugly, but hey, so is the architecture...
+	 */
+
+	do_cpuid(2, descs);
+	iterations = descs[0] & 0xff;
+	while (iterations-- > 0) {
+		for (i = 0; i < 4; i++) {
+			if (descs[i] & 0x80000000)
+				continue;
+			for (j = 0; j < 4; j++) {
+				if (i == 0 && j == 0)
+					continue;
+				desc = (descs[i] >> (j * 8)) & 0xff;
+				cai = cache_info_lookup(intel_cpuid_cache_info,
+				    desc);
+				if (cai != NULL) {
+					const struct i386_cache_info **cp;
+					cp = (const struct i386_cache_info **)
+					    (((uint8_t *)ci) + cai->cai_offset);
+					*cp = cai;
+				}
+			}
+		}
+		do_cpuid(2, descs);
+	}
+}
+
+void
+identifycpu(struct cpu_info *ci)
 {
 	extern char cpu_vendor[];
 	extern int cpu_id;
@@ -872,6 +944,7 @@ identifycpu()
 	int family, model, step, modif;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	void (*cpu_setup) __P((void));
+	void (*cpu_cacheinfo) __P((struct cpu_info *));
 
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -884,6 +957,7 @@ identifycpu()
 		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
 		class = i386_nocpuid_cpus[cpu].cpu_class;
 		cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
+		cpu_cacheinfo = i386_nocpuid_cpus[cpu].cpu_cacheinfo;
 		modifier = "";
 	} else {
 		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
@@ -933,6 +1007,7 @@ identifycpu()
 			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
 			class = cpup->cpu_family[i].cpu_class;
 			cpu_setup = cpup->cpu_family[i].cpu_setup;
+			cpu_cacheinfo = cpup->cpu_family[i].cpu_cacheinfo;
 
 			/*
 			 * Intel processors family >= 6, model 8 allow to
@@ -951,34 +1026,10 @@ identifycpu()
 	cpu_class = class;
 
 	/*
-	 * Parse the cache info from `cpuid', if we have it.
-	 * XXX This is kinda ugly, but hey, so is the architecture...
+	 * Get the cache info for this CPU, if we can.
 	 */
-	if (cpuid_level != -1) {
-		const struct i386_cache_info *cai;
-		u_int descs[4];
-		int iterations, j;
-		u_int8_t desc;
-
-		do_cpuid(2, descs);
-		iterations = descs[0] & 0xff;
-		while (iterations-- > 0) {
-			for (i = 0; i < 4; i++) {
-				if (descs[i] & 0x80000000)
-					continue;
-				for (j = 0; j < 4; j++) {
-					if (i == 0 && j == 0)
-						continue;
-					desc = (descs[i] >> (j * 8)) & 0xff;
-					cai = i386_cache_info_lookup(desc);
-					if (cai != NULL)
-						*cai->cai_var = cai;
-				}
-			}
-
-			do_cpuid(2, descs);
-		}
-	}
+	if (cpu_cacheinfo != NULL)
+		(*cpu_cacheinfo)(ci);
 
 	/*
 	 * If the processor serial number misfeature is present and supported,
@@ -2321,7 +2372,7 @@ init386(first_avail)
 		cngetc();
 	}
 
-	identifycpu();
+	identifycpu(curcpu());
 }
 
 struct queue {
