@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.18 1998/02/05 04:56:36 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.19 2001/05/27 06:19:39 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,14 +80,14 @@ struct cfattach eeprom_ca = {
 
 static int
 eeprom_match(parent, cf, args)
-    struct device *parent;
+	struct device *parent;
 	struct cfdata *cf;
-    void *args;
+	void *args;
 {
 	struct confargs *ca = args;
 
-	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
+	/* This driver only supports one instance. */
+	if (eeprom_va != NULL)
 		return (0);
 
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
