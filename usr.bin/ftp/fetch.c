@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.72 1999/09/22 03:01:53 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.73 1999/09/22 07:18:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.72 1999/09/22 03:01:53 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.73 1999/09/22 07:18:33 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -445,6 +445,8 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	volatile int		s;
 	int 			ischunked, isproxy, rval, hcode;
 	size_t			len;
+	static size_t		bufsize;
+	static char		*xferbuf;
 	char			*cp, *ep, *buf, *savefile;
 	char			*auth, *location, *message;
 	char			*user, *pass, *host, *port, *path, *decodedpath;
@@ -1048,23 +1050,31 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	}
 	oldintr = signal(SIGINT, aborthttp);
 
+	if (rcvbuf_size > bufsize) {
+		if (xferbuf)
+			(void)free(xferbuf);
+		bufsize = rcvbuf_size;
+		xferbuf = xmalloc(bufsize);
+	}
+	if (debug)
+		fprintf(ttyout, "using a buffer size of %d\n", (int)bufsize);
+
 	bytes = 0;
 	hashbytes = mark;
 	progressmeter(-1);
 
 			/* Finally, suck down the file. */
-	buf = xmalloc(BUFSIZ + 1);
 	do {
 		ssize_t chunksize;
 
 		chunksize = 0;
 					/* read chunksize */
 		if (ischunked) {
-			if (fgets(buf, BUFSIZ, fin) == NULL) {
+			if (fgets(xferbuf, bufsize, fin) == NULL) {
 				warnx("Unexpected EOF reading chunksize");
 				goto cleanup_fetch_url;
 			}
-			chunksize = strtol(buf, &ep, 16);
+			chunksize = strtol(xferbuf, &ep, 16);
 			if (strcmp(ep, "\r\n") != 0) {
 				warnx("Unexpected data following chunksize");
 				goto cleanup_fetch_url;
@@ -1088,16 +1098,16 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 
 			if (rate_get)
 				(void)gettimeofday(&then, NULL);
-			bufrem = rate_get ? rate_get : BUFSIZ;
+			bufrem = rate_get ? rate_get : bufsize;
 			while (bufrem > 0) {
-				len = fread(buf, sizeof(char),
-				    ischunked ? MIN(chunksize, bufrem) : BUFSIZ,
-				    fin);
+				len = fread(xferbuf, sizeof(char),
+				    ischunked ? MIN(chunksize, bufrem)
+					    : bufsize, fin);
 				if (len <= 0)
 					goto chunkdone;
 				bytes += len;
 				bufrem -= len;
-				if (fwrite(buf, sizeof(char), len, fout)
+				if (fwrite(xferbuf, sizeof(char), len, fout)
 				    != len) {
 					warn("Writing `%s'", savefile);
 					goto cleanup_fetch_url;
@@ -1128,9 +1138,9 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 					/* read CRLF after chunk*/
  chunkdone:
 		if (ischunked) {
-			if (fgets(buf, BUFSIZ, fin) == NULL)
+			if (fgets(xferbuf, bufsize, fin) == NULL)
 				break;
-			if (strcmp(buf, "\r\n") != 0) {
+			if (strcmp(xferbuf, "\r\n") != 0) {
 				warnx("Unexpected data following chunk");
 				goto cleanup_fetch_url;
 			}
@@ -1175,7 +1185,6 @@ improper:
 	warnx("Improper response from `%s'", host);
 
 cleanup_fetch_url:
-	resetsockbufsize();
 	if (fin != NULL)
 		fclose(fin);
 	else if (s != -1)

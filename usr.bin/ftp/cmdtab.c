@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.25 1999/07/11 20:37:39 itojun Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.26 1999/09/22 07:18:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.25 1999/07/11 20:37:39 itojun Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.26 1999/09/22 07:18:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,6 @@ char	pwdhelp[] =	"print working directory on remote machine";
 char	quithelp[] =	"terminate ftp session and exit";
 char	quotehelp[] =	"send arbitrary ftp command";
 char	ratehelp[] =	"set transfer rate limit";
-char	rcvbufhelp[] =	"set socket receive buffer size";
 char	receivehelp[] =	"receive file";
 char	regethelp[] =	"get file restarting at end of local file";
 char	remotehelp[] =	"get help from remote server";
@@ -120,7 +119,6 @@ char	sitehelp[] =	"send site specific command to remote server\n"
 			"\t\tTry \"rhelp site\" or \"site help\" "
 			"for more information";
 char	sizecmdhelp[] = "show size of remote file";
-char	sndbufhelp[] =	"set socket send buffer size";
 char	statushelp[] =	"show current status";
 char	structhelp[] =	"set file transfer structure";
 char	suniquehelp[] = "toggle store unique on remote machine";
@@ -131,6 +129,7 @@ char	typehelp[] =	"set file transfer type";
 char	umaskhelp[] =	"get (set) umask on remote side";
 char	userhelp[] =	"send new user information";
 char	verbosehelp[] =	"toggle verbose mode";
+char	xferbufhelp[] =	"set socket send/receive buffer size";
 
 #ifdef NO_EDITCOMPLETE
 #define CMPL(x)
@@ -204,7 +203,7 @@ struct cmd cmdtab[] = {
 	{ "quit",	quithelp,	0, 0, 0, CMPL0		quit },
 	{ "quote",	quotehelp,	1, 1, 1, CMPL0		quote },
 	{ "rate",	ratehelp,	0, 0, 0, CMPL0		setrate },
-	{ "rcvbuf",	rcvbufhelp,	0, 0, 0, CMPL0		rcvbuf },
+	{ "rcvbuf",	xferbufhelp,	0, 0, 0, CMPL0		setxferbuf },
 	{ "recv",	receivehelp,	1, 1, 1, CMPL(rl)	get },
 	{ "reget",	regethelp,	1, 1, 1, CMPL(rl)	reget },
 	{ "rename",	renamehelp,	0, 1, 1, CMPL(rr)	renamefile },
@@ -218,7 +217,7 @@ struct cmd cmdtab[] = {
 	{ "sendport",	porthelp,	0, 0, 0, CMPL0		setport },
 	{ "site",	sitehelp,	0, 1, 1, CMPL0		site },
 	{ "size",	sizecmdhelp,	1, 1, 1, CMPL(r)	sizecmd },
-	{ "sndbuf",	sndbufhelp,	0, 0, 0, CMPL0		sndbuf },
+	{ "sndbuf",	xferbufhelp,	0, 0, 0, CMPL0		setxferbuf },
 	{ "status",	statushelp,	0, 0, 1, CMPL0		status },
 	{ "struct",	structhelp,	0, 1, 1, CMPL0		setstruct },
 	{ "sunique",	suniquehelp,	0, 0, 1, CMPL0		setsunique },
@@ -230,6 +229,7 @@ struct cmd cmdtab[] = {
 	{ "umask",	umaskhelp,	0, 1, 1, CMPL0		do_umask },
 	{ "user",	userhelp,	0, 1, 1, CMPL0		user },
 	{ "verbose",	verbosehelp,	0, 0, 0, CMPL0		setverbose },
+	{ "xferbuf",	xferbufhelp,	0, 0, 0, CMPL0		setxferbuf },
 	{ "?",		helphelp,	0, 0, 1, CMPL(C)	help },
 	{ 0 },
 };

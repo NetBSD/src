@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.57 1999/09/22 03:01:53 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.58 1999/09/22 07:18:31 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.57 1999/09/22 03:01:53 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.58 1999/09/22 07:18:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -762,6 +762,9 @@ status(argc, argv)
 	fprintf(ttyout,
 	    "Put transfer rate throttle: %s; maximum: %d; increment %d.\n",
 	    onoff(rate_put), rate_put, rate_put_incr);
+	fprintf(ttyout,
+	    "Socket buffer sizes: send %d, receive %d.\n",
+	    sndbuf_size, rcvbuf_size);
 	fprintf(ttyout, "Use of PORT cmds: %s.\n", onoff(sendport));
 	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv4: %s.\n", onoff(epsv4));
 #ifndef NO_EDITCOMPLETE
@@ -1669,8 +1672,6 @@ disconnect(argc, argv)
 	if (!proxy) {
 		macnum = 0;
 	}
-
-	resetsockbufsize();
 }
 
 void
@@ -2418,62 +2419,46 @@ page(argc, argv)
 }
 
 /*
- * Set the socket send buffer size.
+ * Set the socket send or receive buffer size.
  */
 void
-sndbuf(argc, argv)
+setxferbuf(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int size;
+	int size, dir;
 
 	if (argc != 2) {
-		printf("usage: %s size\n", argv[0]);
+ usage:
+		fprintf(ttyout, "usage: %s size\n", argv[0]);
 		code = -1;
 		return;
 	}
-
-	if ((size = strsuftoi(argv[1])) == -1) {
-		printf("invalid socket buffer size: %s\n", argv[1]);
-		code = -1;
-		return;
-	}
-
-	sndbuf_size = size;
-	if (sndbuf_size)
-		sndbuf_manual = 1;
+	if (strcasecmp(argv[0], "sndbuf") == 0)
+		dir = RATE_PUT;
+	else if (strcasecmp(argv[0], "rcvbuf") == 0)
+		dir = RATE_GET;
+	else if (strcasecmp(argv[0], "xferbuf") == 0)
+		dir = RATE_ALL;
 	else
-		sndbuf_manual = 0;
+		goto usage;
+
+	if ((size = strsuftoi(argv[1])) == -1)
+		goto usage;
+
+	if (size == 0) {
+		fprintf(ttyout, "%s: size must be positive.\n", argv[0]);
+		goto usage;
+	}
+
+	if (dir & RATE_PUT)
+		sndbuf_size = size;
+	if (dir & RATE_GET)
+		rcvbuf_size = size;
+	fprintf(ttyout, "Socket buffer sizes: send %d, receive %d.\n",
+	    sndbuf_size, rcvbuf_size);
 }
 
-/*
- * Set the socket receive buffer size.
- */
-void
-rcvbuf(argc, argv)
-	int argc;
-	char *argv[];
-{
-	int size;
-
-	if (argc != 2) {
-		printf("usage: %s size\n", argv[0]);
-		code = -1;
-		return;
-	}
-
-	if ((size = strsuftoi(argv[1])) == -1) {
-		printf("invalid socket buffer size: %s\n", argv[1]);
-		code = -1;
-		return;
-	}
-
-	rcvbuf_size = size;
-	if (rcvbuf_size)
-		rcvbuf_manual = 1;
-	else
-		rcvbuf_manual = 0;
-}
 
 void
 setepsv4(argc, argv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.35 1999/07/11 20:37:39 itojun Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.36 1999/09/22 07:18:36 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -214,11 +214,7 @@ int	mflag;			/* flag: if != 0, then active multi command */
 int	options;		/* used during socket creation */
 
 int	sndbuf_size;		/* socket send buffer size */
-int	sndbuf_manual;		/* sndbuf_size was set manually; override
-				   conf file */
 int	rcvbuf_size;		/* socket receive buffer size */
-int	rcvbuf_manual;		/* rcvbuf_size was set manually; override
-				   conf file */
 
 /*
  * Format of command table.
