@@ -1,18 +1,15 @@
-# $NetBSD: INSTALL,v 1.44 2000/09/25 11:46:37 abs Exp $
+# $NetBSD: INSTALL,v 1.45 2000/09/25 13:54:50 abs Exp $
 #
 # Alpha INSTALL kernel.
 
 include	"arch/alpha/conf/std.alpha"
 
-# Saving space
-makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
-#options	VNODE_OP_NOINLINE	# Don't inline vnode op calls
-#options	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code
+makeoptions 	COPTS="-Os"		# Optimise for space. Implies -O2
 
 maxusers 8
 
 options 	DDB
-#makeoptions	DEBUG="-g"
+#makeoptions 	DEBUG="-g"
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
@@ -46,6 +43,10 @@ file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system	MSDOSFS		# MS-DOS-compatible file system
 file-system	NFS		# Sun NFS-compatible file system client
 file-system	KERNFS		# Kernel variable file system (/kern)
+
+# Filesystem options
+#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 
 # Networking options
 options 	INET		# Internet protocol suite

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.6 2000/09/25 11:46:37 abs Exp $
+# $NetBSD: INSTALL,v 1.7 2000/09/25 13:54:50 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -8,12 +8,9 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.6 $"
+#ident  		"GENERIC-$Revision: 1.7 $"
 
-# Saving space
-makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
-#options	VNODE_OP_NOINLINE	# Don't inline vnode op calls
-#options	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code
+makeoptions 	COPTS="-Os"		# Optimise for space. Implies -O2
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -28,7 +25,7 @@ options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
 				# bootblock.
 				# You do not need this if you have a DraCo,
 				# have no 68060 or NEVER use the bootblock
-options		P5PPC68KBOARD	# Phase5 PPC/68K board support
+options 		P5PPC68KBOARD	# Phase5 PPC/68K board support
 
 #processors this kernel should support
 
@@ -58,6 +55,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 
+# File systems
 file-system 	FFS		# Berkeley fast file system
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured filesystem (experimental)
@@ -69,10 +67,10 @@ file-system 	MSDOSFS		# MS-DOS filesystem
 
 file-system 	KERNFS		# kernel data-structure filesystem
 
-#Filesystem options
-
+# Filesystem options
 #options 	FFS_EI		# FFS Endian Independant support
-
+#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -98,8 +96,8 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
-#options	NKPTADD=4	# set this for 4 additional KPT pages
-#options	NKPTADDSHIFT=24	# set this for 1 additional KPT page
+#options 	NKPTADD=4	# set this for 4 additional KPT pages
+#options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
 				# per 16 MB (1<<24 bytes) of RAM
                                 # define and decrease this, or define and
                                 # increase NKPTADD if you get "out of PT pages"

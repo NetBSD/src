@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.23 2000/09/25 11:46:38 abs Exp $
+#	$NetBSD: INSTALL_TINY,v 1.24 2000/09/25 13:54:51 abs Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -15,10 +15,7 @@
 
 include "arch/i386/conf/std.i386"
 
-# Saving space
-makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
-#options	VNODE_OP_NOINLINE	# Don't inline vnode op calls
-#options	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code
+makeoptions 	COPTS="-Os"		# Optimise for space. Implies -O2
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -79,7 +76,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 #options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
@@ -113,12 +110,13 @@ file-system 	KERNFS		# /kern
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 
-# File system options
+# Filesystem options
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER	# Network File System server
+#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-options 	VNODE_OP_NOINLINE # don't inline vnode op calls
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
@@ -148,8 +146,8 @@ options 	INET		# IP + ICMP + TCP + UDP
 
 # Squeeze...
 options 	NVNODE=50
-options		NBUF=20
-options		BUFPAGES=20
+options 		NBUF=20
+options 		BUFPAGES=20
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7 2000/09/25 11:46:38 abs Exp $
+#	$NetBSD: INSTALL,v 1.8 2000/09/25 13:54:51 abs Exp $
 #
 # First try for BEBOX config file
 #
@@ -7,23 +7,20 @@ include "arch/bebox/conf/std.bebox"
 
 maxusers	32
 
-# Saving space
-makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
-#options	VNODE_OP_NOINLINE	# Don't inline vnode op calls
-#options	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code
+makeoptions 	COPTS="-Os"		# Optimise for space. Implies -O2
 
 # Enable the hooks used for initializing the root memory-disk.
-options		MEMORY_DISK_HOOKS
-options		MEMORY_DISK_IS_ROOT	# force root on memory disk
-options		MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options		MINIROOTSIZE=3074	# size of memory disk, in blocks
+options 		MEMORY_DISK_HOOKS
+options 		MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 		MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 		MINIROOTSIZE=3074	# size of memory disk, in blocks
 
 #options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
 #options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
 # HMAC key to be used for debugging sessions
 #options 	IPKDBKEY="\"HMAC pass phrase text\""
 #options 	IPKDBSECURE	# Allow debugging even when securelevel > 0
-#makeoptions	DEBUG="-g"
+#makeoptions 	DEBUG="-g"
 
 #options 	DEBUG
 #options 	DIAGNOSTIC
@@ -39,8 +36,9 @@ options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
-options		COMPAT_386BSD_MBRPART	# recognize old partition ID
+options 		COMPAT_386BSD_MBRPART	# recognize old partition ID
 
+# File systems
 file-system 	FFS
 file-system	EXT2FS
 file-system 	MFS
@@ -55,11 +53,15 @@ file-system 	KERNFS
 #file-system 	UMAPFS
 #file-system 	UNION
 
+# Filesystem options
+#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+
 #options 	NFSSERVER
 
 options 	INET
 
-#options	NFS_BOOT_BOOTPARAM
+#options 	NFS_BOOT_BOOTPARAM
 
 config		netbsd	root on ? type ffs
 

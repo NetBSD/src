@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.20 2000/09/25 11:46:39 abs Exp $
+#	$NetBSD: INSTALL,v 1.21 2000/09/25 13:54:52 abs Exp $
 #
 # INSTALL -- install kernel
 #
@@ -6,10 +6,7 @@
 
 include	"arch/pc532/conf/std.pc532"
 
-# Saving space
-makeoptions	COPTS="-Os -msb"	# Don't inline, save space
-#options	VNODE_OP_NOINLINE	# Don't inline vnode op calls
-#options	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code
+makeoptions 	COPTS="-Os -msb"	# Don't inline, save space
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -20,12 +17,16 @@ options 	MINIROOTSIZE=4096	# size of memory disk, in blocks
 # estimated number of users
 maxusers	2
 
-# filesystems
+# File systems
 file-system 	FFS				# Berkeley fast file system
 file-system 	MSDOSFS				# MS-DOS file system
 file-system 	CD9660				# ISO 9660 CD-ROM file system
 file-system 	KERNFS				# /kern
 file-system 	NFS				# Network File System client
+
+# Filesystem options
+#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 
 options 	KMEMSTATS			# saves about 50k
 options 	INET				# IP + ICMP + TCP + UDP
