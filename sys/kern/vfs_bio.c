@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.140 2004/12/23 20:11:28 dbj Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.141 2005/01/10 15:29:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.140 2004/12/23 20:11:28 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.141 2005/01/10 15:29:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,6 +486,9 @@ buf_canrelease(void)
 
 	if (bufmem < bufmem_lowater)
 		return 0;
+
+	if (bufmem > bufmem_hiwater)
+		return bufmem - bufmem_hiwater;
 
 	ninvalid += bufqueues[BQ_AGE].bq_bytes;
 
