@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.54 2000/06/28 14:11:35 mrg Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.55 2000/06/30 20:45:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -660,9 +660,19 @@ lfs_vget(mp, ino, vpp)
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 
+	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
+		return (0);
+
+	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, &vp)) != 0) {
+		*vpp = NULL;
+		 return (error);
+	}
+
 	do {
-		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
+		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+			ungetnewvnode(vp);
 			return (0);
+		}
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
 	/* Translate the inode number to a disk address. */
@@ -682,12 +692,8 @@ lfs_vget(mp, ino, vpp)
 		}
 	}
 
-	/* Allocate new vnode/inode. */
-	if ((error = lfs_vcreate(mp, ino, &vp)) != 0) {
-		*vpp = NULL;
-		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-		return (error);
-	}
+	/* Allocate/init new vnode/inode. */
+	lfs_vcreate(mp, ino, vp);
 
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for

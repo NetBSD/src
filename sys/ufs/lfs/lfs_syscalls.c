@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.43 2000/06/27 20:57:16 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.44 2000/06/30 20:45:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@
 #define FVG_PUT	   0x02	  /* Needs to be vput() */
 
 struct buf *lfs_fakebuf __P((struct vnode *, int, size_t, caddr_t));
+int lfs_fasthashget __P((dev_t, ino_t, int *, struct vnode **));
 
 int debug_cleaner = 0; 
 int clean_vnlocked = 0;
@@ -870,6 +871,53 @@ sys_lfs_segwait(p, v, retval)
 extern struct lock ufs_hashlock;
 
 int
+lfs_fasthashget(dev, ino, need_unlock, vpp)
+	dev_t dev;
+	ino_t ino;
+	int *need_unlock;
+	struct vnode **vpp;
+{
+	struct inode *ip;
+
+	/*
+	 * This is playing fast and loose.  Someone may have the inode
+	 * locked, in which case they are going to be distinctly unhappy
+	 * if we trash something.
+	 */
+	if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
+		if ((*vpp)->v_flag & VXLOCK) {
+			printf("lfs_fastvget: vnode VXLOCKed for ino %d\n",ino);
+			clean_vnlocked++;
+#ifdef LFS_EAGAIN_FAIL
+			return EAGAIN;
+#endif
+		}
+		ip = VTOI(*vpp);
+		if (lfs_vref(*vpp)) {
+			clean_inlocked++;
+			return EAGAIN;
+		}
+		if (VOP_ISLOCKED(*vpp)) {
+#ifdef DEBUG_LFS
+			printf("lfs_fastvget: ino %d inlocked by pid %d\n",
+			    ip->i_number, (*vpp)->v_lock.lk_lockholder);
+#endif
+			clean_inlocked++;
+#ifdef LFS_EAGAIN_FAIL
+			lfs_vunref(*vpp);
+			return EAGAIN;
+#endif /* LFS_EAGAIN_FAIL */
+		} else {
+			vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+			*need_unlock |= FVG_UNLOCK;
+		}
+	} else
+		*vpp = NULL;
+
+	return (0);
+}
+
+int
 lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	struct mount *mp;
 	ino_t ino;
@@ -888,49 +936,27 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 	*need_unlock = 0;
-	/*
-	 * This is playing fast and loose.  Someone may have the inode
-	 * locked, in which case they are going to be distinctly unhappy
-	 * if we trash something.
-	 */
+
+	error = lfs_fasthashget(dev, ino, need_unlock, vpp);
+	if (error != 0 || *vpp != NULL)
+		return (error);
+
+	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, vpp)) != 0) {
+		*vpp = NULL;
+		return (error);
+	}
+
 	do {
-		if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
-			if ((*vpp)->v_flag & VXLOCK) {
-				printf("lfs_fastvget: vnode VXLOCKed for ino %d\n",ino);
-				clean_vnlocked++;
-#ifdef LFS_EAGAIN_FAIL
-				return EAGAIN;
-#endif
-			}
-			ip = VTOI(*vpp);
-			if (lfs_vref(*vpp)) {
-				clean_inlocked++;
-				return EAGAIN;
-			}
-			if (VOP_ISLOCKED(*vpp)) {
-#ifdef DEBUG_LFS
-				printf("lfs_fastvget: ino %d inlocked by pid %d\n",ip->i_number,
-				       (*vpp)->v_lock.lk_lockholder);
-#endif
-				clean_inlocked++;
-#ifdef LFS_EAGAIN_FAIL
-				lfs_vunref(*vpp);
-				return EAGAIN;
-#endif /* LFS_EAGAIN_FAIL */
-			} else {
-				vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-				*need_unlock |= FVG_UNLOCK;
-			}
-			return (0);
+		error = lfs_fasthashget(dev, ino, need_unlock, vpp);
+		if (error != 0 || *vpp != NULL) {
+			ungetnewvnode(vp);
+			return (error);
 		}
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
 	/* Allocate new vnode/inode. */
-	if ((error = lfs_vcreate(mp, ino, &vp)) != 0) {
-		*vpp = NULL;
-		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-		return (error);
-	}
+	lfs_vcreate(mp, ino, vp);
+
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
 	 * this inode will block if they arrive while we are sleeping waiting
