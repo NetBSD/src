@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.1 2003/05/16 19:15:01 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.2 2003/06/12 10:51:38 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -208,6 +208,9 @@ boot. La partition %d sera utilisée.}
 message dofdisk
 {Configuration de la table des partition DOS ...
 }
+
+message wmbrfail
+{L'écriture du MBR a échouée. Je ne peux pas continuer.}
 
 .if BOOTSEL
 message installbootsel

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.11 2003/06/11 21:35:47 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.12 2003/06/12 10:51:41 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,37 +37,4 @@
  */
 
 /* Menu definitions for sysinst. playstation2 version, machine dependent. */
-
-menu wdtype, title  "Select type";
-	display action { msg_display (MSG_wdtype, diskdev); };
-	option "IDE", 	exit;
-	option "ESDI", 	exit, action
-		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno, NULL);
-		  if (yesno)
-			doessf = "sf:";
-		};
-	option "ST506", exit, action
-		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno, NULL);
-		  if (yesno)
-			doessf = "sf:";
-		};
-
-
-menu dlgeom, title "Choose an option";
-	display action { msg_display (MSG_dlgeom, diskdev, dlcyl, dlhead,
-				dlsec, disk->dd_cyl, disk->dd_head,
-				disk->dd_sec);
-			};
-	option "Use real geometry", exit, action {
-			dlcyl  = disk->dd_cyl;
-			dlhead = disk->dd_head;
-			dlsec  = disk->dd_sec;
-		};
-	option "Use disklabel geometry", exit, action {
-			disk->dd_cyl = dlcyl;
-			disk->dd_head = dlhead;
-			disk->dd_sec = dlsec;
-		};
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.2 2003/06/06 18:57:13 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.3 2003/06/12 10:51:37 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -209,6 +209,9 @@ message dofdisk
 {Setting up the DOS partition table ...
 }
 
+message wmbrfail 
+{Rewrite of MBR failed. I can't continue.}
+
 .if BOOTSEL
 message installbootsel
 {You appear to have more than one operating system installed on your
@@ -306,3 +309,4 @@ message bootsel_header
 message bootsel_row
 {%-6d %-32s %s\n}
 .endif
+

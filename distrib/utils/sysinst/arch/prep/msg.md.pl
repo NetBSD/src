@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.7 2003/06/11 21:35:48 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.8 2003/06/12 10:51:42 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/01/16 16:54:01 nonaka Exp */
 
@@ -44,13 +44,6 @@ message md_hello
 {
 }
 
-message wdtype
-{Jakim rodzajem dysku jest %s?}
-
-message sectforward
-{Czy twoj dysk przesuwa AUTOMATYCZNIE sektory?}
-
-/* the %s's will expand into three character strings */
 message dobad144
 {Instalowanie tablicy zlych blokow ...
 }
@@ -59,17 +52,8 @@ message dobootblks
 {Instalowanie bootblokow na %s....
 }
 
-message cyl1024
-{Disklabel (zestaw partycji) ktory skonfigurowales ma glowna partycje, ktora
-konczy sie poza 1024 cylindrem BIOS. Aby byc pewnym, ze system bedzie
-mogl sie zawsze uruchomic, cala glowna partycja powinna znajdowac sie ponizej
-tego ograniczenia. Mozesz ponadto: }
-
 message pickdisk
 {Wybierz dysk: }
-
-message wmbrfail
-{Nadpisanie MBR nie powiodlo sie. Nie moge kontynuowac.}
 
 message partabovechs
 {Czesc dysku NetBSD lezy poza obszarem, ktory BIOS w twojej maszynie moze
