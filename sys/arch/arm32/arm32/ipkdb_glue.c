@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.1 1996/10/16 19:38:49 ws Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.2 1997/10/14 09:57:28 mark Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -46,6 +46,7 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/ipkdb.h>
+#include <machine/trap.h>
 
 int ipkdbregs[NREG];
 
@@ -96,15 +97,15 @@ ipkdb_trap_glue(regs)
 	int inst;
 	int cnt;
 
-	inst = fetchinst(regs[PC] - 4);
+	inst = fetchinst(regs[PC] - INSN_SIZE);
 	switch (inst) {
 	default:
 		/* non IPKDB undefined instruction */
 		return 0;
-	case 0xe6000011:	/* IPKDB installed breakpoint */
-		regs[PC] -= 4;
+	case GDB_BREAKPOINT:	/* IPKDB installed breakpoint */
+		regs[PC] -= INSN_SIZE;
 		break;
-	case 0xe6000010:	/* breakpoint in ipkdb_connect */
+	case IPKDB_BREAKPOINT:	/* breakpoint in ipkdb_connect */
 		break;
 	}
 	while (1) {
@@ -164,51 +165,52 @@ ipkdbcmp(vs, vd, n)
 }
 
 
-int ipkdbfbyte(src)
-unsigned char *src;
+int
+ipkdbfbyte(src)
+	unsigned char *src;
 {
-  /* modified db_interface.c source */
-  pt_entry_t *ptep;
-  vm_offset_t va;
-  int ch;
-         
-  va = (unsigned long)src & (~PGOFSET);
-  ptep = vtopte(va);
-  
-  if ((*ptep & L2_MASK) == L2_INVAL) {
-    return -1;
-  }        
-         
-  ch = *src;
-  
-  return ch;
- } /* ipkdbfbyte */
+	pt_entry_t *ptep;
+	vm_offset_t va;
+	int ch;
+
+	va = (unsigned long)src & (~PGOFSET);
+	ptep = vtopte(va);
+
+	if ((*ptep & L2_MASK) == L2_INVAL)
+		return -1;
+
+	ch = *src;
+
+	return ch;
+}
 
 
-int ipkdbsbyte(dst, ch)
-unsigned char *dst;
-int ch;
+int
+ipkdbsbyte(dst, ch)
+	unsigned char *dst;
+	int ch;
 {
-  /* modified db_interface.c source */
-  pt_entry_t *ptep, pte, pteo;
-  vm_offset_t va;
+	pt_entry_t *ptep, pte, pteo;
+	vm_offset_t va;
+
+	va = (unsigned long)dst & (~PGOFSET);
+	ptep = vtopte(va);
+
+	if ((*ptep & L2_MASK) == L2_INVAL)
+		return -1;
+
+	pteo = ReadWord(ptep);
+	pte = pteo | PT_AP(AP_KRW);
+	WriteWord(ptep, pte);
+	tlbflush();		/* XXX should be purge */
          
-  va = (unsigned long)dst & (~PGOFSET);
-  ptep = vtopte(va);
-  
-  if ((*ptep & L2_MASK) == L2_INVAL) {
-    return -1;
-  }        
-  
-  pteo = ReadWord(ptep);
-  pte = pteo | PT_AP(AP_KRW);
-  WriteWord(ptep, pte);
-  tlbflush();
-         
-  *dst = (unsigned char)ch;
-  
-  WriteWord(ptep, pteo);
-  tlbflush();
-        
-  return 0;
- } /* ipkdbsbyte */
+	*dst = (unsigned char)ch;
+
+	/* make sure the caches and memory are in sync */
+	cpu_cache_syncI_rng((u_int)dst, 4);
+
+	WriteWord(ptep, pteo);
+	tlbflush();		/* XXX should be purge */
+
+	return 0;
+}
