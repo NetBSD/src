@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.62.2.7 2000/10/18 16:31:29 tv Exp $	*/
+/*	$NetBSD: locore.s,v 1.62.2.8 2000/10/20 18:21:35 tv Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -1876,22 +1876,22 @@ intr_setup_msg:
  * We don't guarantee any registers are preserved during this operation.
  */
 #define	INTR_SETUP(stackspace) \
-	sethi	%hi(EINTSTACK-BIAS), %g6; \
+	sethi	%hi(EINTSTACK-BIAS), %g1; \
 	sethi	%hi((stackspace)), %g5; \
 	btst	1, %sp; \
-	bnz,pt	%icc, 0f; \
-	 mov	%sp, %g1; \
-	add	%sp, -BIAS, %g1; \
-0: \
-	or	%g6, %lo(EINTSTACK-BIAS), %g6; \
-	set	(EINTSTACK-INTSTACK), %g7;	/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	add	%sp, -BIAS, %g6; \
+	movnz	%icc, %sp, %g6; \
+	or	%g1, %lo(EINTSTACK-BIAS), %g1; \
+	set	(EINTSTACK-INTSTACK), %g7; \
 	or	%g5, %lo((stackspace)), %g5; \
-	sub	%g6, %g1, %g2;					/* Determine if we need to switch to intr stack or not */ \
+	sub	%g1, %g6, %g2;					/* Determine if we need to switch to intr stack or not */ \
 	dec	%g7;						/* Make it into a mask */ \
-	andncc	%g2, %g7, %g0;					/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	andncc	%g2, %g7, %g0;					/* Is %sp in the interrupt stack? */ \
+	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
 	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
-	srl	%g1, 0, %g1;					/* XXXXX truncate at 32-bits */ \
-	movz	%xcc, %g1, %g6;					/* Stay on interrupt stack? */ \
+	movnz	%xcc, %g1, %g6;					/* Stay on interrupt stack? */ \
+	cmp	%g7, WSTATE_KERN;				/* User or kernel sp? */ \
+	movnz	%icc, %g1, %g6;					/* Go to interrupt base */ \
 	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
 	\
 	stx	%l0, [%g6 + CC64FSZ + BIAS + TF_L + (0*8)];		/* Save local registers to trap frame */ \
@@ -2009,22 +2009,23 @@ intr_setup_msg:
  * We don't guarantee any registers are preserved during this operation.
  */
 #define	INTR_SETUP(stackspace) \
-	sethi	%hi(EINTSTACK), %g6; \
+	sethi	%hi(EINTSTACK), %g1; \
 	sethi	%hi((stackspace)), %g5; \
 	btst	1, %sp; \
-	bz,pt	%icc, 0f; \
-	 mov	%sp, %g1; \
-	add	%sp, BIAS, %g1; \
-0: \
-	srl	%g1, 0, %g1;					/* truncate at 32-bits */ \
-	or	%g6, %lo(EINTSTACK), %g6; \
-	set	(EINTSTACK-INTSTACK), %g7;	/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	add	%sp, BIAS, %g6; \
+	movz	%icc, %sp, %g6; \
+	or	%g1, %lo(EINTSTACK), %g1; \
+	srl	%g6, 0, %g6;					/* truncate at 32-bits */ \
+	set	(EINTSTACK-INTSTACK), %g7; \
 	or	%g5, %lo((stackspace)), %g5; \
-	sub	%g6, %g1, %g2;					/* Determine if we need to switch to intr stack or not */ \
+	sub	%g1, %g6, %g2;					/* Determine if we need to switch to intr stack or not */ \
 	dec	%g7;						/* Make it into a mask */ \
 	andncc	%g2, %g7, %g0;					/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
 	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
-	movz	%icc, %g1, %g6;					/* Stay on interrupt stack? */ \
+	movnz	%xcc, %g1, %g6;					/* Stay on interrupt stack? */ \
+	cmp	%g7, WSTATE_KERN;				/* User or kernel sp? */ \
+	movnz	%icc, %g1, %g6;					/* Stay on interrupt stack? */ \
 	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
 	\
 	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)];		/* Save local registers to trap frame */ \
