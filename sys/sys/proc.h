@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.119 2000/12/22 23:19:15 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.120 2001/01/25 19:14:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -92,12 +92,12 @@ struct	emul {
 	int	e_flags;		/* Miscellaneous flags */
 					/* Syscall handling function */
 	int	*e_errno;		/* Errno array */
-					/* Signal sending function */
 	int	e_nosys;		/* Offset of the nosys() syscall */
 	int	e_nsysent;		/* Number of system call entries */
 #endif
 	const struct sysent *e_sysent;	/* System call array */
 	const char * const *e_syscallnames;	/* System call name array */
+					/* Signal sending function */
 	void	(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
