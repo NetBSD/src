@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.23 1997/03/13 17:22:23 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.24 1997/03/13 17:35:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-static char rcsid[] = "$NetBSD: inetd.c,v 1.23 1997/03/13 17:22:23 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.24 1997/03/13 17:35:39 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -728,12 +728,13 @@ config(signo)
 			if (cp->se_bi == 0 &&
 			    (sep->se_wait == 1 || cp->se_wait == 0))
 				sep->se_wait = cp->se_wait;
-			SWAP(int, cp->se_max, sep->se_max);
 			SWAP(char *, sep->se_user, cp->se_user);
 			SWAP(char *, sep->se_group, cp->se_group);
 			SWAP(char *, sep->se_server, cp->se_server);
 			for (i = 0; i < MAXARGV; i++)
 				SWAP(char *, sep->se_argv[i], cp->se_argv[i]);
+			SWAP(int, cp->se_type, sep->se_type);
+			SWAP(int, cp->se_max, sep->se_max);
 #undef SWAP
 			if (isrpcservice(sep))
 				unregister_rpc(sep);
