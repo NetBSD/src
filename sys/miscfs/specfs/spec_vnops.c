@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)spec_vnops.c	7.37 (Berkeley) 5/30/91
- *	$Id: spec_vnops.c,v 1.7 1993/10/30 16:11:07 glass Exp $
+ *	$Id: spec_vnops.c,v 1.8 1993/11/12 05:56:10 cgd Exp $
  */
 
 #include "param.h"
@@ -43,7 +43,7 @@
 #include "mount.h"
 #include "namei.h"
 #include "vnode.h"
-#include "specdev.h"
+#include "miscfs/specfs/specdev.h" /* XXX */
 #include "stat.h"
 #include "errno.h"
 #include "ioctl.h"

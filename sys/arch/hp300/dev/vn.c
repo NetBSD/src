@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vn.c 1.1 91/04/30
  *	from: @(#)vn.c	7.6 (Berkeley) 6/21/91
- *	$Id: vn.c,v 1.3 1993/08/01 19:24:31 mycroft Exp $
+ *	$Id: vn.c,v 1.4 1993/11/12 05:54:20 cgd Exp $
  */
 
 /*
@@ -70,7 +70,7 @@
 #include "sys/ioctl.h"
 #include "sys/mount.h"
 #include "sys/vnode.h"
-#include "sys/specdev.h"
+#include "miscfs/specfs/specdev.h"
 #include "sys/file.h"
 #include "sys/uio.h"
 

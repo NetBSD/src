@@ -27,7 +27,7 @@
 #include "proc.h"
 #include "mount.h"
 #include "vnode.h"
-#include "specdev.h"		/* defines plimit structure in the proc struct */
+#include "miscfs/specfs/specdev.h" /* XXX */	/* defines v_rdev */
 #include "malloc.h"
 
 #include "dir.h"		/* defines dirent structure */

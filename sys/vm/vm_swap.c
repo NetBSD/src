@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_swap.c	7.18 (Berkeley) 5/6/91
- *	$Id: vm_swap.c,v 1.11 1993/08/29 01:50:20 cgd Exp $
+ *	$Id: vm_swap.c,v 1.12 1993/11/12 05:57:48 cgd Exp $
  */
 
 #include "param.h"
@@ -42,7 +42,7 @@
 #include "namei.h"
 #include "dmap.h"		/* XXX */
 #include "vnode.h"
-#include "specdev.h"
+#include "miscfs/specfs/specdev.h" /* XXX */
 #include "map.h"
 #include "file.h"
 

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.12 1993/10/02 00:00:22 cgd Exp $
+ *	$Id: vm_mmap.c,v 1.13 1993/11/12 05:57:43 cgd Exp $
  */
 
 /*
@@ -49,7 +49,7 @@
 #include "filedesc.h"
 #include "proc.h"
 #include "vnode.h"
-#include "specdev.h"
+#include "miscfs/specfs/specdev.h" /* XXX */
 #include "file.h"
 #include "mman.h"
 #include "conf.h"

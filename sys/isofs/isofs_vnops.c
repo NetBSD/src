@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.9 1993/10/28 17:38:50 ws Exp $
+ *	$Id: isofs_vnops.c,v 1.10 1993/11/12 05:55:14 cgd Exp $
  */
 #include "param.h"
 #include "systm.h"
@@ -13,8 +13,8 @@
 #include "conf.h"
 #include "mount.h"
 #include "vnode.h"
-#include "specdev.h"
-#include "fifo.h"
+#include "miscfs/specfs/specdev.h" /* XXX */
+#include "miscfs/fifofs/fifo.h" /* XXX */
 #include "malloc.h"
 #include "dir.h"
 

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: clock.c 1.18 91/01/21
  *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.3 1993/08/01 19:24:38 mycroft Exp $
+ *	$Id: clock.c,v 1.4 1993/11/12 05:54:35 cgd Exp $
  */
 
 #include "param.h"
@@ -147,7 +147,7 @@ clkread()
 #include "sys/malloc.h"
 #include "vm/vm.h"
 #include "clockioctl.h"
-#include "sys/specdev.h"
+#include "miscfs/specfs/specdev.h"
 #include "sys/vnode.h"
 #include "sys/mman.h"
 
