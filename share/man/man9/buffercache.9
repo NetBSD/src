@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.2 2003/09/06 18:41:44 yamt Exp $
+.\"     $NetBSD: buffercache.9,v 1.3 2003/09/06 19:09:03 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -170,21 +170,23 @@ Read a block corresponding to
 .Fa vp
 and
 .Fa blkno .
-the buffer is returned via
+The buffer is returned via
 .Fa bpp .
 .Pp
 If the buffer is not found (i.e. the block is not cached in memory),
 .Fn bread
 allocates a buffer with enough pages for
 .Fa size
-and read the specified disk block into it using
+and reads the specified disk block into it using
 credential
 .Fa cred .
 .Pp
 The buffer returned by
 .Fn bread
 is marked as busy.
-(B_BUSY flag is set.)
+(The
+.Dv B_BUSY
+flag is set.)
 After manipulation of the buffer returned from
 .Fn bread ,
 the caller should unbusy it so that another thread can get it.
@@ -215,14 +217,18 @@ shouldn't be used by new ones.
 Write a block.
 Start I/O for write using
 .Fn VOP_STRATEGY .
-Then, unless B_ASYNC flag is set in
+Then, unless the
+.Dv B_ASYNC
+flag is set in
 .Fa bp ,
 .Fn bwrite
 waits for the I/O to complete.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn bawrite "bp"
 Write a block asynchronously.
-Set B_ASYNC flags in
+Set the
+.Dv B_ASYNC
+flag in
 .Fa bp
 and simply call
 .Fa VOP_BWRITE ,
@@ -236,7 +242,9 @@ Unlike
 .Fa bawrite ,
 .Fa bdwrite
 won't start any I/O.
-It only mark the buffer as dirty (B_DELWRI) and unbusy it.
+It only marks the buffer as dirty
+.Pq Dv B_DELWRI
+and unbusy it.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn getblk "vp" "blkno" "size" "slpflag" "slptimeo"
 Get a block of requested size
@@ -248,7 +256,8 @@ and
 .Fa blkno
 If it is found in the block cache, make it busy and return it.
 Otherwise, return an empty block of the correct size.
-It is up to the caller to insure that the cached blocks be of the correct size.
+It is up to the caller to ensure that the cached blocks
+are of the correct size.
 .Pp
 If
 .Fn getblk
@@ -284,7 +293,9 @@ Unbusy a buffer and release it to the free lists.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn biodone "bp"
 Mark I/O complete on a buffer.
-If a callback has been requested by B_CALL, do so.
+If a callback has been requested by
+.Dv B_CALL ,
+do so.
 Otherwise, wakeup waiters.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn biowait "bp"
@@ -317,7 +328,7 @@ The buffer cache subsystem is implemented within the file
 .%A Michael J. Karels
 .%A John S. Quarterman
 .%B "The Design and Implementation of the 4.4BSD UNIX Operating System"
-.%I "Addison Welley"
+.%I "Addison Wesley"
 .%D 1996
 .Re
 .\" ------------------------------------------------------------
