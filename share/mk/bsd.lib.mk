@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.204 2002/07/01 19:29:31 fredette Exp $
+#	$NetBSD: bsd.lib.mk,v 1.205 2002/07/20 08:50:10 yamt Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -87,8 +87,10 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 # SHLIB_LDENDFILE:	support .o file, call C++ file-level destructors
 # FPICFLAGS:		flags for ${FC} to compile .[fF] files to .so objects.
 # CPPICFLAGS:		flags for ${CPP} to preprocess .[sS] files for ${AS}
-# CPICFLAGS:		flags for ${CC} to compile .[cC] files to .so objects.
-# CAPICFLAGS		flags for {$CC} to compiling .[Ss] files
+# CPICFLAGS:		flags for ${CC} to compile .[cC] files to pic objects.
+# CSHLIBFLAGS:		flags for ${CC} to compile .[cC] files to .so objects.
+#			(usually includes ${CPICFLAGS})
+# CAPICFLAGS:		flags for ${CC} to compiling .[Ss] files
 #		 	(usually just ${CPPPICFLAGS} ${CPICFLAGS})
 # APICFLAGS:		flags for ${AS} to assemble .[sS] to .so objects.
 
@@ -150,6 +152,16 @@ APICFLAGS?= -k
 
 MKPICLIB?= yes
 
+.if ${MKPICLIB} != "no"
+CSHLIBFLAGS+= ${CPICFLAGS}
+.endif
+
+.if defined(CSHLIBFLAGS) && !empty(CSHLIBFLAGS)
+MKSHLIBOBJS= yes
+.else
+MKSHLIBOBJS= no
+.endif
+
 # Platform-independent linker flags for ELF shared libraries
 .if ${OBJECT_FMT} == "ELF"
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
@@ -183,10 +195,10 @@ FFLAGS+=	${FOPTS}
 
 .c.so:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.c} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.c} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
 .else
-	@echo ${COMPILE.c:Q} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.c} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.c:Q} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.c} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
@@ -216,10 +228,10 @@ FFLAGS+=	${FOPTS}
 
 .cc.so .C.so:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
-	${COMPILE.cc} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.cc} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
 .else
 	@echo ${COMPILE.cc:Q} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.cc} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.cc} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
@@ -279,10 +291,10 @@ FFLAGS+=	${FOPTS}
 
 .m.so:
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
-	${COMPILE.m} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.m} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
 .else
 	@echo ${COMPILE.m:Q} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.m} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.m} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
@@ -321,7 +333,15 @@ POBJS+=${OBJS:.o=.po}
 
 .if ${MKPIC} != "no"
 .if ${MKPICLIB} == "no"
+.if ${MKSHLIBOBJS} != "no"
+# make _pic.a, which isn't really pic,
+# since it's needed for making shared lib.
+# but don't install it.
+SOLIB=lib${LIB}_pic.a
+SOBJS+=${OBJS:.o=.so}
+.else
 SOLIB=lib${LIB}.a
+.endif
 .else
 SOLIB=lib${LIB}_pic.a
 _LIBS+=${SOLIB}
