@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.1 1999/07/06 13:32:01 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.2 1999/09/03 04:34:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -62,7 +62,7 @@ int s;
 
 #define QUERY_RESPONSE_INTERVAL 10000
 
-void make_msg(int index, struct in6_addr *addr);
+void make_msg(int index, struct in6_addr *addr, u_int type);
 void usage(void);
 void dump(int);
 void quit(int);
@@ -75,14 +75,35 @@ main(int argc, char *argv[])
 	u_int hlim = 1;
 	fd_set fdset;
 	struct itimerval itimer;
+	u_int type;
+	int ch;
+	extern int optind;
 
-	if (argc != 2 && argc != 3)
+	type = MLD6_LISTENER_QUERY;
+	while ((ch = getopt(argc, argv, "d")) != EOF) {
+		switch (ch) {
+		case 'd':
+			type = MLD6_LISTENER_DONE;
+			break;
+		case 'r':
+			type = MLD6_LISTENER_REPORT;
+			break;
+		default:
+			usage();
+			/*NOTREACHED*/
+		}
+	}
+
+	argv += optind;
+	argc -= optind;
+	
+	if (argc != 1 && argc != 2)
 		usage();
 
-	ifindex = (u_short)if_nametoindex(argv[1]);
+	ifindex = (u_short)if_nametoindex(argv[0]);
 	if (ifindex == 0)
 		usage();
-	if (argc == 3 && inet_pton(AF_INET6, argv[2], &maddr) != 1)
+	if (argc == 3 && inet_pton(AF_INET6, argv[1], &maddr) != 1)
 		usage();
 
 	if ((s = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
@@ -106,7 +127,7 @@ main(int argc, char *argv[])
 			sizeof(filt)) < 0)
 		err(1, "setsockopt(ICMP6_FILTER)");
 
-	make_msg(ifindex, &maddr);
+	make_msg(ifindex, &maddr, type);
 
 	if (sendmsg(s, &m, 0) < 0)
 		err(1, "sendmsg");
@@ -132,7 +153,7 @@ main(int argc, char *argv[])
 }
 
 void
-make_msg(int index, struct in6_addr *addr)
+make_msg(int index, struct in6_addr *addr, u_int type)
 {
 	static struct iovec iov[2];
 	static u_char *cmsgbuf;
@@ -158,7 +179,7 @@ make_msg(int index, struct in6_addr *addr)
 	m.msg_iovlen = 1;
 
 	bzero(&mldh, sizeof(mldh));
-	mldh.mld6_type = MLD6_LISTENER_QUERY;
+	mldh.mld6_type = type & 0xff;
 	mldh.mld6_maxdelay = htons(QUERY_RESPONSE_INTERVAL);
 	mldh.mld6_addr = *addr;
 
