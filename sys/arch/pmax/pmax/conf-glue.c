@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.9 1996/09/16 03:47:47 jonathan Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.10 1996/10/01 01:04:48 jonathan Exp $	*/
 
 /*
  * conf-glue.c:
@@ -180,11 +180,7 @@ configure_scsi()
 			if (!(*drp->d_init)(dp))
 			    continue;
 			dp->sd_alive = 1;
-			/* if device is a disk, assign number for statistics */
-			if (dp->sd_dk && dkn < DK_NDRIVE)
-			    dp->sd_dk = dkn++;
-			else
-			    dp->sd_dk = -1;
+
 		}
 	}
 }
