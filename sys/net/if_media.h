@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.35 2003/07/08 07:13:51 itojun Exp $	*/
+/*	$NetBSD: if_media.h,v 1.36 2003/10/13 05:06:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -153,7 +153,8 @@ int	ifmedia_baudrate __P((int));
  *	0-4	Media subtype		MAX SUBTYPE == 31!
  *	5-7	Media type
  *	8-15	Type specific options
- *	16-19	RFU
+ *	16-18	Mode (for multi-mode devices)
+ *	19	RFU
  *	20-27	Shared (global) options
  *	28-31	Instance
  */
@@ -211,10 +212,27 @@ int	ifmedia_baudrate __P((int));
 #define	IFM_IEEE80211_DS5	6	/* Direct Sequence 5Mbps*/
 #define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
 #define	IFM_IEEE80211_DS1	8	/* Direct Sequence 1Mbps */
+#define	IFM_IEEE80211_DS22	9	/* Direct Sequence 22Mbps */
+#define	IFM_IEEE80211_OFDM6	10	/* OFDM 6Mbps */
+#define	IFM_IEEE80211_OFDM9	11	/* OFDM 9Mbps */
+#define	IFM_IEEE80211_OFDM12	12	/* OFDM 12Mbps */
+#define	IFM_IEEE80211_OFDM18	13	/* OFDM 18Mbps */
+#define	IFM_IEEE80211_OFDM24	14	/* OFDM 24Mbps */
+#define	IFM_IEEE80211_OFDM36	15	/* OFDM 36Mbps */
+#define	IFM_IEEE80211_OFDM48	16	/* OFDM 48Mbps */
+#define	IFM_IEEE80211_OFDM54	17	/* OFDM 54Mbps */
+#define	IFM_IEEE80211_OFDM72	18	/* OFDM 72Mbps */
 
 #define	IFM_IEEE80211_ADHOC	 0x00000100	/* Operate in Adhoc mode */
 #define	IFM_IEEE80211_HOSTAP	 0x00000200	/* Operate in Host AP mode */
 #define	IFM_IEEE80211_MONITOR	 0x00000400	/* Operate in Monitor mode */
+#define	IFM_IEEE80211_TURBO	 0x00000800	/* Operate in Turbo mode */
+
+/* operating mode for multi-mode devices */
+#define	IFM_IEEE80211_11A	0x00010000	/* 5Ghz, OFDM mode */
+#define	IFM_IEEE80211_11B	0x00020000	/* Direct Sequence mode */
+#define	IFM_IEEE80211_11G	0x00030000	/* 2Ghz, CCK mode */
+#define	IFM_IEEE80211_FH	0x00040000	/* 2Ghz, GFSK mode */
 
 /*
  * Shared media sub-types
@@ -242,6 +260,8 @@ int	ifmedia_baudrate __P((int));
 #define	IFM_IMASK	0xf0000000	/* Instance */
 #define	IFM_ISHIFT	28		/* Instance shift */
 #define	IFM_OMASK	0x0000ff00	/* Type specific options */
+#define	IFM_MMASK	0x00070000	/* Mode */
+#define	IFM_MSHIFT	16		/* Mode shift */
 #define	IFM_GMASK	0x0ff00000	/* Global options */
 
 #define	IFM_NMIN	IFM_ETHER	/* lowest Network type */
@@ -269,6 +289,7 @@ int	ifmedia_baudrate __P((int));
 #define	IFM_SUBTYPE(x)	((x) & IFM_TMASK)
 #define	IFM_INST(x)	(((x) & IFM_IMASK) >> IFM_ISHIFT)
 #define	IFM_OPTIONS(x)	((x) & (IFM_OMASK|IFM_GMASK))
+#define	IFM_MODE(x)	((x) & IFM_MMASK)
 
 #define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
 #define	IFM_INST_ANY	((u_int) -1)
@@ -278,6 +299,8 @@ int	ifmedia_baudrate __P((int));
  */
 #define	IFM_MAKEWORD(type, subtype, options, instance)			\
 	((type) | (subtype) | (options) | ((instance) << IFM_ISHIFT))
+#define	IFM_MAKEMODE(mode) \
+	(((mode) << IFM_MSHIFT) & IFM_MMASK)
 
 /*
  * NetBSD extension not defined in the BSDI API.  This is used in various
@@ -396,13 +419,33 @@ struct ifmedia_description {
 	/*								\
 	 * IEEE 802.11							\
 	 */								\
-	{ IFM_IEEE80211|IFM_IEEE80211_FH1,	"FH1"	},		\
-	{ IFM_IEEE80211|IFM_IEEE80211_FH2,	"FH2"	},		\
-	{ IFM_IEEE80211|IFM_IEEE80211_DS1,	"DS1"	},		\
-	{ IFM_IEEE80211|IFM_IEEE80211_DS2,	"DS2"	},		\
-	{ IFM_IEEE80211|IFM_IEEE80211_DS5,	"DS5"	},		\
-	{ IFM_IEEE80211|IFM_IEEE80211_DS11,	"DS11"	},		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH1,	"FH1" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH2,	"FH2" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS1,	"DS1" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS2,	"DS2" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS5,	"DS5" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS11,	"DS11" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS22,	"DS22" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM6,	"OFDM6" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM9,	"OFDM9" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM12,	"OFDM12" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM18,	"OFDM18" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM24,	"OFDM24" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM36,	"OFDM36" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM48,	"OFDM48" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM54,	"OFDM54" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM72,	"OFDM72" },		\
 									\
+	{ 0, NULL },							\
+}
+
+#define IFM_MODE_DESCRIPTIONS {						\
+	{ IFM_AUTO,				"autoselect" },		\
+	{ IFM_AUTO,				"auto" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_11A,	"11a" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_11B,	"11b" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_11G,	"11g" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH,	"fh" },			\
 	{ 0, NULL },							\
 }
 
@@ -434,6 +477,7 @@ struct ifmedia_description {
 	{ IFM_IEEE80211|IFM_IEEE80211_ADHOC,	"ibss" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_HOSTAP,	"hostap" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_MONITOR,	"monitor" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_TURBO,	"turbo" },		\
 									\
 	{ 0, NULL },							\
 }
@@ -472,12 +516,22 @@ struct ifmedia_baudrate {
 	{ IFM_FDDI|IFM_FDDI_MMF,	IF_Mbps(100) },			\
 	{ IFM_FDDI|IFM_FDDI_UTP,	IF_Mbps(100) },			\
 									\
-	{ IFM_IEEE80211|IFM_IEEE80211_FH1, IF_Mbps(1) },		\
-	{ IFM_IEEE80211|IFM_IEEE80211_FH2, IF_Mbps(2) },		\
-	{ IFM_IEEE80211|IFM_IEEE80211_DS2, IF_Mbps(2) },		\
-	{ IFM_IEEE80211|IFM_IEEE80211_DS5, IF_Kbps(5500) },		\
-	{ IFM_IEEE80211|IFM_IEEE80211_DS11, IF_Mbps(11) },		\
-	{ IFM_IEEE80211|IFM_IEEE80211_DS1, IF_Mbps(1) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH1,	IF_Mbps(1) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH2,	IF_Mbps(2) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS2,	IF_Mbps(2) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS5,	IF_Kbps(5500) },	\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS11,	IF_Mbps(11) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS1,	IF_Mbps(1) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS22,	IF_Mbps(22) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM6,	IF_Mbps(6) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM9,	IF_Mbps(9) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM12,	IF_Mbps(12) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM18,	IF_Mbps(18) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM24,	IF_Mbps(24) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM36,	IF_Mbps(36) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM48,	IF_Mbps(48) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM54,	IF_Mbps(54) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM72,	IF_Mbps(72) },		\
 									\
 	{ 0, 0 },							\
 }
