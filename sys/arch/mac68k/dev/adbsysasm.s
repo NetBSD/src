@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsysasm.s,v 1.7 1998/10/23 01:16:23 ender Exp $	*/
+/*	$NetBSD: adbsysasm.s,v 1.8 1998/10/26 07:07:34 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -30,52 +30,56 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_adb.h"
+#include "kbd.h"
+#include "ms.h"
+#include <machine/asm.h>
+
 /* 
  * ADB subsystem routines in assembly
  */
 
 /* This routine is called when a keyboard has sent us some data. */
 /* (provided it has been set up with SetADBInfo) */
-	.global	_adb_kbd_asmcomplete
-	.global	_kbd_adbcomplete
-_adb_kbd_asmcomplete:
+GLOBAL(adb_kbd_asmcomplete)
+#if NKBD > 0
 	moveml	#0xc0c0, sp@-	| save scratch regs
 	movl	d0, sp@-	/* ADB command byte */
 	movl	a2, sp@-	/* data area pointer */
 	/*	a1 is the pointer to this routine itself. */
 	movl	a0, sp@-	/* device data buffer */
-	jbsr	_kbd_adbcomplete
+	jbsr	_C_LABEL(kbd_adbcomplete)
 	addl	#12, sp		/* pop params */
 	moveml	sp@+, #0x0303	| restore scratch regs
+#endif
 	rts
 
 /* This routine is called when a mouse has sent us some data. */
 /* (provided it has been set up with SetADBInfo) */
-	.global	_adb_ms_asmcomplete
-	.global	_ms_adbcomplete
-_adb_ms_asmcomplete:
+GLOBAL(adb_ms_asmcomplete)
+#if NMS > 0
 	moveml	#0xc0c0, sp@-	| save scratch regs
 	movl	d0, sp@-	/* ADB command byte */
 	movl	a2, sp@-	/* data area pointer */
 	/*	a1 is the pointer to this routine itself. */
 	movl	a0, sp@-	/* device data buffer */
-	jbsr	_ms_adbcomplete
+	jbsr	_C_LABEL(ms_adbcomplete)
 	addl	#12, sp		/* pop params */
 	moveml	sp@+, #0x0303	| restore scratch regs
+#endif
 	rts
 
 
-_adb_jadbprochello:
+GLOBAL(adb_jadbprochello)
 	.asciz	"adb: hello from adbproc\n"
 	.even
 
 
-	.global	_adb_jadbproc
-_adb_jadbproc:
+GLOBAL(adb_jadbproc)
 #if defined(ADB_DEBUG) && 0
 	moveml	#0xc0c0, sp@-	| save scratch regs
-	movl	_adb_jadbprochello, sp@-
-	jbsr	_printf
+	movl	_C_LABEL(adb_jadbprochello), sp@-
+	jbsr	_C_LABEL(printf)
 	addl	#4, sp		/* pop params */
 	moveml	sp@+, #0x0303	| restore scratch regs
 #endif
@@ -83,7 +87,6 @@ _adb_jadbproc:
 	rts
 
 	/* ADBOp's completion routine used by extdms_init() in adbsys.c. */
-	.global	_extdms_complete
-_extdms_complete:
+GLOBAL(extdms_complete)
 	movl	#-1,a2@		| set done flag
 	rts
