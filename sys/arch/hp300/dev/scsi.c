@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.19 1997/04/14 02:33:22 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.20 1997/04/27 20:58:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -54,6 +54,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/hp300spu.h>
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>

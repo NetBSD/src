@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.10 1997/04/01 03:10:58 scottr Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.11 1997/04/27 20:58:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -36,6 +36,7 @@
  */
 
 #include <hp300/dev/iotypes.h>		/* XXX */
+#include <machine/hp300spu.h>
 
 /*
  * Hardware layout for the 98620[ABC]:
