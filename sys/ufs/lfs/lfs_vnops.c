@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.126 2003/12/16 13:47:48 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.127 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.126 2003/12/16 13:47:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.127 2004/01/25 18:06:49 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1101,8 +1101,7 @@ lfs_strategy(void *v)
 	simple_unlock(&fs->lfs_interlock);
 
 	vp = ip->i_devvp;
-	bp->b_dev = vp->v_rdev;
-	VOCALL (vp->v_op, VOFFSET(vop_strategy), ap);
+	VOP_STRATEGY(vp, bp);
 	return (0);
 }
 

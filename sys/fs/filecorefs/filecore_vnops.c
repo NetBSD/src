@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.6 2003/08/07 16:31:38 agc Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.7 2004/01/25 18:06:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.6 2003/08/07 16:31:38 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.7 2004/01/25 18:06:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,9 +466,7 @@ filecore_strategy(v)
 		return (0);
 	}
 	vp = ip->i_devvp;
-	bp->b_dev = vp->v_rdev;
-	VOCALL (vp->v_op, VOFFSET(vop_strategy), ap);
-	return (0);
+	return (VOP_STRATEGY(vp, bp));
 }
 
 /*

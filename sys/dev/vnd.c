@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.105 2004/01/10 14:39:50 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.106 2004/01/25 18:06:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.105 2004/01/10 14:39:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.106 2004/01/25 18:06:48 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -643,7 +643,7 @@ vndstart(vnd)
 
 		if ((bp->b_flags & B_READ) == 0)
 			bp->b_vp->v_numoutput++;
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(bp->b_vp, bp);
 	}
 	vnd->sc_flags &= ~VNF_BUSY;
 }
