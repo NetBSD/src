@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.544 2003/03/07 07:11:38 tshiozak Exp $
+#	$NetBSD: mi,v 1.545 2003/03/10 08:01:11 lukem Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -817,6 +817,7 @@
 ./usr/include/sys/timex.h		comp-c-include
 ./usr/include/sys/tprintf.h		comp-c-include
 ./usr/include/sys/trace.h		comp-c-include
+./usr/include/sys/tree.h		comp-c-include
 ./usr/include/sys/tty.h			comp-c-include
 ./usr/include/sys/ttychars.h		comp-c-include
 ./usr/include/sys/ttycom.h		comp-c-include
