@@ -1,3 +1,4 @@
+#	$NetBSD: scsi.pmax,v 1.2 1998/01/05 20:51:50 perry Exp $
 #
 # SCSI configuration for old DECstation SCSI driver
 # NB: if you change this, you will also need to change conf-glue.c.

@@ -1,3 +1,4 @@
+/*	$NetBSD: loadkmap.c,v 1.2 1998/01/05 20:52:30 perry Exp $	*/
 /*
  * loadkmap - load keyboard map (for NetBSD/X680x0)
  * from: amiga/stand/loadkmap/loadkmap.c

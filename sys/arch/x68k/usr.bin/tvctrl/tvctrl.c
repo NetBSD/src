@@ -1,3 +1,5 @@
+/*	$NetBSD: tvctrl.c,v 1.2 1998/01/05 20:52:34 perry Exp $	*/
+
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>

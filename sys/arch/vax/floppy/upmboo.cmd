@@ -1,3 +1,4 @@
+!	$NetBSD: upmboo.cmd,v 1.2 1998/01/05 20:52:13 perry Exp $
 !
 ! BOOTSTRAP ON UP, GOING MULTI USER
 !

@@ -2,7 +2,7 @@
 | author: chapuni(GBA02750@niftyserve.or.jp)
 |         Yasha
 |
-| $Id: xxboot.S,v 1.1 1997/10/19 11:01:20 oki Exp $
+| $NetBSD: xxboot.S,v 1.2 1998/01/05 20:52:24 perry Exp $
 
 #include "iocscall.h"
 

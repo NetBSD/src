@@ -1,3 +1,5 @@
+#	$NetBSD: AKF85,v 1.2 1998/01/05 20:51:34 perry Exp $
+#
 # Modefile written by !MakeModes version 0.19 (22-Aug-1994)
 # Monitor description file for Acorn AKF85 monitor
 # Line rate: 30 - 82 kHz
