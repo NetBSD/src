@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2001/06/19 11:56:28 nonaka Exp $
+#	$NetBSD: Makefile,v 1.6 2001/11/14 00:58:51 tv Exp $
+
+.include <bsd.own.mk>
 
 COMMON= ${.CURDIR}/../common
-.ifnmake(print-objdir)
-COMMONOBJ!=	cd ${COMMON}; ${MAKE} print-objdir
-.endif
+COMMONOBJ!=	cd ${COMMON} && ${PRINTOBJDIR}
 
 .PATH: ${.CURDIR}/../boot ${COMMONOBJ}
 

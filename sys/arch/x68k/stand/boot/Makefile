@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/10/15 16:23:00 minoura Exp $
+#	$NetBSD: Makefile,v 1.6 2001/11/14 00:58:51 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -42,8 +42,8 @@ LDFLAGS=	-N -static -T ${.CURDIR}/boot.ldscript
 .else
 LDFLAGS=	-N -static -Ttext ${TEXT}
 .endif
-LIBIOCS!=	cd $M/stand/libiocs && ${MAKE} print-objdir
-LIBSA!=		cd $M/stand/libsa && ${MAKE} print-objdir
+LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}
+LIBSA!=		cd $M/stand/libsa && ${PRINTOBJDIR}
 LDLIBS=		-L${LIBSA} -lsa -L${LIBIOCS} -liocs
 
 .PHONY:	machine-links
