@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.5 2003/11/21 19:44:53 tsutsui Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.6 2004/09/04 13:43:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -55,8 +55,7 @@ void (*entry_point)(u_int32_t, u_int32_t, u_int32_t, u_int32_t) =
 char *devs[] = { "hd", "fh", "fd", NULL, NULL, "rd", "st" };
 
 void
-bootxx(d4, d5, d6, d7)
-	int d4, d5, d6, d7;
+bootxx(u_int32_t d4, u_int32_t d5, u_int32_t d6, u_int32_t d7)
 {
 	int fd, blk, bs;
 	int ctlr, unit, part, type;
