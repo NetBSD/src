@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -41,9 +42,7 @@
  *
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
- * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * from: sparc/dev/zs.c,v 1.3 1993/10/13 02:36:44 deraadt Exp 
- * $Id: zs.c,v 1.8 1994/06/28 21:42:32 gwr Exp $
+ * $Id: zs.c,v 1.9 1994/09/20 16:21:48 gwr Exp $
  */
 
 /*
@@ -149,8 +148,6 @@ static int zs_kgdb_savedspeed;
 static void zs_checkkgdb(int, struct zs_chanstate *, struct tty *);
 #endif
 
-static volatile struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
-
 /*
  * Console keyboard L1-A processing is done in the hardware interrupt code,
  * so we need to duplicate some of the console keyboard decode state.  (We
@@ -165,6 +162,19 @@ static struct conk_state {	/* console keyboard state */
 
 int zshardscope;
 int zsshortcuts;		/* number of "shortcut" software interrupts */
+
+static volatile struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
+
+/* Find PROM mappings (for console support). */
+void zs_init()
+{
+	if (zsaddr[0] == NULL)
+		zsaddr[0] = (struct zsdevice *)
+			obio_find_mapping(OBIO_ZS, OBIO_ZS_SIZE);
+	if (zsaddr[1] == NULL)
+		zsaddr[1] = (struct zsdevice *)
+			obio_find_mapping(OBIO_KEYBD_MS, OBIO_ZS_SIZE);
+}	
 
 /*
  * Match slave number to zs unit number, so that misconfiguration will
@@ -196,18 +206,18 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	register struct zs_chanstate *cs;
 	register volatile struct zsdevice *addr;
 	register struct tty *tp, *ctp;
-	int softcar;
+	int softcar, obio_addr;
 	static int didintr;
-	caddr_t obio_addr;
 
-	obio_addr = (caddr_t)obio_loc->obio_addr;
+	obio_addr = obio_loc->obio_addr;
 	obio_print(obio_addr, ZSSOFT_PRI);
 	printf(" hwpri %d\n", ZSHARD_PRI);
 
-	if ((addr = zsaddr[zs]) == NULL) {
-		zsaddr[zs] = addr = (struct zsdevice *)
-			obio_alloc(obio_addr, OBIO_ZS_SIZE, OBIO_WRITE);
+	if (zsaddr[zs] == NULL) {
+		zsaddr[zs] = (struct zsdevice *)
+			obio_alloc(obio_addr, OBIO_ZS_SIZE);
 	}
+	addr = zsaddr[zs];
 
 	if (!didintr) {
 		didintr = 1;
@@ -357,11 +367,10 @@ zs_reset(zc, inten, speed)
 int
 zscnprobe_kbd()
 {
-	if (zs1_va == NULL) {
+	if (zsaddr[1] == NULL) {
 		mon_printf("zscnprobe_kbd: zs1 not yet mapped\n");
 		return CN_DEAD;
 	}
-	zsaddr[1] = (struct zsdevice *)zs1_va;
 	return CN_INTERNAL;
 }
 
@@ -373,12 +382,11 @@ zscnprobe(struct consdev *cn, int unit)
 {
 	int maj, eeCons;
 
-	if (zs0_va == NULL) {
-		mon_printf("zscnprobe: zs0 not yet mapped\n");
+	if (zsaddr[0] == NULL) {
+		mon_printf("zscnprobe: zs0 not mapped\n");
 		cn->cn_pri = CN_DEAD;
 		return 0;
 	}
-	zsaddr[0] = (struct zsdevice *)zs0_va;
 	/* XXX - Also try to make sure it exists? */
 
 	/* locate the major number */
@@ -389,12 +397,7 @@ zscnprobe(struct consdev *cn, int unit)
 	cn->cn_dev = makedev(maj, unit);
 
 	/* Use EEPROM console setting to decide "remote" console. */
-	if (eeprom_va == NULL) {
-		mon_printf("zscnprobe: eeprom not yet mapped\n");
-		eeCons = -1;
-	} else {
-		eeCons = ((struct eeprom *)eeprom_va)->eeConsole;
-	}
+	eeCons = ee_get_byte(EE_CONS_OFFSET, 0);
 
 	/* Hack: EE_CONS_TTYA + 1 == EE_CONS_TTYB */
 	if (eeCons == (EE_CONS_TTYA + unit)) {
@@ -427,7 +430,7 @@ zscninit(struct consdev *cn)
 	volatile struct zsdevice *addr;
 
 	unit = minor(cn->cn_dev) & 1;
-	addr = (struct zsdevice *)zs0_va;
+	addr = zsaddr[0];
 	zs_conschan = ((unit == 0) ?
 				   &addr->zs_chan[CHAN_A] :
 				   &addr->zs_chan[CHAN_B] );
@@ -450,10 +453,15 @@ zscngetc(dev)
 		return (0);
 
 	s = splhigh();
+
+	/* Wait for a character to arrive. */
 	while ((zc->zc_csr & ZSRR0_RX_READY) == 0)
 		ZS_DELAY();
 	ZS_DELAY();
+
 	c = zc->zc_data;
+	ZS_DELAY();
+
 	splx(s);
 	return (c);
 }
@@ -475,11 +483,13 @@ zscnputc(dev, c)
 		splx(s);
 		return (0);
 	}
-
 	s = splhigh();
+
+	/* Wait for transmitter to become ready. */
 	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
 		ZS_DELAY();
 	ZS_DELAY();
+
 	zc->zc_data = c;
 	ZS_DELAY();
 	splx(s);
@@ -1356,6 +1366,7 @@ zs_write(zc, reg, val)
 #ifdef KGDB
 /*
  * Get a character from the given kgdb channel.  Called at splhigh().
+ * XXX - Add delays, or combine with zscngetc()...
  */
 static int
 zs_kgdb_getc(void *arg)
@@ -1403,9 +1414,10 @@ zs_kgdb_init()
 	}
 	zs = unit >> 1;
 	unit &= 1;
-	
-	if ((addr = zs0_va) == NULL)
+
+	if (zsaddr[0] == NULL)
 		panic("kbdb_attach: zs0 not yet mapped");
+	addr = zsaddr[0];
 
 	zc = unit == 0 ? &addr->zs_chan[CHAN_A] : &addr->zs_chan[CHAN_B];
 	zs_kgdb_savedspeed = zs_getspeed(zc);

@@ -31,7 +31,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: si.c,v 1.6 1994/07/06 02:53:39 gwr Exp $
+ * $Id: si.c,v 1.7 1994/09/20 16:21:46 gwr Exp $
  */
 
 /* #define DEBUG 1 */
@@ -196,15 +196,16 @@ si_attach(parent, self, aux)
 	struct device	*parent, *self;
 	void		*aux;
 {
-    caddr_t dvma_malloc(), si_addr;
-    int level, ncr_intr(), unit = DEVICE_UNIT(self);
+    caddr_t dvma_malloc();
+	int si_addr, level;
+	int unit = DEVICE_UNIT(self);
     struct ncr5380_softc *ncr5380 = (struct ncr5380_softc *) self;
     struct obio_cf_loc *obio_loc = OBIO_LOC(self);
 	struct cfdata *new_match;
 
-    si_addr = OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_NCR_SCSI);
+    si_addr = OBIO_DEFAULT_PARAM(int, obio_loc->obio_addr, OBIO_NCR_SCSI);
     ncr5380->sc_regs = (sci_regmap_t *)
-        obio_alloc(si_addr, OBIO_NCR_SCSI_SIZE, OBIO_WRITE);
+        obio_alloc(si_addr, OBIO_NCR_SCSI_SIZE);
 
     level = OBIO_DEFAULT_PARAM(int, obio_loc->obio_level, 2);
 
