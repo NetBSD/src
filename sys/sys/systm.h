@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)systm.h	8.4 (Berkeley) 2/23/94
- *	$Id: systm.h,v 1.27 1994/05/05 05:40:20 cgd Exp $
+ *	$Id: systm.h,v 1.28 1994/05/12 10:30:46 mycroft Exp $
  */
 
 /*
@@ -124,8 +124,6 @@ volatile void	panic __P((const char *, ...));
 void	panic __P((const char *, ...));
 #endif
 void	tablefull __P((const char *));
-void	addlog __P((const char *, ...));
-void	log __P((int, const char *, ...));
 void	printf __P((const char *, ...));
 int	sprintf __P((char *buf, const char *, ...));
 void	ttyprintf __P((struct tty *, const char *, ...));
