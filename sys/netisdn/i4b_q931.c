@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.3 2001/03/24 12:40:32 martin Exp $ 
+ *	$Id: i4b_q931.c,v 1.4 2001/07/08 10:33:59 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -75,10 +75,6 @@
 #include <netisdn/i4b_q931.h>
 
 #include <netisdn/i4b_l4.h>
-
-#ifndef __FreeBSD__
-#define	memcpy(d,s,l)	bcopy(s,d,l)
-#endif
 
 unsigned int i4b_l3_debug = L3_DEBUG_DEFAULT;
 
