@@ -70,7 +70,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "$Id: res_send.c,v 1.1.1.1 2000/04/22 07:11:55 mellon Exp $";
+static const char rcsid[] = "$Id: res_send.c,v 1.1.1.1.4.1 2000/07/22 05:04:16 mellon Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -218,7 +218,7 @@ res_queriesmatch(const u_char *buf1, const u_char *eom1,
 
 int
 res_nsend(res_state statp,
-	  u_char *buf, unsigned buflen, u_char *ans, unsigned anssiz)
+	  double *buf, unsigned buflen, double *ans, unsigned anssiz)
 {
 	HEADER *hp = (HEADER *) buf;
 	HEADER *anhp = (HEADER *) ans;
@@ -372,7 +372,7 @@ res_nsend(res_state statp,
 			 * Receive length & response
 			 */
  read_len:
-			cp = ans;
+			cp = (u_char *)ans;
 			len = INT16SZ;
 			while ((n = read(statp->_sock,
 					 (char *)cp, (unsigned)len)) > 0) {
@@ -401,7 +401,7 @@ res_nsend(res_state statp,
 				res_nclose(statp);
 				goto next_ns;
 			}
-			resplen = getUShort (ans);
+			resplen = getUShort ((unsigned char *)ans);
 			if (resplen > anssiz) {
 				Dprint(statp->options & RES_DEBUG,
 				       (stdout, ";; response truncated\n")
@@ -421,7 +421,7 @@ res_nsend(res_state statp,
 				res_nclose(statp);
 				goto next_ns;
 			}
-			cp = ans;
+			cp = (u_char *)ans;
 			while (len != 0 &&
 			       (n = read(statp->_sock,
 					 (char *)cp, (unsigned)len))
@@ -700,8 +700,10 @@ res_nsend(res_state statp,
 			}
 #endif
 			if (!(statp->options & RES_INSECURE2) &&
-			    !res_queriesmatch(buf, buf + buflen,
-					      ans, ans + anssiz)) {
+			    !res_queriesmatch((u_char *)buf,
+					      ((u_char *)buf) + buflen,
+					      (u_char *)ans,
+					      ((u_char *)ans) + anssiz)) {
 				/*
 				 * response contains wrong query? ignore it.
 				 * XXX - potential security hazard could

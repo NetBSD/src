@@ -70,7 +70,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "$Id: res_query.c,v 1.1.1.1 2000/04/22 07:11:55 mellon Exp $";
+static const char rcsid[] = "$Id: res_query.c,v 1.1.1.1.4.1 2000/07/22 05:03:57 mellon Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -111,10 +111,10 @@ int
 res_nquery(res_state statp,
 	   const char *name,	/* domain name */
 	   ns_class class, ns_type type, /* class and type of query */
-	   u_char *answer,	/* buffer to put answer */
+	   double *answer,	/* buffer to put answer */
 	   unsigned anslen)	/* size of answer buffer */
 {
-	u_char buf[MAXPACKET];
+	double buf[MAXPACKET / sizeof (double)];
 	HEADER *hp = (HEADER *) answer;
 	unsigned n;
 
@@ -183,7 +183,7 @@ int
 res_nsearch(res_state statp,
 	    const char *name,	/* domain name */
 	    ns_class class, ns_type type, /* class and type of query */
-	    u_char *answer,	/* buffer to put answer */
+	    double *answer,	/* buffer to put answer */
 	    unsigned anslen)		/* size of answer */
 {
 	const char *cp, * const *domain;
@@ -318,7 +318,7 @@ res_nquerydomain(res_state statp,
 	    const char *name,
 	    const char *domain,
 	    ns_class class, ns_type type,
-	    u_char *answer,
+	    double *answer,
 	    unsigned anslen)
 {
 	char nbuf[MAXDNAME];
