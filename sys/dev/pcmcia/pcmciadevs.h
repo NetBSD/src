@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.108 2001/01/11 11:33:19 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.109 2001/01/16 15:57:54 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.109 2001/01/11 11:32:56 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.110 2001/01/16 15:56:48 nonaka Exp 
  */
 
 /*-
@@ -84,6 +84,7 @@
 #define	PCMCIA_VENDOR_MELCO	0x8a01	/* Melco Corporation */
 #define	PCMCIA_VENDOR_CONTEC	0xc001	/* Contec */
 #define	PCMCIA_VENDOR_MACNICA	0xc00b	/* MACNICA */
+#define	PCMCIA_VENDOR_ROLAND	0xc00c	/* Roland */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
@@ -388,6 +389,11 @@
 #define	PCMCIA_CIS_CONTEC_CNETPC	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_CONTEC_CNETPC	0x0000
 #define	PCMCIA_STR_CONTEC_CNETPC	"Contec C-NET(PC)C"
+
+/* Roland */
+#define	PCMCIA_CIS_ROLAND_SCP55	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ROLAND_SCP55	0x0001
+#define	PCMCIA_STR_ROLAND_SCP55	"Roland SCP-55"
 
 /* Allied Telesis K.K. */
 #define	PCMCIA_CIS_ALLIEDTELESIS_LA_PCM	{ NULL, NULL, NULL, NULL }

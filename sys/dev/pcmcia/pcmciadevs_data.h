@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.108 2001/01/11 11:33:19 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.109 2001/01/16 15:57:54 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.109 2001/01/11 11:32:56 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.110 2001/01/16 15:56:48 nonaka Exp 
  */
 
 /*-
@@ -582,6 +582,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Contec",
 	    "Contec C-NET(PC)C"	},
+	},
+	{
+	    PCMCIA_VENDOR_ROLAND, PCMCIA_PRODUCT_ROLAND_SCP55,
+	    PCMCIA_CIS_ROLAND_SCP55,
+	    0,
+	    "Roland",
+	    "Roland SCP-55"	},
 	},
 	{
 	    PCMCIA_VENDOR_ALLIEDTELESIS, PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM,
@@ -1176,6 +1183,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "MACNICA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ROLAND, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Roland",
 	    NULL,
 	},
 	{
