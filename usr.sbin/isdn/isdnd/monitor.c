@@ -1,4 +1,4 @@
-/* $NetBSD: monitor.c,v 1.9 2003/05/13 07:07:37 martin Exp $ */
+/* $NetBSD: monitor.c,v 1.10 2003/10/06 09:18:41 itojun Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ monitor_start_rights(const char *clientspec)
 			return I4BMAR_LENGTH;
 
 		r.local = 1;
-		strcpy(r.name, clientspec);
+		strlcpy(r.name, clientspec, sizeof(r.name));
 
 #ifndef I4B_NOTCPIP_MONITOR
 
@@ -448,7 +448,7 @@ monitor_create_local_socket(void)
 	memset(&sa, 0, sizeof sa);
 	sa.sun_len = sizeof sa;
 	sa.sun_family = AF_LOCAL;
-	strcpy(sa.sun_path, local_rights->name);
+	strlcpy(sa.sun_path, local_rights->name, sizeof(sa.sun_path));
 
 	if (bind(s, (struct sockaddr *)&sa, SUN_LEN(&sa)))
 	{
@@ -511,7 +511,7 @@ monitor_handle_input(fd_set *selset)
 
 				char source[FILENAME_MAX];
 
-				strcpy(source, con->source);
+				strlcpy(source, con->source, sizeof(source));
 				TAILQ_REMOVE(&connections, con, connections);
 				free(con);
 				logit(LL_DMN, "monitor closed from %s", source );
@@ -554,7 +554,7 @@ monitor_handle_connect(int sockfd, int is_local)
 	{
 		s = sizeof ua;
 		fd = accept(sockfd, (struct sockaddr *)&ua, &s);
-		strcpy(source, "local");
+		strlcpy(source, "local", sizeof(source));
 
 #ifndef I4B_NOTCPIP_MONITOR
 	}
@@ -620,7 +620,7 @@ monitor_handle_connect(int sockfd, int is_local)
 	TAILQ_INSERT_TAIL(&connections, con, connections);
 	con->sock = fd;
 	con->rights = r_mask;
-	strcpy(con->source, source);
+	strlcpy(con->source, source, sizeof(con->source));
 	
 	logit(LL_DMN, "monitor opened from %s rights 0x%x", source, r_mask);
 

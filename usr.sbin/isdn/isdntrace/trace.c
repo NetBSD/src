@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.5 2003/10/03 23:27:31 itojun Exp $ 
+ *	$Id: trace.c,v 1.6 2003/10/06 09:18:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -240,9 +240,10 @@ main(int argc, char *argv[])
 	if(Bopt)
 	{
 		if(bpopt)
-			sprintf(BPfilename, "%s", binfile);
+			snprintf(BPfilename, sizeof(BPfilename), "%s", binfile);
 		else
-			sprintf(BPfilename, "%s%d", BIN_FILE_NAME, unit);
+			snprintf(BPfilename, sizeof(BPfilename), "%s%d",
+			    BIN_FILE_NAME, unit);
 			
 		add_datetime(BPfilename, rBPfilename);
 
@@ -250,7 +251,8 @@ main(int argc, char *argv[])
 		{
 			char buffer[80];
 
-			sprintf(buffer, "Error opening file [%s]", rBPfilename);
+			snprintf(buffer, sizeof(buffer),
+			    "Error opening file [%s]", rBPfilename);
 			perror(buffer);
 			exit(1);
 		}
@@ -259,7 +261,9 @@ main(int argc, char *argv[])
 		{
 			char buffer[80];
 
-			sprintf(buffer, "Error setting file [%s] to unbuffered", rBPfilename);
+			snprintf(buffer, sizeof(buffer),
+			    "Error setting file [%s] to unbuffered",
+			    rBPfilename);
 			perror(buffer);
 			exit(1);
 		}
@@ -268,17 +272,19 @@ main(int argc, char *argv[])
 	if(Popt)
 	{
 		if(bpopt)
-			sprintf(BPfilename, "%s", binfile);
+			snprintf(BPfilename, sizeof(BPfilename), "%s", binfile);
 		else
-			sprintf(BPfilename, "%s%d", BIN_FILE_NAME, unit);
+			snprintf(BPfilename, sizeof(BPfilename), "%s%d",
+			    BIN_FILE_NAME, unit);
   			
-		strcpy(rBPfilename, BPfilename);
+		strlcpy(rBPfilename, BPfilename, sizeof(rBPfilename));
 		
 		if((BP = fopen(BPfilename, "r")) == NULL)
 		{
 			char buffer[80];
 
-			sprintf(buffer, "Error opening file [%s]", BPfilename);
+			snprintf(buffer, sizeof(buffer),
+			    "Error opening file [%s]", BPfilename);
 			perror(buffer);
 			exit(1);
 		}
@@ -287,7 +293,8 @@ main(int argc, char *argv[])
 			if(fstat(fileno(BP), &fst))
 			{
 				char buffer[80];
-				sprintf(buffer, "Error fstat file [%s]", BPfilename);
+				snprintf(buffer, sizeof(buffer),
+				    "Error fstat file [%s]", BPfilename);
 				perror(buffer);
 				exit(1);
 			}
@@ -295,13 +302,15 @@ main(int argc, char *argv[])
 	}
 	else
 	{		
-		sprintf(devicename, "%s%d", I4BTRC_DEVICE, unit);
+		snprintf(devicename, sizeof(devicename), "%s%d",
+		    I4BTRC_DEVICE, unit);
 	
 		if((f = open(devicename, O_RDWR)) < 0)
 		{
 			char buffer[80];
 	
-			sprintf(buffer, "Error opening trace device [%s]", devicename);
+			snprintf(buffer, sizeof(buffer),
+			    "Error opening trace device [%s]", devicename);
 			perror(buffer);
 			exit(1);
 		}
@@ -310,9 +319,10 @@ main(int argc, char *argv[])
 	if(outflag)
 	{
 		if(outfileset == 0)
-			sprintf(outfilename, "%s%d", TRACE_FILE_NAME, unit);
+			snprintf(outfilename, sizeof(outfilename), "%s%d",
+			    TRACE_FILE_NAME, unit);
 		else
-			strcpy(outfilename, outfile);
+			strlcpy(outfilename, outfile, sizeof(outfilename));
 			
 		add_datetime(outfilename, routfilename);
 			
@@ -320,7 +330,8 @@ main(int argc, char *argv[])
 		{
 			char buffer[80];
 
-			sprintf(buffer, "Error opening file [%s]", routfilename);
+			snprintf(buffer, sizeof(buffer),
+			    "Error opening file [%s]", routfilename);
 			perror(buffer);
 			exit(1);
 		}
@@ -329,7 +340,9 @@ main(int argc, char *argv[])
 		{
 			char buffer[80];
 
-			sprintf(buffer, "Error setting file [%s] to unbuffered", routfilename);
+			snprintf(buffer, sizeof(buffer),
+			    "Error setting file [%s] to unbuffered",
+			    routfilename);
 			perror(buffer);
 			exit(1);
 		}
@@ -339,7 +352,8 @@ main(int argc, char *argv[])
 	{
 		char buffer[80];
 
-		sprintf(buffer, "Error setting stdout to line-buffered");
+		snprintf(buffer, sizeof(buffer),
+		    "Error setting stdout to line-buffered");
 		perror(buffer);
 		exit(1);
 	}
@@ -359,13 +373,15 @@ main(int argc, char *argv[])
 	
 	if(analyze)
 	{
-		sprintf(headerbuf, "\n==== isdnanalyze controller rx #%d - tx #%d ==== started %s",
-				Rx, Tx, ctime(&tm));
+		snprintf(headerbuf, sizeof(headerbuf),
+		    "\n==== isdnanalyze controller rx #%d - tx #%d ==== started %s",
+		    Rx, Tx, ctime(&tm));
 	}
 	else
 	{
-		sprintf(headerbuf, "\n=========== isdntrace controller #%d =========== started %s",
-				unit, ctime(&tm));
+		snprintf(headerbuf, sizeof(headerbuf),
+		    "\n=========== isdntrace controller #%d =========== started %s",
+		    unit, ctime(&tm));
 	}
 	
 	printf("%s", headerbuf);
@@ -384,7 +400,9 @@ main(int argc, char *argv[])
 				if((fwrite(buf, 1, n, BP)) != n)
 				{
 					char buffer[80];
-					sprintf(buffer, "Error writing file [%s]", rBPfilename);
+					snprintf(buffer, sizeof(buffer),
+					    "Error writing file [%s]",
+					    rBPfilename);
 					perror(buffer);
 					exit(1);
 				}
@@ -404,7 +422,7 @@ again:
 						if(ferror(BP))
 						{
 							char buffer[80];
-							sprintf(buffer, "Error reading hdr from file [%s]", rBPfilename);
+							snprintf(buffer, sizeof(buffer), "Error reading hdr from file [%s]", rBPfilename);
 							perror(buffer);
 							exit(1);
 						}
@@ -420,7 +438,7 @@ again:
 								if((BP = freopen(rBPfilename, "r", BP)) == NULL)
 								{
 									char buffer[80];
-									sprintf(buffer, "Error reopening file [%s]", rBPfilename);
+									snprintf(buffer, sizeof(buffer), "Error reopening file [%s]", rBPfilename);
 									perror(buffer);
 									exit(1);
 								}
@@ -438,7 +456,9 @@ again:
 				else
 				{
 					char buffer[80];
-					sprintf(buffer, "Error reading hdr from file [%s]", rBPfilename);
+					snprintf(buffer, sizeof(buffer),
+					    "Error reading hdr from file [%s]",
+					    rBPfilename);
 					perror(buffer);
 					exit(1);
 				}
@@ -450,7 +470,9 @@ again:
 			if((n = fread(buf+sizeof(struct i4b_trace_hdr), 1, l , BP)) != l)
 			{
 				char buffer[80];
-				sprintf(buffer, "Error reading data from file [%s]", rBPfilename);
+				snprintf(buffer, sizeof(buffer),
+				    "Error reading data from file [%s]",
+				    rBPfilename);
 				perror(buffer);
 				exit(1);
 			}
@@ -479,46 +501,30 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 
 	if(hdr->type == TRC_CH_I)		/* Layer 1 INFO's */
 	{
-		sprintf(hbuf,"\n-- %s - bri:%d ---------------- time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u ",
-			((hdr->dir) ? "NT->TE" : "TE->NT"),
-			hdr->isdnif,
-			s->tm_mday,
-			s->tm_mon + 1,
-			s->tm_hour,
-			s->tm_min,
-			s->tm_sec,
-			(u_int32_t)hdr->time.tv_usec);
+		snprintf(hbuf, sizeof(hbuf),
+		    "\n-- %s - bri:%d ---------------- time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u ",
+		    ((hdr->dir) ? "NT->TE" : "TE->NT"), hdr->isdnif,
+		    s->tm_mday, s->tm_mon + 1, s->tm_hour, s->tm_min,
+		    s->tm_sec, (u_int32_t)hdr->time.tv_usec);
 	}
 	else
 	{
 		if(hdr->trunc > 0)
 		{
-			sprintf(hbuf,"\n-- %s - bri:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d (%d) ",
-				((hdr->dir) ? "NT->TE" : "TE->NT"),
-				hdr->isdnif,
-				hdr->count,
-				s->tm_mday,
-				s->tm_mon + 1,
-				s->tm_hour,
-				s->tm_min,
-				s->tm_sec,
-				(u_int32_t)hdr->time.tv_usec,
-				frm_len,
-				hdr->trunc);
+			snprintf(hbuf, sizeof(hbuf),
+			    "\n-- %s - bri:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d (%d) ",
+			    ((hdr->dir) ? "NT->TE" : "TE->NT"), hdr->isdnif,
+			    hdr->count, s->tm_mday, s->tm_mon + 1, s->tm_hour,
+			    s->tm_min, s->tm_sec, (u_int32_t)hdr->time.tv_usec,
+			    frm_len, hdr->trunc);
 		}
 		else
 		{
-			sprintf(hbuf,"\n-- %s - bri:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d ",
-				((hdr->dir) ? "NT->TE" : "TE->NT"),
-				hdr->isdnif,
-				hdr->count,
-				s->tm_mday,
-				s->tm_mon + 1,
-				s->tm_hour,
-				s->tm_min,
-				s->tm_sec,
-				(u_int32_t)hdr->time.tv_usec,
-				frm_len);
+			snprintf(hbuf, sizeof(hbuf),
+			    "\n-- %s - bri:%d - frame:%6.6u - time:%2.2d.%2.2d %2.2d:%2.2d:%2.2d.%06u - length:%d ", ((hdr->dir) ? "NT->TE" : "TE->NT"),
+			    hdr->isdnif, hdr->count, s->tm_mday, s->tm_mon + 1,
+			    s->tm_hour, s->tm_min, s->tm_sec,
+			    (u_int32_t)hdr->time.tv_usec, frm_len);
 		}
 	}
 	
@@ -711,7 +717,8 @@ switch_driver(int value, int rx, int tx)
 	{
 		if(ioctl(f, I4B_TRC_SET, &v) < 0)
 		{
-			sprintf(buffer, "Error ioctl I4B_TRC_SET, val = %d", v);
+			snprintf(buffer, sizeof(buffer),
+			    "Error ioctl I4B_TRC_SET, val = %d", v);
 			perror(buffer);
 			return(-1);
 		}
@@ -722,7 +729,8 @@ switch_driver(int value, int rx, int tx)
 		{
 			if(ioctl(f, I4B_TRC_RESETA, &v) < 0)
 			{
-				sprintf(buffer, "Error ioctl I4B_TRC_RESETA - ");
+				snprintf(buffer, sizeof(buffer),
+				    "Error ioctl I4B_TRC_RESETA - ");
 				perror(buffer);
 				return(-1);
 			}
@@ -738,7 +746,8 @@ switch_driver(int value, int rx, int tx)
 			
 			if(ioctl(f, I4B_TRC_SETA, &tsa) < 0)
 			{
-				sprintf(buffer, "Error ioctl I4B_TRC_SETA, val = %d", v);
+				snprintf(buffer, sizeof(buffer),
+				    "Error ioctl I4B_TRC_SETA, val = %d", v);
 				perror(buffer);
 				return(-1);
 			}
@@ -770,7 +779,8 @@ reopenfiles(int dummy)
 		{
 			char buffer[80];
 
-			sprintf(buffer, "Error re-opening file [%s]", routfilename);
+			snprintf(buffer, sizeof(buffer),
+			    "Error re-opening file [%s]", routfilename);
 			perror(buffer);
 			exit(1);
 		}
@@ -779,7 +789,9 @@ reopenfiles(int dummy)
 		{
 			char buffer[80];
 
-			sprintf(buffer, "Error re-setting file [%s] to unbuffered", routfilename);
+			snprintf(buffer, sizeof(buffer),
+			    "Error re-setting file [%s] to unbuffered",
+			    routfilename);
 			perror(buffer);
 			exit(1);
 		}
@@ -796,7 +808,8 @@ reopenfiles(int dummy)
 		{
 			char buffer[80];
 
-			sprintf(buffer, "Error re-opening file [%s]", rBPfilename);
+			snprintf(buffer, sizeof(buffer),
+			    "Error re-opening file [%s]", rBPfilename);
 			perror(buffer);
 			exit(1);
 		}
@@ -805,7 +818,9 @@ reopenfiles(int dummy)
 		{
 			char buffer[80];
 
-			sprintf(buffer, "Error re-setting file [%s] to unbuffered", rBPfilename);
+			snprintf(buffer, sizeof(buffer),
+			    "Error re-setting file [%s] to unbuffered",
+			    rBPfilename);
 			perror(buffer);
 			exit(1);
 		}
@@ -822,7 +837,7 @@ add_datetime(char *filename, char *rfilename)
 	time(&timeb);
 	tmp = localtime(&timeb);
 	
-	sprintf(rfilename, "%s-", filename);
+	snprintf(rfilename, sizeof(rfilename), "%s-", filename);
 
 	strftime(rfilename+strlen(rfilename), MAXPATHLEN-strlen(rfilename)-1,
 		"%Y%m%d-%H%M%S", tmp);
@@ -836,7 +851,7 @@ add_datetime(char *filename, char *rfilename)
 		time(&timeb);
 		tmp = localtime(&timeb);
 	
-		sprintf(rfilename, "%s-", filename);
+		snprintf(rfilename, sizeof(rfilename), "%s-", filename);
 
 		strftime(rfilename+strlen(rfilename), MAXPATHLEN-strlen(rfilename)-1,
 			"%Y%m%d-%H%M%S", tmp);

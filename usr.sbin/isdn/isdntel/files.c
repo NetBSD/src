@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: files.c,v 1.2 2003/10/06 04:19:41 itojun Exp $ 
+ *      $Id: files.c,v 1.3 2003/10/06 09:18:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -122,12 +122,10 @@ fill_list(void)
 
 		/* alloc filename memory and copy name into it */
 
-		if ((new_entry->fname = (char *) malloc(strlen(dp->d_name) + 1)) == NULL)
+		if ((new_entry->fname = strdup(dp->d_name)) == NULL)
 		{
 			fatal("files.c, fill_list(): malloc filename string memory failed");
 		}
-
-		strcpy(new_entry->fname, dp->d_name);
 
 		/* fill in remaining fields from filename */
 
@@ -141,13 +139,11 @@ fill_list(void)
 		tmp[7] = dp->d_name[1]; /* year lsb */
 		tmp[8] = '\0';
 
-		if((new_entry->date = (char *) malloc(strlen(tmp) + 1)) == NULL)
+		if((new_entry->date = strdup(tmp)) == NULL)
 		{
 			fatal("files.c, fill_list(): malloc date string memory failed");
 		}
 
-		strcpy(new_entry->date, tmp);
-		
 		tmp[0]  = dp->d_name[6]; /* hour msb */
 		tmp[1] = dp->d_name[7]; /* hour lsb */
 		tmp[2] = ':';
@@ -158,12 +154,10 @@ fill_list(void)
 		tmp[7] = dp->d_name[11]; /* second lsb */
 		tmp[8] = '\0';
 		
-		if((new_entry->time = (char *) malloc(strlen(tmp) + 1)) == NULL)
+		if((new_entry->time = strdup(tmp)) == NULL)
 		{
 			fatal("files.c, fill_list(): malloc time string memory failed");
 		}
-
-		strcpy(new_entry->time, tmp);
 
 		/* destination number */
 		
@@ -175,12 +169,10 @@ fill_list(void)
 
 		*d = '\0';
 		
-		if((new_entry->dstnumber = (char *) malloc(strlen(tmp) + 1)) == NULL)
+		if((new_entry->dstnumber = strdup(tmp)) == NULL)
 		{
 			fatal("files.c, fill_list(): malloc dstnumber string memory failed");
 		}
-
-		strcpy(new_entry->dstnumber, tmp);
 
 		/* source number */
 		
@@ -192,12 +184,10 @@ fill_list(void)
 
 		*d = '\0';
 		
-		if((new_entry->srcnumber = (char *) malloc(strlen(tmp) + 1)) == NULL)
+		if((new_entry->srcnumber = strdup(tmp)) == NULL)
 		{
 			fatal("files.c, fill_list(): malloc srcnumber string memory failed");
 		}
-
-		strcpy(new_entry->srcnumber, tmp);
 
 		/* length in seconds */
 		
@@ -209,12 +199,10 @@ fill_list(void)
 
 		*d = '\0';
 		
-		if((new_entry->seconds = (char *) malloc(strlen(tmp) + 1)) == NULL)
+		if((new_entry->seconds = strdup(tmp)) == NULL)
 		{
 			fatal("files.c, fill_list(): malloc seconds string memory failed");
 		}
-
-		strcpy(new_entry->seconds, tmp);
 
 		/* search for alias and add if found */
 		

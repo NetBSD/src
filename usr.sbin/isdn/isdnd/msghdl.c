@@ -27,7 +27,7 @@
  *	i4b daemon - message from kernel handling routines
  *	--------------------------------------------------
  *
- *	$Id: msghdl.c,v 1.7 2003/10/06 04:19:41 itojun Exp $ 
+ *	$Id: msghdl.c,v 1.8 2003/10/06 09:18:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -1181,8 +1181,9 @@ sendm_connect_req(struct cfg_entry *cep)
 	else
 		mcr.unitlen_method = ULEN_METHOD_STATIC;
 	
-	strcpy(mcr.dst_telno, cep->remote_phone_dialout);
-	strcpy(mcr.src_telno, cep->local_phone_dialout);
+	strlcpy(mcr.dst_telno, cep->remote_phone_dialout,
+	    sizeof(mcr.dst_telno));
+	strlcpy(mcr.src_telno, cep->local_phone_dialout, sizeof(mcr.src_telno));
 
 	cep->last_dial_time = time(NULL);
 	cep->direction = DIR_OUT;

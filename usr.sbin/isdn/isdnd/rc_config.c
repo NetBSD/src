@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.17 2003/09/05 13:31:04 pooka Exp $ 
+ *	$Id: rc_config.c,v 1.18 2003/10/06 09:18:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -195,7 +195,7 @@ set_config_defaults(void)
 		rarr[i].re_flg = 0;
 	}
 
-	strcpy(rotatesuffix, "");
+	strlcpy(rotatesuffix, "", sizeof(rotatesuffix));
 }
 
 static void
@@ -362,7 +362,7 @@ cfg_setval(int keyword)
 			break;
 			
 		case ACCTFILE:
-			strcpy(acctfile, yylval.str);
+			strlcpy(acctfile, yylval.str, sizeof(acctfile));
 			DBGL(DL_RCCF, (logit(LL_DBG, "system: acctfile = %s", yylval.str)));
 			break;
 
@@ -388,17 +388,16 @@ cfg_setval(int keyword)
 			break;
 
 		case ALIASFNAME:
-			strcpy(aliasfile, yylval.str);
+			strlcpy(aliasfile, yylval.str, sizeof(aliasfile));
 			DBGL(DL_RCCF, (logit(LL_DBG, "system: aliasfile = %s", yylval.str)));
 			break;
 
 		case ANSWERPROG:
-			if((current_cfe->answerprog = malloc(strlen(yylval.str)+1)) == NULL)
+			if((current_cfe->answerprog = strdup(yylval.str)) == NULL)
 			{
 				logit(LL_ERR, "entry %s: answerstring, malloc failed!", current_cfe->name);
 				do_exit(1);
 			}
-			strcpy(current_cfe->answerprog, yylval.str);
 			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: answerprog = %s", current_cfe->name, yylval.str)));
 			break;
 			
@@ -483,12 +482,11 @@ cfg_setval(int keyword)
 				{
 					if((fscanf(fp, "%d %d %d", (int *)&s, (int *)&l, &n)) == 3)
 					{
-						if((current_cfe->budget_callbacks_file = malloc(strlen(yylval.str)+1)) == NULL)
+						if((current_cfe->budget_callbacks_file = strdup(yylval.str)) == NULL)
 						{
 							logit(LL_ERR, "entry %s: budget-callbacksfile, malloc failed!", current_cfe->name);
 							do_exit(1);
 						}
-						strcpy(current_cfe->budget_callbacks_file, yylval.str);
 						DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: using callbacksfile %s", current_cfe->name, yylval.str)));
 					}
 					fclose(fp);
@@ -534,12 +532,11 @@ cfg_setval(int keyword)
 				{
 					if((fscanf(fp, "%d %d %d", (int *)&s, (int *)&l, &n)) == 3)
 					{
-						if((current_cfe->budget_callouts_file = malloc(strlen(yylval.str)+1)) == NULL)
+						if((current_cfe->budget_callouts_file = strdup(yylval.str)) == NULL)
 						{
 							logit(LL_ERR, "entry %s: budget-calloutsfile, malloc failed!", current_cfe->name);
 							do_exit(1);
 						}
-						strcpy(current_cfe->budget_callouts_file, yylval.str);
 						DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: using calloutsfile %s", current_cfe->name, yylval.str)));
 					}
 					fclose(fp);
@@ -570,12 +567,11 @@ cfg_setval(int keyword)
 			break;
 
 		case CONNECTPROG:
-			if((current_cfe->connectprog = malloc(strlen(yylval.str)+1)) == NULL)
+			if((current_cfe->connectprog = strdup(yylval.str)) == NULL)
 			{
 				logit(LL_ERR, "entry %s: connectprog, malloc failed!", current_cfe->name);
 				do_exit(1);
 			}
-			strcpy(current_cfe->connectprog, yylval.str);
 			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: connectprog = %s", current_cfe->name, yylval.str)));
 			break;
 			
@@ -619,12 +615,11 @@ cfg_setval(int keyword)
 			break;
 
 		case DISCONNECTPROG:
-			if((current_cfe->disconnectprog = malloc(strlen(yylval.str)+1)) == NULL)
+			if((current_cfe->disconnectprog = strdup(yylval.str)) == NULL)
 			{
 				logit(LL_ERR, "entry %s: disconnectprog, malloc failed!", current_cfe->name);
 				do_exit(1);
 			}
-			strcpy(current_cfe->disconnectprog, yylval.str);
 			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: disconnectprog = %s", current_cfe->name, yylval.str)));
 			break;
 
@@ -664,7 +659,7 @@ cfg_setval(int keyword)
 			break;
 
 		case HOLIDAYFILE:
-			strcpy(holidayfile, yylval.str);
+			strlcpy(holidayfile, yylval.str, sizeof(holidayfile));
 			DBGL(DL_RCCF, (logit(LL_DBG, "system: holidayfile = %s", yylval.str)));
 			break;
 
@@ -741,21 +736,23 @@ cfg_setval(int keyword)
 
 		case LOCAL_PHONE_DIALOUT:
 			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: local_phone_dialout = %s", current_cfe->name, yylval.str)));
-			strcpy(current_cfe->local_phone_dialout, yylval.str);
+			strlcpy(current_cfe->local_phone_dialout, yylval.str,
+			    sizeof(current_cfe->local_phone_dialout));
 			break;
 
 		case LOCAL_PHONE_INCOMING:
 			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: local_phone_incoming = %s", current_cfe->name, yylval.str)));
-			strcpy(current_cfe->local_phone_incoming, yylval.str);
+			strlcpy(current_cfe->local_phone_incoming, yylval.str,
+			    sizeof(current_cfe->local_phone_incoming));
 			break;
 
 		case MAILER:
-			strcpy(mailer, yylval.str);
+			strlcpy(mailer, yylval.str, sizeof(mailer));
 			DBGL(DL_RCCF, (logit(LL_DBG, "system: mailer = %s", yylval.str)));
 			break;
 
 		case MAILTO:
-			strcpy(mailto, yylval.str);
+			strlcpy(mailto, yylval.str, sizeof(mailto));
 			DBGL(DL_RCCF, (logit(LL_DBG, "system: mailto = %s", yylval.str)));
 			break;
 
@@ -779,7 +776,8 @@ cfg_setval(int keyword)
 
 		case NAME:
 			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: name = %s", current_cfe->name, yylval.str)));
-			strcpy(current_cfe->name, yylval.str);
+			strlcpy(current_cfe->name, yylval.str,
+			    sizeof(current_cfe->name));
 			break;
 
 		case PPP_AUTH_RECHALLENGE:
@@ -901,7 +899,9 @@ cfg_setval(int keyword)
 			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: remote_phone_dialout #%d = %s",
 				current_cfe->name, current_cfe->remote_numbers_count, yylval.str)));
 
-			strcpy(current_cfe->remote_numbers[current_cfe->remote_numbers_count].number, yylval.str);
+			strlcpy(current_cfe->remote_numbers[current_cfe->remote_numbers_count].number,
+			    yylval.str,
+			    sizeof(current_cfe->remote_numbers[current_cfe->remote_numbers_count].number));
 			current_cfe->remote_numbers[current_cfe->remote_numbers_count].flag = 0;
 
 			current_cfe->remote_numbers_count++;
@@ -934,13 +934,15 @@ cfg_setval(int keyword)
 					break;
 				}
 				DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: remote_phone_incoming #%d = %s", current_cfe->name, n, yylval.str)));
-				strcpy(current_cfe->remote_phone_incoming[n].number, yylval.str);
+				strlcpy(current_cfe->remote_phone_incoming[n].number,
+				    yylval.str,
+				    sizeof(current_cfe->remote_phone_incoming[n].number));
 				current_cfe->incoming_numbers_count++;
 			}
 			break;
 
 		case RATESFILE:
-			strcpy(ratesfile, yylval.str);
+			strlcpy(ratesfile, yylval.str, sizeof(ratesfile));
 			DBGL(DL_RCCF, (logit(LL_DBG, "system: ratesfile = %s", yylval.str)));
 			break;
 
@@ -978,13 +980,12 @@ cfg_setval(int keyword)
 			}
 			else
 			{
-				if((rarr[nregexpr].re_expr = malloc(strlen(yylval.str)+1)) == NULL)
+				if((rarr[nregexpr].re_expr = strdup(yylval.str)) == NULL)
 				{
 					logit(LL_ERR, "system: regexpr malloc error error for %s", yylval.str);
 					config_error_flag++;
 					break;
 				}
-				strcpy(rarr[nregexpr].re_expr, yylval.str);
 
 				DBGL(DL_RCCF, (logit(LL_DBG, "system: regexpr %s stored into slot %d", yylval.str, nregexpr)));
 				
@@ -1003,13 +1004,12 @@ cfg_setval(int keyword)
 				config_error_flag++;
 				break;
 			}
-			if((rarr[nregprog].re_prog = malloc(strlen(yylval.str)+1)) == NULL)
+			if((rarr[nregprog].re_prog = strdup(yylval.str)) == NULL)
 			{
 				logit(LL_ERR, "system: regprog malloc error error for %s", yylval.str);
 				config_error_flag++;
 				break;
 			}
-			strcpy(rarr[nregprog].re_prog, yylval.str);
 
 			DBGL(DL_RCCF, (logit(LL_DBG, "system: regprog %s stored into slot %d", yylval.str, nregprog)));
 			
@@ -1020,7 +1020,7 @@ cfg_setval(int keyword)
 			break;
 
 		case ROTATESUFFIX:
-			strcpy(rotatesuffix, yylval.str);
+			strlcpy(rotatesuffix, yylval.str, sizeof(rotatesuffix));
 			DBGL(DL_RCCF, (logit(LL_DBG, "system: rotatesuffix = %s", yylval.str)));
 			break;
 
@@ -1042,7 +1042,7 @@ cfg_setval(int keyword)
 			break;
 
 		case TINAINITPROG:
-			strcpy(tinainitprog, yylval.str);
+			strlcpy(tinainitprog, yylval.str, sizeof(tinainitprog));
 			DBGL(DL_RCCF, (logit(LL_DBG, "system: tinainitprog = %s", yylval.str)));
 			break;
 
@@ -1327,7 +1327,7 @@ print_config(void)
 	char mytime[64];
 
 	time(&clock);
-	strcpy(mytime, ctime(&clock));
+	strlcpy(mytime, ctime(&clock), sizeof(mytime));
 	mytime[strlen(mytime)-1] = '\0';
 
 	fprintf(PFILE, "#---------------------------------------------------------------------------\n");
@@ -1489,19 +1489,19 @@ print_config(void)
 			b[0] = '\0';
 			
 			if((m_rights->rights) & I4B_CA_COMMAND_FULL)
-				strcat(b, "fullcmd,");
+				strlcat(b, "fullcmd,", sizeof(b));
 			if((m_rights->rights) & I4B_CA_COMMAND_RESTRICTED)
-				strcat(b, "restrictedcmd,");
+				strlcat(b, "restrictedcmd,", sizeof(b));
 			if((m_rights->rights) & I4B_CA_EVNT_CHANSTATE)
-				strcat(b, "channelstate,");
+				strlcat(b, "channelstate,", sizeof(b));
 			if((m_rights->rights) & I4B_CA_EVNT_CALLIN)
-				strcat(b, "callin,");
+				strlcat(b, "callin,", sizeof(b));
 			if((m_rights->rights) & I4B_CA_EVNT_CALLOUT)
-				strcat(b, "callout,");
+				strlcat(b, "callout,", sizeof(b));
 			if((m_rights->rights) & I4B_CA_EVNT_I4B)
-				strcat(b, "logevents,");
+				strlcat(b, "logevents,", sizeof(b));
 
-			if(b[strlen(b)-1] == ',')
+			if(strlen(b) > 0 && b[strlen(b)-1] == ',')
 				b[strlen(b)-1] = '\0';
 				
 			fprintf(PFILE, "monitor-access  = %s\t\t# monitor access rights\n", b);

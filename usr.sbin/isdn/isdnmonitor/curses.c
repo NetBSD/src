@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.4 2003/10/06 04:19:41 itojun Exp $ 
+ *	$Id: curses.c,v 1.5 2003/10/06 09:18:41 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -62,22 +62,22 @@ init_screen(void)
 	char buffer[512];
 	int uheight, lheight;
 	int i, j;
-	
+
 	initscr();			/* curses init */
-	
+
 	if ((COLS < 80) || (LINES < 24))
 	{
 		endwin();
 		fprintf(stderr, "ERROR, minimal screensize must be 80x24, is %dx%d, terminating!",COLS, LINES);
 		exit(1);
-	}		
+	}
 
 	noecho();
 	raw();
 
 	uheight = nctrl * 2; /* cards * b-channels */
 	lheight = LINES - uheight - 6 + 1; /* rest of display */
-	
+
 	if ((upper_w = newwin(uheight, COLS, UPPER_B, 0)) == NULL)
 	{
 		endwin();
@@ -98,30 +98,30 @@ init_screen(void)
 		fprintf(stderr, "ERROR, curses init lower window, LINES = %d, lheight = %d, uheight = %d, terminating!", LINES, lheight, uheight);
 		exit(1);
 	}
-	
+
 	scrollok(lower_w, 1);
 
 	snprintf(buffer, sizeof(buffer), "----- isdn controller channel state ------------- isdnmonitor %02d.%02d.%d -", VERSION, REL, STEP);
 
 	while(strlen(buffer) < COLS)
-		strcat(buffer, "-");	
+		strlcat(buffer, "-", sizeof(buffer));
 
 	move(0, 0);
 	standout();
 	addstr(buffer);
 	standend();
-	
+
 	move(1, 0);
 	/*      01234567890123456789012345678901234567890123456789012345678901234567890123456789 */
 	addstr("# tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
-	
+
 	if (hostname)
 		snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------- %s:%d -", hostname, portno);
 	else
 		snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------- %s -", sockpath);
-		
+
 	while(strlen(buffer) < COLS)
-		strcat(buffer, "-");	
+		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+2, 0);
 	standout();
@@ -130,13 +130,13 @@ init_screen(void)
 
 	snprintf(buffer, sizeof(buffer), "----- isdnd logfile display --------------------------------------------------");
 	while(strlen(buffer) < COLS)
-		strcat(buffer, "-");	
+		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+4, 0);
 	standout();
 	addstr(buffer);
 	standend();
-	
+
 	refresh();
 
 	for(i=0, j=0; i <= nctrl; i++, j+=2)
@@ -175,7 +175,7 @@ void
 display_charge(int pos, int charge)
 {
 	mvwprintw(upper_w, pos, H_UNITS, "%d", charge);
-	wclrtoeol(upper_w);	
+	wclrtoeol(upper_w);
 	wrefresh(upper_w);
 }
 
@@ -186,7 +186,7 @@ void
 display_ccharge(int pos, int units)
 {
 	mvwprintw(upper_w, pos, H_UNITS, "(%d)", units);
-	wclrtoeol(upper_w);	
+	wclrtoeol(upper_w);
 	wrefresh(upper_w);
 }
 
@@ -242,7 +242,7 @@ display_l12stat(int controller, int layer, int state)
 {
 	if (controller > nctrl)
 		return;
-		
+
 	if (!(layer == 1 || layer == 2))
 		return;
 
@@ -306,8 +306,8 @@ do_menu(void)
 	{
 		"1 - (D)isplay refresh",
 		"2 - (H)angup (choose a channel)",
-		"3 - (R)eread config file",		
-		"4 - (Q)uit the program",		
+		"3 - (R)eread config file",
+		"4 - (Q)uit the program",
 	};
 
 	WINDOW *menu_w;
@@ -316,36 +316,36 @@ do_menu(void)
 	struct pollfd set[1];
 
 	/* create a new window in the lower screen area */
-	
+
 	if ((menu_w = newwin(WMENU_HGT, WMENU_LEN, WMENU_POSLN, WMENU_POSCO )) == NULL)
 	{
 		return;
 	}
 
 	/* create a border around the window */
-	
+
 	box(menu_w, '|', '-');
 
 	/* add a title */
-	
+
 	wstandout(menu_w);
 	mvwaddstr(menu_w, 0, (WMENU_LEN / 2) - (strlen(WMENU_TITLE) / 2), WMENU_TITLE);
-	wstandend(menu_w);	
+	wstandend(menu_w);
 
 	/* fill the window with the menu options */
-	
+
 	for(mpos=0; mpos <= (WMITEMS-1); mpos++)
 		mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
 
 	/* highlight the first menu option */
-	
+
 	mpos = 0;
 	wstandout(menu_w);
 	mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
 	wstandend(menu_w);
 
 	/* input loop */
-	
+
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
 	for(;;)
@@ -353,10 +353,10 @@ do_menu(void)
 		wrefresh(menu_w);
 
 		/* if no char is available within timeout, exit menu*/
-		
+
 		if ((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
 			goto mexit;
-		
+
 		c = wgetch(menu_w);
 
 		switch(c)
@@ -419,7 +419,7 @@ do_menu(void)
 				}
 				goto mexit;
 				break;
-		
+
 			default:
 				goto mexit;
 				break;
@@ -432,7 +432,7 @@ mexit:
 	delwin(menu_w);
 
 	/* re-display the original lower window contents */
-	
+
 	touchwin(lower_w);
 	wrefresh(lower_w);
 }
@@ -448,15 +448,15 @@ display_connect(int pos, int dir, char *name, char *remtel, char *dev)
 	/* remote telephone number */
 
 	snprintf(buffer, sizeof(buffer), "%s/%s", name, remtel);
-		
+
 	buffer[H_IFN - H_TELN - 1] = '\0';
 
 	mvwprintw(upper_w, pos, H_TELN, "%s", buffer);
 
 	/* interface */
-	
+
 	mvwprintw(upper_w, pos, H_IFN, "%s ", dev);
-	
+
 	mvwprintw(upper_w, pos, H_IO, dir ? "out" : "in");
 
 	mvwprintw(upper_w, pos, H_OUT,    "-");
@@ -466,7 +466,7 @@ display_connect(int pos, int dir, char *name, char *remtel, char *dev)
 
 	if (do_bell)
 		display_bell();
-	
+
 	wrefresh(upper_w);
 }
 
@@ -510,14 +510,14 @@ display_chans(void)
 	else
 	{
 		nlines = 5;
-		ncols = 22;		
+		ncols = 22;
 	}
 
 	pos_y = WMENU_POSLN + 4;
 	pos_x = WMENU_POSCO + 10;
 
 	/* create a new window in the lower screen area */
-	
+
 	if ((chan_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
 	{
 		if (cnt > 0)
@@ -526,14 +526,14 @@ display_chans(void)
 	}
 
 	/* create a border around the window */
-	
+
 	box(chan_w, '|', '-');
 
 	/* add a title */
-	
+
 	wstandout(chan_w);
 	mvwaddstr(chan_w, 0, (ncols / 2) - (strlen("Channels") / 2), "Channels");
-	wstandend(chan_w);	
+	wstandend(chan_w);
 
 	/* no active channels */
 	if (cnt == 0)
@@ -563,7 +563,7 @@ display_chans(void)
 			nlines++;
 			ncols++;
 		}
-		if (remstate[i].ch2state)		
+		if (remstate[i].ch2state)
 		{
 			snprintf(buffer, sizeof(buffer),
 			    "%d - Controller %d channel %s", ncols, i, "B2");
@@ -582,10 +582,10 @@ display_chans(void)
 		wrefresh(chan_w);
 
 		/* if no char is available within timeout, exit menu*/
-		
+
 		if ((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
 			break;
-		
+
 		ncols = wgetch(chan_w);
 
 		if (!(isdigit(ncols)))

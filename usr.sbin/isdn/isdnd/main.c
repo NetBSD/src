@@ -27,7 +27,7 @@
  *	i4b daemon - main program entry
  *	-------------------------------
  *
- *	$Id: main.c,v 1.6 2002/12/06 15:00:15 thorpej Exp $ 
+ *	$Id: main.c,v 1.7 2003/10/06 09:18:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -169,7 +169,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'L':
-				strcpy(logfile, optarg);
+				strlcpy(logfile, optarg, sizeof(logfile));
 				break;
 
 			case 'P':
