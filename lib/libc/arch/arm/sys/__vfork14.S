@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.1 2000/12/29 20:14:01 bjh21 Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.2 2001/01/09 19:30:38 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,10 @@
 
 /*
  * pid = vfork();
+ *
+ * On return from the SWI:
+ * r1 == 0 in parent process, r1 == 1 in child process.
+ * r0 == pid of child in parent, r0 == pid of parent in child.
  */
 	.text
 	.align	0
@@ -47,8 +51,8 @@ ENTRY(__vfork14)
 	mov	r2, r14
 	swi	SYS___vfork14
 	bcs	cerror
-	sub	r1, r1, #0x00000001
-	and	r0, r0, r1
+	sub	r1, r1, #1	/* r1 == 0xffffffff if parent, 0 if child */
+	and	r0, r0, r1	/* r0 == 0 if child, else unchanged */
 #ifdef __APCS_26__
 	movs	r15, r2
 #else
