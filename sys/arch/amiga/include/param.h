@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.11 1994/05/08 05:53:58 chopps Exp $
+ *	$Id: param.h,v 1.12 1994/06/04 11:59:26 chopps Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
@@ -61,7 +61,7 @@
 #define	NBPG		8192		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		13		/* LOG2(NBPG) */
-#define	NPTEPG		(NBPG/(sizeof (struct pte)))
+#define	NPTEPG		(NBPG/(sizeof(u_int)))
 
 #define NBSEG		(cpu040 ? 32*NBPG : 2048*NBPG)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)			/* byte offset into segment */

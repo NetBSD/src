@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ztwobusvar.h,v 1.1 1994/05/08 05:53:53 chopps Exp $
+ *	$Id: ztwobusvar.h,v 1.2 1994/06/04 11:59:20 chopps Exp $
  */
 #ifndef _ZTWOBUSVAR_H_
 #define _ZTWOBUSVAR_H_
@@ -41,13 +41,12 @@ struct ztwobus_args {
 	int prodid;
 	int serno;
 };
-caddr_t	ZTWOROMADDR;
+vm_offset_t	ZTWOROMADDR;
+vm_offset_t	ZTWOMEMADDR;
+u_int		NZTWOMEMPG;
 #define ZTWOROMBASE	(0x00D80000)
 #define ZTWOROMTOP	(0x00F80000)
-#define ZTWOROMSIZE	btoc(ZTWOROMTOP-ZTWOROMBASE)
-
-u_int	ZTWOMEMADDR;
-u_int	ZTWOMEMSIZE;		/* In Bytes!! */
+#define NZTWOROMPG	btoc(ZTWOROMTOP-ZTWOROMBASE)
 
 /* 
  * maps a ztwo and/or A3000 builtin address into the mapped kva address
@@ -60,11 +59,11 @@ u_int	ZTWOMEMSIZE;		/* In Bytes!! */
  * tests whether the address lies in our zorro2 rom space
  */
 #define isztwokva(kva) \
-    ((u_int)(kva) >= (u_int)ZTWOROMADDR && \
+    ((u_int)(kva) >= ZTWOROMADDR && \
     (u_int)(kva) < \
-    ((u_int)ZTWOROMADDR + (u_int)ZTWOROMTOP - (u_int)ZTWOROMBASE))
+    (ZTWOROMADDR + ZTWOROMTOP - ZTWOROMBASE))
 #define isztwopa(pa) ((u_int)(pa) >= ZTWOROMBASE && (u_int)(pa) <= ZTWOROMTOP)
 #define isztwomem(kva) \
-    (ZTWOMEMADDR && (u_int)(kva) >= (u_int)ZTWOMEMADDR && \
-    (u_int)(kva) < (ZTWOMEMADDR + ZTWOMEMSIZE))
+    (ZTWOMEMADDR && (u_int)(kva) >= ZTWOMEMADDR && \
+    (u_int)(kva) < (ZTWOMEMADDR + NZTWOMEMPG * NBPG))
 #endif /* _ZTWOBUS_H_ */

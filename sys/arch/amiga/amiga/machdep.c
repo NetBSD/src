@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.28 1994/05/29 04:49:51 chopps Exp $
+ *	$Id: machdep.c,v 1.29 1994/06/04 11:58:50 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -142,7 +142,6 @@ char *cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
 char machine[] = "amiga";
  
-extern struct Mem_List *mem_list;
 
 #ifdef COMPAT_SUNOS
 void sun_sendsig ();
@@ -189,11 +188,11 @@ consinit()
 void
 cpu_startup()
 {
+	extern long Usrptsize;
+	extern struct map *useriomap;
 	register unsigned i;
 	register caddr_t v, firstaddr;
 	int base, residual;
-	extern long Usrptsize;
-	extern struct map *useriomap;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -377,12 +376,14 @@ again:
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 	
-	/* display memory configuration passed from loadbsd */
-	if (mem_list->num_mem > 0 && mem_list->num_mem < 16)
-		for (i = 0; i < mem_list->num_mem; i++)
-			printf ("memory segment %d at %08lx size %08lx\n", i,
-				mem_list->mem_seg[i].mem_start,
-				mem_list->mem_seg[i].mem_size);
+	/*
+	 * display memory configuration passed from loadbsd
+	 */
+	if (memlist->m_nseg > 0 && memlist->m_nseg < 16)
+		for (i = 0; i < memlist->m_nseg; i++)
+			printf("memory segment %d at %08lx size %08lx\n", i,
+			    memlist->m_seg[i].ms_start, 
+			    memlist->m_seg[i].ms_size);
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */

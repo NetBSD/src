@@ -38,7 +38,7 @@
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
  *	@(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.7 1994/06/04 05:25:03 chopps Exp $
+ *	$Id: pte.h,v 1.8 1994/06/04 11:59:29 chopps Exp $
  */
 #ifndef _MACHINE_PTE_H_
 #define _MACHINE_PTE_H_
@@ -47,50 +47,28 @@
  * AMIGA hardware segment/page table entries
  */
 
-struct ste {
-	unsigned int	sg_pfnum:20;	/* page table frame number */
-	unsigned int	:8;		/* reserved at 0 */
-	unsigned int	:1;		/* reserved at 1 */
-	unsigned int	sg_prot:1;	/* write protect bit */
-	unsigned int	sg_v:2;		/* valid bits */
-};
-
-struct pte {
-	unsigned int	pg_pfnum:20;	/* page frame number or 0 */
-	unsigned int	:3;
-	unsigned int	pg_w:1;		/* is wired */
-	unsigned int	:1;		/* reserved at zero */
-	unsigned int	pg_ci:1;	/* cache inhibit bit */
-	unsigned int	pg_cm1:1;	/* cache mode, lsb (68040) */
-	unsigned int	pg_m:1;		/* hardware modified (dirty) bit */
-	unsigned int	pg_u:1;		/* hardware used (reference) bit */
-	unsigned int	pg_prot:1;	/* write protect bit */
-	unsigned int	pg_v:2;		/* valid bit */
-};
-
-typedef struct ste	st_entry_t;	/* segment table entry */
-typedef struct pte	pt_entry_t;	/* Mach page table entry */
-
-#define	PT_ENTRY_NULL	((pt_entry_t *) 0)
-#define	ST_ENTRY_NULL	((st_entry_t *) 0)
+#define	PT_ENTRY_NULL	((u_int *) 0)
+#define	ST_ENTRY_NULL	((u_int *) 0)
 
 #define	SG_V		0x00000002	/* segment is valid */
 #define	SG_NV		0x00000000
 #define	SG_PROT		0x00000004	/* access protection mask */
 #define	SG_RO		0x00000004
 #define	SG_RW		0x00000000
+#define SG_U		0x00000008	/* modified bit (68040) */
 #define	SG_FRAME	0xffffe000
-#define SG_IMASK1	0xfe000000
-#define SG_IMASK2	0x01fc0000
-#define SG_040IMASK	0xfffc0000
-#define SG_040PMASK	0x0003e000
-#define SG_ISHIFT1	25
-#define SG_040ISHIFT	18
 #define SG_IMASK	0xff000000
-#define SG_PMASK	0x00ffe000
 #define SG_ISHIFT	24
+#define SG_PMASK	0x00ffe000
 #define SG_PSHIFT	13
 
+/* 68040 additions */
+#define SG4_IMASK1	0xfe000000
+#define SG4_ISHIFT1	25
+#define SG4_IMASK2	0x01fc0000
+#define SG4_IMASK	0xfffc0000
+#define SG4_PMASK	0x0003e000
+#define SG4_ISHIFT	18
 
 #define	PG_V		0x00000001
 #define	PG_NV		0x00000000
@@ -100,13 +78,18 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define	PG_W		0x00000100
 #define	PG_RO		0x00000004
 #define	PG_RW		0x00000000
-#define	PG_CI		0x00000040
-#define PG_CC		0x00000020	/* Cachable, copyback */
-#define PG_CIN		0x00000060	/* Cache inhibited, nonserialized */
-#define PG_CMASK	0x00000060	/* Cache mask for 040 */
 #define PG_FRAME	0xffffe000
+#define	PG_CI		0x00000040
 #define PG_SHIFT	13
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
+
+/* 68040 additions */
+#define PG_CMASK	0x00000060	/* cache mode mask */
+#define PG_CWT		0x00000000	/* writethrough caching */
+#define PG_CCB		0x00000020	/* copyback caching */
+#define PG_CIS		0x00000040	/* cache inhibited serialized */
+#define PG_CIN		0x00000060	/* cache inhibited nonserialized */
+#define PG_SO		0x00000080	/* supervisor only */
 
 #define AMIGA_040RTSIZE		512	/* root (level 1) table size */
 #define AMIGA_040STSIZE		512	/* segment (level 2) table size */
@@ -138,7 +121,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define	kvtopte(va) \
 	(&Sysmap[((unsigned)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT])
 #define	ptetokv(pt) \
-	((((pt_entry_t *)(pt) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
+	((((u_int *)(pt) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
 #define	kvtophys(va) \
 	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
 

@@ -36,33 +36,28 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.8 1994/05/25 07:59:59 chopps Exp $
+ *	$Id: pmap.h,v 1.9 1994/06/04 11:59:28 chopps Exp $
  */
 #ifndef	_MACHINE_PMAP_H_
 #define	_MACHINE_PMAP_H_
 
-#define AMIGA_PAGE_SIZE	NBPG
-#define AMIGA_SEG_SIZE	NBSEG
-
 /*
  * Pmap stuff (in anticipation of '40 support)
  */
-
 struct pmap {
-	struct pte		*pm_ptab;	/* KVA of page table */
-	struct ste		*pm_stab;	/* KVA of segment table */
-	struct ste		*pm_rtab;	/* KVA of 68040 root table */
-	int			pm_stchanged;	/* ST changed */
-	short			pm_sref;	/* segment table ref count */
-	short			pm_count;	/* pmap reference count */
+	u_int 	*pm_ptab;	/* KVA of page table */
+	u_int	*pm_stab;	/* KVA of segment table */
+	u_int	*pm_rtab;	/* KVA of 68040 root table */
+	int	pm_stchanged;	/* ST changed */
+	short	pm_sref;	/* segment table ref count */
+	short	pm_count;	/* pmap reference count */
+	long	pm_ptpages;	/* more stats: PT pages */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	long			pm_ptpages;	/* more stats: PT pages */
 };
 
-typedef struct pmap	*pmap_t;
-
-extern pmap_t		kernel_pmap;
+typedef struct pmap *pmap_t;
+extern pmap_t kernel_pmap;
 
 /*
  * Macros for speed
@@ -87,7 +82,7 @@ typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vm_offset_t	pv_va;		/* virtual address for mapping */
-	struct ste	*pv_ptste;	/* non-zero if VA maps a PT page */
+	u_int		*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 	int		pv_flags;	/* flags */
 } *pv_entry_t;
@@ -96,15 +91,13 @@ typedef struct pv_entry {
 #define PV_PTPAGE	0x02	/* entry maps a page table page */
 
 #ifdef	KERNEL
-pv_entry_t	pv_table;		/* array of entries, one per page */
+pv_entry_t	pv_table;	/* array of entries, one per page */
+u_int		*Sysmap;
+char		*vmmap;		/* map for mem, dumps, etc. */
 
 #define pa_index(pa)		atop(pa - vm_first_phys)
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
-
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
-
-extern	struct pte *Sysmap;
-extern	char *vmmap;			/* map for mem, dumps, etc. */
 #endif	KERNEL
 
 #endif	/* !_MACHINE_PMAP_H_ */

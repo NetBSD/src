@@ -1,8 +1,8 @@
 /* some colors, handy for debugging 
  *
- *	$Id: color.h,v 1.5 1994/02/17 09:09:21 chopps Exp $
+ *	$Id: color.h,v 1.6 1994/06/04 11:58:43 chopps Exp $
  */
-
+#ifdef DEBUG
 #define COL_BLACK	0x000
 #define COL_DARK_GRAY	0x444
 #define COL_MID_GRAY	0x888
@@ -25,3 +25,6 @@
 #define COL24_DGREY	0x0009
 #define COL24_LGREY	0x0880
 #define COL24_WHITE	0xffff
+
+void rollcolor __P((int));
+#endif

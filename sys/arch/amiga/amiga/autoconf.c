@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: autoconf.c,v 1.21 1994/06/03 00:30:27 chopps Exp $
+ *	$Id: autoconf.c,v 1.22 1994/06/04 11:58:38 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ int
 is_a3000()
 {
 	/* this is a dirty kludge.. but how do you do this RIGHT ? :-) */
-	extern long orig_fastram_start;
+	extern long boot_fphystart;
 	short sc;
 
 	if ((machineid >> 16) == 3000)
@@ -338,7 +338,7 @@ is_a3000()
 	/* Machine type is unknown, so try to guess it */
 	/* where is fastram on the A4000 ?? */
 	/* if fastram is below 0x07000000, assume it's not an A3000 */
-	if (orig_fastram_start < 0x07000000)
+	if (boot_fphystart < 0x07000000)
 		return(0);
 	/*
 	 * OK, fastram starts at or above 0x07000000, check specific

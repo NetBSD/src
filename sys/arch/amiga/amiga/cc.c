@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cc.c,v 1.4 1994/03/25 16:30:03 chopps Exp $
+ *	$Id: cc.c,v 1.5 1994/06/04 11:58:40 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -416,10 +416,8 @@ cc_init_chipmem ()
 {
 	int s = splhigh ();
 	struct mem_node *mem;
-	extern u_char *chipmem_end, *chipmem_start;
 
-	chip_size = chipmem_end - (chipmem_start+NBPG);
-
+	chip_size = chipmem_end - (chipmem_start + NBPG);
 	chip_total = chip_size - sizeof(*mem);
     
 	mem = (struct mem_node *)chipmem_steal(chip_size);

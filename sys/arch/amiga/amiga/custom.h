@@ -27,196 +27,186 @@
  * on the Hardware Reference Manual.  It is NOT based on the Amiga's
  * hardware/custom.h.
  *
- *	$Id: custom.h,v 1.6 1994/04/05 18:09:00 chopps Exp $
+ *	$Id: custom.h,v 1.7 1994/06/04 11:58:44 chopps Exp $
  */
 
-#ifndef _amiga_custom_
-#define _amiga_custom_
-
-/*#include <machine/vm_param.h>*/
-
-#define PHYS_CUSTOM 0xdff000
-
+#ifndef _AMIGA_CUSTOM_
+#define _AMIGA_CUSTOM_
 
 #ifndef LOCORE
-struct Custom
-  {
+struct Custom {
     /*** read-only registers ***/
+	unsigned short zz1;
+	unsigned short dmaconr;
+	unsigned short vposr;
+	unsigned short vhposr;
+	unsigned short zz2;
+	unsigned short joy0dat;
+	unsigned short joy1dat;
+	unsigned short clxdat;
+	unsigned short adkconr;
+	unsigned short pot0dat;
+	unsigned short pot1dat;
+	unsigned short potgor;
+	unsigned short serdatr;
+	unsigned short dskbytr;
+	unsigned short intenar;
+	unsigned short intreqr;
 
-    unsigned short zz1;
-    unsigned short dmaconr;
-    unsigned short vposr;
-    unsigned short vhposr;
-    unsigned short zz2;
-    unsigned short joy0dat;
-    unsigned short joy1dat;
-    unsigned short clxdat;
-    unsigned short adkconr;
-    unsigned short pot0dat;
-    unsigned short pot1dat;
-    unsigned short potgor;
-    unsigned short serdatr;
-    unsigned short dskbytr;
-    unsigned short intenar;
-    unsigned short intreqr;
+	/*** write-only registers ***/
 
-    /*** write-only registers ***/
+	/* disk */
+	void *dskpt;
+	unsigned short dsklen;
 
-    /* disk */
-    void *dskpt;
-    unsigned short dsklen;
+	unsigned short zz3[2];
+	unsigned short vposw;
+	unsigned short vhposw;
+	unsigned short copcon;
+	unsigned short serdat;
+	unsigned short serper;
+	unsigned short potgo;
+	unsigned short joytest;
+	unsigned short zz4[4];
 
-    unsigned short zz3[2];
-    unsigned short vposw;
-    unsigned short vhposw;
-    unsigned short copcon;
-    unsigned short serdat;
-    unsigned short serper;
-    unsigned short potgo;
-    unsigned short joytest;
-    unsigned short zz4[4];
+	/* blitter */
+	unsigned short bltcon0;
+	unsigned short bltcon1;
+	unsigned short bltafwm;
+	unsigned short bltalwm;
+	void *bltcpt;
+	void *bltbpt;
+	void *bltapt;
+	void *bltdpt;
+	unsigned short bltsize;
+	unsigned short zz5[3];
+	unsigned short bltcmod;
+	unsigned short bltbmod;
+	unsigned short bltamod;
+	unsigned short bltdmod;
+	unsigned short zz6[4];
+	unsigned short bltcdat;
+	unsigned short bltbdat;
+	unsigned short bltadat;
+	unsigned short zz7[3];
+	unsigned short deniseid;
 
-    /* blitter */
-    unsigned short bltcon0;
-    unsigned short bltcon1;
-    unsigned short bltafwm;
-    unsigned short bltalwm;
-    void *bltcpt;
-    void *bltbpt;
-    void *bltapt;
-    void *bltdpt;
-    unsigned short bltsize;
-    unsigned short zz5[3];
-    unsigned short bltcmod;
-    unsigned short bltbmod;
-    unsigned short bltamod;
-    unsigned short bltdmod;
-    unsigned short zz6[4];
-    unsigned short bltcdat;
-    unsigned short bltbdat;
-    unsigned short bltadat;
-    unsigned short zz7[3];
-    unsigned short deniseid;
-
-    /* more disk */
-    unsigned short dsksync;
+	/* more disk */
+	unsigned short dsksync;
 
     /* copper */
-    union {
-      void *cp;
-      struct {
-        unsigned short ch, cl;
-      } cs;
-    } _cop1lc;
+	union {
+		void *cp;
+		struct {
+			unsigned short ch, cl;
+		} cs;
+	} _cop1lc;
 #define cop1lc	_cop1lc.cp
 #define cop1lch	_cop1lc.cs.ch
 #define cop1lcl	_cop1lc.cs.cl
-    union {
-      void *cp;
-      struct {
-        unsigned short ch, cl;
-      } cs;
-    } _cop2lc;
+	union {
+		void *cp;
+		struct {
+			unsigned short ch;
+			unsigned short cl;
+		} cs;
+	} _cop2lc;
 #define cop2lc	_cop2lc.cp
 #define cop2lch	_cop2lc.cs.ch
 #define cop2lcl	_cop2lc.cs.cl
-    unsigned short copjmp1;
-    unsigned short copjmp2;
-    unsigned short copins;
+	unsigned short copjmp1;
+	unsigned short copjmp2;
+	unsigned short copins;
 
-    /* display parameters */
-    unsigned short diwstrt;
-    unsigned short diwstop;
-    unsigned short ddfstrt;
-    unsigned short ddfstop;
+	/* display parameters */
+	unsigned short diwstrt;
+	unsigned short diwstop;
+	unsigned short ddfstrt;
+	unsigned short ddfstop;
 
-    /* control registers */
-    unsigned short dmacon;
-    unsigned short clxcon;
-    unsigned short intena;
-    unsigned short intreq;
+	/* control registers */
+	unsigned short dmacon;
+	unsigned short clxcon;
+	unsigned short intena;
+	unsigned short intreq;
 
-    /* audio */
-    unsigned short adkcon;
-    struct Audio
-      {
-        void *lc;
-        unsigned short len;
-        unsigned short per;
-        unsigned short vol;
-        unsigned short zz[3];
-      } aud[4];
+	/* audio */
+	unsigned short adkcon;
+	struct Audio {
+		void *lc;
+		unsigned short len;
+		unsigned short per;
+		unsigned short vol;
+		unsigned short zz[3];
+	} aud[4];
 
-    /* display */
-    union {
-      void *bp[6];
-      struct {
-        unsigned short bph;
-        unsigned short bpl;
-      } bs[6];
-
-    } _bplpt;
+	/* display */
+	union {
+		void *bp[6];
+		struct {
+			unsigned short bph;
+			unsigned short bpl;
+		} bs[6];
+	} _bplpt;
 #define bplpt	_bplpt.bp
 #define bplptl(n)	_bplpt.bs[n].bpl
 #define bplpth(n)	_bplpt.bs[n].bph
 
-    unsigned short zz8[4];
-    unsigned short bplcon0;
-    unsigned short bplcon1;
-    unsigned short bplcon2;
-    unsigned short zz9;
-    unsigned short bpl1mod;
-    unsigned short bpl2mod;
-    unsigned short zz10[2+6+2];
+	unsigned short zz8[4];
+	unsigned short bplcon0;
+	unsigned short bplcon1;
+	unsigned short bplcon2;
+	unsigned short zz9;
+	unsigned short bpl1mod;
+	unsigned short bpl2mod;
+	unsigned short zz10[2+6+2];
 
-    /* sprites */
-    void *sprpt[8];
-    struct Sprite
-      {
-        unsigned short pos;
-        unsigned short ctl;
-        unsigned short data;
-        unsigned short datb;
-      } spr[8];
+	/* sprites */
+	void *sprpt[8];
+	struct Sprite {
+		unsigned short pos;
+		unsigned short ctl;
+		unsigned short data;
+		unsigned short datb;
+	} spr[8];
 
-    unsigned short color[32];
-    unsigned short htotal;
-    unsigned short hsstop;
-    unsigned short hbstrt;
-    unsigned short hbstop;
-    unsigned short vtotal;
-    unsigned short vsstop;
-    unsigned short vbstrt;
-    unsigned short vbstop;
-    unsigned short sprhstrt;
-    unsigned short sprhstop;
-    unsigned short bplhstrt;
-    unsigned short bplhstop;
-    unsigned short hhposw;
-    unsigned short hhposr;
-    unsigned short beamcon0;
-    unsigned short hsstrt;
-    unsigned short vsstrt;
-    unsigned short hcenter;
-    unsigned short diwhigh;	/* 1e4 */
-    unsigned short padf3[11];
-    unsigned short fmode;
-  };
+	unsigned short color[32];
+	unsigned short htotal;
+	unsigned short hsstop;
+	unsigned short hbstrt;
+	unsigned short hbstop;
+	unsigned short vtotal;
+	unsigned short vsstop;
+	unsigned short vbstrt;
+	unsigned short vbstop;
+	unsigned short sprhstrt;
+	unsigned short sprhstop;
+	unsigned short bplhstrt;
+	unsigned short bplhstop;
+	unsigned short hhposw;
+	unsigned short hhposr;
+	unsigned short beamcon0;
+	unsigned short hsstrt;
+	unsigned short vsstrt;
+	unsigned short hcenter;
+	unsigned short diwhigh;	/* 1e4 */
+	unsigned short padf3[11];
+	unsigned short fmode;
+};
 #endif
 
 
 /* Custom chips as seen by the kernel */
 #ifdef KERNEL
 #ifndef LOCORE
-extern volatile struct Custom *CUSTOMbase;
+vm_offset_t CUSTOMADDR, CUSTOMbase;
+#define CUSTOMBASE	(0x00DFF000)	/* now just offset rel to zorro2 */
 #endif
 #define custom (*((volatile struct Custom *)CUSTOMbase))
 #endif
 
 /* This is used for making copper lists.  */
 #define CUSTOM_OFS(field) ((long)&((struct Custom*)0)->field)
-
-
 
 /* Bit definitions for dmacon and dmaconr */
 #define DMAB_SETCLR     15
@@ -305,4 +295,4 @@ extern volatile struct Custom *CUSTOMbase;
 #define ADKF_MSBSYNC  (1<<ADKB_MSBSYNC)
 #define ADKF_FAST     (1<<ADKB_FAST)
 
-#endif /* _machine_custom_ */
+#endif /* _AMIGA_CUSTOM_ */

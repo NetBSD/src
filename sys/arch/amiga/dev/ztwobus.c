@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ztwobus.c,v 1.5 1994/06/03 00:30:52 chopps Exp $
+ *	$Id: ztwobus.c,v 1.6 1994/06/04 11:59:19 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/device.h>
@@ -167,7 +167,7 @@ ztwoattach(pdp, dp, auxp)
 	if (amiga_realconfig) {
 		if (ZTWOMEMADDR)
 			printf(" mem %08x-%08x",
-			    ZTWOMEMADDR, ZTWOMEMADDR + ZTWOMEMSIZE - 1);
+			    ZTWOMEMADDR, ZTWOMEMADDR + NBPG * NZTWOMEMPG - 1);
 		printf("\n");
 	}
 	for (cdp = cfdev; cdp < ecdp; cdp++) {
