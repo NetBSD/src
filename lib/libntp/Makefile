@@ -1,17 +1,18 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/23 02:50:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1998/03/06 18:17:12 christos Exp $
 
 LIB=	ntp
-SRCS=	a_md512crypt.c a_md5decrypt.c a_md5encrypt.c adjtime.c atoint.c \
-	atolfp.c atouint.c auth12crypt.c authdecrypt.c authdes.c authencrypt.c \
-	authkeys.c authparity.c authreadkeys.c authusekey.c buftvtots.c \
-	caljulian.c calleapwhen.c caltontp.c calyearstart.c clocktime.c \
-	clocktypes.c decodenetnum.c dofptoa.c dolfptoa.c emalloc.c \
-	findconfig.c fptoa.c fptoms.c getopt.c hextoint.c hextolfp.c \
-	humandate.c inttoa.c lib_strbuf.c lib_strbuf.h machines.c memmove.c \
-	mexit.c mfptoa.c mfptoms.c modetoa.c mstolfp.c msutotsf.c msyslog.c \
-	netof.c numtoa.c numtohost.c octtoint.c prettydate.c ranny.c \
-	refnumtoa.c statestr.c syssignal.c systime.c tsftomsu.c tstotv.c \
-	tvtoa.c tvtots.c uglydate.c uinttoa.c utvtoa.c version.c
+SRCS=	utvtoa.c uinttoa.c uglydate.c tvtots.c tvtoa.c tstotv.c \
+tsftomsu.c systime.c syssignal.c statestr.c refnumtoa.c ranny.c \
+prettydate.c octtoint.c numtohost.c numtoa.c netof.c msyslog.c \
+msutotsf.c mstolfp.c modetoa.c mfptoms.c mfptoa.c mexit.c \
+memmove.c machines.c lib_strbuf.h lib_strbuf.c inttoa.c humandate.c \
+hextolfp.c hextoint.c getopt.c fptoms.c fptoa.c findconfig.c \
+emalloc.c dolfptoa.c dofptoa.c decodenetnum.c clocktypes.c clocktime.c \
+calyearstart.c caltontp.c calleapwhen.c caljulian.c buftvtots.c authusekey.c \
+authreadkeys.c authparity.c authkeys.c authencrypt.c authdes.c authdecrypt.c \
+auth12crypt.c atouint.c atolfp.c atoint.c adjtime.c a_md5encrypt.c \
+a_md5decrypt.c a_md512crypt.c 
+SRCS += version.c
 
 CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../usr.sbin/xntp/include
 
