@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.27 1998/05/08 16:55:16 kleink Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.28 1998/07/14 03:19:17 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.27 1998/05/08 16:55:16 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.28 1998/07/14 03:19:17 mhitch Exp $");
 
 #include "opt_uvm.h"
 
@@ -505,7 +505,7 @@ setregs(p, pack, stack)
 	p->p_md.md_regs[SP] = stack;
 	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
 	p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
-	p->p_md.md_regs[PS] = PSL_USERSET;
+	p->p_md.md_regs[SR] = PSL_USERSET;
 	p->p_md.md_flags &= ~MDP_FPUSED;
 	if (fpcurproc == p)
 		fpcurproc = (struct proc *)0;
