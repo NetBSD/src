@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.5 2000/10/30 20:57:00 jdolecek Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.6 2002/09/21 18:43:36 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.5 2000/10/30 20:57:00 jdolecek Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.6 2002/09/21 18:43:36 christos Exp $");
 #endif
 
 #include <sys/cdefs.h>
@@ -53,12 +53,14 @@ __RCSID("$NetBSD: mount_ntfs.c,v 1.5 2000/10/30 20:57:00 jdolecek Exp $");
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "mntopts.h"
 #include <fattr.h>
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	MOPT_GETARGS,
 	{ NULL }
 };
 
@@ -197,6 +199,12 @@ mount_ntfs(argc, argv)
 #endif
 		err(EX_OSERR, "%s on %s", dev, dir);
 
+	if (mntflags & MNT_GETARGS) {
+		char buf[1024];
+		(void)snprintb(buf, sizeof(buf), NTFS_MFLAG_BITS, args.flag);
+		printf("uid=%d, gid=%d, mode=%d, flags=%s\n", args.uid,
+		    args.gid, args.mode, buf);
+	}
 	exit (0);
 }
 

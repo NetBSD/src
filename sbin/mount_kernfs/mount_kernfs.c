@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_kernfs.c,v 1.12 2000/10/30 20:56:59 jdolecek Exp $	*/
+/*	$NetBSD: mount_kernfs.c,v 1.13 2002/09/21 18:43:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_kernfs.c,v 1.12 2000/10/30 20:56:59 jdolecek Exp $");
+__RCSID("$NetBSD: mount_kernfs.c,v 1.13 2002/09/21 18:43:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: mount_kernfs.c,v 1.12 2000/10/30 20:56:59 jdolecek Exp $");
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	MOPT_GETARGS,
 	{ NULL }
 };
 
