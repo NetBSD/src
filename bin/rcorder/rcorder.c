@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.1.1.1 1999/11/19 04:30:56 mrg Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.2 1999/11/19 04:33:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -126,6 +126,7 @@ filenode *filenode_new __P((char *));
 void add_require __P((filenode *, char *));
 void add_provide __P((filenode *, char *));
 void add_before __P((filenode *, char *));
+void insert_before __P((void));
 Hash_Entry *make_fake_provision __P((filenode *));
 void crunch_all_files __P((void));
 void initialize __P((void));
@@ -455,7 +456,6 @@ insert_before()
 	provnode *pnode;
 	f_reqnode *rnode;
 	beforelist *bl;
-	filenode *f;
 	int new;
 	
 	while (bl_list != NULL) {
