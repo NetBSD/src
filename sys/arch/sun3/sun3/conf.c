@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.62 1998/11/13 04:47:09 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.63 1999/04/19 21:23:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -35,6 +35,8 @@
  *
  *	@(#)conf.c	8.2 (Berkeley) 11/14/93
  */
+
+#include "opt_compat_svr4.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,6 +295,7 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 80: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 81: SCSI bus */
 	cdev_disk_init(NRAID,raid), 	/* 82: RAIDframe disk driver */
+	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 83: svr4 net pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

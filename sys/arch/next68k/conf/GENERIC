@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14 1999/03/27 02:59:41 dbj Exp $
+# $NetBSD: GENERIC,v 1.15 1999/04/19 21:23:00 kleink Exp $
 #
 # GENERIC next68k
 #
@@ -54,8 +54,9 @@ options 	COMPAT_13	# NetBSD 1.3
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
+#options 	COMPAT_SVR4	# can run SVR4 executables
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
+#options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 
 # File systems
 #file-system 	FFS		# UFS
