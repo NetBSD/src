@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.10 1998/08/08 11:18:32 ragge Exp $	*/
+/*	$NetBSD: endian.h,v 1.11 1998/11/07 17:22:58 ragge Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -83,15 +83,10 @@ __END_DECLS
 	__y; })
 
 #define __byte_swap_word_variable(x)		\
-({ register u_int16_t __y, __x = (x);		\
+({ register u_int16_t __x = (x);		\
 						\
-	__asm ("insv	%1,$16,$8,%1;		\
-		ashl	$-8,%1,%0" 		\
-		: "&=r" (__y)			\
-		: "r" (__x)			\
-		: "cc" );			\
-	__y; })
-
+	(u_int16_t)(__x << 8 | __x >> 8);	\
+})
 
 #define __byte_swap_long(x)     __byte_swap_long_variable(x)
 #define __byte_swap_word(x)     __byte_swap_word_variable(x)
