@@ -1,4 +1,4 @@
-/*	$NetBSD: pms_iomd.c,v 1.2 2001/11/27 01:03:53 thorpej Exp $	*/
+/*	$NetBSD: opms_iomd.c,v 1.1 2002/04/19 01:04:40 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -31,7 +31,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	from:pms.c,v 1.24 1995/12/24 02:30:28 mycroft Exp
+ *	from: opms.c,v 1.24 1995/12/24 02:30:28 mycroft Exp
  */
 
 /*
@@ -52,44 +52,44 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <arm/iomd/iomdvar.h>
-#include <arm/iomd/pmsvar.h>
+#include <arm/iomd/opmsvar.h>
 
-static int  pms_iomd_probe     __P((struct device *, struct cfdata *, void *));
-static void pms_iomd_attach    __P((struct device *, struct device *, void *));
-static void pms_iomd_intenable __P((struct pms_softc *sc, int enable));
+static int  opms_iomd_probe     __P((struct device *, struct cfdata *, void *));
+static void opms_iomd_attach    __P((struct device *, struct device *, void *));
+static void opms_iomd_intenable __P((struct opms_softc *sc, int enable));
 
 struct cfattach opms_iomd_ca = {
-	sizeof(struct pms_softc), pms_iomd_probe, pms_iomd_attach
+	sizeof(struct opms_softc), opms_iomd_probe, opms_iomd_attach
 };
 
 static int
-pms_iomd_probe(parent, cf, aux)
+opms_iomd_probe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct pms_attach_args *pa = aux;
+	struct opms_attach_args *pa = aux;
 
-	if (strcmp(pa->pa_name, "pms") == 0)
+	if (strcmp(pa->pa_name, "opms") == 0)
 		return(1);
 
 	return(0);
 }
 static void
-pms_iomd_attach(parent, self, aux)
+opms_iomd_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pms_softc *sc = (void *)self;
-	struct pms_attach_args *pa = aux;
+	struct opms_softc *sc = (void *)self;
+	struct opms_attach_args *pa = aux;
 
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_ioh = pa->pa_ioh;
 	sc->sc_irqnum = pa->pa_irq;
 
-	sc->sc_intenable = pms_iomd_intenable;
+	sc->sc_intenable = opms_iomd_intenable;
 
-	if (pmsinit(sc) != 1) {
+	if (opmsinit(sc) != 1) {
 		printf("Mouse not present\n");
 	}
 
@@ -97,12 +97,12 @@ pms_iomd_attach(parent, self, aux)
 }
 
 static void
-pms_iomd_intenable(sc, enable)
-	struct pms_softc *sc;
+opms_iomd_intenable(sc, enable)
+	struct opms_softc *sc;
 	int enable;
 {
 	if (enable) {
-		sc->sc_ih = intr_claim(sc->sc_irqnum, IPL_TTY, "pms", pmsintr, sc);
+		sc->sc_ih = intr_claim(sc->sc_irqnum, IPL_TTY, "opms", opmsintr, sc);
 		if (!sc->sc_ih)
 			panic("%s: Cannot claim interrupt\n", sc->sc_dev.dv_xname);
 	} else {
@@ -111,4 +111,4 @@ pms_iomd_intenable(sc, enable)
 	}
 }
 
-/* End of pms_iomd.c */
+/* End of opms_iomd.c */
