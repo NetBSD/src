@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 1997/06/12 15:46:28 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 1997/07/15 06:49:56 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1110,4 +1110,17 @@ bus_size_t		size;
 #endif
 
 	kmem_free(kernel_map, va, endva - va);
+}
+
+/*
+ * Get a new handle for a subregion of an already-mapped area of bus space.
+ */
+int bus_space_subregion(t, memh, off, sz, mhp)
+bus_space_tag_t		t;
+bus_space_handle_t	memh;
+bus_size_t		off, sz;
+bus_space_handle_t	*mhp;
+{
+	*mhp = memh + off;
+	return 0;
 }
