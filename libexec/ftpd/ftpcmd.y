@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.8 1997/03/30 22:53:38 cjs Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.9 1997/04/27 03:21:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.8 1997/03/30 22:53:38 cjs Exp $";
+static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.9 1997/04/27 03:21:39 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -662,22 +662,26 @@ pathname
 			/*
 			 * Problem: this production is used for all pathname
 			 * processing, but only gives a 550 error reply.
-			 * This is a valid reply in some cases but not in others.
+			 * This is a valid reply in some cases but not in
+			 * others.
 			 */
 			if (logged_in && $1 && *$1 == '~') {
 				glob_t gl;
 				int flags =
 				 GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
 
-				memset(&gl, 0, sizeof(gl));
-				if (glob($1, flags, NULL, &gl) ||
-				    gl.gl_pathc == 0) {
-					reply(550, "not found");
-					$$ = NULL;
-				} else {
-					$$ = strdup(gl.gl_pathv[0]);
+				if ($1[1] == '\0')
+					$$ = strdup(pw->pw_dir);
+				else {
+					memset(&gl, 0, sizeof(gl));
+					if (glob($1, flags, NULL, &gl) ||
+					    gl.gl_pathc == 0) {
+						reply(550, "not found");
+						$$ = NULL;
+					} else
+						$$ = strdup(gl.gl_pathv[0]);
+					globfree(&gl);
 				}
-				globfree(&gl);
 				free($1);
 			} else
 				$$ = $1;
