@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.10 2004/06/12 13:03:12 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.11 2004/06/12 15:55:23 wiz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -529,7 +529,7 @@ message nfsbadmount
 {Das Verzeichnis %s:%s konnte nicht gemountet werden.}
 
 message cdromsource
-{Geben Sie das CD-Laufwerk und das entsprechendes Verzeichnis 
+{Geben Sie das CD-Laufwerk und das entsprechende Verzeichnis 
 an, in dem die Distribution zu finden ist.
 (Das Verzeichnis muss .tgz Dateien enthalten)
 
