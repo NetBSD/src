@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 1995/06/11 14:57:01 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.7 1995/07/24 06:35:58 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -79,7 +79,7 @@
 36	NOARGS		{ int sync(void); }
 37	STD		{ int linux_kill(int pid, int signum); }
 38	STD		{ int linux_rename(char *from, char *to); }
-39	STD		{ int linux_mkdir(char *path); }
+39	STD		{ int linux_mkdir(char *path, int mode); }
 40	STD		{ int linux_rmdir(char *path); }
 41	NOARGS		{ int dup(u_int fd); }
 42	STD		{ int linux_pipe(int *pfds); }

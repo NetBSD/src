@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.6 1995/07/03 21:33:59 fvdl Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.7 1995/07/24 06:35:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -603,6 +603,7 @@ linux_mkdir(p, uap, retval)
 	struct proc *p;
 	struct linux_mkdir_args /* {
 		syscallarg(char *) path;
+		syscallarg(int) mode;
 	} */ *uap;
 	register_t *retval;
 {
