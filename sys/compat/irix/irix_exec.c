@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.17 2002/06/05 17:27:11 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.18 2002/06/12 20:33:20 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.17 2002/06/05 17:27:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.18 2002/06/12 20:33:20 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.17 2002/06/05 17:27:11 manu Exp $");
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_exec.h>
+#include <compat/irix/irix_prctl.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_errno.h>
 
@@ -267,26 +268,14 @@ irix_e_proc_exec(p, epp)
 	struct exec_package *epp;
 {
 	int error;
-	struct exec_vmcmd evc;
 
 	irix_e_proc_init(p, p->p_vmspace);
 
-	/* 
-	 * On IRIX, usinit(3) expects the kernel to prepare one page of 
-	 * memory mapped at address 0x200000. It is used for shared 
-	 * semaphores and locks.
-	 */
-	bzero(&evc, sizeof(evc));
-	evc.ev_addr = IRIX_SH_ARENA_ADDR;
-	evc.ev_len = IRIX_SH_ARENA_SZ;
-	evc.ev_prot = UVM_PROT_RW;
-	evc.ev_proc = *vmcmd_map_zero;
-
-	error = (*evc.ev_proc)(p, &evc);
+	/* Initialize the process private area (PRDA) */
+	error = irix_prda_init(p);
 #ifdef DEBUG_IRIX
-	printf("irix_e_proc_init(): uvm_map() returned %d\n", error);
 	if (error != 0)
-		printf("irix_e_proc_init(): IRIX_SHARED_ARENA map failed ");
+		printf("irix_e_proc_init(): PRDA map failed ");
 #endif
 }
 
