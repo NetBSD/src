@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.41 2000/06/14 19:35:50 wiz Exp $ */
+/*	$NetBSD: fdisk.c,v 1.41.2.1 2002/02/14 19:59:55 he Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.41 2000/06/14 19:35:50 wiz Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.41.2.1 2002/02/14 19:59:55 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1277,9 +1277,12 @@ int
 get_params()
 {
 
-	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
-		warn("DIOCGDINFO");
-		return (-1);
+	if (ioctl(fd, DIOCGDEFLABEL, &disklabel) == -1) {
+		warn("DIOCGDEFLABEL");
+		if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
+			warn("DIOCGDINFO");
+			return (-1);
+		}
 	}
 
 	dos_cylinders = cylinders = disklabel.d_ncylinders;
