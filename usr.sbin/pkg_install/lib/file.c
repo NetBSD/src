@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.48.2.2 2002/07/21 04:35:40 lukem Exp $	*/
+/*	$NetBSD: file.c,v 1.48.2.3 2002/07/21 04:42:21 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.48.2.2 2002/07/21 04:35:40 lukem Exp $");
+__RCSID("$NetBSD: file.c,v 1.48.2.3 2002/07/21 04:42:21 lukem Exp $");
 #endif
 #endif
 
@@ -174,12 +174,13 @@ URLlength(const char *fname)
 /*
  * Returns the host part of a URL
  */
-char   *
-fileURLHost(char *fname, char *where, int max)
+const char *
+fileURLHost(const char *fname, char *where, int max)
 {
-	char   *ret;
+	const char   *ret;
 	int     i;
 
+	assert(where != NULL);
 	assert(max > 0);
 
 	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
@@ -187,29 +188,24 @@ fileURLHost(char *fname, char *where, int max)
 	}
 	fname += i;
 	/* Do we have a place to stick our work? */
-	if ((ret = where) != NULL) {
-		while (*fname && *fname != '/' && --max)
-			*where++ = *fname++;
-		*where = '\0';
-		return ret;
-	}
-	/* If not, they must really want us to stomp the original string */
-	ret = fname;
-	while (*fname && *fname != '/')
-		++fname;
-	*fname = '\0';
+	ret = where;
+	while (*fname && *fname != '/' && --max)
+		*where++ = *fname++;
+	*where = '\0';
+
 	return ret;
 }
 
 /*
  * Returns the filename part of a URL
  */
-char   *
-fileURLFilename(char *fname, char *where, int max)
+const char *
+fileURLFilename(const char *fname, char *where, int max)
 {
-	char   *ret;
+	const char *ret;
 	int     i;
 
+	assert(where != NULL);
 	assert(max > 0);
 
 	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
@@ -217,82 +213,50 @@ fileURLFilename(char *fname, char *where, int max)
 	}
 	fname += i;
 	/* Do we have a place to stick our work? */
-	if ((ret = where) != NULL) {
-		while (*fname && *fname != '/')
-			++fname;
-		if (*fname == '/') {
-			while (*fname && --max)
-				*where++ = *fname++;
-		}
-		*where = '\0';
-		return ret;
-	}
-	/* If not, they must really want us to stomp the original string */
+	ret = where;
 	while (*fname && *fname != '/')
 		++fname;
-	return fname;
+	if (*fname == '/') {
+		while (*fname && --max)
+			*where++ = *fname++;
+	}
+	*where = '\0';
+
+	return ret;
 }
 
 /*
- * Wrapper routine for fileGetURL to iterate over several "sfx"s
+ * Try and fetch a file by URL, returning the directory name for where
+ * it's unpacked, if successful. To be handed to leave_playpen() later.
  */
-static char   *
-fileGet1URL(const char *base, const char *spec, const char *sfx)
+char   *
+fileGetURL(const char *spec)
 {
 	char    host[MAXHOSTNAMELEN], file[FILENAME_MAX];
-	char   *cp, *rp;
-	char    fname[FILENAME_MAX];
+	const char *cp;
+	char   *rp;
 	char    pen[FILENAME_MAX];
 	int     rc;
-	char   *hint;
 
 	rp = NULL;
-	/* Special tip that sysinstall left for us */
-	hint = getenv("PKG_ADD_BASE");
 	if (!IS_URL(spec)) {
-		if (!base && !hint)
-			return NULL;
-		/* We've been given an existing URL (that's known-good) and
-		 * now we need to construct a composite one out of that and
-		 * the basename we were handed as a dependency. */
-		if (base) {
-			strlcpy(fname, base, sizeof(fname));
-			/* Advance back two slashes to get to the root of the package hierarchy */
-			cp = strrchr(fname, '/');
-			if (cp) {
-				*cp = '\0';	/* chop name */
-				cp = strrchr(fname, '/');
-			}
-			if (cp) {
-				size_t sz;
-
-				cp++; /* next char of '/' */
-				sz = fname + sizeof(fname) - cp;
-				snprintf(cp, sz, "All/%s%s", spec, sfx);
-			} else
-				return NULL;
-		} else {
-			/* Otherwise, we've been given an environment variable hinting at the right location from sysinstall */
-			assert(hint != NULL);
-			snprintf(fname, sizeof(fname), "%s%s%s", hint, spec, sfx);
-		}
-	} else
-		strlcpy(fname, spec, sizeof(fname));
+		errx(1, "fileGetURL was called with non-url arg '%s'\n", spec);
+	}
 
  	/* Some sanity checks on the URL */
-	cp = fileURLHost(fname, host, MAXHOSTNAMELEN);
+	cp = fileURLHost(spec, host, MAXHOSTNAMELEN);
 	if (!*cp) {
-		warnx("URL `%s' has bad host part!", fname);
+		warnx("URL `%s' has bad host part!", spec);
 		return NULL;
 	}
-	cp = fileURLFilename(fname, file, FILENAME_MAX);
+	cp = fileURLFilename(spec, file, FILENAME_MAX);
 	if (!*cp) {
-		warnx("URL `%s' has bad filename part!", fname);
+		warnx("URL `%s' has bad filename part!", spec);
 		return NULL;
 	}
 
 	if (Verbose)
-		printf("Trying to fetch %s.\n", fname);
+		printf("Trying to fetch %s.\n", spec);
 	
 	pen[0] = '\0';
 	rp = make_playpen(pen, sizeof(pen), 0);
@@ -302,233 +266,135 @@ fileGet1URL(const char *base, const char *spec, const char *sfx)
 	}
 
 	rp = strdup(pen);
-	rc = unpackURL(fname, pen);
+	rc = unpackURL(spec, pen);
 	if (rc < 0) {
 		leave_playpen(rp); /* Don't leave dir hang around! */
 		
-		printf("Error on unpackURL('%s', '%s')\n", fname, pen);
+		printf("Error on unpackURL('%s', '%s')\n", spec, pen);
 		return NULL;
 	}
 	return rp;
 }
 
-/*
- * Try and fetch a file by URL, returning the directory name for where
- * it's unpacked, if successful. To be handed to leave_playpen() later.
- */
-char   *
-fileGetURL(char *base, char *spec)
-{
-	char *rp;
-	rp = fileGet1URL(base, spec, ".tbz");
-	if (rp == NULL) {
-		rp = fileGet1URL(base, spec, ".tgz");
-	}
-
-	return rp;
-}
-
-/*
- *  Look for filename/pattern "fname" in
- *   - current dir, and if not found there, look
- *   - $base/../All
- *   - all dirs in $PKG_PATH
- * Returns a full path/URL where the pkg can be found
- */
-char   *
-fileFindByPath(char *base, char *fname)
+static char *
+resolvepattern1(const char *name)
 {
 	static char tmp[FILENAME_MAX];
-	char   *cp;
+	char *cp;
 
-/* printf("HF: fileFindByPath(\"%s\", \"%s\")\n", base, fname); *//*HF*/
+	if (IS_URL(name)) {
+		/* some package depends on a wildcard pkg */
+		int rc;
 
-	/* The following code won't return a match if base is an URL 
-	 * Could save some cycles here - HF */
-	if (ispkgpattern(fname)) {
-		if ((cp = findbestmatchingname(".", fname)) != NULL) {
-			strcpy(tmp, cp);
+		rc = expandURL(tmp, name);
+		if (rc < 0) {
+			return NULL;
+		}
+		if (Verbose)
+			printf("'%s' expanded to '%s'\n", name, tmp);
+		return tmp;    /* return expanded URL w/ corrent pkg */
+	}
+	else if (ispkgpattern(name)) {
+		cp = findbestmatchingname(
+			dirname_of(name), basename_of(name));
+		if (cp) {
+			snprintf(tmp, sizeof(tmp), "%s/%s", dirname_of(name), cp);
 			free(cp);
 			return tmp;
 		}
 	} else {
-		if (fexists(fname) && isfile(fname)) {
-			strcpy(tmp, fname);
+		if (isfile(name)) {
+			strlcpy(tmp, name, sizeof(tmp));
 			return tmp;
 		}
 	}
 
-	if (base) {
-		strcpy(tmp, base);
+	return NULL;
+}
 
-		cp = strrchr(tmp, '/');
-		if (cp) {
-			*cp = '\0';	/* chop name */
-			cp = strrchr(tmp, '/');
-		}
-		if (cp) {
-			size_t sz;
+static char *
+resolvepattern(const char *name)
+{
+	char tmp[FILENAME_MAX];
+	char *cp;
+	const char *suf;
 
-			cp++; /* next char of '/' */
-			sz = fname + sizeof(fname) - cp;
-			snprintf(cp, sz, "All/%s.t[bg]z", fname);
+	cp = resolvepattern1(name);
+	if (cp != NULL)
+		return cp;
 
-			if (ispkgpattern(tmp)) {
-				if (IS_URL(tmp)) {
-					/* some package depends on a wildcard pkg */
-					int rc;
-					char url[FILENAME_MAX];
+	if (ispkgpattern(name))
+		return NULL;
 
-					/* save url to expand, as tmp is the static var in which
-					 * we return the result of the expansion. 
-					 */
-					strcpy(url, tmp);
+	suf = suffix_of(name);
+	if (!strcmp(suf, "tbz") || !strcmp(suf, "tgz"))
+		return NULL;
 
-/*					printf("HF: expandURL('%s')'ing #1\n", url);*//*HF*/
-					rc = expandURL(tmp, url);
-					if (rc < 0) {
-						warnx("fileFindByPath: expandURL('%s') failed\n", url);
-						return NULL;
-					}
-					if (Verbose)
-						printf("'%s' expanded to '%s'\n", url, tmp);
-					return tmp;    /* return expanded URL w/ corrent pkg */
-				} else {
-					cp = findbestmatchingname(
-					    dirname_of(tmp), basename_of(tmp));
-					if (cp) {
-						char   *s;
-						s = strrchr(tmp, '/');
-						assert(s != NULL);
-						strcpy(s + 1, cp);
-						free(cp);
-						return tmp;
-					}
-				}
-			} else {
-				if (fexists(tmp)) {
-					return tmp;
-				}
-			}
-		}
-	} else {
-		if (IS_URL(fname)) {
-			/* Wildcard-URL directly specified on command line */
-			int rc;
+	/* add suffix and try */
+	snprintf(tmp, sizeof(tmp), "%s.tbz", name);
+	cp = resolvepattern1(tmp);
+	if (cp != NULL)
+		return cp;
+	snprintf(tmp, sizeof(tmp), "%s.tgz", name);
+	cp = resolvepattern1(tmp);
+	if (cp != NULL)
+		return cp;
 
-/*			printf("HF: expandURL('%s')'ing #2\n", fname);*//*HF*/
-			rc = expandURL(tmp, fname);
-			if (rc < 0) {
-				warnx("fileFindByPath: expandURL('%s') failed\n", fname);
-				return NULL;
-			}
-			if (Verbose)
-				printf("'%s' expanded to '%s'\n", fname, tmp);
-			return tmp;    /* return expanded URL w/ corrent pkg */
-		}
-	}
+	/* add version number wildcard and try */
+	snprintf(tmp, sizeof(tmp), "%s-[0-9]*.t[bg]z", name);
+	return resolvepattern1(tmp);
+}
 
-	cp = getenv("PKG_PATH");
-	while (cp && *cp) {
-		char   *cp2 = strsep(&cp, ";");
+/*
+ *  Look for filename/pattern "fname" in
+ * Returns a full path/URL where the pkg can be found
+ */
+char   *
+fileFindByPath(const char *fname)
+{
+	char    tmp[FILENAME_MAX];
+	struct path *path;
+
+	/*
+	 * 1. if fname is an absolute pathname or a url,
+	 *    just use it.
+	 */
+	if (IS_FULLPATH(fname) || IS_URL(fname))
+		return resolvepattern(fname);
+
+	/*
+	 * 2. otherwise, use PKG_PATH.
+	 */
+	TAILQ_FOREACH(path, &PkgPath, pl_entry) {
+		char *cp;
+		const char *cp2 = path->pl_path;
 
 		if (Verbose)
-			printf("trying PKG_PATH %s\n", cp2?cp2:cp);
+			printf("trying PKG_PATH %s\n", cp2);
 
-		if (strstr(fname, ".tgz") || strstr(fname, ".tbz") || strstr(fname, ".t[bg]z")) {
-			/* There's already a ".t[bg]z" present, probably typed on the command line */
-			(void) snprintf(tmp, sizeof(tmp), "%s/%s", cp2 ? cp2 : cp, fname);
-		} else {
-			/* Try this component, and tack on a ".t[bg]z" */
-			(void) snprintf(tmp, sizeof(tmp), "%s/%s.t[bg]z", cp2 ? cp2 : cp, fname);
+		if (IS_FULLPATH(cp2) || IS_URL(cp2)) {
+			snprintf(tmp, sizeof(tmp), "%s/%s", cp2, fname);
 		}
-		if (IS_URL(tmp)) {
-			char url[FILENAME_MAX];
-			int rc;
-			
-			/* save url to expand, as tmp is the static var in which
-			 * we return the result of the expansion. 
-			 */
-			strcpy(url, tmp);
-			
-/*			printf("HF: expandURL('%s')'ing #3\n", url);*//*HF*/
-			rc = expandURL(tmp, url);
-			if (rc >= 0) {
-				if (Verbose)
-					printf("fileFindByPath: success, expandURL('%s') returns '%s'\n", url, tmp);
-				return tmp;
-			}
-
-			/* Second chance - maybe just a package name was given, without
-			 * a version number. Remove the ".t*z" we tacked on above, and
-			 * re-add it with a "-[0-9]*" before. Then see if this matches
-			 * something. See also perform.c.
-			 */
-			{
-				char *s;
-				
-				if ((s = strstr(tmp, ".tgz")) ||
-				    (s = strstr(tmp, ".tgz")) ||
-				    (s = strstr(tmp, ".t[bg]z"))) {
-					*s = '\0';
-				}
-				snprintf(url, FILENAME_MAX, "%s-[0-9]*.t[bg]z", tmp);
-				rc = expandURL(tmp, url);
-				if (rc >= 0) {
-					if (Verbose)
-						printf("fileFindByPath: late success, expandURL('%s') returns '%s'\n",
-							url, tmp);
-					return tmp;
-				}
-			}
-
-			/* No luck with this parth of PKG_PATH - try next one */
-			
-		} else {
-		if (ispkgpattern(tmp)) {
-			char   *s;
-			s = findbestmatchingname(dirname_of(tmp), basename_of(tmp));
-			if (s) {
-				char   *t;
-				t = strrchr(tmp, '/');
-				strcpy(t + 1, s);
-				free(s);
-				return tmp;
-			}
-		} else {
-			if (fexists(tmp) && isfile(tmp)) {
-				return tmp;
-				}
-
-				/* Second chance: seems just a pkg name was given,
-				 * no wildcard, no .tgz. Tack something on and retry.
-				 * (see above, and perform.c)
-				 */
-				{
-					char *s;
-					char buf2[FILENAME_MAX];
-					
-					if ((s = strstr(tmp, ".tgz")) ||
-					    (s = strstr(tmp, ".tgz")) ||
-					    (s = strstr(tmp, ".t[bg]z"))) {
-						*s = '\0';
-					}
-					snprintf(buf2, FILENAME_MAX, "%s-[0-9]*.t[bg]z", tmp);
-					s = findbestmatchingname(dirname_of(buf2), basename_of(buf2));
-					if (s) {
-						char *t;
-						strcpy(tmp, buf2); /* now we can overwrite it */
-						t = strrchr(tmp, '/');
-						strcpy(t+1, s);
-						free(s);
-						return tmp;
-					}
-				}
-			}
+		else {
+			char cwdtmp[MAXPATHLEN];
+			if (getcwd(cwdtmp, sizeof(cwdtmp)) == NULL)
+				errx(1, "getcwd");
+			snprintf(tmp, sizeof(tmp), "%s/%s/%s", cwdtmp, cp2, fname);
 		}
+		cp = resolvepattern(tmp);
+		if (cp)
+			return cp;
 	}
 
+#if 0
+	/*
+	 * 3. finally, search current directory.
+	 */
+	snprintf(tmp, sizeof(tmp), "./%s", fname);
+	return resolvepattern(tmp);
+#else
 	return NULL;
+#endif
 }
 
 /*
@@ -657,7 +523,7 @@ move_file(char *dir, char *fname, char *to)
  * Unpack a tar file
  */
 int
-unpack(char *pkg, char *flist)
+unpack(const char *pkg, const char *flist)
 {
 	char    args[10] = "-";
 	char   *cp;
@@ -666,7 +532,7 @@ unpack(char *pkg, char *flist)
          * Figure out by a crude heuristic whether this or not this is probably
          * compressed.
          */
-	if (strcmp(pkg, "-")) {
+	if (!IS_STDIN(pkg)) {
 		cp = strrchr(pkg, '.');
 		if (cp) {
 			cp++;
