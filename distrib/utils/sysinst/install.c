@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.6 1997/11/02 09:41:59 jonathan Exp $	*/
+/*	$NetBSD: install.c,v 1.7 1997/11/03 06:18:08 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,8 +91,8 @@ void do_install(void)
 	md_post_newfs ();
 
 	/* Done to here. */
-	printf ("\n\nThis part of the installation completed."
-		"  CR to continue\n");
+	printf("%s", msg_string(MSG_disksetupdone));
+
 	getchar();
 	puts (CL); /* just to make sure */
 	wrefresh(stdscr);
