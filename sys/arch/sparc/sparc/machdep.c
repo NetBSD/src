@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.216 2003/01/12 16:29:01 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.217 2003/01/13 01:35:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -709,6 +709,24 @@ sys___sigreturn14(p, v, retval)
 	return (EJUSTRETURN);
 }
 
+#if defined(MULTIPROCESSOR)
+/*
+ * stop routine for CPUs not running cpu_reboot.
+ */
+static void cpu_halt(void)
+{
+	/* XXX - Acknowledge receipt */
+	cpuinfo.flags |= CPUFLG_GOTMSG;
+
+	printf("cpu%d halted\n", cpu_number());
+
+	/* This CPU is no longer available */
+	cpuinfo.flags &= ~CPUFLG_READY;
+
+	spl0();
+	prom_cpustop(0);
+}
+#endif /* MULTIPROCESSOR */
 
 int	waittime = -1;
 
@@ -751,8 +769,17 @@ cpu_reboot(howto, user_boot_string)
 			resettodr();
 	}
 
-	/* Disable interrupts. */
-	(void) splhigh();
+	/* Disable interrupts. But still allow IPI on MP systems */
+	if (ncpu > 1)
+		(void)splsched();
+	else
+		(void)splhigh();
+
+#if defined(MULTIPROCESSOR)
+	/* Direct system interrupts to this CPU, since dump uses polled I/O */
+	if (CPU_ISSUN4M)
+		*((u_int *)ICR_ITR) = cpuinfo.mid - 8;
+#endif
 
 	/* If rebooting and a dump is requested, do it. */
 #if 0
@@ -766,6 +793,12 @@ cpu_reboot(howto, user_boot_string)
 
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+#if defined(MULTIPROCESSOR)
+	UNLOCK_XPMSG();	/* XXX - in case we paniced in xcall() */
+	XCALL0(cpu_halt, CPUSET_ALL & ~(1 << cpu_number()));
+	delay(100);
+#endif /* MULTIPROCESSOR */
 
 	/* If powerdown was requested, do it. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
@@ -784,7 +817,11 @@ cpu_reboot(howto, user_boot_string)
 	}
 
 	if (howto & RB_HALT) {
+#if defined(MULTIPROCESSOR)
+		printf("cpu%d halted\n\n", cpu_number());
+#else
 		printf("halted\n\n");
+#endif
 		prom_halt();
 	}
 
