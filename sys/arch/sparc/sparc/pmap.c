@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.14 1994/07/13 07:52:01 pk Exp $
+ * $Id: pmap.c,v 1.15 1994/08/06 22:08:49 deraadt Exp $
  */
 
 /*
@@ -1819,8 +1819,12 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 			}
 			if ((tpte & PG_TYPE) == PG_OBMEM) {
 				i = ptoa(HWTOSW(tpte & PG_PFNUM));
-				if (managed(i))
+				if (managed(i)) {
+					if (tpte & PG_W)
+						pm->pm_stats.wired_count--;
+					pm->pm_stats.resident_count--;
 					pv_unlink(pvhead(i), pm, va);
+				}
 			}
 			nleft--;
 			*pte = 0;
@@ -2451,6 +2455,10 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 				splx(s);
 				/* caller should call this directly: */
 				pmap_changeprot(pm, va, prot, wired);
+				if (wired)
+					pm->pm_stats.wired_count++;
+				else
+					pm->pm_stats.wired_count--;
 				return;
 			}
 			/*
@@ -2472,6 +2480,13 @@ curproc->p_comm, curproc->p_pid, va);*/
 		} else {
 			/* adding new entry */
 			pm->pm_npte[vseg]++;
+
+			/*
+			 * Increment counters
+			 */
+			pm->pm_stats.resident_count++;
+			if (wired)
+				pm->pm_stats.wired_count++;
 		}
 	}
 
