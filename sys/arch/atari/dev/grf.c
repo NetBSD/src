@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.1.1.1 1995/03/26 07:12:12 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.2 1995/04/10 08:55:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -86,7 +86,7 @@ int grfopen __P((dev_t, int, int, struct proc *));
 int grfclose __P((dev_t, int));
 int grfioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int grfselect __P((dev_t, int));
-int grfmap __P((dev_t, int, int));
+int grfmmap __P((dev_t, int, int));
 
 int grfon __P((dev_t));
 int grfoff __P((dev_t));
@@ -417,11 +417,11 @@ grfselect(dev, rw)
  * memory space.
  */
 int
-grfmap(dev, off, prot)
+grfmmap(dev, off, prot)
 dev_t	dev;
 int	off, prot;
 {
-panic("No grfmap\n"); /* LWP */
+panic("No grfmmap\n"); /* LWP */
 }
 
 int
