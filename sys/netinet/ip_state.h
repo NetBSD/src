@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.16 2000/05/03 11:12:14 veego Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.17 2000/08/09 21:00:45 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.13 2000/03/13 22:10:23 darrenr Exp
+ * Id: ip_state.h,v 2.13.2.1 2000/07/08 02:15:35 darrenr Exp
  */
 
 #ifndef _NETINET_IP_STATE_H_
@@ -20,8 +20,8 @@
 # define	SIOCDELST	_IOW(r, 61, struct ipstate *)
 #endif
 
-#define	IPSTATE_SIZE	257
-#define	IPSTATE_MAX	2048	/* Maximum number of states held */
+#define	IPSTATE_SIZE	5737
+#define	IPSTATE_MAX	4013	/* Maximum number of states held */
 
 #define	PAIRS(s1,d1,s2,d2)	((((s1) == (s2)) && ((d1) == (d2))) ||\
 				 (((s1) == (d2)) && ((d1) == (s2))))
