@@ -1,4 +1,5 @@
-/*	$NetBSD: funcs.c,v 1.1.1.7 2004/12/13 10:24:53 pooka Exp $	*/
+/*	$NetBSD: funcs.c,v 1.1.1.8 2005/02/21 14:33:38 pooka Exp $	*/
+
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -35,9 +36,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: funcs.c,v 1.13 2004/09/11 19:15:57 christos Exp")
+FILE_RCSID("@(#)Id: funcs.c,v 1.14 2005/01/07 19:17:27 christos Exp")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.1.1.7 2004/12/13 10:24:53 pooka Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.1.1.8 2005/02/21 14:33:38 pooka Exp $");
 #endif
 #endif	/* lint */
 /*
@@ -116,11 +117,11 @@ file_badread(struct magic_set *ms)
 
 #ifndef COMPILE_ONLY
 protected int
-file_buffer(struct magic_set *ms, const void *buf, size_t nb)
+file_buffer(struct magic_set *ms, int fd, const void *buf, size_t nb)
 {
     int m;
     /* try compression stuff */
-    if ((m = file_zmagic(ms, buf, nb)) == 0) {
+    if ((m = file_zmagic(ms, fd, buf, nb)) == 0) {
 	/* Check if we have a tar file */
 	if ((m = file_is_tar(ms, buf, nb)) == 0) {
 	    /* try tests in /etc/magic (or surrogate magic file) */

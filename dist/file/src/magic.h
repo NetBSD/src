@@ -1,4 +1,5 @@
-/*	$NetBSD: magic.h,v 1.1.1.5 2004/12/13 10:24:50 pooka Exp $	*/
+/*	$NetBSD: magic.h,v 1.1.1.6 2005/02/21 14:33:38 pooka Exp $	*/
+
 
 /*
  * Copyright (c) Christos Zoulas 2003.
