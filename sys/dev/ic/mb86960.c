@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.21 1998/03/22 04:25:36 enami Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.22 1998/03/29 22:08:03 mycroft Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1557,7 +1557,7 @@ mb86960_getmcaf(ec, af)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
-	register u_char *cp, c;
+	register u_char *cp;
 	register u_long crc;
 	register int i, len;
 	struct ether_multistep step;
@@ -1592,14 +1592,13 @@ mb86960_getmcaf(ec, af)
 		cp = enm->enm_addrlo;
 		crc = 0xffffffff;
 		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			c = *cp++;
+			crc ^= (*cp++) << 0;
 			for (i = 8; --i >= 0;) {
-				if ((crc & 0x01) ^ (c & 0x01)) {
+				if (crc & 0x01) {
 					crc >>= 1;
 					crc ^= 0xedb88320;
 				} else
 					crc >>= 1;
-				c >>= 1;
 			}
 		}
 		/* Just want the 6 most significant bits. */
