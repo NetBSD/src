@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2003/07/23 08:01:27 itojun Exp $
+#	$NetBSD: Makefile,v 1.52 2005/01/10 02:58:58 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 .include <bsd.own.mk>
@@ -15,8 +15,9 @@ MLINKS=	ftpusers.5 ftpchroot.5
 SRCS+=	ls.c cmp.c print.c stat_flags.c util.c
 .PATH:	${NETBSDSRCDIR}/bin/ls
 
+.if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
-.include <bsd.own.mk>
+.endif
 
 WARNS=2
 

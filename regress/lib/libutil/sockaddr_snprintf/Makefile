@@ -1,7 +1,14 @@
-#	$NetBSD: Makefile,v 1.1 2004/11/19 21:38:25 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2005/01/10 02:58:58 lukem Exp $
+
+NOMAN=		# defined
+
+.include <bsd.own.mk>
 
 PROG=		sockaddr_snprintf
-NOMAN=		# defined
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=	-DINET6
+.endif
 
 regress: ${PROG}
 	./${PROG}
