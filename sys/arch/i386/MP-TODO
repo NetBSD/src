@@ -5,11 +5,6 @@ showstoppers for merge back to -current:
  - change splraise/spllower to not touch local apic, since that's very
 slow (requires cheap per-cpu storage).
 
- - per-cpu GDT and MP-safing of gdt.c.  this seems like severe
-overkill so just one descriptor is different.  While we're in there,
-we *might* want to use per-cpu, more ephemeral, descriptors for TSS
-and LDT.
-
  - quad cpu ppro sporadically jumps into the stack; need to diagnose
 this.
 
@@ -22,6 +17,10 @@ branch from/to" MSR contents) to allow for sane debugging.
  - figure out why ahc on serverworks fails to find its interrupt.
 
  - careful code review of all diffs from -current
+
+ - try to render APM *harmless* (and functional in uniprocessor
+configurations).  it can't possibly work correctly when multiple cpu's
+are running, but..
 
 "would be nice":
 
@@ -37,6 +36,12 @@ branch from/to" MSR contents) to allow for sane debugging.
 
  - turn off rdtsc-based microtime on uniprocessor systems which might
 have variable-speed TSC.
+
+ - investigate using per-cpu, more ephemeral, descriptors for TSS and
+LDT.
+
+ - make halt -p work in MULTIPROCESSOR config (the one APM feature
+everyone wants)
 
 -----
 
@@ -70,4 +75,10 @@ completed.  significant rewrite of cpu spinup required.
 
 [2001/05/26  20:03:41  sommerfeld]
 answer: microtime was just doing the wrong thing.  fixed.
+
+[2002/01/30  09:52:17  sommerfeld]
+done a while ago:
+
+ - per-cpu GDT and MP-safing of gdt.c.  this seems like severe
+overkill so just one descriptor is different.  
 
