@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.3 1996/10/11 00:46:51 christos Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.4 1996/10/13 03:47:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -144,7 +144,7 @@ si_obio_match(parent, vcf, args)
 
 #ifdef	DIAGNOSTIC
 	if (ca->ca_bustype != BUS_OBIO) {
-		kprintf("si_obio_match: bustype %d?\n", ca->ca_bustype);
+		printf("si_obio_match: bustype %d?\n", ca->ca_bustype);
 		return (0);
 	}
 #endif
@@ -188,10 +188,10 @@ si_obio_attach(parent, self, args)
 	/* Default interrupt level. */
 	if ((intpri = cf->cf_intpri) == -1)
 		intpri = 2;
-	kprintf(" level %d", intpri);
+	printf(" level %d", intpri);
 
 	/* XXX: Get options from flags... */
-	kprintf(" : options=%d\n", si_obio_options);
+	printf(" : options=%d\n", si_obio_options);
 
 	ncr_sc->sc_flags = 0;
 	if (si_obio_options & SI_DO_RESELECT)
@@ -300,7 +300,7 @@ si_obio_dma_setup(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		kprintf("si_dma_setup: dh=0x%x, pa=0x%x, xlen=%d\n",
+		printf("si_dma_setup: dh=0x%x, pa=0x%x, xlen=%d\n",
 			   dh, data_pa, xlen);
 	}
 #endif
@@ -336,7 +336,7 @@ si_obio_dma_setup(ncr_sc)
 #ifdef	DEBUG
 	/* Make sure the extra FIFO reset did not hit the count. */
 	if (si->fifo_count != xlen) {
-		kprintf("si_dma_setup: fifo_count=0x%x, xlen=0x%x\n",
+		printf("si_dma_setup: fifo_count=0x%x, xlen=0x%x\n",
 			   si->fifo_count, xlen);
 		Debugger();
 	}
@@ -390,7 +390,7 @@ si_obio_dma_start(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		kprintf("si_dma_start: sr=0x%x\n", sr);
+		printf("si_dma_start: sr=0x%x\n", sr);
 	}
 #endif
 
@@ -423,7 +423,7 @@ si_obio_dma_start(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		kprintf("si_dma_start: started, flags=0x%x\n",
+		printf("si_dma_start: started, flags=0x%x\n",
 			   ncr_sc->sc_state);
 	}
 #endif
@@ -451,7 +451,7 @@ si_obio_dma_stop(ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		kprintf("si_dma_stop: dma not running\n");
+		printf("si_dma_stop: dma not running\n");
 #endif
 		return;
 	}
@@ -465,7 +465,7 @@ si_obio_dma_stop(ncr_sc)
 
 	/* Check for DMA errors. */
 	if (si->si_csr & (SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)) {
-		kprintf("si: DMA error, csr=0x%x, reset\n", si->si_csr);
+		printf("si: DMA error, csr=0x%x, reset\n", si->si_csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
 		si_reset_adapter(ncr_sc);
@@ -486,7 +486,7 @@ si_obio_dma_stop(ncr_sc)
 			if (si->si_csr & SI_CSR_FIFO_EMPTY)
 				break;
 			if (--tmo <= 0) {
-				kprintf("si: dma fifo did not empty, reset\n");
+				printf("si: dma fifo did not empty, reset\n");
 				ncr_sc->sc_state |= NCR_ABORTING;
 				/* si_reset_adapter(ncr_sc); */
 				goto out;
@@ -505,14 +505,14 @@ si_obio_dma_stop(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		kprintf("si_dma_stop: resid=0x%x ntrans=0x%x\n",
+		printf("si_dma_stop: resid=0x%x ntrans=0x%x\n",
 		       resid, ntrans);
 	}
 #endif
 
 	/* XXX: Treat (ntrans==0) as a special, non-error case? */
 	if (ntrans < MIN_DMA_LEN) {
-		kprintf("si: fifo count: 0x%x\n", resid);
+		printf("si: fifo count: 0x%x\n", resid);
 		ncr_sc->sc_state |= NCR_ABORTING;
 		goto out;
 	}

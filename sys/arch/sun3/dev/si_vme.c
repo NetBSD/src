@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.3 1996/10/11 00:46:53 christos Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.4 1996/10/13 03:47:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -146,7 +146,7 @@ si_vmes_match(parent, vcf, args)
 
 #ifdef	DIAGNOSTIC
 	if (ca->ca_bustype != BUS_VME16) {
-		kprintf("si_vmes_match: bustype %d?\n", ca->ca_bustype);
+		printf("si_vmes_match: bustype %d?\n", ca->ca_bustype);
 		return (0);
 	}
 #endif
@@ -185,7 +185,7 @@ si_vmes_match(parent, vcf, args)
 	if (x != -1) {
 		/* Something responded at 2K+1.  Maybe an "sc" board? */
 #ifdef	DEBUG
-		kprintf("si_vmes_match: May be an `sc' board at pa=0x%x\n",
+		printf("si_vmes_match: May be an `sc' board at pa=0x%x\n",
 			   ca->ca_paddr);
 #endif
 		return(0);
@@ -206,7 +206,7 @@ si_vmes_attach(parent, self, args)
 	int s;
 
 	/* XXX: Get options from flags... */
-	kprintf(" : options=%d\n", si_vme_options);
+	printf(" : options=%d\n", si_vme_options);
 
 	ncr_sc->sc_flags = 0;
 	if (si_vme_options & SI_DO_RESELECT)
@@ -336,7 +336,7 @@ si_vme_dma_setup(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		kprintf("si_dma_setup: dh=0x%x, pa=0x%x, xlen=%d\n",
+		printf("si_dma_setup: dh=0x%x, pa=0x%x, xlen=%d\n",
 			   dh, data_pa, xlen);
 	}
 #endif
@@ -425,7 +425,7 @@ si_vme_dma_start(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		kprintf("si_dma_start: started, flags=0x%x\n",
+		printf("si_dma_start: started, flags=0x%x\n",
 			   ncr_sc->sc_state);
 	}
 #endif
@@ -453,7 +453,7 @@ si_vme_dma_stop(ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		kprintf("si_dma_stop: dma not running\n");
+		printf("si_dma_stop: dma not running\n");
 #endif
 		return;
 	}
@@ -466,7 +466,7 @@ si_vme_dma_stop(ncr_sc)
 	*ncr_sc->sci_tcmd = PHASE_INVALID;
 
 	if (si->si_csr & (SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)) {
-		kprintf("si: DMA error, csr=0x%x, reset\n", si->si_csr);
+		printf("si: DMA error, csr=0x%x, reset\n", si->si_csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
 		si_reset_adapter(ncr_sc);
@@ -500,13 +500,13 @@ si_vme_dma_stop(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		kprintf("si_dma_stop: resid=0x%x ntrans=0x%x\n",
+		printf("si_dma_stop: resid=0x%x ntrans=0x%x\n",
 		       resid, ntrans);
 	}
 #endif
 
 	if (ntrans < MIN_DMA_LEN) {
-		kprintf("si: fifo count: 0x%x\n", resid);
+		printf("si: fifo count: 0x%x\n", resid);
 		ncr_sc->sc_state |= NCR_ABORTING;
 		goto out;
 	}
@@ -526,7 +526,7 @@ si_vme_dma_stop(ncr_sc)
 	{
 		char *cp = ncr_sc->sc_dataptr;
 #ifdef DEBUG
-		kprintf("si: Got Left-over bytes!\n");
+		printf("si: Got Left-over bytes!\n");
 #endif
 		if (si->si_csr & SI_CSR_BPCON) {
 			/* have SI_CSR_BPCON */

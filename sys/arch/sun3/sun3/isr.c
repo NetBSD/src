@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.23 1996/10/11 00:47:17 christos Exp $	*/
+/*	$NetBSD: isr.c,v 1.24 1996/10/13 03:47:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -142,7 +142,7 @@ void isr_autovec(evec)
 	isr = isr_autovec_list[ipl];
 	if (isr == NULL) {
 		if (n == 0)
-			kprintf("isr_autovec: ipl %d unexpected\n", ipl);
+			printf("isr_autovec: ipl %d unexpected\n", ipl);
 		return;
 	}
 
@@ -153,7 +153,7 @@ void isr_autovec(evec)
 		isr = isr->isr_next;
 	}
 	if (!n)
-		kprintf("isr_autovec: ipl %d not claimed\n", ipl);
+		printf("isr_autovec: ipl %d not claimed\n", ipl);
 }
 
 /*
@@ -207,19 +207,19 @@ isr_vectored(evec)
 	cnt.v_intr++;
 
 	if (vec < 64 || vec >= 256) {
-		kprintf("isr_vectored: vector=0x%x (invalid)\n", vec);
+		printf("isr_vectored: vector=0x%x (invalid)\n", vec);
 		return;
 	}
 	vh = &isr_vector_handlers[vec - 64];
 	if (vh->func == NULL) {
-		kprintf("isr_vectored: vector=0x%x (nul func)\n", vec);
+		printf("isr_vectored: vector=0x%x (nul func)\n", vec);
 		set_vector_entry(vec, badtrap);
 		return;
 	}
 
 	/* OK, call the isr function. */
 	if (vh->func(vh->arg) == 0)
-		kprintf("isr_vectored: vector=0x%x (not claimed)\n", vec);
+		printf("isr_vectored: vector=0x%x (not claimed)\n", vec);
 }
 
 /*
@@ -235,12 +235,12 @@ void isr_add_vectored(func, arg, level, vec)
 	struct vector_handler *vh;
 
 	if (vec < 64 || vec >= 256) {
-		kprintf("isr_add_vectored: vect=0x%x (invalid)\n", vec);
+		printf("isr_add_vectored: vect=0x%x (invalid)\n", vec);
 		return;
 	}
 	vh = &isr_vector_handlers[vec - 64];
 	if (vh->func) {
-		kprintf("isr_add_vectored: vect=0x%x (in use)\n", vec);
+		printf("isr_add_vectored: vect=0x%x (in use)\n", vec);
 		return;
 	}
 	vh->func = func;

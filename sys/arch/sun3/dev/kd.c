@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.19 1996/10/11 00:46:42 christos Exp $	*/
+/*	$NetBSD: kd.c,v 1.20 1996/10/13 03:47:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -36,7 +36,7 @@
  * This driver exists simply to provide a tty device that
  * the indirect console driver can point to.
  * The kbd driver sends its input here.
- * Output goes to the screen via PROM kprintf.
+ * Output goes to the screen via PROM printf.
  */
 
 #include <sys/param.h>
@@ -130,7 +130,7 @@ kdopen(dev, flag, mode, p)
 
 	if ((error = kbd_iopen(unit)) != 0) {
 #ifdef	DIAGNOSTIC
-		kprintf("kd: kbd_iopen, error=%d\n", error);
+		printf("kd: kbd_iopen, error=%d\n", error);
 #endif
 		return (error);
 	}

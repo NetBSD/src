@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 1996/10/11 00:47:22 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 1996/10/13 03:47:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -82,7 +82,7 @@ main_attach(parent, self, args)
 	struct cfdata *new_match;
 	int i;
 
-	kprintf("\n");
+	printf("\n");
 
 	for (i = 0; i < BUS_ORDER_SZ; i++) {
 		ca.ca_bustype = bus_order[i];
