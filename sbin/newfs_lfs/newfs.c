@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.7 2001/07/13 20:30:20 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.8 2001/11/01 07:44:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.7 2001/07/13 20:30:20 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.8 2001/11/01 07:44:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,6 @@ __RCSID("$NetBSD: newfs.c,v 1.7 2001/07/13 20:30:20 perseant Exp $");
 
 #define	COMPAT			/* allow non-labeled disks */
 
-int	version = DFL_VERSION;	/* what version of lfs to make */
 int	Nflag = 0;		/* run without writing file system */
 int	fssize;			/* file system size */
 int	sectorsize;		/* bytes/sector */
@@ -162,13 +161,15 @@ auto_segsize(int fd, off_t len, int version)
 int
 main(int argc, char **argv)
 {
-	int ch;
+	int version, ch;
 	struct partition *pp;
 	struct disklabel *lp;
 	struct stat st;
 	int debug, force, fsi, fso, segsize, maxpartitions;
 	daddr_t start;
 	char *cp, *opstring;
+
+	version = DFL_VERSION;		/* what version of lfs to make */
 
 	if ((progname = strrchr(*argv, '/')) != NULL)
 		++progname;
