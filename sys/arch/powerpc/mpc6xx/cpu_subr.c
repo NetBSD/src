@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.24 2002/07/16 23:04:21 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.25 2002/07/28 07:03:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -130,8 +130,7 @@ struct cpu_info *
 cpu_attach_common(struct device *self, int id)
 {
 	struct cpu_info *ci;
-	u_int hid0, pvr, vers;
-	char model[80];
+	u_int pvr, vers;
 
 	ncpus++;
 #ifdef MULTIPROCESSOR
@@ -171,6 +170,7 @@ cpu_attach_common(struct device *self, int id)
 		case MPC7455:
 			__asm __volatile ("mtspr %1,%0" :: "r"(id), "n"(SPR_PIR));
 		}
+		cpu_setup(self, ci);
 		break;
 	default:
 		if (id >= CPU_MAXNUM) {
@@ -182,9 +182,23 @@ cpu_attach_common(struct device *self, int id)
 		return NULL;
 #endif
 	}
+	return (ci);
+}
+
+void
+cpu_setup(self, ci)
+	struct device *self;
+	struct cpu_info *ci;
+{
+	u_int hid0, pvr, vers;
+	char model[80];
+
+	__asm __volatile ("mfpvr %0" : "=r"(pvr));
+	vers = (pvr >> 16) & 0xffff;
+
 	cpu_identify(model, sizeof(model));
 	printf(": %s, ID %d%s\n", model,  cpu_number(),
-	    id == 0 ? " (primary)" : "");
+	    cpu_number() == 0 ? " (primary)" : "");
 
 	__asm __volatile("mfspr %0,%1" : "=r"(hid0) : "n"(SPR_HID0));
 	cpu_probe_cache();
@@ -331,8 +345,6 @@ cpu_attach_common(struct device *self, int id)
 		    &ci->ci_ev_vec, self->dv_xname, "AltiVec context switches");
 	}
 #endif
-
-	return ci;
 }
 
 struct cputab {
