@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.11 2002/08/03 02:03:00 itojun Exp $	*/
+/*	$NetBSD: do_command.c,v 1.12 2003/02/19 09:21:15 dsl Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.11 2002/08/03 02:03:00 itojun Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.12 2003/02/19 09:21:15 dsl Exp $");
 #endif
 #endif
 
@@ -198,12 +198,12 @@ child_process(e, u)
 #ifdef SYSLOG
 		closelog();
 #endif
-		if (setlogin(usernm) < 0)
-			syslog(LOG_ERR, "setlogin() failure: %m");
-
 		/* get new pgrp, void tty, etc.
 		 */
 		(void) setsid();
+
+		if (setlogin(usernm) < 0)
+			syslog(LOG_ERR, "setlogin() failure: %m");
 
 		/* close the pipe ends that we won't use.  this doesn't affect
 		 * the parent, who has to read and write them; it keeps the
