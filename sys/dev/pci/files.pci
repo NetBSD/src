@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.35 1998/04/15 20:17:17 drochner Exp $
+#	$NetBSD: files.pci,v 1.36 1998/05/01 21:54:33 augustss Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -103,3 +103,8 @@ file	dev/pci/tga.c		tga		needs-flag
 file	dev/pci/tga_conf.c	tga
 file	dev/pci/tga_bt463.c	tga
 file	dev/pci/tga_bt485.c	tga
+
+# Ensoniq AudioPCI S5016
+device	eap: audio, auconv, mulaw
+attach	eap at pci
+file	dev/pci/eap.c			eap
