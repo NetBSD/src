@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.10 2001/07/13 20:30:22 perseant Exp $	*/
+/*	$NetBSD: print.c,v 1.11 2002/04/26 04:34:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.10 2001/07/13 20:30:22 perseant Exp $");
+__RCSID("$NetBSD: print.c,v 1.11 2002/04/26 04:34:41 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,18 +71,23 @@ dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr
 {
 	int i, j, blk, numblocks, accino=0;
 	daddr_t *dp, ddp, *idp;
-	u_long *datap;
+	u_int32_t *datap;
 	int size;
 	FINFO *fp;
-	u_long ck;
+	u_int32_t ck;
 
 	blk=0;
-	datap = (u_long *)malloc((lfsp->lfs_ssize*lfsp->lfs_frag) * sizeof(u_long));
-	if(datap==NULL)
+	datap = (u_int32_t *)malloc((lfsp->lfs_ssize / lfsp->lfs_fsize) * sizeof(u_int32_t));
+	if(datap==NULL) {
+	        syslog(LOG_WARNING, "cannot allocate %d in dump_summary",
+		       (int)((lfsp->lfs_ssize / lfsp->lfs_fsize) * sizeof(u_int32_t)));
 		return(-1);
+	}
 
 	if (sp->ss_sumsum != (ck = cksum(&sp->ss_datasum, 
 	    lfsp->lfs_sumsize - sizeof(sp->ss_sumsum)))) {
+	        syslog(LOG_WARNING, "sumsum checksum mismatch: should be %d, found %d\n",
+		       (int) sp->ss_sumsum, (int) ck);
 		free(datap);
 		return(-1);
 	}
@@ -126,7 +131,7 @@ dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr
 		/* printf("finfo %d: ddp=%lx, *idp=%lx\n",i,ddp,*idp); */
 		while(ddp == *idp) {
 			 /* printf(" [ino %lx]",ddp); */
-			datap[blk++] = *(u_long*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
+			datap[blk++] = *(u_int32_t*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
 			--idp;
 			ddp += btofsb(lfsp, lfsp->lfs_ibsize);
 			accino++;
@@ -139,7 +144,7 @@ dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr
 				size = btofsb(lfsp, lfsp->lfs_bsize);
 				/* printf(" %lx/%d",ddp,size); */
 			}
-			datap[blk++] = *(u_long*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
+			datap[blk++] = *(u_int32_t*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
 			ddp += size;
 		}
 		numblocks += fp->fi_nblocks;
@@ -161,7 +166,7 @@ dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr
 	while(*idp >= ddp && accino < howmany(sp->ss_ninos,INOPB(lfsp))) {
 		ddp = *idp;
 		/* printf(" [ino %lx]",ddp); */
-		datap[blk++] = *(u_long*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
+		datap[blk++] = *(u_int32_t*)((caddr_t)sp + fsbtob(lfsp, ddp-addr));
 		--idp;
 		accino++;
 	}
@@ -174,9 +179,9 @@ dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr
 		syslog(LOG_DEBUG,"Oops, blk=%d numblocks=%d\n",blk,numblocks);
 	}
 	/* check data/inode block(s) checksum too */
-	if ((ck=cksum ((void *)datap, numblocks * sizeof(u_long))) != sp->ss_datasum) {
+	if ((ck=cksum ((void *)datap, numblocks * sizeof(u_int32_t))) != sp->ss_datasum) {
                 syslog(LOG_DEBUG, "Bad data checksum: given %lu, got %lu",
-		       (unsigned long)sp->ss_datasum, ck);
+		       (unsigned long)sp->ss_datasum, (unsigned long)ck);
 		free(datap);
 		return 0;
         }
