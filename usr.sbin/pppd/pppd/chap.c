@@ -1,3 +1,5 @@
+/*	$NetBSD: chap.c,v 1.1.1.7 2000/09/23 22:14:44 christos Exp $	*/
+
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
  *
@@ -33,7 +35,14 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define RCSID	"$Id: chap.c,v 1.1.1.6 2000/07/16 21:00:01 tron Exp $"
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+#define RCSID	"Id: chap.c,v 1.24 1999/11/15 01:51:50 paulus Exp "
+#else
+__RCSID("$NetBSD: chap.c,v 1.1.1.7 2000/09/23 22:14:44 christos Exp $");
+#endif
+#endif
 
 /*
  * TODO:

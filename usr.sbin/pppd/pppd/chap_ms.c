@@ -1,3 +1,5 @@
+/*	$NetBSD: chap_ms.c,v 1.1.1.6 2000/09/23 22:14:45 christos Exp $	*/
+
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
  *
@@ -31,7 +33,14 @@
  *   You should also use DOMAIN\\USERNAME as described in README.MSCHAP80
  */
 
-#define RCSID	"$Id: chap_ms.c,v 1.1.1.5 1999/08/24 20:25:44 christos Exp $"
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+#define RCSID	"Id: chap_ms.c,v 1.15 1999/08/13 06:46:12 paulus Exp "
+#else
+__RCSID("$NetBSD: chap_ms.c,v 1.1.1.6 2000/09/23 22:14:45 christos Exp $");
+#endif
+#endif
 
 #ifdef CHAPMS
 

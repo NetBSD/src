@@ -1,3 +1,5 @@
+/*	$NetBSD: ccp.c,v 1.1.1.6 2000/09/23 22:14:44 christos Exp $	*/
+
 /*
  * ccp.c - PPP Compression Control Protocol.
  *
@@ -25,7 +27,14 @@
  * OR MODIFICATIONS.
  */
 
-#define RCSID	"$Id: ccp.c,v 1.1.1.5 1999/08/24 20:25:45 christos Exp $"
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+#define RCSID	"Id: ccp.c,v 1.30 2000/04/15 01:27:11 masputra Exp "
+#else
+__RCSID("$NetBSD: ccp.c,v 1.1.1.6 2000/09/23 22:14:44 christos Exp $");
+#endif
+#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -48,7 +57,7 @@ static option_t ccp_option_list[] = {
       "Disable CCP negotiation" },
     { "-ccp", o_bool, &ccp_protent.enabled_flag,
       "Disable CCP negotiation" },
-    { "bsdcomp", o_special, setbsdcomp,
+    { "bsdcomp", o_special, (void *)setbsdcomp,
       "Request BSD-Compress packet compression" },
     { "nobsdcomp", o_bool, &ccp_wantoptions[0].bsd_compress,
       "don't allow BSD-Compress", OPT_A2COPY,
@@ -56,7 +65,7 @@ static option_t ccp_option_list[] = {
     { "-bsdcomp", o_bool, &ccp_wantoptions[0].bsd_compress,
       "don't allow BSD-Compress", OPT_A2COPY,
       &ccp_allowoptions[0].bsd_compress },
-    { "deflate", 1, setdeflate,
+    { "deflate", 1, (void *)setdeflate,
       "request Deflate compression" },
     { "nodeflate", o_bool, &ccp_wantoptions[0].deflate,
       "don't allow Deflate compression", OPT_A2COPY,
@@ -1150,7 +1159,7 @@ ccp_printpkt(p, plen, printer, arg)
     case TERMACK:
     case TERMREQ:
 	if (len > 0 && *p >= ' ' && *p < 0x7f) {
-	    print_string(p, len, printer, arg);
+	    print_string((char *)p, len, printer, arg);
 	    p += len;
 	    len = 0;
 	}

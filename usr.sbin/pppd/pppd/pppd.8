@@ -1,5 +1,7 @@
-.\" manual page [] for pppd 2.3
-.\" $Id: pppd.8,v 1.1.1.6 2000/07/16 21:00:20 tron Exp $
+.\" $NetBSD: pppd.8,v 1.1.1.7 2000/09/23 22:14:58 christos Exp $
+.\"
+.\" manual page [] for pppd 2.4
+.\" Id: pppd.8,v 1.53 2000/08/01 01:47:04 paulus Exp 
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -298,6 +300,22 @@ specify \fIdomain Quotron.COM\fR.  Pppd would then use the name
 and as the default name to send to the peer when authenticating itself
 to the peer.  This option is privileged.
 .TP
+.B endpoint \fI<epdisc>
+Sets the endpoint discriminator sent by the local machine to the peer
+during multilink negotiation to \fI<epdisc>\fR.  The default is to use
+the MAC address of the first ethernet interface on the system, if any,
+otherwise the IPv4 address corresponding to the hostname, if any,
+provided it is not in the multicast or locally-assigned IP address
+ranges, or the localhost address.  The endpoint discriminator can be
+the string \fBnull\fR or of the form \fItype\fR:\fIvalue\fR, where
+type is a decimal number or one of the strings \fBlocal\fR, \fBIP\fR,
+\fBMAC\fR, \fBmagic\fR, or \fBphone\fR.  The value is an IP address in
+dotted-decimal notation for the \fBIP\fR type, or a string of bytes in
+hexadecimal, separated by periods or colons for the other types.  For
+the MAC type, the value may also be the name of an ethernet or similar
+network interface.  This option is currently only available under
+Linux.
+.TP
 .B hide-password
 When logging the contents of PAP packets, this option causes pppd to
 exclude the password string from the log.  This is the default.
@@ -524,6 +542,23 @@ signal briefly when the connection is terminated and before executing
 the connect script.  On Ultrix, this option implies hardware flow
 control, as for the \fIcrtscts\fR option.
 .TP
+.B mp
+Enables the use of PPP multilink; this is an alias for the `multilink'
+option.  This option is currently only available under Linux.
+.TP
+.B mpshortseq
+Enables the use of short (12-bit) sequence numbers in multilink
+headers, as opposed to 24-bit sequence numbers.  This option is only
+available under Linux, and only has any effect if multilink is
+enabled (see the multilink option).
+.TP
+.B mrru \fIn
+Sets the Maximum Reconstructed Receive Unit to \fIn\fR.  The MRRU is
+the maximum size for a received packet on a multilink bundle, and is
+analogous to the MRU for the individual links.  This option is
+currently only available under Linux, and only has any effect if
+multilink is enabled (see the multilink option).
+.TP
 .B ms-dns \fI<addr>
 If pppd is acting as a server for Microsoft Windows clients, this
 option allows pppd to supply one or two DNS (Domain Name Server)
@@ -538,6 +573,14 @@ clients, this option allows pppd to supply one or two WINS (Windows
 Internet Name Services) server addresses to the clients.  The first
 instance of this option specifies the primary WINS address; the second
 instance (if given) specifies the secondary WINS address.
+.TP
+.B multilink
+Enables the use of the PPP multilink protocol.  If the peer also
+supports multilink, then this link can become part of a bundle between
+the local system and the peer.  If there is an existing bundle to the
+peer, pppd will join this link to that bundle, otherwise pppd will
+create a new bundle.  See the MULTILINK section below.  This option is
+currently only available under Linux.
 .TP
 .B name \fIname
 Set the name of the local system for authentication purposes to
@@ -601,6 +644,11 @@ Don't detach from the controlling terminal.  Without this option, if a
 serial device other than the terminal on the standard input is
 specified, pppd will fork to become a background process.
 .TP
+.B noendpoint
+Disables pppd from sending an endpoint discriminator to the peer or
+accepting one from the peer (see the MULTILINK section below).  This
+option should only be required if the peer is buggy.
+.TP
 .B noip
 Disable IPCP negotiation and IP communication.  This option should
 only be required if the peer is buggy and gets confused by requests
@@ -630,10 +678,25 @@ settings.
 .B nolog
 Do not send log messages to a file or file descriptor.  This option
 cancels the \fBlogfd\fR and \fBlogfile\fR options.
+.TP
 .B nomagic
 Disable magic number negotiation.  With this option, pppd cannot
 detect a looped-back line.  This option should only be needed if the
 peer is buggy.
+.TP
+.B nomp
+Disables the use of PPP multilink.  This option is currently only
+available under Linux.
+.TP
+.B nompshortseq
+Disables the use of short (12-bit) sequence numbers in the PPP
+multilink protocol, forcing the use of 24-bit sequence numbers.  This
+option is currently only available under Linux, and only has any
+effect if multilink is enabled.
+.TP
+.B nomultilink
+Disables the use of PPP multilink.  This option is currently only
+available under Linux.
 .TP
 .B nopcomp
 Disable protocol field compression negotiation in both the receive and
@@ -1063,6 +1126,39 @@ IP address assignment), pppd has to change the interface IP addresses
 to the negotiated addresses.  This may disrupt existing connections,
 and the use of demand dialling with peers that do dynamic IP address
 assignment is not recommended.
+.SH MULTILINK
+Multilink PPP provides the capability to combine two or more PPP links
+between a pair of machines into a single `bundle', which appears as a
+single virtual PPP link which has the combined bandwidth of the
+individual links.  Currently, multilink PPP is only supported under
+Linux.
+.LP
+Pppd detects that the link it is controlling is connected to the same
+peer as another link using the peer's endpoint discriminator and the
+authenticated identity of the peer (if it authenticates itself).  The
+endpoint discriminator is a block of data which is hopefully unique
+for each peer.  Several types of data can be used, including
+locally-assigned strings of bytes, IP addresses, MAC addresses,
+randomly strings of bytes, or E-164 phone numbers.  The endpoint
+discriminator sent to the peer by pppd can be set using the endpoint
+option.
+.LP
+In circumstances the peer may send no endpoint discriminator or a
+non-unique value.  The optional bundle option adds an extra string
+which is added to the peer's endpoint discriminator and authenticated
+identity when matching up links to be joined together in a bundle.
+The bundle option can also be used to allow the establishment of
+multiple bundles between the local system and the peer.  Pppd uses a
+TDB database in /var/run/pppd.tdb to match up links.
+.LP
+Assuming that multilink is enabled and the peer is willing to
+negotiate multilink, then when pppd is invoked to bring up the first
+link to the peer, it will detect that no other link is connected to
+the peer and create a new bundle, that is, another ppp network
+interface unit.  When another pppd is invoked to bring up another link
+to the peer, it will detect the existing bundle and join its link to
+it.  Currently, if the first pppd terminates (for example, because of
+a hangup or a received signal) the bundle is destroyed.
 .SH EXAMPLES
 .LP
 The following examples assume that the /etc/ppp/options file contains

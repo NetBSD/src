@@ -1,3 +1,5 @@
+/*	$NetBSD: upap.c,v 1.1.1.7 2000/09/23 22:14:55 christos Exp $	*/
+
 /*
  * upap.c - User/Password Authentication Protocol.
  *
@@ -17,7 +19,14 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define RCSID	"$Id: upap.c,v 1.1.1.6 2000/07/16 21:00:23 tron Exp $"
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+#define RCSID	"Id: upap.c,v 1.23 1999/11/20 05:11:47 paulus Exp "
+#else
+__RCSID("$NetBSD: upap.c,v 1.1.1.7 2000/09/23 22:14:55 christos Exp $");
+#endif
+#endif
 
 /*
  * TODO:

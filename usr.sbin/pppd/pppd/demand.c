@@ -1,3 +1,5 @@
+/*	$NetBSD: demand.c,v 1.1.1.6 2000/09/23 22:14:45 christos Exp $	*/
+
 /*
  * demand.c - Support routines for demand-dialling.
  *
@@ -17,7 +19,14 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define RCSID	"$Id: demand.c,v 1.1.1.5 1999/08/24 20:25:44 christos Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+#define RCSID	"Id: demand.c,v 1.13 2000/04/15 01:27:11 masputra Exp "
+#else
+__RCSID("$NetBSD: demand.c,v 1.1.1.6 2000/09/23 22:14:45 christos Exp $");
+#endif
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -216,7 +225,7 @@ loop_chars(p, n)
 	    if (!escape_flag && !flush_flag
 		&& framelen > 2 && fcs == PPP_GOODFCS) {
 		framelen -= 2;
-		if (loop_frame(frame, framelen))
+		if (loop_frame((unsigned char *)frame, framelen))
 		    rv = 1;
 	    }
 	    framelen = 0;

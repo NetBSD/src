@@ -1,3 +1,5 @@
+/*	$NetBSD: cbcp.h,v 1.1.1.5 2000/09/23 22:14:43 christos Exp $	*/
+
 #ifndef CBCP_H
 #define CBCP_H
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: sys-bsd.c,v 1.1.1.6 2000/09/23 22:14:54 christos Exp $	*/
+
 /*
  * sys-bsd.c - System-dependent procedures for setting up
  * PPP interfaces on bsd-4.4-ish systems (including 386BSD, NetBSD, etc.)
@@ -20,9 +22,15 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define RCSID	"$Id: sys-bsd.c,v 1.1.1.5 1999/08/24 20:25:38 christos Exp $"
-/*	$NetBSD: sys-bsd.c,v 1.1.1.5 1999/08/24 20:25:38 christos Exp $	*/
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+#define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
+#else
+__RCSID("$NetBSD: sys-bsd.c,v 1.1.1.6 2000/09/23 22:14:54 christos Exp $");
 #endif
+#endif
+/*	$NetBSD: sys-bsd.c,v 1.1.1.6 2000/09/23 22:14:54 christos Exp $	*/
 
 /*
  * TODO:

@@ -1,3 +1,5 @@
+/*	$NetBSD: pppstats.c,v 1.1.1.6 2000/09/23 22:14:58 christos Exp $	*/
+
 /*
  * print PPP statistics:
  * 	pppstats [-a|-d] [-v|-r|-z] [-c count] [-w wait] [interface]
@@ -35,8 +37,13 @@
 #define const
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
-static const char rcsid[] = "$Id: pppstats.c,v 1.1.1.5 1999/08/25 02:57:32 christos Exp $";
+#if 0
+static const char rcsid[] = "Id: pppstats.c,v 1.28 2000/04/24 02:54:18 masputra Exp ";
+#else
+__RCSID("$NetBSD: pppstats.c,v 1.1.1.6 2000/09/23 22:14:58 christos Exp $");
+#endif
 #endif
 
 #include <stdio.h>
@@ -98,6 +105,14 @@ char	*interface;
 extern int optind;
 extern char *optarg;
 #endif
+
+/*
+ * If PPP_DRV_NAME is not defined, use the legacy "ppp" as the
+ * device name.
+ */
+#if !defined(PPP_DRV_NAME)
+#define PPP_DRV_NAME    "ppp"
+#endif /* !defined(PPP_DRV_NAME) */
 
 static void usage __P((void));
 static void catchalarm __P((int));
@@ -444,7 +459,7 @@ main(argc, argv)
     char *dev;
 #endif
 
-    interface = "ppp0";
+    interface = PPP_DRV_NAME "0";
     if ((progname = strrchr(argv[0], '/')) == NULL)
 	progname = argv[0];
     else
@@ -498,7 +513,7 @@ main(argc, argv)
     if (argc > 0)
 	interface = argv[0];
 
-    if (sscanf(interface, "ppp%d", &unit) != 1) {
+    if (sscanf(interface, PPP_DRV_NAME "%d", &unit) != 1) {
 	fprintf(stderr, "%s: invalid interface '%s' specified\n",
 		progname, interface);
     }
@@ -530,7 +545,7 @@ main(argc, argv)
 #ifdef __osf__
     dev = "/dev/streams/ppp";
 #else
-    dev = "/dev/ppp";
+    dev = "/dev/" PPP_DRV_NAME;
 #endif
     if ((s = open(dev, O_RDONLY)) < 0) {
 	fprintf(stderr, "%s: couldn't open ", progname);

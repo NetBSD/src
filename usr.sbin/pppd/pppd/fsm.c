@@ -1,3 +1,5 @@
+/*	$NetBSD: fsm.c,v 1.1.1.6 2000/09/23 22:14:45 christos Exp $	*/
+
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
  *
@@ -17,7 +19,14 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define RCSID	"$Id: fsm.c,v 1.1.1.5 1999/08/24 20:25:44 christos Exp $"
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+#define RCSID	"Id: fsm.c,v 1.17 1999/08/13 06:46:12 paulus Exp "
+#else
+__RCSID("$NetBSD: fsm.c,v 1.1.1.6 2000/09/23 22:14:45 christos Exp $");
+#endif
+#endif
 
 /*
  * TODO:

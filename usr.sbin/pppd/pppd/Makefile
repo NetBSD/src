@@ -1,20 +1,22 @@
-#	$NetBSD: Makefile,v 1.1.1.3 1997/09/26 18:51:07 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.4 2000/09/23 22:14:58 christos Exp $
 
 PCAPDIR=${.CURDIR}/../../../lib/libpcap
 
 PROG=	pppd
-SRCS=	auth.c cbcp.c ccp.c chap.c chap_ms.c demand.c fsm.c ipcp.c \
-	ipxcp.c lcp.c magic.c main.c options.c sys-bsd.c upap.c
+SRCS=	auth.c cbcp.c ccp.c chap.c chap_ms.c demand.c eui64.c fsm.c \
+	ipcp.c ipv6cp.c ipxcp.c lcp.c magic.c main.c multilink.c options.c \
+	sys-bsd.c tdb.c tty.c upap.c utils.c
 
 .PATH:	${PCAPDIR}
-MAN=	pppd.8 pppd.cbcp.8
+MAN=	pppd.8
 BINMODE=4555
 BINOWN=	root
 
 LDADD=	-lpcap -lcrypt -lutil
 DPADD=	${LIBPCAP} ${LIBCRYPT} ${LIBUTIL}
-CFLAGS+= -I. -DHAVE_PATHS_H -I${PCAPDIR} -DPPP_FILTER
-CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes
+CPPFLAGS+= -I. -DHAVE_PATHS_H 
+CPPFLAGS+= -I${PCAPDIR} -DPPP_FILTER
+CPPFLAGS+= -DCBCP_SUPPORT -DCHAPMS -DUSE_CRYPT -DMSLANMAN
+CPPFLAGS+= -DINET6
 
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>
