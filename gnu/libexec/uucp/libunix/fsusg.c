@@ -31,6 +31,7 @@ int statfs ();
 #endif
 
 #if STAT_STATFS2_FSIZE		/* 4.4BSD.  */
+#include <sys/param.h>
 #include <sys/mount.h>
 #endif
 
