@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/11/25 11:22:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/01/05 07:00:56 mrg Exp $
 #
 
 PROG=	makefs
@@ -23,4 +23,6 @@ CPPFLAGS+=	-I${.CURDIR} -I${SYSSRC} \
 
 WARNS?=	2
 
+.ifndef HOSTPROG
 .include <bsd.prog.mk>
+.endif
