@@ -1,12 +1,7 @@
-#	$NetBSD: Makefile,v 1.26 1998/12/17 11:34:10 pk Exp $
+#	$NetBSD: Makefile,v 1.27 1999/02/09 20:27:04 christos Exp $
 
-.if	(${MACHINE_ARCH} == "i386") || \
-	(${MACHINE_ARCH} == "m68k") || \
-	(${MACHINE_ARCH} == "ns32k") || \
-	(${MACHINE_ARCH} == "sparc") || \
-	(${MACHINE_ARCH} == "vax") || \
-	(${MACHINE_ARCH} == "arm32")
-
+.include <bsd.own.mk>
+.if (${OBJECT_FMT} == "a.out")
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c md.c vfprintf.c
 CLIB=	${.CURDIR}/../../lib/libc
