@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.7 1995/04/27 17:18:22 mycroft Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.8 1995/05/01 01:24:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -77,10 +77,10 @@ in_cksum(m, len)
 	int byte_swapped = 0;
 
 	for (; m && len; m = m->m_next) {
-		if (m->m_len == 0)
+		mlen = m->m_len;
+		if (mlen == 0)
 			continue;
 		w = mtod(m, u_char *);
-		mlen = m->m_len;
 		if (len < mlen)
 			mlen = len;
 		len -= mlen;
