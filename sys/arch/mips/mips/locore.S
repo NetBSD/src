@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.85 2000/01/28 15:08:37 takemura Exp $	*/
+/*	$NetBSD: locore.S,v 1.86 2000/01/28 15:18:32 takemura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,21 +267,8 @@ LEAF(mips_idle)
 1:
 	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
 	nop
-#if defined(MIPS3_4100) && defined(VR41_STANDBY_IDLE)
-	bne	t0, zero, 1f
-	nop
-	.word	0x42000021			# standby
-	nop
-	nop
-	nop
-	nop
 	beq	t0, zero, 1b
 	nop
-1:
-#else /* MIPS3_4100 && defined(VR41_STANDBY_IDLE) */ 
-	beq	t0, zero, 1b
-	nop
-#endif /* MIPS3_4100 && defined(VR41_STANDBY_IDLE) */ 
 	la	ra, sw1
 	j	ra
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
