@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_lfs.8,v 1.12 2004/06/10 14:13:36 uebayasi Exp $
+.\"	$NetBSD: mount_lfs.8,v 1.13 2005/01/31 05:19:19 erh Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,6 +49,11 @@ command attaches a log-structured file system
 .Ar special
 device on to the file system tree at the point
 .Ar node .
+Both
+.Ar special
+and
+.Ar node
+are converted to absolute paths before use.
 In addition, the
 .Xr lfs_cleanerd 8
 utility is invoked to clean the file system periodically.

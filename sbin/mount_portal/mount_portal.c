@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.25 2003/08/07 10:04:30 agc Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.26 2005/01/31 05:19:19 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.25 2003/08/07 10:04:30 agc Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.26 2005/01/31 05:19:19 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-static const char *mountpt;		/* made available to signal handler */
+static char mountpt[MAXPATHLEN];  /* made available to signal handler */
 
 	int	main __P((int, char *[]));
 static	void	sigchld __P((int));
@@ -156,7 +156,12 @@ main(argc, argv)
 	 * Get config file and mount point
 	 */
 	conf = argv[optind];
-	mountpt = argv[optind+1];
+	if (realpath(argv[optind+1], mountpt) == NULL) /* Check device path */
+		err(1, "realpath %s", argv[optind+1]);
+	if (strncmp(argv[optind+1], mountpt, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", argv[optind+1]);
+		warnx("using \"%s\" instead.", mountpt);
+	}
 
 	/*
 	 * If configuration file is not specified with an
