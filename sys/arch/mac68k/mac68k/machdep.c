@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.227 1999/04/01 00:17:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.228 1999/04/07 06:45:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -362,7 +362,7 @@ cpu_startup(void)
 	int vers;
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
-	vm_size_t size = 0;	/* To avoid compiler warning */
+	vsize_t size = 0;	/* To avoid compiler warning */
 	int delay;
 
 	/*
@@ -480,7 +480,7 @@ again:
 	 * End of first pass, size has been calculated so allocate memory
 	 */
 	if (firstaddr == 0) {
-		size = (vm_size_t)(v - firstaddr);
+		size = (vsize_t)(v - firstaddr);
 		firstaddr = (caddr_t)uvm_km_alloc(kernel_map, round_page(size));
 		if (firstaddr == 0)
 			panic("startup: no room for tables");
@@ -489,7 +489,7 @@ again:
 	/*
 	 * End of second pass, addresses have been assigned
 	 */
-	if ((vm_size_t)(v - firstaddr) != size)
+	if ((vsize_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
 
 	/*
@@ -505,7 +505,7 @@ again:
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
+		vsize_t curbufsize;
 		vaddr_t curbuf;
 		struct vm_page *pg;
 

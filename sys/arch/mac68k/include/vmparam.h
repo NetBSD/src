@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.20 1999/03/31 14:58:15 scottr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21 1999/04/07 06:45:14 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -257,7 +257,7 @@
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
