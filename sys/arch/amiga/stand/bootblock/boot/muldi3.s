@@ -1,4 +1,4 @@
-/*	$NetBSD: muldi3.s,v 1.3 1999/02/16 23:34:11 is Exp $ */
+/*	$NetBSD: muldi3.s,v 1.4 2001/02/26 14:58:37 is Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,11 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <machine/asm.h>
 
-	.text
-	.even
-	.globl	___muldi3
-___muldi3:
+ENTRY_NOPROFILE(__muldi3)
 	movml d2/d3/d4/d5/d6,sp@-	| 0..4 regs, 5 pc, 6..9 parameters
 	movml sp@(24),d2-d5
 |	movl sp@(24),d2
