@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.72 2003/11/24 14:59:38 pk Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.73 2003/11/25 12:52:10 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.72 2003/11/24 14:59:38 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.73 2003/11/25 12:52:10 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -652,9 +652,7 @@ spec_close(v)
 	int mode, error, count, flags, flags1;
 
 	count = vcount(vp);
-	simple_lock(&vp->v_interlock);
 	flags = vp->v_flag;
-	simple_unlock(&vp->v_interlock);
 
 	switch (vp->v_type) {
 
