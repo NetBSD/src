@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.9 1999/12/15 05:22:37 christos Exp $	 */
+/*	$NetBSD: load.c,v 1.10 1999/12/15 20:13:31 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -181,7 +181,7 @@ _rtld_load_by_name(name, obj, needed, dodebug)
 		for (i = 0; i < RTLD_MAX_ENTRY && x->entry[i].value != NULL;
 		    i++) {
 			if (dodebug)
-				dbg(("entry %d", i));
+				dbg(("entry %ld", (unsigned long)i));
 			if (strcmp(x->entry[i].value, val.s) == 0)
 				break;
 		}
