@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.10 1994/09/18 01:59:30 mycroft Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.11 1994/09/19 05:03:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -374,6 +374,7 @@ struct	mbuf *m_prepend __P((struct mbuf *, int, int));
 struct	mbuf *m_pullup __P((struct mbuf *, int));
 struct	mbuf *m_retry __P((int, int));
 struct	mbuf *m_retryhdr __P((int, int));
+void	m_adj __P((struct mbuf *, int));
 int	m_clalloc __P((int, int));
 void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 void	m_freem __P((struct mbuf *));
