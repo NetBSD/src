@@ -7654,7 +7654,7 @@ done
 
 
 
-for ac_func in htobe16, htobe32, htobe64, htole16, htole32, htole64, be16toh, be32toh, be64toh, le16toh, le32toh, le64toh
+for ac_func in htobe16 htobe32 htobe64 htole16 htole32 htole64 be16toh be32toh be64toh le16toh le32toh le64toh
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -7759,7 +7759,7 @@ done
 
 
 
-for ac_func in bswap16, bswap32, bswap64
+for ac_func in bswap16 bswap32 bswap64
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
