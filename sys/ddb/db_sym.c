@@ -96,12 +96,15 @@ extern void	X_db_symbol_values();
 /*
  * Multiple symbol tables
  */
+#ifndef MAXLKMS
+#define MAXLKMS 20
+#endif
+
 #ifndef MAXNOSYMTABS
-#define	MAXNOSYMTABS	3	/* mach, ux, emulator */
+#define	MAXNOSYMTABS	MAXLKMS+1	/* Room for kernel + LKM's */
 #endif
 
 db_symtab_t	db_symtabs[MAXNOSYMTABS] = {{0,},};
-int db_nsymtab = 0;
 
 db_symtab_t	*db_last_symtab;
 
@@ -110,27 +113,59 @@ db_sym_t	db_lookup();	/* forward */
 /*
  * Add symbol table, with given name, to list of symbol tables.
  */
-void
+int
 db_add_symbol_table(start, end, name, ref)
 	char *start;
 	char *end;
 	char *name;
 	char *ref;
 {
-	if (db_nsymtab >= MAXNOSYMTABS) {
+	int slot;
+
+	for (slot = 0; slot < MAXNOSYMTABS; slot++) {
+		if (db_symtabs[slot].name == NULL)
+			break;
+	}
+	if (slot >= MAXNOSYMTABS) {
 		printf ("No slots left for %s symbol table", name);
-		panic ("db_sym.c: db_add_symbol_table");
+		return(-1);
 	}
 
-	db_symtabs[db_nsymtab].start = start;
-	db_symtabs[db_nsymtab].end = end;
-	db_symtabs[db_nsymtab].name = name;
-	db_symtabs[db_nsymtab].private = ref;
-	db_nsymtab++;
+	db_symtabs[slot].start = start;
+	db_symtabs[slot].end = end;
+	db_symtabs[slot].name = name;
+	db_symtabs[slot].private = ref;
+
+	return(slot);
 }
 
 /*
- *  db_qualify("vm_map", "ux") returns "unix:vm_map".
+ * Delete a symbol table. Caller is responsible for freeing storage.
+ */
+void
+db_del_symbol_table(name)
+	char *name;
+{
+	int slot;
+
+	for (slot = 0; slot < MAXNOSYMTABS; slot++) {
+		if (db_symtabs[slot].name &&
+		    ! strcmp(db_symtabs[slot].name, name))
+			break;
+	}
+	if (slot >= MAXNOSYMTABS) {
+		printf ("Unable to find symbol table slot for %s.", name);
+		return;
+	}
+
+	db_symtabs[slot].start = 0;
+	db_symtabs[slot].end = 0;
+	db_symtabs[slot].name = 0;
+	db_symtabs[slot].private = 0;
+}
+
+/*
+ *  db_qualify("vm_map", "netbsd") returns "netbsd:vm_map".
  *
  *  Note: return value points to static data whose content is
  *  overwritten by each call... but in practice this seems okay.
@@ -196,7 +231,7 @@ db_lookup(symstr)
 	db_sym_t sp;
 	register int i;
 	int symtab_start = 0;
-	int symtab_end = db_nsymtab;
+	int symtab_end = MAXNOSYMTABS;
 	register char *cp;
 
 	/*
@@ -205,15 +240,16 @@ db_lookup(symstr)
 	for (cp = symstr; *cp; cp++) {
 		if (*cp == ':') {
 			*cp = '\0';
-			for (i = 0; i < db_nsymtab; i++) {
-				if (! strcmp(symstr, db_symtabs[i].name)) {
+			for (i = 0; i < MAXNOSYMTABS; i++) {
+				if (db_symtabs[i].name &&
+				    ! strcmp(symstr, db_symtabs[i].name)) {
 					symtab_start = i;
 					symtab_end = i + 1;
 					break;
 				}
 			}
 			*cp = ':';
-			if (i == db_nsymtab) {
+			if (i == MAXNOSYMTABS) {
 				db_error("invalid symbol table name");
 			}
 			symstr = cp+1;
@@ -225,7 +261,8 @@ db_lookup(symstr)
 	 * Return on first match.
 	 */
 	for (i = symtab_start; i < symtab_end; i++) {
-		if (sp = X_db_lookup(&db_symtabs[i], symstr)) {
+		if (db_symtabs[i].name && 
+		    (sp = X_db_lookup(&db_symtabs[i], symstr))) {
 			db_last_symtab = &db_symtabs[i];
 			return sp;
 		}
@@ -252,8 +289,9 @@ db_symbol_is_ambiguous(sym)
 		return FALSE;
 
 	db_symbol_values(sym, &sym_name, 0);
-	for (i = 0; i < db_nsymtab; i++) {
-		if (X_db_lookup(&db_symtabs[i], sym_name)) {
+	for (i = 0; i < MAXNOSYMTABS; i++) {
+		if (db_symtabs[i].name &&
+		    X_db_lookup(&db_symtabs[i], sym_name)) {
 			if (found_once)
 				return TRUE;
 			found_once = TRUE;
@@ -280,7 +318,9 @@ db_search_symbol( val, strategy, offp)
 
 	newdiff = diff = ~0;
 	db_last_symtab = 0;
-	for (i = 0; i < db_nsymtab; i++) {
+	for (i = 0; i < MAXNOSYMTABS; i++) {
+	    if (!db_symtabs[i].name)
+	        continue;
 	    sym = X_db_search_symbol(&db_symtabs[i], val, strategy, &newdiff);
 	    if (newdiff < diff) {
 		db_last_symtab = &db_symtabs[i];
