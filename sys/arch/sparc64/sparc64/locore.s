@@ -8037,7 +8037,9 @@ ENTRY(kcopy)
 	sethi	%hi(_C_LABEL(cpcb)), %o5		! cpcb->pcb_onfault = Lkcerr;
 	LDPTR	[%o5 + %lo(_C_LABEL(cpcb))], %o5
 	set	Lkcerr, %o3
+	LDPTR	[%o5 + PCB_ONFAULT], %g1! save current onfault handler
 	STPTR	%o3, [%o5 + PCB_ONFAULT]
+
 	cmp	%o2, BCOPY_SMALL
 Lkcopy_start:
 	bge,a	Lkcopy_fancy	! if >= this many, go be fancy.
@@ -8050,14 +8052,14 @@ Lkcopy_start:
 	bl	1f
 	 EMPTY
 0:
+	ldsb	[%o0], %o4	!	*dst++ = *src++;
 	inc	%o0
-	ldsb	[%o0 - 1], %o4	!	(++dst)[-1] = *src++;
 	stb	%o4, [%o1]
 	deccc	%o2
 	bge	0b
 	 inc	%o1
 1:
-	STPTR	%g0, [%o5 + PCB_ONFAULT]
+	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
 	retl
 	 clr	%o0
 	NOTREACHED
@@ -8084,15 +8086,15 @@ Lkcopy_fancy:
 	! low bits do not match, must copy by bytes.
 0:
 	ldsb	[%o0], %o4	!	do {
-	inc	%o0		!		(++dst)[-1] = *src++;
-	inc	%o1
+	inc	%o0		!		*dst++ = *src++;
+	stb	%o4, [%o1]
 	deccc	%o2
 	bnz	0b		!	} while (--len != 0);
-	 stb	%o4, [%o1 - 1]
+	 inc	%o1
 	membar	#Sync		! Make sure all traps are taken
-	clr	%o0
+	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
 	retl
-	 STPTR	%g0, [%o5 + PCB_ONFAULT]
+	 clr	%o0
 	NOTREACHED
 
 	! lowest bit matches, so we can copy by words, if nothing else
@@ -8102,10 +8104,10 @@ Lkcopy_fancy:
 
 	! although low bits match, both are 1: must copy 1 byte to align
 	ldsb	[%o0], %o4	!	*dst++ = *src++;
-	stb	%o4, [%o1]
 	inc	%o0
-	inc	%o1
+	stb	%o4, [%o1]
 	dec	%o2		!	len--;
+	inc	%o1
 	btst	2, %o3		! } [if (t & 2)]
 1:
 	be,a	1f		! if (t & 2) {
@@ -8113,8 +8115,8 @@ Lkcopy_fancy:
 	dec	2, %o2		!	len -= 2;
 0:
 	ldsh	[%o0], %o4	!	do {
-	sth	%o4, [%o1]	!		*(short *)dst = *(short *)src;
 	inc	2, %o0		!		dst += 2, src += 2;
+	sth	%o4, [%o1]	!		*(short *)dst = *(short *)src;
 	deccc	2, %o2		!	} while ((len -= 2) >= 0);
 	bge	0b
 	 inc	2, %o1
@@ -8129,10 +8131,10 @@ Lkcopy_fancy:
 
 	! although low 2 bits match, they are 10: must copy one short to align
 	ldsh	[%o0], %o4	!	(*short *)dst = *(short *)src;
-	sth	%o4, [%o1]
 	inc	2, %o0		!	dst += 2;
-	inc	2, %o1		!	src += 2;
+	sth	%o4, [%o1]
 	dec	2, %o2		!	len -= 2;
+	inc	2, %o1		!	src += 2;
 	btst	4, %o3		! } [if (t & 4)]
 1:
 	be,a	1f		! if (t & 4) {
@@ -8140,8 +8142,8 @@ Lkcopy_fancy:
 	dec	4, %o2		!	len -= 4;
 0:
 	ld	[%o0], %o4	!	do {
-	st	%o4, [%o1]	!		*(int *)dst = *(int *)src;
 	inc	4, %o0		!		dst += 4, src += 4;
+	st	%o4, [%o1]	!		*(int *)dst = *(int *)src;
 	deccc	4, %o2		!	} while ((len -= 4) >= 0);
 	bge	0b
 	 inc	4, %o1
@@ -8154,15 +8156,15 @@ Lkcopy_fancy:
 	be	1f		! if (src & 4) {
 	 dec	8, %o2		! [delay slot: len -= 8]
 	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
-	st	%o4, [%o1]
 	inc	4, %o0		!	dst += 4, src += 4, len -= 4;
-	inc	4, %o1
+	st	%o4, [%o1]
 	dec	4, %o2		! }
+	inc	4, %o1
 1:
 Lkcopy_doubles:
 	ldx	[%o0], %g5	! do {
-	stx	%g5, [%o1]	!	*(double *)dst = *(double *)src;
 	inc	8, %o0		!	dst += 8, src += 8;
+	stx	%g5, [%o1]	!	*(double *)dst = *(double *)src;
 	deccc	8, %o2		! } while ((len -= 8) >= 0);
 	bge	Lkcopy_doubles
 	 inc	8, %o1
@@ -8175,8 +8177,8 @@ Lkcopy_doubles:
 	be,a	Lkcopy_mopw	!	goto mop_up_word_and_byte;
 	 btst	2, %o2		! [delay slot: if (len & 2)]
 	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
-	st	%o4, [%o1]
 	inc	4, %o0		!	dst += 4;
+	st	%o4, [%o1]
 	inc	4, %o1		!	src += 4;
 	btst	2, %o2		! } [if (len & 2)]
 
@@ -8191,9 +8193,9 @@ Lkcopy_mopw:
 	ldsb	[%o0 + 2], %o4	! dst[2] = src[2];
 	stb	%o4, [%o1 + 2]
 	membar	#Sync		! Make sure all traps are taken
-	clr	%o0
+	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
 	retl
-	 STPTR	%g0, [%o5 + PCB_ONFAULT]
+	 clr	%o0
 	NOTREACHED
 
 	! mop up trailing byte (if present).
@@ -8202,17 +8204,19 @@ Lkcopy_mopb:
 	 ldsb	[%o0], %o4
 
 Lkcopy_done:
-	clr	%o0
 	membar	#Sync		! Make sure all traps are taken
+	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
 	retl
-	 STPTR	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	 clr	%o0
+	NOTREACHED
 
 1:
-	stb	%o4,[%o1]
-	clr	%o0
+	stb	%o4, [%o1]
 	membar	#Sync		! Make sure all traps are taken
+	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
 	retl
-	 STPTR	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	 clr	%o0
+	NOTREACHED
 	
 Lkcerr:
 #ifdef DEBUG
@@ -8232,9 +8236,10 @@ Lkcerr:
 	_ALIGN
 3:
 #endif
-	STPTR	%g0, [%o5 + PCB_ONFAULT]! clear onfault
+	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
 	retl				! and return error indicator
-	 mov	-1, %o0
+	 mov	EFAULT, %o0
+	NOTREACHED
 
 #if 0
 /*
