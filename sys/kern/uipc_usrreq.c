@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.74 2004/03/23 13:22:05 junyoung Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.75 2004/04/17 15:15:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.74 2004/03/23 13:22:05 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.75 2004/04/17 15:15:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,7 @@ uipc_usrreq(so, req, m, nam, control, p)
 {
 	struct unpcb *unp = sotounpcb(so);
 	struct socket *so2;
+	u_int newhiwat;
 	int error = 0;
 
 	if (req == PRU_CONTROL)
@@ -290,7 +291,9 @@ uipc_usrreq(so, req, m, nam, control, p)
 			 */
 			snd->sb_mbmax += unp->unp_mbcnt - rcv->sb_mbcnt;
 			unp->unp_mbcnt = rcv->sb_mbcnt;
-			snd->sb_hiwat += unp->unp_cc - rcv->sb_cc;
+			newhiwat = snd->sb_hiwat + unp->unp_cc - rcv->sb_cc;
+			(void)chgsbsize(so2->so_uid,
+			    &snd->sb_hiwat, newhiwat, RLIM_INFINITY);
 			unp->unp_cc = rcv->sb_cc;
 			sowwakeup(so2);
 #undef snd
@@ -365,7 +368,10 @@ uipc_usrreq(so, req, m, nam, control, p)
 			snd->sb_mbmax -=
 			    rcv->sb_mbcnt - unp->unp_conn->unp_mbcnt;
 			unp->unp_conn->unp_mbcnt = rcv->sb_mbcnt;
-			snd->sb_hiwat -= rcv->sb_cc - unp->unp_conn->unp_cc;
+			newhiwat = snd->sb_hiwat -
+			    (rcv->sb_cc - unp->unp_conn->unp_cc);
+			(void)chgsbsize(so->so_uid,
+			    &snd->sb_hiwat, newhiwat, RLIM_INFINITY);
 			unp->unp_conn->unp_cc = rcv->sb_cc;
 			sorwakeup(so2);
 #undef snd
