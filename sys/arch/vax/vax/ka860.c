@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.7 1997/02/19 10:04:20 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.8 1997/11/02 14:07:23 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -51,6 +51,7 @@
 #include <machine/nexus.h>
 #include <machine/ioa.h>
 #include <machine/sid.h>
+#include <vax/vax/gencons.h>
 
 struct	ioa *ioa; 
 
@@ -59,6 +60,8 @@ void	ka86_memenable __P((struct sbi_attach_args *, struct device *));
 void	ka86_memerr __P((void));
 int	ka86_mchk __P((caddr_t));
 void	ka86_steal_pages __P((void));
+void	ka86_reboot __P((int));
+void	ka86_clrf __P((void));
 
 void	crlattach __P((void));
 
@@ -74,7 +77,10 @@ struct	cpu_dep	ka860_calls = {
 	0,      /* Used by vaxstation */
 	0,      /* Used by vaxstation */
 	0,      /* Used by vaxstation */
-
+	0, 	/* Used by vaxstation */
+	0,	/* Halt call, nothing special */
+	ka86_reboot,
+	ka86_clrf,
 };
 
 /*
@@ -317,12 +323,8 @@ ka86_conf(parent, self, aux)
 	/* Enable cache */
 	mtpr(3, PR_CSWP);
 
-	strcpy(cpu_model,"VAX 8600");
-	if (ka86->v8650)
-		cpu_model[5] = '5';
-	printf(": %s, serial number %d(%d), hardware ECO level %d(%d)\n",
-	    &cpu_model[4], ka86->snr, ka86->plant, ka86->eco >> 4, ka86->eco);
-	printf("%s: ", self->dv_xname);
+	printf(": KA86, serial number %d(%d), hardware ECO level %d(%d)\n%s: ",
+	    ka86->snr, ka86->plant, ka86->eco >> 4, ka86->eco, self->dv_xname);
 	if (mfpr(PR_ACCS) & 255) {
 		printf("FPA present, type %d, serial number %d, enabling.\n", 
 		    mfpr(PR_ACCS) & 255, mfpr(PR_ACCS) >> 16);
@@ -330,4 +332,53 @@ ka86_conf(parent, self, aux)
 	} else
 		printf("no FPA\n");
 	crlattach();
+}
+
+/*
+ * Clear restart flag.
+ */
+void
+ka86_clrf()
+{
+	/*
+	 * We block all interrupts here so that there won't be any
+	 * interrupts for an ongoing printout.
+	 */
+	int s = splhigh(), old = mfpr(PR_TXCS);
+
+#define	WAIT	while ((mfpr(PR_TXCS) & GC_RDY) == 0) ;
+
+	WAIT;
+
+	/* Enable channel to console */
+	mtpr(GC_LT|GC_WRT, PR_TXCS);
+	WAIT;
+
+	/* clear warm start flag */
+	mtpr(GC_CWFL, PR_TXDB);
+	WAIT;
+
+	/* clear cold start flag */
+	mtpr(GC_CCFL, PR_TXDB);
+	WAIT;        
+
+	/* restore old state */
+	mtpr(old|GC_WRT, PR_TXCS);
+	splx(s);
+}
+
+void
+ka86_reboot(howto)
+	int howto;
+{
+	WAIT;
+
+	/* Enable channel to console */ 
+	mtpr(GC_LT|GC_WRT, PR_TXCS);
+	WAIT;   
+
+	mtpr(GC_BTFL, PR_TXDB);
+	WAIT;
+
+	asm("halt");
 }

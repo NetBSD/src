@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.h,v 1.5 1996/04/08 18:32:37 ragge Exp $ */
+/*	$NetBSD: gencons.h,v 1.6 1997/11/02 14:07:13 ragge Exp $ */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -55,8 +55,10 @@
 #define	GC_CON	0xf00	/* mfpr($PR_RXDB)&GC_CON==0 then console chr */
 
 /* PR_TXDB */
-#define	GC_BOOT	0xf02	/* boot machine */
-#define	GC_CCF	0xf04	/* clear cold start flag */
+#define	GC_CONS	0xf00	/* Console software !8600 */
+#define	GC_BTFL	0x2	/* boot machine */
+#define	GC_CWFL	0x3	/* clear warm start flag */
+#define	GC_CCFL	0x4	/* clear cold start flag */
 
 /* Prototypes */
 void	gencnputc __P((dev_t, int));

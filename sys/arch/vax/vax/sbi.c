@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.14 1996/10/13 03:36:00 christos Exp $ */
+/*	$NetBSD: sbi.c,v 1.15 1997/11/02 14:07:30 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -49,12 +49,11 @@ sbi_print(aux, name)
 {
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	int unsupp = 0;
-	extern int nmba;
 
 	if (name) {
 		switch (sa->type) {
 		case NEX_MBA:
-			printf("mba%d at %s",nmba++, name);
+			printf("mba at %s", name);
 			break;
 		default:
 			printf("unknown device 0x%x at %s", sa->type, name);
