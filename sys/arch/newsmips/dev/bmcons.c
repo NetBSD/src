@@ -1,4 +1,4 @@
-/*	$NetBSD: bmcons.c,v 1.8 2000/11/02 00:37:57 eeh Exp $	*/
+/*	$NetBSD: bmcons.c,v 1.9 2000/11/03 18:26:32 tsutsui Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -153,7 +153,7 @@ bmcnpollc(dev, on)
 
 static char bmcn_active[1];
 static char bmcn_stopped[1];
-static struct tty bmcn_tty[1];
+static struct tty *bmcn_tp;
 
 void	ttrstrt __P((void *));
 void	bmcnrint __P((char));
@@ -177,21 +177,16 @@ static int cntodm __P((int));
 void
 bmcnattach()
 {
-	struct tty *tp;
 	extern struct clist scode_buf;
 	extern struct clist keyboard_buf;
 
-	tp = &bmcn_tty[0];
-	bzero(tp, sizeof(struct tty));
-	clalloc(&tp->t_rawq, 1024, 1);
-	clalloc(&tp->t_canq, 1024, 1);
-	clalloc(&tp->t_outq, 1024, 0);
+	bmcn_tp = ttymalloc();
 
 	clalloc(&scode_buf, 1024, 1);
 	clalloc(&keyboard_buf, 1024, 1);
 
-	tp->t_dev = makedev(BMMAJOR, 0);
-	tty_attach(tp);
+	bmcn_tp->t_dev = makedev(BMMAJOR, 0);
+	tty_attach(bmcn_tp);
 }
 
 
@@ -205,7 +200,7 @@ bmcnopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp = &bmcn_tty[0];
+	register struct tty *tp = bmcn_tp;
 	static int firstopen = 1;
 
 	if (firstopen) {
@@ -255,7 +250,7 @@ bmcnclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp = &bmcn_tty[0];
+	register struct tty *tp = bmcn_tp;
 
 	(*tp->t_linesw->l_close)(tp, flag);
 	(void) cnmctl(CN_BRK, DMBIC);
@@ -270,7 +265,7 @@ bmcnread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = &bmcn_tty[0];
+	register struct tty *tp = bmcn_tp;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
@@ -282,7 +277,7 @@ bmcnwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = &bmcn_tty[0];
+	register struct tty *tp = bmcn_tp;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
@@ -291,7 +286,7 @@ struct tty *
 bmcntty(dev)
 	dev_t dev;
 {
-	return &bmcn_tty[0];
+	return bmcn_tp;
 }
 
 
@@ -303,7 +298,7 @@ _bmcnrint(buf, n)
 	register char *buf;
 	register int n;
 {
-	register struct tty *tp = &bmcn_tty[0];
+	register struct tty *tp = bmcn_tp;
 	register int (*rint)();
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
@@ -333,7 +328,7 @@ bmcnioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct tty *tp = &bmcn_tty[0];
+	register struct tty *tp = bmcn_tp;
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
@@ -488,7 +483,7 @@ void
 _bmcnxint(count)
 	int count;
 {
-	register struct tty *tp = &bmcn_tty[0];
+	register struct tty *tp = bmcn_tp;
 	int s;
 
 	bmcn_stopped[0] = 0;
@@ -499,7 +494,7 @@ _bmcnxint(count)
 	else
 		ndflush(&tp->t_outq, count);
 	(void) splx(s);
-	if (tp->t_line)
+	if (0) /* XXX always termios? */
 		(*tp->t_linesw->l_start)(tp);
 	else
 		bmcnstart(tp);
@@ -648,7 +643,7 @@ void
 _bmcnsint(stat)
 	int stat;
 {
-	register struct tty *tp = &bmcn_tty[0];
+	register struct tty *tp = bmcn_tp;
 
 	if (stat & OVERRUN_ERROR)
 		printf("console: fifo overflow\n");
