@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.2 1995/12/13 19:35:39 thorpej Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.3 1997/04/25 00:58:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,13 +37,13 @@
  * SUCH DAMAGE.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	RCSID("from: @(#)_setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.2 1995/12/13 19:35:39 thorpej Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.3 1997/04/25 00:58:41 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
