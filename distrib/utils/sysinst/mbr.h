@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.20 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: mbr.h,v 1.21 2004/07/17 19:36:59 dsl Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -78,7 +78,7 @@ struct mbr_info_t {
 };
 
 /* incore fdisk (mbr, bios) geometry */
-int bcyl, bhead, bsec, bsize, bcylsize;
+int bcyl, bhead, bsec;
 
 mbr_info_t mbr;
 
