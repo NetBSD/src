@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: xen.h,v 1.1.2.1 2004/05/22 15:58:19 he Exp $	*/
 
 /*
  *
@@ -30,15 +30,38 @@
 
 #ifndef _LOCORE
 
+struct xen_netinfo {
+	uint32_t xi_ifno;
+	char *xi_root;
+	uint32_t xi_ip[5];
+};
+
+union xen_cmdline_parseinfo {
+	char			xcp_bootdev[16]; /* sizeof(dv_xname) */
+	struct xen_netinfo	xcp_netinfo;
+	char			xcp_console[16];
+};
+
+#define	XEN_PARSE_BOOTDEV	0
+#define	XEN_PARSE_NETINFO	1
+#define	XEN_PARSE_CONSOLE	2
+
+void	xen_parse_cmdline(int, union xen_cmdline_parseinfo *);
+
+void	xenconscn_attach(void);
+
+void	xenmachmem_init(void);
+void	xenprivcmd_init(void);
+void	xenvfr_init(void);
+
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
 #ifdef XENDEBUG
 void printk(const char *, ...);
+void vprintk(const char *, va_list);
 #endif
-
-void xencn_attach(void);
 
 #endif
 
@@ -47,7 +70,7 @@ void xencn_attach(void);
 	lock						;\
 	btsl	$num,EVENTS_MASK(%eax)
 
-#endif
+#endif /* _XEN_H */
 
 /******************************************************************************
  * os.h
@@ -89,30 +112,8 @@ void xencn_attach(void);
 
 #include <machine/hypervisor-ifs/hypervisor-if.h>
 
-
-/* this struct defines the way the registers are stored on the 
-   stack during an exception or interrupt. */
-struct pt_regs {
-	long ebx;
-	long ecx;
-	long edx;
-	long esi;
-	long edi;
-	long ebp;
-	long eax;
-	int  xds;
-	int  xes;
-	long orig_eax;
-	long eip;
-	int  xcs;
-	long eflags;
-	long esp;
-	int  xss;
-};
-
 /* some function prototypes */
 void trap_init(void);
-void dump_regs(struct pt_regs *regs);
 
 
 /*
