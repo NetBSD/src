@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.1 2004/03/15 03:45:50 uwe Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.2 2004/03/15 23:38:16 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.1 2004/03/15 03:45:50 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.2 2004/03/15 23:38:16 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -241,7 +241,7 @@ j6x0lcd_attach(struct device *parent, struct device *self, void *aux)
 
 	/* LCD on/off hook */
 	config_hook(CONFIG_HOOK_POWERCONTROL,
-		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
+		    CONFIG_HOOK_POWERCONTROL_LCD,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_power, sc);
 }
@@ -324,7 +324,7 @@ j6x0lcd_power(ctx, type, id, msg)
 	uint16_t r;
 
 	if (type != CONFIG_HOOK_POWERCONTROL
-	    || id != CONFIG_HOOK_POWERCONTROL_LCDLIGHT)
+	    || id != CONFIG_HOOK_POWERCONTROL_LCD)
 		return (EINVAL);
 
 	on = (int)msg;
