@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36 1994/10/27 04:15:51 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37 1994/11/01 06:49:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -85,6 +85,15 @@ cpu_fork(p1, p2)
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	p2->p_md.md_regs = p1->p_md.md_regs;
 	p2->p_md.ibcs_sigflags = p1->p_md.ibcs_sigflags;
+
+	if (p1->p_addr->u_pcb.pcb_ldt) {
+		size_t len =
+		    p1->p_addr->u_pcb.pcb_ldt_len * sizeof(union descriptor);
+		union descriptor *new_ldt =
+		    (union descriptor *)kmem_alloc(kernel_map, len);
+		bcopy(p1->p_addr->u_pcb.pcb_ldt, new_ldt, len);
+		p2->p_addr->u_pcb.pcb_ldt = (caddr_t)new_ldt;
+	}
 
 	/*
 	 * Wire top of address space of child to it's kstack.
