@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.10 2000/02/17 10:59:32 darrenr Exp $	*/
+/*	$NetBSD: pfil.c,v 1.11 2000/02/20 00:56:33 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -35,7 +35,6 @@
 #include <sys/socketvar.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/protosw.h>
 #include <sys/queue.h>
 
 #include <net/if.h>
@@ -66,13 +65,12 @@ pfil_init(ph)
  *	PFIL_WAITOK	OK to call malloc with M_WAITOK.
  */
 void
-pfil_add_hook(func, flags, psw)
+pfil_add_hook(func, flags, ph)
 	int	(*func) __P((void *, int, struct ifnet *, int,
 			     struct mbuf **));
 	int	flags;
-	struct	protosw	*psw;
+	struct	pfil_head	*ph;
 {
-	struct	pfil_head	*ph = &psw->pr_pfh;
 
 	if (ph->ph_init == 0)
 		pfil_init(ph);
@@ -109,13 +107,12 @@ pfil_list_add(list, func, flags)
  * hook list.
  */
 void
-pfil_remove_hook(func, flags, psw)
+pfil_remove_hook(func, flags, ph)
 	int	(*func) __P((void *, int, struct ifnet *, int,
 			     struct mbuf **));
 	int	flags;
-	struct	protosw	*psw;
+	struct	pfil_head	*ph;
 {
-	struct	pfil_head	*ph = &psw->pr_pfh;
 
 	if (ph->ph_init == 0)
 		pfil_init(ph);
@@ -151,12 +148,10 @@ pfil_list_remove(list, func)
 }
 
 struct packet_filter_hook *
-pfil_hook_get(flag, psw)
+pfil_hook_get(flag, ph)
 	int flag;
-	struct protosw *psw;
+	struct	pfil_head	*ph;
 {
-	struct	pfil_head	*ph = &psw->pr_pfh;	
-
 	if (ph->ph_init != 0)
 		switch (flag) {
 		case PFIL_IN:
