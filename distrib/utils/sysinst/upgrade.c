@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.20 1999/06/22 06:57:01 cgd Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.20.10.1 2000/09/08 23:57:20 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,6 +51,8 @@
 void 	check_prereqs __P((void));
 int	save_etc __P((void));
 int	merge_etc __P((void));
+int	save_X __P((void));
+int	merge_X __P((void));
 
 /*
  * Do the system upgrade.
@@ -88,6 +90,11 @@ do_upgrade()
 	if (save_etc())
 		return;
 
+	/*
+	 * Save X symlink, ...
+	 */
+	if (save_X())
+		return;
 
 	/* Do any md updating of the file systems ... e.g. bootblocks,
 	   copy file systems ... */
@@ -106,6 +113,7 @@ do_upgrade()
 
 	/* Copy back any files we should restore after the upgrade.*/
 	merge_etc();
+	merge_X();
 
 	sanity_check();
 }
@@ -169,6 +177,32 @@ save_etc()
 }
 
 /*
+ * Save X symlink to X.old so it can be recovered later
+ */
+int
+save_X()
+{
+	/* Only care for X if it's a symlink */
+	if (target_symlink_exists_p("/usr/X11R6/bin/X")) {
+		if (target_symlink_exists_p("/usr/X11R6/bin/X.old")) {
+			msg_display(MSG_X_oldexists);
+			process_menu(MENU_ok);
+			return EEXIST;
+		}
+
+#ifdef DEBUG
+		printf("saving /usr/X11R6/bin/X as .../X.old ...");
+#endif
+
+		/* Move target .../X to .../X.old.  Abort on error. */
+		mv_within_target_or_die("/usr/X11R6/bin/X",
+					"/usr/X11R6/bin/X.old");
+	}
+
+	return 0;
+}
+
+/*
  * Merge back saved target /etc files after unpacking the new
  * sets has completed.
  */
@@ -178,6 +212,23 @@ merge_etc()
 
 	/* just move back fstab, so we can boot cleanly.  */
 	cp_within_target("/etc.old/fstab", "/etc/");
+
+	return 0;	
+}
+
+/*
+ * Merge back saved target X files after unpacking the new
+ * sets has completed.
+ */
+int
+merge_X()
+{
+	if (target_symlink_exists_p("/usr/X11R6/bin/X.old")) {
+		/* Only move back X if it's a symlink - we don't want
+		 * to restore old binaries */
+		mv_within_target_or_die("/usr/X11R6/bin/X.old",
+					"/usr/X11R6/bin/X");
+	}
 
 	return 0;	
 }

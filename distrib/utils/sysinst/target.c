@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.22 1999/06/20 06:08:15 cgd Exp $	*/
+/*	$NetBSD: target.c,v 1.22.10.1 2000/09/08 23:57:19 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.22 1999/06/20 06:08:15 cgd Exp $");
+__RCSID("$NetBSD: target.c,v 1.22.10.1 2000/09/08 23:57:19 hubertf Exp $");
 #endif
 
 /*
@@ -78,6 +78,7 @@ static const char* concat_paths __P((const char *prefix, const char *suffix));
 int	target_test(const char *test, const char *path);
 int	target_test_dir __P((const char *path));	/* deprecated */
 int	target_test_file __P((const char *path));	/* deprecated */
+int	target_test_symlink __P((const char *path));	/* deprecated */
 
 void backtowin(void);
 
@@ -541,7 +542,8 @@ dup_file_into_target(filename)
 /*
  * Do a mv where both pathnames are  within the target filesystem.
  */
-void mv_within_target_or_die(frompath, topath)
+void
+mv_within_target_or_die(frompath, topath)
 	const char *frompath;
 	const char *topath;
 {
@@ -724,6 +726,14 @@ target_test_file(path)
  	return target_test("-f", path);
 }
 
+int
+target_test_symlink(path)
+	const char *path;
+{
+
+ 	return target_test("-h", path);
+}
+
 int target_file_exists_p(path)
 	const char *path;
 {
@@ -736,4 +746,11 @@ int target_dir_exists_p(path)
 {
 
 	return (target_test_dir(path) == 0);
+}
+
+int target_symlink_exists_p(path)
+	const char *path;
+{
+
+	return (target_test_symlink(path) == 0);
 }
