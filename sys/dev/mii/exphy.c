@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.35 2003/04/29 01:49:33 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.36 2004/08/23 06:16:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.35 2003/04/29 01:49:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.36 2004/08/23 06:16:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,20 +86,20 @@ __KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.35 2003/04/29 01:49:33 thorpej Exp $");
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-int	exphymatch(struct device *, struct cfdata *, void *);
-void	exphyattach(struct device *, struct device *, void *);
+static int	exphymatch(struct device *, struct cfdata *, void *);
+static void	exphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(exphy, sizeof(struct mii_softc),
     exphymatch, exphyattach, mii_phy_detach, mii_phy_activate);
 
-int	exphy_service(struct mii_softc *, struct mii_data *, int);
-void	exphy_reset(struct mii_softc *);
+static int	exphy_service(struct mii_softc *, struct mii_data *, int);
+static void	exphy_reset(struct mii_softc *);
 
-const struct mii_phy_funcs exphy_funcs = {
+static const struct mii_phy_funcs exphy_funcs = {
 	exphy_service, ukphy_status, exphy_reset,
 };
 
-int
+static int
 exphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -120,7 +120,7 @@ exphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (10);
 }
 
-void
+static void
 exphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -160,7 +160,7 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -212,7 +212,7 @@ exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 exphy_reset(struct mii_softc *sc)
 {
 
