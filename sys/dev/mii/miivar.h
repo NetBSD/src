@@ -1,7 +1,7 @@
-/*	$NetBSD: miivar.h,v 1.7 1998/11/05 04:08:02 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.8 1999/04/23 04:24:32 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -128,6 +128,7 @@ typedef struct mii_softc mii_softc_t;
 
 /* mii_flags */
 #define	MIIF_NOISOLATE	0x0001		/* do not isolate the PHY */
+#define	MIIF_DOINGAUTO	0x0002		/* doing autonegotiation */
 
 /*
  * Used to attach a PHY to a parent.
@@ -161,7 +162,7 @@ void	mii_add_media __P((struct mii_data *, int, int));
 
 int	mii_media_from_bmcr __P((int));
 
-int	mii_phy_auto __P((struct mii_softc *));
+int	mii_phy_auto __P((struct mii_softc *, int));
 void	mii_phy_reset __P((struct mii_softc *));
 
 void	ukphy_status __P((struct mii_softc *));
