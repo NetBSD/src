@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.44 2000/06/29 07:51:47 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45 2001/01/22 14:33:29 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -276,8 +276,8 @@ pagemove(from, to, size)
 
 	if (size % NBPG)
 		panic("pagemove");
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
+	fpte = kvtopte((vaddr_t)from);
+	tpte = kvtopte((vaddr_t)to);
 
 	if (size <= NBPG * 16) {
 		while (size > 0) {
