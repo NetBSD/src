@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.541.2.14 2005/03/04 16:45:22 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541.2.15 2005/03/08 13:53:10 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.661 2004/10/28 07:26:09 martti Exp 
+ *	NetBSD: pcidevs,v 1.696 2005/03/07 02:27:17 christos Exp
  */
 
 /*
@@ -3432,7 +3432,15 @@ const struct pci_product pci_products[] = {
 	    "IXP AC'97 Audio Controller",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_200,
+	    "IXP IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_300,
+	    "IXP IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_400,
 	    "IXP IDE Controller",
 	},
 	{
@@ -10036,4 +10044,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1930;
+const int pci_nproducts = 1932;

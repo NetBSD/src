@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.542.2.14 2005/03/04 16:45:22 skrll Exp $
+$NetBSD: pcidevs,v 1.542.2.15 2005/03/08 13:53:10 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -959,7 +959,9 @@ product ATI RADEON_M6_U2	0x4337	Radeon Mobility M6
 product	ATI IXP_AUDIO_200	0x4341	IXP AC'97 Audio Controller
 product	ATI IXP_AUDIO_300	0x4361	IXP AC'97 Audio Controller
 product	ATI IXP_AUDIO_400	0x4370	IXP AC'97 Audio Controller
-product ATI IXP_IDE		0x4349	IXP IDE Controller
+product	ATI IXP_IDE_200		0x4349	IXP IDE Controller
+product	ATI IXP_IDE_300		0x4369	IXP IDE Controller
+product	ATI IXP_IDE_400		0x4376	IXP IDE Controller
 product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI RAGE_PRO_AGP	0x4742	3D Rage Pro (AGP)

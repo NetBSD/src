@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.2.2.2 2005/03/04 16:45:19 skrll Exp $ */
+/* $NetBSD: if_vge.c,v 1.2.2.3 2005/03/08 13:53:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.2.2.2 2005/03/04 16:45:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.2.2.3 2005/03/08 13:53:10 skrll Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -121,7 +121,7 @@ static void vge_attach	(struct device *, struct device *, void *);
 static int vge_encap		(struct vge_softc *, struct mbuf *, int);
 
 static int vge_dma_map_rx_desc	(struct vge_softc *, int);
-static int vge_dma_map_tx_desc	(struct vge_softc *, struct mbuf *, int, int);
+static void vge_dma_map_tx_desc	(struct vge_softc *, struct mbuf *, int, int);
 static int vge_allocmem		(struct vge_softc *);
 static int vge_newbuf		(struct vge_softc *, int, struct mbuf *);
 static int vge_rx_list_init	(struct vge_softc *);
@@ -177,40 +177,52 @@ CFATTACH_DECL(vge, sizeof(struct vge_softc),
 struct mbuf * vge_m_defrag(struct mbuf *, int);
 
 struct mbuf *
-vge_m_defrag(struct mbuf *m0, int flags)
+vge_m_defrag(struct mbuf *mold, int flags)
 {
-	struct mbuf *m;
+	struct mbuf *m0, *mn, *n;
+	size_t sz = mold->m_pkthdr.len;
 
 #ifdef DIAGNOSTIC
-	if ((m0->m_flags & M_PKTHDR) == 0)
+	if ((mold->m_flags & M_PKTHDR) == 0)
 		panic("m_defrag: not a mbuf chain header");
 #endif
 
-	if (m0->m_pkthdr.len > MCLBYTES) {
-		/* XXX TODO no defragmentation for JUMBO packets, yet */
-		m = NULL;
-		goto out;
-	}
+	MGETHDR(m0, flags, MT_DATA);
+	if (m0 == NULL)
+		return NULL;
+	m0->m_pkthdr.len = mold->m_pkthdr.len;
+	mn = m0;
 
-	MGETHDR(m, flags, MT_DATA);
-	if (m == NULL)
-		goto out;
-
-	if (m0->m_pkthdr.len > MHLEN) {
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_freem(m);
-			m = NULL;
-			goto out;
+	do {
+		if (sz > MHLEN) {
+			MCLGET(mn, M_DONTWAIT);
+			if ((mn->m_flags & M_EXT) == 0) {
+				m_freem(m0);
+				return NULL;
+			}
 		}
-	}
 
-	m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
-	m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
+		mn->m_len = MIN(sz, MCLBYTES);
 
-    out:
-	m_freem(m0);
-	return m;
+		m_copydata(mold, mold->m_pkthdr.len - sz, mn->m_len,
+		     mtod(mn, caddr_t));
+
+		sz -= mn->m_len;
+
+		if (sz > 0) {
+			/* need more mbufs */
+			MGET(n, M_NOWAIT, MT_DATA);
+			if (n == NULL) {
+				m_freem(m0);
+				return NULL;
+			}
+
+			mn->m_next = n;
+			mn = n;
+		}
+	} while (sz > 0);
+
+	return m0;
 }
 
 /*
@@ -677,13 +689,13 @@ vge_dma_map_rx_desc(sc, idx)
 	return (0);
 }
 
-static int
+static void
 vge_dma_map_tx_desc(sc, m0, idx, flags)
 	struct vge_softc	*sc;
 	struct mbuf		*m0;
 	int			idx, flags;
 {
-	struct vge_tx_desc	*d = NULL;
+	struct vge_tx_desc	*d = &sc->vge_ldata.vge_tx_list[idx];
 	struct vge_tx_frag	*f;
 	int			i = 0;
 	bus_dma_segment_t	*segs;
@@ -691,13 +703,6 @@ vge_dma_map_tx_desc(sc, m0, idx, flags)
 	bus_dmamap_t		map = sc->vge_ldata.vge_tx_dmamap[idx];
 
 	/* Map the segment array into descriptors. */
-
-	d = &sc->vge_ldata.vge_tx_list[idx];
-
-	/* If this descriptor is still owned by the chip, bail. */
-
-	if (le32toh(d->vge_sts) & VGE_TDSTS_OWN)
-		return (EBUSY);
 
 	segs = map->dm_segs;
 	for (i = 0; i < map->dm_nsegs; i++) {
@@ -731,8 +736,6 @@ vge_dma_map_tx_desc(sc, m0, idx, flags)
 
 	if (sz > ETHERMTU + ETHER_HDR_LEN)
 		d->vge_ctl |= VGE_TDCTL_JUMBO;
-
-	return (0);
 }
 
 static int
@@ -870,7 +873,6 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	u_char			eaddr[ETHER_ADDR_LEN];
 	struct vge_softc	*sc = (struct vge_softc *)self;
 	struct ifnet		*ifp;
-	int			error = 0;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	const char *intrstr;
@@ -933,12 +935,8 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->vge_dmat = pa->pa_dmat;
 
-	error = vge_allocmem(sc);
-
-	if (error) {
-printf("allocmem err %d\n", error);
+	if (vge_allocmem(sc))
 		return;
-	}
 
 	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_softc = sc;
@@ -1614,8 +1612,10 @@ vge_encap(sc, m_head, idx)
 	int			error, flags;
 	struct m_tag		*mtag;
 
-	if (sc->vge_ldata.vge_tx_free <= 2)
-		return (EFBIG);
+	/* If this descriptor is still owned by the chip, bail. */
+	if (sc->vge_ldata.vge_tx_free <= 2
+	    || le32toh(sc->vge_ldata.vge_tx_list[idx].vge_sts) & VGE_TDSTS_OWN)
+		return (ENOBUFS);
 
 	flags = 0;
 
@@ -1630,35 +1630,24 @@ vge_encap(sc, m_head, idx)
 	error = bus_dmamap_load_mbuf(sc->vge_dmat, map,
 	    m_head, BUS_DMA_NOWAIT);
 
-	if ((error && error != EFBIG)
-	    || vge_dma_map_tx_desc(sc, m_head, idx, flags)) {
-		if (error) {
-			printf("%s: can't map mbuf (error %d)\n",
-			    sc->sc_dev.dv_xname, error);
-		}
-		return (ENOBUFS);
-	}
-
-	/* Too many segments to map, coalesce into a single mbuf */
-
-	if (error) {
+	/* If too many segments to map, coalesce */
+	if (error == EFBIG) {
 		m_new = m_defrag(m_head, M_DONTWAIT);
 		if (m_new == NULL)
-			return (1);
-		else
-			m_head = m_new;
+			return (error);
 
 		error = bus_dmamap_load_mbuf(sc->vge_dmat, map,
-		    m_head, BUS_DMA_NOWAIT);
-		if (error || vge_dma_map_tx_desc(sc, m_head, idx, flags)) {
-			if (error) {
-				printf("%s: can't map defrag mbuf (error %d)\n",
-				    sc->sc_dev.dv_xname, error);
-			}
-			m_freem(m_head);
-			return (EFBIG);
+		    m_new, BUS_DMA_NOWAIT);
+		if (error) {
+			m_freem(m_new);
+			return (error);
 		}
-	}
+
+		m_head = m_new;
+	} else if (error)
+		return (error);
+
+	vge_dma_map_tx_desc(sc, m_head, idx, flags);
 
 	sc->vge_ldata.vge_tx_mbuf[idx] = m_head;
 	sc->vge_ldata.vge_tx_free--;
@@ -1687,21 +1676,13 @@ vge_start(ifp)
 {
 	struct vge_softc	*sc;
 	struct mbuf		*m_head = NULL;
-	int			idx, pidx = 0;
+	int			idx, pidx = 0, error;
 
 	sc = ifp->if_softc;
 	VGE_LOCK(sc);
 
-	if (!sc->vge_link || ifp->if_flags & IFF_OACTIVE) {
-		VGE_UNLOCK(sc);
-		return;
-	}
-
-#if __FreeBSD_version < 502114
-	if (ifp->if_snd.ifq_head == NULL) {
-#else
-	if (IFQ_DRV_IS_EMPTY(&ifp->if_snd)) {
-#endif
+	if (!sc->vge_link
+	    || (ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING) {
 		VGE_UNLOCK(sc);
 		return;
 	}
@@ -1712,28 +1693,56 @@ vge_start(ifp)
 	if (pidx < 0)
 		pidx = VGE_TX_DESC_CNT - 1;
 
-
-	while (sc->vge_ldata.vge_tx_mbuf[idx] == NULL) {
-#if __FreeBSD_version < 502114
-		IF_DEQUEUE(&ifp->if_snd, m_head);
-#else
-		IFQ_DRV_DEQUEUE(&ifp->if_snd, m_head);
-#endif
+	/*
+	 * Loop through the send queue, setting up transmit descriptors
+	 * until we drain the queue, or use up all available transmit
+	 * descriptors.
+	 */
+	for(;;) {
+		/* Grab a packet off the queue. */
+		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
-		if (vge_encap(sc, m_head, idx)) {
-#if __FreeBSD_version >= 502114
-			IFQ_DRV_PREPEND(&ifp->if_snd, m_head);
-#else
-			IF_PREPEND(&ifp->if_snd, m_head);
-#endif
+		if (sc->vge_ldata.vge_tx_mbuf[idx] != NULL) {
+			/*
+			 * Slot already used, stop for now.
+			 */
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
+		if ((error = vge_encap(sc, m_head, idx))) {
+			if (error == EFBIG) {
+				printf("%s: Tx packet consumes too many "
+				    "DMA segments, dropping...\n",
+				    sc->sc_dev.dv_xname);
+				IFQ_DEQUEUE(&ifp->if_snd, m_head);
+				m_freem(m_head);
+				continue;
+			}
+
+			/*
+			 * Short on resources, just stop for now.
+			 */
+			if (error == ENOBUFS)
+				ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+
+		/*
+		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
+		 */
+
 		sc->vge_ldata.vge_tx_list[pidx].vge_frag[0].vge_buflen |=
 		    htole16(VGE_TXDESC_Q);
+
+		if (sc->vge_ldata.vge_tx_mbuf[idx] != m_head) {
+			m_freem(m_head);
+			m_head = sc->vge_ldata.vge_tx_mbuf[idx];
+		}
 
 		pidx = idx;
 		VGE_TX_DESC_INC(idx);

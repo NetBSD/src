@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.27.2.7 2005/03/04 16:41:28 skrll Exp $ */
+/*	$NetBSD: gem.c,v 1.27.2.8 2005/03/08 13:53:10 skrll Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.27.2.7 2005/03/04 16:41:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.27.2.8 2005/03/08 13:53:10 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1512,9 +1512,12 @@ gem_rint(sc)
 			if (hlen < sizeof(struct ip))
 				goto swcsum;
 
-			/* too short, truncated, fragment */
+			/*
+			 * bail if too short, has random trailing garbage,
+			 * truncated, fragment, or has ethernet pad.
+			 */
 			if ((ntohs(ip->ip_len) < hlen) ||
-			    (ntohs(ip->ip_len) > pktlen) ||
+			    (ntohs(ip->ip_len) != pktlen) ||
 			    (ntohs(ip->ip_off) & (IP_MF | IP_OFFMASK)))
 				goto swcsum;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.90.2.8 2005/03/04 16:52:56 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.90.2.9 2005/03/08 13:53:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -347,6 +347,7 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_CSUM_UDPv6	0x0010	/* can do IPv6/UDP checksums */
 #define	IFCAP_CSUM_TCPv4_Rx	0x0020	/* can do IPv4/TCP (Rx only) */
 #define	IFCAP_CSUM_UDPv4_Rx	0x0040	/* can do IPv4/UDP (Rx only) */
+#define	IFCAP_TSOv4		0x0080	/* can do TCPv4 segmentation offload */
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)

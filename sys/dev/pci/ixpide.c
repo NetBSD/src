@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.1.4.3 2005/03/04 16:45:21 skrll Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.1.4.4 2005/03/08 13:53:10 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.1.4.3 2005/03/04 16:45:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.1.4.4 2005/03/08 13:53:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,17 +57,13 @@ static void	ixp_setup_channel(struct ata_channel *);
 CFATTACH_DECL(ixpide, sizeof(struct pciide_softc),
     ixpide_match, ixpide_attach, NULL, NULL);
 
+static const char ixpdesc[] = "ATI Technologies IXP IDE Controller";
+
 static const struct pciide_product_desc pciide_ixpide_products[] = {
-	{ PCI_PRODUCT_ATI_IXP_IDE,
-	  0,
-	  "ATI Technologies IXP IDE Controller",
-	  ixp_chip_map
-	},
-	{ 0,
-	  0,
-	  NULL,
-	  NULL
-	}
+	{ PCI_PRODUCT_ATI_IXP_IDE_200, 0, ixpdesc, ixp_chip_map },
+	{ PCI_PRODUCT_ATI_IXP_IDE_300, 0, ixpdesc, ixp_chip_map },
+	{ PCI_PRODUCT_ATI_IXP_IDE_400, 0, ixpdesc, ixp_chip_map },
+	{ 0, 			       0, NULL,	   NULL }
 };
 
 static int
