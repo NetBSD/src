@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.9 2002/01/27 05:15:36 uch Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.10 2002/01/29 18:53:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #define DPRINTF_ENABLE
 #define DPRINTF_DEBUG	hd64461pcmcia_debug
 #endif
-#include <hpcsh/hpcsh/debug.h>
+#include <machine/debug.h>
 
 enum controller_channel {
 	CHANNEL_0 = 0,

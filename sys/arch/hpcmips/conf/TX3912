@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.37 2002/01/28 05:40:30 uch Exp $
+#	$NetBSD: TX3912,v 1.38 2002/01/29 18:53:08 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -13,11 +13,11 @@ options 	TX391X			# Product TMPR3912
 
 options 	TX39_DEBUG
 options 	TX39_WATCHDOGTIMER
-#options 	TX39ICUDEBUG
-#options 	TX39CLKDEBUG
-#options 	TX39BIUDEBUG
-#options 	TX39POWERDEBUG
-#options 	TX39UARTDEBUG
+#options 	TX39ICU_DEBUG
+#options 	TX39CLOCK_DEBUG
+#options 	TX39BIU_DEBUG
+#options 	TX39POWER_DEBUG
+#options 	TX39UART_DEBUG
 
 options 	SERIALCONSSLOT=0	# UARTA 0, UARTB 1
 
