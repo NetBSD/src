@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.18 2002/01/24 04:07:13 lukem Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.19 2002/01/24 06:31:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.18 2002/01/24 04:07:13 lukem Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.19 2002/01/24 06:31:38 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,17 +95,16 @@ __RCSID("$NetBSD: pwcache.c,v 1.18 2002/01/24 04:07:13 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#endif	/* HAVE_CONFIG_H */
-
-#if !HAVE_PWCACHE_USERDB
-#include "pwcache.h"
-
 #ifdef __weak_alias
 __weak_alias(user_from_uid,_user_from_uid)
 __weak_alias(group_from_gid,_group_from_gid)
 __weak_alias(pwcache_userdb,_pwcache_userdb)
 __weak_alias(pwcache_groupdb,_pwcache_groupdb)
 #endif
+#endif	/* HAVE_CONFIG_H */
+
+#if !HAVE_PWCACHE_USERDB
+#include "pwcache.h"
 
 /*
  * routines that control user, group, uid and gid caches (for the archive
