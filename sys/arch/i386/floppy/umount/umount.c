@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: umount.c,v 1.2 1994/06/14 01:19:50 cgd Exp $";
+static char rcsid[] = "$Id: umount.c,v 1.3 1994/08/02 12:27:10 ws Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,13 +50,11 @@ main(argc, argv)
 	char **argv;
 {
 	sync();
-	argc--;
 	if (strcmp(*++argv, "-f") == 0) {
 		fflag = MNT_FORCE;
-		argc--;
 		argv++;
 	}
-	if (*++argv && **argv == '-') {
+	if (*argv && **argv == '-') {
 		errprint("usage: umount [-f] node ...");
 		_exit(1);
 	}
