@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)resolv.h	5.15 (Berkeley) 4/3/91
- *	$Id: resolv.h,v 1.2 1993/08/01 18:45:24 mycroft Exp $
+ *	$Id: resolv.h,v 1.3 1994/01/28 03:00:25 deraadt Exp $
  */
 
 #ifndef _RESOLV_H_
@@ -54,6 +54,7 @@
 #define	MAXDFLSRCH		3	/* # default domain levels to try */
 #define	MAXDNSRCH		6	/* max # domains in search path */
 #define	LOCALDOMAINPARTS	2	/* min levels in name that is "local" */
+#define	MAXDNSLUS		4	/* max # of host lookup types */
 
 #define	RES_TIMEOUT		5	/* min. seconds between retries */
 
@@ -67,6 +68,7 @@ struct state {
 	u_short	id;			/* current packet id */
 	char	defdname[MAXDNAME];	/* default domain */
 	char	*dnsrch[MAXDNSRCH+1];	/* components of domain to search */
+	char	lookups[MAXDNSLUS];
 };
 
 /*
