@@ -39,45 +39,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cgthreereg.h	8.1 (Berkeley) 6/11/93
+ *    @(#)cgthreereg.h        8.1 (Berkeley) 6/11/93
  *
- * from: Header: cgthreereg.h,v 1.5 92/11/26 02:28:07 torek Exp 
- * $Id: cgthreereg.h,v 1.1 1993/10/02 10:23:48 deraadt Exp $
+ * from: $Header: /cvsroot/src/sys/arch/sparc/sbus/Attic/cgthreereg.h,v 1.2 1993/11/11 03:36:56 deraadt Exp $
+ * $Id: cgthreereg.h,v 1.2 1993/11/11 03:36:56 deraadt Exp $
  */
 
 /*
- * cgthree display registers.
- *
- * The registers start at offset 0x400000 and repeat every 32 bytes
- * (presumably only the low order address lines are decoded).  Video RAM
- * starts at offset 0x800000.  We use separate pointers to each so that
- * the sparc addressing modes work well.
- *
- * The cg3 has a Brooktree Bt458 (?) chip to do everything (Brooktree
- * makes the only decent color frame buffer chips).  To update the
- * color map one would normally do byte writes, but the hardware
- * takes longword writes.  Since there are three registers for each
- * color map entry (R, then G, then B), we have to set color 1 with
- * a write to address 0 (setting 0's R/G/B and color 1's R) followed
- * by a second write to address 1 (setting color 1's G/B and color 2's
- * R/G).  Software must therefore keep a copy of the current map.
- *
- * The colormap address register increments automatically, so the above
- * write is done as:
- *
- *	p->cg3_cadr = 0;
- *	p->cg3_cmap = R0G0B0R1;
- *	p->cg3_cmap = G1B1R2G2;
- *
- * Yow!
+ * cgthree display registers.  Much like bwtwo registers, except that
+ * there is a Brooktree Video DAC in there (so we also use btreg.h).
  */
-struct cgthreereg {
-	u_int	cg3_addr;		/* ?any? address register */
-	u_int	cg3_cmap;		/* colormap data register */
-	u_int	cg3_ctrl;		/* control register */
-	u_int	cg3_omap;		/* overlay map register */
-	char	cg3_xxx0[16];		/* ? (make same size as bwtwo) */
-};
 
 /* offsets */
 #define	CG3REG_ID	0
@@ -88,7 +59,7 @@ struct cgthreereg {
 struct cgthree_all {
 	long	ba_id;			/* ID = 0xfe010104 on my IPC */
 	char	ba_xxx0[0x400000-4];
-	struct	cgthreereg ba_reg;	/* control registers */
-	char	ba_xxx1[0x400000-32];
+	struct	bt_regs ba_btreg;	/* Brooktree registers */
+	char	ba_xxx1[0x400000-sizeof(struct bt_regs)];
 	char	ba_ram[4096];		/* actually larger */
 };
