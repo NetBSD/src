@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/06/12 12:41:40 shin Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/06/17 10:59:27 shin Exp $
 
-#EXTRA_KERNELS+= 	TX3912 TX3922
+EXTRA_KERNELS+= 	TX3912 TX3922
 BUILD_KERNELS+= 	RAMDISK
 
 snap_md_post:
