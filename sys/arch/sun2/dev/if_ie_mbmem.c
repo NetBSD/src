@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mbmem.c,v 1.1 2001/04/06 15:14:39 fredette Exp $	*/
+/*	$NetBSD: if_ie_mbmem.c,v 1.2 2001/04/10 12:42:51 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -507,7 +507,7 @@ ie_mbmem_attach(parent, self, aux)
 	/* 4 more */
 	rampaddr = rampaddr | ((read_iev(vsc, status) & IEMBMEM_HADDR) << 16);
 	sc->bt = ca->ca_bustag;
-	if (bus_space_map(ca->ca_bustag, ca->ca_paddr, memsize, 0, &sc->bh))
+	if (bus_space_map(ca->ca_bustag, rampaddr, memsize, 0, &sc->bh))
 		panic("ie_mbmem_attach: can't map mem");
 
 	write_iev(vsc, pectrl, read_iev(vsc, pectrl) | IEMBMEM_PARACK);
