@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.55 2003/07/04 12:16:05 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.56 2004/01/26 18:17:08 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -283,7 +283,7 @@ typedef struct audio_info {
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02
 #define AUMODE_PLAY_ALL 0x04	/* do not do real-time correction */
-};
+} audio_info_t;
 .Ed
 .Pp
 When setting the current state with
