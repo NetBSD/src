@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2003/01/12 23:46:11 augustss Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3 2003/03/06 00:20:42 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -95,30 +95,35 @@ static int pmppc_memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t,
 	bus_space_handle_t *);
 static void pmppc_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-const struct powerpc_bus_space pmppc_mem_tag = {
-	0, 0, 0x0000000, 0xffffffff,
+struct powerpc_bus_space pmppc_mem_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0, PMPPC_IO_START, 0xffffffff,
+	NULL,
 	pmppc_memio_mmap,
 	pmppc_memio_map, pmppc_memio_unmap, pmppc_memio_alloc,
 	pmppc_memio_free
 };
-const struct powerpc_bus_space pmppc_pci_io_tag = {
-	0, 0, CPC_PCI_IO_BASE, 0xffffffff,
+struct powerpc_bus_space pmppc_pci_io_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0, CPC_PCI_IO_BASE, 0xffffffff,
+	NULL,
 	pmppc_memio_mmap,
 	pmppc_memio_map, pmppc_memio_unmap, pmppc_memio_alloc,
 	pmppc_memio_free
 };
 
-static long ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+static char ex_storage[1][EXTENT_FIXED_STORAGE_SIZE(8)]
+    __attribute__((aligned(8)));
 
-static struct extent *allmem_ex;
-
-static int ioport_malloc_safe;
+static int ioport_extent_flags;
 
 void
 pmppc_bus_space_init(void)
 {
-	allmem_ex = extent_create("iomem", PMPPC_IO_START, 0xffffffff,
-	        M_DEVBUF, (caddr_t)ex_storage, sizeof(ex_storage),
+	pmppc_mem_tag.pbs_extent = extent_create("iomem",
+		pmppc_mem_tag.pbs_base, pmppc_mem_tag.pbs_limit - 1,
+	        M_DEVBUF,
+		ex_storage[0], sizeof(ex_storage[0]),
 		EX_NOCOALESCE | EX_NOWAIT);
 }
 
@@ -126,7 +131,7 @@ void
 pmppc_bus_space_mallocok(void)
 {
 
-	ioport_malloc_safe = 1;
+	ioport_extent_flags = 1;
 }
 
 static paddr_t
@@ -155,8 +160,8 @@ pmppc_memio_map(t, bpa, size, flags, bshp)
 	 * Before we go any further, let's make sure that this
 	 * region is available.
 	 */
-	error = extent_alloc_region(allmem_ex, bpa, size,
-	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0));
+	error = extent_alloc_region(t->pbs_extent, bpa, size,
+	    EX_NOWAIT | ioport_extent_flags);
 	if (error)
 		return (error);
 
@@ -171,14 +176,13 @@ pmppc_memio_unmap(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	bus_addr_t bpa;
+	bus_addr_t bpa = bsh;
 
-	bpa = bsh;
-
-	if (extent_free(allmem_ex, bpa, size,
-	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-		printf("pmppc_memio_unmap: type=%d 0x%lx, size 0x%lx\n",
-		       t->pbs_type, (unsigned long)bpa, (unsigned long)size);
+	if (extent_free(t->pbs_extent, bpa, size,
+	    EX_NOWAIT | ioport_extent_flags)) {
+		printf("pmppc_memio_unmap: type=%s 0x%lx, size 0x%lx\n",
+		    (t->pbs_flags & _BUS_SPACE_IO_TYPE) ? "port" : "iomem",
+		    (unsigned long)bpa, (unsigned long)size);
 		printf("pmppc_memio_unmap: can't free region\n");
 	}
 }
@@ -196,12 +200,11 @@ pmppc_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
 	u_long bpa;
 	int error;
 
-	if (rstart < allmem_ex->ex_start || rend > allmem_ex->ex_end)
+	if (rstart < t->pbs_extent->ex_start || rend > t->pbs_extent->ex_end)
 		panic("pmppc_memio_alloc: bad region start/end");
 
-	error = extent_alloc_subregion(allmem_ex, rstart, rend, size,
-	    alignment, boundary,
-	    EX_FAST | EX_NOWAIT | (ioport_malloc_safe ?  EX_MALLOCOK : 0),
+	error = extent_alloc_subregion(t->pbs_extent, rstart, rend, size,
+	    alignment, boundary, EX_FAST | EX_NOWAIT | ioport_extent_flags,
 	    &bpa);
 
 	if (error)

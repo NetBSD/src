@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2003/03/05 22:08:27 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 2003/03/06 00:20:39 matt Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -122,9 +122,9 @@ struct powerpc_bus_space {
 #define	_BUS_SPACE_LITTLE_ENDIAN	0x00000000
 #define	_BUS_SPACE_IO_TYPE		0x00000002
 #define	_BUS_SPACE_MEM_TYPE		0x00000000
-	bus_addr_t pbs_offset;
-	bus_addr_t pbs_base;
-	bus_addr_t pbs_limit;
+	bus_addr_t pbs_offset;		/* offset to real start */
+	bus_addr_t pbs_base;		/* extent base */
+	bus_addr_t pbs_limit;		/* extent limit */
 	struct extent *pbs_extent;
 	paddr_t (*pbs_mmap) __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 	int (*pbs_map) __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
