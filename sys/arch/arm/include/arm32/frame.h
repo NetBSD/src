@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.7 2003/10/30 08:57:24 scw Exp $	*/
+/*	$NetBSD: frame.h,v 1.8 2003/11/14 16:57:28 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -198,15 +198,15 @@ void validate_trapframe __P((trapframe_t *, int));
  * PULLFRAME at the end of interrupt/exception handlers.
  */
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
-	mrs	r4, cpsr		/* save CPSR */			;\
 	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
-	orr	r4, r4, #(I32_bit)	/* Disable IRQs */		;\
-	msr	cpsr_c, r4						;\
+	mrs	r4, cpsr		/* save CPSR */			;\
 	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
 	teq	r0, #(PSR_USR32_MODE)					;\
 	ldreq	r5, .Laflt_astpending					;\
 	bne	3f			/* Nope, get out now */		;\
-1:	ldr	r1, [r5]		/* Pending AST? */		;\
+1:	orr	r0, r4, #(I32_bit)	/* Disable IRQs */		;\
+	msr	cpsr_all, r0						;\
+	ldr	r1, [r5]		/* Pending AST? */		;\
 	teq	r1, #0x00000000						;\
 	bne	2f			/* Yup. Go deal with it */	;\
 	GET_CURPCB_EXIT			/* r1 = curpcb, r2 = cpuinfo */	;\
@@ -222,12 +222,10 @@ void validate_trapframe __P((trapframe_t *, int));
 	ldr	pc, [r2, #CF_CONTROL]	/* Set new CTRL reg value */	;\
 2:	mov	r1, #0x00000000						;\
 	str	r1, [r5]		/* Clear astpending */		;\
-	bic	r0, r4, #(I32_bit)	/* Enable IRQs */		;\
-	msr	cpsr_c, r0						;\
+	msr	cpsr_all, r4		/* Restore interrupts */	;\
 	mov	r0, sp							;\
-	bl	_C_LABEL(ast)		/* ast(frame) */		;\
-	msr	cpsr_c, r4		/* Disable IRQs */		;\
-	b	1b			/* Check for more ASTs */	;\
+	adr	lr, 1b							;\
+	b	_C_LABEL(ast)		/* ast(frame) */		;\
 3:
 
 #else	/* !(COMPAT_15 && EXEC_AOUT) */
@@ -239,25 +237,23 @@ void validate_trapframe __P((trapframe_t *, int));
 #define	ENABLE_ALIGNMENT_FAULTS		/* nothing */
 
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
-	mrs	r4, cpsr		/* save CPSR */			;\
 	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
-	orr	r4, r4, #(I32_bit)	/* Disable IRQs */		;\
-	msr	cpsr_c, r4						;\
+	mrs	r4, cpsr		/* save CPSR */			;\
 	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
 	teq	r0, #(PSR_USR32_MODE)					;\
 	ldreq	r5, .Laflt_astpending					;\
 	bne	2f			/* Nope, get out now */		;\
-1:	ldr	r1, [r5]		/* Pending AST? */		;\
+1:	orr	r0, r4, #(I32_bit)	/* Disable IRQs */		;\
+	msr	cpsr_all, r0						;\
+	ldr	r1, [r5]		/* Pending AST? */		;\
 	teq	r1, #0x00000000						;\
 	beq	2f			/* Nope. Just bail */		;\
 	mov	r1, #0x00000000						;\
 	str	r1, [r5]		/* Clear astpending */		;\
-	bic	r0, r4, #(I32_bit)	/* Enable IRQs */		;\
-	msr	cpsr_c, r0						;\
+	msr	cpsr_all, r4		/* Restore interrupts */	;\
 	mov	r0, sp							;\
-	bl	_C_LABEL(ast)		/* ast(frame) */		;\
-	msr	cpsr_c, r4		/* Disable IRQs */		;\
-	b	1b			/* Check for more ASTs */	;\
+	adr	lr, 1b							;\
+	b	_C_LABEL(ast)		/* ast(frame) */		;\
 2:
 #endif /* COMPAT_15 && EXEC_AOUT */
 
