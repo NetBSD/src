@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.83 2004/06/25 14:44:16 wiz Exp $	*/
+/*	$NetBSD: newfs.c,v 1.84 2004/09/07 02:18:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.83 2004/06/25 14:44:16 wiz Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.84 2004/09/07 02:18:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ int	maxbsize = 0;		/* maximum clustering */
 int	minfree = MINFREE;	/* free space threshold */
 int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
 int	density;		/* number of bytes per inode */
-int	num_inodes;		/* number of inoder (overrides density) */
+int	num_inodes;		/* number of inodes (overrides density) */
 int	maxcontig = 0;		/* max contiguous blocks to allocate */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	avgfilesize = AVFILESIZ;/* expected average file size */
