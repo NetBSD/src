@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.27 2001/04/05 12:47:05 wiz Exp $
+.\"	$NetBSD: isa.4,v 1.28 2001/09/22 00:57:41 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -36,7 +36,6 @@
 .Nm isa
 .Nd introduction to machine-independent ISA bus support and drivers
 .Sh SYNOPSIS
-.Pp
 Attachments are machine-dependent and depend on the bus topology and
 .Tn ISA
 bus interface of your system.
@@ -64,7 +63,6 @@ for additional information.
 includes machine-independent
 .Tn ISA
 drivers, sorted by device type and driver name:
-.Pp
 .Ss SCSI interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It adv
@@ -125,7 +123,6 @@ and IDE/ATAPI.
 .It wt
 Wangtek and compatible QIC-02 and QIC-36 tape drives.
 .El
-.Pp
 .Ss Serial and parallel interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It ast
@@ -149,7 +146,6 @@ IBM RT four-port serial interfaces.
 .It tcom
 Byte Runner Technologies TC-400 and TC-800 series serial interfaces.
 .El
-.Pp
 .Ss Network interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It ai
@@ -292,7 +288,6 @@ to attach
 .Tn ISA
 devices.
 .Sh SEE ALSO
-.Xr intro 4 ,
 .Xr aha 4 ,
 .Xr ahc 4 ,
 .Xr ai 4 ,
@@ -311,6 +306,7 @@ devices.
 .Xr ep 4 ,
 .Xr ess 4 ,
 .Xr gus 4 ,
+.Xr intro 4 ,
 .Xr isapnp 4 ,
 .Xr ix 4 ,
 .Xr iy 4 ,
