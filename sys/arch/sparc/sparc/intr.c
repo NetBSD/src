@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.32 1998/09/22 13:40:08 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.33 1998/09/23 08:44:51 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -190,6 +190,7 @@ soft01intr(fp)
 	return (1);
 }
 
+#if defined(SUN4M)
 void	nmi_hard __P((void));
 void	nmi_soft __P((void));
 
@@ -272,6 +273,7 @@ nmi_soft()
 {
 	printf("Message interrupt on CPU %d\n", cpuinfo.mid);
 }
+#endif
 
 static struct intrhand level01 = { soft01intr };
 
