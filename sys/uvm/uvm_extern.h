@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.56.2.10 2002/12/11 06:51:53 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.56.2.11 2002/12/11 15:44:49 thorpej Exp $	*/
 
 /*
  *
@@ -146,6 +146,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define UVM_FLAG_COPYONW 0x080000 /* set copy_on_write flag */
 #define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce malloc() */
 #define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
+#define UVM_FLAG_NOWAIT  0x400000 /* not allowed to sleep */
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
@@ -162,10 +163,10 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 /*
  * the following defines are for uvm_km_kmemalloc's flags
  */
-#define UVM_KMF_NOWAIT	0x1			/* matches M_NOWAIT */
-#define UVM_KMF_VALLOC	0x2			/* allocate VA only */
-#define UVM_KMF_CANFAIL	0x4			/* caller handles failure */
+#define UVM_KMF_VALLOC	0x1			/* allocate VA only */
+#define UVM_KMF_CANFAIL	0x2			/* caller handles failure */
 #define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
+#define UVM_KMF_NOWAIT	UVM_FLAG_NOWAIT		/* not allowed to sleep */
 
 /*
  * the following defines the strategies for uvm_pagealloc_strat()
