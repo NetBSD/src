@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.19 2003/10/25 18:29:12 christos Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.20 2003/10/28 22:31:12 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.19 2003/10/25 18:29:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.20 2003/10/28 22:31:12 mycroft Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1919,7 +1919,6 @@ extern struct pfil_head inet6_pfil_hook;                /* XXX */
  */
 static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
-/*###1922 [cc] warning: `split2' might be used uninitialized in this function%%%*/
 	int snap, error, split1, split2, pktlen;
 	struct ether_header *eh;
 	struct mbuf *m1, *m2;
@@ -1988,7 +1987,7 @@ static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 		}
 	} else {
 		m2 = m1;
-		split2 = 0;
+		split2 = 0; /* XXX: gcc */
 	}
 
 	/*
