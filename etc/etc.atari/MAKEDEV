@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.40 2000/01/21 12:28:23 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.41 2000/07/27 18:43:19 mason Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -119,7 +119,8 @@ all)
 	sh $0 std fd st0 ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 grf0 grf1
 	sh $0 grf2 grf3 grf4 grf5 mouse0 mouse1 rtc random etvme leo0
 	sh $0 kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
-	sh $0 vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
+	sh $0 vnd3 vnd4 view00 view01 view02 view03 view04 view05
+	sh $0 pty0 pty1 pty2 pty3
 	sh $0 vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3
 	sh $0 raid0 raid1 raid2 raid3
@@ -132,7 +133,7 @@ all)
 floppy)
 	sh $0 std st0 ttye0 ttye1 ttye2 grf0 grf1 grf2 kbd tun0 tun1
 	sh $0 sd0 sd1 sd2 sd3 sd4 wd0 wd1 cd0 fd0 md0 md1 rtc
-	sh $0 ttyA0 ttyA1 ttyB0
+	sh $0 ttyA0 ttyA1 ttyB0 pty0
 	;;
 
 std)
