@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.24 2003/01/24 21:55:12 fvdl Exp $	*/
+/*	$NetBSD: lfs.c,v 1.25 2003/02/23 04:32:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.24 2003/01/24 21:55:12 fvdl Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.25 2003/02/23 04:32:06 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -447,7 +447,23 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	 * structures into a free list.
 	 */
 
-	/* Figure out where the superblocks are going to live */
+	/*
+	 * Figure out where the superblocks are going to live.
+	 *
+	 * Make segment 0 start at either zero, or LFS_LABELPAD, or
+	 * >= LFS_SBPAD+LFS_LABELPAD, in order to prevent segment 0
+	 * from having half a superblock in it.
+	 */
+	if (fsbtodb(lfsp, dbtofsb(lfsp, start)) != start)
+		fatal("Segment 0 offset is not multiple of frag size\n");
+	if (start != 0 && dbtob(start) != LFS_LABELPAD &&
+	    dbtob(start) < LFS_SBPAD + LFS_LABELPAD) {
+		fatal("Using flags \"-O %d\" would result in the first "
+		      "segment containing only\npart of a superblock.  "
+		      "Please choose an offset of 0, %d, or %d or more,\n",
+		      start, btodb(LFS_LABELPAD),
+		      btodb(LFS_LABELPAD + LFS_SBPAD));
+	}
 	lfsp->lfs_sboffs[0] = label_fsb;
 	if (version == 1)
 		lfsp->lfs_start = lfsp->lfs_sboffs[0];
@@ -508,7 +524,9 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 		segp->su_lastmod = lfsp->lfs_tstamp;
 	segp->su_nsums = 1;	/* 1 summary blocks */
 	segp->su_ninos = 1;	/* 1 inode block */
-	segp->su_flags = SEGUSE_SUPERBLOCK | SEGUSE_DIRTY;
+	segp->su_flags = SEGUSE_DIRTY;
+	if (lfsp->lfs_start < btofsb(lfsp, LFS_LABELPAD + LFS_SBPAD))
+		segp->su_flags |= SEGUSE_SUPERBLOCK;
 
 	lfsp->lfs_bfree -= btofsb(lfsp, lfsp->lfs_sumsize);
 	lfsp->lfs_bfree -= fragstofsb(lfsp, blkstofrags(lfsp, 
@@ -518,8 +536,10 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	 * Now figure out the address of the ifile inode. The inode block
 	 * appears immediately after the segment summary.
 	 */
-	lfsp->lfs_idaddr = label_fsb + sb_fsb +
-		btofsb(lfsp, lfsp->lfs_sumsize);
+	lfsp->lfs_idaddr = label_fsb + sb_fsb;
+	if (lfsp->lfs_idaddr < lfsp->lfs_start)
+		lfsp->lfs_idaddr = lfsp->lfs_start;
+	lfsp->lfs_idaddr += btofsb(lfsp, lfsp->lfs_sumsize);
 
 	for (i = 1, j = 1; i < lfsp->lfs_nseg; i++) {
 		segp = (SEGUSE *)(((char *)segtable) +
@@ -750,6 +770,8 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	if (lfsp->lfs_start < label_fsb)
 		lfsp->lfs_avail -= label_fsb - lfsp->lfs_start;
 	lfsp->lfs_bfree = lfsp->lfs_avail; /* XXX */
+	if (lfsp->lfs_start >= label_fsb + sb_fsb) /* XXX */
+		lfsp->lfs_avail += sb_fsb;
 	/* Slop for an imperfect cleaner */
 	lfsp->lfs_avail += segtod(lfsp, lfsp->lfs_minfreeseg / 2);
 	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
