@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.3 2000/08/01 00:28:03 eeh Exp $ */
+/*	$NetBSD: cache.c,v 1.4 2000/12/04 20:40:07 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -115,7 +115,7 @@ cache_flush_page(pa)
 	ls = cacheinfo.c_linesize;
 	i = NBPG >> cacheinfo.dc_l2linesize;
 	/* Assume E$ takes care of itself*/
-	kp = (int *)((pa & (cacheinfo.ec_totalsize - 1)) + KERNBASE);
+	kp = (int *)(u_long)((pa & (cacheinfo.ec_totalsize - 1)) + KERNBASE);
 	j = 0; /* defeat optimizer? */
 	for (; --i >= 0; p += ls) {
 		flush(p);	/* Take care of I$. */
