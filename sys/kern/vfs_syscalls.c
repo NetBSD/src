@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.137 1999/06/29 22:18:47 wrstuden Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.138 1999/06/30 10:00:06 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1835,8 +1835,10 @@ sys_access(p, v, retval)
 			flags |= VWRITE;
 		if (SCARG(uap, flags) & X_OK)
 			flags |= VEXEC;
-		if ((flags & VWRITE) == 0 || (error = vn_writechk(vp)) == 0)
-			error = VOP_ACCESS(vp, flags, cred, p);
+
+		error = VOP_ACCESS(vp, flags, cred, p);
+		if (!error && (flags & VWRITE))
+			error = vn_writechk(vp);
 	}
 	vput(vp);
 out1:
