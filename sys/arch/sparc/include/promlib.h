@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.5 2003/01/16 16:58:52 pk Exp $ */
+/*	$NetBSD: promlib.h,v 1.6 2003/02/18 13:36:51 pk Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -114,6 +114,18 @@ struct promops {
 };
 
 extern struct promops	promops;
+
+/*
+ * Memory description array.
+ */
+struct memarr {
+	paddr_t	addr;
+	psize_t	len;
+};
+int	prom_makememarr(struct memarr *, int max, int which);
+#define	MEMARR_AVAILPHYS	0
+#define	MEMARR_TOTALPHYS	1
+
 
 void	prom_init	__P((void));	/* To setup promops */
 

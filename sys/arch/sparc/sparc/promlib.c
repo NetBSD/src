@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.13 2001/12/07 11:00:39 hannken Exp $ */
+/*	$NetBSD: promlib.c,v 1.14 2003/02/18 13:36:52 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -793,6 +793,144 @@ opf_nextprop(node, prop)
 	static char buf[OF_NEXTPROP_BUF_SIZE];
 	OF_nextprop(node, prop, buf);
 	return (buf);
+}
+
+int
+prom_makememarr(ap, max, which)
+	struct memarr *ap;
+	int max, which;
+{
+	struct v2rmi {
+		int	zero;
+		int	addr;
+		int	len;
+	} v2rmi[200];		/* version 2 rom meminfo layout */
+#define	MAXMEMINFO ((int)sizeof(v2rmi) / (int)sizeof(*v2rmi))
+	void *p;
+
+	struct v0mlist *mp;
+	int i, node, len;
+	char *prop;
+
+	switch (prom_version()) {
+		struct promvec *promvec;
+		struct om_vector *oldpvec;
+	case PROM_OLDMON:
+		oldpvec = (struct om_vector *)PROM_BASE;
+		switch (which) {
+		case MEMARR_AVAILPHYS:
+			ap[0].addr = 0;
+			ap[0].len = *oldpvec->memoryAvail;
+			break;
+		case MEMARR_TOTALPHYS:
+			ap[0].addr = 0;
+			ap[0].len = *oldpvec->memorySize;
+			break;
+		default:
+			printf("pre_panic: makememarr");
+			break;
+		}
+		i = (1);
+		break;
+
+	case PROM_OBP_V0:
+		/*
+		 * Version 0 PROMs use a linked list to describe these
+		 * guys.
+		 */
+		promvec = romp;
+		switch (which) {
+		case MEMARR_AVAILPHYS:
+			mp = *promvec->pv_v0mem.v0_physavail;
+			break;
+
+		case MEMARR_TOTALPHYS:
+			mp = *promvec->pv_v0mem.v0_phystot;
+			break;
+
+		default:
+			panic("makememarr");
+		}
+		for (i = 0; mp != NULL; mp = mp->next, i++) {
+			if (i >= max)
+				goto overflow;
+			ap->addr = (u_int)mp->addr;
+			ap->len = mp->nbytes;
+			ap++;
+		}
+		break;
+
+	default:
+		printf("makememarr: hope version %d PROM is like version 2\n",
+			prom_version());
+		/* FALLTHROUGH */
+
+        case PROM_OBP_V3:
+	case PROM_OBP_V2:
+		/*
+		 * Version 2 PROMs use a property array to describe them.
+		 */
+
+		/* Consider emulating `OF_finddevice' */
+		node = findnode(firstchild(findroot()), "memory");
+		goto case_common;
+
+	case PROM_OPENFIRM:
+		node = OF_finddevice("/memory");
+		if (node == -1)
+		    node = 0;
+
+	case_common:
+		if (node == 0)
+			panic("makememarr: cannot find \"memory\" node");
+
+		if (max > MAXMEMINFO) {
+			printf("makememarr: limited to %d\n", MAXMEMINFO);
+			max = MAXMEMINFO;
+		}
+
+		switch (which) {
+		case MEMARR_AVAILPHYS:
+			prop = "available";
+			break;
+
+		case MEMARR_TOTALPHYS:
+			prop = "reg";
+			break;
+
+		default:
+			panic("makememarr");
+		}
+
+		len = MAXMEMINFO;
+		p = v2rmi;
+		if (PROM_getprop(node, prop, sizeof(struct v2rmi), &len, &p) != 0)
+			panic("makememarr: cannot get property");
+
+		for (i = 0; i < len; i++) {
+			if (i >= max)
+				goto overflow;
+			ap->addr = v2rmi[i].addr;
+			ap->len = v2rmi[i].len;
+			ap++;
+		}
+		break;
+	}
+
+	/*
+	 * Success!  (Hooray)
+	 */
+	if (i == 0)
+		panic("makememarr: no memory found");
+	return (i);
+
+overflow:
+	/*
+	 * Oops, there are more things in the PROM than our caller
+	 * provided space for.  Truncate any extras.
+	 */
+	printf("makememarr: WARNING: lost some memory\n");
+	return (i);
 }
 
 static void prom_init_oldmon __P((void));
