@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.152 2000/03/22 20:58:25 ws Exp $
+#	$NetBSD: files.i386,v 1.153 2000/03/26 15:36:49 martin Exp $
 #
 # new style config file for i386 architecture
 #
@@ -149,6 +149,14 @@ device	pcib: isabus
 attach	pcib at pci
 file	arch/i386/pci/pcib.c		pcib
 
+# Game adapter (joystick)
+device	joy
+file	arch/i386/isa/joy.c		joy needs-flag
+
+# PCI joysticks
+attach joy at pci with pci_joy
+file	arch/i386/pci/joy_pci.c		pci_joy
+
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
@@ -229,10 +237,6 @@ device	fd: disk, isadma
 attach	fd at fdc
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
-
-# Game adapter (joystick)
-device	joy
-file	arch/i386/isa/joy.c		joy needs-flag
 
 attach	joy at isa with joy_isa
 file	arch/i386/isa/joy_isa.c		joy_isa

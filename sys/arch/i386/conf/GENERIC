@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.316 2000/03/22 11:22:21 onoe Exp $
+#	$NetBSD: GENERIC,v 1.317 2000/03/26 15:36:49 martin Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.316 $"
+#ident 		"GENERIC-$Revision: 1.317 $"
 
 maxusers	32		# estimated number of users
 
@@ -753,6 +753,9 @@ wsmouse*	at mms? mux 0
 
 # ISA Plug-and-Play joysticks
 joy*	at isapnp?			# Game ports (usually on audio cards)
+
+# PCI joysticks
+joy*	at pci?				# Game ports (usually on audio cards)
 
 # ISA joysticks. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
