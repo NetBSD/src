@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.10 2000/06/12 23:26:38 eeh Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.11 2000/11/18 23:43:07 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,7 +38,6 @@
 #include <machine/openfirm.h>
 
 #define min(x,y)	((x<y)?(x):(y))
-
 
 int
 OF_peer(phandle)
@@ -179,6 +178,65 @@ OF_getprop(handle, prop, buf, buflen)
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.size;
+}
+
+int
+OF_setprop(handle, prop, buf, buflen)
+	int handle;
+	char *prop;
+	const void *buf;
+	int buflen;
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t prop;
+		cell_t buf;
+		cell_t buflen;
+		cell_t size;
+	} args;
+	
+	if (buflen > NBPG)
+		return -1;
+	args.name = ADR2CELL(&"setprop");
+	args.nargs = 4;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(handle);
+	args.prop = ADR2CELL(prop);
+	args.buf = ADR2CELL(buf);
+	args.buflen = buflen;
+	if (openfirmware(&args) == -1)
+		return -1;
+	return args.size;
+}
+
+int
+OF_nextprop(handle, prop, buf)
+	int handle;
+	char *prop;
+	void *buf;
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t prev;
+		cell_t buf;
+		cell_t next;
+	} args;
+	
+	args.name = ADR2CELL(&"nextprop");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(handle);
+	args.prev = ADR2CELL(prop);
+	args.buf = ADR2CELL(buf);
+	if (openfirmware(&args) == -1)
+		return -1;
+	return args.next;
 }
 
 int
@@ -657,7 +715,46 @@ OF_set_symbol_lookup(s2v, v2s)
 	(void)openfirmware(&args);
 }
 
+void
+OF_interpret(s)
+	char *s;
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t verbs;
+		cell_t status;
+	} args;
+	
+	args.name = ADR2CELL(&"interpret");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.verbs = ADR2CELL(s);
+	openfirmware(&args);
+}
+
+int
+OF_milliseconds()
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t ticks;
+	} args;
+	
+	args.name = ADR2CELL(&"milliseconds");
+	args.nargs = 0;
+	args.nreturns = 1;
+	openfirmware(&args);
+	return (args.ticks);
+}
+
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ddb.h"
+#endif
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
