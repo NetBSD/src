@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.75 2002/12/23 02:58:37 tsutsui Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.76 2003/01/17 08:11:50 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.75 2002/12/23 02:58:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.76 2003/01/17 08:11:50 itojun Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1123,6 +1123,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 	int firsttx = sc->sc_txnext;
 #endif
 #ifdef DP83820
+	struct m_tag *mtag;
 	u_int32_t extsts;
 #endif
 
@@ -1309,7 +1310,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 		 * the packet.
 		 */
 		if (sc->sc_ethercom.ec_nvlans != 0 &&
-		    (m = m_aux_find(m0, AF_LINK, ETHERTYPE_VLAN)) != NULL) {
+		    (mtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL)) != NULL) {
 			sc->sc_txdescs[lasttx].sipd_extsts |=
 			    htole32(EXTSTS_VPKT |
 				    htons(*mtod(m, int *) & EXTSTS_VTCI));
@@ -1863,9 +1864,10 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 */
 		if (sc->sc_ethercom.ec_nvlans != 0 &&
 		    (extsts & EXTSTS_VPKT) != 0) {
-			struct mbuf *vtag;
+			struct m_tag *vtag;
 
-			vtag = m_aux_add(m, AF_LINK, ETHERTYPE_VLAN);
+			vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
+			    M_NOWAIT);
 			if (vtag == NULL) {
 				ifp->if_ierrors++;
 				printf("%s: unable to allocate VLAN tag\n",
@@ -1874,8 +1876,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 				continue;
 			}
 
-			*mtod(vtag, int *) = ntohs(extsts & EXTSTS_VTCI);
-			vtag->m_len = sizeof(int);
+			*(u_int *)(vtag + 1) = ntohs(extsts & EXTSTS_VTCI);
 		}
 
 		/*
