@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <a.out.h>
+#include <stab.h>
 #include <machine/param.h>
 
 #define FILE_OFFSET(vadr) (((vadr) - text_adr) - N_DATADDR(hdr) + \
@@ -27,11 +28,13 @@ int db_symtab_adr;
 
 int avail;
 
+int force = 0;
 int zap_locals = 0;
+int debugging = 0;
 
 usage ()
 {
-	fprintf (stderr, "usage: dbsym [-l] [-T addr] file\n");
+	fprintf (stderr, "usage: dbsym [-fgx] [-T addr] file\n");
 	exit (1);
 }
 
@@ -50,9 +53,15 @@ char **argv;
 	int len;
 
 
-	while ((c = getopt (argc, argv, "lT:")) != EOF) {
+	while ((c = getopt (argc, argv, "fgxT:")) != EOF) {
 		switch (c) {
-                case 'l':
+		case 'f':
+			force = 1;
+			break;
+		case 'g':
+			debugging = 1;
+			break;
+                case 'x':
                         zap_locals = 1;
                         break;
 		case 'T':
@@ -125,32 +134,49 @@ char **argv;
 
 	nsp = new_syms;
 	for (i = 0, sp = old_syms; i < num_old_syms; i++, sp++) {
-		if (sp->n_type & N_STAB)
+		if (zap_locals && !(sp->n_type & N_EXT))
 			continue;
 
-		if (zap_locals && (sp->n_type & N_EXT) == 0)
+		if (sp->n_type & N_STAB)
+			switch (sp->n_type & ~N_EXT) {
+				case N_SLINE:
+					if (debugging)
+						*nsp++ = *sp;
+					continue;
+				case N_FUN:
+				case N_PSYM:
+				case N_SO:
+					if (!debugging)
+						continue;
+					goto skip_tests;
+					break;
+				default:
+					continue;
+			}
+
+		if ((sp->n_type & ~N_EXT) == N_UNDF)
 			continue;
                 
-                if ((sp->n_type & N_FN) == 0)
+                if (!debugging && (sp->n_type & ~N_EXT) == N_FN)
 			continue;
 
 		if (sp->n_un.n_strx == 0)
 			continue;
 
-		if (sp->n_value < 0xfe000000)
+		if (sp->n_value < text_adr)
 			continue;
 
-		if (sp->n_value >= 0xff000000)
+		if (sp->n_value > (text_adr + hdr.a_text + hdr.a_data +
+				   hdr.a_bss))
 			continue;
+
+		skip_tests:
 
 		name = old_strtab + sp->n_un.n_strx;
 
 		len = strlen (name);
 
 		if (len == 0)
-			continue;
-
-		if (len >= 2 && name[len - 2] == '.' && name[len - 1] == 'o')
 			continue;
 
 		if (strcmp (name, "gcc_compiled.") == 0)
@@ -175,10 +201,12 @@ char **argv;
 			db_symtabsize_adr = sp->n_value;
 	}
 	
-	if (db_symtab_adr == 0 || db_symtabsize_adr == 0) {
-/*		fprintf (stderr, "couldn't find db_symtab symbols\n");*/
-		exit (0);
-	}
+	if (db_symtab_adr == 0 || db_symtabsize_adr == 0)
+		if (!force) {
+			fprintf (stderr, "couldn't find db_symtab symbols\n");
+			exit (1);
+		} else
+			exit (0);
 
 	*(int *)new_strtab = new_strtab_size;
 	num_new_syms = nsp - new_syms;
