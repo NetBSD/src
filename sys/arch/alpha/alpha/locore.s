@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.61 1999/04/19 23:24:14 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.62 1999/04/20 21:11:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.61 1999/04/19 23:24:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.62 1999/04/20 21:11:59 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -219,19 +219,12 @@ Lstart1: LDGP(pv)
 	call_pal PAL_imb
 
 	/*
-	 * Construct a fake trap frame, so execve() can work normally.
-	 * Note that setregs() is responsible for setting its contents
-	 * to 'reasonable' values.
+	 * All ready to go!  Call main()!
 	 */
-	lda	sp,-(FRAME_SIZE * 8)(sp)	/* space for struct trapframe */
-	mov	sp, a0				/* main()'s arg is frame ptr */
-	CALL(main)				/* go to main()! */
+	CALL(main)
 
-	/*
-	 * Call exception_return, to simulate return from (fake)
-	 * exception to user-land, running process 1, init!
-	 */
-	jmp	zero, exception_return		/* "And that's all she wrote." */
+	/* This should never happen. */
+	PANIC("main() returned",Lmain_returned_pmsg)
 	END(locorestart)
 
 /**************************************************************************/
@@ -278,6 +271,17 @@ Lstart1: LDGP(pv)
  */
 #include <alpha/alpha/multiproc.s>
 #endif /* MULTIPROCESSOR */
+
+/**************************************************************************/
+
+/**************************************************************************/
+
+#if defined(DDB)
+/*
+ * Pull in debugger glue.
+ */
+#include <alpha/alpha/debug.s>
+#endif /* DDB */
 
 /**************************************************************************/
 
@@ -515,26 +519,6 @@ LEAF(exception_restore_regs, 0)
 	/* a0, a1, & a2 already set up */
 	ldiq	a3, ALPHA_KENTRY_IF
 	mov	sp, a4			; .loc 1 __LINE__
-#if defined(DDB)
-	/*
-	 * Kernel-mode BUGCHK and BPT traps enter the kernel debugger.
-	 */
-	ldq	t0, (FRAME_PS*8)(sp)
-	and	t0, ALPHA_PSL_USERMODE, t0
-	bne	t0, Lcalltrap		/* usermode */
-
-	cmpeq	a0, ALPHA_IF_CODE_BPT, t0
-	bne	t0, Lcalldbgr		/* got BPT */
-
-	cmpeq	a0, ALPHA_IF_CODE_BUGCHK, t0
-	beq	t0, Lcalltrap		/* not BUGCHK */
-Lcalldbgr:
-	CALL(ddb_trap)
-	beq	v0, Lcalltrap		/* debugger didn't handle trap! */
-	
-	jmp	zero, exception_return	/* debugger handled it, return */
-Lcalltrap:
-#endif
 	CALL(trap)
 	jmp	zero, exception_return	
 	END(XentIF)
