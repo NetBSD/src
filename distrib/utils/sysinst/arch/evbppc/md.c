@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 2003/05/29 17:51:28 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.8 2003/05/30 17:28:28 dsl Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -55,7 +55,8 @@ mbr_sector_t mbr;
 /* prototypes */
 
 
-int md_get_info()
+int
+md_get_info(void)
 {
 
 	read_mbr(diskdev, &mbr, sizeof mbr);
@@ -63,7 +64,8 @@ int md_get_info()
 	return edit_mbr(&mbr);
 }
 
-int md_pre_disklabel()
+int
+md_pre_disklabel(void)
 {
 	printf ("%s", msg_string (MSG_dofdisk));
 
@@ -76,7 +78,8 @@ int md_pre_disklabel()
 	return 0;
 }
 
-int md_post_disklabel(void)
+int
+md_post_disklabel(void)
 {
 	/* Sector forwarding / badblocks ... */
 	if (*doessf) {
@@ -87,7 +90,8 @@ int md_post_disklabel(void)
 	return 0;
 }
 
-int md_post_newfs(void)
+int
+md_post_newfs(void)
 {
 /* Walnut don't do bootblocks */
 #if 0
@@ -100,7 +104,8 @@ int md_post_newfs(void)
 	return 0;
 }
 
-int md_copy_filesystem (void)
+int
+md_copy_filesystem(void)
 {
 	if (target_already_root()) {
 		return 0;
@@ -119,7 +124,8 @@ int md_copy_filesystem (void)
 
 
 
-int md_make_bsd_partitions (void)
+int
+md_make_bsd_partitions(void)
 {
 	FILE *f;
 	int i;
@@ -336,7 +342,7 @@ editlab:
 
 /* Upgrade support */
 int
-md_update (void)
+md_update(void)
 {
 	endwin();
 	md_copy_filesystem ();
@@ -369,13 +375,13 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update()
+md_pre_update(void)
 {
 	return 1;
 }
 
 void
-md_init()
+md_init(void)
 {
 }
 
@@ -398,14 +404,14 @@ md_bios_info(dev)
 
 
 void
-md_set_sizemultname()
+md_set_sizemultname(void)
 {
 
 	set_sizemultname_meg();
 }
 
 void
-md_set_no_x()
+md_set_no_x(void)
 {
 
 	toggle_getit (8);
