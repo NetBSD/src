@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.4 2000/04/16 09:52:49 jdc Exp $	*/
+/*	$NetBSD: background.c,v 1.5 2000/04/18 22:44:21 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -66,10 +66,12 @@ bkgd(chtype ch)
 void
 wbkgdset(WINDOW *win, chtype ch)
 {
-	win->bchar = (wchar_t) ch & A_CHARTEXT;
-	win->battr = (attr_t) ch & A_ATTRIBUTES;
+	if (ch & __CHARTEXT)
+		win->bch = (wchar_t) ch & __CHARTEXT;
+	win->battr = (attr_t) ch & __ATTRIBUTES;
 #ifdef DEBUG
-	__CTRACE("wbkgdset: %08x, %08x\n", win->bchar, win->battr);
+	__CTRACE("wbkgdset: (%0.2o), '%s', %08x\n",
+	    win, unctrl(win->bch), win->battr);
 #endif
 }
 
@@ -80,7 +82,15 @@ wbkgdset(WINDOW *win, chtype ch)
 int
 wbkgd(WINDOW *win, chtype ch)
 {
+	int	y, x;
+
 	wbkgdset(win, ch);
+	for (y = 0; y < win->maxy; y++)
+		for (x = 0; x < win->maxx; x++) {
+			if (ch & A_CHARTEXT)
+				win->lines[y]->line[x].bch = ch & __CHARTEXT;
+			win->lines[y]->line[x].battr = ch & __ATTRIBUTES;
+		}
 	__touchwin(win);
 	return(OK);
 }
@@ -92,6 +102,6 @@ wbkgd(WINDOW *win, chtype ch)
 chtype
 getbkgd(WINDOW *win)
 {
-	return ((chtype) ((win->bchar & A_CHARTEXT) |
+	return ((chtype) ((win->bch & A_CHARTEXT) |
 	    (win->battr & A_ATTRIBUTES)));
 }
