@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.3.4.1 1999/06/26 23:56:42 cgd Exp $
+#	$NetBSD: dot.profile,v 1.3.4.2 1999/07/01 19:31:22 perry Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -32,10 +32,10 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=sun
-export TERM
 HOME=/
 export HOME
+EDITOR=ed
+export EDITOR
 
 umask 022
 
