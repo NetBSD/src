@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 2000/12/09 05:27:29 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.25 2000/12/09 07:10:35 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -72,12 +72,12 @@
 			    struct ibcs2_stat *st); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
-20	NOARGS		{ pid_t sys_getpid(void); }
+20	NOARGS		{ pid_t sys_getpid_with_ppid(void); }
 21	STD		{ int ibcs2_sys_mount(char *special, char *dir, \
 			    int flags, int fstype, char *data, int len); }
 22	STD		{ int ibcs2_sys_umount(char *name); }
 23	STD		{ int ibcs2_sys_setuid(int uid); }
-24	NOARGS		{ uid_t sys_getuid(void); }
+24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	STD		{ int ibcs2_sys_stime(long *timep); }
 26	UNIMPL		ibcs2_ptrace
 27	STD		{ int ibcs2_sys_alarm(unsigned sec); }
@@ -104,7 +104,7 @@
 44	UNIMPL		profil
 45	STD		{ int ibcs2_sys_plock(int cmd); }
 46	STD		{ int ibcs2_sys_setgid(int gid); }
-47	NOARGS		{ gid_t sys_getgid(void); }
+47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
 48	STD		{ int ibcs2_sys_sigsys(int sig, ibcs2_sig_t fp); }
 #ifdef SYSVMSG
 49	STD		{ int ibcs2_sys_msgsys(int which, int a2, int a3, \
