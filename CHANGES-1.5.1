@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.32 2001/03/13 21:38:26 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.33 2001/03/14 23:44:23 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -1892,3 +1892,7 @@ sys/dev/pcmcia/pcmcia_cis.c			1.21
   Add some small delays at appropriate places in CIS reading code.
   This is a stopgap fix for PR#9984, avoiding a panic when an
   ``AVM Fritz!'' ISDN card is installed in a cardbus slot.
+
+usr.bin/audio/play/play.c			1.24 via patch
+
+  Fix LP64 format/type inconsistency.
