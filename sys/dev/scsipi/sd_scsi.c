@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.12 2000/03/29 03:43:32 simonb Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.13 2000/05/30 01:08:25 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,7 +160,10 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	struct sd_scsibus_mode_sense_data *scsipi_sense;
 	int page, flags;
 {
-	struct scsi_mode_sense scsipi_cmd;
+	struct scsi_mode_sense sense_cmd;
+	struct scsi_mode_sense_big sensebig_cmd;
+	struct scsipi_generic *cmd;
+	int len;
 
 	/*
 	 * Make sure the sense buffer is clean before we do
@@ -169,17 +172,27 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	 */
 	bzero(scsipi_sense, sizeof(*scsipi_sense));
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = SCSI_MODE_SENSE;
-	scsipi_cmd.page = page;
-	scsipi_cmd.length = 0x20;
+	if (sd->sc_link->quirks & SDEV_ONLYBIG) {
+		memset(&sensebig_cmd, 0, sizeof(sensebig_cmd));
+		sensebig_cmd.opcode = SCSI_MODE_SENSE_BIG;
+		sensebig_cmd.page = page;
+		_lto2b(0x20, sensebig_cmd.length);
+		cmd = (struct scsipi_generic *)&sensebig_cmd;
+		len = sizeof(sensebig_cmd); 
+	} else {
+		memset(&sense_cmd, 0, sizeof(sense_cmd));
+		sense_cmd.opcode = SCSI_MODE_SENSE;
+		sense_cmd.page = page;
+		sense_cmd.length = 0x20;
+		cmd = (struct scsipi_generic *)&sense_cmd;
+		len = sizeof(sense_cmd); 
+	}
 	/*
 	 * If the command worked, use the results to fill out
 	 * the parameter structure
 	 */
 	return (scsipi_command(sd->sc_link,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *)scsipi_sense, sizeof(*scsipi_sense),
+	    cmd, len, (u_char *)scsipi_sense, sizeof(*scsipi_sense),
 	    SDRETRIES, 6000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_SILENT));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.161 2000/05/23 10:20:14 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.162 2000/05/30 01:08:25 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -718,7 +718,8 @@ sdstart(v)
 		 *  fit in a "small" cdb, use it.
 		 */
 		if (((bp->b_rawblkno & 0x1fffff) == bp->b_rawblkno) &&
-		    ((nblks & 0xff) == nblks) && sc_link->type == BUS_SCSI) {
+		    ((nblks & 0xff) == nblks) && sc_link->type == BUS_SCSI &&
+		    !(sc_link->quirks & SDEV_ONLYBIG)) {
 			/*
 			 * We can fit in a small cdb.
 			 */
