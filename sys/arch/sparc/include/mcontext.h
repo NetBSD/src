@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.1 2001/11/20 16:19:47 pk Exp $	 */
+/*	$NetBSD: mcontext.h,v 1.1.2.2 2002/06/21 06:55:18 gmcgarry Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,5 +113,7 @@ typedef struct __mcontext {
 	__xrs_t		__xrs;
 	long		__pad[19];
 } mcontext_t;
+
+#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__greg[_REG_SP])
 
 #endif /* !_SPARC_MCONTEXT_H_ */
