@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.79 1997/07/14 20:46:23 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.80 1997/07/17 23:54:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1016,7 +1016,7 @@ nfs_readrpc(vp, uiop, cred)
 #endif
 	nmp = VFSTONFS(vp->v_mount);
 	tsiz = uiop->uio_resid;
-	if (uiop->uio_offset + tsiz > 0xffffffff && !v3)
+	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
 		return (EFBIG);
 	while (tsiz > 0) {
 		nfsstats.rpccnt[NFSPROC_READ]++;
@@ -1082,7 +1082,7 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 #endif
 	*must_commit = 0;
 	tsiz = uiop->uio_resid;
-	if (uiop->uio_offset + tsiz > 0xffffffff && !v3)
+	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
 		return (EFBIG);
 	while (tsiz > 0) {
 		nfsstats.rpccnt[NFSPROC_WRITE]++;
@@ -1121,6 +1121,7 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 				rlen = fxdr_unsigned(int, *tl++);
 				if (rlen == 0) {
 					error = NFSERR_IO;
+					m_freem(mrep);
 					break;
 				} else if (rlen < len) {
 					backup = len - rlen;
@@ -1157,6 +1158,8 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 		if (wccflag)
 		    VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr.va_mtime.tv_sec;
 		m_freem(mrep);
+		if (error)
+			break;
 		tsiz -= len;
 	}
 nfsmout:
