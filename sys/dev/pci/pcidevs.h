@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.124 1999/05/07 15:40:57 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.125 1999/05/07 21:11:20 hwr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.117 1999/05/07 15:38:40 drochner Exp 
+ *	NetBSD: pcidevs,v 1.118 1999/05/07 21:09:31 hwr Exp 
  */
 
 /*
@@ -1105,6 +1105,7 @@
 #define	PCI_PRODUCT_TI_PCI1031	0xac13		/* PCI1031 PCI-pcmcia Bridge */
 #define	PCI_PRODUCT_TI_PCI1131	0xac15		/* PCI1131 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1250	0xac16		/* PCI1250 PCI-CardBus Bridge */
+#define	PCI_PRODUCT_TI_PCI1251	0xac1d		/* PCI1251 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1220	0xac17		/* PCI1220 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1221	0xac19		/* PCI1221 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1225	0xac1C		/* PCI1225 PCI-CardBus Bridge */
