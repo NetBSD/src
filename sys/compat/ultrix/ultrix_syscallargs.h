@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_syscallargs.h,v 1.26 1998/10/03 16:15:39 drochner Exp $	*/
+/*	$NetBSD: ultrix_syscallargs.h,v 1.27 1998/10/03 19:45:37 eeh Exp $	*/
 
 /*
  * System call argument lists.
@@ -7,7 +7,21 @@
  * created from	NetBSD: syscalls.master,v 1.27 1998/10/03 16:13:20 drochner Exp 
  */
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
+#ifdef	syscallarg
+#undef	syscallarg
+#endif
+
+#define	syscallarg(x)								\
+		union {								\
+			register_t pad;						\
+			struct { x datum; } le;					\
+			struct {						\
+				int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+					? 0					\
+					: sizeof (register_t) - sizeof (x)];	\
+				x datum;					\
+			} be;							\
+		}
 
 struct ultrix_sys_open_args {
 	syscallarg(char *) path;
