@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.183 2003/12/20 18:22:16 manu Exp $	*/
+/*	$NetBSD: proc.h,v 1.184 2003/12/20 19:01:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -105,9 +105,12 @@ struct emul {
 					  const sigset_t *));
 	void		(*e_trapsignal) __P((struct lwp *,
 					     const struct ksiginfo *));
+	int		(*e_sigfilter) __P((struct lwp *,
+					     const struct ksiginfo *));
 #else
 	void		(*e_sendsig) __P((int, const sigset_t *, u_long));
 	void		(*e_trapsignal) __P((struct lwp *, int, u_long));
+	int		(*e_sigfilter) __P((struct lwp *, int, u_long));
 #endif
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
