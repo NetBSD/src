@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.17 1998/10/07 22:12:48 erh Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.18 1998/10/07 22:45:51 erh Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -325,14 +325,8 @@ linux_sigprocmask1(p, how, set, oset)
 	const linux_old_sigset_t *set;
 	linux_old_sigset_t *oset;
 {
-	struct linux_sys_sigprocmask_args /* {
-		syscallarg(int) how;
-		syscallarg(const linux_old_sigset_t *) set;
-		syscallarg(linux_old_sigset_t *) oset;
-	} */ *uap = v;
 	linux_old_sigset_t nlss, olss;
 	sigset_t nbss, obss;
-	int how;
 	int error;
 
 	switch (how) {
@@ -391,8 +385,8 @@ linux_sys_rt_sigprocmask(p, v, retval)
 	}
 
 	return(linux_sigprocmask1(p, SCARG(uap, how), 
-				(linux_old_sigset_t)SCARG(uap, set),
-				(linux_old_sigset_t)SCARG(uap, oset));
+				(const linux_old_sigset_t *)SCARG(uap, set),
+				(linux_old_sigset_t *)SCARG(uap, oset));
 }
 
 int
