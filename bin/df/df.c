@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.64 2004/07/07 01:10:58 enami Exp $	*/
+/*	$NetBSD: df.c,v 1.65 2004/07/07 01:14:13 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.64 2004/07/07 01:10:58 enami Exp $");
+__RCSID("$NetBSD: df.c,v 1.65 2004/07/07 01:14:13 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -367,7 +367,7 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 	bavail = sfsp->f_bfree - sfsp->f_bresvd;
 	availblks = bavail + used;
 	if (hflag)
-		prthuman(sfsp, (u_long)used, bavail);
+		prthuman(sfsp, used, bavail);
 	else
 		(void)printf(" %*" PRId64 " %8" PRId64 " %9" PRId64, headerlen,
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_frsize, blocksize),
