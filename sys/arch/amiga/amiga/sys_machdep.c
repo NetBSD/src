@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.20 1999/01/19 18:18:41 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.21 1999/02/25 19:51:23 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -121,15 +121,26 @@ vdoualarm(arg)
 int
 cachectl(req, addr, len)
 	int req;
-	caddr_t	addr;
+	vm_offset_t addr;
 	int len;
+{
+	return cachectl1(req, addr, len, curproc);
+}
+
+/*ARGSUSED1*/
+int
+cachectl1(req, addr, len, p)
+	int req;
+	vm_offset_t addr;
+	int len;
+	struct proc *p;
 {
 	int error = 0;
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
 		register int inc = 0;
 		int pa = 0, doall = 0;
-		caddr_t end = 0;
+		vm_offset_t end = 0;
 
 		if (addr == 0 ||
 		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
@@ -137,10 +148,10 @@ cachectl(req, addr, len)
 		if (!doall) {
 			end = addr + len;
 			if (len <= 1024) {
-				addr = (caddr_t)((int)addr & ~0xF);
+				addr = addr & ~0xF;
 				inc = 16;
 			} else {
-				addr = (caddr_t)((int)addr & ~PGOFSET);
+				addr = addr & ~PGOFSET;
 				inc = NBPG;
 			}
 		}
@@ -151,9 +162,9 @@ cachectl(req, addr, len)
 			 * entire cache (XXX is this a rational thing to do?)
 			 */
 			if (!doall &&
-			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
-						  (vm_offset_t)addr);
+			    (pa == 0 || (addr & PGOFSET) == 0)) {
+				pa = pmap_extract(p->p_vmspace->vm_map.pmap,
+						  addr);
 				if (pa == 0)
 					doall = 1;
 			}
