@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.56 2000/05/10 23:24:04 thorpej Exp $
+# $NetBSD: mi,v 1.57 2000/05/13 08:13:56 lukem Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -45,7 +45,6 @@
 ./etc/namedb/loopback.v6
 ./etc/namedb/named.conf
 ./etc/namedb/root.cache
-./etc/netstart
 ./etc/networks
 ./etc/newsyslog.conf
 ./etc/nsswitch.conf
