@@ -1,3 +1,5 @@
+/*	$NetBSD: db_interface.c,v 1.2 1994/10/26 08:24:57 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -30,8 +32,6 @@
  *	Author: Tero Kivinen, Helsinki University of Technology 1992.
  *
  *	Interface to new kernel debugger.
- *
- *	$Id: db_interface.c,v 1.1.1.1 1993/09/09 23:53:48 phil Exp $
  */
 
 #include <sys/reboot.h>

@@ -1,6 +1,4 @@
-/*
- * 	$Id: cddefs.h,v 1.1 1994/04/01 23:18:07 phil Exp $
- */
+/*	$NetBSD: cddefs.h,v 1.2 1994/10/26 08:25:25 cgd Exp $	*/
 
 struct cd_data {
 	int	flags;

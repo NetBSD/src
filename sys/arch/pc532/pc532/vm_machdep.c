@@ -1,3 +1,5 @@
+/*	$NetBSD: vm_machdep.c,v 1.6 1994/10/26 08:25:21 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * Copyright (c) 1989, 1990 William Jolitz
@@ -36,14 +38,12 @@
  * SUCH DAMAGE.
  *
  *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *
- *	$Id: vm_machdep.c,v 1.5 1994/07/13 15:09:15 phil Exp $
  */
 
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.5 1994/07/13 15:09:15 phil Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.6 1994/10/26 08:25:21 cgd Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>

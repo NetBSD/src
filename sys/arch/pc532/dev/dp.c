@@ -1,9 +1,9 @@
+/*	$NetBSD: dp.c,v 1.6 1994/10/26 08:24:10 cgd Exp $	*/
+
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model. 
  *
  *	dp.c:  A NCR DP8490 driver for the pc532.
- *
- *	dp.c,v 1.2 1993/10/01 22:59:31 phil Exp
  */
 
 /*

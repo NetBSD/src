@@ -1,3 +1,5 @@
+/*	$NetBSD: bcopy.s,v 1.4 1994/10/26 08:24:50 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -29,8 +31,6 @@
  * 	File: ns532/bcopy.s
  *	Author: Tatu Ylonen, Jukka Virtanen
  *	Helsinki University of Technology 1992.
- *
- *	$Id: bcopy.s,v 1.3 1994/03/22 00:18:28 phil Exp $
  */
 
 #include <machine/asm.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: frame.h,v 1.4 1994/10/26 08:24:28 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,8 +36,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)frame.h	5.2 (Berkeley) 1/18/91
- *
- * 	frame.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
 #ifndef _MACHINE_FRAME_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: so.h,v 1.2 1994/10/26 08:25:57 cgd Exp $	*/
+
 #ifndef _SO_H_INCLUDE
 #define _SO_H_INCLUDE
 

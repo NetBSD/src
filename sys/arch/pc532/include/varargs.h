@@ -1,3 +1,5 @@
+/*	$NetBSD: varargs.h,v 1.5 1994/10/26 08:24:45 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)varargs.h	8.2 (Berkeley) 3/22/94
- *	$Id: varargs.h,v 1.4 1994/10/15 04:57:58 cgd Exp $
+ *	@(#)varargs.h	8.2 (Berkeley) 3/22/94
  */
 
 #ifndef _PC532_VARARGS_H_

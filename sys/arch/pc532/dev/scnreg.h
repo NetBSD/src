@@ -1,3 +1,5 @@
+/*	$NetBSD: scnreg.h,v 1.5 1994/10/26 08:24:19 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
@@ -29,8 +31,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *	scnreg.h: definitions for the scn serial driver.
- *
- *	$Id: scnreg.h,v 1.4 1994/07/01 04:24:18 phil Exp $
  */
 
 /* Constants. */

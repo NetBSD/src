@@ -1,3 +1,5 @@
+/*	$NetBSD: icu.h,v 1.2 1994/10/26 08:24:29 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
@@ -29,8 +31,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *	icu.h
- *
- *	$Id: icu.h,v 1.1 1994/05/17 17:31:04 phil Exp $
  */
 
 /* icu.h: defines for use with the ns32532 icu. */

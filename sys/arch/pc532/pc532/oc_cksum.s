@@ -1,3 +1,5 @@
+/*	$NetBSD: oc_cksum.s,v 1.2 1994/10/26 08:25:13 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
@@ -27,10 +29,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	oc_cksum.s
- *
- *	$Id: oc_cksum.s,v 1.1.1.1 1993/09/09 23:53:51 phil Exp $
  *
  *
  * oc_cksum: ones complement 16 bit checksum for NS32532

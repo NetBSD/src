@@ -1,5 +1,6 @@
-#	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#	$Id: Makefile,v 1.1 1994/05/26 23:48:00 phil Exp $
+#	$NetBSD: Makefile,v 1.2 1994/10/26 08:23:50 cgd Exp $
+
+#	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
 COMM=	../net/*.[ch] ../netimp/*.[ch] ../netinet/*.[ch] ../netns/*.[ch] \
 	../netiso/*.[ch] ../netccitt/*.[ch] \

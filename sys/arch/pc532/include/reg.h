@@ -1,3 +1,5 @@
+/*	$NetBSD: reg.h,v 1.8 1994/10/26 08:24:41 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,8 +36,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)reg.h	5.5 (Berkeley) 1/18/91
- *
- *	reg.h,v 1.2 1993/09/13 07:25:44 phil Exp
  */
 
 /* Modified for the pc532... 2/1/93 by Phil Nelson

@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_cd.h,v 1.2 1994/10/26 08:25:29 cgd Exp $	*/
+
 /*
  * Written by Julian Elischer (julian@tfs.com)
  * for TRW Financial Systems.
@@ -11,8 +13,6 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
- *
- *	$Id: scsi_cd.h,v 1.1 1994/04/01 23:18:10 phil Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: jmpbuf.h,v 1.3 1994/10/26 08:24:30 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
@@ -30,8 +32,6 @@
  *
  *
  *  machine/setjmp.h : for support of the library routines.
- *
- *	jmpbuf.h,v 1.1.1.1 1993/09/09 23:53:47 phil Exp
  */
 
 #ifndef _MACHINE_JMPBUF_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: tgets.c,v 1.2 1994/10/26 08:26:00 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,9 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)gets.c	8.1 (Berkeley) 6/11/93
- *
- * $Id: tgets.c,v 1.1 1994/05/30 19:59:02 phil Exp $
+ *	@(#)gets.c	8.1 (Berkeley) 6/11/93
  */
 
 tgets(buf)

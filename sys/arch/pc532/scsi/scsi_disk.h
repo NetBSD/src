@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_disk.h,v 1.2 1994/10/26 08:25:32 cgd Exp $	*/
+
 /*
  * SCSI interface description
  *
@@ -41,8 +43,6 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
- *
- *	$Id: scsi_disk.h,v 1.1 1994/04/01 23:18:13 phil Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: ncr_5380.h,v 1.2 1994/10/26 08:24:13 cgd Exp $	*/
+
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
@@ -22,27 +24,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * HISTORY
- * $Log: ncr_5380.h,v $
- * Revision 1.1  1994/02/22 22:55:06  phil
- * Changes to get the "ncr" driver in the tree.  Still trying to get a working
- * scsi driver.
- *
- * Revision 1.2  1993/11/29  00:38:38  briggs
- * Added signal.h for -current.  The rest is formatting changes.
- *
- * Revision 2.3  91/08/24  12:25:10  af
- * 	Moved padding of regmap in impl file.
- * 	[91/08/02  04:22:39  af]
- * 
- * Revision 2.2  91/06/19  16:28:35  rvb
- * 	From the NCR data sheets
- * 	"NCR 5380 Family, SCSI Protocol Controller Data Manual"
- * 	NCR Microelectronics Division, Colorado Spring, 6/98 T01891L
- * 	[91/04/21            af]
- * 
  */
 /*
  *	File: scsi_5380.h

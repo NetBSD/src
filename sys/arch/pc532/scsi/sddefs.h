@@ -1,6 +1,4 @@
-/*
- *	$Id: sddefs.h,v 1.1 1994/04/01 23:18:18 phil Exp $
- */
+/*	$NetBSD: sddefs.h,v 1.2 1994/10/26 08:25:38 cgd Exp $	*/
 
 struct sd_data {
 	int flags;

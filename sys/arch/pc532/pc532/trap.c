@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.c,v 1.9 1994/10/26 08:25:19 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,8 +36,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)trap.c	7.4 (Berkeley) 5/13/91
- *
- *	trap.c,v 1.1.1.1 1993/09/09 23:53:50 phil Exp
  */
 
 /*

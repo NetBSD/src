@@ -1,3 +1,5 @@
+/*	$NetBSD: cd.c,v 1.5 1994/10/26 08:25:24 cgd Exp $	*/
+
 /*
  * Written by Julian Elischer (julian@tfs.com)
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
@@ -12,8 +14,6 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
- *
- *	$Id: cd.c,v 1.4 1994/10/14 18:27:17 cgd Exp $
  */
 
 #define SPLCD splbio

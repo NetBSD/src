@@ -1,3 +1,5 @@
+/*	$NetBSD: ptrace.h,v 1.5 1994/10/26 08:24:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: ptrace.h,v 1.4 1994/02/02 08:02:45 phil Exp $
  */
 
 /*
