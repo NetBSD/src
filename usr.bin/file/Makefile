@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2003/10/19 04:30:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.49 2003/10/21 10:01:22 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -38,20 +38,16 @@ MAGFILES=	${DIST}/magic/Header \
 
 .if ${MKSHARE} != "no"
 magic: ${MAGFILES}
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${TOOL_CAT} ${MAGFILES} > ${.TARGET}
 
 magic.mgc: magic
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${TOOL_MKMAGIC} -C -m magic
 
 magic.mime.mgc:
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	cp ${DIST}/magic/magic.mime ${.OBJDIR}
-	${_MKCMD}\
 	${TOOL_MKMAGIC} -C -m magic.mime
 .else
 magic:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.71 2003/10/19 04:45:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.72 2003/10/21 10:01:19 lukem Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -45,42 +45,33 @@ CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h
 CLEANFILES+= trace
 
 token.h: mktokens
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${.ALLSRC}
 
 builtins.h: builtins.c
-	${_MKMSGCREATE}
-
+	${_MKTARGET_CREATE}
 
 builtins.c: mkbuiltins shell.h builtins.def
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${.ALLSRC} ${.OBJDIR}
-	${_MKCMD}\
 	[ -f builtins.h ]
 
 init.c: mkinit ${SHSRCS}
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	./${.ALLSRC}
 
 nodes.h: nodes.c
 
 nodes.c: mknodes nodetypes nodes.c.pat
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	./${.ALLSRC}
-	${_MKCMD}\
 	[ -f nodes.h ]
 
 syntax.h: syntax.c
 
 syntax.c: mksyntax
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	./${.ALLSRC}
-	${_MKCMD}\
 	[ -f syntax.h ]
 
 .if ${USETOOLS} == "yes"
@@ -89,13 +80,11 @@ NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
 .endif
 
 mkinit: mkinit.c
-	${_MKMSGLINK}
-	${_MKCMD}\
+	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o mkinit ${.IMPSRC} ${NBCOMPATLIB}
 
 mknodes: mknodes.c
-	${_MKMSGLINK}
-	${_MKCMD}\
+	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o mknodes ${.IMPSRC} ${NBCOMPATLIB}
 
 .if	(${MACHINE_ARCH} == "powerpc") || \
@@ -106,8 +95,7 @@ TARGET_CHARFLAG?= -DTARGET_CHAR="signed char"
 .endif
 
 mksyntax: mksyntax.c
-	${_MKMSGLINK}
-	${_MKCMD}\
+	${_MKTARGET_LINK}
 	${HOST_LINK.c} ${TARGET_CHARFLAG} -o mksyntax ${.IMPSRC} ${NBCOMPATLIB}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2003/10/19 04:45:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.26 2003/10/21 10:01:19 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -17,13 +17,11 @@ FILESDIR=/usr/share/games
 realall: ${FILES}
 
 initdeck: initdeck.c
-	${_MKMSGLINK}
-	${_MKCMD}\
+	${_MKTARGET_LINK}
 	${HOST_LINK.c} -o initdeck ${.CURDIR}/initdeck.c
 
 cards.pck: initdeck
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	./initdeck ${.CURDIR}/cards.inp
 
 .include <bsd.prog.mk>

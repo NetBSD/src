@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2003/10/19 14:08:52 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.5 2003/10/21 10:01:21 lukem Exp $
 
 .PATH: ${.CURDIR}/MISC
 
@@ -13,13 +13,11 @@ MAPS_MISC=		Big5%UCS.mps \
 			UCS%KOI8-U.mps
 
 mapper.dir.MISC: ${.CURDIR}/MISC/mapper.dir.MISC.src
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	(echo "# MISC" ; cat ${.ALLSRC} ; echo ) > ${.TARGET}
 
 charset.pivot.MISC: ${.CURDIR}/MISC/charset.pivot.MISC.src
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	(echo "# MISC" ; cat ${.ALLSRC} ; echo ) > ${.TARGET}
 
 FILES+= ${MAPS_MISC}
