@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2002/10/01 15:01:48 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 2002/10/02 12:19:38 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1114,6 +1114,9 @@ pmap_page_is_cacheable(pmap_t pm, vaddr_t va)
 	struct pvo_entry *pvo;
 	ptel_t ptel = 0;
 	int s;
+
+	if (va < SH5_KSEG1_BASE && va >= SH5_KSEG0_BASE)
+		return (1);
 
 	s = splhigh();
 	pvo = pmap_pvo_find_va(pm, va, NULL);
