@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_file.c,v 1.7 1997/08/15 02:18:02 mikel Exp $	*/
+/*	$NetBSD: kvm_file.c,v 1.8 1997/08/15 17:52:45 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_file.c,v 1.7 1997/08/15 02:18:02 mikel Exp $");
+__RCSID("$NetBSD: kvm_file.c,v 1.8 1997/08/15 17:52:45 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,6 +76,9 @@ __RCSID("$NetBSD: kvm_file.c,v 1.7 1997/08/15 02:18:02 mikel Exp $");
 
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, obj, sizeof(*obj)) != sizeof(*obj))
+
+static int
+kvm_deadfiles __P((kvm_t *, int, int, long, int));
 
 /*
  * Get file structures.
