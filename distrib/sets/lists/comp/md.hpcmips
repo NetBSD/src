@@ -1,4 +1,6 @@
-# $NetBSD: md.hpcmips,v 1.4 2000/02/03 05:27:59 jwise Exp $
+# $NetBSD: md.hpcmips,v 1.5 2000/03/15 16:03:50 tron Exp $
+./usr/include/dev/hpc	comp-c-include
+./usr/include/dev/hpc/hpcfbio.h	comp-c-include
 ./usr/include/hpcmips	comp-c-include
 ./usr/include/hpcmips/_G_config.h	comp-c-include
 ./usr/include/hpcmips/ansi.h	comp-c-include
