@@ -1,14 +1,23 @@
-#	$NetBSD: Makefile.cats.inc,v 1.4 2002/02/06 00:55:56 chris Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.5 2002/02/06 19:59:01 thorpej Exp $
 
 GENASSYM_EXTRAS+=	${ARM}/footbridge/genassym.cf
 LOOSE_PROTOTYPES=	NO
 
 .if (${OBJECT_FMT} == "ELF")
-# Under ELF we need to do a whole load of stuff extra to get that kernel.
+# Need to convert the kernel from ELF to a.out so that OpenFirmware
+# can load it.
 
+# ZMAGIC a.out includes the a.out header in front of the text
+# segment, so if we link the kernel at the normal load address,
+# it will be wrong once the a.out header is stuck in the file.
+# XXX HOWEVER, by linking it +32 bytes to compensate, the resulting
+# XXX ELF kernel cannot be booted itself.
 LOADADDRESS=0xF0000020
 
 SYSTEM_LD_TAIL_EXTRA=; \
 	${DBSYM} $@ || true; \
-	$S/arch/${MACHINE}/conf/elf2aout.sh
+	echo OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
+	    ${ARM}/conf/elf2aout.sh $@ $@.aout; \
+	OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
+	    ${ARM}/conf/elf2aout.sh $@ $@.aout
 .endif	
