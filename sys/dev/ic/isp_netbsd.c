@@ -1,4 +1,5 @@
-/* $NetBSD: isp_netbsd.c,v 1.6 1998/11/19 21:53:00 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.7 1998/12/05 19:48:23 mjacob Exp $ */
+/* isp_netbsd.c 1.15 */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -73,13 +74,35 @@ isp_attach(isp)
 
 	if (isp->isp_type & ISP_HA_FC) {
 		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_FC_TARG-1;
+#ifdef	SCCLUN
+		/*
+		 * 16 bits worth, but let's be reasonable..
+		 */
+		isp->isp_osinfo._link.scsipi_scsi.max_lun = 255;
+#else
+		isp->isp_osinfo._link.scsipi_scsi.max_lun = 15;
+#endif
 		isp->isp_osinfo._link.openings =
 			RQUEST_QUEUE_LEN / (MAX_FC_TARG-1);
-		isp->isp_osinfo._link.scsipi_scsi.adapter_target = 0xff;
+		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
+			((fcparam *)isp->isp_param)->isp_loopid;
 	} else {
 		isp->isp_osinfo._link.openings =
 			RQUEST_QUEUE_LEN / (MAX_TARGETS-1);
 		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_TARGETS-1;
+		if (isp->isp_bustype == ISP_BT_SBUS) {
+			isp->isp_osinfo._link.scsipi_scsi.max_lun = 7;
+		} else {
+			/*
+			 * Too much target breakage at present.
+			 */
+#if	0
+			if (isp->isp_fwrev >= ISP_FW_REV(7,55))
+				isp->isp_osinfo._link.scsipi_scsi.max_lun = 31;
+			else
+#endif
+				isp->isp_osinfo._link.scsipi_scsi.max_lun = 7;
+		}
 		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
 			((sdparam *)isp->isp_param)->isp_initiator_id;
 	}

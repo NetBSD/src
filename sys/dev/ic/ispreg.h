@@ -1,4 +1,5 @@
-/* $NetBSD: ispreg.h,v 1.8 1998/09/17 22:52:14 mjacob Exp $ */
+/* $NetBSD: ispreg.h,v 1.9 1998/12/05 19:48:23 mjacob Exp $ */
+/* ispreg.h 1.7 */
 /*
  * Machine Independent (well, as best as possible) register
  * definitions for Qlogic ISP SCSI adapters.
@@ -670,7 +671,7 @@
 		(((u_int64_t)(c)[23]) << 16) | \
 		(((u_int64_t)(c)[24]) <<  8) | \
 		(((u_int64_t)(c)[25]) <<  0))
-#define	ISP2100_NVRAM_HARDLOOPID(c)		(c)[24]
+#define	ISP2100_NVRAM_HARDLOOPID(c)		(c)[26]
 
 #define	ISP2100_NVRAM_HBA_DISABLE(c)		ISPBSMX(c, 70, 0, 0x01)
 #define	ISP2100_NVRAM_BIOS_DISABLE(c)		ISPBSMX(c, 70, 1, 0x01)

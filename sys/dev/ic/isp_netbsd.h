@@ -1,4 +1,5 @@
-/* $NetBSD: isp_netbsd.h,v 1.5 1998/11/19 21:53:00 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.6 1998/12/05 19:48:23 mjacob Exp $	*/
+/* isp_netbsd.h 1.16 */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -62,13 +63,13 @@
 #include <vm/pmap.h>
 
 #define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	98
+#define	ISP_PLATFORM_VERSION_MINOR	99
 
 #define	ISP_SCSI_XFER_T		struct scsipi_xfer
 struct isposinfo {
 	struct device		_dev;
 	struct scsipi_link	_link;
-	struct scsipi_adapter	_adapter;
+	struct scsipi_adapter   _adapter;
 };
 #define	MAXISPREQUEST	256
 
