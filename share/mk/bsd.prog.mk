@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.205 2005/02/20 00:35:02 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.206 2005/03/04 20:41:08 he Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -72,6 +72,15 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif
 .endfor
+
+# PAM applications, if linked statically, need more libraries
+.if (${MKPIC} == "no")
+PAM_STATIC_LDADD= -lcrypt -lrpcsvc -lutil
+PAM_STATIC_DPADD= ${LIBCRYPT} ${LIBRPCSVC} ${LIBUTIL}
+.else
+PAM_STATIC_LDADD=
+PAM_STATIC_DPADD=
+.endif
 
 .ifndef LIBSTDCXX
 LIBSTDCXX=	${DESTDIR}/usr/lib/libstdc++.a

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2005/02/20 08:52:10 christos Exp $
+#	$NetBSD: Makefile,v 1.42 2005/03/04 20:41:09 he Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 .include <bsd.own.mk>
@@ -10,8 +10,8 @@ CPPFLAGS+=-DLINEMODE -DKLUDGELINEMODE -DDIAGNOSTICS
 CPPFLAGS+=-DOLD_ENVIRON -DENV_HACK -DSECURELOGIN -DSUPPORT_UTMP -DSUPPORT_UTMPX
 SRCS=	authenc.c global.c slc.c state.c sys_term.c telnetd.c \
 	termstat.c utility.c
-DPADD=	${LIBUTIL} ${LIBTERMCAP} ${LIBTELNETDIR}/libtelnet.a
-LDADD+=	-lutil -ltermcap ${LIBTELNETDIR}/libtelnet.a
+DPADD=	${LIBTELNETDIR}/libtelnet.a ${LIBTERMCAP} ${LIBUTIL}
+LDADD+=	${LIBTELNETDIR}/libtelnet.a -ltermcap -lutil
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/lib
 CPPFLAGS+=-I${.CURDIR}
@@ -31,8 +31,8 @@ DPADD+=	${LIBKRB}
 .endif
 
 .if (${USE_PAM} != "no")
-LDADD+= -lpam
-DPADD+=	${LIBPAM}
+LDADD+= -lpam ${PAM_STATIC_LDADD}
+DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2005/02/13 22:48:01 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2005/03/04 20:41:09 he Exp $
 
 .include <bsd.own.mk>
 
@@ -19,8 +19,8 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 .if (${USE_PAM} != "no")
 CPPFLAGS+=-DUSE_PAM
 SRCS+= auth-pam.c
-LDADD+=	-lpam
-DPADD+=	${LIBPAM}
+LDADD+=	-lpam ${PAM_STATIC_LDADD}
+DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 
 .if (${USE_KERBEROS} != "no")

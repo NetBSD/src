@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2005/02/28 10:37:49 wiz Exp $
+#	$NetBSD: Makefile,v 1.40 2005/03/04 20:41:09 he Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
@@ -37,8 +37,8 @@ MAN+=	kpasswd.1
 .if (${USE_PAM} != "no")
 CPPFLAGS+=-DUSE_PAM
 SRCS+= pam_passwd.c
-LDADD+=-lpam
-DPADD+=${LIBPAM}
+LDADD+=-lpam ${PAM_STATIC_LDADD}
+DPADD+=${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 
 .include <bsd.prog.mk>
