@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.7 1997/05/11 07:22:35 mikel Exp $
+.\"	$NetBSD: telnet.1,v 1.8 1997/05/13 04:15:06 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -154,8 +154,9 @@ option allows the local credentials to be forwarded to the remote system.
 If Kerberos authentication is being used, the
 .Fl k
 option requests that telnet obtain tickets for the remote host in
-realm realm instead of the remote host's realm, as determined
-by
+realm
+.Ar realm
+instead of the remote host's realm, as determined by
 .Xr krb_realmofhost 3 .
 .It Fl l Ar user 
 When connecting to the remote system, if the remote system
