@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.9.4.2 1999/07/01 23:55:17 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.9.4.3 1999/07/04 02:03:21 chs Exp $	*/
 
 /*
  *
@@ -42,29 +42,6 @@
 /*
  * uvm_pager.h
  */
-
-/*
- * async pager i/o descriptor structure
- */
-
-TAILQ_HEAD(uvm_aiohead, uvm_aiodesc);
-
-struct uvm_aiodesc {
-	void (*aiodone) __P((struct uvm_aiodesc *));
-						/* aio done function */
-	vaddr_t kva;				/* KVA of mapped page(s) */
-	int npages;				/* # of pages in I/O req */
-	void *pd_ptr;				/* pager-dependent pointer */
-	int flags;				/* misc flags */
-	TAILQ_ENTRY(uvm_aiodesc) aioq;		/* linked list of aio's */
-};
-
-#define UVM_AIO_PAGEDAEMON 0x0001		/* i/o is from pagedaemon */
-
-struct uvm_aiobuf {
-	struct buf buf;
-	struct uvm_aiodesc aio;
-};
 
 /*
  * pager ops
@@ -111,7 +88,7 @@ struct uvm_pagerops {
 #define PGO_CLEANIT	0x001	/* write dirty pages to backing store */
 #define PGO_SYNCIO	0x002	/* if PGO_CLEAN: use sync I/O? */
 /*
- * obviously if neither PGO_INVALIDATE or PGO_FREE are set then the pages
+ * if neither PGO_INVALIDATE or PGO_FREE are set then the pages
  * stay where they are.
  */
 #define PGO_DEACTIVATE	0x004	/* deactivate flushed pages */
@@ -122,11 +99,10 @@ struct uvm_pagerops {
 #define PGO_LOCKED	0x040	/* fault data structures are locked [get] */
 #define PGO_PDFREECLUST	0x080	/* daemon's free cluster flag [uvm_pager_put] */
 #define PGO_REALLOCSWAP	0x100	/* reallocate swap area [pager_dropcluster] */
-
 #define PGO_OVERWRITE	0x200	/* page will be overwritten immediately */
 
 /* page we are not interested in getting */
-#define PGO_DONTCARE ((struct vm_page *) -1)	/* [get only] */
+#define PGO_DONTCARE ((struct vm_page *) -1L)	/* [get only] */
 
 #ifdef _KERNEL
 
@@ -154,8 +130,7 @@ int		uvm_pager_put __P((struct uvm_object *, struct vm_page *,
 
 PAGER_INLINE struct vm_page *uvm_pageratop __P((vaddr_t));
 
-vaddr_t	uvm_pagermapin __P((struct vm_page **, int, 
-				    struct uvm_aiodesc **, int));
+vaddr_t		uvm_pagermapin __P((struct vm_page **, int, int));
 void		uvm_pagermapout __P((vaddr_t, int));
 struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
 				       int *, struct vm_page *, int, 
