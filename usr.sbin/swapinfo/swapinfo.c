@@ -1,139 +1,143 @@
 /*
- * swapinfo
- *
- * Swapinfo will provide some information about the state of the swap
- * space for the system.  It'll determine the number of swap areas,
- * their original size, and their utilization.
- *
- * Kevin Lahey, February 16, 1993
+ * swapinfo - based on a program of the same name by Kevin Lahey
+ *	      (written by Chris Torek, converted to NetBSD by cgd)
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/termios.h>
-#include <sys/stat.h>
-#include <sys/tty.h>
-#include <sys/uio.h>
+#include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
-#include <sys/rlist.h>
+#include <sys/ioctl.h>
+#include <sys/map.h>
+#include <sys/stat.h>
+#include <sys/termios.h>
+#include <sys/tty.h>
+#include <sys/uio.h>
+
+#include <errno.h>
+#include <err.h>
+#include <fcntl.h>
 #include <nlist.h>
+#include <kvm.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-struct rlist *swapmap;
+extern char *devname __P((int, int));
+void showspace __P((long blocksize));
 
-static struct nlist nl[] = {{"_swapmap"},  /* list of free swap areas */
+struct nlist syms[] = {
+	{ "_swapmap" },	/* list of free swap areas */
 #define VM_SWAPMAP	0
-			    {"_swdevt"},   /* list of swap devices and sizes */
-#define VM_SWDEVT	1
-			    {"_nswap"},    /* size of largest swap device */
-#define VM_NSWAP	2
-			    {"_nswdev"},   /* number of swap devices */
-#define VM_NSWDEV	3
-			    {"_dmmax"},    /* maximum size of a swap block */
-#define VM_DMMAX	4
-			    {""}};
+	{ "_nswapmap" },/* size of the swap map */
+#define VM_NSWAPMAP	1
+	{ "_swdevt" },	/* list of swap devices and sizes */
+#define VM_SWDEVT	2
+	{ "_nswap" },	/* size of largest swap device */
+#define VM_NSWAP	3
+	{ "_nswdev" },	/* number of swap devices */
+#define VM_NSWDEV	4
+	{ "_dmmax" },	/* maximum size of a swap block */
+#define VM_DMMAX	5
+	0
+};
 
-
-main (argc, argv)
-int	argc;
-char	**argv;
+main(argc, argv)
+	int argc;
+	char **argv;
 {
-	int	i, total_avail, total_free, total_partitions, *by_device, 
-		use_k = 1,  /* used as a divisor, so 1 == blocks, 2 == K */
-		nswap, nswdev, dmmax;
-	struct swdevt	*swdevt;
-	struct rlist	head;
+	char *memf, *nlistf;
+	int ch, i;
+	long blocksize = 512;
+	char errbuf[256];
 
-	/* We are trying to be simple here: */
+	memf = nlistf = NULL;
+	while ((ch = getopt(argc, argv, "kM:N:")) != EOF) {
+		switch (ch) {
 
-	if (argc > 1)
-		if (strcmp (argv [1], "-k") == 0) {
-			use_k = 2;
-		} else {
-			fprintf (stderr, "Usage:  swapinfo [-k]\n");
-			exit (1);
+		case 'k':
+			blocksize = 1024;
+			break;
+
+		case 'M':
+			memf = optarg;
+			break;
+
+		case 'N':
+			nlistf = optarg;
+			break;
+
+		case '?':
+		default:
+			errx(1, "usage: swapinfo [-M memfile] [-N kernel]\n");
 		}
-
-	/* Open up /dev/kmem for reading. */
-	
-	if (kvm_openfiles (NULL, NULL, NULL) == -1) {
-		fprintf (stderr, "%s: kvm_openfiles:  %s\n", 
-			 argv [0], kvm_geterr());
-		exit (1);
 	}
-
-	/* Figure out the offset of the various structures we'll need. */
-
-	if (kvm_nlist (nl) == -1) {
-		fprintf (stderr, "%s: kvm_nlist:  %s\n", 
-			 argv [0], kvm_geterr());
-		exit (1);
+	argc -= optind;
+	argv += optind;
+	if (nlistf != NULL || memf != NULL)
+		setgid(getgid());
+	if (kvm_openfiles(nlistf, memf, NULL) == -1)
+		err(1, "can't kvm_openfiles");
+	if (kvm_nlist((struct nlist *)syms)) {
+		(void)fprintf(stderr, "swapinfo: cannot find ");
+		for (i = 0; syms[i].n_name != NULL; i++)
+			if (syms[i].n_value == 0)
+				(void)fprintf(stderr, " %s", syms[i].n_name);
+		(void)fprintf(stderr, "\n");
+		exit(1);
 	}
+	showspace(blocksize);
+	exit(0);
+}
 
-	if (kvm_read (nl [VM_NSWAP].n_value, &nswap, sizeof (nswap)) !=
-	    sizeof (nswap)) {
-		fprintf (stderr, "%s:  didn't read all of nswap\n", 
-			 argv [0]);
-		exit (5);
-	}
+#define	SVAR(var) __STRING(var)	/* to force expansion */
+#define	KGET(idx, var) \
+	KGET1(idx, &var, sizeof(var), SVAR(var))
+#define	KGET1(idx, p, s, msg) \
+	KGET2(syms[idx].n_value, p, s, msg)
+#define	KGET2(addr, p, s, msg) \
+	if (kvm_read((void *)addr, p, s) != s) \
+		errx(1, "cannot read %s: %s", msg, kvm_geterr())
 
-	if (kvm_read (nl [VM_NSWDEV].n_value, &nswdev, sizeof (nswdev)) !=
-	    sizeof (nswdev)) {
-		fprintf (stderr, "%s:  didn't read all of nswdev\n", 
-			 argv [0]);
-		exit (5);
-	}
+void
+showspace(blocksize)
+	long blocksize;
+{
+	int nswap, nswdev, dmmax, nswapmap;
+	int s, e, div, i, avail, nfree, npfree, used;
+	struct swdevt *sw;
+	long *perdev;
+	struct map *swapmap, *kswapmap;
+	struct mapent *mp;
 
-	if (kvm_read (nl [VM_DMMAX].n_value, &dmmax, sizeof (dmmax)) !=
-	    sizeof (dmmax)) {
-		fprintf (stderr, "%s:  didn't read all of dmmax\n", 
-			 argv [0]);
-		exit (5);
-	}
+	KGET(VM_NSWAP, nswap);
+	KGET(VM_NSWDEV, nswdev);
+	KGET(VM_DMMAX, dmmax);
+	KGET(VM_NSWAPMAP, nswapmap);
+	KGET(VM_SWAPMAP, kswapmap);	/* kernel `swapmap' is a pointer */
+	if ((sw = malloc(nswdev * sizeof(*sw))) == NULL ||
+	    (perdev = malloc(nswdev * sizeof(*perdev))) == NULL ||
+	    (mp = malloc(nswapmap * sizeof(*mp))) == NULL)
+		err(1, "malloc");
+	KGET1(VM_SWDEVT, sw, nswdev * sizeof(*sw), "swdevt");
+	KGET2((long)kswapmap, mp, nswapmap * sizeof(*mp), "swapmap");
 
-	if ((swdevt = malloc (sizeof (struct swdevt) * nswdev)) == NULL ||
-	    (by_device = calloc (sizeof (*by_device), nswdev)) == NULL) {
-		perror ("malloc");
-		exit (5);
-	}
+	/* first entry in map is `struct map'; rest are mapent's */
+	swapmap = (struct map *)mp;
+	if (nswapmap != swapmap->m_limit - (struct mapent *)kswapmap)
+		errx(1, "panic: nswapmap goof");
 
-	if (kvm_read (nl [VM_SWDEVT].n_value, swdevt, 
-		      sizeof (struct swdevt) * nswdev) !=
-	    sizeof (struct swdevt) * nswdev) {
-		fprintf (stderr, "%s:  didn't read all of swdevt\n", 
-			 argv [0]);
-		exit (5);
-	}
-
-	if (kvm_read (nl [0].n_value, &swapmap, sizeof (struct rlist *)) !=
-	    sizeof (struct rlist *)) {
-		fprintf (stderr, "%s:  didn't read all of swapmap\n", 
-			 argv [0]);
-		exit (5);
-	}
-
-	/* Traverse the list of free swap space... */
-
-	total_free = 0;
-    	while (swapmap) {
-		int	top, bottom, next_block;
-
-		if (kvm_read ((long) swapmap, &head, sizeof (struct rlist )) !=
-		    sizeof (struct rlist )) {
-			fprintf (stderr, "%s:  didn't read all of head\n", 
-				 argv [0]);
-			exit (5);
-		}
-
-		top = head.rl_end;
-		bottom = head.rl_start;
-
-		total_free += top - bottom + 1;
+	/*
+	 * Count up swap space.
+	 */
+	nfree = 0;
+	bzero(perdev, nswdev * sizeof(*perdev));
+	for (mp++; mp->m_addr != 0; mp++) {
+		s = mp->m_addr;			/* start of swap region */
+		e = mp->m_addr + mp->m_size;	/* end of region */
+		nfree += mp->m_size;
 
 		/*
-		 * Swap space is split up among the configured disk.
+		 * Swap space is split up among the configured disks.
 		 * The first dmmax blocks of swap space some from the
 		 * first disk, the next dmmax blocks from the next, 
 		 * and so on.  The list of free space joins adjacent
@@ -142,44 +146,47 @@ char	**argv;
 		 * just have to extract it ourselves.
 		 */
 
-		while (top / dmmax != bottom / dmmax) {
-			next_block = ((bottom + dmmax) / dmmax);
-			by_device [(bottom / dmmax) % nswdev] +=
-				next_block * dmmax - bottom;
-			bottom = next_block * dmmax;
+		/* calculate first device on which this falls */
+		i = (s / dmmax) % nswdev;
+		while (s < e) {		/* XXX this is inefficient */
+			int bound = roundup(s+1, dmmax);
+
+			if (bound > e)
+				bound = e;
+			perdev[i] += bound - s;
+			if (++i >= nswdev)
+				i = 0;
+			s = bound;
 		}
-
-		by_device [(bottom / dmmax) % nswdev] +=
-			top - bottom + 1;
-
-		swapmap = head.rl_next;
 	}
 
-	printf ("%-10s %10s %10s %10s %10s\n",
-		"Device", use_k == 1 ? "512-blks" : "Kilobytes", 
-		"Used", "Available", "Capacity");
-	for (total_avail = total_partitions = i = 0; i < nswdev; i++) {
-		printf ("/dev/%-5s %10d ",
-			devname (swdevt [i].sw_dev, S_IFBLK), 
-			swdevt [i].sw_nblks / use_k);
+	(void)printf("%-10s %4d-blocks %10s %10s %10s\n",
+	    "Device", blocksize, "Used", "Available", "Capacity");
+	div = blocksize / 512;
+	avail = npfree = 0;
+	for (i = 0; i < nswdev; i++) {
+		int xsize, xfree;
+
+		(void)printf("/dev/%-5s %11d ",
+		    devname(sw[i].sw_dev, S_IFBLK),
+		    sw[i].sw_nblks / div);
 
 		/*
 		 * Don't report statistics for partitions which have not
 		 * yet been activated via swapon(8).
 		 */
-
-		if (!swdevt [i].sw_freed) {
-			printf (" *** not available for swapping ***\n");
-		} else {
-			total_partitions++;
-			total_avail += swdevt [i].sw_nblks;
-			printf ("%10d %10d %7.0f%%\n", 
-				(swdevt [i].sw_nblks - by_device [i]) / use_k,
-				by_device [i] / use_k,
-				(double) (swdevt [i].sw_nblks - 
-					  by_device [i]) / 
-				(double) swdevt [i].sw_nblks * 100.0);
+		if (!sw[i].sw_freed) {
+			(void)printf(" *** not available for swapping ***\n");
+			continue;
 		}
+		xsize = sw[i].sw_nblks;
+		xfree = perdev[i];
+		used = xsize - xfree;
+		(void)printf("%10d %10d %7.0f%%\n", 
+		    used / div, xfree / div,
+		    (double)used / (double)xsize * 100.0);
+		npfree++;
+		avail += xsize;
 	}
 
 	/* 
@@ -187,13 +194,11 @@ char	**argv;
 	 * need to bother with totals.
 	 */
 
-	if (total_partitions > 1)
-		printf ("%-10s %10d %10d %10d %7.0f%%\n", "Total", 
-			total_avail / use_k, 
-			(total_avail - total_free) / use_k, 
-			total_free / use_k,
-			(double) (total_avail - total_free) / 
-			(double) total_avail * 100.0);
-
-	exit (0);
+	if (npfree > 1) {
+		used = avail - nfree;
+		(void)printf("%-10s %11d %10d %10d %7.0f%%\n",
+		    "Total", avail / div, used / div, nfree / div,
+		    (double)used / (double)avail * 100.0);
+	}
 }
+

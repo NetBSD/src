@@ -38,7 +38,7 @@
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
  *	from: @(#)swap_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: swap_pager.c,v 1.5 1993/06/29 19:38:50 mycroft Exp $
+ *	$Id: swap_pager.c,v 1.6 1993/07/07 06:04:12 cgd Exp $
  */
 
 /*
@@ -54,12 +54,12 @@
 #include "param.h"
 #include "proc.h"
 #include "buf.h"
+#include "map.h"
 #include "systm.h"
 #include "specdev.h"
 #include "vnode.h"
 #include "malloc.h"
 #include "queue.h"
-#include "rlist.h"
 
 #include "vm_param.h"
 #include "queue.h"
@@ -354,8 +354,7 @@ swap_pager_dealloc(pager)
 				printf("swpg_dealloc: blk %x\n",
 				       bp->swb_block);
 #endif
-			rlist_free(&swapmap, (unsigned)bp->swb_block,
-				(unsigned)bp->swb_block + swp->sw_bsize - 1);
+			rmfree(swapmap, swp->sw_bsize, bp->swb_block);
 		}
 	splx(s);
 	/*
@@ -538,13 +537,8 @@ swap_pager_io(swp, m, flags)
 			return(VM_PAGER_FAIL);
 		}
 	} else if (swb->swb_block == 0) {
-#ifdef old
 		swb->swb_block = rmalloc(swapmap, swp->sw_bsize);
 		if (swb->swb_block == 0) {
-#else
-		if (!rlist_alloc(&swapmap, (unsigned)swp->sw_bsize,
-			(unsigned *)&swb->swb_block)) {
-#endif
 #ifdef DEBUG
 			if (swpagerdebug & SDB_FAIL)
 				printf("swpg_io: rmalloc of %x failed\n",

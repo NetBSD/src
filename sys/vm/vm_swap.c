@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_swap.c	7.18 (Berkeley) 5/6/91
- *	$Id: vm_swap.c,v 1.7 1993/06/27 06:34:41 andrew Exp $
+ *	$Id: vm_swap.c,v 1.8 1993/07/07 06:04:14 cgd Exp $
  */
 
 #include "param.h"
@@ -43,15 +43,14 @@
 #include "dmap.h"		/* XXX */
 #include "vnode.h"
 #include "specdev.h"
+#include "map.h"
 #include "file.h"
-#include "rlist.h"
 
 /*
  * Indirect driver for multi-controller paging.
  */
 
 int	nswap, nswdev;
-struct rlist *swapmap = NULL;
 
 /*
  * Set up swap devices.
@@ -88,9 +87,8 @@ swapinit()
 	if (bdevvp(swdevt[0].sw_dev, &swdevt[0].sw_vp))
 		panic("swapvp");
 	if (error = swfree(&proc0, 0)) {
-		printf("\nwarning: no swap space present (yet)\n");
-		/* printf("(swfree (..., 0) -> %d)\n", error);	/* XXX */
-		/*panic("swapinit swfree 0");*/
+		printf("swfree errno %d\n", error);	/* XXX */
+		panic("swapinit swfree 0");
 	}
 
 	/*
@@ -102,7 +100,6 @@ swapinit()
 	sp->av_forw = NULL;
 }
 
-int
 swstrategy(bp)
 	register struct buf *bp;
 {
@@ -128,7 +125,6 @@ swstrategy(bp)
 		return;
 	}
 	if (nswdev > 1) {
-		--bp->b_blkno;
 		off = bp->b_blkno % dmmax;
 		if (off+sz > dmmax) {
 			bp->b_flags |= B_ERROR;
@@ -139,7 +135,6 @@ swstrategy(bp)
 		index = seg % nswdev;
 		seg /= nswdev;
 		bp->b_blkno = seg*dmmax + off;
-		++bp->b_blkno;
 	} else
 		index = 0;
 	sp = &swdevt[index];
@@ -213,7 +208,6 @@ swapon(p, uap, retval)
 			}
 			sp->sw_vp = vp;
 			if (error = swfree(p, sp - swdevt)) {
-				printf("swapon: failed! (unchanged)\n");
 				vrele(vp);
 				return (error);
 			}
@@ -228,9 +222,6 @@ swapon(p, uap, retval)
  * Each of the nswdev devices provides 1/nswdev'th of the swap
  * space, which is laid out with blocks of dmmax pages circularly
  * among the devices.
- *
- * We explicitly ignore the first block in each swap area to avoid
- * bashing a disk label and confusing the rest of the VM code.
  */
 swfree(p, index)
 	struct proc *p;
@@ -245,23 +236,34 @@ swfree(p, index)
 	int error;
 
 	sp = &swdevt[index];
-	nblks = sp->sw_nblks - 1;
-	if (nblks <= 0)
-		return(ENXIO);
 	vp = sp->sw_vp;
 	if (error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p))
 		return (error);
 	sp->sw_freed = 1;
-
-	/*printf("%d blocks from device %d/%d ",
-		sp->sw_nblks, major(sp->sw_dev), minor(sp->sw_dev));*/
+	nblks = sp->sw_nblks;
 	for (dvbase = 0; dvbase < nblks; dvbase += dmmax) {
 		blk = nblks - dvbase;
 		if ((vsbase = index*dmmax + dvbase*nswdev) >= nswap)
 			panic("swfree");
 		if (blk > dmmax)
 			blk = dmmax;
-		rlist_free(&swapmap, vsbase + 1, vsbase + blk); 
+		if (vsbase == 0) {
+			/*
+			 * First of all chunks... initialize the swapmap.
+			 * Don't use the first cluster of the device
+			 * in case it starts with a label or boot block.
+			 */
+			rminit(swapmap, blk - ctod(CLSIZE),
+				vsbase + ctod(CLSIZE), "swap", nswapmap);
+		} else if (dvbase == 0) {
+			/*
+			 * Don't use the first cluster of the device
+			 * in case it starts with a label or boot block.
+			 */
+			rmfree(swapmap, blk - ctod(CLSIZE),
+			    vsbase + ctod(CLSIZE));
+		} else
+			rmfree(swapmap, blk, vsbase);
 	}
 	return (0);
 }
