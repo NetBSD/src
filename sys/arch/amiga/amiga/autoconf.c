@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55 1997/08/27 20:18:19 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56 1997/08/31 16:33:13 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -361,11 +361,17 @@ findroot(devpp, partp)
 	 * If we have the boot partition offset (boot_partition), try
 	 * to locate the device corresponding to that partition.
 	 */
+#ifdef DEBUG_KERNEL_START
+	printf("Boot partition offset is %ld\n", boot_partition);
+#endif
 	if (boot_partition != 0) {
 	 	struct bdevsw *bdp;
 		int i;
 
 		for (unit = 0; unit < sd_cd.cd_ndevs; ++unit) {
+#ifdef DEBUG_KERNEL_START
+			printf("probing for sd%d\n", unit);
+#endif
 			if (sd_cd.cd_devs[unit] == NULL)
 				continue;
 
@@ -384,14 +390,19 @@ findroot(devpp, partp)
 				if (bdp->d_strategy ==
 				    dkp->dk_driver->d_strategy)
 					break;
-			if (bdp->d_open(MAKEDISKDEV(4, unit, 0),
+			if (bdp->d_open(MAKEDISKDEV(4, unit, RAW_PART),
 			    FREAD | FNONBLOCK, 0, curproc))
 				continue;
-			bdp->d_close(MAKEDISKDEV(4, unit, 0),
+			bdp->d_close(MAKEDISKDEV(4, unit, RAW_PART),
 			    FREAD | FNONBLOCK, 0, curproc);
 			pp = &dkp->dk_label->d_partitions[0];
 			for (i = 0; i < dkp->dk_label->d_npartitions;
 			    i++, pp++) {
+#ifdef DEBUG_KERNEL_START
+				printf("sd%d%c type %d offset %d size %d\n",
+					unit, i+'a', pp->p_fstype,
+					pp->p_offset, pp->p_size);
+#endif
 				if (pp->p_size == 0 ||
 				    (pp->p_fstype != FS_BSDFFS &&
 				    pp->p_fstype != FS_SWAP))
