@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478var.h,v 1.1 1996/09/21 03:02:10 jonathan Exp $	*/
+/*	$NetBSD: bt478var.h,v 1.2 1996/09/21 03:22:24 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -22,5 +22,7 @@ int bt478init __P((struct fbinfo *fi));
 void bt478BlankCursor __P((struct fbinfo *fi));
 void bt478RestoreCursorColor __P((struct fbinfo *fi));
 void bt478InitColorMap __P((struct fbinfo *fi));
-int bt478LoadColorMap __P ((struct fbinfo *, caddr_t, int, int));
-int bt478GetColorMap __P ((struct fbinfo *, caddr_t, int, int));
+int bt478LoadColorMap __P ((struct fbinfo *fi, caddr_t bits,
+			    int index, int count));
+int bt478GetColorMap __P ((struct fbinfo *fi, caddr_t bits,
+			   int index, int count));
