@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.18 2000/03/19 07:44:58 scottr Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.19 2000/07/03 08:59:27 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -72,6 +72,9 @@ int	adbread __P((dev_t dev, struct uio *uio, int flag));
 int	adbwrite __P((dev_t dev, struct uio *uio, int flag));
 int	adbioctl __P((dev_t , int , caddr_t , int , struct proc *));
 int	adbpoll __P((dev_t dev, int events, struct proc *p));
+
+int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
+void	adb_op_comprout __P((void));
 
 /* adbsysasm.s */
 void	adb_kbd_asmcomplete __P((void));

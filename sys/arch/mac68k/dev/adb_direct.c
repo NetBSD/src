@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.42 2000/03/23 06:39:55 thorpej Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.43 2000/07/03 08:59:26 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -303,7 +303,6 @@ int	get_adb_info __P((ADBDataBlock *, int));
 int	set_adb_info __P((ADBSetInfoBlock *, int));
 void	adb_setup_hw_type __P((void));
 int	adb_op __P((Ptr, Ptr, Ptr, short));
-int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
 void	adb_read_II __P((u_char *));
 void	adb_hw_setup __P((void));
 void	adb_hw_setup_IIsi __P((u_char *));
@@ -2120,8 +2119,10 @@ adb_reinit(void)
 	 * Initialize the ADB table.  For now, we'll always use the same table
 	 * that is defined at the beginning of this file - no mallocs.
 	 */
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++) {
 		ADBDevTable[i].devType = 0;
+		ADBDevTable[i].origAddr = ADBDevTable[i].currentAddr = 0;
+	}
 
 	adb_setup_hw_type();	/* setup hardware type */
 
@@ -2130,7 +2131,7 @@ adb_reinit(void)
 	delay(1000);
 
 	/* send an ADB reset first */
-	adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
+	(void)adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
 	delay(3000);
 
 	/*
@@ -2156,16 +2157,7 @@ adb_reinit(void)
 		result = adb_op_sync((Ptr)send_string, (Ptr)0,
 		    (Ptr)0, (short)command);
 
-		if (send_string[0] != 0) {
-			/* check for valid device handler */
-			switch (send_string[2]) {
-			case 0:
-			case 0xfd:
-			case 0xfe:
-			case 0xff:
-				continue;	/* invalid, skip */
-			}
-
+		if (result == 0 && send_string[0] != 0) {
 			/* found a device */
 			++ADBNumDevices;
 			KASSERT(ADBNumDevices < 16);
@@ -2195,7 +2187,7 @@ adb_reinit(void)
 
 	nonewtimes = 0;		/* no loops w/o new devices */
 	while (saveptr > 0 && nonewtimes++ < 11) {
-		for (i = 1; i <= ADBNumDevices; i++) {
+		for (i = 1;saveptr > 0 && i <= ADBNumDevices; i++) {
 			device = ADBDevTable[i].currentAddr;
 #ifdef ADB_DEBUG
 			if (adb_debug & 0x80)
@@ -2205,7 +2197,7 @@ adb_reinit(void)
 
 			/* send TALK R3 to address */
 			command = ADBTALK(device, 3);
-			adb_op_sync((Ptr)send_string, (Ptr)0,
+			(void)adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
 
 			/* move device to higher address */
@@ -2213,38 +2205,43 @@ adb_reinit(void)
 			send_string[0] = 2;
 			send_string[1] = (u_char)(saveptr | 0x60);
 			send_string[2] = 0xfe;
-			adb_op_sync((Ptr)send_string, (Ptr)0,
+			(void)adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
-			delay(500);
+			delay(1000);
 
 			/* send TALK R3 - anthing at new address? */
 			command = ADBTALK(saveptr, 3);
-			adb_op_sync((Ptr)send_string, (Ptr)0,
+			send_string[0] = 0;
+			result = adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
-			delay(500);
+			delay(1000);
 
-			if (send_string[0] == 0) {
+			if (result != 0 || send_string[0] == 0) {
+				/*
+				 * maybe there's a communication breakdown;
+				 * just in case, move it back from whence it
+				 * came, and we'll try again later
+				 */
+				command = ADBLISTEN(saveptr, 3);
+				send_string[0] = 2;
+				send_string[1] = (u_char)(device | 0x60);
+				send_string[2] = 0x00;
+				(void)adb_op_sync((Ptr)send_string, (Ptr)0,
+				    (Ptr)0, (short)command);
 #ifdef ADB_DEBUG
 				if (adb_debug & 0x80)
 					printf_intr("failed, continuing\n");
 #endif
+				delay(1000);
 				continue;
 			}
 
 			/* send TALK R3 - anything at old address? */
 			command = ADBTALK(device, 3);
+			send_string[0] = 0;
 			result = adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
-			if (send_string[0] != 0) {
-				/* check for valid device handler */
-				switch (send_string[2]) {
-				case 0:
-				case 0xfd:
-				case 0xfe:
-				case 0xff:
-					continue;	/* invalid, skip */
-				}
-
+			if (result == 0 && send_string[0] != 0) {
 				/* new device found */
 				/* update data for previously moved device */
 				ADBDevTable[i].currentAddr = saveptr;
@@ -2298,7 +2295,7 @@ adb_reinit(void)
 				send_string[0] = 2;
 				send_string[1] = (u_char)(device | 0x60);
 				send_string[2] = 0xfe;
-				adb_op_sync((Ptr)send_string, (Ptr)0,
+				(void)adb_op_sync((Ptr)send_string, (Ptr)0,
 				    (Ptr)0, (short)command);
 				delay(1000);
 			}
@@ -2463,50 +2460,6 @@ adb_cmd_extra(u_char *in)
 }
 
 
-/*
- * adb_op_sync
- *
- * This routine does exactly what the adb_op routine does, except that after
- * the adb_op is called, it waits until the return value is present before
- * returning.
- *
- * NOTE: The user specified compRout is ignored, since this routine specifies
- * it's own to adb_op, which is why you really called this in the first place
- * anyway.
- */
-int
-adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
-{
-	int result;
-	volatile int flag = 0;
-
-	result = adb_op(buffer, (void *)adb_op_comprout,
-	    (void *)&flag, command);	/* send command */
-	if (result == 0)		/* send ok? */
-		while (0 == flag)
-			/* wait for compl. routine */;
-
-	return result;
-}
-
-
-/*
- * adb_op_comprout
- *
- * This function is used by the adb_op_sync routine so it knows when the
- * function is done.
- */
-void 
-adb_op_comprout(void)
-{
-#ifdef __NetBSD__
-	asm("movw	#1,a2@			| update flag value");
-#else				/* for macos based testing */
-	asm {
-		move.w #1,(a2) }		/* update flag value */
-#endif
-}
-
 void 
 adb_setup_hw_type(void)
 {
@@ -2657,7 +2610,7 @@ count_adbs(void)
 	found = 0;
 
 	for (i = 1; i < 16; i++)
-		if (0 != ADBDevTable[i].devType)
+		if (0 != ADBDevTable[i].currentAddr)
 			found++;
 
 	return found;

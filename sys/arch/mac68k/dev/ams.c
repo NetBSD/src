@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.8 2000/06/11 17:26:47 scottr Exp $	*/
+/*	$NetBSD: ams.c,v 1.9 2000/07/03 08:59:27 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -69,8 +69,6 @@ extern int	kbd_polling; /* Are we polling (Debugger mode)? from kbd.c */
 /*
  * Local variables.
  */
-static volatile int extdms_done;  /* Did ADBOp() complete? */
-
 
 /* Driver definition. */
 struct cfattach ams_ca = {
@@ -220,7 +218,7 @@ void
 ems_init(sc)
 	struct ams_softc * sc;
 {
-	int adbaddr, count;
+	int adbaddr;
 	short cmd;
 	u_char buffer[9];
 
@@ -256,11 +254,7 @@ ems_init(sc)
 		buffer[4] = 0x07;	/* Locking mask = 0000b,
 					 * enable buttons = 0111b
 					 */
-		extdms_done = 0;
-		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-		    (Ptr)&extdms_done, cmd);
-		while (!extdms_done)
-			/* busy wait until done */;
+		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
 
 		sc->sc_buttons = 3;
 		sc->sc_res = 200;
@@ -270,52 +264,41 @@ ems_init(sc)
 	    (sc->handler_id == ADBMS_200DPI)) {
 		/* found a mouse */
 		cmd = ADBTALK(adbaddr, 3);
-		extdms_done = 0;
-		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-		    (Ptr)&extdms_done, cmd);
-
-		/* Wait until done, but no more than 2 secs */
-		count = 40000;
-		while (!extdms_done && count-- > 0)
-			delay(50);
-
-		if (!extdms_done) {
+		if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
 #ifdef ADB_DEBUG
 			if (adb_debug)
-				printf("adb: extdms_init timed out\n");
+				printf("adb: ems_init timed out\n");
 #endif
 			return;
 		}
 
 		/* Attempt to initialize Extended Mouse Protocol */
-		buffer[2] = '\004'; /* make handler ID 4 */
-		extdms_done = 0;
+		buffer[2] = 4; /* make handler ID 4 */
 		cmd = ADBLISTEN(adbaddr, 3);
-		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-		    (Ptr)&extdms_done, cmd);
-		while (!extdms_done)
-			/* busy wait until done */;
+		if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
+#ifdef ADB_DEBUG
+			if (adb_debug)
+				printf("adb: ems_init timed out\n");
+#endif
+			return;
+		}
 
 		/* 
 		 * Check to see if successful, if not
 		 * try to initialize it as other types
 		 */
 		cmd = ADBTALK(adbaddr, 3);
-		extdms_done = 0;
-		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-		    (Ptr)&extdms_done, cmd);
-		while (!extdms_done)
-			/* busy wait until done */;
+		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
 			
 		if (buffer[2] == ADBMS_EXTENDED) {
 			sc->handler_id = ADBMS_EXTENDED;
-			extdms_done = 0;
-			/* talk register 1 */
-			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-			    (Ptr)&extdms_done, (adbaddr << 4) | 0xd);
-			while (!extdms_done)
-				/* busy-wait until done */;
-			if (buffer[0] == 8) {
+			cmd = ADBTALK(adbaddr, 1);
+			if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
+#ifdef ADB_DEBUG
+				if (adb_debug)
+					printf("adb: ems_init timed out\n");
+#endif
+			} else if (buffer[0] == 8) {
 				/* we have a true EMP device */
 				sc->sc_class = buffer[7];
 				sc->sc_buttons = buffer[8];
@@ -328,42 +311,30 @@ ems_init(sc)
 				 * button bits in 3rd byte instead of sending
 				 * via pseudo keyboard device.
 				 */
-				extdms_done = 0;
-				/* listen register 1 */
+				cmd = ADBLISTEN(adbaddr, 1);
 				buffer[0]=2;
 				buffer[1]=0x00;
 				buffer[2]=0x81;
-				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-				    (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
-				while (!extdms_done)
-					/* busy-wait until done */;
-				extdms_done = 0;
-				/* listen register 1 */
+				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+
+				cmd = ADBLISTEN(adbaddr, 1);
 				buffer[0]=2;
 				buffer[1]=0x01;
 				buffer[2]=0x81;
-				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-				    (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
-				while (!extdms_done)
-					/* busy-wait until done */;
-				extdms_done = 0;
-				/* listen register 1 */
+				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+
+				cmd = ADBLISTEN(adbaddr, 1);
 				buffer[0]=2;
 				buffer[1]=0x02;
 				buffer[2]=0x81;
-				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-				    (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
-				while (!extdms_done)
-					/* busy-wait until done */;
-				extdms_done = 0;
-				/* listen register 1 */
+				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+
+				cmd = ADBLISTEN(adbaddr, 1);
 				buffer[0]=2;
 				buffer[1]=0x03;
 				buffer[2]=0x38;
-				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-				      (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
-				while (!extdms_done)
-					/* busy-wait until done */;
+				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+
 				sc->sc_buttons = 3;
 				sc->sc_res = 400;
 				if (buffer[2] == 0x21)
@@ -375,23 +346,21 @@ ems_init(sc)
 		} else {
 			/* Attempt to initialize as an A3 mouse */
 			buffer[2] = 0x03; /* make handler ID 3 */
-			extdms_done = 0;
 			cmd = ADBLISTEN(adbaddr, 3);
-			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-			    (Ptr)&extdms_done, cmd);
-			while (!extdms_done)
-				/* busy wait until done */;
+			if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
+#ifdef ADB_DEBUG
+				if (adb_debug)
+					printf("adb: ems_init timed out\n");
+#endif
+				return;
+			}
 	
 			/* 
 			 * Check to see if successful, if not
 			 * try to initialize it as other types
 			 */
 			cmd = ADBTALK(adbaddr, 3);
-			extdms_done = 0;
-			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-			    (Ptr)&extdms_done, cmd);
-			while (!extdms_done)
-				/* busy wait until done */;
+			adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
 				
 			if (buffer[2] == ADBMS_MSA3) {
 				sc->handler_id = ADBMS_MSA3;
@@ -406,11 +375,7 @@ ems_init(sc)
 				 * enable 3 button mode = 0111b,
 				 * speed = normal
 				 */
-				extdms_done = 0;
-				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-				    (Ptr)&extdms_done, cmd);
-				while (!extdms_done)
-					/* busy wait until done */;
+				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
 				sc->sc_buttons = 3;
 				sc->sc_res = 300;
 			} else {

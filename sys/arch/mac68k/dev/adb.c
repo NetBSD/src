@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.36 2000/06/18 22:58:45 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.37 2000/07/03 08:59:26 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -254,4 +254,65 @@ adbprint(args, name)
 		printf(" addr %d: ", aa_args->origaddr);
 
 	return (rv);
+}
+
+
+/*
+ * adb_op_sync
+ *
+ * This routine does exactly what the adb_op routine does, except that after
+ * the adb_op is called, it waits until the return value is present before
+ * returning.
+ *
+ * NOTE: The user specified compRout is ignored, since this routine specifies
+ * it's own to adb_op, which is why you really called this in the first place
+ * anyway.
+ */
+int
+adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
+{
+	int tmout;
+	int result;
+	volatile int flag = 0;
+
+	result = ADBOp(buffer, (void *)adb_op_comprout,
+	    (void *)&flag, command);	/* send command */
+	if (result == 0) {		/* send ok? */
+		/*
+		 * Total time to wait is calculated as follows:
+		 *  - Tlt (stop to start time): 260 usec
+		 *  - start bit: 100 usec
+		 *  - up to 8 data bytes: 64 * 100 usec = 6400 usec
+		 *  - stop bit (with SRQ): 140 usec
+		 * Total: 6900 usec
+		 */
+		tmout = 6900;
+		for (tmout = 6900; !flag && tmout >= 10; tmout -= 10)
+			delay(10);
+		if (!flag && tmout > 0)
+			delay(tmout);
+
+		if (!flag)
+			result = -2;
+	}
+
+	return result;
+}
+
+
+/*
+ * adb_op_comprout
+ *
+ * This function is used by the adb_op_sync routine so it knows when the
+ * function is done.
+ */
+void 
+adb_op_comprout(void)
+{
+#ifdef __NetBSD__
+	asm("movw	#1,a2@			| update flag value");
+#else				/* for macos based testing */
+	asm {
+		move.w #1,(a2) }		/* update flag value */
+#endif
 }
