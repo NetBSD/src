@@ -27,13 +27,10 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.2 2001/01/07 21:47:29 martin Exp $
+ *	$Id: i4b_trace.c,v 1.3 2001/01/19 12:44:46 martin Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
- * $FreeBSD$
- *
- *	NOTE: the code assumes that SPLI4B >= splimp !
  *
  *---------------------------------------------------------------------------*/
 
@@ -323,7 +320,7 @@ get_trace_data_from_l1(i4b_trace_hdr_t *hdr, int len, char *buf)
 	{
 		struct mbuf *m1;
 
-		x = SPLI4B();
+		x = splnet();
 		IF_DEQUEUE(&trace_queue[unit], m1);
 		splx(x);		
 
@@ -339,7 +336,7 @@ get_trace_data_from_l1(i4b_trace_hdr_t *hdr, int len, char *buf)
 	else
 		memcpy(&m->m_data[sizeof(i4b_trace_hdr_t)], buf, len);
 
-	x = SPLI4B();
+	x = splnet();
 	
 	IF_ENQUEUE(&trace_queue[unit], m);
 	
@@ -372,7 +369,7 @@ i4btrcopen(dev_t dev, int flag, int fmt, struct proc *p)
 	if(analyzemode && (unit == outunit || unit == rxunit || unit == txunit))
 		return(EBUSY);
 
-	x = SPLI4B();
+	x = splnet();
 	
 	device_state[unit] = ST_ISOPEN;		
 
@@ -420,7 +417,7 @@ i4btrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 			(*ctrl_desc[cno].N_MGMT_COMMAND)(ctrl_desc[cno].unit, CMR_SETTRACE, TRACE_OFF);
 	}
 
-	x = SPLI4B();
+	x = splnet();
 	device_state[unit] = ST_IDLE;
 	splx(x);
 	
@@ -441,7 +438,7 @@ i4btrcread(dev_t dev, struct uio * uio, int ioflag)
 	if(!(device_state[unit] & ST_ISOPEN))
 		return(EIO);
 
-	x = SPLI4B();
+	x = splnet();
 	
 	while(IF_QEMPTY(&trace_queue[unit]) && (device_state[unit] & ST_ISOPEN))
 	{

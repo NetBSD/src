@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.2 2001/01/17 00:30:52 thorpej Exp $
+ *	$Id: i4b_ipr.c,v 1.3 2001/01/19 12:44:45 martin Exp $
  *
  * $FreeBSD$
  *
@@ -408,7 +408,7 @@ i4biproutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct ip *ip;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 	
-	s = SPLI4B();
+	s = splnet();
 
 #if defined(__FreeBSD__) || defined(__bsdi__)
 	unit = ifp->if_unit;
@@ -570,7 +570,7 @@ i4biprioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s;
 	int error = 0;
 
-	s = SPLI4B();
+	s = splnet();
 	
 	switch (cmd)
 	{
@@ -670,7 +670,7 @@ iprclearqueues(struct ipr_softc *sc)
 	
 	for(;;)
 	{
-		x = splimp();
+		x = splnet();
 		IF_DEQUEUE(&sc->sc_fastq, m);
 		splx(x);
 
@@ -682,7 +682,7 @@ iprclearqueues(struct ipr_softc *sc)
 
 	for(;;)
 	{
-		x = splimp();
+		x = splnet();
 		IF_DEQUEUE(&sc->sc_if.if_snd, m);
 		splx(x);
 
@@ -759,7 +759,7 @@ iprwatchdog(struct ifnet *ifp)
 static void
 i4bipr_connect_startio(struct ipr_softc *sc)
 {
-	int s = SPLI4B();
+	int s = splnet();
 	
 	if(sc->sc_state == ST_CONNECTED_W)
 	{
@@ -781,7 +781,7 @@ ipr_connect(int unit, void *cdp)
 
 	sc->sc_cdp = (call_desc_t *)cdp;
 
-	s = SPLI4B();
+	s = splnet();
 
 	NDBGL4(L4_DIALST, "ipr%d: setting dial state to ST_CONNECTED", unit);
 
@@ -915,7 +915,7 @@ ipr_updown(int unit, int updown)
  *	this routine is called from the HSCX interrupt handler
  *	when a new frame (mbuf) has been received and was put on
  *	the rx queue. It is assumed that this routines runs at
- *	pri level splimp() ! Keep it short !
+ *	appropriate protection level! Keep it short !
  *---------------------------------------------------------------------------*/
 static void
 ipr_rx_data_rdy(int unit)

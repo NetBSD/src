@@ -27,7 +27,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.1.1.1 2001/01/05 12:50:01 martin Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -98,7 +98,7 @@ get_cdid(void)
 	int i;
 	int x;
 
-	x = SPLI4B();   
+	x = splnet();   
 
 	/* get next id */
 	
@@ -141,7 +141,7 @@ reserve_cd(void)
 	int x;
 	int i;
 
-	x = SPLI4B();
+	x = splnet();
 
 	cd = NULL;
 	
@@ -180,7 +180,7 @@ void
 freecd_by_cd(call_desc_t *cd)
 {
 	int i;
-	int x = SPLI4B();
+	int x = splnet();
 	
 	for(i=0; i < N_CALL_DESC; i++)
 	{
@@ -352,7 +352,7 @@ i4b_l4_daemon_attached(void)
 {
 	int i;
 
-	int x = SPLI4B();
+	int x = splnet();
 	
 	for(i=0; i < nctrl; i++)
 	{
@@ -373,7 +373,7 @@ i4b_l4_daemon_detached(void)
 {
 	int i;
 
-	int x = SPLI4B();
+	int x = splnet();
 
 	for(i=0; i < nctrl; i++)
 	{

@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.1.1.1 2001/01/05 12:50:03 martin Exp $ 
+ *	$Id: i4b_q931.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -148,7 +148,7 @@ i4b_decode_q931(int unit, int msg_len, u_char *msg_ptr)
 	msg_ptr++;
 	msg_len--;
 
-	s = SPLI4B();		/* this has to be protected ! */
+	s = splnet();		/* this has to be protected ! */
 	
 	/* extract call reference */
 

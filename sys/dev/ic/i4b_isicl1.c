@@ -27,7 +27,7 @@
  *	i4b_l1.c - isdn4bsd layer 1 handler
  *	-----------------------------------
  *
- *	$Id: i4b_isicl1.c,v 1.2 2001/01/07 21:47:27 martin Exp $ 
+ *	$Id: i4b_isicl1.c,v 1.3 2001/01/19 12:44:44 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
@@ -155,7 +155,7 @@ ph_data_req(int unit, struct mbuf *m, int freeflag)
 	if(m == NULL)			/* failsafe */
 		return (0);
 
-	s = SPLI4B();
+	s = splnet();
 
 	if(sc->sc_I430state == ST_F3)	/* layer 1 not running ? */
 	{

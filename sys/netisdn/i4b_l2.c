@@ -27,7 +27,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.2 2001/01/07 21:47:29 martin Exp $ 
+ *	$Id: i4b_l2.c,v 1.3 2001/01/19 12:44:45 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -173,11 +173,11 @@ int i4b_dl_data_req(int unit, struct mbuf *m)
 		        }
 		        else
 		        {
-		        	CRIT_VAR;
+		        	int s;
 
-		        	CRIT_BEG;
+		        	s = splnet();
 				IF_ENQUEUE(&l2sc->i_queue, m);
-				CRIT_END;
+				splx(s);
 
 				i4b_i_frame_queued_up(l2sc);
 			}
@@ -225,9 +225,9 @@ static void
 i4b_l2_unit_init(int unit)
 {
 	l2_softc_t *l2sc = &l2_softc[unit];
-	CRIT_VAR;
+	int s;
 
-	CRIT_BEG;
+	s = splnet();
 	l2sc->Q921_state = ST_TEI_UNAS;
 	l2sc->tei_valid = TEI_INVALID;
 	l2sc->vr = 0;
@@ -258,7 +258,7 @@ i4b_l2_unit_init(int unit)
 	i4b_T202_stop(l2sc);
 	i4b_T203_stop(l2sc);
 
-	CRIT_END;	
+	splx(s);	
 }
 
 /*---------------------------------------------------------------------------*
@@ -268,10 +268,10 @@ int
 i4b_mph_status_ind(int unit, int status, int parm)
 {
 	l2_softc_t *l2sc = &l2_softc[unit];
-	CRIT_VAR;
+	int s;
 	int sendup = 1;
 	
-	CRIT_BEG;
+	s = splnet();
 
 	NDBGL1(L1_PRIM, "unit %d, status=%d, parm=%d", unit, status, parm);
 
@@ -330,7 +330,7 @@ i4b_mph_status_ind(int unit, int status, int parm)
 	if(sendup)
 		MDL_Status_Ind(unit, status, parm);  /* send up to layer 3 */
 
-	CRIT_END;
+	splx(s);
 	
 	return(0);
 }

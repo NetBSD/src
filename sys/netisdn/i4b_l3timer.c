@@ -27,7 +27,7 @@
  *	i4b_l3timer.c - timer and timeout handling for layer 3
  *	------------------------------------------------------
  *
- *	$Id: i4b_l3timer.c,v 1.1.1.1 2001/01/05 12:50:04 martin Exp $ 
+ *	$Id: i4b_l3timer.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -117,15 +117,15 @@ T303_start(call_desc_t *cd)
 void
 T303_stop(call_desc_t *cd)
 {
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 	
 	if(cd->T303 != TIMER_IDLE)
 	{
 		STOP_TIMER(cd->T303_callout, T303_timeout, cd);
 		cd->T303 = TIMER_IDLE;
 	}
-	CRIT_END;
+	splx(s);
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 }
 
@@ -160,15 +160,15 @@ T305_start(call_desc_t *cd)
 void
 T305_stop(call_desc_t *cd)
 {
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 	
 	if(cd->T305 != TIMER_IDLE)
 	{
 		STOP_TIMER(cd->T305_callout, T305_timeout, cd);
 		cd->T305 = TIMER_IDLE;
 	}
-	CRIT_END;
+	splx(s);
 	
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 }
@@ -204,15 +204,15 @@ T308_start(call_desc_t *cd)
 void
 T308_stop(call_desc_t *cd)
 {
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 	
 	if(cd->T308 != TIMER_IDLE)
 	{
 		STOP_TIMER(cd->T308_callout, T308_timeout, cd);
 		cd->T308 = TIMER_IDLE;
 	}
-	CRIT_END;
+	splx(s);
 	
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 }
@@ -248,15 +248,15 @@ T309_start(call_desc_t *cd)
 void
 T309_stop(call_desc_t *cd)
 {
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 	
 	if(cd->T309 != TIMER_IDLE)
 	{
 		STOP_TIMER(cd->T309_callout, T309_timeout, cd);
 		cd->T309 = TIMER_IDLE;
 	}
-	CRIT_END;
+	splx(s);
 	
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 }
@@ -292,15 +292,15 @@ T310_start(call_desc_t *cd)
 void
 T310_stop(call_desc_t *cd)
 {
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 	
 	if(cd->T310 != TIMER_IDLE)
 	{
 		STOP_TIMER(cd->T310_callout, T310_timeout, cd);
 		cd->T310 = TIMER_IDLE;
 	}
-	CRIT_END;
+	splx(s);
 
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 }
@@ -336,15 +336,15 @@ T313_start(call_desc_t *cd)
 void
 T313_stop(call_desc_t *cd)
 {
-	CRIT_VAR;
-	CRIT_BEG;
+	int s;
+	s = splnet();
 	
 	if(cd->T313 != TIMER_IDLE)
 	{
 		cd->T313 = TIMER_IDLE;
 		STOP_TIMER(cd->T313_callout, T313_timeout, cd);
 	}
-	CRIT_END;
+	splx(s);
 	
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 }
