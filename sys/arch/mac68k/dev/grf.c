@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.27 1995/07/06 04:17:15 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.28 1995/07/06 17:13:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,10 +89,12 @@ static void	fake_internal __P((void));
 extern int	grfmv_probe __P((struct grf_softc *gp, nubus_slot *nu));
 extern int	grfmv_init __P((struct grf_softc *gp));
 extern int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
+extern caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
 
 extern int	grfiv_probe __P((struct grf_softc *gp, nubus_slot *ignore));
 extern int	grfiv_init __P((struct grf_softc *gp));
 extern int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
+extern caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
 
 struct cfdriver grfcd = {
 	NULL, "grf", grf_match, grf_attach, DV_DULL,
@@ -100,9 +102,12 @@ struct cfdriver grfcd = {
 };
 
 struct grfdev grfdev[] = {
-/* DrSW             (*gd_probe)() (*gd_init)() (*gd_mode)()  gd_desc */
-   NUBUS_DRSW_APPLE,  grfmv_probe,  grfmv_init,  grfmv_mode, "QD-compatible",
-               0xFF,  grfiv_probe,  grfiv_init,  grfiv_mode, "Internal video",
+/* DrSW             (*gd_probe)() (*gd_init)() (*gd_mode)()  gd_desc
+       (*gd_phys)()                                                   */
+{  NUBUS_DRSW_APPLE,  grfmv_probe,  grfmv_init,  grfmv_mode, "QD-compatible",
+         grfmv_phys },
+{              0xFF,  grfiv_probe,  grfiv_init,  grfiv_mode, "Internal video",
+         grfiv_phys },
 };
 
 static int ngrfdev=(sizeof(grfdev) / sizeof(grfdev[0]));
@@ -347,7 +352,7 @@ grfaddr(gp, off)
 	u_long	addr;
 
 	if (off < mac68k_round_page(gm->fbsize + gm->fboff) ) {
-		addr = NUBUS_VIRT_TO_PHYS((u_int) gm->fbbase) + off;
+		addr = (*grfdev[gp->g_type].gd_phys) (gp, gm->fbbase) + off;
 		return mac68k_btop(addr);
 	}
 	/* bogus */
