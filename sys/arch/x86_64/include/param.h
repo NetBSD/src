@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2002/02/26 15:13:27 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2002/05/26 00:23:49 fvdl Exp $	*/
 
 #ifdef _KERNEL
 #ifdef _LOCORE
@@ -41,15 +41,15 @@
  * XXXfvdl change this (after bootstrap) to take # of bits from
  * config info into account.
  */
-#define	KERNBASE	0xffff800000000000 /* start of kernel virtual space */
-#define	KERNTEXTOFF	0xffff800000100000 /* start of kernel text */
+#define	KERNBASE	0xffffffff80000000 /* start of kernel virtual space */
+#define	KERNTEXTOFF	0xffffffff80100000 /* start of kernel text */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
-#define KERNTEXTOFF_HI	0xffff8000
-#define KERNTEXTOFF_LO	0x00100000
+#define KERNTEXTOFF_HI	0xffffffff
+#define KERNTEXTOFF_LO	0x80100000
 
-#define KERNBASE_HI	0xffff8000
-#define KERNBASE_LO	0x00000000
+#define KERNBASE_HI	0xffffffff
+#define KERNBASE_LO	0x80000000
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
