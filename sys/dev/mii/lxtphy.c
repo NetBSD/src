@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.27 2002/03/14 04:40:26 chs Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.28 2002/03/25 20:51:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.27 2002/03/14 04:40:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.28 2002/03/25 20:51:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ lxtphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->mii_funcs = &lxtphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags | ma->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);
