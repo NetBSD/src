@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyslot.c,v 1.8 1998/02/03 18:23:56 perry Exp $	*/
+/*	$NetBSD: ttyslot.c,v 1.9 1998/06/01 20:13:30 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)ttyslot.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ttyslot.c,v 1.8 1998/02/03 18:23:56 perry Exp $");
+__RCSID("$NetBSD: ttyslot.c,v 1.9 1998/06/01 20:13:30 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <ttyent.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
