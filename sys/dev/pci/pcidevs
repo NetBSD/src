@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.365 2001/10/24 00:13:41 thorpej Exp $
+$NetBSD: pcidevs,v 1.366 2001/10/24 00:18:49 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1543,6 +1543,10 @@ product PCTECH RZ1000	0x1000	RZ1000
 
 /* PLX Technology products */
 product PLX 9060ES	0x906e	9060ES PCI bus controller
+
+/* Powerhouse Systems products */
+product	POWERHOUSE POWERTOP	0x6037	PowerTop PowerPC system controller
+product POWERHOUSE POWERPRO	0x6073	PowerPro PowerPC system controller
 
 /* ProLAN products - XXX better descriptions */
 product PROLAN NE2KETHER 0x1980 Ethernet
