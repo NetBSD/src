@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_meas.c	7.4 (Berkeley) 5/6/91
- *	$Id: tp_meas.c,v 1.2 1993/05/20 05:27:45 cgd Exp $
+ *	$Id: tp_meas.c,v 1.3 1993/07/04 21:25:07 cgd Exp $
  */
 
 /***********************************************************
@@ -66,6 +66,7 @@ SOFTWARE.
  */
 
 #include "types.h"
+#include "cdefs.h"
 #include "time.h"
 #include "argo_debug.h"
 #include "tp_meas.h"
