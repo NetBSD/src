@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.2 1995/01/20 08:52:16 jtc Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.3 1995/03/22 15:25:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.2 1995/01/20 08:52:16 jtc Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.3 1995/03/22 15:25:58 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -55,14 +55,16 @@ static char rcsid[] = "$NetBSD: vmstat.c,v 1.2 1995/01/20 08:52:16 jtc Exp $";
 #include <sys/sysctl.h>
 #include <vm/vm.h>
 
-#include <signal.h>
-#include <nlist.h>
 #include <ctype.h>
-#include <utmp.h>
+#include <err.h>
+#include <nlist.h>
 #include <paths.h>
-#include <string.h>
+#include <signal.h>
 #include <stdlib.h>
+#include <string.h>
+#include <utmp.h>
 #include <unistd.h>
+
 #include "systat.h"
 #include "extern.h"
 
@@ -638,10 +640,8 @@ allocinfo(s)
 {
 
 	s->intrcnt = (long *) malloc(nintr * sizeof(long));
-	if (s->intrcnt == NULL) {
-		fprintf(stderr, "systat: out of memory\n");
-		exit(2);
-	}
+	if (s->intrcnt == NULL)
+		errx(2, "out of memory");
 }
 
 static void
