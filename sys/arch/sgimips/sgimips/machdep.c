@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2001/07/08 21:04:52 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2001/07/08 23:59:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -141,8 +141,6 @@ void zs_kgdb_init(void);
 void kgdb_connect(int);
 #endif
 
-extern int 	atoi(char *);	/* For parsing IP (archictecture) number */
-
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset(void);
 static void	unimpl_cons_init(void);
@@ -187,7 +185,6 @@ mach_init(argc, argv, envp)
 	vsize_t size;
 	extern char edata[], end[];
 	struct arcbios_mem *mem;
-	struct arcbios_component *root;
 	char *cpufreq;
 	int i;
 
@@ -271,11 +268,11 @@ mach_init(argc, argv, envp)
 #endif
 #endif
 
-	root = ARCBIOS->GetChild(NULL);
-	for (i = 0; root->Identifier[i] != '\0'; i++) {
-		if (root->Identifier[i] >= '0' &&
-		    root->Identifier[i] <= '9') {
-			mach_type = atoi(&root->Identifier[i]);
+	for (i = 0; arcbios_system_identifier[i] != '\0'; i++) {
+		if (arcbios_system_identifier[i] >= '0' &&
+		    arcbios_system_identifier[i] <= '9') {
+			mach_type = strtoul(&arcbios_system_identifier[i],
+			    NULL, 10);
 			break;
 		}
 	}

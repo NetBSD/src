@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 2001/05/11 04:53:25 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5 2001/07/08 23:59:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -39,6 +39,7 @@
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
+#include <machine/machtype.h>
 
 static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);
@@ -62,16 +63,19 @@ cpu_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct mainbus_attach_args *ma = aux;
 	u_int32_t config;
 
-	if (ma->ma_arch == 32)
+	switch (mach_type) {
+	case MACH_SGI_IP22:
+		mips_L2CacheSize = 1024 * 1024;		/* XXX Indy */
+		break;
+
+	case MACH_SGI_IP32:
 		mips_L2CacheSize = 512 * 1024;		/* XXX O2 */
+		break;
+	}
 
-	if (ma->ma_arch == 22) 				/* XXX Indy */
-	    mips_L2CacheSize = 1024 * 1024;
-
-#if 1
+#if 1	/* XXX XXX XXX */
 	config = mips3_cp0_config_read();
 	config &= ~MIPS3_CONFIG_SC;
 	mips3_cp0_config_write(config);
@@ -80,10 +84,10 @@ cpu_attach(parent, self, aux)
 	printf(": ");
 	cpu_identify();
 
-	if (ma->ma_arch == 22) {			/* XXX Indy */
+	if (mach_type == MACH_SGI_IP22) {		/* XXX Indy */
 		unsigned long tmp1, tmp2, tmp3;
 
-		printf("cpu0: disabling IP22 SysAD L2 cache\n");
+		printf("%s: disabling IP22 SysAD L2 cache\n", self->dv_xname);
 
 	        __asm__ __volatile__("
                 .set noreorder
