@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.35 2001/03/16 10:28:53 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.36 2001/03/17 01:54:17 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -392,7 +392,9 @@ const struct db_command db_machine_command_table[] = {
 	{ "page",	db_page_cmd,	0,	0 },
 	{ "uvmdump",	db_uvmhistdump,	0,	0 },
 #if 0
+#ifdef MULTIPROCESSOR
 	{ "cpu",	db_cpu_cmd,	0,	0 },
+#endif
 #endif
 	{ (char *)0, }
 };
