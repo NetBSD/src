@@ -1,4 +1,4 @@
-/*	$NetBSD: pccvar.h,v 1.1 1996/04/26 19:00:11 chuck Exp $	*/
+/*	$NetBSD: pccvar.h,v 1.2 1997/07/17 02:02:42 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,7 +60,8 @@ struct pcc_attach_args {
 };
 
 /* Shorthand for locators. */
-#define pcccf_ipl	cf_loc[0]
+#include "locators.h"
+#define pcccf_ipl	cf_loc[PCCCF_IPL]
 
 void	pccintr_establish __P((int, int (*)(void *), int, void *));
 void	pccintr_disestablish __P((int));
