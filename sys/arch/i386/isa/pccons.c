@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.81 1995/04/17 12:07:26 cgd Exp $	*/
+/*	$NetBSD: pccons.c,v 1.82 1995/04/19 18:10:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -96,8 +96,6 @@ int pc_xmode = 0;
 
 #define	PCUNIT(x)	(minor(x))
 
-struct	tty *pc_tty[NPC];
-
 static struct video_state {
 	int 	cx, cy;		/* escape parameters */
 	int 	row, col;	/* current cursor position */
@@ -112,12 +110,18 @@ static struct video_state {
 	char	so_at;		/* standout attributes */
 } vs;
 
+struct pc_softc {
+	struct	device sc_dev;
+	void	*sc_ih;
+	struct	tty *sc_tty;
+}
+
 int pcprobe __P((struct device *, void *, void *));
 void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 
 struct cfdriver pccd = {
-	NULL, "pc", pcprobe, pcattach, DV_TTY, sizeof(struct device)
+	NULL, "pc", pcprobe, pcattach, DV_TTY, sizeof(struct pc_softc)
 };
 
 #define	COL		80
@@ -462,13 +466,14 @@ pcattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct pc_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 
-	(void)isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
-	    pcintr, 0);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
+	    pcintr, sc);
 }
 
 int
@@ -477,16 +482,20 @@ pcopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	struct pc_softc *sc;
 	int unit = PCUNIT(dev);
 	struct tty *tp;
 
-	if (unit >= pccd.cd_ndevs || !pccd.cd_devs[unit])
+	if (unit >= pccd.cd_ndevs)
+		return ENXIO;
+	sc = pccd.cd_devs[unit];
+	if (sc == 0)
 		return ENXIO;
 
-	if (!pc_tty[unit])
-		tp = pc_tty[unit] = ttymalloc();
+	if (!sc->sc_tty)
+		tp = sc->sc_tty = ttymalloc();
 	else
-		tp = pc_tty[unit];
+		tp = sc->sc_tty;
 
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
@@ -514,7 +523,7 @@ pcclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp = pc_tty[PCUNIT(dev)];
+	register struct tty *tp = pccd.cd_devs[PCUNIT(dev)]->sc_tty;
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
@@ -530,7 +539,7 @@ pcread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = pc_tty[PCUNIT(dev)];
+	register struct tty *tp = pccd.cd_devs[PCUNIT(dev)]->sc_tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -541,9 +550,17 @@ pcwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = pc_tty[PCUNIT(dev)];
+	register struct tty *tp = pccd.cd_devs[PCUNIT(dev)]->sc_tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+struct tty *
+pctty(dev)
+	dev_t dev;
+{
+
+	return (pccd.cd_devs[PCUNIT(dev)]->sc_tty);
 }
 
 /*
@@ -555,7 +572,8 @@ int
 pcintr(arg)
 	void *arg;
 {
-	register struct tty *tp = pc_tty[0];	/* XXX */
+	struct pc_softc *sc = arg;
+	register struct tty *tp = sc->sc_tty;
 	u_char *cp;
 
 	if ((inb(KBSTATP) & KBS_DIB) == 0)
@@ -582,7 +600,7 @@ pcioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct tty *tp = pc_tty[PCUNIT(dev)];
+	register struct tty *tp = pccd.cd_devs[PCUNIT(dev)]->sc_tty;
 	int error;
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
