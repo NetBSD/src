@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.379 2001/10/04 16:18:45 oster Exp $
+#	$NetBSD: mi,v 1.380 2001/10/04 19:08:07 eeh Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -889,6 +889,7 @@
 ./usr/include/sys/poll.h		comp-c-include
 ./usr/include/sys/pool.h		comp-c-include
 ./usr/include/sys/proc.h		comp-c-include
+./usr/include/sys/property.h		comp-c-include
 ./usr/include/sys/protosw.h		comp-c-include
 ./usr/include/sys/ptrace.h		comp-c-include
 ./usr/include/sys/queue.h		comp-c-include
@@ -5396,6 +5397,15 @@
 ./usr/share/man/man9/powerhook_establish.9		comp-sys-man
 ./usr/share/man/man9/ppsratecheck.9		comp-sys-man
 ./usr/share/man/man9/printf.9		comp-sys-man
+./usr/share/man/man9/properties.9		comp-sys-man
+./usr/share/man/man9/propdb_create.9		comp-sys-man
+./usr/share/man/man9/propdb_destroy.9		comp-sys-man
+./usr/share/man/man9/prop_copy.9		comp-sys-man
+./usr/share/man/man9/prop_delete.9		comp-sys-man
+./usr/share/man/man9/prop_get.9		comp-sys-man
+./usr/share/man/man9/prop_list.9		comp-sys-man
+./usr/share/man/man9/prop_objs.9		comp-sys-man
+./usr/share/man/man9/prop_set.9		comp-sys-man
 ./usr/share/man/man9/psignal.9		comp-sys-man
 ./usr/share/man/man9/ratecheck.9		comp-sys-man
 ./usr/share/man/man9/readdisklabel.9		comp-sys-man
