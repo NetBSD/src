@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.34 1996/10/27 20:30:52 gwr Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.35 1996/10/27 20:50:00 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -60,13 +60,9 @@
 /*
  * Note that stdarg.h and the ANSI style va_start macro is used for both
  * ANSI and traditional C compilers.
+ * XXX: This requires that stdarg.h defines: va_alist, va_dcl
  */
 #include <machine/stdarg.h>
-/* XXX - This is a total hack! */
-#ifndef	va_alist
-#define	va_alist	__builtin_va_alist
-#define	va_dcl		long va_alist; ...
-#endif
 
 #include "ipkdb.h"
 
