@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.15 2001/05/27 14:17:56 lukem Exp $	*/
+/*	$NetBSD: optr.c,v 1.16 2001/05/28 00:41:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.15 2001/05/27 14:17:56 lukem Exp $");
+__RCSID("$NetBSD: optr.c,v 1.16 2001/05/28 00:41:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,20 +51,13 @@ __RCSID("$NetBSD: optr.c,v 1.15 2001/05/27 14:17:56 lukem Exp $");
 #include <grp.h>
 #include <signal.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#endif
 #include <time.h>
 #include <tzfile.h>
-#ifdef __STDC__
 #include <unistd.h>
-#endif
 #include <utmp.h>
-#ifndef __STDC__
-#include <varargs.h>
-#endif
 
 #include "dump.h"
 #include "pathnames.h"

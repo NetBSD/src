@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.29 2001/05/27 14:17:57 lukem Exp $	*/
+/*	$NetBSD: traverse.c,v 1.30 2001/05/28 00:41:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.29 2001/05/27 14:17:57 lukem Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.30 2001/05/28 00:41:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,10 +64,8 @@ __RCSID("$NetBSD: traverse.c,v 1.29 2001/05/27 14:17:57 lukem Exp $");
 #include <errno.h>
 #include <fts.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <string.h>
 #include <unistd.h>
-#endif
 
 #include "dump.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.26 2001/05/27 14:17:57 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.27 2001/05/28 00:41:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.26 2001/05/27 14:17:57 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.27 2001/05/28 00:41:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,14 +64,10 @@ __RCSID("$NetBSD: tape.c,v 1.26 2001/05/27 14:17:57 lukem Exp $");
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#else
-int	write(), read();
-#endif
 
 #include "dump.h"
 #include "pathnames.h"
