@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.2 2003/08/27 11:38:54 itojun Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.3 2003/09/02 20:10:30 fvdl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.2 2003/08/27 11:38:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.3 2003/09/02 20:10:30 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,9 +118,9 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 #ifdef MPACPI
 	int i, h;
 	struct mp_intr_map *mip;
+#endif
 #if NIOAPIC > 0
 	struct ioapic_softc *sc;
-#endif
 #endif
 
 	if (acpi_intrcold) {
@@ -138,7 +138,7 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 
 	trigger = IST_LEVEL;
 
-#ifdef MPACPI
+#if defined(MPACPI) && NIOAPIC > 0
 	/*
 	 * Can only match on ACPI global interrupt numbers if the ACPI
 	 * interrupt info was extracted, which is in the MPACPI case.
@@ -193,7 +193,7 @@ nomap:
 		irq = pin = (int)InterruptNumber;
 	}
 
-#ifdef MPACPI
+#if defined(MPACPI) && NIOAPIC > 0
 found:
 #endif
 
