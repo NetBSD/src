@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.55 2004/09/17 23:13:02 mycroft Exp $	*/
+/*	$NetBSD: ss.c,v 1.56 2004/10/17 17:49:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.55 2004/09/17 23:13:02 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.56 2004/10/17 17:49:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,7 @@ ssstrategy(struct buf *bp)
 	int s;
 
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
-	    ("ssstrategy %ld bytes @ blk %" PRId64 "\n", bp->b_bcount, bp->b_blkno));
+	    ("ssstrategy %d bytes @ blk %" PRId64 "\n", bp->b_bcount, bp->b_blkno));
 
 	/*
 	 * If the device has been made invalid, error out
