@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.11 2003/01/23 23:18:04 matt Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.12 2003/05/17 01:38:40 nakayama Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -629,8 +629,8 @@ svr4_32_trap(type, l)
 
 			tm = (u_quad_t) tv.tv_sec * 1000000000 +
 			    (u_quad_t) tv.tv_usec * 1000;
-			tf->tf_out[0] = ((u_int32_t *) &tm)[0];
-			tf->tf_out[1] = ((u_int32_t *) &tm)[1];
+			tf->tf_out[0] = ((u_int32_t *)(void *) &tm)[0];
+			tf->tf_out[1] = ((u_int32_t *)(void *) &tm)[1];
 		}
 		break;
 
@@ -659,8 +659,8 @@ svr4_32_trap(type, l)
 			                tv.tv_usec -
 			                    spc->spc_runtime.tv_usec)
 			                * 1000;
-			tf->tf_out[0] = ((u_int32_t *) &tm)[0];
-			tf->tf_out[1] = ((u_int32_t *) &tm)[1];
+			tf->tf_out[0] = ((u_int32_t *)(void *) &tm)[0];
+			tf->tf_out[1] = ((u_int32_t *)(void *) &tm)[1];
 		}
 		break;
 

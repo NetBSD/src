@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.67 2003/01/18 06:55:23 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.68 2003/05/17 01:38:40 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -148,7 +148,7 @@ const struct db_variable db_regs[] = {
 	{ "npc", (long *)&DDB_TF->tf_npc, FCN_NULL, },
 	{ "ipl", (long *)&DDB_TF->tf_oldpil, db__char_value, },
 	{ "y", (long *)&DDB_TF->tf_y, db__int_value, },
-	{ "g0", (long *)&nil, FCN_NULL, },
+	{ "g0", (void *)&nil, FCN_NULL, },
 	{ "g1", (long *)&DDB_TF->tf_global[1], FCN_NULL, },
 	{ "g2", (long *)&DDB_TF->tf_global[2], FCN_NULL, },
 	{ "g3", (long *)&DDB_TF->tf_global[3], FCN_NULL, },

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.59 2003/04/01 16:34:58 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.60 2003/05/17 01:38:39 nakayama Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -544,7 +544,7 @@ sbus_get_intr(sc, node, ipp, np, slot)
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
 	ipl = NULL;
-	if (PROM_getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
+	if (PROM_getprop(node, "interrupts", sizeof(int), np, (void *)&ipl) == 0) {
 		struct openprom_intr *ip;
 		int pri;
 
