@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.9 2003/10/24 05:27:55 mellon Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.10 2004/03/30 19:40:58 mellon Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -88,6 +88,20 @@ int nowait=0;
 static void usage PROTO ((void));
 
 void do_release(struct client_state *);
+
+static isc_result_t
+verify_addr (omapi_object_t *l, omapi_addr_t *addr)
+{
+	return ISC_R_SUCCESS;
+}
+
+static isc_result_t
+verify_auth (omapi_object_t *p, omapi_auth_key_t *a)
+{
+	if (a != top_level_config.omapi_key)
+		return ISC_R_INVALIDKEY;
+	return ISC_R_SUCCESS;
+}
 
 int main (argc, argv, envp)
 	int argc;
@@ -442,10 +456,12 @@ int main (argc, argv, envp)
 		if (result != ISC_R_SUCCESS)
 			log_fatal ("Can't allocate new generic object: %s\n",
 				   isc_result_totext (result));
-		result = omapi_protocol_listen (listener,
-						(unsigned)
-						top_level_config.omapi_port,
-						1);
+		result = (omapi_protocol_listen
+			  (listener,
+			   (unsigned)top_level_config.omapi_port, 1));
+		if (result == ISC_R_SUCCESS && top_level_config.omapi_key)
+			result = (omapi_protocol_configure_security
+				  (listener, verify_addr, verify_auth));
 		if (result != ISC_R_SUCCESS)
 			log_fatal ("Can't start OMAPI protocol: %s",
 				   isc_result_totext (result));
