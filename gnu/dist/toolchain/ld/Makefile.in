@@ -641,49 +641,49 @@ deffilep.h: deffilep.c
 ldgram.h: ldgram.c
 
 
-ld.info: ld.texinfo
-ld.dvi: ld.texinfo
-
-
-DVIPS = dvips
-
-.texi.info:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texi.dvi:
-	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.texi:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texinfo.info:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texinfo:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.texinfo.dvi:
-	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.txi.info:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-
-.txi.dvi:
-	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
-	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
-
-.txi:
-	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	$(MAKEINFO) -I $(srcdir) $<
-.dvi.ps:
-	$(DVIPS) $< -o $@
+#  ld.info: ld.texinfo
+#  ld.dvi: ld.texinfo
+#  
+#  
+#  DVIPS = dvips
+#  
+#  .texi.info:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texi.dvi:
+#  	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .texi:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texinfo.info:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texinfo:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .texinfo.dvi:
+#  	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .txi.info:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  
+#  .txi.dvi:
+#  	TEXINPUTS=$(top_srcdir)/../texinfo/texinfo.tex:$$TEXINPUTS \
+#  	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
+#  
+#  .txi:
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) $<
+#  .dvi.ps:
+#  	$(DVIPS) $< -o $@
 
 install-info-am: $(INFO_DEPS)
 	@$(NORMAL_INSTALL)
@@ -1874,38 +1874,39 @@ bootstrap: ld3$(EXEEXT)
 
 # END OF CHECK TARGETS
 
-# DOCUMENTATION TARGETS
-# Manual configuration file; not usually attached to normal configuration,
-# because almost all configs use "gen" version of manual.
-#  Set DOCVER above to change.
-#configdoc.texi:	${DOCVER}-doc.texi
-#	ln -s ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi >/dev/null 2>&1 \
-#	  || ln ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi >/dev/null 2>&1 \
-#	  || cp ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi
+#  # DOCUMENTATION TARGETS
+#  # Manual configuration file; not usually attached to normal configuration,
+#  # because almost all configs use "gen" version of manual.
+#  #  Set DOCVER above to change.
+#  configdoc.texi:	${DOCVER}-doc.texi
+#  	ln -s ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi >/dev/null 2>&1 \
+#  	  || ln ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi >/dev/null 2>&1 \
+#  	  || cp ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi
+#  
+#  ldver.texi: Makefile
+#  	rm -f $@
+#  	echo '@set VERSION $(VERSION)' > $@
+#  
+#  ld.info: $(srcdir)/ld.texinfo configdoc.texi ldver.texi
+#  	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+#  	$(MAKEINFO) -I $(srcdir) -I $(BFDDIR)/doc $(srcdir)/ld.texinfo
+#  
+#  ld.dvi: $(srcdir)/ld.texinfo configdoc.texi ldver.texi
+#  	TEXINPUTS=$(top_srcdir)/../texinfo:$$TEXINPUTS \
+#  	  MAKEINFO="$(MAKEINFO) -I $(srcdir) -I $(BFDDIR)/doc" $(TEXI2DVI) -I $(BFDDIR)/doc $(srcdir)/ld.texinfo
+#  
+#  # Build the man page from the texinfo file
+#  # The sed command removes the no-adjust Nroff command so that
+#  # the man output looks standard.
+#  ld.1: $(srcdir)/ld.texinfo configdoc.texi ldver.texi
+#  	touch $@
+#  	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texinfo > ld.pod
+#  	-($(POD2MAN) ld.pod | \
+#  	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
+#  	        mv -f $@.T$$$$ $@) || \
+#  	        (rm -f $@.T$$$$ && exit 1)
+#  	rm -f ld.pod
 
-#ldver.texi: Makefile
-#	rm -f $@
-#	echo '@set VERSION $(VERSION)' > $@
-
-#ld.info: $(srcdir)/ld.texinfo configdoc.texi ldver.texi
-#	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
-#	$(MAKEINFO) -I $(srcdir) -I $(BFDDIR)/doc $(srcdir)/ld.texinfo
-
-ld.dvi: $(srcdir)/ld.texinfo configdoc.texi ldver.texi
-	TEXINPUTS=$(top_srcdir)/../texinfo:$$TEXINPUTS \
-	  MAKEINFO="$(MAKEINFO) -I $(srcdir) -I $(BFDDIR)/doc" $(TEXI2DVI) -I $(BFDDIR)/doc $(srcdir)/ld.texinfo
-
-# Build the man page from the texinfo file
-# The sed command removes the no-adjust Nroff command so that
-# the man output looks standard.
-#ld.1: $(srcdir)/ld.texinfo configdoc.texi ldver.texi
-#	touch $@
-#	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texinfo > ld.pod
-#	-($(POD2MAN) ld.pod | \
-#	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
-#	        mv -f $@.T$$$$ $@) || \
-#	        (rm -f $@.T$$$$ && exit 1)
-#	rm -f ld.pod
 mostlyclean-local:
 	-rm -rf tmpdir
 
