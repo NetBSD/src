@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.148 2000/03/23 06:33:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149 2000/03/26 07:52:58 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,7 @@
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_atalk.h"
+#include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_compat_netbsd.h"
@@ -129,6 +130,13 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
+#ifdef CCITT 
+#undef PS	/* XXX namespace collision */
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_extern.h>
+#undef PS	/* XXX namespace collision */
+#endif 
 #ifdef NS
 #include <netns/ns_var.h>
 #endif
