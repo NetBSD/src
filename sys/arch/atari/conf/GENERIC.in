@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.21 2002/06/17 05:14:06 lukem Exp $
+#	$NetBSD: GENERIC.in,v 1.22 2002/09/02 12:10:46 leo Exp $
 #
 # Generic atari
 #
@@ -67,7 +67,9 @@ options 	NS		# XNS
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
+#ifndef NO_PHYS_NETWORK
 options 	NETATALK	# AppleTalk networking protocols
+#endif
 #endif
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -195,7 +197,7 @@ options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 #ifndef INSTALL_KERNEL
 options 	SERCONSOLE		# modem1 console support
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
-#options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
+options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
 #options 	STATCLOCK	        # Separate {stat,prof}clock
 #endif
 
@@ -211,7 +213,7 @@ config		netbsd root on ? type ?
 
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
-#ifndef FALCON_KERNEL
+#ifndef NO_PHYS_NETWORK
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #endif
 pseudo-device	pty			# pseudo-terminals
@@ -226,8 +228,10 @@ pseudo-device	tun		2	# network tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#ifndef NO_PHYS_NETWORK
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+#endif
 pseudo-device	ccd		4	# concatenating disk driver
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
