@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.94 2001/10/22 03:34:39 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.95 2001/10/22 19:22:43 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -367,7 +367,7 @@ MLINKS+=vnodeops.9 VOP_LOOKUP.9 \
 	vnodeops.9 VOP_READ.9 \
 	vnodeops.9 VOP_WRITE.9 \
 	vnodeops.9 VOP_IOCTL.9 \
-	vnodeops.9 VOP_FNCTL.9 \
+	vnodeops.9 VOP_FCNTL.9 \
 	vnodeops.9 VOP_POLL.9 \
 	vnodeops.9 VOP_REVOKE.9 \
 	vnodeops.9 VOP_MMAP.9 \

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.389 2001/10/22 18:04:07 kleink Exp $
+#	$NetBSD: mi,v 1.390 2001/10/22 19:27:06 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3286,7 +3286,7 @@
 ./usr/share/man/cat9/vn_close.0		comp-sys-catman
 ./usr/share/man/cat9/vn_closefile.0		comp-sys-catman
 ./usr/share/man/cat9/vn_default_error.0		comp-sys-catman
-./usr/share/man/cat9/vn_fnctl.0		comp-sys-catman
+./usr/share/man/cat9/vn_fcntl.0		comp-sys-catman
 ./usr/share/man/cat9/vn_ioctl.0		comp-sys-catman
 ./usr/share/man/cat9/vn_isunder.0		comp-sys-catman
 ./usr/share/man/cat9/vn_lock.0		comp-sys-catman
@@ -5622,7 +5622,7 @@
 ./usr/share/man/man9/vn_close.9		comp-sys-man
 ./usr/share/man/man9/vn_closefile.9		comp-sys-man
 ./usr/share/man/man9/vn_default_error.9		comp-sys-man
-./usr/share/man/man9/vn_fnctl.9		comp-sys-man
+./usr/share/man/man9/vn_fcntl.9		comp-sys-man
 ./usr/share/man/man9/vn_ioctl.9		comp-sys-man
 ./usr/share/man/man9/vn_isunder.9		comp-sys-man
 ./usr/share/man/man9/vn_lock.9		comp-sys-man

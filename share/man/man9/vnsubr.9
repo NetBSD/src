@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.2 2001/10/22 08:21:33 wiz Exp $
+.\"     $NetBSD: vnsubr.9,v 1.3 2001/10/22 19:22:43 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Nm vn_close ,
 .Nm vn_closefile ,
 .Nm vn_default_error ,
-.Nm vn_fnctl ,
+.Nm vn_fcntl ,
 .Nm vn_ioctl ,
 .Nm vn_isunder ,
 .Nm vn_lock ,
@@ -70,7 +70,7 @@
 .Ft int
 .Fn vn_default_error "void *v"
 .Ft int
-.Fn vn_fnctl "struct file *fp" "u_int com" "caddr_t data" "struct proc *p"
+.Fn vn_fcntl "struct file *fp" "u_int com" "caddr_t data" "struct proc *p"
 .Ft int
 .Fn vn_ioctl "struct file *fp" "u_long com" "caddr_t data" "struct proc *p"
 .Ft int
@@ -140,18 +140,18 @@ with the appropriate arguments.
 A generic "default" routine that just returns error.  It is used by a
 file system to specify unsupported operations in the vnode operations
 vector.
-.It Fn vn_fnctl "fp" "com" "data" "p"
+.It Fn vn_fcntl "fp" "com" "data" "p"
 Common code for a file table vnode
-.Xr fnctl 2
+.Xr fcntl 2
 operation.  The file is
 specified by
 .Fa fp .
 The argument
 .Fa p
 is the calling process.
-.Fn vn_fnctl
+.Fn vn_fcntl
 simply locks the vnode and invokes the vnode operation
-.Xr VOP_FNCTL 9
+.Xr VOP_FCNTL 9
 with the command
 .Fa com
 and buffer
