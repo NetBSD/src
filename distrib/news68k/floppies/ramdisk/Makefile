@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/10/13 06:15:18 jmc Exp $
+#	$NetBSD: Makefile,v 1.15 2001/11/09 20:52:18 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -8,12 +8,10 @@ IMAGE=		ramdisk.fs
 CBIN=		ramdiskbin
 
 MOUNT_POINT?=	/mnt
-# DEV/RDEV file system device, CDEV/RDEV vnconfig device
+# DEV/RDEV file system device
 VND?=		vnd1
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}c
-VND_CRDEV=	/dev/r${VND}c
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		list
@@ -28,8 +26,8 @@ DISKTYPE=	floppyinstfs
 
 all: ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
+	disklabel -rw ${VND} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i 4096 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
@@ -40,11 +38,11 @@ all: ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 	-rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
