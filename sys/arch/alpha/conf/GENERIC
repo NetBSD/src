@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 1999/06/29 07:04:15 ross Exp $
+# $NetBSD: GENERIC,v 1.123 1999/07/29 10:37:13 augustss Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -57,6 +57,7 @@ options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
+options 	COMPAT_14
 
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
