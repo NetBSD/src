@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppi.c	7.3 (Berkeley) 12/16/90
- *	$Id: par.c,v 1.7 1994/05/08 05:53:31 chopps Exp $
+ *	$Id: par.c,v 1.8 1994/05/31 03:11:44 chopps Exp $
  */
 
 /*
@@ -256,7 +256,7 @@ parrw(dev, uio)
 	   dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
 	   sc->sc_burst, sc->sc_timo, uio->uio_resid);
 #endif
-  buflen = MIN(sc->sc_burst, uio->uio_resid);
+  buflen = min(sc->sc_burst, uio->uio_resid);
   buf = (char *)malloc(buflen, M_DEVBUF, M_WAITOK);
   sc->sc_flags |= PARF_UIO;
   if (sc->sc_timo > 0) 
@@ -266,7 +266,7 @@ parrw(dev, uio)
     }
   while (uio->uio_resid > 0) 
     {
-      len = MIN(buflen, uio->uio_resid);
+      len = min(buflen, uio->uio_resid);
       cp = buf;
       if (uio->uio_rw == UIO_WRITE) 
 	{
