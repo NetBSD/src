@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.23 1999/01/10 00:23:32 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.24 1999/01/10 10:17:54 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -433,7 +433,7 @@ ukbd_intr(reqh, addr, status)
 	int mod, omod;
 	u_int16_t ibuf[MAXKEYS];	/* chars events */
 	int nkeys, i, j;
-	int key, c;
+	int key;
 #define ADDKEY(c) ibuf[nkeys++] = (c)
 
 	DPRINTFN(5, ("ukbd_intr: status=%d\n", status));
@@ -504,6 +504,7 @@ ukbd_intr(reqh, addr, status)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->sc_rawkbd) {
 		char cbuf[MAXKEYS * 2];
+		int c;
 		int npress;
 
 		for (npress = i = j = 0; i < nkeys; i++) {
