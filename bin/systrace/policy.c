@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.3 2002/08/28 03:52:46 itojun Exp $	*/
+/*	$NetBSD: policy.c,v 1.4 2002/08/30 17:09:31 itojun Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.3 2002/08/28 03:52:46 itojun Exp $");
+__RCSID("$NetBSD: policy.c,v 1.4 2002/08/30 17:09:31 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -400,8 +400,20 @@ systrace_readpolicy(char *filename)
 		}
 		*p = '\0';
 
-		p = line;
-		strsep(&p, "#");
+		p = strchr(line, '#');
+		if (p != NULL) {
+			if (p != line && *(p-1) == '-')
+				p = strchr(p + 1, '#');
+			if (p != NULL)
+				*p = '\0';
+		}
+
+		p = line + strlen(line) - 1;
+		while (p > line) {
+			if (!isspace(*p))
+				break;
+			*p-- = '\0';
+		}
 
 		p = line;
 		p += strspn(p, " \t");
