@@ -1,7 +1,7 @@
-/* $NetBSD: bus.h,v 1.41 2000/07/31 22:47:08 briggs Exp $ */
+/* $NetBSD: bus.h,v 1.42 2001/03/07 22:42:16 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -495,6 +495,7 @@ do {									\
 #define	BUS_DMA_NOWAIT		0x01	/* not safe to sleep */
 #define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now */
 #define	BUS_DMA_COHERENT	0x04	/* hint: map memory DMA coherent */
+#define	BUS_DMA_STREAMING	0x08	/* hint: sequential, unidirectional */
 #define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40
