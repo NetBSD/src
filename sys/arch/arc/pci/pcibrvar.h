@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibrvar.h,v 1.2 2000/01/23 21:02:00 soda Exp $	*/
+/*	$NetBSD: pcibrvar.h,v 1.3 2000/06/09 05:38:15 soda Exp $	*/
 /*	$OpenBSD: pcibrvar.h,v 1.2 1997/04/10 16:29:32 pefo Exp $ */
 
 /*
@@ -33,17 +33,9 @@
  *
  */
 
-struct pcibr_config {
-	bus_space_tag_t lc_iot;
-	bus_space_tag_t lc_memt;
-	struct arc_pci_chipset lc_pc;
-	int	pci_init_done;
-};
-
 struct pcibr_softc {
 	struct device	sc_dev;
-	struct pcibr_config *sc_pcibr;
 	struct arc_bus_space sc_bus_space;	/* Same for I/O and Mem */
+	struct arc_bus_dma_tag sc_dmat;
+	struct arc_pci_chipset sc_pc;
 };
-
-
