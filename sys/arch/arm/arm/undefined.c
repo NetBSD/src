@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.9.4.11 2002/09/26 20:04:44 nathanw Exp $	*/
+/*	$NetBSD: undefined.c,v 1.9.4.12 2003/01/07 22:12:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,7 +50,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.11 2002/09/26 20:04:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.12 2003/01/07 22:12:19 thorpej Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -283,7 +283,7 @@ undefinedinstruction(trapframe_t *frame)
 			/*
 			 * We are being preempted.
 			 */
-			preempt(NULL);
+			preempt(0);
 		}
 
 		/* take pending signals */

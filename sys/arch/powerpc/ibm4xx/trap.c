@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2.6.14 2002/12/11 06:11:39 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.6.15 2003/01/07 22:12:34 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -263,7 +263,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		}
 		/* Check whether we are being preempted. */
 		if (want_resched)
-			preempt(NULL);
+			preempt(0);
 		KERNEL_PROC_UNLOCK(l);
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103.6.10 2002/11/11 22:05:34 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.103.6.11 2003/01/07 22:12:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -444,7 +444,7 @@ trap(type, code, v, tf)
 			ADDUPROF(p);
 		}
 		if (want_resched)
-			preempt(NULL);
+			preempt(0);
 		goto douret;
 
 	case T_MMUFLT:		/* kernel mode page fault */

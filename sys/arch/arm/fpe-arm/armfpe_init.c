@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.5.2.2 2002/10/18 03:22:29 nathanw Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.5.2.3 2003/01/07 22:12:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.5.2.2 2002/10/18 03:22:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.5.2.3 2003/01/07 22:12:20 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -194,7 +194,7 @@ arm_fpe_postproc(fpframe, frame)
 		/*
 		 * We are being preempted.
 		 */
-		preempt(NULL);
+		preempt(0);
 		while ((sig = (CURSIG(p))) != 0) {
 			postsig(sig);
 		}

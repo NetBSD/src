@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.30 2003/01/06 17:29:47 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.31 2003/01/07 22:12:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.30 2003/01/06 17:29:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.31 2003/01/07 22:12:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -786,33 +786,21 @@ yield(void)
  */
 
 void
-preempt(struct lwp *newl)
+preempt(int more)
 {
 	struct lwp *l = curlwp;
 	int r, s;
 
-	if (l->l_flag & L_SA) {
-		SCHED_LOCK(s);
-		l->l_priority = l->l_usrpri;
-		l->l_stat = LSRUN;
-		setrunqueue(l);
-		l->l_proc->p_stats->p_ru.ru_nivcsw++;
-		r = mi_switch(l, newl);
-		SCHED_ASSERT_UNLOCKED();
-		splx(s);
-		if (r != 0)
-			sa_preempt(l);
-	} else {
-		SCHED_LOCK(s);
-		l->l_priority = l->l_usrpri;
-		l->l_stat = LSRUN;
-		setrunqueue(l);
-		l->l_proc->p_stats->p_ru.ru_nivcsw++;
-		mi_switch(l, newl);
-		SCHED_ASSERT_UNLOCKED();
-		splx(s);
-	}
-
+	SCHED_LOCK(s);
+	l->l_priority = l->l_usrpri;
+	l->l_stat = LSRUN;
+	setrunqueue(l);
+	l->l_proc->p_stats->p_ru.ru_nivcsw++;
+	r = mi_switch(l, NULL);
+	SCHED_ASSERT_UNLOCKED();
+	splx(s);
+	if ((l->l_flag & L_SA) != 0 && r != 0 && more == 0)
+		sa_preempt(l);
 }
 
 /*

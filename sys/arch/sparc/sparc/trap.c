@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.24 2003/01/07 21:21:31 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.25 2003/01/07 22:12:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -234,7 +234,7 @@ userret(l, pc, oticks)
 		/*
 		 * We are being preempted.
 		 */
-		preempt(NULL);
+		preempt(0);
 		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}

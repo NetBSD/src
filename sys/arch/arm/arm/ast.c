@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.2.2.8 2002/09/26 20:04:44 nathanw Exp $	*/
+/*	$NetBSD: ast.c,v 1.2.2.9 2003/01/07 22:12:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -132,7 +132,7 @@ ast(struct trapframe *tf)
 
 	/* Allow a forced task switch. */
 	if (want_resched)
-		preempt(NULL);
+		preempt(0);
 
 	userret(l);
 }

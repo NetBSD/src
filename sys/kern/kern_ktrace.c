@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.53.2.11 2002/12/29 20:54:41 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.53.2.12 2003/01/07 22:12:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.11 2002/12/29 20:54:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.12 2003/01/07 22:12:13 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -258,7 +258,7 @@ ktrgenio(p, fd, rw, iov, len, error)
 #endif
 		/* XXX NJWLWP */
 		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-			preempt(NULL);
+			preempt(1);
 
 		cnt = min(iov->iov_len, buflen);
 		if (cnt > resid)
@@ -700,7 +700,7 @@ ktrwrite(p, kth)
 		    fp->f_cred, FOF_UPDATE_OFFSET);
 		tries++;
 		if (error == EWOULDBLOCK) 
-		  	preempt(NULL);
+		  	preempt(1);
 	} while ((error == EWOULDBLOCK) && (tries < 3));
 	FILE_UNUSE(fp, NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.22 2002/12/02 06:12:13 wdk Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.23 2003/01/07 22:12:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.22 2002/12/02 06:12:13 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.23 2003/01/07 22:12:27 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -584,7 +584,7 @@ ast(pc)
 			/*
 			 * We are being preempted.
 			 */
-			preempt(NULL);
+			preempt(0);
 		}
 
 		userret(l);

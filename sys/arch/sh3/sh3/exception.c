@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.2.4.5 2002/12/29 19:37:29 thorpej Exp $	*/
+/*	$NetBSD: exception.c,v 1.2.4.6 2003/01/07 22:12:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -509,7 +509,7 @@ ast(struct lwp *l, struct trapframe *tf)
 
 		if (want_resched) {
 			/* We are being preempted. */
-			preempt(NULL);
+			preempt(0);
 		}
 
 		userret(l);

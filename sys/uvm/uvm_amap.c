@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.30.2.13 2002/12/20 19:10:29 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.30.2.14 2003/01/07 22:12:10 thorpej Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.30.2.13 2002/12/20 19:10:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.30.2.14 2003/01/07 22:12:10 thorpej Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -691,7 +691,7 @@ amap_wipeout(amap)
 		 */
 
 		if (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-			preempt(NULL);
+			preempt(1);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.18.4.8 2002/10/05 05:06:27 gmcgarry Exp $ */
+/* $NetBSD: trap.c,v 1.18.4.9 2003/01/07 22:12:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18.4.8 2002/10/05 05:06:27 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18.4.9 2003/01/07 22:12:25 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -490,7 +490,7 @@ trap(type, code, v, frame)
 			ADDUPROF(p);
 		}
 		if (want_resched)
-			preempt(NULL);
+			preempt(0);
 		goto out;
 
 	case T_MMUFLT:		/* kernel mode page fault */
