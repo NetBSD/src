@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.6 1995/01/18 06:42:01 mellon Exp $	*/
+/*	$NetBSD: signal.h,v 1.7 1996/03/19 04:22:04 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,7 @@ struct	sigcontext {
 	int	sc_fpused;	/* fp has been used */
 	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
+	int	sc_xxx[8];	/* XXX reserved */ 
 };
 
 #endif	/* !_ANSI_SOURCE */
