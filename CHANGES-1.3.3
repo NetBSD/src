@@ -63,3 +63,13 @@ sys/dev/ic/z8530tty.c			1.49-1.50	wrstuden
   Initialize the struct tty's t_dev field at attach, so that the
   console parameters are correctly set even if the console is not
   zstty0.
+
+sys/arch/amiga/amiga/locore.s		patch		is
+
+  Fix catastrophic typo. DraCos rev. 3 (or older) would crash on
+  exiting from the first timer interupt.
+
+sys/dev/scsipi/scsi_tape.h		1.15		drochner
+	       st.c			patch		drochner
+
+  Fix incorrect length of LOCATE CDB (PR#5306).
