@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.23 2002/07/07 06:36:32 junyoung Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.24 2002/07/07 10:52:18 tron Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.23 2002/07/07 06:36:32 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.24 2002/07/07 10:52:18 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ pcdisplay_cursor(id, on, row, col)
 	int pos;
 
 	scr->cursorrow = row;
-	scr->cusrorcol = col;
+	scr->cursorcol = col;
 	scr->cursoron = on;
 
 	if (scr->active) {
