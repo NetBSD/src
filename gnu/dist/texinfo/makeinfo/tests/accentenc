@@ -1,6 +1,7 @@
 #!/bin/sh
 # Test encoded accent info output.
 
+unset TEXINFO_OUTPUT
 : ${srcdir=.}
 input=`basename $0`.txi
 output=`basename $0`.info

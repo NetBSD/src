@@ -1,7 +1,7 @@
-/*	$NetBSD: plural-exp.h,v 1.1.1.1 2003/01/17 14:54:19 wiz Exp $	*/
+/*	$NetBSD: plural-exp.h,v 1.1.1.2 2004/07/12 23:27:17 wiz Exp $	*/
 
 /* Expression parsing and evaluation for plural form selection.
-   Copyright (C) 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 2000-2003 Free Software Foundation, Inc.
    Written by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
    This program is free software; you can redistribute it and/or modify it
@@ -21,14 +21,6 @@
 
 #ifndef _PLURAL_EXP_H
 #define _PLURAL_EXP_H
-
-#ifndef PARAMS
-# if __STDC__ || defined __GNUC__ || defined __SUNPRO_C || defined __cplusplus || __PROTOTYPES
-#  define PARAMS(args) args
-# else
-#  define PARAMS(args) ()
-# endif
-#endif
 
 #ifndef internal_function
 # define internal_function
@@ -111,18 +103,18 @@ struct parse_args
 # define EXTRACT_PLURAL_EXPRESSION extract_plural_expression
 #endif
 
-extern void FREE_EXPRESSION PARAMS ((struct expression *exp))
+extern void FREE_EXPRESSION (struct expression *exp)
      internal_function;
-extern int PLURAL_PARSE PARAMS ((void *arg));
+extern int PLURAL_PARSE (void *arg);
 extern struct expression GERMANIC_PLURAL attribute_hidden;
-extern void EXTRACT_PLURAL_EXPRESSION PARAMS ((const char *nullentry,
-					       struct expression **pluralp,
-					       unsigned long int *npluralsp))
+extern void EXTRACT_PLURAL_EXPRESSION (const char *nullentry,
+				       struct expression **pluralp,
+				       unsigned long int *npluralsp)
      internal_function;
 
 #if !defined (_LIBC) && !defined (IN_LIBINTL)
-extern unsigned long int plural_eval PARAMS ((struct expression *pexp,
-					      unsigned long int n));
+extern unsigned long int plural_eval (struct expression *pexp,
+				      unsigned long int n);
 #endif
 
 #endif /* _PLURAL_EXP_H */

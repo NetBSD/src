@@ -1,4 +1,4 @@
-/*	$NetBSD: localcharset.c,v 1.1.1.2 2003/07/03 14:59:13 wiz Exp $	*/
+/*	$NetBSD: localcharset.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
 
 /* Determine a canonical name for the current locale's character encoding.
 
@@ -88,7 +88,7 @@
 # define ISSLASH(C) ((C) == DIRECTORY_SEPARATOR)
 #endif
 
-#ifdef HAVE_GETC_UNLOCKED
+#if HAVE_DECL_GETC_UNLOCKED
 # undef getc
 # define getc getc_unlocked
 #endif

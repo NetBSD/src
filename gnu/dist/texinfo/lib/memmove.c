@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.c,v 1.1.1.2 2003/01/17 14:54:30 wiz Exp $	*/
+/*	$NetBSD: memmove.c,v 1.1.1.3 2004/07/12 23:26:57 wiz Exp $	*/
 
 /* memmove.c -- copy memory.
    Copy LENGTH bytes from SOURCE to DEST.  Does not null-terminate.
@@ -9,13 +9,13 @@
 # include <config.h>
 #endif
 
+#include <stddef.h>
+
 void *
-memmove (dest, source, length)
-     char *dest;
-     const char *source;
-     unsigned length;
+memmove (void *dest0, void const *source0, size_t length)
 {
-  char *d0 = dest;
+  char *dest = dest0;
+  char const *source = source0;
   if (source < dest)
     /* Moving from low mem to hi mem; start at end.  */
     for (source += length, dest += length; length; --length)
@@ -26,5 +26,5 @@ memmove (dest, source, length)
       for (; length; --length)
 	*dest++ = *source++;
     }
-  return (void *) d0;
+  return dest0;
 }
