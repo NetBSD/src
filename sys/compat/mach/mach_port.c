@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.47 2003/12/18 01:10:20 grant Exp $ */
+/*	$NetBSD: mach_port.c,v 1.48 2003/12/20 19:43:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.47 2003/12/18 01:10:20 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.48 2003/12/20 19:43:17 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,15 +93,11 @@ mach_sys_thread_self_trap(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct mach_emuldata *med;
+	struct mach_lwp_emuldata *mle;
 	struct mach_right *mr;
 
-	/* 
-	 * XXX for now thread kernel port and task kernel port are the same 
-	 * awaiting for struct lwp ...
-	 */
-	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
-	mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
+	mle = l->l_emuldata;
+	mr = mach_right_get(mle->mle_kernel, l, MACH_PORT_TYPE_SEND, 0);
 	*retval = (register_t)mr->mr_name;
 
 	return 0;

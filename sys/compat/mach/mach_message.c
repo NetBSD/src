@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.38 2003/12/18 01:10:20 grant Exp $ */
+/*	$NetBSD: mach_message.c,v 1.39 2003/12/20 19:43:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.38 2003/12/18 01:10:20 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.39 2003/12/20 19:43:17 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -702,15 +702,20 @@ mach_get_target_task(l, mp)
 	struct proc *tp;
 	struct lwp *tl;
 
-	if (mp->mp_datatype != MACH_MP_PROC)
-		return l;	
+	switch (mp->mp_datatype) {
+	case MACH_MP_PROC:
+		tp = (struct proc *)mp->mp_data;
+		tl = proc_representative_lwp(tp);
+		break;
 
-	/* 
-	 * We need per thread kernel ports to avoid 
-	 * always seeing the same thread here.
-	 */
-	tp = (struct proc *)mp->mp_data;
-	tl = proc_representative_lwp(tp);
+	case MACH_MP_LWP:
+		tl = (struct lwp *)mp->mp_data;
+		break;
+
+	default:
+		tl = l;
+		break;
+	}
 
 	return tl;
 }
