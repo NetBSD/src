@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog.c,v 1.2 1999/09/22 12:49:49 uch Exp $	*/
+/*	$NetBSD: startprog.c,v 1.3 1999/09/23 08:30:59 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -255,50 +255,6 @@ __asm(
 
 " loop_end:"
 );
-
-__asm(
-"	lui	a1, 0xaa00;	"
-"	ori	a1, 0x0000;	"
-
-"	ori	t0, zero, 0x0000;"  /* ........ */
-"	sh	t0, 80*0(a1);"
-"	ori	t0, zero, 0xf03f;"  /* .#####.. */
-"	sh	t0, 80*1(a1);"
-"	ori	t0, zero, 0x0cc0;"  /* #.....#. */
-"	sh	t0, 80*2(a1);"
-"	ori	t0, zero, 0x0cc0;"  /* #.....#. */
-"	sh	t0, 80*3(a1);"
-"	ori	t0, zero, 0x0cc3;"  /* #..#..#. */
-"	sh	t0, 80*4(a1);"
-"	ori	t0, zero, 0x0cc0;"  /* #.....#. */
-"	sh	t0, 80*5(a1);"
-"	ori	t0, zero, 0x0cc0;"  /* #.....#. */
-"	sh	t0, 80*6(a1);"
-"	ori	t0, zero, 0xf03f;"  /* .#####.. */
-"	sh	t0, 80*7(a1);"
-"	ori	t0, zero, 0x0000;"  /* ........ */
-"	sh	t0, 80*8(a1);"
-
-"	ori	t0, zero, 0x0000;"  /* ........ */
-"	sh	t0, 80*0+2(a1);"
-"	ori	t0, zero, 0x3030;"  /* .#...#.. */
-"	sh	t0, 80*1+2(a1);"
-"	ori	t0, zero, 0xc030;"  /* .#..#... */
-"	sh	t0, 80*2+2(a1);"
-"	ori	t0, zero, 0x0033;"  /* .#.#.... */
-"	sh	t0, 80*3+2(a1);"
-"	ori	t0, zero, 0x003c;"  /* .##..... */
-"	sh	t0, 80*4+2(a1);"
-"	ori	t0, zero, 0x0033;"  /* .#.#.... */
-"	sh	t0, 80*5+2(a1);"
-"	ori	t0, zero, 0xc030;"  /* .#..#... */
-"	sh	t0, 80*6+2(a1);"
-"	ori	t0, zero, 0x3030;"  /* .#...#.. */
-"	sh	t0, 80*7+2(a1);"
-"	ori	t0, zero, 0x0000;"  /* ........ */
-"	sh	t0, 80*8+2(a1);"
-);
-
 
 /*
  *  flush instruction cache
