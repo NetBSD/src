@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.13.14.1 2002/05/16 12:55:00 gehenna Exp $	*/
+/*	$NetBSD: sem.h,v 1.13.14.2 2002/06/20 13:36:44 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,23 +50,25 @@ void		setdefmaxusers(int, int, int);
 void		setmaxusers(int);
 void		setident(const char *);
 int		defattr(const char *, struct nvlist *, int);
-void		defdev(struct devbase *, struct nvlist *, struct nvlist *,
-		       int);
+void		defdev(struct devbase *, struct nvlist *, struct nvlist *, int);
 void		defdevattach(struct deva *, struct devbase *, struct nvlist *,
 			     struct nvlist *);
-struct devbase *getdevbase(const char *name);
-struct deva    *getdevattach(const char *name);
-struct attr    *getattr(const char *name);
-void		setmajor(struct devbase *d, int n);
+struct devbase *getdevbase(const char *);
+struct deva    *getdevattach(const char *);
+struct attr    *getattr(const char *);
+void		setmajor(struct devbase *, int);
 void		addconf(struct config *);
 void		setconf(struct nvlist **, const char *, struct nvlist *);
 void		setfstype(const char **, const char *);
 void		adddev(const char *, const char *, struct nvlist *, int);
-void		addpseudo(const char *name, int number);
+void		deldev(const char *, const char *);
+void		addpseudo(const char *, int);
+void		delpseudo(const char *);
 void		adddevm(const char *, int, int, struct nvlist *);
-const char     *ref(const char *name);
-const char     *starref(const char *name);
-const char     *wildref(const char *name);
+void		fixdevis(void);
+const char     *ref(const char *);
+const char     *starref(const char *);
+const char     *wildref(const char *);
 int		has_attr(struct nvlist *, const char *);
 
 extern const char *s_qmark;

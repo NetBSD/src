@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.14.8.4 2002/06/05 13:27:10 gehenna Exp $	*/
+/*	$NetBSD: files.c,v 1.14.8.5 2002/06/20 13:36:41 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,10 +62,7 @@ extern const char *yyfile;
 static struct hashtab *basetab;		/* file base names */
 static struct hashtab *pathtab;		/* full path names */
 
-static struct files **nextfile;
 static struct files **unchecked;
-
-static struct objects **nextobject;
 
 static int	checkaux(const char *, void *);
 static int	fixcount(const char *, void *);
@@ -75,15 +72,17 @@ static int	expr_eval(struct nvlist *,
 		    int (*)(const char *, void *), void *);
 static void	expr_free(struct nvlist *);
 
+static struct devm *dupdevm(struct devm *);
+
 void
 initfiles(void)
 {
 
 	basetab = ht_new();
 	pathtab = ht_new();
-	nextfile = &allfiles;
-	unchecked = &allfiles;
-	nextobject = &allobjects;
+	TAILQ_INIT(&allfiles);
+	unchecked = &TAILQ_FIRST(&allfiles);
+	TAILQ_INIT(&allobjects);
 }
 
 void
@@ -150,21 +149,20 @@ addfile(const char *path, struct nvlist *optx, int flags, const char *rule)
 	}
 	memcpy(base, tail, baselen);
 	base[baselen] = 0;
-	fi->fi_next = NULL;
 	fi->fi_srcfile = yyfile;
 	fi->fi_srcline = currentline();
 	fi->fi_flags = flags;
 	fi->fi_path = path;
 	fi->fi_tail = tail;
 	fi->fi_base = intern(base);
-	fi->fi_prefix = (prefixes != NULL) ? prefixes->pf_prefix : NULL;
+	fi->fi_prefix = SLIST_EMPTY(&prefixes) ? NULL :
+			SLIST_FIRST(&prefixes)->pf_prefix;
 	fi->fi_optx = optx;
 	fi->fi_optf = NULL;
 	fi->fi_mkrule = rule;
-	*nextfile = fi;
-	nextfile = &fi->fi_next;
+	TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
 	return;
-bad:
+ bad:
 	expr_free(optx);
 }
 
@@ -186,16 +184,15 @@ addobject(const char *path, struct nvlist *optx, int flags)
 		xerror(oi->oi_srcfile, oi->oi_srcline,
 		    "here is the original definition");
 	} 
-	oi->oi_next = NULL;
 	oi->oi_srcfile = yyfile;
 	oi->oi_srcline = currentline();
 	oi->oi_flags = flags;
 	oi->oi_path = path;
-	oi->oi_prefix = (prefixes != NULL) ? prefixes->pf_prefix : NULL;
+	oi->oi_prefix = SLIST_EMPTY(&prefixes) ? NULL :
+			SLIST_FIRST(&prefixes)->pf_prefix;
 	oi->oi_optx = optx;
 	oi->oi_optf = NULL;
-	*nextobject = oi;
-	nextobject = &oi->oi_next;
+	TAILQ_INSERT_TAIL(&allobjects, oi, oi_next);
 	return;
 }     
 
@@ -211,11 +208,13 @@ checkfiles(void)
 	struct files *fi, *last;
 
 	last = NULL;
-	for (fi = *unchecked; fi != NULL; last = fi, fi = fi->fi_next)
+	for (fi = *unchecked; fi != NULL;
+	    last = fi, fi = TAILQ_NEXT(fi, fi_next)) {
 		if ((fi->fi_flags & FI_NEEDSCOUNT) != 0)
 			(void)expr_eval(fi->fi_optx, checkaux, fi);
+	}
 	if (last != NULL)
-		unchecked = &last->fi_next;
+		unchecked = &TAILQ_NEXT(last, fi_next);
 }
 
 /*
@@ -250,7 +249,7 @@ fixfiles(void)
 	int err, sel;
 
 	err = 0;
-	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
+	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		/* Skip files that generated counted-device complaints. */
 		if (fi->fi_flags & FI_HIDDEN)
 			continue;
@@ -310,7 +309,7 @@ fixobjects(void)
 	int err, sel; 
  
 	err = 0;
-	for (oi = allobjects; oi != NULL; oi = oi->oi_next) {
+	TAILQ_FOREACH(oi, &allobjects, oi_next) {
 		/* Optional: see if it is to be included. */
 		if (oi->oi_optx != NULL) {
 			flathead = NULL;
@@ -330,20 +329,19 @@ fixobjects(void)
 }     
 
 /*
- * We have finished reading everything.  Tack the devsw down: calculate
+ * We have finished reading everything.  Tack the devsws down: calculate
  * selection.
  */
 int
-fixdevm(void)
+fixdevsw(void)
 {
-	struct devm *dm, *res, **next;
+	struct devm *dm, *res;
 	char mstr[16];
 
-	fixdevms = NULL;
-	next = &fixdevms;
+	TAILQ_INIT(&fixdevms);
 	fixdevmtab = ht_new();
 
-	for (dm = alldevms ; dm != NULL ; dm = dm->dm_next) {
+	TAILQ_FOREACH(dm, &alldevms, dm_next) {
 		res = ht_lookup(fixdevmtab, intern(dm->dm_name));
 		if (res != NULL) {
 			if (res->dm_cmajor != dm->dm_cmajor ||
@@ -364,8 +362,7 @@ fixdevm(void)
 				      dm->dm_name, dm->dm_cmajor,
 				      dm->dm_bmajor);
 			}
-			*next = dm;
-			next = &dm->dm_next;
+			TAILQ_INSERT_TAIL(&fixdevms, dupdevm(dm), dm_next);
 		}
 
 		if (dm->dm_opts != NULL &&
@@ -388,7 +385,7 @@ fixdevm(void)
 		    ht_insert(cdevmtab, intern(mstr), dm)) {
 			panic("fixdevm: %s character major %d",
 			      dm->dm_name, dm->dm_cmajor);
-                }
+		}
 		if (dm->dm_bmajor != -1) {
 			if (ht_lookup(bdevmtab, intern(dm->dm_name)) != NULL) {
 				xerror(dm->dm_srcfile, dm->dm_srcline,
@@ -403,7 +400,7 @@ fixdevm(void)
 				       "is already defined", dm->dm_bmajor);
 				return (1);
 			}
-			if (ht_insert(bdevmtab, intern(dm->dm_name), dm) ||
+			if (ht_insert(bdevmtab, intern(dm->dm_name), dm) || 
 			    ht_insert(bdevmtab, intern(mstr), dm)) {
 				panic("fixdevm: %s block major %d",
 				      dm->dm_name, dm->dm_bmajor);
@@ -412,6 +409,19 @@ fixdevm(void)
 	}
 
 	return (0);
+}
+
+static struct devm *
+dupdevm(struct devm *src_dm)
+{
+	struct devm *dst_dm;
+
+	dst_dm = emalloc(sizeof(*src_dm));
+	dst_dm->dm_name = src_dm->dm_name;
+	dst_dm->dm_cmajor = src_dm->dm_cmajor;
+	dst_dm->dm_bmajor = src_dm->dm_bmajor;
+
+	return (dst_dm);
 }
 
 /*

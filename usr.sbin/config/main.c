@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.67.8.5 2002/05/31 01:45:04 gehenna Exp $	*/
+/*	$NetBSD: main.c,v 1.67.8.6 2002/06/20 13:36:42 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,8 @@ static	void	do_depend(struct nvlist *);
 static	void	stop(void);
 static	int	do_option(struct hashtab *, struct nvlist ***,
 		    const char *, const char *, const char *);
+static	int	undo_option(struct hashtab *, struct nvlist **,
+		    const char *, const char *);
 static	int	crosscheck(void);
 static	int	badstar(void);
 	int	main(int, char **);
@@ -96,6 +98,7 @@ static	int	mksymlinks(void);
 static	int	mkident(void);
 static	int	hasparent(struct devi *);
 static	int	cfcrosscheck(struct config *, const char *, struct nvlist *);
+static	const char *strtolower(const char *);
 void	defopt(struct hashtab *ht, const char *fname,
 	     struct nvlist *opts, struct nvlist *deps);
 
@@ -181,7 +184,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 	if (argc > 1) {
-usage:
+ usage:
 		(void)fputs("usage: config [-Ppv] [-s srcdir] [-b builddir] sysname\n", stderr);
 		exit(1);
 	}
@@ -247,6 +250,11 @@ usage:
 	logconfig_end();
 
 	/*
+	 * Select devices and pseudo devices and their attributes
+	 */
+	fixdevis();
+
+	/*
 	 * Deal with option dependencies.
 	 */
 	dependopts();
@@ -266,7 +274,7 @@ usage:
 	/*
 	 * Fix device-majors.
 	 */
-	if (fixdevm())
+	if (fixdevsw())
 		stop();
 
 	/*
@@ -672,6 +680,16 @@ addoption(const char *name, const char *value)
 	(void)ht_insert(selecttab, n, (void *)n);
 }
 
+void
+deloption(const char *name)
+{
+
+	if (undo_option(opttab, &options, name, "options"))
+		return;
+	if (undo_option(selecttab, NULL, strtolower(name), "options"))
+		return;
+}
+
 /*
  * Add a file system option.  This routine simply inserts the name into
  * a list of valid file systems, which is used to validate the root
@@ -714,6 +732,20 @@ addfsoption(const char *name)
 	(void)ht_insert(selecttab, n, (void *)n);
 }
 
+void
+delfsoption(const char *name)
+{
+	const char *n;
+
+	n = strtolower(name);
+	if (undo_option(fsopttab, &fsoptions, name, "file-system"))
+		return;
+	if (undo_option(fsopttab, NULL, n, "file-system"))
+		return;
+	if (undo_option(selecttab, NULL, n, "file-system"))
+		return;
+}
+
 /*
  * Add a "make" option.
  */
@@ -722,6 +754,13 @@ addmkoption(const char *name, const char *value)
 {
 
 	(void)do_option(mkopttab, &nextmkopt, name, value, "mkoptions");
+}
+
+void
+delmkoption(const char *name)
+{
+
+	(void)undo_option(mkopttab, &mkoptions, name, "mkoptions");
 }
 
 /*
@@ -758,6 +797,35 @@ do_option(struct hashtab *ht, struct nvlist ***nppp, const char *name,
 		error("already have %s `%s=%s'", type, name, nv->nv_str);
 	else
 		error("already have %s `%s'", type, name);
+	return (1);
+}
+
+/*
+ * Remove a name from a hash table,
+ * and optionally, a name=value pair from an option list.
+ */
+static int
+undo_option(struct hashtab *ht, struct nvlist **npp,
+    const char *name, const char *type)
+{
+	struct nvlist *nv;
+	
+	if (ht_remove(ht, name)) {
+		error("%s `%s' is not defined", type, name);
+		return (1);
+	}
+	if (npp == NULL)
+		return (0);
+
+	for ( ; *npp != NULL; npp = &(*npp)->nv_next) {
+		if ((*npp)->nv_name != name)
+			continue;
+		nv = (*npp)->nv_next;
+		nvfree(*npp);
+		*npp = nv;
+		return (0);
+	}
+	panic("%s `%s' is not defined in nvlist", type, name);
 	return (1);
 }
 
@@ -852,16 +920,17 @@ cfcrosscheck(struct config *cf, const char *what, struct nvlist *nv)
 		if (devbase_has_instances(dev, STAR) &&
 		    devunit >= dev->d_umax)
 			continue;
-		for (pd = allpseudo; pd != NULL; pd = pd->i_next)
+		TAILQ_FOREACH(pd, &allpseudo, i_next) {
 			if (pd->i_base == dev && devunit < dev->d_umax &&
 			    devunit >= 0)
 				goto loop;
+		}
 		(void)fprintf(stderr,
 		    "%s:%d: %s says %s on %s, but there's no %s\n",
 		    conffile, cf->cf_lineno,
 		    cf->cf_name, what, nv->nv_str, nv->nv_str);
 		errs++;
-loop:
+ loop:
 		;
 	}
 	return (errs);
@@ -880,7 +949,7 @@ crosscheck(void)
 	int errs;
 
 	errs = 0;
-	for (i = alldevi; i != NULL; i = i->i_next) {
+	TAILQ_FOREACH(i, &alldevi, i_next) {
 		if (i->i_at == NULL || hasparent(i))
 			continue;
 		xerror(conffile, i->i_lineno,
@@ -890,12 +959,12 @@ crosscheck(void)
 		    i->i_at);
 		errs++;
 	}
-	if (allcf == NULL) {
+	if (TAILQ_EMPTY(&allcf)) {
 		(void)fprintf(stderr, "%s has no configurations!\n",
 		    conffile);
 		errs++;
 	}
-	for (cf = allcf; cf != NULL; cf = cf->cf_next) {
+	TAILQ_FOREACH(cf, &allcf, cf_next) {
 		if (cf->cf_root != NULL) {	/* i.e., not root on ? */
 			errs += cfcrosscheck(cf, "root", cf->cf_root);
 			errs += cfcrosscheck(cf, "dumps", cf->cf_dump);
@@ -916,14 +985,14 @@ badstar(void)
 	int errs, n;
 
 	errs = 0;
-	for (d = allbases; d != NULL; d = d->d_next) {
+	TAILQ_FOREACH(d, &allbases, d_next) {
 		for (da = d->d_ahead; da != NULL; da = da->d_bsame)
 			for (i = da->d_ihead; i != NULL; i = i->i_asame) {
 				if (i->i_unit == STAR)
-					goto foundstar;
+					goto aybabtu;
 			}
 		continue;
-	foundstar:
+ aybabtu:
 		if (ht_lookup(needcnttab, d->d_name)) {
 			(void)fprintf(stderr,
 		    "config: %s's cannot be *'d until its driver is fixed\n",
@@ -1156,3 +1225,16 @@ logconfig_end(void)
 	fclose(fp);
 	fclose(cfg);
 }
+
+static const char *
+strtolower(const char *name)
+{
+	const char *n;
+	char *p, c, low[500];
+
+	for (n = name, p = low; (c = *n) != '\0'; n++)
+		*p++ = isupper(c) ? tolower(c) : c;
+	*p = 0;
+	return (intern(low));
+}
+
