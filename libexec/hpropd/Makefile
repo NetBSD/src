@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2003/07/23 08:01:28 itojun Exp $
+# $NetBSD: Makefile,v 1.12 2003/08/18 07:23:45 lha Exp $
 
 NOLINT=		# defined
 
@@ -15,8 +15,8 @@ MAN=		hpropd.8
 .if ${MKKERBEROS4} != "no"
 CPPFLAGS+= -DKRB4
 CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
-KRB4LDADD= -lkdb -lkrb
-KRB4DPADD= ${LIBKDB} ${LIBKRB}
+KRB4LDADD= -lkdb -lkrb -ldes
+KRB4DPADD= ${LIBKDB} ${LIBKRB} ${LIBDES}
 .endif
 
 CPPFLAGS+= -I.					\
