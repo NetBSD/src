@@ -1,4 +1,4 @@
-/* $Id: platid_mask.c,v 1.9 1999/12/09 02:48:43 jun Exp $ */
+/* $Id: platid_mask.c,v 1.10 1999/12/10 09:14:27 jun Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -122,13 +122,13 @@ platid_t platid_mask_MACH_NEC_MCR_300 = {{
 	PLATID_CPU_MIPS_VR_4111,
 	PLATID_MACH_NEC_MCR_300
 }};
-platid_t platid_mask_MACH_NEC_MCR_FORDOCOMO = {{
-	PLATID_CPU_MIPS_VR_4111,
-	PLATID_MACH_NEC_MCR_FORDOCOMO
-}};
 platid_t platid_mask_MACH_NEC_MCR_320 = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_NEC_MCR_320
+}};
+platid_t platid_mask_MACH_NEC_MCR_FORDOCOMO = {{
+	PLATID_CPU_MIPS_VR_4111,
+	PLATID_MACH_NEC_MCR_FORDOCOMO
 }};
 platid_t platid_mask_MACH_NEC_MCR_5XX = {{
 	PLATID_CPU_MIPS_VR_41XX,
@@ -137,10 +137,6 @@ platid_t platid_mask_MACH_NEC_MCR_5XX = {{
 platid_t platid_mask_MACH_NEC_MCR_500 = {{
 	PLATID_CPU_MIPS_VR_4111,
 	PLATID_MACH_NEC_MCR_500
-}};
-platid_t platid_mask_MACH_NEC_MCR_500A = {{
-	PLATID_CPU_MIPS_VR_4111,
-	PLATID_MACH_NEC_MCR_500A
 }};
 platid_t platid_mask_MACH_NEC_MCR_510 = {{
 	PLATID_CPU_MIPS_VR_4121,
@@ -153,6 +149,10 @@ platid_t platid_mask_MACH_NEC_MCR_520 = {{
 platid_t platid_mask_MACH_NEC_MCR_520A = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_NEC_MCR_520A
+}};
+platid_t platid_mask_MACH_NEC_MCR_500A = {{
+	PLATID_CPU_MIPS_VR_4111,
+	PLATID_MACH_NEC_MCR_500A
 }};
 platid_t platid_mask_MACH_NEC_MCR_7XX = {{
 	PLATID_CPU_MIPS_VR_41XX,
