@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.13 2003/03/03 22:07:40 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.14 2003/06/03 20:09:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -263,6 +263,23 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_msync_reply_t;
 
+/* vm_copy */
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_src;
+	mach_vm_size_t req_size;
+	mach_vm_address_t req_addr;
+} mach_vm_copy_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_copy_reply_t;
+
+
 int mach_vm_map(struct mach_trap_args *);
 int mach_vm_allocate(struct mach_trap_args *);
 int mach_vm_deallocate(struct mach_trap_args *);
@@ -272,5 +289,6 @@ int mach_vm_inherit(struct mach_trap_args *);
 int mach_vm_make_memory_entry(struct mach_trap_args *);
 int mach_vm_region(struct mach_trap_args *);
 int mach_vm_msync(struct mach_trap_args *);
+int mach_vm_copy(struct mach_trap_args *);
 
 #endif /* _MACH_VM_H_ */
