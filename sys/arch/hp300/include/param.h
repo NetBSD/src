@@ -37,13 +37,14 @@
  *
  *	from: Utah Hdr: machparam.h 1.11 89/08/14
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.6 1993/08/14 02:46:00 mycroft Exp $
+ *	$Id: param.h,v 1.7 1993/12/04 02:20:11 cgd Exp $
  */
 
 /*
  * Machine dependent constants for HP9000 series 300.
  */
 #define	MACHINE		"hp300"
+#define	MACHINE_ARCH	"m68k"
 #define MID_MACHINE	MID_M68K4K
 
 /*
