@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.18 1995/06/04 08:29:41 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.19 1995/06/04 20:22:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@
 
 #ifndef LOCORE
 
-int cpl, ipending, astpending, imask[4];
+int cpl, ipending, astpending, imask[5];
 
 /*
  * Add a mask to cpl, and return the old value of cpl.
