@@ -1,5 +1,6 @@
+/*	$NetBSD: md.h,v 1.2 1994/11/30 06:20:43 phil Exp $  */
+
 /*
- * $Id: md.h,v 1.1 1994/04/07 19:44:49 pk Exp $
  *	- ns32k dependent definitions
  */
 
@@ -47,6 +48,16 @@ typedef struct jmpslot {
 #define BSR	0x02a2		/* NOP BSR opcode */
 #define BR	0xeaa2		/* NOP BR opcode */
 #define BPT	0xf2		/* BPT opcode */
+
+#define _cachectl(addr, len) ({ \
+   register void *_addr __asm__("r0") = addr; \
+   register int _len __asm__("r1") = len; \
+   _addr = addr; _len = len; \
+   __asm__ __volatile__("bispsrb 0x20; flag" \
+	: /* No outputs */ \
+	: "r" (_addr), "r" (_len) \
+	: "r0", "cc" \
+   ); });
 
 /*
  * Byte swap defs for cross linking
@@ -124,4 +135,3 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 # define md_swap_long(x)	(x)
 
 #endif /* CROSS_LINKER */
-
