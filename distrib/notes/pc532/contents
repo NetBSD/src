@@ -16,8 +16,8 @@ the files as follows:
 	netbsd.sd1.19200.gz	sd1a root, 19200 baud console
 	base.tar.gz		base distribution
 	comp.tar.gz		compiler tools & libraries
-	etc.tar.gz		/usr/etc
-	games.tar.gz		/usr/games
+	etc.tar.gz		files for /etc
+	games.tar.gz		/usr/games and friends
 	man.tar.gz		/usr/man
 	misc.tar.gz		various
 	text.tar.gz		groff and friends
