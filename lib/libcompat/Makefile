@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.11 1994/07/06 04:08:28 mycroft Exp $
+#	$Id: Makefile,v 1.12 1994/12/16 10:01:23 mycroft Exp $
 
 LIB=	compat
 CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
@@ -30,7 +30,7 @@ MLINKS+=stty.3 gtty.3
 SRCS+=	cfree.c lsearch.c regex.c rexec.c
 
 .if	(${MACHINE_ARCH} == "m68k")
-SRCS+=	insque.s remque.s
+SRCS+=	insque.S remque.S
 .else
 SRCS+=	insque.c remque.c
 .endif
