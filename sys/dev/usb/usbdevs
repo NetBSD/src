@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.300 2003/02/07 18:06:23 augustss Exp $
+$NetBSD: usbdevs,v 1.301 2003/02/07 18:08:06 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -707,6 +707,7 @@ product HAGIWARA FG		0x0005  FlashGate
 
 /* Handspring, Inc. */
 product HANDSPRING VISOR	0x0100	Handspring Visor
+product HANDSPRING TREO		0x0200	Handspring Treo
 
 /* Hauppauge Computer Works */
 product HAUPPAUGE WINTV_USB_FM	0x4d12	WinTV USB FM
