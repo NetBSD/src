@@ -1,8 +1,8 @@
-	$NetBSD: upgrade,v 1.1.2.4 1998/05/09 05:10:13 mycroft Exp $	
+	$NetBSD: upgrade,v 1.1.2.5 1998/05/29 04:13:24 mycroft Exp $	
 
 The upgrade to NetBSD _VER is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
-to interdepencies in the various components.
+to interdependencies in the various components.
 
 Since upgrading involves replacing the boot blocks on your NetBSD
 partition, the kernel, and most of the system binaries, it has the
@@ -11,14 +11,15 @@ IMPORTANT DATA ON YOUR DISK, whether on the NetBSD partition or on
 another operating system's partition, before beginning the upgrade
 process.
 
-The upgrade is done entirely `by hand.' You will need first to boot
-the new boot floppy or INSTALL kernel and use /usr/mdec/installboot
-to install new boot blocks. Then you may extract a new kernel and the
-distribution sets as described in section 5 of the installation
-instructions.
+The upgrade is mainly a simple matter of unpacking the distribution
+tar archives on top of the previous distribution.  You will need
+first to boot the new boot floppy or INSTALL kernel and use
+/usr/mdec/installboot to install new boot blocks. Then you may
+extract a new kernel and the distribution sets as described in
+section 4 of the installation instructions.
 
 After this point your machine is a complete NetBSD _VER system.
-However, that doesn't mean that you're finished with the upgrade
+However, that doesn't mean that you are finished with the upgrade
 process.  You will probably want to update the set of device nodes
 you have in /dev.  If you've changed the contents of /dev by hand,
 you will need to be careful about this, but if not, you can just
@@ -35,6 +36,6 @@ example mount_nfs(8) for NFS.
 
 Finally, you will want to delete old binaries that were part of
 the version of NetBSD that you upgraded from and have since been
-removed from the NetBSD distribution. Especially important, if you
-use NFS, is removing /sbin/nfsd and /sbin/nfsiod; the new versions
+removed from the NetBSD distribution. IMPORTANT NOTE: if you
+use NFS, remove /sbin/nfsd and /sbin/nfsiod; the new versions
 of these programs are in /usr/sbin.
