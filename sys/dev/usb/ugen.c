@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.3 1998/12/10 23:16:47 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.4 1998/12/12 11:59:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -888,10 +888,11 @@ ugenpoll(dev, events, p)
 	if (sc->sc_disconnected)
 		return (EIO);
 
+	sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
+	if (!sce->edesc) return (0); /* XXX */
 	s = splusb();
 	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_INTERRUPT:
-		sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
 		if (events & (POLLIN | POLLRDNORM)) {
 			if (sce->q.c_cc > 0)
 				revents |= events & (POLLIN | POLLRDNORM);
