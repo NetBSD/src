@@ -15,6 +15,9 @@
 
 #include <sparc/sp64-elf.h>
 
+#undef SPARC_DEFAULT_CMODEL
+#define SPARC_DEFAULT_CMODEL CM_MEDANY
+
 #undef INIT_SUBTARGET_OPTABS  
 #define INIT_SUBTARGET_OPTABS  
 
