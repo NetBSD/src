@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.25 1997/06/25 03:31:56 mrg Exp $
+#	$NetBSD: gcc2netbsd,v 1.26 1997/10/18 06:21:32 lukem Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -485,6 +485,9 @@ or at most GNU software mirrors.
 	(${MACHINE_ARCH} == "sparc") || \
 	(${MACHINE_ARCH} == "vax")
 SUBDIR+=	common cc1 cc1plus cc1obj libgcc libobjc
+
+all-cc1 all-cc1plus all-cc1obj: all-common
+
 .endif
 
 SUBDIR+=	cc cpp g++
@@ -505,11 +508,8 @@ CFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
 
 YFLAGS=
 
-LIBCC1!=cd $(.CURDIR)/../common; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libcc1.a\n" | ${MAKE} -s -f-
-
-LDADD+=	${LIBCC1} -lgnumalloc
-DPADD+=	${LIBCC1} ${LIBGNUMALLOC}
+LDADD+=	-L${COMMON} -lcc1 -lgnumalloc
+DPADD+=	${COMMON}/libcc1.a ${LIBGNUMALLOC}
 
 .include <bsd.prog.mk>
 %% file common/Makefile
