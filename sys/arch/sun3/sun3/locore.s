@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.43 1997/01/27 17:11:36 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.44 1997/02/02 08:33:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -783,8 +783,6 @@ _esigcode:
  * Primitives
  */
 #include <machine/asm.h>
-
-/* XXX copypage(fromaddr, toaddr) */
 
 /*
  * non-local gotos
