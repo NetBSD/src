@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.46 1998/02/24 02:12:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -77,7 +77,6 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <vm/vm.h>
