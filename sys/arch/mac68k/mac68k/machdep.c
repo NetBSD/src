@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.12 1994/04/18 03:03:05 briggs Exp $
+ *	$Id: machdep.c,v 1.13 1994/04/21 23:29:59 briggs Exp $
  */
 
 #include <param.h>
@@ -131,6 +131,7 @@ int			mach_memsize;
 int			booter_version;
 extern unsigned long	videoaddr;
 extern unsigned long	videorowbytes;
+u_int			cache_copyback = PG_CC;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -397,6 +398,7 @@ setregs(p, entry, sp, retval)
 identifycpu()
 {
 	extern unsigned long	bootdev, root_scsi_id,
+				cpu040, mmutype,
 				videobitdepth, videosize;
 /* MF Just a little interesting tidbit about what machine we are
    running on.  In the future magic may happen here based on
@@ -1207,6 +1209,10 @@ badbaddr(addr)
 netintr()
 {
 #ifdef INET
+	if (netisr & (1 << NETISR_ARP)) {
+		netisr &= ~(1 << NETISR_ARP);
+		arpintr();
+	}
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
@@ -2324,10 +2330,11 @@ void printenvvars (void)
 }
 
 
-extern long (*via1itab[7])();
-extern long adb_intr_II(void);
-extern long adb_intr_SI(void);
-extern long adb_intr_PB(void);
+extern long	(*via1itab[7])();
+extern long	adb_intr_II(void);
+extern long	adb_intr_SI(void);
+extern long	adb_intr_PB(void);
+extern long	cpu040;
 
 /* BG 1/2/94 */
 void setmachdep(void)
@@ -2385,6 +2392,12 @@ void setmachdep(void)
 			break;
 		case MACH_MACQ700:		/* These three are guesses */
 		case MACH_MACQ900:
+			cpu040 = 1;
+			VIA2 = 0x1;
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+			via1itab[2] = adb_intr_II;
+			break;
 		case MACH_MACCLASSICII:
 			VIA2 = 0x13;
 			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
