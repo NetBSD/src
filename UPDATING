@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.86 2003/04/10 08:12:29 kleink Exp $
+$NetBSD: UPDATING,v 1.87 2003/04/19 21:27:04 bjh21 Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,14 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20030402:
+	The superblock layout for FFS was changed.  If you have 1.6
+	fsck binaries, they will signal a fatal superblock mismatch
+	with the first alternate, because they compare too many
+	fields (even ones that aren't useful).  If possible, upgrade
+	your fsck_ffs binary before using a new kernel.
+	None of this signals actual filesystem damage.
 
 20030324:
 	sendmail version 8.12.8 was imported.  Since sendmail is
