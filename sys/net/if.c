@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.19 1995/03/09 09:47:25 mycroft Exp $	*/
+/*	$NetBSD: if.c,v 1.20 1995/04/22 13:07:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -115,9 +115,9 @@ if_attach(ifp)
 			       unitlen + namelen;
 	socksize = masklen + ifp->if_addrlen;
 #define ROUNDUP(a) (1 + (((a) - 1) | (sizeof(long) - 1)))
-	socksize = ROUNDUP(socksize);
 	if (socksize < sizeof(*sdl))
 		socksize = sizeof(*sdl);
+	socksize = ROUNDUP(socksize);
 	ifasize = sizeof(*ifa) + 2 * socksize;
 	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK);
 	if (ifa == 0)
@@ -555,7 +555,7 @@ ifioctl(so, cmd, data, p)
 		case OSIOCGIFDSTADDR:
 		case OSIOCGIFBRDADDR:
 		case OSIOCGIFNETMASK:
-			*(u_short *)&ifr->ifr_addr = ifr->ifr_addr.sa_family;
+			*(u_int16_t *)&ifr->ifr_addr = ifr->ifr_addr.sa_family;
 		}
 		return (error);
 
