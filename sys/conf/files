@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.557 2002/10/05 15:16:10 tsutsui Exp $
+#	$NetBSD: files,v 1.558 2002/10/09 20:23:56 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -164,7 +164,8 @@ define	audiobus	{ }
 define	midibus		{ }
 define	midisyn
 define	wdc_base
-define	scsi		{[channel = -1]}
+define	scsi_core
+define	scsi		{[channel = -1]}: scsi_core
 define	ata		{[channel = -1], [drive = -1]}
 define	atapi		{[channel = -1]}
 define	irbus		{ }
