@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 12/2/92
-#	$Id: Makefile,v 1.6 1993/10/05 21:52:07 pk Exp $
+#	$Id: Makefile,v 1.7 1993/10/11 19:20:24 jtc Exp $
 #
 # ieee		- for most IEEE machines, we hope.
 # mc68881	- the, ahem, mc68881.
@@ -141,6 +141,7 @@ MLINKS+=ieee.3 copysign.3 ieee.3 drem.3 ieee.3 finite.3 ieee.3 logb.3 \
 	ieee.3 scalb.3
 MLINKS+=j0.3 j1.3 j0.3 jn.3 j0.3 y0.3 j0.3 y1.3 j0.3 yn.3
 MLINKS+=lgamma.3 gamma.3
+MLINKS+=sqrt.3 cbrt.3
 
 # can't use the standard mkdep, because there are some .s files that
 # are using '#' as a comment indicator and cpp thinks it's an undefined
