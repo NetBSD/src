@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.180 1998/08/31 17:58:46 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.181 1998/09/08 20:56:08 rvb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -99,6 +99,7 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
+#file-system	CFS		# Coda File System; also needs vcfs (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -539,3 +540,6 @@ pseudo-device	sequencer	1	# MIDI sequencer
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+# a pseudo device needed for Coda	# also needs CFS (above)
+#pseudo-device	vcfs		4	# coda minicache <-> venus comm.
