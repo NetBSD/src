@@ -33,6 +33,9 @@
  *	@(#)iso_var.h	7.5 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_ISO_VAR_H_
+#define _NETISO_ISO_VAR_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -59,7 +62,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/iso_var.h,v 1.1 1993/04/09 12:01:24 cgd Exp $
+/* $Header: /cvsroot/src/sys/netiso/Attic/iso_var.h,v 1.2 1993/04/19 03:45:49 mycroft Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/iso_var.h,v $
  */
 
@@ -135,3 +138,5 @@ struct iso_ifaddr	*iso_ifaddr;	/* linked list of iso address ifaces */
 struct iso_ifaddr	*iso_localifa();	/* linked list of iso address ifaces */
 struct ifqueue 		clnlintrq;		/* clnl packet input queue */
 #endif KERNEL
+
+#endif /* !_NETISO_ISO_VAR_H_ */

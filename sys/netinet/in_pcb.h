@@ -33,6 +33,9 @@
  *	@(#)in_pcb.h	7.6 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_IN_PCB_H_
+#define _NETINET_IN_PCB_H_
+
 /*
  * Common structure pcb for internet protocol implementation.
  * Here are stored pointers to local and foreign host table
@@ -89,3 +92,5 @@ struct raw_inpcb {
 #ifdef KERNEL
 struct	inpcb *in_pcblookup();
 #endif
+
+#endif /* !_NETINET_IN_PCB_H_ */

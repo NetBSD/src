@@ -33,6 +33,9 @@
  *	@(#)clnp.h	7.8 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_CLNP_H_
+#define _NETISO_CLNP_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -59,7 +62,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/clnp.h,v 1.1 1993/04/09 12:00:46 cgd Exp $ */
+/* $Header: /cvsroot/src/sys/netiso/Attic/clnp.h,v 1.2 1993/04/19 03:45:37 mycroft Exp $ */
 /* $Source: /cvsroot/src/sys/netiso/Attic/clnp.h,v $ */
 
 #ifndef BYTE_ORDER
@@ -476,3 +479,5 @@ struct mbuf		*clnp_reass();
 struct troll	trollctl;
 #endif	TROLL
 #endif	KERNEL
+
+#endif /* !_NETISO_CLNP_H_ */

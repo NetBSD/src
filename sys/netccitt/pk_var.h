@@ -38,6 +38,8 @@
  *	@(#)pk_var.h	7.11 (Berkeley) 5/29/91
  */
 
+#ifndef _NETCCITT_PK_VAR_H_
+#define _NETCCITT_PK_VAR_H_
 
 /*
  *
@@ -172,3 +174,5 @@ struct	pklcd *pk_attach();
 extern char	*pk_name[], *pk_state[];
 int	pk_t20, pk_t21, pk_t22, pk_t23;
 #endif
+
+#endif /* !_NETCCITT_PK_VAR_H_ */

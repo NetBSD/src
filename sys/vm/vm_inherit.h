@@ -62,12 +62,12 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_VM_INHERIT_H_
+#define _VM_VM_INHERIT_H_
+
 /*
  *	Virtual memory map inheritance definitions.
  */
-
-#ifndef	_VM_INHERIT_
-#define	_VM_INHERIT_
 
 /*
  *	Types defined:
@@ -88,4 +88,4 @@ typedef int		vm_inherit_t;	/* might want to change this */
 
 #define VM_INHERIT_DEFAULT	VM_INHERIT_COPY
 
-#endif	_VM_INHERIT_
+#endif /* !_VM_VM_INHERIT_H_ */

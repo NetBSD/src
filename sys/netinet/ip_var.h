@@ -33,6 +33,9 @@
  *	@(#)ip_var.h	7.7 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_IP_VAR_H_
+#define _NETINET_IP_VAR_H_
+
 /*
  * Overlay for ip header used by other protocols (tcp, udp).
  */
@@ -134,3 +137,5 @@ u_short	ip_id;				/* ip packet ctr, for ids */
 
 struct	mbuf *ip_srcroute();
 #endif
+
+#endif /* !_NETINET_IP_VAR_H_ */

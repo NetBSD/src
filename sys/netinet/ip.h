@@ -33,6 +33,9 @@
  *	@(#)ip.h	7.10 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_IP_H_
+#define _NETINET_IP_H_
+
 /*
  * Definitions for internet protocol version 4.
  * Per RFC 791, September 1981.
@@ -164,3 +167,5 @@ struct	ip_timestamp {
 #define	IPTTLDEC	1		/* subtracted when forwarding */
 
 #define	IP_MSS		576		/* default maximum segment size */
+
+#endif /* !_NETINET_IP_H_ */

@@ -62,12 +62,12 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_VM_STATISTICS_H_
+#define _VM_VM_STATISTICS_H_
+
 /*
  *	Virtual memory statistics structure.
  */
-
-#ifndef	_VM_STATISTICS_
-#define	_VM_STATISTICS_
 
 struct vm_statistics {
 	long	pagesize;		/* page size in bytes */
@@ -105,4 +105,5 @@ struct pmap_statistics {
 };
 
 typedef struct pmap_statistics	*pmap_statistics_t;
-#endif	_VM_STATISTICS_
+
+#endif /* !_VM_VM_STATISTICS_H_ */

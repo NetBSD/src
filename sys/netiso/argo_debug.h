@@ -33,6 +33,9 @@
  *	@(#)argo_debug.h	7.4 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_ARGO_DEBUG_H_
+#define _NETISO_ARGO_DEBUG_H_
+
 /*****************************************************************
 				Copyright IBM Corporation 1987
 
@@ -60,12 +63,9 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * $Header: /cvsroot/src/sys/netiso/Attic/argo_debug.h,v 1.1 1993/04/09 12:00:44 cgd Exp $
+ * $Header: /cvsroot/src/sys/netiso/Attic/argo_debug.h,v 1.2 1993/04/19 03:45:34 mycroft Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/argo_debug.h,v $
  */
-
-#ifndef __ARGO_DEBUG__
-#define __ARGO_DEBUG__
 
 #define dump_buf(a, b) Dump_buf((caddr_t)(a), (int)(b))
 
@@ -293,4 +293,4 @@ void dump_mbuf();
 
 #endif ARGO_DEBUG
 
-#endif __ARGO_DEBUG__
+#endif /* !_NETISO_ARGO_DEBUG_H_ */

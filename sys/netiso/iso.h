@@ -33,6 +33,9 @@
  *	@(#)iso.h	7.6 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_ISO_H_
+#define _NETISO_ISO_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -59,11 +62,8 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/iso.h,v 1.1 1993/04/09 12:01:13 cgd Exp $ */
+/* $Header: /cvsroot/src/sys/netiso/Attic/iso.h,v 1.2 1993/04/19 03:45:44 mycroft Exp $ */
 /* $Source: /cvsroot/src/sys/netiso/Attic/iso.h,v $ */
-
-#ifndef __ISO__
-#define __ISO__
 
 /*
  *	Return true if this is a multicast address
@@ -187,4 +187,5 @@ __END_DECLS
 #endif /* KERNEL */
 
 #define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
-#endif __ISO__
+
+#endif /* !_NETISO_ISO_H_ */

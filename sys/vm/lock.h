@@ -62,12 +62,12 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_LOCK_H_
+#define _VM_LOCK_H_
+
 /*
  *	Locking primitives definitions
  */
-
-#ifndef	_LOCK_H_
-#define	_LOCK_H_
 
 #define	NCPUS	1		/* XXX */
 
@@ -172,4 +172,4 @@ boolean_t	lock_try_read_to_write();
 void		lock_set_recursive();
 void		lock_clear_recursive();
 
-#endif /* !_LOCK_H_ */
+#endif /* !_VM_LOCK_H_ */

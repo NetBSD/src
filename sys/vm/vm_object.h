@@ -62,12 +62,12 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_VM_OBJECT_H_
+#define _VM_VM_OBJECT_H_
+
 /*
  *	Virtual memory object module definitions.
  */
-
-#ifndef	_VM_OBJECT_
-#define	_VM_OBJECT_
 
 #include <vm/vm_pager.h>
 
@@ -168,4 +168,4 @@ void		vm_object_print();
 					thread_sleep((event), &(object)->Lock, (interruptible))
 #endif	VM_OBJECT_DEBUG
 
-#endif	_VM_OBJECT_
+#endif /* !_VM_VM_OBJECT_H_ */

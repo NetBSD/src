@@ -33,6 +33,9 @@
  *	@(#)ip_icmp.h	7.5 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_IP_ICMP_H_
+#define _NETINET_IP_ICMP_H_
+
 /*
  * Interface Control Message Protocol Definitions.
  * Per RFC 792, September 1981.
@@ -131,3 +134,5 @@ struct icmp {
 	(type) == ICMP_TSTAMP || (type) == ICMP_TSTAMPREPLY || \
 	(type) == ICMP_IREQ || (type) == ICMP_IREQREPLY || \
 	(type) == ICMP_MASKREQ || (type) == ICMP_MASKREPLY)
+
+#endif /* !_NETINET_IP_ICMP_H_ */

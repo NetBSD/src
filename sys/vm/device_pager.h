@@ -38,8 +38,8 @@
  *	@(#)device_pager.h	7.1 (Berkeley) 12/5/90
  */
 
-#ifndef	_DEVICE_PAGER_
-#define	_DEVICE_PAGER_	1
+#ifndef _VM_DEVICE_PAGER_H_
+#define _VM_DEVICE_PAGER_H_
 
 /*
  * Device pager private data.
@@ -75,4 +75,4 @@ struct pagerops devicepagerops = {
 
 #endif
 
-#endif	/* _DEVICE_PAGER_ */
+#endif /* !_VM_DEVICE_PAGER_H_ */

@@ -33,6 +33,9 @@
  *	@(#)af.h	7.5 (Berkeley) 6/28/90
  */
 
+#ifndef _NET_AF_H_
+#define _NET_AF_H_
+
 /*
  * This file is obsolete, I think.  kls 12/21/88
 
@@ -62,3 +65,5 @@ struct afhash {
 struct	afswitch afswitch[];
 #endif
  */
+
+#endif /* !_NET_AF_H_ */

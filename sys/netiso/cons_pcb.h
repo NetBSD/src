@@ -33,6 +33,9 @@
  *	@(#)cons_pcb.h	7.4 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_CONS_PCB_H_
+#define _NETISO_CONS_PCB_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -59,7 +62,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/cons_pcb.h,v 1.1 1993/04/09 12:01:05 cgd Exp $ */
+/* $Header: /cvsroot/src/sys/netiso/Attic/cons_pcb.h,v 1.2 1993/04/19 03:45:41 mycroft Exp $ */
 /* $Source: /cvsroot/src/sys/netiso/Attic/cons_pcb.h,v $ */
 
 /*
@@ -191,3 +194,5 @@ struct e_clear_data 				{
 #ifdef KERNEL
 #define IncStat(XYZ) cons_stat.XYZ++
 #endif KERNEL
+
+#endif /* !_NETISO_CONS_PCB_H_ */

@@ -38,6 +38,9 @@
  *	@(#)pk.h	7.8 (Berkeley) 4/30/91
  */
 
+#ifndef _NETCCITT_PK_H_
+#define _NETCCITT_PK_H_
+
 /*
  *
  *  X.25 Packet Level Definitions:
@@ -190,3 +193,5 @@ struct mbuf *pk_template ();
 #define DIAG_TYPE       14 * MAXSTATES
 #define INVALID_PACKET  15 * MAXSTATES
 #define DELETE_PACKET	INVALID_PACKET
+
+#endif /* !_NETCCITT_PK_H_ */

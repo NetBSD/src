@@ -37,8 +37,11 @@
  *
  *	@(#)bpfdesc.h	7.1 (Berkeley) 5/7/91
  *
- * @(#) $Header: /cvsroot/src/sys/net/bpfdesc.h,v 1.3 1993/04/06 06:50:20 deraadt Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/sys/net/bpfdesc.h,v 1.4 1993/04/19 03:47:43 mycroft Exp $ (LBL)
  */
+
+#ifndef _NET_BPFDESC_H_
+#define _NET_BPFDESC_H_
 
 /*
  * Descriptor associated with each open bpf file.
@@ -96,3 +99,5 @@ struct bpf_if {
 	u_int bif_hdrlen;		/* length of header (with padding) */
 	struct ifnet *bif_ifp;		/* correspoding interface */
 };
+
+#endif /* !_NET_BPFDESC_H_ */

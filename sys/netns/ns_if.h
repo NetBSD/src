@@ -33,6 +33,9 @@
  *	@(#)ns_if.h	7.6 (Berkeley) 6/28/90
  */
 
+#ifndef _NETNS_NS_IF_H_
+#define _NETNS_NS_IF_H_
+
 /*
  * Interface address, xerox version.  One of these structures
  * is allocated for each interface with an internet address.
@@ -82,3 +85,5 @@ struct	ns_ifaddr *ns_ifaddr;
 struct	ns_ifaddr *ns_iaonnetof();
 struct	ifqueue	nsintrq;	/* XNS input packet queue */
 #endif
+
+#endif /* !_NETNS_NS_IF_H_ */

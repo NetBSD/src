@@ -36,8 +36,8 @@
  *	@(#)quota.h	7.9 (Berkeley) 2/22/91
  */
 
-#ifndef _QUOTA_
-#define _QUOTA_
+#ifndef _UFS_QUOTA_H_
+#define _UFS_QUOTA_H_
 
 /*
  * Definitions for disk quotas imposed on the average user
@@ -179,4 +179,5 @@ int	quotactl __P((const char *, int, int, void *));
 __END_DECLS
 
 #endif /* KERNEL */
-#endif /* _QUOTA_ */
+
+#endif /* !_UFS_QUOTA_H_ */

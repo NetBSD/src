@@ -33,6 +33,9 @@
  *	@(#)netisr.h	7.8 (Berkeley) 5/7/91
  */
 
+#ifndef _NET_NETISR_H_
+#define _NET_NETISR_H_
+
 /*
  * The networking code runs off software interrupts.
  *
@@ -84,3 +87,5 @@ int	softem;
 int	netisr;				/* scheduling bits for network */
 #endif
 #endif
+
+#endif /* !_NET_NETISR_H_ */

@@ -38,6 +38,9 @@
  *	@(#)x25.h	7.8 (Berkeley) 5/29/91
  */
 
+#ifndef _NETCCITT_X25_H_
+#define _NETCCITT_X25_H_
+
 #ifdef KERNEL
 #define PRC_IFUP	3
 #define PRC_LINKUP	4
@@ -150,3 +153,5 @@ struct ifreq_x25 {
 #define	SIOCSIFCONF_X25	_IOW('i', 12, struct ifreq_x25)	/* set ifnet config */
 #define	SIOCGIFCONF_X25	_IOWR('i',13, struct ifreq_x25)	/* get ifnet config */
 #endif
+
+#endif /* !_NETCCITT_X25_H_ */

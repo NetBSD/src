@@ -69,12 +69,12 @@
  * 15 Aug 92    William Jolitz		Prevent running out of map entries...
  */
 
+#ifndef _VM_VM_MAP_H_
+#define _VM_VM_MAP_H_
+
 /*
  *	Virtual memory map module definitions.
  */
-
-#ifndef	_VM_MAP_
-#define	_VM_MAP_
 
 /*
  *	Types defined:
@@ -213,4 +213,4 @@ void		vm_map_verify_done();
 #define MAX_KMAPENT     1000	/* 15 Aug 92*/
 #endif  /* !OMIT*/
 
-#endif	_VM_MAP_
+#endif /* !_VM_VM_MAP_H_ */

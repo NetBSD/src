@@ -33,6 +33,9 @@
  *	@(#)tcp_debug.h	7.4 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_TCP_DEBUG_H_
+#define _NETINET_TCP_DEBUG_H_
+
 struct	tcp_debug {
 	n_time	td_time;
 	short	td_act;
@@ -57,3 +60,5 @@ char	*tanames[] =
 #define	TCP_NDEBUG 100
 struct	tcp_debug tcp_debug[TCP_NDEBUG];
 int	tcp_debx;
+
+#endif /* !_NETINET_TCP_DEBUG_H_ */

@@ -33,6 +33,9 @@
  *	@(#)if.h	7.11 (Berkeley) 3/19/91
  */
 
+#ifndef _NET_IF_H_
+#define _NET_IF_H_
+
 /*
  * Structures defining a network interface, providing a packet
  * transport mechanism (ala level 0 of the PUP protocols).
@@ -252,3 +255,5 @@ struct	ifaddr *ifa_ifwithdstaddr();
 #else KERNEL
 #include <net/if_arp.h>
 #endif KERNEL
+
+#endif /* !_NET_IF_H_ */

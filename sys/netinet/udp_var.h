@@ -33,6 +33,9 @@
  *	@(#)udp_var.h	7.7 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_UDP_VAR_H_
+#define _NETINET_UDP_VAR_H_
+
 /*
  * UDP kernel structures and variables.
  */
@@ -72,3 +75,5 @@ struct	udpstat {
 struct	inpcb udb;
 struct	udpstat udpstat;
 #endif
+
+#endif /* !_NETINET_UDP_VAR_H_ */

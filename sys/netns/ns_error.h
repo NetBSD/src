@@ -33,6 +33,9 @@
  *	@(#)ns_error.h	7.5 (Berkeley) 6/28/90
  */
 
+#ifndef _NETNS_NS_ERROR_H_
+#define _NETNS_NS_ERROR_H_
+
 /*
  * Xerox NS error messages
  */
@@ -88,3 +91,5 @@ struct	ns_errstat {
 #ifdef KERNEL
 struct	ns_errstat ns_errstat;
 #endif
+
+#endif /* !_NETNS_NS_ERROR_H_ */

@@ -33,6 +33,9 @@
  *	@(#)mfsnode.h	7.3 (Berkeley) 4/16/91
  */
 
+#ifndef _UFS_MFSNODE_H_
+#define _UFS_MFSNODE_H_
+
 /*
  * This structure defines the control data for the memory
  * based file system.
@@ -194,3 +197,5 @@ int	mfs_print __P((
 		int op, \
 		struct flock *fl, \
 		int flags))) mfs_badop)
+
+#endif /* !_UFS_MFSNODE_H_ */

@@ -33,6 +33,9 @@
  *	@(#)cltp_var.h	7.3 (Berkeley) 6/28/90
  */
 
+#ifndef _NETISO_CLTP_VAR_H_
+#define _NETISO_CLTP_VAR_H_
+
 #define UD_TPDU_type	0x40	/* packet type */
 
 #define CLTPOVAL_SRC	0xc1	/* Source TSAP -- required */
@@ -52,3 +55,5 @@ struct	cltpstat {
 struct	isopcb cltb;
 struct	cltpstat cltpstat;
 #endif
+
+#endif /* !_NETISO_CLTP_VAR_H_ */

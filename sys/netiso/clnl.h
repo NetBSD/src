@@ -33,6 +33,9 @@
  *	@(#)clnl.h	7.3 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_CLNL_H_
+#define _NETISO_CLNL_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -62,3 +65,5 @@ SOFTWARE.
 struct clnl_protosw {
 	int (*clnl_input)();	/* input routine */
 };
+
+#endif /* !_NETISO_CLNL_H_ */

@@ -33,6 +33,9 @@
  *	@(#)if_ether.h	7.5 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_IF_ETHER_H_
+#define _NETINET_IF_ETHER_H_
+
 /*
  * Structure of a 10Mb/s Ethernet header.
  */
@@ -106,3 +109,5 @@ struct	arptab *arptnew();
 int	ether_output(), ether_input();
 char	*ether_sprintf();
 #endif
+
+#endif /* !_NETINET_IF_ETHER_H_ */

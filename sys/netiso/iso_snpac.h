@@ -33,6 +33,9 @@
  *	@(#)iso_snpac.h	7.8 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_ISO_SNPAC_H_
+#define _NETISO_ISO_SNPAC_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -110,3 +113,5 @@ struct llinfo_llc {
 #ifdef	KERNEL
 struct llinfo_llc llinfo_llc;	/* head for linked lists */
 #endif	KERNEL
+
+#endif /* !_NETISO_ISO_SNPAC_H_ */
