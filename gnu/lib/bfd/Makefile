@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/17 20:51:25 gwr Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/25 01:50:36 thorpej Exp $
 
 LIB=	bfd
 
@@ -14,6 +14,7 @@ INCSDIR=/usr/include/bfd
 INCS= ansidecl.h bfd.h libiberty.h
 
 # CFLAGS=-g #XXX
+CFLAGS+= -I.
 CFLAGS+= -I$(.CURDIR)
 CFLAGS+= -I$(dist)/bfd
 CFLAGS+= -I$(dist)/opcodes
