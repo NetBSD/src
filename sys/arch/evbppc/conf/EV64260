@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.1 2003/03/05 22:08:24 matt Exp $
+#	$NetBSD: EV64260,v 1.2 2003/03/16 07:07:17 matt Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -14,11 +14,12 @@ maxusers	32
 #options 	UVMHIST_PRINT
 
 # Discovery options
-options		GT_MPP_INTERRUPTS=0x2c600000
-#options	GT_MPP_WATCHDOG=0x00000000
-options		MPSC_CONSOLE
-options		GT_MPSC_DEFAULT_BAUD_RATE=9600
-options 	GT_BASE=0x14000000
+options		ALTIVEC
+options 	GT_MPP_INTERRUPTS=0x2c600000
+options 	GT_MPP_WATCHDOG=0x03000000
+#options 	MPSC_CONSOLE
+options 	GT_MPSC_DEFAULT_BAUD_RATE=9600
+options 	GT_BASE=0xF8000000
 
 # Options for necessary to use MD
 #options 	MEMORY_DISK_HOOKS
@@ -39,18 +40,17 @@ options 	SYSVSHM		# System V shared memory
 #options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
-options 	TRAP_PANICWAIT
 options 	SYMTAB_SPACE=300000	# size for embedded symbol table
 
 #makeoptions	DEFCOPTS="-g"	# compile full symbol table
-#makeoptions	DEBUG="-g"
+makeoptions	DEBUG="-g"
 
 # Compatibility options
 #options 	COMPAT_09	# NetBSD 0.9,
@@ -120,7 +120,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to configure PCI devices
+#options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to configure PCI devices
 #options 	PCI_CONFIGURE_VERBOSE	# Show PCI config information
 
 # wscons options
@@ -147,15 +147,20 @@ gtpci1		at gt0 unit 1		# 64-bit, 66MHz
 
 pci*		at gtpci?
 
+# 16550s off CS2
+obio2		at gt0 unit 2		# Chip Select 2
+com0		at obio2 offset 0x0020 size 8 irq 85
+com1		at obio2 offset 0x0000 size 8 irq 86
+
 # UARTs
-gtmpsc0		at gt0 unit 0		# Serial #0
-#gtmpsc1		at gt0 unit 1		# Serial #1
+gtmpsc0 	at gt0 unit 0		# Serial #0
+gtmpsc1 	at gt0 unit 1		# Serial #1
 
 # Ethernet and PHY
-gfe0		at gt0 unit 0		# Ethernet #0
-gfe1		at gt0 unit 1		# Ethernet #1
-gfe2		at gt0 unit 2		# Ethernet #2
-#acphy*		at mii? phy ?
+gfe0		at gt0 unit 0 flags 1	# Ethernet #0 (RMMI)
+gfe1		at gt0 unit 1 flags 1	# Ethernet #1 (RMMI)
+gfe2		at gt0 unit 2 flags 1	# Ethernet #2 (RMMI)
+acphy*		at mii? phy ?
 
 # PCI devices
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges

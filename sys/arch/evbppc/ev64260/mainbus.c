@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2003/03/07 18:24:01 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2003/03/16 07:07:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -70,7 +70,8 @@ mainbus_cfprint(void *aux, const char *pnp)
 	struct mainbus_attach_args *mba = aux;
 
 	if (pnp)
-		printf("%s at %s", mba->mba_busname, pnp);
+		aprint_normal("%s at %s", mba->mba_busname, pnp);
+	aprint_normal(" unit %d", mba->mba_unit);
 	return (UNCONF);
 }
 
@@ -116,7 +117,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 * Now try to configure the Discovery
 	 */
 	mba.mba_busname = "gt";
-	mba.mba_unit = 1;
+	mba.mba_unit = 0;
 	config_found(self, &mba, mainbus_cfprint);
 }
 
