@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.28.2.4 2002/10/19 12:40:25 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.28.2.5 2002/10/19 13:30:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -86,14 +86,8 @@
  */
 
 #ifdef MULTIPROCESSOR
-.Lcpu_info_store:
-	.word	_C_LABEL(cpu_info_store)
-.Lcurproc:
-	/* FIXME: This is bogus in the general case. */
-	.word	_C_LABEL(cpu_info_store) + CI_CURPROC
-
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
+.Lcpu_info:
+	.word	_C_LABEL(cpu_info)
 #else
 .Lcurproc:
 	.word	_C_LABEL(curproc)
@@ -179,22 +173,37 @@ ENTRY(cpu_switch)
  * r6 = newproc
  * r7 = &whichqs, new first proc in q, old pcb, new pcb
  * r8 = oldproc
+ * r9 = curcpu()
  */
 	mov	ip, sp
 	stmfd	sp!, {r4-r10, fp, ip, lr, pc}
 	sub	fp, ip, #4
+
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	bl	_C_LABEL(cpu_number)
+	ldr	r9, .Lcpu_info
+	ldr	r9, [r9, r0, lsl #2]
+#endif
 
 	/*
 	 * Get the current process and indicate that there is no longer
 	 * a valid process (curproc = 0).  Zero the current PCB pointer
 	 * while we're at it.
 	 */
+#ifdef MULTIPROCESSOR
+	ldr	r8, [r9, #CI_CURPROC]	/* r8 = curproc */
+	mov	r0, #0
+	str	r0, [r9, #CI_CURPROC]	/* curproc = NULL */
+	str	r0, [r9, #CI_CURPCB]	/* curpcb = NULL */
+#else
 	ldr	r1, .Lcurproc
 	ldr	r2, .Lcurpcb
 	mov	r0, #0x00000000
 	ldr	r8, [r1]		/* r8 = curproc */
 	str	r0, [r1]		/* curproc = NULL */
 	str	r0, [r2]		/* curpcb = NULL */
+#endif
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* release the sched_lock before handling interrupts */
@@ -329,9 +338,7 @@ ENTRY(cpu_switch)
 #endif
 
 #ifdef MULTIPROCESSOR
-	/* XXX use curcpu() */
-	ldr	r0, .Lcpu_info_store
-	str	r0, [r6, #(P_CPU)]
+	str	r9, [r6, #(P_CPU)]
 #else
 	/* p->p_cpu initialized in fork1() for single-processor */
 #endif
@@ -341,13 +348,22 @@ ENTRY(cpu_switch)
 	strb	r0, [r6, #(P_STAT)]
 
 	/* We have a new curproc now so make a note it */
+#ifdef MULTIPROCESSOR
+	str	r6, [r9, #CI_CURPROC]
+#else	
 	ldr	r7, .Lcurproc
 	str	r6, [r7]
+#endif
 
 	/* Hook in a new pcb */
+#ifdef MULTIPROCESSOR
+	ldr	r0, [r6, #(P_ADDR)]
+	str	r0, [r9, #CI_CURPCB]
+#else
 	ldr	r7, .Lcurpcb
 	ldr	r0, [r6, #(P_ADDR)]
 	str	r0, [r7]
+#endif
 
 	/* At this point we can allow IRQ's again. */
 	IRQenable
@@ -538,13 +554,26 @@ ENTRY(switch_exit)
 	mov	r4, r0			/* r4 = p */
 	mov	r5, r1			/* r5 = p0 */
 
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	bl	_C_LABEL(cpu_number)
+	ldr	r9, .Lcpu_info
+	ldr	r9, [r9, r0, lsl #2]
+#endif
+
 	/* In case we fault */
+#ifdef MULTIPROCESSOR
+	mov	r2, #0
+	str	r2, [r9, #CI_CURPROC]
+/*	str	r2, [r9, #CI_CURPCB] */
+#else
 	ldr	r0, .Lcurproc
 	mov	r2, #0x00000000
 	str	r2, [r0]
 
 /*	ldr	r0, .Lcurpcb
 	str	r2, [r0]*/
+#endif
 
 	/*
 	 * Don't allow user space access between the purge and the switch.
@@ -568,15 +597,19 @@ ENTRY(switch_exit)
 	ldr	r1, .Lcpufuncs
 	mov	lr, pc
 	ldr	pc, [r1, #CF_CONTEXT_SWITCH]
-       
+
 	/* Restore all the save registers */
 	add	r0, r7, #PCB_R11
 	ldmia	r0, {r11-r13}
 
 	/* This is not really needed ! */
 	/* Yes it is for the su and fu routines */
+#ifdef MULTIPROCESSOR
+	str	r7, [r9, #CI_CURPCB]
+#else
 	ldr	r0, .Lcurpcb
-	str	r2, [r0]
+	str	r7, [r0]
+#endif
 
 	IRQenable
 
@@ -587,9 +620,14 @@ ENTRY(switch_exit)
 	bl	_C_LABEL(exit2)
 
 	/* Paranoia */
+#ifdef MULTIPROCESSOR
+	mov	r0, #0
+	str	r0, [r9, #CI_CURPCB]
+#else
 	ldr	r1, .Lcurproc
 	mov	r0, #0x00000000
 	str	r0, [r1]
+#endif
 
 	ldr	r7, .Lwhichqs		/* r7 = &whichqs */
 	mov	r8, #0x00000000		/* r8 = old proc = NULL */
