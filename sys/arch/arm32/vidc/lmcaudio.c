@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.29 2001/02/25 17:17:56 reinoud Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.30 2001/02/27 20:23:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -59,12 +59,13 @@
 #include <machine/katelib.h>
 
 #include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 #include <arm/mainbus/mainbus.h>
 #include <arm32/vidc/waveform.h>
 #include "lmcaudio.h"
 
 #include <arm32/vidc/lmc1982.h>
- 
+
 struct audio_general {
 	vm_offset_t silence;
 	vm_offset_t beep;

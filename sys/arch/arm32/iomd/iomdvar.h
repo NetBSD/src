@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdvar.h,v 1.1 1997/10/14 10:58:51 mark Exp $	*/
+/*	$NetBSD: iomdvar.h,v 1.2 2001/02/27 20:23:11 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -116,4 +116,8 @@ union iomd_attach_args {
 	struct clk_attach_args		ia_clk;
 };
 
+/*
+ * IOMD_BASE register variable
+ */
+extern int *iomd_base;
 /* End of iomdvar.h */
