@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.14 2003/08/22 21:53:10 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.15 2003/08/22 22:00:41 itojun Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.14 2003/08/22 21:53:10 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.15 2003/08/22 22:00:41 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_inet.h"
@@ -97,10 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.14 2003/08/22 21:53:10 itojun Exp 
 #include <netinet6/udp6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/ip6protosw.h>
-
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#endif /* IPSEC */
 
 #include "faith.h"
 
@@ -346,12 +342,6 @@ udp6_output(in6p, m, addr6, control, p)
 #endif
 
 		udp6stat.udp6s_opackets++;
-#ifdef IPSEC
-		if (ipsec_setsocket(m, in6p->in6p_socket) != 0) {
-			error = ENOBUFS;
-			goto release;
-		}
-#endif /* IPSEC */
 		error = ip6_output(m, in6p->in6p_outputopts, &in6p->in6p_route,
 		    flags, in6p->in6p_moptions, in6p->in6p_socket, NULL);
 		break;
@@ -383,9 +373,6 @@ udp6_output(in6p, m, addr6, control, p)
 		ip->ip_tos = 0;	/* XXX */
 
 		udpstat.udps_opackets++;
-#ifdef IPSEC
-		(void)ipsec_setsocket(m, in6p->in6p_socket);
-#endif /* IPSEC */
 		error = ip_output(m, NULL, &in6p->in6p_route, flags /* XXX */,
 		    (struct ip_moptions *)NULL,
 		    (struct socket *)in6p->in6p_socket);
