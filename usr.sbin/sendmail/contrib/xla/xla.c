@@ -6,11 +6,8 @@
  * or warranties) than the other modules of the Sendmail package.
  *
  * ABSOLUTELY NO WARRANTY. USE AT YOUR OWN RISKS.
+ *
  */
-
-#ifndef lint
-static char rcsid[] = "$Id: xla.c,v 1.2 1993/08/02 17:57:06 mycroft Exp $";
-#endif /* not lint */
 
 
 #ifdef XLA

@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/7/93
-#	$Id: Makefile,v 1.9 1993/09/05 22:05:07 mycroft Exp $
+#	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 PROG=	sendmail
 
@@ -11,17 +10,19 @@ PROG=	sendmail
 # databases are read, but the new format will be used on any rebuilds.  On
 # really gnarly systems, you can set this to null; it will crawl like a high
 # spiral snail, but it will work.
-DBMDEF=	-DNEWDB
+DBMDEF=	-DNEWDB -DNDBM
 
-CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO
+#nasty warning about gcc 2.4.x caused bugs 
+CFLAGS=-I${.CURDIR} ${DBMDEF} -DNETISO -DMIME
+#CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO -DMIME
 
 SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	deliver.c domain.c envelope.c err.c headers.c macro.c main.c map.c \
 	mci.c parseaddr.c queue.c readcf.c recipient.c savemail.c srvrsmtp.c \
 	stab.c stats.c sysexits.c trace.c udb.c usersmtp.c \
 	util.c version.c
-DPADD+=	${LIBDBM} ${LIBCOMPAT} ${LIBUTIL}
-LDADD+=	-lutil
+DPADD=	$(LIBUTIL)
+LDADD=	$(LIBUTIL)
 MAN1=	newaliases.0
 MAN5=	aliases.0
 MAN8=	sendmail.0 

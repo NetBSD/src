@@ -1,37 +1,100 @@
-#	from: @(#)Makefile	5.22 (Berkeley) 7/26/91
-#	$Id: Makefile.SunOS,v 1.2 1993/07/30 21:40:19 mycroft Exp $
+#
+#  This Makefile is designed to work on the old "make" program.  It does
+#  not use the obj subdirectory.  It also does not install documentation
+#  automatically -- think of it as a quick start for sites that have the
+#  old make program (I recommend that you get and port the new make if you
+#  are going to be doing any signficant work on sendmail).
+#
+#	This has been tested on SunOS 4.1.[12].
+#
 
-PROG=	sendmail
+# use O=-O (usual) or O=-g (debugging)
+O=	-O
 
-DBMDEF=	-DNEWDB -DNDBM -DNIS
-INCLS=	-I/usr/local/include -I/usr/sww/include/db
-CFLAGS+=-I${.CURDIR} ${INCLS} ${DBMDEF} ${OPTNS}
+# define the database mechanisms available for map & alias lookups:
+#	-DNDBM -- use new DBM
+#	-DNEWDB -- use new Berkeley DB
+#	-DNIS -- include NIS support
+# The really old (V7) DBM library is no longer supported.
+# See READ_ME for a description of how these flags interact.
+#
+DBMDEF=	-DNDBM -DNEWDB -DNIS
 
-SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
-	deliver.c domain.c envelope.c err.c headers.c macro.c main.c map.c \
-	mci.c parseaddr.c queue.c readcf.c recipient.c savemail.c srvrsmtp.c \
-	stab.c stats.c sysexits.c trace.c udb.c usersmtp.c \
-	util.c version.c
-DPADD=	${LIBDBM} ${LIBCOMPAT} ${LIBUTIL}
-LDADD=	-L/usr/sww/lib -ldb -ldbm -lresolv -Bstatic
-#LDADD=	/usr/sww/build/lib/db/libdb.a -ldbm
-#MAN1=	newaliases.0
-#MAN5=	aliases.0
-#MAN8=	sendmail.0 
-NOMAN=
-LINKS=	${DESTDIR}/usr/sbin/sendmail ${DESTDIR}/usr/bin/newaliases \
-	${DESTDIR}/usr/sbin/sendmail ${DESTDIR}/usr/bin/mailq
-BINDIR=	/usr/sbin
+# environment definitions (e.g., -D_AIX3)
+ENVDEF=
+
+# see also conf.h for additional compilation flags
+
+# include directories
+INCDIRS=-I/usr/sww/include/db
+
+# loader options
+LDOPTS=	-Bstatic
+
+# library directories
+LIBDIRS=-L/usr/sww/lib
+
+# libraries required on your system
+LIBS=	-ldb -ldbm -lresolv
+
+# location of sendmail binary (usually /usr/sbin or /usr/lib)
+BINDIR=	${DESTDIR}/usr/lib
+
+# location of sendmail.st file (usually /var/log or /usr/lib)
+STDIR=	${DESTDIR}/var/log
+
+# location of sendmail.hf file (usually /usr/share/misc or /usr/lib)
+HFDIR=	${DESTDIR}/usr/lib
+
+# additional .o files needed
+OBJADD=
+
+###################  end of user configuration flags  ######################
+
+CFLAGS=	-I. $O ${INCDIRS} ${DBMDEF} ${ENVDEF}
+
+OBJS=	alias.o arpadate.o clock.o collect.o conf.o convtime.o daemon.o \
+	deliver.o domain.o envelope.o err.o headers.o macro.o main.o \
+	map.o mci.o parseaddr.o queue.o readcf.o recipient.o \
+	savemail.o srvrsmtp.o stab.o stats.o sysexits.o \
+	trace.o udb.o usersmtp.o util.o version.o ${OBJADD}
+
+LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
 BINOWN=	root
 BINGRP=	kmem
 BINMODE=6555
 
-beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
-	    ${DESTDIR}/etc/sendmail.fc
-	install -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
-	    ${DESTDIR}/var/log/sendmail.st
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/sendmail.hf \
-	    ${DESTDIR}/usr/share/misc
+ALL=	sendmail aliases.0 newaliases.0 sendmail.0
 
-.include <bsd.prog.mk>
+all: ${ALL}
+
+sendmail: ${BEFORE} ${OBJS}
+	${CC} -o sendmail ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
+
+aliases.0: aliases.5
+	nroff -h -mandoc aliases.5 > aliases.0
+
+newaliases.0: newaliases.1
+	nroff -h -mandoc newaliases.1 > newaliases.0
+
+sendmail.0: sendmail.8
+	nroff -h -mandoc sendmail.8 > sendmail.0
+
+install: install-sendmail install-docs
+
+install-sendmail: sendmail
+	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
+	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
+	install -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
+	    ${STDIR}/sendmail.st
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
+
+# doesn't actually install them -- you may want to install pre-nroff versions
+install-docs: aliases.0 newaliases.0 sendmail.0
+
+clean:
+	rm -f ${OBJS} sendmail aliases.0 newaliases.0 sendmail.0
+
+# dependencies
+#   gross overkill, and yet still not quite enough....
+${OBJS}: sendmail.h conf.h
