@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.7 1999/11/01 08:58:45 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.8 1999/11/15 16:19:03 joda Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -598,7 +598,6 @@ pccbb_pci_callback(self)
   if (!(sc->sc_pcmcia_flags & PCCBB_PCMCIA_16BITONLY)) {
     pcireg_t busreg = pci_conf_read(pc, sc->sc_tag, PCI_BUSNUM);
     pcireg_t bhlc = pci_conf_read(pc, sc->sc_tag, PCI_BHLC_REG);
-    pcireg_t pci_lscp = pci_conf_read(pc, sc->sc_tag, PCI_CB_LSCP_REG);
 
     /* initialise cbslot_attach */
     cba.cba_busname = "cardbus";
@@ -617,12 +616,12 @@ pccbb_pci_callback(self)
 #endif
 
     cba.cba_cacheline = PCI_CACHELINE(bhlc);
-    cba.cba_lattimer = PCI_CB_LATENCY(pci_lscp);
+    cba.cba_lattimer = PCI_CB_LATENCY(busreg);
 
     printf("%s: cacheline 0x%x lattimer 0x%x\n", sc->sc_dev.dv_xname,
 	   cba.cba_cacheline, cba.cba_lattimer);
     printf("%s: bhlc 0x%x lscp 0x%x\n", sc->sc_dev.dv_xname,
-	   bhlc, pci_lscp);
+	   bhlc, busreg);
 #if defined SHOW_REGS
     cb_show_regs(sc->sc_pc, sc->sc_tag, sc->sc_base_memt, sc->sc_base_memh);
 #endif
