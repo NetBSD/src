@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Guido van Rossum.
@@ -35,8 +35,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)fnmatch.c	5.6 (Berkeley) 6/28/92";*/
-static char *rcsid = "$Id: fnmatch.c,v 1.5 1993/08/26 00:44:31 jtc Exp $";
+/* from: static char sccsid[] = "@(#)fnmatch.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: fnmatch.c,v 1.6 1993/11/06 00:52:40 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
