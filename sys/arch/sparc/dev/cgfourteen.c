@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.15 1999/03/24 05:51:10 mrg Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.16 2000/03/19 15:38:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -118,9 +118,6 @@ static struct fbdriver cgfourteenfbdriver = {
 	cgfourteenunblank, cgfourteenopen, cgfourteenclose, cgfourteenioctl,
 	cgfourteenpoll, cgfourteenmmap
 };
-
-extern int fbnode;
-extern struct tty *fbconstty;
 
 static void cg14_set_video __P((struct cgfourteen_softc *, int));
 static int  cg14_get_video __P((struct cgfourteen_softc *));
@@ -260,7 +257,7 @@ cgfourteenattach(parent, self, aux)
 		sc->sc_cmap.cm_chip[i] = lut[i];
 
 	/* See if we're the console */
-	isconsole = node == fbnode && fbconstty != NULL;
+	isconsole = fb_is_console(node);
 
 	if (isconsole) {
 		printf(" (console)\n");
@@ -277,8 +274,7 @@ cgfourteenattach(parent, self, aux)
 		printf("\n");
 
 	/* Attach to /dev/fb */
-	if (node == fbnode)
-		fb_attach(&sc->sc_fb, isconsole);
+	fb_attach(&sc->sc_fb, isconsole);
 }
 
 /*

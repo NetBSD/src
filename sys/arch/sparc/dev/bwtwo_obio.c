@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.1 1999/08/10 04:56:30 christos Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.2 2000/03/19 15:38:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -127,7 +127,6 @@ static int	bwtwo_get_video_sun4  __P((struct bwtwo_softc *));
 static void	bwtwo_set_video_sun4 __P((struct bwtwo_softc *, int));
 
 extern int fbnode;
-extern struct tty *fbconstty;
 
 static int
 bwtwomatch_obio(parent, cf, aux)
@@ -176,7 +175,7 @@ bwtwoattach_obio(parent, self, uax)
 
 	constype = (fb->fb_flags & FB_PFOUR) ? EE_CONS_P4OPT : EE_CONS_BW;
 	if (eep == NULL || eep->eeConsole == constype)
-		isconsole = (fbconstty != NULL);
+		isconsole = fb_is_console(0);
 	else
 		isconsole = 0;
 
@@ -257,7 +256,7 @@ bwtwoattach_obio(parent, self, uax)
 		sc->sc_fb.fb_pixels = (char *)bh;
 	}
 
-	bwtwoattach(sc, name, isconsole, 1);
+	bwtwoattach(sc, name, isconsole);
 }
 
 static void

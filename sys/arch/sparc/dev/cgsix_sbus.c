@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.1 1998/03/31 21:05:04 pk Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.2 2000/03/19 15:38:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,8 +82,6 @@ struct cfattach cgsix_sbus_ca = {
 };
 
 
-extern int fbnode;
-
 /*
  * Match a cgsix.
  */
@@ -113,7 +111,6 @@ cgsixattach(parent, self, aux)
 	int node, isconsole;
 	char *name;
 	bus_space_handle_t bh;
-	extern struct tty *fbconstty;
 
 	/* Remember cookies for cgsix_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
@@ -177,7 +174,7 @@ cgsixattach(parent, self, aux)
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	name = getpropstring(node, "model");
 
-	isconsole = node == fbnode && fbconstty != NULL;
+	isconsole = fb_is_console(node);
 	if (isconsole && cgsix_use_rasterconsole) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
@@ -191,5 +188,5 @@ cgsixattach(parent, self, aux)
 		sc->sc_fb.fb_pixels = (caddr_t)bh;
 	}
 
-	cg6attach(sc, name, isconsole, node == fbnode);
+	cg6attach(sc, name, isconsole);
 }

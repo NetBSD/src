@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.45 1999/08/26 22:53:42 thorpej Exp $ */
+/*	$NetBSD: cgsix.c,v 1.46 2000/03/19 15:38:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,11 +152,10 @@ static void cg6_loadcursor __P((struct cgsix_softc *));/* set shape */
 
 
 void
-cg6attach(sc, name, isconsole, isfb)
+cg6attach(sc, name, isconsole)
 	struct cgsix_softc *sc;
 	char *name;
 	int isconsole;
-	int isfb;
 {
 	struct fbdevice *fb = &sc->sc_fb;
 
@@ -194,8 +193,7 @@ cg6attach(sc, name, isconsole, isfb)
 	}
 
 	printf("\n");
-	if (isfb)
-		fb_attach(&sc->sc_fb, isconsole);
+	fb_attach(&sc->sc_fb, isconsole);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.30 1999/06/30 15:18:58 drochner Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.31 2000/03/19 15:38:45 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,9 +111,6 @@ static struct fbdriver cgtwofbdriver = {
 	cgtwounblank, cgtwoopen, cgtwoclose, cgtwoioctl, cgtwopoll, cgtwommap
 };
 
-extern int fbnode;
-extern struct tty *fbconstty;
-
 /*
  * Match a cgtwo.
  */
@@ -204,7 +201,7 @@ cgtwoattach(parent, self, aux)
 	 * to be found.
 	 */
 	if (eep == NULL || eep->eeConsole == EE_CONS_COLOR)
-		isconsole = (fbconstty != NULL);
+		isconsole = fb_is_console(0);
 	else
 		isconsole = 0;
 

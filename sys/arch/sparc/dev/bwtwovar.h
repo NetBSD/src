@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwovar.h,v 1.1 1999/08/10 04:56:30 christos Exp $ */
+/*	$NetBSD: bwtwovar.h,v 1.2 2000/03/19 15:38:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -104,5 +104,5 @@ struct bwtwo_softc {
 	void	(*sc_set_video) __P((struct bwtwo_softc *, int));
 };
 
-void	bwtwoattach __P((struct bwtwo_softc *, char *, int, int));
+void	bwtwoattach __P((struct bwtwo_softc *, char *, int));
 int	bwtwo_pfour_probe __P((void *, void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.19 1998/11/19 15:38:24 mrg Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.20 2000/03/19 15:38:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -154,9 +154,6 @@ static struct fbdriver cgfourfbdriver = {
 	cgfourmmap
 };
 
-extern int fbnode;
-extern struct tty *fbconstty;
-
 static void cgfourloadcmap __P((struct cgfour_softc *, int, int));
 static int cgfour_get_video __P((struct cgfour_softc *));
 static void cgfour_set_video __P((struct cgfour_softc *, int));
@@ -252,7 +249,7 @@ cgfourattach(parent, self, aux)
 		 * to be found.
 		 */
 		if (eep == NULL || eep->eeConsole == EE_CONS_P4OPT)
-			isconsole = (fbconstty != NULL);
+			isconsole = fb_is_console(0);
 	}
 
 #if 0

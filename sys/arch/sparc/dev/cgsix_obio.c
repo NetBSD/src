@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.3 1999/08/09 12:16:10 christos Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.4 2000/03/19 15:38:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -132,7 +132,6 @@ cgsixattach(parent, self, aux)
 	bus_space_handle_t bh;
 	int constype, isconsole;
 	char *name;
-	extern struct tty *fbconstty;
 
 	oba = &uoba->uoba_oba4;
 
@@ -207,7 +206,7 @@ cgsixattach(parent, self, aux)
 	 * to be found.
 	 */
 	if (eep == NULL || eep->eeConsole == constype)
-		isconsole = (fbconstty != NULL);
+		isconsole = fb_is_console(0);
 	else
 		isconsole = 0;
 
@@ -224,5 +223,5 @@ cgsixattach(parent, self, aux)
 		sc->sc_fb.fb_pixels = (caddr_t)bh;
 	}
 
-	cg6attach(sc, name, isconsole, 1);
+	cg6attach(sc, name, isconsole);
 }

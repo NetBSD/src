@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.42 1999/08/10 04:56:30 christos Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.43 2000/03/19 15:38:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -148,11 +148,10 @@ bwtwo_pfour_probe(vaddr, arg)
 }
 
 void
-bwtwoattach(sc, name, isconsole, isfb)
+bwtwoattach(sc, name, isconsole)
 	struct	bwtwo_softc *sc;
 	char	*name;
 	int	isconsole;
-	int	isfb;
 {
 	struct fbdevice *fb = &sc->sc_fb;
 
@@ -202,19 +201,17 @@ bwtwoattach(sc, name, isconsole, isfb)
 		printf("%s: %s overlay plane\n", sc->sc_dev.dv_xname, ovnam);
 	}
 
-	if (isfb) {
-		/*
-		 * If we're on an overlay plane of a color framebuffer,
-		 * then we don't force the issue in fb_attach() because
-		 * we'd like the color framebuffer to actually be the
-		 * "console framebuffer".  We're only around to speed
-		 * up rconsole.
-		 */
-		if ((fb->fb_flags & FB_PFOUR) && (sc->sc_ovtype != BWO_NONE ))
-			fb_attach(fb, 0);
-		else
-			fb_attach(fb, isconsole);
-	}
+	/*
+	 * If we're on an overlay plane of a color framebuffer,
+	 * then we don't force the issue in fb_attach() because
+	 * we'd like the color framebuffer to actually be the
+	 * "console framebuffer".  We're only around to speed
+	 * up rconsole.
+	 */
+	if ((fb->fb_flags & FB_PFOUR) && (sc->sc_ovtype != BWO_NONE ))
+		fb_attach(fb, 0);
+	else
+		fb_attach(fb, isconsole);
 }
 
 int
