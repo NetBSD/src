@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.47 1999/11/19 10:41:41 bouyer Exp $	*/
+/*	$NetBSD: socket.h,v 1.48 1999/12/20 06:18:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -207,8 +207,8 @@ struct sockproto {
 
 #if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
 struct sockaddr_storage {
-	u_char	__ss_len;	/* address length */
-	u_char	__ss_family;	/* address family */
+	u_char	ss_len;		/* address length */
+	u_char	ss_family;	/* address family */
 	char	__ss_pad1[_SS_PAD1SIZE];
 	int64_t	__ss_align;	/* force desired structure storage alignment */
 	char	__ss_pad2[_SS_PAD2SIZE];
