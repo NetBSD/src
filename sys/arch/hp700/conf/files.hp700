@@ -1,0 +1,214 @@
+#	$NetBSD: files.hp700,v 1.1 2002/06/06 19:48:02 fredette Exp $
+#
+#	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
+#
+# hppa-specific configuration info
+
+# maxpartitions must be the first item in files.${ARCH}
+maxpartitions 16
+
+maxusers 2 8 64
+
+# 
+# "workstation console" routines
+#
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
+
+#
+# Machine-independent SCSI drivers
+#
+include "dev/scsipi/files.scsipi"
+major	{ sd = 4 }
+major	{ st = 5 }
+major	{ cd = 6 }
+
+# I2O
+include "dev/i2o/files.i2o"
+
+#
+# MI ATAPI drivers
+#
+#include "dev/atapiscsi/files.atapiscsi"
+#include "dev/ata/files.ata"
+
+include "dev/pckbc/files.pckbc"
+
+#
+# ISA Bus support
+#
+include "dev/isa/files.isa"
+
+#
+# EISA Bus support
+#
+include "dev/eisa/files.eisa"
+
+#
+# PCI Bus support
+#
+include "dev/pci/files.pci"
+
+#
+# Gonzo System Connect Bus
+#	(GSC, GSC-1X, GSC+, GSC-1.5X, GSC-2X)
+#
+define	gscbus	{ }
+
+#
+# Mainbus
+#
+
+define	mainbus {[irq = -1]}
+device	mainbus
+attach	mainbus at root
+file	arch/hp700/hp700/mainbus.c	mainbus
+
+device	pdc
+attach	pdc at mainbus
+file	arch/hp700/dev/pdc.c		pdc
+
+device	mem
+attach	mem at mainbus
+file	arch/hp700/dev/mem.c		mem
+
+device	cpu
+attach	cpu at mainbus
+file	arch/hp700/dev/cpu.c		cpu
+
+device	fpu
+attach	fpu at mainbus
+file	arch/hp700/dev/fpu.c		fpu
+
+# 1FT1-0002, 1FU2-0002
+# as goes w/ 7100LC, 7300LC, 7200, 8000, 8200, 8500
+device	lasi: gscbus
+attach	lasi at mainbus
+file	arch/hp700/dev/lasi.c		lasi
+
+# all the older systems
+device	asp: gscbus
+attach	asp at mainbus
+file	arch/hp700/dev/asp.c		asp
+
+# 1FT4-0001, ASIC used on gecko cards
+device	wax: gscbus, isabus, eisabus
+attach	wax at mainbus
+file	arch/hp700/dev/wax.c		wax
+
+device	mongoose: isabus, eisabus
+attach	mongoose at mainbus
+file	arch/hp700/dev/mongoose.c	mongoose
+
+device	dino: pcibus
+attach	dino at mainbus
+file	arch/hp700/dev/dino.c		dino
+
+attach	sti at mainbus with sti_sgc
+file	arch/hp700/dev/sti_sgc.c		sti_sgc
+
+###
+
+major	{ccd = 1}
+major	{vnd = 2}
+#major	{rd = 3}
+
+#
+# GSC bus devices
+#
+
+device	gsc {[irq = -1]}
+attach	gsc at gscbus
+file	arch/hp700/gsc/gscbus.c		gsc
+
+# com and lpt are both on WD 16C552
+attach	com at gsc with com_gsc
+file	arch/hp700/gsc/com_gsc.c		com
+
+attach	lpt at gsc with lpt_gsc
+file	arch/hp700/gsc/lpt_gsc.c		lpt
+
+# Floppy disk controller
+#device	fdc {drive = -1}: isadma
+#file	dev/isa/fd.c			fdc needs-flag
+
+#attach	fdc at isa with fdc_isa
+#file	dev/isa/fdc_isa.c		fdc_isa
+
+#attach	fdc at gsc with fdc_gsc
+#file	arch/hp700/gsc/fdc_gsc.c	fdc_gsc
+
+#device  fd: disk
+#attach  fd at fdc
+#major   {fd = 7}        
+
+device	ie: ifnet, ether, arp, i82586
+attach	ie at gsc with ie_gsc
+file	arch/hp700/gsc/if_ie_gsc.c	ie_gsc
+
+attach	siop at gsc
+file	arch/hp700/gsc/siop_gsc.c	siop
+
+attach	osiop at gsc with osiop_gsc
+file	arch/hp700/gsc/osiop_gsc.c	osiop
+
+device	hil: tty
+attach	hil at gsc
+file	arch/hp700/gsc/hil.c		hil
+
+attach	pckbc at gsc with pckbc_gsc
+file	arch/hp700/gsc/pckbc_gsc.c	pckbc_gsc
+
+# PSB 2160-N based 8bit mono audio (705, 710, 745i/*, 747i/*)
+device	aone: audiobus, mulaw, auconv
+attach	aone at gsc
+file	arch/hp700/gsc/aone.c		aone
+
+# CS4215/AD1849 based 16bit mono/stereo audio iface (most of others not w/ aone)
+# a.k.a. Audio Type 2 (optional beeper)
+device	harmony {} : audiobus, mulaw, auconv
+attach	harmony at gsc
+file	arch/hp700/gsc/harmony.c		harmony
+
+# fax/modem/voice on harmony
+attach	com at harmony with com_harmony
+file	arch/hp700/gsc/com_harmony.c	com_harmony
+
+# HPA4011A/B w/ TMS380C26PQL, TMS38054FNL
+#device	tms: tokenring
+#attach	tms at gsc
+#file	arch/hp700/gsc/if_tms.c		tms
+
+# these we don't know yet
+# AMD Supernet2 FDDI ?
+#device	medusa: fddi
+#attach	medusa at gsc
+#file	arch/hp700/gsc/medusa.c		medusa
+
+# XXX should not be here
+# ANSI/VITA 26-1998 Gbit packet switching network iface
+#device	myri: ether
+#attach	myri at pci
+#file	dev/pci/myri.c			myri
+
+#
+# PC Keyboard controller (ps2)
+#
+
+#include "dev/pckbc/files.pckbc"
+
+#
+# Non-device files
+#
+
+file	arch/hp700/hp700/autoconf.c
+file	arch/hp700/hp700/conf.c
+file	arch/hp700/hp700/disksubr.c		disk
+file	arch/hp700/hp700/intr.c
+file	arch/hp700/hp700/machdep.c
+file	arch/hp700/hp700/softintr.c
+file	arch/hp700/hp700/sys_machdep.c
+file	arch/hp700/dev/clock.c
+
+file	dev/cons.c
+file	dev/cninit.c
