@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.15 2001/06/12 15:17:20 wiz Exp $ */
+/* $NetBSD: sci.c,v 1.16 2001/09/10 08:50:33 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -1244,20 +1244,27 @@ sciintr(arg)
 	cc = sc->sc_rbavail;
 
 	ssr = SHREG_SCSSR;
+	if (ISSET(ssr, SCSSR_FER)) {
+		SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_PER | SCSSR_FER);
 #if defined(DDB) || defined(KGDB)
-	if (ISSET(ssr, SCSSR_BRK)) {
+#ifdef SH4
+		if ((SHREG_SCSPTR & SCPTR_SPB0DT) != 0) {
+#else
+		if ((SHREG_SCSPDR & SCPDR_SCP0DT) != 0) {
+#endif
 #ifdef DDB
-		if (ISSET(sc->sc_hwflags, SCI_HW_CONSOLE)) {
-			console_debugger();
-		}
+			if (ISSET(sc->sc_hwflags, SCI_HW_CONSOLE)) {
+				console_debugger();
+			}
 #endif
 #ifdef KGDB
-		if (ISSET(sc->sc_hwflags, SCI_HW_KGDB)) {
-			kgdb_connect(1);
-		}
+			if (ISSET(sc->sc_hwflags, SCI_HW_KGDB)) {
+				kgdb_connect(1);
+			}
 #endif
-	}
+		}
 #endif /* DDB || KGDB */
+	}
 	if ((SHREG_SCSSR & SCSSR_RDRF) != 0) {
 		if (cc > 0) {
 			put[0] = SHREG_SCRDR;
