@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.45 1999/07/09 09:53:01 mrg Exp $	*/
+/*	$NetBSD: config.h,v 1.46 1999/09/22 14:23:03 ws Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,6 +101,8 @@ struct nvlist {
 #define	nv_ptr	nv_un.un_ptr
 	int	nv_int;
 	int	nv_ifunit;		/* XXX XXX XXX */
+	int	nv_flags;
+#define	NV_DEPENDED	1
 };
 
 /*
