@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.3 1998/09/05 15:12:26 pk Exp $ */
+/*	$NetBSD: bootxx.c,v 1.4 1999/02/15 18:59:36 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 
 #include <lib/libsa/stand.h>
 
+#include <machine/promlib.h>
 #include <sparc/stand/common/promdev.h>
 
 int debug;
@@ -65,34 +66,39 @@ int32_t			block_count = MAXBLOCKNUM;
 daddr_t			block_table[MAXBLOCKNUM] = { 0 };
 
 
+int	main __P((void));
 void	loadboot __P((struct open_file *, caddr_t));
 
 int
 main()
 {
 	char	*dummy;
-	size_t	n;
-	register void (*entry)__P((caddr_t)) = (void (*)__P((caddr_t)))LOADADDR;
+	void (*entry)__P((void *)) = (void (*)__P((void *)))PROM_LOADADDR;
+	void	*arg;
 
 	prom_init();
+	prom_bootdevice = prom_getbootpath();
 	io.f_flags = F_RAW;
 	if (devopen(&io, 0, &dummy)) {
-		panic("%s: can't open device", progname);
+		panic("%s: can't open device `%s'", progname,
+			prom_bootdevice != NULL ? prom_bootdevice : "unknown");
 	}
 
-	(void)loadboot(&io, LOADADDR);
+	(void)loadboot(&io, PROM_LOADADDR);
 	(io.f_dev->dv_close)(&io);
-	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec);
+
+	arg = (prom_version() == PROM_OLDMON) ? PROM_LOADADDR : romp;
+	(*entry)(arg);
 	_rtt();
 }
 
 void
 loadboot(f, addr)
-	register struct open_file	*f;
-	register char			*addr;
+	struct open_file	*f;
+	char			*addr;
 {
-	register int	i;
-	register char	*buf;
+	int	i;
+	char	*buf;
 	size_t		n;
 	daddr_t		blk;
 
@@ -114,13 +120,14 @@ loadboot(f, addr)
 #endif
 		if ((f->f_dev->dv_strategy)(f->f_devdata, F_READ,
 					    blk, block_size, buf, &n)) {
-			panic("%s: read failure", progname);
+			printf("%s: read failure", progname);
+			_rtt();
 		}
 		bcopy(buf, addr, block_size);
 		if (n != block_size)
 			panic("%s: short read", progname);
 		if (i == 0) {
-			register int m = N_GETMAGIC(*(struct exec *)addr);
+			int m = N_GETMAGIC(*(struct exec *)addr);
 			if (m == ZMAGIC || m == NMAGIC || m == OMAGIC) {
 				/* Move exec header out of the way */
 				bcopy(addr, addr - sizeof(struct exec), n);
@@ -130,4 +137,21 @@ loadboot(f, addr)
 		addr += n;
 	}
 
+}
+
+/*
+ * We don't need the overlap handling feature that the libkern version
+ * of bcopy() provides. We DO need code compactness..
+ */
+void
+bcopy(src, dst, n)
+	const void *src;
+	void *dst;
+	size_t n;
+{
+	const char *p = src;
+	char *q = dst;
+
+	while (n-- > 0)
+		*q++ = *p++;
 }

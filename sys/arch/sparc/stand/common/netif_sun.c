@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.2 1997/07/22 17:41:08 drochner Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.3 1999/02/15 18:59:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -77,7 +77,6 @@ netif_open(machdep_hint)
 {
 	struct promdata *pd = machdep_hint;
 	struct iodesc *io;
-	int fd, error;
 
 	/* find a free socket */
 	io = sockets;
@@ -179,7 +178,7 @@ netif_get(desc, pkt, maxlen, timo)
 	time_t timo;
 {
 	struct promdata *pd;
-	int tick0, tmo_ticks;
+	int tick0;
 	ssize_t len;
 
 	pd = (struct promdata *)desc->io_netif->nif_devdata;
@@ -190,12 +189,11 @@ netif_get(desc, pkt, maxlen, timo)
 			   pkt, maxlen, timo);
 #endif
 
-	tmo_ticks = timo * hz;
-	tick0 = getticks();
+	tick0 = getsecs();
 
 	do {
 		len = (*pd->recv)(pd, pkt, maxlen);
-	} while ((len == 0) && ((getticks() - tick0) < tmo_ticks));
+	} while ((len == 0) && ((getsecs() - tick0) < timo));
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)

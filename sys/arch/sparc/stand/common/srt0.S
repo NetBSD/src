@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.1 1997/06/01 03:39:40 mrg Exp $	*/
+/*	$NetBSD: srt0.S,v 1.2 1999/02/15 18:59:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -30,6 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _LOCORE		/* XXX - fix Makefile */
+
 #include <machine/param.h>
 #include <machine/psl.h>
 
@@ -37,16 +39,12 @@
 
 	.file	"str0.s"
 
-	.data
-	.global	_cputyp, _nbpg, _pgofset, _pgshift
-_cputyp:
-	.word	1
-_nbpg:
-	.word	1
-_pgofset:
-	.word	1
-_pgshift:
-	.word	1
+	.comm	_romp, 4
+	.comm	_opf_romp, 4
+	.comm	_cputyp, 4
+	.comm	_nbpg, 4
+	.comm	_pgofset, 4
+	.comm	_pgshift, 4
 
 	.text	
 	.globl	start
@@ -99,8 +97,17 @@ start:
 	 */
 	set     _edata, %o0             ! bzero(edata, end - edata)
 	set     _end, %o1
-	call    _bzero
-	 sub    %o1, %o0, %o1
+	/* note: bzero() expanded inline for compactness */
+	subcc	%o1, %o0, %o1
+	bz	2f			! in case there is no BSS
+
+	srl	%o1, 2, %o1		! assume _edata & _end are aligned
+1:
+	st	%g0, [%o0]		! while (n--)
+	subcc	%o1, 1, %o1		!	*p = 0; etc..
+	bnz	1b
+	 add	%o0, 4, %o0
+2:
 
 	/*
 	 * Enable interrupts, but only above level 11. This enables "L1-A",
@@ -117,24 +124,28 @@ start:
 	sethi	%hi(_cputyp), %o0
 	set	0x4000, %g7
 	cmp	%i0, %g7
-	beq	5f
+	beq	is_sun4
 	 nop
+
+	mov	CPU_SUN4C, %g4
+	mov	SUN4CM_PGSHIFT, %g5
 
 	/*
 	 * Save address of PROM vector (passed in %i0).
 	 */
-	sethi	%hi(_promvec), %o1
-	st	%i0, [%o1 + %lo(_promvec)]
+	sethi	%hi(_romp), %o1
+	st	%i0, [%o1 + %lo(_romp)]
 
-	mov	CPU_SUN4C, %g4
-	mov	SUN4CM_PGSHIFT, %g5
-	b,a	6f
+	/* Also save %i3, which is the Openfirmware entry, if any */
+	sethi	%hi(_opf_romp), %o1
+	st	%i3, [%o1 + %lo(_opf_romp)]
+	b,a	is_sun4cm
 
-5:
+is_sun4:
 	mov	CPU_SUN4, %g4
 	mov	SUN4_PGSHIFT, %g5
 
-6:
+is_sun4cm:
 	st	%g4, [%o0 + %lo(_cputyp)]
 	sethi	%hi(_pgshift), %o0	! pgshift = log2(nbpg)
 	st	%g5, [%o0 + %lo(_pgshift)]
@@ -153,6 +164,14 @@ start:
 
 	ret
 	 restore
+
+/*
+ * NO-OP place holder function.
+ */
+	.globl	_sparc_noop
+_sparc_noop:
+	retl
+	 nop
 
 
 #ifdef TIGHT

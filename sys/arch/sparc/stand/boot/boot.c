@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1998/08/29 06:40:43 mrg Exp $ */
+/*	$NetBSD: boot.c,v 1.4 1999/02/15 18:59:36 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -41,10 +41,15 @@
 
 #include <lib/libsa/stand.h>
 
+#include <machine/promlib.h>
 #include <sparc/stand/common/promdev.h>
 
-static void copyunix __P((int, char *));
-static void promsyms __P((int, struct exec *));
+static int	bootoptions __P((char *));
+void		loadfile __P((int, caddr_t));
+#if 0
+static void	promsyms __P((int, struct exec *));
+#endif
+
 int debug;
 int netif_debug;
 
@@ -54,9 +59,9 @@ char			*strtab;
 int			strtablen;
 char			fbuf[80], dbuf[128];
 
+int	main __P((void));
 typedef void (*entry_t)__P((caddr_t, int, int, int, long, long));
 
-void	loadfile __P((int, caddr_t));
 
 /*
  * Boot device is derived from ROM provided information, or if there is none,
@@ -79,10 +84,39 @@ char *kernels[] = {
 	NULL
 };
 
+int
+bootoptions(ap)
+	char *ap;
+{
+	int v = 0;
+	if (ap == NULL || *ap++ != '-')
+		return (0);
+
+	while (*ap != '\0' && *ap != ' ' && *ap != '\t' && *ap != '\n') {
+		switch (*ap) {
+		case 'a':
+			v |= RB_ASKNAME;
+			break;
+		case 's':
+			v |= RB_SINGLE;
+			break;
+		case 'd':
+			v |= RB_KDB;
+			debug = 1;
+			break;
+		}
+		ap++;
+	}
+
+	return (v);
+}
+
+int
 main()
 {
 	int	io, i;
 	char	*kernel;
+	int	how;
 
 	prom_init();
 
@@ -92,9 +126,12 @@ main()
 	/*
 	 * get default kernel.
 	 */
-	if (prom_bootfile && *prom_bootfile) {
+	prom_bootdevice = prom_getbootpath();
+	kernel = prom_getbootfile();
+	how = bootoptions(prom_getbootargs());
+
+	if (kernel != NULL && *kernel != '\0') {
 		i = -1;	/* not using the kernels */
-		kernel = prom_bootfile;
 	} else {
 		i = 0;
 		kernel = kernels[i];
@@ -104,9 +141,9 @@ main()
 		/*
 		 * ask for a kernel first ..
 		 */
-		if (prom_boothow & RB_ASKNAME) {
+		if (how & RB_ASKNAME) {
 			printf("device[%s] (\"halt\" to halt): ",
-			   prom_bootdevice);
+					prom_bootdevice);
 			gets(dbuf);
 			if (strcmp(dbuf, "halt") == 0)
 				_rtt();
@@ -117,7 +154,7 @@ main()
 			if (fbuf[0])
 				kernel = fbuf;
 			else {
-				prom_boothow &= ~RB_ASKNAME;
+				how &= ~RB_ASKNAME;
 				i = 0;
 				kernel = kernels[i];
 			}
@@ -132,13 +169,13 @@ main()
 		 * prom bootfile, try the next one (if it exits).  otherwise,
 		 * go into askname mode.
 		 */
-		if ((prom_boothow & RB_ASKNAME) == 0 &&
+		if ((how & RB_ASKNAME) == 0 &&
 		    i != -1 && kernels[++i]) {
 			kernel = kernels[i];
 			printf(": trying %s...\n", kernel);
 		} else {
 			printf("\n");
-			prom_boothow |= RB_ASKNAME;
+			how |= RB_ASKNAME;
 		}
 	}
 
@@ -147,18 +184,19 @@ main()
 	 * make loadfile() return a value, so that if the load of the kernel
 	 * fails, we can jump back and try another kernel in the list.
 	 */
-	printf("Booting %s @ 0x%x\n", kernel, LOADADDR);
-	loadfile(io, LOADADDR);
+	printf("Booting %s @ %p\n", kernel, PROM_LOADADDR);
+	loadfile(io, PROM_LOADADDR);
 
 	_rtt();
 }
 
 void
 loadfile(io, addr)
-	register int	io;
-	register caddr_t addr;
+	int	io;
+	caddr_t addr;
 {
-	register entry_t entry = (entry_t)LOADADDR;
+	entry_t entry = (entry_t)PROM_LOADADDR;
+	void *arg;
 	struct exec x;
 	int i;
 
@@ -168,7 +206,7 @@ loadfile(io, addr)
 		printf("Bad format\n");
 		return;
 	}
-	printf("%d", x.a_text);
+	printf("%ld", x.a_text);
 	if (N_GETMAGIC(x) == ZMAGIC) {
 		entry = (entry_t)(addr+sizeof(struct exec));
 		addr += sizeof(struct exec);
@@ -179,17 +217,17 @@ loadfile(io, addr)
 	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
 		while ((int)addr & __LDPGSZ)
 			*addr++ = 0;
-	printf("+%d", x.a_data);
+	printf("+%ld", x.a_data);
 	if (read(io, addr, x.a_data) != x.a_data)
 		goto shread;
 	addr += x.a_data;
-	printf("+%d", x.a_bss);
+	printf("+%ld", x.a_bss);
 	for (i = 0; i < x.a_bss; i++)
 		*addr++ = 0;
 	if (x.a_syms != 0) {
 		bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 		addr += sizeof(x.a_syms);
-		printf("+[%d", x.a_syms);
+		printf("+[%ld", x.a_syms);
 		if (read(io, addr, x.a_syms) != x.a_syms)
 			goto shread;
 		addr += x.a_syms;
@@ -198,7 +236,7 @@ loadfile(io, addr)
 			goto shread;
 
 		bcopy(&strtablen, addr, sizeof(int));
-		if (i = strtablen) {
+		if ((i = strtablen) != 0) {
 			i -= sizeof(int);
 			addr += sizeof(int);
 			if (read(io, addr, i) != i)
@@ -206,7 +244,7 @@ loadfile(io, addr)
 			addr += i;
 		}
 		printf("+%d]", i);
-		esym = ((u_int)x.a_entry - (u_int)LOADADDR) +
+		esym = ((u_int)x.a_entry - (u_int)PROM_LOADADDR) +
 			(((int)addr + sizeof(int) - 1) & ~(sizeof(int) - 1));
 #if 0
 		/*
@@ -217,12 +255,12 @@ loadfile(io, addr)
 		promsyms(io, &x);
 #endif
 	}
-	printf("=0x%x\n", addr);
+	printf("=%p\n", addr);
 	close(io);
 
 	/* Note: args 2-4 not used due to conflicts with SunOS loaders */
-	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec,
-		 0, 0, 0, esym, DDB_MAGIC1);
+	arg = (prom_version() == PROM_OLDMON) ? PROM_LOADADDR : romp;
+	(*entry)(arg, 0, 0, 0, esym, DDB_MAGIC1);
 	return;
 
 shread:
@@ -311,6 +349,6 @@ promsyms(fd, hp)
 	}
 
 	sprintf(buf, "%x %d %x loadsyms", syms, n, str);
-	(promvec->pv_fortheval.v2_eval)(buf);
+	prom_interpret(buf);
 }
 #endif
