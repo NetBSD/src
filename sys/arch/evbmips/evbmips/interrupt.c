@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2 2002/04/08 14:08:26 simonb Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3 2002/07/29 16:21:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,20 +48,6 @@
 #include <evbmips/evbmips/clockvar.h>
 
 struct evbmips_soft_intrhand *softnet_intrhand;
-
-/*
- * This is a mask of bits to clear in the SR when we go to a
- * given software interrupt priority level.
- * Hardware ipls are port/board specific.
- */
-
-const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
-};
-
 struct evbmips_soft_intr evbmips_soft_intrs[_IPL_NSOFT];
 
 struct evcnt mips_int5_evcnt =
@@ -180,12 +166,13 @@ softintr_init(void)
 	for (i = 0; i < _IPL_NSOFT; i++) {
 		si = &evbmips_soft_intrs[i];
 		TAILQ_INIT(&si->softintr_q);
+		simple_lock_init(&si->softintr_slock);
 		si->softintr_ipl = IPL_SOFT + i;
 		evcnt_attach_dynamic(&si->softintr_evcnt, EVCNT_TYPE_INTR,
 		    NULL, "soft", softintr_names[i]);
 	}
 
-	/* XXX Establish legacy soft interrupt handlers. */
+	/* XXX Establish legacy software interrupt handlers. */
 	softnet_intrhand = softintr_establish(IPL_SOFTNET,
 	    (void (*)(void *))netintr, NULL);
 
@@ -232,10 +219,12 @@ softintr_disestablish(void *arg)
 	int s;
 
 	s = splhigh();
+	simple_lock(&si->softintr_slock);
 	if (sih->sih_pending) {
 		TAILQ_REMOVE(&si->softintr_q, sih, sih_q);
 		sih->sih_pending = 0;
 	}
+	simple_unlock(&si->softintr_slock);
 	splx(s);
 
 	free(sih, M_DEVBUF);
