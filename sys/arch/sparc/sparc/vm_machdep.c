@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.10 1995/02/23 19:56:24 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.11 1995/04/10 16:49:02 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,12 +74,12 @@ pagemove(from, to, size)
 	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
 		panic("pagemove 1");
 	while (size > 0) {
-		pa = pmap_extract(kernel_pmap, (vm_offset_t)from);
+		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
 		if (pa == 0)
 			panic("pagemove 2");
-		pmap_remove(kernel_pmap,
+		pmap_remove(pmap_kernel(),
 		    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
-		pmap_enter(kernel_pmap,
+		pmap_enter(pmap_kernel(),
 		    (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
