@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.2.1 2000/03/11 20:51:49 scw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.2.2 2000/03/18 13:52:02 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ static	struct mainbus_devices mainbusdevs_147[] = {
 #if defined(MVME167) || defined(MVME177)
 static	struct mainbus_devices mainbusdevs_1x7[] = {
 	{"pcctwo", MAINBUS_PCCTWO_OFFSET},
-	{"vmechip", MAINBUS_VMETWO_OFFSET},
+	{"vmetwo", MAINBUS_VMETWO_OFFSET},
 	{NULL, 0}
 };
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62.2.1 2000/03/11 20:51:53 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.2.2 2000/03/18 13:52:30 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,7 +88,14 @@
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
+#include <mvme68k/dev/mainbus.h>
+#include <mvme68k/mvme68k/isr.h>
 #include <mvme68k/mvme68k/seglist.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#endif
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 
@@ -142,6 +149,10 @@ void	dumpsys __P((void));
 int	cpu_dumpsize __P((void));
 int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
 void	cpu_init_kcore_hdr __P((void));
+u_long	cpu_dump_mempagecnt __P((void));
+int	cpu_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+void	straytrap __P((int, u_short));
+void	nmintr __P((struct frame));
 
 /*
  * Machine-independent crash dump header info.
@@ -264,8 +275,7 @@ mvme147_init()
 	/*
 	 * Set up a temporary mapping to the PCC's registers
 	 */
-	if ( bus_space_map(bt, PCC_REG_OFF, PCCREG_SIZE, 0, &bh) != 0 )
-		panic("mvme147_init: Failed to map PCC");
+	bus_space_map(bt, MAINBUS_PCC_OFFSET + PCC_REG_OFF, PCCREG_SIZE, 0, &bh);
 
 	/*
 	 * calibrate delay() using the 6.25 usec counter.
@@ -316,20 +326,28 @@ mvme162_init()
 void
 mvme167_init()
 {
-	struct pcctwo *pcctwo;
+	bus_space_tag_t bt = MVME68K_INTIO_BUS_SPACE;
+	bus_space_handle_t bh;
 
-	pcctwo = (struct pcctwo *)PCCTWO_VADDR(PCCTWO_REG_OFF);
+	/*
+	 * Set up a temporary mapping to the PCCChip2's registers
+	 */
+	bus_space_map(bt, MAINBUS_PCCTWO_OFFSET + PCCTWO_REG_OFF,
+	    PCC2REG_SIZE, 0, &bh);
 
-	pcctwo->tt1_icr = 0;
+	bus_space_write_1(bt, bh, PCC2REG_TIMER1_ICSR, 0);
 
 	for (delay_divisor = 60; delay_divisor > 0; delay_divisor--) {
-		pcctwo->tt1_counter = 0;
-		pcctwo->tt1_ctrl = PCCTWO_TT_CTRL_CEN;
+		bus_space_write_4(bt, bh, PCC2REG_TIMER1_COUNTER, 0);
+		bus_space_write_1(bt, bh, PCC2REG_TIMER1_CONTROL,
+		    PCCTWO_TT_CTRL_CEN);
 		delay(10000);
-		pcctwo->tt1_ctrl = 0;
-		if (pcctwo->tt1_counter > 10000)
+		bus_space_write_1(bt, bh, PCC2REG_TIMER1_CONTROL, 0);
+		if (bus_space_read_4(bt, bh, PCC2REG_TIMER1_COUNTER) > 10000)
 			break;	/* got it! */
 	}
+
+	bus_space_unmap(bt, bh, PCC2REG_SIZE);
 
 	/* calculate cpuspeed */
 	cpuspeed = 759 / delay_divisor;
@@ -526,6 +544,7 @@ setregs(p, pack, stack)
 	u_long stack;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	extern void m68881_restore __P((struct fpframe *));
 
 	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
@@ -677,6 +696,7 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -715,6 +735,7 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
+	extern void savectx __P((struct user *));
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
@@ -1002,7 +1023,7 @@ dumpsys()
 
 			/* Print out how many MBs we have left to go. */
 			if ((totalbytesleft % (1024*1024)) == 0)
-				printf("%d ", totalbytesleft / (1024 * 1024));
+				printf("%ld ", totalbytesleft / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 			n = bytes - i;
@@ -1072,6 +1093,7 @@ initcpu()
 #endif
 }
 
+void
 straytrap(pc, evec)
 	int pc;
 	u_short evec;
@@ -1125,7 +1147,7 @@ void
 nmintr(frame)
 	struct frame frame;
 {
-	nmihand(&frame);
+	(void) nmihand(&frame);
 }
 
 /*
@@ -1135,12 +1157,13 @@ nmintr(frame)
  * environment, bumping the ABORT switch would be bad, so we enable
  * panic'ing on ABORT with the kernel option "PANICBUTTON".
  */
-void
-nmihand(frame)
-	struct frame *frame;
+int
+nmihand(arg)
+	void *arg;
 {
-
 	mvme68k_abort("ABORT SWITCH");
+
+	return 1;
 }
 
 /*
@@ -1170,6 +1193,7 @@ mvme68k_abort(cp)
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
+int
 cpu_exec_aout_makecmds(p, epp)
     struct proc *p;
     struct exec_package *epp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.2.16.2 2000/03/14 15:59:50 scw Exp $ */
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.2.16.3 2000/03/18 13:51:58 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,14 +65,13 @@
 
 
 /* Definition of the driver for autoconfig. */
-static int	clmpcc_pcctwo_match  __P((struct device *,
-					struct cfdata *, void *));
-static void	clmpcc_pcctwo_attach __P((struct device *,
-					struct device *, void *));
-static void	clmpcc_pcctwo_iackhook __P((struct clmpcc_softc *, int));
-static void	clmpcc_pcctwo_softhook __P((struct clmpcc_softc *));
+int clmpcc_pcctwo_match __P((struct device *, struct cfdata *, void *));
+void clmpcc_pcctwo_attach __P((struct device *, struct device *, void *));
+void clmpcc_pcctwo_iackhook __P((struct clmpcc_softc *, int));
+void clmpcc_pcctwo_softhook __P((struct clmpcc_softc *));
+void clmpcc_pcctwo_consiackhook __P((struct clmpcc_softc *, int));
 
-static u_long	clmpcc_pcctwo_sir;
+static u_long clmpcc_pcctwo_sir;
 
 struct cfattach clmpcc_pcctwo_ca = {
 	sizeof(struct clmpcc_softc), clmpcc_pcctwo_match, clmpcc_pcctwo_attach
@@ -81,43 +80,48 @@ struct cfattach clmpcc_pcctwo_ca = {
 extern struct cfdriver clmpcc_cd;
 
 /*
- * For clmpccopen()
+ * For clmpccopen() and clmpcccn*()
  */
 cdev_decl(clmpcc);
+cons_decl(clmpcc);
 
 
 /*
  * Is the CD2401 chip present?
  */
-static int
+int
 clmpcc_pcctwo_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct pcctwo_attach_args *pa = aux;
+	struct pcctwo_attach_args *pa;
 
-	if ( strcmp(pa->pa_name, clmpcc_cd.cd_name) )
+	pa = aux;
+
+	if (strcmp(pa->pa_name, clmpcc_cd.cd_name))
 		return (0);
 
 	pa->pa_ipl = cf->pcctwocf_ipl;
 
 	return (1);
 }
-
 /*
  * Attach a found CD2401.
  */
-static void
+void
 clmpcc_pcctwo_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
-	struct clmpcc_softc *sc = (void *) self;
-	struct pcctwo_attach_args *pa = aux;
+	struct clmpcc_softc *sc;
+	struct pcctwo_attach_args *pa;
 	int level = pa->pa_ipl;
 
+	sc = (struct clmpcc_softc *)self;
+	pa = aux;
+	level = pa->pa_ipl;
 	sc->sc_iot = pa->pa_bust;
 	bus_space_map(pa->pa_bust, pa->pa_offset, 0x100, 0, &sc->sc_ioh);
 
@@ -150,10 +154,11 @@ clmpcc_pcctwo_attach(parent, self, aux)
 	pcc2_reg_write(sys_pcctwo, PCC2REG_SCC_TX_ICSR, level | PCCTWO_ICR_IEN);
 }
 
-static void
+void
 clmpcc_pcctwo_softhook(sc)
 	struct clmpcc_softc *sc;
 {
+
 	setsoftint(clmpcc_pcctwo_sir);
 }
 
@@ -165,20 +170,20 @@ clmpcc_pcctwo_iackhook(sc, which)
 	bus_size_t offset;
 	volatile u_char foo;
 
-	switch ( which ) {
-	  case CLMPCC_IACK_MODEM:
+	switch (which) {
+	case CLMPCC_IACK_MODEM:
 		offset = PCC2REG_SCC_MODEM_PIACK;
 		break;
 
-	  case CLMPCC_IACK_RX:
+	case CLMPCC_IACK_RX:
 		offset = PCC2REG_SCC_RX_PIACK;
 		break;
 
-	  case CLMPCC_IACK_TX:
+	case CLMPCC_IACK_TX:
 		offset = PCC2REG_SCC_TX_PIACK;
 		break;
 #ifdef DEBUG
-	  default:
+	default:
 		printf("%s: Invalid IACK number '%d'\n",
 		    sc->sc_dev.dv_xname, which);
 		panic("clmpcc_pcctwo_iackhook");
@@ -187,7 +192,6 @@ clmpcc_pcctwo_iackhook(sc, which)
 
 	foo = pcc2_reg_read(sys_pcctwo, offset);
 }
-
 /*
  * This routine is only used prior to clmpcc_attach() being called
  */
@@ -206,23 +210,23 @@ clmpcc_pcctwo_consiackhook(sc, which)
 	 * be NULL during early system startup...
 	 */
 	bust = MVME68K_INTIO_BUS_SPACE;
-	bush = (bus_space_tag_t) &(intiobase[MAINBUS_PCCTWO_OFFSET +
-					     PCCTWO_REG_OFF]);
+	bush = (bus_space_tag_t) & (intiobase[MAINBUS_PCCTWO_OFFSET +
+		PCCTWO_REG_OFF]);
 
-	switch ( which ) {
-	  case CLMPCC_IACK_MODEM:
+	switch (which) {
+	case CLMPCC_IACK_MODEM:
 		offset = PCC2REG_SCC_MODEM_PIACK;
 		break;
 
-	  case CLMPCC_IACK_RX:
+	case CLMPCC_IACK_RX:
 		offset = PCC2REG_SCC_RX_PIACK;
 		break;
 
-	  case CLMPCC_IACK_TX:
+	case CLMPCC_IACK_TX:
 		offset = PCC2REG_SCC_TX_PIACK;
 		break;
 #ifdef DEBUG
-	  default:
+	default:
 		printf("%s: Invalid IACK number '%d'\n",
 		    sc->sc_dev.dv_xname, which);
 		panic("clmpcc_pcctwo_consiackhook");
@@ -244,9 +248,9 @@ void
 clmpcccnprobe(cp)
 	struct consdev *cp;
 {
-	int	maj;
+	int maj;
 
-	if ( machineid == MVME_147 ) {
+	if (machineid == MVME_147) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
@@ -255,7 +259,7 @@ clmpcccnprobe(cp)
 	 * Locate the major number
 	 */
 	for (maj = 0; maj < nchrdev; maj++) {
-		if ( cdevsw[maj].d_open == clmpccopen )
+		if (cdevsw[maj].d_open == clmpccopen)
 			break;
 	}
 

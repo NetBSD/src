@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_twovar.h,v 1.1.16.3 2000/03/14 12:43:38 scw Exp $ */
+/*	$NetBSD: vme_twovar.h,v 1.1.16.4 2000/03/18 13:52:14 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ struct vmetwo_range {
 	vme_am_t	vr_am;
 	vme_datasize_t	vr_datasize;
 	paddr_t		vr_locstart;
-	paddr_t		vr_locmask;
+	paddr_t		vr_mask;
 	vme_addr_t	vr_vmestart;
 	vme_addr_t	vr_vmeend;
 };
@@ -63,6 +63,7 @@ struct vmetwo_softc {
 	bus_space_handle_t	sc_gcrh;
 	bus_dma_tag_t		sc_dmat;
 	bus_space_tag_t		sc_vmet;
+	short			sc_irqref[8];
 	struct vmetwo_range	sc_ranges[VME2_NRANGES];
 	struct vme_chipset_tag	sc_vct;
 };

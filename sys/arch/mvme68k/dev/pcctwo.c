@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.2.16.2 2000/03/14 15:59:52 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.2.16.3 2000/03/18 13:52:04 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ pcctwoattach(parent, self, args)
 	struct mainbus_attach_args *ma;
 	struct pcctwo_softc *sc;
 	struct pcctwo_attach_args npa;
-	caddr_t kva;
 	int i;
 
 	ma = (struct mainbus_attach_args *) args;

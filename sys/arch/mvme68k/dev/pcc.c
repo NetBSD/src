@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.12.16.2 2000/03/14 15:59:52 scw Exp $	*/
+/*	$NetBSD: pcc.c,v 1.12.16.3 2000/03/18 13:52:04 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/cpu.h>
 #include <machine/bus.h>
 
 #include <mvme68k/mvme68k/isr.h>
@@ -275,6 +276,6 @@ pccintr(frame)
 	/* XXX wait until button pops out */
 	pcc_reg_write(sys_pcc, PCCREG_ABORT_INTR_CTRL,
 	    PCC_ABORT_IEN | PCC_ABORT_ACK);
-	nmihand((struct frame *)frame);
-	return (1);
+
+	return nmihand(frame);
 }
