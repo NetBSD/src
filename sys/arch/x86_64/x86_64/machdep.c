@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2003/04/11 22:02:34 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2003/04/17 09:36:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1761,8 +1761,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	memcpy(mcp->__gregs, tf, sizeof *tf);
 
 	if ((ras_rip = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_RIP])) != -1)
-		gr[_REG_RIP] = ras_rip;
+	    (caddr_t) mcp->__gregs[_REG_RIP])) != -1)
+		mcp->__gregs[_REG_RIP] = ras_rip;
 
 	*flags |= _UC_CPU;
 
