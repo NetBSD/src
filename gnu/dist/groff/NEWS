@@ -1,6 +1,134 @@
 This file describes recent user-visible changes in groff.  Bug fixes are not
 described.  There are more details in the man and info pages.
 
+VERSION 1.19.1
+==============
+
+Groff
+-----
+
+o The argument of the command line option `-I' is now also passed to troff
+  and grops, specifying a directory to search for files on the command line,
+  files named in `so' and `psbb' requests, and files named in \X'ps: file'
+  and \X'ps: import' escapes.
+
+o If option `-V' is used more than once, the commands will be both printed
+  on standard error and run.
+
+Troff
+-----
+
+o Two new read-only, string-valued registers `.m' and `.M' return the
+  name of the current drawing and background color, respectively.
+
+o New read-only register `.U' which is set to 1 if in safer mode and set
+  to 0 if in unsafe mode.
+
+o An input encoding file for latin-5 (a.k.a. ISO 8859-9) has been added.
+  Example use:
+
+    groff -Tdvi -mlatin5 my_file > my_file.dvi
+
+  Note that some output devices don't support all glyphs of this encoding.
+
+o If the `return' request is called with an argument, it exits twice,
+  namely the current macro and the macro one level higher.  This is
+  used to define a wrapper macro for `return' in trace.tmac.
+
+o For completeness, two new requests have been added: `dei1' and `ami1'.
+  They are equivalent to `dei' and `ami', respectively, but the macros
+  are executed with compatibility mode off (similar to `de1' and `am1').
+
+o New command line option `-I' to specify a directory for files (both
+  those on the command line and those named in `psbb' requests).  This is
+  also handled by the groff wrapper program.
+
+o Since version 1.19 you can say `.vs 0'.  Older versions emit a warning
+  and convert this to `.vs \n[.V]'.
+
+  This hasn't been documented properly.  Note that `.vs 0' isn't saved in a
+  diversion since it doesn't result in vertical motion.
+
+Pic
+___
+
+o Dashed and dotted ellipses have been implemented.
+
+Tbl
+---
+
+o New key character `x' to make tbl call a user-defined macro on a table
+  cell.  Patch by Heinz-Jürgen Oertel <hj.oertel@surfeu.de>.
+
+Grap2graph
+----------
+
+o A new script contributed by Eric S. Raymond <esr@thyrsus.com>.  It
+  converts a grap diagram into a cropped image.  Since it uses gs and the
+  PNM library, virtually all graphics formats are available for output.
+  [Note that the grap program itself isn't part of the groff package;
+  see the file MORE.STUFF how to obtain grap.]
+
+Grohtml
+-------
+
+o New option `-j' to emit output splitted into multiple files.
+
+Grops
+-----
+
+o New command line option `-I' to specify a directory to search for files
+  on the command line and files named in \X'ps: import' and \X'ps: file'
+  escapes.  This is also handled by the groff wrapper program.
+
+o The default value for the `broken' keyword in the DESC file is now 0.
+
+Grolj4
+------
+
+o A new man page `lj4_font(5)' documents how fonts are accessed with
+  grolj4.
+
+o The built-in fonts for LJ4 and newer PCL 5 devices have been completely
+  revised, mainly to access as much glyphs as possible.  The provided
+  metric files should be compatible with recent PCL 5 printers also.
+  Additionally, font description files have been added for the Arial and
+  Times New Roman family, the MS symbol, and Wingdings fonts.
+
+Afmtodit
+--------
+
+o New option `-x' to prevent use of built-in Adobe Glyph List.
+
+Hpftodit
+--------
+
+o Completely revised to handle HP TrueType metric files also.  See the
+  hpftodit manual page for more details.
+
+Groffer
+-------
+
+o This version is a rewrite of groffer in many parts, but it is kept in
+  the old single script style.
+
+  New options: --text, --mode text, --tty-viewer, --X, --mode X,
+  --X-viewer, --html, --mode html, --html-view, --apropos-data,
+  --apropos-devel, --apropos-progs.
+
+  New documentation file: README_SH.
+
+  Enhancement of the configuration files and the `apropos' handling.
+
+Macro Packages
+--------------
+
+o www.tmac: New macro `JOBNAME' to split output into multiple files.
+
+o In mdoc, multiple calls to `.Lb' are now supported in the LIBRARY
+  section.
+
+
 VERSION 1.19
 ============
 
@@ -17,9 +145,9 @@ o Input encoding files for latin-9 (a.k.a. latin-0 and ISO 8859-15) and
   and latin-2 only for -Tdvi and -Tutf8.
 
 o Composite glyphs are now supported.  To do this, a subset of the Adobe
-  Glyph List (AGL) Algorithm as described in 
+  Glyph List (AGL) Algorithm as described in
 
-    http://partners.adobe.com/asn/developer/typeforum/unicodegn.html
+    http://partners.adobe.com/asn/tech/type/unicodegn.jsp
 
   is used to construct glyph names based on Unicode character codes.  The
   existing groff glyph names are frozen; no glyph names which can't be
@@ -110,7 +238,10 @@ o The paper size is now emitted via the %%DocumentMedia and PageSize
   mechanisms so that it is no longer required to tell `gv' or `ps2pdf'
   about the paper size.  The `broken' flag value 16 omits this feature
   (the used PostScript command `setpagedevice' is a LanguageLevel 2
-  extension).  Patch by Egil Kvaleberg <egil@kvaleberg.no>.
+  extension) -- if you intend to further process grops output to get an
+  encapsulated PS (EPS) file you must also use this option.
+
+  Patch by Egil Kvaleberg <egil@kvaleberg.no>.
 
 o Non-slanted PostScript metrics have been changed again; they no longer
   contain negative left italic correction values.  This assures correct
@@ -316,7 +447,7 @@ o Color support has been added to troff and pic (and to the device drivers
   grops, grodvi, grotty, and grohtml -- other preprocessors and drivers will
   follow).  A new function `defcolor' defines colors; the escape sequence
   `\m' sets the drawing color, the escape sequence `\M' specifies the
-  background color for closed objects created with \D'...' commands. 
+  background color for closed objects created with \D'...' commands.
   `\m[]' and `\M[]' switch back to the previous color.  `\m' and `\M'
   correspond to the new troff output command sets starting with `m' and
   `DF'.  The device-specific default color is called `default' and can't be

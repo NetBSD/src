@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.1.1.1 2001/04/19 12:52:33 wiz Exp $	*/
+/*	$NetBSD: lex.c,v 1.1.1.2 2004/07/30 14:45:09 wiz Exp $	*/
 
 #include <X11/Xos.h>
 #include <X11/IntrinsicP.h>
@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "DviP.h"
 
+int
 DviGetAndPut(dw, cp)
     DviWidget	dw;
     int		*cp;
@@ -69,6 +70,7 @@ GetWord(dw, Buffer, Length)
 	return Buffer;
 } 
 
+int
 GetNumber(dw)
 	DviWidget	dw;
 {

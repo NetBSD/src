@@ -10,7 +10,7 @@
 <a href="using.html#TOP">Next</a>&nbsp;&nbsp;
 <a href="intro.html#TOP">Prev</a>&nbsp;&nbsp;
 <a href="toc.html">Back to Table of Contents</a>
-
+<p>
 <a name="TOP"></a>
 <a name="TERMS">
 	<h1 align="center"><u>DEFINITIONS OF TERMS USED IN THIS MANUAL</u></h1>
@@ -28,7 +28,7 @@ to <strong>mom</strong> herself.  To make life easier, I'll explain
 them here.  Refer back to this section should you encounter a word
 or concept you're not familiar with.  Words in these definitions that
 are defined elsewhere in this section are marked with asterisks.
-<br>
+<p>
 <hr>
 
 <a name="TERMS_TYPESETTING">
@@ -121,15 +121,15 @@ letter until the bottom of the drop cap is reached, at which
 point text reverts to the left margin.
 
 <dt><a name="TERMS_EM"><em>Em/en</em></a>
-<dd>A relative measurement equal to the width of the letter M at a
-given <strong>*point size</strong> in a given <strong>*font</strong>.
-Since most Ms are designed square, an em is usually (but sometimes
-erroneously) considered to be the same size as the current point size
-(i.e. if the point size of the type is 12, one em equals 12 points).
-An en is equal to the width of a letter N (historically 2/3 of an em,
-although groff treats an en as 1/2 of an em).  Typically, ems and
-ens are used to measure indents, or to define the length of dashes
-(long hyphens).
+<dd>An em is a relative measurement equal to the width of the
+letter M at a given <strong>*point size</strong> in a given
+<strong>*font</strong>.  Since most Ms are designed square, an em is
+usually (but sometimes erroneously) considered to be the same size
+as the current point size (i.e. if the point size of the type is 12,
+one em equals 12 points).  An en is equal to the width of a letter
+N (historically 2/3 of an em, although groff treats an en as 1/2 of
+an em).  Typically, ems and ens are used to measure indents, or to
+define the length of dashes (long hyphens).
 
 <dt><a name="TERMS_FAMILY"><em>Family</em></a>
 <dd>The collective name by which a collection of
@@ -187,7 +187,7 @@ whitespace between them.  In the days before phototypesetting,
 type was set from small, rectangular blocks of wood or metal, each
 block having exactly one letter.  Because the edge of each block
 determined the edge of each letter, certain letter combinations (TA,
-for example) didn't fit together well and had to be morticed by hand
+for example) didn't fit together well and had to be mortised by hand
 to bring them visually closer.  Modern typesetting systems usually
 take care of kerning automatically, but they're far from perfect.
 Professional typesetters still devote a lot of time to fitting letters
@@ -256,9 +256,9 @@ fractionally smaller than its point size.
 <dd>When only one margin of type is flush, lines of type are quadded in
 the direction of the flush margin.  Therefore, quad left means the
 left margin is flush, the right isn't.  Quad right means the right
-margin is flush, the left isn't.  Quad center means neither the left
+margin is flush, the left isn't.  Quad centre means neither the left
 nor the right margin is flush; rather, lines of type are quadded on
-both sides so that type appears centered on the page.
+both sides so that type appears centred on the page.
 
 <dt><a name="TERMS_RAG"><em>Rag</em></a>
 <dd>Describes a margin that isn't flush.  Rag right means the right
@@ -282,7 +282,8 @@ The correct term is letter spacing, but track kerning and line kerning
 <dd>Equal to <strong>*word space</strong>, however words separated by
 an unbreakable space will always be kept together on the same line.
 Expands and contracts like word space.  Useful for proper names, which
-should never be broken.  In groff, unbreakable space is entered with
+one should, whenever possibly, avoid splitting onto two lines.  In
+groff, unbreakable space is entered with
 <p>
 <pre>
 	\~
@@ -300,6 +301,7 @@ the margins flush.
 point size.  Generally used to mean the average height of the bowl
 of lower case letters.
 </dl>
+<p>
 <hr>
 
 <a name="TERMS_GROFF">
@@ -378,7 +380,7 @@ appear in your text editor are ignored.  Instead, words from adjoining
 <strong>*input lines</strong> are added one at a time to the output
 line until no more words fit.  Then, depending whether text is to
 be <strong>*justified</strong> or <strong>*quadded</strong> (left,
-right, or center), and depending on whether automatic hyphenation
+right, or centre), and depending on whether automatic hyphenation
 is turned on, groff attempts to hyphenate the last word, or, barring
 that, spreads and breaks the line (when justification is turned on) or
 breaks and quads the line (when quadding is turned on).
@@ -481,13 +483,13 @@ character (").
 <dt><a name="TERMS_UNITOFMEASURE"><em>Unit of measure</em></a>
 <dd>The single letter after a <strong>*numeric argument</strong>
 that tells <strong>mom</strong> what measurement scale the argument
-should use.  Commonly valid units are:
+should use.  Common valid units are:
 <p>
 <table valign="baseline" summary="unitsofmeasure">
 <tr><td><strong>i</strong><td> = <td>inches
 <tr><td><strong>p</strong><td> = <td>points
 <tr><td><strong>P</strong><td> = <td>picas
-<tr><td><strong>c</strong><td> = <td>centimeters
+<tr><td><strong>c</strong><td> = <td>centimetres
 <tr><td><strong>m</strong><td> = <td>ems
 <tr><td><strong>n</strong><td> = <td>ens
 <tr><td><strong>v</strong><td> = <td>the current leading (line space)</td></tr>
@@ -539,11 +541,12 @@ of an input line as meaning that what follows is a <strong>*control
 line</strong>.  In fill modes, groff treats a space at the beginning
 of an input line as meaning &quot;start a new line and put a space
 at the beginning of it.&quot; If you want groff to interpret periods
-and apostrophes at the beginning of input lines literally (ie. print
+and apostrophes at the beginning of input lines literally (i.e. print
 them), or spaces at the beginning of input lines as just garden
 variety word spaces, you must start the line with the zero-width
 character.
 </dl>
+<p>
 <hr>
 
 <a name="TERMS_MOM">
@@ -609,7 +612,7 @@ footers.
 <dd>A horizontal gap in <strong>*running text</strong>, frequently
 set off by typographic symbols such as asterisks or daggers.  Used to
 indicate a shift in the content of a document (e.g. a scene change in a
-short story).
+short story).  Also commonly called a scene break.
 
 <dt><a name="TERMS_PARAHEAD"><em>Paragraph head</em></a>
 <dd>A title joined to the body of a paragraph; hierarchically one

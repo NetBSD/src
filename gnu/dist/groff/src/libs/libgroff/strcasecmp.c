@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.1.1.1 2003/06/30 17:52:06 wiz Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.1.1.2 2004/07/30 14:44:51 wiz Exp $	*/
 
 /* strcasecmp.c -- case insensitive string comparator
    Copyright (C) 1998, 1999 Free Software Foundation, Inc.
@@ -31,7 +31,7 @@
 # define LENGTH_LIMIT_EXPR(Expr) 0
 #endif
 
-#include <sys/types.h>
+#include <stddef.h>
 #include <ctype.h>
 
 #define TOLOWER(Ch) (isupper (Ch) ? tolower (Ch) : (Ch))

@@ -1,7 +1,7 @@
-/*	$NetBSD: html.h,v 1.1.1.2 2003/06/30 17:52:16 wiz Exp $	*/
+/*	$NetBSD: html.h,v 1.1.1.3 2004/07/30 14:45:05 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 2000, 2001 Free Software Foundation, Inc.
+/* Copyright (C) 2000, 2001, 2002 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.

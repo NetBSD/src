@@ -1,7 +1,7 @@
-/*	$NetBSD: env.cpp,v 1.1.1.1 2003/06/30 17:52:08 wiz Exp $	*/
+/*	$NetBSD: env.cpp,v 1.1.1.2 2004/07/30 14:44:54 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -22,7 +22,6 @@ with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "troff.h"
-#include "symbol.h"
 #include "dictionary.h"
 #include "hvunits.h"
 #include "env.h"
@@ -116,7 +115,8 @@ int pending_output_line::output()
   return 1;
 }
 
-void environment::output(node *nd, int no_fill, vunits vs, vunits post_vs,
+void environment::output(node *nd, int no_fill_flag,
+			 vunits vs, vunits post_vs,
 			 hunits width)
 {
 #ifdef WIDOW_CONTROL
@@ -134,29 +134,30 @@ void environment::output(node *nd, int no_fill, vunits vs, vunits post_vs,
 #endif /* WIDOW_CONTROL */
   if (!trap_sprung_flag && !pending_lines
 #ifdef WIDOW_CONTROL
-      && (!widow_control || no_fill)
+      && (!widow_control || no_fill_flag)
 #endif /* WIDOW_CONTROL */
       ) {
-    curdiv->output(nd, no_fill, vs, post_vs, width);
+    curdiv->output(nd, no_fill_flag, vs, post_vs, width);
     emitted_node = 1;
   } else {
     pending_output_line **p;
     for (p = &pending_lines; *p; p = &(*p)->next)
       ;
-    *p = new pending_output_line(nd, no_fill, vs, post_vs, width);
+    *p = new pending_output_line(nd, no_fill_flag, vs, post_vs, width);
   }
 }
 
 // a line from .tl goes at the head of the queue
 
-void environment::output_title(node *nd, int no_fill, vunits vs,
-			       vunits post_vs, hunits width)
+void environment::output_title(node *nd, int no_fill_flag,
+			       vunits vs, vunits post_vs,
+			       hunits width)
 {
   if (!trap_sprung_flag)
-    curdiv->output(nd, no_fill, vs, post_vs, width);
+    curdiv->output(nd, no_fill_flag, vs, post_vs, width);
   else
-    pending_lines = new pending_output_line(nd, no_fill, vs, post_vs, width,
-					    pending_lines);
+    pending_lines = new pending_output_line(nd, no_fill_flag, vs, post_vs,
+					    width, pending_lines);
 }
 
 void environment::output_pending_lines()
@@ -174,7 +175,8 @@ void environment::mark_last_line()
 {
   if (!widow_control || !pending_lines)
     return;
-  for (pending_output_line *p = pending_lines; p->next; p = p->next)
+  pending_output_line *p;
+  for (p = pending_lines; p->next; p = p->next)
     ;
   if (!p->no_fill)
     p->last_line = 1;
@@ -2148,7 +2150,7 @@ void environment::final_break()
  *                 the key troff commands
  */
 
-void environment::add_html_tag(int force, const char *name)
+void environment::add_html_tag(int force, const char *nm)
 {
   if (!force && (curdiv != topdiv))
     return;
@@ -2162,11 +2164,11 @@ void environment::add_html_tag(int force, const char *name)
       topdiv->begin_page();
     macro *m = new macro;
     m->append_str("html-tag:");
-    for (const char *p = name; *p; p++)
+    for (const char *p = nm; *p; p++)
       if (!invalid_input_char((unsigned char)*p))
 	m->append(*p);
     curdiv->output(new special_node(*m), 1, 0, 0, 0);
-    if (strcmp(name, ".nf") == 0)
+    if (strcmp(nm, ".nf") == 0)
       curenv->ignore_next_eol = 1;
   }
 }
@@ -2177,7 +2179,7 @@ void environment::add_html_tag(int force, const char *name)
  *                 of i.
  */
 
-void environment::add_html_tag(int force, const char *name, int i)
+void environment::add_html_tag(int force, const char *nm, int i)
 {
   if (!force && (curdiv != topdiv))
     return;
@@ -2191,7 +2193,7 @@ void environment::add_html_tag(int force, const char *name, int i)
       topdiv->begin_page();
     macro *m = new macro;
     m->append_str("html-tag:");
-    for (const char *p = name; *p; p++)
+    for (const char *p = nm; *p; p++)
       if (!invalid_input_char((unsigned char)*p))
 	m->append(*p);
     m->append(' ');
@@ -2245,7 +2247,7 @@ void environment::add_html_tag_tabs(int force)
   }
 }
 
-node *environment::make_html_tag(const char *name, int i)
+node *environment::make_html_tag(const char *nm, int i)
 {
   if (is_html) {
     /*
@@ -2256,7 +2258,7 @@ node *environment::make_html_tag(const char *name, int i)
       topdiv->begin_page();
     macro *m = new macro;
     m->append_str("html-tag:");
-    for (const char *p = name; *p; p++)
+    for (const char *p = nm; *p; p++)
       if (!invalid_input_char((unsigned char)*p))
 	m->append(*p);
     m->append(' ');
@@ -2266,7 +2268,7 @@ node *environment::make_html_tag(const char *name, int i)
   return 0;
 }
 
-node *environment::make_html_tag(const char *name)
+node *environment::make_html_tag(const char *nm)
 {
   if (is_html) {
     /*
@@ -2277,7 +2279,7 @@ node *environment::make_html_tag(const char *name)
       topdiv->begin_page();
     macro *m = new macro;
     m->append_str("html-tag:");
-    for (const char *p = name; *p; p++)
+    for (const char *p = nm; *p; p++)
       if (!invalid_input_char((unsigned char)*p))
 	m->append(*p);
     return new special_node(*m);
@@ -2285,7 +2287,7 @@ node *environment::make_html_tag(const char *name)
   return 0;
 }
 
-void environment::do_break(int spread)
+void environment::do_break(int do_spread)
 {
   if (curdiv == topdiv && topdiv->before_first_page) {
     topdiv->begin_page();
@@ -2297,7 +2299,7 @@ void environment::do_break(int spread)
     // this is so that hyphenation works
     line = new space_node(H0, get_fill_color(), line);
     space_total++;
-    possibly_break_line(0, spread);
+    possibly_break_line(0, do_spread);
   }
   while (line != 0 && line->discardable()) {
     width_total -= line->width();
@@ -2391,8 +2393,8 @@ void title()
     tem->next = n;
     n = tem;
   }
-  hunits title_length(curenv->title_length);
-  hunits f = title_length - part_width[1];
+  hunits length_title(curenv->title_length);
+  hunits f = length_title - part_width[1];
   hunits f2 = f/2;
   n = new hmotion_node(f2 - part_width[2], curenv->get_fill_color(), n);
   p = part[1];
@@ -2411,7 +2413,7 @@ void title()
     n = tem;
   }
   curenv->output_title(n, !curenv->fill, curenv->vertical_spacing,
-		       curenv->total_post_vertical_spacing(), title_length);
+		       curenv->total_post_vertical_spacing(), length_title);
   curenv->hyphen_line_count = 0;
   tok.next();
 }  
@@ -2861,25 +2863,25 @@ node *environment::make_tab_node(hunits d, node *next)
 void environment::handle_tab(int is_leader)
 {
   hunits d;
-  hunits abs;
+  hunits absolute;
   if (current_tab)
     wrap_up_tab();
   charinfo *ci = is_leader ? leader_char : tab_char;
   delete leader_node;
   leader_node = ci ? make_char_node(ci) : 0;
-  tab_type t = distance_to_next_tab(&d, &abs);
+  tab_type t = distance_to_next_tab(&d, &absolute);
   switch (t) {
   case TAB_NONE:
     return;
   case TAB_LEFT:
     add_node(make_tab_node(d));
-    add_node(make_html_tag("tab L", abs.to_units()));
+    add_node(make_html_tag("tab L", absolute.to_units()));
     return;
   case TAB_RIGHT:
-    add_node(make_html_tag("tab R", abs.to_units()));
+    add_node(make_html_tag("tab R", absolute.to_units()));
     break;
   case TAB_CENTER:
-    add_node(make_html_tag("tab C", abs.to_units()));
+    add_node(make_html_tag("tab C", absolute.to_units()));
     break;
   default:
     assert(0);
@@ -3093,6 +3095,16 @@ const char *environment::get_font_family_string()
   return family->nm.contents();
 }
 
+const char *environment::get_glyph_color_string()
+{
+  return glyph_color->nm.contents();
+}
+
+const char *environment::get_fill_color_string()
+{
+  return fill_color->nm.contents();
+}
+
 const char *environment::get_font_name_string()
 {
   symbol f = get_font_name(fontno, this);
@@ -3249,6 +3261,8 @@ void init_env_requests()
   init_int_env_reg(".L", get_line_spacing);
   init_hunits_env_reg(".l", get_line_length);
   init_hunits_env_reg(".ll", get_saved_line_length);
+  init_string_env_reg(".M", get_fill_color_string);
+  init_string_env_reg(".m", get_glyph_color_string);
   init_hunits_env_reg(".n", get_prev_text_length);
   init_int_env_reg(".ps", get_point_size);
   init_int_env_reg(".psr", get_requested_point_size);
@@ -3360,7 +3374,7 @@ static void hyphen_word()
 	  pos[npos++] = i;
       }
       else {
-	int c = ci->get_hyphenation_code();
+	unsigned char c = ci->get_hyphenation_code();
 	if (c == 0)
 	  break;
 	buf[i++] = c;
@@ -3663,7 +3677,8 @@ void hyphen_trie::read_patterns_file(const char *name, int append,
 	  c = hpf_getc(fp);
 	if (c == '{') {
 	  if (have_patterns || have_hyphenation)
-	    error("`{' not allowed inside of \\patterns or \\hyphenation");
+	    error("\\patterns not allowed inside of %1 group",
+		  have_patterns ? "\\patterns" : "\\hyphenation");
 	  else {
 	    have_patterns = 1;
 	    have_keyword = 1;
@@ -3677,7 +3692,8 @@ void hyphen_trie::read_patterns_file(const char *name, int append,
 	  c = hpf_getc(fp);
 	if (c == '{') {
 	  if (have_patterns || have_hyphenation)
-	    error("`{' not allowed inside of \\patterns or \\hyphenation");
+	    error("\\hyphenation not allowed inside of %1 group",
+		  have_patterns ? "\\patterns" : "\\hyphenation");
 	  else {
 	    have_hyphenation = 1;
 	    have_keyword = 1;
@@ -3705,8 +3721,17 @@ void hyphen_trie::read_patterns_file(const char *name, int append,
 	}
 	c = hpf_getc(fp);
       }
-      else if (c == '{')		// skipped if not starting \patterns
-	c = hpf_getc(fp);		// or \hyphenation
+      else if (c == '{') {
+	if (have_patterns || have_hyphenation)
+	  error("`{' not allowed within %1 group",
+		have_patterns ? "\\patterns" : "\\hyphenation");
+	c = hpf_getc(fp);		// skipped if not starting \patterns
+					// or \hyphenation
+      }
+    }
+    else {
+      if (c == '{' || c == '}')
+	c = hpf_getc(fp);
     }
     if (i > 0) {
       if (have_patterns || final_pattern || traditional) {

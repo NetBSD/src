@@ -19,13 +19,10 @@ Groff is free software.  See the file COPYING for copying permission.
 The file PROBLEMS describes various problems that have been encountered
 in compiling, installing, and running groff.
 
-For the moment, the documentation assumes that you are already familiar
-with the Unix versions of troff, -ms, and the preprocessors.
-
 The most recent released version of groff is always available by
 anonymous ftp from ftp.gnu.org in the directory pub/gnu/groff.
 
-A CVS repository is now available, containing the current development
+A CVS repository is available, containing the current development
 version of groff.  You can access it with the commands
 
   export CVSROOT=:pserver:anoncvs@anoncvs.ffii.org:/var/cvs
@@ -57,6 +54,11 @@ following to apply the diff file:
   cd groff-<version>
   gunzip -c ../groff-<version>-current.diff.gz | patch -p1
 
+Finally, it is possible to access the CVS with a browser by pointing it
+to
+
+  http://www.ffii.org/cgi-bin/viewcvs.cgi/groff
+
 Please report bugs using the form in the file BUG-REPORT; the idea of
 this is to make sure that FSF has all the information it needs to fix
 the bug.  At the very least, read the BUG-REPORT form and make sure
@@ -67,7 +69,7 @@ enable us to determine whether it really is a bug or not.
 Three mailing lists are available:
 
   bug-groff@gnu.org          for reporting bugs
-  groff@gnu.org              for general discussion of groff
+  groff@ffii.org             for general discussion of groff
   groff-commit@ffii.org      a read-only list showing logs of
                              commitments to the CVS repository
 
@@ -76,7 +78,10 @@ subscribed to the `groff' list to send mails.
 
 To subscribe, send a mail to <list>-request@<domain> (example:
 groff-request@ffii.org) with the word `subscribe' in either the subject
-or body of the email (don't include the quotes).
+or body of the email (don't include the quotes) or have a look at the
+groff mailing list web page at
+
+  http://ffii.org/mailman/listinfo/groff
 
 GNU groff was written by James Clark <jjc@jclark.com>.  It is now
 maintained by Ted Harding <ted.harding@nessie.mcc.ac.uk> and Werner

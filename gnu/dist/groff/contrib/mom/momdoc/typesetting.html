@@ -10,7 +10,7 @@
 <a href="goodies.html#TOP">Next</a>&nbsp;&nbsp;
 <a href="definitions.html#TOP">Prev</a>&nbsp;&nbsp;
 <a href="toc.html">Back to Table of Contents</a>
-
+<p>
 <a name="TOP"></a>
 <a name="MACROS_TYPESETTING">
 	<h1 align="center"><u>THE TYPESETTING MACROS</u></h1>
@@ -83,6 +83,7 @@
 		<li><a href="inlines.html#INDEX_INLINES">List of inline escapes</a>
 	</ul>
 </ul>
+<p>
 <hr>
 
 <h2><a name="INTRO_MACROS_TYPESETTING"><u>Introduction to the typesetting macros</u></a></h2>
@@ -113,7 +114,7 @@ friend's résumé, a poster for a lost dog -- none of these requires
 structured document processing (page headers, paragraphs, heads,
 footnotes, etc).  What they do demand is precise control over every
 element on the page.  The typesetting macros give you that control.
-<br>
+<p>
 <hr>
 
 <!====================================================================>
@@ -138,7 +139,7 @@ for a number of well-known, established paper sizes.  The
 <a href="#PAGE">PAGE</a>
 macro provides a convenient way of setting the page dimensions and
 some or all of the page margins with a single macro.
-<br>
+<p>
 
 <a name="INDEX_SETUP">
 	<h3><u>Page setup macros list</u></h3>
@@ -155,6 +156,7 @@ some or all of the page margins with a single macro.
 	<li><a href="#PAGE">PAGE</a> (page dimensions and margins all in one fell swoop)
 	<li><a href="#NEWPAGE">NEWPAGE</a> (start a new page)
 </ul>
+<p>
 
 <!---PAGEWIDTH--->
 
@@ -282,7 +284,7 @@ using the
 See
 <a href="typemacdoc.html#TYPESETTING">Typesetting Macros in Document Processing</a>
 for an explanation.
-<br>
+<p>
 
 <!---R_MARGIN--->
 
@@ -356,7 +358,7 @@ when you're using the
 See
 <a href="typemacdoc.html#TYPESETTING">Typesetting Macros in Document Processing</a>
 for an explanation.
-<br>
+<p>
 
 <!---T_MARGIN--->
 
@@ -371,7 +373,7 @@ Macro: <strong>T_MARGIN</strong> <var>&lt;top margin&gt;</var>
 <strong>T_MARGIN</strong> establishes the distance from the top of
 the printer sheet at which you want your type to start.  It requires
 a unit of measure, and decimal fractions are allowed.  To set a top
-margin of 2-1/2 centimeters, you'd enter
+margin of 2-1/2 centimetres, you'd enter
 <p>
 <pre>
 	.T_MARGIN 2.5c
@@ -408,7 +410,7 @@ slightly different when you're using the
 See
 <a href="typemacdoc.html#TB_MARGINS">Top and bottom margins in document processing</a>
 for an explanation.
-<br>
+<p>
 
 <!---B_MARGIN--->
 
@@ -449,7 +451,7 @@ slightly different when you're using the document processing macros.
 See
 <a href="typemacdoc.html#TB_MARGINS">Top and bottom margins in document processing</a>
 for an explanation.
-<br>
+<p>
 
 <!---PAGE--->
 
@@ -528,7 +530,7 @@ of the first line of text down by one linespace.  To compensate, do
 
 immediately before entering any text, or, if it's feasible, make
 <strong>PAGE</strong> the last macro you invoke prior to entering text.
-<br>
+<p>
 
 <!---NEWPAGE--->
 
@@ -547,7 +549,7 @@ processing the current page and move you to the top of a new one
 <strong>Experts:</strong> <strong>NEWPAGE</strong> is an alias of
 <strong>.bp</strong>.  You can use either, or mix 'n' match with
 impunity.
-<br>
+<p>
 <hr>
 
 <!====================================================================>
@@ -566,7 +568,7 @@ to the basic parameter macros remain in effect until you change them.
 The document processing macros handle things differently.  See
 <a href="typemacdoc.html#TYPESETTING">Typesetting Macros in Document Processing</a>
 for an explanation.
-<br>
+<p>
 
 <a name="INDEX_BASIC"><h3><u>Basic parameter macros list</u></h3></a>
 <ul>
@@ -632,7 +634,7 @@ GARAMOND then becomes a legal family name you can pass to
 <strong>FAMILY</strong>.  (You could, of course, shorten GARAMOND to just
 G, or GD.)  R, I, B, and BI after GARAMOND are the roman, italic,
 bold and bold-italic fonts respectively.
-<br>
+<p>
 
 <!---FT--->
 
@@ -672,7 +674,7 @@ family and font separate.
 <p>
 Fonts can also be changed inline.  See
 <a href="inlines.html#INLINE_FONTS_MOM">Inline Escapes, font control</a>.
-<br>
+<p>
 
 <!---PT_SIZE--->
 
@@ -714,7 +716,7 @@ then later reset it to 12 with
 
 The size of type can also be changed inline.  See
 <a href="inlines.html#INLINE_SIZE_MOM">Inline Escapes, changing point size</a>.
-<br>
+<p>
 
 <!---LS--->
 
@@ -767,7 +769,7 @@ then later reset it to 14 points with
 <strong>ls</strong>.  <strong>LS</strong> acts like <strong>vs</strong>.
 <strong>mom</strong> does not provide a macro analogous to
 <strong>ls</strong>.
-<br>
+<p>
 
 <!---AUTOLEAD--->
 
@@ -822,7 +824,7 @@ to 14, the leading automatically changes to 15.75 (14 x 1.125).
 <strong>NOTE:</strong> There's no need to prepend a plus sign (+)
 to <strong>AUTOLEAD</strong>'s argument, although you may do so if you
 wish.
-<br>
+<p>
 
 <!---LL--->
 
@@ -859,7 +861,7 @@ sets the line length to 4-1/2 inches.
 <strong>NOTE:</strong> The <a href="#R_MARGIN">right margin
 macro</a> (<strong>R_MARGIN</strong>) can also be used to set line
 length.
-<br>
+<p>
 <hr>
 
 <!====================================================================>
@@ -873,7 +875,7 @@ length.
 The justification and quadding macros deal with how type aligns along
 the left and right margins.  In a nutshell, type either aligns at the
 left margin, at the right margin, at both margins, or at neither margin
-(centered).
+(centred).
 <p>
 These macros also determine whether or not
 <a href="definitions.html#TERMS_INPUTLINE">input lines</a> are joined and
@@ -889,18 +891,18 @@ You may encounter some words here that are unfamiliar.  Refer to
 <a href="definitions.html#TERMS_GROFF">Groff terms</a> for an explanation.
 
 <a name="INDEX_JUST"><h3><u>Justification, quad, fill, and break macro list</u></h3></a>
-
+<p>
 <ul>
 	<li><strong>Fill modes</strong>
 	<ul>
 		<li><a href="#JUSTIFY">JUSTIFY</a> (set lines justified)
-		<li><a href="#QUAD">QUAD</a> (set filled lines flush left, right or centered)
+		<li><a href="#QUAD">QUAD</a> (set filled lines flush left, right or centred)
 	</ul>
 	<li><strong>Nofill modes</strong>
 	<ul>
 		<li><a href="#LRC">LEFT</a> (set non-filled lines flush left)
 		<li><a href="#LRC">RIGHT</a> (set non-filled lines flush right)
-		<li><a href="#LRC">CENTER</a> (set non-filled lines centered)
+		<li><a href="#LRC">CENTER</a> (set non-filled lines centred)
 	</ul>
 	<li><strong>Breaking lines</strong>
 	<ul>
@@ -935,12 +937,12 @@ upon output.
 To break lines and prevent them from being filled and justified,
 use the
 <a href="#BR">BR</a> macro.
-<br>
+<p>
 
 <!---QUAD--->
 
 <hr width="66%" align="left">
-<a name="QUAD"><h3><u>Quad lines left, right, or center</u></h3></a>
+<a name="QUAD"><h3><u>Quad lines left, right, or centre</u></h3></a>
 <br>
 Macro: <strong>QUAD</strong> <var>L | LEFT | R | RIGHT | C | CENTER | J | JUSTIFY</var>
 <br>
@@ -963,7 +965,7 @@ along the left margin.
 If <strong>R</strong> or <strong>RIGHT</strong>, type is
 set flush along the right margin.
 <p>
-If <strong>C</strong> or <strong>CENTER</strong> type is set centered
+If <strong>C</strong> or <strong>CENTER</strong> type is set centred
 on the current line length.
 <p>
 <strong>J</strong> and <strong>JUSTIFY</strong> justify text,
@@ -974,12 +976,12 @@ href="#JUSTIFY">JUSTIFY</a>.
 <p>
 To break lines and prevent them from being filled, use the
 <a href="#BR">BR</a> macro.
-<br>
+<p>
 
 <!---LEFT, RIGHT, CENTER--->
 
 <hr width="66%" align="left">
-<a name="LRC"><h3><u>Set non-filled lines flush left, right, or centered</u></h3></a>
+<a name="LRC"><h3><u>Set non-filled lines flush left, right, or centred</u></h3></a>
 <br>
 Macro: <strong>LEFT</strong>
 &nbsp;&nbsp;Macro: <strong>RIGHT</strong>
@@ -1029,7 +1031,7 @@ modes, groff does not always respect the current line length.
 that run long may exceed it, or get broken in undesirable ways.
 Therefore, when using these three macros, you should preview your
 work to ensure that all lines fit as expected.
-<br>
+<p>
 
 <!---BR--->
 
@@ -1069,7 +1071,7 @@ ALL macros cause a break.  If a break is not desired, use the
 <p>
 <strong>Experts: BR</strong> is an alias for <strong>br</strong>.
 You can use either, or mix 'n' match with impunity.
-<br>
+<p>
 
 <!---EL--->
 
@@ -1109,7 +1111,7 @@ get 24.  To demonstrate:
 	The next line of text.
 </pre>
 
-may be more instuitive than
+may be more intuitive than
 <p>
 <pre>
 	.LS 12.5
@@ -1140,16 +1142,17 @@ a line break that trips the trap (hey, I like that --
 <strong>mom</strong> can't recover.  She places the line after
 the <strong>EL</strong> on the next page.
 <p>
-If you need <strong>EL</strong> functionality on the last line of
-a page with a footer trap, turn the trap off with
-<a href="goodies.html#TRAP">TRAP</a>,
-as in this example:
+If you need <strong>EL</strong> functionality on the last line of a
+page that has a footer trap, turn the trap off by surrounding the
+line to be <strong>EL</strong>'d with
+<a href="goodies.html#TRAP">TRAP</a>
+requests, as in following example.
 <p>
 <pre>
-	3.
-	.TRAP OFF
-	.EL
-	.TRAP
+	.TRAP OFF  \" Turn trap off
+	3.		   \" Input the first line
+	.EL        \" Invoke EL...
+	.TRAP      \" ...and turn trap back on *before* inputting next line
 	\*[FP12]Establish, once and for all, if 42 really is the answer.
 </pre>
 
@@ -1167,7 +1170,7 @@ If you hadn't turned the trap off for <kbd>.EL</kbd>,
 &quot;3.&quot; would have appeared at the bottom of the page by
 itself, with &quot;Establish, once and for all...&quot;
 appearing at the top of the next page.
-<br>
+<p>
 
 <!---SP--->
 
@@ -1225,7 +1228,7 @@ after a line.
 <p>
 <strong>Experts: SPACE</strong> is an alias of <strong>sp</strong>.
 You can use either, or mix 'n' match with impunity.
-<br>
+<p>
 
 <!---SPREAD--->
 
@@ -1248,7 +1251,7 @@ and have it came out fully justified.
 <p>
 <strong>Experts: SPREAD</strong> is an alias for <strong>brp</strong>.
 You can use either, or mix 'n' match with impunity.
-<br>
+<p>
 
 <!---JOIN--->
 
@@ -1300,7 +1303,7 @@ words of the output line would read
 Please also note that had the example been in one of the
 <a href="definitions.html#TERMS_FILLED">fill modes</a>,
 there'd have been no need for the <strong>\c</strong>.  
-<br>
+<p>
 <hr>
 
 <!====================================================================>
@@ -1318,7 +1321,6 @@ ensuring that your documents look typographically professional.
 <a name="INDEX_REFINEMENTS">
 	<h3><u>Typographic refinements macro list</u></h3>
 </a>
-
 <ul>
 	<li><strong>Word and sentence spacing</strong>
 	<ul>
@@ -1412,7 +1414,7 @@ its groff default by entering
 This can be particularly useful if you've been playing around
 with plus and minus values, and can't remember by how much you
 have to in/decrease the word space to get it back to normal.
-<br>
+<p>
 
 <!---SS--->
 
@@ -1486,7 +1488,7 @@ school of typists that puts two spaces between sentences.  If you
 ignore this advice and use <strong>SS</strong> when you habitually
 put only one space between sentences, you risk producing output where
 the space between sentences is not equal.
-<br>
+<p>
 
 <!---HY--->
 
@@ -1514,8 +1516,6 @@ you can pass to <strong>HY</strong>, I've broken them down into
 separate sections.
 
 <h3><u>1. HY</u></h3>
-
-<p>
 <strong>HY</strong> by itself (i.e. with no argument) simply turns
 automatic hyphenation on.  Any argument other than <strong>LINES,
 MARGIN, SPACE</strong> or <strong>DEFAULT</strong>, turns automatic
@@ -1541,8 +1541,6 @@ you could turn <strong>HY</strong> off by entering
 </ol>
 
 <h3><u>2. HY LINES</u></h3>
-
-<p>
 <strong>HY LINES</strong> sets the maximum number of consecutive
 hyphenated lines that will appear in output copy.  2 is a very
 good choice, and you'd set it with
@@ -1561,8 +1559,6 @@ count when groff is figuring out how many lines to hyphenate;
 explicit hyphens do not.
 
 <h3><u>3. HY MARGIN</u></h3>
-
-<p>
 <strong>HY MARGIN</strong> sets the amount of room allowed at
 the end of a line before hyphenation is tripped (e.g. if there's
 only 6 points left at the end of a line, groff won't try to hyphenate
@@ -1585,8 +1581,6 @@ MARGIN</strong> requires a
 <a href="definitions.html#TERMS_UNITOFMEASURE">unit of measure</a>.
 
 <h3><u>4. HY SPACE</u></h3>
-
-<p>
 <strong>HY SPACE</strong> sets an amount of extra interword
 space that groff will <em>try</em> to put between words on a
 line in order to PREVENT hyphenation.  <strong>HY SPACE</strong>
@@ -1606,19 +1600,15 @@ value might be half a point, or one point, which you'd set with
 SPACE</strong> requires a
 <a href="definitions.html#TERMS_UNITOFMEASURE">unit of measure</a>.
 
-<h3><u>4. HY DEFAULT</u></h3>
-
-<p>
+<h3><u>5. HY DEFAULT</u></h3>
 <strong>HY DEFAULT</strong> resets automatic hyphenation to its
 default behaviour, cancelling any changes made with <strong>LINES,
 MARGIN,</strong> and/or <strong>SPACE</strong>.
 
 <h3><u>A note on hyphenation in general</u></h3>
-
-<p>
 Hyphenation is a necessary evil.  If it can be avoided, it should be.
 If it can't be, it should occur infrequently.  That's the reason for
-number of parameters you can set with <strong>HY</strong>.
+the number of parameters you can set with <strong>HY</strong>.
 
 <p>
 Furthermore, hyphenation in
@@ -1629,7 +1619,7 @@ on consecutive lines to achieve a pleasing, natural-looking rag.
 Since such adjustments are often too fussy for document
 processing, I recommend playing around with <strong>HY MARGIN</strong>
 a bit if your copy looks hyphen-heavy.
-<br>
+<p>
 
 <!---HY_SET--->
 
@@ -1678,7 +1668,7 @@ copy,
 </pre>
 
 is how you'd do it.
-<br>
+<p>
 
 <!---RW--->
 
@@ -1732,7 +1722,7 @@ cancel its effect (<code>.RW 0</code>) on those fonts, or reinvoked
 you can tell <strong>mom</strong> that's what you want by invoking the
 <a href="#BR_AT_LINE_KERN">BR_AT_LINE_KERN</a>
 toggle macro.
-<br>
+<p>
 
 <!---EW--->
 
@@ -1772,7 +1762,7 @@ assess the effect of <strong>EW</strong>.
 you can tell <strong>mom</strong> that's what you want by invoking the
 <a href="#BR_AT_LINE_KERN">BR_AT_LINE_KERN</a>
 toggle macro.
-<br>
+<p>
 
 <!---BR_AT_LINE_KERN--->
 
@@ -1819,7 +1809,7 @@ Kerning of individual character pairs can be controlled with the
 <a href="definitions.html#TERMS_INLINES">inline escapes</a>
 <strong>\*[BU #]</strong> and <strong>\*[FU #]</strong>.  See
 <a href="inlines.html#INLINE_KERNING_MOM">Inline Escapes, kerning</a>.
-<br>
+<p>
 
 <!---LIGATURES--->
 
@@ -1845,7 +1835,7 @@ Good Thing, hence <strong>mom</strong> has them on by default.
 ligature generation off.
 <p>
 <strong>NOTE:</strong> Not all fonts support ligatures.
-<br>
+<p>
 <hr>
 
 <!====================================================================>
@@ -1876,8 +1866,8 @@ type in a faked font look typographically cheap.
 <ul>
 	<li><strong>Pseudo italic</strong>
 	<ul>
-		<li><a href="#SETSLANT">SETSLANT</a> -- degree of pseudo-italicising
-		<li><a href="#SLANT_INLINE">\*[SLANT]</a> -- inline escape for pseudo-italicising type
+		<li><a href="#SETSLANT">SETSLANT</a> -- degree of pseudo-italicizing
+		<li><a href="#SLANT_INLINE">\*[SLANT]</a> -- inline escape for pseudo-italicizing type
 	</ul>
 	<li><strong>Pseudo bold</strong>
 	<ul>
@@ -1899,12 +1889,12 @@ type in a faked font look typographically cheap.
 <!---SETSLANT--->
 
 <hr width="66%" align="left">
-<a name="SETSLANT"><h3><u>Set degree of slant for pseudo-italicising</u></h3></a>
+<a name="SETSLANT"><h3><u>Set degree of slant for pseudo-italicizing</u></h3></a>
 <br>
 Macro: <strong>SETSLANT</strong> <var>&lt;degrees to slant type&gt; | RESET</var>
 
 <p>
-Pseudo-italicising of type is accomplished by slanting a roman font
+Pseudo-italicizing of type is accomplished by slanting a roman font
 a certain number of degrees to the right.  <strong>SETSLANT</strong>
 lets you fix the number of degrees.  <strong>Mom</strong>'s
 default is 15, which produces an acceptable approximation of an
@@ -1923,12 +1913,12 @@ to the <strong>mom</strong> default, do
 </pre>
 
 <strong>NOTE:</strong> By itself, <strong>SETSLANT</strong>
-will not start pseudo-italicising type; it merely tells
+will not start pseudo-italicizing type; it merely tells
 <strong>mom</strong> what degree of slant you want.  To start
-pseudo-italicising, use the
+pseudo-italicizing, use the
 <a href="definitions.html#TERMS_INLINES">inline escape</a>
 <strong>\*[SLANT]</strong>.
-<br>
+<p>
 
 <!---\*[SLANT]--->
 
@@ -1940,7 +1930,7 @@ Inline: <strong>\*[SLANT] -- turn pseudo-italic on</strong>
 Inline: <strong>\*[SLANTX] -- turn pseudo-italic off</strong>
 
 <p>
-<strong>\*[SLANT]</strong> begins pseudo-italicising type.
+<strong>\*[SLANT]</strong> begins pseudo-italicizing type.
 <strong>\*[SLANTX]</strong> turns the feature off.  Both are
 <a href="definitions.html#TERMS_INLINES">inline escapes</a>,
 therefore they should not appear as separate lines, but rather
@@ -1950,7 +1940,7 @@ be embedded in text lines, like this:
 	Not \*[SLANT]everything\*[SLANTX] is as it seems.
 </pre>
 
-Alternatively, if you wanted the whole line pseudo-italicised,
+Alternatively, if you wanted the whole line pseudo-italicized,
 you'd do
 <p>
 <pre>
@@ -1968,7 +1958,7 @@ with
 <strong>mom</strong> underlines pseudo-italics by default.  To
 change this behaviour, use the special macro
 <a href="docprocessing.html#SLANT_MEANS_SLANT">SLANT_MEANS_SLANT</a>.
-<br>
+<p>
 
 <!---SETBOLDER--->
 
@@ -2004,7 +1994,7 @@ will not start emboldening type; it merely tells
 To start emboldening, use the
 <a href="definitions.html#TERMS_INLINES">inline escape</a>
 <strong>\*[BOLDER]</strong>.
-<br>
+<p>
 
 <!---\*[BOLDER]--->
 
@@ -2043,7 +2033,7 @@ with
 <a href="docprocessing.html#PRINTSTYLE">PRINTSTYLE TYPEWRITE</a>,
 <strong>mom</strong> ignores <strong>\*[BOLDER]</strong>
 requests.
-<br>
+<p>
 
 <!---CONDENSE--->
 
@@ -2084,7 +2074,7 @@ is off (with
 <a href="#COND_INLINE">\*[CONDX]</a>)
 before before making any changes to the pseudo-condense percentage
 with <strong>CONDENSE</strong>.
-<br>
+<p>
 
 <!---\*[COND]--->
 
@@ -2127,7 +2117,7 @@ with
 <a href="docprocessing.html#PRINTSTYLE">PRINTSTYLE TYPEWRITE</a>,
 <strong>mom</strong> ignores <strong>\*[COND]</strong>
 requests.
-<br>
+<p>
 
 <!---EXTEND--->
 
@@ -2148,7 +2138,7 @@ to be extended.
 <strong>EXTEND</strong>, therefore you must set it before using the
 <a href="definitions.html#TERMS_INLINES">inline escape</a>
 <a href="#EXT_INLINE">\*[EXT]</a>.
-120 percent of the normal character width is a good value, and
+120% of the normal character width is a good value, and
 you'd set it like this:
 <p>
 <pre>
@@ -2169,7 +2159,7 @@ pseudo-extending is off (with
 <a href="#EXT_INLINE">\*[EXTX]</a>)
 before before making any changes to the pseudo-extend percentage
 with <strong>EXTEND</strong>.
-<br>
+<p>
 
 <!---\*[EXT]--->
 
@@ -2212,7 +2202,7 @@ with
 <a href="docprocessing.html#PRINTSTYLE">PRINTSTYLE TYPEWRITE</a>,
 <strong>mom</strong> ignores <strong>\*[EXT]</strong>
 requests.
-<br>
+<p>
 <hr>
 
 <!====================================================================>
@@ -2291,7 +2281,7 @@ way if you have set a top margin with
 <a href="#T_MARGIN">T_MARGIN</a>
 or
 <a href="#PAGE">PAGE</a>.
-<br>
+<p>
 
 <!---RLD--->
 
@@ -2328,7 +2318,7 @@ As the mnemonic (<strong>R</strong>dvance
 use <strong>RLD</strong> with
 <a href="definitions.html#TERMS_PICASPOINTS">points</a>
 of lead.
-<br>
+<p>
 <hr>
 
 <!====================================================================>
@@ -2345,26 +2335,32 @@ do with the tab key on your keyboard, and both are utterly
 divorced from groff's notion of tabs.  I recommend reading this
 section carefully in order to understand how
 <strong>mom</strong> handles tabs.
+<p>
+<strong>NOTE:</strong> see the section
+<a href="typemacdoc.html#TYPESETTING">Using typesetting macros during document processing</a>
+for re-assuring information on the use of tabs during
+<a href="docprocessing.html#DOCPROCESSING">document processing</a>.
+<p>
 
 <a name="TYPESETTING_TABS"><h3><u>Typesetting tabs</u></h3></a>
 <p>
 Typesetting tabs are defined by both an indent from the left margin and
 a line length.  This is quite different from typewriter-style tab stops
 (the groff norm) that only define the left indent.  In conjunction
-with the multi-column macros, typesetting tabs significantly facilitate
+with the
+<a href="#MULTI_COLUMNS">multi-column macros</a>,
+typesetting tabs significantly facilitate
 tabular and columnar work.
 <p>
-Typesetting tabs are created with the <strong>TAB_SET</strong>
+Typesetting tabs are created with the
+<a href="#TAB_SET">TAB_SET</a>
 macro. <strong>TAB_SET</strong> identifies the tab (by number),
 establishes its left indent and line length, and optionally sets
 a quad direction and fill mode.  After tabs have been created with
 <strong>TAB_SET</strong>, they can be called at any time with the
-<strong>TAB</strong> macro.
+<a href="#TAB">TAB</a>
+macro.
 <p>
-<strong>NOTE:</strong> see the section
-<a href="typemacdoc.html#TYPESETTING">Typesetting Macros in Document Processing</a>
-for information and advice on using tabs with the
-<a href="docprocessing.html#DOCPROCESSING">document processing macros</a>.
 
 <a name="TYPESETTING_TABS_TUT"><h3><u>Quickie tutorial on typesetting tabs</u></h3></a>
 <p>
@@ -2411,7 +2407,7 @@ You want the second tab (&quot;EVALUATION&quot;)
 <ul>
 	<li>to begin 8 picas from the left margin
 	<li>to have a length of 9 picas
-	<li>to be set centered.
+	<li>to be set centred.
 </ul>
 <br>
 You set it up like this:
@@ -2523,13 +2519,17 @@ tab 3 means you don't have to worry about the length of
 <strong>mom</strong>
 <a href="definitions.html#TERMS_FILLED">fills</a>
 the tab and sets the type flush left.
-
+<p>
 <a name="STRING_TABS"><h3><u>String tabs (autotabs)</u></h3></a>
 <p>
-String tabs let you mark off tab positions inline.  Left indents
-and line lengths are calculated from the beginning and end positions of
-the marks.  This is especially useful when tab indents and lengths
-need to be determined from the text that goes in each tab.
+String tabs let you mark off tab positions with
+<a href="definitions.html#TERMS_INLINES">inline escapes</a>
+embedded in
+<a href="definitions.html#TERMS_INPUTLINE">input lines</a>.
+Left indents and line lengths are calculated from the beginning and
+end positions of the marks.  This is especially useful when tab
+indents and lengths need to be determined from the text that goes in
+each tab.
 <p>
 Setting up string tabs is a two-step procedure.  First, you enter an
 input line in which you mark off where you want tabs to begin and end.
@@ -2550,10 +2550,10 @@ In combination with the
 macro and the groff inline escape
 <a href="inlines.html#INLINE_HORIZONTAL_GROFF">\h</a>
 (move horizontally across the page) or <strong>mom</strong>'s
-<a href="inlines.html#INLINE_HORIZONTAL_MOM">\*[FP#]</a>
-(Forward Points) inline, string tabs provide
+<a href="inlines.html#INLINE_HORIZONTAL_MOM">\*[FWD &lt;distance&gt;]</a>
+(move forward) inline, string tabs provide
 tremendous flexibility in setting up complex tab structures.
-
+<p>
 <a name="STRING_TABS_TUT"><h3><u>Quickie tutorial on string tabs</u></h3></a>
 <p>
 Say you want to set up tabs for the
@@ -2577,8 +2577,12 @@ The first thing you need for string tabs is an
 <a href="definitions.html#TERMS_INPUTLINE">input line</a>
 with tab positions marked on it.  Tabs are marked with the
 <a href="definitions.html#TERMS_INLINES">inline escapes</a>
-<strong>\*[ST#]</strong> and <strong>\*[ST#X]</strong>.  (In this
-example, we enclose the input line with the
+<a href="#ST_INLINE">\*[ST&lt;n&gt;]</a>
+and
+<a href="#ST_INLINE">\*[ST&lt;n&gt;X]</a>,
+where <strong>&lt;n&gt;</strong>
+is the number you want the tab to have.  (In this example, we
+enclose the input line with the
 <a href="goodies.html#SILENT">SILENT</a>
 macro so the line doesn't print.  We also use the
 <a href="goodies.html#PAD">PAD</a>
@@ -2589,7 +2593,7 @@ The setup looks like this:
 <p>
 <pre>
 	.SILENT
-	.PAD "\*[ST1]CRITERION\*[ST1X]\*[FP12]\*[ST2]EVALUATION\*[ST2X]\*[FP12]\*[ST3]#\*[ST3X]"
+	.PAD "\*[ST1]CRITERION\*[ST1X]\*[FWD 12p]\*[ST2]EVALUATION\*[ST2X]\*[FWD 12p]\*[ST3]#\*[ST3X]"
 	.SILENT OFF
 </pre>
 
@@ -2603,10 +2607,10 @@ Here's what it means when broken down into its component parts:
 		<kbd>\*[ST1]CRITERION\*[ST1X]</kbd>
 		<br>
 	<li>We want a 1 pica (12 points) gutter between tab 1 and 2,
-		so we insert 12 points of space with \*[FP12]
-		(<strong>F</strong>orward <strong>P</strong>oints 12):
+		so we insert 12 points of space with \*[FWD 12p]
+		(<strong>F</strong>or<strong>W</strong>ar<strong>D</strong> 12 points):
 		<p>
-		<kbd>\*[FP12]</kbd>
+		<kbd>\*[FWD 12p]</kbd>
 		<br>
 	<li>The longest line in tab 2 is &quot;EVALUATION&quot;, so
 		we enclose EVALUATION with begin/end markers for string
@@ -2615,9 +2619,9 @@ Here's what it means when broken down into its component parts:
 		<kbd>\*[ST2]EVALUATION\*[ST2X]</kbd>
 		<br>
 	<li>We want 1 pica (12 points) between tab 2 and 3, so we
-		insert 12 points of space with another \*[FP12]:
+		insert 12 points of space with another \*[FWD 12p]:
 		<p>
-		<kbd>\*[FP12]</kbd>
+		<kbd>\*[FWD 12p]</kbd>
 		<br>
 	<li>We want tab 3 to be as long as whatever space remains on
 		the current line length, so we enclose the
@@ -2656,7 +2660,7 @@ just like typesetting tabs (see
 <a href="#TYPESETTING_TABS_TUT">typesetting tabs tutorial</a>).
 <p>
 Here's the complete setup and entry for the sample employee
-evaluation form utilising string tabs.
+evaluation form utilizing string tabs.
 <p>
 <pre>
 	.PAGE 8.5i 11i 1i 1i 1i
@@ -2669,7 +2673,7 @@ evaluation form utilising string tabs.
 	.HY OFF
 	.SS 0
 	.SILENT
-	.PAD "\*[ST1]CRITERION\*[ST1X]\*[FP12]\*[ST2]EVALUATION\*[ST2X]\*[FP12]\*[ST3]#\*[ST3X]"
+	.PAD "\*[ST1]CRITERION\*[ST1X]\*[FWD 12p]\*[ST2]EVALUATION\*[ST2X]\*[FWD 12p]\*[ST3]#\*[ST3X]"
 	.SILENT OFF
 	.ST  1  L
 	.ST  2  L
@@ -2717,11 +2721,11 @@ it again.  You'll see that the tab structure remains identical (tab
 between tabs is still 1 pica), while the position and length 
 of the tabs have altered because of the new point size.
 <p>
-Now try increasing the gutters to 2 picas (put an additional
-<kbd>\*[FP12]</kbd> after each <kbd>\*[FP12]</kbd>).  Preview the
+Now try increasing the gutters to 2 picas (<kbd>\*[FWD 24p]</kbd> or
+<kbd>\*[FWD 2P]</kbd> instead of <kbd>\*[FWD 12p]</kbd>).  Preview the
 file again, and notice how the tab structure remains the same, but
 the gutters are wider.
-
+<p>
 
 <a name="INDEX_TABS">
 	<h3><u>Tabs macro list</u></h3>
@@ -2739,7 +2743,7 @@ the gutters are wider.
 <!---TAB_SET--->
 
 <hr width="66%" align="left">
-	<a name="TAB_SET"><h3><u>Set up typsetting tabs</u></h3></a>
+	<a name="TAB_SET"><h3><u>Set up typesetting tabs</u></h3></a>
 <br>
 Macro: <strong>TAB_SET</strong> <var>&lt;tab number&gt; &lt;indent&gt; &lt;length&gt;  L | R | C | J [ QUAD ]</var>
 <br>
@@ -2761,7 +2765,7 @@ four required arguments:
 	<li>a direction
 </ul>
 <br>
-To set up a centered tab 6 picas long and 9 points from the left
+To set up a centred tab 6 picas long and 9 points from the left
 margin, you'd enter
 <p>
 <pre>
@@ -2774,7 +2778,7 @@ need to set up tabs in numerical sequence.
 <p>
 By default, tabs are in
 <a href="definitions.html#TERMS_NOFILL">nofill</a>
-mode, meaning you can enter text in tabs on a line for line basis
+mode, meaning you can enter text in tabs on a line-for-line basis
 without having to use the
 <a href="#BR">BR</a>
 macro.  If you want a tab to be
@@ -2816,7 +2820,7 @@ up a tab structure within the confines of an existing tab).
 <a href="#INDENTS">Indents</a>)
 before setting up tabs with <strong>TAB_SET</strong>, or
 <strong>mom</strong> may get confused.
-<br>
+<p>
 
 <!---INLINE_ST--->
 
@@ -2870,7 +2874,7 @@ a line that is broken with
 <strong>Mom</strong> calculates string tab positions and lengths
 as she reads the input line, not after the line has undergone
 manipulations to the word spacing.
-<br>
+<p>
 
 <!---ST--->
 
@@ -2911,7 +2915,7 @@ If you want it to be justified, enter
 See the
 <a href="#STRING_TABS_TUT">Quickie tutorial on string tabs</a>
 for a full explanation of setting up string tabs.
-<br>
+<p>
 
 <!---TAB--->
 
@@ -2980,7 +2984,7 @@ If you were happily zipping down the page with a left indent of 2
 picas turned on, and you call a tab whose indent from the left margin
 is 6 picas, your new distance from the left margin will be 6 picas,
 not 6 picas plus the 2 pica indent.
-<br>
+<p>
 
 <!---TN--->
 
@@ -2997,23 +3001,51 @@ sequence (tab n+1) without advancing on the page.  See the
 in the description of the <strong>TAB</strong> macro for an
 example of how <strong>TN</strong> works.
 <p>
-<strong>NOTE:</strong> <strong>TN</strong> is like
+<strong>NOTE:</strong> You <em>must</em> put text in the
+<a href="definitions.html#TERMS_INPUTLINE">input line</a>
+immediately after <strong>TN</strong>. &quot;Stacking&quot; of
+<strong>TN</strong>'s is not allowed.  In other words, you cannot
+do
+<p>
+<pre>
+	.TAB 1
+	Some text
+	.TN
+	Some more text
+	.TN
+	.TN
+	Yet more text
+</pre>
+
+The above example, assuming tabs numbered from 1 to 4, should be entered
+<p>
+<pre>
+	.TAB 1
+	Some text
+	.TN
+	Some more text
+	.TAB 4
+	Yet more text
+</pre>
+<p>
+<strong>ADDITIONAL NOTE:</strong> <strong>TN</strong> is like
 <a href="#EL">EL</a>
 in that it doesn't work as advertised on the last line before a
-footer trap is sprung.  If you need to use <strong>TN</strong>
-on the last line of a page with a footer trap, turn the trap off with
+footer trap is sprung.  If you need to use <strong>TN</strong> on
+the last line of a page that has a footer trap, turn the trap off by
+surrounding the line to be <strong>TN</strong>'d with
 <a href="goodies.html#TRAP">TRAP</a>,
-as in this example:
+requests, as in the following example.
 <p>
 <pre>
 	.TAB_SET 1 0  1P  L
 	.TAB_SET 2 1P 20P L
 	.TAB 1
-	.TRAP OFF
-	1.
-	.TN
+	.TRAP OFF  \" Turn trap off
+	1.         \" Input the first line
+	.TN        \" Invoke TN...
+	.TRAP      \" ...and turn trap back on *before* inputting next line
 	The first rule of survival is &quot;make and keep good friends.&quot;
-	.TRAP
 </pre>
 
 The above, at the bottom of a page, will look something like this:
@@ -3026,7 +3058,7 @@ If you hadn't turned the trap off before <kbd>.TN</kbd>,
 &quot;1.&quot; would have appeared as the last line on the page,
 with &quot;The first rule of survival...&quot; being the first
 line on the next page.
-<br>
+<p>
 
 <!---TQ--->
 
@@ -3042,7 +3074,7 @@ advances 1 linespace, and restores the left margin, line length,
 quad direction and
 <a href="definitions.html#TERMS_FILLED">fill mode</a>
 that were in effect prior to invoking any tabs.
-<br>
+<p>
 <hr>
 
 <!====================================================================>
@@ -3123,7 +3155,7 @@ the
 <a href="docprocessing.html#COLUMNS">COLUMNS</a>
 macro in the
 <a href="docprocessing.html#DOCPROCESSING">document processing macros</a>.
-
+<p>
 <a name="INDEX_MULTI_COLUMNS">
 	<h3><u>Columns macro list</u></h3>
 </a>
@@ -3158,7 +3190,7 @@ the
 <a href="docprocessing.html#COLUMNS">COLUMNS</a>
 macro in the
 <a href="docprocessing.html#DOCPROCESSING">document processing macros</a>.
-<br>
+<p>
 
 <!---MCR--->
 
@@ -3173,7 +3205,7 @@ Once you've turned multi-columns on (with
 <a href="#MCO">MCO</a>),
 <strong>MCR</strong>, at any time, returns you to the top of
 your columns.
-<br>
+<p>
 
 <!---MCX--->
 
@@ -3198,7 +3230,7 @@ invoked.</em>
 <p>
 If you pass the <var>&lt;distance&gt;</var> argument to
 <strong>MCX</strong>, it advances 1 linespace below the longest
-column (see above) PLUS the distance specified by the argumemnt.
+column (see above) PLUS the distance specified by the argument.
 The argument requires a unit of measure; therefore, to advance
 an extra 6 points below where <strong>MCX</strong> would
 normally place you, you'd enter
@@ -3223,7 +3255,7 @@ macro, like this:
 
 The above advances to precisely 24 points below the baseline
 of the longest column.
-<br>
+<p>
 <hr>
 
 <!====================================================================>
@@ -3240,7 +3272,7 @@ provides temporary left indents (i.e. only one line is indented,
 as at the start of a paragraph) and &quot;hanging&quot; left indents
 (the reverse of a temporary indent; the first line isn't indented,
 subsequent lines are).
-
+<p>
 <a name="INDENTS_TUT"><h3><u>A brief explanation of how mom handles indents</u></h3></a>
 <p>
 <strong>Mom</strong> provides five kinds of indents: left, right,
@@ -3373,7 +3405,7 @@ picas and control each separately, as in the following example.
 	More text  \"Text is still indented 4 picas left
 </pre>
 
-If, at <kbd>.IRX</kbd>, you wanted the text afterward to have no
+If, at <kbd>.IRX</kbd>, you wanted the text afterwards to have no
 indents (either left or right), you would enter <kbd>.IQ</kbd>,
 which exits all indent styles at once.
 <p>
@@ -3388,9 +3420,9 @@ at which they excel.
 <p>
 <strong>NOTE:</strong> see the section
 <a href="typemacdoc.html#TYPESETTING">Typesetting Macros in Document Processing</a>
-for information and advice on using idents with the
+for information and advice on using indents with the
 <a href="docprocessing.html#DOCPROCESSING">document processing macros</a>.
-
+<p>
 <a name="INDEX_INDENTS"><h3><u>Indents macro list</u></h3>
 <ul>
 	<li><a href="#IL">IL</a>&nbsp;&nbsp;(Indent left)
@@ -3447,8 +3479,8 @@ for more details.
 automatically cancels any active indents.
 <p>
 <strong>ADDITIONAL NOTE:</strong> Invoking <strong>IL</strong>
-automtically turns off <strong>IB</strong>.
-<br>
+automatically turns off <strong>IB</strong>.
+<p>
 
 <!---IR--->
 
@@ -3468,7 +3500,7 @@ measure.  Subsequent invocations with a measure add to the previous
 indent measure.  A minus sign may be prepended to the argument to
 subtract from the current indent measure.  The
 <a href="inlines.html#INLINE_STRINGWIDTH_GROFF">\w</a>
-<a href="definitions.html#TERMS_INLINES">inline esacpe</a>
+<a href="definitions.html#TERMS_INLINES">inline escape</a>
 may be used to specify a text-dependent measure, in which case
 no unit of measure is required.  For example,
 <p>
@@ -3488,8 +3520,8 @@ for more details.
 automatically cancels any active indents.
 <p>
 <strong>ADDITIONAL NOTE:</strong> Invoking <strong>IR</strong>
-automtically turns off <strong>IB</strong>.
-<br>
+automatically turns off <strong>IB</strong>.
+<p>
 
 <!---IB--->
 
@@ -3519,12 +3551,12 @@ save yourself a lot of grief.
 A minus sign may be prepended to the arguments to subtract from their
 current values.  The
 <a href="inlines.html#INLINE_STRINGWIDTH_GROFF">\w</a>
-<a href="definitions.html#TERMS_INLINES">inline esacpe</a>
+<a href="definitions.html#TERMS_INLINES">inline escape</a>
 may be used to specify text-dependent measures, in which case
 no unit of measure is required.  For example,
 <p>
 <pre>
-	.IB \w'margaraine' \w'jello'
+	.IB \w'margarine' \w'jello'
 </pre>
 
 left indents text by the width of the word &quot;margarine&quot;
@@ -3540,9 +3572,9 @@ for more details.
 automatically cancels any active indents.
 <p>
 <strong>ADDITIONAL NOTE:</strong> Invoking <strong>IB</strong>
-automtically turns off <strong>IL</strong> and
+automatically turns off <strong>IL</strong> and
 <strong>IR</strong>.
-<br>
+<p>
 
 <!---TI--->
 
@@ -3555,7 +3587,7 @@ Macro: <strong>TI</strong> <var>[ &lt;measure&gt; ]</var>
 
 <p>
 A temporary indent is one that applies only to the first line of
-text that comes after it.  It's chief use is indenting the first
+text that comes after it.  Its chief use is indenting the first
 line of paragraphs.  (<strong>Mom</strong>'s
 <a href="docprocessing.html#PP">PP</a>
 macro, for example, uses a temporary indent.)
@@ -3639,10 +3671,15 @@ prior to the line you want hung (i.e. without any intervening
 <a href="definitions.html#TERMS_CONTROLLINES">control lines</a>).
 And because hanging indents affect only one line, there's no need to turn
 them off.
-
+<p>
 <a name="NUM_LISTS"><h3><u>A recipe for numbered lists</u></h3></a>
 <p>
-A common use for hanging indents is setting numbered lists.
+<strong>PLEASE NOTE: mom</strong> now has macros for setting lists (see
+<a href="docelement.html#LIST_INTRO">Nested lists</a>),
+making this recipe superfluous.  It remains here in the hope that
+it will clarify the use of hanging indents generally, if no longer
+specifically.
+<p>
 Consider the following example:
 <p>
 <pre>
@@ -3678,7 +3715,7 @@ of 2
 plus a period (using the
 <a href="inlines.html#INLINE_STRINGWIDTH_GROFF">\w</a>
 inline escape).  At this point, the left indent is active; text
-afterward would normally be indented.  However, we invoke a hanging
+afterwards would normally be indented.  However, we invoke a hanging
 indent of exactly the same width, which hangs the first line (and
 first line only!) to the left of the indent by the same distance
 (in this case, that means &quot;out to the left margin&quot;).
@@ -3697,7 +3734,7 @@ Paste the example above into a file and preview it with <kbd>groff -mom -X
 <strong>IB</strong>, measures given to <strong>HI</strong>
 are NOT additive.  Each time you pass a measure to
 <strong>HI</strong>, the measure is treated literally.
-<br>
+<p>
 
 <!---IX--->
 
