@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.41 1998/07/04 22:18:37 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.42 1998/09/07 19:54:15 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.41 1998/07/04 22:18:37 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.42 1998/09/07 19:54:15 mhitch Exp $");
 
 #include "opt_ddb.h"
 
@@ -529,7 +529,7 @@ sccattach(parent, self, aux)
 		    sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
 
 		/* Wire carrier for console. */
-		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
+		sc->scc_softCAR |= 1 << SCCLINE(cn_tab->cn_dev);
 		scc_tty_init(sc, cn_tab->cn_dev);
 
 		DELAY(20000);
