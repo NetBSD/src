@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv.c,v 1.5 2004/12/21 08:07:41 yamt Exp $	*/
+/*	$NetBSD: citrus_iconv.c,v 1.6 2004/12/30 05:03:48 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv.c,v 1.5 2004/12/21 08:07:41 yamt Exp $");
+__RCSID("$NetBSD: citrus_iconv.c,v 1.6 2004/12/30 05:03:48 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -107,7 +107,7 @@ lookup_iconv_entry(const char *curdir, const char *key,
 	char *p, path[PATH_MAX];
 
 	/* iconv.dir path */
-	snprintf(path, PATH_MAX, "%s/" _CITRUS_ICONV_DIR, curdir);
+	snprintf(path, (size_t)PATH_MAX, "%s/" _CITRUS_ICONV_DIR, curdir);
 
 	/* lookup db */
 	cp = p = _lookup_simple(path, key, linebuf, linebufsize,
@@ -336,11 +336,13 @@ _citrus_iconv_open(struct _citrus_iconv * __restrict * __restrict rcv,
 	/* resolve codeset name aliases */
 	snprintf(path, sizeof(path), "%s/%s", basedir, _CITRUS_ICONV_ALIAS);
 	strlcpy(realsrc,
-		_lookup_alias(path, src, buf, PATH_MAX, _LOOKUP_CASE_IGNORE),
-		PATH_MAX);
+		_lookup_alias(path, src, buf, (size_t)PATH_MAX,
+		_LOOKUP_CASE_IGNORE),
+		(size_t)PATH_MAX);
 	strlcpy(realdst,
-		_lookup_alias(path, dst, buf, PATH_MAX, _LOOKUP_CASE_IGNORE),
-		PATH_MAX);
+		_lookup_alias(path, dst, buf, (size_t)PATH_MAX,
+		_LOOKUP_CASE_IGNORE),
+		(size_t)PATH_MAX);
 
 	/* sanity check */
 	if (strchr(realsrc, '/') != NULL || strchr(realdst, '/'))
