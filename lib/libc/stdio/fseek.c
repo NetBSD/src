@@ -32,19 +32,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00109
- * --------------------         -----   ----------------------
- *
- * 02 Mar 93    Branko Lankester	Update internal buffer pointer
- *
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)fseek.c	5.7 (Berkeley) 2/24/91";*/
-static char rcsid[] = "$Id: fseek.c,v 1.3 1993/08/01 18:38:55 mycroft Exp $";
+static char rcsid[] = "$Id: fseek.c,v 1.4 1993/08/02 18:18:06 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

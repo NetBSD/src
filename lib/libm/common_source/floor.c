@@ -29,20 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00068
- * --------------------         -----   ----------------------
- *
- * 17 Dec 1992	Karl Lehenbauer 	Removed defines for rint() to
- *					add it's use in 386BSD.
  */
-  static char rcsid[] = "$Header: /cvsroot/src/lib/libm/common_source/Attic/floor.c,v 1.3 1993/08/01 18:34:45 mycroft Exp $";
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)floor.c	5.7 (Berkeley) 10/9/90";*/
-static char rcsid[] = "$Id: floor.c,v 1.3 1993/08/01 18:34:45 mycroft Exp $";
+static char rcsid[] = "$Id: floor.c,v 1.4 1993/08/02 18:17:53 mycroft Exp $";
 #endif /* not lint */
 
 #include "mathimpl.h"

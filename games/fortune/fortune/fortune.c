@@ -32,13 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       90001
- * --------------------         -----   ----------------------
- *
- * 29 Sep 92	Terry Lambert		Fixed bogus "pat" on NO_REGEX
  */
 
 #ifndef lint
@@ -49,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fortune.c	5.13 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: fortune.c,v 1.5 1993/08/01 18:54:48 mycroft Exp $";
+static char rcsid[] = "$Id: fortune.c,v 1.6 1993/08/02 18:22:46 mycroft Exp $";
 #endif /* not lint */
 
 # include	<machine/endian.h>
