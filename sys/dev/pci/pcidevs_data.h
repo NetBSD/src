@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.134 1999/06/05 10:42:16 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.135 1999/06/18 04:55:27 tsubai Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.129 1999/06/05 10:41:37 tron Exp 
+ *	NetBSD: pcidevs,v 1.130 1999/06/18 04:54:06 tsubai Exp 
  */
 
 /*
@@ -499,7 +499,49 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
 	    0,
 	    "Apple Computer",
-	    "PCI Controller",
+	    "Bandit Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GC,
+	    0,
+	    "Apple Computer",
+	    "Grand Central I/O Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_CONTROL,
+	    0,
+	    "Apple Computer",
+	    "Control",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PLANB,
+	    0,
+	    "Apple Computer",
+	    "PlanB",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_OHARE,
+	    0,
+	    "Apple Computer",
+	    "OHare I/O Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT2,
+	    0,
+	    "Apple Computer",
+	    "Bandit Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_HEATHROW,
+	    0,
+	    "Apple Computer",
+	    "MAC-IO I/O Controller (Heathrow)",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PADDINGTON,
+	    0,
+	    "Apple Computer",
+	    "MAC-IO I/O Controller (Paddington)",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -1766,6 +1808,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Matrox",
 	    "MGA G100 AGP",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC106,
+	    0,
+	    "Motorola",
+	    "MPC106 Host-PCI Bridge (grackle)",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
