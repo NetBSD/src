@@ -19,14 +19,18 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.1 1993/11/29 00:32:43 briggs Exp $
+ * $Id: if_ae.c,v 1.2 1993/12/15 03:38:20 briggs Exp $
  */
 
 /*
  * Modification history
  *
  * $Log: if_ae.c,v $
- * Revision 1.1  1993/11/29 00:32:43  briggs
+ * Revision 1.2  1993/12/15 03:38:20  briggs
+ * Get rid of IFF_ALTPHYS and hence IFF_LLC0 reference.  It doesn't appear
+ * to have been used in this driver ;-)
+ *
+ * Revision 1.1  1993/11/29  00:32:43  briggs
  * Update to current work in progress.  This includes an update to
  * use config.new.
  * Numerous updates to console so it works better on the SE/30 screen.
@@ -74,11 +78,6 @@
 
 #include "device.h"
 #include "if_aereg.h"
-
-/* For backwards compatibility */
-#ifndef IFF_ALTPHYS
-#define IFF_ALTPHYS IFF_LLC0
-#endif
 
 /*
  * ae_softc: per line info and status
