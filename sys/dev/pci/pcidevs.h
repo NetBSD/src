@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.495 2002/12/26 01:52:00 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.496 2002/12/26 20:53:18 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.492 2002/12/26 01:51:27 matt Exp 
+ *	NetBSD: pcidevs,v 1.493 2002/12/26 20:52:58 matt Exp 
  */
 
 /*
@@ -1827,6 +1827,7 @@
 #define	PCI_PRODUCT_PROLAN_NE2KETHER	0x1980		/* Ethernet */
 
 /* Promise products */
+#define	PCI_PRODUCT_PROMISE_SATA150TX2PLUS	0x3376		/* Serial ATA/150 TX2plus Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_DC5030	0x5300		/* DC5030 */
 #define	PCI_PRODUCT_PROMISE_ULTRA33	0x4d33		/* Ultra33/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_ULTRA66	0x4d38		/* Ultra66/ATA Bus Master IDE Accelerator */
