@@ -11,7 +11,7 @@ CLEANFILES+=dumprmt.o rtape.o rrestore
 all: rrestore
 
 rrestore: ${ROBJS} ${LIBC}
-	${CC} ${STRIP} ${CFLAGS} -o ${.TARGET} ${.CURDIR}/${ROBJS} ${LDADD}
+	${CC} ${LDFLAGS} -o ${.TARGET} ${ROBJS} ${LDADD}
 
 rtape.o: tape.c ${LIBC}
 	${CC} ${CFLAGS} -c -DRRESTORE ${.CURDIR}/tape.c -o ${.TARGET}
