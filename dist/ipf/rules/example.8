@@ -1,0 +1,11 @@
+#	$NetBSD: example.8,v 1.1.1.1.2.2 1999/12/20 21:01:57 he Exp $
+#
+# block all incoming TCP connections but send back a TCP-RST for ones to
+# the ident port
+#
+block in proto tcp from any to any flags S/SA
+block return-rst in quick proto tcp from any to any port = 113 flags S/SA
+#
+# block all inbound UDP packets and send back an ICMP error.
+#
+block return-icmp in proto udp from any to any
