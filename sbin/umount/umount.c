@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)umount.c	5.16 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: umount.c,v 1.4 1993/08/01 18:23:43 mycroft Exp $";
+static char rcsid[] = "$Id: umount.c,v 1.5 1993/12/05 13:44:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -281,6 +281,7 @@ umountfs(name, typelist)
 #ifdef	NFS
 	if (!fake && hp != NULL && (fflag & MNT_FORCE) == 0) {
 		*delimp = '\0';
+		bzero((char *)&saddr, sizeof saddr);
 		bcopy(hp->h_addr,(caddr_t)&saddr.sin_addr,hp->h_length);
 		saddr.sin_family = AF_INET;
 		saddr.sin_port = 0;
