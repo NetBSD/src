@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.119 1999/06/30 18:42:03 ross Exp $
+#	$NetBSD: Makefile,v 1.120 1999/07/02 09:28:16 itojun Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -92,6 +92,9 @@ BIN1+=	aliases bootptab changelist csh.cshrc csh.login \
 	(${MACHINE_ARCH} == "arm32")
 BIN1+=	ld.so.conf
 .endif
+
+# IPv6
+BIN1+=	rtadvd.conf
 
 # -rw-rw-r--
 BIN2+=	motd
