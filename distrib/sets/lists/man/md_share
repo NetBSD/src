@@ -168,6 +168,8 @@
 ./usr/share/man/cat4/vax/vp.0
 ./usr/share/man/cat4/vax/vv.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
+./usr/share/man/cat8/amiga/boot.0
+./usr/share/man/cat8/amiga/installboot.0
 ./usr/share/man/cat8/amiga/makedev.0
 ./usr/share/man/cat8/arm32/MAKEDEV.0
 ./usr/share/man/cat8/arm32/makedev.0
