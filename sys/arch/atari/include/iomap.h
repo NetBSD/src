@@ -1,4 +1,4 @@
-/*	$NetBSD: iomap.h,v 1.7 1999/12/06 16:06:41 leo Exp $	*/
+/*	$NetBSD: iomap.h,v 1.8 2000/01/06 12:15:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -89,7 +89,7 @@ vaddr_t	pci_mem_addr;		/* KVA base of PCI mem-space		*/
 #define	AD_RTC		(AD_STIO + 0x0960)	/* TT realtime clock	*/
 #define	AD_SCC		(AD_STIO + 0x0C80)	/* SCC 8530		*/
 #define	AD_SCU		(AD_STIO + 0x0E00)	/* System Control Unit	*/
-
+#define	AD_CFG_SWITCH	(AD_STIO + 0x1200)	/* Config switches	*/
 #define	AD_MFP		(AD_STIO + 0x7A00)	/* 68901		*/
 #define	AD_MFP2		(AD_STIO + 0x7A80)	/* 68901-TT		*/
 #define	AD_ACIA		(AD_STIO + 0x7C00)	/* 2 * 6850		*/
