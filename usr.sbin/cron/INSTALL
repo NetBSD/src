@@ -15,7 +15,7 @@
  * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
  */
 
-$Id: INSTALL,v 1.1.1.2 1994/01/12 18:34:24 jtc Exp $
+$Id: INSTALL,v 1.1.1.3 1994/01/20 02:46:53 jtc Exp $
 
 Read the comments at the top of the Makefile, then edit the area marked
 'configurable stuff'.

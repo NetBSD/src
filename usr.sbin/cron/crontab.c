@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.1.1.3 1994/01/12 18:37:20 jtc Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.1.1.4 1994/01/20 02:47:18 jtc Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -44,29 +44,30 @@ static char rcsid[] = "$Id: crontab.c,v 1.1.1.3 1994/01/12 18:37:20 jtc Exp $";
 #endif
 
 
+#define NHEADER_LINES 3
+
+
+enum opt_t	{ opt_unknown, opt_list, opt_delete, opt_edit, opt_replace };
+
+#if DEBUGGING
+static char	*Options[] = { "???", "list", "delete", "edit", "replace" };
+#endif
+
+
 static	PID_T		Pid;
 static	char		User[MAX_UNAME], RealUser[MAX_UNAME];
 static	char		Filename[MAX_FNAME];
 static	FILE		*NewCrontab;
 static	int		CheckErrorCount;
-static	enum	{ opt_unknown, opt_list, opt_delete, opt_edit, opt_replace }
-			Option;
+static	enum opt_t	Option;
 static	struct passwd	*pw;
 static	void		list_cmd __P((void)),
 			delete_cmd __P((void)),
 			edit_cmd __P((void)),
-			replace_cmd __P((void)),
 			poke_daemon __P((void)),
 			check_error __P((char *)),
 			parse_args __P((int c, char *v[]));
-
-
-#define NHEADER_LINES 3
-
-
-#if DEBUGGING
-static char	*Options[] = { "???", "list", "delete", "edit", "replace" };
-#endif
+static	int		replace_cmd __P((void));
 
 
 static void
@@ -89,6 +90,8 @@ main(argc, argv)
 	int	argc;
 	char	*argv[];
 {
+	int	exitstatus;
+
 	Pid = getpid();
 	ProgramName = argv[0];
 
@@ -110,15 +113,16 @@ main(argc, argv)
 		log_it(RealUser, Pid, "AUTH", "crontab command not allowed");
 		exit(ERROR_EXIT);
 	}
-	switch (Option)
-	{
+	exitstatus = OK_EXIT;
+	switch (Option) {
 	case opt_list:		list_cmd();
 				break;
 	case opt_delete:	delete_cmd();
 				break;
 	case opt_edit:		edit_cmd();
 				break;
-	case opt_replace:	replace_cmd();
+	case opt_replace:	if (replace_cmd() < 0)
+					exitstatus = ERROR_EXIT;
 				break;
 	}
 	exit(0);
@@ -281,14 +285,14 @@ static void
 check_error(msg)
 	char	*msg;
 {
-	CheckErrorCount += 1;
-	fprintf(stderr, "\"%s\", line %d: %s\n", Filename, LineNumber, msg);
+	CheckErrorCount++;
+	fprintf(stderr, "\"%s\":%d: %s\n", Filename, LineNumber-1, msg);
 }
 
 
 static void
 edit_cmd() {
-	char		n[MAX_FNAME], *editor;
+	char		n[MAX_FNAME], q[MAX_TEMPSTR], *editor;
 	FILE		*f;
 	int		ch, t, x;
 	struct stat	statbuf;
@@ -297,7 +301,6 @@ edit_cmd() {
 	PID_T		pid, xpid;
 
 	log_it(RealUser, Pid, "BEGIN EDIT", User);
-	NewCrontab = NULL;
 	(void) sprintf(n, CRON_TAB(User));
 	if (!(f = fopen(n, "r"))) {
 		if (errno != ENOENT) {
@@ -313,7 +316,7 @@ edit_cmd() {
 	}
 
 	(void) sprintf(Filename, "/tmp/crontab.%d", Pid);
-	if (-1 == (t = open(Filename, O_CREAT|O_EXCL|O_RDWR, 0700))) {
+	if (-1 == (t = open(Filename, O_CREAT|O_EXCL|O_RDWR, 0600))) {
 		perror(Filename);
 		goto fatal;
 	}
@@ -355,12 +358,16 @@ edit_cmd() {
 		while (EOF != (ch = get_char(f)))
 			putc(ch, NewCrontab);
 	fclose(f);
-	fflush(NewCrontab);  rewind(NewCrontab);
+	if (fflush(NewCrontab) < OK) {
+		perror(Filename);
+		exit(ERROR_EXIT);
+	}
+ again:
+	rewind(NewCrontab);
 	if (ferror(NewCrontab)) {
 		fprintf(stderr, "%s: error while writing new crontab to %s\n",
 			ProgramName, Filename);
- fatal:		if (NewCrontab) fclose(NewCrontab);
-		unlink(Filename);
+ fatal:		unlink(Filename);
 		exit(ERROR_EXIT);
 	}
 	if (fstat(t, &statbuf) < 0) {
@@ -432,17 +439,49 @@ edit_cmd() {
 	if (mtime == statbuf.st_mtime) {
 		fprintf(stderr, "%s: no changes made to crontab\n",
 			ProgramName);
-	} else {
-		fprintf(stderr, "%s: installing new crontab\n",
-			ProgramName);
-		replace_cmd();
+		goto remove;
 	}
-	fclose(NewCrontab);  unlink(Filename);
+	fprintf(stderr, "%s: installing new crontab\n", ProgramName);
+	switch (replace_cmd()) {
+	case 0:
+		break;
+	case -1:
+		for (;;) {
+			printf("Do you want to retry the same edit? ");
+			fflush(stdout);
+			q[0] = '\0';
+			(void) fgets(q, sizeof q, stdin);
+			switch (islower(q[0]) ? q[0] : tolower(q[0])) {
+			case 'y':
+				goto again;
+			case 'n':
+				goto abandon;
+			default:
+				fprintf(stderr, "Enter Y or N\n");
+			}
+		}
+		/*NOTREACHED*/
+	case -2:
+	abandon:
+		fprintf(stderr, "%s: edits left in %s\n",
+			ProgramName, Filename);
+		goto done;
+	default:
+		fprintf(stderr, "%s: panic: bad switch() in replace_cmd()\n");
+		goto fatal;
+	}
+ remove:
+	unlink(Filename);
+ done:
 	log_it(RealUser, Pid, "END EDIT", User);
 }
 	
 
-static void
+/* returns	0	on success
+ *		-1	on syntax error
+ *		-2	on install error
+ */
+static int
 replace_cmd() {
 	char	n[MAX_FNAME], envstr[MAX_ENVSTR], tn[MAX_FNAME];
 	FILE	*tmp;
@@ -455,7 +494,7 @@ replace_cmd() {
 	(void) sprintf(tn, CRON_TAB(n));
 	if (!(tmp = fopen(tn, "w+"))) {
 		perror(tn);
-		exit(ERROR_EXIT);
+		return (-2);
 	}
 
 	/* write a signature at the top of the file.
@@ -468,10 +507,10 @@ replace_cmd() {
 
 	/* copy the crontab to the tmp
 	 */
+	rewind(NewCrontab);
 	Set_LineNum(1)
 	while (EOF != (ch = get_char(NewCrontab)))
 		putc(ch, tmp);
-	fclose(NewCrontab);
 	ftruncate(fileno(tmp), ftell(tmp));
 	fflush(tmp);  rewind(tmp);
 
@@ -479,7 +518,7 @@ replace_cmd() {
 		fprintf(stderr, "%s: error while writing new crontab to %s\n",
 			ProgramName, tn);
 		fclose(tmp);  unlink(tn);
-		exit(ERROR_EXIT);
+		return (-2);
 	}
 
 	/* check the syntax of the file being installed.
@@ -489,7 +528,7 @@ replace_cmd() {
 	 * in the file proper -- kludged it by stopping after first error.
 	 *		vix 31mar87
 	 */
-	Set_LineNum(1)
+	Set_LineNum(1 - NHEADER_LINES)
 	CheckErrorCount = 0;  eof = FALSE;
 	while (!CheckErrorCount && !eof) {
 		switch (load_env(envstr, tmp)) {
@@ -498,7 +537,8 @@ replace_cmd() {
 			break;
 		case FALSE:
 			e = load_entry(tmp, check_error, pw, envp);
-			if (e) free(e);
+			if (e)
+				free(e);
 			break;
 		case TRUE:
 			break;
@@ -508,33 +548,35 @@ replace_cmd() {
 	if (CheckErrorCount != 0) {
 		fprintf(stderr, "errors in crontab file, can't install.\n");
 		fclose(tmp);  unlink(tn);
-		exit(ERROR_EXIT);
+		return (-1);
 	}
 
 #ifdef HAS_FCHOWN
-	if (fchown(fileno(tmp), ROOT_UID, -1) < OK) {
+	if (fchown(fileno(tmp), ROOT_UID, -1) < OK)
 #else
-	if (chown(tn, ROOT_UID, -1) < OK) {
+	if (chown(tn, ROOT_UID, -1) < OK)
 #endif
+	{
 		perror("chown");
 		fclose(tmp);  unlink(tn);
-		exit(ERROR_EXIT);
+		return (-2);
 	}
 
 #ifdef HAS_FCHMOD
-	if (fchmod(fileno(tmp), 0600) < OK) {
+	if (fchmod(fileno(tmp), 0600) < OK)
 #else
-	if (chmod(tn, 0600) < OK) {
+	if (chmod(tn, 0600) < OK)
 #endif
+	{
 		perror("chown");
 		fclose(tmp);  unlink(tn);
-		exit(ERROR_EXIT);
+		return (-2);
 	}
 
 	if (fclose(tmp) == EOF) {
 		perror("fclose");
 		unlink(tn);
-		exit(ERROR_EXIT);
+		return (-2);
 	}
 
 	(void) sprintf(n, CRON_TAB(User));
@@ -543,11 +585,13 @@ replace_cmd() {
 			ProgramName, tn, n);
 		perror("rename");
 		unlink(tn);
-		exit(ERROR_EXIT);
+		return (-2);
 	}
 	log_it(RealUser, Pid, "REPLACE", User);
 
 	poke_daemon();
+
+	return (0);
 }
 
 

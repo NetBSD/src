@@ -17,7 +17,7 @@
 
 /* config.h - configurables for Vixie Cron
  *
- * $Id: config.h,v 1.1.1.2 1994/01/12 18:35:59 jtc Exp $
+ * $Id: config.h,v 1.1.1.3 1994/01/20 02:47:07 jtc Exp $
  */
 
 #if !defined(_PATH_SENDMAIL)
