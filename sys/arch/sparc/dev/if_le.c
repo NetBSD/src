@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.30 1996/04/22 02:37:10 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.31 1996/04/22 02:39:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -145,9 +145,9 @@ lehwinit(sc)
 		struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 		if (ifp->if_flags & IFF_LINK0)
-			sc->sc_dma->sc_regs->csr |= D_MEDIA_UTP;
+			sc->sc_dma->sc_regs->csr |= DE_AUI_TP;
 		else
-			sc->sc_dma->sc_regs->csr &= ~D_MEDIA_UTP;
+			sc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
 	}
 #endif
 }
