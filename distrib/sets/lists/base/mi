@@ -1,51 +1,51 @@
-# $NetBSD: mi,v 1.213 2001/01/22 17:48:15 itojun Exp $
+# $NetBSD: mi,v 1.214 2001/01/24 07:56:20 jwise Exp $
 .
-./altroot
-./bin
-./bin/[
-./bin/cat
-./bin/chio
-./bin/chmod
-./bin/cp
-./bin/csh
-./bin/date
-./bin/dd
-./bin/df
-./bin/domainname
-./bin/echo
-./bin/ed
-./bin/expr
-./bin/hostname
-./bin/kill
-./bin/ksh
-./bin/ln
-./bin/ls
-./bin/mkdir
-./bin/mt
-./bin/mv
-./bin/pax
-./bin/ps
-./bin/pwd
-./bin/rcmd
-./bin/rcp
-./bin/rm
-./bin/rmail
-./bin/rmdir
-./bin/sh
-./bin/sleep
-./bin/stty
-./bin/sync
-./bin/test
-./dev
-./dev/MAKEDEV
-./dev/fd
-./dev/log
-./etc
-./etc/defaults
+./altroot		base-sys-root
+./bin			base-sys-root
+./bin/[			base-util-root
+./bin/cat		base-util-root
+./bin/chio		base-util-root
+./bin/chmod		base-util-root
+./bin/cp		base-util-root
+./bin/csh		base-util-root
+./bin/date		base-util-root
+./bin/dd		base-util-root
+./bin/df		base-util-root
+./bin/domainname	base-nis-root
+./bin/echo		base-util-root
+./bin/ed		base-util-root
+./bin/expr		base-util-root
+./bin/hostname		base-util-root
+./bin/kill		base-util-root
+./bin/ksh		base-util-root
+./bin/ln		base-util-root
+./bin/ls		base-util-root
+./bin/mkdir		base-util-root
+./bin/mt		base-util-root
+./bin/mv		base-util-root
+./bin/pax		base-util-root
+./bin/ps		base-util-root
+./bin/pwd		base-util-root
+./bin/rcmd		base-net-root
+./bin/rcp		base-net-root
+./bin/rm		base-util-root
+./bin/rmail		base-uucp-root
+./bin/rmdir		base-util-root
+./bin/sh		base-util-root
+./bin/sleep		base-util-root
+./bin/stty		base-util-root
+./bin/sync		base-util-root
+./bin/test		base-util-root
+./dev			base-sys-root
+./dev/MAKEDEV		base-sysutil-root
+./dev/fd		base-sys-root
+./dev/log		base-sys-root
+./etc			base-sys-root
+./etc/defaults		base-sys-root
 ./etc/kerberosIV
 ./etc/kerberosV
 ./etc/mail
-./etc/mtree
+./etc/mtree		base-sys-root
 ./etc/namedb
 ./etc/openssl
 ./etc/openssl/certs
@@ -53,382 +53,384 @@
 ./etc/openssl/private
 ./etc/postfix
 ./etc/racoon
-./etc/rc.conf.d
-./etc/rc.d
-./etc/skel
+./etc/rc.conf.d		base-sys-root
+./etc/rc.d		base-sys-root
+./etc/skel		base-sys-root
 ./etc/sliphome
 ./etc/uucp
-./home
-./mnt
-./root
-./sbin
-./sbin/atactl
-./sbin/badsect
-./sbin/ccdconfig
-./sbin/clri
-./sbin/dhclient
-./sbin/disklabel
-./sbin/dmesg
-./sbin/dump
-./sbin/dump_lfs
-./sbin/fastboot
-./sbin/fasthalt
-./sbin/fsck
-./sbin/fsck_ext2fs
-./sbin/fsck_ffs
-./sbin/fsck_lfs
-./sbin/fsck_msdos
-./sbin/fsdb
-./sbin/fsirand
-./sbin/halt
-./sbin/ifconfig
-./sbin/init
-./sbin/ipf
-./sbin/lmcctl
-./sbin/mbrlabel
-./sbin/mknod
-./sbin/modload
-./sbin/modunload
-./sbin/mount
-./sbin/mount_ados
-./sbin/mount_cd9660
-./sbin/mount_ext2fs
-./sbin/mount_fdesc
-./sbin/mount_ffs
-./sbin/mount_filecore
-./sbin/mount_kernfs
-./sbin/mount_lfs
-./sbin/mount_mfs
-./sbin/mount_msdos
-./sbin/mount_nfs
-./sbin/mount_ntfs
-./sbin/mount_null
-./sbin/mount_overlay
-./sbin/mount_portal
-./sbin/mount_procfs
-./sbin/mount_ufs
-./sbin/mount_umap
-./sbin/mount_union
-./sbin/newbtconf
-./sbin/newfs
-./sbin/newfs_lfs
-./sbin/newfs_msdos
-./sbin/nologin
-./sbin/ping
-./sbin/ping6
-./sbin/poweroff
-./sbin/raidctl
-./sbin/rcorder
-./sbin/rdump
-./sbin/rdump_lfs
-./sbin/reboot
-./sbin/restore
-./sbin/rndctl
-./sbin/route
-./sbin/routed
-./sbin/rrestore
-./sbin/rtsol
-./sbin/savecore
-./sbin/scsictl
-./sbin/setkey
-./sbin/shutdown
-./sbin/slattach
-./sbin/swapctl
-./sbin/swapon
-./sbin/sysctl
-./sbin/ttyflags
-./sbin/tunefs
-./sbin/umount
-./sbin/wdogctl
-./sbin/wsconsctl
-./stand
-./tmp
-./usr
-./usr/bin
-./usr/bin/Mail
-./usr/bin/apply
-./usr/bin/apropos
-./usr/bin/at
-./usr/bin/atq
-./usr/bin/atrm
-./usr/bin/audioctl
-./usr/bin/audioplay
-./usr/bin/audiorecord
-./usr/bin/awk
-./usr/bin/banner
-./usr/bin/basename
-./usr/bin/batch
-./usr/bin/bc
-./usr/bin/bdes
-./usr/bin/biff
-./usr/bin/bunzip2
-./usr/bin/bzcat
-./usr/bin/bzip2
-./usr/bin/bzip2recover
-./usr/bin/cal
-./usr/bin/calendar
-./usr/bin/cap_mkdb
-./usr/bin/cdplay
-./usr/bin/chflags
-./usr/bin/chfn
-./usr/bin/chgrp
-./usr/bin/chpass
-./usr/bin/chsh
-./usr/bin/ci
-./usr/bin/cksum
-./usr/bin/clear
-./usr/bin/cmp
-./usr/bin/co
-./usr/bin/col
-./usr/bin/colcrt
-./usr/bin/colrm
-./usr/bin/column
-./usr/bin/comm
-./usr/bin/compile_et
-./usr/bin/compress
-./usr/bin/cpio
-./usr/bin/cpp
-./usr/bin/crontab
-./usr/bin/ctags
-./usr/bin/cu
-./usr/bin/cut
-./usr/bin/dc
-./usr/bin/diff
-./usr/bin/diff3
-./usr/bin/dig
-./usr/bin/dirname
-./usr/bin/dnsquery
-./usr/bin/du
-./usr/bin/egrep
-./usr/bin/eject
-./usr/bin/env
-./usr/bin/error
-./usr/bin/ex
-./usr/bin/expand
-./usr/bin/false
-./usr/bin/fgrep
-./usr/bin/file
-./usr/bin/find
-./usr/bin/finger
-./usr/bin/fmt
-./usr/bin/fold
-./usr/bin/from
-./usr/bin/fsplit
-./usr/bin/fstat
-./usr/bin/ftp
-./usr/bin/gcpp
-./usr/bin/gencat
-./usr/bin/getconf
-./usr/bin/getopt
-./usr/bin/grep
-./usr/bin/groups
-./usr/bin/gunzip
-./usr/bin/gzcat
-./usr/bin/gzexe
-./usr/bin/gzip
-./usr/bin/head
-./usr/bin/hesinfo
-./usr/bin/hexdump
-./usr/bin/host
-./usr/bin/hoststat
-./usr/bin/id
-./usr/bin/ident
-./usr/bin/indent
-./usr/bin/info
-./usr/bin/innetgr
-./usr/bin/install
-./usr/bin/install-info
-./usr/bin/install-sid
-./usr/bin/ipcrm
-./usr/bin/ipcs
-./usr/bin/join
-./usr/bin/jot
-./usr/bin/kdestroy
-./usr/bin/kdump
-./usr/bin/kf
-./usr/bin/kinit
-./usr/bin/klist
-./usr/bin/kpasswd
-./usr/bin/ktrace
-./usr/bin/ktruss
-./usr/bin/lam
-./usr/bin/last
-./usr/bin/lastcomm
-./usr/bin/ldd
-./usr/bin/leave
-./usr/bin/less
-./usr/bin/lessecho
-./usr/bin/lesskey
-./usr/bin/locate
-./usr/bin/lock
-./usr/bin/logger
-./usr/bin/login
-./usr/bin/logname
-./usr/bin/look
-./usr/bin/lp
-./usr/bin/lpq
-./usr/bin/lpr
-./usr/bin/lprm
-./usr/bin/m4
-./usr/bin/machine
-./usr/bin/mail
-./usr/bin/mailq
-./usr/bin/mailx
-./usr/bin/make
-./usr/bin/man
-./usr/bin/md5
-./usr/bin/merge
-./usr/bin/mesg
-./usr/bin/midiplay
-./usr/bin/mixerctl
-./usr/bin/mk_cmds
-./usr/bin/mkdep
-./usr/bin/mkfifo
-./usr/bin/mklocale
-./usr/bin/mktemp
-./usr/bin/modstat
-./usr/bin/more
-./usr/bin/mset
-./usr/bin/msgs
-./usr/bin/netgroup
-./usr/bin/netstat
-./usr/bin/newaliases
-./usr/bin/newsyslog
-./usr/bin/nfsstat
-./usr/bin/nice
-./usr/bin/nl
-./usr/bin/nohup
-./usr/bin/nslookup
-./usr/bin/nsupdate
-./usr/bin/od
-./usr/bin/openssl
-./usr/bin/page
-./usr/bin/pagesize
-./usr/bin/passwd
-./usr/bin/paste
-./usr/bin/patch
-./usr/bin/pawd
-./usr/bin/pr
-./usr/bin/printenv
-./usr/bin/printf
-./usr/bin/purgestat
-./usr/bin/quota
-./usr/bin/rcs
-./usr/bin/rcsclean
-./usr/bin/rcsdiff
-./usr/bin/rcsfreeze
-./usr/bin/rcslog
-./usr/bin/rcsmerge
-./usr/bin/rdist
-./usr/bin/renice
-./usr/bin/reset
-./usr/bin/rev
-./usr/bin/rlog
-./usr/bin/rlogin
-./usr/bin/rpcinfo
-./usr/bin/rs
-./usr/bin/rsh
-./usr/bin/rup
-./usr/bin/ruptime
-./usr/bin/rusers
-./usr/bin/rwall
-./usr/bin/rwho
-./usr/bin/scp
-./usr/bin/script
-./usr/bin/sdiff
-./usr/bin/sed
-./usr/bin/send-pr
-./usr/bin/shar
-./usr/bin/shlock
-./usr/bin/showmount
-./usr/bin/shuffle
-./usr/bin/skey
-./usr/bin/skeyaudit
-./usr/bin/skeyinfo
-./usr/bin/skeyinit
-./usr/bin/slogin
-./usr/bin/sort
-./usr/bin/split
-./usr/bin/ssh
-./usr/bin/ssh-add
-./usr/bin/ssh-agent
-./usr/bin/ssh-keygen
-./usr/bin/ssh-keyscan
-./usr/bin/string2key
-./usr/bin/su
-./usr/bin/sum
-./usr/bin/sysstat
-./usr/bin/systat
-./usr/bin/tail
-./usr/bin/talk
-./usr/bin/tar
-./usr/bin/tcopy
-./usr/bin/tee
-./usr/bin/telnet
-./usr/bin/tftp
-./usr/bin/time
-./usr/bin/tip
-./usr/bin/tn3270
-./usr/bin/top
-./usr/bin/touch
-./usr/bin/tput
-./usr/bin/tr
-./usr/bin/true
-./usr/bin/tset
-./usr/bin/tty
-./usr/bin/ul
-./usr/bin/uname
-./usr/bin/uncompress
-./usr/bin/unexpand
-./usr/bin/uniq
-./usr/bin/units
-./usr/bin/unvis
-./usr/bin/uptime
-./usr/bin/usbhidaction
-./usr/bin/usbhidctl
-./usr/bin/users
-./usr/bin/uucp
-./usr/bin/uudecode
-./usr/bin/uuencode
-./usr/bin/uulog
-./usr/bin/uuname
-./usr/bin/uupick
-./usr/bin/uusched
-./usr/bin/uustat
-./usr/bin/uuto
-./usr/bin/uux
-./usr/bin/vacation
-./usr/bin/vi
-./usr/bin/view
-./usr/bin/vis
-./usr/bin/vmstat
-./usr/bin/w
-./usr/bin/wall
-./usr/bin/wc
-./usr/bin/what
-./usr/bin/whatis
-./usr/bin/whereis
-./usr/bin/which
-./usr/bin/who
-./usr/bin/whoami
-./usr/bin/whois
-./usr/bin/window
-./usr/bin/write
-./usr/bin/xargs
-./usr/bin/yes
-./usr/bin/ypcat
-./usr/bin/ypmatch
-./usr/bin/yppasswd
-./usr/bin/ypwhich
-./usr/bin/zcat
-./usr/bin/zcmp
-./usr/bin/zdiff
-./usr/bin/zegrep
-./usr/bin/zfgrep
-./usr/bin/zforce
-./usr/bin/zgrep
-./usr/bin/zmore
-./usr/bin/znew
+./home			base-sys-root
+./mnt			base-sys-root
+./root			base-sys-root
+./sbin			base-sys-root
+./sbin/atactl		base-sysutil-root
+./sbin/badsect		base-sysutil-root
+./sbin/ccdconfig	base-sysutil-root
+./sbin/clri		base-sysutil-root
+./sbin/dhclient		base-dhclient-root
+./sbin/disklabel	base-sysutil-root
+./sbin/dmesg		base-sysutil-root
+./sbin/dump		base-sysutil-root
+./sbin/dump_lfs		base-sysutil-root
+./sbin/fastboot		base-sysutil-root
+./sbin/fasthalt		base-sysutil-root
+./sbin/fsck		base-sysutil-root
+./sbin/fsck_ext2fs	base-ext2fs-root
+./sbin/fsck_ffs		base-sysutil-root
+./sbin/fsck_lfs		base-sysutil-root
+./sbin/fsck_msdos	base-sysutil-root
+./sbin/fsdb		base-sysutil-root
+./sbin/fsirand		base-sysutil-root
+./sbin/halt		base-sysutil-root
+./sbin/ifconfig		base-netutil-root
+./sbin/init		base-sysutil-root
+./sbin/ipf		base-netutil-root
+./sbin/lmcctl		base-netutil-root
+./sbin/mbrlabel		base-sysutil-root
+./sbin/mknod		base-sysutil-root
+./sbin/modload		base-sysutil-root
+./sbin/modunload	base-sysutil-root
+./sbin/mount		base-sysutil-root
+./sbin/mount_ados	base-adosfs-root
+./sbin/mount_cd9660	base-sysutil-root
+./sbin/mount_ext2fs	base-ext2fs-root
+./sbin/mount_fdesc	base-miscfs-root
+./sbin/mount_ffs	base-sysutil-root
+./sbin/mount_filecore	base-filecorefs-root
+./sbin/mount_kernfs	base-sysutil-root
+./sbin/mount_lfs	base-sysutil-root
+./sbin/mount_mfs	base-sysutil-root
+./sbin/mount_msdos	base-sysutil-root
+./sbin/mount_nfs	base-nfsclient-root
+./sbin/mount_ntfs	base-ntfs-root
+./sbin/mount_null	base-miscfs-root
+./sbin/mount_overlay	base-miscfs-root
+./sbin/mount_portal	base-miscfs-root
+./sbin/mount_procfs	base-sysutil-root
+./sbin/mount_ufs	base-sysutil-root
+./sbin/mount_umap	base-miscfs-root
+./sbin/mount_union	base-miscfs-root
+./sbin/newbtconf	base-sysutil-root
+./sbin/newfs		base-sysutil-root
+./sbin/newfs_lfs	base-sysutil-root
+./sbin/newfs_msdos	base-sysutil-root
+./sbin/nologin		base-sysutil-root
+./sbin/ping		base-netutil-root
+./sbin/ping6		base-netutil-root
+./sbin/poweroff		base-sysutil-root
+./sbin/raidctl		base-sysutil-root
+./sbin/rcorder		base-sysutil-root
+./sbin/rdump		base-sysutil-root
+./sbin/rdump_lfs	base-sysutil-root
+./sbin/reboot		base-sysutil-root
+./sbin/restore		base-sysutil-root
+./sbin/rndctl		base-sysutil-root
+./sbin/route		base-netutil-root
+./sbin/routed		base-router-root
+./sbin/rrestore		base-netutil-root
+./sbin/rtsol		base-netutil-root
+./sbin/savecore		base-sysutil-root
+./sbin/scsictl		base-sysutil-root
+./sbin/setkey		base-netutil-root
+./sbin/shutdown		base-sysutil-root
+./sbin/slattach		base-slip-root
+./sbin/swapctl		base-sysutil-root
+./sbin/swapon		base-sysutil-root
+./sbin/sysctl		base-sysutil-root
+./sbin/ttyflags		base-sysutil-root
+./sbin/tunefs		base-sysutil-root
+./sbin/umount		base-sysutil-root
+./sbin/wdogctl		base-sysutil-root
+./sbin/wsconsctl	base-sysutil-root
+./stand			base-sys-root
+./tmp			base-sys-root
+./usr			base-sys-root
+./usr/bin		base-sys-usr
+./usr/bin/Mail		base-mail-bin
+./usr/bin/apply		base-util-bin
+./usr/bin/apropos	base-man-bin
+./usr/bin/at		base-cron-bin
+./usr/bin/atq		base-cron-bin
+./usr/bin/atrm		base-cron-bin
+./usr/bin/audioctl	base-audio-bin
+./usr/bin/audioplay	base-audio-bin
+./usr/bin/audiorecord	base-audio-bin
+./usr/bin/awk		base-util-bin
+./usr/bin/banner	base-util-bin
+./usr/bin/basename	base-util-bin
+./usr/bin/batch		base-cron-bin
+./usr/bin/bc		base-util-bin
+./usr/bin/bdes		base-crypto-bin
+./usr/bin/biff		base-mail-bin
+./usr/bin/bunzip2	base-util-bin
+./usr/bin/bzcat		base-util-bin
+./usr/bin/bzip2		base-util-bin
+./usr/bin/bzip2recover	base-util-bin
+./usr/bin/cal		base-util-bin
+./usr/bin/calendar	base-util-bin
+./usr/bin/cap_mkdb	base-util-bin
+./usr/bin/cdplay	base-audio-bin
+./usr/bin/chflags	base-util-bin
+./usr/bin/chfn		base-util-bin
+./usr/bin/chgrp		base-util-bin
+./usr/bin/chpass	base-util-bin
+./usr/bin/chsh		base-util-bin
+./usr/bin/ci		base-rcs-bin
+./usr/bin/cksum		base-util-bin
+./usr/bin/clear		base-util-bin
+./usr/bin/cmp		base-util-bin
+./usr/bin/co		base-rcs-bin
+./usr/bin/col		base-util-bin
+./usr/bin/colcrt	base-util-bin
+./usr/bin/colrm		base-util-bin
+./usr/bin/column	base-util-bin
+./usr/bin/comm		base-util-bin
+./usr/bin/compile_et	base-krb5-bin
+./usr/bin/compress	base-util-bin
+./usr/bin/cpio		base-util-bin
+./usr/bin/cpp		base-util-bin
+./usr/bin/crontab	base-cron-bin
+./usr/bin/ctags		base-c-bin
+./usr/bin/cu		base-uucp-bin
+./usr/bin/cut		base-util-bin
+./usr/bin/dc		base-util-bin
+./usr/bin/diff		base-util-bin
+./usr/bin/diff3		base-util-bin
+./usr/bin/dig		base-netutil-bin
+./usr/bin/dirname	base-util-bin
+./usr/bin/dnsquery	base-netutil-bin
+./usr/bin/du		base-util-bin
+./usr/bin/egrep		base-util-bin
+./usr/bin/eject		base-util-bin
+./usr/bin/env		base-util-bin
+./usr/bin/error		base-util-bin
+./usr/bin/ex		base-util-bin
+./usr/bin/expand	base-util-bin
+./usr/bin/false		base-util-bin
+./usr/bin/fgrep		base-util-bin
+./usr/bin/file		base-util-bin
+./usr/bin/find		base-util-bin
+./usr/bin/finger	base-util-bin
+./usr/bin/fmt		base-util-bin
+./usr/bin/fold		base-util-bin
+./usr/bin/from		base-mail-bin
+./usr/bin/fsplit	base-util-bin
+./usr/bin/fstat		base-util-bin
+./usr/bin/ftp		base-netutil-bin
+./usr/bin/gcpp		base-util-bin
+./usr/bin/gencat	base-util-bin
+./usr/bin/getconf	base-util-bin
+./usr/bin/getopt	base-util-bin
+./usr/bin/grep		base-util-bin
+./usr/bin/groups	base-util-bin
+./usr/bin/gunzip	base-util-bin
+./usr/bin/gzcat		base-util-bin
+./usr/bin/gzexe		base-util-bin
+./usr/bin/gzip		base-util-bin
+./usr/bin/head		base-util-bin
+./usr/bin/hesinfo	base-hesiod-bin
+./usr/bin/hexdump	base-util-bin
+./usr/bin/host		base-netutil-bin
+./usr/bin/hoststat	base-mailwrapper-bin
+./usr/bin/id		base-util-bin
+# This is in `base-util-bin', not `base-rcs-bin' as it is used by pkgsrc
+./usr/bin/ident		base-util-bin
+./usr/bin/indent	base-c-bin
+./usr/bin/info		base-texinfo-bin
+./usr/bin/innetgr	base-nis-bin
+./usr/bin/install	base-util-bin
+./usr/bin/install-info	base-texinfo-bin
+./usr/bin/install-sid	base-gnats-bin
+./usr/bin/ipcrm		base-util-bin
+./usr/bin/ipcs		base-util-bin
+./usr/bin/join		base-util-bin
+./usr/bin/jot		base-util-bin
+./usr/bin/kdestroy	base-krb5-bin
+./usr/bin/kdump		base-krb5-bin
+./usr/bin/kf		base-krb5-bin
+./usr/bin/kinit		base-krb5-bin
+./usr/bin/klist		base-krb5-bin
+./usr/bin/kpasswd	base-krb5-bin
+./usr/bin/ktrace	base-debug-bin
+./usr/bin/ktruss	base-debug-bin
+./usr/bin/lam		base-util-bin
+./usr/bin/last		base-util-bin
+./usr/bin/lastcomm	base-util-bin
+# This is also used by pkgsrc, and should stay in base-util-bin
+./usr/bin/ldd		base-util-bin
+./usr/bin/leave		base-util-bin
+./usr/bin/less		base-util-bin
+./usr/bin/lessecho	base-util-bin
+./usr/bin/lesskey	base-util-bin
+./usr/bin/locate	base-util-bin
+./usr/bin/lock		base-util-bin
+./usr/bin/logger	base-util-bin
+./usr/bin/login		base-util-bin
+./usr/bin/logname	base-util-bin
+./usr/bin/look		base-util-bin
+./usr/bin/lp		base-lpr-bin
+./usr/bin/lpq		base-lpr-bin
+./usr/bin/lpr		base-lpr-bin
+./usr/bin/lprm		base-lpr-bin
+./usr/bin/m4		base-util-bin
+./usr/bin/machine	base-util-bin
+./usr/bin/mail		base-mail-bin
+./usr/bin/mailq		base-mailwrapper-bin
+./usr/bin/mailx		base-mail-bin
+./usr/bin/make		base-util-bin
+./usr/bin/man		base-man-bin
+./usr/bin/md5		base-util-bin
+./usr/bin/merge		base-util-bin
+./usr/bin/mesg		base-util-bin
+./usr/bin/midiplay	base-audio-bin
+./usr/bin/mixerctl	base-audio-bin
+./usr/bin/mk_cmds	base-krb5-bin
+./usr/bin/mkdep		base-c-bin
+./usr/bin/mkfifo	base-util-bin
+./usr/bin/mklocale	base-locale-bin
+./usr/bin/mktemp	base-util-bin
+./usr/bin/modstat	base-util-bin
+./usr/bin/more		base-util-bin
+./usr/bin/mset		base-tn3270-bin
+./usr/bin/msgs		base-util-bin
+./usr/bin/netgroup	base-nis-bin
+./usr/bin/netstat	base-netutil-bin
+./usr/bin/newaliases	base-mailwrapper-bin
+./usr/bin/newsyslog	base-util-bin
+./usr/bin/nfsstat	base-nfsclient-bin
+./usr/bin/nice		base-util-bin
+./usr/bin/nl		base-util-bin
+./usr/bin/nohup		base-util-bin
+./usr/bin/nslookup	base-netutil-bin
+./usr/bin/nsupdate	base-netutil-bin
+./usr/bin/od		base-util-bin
+./usr/bin/openssl	base-crypto-bin
+./usr/bin/page		base-util-bin
+./usr/bin/pagesize	base-util-bin
+./usr/bin/passwd	base-util-bin
+./usr/bin/paste		base-util-bin
+./usr/bin/patch		base-util-bin
+./usr/bin/pawd		base-amd-bin
+./usr/bin/pr		base-util-bin
+./usr/bin/printenv	base-util-bin
+./usr/bin/printf	base-util-bin
+./usr/bin/purgestat	base-mailwrapper-bin
+./usr/bin/quota		base-util-bin
+./usr/bin/rcs		base-rcs-bin
+./usr/bin/rcsclean	base-rcs-bin
+./usr/bin/rcsdiff	base-rcs-bin
+./usr/bin/rcsfreeze	base-rcs-bin
+./usr/bin/rcslog	base-rcs-bin
+./usr/bin/rcsmerge	base-rcs-bin
+./usr/bin/rdist		base-netutil-bin
+./usr/bin/renice	base-util-bin
+./usr/bin/reset		base-util-bin
+./usr/bin/rev		base-util-bin
+./usr/bin/rlog		base-rcs-bin
+./usr/bin/rlogin	base-netutil-bin
+./usr/bin/rpcinfo	base-netutil-bin
+./usr/bin/rs		base-util-bin
+./usr/bin/rsh		base-netutil-bin
+./usr/bin/rup		base-netutil-bin
+./usr/bin/ruptime	base-netutil-bin
+./usr/bin/rusers	base-netutil-bin
+./usr/bin/rwall		base-netutil-bin
+./usr/bin/rwho		base-netutil-bin
+./usr/bin/scp		base-secsh-bin
+./usr/bin/script	base-util-bin
+./usr/bin/sdiff		base-util-bin
+./usr/bin/sed		base-util-bin
+./usr/bin/send-pr	base-gnats-bin
+./usr/bin/shar		base-util-bin
+./usr/bin/shlock	base-util-bin
+./usr/bin/showmount	base-nfsclient-bin
+./usr/bin/shuffle	base-util-bin
+./usr/bin/skey		base-util-bin
+./usr/bin/skeyaudit	base-util-bin
+./usr/bin/skeyinfo	base-util-bin
+./usr/bin/skeyinit	base-util-bin
+./usr/bin/slogin	base-secsh-bin
+./usr/bin/sort		base-util-bin
+./usr/bin/split		base-util-bin
+./usr/bin/ssh		base-secsh-bin
+./usr/bin/ssh-add	base-secsh-bin
+./usr/bin/ssh-agent	base-secsh-bin
+./usr/bin/ssh-keygen	base-secsh-bin
+./usr/bin/ssh-keyscan	base-secsh-bin
+./usr/bin/string2key	base-krb5-bin
+./usr/bin/su		base-util-bin
+./usr/bin/sum		base-util-bin
+./usr/bin/sysstat	base-util-bin
+./usr/bin/systat	base-util-bin
+./usr/bin/tail		base-util-bin
+./usr/bin/talk		base-netutil-bin
+./usr/bin/tar		base-util-bin
+./usr/bin/tcopy		base-util-bin
+./usr/bin/tee		base-util-bin
+./usr/bin/telnet	base-netutil-bin
+./usr/bin/tftp		base-netutil-bin
+./usr/bin/time		base-util-bin
+./usr/bin/tip		base-uucp-bin
+./usr/bin/tn3270	base-tn3270-bin
+./usr/bin/top		base-util-bin
+./usr/bin/touch		base-util-bin
+./usr/bin/tput		base-util-bin
+./usr/bin/tr		base-util-bin
+./usr/bin/true		base-util-bin
+./usr/bin/tset		base-util-bin
+./usr/bin/tty		base-util-bin
+./usr/bin/ul		base-util-bin
+./usr/bin/uname		base-util-bin
+./usr/bin/uncompress	base-util-bin
+./usr/bin/unexpand	base-util-bin
+./usr/bin/uniq		base-util-bin
+./usr/bin/units		base-util-bin
+./usr/bin/unvis		base-util-bin
+./usr/bin/uptime	base-util-bin
+./usr/bin/usbhidaction	base-util-bin
+./usr/bin/usbhidctl	base-util-bin
+./usr/bin/users		base-util-bin
+./usr/bin/uucp		base-uucp-bin
+./usr/bin/uudecode	base-util-bin
+./usr/bin/uuencode	base-util-bin
+./usr/bin/uulog		base-uucp-bin
+./usr/bin/uuname	base-uucp-bin
+./usr/bin/uupick	base-uucp-bin
+./usr/bin/uusched	base-uucp-bin
+./usr/bin/uustat	base-uucp-bin
+./usr/bin/uuto		base-uucp-bin
+./usr/bin/uux		base-uucp-bin
+./usr/bin/vacation	base-mail-bin
+./usr/bin/vi		base-util-bin
+./usr/bin/view		base-util-bin
+./usr/bin/vis		base-util-bin
+./usr/bin/vmstat	base-util-bin
+./usr/bin/w		base-util-bin
+./usr/bin/wall		base-util-bin
+./usr/bin/wc		base-util-bin
+./usr/bin/what		base-util-bin
+./usr/bin/whatis	base-util-bin
+./usr/bin/whereis	base-util-bin
+./usr/bin/which		base-util-bin
+./usr/bin/who		base-util-bin
+./usr/bin/whoami	base-util-bin
+./usr/bin/whois		base-util-bin
+./usr/bin/window	base-util-bin
+./usr/bin/write		base-util-bin
+./usr/bin/xargs		base-util-bin
+./usr/bin/yes		base-util-bin
+./usr/bin/ypcat		base-nis-bin
+./usr/bin/ypmatch	base-nis-bin
+./usr/bin/yppasswd	base-nis-bin
+./usr/bin/ypwhich	base-nis-bin
+./usr/bin/zcat		base-util-bin
+./usr/bin/zcmp		base-util-bin
+./usr/bin/zdiff		base-util-bin
+./usr/bin/zegrep	base-util-bin
+./usr/bin/zfgrep	base-util-bin
+./usr/bin/zforce	base-util-bin
+./usr/bin/zgrep		base-util-bin
+./usr/bin/zmore		base-util-bin
+./usr/bin/znew		base-util-bin
 ./usr/games
 ./usr/games/hide
 ./usr/include
@@ -560,214 +562,214 @@
 ./usr/local/man/man9
 ./usr/local/sbin
 ./usr/mdec
-./usr/sbin
-./usr/sbin/ac
-./usr/sbin/accton
-./usr/sbin/altqd
-./usr/sbin/altqstat
-./usr/sbin/amd
-./usr/sbin/amq
-./usr/sbin/arp
-./usr/sbin/bootpd
-./usr/sbin/bootpef
-./usr/sbin/bootpgw
-./usr/sbin/bootptest
-./usr/sbin/catman
-./usr/sbin/chat
-./usr/sbin/chown
-./usr/sbin/chroot
-./usr/sbin/chrtbl
-./usr/sbin/cnwctl
-./usr/sbin/cron
-./usr/sbin/daicctl
-./usr/sbin/dev_mkdb
-./usr/sbin/dhcpd
-./usr/sbin/dhcrelay
-./usr/sbin/diskpart
-./usr/sbin/dtmfdecode
-./usr/sbin/dumpfs
-./usr/sbin/dumplfs
-./usr/sbin/edquota
-./usr/sbin/envstat
-./usr/sbin/eshconfig
-./usr/sbin/faithd
-./usr/sbin/fixmount
-./usr/sbin/fsinfo
-./usr/sbin/g711conv
-./usr/sbin/getencstat
-./usr/sbin/greconfig
-./usr/sbin/group
-./usr/sbin/groupadd
-./usr/sbin/groupdel
-./usr/sbin/groupinfo
-./usr/sbin/groupmod
-./usr/sbin/hlfsd
-./usr/sbin/hprop
-./usr/sbin/ifmcstat
-./usr/sbin/inetd
-./usr/sbin/iopctl
-./usr/sbin/iostat
-./usr/sbin/ipfs
-./usr/sbin/ipfstat
-./usr/sbin/ipftest
-./usr/sbin/ipmon
-./usr/sbin/ipnat
-./usr/sbin/ipresend
-./usr/sbin/ipsend
-./usr/sbin/iptest
-./usr/sbin/isdnd
-./usr/sbin/isdnmonitor
-./usr/sbin/isdntel
-./usr/sbin/isdntelctl
-./usr/sbin/isdntrace
-./usr/sbin/ispppcontrol
-./usr/sbin/kadmin
-./usr/sbin/kdc
-./usr/sbin/kstash
-./usr/sbin/ktutil
-./usr/sbin/kvm_mkdb
-./usr/sbin/lastlogin
-./usr/sbin/link
-./usr/sbin/lpc
-./usr/sbin/lpd
-./usr/sbin/lptest
-./usr/sbin/mailstats
-./usr/sbin/mailwrapper
-./usr/sbin/makedbm
-./usr/sbin/makemap
-./usr/sbin/map-mbone
-./usr/sbin/mdconfig
-./usr/sbin/mdsetimage
-./usr/sbin/mk-amd-map
-./usr/sbin/mkalias
-./usr/sbin/mknetid
-./usr/sbin/mld6query
-./usr/sbin/mopa.out
-./usr/sbin/mopchk
-./usr/sbin/mopd
-./usr/sbin/mopprobe
-./usr/sbin/moptrace
-./usr/sbin/mountd
-./usr/sbin/mrinfo
-./usr/sbin/mrouted
-./usr/sbin/mtrace
-./usr/sbin/mtrace6
-./usr/sbin/mtree
-./usr/sbin/named
-./usr/sbin/named-bootconf
-./usr/sbin/named.reload
-./usr/sbin/named.restart
-./usr/sbin/ndc
-./usr/sbin/ndp
-./usr/sbin/netgroup_mkdb
-./usr/sbin/nfsd
-./usr/sbin/ntpd
-./usr/sbin/ntpdate
-./usr/sbin/ntpdc
-./usr/sbin/ntpq
-./usr/sbin/ntptime
-./usr/sbin/ntptimeset
-./usr/sbin/ntptrace
-./usr/sbin/pac
-./usr/sbin/pim6dd
-./usr/sbin/pim6sd
-./usr/sbin/pim6stat
-./usr/sbin/pkg_add
-./usr/sbin/pkg_admin
-./usr/sbin/pkg_create
-./usr/sbin/pkg_delete
-./usr/sbin/pkg_info
-./usr/sbin/postalias
-./usr/sbin/postcat
-./usr/sbin/postconf
-./usr/sbin/postdrop
-./usr/sbin/postfix
-./usr/sbin/postkick
-./usr/sbin/postlock
-./usr/sbin/postlog
-./usr/sbin/postmap
-./usr/sbin/postsuper
-./usr/sbin/pppd
-./usr/sbin/pppstats
-./usr/sbin/praliases
-./usr/sbin/pstat
-./usr/sbin/pvcsif
-./usr/sbin/pvctxctl
-./usr/sbin/pwd_mkdb
-./usr/sbin/quot
-./usr/sbin/quotacheck
-./usr/sbin/quotaoff
-./usr/sbin/quotaon
-./usr/sbin/racoon
-./usr/sbin/rarpd
-./usr/sbin/rbootd
-./usr/sbin/rdate
-./usr/sbin/repquota
-./usr/sbin/revnetgroup
-./usr/sbin/rip6query
-./usr/sbin/rmt
-./usr/sbin/route6d
-./usr/sbin/rpc.bootparamd
-./usr/sbin/rpc.lockd
-./usr/sbin/rpc.pcnfsd
-./usr/sbin/rpc.statd
-./usr/sbin/rpc.yppasswdd
-./usr/sbin/rpcbind
-./usr/sbin/rtadvd
-./usr/sbin/rtquery
-./usr/sbin/rtsold
-./usr/sbin/rwhod
-./usr/sbin/sa
-./usr/sbin/screenblank
-./usr/sbin/sendmail
-./usr/sbin/sesd
-./usr/sbin/setencstat
-./usr/sbin/setobjstat
-./usr/sbin/sliplogin
-./usr/sbin/slstats
-./usr/sbin/spray
-./usr/sbin/sshd
-./usr/sbin/stdethers
-./usr/sbin/stdhosts
-./usr/sbin/sup
-./usr/sbin/supfilesrv
-./usr/sbin/supscan
-./usr/sbin/sushi
-./usr/sbin/syslogd
-./usr/sbin/tbrconfig
-./usr/sbin/tcpdchk
-./usr/sbin/tcpdmatch
-./usr/sbin/tcpdump
-./usr/sbin/timed
-./usr/sbin/timedc
-./usr/sbin/traceroute
-./usr/sbin/traceroute6
-./usr/sbin/trpt
-./usr/sbin/trsp
-./usr/sbin/unlink
-./usr/sbin/usbdevs
-./usr/sbin/user
-./usr/sbin/useradd
-./usr/sbin/userdel
-./usr/sbin/userinfo
-./usr/sbin/usermod
-./usr/sbin/uuchk
-./usr/sbin/vipw
-./usr/sbin/vnconfig
-./usr/sbin/wiconfig
-./usr/sbin/wire-test
-./usr/sbin/wsconscfg
-./usr/sbin/wsfontload
-./usr/sbin/ypbind
-./usr/sbin/ypinit
-./usr/sbin/yppoll
-./usr/sbin/yppush
-./usr/sbin/ypserv
-./usr/sbin/ypset
-./usr/sbin/yptest
-./usr/sbin/ypxfr
-./usr/sbin/zdump
-./usr/sbin/zic
+./usr/sbin			base-sys-usr
+./usr/sbin/ac			base-sysutil-bin
+./usr/sbin/accton		base-sysutil-bin
+./usr/sbin/altqd		base-router-bin
+./usr/sbin/altqstat		base-router-bin
+./usr/sbin/amd			base-amd-bin
+./usr/sbin/amq			base-amd-bin
+./usr/sbin/arp			base-netutil-bin
+./usr/sbin/bootpd		base-bootserver-bin
+./usr/sbin/bootpef		base-bootserver-bin
+./usr/sbin/bootpgw		base-bootserver-bin
+./usr/sbin/bootptest		base-bootserver-bin
+./usr/sbin/catman		base-man-bin
+./usr/sbin/chat			base-ppp-bin
+./usr/sbin/chown		base-sysutil-bin
+./usr/sbin/chroot		base-sysutil-bin
+./usr/sbin/chrtbl		base-sysutil-bin
+./usr/sbin/cnwctl		base-netutil-bin
+./usr/sbin/cron			base-cron-bin
+./usr/sbin/daicctl		base-isdn-bin
+./usr/sbin/dev_mkdb		base-sysutil-bin
+./usr/sbin/dhcpd		base-dhcpd-bin
+./usr/sbin/dhcrelay		base-dhcpd-bin
+./usr/sbin/diskpart		base-sysutil-bin
+./usr/sbin/dtmfdecode		base-isdn-bin
+./usr/sbin/dumpfs		base-sysutil-bin
+./usr/sbin/dumplfs		base-sysutil-bin
+./usr/sbin/edquota		base-sysutil-bin
+./usr/sbin/envstat		base-sysutil-bin
+./usr/sbin/eshconfig		base-sysutil-bin
+./usr/sbin/faithd		base-router-bin
+./usr/sbin/fixmount		base-nfsclient-bin
+./usr/sbin/fsinfo		base-sysutil-bin
+./usr/sbin/g711conv		base-isdn-bin
+./usr/sbin/getencstat		base-sysutil-bin
+./usr/sbin/greconfig		base-netutil-bin
+./usr/sbin/group		base-sysutil-bin
+./usr/sbin/groupadd		base-sysutil-bin
+./usr/sbin/groupdel		base-sysutil-bin
+./usr/sbin/groupinfo		base-sysutil-bin
+./usr/sbin/groupmod		base-sysutil-bin
+./usr/sbin/hlfsd		base-amd-bin
+./usr/sbin/hprop		base-krb5-bin
+./usr/sbin/ifmcstat		base-netutil-bin
+./usr/sbin/inetd		base-netutil-bin
+./usr/sbin/iopctl		base-sysutil-bin
+./usr/sbin/iostat		base-sysutil-bin
+./usr/sbin/ipfs			base-netutil-bin
+./usr/sbin/ipfstat		base-netutil-bin
+./usr/sbin/ipftest		base-netutil-bin
+./usr/sbin/ipmon		base-netutil-bin
+./usr/sbin/ipnat		base-router-bin
+./usr/sbin/ipresend		base-netutil-bin
+./usr/sbin/ipsend		base-netutil-bin
+./usr/sbin/iptest		base-netutil-bin
+./usr/sbin/isdnd		base-isdn-bin
+./usr/sbin/isdnmonitor		base-isdn-bin
+./usr/sbin/isdntel		base-isdn-bin
+./usr/sbin/isdntelctl		base-isdn-bin
+./usr/sbin/isdntrace		base-isdn-bin
+./usr/sbin/ispppcontrol		base-isdn-bin
+./usr/sbin/kadmin		base-krb5-bin
+./usr/sbin/kdc			base-krb5-bin
+./usr/sbin/kstash		base-krb5-bin
+./usr/sbin/ktutil		base-krb5-bin
+./usr/sbin/kvm_mkdb		base-sysutil-bin
+./usr/sbin/lastlogin		base-sysutil-bin
+./usr/sbin/link			base-sysutil-bin
+./usr/sbin/lpc			base-lpr-bin
+./usr/sbin/lpd			base-lpr-bin
+./usr/sbin/lptest		base-lpr-bin
+./usr/sbin/mailstats		base-mailwrapper-bin
+./usr/sbin/mailwrapper		base-mailwrapper-bin
+./usr/sbin/makedbm		base-nis-bin
+./usr/sbin/makemap		base-sendmail-bin
+./usr/sbin/map-mbone		base-netutil-bin
+./usr/sbin/mdconfig		base-sysutil-bin
+./usr/sbin/mdsetimage		base-sysutil-bin
+./usr/sbin/mk-amd-map		base-amd-bin
+./usr/sbin/mkalias		base-nis-bin
+./usr/sbin/mknetid		base-nis-bin
+./usr/sbin/mld6query		base-netutil-bin
+./usr/sbin/mopa.out		base-bootserver-bin
+./usr/sbin/mopchk		base-bootserver-bin
+./usr/sbin/mopd			base-bootserver-bin
+./usr/sbin/mopprobe		base-bootserver-bin
+./usr/sbin/moptrace		base-bootserver-bin
+./usr/sbin/mountd		base-nfsserver-bin
+./usr/sbin/mrinfo		base-router-bin
+./usr/sbin/mrouted		base-router-bin
+./usr/sbin/mtrace		base-netutil-bin
+./usr/sbin/mtrace6		base-netutil-bin
+./usr/sbin/mtree		base-sysutil-bin
+./usr/sbin/named		base-bind-bin
+./usr/sbin/named-bootconf	base-bind-bin
+./usr/sbin/named.reload		base-bind-bin
+./usr/sbin/named.restart	base-bind-bin
+./usr/sbin/ndc			base-bind-bin
+./usr/sbin/ndp			base-netutil-bin
+./usr/sbin/netgroup_mkdb	base-nis-bin
+./usr/sbin/nfsd			base-nfsserver-bin
+./usr/sbin/ntpd			base-ntp-bin
+./usr/sbin/ntpdate		base-ntp-bin
+./usr/sbin/ntpdc		base-ntp-bin
+./usr/sbin/ntpq			base-ntp-bin
+./usr/sbin/ntptime		base-ntp-bin
+./usr/sbin/ntptimeset		base-ntp-bin
+./usr/sbin/ntptrace		base-ntp-bin
+./usr/sbin/pac			base-sysutil-bin
+./usr/sbin/pim6dd		base-router-bin
+./usr/sbin/pim6sd		base-router-bin
+./usr/sbin/pim6stat		base-router-bin
+./usr/sbin/pkg_add		base-pkgutil-bin
+./usr/sbin/pkg_admin		base-pkgutil-bin
+./usr/sbin/pkg_create		base-pkgutil-bin
+./usr/sbin/pkg_delete		base-pkgutil-bin
+./usr/sbin/pkg_info		base-pkgutil-bin
+./usr/sbin/postalias		base-postfix-bin
+./usr/sbin/postcat		base-postfix-bin
+./usr/sbin/postconf		base-postfix-bin
+./usr/sbin/postdrop		base-postfix-bin
+./usr/sbin/postfix		base-postfix-bin
+./usr/sbin/postkick		base-postfix-bin
+./usr/sbin/postlock		base-postfix-bin
+./usr/sbin/postlog		base-postfix-bin
+./usr/sbin/postmap		base-postfix-bin
+./usr/sbin/postsuper		base-postfix-bin
+./usr/sbin/pppd			base-ppp-bin
+./usr/sbin/pppstats		base-ppp-bin
+./usr/sbin/praliases		base-sendmail-bin
+./usr/sbin/pstat		base-sysutil-bin
+./usr/sbin/pvcsif		base-netutil-bin
+./usr/sbin/pvctxctl		base-netutil-bin
+./usr/sbin/pwd_mkdb		base-sysutil-bin
+./usr/sbin/quot			base-sysutil-bin
+./usr/sbin/quotacheck		base-sysutil-bin
+./usr/sbin/quotaoff		base-sysutil-bin
+./usr/sbin/quotaon		base-sysutil-bin
+./usr/sbin/racoon		base-netutil-bin
+./usr/sbin/rarpd		base-bootserver-bin
+./usr/sbin/rbootd		base-bootserver-bin
+./usr/sbin/rdate		base-netutil-bin
+./usr/sbin/repquota		base-sysutil-bin
+./usr/sbin/revnetgroup		base-nis-bin
+./usr/sbin/rip6query		base-netutil-bin
+./usr/sbin/rmt			base-sysutil-bin
+./usr/sbin/route6d		base-router-bin
+./usr/sbin/rpc.bootparamd	base-bootserver-bin
+./usr/sbin/rpc.lockd		base-nfsserver-bin
+./usr/sbin/rpc.pcnfsd		base-nfsserver-bin
+./usr/sbin/rpc.statd		base-nfsclient-bin
+./usr/sbin/rpc.yppasswdd	base-nis-bin
+./usr/sbin/rpcbind		base-netutil-bin
+./usr/sbin/rtadvd		base-router-bin
+./usr/sbin/rtquery		base-netutil-bin
+./usr/sbin/rtsold		base-netutil-bin
+./usr/sbin/rwhod		base-netutil-bin
+./usr/sbin/sa			base-sysutil-bin
+./usr/sbin/screenblank		base-sysutil-bin
+./usr/sbin/sendmail		base-mailwrapper-bin
+./usr/sbin/sesd			base-sysutil-bin
+./usr/sbin/setencstat		base-sysutil-bin
+./usr/sbin/setobjstat		base-sysutil-bin
+./usr/sbin/sliplogin		base-slip-bin
+./usr/sbin/slstats		base-slip-bin
+./usr/sbin/spray		base-netutil-bin
+./usr/sbin/sshd			base-secsh-bin
+./usr/sbin/stdethers		base-nis-bin
+./usr/sbin/stdhosts		base-nis-bin
+./usr/sbin/sup			base-sup-bin
+./usr/sbin/supfilesrv		base-sup-bin
+./usr/sbin/supscan		base-sup-bin
+./usr/sbin/sushi		base-sysutil-bin
+./usr/sbin/syslogd		base-sysutil-bin
+./usr/sbin/tbrconfig		base-router-bin
+./usr/sbin/tcpdchk		base-netutil-bin
+./usr/sbin/tcpdmatch		base-netutil-bin
+./usr/sbin/tcpdump		base-netutil-bin
+./usr/sbin/timed		base-timed-bin
+./usr/sbin/timedc		base-timed-bin
+./usr/sbin/traceroute		base-netutil-bin
+./usr/sbin/traceroute6		base-netutil-bin
+./usr/sbin/trpt			base-netutil-bin
+./usr/sbin/trsp			base-netutil-bin
+./usr/sbin/unlink		base-sysutil-bin
+./usr/sbin/usbdevs		base-sysutil-bin
+./usr/sbin/user			base-sysutil-bin
+./usr/sbin/useradd		base-sysutil-bin
+./usr/sbin/userdel		base-sysutil-bin
+./usr/sbin/userinfo		base-sysutil-bin
+./usr/sbin/usermod		base-sysutil-bin
+./usr/sbin/uuchk		base-uucp-bin
+./usr/sbin/vipw			base-sysutil-bin
+./usr/sbin/vnconfig		base-sysutil-bin
+./usr/sbin/wiconfig		base-sysutil-bin
+./usr/sbin/wire-test		base-netutil-bin
+./usr/sbin/wsconscfg		base-sysutil-bin
+./usr/sbin/wsfontload		base-sysutil-bin
+./usr/sbin/ypbind		base-nis-bin
+./usr/sbin/ypinit		base-nis-bin
+./usr/sbin/yppoll		base-nis-bin
+./usr/sbin/yppush		base-nis-bin
+./usr/sbin/ypserv		base-nis-bin
+./usr/sbin/ypset		base-nis-bin
+./usr/sbin/yptest		base-nis-bin
+./usr/sbin/ypxfr		base-nis-bin
+./usr/sbin/zdump		base-sysutil-bin
+./usr/sbin/zic			base-sysutil-bin
 ./usr/share
 ./usr/share/calendar
 ./usr/share/calendar/calendar.birthday
