@@ -1,6 +1,6 @@
 # GENERIC
 #
-#     $Id: GENERIC,v 1.17 1994/07/21 00:57:33 briggs Exp $
+#     $Id: GENERIC,v 1.18 1994/07/21 01:19:42 briggs Exp $
 
 include	"std.mac68k"
 
@@ -55,7 +55,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 options		MC68040
 options		MC68030		# Includes the 020+851
 options		FPCOPROC
-options		FPSP
+#options	FPSP
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
