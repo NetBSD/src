@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 1997/10/09 21:39:36 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.8 1997/10/21 19:25:23 scw Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -100,6 +100,7 @@
 #include <sys/malloc.h>
 #include <sys/user.h>
 
+#include <machine/vmparam.h>
 #include <machine/pte.h>
 
 #include <vm/vm.h>
