@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2000/09/24 12:32:39 jdolecek Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -128,7 +128,7 @@ parseargs(str, howtop)
 	int i;
 
 	/* Allow user to drop back to the PROM. */
-	if (strcmp(str, "exit") == 0)
+	if (strcmp(str, "exit") == 0 || strcmp(str, "halt") == 0)
 		_rtt();
 
 	/* Insert the kernel name if it is not there. */
