@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fereg.h,v 1.5 2002/09/28 18:19:09 tsutsui Exp $	*/
+/*	$NetBSD: if_fmvreg.h,v 1.1 2002/09/28 18:43:08 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
