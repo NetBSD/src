@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.1.1.1.2.9 2002/09/04 04:26:52 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.1.1.1.2.10 2003/08/05 11:27:44 msaitoh Exp $	*/
 /*	$KAME: esp_core.c,v 1.50 2000/11/02 12:27:38 itojun Exp $	*/
 
 /*
@@ -240,6 +240,7 @@ esp_schedule(algo, sav)
 	if (error) {
 		ipseclog((LOG_ERR, "esp_schedule %s: error %d\n",
 		    algo->name, error));
+		bzero(sav->sched, sav->schedlen);
 		free(sav->sched, M_SECA);
 		sav->sched = NULL;
 		sav->schedlen = 0;
