@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.1 2004/04/24 17:35:27 cl Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.2 2004/04/24 17:41:49 cl Exp $	*/
 
 /*
  *
@@ -56,6 +56,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
  */
+
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.2 2004/04/24 17:41:49 cl Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
