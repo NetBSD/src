@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.10 2001/03/10 14:10:51 toshii Exp $
+#	$NetBSD: files.hpcarm,v 1.11 2001/03/10 19:05:40 toshii Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -97,10 +97,26 @@ device	salcd: hpcfbif
 attach	salcd at saip
 file	arch/hpcarm/sa11x0/sa11x0_lcd.c		salcd
 
+# SA11[01]0 companion chips
+device	sacc { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1] }
+attach	sacc at saip
+file	arch/hpcarm/sa11x0/sa1111.c		sacc
+
+# XXX this is a hack to use dev/pcmcia without fdc.c
+device	fdc
+
 # PCMCIA
-device	sapcic: pcmciabus
-attach	sapcic at saip
-file	arch/hpcarm/sa11x0/sa11x0_pcmcia.c	sapcic needs-flag
+include "dev/pcmcia/files.pcmcia"
+
+device	sacpcic: pcmciabus
+attach	sacpcic at sacc
+file	arch/hpcarm/sa11x0/sa11x1_pcic.c	sacpcic needs-flag
+
+device	sagpcic: pcmciabus
+attach	sagpcic at saip
+file	arch/hpcarm/sa11x0/sa11x0_pcic.c	sagpcic needs-flag
+
+file	arch/hpcarm/sa11x0/sa11xx_pcic.c	sacpcic | sagpcic
 
 # Include ISA stuff
 include "dev/isa/files.isa"
