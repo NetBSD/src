@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.18 2001/05/26 10:23:47 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.19 2001/06/11 13:34:51 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
  */
 
 #include "opt_kgdb.h"
+#include "fb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,7 +67,7 @@
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 
-#ifdef RASTERCONSOLE
+#if defined(RASTERCONSOLE) && NFB > 0
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
 #endif
@@ -121,7 +122,7 @@ kd_init(kd)
 	/*
 	 * Get the console struct winsize.
 	 */
-#ifdef RASTERCONSOLE
+#if defined(RASTERCONSOLE) && NFB > 0
 	/* If the raster console driver is attached, copy its size */
 	kd->rows = fbrcons_rows();
 	kd->cols = fbrcons_cols();
