@@ -33,9 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)trap.c	7.4 (Berkeley) 5/13/91
+ *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
+ *	$Id: trap.c,v 1.6 1993/05/22 08:00:04 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/trap.c,v 1.5 1993/05/20 14:33:47 cgd Exp $";
 
 /*
  * 386 Trap and System call handleing

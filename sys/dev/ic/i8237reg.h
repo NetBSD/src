@@ -1,5 +1,7 @@
 /*
  * Intel 8237 DMA Controller
+ *
+ *	$Id: i8237reg.h,v 1.2 1993/05/22 08:01:56 cgd Exp $
  */
 
 #define	DMA37MD_SINGLE	0x40	/* single pass mode */

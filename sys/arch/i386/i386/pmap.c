@@ -34,16 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pmap.c	7.7 (Berkeley)	5/12/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00063
- * --------------------         -----   ----------------------
- *
- * 28 Nov 1991	Poul-Henning Kamp	Speedup processing.
+ *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
+ *	$Id: pmap.c,v 1.4 1993/05/22 07:59:57 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/Attic/pmap.c,v 1.3 1993/04/10 00:52:34 mycroft Exp $";
 
 /*
  * Derived from hp300 version by Mike Hibler, this version by William

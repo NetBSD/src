@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)volhdr.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)volhdr.h	7.1 (Berkeley) 5/8/90
+ *	$Id: volhdr.h,v 1.2 1993/05/22 07:59:26 cgd Exp $
  */
 
 /*

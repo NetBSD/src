@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: ite_subr.c 1.1 89/02/17$
  *
- *	@(#)ite_subr.c	7.2 (Berkeley) 12/16/90
+ *	from: @(#)ite_subr.c	7.2 (Berkeley) 12/16/90
+ *	$Id: ite_subr.c,v 1.2 1993/05/22 07:59:08 cgd Exp $
  */
 
 #include "samachdep.h"

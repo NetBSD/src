@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fdbootblk.c	7.2 (Berkeley) 5/4/91
+ *	from: @(#)fdbootblk.c	7.2 (Berkeley) 5/4/91
+ *	$Id: fdbootblk.c,v 1.4 1993/05/22 08:02:15 cgd Exp $
  */
 
 /*

@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: hpux_tty.c 1.1 90/07/09$
  *
- *	@(#)hpux_tty.c	7.9 (Berkeley) 5/30/91
+ *	from: @(#)hpux_tty.c	7.9 (Berkeley) 5/30/91
+ *	$Id: hpux_tty.c,v 1.2 1993/05/22 07:58:13 cgd Exp $
  */
 
 /*

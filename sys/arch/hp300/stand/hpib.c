@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)hpib.c	7.5 (Berkeley) 5/7/91
+ *	from: @(#)hpib.c	7.5 (Berkeley) 5/7/91
+ *	$Id: hpib.c,v 1.2 1993/05/22 07:58:57 cgd Exp $
  */
 
 /*

@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/i386/i386/Attic/microtime.s,v 1.1 1993/03/23 08:12:17 cgd Exp $
+ *	$Id: microtime.s,v 1.2 1993/05/22 07:59:54 cgd Exp $
  */
 
 #include "asm.h"

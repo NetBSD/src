@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)isr.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)isr.h	7.1 (Berkeley) 5/8/90
+ *	$Id: isr.h,v 1.2 1993/05/22 07:57:26 cgd Exp $
  */
 
 struct isr {

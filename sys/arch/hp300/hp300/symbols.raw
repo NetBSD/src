@@ -1,4 +1,5 @@
-#	@(#)symbols.raw	7.6 (Berkeley) 5/8/91
+#	from: @(#)symbols.raw	7.6 (Berkeley) 5/8/91
+#	$Id: symbols.raw,v 1.2 1993/05/22 07:57:45 cgd Exp $
 
 	_version
 #dmesg

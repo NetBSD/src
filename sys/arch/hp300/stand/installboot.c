@@ -30,17 +30,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)installboot.c	7.2 (Berkeley) 12/16/90
+ *	from: @(#)installboot.c	7.2 (Berkeley) 12/16/90
+ *	$Id: installboot.c,v 1.2 1993/05/22 07:59:00 cgd Exp $
  */
 
 #ifndef lint
 char copyright[] =
-"@(#) Copyright (c) 1980, 1986, 1990 The Regents of the University of California.\n\
+"Copyright (c) 1980, 1986, 1990 The Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)installboot.c	7.2 (Berkeley) 12/16/90";
+/* from: static char sccsid[] = "@(#)installboot.c	7.2 (Berkeley) 12/16/90"; */
+static char rcsid[] = "$Id: installboot.c,v 1.2 1993/05/22 07:59:00 cgd Exp $";
 #endif /* not lint */
 
 #include "sys/param.h"

@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: st.c 1.8 90/10/14$
  *
- *      @(#)st.c	7.3 (Berkeley) 5/4/91
+ *      from: @(#)st.c	7.3 (Berkeley) 5/4/91
+ *	$Id: st.c,v 1.2 1993/05/22 07:56:55 cgd Exp $
  */
 
 /*

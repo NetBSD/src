@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      @(#)conf.c	7.9 (Berkeley) 5/28/91
+ *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
+ *	$Id: conf.c,v 1.2 1993/05/22 07:57:16 cgd Exp $
  */
 
 #include "sys/param.h"

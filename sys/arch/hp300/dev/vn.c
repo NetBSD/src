@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: vn.c 1.1 91/04/30$
  *
- *	@(#)vn.c	7.6 (Berkeley) 6/21/91
+ *	from: @(#)vn.c	7.6 (Berkeley) 6/21/91
+ *	$Id: vn.c,v 1.2 1993/05/22 07:56:59 cgd Exp $
  */
 
 /*

@@ -11,6 +11,8 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
+ *
+ *	$Id: aha1742.c,v 1.11 1993/05/22 08:01:00 cgd Exp $
  */
 
 #include "ahb.h"

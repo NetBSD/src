@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)reg.h	5.5 (Berkeley) 1/18/91
+ *	from: @(#)reg.h	5.5 (Berkeley) 1/18/91
+ *	$Id: reg.h,v 1.2 1993/05/22 08:00:36 cgd Exp $
  */
 
 /*

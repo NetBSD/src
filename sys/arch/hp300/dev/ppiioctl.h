@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ppiioctl.h	7.2 (Berkeley) 12/16/90
+ *	from: @(#)ppiioctl.h	7.2 (Berkeley) 12/16/90
+ *	$Id: ppiioctl.h,v 1.2 1993/05/22 07:56:43 cgd Exp $
  */
 
 #ifndef _IOCTL_

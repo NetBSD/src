@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_nereg.h	7.1 (Berkeley) 5/9/91
+ *	from: @(#)if_nereg.h	7.1 (Berkeley) 5/9/91
+ *	$Id: if_nereg.h,v 1.2 1993/05/22 08:01:24 cgd Exp $
  */
 
 /*

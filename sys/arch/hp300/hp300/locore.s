@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
- *	@(#)locore.s	7.11 (Berkeley) 5/9/91
+ *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
+ *	$Id: locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp $
  */
 
 #include "assym.s"

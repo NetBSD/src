@@ -1,3 +1,7 @@
+/*
+ *	$Id: asreg.h,v 1.2 1993/05/22 08:01:03 cgd Exp $
+ */
+
 struct scsicmd {
 	int lun;
 	int readflag; /* 1=read, 0=write */

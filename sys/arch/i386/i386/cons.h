@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cons.h	7.2 (Berkeley) 5/9/91
+ *	from: @(#)cons.h	7.2 (Berkeley) 5/9/91
+ *	$Id: cons.h,v 1.2 1993/05/22 07:59:40 cgd Exp $
  */
 
 

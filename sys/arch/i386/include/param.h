@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)param.h	5.8 (Berkeley) 6/28/91
+ *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
+ *	$Id: param.h,v 1.4 1993/05/22 08:00:24 cgd Exp $
  */
 
 /*

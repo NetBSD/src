@@ -2,6 +2,8 @@
  * linux/include/linux/math_emu.h
  *
  * (C) 1991 Linus Torvalds
+ *
+ *	$Id: math_emu.h,v 1.2 1993/05/22 07:59:52 cgd Exp $
  */
 #ifndef _LINUX_MATH_EMU_H
 #define _LINUX_MATH_EMU_H

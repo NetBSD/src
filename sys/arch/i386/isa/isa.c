@@ -33,9 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)isa.c	7.2 (Berkeley) 5/13/91
+ *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
+ *	$Id: isa.c,v 1.13 1993/05/22 08:01:27 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/isa.c,v 1.12 1993/05/11 04:15:22 deraadt Exp $";
 
 /*
  * code to manage AT bus

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)specialreg.h	7.1 (Berkeley) 5/9/91
+ *	from: @(#)specialreg.h	7.1 (Berkeley) 5/9/91
+ *	$Id: specialreg.h,v 1.3 1993/05/22 08:00:38 cgd Exp $
  */
 
 /*

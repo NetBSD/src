@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dca.c	7.3 (Berkeley) 5/7/91
+ *	from: @(#)dca.c	7.3 (Berkeley) 5/7/91
+ *	$Id: dca.c,v 1.2 1993/05/22 07:58:50 cgd Exp $
  */
 
 #ifdef DCACONSOLE

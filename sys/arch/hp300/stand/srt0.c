@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: srt0.c 1.12 91/04/25$
  *
- *	@(#)srt0.c	7.4 (Berkeley) 5/7/91
+ *	from: @(#)srt0.c	7.4 (Berkeley) 5/7/91
+ *	$Id: srt0.c,v 1.2 1993/05/22 07:59:25 cgd Exp $
  */
 
 /*

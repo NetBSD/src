@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ansi.h	7.1 (Berkeley) 3/9/91
+ *	from: @(#)ansi.h	7.1 (Berkeley) 3/9/91
+ *	$Id: ansi.h,v 1.2 1993/05/22 08:00:10 cgd Exp $
  */
 
 #ifndef	_ANSI_H_

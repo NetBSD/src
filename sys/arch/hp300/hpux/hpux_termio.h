@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: hpux_termio.h 1.1 90/07/09$
  *
- *	@(#)hpux_termio.h	7.3 (Berkeley) 10/24/90
+ *	from: @(#)hpux_termio.h	7.3 (Berkeley) 10/24/90
+ *	$Id: hpux_termio.h,v 1.2 1993/05/22 07:58:11 cgd Exp $
  */
 
 /* HP-UX termio stuff */

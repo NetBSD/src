@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
+ *	from: @(#)scsi.c	7.5 (Berkeley) 5/4/91
+ *	$Id: scsi.c,v 1.2 1993/05/22 07:56:48 cgd Exp $
  */
 
 /*
@@ -41,10 +42,6 @@
  */
 #include "scsi.h"
 #if NSCSI > 0
-
-#ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/scsi.c,v 1.1.1.1 1993/05/13 13:56:47 cgd Exp $";
-#endif
 
 #include "sys/param.h"
 #include "sys/systm.h"

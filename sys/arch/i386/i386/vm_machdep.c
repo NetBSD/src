@@ -35,13 +35,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
+ *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
+ *	$Id: vm_machdep.c,v 1.3 1993/05/22 08:00:06 cgd Exp $
  */
 
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/Attic/vm_machdep.c,v 1.2 1993/05/09 23:02:39 deraadt Exp $";
 
 #include "param.h"
 #include "systm.h"

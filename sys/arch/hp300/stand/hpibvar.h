@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)hpibvar.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)hpibvar.h	7.1 (Berkeley) 5/8/90
+ *	$Id: hpibvar.h,v 1.2 1993/05/22 07:58:59 cgd Exp $
  */
 
 #define	HPIBA		32

@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dkbad.c	5.4 (Berkeley) 1/19/91
+ *	from: @(#)dkbad.c	5.4 (Berkeley) 1/19/91
+ *	$Id: dkbad.c,v 1.2 1993/05/22 07:59:48 cgd Exp $
  */
 
 

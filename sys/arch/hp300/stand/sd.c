@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: sd.c 1.2 90/01/23$
  *
- *	@(#)sd.c	7.4 (Berkeley) 5/5/91
+ *	from: @(#)sd.c	7.4 (Berkeley) 5/5/91
+ *	$Id: sd.c,v 1.2 1993/05/22 07:59:23 cgd Exp $
  */
 
 /*

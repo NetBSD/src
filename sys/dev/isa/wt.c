@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)wt.c	7.1 (Berkeley) 5/9/91
+ *	from: @(#)wt.c	7.1 (Berkeley) 5/9/91
+ *	$Id: wt.c,v 1.2 1993/05/22 08:01:48 cgd Exp $
  */
 
 /*
@@ -66,7 +67,10 @@
 /* 
  * HISTORY
  * $Log: wt.c,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
+ * Revision 1.2  1993/05/22 08:01:48  cgd
+ * add rcsids to everything and clean up headers
+ *
+ * Revision 1.1.1.1  1993/03/21  09:46:00  cgd
  * initial import of 386bsd-0.1 sources
  *
  * Revision 2.2.1.3  90/01/08  13:29:38  rvb

@@ -3,11 +3,16 @@
  * Copyright (c) 1990 Carnegie-Mellon University
  * All rights reserved.  The CMU software License Agreement specifies
  * the terms and conditions for use and redistribution.
+ *
+ *	$Id: pio.h,v 1.2 1993/05/22 08:00:27 cgd Exp $
  */
 /* 
  * HISTORY
  * $Log: pio.h,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
+ * Revision 1.2  1993/05/22 08:00:27  cgd
+ * add rcsids to everything and clean up headers
+ *
+ * Revision 1.1  1993/03/21  18:09:48  cgd
  * after 0.2.2 "stable" patches applied
  *
  * Revision 1.1  1992/05/27  00:48:30  balsup

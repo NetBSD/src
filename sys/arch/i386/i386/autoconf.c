@@ -33,9 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
+ *	from: @(#)autoconf.c	7.1 (Berkeley) 5/9/91
+ *	$Id: autoconf.c,v 1.5 1993/05/22 07:59:38 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/autoconf.c,v 1.4 1993/05/18 12:42:44 cgd Exp $";
 
 /*
  * Setup the system to run on the current machine.

@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: cons.c 1.5 89/08/22$
  *
- *	@(#)cons.c	7.4 (Berkeley) 5/5/91
+ *	from: @(#)cons.c	7.4 (Berkeley) 5/5/91
+ *	$Id: cons.c,v 1.2 1993/05/22 07:58:47 cgd Exp $
  */
 
 #include "sys/param.h"

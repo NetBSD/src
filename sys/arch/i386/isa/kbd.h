@@ -1,5 +1,7 @@
 /*
  * Keyboard definitions
+ *
+ *	$Id: kbd.h,v 1.2 1993/05/22 08:01:31 cgd Exp $
  */
 
 /* commands and responses */

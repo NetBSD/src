@@ -34,13 +34,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	5.11 (Berkeley) 5/10/91
- *	$Id: genassym.c,v 1.4 1993/05/21 11:06:07 cgd Exp $
+ *	$Id: genassym.c,v 1.5 1993/05/22 07:59:49 cgd Exp $
  */
-
-#ifndef lint
-/* from: static char sccsid[] = "@(#)genassym.c	5.11 (Berkeley) 5/10/91"; */
-static char rcsid[] = "$Id: genassym.c,v 1.4 1993/05/21 11:06:07 cgd Exp $";
-#endif /* not lint */
 
 #include "sys/param.h"
 #include "sys/buf.h"

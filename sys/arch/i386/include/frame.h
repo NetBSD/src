@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)frame.h	5.2 (Berkeley) 1/18/91
+ *	from: @(#)frame.h	5.2 (Berkeley) 1/18/91
+ *	$Id: frame.h,v 1.2 1993/05/22 08:00:19 cgd Exp $
  */
 
 /*
