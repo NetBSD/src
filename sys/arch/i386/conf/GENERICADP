@@ -1,10 +1,10 @@
-#	$NetBSD: GENERICADP,v 1.32 1996/10/02 23:56:44 mycroft Exp $
+#	$NetBSD: GENERICADP,v 1.33 1996/11/15 09:19:33 fvdl Exp $
 #
 #	GENERICADP -- everything that's currently supported, except non-
 #                     Adaptec SCSI controllers.
 #
 
-machine		i386		# architecture, used by config; REQUIRED
+include "arch/i386/conf/std.i386"
 
 options		I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
@@ -20,14 +20,12 @@ options		MATH_EMULATE	# floating point emulation
 #options	DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		INSECURE	# insecure; allow /dev/mem writing for X
-options		MACHINE_NONCONTIG
 
 maxusers	32		# estimated number of users
 options		TIMEZONE=0	# time zone to adjust RTC time by
 options		DST=0		# daylight savings time used by RTC
 #options	NTP		# NTP phase/frequency locked loop
 
-options		SWAPPAGER	# paging; REQUIRED
 options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
@@ -54,8 +52,6 @@ options		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options		COMPAT_LINUX	# binary compatibility with Linux
 options		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
-options		EXEC_SCRIPT	# #! scripts
-options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
 options		EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 options		USER_LDT	# user-settable LDT; used by WINE
