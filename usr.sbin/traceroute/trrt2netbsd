@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: trrt2netbsd,v 1.2 1997/10/25 06:58:52 lukem Exp $
+#	$NetBSD: trrt2netbsd,v 1.3 1999/02/26 22:43:03 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for traceroute into
 #	a NetBSD source tree.
@@ -256,6 +256,7 @@ PROG=	traceroute
 
 CPPFLAGS+=-DHAVE_MALLOC_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_SYS_SOCKIO_H=1
 CPPFLAGS+=-DHAVE_STRERROR=1 -DHAVE_SETLINEBUF=1 -DHAVE_SOCKADDR_SA_LEN=1 
+CPPFLAGS+=-DHAVE_RAW_OPTIONS=1
 
 BINOWN= root
 BINMODE=4555
