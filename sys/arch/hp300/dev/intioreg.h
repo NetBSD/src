@@ -1,4 +1,4 @@
-/*	$NetBSD: intioreg.h,v 1.1 2001/11/17 23:33:22 gmcgarry Exp $	*/
+/*	$NetBSD: intioreg.h,v 1.2 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #define INTIO_DEV_7xx_RSTREL	3072
 
 /* HP8xx registers - XXX check these */
-#define INTIO_DEV_8xx_DATA	3	
+#define INTIO_DEV_8xx_DATA	3
 #define INTIO_DEV_8xx_CMD	11
 #define INTIO_DEV_8xx_STAT	11
 

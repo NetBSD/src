@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.27 2003/08/07 16:27:34 agc Exp $	*/
+/*	$NetBSD: ppi.c,v 1.28 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.27 2003/08/07 16:27:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.28 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,8 @@ struct	ppi_softc {
 };
 
 /* sc_flags values */
-#define	PPIF_ALIVE	0x01	
-#define	PPIF_OPEN	0x02	
+#define PPIF_ALIVE	0x01
+#define PPIF_OPEN	0x02
 #define PPIF_UIO	0x04
 #define PPIF_TIMO	0x08
 #define PPIF_DELAY	0x10

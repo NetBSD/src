@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.39 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.40 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.39 2003/10/08 00:28:41 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.40 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,8 +124,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.39 2003/10/08 00:28:41 thorpej Ex
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/poll.h> 
-#include <sys/proc.h> 
+#include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.39 2003/10/08 00:28:41 thorpej Ex
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
-#include <sys/wait.h> 
+#include <sys/wait.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -277,7 +277,7 @@ hpux_sys_advise(l, v, retval)
 
 	switch (SCARG(uap, arg)) {
 	case 0:
-		l->l_proc->p_md.mdp_flags |= MDP_HPUXMMAP; 
+		l->l_proc->p_md.mdp_flags |= MDP_HPUXMMAP;
 		break;
 
 	case 1:
@@ -302,14 +302,14 @@ hpux_sys_advise(l, v, retval)
  */
 int
 hpux_sys_getcontext(lp, v, retval)
-	struct lwp *lp; 
+	struct lwp *lp;
 	void *v;
-	register_t *retval; 
+	register_t *retval;
 {
 	struct hpux_sys_getcontext_args *uap = v;
 	const char *str;
 	int l, i, error = 0;
-	int len; 
+	int len;
 
 	if (SCARG(uap, len) <= 0)
 		return (EINVAL);
@@ -340,11 +340,11 @@ hpux_sys_getcontext(lp, v, retval)
  */
 int
 hpux_to_bsd_uoff(off, isps, l)
-	int *off, *isps; 
+	int *off, *isps;
 	struct lwp *l;
 {
 	int *ar0 = l->l_md.md_regs;
-	struct hpux_fp *hp; 
+	struct hpux_fp *hp;
 	struct bsdfp *bp;
 	u_int raddr;
 
@@ -352,7 +352,7 @@ hpux_to_bsd_uoff(off, isps, l)
 
 	/* u_ar0 field; procxmt puts in U_ar0 */
 	if ((int)off == HPUOFF(hpuxu_ar0))
-		return(UOFF(U_ar0)); 
+		return(UOFF(U_ar0));
 
 	if (fputype) {
 		/* FP registers from PCB */

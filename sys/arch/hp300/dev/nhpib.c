@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.29 2003/08/07 16:27:33 agc Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.30 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.29 2003/08/07 16:27:33 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.30 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ void	nhpibifc __P((struct nhpibdevice *));
 void	nhpibreadtimo __P((void *));
 int	nhpibwait __P((struct nhpibdevice *, int));
 
-void	nhpibreset __P((struct hpibbus_softc *)); 
+void	nhpibreset __P((struct hpibbus_softc *));
 int	nhpibsend __P((struct hpibbus_softc *, int, int, void *, int));
 int	nhpibrecv __P((struct hpibbus_softc *, int, int, void *, int));
 int	nhpibppoll __P((struct hpibbus_softc *));
@@ -254,7 +254,7 @@ nhpib_common_attach(sc, desc)
 	struct nhpib_softc *sc;
 	const char *desc;
 {
-	struct hpibdev_attach_args ha; 
+	struct hpibdev_attach_args ha;
 
 	printf(": %s\n", desc);
 

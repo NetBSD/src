@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.17 2003/09/22 14:26:58 cl Exp $
+|	$NetBSD: vectors.s,v 1.18 2003/11/17 14:37:59 tsutsui Exp $
 
 | Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 | Copyright (c) 1988 University of Utah
@@ -95,7 +95,7 @@ GLOBAL(vectab)
 #ifdef COMPAT_16
 	VECTOR(trap3)		/* 35: compat_16_sigreturn */
 #else
-	VECTOR(illinst)	
+	VECTOR(illinst)
 #endif
 	VECTOR(illinst)		/* 36: TRAP instruction vector */
 	VECTOR(illinst)		/* 37: TRAP instruction vector */

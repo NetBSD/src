@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.54 2003/08/07 16:27:28 agc Exp $	*/
+/*	$NetBSD: grf.c,v 1.55 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.54 2003/08/07 16:27:28 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.55 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -591,7 +591,7 @@ grfunlock(gp)
 		gp->g_lockpslot = gp->g_lock->gl_lockslot = 0;
 	}
 	if (gp->g_flags & GF_WANTED) {
-		wakeup((caddr_t)&gp->g_flags); 
+		wakeup((caddr_t)&gp->g_flags);
 		gp->g_flags &= ~GF_WANTED;
 	}
 	gp->g_lockp = NULL;
@@ -733,7 +733,7 @@ iounmmap(dev, addr)
  * an array of pids.  The first element is used to record the last slot used
  * (for faster lookups).  The remaining elements record up to GRFMAXLCK-1
  * process ids.  Returns a slot number between 1 and GRFMAXLCK or 0 if no
- * slot is available. 
+ * slot is available.
  */
 int
 grffindpid(gp)

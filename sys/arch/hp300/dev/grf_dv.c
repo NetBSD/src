@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dv.c,v 1.25 2003/08/07 16:27:28 agc Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.26 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.25 2003/08/07 16:27:28 agc Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.26 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -342,7 +342,7 @@ void
 dv_reset(dbp)
 	struct dvboxfb *dbp;
 {
-  	dbp->reset = 0x80;
+	dbp->reset = 0x80;
 	DELAY(100);
 
 	dbp->interrupt = 0x04;
@@ -489,7 +489,7 @@ dvbox_init(ip)
 	struct ite_data *ip;
 {
 	int i;
-	
+
 	/* XXX */
 	if (ip->regbase == 0) {
 		struct grf_data *gp = ip->grf;
@@ -522,8 +522,8 @@ dvbox_init(ip)
 	 * Lastly, turn on the box.
 	 */
 	REGBASE->interrupt = 0x04;
-	REGBASE->drive     = 0x10;		
- 	REGBASE->rep_rule  = RR_COPY << 4 | RR_COPY;
+	REGBASE->drive     = 0x10;
+	REGBASE->rep_rule  = RR_COPY << 4 | RR_COPY;
 	REGBASE->opwen     = 0x01;
 	REGBASE->fbwen     = 0x0;
 	REGBASE->fold      = 0x01;
@@ -561,7 +561,7 @@ dvbox_init(ip)
 		REGBASE->rgb[1].blue  = 0xFF;
 	}
 	REGBASE->cmapbank = 0;
-	
+
 	db_waitbusy(ip->regbase);
 
 	ite_fontinfo(ip);
@@ -588,16 +588,16 @@ dvbox_deinit(ip)
 	dvbox_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
 	db_waitbusy(ip->regbase);
 
-   	ip->flags &= ~ITE_INITED;
+	ip->flags &= ~ITE_INITED;
 }
 
 void
 dvbox_putc(ip, c, dy, dx, mode)
 	struct ite_data *ip;
-        int dy, dx, c, mode;
+	int dy, dx, c, mode;
 {
-        int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
-	
+	int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
+
 	dvbox_windowmove(ip, charY(ip, c), charX(ip, c),
 			 dy * ip->ftheight, dx * ip->ftwidth,
 			 ip->ftheight, ip->ftwidth, wrr);
@@ -606,7 +606,7 @@ dvbox_putc(ip, c, dy, dx, mode)
 void
 dvbox_cursor(ip, flag)
 	struct ite_data *ip;
-        int flag;
+	int flag;
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -624,15 +624,15 @@ dvbox_clear(ip, sy, sx, h, w)
 	int sy, sx, h, w;
 {
 	dvbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			 sy * ip->ftheight, sx * ip->ftwidth, 
+			 sy * ip->ftheight, sx * ip->ftwidth,
 			 h  * ip->ftheight, w  * ip->ftwidth,
 			 RR_CLEAR);
 }
 
 void
 dvbox_scroll(ip, sy, sx, count, dir)
-        struct ite_data *ip;
-        int sy, count, dir, sx;
+	struct ite_data *ip;
+	int sy, count, dir, sx;
 {
 	int dy;
 	int dx = sx;
@@ -656,7 +656,7 @@ dvbox_scroll(ip, sy, sx, count, dir)
 		dy = sy;
 		dx = sx - count;
 		width = ip->cols - sx;
-	}		
+	}
 
 	dvbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
 			 dy * ip->ftheight, dx * ip->ftwidth,
@@ -672,7 +672,7 @@ dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	struct dvboxfb *dp = REGBASE;
 	if (h == 0 || w == 0)
 		return;
-	
+
 	db_waitbusy(ip->regbase);
 	dp->rep_rule = func << 4 | func;
 	dp->source_y = sy;
@@ -704,7 +704,7 @@ dvboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	grf = (struct grfreg *)va;
 
 	if ((grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_DAVINCI)) {
-		bus_space_unmap(bst, bsh, PAGE_SIZE); 
+		bus_space_unmap(bst, bsh, PAGE_SIZE);
 		return (1);
 	}
 

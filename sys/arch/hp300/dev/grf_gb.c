@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.24 2003/08/07 16:27:29 agc Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.25 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.24 2003/08/07 16:27:29 agc Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.25 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -138,7 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.24 2003/08/07 16:27:29 agc Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
- 
+
 #include <dev/cons.h>
 
 #include <hp300/dev/diovar.h>
@@ -152,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.24 2003/08/07 16:27:29 agc Exp $");
 
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/itereg.h>
- 
+
 #include "ite.h"
 
 #define CRTC_DATA_LENGTH  0x0e
@@ -355,7 +355,7 @@ gb_microcode(gbp)
 	struct gboxfb *gbp;
 {
 	int i;
-	
+
 	for (i = 0; i < CRTC_DATA_LENGTH; i++) {
 		gbp->crtc_address = i;
 		gbp->crtc_data = crtc_init_data[i];
@@ -485,7 +485,7 @@ gbox_init(ip)
 	REGBASE->cmap_blu    = 0x00;
 	REGBASE->cmap_write  = 0x00;
 	gbcm_waitbusy(ip->regbase);
-	
+
 	REGBASE->creg_select = 0x01;
 	REGBASE->cmap_red    = 0xFF;
 	REGBASE->cmap_grn    = 0xFF;
@@ -525,16 +525,16 @@ gbox_deinit(ip)
 	gbox_windowmove(ip, 0, 0, 0, 0, ip->dheight, ip->dwidth, RR_CLEAR);
 	tile_mover_waitbusy(ip->regbase);
 
-   	ip->flags &= ~ITE_INITED;
+	ip->flags &= ~ITE_INITED;
 }
 
 void
 gbox_putc(ip, c, dy, dx, mode)
 	struct ite_data *ip;
-        int dy, dx;
+	int dy, dx;
 	int c, mode;
 {
-        int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
+	int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
 
 	gbox_windowmove(ip, charY(ip, c), charX(ip, c),
 			    dy * ip->ftheight, dx * ip->ftwidth,
@@ -544,7 +544,7 @@ gbox_putc(ip, c, dy, dx, mode)
 void
 gbox_cursor(ip, flag)
 	struct ite_data *ip;
-        int flag;
+	int flag;
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -562,7 +562,7 @@ gbox_clear(ip, sy, sx, h, w)
 	int sy, sx, h, w;
 {
 	gbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			sy * ip->ftheight, sx * ip->ftwidth, 
+			sy * ip->ftheight, sx * ip->ftwidth,
 			h  * ip->ftheight, w  * ip->ftwidth,
 			RR_CLEAR);
 }
@@ -578,14 +578,14 @@ gbox_clear(ip, sy, sx, h, w)
 
 void
 gbox_scroll(ip, sy, sx, count, dir)
-        struct ite_data *ip;
-        int sy, dir, sx, count;
+	struct ite_data *ip;
+	int sy, dir, sx, count;
 {
 	int height, dy, i;
-	
+
 	tile_mover_waitbusy(ip->regbase);
 	REGBASE->write_protect = 0x0;
-	
+
 	if (dir == SCROLL_UP) {
 		dy = sy - count;
 		height = ip->rows - sy;
@@ -605,13 +605,13 @@ gbox_scroll(ip, sy, sx, count, dir)
 	else {
 		gbox_blockmove(ip, sy, sx, sy, sx - count,
 			       1, ip->cols - sx);
-	}		
+	}
 }
 
 void
 gbox_windowmove(ip, sy, sx, dy, dx, h, w, mask)
-     struct ite_data *ip;
-     int sy, sx, dy, dx, mask, h, w;
+	struct ite_data *ip;
+	int sy, sx, dy, dx, mask, h, w;
 {
 	int src, dest;
 

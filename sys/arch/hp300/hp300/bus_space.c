@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8 2003/08/01 00:23:18 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.9 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8 2003/08/01 00:23:18 tsutsui Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.9 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

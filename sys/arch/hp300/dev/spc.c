@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.1 2003/08/01 01:18:46 tsutsui Exp $ */
+/* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.1 2003/08/01 01:18:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.1 2003/08/01 01:18:46 tsutsui Exp $");
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsi_message.h> 
+#include <dev/scsipi/scsi_message.h>
 #include <dev/scsipi/scsiconf.h>
 
 #include <dev/ic/mb89352reg.h>

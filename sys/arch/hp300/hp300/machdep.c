@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.174 2003/09/27 20:01:58 cl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.175 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.174 2003/09/27 20:01:58 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -153,10 +153,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.174 2003/09/27 20:01:58 cl Exp $");
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-struct vm_map *exec_map = NULL;  
+struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -388,7 +388,7 @@ cpu_startup()
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL) 
+			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
@@ -1351,7 +1351,7 @@ done:
 /*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  *

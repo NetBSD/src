@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.61 2003/08/07 16:27:33 agc Exp $	*/
+/*	$NetBSD: ite.c,v 1.62 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.61 2003/08/07 16:27:33 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.62 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include "hil.h"
 
@@ -336,7 +336,7 @@ iteinit(ip)
 
 	if (ip->flags & ITE_INITED)
 		return;
-	
+
 	ip->curx = 0;
 	ip->cury = 0;
 	ip->cursorx = 0;
@@ -497,7 +497,7 @@ itepoll(dev, events, p)
 {
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
 	struct tty *tp = sc->sc_data->tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
@@ -616,7 +616,7 @@ itefilter(stat, c)
 	case KBD_EXT_RIGHT_DOWN:
 		metamode = 1;
 		return;
-		
+
 	case KBD_EXT_LEFT_UP:
 	case KBD_EXT_RIGHT_UP:
 		metamode = 0;
@@ -640,8 +640,8 @@ itefilter(stat, c)
 	case KBD_CTRL:
 		code = ite_km->kbd_ctrlmap[(int)c];
 		break;
-		
-	case KBD_CTRLSHIFT:	
+
+	case KBD_CTRLSHIFT:
 		code = ite_km->kbd_ctrlshiftmap[(int)c];
 		break;
         }
@@ -743,7 +743,7 @@ doesc:
 			case 1:
 				if (c == 'A') {
 					switch (ip->hold) {
-	
+
 					case '0':
 						clr_attr(ip, ATTR_KPAD);
 						break;
@@ -883,7 +883,7 @@ ignore:
 			ite_movecursor(ip, sp);
 		}
 		break;
-	
+
 	case '\b':
 		if (--ip->curx < 0)
 			ip->curx = 0;

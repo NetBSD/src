@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rbreg.h,v 1.5 2003/08/07 16:27:30 agc Exp $	*/
+/*	$NetBSD: grf_rbreg.h,v 1.6 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -143,7 +143,7 @@ struct rboxfb {
     vu_int	opwen;			/* overlay plane write enable 0x40b4 */
     u_char	filler9[3];
     vu_char	tmode;			/* Tile mode size	      0x40bb */
-    u_char	filler9a[3];		
+    u_char	filler9a[3];
     vu_char	drive;			/* drive register	      0x40bf */
     u_char 	filler10[3];
     vu_char	vdrive;			/* vdrive register	      0x40c3 */
