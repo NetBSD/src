@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.14 1993/11/03 12:48:31 mycroft Exp $
+#	$Id: TEST,v 1.15 1993/11/03 13:29:37 mycroft Exp $
 #
 
 # standard options
@@ -78,7 +78,7 @@ mms0 at isa? port 0x23c				# MicroSoft InPort
 mms1 at isa? port 0x238
 lms0 at isa? port 0x23c				# Logitech
 lms1 at isa? port 0x238
-#pms0 at isa? port 0x60				# PS/2 auxiliary port; broken
+#pms0 at isa? port 0x60				# PS/2 auxiliary port
 
 #non-scsi disk controllers
 #wdc0 at isa? port 0x1f0			# MFM, RLL, IDE, ESDI
