@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.4 1997/10/11 01:16:27 lukem Exp $	*/
+/*	$NetBSD: extern.c,v 1.5 1999/09/08 21:17:50 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.4 1997/10/11 01:16:27 lukem Exp $");
+__RCSID("$NetBSD: extern.c,v 1.5 1999/09/08 21:17:50 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,8 @@ __RCSID("$NetBSD: extern.c,v 1.4 1997/10/11 01:16:27 lukem Exp $");
 
 bool    Guessed[26];
 
-char    Word[BUFSIZ], Known[BUFSIZ], *Noose_pict[] = {
+char    Word[BUFSIZ], Known[BUFSIZ];
+const char *const Noose_pict[] = {
 	"     ______",
 	"     |    |",
 	"     |",
@@ -63,7 +64,7 @@ int     Errors, Wordnum = 0;
 
 double  Average = 0.0;
 
-ERR_POS Err_pos[MAXERRS] = {
+const ERR_POS Err_pos[MAXERRS] = {
 	{2, 10, 'O'},
 	{3, 10, '|'},
 	{4, 10, '|'},

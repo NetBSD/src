@@ -1,4 +1,4 @@
-/*	$NetBSD: shapes.c,v 1.3 1997/10/12 02:03:47 lukem Exp $	*/
+/*	$NetBSD: shapes.c,v 1.4 1999/09/08 21:18:01 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
 #define	BC	B_COLS		/* bottom center */
 #define	BR	B_COLS+1	/* bottom right */
 
-struct shape shapes[] = {
+const struct shape shapes[] = {
 	/* 0*/	{ 7,	{ TL, TC, MR, } },
 	/* 1*/	{ 8,	{ TC, TR, ML, } },
 	/* 2*/	{ 9,	{ ML, MR, BC, } },
@@ -84,7 +84,7 @@ struct shape shapes[] = {
  */
 int
 fits_in(shape, pos)
-	struct shape *shape;
+	const struct shape *shape;
 	register int pos;
 {
 	register int *o = shape->off;
@@ -101,7 +101,7 @@ fits_in(shape, pos)
  */
 void
 place(shape, pos, onoff)
-	struct shape *shape;
+	const struct shape *shape;
 	register int pos, onoff;
 {
 	register int *o = shape->off;

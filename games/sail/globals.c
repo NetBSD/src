@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.6 1997/10/13 19:44:17 christos Exp $	*/
+/*	$NetBSD: globals.c,v 1.7 1999/09/08 21:17:58 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.6 1997/10/13 19:44:17 christos Exp $");
+__RCSID("$NetBSD: globals.c,v 1.7 1999/09/08 21:17:58 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -406,7 +406,7 @@ struct shipspecs specs[] = {
 /*                 class   qual   crew2    gunL   carL   rig1  rig3        */
 };
 
-struct windeffects WET[7][6] = {
+const struct windeffects WET[7][6] = {
 	{ {9,9,9,9}, {9,9,9,9}, {9,9,9,9}, {9,9,9,9}, {9,9,9,9}, {9,9,9,9} },
 	{ {3,2,2,0}, {3,2,1,0}, {3,2,1,0}, {3,2,1,0}, {2,1,0,0}, {2,1,0,0} },
 	{ {1,1,1,0}, {1,1,0,0}, {1,0,0,0}, {1,0,0,0}, {1,0,0,0}, {1,0,0,0} },
@@ -416,7 +416,7 @@ struct windeffects WET[7][6] = {
 	{ {2,1,1,0}, {3,2,1,0}, {3,2,1,0}, {3,2,1,0}, {3,3,2,0}, {3,3,2,0} }
 };
 
-struct Tables RigTable[11][6] = {
+const struct Tables RigTable[11][6] = {
 	{ {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,1}, {0,0,1,0} },
 	{ {0,0,0,0}, {0,0,0,0}, {0,0,0,1}, {0,0,1,0}, {1,0,0,1}, {0,1,1,1} },
 	{ {0,0,0,0}, {0,0,0,1}, {0,0,1,1}, {0,1,0,1}, {0,1,0,1}, {1,0,1,2} },
@@ -429,7 +429,7 @@ struct Tables RigTable[11][6] = {
 	{ {1,1,0,4}, {1,0,1,4}, {2,0,0,5}, {0,2,1,5}, {0,1,2,6}, {0,2,0,7} },
 	{ {1,0,1,5}, {0,2,0,6}, {1,2,0,6}, {1,1,1,6}, {2,0,2,6}, {1,1,2,7} }
 };
-struct Tables HullTable[11][6] = {
+const struct Tables HullTable[11][6] = {
 	{ {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {1,0,0,0}, {0,1,0,0} },
 	{ {0,0,0,0}, {0,0,0,0}, {0,1,0,0}, {1,1,0,0}, {1,0,1,0}, {1,0,1,1} },
 	{ {0,1,0,0}, {1,0,0,0}, {1,1,0,0}, {1,0,1,0}, {1,0,1,1}, {2,1,0,0} },
@@ -443,7 +443,7 @@ struct Tables HullTable[11][6] = {
 	{ {2,2,4,0}, {3,3,1,1}, {4,2,1,1}, {5,1,0,2}, {5,1,2,1}, {6,2,2,0} },
 };
 
-char AMMO[9][4] = {
+const char AMMO[9][4] = {
 	{ -1, 1, 0, 1 },
 	{ -1, 1, 0, 1 },
 	{ -1, 1, 0, 1 },
@@ -455,7 +455,7 @@ char AMMO[9][4] = {
 	{ -3, 2, 0, 3 }
 };
 	
-char HDT[9][10] = {
+const char HDT[9][10] = {
 	{ 1, 0,-1,-2,-3,-3,-4,-4,-4,-4 },
 	{ 1, 1, 0,-1,-2,-2,-3,-3,-3,-3 },
 	{ 2, 1, 0,-1,-2,-2,-3,-3,-3,-3 },
@@ -467,7 +467,7 @@ char HDT[9][10] = {
 	{ 5, 4, 3, 2, 1, 1, 0, 0, 0, 0 }
 };
 
-char HDTrake[9][10] = {
+const char HDTrake[9][10] = {
 	{ 2, 1, 0,-1,-2,-2,-3,-3,-3,-3 },
 	{ 2, 2, 1, 0,-1,-1,-2,-2,-2,-2 },
 	{ 3, 2, 1, 0,-1,-1,-2,-2,-2,-2 },
@@ -479,7 +479,7 @@ char HDTrake[9][10] = {
 	{ 9, 8, 7, 6, 5, 5, 4, 4, 4, 4 }
 };
 
-char QUAL[9][5] = {
+const char QUAL[9][5] = {
 	{ -1, 0, 0, 1, 1 },
 	{ -1, 0, 0, 1, 1 },
 	{ -1, 0, 0, 1, 2 },
@@ -491,7 +491,7 @@ char QUAL[9][5] = {
 	{ -2,-1, 0, 2, 3 }
 };
 
-char MT[9][3] = {
+const char MT[9][3] = {
 	{ 1, 0, 0 },
 	{ 1, 1, 0 },
 	{ 2, 1, 0 },
@@ -503,7 +503,7 @@ char MT[9][3] = {
 	{ 4, 4, 2 }
 };
 
-char rangeofshot[] = {
+const char rangeofshot[] = {
 	0,
 	1,		/* grape */
 	3,		/* chain */
@@ -511,12 +511,12 @@ char rangeofshot[] = {
 	1		/* double */
 };
 
-char *countryname[] = {
+const char *const countryname[] = {
 	"American", "British", "Spanish", "French", "Japanese",
 	"Federation", "Klingon", "Orion"
 };
 
-char *classname[] = {
+const char *const classname[] = {
 	"Drift wood",
 	"Ship of the Line",
 	"Ship of the Line",
@@ -526,7 +526,7 @@ char *classname[] = {
 	"Brig"
 };
 
-char *directionname[] = {
+const char *const directionname[] = {
 	"dead ahead",
 	"off the starboard bow",
 	"off the starboard beam",
@@ -538,9 +538,9 @@ char *directionname[] = {
 	"dead ahead"
 };
 
-char *qualname[] = { "dead", "mutinous", "green", "mundane", "crack", "elite" };
+const char *const qualname[] = { "dead", "mutinous", "green", "mundane", "crack", "elite" };
 
-char loadname[] = { '-', 'G', 'C', 'R', 'D', 'E' };
+const char loadname[] = { '-', 'G', 'C', 'R', 'D', 'E' };
 
-char dr[] = { 0, 1, 1, 0, -1, -1, -1, 0, 1 };
-char dc[] = { 0, 0, -1, -1, -1, 0, 1, 1, 1 };
+const char dr[] = { 0, 1, 1, 0, -1, -1, -1, 0, 1 };
+const char dc[] = { 0, 0, -1, -1, -1, 0, 1, 1, 1 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: morg.c,v 1.7 1999/08/21 10:40:04 simonb Exp $	*/
+/*	$NetBSD: morg.c,v 1.8 1999/09/08 21:17:52 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morg.c,v 1.7 1999/08/21 10:40:04 simonb Exp $");
+__RCSID("$NetBSD: morg.c,v 1.8 1999/09/08 21:17:52 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,8 +48,8 @@ __RCSID("$NetBSD: morg.c,v 1.7 1999/08/21 10:40:04 simonb Exp $");
  *	These routines deal with mortgaging.
  */
 
-static char	*names[MAX_PRP+2],
-		*morg_coms[]	= {
+static const char	*names[MAX_PRP+2],
+		*const morg_coms[]	= {
 			"quit",		/*  0 */
 			"print",	/*  1 */
 			"where",	/*  2 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_4.c,v 1.7 1999/02/10 00:45:46 hubertf Exp $	*/
+/*	$NetBSD: pl_4.c,v 1.8 1999/09/08 21:17:59 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_4.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_4.c,v 1.7 1999/02/10 00:45:46 hubertf Exp $");
+__RCSID("$NetBSD: pl_4.c,v 1.8 1999/09/08 21:17:59 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ lookout()
 	}
 }
 
-char *
+const char *
 saywhat(sp, flag)
 struct ship *sp;
 char flag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.10 1999/05/16 00:03:35 christos Exp $	*/
+/*	$NetBSD: robots.h,v 1.11 1999/09/08 21:17:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -105,8 +105,8 @@ extern bool	Dead, Full_clear, Jump, Newscore, Real_time, Running,
 extern bool	Pattern_roll, Stand_still;
 #endif
 
-extern char	Cnt_move, Field[Y_FIELDSIZE][X_FIELDSIZE], *Next_move,
-		*Move_list, Run_ch;
+extern char	Cnt_move, Field[Y_FIELDSIZE][X_FIELDSIZE], Run_ch;
+extern const char *Next_move, *Move_list;
 
 extern int	Count, Level, Num_robots, Num_scrap, Num_scores, Score,
 		Start_level, Wait_bonus, Num_games;
@@ -123,7 +123,7 @@ void	add_score __P((int));
 bool	another __P((void));
 int	cmp_sc __P((const void *, const void *));
 bool	do_move __P((int, int));
-bool	eaten __P((COORD *));
+bool	eaten __P((const COORD *));
 void	flush_in __P((void));
 void	get_move __P((void));
 void	init_field __P((void));
@@ -132,7 +132,7 @@ void	make_level __P((void));
 void	move_robots __P((int));
 bool	must_telep __P((void));
 void	play_level __P((void));
-int	query __P((char *));
+int	query __P((const char *));
 void	quit __P((int)) __attribute__((__noreturn__));
 void	reset_count __P((void));
 int	rnd __P((int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.5 1999/08/21 10:40:04 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.6 1999/09/08 21:17:52 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,15 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.5 1999/08/21 10:40:04 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.6 1999/09/08 21:17:52 jsm Exp $");
 #endif
 #endif /* not lint */
 
 #include "monop.ext"
 
-static char *header = "Name      Own      Price Mg # Rent";
+static const char *header = "Name      Own      Price Mg # Rent";
 
-static void printmorg __P((SQUARE *));
+static void printmorg __P((const SQUARE *));
 
 /*
  *	This routine prints out the current board
@@ -168,7 +168,7 @@ printsq(sqn, eoln)
  */
 static void
 printmorg(sqp)
-	SQUARE *sqp;
+	const SQUARE *sqp;
 {
 	if (sqp->desc->morg)
 		printf(" * ");

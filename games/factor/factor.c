@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.8 1998/09/13 15:27:27 hubertf Exp $	*/
+/*	$NetBSD: factor.c,v 1.9 1999/09/08 21:17:48 jsm Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.8 1998/09/13 15:27:27 hubertf Exp $");
+__RCSID("$NetBSD: factor.c,v 1.9 1999/09/08 21:17:48 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,8 +85,8 @@ __RCSID("$NetBSD: factor.c,v 1.8 1998/09/13 15:27:27 hubertf Exp $");
  * We are able to sieve 2^32-1 because this byte table yields all primes 
  * up to 65537 and 65537^2 > 2^32-1.
  */
-extern ubig prime[];
-extern ubig *pr_limit;		/* largest prime in the prime array */
+extern const ubig prime[];
+extern const ubig *pr_limit;		/* largest prime in the prime array */
 
 int	main __P((int, char *[]));
 void	pr_fact __P((ubig));	/* print factors of a value */
@@ -164,7 +164,7 @@ void
 pr_fact(val)
 	ubig val;		/* Factor this value. */
 {
-	ubig *fact;		/* The factor found. */
+	const ubig *fact;		/* The factor found. */
 
 	/* Firewall - catch 0 and 1. */
 	if (val == 0)		/* Historical practice; 0 just exits. */

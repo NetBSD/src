@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.6 1999/08/21 10:40:03 simonb Exp $	*/
+/*	$NetBSD: execute.c,v 1.7 1999/09/08 21:17:51 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.6 1999/08/21 10:40:03 simonb Exp $");
+__RCSID("$NetBSD: execute.c,v 1.7 1999/09/08 21:17:51 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,7 +240,7 @@ restore()
  */
 int
 rest_f(file)
-	char *file; 
+	const char *file; 
 {
 	char *sp;
 	int inf, num;

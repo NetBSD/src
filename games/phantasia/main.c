@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1999/08/18 01:39:16 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1999/09/08 21:17:54 jsm Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -873,7 +873,7 @@ genchar(type)
 	int     type;
 {
 	int     subscript;	/* used for subscripting into Stattable */
-	struct charstats *statptr;	/* for pointing into Stattable */
+	const struct charstats *statptr; /* for pointing into Stattable */
 
 	subscript = type - '1';
 
