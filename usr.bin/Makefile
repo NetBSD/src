@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.144 2005/01/20 04:26:00 ginsbach Exp $
+#	$NetBSD: Makefile,v 1.145 2005/03/09 05:20:05 atatat Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -20,7 +20,7 @@ SUBDIR= apply apropos asa at audio awk banner basename biff \
 	printenv printf progress pwhash qsubst quota radioctl rdist \
 	renice rev rlogin rpcgen rpcinfo rs rsh rup ruptime \
 	rusers rwall rwho script sed seq shar shlock showmount \
-	shuffle soelim sort split stat su systat tail talk \
+	shuffle sockstat soelim sort split stat su systat tail talk \
 	tcopy tee telnet tftp time tip tn3270 top touch tput \
 	tr true tset tsort tty ul uname unexpand unifdef \
 	uniq units unvis usbhidaction usbhidctl users \
