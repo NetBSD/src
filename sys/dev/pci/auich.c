@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.68 2004/10/31 16:49:27 mycroft Exp $	*/
+/*	$NetBSD: auich.c,v 1.69 2004/10/31 18:30:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.68 2004/10/31 16:49:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.69 2004/10/31 18:30:52 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1310,8 +1310,7 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	sc->pcmo_end = sc->pcmo_start + size;
 	sc->pcmo_blksize = blksize;
 
-	qptr = 0;
-	do {
+	for (qptr = 0; qptr < ICH_DMALIST_MAX; qptr++) {
 		q = &sc->dmalist_pcmo[qptr];
 
 		q->base = sc->pcmo_p;
@@ -1320,12 +1319,9 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 		sc->pcmo_p += blksize;
 		if (sc->pcmo_p >= sc->pcmo_end)
 			sc->pcmo_p = sc->pcmo_start;
+	}
 
-		if (++qptr == ICH_DMALIST_MAX)
-			qptr = 0;
-	} while (qptr != 0);
-
-	sc->ptr_pcmo = qptr;
+	sc->ptr_pcmo = qptr = 0;
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_LVI,
 	    (qptr - 1) & ICH_LVI_MASK);
 
@@ -1388,8 +1384,7 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	sc->pcmi_end = sc->pcmi_start + size;
 	sc->pcmi_blksize = blksize;
 
-	qptr = 0;
-	do {
+	for (qptr = 0; qptr < ICH_DMALIST_MAX; qptr++) {
 		q = &sc->dmalist_pcmi[qptr];
 
 		q->base = sc->pcmi_p;
@@ -1398,12 +1393,9 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 		sc->pcmi_p += blksize;
 		if (sc->pcmi_p >= sc->pcmi_end)
 			sc->pcmi_p = sc->pcmi_start;
+	}
 
-		if (++qptr == ICH_DMALIST_MAX)
-			qptr = 0;
-	} while (qptr != 0);
-
-	sc->ptr_pcmi = qptr;
+	sc->ptr_pcmi = qptr = 0;
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_LVI,
 	    (qptr - 1) & ICH_LVI_MASK);
 
