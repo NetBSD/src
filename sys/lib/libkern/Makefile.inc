@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 1997/03/07 00:50:30 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.26.8.1 1997/11/12 23:51:54 thorpej Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -33,6 +33,10 @@ KERNMAKE= \
 	cd ${KERNDIR} && MAKEOBJDIR=${KERNDST} ${MAKE} \
 	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
+	    AR=${AR:Q} NM=${NM:Q} \
+	    LORDER=${LORDER:Q} \
+	    TSORT=${TSORT:Q} \
+	    RANLIB=${RANLIB:Q} \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
