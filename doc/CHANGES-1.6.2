@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.6 2003/05/25 12:16:26 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.7 2003/06/02 09:56:26 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -55,4 +55,28 @@ sys/netiso/clnp_er.c				1.13
 	Keep pkthdr when prepending new mbuf in front of a given chain.
 	This keeps us from panic()ing in the interface output routine.
 	[is, ticket #1295]
+
+sys/kern/init_main.c				1.215
+usr.bin/login/login.c				1.72
+
+	Update copyright notice.
+	[fair, ticket #1303]
+
+etc/mrouted.conf				1.5
+share/man/man4/ntwoc.4				1.4
+	Fix typos.
+	[keihan, ticket #1135]
+
+sys/dev/scsipi/scsiconf.c			1.199
+
+	Add PQUIRK_NOLUNS entry for "NEC     ", "CD-ROM DRIVE:502".
+	Fixes PR kern/18479
+	[bouyer, ticket #]
+
+sys/dev/pci/pcidevs				1.503
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+	Add SiS 651 host bridge.
+	[bouyer, ticket #]
 
