@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.8 2000/12/01 19:18:46 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.9 2000/12/03 14:47:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -27,6 +27,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
