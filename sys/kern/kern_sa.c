@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.36 2002/10/22 03:16:44 simonb Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.37 2002/10/22 17:40:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -322,6 +322,8 @@ sa_yield(struct lwp *l)
 		 * that case, we want to call lwp_exit(), which will
 		 * be done by the userret() hooks.
 		 */
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);
 		KDASSERT(p->p_flag & P_WEXIT);
 		/* mostly NOTREACHED */
 	}
