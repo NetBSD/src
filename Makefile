@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.16 1994/02/08 23:20:40 cgd Exp $
+#	$Id: Makefile,v 1.17 1994/02/10 01:50:17 cgd Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -14,20 +14,20 @@ SUBDIR+= regress
 
 regression-tests:
 	@echo Running regression tests...
-	@( cd regress; make regress )
+	@( cd regress; ${MAKE} regress )
 .endif
 
 afterinstall:
-	(cd share/man && make makedb)
+	(cd share/man && ${MAKE} makedb)
 
 build:
-	(cd include && make install)
-	make cleandir
-	(cd lib && make depend && make && make install)
-	(cd gnu/lib && make depend && make && make install)
+	(cd include && ${MAKE} install)
+	${MAKE} cleandir
+	(cd lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .if exists(kerberosIV)
-	(cd kerberosIV && make depend && make && make install)
+	(cd kerberosIV && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .endif
-	make depend && make && make install
+	${MAKE} depend && ${MAKE} && ${MAKE} install
 
 .include <bsd.subdir.mk>
