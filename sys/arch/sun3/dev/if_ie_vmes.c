@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vmes.c,v 1.7 1997/01/27 19:40:49 gwr Exp $	*/
+/*	$NetBSD: if_ie_vmes.c,v 1.7.4.1 1997/03/06 14:03:45 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>

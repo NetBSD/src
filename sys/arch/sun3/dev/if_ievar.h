@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ievar.h,v 1.7 1996/12/17 21:10:47 gwr Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.7.6.1 1997/03/06 14:03:46 is Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -57,10 +57,8 @@ enum ie_hardware {
 struct ie_softc {
 	struct device sc_dev;	/* device structure */
 
-	struct arpcom sc_arpcom;/* system arpcom structure */
-#define	sc_if	sc_arpcom.ac_if 		/* network-visible interface */
-#define	sc_addr	sc_arpcom.ac_enaddr		/* hardware Ethernet address */
-
+	struct ethercom sc_ethercom;/* system ethercom structure */
+#define	sc_if	sc_ethercom.ec_if 		/* network-visible interface */
 	caddr_t sc_iobase;	/* KVA of base of 24bit addr space */
 	caddr_t sc_maddr;	/* KVA of base of chip's RAM */
 	u_int   sc_msize;	/* how much RAM we have/use */
@@ -116,6 +114,7 @@ struct ie_softc {
 #ifdef IEDEBUG
 	int     sc_debug;
 #endif
+	u_int8_t sc_addr[ETHER_ADDR_LEN];
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.35 1997/01/27 16:57:12 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.35.4.1 1997/03/06 14:03:47 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -150,7 +151,7 @@ le_attach(parent, self, aux)
 	sc->sc_addr = (u_long)sc->sc_mem & 0xffffff;
 	sc->sc_conf3 = LE_C3_BSWP;
 
-	idprom_etheraddr(sc->sc_arpcom.ac_enaddr);
+	idprom_etheraddr(sc->sc_enaddr);
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
 	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
