@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 1997/10/12 13:09:11 mycroft Exp $
+#	$NetBSD: Makefile,v 1.23 1997/10/12 14:04:36 mycroft Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 # XXX Work-around a compiler bug for now... can't use -O
@@ -23,9 +23,14 @@ DPADD+= ${LIBSKEY}
 LDADD+= -lskey
 .endif
 
-.ifdef KERBEROS
+.ifdef KERBEROS5
+SRCS+=	k5login.c
+CPPFLAGS+=-DKERBEROS5
+DPADD+=	${LIBKRB5} ${LIBCRYPTO}
+LDADD+=	-lkrb5 -lcrypto -lcom_err
+.elifdef KERBEROS
 SRCS+=	klogin.c
 CPPFLAGS+=-DKERBEROS
-DPADD+= ${LIBKRB} ${LIBDES}
-LDADD+= -lkrb -ldes
+DPADD+=	${LIBKRB} ${LIBDES}
+LDADD+=	-lkrb -ldes
 .endif
