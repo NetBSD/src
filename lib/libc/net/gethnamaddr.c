@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.42.2.10 2003/10/04 08:40:42 tron Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.42.2.11 2003/10/04 08:42:55 tron Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.42.2.10 2003/10/04 08:40:42 tron Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.42.2.11 2003/10/04 08:42:55 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -203,11 +203,11 @@ dprintf(char *msg, ...)
 
 #define BOUNDED_INCR(x) \
 	do { \
-		if (cp + x >= eom) { \
+		if (cp + (x) >= eom) { \
 			h_errno = NO_RECOVERY; \
 			return (NULL); \
 		} \
-		cp += x; \
+		cp += (x); \
 	} while (/*CONSTCOND*/0)
 
 #define BOUNDS_CHECK(ptr, count) \
