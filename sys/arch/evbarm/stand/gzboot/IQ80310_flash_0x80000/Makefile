@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/03/28 20:41:45 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2002/04/25 01:47:41 thorpej Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -12,6 +12,6 @@ CPPFLAGS+= -DCONADDR=0xfe810000UL
 
 LDSCRIPT= ${.CURDIR}/ldscript
 
-SRCS+=	ns16550.c i80312_mem.c
+SRCS+=	iq80310.c ns16550.c i80312_mem.c
 
 .include "${S}/arch/evbarm/stand/gzboot/Makefile.gzboot"
