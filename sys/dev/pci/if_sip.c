@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.25 2001/03/09 07:42:24 briggs Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.26 2001/03/09 16:07:20 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -1345,10 +1345,17 @@ sip_init(ifp)
 		 *
 		 * It's not clear if this should be 302h or 203h because that
 		 * chip name is listed as SRR 302h in the description of the
-		 * SRR register.
+		 * SRR register.  However, my revision 302h DP83815 on the
+		 * Netgear FA311 purchased in 02/2001 needs these settings
+		 * to avoid tons of errors in AcceptPerfectMatch (non-
+		 * IFF_PROMISC) mode.  I do not know if other revisions need
+		 * this set or not.  [briggs -- 09 March 2001]
+		 *
+		 * Note that only the low-order 12 bits of 0xe4 are documented
+		 * and that this sets reserved bits in that register.
 		 */
 		cfg = bus_space_read_4(st, sh, SIP_NS_SRR);
-		if (cfg == 0x203) {
+		if (cfg == 0x302) {
 			bus_space_write_4(st, sh, 0x00cc, 0x0001);
 			bus_space_write_4(st, sh, 0x00e4, 0x189C);
 			bus_space_write_4(st, sh, 0x00fc, 0x0000);
@@ -1865,6 +1872,11 @@ sip_dp83815_set_filter(sc)
 
 	/*
 	 * Initialize the prototype RFCR.
+	 * Enable the receive filter, and accept ARP
+	 * and on Perfect (destination address) Match
+	 * If IFF_BROADCAST, also accept all broadcast packets.
+	 * If IFF_PROMISC, accept all unicast packets (and later, set
+	 *    IFF_ALLMULTI and accept all multicast, too).
 	 */
 	sc->sc_rfcr = RFCR_RFEN | RFCR_AARP | RFCR_APM;
 	if (ifp->if_flags & IFF_BROADCAST)
@@ -1885,9 +1897,12 @@ sip_dp83815_set_filter(sc)
 
 	memset(mchash, 0, sizeof(mchash));
 
+	ifp->if_flags &= ~IFF_ALLMULTI;
 	ETHER_FIRST_MULTI(step, ec, enm);
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+	if (enm != NULL) {
+		while (enm != NULL) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -1896,22 +1911,22 @@ sip_dp83815_set_filter(sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-			goto allmulti;
+				goto allmulti;
+			}
+
+			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+			/* Just want the 9 most significant bits. */
+			crc >>= 23;
+
+			/* Set the corresponding bit in the hash table. */
+			mchash[crc >> 5] |= 1 << (crc & 0x1f);
+
+			ETHER_NEXT_MULTI(step, enm);
 		}
 
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-
-		/* Just want the 9 most significant bits. */
-		crc >>= 23;
-
-		/* Set the corresponding bit in the hash table. */
-		mchash[crc >> 5] |= 1 << (crc & 0x1f);
-
-		ETHER_NEXT_MULTI(step, enm);
+		sc->sc_rfcr |= RFCR_MHEN;
 	}
-
-	ifp->if_flags &= ~IFF_ALLMULTI;
-	sc->sc_rfcr |= RFCR_MHEN;
 	goto setit;
 
  allmulti:
@@ -1929,9 +1944,9 @@ sip_dp83815_set_filter(sc)
 	 * Disable receive filter, and program the node address.
 	 */
 	cp = LLADDR(ifp->if_sadl);
-	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH, (cp[1] << 8) | cp[0]);
-	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH, (cp[3] << 8) | cp[2]);
-	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH, (cp[5] << 8) | cp[4]);
+	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH0, (cp[1] << 8) | cp[0]);
+	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH2, (cp[3] << 8) | cp[2]);
+	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH4, (cp[5] << 8) | cp[4]);
 
 	if ((ifp->if_flags & IFF_ALLMULTI) == 0) {
 		/*
