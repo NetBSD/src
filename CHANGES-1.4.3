@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.52 2000/08/15 23:20:04 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.53 2000/08/26 19:36:01 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1198,3 +1198,51 @@ distrib/utils/Makefile				patch
 
   Don't build libhack in its own directory; build it where it's
   used instead.
+
+distrib/sets/makesums				1.2
+
+  Add -all option, and improve intelligence about which files to
+  checksum.
+
+lib/csu/c++/Makefile				patch
+gnu/lib/libstdc++/Makefile			patch
+distrib/notes/common/main			patch
+
+  Compile c++rt0.o with -fPIC on sparc.  This means that C++ shared
+  libraries with global constructors (which must link c++rt0.o on
+  sparc/a.out) must also be compiled -fPIC.
+
+distrib/sparc/ramdisk/Makefile			patch
+
+  Make this build with obj directories.
+
+sys/compat/ossaudio/ossaudio.c			1.32 via patch
+lib/libossaudio/ossaudio.c			1.12 via patch
+
+  Use accurate rounding in conversion between OSS and NetBSD
+  volume values.  Fixes among other things PR#10818.
+
+sbin/fsck_ffs/dir.c				1.27
+
+  Fix an evil ugly bug which causes files placed into lost+found
+  to be inconsistent, and unremovable.
+
+Makefile					1.109,1.120 via patch
+
+  Make it easier on release builders -- descend into "distrib"
+  directory whenever "obj" or "cleandir" targets are invoked.
+
+distrib/notes/common/sysinst			patch
+
+  Correct markup error.
+
+distrib/sets/list/base/mi			1.156 via patch
+distrib/sets/list/base/obsolete.mi		1.7 via patch
+distrib/sets/lists/man/mi			1.226 via patch
+distrib/sets/lists/man/obsolete.mi		1.9 via patch
+
+  "sysconfd" and "statmsg" are now obsolete.
+
+distrib/notes/common/main			1.75 via patch
+
+  Add new developers.
