@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.2 2001/02/02 13:00:29 mrg Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.3 2001/02/04 11:06:14 mrg Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -753,6 +753,8 @@ sunos32_sys_mmap(p, v, retval)
 	struct filedesc *fdp;
 	struct file *fp;
 	struct vnode *vp;
+	void *rt;
+	int error;
 
 	/*
 	 * Verify the arguments.
@@ -763,18 +765,18 @@ sunos32_sys_mmap(p, v, retval)
 	if ((SCARG(uap, flags) & SUNOS__MAP_NEW) == 0)
 		return (EINVAL);
 
-	SCARG(&ua, flags) = SCARG(uap, flags) & ~SUNOS__MAP_NEW;
 	SUNOS32TOP_UAP(addr, void);
+	SUNOS32TOX_UAP(len, size_t);
+	SUNOS32TO64_UAP(prot);
+	SCARG(&ua, flags) = SCARG(uap, flags) & ~SUNOS__MAP_NEW;
+	SUNOS32TO64_UAP(fd);
+	SCARG(&ua, pad) = 0;
+	SUNOS32TOX_UAP(pos, off_t);
 
 	if ((SCARG(&ua, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&ua, addr) != 0 &&
 	    SCARG(&ua, addr) < (void *)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ))
 		SCARG(&ua, addr) = (void *)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ);
-
-	SUNOS32TOX_UAP(len, size_t);
-	SUNOS32TO64_UAP(prot);
-	SUNOS32TO64_UAP(fd);
-	SUNOS32TO64_UAP(pos);
 
 	/*
 	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
@@ -789,7 +791,11 @@ sunos32_sys_mmap(p, v, retval)
 		SCARG(&ua, fd) = -1;
 	}
 
-	return (sys_mmap(p, &ua, retval));
+	error = sys_mmap(p, &ua, (register_t *)&rt);
+	if ((long)rt > (long)UINT_MAX)
+		printf("sunos32_mmap: retval out of range: %p", rt);
+	*retval = (netbsd32_voidp)(u_long)rt;
+	return (error);
 }
 
 #define	MC_SYNC		1
