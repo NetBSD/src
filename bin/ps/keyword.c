@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.22 2000/05/11 08:52:30 mjl Exp $	*/
+/*	$NetBSD: keyword.c,v 1.23 2000/05/26 03:04:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.22 2000/05/11 08:52:30 mjl Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.23 2000/05/26 03:04:28 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,10 +76,7 @@ int	utime(), stime(), ixrss(), idrss(), isrss();
 #endif
 
 /* Compute offset in common structures. */
-#define	POFF(x)	offsetof(struct proc, x)
-#define	EOFF(x)	offsetof(struct eproc, x)
-#define	UOFF(x)	offsetof(struct usave, x)
-#define	ROFF(x)	offsetof(struct rusage, x)
+#define	POFF(x)	offsetof(struct kinfo_proc2, x)
 
 #define	UIDFMT	"u"
 #define	UIDLEN	5
@@ -108,9 +105,9 @@ VAR var[] = {
 	{"flags", "", "f"},
 	{"holdcnt", "HOLDCNT", NULL, 0, pvar, 8, POFF(p_holdcnt), INT, "d"},
 	{"ignored", "", "sigignore"},
-	{"inblk", "INBLK", NULL, USER, rvar, 4, ROFF(ru_inblock), LONG, "d"},
+	{"inblk", "INBLK", NULL, USER, pvar, 4, POFF(p_uru_inblock), LONG, "d"},
 	{"inblock", "", "inblk"},
-	{"jobc", "JOBC", NULL, 0, evar, 4, EOFF(e_jobc), SHORT, "d"},
+	{"jobc", "JOBC", NULL, 0, evar, 4, POFF(p_jobc), SHORT, "d"},
 	{"ktrace", "KTRACE", NULL, 0, pvar, 8, POFF(p_traceflag), INT, "x"},
 	/* XXX */
 	{"ktracep", "KTRACEP", NULL, 0, pvar, 8, POFF(p_tracep), KPTR, "x"},
@@ -118,44 +115,44 @@ VAR var[] = {
 	{"login", "LOGIN", NULL, LJUST, logname, MAXLOGNAME},
 	{"logname", "", "login"},
 	{"lstart", "STARTED", NULL, LJUST|USER, lstarted, 28},
-	{"majflt", "MAJFLT", NULL, USER, rvar, 4, ROFF(ru_majflt), LONG, "d"},
-	{"minflt", "MINFLT", NULL, USER, rvar, 4, ROFF(ru_minflt), LONG, "d"},
-	{"msgrcv", "MSGRCV", NULL, USER, rvar, 4, ROFF(ru_msgrcv), LONG, "d"},
-	{"msgsnd", "MSGSND", NULL, USER, rvar, 4, ROFF(ru_msgsnd), LONG, "d"},
+	{"majflt", "MAJFLT", NULL, USER, pvar, 4, POFF(p_uru_majflt), LONG, "d"},
+	{"minflt", "MINFLT", NULL, USER, pvar, 4, POFF(p_uru_minflt), LONG, "d"},
+	{"msgrcv", "MSGRCV", NULL, USER, pvar, 4, POFF(p_uru_msgrcv), LONG, "d"},
+	{"msgsnd", "MSGSND", NULL, USER, pvar, 4, POFF(p_uru_msgsnd), LONG, "d"},
 	{"ni", "", "nice"},
-	{"nice", "NI", NULL, 0, pnice, 2},
-	{"nivcsw", "NIVCSW", NULL, USER, rvar, 5, ROFF(ru_nivcsw), LONG, "d"},
+	{"nice", "NI", NULL, 0, pnice, 3},
+	{"nivcsw", "NIVCSW", NULL, USER, pvar, 5, POFF(p_uru_nivcsw), LONG, "d"},
 	{"nsignals", "", "nsigs"},
-	{"nsigs", "NSIGS", NULL, USER, rvar, 4, ROFF(ru_nsignals), LONG, "d"},
-	{"nswap", "NSWAP", NULL, USER, rvar, 4, ROFF(ru_nswap), LONG, "d"},
-	{"nvcsw", "NVCSW", NULL, USER, rvar, 5, ROFF(ru_nvcsw), LONG, "d"},
+	{"nsigs", "NSIGS", NULL, USER, pvar, 4, POFF(p_uru_nsignals), LONG, "d"},
+	{"nswap", "NSWAP", NULL, USER, pvar, 4, POFF(p_uru_nswap), LONG, "d"},
+	{"nvcsw", "NVCSW", NULL, USER, pvar, 5, POFF(p_uru_nvcsw), LONG, "d"},
 	/* XXX */
 	{"nwchan", "WCHAN", NULL, 0, pvar, 6, POFF(p_wchan), KPTR, "x"},
-	{"oublk", "OUBLK", NULL, USER, rvar, 4, ROFF(ru_oublock), LONG, "d"},
+	{"oublk", "OUBLK", NULL, USER, pvar, 4, POFF(p_uru_oublock), LONG, "d"},
 	{"oublock", "", "oublk"},
 	/* XXX */
 	{"p_ru", "P_RU", NULL, 0, pvar, 6, POFF(p_ru), KPTR, "x"},
 	/* XXX */
-	{"paddr", "PADDR", NULL, 0, evar, 6, EOFF(e_paddr), KPTR, "x"},
+	{"paddr", "PADDR", NULL, 0, evar, 6, POFF(p_paddr), KPTR, "x"},
 	{"pagein", "PAGEIN", NULL, USER, pagein, 6},
 	{"pcpu", "", "%cpu"},
 	{"pending", "", "sig"},
-	PID("pgid", "PGID", evar, EOFF(e_pgid)),
+	PID("pgid", "PGID", evar, POFF(p__pgid)),
 	PID("pid", "PID", pvar, POFF(p_pid)),
 	{"pmem", "", "%mem"},
-	PID("ppid", "PPID", evar, EOFF(e_ppid)),
+	PID("ppid", "PPID", evar, POFF(p_ppid)),
 	{"pri", "PRI", NULL, 0, pri, 3},
 	{"re", "RE", NULL, INF127, pvar, 3, POFF(p_swtime), UINT, "d"},
-	GID("rgid", "RGID", evar, EOFF(e_pcred.p_rgid)),
+	GID("rgid", "RGID", evar, POFF(p_rgid)),
 	/* XXX */
 	{"rlink", "RLINK", NULL, 0, pvar, 8, POFF(p_back), KPTR, "x"},
 	{"rss", "RSS", NULL, 0, p_rssize, 4},
 	{"rssize", "", "rsz"},
 	{"rsz", "RSZ", NULL, 0, rssize, 4},
-	UID("ruid", "RUID", evar, EOFF(e_pcred.p_ruid)),
+	UID("ruid", "RUID", evar, POFF(p_ruid)),
 	{"ruser", "RUSER", NULL, LJUST, runame, USERLEN},
-	{"sess", "SESS", NULL, 0, evar, 6, EOFF(e_sess), KPTR24, "x"},
-	PID("sid", "SID", evar, EOFF(e_sid)),
+	{"sess", "SESS", NULL, 0, evar, 6, POFF(p_sess), KPTR24, "x"},
+	PID("sid", "SID", evar, POFF(p_sid)),
 	{"sig", "PENDING",
 	    NULL, 0, pvar, SIGWIDTH, POFF(p_siglist), SIGLIST, "s"},
 	{"sigcatch", "CAUGHT",
@@ -168,17 +165,17 @@ VAR var[] = {
 	{"start", "STARTED", NULL, LJUST|USER, started, 8},
 	{"stat", "", "state"},
 	{"state", "STAT", NULL, 0, state, 4},
-	GID("svgid", "SVGID", evar, EOFF(e_pcred.p_svgid)),
-	UID("svuid", "SVUID", evar, EOFF(e_pcred.p_svuid)),
+	GID("svgid", "SVGID", evar, POFF(p_gid)),
+	UID("svuid", "SVUID", evar, POFF(p_uid)),
 	{"tdev", "TDEV", NULL, 0, tdev, 4},
 	{"time", "TIME", NULL, USER, cputime, 9},
-	PID("tpgid", "TGPID", evar, EOFF(e_tpgid)),
-	{"tsess", "TSESS", NULL, 0, evar, 6, EOFF(e_tsess), KPTR, "x"},
+	PID("tpgid", "TGPID", evar, POFF(p_tpgid)),
+	{"tsess", "TSESS", NULL, 0, evar, 6, POFF(p_tsess), KPTR, "x"},
 	{"tsiz", "TSIZ", NULL, 0, tsize, 4},
 	{"tt", "TT", NULL, LJUST, tname, 3},
 	{"tty", "TTY", NULL, LJUST, longtname, 8},
 	{"ucomm", "UCOMM", NULL, LJUST, ucomm, MAXCOMLEN},
-	UID("uid", "UID", evar, EOFF(e_ucred.cr_uid)),
+	UID("uid", "UID", evar, POFF(p_uid)),
 	{"upr", "UPR", NULL, 0, pvar, 3, POFF(p_usrpri), UCHAR, "d"},
 	{"user", "USER", NULL, LJUST, uname, USERLEN},
 	{"usrpri", "", "upr"},

@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.37 2000/04/29 00:18:48 abs Exp $	*/
+/*	$NetBSD: ps.c,v 1.38 2000/05/26 03:04:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.37 2000/04/29 00:18:48 abs Exp $");
+__RCSID("$NetBSD: ps.c,v 1.38 2000/05/26 03:04:28 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,11 +72,7 @@ __RCSID("$NetBSD: ps.c,v 1.37 2000/04/29 00:18:48 abs Exp $");
 
 #include "ps.h"
 
-#ifdef P_PPWAIT
-#define NEWVM
-#endif
-
-KINFO *kinfo;
+struct kinfo_proc2 *kinfo;
 struct varent *vhead, *vtail;
 
 int	eval;			/* exit value */
@@ -86,15 +82,15 @@ int	dontuseprocfs=0;	/* -K */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
-int	needuser, needcomm, needenv, commandonly, use_procfs;
+int	needcomm, needenv, commandonly, use_procfs;
 uid_t	myuid;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
-static KINFO	*getkinfo_kvm __P((kvm_t *, int, int, int *, int));
+static struct kinfo_proc2
+		*getkinfo_kvm __P((kvm_t *, int, int, int *));
 static char	*kludge_oldps_options __P((char *));
 static int	 pscomp __P((const void *, const void *));
-static void	 saveuser __P((KINFO *));
 static void	 scanvars __P((void));
 static void	 usage __P((void));
 int		 main __P((int, char *[]));
@@ -116,14 +112,14 @@ main(argc, argv)
 {
 	struct varent *vent;
 	struct winsize ws;
-	gid_t egid = getegid();
 	int ch, flag, i, fmt, lineno, nentries;
 	int prtheader, wflag, what, xflg;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	char *ttname;
 
-	(void)setegid(getgid());
-	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 ||
+	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
+	     ioctl(STDERR_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
+	     ioctl(STDIN_FILENO,  TIOCGWINSZ, (char *)&ws) == -1) ||
 	     ws.ws_col == 0)
 		termwidth = 79;
 	else
@@ -300,18 +296,13 @@ main(argc, argv)
 		}
 	}
 #endif
-	/*
-	 * Discard setgid privileges.  If not the running kernel, we toss
-	 * them away totally so that bad guys can't print interesting stuff
-	 * from kernel memory, otherwise switch back to kmem for the
-	 * duration of the kvm_openfiles() call.
-	 */
-	if (nlistf != NULL || memf != NULL || swapf != NULL)
-		(void)setgid(getgid());
-	else
-		(void)setegid(egid);
 
-	kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
+	if (nlistf == NULL && memf == NULL && swapf == NULL) {
+		kd = kvm_openfiles(nlistf, memf, swapf, KVM_NO_FILES, errbuf);
+		donlist_sysctl();
+	} else
+		kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
+		
 	if (kd == 0) {
 		if (dontuseprocfs)
 			errx(1, "%s", errbuf);
@@ -320,9 +311,6 @@ main(argc, argv)
 			fprintf(stderr, "ps: falling back to /proc-based lookup\n");
 		}
 	}
-
-	if (nlistf == NULL && memf == NULL && swapf == NULL)
-		(void)setgid(getgid());
 
 	if (!fmt)
 		parsefmt(dfmt);
@@ -336,35 +324,24 @@ main(argc, argv)
 	/*
 	 * select procs
 	 */
-	if (!kd || !(kinfo = getkinfo_kvm(kd, what, flag, &nentries, needuser)))
+	if (!kd || !(kinfo = getkinfo_kvm(kd, what, flag, &nentries)))
 	{
 		/*  If/when the /proc-based code is ripped out
 		 *  again, make sure all references to the -K
 		 *  option are also pulled (getopt(), usage(),
 		 *  man page).  See the man page comments about
 		 *  this for more details.  */
-	  	/*  sysctl() ought to provide some sort of
-		 *  always-working-but-minimal-functionality
-		 *  method of providing at least some of the
-		 *  process information.  Unfortunately, such a
-		 *  change will require too much work to be put
-		 *  into 1.4.  For now, enable this experimental
-		 *  /proc-based support instead (if /proc is
-		 *  mounted) to grab as much information as we can.  
-		 *  The guts of emulating kvm_getprocs() is in
-		 *  the file procfs_ops.c.  */
 		if (kd)
 			warnx("%s.", kvm_geterr(kd));
-		if (dontuseprocfs) {
+		if (dontuseprocfs)
 			exit(1);
-		}
+
 		/*  procfs_getprocs supports all but the
 		 *  KERN_PROC_RUID flag.  */
 		kinfo = getkinfo_procfs(what, flag, &nentries);
-		if (kinfo == 0) {
-		  errx(1, "fallback /proc-based lookup also failed.  %s",
-				  "Giving up...");
-		}
+		if (kinfo == 0)
+			errx(1, "fallback /proc-based lookup also failed.  %s",
+			    "Giving up...");
 		fprintf(stderr, "%s%s",
 		    "Warning:  /proc does not provide ",
 		    "valid data for all fields.\n");
@@ -380,15 +357,15 @@ main(argc, argv)
 	/*
 	 * sort proc list
 	 */
-	qsort(kinfo, nentries, sizeof(KINFO), pscomp);
+	qsort(kinfo, nentries, sizeof(struct kinfo_proc2), pscomp);
 	/*
 	 * for each proc, call each variable output function.
 	 */
 	for (i = lineno = 0; i < nentries; i++) {
-		KINFO *ki = &kinfo[i];
+		struct kinfo_proc2 *ki = &kinfo[i];
 
-		if (xflg == 0 && (KI_EPROC(ki)->e_tdev == NODEV ||
-		    (KI_PROC(ki)->p_flag & P_CONTROLT ) == 0))
+		if (xflg == 0 && (ki->p_tdev == NODEV ||
+		    (ki->p_flag & P_CONTROLT ) == 0))
 			continue;
 		for (vent = vhead; vent; vent = vent->next) {
 			(vent->var->oproc)(ki, vent);
@@ -406,27 +383,13 @@ main(argc, argv)
 	/* NOTREACHED */
 }
 
-static KINFO *
-getkinfo_kvm(kd, what, flag, nentriesp, needuser)
+static struct kinfo_proc2 *
+getkinfo_kvm(kd, what, flag, nentriesp)
 	kvm_t *kd;
-	int what, flag, *nentriesp, needuser;
+	int what, flag, *nentriesp;
 {
-	struct kinfo_proc *kp;
-	KINFO *kinfo=NULL;
-	size_t i;
-
-	if ((kp = kvm_getprocs(kd, what, flag, nentriesp)) != 0)
-	{
-		if ((kinfo = malloc((*nentriesp) * sizeof(*kinfo))) == NULL)
-			err(1, NULL);
-		for (i = (*nentriesp); i-- > 0; kp++) {
-			kinfo[i].ki_p = kp;
-			if (needuser)
-				saveuser(&kinfo[i]);
-		}
-	}
-
-	return (kinfo);
+	return (kvm_getproc2(kd, what, flag, sizeof(struct kinfo_proc2),
+	    nentriesp));
 }
 
 static void
@@ -442,57 +405,32 @@ scanvars()
 		if (v->width < i)
 			v->width = i;
 		totwidth += v->width + 1;	/* +1 for space */
-		if (v->flag & USER)
-			needuser = 1;
 		if (v->flag & COMM)
 			needcomm = 1;
 	}
 	totwidth--;
 }
 
-static void
-saveuser(ki)
-	KINFO *ki;
-{
-	struct pstats pstats;
-	struct usave *usp;
-
-	usp = &ki->ki_u;
-	if (kvm_read(kd, (u_long)&KI_PROC(ki)->p_addr->u_stats,
-	    (char *)&pstats, sizeof(pstats)) == sizeof(pstats)) {
-		/*
-		 * The u-area might be swapped out, and we can't get
-		 * at it because we have a crashdump and no swap.
-		 * If it's here fill in these fields, otherwise, just
-		 * leave them 0.
-		 */
-		usp->u_start = pstats.p_start;
-		usp->u_ru = pstats.p_ru;
-		usp->u_cru = pstats.p_cru;
-		usp->u_valid = 1;
-	} else
-		usp->u_valid = 0;
-}
-
 static int
 pscomp(a, b)
 	const void *a, *b;
 {
+	struct kinfo_proc2 *ka = (struct kinfo_proc2 *)a;
+	struct kinfo_proc2 *kb = (struct kinfo_proc2 *)b;
+
 	int i;
-#ifdef NEWVM
-#define VSIZE(k) (KI_EPROC(k)->e_vm.vm_dsize + KI_EPROC(k)->e_vm.vm_ssize + \
-		  KI_EPROC(k)->e_vm.vm_tsize)
-#else
-#define VSIZE(k) ((k)->ki_p->p_dsize + (k)->ki_p->p_ssize + (k)->ki_e->e_xsize)
-#endif
+#define VSIZE(k) (k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize)
 
 	if (sortby == SORTCPU)
-		return (getpcpu((KINFO *)b) - getpcpu((KINFO *)a));
+		return (getpcpu(kb) - getpcpu(ka));
 	if (sortby == SORTMEM)
-		return (VSIZE((KINFO *)b) - VSIZE((KINFO *)a));
-	i =  KI_EPROC((KINFO *)a)->e_tdev - KI_EPROC((KINFO *)b)->e_tdev;
+		return (VSIZE(kb) - VSIZE(ka));
+	i =  ka->p_tdev - kb->p_tdev;
 	if (i == 0)
-		i = KI_PROC((KINFO *)a)->p_pid - KI_PROC((KINFO *)b)->p_pid;
+		i = ka->p_pid - kb->p_pid;
+
+	if (i == 0)
+		i = ka->p_pid - kb->p_pid;
 	return (i);
 }
 

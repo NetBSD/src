@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.15 1999/05/03 00:20:07 mrg Exp $	*/
+/*	$NetBSD: ps.h,v 1.16 2000/05/26 03:04:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,22 +41,6 @@ enum type {
 	INT32, UINT32, SIGLIST
 };
 
-struct usave {
-	struct	timeval u_start;
-	struct	rusage u_ru;
-	struct	rusage u_cru;
-	char	u_acflag;
-	char	u_valid;
-};
-
-#define KI_PROC(ki) (&(ki)->ki_p->kp_proc)
-#define KI_EPROC(ki) (&(ki)->ki_p->kp_eproc)
-
-typedef struct kinfo {
-	struct kinfo_proc *ki_p;	/* proc structure */
-	struct usave ki_u;	/* interesting parts of user */
-} KINFO;
-
 /* Variables. */
 typedef struct varent {
 	struct varent *next;
@@ -73,12 +57,12 @@ typedef struct var {
 #define	INF127	0x08		/* 127 = infinity: if > 127, print 127. */
 	u_int	flag;
 				/* output routine */
-	void	(*oproc) __P((struct kinfo *, struct varent *));
+	void	(*oproc) __P((struct kinfo_proc2 *, struct varent *));
 	short	width;		/* printing width */
 	/*
 	 * The following (optional) elements are hooks for passing information
-	 * to the generic output routines: pvar, evar, uvar (those which print
-	 * simple elements from well known structures: proc, eproc, usave)
+	 * to the generic output routine: pvar (that which prints simple
+	 * elements from struct kinfo_proc2).
 	 */
 	int	off;		/* offset in structure */
 	enum	type type;	/* type of element */
