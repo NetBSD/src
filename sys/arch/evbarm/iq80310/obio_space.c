@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.1 2001/11/07 00:33:25 thorpej Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.2 2002/03/19 01:36:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,6 +46,8 @@
 
 #include <machine/bus.h>
 
+#include "iq80310reg.h"
+
 /* Prototypes for all the bus_space structure functions */
 bs_protos(obio);
 bs_protos(bs_notimpl);
@@ -89,7 +91,7 @@ struct bus_space obio_bs_tag = {
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
+	obio_bs_rr_1,
 	bs_notimpl_bs_rr_2,
 	bs_notimpl_bs_rr_4,
 	bs_notimpl_bs_rr_8,
@@ -135,12 +137,43 @@ int
 obio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
+	u_long startpa, endpa, pa;
+	vaddr_t va;
+	pt_entry_t *pte;
 
-	/*
-	 * IQ80310 on-board devices are mapped VA==PA.  All addresses
-	 * we're provided, therefore, don't need any additional mapping.
-	 */
-	*bshp = bpa;
+	if (bpa > IQ80310_OBIO_BASE) {
+
+		/*
+		 * IQ80310 on-board devices are mapped VA==PA.  All addresses
+		 * we're provided, therefore, don't need any additional mapping.
+		 */
+		*bshp = bpa;
+
+	} else {
+
+		/*
+		 * Some devices actually lie outside the range above.
+		 * Notably: flash.
+		 */
+		startpa = trunc_page(bpa);
+		endpa = round_page(bpa + size);
+
+		/* XXX use extent manager to check duplicate mapping */
+
+		va = uvm_km_valloc(kernel_map, endpa - startpa);
+		if (! va)
+			return(ENOMEM);
+
+		*bshp = (bus_space_handle_t)(va + (bpa - startpa));
+
+		for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+			pte = pmap_pte(pmap_kernel(), va);
+			*pte &= ~PT_CACHEABLE;
+		}
+		pmap_update(pmap_kernel());
+
+	}
 
 	return 0;
 }
@@ -160,6 +193,9 @@ obio_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/* Nothing to do. */
+	/* XXX -- technically, if we alloc and map above, we should
+	 * unmap and free here, but we bail on this for now.
+	 */
 }
 
 void    
