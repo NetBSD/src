@@ -1,7 +1,7 @@
 #
 # KICKME -- 486Cx-33 development machine.
 #
-#	$Id: KICKME,v 1.5 1994/03/29 04:40:45 mycroft Exp $
+#	$Id: KICKME,v 1.6 1994/04/06 23:30:26 cgd Exp $
 #
 
 machine		"i386"
@@ -19,6 +19,7 @@ options		SCSI
 options		"MATH_EMULATE"
 #options 	"COMPAT_NOMID"
 options		"MACHINE_NONCONTIG"
+options		KTRACE
 options		DDB
 
 config		netbsd	root on sd0 swap on sd0 and sd1
