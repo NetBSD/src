@@ -1,4 +1,4 @@
-/*	$NetBSD: strsuftoull.c,v 1.7 2002/01/31 22:43:33 tv Exp $	*/
+/*	$NetBSD: strsuftoull.c,v 1.8 2002/06/09 19:38:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: strsuftoull.c,v 1.7 2002/01/31 22:43:33 tv Exp $");
+__RCSID("$NetBSD: strsuftoull.c,v 1.8 2002/06/09 19:38:00 matt Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -179,7 +179,7 @@ strsuftoullx(const char *desc, const char *val, uint64_t min, uint64_t max,
 		break;
 	case 't':
 		t = num;
-		num *= 1099511627776;		/* 1 terabyte */
+		num *= 1099511627776LL;		/* 1 terabyte */
 		if (t > num)
 			goto erange;
 		++expr;
