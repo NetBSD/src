@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.20.2.1 1998/11/24 06:04:27 cgd Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.20.2.2 1998/11/24 06:20:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.20.2.1 1998/11/24 06:04:27 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.20.2.2 1998/11/24 06:20:57 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,6 +104,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.20.2.1 1998/11/24 06:04:27 cgd Exp $"
 
 #if NSCC > 0
 #include <pmax/tc/sccvar.h>
+#include <pmax/pmax/asic.h>		/* scc serial console addresses */
+#include <pmax/pmax/kn03.h>
+#include <pmax/pmax/kmin.h>
+#include <pmax/pmax/maxine.h>
 #endif
 
 #if NPM > 0
@@ -344,6 +348,27 @@ remcons:
 #endif /* NDC_IOASIC */
 		break;
 
+
+#if (NSCC > 0)
+#define TC_KV(x) ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
+	case DS_MAXINE:
+		cd.cn_dev = makedev(SCCDEV, SCCCOMM2_PORT);
+		scc_consinit(cd.cn_dev,
+		    (void*)(TC_KV(XINE_SYS_ASIC) + IOASIC_SLOT_4_START));
+		return;
+
+	case DS_3MIN:
+		cd.cn_dev = makedev(SCCDEV, SCCCOMM3_PORT);
+		scc_consinit(cd.cn_dev,
+		    (void*)(TC_KV(KMIN_SYS_ASIC) + IOASIC_SLOT_6_START));
+		return;
+
+	case DS_3MAXPLUS:
+		cd.cn_dev = makedev(SCCDEV, SCCCOMM3_PORT);
+		scc_consinit(cd.cn_dev,
+		    (void*)(TC_KV(KN03_SYS_ASIC) + IOASIC_SLOT_6_START));
+		return;
+#endif /* NSCC */
 	}
 
 	/*
