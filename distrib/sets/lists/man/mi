@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.334 2001/04/05 12:49:47 wiz Exp $
+# $NetBSD: mi,v 1.335 2001/04/06 10:47:17 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -668,6 +668,7 @@
 ./usr/share/man/cat4/mac68k/mem.0		man-sys-catman
 ./usr/share/man/cat4/mac68k/obio.0		man-sys-catman
 ./usr/share/man/cat4/mac68k/sn.0		man-sys-catman
+./usr/share/man/cat4/macppc/intro.0		man-sys-catman
 ./usr/share/man/cat4/mainbus.0			man-sys-catman
 ./usr/share/man/cat4/mbe.0			man-sys-catman
 ./usr/share/man/cat4/mca.0			man-sys-catman
@@ -2157,6 +2158,7 @@
 ./usr/share/man/man4/mac68k/mem.4		man-sys-man
 ./usr/share/man/man4/mac68k/obio.4		man-sys-man
 ./usr/share/man/man4/mac68k/sn.4		man-sys-man
+./usr/share/man/man4/macppc/intro.4		man-sys-man
 ./usr/share/man/man4/mainbus.4			man-sys-man
 ./usr/share/man/man4/mbe.4			man-sys-man
 ./usr/share/man/man4/mca.4			man-sys-man
