@@ -33,7 +33,7 @@ static char copright[] =
 "@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n";
 
-static char rcsid[] = "$Id: main.c,v 1.4 1995/03/22 15:56:29 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.5 1995/04/24 13:26:25 cgd Exp $";
 #endif
 
 /*
@@ -48,6 +48,7 @@ static char rcsid[] = "$Id: main.c,v 1.4 1995/03/22 15:56:29 mycroft Exp $";
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include "extern.h"
 #include "pathnames.h"

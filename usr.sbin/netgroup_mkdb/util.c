@@ -30,11 +30,12 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: util.c,v 1.1 1994/12/04 17:11:07 christos Exp $";
+static char *rcsid = "$Id: util.c,v 1.2 1995/04/24 13:25:56 cgd Exp $";
 #endif
 
 #include <err.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "util.h"
 
