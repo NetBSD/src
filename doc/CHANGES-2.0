@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.170 2004/04/30 03:43:26 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.171 2004/04/30 03:46:55 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1720,3 +1720,9 @@ distrib/common/mtree.common			1.5
 	Add /targetroot (used by sysinst) so that sysinst can work on 
 	sparc (etc) systems booted off a readonly miniroot.
 	[dsl, ticket #238]
+
+lib/libc/db/hash/ndbm.c				patch
+
+	XPG4.2: when it is attempted to open a database write-only, silently
+	"upgrade" to use read/write access on the database file.
+	[kleink, ticket #240]
