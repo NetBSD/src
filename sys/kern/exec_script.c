@@ -1,7 +1,7 @@
-/*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.14 1996/09/30 23:18:44 cgd Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994 Christopher G. Demetriou
+ * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -159,7 +159,10 @@ check_shell:
 	 * close all open fd's when the start.  That kills this
 	 * method of implementing "safe" set-id and x-only scripts.
 	 */
-	if (VOP_ACCESS(epp->ep_vp, VREAD, p->p_ucred, p) == EACCES
+	VOP_LOCK(epp->ep_vp);
+	error = VOP_ACCESS(epp->ep_vp, VREAD, p->p_ucred, p);
+	VOP_UNLOCK(epp->ep_vp);
+	if (error == EACCES
 #ifdef SETUIDSCRIPTS
 	    || script_sbits
 #endif
@@ -227,8 +230,6 @@ check_shell:
 	scriptvp = epp->ep_vp;
 	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
 
-	VOP_UNLOCK(scriptvp);
-
 	if ((error = check_exec(p, epp)) == 0) {
 		/* note that we've clobbered the header */
 		epp->ep_flags |= EXEC_DESTR;
@@ -239,8 +240,10 @@ check_shell:
 		 * Also, set things up so that the fake args
 		 * list will be used.
 		 */
-		if ((epp->ep_flags & EXEC_HASFD) == 0)
-			vn_close(scriptvp, FREAD, p->p_ucred, p);
+		if ((epp->ep_flags & EXEC_HASFD) == 0) {
+			VOP_CLOSE(scriptvp, FREAD, p->p_ucred, p);
+			vrele(scriptvp);
+		}
 
 		/* free the old pathname buffer */
 		FREE(oldpnbuf, M_NAMEI);
@@ -273,8 +276,10 @@ fail:
         if (epp->ep_flags & EXEC_HASFD) {
                 epp->ep_flags &= ~EXEC_HASFD;
                 (void) fdrelease(p, epp->ep_fd);
-        } else
-		vn_close(scriptvp, FREAD, p->p_ucred, p);
+        } else {
+		VOP_CLOSE(scriptvp, FREAD, p->p_ucred, p);
+		vrele(scriptvp);
+	}
 
         FREE(epp->ep_ndp->ni_cnd.cn_pnbuf, M_NAMEI);
 

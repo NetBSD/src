@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_exec.c,v 1.76 1996/09/26 23:34:47 cgd Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.77 1996/09/30 23:18:46 cgd Exp $	*/
 
 /*-
- * Copyright (C) 1993, 1994 Christopher G. Demetriou
+ * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
  * Copyright (C) 1992 Wolfgang Solfrank.
  * Copyright (C) 1992 TooLs GmbH.
  * All rights reserved.
@@ -74,17 +74,17 @@
  *
  * ON EXIT:
  *	error:	nothing held, etc.  exec header still allocated.
- *	ok:	filled exec package, executable's vnode (locked).
+ *	ok:	filled exec package, executable's vnode (unlocked).
  *
  * EXEC SWITCH ENTRY:
  * 	Locked vnode to check, exec package, proc.
  *
  * EXEC SWITCH EXIT:
- *	ok:	return 0, filled exec package, executable's vnode (locked).
+ *	ok:	return 0, filled exec package, executable's vnode (unlocked).
  *	error:	destructive:
  *			everything deallocated execept exec header.
  *		non-destructive:
- *			error code, executable's vnode (locked),
+ *			error code, executable's vnode (unlocked),
  *			exec header unmodified.
  */
 int
@@ -135,9 +135,12 @@ check_exec(p, epp)
 	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, p)) != 0)
 		goto bad1;
 
+	/* unlock vp, since we don't need it locked from here on out. */
+	VOP_UNLOCK(vp);
+
 	/* now we have the file, get the exec header */
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
-			UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, p);
+			UIO_SYSSPACE, 0, p->p_ucred, &resid, p);
 	if (error)
 		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
@@ -185,8 +188,8 @@ bad2:
 	 * unlock and close the vnode, restore the old one, free the
 	 * pathname buf, and punt.
 	 */
-	VOP_UNLOCK(vp);
-	vn_close(vp, FREAD, p->p_ucred, p);
+	VOP_CLOSE(vp, FREAD, p->p_ucred, p);
+	vrele(vp);
 	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
 	return error;
 
@@ -195,8 +198,8 @@ bad1:
 	 * free the namei pathname buffer, and put the vnode
 	 * (which we don't yet have open).
 	 */
+	vput(vp);				/* was still locked */
 	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
-	vput(vp);
 	return error;
 }
 
@@ -244,6 +247,7 @@ sys_execve(p, v, retval)
 	}
 
 	/* init the namei data to point the file user's program name */
+	/* XXX cgd 960926: why do this here?  most will be clobbered. */
 	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 
 	/*
@@ -359,6 +363,7 @@ sys_execve(p, v, retval)
 	pack.ep_ssize = len;	/* maybe should go elsewhere, but... */
 
 	/* Unmap old program */
+	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
 #ifdef sparc
 	kill_user_windows(p);		/* before stack addresses go away */
 #endif
@@ -469,7 +474,7 @@ sys_execve(p, v, retval)
 
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
-	vput(pack.ep_vp);
+	vrele(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
 	(*pack.ep_emul->e_setregs)(p, &pack, (u_long) stack, retval);
@@ -496,7 +501,7 @@ bad:
 	}
 	/* close and put the exec'd file */
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
-	vput(pack.ep_vp);
+	vrele(pack.ep_vp);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	kmem_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
 
@@ -516,7 +521,7 @@ exec_abort:
 		FREE(pack.ep_emul_arg, M_TEMP);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
-	vput(pack.ep_vp);
+	vrele(pack.ep_vp);
 	kmem_free_wakeup(exec_map, (vm_offset_t) argp, NCARGS);
 	FREE(pack.ep_hdr, M_EXEC);
 	exit1(p, W_EXITCODE(0, SIGABRT));
