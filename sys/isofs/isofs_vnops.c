@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.8 1993/09/07 15:41:01 ws Exp $
+ *	$Id: isofs_vnops.c,v 1.8.2.1 1993/09/24 08:50:09 mycroft Exp $
  */
 #include "param.h"
 #include "systm.h"
@@ -144,12 +144,10 @@ isofs_getattr(vp, vap, cred, p)
 	vap->va_rdev	= ip->inode.iso_rdev;
 
 	vap->va_size	= ip->i_size;
-	vap->va_size_rsv = 0;
 	vap->va_flags	= 0;
 	vap->va_gen = 1;
 	vap->va_blocksize = ip->i_mnt->logical_block_size;
 	vap->va_bytes	= ip->i_size;
-	vap->va_bytes_rsv = 0;
 	vap->va_type	= vp->v_type;
 	return (0);
 }
