@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 2003/08/04 22:26:59 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 2003/08/08 07:14:26 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -78,7 +78,6 @@ struct cpu_info {
 	int ci_ipending;
 	int ci_intrdepth;
 	char *ci_intstk;
-	char *ci_spillstk;
 #define	CPUSAVE_LEN	8
 	register_t ci_tempsave[CPUSAVE_LEN];
 	register_t ci_ddbsave[CPUSAVE_LEN];

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 2003/08/03 21:26:27 matt Exp $
+#	$NetBSD: genassym.cf,v 1.3 2003/08/08 07:14:27 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -177,7 +177,6 @@ define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_CPL		offsetof(struct cpu_info, ci_cpl)
 define	CI_INTRDEPTH	offsetof(struct cpu_info, ci_intrdepth)
 define	CI_INTSTK	offsetof(struct cpu_info, ci_intstk)
-define	CI_SPILLSTK	offsetof(struct cpu_info, ci_spillstk)
 define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_tempsave)
 define	CI_DDBSAVE	offsetof(struct cpu_info, ci_ddbsave)
 define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
