@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.3 1997/05/14 16:41:19 gwr Exp $	*/
+/*	$NetBSD: leds.c,v 1.4 1997/05/16 05:47:14 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ leds_uio(struct uio *uio)
 
 	off = uio->uio_offset;
 	if ((off < 0) || (off > sizeof(ledpat)))
-		return (EFAULT);
+		return (EIO);
 
 	cnt = min(uio->uio_resid, (sizeof(ledpat) - off));
 	if (cnt == 0)
