@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2003/03/05 05:28:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.26 2003/03/05 06:17:17 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -37,17 +37,17 @@ native: .native/.configure_done
 	@MAKE=${MAKE:Q} sh  ${.CURDIR}/mknative all \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
-mknative-binutils: .native/.configure_done
+native-binutils: .native/.configure_done
 	@echo 'Extracting GNU binutils configury for a native toolchain.'
 	@MAKE=${MAKE:Q} sh  ${.CURDIR}/mknative binutils \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
-mknative-gcc: .native/.configure_done
+native-gcc: .native/.configure_done
 	@echo 'Extracting GNU GCC configury for a native toolchain.'
 	@MAKE=${MAKE:Q} sh  ${.CURDIR}/mknative gcc \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
-mknative-gdb: .native/.configure_done
+native-gdb: .native/.configure_done
 	@echo 'Extracting GNU GDB configury for a native toolchain.'
 	@MAKE=${MAKE:Q} sh  ${.CURDIR}/mknative gdb \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
