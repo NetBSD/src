@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 1997/09/26 18:12:09 gwr Exp $
+# $NetBSD: Makefile,v 1.5 1997/09/26 21:18:07 gwr Exp $
 
 # PROG=	gdb # No, this needs custom rules.
 # Use <bsd.prog.mk> somehow?
@@ -89,6 +89,11 @@ all: gdb
 
 .include <bsd.prog.mk>
 
+.NOPATH: ${OBJS}
+
+# Note: this rule does something similar to the gcc "collect" program,
+# by scanning all the objects for initialization functions, collecting
+# them all into the generated init.c file, which is called by main.
 CLEANFILES+= init.c init.o
 gdb : $(OBJS) $(DPADD)
 	-rm -f init.c
@@ -99,12 +104,12 @@ gdb : $(OBJS) $(DPADD)
 # Need these headers before any objects.
 $(OBJS) : nm.h tm.h xm.h
 
-CLEANFILES+= nm.h
+DPSRCS+= nm.h
 nm.h : $(srcdir)/$(NM_FILE)
 	-rm -f $@
 	cp -p $(srcdir)/$(NM_FILE) $@
 
-CLEANFILES+= tm.h
+DPSRCS+= tm.h
 tm.h : $(srcdir)/$(TM_FILE)
 	-rm -f $@
 	cp -p $(srcdir)/$(TM_FILE) $@
@@ -115,30 +120,13 @@ version.o : version.c
 	  -DTARGET_NAME=\"$(TARGET_ARCH)-netbsd\" \
 	  -c $(.IMPSRC)
 
-CLEANFILES+= c-exp.tab.h c-exp.c
-c-exp.c c-exp.tab.h : c-exp.y
-	${YACC} -d -p c_ -b c-exp $(.IMPSRC)
-c-exp.o : c-exp.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(.IMPSRC)
-
-CLEANFILES+= f-exp.tab.h f-exp.c
-f-exp.c f-exp.tab.h : f-exp.y
-	${YACC} -d -p f_ -b f-exp $(.IMPSRC)
-f-exp.o : f-exp.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(.IMPSRC)
-
-CLEANFILES+= m2-exp.tab.h m2-exp.c
-m2-exp.c m2-exp.tab.h : m2-exp.y
-	${YACC} -d -p m2_ -b m2-exp $(.IMPSRC)
-m2-exp.o : m2-exp.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(.IMPSRC)
+# YACC rules for YYOBJS?
 
 cleandepend:
-	-rm -f .depend
+	-rm -f .depend ${DPSRCS}
 
-DPSRCS = ${OBJS:.o=.c} nm.h tm.h
 depend: .depend
-.depend: ${DPSRCS}
+.depend: ${DPSRCS} ${OBJS:.o=.c}
 	${CC} -MM $(CPPFLAGS) ${.ALLSRC:M*.c} > .depend.tmp
 	-mv -f .depend.tmp $@
 
