@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.16 2002/06/17 20:31:26 wrstuden Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.17 2002/06/18 23:46:52 wrstuden Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -286,10 +286,26 @@ tags:
 
 EXTRA_CLEAN+= cscope.out
 .if !target(cscope.out)
+#
+# This target is tricky. We want to include source files from the different
+# kernel libraries in the output, but to get them requires calling
+# make in those directories. We'd rather not call make in those directories
+# if we don't have to, so we make cscope.out in two steps.
+# The first step calls make on this makefile to evaluate the second
+# make target. It *also* passes ` ` evaluated variables on the command
+# line to the second make. These ` ` evaluated variables run make in
+# the library directories, and thus provide the sources from the libs.
+#
 cscope.out: Makefile
 	@echo Building cscope.out source database
-	@echo ${SRCS} | ${CSCOPE} -k -i - -b \
-		`echo ${INCLUDES} | sed s/-nostdinc//`
+	@${MAKE} LIBKERNSRC="`${KERNMAKE} showsources`" \
+		LIBCOMPATSRC="`${COMPATMAKE} showsources`" cscope.out1
+
+.PHONY: cscope.out1
+cscope.out1:
+	@echo ${SRCS} ${LIBKERNSRC:S|^|${KERNDST}/|} \
+		${LIBCOMPATSRC:S|^|${COMPATDST}/|} \
+		| ${CSCOPE} -k -i - -b `echo ${INCLUDES} | sed s/-nostdinc//`
 #	cscope doesn't write cscope.out if it's uptodate, so ensure
 #	make doesn't keep calling cscope when not needed.
 	@touch cscope.out
@@ -305,9 +321,20 @@ EXTRA_CLEAN+= ID
 .PHONY: mkid
 mkid: ID
 
-ID: Makefile
+ID: Makefile depend
+# Same dance as cscope.out/cscope.out1
 	@echo Building mkid database
-	@${MKID} ${SRCS}
+	@${MAKE} LIBKERNSRC="`${KERNMAKE} showsources`" \
+		LIBCOMPATSRC="`${COMPATMAKE} showsources`" \
+		LIBKERNDEPEND="`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' lib/kern//.depend | tr ' ' '\n' | sort -u`" \
+		LIBCOMPDEPEND="`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' lib/compat/.depend | tr ' ' '\n' | sort -u`" ID1
+
+.PHONY: ID1
+ID1:
+	@${MKID} ${SRCS} ${LIBKERNSRC:S|^|${KERNDST}/|} \
+		${LIBCOMPATSRC:S|^|${COMPATDST}/|} \
+		${LIBKERNDEPEND:S|^../../||} ${LIBCOMPDEPEND:S|^../../||} \
+	`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' .depend | tr ' ' '\n' | sort -u`
 .endif
 
 ##
