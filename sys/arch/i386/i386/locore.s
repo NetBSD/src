@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.16 2002/09/17 21:15:04 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.17 2002/09/17 23:45:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1992,13 +1992,13 @@ switch_restored:
 	 *  Check for restartable atomic sequences (RAS)
 	 */
 	movl	_C_LABEL(curlwp),%edi
-	movl	L_PROC(%edi),%edi
-	cmpl	$0,P_NRAS(%edi)
+	movl	L_PROC(%edi),%esi
+	cmpl	$0,P_NRAS(%esi)
 	je	1f
 	movl	L_MD_REGS(%edi),%edx
 	movl	TF_EIP(%edx),%eax
 	pushl	%eax
-	pushl	%edi
+	pushl	%esi
 	call	_C_LABEL(ras_lookup)
 	addl	$8,%esp
 	cmpl	$-1,%eax
