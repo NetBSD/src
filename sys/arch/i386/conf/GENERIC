@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.162 1998/07/12 19:51:56 augustss Exp $
+#	$NetBSD: GENERIC,v 1.163 1998/07/26 17:45:53 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -411,9 +411,11 @@ uhub*	at uhub? port ?
 
 # USB Mice
 ums*	at uhub? port ?
+wsmouse*	at ums?
 
 # USB Keyboards
 ukbd*	at uhub? port ?
+wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
 uhid*	at uhub? port ?
