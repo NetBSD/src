@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.16 1999/08/03 09:16:01 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.17 1999/08/05 01:51:00 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -193,7 +193,7 @@ next_dma_rotate(nd)
 
 #ifdef DIAGNOSTIC
 	if (nd->_nd_map && 
-			nd->_nd_map->dm_segs[nd->_nd_idx].ds_read_len == 0x1234beef) {
+			nd->_nd_map->dm_segs[nd->_nd_idx].ds_xfer_len == 0x1234beef) {
 		next_dma_print(nd);
 		panic("DMA didn't set read length of segment");
 	}
@@ -224,7 +224,7 @@ next_dma_rotate(nd)
 
 #ifdef DIAGNOSTIC
 	if (nd->_nd_map) {
-		nd->_nd_map->dm_segs[nd->_nd_idx].ds_read_len = 0x1234beef;
+		nd->_nd_map->dm_segs[nd->_nd_idx].ds_xfer_len = 0x1234beef;
 	}
 #endif
 
@@ -409,8 +409,8 @@ next_dma_print(nd)
 				nd->_nd_idx,nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
 		printf("NDMAP: nd->_nd_map->dm_segs[%d].ds_len = %d\n",
 				nd->_nd_idx,nd->_nd_map->dm_segs[nd->_nd_idx].ds_len);
-		printf("NDMAP: nd->_nd_map->dm_segs[%d].ds_read_len = %d\n",
-				nd->_nd_idx,nd->_nd_map->dm_segs[nd->_nd_idx].ds_read_len);
+		printf("NDMAP: nd->_nd_map->dm_segs[%d].ds_xfer_len = %d\n",
+				nd->_nd_idx,nd->_nd_map->dm_segs[nd->_nd_idx].ds_xfer_len);
 	} else {
 		printf("NDMAP: nd->_nd_map = NULL\n");
 	}
@@ -423,8 +423,8 @@ next_dma_print(nd)
 				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
 		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_len = %d\n",
 				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len);
-		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_read_len = %d\n",
-				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_read_len);
+		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_xfer_len = %d\n",
+				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_xfer_len);
 	} else {
 		printf("NDMAP: nd->_nd_map_cont = NULL\n");
 	}
@@ -631,9 +631,9 @@ nextdma_intr(arg)
 				/* @@@ we pretend the entire buffer transferred ok.
 				 * we might consider throwing away this transfer instead
 				 */
-				nd->_nd_map->dm_segs[nd->_nd_idx].ds_read_len = expected_limit-expected_next;
+				nd->_nd_map->dm_segs[nd->_nd_idx].ds_xfer_len = expected_limit-expected_next;
 			} else {
-				nd->_nd_map->dm_segs[nd->_nd_idx].ds_read_len = limit-next;
+				nd->_nd_map->dm_segs[nd->_nd_idx].ds_xfer_len = limit-next;
 				expected_limit = expected_next + (limit-next);
 			}
 

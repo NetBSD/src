@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.14 1999/08/03 09:16:01 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.15 1999/08/05 01:51:00 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -338,8 +338,8 @@ mb8795_rint(sc)
 			/* Find receive length and chop off CRC */
 			/* @@@ assumes packet is all in first segment
 			 */
-			m->m_pkthdr.len = map->dm_segs[0].ds_read_len-4;
-			m->m_len = map->dm_segs[0].ds_read_len-4;
+			m->m_pkthdr.len = map->dm_segs[0].ds_xfer_len-4;
+			m->m_len = map->dm_segs[0].ds_xfer_len-4;
 			m->m_pkthdr.rcvif = ifp;
 
 			bus_dmamap_unload(sc->sc_rx_dmat, map);
