@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.99 2004/09/18 16:40:11 yamt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.100 2004/10/26 22:44:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.99 2004/09/18 16:40:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.100 2004/10/26 22:44:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -986,6 +986,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct buf *bp;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
+	struct ucred *uc;
 	char **cpp;
 	struct vnode **vpp;
 #ifdef __HAVE_OLD_DISKLABEL
@@ -1019,6 +1020,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case CCDIOCCLR:
 	case DIOCGDINFO:
+	case DIOCCACHESYNC:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 	case DIOCGPART:
@@ -1212,6 +1214,27 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		((struct partinfo *)data)->disklab = cs->sc_dkdev.dk_label;
 		((struct partinfo *)data)->part =
 		    &cs->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
+		break;
+
+	case DIOCCACHESYNC:
+		/*
+		 * XXX Do we really need to care about having a writable
+		 * file descriptor here?
+		 */
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/*
+		 * We pass this call down to all components and report
+		 * the first error we encounter.
+		 */
+		uc = (p != NULL) ? p->p_ucred : NOCRED;
+		for (error = 0, i = 0; i < cs->sc_nccdisks; i++) {
+			j = VOP_IOCTL(cs->sc_cinfo[i].ci_vp, cmd, data,
+				      flag, uc, p);
+			if (j != 0 && error == 0)
+				error = j;
+		}
 		break;
 
 	case DIOCWDINFO:
