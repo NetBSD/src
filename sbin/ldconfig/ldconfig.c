@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.21 1998/12/15 22:27:14 pk Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.22 1998/12/15 22:49:42 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #include <unistd.h>
 #include <link.h>
 
-#include "ld.h"
+#include "shlib.h"
 
 #define _PATH_LD_SO_CONF "/etc/ld.so.conf"
 
