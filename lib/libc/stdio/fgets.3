@@ -1,4 +1,4 @@
-.\"	$NetBSD: fgets.3,v 1.18 2003/10/30 12:59:23 grant Exp $
+.\"	$NetBSD: fgets.3,v 1.19 2003/12/09 21:40:54 grant Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,8 +60,7 @@ and stores them in the string
 .Fa str .
 Reading stops when a newline character is found,
 at end-of-file or error.
-The newline, if any, is retained.
-In any case a
+The newline, if any, is retained, and a
 .Ql \e0
 character is appended to end the string.
 .Pp
