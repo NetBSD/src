@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.688 2005/01/27 13:33:36 kent Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.689 2005/01/27 21:48:37 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.689 2005/01/27 13:31:45 kent Exp 
+ *	NetBSD: pcidevs,v 1.690 2005/01/27 21:48:15 jdolecek Exp 
  */
 
 /*
@@ -7308,6 +7308,10 @@ const struct pci_product pci_products[] = {
 	    "nForce2 Ultra 400 USB2 Host Controller",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_MCPT_AC,
+	    "nForce2 Ultra 400 AC-97",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_PPB,
 	    "nForce2 Ultra 400 PCI-PCI bridge",
 	},
@@ -10024,4 +10028,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1927;
+const int pci_nproducts = 1928;
