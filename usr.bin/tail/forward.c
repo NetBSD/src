@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.22 2002/09/18 19:29:12 skrll Exp $	*/
+/*	$NetBSD: forward.c,v 1.23 2002/10/30 21:48:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.22 2002/09/18 19:29:12 skrll Exp $");
+__RCSID("$NetBSD: forward.c,v 1.23 2002/10/30 21:48:50 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <sys/event.h>
 
 #include <limits.h>
 #include <fcntl.h>
@@ -59,6 +60,11 @@ __RCSID("$NetBSD: forward.c,v 1.22 2002/09/18 19:29:12 skrll Exp $");
 #include "extern.h"
 
 static int rlines(FILE *, long, struct stat *);
+
+/* defines for inner loop actions */
+#define	USE_SLEEP	0
+#define	USE_KQUEUE	1
+#define	ADD_EVENTS	2
 
 /*
  * forward -- display the file, from an offset, forward.
@@ -85,13 +91,12 @@ static int rlines(FILE *, long, struct stat *);
 void
 forward(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
 {
-	int ch;
-	struct timespec second;
-	int dostat = 0;
+	int ch, n;
+	int kq=-1, action=USE_SLEEP;
 	struct stat statbuf;
-	off_t lastsize = 0;
 	dev_t lastdev;
 	ino_t lastino;
+	struct kevent ev[2];
 
 	/* Keep track of file's previous incarnation. */
 	lastdev = sbp->st_dev;
@@ -176,6 +181,13 @@ forward(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
 		break;
 	}
 
+	if (fflag) {
+		kq = kqueue();
+		if (kq < 0)
+			err(1, "kqueue");
+		action = ADD_EVENTS;
+	}
+
 	for (;;) {
 		while ((ch = getc(fp)) != EOF)  {
 			if (putchar(ch) == EOF)
@@ -188,49 +200,79 @@ forward(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
 		(void)fflush(stdout);
 		if (!fflag)
 			break;
-		/*
-		 * We pause for one second after displaying any data that has
-		 * accumulated since we read the file.
-		 */
-		second.tv_sec = 1;
-		second.tv_nsec = 0;
-		if (nanosleep(&second, NULL) == -1)
-			err(1, "nanosleep: %s", strerror(errno));
+
 		clearerr(fp);
 
-		if (fflag == 1)
-			continue;
-		/*
-		 * We restat the original filename every five seconds. If
-		 * the size is ever smaller than the last time we read it,
-		 * the file has probably been truncated; if the inode or
-		 * or device number are different, it has been rotated.
-		 * This causes us to close it, reopen it, and continue
-		 * the tail -f. If stat returns an error (say, because
-		 * the file has been removed), just continue with what
-		 * we've got open now.
-		 */
-		if (dostat > 0)  {
-			dostat -= 1;
-		} else {
-			dostat = 5;
-			if (stat(fname, &statbuf) == 0)  {
-				if (statbuf.st_dev != lastdev ||
-				    statbuf.st_ino != lastino ||
-				    statbuf.st_size < lastsize)  {
-					lastdev = statbuf.st_dev;
-					lastino = statbuf.st_ino;
-					lastsize = 0;
-					fclose(fp);
-					if ((fp = fopen(fname, "r")) == NULL)
-						err(1, "can't reopen %s: %s",
-						    fname, strerror(errno));
-				} else {
-					lastsize = statbuf.st_size;
+		switch (action) {
+		case ADD_EVENTS:
+			n = 0;
+
+			memset(ev, 0, sizeof(ev));
+			if (fflag == 2 && fileno(fp) != STDIN_FILENO) {
+				EV_SET(&ev[n], fileno(fp), EVFILT_VNODE,
+					EV_ADD | EV_ENABLE | EV_CLEAR,
+					NOTE_DELETE | NOTE_RENAME, 0, 0);
+				n++;
+			}
+			EV_SET(&ev[n], fileno(fp), EVFILT_READ,
+				EV_ADD | EV_ENABLE, 0, 0, 0);
+			n++;
+
+			if (kevent(kq, ev, n, NULL, 0, NULL) < 0) {
+				close(kq);
+				kq = -1;
+				action = USE_SLEEP;
+			} else {
+				action = USE_KQUEUE;
+			}
+			break;
+
+		case USE_KQUEUE:
+			if (kevent(kq, NULL, 0, ev, 1, NULL) < 0)
+				err(1, "kevent");
+
+			if (ev[0].filter == EVFILT_VNODE) {
+				/* file was rotated, wait until it reappears */
+				action = USE_SLEEP;
+			} else if (ev[0].data < 0) {
+				/* file shrank, reposition to end */
+				if (fseek(fp, 0L, SEEK_END) == -1) {
+					ierr();
+					return;
 				}
 			}
+			break;
+
+		case USE_SLEEP:
+			/*
+			 * We pause for one second after displaying any data
+			 * that has accumulated since we read the file.
+			 */
+                	(void) usleep(1000000);
+
+			if (fflag == 2 && fileno(fp) != STDIN_FILENO &&
+			    stat(fname, &statbuf) != -1) {
+				if (statbuf.st_ino != sbp->st_ino ||
+				    statbuf.st_dev != sbp->st_dev ||
+				    statbuf.st_rdev != sbp->st_rdev ||
+				    statbuf.st_nlink == 0) {
+					fp = freopen(fname, "r", fp);
+					if (fp == NULL) {
+						ierr();
+						break;
+					}
+					*sbp = statbuf;
+					if (kq != -1)
+						action = ADD_EVENTS;
+				} else if (kq != -1)
+					action = USE_KQUEUE;
+			}
+			break;
 		}
 	}
+
+	if (fflag && kq != -1)
+		close(kq);
 }
 
 /*
