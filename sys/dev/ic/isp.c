@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.39 1999/10/17 01:38:27 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.40 1999/10/22 17:06:12 mjacob Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -2039,8 +2039,8 @@ isp_control(isp, ctl, arg)
 			bus = *((int *) arg);
 			mbs.param[2] = bus;
 		} else {
-			/* Unparameterized. */
 			mbs.param[1] = 10;
+			mbs.param[2] = 0;
 			bus = 0;
 		}
 		isp->isp_sendmarker = 1 << bus;
