@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.16 2001/01/04 02:43:33 jwise Exp $	*/
+/*	$NetBSD: sync.c,v 1.17 2001/01/04 03:21:17 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,22 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.16 2001/01/04 02:43:33 jwise Exp $");
+__RCSID("$NetBSD: sync.c,v 1.17 2001/01/04 03:21:17 jwise Exp $");
 #endif
 #endif /* not lint */
 
 #include <fcntl.h>
 #include <errno.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
+#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 #include "extern.h"
 #include "pathnames.h"
 
