@@ -1,8 +1,9 @@
-/*	$NetBSD: symbol.c,v 1.24 2002/10/04 20:34:10 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.25 2002/10/05 11:59:04 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * Copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,8 +1,9 @@
-/*	$NetBSD: headers.c,v 1.16 2002/10/04 18:50:43 mycroft Exp $	 */
+/*	$NetBSD: headers.c,v 1.17 2002/10/05 11:59:03 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * Copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
