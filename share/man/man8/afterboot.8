@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.5 2003/03/10 06:46:59 lukem Exp $
+.\"	$NetBSD: afterboot.8,v 1.6 2003/03/21 16:49:18 jmmv Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -606,20 +606,19 @@ Please see
 and
 .Pa /usr/share/doc/smm/08.sendmailop/op.me
 for information on generating your own sendmail configuration files.
-It is very important to configure
 .Pa /etc/mailer.conf
-to point to Sendmail binaries, as no mailer is configured by default.
+is configured to use Sendmail binaries by default.
 .Ss Postfix
 .Nx
 comes also with Postfix in the base system. You may wish to
-setup it in favour of sendmail. Take a look to
+setup it in favor of sendmail. Take a look to
 .Pa /etc/postfix/main.cf
 and enable the daemon in
 .Pa /etc/rc.conf
 using "postfix=yes".
 It is very important to configure
 .Pa /etc/mailer.conf
-to point to Postfix binaries, as no mailer is configured by default.
+to point to Postfix binaries.
 .Ss DHCP server
 If this is a
 DHCP
