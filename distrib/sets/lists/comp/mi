@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.484 2002/09/25 23:07:38 thorpej Exp $
+#	$NetBSD: mi,v 1.485 2002/09/27 15:02:25 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1748,6 +1748,7 @@
 ./usr/share/man/cat3/endservent.0	comp-c-catman
 ./usr/share/man/cat3/endttyent.0	comp-c-catman
 ./usr/share/man/cat3/endusershell.0	comp-c-catman
+./usr/share/man/cat3/endutxent.0	comp-c-catman
 ./usr/share/man/cat3/erand48.0	comp-c-catman
 ./usr/share/man/cat3/erf.0	comp-c-catman
 ./usr/share/man/cat3/erfc.0	comp-c-catman
@@ -1960,6 +1961,9 @@
 ./usr/share/man/cat3/getttyent.0	comp-c-catman
 ./usr/share/man/cat3/getttynam.0	comp-c-catman
 ./usr/share/man/cat3/getusershell.0	comp-c-catman
+./usr/share/man/cat3/getutxent.0	comp-c-catman
+./usr/share/man/cat3/getutxid.0	comp-c-catman
+./usr/share/man/cat3/getutxline.0	comp-c-catman
 ./usr/share/man/cat3/getw.0	comp-c-catman
 ./usr/share/man/cat3/getwc.0	comp-c-catman
 ./usr/share/man/cat3/getwchar.0	comp-c-catman
@@ -2302,8 +2306,11 @@
 ./usr/share/man/cat3/login_getcaptime.0	comp-c-catman
 ./usr/share/man/cat3/login_getclass.0	comp-c-catman
 ./usr/share/man/cat3/login_tty.0	comp-c-catman
+./usr/share/man/cat3/loginx.0	comp-c-catman
 ./usr/share/man/cat3/logout.0	comp-c-catman
+./usr/share/man/cat3/logoutx.0	comp-c-catman
 ./usr/share/man/cat3/logwtmp.0	comp-c-catman
+./usr/share/man/cat3/logwtmpx.0	comp-c-catman
 ./usr/share/man/cat3/longjmp.0	comp-c-catman
 ./usr/share/man/cat3/longjmperror.0	comp-c-catman
 ./usr/share/man/cat3/lrand48.0	comp-c-catman
@@ -2447,6 +2454,7 @@
 ./usr/share/man/cat3/putchar_unlocked.0	comp-c-catman
 ./usr/share/man/cat3/putenv.0	comp-c-catman
 ./usr/share/man/cat3/puts.0	comp-c-catman
+./usr/share/man/cat3/pututxline.0	comp-c-catman
 ./usr/share/man/cat3/putw.0	comp-c-catman
 ./usr/share/man/cat3/putwc.0	comp-c-catman
 ./usr/share/man/cat3/putwchar.0	comp-c-catman
@@ -2607,6 +2615,7 @@
 ./usr/share/man/cat3/setttyent.0	comp-c-catman
 ./usr/share/man/cat3/setusercontext.0	comp-c-catman
 ./usr/share/man/cat3/setusershell.0	comp-c-catman
+./usr/share/man/cat3/setutxent.0	comp-c-catman
 ./usr/share/man/cat3/setvbuf.0	comp-c-catman
 ./usr/share/man/cat3/sha1.0	comp-c-catman
 ./usr/share/man/cat3/shquote.0	comp-c-catman
@@ -4469,6 +4478,7 @@
 ./usr/share/man/man3/endservent.3		comp-c-man
 ./usr/share/man/man3/endttyent.3		comp-c-man
 ./usr/share/man/man3/endusershell.3		comp-c-man
+./usr/share/man/man3/endutxent.3		comp-c-man
 ./usr/share/man/man3/erand48.3		comp-c-man
 ./usr/share/man/man3/erf.3		comp-c-man
 ./usr/share/man/man3/erfc.3		comp-c-man
@@ -4681,6 +4691,9 @@
 ./usr/share/man/man3/getttyent.3		comp-c-man
 ./usr/share/man/man3/getttynam.3		comp-c-man
 ./usr/share/man/man3/getusershell.3		comp-c-man
+./usr/share/man/man3/getutxent.3		comp-c-man
+./usr/share/man/man3/getutxid.3		comp-c-man
+./usr/share/man/man3/getutxline.3		comp-c-man
 ./usr/share/man/man3/getw.3		comp-c-man
 ./usr/share/man/man3/getwc.3		comp-c-man
 ./usr/share/man/man3/getwchar.3		comp-c-man
@@ -5023,8 +5036,11 @@
 ./usr/share/man/man3/login_getcaptime.3		comp-c-man
 ./usr/share/man/man3/login_getclass.3		comp-c-man
 ./usr/share/man/man3/login_tty.3		comp-c-man
+./usr/share/man/man3/loginx.3		comp-c-man
 ./usr/share/man/man3/logout.3		comp-c-man
+./usr/share/man/man3/logoutx.3		comp-c-man
 ./usr/share/man/man3/logwtmp.3		comp-c-man
+./usr/share/man/man3/logwtmpx.3		comp-c-man
 ./usr/share/man/man3/longjmp.3		comp-c-man
 ./usr/share/man/man3/longjmperror.3		comp-c-man
 ./usr/share/man/man3/lrand48.3		comp-c-man
@@ -5168,6 +5184,7 @@
 ./usr/share/man/man3/putchar_unlocked.3		comp-c-man
 ./usr/share/man/man3/putenv.3		comp-c-man
 ./usr/share/man/man3/puts.3		comp-c-man
+./usr/share/man/man3/pututxline.3		comp-c-man
 ./usr/share/man/man3/putw.3		comp-c-man
 ./usr/share/man/man3/putwc.3		comp-c-man
 ./usr/share/man/man3/putwchar.3		comp-c-man
@@ -5328,6 +5345,7 @@
 ./usr/share/man/man3/setttyent.3		comp-c-man
 ./usr/share/man/man3/setusercontext.3		comp-c-man
 ./usr/share/man/man3/setusershell.3		comp-c-man
+./usr/share/man/man3/setutxent.3		comp-c-man
 ./usr/share/man/man3/setvbuf.3		comp-c-man
 ./usr/share/man/man3/sha1.3		comp-c-man
 ./usr/share/man/man3/shquote.3		comp-c-man

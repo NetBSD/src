@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.516 2002/09/25 01:07:43 wiz Exp $
+# $NetBSD: mi,v 1.517 2002/09/27 15:02:24 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1167,6 +1167,7 @@
 ./usr/share/man/cat5/krb.realms.0		man-krb5-catman
 ./usr/share/man/cat5/krb5.conf.0		man-krb5-catman
 ./usr/share/man/cat5/lastlog.0			man-sys-catman
+./usr/share/man/cat5/lastlogx.0			man-sys-catman
 ./usr/share/man/cat5/ld.so.conf.0		man-sys-catman
 ./usr/share/man/cat5/link.0			man-sys-catman
 ./usr/share/man/cat5/lkm.conf.0			man-sys-catman
@@ -1220,12 +1221,14 @@
 ./usr/share/man/cat5/tzfile.0			man-sys-catman
 ./usr/share/man/cat5/usermgmt.conf.0		man-sys-catman
 ./usr/share/man/cat5/utmp.0			man-sys-catman
+./usr/share/man/cat5/utmpx.0			man-sys-catman
 ./usr/share/man/cat5/uuencode.0			man-util-catman
 ./usr/share/man/cat5/vgrindefs.0		man-groff-catman
 ./usr/share/man/cat5/virtual.0			man-postfix-catman
 ./usr/share/man/cat5/weekly.conf.0		man-sys-catman
 ./usr/share/man/cat5/wscons.conf.0		man-sys-catman
 ./usr/share/man/cat5/wtmp.0			man-sys-catman
+./usr/share/man/cat5/wtmpx.0			man-sys-catman
 ./usr/share/man/cat7/ascii.0			man-reference-catman
 ./usr/share/man/cat7/des_modes.0		man-reference-catman
 ./usr/share/man/cat7/environ.0			man-reference-catman
@@ -2914,6 +2917,7 @@
 ./usr/share/man/man5/krb.realms.5		man-krb5-man
 ./usr/share/man/man5/krb5.conf.5		man-krb5-man
 ./usr/share/man/man5/lastlog.5			man-sys-man
+./usr/share/man/man5/lastlogx.5			man-sys-man
 ./usr/share/man/man5/ld.so.conf.5		man-sys-man
 ./usr/share/man/man5/link.5			man-sys-man
 ./usr/share/man/man5/lkm.conf.5			man-sys-man
@@ -2967,12 +2971,14 @@
 ./usr/share/man/man5/tzfile.5			man-sys-man
 ./usr/share/man/man5/usermgmt.conf.5		man-sys-man
 ./usr/share/man/man5/utmp.5			man-sys-man
+./usr/share/man/man5/utmpx.5			man-sys-man
 ./usr/share/man/man5/uuencode.5			man-util-man
 ./usr/share/man/man5/vgrindefs.5		man-groff-man
 ./usr/share/man/man5/virtual.5			man-postfix-man
 ./usr/share/man/man5/weekly.conf.5		man-sys-man
 ./usr/share/man/man5/wscons.conf.5		man-sys-man
 ./usr/share/man/man5/wtmp.5			man-sys-man
+./usr/share/man/man5/wtmpx.5			man-sys-man
 ./usr/share/man/man7/ascii.7			man-reference-man
 ./usr/share/man/man7/des_modes.7		man-reference-man
 ./usr/share/man/man7/environ.7			man-reference-man
