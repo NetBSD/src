@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.27 2000/07/10 02:23:04 assar Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.28 2000/07/10 11:15:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -51,13 +51,11 @@
 /*
  * newsyslog(1) - a program to roll over log files provided that specified
  * critera are met, optionally preserving a number of historical log files.
- *
- * XXX too much size_t fsckage.
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.27 2000/07/10 02:23:04 assar Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.28 2000/07/10 11:15:07 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,7 +80,8 @@ __RCSID("$NetBSD: newsyslog.c,v 1.27 2000/07/10 02:23:04 assar Exp $");
 
 #include "pathnames.h"
 
-#define	PRINFO(x)	((void)(verbose ? printf x : 0))
+#define	PRHDRINFO(x)	((void)(verbose ? printf x : 0))
+#define	PRINFO(x)	((void)(verbose ? printf("  ") + printf x : 0))
 
 #define	CE_COMPACT	1	/* Compact the achived log files */
 #define	CE_BINARY	2	/* Logfile is a binary file/non-syslog */
@@ -103,6 +102,7 @@ struct conf_entry {
 };
 
 int     verbose = 0;			/* Be verbose */
+int	noaction = 0;			/* Take no action */
 char    hostname[MAXHOSTNAMELEN + 1];	/* Hostname, stripped of domain */
 
 int	main(int, char **);
@@ -143,26 +143,31 @@ main(int argc, char **argv)
 		*p = '\0';
 
 	/* Parse command line options */
-	while ((c = getopt(argc, argv, "Frvf:")) != -1) {
+	while ((c = getopt(argc, argv, "f:nrvF")) != -1) {
 		switch (c) {
+		case 'f':
+			cfile = optarg;
+			break;
+		case 'n':
+			noaction = 1;
+			verbose = 0;
+			break;
 		case 'r':
 			needroot = 0;
 			break;
 		case 'v':
 			verbose = 1;
 			break;
-		case 'f':
-			cfile = optarg;
-			break;
 		case 'F':
 			force = 1;
 			break;
 		default:
 			usage();
+			/* NOTREACHED */
 		}
 	}
 
-	if (needroot && getuid() != 0 && geteuid() != 0)
+	if (needroot && geteuid() != 0)
 		errx(EXIT_FAILURE, "must be run as root");
 
 	if (strcmp(cfile, "-") == 0)
@@ -258,7 +263,7 @@ parse(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	ap++;
 
 	log->flags = 0;
-	for (q = *ap++; q != NULL && *q != '\0' && !isspace(*q); q++) {
+	for (q = *ap++; q != NULL && *q != '\0'; q++) {
 		switch (tolower(*q)) {
 		case 'b':
 			log->flags |= CE_BINARY;
@@ -303,32 +308,34 @@ log_examine(struct conf_entry *ent, int force)
 {
 	struct stat sb;
 	size_t size;
-	int modtime;
+	int age;
 	char tmp[MAXPATHLEN];
 	time_t now;
 
 	if (ent->logfile[0] == '\0')
 		return;
+
+	PRHDRINFO(("\n%s <%d%s>: ", ent->logfile, ent->numhist, 
+	    (ent->flags & CE_COMPACT) != 0 ? "Z" : ""));
+
 	if (stat(ent->logfile, &sb) < 0) {
 		if (errno == ENOENT && (ent->flags & CE_CREATE) != 0) {
-			PRINFO(("%s: no file, creating\n", ent->logfile));
-			log_create(ent);
-			errno = 0;
-			stat(ent->logfile, &sb);
-		} 
-
-		if (errno != 0) {
-			PRINFO(("%s: %s\n", ent->logfile, strerror(errno)));
+			PRHDRINFO(("creating; "));
+			if (!noaction)
+				log_create(ent);
+			else {
+				PRHDRINFO(("can't proceed with `-n'\n"));
+				return;
+			}
+			if (stat(ent->logfile, &sb))
+				err(EXIT_FAILURE, "%s", ent->logfile);
+		} else if (errno == ENOENT) {
+			PRHDRINFO(("does not exist --> skip log\n"));
 			return;
-		}
+		} else if (errno != 0)
+			err(EXIT_FAILURE, "%s", ent->logfile);
 	}
 	
-	if (verbose) {
-		if ((ent->flags & CE_COMPACT) != 0)
-			PRINFO(("%s <%dZ>: ", ent->logfile, ent->numhist));
-		else
-			PRINFO(("%s <%d>: ", ent->logfile, ent->numhist));
-	}
 
 	size = ((size_t)sb.st_blocks * S_BLKSIZE) >> 10;
 
@@ -338,31 +345,31 @@ log_examine(struct conf_entry *ent, int force)
 	if (stat(tmp, &sb) < 0) {
 		strlcat(tmp, ".gz", sizeof(tmp));
 		if (stat(tmp, &sb) < 0)
-			modtime = -1;
+			age = -1;
 		else
-			modtime = (int)(now - sb.st_mtime + 1800) / 3600;
+			age = (int)(now - sb.st_mtime + 1800) / 3600;
 	} else
-		modtime = (int)(now - sb.st_mtime + 1800) / 3600;
+		age = (int)(now - sb.st_mtime + 1800) / 3600;
 
 	if (verbose) {
 		if (ent->maxsize != (size_t)-1)
-			PRINFO(("size (Kb): %lu [%lu] ",
+			PRHDRINFO(("size (Kb): %lu [%lu] ",
 				(u_long)size,
 				(u_long)ent->maxsize));
 		if (ent->maxage > 0)
-			PRINFO((" age (hr): %d [%d] ", modtime, ent->maxage));
+			PRHDRINFO(("age (hr): %d [%d] ", age, ent->maxage));
 	}
 	
 	/*
 	 * Note: if maxage is used as a trim condition, we need at least one
 	 * historical log file to determine the `age' of the active log file.
 	 */
-	if ((ent->maxage > 0 && (modtime >= ent->maxage || modtime < 0)) ||
+	if ((ent->maxage > 0 && (age >= ent->maxage || age < 0)) ||
 	    size >= ent->maxsize || force) {
-		PRINFO(("--> trimming log....\n"));
+		PRHDRINFO(("--> trim log\n"));
 		log_trim(ent);
 	} else
-		PRINFO(("--> skipping\n"));
+		PRHDRINFO(("--> skip log\n"));
 }
 
 /*
@@ -372,7 +379,7 @@ void
 log_trim(struct conf_entry *log)
 {
 	char file1[MAXPATHLEN], file2[MAXPATHLEN];
-	char zfile1[MAXPATHLEN], zfile2[MAXPATHLEN];
+ 	char zfile1[MAXPATHLEN], zfile2[MAXPATHLEN];
 	int i;
 	struct stat st;
 	pid_t pid;
@@ -384,11 +391,13 @@ log_trim(struct conf_entry *log)
 	strlcat(zfile1, ".gz", sizeof(zfile1));
 
 	PRINFO(("rm -f %s\n", file1));
-	unlink(file1);
+	if (!noaction)
+		unlink(file1);
 	PRINFO(("rm -f %s\n", zfile1));
-	unlink(zfile1);
+	if (!noaction)
+		unlink(zfile1);
 
-	/* Move down log files. */
+	/* Move down log files */
 	for (i = log->numhist - 1; i != 0; i--) {
 		strcpy(file2, file1);
 		snprintf(file1, sizeof(file1), "%s.%d", log->logfile, i - 1);
@@ -403,32 +412,40 @@ log_trim(struct conf_entry *log)
 		}
 
 		PRINFO(("mv %s %s\n", zfile1, zfile2));
-		rename(zfile1, zfile2);
+		if (!noaction)
+			if (rename(zfile1, zfile2))
+				err(EXIT_FAILURE, "%s", zfile1); 
 		PRINFO(("chmod %o %s\n", log->mode, zfile2));
-		chmod(zfile2, log->mode);
-		PRINFO(("chown %d.%d %s\n", log->uid, log->gid, zfile2));
-		chown(zfile2, log->uid, log->gid);
+		if (!noaction)
+			if (chmod(zfile2, log->mode))
+				err(EXIT_FAILURE, "%s", zfile2); 
+		PRINFO(("chown %d:%d %s\n", log->uid, log->gid, zfile2));
+		if (!noaction)
+			if (chown(zfile2, log->uid, log->gid))
+				err(EXIT_FAILURE, "%s", zfile2); 
 	}
 
-	if ((log->flags & CE_BINARY) == 0)
-		log_trimmed(log);
+	log_trimmed(log);
 
 	if (log->numhist == 0) {
-		PRINFO(("rm %s\n", log->logfile));
-		unlink(log->logfile);
+		PRINFO(("rm -f %s\n", log->logfile));
+		if (!noaction)
+			if (unlink(log->logfile))
+				err(EXIT_FAILURE, "%s", log->logfile);
 	} else {
-		PRINFO(("mv %s to %s\n", log->logfile, file1));
-		rename(log->logfile, file1);
+		PRINFO(("mv %s %s\n", log->logfile, file1));
+		if (!noaction)
+			if (rename(log->logfile, file1))
+				err(EXIT_FAILURE, "%s", log->logfile);
 	}
 
-	PRINFO(("Start new log...\n"));
 	log_create(log);
-
-	if ((log->flags & CE_BINARY) == 0)
-		log_trimmed(log);
+	log_trimmed(log);
 
 	PRINFO(("chmod %o %s\n", log->mode, log->logfile));
-	chmod(log->logfile, log->mode);
+	if (!noaction)
+		if (chmod(log->logfile, log->mode))
+			err(EXIT_FAILURE, "%s", log->logfile);
 
 	if ((log->flags & CE_NOSIGNAL) == 0) {
 		if (log->pidfile[0] != '\0')
@@ -439,20 +456,23 @@ log_trim(struct conf_entry *log)
 		if (pid != (pid_t)-1) {
 			PRINFO(("kill -%s %d\n", sys_signame[log->signum], 
 			    pid));
-			if (kill(pid, log->signum))
-				warn("warning - could not signal daemon");
+			if (!noaction)
+				if (kill(pid, log->signum))
+					warn("kill");
 		}
 	}
 	
 	if ((log->flags & CE_COMPACT) != 0) {
 		PRINFO(("gzip %s.0\n", log->logfile));
-
-		if ((pid = fork()) < 0)
-			err(EXIT_FAILURE, "fork");
-		else if (pid == 0) {
-			snprintf(file1, sizeof(file1), "%s.0", log->logfile);
-			execl(_PATH_GZIP, "gzip", "-f", file1, NULL);
-			err(EXIT_FAILURE, _PATH_GZIP);
+		if (!noaction) {
+			if ((pid = fork()) < 0)
+				err(EXIT_FAILURE, "fork");
+			else if (pid == 0) {
+				snprintf(file1, sizeof(file1), "%s.0", 
+				    log->logfile);
+				execl(_PATH_GZIP, "gzip", "-f", file1, NULL);
+				err(EXIT_FAILURE, _PATH_GZIP);
+			}
 		}
 	}
 }
@@ -467,6 +487,12 @@ log_trimmed(struct conf_entry *log)
 	time_t now;
 	char *daytime;
 
+	if ((log->flags & CE_BINARY) != 0)
+		return;
+	PRINFO(("(append rotation notice to %s)\n", log->logfile));
+	if (noaction)
+		return;
+
 	if ((fd = fopen(log->logfile, "at")) == NULL)
 		err(EXIT_FAILURE, "%s", log->logfile);
 
@@ -475,24 +501,27 @@ log_trimmed(struct conf_entry *log)
 	daytime[15] = '\0';
 		
 	fprintf(fd, "%s %s newsyslog[%ld]: log file turned over\n", daytime, 
-	    hostname, (u_long)getpid());
+	    hostname, (long)getpid());
 	fclose(fd);
 }
 
 /*
- * Create a new log file.
+ * Create a new log file.  This routine does not obey `noaction'.
  */
 void
 log_create(struct conf_entry *ent)
 {
 	int fd;
 
+	PRINFO(("(create new log)\n"));
+	if (noaction)
+		return;
+
 	if ((fd = creat(ent->logfile, ent->mode)) < 0)
 		err(EXIT_FAILURE, "%s", ent->logfile);
 	if (fchown(fd, ent->uid, ent->gid) < 0)
 		err(EXIT_FAILURE, "%s", ent->logfile);
-	if (close(fd) < 0)
-		err(EXIT_FAILURE, "%s", ent->logfile);
+	close(fd);
 }
 
 /*
@@ -530,12 +559,12 @@ getsig(const char *sig)
 	
 	if (isnumber(sig)) {
 		n = (int)strtol(sig, &p, 0);
-		if (p != '\0' || (unsigned)n >= NSIG)
+		if (p != '\0' || n < 0 || n >= NSIG)
 			return (-1);
 		return (n);
 	}
 
-	if (strncasecmp(sig, "sig", 3) == 0)
+	if (strncasecmp(sig, "SIG", 3) == 0)
 		sig += 3;
 	for (n = 1; n < NSIG; n++)
 		if (strcasecmp(sys_signame[n], sig) == 0)
@@ -552,6 +581,13 @@ readpidfile(const char *file)
 	FILE *fd;
 	char line[BUFSIZ];
 	pid_t pid;
+
+#ifdef notyet
+	if (file[0] != '/')
+		snprintf(tmp, sizeof(tmp), "%s%s", _PATH_VARRUN, file);
+	else
+		strlcpy(tmp, file, sizeof(tmp));
+#endif
 
 	if ((fd = fopen(file, "rt")) == NULL) {
 		warn("%s", file);
@@ -582,7 +618,7 @@ parseuserspec(const char *name, struct passwd **pw, struct group **gr)
 
 	/* 
 	 * Before attempting to use '.' as a separator, see if the whole 
-	 * string resolves as a user name or UID.
+	 * string resolves as a user name.
 	 */
 	if ((*pw = getpwnam(buf)) != NULL) {
 		*gr = getgrgid((*pw)->pw_gid);
@@ -614,5 +650,5 @@ parseuserspec(const char *name, struct passwd **pw, struct group **gr)
 	else
 		*gr = getgrnam(group);
 		
-	return (*gr != NULL ? 0 : -1);
+	return (*pw != NULL && *gr != NULL ? 0 : -1);
 }
