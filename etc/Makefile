@@ -21,7 +21,7 @@ WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
 
 all clean cleandir depend etc install lint:
 
-distribution:
+distribution: distrib-dirs
 	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	install -c -o ${BINOWN} -g ${BINGRP} -m 666 ${BIN2} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
@@ -70,4 +70,24 @@ hcx9-distribution:
 	(cd etc.tahoe; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS2} \
 	    ${DESTDIR}/)
 
+distrib-dirs:
+	umask 022
+	-mkdir ${DESTDIR}/dev ${DESTDIR}/etc ${DESTDIR}/root ${DESTDIR}/tmp \
+		${DESTDIR}/var
+	chmod 1777 ${DESTDIR}/tmp
+	-mkdir ${DESTDIR}/etc/mtree ${DESTDIR}/etc/namedb
+	-mkdir ${DESTDIR}/var/backups ${DESTDIR}/var/cron ${DESTDIR}/var/db \
+	       ${DESTDIR}/var/log ${DESTDIR}/var/mail ${DESTDIR}/var/preserve \
+	       ${DESTDIR}/var/run ${DESTDIR}/var/rwho ${DESTDIR}/var/spool \
+	       ${DESTDIR}/var/tmp
+	chmod 1777 ${DESTDIR}/var/tmp
+	-mkdir ${DESTDIR}/var/cron/tabs
+	chmod 700 ${DESTDIR}/var/cron/tabs
+	-mkdir ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
+	       ${DESTDIR}/var/spool/uucp ${DESTDIR}/var/spool/uucppublic
+	chown uucp.dialer ${DESTDIR}/var/spool/lock
+	ln -s ${DESTDIR}/usr/src/sys.386bsd ${DESTDIR}/sys
+
 .include <bsd.prog.mk>
+#
+#	$Id: Makefile,v 1.7 1993/04/10 11:11:40 cgd Exp $
