@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.65 2001/11/10 17:11:38 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.66 2001/11/20 13:48:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ struct usbd_port {
 	u_int8_t		portno;
 	u_int8_t		restartcnt;
 #define USBD_RESTART_MAX 5
-	struct usbd_device     *device;
+	struct usbd_device     *device;	/* Connected device */
 	struct usbd_device     *parent;	/* The ports hub */
 };
 
@@ -135,13 +135,15 @@ struct usbd_device {
 	u_int8_t		address;       /* device addess */
 	u_int8_t		config;	       /* current configuration # */
 	u_int8_t		depth;         /* distance from root hub */
-	u_int8_t		lowspeed;      /* lowspeed flag */
+	u_int8_t		speed;         /* low/full/high speed */
 	u_int8_t		self_powered;  /* flag for self powered */
 	u_int16_t		power;         /* mA the device uses */
 	int16_t			langid;	       /* language for strings */
 #define USBD_NOLANG (-1)
 	usb_event_cookie_t	cookie;	       /* unique connection id */
 	struct usbd_port       *powersrc;      /* upstream hub port, or 0 */
+	struct usbd_device     *myhub; 	       /* upstream hub */
+	struct usbd_device     *myhighhub;     /* closest high speed hub */
 	struct usbd_endpoint	def_ep;	       /* for pipe 0 */
 	usb_endpoint_descriptor_t def_ep_desc; /* for pipe 0 */
 	struct usbd_interface  *ifaces;        /* array of all interfaces */

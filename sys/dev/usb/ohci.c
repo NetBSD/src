@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.108 2001/11/13 06:24:54 lukem Exp $	*/
+/*	$NetBSD: ohci.c,v 1.109 2001/11/20 13:48:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.108 2001/11/13 06:24:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.109 2001/11/20 13:48:32 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1954,7 +1954,8 @@ ohci_open(usbd_pipe_handle pipe)
 		sed->ed.ed_flags = htole32(
 			OHCI_ED_SET_FA(addr) | 
 			OHCI_ED_SET_EN(ed->bEndpointAddress) |
-			(dev->lowspeed ? OHCI_ED_SPEED : 0) | fmt |
+			(dev->speed == USB_SPEED_LOW ? OHCI_ED_SPEED : 0) |
+			fmt |
 			OHCI_ED_SET_MAXP(UGETW(ed->wMaxPacketSize)));
 		sed->ed.ed_headp = sed->ed.ed_tailp = htole32(tdphys);
 
@@ -2149,7 +2150,7 @@ Static usb_device_descriptor_t ohci_devd = {
 	{0x00, 0x01},		/* USB version */
 	UDCLASS_HUB,		/* class */
 	UDSUBCLASS_HUB,		/* subclass */
-	0,			/* protocol */
+	UDPROTO_FSHUB,
 	64,			/* max packet */
 	{0},{0},{0x00,0x01},	/* device id */
 	1,2,0,			/* string indicies */
@@ -2177,7 +2178,7 @@ Static usb_interface_descriptor_t ohci_ifcd = {
 	1,
 	UICLASS_HUB,
 	UISUBCLASS_HUB,
-	0,
+	UIPROTO_FSHUB,
 	0
 };
 

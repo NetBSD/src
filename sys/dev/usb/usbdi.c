@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.85 2001/11/15 15:15:59 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.86 2001/11/20 13:48:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.85 2001/11/15 15:15:59 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.86 2001/11/20 13:48:04 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,9 @@ usbd_dump_device(struct usbd_device *dev)
 	if (dev == NULL)
 		return;
 	printf(" bus=%p default_pipe=%p\n", dev->bus, dev->default_pipe);
-	printf(" address=%d config=%d depth=%d lowspeed=%d self_powered=%d power=%d langid=%d\n",
-	       dev->address, dev->config, dev->depth, dev->lowspeed,
+	printf(" address=%d config=%d depth=%d speed=%d self_powered=%d "
+	       "power=%d langid=%d\n",
+	       dev->address, dev->config, dev->depth, dev->speed,
 	       dev->self_powered, dev->power, dev->langid);
 }
 
