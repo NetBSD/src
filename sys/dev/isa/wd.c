@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.155 1996/11/27 10:50:39 thorpej Exp $	*/
+/*	$NetBSD: wd.c,v 1.156 1997/01/17 20:45:29 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -96,7 +96,7 @@ struct wd_softc {
 #define	GEOMETRY_WAIT	3		/* done uploading geometry */
 #define	MULTIMODE	4		/* set multiple mode */
 #define	MULTIMODE_WAIT	5		/* done setting multiple mode */
-#define	OPEN		6		/* done with open */
+#define	READY		6		/* ready for use */
 	int sc_mode;			/* transfer mode */
 #define	WDM_PIOSINGLE	0		/* single-sector PIO */
 #define	WDM_PIOMULTI	1		/* multi-sector PIO */
@@ -547,7 +547,7 @@ loop:
 	bp = wd->sc_q.b_actf;
     
 	if (wdc->sc_errors >= WDIORETRIES) {
-		wderror(wd, bp, "hard error");
+		wderror(wd, bp, "wdcstart hard error");
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		wdfinish(wd, bp);
@@ -555,7 +555,7 @@ loop:
 	}
 
 	/* Do control operations specially. */
-	if (wd->sc_state < OPEN) {
+	if (wd->sc_state < READY) {
 		/*
 		 * Actually, we want to be careful not to mess with the control
 		 * state if the device is currently busy, but we can assume
@@ -783,7 +783,7 @@ wdcintr(arg)
 	}
     
 	/* Is it not a transfer, but a control operation? */
-	if (wd->sc_state < OPEN) {
+	if (wd->sc_state < READY) {
 		if (wdcontrol(wd) == 0) {
 			/* The drive is busy.  Wait. */
 			return 1;
@@ -811,11 +811,18 @@ wdcintr(arg)
 		if (bp->b_flags & B_FORMAT)
 			goto bad;
 #endif
-	
-		if (++wdc->sc_errors < WDIORETRIES)
-			goto restart;
-		wderror(wd, bp, "hard error");
 
+		if (++wdc->sc_errors < WDIORETRIES) {
+			if (wdc->sc_errors == (WDIORETRIES + 1) / 2) {
+#if 0
+				wderror(wd, NULL, "wedgie");
+#endif
+				wdcunwedge(wdc);
+				return 1;
+			}
+			goto restart;
+		}
+		wderror(wd, bp, "wdcintr hard error");
 #ifdef B_FORMAT
 	bad:
 #endif
@@ -1129,7 +1136,7 @@ wdcontrol(wd)
 	case MULTIMODE:
 	multimode:
 		if (wd->sc_mode != WDM_PIOMULTI)
-			goto open;
+			goto ready;
 		outb(wdc->sc_iobase+wd_seccnt, wd->sc_multiple);
 		if (wdcommandshort(wdc, wd->sc_drive, WDCC_SETMULTI) != 0) {
 			wderror(wd, NULL, "wdcontrol: setmulti failed (1)");
@@ -1144,10 +1151,10 @@ wdcontrol(wd)
 			goto bad;
 		}
 		/* fall through */
-	case OPEN:
-	open:
+	case READY:
+	ready:
 		wdc->sc_errors = 0;
-		wd->sc_state = OPEN;
+		wd->sc_state = READY;
 		/*
 		 * The rest of the initialization can be done by normal means.
 		 */
@@ -1500,7 +1507,7 @@ wddump(dev, blkno, va, size)
 	part = WDPART(dev);
 
 	/* Make sure it was initialized. */
-	if (wd->sc_state < OPEN)
+	if (wd->sc_state < READY)
 		return ENXIO;
 
 	wdc = (void *)wd->sc_dev.dv_parent;
