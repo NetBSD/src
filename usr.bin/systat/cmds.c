@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.27 2004/07/03 18:54:47 mycroft Exp $	*/
+/*	$NetBSD: cmds.c,v 1.28 2004/11/04 07:18:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.27 2004/07/03 18:54:47 mycroft Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.28 2004/11/04 07:18:47 dsl Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -83,7 +83,7 @@ command(char *cmd)
 		}
 	}
 
-	if (isdigit(cmd[0])) {
+	if (isdigit((unsigned char)cmd[0])) {
 		global_interval(cmd);
 		goto done;
 	}
