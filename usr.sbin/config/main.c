@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.88 2003/12/02 05:11:42 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.88.2.1 2004/06/22 07:17:18 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,10 @@
  *
  *	from: @(#)main.c	8.1 (Berkeley) 6/6/93
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
