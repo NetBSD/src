@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sigcode.s,v 1.1 2000/11/27 22:29:26 jdolecek Exp $ */
+/* $NetBSD: linux_sigcode.s,v 1.2 2002/05/13 21:37:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_sigcode.s,v 1.1 2000/11/27 22:29:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sigcode.s,v 1.2 2002/05/13 21:37:11 thorpej Exp $");
 
 #include "assym.h"
 
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sigcode.s,v 1.1 2000/11/27 22:29:26 jdolecek E
  * Linux signal trampoline code.  Almost identical to the normal one.
  */
 
-NESTED(linux_sigcode,0,0,ra,0,0)
+NESTED_NOPROFILE(linux_sigcode,0,0,ra,0,0)
 	lda	sp, -16(sp)		/* save the sigcontext pointer */
 	stq	a2, 0(sp)
 	jsr	ra, (t12)		/* call the signal handler */
@@ -92,7 +92,7 @@ NESTED(linux_sigcode,0,0,ra,0,0)
 XNESTED(linux_esigcode,0)
 	END(linux_sigcode)
 
-NESTED(linux_rt_sigcode,0,0,ra,0,0)
+NESTED_NOPROFILE(linux_rt_sigcode,0,0,ra,0,0)
 	lda	sp, -16(sp)		/* save the sigcontext pointer */
 	stq	a2, 0(sp)
 	jsr	ra, (t12)		/* call the signal handler */
