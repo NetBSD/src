@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.17 1998/09/04 19:13:06 christos Exp $	*/
+/*	$NetBSD: pppd.h,v 1.18 1999/05/12 18:50:53 thorpej Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -112,8 +112,13 @@ extern int	holdoff;	/* Dead time before restarting */
 extern int	refuse_pap;	/* Don't wanna auth. ourselves with PAP */
 extern int	refuse_chap;	/* Don't wanna auth. ourselves with CHAP */
 #ifdef PPP_FILTER
-extern struct	bpf_program pass_filter;   /* Filter for pkts to pass */
-extern struct	bpf_program active_filter; /* Filter for link-active pkts */
+/* Filter for packets to pass */
+extern struct	bpf_program pass_filter_in;
+extern struct	bpf_program pass_filter_out;
+
+/* Filter for link-active packets */
+extern struct	bpf_program active_filter_in;
+extern struct	bpf_program active_filter_out;
 #endif
 
 
@@ -302,7 +307,8 @@ void logwtmp __P((const char *, const char *, const char *));
 				/* Write entry to wtmp file */
 int  get_host_seed __P((void));	/* Get host-dependent random number seed */
 #ifdef PPP_FILTER
-int  set_filters __P((struct bpf_program *pass, struct bpf_program *active));
+int  set_filters __P((struct bpf_program *pass_in, struct bpf_program *pass_out,
+	struct bpf_program *active_in, struct bpf_program *active_out));
 				/* Set filter programs in kernel */
 #endif
 #ifdef IPX_CHANGE
