@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51 1997/06/15 19:16:37 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.52 1997/07/19 00:01:52 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -250,15 +250,21 @@ mbattach(pdp, dp, auxp)
 {
 	printf("\n");
 	config_found(dp, "clock", simple_devprint);
+	if (is_a3000() || is_a4000()) {
+		config_found(dp, "a34kbbc", simple_devprint);
+	} else if (!is_draco() && !is_a1200()) {
+		config_found(dp, "a2kbbc", simple_devprint);
+	}
 #ifdef DRACO
 	if (is_draco()) {
+		config_found(dp, "drbbc", simple_devprint);
 		config_found(dp, "kbd", simple_devprint);
 		config_found(dp, "drsc", simple_devprint);
 		config_found(dp, "drcom", simple_devprint);
 		config_found(dp, "drcom", simple_devprint);
 		/*
 		 * XXX -- missing here:
-		 * SuperIO chip serial, parallel, floppy
+		 * SuperIO chip parallel, floppy
 		 * or maybe just make that into a pseudo
 		 * ISA bus.
 		 */
@@ -267,10 +273,6 @@ mbattach(pdp, dp, auxp)
 	{
 		config_found(dp, "ser", simple_devprint);
 		config_found(dp, "par", simple_devprint);
-#include "audio.h"
-#if NAUDIO>0
-		config_found(dp, "aucc", simple_devprint);
-#endif
 		config_found(dp, "kbd", simple_devprint);
 		config_found(dp, "ms", simple_devprint);
 		config_found(dp, "ms", simple_devprint);
@@ -358,7 +360,6 @@ findroot(devpp, partp)
 	 */
 	if (boot_partition != 0) {
 	 	struct bdevsw *bdp;
-		int i;
 
 		for (unit = 0; unit < sd_cd.cd_ndevs; ++unit) {
 			if (sd_cd.cd_devs[unit] == NULL)
@@ -384,20 +385,18 @@ findroot(devpp, partp)
 				continue;
 			bdp->d_close(MAKEDISKDEV(4, unit, 0),
 			    FREAD | FNONBLOCK, 0, curproc);
+			/*
+			 * XXX - assumes booting only from 'a' partition
+			 */
 			pp = &dkp->dk_label->d_partitions[0];
-			for (i = 0; i < dkp->dk_label->d_npartitions;
-			    i++, pp++) {
-				if (pp->p_size == 0 ||
-				    (pp->p_fstype != FS_BSDFFS &&
-				    pp->p_fstype != FS_SWAP))
-					continue;
-				if (pp->p_offset == boot_partition) {
-					if (*devpp == NULL) {
-						*devpp = devs[unit];
-						*partp = i;
-					} else
-						printf("Ambiguous boot device\n");
-				}
+			if (pp->p_size == 0 || pp->p_fstype != FS_BSDFFS)
+				continue;
+			if (pp->p_offset == boot_partition) {
+				if (*devpp == NULL) {
+					*devpp = devs[unit];
+					*partp = 0;	/* XXX */
+				} else
+					printf("Ambiguous boot device\n");
 			}
 		}
 	}
