@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.19 2000/11/26 11:08:58 takemura Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.20 2000/11/30 15:33:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1091,7 +1091,7 @@ STATIC void rtk_rxeof(sc)
 				m_copyback(m, wrap, total_len - wrap,
 					sc->rtk_cdata.rtk_rx_buf);
 			}
-			cur_rx = (total_len - wrap + ETHER_CRC_LEN);
+			cur_rx = total_len - wrap;
 		} else {
 			m = m_devget(rxbufpos - RTK_ETHER_ALIGN,
 			    total_len + RTK_ETHER_ALIGN, 0, ifp, NULL);
@@ -1102,7 +1102,7 @@ STATIC void rtk_rxeof(sc)
 				    total_len);
 			} else
 				m_adj(m, RTK_ETHER_ALIGN);
-			cur_rx += total_len + 4 + ETHER_CRC_LEN;
+			cur_rx += total_len + 4;
 		}
 
 		/*
