@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_ieee.h,v 1.7 2000/08/14 00:44:22 jhawk Exp $	*/
+/*	$NetBSD: if_wi_ieee.h,v 1.8 2000/08/23 19:01:05 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -225,6 +225,7 @@ struct wi_counters {
 #define WI_RID_P2_TX_CRYPT_KEY	0xFC23
 #define WI_RID_P2_CRYPT_KEY0	0xFC24
 #define WI_RID_P2_CRYPT_KEY1	0xFC25
+#define WI_RID_MICROWAVE_OVEN	0xFC25
 #define WI_RID_P2_CRYPT_KEY2	0xFC26
 #define WI_RID_P2_CRYPT_KEY3	0xFC27
 #define WI_RID_P2_ENCRYPTION	0xFC28
