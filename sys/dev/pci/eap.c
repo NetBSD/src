@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.54 2002/11/04 16:34:25 pooka Exp $	*/
+/*	$NetBSD: eap.c,v 1.55 2002/11/07 06:54:25 thorpej Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.54 2002/11/04 16:34:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.55 2002/11/07 06:54:25 thorpej Exp $");
 
 #include "midi.h"
 
@@ -1179,8 +1179,7 @@ eap_trigger_output(
 	}
 
 	if (ei->index == EAP_DAC2) {
-		DPRINTF(("eap_trigger_output: DAC2_ADDR=0x%x,
-			 DAC2_SIZE=0x%x\n",
+		DPRINTF(("eap_trigger_output: DAC2_ADDR=0x%x, DAC2_SIZE=0x%x\n",
 			 (int)DMAADDR(p), 
 			 (int)EAP_SET_SIZE(0,
 			 (((char *)end - (char *)start) >> 2) - 1)));
@@ -1191,8 +1190,7 @@ eap_trigger_output(
 			((char *)end - (char *)start) >> 2) - 1);
 		EWRITE4(sc, EAP_DAC2_CSR, (blksize >> sampshift) - 1);
 	} else if (ei->index == EAP_DAC1) {
-		DPRINTF(("eap_trigger_output: DAC1_ADDR=0x%x,
-			 DAC1_SIZE=0x%x\n",
+		DPRINTF(("eap_trigger_output: DAC1_ADDR=0x%x, DAC1_SIZE=0x%x\n",
 			 (int)DMAADDR(p), 
 			 (int)EAP_SET_SIZE(0,
 			 (((char *)end - (char *)start) >> 2) - 1)));
