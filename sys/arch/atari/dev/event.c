@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.2 1995/06/25 19:05:23 leo Exp $	*/
+/*	$NetBSD: event.c,v 1.2.6.1 1996/06/18 11:28:08 leo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -166,6 +166,7 @@ ev_select(ev, rw, p)
 		break;
 
 	case FWRITE:
+		splx(s);
 		return (1);	/* always fails => never blocks */
 	}
 	splx(s);
