@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 1997/01/23 22:58:26 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.13 1997/11/04 21:18:28 gwr Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -32,6 +32,10 @@ COMPATMAKE= \
 	cd ${COMPATDIR} && MAKEOBJDIR=${COMPATDST} ${MAKE} \
 	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
+	    AR=${AR:Q} NM=${NM:Q} \
+	    LORDER=${LORDER:Q} \
+	    TSORT=${TSORT:Q} \
+	    RANLIB=${RANLIB:Q} \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    COMPATCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
