@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.14 2003/06/29 22:29:39 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.15 2004/01/15 14:36:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -39,7 +39,7 @@
 			data32, (struct type *)data, cmd); \
 		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, p); \
 		__CONCAT(netbsd32_from_, type)((struct type *)data, \
-			(struct __CONCAT(netbsd32_, type) *)data32); \
+			(struct __CONCAT(netbsd32_, type) *)data32, cmd); \
 		break
  
 /* from <sys/audioio.h> */
