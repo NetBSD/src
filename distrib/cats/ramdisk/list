@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 2003/12/25 11:14:36 martin Exp $
+#	$NetBSD: list,v 1.6 2005/01/18 12:38:45 lukem Exp $
 
 # usr.bin/less has to be first, otherwise the ramdisk.mk generation fails
 SRCDIRS usr.bin/less bin sbin usr.bin usr.sbin gnu/usr.bin
@@ -38,11 +38,9 @@ PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
-PROG	sbin/ping6
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/restore	sbin/rrestore
 PROG	sbin/route
-PROG	sbin/rtsol
 PROG	sbin/scsictl
 PROG	sbin/shutdown
 PROG	sbin/slattach
@@ -64,7 +62,6 @@ ARGVLN	sh -sh
 SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
-SPECIAL	ping6		srcdir	distrib/utils/x_ping6
 SPECIAL	route		srcdir	distrib/utils/x_route
 
 LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz

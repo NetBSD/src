@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/03/23 13:43:41 chris Exp $
+#	$NetBSD: Makefile,v 1.7 2005/01/18 12:38:45 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,6 +19,10 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
 		${NETBSDSRCDIR}/etc/services
+
+.if ${USE_INET6} != "no"
+LISTS+=		${.CURDIR}/list.inet6
+.endif
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
