@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.7 2003/02/15 04:34:40 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.8 2003/02/15 21:18:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@ struct	pthread_st {
 	sigset_t	pt_sigmask;	/* Signals we won't take. */
 	sigset_t	pt_siglist;	/* Signals pending for us. */
 	sigset_t	pt_sigblocked;	/* Signals delivered while blocked. */
+	sigset_t	*pt_sigwait;	/* Signals waited for in sigwait */
+	siginfo_t	*pt_wsig;	
 	pthread_spin_t	pt_siglock;	/* Lock on above */
 
 	void *		pt_exitval;	/* Read by pthread_join() */
