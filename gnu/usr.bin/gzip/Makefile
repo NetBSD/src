@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.30 2001/11/13 17:26:52 tv Exp $
+#	$NetBSD: Makefile,v 1.31 2002/08/27 14:46:12 lukem Exp $
 
-.include <bsd.own.mk>
+.include <bsd.own.mk>		# for MKDYNAMICROOT & OBJECT_FMT definition
 
 PROG=		gzip
 SRCS=		gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
@@ -17,7 +17,10 @@ AFLAGS+=	-DNO_UNDERLINE
 .endif
 .endif	# m68k || i386
 
+.if (${MKDYNAMICROOT} == "no")
 LDSTATIC?=	-static
+.endif
+
 DPADD+=		${LIBBZ2}
 LDADD+=		-lbz2
 

@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.15 2001/12/05 05:50:22 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2002/08/27 14:46:14 lukem Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/8/93
 
-.include <bsd.own.mk>		# for LDSTATIC def'n
+.include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 WARNS?=		2
 BINDIR?=	/sbin
-LDSTATIC?=	-static
 WFORMAT?=	2
+
+.if (${MKDYNAMICROOT} == "no")
+LDSTATIC?=	-static
+.endif
