@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.23 1994/07/25 00:34:30 briggs Exp $
+ *	$Id: machdep.c,v 1.24 1994/07/29 00:52:20 grantham Exp $
  */
 
 #include <param.h>
@@ -2230,6 +2230,8 @@ getenvvars (void)
   extern unsigned long	bootdev, videobitdepth, videosize;
   extern unsigned long	end, esym;
   int			root_scsi_id;
+  extern unsigned long	macos_boottime;
+  extern long		macos_gmtbias;
 
   root_scsi_id = getenv ("ROOT_SCSI_ID");
   /*
@@ -2270,6 +2272,12 @@ getenvvars (void)
    */
   esym = getenv("END_SYM");
   if (esym == 0) esym = (long) &end;
+  
+  /* Get MacOS time just in case we can't read PRAM */
+  macos_boottime = getenv("BOOTTIME");
+
+  /* Save GMT BIAS saved in Booter parameters dialog box */
+  macos_gmtbias = getenv("GMTBIAS");
 }
 
 void printenvvars (void)
