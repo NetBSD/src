@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.43 2004/02/11 18:42:37 jdolecek Exp $	*/
+/*	$NetBSD: modload.c,v 1.44 2004/02/12 21:10:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.43 2004/02/11 18:42:37 jdolecek Exp $");
+__RCSID("$NetBSD: modload.c,v 1.44 2004/02/12 21:10:39 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -253,7 +253,7 @@ main(int argc, char **argv)
 	char *post = NULL;
 	char *ldscript = NULL;
 	char *modobj;
-	char modout[MAXPATHLEN+1], *p;
+	char modout[MAXPATHLEN], *p;
 	struct stat stb;
 	int strtablen;
 	size_t modsize;	/* XXX */
