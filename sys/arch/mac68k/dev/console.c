@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.7 1994/01/20 23:57:09 briggs Exp $
+ * $Id: console.c,v 1.8 1994/01/30 01:07:01 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -374,8 +374,8 @@ if (initt) {
 
   font[0].width = 8;
   font[0].height = 14;
-  font[0].normalfont = Font8x14;	/* In chars.h */
-  font[0].boldfont = Font8x14B;		/* In chars.h */
+  font[0].normalfont = Font8x14;	/* In 8x14.h */
+  font[0].boldfont = Font8x14B;		/* In 8x14.h */
   font[0].sevenbit = 0;
   font[1].width = 6;
   font[1].height = 10;
