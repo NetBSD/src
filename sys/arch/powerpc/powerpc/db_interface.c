@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22 2002/12/19 13:29:53 scw Exp $ */
+/*	$NetBSD: db_interface.c,v 1.23 2002/12/19 13:45:03 scw Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -338,6 +338,9 @@ db_ppc4xx_dcr(db_expr_t address, int have_addr, db_expr_t count, char *modif)
 {
 	db_expr_t new_value;
 	db_expr_t addr;
+
+	if (address < 0 || address > 0x3ff)
+		db_error("Invalid DCR address (Valid range is 0x0 - 0x3ff)\n");
 
 	addr = address;
 
