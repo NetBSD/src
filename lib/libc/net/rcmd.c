@@ -1,7 +1,6 @@
-/*	$NetBSD: rcmd.c,v 1.55 2004/01/27 11:46:34 lukem Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.56 2004/03/21 05:46:42 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997 Matthew R. Green.
  * Copyright (c) 1983, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -35,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.55 2004/01/27 11:46:34 lukem Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.56 2004/03/21 05:46:42 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
