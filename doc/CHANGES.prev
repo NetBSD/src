@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.19 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.20 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -2239,7 +2239,7 @@ Changes from NetBSD 1.0 to NetBSD 1.1:
 		[leo 19950820]
 	pc532: added changes from Matthias Pfaller to support dumps.
 		[phil 19950824]
-	pc532: imported a new method of makeing distributions from Matthias
+	pc532: imported a new method of making distributions from Matthias
 		Pfaller. [phil 19950827]
 	pc532: added changes to vmstat for pc532 support. [phil 19950827]
 	rarpd(8): changed rarpd to respond to rarp requests even if there's no
