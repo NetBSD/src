@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char cu_rcsid[] = "$Id: cu.c,v 1.5 1999/01/18 20:54:43 tron Exp $";
+const char cu_rcsid[] = "$Id: cu.c,v 1.6 2000/03/23 19:05:40 mycroft Exp $";
 #endif
 
 #include "cu.h"
@@ -598,6 +598,8 @@ main (argc, argv)
 	      sport.uuconf_palloc = NULL;
 	      sport.uuconf_u.uuconf_sdirect.uuconf_zdevice = NULL;
 	      sport.uuconf_u.uuconf_sdirect.uuconf_ibaud = ibaud;
+	      sport.uuconf_u.uuconf_sdirect.uuconf_fcarrier = FALSE;
+	      sport.uuconf_u.uuconf_sdirect.uuconf_fhardflow = TRUE;
 
 	      if (! fconn_init (&sport, &sconn, UUCONF_PORTTYPE_UNKNOWN))
 		ucuabort ();
