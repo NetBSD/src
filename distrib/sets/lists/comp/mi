@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.557 2003/04/06 18:27:52 perry Exp $
+#	$NetBSD: mi,v 1.558 2003/04/07 07:11:21 gmcgarry Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -4080,7 +4080,7 @@
 ./usr/share/man/cat9/vfs_mountroot.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_reinit.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_rootmountalloc.0		comp-sys-catman
-./usr/share/man/cat9/vfs_setpublic.0		comp-sys-catman
+./usr/share/man/cat9/vfs_setpublicfs.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_showexport.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_shutdown.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_sysctl.0		comp-sys-catman
@@ -7197,7 +7197,7 @@
 ./usr/share/man/man9/vfs_mountroot.9		comp-sys-man
 ./usr/share/man/man9/vfs_reinit.9		comp-sys-man
 ./usr/share/man/man9/vfs_rootmountalloc.9		comp-sys-man
-./usr/share/man/man9/vfs_setpublic.9		comp-sys-man
+./usr/share/man/man9/vfs_setpublicfs.9		comp-sys-man
 ./usr/share/man/man9/vfs_showexport.9		comp-sys-man
 ./usr/share/man/man9/vfs_shutdown.9		comp-sys-man
 ./usr/share/man/man9/vfs_sysctl.9		comp-sys-man
