@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.164.2.4 2001/09/21 22:36:28 nathanw Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.164.2.5 2001/09/25 16:14:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1923,6 +1923,7 @@ sys_access(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct ucred *cred = crget();
 	struct vnode *vp;
 	int error, flags;
