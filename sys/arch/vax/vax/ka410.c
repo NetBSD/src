@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.17 1999/03/13 15:16:48 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.18 1999/04/14 23:14:46 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -54,7 +54,6 @@
 #include <machine/vsbus.h>
 
 static	void	ka410_conf __P((struct device*, struct device*, void*));
-static	void	ka410_steal_pages __P((void));
 static	void	ka410_memerr __P((void));
 static	int	ka410_mchk __P((caddr_t));
 static	void	ka410_halt __P((void));
@@ -71,7 +70,7 @@ extern  short *clk_page;
  * Declaration of 410-specific calls.
  */
 struct	cpu_dep ka410_calls = {
-	ka410_steal_pages,
+	0,
 	no_nicr_clock,
 	ka410_mchk,
 	ka410_memerr, 
@@ -147,16 +146,6 @@ ka410_mchk(addr)
 {
 	panic("Machine check");
 	return 0;
-}
-
-extern caddr_t le_iomem;
-
-void
-ka410_steal_pages()
-{
-	extern	vaddr_t avail_start;
-
-	MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
 }
 
 static void

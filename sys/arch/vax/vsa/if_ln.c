@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ln.c,v 1.11 1999/03/13 15:16:48 ragge Exp $	*/
+/*	$NetBSD: if_ln.c,v 1.12 1999/04/14 23:14:46 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -129,6 +129,8 @@
 #include <dev/ic/lancereg.h>
 #include <dev/ic/am7990reg.h>
 
+#include <machine/bus.h>
+
 #include <machine/cpu.h>
 #include <machine/rpb.h>
 #include <machine/vsbus.h>
@@ -193,6 +195,9 @@ struct ln_softc {
 	struct	ethercom sc_ethercom;	/* Ethernet common part */
 
 	struct	initblock *sc_ib;	/* LANCE initblock */
+	caddr_t	sc_memblk;		/* Memory descr/buffer block */
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_dmamap;
 	struct	buffdesc *sc_rdesc;
 	struct	buffdesc *sc_tdesc;
 	int	sc_first_td, sc_last_td, sc_no_td;
@@ -217,8 +222,6 @@ void	ln_reset __P((struct ln_softc *));
 
 static	short *lance_csr; /* LANCE CSR virtual address */
 static	int *lance_addr; /* Ethernet address */
-
-caddr_t	le_iomem;
 
 struct cfattach ln_ca = {
 	sizeof(struct ln_softc), lnmatch, lnattach
@@ -256,15 +259,38 @@ lnattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct	vsbus_attach_args *va = aux;
 	struct ln_softc *sc = (void *)self;
 	u_int highmark;
-	int i;
+	bus_dma_segment_t seg;
+	int i, err, rseg;
 
 	/* Allocate the needed virtual space */
 	if (lance_csr == 0)
 		lance_csr = (short *)vax_map_physmem(NI_BASE, 1);
 	if (lance_addr == 0)
 		lance_addr = (int *)vax_map_physmem(NI_ADDR, 1);
+
+	/*
+	 * Allocate a (DMA-safe) block for all descriptors and buffers.
+	 */
+	sc->sc_dmat = va->va_dmat;
+#define	ALLOCSIZ ((sizeof(struct buffdesc) + BUFSIZE) * (NRBUF + NTBUF))
+
+	err = bus_dmamem_alloc(sc->sc_dmat, ALLOCSIZ, NBPG, 0, 
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT);
+	if (err) {
+		printf(": unable to alloc buffer block: err %d\n", err);
+		return;
+	}
+	err = bus_dmamem_map(sc->sc_dmat, &seg, rseg, ALLOCSIZ, 
+	    &sc->sc_memblk, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	if (err) {
+		printf(": unable to map buffer block: err %d\n", err);
+		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return;
+	}
+
 	/*
 	 * Get the ethernet address out of rom
 	 */
@@ -292,7 +318,7 @@ lnattach(parent, self, aux)
 	printf("\n%s: address %s\n", self->dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
 
-	highmark = (u_int)le_iomem;
+	highmark = (u_int)sc->sc_memblk;
 	sc->sc_ib = (void *)ALLOC(sizeof(struct initblock));
 	bcopy(sc->sc_enaddr, sc->sc_ib->ib_padr, 6);
 	sc->sc_rdesc = (void *)ALLOC(sizeof(struct buffdesc) * NRBUF);

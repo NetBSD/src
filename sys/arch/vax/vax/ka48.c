@@ -150,15 +150,11 @@ ka48_mchk(addr)
 	return 0;
 }
 
-extern caddr_t le_iomem;
-
 void
 ka48_steal_pages()
 {
-	extern	vm_offset_t avail_start, virtual_avail, avail_end;
+	extern	vm_offset_t virtual_avail, avail_end;
 	int	i;
-
-	MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Turn on caches (to speed up execution a bit) */
 	ka48_cache_enable();
