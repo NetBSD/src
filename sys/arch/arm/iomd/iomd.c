@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.12 2003/12/06 22:31:16 bjh21 Exp $	*/
+/*	$NetBSD: iomd.c,v 1.13 2004/02/08 13:39:21 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.12 2003/12/06 22:31:16 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.13 2004/02/08 13:39:21 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,12 +268,6 @@ iomdattach(parent, self, aux)
 		panic("%s: Cannot map kbd registers", self->dv_xname);
 	ia.ia_kbd.ka_name = "kbd";
 	ia.ia_kbd.ka_iot = iot;
-	ia.ia_kbd.ka_rxirq = IRQ_KBDRX;
-	ia.ia_kbd.ka_txirq = IRQ_KBDTX;
-	config_found(self, &ia, iomdprint);
-
-	/* Attach rpckbc device when configured */
-	ia.ia_kbd.ka_name = "rpckbd";
 	ia.ia_kbd.ka_rxirq = IRQ_KBDRX;
 	ia.ia_kbd.ka_txirq = IRQ_KBDTX;
 	config_found(self, &ia, iomdprint);
