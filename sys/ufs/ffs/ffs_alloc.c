@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.53 2001/10/30 01:11:53 lukem Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.54 2002/04/10 08:05:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.53 2001/10/30 01:11:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.54 2002/04/10 08:05:11 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -755,7 +755,7 @@ ffs_dirpref(pip)
 	minifree = avgifree - fs->fs_ipg / 4;
 	if (minifree < 0)
 		minifree = 0;
-	minbfree = avgbfree - fs->fs_fpg / fs->fs_frag / 4;
+	minbfree = avgbfree - fragstoblks(fs, fs->fs_fpg) / 4;
 	if (minbfree < 0)
 		minbfree = 0;
 	cgsize = fs->fs_fsize * fs->fs_fpg;
@@ -1726,14 +1726,14 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 	loc = scanc((u_int)len,
 		(const u_char *)&cg_blksfree(cgp, needswap)[start],
 		(const u_char *)fragtbl[fs->fs_frag],
-		(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
+		(1 << (allocsiz - 1 + (fs->fs_frag & (NBBY - 1)))));
 	if (loc == 0) {
 		len = start + 1;
 		start = 0;
 		loc = scanc((u_int)len,
 			(const u_char *)&cg_blksfree(cgp, needswap)[0],
 			(const u_char *)fragtbl[fs->fs_frag],
-			(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
+			(1 << (allocsiz - 1 + (fs->fs_frag & (NBBY - 1)))));
 		if (loc == 0) {
 			printf("start = %d, len = %d, fs = %s\n",
 			    ostart, olen, fs->fs_fsmnt);
