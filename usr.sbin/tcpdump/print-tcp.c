@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.6 1996/05/20 00:41:14 fvdl Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.6.4.1 1996/05/26 18:36:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -36,6 +36,8 @@ static char rcsid[] =
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
+
+#include <rpc/rpc.h>
 
 #include <stdio.h>
 #ifdef __STDC__
@@ -122,12 +124,14 @@ tcp_print(register const u_char *bp, register int length,
 	 * to NFS print routines.
 	 */
 	if (!qflag) {
-		if (length > 0 && dport == NFS_PORT) {
+		if ((u_char *)tp + 4 + sizeof(struct rpc_msg) <= snapend &&
+		    dport == NFS_PORT) {
 			nfsreq_print((u_char *)tp + hlen + 4, length,
 				     (u_char *)ip);
 			return;
 		}
-		else if (length > 0 && sport == NFS_PORT) {
+		else if ((u_char *)tp + 4 + sizeof(struct rpc_msg) <= snapend &&
+		    sport == NFS_PORT) {
 			nfsreply_print((u_char *)tp + hlen + 4, length,
 				       (u_char *)ip);
 			return;
