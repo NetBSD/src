@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.18 2000/06/18 22:47:19 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.18.2.1 2000/11/16 20:38:55 tv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.18 2000/06/18 22:47:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.18.2.1 2000/11/16 20:38:55 tv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -151,7 +151,7 @@ asc_vsbus_match( struct device *parent, struct cfdata *cf, void *aux)
 	if (vax_boardtype == VAX_BTYP_46 || vax_boardtype == VAX_BTYP_48) {
 		if (cf->cf_loc[0] != 0x200c0080)
 			return 0;
-#if 0
+#if 1
 	} else if (vax_boardtype == VAX_BTYP_49) {
 		if (cf->cf_loc[0] != 0x26000080)
 			return 0;
