@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_7248.c,v 1.4 2002/05/02 14:48:27 nonaka Exp $	*/
+/*	$NetBSD: ibm_7248.c,v 1.5 2002/05/02 15:18:00 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ struct platform platform_ibm_7248 = {
 	ext_intr_ivr,				/* ext_intr */
 	cpu_setup_ibm_generic,			/* cpu_setup */
 	reset_prep_generic,			/* reset */
+	obiodevs_nodev,				/* obiodevs */
 };
 
 void

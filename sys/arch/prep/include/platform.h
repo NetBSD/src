@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.4 2002/05/02 14:48:27 nonaka Exp $	*/
+/*	$NetBSD: platform.h,v 1.5 2002/05/02 15:17:59 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@ struct platform {
 	void		(*ext_intr)(void);
 	void		(*cpu_setup)(struct device *);
 	void		(*reset)(void);
+	const char	**obiodevs;
 };
 
 struct plattab {
@@ -60,6 +61,7 @@ struct plattab {
 };
 
 extern struct platform *platform;
+extern const char *obiodevs_nodev[];
 
 int ident_platform(void);
 int platform_generic_match(struct platform *);
