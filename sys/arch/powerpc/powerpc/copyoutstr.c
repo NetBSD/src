@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.1 1996/09/30 16:34:42 ws Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.2 1999/01/10 10:24:16 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -32,22 +32,24 @@
  */
 #include <sys/param.h>
 #include <sys/errno.h>
+#include <sys/systm.h>
 
 /*
  * Emulate copyoutstr.
  */
 int
 copyoutstr(kaddr, udaddr, len, done)
-	void *kaddr;
+	const void *kaddr;
 	void *udaddr;
 	size_t len;
 	size_t *done;
 {
-	u_char *kp = kaddr;
+	const u_char *kp = kaddr;
+	u_char *up = udaddr;
 	int l;
 	
 	for (l = 0; len-- > 0; l++) {
-		if (subyte(udaddr++, *kp) < 0) {
+		if (subyte(up++, *kp) < 0) {
 			*done = l;
 			return EACCES;
 		}

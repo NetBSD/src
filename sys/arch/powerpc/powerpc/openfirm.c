@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.3 1998/11/15 19:53:25 tsubai Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.4 1999/01/10 10:24:16 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,7 +57,7 @@ OF_peer(phandle)
 		1,
 		1,
 	};
-	
+
 	ofw_stack();
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
@@ -80,7 +80,7 @@ OF_child(phandle)
 		1,
 		1,
 	};
-	
+
 	ofw_stack();
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
@@ -103,7 +103,7 @@ OF_parent(phandle)
 		1,
 		1,
 	};
-	
+
 	ofw_stack();
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
@@ -212,7 +212,7 @@ OF_finddevice(name)
 		"finddevice",
 		1,
 		1,
-	};	
+	};
 
 	ofw_stack();
 	args.device = name;
@@ -274,7 +274,7 @@ OF_package_to_path(phandle, buf, buflen)
 		3,
 		1,
 	};
-	
+
 	ofw_stack();
 	if (buflen > NBPG)
 		return -1;
@@ -316,7 +316,7 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 		1,
 	};
 	int *ip, n;
-	
+
 	if (nargs > 6)
 		return -1;
 	args.nargs = nargs + 2;
@@ -362,7 +362,7 @@ OF_call_method_1(method, ihandle, nargs, va_alist)
 		2,
 	};
 	int *ip, n;
-	
+
 	if (nargs > 6)
 		return -1;
 	args.nargs = nargs + 2;
@@ -396,7 +396,7 @@ OF_open(dname)
 		1,
 	};
 	int l;
-	
+
 	ofw_stack();
 	if ((l = strlen(dname)) >= NBPG)
 		return -1;
@@ -427,7 +427,7 @@ OF_close(handle)
 	openfirmware(&args);
 }
 
-/* 
+/*
  * This assumes that character devices don't read in multiples of NBPG.
  */
 int
@@ -450,17 +450,18 @@ OF_read(handle, addr, len)
 		1,
 	};
 	int l, act = 0;
-	
+	char *p = addr;
+
 	ofw_stack();
 	args.ihandle = handle;
 	args.addr = OF_buf;
-	for (; len > 0; len -= l, addr += l) {
+	for (; len > 0; len -= l, p += l) {
 		l = min(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
 			return -1;
 		if (args.actual > 0) {
-			ofbcopy(OF_buf, addr, args.actual);
+			ofbcopy(OF_buf, p, args.actual);
 			act += args.actual;
 		}
 		if (args.actual < l)
@@ -492,13 +493,14 @@ OF_write(handle, addr, len)
 		1,
 	};
 	int l, act = 0;
-	
+	char *p = addr;
+
 	ofw_stack();
 	args.ihandle = handle;
 	args.addr = OF_buf;
-	for (; len > 0; len -= l, addr += l) {
+	for (; len > 0; len -= l, p += l) {
 		l = min(NBPG, len);
-		ofbcopy(addr, OF_buf, l);
+		ofbcopy(p, OF_buf, l);
 		args.len = l;
 		if (openfirmware(&args) == -1)
 			return -1;
@@ -551,7 +553,7 @@ OF_boot(bootspec)
 		0,
 	};
 	int l;
-	
+
 	if ((l = strlen(bootspec)) >= NBPG)
 		panic("OF_boot");
 	ofw_stack();
@@ -633,7 +635,7 @@ ofbcopy(src, dst, len)
 
 	if (src == dst)
 		return;
-	
+
 	/*
 	 * Do some optimization?						XXX
 	 */
