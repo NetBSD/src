@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.2 1998/07/25 15:36:30 augustss Exp $
+#	$NetBSD: files.usb,v 1.3 1998/12/02 22:47:20 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -17,31 +17,11 @@ file	dev/usb/usb_subr.c		usb
 file	dev/usb/usb_quirks.c		usb
 
 # Hub driver
-device	uhub { [port = -1] }
+device	uhub { [port = -1], [configuration = -1], [interface = -1] }
 attach	uhub at usb
 file	dev/usb/uhub.c			usb
 
 attach	uhub at uhub with uhub_uhub
-
-# Mice
-device	ums: wsmousedev
-attach	ums at uhub
-file	dev/usb/ums.c			ums		needs-flag
-
-# Keyboards
-device	ukbd: wskbddev
-attach	ukbd at uhub
-file	dev/usb/ukbd.c			ukbd
-
-# Generic HID devices
-device	uhid
-attach	uhid at uhub
-file	dev/usb/uhid.c			uhid		needs-flag
-
-# Printers
-device	ulpt
-attach	ulpt at uhub
-file	dev/usb/ulpt.c			ulpt		needs-flag
 
 # Audio devices
 device	uaudio: audio, auconv, mulaw
@@ -49,10 +29,37 @@ attach	uaudio at uhub
 file	dev/usb/uaudio.c		uaudio
 
 # Generic devices
+device	ucom
+attach	ucom at uhub
+file	dev/usb/ucom.c			ucom		needs-flag
+
+# Generic devices
 device	ugen
 attach	ugen at uhub
 file	dev/usb/ugen.c			ugen		needs-flag
 
+# Generic HID devices
+device	uhid
+attach	uhid at uhub
+file	dev/usb/uhid.c			uhid		needs-flag
+
+# Keyboards
+device	ukbd: wskbddev
+attach	ukbd at uhub
+file	dev/usb/ukbd.c			ukbd
+
+# Printers
+device	ulpt
+attach	ulpt at uhub
+file	dev/usb/ulpt.c			ulpt		needs-flag
+
+# Mice
+device	ums: wsmousedev
+attach	ums at uhub
+file	dev/usb/ums.c			ums		needs-flag
+
+
+#
 # Inside Out Networks, Edgeport/4, 4 serial ports
 #device	uep
 #attach	uep at uhub
