@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.38 2002/09/21 18:09:30 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.39 2003/01/03 13:21:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -63,6 +63,7 @@ typedef enum {
 	Pmeminfo,	/* system memory info (if -o linux) */
 	Pcpuinfo,	/* CPU info (if -o linux) */
 	Pmaps,		/* memory map, Linux style (if -o linux) */
+	Pfd,		/* a directory containing the processes open fd's */
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODE_TYPES
 #endif
@@ -76,6 +77,7 @@ struct pfsnode {
 	struct vnode	*pfs_vnode;	/* vnode associated with this pfsnode */
 	pfstype		pfs_type;	/* type of procfs node */
 	pid_t		pfs_pid;	/* associated process */
+	int		pfs_fd;		/* associated fd if not -1 */
 	mode_t		pfs_mode;	/* mode bits for stat() */
 	u_long		pfs_flags;	/* open flags */
 	u_long		pfs_fileno;	/* unique file id */
@@ -106,10 +108,10 @@ struct procfs_args {
 
 #define UIO_MX 32
 
-#define PROCFS_FILENO(pid, type) \
-	(((type) < Pproc) ? \
-			((type) + 2) : \
-			((((pid)+1) << 4) + ((int) (type))))
+#define PROCFS_FILENO(pid, type, fd) \
+    (((type) < Pproc) ? ((type) + 2) : \
+	(((fd) == -1) ? ((((pid)+1) << 4) + ((int) (type))) : \
+	((((pid)+1) << 16) | ((fd) << 4) | ((int) (type)))))
 
 struct procfsmount {
 	void *pmnt_exechook;
@@ -135,7 +137,7 @@ const vfs_namemap_t *vfs_findname __P((const vfs_namemap_t *, const char *, int)
 
 #define PFIND(pid) ((pid) ? pfind(pid) : &proc0)
 int procfs_freevp __P((struct vnode *));
-int procfs_allocvp __P((struct mount *, struct vnode **, long, pfstype));
+int procfs_allocvp __P((struct mount *, struct vnode **, pid_t, pfstype, int));
 int procfs_donote __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
 int procfs_doregs __P((struct proc *, struct proc *, struct pfsnode *,
@@ -156,11 +158,14 @@ int procfs_domeminfo __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
 int procfs_docpuinfo __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
+int procfs_dofd __P((struct proc *, struct proc *, struct pfsnode *,
+    struct uio *));
 
 void procfs_revoke_vnodes __P((struct proc *, void *));
 void procfs_hashinit __P((void));
 void procfs_hashreinit __P((void));
 void procfs_hashdone __P((void));
+int procfs_getfp __P((struct pfsnode *, struct file **));
 
 /* functions to check whether or not files should be displayed */
 int procfs_validfile __P((struct proc *, struct mount *));

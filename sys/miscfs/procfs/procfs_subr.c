@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.41 2002/11/07 08:21:36 thorpej Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.42 2003/01/03 13:21:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.41 2002/11/07 08:21:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.42 2003/01/03 13:21:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,12 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.41 2002/11/07 08:21:36 thorpej Exp
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/stat.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 
 #include <miscfs/procfs/procfs.h>
 
 void procfs_hashins __P((struct pfsnode *));
 void procfs_hashrem __P((struct pfsnode *));
-struct vnode *procfs_hashget __P((pid_t, pfstype, struct mount *));
+struct vnode *procfs_hashget __P((pid_t, pfstype, int, struct mount *));
 
 LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
 u_long	pfs_ihash;	/* size of hash table - 1 */
@@ -94,18 +96,19 @@ struct simplelock pfs_hash_slock;
  * the vnode free list.
  */
 int
-procfs_allocvp(mp, vpp, pid, pfs_type)
+procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	struct mount *mp;
 	struct vnode **vpp;
-	long pid;
+	pid_t pid;
 	pfstype pfs_type;
+	int fd;
 {
 	struct pfsnode *pfs;
 	struct vnode *vp;
 	int error;
 
 	do {
-		if ((*vpp = procfs_hashget(pid, pfs_type, mp)) != NULL)
+		if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL)
 			return (0);
 	} while (lockmgr(&pfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
@@ -119,11 +122,12 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 	MALLOC(pfs, void *, sizeof(struct pfsnode), M_TEMP, M_WAITOK);
 	vp->v_data = pfs;
 
-	pfs->pfs_pid = (pid_t) pid;
+	pfs->pfs_pid = pid;
 	pfs->pfs_type = pfs_type;
 	pfs->pfs_vnode = vp;
 	pfs->pfs_flags = 0;
-	pfs->pfs_fileno = PROCFS_FILENO(pid, pfs_type);
+	pfs->pfs_fileno = PROCFS_FILENO(pid, pfs_type, fd);
+	pfs->pfs_fd = fd;
 
 	switch (pfs_type) {
 	case Proot:	/* /proc = dr-xr-xr-x */
@@ -139,8 +143,35 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 		break;
 
 	case Pproc:	/* /proc/N = dr-xr-xr-x */
-		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-		vp->v_type = VDIR;
+	case Pfd:
+		if (fd == -1) {	/* /proc/N/fd = dr-xr-xr-x */
+			pfs->pfs_mode =
+			    S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
+			vp->v_type = VDIR;
+		} else {	/* /proc/N/fd/M = [ps-]rw------- */
+			struct file *fp;
+			struct vnode *vxp;
+			if ((error = procfs_getfp(pfs, &fp)) != 0)
+				return error;
+			pfs->pfs_mode = S_IRUSR|S_IWUSR;
+			switch (fp->f_type) {
+			case DTYPE_VNODE:
+				vxp = (struct vnode *)fp->f_data;
+				vp->v_type = vxp->v_type;
+				break;
+			case DTYPE_PIPE:
+				vp->v_type = VFIFO;
+				break;
+			case DTYPE_SOCKET:
+				vp->v_type = VSOCK;
+				break;
+			case DTYPE_KQUEUE:
+			case DTYPE_MISC:
+				return EOPNOTSUPP;
+			default:
+				panic("unknown file type %d\n", fp->f_type);
+			}
+		}
 		break;
 
 	case Pfile:	/* /proc/N/file = -rw------- */
@@ -268,6 +299,9 @@ procfs_rw(v)
 	case Pcpuinfo:
 		return (procfs_docpuinfo(curp, p, pfs, uio));
 
+	case Pfd:
+		return (procfs_dofd(curp, p, pfs, uio));
+
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
 		return (procfs_machdep_rw(curp, p, pfs, uio));
@@ -387,9 +421,10 @@ procfs_hashdone()
 }
 
 struct vnode *
-procfs_hashget(pid, type, mp)
+procfs_hashget(pid, type, fd, mp)
 	pid_t pid;
 	pfstype type;
+	int fd;
 	struct mount *mp;
 {
 	struct pfs_hashhead *ppp;
@@ -402,7 +437,7 @@ loop:
 	LIST_FOREACH(pp, ppp, pfs_hash) {
 		vp = PFSTOV(pp);
 		if (pid == pp->pfs_pid && pp->pfs_type == type &&
-		    vp->v_mount == mp) {
+		    pp->pfs_fd == fd && vp->v_mount == mp) {
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&pfs_hash_slock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
@@ -465,4 +500,22 @@ procfs_revoke_vnodes(p, arg)
 		    vp->v_mount == mp)
 			VOP_REVOKE(vp, REVOKEALL);
 	}
+}
+
+int
+procfs_getfp(pfs, fp)
+	struct pfsnode *pfs;
+	struct file **fp;
+{
+	struct proc *p = PFIND(pfs->pfs_pid);
+
+	if (p == NULL)
+		return ESRCH;
+
+	if (pfs->pfs_fd == -1)
+		return EINVAL;
+
+	if ((*fp = p->p_fd->fd_ofiles[pfs->pfs_fd]) == NULL)
+		return EBADF;
+	return 0;
 }
