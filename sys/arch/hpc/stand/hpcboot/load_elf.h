@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: load_elf.h,v 1.4 2001/07/03 20:38:03 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: load_elf.h,v 1.5 2004/06/10 15:57:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
 class ElfLoader : public Loader {
 private:
 	Elf_Ehdr _eh;
-	Elf_Phdr _ph[16];
-	Elf_Shdr _sh[16];
+	Elf_Phdr *_ph;
+	Elf_Shdr *_sh;
 
 	struct _symbol_block {
 		BOOL enable;
