@@ -1,4 +1,4 @@
-.\"	$NetBSD: units.1,v 1.10 2001/12/18 01:06:09 wiz Exp $
+.\"	$NetBSD: units.1,v 1.11 2002/04/02 18:08:28 atatat Exp $
 .Dd December 18, 2001
 .Dt UNITS 1
 .Os
@@ -9,7 +9,10 @@
 .Nm
 .Op Fl f Ar filename
 .Op Fl qv
-.Op Ar from-unit to-unit
+.Oo
+.Op Ar count
+.Ar from-unit to-unit
+.Oc
 .Sh DESCRIPTION
 The units program converts quantities expression in various scales to
 their equivalents in other scales.  The units program can only
@@ -28,7 +31,11 @@ Prints the version number.
 .It Ar from-unit Ar to-unit
 Allows a single unit conversion to be done directly from the command
 line.  No prompting will occur.  The units program will print out
-only the result of this single conversion.
+only the result of this single conversion.  The
+.Ar count
+argument can be prepended to the
+.Ar from-unit
+or it can be separate.
 .El
 .Pp
 .Nm
