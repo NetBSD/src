@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.105 2000/10/05 00:53:01 cgd Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.106 2000/10/05 01:06:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.105 2000/10/05 00:53:01 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.106 2000/10/05 01:06:07 cgd Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -310,7 +310,8 @@ mips3_vector_init(mips3_csizebase)
 
 	MachFlushCache();
 
-	mips3_clearBEV();
+	/* Clear BEV in SR so we start handling our own exceptions */
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
 }
 #endif	/* MIPS3 */
 
