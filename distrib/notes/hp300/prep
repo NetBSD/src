@@ -135,9 +135,12 @@ offset of any unused partition to 0.  Note that sizes and offsets are
 expressed in `n sectors', assuming 512 byte sectors.  Care should be taken
 to ensure that partitions begin and end on cylinder boundaries (i.e. size
 and offset is an even multiple of the number of sectors per cylinder).
-While this is not technically necessary, it is generally encouraged.  Note
-that you cannot enter partition types at this time.  You will be given an
-oppotinuty to `clean up' the disklabel later on in the installation procedure.
+While this is not technically necessary, it is generally encouraged.
+
+NOTE: When setting the partition type of the `b' partition, make sure to
+specify it as an `ffs' partition so that the miniroot can be mounted (even
+if this will be a swap partition).  You will be given a chance to clean
+this up later in the installation process.
 
 Once you have edited the label, select the `show' option to verify that
 it is correct.  If so, select `write' and `done'.  Otherwise, you may
