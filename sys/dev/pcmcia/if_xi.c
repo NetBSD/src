@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.42 2004/08/08 07:25:20 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.43 2004/08/08 07:48:46 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.42 2004/08/08 07:25:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.43 2004/08/08 07:48:46 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -724,9 +724,11 @@ xi_mediastatus(ifp, ifmr)
 
 	DPRINTF(XID_CONFIG, ("xi_mediastatus()\n"));
 
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	if (LIST_FIRST(&sc->sc_mii.mii_phys)) {
+		mii_pollstat(&sc->sc_mii);
+		ifmr->ifm_status = sc->sc_mii.mii_media_status;
+		ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	}
 }
 
 STATIC void
