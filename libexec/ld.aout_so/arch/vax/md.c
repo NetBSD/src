@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 1998/08/21 01:03:48 matt Exp $	*/
+/*	$NetBSD: md.c,v 1.7 1998/08/26 14:37:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -75,6 +75,12 @@ long			relocation;
 unsigned char		*addr;
 int			relocatable_output;
 {
+	/*
+	 * 
+	 */
+	if (rp->r_baserel && rp->r_pcrel && !relocatable_output)
+		relocation += got_symbol->value - (rp->r_address + 4);
+
 	switch (RELOC_TARGET_SIZE(rp)) {
 	case 0:
 		put_byte(addr, relocation);
@@ -129,12 +135,19 @@ long		index;
 	 * On VAX a branch offset given in immediate mode is relative to
 	 * the end of the address itself.
 	 */
-	u_long fudge = - (offsetof(jmpslot_t, reloc_index) + offset);
+	u_long fudge = -(offset + 8 - 2 /* skip mask */);
 
-	sp->mask = 0;			/* save no registers */
-	sp->opcode = JSB_PCREL;
-	sp->offset[0] = fudge & 0xffff;
-	sp->offset[1] = fudge >> 16;
+	if (offset == 0) {
+		sp->mask = 0x0101;		/* NOP NOP */
+	} else {
+		sp->mask - 0x0000;
+	}
+	sp->insn[0] = 0x16;			/* jsb */
+	sp->insn[1] = 0xef;			/* L^(pc) */
+	sp->insn[2] = (fudge >>  0) & 0xff;
+	sp->insn[3] = (fudge >>  8) & 0xff;
+	sp->insn[4] = (fudge >> 16) & 0xff;
+	sp->insn[5] = (fudge >> 24) & 0xff;
 	sp->reloc_index = index;
 }
 
@@ -142,7 +155,7 @@ long		index;
  * Set up a "direct" transfer (ie. not through the run-time binder) from
  * jmpslot at OFFSET to ADDR. Used by `ld' when the SYMBOLIC flag is on,
  * and by `ld.so' after resolving the symbol.
- * On the VAX, we use the JMP instruction which is PC relative, so no
+ * On the VAX, we use a PC relative JMP instruction, so no
  * further RRS relocations will be necessary for such a jmpslot.
  */
 void
@@ -151,15 +164,22 @@ jmpslot_t	*sp;
 long		offset;
 u_long		addr;
 {
-	u_long fudge = addr - (offsetof(jmpslot_t, reloc_index) + offset);
+	u_long fudge = addr - (offset + 9);
 
-	sp->mask = *(u_short *) addr;	/* store the procedure entry mask */
-	sp->opcode = JMP_PCREL;		/* jmp to procedure + 2 */
-	sp->offset[0] = (fudge + 2) & 0xffff;	/* skipping entry mask */
-	sp->offset[1] = (fudge + 2) >> 16;
-#if 0
-	sp->reloc_index = 0;
-#endif
+	if (offset == 0) {
+		sp->mask = 0x0101;		/* NOP NOP */
+		sp->insn[0] = 0x01;		/* nop */
+		sp->insn[1] = 0x17;		/* jmp */
+	} else {
+		sp->mask - 0x0000;
+		sp->insn[0] = 0xfa;		/* callg */
+		sp->insn[1] = 0x6c;		/* (ap) */
+	}
+	sp->insn[2] = 0xef;			/* L^(pc) */
+	sp->insn[2] = (fudge >>  0) & 0xff;
+	sp->insn[3] = (fudge >>  8) & 0xff;
+	sp->insn[4] = (fudge >> 16) & 0xff;
+	sp->insn[5] = (fudge >> 24) & 0xff;
 }
 
 /*
@@ -185,17 +205,28 @@ int			type;
 	r->r_jmptable = 1;
 	if (type & RELTYPE_RELATIVE)
 		r->r_relative = 1;
-
 }
 
 /*
  * Set relocation type for a RRS GOT relocation.
  */
 void
-md_make_gotreloc(rp, r, type)
+md_make_gotreloc(rp, r, type, gotp)
 struct relocation_info	*rp, *r;
 int			type;
+got_t			*gotp;
 {
+	/*
+	 * this is a fixup from text space.
+	 *    consider that addend is really -pc_offset + addend.
+	 *    so remove -pc_offset from addend (which is stored in
+	 *    the got).
+	 *    movl l^datum+4, r0 --> movl @_datum@GOT, r0
+	 *			     _datum@GOT: .long 4
+	 */
+	if (rp->r_baserel && rp->r_pcrel)
+		*gotp += (rp->r_address + 4);
+
 	r->r_baserel = 1;
 	if (type & RELTYPE_RELATIVE)
 		r->r_relative = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 1998/08/21 01:03:48 matt Exp $	*/
+/*	$NetBSD: md.h,v 1.5 1998/08/26 14:37:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -87,14 +87,15 @@
 
 #define RELOC_STATICS_THROUGH_GOT_P(r)	(1)
 #define JMPSLOT_NEEDS_RELOC		(1)
+#define JMPSLOT_NEEDS_GOT		(1)
 
 #define md_got_reloc(r)			(0)
 
 #define md_get_rt_segment_addend(r,a)	md_get_addend(r,a)
 
 /* Width of a Global Offset Table entry */
-#define GOT_ENTRY_SIZE	4
-typedef long	got_t;
+#define GOT_ENTRY_SIZE			4
+typedef int32_t	got_t;
 
 /*
  *	.word	^M<reg-mask>
@@ -102,20 +103,14 @@ typedef long	got_t;
  */
 typedef struct jmpslot {
 	u_short mask;
-	u_short	opcode;
-	u_short	offset[2];
-#define JMPSLOT_RELOC_MASK		0xffff
-	u_short addr[2];
+	u_char insn[8];
 	u_short	reloc_index;
-	u_short filler;
 } jmpslot_t;
 
 /*
  * following defines are untested since VAX doesn't support PIC (yet?)
  */
-#define JSB_PCREL	0x8F16	/* JSB + immediate mode for displacement */
-#define JMP_PCREL	0x8F17	/* JMP + immediate mode for displacement */
-#define TRAP		0x00BC	/* how to trap ??? CHMK ??? */
+#define BPT	0x0003			/* Set a breakpoint */
 
 /*
  * Byte swap defs for cross linking
