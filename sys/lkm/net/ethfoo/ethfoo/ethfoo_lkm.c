@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.10 2004/12/12 22:15:28 cube Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.11 2004/12/13 19:21:42 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -567,7 +567,7 @@ ethfoo_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
  * the packets, and we send a signal to the processes waiting to read.
  *
  * wakeup(sc) is the counterpart to the tsleep call in
- * ethfoo_cdev_read, while selnotify() is used for kevent(2) and
+ * ethfoo_dev_read, while selnotify() is used for kevent(2) and
  * poll(2) (which includes select(2)) listeners.
  */
 static void
