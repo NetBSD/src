@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32 2000/02/29 17:13:27 matt Exp $	 */
+/*	$NetBSD: clock.c,v 1.33 2000/04/18 16:25:59 mhitch Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -80,6 +80,17 @@ microtime(tvp)
 		extern struct vs_cpu *ka46_cpu;
 		i = *(volatile int *)(&ka46_cpu->vc_diagtimu);
 		i = (i >> 16) * 1024 + (i & 0x3ff);
+		break;
+		}
+#endif
+#if VAX48
+	case VAX_BTYP_48: {
+		/*
+		 * PR_ICR doesn't exist.  We could use the vc_diagtimu
+		 * counter, saving the value on the timer interrupt and
+		 * subtracting that from the current value.
+		 */
+		i = 0;
 		break;
 		}
 #endif
