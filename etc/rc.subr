@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.21 2000/07/20 23:12:44 lukem Exp $
+# $NetBSD: rc.subr,v 1.22 2000/08/17 11:07:10 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -185,12 +185,18 @@ check_process()
 #				the action should be run.
 #				If this variable isn't set, ${name} is checked 
 #				instead.
-#	${name}_chdir	n	Directory to cd to before running ${command}.
+#	${name}_chroot	n	Directory to chroot to before running ${command}
+#	${name}_chdir	n	Directory to cd to before running ${command}
+#				(if not using ${name}_chroot).
 #	${name}_flags	n	Arguments to call ${command} with.
 #				NOTE:	if $flags is set (e.g, from the parent
 #					environment), it overrides this.
-#	${name}_nice	n	Nice level to run ${command} at.
-#	${name}_user	n	User to run ${command} as.
+#	${name}_nice	n	Nice level to run ${command} at (if not using
+#				${name}_chroot).
+#	${name}_user	n	User to run ${command} as, using su(1) if not
+#				using ${name}_chroot.
+#	${name}_group	n	Group to run chrooted ${command} as.
+#	${name}_groups	n	Group list to run chrooted ${command} with.
 #	${_arg}_cmd	n	If set, use this as the action when invoked;
 #				$_arg is available to the action to use.
 #				Otherwise, use default command (see below)
@@ -271,8 +277,11 @@ run_rc_command()
 		eval _flags=\$${name}_flags
 	fi
 	eval _chdir=\$${name}_chdir
+	eval _chroot=\$${name}_chroot
 	eval _nice=\$${name}_nice
 	eval _user=\$${name}_user
+	eval _group=\$${name}_group
+	eval _groups=\$${name}_groups
 
 	eval $_pidcmd
 
@@ -333,12 +342,18 @@ run_rc_command()
 
 			eval $_precmd || return 1
 			echo "Starting ${name}."
-			_doit="\
+			if [ -n "$_chroot" ]; then
+				_doit="\
+chroot ${_user:+-u $_user }${_group:+-g $_group }${_groups:+-G $_groups }\
+$_chroot $command $_flags $command_args"
+			else
+				_doit="\
 ${_user:+su -m $_user -c 'sh -c \"}\
 ${_chdir:+cd $_chdir; }\
 ${_nice:+nice -n $_nice }\
 $command $_flags $command_args\
 ${_user:+\"'}"
+			fi
 			eval $_doit
 			;;
 
