@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.46 1996/10/29 04:26:57 briggs Exp $
+#	$NetBSD: GENERIC,v 1.47 1996/10/29 06:16:29 briggs Exp $
 #
 # GENERIC
 
@@ -85,6 +85,7 @@ ite0		at grf?
 
 ncrscsi0	at obio?		# SCSI NCR 5380
 esp0		at obio?		# SCSI NCR 53C96
+esp1		at obio?		# SCSI NCR 53C96
 
 scsibus*	at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
