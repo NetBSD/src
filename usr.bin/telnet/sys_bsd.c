@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.22 2002/09/23 12:48:04 mycroft Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.23 2003/03/15 04:48:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.22 2002/09/23 12:48:04 mycroft Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.23 2003/03/15 04:48:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -423,7 +423,7 @@ TerminalNewMode(f)
      * anything at all, otherwise it returns 1 + the number
      * of characters left to write.
 #ifndef	USE_TERMIO
-     * We would really like ask the kernel to wait for the output
+     * We would really like to ask the kernel to wait for the output
      * to drain, like we can do with the TCSADRAIN, but we don't have
      * that option.  The only ioctl that waits for the output to
      * drain, TIOCSETP, also flushes the input queue, which is NOT
@@ -443,6 +443,8 @@ TerminalNewMode(f)
 	    tcsetattr(tin, TCSADRAIN, &tmp_tc);
 #endif	/* USE_TERMIO */
 	    old = ttyflush(SYNCHing|flushout);
+	    if (old == -2)
+		return;
 	} while (old < 0 || old > 1);
     }
 
@@ -980,7 +982,8 @@ sys_telnet_init()
  *	The parameter specifies whether this is a poll operation,
  *	or a block-until-something-happens operation.
  *
- *	The return value is 1 if something happened, 0 if not.
+ *	The return value is 1 if something happened, 0 if not, < 0 if an
+ *	error occured.
  */
 
     int
@@ -1024,7 +1027,7 @@ process_rings(netin, netout, netex, ttyin, ttyout, dopoll)
 		return 0;
 #	    endif /* defined(TN3270) */
 		    /* I don't like this, does it ever happen? */
-	    printf("sleep(5) from telnet, after select\r\n");
+	    printf("sleep(5) from telnet, after poll\r\n");
 	    sleep(5);
 	}
 	return 0;
