@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.18 1997/09/14 13:52:27 lukem Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.19 1997/09/25 05:08:30 lukem Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.18 1997/09/14 13:52:27 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.19 1997/09/25 05:08:30 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: fdisk.c,v 1.18 1997/09/14 13:52:27 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #define LBUF 100
 static char lbuf[LBUF];
@@ -73,10 +74,6 @@ struct mboot mboot;
 
 #define ACTIVE 0x80
 #define BOOT_MAGIC 0xAA55
-
-#ifndef RAWPARTITION
-#define RAWPARTITION	'c'
-#endif
 
 int dos_cylinders;
 int dos_heads;
@@ -815,17 +812,8 @@ open_disk(u_flag)
 	static char namebuf[MAXPATHLEN + 1];
 	struct stat st;
 
-	if (disk[0] != '/')
-		(void)snprintf(namebuf, sizeof(namebuf) - 1, "%sr%s%c",
-		    _PATH_DEV, disk, RAWPARTITION);
-	else
-		(void)snprintf(namebuf, sizeof(namebuf) - 1, "%s", disk);
-	fd = open(namebuf, u_flag ? O_RDWR : O_RDONLY);
-	if (fd < 0 && errno == ENOENT && disk[0] != '/') {
-		(void)snprintf(namebuf, sizeof(namebuf) - 1, "%sr%s",
-		    _PATH_DEV, disk);
-		fd = open(namebuf, u_flag ? O_RDWR : O_RDONLY);
-	}
+	fd = opendisk(disk, u_flag ? O_RDWR : O_RDONLY, namebuf,
+	    sizeof(namebuf), 0);
 	if (fd < 0) {
 		warn("%s", namebuf);
 		return (-1);
