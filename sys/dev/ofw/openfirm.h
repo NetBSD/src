@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.14 2000/11/14 06:44:12 matt Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.15 2000/11/15 14:27:26 pk Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -82,7 +82,7 @@ int	OF_parent (int phandle);
 int	OF_instance_to_package (int ihandle);
 int	OF_getproplen (int handle, char *prop);
 int	OF_getprop (int handle, char *prop, void *buf, int buflen);
-int	OF_nextprop (int handle, char *prop, char *nextprop);
+int	OF_nextprop (int handle, char *prop, void *nextprop);
 int	OF_setprop (int handle, char *prop, const void *buf, int buflen);
 int	OF_finddevice (char *name);
 int	OF_instance_to_path (int ihandle, char *buf, int buflen);
