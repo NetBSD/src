@@ -34,9 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: conf.c,v 1.2 1992/05/27 07:09:27 jsp Exp jsp
- *	from: @(#)conf.c	8.1 (Berkeley) 6/5/93
- *	$Id: conf.c,v 1.1 1994/01/12 20:01:33 cgd Exp $
+ *	from: Id: conf.c,v 1.2 1992/05/27 07:09:27 jsp Exp
+ *	from: @(#)conf.c	8.2 (Berkeley) 3/27/94
+ *	$Id: conf.c,v 1.2 1994/06/08 19:24:46 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -240,7 +240,7 @@ qelem *xq;
 	 * and free it.
 	 */
 	while (q0->q_forw != q0) {
-		qelem *q = q->q_forw;
+		qelem *q = q0->q_forw;
 		rem_que(q);
 		pfree((path *) q);
 	}
