@@ -33,6 +33,9 @@
  *	@(#)in_var.h	7.6 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_IN_VAR_H_
+#define _NETINET_IN_VAR_H_
+
 /*
  * Interface address, Internet version.  One of these structures
  * is allocated for each interface with an Internet address.
@@ -74,3 +77,5 @@ struct	in_ifaddr *in_ifaddr;
 struct	in_ifaddr *in_iaonnetof();
 struct	ifqueue	ipintrq;		/* ip packet input queue */
 #endif
+
+#endif /* !_NETINET_IN_VAR_H_ */

@@ -38,8 +38,8 @@
  *	@(#)swap_pager.h	7.1 (Berkeley) 12/5/90
  */
 
-#ifndef	_SWAP_PAGER_
-#define	_SWAP_PAGER_	1
+#ifndef _VM_SWAP_PAGER_H_
+#define _VM_SWAP_PAGER_H_
 
 /*
  * In the swap pager, the backing store for an object is organized as an
@@ -109,4 +109,4 @@ boolean_t	swap_pager_clean();
 
 #endif
 
-#endif	/* _SWAP_PAGER_ */
+#endif /* !_VM_SWAP_PAGER_H_ */

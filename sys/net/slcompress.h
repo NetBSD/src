@@ -2,7 +2,7 @@
 /*
  * Definitions for tcp compression routines.
  *
- * $Header: /cvsroot/src/sys/net/slcompress.h,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
+ * $Header: /cvsroot/src/sys/net/slcompress.h,v 1.2 1993/04/19 03:48:01 mycroft Exp $
  *
  * Copyright (c) 1989 Regents of the University of California.
  * All rights reserved.
@@ -38,6 +38,9 @@
  *	Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  *	- Initial distribution.
  */
+
+#ifndef _NET_SLCOMPRESS_H_
+#define _NET_SLCOMPRESS_H_
 
 #define MAX_STATES 16		/* must be > 2 and < 256 */
 #define MAX_HDR MLEN		/* XXX 4bsd-ism: should really be 128 */
@@ -155,3 +158,5 @@ extern void sl_compress_init(/* struct slcompress * */);
 extern u_char sl_compress_tcp(/* struct mbuf *, struct ip *,
 				struct slcompress *, int compress_cid_flag */);
 extern int sl_uncompress_tcp(/* u_char **, int,  u_char, struct slcompress * */);
+
+#endif /* !_NET_SLCOMPRESS_H_ */

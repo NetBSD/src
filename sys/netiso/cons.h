@@ -33,6 +33,9 @@
  *	@(#)cons.h	7.3 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_CONS_H_
+#define _NETISO_CONS_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -60,7 +63,7 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /*
- * $Header: /cvsroot/src/sys/netiso/Attic/cons.h,v 1.1 1993/04/09 12:01:03 cgd Exp $
+ * $Header: /cvsroot/src/sys/netiso/Attic/cons.h,v 1.2 1993/04/19 03:45:40 mycroft Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/cons.h,v $
  *
  * interface between TP and CONS
@@ -90,3 +93,5 @@ struct dte_addr {
 #define PRC_CONS_SEND_DONE 2 /* something unused in protosw.h */
 
 #endif	KERNEL
+
+#endif /* !_NETISO_CONS_H_ */

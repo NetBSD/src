@@ -38,8 +38,8 @@
  *	@(#)vnode_pager.h	7.1 (Berkeley) 12/5/90
  */
 
-#ifndef	_VNODE_PAGER_
-#define	_VNODE_PAGER_	1
+#ifndef _VM_VNODE_PAGER_H_
+#define _VM_VNODE_PAGER_H_
 
 /*
  * VNODE pager private data.
@@ -75,4 +75,4 @@ struct pagerops vnodepagerops = {
 
 #endif
 
-#endif	/* _VNODE_PAGER_ */
+#endif /* !_VM_VNODE_PAGER_H_ */

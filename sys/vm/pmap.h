@@ -62,13 +62,13 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_PMAP_H_
+#define _VM_PMAP_H_
+
 /*
  *	Machine address mapping definitions -- machine-independent
  *	section.  [For machine-dependent section, see "machine/pmap.h".]
  */
-
-#ifndef	_PMAP_VM_
-#define	_PMAP_VM_
 
 #include <machine/pmap.h>
 
@@ -104,4 +104,4 @@ boolean_t	pmap_access();
 extern pmap_t	kernel_pmap;
 #endif
 
-#endif	_PMAP_VM_
+#endif /* !_VM_PMAP_H_ */

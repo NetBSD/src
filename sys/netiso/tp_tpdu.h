@@ -33,6 +33,9 @@
  *	@(#)tp_tpdu.h	7.4 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_TP_TPDU_H_
+#define _NETISO_TP_TPDU_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -62,15 +65,12 @@ SOFTWARE.
 /* 
  * ARGO TP
  *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_tpdu.h,v 1.1 1993/04/09 12:01:55 cgd Exp $
+ * $Header: /cvsroot/src/sys/netiso/Attic/tp_tpdu.h,v 1.2 1993/04/19 03:46:00 mycroft Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/tp_tpdu.h,v $
  *
  * This ghastly set of macros makes it possible to
  * refer to tpdu structures without going mad.
  */
-
-#ifndef __TP_TPDU__
-#define __TP_TPDU__
 
 #ifndef BYTE_ORDER
 /*
@@ -293,4 +293,4 @@ struct tpdu {
 	union 	tpdu_fixed_rest _tpdufr;
 };
 
-#endif __TP_TPDU__
+#endif /* !_NETISO_TP_TPDU_H_ */

@@ -62,6 +62,9 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_VM_KERN_H_
+#define _VM_VM_KERN_H_
+
 /*
  *	Kernel memory management definitions.
  */
@@ -82,3 +85,5 @@ vm_map_t	mb_map;
 vm_map_t	kmem_map;
 vm_map_t	phys_map;
 vm_map_t	buffer_map;
+
+#endif /* !_VM_VM_KERN_H_ */

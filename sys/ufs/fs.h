@@ -33,6 +33,9 @@
  *	@(#)fs.h	7.12 (Berkeley) 5/8/91
  */
 
+#ifndef _UFS_FS_H_
+#define _UFS_FS_H_
+
 /*
  * Each disk drive contains some number of file systems.
  * A file system consists of a number of cylinder groups.
@@ -438,3 +441,5 @@ struct	ocg {
  * NINDIR is the number of indirects in a file system block.
  */
 #define	NINDIR(fs)	((fs)->fs_nindir)
+
+#endif /* !_UFS_FS_H_ */

@@ -33,6 +33,9 @@
  *	@(#)tp_param.h	7.8 (Berkeley) 6/27/91
  */
 
+#ifndef _NETISO_TP_PARAM_H_
+#define _NETISO_TP_PARAM_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -62,14 +65,10 @@ SOFTWARE.
 /* 
  * ARGO TP
  *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_param.h,v 1.1 1993/04/09 12:01:42 cgd Exp $
+ * $Header: /cvsroot/src/sys/netiso/Attic/tp_param.h,v 1.2 1993/04/19 03:45:55 mycroft Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/tp_param.h,v $
  *
  */
-
-#ifndef __TP_PARAM__
-#define __TP_PARAM__
-
 
 /******************************************************
  * compile time parameters that can be changed
@@ -366,4 +365,4 @@ bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type)
 #endif  tp_NSTATES 
 #endif KERNEL
 
-#endif __TP_PARAM__
+#endif /* !_NETISO_TP_PARAM_H_ */

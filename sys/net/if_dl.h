@@ -33,6 +33,9 @@
  *	@(#)if_dl.h	7.2 (Berkeley) 2/22/91
  */
 
+#ifndef _NET_IF_DL_H_
+#define _NET_IF_DL_H_
+
 /* 
  * A Link-Level Sockaddr may specify the interface in one of two
  * ways: either by means of a system-provided index number (computed
@@ -78,3 +81,5 @@ char	*link_ntoa __P((const struct sockaddr_dl *));
 __END_DECLS
 
 #endif /* !KERNEL */
+
+#endif /* !_NET_IF_DL_H_ */

@@ -33,6 +33,9 @@
  *	@(#)ufsmount.h	7.9 (Berkeley) 5/8/91
  */
 
+#ifndef _UFS_UFSMOUNT_H_
+#define _UFS_UFSMOUNT_H_
+
 /*
  * This structure describes the UFS specific mount structure data.
  */
@@ -75,3 +78,5 @@ int ufs_sync __P((struct mount *mp, int waitfor));
 int ufs_fhtovp __P((struct mount *mp, struct fid *fhp, struct vnode **vpp));
 int ufs_vptofh __P((struct vnode *vp, struct fid *fhp));
 int ufs_init __P(());
+
+#endif /* !_UFS_UFSMOUNT_H_ */

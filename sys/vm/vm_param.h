@@ -62,12 +62,12 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_VM_PARAM_H_
+#define _VM_VM_PARAM_H_
+
 /*
  *	Machine independent virtual memory parameters.
  */
-
-#ifndef	_VM_PARAM_
-#define	_VM_PARAM_
 
 #ifdef KERNEL
 #include "machine/vmparam.h"
@@ -148,4 +148,4 @@ extern vm_offset_t	last_addr;	/* last physical page */
 
 #endif	ASSEMBLER
 
-#endif	_VM_PARAM_
+#endif /* !_VM_VM_PARAM_H_ */

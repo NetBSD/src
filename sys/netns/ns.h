@@ -33,6 +33,9 @@
  *	@(#)ns.h	7.8 (Berkeley) 2/22/91
  */
 
+#ifndef _NETNS_NS_H_
+#define _NETNS_NS_H_
+
 /*
  * Constants and Structures defined by the Xerox Network Software
  * per "Internet Transport Protocols", XSIS 028112, December 1981
@@ -149,3 +152,5 @@ extern char *ns_ntoa __P((struct ns_addr));
 __END_DECLS
 
 #endif
+
+#endif /* !_NETNS_NS_H_ */

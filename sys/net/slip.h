@@ -2,7 +2,7 @@
  * Definitions that user level programs might need to know to interact
  * with serial line IP (slip) lines.
 
- * @(#) $Header: /cvsroot/src/sys/net/slip.h,v 1.1 1993/03/25 00:30:55 cgd Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/sys/net/slip.h,v 1.2 1993/04/19 03:48:03 mycroft Exp $ (LBL)
  *
  * Copyright (c) 1990 Regents of the University of California.
  * All rights reserved.
@@ -19,6 +19,9 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+
+#ifndef _NET_SLIP_H_
+#define _NET_SLIP_H_
 
 /*
  * ioctl to get slip interface unit number (e.g., sl0, sl1, etc.)
@@ -43,3 +46,4 @@
 #define SLIPDIR_IN 0
 #define SLIPDIR_OUT 1
 
+#endif /* !_NET_SLIP_H_ */

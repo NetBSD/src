@@ -33,6 +33,9 @@
  *	@(#)idp_var.h	7.4 (Berkeley) 6/28/90
  */
 
+#ifndef _NETNS_IDP_VAR_H_
+#define _NETNS_IDP_VAR_H_
+
 /*
  * IDP Kernel Structures and Variables
  */
@@ -47,3 +50,5 @@ struct	idpstat {
 #ifdef KERNEL
 struct	idpstat	idpstat;
 #endif
+
+#endif /* !_NETNS_IDP_VAR_H_ */

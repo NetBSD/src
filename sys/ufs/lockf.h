@@ -36,6 +36,9 @@
  *	@(#)lockf.h	7.1 (Berkeley) 2/1/91
  */
 
+#ifndef _UFS_LOCKF_H_
+#define _UFS_LOCKF_H_
+
 /*
  * The lockf structure is a kernel structure which contains all the
  * information associated with a byte range lock. The lockf structures
@@ -69,3 +72,5 @@ extern struct lockf *lf_getblock();	/* Return the first blocking lock */
 extern int lockf_debug;
 #endif	LOCKF_DEBUG
 #endif	KERNEL
+
+#endif /* !_UFS_LOCKF_H_ */

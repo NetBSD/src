@@ -38,6 +38,9 @@
  *	@(#)x25acct.h	7.2 (Berkeley) 5/11/90
  */
 
+#ifndef _NETCCITT_X25ACCT_H_
+#define _NETCCITT_X25ACCT_H_
+
 /*
  * Format of X.25 accounting record written
  * to X25ACCTF whenever a circuit is closed.
@@ -68,3 +71,5 @@ struct	x25acct {
 	long	x25acct_txcnt;		/* packets transmitted */
 	long	x25acct_rxcnt;		/* packets received */
 };
+
+#endif /* !_NETCCITT_X25ACCT_H_ */

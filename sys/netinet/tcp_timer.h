@@ -33,6 +33,9 @@
  *	@(#)tcp_timer.h	7.8 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_TCP_TIMER_H_
+#define _NETINET_TCP_TIMER_H_
+
 /*
  * Definitions of the TCP timers.  These timers are counted
  * down PR_SLOWHZ times a second.
@@ -127,3 +130,5 @@ extern int tcp_maxidle;			/* time to drop after starting probes */
 extern int tcp_ttl;			/* time to live for TCP segs */
 extern int tcp_backoff[];
 #endif
+
+#endif /* !_NETINET_TCP_TIMER_H_ */

@@ -33,6 +33,9 @@
  *	@(#)iso_pcb.h	7.5 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_ISO_PCB_H_
+#define _NETISO_ISO_PCB_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -59,7 +62,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/iso_pcb.h,v 1.1 1993/04/09 12:01:19 cgd Exp $ */
+/* $Header: /cvsroot/src/sys/netiso/Attic/iso_pcb.h,v 1.2 1993/04/19 03:45:47 mycroft Exp $ */
 /* $Source: /cvsroot/src/sys/netiso/Attic/iso_pcb.h,v $ */
 
 #define	MAXX25CRUDLEN	16	/* 16 bytes of call request user data */
@@ -110,3 +113,5 @@ struct rawisopcb {
 #ifdef KERNEL
 struct	isopcb *iso_pcblookup();
 #endif
+
+#endif /* !_NETISO_ISO_PCB_H_ */

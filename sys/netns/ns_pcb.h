@@ -33,6 +33,9 @@
  *	@(#)ns_pcb.h	7.4 (Berkeley) 6/28/90
  */
 
+#ifndef _NETNS_NS_PCB_H_
+#define _NETNS_NS_PCB_H_
+
 /*
  * Ns protocol interface control block.
  */
@@ -78,3 +81,5 @@ struct nspcb {
 struct	nspcb nspcb;			/* head of list */
 struct	nspcb *ns_pcblookup();
 #endif
+
+#endif /* !_NETNS_NS_PCB_H_ */

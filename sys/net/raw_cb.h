@@ -33,6 +33,9 @@
  *	@(#)raw_cb.h	7.6 (Berkeley) 6/28/90
  */
 
+#ifndef _NET_RAW_CB_H_
+#define _NET_RAW_CB_H_
+
 /*
  * Raw protocol interface control block.  Used
  * to tie a socket to the generic raw interface.
@@ -57,3 +60,5 @@ struct rawcb {
 #ifdef KERNEL
 struct rawcb rawcb;			/* head of list */
 #endif
+
+#endif /* !_NET_RAW_CB_H_ */

@@ -33,6 +33,9 @@
  *	@(#)tp_meas.h	7.5 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_TP_MEAS_H_
+#define _NETISO_TP_MEAS_H_
+
 /***********************************************************
 				Copyright IBM Corporation 1987
 
@@ -92,3 +95,5 @@ extern struct tp_Meas tp_Meas[];
 #define TPtime_close		0x09
 
 #endif TP_PERF_MEAS
+
+#endif /* !_NETISO_TP_MEAS_H_ */

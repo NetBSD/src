@@ -33,6 +33,9 @@
  *	@(#)tp_timer.h	7.4 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_TP_TIMER_H_
+#define _NETISO_TP_TIMER_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -62,15 +65,12 @@ SOFTWARE.
 /* 
  * ARGO TP
  *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_timer.h,v 1.1 1993/04/09 12:01:54 cgd Exp $
+ * $Header: /cvsroot/src/sys/netiso/Attic/tp_timer.h,v 1.2 1993/04/19 03:45:59 mycroft Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/tp_timer.h,v $
  *
  * ARGO TP
  * The callout structures used by the tp timers.
  */
-
-#ifndef __TP_CALLOUT__
-#define __TP_CALLOUT__
 
 /* C timers - one per tpcb, generally cancelled */
 
@@ -89,4 +89,4 @@ struct Ecallout {
 	struct Ecallout *c_next;
 };
 
-#endif __TP_CALLOUT__
+#endif /* !_NETISO_TP_TIMER_H_ */

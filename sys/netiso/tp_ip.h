@@ -33,6 +33,9 @@
  *	@(#)tp_ip.h	7.3 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_TP_IP_H_
+#define _NETISO_TP_IP_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -62,16 +65,12 @@ SOFTWARE.
 /* 
  * ARGO TP
  *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_ip.h,v 1.1 1993/04/09 12:01:36 cgd Exp $
+ * $Header: /cvsroot/src/sys/netiso/Attic/tp_ip.h,v 1.2 1993/04/19 03:45:51 mycroft Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/tp_ip.h,v $
  *
  * internet IP-dependent structures and include files
  *
  */
-
-
-#ifndef __TP_IP__
-#define __TP_IP__
 
 #ifndef SOCK_STREAM
 #include "socket.h"
@@ -88,4 +87,4 @@ SOFTWARE.
 struct inpcb tp_inpcb;	
 	/* queue of active inpcbs for tp ; for tp with dod ip */
 
-#endif __TP_IP__
+#endif /* !_NETISO_TP_IP_H_ */

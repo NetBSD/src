@@ -62,12 +62,12 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_VM_USER_H_
+#define _VM_VM_USER_H_
+
 /*
  *	Kernel memory management definitions.
  */
-
-#ifndef	_VM_USER_
-#define	_VM_USER_
 
 int	vm_allocate();
 int	vm_deallocate();
@@ -75,4 +75,4 @@ int	vm_inherit();
 int	vm_protect();
 int	vm_statistics();
 
-#endif	_VM_USER_
+#endif /* !_VM_VM_USER_H_ */

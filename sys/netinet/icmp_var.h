@@ -33,6 +33,9 @@
  *	@(#)icmp_var.h	7.5 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_ICMP_VAR_H_
+#define _NETINET_ICMP_VAR_H_
+
 /*
  * Variables related to this implementation
  * of the internet control message protocol.
@@ -55,3 +58,5 @@ struct	icmpstat {
 #ifdef KERNEL
 struct	icmpstat icmpstat;
 #endif
+
+#endif /* !_NETINET_ICMP_VAR_H_ */

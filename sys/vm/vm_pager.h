@@ -38,13 +38,13 @@
  *	@(#)vm_pager.h	7.2 (Berkeley) 4/20/91
  */
 
+#ifndef _VM_VM_PAGER_H_
+#define _VM_VM_PAGER_H_
+
 /*
  * Pager routine interface definition.
  * For BSD we use a cleaner version of the internal pager interface.
  */
-
-#ifndef	_VM_PAGER_
-#define	_VM_PAGER_
 
 struct	pager_struct {
 	queue_head_t	pg_list;	/* links for list management */
@@ -103,4 +103,4 @@ void		vm_pager_sync();
 extern struct pagerops *dfltpagerops;
 #endif
 
-#endif	/* _VM_PAGER_ */
+#endif /* !_VM_VM_PAGER_H_ */
