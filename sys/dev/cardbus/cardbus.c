@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.58 2004/10/10 22:10:06 enami Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.59 2004/10/10 22:26:34 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.58 2004/10/10 22:10:06 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.59 2004/10/10 22:26:34 enami Exp $");
 
 #include "opt_cardbus.h"
 
@@ -247,8 +247,8 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 					    p->romh, CARDBUS_CIS_ADDR(cis_ptr),
 					    tuples, p->image_size);
 					found++;
+					break;
 				}
-				break;
 			}
 			while ((p = SIMPLEQ_FIRST(&rom_image)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&rom_image, next);
