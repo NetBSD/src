@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.23 2003/08/07 11:13:44 agc Exp $	*/
+/*	$NetBSD: finger.c,v 1.24 2004/06/03 18:32:18 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,7 +52,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.23 2003/08/07 11:13:44 agc Exp $");
+__RCSID("$NetBSD: finger.c,v 1.24 2004/06/03 18:32:18 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,4 +302,3 @@ net:
 			enter_lastlog(tmp);
 		}
 }
-
