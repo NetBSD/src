@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.11 2000/06/25 19:33:01 thorpej Exp $ */
+/* $NetBSD: mcpcia.c,v 1.12 2001/05/02 01:24:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.11 2000/06/25 19:33:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.12 2001/05/02 01:24:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,19 +297,21 @@ mcpcia_init0(ccp, mallocsafe)
 	REGVAL(MCPCIA_CAP_ERR(ccp)) = 0xFFFFFFFF;
 	alpha_mb();
 
-	/*
-	 * Use this opportunity to also find out the MID and CPU
-	 * type of the currently running CPU (that's us, billybob....)
-	 */
-	ctl = REGVAL(MCPCIA_WHOAMI(ccp));
-	mcbus_primary.mcbus_cpu_mid = MCBUS_CPU_MID(ctl);
-	if ((MCBUS_CPU_INFO(ctl) & CPU_Fill_Err) == 0 &&
-	    mcbus_primary.mcbus_valid == 0) {
-		mcbus_primary.mcbus_bcache =
-		    MCBUS_CPU_INFO(ctl) & CPU_BCacheMask;
-		mcbus_primary.mcbus_valid = 1;
+	if (ccp == &mcpcia_console_configuration) {
+		/*
+		 * Use this opportunity to also find out the MID and CPU
+		 * type of the currently running CPU (that's us, billybob....)
+		 */
+		ctl = REGVAL(MCPCIA_WHOAMI(ccp));
+		mcbus_primary.mcbus_cpu_mid = MCBUS_CPU_MID(ctl);
+		if ((MCBUS_CPU_INFO(ctl) & CPU_Fill_Err) == 0 &&
+		    mcbus_primary.mcbus_valid == 0) {
+			mcbus_primary.mcbus_bcache =
+			    MCBUS_CPU_INFO(ctl) & CPU_BCacheMask;
+			mcbus_primary.mcbus_valid = 1;
+		}
+		alpha_mb();
 	}
-	alpha_mb();
 
 	ccp->cc_initted = 1;
 }

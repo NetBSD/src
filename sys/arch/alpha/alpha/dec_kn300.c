@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.19 2001/04/25 17:53:05 bouyer Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.20 2001/05/02 01:24:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.19 2001/04/25 17:53:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.20 2001/05/02 01:24:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.19 2001/04/25 17:53:05 bouyer Exp $"
 #include <dev/ic/pckbcvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <alpha/mcbus/mcbusreg.h>
 #include <alpha/mcbus/mcbusvar.h>
@@ -102,6 +104,7 @@ void
 dec_kn300_init()
 {
 	u_int64_t variation;
+	int cachesize;
 
 	platform.family = ALPHASERVER_4100;
 
@@ -116,6 +119,38 @@ dec_kn300_init()
 	platform.cons_init = dec_kn300_cons_init;
 	platform.device_register = dec_kn300_device_register;
 	platform.mcheck_handler = dec_kn300_mcheck_handler;
+
+	/*
+	 * Determine B-cache size by looking at the primary (console)
+	 * MCPCIA's WHOAMI register.
+	 */
+	mcpcia_init();
+
+	if (mcbus_primary.mcbus_valid) {
+		switch (mcbus_primary.mcbus_bcache) {
+		default:
+		case CPU_BCache_0MB:
+			/* No B-cache or invalid; default to 1MB. */
+			/* FALLTHROUGH */
+
+		case CPU_BCache_1MB:
+			cachesize = (1 * 1024 * 1024);
+			break;
+
+		case CPU_BCache_2MB:
+			cachesize = (2 * 1024 * 1024);
+			break;
+
+		case CPU_BCache_4MB:
+			cachesize = (4 * 1024 * 1024);
+			break;
+		}
+	} else {
+		/* Default to 1MB. */
+		cachesize = (1 * 1024 * 1024);
+	}
+
+	uvmexp.ncolors = atop(cachesize);
 }
 
 void
@@ -126,7 +161,7 @@ dec_kn300_cons_init()
 	extern struct mcpcia_config mcpcia_console_configuration;
 
 	ccp = &mcpcia_console_configuration;
-	mcpcia_init();
+	/* It's already initialized. */
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
