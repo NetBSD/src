@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 1994/10/26 21:09:07 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 1995/04/19 06:56:21 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -164,6 +164,8 @@ extern int pmax_boardtype;
 extern u_long le_iomem;
 extern u_long asic_base;
 
+extern void lestart __P((struct ifnet *));
+
 /*
  * Test to see if device is present.
  * Return true if found and initialized ok.
@@ -179,7 +181,7 @@ leprobe(dp)
 	struct ifnet *ifp = &le->sc_if;
 	u_char *cp;
 	int i;
-	extern int leinit(), lereset(), leioctl(), lestart(), ether_output();
+	extern int leinit(), lereset(), leioctl();
 
 	switch (pmax_boardtype) {
 	case DS_PMAX:
@@ -253,7 +255,6 @@ leprobe(dp)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_reset = lereset;
 	ifp->if_ioctl = leioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
 #ifdef MULTICAST
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -468,7 +469,7 @@ leinit(unit)
 		s = splnet();
 		ifp->if_flags |= IFF_RUNNING;
 		lereset(unit);
-	        (void) lestart(ifp);
+	        lestart(ifp);
 		splx(s);
 	}
 }
@@ -483,6 +484,7 @@ leinit(unit)
  * off of the interface queue, and copy it to the interface
  * before starting the output.
  */
+void
 lestart(ifp)
 	struct ifnet *ifp;
 {
@@ -493,7 +495,7 @@ lestart(ifp)
 	int len = 0;
 
 	if ((le->sc_if.if_flags & IFF_RUNNING) == 0)
-		return (0);
+		return;
 	while (bix != le->sc_tmd) {
 		if (LER2V_tmd1(tmd) & LE_OWN)
 			panic("lestart");
@@ -519,7 +521,7 @@ lestart(ifp)
 		LERDWR(ler0, LE_TDMD | LE_INEA, le->sc_r1->ler1_rdp);
 	}
 	le->sc_tmdnext = bix;
-	return (0);
+	return;
 }
 
 /*
@@ -617,7 +619,7 @@ lexint(unit)
 	}
 	if (bix == le->sc_tmdnext)
 		le->sc_if.if_flags &= ~IFF_OACTIVE;
-	(void) lestart(&le->sc_if);
+	lestart(&le->sc_if);
 }
 
 #define	LENEXTRMP \
@@ -906,10 +908,8 @@ leioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			leinit(ifp->if_unit);	/* before arpwhohas */
-			((struct arpcom *)ifp)->ac_ipaddr =
-				IA_SIN(ifa)->sin_addr;
-			arpwhohas((struct arpcom *)ifp, &IA_SIN(ifa)->sin_addr);
+			(void)leinit(ifp->if_unit);
+			arp_ifinit(&le->sc_ac, ifa);
 			break;
 #endif
 #ifdef NS
