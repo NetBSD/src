@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.128 2003/08/02 12:23:28 kochi Exp $
+#	$NetBSD: 3RDPARTY,v 1.129 2003/08/02 22:43:00 jdolecek Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -452,8 +452,8 @@ Notes:
 Delete the otherOS directory before importing.
 
 Package:	nawk
-Version:	2000-11-15
-Current Vers:	2003-03-14
+Version:	2003-07-29
+Current Vers:	2003-07-29
 Maintainer:	Brian Kernighan <bwk@bell-labs.com> (Lucent Technologies)
 Archive Site:	http://cm.bell-labs.com/who/bwk/
 Mailing List:
