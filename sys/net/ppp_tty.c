@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.30 2002/03/17 19:41:11 atatat Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.30.4.1 2002/05/16 03:58:47 gehenna Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -77,7 +77,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.30 2002/03/17 19:41:11 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.30.4.1 2002/05/16 03:58:47 gehenna Exp $");
 
 #include "ppp.h"
 
@@ -635,6 +635,7 @@ pppsyncstart(sc)
 {
 	struct tty *tp = (struct tty *) sc->sc_devp;
 	struct mbuf *m, *n;
+	const struct cdevsw *cdev;
 	int len;
     
 	for(m = sc->sc_outm;;) {
@@ -649,8 +650,10 @@ pppsyncstart(sc)
 			len += n->m_len;
 			
 		/* call device driver IOCTL to transmit a frame */
-		if ((*cdevsw[major(tp->t_dev)].d_ioctl)
-			(tp->t_dev, TIOCXMTFRAME, (caddr_t)&m, 0, 0)) {
+		cdev = cdevsw_lookup(tp->t_dev);
+		if (cdev == NULL ||
+		    (*cdev->d_ioctl)(tp->t_dev, TIOCXMTFRAME, (caddr_t)&m,
+				     0, 0)) {
 			/* busy or error, set as current packet */
 			sc->sc_outm = m;
 			break;
@@ -968,6 +971,7 @@ pppinput(c, tp)
 {
     struct ppp_softc *sc;
     struct mbuf *m;
+    const struct cdevsw *cdev;
     int ilen, s;
 
     sc = (struct ppp_softc *) tp->t_sc;
@@ -993,7 +997,9 @@ pppinput(c, tp)
 	if (c == tp->t_cc[VSTOP] && tp->t_cc[VSTOP] != _POSIX_VDISABLE) {
 	    if ((tp->t_state & TS_TTSTOP) == 0) {
 		tp->t_state |= TS_TTSTOP;
-		(*cdevsw[major(tp->t_dev)].d_stop)(tp, 0);
+		cdev = cdevsw_lookup(tp->t_dev);
+		if (cdev != NULL)
+			(*cdev->d_stop)(tp, 0);
 	    }
 	    return 0;
 	}

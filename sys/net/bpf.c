@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.64 2002/03/23 15:55:21 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.64.2.1 2002/05/16 03:58:47 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.64 2002/03/23 15:55:21 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.64.2.1 2002/05/16 03:58:47 gehenna Exp $");
 
 #include "bpfilter.h"
 
@@ -107,12 +107,23 @@ static int	bpf_movein __P((struct uio *, int, int,
 static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
 static void	bpf_detachd __P((struct bpf_d *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
-int		bpfpoll __P((dev_t, int, struct proc *));
 static __inline void
 		bpf_wakeup __P((struct bpf_d *));
 static void	catchpacket __P((struct bpf_d *, u_char *, u_int, u_int,
 				 void *(*)(void *, const void *, size_t)));
 static void	reset_d __P((struct bpf_d *));
+
+dev_type_open(bpfopen);
+dev_type_close(bpfclose);
+dev_type_read(bpfread);
+dev_type_write(bpfwrite);
+dev_type_ioctl(bpfioctl);
+dev_type_poll(bpfpoll);
+
+const struct cdevsw bpf_cdevsw = {
+	bpfopen, bpfclose, bpfread, bpfwrite, bpfioctl,
+	nostop, notty, bpfpoll, nommap,
+};
 
 static int
 bpf_movein(uio, linktype, mtu, mp, sockp)
@@ -1263,9 +1274,7 @@ bpfdetach(ifp)
 	int i, s, cmaj;
 
 	/* locate the major number */
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == bpfopen)
-			break;
+	cmaj = cdevsw_lookup_major(&bpf_cdevsw);
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < NBPFILTER; ++i) {
