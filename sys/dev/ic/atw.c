@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.42 2004/07/15 06:28:37 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.43 2004/07/15 06:30:12 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.42 2004/07/15 06:28:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.43 2004/07/15 06:30:12 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2361,9 +2361,6 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		panic("%s: unexpected state IEEE80211_S_INIT\n", __func__);
 		break;
 	case IEEE80211_S_SCAN:
-		memset(sc->sc_bssid, 0, IEEE80211_ADDR_LEN);
-		atw_write_bssid(sc);
-
 		callout_reset(&sc->sc_scan_ch, atw_dwelltime * hz / 1000,
 		    atw_next_scan, sc);
 
@@ -2406,7 +2403,12 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	else
 		atw_start_beacon(sc, 0);
 
-	return (*sc->sc_newstate)(ic, nstate, arg);
+	error = (*sc->sc_newstate)(ic, nstate, arg);
+
+	if (ostate == IEEE80211_S_INIT && nstate == IEEE80211_S_SCAN)
+		atw_write_bssid(sc);
+
+	return error;
 }
 
 /*
