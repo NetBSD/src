@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.31 1997/09/20 12:10:09 leo Exp $ */
+/*	$NetBSD: param.h,v 1.32 1997/09/23 08:23:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,8 +88,8 @@
 extern int nbpg, pgofset, pgshift;
 #endif
 
-#define	KERNBASE	0xf8000000	/* start of kernel virtual space */
-#define	KERNTEXTOFF	0xf8004000	/* start of kernel text */
+#define	KERNBASE	0xf0000000	/* start of kernel virtual space */
+#define	KERNTEXTOFF	0xf0004000	/* start of kernel text */
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
@@ -123,7 +123,7 @@ extern int nbpg, pgofset, pgshift;
 #endif
 #endif
 
-#define MSGBUFSIZE	(4096 - 4 * sizeof(long))
+#define MSGBUFSIZE	4096
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages.
