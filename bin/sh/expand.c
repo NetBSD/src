@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.63 2004/06/26 14:09:58 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.64 2004/06/26 14:21:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.63 2004/06/26 14:09:58 dsl Exp $");
+__RCSID("$NetBSD: expand.c,v 1.64 2004/06/26 14:21:29 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -685,7 +685,6 @@ again: /* jump here after setting a variable with ${var=text} */
 		/* FALLTHROUGH */
 	case VSMINUS:
 		if (!set) {
-			printf("VSMINUS: flag %x\n", flag);
 		        argstr(p, flag);
 			/*
 			 * ${x-a b c} doesn't get split, but removing the
