@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1995/02/16 02:33:08 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 1995/06/28 00:58:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,6 +126,10 @@ coff_exec(fd, coff)
 	ffp_save += 2;		/* XXX OSF/1 does this, no idea why. */
 #endif
 
+	{
+		extern int diskdev;
+		prom_close(diskdev);
+	}
 	(*(void (*)())coff->a.entry)();
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/02/27 16:36:46 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1995/06/28 00:58:44 cgd Exp $
 #
 # BSD Boot blocks for the Alpha
 #
@@ -15,7 +15,7 @@ RELOC2=	fffffc0000230000
 
 # Compiler and assembler flags used to generate boot blocks.
 #
-DEFS=	-DSMALL -DSTANDALONE
+DEFS=	-DSTANDALONE
 AFLAGS+=-DASSEMBLER ${INCPATH}
 CFLAGS= -mno-fp-regs ${INCPATH} ${DEFS}
 
