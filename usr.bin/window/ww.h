@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.6 1996/02/08 20:45:06 mycroft Exp $	*/
+/*	$NetBSD: ww.h,v 1.7 1996/02/08 21:08:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -69,15 +69,18 @@ struct ww_pos {
 
 	/* the window structure */
 struct ww {
+	int ww_flags;
+
 		/* general flags and states */
 	int ww_state;		/* state of window */
 #define WWS_INITIAL	0	/* just opened */
 #define WWS_HASPROC	1	/* has process on pty */
 #define WWS_DEAD	3	/* child died */
-	int ww_oflags;		/* wwopen flags */
-#define WWO_REVERSE	0x01	/* make it all reverse video */
-#define WWO_GLASS	0x02	/* make it all glass */
-#define WWO_FRAME	0x04	/* this is a frame window */
+#define	ww_oflags	ww_flags
+#define WWO_REVERSE	0x0001	/* make it all reverse video */
+#define WWO_GLASS	0x0002	/* make it all glass */
+#define WWO_FRAME	0x0004	/* this is a frame window */
+#define	WWO_ALLFLAGS	0x0007
 
 		/* information for overlap */
 	struct ww *ww_forw;	/* doubly linked list, for overlapping info */
@@ -101,21 +104,21 @@ struct ww {
 		/* information for wwwrite() and company */
 	int ww_wstate;		/* state for outputting characters */
 	char ww_modes;		/* current display modes */
-	int ww_wflags;
-#define	WWW_INSERT	0x01	/* insert mode */
-#define	WWW_MAPNL	0x02	/* map \n to \r\n */
-#define	WWW_NOUPDATE	0x04	/* don't do updates in wwwrite() */
-#define	WWW_UNCTRL	0x08	/* expand control characters */
-#define	WWW_NOINTR	0x10	/* wwwrite() not interruptable */
-#define	WWW_HASCURSOR	0x20	/* has fake cursor */
+#define	ww_wflags	ww_flags
+#define	WWW_INSERT	0x0008	/* insert mode */
+#define	WWW_MAPNL	0x0010	/* map \n to \r\n */
+#define	WWW_NOUPDATE	0x0020	/* don't do updates in wwwrite() */
+#define	WWW_UNCTRL	0x0040	/* expand control characters */
+#define	WWW_NOINTR	0x0080	/* wwwrite() not interruptable */
+#define	WWW_HASCURSOR	0x0100	/* has fake cursor */
 
 		/* things for the window process and io */
 	int ww_type;
 #define	WWT_PTY		0	/* pty */
 #define	WWT_SOCKET	1	/* socket pair */
 #define	WWT_INTERNAL	2
-	int ww_pflags;
-#define	WWP_STOPPED	0x01	/* output stopped */
+#define	ww_pflags	ww_flags
+#define	WWP_STOPPED	0x0200	/* output stopped */
 	int ww_pty;		/* file descriptor of pty or socket pair */
 	int ww_socket;		/* other end of socket pair */
 	int ww_pid;		/* pid of process, if WWS_HASPROC true */
@@ -127,10 +130,11 @@ struct ww {
 
 		/* things for the user, they really don't belong here */
 	int ww_id;		/* the user window id */
-	int ww_uflags;
-#define	WWU_CENTER	0x01	/* center the label */
-#define	WWU_HASFRAME	0x02	/* frame it */
-#define	WWU_KEEPOPEN	0x04	/* keep it open after the process dies */
+#define	ww_uflags	ww_flags
+#define	WWU_CENTER	0x0400	/* center the label */
+#define	WWU_HASFRAME	0x0800	/* frame it */
+#define	WWU_KEEPOPEN	0x1000	/* keep it open after the process dies */
+#define	WWU_ALLFLAGS	0x1c00
 	char *ww_label;		/* the user supplied label */
 	struct ww_dim ww_alt;	/* alternate position and size */
 };
