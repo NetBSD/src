@@ -1,43 +1,50 @@
-#!/bin/csh -f
+#!/bin/sh
+#
+# $NetBSD: maketars,v 1.2 1996/05/20 19:11:05 gwr Exp $
+#
+# Make release tar files for some or all lists.  Usage:
+# maketars [-arch arch] [-setd setsdir] [-dest destdir] \
+#	[-tars tardir] [setname ...]
+#
 
-if (! $?RELEASEDIR) then
+# set defaults
+arch=`uname -m`
+setd=`pwd`
+lists="base comp etc games man misc text"
+tars=$RELEASEDIR
+dest=$DESTDIR
+
+# handle args
+while :
+do
+	case $1 in
+	-arch)	arch=$2; shift;;
+	-setd)	setd=$2; shift;;
+	-dest)	dest=$2; shift;;
+	-tars)	tars=$2; shift;;
+	-*)	echo "bad option"; exit 1;;
+	*)	break;;
+	esac
+	shift
+done
+[ "$@" ] && lists="$@"
+
+[ "$tars" ] || {
 	echo RELEASEDIR must be set
 	exit 1
-endif
+}
 
-if (! $?DESTDIR) then
+[ "$dest" ] || {
 	echo DESTDIR must be set
 	exit 1
-endif
+}
 
-set arch=`uname -m`
-set listsdir=`pwd`/lists
-set tardir=$RELEASEDIR
-set fsdir=$DESTDIR
-
-cd $fsdir
-
-set lists=(base comp etc games text)
-# SPECIAL: man misc
-# EXTRA SPECIAL (not done here): secr
-
-foreach setname ($lists)
-	echo -n "${setname}: "
-	cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} | sort | \
-	    pax -w -d | gzip -9 > ${tardir}/$setname.tar.gz
-	echo    "done."
-end
-
-set setname=man
-echo -n "${setname}: "
-grep ${arch} $listsdir/man/md_share | \
-    cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} - | sort | \
-    pax -w -d | gzip -9 > ${tardir}/$setname.tar.gz
-echo    "done."
-
-set setname=misc
-echo -n "${setname}: "
-grep -v ${arch} $listsdir/man/md_share | \
-    cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} - | sort | \
-    pax -w -d | gzip -9 > ${tardir}/$setname.tar.gz
-echo    "done."
+set -x
+for setname in $lists
+do
+	out=$setname.tar.gz
+	echo "making $out"
+	$setd/makeflist -arch $arch -setd $setd $setname |
+	  (cd $dest ; pax -w -d) |
+	  gzip -9 > ${tars}/$setname.tar.gz
+done
