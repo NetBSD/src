@@ -1,10 +1,14 @@
-#! /bin/sh
-#  $NetBSD: build.sh,v 1.58.2.4 2002/11/03 16:28:36 he Exp $
+#! /usr/bin/env sh
+#  $NetBSD: build.sh,v 1.58.2.5 2002/11/03 16:36:06 he Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
 # This script should run on any POSIX-compliant shell.  For systems
 # with a strange /bin/sh, "ksh" or "bash" may be an ample alternative.
+#
+# Note, however, that due to the way the interpreter is invoked above,
+# if a POSIX-compliant shell is the first in the PATH, you won't have
+# to take any further action.
 #
 
 bomb () {
@@ -16,7 +20,17 @@ bomb () {
 [ -d usr.bin/make ] || bomb "build.sh must be run from the top source level"
 [ -f share/mk/bsd.own.mk ] || bomb "src/share/mk is missing; please re-fetch the source tree"
 
-TOP=`pwd`
+# If $PWD is a valid name of the current directory, POSIX mandates that pwd
+# return it by default which causes problems in the presence of symlinks.
+# Unsetting PWD is simpler than changing every occurrence of pwd to use -P.
+#
+# XXX Except that doesn't work on Solaris.
+unset PWD
+if [ "x`uname -s`" = "xSunOS" ]; then
+	TOP=`pwd -P`
+else
+	TOP=`pwd`
+fi
 
 getarch () {
 	# Translate a MACHINE into a default MACHINE_ARCH.
@@ -76,7 +90,7 @@ EOF
 resolvepath () {
 	case $OPTARG in
 	/*)	;;
-	*)	OPTARG="$cwd/$OPTARG";;
+	*)	OPTARG="$TOP/$OPTARG";;
 	esac
 }
 
@@ -112,7 +126,6 @@ usage () {
 # Set defaults.
 MAKEFLAGS=
 buildtarget=build
-cwd=`pwd`
 do_buildsystem=true
 do_buildonlytools=false
 do_rebuildmake=false
@@ -185,7 +198,7 @@ while eval $getoptcmd; do case $opt in
 		makeenv="$makeenv MAKEOBJDIRPREFIX";;
 
 	-O)	eval $optargcmd; resolvepath
-		MAKEOBJDIR="\${.CURDIR:C,^$cwd,$OPTARG,}"; export MAKEOBJDIR
+		MAKEOBJDIR="\${.CURDIR:C,^$TOP,$OPTARG,}"; export MAKEOBJDIR
 		makeobjdir=$OPTARG
 		makeenv="$makeenv MAKEOBJDIR";;
 
@@ -217,7 +230,7 @@ makeenv="$makeenv TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS"
 if [ ! -z "$BUILDID" ]; then
 	makeenv="$makeenv BUILDID"
 fi
-MAKEFLAGS="-m $cwd/share/mk $MAKEFLAGS MKOBJDIRS=${MKOBJDIRS-yes}"
+MAKEFLAGS="-m $TOP/share/mk $MAKEFLAGS MKOBJDIRS=${MKOBJDIRS-yes}"
 export MAKEFLAGS MACHINE MACHINE_ARCH
 
 # Test make source file timestamps against installed nbmake binary,
@@ -251,11 +264,11 @@ if $do_rebuildmake; then
 	$runcmd cd "$tmpdir"
 
 	$runcmd env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
-		"$cwd/tools/make/configure" || bomb "configure of nbmake failed"
+		"$TOP/tools/make/configure" || bomb "configure of nbmake failed"
 	$runcmd sh buildmake.sh || bomb "build of nbmake failed"
 
 	make="$tmpdir/nbmake"
-	$runcmd cd "$cwd"
+	$runcmd cd "$TOP"
 	$runcmd rm -f usr.bin/make/*.o usr.bin/make/lst.lib/*.o
 fi
 
@@ -373,7 +386,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.58.2.4 2002/11/03 16:28:36 he Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.58.2.5 2002/11/03 16:36:06 he Exp $
 #
 
 EOF
