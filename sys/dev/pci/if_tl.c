@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.4 1997/11/17 01:58:29 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.5 1997/11/17 08:14:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -345,6 +345,27 @@ tl_pci_attach(parent, self, aux)
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 	    0, &memt, &memh, NULL, NULL) == 0);
 
+#if 1
+	/*
+	 * XXX HACK!  Due to a bug in a previous revision of this driver,
+	 * XXX i/o space was always selected.  Now that this bug is fixed,
+	 * XXX we discover that memory mapped use fails on at least one
+	 * XXX ThunderLAN variant - the built-in Ethernet on TI Travelmate
+	 * XXX docking stations.  We hack around this by "prefering" i/o
+	 * XXX access for now.
+	 */
+	if (ioh_valid) {
+		sc->tl_bustag = iot;
+		sc->tl_bushandle = ioh;
+	} else if (memh_valid) {
+		sc->tl_bustag = memt;
+		sc->tl_bushandle = memh;
+	} else {
+		printf("%s: unable to map device registers\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+#else
 	if (memh_valid) {
 		sc->tl_bustag = memt;
 		sc->tl_bushandle = memh;
@@ -356,6 +377,7 @@ tl_pci_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+#endif
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
