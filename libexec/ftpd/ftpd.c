@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.64 1999/05/19 21:44:29 thorpej Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.65 1999/05/24 21:57:19 ross Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -80,7 +80,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.64 1999/05/19 21:44:29 thorpej Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.65 1999/05/24 21:57:19 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -1063,7 +1063,7 @@ dataconn(name, size, mode)
 	byte_count = 0;
 	if (size != (off_t) -1)
 		(void)snprintf(sizebuf, sizeof(sizebuf), " (%qd byte%s)",
-		    (long long)size, PLURAL(size));
+		    (qdfmt_t)size, PLURAL(size));
 	else
 		sizebuf[0] = '\0';
 	if (pdata >= 0) {
@@ -1463,24 +1463,27 @@ printaddr:
 
 	if (logged_in) {
 		lreply(0, "Data sent:        %qd byte%s in %qd file%s",
-		    total_data_out, PLURAL(total_data_out),
-		    total_files_out, PLURAL(total_files_out));
+		    (qdfmt_t)total_data_out, PLURAL(total_data_out),
+		    (qdfmt_t)total_files_out, PLURAL(total_files_out));
 		lreply(0, "Data received:    %qd byte%s in %qd file%s",
-		    total_data_in, PLURAL(total_data_in),
-		    total_files_in, PLURAL(total_files_in));
+		    (qdfmt_t)total_data_in, PLURAL(total_data_in),
+		    (qdfmt_t)total_files_in, PLURAL(total_files_in));
 		lreply(0, "Total data:       %qd byte%s in %qd file%s",
-		    total_data, PLURAL(total_data),
-		    total_files, PLURAL(total_files));
+		    (qdfmt_t)total_data, PLURAL(total_data),
+		    (qdfmt_t)total_files, PLURAL(total_files));
 	}
 	otbi = total_bytes_in;
 	otbo = total_bytes_out;
 	otb = total_bytes;
 	lreply(0, "Traffic sent:     %qd byte%s in %qd transfer%s",
-	    otbo, PLURAL(otbo), total_xfers_out, PLURAL(total_xfers_out));
+	    (qdfmt_t)otbo, PLURAL(otbo),
+	    (qdfmt_t)total_xfers_out, PLURAL(total_xfers_out));
 	lreply(0, "Traffic received: %qd byte%s in %qd transfer%s",
-	    otbi, PLURAL(otbi), total_xfers_in, PLURAL(total_xfers_in));
+	    (qdfmt_t)otbi, PLURAL(otbi),
+	    (qdfmt_t)total_xfers_in, PLURAL(total_xfers_in));
 	lreply(0, "Total traffic:    %qd byte%s in %qd transfer%s",
-	    otb, PLURAL(otb), total_xfers, PLURAL(total_xfers));
+	    (qdfmt_t)otb, PLURAL(otb),
+	    (qdfmt_t)total_xfers, PLURAL(total_xfers));
 
 	if (logged_in) {
 		struct ftpconv *cp;
@@ -1780,10 +1783,11 @@ myoob(signo)
 	if (strcasecmp(cp, "STAT\r\n") == 0) {
 		if (file_size != (off_t) -1)
 			reply(213, "Status: %qd of %qd byte%s transferred",
-			    byte_count, PLURAL(byte_count), file_size);
+			    (qdfmt_t)byte_count, (qdfmt_t)file_size,
+			    PLURAL(byte_count));
 		else
 			reply(213, "Status: %qd byte%s transferred",
-			    byte_count, PLURAL(byte_count));
+			    (qdfmt_t)byte_count, PLURAL(byte_count));
 	}
 }
 
@@ -2093,7 +2097,7 @@ logcmd(command, bytes, file1, file2, elapsed, error)
 
 	if (bytes != (off_t)-1) {
 		len += snprintf(buf + len, sizeof(buf) - len,
-		    " = %qd byte%s", (long long) bytes, PLURAL(bytes));
+		    " = %qd byte%s", (qdfmt_t) bytes, PLURAL(bytes));
 	} else if (file2 != NULL) {
 		if ((p = realpath(file2, realfile)) == NULL) {
 #if 0	/* XXX: too noisy */
