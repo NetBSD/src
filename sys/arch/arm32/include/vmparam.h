@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7 1998/05/08 23:36:08 mark Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8 1998/06/02 20:32:18 mark Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -107,7 +107,13 @@
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
-#if defined(MACHINE_NEW_NONCONTIG)
+/*
+ * Make MACHINE_NEW_NONCONTIG the default unless overridden with
+ * MACHINE_NONCONTIG.
+ */
+#if !defined(MACHINE_NONCONTIG)
+
+#define MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
 
 /*
  * max number of non-contig chunks of physical RAM you can have
@@ -140,10 +146,7 @@ struct pmap_physseg {
 	char *attrs;			/* attrs array */
 };
 
-#else	/* MACHINE_NEW_NONCONTIG */
-/* revert to MACHINE_NONCONTIG if MACHINE_NEW_NONCONTIG isn't defined */
-#define	MACHINE_NONCONTIG		/* VM <=> pmap interface modifier */
-#endif	/* MACHINE_NEW_NONCONTIG */
+#endif	/* !MACHINE_NONCONTIG */
 #endif	/* _ARM32_VMPARAM_H_ */
 
 /* End of vmparam.h */
