@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.15 1993/12/20 09:05:49 mycroft Exp $
+ * $Id: if_ed.c,v 1.16 1994/01/12 02:38:17 mycroft Exp $
  */
 
 /*
@@ -2224,9 +2224,24 @@ ed_pio_write_mbufs(sc,m,dst)
 	unsigned char residual[2];
 	int maxwait=100; /* about 120us */
 
+#ifdef DEBUG
 	/* First, count up the total number of bytes to copy */
 	for (len = 0, mp = m; mp; mp = mp->m_next)
 		len += mp->m_len;
+	if (len != m->m_pkthdr.len) {
+		int i;
+		printf("calculated len %d != packet header len %d, data:\n",
+		    len, m->m_pkthdr.len);
+		mp = m;
+		while (m) {
+			for (i = 0; i < m->m_len; i++)
+				printf(" %02x", m->m_data[i]);
+			m = m->m_next;
+		}
+	}
+#else
+	len = m->m_pkthdr.len;
+#endif
 	
 	/* select page 0 registers */
 	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
