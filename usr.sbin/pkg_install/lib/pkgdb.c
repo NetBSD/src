@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.2 1999/01/29 13:29:34 hubertf Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.3 1999/03/01 12:06:57 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.2 1999/01/29 13:29:34 hubertf Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.3 1999/03/01 12:06:57 agc Exp $");
 #endif
 
 /*
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: pkgdb.c,v 1.2 1999/01/29 13:29:34 hubertf Exp $");
 #include <db.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 
