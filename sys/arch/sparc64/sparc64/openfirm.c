@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.16 2003/07/15 03:36:09 lukem Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.17 2004/01/06 09:38:20 petrov Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.16 2003/07/15 03:36:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.17 2004/01/06 09:38:20 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -778,6 +778,36 @@ OF_milliseconds()
 	if (openfirmware(&args) == -1)
 		return -1;
 	return (args.ticks);
+}
+
+/* Claim an area of memory. */
+void *
+OF_claim(void *virt, u_int size, u_int align)
+{
+	static struct {
+		cell_t	name;
+		cell_t	nargs;
+		cell_t	nreturns;
+		cell_t	virt;
+		cell_t	size;
+		cell_t	align;
+		cell_t	baseaddr;
+	} args = {
+		(cell_t)"claim",
+		3,
+		1,
+		0,
+		0,
+		0,
+		0
+	};
+
+	args.virt = (cell_t)virt;
+	args.size = size;
+	args.align = align;
+	if (openfirmware(&args) == -1)
+		return (void *)-1;
+	return (void *)args.baseaddr;
 }
 
 #if defined(_KERNEL_OPT)
