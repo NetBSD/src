@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)exec.c	5.2 (Berkeley) 3/13/91";*/
-static char rcsid[] = "$Id: exec.c,v 1.6 1993/09/23 23:32:19 mycroft Exp $";
+static char rcsid[] = "$Id: exec.c,v 1.7 1994/04/01 01:19:25 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -501,7 +501,7 @@ loop:
 					goto loop;
 				/* Are you in this group too? */
 				{
-					int group_list[NGROUPS];
+					gid_t group_list[NGROUPS];
 					int ngroups, i;
 
 					ngroups = getgroups(NGROUPS, group_list);

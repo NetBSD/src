@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	5.12 (Berkeley) 9/27/90";*/
-static char rcsid[] = "$Id: quota.c,v 1.2 1993/08/01 18:10:00 mycroft Exp $";
+static char rcsid[] = "$Id: quota.c,v 1.3 1994/04/01 01:19:21 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -58,6 +58,7 @@ static char rcsid[] = "$Id: quota.c,v 1.2 1993/08/01 18:10:00 mycroft Exp $";
 #include <pwd.h>
 #include <grp.h>
 #include <errno.h>
+#include <unistd.h>
 
 char *qfname = QUOTAFILENAME;
 char *qfextension[] = INITQFNAMES;
@@ -76,7 +77,8 @@ int	vflag;
 main(argc, argv)
 	char *argv[];
 {
-	int ngroups, gidset[NGROUPS];
+	int ngroups; 
+	gid_t gidset[NGROUPS];
 	int i, gflag = 0, uflag = 0;
 	char ch;
 	extern char *optarg;
@@ -205,7 +207,8 @@ showgid(gid)
 	u_long gid;
 {
 	struct group *grp = getgrgid(gid);
-	int ngroups, gidset[NGROUPS];
+	int ngroups;
+	gid_t gidset[NGROUPS];
 	register int i;
 	char *name;
 
@@ -236,7 +239,8 @@ showgrpname(name)
 	char *name;
 {
 	struct group *grp = getgrnam(name);
-	int ngroups, gidset[NGROUPS];
+	int ngroups;
+	gid_t gidset[NGROUPS];
 	register int i;
 
 	if (grp == NULL) {

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)chown.c	5.18 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$Id: chown.c,v 1.3 1993/11/19 20:02:53 jtc Exp $";
+static char rcsid[] = "$Id: chown.c,v 1.4 1994/04/01 01:19:08 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -192,7 +192,7 @@ chownerr(file)
 	}
 	/* check group membership; kernel just returns EPERM */
 	if (gid != -1 && ngroups == -1) {
-		int groups[NGROUPS];
+		gid_t groups[NGROUPS];
 
 		ngroups = getgroups(NGROUPS, groups);
 		while (--ngroups >= 0 && gid != groups[ngroups]);

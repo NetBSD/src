@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)id.c	5.1 (Berkeley) 6/29/91";*/
-static char rcsid[] = "$Id: id.c,v 1.3 1993/12/09 10:28:26 cgd Exp $";
+static char rcsid[] = "$Id: id.c,v 1.4 1994/04/01 01:19:18 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -160,7 +160,7 @@ sgroup(pw)
 	} else {
 		GR *gr;
 		register int ngroups;
-		int groups[NGROUPS + 1];
+		gid_t groups[NGROUPS + 1];
 
 		groups[0] = getgid();
 		ngroups = getgroups(NGROUPS, groups + 1) + 1;
@@ -201,7 +201,7 @@ ugroup(pw)
 		}
 	} else {
 		register int ngroups;
-		int groups[NGROUPS + 1];
+		gid_t groups[NGROUPS + 1];
 
 		groups[0] = getgid();
 		ngroups = getgroups(NGROUPS, groups + 1) + 1;
@@ -222,7 +222,8 @@ current()
 {
 	GR *gr;
 	PW *pw;
-	int id, eid, lastid, ngroups, groups[NGROUPS];
+	int id, eid, lastid, ngroups;
+	gid_t groups[NGROUPS];
 	char *fmt;
 
 	id = getuid();
