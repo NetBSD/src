@@ -1,3 +1,5 @@
+/* $NetBSD: commands.c,v 1.2 2003/10/11 09:55:58 jdolecek Exp $ */
+
 /* commands.c: vinum interface program, main commands */
 /*-
  * Copyright (c) 1997, 1998
@@ -36,11 +38,13 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: commands.c,v 1.1.1.1 2003/10/10 03:14:05 grog Exp $
+ * $Id: commands.c,v 1.2 2003/10/11 09:55:58 jdolecek Exp $
  * $FreeBSD$
  */
 
 #include "vext.h"
+
+__RCSID("$NetBSD: commands.c,v 1.2 2003/10/11 09:55:58 jdolecek Exp $");
 
 static void dorename(struct vinum_rename_msg *msg, const char *oldname, const char *name, int maxlen);
 
