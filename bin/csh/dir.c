@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.19 2002/05/25 23:29:16 wiz Exp $ */
+/* $NetBSD: dir.c,v 1.20 2002/08/12 02:37:26 itojun Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.19 2002/05/25 23:29:16 wiz Exp $");
+__RCSID("$NetBSD: dir.c,v 1.20 2002/08/12 02:37:26 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ dinit(Char *hp)
 	}
     }
 
-    dp = (struct directory *)xcalloc(sizeof(struct directory), 1);
+    dp = (struct directory *)xcalloc(1, sizeof(struct directory));
     dp->di_name = Strsave(cp);
     dp->di_count = 0;
     dhead.di_next = dhead.di_prev = dp;
@@ -365,7 +365,7 @@ dochngd(Char **v, struct command *t)
     }
     else
 	cp = dfollow(*v);
-    dp = (struct directory *)xcalloc(sizeof(struct directory), 1);
+    dp = (struct directory *)xcalloc(1, sizeof(struct directory));
     dp->di_name = cp;
     dp->di_count = 0;
     dp->di_next = dcwd->di_next;
@@ -512,7 +512,7 @@ dopushd(Char **v, struct command *t)
 	Char *ccp;
 
 	ccp = dfollow(*v);
-	dp = (struct directory *)xcalloc(sizeof(struct directory), 1);
+	dp = (struct directory *)xcalloc(1, sizeof(struct directory));
 	dp->di_name = ccp;
 	dp->di_count = 0;
 	dp->di_prev = dcwd;

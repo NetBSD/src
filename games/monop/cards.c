@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.11 1999/12/30 01:40:08 simonb Exp $	*/
+/*	$NetBSD: cards.c,v 1.12 2002/08/12 02:38:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.11 1999/12/30 01:40:08 simonb Exp $");
+__RCSID("$NetBSD: cards.c,v 1.12 2002/08/12 02:38:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ set_up(dp)
 	int r1, r2;
 	int i;
 
-	dp->offsets = (off_t *) calloc(sizeof (off_t), dp->num_cards);
+	dp->offsets = (off_t *) calloc(dp->num_cards, sizeof (off_t));
 	if (dp->offsets == NULL)
 		errx(1, "out of memory");
 	if (fread(dp->offsets, sizeof(off_t), dp->num_cards, deckf) !=
