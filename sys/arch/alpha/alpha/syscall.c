@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.14 2004/02/13 18:01:44 drochner Exp $ */
+/* $NetBSD: syscall.c,v 1.15 2004/07/17 04:56:32 petrov Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2004/02/13 18:01:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2004/07/17 04:56:32 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,7 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	struct proc *p = l->l_proc;
 	boolean_t needlock;
 
+	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
 
 	callp = p->p_emul->e_sysent;
