@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdsun.c,v 1.5 2005/02/21 03:37:39 heas Exp $	*/
+/*	$NetBSD: kbdsun.c,v 1.6 2005/02/21 03:46:38 heas Exp $	*/
 /*	NetBSD: kbd.c,v 1.29 2001/11/13 06:54:32 lukem Exp	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.5 2005/02/21 03:37:39 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.6 2005/02/21 03:46:38 heas Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,7 +436,7 @@ kbd_sun_input(k, code)
 
 		case KBD_LAYOUT:
 			k->k_expect |= KBD_EXPECT_LAYOUT;
-			return;
+			return(0);
 
 		case KBD_ERROR:
 			log(LOG_WARNING, "%s: received error indicator\n",
