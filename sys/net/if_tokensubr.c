@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.10 2000/06/14 05:10:28 mycroft Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.11 2000/10/02 03:53:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -67,12 +67,12 @@
 #include <net/if_types.h>
 
 #include <net/if_ether.h>
+#include <net/if_token.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_inarp.h>
-#include <net/if_token.h>
 #endif
 
 #ifdef NS
@@ -438,7 +438,9 @@ token_output(ifp, m0, dst, rt0)
 		trrif = TOKEN_RIF(trh);
 		bcopy(rif, trrif, riflen);
 	}
+#ifdef INET
 send:
+#endif
 
 	s = splimp();
 	/*
