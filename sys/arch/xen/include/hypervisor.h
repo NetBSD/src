@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.7 2004/04/26 22:05:05 cl Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.8 2004/06/14 13:55:52 cl Exp $	*/
 
 /*
  * 
@@ -43,12 +43,21 @@ struct xen_npx_attach_args {
 };
 
 
+#define	u16 uint16_t
+#define	u32 uint32_t
+#define	u64 uint64_t
+
 /* include the hypervisor interface */
 #include <sys/systm.h>
 #include <machine/hypervisor-ifs/block.h>
 #include <machine/hypervisor-ifs/hypervisor-if.h>
 #include <machine/hypervisor-ifs/dom0_ops.h>
 #include <machine/hypervisor-ifs/network.h>
+#include <machine/hypervisor-ifs/vbd.h>
+
+#undef u16
+#undef u32
+#undef u64
 
 
 /*
