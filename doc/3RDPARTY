@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.123 2003/07/13 08:55:37 itojun Exp $
+#	$NetBSD: 3RDPARTY,v 1.124 2003/07/24 14:30:53 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -522,12 +522,12 @@ http://www.openssh.com/txt/preauth.adv is integrated manually to 1.5 branch.
 version date "20020626" identifies the fix.
 
 Package:	OpenSSL
-Version:	0.9.6g
+Version:	0.9.7b
 Current Vers:	0.9.7b
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Mailing List:	openssl-announce@openssl.org
-Responsible:	mcr, thorpej, itojun
+Responsible:	mcr, thorpej
 Notes:
 modified internal types to u_int32_t and alike, for non-32bit friendliness.
 removed #ifdefs in header files so that they do not affect ABI.
@@ -536,8 +536,6 @@ to tech-security.
 crypto/dist/openssl/openssl-unifdef.pl strips off most of #if in headers
 (should be done after the import - for some of the past imports done before
 import by mistake).
-upgrade to 0.9.7 seems difficult for several reasons - (1) DES API changes,
-(2) incompatibility w/ heimdal.
 
 Package:	pdisk
 Version:	0.8a2
