@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 1996/10/19 08:51:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 1996/10/19 21:11:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -417,13 +417,12 @@ again:
 		nbuf, bufpages * CLBYTES);
 
 	/*
-	 * Tell the VM system that page 0 isn't mapped and that
-	 * writing to kernel text isn't allowed.  If we don't
-	 * do the latter, we might end up COW'ing the text segment!
+	 * Tell the VM system that writing to kernel text isn't allowed.
+	 * If we don't, we might end up COW'ing the text segment!
+	 *
+	 * XXX Should be hp300_trunc_page(&kernel_text) instead
+	 * XXX of NBPG.
 	 */
-	if (vm_map_protect(kernel_map, 0, NBPG, VM_PROT_NONE, TRUE)
-	    != KERN_SUCCESS)
-		panic("can't mark page 0 off-limits");
 	if (vm_map_protect(kernel_map, NBPG, hp300_round_page(&etext),
 	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
