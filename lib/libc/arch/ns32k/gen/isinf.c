@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf.c,v 1.4 1997/07/13 18:40:38 christos Exp $	*/
+/*	$NetBSD: isinf.c,v 1.5 1997/07/21 06:01:55 phil Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	5.1 (Berkeley) 3/18/91";
 #else
-__RCSID("$NetBSD: isinf.c,v 1.4 1997/07/13 18:40:38 christos Exp $);
+__RCSID("$NetBSD: isinf.c,v 1.5 1997/07/21 06:01:55 phil Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
