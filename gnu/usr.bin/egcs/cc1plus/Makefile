@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/04/01 01:50:02 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1998/04/01 21:13:24 tv Exp $
 
 
 PROG=	cc1plus
@@ -11,7 +11,8 @@ lex.o pt.o spew.o: parse.h
 
 CLEANFILES+=	parse.c parse.h
 
-parse.c parse.h: parse.y
+parse.h: parse.c
+parse.c: parse.y
 	$(YACC) -d $(.IMPSRC)
 	grep '^#define[         ]*YYEMPTY' y.tab.c >>y.tab.h
 	mv -f y.tab.c parse.c
@@ -19,8 +20,8 @@ parse.c parse.h: parse.y
 
 # XXX needs to be before dist/gcc or tree.c comes from the
 # wrong place..
-.PATH: $(.OBJDIR) $(.CURDIR)/../../../dist/gcc/cp
+.PATH: $(.CURDIR)/../../../dist/gcc/cp
 
 .include "../Makefile.cc1"
 
-CPPFLAGS+= -I$(DIST)/cp
+CPPFLAGS+= -I. -I$(DIST)/cp
