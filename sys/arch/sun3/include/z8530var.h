@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.6 1996/12/17 21:00:54 gwr Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.7 1999/08/20 03:53:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -73,3 +73,8 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 /* Zilog Serial hardware interrupts (hard-wired at 6) */
 #define splzs()         spl6()
 
+/* We want to call it "zs" instead of "zsc" (sigh). */
+#ifndef ZSCCF_CHANNEL
+#define ZSCCF_CHANNEL 0
+#define ZSCCF_CHANNEL_DEFAULT -1
+#endif
