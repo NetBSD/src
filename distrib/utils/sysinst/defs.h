@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.108 2003/12/28 05:30:47 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.109 2004/01/17 05:30:01 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -111,9 +111,7 @@ deconst(const void *p)
 #define SET_X11_BASE	0x00100000u	/* X11 base and clients */
 #define SET_X11_FONTS	0x00200000u	/* X11 fonts */
 #define SET_X11_SERVERS	0x00400000u	/* X11 servers */
-#define SET_X_CONTRIB	0x00800000u	/* X contrib clients */
-#define SET_X11_PROG	0x01000000u	/* X11 programming */
-#define SET_X11_MISC	0x02000000u	/* X11 miscelllaneous */
+#define SET_X11_PROG	0x00800000u	/* X11 programming */
 
 #define SET_MD		0xf0000000u	/* All machine dependant sets */
 #define SET_MD_1	0x10000000u	/* Machine dependant set */

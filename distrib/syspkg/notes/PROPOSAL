@@ -36,7 +36,6 @@ A. Working Plan
 	text	-- text processing tools
 	xbase	-- general X11R6 binaries
 	xcomp	-- X11R6 development items
-	xcontrib - random binaries from the X11R6 `contrib' tree
 	xfont	-- X11R6 fonts
 	xserver -- X11R6 servers for various video hardware
 
@@ -296,4 +295,4 @@ A. Working Plan
   can continue unhindered while the new system is being implemented.
 
 ------------------------------------------------------------------------
-$Id: PROPOSAL,v 1.1.1.1 2002/01/07 22:46:17 jwise Exp $
+$Id: PROPOSAL,v 1.2 2004/01/17 05:30:01 lukem Exp $
