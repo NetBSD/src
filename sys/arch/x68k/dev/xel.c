@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.4 2002/09/27 20:37:21 thorpej Exp $	*/
+/*	$NetBSD: xel.c,v 1.5 2002/10/01 04:43:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,9 +64,8 @@ struct xel_softc {
 	bus_space_handle_t sc_bh;
 };
 
-const struct cfattach xel_ca = {
-	sizeof (struct xel_softc), xel_match, xel_attach
-};
+CFATTACH_DECL(xel, sizeof (struct xel_softc),
+    xel_match, xel_attach, NULL, NULL)
 
 static paddr_t xel_addrs[] = { 0xec0000, 0xec4000, 0xec8000, 0xecc000 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.27 2002/09/27 20:37:09 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.28 2002/10/01 04:43:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,9 +164,8 @@ static int comspeed __P((long));
 
 static u_char tiocm_xxx2mcr __P((int));
 
-const struct cfattach xcom_ca = {
-	sizeof(struct com_softc), comprobe, comattach,
-};
+CFATTACH_DECL(xcom, sizeof(struct com_softc),
+    comprobe, comattach, NULL, NULL)
 
 extern struct cfdriver xcom_cd;
 
