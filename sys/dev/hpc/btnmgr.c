@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.11 2002/10/23 09:13:11 jdolecek Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.12 2002/12/10 06:18:07 hamajima Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.11 2002/10/23 09:13:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.12 2002/12/10 06:18:07 hamajima Exp $");
 
 #define BTNMGRDEBUG
 
@@ -236,7 +236,9 @@ btnmgr_hook(void *ctx, int type, long id, void *msg)
 	if (id == CONFIG_HOOK_BUTTONEVENT_POWER && msg)
 		config_hook_call(CONFIG_HOOK_PMEVENT, 
 		    CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
-
+	else if (id == CONFIG_HOOK_BUTTONEVENT_COVER)
+		config_hook_call(CONFIG_HOOK_POWERCONTROL,
+		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT, (void*)(msg ? 0: 1));
 
 	return (0);
 }
