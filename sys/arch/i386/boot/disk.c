@@ -29,7 +29,10 @@
 /*
  * HISTORY
  * $Log: disk.c,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
+ * Revision 1.2  1993/06/18 02:28:58  cgd
+ * make it *do* something when loading the kernel, a la sun twiddling-thing
+ *
+ * Revision 1.1  1993/03/21  18:08:36  cgd
  * after 0.2.2 "stable" patches applied
  *
  * Revision 2.2  92/04/04  11:35:49  rpd
@@ -181,9 +184,12 @@ Bread(dosdev,sector)
      int dosdev,sector;
 {
 	int cyl = sector/spc, head = (sector%spc)/spt, secnum = sector%spt;
+
+	twiddle();
 	while (biosread(dosdev, cyl,head,secnum))
 	{
 		printf("Error: C:%d H:%d S:%d\n",cyl,head,secnum);
+		twiddle();
 	}
 }
 
