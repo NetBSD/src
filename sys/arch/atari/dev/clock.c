@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 2000/05/31 12:27:30 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.23 2000/06/07 14:26:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -314,7 +314,7 @@ int	n;
 	    u_int	temp;
 		
 	    __asm __volatile ("mulul %2,%1:%0" : "=d" (n), "=d" (temp)
-					       : "d" (TIMB_FREQ));
+					       : "d" (TIMB_FREQ), "d" (n));
 	    __asm __volatile ("divul %1,%2:%0" : "=d" (n)
 					       : "d"(1000000),"d"(temp),"0"(n));
 	}
