@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.23 2004/08/05 18:05:22 kim Exp $ */
+/* $NetBSD: identd.c,v 1.24 2004/11/05 21:56:01 dsl Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -37,7 +37,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
-__RCSID("$NetBSD: identd.c,v 1.23 2004/08/05 18:05:22 kim Exp $");
+__RCSID("$NetBSD: identd.c,v 1.24 2004/11/05 21:56:01 dsl Exp $");
 
 #define OPSYS_NAME      "UNIX"
 #define IDENT_SERVICE   "auth"
@@ -310,7 +310,7 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 
 	/* Get local and remote ports from the received data */
 	p = buf;
-	while (*p != '\0' && isspace(*p))
+	while (*p != '\0' && isspace((unsigned char)*p))
 		p++;
 	if ((p = strtok(p, " \t,")) != NULL) {
 		lport = atoi(p);
