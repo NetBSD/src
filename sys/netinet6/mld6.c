@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.19 2002/06/08 21:22:34 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.20 2002/06/09 14:43:13 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.19 2002/06/08 21:22:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.20 2002/06/09 14:43:13 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -272,7 +272,7 @@ mld6_input(m, off)
 			timer = 1;
 		mld6_all_nodes_linklocal.s6_addr16[1] =
 			htons(ifp->if_index); /* XXX */
-		
+
 		for (in6m = ia->ia6_multiaddrs.lh_first;
 		     in6m;
 		     in6m = in6m->in6m_entry.le_next)

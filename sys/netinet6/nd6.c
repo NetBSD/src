@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.65 2002/06/08 21:22:34 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.66 2002/06/09 14:43:13 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.65 2002/06/08 21:22:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.66 2002/06/09 14:43:13 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1993,7 +1993,7 @@ fill_drlist(oldp, oldlenp, ol)
 	size_t l;
 
 	s = splsoftnet();
-	
+
 	if (oldp) {
 		d = (struct in6_defrouter *)oldp;
 		de = (struct in6_defrouter *)((caddr_t)oldp + *oldlenp);

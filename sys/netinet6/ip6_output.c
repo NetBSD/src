@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.54 2002/06/08 21:22:33 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.55 2002/06/09 14:43:12 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.54 2002/06/08 21:22:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.55 2002/06/09 14:43:12 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1569,7 +1569,7 @@ ip6_raw_ctloutput(op, so, level, optname, mp)
 			(void)m_free(*mp);
 		return(EINVAL);
 	}
-		
+
 	switch (optname) {
 	case IPV6_CHECKSUM:
 		/*
