@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.183 2001/07/15 21:57:01 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.184 2001/07/16 19:48:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183 2001/07/15 21:57:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184 2001/07/16 19:48:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2679,9 +2679,6 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
  *	Note: we assume that the pv_head is already locked, and that
  *	the caller has acquired a PV->pmap mutex so that we can lock
  *	the pmaps as we encounter them.
- *
- *	XXX This routine could stand to have some I-stream
- *	XXX optimization done.
  */
 void
 pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
@@ -2690,7 +2687,6 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 	pt_entry_t *pte, npte;
 	vaddr_t va;
 	boolean_t hadasm, isactive;
-	boolean_t needisync, needkisync = FALSE;
 	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 #ifdef DEBUG
@@ -2721,25 +2717,7 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 		if (*pte != npte) {
 			hadasm = (pmap_pte_asm(pte) != 0);
 			isactive = PMAP_ISACTIVE(pv->pv_pmap, cpu_id);
-			/*
-			 * Determine what we need to do about the I-stream.
-			 * If PG_EXEC was set, we mark a user pmap as needing
-			 * an I-sync on the way out to userspace.  We always
-			 * need an immediate I-sync for the kernel pmap.
-			 */
-			needisync = FALSE;
-			if (pmap_pte_exec(pte)) {
-				if (pv->pv_pmap == pmap_kernel())
-					needkisync = TRUE;
-				else {
-					PMAP_SET_NEEDISYNC(pv->pv_pmap);
-					if (pv->pv_pmap->pm_cpus != 0)
-						needisync = TRUE;
-				}
-			}
 			PMAP_SET_PTE(pte, npte);
-			if (needisync)
-				PMAP_SYNC_ISTREAM_USER(pv->pv_pmap);
 			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive,
 			    cpu_id);
 			PMAP_TLB_SHOOTDOWN(pv->pv_pmap, va,
@@ -2749,9 +2727,6 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 	}
 
 	PMAP_TLB_SHOOTNOW();
-
-	if (needkisync)
-		PMAP_SYNC_ISTREAM_KERNEL();
 }
 
 /*
