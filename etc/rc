@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.149 2000/03/10 13:15:58 lukem Exp $
+# $NetBSD: rc,v 1.150 2000/03/29 02:13:51 enami Exp $
 #
 # rc.sh --
 #	Run the scripts in /etc/rc.d with rcorder.
@@ -14,6 +14,11 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 . /etc/rc.subr
 . /etc/rc.conf
+
+if ! checkyesno rc_configured; then
+	echo "/etc/rc.conf is not configured.  Multiuser boot aborted."
+	exit 1
+fi
 
 if [ "$1" = autoboot ]; then
 	autoboot=yes
