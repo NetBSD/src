@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.64 1997/06/12 23:57:29 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.65 1997/11/04 01:37:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -106,7 +106,7 @@ cpu_fork(p1, p2)
 	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
 	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
-	pmap_activate(p2->p_vmspace->vm_map.pmap, pcb);
+	pmap_activate(p2);
 
 	/*
 	 * Preset these so that gdt_compact() doesn't get confused if called

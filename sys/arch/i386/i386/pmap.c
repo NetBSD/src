@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1997/09/19 13:54:17 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 1997/11/04 01:37:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -188,7 +188,6 @@ void i386_protection_init __P((void));
 void pmap_collect_pv __P((void));
 __inline void pmap_remove_pv __P((pmap_t, vm_offset_t, u_int));
 __inline void pmap_enter_pv __P((pmap_t, vm_offset_t, u_int));
-void pmap_deactivate __P((pmap_t, struct pcb *));
 void pmap_remove_all __P((vm_offset_t));
 
 #ifdef	NKPDE
@@ -711,25 +710,32 @@ pmap_reference(pmap)
 	simple_unlock(&pmap->pm_lock);
 }
 
+/*
+ * pmap_activate:
+ *
+ *	Mark that a processor is about to be used by a given pmap.
+ */
 void
-pmap_activate(pmap, pcb)
-	pmap_t pmap;
-	struct pcb *pcb;
+pmap_activate(p)
+	struct proc *p;
 {
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
-	if (pmap /*&& pmap->pm_pdchanged */) {
-		pcb->pcb_cr3 =
-		    pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir);
-		if (pmap == curproc->p_vmspace->vm_map.pmap)
-			lcr3(pcb->pcb_cr3);
-		pmap->pm_pdchanged = FALSE;
-	}
+	pcb->pcb_cr3 = pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir);
+	if (p == curproc)
+		lcr3(pcb->pcb_cr3);
+	pmap->pm_pdchanged = FALSE;
 }
 
+/*
+ * pmap_deactivate:
+ *
+ *	Mark that a processor is no longer used by a given pmap.
+ */
 void
-pmap_deactivate(pmap, pcb)
-	pmap_t pmap;
-	struct pcb *pcb;
+pmap_deactivate(p)
+	struct proc *p;
 {
 }
 
