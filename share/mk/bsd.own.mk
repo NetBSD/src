@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.25 1996/08/27 22:15:56 explorer Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -48,6 +48,11 @@ NLSDIR?=	/usr/share/nls
 NLSGRP?=	bin
 NLSOWN?=	bin
 NLSMODE?=	${NONBINMODE}
+
+KMODDIR?=	/usr/lkm
+KMODGRP?=	bin
+KMODOWN?=	bin
+KMODMODE?=	${NONBINMODE}
 
 COPY?=		-c
 STRIP?=		-s
