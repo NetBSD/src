@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 1995/07/03 21:24:29 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.3 1995/07/04 02:08:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -60,16 +60,19 @@
  * Should be set to 1 if the difference of two pointers is of type long
  * or the value of sizeof is of type unsigned long.
  */
-#ifdef i386
+#ifdef __alpha__
+#define PTRDIFF_IS_LONG		1
+#define SIZEOF_IS_ULONG		1
+#elif __i386__
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
-#elif m68k
+#elif __m68k__
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
-#elif sparc
+#elif __ns32k__
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
-#elif ns32k
+#elif __sparc__
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
 #else
