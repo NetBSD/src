@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.33 1999/06/06 20:41:04 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.34 1999/06/06 21:16:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.33 1999/06/06 20:41:04 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.34 1999/06/06 21:16:23 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.33 1999/06/06 20:41:04 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.34 1999/06/06 21:16:23 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2137,10 +2137,14 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	*freePtr = FALSE;
 	Buf_Destroy(v->val, TRUE);
 	free((Address)v);
-	str = emalloc(*lengthPtr + 1);
-	strncpy(str, start, *lengthPtr);
-	str[*lengthPtr] = '\0';
-	*freePtr = TRUE;
+	if (dynamic) {
+	    str = emalloc(*lengthPtr + 1);
+	    strncpy(str, start, *lengthPtr);
+	    str[*lengthPtr] = '\0';
+	    *freePtr = TRUE;
+	} else {
+	    str = var_Error;
+	}
     }
     return (str);
 
