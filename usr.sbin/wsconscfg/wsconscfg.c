@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.5 1999/11/10 16:34:58 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <err.h>
+#include <errno.h>
 
 #include <dev/wscons/wsconsio.h>
 
@@ -143,8 +144,12 @@ main(argc, argv)
 	} else {
 		asd.idx = idx;
 		res = ioctl(wsfd, WSDISPLAYIO_ADDSCREEN, &asd);
-		if (res < 0)
-			err(3, "WSDISPLAYIO_ADDSCREEN");
+		if (res < 0) {
+			if (errno == EBUSY)
+				errx(3, "screen %d is already configured", idx);
+			else
+				err(3, "WSDISPLAYIO_ADDSCREEN");
+		}
 	}
 
 	return (0);
