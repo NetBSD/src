@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.21 1995/05/13 05:57:31 chopps Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.22 1995/05/16 20:59:10 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,9 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
+#include <sys/core.h>
+#include <sys/exec_aout.h>
+#include <m68k/reg.h>
 
 #include <machine/cpu.h>
 
@@ -210,16 +213,78 @@ physunaccess(vaddr, size)
 }
 
 /*
- * Dump the machine specific header information at the start of a core dump.
- */     
-cpu_coredump(p, vp, cred)
+ * Dump the machine specific segment at the start of a core dump.
+ * This means the CPU and FPU registers.  The format used here is
+ * the same one ptrace uses, so gdb can be machine independent.
+ *
+ * XXX - Generate Sun format core dumps for Sun executables?
+ */
+struct md_core {
+	struct reg intreg;
+	struct fpreg freg;
+};
+int
+cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
 	struct vnode *vp;
 	struct ucred *cred;
+	struct core *chdr;
 {
-	return(vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
-	    p));
+	int error;
+	struct md_core md_core;
+	struct coreseg cseg;
+	register struct user *up = p->p_addr;
+	register i;
+
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
+	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+	chdr->c_cpusize = sizeof(md_core);
+
+	/* Save integer registers. */
+	{
+		register struct frame *f;
+
+		f = (struct frame*) p->p_md.md_regs;
+		for (i = 0; i < 16; i++) {
+			md_core.intreg.r_regs[i] = f->f_regs[i];
+		}
+		md_core.intreg.r_sr = f->f_sr;
+		md_core.intreg.r_pc = f->f_pc;
+	}
+	if (fputype) {
+		register struct fpframe *f;
+
+		f = &up->u_pcb.pcb_fpregs;
+		m68881_save(f);
+		for (i = 0; i < (8*3); i++) {
+			md_core.freg.r_regs[i] = f->fpf_regs[i];
+		}
+		md_core.freg.r_fpcr  = f->fpf_fpcr;
+		md_core.freg.r_fpsr  = f->fpf_fpsr;
+		md_core.freg.r_fpiar = f->fpf_fpiar;
+	} else {
+		bzero((caddr_t)&md_core.freg, sizeof(md_core.freg));
+	}
+
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
+	cseg.c_addr = 0;
+	cseg.c_size = chdr->c_cpusize;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	if (error)
+		return error;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
+	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+
+	if (!error)
+		chdr->c_nseg++;
+
+	return error;
 }
 
 /*

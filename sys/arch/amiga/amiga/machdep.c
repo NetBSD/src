@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1995/05/13 05:17:56 chopps Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 1995/05/16 20:59:07 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,17 +144,6 @@ char machine[] = "amiga";
 void
 consinit()
 {
-
-	/*
-	 * Set cpuspeed immediately since cninit() called routines
-	 * might use delay.
-	 */
-
-	if (cpu040)
-		cpuspeed = MHZ_33;		/* MLH - PPI Zeus */
-	else
-		cpuspeed = MHZ_25;		/* XXX */
-
 	/* initialize custom chip interface */
 	custom_chips_init();
 		
@@ -418,6 +407,7 @@ setregs(p, pack, stack, retval)
 	
 	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[SP] = stack;
+	frame->f_regs[A2] = (int)PS_STRINGS;
 
 #ifdef FPCOPROC
 	/* restore a null state frame */
@@ -451,6 +441,7 @@ identifycpu()
 		cpu_type = "m68040";
 		mmu = "/MMU";
 		fpu = "/FPU";
+		fputype = FPU_68040;
 	} else if (machineid & AMIGA_68030) {
 		cpu_type = "m68030";	/* XXX */
 		mmu = "/MMU";
@@ -459,12 +450,16 @@ identifycpu()
 		mmu = " m68851 MMU";
 	}
 	if (fpu == NULL) {
-		if (machineid & AMIGA_68882)
+		if (machineid & AMIGA_68882) {
 			fpu = " m68882 FPU";
-		else if (machineid & AMIGA_68881)
+			fputype = FPU_68882;
+		} else if (machineid & AMIGA_68881) {
 			fpu = " m68881 FPU";
-		else
+			fputype = FPU_68881;
+		} else {
 			fpu = " no FPU";
+			fputype = FPU_NONE;
+		}
 	}
 	sprintf(cpu_model, "%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
 	printf("%s\n", cpu_model);

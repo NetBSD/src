@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 1995/05/12 00:21:54 chopps Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 1995/05/16 20:59:14 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -115,8 +115,7 @@ int	want_resched;		/* resched() was called */
  * although some of it could probably be put into generic 68k headers.
  */
 
-/* values for machineid (happen to be AFF_* settings of AttnFlags)
- * NOTE: '40 support does exist! */
+/* values for machineid (happen to be AFF_* settings of AttnFlags) */
 #define AMIGA_68020	(1L<<1)
 #define AMIGA_68030	(1L<<2)
 #define AMIGA_68040	(1L<<3)
@@ -124,21 +123,19 @@ int	want_resched;		/* resched() was called */
 #define AMIGA_68882	(1L<<5)
 #define	AMIGA_FPU40	(1L<<6)
 
+/* values for fputype */
+#define FPU_NONE	0
+#define FPU_68881	1
+#define FPU_68882	2
+#define FPU_68040	3
 
 /* values for mmutype (assigned for quick testing) */
 #define	MMU_68030	-1	/* 68030 on-chip subset of 68851 */
 #define	MMU_68851	1	/* Motorola 68851 */
 #define MMU_68040	-2	/* 68040 on-chip subsubset */
 
-/* values for cpuspeed (not really related to clock speed due to caches) */
-#define	MHZ_8		1
-#define	MHZ_16		2
-#define	MHZ_25		3
-#define	MHZ_33		4
-#define	MHZ_50		6
-
 #ifdef _KERNEL
-int machineid, mmutype, cpu040;
+int machineid, mmutype, cpu040, fputype;
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 1995/04/02 20:39:00 chopps Exp $	*/
+/*	$NetBSD: param.h,v 1.21 1995/05/16 20:59:15 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -232,7 +232,6 @@ extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 #define splx(s)         _spl_no_check(s)
 
 #ifdef _KERNEL
-int	cpuspeed;
 void delay __P((int));
 void DELAY __P((int));
 #else
