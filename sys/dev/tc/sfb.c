@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.28 1999/12/02 23:04:44 drochner Exp $ */
+/* $NetBSD: sfb.c,v 1.29 1999/12/04 14:01:56 drochner Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.28 1999/12/02 23:04:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.29 1999/12/04 14:01:56 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ static struct wsscreen_descr sfb_stdscreen = {
 	"std", 0, 0,
 	0, /* textops */
 	0, 0,
-	WSSCREEN_REVERSE
+	0 /* capabilities */
 };
 
 static const struct wsscreen_descr *_sfb_scrlist[] = {
@@ -339,6 +339,8 @@ sfb_getdevconfig(dense_addr, dc)
 	sfb_stdscreen.ncols = dc->rinfo.ri_cols;
 	sfb_stdscreen.textops = &dc->rinfo.ri_ops;
 	sfb_stdscreen.capabilities = dc->rinfo.ri_caps;
+	/* our accelerated putchar can't underline */
+	sfb_stdscreen.capabilities &= ~WSSCREEN_UNDERLINE;
 }
 
 static void
@@ -985,8 +987,7 @@ sfb_putchar(id, row, col, uc, attr)
 	int scanspan, height, width, align, x, y;
 	u_int32_t lmask, rmask, glyph;
 	u_int8_t *g;
-
-if (uc < 0x20 || uc >= 127) return; /* XXX why \033 is creaping in !? XXX */
+	int fg, bg;
 
 	x = col * ri->ri_font->fontwidth;
 	y = row * ri->ri_font->fontheight;
@@ -1005,8 +1006,9 @@ if (uc < 0x20 || uc >= 127) return; /* XXX why \033 is creaping in !? XXX */
 
 	SFBMODE(sfb, MODE_OPAQUESTIPPLE);
 	SFBPLANEMASK(sfb, ~0);
-	SFBFG(sfb, ((attr >> 24)  & 0xff) * 0x01010101);
-	SFBBG(sfb, ((attr >> 16)  & 0xff) * 0x01010101);
+	rasops_unpack_attr(attr, &fg, &bg, 0);
+	SFBFG(sfb, fg * 0x01010101);
+	SFBBG(sfb, bg * 0x01010101);
 	if (width <= SFBSTIPPLEBITS) {
 		lmask = lmask & rmask;
 		while (height > 0) {
