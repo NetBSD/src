@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.99 2000/11/03 09:07:25 toddpw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.100 2000/11/10 01:03:29 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.99 2000/11/02 07:15:44 msaitoh Exp 
+ *	NetBSD: pcmciadevs,v 1.101 2000/11/10 01:02:32 hubertf Exp 
  */
 
 /*-
@@ -88,6 +88,7 @@
 #define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 #define	PCMCIA_VENDOR_RATOC	0xc015	/* RATOC System Inc. */
+#define	PCMCIA_VENDOR_ELSA	0xd601	/* Elsa */
 
 /*
  * List of known products.  Grouped by vendor.
@@ -157,6 +158,14 @@
 #define	PCMCIA_CIS_DIGITAL_MOBILE_MEDIA_CDROM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM	0x0d00
 #define	PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM	"Digital Mobile Media CD-ROM"
+
+/* ELSA Products */
+#define	PCMCIA_CIS_ELSA_MC2_IEEE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_MC2_IEEE	0x0001
+#define	PCMCIA_STR_ELSA_MC2_IEEE	"AirLancer MC-2 IEEE"
+#define	PCMCIA_CIS_ELSA_XI300_IEEE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_XI300_IEEE	0x0002
+#define	PCMCIA_STR_ELSA_XI300_IEEE	"XI300 Wireless LAN"
 
 /* Fujutsu Products */
 #define	PCMCIA_CIS_FUJITSU_SCSI600	{ NULL, NULL, NULL, NULL }
