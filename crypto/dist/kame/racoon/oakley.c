@@ -1,4 +1,4 @@
-/*	$KAME: oakley.c,v 1.117 2004/03/27 03:27:46 suz Exp $	*/
+/*	$KAME: oakley.c,v 1.118 2004/06/16 11:55:36 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: oakley.c,v 1.11 2004/04/12 03:34:07 itojun Exp $");
+__RCSID("$NetBSD: oakley.c,v 1.12 2004/06/17 03:42:55 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1326,7 +1326,7 @@ oakley_validate_auth(iph1)
 			switch (iph1->rmconf->certtype) {
 			case ISAKMP_CERT_X509SIGN:
 				error = eay_check_x509cert(&iph1->cert_p->cert,
-					lcconf->pathinfo[LC_PATHTYPE_CERT]);
+					lcconf->pathinfo[LC_PATHTYPE_CERT], 0);
 				break;
 			default:
 				plog(LLV_ERROR, LOCATION, NULL,
