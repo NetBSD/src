@@ -1,4 +1,4 @@
-/* $NetBSD: fp.h,v 1.2 1996/03/14 23:11:15 mark Exp $ */
+/* $NetBSD: fp.h,v 1.3 1996/10/15 00:15:37 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,18 +46,40 @@
 #ifndef __ARM32_FP_H
 #define __ARM32_FP_H
 
-typedef struct {
-	u_int32_t fp_exp;
-	u_int32_t fp_man_hi;
-	u_int32_t fp_man_lo;
-} fp_reg_t;
+/*
+ * An extended precision floating point number
+ */
 
-struct fp_state {
+typedef struct fp_extended_precision {
+	u_int32_t fp_exponent;
+	u_int32_t fp_mantissa_hi;
+	u_int32_t fp_mantissa_lo;
+} fp_extended_precision_t;
+
+typedef struct fp_extended_precision fp_reg_t;
+
+/*
+ * Information about the FPE-SP state that is stored in the pcb
+ *
+ * This needs to move and be hidden from userland.
+ */
+
+struct fpe_sp_state {
 	unsigned int fp_flags;
 	unsigned int fp_sr;
 	unsigned int fp_cr;
 	fp_reg_t fp_registers[16];
 };
+
+/*
+ * Type for a saved FP context, if we want to translate the context to a
+ * user-readable form
+ */
+ 
+typedef struct {
+	u_int32_t fpsr;
+	fp_extended_precision_t regs[8];
+} fp_state_t;
 
 #endif
 
