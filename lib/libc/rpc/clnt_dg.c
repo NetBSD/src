@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.1 2000/06/02 23:11:07 fvdl Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.2 2000/06/04 03:55:20 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -54,6 +54,7 @@ static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #include <rpc/rpc.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <unistd.h>
 #include <err.h>
