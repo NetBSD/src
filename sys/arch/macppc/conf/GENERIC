@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8 1998/07/28 23:02:06 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.9 1998/07/28 23:09:07 thorpej Exp $
 #
 # POWERMAC config file
 #
@@ -110,7 +110,7 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 #ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 #pci*	at ppb? bus ?
 
-ofcons0	at pci? dev ? function ?	# Openfirmware console
+#ofcons0	at pci? dev ? function ?	# Openfirmware console
 
 #de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?
