@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.15 2004/03/07 02:46:58 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.16 2004/03/07 02:49:23 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -133,8 +133,8 @@ struct RF_ReconCtrl_s {
 	/* reconstruction event queue */
 	RF_ReconEvent_t *eventQueue;	/* queue of pending reconstruction
 					 * events */
-	        RF_DECLARE_MUTEX(eq_mutex)	/* mutex for locking event
-						 * queue */
+        RF_DECLARE_MUTEX(eq_mutex)	/* mutex for locking event
+					 * queue */
 	int     eq_count;	/* debug only */
 
 	/* reconstruction buffer management */
@@ -170,24 +170,15 @@ struct RF_ReconCtrl_s {
 /* the default priority for reconstruction accesses */
 #define RF_IO_RECON_PRIORITY RF_IO_LOW_PRIORITY
 
-int     rf_ConfigureReconstruction(RF_ShutdownList_t ** listp);
-
-int 
-rf_ReconstructFailedDisk(RF_Raid_t * raidPtr, RF_RowCol_t col);
-
-int 
-rf_ReconstructFailedDiskBasic(RF_Raid_t * raidPtr, RF_RowCol_t col);
-
-int 
-rf_ReconstructInPlace(RF_Raid_t * raidPtr,RF_RowCol_t col);
-
-int     rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t * reconDesc);
-
-int 
-rf_ForceOrBlockRecon(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
-    void (*cbFunc) (RF_Raid_t *, void *), void *cbArg);
-
-	int     rf_UnblockRecon(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap);
+int rf_ConfigureReconstruction(RF_ShutdownList_t **);
+int rf_ReconstructFailedDisk(RF_Raid_t *, RF_RowCol_t);
+int rf_ReconstructFailedDiskBasic(RF_Raid_t *, RF_RowCol_t);
+int rf_ReconstructInPlace(RF_Raid_t *, RF_RowCol_t);
+int rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *);
+int rf_ForceOrBlockRecon(RF_Raid_t *, RF_AccessStripeMap_t *,
+			 void (*cbFunc) (RF_Raid_t *, void *), 
+			 void *);
+int rf_UnblockRecon(RF_Raid_t *, RF_AccessStripeMap_t *);
 
 extern struct pool rf_reconbuffer_pool;
 
