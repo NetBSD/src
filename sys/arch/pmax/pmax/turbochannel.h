@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)turbochannel.h	8.1 (Berkeley) 6/10/93
- *      $Id: turbochannel.h,v 1.2 1994/05/27 08:42:23 glass Exp $
+ *      $Id: turbochannel.h,v 1.3 1994/05/27 09:04:23 glass Exp $
  */
 
 /* 

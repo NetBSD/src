@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)reloc.h	8.1 (Berkeley) 6/10/93
- *      $Id: reloc.h,v 1.2 1994/05/27 08:41:09 glass Exp $
+ *      $Id: reloc.h,v 1.3 1994/05/27 09:02:19 glass Exp $
  *
  * from: Header: reloc.h,v 1.6 92/06/20 09:59:37 torek Exp
  */
@@ -61,7 +61,7 @@ enum reloc_type {
  * The resulting value is then to be stuffed into the appropriate bits
  * in the object (the low 16, or the low 26 bits).
  */
-struct reloc_info_mips {
+struct reloc_info_pmax {
 	u_long	r_address;	/* relocation addr (offset in segment) */
 	u_int	r_index:24,	/* segment (r_extern==0) or symbol index */
 		r_extern:1,	/* if set, r_index is symbol index */
@@ -69,3 +69,5 @@ struct reloc_info_mips {
 	enum reloc_type r_type:5; /* relocation type, from above */
 	long	r_addend;	/* value to add to symbol value */
 };
+
+#define relocation_info reloc_info_pmax

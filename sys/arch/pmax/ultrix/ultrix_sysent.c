@@ -38,7 +38,7 @@
  * from: Utah Hdr: hpux_sysent.c 1.1 90/07/09
  *
  *	from: @(#)ultrix_sysent.c	8.1 (Berkeley) 6/10/93
- *      $Id: ultrix_sysent.c,v 1.3 1994/05/27 08:43:27 glass Exp $
+ *      $Id: ultrix_sysent.c,v 1.4 1994/05/27 09:07:02 glass Exp $
  */
 
 /*

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tz.c	8.4 (Berkeley) 1/11/94
- *      $Id: tz.c,v 1.2 1994/05/27 08:40:08 glass Exp $
+ *      $Id: tz.c,v 1.3 1994/05/27 08:59:40 glass Exp $
  *
  * from: Header: /sprite/src/kernel/dev/RCS/devSCSITape.c,
  *	v 8.14 89/07/31 17:26:13 mendel Exp  SPRITE (Berkeley)

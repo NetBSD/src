@@ -38,7 +38,7 @@
  * from: Utah Hdr: cons.c 1.1 90/07/09
  *
  *	from: @(#)cons.c	8.2 (Berkeley) 1/11/94
- *      $Id: cons.c,v 1.2 1994/05/27 08:41:43 glass Exp $
+ *      $Id: cons.c,v 1.3 1994/05/27 09:03:05 glass Exp $
  */
 
 #include <sys/param.h>

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)strcat.c	8.1 (Berkeley) 6/10/93
- *      $Id: strcat.c,v 1.2 1994/05/27 08:43:02 glass Exp $
+ *      $Id: strcat.c,v 1.3 1994/05/27 09:06:07 glass Exp $
  */
 
 #include <pmax/stand/dec_prom.h>

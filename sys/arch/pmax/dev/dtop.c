@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dtop.c	8.2 (Berkeley) 11/30/93
- *      $Id: dtop.c,v 1.3 1994/05/27 08:39:27 glass Exp $
+ *      $Id: dtop.c,v 1.4 1994/05/27 08:58:40 glass Exp $
  */
 
 /* 
@@ -130,7 +130,7 @@ int dtopstop		__P((struct tty *, int));
 void dtopstart		__P((struct tty *));
 void dtopKBDPutc	__P((dev_t, int));
 
-struct	tty dtop_tty[NDTOP];
+struct	tty *dtop_tty[NDTOP];
 void	(*dtopDivertXInput)();	/* X windows keyboard input routine */
 void	(*dtopMouseEvent)();	/* X windows mouse motion event routine */
 void	(*dtopMouseButtons)();	/* X windows mouse buttons event routine */
@@ -167,7 +167,7 @@ struct dtop_softc {
 } dtop_softc[NDTOP];
 
 typedef struct dtop_softc *dtop_softc_t;
-struct tty dtop_tty[NDTOP];
+struct tty *dtop_tty[NDTOP];
 
 /*
  * lk201 keyboard divisions and up/down mode key bitmap.
@@ -235,7 +235,9 @@ dtopopen(dev, flag, mode, p)
 	unit = minor(dev);
 	if (unit >= NDTOP)
 		return (ENXIO);
-	tp = &dtop_tty[unit];
+	tp = dtop_tty[unit];
+	if (tp == NULL)
+		tp = dtop_tty[unit] = ttymalloc();
 	tp->t_oproc = dtopstart;
 	tp->t_param = dtopparam;
 	tp->t_dev = dev;
@@ -278,7 +280,7 @@ dtopclose(dev, flag, mode, p)
 	register int unit;
 
 	unit = minor(dev);
-	tp = &dtop_tty[unit];
+	tp = dtop_tty[unit];
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	return (ttyclose(tp));
 }
@@ -289,7 +291,7 @@ dtopread(dev, uio, flag)
 {
 	register struct tty *tp;
 
-	tp = &dtop_tty[minor(dev)];
+	tp = dtop_tty[minor(dev)];
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
@@ -299,7 +301,7 @@ dtopwrite(dev, uio, flag)
 {
 	register struct tty *tp;
 
-	tp = &dtop_tty[minor(dev)];
+	tp = dtop_tty[minor(dev)];
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
@@ -315,11 +317,11 @@ dtopioctl(dev, cmd, data, flag, p)
 	register int unit = minor(dev);
 	int error;
 
-	tp = &dtop_tty[unit];
+	tp = dtop_tty[unit];
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -404,7 +406,7 @@ dtopstart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	/* handle console specially */
-	if (tp == dtop_tty) {
+	if (tp == dtop_tty[0]) {
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
 			cnputc(cc);
@@ -707,7 +709,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	register u_char *ls, *le, *ns, *ne;
 	u_char save[11], retc;
 	int msg_len, c, s;
-	struct tty *tp = &dtop_tty[0];
+	struct tty *tp = dtop_tty[0];
 
 	/*
 	 * Fiddle about emulating an lk201 keyboard. The lk501
@@ -829,7 +831,7 @@ dtop_keyboard_repeat(arg)
 {
 	dtop_device_t dev = (dtop_device_t)arg;
 	register int i, c;
-	struct tty *tp = dtop_tty;
+	struct tty *tp = dtop_tty[0];
 	int s = spltty(), gotone = 0;
 
 	for (i = 0; i < dev->keyboard.last_codes_count; i++) {

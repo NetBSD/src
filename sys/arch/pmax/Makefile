@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/16/93
-#	$Id: Makefile,v 1.2 1994/05/27 08:39:00 glass Exp $
+#	$Id: Makefile,v 1.3 1994/05/27 08:57:32 glass Exp $
 
 # Makefile for pmax links, tags file
 

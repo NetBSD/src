@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	8.1 (Berkeley) 6/10/93
- *      $Id: pmap.h,v 1.3 1994/05/27 08:40:50 glass Exp $
+ *      $Id: pmap.h,v 1.4 1994/05/27 09:01:41 glass Exp $
  */
 
 #ifndef	_PMAP_MACHINE_
@@ -96,8 +96,9 @@ typedef struct pmap {
 #ifdef	KERNEL
 extern	char *pmap_attributes;		/* reference and modify bits */
 extern	struct pmap kernel_pmap_store;
-#define kernel_pmap (&kernel_pmap_store)
+extern  pmap_t kernel_pmap;
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
+#define pmap_kernel() kernel_pmap
 #endif	/* KERNEL */
 
 #endif	/* _PMAP_MACHINE_ */

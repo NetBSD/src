@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmaxtype.h	8.1 (Berkeley) 6/10/93
- *      $Id: pmaxtype.h,v 1.2 1994/05/27 08:42:16 glass Exp $
+ *      $Id: pmaxtype.h,v 1.3 1994/05/27 09:03:58 glass Exp $
  */
 
 /*

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pm.c	8.1 (Berkeley) 6/10/93
- *      $Id: pm.c,v 1.2 1994/05/27 08:39:46 glass Exp $
+ *      $Id: pm.c,v 1.3 1994/05/27 08:59:08 glass Exp $
  */
 
 /* 
@@ -52,7 +52,7 @@
  *
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
- * $Id: pm.c,v 1.2 1994/05/27 08:39:46 glass Exp $
+ * $Id: pm.c,v 1.3 1994/05/27 08:59:08 glass Exp $
  */
 
 
