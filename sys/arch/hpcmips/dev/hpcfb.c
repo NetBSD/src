@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.20 2000/12/12 22:41:02 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.21 2000/12/20 08:04:27 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.20 2000/12/12 22:41:02 sato Exp $";
+    "$Id: hpcfb.c,v 1.21 2000/12/20 08:04:27 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1218,7 +1218,7 @@ hpcfb_redraw(cookie, row, num, all)
 			rasops_emul.putchar(ri, row + i, j, svc->c, svc->attr);
 		}
 		if (all)
-			cols = dc->dc_cols;
+			cols = dc->dc_cols-1;
 		else
 			cols = vscn[row+i].spacecol;
 		for (; j <= cols; j++) {
