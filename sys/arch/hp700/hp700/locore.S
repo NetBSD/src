@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2004/04/23 02:58:28 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2004/06/15 16:28:37 chs Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -63,6 +63,7 @@
  *  suitability of this software for any purpose.
  */
 
+#include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 
