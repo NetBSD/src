@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.17 2003/11/13 03:09:29 chs Exp $ */
+/*	$NetBSD: igsfb.c,v 1.18 2004/11/26 02:07:09 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.17 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.18 2004/11/26 02:07:09 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ igsfb_init_video(dc)
 	dc->dc_curenb = 0;
 
 	/*
-	 * Map abd init graphic coprocessor for accelerated rasops.
+	 * Map and init graphic coprocessor for accelerated rasops.
 	 */
 	if (dc->dc_id >= 0x2000) { /* XXX */
 		if (bus_space_map(dc->dc_iot,
@@ -556,7 +556,7 @@ igsfb_spread_bits_8(b)
 
 /*
  * Cursor sprite data are in 2bpp.  Incoming image/mask are in 1bpp.
- * Prebuild the table to expand 1bpp->2bpp, with bswapping if neccessary.
+ * Prebuild the table to expand 1bpp->2bpp, with bswapping if necessary.
  */
 static void
 igsfb_init_bit_table(dc)
@@ -1068,7 +1068,7 @@ igsfb_update_cursor(dc, which)
 
 	/*
 	 * We will need to tweak sprite control register for cursor
-	 * visibility and cursor color map manipualtion.
+	 * visibility and cursor color map manipulation.
 	 */
 	if (which & (WSDISPLAY_CURSOR_DOCUR | WSDISPLAY_CURSOR_DOCMAP)) {
 		curctl = igs_ext_read(iot, ioh, IGS_EXT_SPRITE_CTL);
@@ -1218,7 +1218,7 @@ igsfb_accel_cursor(cookie, on, row, col)
 	if (on) {
 		ri->ri_flg |= RI_CURSOR;
 
-		/* only bother to move the cursor if it's visibile */
+		/* only bother to move the cursor if it's visible */
 		cc->cc_pos.x = ri->ri_xorigin
 			+ ri->ri_ccol * ri->ri_font->fontwidth;
 		cc->cc_pos.y = ri->ri_yorigin
