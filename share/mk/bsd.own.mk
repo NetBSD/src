@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.339 2003/07/16 13:19:49 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.340 2003/07/18 02:52:51 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -200,7 +200,7 @@ TOOL_PWD_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}pwd_mkdb
 TOOL_REFER=		${TOOLDIR}/bin/${_TOOL_PREFIX}refer
 TOOL_ROFF_ASCII=	PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}nroff
 TOOL_ROFF_DVI=		${TOOL_GROFF} -Tdvi
-TOOL_ROFF_HTML=		${TOOL_GROFF} -Tlatin1 -mdoc2html -P-b -P-o -P-u
+TOOL_ROFF_HTML=		${TOOL_GROFF} -Tlatin1 -mdoc2html
 TOOL_ROFF_PS=		${TOOL_GROFF} -Tps
 TOOL_ROFF_RAW=		${TOOL_GROFF} -Z
 TOOL_RPCGEN=		CPP=${CPP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}rpcgen
@@ -264,9 +264,6 @@ BINGRP?=	wheel
 BINOWN?=	root
 BINMODE?=	555
 NONBINMODE?=	444
-
-# Define MANZ to have the man pages compressed (gzip)
-#MANZ=		1
 
 MANDIR?=	/usr/share/man
 MANGRP?=	wheel
@@ -461,35 +458,40 @@ dependall:	.NOTMAIN realdepend .MAKE
 # Define MKxxx variables (which are either yes or no) for users
 # to set in /etc/mk.conf and override on the make commandline.
 # These should be tested with `== "no"' or `!= "no"'.
-# The NOxxx variables should only be used by Makefiles.
+# The NOxxx variables should only be set by Makefiles.
 #
 
 # Supported NO* options (if defined, MK* will be forced to "no",
 # regardless of user's mk.conf setting).
-.for var in CRYPTO DOC LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PROFILE SHARE
+.for var in CRYPTO DOC HTML LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PROFILE \
+	SHARE
 .if defined(NO${var})
 MK${var}:=	no
 .endif
 .endfor
 
-.if defined(NOMAN)
-NOHTML=
+.if defined(MANZ)
+MKMANZ:=	yes
 .endif
 
 # MK* options which default to "yes".
-.for var in BFD CATPAGES CRYPTO DOC GCC GDB HESIOD IEEEFP INFO KERBEROS \
+.for var in BFD CATPAGES CRYPTO DOC GCC GDB HESIOD HTML IEEEFP INFO KERBEROS \
 	LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PICLIB PROFILE SHARE SKEY YP
 MK${var}?=	yes
 .endfor
 
 # MK* options which default to "no".
-.for var in CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 OBJDIRS SOFTFLOAT
+.for var in CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 MANZ OBJDIRS SOFTFLOAT
 MK${var}?=	no
 .endfor
 
 # Force some options off if their dependencies are off.
 .if ${MKCRYPTO} == "no"
 MKKERBEROS:=	no
+.endif
+
+.if ${MKMAN} == "no"
+MKHTML:=	no
 .endif
 
 .if ${MKLINKLIB} == "no"

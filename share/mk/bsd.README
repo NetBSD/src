@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.118 2003/07/18 00:33:18 lukem Exp $
+#	$NetBSD: bsd.README,v 1.119 2003/07/18 02:52:51 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -117,6 +117,9 @@ MKLINT		If "no", don't build or install the lint libraries.
 
 MKMAN		If "no", don't build or install the man or catman pages.
 		Also acts as "MKCATPAGES=no"
+
+MKMANZ		If not "no", compress manual pages at installation time.
+		"no" by default.
 
 MKNLS		If "no", don't build or install the NLS files and locale
 		definition files.
@@ -301,8 +304,6 @@ USE_SKEY	If set to "no", disables building S/key authentication
 USE_YP		If set to "no", disables building YP (NIS) support into
 		various system utilities/libraries that support it.  If
 		MKYP is set to "no", USE_YP will also be forced to "no".
-
-MANZ		Compress manual pages at installation time.
 
 NOPROFILE	Do not build profiled versions of system libraries
 
@@ -983,7 +984,7 @@ TOOL_ROFF_ASCII		Generate ASCII groff output.  [nroff]
 TOOL_ROFF_DVI		Generate DVI groff output.  [${TOOL_GROFF} -Tdvi]
 
 TOOL_ROFF_HTML		Generate HTML groff output.
-			[${TOOL_GROFF} -Tlatin1 -mdoc2html -P-b -P-o -P-u]
+			[${TOOL_GROFF} -Tlatin1 -mdoc2html]
 
 TOOL_ROFF_PS		Generate PS groff output.  [${TOOL_GROFF} -Tps]
 

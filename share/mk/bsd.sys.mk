@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.90 2003/07/14 00:41:17 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.91 2003/07/18 02:52:52 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -118,7 +118,7 @@ TOOL_PWD_MKDB?=		pwd_mkdb
 TOOL_REFER?=		refer
 TOOL_ROFF_ASCII?=	nroff
 TOOL_ROFF_DVI?=		${TOOL_GROFF} -Tdvi
-TOOL_ROFF_HTML?=	${TOOL_GROFF} -Tlatin1 -mdoc2html -P-b -P-o -P-u
+TOOL_ROFF_HTML?=	${TOOL_GROFF} -Tlatin1 -mdoc2html
 TOOL_ROFF_PS?=		${TOOL_GROFF} -Tps
 TOOL_ROFF_RAW?=		${TOOL_GROFF} -Z
 TOOL_RPCGEN?=		rpcgen
