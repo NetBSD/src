@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.8 2000/03/23 06:44:45 thorpej Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.9 2000/04/04 17:20:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ struct tctrl_softc {
 #define TCTRL_STD_DEV		0
 #define TCTRL_APMCTL_DEV	8
 
-static struct tctrl_event_ch = CALLOUT_INITIALIZER;
+static struct callout tctrl_event_ch = CALLOUT_INITIALIZER;
 
 static int tctrl_match __P((struct device *parent, struct cfdata *cf,
 	void *aux));
