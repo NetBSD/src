@@ -1,4 +1,4 @@
-/* $NetBSD: radlib.c,v 1.2 2005/02/20 00:28:20 christos Exp $ */
+/* $NetBSD: radlib.c,v 1.3 2005/02/20 17:06:16 christos Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libradius/radlib.c,v 1.12 2004/06/14 20:55:30 stefanf Exp $");
 #else
-__RCSID("$NetBSD: radlib.c,v 1.2 2005/02/20 00:28:20 christos Exp $");
+__RCSID("$NetBSD: radlib.c,v 1.3 2005/02/20 17:06:16 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -90,13 +90,13 @@ static int	 put_password_attr(struct rad_handle *, int,
 		    const void *, size_t);
 static int	 put_raw_attr(struct rad_handle *, int,
 		    const void *, size_t);
-static int	 split(char *, const char *[], int, char *, size_t);
+static int	 split(char *, const char *[], size_t, char *, size_t);
 
 static void
 clear_password(struct rad_handle *h)
 {
 	if (h->pass_len != 0) {
-		memset(h->pass, 0, h->pass_len);
+		(void)memset(h->pass, 0, h->pass_len);
 		h->pass_len = 0;
 	}
 	h->pass_pos = 0;
@@ -108,7 +108,7 @@ generr(struct rad_handle *h, const char *format, ...)
 	va_list		 ap;
 
 	va_start(ap, format);
-	vsnprintf(h->errmsg, ERRSIZE, format, ap);
+	vsnprintf(h->errmsg, (size_t)ERRSIZE, format, ap);
 	va_end(ap);
 }
 
@@ -118,13 +118,12 @@ insert_scrambled_password(struct rad_handle *h, int srv)
 	MD5_CTX ctx;
 	unsigned char md5[MD5_DIGEST_LENGTH];
 	const struct rad_server *srvp;
-	int padded_len;
-	int pos;
+	size_t padded_len, pos;
 
 	srvp = &h->servers[srv];
-	padded_len = h->pass_len == 0 ? 16 : (h->pass_len+15) & ~0xf;
+	padded_len = h->pass_len == 0 ? (size_t)16 : (h->pass_len+15) & ~0xf;
 
-	memcpy(md5, &h->request[POS_AUTH], LEN_AUTH);
+	(void)memcpy(md5, &h->request[POS_AUTH], (size_t)LEN_AUTH);
 	for (pos = 0;  pos < padded_len;  pos += 16) {
 		int i;
 
@@ -189,7 +188,8 @@ insert_message_authenticator(struct rad_handle *h, int srv)
 		HMAC_Final(&ctx, md, &md_len);
 		HMAC_CTX_cleanup(&ctx);
 		HMAC_cleanup(&ctx);
-		memcpy(&h->request[h->authentic_pos + 2], md, md_len);
+		(void)memcpy(&h->request[h->authentic_pos + 2], md,
+		    (size_t)md_len);
 	}
 #endif
 }
@@ -249,7 +249,7 @@ is_valid_response(struct rad_handle *h, int srv,
 	 */
 	if (h->response[POS_CODE] != RAD_ACCOUNTING_RESPONSE) {
 
-		memcpy(resp, h->response, MSGSIZE);
+		(void)memcpy(resp, h->response, (size_t)MSGSIZE);
 		pos = POS_ATTRS;
 
 		/* Search and verify the Message-Authenticator */
@@ -257,7 +257,8 @@ is_valid_response(struct rad_handle *h, int srv,
 
 			if (h->response[pos] == RAD_MESSAGE_AUTHENTIC) {
 				/* zero fill the Message-Authenticator */
-				memset(&resp[pos + 2], 0, MD5_DIGEST_LENGTH);
+				(void)memset(&resp[pos + 2], 0,
+				    (size_t)MD5_DIGEST_LENGTH);
 
 				HMAC_CTX_init(&hctx);
 				HMAC_Init(&hctx, srvp->secret,
@@ -272,7 +273,7 @@ is_valid_response(struct rad_handle *h, int srv,
 				HMAC_CTX_cleanup(&hctx);
 				HMAC_cleanup(&hctx);
 				if (memcmp(md, &h->response[pos + 2],
-				    MD5_DIGEST_LENGTH) != 0)
+				    (size_t)MD5_DIGEST_LENGTH) != 0)
 					return 0;
 				break;
 			}
@@ -325,7 +326,7 @@ put_raw_attr(struct rad_handle *h, int type, const void *value, size_t len)
 		return -1;
 	}
 	h->request[h->req_len++] = type;
-	h->request[h->req_len++] = len + 2;
+	h->request[h->req_len++] = (unsigned char)(len + 2);
 	(void)memcpy(&h->request[h->req_len], value, len);
 	h->req_len += len;
 	return 0;
@@ -343,7 +344,7 @@ rad_add_server(struct rad_handle *h, const char *host, int port,
 	}
 	srvp = &h->servers[h->num_servers];
 
-	memset(&srvp->addr, 0, sizeof srvp->addr);
+	(void)memset(&srvp->addr, 0, sizeof srvp->addr);
 	srvp->addr.sin_len = sizeof srvp->addr;
 	srvp->addr.sin_family = AF_INET;
 	if (!inet_aton(host, &srvp->addr.sin_addr)) {
@@ -353,7 +354,7 @@ rad_add_server(struct rad_handle *h, const char *host, int port,
 			generr(h, "%s: host not found", host);
 			return -1;
 		}
-		memcpy(&srvp->addr.sin_addr, hent->h_addr,
+		(void)memcpy(&srvp->addr.sin_addr, hent->h_addr,
 		    sizeof srvp->addr.sin_addr);
 	}
 	if (port != 0)
@@ -389,7 +390,7 @@ rad_close(struct rad_handle *h)
 	if (h->fd != -1)
 		close(h->fd);
 	for (srv = 0;  srv < h->num_servers;  srv++) {
-		memset(h->servers[srv].secret, 0,
+		(void)memset(h->servers[srv].secret, 0,
 		    strlen(h->servers[srv].secret));
 		free(h->servers[srv].secret);
 	}
@@ -413,8 +414,8 @@ rad_config(struct rad_handle *h, const char *path)
 	}
 	retval = 0;
 	linenum = 0;
-	while (fgets(buf, sizeof buf, fp) != NULL) {
-		int len;
+	while (fgets(buf, (int)sizeof buf, fp) != NULL) {
+		size_t len;
 		const char *fields[5];
 		int nfields;
 		char msg[ERRSIZE];
@@ -430,7 +431,7 @@ rad_config(struct rad_handle *h, const char *path)
 		unsigned long timeout;
 		unsigned long maxtries;
 		int port;
-		int i;
+		size_t i;
 
 		linenum++;
 		len = strlen(buf);
@@ -498,7 +499,7 @@ rad_config(struct rad_handle *h, const char *path)
 		host = strsep(&res, ":");
 		port_str = strsep(&res, ":");
 		if (port_str != NULL) {
-			port = strtoul(port_str, &end, 10);
+			port = (int)strtoul(port_str, &end, 10);
 			if (*end != '\0') {
 				generr(h, "%s:%d: invalid port", path,
 				    linenum);
@@ -537,7 +538,7 @@ rad_config(struct rad_handle *h, const char *path)
 		}
 	}
 	/* Clear out the buffer to wipe a possible copy of a shared secret */
-	memset(buf, 0, sizeof buf);
+	(void)memset(buf, 0, sizeof buf);
 	fclose(fp);
 	return retval;
 }
@@ -554,7 +555,7 @@ int
 rad_continue_send_request(struct rad_handle *h, int selected, int *fd,
                           struct timeval *tv)
 {
-	int n;
+	ssize_t n;
 
 	if (selected) {
 		struct sockaddr_in from;
@@ -562,9 +563,8 @@ rad_continue_send_request(struct rad_handle *h, int selected, int *fd,
 		ssize_t rv;
 
 		fromlen = sizeof from;
-		rv = recvfrom(h->fd, h->response,
-		    MSGSIZE, MSG_WAITALL, (struct sockaddr *)(void *)&from,
-		    &fromlen);
+		rv = recvfrom(h->fd, h->response, (size_t)MSGSIZE,
+		    MSG_WAITALL, (struct sockaddr *)(void *)&from, &fromlen);
 		if (rv == -1) {
 			generr(h, "recvfrom: %s", strerror(errno));
 			return -1;
@@ -606,7 +606,7 @@ rad_continue_send_request(struct rad_handle *h, int selected, int *fd,
 	n = sendto(h->fd, h->request, h->req_len, 0,
 	    (const struct sockaddr *)(void *)&h->servers[h->srv].addr,
 	    (socklen_t)sizeof h->servers[h->srv].addr);
-	if (n != h->req_len) {
+	if (n != (ssize_t)h->req_len) {
 		if (n == -1)
 			generr(h, "sendto: %s", strerror(errno));
 		else
@@ -648,7 +648,7 @@ rad_cvt_addr(const void *data)
 {
 	struct in_addr value;
 
-	memcpy(&value.s_addr, data, sizeof value.s_addr);
+	(void)memcpy(&value.s_addr, data, sizeof value.s_addr);
 	return value;
 }
 
@@ -657,7 +657,7 @@ rad_cvt_int(const void *data)
 {
 	u_int32_t value;
 
-	memcpy(&value, data, sizeof value);
+	(void)memcpy(&value, data, sizeof value);
 	return ntohl(value);
 }
 
@@ -668,7 +668,7 @@ rad_cvt_string(const void *data, size_t len)
 
 	s = malloc(len + 1);
 	if (s != NULL) {
-		memcpy(s, data, len);
+		(void)memcpy(s, data, len);
 		s[len] = '\0';
 	}
 	return s;
@@ -716,13 +716,13 @@ rad_init_send_request(struct rad_handle *h, int *fd, struct timeval *tv)
 			generr(h, "Cannot create socket: %s", strerror(errno));
 			return -1;
 		}
-		memset(&saddr, 0, sizeof saddr);
+		(void)memset(&saddr, 0, sizeof saddr);
 		saddr.sin_len = sizeof saddr;
 		saddr.sin_family = AF_INET;
 		saddr.sin_addr.s_addr = INADDR_ANY;
 		saddr.sin_port = htons(0);
 		if (bind(h->fd, (const struct sockaddr *)(void *)&saddr,
-		    sizeof saddr) == -1) {
+		    (socklen_t)sizeof saddr) == -1) {
 			generr(h, "bind: %s", strerror(errno));
 			close(h->fd);
 			h->fd = -1;
@@ -754,8 +754,8 @@ rad_init_send_request(struct rad_handle *h, int *fd, struct timeval *tv)
 	}
 
 	/* Fill in the length field in the message */
-	h->request[POS_LENGTH] = h->req_len >> 8;
-	h->request[POS_LENGTH+1] = h->req_len;
+	h->request[POS_LENGTH] = (unsigned char)(h->req_len >> 8);
+	h->request[POS_LENGTH+1] = (unsigned char)h->req_len;
 
 	/*
 	 * Count the total number of tries we will make, and zero the
@@ -793,7 +793,7 @@ rad_auth_open(void)
 		h->num_servers = 0;
 		h->ident = random();
 		h->errmsg[0] = '\0';
-		memset(h->pass, 0, sizeof h->pass);
+		(void)memset(h->pass, 0, sizeof h->pass);
 		h->pass_len = 0;
 		h->pass_pos = 0;
 		h->chap_pass = 0;
@@ -902,7 +902,7 @@ rad_put_message_authentic(struct rad_handle *h)
 
 	if (h->authentic_pos == 0) {
 		h->authentic_pos = h->req_len;
-		memset(md_zero, 0, sizeof(md_zero));
+		(void)memset(md_zero, 0, sizeof(md_zero));
 		return (put_raw_attr(h, RAD_MESSAGE_AUTHENTIC, md_zero,
 		    sizeof(md_zero)));
 	}
@@ -986,7 +986,8 @@ rad_strerror(struct rad_handle *h)
  * On a syntax error, places a message in the msg string, and returns -1.
  */
 static int
-split(char *str, const char *fields[], int maxfields, char *msg, size_t msglen)
+split(char *str, const char *fields[], size_t maxfields, char *msg,
+    size_t msglen)
 {
 	char *p;
 	int i;
@@ -1090,8 +1091,8 @@ rad_put_vendor_attr(struct rad_handle *h, int vendor, int type,
 
 	attr->vendor_value = htonl((uint32_t)vendor);
 	attr->attrib_type = type;
-	attr->attrib_len = len + 2;
-	memcpy(attr->attrib_data, value, len);
+	attr->attrib_len = (unsigned char)(len + 2);
+	(void)memcpy(attr->attrib_data, value, len);
 
 	res = put_raw_attr(h, RAD_VENDOR_SPECIFIC, attr, len + 6);
 	free(attr);
@@ -1124,7 +1125,7 @@ rad_request_authenticator(struct rad_handle *h, char *buf, size_t len)
 {
 	if (len < LEN_AUTH)
 		return (-1);
-	memcpy(buf, h->request + POS_AUTH, LEN_AUTH);
+	(void)memcpy(buf, h->request + POS_AUTH, (size_t)LEN_AUTH);
 	if (len > LEN_AUTH)
 		buf[LEN_AUTH] = '\0';
 	return (LEN_AUTH);
@@ -1259,7 +1260,7 @@ rad_demangle_mppe_key(struct rad_handle *h, const void *mangled,
 	if (!demangled)
 		return NULL;
 
-	memcpy(demangled, P + 1, *len);
+	(void)memcpy(demangled, P + 1, *len);
 	return demangled;
 }
 
