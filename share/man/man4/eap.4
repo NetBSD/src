@@ -1,4 +1,4 @@
-.\" $NetBSD: eap.4,v 1.12 2001/10/28 16:28:39 jdolecek Exp $
+.\" $NetBSD: eap.4,v 1.13 2002/11/04 16:37:04 pooka Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,6 +44,7 @@
 .Cd "eap*   at pci? dev ? function ?"
 .Cd "audio* at eap?"
 .Cd "midi*  at eap?"
+.Cd "options EAP_USE_BOTH_DACS"
 .Sh DESCRIPTION
 The
 .Nm
@@ -59,7 +60,3 @@ The
 .Nm
 device driver appeared in
 .Nx 1.4 .
-.Sh BUGS
-The
-.Dq FM
-DAC is not supported.
