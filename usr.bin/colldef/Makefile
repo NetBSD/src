@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1.2.1 2000/05/28 22:41:25 minoura Exp $
+# $Id: Makefile,v 1.1.2.2 2000/05/29 14:57:27 minoura Exp $
 
 PROG = colldef
 LFLAGS = -8 -i
@@ -10,5 +10,6 @@ SRCS = parse.y scan.l
 LDADD = -ll
 DPADD = ${LIBL}
 YACC= yacc -d
+CLEANFILES+=	y.tab.h
 
 .include <bsd.prog.mk>
