@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.6 1999/12/22 18:57:12 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7 2000/08/20 07:04:59 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,7 +43,7 @@ static int (*openfirmware) __P((void *));
 static void startup __P((void *, int, int (*)(void *), char *, int));
 static void setup __P((void));
 
-static int stack[4096/4];
+static int stack[8192/4 + 4];
 
 #ifdef XCOFF_GLUE
 asm("
@@ -71,7 +71,7 @@ _start:
 
 	lis	1,stack@ha
 	addi	1,1,stack@l
-	addi	1,1,4096
+	addi	1,1,8192
 
 	mfmsr	8
 	li	0,0
