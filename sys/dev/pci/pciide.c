@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.36 1999/05/03 07:44:47 ross Exp $	*/
+/*	$NetBSD: pciide.c,v 1.37 1999/05/05 15:24:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -1682,18 +1682,24 @@ apollo_setup_channel(chp)
 			if (drvp->PIO_mode <= (drvp->DMA_mode +2))
 				mode = drvp->PIO_mode;
 			else
-				mode = drvp->DMA_mode;
+				mode = drvp->DMA_mode + 2;
 		}
 		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 
 pio:		/* setup PIO mode */
+		if (mode <= 2) {
+			drvp->DMA_mode = 0;
+			drvp->PIO_mode = 0;
+			mode = 0;
+		} else {
+			drvp->PIO_mode = mode;
+			drvp->DMA_mode = mode - 2;
+		}
 		datatim_reg |=
 		    APO_DATATIM_PULSE(chp->channel, drive,
 			apollo_pio_set[mode]) |
 		    APO_DATATIM_RECOV(chp->channel, drive,
 			apollo_pio_rec[mode]);
-		drvp->PIO_mode = mode;
-		drvp->DMA_mode = mode - 2;
 	}
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
