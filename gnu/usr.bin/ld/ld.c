@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.40 1995/01/29 14:47:06 pk Exp $
+ *	$Id: ld.c,v 1.41 1995/06/04 21:56:22 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -683,6 +683,10 @@ decode_option(swt, arg)
 
 	case 'L':
 		add_search_dir(arg);
+		if (link_mode & DYNAMIC)
+			rrs_search_paths = (rrs_search_paths == NULL)
+				? strdup(arg)
+				: concat(rrs_search_paths, ":", arg);
 		return;
 
 	case 'M':
@@ -2566,7 +2570,7 @@ write_header()
 	}
 
 	md_swapout_exec_hdr(&outheader);
-	mywrite(&outheader, sizeof (struct exec), 1, outstream);
+	mywrite(&outheader, 1, sizeof(struct exec), outstream);
 	md_swapin_exec_hdr(&outheader);
 
 	/*
@@ -2634,7 +2638,7 @@ copy_text(entry)
 			    entry->textrel, entry->ntextrel, entry, 0);
 
 	/* Write the relocated text to the output file.  */
-	mywrite(bytes, 1, entry->header.a_text, outstream);
+	mywrite(bytes, entry->header.a_text, 1, outstream);
 }
 
 /*
@@ -2705,7 +2709,7 @@ copy_data(entry)
 	perform_relocation(bytes, entry->header.a_data,
 			   entry->datarel, entry->ndatarel, entry, 1);
 
-	mywrite(bytes, 1, entry->header.a_data, outstream);
+	mywrite(bytes, entry->header.a_data, 1, outstream);
 }
 
 /*
@@ -3252,7 +3256,7 @@ write_string_table()
 		err(1, "write_string_table: %s: fseek", output_filename);
 
 	for (i = 0; i < strtab_index; i++) {
-		mywrite(strtab_vector[i], 1, strtab_lens[i], outstream);
+		mywrite(strtab_vector[i], strtab_lens[i], 1, outstream);
 		strtab_len += strtab_lens[i];
 	}
 }
@@ -3517,7 +3521,7 @@ printf("writesym(#%d): %s, type %x\n", syms_written, sp->name, sp->defined);
 	if (fseek(outstream, strtab_offset, SEEK_SET) != 0)
 		err(1, "write_syms: fseek");
 	strtab_size = md_swap_long(strtab_size);
-	mywrite(&strtab_size, sizeof(int), 1, outstream);
+	mywrite(&strtab_size, 1, sizeof(int), outstream);
 }
 
 

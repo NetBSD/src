@@ -27,28 +27,29 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: shlib.c,v 1.10 1994/06/10 15:16:15 pk Exp $
+ *	$Id: shlib.c,v 1.11 1995/06/04 21:56:30 pk Exp $
  */
 
+#ifdef sun
+char	*strsep();
+int	isdigit();
+#endif
+
 #include <sys/param.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
-#include <err.h>
-#include <fcntl.h>
-#include <string.h>
+#include <a.out.h>
 #include <ctype.h>
 #include <dirent.h>
-#include <a.out.h>
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "ld.h"
-
-#ifdef SUNOS4
-char	*strsep();
-#endif
 
 /*
  * Standard directories to search for files specified by -l.
@@ -59,7 +60,7 @@ char	*strsep();
 
 /*
  * Actual vector of library search directories,
- * including `-L'ed and LD_LIBARAY_PATH spec'd ones.
+ * including `-L'ed and LD_LIBRARY_PATH spec'd ones.
  */
 char	 **search_dirs;
 int	n_search_dirs;
@@ -75,25 +76,57 @@ add_search_dir(name)
 {
 	n_search_dirs++;
 	search_dirs = (char **)
-		xrealloc(search_dirs, n_search_dirs * sizeof(char *));
+		xrealloc(search_dirs, n_search_dirs * sizeof search_dirs[0]);
 	search_dirs[n_search_dirs - 1] = strdup(name);
+}
+
+void
+remove_search_dir(name)
+	char	*name;
+{
+	int	n;
+
+	for (n = 0; n < n_search_dirs; n++) {
+		if (strcmp(search_dirs[n], name))
+			continue;
+		free(search_dirs[n]);
+		if (n < (n_search_dirs - 1))
+			bcopy(&search_dirs[n+1], &search_dirs[n],
+			      (n_search_dirs - n - 1) * sizeof search_dirs[0]);
+		n_search_dirs--;
+	}
 }
 
 void
 add_search_path(path)
 char	*path;
 {
-	register char	*cp;
+	register char	*cp, *dup;
 
 	if (path == NULL)
 		return;
 
-	/* Add search directories from `paths' */
-	while ((cp = strsep(&path, ":")) != NULL) {
+	/* Add search directories from `path' */
+	path = dup = strdup(path);
+	while ((cp = strsep(&path, ":")) != NULL)
 		add_search_dir(cp);
-		if (path)
-			*(path-1) = ':';
-	}
+	free(dup);
+}
+
+void
+remove_search_path(path)
+char	*path;
+{
+	register char	*cp, *dup;
+
+	if (path == NULL)
+		return;
+
+	/* Remove search directories from `path' */
+	path = dup = strdup(path);
+	while ((cp = strsep(&path, ":")) != NULL)
+		remove_search_dir(cp);
+	free(dup);
 }
 
 void
@@ -125,7 +158,11 @@ char	*cp;
 			break;
 
 		if (*cp == '.') cp++;
+#ifdef SUNOS_LIB_COMPAT
+		if (!(isdigit)(*cp))
+#else
 		if (!isdigit(*cp))
+#endif
 			return 0;
 
 		dewey[n++] = strtol(cp, &cp, 10);

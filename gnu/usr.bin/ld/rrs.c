@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rrs.c,v 1.15 1994/12/23 20:32:59 pk Exp $
+ *	$Id: rrs.c,v 1.16 1995/06/04 21:56:28 pk Exp $
  */
 
 #include <sys/param.h>
@@ -59,6 +59,8 @@ static struct nzlist		*rrs_symbols;		/* RRS symbol table */
 static char			*rrs_strtab;		/* RRS strings */
 static struct rrs_hash		*rrs_hashtab;		/* RT hash table */
 static struct shobj		*rrs_shobjs;
+char				*rrs_search_paths;	/* `-L' RT search */
+static int			rrs_search_paths_size;
 
 static int	reserved_rrs_relocs;
 static int	claimed_rrs_relocs;
@@ -816,6 +818,11 @@ consider_rrs_section_lengths()
 	rrs_text_size = reserved_rrs_relocs * sizeof(struct relocation_info);
 	rrs_text_size += number_of_rrs_hash_entries * sizeof(struct rrs_hash);
 	rrs_text_size += number_of_rrs_symbols * rrs_symbol_size;
+	rrs_search_paths_size = rrs_search_paths
+					? strlen(rrs_search_paths) + 1
+					: 0;
+	rrs_search_paths_size = MALIGN(rrs_search_paths_size);
+	rrs_text_size += rrs_search_paths_size;
 
 	/* Align strings size */
 	rrs_strtab_size = MALIGN(rrs_strtab_size);
@@ -905,13 +912,16 @@ relocate_rrs_addresses()
 			number_of_rrs_hash_entries * sizeof(struct rrs_hash);
 	rrs_sdt.sdt_strings = rrs_sdt.sdt_nzlist +
 			number_of_rrs_symbols * rrs_symbol_size;
+	rrs_sdt.sdt_paths = rrs_search_paths
+				? rrs_sdt.sdt_strings + rrs_strtab_size
+				: 0;
+	rrs_sdt.sdt_sods = rrs_shobjs
+				? rrs_sdt.sdt_paths+rrs_search_paths_size
+				: 0;
+	rrs_sdt.sdt_filler2 = 0;
 	rrs_sdt.sdt_str_sz = rrs_strtab_size;
 	rrs_sdt.sdt_text_sz = text_size;
 	rrs_sdt.sdt_plt_sz = number_of_jmpslots * sizeof(jmpslot_t);
-
-	rrs_sdt.sdt_sods = rrs_shobjs ? rrs_sdt.sdt_strings+rrs_strtab_size : 0;
-	rrs_sdt.sdt_filler1 = 0;
-	rrs_sdt.sdt_filler2 = 0;
 
 	/*
 	 * Assign addresses to _GLOBAL_OFFSET_TABLE_ and __DYNAMIC.
@@ -1162,6 +1172,9 @@ write_rrs_text()
 
 	/* Write the strings */
 	mywrite(rrs_strtab, rrs_strtab_size, 1, outstream);
+
+	/* Write RT search path */
+	mywrite(rrs_search_paths, rrs_search_paths_size, 1, outstream);
 
 	/*
 	 * Write the names of the shared objects needed at run-time
