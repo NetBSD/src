@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.43 2004/04/29 02:29:24 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.44 2004/05/18 16:08:33 jmmv Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -64,6 +64,7 @@ FLOPS	floating [point] operations per second
 FPM	fast page mode
 FQDN	fully qualified domain name
 FTP	file transfer protocol
+GC	garbage collector
 GIF	graphics interchange format
 GNU	gnu's not unix
 GPL	gnu/general public license
