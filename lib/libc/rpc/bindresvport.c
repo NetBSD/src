@@ -1,4 +1,4 @@
-/*	$NetBSD: bindresvport.c,v 1.18 2000/06/02 23:11:07 fvdl Exp $	*/
+/*	$NetBSD: bindresvport.c,v 1.19 2000/07/06 03:03:59 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)bindresvport.c 1.8 88/02/08 SMI";
 static char *sccsid = "@(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: bindresvport.c,v 1.18 2000/06/02 23:11:07 fvdl Exp $");
+__RCSID("$NetBSD: bindresvport.c,v 1.19 2000/07/06 03:03:59 christos Exp $");
 #endif
 #endif
 
@@ -69,7 +69,7 @@ bindresvport(sd, sin)
 	int sd;
 	struct sockaddr_in *sin;
 {
-	return bindresvport_sa(sd, (struct sockaddr *)sin);
+	return bindresvport_sa(sd, (struct sockaddr *)(void *)sin);
 }
 
 /*
@@ -93,7 +93,7 @@ bindresvport_sa(sd, sa)
 
 	if (sa == NULL) {
 		salen = sizeof(myaddr);
-		sa = (struct sockaddr *)&myaddr;
+		sa = (struct sockaddr *)(void *)&myaddr;
 
 		if (getsockname(sd, sa, &salen) == -1)
 			return -1;	/* errno is correctly set */
@@ -108,7 +108,7 @@ bindresvport_sa(sd, sa)
 		proto = IPPROTO_IP;
 		portrange = IP_PORTRANGE;
 		portlow = IP_PORTRANGE_LOW;
-		sin = (struct sockaddr_in *)sa;
+		sin = (struct sockaddr_in *)(void *)sa;
 		salen = sizeof(struct sockaddr_in);
 		portp = &sin->sin_port;
 		break;
@@ -117,7 +117,7 @@ bindresvport_sa(sd, sa)
 		proto = IPPROTO_IPV6;
 		portrange = IPV6_PORTRANGE;
 		portlow = IPV6_PORTRANGE_LOW;
-		sin6 = (struct sockaddr_in6 *)sa;
+		sin6 = (struct sockaddr_in6 *)(void *)sa;
 		salen = sizeof(struct sockaddr_in6);
 		portp = &sin6->sin6_port;
 		break;
@@ -153,7 +153,7 @@ bindresvport_sa(sd, sa)
 			return (error);
 		}
 
-		if (sa != (struct sockaddr *)&myaddr) {
+		if (sa != (struct sockaddr *)(void *)&myaddr) {
 			/* What did the kernel assign? */
 			if (getsockname(sd, sa, &salen) < 0)
 				errno = saved_errno;
