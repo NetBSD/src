@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.33 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.34 2000/04/15 23:37:30 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -448,6 +448,7 @@ int attron(int attr);
 int attroff(int attr);
 int attrset(int attr);
 int waddbytes(WINDOW *win, const char *bytes, int count);
+int waddstr(WINDOW *win, const char *s);
 
 /* Standard screen plus movement functions. */
 int mvaddbytes(int y, int x, const char *bytes, int count);
@@ -471,10 +472,9 @@ int mvwgetstr(WINDOW *win, int y, int x, char *str);
 chtype mvwinch(WINDOW *win, int y, int x);
 int mvwinsch(WINDOW *win, int y, int x, chtype ch);
 
-#define	getyx(w, y, x)		(y) = getcury(w), (x) = getcurx(w)
-
 #endif /* _CURSES_USE_MACROS */
 
+#define	getyx(w, y, x)		(y) = getcury(w), (x) = getcurx(w)
 #define	getbegyx(w, y, x)	(y) = getbegy(w), (x) = getbegx(w)
 #define	getmaxyx(w, y, x)	(y) = getmaxy(w), (x) = getmaxx(w)
 
