@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.454 2002/07/10 19:08:43 thorpej Exp $
+#	$NetBSD: mi,v 1.455 2002/07/14 04:08:42 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3363,7 +3363,7 @@
 ./usr/share/man/cat9/simple_lock_freecheck.0	comp-sys-catman
 ./usr/share/man/cat9/simple_lock_init.0	comp-sys-catman
 ./usr/share/man/cat9/simple_lock_try.0	comp-sys-catman
-./usr/share/man/cat9/simple_lock_unlock.0	comp-sys-catman
+./usr/share/man/cat9/simple_unlock.0	comp-sys-catman
 ./usr/share/man/cat9/sleep.0		comp-sys-catman
 ./usr/share/man/cat9/snprintf.0		comp-sys-catman
 ./usr/share/man/cat9/softintr.0		comp-sys-catman
@@ -5924,7 +5924,7 @@
 ./usr/share/man/man9/simple_lock_freecheck.9	comp-sys-man
 ./usr/share/man/man9/simple_lock_init.9	comp-sys-man
 ./usr/share/man/man9/simple_lock_try.9	comp-sys-man
-./usr/share/man/man9/simple_lock_unlock.9	comp-sys-man
+./usr/share/man/man9/simple_unlock.9	comp-sys-man
 ./usr/share/man/man9/sleep.9		comp-sys-man
 ./usr/share/man/man9/snprintf.9		comp-sys-man
 ./usr/share/man/man9/softintr.9		comp-sys-man
