@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.bigram.c,v 1.5 1995/09/01 23:48:13 thorpej Exp $	*/
+/*	$NetBSD: locate.bigram.c,v 1.6 1997/10/19 04:11:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)locate.bigram.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: locate.bigram.c,v 1.5 1995/09/01 23:48:13 thorpej Exp $";
+__RCSID("$NetBSD: locate.bigram.c,v 1.6 1997/10/19 04:11:52 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -62,10 +62,15 @@ static char rcsid[] = "$NetBSD: locate.bigram.c,v 1.5 1995/09/01 23:48:13 thorpe
 char buf1[MAXPATHLEN] = " ";	
 char buf2[MAXPATHLEN];
 
-main ( )
+int	main __P((int, char **));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-  	register char *cp;
-	register char *oldpath = buf1, *path = buf2;
+  	char *cp;
+	char *oldpath = buf1, *path = buf2;
 
      	while ( fgets ( path, sizeof(buf2), stdin ) != NULL ) {
 
