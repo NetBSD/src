@@ -26,7 +26,7 @@ char    copyright[] =
 
 #ifndef lint
 static char rcsid[] =
-"@(#) $Id: rarpd.c,v 1.4 1994/03/01 06:46:42 cgd Exp $";
+"@(#) $Id: rarpd.c,v 1.5 1994/03/30 02:32:50 cgd Exp $";
 #endif
 
 
@@ -422,7 +422,7 @@ rarp_loop()
 			 * lseek() to 0 will fix things. */
 			if (cc < 0) {
 				if (errno == EINVAL &&
-				    (long) (lseek(fd, 0L, SEEK_CUR) + bufsize) < 0) {
+				    (lseek(fd, 0, SEEK_CUR) + bufsize) < 0) {
 					(void) lseek(fd, 0, 0);
 					goto again;
 				}

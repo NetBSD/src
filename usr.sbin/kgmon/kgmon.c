@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kgmon.c	5.12 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: kgmon.c,v 1.2 1993/08/01 17:59:25 mycroft Exp $";
+static char rcsid[] = "$Id: kgmon.c,v 1.3 1994/03/30 02:32:15 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -61,7 +61,7 @@ static char rcsid[] = "$Id: kgmon.c,v 1.2 1993/08/01 17:59:25 mycroft Exp $";
 #define	PROFILING_OFF	3
 
 u_long	s_textsize;
-off_t	sbuf, klseek(), lseek();
+off_t	sbuf, klseek __P((int, off_t, int));
 int	ssiz;
 
 struct nlist nl[] = {
@@ -322,7 +322,7 @@ resetstate()
 turnonoff(onoff)
 	int onoff;
 {
-	(void)klseek(kmem, (long)nl[N_PROFILING].n_value, L_SET);
+	(void)klseek(kmem, (off_t)nl[N_PROFILING].n_value, L_SET);
 	(void)write(kmem, (char *)&onoff, sizeof (onoff));
 }
 
