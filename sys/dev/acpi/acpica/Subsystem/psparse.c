@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psparse - Parser top level AML parse routines
- *              $Revision: 1.7 $
+ *              xRevision: 142 $
  *
  *****************************************************************************/
 
@@ -123,6 +123,9 @@
  * fairly compact by parsing based on a list of AML opcode
  * templates in AmlOpInfo[]
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.8 2003/11/09 11:51:01 kochi Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
