@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.72 2002/10/09 13:28:48 augustss Exp $	*/
+/*	$NetBSD: defs.h,v 1.73 2002/12/05 01:17:15 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -121,7 +121,7 @@ EXTERN const char *shellpath;
 
 EXTERN int logging;
 EXTERN int scripting;
-EXTERN FILE *log;
+EXTERN FILE *logfp;
 EXTERN FILE *script;
 
 /* Hardware variables */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.28 2002/08/13 03:58:56 mrg Exp $ */
+/*	$NetBSD: mbr.c,v 1.29 2002/12/05 01:17:16 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -208,7 +208,7 @@ edit_mbr(partition)
 			process_menu(MENU_noyes);
 			if (!yesno) {
 				if (logging)
-					(void)fprintf(log, "User answered no to destroy other data, aborting.\n");
+					(void)fprintf(logfp, "User answered no to destroy other data, aborting.\n");
 				return 0;
 			}
 		}

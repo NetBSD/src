@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.35 2001/09/13 18:07:26 jdolecek Exp $	*/
+/*	$NetBSD: run.c,v 1.36 2002/12/05 01:17:17 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,7 +96,7 @@ do_logging(void)
 	if (menu_no < 0) {
 		(void)fprintf(stderr, "Dynamic menu creation failed.\n");
 		if (logging)
-			(void)fprintf(log, "Dynamic menu creation failed.\n");
+			(void)fprintf(logfp, "Dynamic menu creation failed.\n");
 		exit(EXIT_FAILURE);
 	}
 	process_menu(menu_no);
@@ -112,16 +112,17 @@ log_flip(menudesc *m)
 	if (logging == 1) {
 		sprintf(log_text[0], "Logging: Off");
 		logging = 0;
-		fprintf(log, "Log ended at: %s\n", asctime(localtime(&tloc)));
-		fflush(log);
-		fclose(log);
+		fprintf(logfp, "Log ended at: %s\n", asctime(localtime(&tloc)));
+		fflush(logfp);
+		fclose(logfp);
 	} else {
-		log = fopen("sysinst.log", "a");
-		if (log != NULL) {
+		logfp = fopen("sysinst.log", "a");
+		if (logfp != NULL) {
 			sprintf(log_text[0], "Logging: On");
 			logging = 1;
-			fprintf(log, "Log started at: %s\n", asctime(localtime(&tloc)));
-			fflush(log);		
+			fprintf(logfp,
+			    "Log started at: %s\n", asctime(localtime(&tloc)));
+			fflush(logfp);		
 		} else {
 			msg_display(MSG_openfail, "log file", strerror(errno));
 		}
@@ -337,9 +338,9 @@ launch_subwin(actionwin, args, win, flags, errstr)
 		(void)tcsetattr(slave, TCSANOW, &rtt);
 		login_tty(slave);
 		if (logging) {
-			fprintf(log, "executing: %s\n", command);
-			fflush(log);
-			fclose(log);
+			fprintf(logfp, "executing: %s\n", command);
+			fflush(logfp);
+			fclose(logfp);
 		}
 		if (scripting) {
 			fprintf(script, "%s\n", command);
@@ -376,7 +377,7 @@ launch_subwin(actionwin, args, win, flags, errstr)
 		if (selectfailed) {
 			char *msg = "select(2) failed but no child died?";
 			if(logging)
-				(void)fprintf(log, msg);
+				(void)fprintf(logfp, msg);
 			errx(1, msg);
 		}
 		read_fd_set = active_fd_set;
@@ -385,7 +386,8 @@ launch_subwin(actionwin, args, win, flags, errstr)
 				goto loop;
 			perror("select");
 			if (logging)
-				(void)fprintf(log, "select failure: %s\n", strerror(errno));
+				(void)fprintf(logfp,
+				    "select failure: %s\n", strerror(errno));
 			++selectfailed;
 		} else for (i = 0; i < FD_SETSIZE; ++i) {
 			if (FD_ISSET (i, &read_fd_set)) {
@@ -426,14 +428,14 @@ launch_subwin(actionwin, args, win, flags, errstr)
 							break;
 						}
 						if (logging)
-							putc(ibuf[j], log);
+							putc(ibuf[j], logfp);
 					}
 				}
 enddisp:
 				if ((flags & RUN_DISPLAY) != 0)
 					wrefresh(actionwin);
 				if (logging)
-					fflush(log);
+					fflush(logfp);
 			}
 		}
 loop:
@@ -445,7 +447,7 @@ loop:
 	close(master);
 	close(slave);
 	if (logging)
-		fflush(log);
+		fflush(logfp);
 
 	/* from here on out, we take tty signals ourselves */
 	ttysig_forward = 0;
