@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.23 1995/08/18 10:43:46 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.24 1995/09/06 12:35:38 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -353,7 +353,7 @@ espattach(parent, self, aux)
 	 * will not set up the defaults correctly.
 	 */
 	sc->sc_cfg1 = sc->sc_id | ESPCFG1_PARENB;
-	sc->sc_cfg2 = ESPCFG2_SCSI2 | ESPCFG2_RSVD;
+	sc->sc_cfg2 = ESPCFG2_SCSI2 | ESPCFG2_RPE;
 	sc->sc_cfg3 = ESPCFG3_CDB;
 	sc->sc_reg[ESP_CFG2] = sc->sc_cfg2;
 
