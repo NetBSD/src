@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2004/06/21 18:20:08 jmc Exp $
+#	$NetBSD: Makefile,v 1.19 2004/08/24 21:32:12 gavan Exp $
 #
 
 .include <bsd.own.mk>
@@ -19,13 +19,14 @@ all: ${ARCHIVE}
 release: check_RELEASEDIR .WAIT ${ARCHIVE}
 	${RELEASE_INSTALL} splug.bas ${RELEASEDIR}/${MACHINE}/installation/misc
 	${RELEASE_INSTALL} ${DISTRIBDIR}/notes/acorn32/prep.RISCOS \
-		    ${RELEASEDIR}/${MACHINE}/
+	    ${RELEASEDIR}/${MACHINE}/
 	${RELEASE_INSTALL} ${ARCHIVE} \
 	    ${RELEASEDIR}/${MACHINE}/installation/misc/
 
 ${ARCHIVE}: tmp/BtNetBSD
-	export TOOL_SPARKCRC=${TOOL_SPARKCRC}; cd tmp/BtNetBSD && \
-	${HOST_SH} ${.CURDIR}/../mksparkive.sh * > ${.OBJDIR}/${ARCHIVE}
+	export TOOL_SPARKCRC=${TOOL_SPARKCRC} TOOL_STAT=${TOOL_STAT}; \
+	    cd tmp/BtNetBSD && \
+	    ${HOST_SH} ${.CURDIR}/../mksparkive.sh * > ${.OBJDIR}/${ARCHIVE}
 
 UUDECODE_FILES=unixfs_res Sprite banner pling.Sprites pling.Sprites22 MemFix
 UUDECODE_FILES+=splug.bas
