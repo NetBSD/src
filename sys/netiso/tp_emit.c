@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.19 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.20 2004/04/21 23:19:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,7 +72,9 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.19 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.20 2004/04/21 23:19:49 matt Exp $");
+
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1067,7 +1069,7 @@ tp_error_emit(
 		lcp->lcd_flags |= X25_DG_CIRCUIT;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			printf("OUTPUT: dutype 0x%x channel 0x%x\n",
+			printf("OUTPUT: dutype %#x channel %p\n",
 			       dutype, cons_channel);
 		}
 #endif
