@@ -4,7 +4,7 @@
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
+ * contributed to Berkeley. Modified by Ralph Campbell for mips.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sparc.h	8.1 (Berkeley) 6/6/93
+ *	@(#)mips.h	8.1 (Berkeley) 6/6/93
+ *
+ * From: @(#)sparc.h	5.1 (Berkeley) 7/8/92
  */
 
 /*
