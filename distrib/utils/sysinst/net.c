@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.98 2003/11/15 12:53:34 sekiya Exp $	*/
+/*	$NetBSD: net.c,v 1.99 2003/11/19 00:16:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -731,21 +731,21 @@ again:
 
 #ifdef INET6
 	if (v6config && network_up) {
-		network_up = !run_prog(0, NULL,
+		network_up = !run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
 		    "/sbin/ping6 -v -c 3 -n -I %s ff02::2", net_dev);
 
 		if (net_namesvr6[0] != '\0')
-			network_up = !run_prog(RUN_DISPLAY, NULL,
+			network_up = !run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
 			    "/sbin/ping6 -v -c 3 -n %s", net_namesvr6);
 	}
 #endif
 
 	if (net_namesvr[0] != '\0' && network_up)
-		network_up = !run_prog(0, NULL,
+		network_up = !run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
 		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_namesvr);
 
 	if (net_defroute[0] != '\0' && network_up)
-		network_up = !run_prog(0, NULL,
+		network_up = !run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
 		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_defroute);
 	fflush(NULL);
 
