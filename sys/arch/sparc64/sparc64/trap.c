@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 2000/07/02 12:39:01 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.49 2000/07/13 06:30:16 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -90,7 +90,6 @@
 #endif
 
 #include <sparc/fpu/fpu_extern.h>
-#include <sparc64/sparc64/memreg.h>
 #include <sparc64/sparc64/cache.h>
 
 #ifndef offsetof
