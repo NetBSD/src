@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.19 1998/02/16 20:58:30 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.20 1998/05/08 16:55:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -450,7 +450,7 @@ hpux_sendsig(catcher, sig, mask, code)
 	fsize = sizeof(struct hpuxsigframe);
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct hpuxsigframe *)(psp->ps_sigstk.ss_sp +
+		fp = (struct hpuxsigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 		    psp->ps_sigstk.ss_size - fsize);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
