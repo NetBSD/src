@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.49 1995/01/16 21:31:34 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.50 1995/01/23 18:17:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -238,14 +238,14 @@ cdopen(dev, flag, fmt)
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE))
 			goto bad3;
 
-		if ((error = scsi_start_and_wait(sc_link, 30, 0)) == EIO)
-			goto bad3;
-
 		sc_link->flags |= SDEV_OPEN;	/* unit attn errors are now errors */
 
 		/* Lock the pack in. */
 		scsi_prevent(sc_link, PR_PREVENT,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
+
+		if ((error = scsi_start_and_wait(sc_link, 30, 0)) == EIO)
+			goto bad;
 
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			sc_link->flags |= SDEV_MEDIA_LOADED;
