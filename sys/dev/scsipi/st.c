@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.106 1998/11/20 00:35:40 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.107 1998/12/08 00:19:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -723,6 +723,8 @@ stclose(dev, flags, mode, p)
 		st_unmount(st, EJECT);
 		break;
 	}
+
+	scsipi_wait_drain(st->sc_link);
 
 	scsipi_adapter_delref(st->sc_link);
 	st->sc_link->flags &= ~SDEV_OPEN;
