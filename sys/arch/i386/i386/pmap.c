@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113 2000/12/07 17:12:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.114 2000/12/07 20:19:05 thorpej Exp $	*/
 
 /*
  *
@@ -356,6 +356,15 @@ static struct pmap *pmaps_hand = NULL;	/* used by pmap_steal_ptp */
  */
 
 struct pool pmap_pmap_pool;
+
+/*
+ * pool and cache that PDPs are allocated from
+ */
+
+struct pool pmap_pdp_pool;
+struct pool_cache pmap_pdp_cache;
+
+int	pmap_pdp_ctor(void *, void *, int);
 
 /*
  * special VAs and the PTEs that map them
@@ -914,6 +923,15 @@ pmap_bootstrap(kva_start)
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+
+	/*
+	 * initialize the PDE pool and cache.
+	 */
+
+	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
+		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
+			pmap_pdp_ctor, NULL, NULL);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
@@ -1712,6 +1730,46 @@ pmap_get_ptp(pmap, pde_index, just_try)
  */
 
 /*
+ * pmap_pdp_ctor: constructor for the PDP cache.
+ */
+
+int
+pmap_pdp_ctor(void *arg, void *object, int flags)
+{
+	pd_entry_t *pdir = object;
+	paddr_t pdirpa;
+
+	/* fetch the physical address of the page directory. */
+	(void) pmap_extract(pmap_kernel(), (vaddr_t) pdir, &pdirpa);
+
+	/* zero init area */
+	memset(pdir, 0, PDSLOT_PTE * sizeof(pd_entry_t));
+
+	/* put in recursibve PDE to map the PTEs */
+	pdir[PDSLOT_PTE] = pdirpa | PG_V | PG_KW;
+
+	/*
+	 * we need to lock pmaps_lock to prevent nkpde from changing on
+	 * us.  note that there is no need to splimp to protect us from
+	 * malloc since malloc allocates out of a submap and we should
+	 * have already allocated kernel PTPs to cover the range...
+	 */
+	simple_lock(&pmaps_lock);
+
+	/* put in kernel VM PDEs */
+	memcpy(&pdir[PDSLOT_KERN], &PDP_BASE[PDSLOT_KERN],
+	    nkpde * sizeof(pd_entry_t));
+
+	/* zero the rest */
+	memset(&pdir[PDSLOT_KERN + nkpde], 0,
+	    PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
+
+	simple_unlock(&pmaps_lock);
+
+	return (0);
+}
+
+/*
  * pmap_create: create a pmap
  *
  * => note: old pmap interface took a "size" args which allowed for
@@ -1737,36 +1795,15 @@ pmap_create()
 	pmap->pm_flags = 0;
 
 	/* allocate PDP */
-	pmap->pm_pdir = (pd_entry_t *) uvm_km_alloc(kernel_map, PAGE_SIZE);
-	if (pmap->pm_pdir == NULL)
-		panic("pmap_create: kernel_map out of virtual space!");
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir,
-			    (paddr_t *)&pmap->pm_pdirpa);
-
-	/* init PDP */
-	/* zero init area */
-	memset(pmap->pm_pdir, 0, PDSLOT_PTE * sizeof(pd_entry_t));
-	/* put in recursive PDE to map the PTEs */
-	pmap->pm_pdir[PDSLOT_PTE] = pmap->pm_pdirpa | PG_V | PG_KW;
+	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
+	pmap->pm_pdirpa = pmap->pm_pdir[PDSLOT_PTE] & PG_FRAME;
 
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
 	pmap->pm_ldt_len = 0;
 	pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 
-	/*
-	 * we need to lock pmaps_lock to prevent nkpde from changing on
-	 * us.   note that there is no need to splimp to protect us from
-	 * malloc since malloc allocates out of a submap and we should have
-	 * already allocated kernel PTPs to cover the range...
-	 */
 	simple_lock(&pmaps_lock);
-	/* put in kernel VM PDEs */
-	memcpy(&pmap->pm_pdir[PDSLOT_KERN], &PDP_BASE[PDSLOT_KERN],
-	       nkpde * sizeof(pd_entry_t));
-	/* zero the rest */
-	memset(&pmap->pm_pdir[PDSLOT_KERN + nkpde], 0,
-	       PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
 	simple_unlock(&pmaps_lock);
 
@@ -1827,7 +1864,7 @@ pmap_destroy(pmap)
 	}
 
 	/* XXX: need to flush it out of other processor's APTE space? */
-	uvm_km_free(kernel_map, (vaddr_t)pmap->pm_pdir, PAGE_SIZE);
+	pool_cache_put(&pmap_pdp_cache, pmap->pm_pdir);
 
 #ifdef USER_LDT
 	if (pmap->pm_flags & PMF_USER_LDT) {
@@ -3724,6 +3761,10 @@ pmap_growkernel(maxkvaddr)
 			pm->pm_pdir[PDSLOT_KERN + nkpde] =
 				kpm->pm_pdir[PDSLOT_KERN + nkpde];
 		}
+
+		/* Invalidate the PDP cache. */
+		pool_cache_invalidate(&pmap_pdp_cache);
+
 		simple_unlock(&pmaps_lock);
 	}
 
