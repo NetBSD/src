@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.256 2004/08/04 08:00:27 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.257 2004/12/02 00:00:41 simonb Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -179,6 +179,7 @@ SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${DESTDIR}/usr/lib/crtn.o
 .endif
 
 CFLAGS+=	${COPTS}
+AFLAGS+=	${COPTS}
 FFLAGS+=	${FOPTS}
 
 .c.o:
