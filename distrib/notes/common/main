@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.12 2000/02/06 19:46:42 he Exp $
+.\" $NetBSD: main,v 1.6.2.13 2000/02/08 00:15:02 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -948,7 +948,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Charles M. Hannum Ta Mt mycroft@NetBSD.ORG
 .It Ta Eric Haszlakiewicz Ta Mt erh@NetBSD.ORG
 .It Ta HAYAKAWA Koichi Ta Mt haya@NetBSD.ORG
-.It Ta Ren\('e Hexel Ta Mt rh@NetBSD.ORG
+.It Ta Rene Hexel Ta Mt rh@NetBSD.ORG
 .It Ta Michael L. Hitch Ta Mt mhitch@NetBSD.ORG
 .It Ta Christian E. Hopps Ta Mt chopps@NetBSD.ORG
 .It Ta Ken Hornstein Ta Mt kenh@NetBSD.ORG
@@ -958,7 +958,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Matthew Jacob Ta Mt mjacob@NetBSD.ORG
 .It Ta Lonhyn T. Jasinskyj Ta Mt lonhyn@NetBSD.ORG
 .It Ta Chris Jones Ta Mt cjones@NetBSD.ORG
-.It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.ORG
+.It Ta Soren Jorvang Ta Mt soren@NetBSD.ORG
 .It Ta Antti Kantee Ta Mt pooka@NetBSD.ORG
 .It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
 .It Ta Thomas Klausner Ta Mt wiz@NetBSD.ORG
