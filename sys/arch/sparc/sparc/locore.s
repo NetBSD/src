@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.198 2004/03/21 14:04:30 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.199 2004/04/17 10:06:29 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2534,15 +2534,23 @@ _ENTRY(_C_LABEL(sparc_interrupt4m))
 	! both softint pending and clear bits are in upper halfwords of
 	! their respective registers so shift the test bit in %l4 up there
 	sll	%l4, 16, %l4
+
+#if defined(MULTIPROCESSOR)
+	cmp	%l3, 14
+	be	lev14_softint
+#endif
+	 st	%l4, [%l6 + ICR_PI_CLR_OFFSET]
+
 #ifdef DIAGNOSTIC
 	btst	%l4, %l5	! make sure softint pending bit is set
 	bnz	softintr_common
-	 st	%l4, [%l6 + ICR_PI_CLR_OFFSET]
+	 !st	%l4, [%l6 + ICR_PI_CLR_OFFSET]
 	/* FALLTHROUGH to sparc_interrupt4m_bogus */
 #else
 	b	softintr_common
-	 st	%l4, [%l6 + ICR_PI_CLR_OFFSET]
+	 !st	%l4, [%l6 + ICR_PI_CLR_OFFSET]
 #endif
+	 nop
 
 #else /* MSIIEP */
 	sethi	%hi(MSIIEP_PCIC_VA), %l6
@@ -2700,6 +2708,187 @@ sparc_interrupt_common:
 	ldd	[%sp + CCFSZ + 40], %g6
 	b	return_from_trap
 	 wr	%l0, 0, %psr
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Level 14 software interrupt: fast IPI
+ */
+lev14_softint:
+	sll	%l3, 2, %l5
+	set	_C_LABEL(intrcnt), %l4	! intrcnt[intlev]++;
+	ld	[%l4 + %l5], %l7
+	inc	%l7
+	st	%l7, [%l4 + %l5]
+
+	sethi	%hi(CPUINFO_VA), %l6
+	ld	[%l6 + CPUINFO_XMSG_TRAP], %l7
+#ifdef DIAGNOSTIC
+	tst	%l7
+	bz	sparc_interrupt4m_bogus
+	 nop
+#endif
+	jmp	%l7
+	 ld	[%l6 + CPUINFO_XMSG_ARG0], %l3	! prefetch 1st arg
+
+/*
+ * Fast flush handlers. xcalled from other CPUs throught soft interrupt 14
+ * On entry:	%l6 = CPUINFO_VA
+ *		%l3 = first argument
+ *
+ * As always, these fast trap handlers should preserve all registers
+ * except %l3 to %l7
+ */
+_ENTRY(_C_LABEL(ft_tlb_flush))
+	!	<%l3 already fetched for us>	! va
+	ld	[%l6 + CPUINFO_XMSG_ARG2], %l5	! level
+	andn	%l3, 0xfff, %l3			! %l3 = (va&~0xfff | lvl);
+	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! context
+	or	%l3, %l5, %l3
+
+	mov	SRMMU_CXR, %l7			!
+	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
+	sta	%l4, [%l7]ASI_SRMMU		! set new context
+
+	sta	%g0, [%l3]ASI_SRMMUFP		! flush TLB
+
+ft_rett:
+	! common return from Fast Flush handlers
+	! enter here with %l5 = ctx to restore, %l6 = CPUINFO_VA, %l7 = ctx reg
+	mov	1, %l4				!
+	sta	%l5, [%l7]ASI_SRMMU		! restore context
+	st	%l4, [%l6 + CPUINFO_XMSG_CMPLT]	! completed = 1
+
+	mov	%l0, %psr			! return from trap
+	 nop
+	RETT
+
+_ENTRY(_C_LABEL(ft_srmmu_vcache_flush_page))
+	!	<%l3 already fetched for us>	! va
+	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! context
+
+	mov	SRMMU_CXR, %l7			!
+	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
+	sta	%l4, [%l7]ASI_SRMMU		! set new context
+
+	set	4096, %l4			! N = page size
+	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
+1:
+	sta	%g0, [%l3]ASI_IDCACHELFP	!  flush cache line
+	subcc	%l4, %l7, %l4			!  p += linesz;
+	bpos	1b				! while ((N -= linesz) > 0)
+	 add	%l3, %l7, %l3
+
+	ld	[%l6 + CPUINFO_XMSG_ARG0], %l3	! reload va
+	!or	%l3, ASI_SRMMUFP_L3(=0), %l3	! va |= ASI_SRMMUFP_L3
+	sta	%g0, [%l3]ASI_SRMMUFP		! flush TLB
+
+	b	ft_rett
+	 mov	SRMMU_CXR, %l7			! reload ctx register
+
+_ENTRY(_C_LABEL(ft_srmmu_vcache_flush_segment))
+	!	<%l3 already fetched for us>	! vr
+	ld	[%l6 + CPUINFO_XMSG_ARG1], %l5	! vs
+	ld	[%l6 + CPUINFO_XMSG_ARG2], %l4	! context
+
+	sll	%l3, 24, %l3			! va = VSTOVA(vr,vs)
+	sll	%l5, 18, %l5
+	or	%l3, %l5, %l3
+
+	mov	SRMMU_CXR, %l7			!
+	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
+	sta	%l4, [%l7]ASI_SRMMU		! set new context
+
+	ld	[%l6 + CPUINFO_CACHE_NLINES], %l4
+	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
+1:
+	sta	%g0, [%l3]ASI_IDCACHELFS	!  flush cache line
+	deccc	%l4				!  p += linesz;
+	bpos	1b				! while (--nlines > 0)
+	 add	%l3, %l7, %l3
+
+	b	ft_rett
+	 mov	SRMMU_CXR, %l7			! reload ctx register
+
+_ENTRY(_C_LABEL(ft_srmmu_vcache_flush_region))
+	!	<%l3 already fetched for us>	! vr
+	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! context
+
+	sll	%l3, 24, %l3			! va = VRTOVA(vr)
+
+	mov	SRMMU_CXR, %l7			!
+	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
+	sta	%l4, [%l7]ASI_SRMMU		! set new context
+
+	ld	[%l6 + CPUINFO_CACHE_NLINES], %l4
+	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
+1:
+	sta	%g0, [%l3]ASI_IDCACHELFR	!  flush cache line
+	deccc	%l4				!  p += linesz;
+	bpos	1b				! while (--nlines > 0)
+	 add	%l3, %l7, %l3
+
+	b	ft_rett
+	 mov	SRMMU_CXR, %l7			! reload ctx register
+
+_ENTRY(_C_LABEL(ft_srmmu_vcache_flush_context))
+	!	<%l3 already fetched for us>	! context
+
+	mov	SRMMU_CXR, %l7			!
+	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
+	sta	%l3, [%l7]ASI_SRMMU		! set new context
+
+	ld	[%l6 + CPUINFO_CACHE_NLINES], %l4
+	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
+	mov	%g0, %l3			! va = 0
+1:
+	sta	%g0, [%l3]ASI_IDCACHELFC	!  flush cache line
+	deccc	%l4				!  p += linesz;
+	bpos	1b				! while (--nlines > 0)
+	 add	%l3, %l7, %l3
+
+	b	ft_rett
+	 mov	SRMMU_CXR, %l7			! reload ctx register
+
+_ENTRY(_C_LABEL(ft_srmmu_vcache_flush_range))
+	!	<%l3 already fetched for us>	! va
+	ld	[%l6 + CPUINFO_XMSG_ARG2], %l4	! context
+
+	andn	%l3, 7, %l3			! double-word alignment
+
+	mov	SRMMU_CXR, %l7			!
+	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
+	sta	%l4, [%l7]ASI_SRMMU		! set new context
+
+	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! size
+	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
+1:
+	sta	%g0, [%l3]ASI_IDCACHELFP	!  flush cache line
+	subcc	%l4, %l7, %l4			!  p += linesz;
+	bpos	1b				! while ((sz -= linesz) > 0)
+	 add	%l3, %l7, %l3
+
+	/* Flush TLB on all pages we visited */
+	ld	[%l6 + CPUINFO_XMSG_ARG0], %l3	! reload va
+	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! reload sz
+	add	%l3, %l4, %l4			! %l4 = round_page(va + sz)
+	add	%l4, 0xfff, %l4
+	andn	%l4, 0xfff, %l4
+	andn	%l3, 0xfff, %l3			! va &= ~PGOFSET;
+	sub	%l4, %l3, %l4			! and finally: size rounded
+						! to page boundary
+	set	4096, %l7			! N = page size
+
+2:
+	!or	%l3, ASI_SRMMUFP_L3(=0), %l3	!  va |= ASI_SRMMUFP_L3
+	sta	%g0, [%l3]ASI_SRMMUFP		!  flush TLB
+	subcc	%l4, %l7, %l4			! while ((sz -= PGSIZE) > 0)
+	bpos	2b
+	 add	%l3, %l7, %l3
+
+	b	ft_rett
+	 mov	SRMMU_CXR, %l7			! reload ctx register
+
+#endif /* MULTIPROCESSOR */
 
 #ifdef notyet
 /*
