@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 1997/09/11 23:02:17 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 1997/09/12 09:59:53 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -554,8 +554,8 @@ setregs(p, pack, stack)
 	 * XXX We have to set both regs and retval here due to different
 	 * XXX calling convention in trap.c and init_main.c.
 	 */
-	tf->fixreg[3] = retval[0] = arginfo.ps_nargvstr;
-	tf->fixreg[4] = retval[1] = (register_t)arginfo.ps_argvstr;
+	tf->fixreg[3] = arginfo.ps_nargvstr;
+	tf->fixreg[4] = (register_t)arginfo.ps_argvstr;
 	tf->fixreg[5] = (register_t)arginfo.ps_envstr;
 	tf->fixreg[6] = 0;			/* auxillary vector */
 	tf->fixreg[7] = 0;			/* termination vector */
