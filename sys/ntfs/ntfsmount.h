@@ -1,3 +1,5 @@
+/*	$NetBSD: ntfsmount.h,v 1.2 1999/05/06 15:43:21 christos Exp $	*/
+
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
  * All rights reserved.

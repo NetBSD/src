@@ -1,3 +1,5 @@
+/*	$NetBSD: ntfs_subr.c,v 1.2 1999/05/06 15:43:19 christos Exp $	*/
+
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
  * All rights reserved.
@@ -37,7 +39,9 @@
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
+#ifdef __FreeBSD__
 #include <machine/clock.h>
+#endif
 
 #include <miscfs/specfs/specdev.h>
 
@@ -684,9 +688,9 @@ ntfs_uustricmp(
 int
 ntfs_uastricmp(
 	       struct ntfsmount * ntmp,
-	       wchar * str1,
+	       const wchar *str1,
 	       int str1len,
-	       char *str2,
+	       const char *str2,
 	       int str2len)
 {
 	int             i;
@@ -706,10 +710,10 @@ ntfs_uastricmp(
  */
 int
 ntfs_uastrcmp(
-	      struct ntfsmount * ntmp,
-	      wchar * str1,
+	      struct ntfsmount *ntmp,
+	      const wchar *str1,
 	      int str1len,
-	      char *str2,
+	      const char *str2,
 	      int str2len)
 {
 	int             i;
@@ -810,13 +814,13 @@ ntfs_frele(
 int
 ntfs_ntlookupattr(
 		struct ntfsmount * ntmp,
-		char * name,
+		const char * name,
 		int namelen,
 		int *attrtype,
 		char **attrname)
 {
-	char *sys;
-	int syslen,i;
+	const char *sys;
+	size_t syslen, i;
 	struct ntvattrdef *adp;
 
 	if (namelen == 0)
@@ -882,7 +886,7 @@ ntfs_ntlookupfile(
 	u_int32_t       rdsize;	/* Length of data to read from current block */
 	struct attr_indexentry *iep;
 	int             error, res, anamelen, fnamelen;
-	char	       *fname,*aname;
+	const char     *fname,*aname;
 	u_int32_t       aoff;
 
 	error = ntfs_ntget(ip);

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntfs.h,v 1.2 1999/05/06 15:43:17 christos Exp $	*/
+
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
  * All rights reserved.
@@ -284,6 +286,32 @@ MALLOC_DECLARE(M_NTFSNTNODE);
 MALLOC_DECLARE(M_NTFSFNODE);
 MALLOC_DECLARE(M_NTFSDIR);
 MALLOC_DECLARE(M_NTFSNTHASH);
+#endif
+
+#ifdef __NetBSD__
+#define MALLOC_DEFINE(a, b, c)
+#define M_NTFSNTHASH	M_TEMP
+#define M_NTFSNTVATTR	M_TEMP
+#define M_NTFSRDATA	M_TEMP
+#define M_NTFSRUN	M_TEMP
+#define M_NTFSDECOMP	M_TEMP
+#define M_NTFSMNT	M_TEMP
+#define M_NTFSNTNODE	M_TEMP
+#define M_NTFSFNODE	M_TEMP
+#define M_NTFSDIR	M_TEMP
+typedef int (vop_t) __P((void *));
+#define HASHINIT(a, b, c, d)	hashinit((a), (b), (c), (d))
+#define bqrelse(bp)		brelse(bp)
+#define VOP__LOCK(a, b, c)	VOP_LOCK((a), (b) ? LK_EXCLUSIVE : LK_SHARED)
+#define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), 0)
+#define VGET(a, b, c)		vget((a), LK_EXCLUSIVE)
+#define VN_LOCK(a, b, c)	vn_lock((a), LK_EXCLUSIVE)
+#else
+#define HASHINIT(a, b, c, d)	hashinit((a), (b), (d))
+#define VOP__LOCK(a, b, c)	VOP_LOCK((a), (b), (c))
+#define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b), (c))
+#define VGET(a, b, c)		vget((a), (b), (c))
+#define VN_LOCK(a, b, c)	vn_lock((a), (b), (c))
 #endif
 
 #if defined(NTFS_DEBUG)
