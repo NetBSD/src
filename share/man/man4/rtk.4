@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtk.4,v 1.4 2001/09/22 16:03:58 wiz Exp $
+.\"	$NetBSD: rtk.4,v 1.5 2003/05/06 18:58:24 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Manuel Bouyer
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Os
 .Sh NAME
 .Nm rtk
-.Nd Ethernet driver for RealTek 8129/8139 based Ethernet boards
+.Nd Ethernet driver for Realtek 8129/8139 based Ethernet boards
 .Sh SYNOPSIS
 .Cd "rtk* at cardbus? dev ? function ?"
 .Cd "rtk* at pci? dev ? function ?"
@@ -44,7 +44,7 @@ Configuration of PHYs are necessary.  See
 The
 .Nm rtk
 device driver supports network adapters based on
-the RealTek 8129/8139 chips.
+the Realtek 8129/8139 chips.
 .Sh MEDIA SELECTION
 Media selection is done using
 .Xr ifconfig 8
