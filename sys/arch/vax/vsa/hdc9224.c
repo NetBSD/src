@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.5 1997/03/09 15:55:59 ragge Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.6 1997/03/15 16:32:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -70,6 +70,7 @@ static int keepLock = 0;
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/syslog.h>
+#include <sys/reboot.h>
 
 #include <machine/pte.h>
 #include <machine/sid.h>
@@ -77,6 +78,7 @@ static int keepLock = 0;
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/vsbus.h>
+#include <machine/rpb.h>
 
 #include <vax/vsa/hdc9224.h>
 
@@ -391,6 +393,11 @@ rdattach(parent, self, aux)
 		       rp->diskname, rp->diskblks/2048, rp->disklbns, 
 		       rp->cylinders, rp->heads, rp->sectors);
 	}
+	/*
+	 * Know where we booted from.
+	 */
+	if ((B_TYPE(bootdev) == BDEV_RD) && (rd->sc_drive == B_UNIT(bootdev)))
+		booted_from = self;
 }
 
 /*
@@ -1139,5 +1146,4 @@ hdc_select(sc, unit)
 
 	return (error);
 }
-
 #endif	/* NHDC > 0 */

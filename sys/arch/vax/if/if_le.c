@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.4 1997/02/26 18:38:25 ragge Exp $	*/
+/*	$NetBSD: if_le.c,v 1.5 1997/03/15 16:32:17 ragge Exp $	*/
 
 #define LEDEBUG	 1		/* debug-level: 0 or 1 */
 /* #define LE_CHIP_IS_POKEY	/* does VS2000 need this ??? */
@@ -48,6 +48,7 @@
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 
 #include <net/if.h>
 
@@ -68,6 +69,7 @@
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/vsbus.h>
+#include <machine/rpb.h>
 
 #include <dev/ic/am7990reg.h>
 #define LE_NEED_BUF_CONTIG
@@ -216,6 +218,14 @@ leattach(parent, self, aux)
 
 	vsbus_intr_register(ca, am7990_intr, &sc->sc_am7990);
 	vsbus_intr_enable(ca);
+
+	/*
+	 * Register this device as boot device if we booted from it.
+	 * This will fail if there are more than one le in a machine,
+	 * fortunately there may be only one.
+	 */
+	if (B_TYPE(bootdev) == BDEV_LE)
+		booted_from = self;
 }
 
 #ifdef LE_CHIP_IS_POKEY
