@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.79 2000/12/11 05:29:02 mycroft Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.80 2000/12/11 15:35:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -145,7 +145,12 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * kernel virtual address space.  The actual U-area pages will
 	 * be allocated and wired in vm_fork().
 	 */
-	uaddr = uvm_km_valloc_align(kernel_map, USPACE, USPACE);
+
+#ifndef USPACE_ALIGN
+#define USPACE_ALIGN	0
+#endif
+
+	uaddr = uvm_km_valloc_align(kernel_map, USPACE, USPACE_ALIGN);
 	if (__predict_false(uaddr == 0)) {
 		(void)chgproccnt(uid, -1);
 		nprocs--;
