@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.57 2004/10/10 22:00:36 enami Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.58 2004/10/10 22:10:06 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.57 2004/10/10 22:00:36 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.58 2004/10/10 22:10:06 enami Exp $");
 
 #include "opt_cardbus.h"
 
@@ -910,6 +910,9 @@ decode_tuple(u_int8_t *tuple, u_int8_t *end,
 {
 	u_int8_t type;
 	u_int8_t len;
+
+	if (tuple + 2 > end)
+		return (NULL);
 
 	type = tuple[0];
 	len = tuple[1] + 2;
