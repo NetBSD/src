@@ -8,7 +8,7 @@
 # are included, only the more common ones.
 #
 #	from: @(#)services	5.8 (Berkeley) 5/9/91
-#	$Id: services,v 1.13 1994/12/28 19:25:15 mycroft Exp $
+#	$Id: services,v 1.14 1994/12/28 19:26:15 mycroft Exp $
 #
 tcpmux		1/tcp		# TCP port service multiplexer
 echo		7/tcp
@@ -167,7 +167,7 @@ rfe		5002/udp		# Actually uses UDP only
 # v4 should uncomment these and comment out the v5 entries above.
 #
 klogin		543/tcp			# Kerberos `rlogin'
-kshell		544/tcp			# Kerberos `rsh'
+kshell		544/tcp		krcmd	# Kerberos `rsh'
 kerberos-adm	749/tcp			# Kerberos `kadmin' (v5)
 #kerberos	750/udp		kdc	# Kerberos (server) udp
 #kerberos	750/tcp		kdc	# Kerberos (server) tcp
