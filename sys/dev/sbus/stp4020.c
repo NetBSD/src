@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.35 2003/12/23 13:46:18 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.35.2.1 2004/05/20 09:47:49 tron Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.35 2003/12/23 13:46:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.35.2.1 2004/05/20 09:47:49 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,6 +750,11 @@ stp4020_intr(arg)
 			/* ignore if this is caused by insert or removal */
 			if (!cd_change)
 				printf("stp4020[%d]: Battery change 2\n", h->sock);
+			r = 1;
+		}
+
+		if ((v & STP4020_ISR0_SCINT) != 0) {
+			DPRINTF(("stp4020[%d]: status change\n", h->sock));
 			r = 1;
 		}
 
