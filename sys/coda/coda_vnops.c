@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.5 1998/09/25 15:01:13 rvb Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.6 1998/09/26 15:24:47 tv Exp $	*/
 
 /*
  * 
@@ -56,6 +56,11 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.6  1998/09/26 15:24:47  tv
+ * DIAGNOSTIC -> DEBUG for all non-panic messages.  DIAGNOSTIC is only for
+ * sanity checks and should not turn on any messages not already printed
+ * without it.
+ *
  * Revision 1.5  1998/09/25 15:01:13  rvb
  * Conditionalize "stray" printouts under DIAGNOSTIC and DEBUG.
  * Make files compile if DEBUG is on (from  Alan Barrett).  Finally,
@@ -503,13 +508,13 @@ coda_close(v)
 
     if (IS_UNMOUNTING(cp)) {
 	if (cp->c_ovp) {
-#ifdef	DIAGNOSTIC
+#ifdef	DEBUG
 	    printf("coda_close: destroying container ref %d, ufs vp %p of vp %p/cp %p\n",
 		    vp->v_usecount, cp->c_ovp, vp, cp);
 #endif
 	    vgone(cp->c_ovp);
 	} else {
-#ifdef	DIAGNOSTIC
+#ifdef	DEBUG
 	    printf("coda_close: NO container vp %p/cp %p\n", vp, cp);
 #endif
 	}
@@ -1328,7 +1333,7 @@ coda_create(v)
 		panic("unlocked parent but couldn't lock child");
 	    }
 	}
-#ifdef OLD_DIAGNOSTIC
+#ifdef DEBUG
 	else {
 	    printf("coda_create: LOCKLEAF not set!\n");
 	}
