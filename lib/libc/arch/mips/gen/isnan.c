@@ -1,11 +1,12 @@
-/*	$NetBSD: isinf.S,v 1.6 1998/10/13 14:43:37 kleink Exp $	*/
+/*	$NetBSD: isnan.c,v 1.1 1999/08/29 23:01:40 mycroft Exp $	*/
 
-/*-
- * Copyright (c) 1993
+/*
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * Ralph Campbell.
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,75 +35,34 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * from: Header: isinf.c,v 1.1 91/07/08 19:03:34 torek Exp
  */
 
-#include <mips/asm.h>
-
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)isinf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: isinf.S,v 1.6 1998/10/13 14:43:37 kleink Exp $")
+#if 0
+static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: isnan.c,v 1.1 1999/08/29 23:01:40 mycroft Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef WEAK_ALIAS
-#define isnan	_isnan	/* XXX */
-#define isinf	_isinf	/* XXX */
-WEAK_ALIAS(isnan,_isnan);
-WEAK_ALIAS(isinf,_isinf);
+#include "namespace.h"
+#include <sys/types.h>
+#include <machine/ieee.h>
+#include <math.h>
+
+#ifdef __weak_alias
+__weak_alias(isnan,_isnan);
 #endif
 
-#ifdef ABICALLS
-	.abicalls
-#endif
+int
+isnan(d)
+	double d;
+{
+	register struct ieee_double *p = (struct ieee_double *)(void *)&d;
 
-#define DEXP_INF	0x7ff
-
-	.set	noreorder
-
-/*
- * isnan(x)
- *	double x;
- *
- * Return true if x is a NAN.
- */
-LEAF(isnan)
-	mfc1	v1, $f13		# get MSW of x
-	mfc1	t3, $f12		# get LSW of x
-	sll	t1, v1, 1		# get x exponent
-	srl	t1, t1, 32 - 11
-	bne	t1, DEXP_INF, 2f	# is it a finite number?
-	sll	t2, v1, 32 - 20		# get x fraction
-	bne	t3, zero, 1f		# is it a NAN?
-	nop
-	beq	t2, zero, 2f		# its infinity
-	nop
-1:
-	j	ra
-	li	v0, 1			# x is a NAN
-2:
-	j	ra
-	move	v0, zero		# x is NOT a NAN
-END(isnan)
-
-/*
- * isinf(x)
- *	double x;
- *
- * Return true if x is infinity.
- */
-LEAF(isinf)
-	mfc1	v1, $f13		# get MSW of x
-	mfc1	t3, $f12		# get LSW of x
-	sll	t1, v1, 1		# get x exponent
-	srl	t1, t1, 32 - 11
-	bne	t1, DEXP_INF, 1f	# is it a finite number?
-	sll	t2, v1, 32 - 20		# get x fraction
-	bne	t3, zero, 1f		# is it a NAN?
-	nop
-	bne	t2, zero, 1f		# is it a NAN?
-	nop
-	j	ra
-	li	v0, 1			# x is infinity
-1:
-	j	ra
-	move	v0, zero		# x is NOT infinity
-END(isinf)
+	return (p->dbl_exp == DBL_EXP_INFNAN &&
+	    (p->dbl_frach != 0 || p->dbl_fracl != 0));
+}
