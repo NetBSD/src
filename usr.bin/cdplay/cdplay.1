@@ -1,6 +1,6 @@
-.\"	$NetBSD: cdplay.1,v 1.5 2000/06/13 13:37:14 ad Exp $
+.\"	$NetBSD: cdplay.1,v 1.6 2000/06/14 14:38:52 ad Exp $
 .\"
-.\" Copyright (c) 1999 Andrew Doran.
+.\" Copyright (c) 1999, 2000 Andrew Doran.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -37,37 +37,33 @@
 .Op Fl f Ar device
 .Op Ar command ...
 .Sh DESCRIPTION
-.Nm Cdplay
+.Nm
 is a program to control audio features of a CD drive.
-If the device not specified, the environment variables 
+.Pp
+If no command is given, then
+.Nm
+enters interactive mode, reading commands from the standard input.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl f Ar device
+Specify the control device.  Both absolute paths and paths relative to
+.Pa /dev
+are accepted.  The suffix `c' (or 'd' on some architectures, see
+.Xr disklabel 8
+for details) is added to the 
+device name if needed.  If the device not specified, the environment variables
 .Ev MUSIC_CD ,
 .Ev CD_DRIVE ,
 .Ev DISC
 and
 .Ev CDPLAY
-will be tried (in this order) to find the CD device.
-.Pp
-If no command is given, then
-.Nm
-enters an interactive mode, reading commands from the standard input.
-.Pp
-The following options are available:
-.Bl -tag -width indent
-.It Fl f Ar device
-Specify a device, such as
-.Pa /dev/cd0c
-(or
-.Pa /dev/cd0d 
-on the i386 architecture).
-Both absolute path and relative to
-.Pa /dev
-filename are possible.
-Suffix `c' (or 'd' on the i386 architecture) is added to the device name if needed.
+will be tried (in this order) to find the device.
 .El
 .Pp
 The available commands are listed below.  Only as many
 characters as are required to uniquely identify a command
-need be specified. The word
+need be specified.  The word
 .Em play
 can be omitted in all cases.
 .Bl -tag -width Cm
@@ -91,7 +87,7 @@ in minutes,
 .Ar end_s ,
 in seconds and 
 .Ar end_f
-(frame number). Minutes are in the range 0-99. Seconds are in the range 0-59.
+(frame number).  Minutes are in the range 0-99. Seconds are in the range 0-59.
 Frame numbers are in the range 0-74.
 .It Cm play Op Ar #start_block Op length
 Play starting from the logical block
@@ -100,9 +96,9 @@ using
 .Ar length
 logical blocks.
 .It Cm pause
-Stop playing. Do not stop the disc.
+Stop playing.  Do not stop the disc.
 .It Cm resume
-Resume playing. Used after the 
+Resume playing.  Used after the 
 .Em pause
 command.
 .It Cm stop
@@ -158,6 +154,8 @@ Quit the program.
 .It Pa /dev/cd??
 .It Pa /dev/mcd??
 .El
+.Sh SEE ALSO
+.Xr disklabel 8
 .Sh AUTHORS
 .An Jean-Marc Zucconi ,
 .An Andrey A.\ Chernov ,
