@@ -1,4 +1,4 @@
-/*	$NetBSD: uvax.h,v 1.5 1999/02/02 18:37:22 ragge Exp $ */
+/*	$NetBSD: uvax.h,v 1.6 2000/06/02 21:39:54 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -61,22 +61,22 @@
  * Miscellaneous registers common on most VAXststions.
  */
 struct vs_cpu {
-        u_long  vc_hltcod;      /* Halt Code Register */
-        u_long  vc_410mser;	/* VS2K */
-        u_long  vc_410cear;	/* VS2K */
-	u_char	vc_intmsk;	/* Interrupt mask register */
-	u_char	vc_vdcorg;	/* Mono display origin */
-	u_char	vc_vdcsel;	/* Video interrupt select */
-	u_char	vc_intreq;	/* Interrupt request register */
+        u_long  vc_hltcod;      /* 00 - Halt Code Register */
+        u_long  vc_410mser;	/* 04 - VS2K */
+        u_long  vc_410cear;	/* 08 - VS2K */
+	u_char	vc_intmsk;	/* 0c - Interrupt mask register */
+	u_char	vc_vdcorg;	/* 0d - Mono display origin */
+	u_char	vc_vdcsel;	/* 0e - Video interrupt select */
+	u_char	vc_intreq;	/* 0f - Interrupt request register */
 #define	vc_intclr vc_intreq
-        u_short vc_diagdsp;     /* Diagnostic display register */
-        u_short pad4;
-        u_long  vc_parctl;      /* Parity Control Register */
+        u_short vc_diagdsp;     /* 10 - Diagnostic display register */
+        u_short pad4;		/* 12 */
+        u_long  vc_parctl;      /* 14 - Parity Control Register */
 #define	vc_bwf0	vc_parctl
-        u_short pad5;
-        u_short pad6;
-        u_short vc_diagtimu;	/* usecond timer KA46 */
-        u_short vc_diagtme;     /* Diagnostic time register */
+        u_short pad5;		/* 16 */
+        u_short pad6;		/* 18 */
+        u_short vc_diagtimu;	/* 1a - usecond timer KA46 */
+        u_short vc_diagtme;     /* 1c - Diagnostic time register */
 #define	vc_diagtimm vc_diagtme	/* msecond time KA46 */
 };
 #define	PARCTL_DMA	0x1000000
