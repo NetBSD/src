@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.1.1.1 2002/10/03 07:46:03 jdolecek Exp $	*/
+/*	$NetBSD: inet.c,v 1.2 2002/11/01 20:54:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ dumpkevent(struct kevent *event)
 {
 	printf(
 "kevent: ident 0x%02lx filter %d flags: 0x%02x, fflags: 0x%02x, data %" PRId64 "\n",
-	    event->ident, event->filter, event->flags, event->fflags,
+	    (long) event->ident, event->filter, event->flags, event->fflags,
 	    event->data);
 }
 
