@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.109 2003/09/17 09:11:12 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.110 2003/09/26 11:51:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.109 2003/09/17 09:11:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.110 2003/09/26 11:51:53 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -146,12 +146,12 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			error = VOP_GETATTR(vp, &vattr, cred, p);
 			if (error)
 				return (error);
-			np->n_mtime = vattr.va_mtime.tv_sec;
+			np->n_mtime = vattr.va_mtime;
 		} else {
 			error = VOP_GETATTR(vp, &vattr, cred, p);
 			if (error)
 				return (error);
-			if (np->n_mtime != vattr.va_mtime.tv_sec) {
+			if (timespeccmp(&np->n_mtime, &vattr.va_mtime, !=)) {
 				if (vp->v_type == VDIR) {
 					nfs_invaldircache(vp, 0);
 					np->n_direofoffset = 0;
@@ -159,7 +159,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 				if (error)
 					return (error);
-				np->n_mtime = vattr.va_mtime.tv_sec;
+				np->n_mtime = vattr.va_mtime;
 			}
 		}
 	}
@@ -921,11 +921,11 @@ nfs_doio_read(bp, uiop)
 			}
 		}
 		if (uiop->uio_procp && (vp->v_flag & VTEXT) &&
-			(((nmp->nm_flag & NFSMNT_NQNFS) &&
-			  NQNFS_CKINVALID(vp, np, ND_READ) &&
-			  np->n_lrev != np->n_brev) ||
-			 (!(nmp->nm_flag & NFSMNT_NQNFS) &&
-			  np->n_mtime != np->n_vattr->va_mtime.tv_sec))) {
+		    (((nmp->nm_flag & NFSMNT_NQNFS) &&
+		      NQNFS_CKINVALID(vp, np, ND_READ) &&
+		      np->n_lrev != np->n_brev) ||
+		     (!(nmp->nm_flag & NFSMNT_NQNFS) &&
+		      timespeccmp(&np->n_mtime, &np->n_vattr->va_mtime, !=)))) {
 			uprintf("Process killed due to "
 				"text file modification\n");
 			psignal(uiop->uio_procp, SIGKILL);
