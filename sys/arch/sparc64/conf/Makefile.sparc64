@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.52 2003/11/09 11:24:38 martin Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.53 2004/03/21 13:12:30 martin Exp $
 
 #=========================================================================
 #
@@ -68,6 +68,10 @@ CFLAGS+=	-mcmodel=medlow
 # 32-bit kernels
 CPPFLAGS+=	-m32 -Wa,-Av8plusa -mcpu=ultrasparc
 AFLAGS+=	-Wa,-Av8plusa
+# XXX
+# The sparc gcc version 3.3.3 (NetBSD nb1 20040301) does not compile this
+# file properly with higher optimizations
+COPTS.uvm_bio.c	= -O0
 .endif
 CFLAGS+=	-mno-fpu
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
