@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.143 2002/08/05 02:18:43 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.144 2002/08/05 13:02:40 shin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.143 2002/08/05 02:18:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.144 2002/08/05 13:02:40 shin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -317,11 +317,11 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_R4650, 0, -1,			CPU_ARCH_MIPS3, -1,
 	  MIPS_NOT_SUPP /* no MMU! */,		"QED R4650 CPU"	},
 	{ 0, MIPS_TX3900, MIPS_REV_TX3912, -1,	CPU_ARCH_MIPS1, 32,
-	  0,					"Toshiba TX3912 CPU"	},
+	  CPU_MIPS_NO_LLSC,			"Toshiba TX3912 CPU"	},
 	{ 0, MIPS_TX3900, MIPS_REV_TX3922, -1,	CPU_ARCH_MIPS1, 64,
-	  0,					"Toshiba TX3922 CPU"	},
+	  CPU_MIPS_NO_LLSC,			"Toshiba TX3922 CPU"	},
 	{ 0, MIPS_TX3900, MIPS_REV_TX3927, -1,	CPU_ARCH_MIPS1, 64,
-	  0,					"Toshiba TX3927 CPU"	},
+	  CPU_MIPS_NO_LLSC,			"Toshiba TX3927 CPU"	},
 	{ 0, MIPS_R5000, -1, -1,		CPU_ARCH_MIPS4, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,			
 						"MIPS R5000 CPU"	},
@@ -831,7 +831,7 @@ mips_vector_init(void)
 	 */
 	mips_cpu_flags = mycpu->cpu_flags;
 	mips_has_r4k_mmu = mips_cpu_flags & CPU_MIPS_R4K_MMU;
-	mips_has_llsc = (mips_cpu_flags & CPU_MIPS_NO_LLSC) != 0;
+	mips_has_llsc = (mips_cpu_flags & CPU_MIPS_NO_LLSC) == 0;
 
 	if (mycpu->cpu_flags & CPU_MIPS_HAVE_SPECIAL_CCA) {
 		uint32_t cca;
