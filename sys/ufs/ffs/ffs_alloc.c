@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.33 2000/03/30 12:41:12 augustss Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.34 2000/04/04 09:23:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -78,6 +78,9 @@ static ufs_daddr_t ffs_mapsearch __P((struct fs *, struct cg *,
 #if defined(DIAGNOSTIC) || defined(DEBUG)
 static int ffs_checkblk __P((struct inode *, ufs_daddr_t, long size));
 #endif
+
+/* if 1, changes in optimalization strategy are logged */
+int ffs_log_changeopt = 0;
 
 /* in ffs_tables.c */
 extern int inside[], around[];
@@ -251,10 +254,13 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 		    fs->fs_cstotal.cs_nffree >
 		    fs->fs_dsize * fs->fs_minfree / (2 * 100))
 			break;
-#ifdef DEBUG
-		log(LOG_NOTICE, "%s: optimization changed from SPACE to TIME\n",
-			fs->fs_fsmnt);
-#endif
+
+		if (ffs_log_changeopt) {
+			log(LOG_NOTICE,
+				"%s: optimization changed from SPACE to TIME\n",
+				fs->fs_fsmnt);
+		}
+
 		fs->fs_optim = FS_OPTTIME;
 		break;
 	case FS_OPTTIME:
@@ -272,10 +278,13 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 		if (fs->fs_cstotal.cs_nffree <
 		    fs->fs_dsize * (fs->fs_minfree - 2) / 100)
 			break;
-#ifdef DEBUG
-		log(LOG_NOTICE, "%s: optimization changed from TIME to SPACE\n",
-			fs->fs_fsmnt);
-#endif
+
+		if (ffs_log_changeopt) {
+			log(LOG_NOTICE,
+				"%s: optimization changed from TIME to SPACE\n",
+				fs->fs_fsmnt);
+		}
+
 		fs->fs_optim = FS_OPTSPACE;
 		break;
 	default:
