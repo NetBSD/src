@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.115 2001/01/28 07:15:07 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.116 2001/01/29 11:23:43 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.116 2001/01/28 07:14:47 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.117 2001/01/29 11:23:13 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -604,6 +604,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Contec",
 	    "Contec C-NET(PC)C"	},
+	},
+	{
+	    PCMCIA_VENDOR_CONTEC, PCMCIA_PRODUCT_CONTEC_FX_DS110_PCC,
+	    PCMCIA_CIS_CONTEC_FX_DS110_PCC,
+	    0,
+	    "Contec",
+	    "Contec FLEXLAN/FX-DS110-PCC"	},
 	},
 	{
 	    PCMCIA_VENDOR_ROLAND, PCMCIA_PRODUCT_ROLAND_SCP55,
