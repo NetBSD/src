@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.21 1999/06/20 22:07:28 cgd Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.22 1999/06/24 14:54:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.21 1999/06/20 22:07:28 cgd Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.22 1999/06/24 14:54:28 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <signal.h>
 #include "ftp_var.h"
 
 /*

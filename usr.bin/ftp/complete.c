@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.24 1999/06/20 22:07:28 cgd Exp $	*/
+/*	$NetBSD: complete.c,v 1.25 1999/06/24 14:54:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.24 1999/06/20 22:07:28 cgd Exp $");
+__RCSID("$NetBSD: complete.c,v 1.25 1999/06/24 14:54:28 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: complete.c,v 1.24 1999/06/20 22:07:28 cgd Exp $");
  */
 
 #include <sys/stat.h>
+#include <signal.h>
 
 #include <ctype.h>
 #include <err.h>
