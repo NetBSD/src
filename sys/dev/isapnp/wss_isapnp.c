@@ -1,7 +1,7 @@
-/*	$NetBSD: wss_isapnp.c,v 1.6 1999/02/23 09:14:05 nathanw Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.7 1999/03/22 09:43:12 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,6 +57,7 @@
 #include <dev/isa/madreg.h>
 #include <dev/isa/wssreg.h>
 #include <dev/isa/wssvar.h>
+#include <dev/isa/sbreg.h>
 
 int	wss_isapnp_match __P((struct device *, struct cfdata *, void *));
 void	wss_isapnp_attach __P((struct device *, struct device *, void *));
@@ -79,7 +80,9 @@ wss_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return isapnp_devmatch(aux, &isapnp_wss_devinfo);
+	int variant;
+
+	return (isapnp_devmatch(aux, &isapnp_wss_devinfo, &variant));
 }
 
 
@@ -96,41 +99,75 @@ wss_isapnp_attach(parent, self, aux)
 	struct wss_softc *sc = (struct wss_softc *)self;
 	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
 	struct isapnp_attach_args *ipa = aux;
+	int variant;
 
 	printf("\n");
 
+	if (!isapnp_devmatch(aux, &isapnp_wss_devinfo, &variant)) {
+		printf("%s: match failed?\n", self->dv_xname);
+		return;
+	}
+			
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", 
-		       ac->sc_dev.dv_xname);
+		printf("%s: error in region allocation\n", self->dv_xname);
 		return;
 	}
 
-	sc->sc_iot = ipa->ipa_iot;
-        sc->sc_ioh = ipa->ipa_io[0].h;
+	switch (variant) {
+	case 1:
+		/* We have to put the chip into `WSS mode'. */
+		{
+			bus_space_tag_t iot;
+			bus_space_handle_t ioh;
 
-        sc->mad_chip_type = MAD_NONE;
+			iot = ipa->ipa_iot;
+			ioh = ipa->ipa_io[0].h;
+
+			while (bus_space_read_1(iot, ioh,
+			    SBP_DSP_WSTAT) & SB_DSP_BUSY);
+			bus_space_write_1(iot, ioh, SBP_DSP_WRITE, 0x09);
+			while (bus_space_read_1(iot, ioh,
+			    SBP_DSP_WSTAT) & SB_DSP_BUSY);
+			bus_space_write_1(iot, ioh, SBP_DSP_WRITE, 0x00);
+			while (bus_space_read_1(iot, ioh,
+			    SBP_DSP_WSTAT) & SB_DSP_BUSY);
+
+			delay(1000);
+		}
+
+		sc->sc_iot = ipa->ipa_iot;
+       		sc->sc_ioh = ipa->ipa_io[2].h;
+		break;
+
+	default:
+		sc->sc_iot = ipa->ipa_iot;
+		sc->sc_ioh = ipa->ipa_io[0].h;
+		break;
+	}
+
+	sc->mad_chip_type = MAD_NONE;
 
 	/* Set up AD1848 I/O handle. */
-	ac->sc_iot = ipa->ipa_iot;
+	ac->sc_iot = sc->sc_iot;
 	ac->sc_ioh = sc->sc_ioh;
 	ac->mode = 2;
 
-	sc->sc_ad1848.sc_ic  = ipa->ipa_ic;
+	sc->sc_ad1848.sc_ic = ipa->ipa_ic;
 	sc->sc_ad1848.sc_iooffs = 0;
 
-        sc->wss_ic  = ipa->ipa_ic;
+	sc->wss_ic = ipa->ipa_ic;
 	sc->wss_irq = ipa->ipa_irq[0].num;
 	sc->wss_playdrq = ipa->ipa_drq[0].num;
 	sc->wss_recdrq = 
-		ipa->ipa_ndrq > 1 ? ipa->ipa_drq[1].num : ipa->ipa_drq[0].num;
+	    ipa->ipa_ndrq > 1 ? ipa->ipa_drq[1].num : ipa->ipa_drq[0].num;
 
 	if (!ad1848_isa_probe(&sc->sc_ad1848)) {
-		printf("%s: ad1848_probe failed\n", ac->sc_dev.dv_xname);
+		printf("%s: ad1848_probe failed\n", self->dv_xname);
 		return;
 	}
 
-	printf("%s: %s %s", ac->sc_dev.dv_xname, ipa->ipa_devident,
-	       ipa->ipa_devclass);
+	printf("%s: %s %s", self->dv_xname, ipa->ipa_devident,
+	    ipa->ipa_devclass);
 
 	wssattach(sc);
 }
