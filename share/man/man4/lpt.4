@@ -1,4 +1,4 @@
-.\" $NetBSD: lpt.4,v 1.3 2004/01/23 15:49:41 wiz Exp $
+.\" $NetBSD: lpt.4,v 1.4 2004/01/23 15:59:18 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -46,23 +46,32 @@ driver is the port of the lpt driver to the
 .Xr ppbus 4
 system.
 .Pp
-One purpose of this port was to allow parallel port sharing with other
-parallel devices.
-Secondly, inb()/outb() calls have been replaced by ppbus
+One purpose of this port was to allow parallel port sharing with
+other parallel devices.
+Secondly,
+.Fn inb
+and
+.Fn outb
+calls have been replaced by
+.Xr ppbus 4
 function calls.
-lpt is now arch-independent thanks to the ppbus interface.
+.Nm
+is now arch-independent thanks to the
+.Xr ppbus 4
+interface.
 See
 .Xr ppbus 4
 for more information about the parallel port bus system.
 .Pp
-The parallel port bus is reserved by lpt when the printer device is opened
-and released when the device is closed.
+The parallel port bus is reserved by
+.Nm
+when the printer device is opened and released when the device is
+closed.
 .Pp
-Ports can be configured to use DMA, IEEE negotiations, and IEEE compliant
-transfer modes by using the
+Ports can be configured to use DMA, IEEE negotiations, and IEEE
+compliant transfer modes by using the
 .Xr lptctl 8
 command, with modes depending on the hardware available.
-.Pp
 .Ss Minor bit
 The minor bit selects some device features:
 .Bl -column "Minor Bit" "Function" -offset indent
@@ -73,7 +82,8 @@ The minor bit selects some device features:
 .El
 .Pp
 .Xr mknod 8
-can be used to create such devices if necessary (see BUGS).
+can be used to create such devices if necessary (see
+.Sx BUGS ) .
 .Sh FILES
 .Bl -tag -width "/dev/lpt0xx" -compact
 .It Pa /dev/lpt?
@@ -87,13 +97,25 @@ polled ports (minor number 128)
 .Xr lptctl 8 ,
 .Xr mknod 8
 .Sh HISTORY
-This driver is derived from drivers which appear in FreeBSD and NetBSD. The
-FreeBSD driver is used for ppbus usage while the NetBSD driver's behavior is
-emulated as much as possible for compatibility.
+This driver is derived from drivers which appear in
+.Fx
+and
+.Nx .
+The
+.Fx
+driver is used for
+.Xr ppbus 4
+usage while the
+.Nx
+driver's behavior is emulated as much as possible for compatibility.
 .Sh AUTHORS
-This manual page was based on the FreeBSD
-.Xr lpt 4
-manual page. The information has been updated for NetBSD's port by Gary Thorpe.
+This manual page was based on the
+.Fx
+.Nm lpt
+manual page.
+The information has been updated for the
+.Nx
+port by Gary Thorpe.
 .Sh BUGS
 If a printer is not connected and on-line,
 .Pa /dev/lpt?
@@ -101,8 +123,9 @@ and
 .Pa /dev/lpa?
 cannot be used with
 .Xr lptctl 8 .
-A lpt device with minor number
+An lpt device with minor number
 .Em 64
-must be used in this case because it skips the initialization sequence.
+must be used in this case because it skips the initialization
+sequence.
 .Pp
 Testing has been limited by hardware availability.
