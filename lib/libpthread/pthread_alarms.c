@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.10 2004/07/18 21:24:52 chs Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.11 2004/12/29 20:47:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_alarms.c,v 1.10 2004/07/18 21:24:52 chs Exp $");
+__RCSID("$NetBSD: pthread_alarms.c,v 1.11 2004/12/29 20:47:39 nathanw Exp $");
 
 #include <err.h>
 #include <sys/time.h>
@@ -97,7 +97,19 @@ pthread__alarm_add(pthread_t self, struct pt_alarm_t *alarm,
 	if (iterator == PTQ_FIRST(&pthread_alarmqueue)) {
 		PTQ_INSERT_HEAD(&pthread_alarmqueue, alarm, pta_next);
 		timespecclear(&it.it_interval);
-		it.it_value = *ts;
+		/*
+		 * A zero-valued timespec will disarm the timer, but is
+		 * a legitimate value for the _timedwait functions to
+		 * pass in. Correct for this here and in other timer-resetting
+		 * code by setting it_value to a small value that is
+		 * safely in the past.
+		 */
+ 		if (timespecisset(ts)) {
+ 			it.it_value = *ts;
+ 		} else {
+ 			it.it_value.tv_sec = 1;
+ 			it.it_value.tv_nsec = 0;
+ 		}
 		SDPRINTF(("(add %p) resetting alarm timer to %d.%06d\n",
 		    self, it.it_value.tv_sec, it.it_value.tv_nsec/1000));
 		retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, 
@@ -127,7 +139,13 @@ pthread__alarm_del(pthread_t self, struct pt_alarm_t *alarm)
 			next = PTQ_NEXT(alarm, pta_next);
 			timespecclear(&it.it_interval);
 			if (next != NULL)
-				it.it_value = *next->pta_time;
+				/* See comment in pthread__alarm_add() */
+				if (timespecisset(next->pta_time)) {
+					it.it_value = *next->pta_time;
+				} else {
+					it.it_value.tv_sec = 1;
+					it.it_value.tv_nsec = 0;
+				}
 			else
 				timespecclear(&it.it_value);
 			SDPRINTF(("(del %p) resetting alarm timer to %d.%06d\n",
@@ -185,7 +203,13 @@ pthread__alarm_process(pthread_t self, void *arg)
 	/* 2. Reset the timer for the next element in the queue. */
 	if (next) {
 		timespecclear(&it.it_interval);
-		it.it_value = *next->pta_time;
+		/* See comment in pthread__alarm_add() */
+		if (timespecisset(next->pta_time)) {
+			it.it_value = *next->pta_time;
+		} else {
+			it.it_value.tv_sec = 1;
+			it.it_value.tv_nsec = 0;
+		}
 		SDPRINTF(("(pro %p) resetting alarm timer to %d.%09d\n", self,
 		    it.it_value.tv_sec, it.it_value.tv_nsec));
 		retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, &it, NULL);
