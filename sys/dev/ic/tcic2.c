@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.2 1999/07/06 21:44:11 thorpej Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.3 2000/01/13 09:38:17 joda Exp $	*/
 
 #undef	TCICDEBUG
 
@@ -870,6 +870,8 @@ tcic_chip_do_mem_map(h, win)
 {
 	int reg, hwwin, wscnt;
 
+	int kind = h->mem[win].kind & ~PCMCIA_WIDTH_MEM_MASK;
+	int mem8 = (h->mem[win].kind & PCMCIA_WIDTH_MEM_MASK) == PCMCIA_WIDTH_MEM8;
 	DPRINTF(("tcic_chip_do_mem_map window %d: 0x%lx+0x%lx 0x%lx\n",
 		win, (u_long)h->mem[win].addr, (u_long)h->mem[win].size,
 		(u_long)h->mem[win].offset));
@@ -895,7 +897,7 @@ tcic_chip_do_mem_map(h, win)
 	/* set the card address and address space */
 	reg = 0;
 	reg = ((h->mem[win].offset >> TCIC_MEM_SHIFT) & TCIC_MMAP_ADDR_MASK);
-	reg |= (h->mem[win].kind & PCMCIA_MEM_ATTR) ? TCIC_MMAP_ATTR : 0;
+	reg |= (kind == PCMCIA_MEM_ATTR) ? TCIC_MMAP_ATTR : 0;
 	DPRINTF(("tcic_chip_do_map_mem window %d(%d) mmap 0x%04x\n",
 	    win, hwwin, reg));
 	tcic_write_ind_2(h, TCIC_WR_MMAP_N(hwwin), reg);
@@ -905,6 +907,7 @@ tcic_chip_do_mem_map(h, win)
 	/* XXX why can't I do the following two in one statement? */
 	reg = tcic_read_ind_2(h, TCIC_WR_MCTL_N(hwwin)) & TCIC_MCTL_WSCNT_MASK;
 	reg |= TCIC_MCTL_ENA|TCIC_MCTL_QUIET;
+	reg |= mem8 ? TCIC_MCTL_B8 : 0;
 	reg |= (h->sock << TCIC_MCTL_SS_SHIFT) & TCIC_MCTL_SS_MASK;
 #ifdef notyet	/* XXX must get speed from CIS somehow. -chb */
 	wscnt = tcic_ns2wscnt(h->mem[win].speed);
