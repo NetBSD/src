@@ -1,4 +1,4 @@
-/*	$NetBSD: serreg.h,v 1.8 1995/04/11 03:00:58 mycroft Exp $	*/
+/*	$NetBSD: serreg.h,v 1.9 1995/04/21 02:48:09 briggs Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -40,7 +40,7 @@
  */
 
 /* Gleaned from MacOS */
-extern volatile unsigned char	*sccA;
+extern volatile unsigned char *sccA;
 
 #define	SERBRD(x)	(mac68k_machine.sccClkConst / (x) - 2)
 #define SCCCNTL(unit)	(sccA[2 - ((unit) << 1)])

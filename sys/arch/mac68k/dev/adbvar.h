@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.1 1994/12/03 23:34:15 briggs Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.2 1995/04/21 02:47:44 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -35,12 +35,10 @@ extern int adb_traceq[ADB_MAXTRACE];
 extern int adb_traceq_tail;
 extern int adb_traceq_len;
 
-
-typedef struct adb_trace_xlate_s{
-	int params;
-	char *string;
-} adb_trace_xlate_t;
-
+typedef struct adb_trace_xlate_s {
+	int     params;
+	char   *string;
+}       adb_trace_xlate_t;
 
 extern adb_trace_xlate_t adb_trace_xlations[];
-void adb_asmcomplete();
+void    adb_asmcomplete();

@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.3 1994/10/26 08:46:15 cgd Exp $	*/
+/*	$NetBSD: nubus.h,v 1.4 1995/04/21 02:48:01 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -38,36 +38,34 @@
 #define NUBUS_MOTHERBOARD	0x0a
 #define NUBUS_MAXSLOTS		16
 
-struct imagedata{
-	long whatTheHellIsThis;
-	long offset;
-	short rowbytes;
-	short top;
-	short left;
-	short right;
-	short bottom;
-	short version;
-	short packType;
-	short packSize;
-	long hRes;
-	long vRes;
-	short pixelType;
-	short pixelSize;	
+struct imagedata {
+	long    whatTheHellIsThis;
+	long    offset;
+	short   rowbytes;
+	short   top;
+	short   left;
+	short   right;
+	short   bottom;
+	short   version;
+	short   packType;
+	short   packSize;
+	long    hRes;
+	long    vRes;
+	short   pixelType;
+	short   pixelSize;
 };
-
 
 /* this is the main data structure that points to good stuff */
 struct header {
-	long offset;
-	long length;
-	long crc;
-	char romrev;
-	char format;
-	long tst;
-	char reserved;
-	char bytelane;
-} ;
-
+	long    offset;
+	long    length;
+	long    crc;
+	char    romrev;
+	char    format;
+	long    tst;
+	char    reserved;
+	char    bytelane;
+};
 
 /* this is what the directory entries contain */
 struct dir {
@@ -78,20 +76,20 @@ struct dir {
 
 /* describe a single slot */
 struct slot {
-	int size;
+	int     size;
 	struct header head;
 	struct dir mainDir[15];
-	long type;
-	char name[40];
-	char manufacturer[40];
+	long    type;
+	char    name[40];
+	char    manufacturer[40];
 };
 
-struct nubus_hw{
-   int found;			/* If there is a card there	*/
-   caddr_t addr;		/* Phys addr of start of card	*/
-   caddr_t rom;			/* Phys addr of start of ROM	*/
-   int claimed;			/* TRUE if a driver claims this */
-   struct slot Slot;		/* MF NUBUS STUFF */
-   /* any other Nubus stuff we can think of when we get */
-   /*  the NuBus documentation */
+struct nubus_hw {
+	int     found;		/* If there is a card there	 */
+	caddr_t addr;		/* Phys addr of start of card	 */
+	caddr_t rom;		/* Phys addr of start of ROM	 */
+	int     claimed;	/* TRUE if a driver claims this */
+	struct slot slot;	/* MF NUBUS STUFF */
+	/* any other Nubus stuff we can think of when we get */
+	/* the NuBus documentation */
 };
