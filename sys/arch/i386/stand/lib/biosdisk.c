@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.12 1999/08/03 19:46:22 drochner Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.13 2000/10/30 07:30:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -95,6 +95,8 @@ struct biosdisk {
 #ifdef _STANDALONE
 static struct btinfo_bootdisk bi_disk;
 #endif
+
+#define	RF_PROTECTED_SECTORS	64	/* XXX refer to <.../rf_optnames.h> */
 
 int 
 biosdiskstrategy(devdata, flag, dblk, size, buf, rsize)
@@ -256,6 +258,8 @@ biosdiskopen(struct open_file *f, ...)
 		goto out;
 	} else {
 		d->boff = lp->d_partitions[partition].p_offset;
+		if (lp->d_partitions[partition].p_fstype == FS_RAID)
+			d->boff += RF_PROTECTED_SECTORS;
 #ifdef COMPAT_OLDBOOT
 		d->disktype = lp->d_type;
 #endif
