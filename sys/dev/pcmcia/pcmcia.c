@@ -269,8 +269,12 @@ pcmcia_function_enable(pf)
 
     if (pf->cfe == NULL)
 	panic("pcmcia_function_enable: function not initialized");
-    if (pf->pf_flags & PFF_ENABLED)
-	panic("pcmcia_function_enable: function already enabled");
+    if (pf->pf_flags & PFF_ENABLED) {
+	/*
+	 * Don't do anything if we're already enabled.
+	 */
+	return (0);
+    }
 
     /* Increase the reference count on the socket, enabling power,
        if necessary. */
@@ -361,6 +365,12 @@ pcmcia_function_disable(pf)
 
     if (pf->cfe == NULL)
 	panic("pcmcia_function_enable: function not initialized");
+    if ((pf->pf_flags & PFF_ENABLED) == 0) {
+	/*
+	 * Don't do anything if we're already disabled.
+	 */
+	return;
+    }
 
     /* Power down the function if the card supports it. */
     if (pf->cfe->flags & PCMCIA_CFE_POWERDOWN) {
