@@ -32,8 +32,6 @@ typedef void (*_IO_free_type) __P((void*));
 
 struct _IO_str_fields
 {
-  /* The current length is max(_len, _IO_write_ptr-_IO_write_base). */
-  _IO_size_t _len;
   _IO_alloc_type _allocate_buffer;
   _IO_free_type _free_buffer;
 };
@@ -44,3 +42,11 @@ typedef struct _IO_strfile_
   const void *_vtable;
   struct _IO_str_fields _s;
 } _IO_strfile;
+
+/* dynamic: set when the array object is allocated (or reallocated)  as
+   necessary to hold a character sequence that can change in length. */
+#define _IO_STR_DYNAMIC(FP) ((FP)->_s._allocate_buffer != (_IO_alloc_type)0)
+
+/* frozen: set when the program has requested that the array object not
+   be altered, reallocated, or freed. */
+#define _IO_STR_FROZEN(FP) ((FP)->_f._IO_file_flags & _IO_USER_BUF)

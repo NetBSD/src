@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/03/09 00:01:40 phil Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 1996/12/17 18:58:40 phil Exp $
 
 LIB=	stdc++
 
@@ -13,13 +13,13 @@ ioprims.c ioprintf.c ioseekoff.c ioseekpos.c iostrerror.c ioungetc.c \
 iovfprintf.c iovfscanf.c outfloat.c strops.c cmathi.cc cstdlibi.cc \
 cstringi.cc exceptioni.cc newi.cc stddefi.cc stdexcepti.cc typeinfoi.cc \
 cstrmain.cc cstrio.cc fcomplex.cc fcomio.cc dcomplex.cc dcomio.cc \
-ldcomplex.cc ldcomio.cc random.cc tempbuf.cc tree.cc 
+ldcomplex.cc ldcomio.cc random.cc tempbuf.cc tree.cc rx.c \
 
 CXXFLAGS+=  -nostdinc++ 
 CFLAGS+=    -I$(.CURDIR) -I$(.CURDIR)/../libio -I$(.CURDIR)/stl
 NOMAN=	    noman
 
-.PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl
+.PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl $(.CURDIR)/../librx
 
 .include <bsd.lib.mk>
 
@@ -96,38 +96,38 @@ ldcomio.cc: Makefile
 CLEANFILES+=ldcomio.cc
 
 typeinfoi.o: typeinfoi.cc
-	@echo "$(COMPILE.cc) -frtti $(.ALLSRC)"
-	@$(COMPILE.cc) -frtti $(.ALLSRC) -o $(.TARGET).o
+	@echo "$(COMPILE.cc) -frtti $(.IMPSRC)"
+	@$(COMPILE.cc) -frtti $(.IMPSRC) -o $(.TARGET).o
 	@$(LD) -x -r $(.TARGET).o -o $(.TARGET)
 	@rm -f $(.TARGET).o
 
 typeinfoi.po: typeinfoi.cc
-	@echo "$(COMPILE.cc) -p -frtti $(.ALLSRC) -o $(.TARGET)"
-	@$(COMPILE.cc) -p -frtti $(.ALLSRC) -o $(.TARGET).o
+	@echo "$(COMPILE.cc) -p -frtti $(.IMPSRC) -o $(.TARGET)"
+	@$(COMPILE.cc) -p -frtti $(.IMPSRC) -o $(.TARGET).o
 	@$(LD) -X -r $(.TARGET).o -o $(.TARGET)
 	@rm -f $(.TARGET).o
 
 typeinfoi.so: typeinfoi.cc
-	@echo "$(COMPILE.cc) $(PICFLAG) -frtti $(.ALLSRC) -o $(.TARGET)"
-	@$(COMPILE.cc) $(PICFLAG) -frtti $(.ALLSRC) -o $(.TARGET).o
+	@echo "$(COMPILE.cc) $(PICFLAG) -frtti $(.IMPSRC) -o $(.TARGET)"
+	@$(COMPILE.cc) $(PICFLAG) -frtti $(.IMPSRC) -o $(.TARGET).o
 	@$(LD) -x -r $(.TARGET).o -o $(.TARGET)
 	@rm -f $(.TARGET).o
 
 stdexcepti.o: stdexcepti.cc
-	@echo "$(COMPILE.cc) -frtti $(.ALLSRC)"
-	@$(COMPILE.cc) -frtti $(.ALLSRC) -o $(.TARGET).o
+	@echo "$(COMPILE.cc) -frtti $(.IMPSRC)"
+	@$(COMPILE.cc) -frtti $(.IMPSRC) -o $(.TARGET).o
 	@$(LD) -x -r $(.TARGET).o -o $(.TARGET)
 	@rm -f $(.TARGET).o
 
 stdexcepti.po: stdexcepti.cc
-	@echo "$(COMPILE.cc) -p -frtti $(.ALLSRC) -o $(.TARGET)"
-	@$(COMPILE.cc) -p -frtti $(.ALLSRC) -o $(.TARGET).o
+	@echo "$(COMPILE.cc) -p -frtti $(.IMPSRC) -o $(.TARGET)"
+	@$(COMPILE.cc) -p -frtti $(.IMPSRC) -o $(.TARGET).o
 	@$(LD) -X -r $(.TARGET).o -o $(.TARGET)
 	@rm -f $(.TARGET).o
 
 stdexcepti.so: stdexcepti.cc
-	@echo "$(COMPILE.cc) $(PICFLAG) -frtti $(.ALLSRC) -o $(.TARGET)"
-	@$(COMPILE.cc) $(PICFLAG) -frtti $(.ALLSRC) -o $(.TARGET).o
+	@echo "$(COMPILE.cc) $(PICFLAG) -frtti $(.IMPSRC) -o $(.TARGET)"
+	@$(COMPILE.cc) $(PICFLAG) -frtti $(.IMPSRC) -o $(.TARGET).o
 	@$(LD) -x -r $(.TARGET).o -o $(.TARGET)
 	@rm -f $(.TARGET).o
 

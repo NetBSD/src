@@ -169,6 +169,7 @@ struct _IO_FILE {
 #define _IO_file_flags _flags
 
   /* The following pointers correspond to the C++ streambuf protocol. */
+  /* Note:  Tk uses the _IO_read_ptr and _IO_read_end fields directly. */
   char* _IO_read_ptr;	/* Current read pointer */
   char* _IO_read_end;	/* End of get area. */
   char* _IO_read_base;	/* Start of putback+get area. */

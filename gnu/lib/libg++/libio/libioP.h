@@ -78,6 +78,15 @@ extern "C" {
  */
 
 #define _IO_JUMPS(THIS) ((struct _IO_FILE_plus*)(THIS))->vtable
+#ifdef _G_USING_THUNKS
+#define JUMP_FIELD(TYPE, NAME) TYPE NAME
+#define JUMP0(FUNC, THIS) _IO_JUMPS(THIS)->FUNC(THIS)
+#define JUMP1(FUNC, THIS, X1) _IO_JUMPS(THIS)->FUNC(THIS, X1)
+#define JUMP2(FUNC, THIS, X1, X2) _IO_JUMPS(THIS)->FUNC(THIS, X1, X2)
+#define JUMP3(FUNC, THIS, X1,X2,X3) _IO_JUMPS(THIS)->FUNC(THIS, X1,X2, X3)
+#define JUMP_INIT(NAME, VALUE) VALUE
+#define JUMP_INIT_DUMMY JUMP_INIT(dummy, 0), JUMP_INIT(dummy2, 0)
+#else
 /* These macros will change when we re-implement vtables to use "thunks"! */
 #define JUMP_FIELD(TYPE, NAME) struct { short delta1, delta2; TYPE pfn; } NAME
 #define JUMP0(FUNC, THIS) _IO_JUMPS(THIS)->FUNC.pfn(THIS)
@@ -86,6 +95,7 @@ extern "C" {
 #define JUMP3(FUNC, THIS, X1,X2,X3) _IO_JUMPS(THIS)->FUNC.pfn(THIS, X1,X2, X3)
 #define JUMP_INIT(NAME, VALUE) {0, 0, VALUE}
 #define JUMP_INIT_DUMMY JUMP_INIT(dummy, 0)
+#endif
 
 /* The 'finish' function does any final cleaning up of an _IO_FILE object.
    It does not delete (free) it, but does everything else to finalize it/
@@ -217,6 +227,9 @@ typedef int (*_IO_stat_t) __P((_IO_FILE*, void*));
 
 struct _IO_jump_t {
     JUMP_FIELD(_G_size_t, __dummy);
+#ifdef _G_USING_THUNKS
+    JUMP_FIELD(_G_size_t, __dummy2);
+#endif
     JUMP_FIELD(_IO_finish_t, __finish);
     JUMP_FIELD(_IO_overflow_t, __overflow);
     JUMP_FIELD(_IO_underflow_t, __underflow);
