@@ -1236,6 +1236,7 @@
 ./usr/share/man/cat2/getuid.0
 ./usr/share/man/cat2/intro.0
 ./usr/share/man/cat2/ioctl.0
+./usr/share/man/cat2/issetugid.0
 ./usr/share/man/cat2/kill.0
 ./usr/share/man/cat2/ktrace.0
 ./usr/share/man/cat2/lchmod.0
@@ -2288,6 +2289,7 @@
 ./usr/share/man/man2/getuid.2
 ./usr/share/man/man2/intro.2
 ./usr/share/man/man2/ioctl.2
+./usr/share/man/man2/issetugid.2
 ./usr/share/man/man2/kill.2
 ./usr/share/man/man2/ktrace.2
 ./usr/share/man/man2/lchmod.2
