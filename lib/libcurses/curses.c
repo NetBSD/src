@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.13 2000/04/12 21:46:49 jdc Exp $	*/
+/*	$NetBSD: curses.c,v 1.14 2000/04/17 12:25:45 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.13 2000/04/12 21:46:49 jdc Exp $");
+__RCSID("$NetBSD: curses.c,v 1.14 2000/04/17 12:25:45 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -78,7 +78,7 @@ int	 LINES;				/* Lines on the screen. */
 int	 COLORS;			/* Maximum colors on the screen */
 int	 COLOR_PAIRS;			/* Maximum color pairs on the screen */
 int	 My_term = 0;			/* Use Def_term regardless. */
-char	*Def_term = "unknown";		/* Default terminal type. */
+const char	*Def_term = "unknown";		/* Default terminal type. */
 char	 GT;				/* Gtty indicates tabs. */
 char	 NONL;				/* Term can't hack LF doing a CR. */
 char	 UPPERCASE;			/* Terminal is uppercase only. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.15 2000/04/15 13:17:04 blymn Exp $	*/
+/*	$NetBSD: initscr.c,v 1.16 2000/04/17 12:25:46 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.15 2000/04/15 13:17:04 blymn Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.16 2000/04/17 12:25:46 blymn Exp $");
 #endif
 #endif	/* not lint */
 
@@ -75,7 +75,7 @@ initscr(void)
 	 * use Def_term.
 	 */
 	if (My_term || (sp = getenv("TERM")) == NULL)
-		sp = Def_term;
+		sp = (char *)Def_term;
 	if (setterm(sp) == ERR)
 		return (NULL);
 

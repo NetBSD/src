@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.36 2000/04/16 09:52:49 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.37 2000/04/17 12:25:45 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -85,7 +85,7 @@ extern char	 NONL;			/* Term can't hack LF doing a CR. */
 extern char	 UPPERCASE;		/* Terminal is uppercase only. */
 
 extern int	 My_term;		/* Use Def_term regardless. */
-extern char	*Def_term;		/* Default terminal type. */
+extern const char	*Def_term;		/* Default terminal type. */
 
 /* Termcap capabilities. */
 extern char	AM, BE, BS, CA, CC, DA, EO, HC, HL, IN, MI, MS, NC, NS,
@@ -523,7 +523,7 @@ int	 mvscanw(int y, int x, const char *fmt, ...);
 int	 mvwin(WINDOW *win, int y, int x);
 int	 mvwprintw(WINDOW *win, int y, int x, const char *fmt, ...);
 int	 mvwscanw(WINDOW *win, int y, int x, const char *fmt, ...);
-WINDOW	*newwin(int nl, int nc, int by, int bx);
+WINDOW	*newwin(int nlines, int ncols, int by, int bx);
 int	 nl(void);
 int	 nocbreak(void);
 void	 nodelay(WINDOW *win, bool bf);
@@ -544,8 +544,8 @@ int	 scanw(const char *, ...);
 int	 scroll(WINDOW *win);
 int	 scrollok(WINDOW *win, bool bf);
 int	 setterm(char *);
-int	 start_color(void);
-WINDOW	*subwin(WINDOW *orig, int nl, int nc, int by, int bx);
+int      start_color(void);
+WINDOW	*subwin(WINDOW *orig, int nlines, int ncols, int by, int bx);
 int	 touchline(WINDOW *win, int start, int count);
 int	 touchoverlap(WINDOW *win1, WINDOW *win2);
 int	 touchwin(WINDOW *win);

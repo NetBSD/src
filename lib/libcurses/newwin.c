@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.18 2000/04/16 05:48:25 mycroft Exp $	*/
+/*	$NetBSD: newwin.c,v 1.19 2000/04/17 12:25:46 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.18 2000/04/16 05:48:25 mycroft Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.19 2000/04/17 12:25:46 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,32 +47,30 @@ __RCSID("$NetBSD: newwin.c,v 1.18 2000/04/16 05:48:25 mycroft Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
-#undef	nl			/* Don't need it here, and it interferes. */
-
 extern struct __winlist	*winlistp;
 
-static WINDOW *__makenew __P((int, int, int, int, int));
+static WINDOW *__makenew(int nlines, int ncols, int by, int bx, int sub);
 
-void __set_subwin __P((WINDOW *, WINDOW *));
+void __set_subwin(WINDOW *orig, WINDOW *win);
 
 /*
  * newwin --
  *	Allocate space for and set up defaults for a new window.
  */
 WINDOW *
-newwin(int nl, int nc, int by, int bx)
+newwin(int nlines, int ncols, int by, int bx)
 {
 	WINDOW *win;
 	__LINE *lp;
 	int     i, j;
 	__LDATA *sp;
 
-	if (nl == 0)
-		nl = LINES - by;
-	if (nc == 0)
-		nc = COLS - bx;
+	if (nlines == 0)
+		nlines = LINES - by;
+	if (ncols == 0)
+		ncols = COLS - bx;
 
-	if ((win = __makenew(nl, nc, by, bx, 0)) == NULL)
+	if ((win = __makenew(nlines, ncols, by, bx, 0)) == NULL)
 		return (NULL);
 
 	win->nextp = win;
@@ -83,21 +81,21 @@ newwin(int nl, int nc, int by, int bx)
 	__CTRACE("newwin: win->ch_off = %d\n", win->ch_off);
 #endif
 
-	for (i = 0; i < nl; i++) {
+	for (i = 0; i < nlines; i++) {
 		lp = win->lines[i];
 		lp->flags = 0;
-		for (sp = lp->line, j = 0; j < nc; j++, sp++) {
+		for (sp = lp->line, j = 0; j < ncols; j++, sp++) {
 			sp->ch = ' ';
 			sp->attr = 0;
 		}
 		lp->hash = __hash((char *)(void *)lp->line,
-		    (int) (nc * __LDATASIZE));
+		    (int) (ncols * __LDATASIZE));
 	}
 	return (win);
 }
 
 WINDOW *
-subwin(WINDOW *orig, int nl, int nc, int by, int bx)
+subwin(WINDOW *orig, int nlines, int ncols, int by, int bx)
 {
 	int     i;
 	__LINE *lp;
@@ -105,17 +103,17 @@ subwin(WINDOW *orig, int nl, int nc, int by, int bx)
 
 	/* Make sure window fits inside the original one. */
 #ifdef	DEBUG
-	__CTRACE("subwin: (%0.2o, %d, %d, %d, %d)\n", orig, nl, nc, by, bx);
+	__CTRACE("subwin: (%0.2o, %d, %d, %d, %d)\n", orig, nlines, ncols, by, bx);
 #endif
 	if (by < orig->begy || bx < orig->begx
-	    || by + nl > orig->maxy + orig->begy
-	    || bx + nc > orig->maxx + orig->begx)
+	    || by + nlines > orig->maxy + orig->begy
+	    || bx + ncols > orig->maxx + orig->begx)
 		return (NULL);
-	if (nl == 0)
-		nl = orig->maxy + orig->begy - by;
-	if (nc == 0)
-		nc = orig->maxx + orig->begx - bx;
-	if ((win = __makenew(nl, nc, by, bx, 1)) == NULL)
+	if (nlines == 0)
+		nlines = orig->maxy + orig->begy - by;
+	if (ncols == 0)
+		ncols = orig->maxx + orig->begx - bx;
+	if ((win = __makenew(nlines, ncols, by, bx, 1)) == NULL)
 		return (NULL);
 	win->nextp = orig->nextp;
 	orig->nextp = win;
@@ -157,9 +155,7 @@ __set_subwin(WINDOW *orig, WINDOW *win)
  *	Set up a window buffer and returns a pointer to it.
  */
 static WINDOW *
-__makenew(nl, nc, by, bx, sub)
-	int     by, bx, nl, nc;
-	int     sub;
+__makenew(int nlines, int ncols, int by, int bx, int sub)
 {
 	WINDOW			*win;
 	__LINE			*lp;
@@ -168,20 +164,20 @@ __makenew(nl, nc, by, bx, sub)
 
 
 #ifdef	DEBUG
-	__CTRACE("makenew: (%d, %d, %d, %d)\n", nl, nc, by, bx);
+	__CTRACE("makenew: (%d, %d, %d, %d)\n", nlines, ncols, by, bx);
 #endif
 	if ((win = malloc(sizeof(*win))) == NULL)
 		return (NULL);
 #ifdef DEBUG
-	__CTRACE("makenew: nl = %d\n", nl);
+	__CTRACE("makenew: nlines = %d\n", nlines);
 #endif
 
 	/* Set up line pointer array and line space. */
-	if ((win->lines = malloc(nl * sizeof(__LINE *))) == NULL) {
+	if ((win->lines = malloc(nlines * sizeof(__LINE *))) == NULL) {
 		free(win);
 		return NULL;
 	}
-	if ((win->lspace = malloc(nl * sizeof(__LINE))) == NULL) {
+	if ((win->lspace = malloc(nlines * sizeof(__LINE))) == NULL) {
 		free(win);
 		free(win->lines);
 		return NULL;
@@ -192,7 +188,7 @@ __makenew(nl, nc, by, bx, sub)
 		 * Allocate window space in one chunk.
 		 */
 		if ((win->wspace =
-			malloc(nc * nl * sizeof(__LDATA))) == NULL) {
+			malloc(ncols * nlines * sizeof(__LDATA))) == NULL) {
 			free(win->lines);
 			free(win->lspace);
 			free(win);
@@ -222,9 +218,9 @@ __makenew(nl, nc, by, bx, sub)
 		 * Point line pointers to line space, and lines themselves into
 		 * window space.
 		 */
-		for (lp = win->lspace, i = 0; i < nl; i++, lp++) {
+		for (lp = win->lspace, i = 0; i < nlines; i++, lp++) {
 			win->lines[i] = lp;
-			lp->line = &win->wspace[i * nc];
+			lp->line = &win->wspace[i * ncols];
 			lp->firstchp = &lp->firstch;
 			lp->lastchp = &lp->lastch;
 			lp->firstch = 0;
@@ -232,11 +228,11 @@ __makenew(nl, nc, by, bx, sub)
 		}
 	}
 #ifdef DEBUG
-	__CTRACE("makenew: nc = %d\n", nc);
+	__CTRACE("makenew: ncols = %d\n", ncols);
 #endif
 	win->cury = win->curx = 0;
-	win->maxy = nl;
-	win->maxx = nc;
+	win->maxy = nlines;
+	win->maxx = ncols;
 
 	win->begy = by;
 	win->begx = bx;
