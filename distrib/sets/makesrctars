@@ -1,12 +1,12 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.13 2002/04/11 06:04:42 lukem Exp $
+#	$NetBSD: makesrctars,v 1.14 2002/04/12 07:08:37 lukem Exp $
 #
 # Make source code tarballs.
 
 : ${CKSUM=cksum}
 
-GZIP=--best
+GZIP=-9
 export GZIP
 
 if [ -z "$SRCDIR" ]; then
