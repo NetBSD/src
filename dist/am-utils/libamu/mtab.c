@@ -1,3 +1,5 @@
+/*	$NetBSD: mtab.c,v 1.1.1.4 2001/05/13 17:50:32 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mtab.c,v 1.1.1.3 2001/05/13 17:34:22 veego Exp $
+ * Id: mtab.c,v 1.3.2.3 2001/04/14 21:08:25 ezk Exp
  *
  */
 
