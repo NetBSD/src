@@ -57,7 +57,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_cbc.c,v 1.6 2002/09/07 22:58:04 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_cbc.c,v 1.7 2002/09/07 23:35:37 elric Exp $");
+
+#include <sys/types.h>
 
 #include <crypto/blowfish/blowfish.h>
 #include "bf_locl.h"
