@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.14 2000/11/07 05:47:15 lukem Exp $
+.\"	$NetBSD: mtree.8,v 1.15 2001/09/22 03:56:29 perry Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl cderUux
+.Op Fl cdelrUux
 .Bk -words
 .Op Fl i | Fl m
 .Ek
@@ -90,6 +90,21 @@ set of keywords.
 .It Fl k
 Use the ``type'' keyword plus the specified (whitespace or comma separated)
 keywords instead of the current set of keywords.
+.It Fl l
+Do 
+.Dq loose
+permissions checks, in which more stringent permissions
+will match less stringent ones. For example, a file marked mode 0444
+will pass a check for mode 0644.
+.Dq Loose
+checks apply only to read, write and execute permissions -- in
+particular, if other bits like the sticky bit or suid/sgid bits are
+set either in the specification or the file, exact checking will be
+performed. This flag may not be set at the same time as the
+.Fl u
+or
+.Fl U
+flags.
 .It Fl m
 If the schg and/or sappnd flags are specified, reset these flags. Note that
 this is only possible with securelevel less than 1 (i. e. in single user mode
