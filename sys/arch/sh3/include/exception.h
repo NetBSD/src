@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.h,v 1.4 2002/12/29 02:47:07 uwe Exp $	*/
+/*	$NetBSD: exception.h,v 1.5 2004/03/25 01:02:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -115,6 +115,11 @@
 
 #define	SH7709_INTEVT2_PINT07	0x700
 #define	SH7709_INTEVT2_PINT8F	0x720
+
+#define SH7709_INTEVT2_DEI0	0x800
+#define SH7709_INTEVT2_DEI1	0x820
+#define SH7709_INTEVT2_DEI2	0x840
+#define SH7709_INTEVT2_DEI3	0x860
 
 #define	SH7709_INTEVT2_IRDA_ERI	0x880
 #define	SH7709_INTEVT2_IRDA_RXI	0x8a0
