@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.56.2.2 1996/06/14 11:20:45 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.56.2.3 1996/12/05 06:44:50 rat Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2013,7 +2013,7 @@ ENTRY(m68881_save)
 	fsave	a0@			| save state
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
-	btst	#7,_machineid
+	btst	#7,_machineid+3
 	jne	Lm68060fpsave
 #endif
 	tstb	a0@			| null state frame?
@@ -2040,7 +2040,7 @@ ENTRY(m68881_restore)
 	movl	sp@(4),a0		| save area pointer
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
-	btst	#7,_machineid
+	btst	#7,_machineid+3
 	jne	Lm68060fprestore
 #endif
 	tstb	a0@			| null state frame?
