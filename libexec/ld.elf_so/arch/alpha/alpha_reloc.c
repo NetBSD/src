@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.12 2002/09/06 13:20:31 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.13 2002/09/06 15:17:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -109,8 +109,9 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, dodebug)
+_rtld_relocate_nonplt_objects(obj, self, dodebug)
 	const Obj_Entry *obj;
+	bool self;
 	bool dodebug;
 {
 	const Elf_Rela *rela;
@@ -163,7 +164,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			extern Elf_Addr	_GOT_END_[];
 
 			/* This is the ...iffy hueristic. */
-			if (!dodebug ||
+			if (!self ||
 			    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
 			    (caddr_t)where >= (caddr_t)_GOT_END_) {
 				*where += (Elf_Addr)obj->relocbase;
