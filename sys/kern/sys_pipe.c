@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.10 2001/07/18 06:51:38 thorpej Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.11 2001/07/26 14:14:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -230,7 +230,6 @@ sys_pipe(p, v, retval)
 	register_t *retval;
 #endif
 {
-	struct filedesc *fdp = p->p_fd;
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
 	int fd, error;
@@ -267,6 +266,8 @@ sys_pipe(p, v, retval)
 	rf->f_ops = &pipeops;
 	error = falloc(p, &wf, &fd);
 	if (error) {
+		struct filedesc *fdp = p->p_fd;
+
 		if (fdp->fd_ofiles[p->p_retval[0]] == rf) {
 			fdp->fd_ofiles[p->p_retval[0]] = NULL;
 			fdrop(rf, p);
@@ -332,7 +333,7 @@ sys_pipe(p, v, retval)
 free3:
 	FILE_UNUSE(rf, p);
 	ffree(rf);
-	fdremove(fdp, retval[0]);
+	fdremove(p->p_fd, retval[0]);
 free2:
 	pipeclose(wpipe);
 	pipeclose(rpipe);
@@ -428,32 +429,9 @@ pipe_create(cpipep, allockva)
 
 	cpipe = *cpipep;
 
-#ifdef __FreeBSD__
-	/* so pipespace()->pipe_free_kmem() doesn't follow junk pointer */
-	cpipe->pipe_buffer.object = NULL;
-#endif /* FreeBSD */
-	/*
-	 * protect so pipeclose() doesn't follow a junk pointer
-	 * if pipespace() fails.
-	 */
-	cpipe->pipe_buffer.buffer = NULL;
-	memset(&cpipe->pipe_sel, 0, sizeof(cpipe->pipe_sel));
+	/* Initialize */ 
+	memset(cpipe, 0, sizeof(*cpipe));
 	cpipe->pipe_state = PIPE_SIGNALR;
-	cpipe->pipe_peer = NULL;
-	cpipe->pipe_busy = 0;
-
-#ifndef PIPE_NODIRECT
-	/*
-	 * pipe data structure initializations to support direct pipe I/O
-	 */
-	cpipe->pipe_map.cnt = 0;
-	cpipe->pipe_map.kva = NULL;
-	cpipe->pipe_map.pos = 0;
-	cpipe->pipe_map.npages = 0;
-#ifdef __NetBSD__
-	cpipe->pipe_map.ms = NULL;
-#endif
-#endif /* !PIPE_NODIRECT */
 
 	if (allockva && (error = pipespace(cpipe, PIPE_SIZE)))
 		return (error);
