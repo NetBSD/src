@@ -36,13 +36,17 @@
 /*
  * ASC driver code and asc_ringbell() support
  *
- * $Id: asc.c,v 1.3 1994/05/06 17:38:38 briggs Exp $
+ * $Id: asc.c,v 1.4 1994/06/26 13:02:49 briggs Exp $
  *
  * 12/12/93 01:14:45 grantham
  *	initial revision
  *
  * $Log: asc.c,v $
- * Revision 1.3  1994/05/06 17:38:38  briggs
+ * Revision 1.4  1994/06/26 13:02:49  briggs
+ * Minor mods.  Get rid of constants, or update to use a better default
+ * value.
+ *
+ * Revision 1.3  1994/05/06  17:38:38  briggs
  * Missed some warnings...
  *
  * Revision 1.2  1994/05/06  03:34:53  briggs
@@ -63,7 +67,7 @@
 
 
 /* Global ASC location */
-unsigned char *ASCBase = (unsigned char *)0x50014000;
+unsigned char *ASCBase = (unsigned char *)0x50f14000;
 
 
 /* bell support data */
