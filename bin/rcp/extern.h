@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2005/02/17 15:25:02 xtraeme Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2005/03/11 02:55:23 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,4 +45,5 @@ void	 nospace(void);
 int	 okname(char *);
 void	 run_err(const char *, ...);
 int	 susystem(char *);
+char	*unbracket(char *);
 void	 verifydir(char *);

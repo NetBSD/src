@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.8 2005/02/17 15:25:02 xtraeme Exp $	*/
+/*	$NetBSD: util.c,v 1.9 2005/03/11 02:55:23 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: util.c,v 1.8 2005/02/17 15:25:02 xtraeme Exp $");
+__RCSID("$NetBSD: util.c,v 1.9 2005/03/11 02:55:23 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,21 @@ colon(char *cp)
 			return (0);
 	}
 	return (0);
+}
+
+char *
+unbracket(char *cp)
+{
+	char *ep;
+
+	if (*cp == '[') {
+		ep = cp + (strlen(cp) - 1);
+		if (*ep == ']') {
+			*ep = '\0';
+			++cp;
+		}
+	}
+	return (cp);
 }
 
 void
