@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.8 1996/03/12 21:28:52 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.9 1996/04/03 08:18:16 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -446,6 +446,8 @@ LIBCC1!= cd $(.CURDIR)/../common; \
 
 LDADD+=${LIBCC1} -lgnumalloc
 DPADD+= /usr/lib/libgnumalloc.a
+
+${PROG}: ${LIBCC1}
 
 .include <bsd.prog.mk>
 %% file common/Makefile
