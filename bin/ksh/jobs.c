@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.2 1997/01/12 19:11:55 tls Exp $	*/
+/*	$NetBSD: jobs.c,v 1.3 1998/04/07 10:29:50 fair Exp $	*/
 
 /*
  * Process and job control
@@ -617,7 +617,7 @@ exchild(t, flags, close_fd)
 			setsig(&sigtraps[SIGQUIT], SIG_IGN,
 				SS_RESTORE_IGN|SS_FORCE);
 			if (!(orig_flags & (XPIPEI | XCOPROC))) {
-				int fd = open("/dev/null", 0);
+				int fd = open(_PATH_DEVNULL, 0);
 				(void) ksh_dup2(fd, 0, TRUE);
 				close(fd);
 			}
