@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.118 2001/11/13 15:20:34 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.119 2001/11/13 16:03:53 tv Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -39,63 +39,56 @@ SRCS+=	timer_create.c timer_delete.c timer_gettime.c timer_settime.c \
 SRCS+=	_brk.c _fork.c _pipe.c _sbrk.c
 
 # modules with default implementations on all architectures:
-ASM=	accept.o access.o acct.o bind.o chdir.o chflags.o \
-	chmod.o chown.o chroot.o clock_getres.o clock_gettime.o \
-	close.o connect.o dup.o dup2.o execve.o \
-	fchdir.o fchflags.o fchmod.o fchown.o fchroot.o fcntl.o \
-	fdatasync.o fhopen.o fhstat.o fhstatfs.o \
-	fktrace.o flock.o fpathconf.o __fstat13.o fstatfs.o \
-	fsync.o futimes.o __getcwd.o \
-	getdents.o getfh.o getfsstat.o getgroups.o getitimer.o \
-	__getlogin.o getpeername.o getpgid.o getpgrp.o \
-	getpriority.o getrlimit.o getrusage.o getsid.o getsockname.o \
-	getsockopt.o gettimeofday.o ioctl.o kill.o ktrace.o \
-	lchflags.o lchmod.o lchown.o __lstat13.o lfs_bmapv.o lfs_markv.o \
-	lfs_segclean.o lfs_segwait.o link.o listen.o lutimes.o \
-	madvise.o mincore.o minherit.o mkdir.o mkfifo.o mknod.o \
-	mlock.o mlockall.o mount.o mprotect.o __msgctl13.o msgget.o msgrcv.o \
-	msgsnd.o __msync13.o munlock.o munlockall.o munmap.o nanosleep.o \
-	nfssvc.o ntp_gettime.o open.o pathconf.o \
-	poll.o profil.o quotactl.o read.o \
-	readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o revoke.o \
-	rmdir.o select.o semconfig.o semget.o semop.o ____semctl13.o sendmsg.o \
-	sendto.o setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
-	setpgid.o setpriority.o setregid.o setreuid.o setrlimit.o \
-	setsid.o setsockopt.o setuid.o \
-	__shmctl13.o shmdt.o shmget.o shutdown.o __sigaction14.o \
-	__sigaltstack14.o __sigpending14.o __sigprocmask14.o __sigsuspend14.o \
-	socket.o socketpair.o __stat13.o statfs.o \
-	swapctl.o symlink.o sysarch.o umask.o undelete.o unlink.o \
-	unmount.o utimes.o utrace.o vadvise.o wait4.o write.o writev.o \
-	__sysctl.o \
-	__posix_chown.o __posix_fchown.o __posix_lchown.o __posix_rename.o
+ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
+	chmod.S chown.S chroot.S clock_getres.S clock_gettime.S \
+	close.S connect.S dup.S dup2.S execve.S \
+	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S fcntl.S \
+	fdatasync.S fhopen.S fhstat.S fhstatfs.S \
+	fktrace.S flock.S fpathconf.S __fstat13.S fstatfs.S \
+	fsync.S futimes.S __getcwd.S \
+	getdents.S getfh.S getfsstat.S getgroups.S getitimer.S \
+	__getlogin.S getpeername.S getpgid.S getpgrp.S \
+	getpriority.S getrlimit.S getrusage.S getsid.S getsockname.S \
+	getsockopt.S gettimeofday.S ioctl.S kill.S ktrace.S \
+	lchflags.S lchmod.S lchown.S __lstat13.S lfs_bmapv.S lfs_markv.S \
+	lfs_segclean.S lfs_segwait.S link.S listen.S lutimes.S \
+	madvise.S mincore.S minherit.S mkdir.S mkfifo.S mknod.S \
+	mlock.S mlockall.S mount.S mprotect.S __msgctl13.S msgget.S msgrcv.S \
+	msgsnd.S __msync13.S munlock.S munlockall.S munmap.S nanosleep.S \
+	nfssvc.S ntp_gettime.S open.S pathconf.S \
+	poll.S profil.S quotactl.S read.S \
+	readlink.S readv.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
+	rmdir.S select.S semconfig.S semget.S semop.S ____semctl13.S sendmsg.S \
+	sendto.S setegid.S seteuid.S setgid.S setgroups.S setitimer.S \
+	setpgid.S setpriority.S setregid.S setreuid.S setrlimit.S \
+	setsid.S setsockopt.S setuid.S \
+	__shmctl13.S shmdt.S shmget.S shutdown.S __sigaction14.S \
+	__sigaltstack14.S __sigpending14.S __sigprocmask14.S __sigsuspend14.S \
+	socket.S socketpair.S __stat13.S statfs.S \
+	swapctl.S symlink.S sysarch.S umask.S undelete.S unlink.S \
+	unmount.S utimes.S utrace.S vadvise.S wait4.S write.S writev.S \
+	__sysctl.S \
+	__posix_chown.S __posix_fchown.S __posix_lchown.S __posix_rename.S
 
-PASM=	${ASM:.o=.po}
-SASM=	${ASM:.o=.so}
+NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
+	issetugid.S sync.S
 
-NOERR=	getegid.o geteuid.o getgid.o getpid.o getppid.o getuid.o \
-	issetugid.o sync.o
-PNOERR= ${NOERR:.o=.po}
-SNOERR= ${NOERR:.o=.so}
+PSEUDONOERR=	_exit.S
 
-PSEUDONOERR=	_exit.o
-PPSEUDONOERR=	${PSEUDONOERR:.o=.po}
-SPSEUDONOERR=	${PSEUDONOERR:.o=.so}
+SRCS+=		${ASM} ${NOERR} ${PSEUDONOERR}
+CLEANFILES+=	${ASM} ${NOERR} ${PSEUDONOERR}
 
-SRCS+=		${ASM:.o=.S} ${NOERR:.o=.S} ${PSEUDONOERR:.o=.S}
-CLEANFILES+=	${ASM:.o=.S} ${NOERR:.o=.S} ${PSEUDONOERR:.o=.S}
-
-.for F in ${ASM:.o=.S}
+.for F in ${ASM}
 ${F}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 	printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' >${.TARGET}
 .endfor
 
-.for F in ${NOERR:.o=.S}
+.for F in ${NOERR}
 ${F}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 	printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' >${.TARGET}
 .endfor
 
-.for F in ${PSEUDONOERR:.o=.S}
+.for F in ${PSEUDONOERR}
 ${F}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 	@printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' >${.TARGET}
 .endfor
