@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.26 1998/01/07 05:49:25 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.27 1998/01/07 23:47:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -193,7 +193,7 @@ sys_accept(p, v, retval)
 		return (error);
 	}
 	*retval = tmpfd;
-	{ struct socket *aso = so->so_q;
+	{ struct socket *aso = so->so_q.tqh_first;
 	  if (soqremque(aso, 1) == 0)
 		panic("accept");
 	  so = aso;
