@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16 2003/01/28 01:07:58 kent Exp $	*/
+/*	$NetBSD: bus.h,v 1.17 2003/06/15 23:08:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -950,6 +950,8 @@ typedef struct bus_dma_tag	*bus_dma_tag_t;
 typedef struct bus_dma_segment	bus_dma_segment_t;
 typedef struct bus_dmamap	*bus_dmamap_t;
 #endif /* ! BUS_DMA_MD_TYPES */
+
+#define BUS_DMA_TAG_VALID(t)    ((t) != (bus_dma_tag_t)0)
 
 /*
  * bus DMA operaion table

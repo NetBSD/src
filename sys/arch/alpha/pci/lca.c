@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.40 2003/01/01 00:39:20 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.41 2003/06/15 23:08:55 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.40 2003/01/01 00:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.41 2003/06/15 23:08:55 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,6 +249,7 @@ lcaattach(parent, self, aux)
 	pba.pba_memt = &lcp->lc_memt;
 	pba.pba_dmat =
 	    alphabus_dma_get_tag(&lcp->lc_dmat_direct, ALPHA_BUS_PCI);
+	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.12 2003/02/06 03:16:48 briggs Exp $	*/
+/*	$NetBSD: i80321.c,v 1.13 2003/06/15 23:08:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -269,6 +269,7 @@ i80321_attach(struct i80321_softc *sc)
 	pba.pba_iot = &sc->sc_pci_iot;
 	pba.pba_memt = &sc->sc_pci_memt;
 	pba.pba_dmat = &sc->sc_pci_dmat;
+	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &sc->sc_pci_chipset;
 	pba.pba_bus = preg;
 	pba.pba_bridgetag = NULL;

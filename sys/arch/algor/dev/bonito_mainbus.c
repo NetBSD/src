@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.6 2003/01/01 00:35:30 thorpej Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.7 2003/06/15 23:08:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ bonito_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		pba.pba_iot = &acp->ac_iot;
 		pba.pba_memt = &acp->ac_memt;
 		pba.pba_dmat = &acp->ac_pci_dmat;
+		pba.pba_dmat64 = NULL;
 		pba.pba_pc = &acp->ac_pc;
 	    }
 #endif /* ALGOR_P6032 */
