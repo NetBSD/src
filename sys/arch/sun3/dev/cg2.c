@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.13 2000/06/29 07:18:58 mrg Exp $	*/
+/*	$NetBSD: cg2.c,v 1.14 2001/08/05 18:07:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -352,7 +352,8 @@ static int cg2putcmap(fb, data)
 	struct fbcmap *cmap = data;
 	struct cg2_softc *sc = fb->fb_private;
 	u_char red[CMSIZE], green[CMSIZE], blue[CMSIZE];
-	int error, start, count, ecount;
+	int error;
+	u_int start, count, ecount;
 	register u_int i;
 	register u_short *p;
 
