@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51.2.2 1996/06/15 09:02:08 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51.2.3 1996/06/17 06:34:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -998,6 +998,7 @@ sendsig(catcher, sig, mask, code)
 	regs[A3] = (int)catcher;
 
 	regs[PC] = (int)catcher;
+	regs[T9] = (int)catcher;
 	regs[SP] = (int)fp;
 	/*
 	 * Signal trampoline code is at base of user stack.
