@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.10 1996/10/13 03:21:45 christos Exp $	*/
+/*	$NetBSD: pram.c,v 1.11 1996/10/21 05:42:29 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -36,12 +36,15 @@
 
 /* #include "stand.h"  */
 #include <sys/types.h>
+#ifdef DEBUG
+#include <sys/systm.h>
+#endif
 #include <machine/viareg.h>
 #include "pram.h"
 #include "macrom.h"
 
 #if DEBUG
-char *convtime(unsigned long t)
+static char *convtime(unsigned long t)
 {
   static long daypmon[] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
   static char *monstr[] = {"January","February","March","April","May","June",
@@ -110,7 +113,7 @@ char *convtime(unsigned long t)
     t=0;
   }
 
-  sprintf(s,"%s %d, %d   %d:%d:%d",monstr[month],day,year,hour,minute,seconds);
+  sprintf(s,"%s %ld, %ld   %ld:%ld:%ld",monstr[month],day,year,hour,minute,seconds);
 
   return s;
 }
@@ -127,7 +130,7 @@ pram_readtime(void)
    else
 	timedata = getPramTime();
 #if DEBUG
-   printf("time read from PRAM: 0x%x\n", timedata);
+   printf("time read from PRAM: 0x%lx\n", timedata);
    printf("Date and time: %s\n",convtime(timedata));
 #endif
 

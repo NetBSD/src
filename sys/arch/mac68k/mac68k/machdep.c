@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 1996/10/15 06:40:39 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123 1996/10/21 05:42:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -537,7 +537,7 @@ sendsig(catcher, sig, mask, code)
 		(void) grow(p, (unsigned) fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		    p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
 	if (useracc((caddr_t) fp, sizeof(struct sigframe), B_WRITE) == 0) {
@@ -607,7 +607,7 @@ sendsig(catcher, sig, mask, code)
 	}
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *) &kfp->sf_state.ss_fpstate)
-		printf("sendsig(%d): copy out FP state (%x) to %x\n",
+		printf("sendsig(%d): copy out FP state (%x) to %p\n",
 		    p->p_pid, *(u_int *) & kfp->sf_state.ss_fpstate,
 		    &kfp->sf_state.ss_fpstate);
 #endif
@@ -626,7 +626,7 @@ sendsig(catcher, sig, mask, code)
 	frame->f_regs[SP] = (int) fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
+		printf("sendsig(%d): sig %d scp %p fp %p sc_sp %x sc_ap %x\n",
 		    p->p_pid, sig, kfp->sf_scp, fp,
 		    kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
 #endif
@@ -671,7 +671,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((int) scp & 1)
 		return (EINVAL);
@@ -724,7 +724,7 @@ sys_sigreturn(p, v, retval)
 		return (EJUSTRETURN);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
+		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
 		    p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		    (flags & SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
@@ -764,7 +764,7 @@ sys_sigreturn(p, v, retval)
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *) &tstate.ss_fpstate)
-		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
+		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
 		    p->p_pid, *(u_int *) & tstate.ss_fpstate,
 		    &tstate.ss_fpstate);
 	if ((sigdebug & SDB_FOLLOW) ||
@@ -1373,10 +1373,9 @@ cpu_exec_aout_makecmds(p, epp)
 	struct exec_package *epp;
 {
 	int     error = ENOEXEC;
-	struct exec *execp = epp->ep_hdr;
 
 #ifdef COMPAT_NOMID
-	if (execp->a_midmag == ZMAGIC)	/* i.e., MID == 0. */
+	if (epp->ep_hdr->a_midmag == ZMAGIC)	/* i.e., MID == 0. */
 		return exec_aout_prep_oldzmagic(p, epp);
 #endif
 
