@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.29 2002/10/04 15:22:30 tsutsui Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.30 2002/10/04 21:19:34 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -113,7 +113,7 @@ enum fe_type {
 	FE_TYPE_AT1700BT,
 	FE_TYPE_AT1700FT,
 	FE_TYPE_AT1700AT,
-	FE_TYPE_RE2000,
+	FE_TYPE_AT_UNKNOWN,
 
 	/* PCMCIA by Fujitsu. */
 	FE_TYPE_MBH10302,
