@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.2 2003/02/05 07:05:19 matt Exp $	*/
+/*	$NetBSD: bat.h,v 1.3 2003/02/05 07:35:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ struct bat {
 };
 
 /* Lower BAT bits (all but PowerPC 601): */
-#define	BAT_RPN		0xfffe0000	/* physical block start */
+#define	BAT_RPN		(~0x1ffff)	/* physical block start */
 #define	BAT_W		0x00000040	/* 1 = write-through, 0 = write-back */
 #define	BAT_I		0x00000020	/* cache inhibit */
 #define	BAT_M		0x00000010	/* memory coherency enable */
@@ -89,7 +89,7 @@ struct bat {
 #define	BAT_PP_RO	0x00000003	/* read-only */
 
 /* Upper BAT bits (all but PowerPC 601): */
-#define	BAT_EPI		0xfffe0000	/* effective block start */
+#define	BAT_EPI		(~0x1ffffL)	/* effective block start */
 #define	BAT_BL		0x00001ffc	/* block length */
 #define	BAT_Vs		0x00000002	/* valid in supervisor mode */
 #define	BAT_Vu		0x00000001	/* valid in user mode */
