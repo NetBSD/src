@@ -33,17 +33,49 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: strsignal.c,v 1.2 1994/09/03 05:07:56 jtc Exp $";
+static char *rcsid = "$Id: __strsignal.c,v 1.1 1994/09/03 05:07:52 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <signal.h>
 #include <string.h>
+#ifdef NLS
+#include <nl_types.h>
+#endif
 
-extern char *__strsignal __P((int, char *));
+extern char *sys_siglist[];
+extern int sys_nerr;
 
 char *
-strsignal(sig)
-	int sig;
+__strsignal(num, buf)
+	int num;
+	char *buf;
 {
-	static char buf[128];
-	return __strsignal(sig, buf);
+#define	UPREFIX	"Unknown signal: %u"
+	register unsigned int signum;
+
+#ifdef NLS
+	nl_catd catd ;
+	catd = catopen("libc", 0);
+#endif
+
+	signum = num;				/* convert to unsigned */
+	if (signum < NSIG) {
+#ifdef NLS
+		strcpy(buf, catgets(catd, 2, signum, sys_siglist[signum])); 
+#else
+		return(sys_siglist[signum]);
+#endif
+	} else {
+#ifdef NLS
+		sprintf(buf, catgets(catd, 1, 0xffff, UPREFIX), signum);
+#else
+		sprintf(buf, UPREFIX, signum);
+#endif
+	}
+
+#ifdef NLS
+	catclose(catd);
+#endif
+
+	return buf;
 }
