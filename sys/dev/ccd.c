@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.86 2003/05/10 23:12:43 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.87 2003/05/17 16:11:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.86 2003/05/10 23:12:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.87 2003/05/17 16:11:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,9 +538,11 @@ ccdopen(dev, flags, fmt, p)
 	/*
 	 * If we're initialized, check to see if there are any other
 	 * open partitions.  If not, then it's safe to update
-	 * the in-core disklabel.
+	 * the in-core disklabel.  Only read the disklabel if it is
+	 * not already valid.
 	 */
-	if ((cs->sc_flags & CCDF_INITED) && (cs->sc_dkdev.dk_openmask == 0))
+	if ((cs->sc_flags & (CCDF_INITED|CCDF_VLABEL)) == CCDF_INITED &&
+	    cs->sc_dkdev.dk_openmask == 0)
 		ccdgetdisklabel(dev);
 
 	/* Check that the partition exists. */
@@ -608,6 +610,11 @@ ccdclose(dev, flags, fmt, p)
 	}
 	cs->sc_dkdev.dk_openmask =
 	    cs->sc_dkdev.dk_copenmask | cs->sc_dkdev.dk_bopenmask;
+
+	if (cs->sc_dkdev.dk_openmask == 0) {
+		if ((cs->sc_flags & CCDF_KLABEL) == 0)
+			cs->sc_flags &= ~CCDF_VLABEL;
+	}
 
 	(void) lockmgr(&cs->sc_lock, LK_RELEASE, NULL);
 	return (0);
@@ -997,6 +1004,7 @@ ccdioctl(dev, cmd, data, flag, p)
 	case ODIOCSDINFO:
 	case ODIOCWDINFO:
 #endif
+	case DIOCKLABEL:
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
@@ -1013,6 +1021,7 @@ ccdioctl(dev, cmd, data, flag, p)
 	case DIOCWDINFO:
 	case DIOCGPART:
 	case DIOCWLABEL:
+	case DIOCKLABEL:
 	case DIOCGDEFLABEL:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
@@ -1165,7 +1174,7 @@ ccdioctl(dev, cmd, data, flag, p)
 		/* Free component info and interleave table. */
 		free(cs->sc_cinfo, M_DEVBUF);
 		free(cs->sc_itable, M_DEVBUF);
-		cs->sc_flags &= ~CCDF_INITED;
+		cs->sc_flags &= ~(CCDF_INITED|CCDF_VLABEL);
 
 		/* Detatch the disk. */
 		disk_detach(&cs->sc_dkdev);
@@ -1224,6 +1233,13 @@ ccdioctl(dev, cmd, data, flag, p)
 		cs->sc_flags &= ~CCDF_LABELLING;
 		break;
 	}
+
+	case DIOCKLABEL:
+		if (*(int *)data != 0)
+			cs->sc_flags |= CCDF_KLABEL;
+		else
+			cs->sc_flags &= ~CCDF_KLABEL;
+		break;
 
 	case DIOCWLABEL:
 		if (*(int *)data != 0)
@@ -1450,6 +1466,9 @@ ccdgetdisklabel(dev)
 		if (errstring != NULL)
 			printf("%s: %s\n", cs->sc_xname, errstring);
 #endif
+
+	/* In-core label now valid. */
+	cs->sc_flags |= CCDF_VLABEL;
 }
 
 /*
