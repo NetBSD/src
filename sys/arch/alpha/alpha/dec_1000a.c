@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.2 1998/09/22 16:23:20 thorpej Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.3 1998/11/19 02:02:45 ross Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.2 1998/09/22 16:23:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.3 1998/11/19 02:02:45 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,12 @@ void dec_1000a_init __P((void));
 static void dec_1000a_cons_init __P((void));
 static void dec_1000a_device_register __P((struct device *, void *));
 
-const struct alpha_variation_table dec_1000a_variations[] = {
+static const struct alpha_variation_table dec_1000_variations[] = {
+	{ 0, "AlphaServer 1000" },
+	{ 0, NULL },
+};
+
+static const struct alpha_variation_table dec_1000a_variations[] = {
 	{ 0, "AlphaServer 1000A" },
 	{ 0, NULL },
 };
@@ -121,12 +126,13 @@ dec_1000a_init()
 {
 	u_int64_t variation;
 
-	platform.family = "AlphaServer 1000A";
+	platform.family = "AlphaServer 1000/1000A";
 
 	if ((platform.model = alpha_dsr_sysname()) == NULL) {
 		variation = hwrpb->rpb_variation & SV_ST_MASK;
 		if ((platform.model = alpha_variation_name(variation,
-		    dec_1000a_variations)) == NULL)
+		    cputype == ST_DEC_1000 ? dec_1000_variations
+					   : dec_1000a_variations)) == NULL)
 			platform.model = alpha_unknown_sysname();
 	}
 
