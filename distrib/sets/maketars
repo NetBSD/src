@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.13.10.3 2002/02/26 20:07:40 he Exp $
+# $NetBSD: maketars,v 1.13.10.4 2002/02/27 20:45:26 he Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-a arch] [-m machine] [-s setsdir] [-d destdir] \
@@ -84,7 +84,7 @@ for setname in $lists; do
 	echo "making $out"
 	sh $setd/makeflist -a $arch -m $machine -s $setd $setname > ${dest}/tmp/flist
 	(cd $dest ; pax -w -d -z < ${dest}/tmp/flist) > ${tars}/$out
-	es=`expr $es + $?`
+	es=$(($es + $?))
 done
 rm -f ${dest}/tmp/flist
 exit $es
