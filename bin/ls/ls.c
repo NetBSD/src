@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.26 1998/05/16 15:12:26 lukem Exp $	*/
+/*	$NetBSD: ls.c,v 1.27 1998/07/27 17:06:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.26 1998/05/16 15:12:26 lukem Exp $");
+__RCSID("$NetBSD: ls.c,v 1.27 1998/07/27 17:06:48 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ main(argc, argv)
 	struct winsize win;
 	int ch, fts_options, notused;
 	int kflag = 0;
-	char *p;
+	const char *p;
 
 	/* Terminal defaults to -Cq, non-terminal defaults to -1. */
 	if (isatty(STDOUT_FILENO)) {
@@ -401,7 +401,7 @@ display(p, list)
 	int maxinode, maxnlink, maxmajor, maxminor;
 	int bcfile, entries, flen, glen, ulen, maxflags, maxgroup, maxlen;
 	int maxuser, needstats;
-	char *user, *group;
+	const char *user, *group;
 	char buf[21];			/* 64 bits == 20 digits, +1 for NUL */
 	char nuser[12], ngroup[12];
 	char *flags = NULL;

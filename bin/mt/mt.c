@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.26 1998/07/04 02:14:22 mjacob Exp $	*/
+/*	$NetBSD: mt.c,v 1.27 1998/07/27 17:06:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.26 1998/07/04 02:14:22 mjacob Exp $");
+__RCSID("$NetBSD: mt.c,v 1.27 1998/07/27 17:06:48 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ const struct commands com[] = {
 	{ NULL }
 };
 
-void printreg __P((char *, u_int, char *));
+void printreg __P((const char *, u_int, const char *));
 void status __P((struct mtget *));
 void usage __P((void));
 int  main __P((int, char *[]));
@@ -117,7 +117,8 @@ main(argc, argv)
 	struct mtget mt_status;
 	struct mtop mt_com;
 	int ch, len, mtfd, flags;
-	char *p, *tape;
+	char *p;
+	const char *tape;
 	int count;
 
 	if ((tape = getenv("TAPE")) == NULL)
@@ -223,11 +224,11 @@ main(argc, argv)
 #include <tahoe/vba/cyreg.h>
 #endif
 
-struct tape_desc {
+const struct tape_desc {
 	short	t_type;		/* type of magtape device */
-	char	*t_name;	/* printing name */
-	char	*t_dsbits;	/* "drive status" register */
-	char	*t_erbits;	/* "error" register */
+	const	char *t_name;	/* printing name */
+	const	char *t_dsbits;	/* "drive status" register */
+	const	char *t_erbits;	/* "error" register */
 } tapes[] = {
 #ifdef sun
 	{ MT_ISCPC,	"TapeMaster",	TMS_BITS,	0 },
@@ -249,7 +250,7 @@ void
 status(bp)
 	struct mtget *bp;
 {
-	struct tape_desc *mt;
+	const struct tape_desc *mt;
 
 	for (mt = tapes;; mt++) {
 		if (mt->t_type == 0) {
@@ -277,9 +278,9 @@ status(bp)
  */
 void
 printreg(s, v, bits)
-	char *s;
+	const char *s;
 	u_int v;
-	char *bits;
+	const char *bits;
 {
 	int i, any = 0;
 	char c;

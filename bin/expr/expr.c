@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.5 1997/07/20 17:33:00 christos Exp $	*/
+/*	$NetBSD: expr.c,v 1.6 1998/07/27 17:06:48 mycroft Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -174,7 +174,8 @@ to_string(vp)
 	if (tmp == NULL) {
 		err(2, "%s", "");
 	}
-	sprintf(tmp, "%d", vp->u.i);
+	(void)snprintf(tmp, 25, "%d", vp->u.i);
+	tmp[24] = '\0';
 	vp->type = string;
 	vp->u.s = tmp;
 }

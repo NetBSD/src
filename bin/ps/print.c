@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.37 1998/04/01 14:19:27 kleink Exp $	*/
+/*	$NetBSD: print.c,v 1.38 1998/07/27 17:06:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.37 1998/04/01 14:19:27 kleink Exp $");
+__RCSID("$NetBSD: print.c,v 1.38 1998/07/27 17:06:48 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -323,7 +323,7 @@ tname(k, ve)
 {
 	VAR *v;
 	dev_t dev;
-	char *ttname;
+	const char *ttname;
 
 	v = ve->var;
 	dev = KI_EPROC(k)->e_tdev;
@@ -344,7 +344,7 @@ longtname(k, ve)
 {
 	VAR *v;
 	dev_t dev;
-	char *ttname;
+	const char *ttname;
 
 	v = ve->var;
 	dev = KI_EPROC(k)->e_tdev;
