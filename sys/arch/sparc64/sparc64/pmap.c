@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 1998/07/07 03:05:05 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define printf	db_printf */
@@ -39,6 +39,10 @@
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/msgbuf.h>
+#include <sys/lock.h>
+#include <sys/exec.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -52,6 +56,7 @@
 #include <machine/sparc64.h>
 #include <machine/ctlreg.h>
 #include <machine/openfirm.h>
+#include <machine/kcore.h>
 
 #include "cache.h"
 #include "asm.h"
@@ -107,7 +112,8 @@ typedef struct pv_entry {
 #define	PV_ALIAS	0x1LL
 #define PV_REF		0x2LL
 #define PV_MOD		0x4LL
-#define PV_MASK		(0x07LL)
+#define PV_NVC		0x8LL
+#define PV_MASK		(0x0fLL)
 #define PV_VAMASK	(~(NBPG-1))
 #if 0
 #define PV_MATCH(pv,va)	(((pv)->pv_va) == (va))
@@ -164,7 +170,10 @@ static int npgs;
 static u_int nextavail;
 static struct mem_region memlist[8]; /* Pick a random size here */
 
+caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
+
 struct mem_region *mem, *avail, *orig;
+int memsize;
 
 static int memh=0, vmemh=0, mmuh=0;	/* Handles to OBP devices */
 
@@ -497,10 +506,10 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		prom_printf("no memory?");
 		OF_exit();
 	}
-	sz = OF_getproplen(memh, "reg") + 2 * sizeof(struct mem_region);
-	valloc(mem, struct mem_region, sz);
-	bzero((caddr_t)mem, sz);
-	if(OF_getprop(memh, "reg", mem, sz) <= 0) {
+	memsize = OF_getproplen(memh, "reg") + 2 * sizeof(struct mem_region);
+	valloc(mem, struct mem_region, memsize);
+	bzero((caddr_t)mem, memsize);
+	if(OF_getprop(memh, "reg", mem, memsize) <= 0) {
 		prom_printf("no memory installed?");
 		OF_exit();
 	}
@@ -728,9 +737,11 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		panic("kernel segment size exceeded\n");
 		OF_exit();
 	}
-       
+
+#if 0       
 	/* DEBUG -- don't allow these pages to be used. */
 	kernelend = (kernelstart + 4*MEG);
+#endif
 #ifdef DEF_DEBUG
 	/* print out mem list */
 	prom_printf("Available %x physical memory before cleanup:\r\n", avail);
@@ -1070,7 +1081,8 @@ pmap_virtual_space(start, end)
 	/*
 	 * Reserve one segment for kernel virtual memory
 	 */
-	*start = (vm_offset_t)(ksegv + 4*MEG); /* Start after our locked TLB entry */
+	vmmap = (caddr_t)(ksegv + 4*MEG); /* Start after our locked TLB entry */
+	*start = (vm_offset_t)(vmmap + NBPG);
 	*end = VM_MAX_KERNEL_ADDRESS;
 #ifdef NOTDEF_DEBUG
 	prom_printf("pmap_virtual_space: %x-%x\r\n", *start, *end);
@@ -1468,10 +1480,11 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 	 */
 	if (IS_VM_PHYSADDR(pa)) {
 		pv = pa_to_pvh(pa);
-		aliased = (pv->pv_va&PV_ALIAS);
+		aliased = (pv->pv_va&(PV_ALIAS|PV_NVC));
 	} else {
 		aliased = 0;
 	}
+	if (pa & PMAP_NVC) aliased = 1;
 	if ((tte.data.data = pseg_get(pm, va))<0 &&
 	    ((tte.data.data^pa)&TLB_PA_MASK)) {
 		vm_offset_t entry;
@@ -1571,6 +1584,8 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 			enter_stats.firstpv++;
 #endif
 			PV_SETVA(pv,va);
+			if (pa & PMAP_NVC)
+				pv->pv_va |= PV_NVC;
 			pv->pv_pmap = pm;
 			pv->pv_next = NULL;
 		} else {
@@ -1623,8 +1638,8 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 				enter_stats.secondpv++;
 #endif
 			/* Fixup possible new aliasing */
-			if (aliased && !(pv->pv_va|PV_ALIAS)) {
-				pv->pv_va|=PV_ALIAS;
+			if (aliased && !(pv->pv_va&(PV_ALIAS|PV_NVC))) {
+				pv->pv_va|=(pa & PMAP_NVC)?PV_NVC:PV_ALIAS;
 #ifdef DEBUG
 				if (pmapdebug & PDB_ALIAS) 
 						printf("pmap_enter_phys: aliased page %p\n", 
@@ -2044,28 +2059,100 @@ int size;
 
 /*
  * Return the number bytes that pmap_dumpmmu() will dump.
- * We just dump our entire TSB.
  */
 int
 pmap_dumpsize()
 {
-	return TSBSIZE;
+	int	sz;
+
+	sz = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
+	sz += memsize * sizeof(phys_ram_seg_t);
+
+	return btodb(sz + DEV_BSIZE - 1);
 }
 
 /*
  * Write the mmu contents to the dump device.
  * This gets appended to the end of a crash dump since
  * there is no in-core copy of kernel memory mappings on a 4/4c machine.
+ *
+ * Write the core dump headers and MD data to the dump device.
+ * We dump the following items:
+ * 
+ *	kcore_seg_t		 MI header defined in <sys/kcore.h>)
+ *	cpu_kcore_hdr_t		 MD header defined in <machine/kcore.h>)
+ *	phys_ram_seg_t[memsize]  physical memory segments
+ *	segmap_t[NKREG*NSEGRG]	 the kernel's segment map (NB: needed?)
  */
 int
 pmap_dumpmmu(dump, blkno)
 	register daddr_t blkno;
 	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 {
-	/*
-	 * Just dump the entire TSB and get done with it.
-	 */
-	return (*dump)(dumpdev, blkno, (caddr_t)tsb, dbtob(TSBSIZE));
+	kcore_seg_t	*ksegp;
+	cpu_kcore_hdr_t	*kcpup;
+	phys_ram_seg_t	memseg;
+	register int	error = 0;
+	register int	i, memsegoffset, segmapoffset, pmegoffset;
+	int		buffer[dbtob(1) / sizeof(int)];
+	int		*bp, *ep;
+
+#define EXPEDITE(p,n) do {						\
+	int *sp = (int *)(p);						\
+	int sz = (n);							\
+	while (sz > 0) {						\
+		*bp++ = *sp++;						\
+		if (bp >= ep) {						\
+			error = (*dump)(dumpdev, blkno,			\
+					(caddr_t)buffer, dbtob(1));	\
+			if (error != 0)					\
+				return (error);				\
+			++blkno;					\
+			bp = buffer;					\
+		}							\
+		sz -= 4;						\
+	}								\
+} while (0)
+
+	/* Setup bookkeeping pointers */
+	bp = buffer;
+	ep = &buffer[sizeof(buffer) / sizeof(buffer[0])];
+
+	/* Fill in MI segment header */
+	ksegp = (kcore_seg_t *)bp;
+	CORE_SETMAGIC(*ksegp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	ksegp->c_size = dbtob(pmap_dumpsize()) - ALIGN(sizeof(kcore_seg_t));
+
+	/* Fill in MD segment header (interpreted by MD part of libkvm) */
+	kcpup = (cpu_kcore_hdr_t *)((int)bp + ALIGN(sizeof(kcore_seg_t)));
+	kcpup->cputype = CPU_SUN4U;
+	kcpup->kernbase = KERNBASE;
+	kcpup->kphys = ksegp;
+	kcpup->nmemseg = memsize;
+	kcpup->memsegoffset = memsegoffset = ALIGN(sizeof(cpu_kcore_hdr_t));
+	kcpup->nsegmap = STSZ;
+	kcpup->segmapoffset = segmapoffset =
+		memsegoffset + memsize * sizeof(phys_ram_seg_t);
+
+	kcpup->npmeg = 0; 
+	kcpup->pmegoffset = 0; /* We don't do this. */
+
+	/* Note: we have assumed everything fits in buffer[] so far... */
+	bp = (int *)((int)kcpup + ALIGN(sizeof(cpu_kcore_hdr_t)));
+
+	for (i = 0; i < memsize; i++) {
+		memseg.start = mem[i].start;
+		memseg.size = mem[i].size;
+		EXPEDITE(&memseg, sizeof(phys_ram_seg_t));
+	}
+
+	EXPEDITE(&kernel_pmap_.pm_segs[0], sizeof(kernel_pmap_.pm_segs));
+
+out:
+	if (bp != buffer)
+		error = (*dump)(dumpdev, blkno++, (caddr_t)buffer, dbtob(1));
+
+	return (error);
 }
 
 /*

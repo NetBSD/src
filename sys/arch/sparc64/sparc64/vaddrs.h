@@ -1,4 +1,4 @@
-/*	$NetBSD: vaddrs.h,v 1.1.1.1 1998/06/20 04:58:53 eeh Exp $ */
+/*	$NetBSD: vaddrs.h,v 1.2 1998/07/07 03:05:05 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -128,7 +128,7 @@
 
 #define DVMA_BASE	0xff800000	/* can change subject to above rule */
 #define DVMA_TOP	0xffffffff 	/* do not modify */
-#define DVMA_START	0xff800000	/* 16M of DVMA */
+#define DVMA_START	0xff800000	/* 8M of DVMA */
 #define DVMA_END	0xfff00000	/* XXX is this enough? */
 
 #endif /* IODEV_0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4 1998/07/04 22:18:42 jonathan Exp $ */
+/*	$NetBSD: trap.c,v 1.5 1998/07/07 03:05:05 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -520,6 +520,20 @@ trap(type, tstate, pc, tf)
 #else
 	cnt.v_trap++;
 #endif
+#ifdef DEBUG
+	if ((trapdebug & TDB_TL) && tl()) {
+		extern int trap_trace_dis;
+		trap_trace_dis = 1;
+		printf("trap: type 0x%x: lvl=%d pc=%x &tf=%x",
+		       type, tl(), pc, tf); 
+		printf(" npc=%x pstate=%b %s\n",
+		       (long)tf->tf_npc, pstate, PSTATE_BITS, 
+		       type < N_TRAP_TYPES ? trap_type[type] : 
+		       ((type == T_AST) ? "ast" : 
+			((type == T_RWRET) ? "rwret" : T)));
+		kdb_trap(type, tf);
+	}
+#endif
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
 	 * handled early here.
@@ -965,6 +979,14 @@ data_access_fault(type, addr, pc, tf)
 #endif
 
 #ifdef DEBUG
+	if (protmmu || missmmu) {
+		extern int trap_trace_dis;
+		trap_trace_dis = 1;
+		printf("%d: data_access_fault(%x, %x, %x, %x) %s=%d\n",
+		       curproc?curproc->p_pid:-1, type, addr, pc, tf, 
+		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
+		Debugger();
+	}
 	write_user_windows();
 /*	if (cpcb->pcb_nsaved > 6) trapdebug |= TDB_NSAVED; */
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_ADDFLT|TDB_FOLLOW)) {
@@ -1179,6 +1201,14 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 #endif
 
 #if DEBUG
+	if (protmmu || missmmu) {
+		extern int trap_trace_dis;
+		trap_trace_dis = 1;
+		printf("%d: data_access_error(%x, %x, %x, %x) %s=%d\n",
+		       curproc?curproc->p_pid:-1, type, sfva, afva, tf, 
+		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
+		Debugger();
+	}
 	write_user_windows();
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 		printf("%d data_access_error(%x, %x, %x, %x)=%x:%x @ %x %b\n",
@@ -1410,6 +1440,14 @@ text_access_fault(type, pc, tf)
 	u_quad_t sticks;
 
 #if DEBUG
+	if (protmmu || missmmu) {
+		extern int trap_trace_dis;
+		trap_trace_dis = 1;
+		printf("%d: text_access_fault(%x, %x, %x, %x) %s=%d\n",
+		       curproc?curproc->p_pid:-1, type, pc, tf, 
+		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
+		Debugger();
+	}
 	write_user_windows();
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
 		printf("%d text_access_fault(%x, %x, %x)\n",
@@ -1538,6 +1576,14 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 #endif
 	
 #if DEBUG
+	if (protmmu || missmmu) {
+		extern int trap_trace_dis;
+		trap_trace_dis = 1;
+		printf("%d: text_access_error(%x, %x, %x, %x) %s=%d\n",
+		       curproc?curproc->p_pid:-1, type, sfsr, afsr, tf, 
+		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
+		Debugger();
+	}
 	write_user_windows();
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
 		printf("%d text_access_error(%x, %x, %x, %x)=%x:%x @ %x %b\n",

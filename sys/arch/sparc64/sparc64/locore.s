@@ -3916,6 +3916,14 @@ _C_LABEL(sparc_interrupt):
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	clr	%l3
 #ifdef DEBUG
+	set	trapdebug, %o2
+	ld	[%o2], %o2
+	btst	0x80, %o2			! (trapdebug & TDB_TL) ?
+	bz	1f
+	rdpr	%tl, %o2			! Trap if we're not at TL=0 since that's an error condition
+	tst	%o2
+	tnz	%icc, 1; nop
+1:	
 	set	_C_LABEL(eintstack), %o2
 	cmp	%sp, %o2
 	bleu	0f
@@ -4272,12 +4280,10 @@ rft_wcnt:	.word 0
 rft_user:
 !	sethi	%hi(_C_LABEL(want_ast)), %g7	! (done above)
 	lduw	[%g7 + %lo(_C_LABEL(want_ast))], %g7! want AST trap?
-#ifdef NOTDEF_DEBUG
-	/* This is probably not necessary */
+	/* This is probably necessary */
 	wrpr	%g3, 0, %tnpc
 	wrpr	%g2, 0, %tpc
 	wrpr	%g1, 0, %tstate
-#endif
 #ifdef TRAPWIN
 	brnz,pn	%g7, softtrap			! yes, re-enter trap with type T_AST
 #else
@@ -4390,7 +4396,6 @@ rft_user:
 #else
 	 nop
 #endif
-	stb	%g0, [%g6 + PCB_NSAVED]			! Clear them out so we won't do this again
 	dec	%g7					! We can do this now or later.  Move to last entry
 	sll	%g7, 7, %g5				! calculate ptr into rw64 array 8*16 == 128 or 7 bits
 
@@ -4450,6 +4455,7 @@ rft_user:
 	bgu,pt	%xcc, 3b				! Next one?
 	 dec	8*16, %g5
 
+	stb	%g0, [%g6 + PCB_NSAVED]			! Clear them out so we won't do this again
 	rdpr	%ver, %g5
 	and	%g5, CWP, %g5
 	add	%g5, %g7, %g4

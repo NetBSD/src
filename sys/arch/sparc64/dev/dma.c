@@ -1,5 +1,4 @@
-/*	$NetBSD: dma.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
-/* #define BUS_DMA */
+/*	$NetBSD: dma.c,v 1.2 1998/07/07 03:05:02 eeh Exp $ */
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -126,7 +125,8 @@ dmamatch_sbus(parent, cf, aux)
 	struct sbus_attach_args *sa = aux;
 
 	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
-		strcmp("espdma", sa->sa_name) == 0);
+		strcmp("espdma", sa->sa_name) == 0 || 
+		strcmp("fas", sa->sa_name) == 0);
 }
 
 int
@@ -510,9 +510,12 @@ dma_setup(sc, addr, len, datain, dmasize)
 		DMADDR(sc) = sc->sc_dvmakaddr;
 		NCR_DMA((" dmakaddr = %p\n", sc->sc_dvmakaddr));
 #else 
-		bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap, 
-				*sc->sc_dmaaddr, sc->sc_dmasize, 
-				curproc, BUS_DMA_WAITOK);
+		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap, 
+				    *sc->sc_dmaaddr, sc->sc_dmasize, 
+				    NULL /* This should already be mapped into the kernel */, 
+				    BUS_DMA_NOWAIT|BUS_DMA_WRITE|BUS_DMA_CACHE)
+		    || (sc->sc_dmamap->dm_segs[0].ds_addr == NULL))
+			panic("dma: cannot allocate DVMA address");
 		DMADDR(sc) = sc->sc_dvmakaddr = sc->sc_dmamap->dm_segs[0].ds_addr;
 #endif
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $	*/
+/*	$NetBSD: esp.c,v 1.2 1998/07/07 03:05:02 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -150,6 +150,9 @@ struct cfattach esp_sbus_ca = {
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch_sbus, espattach_dma
 };
+struct cfattach fas_ca = {
+	sizeof(struct esp_softc), espmatch_sbus, espattach_sbus
+};
 struct cfattach esp_obio_ca = {
 	sizeof(struct esp_softc), espmatch_obio, espattach_obio
 };
@@ -262,6 +265,11 @@ espattach_sbus(parent, self, aux)
 	if (esc->sc_dma)
 		esc->sc_dma->sc_esp = esc;
 	else {
+		/* 
+		 * FAS chips have the DMA in the fas node.  The first set
+		 * of "reg" is the DMA controller, the second set is the FAS366
+		 * itself.  Need to deal w/this somehow.
+		 */
 		printf("\n");
 		panic("espattach: no dma found");
 	}

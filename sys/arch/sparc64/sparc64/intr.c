@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5 1998/07/05 22:48:07 jonathan Exp $ */
+/*	$NetBSD: intr.c,v 1.6 1998/07/07 03:05:04 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,8 +45,10 @@
  */
 
 #include "opt_inet.h"
+#include "opt_atalk.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
+#include "opt_ccitt.h"
 #include "opt_natm.h"
 #include "ppp.h"
 
@@ -78,6 +80,9 @@
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 #include "ppp.h"
 #if NPPP > 0
@@ -159,6 +164,10 @@ soft01intr(fp)
 			if (n & (1 << NETISR_IP))
 				ipintr();
 #endif
+#ifdef NETATALK
+			if (n & (1 << NETISR_ATALK))
+				atintr();
+#endif
 #ifdef NS
 			if (n & (1 << NETISR_NS))
 				nsintr();
@@ -170,6 +179,10 @@ soft01intr(fp)
 #ifdef NATM
 			if (n & (1 << NETISR_NATM))
 				natmintr();
+#endif
+#ifdef CCITT
+			if (n & (1 << NETISR_CCITT))
+				ccittintr();
 #endif
 #if NPPP > 0
 			if (n & (1 << NETISR_PPP))

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.1.1 1998/06/20 04:58:53 eeh Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.2 1998/07/07 03:05:05 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -67,13 +67,14 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/trap.h>
+#include <machine/bus.h>
 
 #include <sparc64/sparc64/cache.h>
 
 /* XXX These are in sbusvar.h, but including that would be problematical */
 struct sbus_softc *sbus0;
-void    sbus_enter __P((struct sbus_softc *, vm_offset_t va, int64_t pa));
-void    sbus_remove __P((struct sbus_softc *, vm_offset_t va, u_int len));
+void    sbus_enter __P((struct sbus_softc *, vm_offset_t va, int64_t pa, int flags));
+void    sbus_remove __P((struct sbus_softc *, vm_offset_t va, int len));
 
 /*
  * Move pages from one kernel virtual address to another.
@@ -243,7 +244,8 @@ dvma_mapin(map, va, len, canwait)
 			panic("dvma_mapin: null page frame");
 		pa = trunc_page(pa);
 
-		sbus_enter(sbus0, tva, pa);
+		/* Standard RAM is cached non-coherent writeable */
+		sbus_enter(sbus0, tva, pa, BUS_DMA_WRITE|BUS_DMA_CACHE);
 
 		tva += PAGE_SIZE;
 		va += PAGE_SIZE;
@@ -381,6 +383,10 @@ vunmapbuf(bp, len)
  */
 #define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-sizeof(struct frame))
 
+#ifdef DEBUG
+char cpu_forkname[] = "cpu_fork()";
+#endif
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb, making the child ready to run, and marking
@@ -430,7 +436,7 @@ cpu_fork(p1, p2)
 	opcb->pcb_cwp = getcwp();
 #ifdef DEBUG
 	/* prevent us from having NULL lastcall */
-	opcb->lastcall = "cpu_fork()";
+	opcb->lastcall = cpu_forkname;
 #endif
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
        	if (p1->p_md.md_fpstate) {
@@ -471,16 +477,24 @@ cpu_fork(p1, p2)
 	tf2->tf_out[0] = 0;
 	tf2->tf_out[1] = 1;
 
+#ifdef DEBUG
+	/* Need to sync tf locals and ins with stack to prevent panic */
+	{
+		int i;
+
+		rp = (struct rwindow32 *)tf2->tf_out[6];
+		for (i=0; i<8; i++) {
+			tf2->tf_local[i] = fuword(&rp->rw_local[i]);
+			tf2->tf_in[i] = fuword(&rp->rw_in[i]);
+		}
+	}
+#endif
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow32 *)((u_int)npcb + TOPFRAMEOFF);
 	*rp = *(struct rwindow32 *)((u_int)opcb + TOPFRAMEOFF);
 	rp->rw_local[0] = (int)child_return;	/* Function to call */
 	rp->rw_local[1] = (int)p2;		/* and its argument */
-#if 0
-	/* Clear out this garbage */
-	rp->rw_in[6] = tf2->tf_out[6];
-	rp->rw_in[7] = tf2->tf_out[7];
-#endif
+
 	npcb->pcb_pc = (int)proc_trampoline - 8;
 	npcb->pcb_sp = (int)rp;
 
@@ -526,11 +540,6 @@ cpu_set_kpc(p, pc)
 	rp = (struct rwindow32 *)((u_int)pcb + TOPFRAMEOFF);
 	rp->rw_local[0] = (int)pc;		/* Function to call */
 	rp->rw_local[1] = (int)p;		/* and its argument */
-#if 0
-	/* Clear out this garbage */
-	rp->rw_in[6] = p->p_md.md_tf->tf_out[6];
-	rp->rw_in[7] = p->p_md.md_tf->tf_out[7];
-#endif
 
 #ifdef NOTDEF_DEBUG
 	/* Let's see if this is ever called */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 1998/07/07 03:05:03 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -111,6 +111,7 @@ struct prom_map {
 };
 
 #define PMAP_NC		1	/* Set the E bit in the page */
+#define PMAP_NVC	2	/* Don't enable the virtual cache */
 /* If these bits are different in va's to the same PA then there is an aliasing in the d$ */
 #define VA_ALIAS_MASK   (1<<14)	
 
