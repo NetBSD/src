@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.3 2001/03/15 17:30:55 uch Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.4 2001/07/04 18:08:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -222,11 +222,11 @@ static int hd64461pcmcia_channel0_intr(void *);
 static int hd64461pcmcia_channel1_intr(void *);
 /* card status */
 static enum hd64461pcmcia_event_type detect_card(enum controller_channel);
-static void power_off(enum controller_channel);
-static void power_on(enum controller_channel);
+static void power_off(enum controller_channel) __attribute__((__unused__));
+static void power_on(enum controller_channel) __attribute__((__unused__));
 /* memory window access ops */
 static void memory_window_mode(enum controller_channel,
-			       enum memory_window_mode);
+			       enum memory_window_mode)__attribute__((__unused__));
 static void memory_window_16(enum controller_channel, enum memory_window_16);
 /* bus width */
 static void set_bus_width(enum controller_channel, int);
@@ -438,9 +438,9 @@ hd64461pcmcia_channel0_intr(void *arg)
 	hd64461_reg_write_1(HD64461_PCC0CSCR_REG8, 0);
 
 	if (r & HD64461_PCC0CSCR_P0IREQ) {
-		if (ch->ch_ih_card_func)
+		if (ch->ch_ih_card_func) {
 			ret = (*ch->ch_ih_card_func)(ch->ch_ih_card_arg);
-		else
+		} else
 			DPRINTF("spurious IREQ interrupt.\n");
 	}
 
@@ -558,7 +558,7 @@ _chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 	bus_addr_t cscier = HD64461_PCCCSCIER(channel);
 	int s = splhigh();
 	u_int8_t r;
-	
+
 	/* disable card interrupt */
 	r = hd64461_reg_read_1(cscier);
 	if (channel == CHANNEL_0) {
@@ -630,7 +630,7 @@ _chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
 				  &cookie->wc_handle) != 0)
 			goto bad;
 		
-		// XXX bogus. check window per common memory access.
+		/* XXX bogus. check window per common memory access. */
 		memory_window_16(ch->ch_channel, window);
 		*offsetp = ofs + 0x01000000; /* skip attribute area */
 		cookie->wc_window = window;
@@ -744,7 +744,6 @@ _chip_socket_enable(pcmcia_chipset_handle_t pch)
 	bus_addr_t isr, gcr;
 	u_int8_t r;
 	int cardtype;
-	int i;
 
 	DPRINTF("enable channel %d\n", channel);
 	isr = HD64461_PCCISR(channel);
@@ -752,36 +751,39 @@ _chip_socket_enable(pcmcia_chipset_handle_t pch)
 
 	power_off(channel);
 	power_on(channel);
+#if notyet
+	{
+		int i;
+		/* assert reset */
+		r = hd64461_reg_read_1(gcr);
+		r |= HD64461_PCCGCR_PCCR;
+		hd64461_reg_write_1(gcr, r);
 
-	/* assert reset */
-	r = hd64461_reg_read_1(gcr);
-	r |= HD64461_PCCGCR_PCCR;
-	hd64461_reg_write_1(gcr, r);
-
-	/*
-	 * hold RESET at least 10us.
-	 */
-	DELAY_MS(20);
+		/*
+		 * hold RESET at least 10us.
+		 */
+		DELAY_MS(20);
 	
-	/* clear the reset flag */
-	r &= ~HD64461_PCCGCR_PCCR;
-	hd64461_reg_write_1(gcr, r);
-	DELAY_MS(2000);
+		/* clear the reset flag */
+		r &= ~HD64461_PCCGCR_PCCR;
+		hd64461_reg_write_1(gcr, r);
+		DELAY_MS(2000);
 
-	/* wait for the chip to finish initializing */	
-	for (i = 0; i < 10000; i++) {
-		if ((hd64461_reg_read_1(isr) & HD64461_PCCISR_READY))
-			goto reset_ok;
-		DELAY_MS(500);
-
-		if ((i > 5000) && (i % 100 == 99))
-			printf(".");
+		/* wait for the chip to finish initializing */	
+		for (i = 0; i < 10000; i++) {
+			if ((hd64461_reg_read_1(isr) & HD64461_PCCISR_READY))
+				goto reset_ok;
+			DELAY_MS(500);
+			
+			if ((i > 5000) && (i % 100 == 99))
+				printf(".");
+		}
+		printf("reset failed.\n");
+		power_off(channel);
+		return;
+	reset_ok:
 	}
-	printf("reset failed.\n");
-	power_off(channel);
-	return;
- reset_ok:
-
+#endif /* notyet */
 	/* set Continuous 16-MB Area Mode */
 	ch->ch_memory_window_mode = MEMWIN_16M_MODE;
 	memory_window_mode(channel, ch->ch_memory_window_mode);
@@ -801,7 +803,6 @@ _chip_socket_enable(pcmcia_chipset_handle_t pch)
 			r &= ~HD64461_PCC0GCR_P0PCCT;
 		hd64461_reg_write_1(gcr, r);
 	}
-
 
 	DPRINTF("OK.\n");
 }
@@ -826,6 +827,7 @@ _chip_socket_disable(pcmcia_chipset_handle_t pch)
 static void
 power_off(enum controller_channel channel)
 {
+#if notyet
 	u_int8_t r;
 	u_int16_t r16;
 	bus_addr_t scr, gcr;
@@ -858,11 +860,13 @@ power_off(enum controller_channel channel)
 	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
 
 	if (channel == CHANNEL_0) {
-		/* GPIO Port A XXX Jonanada690 specific? */
+		/* GPIO Port A XXX Jornada690 specific? */
 		r16 = hd64461_reg_read_2(HD64461_GPADR_REG16);
 		r16 |= 0xf;
 		hd64461_reg_write_2(HD64461_GPADR_REG16, r16);
 	}
+
+#endif /* notyet */
 }
 
 static void
@@ -876,6 +880,9 @@ power_on(enum controller_channel channel)
 	gcr = HD64461_PCCGCR(channel);
 	scr = HD64461_PCCSCR(channel);
 
+	/* 
+	 * XXX to access attribute memory, this is required.
+	 */
 	if (channel == CHANNEL_0) {
 		/* GPIO Port A XXX Jonanada690 specific? */
 		r16 = hd64461_reg_read_2(HD64461_GPADR_REG16);
