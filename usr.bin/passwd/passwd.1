@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.1,v 1.19 2002/09/30 11:09:08 grant Exp $
+.\"	$NetBSD: passwd.1,v 1.20 2003/04/05 18:06:52 lha Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)passwd.1    8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd April  5, 2003
 .Dt PASSWD 1
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@
 .Op Ar user
 .Sh DESCRIPTION
 .Nm
-changes the user's local, YP, or kerberos password.
+changes the user's local, YP, or Kerberos password.
 First, the user is
 prompted for their current password.
 If the current password is correctly typed, a new password is
@@ -112,22 +112,26 @@ with the
 .Fl y
 flag.
 .It Fl 4
-This option causes passwd to change the user's kerberos password,
-using the kerberos 4 admin protocol.
+This option causes passwd to change the user's Kerberos password,
+using the Kerberos 4 admin protocol.
 .It Fl 5
-This option causes passwd to change the user's kerberos password,
-using the kerberos 5 admin protocol.
+This option causes passwd to change the user's Kerberos password,
+using the Kerberos 5 admin protocol.
 .It Fl k
-This option causes passwd to change the user's kerberos password,
-using either the kerberos 4 or kerberos 5 admin protocol.
-If both kerberos 4 and kerberos 5 libraries and config files are
-installed on the host, kerberos 5 will be used to change the password.
+This option causes passwd to change the user's Kerberos password,
+using either the Kerberos 4 or Kerberos 5 admin protocol.
+If both Kerberos 4 and Kerberos 5 libraries and config files are
+installed on the host, Kerberos 5 will be used to change the password.
 .Nm kpasswd
 is the equivalent of
 .Nm
 with the
 .Fl k
 flag.
+Kerberos password changing will only be attempted when Kerberos has
+been enabled on the host by adding configuration files for Kerberos.
+For Kerberos 5, see
+.Xr krb5.conf 5 .
 .It Fl i Ar instance
 This option selects a non-default Kerberos 4 instance for the
 Kerberos password to be changed.
@@ -141,7 +145,7 @@ password to be changed.
 .El
 .Pp
 This is the behavior if no flags are specified:
-If Kerberos is active then
+If Kerberos is configured then
 .Nm
 will talk to the Kerberos server, attempting to use Kerberos 5, then
 Kerberos 4 protocols to change the password (even if the user has an
