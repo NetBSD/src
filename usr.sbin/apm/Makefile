@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/23 06:29:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2002/06/18 05:24:44 itojun Exp $
 
-.if ${MACHINE} == "i386"
+.if (${MACHINE} == "i386" || ${MACHINE} == "macppc")
 PROG=	apm
 SRCS=	apm.c apmsubr.c
 .PATH:	${.CURDIR}/../apmd

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 1999/12/15 20:34:03 garbled Exp $
+#	$NetBSD: Makefile,v 1.8 2002/06/18 05:24:44 itojun Exp $
 
-.if ${MACHINE} == "i386" || ${MACHINE} == "sparc"
+.if ${MACHINE} == "i386" || ${MACHINE} == "sparc" || ${MACHINE} == "macppc"
 PROG=	apmd
 SRCS=	apmd.c apmsubr.c
 .endif
