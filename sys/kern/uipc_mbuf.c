@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_mbuf.c	7.19 (Berkeley) 4/20/91
- *	$Id: uipc_mbuf.c,v 1.4 1993/09/04 00:01:43 jtc Exp $
+ *	$Id: uipc_mbuf.c,v 1.4.2.1 1993/09/24 08:51:51 mycroft Exp $
  */
 
 #include "param.h"
@@ -44,6 +44,9 @@
 #include "syslog.h"
 #include "domain.h"
 #include "protosw.h"
+
+#include "machine/cpu.h"
+
 #include "vm/vm.h"
 
 extern	vm_map_t mb_map;

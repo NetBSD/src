@@ -1,4 +1,4 @@
- 	$Id: syscalls.master,v 1.6 1993/06/07 19:52:42 cgd Exp $
+ 	$Id: syscalls.master,v 1.6.4.1 1993/09/24 08:51:40 mycroft Exp $
 ;	from: @(#)syscalls.master	7.26 (Berkeley) 3/25/91
 ; System call name/number master file.
 ; Processed to created init_sysent.c, syscalls.c and syscall.h.
@@ -158,11 +158,7 @@
 116	STD	2 gettimeofday
 117	STD	2 getrusage
 118	STD	5 getsockopt
-#ifdef vax
-119	STD	1 resuba
-#else
 119	UNIMPL	0 nosys
-#endif
 120	STD	3 readv
 121	STD	3 writev
 122	STD	2 settimeofday
@@ -222,7 +218,7 @@
 162	STD	2 getdomainname
 163	STD 	2 setdomainname
 164	STD	1 uname
-165	UNIMPL	0 nosys
+165	STD	2 sysarch
 166	UNIMPL	0 nosys
 167	UNIMPL	0 nosys
 168	UNIMPL	0 nosys

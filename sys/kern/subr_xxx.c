@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_xxx.c	7.10 (Berkeley) 4/20/91
- *	$Id: subr_xxx.c,v 1.5.4.1 1993/09/14 18:24:23 mycroft Exp $
+ *	$Id: subr_xxx.c,v 1.5.4.2 1993/09/24 08:51:32 mycroft Exp $
  */
 
 /*
@@ -40,7 +40,6 @@
  */
 #include "param.h"
 #include "systm.h"
-#include "machine/cpu.h"
 
 /*
  * Unsupported device function (e.g. writing to read-only device).

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_syscalls.c	7.24 (Berkeley) 6/3/91
- *	$Id: uipc_syscalls.c,v 1.5 1993/07/17 15:24:42 mycroft Exp $
+ *	$Id: uipc_syscalls.c,v 1.5.4.1 1993/09/24 08:51:58 mycroft Exp $
  */
 
 #include "param.h"
@@ -47,6 +47,8 @@
 #ifdef KTRACE
 #include "ktrace.h"
 #endif
+
+#include "machine/cpu.h"
 
 /*
  * System call interface to the socket abstraction.

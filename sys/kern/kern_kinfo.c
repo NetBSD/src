@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.8 1993/08/07 08:03:29 cgd Exp $
+ *	$Id: kern_kinfo.c,v 1.8.2.1 1993/09/24 08:51:05 mycroft Exp $
  */
 
 #include "param.h"
@@ -153,7 +153,7 @@ kinfo_doproc(op, where, acopysize, arg, aneeded)
 	if (where != NULL)
 		buflen = *acopysize;
 
-	p = allproc;
+	p = (struct proc *)allproc;
 	doingzomb = 0;
 again:
 	for (; p != NULL; p = p->p_nxt) {

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_socket.c	7.11 (Berkeley) 4/16/91
- *	$Id: sys_socket.c,v 1.4 1993/06/27 06:01:56 andrew Exp $
+ *	$Id: sys_socket.c,v 1.4.4.1 1993/09/24 08:51:36 mycroft Exp $
  */
 
 #include "param.h"
@@ -43,6 +43,8 @@
 #include "socketvar.h"
 #include "ioctl.h"
 #include "stat.h"
+
+#include "machine/cpu.h"
 
 #include "net/if.h"
 #include "net/route.h"
