@@ -21,6 +21,9 @@
 #ifndef TM_NBSD_H
 #define TM_NBSD_H
 
+/* NetBSD/Alpha doesn't have single stepping support in ptrace().  */
+#define SOFTWARE_SINGLE_STEP_P() 1
+
 #include "alpha/tm-alpha.h"
 #include "solib.h"
 
