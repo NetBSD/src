@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 1995/12/21 05:01:57 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 1996/04/27 00:38:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -217,6 +217,9 @@ extern unsigned char ssir;
 #ifdef _KERNEL
 extern	int machineid, mmutype, ectype;
 extern	char *intiobase, *intiolimit;
+
+void	doboot __P((int))
+	__attribute__((__noreturn__));
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()
