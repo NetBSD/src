@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.1 1998/06/05 12:29:03 mrg Exp $
+.\"	$NetBSD: packages.7,v 1.2 1998/06/09 14:37:19 agc Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -385,29 +385,12 @@ The target to pass to make in the package when installing.  The default is
 This section documents variables related to the use and installation of
 Motif and/or LessTiF.
 .Bl -tag -indent XXXXXXXX -width XXXXXXXX
-.It REQUIRES_MOTIF
-Set this in your package if it requires Motif.  It will  be
-built only if
-.Dv HAVE_MOTIF
-is set.
-.It HAVE_MOTIF
-If set, means system has Motif.  Typically set in
-.Pa /etc/mk.conf
-or
-.Dv ${MAKECONF} .
-.It MOTIF_STATIC
-If set, link libXm statically; otherwise, link it
-dynamically.  Typically set in
-.Pa /etc/mk.conf
-or
-.Dv ${MAKECONF} .
+.It USE_MOTIF
+Set this in your package if it requires Motif.
+If Motif is not present on your system, the lesstif package will be
+installed for you.
 .It MOTIFLIB	
-Set automatically to appropriate value depending on
-.Dv ${MOTIF_STATIC} .
-Substitute references to -lXm with patches to make your package conform to
-our standards.
-.It MOTIF_ONLY
-If set, build Motif packages only.  Not much use except for building packages.
+Set automatically to the Motif or Lesstif library name.
 .El
 .Sh SPECIAL VARIABLES
 Variables to change if you want a special behavior:
@@ -573,7 +556,7 @@ NEVER override the
 .Dq regular
 targets unless you want to open a major can of worms.
 .Sh HISTORY
-This manual page based upon the comments in the
+This manual page is based upon the comments in the
 .Pa bsd.pkg.mk
 file, as distributed with NetBSD.  The sources to this are far
 and varied across all free BSD projects.
