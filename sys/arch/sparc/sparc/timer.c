@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.16 2003/01/06 12:50:45 pk Exp $ */
+/*	$NetBSD: timer.c,v 1.17 2003/03/12 07:51:00 jdc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,7 +143,7 @@ timerattach(cntreg, limreg)
 static int
 timermatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
-#if defined(SUN4M)
+#if defined(SUN4) || defined(SUN4M) 
 	union obio_attach_args *uoba = aux;
 #endif
 #if defined(SUN4)
