@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_cdfs.c,v 1.7 1999/02/01 19:05:10 christos Exp $	*/
+/*	$NetBSD: ops_cdfs.c,v 1.7.2.1 1999/09/21 04:55:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: ops_cdfs.c,v 1.2 1999/01/10 21:53:49 ezk Exp 
+ * Id: ops_cdfs.c,v 1.3 1999/03/30 17:22:46 ezk Exp 
  *
  */
 
@@ -150,6 +150,19 @@ mount_cdfs(char *dir, char *fs_name, char *opts)
   if (hasmntopt(&mnt, MNTTAB_OPT_RRIP))
     cdfs_flags |= MNT2_CDFS_OPT_RRIP;
 #endif /* defined(MNT2_CDFS_OPT_RRIP) && defined(MNTTAB_OPT_RRIP) */
+#if defined(MNT2_CDFS_OPT_NORRIP) && defined(MNTTAB_OPT_NORRIP)
+  if (hasmntopt(&mnt, MNTTAB_OPT_NORRIP))
+    cdfs_flags |= MNT2_CDFS_OPT_NORRIP;
+#endif /* defined(MNT2_CDFS_OPT_NORRIP) && defined(MNTTAB_OPT_NORRIP) */
+
+#if defined(MNT2_CDFS_OPT_GENS) && defined(MNTTAB_OPT_GENS)
+  if (hasmntopt(&mnt, MNTTAB_OPT_GENS))
+    cdfs_flags |= MNT2_CDFS_OPT_GENS;
+#endif /* defined(MNT2_CDFS_OPT_GENS) && defined(MNTTAB_OPT_GENS) */
+#if defined(MNT2_CDFS_OPT_EXTATT) && defined(MNTTAB_OPT_EXTATT)
+  if (hasmntopt(&mnt, MNTTAB_OPT_EXTATT))
+    cdfs_flags |= MNT2_CDFS_OPT_EXTATT;
+#endif /* defined(MNT2_CDFS_OPT_EXTATT) && defined(MNTTAB_OPT_EXTATT) */
 
   genflags = compute_mount_flags(&mnt);
 
