@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.59 2001/01/09 13:01:03 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.60 2001/01/18 13:56:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -797,7 +797,7 @@ linux_machdepioctl(p, v, retval)
 			error = 0;
 		}
 
-		if (error == EINVAL)
+		if (error == ENOTTY)
 			printf("linux_machdepioctl: invalid ioctl %08lx\n",
 			    com);
 		return error;
