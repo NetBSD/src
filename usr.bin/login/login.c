@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.66 2002/07/27 20:10:32 christos Exp $       */
+/*     $NetBSD: login.c,v 1.67 2002/07/27 22:58:07 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.66 2002/07/27 20:10:32 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.67 2002/07/27 22:58:07 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: login.c,v 1.66 2002/07/27 20:10:32 christos Exp $");
 #include <sys/resource.h>
 #include <sys/file.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
 
 #include <err.h>
 #include <errno.h>
@@ -74,10 +75,10 @@ __RCSID("$NetBSD: login.c,v 1.66 2002/07/27 20:10:32 christos Exp $");
 #include <ttyent.h>
 #include <tzfile.h>
 #include <unistd.h>
-#ifdef UPDATE_UTMP
+#ifdef SUPPORT_UTMP
 #include <utmp.h>
 #endif
-#ifdef UPDATE_UTMPX
+#ifdef SUPPORT_UTMPX
 #include <utmpx.h>
 #endif
 #include <util.h>
@@ -103,11 +104,11 @@ int login_krb5_retain_ccache = 0;
 
 void	 badlogin __P((char *));
 void	 checknologin __P((char *));
-#ifdef UPDATE_UTMP
+#ifdef SUPPORT_UTMP
 static void	 doutmp __P((void));
 static void	 dolastlog __P((int));
 #endif
-#ifdef UPDATE_UTMPX
+#ifdef SUPPORT_UTMPX
 static void	 doutmpx __P((void));
 static void	 dolastlogx __P((int));
 #endif
@@ -910,19 +911,20 @@ update_db(int quietlog)
 		socklen_t len = sizeof(ss);
 		(void)getpeername(STDIN_FILENO, (struct sockaddr *)&ss, &len);
 	}
+	printf("from host %s\n", hostname);
 	(void)gettimeofday(&now, NULL);
-#ifdef UPDATE_UTMPX
+#ifdef SUPPORT_UTMPX
 	doutmpx();
 	dolastlogx(quietlog);
 	quietlog = 1;
 #endif	
-#ifdef UPDATE_UTMP
+#ifdef SUPPORT_UTMP
 	doutmp();
 	dolastlog(quietlog);
 #endif
 }
 
-#ifdef UPDATE_UTMPX
+#ifdef SUPPORT_UTMPX
 static void
 doutmpx()
 {
@@ -980,7 +982,7 @@ dolastlogx(quiet)
 }
 #endif
 
-#ifdef UPDATE_UTMP
+#ifdef SUPPORT_UTMP
 static void
 doutmp()
 {
