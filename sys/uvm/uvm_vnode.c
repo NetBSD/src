@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.4 1999/07/31 19:04:49 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.5 1999/08/02 23:39:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1028,10 +1028,8 @@ uvn_put(uobj, pps, npages, flags)
 
 	sync = (flags & PGO_SYNCIO) ? 1 : 0;
 
-	simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	simple_unlock(&uobj->vmobjlock);
 	error = VOP_PUTPAGES(vp, pps, npages, sync, NULL);
-	simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
 
 	return uvm_errno2vmerror(error);
 }
@@ -1063,11 +1061,8 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
 
-	simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
-	simple_lock_assert(&uobj->vmobjlock, flags & PGO_LOCKED ?
-			   SLOCK_LOCKED : SLOCK_UNLOCKED);
 	return uvm_errno2vmerror(error);
 }
 
@@ -1108,7 +1103,6 @@ uvn_findpage(uobj, offset, pps, flags)
 	UVMHIST_FUNC("uvn_findpage"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%lx", uobj, offset,0,0);
 
-	simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	if (*pps != NULL) {
 		UVMHIST_LOG(ubchist, "dontcare", 0,0,0,0);
 		return 0;
