@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 2002/03/22 15:16:02 christos Exp $
+	$NetBSD: syscalls.master,v 1.10 2002/04/10 18:18:27 christos Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -366,7 +366,8 @@
 214	NOARGS		setgid32 { int sys_setgid(gid_t gid); }
 215	NOARGS		setfsuid32 { int linux_sys_setfsuid(uid_t uid); }
 216	NOARGS		getfsuid32 { int linux_sys_getfsuid(void); }
-217	UNIMPL		getdents64
+217	STD		{ int linux_sys_getdents64(int fd, \
+			    struct linux_dirent64 *dent, unsigned int count); }
 218	UNIMPL		pivot_root
 219	UNIMPL		mincore
 220	UNIMPL		madvise
