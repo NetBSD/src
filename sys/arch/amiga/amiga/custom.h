@@ -22,10 +22,7 @@
  *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: custom.h,v 1.2 1993/08/02 17:51:51 mycroft Exp $
  */
-
 /* This is a rewrite (retype) of the Amiga's custom chip register map, based
    on the Hardware Reference Manual.  It is NOT based on the Amiga's
    hardware/custom.h.  */

@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)Locore.c	7.4 (Berkeley) 5/7/91
- *	$Id: Locore.c,v 1.2 1993/08/01 19:22:24 mycroft Exp $
+ *	@(#)Locore.c	7.4 (Berkeley) 5/7/91
  */
 
 #include "../includepte.h"

@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.2 1993/08/01 19:22:32 mycroft Exp $
+ *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
 
 #include "sys/param.h"
@@ -219,6 +218,15 @@ cdev_decl(grf);
 	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
 	dev_init(c,n,select), dev_init(c,n,map), 0 }
 
+#include "par.h"
+cdev_decl(par);
+/* open, close, read, write, ioctl -- XXX should be a generic device */
+#define	cdev_par_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_map((*))) enodev, 0 }
+
 #include "ser.h"
 cdev_decl(ser);
 
@@ -271,7 +279,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NSD,sd),		/* 8: scsi disk */
 	cdev_notdef(),			/* 9: */
 	cdev_grf_init(1,grf),		/* 10: frame buffer */
-	cdev_notdef(),			/* 11: */
+	cdev_par_init(NPAR,par),	/* 11: parallel interface */
 	cdev_tty_init(1,ser),		/* 12: built-in single-port serial */
 	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
 	cdev_notdef(),			/* 14: */

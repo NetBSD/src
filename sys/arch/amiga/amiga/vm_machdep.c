@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: vm_machdep.c 1.21 91/04/06
- *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.2 1993/08/01 19:22:55 mycroft Exp $
+ * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
+ *
+ *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  */
 
 #include "param.h"
@@ -69,6 +69,10 @@ cpu_fork(p1, p2)
 	int offset;
 	extern caddr_t getsp();
 	extern char kstack[];
+
+	/* copy over the machdep part of struct proc, so we don't lose
+	   any emulator-properties of processes. */
+	bcopy (&p1->p_md, &p2->p_md, sizeof (struct mdproc));
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2. 

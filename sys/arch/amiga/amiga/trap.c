@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: trap.c 1.32 91/04/06
- *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.3 1993/09/02 18:05:39 mw Exp $
+ * from: Utah $Hdr: trap.c 1.32 91/04/06$
+ *
+ *	@(#)trap.c	7.15 (Berkeley) 8/2/91
  */
 
 #include "param.h"
@@ -68,10 +68,15 @@
 #include "../hpux/hpux.h"
 #endif
 
+#ifdef COMPAT_SUNOS
+#include "../../sunos/sun_syscall.h"
+#endif
+
 struct	sysent	sysent[];
 int	nsysent;
-#ifndef no_386bsd_code
-int	dostacklimits;
+#ifdef COMPAT_SUNOS
+struct	sysent	sun_sysent[];
+int	nsun_sysent;
 #endif
 
 char	*trap_type[] = {
@@ -290,6 +295,12 @@ copyfault:
 
 	case T_TRACE|T_USER:	/* user trace trap */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
+#ifdef COMPAT_SUNOS
+		/* SunOS seems to use Trap #2 for some obscure fpu operations.
+		   So far, just ignore it, but DONT trap on it.. */
+		if (p->p_md.md_emul == MDPE_SUNOS)
+		  goto out;
+#endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -382,10 +393,8 @@ copyfault:
 		 * XXX: rude hack to make stack limits "work"
 		 */
 		nss = 0;
-		if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map
-			&& dostacklimits) {
-			nss = clrnd(btoc((unsigned)vm->vm_maxsaddr
-				+ MAXSSIZ - (unsigned)va));
+		if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map) {
+			nss = clrnd(btoc(USRSTACK - (unsigned)va));
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 /*pg("trap rlimit %d, maxsaddr %x va %x ", nss, vm->vm_maxsaddr, va);*/
 				rv = KERN_FAILURE;
@@ -514,8 +523,33 @@ syscall(code, frame)
 		panic("syscall");
 	p->p_regs = frame.f_regs;
 	opc = frame.f_pc - 2;
-	systab = sysent;
-	numsys = nsysent;
+	switch (p->p_md.md_emul)
+	  {
+#ifdef COMPAT_SUNOS
+	  case MDPE_SUNOS:
+	    systab = sun_sysent;
+	    numsys = nsun_sysent;
+
+	    /* SunOS passes the syscall-number on the stack, whereas
+	       BSD passes it in D0. So, we have to get the real "code"
+	       from the stack, and clean up the stack, as SunOS glue
+	       code assumes the kernel pops the syscall argument the
+	       glue pushed on the stack. Sigh... */
+	    code = fuword ((caddr_t) frame.f_regs[SP]);
+	    /* XXX don't do this for sun_sigreturn, as there's no
+	       XXX stored pc on the stack to skip, the argument follows
+	       XXX the syscall number without a gap. */
+	    if (code != SYS_sun_sigreturn)
+	      frame.f_regs[SP] += sizeof (int);
+	    break;
+#endif
+
+	  case MDPE_NETBSD:
+	  default:
+	    systab = sysent;
+	    numsys = nsysent;
+	    break;
+	  }
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 	if (code == 0) {			/* indir */
 		code = fuword(params);
@@ -543,22 +577,24 @@ syscall(code, frame)
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
 #if 0
-{
-int arg;
-extern char *syscallnames[];
-printf("{%d %s} ", p->p_pid, syscallnames[code]);
-}
+if (p->p_md.md_emul == MDPE_SUNOS)
+  {
+    int arg;
+    extern char *sun_syscallnames[];
+    printf("{%d [%d]%s} ", p->p_pid, code, sun_syscallnames[code]);
+  }
 #endif
 	error = (*callp->sy_call)(p, &args, rval);
 #if 0
-{
-int arg;
-extern char *syscallnames[];
-printf("%d:%s (", p->p_pid, syscallnames[code]);
-for (arg = 0; arg < callp->sy_narg; arg++)
-  printf ("%s0x%x", arg ? ", " : "", args.i[arg]);
-printf(") = %d/%d [%d]\n", rval[0], rval[1], error);
-}
+if (p->p_md.md_emul == MDPE_SUNOS)
+  {
+    int arg;
+    extern char *sun_syscallnames[];
+    printf("%d:[%d]%s (", p->p_pid, code, sun_syscallnames[code]);
+    for (arg = 0; arg < callp->sy_narg; arg++)
+      printf ("%s0x%x", arg ? ", " : "", args.i[arg]);
+    printf(") = %d/%d [%d]\n", rval[0], rval[1], error);
+  }
 #endif
 	if (error == ERESTART)
 		frame.f_pc = opc;

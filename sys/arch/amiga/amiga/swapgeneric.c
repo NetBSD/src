@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.3 1993/09/02 18:05:38 mw Exp $
+ *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
  */
 
 #include "sys/param.h"

@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
- *	$Id: sys_machdep.c,v 1.2 1993/08/01 19:22:52 mycroft Exp $
+ *	@(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
  */
 
 #include "sys/param.h"
@@ -147,3 +146,13 @@ cachectl(req, addr, len)
 	}
 	return(error);
 }
+
+int
+sysarch(p, uap, retval)
+	struct proc *p;
+	void  *uap;
+	int *retval;
+{
+	return ENOSYS;
+}
+

@@ -1,5 +1,3 @@
-/*	$Id: disksubr.c,v 1.2 1993/08/02 17:51:52 mycroft Exp $ */
-
 #include "param.h"
 #include "systm.h"
 #include "buf.h"

@@ -1,11 +1,5 @@
-<<<<<<< amiga_init.c
-/*	$Id: amiga_init.c,v 1.3 1993/09/02 18:05:24 mw Exp $ */
-
-||||||| 1.1.1.2
-=======
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist */
 
->>>>>>> /tmp/T4009411
 #include "pte.h"
 #include "machine/cpu.h"
 #include "param.h"
