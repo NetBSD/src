@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.657 2004/01/30 08:44:11 lukem Exp $
+# $NetBSD: mi,v 1.658 2004/01/30 15:30:44 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1467,6 +1467,7 @@
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
 ./usr/share/man/cat7/setuid.0			man-reference-catman	.cat
 ./usr/share/man/cat7/signal.0			man-reference-catman	.cat
+./usr/share/man/cat7/sticky.0			man-reference-catman	.cat
 ./usr/share/man/cat7/symlink.0			man-reference-catman	.cat
 ./usr/share/man/cat8/MAKEDEV.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ac.0			man-sysutil-catman	.cat
@@ -1975,7 +1976,7 @@
 ./usr/share/man/cat8/statmsg.0			man-obsolete		obsolete
 ./usr/share/man/cat8/stdethers.0		man-nis-catman		yp,.cat
 ./usr/share/man/cat8/stdhosts.0			man-nis-catman		yp,.cat
-./usr/share/man/cat8/sticky.0			man-sys-catman		.cat
+./usr/share/man/cat8/sticky.0			man-obsolete		obsolete
 ./usr/share/man/cat8/strfile.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/string2key.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/sun2/MAKEDEV.0		man-obsolete		obsolete
@@ -3518,6 +3519,7 @@
 ./usr/share/man/man7/release.7			man-reference-man	.man
 ./usr/share/man/man7/setuid.7			man-reference-man	.man
 ./usr/share/man/man7/signal.7			man-reference-man	.man
+./usr/share/man/man7/sticky.7			man-reference-man	.man
 ./usr/share/man/man7/symlink.7			man-reference-man	.man
 ./usr/share/man/man8/MAKEDEV.8			man-sysutil-man		.man
 ./usr/share/man/man8/ac.8			man-sysutil-man		.man
@@ -4027,7 +4029,7 @@
 ./usr/share/man/man8/statmsg.8			man-obsolete		obsolete
 ./usr/share/man/man8/stdethers.8		man-nis-man		yp,.man
 ./usr/share/man/man8/stdhosts.8			man-nis-man		yp,.man
-./usr/share/man/man8/sticky.8			man-sys-man		.man
+./usr/share/man/man8/sticky.8			man-obsolete		obsolete
 ./usr/share/man/man8/strfile.8			man-sysutil-man		.man
 ./usr/share/man/man8/string2key.8		man-krb5-man		kerberos,.man
 ./usr/share/man/man8/sun2/MAKEDEV.8		man-obsolete		obsolete
