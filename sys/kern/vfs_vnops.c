@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.78 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.79 2004/05/30 20:48:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.78 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.79 2004/05/30 20:48:04 yamt Exp $");
 
 #include "fs_union.h"
 
@@ -779,7 +779,8 @@ vn_lock(vp, flags)
 			    "vn_lock", 0, &vp->v_interlock);
 			error = ENOENT;
 		} else {
-			error = VOP_LOCK(vp, flags | LK_INTERLOCK);
+			error = VOP_LOCK(vp,
+			    (flags & ~LK_RETRY) | LK_INTERLOCK);
 			if (error == 0 || error == EDEADLK || error == EBUSY)
 				return (error);
 		}
