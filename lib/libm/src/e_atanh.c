@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_atanh.c,v 1.5 1994/08/10 20:30:38 jtc Exp $";
+static char rcsid[] = "$Id: e_atanh.c,v 1.6 1994/08/18 23:05:12 jtc Exp $";
 #endif
 
 /* __ieee754_atanh(x)
@@ -55,8 +55,8 @@ static double zero = 0.0;
 #endif
 {
 	double t;
-	int hx,ix;
-	unsigned lx;
+	int32_t hx,ix;
+	u_int32_t lx;
 	EXTRACT_WORDS(hx,lx,x);
 	ix = hx&0x7fffffff;
 	if ((ix|((lx|(-lx))>>31))>0x3ff00000) /* |x|>1 */

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_jn.c,v 1.5 1994/08/10 20:31:03 jtc Exp $";
+static char rcsid[] = "$Id: e_jn.c,v 1.6 1994/08/18 23:05:37 jtc Exp $";
 #endif
 
 /*
@@ -65,7 +65,7 @@ static double zero  =  0.00000000000000000000e+00;
 	int n; double x;
 #endif
 {
-	int i,hx,ix,lx, sgn;
+	int32_t i,hx,ix,lx, sgn;
 	double a, b, temp, di;
 	double z, w;
 
@@ -75,7 +75,7 @@ static double zero  =  0.00000000000000000000e+00;
 	EXTRACT_WORDS(hx,lx,x);
 	ix = 0x7fffffff&hx;
     /* if J(n,NaN) is NaN */
-	if((ix|((unsigned)(lx|-lx))>>31)>0x7ff00000) return x+x;
+	if((ix|((u_int32_t)(lx|-lx))>>31)>0x7ff00000) return x+x;
 	if(n<0){		
 		n = -n;
 		x = -x;
@@ -165,7 +165,7 @@ static double zero  =  0.00000000000000000000e+00;
 		 */
 	    /* determine k */
 		double t,v;
-		double q0,q1,h,tmp; int k,m;
+		double q0,q1,h,tmp; int32_t k,m;
 		w  = (n+n)/(double)x; h = 2.0/(double)x;
 		q0 = w;  z = w+h; q1 = w*z - 1.0; k=1;
 		while(q1<1.0e9) {
@@ -225,14 +225,14 @@ static double zero  =  0.00000000000000000000e+00;
 	int n; double x;
 #endif
 {
-	int i,hx,ix,lx;
-	int sign;
+	int32_t i,hx,ix,lx;
+	int32_t sign;
 	double a, b, temp;
 
 	EXTRACT_WORDS(hx,lx,x);
 	ix = 0x7fffffff&hx;
     /* if Y(n,NaN) is NaN */
-	if((ix|((unsigned)(lx|-lx))>>31)>0x7ff00000) return x+x;
+	if((ix|((u_int32_t)(lx|-lx))>>31)>0x7ff00000) return x+x;
 	if((ix|lx)==0) return -one/zero;
 	if(hx<0) return zero/zero;
 	sign = 1;
@@ -265,7 +265,7 @@ static double zero  =  0.00000000000000000000e+00;
 		}
 		b = invsqrtpi*temp/sqrt(x);
 	} else {
-	    unsigned int high;
+	    u_int32_t high;
 	    a = __ieee754_y0(x);
 	    b = __ieee754_y1(x);
 	/* quit if b is -inf */

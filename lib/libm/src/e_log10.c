@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_log10.c,v 1.5 1994/08/10 20:31:12 jtc Exp $";
+static char rcsid[] = "$Id: e_log10.c,v 1.6 1994/08/18 23:05:44 jtc Exp $";
 #endif
 
 /* __ieee754_log10(x)
@@ -75,8 +75,8 @@ static double zero   =  0.0;
 #endif
 {
 	double y,z;
-	int i,k,hx;
-	unsigned lx;
+	int32_t i,k,hx;
+	u_int32_t lx;
 
 	EXTRACT_WORDS(hx,lx,x);
 
@@ -90,7 +90,7 @@ static double zero   =  0.0;
         }
 	if (hx >= 0x7ff00000) return x+x;
 	k += (hx>>20)-1023;
-	i  = ((unsigned)k&0x80000000)>>31;
+	i  = ((u_int32_t)k&0x80000000)>>31;
         hx = (hx&0x000fffff)|((0x3ff-i)<<20);
         y  = (double)(k+i);
 	SET_HIGH_WORD(x,hx);

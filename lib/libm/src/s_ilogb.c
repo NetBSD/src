@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_ilogb.c,v 1.5 1994/08/10 20:32:31 jtc Exp $";
+static char rcsid[] = "$Id: s_ilogb.c,v 1.6 1994/08/18 23:06:52 jtc Exp $";
 #endif
 
 /* ilogb(double x)
@@ -30,7 +30,7 @@ static char rcsid[] = "$Id: s_ilogb.c,v 1.5 1994/08/10 20:32:31 jtc Exp $";
 	double x;
 #endif
 {
-	int hx,lx,ix;
+	int32_t hx,lx,ix;
 
 	EXTRACT_WORDS(hx,lx,x);
 	hx &= 0x7fffffff;

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_frexp.c,v 1.5 1994/08/10 20:32:28 jtc Exp $";
+static char rcsid[] = "$Id: s_frexp.c,v 1.6 1994/08/18 23:06:49 jtc Exp $";
 #endif
 
 /*
@@ -42,7 +42,7 @@ two54 =  1.80143985094819840000e+16; /* 0x43500000, 0x00000000 */
 	double x; int *eptr;
 #endif
 {
-	int hx, ix, lx;
+	int32_t hx, ix, lx;
 	EXTRACT_WORDS(hx,lx,x);
 	ix = 0x7fffffff&hx;
 	*eptr = 0;

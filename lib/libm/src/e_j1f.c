@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_j1f.c,v 1.1 1994/08/10 20:31:02 jtc Exp $";
+static char rcsid[] = "$Id: e_j1f.c,v 1.2 1994/08/18 23:05:35 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -60,7 +60,7 @@ static float zero    = 0.0;
 #endif
 {
 	float z, s,c,ss,cc,r,u,v,y;
-	int hx,ix;
+	int32_t hx,ix;
 
 	GET_FLOAT_WORD(hx,x);
 	ix = hx&0x7fffffff;
@@ -129,7 +129,7 @@ static float V0[5] = {
 #endif
 {
 	float z, s,c,ss,cc,u,v;
-	int hx,ix;
+	int32_t hx,ix;
 
 	GET_FLOAT_WORD(hx,x);
         ix = 0x7fffffff&hx;
@@ -293,7 +293,7 @@ static float ps2[5] = {
 	float *p,*q;
 #endif
 	float z,r,s;
-        int ix;
+        int32_t ix;
 	GET_FLOAT_WORD(ix,x);
 	ix &= 0x7fffffff;
         if(ix>=0x41000000)     {p = pr8; q= ps8;}
@@ -430,7 +430,7 @@ static float qs2[6] = {
 	float *p,*q;
 #endif
 	float  s,r,z;
-	int ix;
+	int32_t ix;
 	GET_FLOAT_WORD(ix,x);
 	ix &= 0x7fffffff;
 	if(ix>=0x40200000)     {p = qr8; q= qs8;}

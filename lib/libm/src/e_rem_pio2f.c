@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_rem_pio2f.c,v 1.1 1994/08/10 20:31:22 jtc Exp $";
+static char rcsid[] = "$Id: e_rem_pio2f.c,v 1.2 1994/08/18 23:05:58 jtc Exp $";
 #endif
 
 /* __ieee754_rem_pio2f(x,y)
@@ -30,9 +30,9 @@ static char rcsid[] = "$Id: e_rem_pio2f.c,v 1.1 1994/08/10 20:31:22 jtc Exp $";
  * Table of constants for 2/pi, 396 Hex digits (476 decimal) of 2/pi 
  */
 #ifdef __STDC__
-static const int two_over_pi[] = {
+static const int32_t two_over_pi[] = {
 #else
-static int two_over_pi[] = {
+static int32_t two_over_pi[] = {
 #endif
 0xA2, 0xF9, 0x83, 0x6E, 0x4E, 0x44, 0x15, 0x29, 0xFC,
 0x27, 0x57, 0xD1, 0xF5, 0x34, 0xDD, 0xC0, 0xDB, 0x62, 
@@ -61,9 +61,9 @@ static int two_over_pi[] = {
 /* This array is like the one in e_rem_pio2.c, but the numbers are
    single precision and the last 8 bits are forced to 0.  */
 #ifdef __STDC__
-static const int npio2_hw[] = {
+static const int32_t npio2_hw[] = {
 #else
-static int npio2_hw[] = {
+static int32_t npio2_hw[] = {
 #endif
 0x3fc90f00, 0x40490f00, 0x4096cb00, 0x40c90f00, 0x40fb5300, 0x4116cb00,
 0x412fed00, 0x41490f00, 0x41623100, 0x417b5300, 0x418a3a00, 0x4196cb00,
@@ -100,15 +100,15 @@ pio2_3  =  6.0770943833e-11, /* 0x2e85a300 */
 pio2_3t =  6.1232342629e-17; /* 0x248d3132 */
 
 #ifdef __STDC__
-	int __ieee754_rem_pio2f(float x, float *y)
+	int32_t __ieee754_rem_pio2f(float x, float *y)
 #else
-	int __ieee754_rem_pio2f(x,y)
+	int32_t __ieee754_rem_pio2f(x,y)
 	float x,y[];
 #endif
 {
 	float z,w,t,r,fn;
 	float tx[3];
-	int e0,i,j,nx,n,ix,hx;
+	int32_t e0,i,j,nx,n,ix,hx;
 
 	GET_FLOAT_WORD(hx,x);
 	ix = hx&0x7fffffff;
@@ -116,14 +116,14 @@ pio2_3t =  6.1232342629e-17; /* 0x248d3132 */
 	    {y[0] = x; y[1] = 0; return 0;}
 	if(ix<=0x43490f80) { /* |x| ~<= 2^7*(pi/2), medium size */
 	    t  = fabsf(x);
-	    n  = (int) (t*invpio2+half);
+	    n  = (int32_t) (t*invpio2+half);
 	    fn = (float)n;
 	    r  = t-fn*pio2_1;
 	    w  = fn*pio2_1t;	/* 1st round good to 40 bit */
 	    if(n<32&&(ix&0xffffff00)!=npio2_hw[n-1]) {	
 		y[0] = r-w;	/* quick check no cancellation */
 	    } else {
-	        unsigned int high;
+	        u_int32_t high;
 	        j  = ix>>23;
 	        y[0] = r-w; 
 		GET_FLOAT_WORD(high,y[0]);
@@ -157,9 +157,9 @@ pio2_3t =  6.1232342629e-17; /* 0x248d3132 */
 	}
     /* set z = scalbn(|x|,ilogb(x)-7) */
 	e0 	= (ix>>23)-134;		/* e0 = ilogb(z)-7; */
-	SET_FLOAT_WORD(z, ix - (e0<<23));
+	SET_FLOAT_WORD(z, ix - ((int32_t)(e0<<23)));
 	for(i=0;i<2;i++) {
-		tx[i] = (float)((int)(z));
+		tx[i] = (float)((int32_t)(z));
 		z     = (z-tx[i])*two8;
 	}
 	tx[2] = z;

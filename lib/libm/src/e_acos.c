@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_acos.c,v 1.5 1994/08/10 20:30:28 jtc Exp $";
+static char rcsid[] = "$Id: e_acos.c,v 1.6 1994/08/18 23:04:51 jtc Exp $";
 #endif
 
 /* __ieee754_acos(x)
@@ -69,11 +69,11 @@ qS4 =  7.70381505559019352791e-02; /* 0x3FB3B8C5, 0xB12E9282 */
 #endif
 {
 	double z,p,q,r,w,s,c,df;
-	int hx,ix;
+	int32_t hx,ix;
 	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x3ff00000) {	/* |x| >= 1 */
-	    unsigned int lx;
+	    u_int32_t lx;
 	    GET_LOW_WORD(lx,x);
 	    if(((ix-0x3ff00000)|lx)==0) {	/* |x|==1 */
 		if(hx>0) return 0.0;		/* acos(1) = 0  */

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_asinh.c,v 1.5 1994/08/10 20:31:53 jtc Exp $";
+static char rcsid[] = "$Id: s_asinh.c,v 1.6 1994/08/18 23:06:20 jtc Exp $";
 #endif
 
 /* asinh(x)
@@ -45,7 +45,7 @@ huge=  1.00000000000000000000e+300;
 #endif
 {	
 	double t,w;
-	int hx,ix;
+	int32_t hx,ix;
 	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) return x+x;	/* x is inf or NaN */

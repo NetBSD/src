@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_rintf.c,v 1.1 1994/08/10 20:33:01 jtc Exp $";
+static char rcsid[] = "$Id: s_rintf.c,v 1.2 1994/08/18 23:07:17 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -37,8 +37,8 @@ TWO23[2]={
 	float x;
 #endif
 {
-	int i0,j0,sx;
-	unsigned i,i1;
+	int32_t i0,j0,sx;
+	u_int32_t i,i1;
 	float w,t;
 	GET_FLOAT_WORD(i0,x);
 	sx = (i0>>31)&1;

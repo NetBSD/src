@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_finite.c,v 1.5 1994/08/10 20:32:21 jtc Exp $";
+static char rcsid[] = "$Id: s_finite.c,v 1.6 1994/08/18 23:06:44 jtc Exp $";
 #endif
 
 /*
@@ -29,7 +29,7 @@ static char rcsid[] = "$Id: s_finite.c,v 1.5 1994/08/10 20:32:21 jtc Exp $";
 	double x;
 #endif
 {
-	int hx;
+	int32_t hx;
 	GET_HIGH_WORD(hx,x);
-	return  (unsigned)((hx&0x7fffffff)-0x7ff00000)>>31;
+	return (int)((u_int32_t)((hx&0x7fffffff)-0x7ff00000)>>31);
 }

@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_jnf.c,v 1.1 1994/08/10 20:31:04 jtc Exp $";
+static char rcsid[] = "$Id: e_jnf.c,v 1.2 1994/08/18 23:05:39 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -42,7 +42,7 @@ static float zero  =  0.0000000000e+00;
 	int n; float x;
 #endif
 {
-	int i,hx,ix, sgn;
+	int32_t i,hx,ix, sgn;
 	float a, b, temp, di;
 	float z, w;
 
@@ -119,7 +119,7 @@ static float zero  =  0.0000000000e+00;
 		 */
 	    /* determine k */
 		float t,v;
-		float q0,q1,h,tmp; int k,m;
+		float q0,q1,h,tmp; int32_t k,m;
 		w  = (n+n)/(float)x; h = (float)2.0/(float)x;
 		q0 = w;  z = w+h; q1 = w*z - (float)1.0; k=1;
 		while(q1<(float)1.0e9) {
@@ -179,8 +179,8 @@ static float zero  =  0.0000000000e+00;
 	int n; float x;
 #endif
 {
-	int i,hx,ix,ib;
-	int sign;
+	int32_t i,hx,ix,ib;
+	int32_t sign;
 	float a, b, temp;
 
 	GET_FLOAT_WORD(hx,x);

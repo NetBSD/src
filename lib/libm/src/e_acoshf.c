@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_acoshf.c,v 1.1 1994/08/10 20:30:32 jtc Exp $";
+static char rcsid[] = "$Id: e_acoshf.c,v 1.2 1994/08/18 23:04:57 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -36,7 +36,7 @@ ln2	= 6.9314718246e-01;  /* 0x3f317218 */
 #endif
 {	
 	float t;
-	int hx;
+	int32_t hx;
 	GET_FLOAT_WORD(hx,x);
 	if(hx<0x3f800000) {		/* x < 1 */
 	    return (x-x)/(x-x);

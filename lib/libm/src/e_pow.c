@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_pow.c,v 1.4 1994/08/10 20:31:16 jtc Exp $";
+static char rcsid[] = "$Id: e_pow.c,v 1.5 1994/08/18 23:05:51 jtc Exp $";
 #endif
 
 /* __ieee754_pow(x,y) return x**y
@@ -108,9 +108,9 @@ ivln2_l  =  1.92596299112661746887e-08; /* 0x3E54AE0B, 0xF85DDF44 =1/ln2 tail*/
 {
 	double z,ax,z_h,z_l,p_h,p_l;
 	double y1,t1,t2,r,s,t,u,v,w;
-	int i,j,k,yisint,n;
-	int hx,hy,ix,iy;
-	unsigned lx,ly;
+	int32_t i,j,k,yisint,n;
+	int32_t hx,hy,ix,iy;
+	u_int32_t lx,ly;
 
 	EXTRACT_WORDS(hx,lx,x);
 	EXTRACT_WORDS(hy,ly,y);
@@ -185,7 +185,7 @@ ivln2_l  =  1.92596299112661746887e-08; /* 0x3E54AE0B, 0xF85DDF44 =1/ln2 tail*/
 	if((((hx>>31)+1)|yisint)==0) return (x-x)/(x-x);
        but ANSI C says a right shift of a signed negative quantity is
        implementation defined.  */
-	if(((((unsigned)hx>>31)-1)|yisint)==0) return (x-x)/(x-x);
+	if(((((u_int32_t)hx>>31)-1)|yisint)==0) return (x-x)/(x-x);
 
     /* |y| is huge */
 	if(iy>0x41e00000) { /* if |y| > 2**31 */
@@ -256,7 +256,7 @@ ivln2_l  =  1.92596299112661746887e-08; /* 0x3E54AE0B, 0xF85DDF44 =1/ln2 tail*/
 	}
 
 	s = one; /* s (sign of result -ve**odd) = -1 else = 1 */
-	if(((((unsigned)hx>>31)-1)|(yisint-1))==0)
+	if(((((u_int32_t)hx>>31)-1)|(yisint-1))==0)
 	    s = -one;/* (-ve)**(odd int) */
 
     /* split up y into y1+y2 and compute (y1+y2)*(t1+t2) */
