@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.30.2.2 2002/02/11 20:10:37 jdolecek Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.30.2.3 2002/03/15 22:05:58 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995-2002 by Darren Reed.
@@ -94,7 +94,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.30.2.2 2002/02/11 20:10:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.30.2.3 2002/03/15 22:05:58 jdolecek Exp $");
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.58 2002/01/15 14:36:49 darrenr Exp";
 #endif
@@ -403,20 +403,9 @@ caddr_t data;
 	ipstate_save_t ips;
 	int error;
 
-<<<<<<< ip_state.c
-	error = IRCOPY(data, (caddr_t)&ipsp, sizeof(ipsp));
-	if (error)
-		return EFAULT;
-	error = IRCOPY((caddr_t)ipsp, (caddr_t)&ips, sizeof(ips));
-=======
 	error = IRCOPYPTR(data, (caddr_t)&ips, sizeof(ips));
->>>>>>> 1.34
 	if (error)
-<<<<<<< ip_state.c
-		return EFAULT;
-=======
 		return error;
->>>>>>> 1.34
 
 	isn = ips.ips_next;
 	if (!isn) {
@@ -943,35 +932,11 @@ tcphdr_t *tcp;
 		flags = is->is_flags;
 		sp = tcp->th_sport;
 		dp = tcp->th_dport;
-<<<<<<< ip_state.c
-	} else {
-		flags = is->is_flags & FI_WILDA;
-		sp = 0;
-		dp = 0;
-	}
-
-	if (rev == 0) {
-		if (!out) {
-			if (is->is_ifpin == NULL || is->is_ifpin == ifp)
-				ret = 1;
-		} else {
-			if (is->is_ifpout == NULL || is->is_ifpout == ifp)
-				ret = 1;
-		}
-	} else {
-		if (out) {
-			if (is->is_ifpin == NULL || is->is_ifpin == ifp)
-				ret = 1;
-		} else {
-			if (is->is_ifpout == NULL || is->is_ifpout == ifp)
-				ret = 1;
-=======
 		if (!rev) {
 			if (!(flags & FI_W_SPORT) && (sp != is->is_sport))
 				rev = 1;
 			else if (!(flags & FI_W_DPORT) && (dp != is->is_dport))
 				rev = 1;
->>>>>>> 1.34
 		}
 	}
 
@@ -1069,26 +1034,10 @@ tcphdr_t *tcp;
 
 	if (ret >= 0) {
 		is->is_ifp[ret] = ifp;
-<<<<<<< ip_state.c
-#ifdef	_KERNEL
-		strncpy(is->is_ifname[out], IFNAME(fin->fin_ifp),
-			sizeof(is->is_ifname[1]));
-#endif
-=======
 		strncpy(is->is_ifname[ret], IFNAME(ifp),
 			sizeof(is->is_ifname[ret]));
->>>>>>> 1.34
 	}
-<<<<<<< ip_state.c
-#ifdef  _KERNEL
-	if (ret >= 0) {
-		strncpy(is->is_ifname[out], IFNAME(fin->fin_ifp),
-			sizeof(is->is_ifname[1]));
-	}
-#endif
-=======
 	fin->fin_rev = rev;
->>>>>>> 1.34
 	return 1;
 }
 
