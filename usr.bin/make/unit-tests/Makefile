@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2003/07/28 22:52:12 sjg Exp $
+# $Id: Makefile,v 1.2 2003/07/29 06:35:09 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -49,7 +49,8 @@ TEST_MAKE?= ${MAKE}
 # here is the driver
 test:
 	@echo "${TEST_MAKE} -f ${MAKEFILE} > ${.TARGET}.out 2>&1"
-	@${TEST_MAKE} -f ${MAKEFILE} > ${.TARGET}.out 2>&1 || { \
+	@${TEST_MAKE} -f ${MAKEFILE} 2>&1 | \
+	sed 's,^${TEST_MAKE:T}:,make:,' > ${.TARGET}.out || { \
 	tail ${.TARGET}.out; mv ${.TARGET}.out ${.TARGET}.fail; exit 1; }
 	diff -u ${.CURDIR}/${.TARGET}.exp ${.TARGET}.out
 
