@@ -58,6 +58,8 @@
  * [including the GNU Public Licence.]
  */
 
+
+#include <assert.h>
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
@@ -117,7 +119,9 @@ int SSL_clear(SSL *s)
 	s->client_version=s->version;
 	s->rwstate=SSL_NOTHING;
 	s->rstate=SSL_ST_READ_HEADER;
+#if 0
 	s->read_ahead=s->ctx->read_ahead;
+#endif
 
 	if (s->init_buf != NULL)
 		{
@@ -183,7 +187,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 		return(NULL);
 		}
 
-	s=(SSL *)Malloc(sizeof(SSL));
+	s=(SSL *)OPENSSL_malloc(sizeof(SSL));
 	if (s == NULL) goto err;
 	memset(s,0,sizeof(SSL));
 
@@ -227,6 +231,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->server=(ctx->method->ssl_accept == ssl_undefined_function)?0:1;
 	s->options=ctx->options;
 	s->mode=ctx->mode;
+	s->read_ahead=ctx->read_ahead; /* used to happen in SSL_clear */
 	SSL_clear(s);
 
 	CRYPTO_new_ex_data(ssl_meth,s,&s->ex_data);
@@ -239,7 +244,7 @@ err:
 			ssl_cert_free(s->cert);
 		if (s->ctx != NULL)
 			SSL_CTX_free(s->ctx); /* decrement reference count */
-		Free(s);
+		OPENSSL_free(s);
 		}
 	SSLerr(SSL_F_SSL_NEW,ERR_R_MALLOC_FAILURE);
 	return(NULL);
@@ -375,7 +380,7 @@ void SSL_free(SSL *s)
 
 	if (s->method != NULL) s->method->ssl_free(s);
 
-	Free(s);
+	OPENSSL_free(s);
 	}
 
 void SSL_set_bio(SSL *s,BIO *rbio,BIO *wbio)
@@ -703,7 +708,7 @@ long SSL_get_default_timeout(SSL *s)
 	return(s->method->get_timeout());
 	}
 
-int SSL_read(SSL *s,char *buf,int num)
+int SSL_read(SSL *s,void *buf,int num)
 	{
 	if (s->handshake_func == 0)
 		{
@@ -719,8 +724,14 @@ int SSL_read(SSL *s,char *buf,int num)
 	return(s->method->ssl_read(s,buf,num));
 	}
 
-int SSL_peek(SSL *s,char *buf,int num)
+int SSL_peek(SSL *s,void *buf,int num)
 	{
+	if (s->handshake_func == 0)
+		{
+		SSLerr(SSL_F_SSL_READ, SSL_R_UNINITIALIZED);
+		return -1;
+		}
+
 	if (s->shutdown & SSL_RECEIVED_SHUTDOWN)
 		{
 		return(0);
@@ -728,7 +739,7 @@ int SSL_peek(SSL *s,char *buf,int num)
 	return(s->method->ssl_peek(s,buf,num));
 	}
 
-int SSL_write(SSL *s,const char *buf,int num)
+int SSL_write(SSL *s,const void *buf,int num)
 	{
 	if (s->handshake_func == 0)
 		{
@@ -874,7 +885,7 @@ long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)())
 		}
 	}
 
-int ssl_cipher_id_cmp(SSL_CIPHER *a,SSL_CIPHER *b)
+int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b)
 	{
 	long l;
 
@@ -885,7 +896,8 @@ int ssl_cipher_id_cmp(SSL_CIPHER *a,SSL_CIPHER *b)
 		return((l > 0)?1:-1);
 	}
 
-int ssl_cipher_ptr_id_cmp(SSL_CIPHER **ap,SSL_CIPHER **bp)
+int ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
+			const SSL_CIPHER * const *bp)
 	{
 	long l;
 
@@ -1033,7 +1045,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 		return(NULL);
 		}
 	if ((skp == NULL) || (*skp == NULL))
-		sk=sk_SSL_CIPHER_new(NULL); /* change perhaps later */
+		sk=sk_SSL_CIPHER_new_null(); /* change perhaps later */
 	else
 		{
 		sk= *skp;
@@ -1099,7 +1111,7 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 		SSLerr(SSL_F_SSL_CTX_NEW,SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
 		goto err;
 		}
-	ret=(SSL_CTX *)Malloc(sizeof(SSL_CTX));
+	ret=(SSL_CTX *)OPENSSL_malloc(sizeof(SSL_CTX));
 	if (ret == NULL)
 		goto err;
 
@@ -1195,7 +1207,7 @@ err2:
 	}
 
 static void SSL_COMP_free(SSL_COMP *comp)
-    { Free(comp); }
+    { OPENSSL_free(comp); }
 
 void SSL_CTX_free(SSL_CTX *a)
 	{
@@ -1236,7 +1248,7 @@ void SSL_CTX_free(SSL_CTX *a)
 		sk_X509_pop_free(a->extra_certs,X509_free);
 	if (a->comp_methods != NULL)
 		sk_SSL_COMP_pop_free(a->comp_methods,SSL_COMP_free);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)
@@ -1673,6 +1685,10 @@ SSL *SSL_dup(SSL *s)
 
 		if (s->cert != NULL)
 			{
+			if (ret->cert != NULL)
+				{
+				ssl_cert_free(ret->cert);
+				}
 			ret->cert = ssl_cert_dup(s->cert);
 			if (ret->cert == NULL)
 				goto err;
@@ -1759,13 +1775,13 @@ void ssl_clear_cipher_ctx(SSL *s)
 	if (s->enc_read_ctx != NULL)
 		{
 		EVP_CIPHER_CTX_cleanup(s->enc_read_ctx);
-		Free(s->enc_read_ctx);
+		OPENSSL_free(s->enc_read_ctx);
 		s->enc_read_ctx=NULL;
 		}
 	if (s->enc_write_ctx != NULL)
 		{
 		EVP_CIPHER_CTX_cleanup(s->enc_write_ctx);
-		Free(s->enc_write_ctx);
+		OPENSSL_free(s->enc_write_ctx);
 		s->enc_write_ctx=NULL;
 		}
 	if (s->expand != NULL)
@@ -1843,19 +1859,16 @@ int ssl_init_wbio_buffer(SSL *s,int push)
 
 void ssl_free_wbio_buffer(SSL *s)
 	{
-	BIO *under;
-
 	if (s->bbio == NULL) return;
 
 	if (s->bbio == s->wbio)
 		{
 		/* remove buffering */
-		under=BIO_pop(s->wbio);
-		if (under != NULL)
-			s->wbio=under;
-		else
-			abort(); /* ok */
-		}
+		s->wbio=BIO_pop(s->wbio);
+#ifdef REF_CHECK /* not the usual REF_CHECK, but this avoids adding one more preprocessor symbol */
+		assert(s->wbio != NULL);
+#endif	
+	}
 	BIO_free(s->bbio);
 	s->bbio=NULL;
 	}
