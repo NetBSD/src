@@ -1,27 +1,31 @@
 #
+# new config file for TIMESINK
 #
-machine		"sun3"
-cpu		"SUN3_50"
-ident		TIMESINK
 
-timezone	8 dst
-maxusers	16
+include "std.sun3"
+
+options		"SUN3_50"
+
+makeoptions	DEBUG = "-g"
+maxusers	4
+options		TIMEZONE = 480, DST = 2, MAXFDESCS=2048
 
 # Standard options
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 
 # Options for all SUN3 machines
+options		SWAPPAGER, VNODEPAGER, DEVPAGER
 options		KTRACE
-#options		DDB
-
+options		INET
 config		netbsd swap generic
 
-pseudo-device prom
-pseudo-device idprom
+le0 at obio? addr ? level 3
+#zs0 at obio? addr  0x00000 level 3 
+#zs1 at obio? addr  0x20000 level 3 
 
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager
+idprom0 at obctl? addr ? size ?
 
+prom0 at mainbus0
 
+pseudo-device loop

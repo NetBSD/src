@@ -6,21 +6,43 @@
 #include "sys/tty.h"
 #include "sys/file.h"
 #include "sys/conf.h"
+#include "device.h"
 
+#include "machine/autoconf.h"
 #include "machine/mon.h"
 #include "../sun3/cons.h"
 
 #include "prom.h"
 
+void promattach __P((struct device *, struct device *, void *));
+
 struct prom_softc {
     int flags;
     int nopen;
     struct tty t;
-} prom_softc[NPROM];
+};
 
-#if NPROM > 1
-error: "Can not configure more than one prom tty"
-#endif
+struct cfdriver promcd = 
+{ NULL, "prom", always_match, promattach,
+      DV_TTY, sizeof(struct prom_softc), 0};
+
+#define PROM_CHECK(unit) \
+      if (unit >= promcd.cd_ndevs || (promcd.cd_devs[unit] == NULL)) \
+	  return ENXIO
+#define UNIT_TO_PROMP(unit) promcd.cd_devs[unit]
+
+void promattach(parent, self, args)
+     struct device *parent;
+     struct device *self;
+     void *args;
+{
+    struct prom_softc *prom;
+
+    prom = (struct prom_softc *) self;
+    prom->flags = 0;
+    prom->nopen = 0;
+    printf("\n");		
+}
 
 int promstart __P((struct tty *));
 
@@ -35,9 +57,8 @@ int promopen(dev, flag, mode, p)
     int s,error=0;
 
     unit = minor(dev);
-    if (unit >= NPROM)
-	return ENXIO;
-    prom = &prom_softc[unit];
+    PROM_CHECK(unit);
+    prom = UNIT_TO_PROMP(unit);
     bzero(&prom->t, sizeof(struct tty));
     tp = &prom->t;
     tp->t_oproc = promstart;
@@ -80,9 +101,8 @@ promclose(dev, flag, mode, p)
     struct prom_softc *prom;    
 
     unit = minor(dev);
-    if (unit >= NPROM)
-	return ENXIO;
-    prom = &prom_softc[unit];
+    PROM_CHECK(unit);
+    prom = UNIT_TO_PROMP(unit);
     tp = &prom->t;
     (*linesw[tp->t_line].l_close)(tp, flag);
     ttyclose(tp);
@@ -93,36 +113,30 @@ promread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &prom_softc[minor(dev)].t;
- 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+    int unit;
+    register struct tty *tp;
+    struct prom_softc *prom;    
+
+    unit = minor(dev);
+    PROM_CHECK(unit);
+    prom = UNIT_TO_PROMP(unit);
+    tp = &prom->t;
+    return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 promwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &prom_softc[minor(dev)].t;
+    int unit;
+    register struct tty *tp;
+    struct prom_softc *prom;    
+
+    unit = minor(dev);
+    PROM_CHECK(unit);
+    prom = UNIT_TO_PROMP(unit);
+    tp = &prom->t;
  
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
-}
-
-
-promcnprobe(cp)
-     struct consdev *cp;
-{
-    int prommajor;
-
-    mon_printf("prom console probed (start)\n");
-    /* locate the major number */
-    for (prommajor = 0; prommajor < nchrdev; prommajor++)
-	if (cdevsw[prommajor].d_open == promopen)
-	    break;
-
-    cp->cn_dev = makedev(prommajor, 0);
-    cp->cn_pri = CN_NORMAL;	/* will always exist but you don't
-				 * want to use it unless you have to
-				 */
-    mon_printf("prom console probed (end)\n");
+    return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
 int promstart(tp)
@@ -167,15 +181,32 @@ promstop(tp, flag)
 	splx(s);
 }
 
+/* prom console support */
 
+promcnprobe(cp)
+     struct consdev *cp;
+{
+    int prommajor;
+
+    mon_printf("prom console probed (start)\n");
+    /* locate the major number */
+    for (prommajor = 0; prommajor < nchrdev; prommajor++)
+	if (cdevsw[prommajor].d_open == promopen)
+	    break;
+
+    cp->cn_dev = makedev(prommajor, 0);
+    cp->cn_pri = CN_NORMAL;	/* will always exist but you don't
+				 * want to use it unless you have to
+				 */
+    mon_printf("prom console probed (end)\n");
+}
 
 promcninit(cp)
      struct consdev *cp;
 {
-    cp->cn_tp = &prom_softc[0].t;
+    cp->cn_tp = NULL;
     mon_printf("prom console initialized\n");
 }
-
 
 promcngetc(dev)
      dev_t dev;
@@ -194,4 +225,3 @@ promcnputc(dev, c)
 	mon_printf("non unit 0 prom console???\n");
     mon_putchar(c);
 }
-

@@ -42,5 +42,7 @@ struct isr {
 	int	isr_ipl;
 };
 
-#define	NISR		3
-#define	ISRIPL(x)	((x) - 3)
+#define NISR 8
+
+void isr_init __P((void));
+void isr_add __P((int, int (*handler)(), int ));

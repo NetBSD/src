@@ -241,7 +241,7 @@ mksymlinks()
 	char *p, buf[200];
 
 	p = path("machine");
-	(void)sprintf(buf, "../../%s/include", machine);
+	(void)sprintf(buf, "../../include", machine);
 	(void)unlink(p);
 	ret = symlink(buf, p);
 	if (ret)

@@ -1,30 +1,71 @@
 #include "systm.h"
+#include "device.h"
+
+#include "machine/autoconf.h"
+#include "machine/control.h"
 #include "machine/idprom.h"
+#include "machine/obctl.h"
+
 #include "idprom.h"
 
-static int idprom_init = 0;
+extern void idpromattach __P((struct device *, struct device *, void *));
 
-static struct idprom idprom_copy;
+struct idprom_softc {
+    struct device idprom_driver;
+    int           idprom_init;
+    struct idprom idprom_copy;
+    char         *idprom_addr;
+    int           idprom_size;
+};
 
-static int idprom_ok = 0;
+struct cfdriver idpromcd = 
+{ NULL, "idprom", always_match, idpromattach, DV_DULL,
+      sizeof(struct idprom_softc), 0};
 
-int idprom_open(dev, oflags, devtype, p)
+#define IDPROM_CHECK(unit) \
+      if (unit >= idpromcd.cd_ndevs || (idpromcd.cd_devs[unit] == NULL)) \
+	  return ENXIO
+#define UNIT_TO_IDP(unit) idpromcd.cd_devs[unit]
+
+
+void idpromattach(parent, self, args)
+     struct device *parent;
+     struct device *self;
+     void *args;
+{
+    struct idprom_softc *idp = (struct idprom_softc *) self;
+    struct obctl_cf_loc *obctl_loc = OBCTL_LOC(self);
+
+    idp->idprom_init = 0;
+
+    idp->idprom_addr =
+	OBCTL_DEFAULT_PARAM(char *, obctl_loc->obctl_addr, IDPROM_BASE);
+    idp->idprom_size =
+	OBCTL_DEFAULT_PARAM(int, obctl_loc->obctl_size, IDPROM_SIZE);
+    obctl_print(idp->idprom_addr, idp->idprom_size);
+    printf("\n");
+}
+
+int idpromopen(dev, oflags, devtype, p)
      dev_t dev;
      int oflags;
      int devtype;
      struct proc *p;
 {
-    int unit,s;
+    struct idprom_softc *idp;
+    int unit, idprom_ok;
     
     unit = minor(dev);
-    if (unit >= NIDPROM)
-	return ENXIO;
-    if (!idprom_init) idprom_ok = idprom_fetch(&idprom_copy, IDPROM_VERSION);
+    IDPROM_CHECK(unit);
+    idp = UNIT_TO_IDP(unit);
+    if (!idp->idprom_init)
+	idprom_ok = idprom_fetch(&idp->idprom_copy, IDPROM_VERSION);
     if (!idprom_ok) return EIO;
+    idp->idprom_init = 1;
     return 0;
 }
 
-int idprom_close(dev, fflag, devtype, p)
+int idpromclose(dev, fflag, devtype, p)
      dev_t dev;
      int fflag;
      int devtype;
@@ -33,30 +74,27 @@ int idprom_close(dev, fflag, devtype, p)
     int unit;
 
     unit = minor(dev);
-    if (unit >= NIDPROM)
-	return ENXIO;
+    IDPROM_CHECK(unit);
     return 0;
 }
 
-idprom_read(dev, uio, ioflag)
+idpromread(dev, uio, ioflag)
      dev_t dev;
      struct uio *uio;
      int ioflag;
 {
-    int error, unit,length;
-
+    int error, unit, length;
+    struct idprom_softc *idp;
 
     unit = minor(dev);
-
-    if (unit >= NIDPROM)
-	return ENXIO;
-
+    IDPROM_CHECK(unit);
+    idp = UNIT_TO_IDP(unit);
+    if (!idp->idprom_init) return EIO;
     error = 0;
     while (uio->uio_resid > 0) {
-	if (uio->uio_offset >= IDPROM_SIZE) break; /* past or at end */
-	length = min(uio->uio_resid, (IDPROM_SIZE-uio->uio_offset));
-	error = uiomove((caddr_t) &idprom_copy, length, uio);
+	if (uio->uio_offset >= idp->idprom_size) break; /* past or at end */
+	length = min(uio->uio_resid, (idp->idprom_size - uio->uio_offset));
+	error = uiomove((caddr_t) &idp->idprom_copy, length, uio);
     }
     return error;
 }
-

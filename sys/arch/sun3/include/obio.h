@@ -39,6 +39,26 @@
 #define OBIO_DES_SIZE		0x00004		
 #define OBIO_ECCREG_SIZE	0x00100			
 
+/* flags to obio_alloc() */
+#define OBIO_CACHE 0x1
+#define OBIO_WRITE 0x2
+
+struct obio_cf_loc {
+    int obio_addr;
+    int obio_level;
+};
+
+caddr_t obio_alloc __P((caddr_t, caddr_t, int));
+caddr_t obio_vm_alloc __P((int));
+void obio_print __P((caddr_t addr, int level));
+void obio_probe __P((caddr_t addr));
+
+
+#define OBIO_DEFAULT_PARAM(cast, arg, default) \
+     (cast) (arg == -1 ? default : arg)
+
+#define OBIO_LOC(device) (struct obio_cf_loc *) device->dv_cfdata->cf_loc
+
 #ifdef KERNEL
 
 extern char *interrupt_reg;
