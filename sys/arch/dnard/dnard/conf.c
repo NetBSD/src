@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2001/12/11 06:00:17 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2002/01/12 13:04:09 manu Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -182,6 +182,8 @@ cdev_decl(i4btel);
 #include "wsmux.h"
 #include "scsibus.h"
 #include "openfirm.h"
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 /* Character devices */
 
@@ -269,6 +271,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 80: i4b raw b-channel access */
 	cdev_lkm_dummy(),		/* 81: i4b trace device */
 	cdev_lkm_dummy(),		/* 82: i4b phone device */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 83: clockctl pseudo device */
 
 };
 
@@ -394,6 +397,7 @@ static int chrtoblktbl[] = {
     /* 80 */	    NODEV,
     /* 81 */	    NODEV,
     /* 82 */	    NODEV,
+    /* 83 */	    NODEV,
 };
 
 /*
