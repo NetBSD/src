@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 2000/06/23 12:18:49 kleink Exp $ */
+/*	$NetBSD: asm.h,v 1.12 2001/11/03 20:24:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -88,10 +88,18 @@
 	.align 4; .globl name; .proc 1; FTYPE(name); name:
 
 #ifdef GPROF
+/* see _MCOUNT_ENTRY in profile.h */
+#ifdef __ELF__
 #define _PROF_PROLOGUE \
+	.data; .align 4; 1: .long 0; \
+	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call _mcount; \
+	or %o0,%lo(1b),%o0; restore
+#else
+#define	_PROF_PROLOGUE \
 	.data; .align 4; 1: .long 0; \
 	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call mcount; \
 	or %o0,%lo(1b),%o0; restore
+#endif
 #else
 #define _PROF_PROLOGUE
 #endif
