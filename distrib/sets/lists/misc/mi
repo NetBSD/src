@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.82 2003/03/24 15:24:48 atatat Exp $
+# $NetBSD: mi,v 1.83 2003/03/25 11:52:54 tron Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -548,6 +548,7 @@
 ./usr/share/sendmail/cf/minbar.mc			misc-sendmail-share
 ./usr/share/sendmail/cf/netbsd-msp.mc			misc-sendmail-share
 ./usr/share/sendmail/cf/netbsd-proto.mc			misc-sendmail-share
+./usr/share/sendmail/cf/submit.mc			misc-sendmail-share
 ./usr/share/sendmail/cf/sun-lamp.mc			misc-sendmail-share
 ./usr/share/sendmail/cf/zhadum.mc			misc-sendmail-share
 ./usr/share/sendmail/domain				misc-sendmail-share
