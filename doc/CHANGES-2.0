@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.319 2004/07/09 18:15:30 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.320 2004/07/09 18:32:48 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5166,4 +5166,11 @@ xfree/xc/programs/xterm/main.c			1.9
 	Fix xterm scrolling speed, missed events, and a number of GTK
 	"protocol errors" on LP64 platforms.
 	[heas, ticket #613]
+
+sys/arch/alpha/pci/pci_kn300.c			1.25-1.26
+
+	When calculating the mcpcia irq, include bus pin to account for devices
+	behind a PCI-PCI bridge.  Fixes PR#25831 (and the duplicate PR#26031).
+	Verified by Chuck Silvers.
+	[mhitch, tickets #622 and #623]
 
