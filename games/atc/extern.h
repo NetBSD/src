@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1998/11/10 13:43:30 hubertf Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 1999/07/17 19:57:03 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -97,6 +97,7 @@ char		name __P((const PLANE *));
 int		next_plane __P((void));
 void		noise __P((void));
 int		number __P((char));
+void		open_score_file __P((void));
 void		planewin __P((void));
 int		pop __P((void));
 void		push __P((int, int));
