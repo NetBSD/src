@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.20 1997/03/15 00:00:09 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.21 1997/03/18 18:57:21 christos Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -1228,15 +1228,41 @@ svr4_stream_ioctl(fp, p, retval, fd, cmd, dat)
 		/* 
 		 * This is the best we can do for now; we cannot generate
 		 * signals only for specific events so the signal mask gets
-		 * ignored
-		 */
+		 * ignored.
+		 *
+		 * We alse have to fix the O_ASYNC fcntl bit, so the
+		 * process will get SIGPOLLs. */
 		{
 			struct sys_fcntl_args fa;
+			int error;
+			register_t oflags, flags;
 
+			/* get old status flags */
 			SCARG(&fa, fd) = fd;
-			SCARG(&fa, cmd) = F_SETOWN;
-			SCARG(&fa, arg) = (void *) p->p_pid;
-			return sys_fcntl(p, &fa, retval);
+			SCARG(&fa, cmd) = F_GETFL;
+			if ((error = sys_fcntl(p, &fa, &oflags)) != 0)
+				return error;
+
+			/* update the flags */
+			if ((long) dat != 0)
+				flags = oflags | O_ASYNC;
+			else
+				flags = oflags & ~O_ASYNC;
+
+			/* set the new flags, if changed */
+			if (flags != oflags) {
+				SCARG(&fa, cmd) = F_SETFL;
+				SCARG(&fa, arg) = (void *) flags;
+				if ((error = sys_fcntl(p, &fa, &flags)) != 0)
+					return error;
+			}
+
+			/* set up SIGIO receiver if needed */
+			if ((long) dat != 0) {
+				SCARG(&fa, cmd) = F_SETOWN;
+				SCARG(&fa, arg) = (void *) p->p_pid;
+				return sys_fcntl(p, &fa, retval);
+			}
 		}
 
 	case SVR4_I_GETSIG:
