@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.114 2004/10/19 01:05:40 simonb Exp $
+#	$NetBSD: bsd.sys.mk,v 1.115 2005/02/20 01:31:44 matt Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -25,6 +25,9 @@ CFLAGS+=	-Wreturn-type -Wswitch -Wshadow
 .endif
 .if ${WARNS} > 2
 CFLAGS+=	-Wcast-qual -Wwrite-strings
+.endif
+.if ${WARNS} > 3
+CFLAGS+=	-std=c99
 .endif
 .endif
 
