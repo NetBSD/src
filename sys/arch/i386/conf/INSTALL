@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.239 2004/04/29 20:42:39 gendalia Exp $
+#	$NetBSD: INSTALL,v 1.240 2004/06/22 15:18:33 toshii Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -503,6 +503,7 @@ le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
