@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.61 2001/01/14 06:02:25 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.62 2001/01/14 20:54:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.61 2001/01/14 06:02:25 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.62 2001/01/14 20:54:16 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.61 2001/01/14 06:02:25 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.62 2001/01/14 20:54:16 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1608,9 +1608,11 @@ ParseAddCmd(gnp, cmd)
 		     gn->name, gn->fname, gn->lineno);
 #else
 	Parse_Error (PARSE_WARNING,
-		     "ignoring commands for target \"%s\"; "
-		     "using previous commands defined at %s: %d",
-		     gn->name, gn->fname, gn->lineno);
+		     "duplicate script for target \"%s\" ignored",
+		     gn->name);
+	ParseErrorInternal (gn->fname, gn->lineno, PARSE_WARNING,
+			    "using previous script for \"%s\" defined here",
+			    gn->name);
 #endif
     }
     return(0);
