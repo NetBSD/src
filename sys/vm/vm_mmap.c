@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.55 1998/03/03 14:35:26 mycroft Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.56 1998/03/28 16:58:30 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -219,10 +219,10 @@ sys_mmap(p, v, retval)
 		    (fp = fdp->fd_ofiles[fd]) == NULL)
 			return (EBADF);
 		if (fp->f_type != DTYPE_VNODE)
-			return (EINVAL);
+			return (ENODEV);
 		vp = (struct vnode *)fp->f_data;
 		if (vp->v_type != VREG && vp->v_type != VCHR)
-			return (EINVAL);
+			return (ENODEV);
 		/*
 		 * XXX hack to handle use of /dev/zero to map anon
 		 * memory (ala SunOS).
