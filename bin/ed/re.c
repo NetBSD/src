@@ -62,7 +62,7 @@ optpat()
 	int n;
 
 	if ((delim = *ibufp) == '\n') {
-		sprintf(errmsg, "no previous pattern");
+		if (!exp) sprintf(errmsg, "no previous pattern");
 		return exp;
 	} else if (delim == ' ' || *++ibufp == '\n') {
 		sprintf(errmsg, "invalid pattern delimiter");

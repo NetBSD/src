@@ -62,7 +62,7 @@ char *
 gettxt(lp)
 	line_t *lp;
 {
-	static char txtbuf[MAXLINE];
+	static char buf[MAXLINE];
 	int len, ct;
 
 	if (lp == &line0)
@@ -78,14 +78,14 @@ gettxt(lp)
 		}
 	}
 	len = lp->len & ~ACTV;
-	if ((ct = fread(txtbuf, sizeof(char), len, sfp)) <  0 || ct != len) {
+	if ((ct = fread(buf, sizeof(char), len, sfp)) <  0 || ct != len) {
 		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "cannot read temp file");
 		return (char *) ERR;
 	}
 	sfseek += len;				/* update file position */
-	txtbuf[len] = '\0';
-	return txtbuf;
+	buf[len] = '\0';
+	return buf;
 }
 
 
