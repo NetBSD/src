@@ -1,4 +1,4 @@
-.\"	$NetBSD: radixsort.3,v 1.7 2000/12/13 22:11:24 garbled Exp $
+.\"	$NetBSD: radixsort.3,v 1.8 2001/01/12 19:23:11 jdolecek Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,9 +59,11 @@ are implementations of radix sort.
 These functions sort an array of pointers to byte strings, the initial
 member of which is referenced by
 .Fa base .
-The byte strings may contain any values; the end of each string
-is denoted by the user-specified value
+The byte strings may contain any values. End of strings is denoted
+by character which has same weight as user specified value
 .Fa endbyte .
+.Fa endbyte
+has to be between 0 and 255.
 .Pp
 Applications may specify a sort order by providing the
 .Fa table
