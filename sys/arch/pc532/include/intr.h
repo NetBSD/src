@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2002/05/25 04:27:21 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2002/11/22 13:26:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,6 +73,8 @@
 #define	SIR_ALLMASK	0xffff0000
 
 #ifndef _LOCORE
+#include <sys/device.h>
+
 /*
  * Structure of the software interrupt table
  */
@@ -81,7 +83,7 @@ struct iv {
 	void *iv_arg;
 	long iv_level;
 	long iv_mask;
-	long iv_cnt;
+	struct evcnt iv_evcnt;
 	char *iv_use;
 };
 

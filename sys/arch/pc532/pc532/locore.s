@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.67 2002/07/11 00:41:50 simonb Exp $	*/
+/*	$NetBSD: locore.s,v 1.68 2002/11/22 13:26:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -1119,7 +1119,8 @@ ASENTRY_NOPROFILE(interrupt)
 	 */
 	addqd	1,_C_LABEL(intrcnt)(pc)[r1:d]
 	addqd	1,_C_LABEL(uvmexp)+V_INTR(pc)
-	addqd	1,_C_LABEL(ivt)+IV_CNT(r0)
+	addqd	1,_C_LABEL(ivt)+(IV_EVCNT+EV_COUNT)(r0)
+	addcd	0,_C_LABEL(ivt)+(IV_EVCNT+EV_COUNT+4)(r0)
 
 	movd	_C_LABEL(ivt)+IV_ARG(r0),r1 /* Get argument */
 	cmpqd	0,r1
@@ -1284,46 +1285,10 @@ KENTRY(ram_size, 4)
 /****************************************************************************/
 
 /*
- * vmstat -i uses the following labels and interrupt even increments the
- * counters. This information is also availiable from ivt[n].iv_use
- * and ivt[n].iv_cnt in much better form.
+ * XXX: Some bogus symbols to keep vmstat -i happy, for now.
  */
-	.text
-GLOBAL(intrnames)
-	ASMSTR "int  0"
-	ASMSTR "int  1"
-	ASMSTR "int  2"
-	ASMSTR "int  3"
-	ASMSTR "int  4"
-	ASMSTR "int  5"
-	ASMSTR "int  6"
-	ASMSTR "int  7"
-	ASMSTR "int  8"
-	ASMSTR "int  9"
-	ASMSTR "int 10"
-	ASMSTR "int 11"
-	ASMSTR "int 12"
-	ASMSTR "int 13"
-	ASMSTR "int 14"
-	ASMSTR "int 15"
-GLOBAL(eintrnames)
-
 	.data
+GLOBAL(intrnames)
+GLOBAL(eintrnames)
 GLOBAL(intrcnt)
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	0
 GLOBAL(eintrcnt)
