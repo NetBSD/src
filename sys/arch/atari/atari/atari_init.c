@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.4 1995/05/10 05:59:27 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.5 1995/05/14 15:44:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -59,7 +59,7 @@
 #include <atari/atari/misc.h>
 
 extern u_int 	lowram;
-extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
+extern u_int	Sysptmap, Sysptsize, Sysseg, proc0paddr;
 u_int		*Sysmap;
 int		machineid, mmutype, cpu040, astpending;
 char		*vmmap;
@@ -134,10 +134,9 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	u_int		avail;
 	u_int		pt, ptsize;
 	u_int		tc, i;
-	u_int		*sg, *pg, *pg2;
+	u_int		*sg, *pg;
 	u_int		sg_proto, pg_proto;
-	u_int		umap;
-	u_int		p0_pt, p0_u_area, end_loaded;
+	u_int		end_loaded;
 	u_int		ptextra;
 	u_long		kbase;
 
@@ -258,46 +257,12 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	}
 	/* 
 	 * invalidate the remainder of the tables
-	 * (except last entry)
 	 */
 	do {
 		*sg++ = SG_NV;
 		*pg++ = PG_NV;
-	} while(sg < (u_int *)(Sysseg + ATARI_STSIZE - 4));
+	} while(sg < (u_int *)(Sysseg + ATARI_STSIZE));
 
-	/*
-	 * the end of the last segment (0xFF000000) 
-	 * of KVA space is used to map the u-area of
-	 * the current process (u + kernel stack).
-	 */
-	sg_proto = (pstart + kbase) | SG_RW | SG_V; /* use next availabe PA */
-	pg_proto = (pstart + kbase) | PG_RW | PG_CI | PG_V;
-	umap     = pstart;	/* remember for later map entry */
-
-	/*
-	 * enter the page into the segment table 
-	 * (and page table map)
-	 */
-	*sg++     = sg_proto;
-	*pg++     = pg_proto;
-
-	/*
-	 * invalidate all pte's (will validate u-area afterwards)
-	 */
-	for(pg = (u_int *) pstart; pg < (u_int *) (pstart + NBPG); )
-		*pg++ = PG_NV;
-
-	/*
-	 * account for the allocated page
-	 */
-	pstart   += NBPG;
-	avail    -= NBPG;
-
-	/*
-	 * record KVA at which to access current u-area PTE(s)
-	 */
-	Umap = (u_int)Sysmap + ATARI_MAX_PTSIZE - UPAGES * 4;
-  
 	/*
 	 * initialize kernel page table page(s).
 	 * Assume load at VA 0.
@@ -315,9 +280,9 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 
 	/*
 	 * go till end of data allocated so far
-	 * plus proc0 PT/u-area (to be allocated)
+	 * plus proc0 u-area (to be allocated)
 	 */
-	for(; i < pstart + (UPAGES + 1)*NBPG; i += NBPG, pg_proto += NBPG)
+	for(; i < pstart + USPACE; i += NBPG, pg_proto += NBPG)
 		*pg++ = pg_proto;
 
 	/*
@@ -337,43 +302,16 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	}
 
 	/*
-	 * Setup page table for process 0.
-	 * We set up page table access for the kernel via Usrptmap (usrpt)
-	 * [no longer used?] and access to the u-area itself via Umap (u).
-	 * First available page (pstart) is used for proc0 page table.
-	 * Next UPAGES page(s) following are for u-area.
+	 * Clear proc0 user-area
 	 */
-  
-	p0_pt   = pstart;
-	pstart += NBPG;
-	avail  -= NBPG;
-
-	p0_u_area = pstart;		/* base of u-area and end of PT */
-  
-	/*
-	 * invalidate entire page table
-	 */
-	for(pg = (u_int *)p0_pt; pg < (u_int *) p0_u_area; )
-		*pg++ = PG_NV;
+	bzero((u_char *)pstart, USPACE);
 
 	/*
-	 * now go back and validate u-area PTE(s) in PT and in Umap
-	 */
-	pg  -= UPAGES;
-	pg2  = (u_int *) (umap + 4*(NPTEPG - UPAGES));
-	pg_proto = (p0_u_area + kbase) | PG_RW | PG_V;
-	for(i = 0; i < UPAGES; i++, pg_proto += NBPG) {
-		*pg++  = pg_proto;
-		*pg2++ = pg_proto;
-	}
-	bzero((u_char *)p0_u_area, UPAGES * NBPG);
-
-	/*
-	 * save KVA of proc0 u-area
+	 * Save KVA of proc0 user-area and allocate it
 	 */
 	proc0paddr = pstart;
-	pstart    += UPAGES * NBPG;
-	avail     -= UPAGES * NBPG;
+	pstart    += USPACE;
+	avail     -= USPACE;
 
 	/*
 	 * At this point, virtual and physical allocation starts to divert.
