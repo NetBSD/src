@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.25 2000/03/23 06:35:14 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.26 2001/03/18 17:00:56 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -332,8 +332,10 @@ kbdpoll(dev, events, p)
 	int revents = 0;
 	int s = spltty();
 
-	if (KBDFLAG(dev) == KBDFLAG_CONUNIT)
+	if (KBDFLAG(dev) == KBDFLAG_CONUNIT) {
+		splx(s);
 		return(ENXIO);
+	}
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_q.c_cc > 0)
