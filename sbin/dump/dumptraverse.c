@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dumptraverse.c	5.11 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: dumptraverse.c,v 1.6 1993/08/01 18:27:41 mycroft Exp $";
+static char rcsid[] = "$Id: dumptraverse.c,v 1.7 1993/12/02 03:49:38 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,7 +107,7 @@ mapfiles(maxino, tapesize)
 	register struct dinode *dp;
 	int anydirskipped = 0;
 
-	for (ino = 0; ino <= maxino; ino++) {
+	for (ino = 1; ino <= maxino; ino++) {
 		dp = getino(ino);
 		if ((mode = (dp->di_mode & IFMT)) == 0)
 			continue;
@@ -158,12 +158,7 @@ mapdirs(maxino, tapesize)
 	long filesize, blkcnt = 0;
 	int ret, change = 0;
 
-	for (map = dumpdirmap, ino = 0; ino < maxino; ) {
-		if ((ino % NBBY) == 0)
-			dirty = *map++;
-		else
-			dirty >>= 1;
-		ino++;
+	for (map = dumpdirmap, dirty = *map++, ino = 1; ino <= maxino; ino++) {
 		if ((dirty & 1) == 0 || TSTINO(ino, dumpinomap))
 			continue;
 		dp = getino(ino);
@@ -196,6 +191,10 @@ mapdirs(maxino, tapesize)
 				change = 1;
 			}
 		}
+		if ((ino % NBBY) == 0)
+			dirty = *map++;
+		else
+			dirty >>= 1;
 	}
 	return (change);
 }
