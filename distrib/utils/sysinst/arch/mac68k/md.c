@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.43 2004/08/14 16:06:41 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.44 2004/11/14 13:34:53 he Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,8 +95,8 @@ stricmp(s1, s2)
 	char c1, c2;
 
 	while (1) {
-	    c1 = tolower(*s1++);
-	    c2 = tolower(*s2++);
+	    c1 = tolower((unsigned char)*s1++);
+	    c2 = tolower((unsigned char)*s2++);
 	    if (c1 < c2) return -1;
 	    if (c1 > c2) return 1;
 	    if (c1 == 0) return 0;
