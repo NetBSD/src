@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.28 1997/03/17 18:29:56 is Exp $	*/
+/*	$NetBSD: am7990.c,v 1.29 1997/03/27 21:01:47 veego Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -264,6 +264,8 @@ am7990_meminit(sc)
 	else
 #endif
 		init.init_mode = LE_MODE_NORMAL;
+	if (sc->sc_initmodemedia == 1)
+		init.init_mode |= LE_MODE_PSEL0;
 
 	myaddr = LLADDR(ifp->if_sadl);
 	init.init_padr[0] = (myaddr[1] << 8) | myaddr[0];
@@ -334,6 +336,10 @@ am7990_init(sc)
 
 	(*sc->sc_wrcsr)(sc, LE_CSR0, LE_C0_STOP);
 	DELAY(100);
+
+	/* Newer LANCE chips have a reset register */
+	if (sc->sc_hwreset)
+		(*sc->sc_hwreset)(sc);
 
 	/* Set the correct byte swapping mode, etc. */
 	(*sc->sc_wrcsr)(sc, LE_CSR3, sc->sc_conf3);
