@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.54 1996/06/01 20:24:05 jtk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1553,6 +1553,10 @@ vfs_unmountall()
 	for (allerror = 0,
 	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
 		nmp = mp->mnt_list.cqe_prev;
+#ifdef DEBUG
+		printf("unmounting %s (%s)...\n",
+		       mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
+#endif
 		if ((error = dounmount(mp, MNT_FORCE, &proc0)) != 0) {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);
