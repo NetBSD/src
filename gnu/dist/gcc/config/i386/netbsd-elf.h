@@ -200,10 +200,10 @@ do {									\
   ASM_OUTPUT_ALIGNED_COMMON (FILE, NAME, SIZE, ALIGN);			\
 } while (0)
 
-/* This is the pseudo-op used to generate a 64-bit word of data with a
+/* This is the pseudo-op used to generate a 32-bit word of data with a
    specific value in some section.  */
 
-#define INT_ASM_OP		".quad"
+#define INT_ASM_OP		".long"
 
 /* This is the pseudo-op used to generate a contiguous sequence of byte
    values from a double-quoted string WITHOUT HAVING A TERMINATING NUL
