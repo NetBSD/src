@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.8 2000/07/31 11:25:50 simonb Exp $ */
+/* $NetBSD: setup.c,v 1.9 2001/08/29 18:22:56 jsm Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] = "@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.8 2000/07/31 11:25:50 simonb Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.9 2001/08/29 18:22:56 jsm Exp $";
 #endif
 #endif				/* not lint */
 
@@ -66,7 +66,7 @@ static char rcsid[] = "$NetBSD: setup.c,v 1.8 2000/07/31 11:25:50 simonb Exp $";
 #include <stdlib.h>
 #include "hdr.h"		/* SEED lives in there; keep them coordinated. */
 
-#define USAGE "Usage: setup file > data.c (file is typically glorkz)"
+#define USAGE "Usage: setup file > data.c (file is typically glorkz)\n"
 
 #define YES 1
 #define NO  0
