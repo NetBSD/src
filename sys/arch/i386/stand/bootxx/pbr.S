@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.5 2003/08/05 15:14:49 dsl Exp $	*/
+/*	$NetBSD: pbr.S,v 1.6 2003/08/09 20:57:45 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,9 @@ start0:
 	mov	$0xfffc, %sp
 
 	/* A 'reset disk system' request is traditional here... */
+	push	%dx			/* some BIOS zap %dl here :-( */
 	int	$0x13			/* ah == 0 from code above */
+	pop	%dx
 
 	/* Read from start of disk */
 	movw	$0x0001, %cx		/* track zero sector 1 */
@@ -136,7 +138,7 @@ start0:
 	xorl	%ebp, %ebp		/* pass sector 0 to next stage */
 	movl	(%bx), %eax		/* mbr code shouldn't even have ... */
 	cmpl	R(start), %eax		/* ... a jmp at the start. */
-	je	pbr_read_ok
+	je	pbr_read_ok1
 
 /* Now scan the mbr partition table for a netbsd partition */
 	
@@ -175,31 +177,6 @@ scan_ptn_tbl:
 	call	read_lba
 	jmp	scan_ptn_tbl
 
-/*
- * Something went wrong,
- * Output error code,
- */
-
-read_err:
-	set_err(ERR_READ)
-error:
-#ifdef TERSE_ERROR
-	movb	%al, errcod
-	movw	$errtxt, %si
-	call	message
-#else
-	push	%ax
-	movw	$errtxt, %si
-	call	message
-	pop	%si
-	call	message
-	movw	$newline, %si
-	call	message
-#endif
-1:	sti
-	hlt
-	jmp	1b
-
 no_netbsd_ptn:
 	/* Specific sector not found: try again looking for first NetBSD ptn */
 	testl	%esi, %esi
@@ -207,6 +184,19 @@ no_netbsd_ptn:
 	jz	error
 	xorl	%esi, %esi
 	jmp	start
+
+/*
+ * Sector below CHS limit
+ * Do a cylinder-head-sector read instead
+ * I believe the bios should do reads that cross track boundaries.
+ * (but the read should start at the beginning of a track...)
+ */
+read_chs:
+	movb	1(%di), %dh			/* head */
+	movw	2(%di), %cx			/* ch=cyl, cl=sect */
+	call	chs_read
+pbr_read_ok1:
+	jmp	pbr_read_ok
 
 /*
  * Active partition pointed to by di.
@@ -261,32 +251,12 @@ boot:
 	pop	%dx				/* recover drive nmber */
 
 	cmp	%bp, %ax
-	jne	check_lba
-
-/* Read using CHS */
-
-/*
- * Sector below CHS limit
- * Do a cylinder-head-sector read instead
- * I believe the bios should do reads that cross track boundaries.
- * (but the read should start at the beginning of a track...)
- */
-read_chs:
-	movb	1(%di), %dh			/* head */
-	movw	2(%di), %cx			/* ch=cyl, cl=sect */
-	call	chs_read
-	jmp	pbr_read_ok
-
-chs_read:
-	movw	$BOOTADDR, %bx			/* es:bx is buffer */
-	movw	$0x200 + BOOTXX_SECTORS, %ax	/* command 2, xx sectors */
-	int	$0x13
-	jc	read_err
-	ret
-
+	je	read_chs
 
 check_lba:
-#ifndef NO_LBA_CHECK
+#ifdef NO_LBA_CHECK
+	jmp	boot_lba
+#else
 /*
  * Determine whether we have int13-extensions, by calling
  * int 13, function 41. Check for the magic number returned,
@@ -306,8 +276,30 @@ check_lba:
 	testb	$1, %cl
 	jnz	boot_lba
 1:	set_err(ERR_NO_LBA)
-	jmp	error
 #endif	/* NO_LBA_CHECK */
+
+/*
+ * Something went wrong,
+ * Output error code,
+ */
+
+error:
+#ifdef TERSE_ERROR
+	movb	%al, errcod
+	movw	$errtxt, %si
+	call	message
+#else
+	push	%ax
+	movw	$errtxt, %si
+	call	message
+	pop	%si
+	call	message
+	movw	$newline, %si
+	call	message
+#endif
+1:	sti
+	hlt
+	jmp	1b
 
 boot_lba:
 	call	read_lba
@@ -326,14 +318,24 @@ pbr_read_ok:
 
 /* Read disk using int13-extension parameter block */
 read_lba:
-	push	%si
+	pusha
 	movw	$lba_info, %si			/* ds:si is ctl block */
 	movb	$0x42, %ah
+do_read:
 	int	$0x13
-	pop	%si
+	popa
 
-	jc	read_err
+	set_err(ERR_READ)
+	jc	error
 	ret
+
+/* Read using CHS */
+
+chs_read:
+	movw	$BOOTADDR, %bx			/* es:bx is buffer */
+	pusha
+	movw	$0x200 + BOOTXX_SECTORS, %ax	/* command 2, xx sectors */
+	jmp	do_read
 
 _errtxt: .ascii	"Error "			/* runs into newline... */
 _errcod: .byte	0				/* ... if errcod set */
