@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: mkmake.y,v 1.5 1998/03/09 21:34:13 christos Exp $	*/
+/*	$NetBSD: mkmake.y,v 1.6 1998/04/07 19:24:38 tv Exp $	*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkmake.y	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkmake.y,v 1.5 1998/03/09 21:34:13 christos Exp $");
+__RCSID("$NetBSD: mkmake.y,v 1.6 1998/04/07 19:24:38 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -1063,8 +1063,6 @@ main(argc, argv)
     int argc;
     char *argv[];
 {
-    extern int yydebug;
-
     null = same_item(string_lookup(""));
     newline = same_item(string_lookup("\n"));
     blank = same_item(string_lookup(" "));
