@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifaliases.5,v 1.10 2000/11/08 02:56:26 itojun Exp $
+.\"	$NetBSD: ifaliases.5,v 1.11 2000/11/17 09:43:06 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 8, 2000
+.Dd November 17, 2000
 .Dt IFALIASES 5
 .Os
 .Sh NAME
@@ -46,21 +46,21 @@ Each line of the file is of the form:
 .D1 address interface [netmask]
 .Pp
 The
-.Ar address
+.Em address
 is a network address of the alias.  This must be a number, or must be in
 .Pa /etc/hosts ,
 since the nameserver is not running at this point.
 .Pp
 The
-.Ar interface
+.Em interface
 is the network interface the alias will be configured on.
 .Pp
 The
-.Ar netmask
+.Em netmask
 is the netmask of the alias's network address.  Although this is
 optional, omitting the netmask is discouraged.  Omission results in
 the use of the classful netmask associated with 
-.Ar address .
+.Em address .
 .Sh FILES
 .Pa /etc/ifaliases ,
 .Pa /etc/rc.d/network
