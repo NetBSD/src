@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_vtf.c,v 1.5 1994/10/27 04:19:02 cgd Exp $	*/
+/*	$NetBSD: pcvt_vtf.c,v 1.6 1995/04/19 19:12:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -49,9 +49,6 @@
  *	-hm	------------ Release 3.00 --------------
  *
  *---------------------------------------------------------------------------*/
-
-#include "vt.h"
-#if NVT > 0
 
 #include "pcvt_hdr.h"		/* global include */
 #include "pcvt_tbl.h"		/* character set conversion tables */
@@ -2072,8 +2069,6 @@ selective_erase(struct video_state *svsp, u_short *pcrtat, int length)
 		}
 	}
 }
-
-#endif	/* NVT > 0 */
 
 /* ------------------------- E O F ------------------------------------------*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_kbd.c,v 1.5 1994/10/30 21:44:39 cgd Exp $	*/
+/*	$NetBSD: pcvt_kbd.c,v 1.6 1995/04/19 19:12:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -74,9 +74,6 @@
  *	-hm	------------ Release 3.00 --------------
  *
  *---------------------------------------------------------------------------*/
-
-#include "vt.h"
-#if NVT > 0
 
 #include "pcvt_hdr.h"		/* global include */
 
@@ -3012,7 +3009,5 @@ cfkey12(void)
 }
 
 #endif	/* PCVT_VT220KEYB */
-
-#endif	/* NVT > 0 */
 
 /* ------------------------------- EOF -------------------------------------*/

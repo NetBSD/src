@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_sup.c,v 1.8 1995/04/19 18:33:39 mycroft Exp $	*/
+/*	$NetBSD: pcvt_sup.c,v 1.9 1995/04/19 19:12:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -92,9 +92,6 @@
  *	-hm	------------ Release 3.00 --------------
  *
  *---------------------------------------------------------------------------*/
-
-#include "vt.h"
-#if NVT > 0
 
 #include "pcvt_hdr.h"		/* global include */
 
@@ -2135,7 +2132,5 @@ sw_cursor(int onoff)
 			outb(addr_6845+1, CURSOR_ON_BIT);
 	}
 }
-
-#endif	/* NVT > 0 */
 
 /* ------------------------- E O F ------------------------------------------*/
