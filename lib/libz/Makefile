@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 1996/09/12 19:33:53 gwr Exp $
+# $NetBSD: Makefile,v 1.2 1996/09/12 22:33:40 cgd Exp $
 #
 
 LIB=	z
@@ -8,6 +8,8 @@ SRCS=	adler32.c compress.c crc32.c gzio.c uncompr.c deflate.c trees.c \
 CFLAGS+= -D_ZLIB_PRIVATE -I${.CURDIR}
 
 NOMAN=
+
+CLEANFILES+= minigzip
 
 includes:
 	-cd ${.CURDIR}; cmp -s zlib.h ${DESTDIR}/usr/include/zlib.h > \
@@ -23,4 +25,4 @@ test: minigzip
 # Note: CFLAGS ommitted by intention!
 # This is to verify that zlib.h works standalone.
 minigzip : minigzip.c libz.a
-	$(CC) -o minigzip minigzip.c libz.a
+	$(CC) -o minigzip ${.CURDIR}/minigzip.c libz.a
