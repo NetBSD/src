@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.4 1993/08/01 19:24:49 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.5 1993/08/14 14:29:11 mycroft Exp $
  */
 
 #include "param.h"
@@ -48,10 +48,10 @@
 #include "user.h"
 
 #include "../include/cpu.h"
+#include "../include/pte.h"
 
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
-#include "pte.h"
 
 /*
  * Finish a fork operation, with process p2 nearly set up.

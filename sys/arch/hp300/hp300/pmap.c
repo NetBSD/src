@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.2 1993/05/22 07:57:40 cgd Exp $
+ *	$Id: pmap.c,v 1.3 1993/08/14 14:29:10 mycroft Exp $
  */
 
 /*
@@ -80,14 +80,13 @@
 #include "malloc.h"
 #include "user.h"
 
-#include "pte.h"
-
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
 #include "vm/vm_statistics.h"
 
 #include "../include/cpu.h"
+#include "../include/pte.h"
 
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
