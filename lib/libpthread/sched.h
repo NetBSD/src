@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.1.2.2 2001/07/13 02:42:39 nathanw Exp $	*/
+/*	$NetBSD: sched.h,v 1.1.2.3 2001/11/16 00:13:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #ifndef _LIB_PTHREAD_SCHED_H
 #define _LIB_PTHREAD_SCHED_H
 
+#include <sys/sched.h>
+
 /* Required by POSIX 1003.1, section 13.1, lines 12-13. */
 #include <time.h>	
 
@@ -72,5 +74,18 @@ int	sched_rr_get_interval(pid_t pid, struct timespec *interval);
 
 /* Not optional in the presence of _POSIX_THREADS */
 int	sched_yield(void);
+
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE) && \
+    !defined(_ANSI_SOURCE)
+
+/*
+ * Stuff that for historical reasons is in <sched.h>, but not defined
+ * by any standard.
+ */
+
+pid_t	 clone __P((int (*)(void *), void *, int, void *));
+pid_t	__clone __P((int (*)(void *), void *, int, void *));
+
+#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE && !_ANSI_SOURCE */
 
 #endif /* _LIB_PTHREAD_SCHED_H */
