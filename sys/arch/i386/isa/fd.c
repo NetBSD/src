@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.74 1995/05/04 19:39:42 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.75 1995/06/26 05:20:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -491,8 +491,8 @@ fdstrategy(bp)
  	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef DEBUG
-	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d nblks %d\n",
-	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, nblks);
+	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d sz %d\n",
+	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, sz);
 #endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -1101,11 +1101,15 @@ fdsize(dev)
 }
 
 int
-fddump()
+fddump(dev, blkno, va, size)
+	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 
 	/* Not implemented. */
-	return EINVAL;
+	return ENXIO;
 }
 
 int
