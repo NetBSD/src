@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.9 1999/02/11 15:58:19 tv Exp $
+#	$NetBSD: Makefile,v 1.10 1999/03/12 22:06:43 sommerfe Exp $
 
 SUBDIR=		common cc1 cc1plus cc1obj f771 \
-		c89 cc cpp collect2 g++ g77
+		c89 cc cpp collect2 g++ g77 gcov
 
 all-cc1 all-cc1obj all-cc1plus all-f771: all-common
 depend-cc1 depend-cc1obj depend-cc1plus depend-f771: depend-common
