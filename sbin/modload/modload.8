@@ -1,4 +1,4 @@
-.\"	$NetBSD: modload.8,v 1.7 1997/09/15 09:27:53 darrenr Exp $
+.\"	$NetBSD: modload.8,v 1.8 1999/01/13 23:07:30 sommerfe Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Nd load a kernel module
 .Sh SYNOPSIS
 .Nm
-.Op Fl dv
+.Op Fl dvs
 .Op Fl A Ar kernel
 .Op Fl e Ar entry
 .Op Fl p Ar postinstall
@@ -55,6 +55,8 @@ Debug.  Used to debug
 itself.
 .It Fl v
 Print comments about the loading process.
+.It Fl s
+Suppress loading of the symbol table.
 .It Fl A Ar kernel
 Specify the file that is passed to the linker
 to resolve module references to external symbols. 
