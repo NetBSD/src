@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.5 1999/07/22 03:59:42 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.6 1999/07/22 12:56:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -521,10 +521,18 @@ skip_ipsec2:;
 		 * ifp must point it.
 		 */
 		if (ro->ro_rt == 0) {
+#ifdef __NetBSD__
+			/*
+			 * NetBSD always clones routes, if parent is
+			 * PRF_CLONING.
+			 */
+			rtalloc((struct route *)ro);
+#else
 			if (ro == &ip6route)	/* xxx kazu */
 				rtalloc((struct route *)ro);
 			else
 				rtcalloc((struct route *)ro);
+#endif
 		}
 		if (ro->ro_rt == 0) {
 			ip6stat.ip6s_noroute++;
