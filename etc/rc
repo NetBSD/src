@@ -120,7 +120,8 @@ echo clearing /tmp
 # prune quickly with one rm, then use find to clean up /tmp/[lq]*
 # (not needed with mfs /tmp, but doesn't hurt there...)
 (cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
-    find . ! -name . ! -name lost+found ! -name quotas -exec rm -rf -- {} \;)
+    find . ! -name . ! -name lost+found ! -name quotas \
+	-exec rm -rf -- {} \; -type d -prune)
 
 if [ -d /var/account ]; then
 	echo 'turning on accounting'
