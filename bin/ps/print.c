@@ -416,7 +416,7 @@ wchan(k, ve)
 		(void)printf("%-*s", v->width, "-");
 }
 
-#define pgtok(a)        (((a)*NBPG)/1024)
+#define pgtok(a)        (((a)*getpagesize())/1024)
 
 void
 vsize(k, ve)
@@ -609,7 +609,7 @@ maxrss(k, ve)
 
 	v = ve->var;
 #ifndef NEWVM	/* not yet */
-	if (KI_PROC(k)->p_maxrss != (RLIM_INFINITY/NBPG))
+	if (KI_PROC(k)->p_maxrss != (RLIM_INFINITY/getpagesize()))
 		(void)printf("%*d", v->width, pgtok(KI_PROC(k)->p_maxrss));
 	else
 #endif
