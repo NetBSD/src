@@ -1,4 +1,4 @@
-.\"	$NetBSD: trsp.8,v 1.7 1997/07/23 06:16:45 mikel Exp $
+.\"	$NetBSD: trsp.8,v 1.8 1997/07/23 18:20:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .Dd June 6, 1993
 .Dt TRSP 8
-.Os BSD 4.2
+.Os BSD 4.3
 .Sh NAME
 .Nm trsp
 .Nd transliterate sequenced packet protocol trace
@@ -46,9 +46,9 @@
 .Op Fl p Ar hex-address
 .Op Fl s
 .Op Fl t
-.Oo
-.Ar system Op Ar core
-.Oc
+.Op Fl z
+.Op Fl N Ar system
+.Op Fl M Ar core
 .Sh DESCRIPTION
 .Nm Trsp
 interrogates the buffer of
@@ -86,9 +86,21 @@ In addition to the normal output,
 print a detailed description of the packet
 sequencing information.
 .It Fl t
-in addition to the normal output,
+In addition to the normal output,
 print the values for all timers at each
 point in the trace.
+.It Fl z
+Clear the in-kernel debugging buffers.
+.It Fl M Ar core
+Extract values associated with the name list from
+.Pa core
+instead of the default
+.Pa /dev/kmem .
+.It Fl N Ar system
+Extract the name list from
+.Pa system
+instead of the default
+.Pa /netbsd .
 .El
 .Pp
 The recommended use of
@@ -112,10 +124,6 @@ many sockets using the debugging option, the
 option may be useful in checking to see if
 any trace records are present for the socket in
 question.
-.Pp
-If debugging is being performed on a system or
-core file other than the default, the last two
-arguments may be used to supplant the defaults.
 .Sh FILES
 .Bl -tag -width /dev/kmem -compact
 .It Pa /dev/kmem
