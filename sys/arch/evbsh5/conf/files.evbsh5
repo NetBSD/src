@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbsh5,v 1.7 2002/11/23 09:05:04 scw Exp $
+#	$NetBSD: files.evbsh5,v 1.8 2002/11/23 09:13:18 scw Exp $
 
 # Config file for SuperH CAYMAN SH5 Evaluation Board
 
@@ -29,3 +29,4 @@ attach	alphaled at sysfpga with alphaled
 file	arch/evbsh5/dev/alphaled.c		alphaled
 
 include "arch/sh5/conf/majors.sh5"
+include "arch/evbsh5/conf/majors.evbsh5"
