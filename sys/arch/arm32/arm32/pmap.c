@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 1997/02/04 07:12:34 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 1997/07/31 00:36:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -788,7 +788,7 @@ pmap_allocpagedir(pmap)
 			/* Add a self reference reference */
 
 			*((pt_entry_t *)(pmap->pm_vptpt + 0xefc)) =
-			    L2_PTE_NC_NB(pmap->pm_pptpt, AP_KRWUR);
+			    L2_PTE_NC_NB(pmap->pm_pptpt, AP_KRW);
 
 /*
  * Now we get nasty. We need to map the page directory to a standard address
@@ -1660,15 +1660,15 @@ pmap_nightmare(pmap, pind, va, prot)
 	}
 	if (entries > 1) {
 #ifdef PORTMASTER
-		printf("pmap_nightmare: e=%d w=%d p=%d c=%d pind=%x va=%x [", entries, writeable, (prot & VM_PROT_WRITE), cacheable, pind, (u_int)va);
+/*		printf("pmap_nightmare: e=%d w=%d p=%d c=%d pind=%x va=%x [", entries, writeable, (prot & VM_PROT_WRITE), cacheable, pind, (u_int)va);*/
 #endif
 		for (npv = pv; npv; npv = npv->pv_next) {
 			/* Count mappings in the same pmap */
 			if (pmap == npv->pv_pmap) {
-				printf("va=%x ", (u_int)npv->pv_va);
+/*				printf("va=%x ", (u_int)npv->pv_va);*/
 			}
 		}
-		printf("]\n");
+/*		printf("]\n");*/
 #if 0
 		if (writeable || (prot & VM_PROT_WRITE))) {
 			for (npv = pv; npv; npv = npv->pv_next) {
@@ -1684,8 +1684,8 @@ pmap_nightmare(pmap, pind, va, prot)
 		if ((prot & VM_PROT_WRITE) == 0)
 			cacheable = PT_C;
 #ifdef PORTMASTER
-		if (cacheable == 0)
-			printf("pmap_nightmare: w=%d p=%d va=%x c=%d\n", writeable, (prot & VM_PROT_WRITE), (u_int)va, cacheable);
+/*		if (cacheable == 0)
+			printf("pmap_nightmare: w=%d p=%d va=%x c=%d\n", writeable, (prot & VM_PROT_WRITE), (u_int)va, cacheable);*/
 #endif
 	}
 
@@ -1726,15 +1726,15 @@ pmap_nightmare1(pmap, pind, va, prot, cacheable)
 	}
 	if (entries > 1) {
 #ifdef PORTMASTER
-		printf("pmap_nightmare1: e=%d w=%d p=%d c=%d pind=%x va=%x [", entries, writeable, (prot & VM_PROT_WRITE), cacheable, pind, (u_int)va);
+/*		printf("pmap_nightmare1: e=%d w=%d p=%d c=%d pind=%x va=%x [", entries, writeable, (prot & VM_PROT_WRITE), cacheable, pind, (u_int)va);*/
 #endif
 		for (npv = pv; npv; npv = npv->pv_next) {
 			/* Count mappings in the same pmap */
 			if (pmap == npv->pv_pmap) {
-				printf("va=%x ", (u_int)npv->pv_va);
+/*				printf("va=%x ", (u_int)npv->pv_va);*/
 			}
 		}
-		printf("]\n");
+/*		printf("]\n");*/
 #if 0
 		if (writeable || (prot & VM_PROT_WRITE))) {
 			for (npv = pv; npv; npv = npv->pv_next) {
@@ -2194,7 +2194,7 @@ pmap_pte(pmap, va)
 
 		*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE + ((PROCESS_PAGE_TBLS_BASE
 		    >> (PGSHIFT-2)) & ~3) + (ALT_PAGE_TBLS_BASE >> 20))) =
-		    L2_PTE_NC_NB(pmap->pm_pptpt, AP_KRWUR);
+		    L2_PTE_NC_NB(pmap->pm_pptpt, AP_KRW);
 /*		cache_clean();*/
 		tlb_flush();
 	}
