@@ -1,4 +1,4 @@
-/*	$NetBSD: uname.c,v 1.9 1997/10/20 02:16:39 lukem Exp $	*/
+/*	$NetBSD: uname.c,v 1.10 1998/11/09 13:24:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -33,24 +33,32 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: uname.c,v 1.9 1997/10/20 02:16:39 lukem Exp $");
+__RCSID("$NetBSD: uname.c,v 1.10 1998/11/09 13:24:05 kleink Exp $");
 #endif /* not lint */
 
-#include <stdio.h>
+#include <sys/param.h>
+#include <limits.h>
 #include <locale.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <sys/utsname.h>
 #include <err.h>
+
+#include <sys/sysctl.h>
+#include <sys/utsname.h>
 
 int	main __P((int, char **));
 static void usage __P((void));
 
-#define	PRINT_SYSNAME	0x01
-#define	PRINT_NODENAME	0x02
-#define	PRINT_RELEASE	0x04
-#define	PRINT_VERSION	0x08
-#define	PRINT_MACHINE	0x10
-#define	PRINT_ALL	0x1f
+/* Note that PRINT_MACHINE_ARCH is excluded from PRINT_ALL! */
+#define	PRINT_SYSNAME		0x01
+#define	PRINT_NODENAME		0x02
+#define	PRINT_RELEASE		0x04
+#define	PRINT_VERSION		0x08
+#define	PRINT_MACHINE		0x10
+#define	PRINT_MACHINE_ARCH	0x20
+#define	PRINT_ALL		\
+    (PRINT_SYSNAME|PRINT_NODENAME|PRINT_RELEASE|PRINT_VERSION|PRINT_MACHINE)
 
 int
 main(argc, argv) 
@@ -58,14 +66,15 @@ main(argc, argv)
 	char **argv;
 {
 	struct utsname u;
+	char machine_arch[SYS_NMLN];
 	int c;
 	int space = 0;
 	int print_mask = 0;
 
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc,argv,"amnrsv")) != -1 ) {
-		switch ( c ) {
+	while ((c = getopt(argc,argv,"amnprsv")) != -1) {
+		switch (c) {
 		case 'a':
 			print_mask |= PRINT_ALL;
 			break;
@@ -74,6 +83,9 @@ main(argc, argv)
 			break;
 		case 'n':
 			print_mask |= PRINT_NODENAME;
+			break;
+		case 'p':
+			print_mask |= PRINT_MACHINE_ARCH;
 			break;
 		case 'r': 
 			print_mask |= PRINT_RELEASE;
@@ -99,9 +111,17 @@ main(argc, argv)
 		print_mask = PRINT_SYSNAME;
 	}
 
-	if (uname(&u)) {
-		err(1, "uname");
+	if (uname(&u) != 0) {
+		err(EXIT_FAILURE, "uname");
 		/* NOTREACHED */
+	}
+	if (print_mask & PRINT_MACHINE_ARCH) {
+		int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
+		size_t len = sizeof (machine_arch);
+
+		if (sysctl(mib, sizeof (mib) / sizeof (mib[0]), machine_arch,
+		    &len, NULL, 0) < 0)
+			err(EXIT_FAILURE, "sysctl");
 	}
 
 	if (print_mask & PRINT_SYSNAME) {
@@ -124,15 +144,19 @@ main(argc, argv)
 		if (space++) putchar(' ');
 		fputs(u.machine, stdout);
 	}
+	if (print_mask & PRINT_MACHINE_ARCH) {
+		if (space++) putchar(' ');
+		fputs(machine_arch, stdout);
+	}
 	putchar('\n');
 
-	exit(0);
+	exit(EXIT_SUCCESS);
 	/* NOTREACHED */
 }
 
 static void
 usage()
 {
-	fprintf(stderr, "usage: uname [-amnrsv]\n");
-	exit(1);
+	fprintf(stderr, "usage: uname [-amnprsv]\n");
+	exit(EXIT_FAILURE);
 }
