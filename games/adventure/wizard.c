@@ -1,4 +1,4 @@
-/*	$NetBSD: wizard.c,v 1.7 1998/07/24 23:18:07 hubertf Exp $	*/
+/*	$NetBSD: wizard.c,v 1.8 1998/08/24 22:07:37 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: wizard.c,v 1.7 1998/07/24 23:18:07 hubertf Exp $");
+__RCSID("$NetBSD: wizard.c,v 1.8 1998/08/24 22:07:37 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -86,7 +86,7 @@ poof()
 }
 
 int
-Start(n)
+Start()
 {
 	int     d, t, delay;
 
@@ -130,8 +130,7 @@ wizard()
 }
 
 void
-ciao(cmdfile)
-	char   *cmdfile;
+ciao()
 {
 	char   *c;
 	char    fname[80];
