@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.33 2002/09/22 01:19:08 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.34 2003/07/16 07:11:29 itojun Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.33 2002/09/22 01:19:08 lukem Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.34 2003/07/16 07:11:29 itojun Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.33 2002/09/22 01:19:08 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.34 2003/07/16 07:11:29 itojun Exp $");
 #endif
 #endif
 
@@ -229,7 +229,7 @@ getwd(char *pathname)
 
     /* find the inode of root */
     if (stat("/", &st_root) == -1) {
-	(void) snprintf(pathname, sizeof(pathname),
+	(void) sprintf(pathname,
 			"getwd: Cannot stat \"/\" (%s)", strerror(errno));
 	return (NULL);
     }
@@ -240,7 +240,7 @@ getwd(char *pathname)
 
     /* find the inode of the current directory */
     if (lstat(".", &st_cur) == -1) {
-	(void) snprintf(pathname, sizeof(pathname),
+	(void) sprintf(pathname,
 			"getwd: Cannot stat \".\" (%s)", strerror(errno));
 	return (NULL);
     }
@@ -258,13 +258,13 @@ getwd(char *pathname)
 
 	/* open the parent directory */
 	if (stat(nextpathptr, &st_dotdot) == -1) {
-	    (void) snprintf(pathname, sizeof(pathname),
+	    (void) sprintf(pathname,
 			    "getwd: Cannot stat directory \"%s\" (%s)",
 			    nextpathptr, strerror(errno));
 	    return (NULL);
 	}
 	if ((dp = opendir(nextpathptr)) == NULL) {
-	    (void) snprintf(pathname, sizeof(pathname),
+	    (void) sprintf(pathname,
 			    "getwd: Cannot open directory \"%s\" (%s)",
 			    nextpathptr, strerror(errno));
 	    return (NULL);
@@ -287,7 +287,7 @@ getwd(char *pathname)
 		    continue;
 		(void) strcpy(cur_name_add, d->d_name);
 		if (lstat(nextpathptr, &st_next) == -1) {
-		    (void) snprintf(pathname, sizeof(pathname),
+		    (void) sprintf(pathname,
 			"getwd: Cannot stat \"%s\" (%s)",
 			d->d_name, strerror(errno));
 		    (void) closedir(dp);
@@ -300,7 +300,7 @@ getwd(char *pathname)
 	    }
 	}
 	if (d == NULL) {
-	    (void) snprintf(pathname, sizeof(pathname), 
+	    (void) sprintf(pathname,
 		"getwd: Cannot find \".\" in \"..\"");
 	    (void) closedir(dp);
 	    return (NULL);
