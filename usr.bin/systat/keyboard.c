@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.12 2000/07/05 11:03:22 ad Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.13 2000/12/01 02:19:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,13 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.12 2000/07/05 11:03:22 ad Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.13 2000/12/01 02:19:44 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include <ctype.h>
-#include <curses.h>
 #include <signal.h>
 #include <termios.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.19 2000/07/05 11:03:22 ad Exp $	*/
+/*	$NetBSD: netstat.c,v 1.20 2000/12/01 02:19:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,14 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.19 2000/07/05 11:03:22 ad Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.20 2000/12/01 02:19:44 simonb Exp $");
 #endif /* not lint */
 
 /*
  * netstat
  */
 #include <sys/param.h>
-#include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
@@ -79,8 +78,7 @@ __RCSID("$NetBSD: netstat.c,v 1.19 2000/07/05 11:03:22 ad Exp $");
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
-#include <nlist.h>
-#include <paths.h>
+
 #include "systat.h"
 #include "extern.h"
 
