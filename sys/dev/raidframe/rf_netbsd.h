@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.16 2004/03/18 16:40:05 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.17 2004/03/19 02:27:44 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,12 +66,14 @@ struct RF_Pools_s {
 	struct pool alloclist;   /* AllocList */
 	struct pool asm_hdr;     /* Access Stripe Map Header */
 	struct pool asmap;       /* Access Stripe Map */
+	struct pool asmhle;      /* Access Stripe Map Header List Elements */
 	struct pool callback;    /* Callback descriptors */
 	struct pool cbuf;        /* Component buffers */
 	struct pool dagh;        /* DAG headers */
 	struct pool dagnode;     /* DAG nodes */
 	struct pool daglist;     /* DAG lists */
 	struct pool dqd;         /* Disk Queue Data */
+	struct pool fss;         /* Failed Stripe Structures */
 	struct pool funclist;    /* Function Lists */
 	struct pool mcpair;      /* Mutex/Cond Pairs */
 	struct pool pda;         /* Physical Disk Access structures */
@@ -82,6 +84,7 @@ struct RF_Pools_s {
 	struct pool reconbuffer; /* reconstruction buffer (header) pool */
 	struct pool revent;      /* reconstruct events */
 	struct pool stripelock;  /* StripeLock */
+	struct pool vfple;       /* VoidFunctionPtr List Elements */
 };
 
 extern struct RF_Pools_s rf_pools;
