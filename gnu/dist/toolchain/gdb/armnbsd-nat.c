@@ -103,6 +103,8 @@ kernel_u_size ()
 static struct core_fns netbsd_core_fns =
 {
   bfd_target_unknown_flavour,
+  default_check_format,
+  default_core_sniffer,
   fetch_core_registers,
   NULL
 };
