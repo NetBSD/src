@@ -1,7 +1,7 @@
-/*	$NetBSD: smc83c170var.h,v 1.2 1998/08/11 00:13:48 thorpej Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.3 1999/02/12 05:55:27 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -82,6 +82,9 @@ struct epic_control_data {
 };
 
 #define	EPIC_CDOFF(x)	offsetof(struct epic_control_data, x)
+#define	EPIC_CDTXOFF(x)	EPIC_CDOFF(ecd_txdescs[(x)])
+#define	EPIC_CDRXOFF(x)	EPIC_CDOFF(ecd_rxdescs[(x)])
+#define	EPIC_CDFLOFF(x)	EPIC_CDOFF(ecd_txfrags[(x)])
 
 /*
  * Software state for transmit and receive desciptors.
@@ -124,6 +127,49 @@ struct epic_softc {
 
 	int	sc_rxptr;		/* next ready RX descriptor */
 };
+
+#define	EPIC_CDTXADDR(sc, x)	((sc)->sc_cddma + EPIC_CDTXOFF((x)))
+#define	EPIC_CDRXADDR(sc, x)	((sc)->sc_cddma + EPIC_CDRXOFF((x)))
+#define	EPIC_CDFLADDR(sc, x)	((sc)->sc_cddma + EPIC_CDFLOFF((x)))
+
+#define	EPIC_CDTX(sc, x)	(&(sc)->sc_control_data->ecd_txdescs[(x)])
+#define	EPIC_CDRX(sc, x)	(&(sc)->sc_control_data->ecd_rxdescs[(x)])
+#define	EPIC_CDFL(sc, x)	(&(sc)->sc_control_data->ecd_txfrags[(x)])
+
+#define	EPIC_DSTX(sc, x)	(&(sc)->sc_txsoft[(x)])
+#define	EPIC_DSRX(sc, x)	(&(sc)->sc_rxsoft[(x)])
+
+#define	EPIC_CDTXSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    EPIC_CDTXOFF((x)), sizeof(struct epic_txdesc), (ops))
+
+#define	EPIC_CDRXSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    EPIC_CDRXOFF((x)), sizeof(struct epic_rxdesc), (ops))
+
+#define	EPIC_CDFLSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    EPIC_CDFLOFF((x)), sizeof(struct epic_fraglist), (ops))
+
+#define	EPIC_INIT_RXDESC(sc, x)						\
+do {									\
+	struct epic_descsoft *__ds = EPIC_DSRX((sc), (x));		\
+	struct epic_rxdesc *__rxd = EPIC_CDRX((sc), (x));		\
+	struct mbuf *__m = __ds->ds_mbuf;				\
+									\
+	/*								\
+	 * Note we scoot the packet forward 2 bytes in the buffer	\
+	 * so that the payload after the Ethernet header is aligned	\
+	 * to a 4 byte boundary.					\
+	 */								\
+	__m->m_data = __m->m_ext.ext_buf + 2;				\
+	__rxd->er_bufaddr = __ds->ds_dmamap->dm_segs[0].ds_addr + 2;	\
+	__rxd->er_buflength = __m->m_ext.ext_size - 2;			\
+	__rxd->er_control = 0;						\
+	__rxd->er_rxstatus = ER_RXSTAT_OWNER;				\
+	__rxd->er_nextdesc = EPIC_CDRXADDR((sc), EPIC_NEXTRX((x)));	\
+	EPIC_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+} while (0)
 
 #ifdef _KERNEL
 void	epic_attach __P((struct epic_softc *));
