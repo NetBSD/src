@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.7.2.2 1997/06/06 00:14:06 cgd Exp $ */
+/* $NetBSD: cia_pci.c,v 1.7.2.3 1997/07/22 06:00:44 cgd Exp $ */
 
 /*
  * Copyright Notice:
@@ -97,7 +97,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.7.2.2 1997/06/06 00:14:06 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.7.2.3 1997/07/22 06:00:44 cgd Exp $");
 __KERNEL_COPYRIGHT(0,
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -209,7 +209,7 @@ cia_conf_read(cpv, tag, offset)
 	alpha_pal_draina();	
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
+	alpha_pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(CIA_CSRS + 0x480);		/* XXX */
@@ -272,7 +272,7 @@ cia_conf_write(cpv, tag, offset, data)
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
+	alpha_pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(CIA_CSRS + 0x480);		/* XXX */
