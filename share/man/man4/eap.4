@@ -1,4 +1,4 @@
-.\" $NetBSD: eap.4,v 1.10 1999/12/15 22:07:31 abs Exp $
+.\" $NetBSD: eap.4,v 1.11 2001/09/19 00:49:55 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,8 +50,6 @@ The
 driver provides support for the Ensoniq AudioPCI and Creative Labs
 Soundblaster PCI series of audio cards.  All models based on the ES1370,
 ES1371, and ES1373 chips are supported.
-.Sh BUGS
-The "FM" DAC is not supported.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr midi 4 ,
@@ -61,3 +59,7 @@ The
 .Nm
 device driver appeared in
 .Nx 1.4 .
+.Sh BUGS
+The
+.Dq FM
+DAC is not supported.
