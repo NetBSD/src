@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.51 1998/02/18 18:24:26 thorpej Exp $	*/
+/*	$NetBSD: unistd.h,v 1.52 1998/03/27 13:02:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -142,7 +142,7 @@ int	 rcmd __P((char **, int, const char *,
 		const char *, const char *, int *));
 char	*re_comp __P((const char *));
 int	 re_exec __P((const char *));
-int	 readlink __P((const char *, char *, int));
+int	 readlink __P((const char *, char *, size_t));
 int	 reboot __P((int, char *));
 int	 revoke __P((const char *));
 int	 rresvport __P((int *));
