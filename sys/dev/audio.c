@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.12 1995/11/24 23:45:40 cgd Exp $	*/
+/*	$NetBSD: audio.c,v 1.13 1996/01/05 13:16:30 pk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -817,6 +817,8 @@ audio_calc_blksize(sc)
 	if (bs > AU_RING_SIZE)
 		bs = AU_RING_SIZE;
 
+	if (bs < 2)		/* avoid zero blocksize */
+		bs = 2;
 	bs &= ~1;		/* make it even, in case of stereo  */
 	return(bs);
 }
