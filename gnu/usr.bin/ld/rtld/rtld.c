@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.1 1993/10/16 21:54:10 pk Exp $
+ *	$Id: rtld.c,v 1.2 1993/10/17 15:40:11 pk Exp $
  */
 
 #include <sys/param.h>
@@ -95,6 +95,7 @@ struct lm_private {
 
 
 char			**environ;
+int			errno;
 struct link_map		*link_map_head, *main_map;
 struct link_map		**link_map_tail = &link_map_head;
 struct rt_symbol	*rt_symbol_head;
@@ -615,7 +616,7 @@ xprintf(" BINDER: %s located at = %#x in %s\n", sym, addr, src_map->lm_name);
  * Run-time common symbol table.
  */
 
-#define RTC_TABSIZE		63
+#define RTC_TABSIZE		57
 static struct rt_symbol 	*rt_symtab[RTC_TABSIZE];
 
 /*
