@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.695 2004/04/21 21:05:20 kleink Exp $
+#	$NetBSD: mi,v 1.696 2004/04/21 21:24:01 kleink Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4555,6 +4555,7 @@
 ./usr/share/man/cat5/cvs.0			comp-cvs-catman		cvs,.cat
 ./usr/share/man/cat5/mk.conf.0			comp-util-catman	.cat
 ./usr/share/man/cat5/ranlib.0			comp-util-catman	.cat
+./usr/share/man/cat5/statvfs.0			comp-util-catman	.cat
 ./usr/share/man/cat7/operator.0			comp-c-catman		.cat
 ./usr/share/man/cat8/config.0			comp-sysutil-catman	.cat
 ./usr/share/man/cat8/config.new.0		comp-obsolete		obsolete
@@ -8256,6 +8257,7 @@
 ./usr/share/man/man5/cvs.5			comp-cvs-man		cvs,.man
 ./usr/share/man/man5/mk.conf.5			comp-util-man		.man
 ./usr/share/man/man5/ranlib.5			comp-util-man		.man
+./usr/share/man/man5/statvfs.5			comp-util-man		.man
 ./usr/share/man/man7/operator.7			comp-c-man		.man
 ./usr/share/man/man8/config.8			comp-sysutil-man	.man
 ./usr/share/man/man8/cvsbug.8			comp-cvs-man		cvs,.man
