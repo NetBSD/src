@@ -1,4 +1,4 @@
-/*	$NetBSD: md4c.c,v 1.10 2002/03/31 12:58:56 bjh21 Exp $	*/
+/*	$NetBSD: md4c.c,v 1.11 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -36,8 +36,8 @@
 #include <md4.h>
 #include <string.h>
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #if !HAVE_MD4_H

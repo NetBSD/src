@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.14 2003/10/26 20:43:13 chs Exp $ */
+/*	$NetBSD: stat.c,v 1.15 2003/10/27 00:12:43 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,20 +36,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.14 2003/10/26 20:43:13 chs Exp $");
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
-#if HAVE_CONFIG_H
-#include "config.h" 
-#else  /* HAVE_CONFIG_H */
+#include <sys/cdefs.h>
+#if !defined(lint)
+__RCSID("$NetBSD: stat.c,v 1.15 2003/10/27 00:12:43 lukem Exp $");
+#endif
+
+#if ! HAVE_NBTOOL_CONFIG_H
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #define HAVE_STRUCT_STAT_ST_GEN 1
 #define HAVE_STRUCT_STAT_ST_BIRTHTIME 1
 #define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
 #define HAVE_DEVNAME 1
-#endif /* HAVE_CONFIG_H */
+#endif /* HAVE_NBTOOL_CONFIG_H */
 
 #include <sys/types.h>
 #include <sys/stat.h>

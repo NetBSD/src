@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdtemp.c,v 1.8 2003/08/07 16:43:28 agc Exp $	*/
+/*	$NetBSD: mkdtemp.c,v 1.9 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -29,22 +29,22 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
-#if !HAVE_CONFIG_H || !HAVE_MKDTEMP
+#if !HAVE_NBTOOL_CONFIG_H || !HAVE_MKDTEMP
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mkdtemp.c,v 1.8 2003/08/07 16:43:28 agc Exp $");
+__RCSID("$NetBSD: mkdtemp.c,v 1.9 2003/10/27 00:12:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#if HAVE_CONFIG_H
+#if HAVE_NBTOOL_CONFIG_H
 #define	GETTEMP		gettemp
 #else
 #include <assert.h>
@@ -66,4 +66,4 @@ mkdtemp(path)
 	return (GETTEMP(path, (int *)NULL, 1) ? path : (char *)NULL);
 }
 
-#endif /* !HAVE_CONFIG_H || !HAVE_MKDTEMP */
+#endif /* !HAVE_NBTOOL_CONFIG_H || !HAVE_MKDTEMP */

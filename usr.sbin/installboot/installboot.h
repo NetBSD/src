@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.20 2003/07/27 07:53:26 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.21 2003/10/27 00:12:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
 #ifndef	_INSTALLBOOT_H
 #define	_INSTALLBOOT_H
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #include "../../sys/sys/bootblock.h"
 #else
 #include <sys/bootblock.h>

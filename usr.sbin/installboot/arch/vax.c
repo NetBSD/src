@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.9 2003/04/15 14:22:14 dsl Exp $	*/
+/*	$NetBSD: vax.c,v 1.10 2003/10/27 00:12:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -69,14 +69,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.9 2003/04/15 14:22:14 dsl Exp $");
-#endif	/* !__lint */
-
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+#if !defined(__lint)
+__RCSID("$NetBSD: vax.c,v 1.10 2003/10/27 00:12:44 lukem Exp $");
+#endif	/* !__lint */
 
 #include <sys/param.h>
 

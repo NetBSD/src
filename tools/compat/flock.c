@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.4 2002/06/07 21:13:55 mason Exp $	*/
+/*	$NetBSD: flock.c,v 1.5 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  * Otherwise, don't do locking; just pretend success.
  */
 
-#include "config.h"
+#include "nbtool_config.h"
 
 #if !HAVE_FLOCK
 #include <errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.11 2003/04/02 10:39:49 fvdl Exp $	*/
+/*	$NetBSD: makefs.h,v 1.12 2003/10/27 00:12:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,8 +38,8 @@
 #ifndef	_MAKEFS_H
 #define	_MAKEFS_H
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #else
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #define HAVE_STRUCT_STAT_ST_GEN 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.35 2003/08/07 11:25:36 agc Exp $	*/
+/*	$NetBSD: verify.c,v 1.36 2003/10/27 00:12:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.35 2003/08/07 11:25:36 agc Exp $");
+__RCSID("$NetBSD: verify.c,v 1.36 2003/10/27 00:12:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#if !HAVE_CONFIG_H
+#if ! HAVE_NBTOOL_CONFIG_H
 #include <dirent.h>
 #endif
 

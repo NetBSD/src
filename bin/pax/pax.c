@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.30 2003/10/13 07:41:22 agc Exp $	*/
+/*	$NetBSD: pax.c,v 1.31 2003/10/27 00:12:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__COPYRIGHT) && !defined(lint)
+#if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
-#endif /* not lint */
-
-#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.30 2003/10/13 07:41:22 agc Exp $");
+__RCSID("$NetBSD: pax.c,v 1.31 2003/10/27 00:12:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
