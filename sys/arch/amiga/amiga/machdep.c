@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 1997/03/15 18:09:18 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84 1997/03/18 18:29:06 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,7 +105,7 @@
 
 #include "fd.h"
 #include "ser.h"
-#include "ether.h"
+#include "arp.h"
 #include "ppp.h"
 
 #include <net/netisr.h>
