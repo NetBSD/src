@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.17 2004/12/23 06:00:35 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.18 2004/12/23 06:03:09 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.17 2004/12/23 06:00:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.18 2004/12/23 06:03:09 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1109,17 +1109,24 @@ rtw_rxbuf_alloc(bus_dma_tag_t dmat, struct rtw_rxctl *srx)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA); 
 	if (m == NULL)
-		return ENOMEM;
+		return ENOBUFS;
 
 	MCLGET(m, M_DONTWAIT); 
 	if (m == NULL)
-		return ENOMEM;
+		return ENOBUFS;
 
 	m->m_pkthdr.len = m->m_len = m->m_ext.ext_size;
 
+	if (srx->srx_mbuf != NULL)
+		bus_dmamap_unload(dmat, srx->srx_dmamap);
+
+	srx->srx_mbuf = NULL;
+
 	rc = bus_dmamap_load_mbuf(dmat, srx->srx_dmamap, m, BUS_DMA_NOWAIT);
-	if (rc != 0)
-		return rc;
+	if (rc != 0) {
+		m_freem(m);
+		return -1;
+	}
 
 	srx->srx_mbuf = m;
 
@@ -1314,14 +1321,24 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			goto next;
 		}
 
+		bus_dmamap_sync(sc->sc_dmat, srx->srx_dmamap, 0,
+		    srx->srx_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+
 		m = srx->srx_mbuf;
 
 		/* if temporarily out of memory, re-use mbuf */
-		if (rtw_rxbuf_alloc(sc->sc_dmat, srx) != 0) {
+		switch (rtw_rxbuf_alloc(sc->sc_dmat, srx)) {
+		case 0:
+			break;
+		case ENOBUFS:
 			printf("%s: rtw_rxbuf_alloc(, %d) failed, "
 			    "dropping this packet\n", sc->sc_dev.dv_xname,
 			    next);
 			goto next;
+		default:
+			/* XXX shorten rx ring, instead? */
+			panic("%s: could not load DMA map\n",
+			    sc->sc_dev.dv_xname);
 		}
 
 		if (sc->sc_rfchipid == RTW_RFCHIPID_PHILIPS)
