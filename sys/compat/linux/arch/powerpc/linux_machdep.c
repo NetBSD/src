@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.1 2001/01/19 01:36:51 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.2 2001/01/25 19:36:53 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -250,8 +250,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	tf->fixreg[1] = (int)fp;
 	tf->lr = (int)catcher;
 	tf->fixreg[3] = (int)sig;
-	tf->fixreg[4] = (int)code;
-	tf->fixreg[5] = (int)&fp->lgp_regs;
+	tf->fixreg[4] = (int)&fp->lgp_regs;
 	tf->srr0 = (int)p->p_sigctx.ps_sigcode;
 
 	/* 
