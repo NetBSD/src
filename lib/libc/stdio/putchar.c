@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.7 1998/01/19 07:38:52 jtc Exp $	*/
+/*	$NetBSD: putchar.c,v 1.8 2003/07/18 21:52:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)putchar.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: putchar.c,v 1.7 1998/01/19 07:38:52 jtc Exp $");
+__RCSID("$NetBSD: putchar.c,v 1.8 2003/07/18 21:52:18 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include "reentrant.h"
+#include "local.h"
 
 #undef putchar
 #undef putchar_unlocked

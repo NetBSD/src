@@ -1,4 +1,4 @@
-/*	$NetBSD: ferror.c,v 1.9 1999/09/20 04:39:26 lukem Exp $	*/
+/*	$NetBSD: ferror.c,v 1.10 2003/07/18 21:52:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)ferror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ferror.c,v 1.9 1999/09/20 04:39:26 lukem Exp $");
+__RCSID("$NetBSD: ferror.c,v 1.10 2003/07/18 21:52:17 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <stdio.h>
 #include "reentrant.h"
+#include "local.h"
 
 /*
  * A subroutine version of the macro ferror.

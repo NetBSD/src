@@ -1,4 +1,4 @@
-/*	$NetBSD: getchar.c,v 1.7 1998/01/19 07:38:51 jtc Exp $	*/
+/*	$NetBSD: getchar.c,v 1.8 2003/07/18 21:52:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getchar.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getchar.c,v 1.7 1998/01/19 07:38:51 jtc Exp $");
+__RCSID("$NetBSD: getchar.c,v 1.8 2003/07/18 21:52:17 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: getchar.c,v 1.7 1998/01/19 07:38:51 jtc Exp $");
  */
 #include <stdio.h>
 #include "reentrant.h"
+#include "local.h"
 
 #undef getchar
 #undef getchar_unlocked
