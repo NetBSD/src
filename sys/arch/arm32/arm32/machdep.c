@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.5 1996/03/08 21:37:01 mark Exp $ */
+/* $NetBSD: machdep.c,v 1.6 1996/03/13 21:32:39 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -157,15 +157,11 @@ extern pt_entry_t msgbufpte;
 int	msgbufmapped;
 vm_offset_t msgbufphys;
 
-extern char *kstack;
-
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
 extern u_int undefined_handler_address;
 
 extern int pmap_debug_level;
-
-extern struct pcb *curpcb;
 
 #define KERNEL_PT_PAGEDIR   0
 #define KERNEL_PT_PDE       1
@@ -422,7 +418,7 @@ boot(howto)
 /* If we need to do a dump, do it */
 
 	if ((howto & RB_DUMP) && (action & ACTION_DUMP)) {
-/*		savectx(&dumppcb, 0);*/
+		savectx(&dumppcb);
 		dumpsys();
 	}
 
@@ -501,7 +497,7 @@ delay(n)
 
 
 /*
- * void initarm(BootConfig *bootconf)
+ * u_int initarm(BootConfig *bootconf)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -516,7 +512,7 @@ delay(n)
 
 /* This routine is frightening mess ! This is what my mind looks like -mark */
 
-void
+u_int
 initarm(bootconf)
 	BootConfig *bootconf;
 {
@@ -1000,8 +996,6 @@ initarm(bootconf)
 	map_entry(l2pagetable, ((0xef800000) >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KSTACK]);
 
-/*	printf("kstack pt=%08x\n", kernel_pt_table[KERNEL_PT_KSTACK]);*/
-
 	map_entry(l2pagetable, (0xf5000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x0000);
 	map_entry(l2pagetable, (0xf5400000 >> (PGSHIFT-2)),
@@ -1211,6 +1205,9 @@ initarm(bootconf)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
+/* We return the new stack pointer address */
+	return(kernelstack.virtual + USPACE_SVC_STACK_TOP);
 }
 
 
@@ -1390,6 +1387,18 @@ cpu_startup()
 
 	bufinit();
 
+	proc0paddr = (struct user *)kernelstack.virtual;
+	proc0.p_addr = proc0paddr;
+
+	curpcb = &proc0.p_addr->u_pcb;
+	curpcb->pcb_flags = 0;
+	curpcb->pcb_und_sp = (u_int)proc0.p_addr + USPACE_UNDEF_STACK_TOP;
+	curpcb->pcb_sp = (u_int)proc0.p_addr + USPACE_SVC_STACK_TOP;
+	curpcb->pcb_pagedir = (pd_entry_t *)pmap_extract(kernel_pmap,
+	    (vm_offset_t)(kernel_pmap)->pm_pdir);
+	    
+	proc0.p_md.md_regs = (struct trapframe *)curpcb->pcb_sp - 1;
+#if 0
 /* Hack proc0 */
                                  
 	proc0paddr = (struct user *)kernelstack.virtual;
@@ -1401,7 +1410,7 @@ cpu_startup()
 
 	proc0.p_addr->u_pcb.pcb_pagedir = (pd_entry_t *)pmap_extract(kernel_pmap,
 	    (vm_offset_t)(kernel_pmap)->pm_pdir);
-
+#endif
 /*
  * Install an IRQ handler on the VSYNC interrupt to reboot if the
  * middle mouse button is pressed.
