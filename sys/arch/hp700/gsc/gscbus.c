@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.1 2002/06/06 19:48:05 fredette Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.2 2002/08/11 19:39:37 fredette Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -112,7 +112,7 @@ int	gsc_dmamap_load_uio __P((void *, bus_dmamap_t, struct uio *, int));
 int	gsc_dmamap_load_raw __P((void *, bus_dmamap_t,
 				 bus_dma_segment_t *, int, bus_size_t, int));
 void	gsc_dmamap_unload __P((void *, bus_dmamap_t));
-void	gsc_dmamap_sync __P((void *, bus_dmamap_t, bus_addr_t, bus_size_t, bus_dmasync_op_t));
+void	gsc_dmamap_sync __P((void *, bus_dmamap_t, bus_addr_t, bus_size_t, int));
 
 int	gsc_dmamem_alloc __P((void *, bus_size_t, bus_size_t,
 			      bus_size_t, bus_dma_segment_t *, int, int *, int));
@@ -299,7 +299,7 @@ gsc_dmamap_sync(v, map, addr, size, op)
 	bus_dmamap_t map;
 	bus_addr_t addr;
 	bus_size_t size;
-	bus_dmasync_op_t op;
+	int op;
 {
 
 }
