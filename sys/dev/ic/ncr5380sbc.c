@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.31.2.6 2001/01/22 18:02:55 bouyer Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.31.2.7 2001/03/29 16:44:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -141,7 +141,6 @@ int ncr5380_debug = 0;
 #define	NCR_BREAK() \
 	do { if (ncr5380_debug & NCR_DBG_BREAK) Debugger(); } while (0)
 static void ncr5380_show_scsi_cmd __P((struct scsipi_xfer *));
-static void ncr5380_show_sense __P((struct scsipi_xfer *));
 #ifdef DDB
 void	ncr5380_clear_trace __P((void));
 void	ncr5380_show_trace __P((void));
@@ -152,7 +151,6 @@ void	ncr5380_show_state __P((void));
 
 #define	NCR_BREAK() 		/* nada */
 #define ncr5380_show_scsi_cmd(xs) /* nada */
-#define ncr5380_show_sense(xs) /* nada */
 
 #endif	/* NCR5380_DEBUG */
 
@@ -661,6 +659,8 @@ new:
 		sr->sr_dataptr = xs->data;
 		sr->sr_datalen = xs->datalen;
 		sr->sr_flags = (flags & XS_CTL_POLL) ? SR_IMMED : 0;
+		if (xs->xs_control & XS_CTL_REQSENSE)
+			sr->sr_flags |= SR_IMMED; /* no disconnect */
 		sr->sr_status = -1;	/* no value */
 		sc->sc_ncmds++;
 
@@ -761,37 +761,13 @@ ncr5380_done(sc)
 
 	NCR_TRACE("done: check status=%d\n", sr->sr_status);
 
+	xs->status = sr->sr_status;
 	switch (sr->sr_status) {
 	case SCSI_OK:	/* 0 */
-		if (sr->sr_flags & SR_SENSE) {
-#ifdef	NCR5380_DEBUG
-			if (ncr5380_debug & NCR_DBG_CMDS) {
-				ncr5380_show_sense(xs);
-			}
-#endif
-			xs->error = XS_SENSE;
-		}
+		xs->error = XS_NOERROR;
 		break;
 
 	case SCSI_CHECK:
-		if (sr->sr_flags & SR_SENSE) {
-			/* Sense command also asked for sense? */
-			printf("ncr5380_done: sense asked for sense\n");
-			NCR_BREAK();
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-		}
-		sr->sr_flags |= SR_SENSE;
-		NCR_TRACE("done: get sense, sr=0x%x\n", (long) sr);
-		/*
-		 * Leave queued, but clear sc_current so we start over
-		 * with selection.  Guaranteed to get the same request.
-		 */
-		sc->sc_state = NCR_IDLE;
-		sc->sc_current = NULL;
-		sc->sc_matrix[sr->sr_target][sr->sr_lun] = NULL;
-		return;		/* XXX */
-
 	case SCSI_BUSY:
 		xs->error = XS_BUSY;
 		break;
@@ -989,16 +965,6 @@ next_job:
 		NCR_TRACE("sched: overdue, sr=0x%x\n", (long)sr);
 		sc->sc_state |= NCR_ABORTING;
 		sc->sc_msgpriq |= SEND_ABORT;
-		goto have_nexus;
-	}
-
-	/*
-	 * This may be the continuation of some job that
-	 * completed with a "check condition" code.
-	 */
-	if (sr->sr_flags & SR_SENSE) {
-		NCR_TRACE("sched: get sense, sr=0x%x\n", (long)sr);
-		/* Do not allocate DMA, nor set timeout. */
 		goto have_nexus;
 	}
 
@@ -1898,7 +1864,7 @@ nextmsg:
 		msg = 0xc0;	/* MSG_IDENTIFY(0,1) */
 		if (sc->sc_no_disconnect & (1 << sr->sr_target))
 			msg = 0x80;
-		if (sr->sr_flags & (SR_IMMED | SR_SENSE))
+		if (sr->sr_flags & (SR_IMMED))
 			msg = 0x80;
 		sc->sc_omess[0] = msg | sr->sr_lun;
 		n = 1;
@@ -2053,27 +2019,15 @@ ncr5380_command(sc)
 {
 	struct sci_req *sr = sc->sc_current;
 	struct scsipi_xfer *xs = sr->sr_xs;
-	struct scsipi_sense rqs;
 	int len;
 
 	/* acknowledge phase change */
 	NCR5380_WRITE(sc, sci_tcmd, PHASE_COMMAND);
 
-	if (sr->sr_flags & SR_SENSE) {
-		rqs.opcode = REQUEST_SENSE;
-		rqs.byte2 = xs->xs_periph->periph_lun << 5;
-		rqs.length = sizeof(xs->sense.scsi_sense);
-
-		rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
-		len = ncr5380_pio_out(sc, PHASE_COMMAND, sizeof(rqs),
-			(u_char *)&rqs);
-	}
-	else {
-		/* Assume command can be sent in one go. */
-		/* XXX: Do this using DMA, and get a phase change intr? */
-		len = ncr5380_pio_out(sc, PHASE_COMMAND, xs->cmdlen,
-			(u_char *)xs->cmd);
-	}
+	/* Assume command can be sent in one go. */
+	/* XXX: Do this using DMA, and get a phase change intr? */
+	len = ncr5380_pio_out(sc, PHASE_COMMAND, xs->cmdlen,
+		(u_char *)xs->cmd);
 
 	if (len != xs->cmdlen) {
 #ifdef	NCR5380_DEBUG
@@ -2106,19 +2060,6 @@ ncr5380_data_xfer(sc, phase)
 	struct scsipi_xfer *xs = sr->sr_xs;
 	int expected_phase;
 	int len;
-
-	if (sr->sr_flags & SR_SENSE) {
-		NCR_TRACE("data_xfer: get sense, sr=0x%x\n", (long)sr);
-		if (phase != PHASE_DATA_IN) {
-			printf("%s: sense phase error\n", sc->sc_dev.dv_xname);
-			goto abort;
-		}
-		/* acknowledge phase change */
-		NCR5380_WRITE(sc, sci_tcmd, PHASE_DATA_IN);
-		len = ncr5380_pio_in(sc, phase, sizeof(xs->sense.scsi_sense),
-				(u_char *)&xs->sense.scsi_sense);
-		return ACT_CONTINUE;
-	}
 
 	/*
 	 * When aborting a command, disallow any data phase.
@@ -2494,19 +2435,6 @@ ncr5380_show_scsi_cmd(xs)
 	}
 }
 
-
-static void
-ncr5380_show_sense(xs)
-	struct scsipi_xfer *xs;
-{
-	u_char	*b = (u_char *)&xs->sense.scsi_sense;
-	int	i;
-
-	printf("sense:");
-	for (i = 0; i < sizeof(xs->sense.scsi_sense); i++)
-		printf(" %02x", b[i]);
-	printf("\n");
-}
 
 int ncr5380_traceidx = 0;
 
