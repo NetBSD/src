@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_process.c,v 1.1 2002/08/02 00:30:38 thorpej Exp $	*/
+/*	$NetBSD: dmover_process.c,v 1.2 2003/03/06 21:32:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_process.c,v 1.1 2002/08/02 00:30:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_process.c,v 1.2 2003/03/06 21:32:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,18 +106,6 @@ dmover_process(struct dmover_request *dreq)
 	dreq->dreq_assignment = das;
 
 	dmover_session_insque(dses, dreq);
-
-	/* XXX Currently, both buffers must be of same type. */
-	if (das->das_algdesc->dad_ninputs != 0 &&
-	    dreq->dreq_inbuf_type != dreq->dreq_outbuf_type) {
-		dreq->dreq_error = EINVAL;
-		dreq->dreq_flags |= DMOVER_REQ_ERROR;
-		/* XXXUNLOCK */
-		splx(s);
-		dmover_done(dreq);
-		return;
-	}
-
 	dmover_backend_insque(dmb, dreq);
 
 	/* XXXUNLOCK */
