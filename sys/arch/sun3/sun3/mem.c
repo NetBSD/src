@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.36 2000/06/26 14:21:03 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.37 2000/06/29 07:19:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -53,8 +53,6 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
