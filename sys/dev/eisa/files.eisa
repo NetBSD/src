@@ -1,0 +1,16 @@
+#	$NetBSD: files.eisa,v 1.1 1995/04/17 16:15:48 cgd Exp $
+#
+# Config.new file and device description for machine-independent EISA code.
+# Included by ports that need it.  Requires that the SCSI files be
+# defined first.
+
+# XXX IN A PERFECT WORLD:
+# ports should define their own "device eisa" line (like the one below,
+# but with the correct bus attachment).
+
+# XXX there should be MI EISA configuration, but not yet.
+#device	eisa at root {[slot = -1]}
+#file	dev/eisa/eisa.c			eisa
+
+device	ahb at isa: scsi		# XXX should be at EISA
+file	dev/eisa/aha1742.c	ahb     
