@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.22 2000/03/30 12:45:28 augustss Exp $	*/
+/*	$NetBSD: eisa.c,v 1.23 2000/09/01 17:18:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -50,22 +50,19 @@
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
-int	eisamatch __P((struct device *, struct cfdata *, void *));
-void	eisaattach __P((struct device *, struct device *, void *));
+int	eisamatch(struct device *, struct cfdata *, void *);
+void	eisaattach(struct device *, struct device *, void *);
 
 struct cfattach eisa_ca = {
 	sizeof(struct device), eisamatch, eisaattach
 };
 
-int	eisasubmatch __P((struct device *, struct cfdata *, void *));
-int	eisaprint __P((void *, const char *));
-void	eisa_devinfo __P((const char *, char *));
+int	eisasubmatch(struct device *, struct cfdata *, void *);
+int	eisaprint(void *, const char *);
+void	eisa_devinfo(const char *, char *);
 
 int
-eisamatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+eisamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct eisabus_attach_args *eba = aux;
 
@@ -78,9 +75,7 @@ eisamatch(parent, cf, aux)
 }
 
 int
-eisaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+eisaprint(void *aux, const char *pnp)
 {
 	struct eisa_attach_args *ea = aux;
 	char devinfo[256]; 
@@ -94,23 +89,18 @@ eisaprint(aux, pnp)
 }
 
 int
-eisasubmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+eisasubmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 
 	if (cf->eisacf_slot != EISA_UNKNOWN_SLOT &&
 	    cf->eisacf_slot != ea->ea_slot)
-		return 0;
+		return (0);
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
 void
-eisaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+eisaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct eisabus_attach_args *eba = aux;
 	bus_space_tag_t iot, memt;
@@ -216,48 +206,40 @@ struct eisa_knowndev {
 #define EISA_KNOWNDEV_NOPROD	0x01		/* match on vendor only */
 
 #include <dev/eisa/eisadevs_data.h>
-#endif /* EISAVERBOSE */
+#endif	/* EISAVEBSOSE */
 
 void
-eisa_devinfo(id, cp)
-	const char *id;
-	char *cp;
+eisa_devinfo(const char *id, char *cp)
 {
-	const char *name;
-	int onlyvendor;
 #ifdef EISAVERBOSE
+	const char *name;
 	struct eisa_knowndev *edp;
-	int match;
-	const char *unmatched = "unknown ";
-#else
-	const char *unmatched = "";
-#endif
+	int match, onlyvendor;
 
 	onlyvendor = 0;
 	name = NULL;
 
-#ifdef EISAVERBOSE
 	/* find the device in the table, if possible. */
-	edp = eisa_knowndevs;
-	while (edp->id != NULL) {
-		/* check this entry for a match */
+	for (edp = eisa_knowndevs; edp->id != NULL; edp++) {
 		if ((edp->flags & EISA_KNOWNDEV_NOPROD) != 0)
-			match = !strncmp(edp->id, id, 3);
+			match = (strncmp(edp->id, id, 3) == 0);
 		else
-			match = !strcmp(edp->id, id);
+			match = (strcmp(edp->id, id) == 0);
 		if (match) {
 			name = edp->name;
 			onlyvendor = (edp->flags & EISA_KNOWNDEV_NOPROD) != 0;
 			break;
 		}
-		edp++;
 	}
-#endif
 
 	if (name == NULL)
-		cp += sprintf(cp, "%sdevice %s", unmatched, id);
-	else if (onlyvendor)			/* never if not EISAVERBOSE */
-		cp += sprintf(cp, "unknown %s device %s", name, id);
+		sprintf(cp, "unknown device %s", id);
+	else if (onlyvendor)
+		sprintf(cp, "unknown %s device %s", name, id);
 	else
-		cp += sprintf(cp, "%s", name);
+		sprintf(cp, "%s", name);
+#else	/* EISAVERBOSE */
+
+	sprintf(cp, "device %s", id);
+#endif	/* EISAVERBOSE */
 }
