@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.8 1999/12/14 22:35:17 ad Exp $	*/
+/* 	$NetBSD: wsfont.h,v 1.9 1999/12/15 15:27:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ struct wsdisplay_font;
 /* For wsfont_add() */
 #define WSFONT_BUILTIN	(0x01)
 #define WSFONT_STATIC	(0x02)
+#define WSFONT_RDONLY	(0x04)
 
 /* wsfont.c */
 void	wsfont_init __P((void));
