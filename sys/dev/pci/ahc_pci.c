@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.4 1996/07/14 20:13:08 cgd Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.5 1996/08/28 23:44:56 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -75,7 +75,16 @@
 #include <dev/ic/aic7xxxvar.h>
 #include <dev/ic/smc93cx6var.h>
 
+/*
+ * Under normal circumstances, these messages are unnecessary
+ * and not terribly cosmetic.
+ */
+#ifdef DEBUG
 #define bootverbose	1
+#else
+#define bootverbose	0
+#endif
+
 #define PCI_BASEADR0	PCI_MAPREG_START
 
 #endif /* defined(__NetBSD__) */
