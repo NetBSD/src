@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.20 1996/11/12 00:00:45 pk Exp $
+#	$NetBSD: MAKEDEV,v 1.21 1997/01/01 23:46:26 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -67,7 +67,7 @@
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
-#	rd*	memory disk driver
+#	md*	memory pseudo-disk driver
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
 umask 77
@@ -180,13 +180,13 @@ tun*)
 	chown root.wheel tun$unit
 	;;
 
-rd*)
-	unit=${i#rd}
-	rm -f rd$unit
-	mknod rd$unit b 5 $unit
-	mknod rrd$unit c 61 $unit
-	chown root.operator rd$unit rrd$unit
-	chmod 640 rd$unit rrd$unit
+md*)
+	unit=${i#md}
+	rm -f md$unit
+	mknod md$unit b 5 $unit
+	mknod rmd$unit c 61 $unit
+	chown root.operator md$unit rmd$unit
+	chmod 640 md$unit rmd$unit
 	;;
 
 ccd*|fd*|sd*|xd*|xy*|cd*|vnd*)
