@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.115 2002/03/06 13:10:24 tsutsui Exp $ */
+/*	$NetBSD: machdep.c,v 1.116 2002/03/14 20:57:37 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1751,9 +1751,8 @@ struct sparc_bus_dma_tag mainbus_dma_tag = {
 /*
  * Base bus space handlers.
  */
-static int	sparc_bus_map __P(( bus_space_tag_t, bus_type_t, bus_addr_t,
-				    bus_size_t, int, vaddr_t,
-				    bus_space_handle_t *));
+static int	sparc_bus_map __P(( bus_space_tag_t, bus_addr_t,
+				    bus_size_t, int, vaddr_t, bus_space_handle_t *));
 static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
 				     bus_size_t));
 static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
@@ -1773,20 +1772,19 @@ vaddr_t iobase = IODEV_BASE;
 struct extent *io_space = NULL;
 
 int
-sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
+sparc_bus_map(t, addr, size, flags, unused, hp)
 	bus_space_tag_t t;
-	bus_type_t	iospace;
 	bus_addr_t	addr;
 	bus_size_t	size;
-	vaddr_t	vaddr;
+	vaddr_t unused;
 	bus_space_handle_t *hp;
 {
 	vaddr_t v;
 	u_int64_t pa;
 	paddr_t	pm_flags = 0;
 	vm_prot_t pm_prot = VM_PROT_READ;
+	int err;
 
-	t->type = iospace;
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
 	if (io_space == NULL)
@@ -1803,7 +1801,7 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 		printf("sparc_bus_map: zero size\n");
 		return (EINVAL);
 	}
-	switch (iospace) {
+	switch (t->type) {
 	case PCI_CONFIG_BUS_SPACE:
 		/* 
 		 * PCI config space is special.
@@ -1814,7 +1812,6 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 		 */
 		if (flags & BUS_SPACE_MAP_LINEAR) return (-1);
 		*hp = (bus_space_handle_t)addr;
-		if (!vaddr) return (0);
 		/* FALLTHROUGH */
 	case PCI_IO_BUS_SPACE:
 		pm_flags = PMAP_LITTLE;
@@ -1827,17 +1824,19 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 		break;
 	}
 
+	if (flags & BUS_SPACE_MAP_BIG) pm_flags = 0;
+	if (flags & BUS_SPACE_MAP_LITTLE) pm_flags = 0;
+#ifdef DIAGNOSTIC
+	if ((flags & (BUS_SPACE_MAP_LITTLE|BUS_SPACE_MAP_BIG)) ==
+		(BUS_SPACE_MAP_LITTLE|BUS_SPACE_MAP_BIG))
+		panic("sparc_bus_map: cannot map both little and big endian");
+#endif
+
 	if (!(flags & BUS_SPACE_MAP_CACHEABLE)) pm_flags |= PMAP_NC;
 
-	if (vaddr)
-		v = trunc_page(vaddr);
-	else {
-		int err;
-		if ((err = extent_alloc(io_space, size, NBPG,
-					0, EX_NOWAIT|EX_BOUNDZERO, 
-					(u_long *)&v)))
+	if ((err = extent_alloc(io_space, size, NBPG,
+		0, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&v)))
 			panic("sparc_bus_map: cannot allocate io_space: %d\n", err);
-	}
 
 	/* note: preserve page offset */
 	*hp = (bus_space_handle_t)(v | ((u_long)addr & PGOFSET));
@@ -1847,7 +1846,7 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 
 	DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
 		"addr %016llx size %016llx virt %llx paddr %016llx\n",
-		(int)iospace, (int) flags, (unsigned long long)addr,
+		(int)t->type, (int) flags, (unsigned long long)addr,
 		(unsigned long long)size, (unsigned long long)*hp,
 		(unsigned long long)pa));
 
@@ -1902,34 +1901,6 @@ sparc_bus_mmap(t, paddr, off, prot, flags)
 {
 	/* Devices are un-cached... although the driver should do that */
 	return ((paddr+off)|PMAP_NC);
-}
-
-/*
- * Establish a temporary bus mapping for device probing.  */
-int
-bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
-	bus_space_tag_t tag;
-	bus_type_t	btype;
-	bus_addr_t	paddr;
-	bus_size_t	size;
-	size_t		offset;
-	int		flags;
-	int		(*callback) __P((void *, void *));
-	void		*arg;
-{
-	bus_space_handle_t bh;
-	paddr_t tmp;
-	int result;
-
-	if (bus_space_map2(tag, btype, paddr, size, flags, NULL, &bh) != 0)
-		return (0);
-
-	tmp = (paddr_t)bh;
-	result = (probeget(tmp + offset, bus_type_asi[tag->type], size) != -1);
-	if (result && callback != NULL)
-		result = (*callback)((char *)(u_long)tmp, arg);
-	bus_space_unmap(tag, bh, size);
-	return (result);
 }
 
 
