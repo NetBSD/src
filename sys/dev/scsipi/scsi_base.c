@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.23 1994/12/29 13:49:57 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.24 1994/12/30 05:33:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -471,7 +471,7 @@ retry:
 		if (xs->bp)
 			return EJUSTRETURN;
 	doit:
-		SC_DEBUG(sc_link, SDEV_DB3, ("back in cmd()\n"));
+		SC_DEBUG(xs->sc_link, SDEV_DB3, ("back in cmd()\n"));
 		if ((error = sc_err1(xs, 0)) != ERESTART)
 			return error;
 		goto retry;
@@ -882,14 +882,15 @@ show_scsi_cmd(xs)
 
 void
 show_mem(address, num)
-	unsigned char *address;
-	u_int32 num;
+	u_char *address;
+	int num;
 {
-	u_int32 x, y;
+	int x;
+
 	printf("------------------------------");
-	for (y = 0; y < num; y += 1) {
-		if (!(y % 16))
-			printf("\n%03d: ", y);
+	for (x = 0; x < num; x++) {
+		if ((x % 16) == 0)
+			printf("\n%03d: ", x);
 		printf("%02x ", *address++);
 	}
 	printf("\n------------------------------\n");

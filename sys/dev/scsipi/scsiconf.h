@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.17 1994/12/28 19:43:11 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.18 1994/12/30 05:33:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -273,7 +273,7 @@ void sc_print_addr __P((struct scsi_link *));
 
 void show_scsi_xs __P((struct scsi_xfer *));
 void show_scsi_cmd __P((struct scsi_xfer *));
-void show_mem __P((unsigned char *, int));
+void show_mem __P((u_char *, int));
 
 void lto3b __P((u_int32_t val, u_int8_t *bytes));
 u_int32_t _3btol __P((u_int8_t *bytes));
