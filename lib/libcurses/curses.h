@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.74 2003/04/08 18:55:43 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.75 2003/05/21 21:19:52 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -325,6 +325,8 @@ extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 /* Standard screen pseudo functions. */
 #define	addbytes(s, n)			__waddbytes(stdscr, s, n, 0)
 #define	addch(ch)			waddch(stdscr, ch)
+#define	addchnstr(s)			waddchnstr(stdscr, s, n)
+#define	addchstr(s)			waddchnstr(stdscr, s, -1)
 #define	addnstr(s, n)			waddnstr(stdscr, s, n)
 #define	addstr(s)			waddnstr(stdscr, s, -1)
 #define attr_get(a, p, o)		wattr_get(stdscr, a, p, o)
@@ -371,6 +373,8 @@ extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 /* Standard screen plus movement pseudo functions. */
 #define	mvaddbytes(y, x, s, n)		mvwaddbytes(stdscr, y, x, s, n)
 #define	mvaddch(y, x, ch)		mvwaddch(stdscr, y, x, ch)
+#define	mvaddchnstr(y, x, s, n)		mvwaddchnstr(stdscr, y, x, s, n)
+#define	mvaddchstr(y, x, s)		mvwaddchstr(stdscr, y, x, s)
 #define	mvaddnstr(y, x, s, n)		mvwaddnstr(stdscr, y, x, s, n)
 #define	mvaddstr(y, x, s)		mvwaddstr(stdscr, y, x, s)
 #define	mvdelch(y, x)			mvwdelch(stdscr, y, x)
@@ -387,6 +391,10 @@ extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 	(wmove(w, y, x) == ERR ? ERR : __waddbytes(w, s, n, 0))
 #define	mvwaddch(w, y, x, ch) \
 	(wmove(w, y, x) == ERR ? ERR : waddch(w, ch))
+#define	mvwaddchnstr(w, y, x, s, n) \
+	(wmove(w, y, x) == ERR ? ERR : waddchnstr(w, s, n))
+#define	mvwaddchstr(w, y, x, s) \
+	(wmove(w, y, x) == ERR ? ERR : waddchnstr(w, s, -1))
 #define	mvwaddnstr(w, y, x, s, n) \
 	(wmove(w, y, x) == ERR ? ERR : waddnstr(w, s, n))
 #define	mvwaddstr(w, y, x, s) \
@@ -417,6 +425,8 @@ extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 __BEGIN_DECLS
 int	 addbytes(const char *, int);
 int	 addch(chtype);
+int	 addchnstr(const chtype *, int);
+int	 addchstr(const chtype *);
 int	 addnstr(const char *, int);
 int	 addstr(const char *);
 int	 attr_get(attr_t *, short *, void *);
@@ -463,6 +473,8 @@ int	 waddstr(WINDOW *, const char *);
 /* Standard screen plus movement functions. */
 int	 mvaddbytes(int, int, const char *, int);
 int	 mvaddch(int, int, chtype);
+int	 mvaddchnstr(int, int, const chtype *, int);
+int	 mvaddchstr(int, int, const chtype *);
 int	 mvaddnstr(int, int, const char *, int);
 int	 mvaddstr(int, int, const char *);
 int	 mvdelch(int, int);
@@ -478,6 +490,8 @@ int	 mvinstr(int, int, char *);
 
 int	 mvwaddbytes(WINDOW *, int, int, const char *, int);
 int	 mvwaddch(WINDOW *, int, int, chtype);
+int	 mvwaddchnstr(WINDOW *, int, int, const chtype *, int);
+int	 mvwaddchstr(WINDOW *, int, int, const chtype *);
 int	 mvwaddnstr(WINDOW *, int, int, const char *, int);
 int	 mvwaddstr(WINDOW *, int, int, const char *);
 int	 mvwdelch(WINDOW *, int, int);
@@ -620,6 +634,8 @@ int	 vwprintw(WINDOW *, const char *, _BSD_VA_LIST_)
 int	 vwscanw(WINDOW *, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__(__scanf__, 2, 0)));
 int	 waddch(WINDOW *, chtype);
+int	 waddchnstr(WINDOW *, const chtype *, int);
+int	 waddchstr(WINDOW *, const chtype *);
 int	 waddnstr(WINDOW *, const char *, int);
 int	 wattr_get(WINDOW *, attr_t *, short *, void *);
 int	 wattr_off(WINDOW *, attr_t, void *);
