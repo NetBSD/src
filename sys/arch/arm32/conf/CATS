@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.7 1999/02/15 04:25:28 hubertf Exp $
+#	$NetBSD: CATS,v 1.8 1999/02/27 11:19:25 mark Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -7,7 +7,7 @@ include	"arch/arm32/conf/std.arm32"
 
 # estimated number of users
 
-maxusers	8
+maxusers	32
 
 # Standard system options
 
@@ -166,7 +166,10 @@ todclock0	at todservice?
 # PCI bus via footbridge
 pci0	at footbridge?			# PCI bus
 
+pci*	at ppb? bus ?
+
 # PCI bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 #puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
