@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.25 2002/07/29 05:17:38 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.26 2002/07/29 05:23:30 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -2173,7 +2173,7 @@ _formi_manipulate_field(FORM *form, int c)
 			} else {
 				start = 0;
 				cur->row_xpos = 0;
-				_formi_init_cursor_xpos(cur);
+				_formi_init_field_xpos(cur);
 			}
 		}
 		
