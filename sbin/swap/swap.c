@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.4 1997/05/11 04:30:19 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.5 1997/05/11 07:59:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -34,11 +34,12 @@
 
 /*
  * swap command:
- *	-A		add all devices listed as `sw' in /etc/fstab	XXX
+ *	-A		add all devices listed as `sw' in /etc/fstab
  *	-a <dev>	add this device
  *	-d <dev>	remove this swap device (not supported yet)
  *	-l		list swap devices
- *	-k		use kilobytes	XXX
+ *	-s		short listing of swap devices
+ *	-k		use kilobytes
  *	-p <pri>	use this priority
  */
 
@@ -61,10 +62,11 @@ int	dflag;
 #endif
 int	lflag;
 int	kflag;
+int	sflag;
 int	pri;		/* uses 0 as default pri */
 char	*path;
 
-static	void list_swap __P((void));
+static	void list_swap __P((int));	/* 1 for long, 2 for short */
 static	void add_swap __P((char *));
 #ifdef SWAP_OFF_WORKS
 static	void del_swap __P((char *));
@@ -142,45 +144,85 @@ main(argc, argv)
 		usage();
 
 	if (lflag)
-		list_swap();
-	else if (aflag) {
-		path = argv[0];
-		add_swap(path);
+		list_swap(1);
+	else if (sflag)
+		list_swap(0);
+	else if (aflag)
+		add_swap(argv[0]);
 #ifdef SWAP_OFF_WORKS
-	} else if (dflag) {
-		path = argv[0];
-		del_swap(path);
+	else if (dflag)
+		del_swap(argv[0]);
 #endif /* SWAP_OFF_WORKS */
-	} else if (Aflag) {
+	else if (Aflag)
 		do_fstab();
-	}
 	exit(0);
 }
 
 void
-list_swap()
+list_swap(dolong)
+	int	dolong;
 {
-	int rnswap, nswap = swapon(SWAP_NSWAP, 0, 0);
-	struct swapent *sep;
+	struct	swapent *sep;
+	long	blocksize;
+	char	*header;
+	int	hlen, totalsize, size, totalinuse, inuse;
+	int	rnswap, nswap = swapon(SWAP_NSWAP, 0, 0);
 
-	if (nswap < 1)
-		errx(1, "no swap devices configured");
+	if (nswap < 1) {
+		puts("no swap devices configured");
+		exit(0);
+	}
 
 	sep = (struct swapent *)malloc(nswap * sizeof(*sep));
+	if (sep == NULL)
+		err(1, "malloc");
 	rnswap = swapon(SWAP_STATS, (void *)sep, nswap);
 	if (nswap < 0)
 		errx(1, "SWAP_STATS");
 	if (nswap != rnswap)
 		warnx("SWAP_STATS gave different value than SWAP_NSWAP");
 
-	/*
-	 * XXX write me.  use kflag and BLOCKSIZE to determine size??  how
-	 * does df do it?  it uses getbsize(3) ...
-	 */
-	puts("Device    Avail(k) In Use(k)");
-	for (; rnswap-- > 0; sep++)
-		printf("%-9s %-8d %-8d\n", sep->se_dev == NODEV ? "swapfile" : devname(sep->se_dev, S_IFBLK),
-		    dbtob(sep->se_nblks)/1024, dbtob(sep->se_inuse)/1024);
+	if (dolong) {
+		if (kflag) {
+			header = "1K-blocks";
+			blocksize = 1024;
+			hlen = strlen(header);
+		} else
+			header = getbsize(&hlen, &blocksize);
+		(void)printf("%-11s %*s %8s %8s %8s  %s\n",
+		    "Device", hlen, header,
+		    "Used", "Avail", "Capacity", "Priority");
+	}
+	totalsize = totalinuse = 0;
+	for (; rnswap-- > 0; sep++) {
+		size = sep->se_nblks;
+		inuse = sep->se_inuse;
+		totalsize += size;
+		totalinuse += inuse;
+
+		if (dolong) {
+			/* XXX handle se_dev == NODEV */
+			(void)printf("/dev/%-6s %*d ",
+			    devname(sep->se_dev, S_IFBLK),
+				hlen, dbtob(size) / blocksize);
+
+			(void)printf("%8d %8d %5.0f%%    %d\n",
+			    dbtob(inuse) / blocksize,
+			    dbtob(size - inuse) / blocksize,
+			    (double)inuse / (double)size * 100.0,
+			    sep->se_priority);
+		}
+	}
+	if (dolong) {
+		if (nswap > 1)
+		(void)printf("%-11s %*d %8d %8d %5.0f%%\n", "Total", hlen,
+		    dbtob(totalsize) / blocksize,
+		    dbtob(totalinuse) / blocksize,
+		    dbtob(totalsize - totalinuse) / blocksize,
+		    (double)(totalsize-totalinuse) / (double)totalsize * 100.0);
+	} else {
+		puts("swap -s not done (yet)");
+	}
 }
 
 /*
@@ -238,9 +280,11 @@ usage()
 {
 	extern char *__progname;
 #ifdef SWAP_OFF_WORKS
-	static	char usagemsg[] = "usage: %s [-k] [-A|-a|-d|-l] [-p <pri>] [device]\n";
+	static	char usagemsg[] =
+	    "usage: %s [-k] [-A|-a|-d|-l|-s] [-p <pri>] [device]\n";
 #else
-	static	char usagemsg[] = "usage: %s [-k] [-A|-a|-l] [-p <pri>] [device]\n";
+	static	char usagemsg[] =
+	    "usage: %s [-k] [-A|-a|-l|-s] [-p <pri>] [device]\n";
 #endif /* SWAP_OFF_WORKS */
 
 	fprintf(stderr, usagemsg, __progname);
