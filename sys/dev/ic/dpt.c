@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.8 1999/10/04 23:57:32 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.2.1 1999/10/19 17:47:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8 1999/10/04 23:57:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.1 1999/10/19 17:47:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,14 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8 1999/10/04 23:57:32 thorpej Exp $");
 
 #include <dev/ic/dptreg.h>
 #include <dev/ic/dptvar.h>
-
-/* A default for our link struct */
-static struct scsipi_device dpt_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
 
 static char *dpt_cname[] = {
 #ifdef notdef
@@ -129,7 +121,8 @@ static char *dpt_cname[] = {
 void	dpt_shutdown __P((void *));
 void	dpt_timeout __P((void *));
 void	dpt_minphys __P((struct buf *));
-int	dpt_scsi_cmd __P((struct scsipi_xfer *));
+void	dpt_scsipi_request __P((struct scsipi_channel *,
+	    scsipi_adapter_req_t, void *));
 int	dpt_wait __P((struct dpt_softc *, u_int8_t, u_int8_t, int));
 int	dpt_poll __P((struct dpt_softc *, struct dpt_ccb *));
 int	dpt_cmd __P((struct dpt_softc *, struct eata_cp *, u_int32_t, int, int));
@@ -249,12 +242,14 @@ dpt_init(sc, intrstr)
 	struct dpt_softc *sc;
 	const char *intrstr;
 {
+	struct scsipi_adapter *adapt;
+	struct scsipi_channel *chan;
 	struct eata_inquiry_data *ei;
 	int i, j, error, rseg, mapsize;
 	bus_dma_segment_t seg;
 	struct eata_cfg *ec;
 	char model[16];
-	
+
 	ec = &sc->sc_ec;
 	
 	/* Allocate the CCB/status packet/scratch DMA map and load */
@@ -355,26 +350,33 @@ dpt_init(sc, intrstr)
 	if (dpt_cmd(sc, NULL, 0, CP_IMMEDIATE, CPI_BUS_RESET))
 		panic("%s: dpt_cmd failed", sc->sc_dv.dv_xname);
         DELAY(20000);
-	
-	/* Fill in the adapter, each link and attach in turn */
-	sc->sc_adapter.scsipi_cmd = dpt_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = dpt_minphys;
+
+	/*
+	 * Fill in the scsipi_adapter.
+	 */
+	memset(adapt, 0, sizeof(*adapt));
+	adapt->adapt_dev = &sc->sc_dv;
+	adapt->adapt_nchannels = ec->ec_maxchannel + 1;
+	adapt->adapt_openings = sc->sc_nccbs;
+	adapt->adapt_max_periph = sc->sc_nccbs;
+	adapt->adapt_request = dpt_scsipi_request;
+	adapt->adapt_minphys = dpt_minphys;
 
 	for (i = 0; i <= ec->ec_maxchannel; i++) {
-		struct scsipi_link *link;
-		
+		/*
+		 * Fill in the scsipi_channel.
+		 */
 		sc->sc_hbaid[i] = ec->ec_hba[3 - i];
-		link = &sc->sc_link[i];
-		link->scsipi_scsi.channel = i;
-		link->scsipi_scsi.adapter_target = sc->sc_hbaid[i];
-		link->scsipi_scsi.max_lun = ec->ec_maxlun;
-		link->scsipi_scsi.max_target = ec->ec_maxtarget;
-		link->type = BUS_SCSI;
-		link->device = &dpt_dev;
-		link->adapter = &sc->sc_adapter;
-		link->adapter_softc = sc;
-		link->openings = sc->sc_nccbs;
-		config_found(&sc->sc_dv, link, scsiprint);
+		chan = &sc->sc_channels[i];
+		memset(chan, 0, sizeof(*chan));
+		chan->chan_adapter = adapt;
+		chan->chan_bustype = &scsi_bustype;
+		chan->chan_channel = i;
+		chan->chan_ntargets = ec->ec_maxtarget + 1;
+		chan->chan_nluns = ec->ec_maxlun + 1;
+		chan->chan_id = sc->sc_hbaid[i];
+
+		(void) config_found(&sc->sc_dv, chan, scsiprint);
 	}
 }
 
@@ -799,234 +801,210 @@ dpt_done_ccb(sc, ccb)
 
 	/* Free up the CCB and mark the command as done */
 	dpt_free_ccb(sc, ccb);
-	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
-
-	/*
-	 * If there are queue entries in the software queue, try to run the 
-	 * first one.  We should be more or less guaranteed to succeed, since 
-	 * we just freed an CCB. NOTE: dpt_scsi_cmd() relies on our calling 
-	 * it with the first entry in the queue.
-	 */
-	if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
-		dpt_scsi_cmd(xs);
 }
 
 /*
  * Start a SCSI command.
  */
-int
-dpt_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+dpt_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	int error, seg, flags, s, fromqueue, dontqueue;
-	struct scsipi_link *sc_link;
-	struct dpt_softc *sc;
+	struct dpt_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	struct scsipi_xfer *xs;
+	int error, seg, flags;
+	struct scsipi_periph *periph;
 	struct dpt_ccb *ccb;
 	struct eata_sg *sg;
 	struct eata_cp *cp;
-	bus_dma_tag_t dmat;
+	bus_dma_tag_t dmat = sc->sc_dmat;
 
-	sc_link = xs->sc_link;
-	flags = xs->xs_control;
-	sc = sc_link->adapter_softc;
-	dmat = sc->sc_dmat;
-	fromqueue = 0;
-	dontqueue = 0;
+	SC_DEBUG(sc_link, SDEV_DB2, ("dpt_scsipi_request\n"));
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("dpt_scsi_cmd\n"));
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
+		dmat = sc->sc_dmat;
 
-	/* Protect the queue */
-	s = splbio();
-
-	/*
-	 * If we're running the queue from dpt_done_ccb(), we've been called 
-	 * with the first queue entry as our argument.
-	 */
-	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
-		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-		fromqueue = 1;
-	} else {
 		/* Cmds must be no more than 12 bytes for us */
 		if (xs->cmdlen > 12) {
-			splx(s);
 			xs->error = XS_DRIVER_STUFFUP;
-			return (COMPLETE);
+			scsipi_done(xs);
+			return;
 		}
 
 		/* XXX we can't reset devices just yet */
 		if ((flags & XS_CTL_RESET) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
-			return (COMPLETE);
+			scsipi_done(xs);
+			return;
 		}
-
-		/* Polled requests can't be queued for later */
-		dontqueue = flags & XS_CTL_POLL;
-
-		/* If there are jobs in the queue, run them first */
-		if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
-			/*
-			 * If we can't queue, we have to abort, since we have 
-			 * to preserve the queue order.
-			 */
-			if (dontqueue) {
-				splx(s);
-				xs->error = XS_DRIVER_STUFFUP;
-				return (TRY_AGAIN_LATER);
-			}
-
-			/* Swap with the first queue entry. */
-			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-			xs = TAILQ_FIRST(&sc->sc_queue);
-			TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-			fromqueue = 1;
-		}
-	}
-
-	/*
-	 * Get a CCB. If the transfer is from a buf (possibly from interrupt 
-	 * time) then we can't allow it to sleep.
-	 */
-	if ((ccb = dpt_alloc_ccb(sc, flags)) == NULL) {
-		/* If we can't queue, we lose */
-		if (dontqueue) {
-			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
-		}
-		
-		/* 
-		 * Stuff request into the queue, in front if we came off 
-		 * in the first place.
-		 */
-		if (fromqueue)
-			TAILQ_INSERT_HEAD(&sc->sc_queue, xs, adapter_q);
-		else
-			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-		splx(s);
-		return (SUCCESSFULLY_QUEUED);
-	}
-
-	splx(s);
-
-	/* Synchronous xfers musn't write-back through the cache */
-	if (xs->bp != NULL && (xs->bp->b_flags & (B_ASYNC | B_READ)) == 0)
-			ccb->ccb_flg |= CCB_SYNC;
-
-	ccb->ccb_xs = xs;
-	ccb->ccb_timeout = xs->timeout;
-
-	cp = &ccb->ccb_eata_cp;
-	memcpy(&cp->cp_scsi_cmd, xs->cmd, xs->cmdlen);
-	cp->cp_ccbid = ccb->ccb_id;
-	cp->cp_id = sc_link->scsipi_scsi.target;
-	cp->cp_lun = sc_link->scsipi_scsi.lun;
-	cp->cp_channel = sc_link->scsipi_scsi.channel;
-	cp->cp_senselen = sizeof(ccb->ccb_sense);
-	cp->cp_stataddr = SWAP32(sc->sc_sppa);
-	cp->cp_dispri = 1;
-	cp->cp_identify = 1;
-	cp->cp_autosense = 1;
-	cp->cp_nocache = ((ccb->ccb_flg & CCB_SYNC) != 0);
-	cp->cp_datain = ((flags & XS_CTL_DATA_IN) != 0);
-	cp->cp_dataout = ((flags & XS_CTL_DATA_OUT) != 0);
-	cp->cp_interpret = (sc->sc_hbaid[sc_link->scsipi_scsi.channel] ==
-	    sc_link->scsipi_scsi.target);
-
-	cp->cp_senseaddr = SWAP32(sc->sc_dmamap_ccb->dm_segs[0].ds_addr +
-	    CCB_OFF(sc, ccb) + offsetof(struct dpt_ccb, ccb_sense));
-	    
-	if (xs->datalen) {
-		sg = ccb->ccb_sg;
-		seg = 0;
-#ifdef	TFS
-		if (flags & XS_CTL_DATA_UIO) {
-			error = bus_dmamap_load_uio(dmat,
-			    ccb->ccb_dmamap_xfer, (struct uio *)xs->data,
-			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
-		} else
-#endif /*TFS */
-		{
-			error = bus_dmamap_load(dmat, 
-			    ccb->ccb_dmamap_xfer, 
-			    xs->data, xs->datalen, NULL,
-			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
-		}
-
-		if (error) {
-			printf("%s: dpt_scsi_cmd: ", sc->sc_dv.dv_xname); 
-			if (error == EFBIG)
-				printf("more than %d dma segs\n", DPT_SG_SIZE);
-			else
-				printf("error %d loading dma map\n", error);
-		
-			xs->error = XS_DRIVER_STUFFUP;
-			dpt_free_ccb(sc, ccb);
-			return (COMPLETE);
-		}
-
-		bus_dmamap_sync(dmat, ccb->ccb_dmamap_xfer, 0,
-		    ccb->ccb_dmamap_xfer->dm_mapsize,
-		    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
-		    BUS_DMASYNC_PREWRITE);
 
 		/*
-		 * Load the hardware scatter/gather map with the
-		 * contents of the DMA map.
+		 * Get a CCB. If the transfer is from a buf (possibly from
+		 * interrupt time) then we can't allow it to sleep.
 		 */
-		for (seg = 0; seg < ccb->ccb_dmamap_xfer->dm_nsegs; seg++) {
-			ccb->ccb_sg[seg].sg_addr =
-			    SWAP32(ccb->ccb_dmamap_xfer->dm_segs[seg].ds_addr);
-			ccb->ccb_sg[seg].sg_len =
-			    SWAP32(ccb->ccb_dmamap_xfer->dm_segs[seg].ds_len);
+		ccb = dpt_alloc_ccb(sc, flags);
+#ifdef DIAGNOSTIC
+		/*
+		 * This should never happen as we track the resources
+		 * in the mid-layer.
+		 */
+		if (ccb == NULL) {
+			scsipi_printaddr(periph);
+			printf("unable to allocate ccb\n");
+			panic("dpt_scsipi_request");
 		}
+#endif
+
+		/* Synchronous xfers musn't write-back through the cache */
+		if (xs->bp != NULL &&
+		    (xs->bp->b_flags & (B_ASYNC | B_READ)) == 0)
+			ccb->ccb_flg |= CCB_SYNC;
+
+		ccb->ccb_xs = xs;
+		ccb->ccb_timeout = xs->timeout;
+
+		cp = &ccb->ccb_eata_cp;
+		memcpy(&cp->cp_scsi_cmd, xs->cmd, xs->cmdlen);
+		cp->cp_ccbid = ccb->ccb_id;
+		cp->cp_id = periph->periph_target;
+		cp->cp_lun = periph->periph_lun;
+		cp->cp_channel = chan->chan_channel;
+		cp->cp_senselen = sizeof(ccb->ccb_sense);
+		cp->cp_stataddr = SWAP32(sc->sc_sppa);
+		cp->cp_dispri = 1;
+		cp->cp_identify = 1;
+		cp->cp_autosense = 1;
+		cp->cp_nocache = ((ccb->ccb_flg & CCB_SYNC) != 0);
+		cp->cp_datain = ((flags & XS_CTL_DATA_IN) != 0);
+		cp->cp_dataout = ((flags & XS_CTL_DATA_OUT) != 0);
+		cp->cp_interpret = (sc->sc_hbaid[chan->chan_channel] ==
+		    periph->periph_target);
+
+		cp->cp_senseaddr =
+		    SWAP32(sc->sc_dmamap_ccb->dm_segs[0].ds_addr +
+		    CCB_OFF(sc, ccb) + offsetof(struct dpt_ccb, ccb_sense));
+	    
+		if (xs->datalen) {
+			sg = ccb->ccb_sg;
+			seg = 0;
+#ifdef	TFS
+			if (flags & XS_CTL_DATA_UIO) {
+				error = bus_dmamap_load_uio(dmat,
+				    ccb->ccb_dmamap_xfer,
+				    (struct uio *)xs->data,
+				    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				    BUS_DMA_WAITOK);
+			} else
+#endif /*TFS */
+			{
+				error = bus_dmamap_load(dmat, 
+				    ccb->ccb_dmamap_xfer, 
+				    xs->data, xs->datalen, NULL,
+				    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				    BUS_DMA_WAITOK);
+			}
+
+			if (error) {
+				printf("%s: dpt_scsipi_request: ",
+				    sc->sc_dv.dv_xname); 
+				if (error == EFBIG)
+					printf("more than %d dma segs\n",
+					    DPT_SG_SIZE);
+				else
+					printf("error %d loading dma map\n",
+					    error);
 		
-		cp->cp_dataaddr = SWAP32(sc->sc_dmamap_ccb->dm_segs[0].ds_addr 
-		    + CCB_OFF(sc, ccb) + offsetof(struct dpt_ccb, ccb_sg));
-		cp->cp_datalen = SWAP32(seg * sizeof(struct eata_sg));
-		cp->cp_scatter = 1;
-	} else {
-		cp->cp_dataaddr = 0;
-		cp->cp_datalen = 0;
-		cp->cp_scatter = 0;
-	}
+				dpt_free_ccb(sc, ccb);
+				xs->error = XS_DRIVER_STUFFUP;
+				scsipi_done(xs);
+				return;
+			}
 
-	/* Sync up CCB and status packet */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, CCB_OFF(sc, ccb), 
-	    sizeof(struct dpt_ccb), BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_spoff, 
-	    sizeof(struct eata_sp), BUS_DMASYNC_PREREAD);
+			bus_dmamap_sync(dmat, ccb->ccb_dmamap_xfer, 0,
+			    ccb->ccb_dmamap_xfer->dm_mapsize,
+			    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
+			    BUS_DMASYNC_PREWRITE);
 
-	/* 
-	 * Start the command. If we are polling on completion, mark it
-	 * private so that dpt_intr/dpt_done_ccb don't recycle the CCB 
-	 * without us noticing.
-	 */
-	if (dontqueue != 0)
-		ccb->ccb_flg |= CCB_PRIVATE; 
+			/*
+			 * Load the hardware scatter/gather map with the
+			 * contents of the DMA map.
+			 */
+			for (seg = 0;
+			     seg < ccb->ccb_dmamap_xfer->dm_nsegs; seg++) {
+				ccb->ccb_sg[seg].sg_addr =
+			    SWAP32(ccb->ccb_dmamap_xfer->dm_segs[seg].ds_addr);
+				ccb->ccb_sg[seg].sg_len =
+			    SWAP32(ccb->ccb_dmamap_xfer->dm_segs[seg].ds_len);
+			}
+		
+			cp->cp_dataaddr =
+			    SWAP32(sc->sc_dmamap_ccb->dm_segs[0].ds_addr 
+			    + CCB_OFF(sc, ccb) + offsetof(struct dpt_ccb,
+			    ccb_sg));
+			cp->cp_datalen = SWAP32(seg * sizeof(struct eata_sg));
+			cp->cp_scatter = 1;
+		} else {
+			cp->cp_dataaddr = 0;
+			cp->cp_datalen = 0;
+			cp->cp_scatter = 0;
+		}
+
+		/* Sync up CCB and status packet */
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb,
+		    CCB_OFF(sc, ccb), sizeof(struct dpt_ccb),
+		    BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_spoff, 
+		    sizeof(struct eata_sp), BUS_DMASYNC_PREREAD);
+
+		/* 
+		 * Start the command. If we are polling on completion, mark it
+		 * private so that dpt_intr/dpt_done_ccb doesn't recycle the
+		 * CCB without us noticing.
+		 */
+		if (xs->xs_control & XS_CTL_POLL)
+			ccb->ccb_flg |= CCB_PRIVATE; 
 	
-	if (dpt_cmd(sc, &ccb->ccb_eata_cp, ccb->ccb_ccbpa, CP_DMA_CMD, 0)) {
-		printf("%s: dpt_cmd failed\n", sc->sc_dv.dv_xname);
-		xs->error = XS_DRIVER_STUFFUP;
-		dpt_done_ccb(sc, ccb);
-		return (COMPLETE);
-	}
+		if (dpt_cmd(sc, &ccb->ccb_eata_cp, ccb->ccb_ccbpa,
+		    CP_DMA_CMD, 0)) {
+			printf("%s: dpt_cmd failed\n", sc->sc_dv.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			dpt_done_ccb(sc, ccb);
+			return;
+		}
 
-	if (dontqueue == 0)
-		return (SUCCESSFULLY_QUEUED);
+		if ((xs->xs_control & XS_CTL_POLL) == 0)
+			return;
 
-	/* Don't wait longer than this single command wants to wait */
-	if (dpt_poll(sc, ccb)) {
-		dpt_timeout(ccb);
-		/* Wait for abort to complete */
-		if (dpt_poll(sc, ccb))
+		/* Don't wait longer than this single command wants to wait */
+		if (dpt_poll(sc, ccb)) {
 			dpt_timeout(ccb);
-	} 
+			/* Wait for abort to complete */
+			if (dpt_poll(sc, ccb))
+				dpt_timeout(ccb);
+		} 
 	
-	dpt_done_ccb(sc, ccb);
-	return (COMPLETE);
+		dpt_done_ccb(sc, ccb);
+		return;
+
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* XXX Not supported. */
+		return;
+
+	case ADAPTER_REQ_GET_XFER_MODE:
+		/* XXX Not supported. */
+		return;
+	}
 }
 
 /*
@@ -1036,7 +1014,7 @@ void
 dpt_timeout(arg)
 	void *arg;
 {
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct scsipi_xfer *xs;
 	struct dpt_softc *sc;
  	struct dpt_ccb *ccb;
@@ -1044,10 +1022,10 @@ dpt_timeout(arg)
 	
 	ccb = arg;
 	xs = ccb->ccb_xs;
-	sc_link = xs->sc_link;
-	sc  = sc_link->adapter_softc;
+	periph = xs->xs_periph;
+	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(periph);
 	printf("timed out (status:%02x aux status:%02x)", 
 	    dpt_inb(sc, HA_STATUS), dpt_inb(sc, HA_AUX_STATUS));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nca.c,v 1.3 1998/11/19 21:53:32 thorpej Exp $	*/
+/*	$NetBSD: nca.c,v 1.3.10.1 1999/10/19 17:49:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c)  1998 The NetBSD Foundation, Inc.
@@ -92,14 +92,6 @@ int	nca_test __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
 struct cfattach nca_ca = {
 	sizeof(struct nca_softc), nca_match, nca_attach
 };
-
-struct scsipi_device nca_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-
 
 /* Supported controller types */
 #define MAX_NCA_CONTROLLER	3
@@ -415,22 +407,15 @@ nca_attach(parent, self, aux)
 	sc->sc_min_dma_len = MIN_DMA_LEN;
 
 	/*
-	 * Fill in the adapter.
+	 * Fill in our portion of the scsipi_adapter.
 	 */
-	sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr5380_scsipi_request;
+	sc->sc_adapter.adapt_minphys = minphys;
 
 	/*
-	 * Fill in the prototype scsi_link.
+	 * Fill in our portion of the scsipi_channel.
 	 */
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.type = BUS_SCSI;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &nca_dev;
-	sc->sc_link.openings = 1;
+	sc->sc_channel.chan_id = 7;
 
 	/*
 	 * Initialize fields used by the MI code
@@ -447,5 +432,5 @@ nca_attach(parent, self, aux)
 	 */
 	ncr5380_init(sc);
 	ncr5380_reset_scsibus(sc);
-	config_found(&(sc->sc_dev), &(sc->sc_link), scsiprint);
+	config_found(&(sc->sc_dev), &(sc->sc_channel), scsiprint);
 }

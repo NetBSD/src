@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.74 1999/09/23 11:04:32 enami Exp $ */
+/*	$NetBSD: wdc.c,v 1.74.2.1 1999/10/19 17:47:43 thorpej Exp $ */
 
 
 /*
@@ -1468,15 +1468,15 @@ wdc_addref(chp)
 	struct channel_softc *chp;
 {
 	struct wdc_softc *wdc = chp->wdc; 
-	struct scsipi_adapter *adapter = &wdc->sc_atapi_adapter;
+	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter;
 	int s, error = 0;
 
 	s = splbio();
-	if (adapter->scsipi_refcnt++ == 0 &&
-	    adapter->scsipi_enable != NULL) {
-		error = (*adapter->scsipi_enable)(wdc, 1);
+	if (adapt->adapt_refcnt++ == 0 &&
+	    adapt->adapt_enable != NULL) {
+		error = (*adapt->adapt_enable)(&wdc->sc_dev, 1);
 		if (error)
-			adapter->scsipi_refcnt--;
+			adapt->adapt_refcnt--;
 	}
 	splx(s);
 	return (error);
@@ -1487,12 +1487,12 @@ wdc_delref(chp)
 	struct channel_softc *chp;
 {
 	struct wdc_softc *wdc = chp->wdc;
-	struct scsipi_adapter *adapter = &wdc->sc_atapi_adapter;
+	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter;
 	int s;
 
 	s = splbio();
-	if (adapter->scsipi_refcnt-- == 1 &&
-	    adapter->scsipi_enable != NULL)
-		(void) (*adapter->scsipi_enable)(wdc, 0);
+	if (adapt->adapt_refcnt-- == 1 &&
+	    adapt->adapt_enable != NULL)
+		(void) (*adapt->adapt_enable)(&wdc->sc_dev, 0);
 	splx(s);
 }

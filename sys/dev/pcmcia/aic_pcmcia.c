@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.12 1999/09/26 08:14:58 enami Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.12.2.1 1999/10/19 17:52:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -69,7 +69,7 @@ struct cfattach aic_pcmcia_ca = {
 	aic_pcmcia_detach, aic_activate
 };
 
-int	aic_pcmcia_enable __P((void *, int));
+int	aic_pcmcia_enable __P((struct device *, int));
 
 struct aic_pcmcia_product {
 	u_int32_t	app_vendor;		/* PCMCIA vendor ID */
@@ -188,12 +188,12 @@ aic_pcmcia_attach(parent, self, aux)
 
     if (aic_dodetach) {				/* XXX temporary */
 	/* We can enable and disable the controller. */
-	sc->sc_adapter.scsipi_enable = aic_pcmcia_enable;
+	sc->sc_adapter.adapt_enable = aic_pcmcia_enable;
 #ifdef DIAGNOSTIC
-	if (sc->sc_adapter.scsipi_refcnt != 0)
+	if (sc->sc_adapter.adapt_refcnt != 0)
 		panic("refcnt isn't 0");
 #endif
-	sc->sc_adapter.scsipi_refcnt++;
+	sc->sc_adapter.adapt_refcnt++;
     } else {					/* XXX temporary */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_BIO,
 	    aicintr, &psc->sc_aic);
@@ -207,9 +207,9 @@ aic_pcmcia_attach(parent, self, aux)
 	aicattach(sc);
 
     if (aic_dodetach) {				/* XXX temporary */
-	sc->sc_adapter.scsipi_refcnt--;
+	sc->sc_adapter.adapt_refcnt--;
 #ifdef DIAGNOSTIC
-	if (sc->sc_adapter.scsipi_refcnt != 0)
+	if (sc->sc_adapter.adapt_refcnt != 0)
 		panic("refcnt isn't 0");
 #endif
 	pcmcia_function_disable(pf);
@@ -234,11 +234,11 @@ aic_pcmcia_detach(self, flags)
 	return (0);
 }
 int
-aic_pcmcia_enable(arg, onoff)
-	void *arg;
+aic_pcmcia_enable(self, onoff)
+	struct device *self;
 	int onoff;
 {
-	struct aic_pcmcia_softc *psc = arg;
+	struct aic_pcmcia_softc *psc = (void *)self;
 
 	if (onoff) {
 		/* Establish the interrupt handler. */

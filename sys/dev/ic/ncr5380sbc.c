@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.31 1999/09/30 23:04:41 thorpej Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.31.2.1 1999/10/19 17:47:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -355,6 +355,8 @@ void
 ncr5380_init(sc)
 	struct ncr5380_softc *sc;
 {
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
 	int i, j;
 
 #ifdef	NCR5380_DEBUG
@@ -367,10 +369,26 @@ ncr5380_init(sc)
 		for (j = 0; j < 8; j++)
 			sc->sc_matrix[i][j] = NULL;
 
-	sc->sc_link.openings = 2;	/* XXX - Not SCI_OPENINGS */
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+	/*
+	 * Fill in the scsipi_adapter.
+	 */
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	adapt->adapt_openings = SCI_OPENINGS;
+	adapt->adapt_max_periph = 1;
+	/* adapt_request filled in by front-end */
+	/* adapt_minphys filled in by front-end */
+
+	/*
+	 * Fill in the scsipi_channel.
+	 */
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;
+	chan->chan_nluns = 8;
+	/* chan_id filled in by front-end */
+
 	sc->sc_prevphase = PHASE_INVALID;
 	sc->sc_state = NCR_IDLE;
 
@@ -524,7 +542,7 @@ ncr5380_cmd_timeout(arg)
 {
 	struct sci_req *sr = arg;
 	struct scsipi_xfer *xs;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct ncr5380_softc *sc;
 	int s;
 
@@ -536,8 +554,8 @@ ncr5380_cmd_timeout(arg)
 		printf("ncr5380_cmd_timeout: no scsipi_xfer\n");
 		goto out;
 	}
-	sc_link = xs->sc_link;
-	sc = sc_link->adapter_softc;
+	periph = xs->xs_periph;
+	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 
 	printf("%s: cmd timeout, targ=%d, lun=%d\n",
 	    sc->sc_dev.dv_xname,
@@ -593,93 +611,120 @@ out:
  * WARNING:  This can be called recursively!
  * (see comment in ncr5380_done)
  */
-int
-ncr5380_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+ncr5380_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct	ncr5380_softc *sc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct ncr5380_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	struct sci_req	*sr;
-	int s, rv, i, flags;
+	int s, i, flags;
 
-	sc = xs->sc_link->adapter_softc;
-	flags = xs->xs_control;
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
 
-	if (sc->sc_flags & NCR5380_FORCE_POLLING)
-		flags |= XS_CTL_POLL;
+		if (sc->sc_flags & NCR5380_FORCE_POLLING)
+			flags |= XS_CTL_POLL;
 
-	if (flags & XS_CTL_DATA_UIO)
-		panic("ncr5380: scsi data uio requested");
+		if (flags & XS_CTL_DATA_UIO)
+			panic("ncr5380: scsi data uio requested");
 
-	s = splbio();
+		s = splbio();
 
-	if (flags & XS_CTL_POLL) {
-		/* Terminate any current command. */
-		sr = sc->sc_current;
-		if (sr) {
-			printf("%s: polled request aborting %d/%d\n",
-			    sc->sc_dev.dv_xname,
-			    sr->sr_target, sr->sr_lun);
-			ncr5380_abort(sc);
+		if (flags & XS_CTL_POLL) {
+			/* Terminate any current command. */
+			sr = sc->sc_current;
+			if (sr) {
+				printf("%s: polled request aborting %d/%d\n",
+				    sc->sc_dev.dv_xname,
+				    sr->sr_target, sr->sr_lun);
+				ncr5380_abort(sc);
+			}
+			if (sc->sc_state != NCR_IDLE) {
+				panic("ncr5380_scsi_cmd: polled request, "
+				    "abort failed");
+			}
 		}
-		if (sc->sc_state != NCR_IDLE) {
-			panic("ncr5380_scsi_cmd: polled request, abort failed");
-		}
-	}
 
-	/*
-	 * Find lowest empty slot in ring buffer.
-	 * XXX: What about "fairness" and cmd order?
-	 */
-	for (i = 0; i < SCI_OPENINGS; i++)
-		if (sc->sc_ring[i].sr_xs == NULL)
-			goto new;
+		/*
+		 * Find lowest empty slot in ring buffer.
+		 * XXX: What about "fairness" and cmd order?
+		 */
+		for (i = 0; i < SCI_OPENINGS; i++)
+			if (sc->sc_ring[i].sr_xs == NULL)
+				goto new;
 
-	rv = TRY_AGAIN_LATER;
-	NCR_TRACE("scsipi_cmd: no openings, rv=%d\n", rv);
-	goto out;
+		/*
+		 * This should never happen as we track the resources
+		 * in the mid-layer.
+		 */
+		scsipi_printaddr(periph);
+		printf("unable to allocate ring slot\n");
+		panic("ncr5380_scsipi_request");
 
 new:
-	/* Create queue entry */
-	sr = &sc->sc_ring[i];
-	sr->sr_xs = xs;
-	sr->sr_target = xs->sc_link->scsipi_scsi.target;
-	sr->sr_lun = xs->sc_link->scsipi_scsi.lun;
-	sr->sr_dma_hand = NULL;
-	sr->sr_dataptr = xs->data;
-	sr->sr_datalen = xs->datalen;
-	sr->sr_flags = (flags & XS_CTL_POLL) ? SR_IMMED : 0;
-	sr->sr_status = -1;	/* no value */
-	sc->sc_ncmds++;
-	rv = SUCCESSFULLY_QUEUED;
+		/* Create queue entry */
+		sr = &sc->sc_ring[i];
+		sr->sr_xs = xs;
+		sr->sr_target = periph->periph_target;
+		sr->sr_lun = periph->periph_lun;
+		sr->sr_dma_hand = NULL;
+		sr->sr_dataptr = xs->data;
+		sr->sr_datalen = xs->datalen;
+		sr->sr_flags = (flags & XS_CTL_POLL) ? SR_IMMED : 0;
+		sr->sr_status = -1;	/* no value */
+		sc->sc_ncmds++;
 
-	NCR_TRACE("scsipi_cmd: new sr=0x%x\n", (long)sr);
+		NCR_TRACE("scsipi_cmd: new sr=0x%x\n", (long)sr);
 
-	if (flags & XS_CTL_POLL) {
-		/* Force this new command to be next. */
-		sc->sc_rr = i;
+		if (flags & XS_CTL_POLL) {
+			/* Force this new command to be next. */
+			sc->sc_rr = i;
+		}
+
+		/*
+		 * If we were idle, run some commands...
+		 */
+		if (sc->sc_state == NCR_IDLE) {
+			NCR_TRACE("scsipi_cmd: call sched, cur=0x%x\n",
+					  (long) sc->sc_current);
+			ncr5380_sched(sc);
+			NCR_TRACE("scsipi_cmd: sched done, cur=0x%x\n",
+					  (long) sc->sc_current);
+		}
+
+		if (flags & XS_CTL_POLL) {
+			/* Make sure ncr5380_sched() finished it. */
+			if ((xs->xs_status & XS_STS_DONE) == 0)
+				panic("ncr5380_scsi_cmd: poll didn't finish");
+		}
+		splx(s);
+		return;
+
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/*
+		 * We don't support Sync, Wide, or Tagged Queueing.
+		 */
+		return;
+
+	case ADAPTER_REQ_GET_XFER_MODE:
+		periph = arg;
+		periph->periph_mode = 0;
+		periph->periph_period = 0;
+		periph->periph_offset = 0;
+		periph->periph_flags |= PERIPH_MODE_VALID;
+		return;
 	}
-
-	/*
-	 * If we were idle, run some commands...
-	 */
-	if (sc->sc_state == NCR_IDLE) {
-		NCR_TRACE("scsipi_cmd: call sched, cur=0x%x\n",
-				  (long) sc->sc_current);
-		ncr5380_sched(sc);
-		NCR_TRACE("scsipi_cmd: sched done, cur=0x%x\n",
-				  (long) sc->sc_current);
-	}
-
-	if (flags & XS_CTL_POLL) {
-		/* Make sure ncr5380_sched() finished it. */
-		if ((xs->xs_status & XS_STS_DONE) == 0)
-			panic("ncr5380_scsi_cmd: poll didn't finish");
-		rv = COMPLETE;
-	}
-
-out:
-	splx(s);
-	return (rv);
 }
 
 
@@ -1699,7 +1744,7 @@ have_msg:
 		NCR_TRACE("msg_in: DISCONNECT\n", 0);
 		/* Target is about to disconnect. */
 		act_flags |= ACT_DISCONNECT;
-		if ((xs->sc_link->quirks & SDEV_AUTOSAVE) == 0)
+		if ((xs->xs_periph->periph_quirks & PQUIRK_AUTOSAVE) == 0)
 			break;
 		/*FALLTHROUGH*/
 
@@ -2019,7 +2064,7 @@ ncr5380_command(sc)
 
 	if (sr->sr_flags & SR_SENSE) {
 		rqs.opcode = REQUEST_SENSE;
-		rqs.byte2 = xs->sc_link->scsipi_scsi.lun << 5;
+		rqs.byte2 = xs->xs_periph->periph_lun << 5;
 		rqs.length = sizeof(xs->sense.scsi_sense);
 
 		rqs.unused[0] = rqs.unused[1] = rqs.control = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.19 1999/09/23 11:04:32 enami Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.19.2.1 1999/10/19 17:47:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX for scsipi_adapter */
+/*
+ * XXX For scsipi_adapter and scsipi_channel.
+ */
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 
@@ -70,6 +72,7 @@ struct channel_softc { /* Per channel data */
 	struct ata_drive_datas ch_drive[2];
 
 	struct device *atapibus;
+	struct scsipi_channel ch_atapi_channel;
 
 	/*
 	 * channel queues. May be the same for all channels, if hw channels

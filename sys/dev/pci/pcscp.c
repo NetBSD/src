@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.5 1999/09/30 23:04:42 thorpej Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.5.2.1 1999/10/19 17:50:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -110,13 +110,6 @@ void	pcscp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach pcscp_ca = {
 	sizeof(struct pcscp_softc), pcscp_match, pcscp_attach
-};
-
-struct scsipi_device pcscp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -334,16 +327,16 @@ pcscp_attach(parent, self, aux)
 		return;
 	}
 
+	/* Turn on target selection using the `dma' method */
+	ncr53c9x_dmaselect = 1;
+
 	/* Do the common parts of attachment. */
 	printf("%s", sc->sc_dev.dv_xname);
 
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	sc->sc_adapter.adapt_minphys = minphys;
 
-	ncr53c9x_attach(sc, &pcscp_dev);
-
-	/* Turn on target selection using the `dma' method */
-	ncr53c9x_dmaselect = 1;
+	ncr53c9x_attach(sc);
 }
 
 /*

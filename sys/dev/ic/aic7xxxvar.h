@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.19 1998/12/09 08:47:19 thorpej Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.19.10.1 1999/10/19 17:47:36 thorpej Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -236,7 +236,6 @@ struct ahc_data {
 	int	sc_dmaflags;
 
 	bus_dmamap_t sc_dmamap_control;		/* Maps the control blocks */
-	TAILQ_HEAD(, scsipi_xfer) sc_q;		/* XXX software request queue */
 #endif
 	ahc_type type;
 	ahc_flag flags;
@@ -265,14 +264,10 @@ struct ahc_data {
 					 * now been assigned a slot by
 					 * ahc_free_scb.
 					 */
-#ifdef __NetBSD__
-	struct	scsipi_link sc_link;
-	struct	scsipi_link sc_link_b;	/* Second bus for Twin channel cards */
+
 	struct	scsipi_adapter sc_adapter;
-#else
-	struct	scsi_link sc_link;
-	struct	scsi_link sc_link_b;	/* Second bus for Twin channel cards */
-#endif
+	struct	scsipi_channel sc_channels[2];
+
 	u_short	needsdtr_orig;		/* Targets we initiate sync neg with */
 	u_short	needwdtr_orig;		/* Targets we initiate wide neg with */
 	u_short	needsdtr;		/* Current list of negotiated targets */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.63 1999/09/30 23:04:40 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.63.2.1 1999/10/19 17:47:32 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -156,7 +156,8 @@ void	aicattach	__P((struct aic_softc *));
 void	aic_minphys	__P((struct buf *));
 void	aic_done	__P((struct aic_softc *, struct aic_acb *));
 void	aic_dequeue	__P((struct aic_softc *, struct aic_acb *));
-int	aic_scsi_cmd	__P((struct scsipi_xfer *));
+void	aic_scsipi_request __P((struct scsipi_channel *, scsipi_adapter_req_t,
+			    void *));
 int	aic_poll	__P((struct aic_softc *, struct scsipi_xfer *, int));
 integrate void	aic_sched_msgout __P((struct aic_softc *, u_char));
 integrate void	aic_setsync	__P((struct aic_softc *, struct aic_tinfo *));
@@ -182,13 +183,6 @@ void	aic_show_scsi_cmd __P((struct aic_acb *));
 void	aic_print_active_acb __P((void));
 #endif
 
-struct scsipi_device aic_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-
 /*
  * INITIALIZATION ROUTINES (probe, attach ++)
  */
@@ -250,6 +244,8 @@ void
 aicattach(sc)
 	struct aic_softc *sc;
 {
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
 
 	AIC_TRACE(("aicattach  "));
 	sc->sc_state = AIC_INIT;
@@ -272,28 +268,29 @@ aicattach(sc)
 	aic_init(sc, 1);	/* Init chip and driver */
 
 	/*
-	 * Fill in the adapter.
+	 * Fill in the scsipi_adapter.
 	 */
-	sc->sc_adapter.scsipi_cmd = aic_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = aic_minphys;
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	adapt->adapt_openings = 8;
+	adapt->adapt_max_periph = 1;
+	adapt->adapt_request = aic_scsipi_request;
+	adapt->adapt_minphys = aic_minphys;
 
 	/*
-	 * Fill in the prototype scsipi_link
+	 * Fill in the scsipi_channel.
 	 */
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_initiator;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &aic_dev;
-	sc->sc_link.openings = 2;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;
+	chan->chan_nluns = 8;
+	chan->chan_id = sc->sc_initiator;
 
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
 }
 
 int
@@ -449,19 +446,8 @@ aic_init(sc, bus_reset)
 		struct aic_tinfo *ti = &sc->sc_tinfo[r];
 
 		ti->flags = 0;
-#if AIC_USE_SYNCHRONOUS
-		ti->flags |= DO_SYNC;
-		ti->period = sc->sc_minsync;
-		ti->offset = AIC_SYNC_REQ_ACK_OFS;
-#else
 		ti->period = ti->offset = 0;
-#endif
-#if AIC_USE_WIDE
-		ti->flags |= DO_WIDE;
-		ti->width = AIC_MAX_WIDTH;
-#else
 		ti->width = 0;
-#endif
 	}
 
 	sc->sc_state = AIC_IDLE;
@@ -535,63 +521,133 @@ aic_get_acb(sc, flags)
  */
 
 /*
- * Start a SCSI-command
- * This function is called by the higher level SCSI-driver to queue/run
- * SCSI-commands.
+ * Perform a request from the SCSIPI midlayer.
  */
-int
-aic_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+aic_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct aic_softc *sc = sc_link->adapter_softc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct aic_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	struct aic_acb *acb;
 	int s, flags;
 
-	AIC_TRACE(("aic_scsi_cmd  "));
-	AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
-	    sc_link->scsipi_scsi.target));
+	AIC_TRACE(("aic_request  "));
 
-	flags = xs->xs_control;
-	if ((acb = aic_get_acb(sc, flags)) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		return TRY_AGAIN_LATER;
-	}
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
 
-	/* Initialize acb */
-	acb->xs = xs;
-	acb->timeout = xs->timeout;
+		AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
+		    periph->periph_target));
 
-	if (xs->xs_control & XS_CTL_RESET) {
-		acb->flags |= ACB_RESET;
-		acb->scsipi_cmd_length = 0;
-		acb->data_length = 0;
-	} else {
-		bcopy(xs->cmd, &acb->scsipi_cmd, xs->cmdlen);
-		acb->scsipi_cmd_length = xs->cmdlen;
-		acb->data_addr = xs->data;
-		acb->data_length = xs->datalen;
-	}
-	acb->target_stat = 0;
+		flags = xs->xs_control;
+		acb = aic_get_acb(sc, flags);
+#ifdef DIAGNOSTIC
+		/*
+		 * This should never happen as we track the resources
+		 * in the mid-layer.
+		 */
+		if (acb == NULL) {
+			scsipi_printaddr(periph);
+			printf("unable to allocate acb\n");
+			panic("aic_scsipi_request");
+		}
+#endif
 
-	s = splbio();
+		/* Initialize acb */
+		acb->xs = xs;
+		acb->timeout = xs->timeout;
 
-	TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
-	if (sc->sc_state == AIC_IDLE)
-		aic_sched(sc);
+		if (xs->xs_control & XS_CTL_RESET) {
+			acb->flags |= ACB_RESET;
+			acb->scsipi_cmd_length = 0;
+			acb->data_length = 0;
+		} else {
+			bcopy(xs->cmd, &acb->scsipi_cmd, xs->cmdlen);
+			acb->scsipi_cmd_length = xs->cmdlen;
+			acb->data_addr = xs->data;
+			acb->data_length = xs->datalen;
+		}
+		acb->target_stat = 0;
 
-	splx(s);
+		s = splbio();
 
-	if ((flags & XS_CTL_POLL) == 0)
-		return SUCCESSFULLY_QUEUED;
+		TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
+		if (sc->sc_state == AIC_IDLE)
+			aic_sched(sc);
 
-	/* Not allowed to use interrupts, use polling instead */
-	if (aic_poll(sc, xs, acb->timeout)) {
-		aic_timeout(acb);
-		if (aic_poll(sc, xs, acb->timeout))
+		splx(s);
+
+		if ((flags & XS_CTL_POLL) == 0)
+			return;
+
+		/* Not allowed to use interrupts, use polling instead */
+		if (aic_poll(sc, xs, acb->timeout)) {
 			aic_timeout(acb);
+			if (aic_poll(sc, xs, acb->timeout))
+				aic_timeout(acb);
+		}
+		return;
+
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+	    {
+		struct aic_tinfo *ti;
+		periph = arg;
+		ti = &sc->sc_tinfo[periph->periph_target];
+#if AIC_USE_SYNCHRONOUS
+		if (periph->periph_cap & PERIPH_CAP_SYNC) {
+			ti->flags |= DO_SYNC;
+			ti->period = sc->sc_minsync;
+			ti->offset = AIC_SYNC_REQ_ACK_OFS;
+		}
+#endif
+#if AIC_USE_WIDE
+		if (periph->periph_cap & PERIPH_CAP_WIDE16) {
+			ti->flags |= DO_WIDE;
+			ti->width = AIC_MAX_WIDTH;
+		}
+#endif
+		return;
+	    }
+
+	case ADAPTER_REQ_GET_XFER_MODE:
+	    {
+		struct aic_tinfo *ti;
+		periph = arg;
+		ti = &sc->sc_tinfo[periph->periph_target];
+
+		periph->periph_mode = 0;
+		periph->periph_period = 0;
+		periph->periph_offset = 0;
+
+		if (ti->offset != 0) {
+			periph->periph_mode |= PERIPH_CAP_SYNC;
+			periph->periph_period = ti->period;
+			periph->periph_offset = ti->offset;
+		}
+		switch (ti->width) {
+		case 2:
+			periph->periph_mode |= PERIPH_CAP_WIDE32;
+			break;
+		case 1:
+			periph->periph_mode |= PERIPH_CAP_WIDE16;
+			break;
+		}
+
+		periph->periph_flags |= PERIPH_MODE_VALID;
+		return;
+	    }
+	
 	}
-	return COMPLETE;
 }
 
 /*
@@ -682,8 +738,8 @@ aic_select(sc, acb)
 	struct aic_softc *sc;
 	struct aic_acb *acb;
 {
-	struct scsipi_link *sc_link = acb->xs->sc_link;
-	int target = sc_link->scsipi_scsi.target;
+	struct scsipi_periph *periph = acb->xs->xs_periph;
+	int target = periph->periph_target;
 	struct aic_tinfo *ti = &sc->sc_tinfo[target];
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -708,7 +764,7 @@ aic_reselect(sc, message)
 {
 	u_char selid, target, lun;
 	struct aic_acb *acb;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct aic_tinfo *ti;
 
 	/*
@@ -733,8 +789,9 @@ aic_reselect(sc, message)
 	lun = message & 0x07;
 	for (acb = sc->nexus_list.tqh_first; acb != NULL;
 	     acb = acb->chain.tqe_next) {
-		sc_link = acb->xs->sc_link;
-		if (sc_link->scsipi_scsi.target == target && sc_link->scsipi_scsi.lun == lun)
+		periph = acb->xs->xs_periph;
+		if (periph->periph_target == target &&
+		    periph->periph_lun == lun)
 			break;
 	}
 	if (acb == NULL) {
@@ -776,16 +833,16 @@ abort:
 
 /*
  * Schedule a SCSI operation.  This has now been pulled out of the interrupt
- * handler so that we may call it from aic_scsi_cmd and aic_done.  This may
- * save us an unecessary interrupt just to get things going.  Should only be
- * called when state == AIC_IDLE and at bio pl.
+ * handler so that we may call it from aic_scsipi_request and aic_done.  This
+ * may save us an unecessary interrupt just to get things going.  Should only
+ * be called when state == AIC_IDLE and at bio pl.
  */
 void
 aic_sched(sc)
 	register struct aic_softc *sc;
 {
 	struct aic_acb *acb;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct aic_tinfo *ti;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -798,18 +855,18 @@ aic_sched(sc)
 	    CLRSELTIMO | CLRBUSFREE | CLRSCSIPERR);
 	for (acb = sc->ready_list.tqh_first; acb != NULL;
 	    acb = acb->chain.tqe_next) {
-		sc_link = acb->xs->sc_link;
-		ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
-		if ((ti->lubusy & (1 << sc_link->scsipi_scsi.lun)) == 0) {
+		periph = acb->xs->xs_periph;
+		ti = &sc->sc_tinfo[periph->periph_target];
+		if ((ti->lubusy & (1 << periph->periph_lun)) == 0) {
 			AIC_MISC(("selecting %d:%d  ",
-			    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun));
+			    periph->periph_target, periph->periph_lun));
 			TAILQ_REMOVE(&sc->ready_list, acb, chain);
 			sc->sc_nexus = acb;
 			aic_select(sc, acb);
 			return;
 		} else
 			AIC_MISC(("%d:%d busy\n",
-			    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun));
+			    periph->periph_target, periph->periph_lun));
 	}
 	AIC_MISC(("idle  "));
 	/* Nothing to start; just enable reselections and wait. */
@@ -824,15 +881,15 @@ aic_sense(sc, acb)
 	struct aic_acb *acb;
 {
 	struct scsipi_xfer *xs = acb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct aic_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct aic_tinfo *ti = &sc->sc_tinfo[periph->periph_target];
 	struct scsipi_sense *ss = (void *)&acb->scsipi_cmd;
 
 	AIC_MISC(("requesting sense  "));
 	/* Next, setup a request sense command block */
 	bzero(ss, sizeof(*ss));
 	ss->opcode = REQUEST_SENSE;
-	ss->byte2 = sc_link->scsipi_scsi.lun << 5;
+	ss->byte2 = periph->periph_lun << 5;
 	ss->length = sizeof(struct scsipi_sense_data);
 	acb->scsipi_cmd_length = sizeof(*ss);
 	acb->data_addr = (char *)&xs->sense.scsi_sense;
@@ -840,7 +897,7 @@ aic_sense(sc, acb)
 	acb->flags |= ACB_SENSE;
 	ti->senses++;
 	if (acb->flags & ACB_NEXUS)
-		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
+		ti->lubusy &= ~(1 << periph->periph_lun);
 	if (acb == sc->sc_nexus) {
 		aic_select(sc, acb);
 	} else {
@@ -860,8 +917,8 @@ aic_done(sc, acb)
 	struct aic_acb *acb;
 {
 	struct scsipi_xfer *xs = acb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct aic_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct aic_tinfo *ti = &sc->sc_tinfo[periph->periph_target];
 
 	AIC_TRACE(("aic_done  "));
 
@@ -889,8 +946,6 @@ aic_done(sc, acb)
 		}
 	}
 
-	xs->xs_status |= XS_STS_DONE;
-
 #if AIC_DEBUG
 	if ((aic_debug & AIC_SHOWMISC) != 0) {
 		if (xs->resid != 0)
@@ -906,7 +961,7 @@ aic_done(sc, acb)
 	 * Remove the ACB from whatever queue it happens to be on.
 	 */
 	if (acb->flags & ACB_NEXUS)
-		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
+		ti->lubusy &= ~(1 << periph->periph_lun);
 	if (acb == sc->sc_nexus) {
 		sc->sc_nexus = NULL;
 		sc->sc_state = AIC_IDLE;
@@ -1042,21 +1097,22 @@ nextbyte:
 	/* We now have a complete message.  Parse it. */
 	switch (sc->sc_state) {
 		struct aic_acb *acb;
-		struct scsipi_link *sc_link;
+		struct scsipi_periph *periph;
 		struct aic_tinfo *ti;
 
 	case AIC_CONNECTED:
 		AIC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
-		ti = &sc->sc_tinfo[acb->xs->sc_link->scsipi_scsi.target];
+		ti = &sc->sc_tinfo[acb->xs->xs_periph->periph_target];
 
 		switch (sc->sc_imess[0]) {
 		case MSG_CMDCOMPLETE:
 			if (sc->sc_dleft < 0) {
-				sc_link = acb->xs->sc_link;
+				periph = acb->xs->xs_periph;
 				printf("%s: %d extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -sc->sc_dleft,
-				    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun);
+				    periph->periph_target,
+				    periph->periph_lun);
 				acb->data_length = 0;
 			}
 			acb->xs->resid = acb->data_length = sc->sc_dleft;
@@ -1134,7 +1190,7 @@ nextbyte:
 					ti->period = ti->offset = 0;
 					aic_sched_msgout(sc, SEND_SDTR);
 				} else {
-					scsi_print_addr(acb->xs->sc_link);
+					scsipi_printaddr(acb->xs->xs_periph);
 					printf("sync, offset %d, "
 					    "period %dnsec\n",
 					    ti->offset, ti->period * 4);
@@ -1154,7 +1210,7 @@ nextbyte:
 					ti->width = 0;
 					aic_sched_msgout(sc, SEND_WDTR);
 				} else {
-					scsi_print_addr(acb->xs->sc_link);
+					scsipi_printaddr(acb->xs->xs_periph);
 					printf("wide, width %d\n",
 					    1 << (3 + ti->width));
 				}
@@ -1283,14 +1339,14 @@ nextmsg:
 	case SEND_IDENTIFY:
 		AIC_ASSERT(sc->sc_nexus != NULL);
 		sc->sc_omess[0] =
-		    MSG_IDENTIFY(sc->sc_nexus->xs->sc_link->scsipi_scsi.lun, 1);
+		    MSG_IDENTIFY(sc->sc_nexus->xs->xs_periph->periph_lun, 1);
 		n = 1;
 		break;
 
 #if AIC_USE_SYNCHRONOUS
 	case SEND_SDTR:
 		AIC_ASSERT(sc->sc_nexus != NULL);
-		ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+		ti = &sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target];
 		sc->sc_omess[4] = MSG_EXTENDED;
 		sc->sc_omess[3] = 3;
 		sc->sc_omess[2] = MSG_EXT_SDTR;
@@ -1303,7 +1359,7 @@ nextmsg:
 #if AIC_USE_WIDE
 	case SEND_WDTR:
 		AIC_ASSERT(sc->sc_nexus != NULL);
-		ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+		ti = &sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target];
 		sc->sc_omess[3] = MSG_EXTENDED;
 		sc->sc_omess[2] = 2;
 		sc->sc_omess[1] = MSG_EXT_WDTR;
@@ -1695,7 +1751,7 @@ aicintr(arg)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char sstat0, sstat1;
 	register struct aic_acb *acb;
-	register struct scsipi_link *sc_link;
+	register struct scsipi_periph *periph;
 	struct aic_tinfo *ti;
 	int n;
 
@@ -1792,8 +1848,8 @@ loop:
 			}
 			AIC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
-			sc_link = acb->xs->sc_link;
-			ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+			periph = acb->xs->xs_periph;
+			ti = &sc->sc_tinfo[periph->periph_target];
 
 			sc->sc_msgpriq = SEND_IDENTIFY;
 			if (acb->flags & ACB_RESET)
@@ -1812,7 +1868,7 @@ loop:
 			}
 
 			acb->flags |= ACB_NEXUS;
-			ti->lubusy |= (1 << sc_link->scsipi_scsi.lun);
+			ti->lubusy |= (1 << periph->periph_lun);
 
 			/* Do an implicit RESTORE POINTERS. */
 			sc->sc_dp = acb->data_addr;
@@ -1897,8 +1953,8 @@ loop:
 				 * or immediately after sending a SDTR or WDTR
 				 * message, disable negotiation.
 				 */
-				sc_link = acb->xs->sc_link;
-				ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+				periph = acb->xs->xs_periph;
+				ti = &sc->sc_tinfo[periph->periph_target];
 				switch (sc->sc_lastmsg) {
 #if AIC_USE_SYNCHRONOUS
 				case SEND_SDTR:
@@ -2084,11 +2140,12 @@ aic_timeout(arg)
 {
 	struct aic_acb *acb = arg;
 	struct scsipi_xfer *xs = acb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct aic_softc *sc = sc_link->adapter_softc;
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct aic_softc *sc =
+	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	int s;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(periph);
 	printf("timed out");
 
 	s = splbio();
@@ -2118,10 +2175,10 @@ aic_show_scsi_cmd(acb)
 	struct aic_acb *acb;
 {
 	u_char  *b = (u_char *)&acb->scsipi_cmd;
-	struct scsipi_link *sc_link = acb->xs->sc_link;
+	struct scsipi_periph *periph = acb->xs->xs_periph;
 	int i;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(periph);
 	if ((acb->xs->xs_control & XS_CTL_RESET) == 0) {
 		for (i = 0; i < acb->scsipi_cmd_length; i++) {
 			if (i)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahavar.h,v 1.10 1998/12/09 08:47:18 thorpej Exp $	*/
+/*	$NetBSD: ahavar.h,v 1.10.10.1 1999/10/19 17:47:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,10 +85,9 @@ struct aha_softc {
 	struct aha_ccb *sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, aha_ccb) sc_free_ccb, sc_waiting_ccb;
 	int sc_mbofull;
-	struct scsipi_link sc_link;	/* prototype for devs */
-	struct scsipi_adapter sc_adapter;
 
-	TAILQ_HEAD(, scsipi_xfer) sc_queue;
+	struct scsipi_adapter sc_adapter;
+	struct scsipi_channel sc_channel;
 
 	char sc_model[18],
 	     sc_firmware[4];

@@ -1,4 +1,4 @@
-/*	$NetBSD: dptvar.h,v 1.4 1999/10/04 23:57:32 thorpej Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.4.2.1 1999/10/19 17:47:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -58,7 +58,7 @@ struct dpt_softc {
 	struct device sc_dv;		/* generic device data */
 	bus_space_handle_t sc_ioh;	/* bus space handle */
 	struct scsipi_adapter sc_adapter;/* scsipi adapter */
-	struct scsipi_link sc_link[3];	/* prototype link for each channel */
+	struct scsipi_channel sc_channels[3]; /* each channel */
 	struct eata_cfg sc_ec;		/* EATA configuration data */
 	bus_space_tag_t	sc_iot;		/* bus space tag */
 	bus_dma_tag_t	sc_dmat;	/* bus DMA tag */
@@ -76,7 +76,6 @@ struct dpt_softc {
 	int		sc_hbaid[3];	/* ID of HBA on each channel */
 	int		sc_nccbs;	/* number of CCBs available */
 	TAILQ_HEAD(, dpt_ccb) sc_free_ccb;/* free ccb list */
-	TAILQ_HEAD(, scsipi_xfer) sc_queue;/* pending commands */
 };
 
 int	dpt_intr __P((void *));
