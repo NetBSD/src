@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2002/02/10 01:58:02 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2002/04/10 20:13:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -416,7 +416,6 @@ chrtoblk(dev)
 	return (makedev(blkmaj, minor(dev)));
 }
 
-#if !defined(FOOTBRIDGE)                                                                                   
 /*
  * This entire table could be autoconfig()ed but that would mean that
  * the kernel's idea of the console would be out of sync with that of
@@ -441,6 +440,5 @@ struct consdev constab[] = {
 #endif
 	{ 0 },
 };
-#endif	/* !FOOTBRIDGE */
-                           
+
 /* End of conf.c */
