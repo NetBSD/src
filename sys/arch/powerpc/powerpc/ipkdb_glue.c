@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.2 1997/04/16 22:12:42 thorpej Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.3 2001/12/23 08:25:27 dbj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,6 +43,8 @@
 #include <machine/trap.h>
 
 int ipkdbregs[NREG];
+
+int ipkdb_trap_glue __P((struct trapframe *));
 
 #ifdef	IPKDBUSERHACK
 int ipkdbsr;			/* TEMPRORARY (Really needs some better mechanism)	XXX */
