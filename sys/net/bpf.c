@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.87 2004/01/21 22:15:16 jonathan Exp $	*/
+/*	$NetBSD: bpf.c,v 1.88 2004/01/21 23:59:12 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.87 2004/01/21 22:15:16 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.88 2004/01/21 23:59:12 jonathan Exp $");
 
 #include "bpfilter.h"
 
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.87 2004/01/21 22:15:16 jonathan Exp $");
  * dynamically based on available memory size and available mbuf clusters.
  */
 int bpf_bufsize = BPF_BUFSIZE;
-int bpf_maxbufsize = (1024 *  1024)	/* XXX set dynamically, see above */
+int bpf_maxbufsize = (1024 *  1024);	/* XXX set dynamically, see above */
 
 /*
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
