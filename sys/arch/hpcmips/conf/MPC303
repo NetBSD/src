@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.14 2002/03/10 10:13:31 takemura Exp $
+# 	$NetBSD: MPC303,v 1.15 2002/03/25 13:24:18 shin Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -7,7 +7,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.14 $"
+#ident 		"GENERIC-$Revision: 1.15 $"
 
 maxusers	16
 
@@ -221,7 +221,7 @@ bivideo0	at	mainbus0
 hpcfb*		at	bivideo0
 wsdisplay*	at	hpcfb?
 wskbd*		at	hpckbd? mux 1
-#wsmouse*	at	vrpiu? mux 0
+wsmouse*	at	vrpiu? mux 0
 btnmgr0		at	mainbus0
 wskbd*		at	btnmgr0 mux 1
 
