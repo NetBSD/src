@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.22 2003/10/11 09:09:15 tsutsui Exp $	*/
+/*	$NetBSD: cache.c,v 1.23 2003/11/01 04:42:56 shin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.22 2003/10/11 09:09:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.23 2003/11/01 04:42:56 shin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -609,45 +609,30 @@ primary_cache_is_2way:
 #endif /* MIPS3_5900 */
 #ifdef ENABLE_MIPS4_CACHE_R10K
 	case MIPS_R10000:
-		/* cache spec */
+	case MIPS_R12000:
+	case MIPS_R14000:
 		mips_picache_ways = 2;
 		mips_pdcache_ways = 2;
 		mips_sdcache_ways = 2;
 
 		mips4_get_cache_config(csizebase);
 
-		switch (mips_picache_line_size) {
-		case 64:			/* 64 Byte */
-			mips_cache_ops.mco_icache_sync_all =
-			    r10k_icache_sync_all_64;
-			mips_cache_ops.mco_icache_sync_range =
-			    r10k_icache_sync_range_64;
-			mips_cache_ops.mco_icache_sync_range_index =
-			    r10k_icache_sync_range_index_64;
-			break;
-
-		default:
-			panic("r10k picache line size %d",
-			    mips_picache_line_size);
-		}
-		switch (mips_pdcache_line_size) {
-		case 32:			/* 32 Byte */
-			mips_cache_ops.mco_pdcache_wbinv_all =
-			    r5k_pdcache_wbinv_all_32;
-			mips_cache_ops.mco_pdcache_wbinv_range =
-			    r5k_pdcache_wbinv_range_32;
-			mips_cache_ops.mco_pdcache_wbinv_range_index =
-			    r5k_pdcache_wbinv_range_index_32;
-			mips_cache_ops.mco_pdcache_inv_range =
-			    r5k_pdcache_inv_range_32;
-			mips_cache_ops.mco_pdcache_wb_range =
-			    r10k_pdcache_wb_range;
-			break;
-
-		default:
-			panic("r10k pdcache line size %d",
-			    mips_pdcache_line_size);
-		}
+		mips_cache_ops.mco_icache_sync_all =
+		    r10k_icache_sync_all;
+		mips_cache_ops.mco_icache_sync_range =
+		    r10k_icache_sync_range;
+		mips_cache_ops.mco_icache_sync_range_index =
+		    r10k_icache_sync_range_index;
+		mips_cache_ops.mco_pdcache_wbinv_all =
+		    r10k_pdcache_wbinv_all;
+		mips_cache_ops.mco_pdcache_wbinv_range =
+		    r10k_pdcache_wbinv_range;
+		mips_cache_ops.mco_pdcache_wbinv_range_index =
+		    r10k_pdcache_wbinv_range_index;
+		mips_cache_ops.mco_pdcache_inv_range =
+		    r10k_pdcache_inv_range;
+		mips_cache_ops.mco_pdcache_wb_range =
+		    r10k_pdcache_wb_range;
 		break;
 #endif /* ENABLE_MIPS4_CACHE_R10K */
 #endif /* MIPS3 || MIPS4 */
@@ -768,53 +753,18 @@ primary_cache_is_2way:
 		break;
 #ifdef ENABLE_MIPS4_CACHE_R10K
 	case MIPS_R10000:
-		switch (mips_sdcache_ways) {
-		case 2:
-			switch (mips_sdcache_line_size) {
-			case 64:
-				mips_cache_ops.mco_sdcache_wbinv_all =
-				    r4k_sdcache_wbinv_all_generic;
-				mips_cache_ops.mco_sdcache_wbinv_range =
-				    r4k_sdcache_wbinv_range_generic;
-				mips_cache_ops.mco_sdcache_wbinv_range_index =
-				    r4k_sdcache_wbinv_range_index_generic;
-				mips_cache_ops.mco_sdcache_inv_range =
-				    r4k_sdcache_inv_range_generic;
-				mips_cache_ops.mco_sdcache_wb_range =
-#if 0 /* XXX needs real wb functions for r10k 2way L2 cache */
-				    r4k_sdcache_wb_range_generic;
-#else
-				    r4k_sdcache_wbinv_range_generic;
-#endif
-				break;
-
-			case 128:
-				mips_cache_ops.mco_sdcache_wbinv_all =
-				    r4k_sdcache_wbinv_all_128;
-				mips_cache_ops.mco_sdcache_wbinv_range =
-				    r4k_sdcache_wbinv_range_128;
-				mips_cache_ops.mco_sdcache_wbinv_range_index =
-				    r4k_sdcache_wbinv_range_index_128;
-				mips_cache_ops.mco_sdcache_inv_range =
-				    r4k_sdcache_inv_range_128;
-				mips_cache_ops.mco_sdcache_wb_range =
-#if 0 /* XXX needs real wb functions for r10k 2way L2 cache */
-				    r4k_sdcache_wb_range_128;
-#else
-				    r4k_sdcache_wbinv_range_128;
-#endif
-				break;
-
-			default:
-				panic("r10k sdcache %d way line size %d",
-				    mips_sdcache_ways, mips_sdcache_line_size);
-			}
-			break;
-
-		default:
-			panic("r10k sdcache %d way line size %d",
-			    mips_sdcache_ways, mips_sdcache_line_size);
-		}
+	case MIPS_R12000:
+	case MIPS_R14000:
+		mips_cache_ops.mco_sdcache_wbinv_all =
+		    r10k_sdcache_wbinv_all;
+		mips_cache_ops.mco_sdcache_wbinv_range =
+		    r10k_sdcache_wbinv_range;
+		mips_cache_ops.mco_sdcache_wbinv_range_index =
+		    r10k_sdcache_wbinv_range_index;
+		mips_cache_ops.mco_sdcache_inv_range =
+		    r10k_sdcache_inv_range;
+		mips_cache_ops.mco_sdcache_wb_range =
+		    r10k_sdcache_wb_range;
 		break;
 #endif /* ENABLE_MIPS4_CACHE_R10K */
 #endif /* MIPS3 || MIPS4 */
