@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.69 2004/07/17 20:12:02 mycroft Exp $	*/
+/*	$NetBSD: ehci.c,v 1.70 2004/09/17 10:55:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.69 2004/07/17 20:12:02 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.70 2004/09/17 10:55:07 yamt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -804,7 +804,7 @@ ehci_waitintr(ehci_softc_t *sc, usbd_xfer_handle xfer)
 		intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS)) &
 			sc->sc_eintrs;
 		DPRINTFN(15,("ehci_waitintr: 0x%04x\n", intrs));
-#ifdef OHCI_DEBUG
+#ifdef EHCI_DEBUG
 		if (ehcidebug > 15)
 			ehci_dump_regs(sc);
 #endif
