@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.42 1997/05/08 16:20:41 mycroft Exp $	*/
+/*	$NetBSD: vnode.h,v 1.43 1997/06/11 10:40:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@ enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 enum vtagtype	{
 	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_LFS, VT_LOFS, VT_FDESC,
 	VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS, VT_AFS, VT_ISOFS,
-	VT_UNION, VT_ADOSFS
+	VT_UNION, VT_ADOSFS, VT_EXT2FS
 };
 
 /*
