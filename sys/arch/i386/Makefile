@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1997/10/11 09:12:20 mycroft Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 1998/11/04 17:37:48 cgd Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -24,6 +24,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	stand
+SUBDIR=	stand isa/pcvt
 
 .include <bsd.subdir.mk>
