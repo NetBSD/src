@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.78 2003/06/28 14:22:30 darrenr Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.79 2003/06/29 18:43:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.78 2003/06/28 14:22:30 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.79 2003/06/29 18:43:49 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -547,7 +547,7 @@ sys_swapctl(l, v, retval)
 	 */
 	if (SCARG(uap, arg) == NULL) {
 		vp = rootvp;		/* miniroot */
-		if (vget(vp, LK_EXCLUSIVE, l)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			error = EBUSY;
 			goto out;
 		}

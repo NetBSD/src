@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.41 2003/06/29 02:16:59 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.42 2003/06/29 18:43:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.41 2003/06/29 02:16:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.42 2003/06/29 18:43:31 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -71,9 +71,8 @@ int	fdesc_quotactl __P((struct mount *, int, uid_t, caddr_t,
 			    struct lwp *));
 int	fdesc_statfs __P((struct mount *, struct statfs *, struct lwp *));
 int	fdesc_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int	fdesc_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int	fdesc_fhtovp __P((struct mount *, struct fid *, struct vnode **,
-			    struct lwp *));
+int	fdesc_vget __P((struct mount *, ino_t, struct vnode **));
+int	fdesc_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	fdesc_checkexp __P((struct mount *, struct mbuf *, int *,
 			    struct ucred **));
 int	fdesc_vptofh __P((struct vnode *, struct fid *));
@@ -172,10 +171,9 @@ fdesc_unmount(mp, mntflags, l)
 }
 
 int
-fdesc_root(mp, vpp, l)
+fdesc_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct vnode *vp;
 
@@ -269,11 +267,10 @@ fdesc_sync(mp, waitfor, uc, l)
  * Currently unsupported.
  */
 int
-fdesc_vget(mp, ino, vpp, l)
+fdesc_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
@@ -282,11 +279,10 @@ fdesc_vget(mp, ino, vpp, l)
 
 /*ARGSUSED*/
 int
-fdesc_fhtovp(mp, fhp, vpp, l)
+fdesc_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);

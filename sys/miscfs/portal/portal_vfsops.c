@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.35 2003/06/29 02:17:00 thorpej Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.36 2003/06/29 18:43:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.35 2003/06/29 02:17:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.36 2003/06/29 18:43:34 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -74,13 +74,13 @@ int	portal_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct lwp *));
 int	portal_start __P((struct mount *, int, struct lwp *));
 int	portal_unmount __P((struct mount *, int, struct lwp *));
-int	portal_root __P((struct mount *, struct vnode **, struct lwp *));
+int	portal_root __P((struct mount *, struct vnode **));
 int	portal_quotactl __P((struct mount *, int, uid_t, caddr_t,
 			     struct lwp *));
 int	portal_statfs __P((struct mount *, struct statfs *, struct lwp *));
 int	portal_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int	portal_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int	portal_fhtovp __P((struct mount *, struct fid *, struct vnode **, struct lwp *));
+int	portal_vget __P((struct mount *, ino_t, struct vnode **));
+int	portal_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	portal_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	portal_vptofh __P((struct vnode *, struct fid *));
@@ -237,10 +237,9 @@ portal_unmount(mp, mntflags, l)
 }
 
 int
-portal_root(mp, vpp, l)
+portal_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct vnode *vp;
 
@@ -302,22 +301,20 @@ portal_sync(mp, waitfor, uc, l)
 }
 
 int
-portal_vget(mp, ino, vpp, l)
+portal_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
 }
 
 int
-portal_fhtovp(mp, fhp, vpp, l)
+portal_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
