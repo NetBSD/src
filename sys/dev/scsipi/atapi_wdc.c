@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.33 2000/04/01 14:32:25 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.34 2000/04/02 23:38:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -109,6 +109,7 @@ wdc_atapibus_attach(chp)
 	wdc->sc_atapi_adapter._generic.scsipi_cmd = wdc_atapi_send_cmd;
 	wdc->sc_atapi_adapter._generic.scsipi_minphys = wdc_atapi_minphys;
 	wdc->sc_atapi_adapter.atapi_probedev = wdc_atapi_probedev;
+	wdc->sc_atapi_adapter.atapi_kill_pending = atapi_kill_pending;
 
 	memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
 	aa_link.aa_type = T_ATAPI;

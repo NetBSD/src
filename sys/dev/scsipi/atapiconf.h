@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.9 2000/04/01 14:32:26 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.10 2000/04/02 23:38:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -48,6 +48,7 @@ struct atapibus_softc {
 struct atapi_adapter {
 	struct scsipi_adapter _generic;
 	void (*atapi_probedev) __P((struct atapibus_softc *, int));
+	void (*atapi_kill_pending) __P((struct scsipi_link *));
 };
 
 
