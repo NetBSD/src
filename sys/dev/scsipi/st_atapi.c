@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.1 2001/05/04 07:48:57 bouyer Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.2 2001/06/18 09:05:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -65,18 +65,25 @@
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
 #include <dev/scsipi/stvar.h>
+#include <dev/scsipi/atapi_tape.h>
 
 int	st_atapibus_match __P((struct device *, struct cfdata *, void *));
+void	st_atapibus_attach __P((struct device *, struct device *, void *));
+int	st_atapibus_ops __P((struct st_softc *, int, int));
+int	st_atapibus_mode_sense __P((struct st_softc *, int));
+int	st_atapibus_mode_select __P((struct st_softc *, int));
+int	st_atapibus_do_ms __P((struct st_softc *, int, void *, int, int));
 
 struct cfattach st_atapibus_ca = {
-	sizeof(struct st_softc), st_atapibus_match, stattach
+	sizeof(struct st_softc), st_atapibus_match, st_atapibus_attach
 };
 
 const struct scsipi_inquiry_pattern st_atapibus_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
-	 "",         "",                 ""},
+	 "",	 "",		 ""},
 };
 
 int
@@ -88,9 +95,101 @@ st_atapibus_match(parent, match, aux)
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
+	if (scsipi_periph_bustype(sa->sa_periph) != SCSIPI_BUSTYPE_ATAPI)
+		return (0);
+
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
 	    (caddr_t)st_atapibus_patterns,
 	    sizeof(st_atapibus_patterns)/sizeof(st_atapibus_patterns[0]),
 	    sizeof(st_atapibus_patterns[0]), &priority);
 	return (priority);
+}
+
+void
+st_atapibus_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct st_softc *st = (void *)self;
+
+	st->ops = st_atapibus_ops;
+	stattach(parent, st, aux);
+}
+
+int
+st_atapibus_ops(st, op, flags)
+	struct st_softc *st;
+	int op;
+	int flags;
+{
+	switch(op) {
+	case ST_OPS_RBL:
+		/* done in mode_sense */
+		return 0;
+	case ST_OPS_MODESENSE:
+		return st_atapibus_mode_sense(st, flags);
+	case ST_OPS_MODESELECT:
+		return st_atapibus_mode_select(st, flags);
+	case ST_OPS_CMPRSS_ON:
+	case ST_OPS_CMPRSS_OFF:       
+		return ENODEV;
+	default:
+		panic("st_scsibus_ops: invalid op");
+		/* NOTREACHED */      
+	}
+}
+
+int
+st_atapibus_mode_sense(st, flags)
+	struct st_softc *st;
+	int flags;
+{
+	int count, error;
+	struct atapi_cappage cappage;
+	struct scsipi_periph *periph = st->sc_periph;
+
+	/* get drive capabilities, some drives needs this repeated */
+	for (count = 0 ; count < 5 ; count++) {
+		error = scsipi_mode_sense(periph, SMS_DBD,
+		    ATAPI_TAPE_CAP_PAGE, &cappage.header, sizeof(cappage),
+		    flags | XS_CTL_DATA_ONSTACK, ST_RETRIES, ST_CTL_TIME);
+		if (error == 0) {
+			st->numblks = 0; /* unused anyway */
+			if (cappage.cap4 & ATAPI_TAPE_CAP_PAGE_BLK32K)
+				st->media_blksize = 32768;
+			else if (cappage.cap4 & ATAPI_TAPE_CAP_PAGE_BLK1K)
+				st->media_blksize = 1024;
+			else if (cappage.cap4 & ATAPI_TAPE_CAP_PAGE_BLK512)
+				st->media_blksize = 512;
+			else {
+				error = ENODEV;
+				continue;
+			}
+			st->blkmin = st->blkmax = st->media_blksize;
+			st->media_density = 0;
+			if (cappage.header.dev_spec & SMH_DSP_WRITE_PROT)
+				st->flags |= ST_READONLY;
+			else
+				st->flags &= ~ST_READONLY;
+			SC_DEBUG(periph, SCSIPI_DB3,
+			    ("density code %d, %d-byte blocks, write-%s, ",
+			    st->media_density, st->media_blksize,
+			    st->flags & ST_READONLY ? "protected" : "enabled"));
+			SC_DEBUG(periph, SCSIPI_DB3,
+			    ("%sbuffered\n",
+			    cappage.header.dev_spec & SMH_DSP_BUFF_MODE ?
+			    "" : "un"));
+			periph->periph_flags |= PERIPH_MEDIA_LOADED;
+			return 0;
+		}
+	}
+	return error;
+}
+
+int
+st_atapibus_mode_select(st, flags)
+	struct st_softc *st;
+	int flags;
+{
+	return ENODEV; /* for now ... */
 }
