@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.79 2004/04/24 20:51:30 dbj Exp $ */
+/*	$NetBSD: disks.c,v 1.80 2004/04/24 20:54:26 dbj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -544,7 +544,7 @@ fixsb(const char *disk, int ptn)
 	char diskpath[MAXPATHLEN];
 	char *prog = "/sbin/fsck_ffs";
 	int rval;
-	static uint64_t sblk[SBLOCKSIZE/sizeof uint64_t];
+	static uint64_t sblk[SBLOCKSIZE/sizeof(uint64_t)];
 	struct fs *fs = (struct fs *)sblk;
 	char *part;
 
