@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.5 1997/01/24 22:13:10 christos Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.6 1997/04/10 07:02:58 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -256,13 +256,13 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 		*conf = isapnp_newconf(*dev);
 		(*conf)->ipa_pref = buf[0];
 #ifdef DEBUG_ISAPNP
-		isapnp_print_dep_start(">>> Start dependent functions ",
+		isapnp_print_dep_start(">>> Start dependent function ",
 		    (*conf)->ipa_pref);
 #endif
 		return 0;
 		
 	case ISAPNP_TAG_DEP_END:
-		DPRINTF(("<<<End dependend functions\n"));
+		DPRINTF(("<<<End dependent functions\n"));
 		*conf = NULL;
 		return 0;
 
@@ -332,7 +332,6 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 		r->maxbase = (buf[4] << 8) | buf[3];
 		r->align = buf[5];
 		r->length = buf[6];
-
 #ifdef DEBUG_ISAPNP
 		isapnp_print_io("", r);
 #endif
@@ -341,43 +340,38 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 	case ISAPNP_TAG_FIXED_IO_PORT_DESC:
 		r = &pa->ipa_io[pa->ipa_nio++];
 		r->flags = 0;
-		r->minbase = (buf[2] << 8) | buf[1];
+		r->minbase = (buf[1] << 8) | buf[0];
 		r->maxbase = r->minbase;
 		r->align = 1;
-		r->length = buf[3];
-
+		r->length = buf[2];
 #ifdef DEBUG_ISAPNP
-		isapnp_print_io("FIXED", r);
+		isapnp_print_io("FIXED ", r);
 #endif
 		break;
 
-	case ISAPNP_TAG_RESERVED1:
-	case ISAPNP_TAG_RESERVED2:
-	case ISAPNP_TAG_RESERVED3:
-	case ISAPNP_TAG_RESERVED4:
-		break;
-
 	case ISAPNP_TAG_VENDOR_DEF:
+		DPRINTF(("Vendor defined (short)\n"));
 		break;
 
 	case ISAPNP_TAG_MEM_RANGE_DESC:
 		r = &pa->ipa_mem[pa->ipa_nmem++];
-		r->minbase = (buf[2] << 8) | buf[1];
-		r->maxbase = (buf[4] << 8) | buf[3];
+		r->flags = buf[0];
+		r->minbase = (buf[2] << 16) | (buf[1] << 8);
+		r->maxbase = (buf[4] << 16) | (buf[3] << 8);
 		r->align = (buf[6] << 8) | buf[5];
-		r->length = (buf[8] << 8) | buf[7];
+		r->length = (buf[8] << 16) | (buf[7] << 8);
 #ifdef DEBUG_ISAPNP
-		isapnp_print_mem("16 bit", r);
+		isapnp_print_mem("", r);
 #endif
 		break;
 
 
 	case ISAPNP_TAG_UNICODE_IDENT_STRING:
-		buf[len] = '\0';
-		DPRINTF(("Unicode Ident: %s\n", buf));
+		DPRINTF(("Unicode Ident\n"));
 		break;
 
 	case ISAPNP_TAG_VENDOR_DEFINED:
+		DPRINTF(("Vendor defined (long)\n"));
 		break;
 
 	case ISAPNP_TAG_MEM32_RANGE_DESC:
@@ -392,7 +386,7 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 		r->length = (buf[16] << 24) | (buf[15] << 16) |
 		    (buf[14] << 8) | buf[13];
 #ifdef DEBUG_ISAPNP
-		isapnp_print_mem("32 bit", r);
+		isapnp_print_mem("32-bit ", r);
 #endif
 		break;
 
@@ -406,7 +400,7 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 		r->length = (buf[8] << 24) | (buf[7] << 16) |
 		    (buf[6] << 8) | buf[5];
 #ifdef DEBUG_ISAPNP
-		isapnp_print_mem("FIXED 32 bit", r);
+		isapnp_print_mem("FIXED 32-bit ", r);
 #endif
 		break;
 
