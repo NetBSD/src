@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.9 1996/09/28 19:08:22 christos Exp $
+.\"	$NetBSD: quotactl.2,v 1.10 1996/10/22 21:49:00 explorer Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,14 +63,14 @@ The address of an optional command specific data structure,
 may be given; its interpretation
 is discussed below with each command.
 .Pp
-Currently quotas are supported only for the ``ufs'' filesystem.
-For ``ufs'',
+Currently quotas are supported only for the ``ffs'' filesystem.
+For ``ffs'',
 a command is composed of a primary command (see below)
 and a command type used to interpret the
 .Fa id .
 Types are supported for interpretation of user identifiers
 and group identifiers.
-The ``ufs'' specific commands are:
+The ``ffs'' specific commands are:
 .Bl -tag -width Q_QUOTAON
 .It Dv Q_QUOTAON
 Enable disk quotas for the filesystem specified by
@@ -105,7 +105,7 @@ Get disk quota limits and current usage for the user or group
 is a pointer to a
 .Fa struct dqblk
 structure (defined in 
-.Ao Pa ufs/quota.h Ac ) .
+.Ao Pa ufs/ufs/quota.h Ac ) .
 .It Dv Q_SETQUOTA
 Set disk quota limits for the user or group
 (as determined by the command type) with identifier
@@ -114,7 +114,7 @@ Set disk quota limits for the user or group
 is a pointer to a
 .Fa struct dqblk
 structure (defined in 
-.Ao Pa ufs/quota.h Ac ) .
+.Ao Pa ufs/ufs/quota.h Ac ) .
 The usage fields of the
 .Fa dqblk
 structure are ignored.
@@ -127,7 +127,7 @@ Set disk usage limits for the user or group
 is a pointer to a
 .Fa struct dqblk
 structure (defined in
-.Ao Pa ufs/quota.h Ac ) .
+.Ao Pa ufs/ufs/quota.h Ac ) .
 Only the usage fields are used.
 This call is restricted to the super-user.
 .It Dv Q_SYNC
