@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.45 2000/01/19 00:23:59 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.46 2000/01/19 01:16:40 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -197,6 +197,7 @@ struct usbd_xfer {
 	SIMPLEQ_ENTRY(usbd_xfer) next;
 
 	void		       *hcpriv; /* private use by the HC driver */
+	int			hcprivint;
 
 #if defined(__FreeBSD__)
 	struct callout_handle  timo_handle;
