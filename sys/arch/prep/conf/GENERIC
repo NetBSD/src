@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.48 2002/04/25 15:06:36 atatat Exp $
+# $NetBSD: GENERIC,v 1.49 2002/05/02 14:36:42 nonaka Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.48 $"
+#ident		"GENERIC-$Revision: 1.49 $"
 
 maxusers	32
 
@@ -113,6 +113,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	RESIDUAL_DATA_DUMP	# verbosely dump residual data
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_BOOTPARAM
