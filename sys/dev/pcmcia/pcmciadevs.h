@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.51 1999/09/27 22:58:56 enami Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.52 1999/10/11 17:51:45 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.48 1999/09/27 22:57:26 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.49 1999/10/11 17:51:24 thorpej Exp 
  */
 
 /*-
@@ -99,6 +99,9 @@
 #define	PCMCIA_CIS_3COM_3CXEM556INT	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CXEM556INT	0x003d
 #define	PCMCIA_STR_3COM_3CXEM556INT	"3Com/Megahertz 3CXEM556-INT Ethernet/Modem"
+#define	PCMCIA_CIS_3COM_3CCFEM556BI	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3CCFEM556BI	0x0556
+#define	PCMCIA_STR_3COM_3CCFEM556BI	"3Com/Megahertz 3CCFEM556BI Ethernet/Modem"
 
 /* Compex Products */
 #define	PCMCIA_CIS_COMPEX_LINKPORT_ENET_B	{ NULL, NULL, NULL, NULL }
