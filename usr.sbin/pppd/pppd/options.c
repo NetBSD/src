@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.27 1998/09/04 19:13:05 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.28 1999/05/12 18:50:52 thorpej Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.43 1998/09/04 18:49:15 christos Exp ";
 #else
-__RCSID("$NetBSD: options.c,v 1.27 1998/09/04 19:13:05 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.28 1999/05/12 18:50:52 thorpej Exp $");
 #endif
 #endif
 
@@ -131,8 +131,14 @@ struct option_info disconnector_info;
 struct option_info welcomer_info;
 struct option_info devnam_info;
 #ifdef PPP_FILTER
-struct	bpf_program pass_filter;/* Filter program for packets to pass */
-struct	bpf_program active_filter; /* Filter program for link-active pkts */
+/* Filter program for packets to pass */
+struct	bpf_program pass_filter_in;
+struct	bpf_program pass_filter_out;
+
+/* Filter program for link-active packets */
+struct	bpf_program active_filter_in;
+struct	bpf_program active_filter_out;
+
 pcap_t  pc;			/* Fake struct pcap so we can compile expr */
 #endif
 
@@ -240,8 +246,10 @@ static int showhelp __P((char **));
 
 #ifdef PPP_FILTER
 static int setpdebug __P((char **));
-static int setpassfilter __P((char **));
-static int setactivefilter __P((char **));
+static int setpassfilter_in __P((char **));
+static int setpassfilter_out __P((char **));
+static int setactivefilter_in __P((char **));
+static int setactivefilter_out __P((char **));
 #endif
 
 #ifdef IPX_CHANGE
@@ -400,8 +408,12 @@ static struct cmd {
 
 #ifdef PPP_FILTER
     {"pdebug", 1, setpdebug},		/* libpcap debugging */
-    {"pass-filter", 1, setpassfilter},	/* set filter for packets to pass */
-    {"active-filter", 1, setactivefilter}, /* set filter for active pkts */
+    /* Set filter for packets to pass */
+    {"pass-filter-in", 1, setpassfilter_in},
+    {"pass-filter-out", 1, setpassfilter_out},
+    /* Set filter for active packets */
+    {"active-filter-in", 1, setactivefilter_in},
+    {"active-filter-in", 1, setactivefilter_out},
 #endif
 
 #ifdef IPX_CHANGE
@@ -1148,34 +1160,68 @@ setpdebug(argv)
 }
 
 /*
- * setpassfilter - Set the pass filter for packets
+ * setpassfilter_in - Set the incoming pass filter
  */
 static int
-setpassfilter(argv)
+setpassfilter_in(argv)
     char **argv;
 {
-    pc.linktype = DLT_PPP;
+    pc.linktype = DLT_PPP_SERIAL;
     pc.snapshot = PPP_HDRLEN;
- 
-    if (pcap_compile(&pc, &pass_filter, *argv, 1, netmask) == 0)
+
+    if (pcap_compile(&pc, &pass_filter_in, *argv, 1, netmask) == 0)
 	return 1;
-    option_error("error in pass-filter expression: %s\n", pcap_geterr(&pc));
+    option_error("error in pass-filter-in expression: %s\n", pcap_geterr(&pc));
     return 0;
 }
 
 /*
- * setactivefilter - Set the active filter for packets
+ * setpassfilter_out - Set the outgoing pass filter
  */
 static int
-setactivefilter(argv)
+setpassfilter_out(argv)
     char **argv;
 {
-    pc.linktype = DLT_PPP;
+    pc.linktype = DLT_PPP_SERIAL;
     pc.snapshot = PPP_HDRLEN;
  
-    if (pcap_compile(&pc, &active_filter, *argv, 1, netmask) == 0)
+    if (pcap_compile(&pc, &pass_filter_out, *argv, 1, netmask) == 0)
 	return 1;
-    option_error("error in active-filter expression: %s\n", pcap_geterr(&pc));
+    option_error("error in pass-filter-out expression: %s\n", pcap_geterr(&pc));
+    return 0;
+}
+
+/*
+ * setactivefilter_in - Set the incoming active filter
+ */
+static int
+setactivefilter_in(argv)
+    char **argv;
+{
+    pc.linktype = DLT_PPP_SERIAL;
+    pc.snapshot = PPP_HDRLEN;
+
+    if (pcap_compile(&pc, &active_filter_in, *argv, 1, netmask) == 0)
+	return 1;
+    option_error("error in active-filter-in expression: %s\n",
+		 pcap_geterr(&pc));
+    return 0;
+}
+
+/*
+ * setactivefilter_out - Set the outgoing active filter
+ */
+static int
+setactivefilter_out(argv)
+    char **argv;
+{
+    pc.linktype = DLT_PPP_SERIAL;
+    pc.snapshot = PPP_HDRLEN;
+ 
+    if (pcap_compile(&pc, &active_filter_out, *argv, 1, netmask) == 0)
+	return 1;
+    option_error("error in active-filter-out expression: %s\n",
+        pcap_geterr(&pc));
     return 0;
 }
 #endif
