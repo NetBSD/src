@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)mount.8	6.17 (Berkeley) 8/5/91
-.\"	$Id: mount.8,v 1.5 1993/08/01 07:38:55 mycroft Exp $
+.\"	$Id: mount.8,v 1.6 1994/01/05 08:32:10 cgd Exp $
 .\"
 .Dd August 5, 1991
 .Dt MOUNT 8
@@ -125,6 +125,13 @@ special devices for architectures other than its own.
 All
 .Tn I/O
 to the file system should be done synchronously.
+.It union
+Causes the namespace at the mount point to appear as the union
+of the mounted filesystem root and the existing directory.
+Lookups will be done in the mounted filesystem first.
+If those operations fail due to a non-existent file the underlying
+directory is then accessed.
+All creates are done in the mounted filesystem.
 .El
 .It Fl r
 The file system object is to be mounted read-only.
