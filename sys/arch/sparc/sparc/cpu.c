@@ -42,7 +42,7 @@
  *	@(#)cpu.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cpu.c,v 1.12 93/05/03 09:47:57 torek Exp  (LBL)
- * $Id: cpu.c,v 1.5 1993/11/26 11:44:51 deraadt Exp $
+ * $Id: cpu.c,v 1.6 1994/05/07 05:10:01 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@
 struct cacheinfo cacheinfo;
 
 /* The following are used externally */
+char	machine[] = "sparc";
 char	cpu_model[100];
 
 /* The CPU configuration driver. */
