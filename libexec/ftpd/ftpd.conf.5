@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.8.4.1 2000/06/22 08:46:21 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.8.4.2 2000/07/25 08:38:40 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 20, 2000
+.Dd July 23, 2000
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -64,6 +64,28 @@ The following special classes exist when parsing entries in
 Matches any class.
 .It Sy none
 Matches no class.
+.El
+.Pp
+Each class has a type, which may be one of:
+.Bl -tag -width "CHROOT" -offset indent
+.It Sy GUEST
+Guests (as per the
+.Dq anonymous
+and
+.Dq ftp
+logins).
+A
+.Xr chroot 2
+is performed after login.
+.It Sy CHROOT
+.Xr chroot 2 ed
+users (as per
+.Xr ftpchroot 5 ) .
+A
+.Xr chroot 2
+is performed after login.
+.It Sy REAL
+Normal users.
 .El
 .Pp
 .Nm
@@ -116,33 +138,52 @@ is
 or
 .Sy off
 is given, disable this feature, otherwise enable it.
+.It Sy chroot Ar class Op Sy pathformat
+If
+.Ar pathformat
+is not given or
+.Ar class
+is
+.Dq none ,
+use the default behaviour (see below).
+Otherwise,
+.Ar pathformat
+is parsed to create a directory to create as the root directory with
+.Xr chroot 2
+into upon login.
+.Pp
+.Ar pathformat
+can contain the following escape strings:
+.Bl -tag -width "Escape" -offset indent -compact
+.It Sy "Escape"
+.Sy Description
+.It "\&%c"
+Class name.
+.It "\&%d"
+Home directory of user.
+.It "\&%u"
+User name.
+.It "\&%\&%"
+A
+.Dq \&%
+character.
+.El
+.Pp
+The default root directory is
+.Pa /
+for
+.Sy REAL
+users, and the user's home directory for
+.Sy GUEST
+and
+.Sy CHROOT
+users.
 .It Sy classtype Ar class Ar type
 Set the class type of
 .Ar class
 to
-.Ar type .
-.Ar type
-may be one of:
-.Bl -tag -width "CHROOT" -offset indent
-.It Sy GUEST
-Guests (as per the
-.Dq anonymous
-and
-.Dq ftp
-logins).
-A
-.Xr chroot 2
-is performed after login.
-.It Sy CHROOT
-.Xr chroot 2 ed
-users (as per
-.Xr ftpchroot 5 ) .
-A
-.Xr chroot 2
-is performed after login.
-.It Sy REAL
-Normal users.
-.El
+.Ar type 
+(see above).
 .It Xo Sy conversion Ar class
 .Ar suffix Op Ar "type disable command"
 .Xc
@@ -223,6 +264,34 @@ is
 or
 .Ar count
 is not specified.
+.It Sy homedir Ar class Op Sy pathformat
+If
+.Ar pathformat
+is not given or
+.Ar class
+is
+.Dq none ,
+use the default behaviour (see below).
+Otherwise,
+.Ar pathformat
+is parsed to create a directory to change into upon login, and to use
+as the
+.Sq home
+directory of the user for tilde expansion in pathnames, etc.
+.Ar pathformat
+is parsed as per the
+.Sy chroot
+directive.
+.Pp
+The default home directory is the home directory of the user for
+.Sy REAL
+users, and
+.Pa /
+for
+.Sy GUEST
+and
+.Sy CHROOT
+users.
 .It Sy maxtimeout Ar class Ar time
 Set the maximum timeout period that a client may request,
 defaulting to two hours.
@@ -380,7 +449,7 @@ Otherwise, enable them.
 The following defaults are used:
 .Pp
 .Bd -literal -offset indent -compact
-checkportcmd  none
+checkportcmd  all
 classtype     chroot CHROOT
 classtype     guest  GUEST
 classtype     real   REAL

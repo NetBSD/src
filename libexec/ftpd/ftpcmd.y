@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.48 2000/06/19 15:15:03 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.48.2.1 2000/07/25 08:38:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.48 2000/06/19 15:15:03 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.48.2.1 2000/07/25 08:38:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,7 +205,7 @@ cmd
 	| CWD check_login CRLF
 		{
 			if ($2)
-				cwd(pw->pw_dir);
+				cwd(homedir);
 		}
 
 	| CWD check_login SP pathname CRLF
@@ -225,7 +225,7 @@ cmd
 	| QUIT CRLF
 		{
 			if (logged_in) {
-				reply(-221, "");
+				reply(-221, "%s", "");
 				reply(0,
 	    "Data traffic for this session was %qd byte%s in %qd file%s.",
 				    (qdfmt_t)total_data, PLURAL(total_data),
@@ -254,91 +254,20 @@ cmd
 
 	| PORT check_login SP host_port CRLF
 		{
-			if ($2) {
-					/* be paranoid, if told so */
-			if (curclass.checkportcmd &&
-			    ((ntohs(data_dest.su_port) < IPPORT_RESERVED) ||
-			    memcmp(&data_dest.su_sin.sin_addr,
-			    &his_addr.su_sin.sin_addr,
-			    sizeof(data_dest.su_sin.sin_addr)) != 0)) {
-				reply(500,
-				    "Illegal PORT command rejected");
-			} else if (epsvall) {
-				reply(501, "PORT disallowed after EPSV ALL");
-			} else {
-				usedefault = 0;
-				if (pdata >= 0) {
-					(void) close(pdata);
-					pdata = -1;
-				}
-				reply(200, "PORT command successful.");
-			}
-
-			}
+			if ($2)
+				port_check("PORT", AF_INET);
 		}
 
 	| LPRT check_login SP host_long_port4 CRLF
 		{
-			if ($2) {
-
-			/* reject invalid host_long_port4 */
-			if (data_dest.su_family != AF_INET) {
-				reply(500, "Illegal LPRT command rejected");
-				return (NULL);
-			}
-			/* be paranoid, if told so */
-			if (curclass.checkportcmd &&
-			    ((ntohs(data_dest.su_port) < IPPORT_RESERVED) ||
-			     memcmp(&data_dest.su_sin.sin_addr,
-				    &his_addr.su_sin.sin_addr,
-			     sizeof(data_dest.su_sin.sin_addr)) != 0)) {
-				reply(500, "Illegal LPRT command rejected");
-				return (NULL);
-			}
-			if (epsvall)
-				reply(501, "LPRT disallowed after EPSV ALL");
-			else {
-				usedefault = 0;
-				if (pdata >= 0) {
-					(void) close(pdata);
-					pdata = -1;
-				}
-				reply(200, "LPRT command successful.");
-			}
-
-			}
+			if ($2)
+				port_check("LPRT", AF_INET);
 		}
 
 	| LPRT check_login SP host_long_port6 CRLF
 		{
-			if ($2) {
-
-			/* reject invalid host_long_port6 */
-			if (data_dest.su_family != AF_INET6) {
-				reply(500, "Illegal LPRT command rejected");
-				return (NULL);
-			}
-			/* be paranoid, if told so */
-			if (curclass.checkportcmd &&
-			    ((ntohs(data_dest.su_port) < IPPORT_RESERVED) ||
-			     memcmp(&data_dest.su_sin6.sin6_addr,
-				    &his_addr.su_sin6.sin6_addr,
-			     sizeof(data_dest.su_sin6.sin6_addr)) != 0)) {
-				reply(500, "Illegal LPRT command rejected");
-				return (NULL);
-			}
-			if (epsvall)
-				reply(501, "LPRT disallowed after EPSV ALL");
-			else {
-				usedefault = 0;
-				if (pdata >= 0) {
-					(void) close(pdata);
-					pdata = -1;
-				}
-				reply(200, "LPRT command successful.");
-			}
-
-			}
+			if ($2)
+				port_check("LPRT", AF_INET6);
 		}
 
 	| EPRT check_login SP STRING CRLF
@@ -353,16 +282,6 @@ cmd
 
 			if ($2) {
 
-			if (epsvall) {
-				reply(501, "EPRT disallowed after EPSV ALL");
-				goto eprt_done;
-			}
-			usedefault = 0;
-			if (pdata >= 0) {
-				(void) close(pdata);
-				pdata = -1;
-			}
-
 			tmp = xstrdup($4);
 			p = tmp;
 			delim = p[0];
@@ -371,7 +290,7 @@ cmd
 			for (i = 0; i < 3; i++) {
 				q = strchr(p, delim);
 				if (!q || *q != delim) {
-		parsefail:
+ parsefail:
 					reply(500,
 					    "Invalid argument, rejected.");
 					usedefault = 1;
@@ -402,55 +321,19 @@ cmd
 			if (atoi(result[0]) == 2)
 				hints.ai_family = PF_INET6;
 			else
-				hints.ai_family = PF_UNSPEC;	/*XXX*/
+				hints.ai_family = PF_UNSPEC;	/* XXX */
 			hints.ai_socktype = SOCK_STREAM;
 			if (getaddrinfo(result[1], result[2], &hints, &res))
 				goto parsefail;
 			memcpy(&data_dest, res->ai_addr, res->ai_addrlen);
-			if (his_addr.su_family == AF_INET6
-			 && data_dest.su_family == AF_INET6) {
+			if (his_addr.su_family == AF_INET6 &&
+			    data_dest.su_family == AF_INET6) {
 				/* XXX more sanity checks! */
 				data_dest.su_sin6.sin6_scope_id =
 					his_addr.su_sin6.sin6_scope_id;
 			}
-			/* be paranoid, if told so */
-			if (curclass.checkportcmd) {
-				int fail;
-				fail = 0;
-				if (ntohs(data_dest.su_port) < IPPORT_RESERVED)
-					fail++;
-				if (data_dest.su_family != his_addr.su_family)
-					fail++;
-				if (data_dest.su_len != his_addr.su_len)
-					fail++;
-				switch (data_dest.su_family) {
-				case AF_INET:
-					fail += memcmp(
-					    &data_dest.su_sin.sin_addr,
-					    &his_addr.su_sin.sin_addr,
-					    sizeof(data_dest.su_sin.sin_addr));
-					break;
-				case AF_INET6:
-					fail += memcmp(
-					    &data_dest.su_sin6.sin6_addr,
-					    &his_addr.su_sin6.sin6_addr,
-					    sizeof(data_dest.su_sin6.sin6_addr));
-					break;
-				default:
-					fail++;
-				}
-				if (fail) {
-					reply(500,
-					    "Illegal EPRT command rejected");
-					return (NULL);
-				}
-			}
-			if (pdata >= 0) {
-				(void) close(pdata);
-				pdata = -1;
-			}
-			reply(200, "EPRT command successful.");
-		eprt_done:;
+			port_check("EPRT", -1);
+ eprt_done:
 			if (tmp != NULL)
 				free(tmp);
 
@@ -703,7 +586,7 @@ cmd
 				send_file_list(".");
 		}
 
-	| NLST check_login SP STRING CRLF
+	| NLST check_login SP pathname CRLF
 		{
 			if ($2)
 				send_file_list($4);
@@ -855,8 +738,11 @@ cmd
 
 	| SYST CRLF
 		{
-			reply(215, "UNIX Type: L%d Version: %s", NBBY,
-			    FTPD_VERSION);
+			if (EMPTYSTR(version))
+				reply(215, "UNIX Type: L%d", NBBY);
+			else
+				reply(215, "UNIX Type: L%d Version: %s", NBBY,
+				    version);
 		}
 
 	| STAT check_login SP pathname CRLF
@@ -964,7 +850,7 @@ cmd
 		}
 
 
-				/* extensions from draft-ietf-ftpext-mlst-10 */
+				/* extensions from draft-ietf-ftpext-mlst-11 */
 
 		/*
 		 * Return size of file in a format suitable for
@@ -1259,11 +1145,10 @@ pathname
 			 */
 			if (logged_in && $1 && *$1 == '~') {
 				glob_t gl;
-				int flags =
-				 GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
+				int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 
 				if ($1[1] == '\0')
-					$$ = xstrdup(pw->pw_dir);
+					$$ = xstrdup(homedir);
 				else {
 					memset(&gl, 0, sizeof(gl));
 					if (glob($1, flags, NULL, &gl) ||
@@ -1445,7 +1330,7 @@ struct tab cmdtab[] = {
 	{ "FEAT", FEAT, NOARGS,	1,	"(display extended features)" },
 	{ "OPTS", OPTS, STR1,	1,	"<sp> command [ <sp> options ]" },
 
-				/* from draft-ietf-ftpext-mlst-10 */
+				/* from draft-ietf-ftpext-mlst-11 */
 	{ "MDTM", MDTM, OSTR,	1,	"<sp> path-name" },
 	{ "SIZE", SIZE, OSTR,	1,	"<sp> path-name" },
 	{ "MLST", MLST, OSTR,	2,	"[ <sp> path-name ]" },
@@ -1479,6 +1364,7 @@ struct tab sitetab[] = {
 };
 
 static	void		help(struct tab *, const char *);
+static	void		port_check(const char *, int);
 static	void		toolong(int);
 static	int		yylex(void);
 
@@ -1867,7 +1753,7 @@ help(struct tab *ctab, const char *s)
 		int i, j, w;
 		int columns, lines;
 
-		reply(-214, "");
+		reply(-214, "%s", "");
 		reply(0, "The following %scommands are recognized.", type);
 		reply(0, "(`-' = not implemented, `+' = supports options)");
 		columns = 76 / width;
@@ -1911,4 +1797,58 @@ help(struct tab *ctab, const char *s)
 	else
 		reply(214, "%s%-*s\t%s; not implemented.", type, width,
 		    c->name, c->help);
+}
+
+/*
+ * Check that the structures used for a PORT, LPRT or EPRT command are
+ * valid (data_dest, his_addr), and if necessary, detect ftp bounce attacks.
+ * If family != -1 check that his_addr.su_family == family.
+ */
+static void
+port_check(const char *cmd, int family)
+{
+
+	if (epsvall) {
+		reply(501, "%s disallowed after EPSV ALL", cmd);
+		return;
+	}
+
+	if (family != -1 && his_addr.su_family != family) {
+ port_check_fail:
+		reply(500, "Illegal %s command rejected", cmd);
+		return;
+	}
+
+	if (data_dest.su_family != his_addr.su_family)
+		goto port_check_fail;
+
+			/* be paranoid, if told so */
+	if (curclass.checkportcmd) {
+		if ((ntohs(data_dest.su_port) < IPPORT_RESERVED) ||
+		    (data_dest.su_len != his_addr.su_len))
+			goto port_check_fail;
+		switch (data_dest.su_family) {
+		case AF_INET:
+			if (memcmp(&data_dest.su_sin.sin_addr,
+			    &his_addr.su_sin.sin_addr,
+			    sizeof(data_dest.su_sin.sin_addr)) != 0)
+				goto port_check_fail;
+			break;
+		case AF_INET6:
+			if (memcmp(&data_dest.su_sin6.sin6_addr,
+			    &his_addr.su_sin6.sin6_addr,
+			    sizeof(data_dest.su_sin6.sin6_addr)) != 0)
+				goto port_check_fail;
+			break;
+		default:
+			goto port_check_fail;
+		}
+	}
+
+	usedefault = 0;
+	if (pdata >= 0) {
+		(void) close(pdata);
+		pdata = -1;
+	}
+	reply(200, "%s command successful.", cmd);
 }
