@@ -1,4 +1,4 @@
-/*	$Id: video.c,v 1.2 1998/10/28 02:47:35 sakamoto Exp $	*/
+/*	$NetBSD: video.c,v 1.3 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
