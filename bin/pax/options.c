@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.49 2002/10/16 18:53:40 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.50 2002/10/16 21:45:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.49 2002/10/16 18:53:40 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.50 2002/10/16 21:45:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,6 +204,8 @@ options(int argc, char **argv)
 struct option pax_longopts[] = {
 	{ "insecure",		no_argument,		0,
 						OPT_INSECURE },
+	{ "force-local",	no_argument,		0,
+						OPT_FORCE_LOCAL },
 };
 
 /*
@@ -584,6 +586,9 @@ pax_options(int argc, char **argv)
 		case OPT_INSECURE:
 			secure = 0;
 			break;
+		case OPT_FORCE_LOCAL:
+			forcelocal = 0;
+			break;
 		case '?':
 		default:
 			pax_usage();
@@ -693,7 +698,6 @@ struct option tar_longopts[] = {
 	{ "gunzip",		no_argument,		0,	'z' },
 	{ "read-full-blocks",	no_argument,		0,	'B' },
 	{ "directory",		required_argument,	0,	'C' },
-	{ "tape-length",	required_argument,	0,	'L' },
 	{ "absolute-paths",	no_argument,		0,	'P' },
 	{ "files-from",		required_argument,	0,	'T' },
 	{ "exclude-from",	required_argument,	0,	'X' },
@@ -729,6 +733,8 @@ struct option tar_longopts[] = {
 						OPT_IGNORE_FAILED_READ },
 	{ "keep-old-files",	no_argument,		0,	'k' },
 	{ "starting-file",	no_argument,		0,	'K' },
+	/* XXX: Conflicts with current -L */
+	{ "tape-length",	required_argument,	0,	'L' },
 	{ "multi-volume",	no_argument,		0,	'M' },
 	{ "after-date",		required_argument,	0,	'N' },
 	{ "newer",		required_argument,	0,	'N' },
