@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.5 2001/11/25 19:15:47 augustss Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.6 2001/12/14 05:58:14 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -68,6 +68,11 @@ extern int umassdebug;
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)			      
 
+/* Endpoints for umass */
+#define	UMASS_BULKIN	0
+#define	UMASS_BULKOUT	1
+#define	UMASS_INTRIN	2
+#define	UMASS_NEP	3
 
 /* Bulk-Only features */
 
@@ -151,6 +156,9 @@ struct umass_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* device */
 
+	u_int8_t		sc_epaddr[UMASS_NEP];
+	usbd_pipe_handle	sc_pipe[UMASS_NEP];
+
 	unsigned char		drive;
 #define DRIVE_GENERIC		0	/* use defaults for this one */
 #define ZIP_100			1	/* to be used for quirks */
@@ -198,13 +206,6 @@ struct umass_softc {
 
 	usbd_interface_handle	iface;		/* Mass Storage interface */
 	int			ifaceno;	/* MS iface number */
-
-	u_int8_t		bulkin;		/* bulk-in Endpoint Address */
-	u_int8_t		bulkout;	/* bulk-out Endpoint Address */
-	u_int8_t		intrin;		/* intr-in Endp. (CBI) */
-	usbd_pipe_handle	bulkin_pipe;
-	usbd_pipe_handle	bulkout_pipe;
-	usbd_pipe_handle	intrin_pipe;
 
 	/* Reset the device in a wire protocol specific way */
 	wire_reset_f		reset;
