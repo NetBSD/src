@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.368 2001/09/09 17:42:47 assar Exp $
+#	$NetBSD: mi,v 1.369 2001/09/10 11:05:03 fvdl Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -804,6 +804,7 @@
 ./usr/include/strings.h			comp-c-include
 ./usr/include/struct.h			comp-c-include
 ./usr/include/sys/acct.h		comp-c-include
+./usr/include/sys/agpio.h		comp-c-include
 ./usr/include/sys/ansi.h		comp-c-include
 ./usr/include/sys/ataio.h		comp-c-include
 ./usr/include/sys/audioio.h		comp-c-include
