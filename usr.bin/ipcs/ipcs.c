@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.17 1998/07/06 10:16:40 mrg Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.18 1999/08/25 05:11:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -298,7 +298,7 @@ main(argc, argv)
 
 					printf("q %6d %10ld %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, msqptr->msg_perm),
-					    (long)msqptr->msg_perm.key,
+					    (long)msqptr->msg_perm._key,
 					    fmt_perm(msqptr->msg_perm.mode),
 					    user_from_uid(msqptr->msg_perm.uid, 0),
 					    group_from_gid(msqptr->msg_perm.gid, 0));
@@ -310,7 +310,7 @@ main(argc, argv)
 
 					if (option & OUTSTANDING)
 						printf(" %6ld %6ld",
-						    (long)msqptr->msg_cbytes,
+						    (long)msqptr->_msg_cbytes,
 						    (long)msqptr->msg_qnum);
 
 					if (option & BIGGEST)
@@ -400,7 +400,7 @@ main(argc, argv)
 
 					printf("m %6d %10ld %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, shmptr->shm_perm),
-					    (long)shmptr->shm_perm.key,
+					    (long)shmptr->shm_perm._key,
 					    fmt_perm(shmptr->shm_perm.mode),
 					    user_from_uid(shmptr->shm_perm.uid, 0),
 					    group_from_gid(shmptr->shm_perm.gid, 0));
@@ -415,8 +415,8 @@ main(argc, argv)
 						    shmptr->shm_nattch);
 
 					if (option & BIGGEST)
-						printf(" %6d",
-						    shmptr->shm_segsz);
+						printf(" %6lu",
+						    (u_long)shmptr->shm_segsz);
 
 					if (option & PID)
 						printf(" %6d %6d",
@@ -508,7 +508,7 @@ main(argc, argv)
 
 					printf("s %6d %10ld %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, semaptr->sem_perm),
-					    (long)semaptr->sem_perm.key,
+					    (long)semaptr->sem_perm._key,
 					    fmt_perm(semaptr->sem_perm.mode),
 					    user_from_uid(semaptr->sem_perm.uid, 0),
 					    group_from_gid(semaptr->sem_perm.gid, 0));
