@@ -1,3 +1,5 @@
+/*	$NetBSD: conf.h,v 1.7 2001/11/25 15:55:55 thorpej Exp $	*/
+
 #ifndef _CATS_CONF_H
 #define	_CATS_CONF_H
 
