@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.141 2001/09/03 18:37:15 drochner Exp $
+#	$NetBSD: MAKEDEV,v 1.142 2001/09/10 12:58:35 fvdl Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -127,6 +127,7 @@
 #	altq	ALTQ control interface
 #	vmegen*	generic VME access
 #	wsfont*	console font control
+#	agp*	AGP GARt devices
 #
 
 dialin=0
@@ -173,6 +174,7 @@ all)
 	sh $0 sysmon
 	sh $0 bktr
 	sh $0 ttyCZ0 ttyCY0
+	sh $0 agp0
 	sh $0 altq
 	sh $0 ed0 ed1
 	;;
@@ -800,6 +802,13 @@ mly*)
 	chmod 600 mly$unit
 	;;
 
+agp*)
+	unit=${i#agp};
+	rm -f agp$unit
+	mknod agp$unit c 82 $unit
+	if [ "$unit" = "0" ]; then ln -sf agp$unit agpgart; fi
+	chmod 644 agp$unit
+	;;
 altq)
 	mkdir -p altq
 	chmod 755 altq
