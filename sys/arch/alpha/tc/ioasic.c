@@ -1,4 +1,41 @@
-/* $NetBSD: ioasic.c,v 1.16 1998/01/12 10:21:17 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.17 1998/01/19 02:56:05 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.16 1998/01/12 10:21:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.17 1998/01/19 02:56:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.16 1998/01/12 10:21:17 thorpej Exp $");
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/pte.h>
 #include <machine/rpb.h>
 #ifndef EVCNT_COUNTERS
@@ -54,6 +92,9 @@ struct ioasic_softc {
 
 	tc_addr_t sc_base;
 	void	*sc_cookie;
+
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_lance_dmam;
 };
 
 /* Definition of the driver for autoconfig. */
@@ -106,6 +147,16 @@ int ioasicfound;
 
 extern int cputype;
 
+/*
+ * DMA area for IOASIC LANCE.
+ * XXX Should be done differently, but this is better than it used to be.
+ */
+#define	LE_IOASIC_MEMSIZE	(128*1024)
+#define	LE_IOASIC_MEMALIGN	(128*1024)
+caddr_t	le_iomem;
+
+void	ioasic_lance_dma_setup __P((struct ioasic_softc *));
+
 int
 ioasicmatch(parent, cfdata, aux)
 	struct device *parent;
@@ -143,6 +194,7 @@ ioasicattach(parent, self, aux)
 	sc->sc_base = ta->ta_addr;
 	ioasic_base = sc->sc_base;			/* XXX XXX XXX */
 	sc->sc_cookie = ta->ta_cookie;
+	sc->sc_dmat = ta->ta_dmat;
 
 #ifdef DEC_3000_300
 	if (cputype == ST_DEC_3000_300) {
@@ -171,6 +223,11 @@ ioasicattach(parent, self, aux)
 		ioasicintrs[i].iai_arg = (void *)i;
 	}
 	tc_intr_establish(parent, sc->sc_cookie, TC_IPL_NONE, ioasic_intr, sc);
+
+	/*
+	 * Set up the LANCE DMA area.
+	 */
+	ioasic_lance_dma_setup(sc);
 
         /*
 	 * Try to configure each device.
@@ -338,13 +395,52 @@ ioasic_lance_ether_address()
 }
 
 void
-ioasic_lance_dma_setup(v)
-	void *v;
+ioasic_lance_dma_setup(sc)
+	struct ioasic_softc *sc;
 {
+	bus_dma_tag_t dmat = sc->sc_dmat;
+	bus_dma_segment_t seg;
 	volatile u_int32_t *ldp;
 	tc_addr_t tca;
+	int rseg;
 
-	tca = (tc_addr_t)v;
+	/*
+	 * Allocate a DMA area for the chip.
+	 */
+	if (bus_dmamem_alloc(dmat, LE_IOASIC_MEMSIZE, LE_IOASIC_MEMALIGN,
+	    0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		printf("%s: can't allocate DMA area for LANCE\n",
+		    sc->sc_dv.dv_xname);
+		return;
+	}
+	if (bus_dmamem_map(dmat, &seg, rseg, LE_IOASIC_MEMSIZE,
+	    &le_iomem, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC)) {
+		printf("%s: can't map DMA area for LANCE\n",
+		    sc->sc_dv.dv_xname);
+		bus_dmamem_free(dmat, &seg, rseg);
+		return;
+	}
+
+	/*
+	 * Create and load the DMA map for the DMA area.
+	 */
+	if (bus_dmamap_create(dmat, LE_IOASIC_MEMSIZE, 1,
+	    LE_IOASIC_MEMSIZE, 0, BUS_DMA_NOWAIT, &sc->sc_lance_dmam)) {
+		printf("%s: can't create DMA map\n", sc->sc_dv.dv_xname);
+		goto bad;
+	}
+	if (bus_dmamap_load(dmat, sc->sc_lance_dmam,
+	    le_iomem, LE_IOASIC_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
+		printf("%s: can't load DMA map\n", sc->sc_dv.dv_xname);
+		goto bad;
+	}
+
+	tca = (tc_addr_t)sc->sc_lance_dmam->dm_segs[0].ds_addr;
+	if (tca != sc->sc_lance_dmam->dm_segs[0].ds_addr) {
+		printf("%s: bad LANCE DMA address\n", sc->sc_dv.dv_xname);
+		bus_dmamap_unload(dmat, sc->sc_lance_dmam);
+		goto bad;
+	}
 
 	ldp = (volatile u_int *)IOASIC_REG_LANCE_DMAPTR(ioasic_base);
 	*ldp = ((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f);
@@ -353,4 +449,10 @@ ioasic_lance_dma_setup(v)
 	*(volatile u_int32_t *)IOASIC_REG_CSR(ioasic_base) |=
 	    IOASIC_CSR_DMAEN_LANCE;
 	tc_mb();
+	return;
+
+ bad:
+	bus_dmamem_unmap(dmat, le_iomem, LE_IOASIC_MEMSIZE);
+	bus_dmamem_free(dmat, &seg, rseg);
+	le_iomem = 0;
 }
