@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.44 1997/03/25 20:35:03 cgd Exp $
+# $NetBSD: ALPHA,v 1.45 1997/04/06 23:03:02 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
