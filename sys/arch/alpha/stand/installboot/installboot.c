@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.21 1999/10/04 21:22:15 ross Exp $ */
+/* $NetBSD: installboot.c,v 1.22 1999/10/05 03:18:32 hubertf Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -88,8 +88,8 @@ static void
 usage()
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "\t%s [-n] [-v] disk bootstrap\n", __progname);
-	fprintf(stderr, "\t%s [-n] [-v] -c disk\n", __progname);
+	fprintf(stderr, "\t%s [-nsv] disk bootstrap\n", __progname);
+	fprintf(stderr, "\t%s [-nsv] -c disk\n", __progname);
 	exit(EXIT_FAILURE);
 }
 
