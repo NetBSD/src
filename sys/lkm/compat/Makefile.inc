@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2003/02/06 22:23:11 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2003/04/22 17:23:20 jdolecek Exp $
 
 .if !target(assym.h)
 S!=	cd ${.CURDIR}/../../..;pwd
@@ -36,7 +36,8 @@ CPPFLAGS+=	-Demul_find=${COMPAT_UTIL_OVERRIDE}_emul_find				\
 		-Dstackgap_init=${COMPAT_UTIL_OVERRIDE}_stackgap_init			\
 		-Demul_flags_translate=${COMPAT_UTIL_OVERRIDE}_emul_flags_translate	\
 		-Dstackgap_alloc=${COMPAT_UTIL_OVERRIDE}_stackgap_alloc		 	\
-		-Dcompat_offseterr=${COMPAT_UTIL_OVERRIDE}_compat_offseterr
+		-Dcompat_offseterr=${COMPAT_UTIL_OVERRIDE}_compat_offseterr		\
+		-Demul_find_interp=${COMPAT_UTIL_OVERRIDE}_emul_find_interp
 
 # get emul_find() and friends
 .PATH: $S/compat/common
