@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)vmstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: vmstat.c,v 1.18 1995/03/14 07:35:49 pk Exp $";
+static char *rcsid = "$Id: vmstat.c,v 1.19 1995/04/17 00:00:29 ragge Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -130,12 +130,6 @@ struct nlist namelist[] = {
 	{ "_ckeystats" },
 #define	X_DKEYSTATS	(X_END+2)
 	{ "_dkeystats" },
-#endif
-#ifdef vax
-#define X_MBDINIT	(X_END)
-	{ "_mbdinit" },
-#define X_UBDINIT	(X_END+1)
-	{ "_ubdinit" },
 #endif
 	{ "" },
 };
@@ -555,9 +549,6 @@ dosum()
 	(void)printf("%9u cpu context switches\n", sum.v_swtch);
 	(void)printf("%9u device interrupts\n", sum.v_intr);
 	(void)printf("%9u software interrupts\n", sum.v_soft);
-#ifdef vax
-	(void)printf("%9u pseudo-dma dz interrupts\n", sum.v_pdma);
-#endif
 	(void)printf("%9u traps\n", sum.v_trap);
 	(void)printf("%9u system calls\n", sum.v_syscall);
 	(void)printf("%9u total faults taken\n", sum.v_faults);
