@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.4 2003/02/02 02:22:14 christos Exp $	*/
+/*	$NetBSD: savar.h,v 1.5 2003/07/17 18:16:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@ struct sadata {
 	int	sa_flag;		/* SA_* flags */
 	sa_upcall_t	sa_upcall;	/* upcall entry point */
 	struct lwp	*sa_vp;		/* "virtual processor" allocation */
+	struct lwp	*sa_old_lwp;	/*  XXXUPSXXX hack: lwp that used to be on  sa_vp */
+	int    sa_vp_wait_count;        /*  XXXUPSXXX hack: number of LWPs waiting on VP */
+
 	struct lwp	*sa_woken;	/* list of woken lwps */
 	struct lwp	*sa_idle;      	/* lwp in sawait */
 	int	sa_concurrency;		/* desired concurrency */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.117 2003/06/29 22:31:20 fvdl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.118 2003/07/17 18:16:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.117 2003/06/29 22:31:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.118 2003/07/17 18:16:58 fvdl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -179,8 +179,11 @@ exit1(struct lwp *l, int rv)
 	 */
 	sa = 0;
 	if (p->p_sa != NULL) {
+
 		l->l_flag &= ~L_SA;
+#if 0
 		p->p_flag &= ~P_SA;
+#endif
 		sa = 1;
 	}
 
@@ -461,9 +464,18 @@ exit_lwps(struct lwp *l)
 	 * them) and then wait for everyone else to finish.  
 	 */
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+#if 0
 		l2->l_flag &= ~(L_DETACHED|L_SA);
+#endif	
+		l2->l_flag &= ~(L_DETACHED);
+	
+		if(l2->l_flag & L_SA_WANTS_VP)
+		{
+			wakeup(l2);
+		}
+
 		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
-		    l2->l_stat == LSSUSPENDED) {
+		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
 			SCHED_LOCK(s);
 			setrunnable(l2);
 			SCHED_UNLOCK(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.143 2003/06/29 22:31:22 fvdl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.144 2003/07/17 18:16:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143 2003/06/29 22:31:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.144 2003/07/17 18:16:58 fvdl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -528,8 +528,11 @@ sigsuspend1(struct proc *p, const sigset_t *ss)
 		(void) spl0();		/* XXXSMP */
 	}
 
+
+
 	while (tsleep((caddr_t) ps, PPAUSE|PCATCH, "pause", 0) == 0)
-		/* void */;
+		;	/* void  */
+	
 	/* always return EINTR rather than ERESTART... */
 	return (EINTR);
 }
@@ -867,7 +870,8 @@ psignal1(struct proc *p, int signum,
 	 */
 	if ((prop & SA_CANTMASK) == 0
 	    && p->p_sigctx.ps_sigwaited < 0
-	    && sigismember(&p->p_sigctx.ps_sigwait, signum)) {
+	    && sigismember(&p->p_sigctx.ps_sigwait, signum)
+	    &&  p->p_stat != SSTOP) {
 		sigdelset(&p->p_sigctx.ps_siglist, signum);
 		p->p_sigctx.ps_sigwaited = signum;
 		sigemptyset(&p->p_sigctx.ps_sigwait);
@@ -889,7 +893,8 @@ psignal1(struct proc *p, int signum,
 	if (dolock)
 		SCHED_LOCK(s);
 
-	if (p->p_nrlwps > 0) {
+	/* XXXUPSXXX LWPs might go to sleep without passing signal handling */ 
+	if (p->p_nrlwps > 0 && (p->p_stat != SSTOP)) {
 		/*
 		 * At least one LWP is running or on a run queue. 
 		 * The signal will be noticed when one of them returns 
@@ -903,7 +908,17 @@ psignal1(struct proc *p, int signum,
 	} else {
 		/* Process is sleeping or stopped */
 		if (p->p_flag & P_SA) {
-			l = p->p_sa->sa_idle;
+			struct lwp *l2 = p->p_sa->sa_vp;
+			l = NULL;		
+			allsusp = 1;
+
+			if ((l2->l_stat == LSSLEEP) &&  (l2->l_flag & L_SINTR))
+				l = l2; 
+			else if (l2->l_stat == LSSUSPENDED)
+				suspended = l2;
+			else if ((l2->l_stat != LSZOMB) && 
+				 (l2->l_stat != LSDEAD))
+				allsusp = 0;
 		} else {
 			/*
 			 * Find out if any of the sleeps are interruptable,
@@ -938,6 +953,7 @@ psignal1(struct proc *p, int signum,
 				goto out;
 			}
 
+
 			/*
 			 * When a sleeping process receives a stop
 			 * signal, process immediately if possible.
@@ -961,6 +977,7 @@ psignal1(struct proc *p, int signum,
 				proc_stop(p);	/* XXXSMP: recurse? */
 				goto out;
 			}
+
 
 			if (l == NULL) {
 				/*
@@ -1059,6 +1076,7 @@ psignal1(struct proc *p, int signum,
 	if (l->l_priority > PUSER)
 		l->l_priority = PUSER;
  run:
+	
 	setrunnable(l);		/* XXXSMP: recurse? */
  out:
 	/* XXXSMP: works, but icky */
@@ -1074,6 +1092,11 @@ psendsig(struct lwp *l, int sig, sigset_t *mask, u_long code)
 	siginfo_t *si;	
 
 	if (p->p_flag & P_SA) {
+
+		/* XXXUPSXXX What if not on sa_vp ? */
+
+		int s = l->l_flag & L_SA;
+		l->l_flag &= ~L_SA; 
 		si = pool_get(&siginfo_pool, PR_WAITOK);
 		si->si_signo = sig;
 		si->si_errno = 0;
@@ -1086,6 +1109,9 @@ psendsig(struct lwp *l, int sig, sigset_t *mask, u_long code)
 
 		sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li, 
 			    sizeof(siginfo_t), si);
+
+		
+		l->l_flag |= s;
 		return;
 	}
 
@@ -1139,6 +1165,16 @@ issignal(struct lwp *l)
 	int		s = 0, signum, prop;
 	int		dolock = (l->l_flag & L_SINTR) == 0, locked = !dolock;
 	sigset_t	ss;
+
+	
+	if (l->l_flag & L_SA) {
+		struct sadata *sa = p->p_sa;	
+
+		/* Bail out if we do not own the virtual processor */
+		if (sa->sa_vp != l)
+			return 0;
+	}
+
 
 	if (p->p_stat == SSTOP) {
 		/*
@@ -1322,6 +1358,8 @@ proc_stop(struct proc *p)
 
 	SCHED_ASSERT_LOCKED();
 
+
+
 	/* XXX lock process LWP state */
 	p->p_stat = SSTOP;
 	p->p_flag &= ~P_WAITED;
@@ -1333,7 +1371,7 @@ proc_stop(struct proc *p)
 	 */
 	   
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		if (l->l_stat == LSONPROC) {
+		if ((l->l_stat == LSONPROC) && (l == curlwp)) {
 			/* XXX SMP this assumes that a LWP that is LSONPROC
 			 * is curlwp and hence is about to be mi_switched 
 			 * away; the only callers of proc_stop() are:
@@ -1346,7 +1384,14 @@ proc_stop(struct proc *p)
 			 */
 			l->l_stat = LSSTOP;
 			p->p_nrlwps--;
-		} else if (l->l_stat == LSRUN) {
+		}
+		 else if ( (l->l_stat == LSSLEEP) && (l->l_flag & L_SINTR)) {
+			setrunnable(l);
+		}
+
+/* !!!UPS!!! FIX ME */
+#if 0
+else if (l->l_stat == LSRUN) {
 			/* Remove LWP from the run queue */
 			remrunqueue(l);
 			l->l_stat = LSSTOP;
@@ -1374,9 +1419,11 @@ proc_stop(struct proc *p)
 			    p->p_pid, l->l_lid, l->l_stat);
 		}
 #endif
+#endif
 	}
 	/* XXX unlock process LWP state */
-		    
+
+	    
 	sched_wakeup((caddr_t)p->p_pptr);
 }
 
@@ -1584,8 +1631,11 @@ lwp_coredump_hook(struct lwp *l, void *arg)
 void
 sigexit(struct lwp *l, int signum)
 {
+
 	struct proc	*p;
+#if 0
 	struct lwp	*l2;
+#endif
 	int		error, exitsig;
 
 	p = l->l_proc;
@@ -1601,11 +1651,13 @@ sigexit(struct lwp *l, int signum)
 	p->p_flag |= P_WEXIT;
 	/* We don't want to switch away from exiting. */
 	/* XXX multiprocessor: stop LWPs on other processors. */
+#if 0
 	if (p->p_flag & P_SA) {
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling)
 		    l2->l_flag &= ~L_SA;
 		p->p_flag &= ~P_SA;
 	}
+#endif
 
 	/* Make other LWPs stick around long enough to be dumped */
 	p->p_userret = lwp_coredump_hook;
