@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.23 1998/10/24 19:04:51 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.23.2.1 2000/10/19 20:35:38 he Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.23 1998/10/24 19:04:51 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.23.2.1 2000/10/19 20:35:38 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -333,7 +333,7 @@ ioctldecode(cmd)
 	*dir = '\0';
 
 	printf(decimal ? ",_IO%s('%c',%ld" : ",_IO%s('%c',%#lx",
-	    dirbuf, (cmd >> 8) & 0xff, cmd & 0xff);
+	    dirbuf, (char)((cmd >> 8) & 0xff), cmd & 0xff);
 	if ((cmd & IOC_VOID) == 0)
 		printf(decimal ? ",%ld)" : ",%#lx)", (cmd >> 16) & 0xff);
 	else
