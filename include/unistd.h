@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.40 1997/10/06 01:43:21 enami Exp $	*/
+/*	$NetBSD: unistd.h,v 1.41 1997/10/08 05:44:22 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -81,7 +81,6 @@ pid_t	 getpid __P((void));
 pid_t	 getppid __P((void));
 uid_t	 getuid __P((void));
 int	 isatty __P((int));
-int	 lchown __P((const char *, uid_t, gid_t));
 int	 link __P((const char *, const char *));
 off_t	 lseek __P((int, off_t, int));
 long	 pathconf __P((const char *, int));	/* not yet */
@@ -130,6 +129,7 @@ char	*getusershell __P((void));
 char	*getwd __P((char *));			/* obsoleted by getcwd() */
 int	 initgroups __P((const char *, gid_t));
 int	 iruserok __P((u_int32_t, int, const char *, const char *));
+int	 lchown __P((const char *, uid_t, gid_t));
 int	 mknod __P((const char *, mode_t, dev_t));
 int	 mkstemp __P((char *));
 char	*mktemp __P((char *));
