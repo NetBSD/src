@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.71 2000/03/19 13:38:54 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.72 2000/06/29 07:40:09 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@
 #include <sys/gmon.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.82 2000/06/04 19:15:02 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.83 2000/06/29 07:40:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,8 +100,6 @@
 #include <sys/conf.h>
 
 #include <dev/cons.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
