@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.6 2003/01/01 01:48:56 thorpej Exp $ */
+/* $NetBSD: aubus.c,v 1.7 2003/04/01 17:29:11 hpeyerl Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -73,10 +73,12 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
+#define _MIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/locore.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/aubusvar.h>
+
 
 struct au1x00_dev {
 	const char *name;
@@ -156,11 +158,13 @@ static int	aubus_match(struct device *, struct cfdata *, void *);
 static void	aubus_attach(struct device *, struct device *, void *);
 static int	aubus_submatch(struct device *, struct cfdata *, void *);
 static int	aubus_print(void *, const char *);
+static void  aubus_alloc_dma_tag(struct device *, bus_dma_tag_t);
 
 CFATTACH_DECL(aubus, sizeof(struct device),
     aubus_match, aubus_attach, NULL, NULL);
 
 bus_space_tag_t	aubus_st;		/* XXX */
+struct mips_bus_dma_tag  aubus_mdt;
 
 /*
  * Probe for the aubus; always succeeds.
@@ -191,6 +195,7 @@ static void
 aubus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct aubus_attach_args aa;
+	struct device *sc = (struct device *)self;
 	const struct au1x00_dev *ad;
 
 	printf("\n");
@@ -213,6 +218,8 @@ aubus_attach(struct device *parent, struct device *self, void *aux)
 	for (; ad->name != NULL; ad++) {
 		aa.aa_name = ad->name;
 		aa.aa_st = aubus_st;
+		aa.aa_dt = &aubus_mdt;
+		aubus_alloc_dma_tag(sc, aa.aa_dt);
 		aa.aa_addrs[0] = ad->addr[0];
 		aa.aa_addrs[1] = ad->addr[1];
 		aa.aa_addrs[2] = ad->addr[2];
@@ -239,4 +246,31 @@ aubus_print(void *aux, const char *pnp)
 	if (aa->aa_irq[1] >= 0)
 		aprint_normal(",%d", aa->aa_irq[1]);
 	return (UNCONF);
+}
+
+void
+aubus_alloc_dma_tag(sc, pdt)
+	struct device *sc;
+	bus_dma_tag_t pdt;
+{
+	bus_dma_tag_t	t;
+
+	t = pdt;
+	t->_cookie = sc;
+	t->_wbase=0;	/* XXX */
+	t->_physbase=0;	/* XXX */
+	t->_wsize=MIPS_KSEG1_START - MIPS_KSEG0_START;
+	t->_dmamap_create=_bus_dmamap_create;
+	t->_dmamap_destroy=_bus_dmamap_destroy;
+	t->_dmamap_load=_bus_dmamap_load;
+	t->_dmamap_load_mbuf=_bus_dmamap_load_mbuf;
+	t->_dmamap_load_uio=_bus_dmamap_load_uio;
+	t->_dmamap_load_raw=_bus_dmamap_load_raw;
+	t->_dmamap_unload=_bus_dmamap_unload;
+	t->_dmamap_sync=_bus_dmamap_sync;
+	t->_dmamem_alloc=_bus_dmamem_alloc;
+	t->_dmamem_free=_bus_dmamem_free;
+	t->_dmamem_map=_bus_dmamem_map;
+	t->_dmamem_unmap=_bus_dmamem_unmap;
+	t->_dmamem_mmap=_bus_dmamem_mmap;
 }

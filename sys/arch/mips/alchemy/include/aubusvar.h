@@ -1,4 +1,4 @@
-/* $NetBSD: aubusvar.h,v 1.2 2003/03/22 14:26:42 simonb Exp $ */
+/* $NetBSD: aubusvar.h,v 1.3 2003/04/01 17:29:11 hpeyerl Exp $ */
 
 #ifndef _MIPS_ALCHEMY_DEV_AUBUSVAR_H_
 #define	_MIPS_ALCHEMY_DEV_AUBUSVAR_H_
@@ -13,6 +13,7 @@ struct aubus_attach_args {
 	bus_space_tag_t	aa_st;		/* the space tag to use */
 	bus_addr_t	aa_addrs[3];	/* system bus address(es) */
 	int		aa_irq[2];	/* IRQ index(s) */
+	bus_dma_tag_t	aa_dt;		/* the dma tag to use */
 };
 #define	aa_addr		aa_addrs[0]
 
