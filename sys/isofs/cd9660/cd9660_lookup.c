@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.22 1999/07/08 01:06:00 wrstuden Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.23 1999/07/13 11:12:05 scw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -321,7 +321,8 @@ searchloop:
 					    || ep->name[0] != 0)
 						goto notfound;
 				} else if (!(res = isofncmp(name,len,
-							    ep->name,namelen))) {
+						   ep->name,namelen,
+						   imp->im_joliet_level))) {
 					if (isonum_711(ep->flags)&2)
 						ino = isodirino(ep, imp);
 					else

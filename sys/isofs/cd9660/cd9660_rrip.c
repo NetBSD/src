@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.18 1998/08/09 20:42:54 perry Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.19 1999/07/13 11:12:06 scw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -298,17 +298,19 @@ cd9660_rrip_defname(v, ana)
 {
 	struct iso_directory_record *isodir = v;
 
-	strcpy(ana->outbuf, "..");
-	switch (*isodir->name) {
+	isofntrans(isodir->name, isonum_711(isodir->name_len),
+		   ana->outbuf, ana->outlen,
+		   1, isonum_711(isodir->flags) & 4,
+		   ana->imp->im_joliet_level);
+	switch (ana->outbuf[0]) {
 	default:
-		isofntrans(isodir->name, isonum_711(isodir->name_len),
-			   ana->outbuf, ana->outlen,
-			   1, isonum_711(isodir->flags) & 4);
 		break;
 	case 0:
+		ana->outbuf[0] = '.';
 		*ana->outlen = 1;
 		break;
 	case 1:
+		strcpy(ana->outbuf, "..");
 		*ana->outlen = 2;
 		break;
 	}
@@ -518,6 +520,7 @@ cd9660_rrip_loop(isodir, ana, table)
 	register ISO_SUSP_HEADER *pend;
 	struct buf *bp = NULL;
 	char *pwhead;
+	u_char c;
 	int result;
 	
 	/*
@@ -527,10 +530,10 @@ cd9660_rrip_loop(isodir, ana, table)
 	pwhead = isodir->name + isonum_711(isodir->name_len);
 	if (!(isonum_711(isodir->name_len) & 1))
 		pwhead++;
+	isochar(isodir->name, pwhead, ana->imp->im_joliet_level, &c);
 	
 	/* If it's not the '.' entry of the root dir obey SP field */
-	if (*isodir->name != 0
-	    || isonum_733(isodir->extent) != ana->imp->root_extent)
+	if (c != 0 || isonum_733(isodir->extent) != ana->imp->root_extent)
 		pwhead += ana->imp->rr_skip;
 	else
 		pwhead += ana->imp->rr_skip0;
@@ -648,6 +651,7 @@ cd9660_rrip_getname(isodir, outbuf, outlen, inump, imp)
 {
 	ISO_RRIP_ANALYZE analyze;
 	RRIP_TABLE *tab;
+	u_char c;
 	
 	analyze.outbuf = outbuf;
 	analyze.outlen = outlen;
@@ -657,9 +661,10 @@ cd9660_rrip_getname(isodir, outbuf, outlen, inump, imp)
 	analyze.fields = ISO_SUSP_ALTNAME | ISO_SUSP_RELDIR | ISO_SUSP_CLINK | ISO_SUSP_PLINK;
 	*outlen = 0;
 	
+	isochar(isodir->name, isodir->name + isonum_711(isodir->name_len),
+		imp->im_joliet_level, &c);
 	tab = rrip_table_getname;
-	if (*isodir->name == 0
-	    || *isodir->name == 1) {
+	if (c == 0 || c == 1) {
 		cd9660_rrip_defname(isodir, &analyze);
 		
 		analyze.fields &= ~ISO_SUSP_ALTNAME;
