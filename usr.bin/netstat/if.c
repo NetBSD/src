@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)if.c	5.15 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: if.c,v 1.4 1994/02/22 04:19:37 cgd Exp $";
+static char rcsid[] = "$Id: if.c,v 1.5 1994/03/03 22:03:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -76,6 +76,7 @@ intpr(interval, ifnetaddr)
 	off_t ifnetaddr;
 {
 	struct ifnet ifnet;
+	struct in_addr in;
 	union {
 		struct ifaddr ifa;
 		struct in_ifaddr in;
@@ -157,9 +158,10 @@ intpr(interval, ifnetaddr)
 					INADDR_ANY);
 				printf("%-11.11s ", netname(in));
 #else
+				in.s_addr = htonl(ifaddr.in.ia_subnet);
+				
 				printf("%-11.11s ",
-					netname(htonl(ifaddr.in.ia_subnet),
-						ifaddr.in.ia_subnetmask));
+					netname(in, ifaddr.in.ia_subnetmask));
 #endif
 				printf("%-15.15s ", routename(sin->sin_addr));
 				break;
