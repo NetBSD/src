@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.3 2003/02/10 11:09:33 fvdl Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.4 2003/06/12 21:46:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -139,9 +139,9 @@ ENTRY(pthread__switch)
 	 * the _setcontext_u below.  
 	 */
 #ifdef PIC
-	movl	PIC_GOT(switch_return_point), %esi
+	movl	PIC_GOT(pthread__switch_return_point), %esi
 #else
-	leal	switch_return_point, %esi
+	leal	pthread__switch_return_point, %esi
 #endif
 	movl	%esi, UC_EIP(%edi)
 	
@@ -151,7 +151,7 @@ ENTRY(pthread__switch)
 
 	pushl	%esi			/* ucontext_t *ucp */
 	call	*PIC_GOTOFF(_C_LABEL(_md_setcontext_u))
-switch_return_point:
+NENTRY(pthread__switch_return_point)
 	/* We're back on the original stack. */
 	addl	$CONTEXTSIZE+24, %esp
 	PIC_EPILOGUE
@@ -249,8 +249,8 @@ ENTRY(pthread__locked_switch)
 	 * PT_SWITCHTO will be stomped by another switch_lock and
 	 * preemption.
          */
-	movl	%ecx, PT_SWITCHTO(%eax)
 	movl	%esi, PT_SWITCHTOUC(%eax)
+	movl	%ecx, PT_SWITCHTO(%eax)
 	movl	%edx, PT_HELDLOCK(%eax)
 	decl	PT_SPINLOCKS(%eax)
 
@@ -282,8 +282,8 @@ locked_no_old_preempt:
 	cmpl	$0, PT_NEXT(%ecx)
 	je	locked_no_new_preempt
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movl	%ecx, PT_SWITCHTO(%ecx)
 	movl	%esi, PT_SWITCHTOUC(%ecx)
+	movl	%ecx, PT_SWITCHTO(%ecx)
 	movl	%ecx, %eax
 	movl	PT_NEXT(%ecx), %ecx
 	movl	$-2, %edx
@@ -329,9 +329,9 @@ ENTRY(pthread__upcall_switch)
 	 * Yes, it was. Stash the thread we were going to
 	 * switch to, and go to the next thread in the chain.
 	 */
-	movl	%ecx, PT_SWITCHTO(%eax)
-	movl	%esi, PT_SWITCHTOUC(%eax)
 	movl	$PT_STATE_RECYCLABLE, PT_STATE(%eax)
+	movl	%esi, PT_SWITCHTOUC(%eax)
+	movl	%ecx, PT_SWITCHTO(%eax)
 	movl	PT_NEXT(%eax), %edx
 	movl	%ecx, %eax
 	movl	%edx, %ecx
@@ -353,8 +353,8 @@ upcall_no_old_preempt:
 	cmpl	$0, PT_NEXT(%ecx)
 	je	upcall_no_new_preempt
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movl	%ecx, PT_SWITCHTO(%ecx)
 	movl	%esi, PT_SWITCHTOUC(%ecx)
+	movl	%ecx, PT_SWITCHTO(%ecx)
 	movl	%ecx, %eax
 	movl	PT_NEXT(%ecx), %ecx
 	movl	$-1, %edx

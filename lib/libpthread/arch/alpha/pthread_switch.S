@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.2 2003/01/18 10:34:17 thorpej Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.3 2003/06/12 21:46:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ NESTED(pthread__switch, 2, CONTEXTSIZE + 24, ra, 0, 0)
 
 	/* Edit the context to make it continue below, rather than here */
 	lda	t3, 24(sp)
-	lda	t1, switch_return_point
+	lda	t1, pthread__switch_return_point
 	stq	t1, (UC_GREGS + _REG_PC * 8)(t3)
 
 	lda	t0, 24(sp)
@@ -90,7 +90,7 @@ NESTED(pthread__switch, 2, CONTEXTSIZE + 24, ra, 0, 0)
 	stq	t0, PT_UC(a0)
 	mov	t2, a0
 	CALL(_setcontext_u)
-switch_return_point:	
+XNESTED(pthread__switch_return_point, 2)
 	ldq	ra, 0(sp)
 	lda	sp, (CONTEXTSIZE + 24)(sp)
 	RET
@@ -163,9 +163,9 @@ NESTED(pthread__locked_switch, 3, CONTEXTSIZE + 32, ra, 0x00030000, 0)
 	 * PT_SWITCHTO will be stomped by another switch_lock and
 	 * preemption.
 	 */
-	stq	a1, PT_SWITCHTO(a0)
-	stq	t2, PT_SWITCHTOUC(a0)
 	stq	a2, PT_HELDLOCK(a0)
+	stq	t2, PT_SWITCHTOUC(a0)
+	stq	a1, PT_SWITCHTO(a0)
 	ldl	t4, PT_SPINLOCKS(a0)
 	subl	t4, 1, t4
 	stl	t4, PT_SPINLOCKS(a0)
@@ -203,8 +203,8 @@ NESTED(pthread__locked_switch, 3, CONTEXTSIZE + 32, ra, 0x00030000, 0)
 	beq	t0, 2f
 	
 	/* Yes, we were. Go to the next element in the chain. */
-	stq	a1, PT_SWITCHTO(a1)
 	stq	t2, PT_SWITCHTOUC(a1)
+	stq	a1, PT_SWITCHTO(a1)
 	mov	a1, a0
 	mov	t0, a1
 	mov	zero, a2
@@ -250,10 +250,10 @@ NESTED(pthread__upcall_switch,2,0,ra,0,0)
 	/* Yes, it was. Stash the thread we were going to switch to,
 	 * and switch to the next thread in the continuation chain.
 	 */
-	stq	a1, PT_SWITCHTO(a0)
-	stq	s2, PT_SWITCHTOUC(a0)
 	mov	PT_STATE_RECYCLABLE, t1
 	stl	t1, PT_STATE(a0)
+	stq	s2, PT_SWITCHTOUC(a0)
+	stq	a1, PT_SWITCHTO(a0)
 	mov	a1, a0
 	mov	t0, a1
 	mov	1, a2
@@ -279,8 +279,8 @@ NESTED(pthread__upcall_switch,2,0,ra,0,0)
 	/* Yes, we were. Stash the to-be-switched-to context in our thread
 	 * structure and go to the next link in the chain.
 	 */
-	stq	a1, PT_SWITCHTO(a1)
 	stq	s2, PT_SWITCHTOUC(a1)
+	stq	a1, PT_SWITCHTO(a1)
 	mov	a1, a0
 	mov	t0, a1
 	mov	0, a2

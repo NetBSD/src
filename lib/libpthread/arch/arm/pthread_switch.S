@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.3 2003/04/05 23:15:11 bjh21 Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.4 2003/06/12 21:46:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -101,7 +101,7 @@ ENTRY(pthread__switch)
 	bl	PIC_SYM(_C_LABEL(_getcontext_u), PLT)
 
 	/* Edit the context to make it continue below, rather than here */
-	add	r0, pc, #switch_return_point - . - 8
+	add	r0, pc, #pthread__switch_return_point - . - 8
 	str	r0, [r5, #(_REG_PC)]
 
 	/* Get back r0-r2 */
@@ -118,7 +118,7 @@ ENTRY(pthread__switch)
 	b	PIC_SYM(_C_LABEL(_setcontext_u), PLT)
 	NOTREACHED
 
-switch_return_point:
+ENTRY_NP(pthread__switch_return_point)
 /*
  * Stack is:
  *		context			(RND_CTXSIZE bytes)
@@ -189,10 +189,10 @@ ENTRY(pthread__upcall_switch)
 	 * Yes, it was.  Stash the tread we were going to switch to,
 	 * and switch to the next thread in the continuation chain.
 	 */
-	str	r1, [r0, #(PT_SWITCHTO)]
-	str	r7, [r0, #(PT_SWITCHTOUC)]
 	mov	r4, #(PT_STATE_RECYCLABLE)
 	str	r4, [r0, #(PT_STATE)]
+	str	r7, [r0, #(PT_SWITCHTOUC)]
+	str	r1, [r0, #(PT_SWITCHTO)]
 	mov	r0, r1		/* from = next */
 	mov	r1, r3		/* to = self->pt_next */
 	mov	r2, #0x00000001	/* decr-spinlocks = TRUE */
@@ -221,8 +221,8 @@ ENTRY(pthread__upcall_switch)
 	 * in itself, and switch to the next thread in the continuation
 	 * chain.
 	 */
-	str	r1, [r1, #(PT_SWITCHTO)]
 	str	r7, [r1, #(PT_SWITCHTOUC)]
+	str	r1, [r1, #(PT_SWITCHTO)]
 	mov	r0, r1		/* from = next */
 	mov	r1, r3		/* to = next->pt_next */
 	mov	r2, #0x00000000	/* decr-spinlocks = FALSE */
@@ -317,9 +317,9 @@ ENTRY(pthread__locked_switch)
 	 * PT_SWITCHTO will be stomped on by another switch_lock and
 	 * preemption.
 	 */
-	str	r1, [r0, #(PT_SWITCHTO)]
-	str	r4, [r0, #(PT_SWITCHTOUC)]
 	str	r2, [r0, #(PT_HELDLOCK)]
+	str	r4, [r0, #(PT_SWITCHTOUC)]
+	str	r1, [r0, #(PT_SWITCHTO)]
 
 	ldr	r4, [r0, #(PT_SPINLOCKS)]
 	sub	r4, r4, #1
@@ -370,8 +370,8 @@ ENTRY(pthread__locked_switch)
 	beq	2f
 
 	/* Yes, we were.  Go to the next thread in the chain. */
-	str	r1, [r1, #(PT_SWITCHTO)]
 	str	r5, [r1, #(PT_SWITCHTOUC)]
+	str	r1, [r1, #(PT_SWITCHTO)]
 	mov	r0, r1			/* from = next */
 	mov	r1, r3			/* to = next->pt_next */
 	mov	r2, #0x00000000		/* decr-spinlocks = FALSE */
