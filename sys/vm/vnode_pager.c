@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.36 1998/06/22 22:01:12 sommerfe Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.37 1998/06/24 20:58:49 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -49,7 +49,6 @@
  */
 
 #include "fs_nfs.h"
-#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,15 +562,11 @@ vnode_pager_uncache(vp)
 #ifdef NFS
 		extern int (**nfsv2_vnodeop_p) __P((void *));
 		extern int (**spec_nfsv2nodeop_p) __P((void *));
-#ifdef FIFO
 		extern int (**fifo_nfsv2nodeop_p) __P((void *));
-#endif
 
 		if (vp->v_op != nfsv2_vnodeop_p
 		    && vp->v_op != spec_nfsv2nodeop_p
-#ifdef FIFO
 		    && vp->v_op != fifo_nfsv2nodeop_p
-#endif
 		    )
 
 #endif

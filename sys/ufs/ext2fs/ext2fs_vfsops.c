@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.13 1998/06/22 22:01:08 sommerfe Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.14 1998/06/24 20:58:47 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -37,8 +37,6 @@
  * Modified for ext2fs by Manuel Bouyer.
  */
 
-#include "opt_fifo.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -76,16 +74,12 @@ int ext2fs_check_export __P((struct mount *, struct ufid *, struct mbuf *,
 
 extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_specop_opv_desc;
-#ifdef FIFO
 extern struct vnodeopv_desc ext2fs_fifoop_opv_desc;
-#endif
 
 struct vnodeopv_desc *ext2fs_vnodeopv_descs[] = {
 	&ext2fs_vnodeop_opv_desc,
 	&ext2fs_specop_opv_desc,
-#ifdef FIFO
 	&ext2fs_fifoop_opv_desc,
-#endif
 	NULL,
 };
 
@@ -924,7 +918,7 @@ ext2fs_vget(mp, ino, vpp)
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
-	error = ext2fs_vinit(mp, ext2fs_specop_p, EXT2FS_FIFOOPS, &vp);
+	error = ext2fs_vinit(mp, ext2fs_specop_p, ext2fs_fifoop_p, &vp);
 	if (error) {
 		vput(vp);
 		*vpp = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.21 1998/06/22 22:01:10 sommerfe Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.22 1998/06/24 20:58:48 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -37,7 +37,6 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_quota.h"
-#include "opt_fifo.h"
 #endif
 
 #include <sys/param.h>
@@ -70,16 +69,12 @@ int lfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
 
 extern struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc lfs_specop_opv_desc;
-#ifdef FIFO
 extern struct vnodeopv_desc lfs_fifoop_opv_desc;
-#endif  
 
 struct vnodeopv_desc *lfs_vnodeopv_descs[] = {
 	&lfs_vnodeop_opv_desc,
 	&lfs_specop_opv_desc,
-#ifdef FIFO
 	&lfs_fifoop_opv_desc,
-#endif
 	NULL,
 };
 
@@ -601,7 +596,7 @@ lfs_vget(mp, ino, vpp)
 	 * Initialize the vnode from the inode, check for aliases.  In all
 	 * cases re-init ip, the underlying vnode/inode may have changed.
 	 */
-	error = ufs_vinit(mp, lfs_specop_p, LFS_FIFOOPS, &vp);
+	error = ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 	if (error) {
 		vput(vp);
 		*vpp = NULL;

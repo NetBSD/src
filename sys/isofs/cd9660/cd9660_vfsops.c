@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.29 1998/06/22 22:01:03 sommerfe Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.30 1998/06/24 20:58:45 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -40,10 +40,6 @@
  *	@(#)cd9660_vfsops.c	8.18 (Berkeley) 5/22/95
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_fifo.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -69,16 +65,12 @@
 
 extern struct vnodeopv_desc cd9660_vnodeop_opv_desc;
 extern struct vnodeopv_desc cd9660_specop_opv_desc;
-#ifdef FIFO
 extern struct vnodeopv_desc cd9660_fifoop_opv_desc;
-#endif
 
 struct vnodeopv_desc *cd9660_vnodeopv_descs[] = {
 	&cd9660_vnodeop_opv_desc,
 	&cd9660_specop_opv_desc,
-#ifdef FIFO
 	&cd9660_fifoop_opv_desc,
-#endif
 	NULL,
 };
 
@@ -759,13 +751,8 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 */
 	switch (vp->v_type = IFTOVT(ip->inode.iso_mode)) {
 	case VFIFO:
-#ifdef	FIFO
 		vp->v_op = cd9660_fifoop_p;
 		break;
-#else
-		vput(vp);
-		return (EOPNOTSUPP);
-#endif	/* FIFO */
 	case VCHR:
 	case VBLK:
 		/*

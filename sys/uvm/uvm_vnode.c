@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.11 1998/06/22 22:01:12 sommerfe Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.12 1998/06/24 20:58:49 sommerfe Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -51,7 +51,6 @@
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
-#include "opt_fifo.h"
 
 /*
  * uvm_vnode.c: the vnode pager.
@@ -1805,20 +1804,16 @@ uvm_vnp_uncache(vp)
 #ifdef NFS
 		extern int (**nfsv2_vnodeop_p) __P((void *));
 		extern int (**spec_nfsv2nodeop_p) __P((void *));
-#ifdef FIFO
 		extern int (**fifo_nfsv2nodeop_p) __P((void *));
-#endif	/* FIFO */
 
 		/* vnode is NOT VOP_LOCKed: some vnode types _never_ lock */
 		if (vp->v_op == nfsv2_vnodeop_p ||
 		    vp->v_op == spec_nfsv2nodeop_p) {
 			is_ok_anyway = TRUE;
 		}
-#ifdef FIFO
 		if (vp->v_op == fifo_nfsv2nodeop_p) {
 			is_ok_anyway = TRUE;
 		}
-#endif	/* FIFO */
 #endif	/* NFS */
 		if (!is_ok_anyway)
 			panic("uvm_vnp_uncache: vnode not locked!");

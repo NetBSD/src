@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.13 1998/06/09 07:46:33 scottr Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.14 1998/06/24 20:58:48 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -143,7 +143,7 @@ lfs_valloc(v)
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
 
-	error = ufs_vinit(vp->v_mount, lfs_specop_p, LFS_FIFOOPS, &vp);
+	error = ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 	if (error) {
 		vput(vp);
 		*ap->a_vpp = NULL;

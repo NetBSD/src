@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.12 1998/06/22 22:01:11 sommerfe Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.13 1998/06/24 20:58:49 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,10 +34,6 @@
  *
  *	@(#)ufs_extern.h	8.10 (Berkeley) 5/14/95
  */
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_fifo.h"
-#endif
 
 struct buf;
 struct componentname;
@@ -102,11 +98,9 @@ int	ufsspec_close	__P((void *));
 int	ufsspec_read	__P((void *));
 int	ufsspec_write	__P((void *));
 
-#ifdef FIFO
 int	ufsfifo_read	__P((void *));
 int	ufsfifo_write	__P((void *));
 int	ufsfifo_close	__P((void *));
-#endif
 
 /* ufs_bmap.c */
 int ufs_bmaparray __P((struct vnode *, ufs_daddr_t, ufs_daddr_t *,

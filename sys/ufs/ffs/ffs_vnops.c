@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.14 1998/06/22 22:01:09 sommerfe Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.15 1998/06/24 20:58:48 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,6 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_uvm.h"
-#include "opt_fifo.h"
 #endif
 
 #include <sys/param.h>
@@ -177,7 +176,6 @@ struct vnodeopv_entry_desc ffs_specop_entries[] = {
 struct vnodeopv_desc ffs_specop_opv_desc =
 	{ &ffs_specop_p, ffs_specop_entries };
 
-#ifdef FIFO
 int (**ffs_fifoop_p) __P((void *));
 struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -228,7 +226,6 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 };
 struct vnodeopv_desc ffs_fifoop_opv_desc =
 	{ &ffs_fifoop_p, ffs_fifoop_entries };
-#endif /* FIFO */
 
 int doclusterread = 1;
 int doclusterwrite = 1;
