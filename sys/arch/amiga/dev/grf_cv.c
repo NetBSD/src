@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.8 1996/03/04 20:36:56 is Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.9 1996/03/06 16:40:16 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -505,21 +505,12 @@ cv_boardinit(gp)
 	/* Memory CLK */
 	clockpar = compute_clock(cv_memclk);
 	test = (clockpar & 0xFF00) >> 8;
-
-	if (RCrt(ba, CRT_ID_REVISION) == 0x10) {
-		WSeq(ba, SEQ_ID_MCLK_HI, test); /* PLL N-Divider Value */
-
-		test = clockpar & 0xFF;
-		WSeq(ba, SEQ_ID_MCLK_LO, test); /* PLL M-Divider Value */
-
-		test = (clockpar & 0xFF00) >> 8;
+	WSeq(ba, SEQ_ID_MCLK_HI, test);		/* PLL N-Divider Value */
+	if (RCrt(ba, CRT_ID_REVISION) == 0x10)	/* bugfix for new S3 chips */
 		WSeq(ba, SEQ_ID_MORE_MAGIC, test);
-	} else {
-               WSeq(ba, SEQ_ID_MCLK_HI, test); /* PLL N-Divider Value */
 
-               test = clockpar & 0xFF;
-               WSeq(ba, SEQ_ID_MCLK_LO, test); /* PLL M-Divider Value */
-	}
+	test = clockpar & 0xFF;
+	WSeq(ba, SEQ_ID_MCLK_LO, test);		/* PLL M-Divider Value */
 
 	/* We now load an 25 MHz, 31 kHz, 640x480 standard VGA Mode. */
 	/* DCLK */
