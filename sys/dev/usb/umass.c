@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.112 2004/06/22 12:21:04 mycroft Exp $	*/
+/*	$NetBSD: umass.c,v 1.113 2004/06/25 14:07:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.112 2004/06/22 12:21:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.113 2004/06/25 14:07:27 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1654,21 +1654,23 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		return;
 
 	case TSTATE_CBI_DCLEAR:
-		if (err)	/* should not occur */
+		if (err) {	/* should not occur */
 			printf("%s: CBI bulk-%s stall clear failed, %s\n",
 			    USBDEVNAME(sc->sc_dev),
 			    (sc->transfer_dir == DIR_IN? "in":"out"),
 			    usbd_errstr(err));
-		umass_cbi_reset(sc, STATUS_WIRE_FAILED);
+			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
+		} else
+			umass_cbi_reset(sc, STATUS_CMD_FAILED);
 		return;
 
 	case TSTATE_CBI_SCLEAR:
-		if (err)	/* should not occur */
+		if (err) {	/* should not occur */
 			printf("%s: CBI intr-in stall clear failed, %s\n",
 			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
-
-		/* Something really bad is going on. Reset the device */
-		umass_cbi_reset(sc, STATUS_CMD_FAILED);
+			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
+		} else
+			umass_cbi_reset(sc, STATUS_CMD_FAILED);
 		return;
 
 	/***** CBI Reset *****/
