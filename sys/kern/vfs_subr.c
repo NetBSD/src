@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.92 1998/08/17 17:29:20 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.93 1998/09/01 03:09:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -153,6 +153,8 @@ struct mount *rootfs;
 struct vnode *rootvnode;
 struct device *root_device;			/* root device */
 
+struct pool vnode_pool;				/* memory pool for vnodes */
+
 /*
  * Local declarations.
  */
@@ -180,6 +182,9 @@ vntblinit()
 	simple_lock_init(&mntid_slock);
 	simple_lock_init(&spechash_slock);
 	simple_lock_init(&vnode_free_list_slock);
+
+	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodepl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VNODE);
 }
 
 /*
@@ -399,8 +404,7 @@ getnewvnode(tag, mp, vops, vpp)
 	     numvnodes < 2 * desiredvnodes) ||
 	    numvnodes < desiredvnodes) {
 		simple_unlock(&vnode_free_list_slock);
-		vp = (struct vnode *)malloc((u_long)sizeof(*vp),
-		    M_VNODE, M_WAITOK);
+		vp = pool_get(&vnode_pool, PR_WAITOK);
 		memset((char *)vp, 0, sizeof(*vp));
 		numvnodes++;
 	} else {
