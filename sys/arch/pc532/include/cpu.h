@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 1996/10/23 07:30:54 matthias Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 1996/12/23 08:37:37 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -138,11 +138,13 @@ void	setconf __P((void));
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_NKPDE		2	/* int: number of kernel PDEs */
+#define	CPU_MAXID		3	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "nkpde", CTLTYPE_INT }, \
 }
 
 #endif /* !_NS532_CPU_H_ */
