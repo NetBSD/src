@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2003/01/03 09:09:22 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2003/01/06 05:56:00 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -71,6 +71,7 @@
 
 #include <mips/locore.h>
 #include <mips/cache.h>
+#include <mips/cache_r5k.h>
 
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
@@ -89,7 +90,6 @@
 #include <sys/exec_elf.h>
 #endif
 
-#include <dev/cons.h>
 
 /* For sysctl_hw. */
 extern char cpu_model[];
@@ -143,7 +143,7 @@ void	sgimips_count_cpus(struct arcbios_component *,
 	    struct arcbios_treewalk_context *);
 
 #ifdef KGDB
-void zs_kgdb_init(void);
+void kgdb_port_init(void);
 void kgdb_connect(int);
 #endif
 
@@ -300,22 +300,6 @@ mach_init(argc, argv, magic, btinfo)
 #endif
 	}
 
-#if defined(KGDB) || defined(DDB)
-	/* Set up DDB hook to turn off watchdog on entry */
-	db_trap_callback = ddb_trap_hook;
-
-#ifdef DDB
-	ddb_init(nsym, ssym, esym);
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef KGDB
-	zs_kgdb_init();			/* XXX */
-	if (boothowto & RB_KDB)
-		kgdb_connect(0);
-#endif
-#endif
-
 	for (i = 0; arcbios_system_identifier[i] != '\0'; i++) {
 		if (arcbios_system_identifier[i] >= '0' &&
 		    arcbios_system_identifier[i] <= '9') {
@@ -327,6 +311,25 @@ mach_init(argc, argv, magic, btinfo)
 
 	if (mach_type <= 0)
 		panic("invalid architecture");
+
+#if defined(KGDB) || defined(DDB)
+	/* Set up DDB hook to turn off watchdog on entry */
+	db_trap_callback = ddb_trap_hook;
+
+#  ifdef DDB
+	ddb_init(nsym, ssym, esym);
+	if (boothowto & RB_KDB)
+		Debugger();
+#  endif
+
+
+#  ifdef KGDB
+	kgdb_port_init();
+
+	if (boothowto & RB_KDB)
+		kgdb_connect(0);
+#  endif
+#endif
 
 	switch (mach_type) {
 	case MACH_SGI_IP20:
@@ -347,6 +350,7 @@ mach_init(argc, argv, magic, btinfo)
 
 	case MACH_SGI_IP32:
 #ifdef IP32
+		boothowto |= AB_DEBUG;		/* XXXrkb */
 		ip32_init();
 #else
 		unconfigured_system_type(mach_type);
