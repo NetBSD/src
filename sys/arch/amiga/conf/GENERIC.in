@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.1 2002/06/18 17:39:39 lukem Exp $
+# $NetBSD: GENERIC.in,v 1.2 2002/07/05 13:18:21 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -151,7 +151,9 @@ file-system 	UNION		# union filesystem
 
 #options 	FFS_EI		# FFS Endian Independant support
 
-m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
+m4_ifdef(`INSTALL_CONFIGURATION', `
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+', `m4_dnl
 options 	QUOTA		# User and group quotas in FFS
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
@@ -207,7 +209,8 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USERCONF	# userconf(4) support
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
-options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 ', `m4_dnl
 options 	NTP		# NTP phase/frequency locked loop
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
