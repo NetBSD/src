@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-skey.c,v 1.1.1.4 2002/03/08 01:21:47 itojun Exp $	*/
+/*	$NetBSD: auth-skey.c,v 1.1.1.5 2002/04/22 07:38:00 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: auth-skey.c,v 1.16 2002/01/12 13:10:29 markus Exp $");
+RCSID("$OpenBSD: auth-skey.c,v 1.17 2002/03/18 17:50:31 provos Exp $");
 
 #ifdef SKEY
 
@@ -31,14 +31,13 @@ RCSID("$OpenBSD: auth-skey.c,v 1.16 2002/01/12 13:10:29 markus Exp $");
 
 #include "xmalloc.h"
 #include "auth.h"
+#include "monitor_wrap.h"
 
 static void *
 skey_init_ctx(Authctxt *authctxt)
 {
 	return authctxt;
 }
-
-#define PROMPT "\nS/Key Password: "
 
 static int
 skey_query(void *ctx, char **name, char **infotxt,
@@ -59,10 +58,10 @@ skey_query(void *ctx, char **name, char **infotxt,
 	*echo_on = xmalloc(*numprompts * sizeof(u_int));
 	(*echo_on)[0] = 0;
 
-	len = strlen(challenge) + strlen(PROMPT) + 1;
+	len = strlen(challenge) + strlen(SKEY_PROMPT) + 1;
 	p = xmalloc(len);
 	strlcpy(p, challenge, len);
-	strlcat(p, PROMPT, len);
+	strlcat(p, SKEY_PROMPT, len);
 	(*prompts)[0] = p;
 
 	return 0;
@@ -92,6 +91,14 @@ KbdintDevice skey_device = {
 	skey_init_ctx,
 	skey_query,
 	skey_respond,
+	skey_free_ctx
+};
+
+KbdintDevice mm_skey_device = {
+	"skey",
+	skey_init_ctx,
+	mm_skey_query,
+	mm_skey_respond,
 	skey_free_ctx
 };
 #endif /* SKEY */

@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.h,v 1.1.1.9 2002/03/08 01:21:08 itojun Exp $	*/
-/*	$OpenBSD: servconf.h,v 1.54 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$NetBSD: servconf.h,v 1.1.1.10 2002/04/22 07:37:39 itojun Exp $	*/
+/*	$OpenBSD: servconf.h,v 1.57 2002/03/20 19:12:25 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -130,7 +130,6 @@ typedef struct {
 
 	char   *authorized_keys_file;	/* File containing public keys */
 	char   *authorized_keys_file2;
-
 }       ServerOptions;
 
 void	 initialize_server_options(ServerOptions *);

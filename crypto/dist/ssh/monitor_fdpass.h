@@ -1,8 +1,9 @@
-/*	$NetBSD: sftp-glob.h,v 1.1.1.6 2002/04/22 07:37:43 itojun Exp $	*/
-/* $OpenBSD: sftp-glob.h,v 1.7 2002/03/19 10:49:35 markus Exp $ */
+/*	$NetBSD: monitor_fdpass.h,v 1.1.1.1 2002/04/22 07:38:02 itojun Exp $	*/
+/*	$OpenBSD: monitor_fdpass.h,v 1.2 2002/03/26 03:24:01 stevesk Exp $	*/
 
 /*
- * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
+ * Copyright 2002 Niels Provos <provos@citi.umich.edu>
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,15 +26,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Remote sftp filename globbing */
+#ifndef _MM_FDPASS_H_
+#define _MM_FDPASS_H_
 
-#ifndef _SFTP_GLOB_H
-#define _SFTP_GLOB_H
+void mm_send_fd(int, int);
+int mm_receive_fd(int);
 
-#include "sftp-client.h"
-
-int
-remote_glob(struct sftp_conn *, const char *, int,
-    int (*)(const char *, int), glob_t *);
-
-#endif
+#endif /* _MM_FDPASS_H_ */

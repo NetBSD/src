@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.1.1.10 2002/03/08 01:20:53 itojun Exp $	*/
-/*	$OpenBSD: packet.h,v 1.33 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$NetBSD: packet.h,v 1.1.1.11 2002/04/22 07:37:33 itojun Exp $	*/
+/*	$OpenBSD: packet.h,v 1.34 2002/03/18 17:16:38 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -56,6 +56,16 @@ void	*packet_get_raw(int *length_ptr);
 void	*packet_get_string(u_int *length_ptr);
 void     packet_disconnect(const char *fmt,...) __attribute__((format(printf, 1, 2)));
 void     packet_send_debug(const char *fmt,...) __attribute__((format(printf, 1, 2)));
+
+void	 set_newkeys(int mode);
+int	 packet_get_keyiv_len(int);
+void	 packet_get_keyiv(int, u_char *, u_int);
+int	 packet_get_keycontext(int, u_char *);
+void	 packet_set_keycontext(int, u_char *);
+u_int32_t packet_get_seqnr(int);
+void	 packet_set_seqnr(int, u_int32_t);
+int	 packet_get_ssh1_cipher(void);
+void	 packet_set_iv(int, u_char *);
 
 void     packet_write_poll(void);
 void     packet_write_wait(void);
