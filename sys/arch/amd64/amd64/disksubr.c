@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 2003/05/07 23:32:40 fvdl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 2003/05/08 20:36:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -141,7 +141,7 @@ readdisklabel(dev, strat, lp, osdep)
 	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
-	int dospartoff, cyl, i, *ip, found = 0;
+	int dospartoff, cyl, i, *ip;
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secsize == 0)
@@ -262,19 +262,19 @@ nombrpart:
 	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			continue;
+			if (msg == NULL)
+				msg = "no disk label";
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
 			   dkcksum(dlp) != 0)
 			msg = "disk label corrupted";
 		else {
 			*lp = *dlp;
 			msg = NULL;
-			found = 1;
 			break;
 		}
 	}
 
-	if (msg != NULL || found == 0)
+	if (msg)
 		goto done;
 
 	/* obtain bad sector table if requested and present */
