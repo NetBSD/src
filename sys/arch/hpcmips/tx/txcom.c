@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.21.2.3 2004/09/21 13:16:13 skrll Exp $ */
+/*	$NetBSD: txcom.c,v 1.21.2.4 2005/01/24 08:59:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.21.2.3 2004/09/21 13:16:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.21.2.4 2005/01/24 08:59:39 skrll Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -783,7 +783,7 @@ txcom_txsoft(void *arg)
 }
 
 int
-txcomopen(dev_t dev, int flag, int mode, struct proc *p)
+txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
 	struct txcom_chip *chip;
@@ -799,7 +799,7 @@ txcomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -883,7 +883,7 @@ txcomopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-txcomclose(dev_t dev, int flag, int mode, struct proc *p)
+txcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -926,12 +926,12 @@ txcomwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-txcompoll(dev_t dev, int events, struct proc *p)
+txcompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -943,18 +943,18 @@ txcomtty(dev_t dev)
 }
 
 int
-txcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+txcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 	int s, err;
 
-	err = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	err = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (err != EPASSTHROUGH) {
 		return err;
 	}
 
-	err = ttioctl(tp, cmd, data, flag, p);
+	err = ttioctl(tp, cmd, data, flag, l);
 	if (err != EPASSTHROUGH) {
 		return err;
 	}
@@ -989,7 +989,7 @@ txcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		err = suser(p->p_ucred, &p->p_acflag); 
+		err = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
 		if (err) {
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.1.2.4 2004/09/21 13:27:46 skrll Exp $ */
+/*	$NetBSD: apmdev.c,v 1.1.2.5 2005/01/24 08:59:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.1.2.4 2004/09/21 13:27:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.1.2.5 2005/01/24 08:59:40 skrll Exp $");
 
 #include "opt_apmdev.h"
 
@@ -763,7 +763,7 @@ apm_thread(void *arg)
 }
 
 int
-apmdevopen(dev_t dev, int flag, int mode, struct proc *p)
+apmdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = APMUNIT(dev);
 	int ctl = APMDEV(dev);
@@ -780,7 +780,7 @@ apmdevopen(dev_t dev, int flag, int mode, struct proc *p)
 		return ENXIO;
 	
 	DPRINTF(APMDEBUG_DEVICE,
-	    ("apmopen: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
+	    ("apmopen: pid %d flag %x mode %x\n", l->l_proc->p_pid, flag, mode));
 
 	APM_LOCK(sc);
 	switch (ctl) {
@@ -812,13 +812,13 @@ apmdevopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-apmdevclose(dev_t dev, int flag, int mode, struct proc *p)
+apmdevclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
 	int ctl = APMDEV(dev);
 
 	DPRINTF(APMDEBUG_DEVICE,
-	    ("apmclose: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
+	    ("apmclose: pid %d flag %x mode %x\n", l->l_proc->p_pid, flag, mode));
 
 	APM_LOCK(sc);
 	switch (ctl) {
@@ -838,7 +838,7 @@ apmdevclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
 	struct apm_power_info *powerp;
@@ -921,7 +921,7 @@ apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-apmdevpoll(dev_t dev, int events, struct proc *p)
+apmdevpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
 	int revents = 0;
@@ -931,7 +931,7 @@ apmdevpoll(dev_t dev, int events, struct proc *p)
 		if (sc->event_count)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 	}
 	APM_UNLOCK(sc);
 

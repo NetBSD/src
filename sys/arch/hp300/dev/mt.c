@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.23.2.6 2004/11/02 07:50:23 skrll Exp $	*/
+/*	$NetBSD: mt.c,v 1.23.2.7 2005/01/24 08:59:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.6 2004/11/02 07:50:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.7 2005/01/24 08:59:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 }
 
 static int
-mtopen(dev_t dev, int flag, int mode, struct proc *p)
+mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct mt_softc *sc;
@@ -326,7 +326,7 @@ mtopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc->sc_flags & MTF_OPEN)
 		return (EBUSY);
 	sc->sc_flags |= MTF_OPEN;
-	sc->sc_ttyp = tprintf_open(p);
+	sc->sc_ttyp = tprintf_open(l->l_proc);
 	if ((sc->sc_flags & MTF_ALIVE) == 0) {
 		error = mtcommand(dev, MTRESET, 0);
 		if (error != 0 || (sc->sc_flags & MTF_ALIVE) == 0)
@@ -412,7 +412,7 @@ errout:
 }
 
 static int
-mtclose(dev_t dev, int flag, int fmt, struct proc *p)
+mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
 
@@ -946,7 +946,7 @@ mtwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-mtioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mtioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct mtop *op;
 	int cnt;

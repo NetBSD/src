@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11.2.2 2004/12/18 09:31:02 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11.2.3 2005/01/24 08:59:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.2.2 2004/12/18 09:31:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.2.3 2005/01/24 08:59:39 skrll Exp $");
 
 #include "locators.h"
 
@@ -933,10 +933,10 @@ mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio,
 	iov = uio->uio_iov;
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
+		p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
-			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
+			panic("_bus_dmamap_load_uio: USERSPACE but no lwp");
 #endif
 	}
 

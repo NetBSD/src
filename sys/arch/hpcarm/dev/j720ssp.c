@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.17.2.3 2004/09/21 13:16:00 skrll Exp $ */
+/* $NetBSD: j720ssp.c,v 1.17.2.4 2005/01/24 08:59:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.17.2.3 2004/09/21 13:16:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.17.2.4 2005/01/24 08:59:39 skrll Exp $");
 
 #include "apm.h"
 
@@ -150,7 +150,7 @@ int  apm_submatch __P((struct device *, struct cfdata *, void *));
 
 int  j720kbd_enable __P((void *, int));
 void j720kbd_set_leds __P((void *, int));
-int  j720kbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int  j720kbd_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
 
 int  j720lcdpower(void *, int, long, void *);
 int  hpcarm_apm_getpower __P((struct apm_power_info *, void *));
@@ -184,7 +184,7 @@ const struct wskbd_mapdata j720kbd_keymapdata = {
 };
 
 static int  j720tp_enable __P((void *));
-static int  j720tp_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static int  j720tp_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
 static void j720tp_disable __P((void *));
 
 const struct wsmouse_accessops j720tp_accessops = {
@@ -437,12 +437,12 @@ j720kbd_set_leds(v, on)
 }
 
 int
-j720kbd_ioctl(v, cmd, data, flag, p)
+j720kbd_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -669,16 +669,16 @@ j720tp_disable(arg)
 }
 
 static int
-j720tp_ioctl(arg, cmd, data, flag, p)
+j720tp_ioctl(arg, cmd, data, flag, l)
 	void *arg;
 	u_long cmd;
 	caddr_t data; 
 	int flag; 
-	struct proc *p;
+	struct lwp *l;
 {
 	struct j720ssp_softc *sc = arg;
 
-	return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
+	return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, l);
 }
 
 int

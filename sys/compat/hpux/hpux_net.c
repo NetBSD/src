@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.29.2.4 2004/10/12 06:00:41 skrll Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.29.2.5 2005/01/24 08:59:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.29.2.4 2004/10/12 06:00:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.29.2.5 2005/01/24 08:59:40 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -287,7 +287,7 @@ hpux_sys_setsockopt(l, v, retval)
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -324,7 +324,7 @@ hpux_sys_setsockopt2(l, v, retval)
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -373,6 +373,6 @@ hpux_sys_getsockopt(l, v, retval)
 	if (m != NULL)
 		(void) m_free(m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
