@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.11 1996/10/13 02:59:36 christos Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.12 1996/10/13 19:57:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -67,11 +67,13 @@ interrupt(a0, a1, a2, framep)
 	struct trapframe *framep;
 {
 
-	if (a0 == 1)			/* clock interrupt */
+	if (a0 == 1) {			/* clock interrupt */
+		cnt.v_intr++;
 		(*clockintr)(framep, a1);
-	else if (a0 == 3)		/* I/O device interrupt */
+	} else if (a0 == 3) {		/* I/O device interrupt */
+		cnt.v_intr++;
 		(*iointr)(framep, a1);
-	else if (a0 == 2)		/* machine check or correctable error */
+	} else if (a0 == 2)		/* machine check or correctable error */
 		machine_check(framep, a1, a2);
 	else {
 		/*
