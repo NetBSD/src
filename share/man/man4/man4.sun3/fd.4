@@ -1,4 +1,4 @@
-.\"	$NetBSD: fd.4,v 1.2 1997/10/08 22:00:09 jtc Exp $
+.\"	$NetBSD: fd.4,v 1.3 1997/10/20 00:28:33 pk Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,17 +49,72 @@ This is the driver for the built-in disquette station found on the
 Sparcstation 1, and (optionally) other desktop Sparc systems.
 .Pp
 Bits
-.Bq 0-4
+.Bq 0-3
 of the minor device number of the special files referring to this
 device encode the floppy density as follows:
 .Bl -tag -width indent -offset indent
 .It 0
 3.5'' 1.44MB disquettes.
 .It 1
-3.5'' 1.2MB disquettes.
+3.5'' 720KB disquettes.
+.It 2
+3.5'' 360KB disquettes.
+.It 3
+3.5'' 1.2MB/NEC Japanese format disquettes.
 .El
+.Sh FORMATTING
+The driver supports floppy disk formatting using the interfaces in
+.Pa Aq sys/fdio.h :
+.Pp
+.Bl -tag -width FDIOCFORMAT_TRACK -compact
+.It Dv FDIOCGETFORMAT Fa struct fdformat_parms
+Fetch current formatting parameters.  This gets the default parameters
+for the open device if no parameters have been set during the session.
+.Pp
+.It Dv FDIOCSETFORMAT Fa struct fdformat_parms
+Set formatting parameters.
+The driver saves this state and it persists while the device is open.
+.Pp
+.It Dv FDIOCFORMAT_TRACK Fa struct fdformat_cmd
+Format a track on the medium.
+If this call returns
+.Er EINVAL ,
+the track formatting parameters were out of range for the medium.
+If it returns
+.Er EIO ,
+there was a medium error while formatting the track.
+.Pp
+.It Dv FDIOCSETOPTS Fa int
+Set driver options which persist until the device is closed.  The
+options should be the logical OR of the desired values below:
+.Pp
+.Bl -tag -width FDOPT_NORETRY -compact
+.It Dv FDOPT_NORETRY
+Do not retry operations on failure
+.It Dv FDOPT_SILENT
+Do not print error messages to the console
+.El
+.Pp
+.It Dv FDIOCGETOPTS Fa int
+Fetch drive options.
+.El
+.Pp
+A typical use of the formatting facilities would be to open the device,
+call
+.Dv FDIOCGETFORMAT
+to fetch the current format parameters, perhaps
+change a parameter or two, display the formatting details to the user,
+and then call
+.Dv FDIOCSETFORMAT
+followed by a series of calls to
+.Dv FDIOCFORMAT_TRACK .
 .Sh SEE ALSO
-.Xr eject 1
+.Xr eject 1 ,
+.Xr fdformat 1 .
 .Sh BUGS
-This driver does not work well with Intel 82077-based controllers
-.Pq which are commonly found on sun4m machines .
+Formatting appears to not work reliably on all machines.
+.Sh HISTORY
+The
+.Nm
+formatting support appeared in
+.Nx 1.3 .
