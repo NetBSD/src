@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.4 1997/10/17 14:54:38 lukem Exp $ */
+/* $NetBSD: lib.h,v 1.5 1998/06/05 11:22:20 frueauf Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -84,7 +84,7 @@ enum _plist_t {
     PLIST_CHOWN, PLIST_CHGRP, PLIST_COMMENT, PLIST_IGNORE,
     PLIST_NAME, PLIST_UNEXEC, PLIST_SRC, PLIST_DISPLAY,
     PLIST_PKGDEP, PLIST_MTREE, PLIST_DIR_RM, PLIST_IGNORE_INST,
-    PLIST_OPTION
+    PLIST_OPTION, PLIST_PKGCFL
 };
 typedef enum _plist_t plist_t;
 
