@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.19 2000/10/04 14:46:23 sommerfeld Exp $	*/
+/*	$NetBSD: ethers.c,v 1.20 2002/09/16 19:25:33 tron Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -9,7 +9,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ethers.c,v 1.19 2000/10/04 14:46:23 sommerfeld Exp $");
+__RCSID("$NetBSD: ethers.c,v 1.20 2002/09/16 19:25:33 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -45,13 +45,13 @@ __weak_alias(ether_ntohost,_ether_ntohost)
 
 char *
 ether_ntoa(e)
-	struct ether_addr *e;
+	const struct ether_addr *e;
 {
 	static char a[18];
 
 	_DIAGASSERT(e != NULL);
 
-	snprintf(a, sizeof a, "%02x:%02x:%02x:%02x:%02x:%02x",
+	(void) snprintf(a, sizeof a, "%02x:%02x:%02x:%02x:%02x:%02x",
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
 	    e->ether_addr_octet[2], e->ether_addr_octet[3],
 	    e->ether_addr_octet[4], e->ether_addr_octet[5]);
@@ -83,7 +83,7 @@ ether_aton(s)
 int
 ether_ntohost(hostname, e)
 	char *hostname;
-	struct ether_addr *e;
+	const struct ether_addr *e;
 {
 	FILE *f; 
 	char *p;
