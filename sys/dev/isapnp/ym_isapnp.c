@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.5 1998/08/25 22:35:25 pk Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.6 1999/02/23 21:16:27 nathanw Exp $ */
 
 
 /*
@@ -116,7 +116,7 @@ ym_isapnp_attach(parent, self, aux)
 	sc->sc_ioh = ipa->ipa_io[1].h;
 
 	sc->ym_irq = ipa->ipa_irq[0].num;
-	sc->ym_drq = ipa->ipa_drq[0].num;
+	sc->ym_playdrq = ipa->ipa_drq[0].num;
 	sc->ym_recdrq = ipa->ipa_drq[1].num;
 	
 	sc->sc_controlioh = ipa->ipa_io[4].h; 
