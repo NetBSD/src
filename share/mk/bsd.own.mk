@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.338 2003/07/10 10:34:36 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.339 2003/07/16 13:19:49 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -104,8 +104,7 @@ HOST_CYGWIN=	${HOST_OSTYPE:MCYGWIN*}
 
 # Provide a default for TOOLDIR.
 .if !defined(TOOLDIR)
-_TOOLOBJ!=	cd ${NETBSDSRCDIR}/tools && ${PRINTOBJDIR}
-TOOLDIR:=	${_TOOLOBJ}/tools.${HOST_OSTYPE}
+TOOLDIR:=	${_SRC_TOP_OBJ_}/tooldir.${HOST_OSTYPE}
 .MAKEOVERRIDES+= TOOLDIR
 .endif
 
