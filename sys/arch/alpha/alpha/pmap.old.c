@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.20 1997/09/02 20:15:34 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.21 1997/09/03 00:58:14 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.20 1997/09/02 20:15:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.21 1997/09/03 00:58:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1272,7 +1272,8 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
  *	Generally used to insure that a thread about
  *	to run will see a semantically correct world.
  */
-void pmap_update()
+void
+pmap_update()
 {
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1869,8 +1870,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				 * update now to reload hardware.
 				 * (curproc may be NULL if exiting.)
 				 */
-				if (curproc != NULL &&
-				    ptpmap == curproc->p_vmspace->vm_map.pmap)
+				if (active_user_pmap(ptpmap))
 					_pmap_activate(ptpmap);
 			}
 #ifdef DEBUG
@@ -2012,7 +2012,7 @@ pmap_enter_ptpage(pmap, va)
 		 * XXX may have changed segment table pointer for current
 		 * process so update now to reload hardware.
 		 */
-		if (pmap == curproc->p_vmspace->vm_map.pmap)
+		if (active_user_pmap(pmap))
 			_pmap_activate(pmap);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
