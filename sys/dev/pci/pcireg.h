@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.11 1996/08/10 15:42:33 mycroft Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.12 1997/03/19 19:38:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -123,6 +123,12 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CLASS_MULTIMEDIA			0x04
 #define	PCI_CLASS_MEMORY			0x05
 #define	PCI_CLASS_BRIDGE			0x06
+#define	PCI_CLASS_COMMUNICATIONS		0x07
+#define	PCI_CLASS_SYSTEM			0x08
+#define	PCI_CLASS_INPUT				0x09
+#define	PCI_CLASS_DOCK				0x0A
+#define	PCI_CLASS_PROCESSOR			0x0B
+#define	PCI_CLASS_SERIALBUS			0x0C
 #define	PCI_CLASS_UNDEFINED			0xff
 
 /* 0x00 prehistoric subclasses */
@@ -134,12 +140,14 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_IDE		0x01
 #define	PCI_SUBCLASS_MASS_STORAGE_FLOPPY	0x02
 #define	PCI_SUBCLASS_MASS_STORAGE_IPI		0x03
+#define	PCI_SUBCLASS_MASS_STORAGE_RAID		0x04
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
 #define	PCI_SUBCLASS_NETWORK_ETHERNET		0x00
 #define	PCI_SUBCLASS_NETWORK_TOKENRING		0x01
 #define	PCI_SUBCLASS_NETWORK_FDDI		0x02
+#define	PCI_SUBCLASS_NETWORK_ATM		0x03
 #define	PCI_SUBCLASS_NETWORK_MISC		0x80
 
 /* 0x03 display subclasses */
@@ -164,7 +172,46 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_BRIDGE_MC			0x03
 #define	PCI_SUBCLASS_BRIDGE_PCI			0x04
 #define	PCI_SUBCLASS_BRIDGE_PCMCIA		0x05
+#define	PCI_SUBCLASS_BRIDGE_NUBUS		0x06
+#define	PCI_SUBCLASS_BRIDGE_CARDBUS		0x07
 #define	PCI_SUBCLASS_BRIDGE_MISC		0x80
+
+/* 0x07 communications subclasses */
+#define	PCI_SUBCLASS_COMMUNICATIONS_SERIAL	0x00
+#define	PCI_SUBCLASS_COMMUNICATIONS_PARALLEL	0x01
+#define	PCI_SUBCLASS_COMMUNICATIONS_MISC	0x80
+
+/* 0x08 system subclasses */
+#define	PCI_SUBCLASS_SYSTEM_PIC			0x00
+#define	PCI_SUBCLASS_SYSTEM_DMA			0x01
+#define	PCI_SUBCLASS_SYSTEM_TIMER		0x02
+#define	PCI_SUBCLASS_SYSTEM_RTC			0x03
+#define	PCI_SUBCLASS_SYSTEM_MISC		0x80
+
+/* 0x09 input subclasses */
+#define	PCI_SUBCLASS_INPUT_KEYBOARD		0x00
+#define	PCI_SUBCLASS_INPUT_DIGITIZER		0x01
+#define	PCI_SUBCLASS_INPUT_MOUSE		0x02
+#define	PCI_SUBCLASS_INPUT_MISC			0x80
+
+/* 0x0A dock subclasses */
+#define	PCI_SUBCLASS_DOCK_GENERIC		0x00
+#define	PCI_SUBCLASS_DOCK_MISC			0x80
+
+/* 0x0B processor subclasses */
+#define	PCI_SUBCLASS_PROCESSOR_386		0x00
+#define	PCI_SUBCLASS_PROCESSOR_486		0x01
+#define	PCI_SUBCLASS_PROCESSOR_PENTIUM		0x02
+#define	PCI_SUBCLASS_PROCESSOR_ALPHA		0x10
+#define	PCI_SUBCLASS_PROCESSOR_POWERPC		0x20
+#define	PCI_SUBCLASS_PROCESSOR_COPROC		0x40
+
+/* 0x0C serial bus subclasses */
+#define	PCI_SUBCLASS_SERIALBUS_FIREWIRE		0x00
+#define	PCI_SUBCLASS_SERIALBUS_ACCESS		0x01
+#define	PCI_SUBCLASS_SERIALBUS_SSA		0x02
+#define	PCI_SUBCLASS_SERIALBUS_USB		0x03
+#define	PCI_SUBCLASS_SERIALBUS_FIBER		0x04
 
 /*
  * PCI BIST/Header Type/Latency Timer/Cache Line Size Register.
@@ -176,7 +223,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_BIST(bhlcr) \
 	    (((bhlcr) >> PCI_BIST_SHIFT) & PCI_BIST_MASK)
 
-#define	PCI_HDRTYPE_SHIFT			24
+#define	PCI_HDRTYPE_SHIFT			16
 #define	PCI_HDRTYPE_MASK			0xff
 #define	PCI_HDRTYPE(bhlcr) \
 	    (((bhlcr) >> PCI_HDRTYPE_SHIFT) & PCI_HDRTYPE_MASK)
@@ -184,12 +231,12 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_HDRTYPE_MULTIFN(bhlcr) \
 	    ((PCI_HDRTYPE(bhlcr) & 0x80) != 0)
 
-#define	PCI_LATTIMER_SHIFT			24
+#define	PCI_LATTIMER_SHIFT			8
 #define	PCI_LATTIMER_MASK			0xff
 #define	PCI_LATTIMER(bhlcr) \
 	    (((bhlcr) >> PCI_LATTIMER_SHIFT) & PCI_LATTIMER_MASK)
 
-#define	PCI_CACHELINE_SHIFT			24
+#define	PCI_CACHELINE_SHIFT			0
 #define	PCI_CACHELINE_MASK			0xff
 #define	PCI_CACHELINE(bhlcr) \
 	    (((bhlcr) >> PCI_CACHELINE_SHIFT) & PCI_CACHELINE_MASK)
