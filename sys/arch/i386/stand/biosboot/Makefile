@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2003/02/02 21:05:53 dsl Exp $
+#	$NetBSD: Makefile,v 1.43 2003/04/01 21:25:34 mycroft Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -15,6 +15,7 @@ RELOC=		0x0
 
 SRCS= main.c devopen.c conf.c exec.c
 
+CPPFLAGS+= -DSLOW	# for libz
 CPPFLAGS+= -DCOMPAT_386BSD_MBRPART -DSUPPORT_PS2
 
 .if (${BASE} == "biosboot")
