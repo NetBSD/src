@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.24 2002/10/02 17:08:10 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.25 2002/10/04 14:33:30 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.24 2002/10/02 17:08:10 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.25 2002/10/04 14:33:30 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,6 +434,12 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sts_reg = ICH_STS;
 		sc->sc_sample_size = 2;
 	}
+	/* nForce MCP quirk */
+	if (d->vendor == PCI_VENDOR_NVIDIA
+	    && d->product == PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC) {
+		sc->sc_ignore_codecready = TRUE;
+	}
+
 
 	/* Set up DMA lists. */
 	sc->ptr_pcmo = sc->ptr_pcmi = sc->ptr_mici = 0;
