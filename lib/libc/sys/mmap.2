@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.13 1998/02/10 05:51:00 mrg Exp $
+.\"	$NetBSD: mmap.2,v 1.14 1998/03/28 16:58:58 kleink Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -208,10 +208,11 @@ valid address range for a process.
 .Dv MAP_ANON was specified and
 .Fa fd
 was not \-1.
-.Fa Fd
-did not reference a regular or character special file.
 .Fa Len
 was less than zero.
+.It Bq Er ENODEV
+.Fa Fd
+did not reference a regular or character special file.
 .It Bq Er ENOMEM
 .Dv MAP_FIXED
 was specified and the
