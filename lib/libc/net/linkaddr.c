@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.6 1997/07/13 19:57:52 christos Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.7 1998/07/26 13:03:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.6 1997/07/13 19:57:52 christos Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.7 1998/07/26 13:03:43 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,7 +128,7 @@ link_addr(addr, sdl)
 	return;
 }
 
-static char hexlist[] = "0123456789abcdef";
+static const char hexlist[16] = "0123456789abcdef";
 
 char *
 link_ntoa(sdl)
