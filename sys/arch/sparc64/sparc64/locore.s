@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.29 1999/02/15 04:54:34 hubertf Exp $	*/
+/*	$NetBSD: locore.s,v 1.30 1999/02/17 03:23:28 eeh Exp $	*/
 /*
  * Copyright (c) 1996, 1997, 1998 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -57,6 +57,7 @@
 #undef LOCKED_PCB
 #define HWREF
 #define MMUDEBUG
+#define VECTORED_INTERRUPTS
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -3555,6 +3556,34 @@ return_from_syscall:
  *		code.
  *
  */
+
+/*
+ * Vectored interrupts:
+ *
+ * When an interrupt comes in, interrupt_vector uses the interrupt 
+ * vector number to lookup the appropriate intrhand from the intrlev
+ * array.  It then looks up the interrupt level from the intrhand
+ * structure.  It uses the level to index the intrpending array,
+ * which is 8 slots for each possible interrupt level (so we can 
+ * shift instead of multiply for address calculation).  It hunts for
+ * any available slot at that level.  Available slots are NULL.
+ *
+ * NOTE: If no slots are available, the interrupt is lost.
+ *
+ * Then interrupt_vector uses the interrupt level in the intrhand
+ * to issue a softint of the appropriate level.  The softint handler
+ * figures out what level interrupt it's handling and pulls the first
+ * intrhand pointer out of the intrpending array for that interrupt
+ * level, puts a NULL in its place, clears the interrupt generator, 
+ * and invokes the interrupt handler.
+ */
+	
+	.data
+	.globl	intrpending
+intrpending:
+	.space	15 * 8 * PTRSZ
+	.text
+	
 #ifdef DEBUG
 #define INTRDEBUG_VECTOR	0x1
 #define INTRDEBUG_LEVEL		0x2	
@@ -3615,9 +3644,28 @@ interrupt_vector:
 	LOCTOGLOB
 	ba	1f
 	 restore
-#endif
 1:
+#endif
+#ifdef	VECTORED_INTERRUPTS
+	set	intrpending, %g1
+	mov	8, %g7			! Number of slots to search
+	sll	%g6, PTRSHFT+3, %g2	! Find start of table for this IPL
+	add	%g1, %g2, %g1
+	LDPTR	[%g1], %g2		! Get slot
+	dec	%g7
+	brz,a,pt	%g2, 4f		! Available?
+	 STPTR	%g5, [%g1]		! Put intrhand in slot
+	brgz,pt	%o7, 1b
+	 inc	PTRSZ, %g1		! Next slot
+	
+	!! If we get here we have a problem.
+	!! There were no available slots and the interrupt was lost.
+	!! We'll resort to polling in this case.
+4:
+#endif
+	set	1, %g7
 	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
+	sll	%g7, %g6, %g6
 	membar	#Sync			! Should not be needed due to retry
 	wr	%g6, 0, SET_SOFTINT	! Invoke a softint
 2:	
@@ -3713,6 +3761,7 @@ iv_halt:
  *
  *       IRQ# = %tt - 0x40
  */
+
 	.comm	_C_LABEL(intrhand), 15 * PTRSZ	! intrhand[0..14]; 0 => error
 	.globl _C_LABEL(sparc_interrupt)		! This is for interrupt debugging
 _C_LABEL(sparc_interrupt):
@@ -3794,6 +3843,38 @@ _C_LABEL(sparc_interrupt):
 	inc	%o0
 	st	%o0, [%l4 + %l3]
 	wrpr	%l5, %pil
+#ifdef VECTORED_INTERRUPTS
+	set	intrpending, %l4
+	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
+	sll	%l5, PTRSHFT+3, %l2
+	add	%l2, %l4, %l4
+	mov	8, %l7
+1:	
+	LDPTR	[%l4], %l2		! Get slot
+	dec	%l7
+	brnz,a,pt	%l2, 1f		! Available?
+	 STPTR	%g0, [%l4]		! Put intrhand in slot
+	brgz,pt	%l7, 1b
+	 inc	PTRSZ, %l4		! Next slot
+	ba,a,pt	%icc, 2f		! Not found -- use the old scheme
+	 nop				! XXX Spitfire bug
+1:
+	LDPTR	[%l2 + IH_CLR], %o3
+	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
+	LDPTR	[%l2 + IH_FUN], %o1	! ih->ih_fun
+	brz,pn	%o3, 0f
+	 LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
+	stx	%g0, [%o3]		! Clear intr source
+0:	
+	jmpl	%o1, %o7		! handled = (*ih->ih_fun)(...)
+	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
+	brz,pt	%o0, 4f			! Done?
+	 nop
+	call	_C_LABEL(strayintr)	! strayintr(&intrframe)
+	 add	%sp, CC64FSZ + STKB, %o0
+	ba,a,pt	%icc, 4f		! done
+2:	
+#endif
 	set	_C_LABEL(intrhand), %l4		! %l4 = intrhand[intlev];
 	LDPTR	[%l4 + %l3], %l4
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
