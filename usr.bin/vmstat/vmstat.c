@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)vmstat.c	5.31 (Berkeley) 7/2/91"; */
-static char rcsid[] = "$Id: vmstat.c,v 1.4 1993/05/25 18:04:17 cgd Exp $";
+static char rcsid[] = "$Id: vmstat.c,v 1.5 1993/06/06 17:15:59 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -746,7 +746,7 @@ cpustats()
 void
 dointr()
 {
-	register long *intrcnt, inttotal, uptime;
+	register unsigned long *intrcnt, inttotal, uptime;
 	register int nintr, inamlen;
 	register char *intrname;
 
@@ -761,17 +761,17 @@ dointr()
 	}
 	kread(X_INTRCNT, intrcnt, (size_t)nintr);
 	kread(X_INTRNAMES, intrname, (size_t)inamlen);
-	(void)printf("interrupt      total      rate\n");
+	(void)printf("%-12s %10s %8s\n", "interrupt", "count", "rate");
 	inttotal = 0;
 	nintr /= sizeof(long);
 	while (--nintr >= 0) {
 		if (*intrcnt)
-			(void)printf("%-12s %8ld %8ld\n", intrname,
+			(void)printf("%-12s %10lu %8lu\n", intrname,
 			    *intrcnt, *intrcnt / uptime);
 		intrname += strlen(intrname) + 1;
 		inttotal += *intrcnt++;
 	}
-	(void)printf("Total        %8ld %8ld\n", inttotal, inttotal / uptime);
+	(void)printf("%-12s %10lu %8lu\n", "Total", inttotal, inttotal / uptime);
 }
 
 /*
