@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.11.2.6 2004/05/30 07:02:32 tron Exp $	*/
+/*	$NetBSD: key.c,v 1.11.2.7 2004/06/17 09:26:57 tron Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.11.2.6 2004/05/30 07:02:32 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.11.2.7 2004/06/17 09:26:57 tron Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -385,10 +385,10 @@ static int key_spdflush __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
 static int key_spddump __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
-static struct mbuf * key_setspddump __P((int *errorp));
-static struct mbuf * key_setspddump_chain __P((int *errorp, int *lenp));
+static struct mbuf * key_setspddump __P((int *errorp, pid_t));
+static struct mbuf * key_setspddump_chain __P((int *errorp, int *lenp, pid_t pid));
 static struct mbuf *key_setdumpsp __P((struct secpolicy *,
-	u_int8_t, u_int32_t, u_int32_t));
+	u_int8_t, u_int32_t, pid_t));
 static u_int key_getspreqmsglen __P((struct secpolicy *));
 static int key_spdexpire __P((struct secpolicy *));
 static struct secashead *key_newsah __P((struct secasindex *));
@@ -480,7 +480,7 @@ static int key_expire __P((struct secasvar *));
 static int key_flush __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
 static struct mbuf *key_setdump_chain __P((u_int8_t req_satype, int *errorp,
-	int *lenp));
+	int *lenp, pid_t pid));
 static int key_dump __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
 static int key_promisc __P((struct socket *, struct mbuf *,
@@ -2406,7 +2406,7 @@ key_spdflush(so, m, mhp)
 static struct sockaddr key_src = { 2, PF_KEY, };
 
 static struct mbuf *
-key_setspddump_chain(int *errorp, int *lenp)
+key_setspddump_chain(int *errorp, int *lenp, pid_t pid)
 {
 	struct secpolicy *sp;
 	int cnt;
@@ -2435,7 +2435,7 @@ key_setspddump_chain(int *errorp, int *lenp)
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
 		LIST_FOREACH(sp, &sptree[dir], chain) {
 			--cnt;
-			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, 0);
+			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, pid);
 
 			if (!n) {
 				*errorp = ENOBUFS;
@@ -2478,12 +2478,14 @@ key_spddump(so, m0, mhp)
 	struct mbuf *n;
 	int error, len;
 	int ok, s;
+	pid_t pid;
 
 	/* sanity check */
 	if (so == NULL || m0 == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_spddump: NULL pointer is passed.\n");
 
 
+	pid = mhp->msg->sadb_msg_pid;
 	/*
 	 * If the requestor has insufficient socket-buffer space
 	 * for the entire chain, nobody gets any response to the DUMP.
@@ -2496,7 +2498,7 @@ key_spddump(so, m0, mhp)
 	}
 
 	s = splsoftnet();
-	n = key_setspddump_chain(&error, &len);
+	n = key_setspddump_chain(&error, &len, pid);
 	splx(s);
 
 	if (n == NULL) {
@@ -2535,7 +2537,8 @@ static struct mbuf *
 key_setdumpsp(sp, type, seq, pid)
 	struct secpolicy *sp;
 	u_int8_t type;
-	u_int32_t seq, pid;
+	u_int32_t seq;
+	pid_t pid;
 {
 	struct mbuf *result = NULL, *m;
 
@@ -6626,7 +6629,7 @@ key_flush(so, m, mhp)
 
 
 static struct mbuf *
-key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp)
+key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 {
 	struct secashead *sah;
 	struct secasvar *sav;
@@ -6689,7 +6692,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp)
 			state = saorder_state_any[stateidx];
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
-				    --cnt, 0);
+				    --cnt, pid);
 				if (!n) {
 					m_freem(m);
 					*errorp = ENOBUFS;
@@ -6768,7 +6771,7 @@ key_dump(so, m0, mhp)
 	}
 
 	s = splsoftnet();
-	n = key_setdump_chain(satype, &error, &len);
+	n = key_setdump_chain(satype, &error, &len, mhp->msg->sadb_msg_pid);
 	splx(s);
 
 	if (n == NULL) {
@@ -7590,7 +7593,7 @@ key_alloc_mbuf(l)
 }
 
 static struct mbuf *
-key_setdump(u_int8_t req_satype, int *errorp)
+key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 {
 	struct secashead *sah;
 	struct secasvar *sav;
@@ -7649,7 +7652,7 @@ key_setdump(u_int8_t req_satype, int *errorp)
 			state = saorder_state_any[stateidx];
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
-				    --cnt, 0);
+				    --cnt, pid);
 				if (!n) {
 					m_freem(m);
 					*errorp = ENOBUFS;
@@ -7680,7 +7683,7 @@ key_setdump(u_int8_t req_satype, int *errorp)
 }
 
 static struct mbuf *
-key_setspddump(int *errorp)
+key_setspddump(int *errorp, pid_t pid)
 {
 	struct secpolicy *sp;
 	int cnt;
@@ -7704,7 +7707,7 @@ key_setspddump(int *errorp)
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
 		LIST_FOREACH(sp, &sptree[dir], chain) {
 			--cnt;
-			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, 0);
+			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, pid);
 
 			if (!n) {
 				*errorp = ENOBUFS;
@@ -7739,7 +7742,7 @@ sysctl_net_key_dumpsa(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	s = splsoftnet();
-	m = key_setdump(name[0], &error);
+	m = key_setdump(name[0], &error, l->l_proc->p_pid);
 	splx(s);
 	if (!m)
 		return (error);
@@ -7785,7 +7788,7 @@ sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	s = splsoftnet();
-	m = key_setspddump(&error);
+	m = key_setspddump(&error, l->l_proc->p_pid);
 	splx(s);
 	if (!m)
 		return (error);
