@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 1999/09/04 04:21:28 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.49 1999/09/15 08:48:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.48 1999/09/04 04:21:28 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.49 1999/09/15 08:48:17 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.48 1999/09/04 04:21:28 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.49 1999/09/15 08:48:17 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -835,10 +835,12 @@ main(argc, argv)
 		Compat_Run(targs);
 	}
 
+#ifdef CLEANUP
 	Lst_Destroy(targs, NOFREE);
 	Lst_Destroy(variables, NOFREE);
 	Lst_Destroy(makefiles, NOFREE);
 	Lst_Destroy(create, (void (*) __P((ClientData))) free);
+#endif
 
 	/* print the graph now it's been processed if the user requested it */
 	if (DEBUG(GRAPH2))
