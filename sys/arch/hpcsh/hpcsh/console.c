@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.9 2002/03/03 14:35:08 uch Exp $	*/
+/*	$NetBSD: console.c,v 1.10 2003/04/26 18:22:56 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ struct consdev constab[] = {
 #define CN_ENABLE(x)	set_console(x ## cninit, x ## cnprobe)
 
 static int initialized;
-static int attach_kbd  __attribute__((__unused__)) = 1;
+static int attach_kbd  __attribute__((__unused__)) = 0;
 static void set_console(void (*)(struct consdev *), void (*)(struct consdev *));
 static void disable_console(void);
 static void cn_nonprobe(struct consdev *);
