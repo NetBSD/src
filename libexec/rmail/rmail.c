@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.16 2003/04/05 17:45:11 perry Exp $	*/
+/*	$NetBSD: rmail.c,v 1.17 2003/07/13 12:00:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: rmail.c,v 1.16 2003/04/05 17:45:11 perry Exp $");
+__RCSID("$NetBSD: rmail.c,v 1.17 2003/07/13 12:00:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,9 +284,8 @@ main(argc, argv)
 		if (strchr(*argv, ',') == NULL || strchr(*argv, '<') != NULL)
 			args[i++] = *argv;
 		else {
-			if ((args[i] = malloc(strlen(*argv) + 3)) == NULL)
+			if (asprintf(&args[i++], "<%s>", *argv) < 0)
 				err(EX_TEMPFAIL, "Cannot malloc");
-			sprintf (args [i++], "<%s>", *argv);
 		}
 		argv++;
 	} 
