@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.4 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.5 2004/03/06 11:57:14 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -33,6 +33,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <err.h>
+
+#define VERIEXEC_DEV "/dev/veriexec"
 
 /* globals */
 int fd;
@@ -47,15 +50,15 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	fd = open("/dev/veriexec", O_WRONLY, 0);
+	fd = open(VERIEXEC_DEV, O_WRONLY, 0);
 	if (fd < 0) {
-		fprintf(stderr, "Dev open failed\n");
-		exit(1);
+		err(EXIT_FAILURE, "Open of veriexec device %s failed",
+		    VERIEXEC_DEV);
 	}
 
 	if ((yyin = fopen(argv[1], "r")) == NULL) {
-		fprintf(stderr, "Input file open failed\n");
-		exit(1);
+		err(EXIT_FAILURE, "Opening signature file %s failed",
+		    argv[1]);
 	}
 
 	yyparse();
