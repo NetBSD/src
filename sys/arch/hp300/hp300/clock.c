@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 1997/10/12 18:37:56 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.22 2001/10/11 15:02:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,7 +53,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/tty.h>
+
+#include <dev/clock_subr.h>
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -85,19 +88,17 @@ static int profmin;		/* profclock interval - variance/2 */
 static int timer3min;		/* current, from above choices */
 static int statprev;		/* previous value in stat timer */
 
-static int month_days[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-u_char bbc_registers[13];
-struct hil_dev *bbcaddr = NULL;
-
 void	statintr __P((struct clockframe *));
 
-struct bbc_tm *gmt_to_bbc __P((long));
-int	bbc_to_gmt __P((u_long *));
-void	read_bbc __P((void));
-u_char	read_bbc_reg __P((int));
-u_char	write_bbc_reg __P((int, u_int));
+static todr_chip_handle_t todr_handle;
+
+void bbc_init __P((void));
+int bbc_settime __P((todr_chip_handle_t, struct timeval *));
+int bbc_gettime __P((todr_chip_handle_t, struct timeval *));
+int bbc_getcal __P((todr_chip_handle_t, int *));
+int bbc_setcal __P((todr_chip_handle_t, int));
+static u_int8_t read_bbc_reg __P((struct hil_dev *, int));
+static u_int8_t write_bbc_reg __P((struct hil_dev *, int, u_int));
 
 /*
  * Machine-dependent clock routines.
@@ -148,7 +149,7 @@ hp300_calibrate_delay()
 		/* Enable the timer */
 		clk->clk_cr2 = CLK_CR1;
 		clk->clk_cr1 = CLK_IENAB;
-		
+
 		delay(10000);
 
 		/* Timer1 interrupt flag high? */
@@ -201,6 +202,9 @@ cpu_initclocks()
 {
 	volatile struct clkreg *clk;
 	int intvl, statint, profint, minint;
+
+	/* XXX TOD clock should be attached as a normal device */
+	bbc_init();
 
 	clkstd[0] = IIOV(0x5F8000);		/* XXX grot */
 	clk = (volatile struct clkreg *)clkstd[0];
@@ -358,188 +362,229 @@ void
 inittodr(base)
 	time_t base;
 {
-	u_long timbuf = base;	/* assume no battery clock exists */
-	static int bbcinited = 0;
+	int badbase = 0, waszero = (base == 0);
 
-	/* XXX */
-	if (!bbcinited) {
-		if (badbaddr((caddr_t)&BBCADDR->hil_stat))
-			printf("WARNING: no battery clock\n");
-		else
-			bbcaddr = BBCADDR;
-		bbcinited = 1;
+	if (base < 5 * SECYR) {
+		/*
+		 * If base is 0, assume filesystem time is just unknown
+		 * in stead of preposterous. Don't bark.
+		 */
+		if (base != 0)
+			printf("WARNING: preposterous time in file system\n");
+		/* not going to use it anyway, if the chip is readable */
+		/* 1991/07/01	12:00:00 */
+		base = 21*SECYR + 186*SECDAY + SECDAY/2;
+		badbase = 1;
 	}
 
-	/*
-	 * bbc_to_gmt converts and stores the gmt in timbuf.
-	 * If an error is detected in bbc_to_gmt, or if the filesystem
-	 * time is more recent than the gmt time in the clock,
-	 * then use the filesystem time and warn the user.
- 	 */
-	if (!bbc_to_gmt(&timbuf) || timbuf < base) {
-		printf("WARNING: bad date in battery clock\n");
-		timbuf = base;
+	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	    time.tv_sec == 0) {
+		printf("WARNING: bad date in battery clock");
+		/*
+		 * Believe the time in the file system for lack of
+		 * anything better, resetting the clock.
+		 */
+		time.tv_sec = base;
+		if (!badbase)
+			resettodr();
+	} else {
+		int deltat = time.tv_sec - base;
+
+		if (deltat < 0)
+			deltat = -deltat;
+		if (waszero || deltat < 2 * SECDAY)
+			return;
+		printf("WARNING: clock %s %d days",
+		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
-	if (base < 5*SECYR) {
-		printf("WARNING: preposterous time in file system");
-		timbuf = 6*SECYR + 186*SECDAY + SECDAY/2;
-		printf(" -- CHECK AND RESET THE DATE!\n");
-	}
-	
-	/* Battery clock does not store usec's, so forget about it. */
-	time.tv_sec = timbuf;
+	printf(" -- CHECK AND RESET THE DATE!\n");
 }
 
 /*
- * Restore the time of day hardware after a time change.
+ * Reset the clock based on the current time.
+ * Used when the current clock is preposterous, when the time is changed,
+ * and when rebooting.  Do nothing if the time is not yet known, e.g.,
+ * when crashing during autoconfig.
  */
 void
 resettodr()
 {
-	int i;
-	struct bbc_tm *tmptr;
 
-	tmptr = gmt_to_bbc(time.tv_sec);
+	if (time.tv_sec == 0)
+		return;
 
-	decimal_to_bbc(0, 1,  tmptr->tm_sec);
-	decimal_to_bbc(2, 3,  tmptr->tm_min);
-	decimal_to_bbc(4, 5,  tmptr->tm_hour);
-	decimal_to_bbc(7, 8,  tmptr->tm_mday);
-	decimal_to_bbc(9, 10, tmptr->tm_mon);
-	decimal_to_bbc(11, 12, tmptr->tm_year);
-
-	/* Some bogusness to deal with seemingly broken hardware. Nonsense */
-	bbc_registers[5] = ((tmptr->tm_hour / 10) & 0x03) + 8;
-
-	write_bbc_reg(15, 13);	/* reset prescalar */
-
-	for (i = 0; i <= NUM_BBC_REGS; i++)
-	  	if (bbc_registers[i] != write_bbc_reg(i, bbc_registers[i])) {
-			printf("Cannot set battery backed clock\n");
-			break;
-		}
+	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+		printf("resettodr: cannot set time in time-of-day clock\n");
 }
 
-struct bbc_tm *
-gmt_to_bbc(tim)
-	long tim;
+/*
+ * functions for HP300 battery-backed clock
+ */
+#define BBC_SET_REG 	0xe0
+#define BBC_WRITE_REG	0xc2
+#define BBC_READ_REG	0xc3
+#define NUM_BBC_REGS	13
+#define BBC_BASE_YEAR	1900
+
+void
+bbc_init(void)
 {
-	int i;
-	long hms, day;
-	static struct bbc_tm rt;
+	struct hil_dev *bbcaddr;
 
-	day = tim / SECDAY;
-	hms = tim % SECDAY;
+	bbcaddr = BBCADDR; /* XXX */
+	if (badbaddr((caddr_t)&bbcaddr->hil_stat)) {
+		printf("WARNING: no battery clock\n");
+		bbcaddr = NULL;
+	}
+	todr_handle = malloc(sizeof(struct todr_chip_handle),
+	    M_DEVBUF, M_NOWAIT);
 
-	/* Hours, minutes, seconds are easy */
-	rt.tm_hour = hms / 3600;
-	rt.tm_min  = (hms % 3600) / 60;
-	rt.tm_sec  = (hms % 3600) % 60;
-
-	/* Number of years in days */
-	for (i = STARTOFTIME - 1900; day >= days_in_year(i); i++)
-	  	day -= days_in_year(i);
-	rt.tm_year = i;
-	
-	/* Number of months in days left */
-	if (leapyear(rt.tm_year))
-		days_in_month(FEBRUARY) = 29;
-	for (i = 1; day >= days_in_month(i); i++)
-		day -= days_in_month(i);
-	days_in_month(FEBRUARY) = 28;
-	rt.tm_mon = i;
-
-	/* Days are what is left over (+1) from all that. */
-	rt.tm_mday = day + 1;  
-	
-	return(&rt);
+	todr_handle->cookie = bbcaddr;
+	todr_handle->todr_gettime = bbc_gettime;
+	todr_handle->todr_settime = bbc_settime;
+	todr_handle->todr_getcal = bbc_getcal;
+	todr_handle->todr_setcal = bbc_setcal;
+	todr_handle->todr_setwen = NULL;
 }
 
 int
-bbc_to_gmt(timbuf)
-	u_long *timbuf;
+bbc_gettime(handle, tv)
+	todr_chip_handle_t handle;
+	struct timeval *tv;
 {
-	int i;
-	u_long tmp;
-	int year, month, day, hour, min, sec;
+	int i, read_okay, year;
+	struct clock_ymdhms dt;
+	struct hil_dev *bbcaddr = handle->cookie;
+	u_int8_t bbc_registers[NUM_BBC_REGS];
 
-	read_bbc();
-
-	sec = bbc_to_decimal(1, 0);
-	min = bbc_to_decimal(3, 2);
-
-	/*
-	 * Hours are different for some reason. Makes no sense really.
-	 */
-	hour  = ((bbc_registers[5] & 0x03) * 10) + bbc_registers[4];
-	day   = bbc_to_decimal(8, 7);
-	month = bbc_to_decimal(10, 9);
-	year  = bbc_to_decimal(12, 11) + 1900;
-
-	range_test(hour, 0, 23);
-	range_test(day, 1, 31);
-	range_test(month, 1, 12);
-	range_test(year, STARTOFTIME, 2000);
-
-	tmp = 0;
-
-	for (i = STARTOFTIME; i < year; i++)
-		tmp += days_in_year(i);
-	if (leapyear(year) && month > FEBRUARY)
-		tmp++;
-
-	for (i = 1; i < month; i++)
-	  	tmp += days_in_month(i);
-	
-	tmp += (day - 1);
-	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
-
-	*timbuf = tmp;
-	return(1);
-}
-
-void
-read_bbc()
-{
-  	int i, read_okay;
-
+	/* read bbc registers */
 	read_okay = 0;
 	while (!read_okay) {
 		read_okay = 1;
-		for (i = 0; i <= NUM_BBC_REGS; i++)
-			bbc_registers[i] = read_bbc_reg(i);
-		for (i = 0; i <= NUM_BBC_REGS; i++)
-			if (bbc_registers[i] != read_bbc_reg(i))
+		for (i = 0; i < NUM_BBC_REGS; i++)
+			bbc_registers[i] = read_bbc_reg(bbcaddr, i);
+		for (i = 0; i < NUM_BBC_REGS; i++)
+			if (bbc_registers[i] != read_bbc_reg(bbcaddr, i))
 				read_okay = 0;
 	}
+
+#define	bbc_to_decimal(a,b) 	(bbc_registers[a] * 10 + bbc_registers[b])
+
+	dt.dt_sec  = bbc_to_decimal(1, 0);
+	dt.dt_min  = bbc_to_decimal(3, 2);
+	/* Hours are different for some reason. Makes no sense really. */
+	dt.dt_hour = ((bbc_registers[5] & 0x03) * 10) + bbc_registers[4];
+	dt.dt_day  = bbc_to_decimal(8, 7);
+	dt.dt_mon  = bbc_to_decimal(10, 9);
+
+	year = bbc_to_decimal(12, 11) + BBC_BASE_YEAR;
+	if (year < POSIX_BASE_YEAR)
+		year += 100;
+	dt.dt_year = year;
+
+#undef	bbc_to_decimal
+
+	/* simple sanity checks */
+	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
+	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
+		return (1);
+
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	tv->tv_usec = 0;
+	return (0);
 }
 
-u_char
-read_bbc_reg(reg)
+int
+bbc_settime(handle, tv)
+	todr_chip_handle_t handle;
+	struct timeval *tv;
+{
+	int i, year;
+	struct clock_ymdhms dt;
+	struct hil_dev *bbcaddr = handle->cookie;
+	u_int8_t bbc_registers[NUM_BBC_REGS];
+
+	/* Note: we ignore `tv_usec' */
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
+
+	year = dt.dt_year - BBC_BASE_YEAR;
+	if (year > 99)
+		year -= 100;
+
+#define	decimal_to_bbc(a,b,n)		\
+	bbc_registers[a] = (n) % 10;	\
+	bbc_registers[b] = (n) / 10;
+
+	decimal_to_bbc(0, 1, dt.dt_sec);
+	decimal_to_bbc(2, 3, dt.dt_min);
+	decimal_to_bbc(7, 8, dt.dt_day);
+	decimal_to_bbc(9, 10, dt.dt_mon);
+	decimal_to_bbc(11, 12, year);
+
+	/* Some bogusness to deal with seemingly broken hardware. Nonsense */
+	bbc_registers[4] = dt.dt_hour % 10;
+	bbc_registers[5] = ((dt.dt_hour / 10) & 0x03) | 0x08;
+
+	bbc_registers[6] = 0;
+
+#undef	decimal_to_bbc
+
+	/* write bbc registers */
+	write_bbc_reg(bbcaddr, 15, 13);	/* reset prescalar */
+	for (i = 0; i < NUM_BBC_REGS; i++)
+		if (bbc_registers[i] !=
+		    write_bbc_reg(bbcaddr, i, bbc_registers[i]))
+			return (1);
+	return (0);
+}
+
+int
+bbc_getcal(handle, vp)
+	todr_chip_handle_t handle;
+	int *vp;
+{
+
+	return (EOPNOTSUPP);
+}
+
+int
+bbc_setcal(handle, v)
+	todr_chip_handle_t handle;
+	int v;
+{
+
+	return (EOPNOTSUPP);
+}
+
+
+static u_int8_t
+read_bbc_reg(bbcaddr, reg)
+	struct hil_dev *bbcaddr;
 	int reg;
 {
-	u_char data = reg;
+	u_int8_t data = reg;
 
 	if (bbcaddr) {
 		send_hil_cmd(bbcaddr, BBC_SET_REG, &data, 1, NULL);
 		send_hil_cmd(bbcaddr, BBC_READ_REG, NULL, 0, &data);
 	}
-	return(data);
+	return (data);
 }
 
-u_char
-write_bbc_reg(reg, data)
+static u_int8_t
+write_bbc_reg(bbcaddr, reg, data)
+	struct hil_dev *bbcaddr;
 	int reg;
 	u_int data;
 {
-	u_char tmp;
+	u_int8_t tmp;
 
-	tmp = (u_char) ((data << HIL_SSHIFT) | reg);
+	tmp = (data << HIL_SSHIFT) | reg;
 
 	if (bbcaddr) {
 		send_hil_cmd(bbcaddr, BBC_SET_REG, &tmp, 1, NULL);
 		send_hil_cmd(bbcaddr, BBC_WRITE_REG, NULL, 0, NULL);
 		send_hil_cmd(bbcaddr, BBC_READ_REG, NULL, 0, &tmp);
 	}
-	return(tmp);
-}	
+	return (tmp);
+}
