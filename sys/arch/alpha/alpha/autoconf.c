@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 1996/06/13 04:53:47 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 1996/06/13 23:10:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -345,7 +345,7 @@ gotswap:
 			/*
 			 * Root and swap are on a net.
 			 */
-			rootdv = swapdv = NULL;
+			rootdv = swapdv = bootdv;
 			nswapdev = dumpdev = NODEV;
 		}
 		swdevt[0].sw_dev = nswapdev;
