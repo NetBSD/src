@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.20 2003/12/14 07:28:17 sekiya Exp $	*/
+/*	$NetBSD: hpc.c,v 1.21 2003/12/16 05:27:40 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.20 2003/12/14 07:28:17 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.21 2003/12/16 05:27:40 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.20 2003/12/14 07:28:17 sekiya Exp $");
 
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>
-#include <sgimips/hpc/iocreg.h>
+#include <sgimips/ioc/iocreg.h>
 
 #include "locators.h"
 
