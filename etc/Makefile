@@ -71,21 +71,27 @@ hcx9-distribution:
 	    ${DESTDIR}/)
 
 distrib-dirs:
-	umask 022
 	-mkdir ${DESTDIR}/dev ${DESTDIR}/etc ${DESTDIR}/root ${DESTDIR}/tmp \
 		${DESTDIR}/var
+	chmod 755 ${DESTDIR}/dev ${DESTDIR}/etc ${DESTDIR}/root ${DESTDIR}/var
 	chmod 1777 ${DESTDIR}/tmp
 	-mkdir ${DESTDIR}/etc/mtree ${DESTDIR}/etc/namedb
+	chmod 755 ${DESTDIR}/etc/mtree ${DESTDIR}/etc/namedb
 	-mkdir ${DESTDIR}/var/backups ${DESTDIR}/var/cron ${DESTDIR}/var/db \
 	       ${DESTDIR}/var/log ${DESTDIR}/var/mail ${DESTDIR}/var/preserve \
 	       ${DESTDIR}/var/run ${DESTDIR}/var/rwho ${DESTDIR}/var/spool \
 	       ${DESTDIR}/var/tmp
+	chmod 755 ${DESTDIR}/var/backups ${DESTDIR}/var/cron ${DESTDIR}/var/db \
+		  ${DESTDIR}/var/log ${DESTDIR}/var/mail ${DESTDIR}/var/preserve \
+		  ${DESTDIR}/var/run ${DESTDIR}/var/rwho ${DESTDIR}/var/spool \
 	chmod 1777 ${DESTDIR}/var/tmp
 	-mkdir ${DESTDIR}/var/cron/tabs
 	chmod 700 ${DESTDIR}/var/cron/tabs
 	-mkdir ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
 	       ${DESTDIR}/var/spool/uucp ${DESTDIR}/var/spool/uucppublic
 	chown uucp.dialer ${DESTDIR}/var/spool/lock
+	chmod 755 ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
+		  ${DESTDIR}/var/spool/uucp ${DESTDIR}/var/spool/uucppublic
 	ln -s ${DESTDIR}/usr/src/sys.386bsd ${DESTDIR}/sys
 
 .include <bsd.prog.mk>
