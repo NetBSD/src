@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.3 1998/02/07 11:09:08 mrg Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.4 1998/02/07 12:45:53 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -79,179 +79,177 @@ static void uvm_total __P((struct vmtotal *));
 /*
  * uvm_meter: calculate load average and wake up the swapper (if needed)
  */
-
-void uvm_meter()
-
+void
+uvm_meter()
 {
-  if ((time.tv_sec % 5) == 0)
-    uvm_loadav(&averunnable);
-  if (proc0.p_slptime > (maxslp / 2))
-    wakeup((caddr_t)&proc0);
+	if ((time.tv_sec % 5) == 0)
+		uvm_loadav(&averunnable);
+	if (proc0.p_slptime > (maxslp / 2))
+		wakeup((caddr_t)&proc0);
 }
 
 /*
  * uvm_loadav: compute a tenex style load average of a quantity on 
  * 1, 5, and 15 minute internvals.
  */
-static void uvm_loadav(avg)
-
-struct loadavg *avg;
-
+static void
+uvm_loadav(avg)
+	struct loadavg *avg;
 {
-  int i, nrun;
-  struct proc *p;
+	int i, nrun;
+	struct proc *p;
 
-  for (nrun = 0, p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
-    switch (p->p_stat) {
-    case SSLEEP:
-      if (p->p_priority > PZERO || p->p_slptime > 1)
-	continue;
-      /* fall through */
-    case SRUN:
-    case SIDL:
-      nrun++;
-    }
-  }
-  for (i = 0; i < 3; i++)
-    avg->ldavg[i] = (cexp[i] * avg->ldavg[i] +
-		     nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
+	for (nrun = 0, p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+		switch (p->p_stat) {
+		case SSLEEP:
+			if (p->p_priority > PZERO || p->p_slptime > 1)
+				continue;
+		/* fall through */
+		case SRUN:
+		case SIDL:
+			nrun++;
+		}
+	}
+	for (i = 0; i < 3; i++)
+		avg->ldavg[i] = (cexp[i] * avg->ldavg[i] +
+		    nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
 }
 
 /*
  * uvm_sysctl: sysctl hook into UVM system.
  */
-int uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-
-int *name;
-u_int namelen;
-void *oldp;
-size_t *oldlenp;
-void *newp;
-size_t newlen;
-struct proc *p;
-
+int
+uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
 {
-  struct vmtotal vmtotals;
+	struct vmtotal vmtotals;
 
-  /* all sysctl names at this level are terminal */
-  if (namelen != 1)
-    return (ENOTDIR);		/* overloaded */
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
 
-  switch (name[0]) {
-  case VM_LOADAVG:
-    return (sysctl_rdstruct(oldp, oldlenp, newp, &averunnable,
-			    sizeof(averunnable)));
-  case VM_METER:
-    uvm_total(&vmtotals);
-    return (sysctl_rdstruct(oldp, oldlenp, newp, &vmtotals,
-			    sizeof(vmtotals)));
-  case VM_UVMEXP:
-    return (sysctl_rdstruct(oldp, oldlenp, newp, &uvmexp, sizeof(uvmexp)));
+	switch (name[0]) {
+	case VM_LOADAVG:
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &averunnable,
+		    sizeof(averunnable)));
 
-  default:
-    return (EOPNOTSUPP);
-  }
-  /* NOTREACHED */
+	case VM_METER:
+		uvm_total(&vmtotals);
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &vmtotals,
+		    sizeof(vmtotals)));
+
+	case VM_UVMEXP:
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &uvmexp,
+		    sizeof(uvmexp)));
+
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }
 
 /*
  * uvm_total: calculate the current state of the system.
  */
-
-static void uvm_total(totalp)
-
-struct vmtotal *totalp;
-
+static void
+uvm_total(totalp)
+	struct vmtotal *totalp;
 {
-  struct proc *p;
+	struct proc *p;
 #if 0
-  vm_map_entry_t	entry;
-  vm_map_t map;
-  int paging;
+	vm_map_entry_t	entry;
+	vm_map_t map;
+	int paging;
 #endif
 
-  bzero(totalp, sizeof *totalp);
+	bzero(totalp, sizeof *totalp);
 
-  /*
-   * calculate process statistics
-   */
+	/*
+	 * calculate process statistics
+	 */
 
-  for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
-    if (p->p_flag & P_SYSTEM)
-      continue;
-    switch (p->p_stat) {
-    case 0:
-      continue;
+	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+		if (p->p_flag & P_SYSTEM)
+			continue;
+		switch (p->p_stat) {
+		case 0:
+			continue;
       
-    case SSLEEP:
-    case SSTOP:
-      if (p->p_flag & P_INMEM) {
-	if (p->p_priority <= PZERO)
-	  totalp->t_dw++;
-	else if (p->p_slptime < maxslp)
-	  totalp->t_sl++;
-      } else if (p->p_slptime < maxslp)
-	totalp->t_sw++;
-      if (p->p_slptime >= maxslp)
-	continue;
-      break;
+		case SSLEEP:
+		case SSTOP:
+			if (p->p_flag & P_INMEM) {
+				if (p->p_priority <= PZERO)
+					totalp->t_dw++;
+				else if (p->p_slptime < maxslp)
+					totalp->t_sl++;
+			} else if (p->p_slptime < maxslp)
+				totalp->t_sw++;
+			if (p->p_slptime >= maxslp)
+				continue;
+			break;
       
-    case SRUN:
-    case SIDL:
-      if (p->p_flag & P_INMEM)
-	totalp->t_rq++;
-      else
-	totalp->t_sw++;
-      if (p->p_stat == SIDL)
-	continue;
-      break;
-    }
-    /*
-     * note active objects
-     */
+		case SRUN:
+		case SIDL:
+			if (p->p_flag & P_INMEM)
+				totalp->t_rq++;
+			else
+				totalp->t_sw++;
+			if (p->p_stat == SIDL)
+				continue;
+			break;
+		}
+		/*
+		 * note active objects
+		 */
 #if 0
-    /*
-     * XXXCDC: BOGUS!  you can't walk a map entry chain without
-     * first locking the map.   rethink this.   in the mean time
-     * just don't do it.
-     */
-    paging = 0;
-    for (map = &p->p_vmspace->vm_map, entry = map->header.next;
-	 entry != &map->header; entry = entry->next) {
-      if (entry->is_a_map || entry->is_sub_map ||
-	  entry->object.vm_object == NULL)
-	continue;
-      entry->object.vm_object->flags |= OBJ_ACTIVE;
-      paging |= vm_object_paging(entry->object.vm_object);
-    }
-    if (paging)
-      totalp->t_pw++;
+		/*
+		 * XXXCDC: BOGUS!  you can't walk a map entry chain without
+		 * first locking the map.   rethink this.   in the mean time
+		 * just don't do it.
+		 */
+		paging = 0;
+		for (map = &p->p_vmspace->vm_map, entry = map->header.next;
+		    entry != &map->header; entry = entry->next) {
+			if (entry->is_a_map || entry->is_sub_map ||
+			    entry->object.vm_object == NULL)
+				continue;
+			entry->object.vm_object->flags |= OBJ_ACTIVE;
+			paging |= vm_object_paging(entry->object.vm_object);
+		}
+		if (paging)
+			totalp->t_pw++;
 #endif
-  }
-  /*
-   * Calculate object memory usage statistics.
-   */
+	}
+	/*
+	 * Calculate object memory usage statistics.
+	 */
 #if 0 /* XXXCDC: rethink! rethink! */
-  simple_lock(&vm_object_list_lock);
-  for (object = vm_object_list.tqh_first;
-       object != NULL;
-       object = object->object_list.tqe_next) {
-    totalp->t_vm += num_pages(object->size);
-    totalp->t_rm += object->resident_page_count;
-    if (object->flags & OBJ_ACTIVE) {
-      totalp->t_avm += num_pages(object->size);
-      totalp->t_arm += object->resident_page_count;
-    }
-    if (object->ref_count > 1) {
-      /* shared object */
-      totalp->t_vmshr += num_pages(object->size);
-      totalp->t_rmshr += object->resident_page_count;
-      if (object->flags & OBJ_ACTIVE) {
-	totalp->t_avmshr += num_pages(object->size);
-	totalp->t_armshr += object->resident_page_count;
-      }
-    }
-  }
-  totalp->t_free = cnt.v_free_count;
+	simple_lock(&vm_object_list_lock);
+	for (object = vm_object_list.tqh_first;
+	    object != NULL;
+	    object = object->object_list.tqe_next) {
+		totalp->t_vm += num_pages(object->size);
+		totalp->t_rm += object->resident_page_count;
+		if (object->flags & OBJ_ACTIVE) {
+			totalp->t_avm += num_pages(object->size);
+			totalp->t_arm += object->resident_page_count;
+		}
+		if (object->ref_count > 1) {
+			/* shared object */
+			totalp->t_vmshr += num_pages(object->size);
+			totalp->t_rmshr += object->resident_page_count;
+			if (object->flags & OBJ_ACTIVE) {
+				totalp->t_avmshr += num_pages(object->size);
+				totalp->t_armshr += object->resident_page_count;
+			}
+		}
+	}
+	totalp->t_free = cnt.v_free_count;
 #endif
 }
