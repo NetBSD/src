@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.18 1997/09/02 10:26:56 thorpej Exp $	*/
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.19 1997/09/02 10:56:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
