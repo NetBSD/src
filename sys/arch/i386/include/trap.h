@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.5 2002/06/17 21:38:20 fvdl Exp $	*/
+/*	$NetBSD: trap.h,v 1.6 2002/10/05 21:27:35 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,3 +67,8 @@
 
 /* Trap's coming from user mode */
 #define	T_USER	0x100
+
+/* Flags kludged into the trap code */
+
+#define TC_TSS		0x80000000
+#define TC_FLAGMASK	(TC_TSS)
