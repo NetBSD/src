@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.55 2005/02/04 09:03:03 jlam Exp $
+.\" $NetBSD: pkg_add.1,v 1.56 2005/02/04 14:58:59 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -517,7 +517,7 @@ flag to
 The scripts are also called with the
 .Ev PKG_METADATA_DIR
 environment variable set to the location of the
-.Ar +*
+.Pa +*
 meta-data files, and with the
 .Ev PKG_REFCOUNT_DBDIR
 environment variable set to the location of the package reference counts
@@ -554,7 +554,7 @@ FTP URLs may not end with a slash.
 .It Ev PKG_REFCOUNT_DBDIR
 Location of the package reference counts database directory.
 The default location is the path to the package database directory with
-.Do .refcount Dc
+.Dq .refcount
 appended to the path, e.g.
 .Pa /var/db/pkg.refcount .
 .It Ev PKG_TMPDIR
