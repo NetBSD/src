@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.35 2003/01/15 21:56:06 bouyer Exp $ */
+/* $NetBSD: seeq8005.c,v 1.35.6.1 2005/01/24 21:39:25 he Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.35 2003/01/15 21:56:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.35.6.1 2005/01/24 21:39:25 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1361,7 +1361,8 @@ ea_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ea_mc_reset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				ea_mc_reset(sc);
 			error = 0;
 		}
 		break;
