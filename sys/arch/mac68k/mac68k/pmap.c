@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 1996/05/05 06:54:19 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 1996/05/07 01:45:22 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -175,14 +175,6 @@ int pmapdebug = 0x2000;
 #define PDB_WIRING	0x4000
 #define PDB_PVDUMP	0x8000
 
-#ifdef HAVEVAC
-int pmapvacflush = 0;
-#define	PVF_ENTER	0x01
-#define	PVF_REMOVE	0x02
-#define	PVF_PROTECT	0x04
-#define	PVF_TOTAL	0x80
-#endif
-
 #if defined(M68040)
 int dowriteback = 1;	/* 68040: enable writeback caching */
 int dokwriteback = 1;	/* 68040: enable writeback caching of kernel AS */
@@ -291,9 +283,6 @@ extern int		numranges;
 extern unsigned long	low[8];
 extern unsigned long	high[8];
 
-#ifdef HAVEVAC
-int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
-#endif
 #if defined(M68040)
 int		protostfree;	/* prototype (default) free ST map */
 #endif
@@ -878,29 +867,6 @@ pmap_remove(pmap, sva, eva)
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
 			if (pmap_pte_v(pte)) {
-#ifdef HAVEVAC
-				if (pmap_aliasmask) {
-					/*
-					 * Purge kernel side of VAC to ensure
-					 * we get the correct state of any
-					 * hardware maintained bits.
-					 */
-					if (firstpage) {
-						DCIS();
-#ifdef PMAPSTATS
-						remove_stats.sflushes++;
-#endif
-					}
-					/*
-					 * Remember if we may need to
-					 * flush the VAC due to a non-CI
-					 * mapping.
-					 */
-					if (!needcflush && !pmap_pte_ci(pte))
-						needcflush = TRUE;
-
-				}
-#endif
 				pmap_remove_mapping(pmap, sva, pte, flags);
 				firstpage = FALSE;
 			}
@@ -913,42 +879,6 @@ pmap_remove(pmap, sva, eva)
 	 */
 	if (firstpage)
 		return;
-#ifdef HAVEVAC
-	/*
-	 * In a couple of cases, we don't need to worry about flushing
-	 * the VAC:
-	 * 	1. if this is a kernel mapping,
-	 *	   we have already done it
-	 *	2. if it is a user mapping not for the current process,
-	 *	   it won't be there
-	 */
-	if (pmap_aliasmask &&
-	    (pmap == pmap_kernel() || pmap != curproc->p_vmspace->vm_map.pmap))
-		needcflush = FALSE;
-#ifdef DEBUG
-	if (pmap_aliasmask && (pmapvacflush & PVF_REMOVE)) {
-		if (pmapvacflush & PVF_TOTAL)
-			DCIA();
-		else if (pmap == pmap_kernel())
-			DCIS();
-		else
-			DCIU();
-	} else
-#endif
-	if (needcflush) {
-		if (pmap == pmap_kernel()) {
-			DCIS();
-#ifdef PMAPSTATS
-			remove_stats.sflushes++;
-#endif
-		} else {
-			DCIU();
-#ifdef PMAPSTATS
-			remove_stats.uflushes++;
-#endif
-		}
-	}
-#endif
 }
 
 /*
@@ -1066,18 +996,6 @@ pmap_protect(pmap, sva, eva, prot)
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
 			if (pmap_pte_v(pte) && pmap_pte_prot_chg(pte, isro)) {
-#ifdef HAVEVAC
-				/*
-				 * Purge kernel side of VAC to ensure we
-				 * get the correct state of any hardware
-				 * maintained bits.
-				 *
-				 * XXX do we need to clear the VAC in
-				 * general to reflect the new protection?
-				 */
-				if (firstpage && pmap_aliasmask)
-					DCIS();
-#endif
 #if defined(M68040)
 				/*
 				 * Clear caches if making RO (see section
@@ -1110,16 +1028,6 @@ pmap_protect(pmap, sva, eva, prot)
 			sva += NBPG;
 		}
 	}
-#if defined(HAVEVAC) && defined(DEBUG)
-	if (pmap_aliasmask && (pmapvacflush & PVF_PROTECT)) {
-		if (pmapvacflush & PVF_TOTAL)
-			DCIA();
-		else if (pmap == pmap_kernel())
-			DCIS();
-		else
-			DCIU();
-	}
-#endif
 }
 
 void
@@ -1320,56 +1228,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 			if (!npv->pv_next)
 				enter_stats.secondpv++;
 #endif
-#ifdef HAVEVAC
-			/*
-			 * Since there is another logical mapping for the
-			 * same page we may need to cache-inhibit the
-			 * descriptors on those CPUs with external VACs.
-			 * We don't need to CI if:
-			 *
-			 * - No two mappings belong to the same user pmaps.
-			 *   Since the cache is flushed on context switches
-			 *   there is no problem between user processes.
-			 *
-			 * - Mappings within a single pmap are a certain
-			 *   magic distance apart.  VAs at these appropriate
-			 *   boundaries map to the same cache entries or
-			 *   otherwise don't conflict.
-			 *
-			 * To keep it simple, we only check for these special
-			 * cases if there are only two mappings, otherwise we
-			 * punt and always CI.
-			 *
-			 * Note that there are no aliasing problems with the
-			 * on-chip data-cache when the WA bit is set.
-			 */
-			if (pmap_aliasmask) {
-				if (pv->pv_flags & PV_CI) {
-#ifdef DEBUG
-					if (pmapdebug & PDB_CACHE)
-					printf("enter: pa %x already CI'ed\n",
-					       pa);
-#endif
-					checkpv = cacheable = FALSE;
-				} else if (npv->pv_next ||
-					   ((pmap == pv->pv_pmap ||
-					     pmap == pmap_kernel() ||
-					     pv->pv_pmap == pmap_kernel()) &&
-					    ((pv->pv_va & pmap_aliasmask) !=
-					     (va & pmap_aliasmask)))) {
-#ifdef DEBUG
-					if (pmapdebug & PDB_CACHE)
-					printf("enter: pa %x CI'ing all\n",
-					       pa);
-#endif
-					cacheable = FALSE;
-					pv->pv_flags |= PV_CI;
-#ifdef PMAPSTATS
-					enter_stats.ci++;
-#endif
-				}
-			}
-#endif
 		}
 		splx(s);
 	}
@@ -1392,14 +1250,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 		pmap->pm_stats.wired_count++;
 
 validate:
-#ifdef HAVEVAC
-	/*
-	 * Purge kernel side of VAC to ensure we get correct state
-	 * of HW bits so we don't clobber them.
-	 */
-	if (pmap_aliasmask)
-		DCIS();
-#endif
 	/*
 	 * Build the new PTE.
 	 */
@@ -1433,37 +1283,6 @@ validate:
 	*pte = npte;
 	if (!wired && active_pmap(pmap))
 		TBIS(va);
-#ifdef HAVEVAC
-	/*
-	 * The following is executed if we are entering a second
-	 * (or greater) mapping for a physical page and the mappings
-	 * may create an aliasing problem.  In this case we must
-	 * cache inhibit the descriptors involved and flush any
-	 * external VAC.
-	 */
-	if (checkpv && !cacheable) {
-		pmap_changebit(pa, PG_CI, TRUE);
-		DCIA();
-#ifdef PMAPSTATS
-		enter_stats.flushes++;
-#endif
-#ifdef DEBUG
-		if ((pmapdebug & (PDB_CACHE|PDB_PVDUMP)) ==
-		    (PDB_CACHE|PDB_PVDUMP))
-			pmap_pvdump(pa);
-#endif
-	}
-#ifdef DEBUG
-	else if (pmapvacflush & PVF_ENTER) {
-		if (pmapvacflush & PVF_TOTAL)
-			DCIA();
-		else if (pmap == pmap_kernel())
-			DCIS();
-		else
-			DCIU();
-	}
-#endif
-#endif
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
 		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
@@ -1860,30 +1679,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		if (*pte == PG_NV)
 			return;
 	}
-#ifdef HAVEVAC
-	if (pmap_aliasmask && (flags & PRM_CFLUSH)) {
-		/*
-		 * Purge kernel side of VAC to ensure we get the correct
-		 * state of any hardware maintained bits.
-		 */
-		DCIS();
-#ifdef PMAPSTATS
-		remove_stats.sflushes++;
-#endif
-		/*
-		 * If this is a non-CI user mapping for the current process,
-		 * flush the VAC.  Note that the kernel side was flushed
-		 * above so we don't worry about non-CI kernel mappings.
-		 */
-		if (pmap == curproc->p_vmspace->vm_map.pmap &&
-		    !pmap_pte_ci(pte)) {
-			DCIU();
-#ifdef PMAPSTATS
-			remove_stats.uflushes++;
-#endif
-		}
-	}
-#endif
 	pa = pmap_pte_pa(pte);
 #ifdef DEBUG
 	opte = *pte;
@@ -1974,25 +1769,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		pmap_free_pv(npv);
 		pv = pa_to_pvh(pa);
 	}
-#ifdef HAVEVAC
-	/*
-	 * If only one mapping left we no longer need to cache inhibit
-	 */
-	if (pmap_aliasmask &&
-	    pv->pv_pmap && pv->pv_next == NULL && (pv->pv_flags & PV_CI)) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_CACHE)
-			printf("remove: clearing CI for pa %x\n", pa);
-#endif
-		pv->pv_flags &= ~PV_CI;
-		pmap_changebit(pa, PG_CI, FALSE);
-#ifdef DEBUG
-		if ((pmapdebug & (PDB_CACHE|PDB_PVDUMP)) ==
-		    (PDB_CACHE|PDB_PVDUMP))
-			pmap_pvdump(pa);
-#endif
-	}
-#endif
 	/*
 	 * If this was a PT page we must also remove the
 	 * mapping from the associated segment table.
@@ -2105,13 +1881,6 @@ pmap_testbit(pa, bit)
 		splx(s);
 		return(TRUE);
 	}
-#ifdef HAVEVAC
-	/*
-	 * Flush VAC to get correct state of any hardware maintained bits.
-	 */
-	if (pmap_aliasmask && (bit & (PG_U|PG_M)))
-		DCIS();
-#endif
 	/*
 	 * Not found, check current mappings returning
 	 * immediately if found.
@@ -2140,7 +1909,9 @@ pmap_changebit(pa, bit, setem)
 	register pt_entry_t *pte, npte;
 	vm_offset_t va;
 	int s;
+#if defined(M68040)
 	boolean_t firstpage = TRUE;
+#endif
 #ifdef PMAPSTATS
 	struct chgstats *chgp;
 #endif
@@ -2169,7 +1940,6 @@ pmap_changebit(pa, bit, setem)
 		pmap_attributes[pmap_page_index(pa)] &= ~bit;
 	/*
 	 * Loop over all current mappings setting/clearing as appropos
-	 * If setting RO do we need to clear the VAC?
 	 */
 	if (pv->pv_pmap != NULL) {
 #ifdef DEBUG
@@ -2192,16 +1962,6 @@ pmap_changebit(pa, bit, setem)
 			}
 
 			pte = pmap_pte(pv->pv_pmap, va);
-#ifdef HAVEVAC
-			/*
-			 * Flush VAC to ensure we get correct state of HW bits
-			 * so we don't clobber them.
-			 */
-			if (firstpage && pmap_aliasmask) {
-				firstpage = FALSE;
-				DCIS();
-			}
-#endif
 			if (setem)
 				npte = *pte | bit;
 			else
@@ -2240,16 +2000,6 @@ pmap_changebit(pa, bit, setem)
 			}
 #endif
 		}
-#if defined(HAVEVAC) && defined(DEBUG)
-		if (setem && bit == PG_RO && (pmapvacflush & PVF_PROTECT)) {
-			if ((pmapvacflush & PVF_TOTAL) || toflush == 3)
-				DCIA();
-			else if (toflush == 2)
-				DCIS();
-			else
-				DCIU();
-		}
-#endif
 	}
 	splx(s);
 }
