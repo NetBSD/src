@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2000/01/09 15:34:43 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2000/01/14 13:45:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -47,6 +47,7 @@
 #ifndef _LOCORE
 
 #include <mips/cpuregs.h>
+#include <mips/intr.h>
 
 int	_splraise __P((int));
 int	_spllower __P((int));
@@ -119,8 +120,14 @@ extern u_long intrcnt[];
 #define	FLOPPY_INTR	15
 #define	STRAY_INTR	16
 
-/* handle i/o device interrupts */
-extern int (*mips_hardware_intr) __P((unsigned, unsigned, unsigned, unsigned));
+
+struct intrhand {
+	int	(*ih_func) __P((void *));
+	void	*ih_arg;
+};
+extern struct intrhand intrtab[];
+
+#define	MAX_INTR_COOKIES	16
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

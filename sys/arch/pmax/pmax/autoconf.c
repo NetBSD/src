@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 2000/01/10 03:24:36 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.46 2000/01/14 13:45:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45 2000/01/10 03:24:36 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.46 2000/01/14 13:45:23 simonb Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -61,25 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45 2000/01/10 03:24:36 simonb Exp $")
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/intr.h>
 #include <machine/sysconf.h>
 
 #include <pmax/dev/device.h>
-#include <pmax/pmax/turbochannel.h>
 
 
-/*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
-int	cpuspeed = 30;	/* approx # instr per usec. */
-
-/*
- * XXX This should really be in a tcasic driver, or something.
- * XXX But right now even the 3100 code uses it.
- */
-tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
-
+struct intrhand intrtab[MAX_INTR_COOKIES];
 
 static void	findroot __P((struct device **, int *));
 
