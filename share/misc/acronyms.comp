@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.55 2005/01/13 17:37:59 kleink Exp $
+$NetBSD: acronyms.comp,v 1.56 2005/01/13 18:01:13 jmmv Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -186,6 +186,7 @@ NIC	network interface card
 NIS	network information service
 NRZ	non-return to zero
 NUMA	non uniform memory access
+OCL	object constraint language
 OCR	optical character recognition
 OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
@@ -282,6 +283,7 @@ UC	uncacheable
 UDO	ultra density optical (storage)
 UDP	user datagram protocol
 UFS	unix file system
+UML	unified modeling language
 UPS	uninterruptible power supply
 URI	uniform resource identifier
 URL	uniform resource locator
