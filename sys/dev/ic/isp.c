@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.52 2000/05/13 16:53:03 he Exp $ */
+/* $NetBSD: isp.c,v 1.53 2000/06/03 22:44:43 fair Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -865,7 +865,7 @@ isp_scsi_channel_init(isp, channel)
 		u_int16_t sdf;
 
 		if (sdp->isp_devparam[tgt].dev_enable == 0) {
-			IDPRINTF(1, ("%s: skipping target %d bus %d settings\n",
+			IDPRINTF(3, ("%s: skipping target %d bus %d settings\n",
 			    isp->isp_name, tgt, channel));
 			continue;
 		}
@@ -3877,7 +3877,7 @@ isp_update_bus(isp, bus)
 		int get;
 
 		if (sdp->isp_devparam[tgt].dev_enable == 0) {
-			IDPRINTF(1, ("%s: skipping target %d bus %d update\n",
+			IDPRINTF(3, ("%s: skipping target %d bus %d update\n",
 			    isp->isp_name, tgt, bus));
 			continue;
 		}
