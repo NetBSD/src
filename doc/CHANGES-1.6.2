@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.24 2003/06/16 13:45:06 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.25 2003/06/16 13:48:13 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -371,3 +371,9 @@ sys/dev/pci/if_wm.c				1.36
 	Pullup short mbuf in wm_tx_cksum() instead of dropping it which fixes
 	PR kern/21190 by myself. Jason R. Thorpe code reviewed the changes.
 	[tron, ticket #1256]
+
+sys/netinet/ip_icmp.c				1.73
+
+	Clear hardware checksum flags before reusing a mbuf for an ICMP reply
+	as suggested by Enami Tsugutomo. This fixes PR kern/21203 by myself.
+	[tron, ticket #1260]
