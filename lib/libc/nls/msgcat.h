@@ -1,3 +1,5 @@
+/*	$NetBSD: msgcat.h,v 1.3 1995/02/27 13:06:55 cgd Exp $	*/
+
 /* -*-c++-*- */
 
 #ifndef __msgcath

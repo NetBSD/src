@@ -1,3 +1,5 @@
+/*	$NetBSD: msgcat.c,v 1.11 1995/02/27 13:06:51 cgd Exp $	*/
+
 /***********************************************************
 Copyright 1990, by Alfalfa Software Incorporated, Cambridge, Massachusetts.
 
@@ -31,7 +33,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.10 1994/12/23 13:01:33 cgd Exp $";
+static char *rcsid = "$NetBSD: msgcat.c,v 1.11 1995/02/27 13:06:51 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History

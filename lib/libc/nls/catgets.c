@@ -1,3 +1,5 @@
+/*	$NetBSD: catgets.c,v 1.6 1995/02/27 13:06:39 cgd Exp $	*/
+
 /*
  * Written by J.T. Conklin, 10/05/94
  * Public domain.
