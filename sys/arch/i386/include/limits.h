@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
- *	$Id: limits.h,v 1.3 1993/08/18 00:22:57 jtc Exp $
+ *	$Id: limits.h,v 1.4 1993/09/16 06:01:11 mycroft Exp $
  */
 
 #define	CHAR_BIT	8		/* number of bits in a char */
@@ -55,3 +55,8 @@
 #define	ULONG_MAX	0xffffffff	/* max value for an unsigned long */
 #define	LONG_MAX	0x7fffffff	/* max value for a long */
 #define	LONG_MIN	(-0x7fffffff-1)	/* min value for a long */
+
+#define	UQUAD_MAX	0xffffffffffffffffLL		/* max unsigned quad */
+#define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
+#define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
+
