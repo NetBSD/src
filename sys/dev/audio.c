@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.42 1997/05/01 12:27:10 kleink Exp $	*/
+/*	$NetBSD: audio.c,v 1.43 1997/05/07 18:51:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -83,6 +83,8 @@
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
+
+#include <machine/endian.h>
 
 #ifdef AUDIO_DEBUG
 #include <machine/stdarg.h>
@@ -846,26 +848,50 @@ audio_fill_silence(params, p, n)
         u_char *p;
         int n;
 {
-	u_int auzero;
-	u_char *q;
+	u_char auzero[4];
+	int nfill = 1;
     
 	switch (params->encoding) {
 	case AUDIO_ENCODING_ULAW:
-	    	auzero = 0x7f; 
+	    	auzero[0] = 0x7f; 
 		break;
 	case AUDIO_ENCODING_ALAW:
-		auzero = 0x55;
+		auzero[0] = 0x55;
 		break;
 	case AUDIO_ENCODING_ADPCM: /* is this right XXX */
-	case AUDIO_ENCODING_PCM8:
-	case AUDIO_ENCODING_PCM16:
+	case AUDIO_ENCODING_LINEAR_LE:
+	case AUDIO_ENCODING_LINEAR_BE:
+		auzero[0] = 0;	/* fortunately this works for both 8 and 16 bits */
+		break;
+	case AUDIO_ENCODING_ULINEAR_LE:
+	case AUDIO_ENCODING_ULINEAR_BE:
+		if (params->precision == 16) {
+			nfill = 2;
+			if (params->encoding == AUDIO_ENCODING_LINEAR_LE) {
+				auzero[0] = 0;
+				auzero[1] = 0x80;
+			} else {
+				auzero[0] = 0x80;
+				auzero[1] = 0;
+			}
+		} else
+			auzero[0] = 0x80;
+		break;
 	default:
-		auzero = 0;	/* fortunately this works for both 8 and 16 bits */
+		printf("audio: bad encoding %d\n", params->encoding);
+		auzero[0] = 0;
 		break;
 	}
-	q = p;
-	while (--n >= 0)
-		*q++ = auzero;
+	if (nfill == 1) {
+		while (--n >= 0)
+			*p++ = auzero[0]; /* XXX memset */
+	} else /* must be 2 */ {
+		while (n > 1) {
+			*p++ = auzero[0];
+			*p++ = auzero[1];
+			n -= 2;
+		}
+	}
 }
 
 #define NSILENCE 128 /* An arbitrary even constant >= 2 */
@@ -1487,29 +1513,31 @@ int
 audio_check_params(p)
 	struct audio_params *p;
 {
-
 	if (p->encoding == AUDIO_ENCODING_LINEAR)
-		switch (p->precision) {
-		case 8:
-			p->encoding = AUDIO_ENCODING_PCM8;
-			return (0);
-		case 16:
-			p->encoding = AUDIO_ENCODING_PCM16;
-			return (0);
-		default:
-			return (EINVAL);
-		}
+#if BYTE_ORDER == LITTLE_ENDIAN
+		p->encoding = AUDIO_ENCODING_LINEAR_LE;
+#else
+		p->encoding = AUDIO_ENCODING_LINEAR_BE;
+#endif
+	if (p->encoding == AUDIO_ENCODING_ULINEAR)
+#if BYTE_ORDER == LITTLE_ENDIAN
+		p->encoding = AUDIO_ENCODING_ULINEAR_LE;
+#else
+		p->encoding = AUDIO_ENCODING_ULINEAR_BE;
+#endif
 
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 	case AUDIO_ENCODING_ALAW:
-	case AUDIO_ENCODING_PCM8:
 	case AUDIO_ENCODING_ADPCM:
 		if (p->precision != 8)
 			return (EINVAL);
 		break;
-	case AUDIO_ENCODING_PCM16:
-		if (p->precision != 16)
+	case AUDIO_ENCODING_LINEAR_LE:
+	case AUDIO_ENCODING_LINEAR_BE:
+	case AUDIO_ENCODING_ULINEAR_LE:
+	case AUDIO_ENCODING_ULINEAR_BE:
+		if (p->precision != 8 && p->precision != 16)
 			return (EINVAL);
 		break;
 	default:
