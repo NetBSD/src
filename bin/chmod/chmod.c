@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)chmod.c	5.19 (Berkeley) 3/12/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/chmod/chmod.c,v 1.3 1993/03/23 00:23:34 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/chmod/chmod.c,v 1.4 1993/06/07 17:34:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -102,14 +102,14 @@ done:	argv += optind;
 
 	retval = 0;
 	if (rflag) {
-		if (!(fts = fts_open(++argv,
-		    oct ? FTS_NOSTAT|FTS_PHYSICAL : FTS_PHYSICAL, 0))) {
+		if (!(fts = fts_open(++argv, FTS_PHYSICAL, 0))) {
 			(void)fprintf(stderr, "chmod: %s.\n", strerror(errno));
 			exit(1);
 		}
 		while (p = fts_read(fts))
 			switch(p->fts_info) {
 			case FTS_D:
+			case FTS_SL:
 				break;
 			case FTS_DNR:
 			case FTS_ERR:
@@ -118,23 +118,26 @@ done:	argv += optind;
 				    p->fts_path, strerror(errno));
 				exit(1);
 			default:
-				if (chmod(p->fts_accpath, oct ? omode :
-				    getmode(set, p->fts_statb.st_mode)) &&
-				    !fflag)
+				if (chmod(p->fts_accpath,
+				    oct ? omode : getmode(set, p->fts_statb.st_mode))
+				    && !fflag)
 					error(p->fts_path);
 				break;
 			}
 		exit(retval);
 	}
-	if (oct) {
-		while (*++argv)
-			if (chmod(*argv, omode) && !fflag)
+
+	while (*++argv) {
+		if (lstat(*argv, &sb) < 0) {
+			if(!fflag)
 				error(*argv);
-	} else
-		while (*++argv)
-			if ((lstat(*argv, &sb) ||
-			    chmod(*argv, getmode(set, sb.st_mode))) && !fflag)
-				error(*argv);
+			continue;
+		}
+		if (S_ISLNK(sb.st_mode))
+			continue;
+		if (chmod(*argv, oct ? omode : getmode(set, sb.st_mode)) && !fflag)
+			error(*argv);
+	}
 	exit(retval);
 }
 
