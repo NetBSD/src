@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.48 2002/02/23 21:55:25 gmcgarry Exp $	*/
+/*	$NetBSD: sd.c,v 1.49 2002/03/05 00:34:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -171,11 +171,11 @@ void	sdstrategy __P((struct buf *));
 int	sddump __P((dev_t, daddr_t, caddr_t, size_t));
 int	sdsize __P((dev_t));
 
+static int	sderror __P((struct sd_softc *, int));
+static void	sdfinish __P((struct sd_softc *, struct buf *));
 static void	sdgetdefaultlabel __P((struct sd_softc *, struct disklabel *));
 static void 	sdgetgeom __P((struct sd_softc *));
 static void	sdlblkstrat __P((struct buf *, int));
-static int	sderror __P((struct sd_softc *, int));
-static void	sdfinish __P((struct sd_softc *, struct buf *));
 
 /*
  * Perform a mode-sense on page 0x04 (rigid geometry).
@@ -315,6 +315,7 @@ void
 sdreset(sc)
 	struct sd_softc *sc;
 {
+
 	sc->sc_stats.sdresets++;
 }
 
@@ -1169,7 +1170,6 @@ sdioctl(dev, cmd, data, flag, p)
 	}
 	/*NOTREACHED*/
 }
-
 
 static void
 sdgetdefaultlabel(sc, lp)
