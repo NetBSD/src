@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.6 1994/08/18 22:48:03 mycroft Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.7 1994/12/13 17:17:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfsmount.h	8.1 (Berkeley) 6/10/93
+ *	@(#)nfsmount.h	8.2 (Berkeley) 8/18/94
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.9 1994/08/17 12:34:12 mycroft Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.10 1994/12/13 17:17:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_srvcache.c	8.1 (Berkeley) 6/10/93
+ *	@(#)nfs_srvcache.c	8.2 (Berkeley) 8/18/94
  */
 
 /*
