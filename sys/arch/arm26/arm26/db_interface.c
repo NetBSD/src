@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11 2001/11/16 14:39:30 bjh21 Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.12 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -34,7 +34,6 @@
  * Interface to new debugger.
  */
 #include "opt_ddb.h"
-#include "opt_progmode.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -85,7 +84,7 @@ const struct db_variable db_regs[] = {
 	{ "svc_sp", (long *)&DDB_REGS->tf_svc_sp, FCN_NULL, },
 	{ "svc_lr", (long *)&DDB_REGS->tf_svc_lr, FCN_NULL, },
 	{ "pc", (long *)&DDB_REGS->tf_pc, FCN_NULL, },
-#ifdef PROG32
+#ifdef __PROG32
 	{ "und_sp", (long *)&nil, db_access_und_sp, },
 	{ "abt_sp", (long *)&nil, db_access_abt_sp, },
 	{ "irq_sp", (long *)&nil, db_access_irq_sp, },
@@ -98,7 +97,7 @@ extern label_t	*db_recover;
 
 int	db_active = 0;
 
-#ifdef PROG32
+#ifdef __PROG32
 int db_access_und_sp(vp, valp, rw)
 	const struct db_variable *vp;
 	db_expr_t *valp;
@@ -128,7 +127,7 @@ int db_access_irq_sp(vp, valp, rw)
 		*valp = get_stackptr(PSR_IRQ32_MODE);
 	return(0);
 }
-#endif
+#endif /* __PROG32 */
 
 /*
  *  kdb_trap - field a TRACE or BPT trap

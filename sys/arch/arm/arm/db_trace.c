@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3 2001/11/09 16:49:29 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4 2001/11/22 17:59:59 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: db_trace.c,v 1.3 2001/11/09 16:49:29 thorpej Exp $");
+__RCSID("$NetBSD: db_trace.c,v 1.4 2001/11/22 17:59:59 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -44,8 +44,6 @@ __RCSID("$NetBSD: db_trace.c,v 1.3 2001/11/09 16:49:29 thorpej Exp $");
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 
-#include "opt_progmode.h"
- 
 #define INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
 /*
@@ -142,7 +140,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		 * In theory, the SCP isn't guaranteed to be in the function
 		 * that generated the stack frame.  We hope for the best.
 		 */
-#ifdef PROG26
+#ifdef __PROG26
 		scp = frame[FR_SCP] & R15_PC;
 #else
 		scp = frame[FR_SCP];
@@ -150,7 +148,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 		db_printsym(scp, DB_STGY_PROC, pr);
 		(*pr)("\n\t");
-#ifdef PROG26
+#ifdef __PROG26
 		(*pr)("scp=0x%08x rlv=0x%08x (", scp, frame[FR_RLV] & R15_PC);
 		db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC, pr);
 		(*pr)(")\n");
