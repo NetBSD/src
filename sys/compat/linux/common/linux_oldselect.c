@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldselect.c,v 1.28 1996/06/23 11:13:32 mycroft Exp $	*/
+/*	$NetBSD: linux_oldselect.c,v 1.29 1996/08/10 09:09:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -39,7 +39,7 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
