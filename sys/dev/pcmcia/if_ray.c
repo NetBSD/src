@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.11 2000/02/04 08:45:41 chopps Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.12 2000/02/07 09:36:27 augustss Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -473,8 +473,7 @@ ray_attach(parent, self, aux)
 	struct ray_softc *sc;
 	struct ifnet *ifp;
 	bus_addr_t memoff;
-	struct pcmcia_card *card;
-	int i;
+	char devinfo[256];
 
 	pa = aux;
 	sc = (struct ray_softc *)self;
@@ -486,16 +485,8 @@ ray_attach(parent, self, aux)
 #endif
 
 	/* Print out what we are */
-	printf(": ");
-	card = &pa->pf->sc->card;
-	for (i = 0; i < 4; i++) {
-		if (card->cis1_info[i] == NULL)
-			break;
-		if (i)
-			printf(", ");
-		printf("%s", card->cis1_info[i]);
-	}
-	printf("\n");
+	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof devinfo);
+	printf(": %s\n", devinfo);
 
 	/* enable the card */
 	pcmcia_function_init(sc->sc_pf, sc->sc_pf->cfe_head.sqh_first);
