@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.516 2005/01/10 03:13:04 lukem Exp $
+# $NetBSD: mi,v 1.517 2005/01/11 22:19:51 peter Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2674,7 +2674,7 @@
 ./usr/share/sushi/system/rcconf/script		base-sushi-share	share
 ./usr/share/sushi/system/rcconf/script1		base-sushi-share	share
 ./usr/share/sushi/system/rcconf/script2		base-sushi-share	share
-./usr/share/sushi/system/rcconf/script3		base-sushi-share	share
+./usr/share/sushi/system/rcconf/script3		base-obsolete		obsolete
 ./usr/share/sushi/system/rcconf/script4		base-sushi-share	share
 ./usr/share/sushi/system/securityconf		base-sushi-share
 ./usr/share/sushi/system/securityconf/form	base-sushi-share	share
