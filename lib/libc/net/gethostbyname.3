@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)gethostbyname.3	6.14 (Berkeley) 7/31/91
-.\"	$Id: gethostbyname.3,v 1.4 1994/03/12 09:00:01 davidb Exp $
+.\"	$Id: gethostbyname.3,v 1.5 1994/04/07 07:00:10 deraadt Exp $
 .\"
 .Dd July 31, 1991
 .Dt GETHOSTBYNAME 3
@@ -47,9 +47,9 @@
 .Fd #include <netdb.h>
 .Fd extern int h_errno;
 .Ft struct hostent *
-.Fn gethostbyname "char *name"
+.Fn gethostbyname "const char *name"
 .Ft struct hostent *
-.Fn gethostbyaddr "char *addr" "int len" "int type"
+.Fn gethostbyaddr "const char *addr" "int len" "int type"
 .Ft struct hostent *
 .Fn gethostent void
 .Fn sethostent "int stayopen"
@@ -66,8 +66,11 @@ following structure describing an internet host
 referenced by name or by address, respectively.
 This structure contains either the information obtained from the name server,
 .Xr named 8 ,
-or broken-out fields from a line in 
-.Pa /etc/hosts .
+broken-out fields from a line in 
+.Pa /etc/hosts ,
+or database entries supplied by the
+.Xr yp 8
+system .
 If the local name server is not running these routines do a lookup in
 .Pa /etc/hosts .
 .Bd -literal

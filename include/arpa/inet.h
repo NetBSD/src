@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)inet.h	5.7 (Berkeley) 4/3/91
- *	$Id: inet.h,v 1.2 1993/08/01 18:46:22 mycroft Exp $
+ *	$Id: inet.h,v 1.3 1994/04/07 06:59:02 deraadt Exp $
  */
 
 #ifndef _INET_H_
@@ -42,12 +42,13 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern unsigned long	 inet_addr __P((const char *));
-extern unsigned long	 inet_lnaof __P((struct in_addr));
-extern struct in_addr	 inet_makeaddr __P((u_long , u_long));
-extern unsigned long	 inet_netof __P((struct in_addr));
-extern unsigned long	 inet_network __P((const char *));
-extern char		*inet_ntoa __P((struct in_addr));
+unsigned long	inet_addr __P((const char *));
+int		inet_aton __P((const char *, struct in_addr *));
+unsigned long	inet_lnaof __P((struct in_addr));
+struct in_addr	inet_makeaddr __P((u_long, u_long));
+unsigned long	inet_netof __P((struct in_addr));
+unsigned long	inet_network __P((const char *));
+char		*inet_ntoa __P((struct in_addr));
 __END_DECLS
 
 #endif /* !_INET_H_ */
