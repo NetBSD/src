@@ -1,4 +1,4 @@
-/* $NetBSD: mpbiosvar.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
+/* $NetBSD: mpbiosvar.h,v 1.1.2.3 2000/02/29 13:17:20 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,20 +39,23 @@
  */
 
 
-#ifndef _MPS_H_
-#define _MPS_H_
+#ifndef _I386_MPBIOSVAR_H_
+#define _I386_MPBIOSVAR_H_
 
 #define MP_TRAMPOLINE  (3 * NBPG)
 
 #if !defined(_LOCORE)
 
+#include <machine/mpbiosreg.h>
+
 struct mp_bus 
 {
 	char *mb_name;		/* XXX bus name */
 	int mb_idx;		/* XXX bus index */
-	void (*mb_intr_print)(int);
-	void (*mb_intr_cfg)(int, int, u_int32_t *); /* XXX XXX intf */
+	void (*mb_intr_print) __P((int));
+	void (*mb_intr_cfg) __P((const struct mpbios_int *, u_int32_t *));
 	struct mp_intr_map *mb_intrs;
+	u_int32_t mb_data;	/* random bus-specific datum. */
 };
 
 struct mp_intr_map
@@ -80,4 +83,4 @@ int mpbios_probe __P((struct device *));
 
 #endif
 
-#endif
+#endif /* !_I386_MPBIOSVAR_H_ */
