@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 1995/10/09 23:25:57 pk Exp $
+#	$NetBSD: Makefile,v 1.5 1995/10/10 20:07:54 pk Exp $
 
 R=	..
 .PATH:	${.CURDIR}/${R}
 PROG=	bootxx
 SRCS=	srt0.S bootxx.c promdev.c dvma.c
-KOBJS=	__main.o bzero.o rem.o urem.o udiv.o
+KOBJS=	__main.o bzero.o urem.o udiv.o
 NOMAN=	1
 STRIP=
 BINDIR=	/usr/mdec
