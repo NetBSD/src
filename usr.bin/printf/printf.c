@@ -1,8 +1,8 @@
-/*	$NetBSD: printf.c,v 1.16 1997/07/04 21:25:17 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.17 1997/10/18 15:38:08 mrg Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,20 +35,21 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if !defined(SHELL) && !defined(BUILTIN)
-__COPYRIGHT(
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n");
+#if !defined(BUILTIN) && !defined(SHELL)
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif
-#endif /* not lint */
+#endif
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)printf.c	5.9 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.16 1997/07/04 21:25:17 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.17 1997/10/18 15:38:08 mrg Exp $");
 #endif
 #endif /* not lint */
+
+#include <sys/types.h>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -141,7 +142,7 @@ progprintf(argc, argv)
 main(argc, argv)
 #endif
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	register char *fmt, *start;
 	register int fieldwidth, precision;
@@ -440,26 +441,26 @@ static int
 getchr()
 {
 	if (!*gargv)
-		return((int)'\0');
-	return((int)**gargv++);
+		return ('\0');
+	return ((int)**gargv++);
 }
 
 static char *
 getstr()
 {
 	if (!*gargv)
-		return("");
-	return(*gargv++);
+		return ("");
+	return (*gargv++);
 }
 
-static char *number = "+-.0123456789";
+static char *Number = "+-.0123456789";
 static int
 getint()
 {
 	if (!*gargv)
 		return(0);
 
-	if (index(number, **gargv))
+	if (index(Number, **gargv))
 		return(atoi(*gargv++));
 
 	return 0;

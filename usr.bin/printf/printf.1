@@ -1,7 +1,7 @@
-.\"	$NetBSD: printf.1,v 1.7 1997/03/08 14:20:21 mouse Exp $
+.\"	$NetBSD: printf.1,v 1.8 1997/10/18 15:38:05 mrg Exp $
 .\"
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -34,8 +34,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
-.\"	$NetBSD: printf.1,v 1.7 1997/03/08 14:20:21 mouse Exp $
+.\"	from: @(#)printf.1	8.1 (Berkeley) 6/6/93
 .\"
 .Dd November 5, 1993
 .Dt PRINTF 1
@@ -273,7 +272,7 @@ The
 utility conforms to 
 .St -p1003.2-92 .
 .Sh BUGS
-Since arguments are translated from
+Since the floating point numbers are translated from
 .Tn ASCII
-to floating-point, and
+to floating-point and
 then back again, floating-point precision may be lost.
