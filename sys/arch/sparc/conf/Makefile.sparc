@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.71 2001/01/22 12:59:29 pk Exp $
+# 	$NetBSD: Makefile.sparc,v 1.72 2001/02/11 16:16:58 pk Exp $
 
 # Makefile for NetBSD
 #
@@ -58,7 +58,8 @@ LINKFLAGS=	-Ttext F0004000 -e start
 .if ${OBJECT_FMT} != "ELF"
 LINKFLAGS+=	-N -p
 .else
-LINKFLAGS+=	-n
+KERN_LDSCRIPT?= kern.ldscript
+LINKFLAGS+=	-n -T ${SPARC}/conf/${KERN_LDSCRIPT}
 .endif
 STRIPFLAGS=	-g
 
