@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.13 1999/03/24 05:51:21 mrg Exp $ */
+/* $NetBSD: tga.c,v 1.13.2.1 1999/04/29 14:25:11 perry Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -72,13 +72,29 @@ void	tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
 
 struct tga_devconfig tga_console_dc;
 
+int tga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int tga_mmap __P((void *, off_t, int));
+static void tga_copyrows __P((void *, int, int, int));
+static void tga_copycols __P((void *, int, int, int, int));
+static int tga_alloc_screen __P((void *, const struct wsscreen_descr *,
+				      void **, int *, int *, long *));
+static void tga_free_screen __P((void *, void *));
+static void tga_show_screen __P((void *, void *));
+static int tga_rop __P((struct raster *, int, int, int, int, int,
+	struct raster *, int, int));
+static int tga_rop_nosrc __P((struct raster *, int, int, int, int, int));
+static int tga_rop_htov __P((struct raster *, int, int, int, int,
+	int, struct raster *, int, int ));
+static int tga_rop_vtov __P((struct raster *, int, int, int, int,
+	int, struct raster *, int, int ));
+
 struct wsdisplay_emulops tga_emulops = {
 	rcons_cursor,			/* could use hardware cursor; punt */
 	rcons_mapchar,
 	rcons_putchar,
-	rcons_copycols,
+	tga_copycols,
 	rcons_erasecols,
-	rcons_copyrows,
+	tga_copyrows,
 	rcons_eraserows,
 	rcons_alloc_attr
 };
@@ -99,13 +115,6 @@ const struct wsscreen_descr *_tga_scrlist[] = {
 struct wsscreen_list tga_screenlist = {
 	sizeof(_tga_scrlist) / sizeof(struct wsscreen_descr *), _tga_scrlist
 };
-
-int	tga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	tga_mmap __P((void *, off_t, int));
-static int	tga_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *, long *));
-static void	tga_free_screen __P((void *, void *));
-static void	tga_show_screen __P((void *, void *));
 
 struct wsdisplay_accessops tga_accessops = {
 	tga_ioctl,
@@ -238,6 +247,7 @@ tga_getdevconfig(memt, pc, tag, dc)
 	rap->depth = tgac->tgac_phys_depth;
 	rap->linelongs = dc->dc_rowbytes / sizeof(u_int32_t);
 	rap->pixels = (u_int32_t *)dc->dc_videobase;
+	rap->data = (caddr_t)dc;
 
 	/* initialize the raster console blitter */
 	rcp = &dc->dc_rcons;
@@ -651,4 +661,215 @@ tga_builtin_get_curmax(dc, curposp)
 
 	curposp->x = curposp->y = 64;
 	return (0);
+}
+
+/*
+ * Copy columns (characters) in a row (line).
+ */
+void
+tga_copycols(id, row, srccol, dstcol, ncols)
+	void *id;
+	int row, srccol, dstcol, ncols;
+{
+	struct rcons *rc = id;
+	int y, srcx, dstx, nx;
+
+	y = rc->rc_yorigin + rc->rc_font->height * row;
+	srcx = rc->rc_xorigin + rc->rc_font->width * srccol;
+	dstx = rc->rc_xorigin + rc->rc_font->width * dstcol;
+	nx = rc->rc_font->width * ncols;
+
+	tga_rop(rc->rc_sp, dstx, y,
+	    nx, rc->rc_font->height, RAS_SRC,
+	    rc->rc_sp, srcx, y);
+}
+
+/*
+ * Copy rows (lines).
+ */
+void
+tga_copyrows(id, srcrow, dstrow, nrows)
+	void *id;
+	int srcrow, dstrow, nrows;
+{
+	struct rcons *rc = id;
+	int srcy, dsty, ny;
+
+	srcy = rc->rc_yorigin + rc->rc_font->height * srcrow;
+	dsty = rc->rc_yorigin + rc->rc_font->height * dstrow;
+	ny = rc->rc_font->height * nrows;
+
+	tga_rop(rc->rc_sp, rc->rc_xorigin, dsty,
+	    rc->rc_raswidth, ny, RAS_SRC,
+	    rc->rc_sp, rc->rc_xorigin, srcy);
+}
+
+/* Do we need the src? */
+static int needsrc[16] = { 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0 };
+
+/* A mapping between our API and the TGA card */
+static int map_rop[16] = { 0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6,
+	0xe, 0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf
+};
+
+/*
+ *  Generic TGA raster op.
+ *   This covers all possible raster ops, and
+ *   clips the sizes and all of that.
+ */
+static int
+tga_rop(dst, dx, dy, w, h, rop, src, sx, sy)
+	struct raster *dst;
+	int dx, dy, w, h, rop;
+	struct raster *src;
+	int sx, sy;
+{
+	if (!dst)
+		return -1;
+	if (dst->data == NULL)
+		return -1;	/* we should be writing to a screen */
+	if (needsrc[RAS_GETOP(rop)]) {
+		if (src == (struct raster *) 0)
+			return -1;	/* We want a src */
+		/* Clip against src */
+		if (sx < 0) {
+			w += sx;
+			sx = 0;
+		}
+		if (sy < 0) {
+			h += sy;
+			sy = 0;
+		}
+		if (sx + w > src->width)
+			w = src->width - sx;
+		if (sy + h > src->height)
+			h = src->height - sy;
+	} else {
+		if (src != (struct raster *) 0)
+			return -1;	/* We need no src */
+	}
+	/* Clip against dst.  We modify src regardless of using it,
+	 * since it really doesn't matter.
+	 */
+	if (dx < 0) {
+		w += dx;
+		sx -= dx;
+		dx = 0;
+	}
+	if (dy < 0) {
+		h += dy;
+		sy -= dy;
+		dy = 0;
+	}
+	if (dx + w > dst->width)
+		w = dst->width - dx;
+	if (dy + h > dst->height)
+		h = dst->height - dy;
+	if (w <= 0 || h <= 0)
+		return 0;	/* Vacuously true; */
+	if (!src)
+		return tga_rop_nosrc(dst, dx, dy, w, h, rop);
+	if (src->data == NULL)
+		return tga_rop_htov(dst, dx, dy, w, h, rop, src, sx, sy);
+	else
+		return tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy);
+}
+
+/*
+ * No source raster ops.
+ * This function deals with all raster ops that don't require a src.
+ */
+static int
+tga_rop_nosrc(dst, dx, dy, w, h, rop)
+	struct raster *dst;
+	int dx, dy, w, h, rop;
+{
+	return raster_op(dst, dx, dy, w, h, rop, NULL, 0, 0);
+}
+
+/*
+ * Host to Video raster ops.
+ * This function deals with all raster ops that have a src that is host memory.
+ */
+static int
+tga_rop_htov(dst, dx, dy, w, h, rop, src, sx, sy)
+	struct raster *dst;
+	int dx, dy, w, h, rop;
+	struct raster *src;
+	int sx, sy;
+{
+	return raster_op(dst, dx, dy, w, h, rop, src, sx, sy);
+}
+
+/*
+ * Video to Video raster ops.
+ * This function deals with all raster ops that have a src and dst
+ * that are on the card.
+ */
+static int
+tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
+	struct raster *dst;
+	int dx, dy, w, h, rop;
+	struct raster *src;
+	int sx, sy;
+{
+	struct tga_devconfig *dc = (struct tga_devconfig *)dst->data;
+	tga_reg_t *regs0 = dc->dc_regs;
+	tga_reg_t *regs1 = regs0 + 16 * 1024;	/* register alias 1 */
+	tga_reg_t *regs2 = regs1 + 16 * 1024;	/* register alias 2 */
+	tga_reg_t *regs3 = regs2 + 16 * 1024;	/* register alias 3 */
+	int srcb, dstb;
+	int x, y;
+	int xstart, xend, xdir, xinc;
+	int ystart, yend, ydir, yinc;
+	int offset = 1 * dc->dc_tgaconf->tgac_vvbr_units;
+
+	/*
+	 * I don't yet want to deal with unaligned guys, really.  And we don't
+	 * deal with copies from one card to another.
+	 */
+	if (dx % 8 != 0 || sx % 8 != 0 || src != dst)
+		return raster_op(dst, dx, dy, w, h, rop, src, sx, sy);
+
+	if (sy >= dy) {
+		ystart = 0;
+		yend = h;
+		ydir = 1;
+	} else {
+		ystart = h;
+		yend = 0;
+		ydir = -1;
+	}
+	if (sx >= dx) {
+		xstart = 0;
+		xend = w * (dst->depth / 8);
+		xdir = 1;
+	} else {
+		xstart = w * (dst->depth / 8);
+		xend = 0;
+		xdir = -1;
+	}
+	xinc = xdir * 4 * 64;
+	yinc = ydir * dst->linelongs * 4;
+	ystart *= dst->linelongs * 4;
+	yend *= dst->linelongs * 4;
+	srcb = offset + sy  * src->linelongs * 4 + sx;
+	dstb = offset + dy  * dst->linelongs * 4 + dx;
+	regs3[TGA_REG_GMOR] = 0x0007;		/* Copy mode */
+	regs3[TGA_REG_GOPR] = map_rop[rop];	/* Set up the op */
+	for (y = ystart; (ydir * y) < (ydir * yend); y += yinc) {
+		for (x = xstart; (xdir * x) < (xdir * xend); x += xinc) {
+			regs0[TGA_REG_GCSR] = srcb + y + x + 3 * 64;
+			regs0[TGA_REG_GCDR] = dstb + y + x + 3 * 64;
+			regs1[TGA_REG_GCSR] = srcb + y + x + 2 * 64;
+			regs1[TGA_REG_GCDR] = dstb + y + x + 2 * 64;
+			regs2[TGA_REG_GCSR] = srcb + y + x + 1 * 64;
+			regs2[TGA_REG_GCDR] = dstb + y + x + 1 * 64;
+			regs3[TGA_REG_GCSR] = srcb + y + x + 0 * 64;
+			regs3[TGA_REG_GCDR] = dstb + y + x + 0 * 64;
+		}
+	}
+	regs0[TGA_REG_GOPR] = 0x0003;		/* op -> dst = src */
+	regs0[TGA_REG_GMOR] = 0x0000;		/* Simple mode */
+	return 0;
 }
