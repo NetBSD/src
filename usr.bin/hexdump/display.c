@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.8 1999/11/09 15:06:36 drochner Exp $	*/
+/*	$NetBSD: display.c,v 1.8.4.1 2000/07/28 01:09:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.8 1999/11/09 15:06:36 drochner Exp $");
+__RCSID("$NetBSD: display.c,v 1.8.4.1 2000/07/28 01:09:29 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ display()
 				(void)printf(pr->fmt, (quad_t)eaddress);
 				break;
 			case F_TEXT:
-				(void)printf(pr->fmt);
+				(void)printf("%s", pr->fmt);
 				break;
 			}
 	}
@@ -182,7 +182,7 @@ print(pr, bp)
 		(void)printf(pr->fmt, (char *)bp);
 		break;
 	case F_TEXT:
-		(void)printf(pr->fmt);
+		(void)printf("%s", pr->fmt);
 		break;
 	case F_U:
 		conv_u(pr, bp);

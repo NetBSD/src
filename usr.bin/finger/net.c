@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.13 1999/07/02 06:01:23 itojun Exp $	*/
+/*	$NetBSD: net.c,v 1.13.8.1 2000/07/28 01:09:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)net.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: net.c,v 1.13 1999/07/02 06:01:23 itojun Exp $");
+__RCSID("$NetBSD: net.c,v 1.13.8.1 2000/07/28 01:09:29 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ netfinger(name)
 	}
 	if (s < 0) {
 		if (emsg != NULL)
-			warn(emsg);
+			warn("%s", emsg);
 		return;
 	}
 
