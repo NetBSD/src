@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.195 2000/12/11 15:49:07 is Exp $
+# $NetBSD: mi,v 1.196 2000/12/14 04:15:54 jmc Exp $
 .
 ./altroot
 ./bin
@@ -884,15 +884,6 @@
 ./usr/share/keymaps/atari
 ./usr/share/keymaps/x68k
 ./usr/share/ldscripts
-./usr/share/lkm
-./usr/share/lkm/misc
-./usr/share/lkm/misc/module
-./usr/share/lkm/misc/test
-./usr/share/lkm/syscall
-./usr/share/lkm/syscall/module
-./usr/share/lkm/syscall/test
-./usr/share/lkm/vfs
-./usr/share/lkm/vfs/module
 ./usr/share/locale
 ./usr/share/locale/da
 ./usr/share/locale/da/LC_MESSAGES
