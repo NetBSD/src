@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.67 1999/08/31 21:30:25 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.68 1999/08/31 22:05:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.67 1999/08/31 21:30:25 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.68 1999/08/31 22:05:22 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -651,6 +651,12 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 		if (port == NULL) {
 			warnx("Unknown port for URL `%s'", url);
 			goto cleanup_fetch_url;
+		}
+		portnum = strtol(port, &ep, 10);
+		if (*ep || port == ep) {
+			struct servent *svp = getservbyname(port, "tcp");
+			if (svp != NULL)
+				portnum = ntohs(svp->s_port);
 		}
 		sin.sin_port = portnum;
 
