@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib_host.c,v 1.2 1997/07/18 21:57:03 thorpej Exp $	*/
+/*	$NetBSD: yplib_host.c,v 1.3 1997/10/13 03:42:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: yplib_host.c,v 1.3 1997/10/13 03:42:31 lukem Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdb.c,v 1.3 1997/10/07 14:39:06 lukem Exp $	*/
+/*	$NetBSD: ypdb.c,v 1.4 1997/10/13 03:42:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -40,13 +40,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ypdb.c,v 1.4 1997/10/13 03:42:30 lukem Exp $");
+#endif
+
 #include <sys/param.h>
 #include <sys/types.h>
+
+#include <db.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
-
-#define __DBINTERFACE_PRIVATE
-#include <db.h>
 
 #include "ypdb.h"
 
@@ -61,21 +66,15 @@ ypdb_open(file, flags, mode)
 	const char *file;
 	int flags, mode;
 {
-	char path[MAXPATHLEN];
-#ifdef YPDB_PATCH
-	HASHINFO info;
-
-	info.bsize = 4096;
-	info.ffactor = 40;
-	info.nelem = 1;
-	info.cachesize = NULL;
-	info.hash = NULL;
-	info.lorder = 0;
-	snprintf(path, sizeof(path), "%s%s", file, YPDB_SUFFIX);
-	return ((DBM *)__hash_open(path, flags, mode, &info, 0));
-#else
+	char path[MAXPATHLEN], *cp;
+	DBM *db;
 	BTREEINFO info;
 
+	cp = strrchr(file, '.');
+	snprintf(path, sizeof(path), "%s%s", file,
+	    (cp != NULL && strcmp(cp, ".db") == 0) ? "" : YPDB_SUFFIX);
+
+		/* try our btree format first */
 	info.flags = 0;
 	info.cachesize = 0;
 	info.maxkeypage = 0;
@@ -84,9 +83,13 @@ ypdb_open(file, flags, mode)
 	info.compare = NULL;
 	info.prefix = NULL;
 	info.lorder = 0;
-	snprintf(path, sizeof(path), "%s%s", file, YPDB_SUFFIX);
-	return ((DBM *)__bt_open(path, flags, mode, &info, 0));
-#endif
+	db = (DBM *)dbopen(path, flags, mode, DB_BTREE, (void *)&info);
+	if (db != NULL || errno != EFTYPE)
+		return (db);
+
+		/* fallback to standard hash (for sendmail's aliases.db) */
+	db = (DBM *)dbopen(path, flags, mode, DB_HASH, NULL);
+	return (db);
 }
 
 void
@@ -169,26 +172,10 @@ ypdb_setkey(db, key)
 {
 	int status;
 	datum retdata;
-#ifdef YPDB_PATCH
-	datum retkey;
-
-	status = (db->seq)(db, (DBT *)&retkey, (DBT *)&retdata, R_FIRST);
-	if (status)
-		retkey.dptr = NULL;
-	while ((retkey.dptr != NULL) &&
-	       ((retkey.dsize != key.dsize) ||
-		(strncmp(key.dptr,retkey.dptr,retkey.dsize) != 0))) {
-	  status = (db->seq)(db, (DBT *)&retkey, (DBT *)&retdata, R_NEXT);
-	  if (status)
-	  	retkey.dptr = NULL;
-	};
-	return (retkey);
-#else
 	status = (db->seq)(db, (DBT *)&key, (DBT *)&retdata, R_CURSOR);
 	if (status)
 		key.dptr = NULL;
 	return (key);
-#endif
 }
 
 /*

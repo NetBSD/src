@@ -1,9 +1,14 @@
-/*	$NetBSD: ypresp_xdr.c,v 1.1.1.1 1996/08/09 10:14:52 thorpej Exp $	*/
+/*	$NetBSD: ypresp_xdr.c,v 1.2 1997/10/13 03:42:33 lukem Exp $	*/
 
 /*
  * This file was originally generated with rpcgen, then modified
  * by Jason R. Thorpe <thorpej@NetBSD.ORG>. 
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ypresp_xdr.c,v 1.2 1997/10/13 03:42:33 lukem Exp $");
+#endif
 
 #include <sys/types.h>
 
