@@ -1,5 +1,5 @@
-/*	$NetBSD: qop_cbq.c,v 1.4 2001/08/22 08:52:37 itojun Exp $	*/
-/*	$KAME: qop_cbq.c,v 1.5 2001/08/16 10:39:14 kjc Exp $	*/
+/*	$NetBSD: qop_cbq.c,v 1.5 2002/03/05 04:11:53 itojun Exp $	*/
+/*	$KAME: qop_cbq.c,v 1.6 2001/12/03 08:20:55 kjc Exp $	*/
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.
  *
@@ -134,7 +134,7 @@ cbq_interface_parser(const char *ifname, int argc, char **argv)
 		} else if (EQUAL(*argv, "cbq-prr")) {
 			is_wrr = 0;
 		} else {
-			LOG(LOG_ERR, 0, "Unknown keyword '%s'", argv);
+			LOG(LOG_ERR, 0, "Unknown keyword '%s'", *argv);
 			return (0);
 		}
 		argc--; argv++;

@@ -1,5 +1,5 @@
-/*	$NetBSD: qop_blue.c,v 1.4 2001/08/22 08:52:37 itojun Exp $	*/
-/*	$KAME: qop_blue.c,v 1.5 2001/08/16 10:39:13 kjc Exp $	*/
+/*	$NetBSD: qop_blue.c,v 1.5 2002/03/05 04:11:53 itojun Exp $	*/
+/*	$KAME: qop_blue.c,v 1.6 2001/12/03 08:20:55 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -125,7 +125,7 @@ blue_interface_parser(const char *ifname, int argc, char **argv)
 		} else if (EQUAL(*argv, "ecn")) {
 			flags |= BLUEF_ECN;
 		} else {
-			LOG(LOG_ERR, 0, "Unknown keyword '%s'", argv);
+			LOG(LOG_ERR, 0, "Unknown keyword '%s'", *argv);
 			return (0);
 		}
 		argc--; argv++;
