@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.39 1999/03/24 05:50:50 mrg Exp $ */
+/* $NetBSD: interrupt.c,v 1.40 1999/08/10 23:35:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.39 1999/03/24 05:50:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.40 1999/08/10 23:35:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.39 1999/03/24 05:50:50 mrg Exp $");
 
 #if defined(MULTIPROCESSOR)
 #include <sys/device.h>
-#include <alpha/alpha/cpuvar.h>
 #endif
 
 static u_int schedclk2;
