@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2001/02/23 03:48:09 ichiro Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2001/03/03 18:04:35 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -158,7 +158,6 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "audio.h"
 #include "midi.h"
 #include "sequencer.h"
-#include "cpu.h"
 #include "ipfilter.h"
 #include "rnd.h"
 #include "sacom.h"
@@ -221,7 +220,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_init(NLKM,lkm),        /* 35: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),	/* 36: generic audio I/O */
 	cdev_lkm_dummy(),		/* 37: reserved */
-	cdev_cpu_init(NCPU,cpu),	/* 38: cpu device */
+	cdev_lkm_dummy(),		/* 38: removed cpu device */
 	cdev_lkm_dummy(),		/* 39: reserved */
 	cdev_lkm_dummy(),		/* 40: reserved */
 	cdev_lkm_dummy(),		/* 41: reserved */

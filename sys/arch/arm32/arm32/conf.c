@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.48 2001/02/21 00:51:26 reinoud Exp $	*/
+/*	$NetBSD: conf.c,v 1.49 2001/03/03 18:04:34 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -212,7 +212,6 @@ cdev_decl(i4btel);
 #include "audio.h"
 #include "midi.h"
 #include "sequencer.h"
-#include "cpu.h"
 #include "iic.h"
 #include "rtc.h"
 #include "vidcconsole.h"
@@ -291,7 +290,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_init(NLKM,lkm),        /* 35: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),	/* 36: generic audio I/O */
 	cdev_vidcvid_init(NVIDCCONSOLE,vidcconsole),	/* 37: vidcconsole device */
-	cdev_cpu_init(NCPU,cpu),	/* 38: cpu device */
+	cdev_lkm_dummy(),		/* 38: removed cpu device */
 	cdev_lkm_dummy(),		/* 39: reserved */
 	cdev_mouse_init(NOPMS,pms),     /* 40: PS2 mouse driver */
 	cdev_lkm_dummy(),		/* 41: reserved */
