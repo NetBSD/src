@@ -43,8 +43,6 @@
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
 
-#include "npx.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -57,6 +55,8 @@
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+
+#include "npx.h"
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -96,16 +96,16 @@ cpu_fork(p1, p2)
 	 * Wire top of address space of child to it's kstack.
 	 * First, fault in a page of pte's to map it.
 	 */
-        addr = trunc_page((u_int)vtopte(kstack));
+	addr = trunc_page((u_int)vtopte(kstack));
 	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
-	for (i=0; i < UPAGES; i++)
-		pmap_enter(&p2->p_vmspace->vm_pmap, kstack+i*NBPG,
-			pmap_extract(kernel_pmap, ((int)p2->p_addr)+i*NBPG),
-			VM_PROT_READ | VM_PROT_WRITE,	/* must be writable for
+	for (i = 0; i < UPAGES; i++)
+		pmap_enter(&p2->p_vmspace->vm_pmap, kstack + i * NBPG,
+		    pmap_extract(kernel_pmap, ((int)p2->p_addr) + i * NBPG),
+		    VM_PROT_READ | VM_PROT_WRITE,	/* must be writable for
 							 * i486 WP support;
 							 * i386 doesn't care
 							 */
-			TRUE);
+		    TRUE);
 
 	pmap_activate(&p2->p_vmspace->vm_pmap, &up->u_pcb);
 
@@ -156,8 +156,8 @@ cpu_exit(p)
 	/* drop per-process resources */
 	vmspace_free(p->p_vmspace);
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-
 	p->p_addr = (struct user *) &nullpcb;
+
 	splclock();
 	swtch();
 	/* NOTREACHED */
@@ -167,16 +167,16 @@ void
 cpu_exit(p)
 	register struct proc *p;
 {
-        extern int _default_ldt, currentldt;
+	extern int _default_ldt, currentldt;
 	
 #if NNPX > 0
 	npxexit(p);
 #endif
 #ifdef	USER_LDT
-        if (((struct pcb *)p->p_addr)->pcb_ldt && (currentldt != _default_ldt)) {
-                lldt(_default_ldt);
-                currentldt = _default_ldt;
-        }
+	if (p->p_addr->u_pcb.pcb_ldt && (currentldt != _default_ldt)) {
+		lldt(_default_ldt);
+		currentldt = _default_ldt;
+	}
 #endif
 	splclock();
 	swtch();
@@ -187,16 +187,16 @@ void
 cpu_wait(p)
 	struct proc *p;
 {
-        struct pcb *pcb = (struct pcb *)p->p_addr;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	/* drop per-process resources */
 	vmspace_free(p->p_vmspace);
 #ifdef	USER_LDT
-        if (pcb->pcb_ldt) {
-                kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
-                          (pcb->pcb_ldt_len * sizeof(union descriptor)));
-                pcb->pcb_ldt = NULL;
-        }
+	if (pcb->pcb_ldt) {
+		kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
+			  (pcb->pcb_ldt_len * sizeof(union descriptor)));
+		pcb->pcb_ldt = NULL;
+	}
 #endif
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 }
@@ -428,5 +428,6 @@ cpu_reset() {
 
 	/* "good night, sweet prince .... <THUNK!>" */
 	tlbflush(); 
-	/* NOTREACHED */
+	/* just in case */
+	for (;;);
 }
