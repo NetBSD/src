@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.110 2000/11/26 17:44:06 ad Exp $
+#	$NetBSD: files.pci,v 1.111 2000/11/28 05:12:29 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -229,6 +229,11 @@ file	dev/pci/mpu_fms.c		mpu_fms
 device	eap: audio, auconv, mulaw, ac97, midibus
 attach	eap at pci
 file	dev/pci/eap.c			eap
+
+# Intel ICH AC'97 audio
+device	auich: audio, auconv, mulaw, ac97
+attach	auich at pci
+file	dev/pci/auich.c			auich
 
 # VIA VT82C686A AC'97 Audio
 device  auvia: audio, auconv, mulaw, ac97
