@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.8 2000/11/24 12:58:17 tsutsui Exp $
+# 	$NetBSD: LIBERO,v 1.9 2001/01/25 14:33:31 tsutsui Exp $
 
 #	NEWS1750 config file;
 #
@@ -88,9 +88,13 @@ clock0	at hb0 addr 0xe0d80000 ipl 6
 # onboard LANCE ethernet
 le0	at hb0 addr 0xe0f00000 ipl 4
 
-# keyboard/mouse; not yet
-#kb0	at hb0 addr 0xe0d00000 ipl 5
-#ms0	at hb0 addr 0xe0d00005 ipl 5
+# keyboard/mouse
+kbc0	at hb0 addr 0xe0d00000 ipl 5
+kb0	at kbc0
+ms0	at kbc0
+
+wskbd*	at kb?
+wsmouse* at ms?
 
 # onboard z8530 SCC
 zsc0	at hb0 addr 0xe0d40000 ipl 5 vect 64 flags 0x0
