@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.13 1997/01/22 07:09:12 mikel Exp $	*/
+/*	$NetBSD: errno.h,v 1.14 1997/01/23 07:01:50 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -44,7 +44,9 @@
 #define _SYS_ERRNO_H_
 
 #ifndef _KERNEL
+#include <sys/cdefs.h>
 
+__BEGIN_DECLS
 #if !defined(_REENTRANT)
 extern int errno;
 #else
@@ -56,7 +58,8 @@ extern int *__errno();
 extern int sys_nerr;
 extern const char *const sys_errlist[];
 #endif
-#endif
+__END_DECLS
+#endif /* !_KERNEL */
 
 #define	EPERM		1		/* Operation not permitted */
 #define	ENOENT		2		/* No such file or directory */
