@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.22 2004/06/27 18:28:26 pk Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.23 2004/06/30 21:16:38 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.22 2004/06/27 18:28:26 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.23 2004/06/30 21:16:38 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,6 @@ void	*dmabus_intr_establish __P((
 		int (*) __P((void *)),	/*handler*/
 		void *,			/*handler arg*/
 		void (*) __P((void))));	/*optional fast trap handler*/
-
-static	bus_space_tag_t dma_alloc_bustag __P((struct dma_softc *sc));
 
 CFATTACH_DECL(dma_sbus, sizeof(struct dma_softc),
     dmamatch_sbus, dmaattach_sbus, NULL, NULL);
@@ -214,7 +212,11 @@ dmaattach_sbus(parent, self, aux)
 	}
 
 	sbus_establish(&dsc->sc_sd, &sc->sc_dev);
-	sbt = dma_alloc_bustag(dsc);
+	if ((sbt = bus_space_tag_alloc(sc->sc_bustag, dsc)) == NULL) {
+		printf("%s: attach: out of memory\n", self->dv_xname);
+		return;
+	}
+	sbt->sparc_intr_establish = dmabus_intr_establish;
 	lsi64854_attach(sc);
 
 	/* Attach children */
@@ -247,24 +249,4 @@ dmabus_intr_establish(t, pri, level, handler, arg, fastvec)
 	}
 	return (bus_intr_establish(sc->sc_bustag, pri, level,
 				   handler, arg));
-}
-
-bus_space_tag_t
-dma_alloc_bustag(sc)
-	struct dma_softc *sc;
-{
-	bus_space_tag_t sbt;
-
-	sbt = (bus_space_tag_t) malloc(sizeof(struct sparc_bus_space_tag),
-	    M_DEVBUF, M_NOWAIT);
-	if (sbt == NULL)
-		return (NULL);
-
-	memcpy(sbt, sc->sc_lsi64854.sc_bustag, sizeof(*sbt));
-	sbt->cookie = sc;
-	sbt->parent = sc->sc_lsi64854.sc_bustag;
-	sbt->sparc_intr_establish = dmabus_intr_establish;
-	sbt->ranges = NULL;
-	sbt->nranges = 0;
-	return (sbt);
 }

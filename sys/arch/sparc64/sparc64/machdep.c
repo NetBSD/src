@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.169 2004/06/28 10:17:01 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.170 2004/06/30 21:16:39 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2004/06/28 10:17:01 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2004/06/30 21:16:39 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1594,6 +1594,33 @@ static void	sparc_bus_free __P((bus_space_tag_t, bus_space_handle_t,
 
 vaddr_t iobase = IODEV_BASE;
 struct extent *io_space = NULL;
+
+/*
+ * Allocate a new bus tag and have it inherit the methods of the
+ * given parent.
+ */
+bus_space_tag_t
+bus_space_tag_alloc(parent, cookie)
+	bus_space_tag_t parent;
+	void *cookie;
+{
+	struct sparc_bus_space_tag *sbt;
+
+	sbt = malloc(sizeof(struct sparc_bus_space_tag),
+		     M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (sbt == NULL)
+		return (NULL);
+
+	if (parent) {
+		memcpy(sbt, parent, sizeof(*sbt));
+		sbt->parent = parent;
+		sbt->ranges = NULL;
+		sbt->nranges = 0;
+	}
+
+	sbt->cookie = cookie;
+	return (sbt);
+}
 
 /*
  * Generic routine to translate an address using OpenPROM `ranges'.
