@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.9 1996/12/20 16:21:13 leo Exp $ */
+/*	$NetBSD: lpt.c,v 1.10 1996/12/26 23:25:15 leo Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -72,6 +72,7 @@
 #include <machine/mfp.h>
 
 #include <atari/dev/ym2149reg.h>
+#include <atari/atari/intr.h>
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
@@ -113,9 +114,9 @@ dev_type_ioctl(lptioctl);
 
 static void lptwakeup __P((void *arg));
 static int pushbytes __P((struct lpt_softc *));
-static void lptpseudointr __P((void));
-int lptintr __P((void));
-int lpthwintr __P((int));
+static void lptpseudointr __P((struct lpt_softc *));
+int lptintr __P((struct lpt_softc *));
+int lpthwintr __P((struct lpt_softc *, int));
 
 
 /*
@@ -154,6 +155,8 @@ void	*auxp;
 
 	sc->sc_state = 0;
 
+	if (intr_establish(0, USER_VEC, 0, (hw_ifun_t)lpthwintr, sc) == NULL)
+		printf("lptattach: Can't establish interrupt\n");
 	ym2149_strobe(1);
 
 	printf("\n");
@@ -232,7 +235,7 @@ lptwakeup(arg)
 {
 	struct lpt_softc *sc = arg;
 
-	lptpseudointr();
+	lptpseudointr(sc);
 
 	timeout(lptwakeup, sc, STEP);
 }
@@ -315,7 +318,7 @@ pushbytes(sc)
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
 				lprintf("%s: write %d\n", sc->sc_dev.dv_xname,
 				    sc->sc_count);
-				(void) lptpseudointr();
+				(void) lptpseudointr(sc);
 			}
 			if ((error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
 			     "lptwrite2", 0)) != 0)
@@ -361,12 +364,9 @@ lptwrite(dev, uio, flags)
  * another char.
  */
 int
-lptintr()
+lptintr(sc)
+struct lpt_softc *sc;
 {
-	struct lpt_softc *sc;
-
-	sc = lpt_cd.cd_devs[0]; /* XXX: LWP - we have only one on the Atari */
-
 	/* is printer online and ready for output */
 	if (NOT_READY())
 		return 0;
@@ -391,22 +391,24 @@ lptintr()
 }
 
 static void
-lptpseudointr()
+lptpseudointr(sc)
+struct lpt_softc *sc;
 {
 	int	s;
 
 	s = spltty();
-	lptintr();
+	lptintr(sc);
 	splx(s);
 }
 
 int
-lpthwintr(sr)
-int	sr;
+lpthwintr(sc, sr)
+struct lpt_softc *sc;
+int		  sr;
 {
 	if (!BASEPRI(sr))
-		add_sicallback((si_farg)lptpseudointr, NULL, 0);
-	else lptpseudointr();
+		add_sicallback((si_farg)lptpseudointr, sc, 0);
+	else lptpseudointr(sc);
 	return 1;
 }
 

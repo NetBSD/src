@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.28 1996/12/18 12:35:19 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.29 1996/12/26 23:25:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -362,6 +362,13 @@ fault:
 
 	.globl	_straytrap
 
+	.globl	_intr_glue
+_intr_glue:
+	moveml	d0-d1/a0-a1,sp@-	|  Save scratch registers
+	jbsr	_intr_dispatch		|  handle interrupt
+	moveml	sp@+,d0-d1/a0-a1
+	jra	rei
+
 _lev2intr:
 #ifndef TT_SCSI
 	rte				|  HBL, can't be turned off on Falcon!
@@ -591,19 +598,6 @@ mfp_timc:
 	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
 	jra	rei			|  all done
 #endif /* STATCLOCK */
-
-	/* MFP BUSYY handler --- printer --- */
-mfp_lpt:
-	addql	#1,_intrcnt+40		|  add another printer interrupt
-
-	moveml	d0-d1/a0-a1,sp@-	|  Save scratch registers
-	movw	sp@(16),sp@-		|  push previous SR value
-	clrw	sp@-			|     padded to longword
-	jbsr	_lpthwintr		|  handle interrupt
-	addql	#4,sp			|  pop SR
-	moveml	sp@+,d0-d1/a0-a1
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
-	jra	rei
 
 	/* MFP ACIA handler --- keyboard/midi --- */
 mfp_kbd:
@@ -1995,22 +1989,5 @@ timebomb:
 	.long	0
 #endif
 
-/* interrupt counters */
-	.globl	_intrcnt,_eintrcnt,_intrnames,_eintrnames
-_intrnames:
-	.asciz	"spur"
-	.asciz	"clock"
-	.asciz	"kbd/mouse"
-	.asciz	"fdc/acsi"
-	.asciz	"soft"
-	.asciz	"5380-SCSI"
-	.asciz	"5380-DMA"
-	.asciz	"nmi"
-	.asciz	"8530-SCC"
-	.asciz	"statclock"
-	.asciz	"printer"
-_eintrnames:
-	.even
-_intrcnt:
-	.long	0,0,0,0,0,0,0,0,0,0,0
-_eintrcnt:
+/* interrupt counters & names */
+#include <atari/atari/intrcnt.h>

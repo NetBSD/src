@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.21 1996/10/15 20:51:59 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.22 1996/12/26 23:25:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -59,6 +59,7 @@
 #include <machine/mfp.h>
 #include <machine/scu.h>
 #include <machine/kcore.h>
+#include <atari/atari/intr.h>
 #include <atari/atari/stalloc.h>
 #include <atari/dev/ym2149reg.h>
 
@@ -536,6 +537,11 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * Initialize stmem allocator
 	 */
 	init_stmem();
+
+	/*
+	 * Initialize interrupt mapping.
+	 */
+	intr_init();
 }
 
 /*
