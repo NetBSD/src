@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.91 2004/08/30 09:48:05 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.92 2004/10/15 04:38:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.91 2004/08/30 09:48:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.92 2004/10/15 04:38:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1031,7 +1031,7 @@ config_attach_loc(struct device *parent, struct cfdata *cf,
  * name by the attach routine.
  */
 struct device *
-config_attach_pseudo(const char *name, int unit)
+config_attach_pseudo(struct cfdata *cf)
 {
 	struct device *dev;
 	struct cfdriver *cd;
@@ -1041,18 +1041,26 @@ config_attach_pseudo(const char *name, int unit)
 	int myunit;
 	char num[10];
 
-	cd = config_cfdriver_lookup(name);
+	cd = config_cfdriver_lookup(cf->cf_name);
 	if (cd == NULL)
 		return (NULL);
 
-	ca = config_cfattach_lookup_cd(cd, name);
+	ca = config_cfattach_lookup_cd(cd, cf->cf_atname);
 	if (ca == NULL)
 		return (NULL);
 
 	if (ca->ca_devsize < sizeof(struct device))
 		panic("config_attach_pseudo");
 
-	if (unit == DVUNIT_ANY) {
+	/*
+	 * We just ignore cf_fstate, instead doing everything with
+	 * cf_unit.
+	 *
+	 * XXX Should we change this and use FSTATE_NOTFOUND and
+	 * XXX FSTATE_STAR?
+	 */
+
+	if (cf->cf_unit == DVUNIT_ANY) {
 		for (myunit = 0; myunit < cd->cd_ndevs; myunit++)
 			if (cd->cd_devs[myunit] == NULL)
 				break;
@@ -1060,7 +1068,7 @@ config_attach_pseudo(const char *name, int unit)
 		 * myunit is now the unit of the first NULL device pointer.
 		 */
 	} else {
-		myunit = unit;
+		myunit = cf->cf_unit;
 		if (myunit < cd->cd_ndevs && cd->cd_devs[myunit] != NULL)
 			return (NULL);
 	}
@@ -1081,7 +1089,7 @@ config_attach_pseudo(const char *name, int unit)
 	memset(dev, 0, ca->ca_devsize);
 	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
 	dev->dv_class = cd->cd_class;
-	dev->dv_cfdata = NULL;
+	dev->dv_cfdata = cf;
 	dev->dv_cfdriver = cd;
 	dev->dv_cfattach = ca;
 	dev->dv_unit = myunit;
