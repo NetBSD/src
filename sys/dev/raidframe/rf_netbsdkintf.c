@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.50 2000/02/21 23:33:45 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.51 2000/02/22 03:38:42 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -290,6 +290,8 @@ int rf_set_autoconfig __P((RF_Raid_t *, int));
 int rf_set_rootpartition __P((RF_Raid_t *, int));
 void rf_release_all_vps __P((RF_ConfigSet_t *));
 void rf_cleanup_config_set __P((RF_ConfigSet_t *));
+int rf_have_enough_components __P((RF_ConfigSet_t *));
+int rf_auto_config_set __P((RF_ConfigSet_t *, int *));
 
 static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 				  allow autoconfig to take place */
@@ -426,46 +428,33 @@ rf_buildroothack(arg)
 	RF_ConfigSet_t *config_sets = arg;
 	RF_ConfigSet_t *cset;
 	RF_ConfigSet_t *next_cset;
-	RF_Raid_t *raidPtr;
-	RF_Config_t *config;
-	int raidID;
 	int retcode;
+	int raidID;
+	int rootID;
+	int num_root;
 
-	raidID=0;
+	num_root = 0;
 	cset = config_sets;
 	while(cset != NULL ) {
 		next_cset = cset->next;
-		if (cset->ac->clabel->autoconfigure==1) {
-			printf("Starting autoconfigure on raid%d\n",raidID);
-			config = (RF_Config_t *)malloc(sizeof(RF_Config_t),
-						       M_RAIDFRAME,
-						       M_NOWAIT);
-			if (config==NULL) {
-				printf("Out of mem!?!?\n");
-				/* XXX do something more intelligent here. */
-				return;
-			}
-			/* XXX raidID needs to be set correctly.. */
-			raidPtr = raidPtrs[raidID];
-			/* XXX all this stuff should be done SOMEWHERE ELSE! */
-			raidPtr->raidid = raidID;
-			raidPtr->openings = RAIDOUTSTANDING;
-			rf_create_configuration(cset->ac, config, raidPtr);
-			retcode = rf_Configure( raidPtr, config, cset->ac );
-
-			if (retcode == 0) {
-#if DEBUG
-				printf("Calling raidinit()\n");
-#endif
-				/* XXX the 0's below are bogus! */
-				retcode = raidinit(0, raidPtrs[raidID], 0);
-				if (retcode) {
-					printf("init returned: %d\n",retcode);
+		if (rf_have_enough_components(cset) && 
+		    cset->ac->clabel->autoconfigure==1) {
+			retcode = rf_auto_config_set(cset,&raidID);
+			if (!retcode) {
+				if (cset->rootable) {
+					rootID = raidID;
+					num_root++;
 				}
-				rf_markalldirty( raidPtrs[raidID] );
+			} else {
+				/* The autoconfig didn't work :( */
+#if DEBUG
+				printf("Autoconfig failed with code %d for raid%d\n", retcode, raidID);
+#endif
+				rf_release_all_vps(cset);
+#if DEBUG
+				printf("Done cleanup\n");
+#endif
 			}
-			raidID++; /* XXX for now.. */
-			free(config, M_RAIDFRAME);
 		} else {
 			/* we're not autoconfiguring this set...  
 			   release the associated resources */
@@ -486,6 +475,20 @@ rf_buildroothack(arg)
 		printf("Done cleanup\n");
 #endif
 		cset = next_cset;
+	}
+	if (boothowto & RB_ASKNAME) {
+		/* We don't auto-config... */
+	} else {
+		/* They didn't ask, and we found something bootable... */
+		/* XXX pretend for now.. */
+		if (num_root == 1) {
+#if 1
+			booted_device = &raidrootdev[rootID]; 
+#endif
+		} else if (num_root > 1) {
+			/* we can't guess.. require the user to answer... */
+			boothowto |= RB_ASKNAME;
+		}
 	}
 }
 
@@ -1064,8 +1067,9 @@ raidioctl(dev, cmd, data, flag, p)
 		   */
 
 		raidPtr->serial_number = clabel->serial_number;
-
-		raid_init_component_label(raidPtr, clabel);
+		
+		raid_init_component_label(raidPtr, &ci_label);
+		ci_label.serial_number = clabel->serial_number;
 
 		for(row=0;row<raidPtr->numRow;row++) {
 			ci_label.row = row;
@@ -2674,7 +2678,9 @@ print_component_label(clabel)
 	       clabel->numBlocks);
 	printf("   Autoconfig: %s\n", clabel->autoconfigure ? "Yes" : "No" );
 	printf("   Last configured as: raid%d\n", clabel->last_unit );
-	printf("   Config order: %d\n", clabel->config_order);
+#if 0
+	   printf("   Config order: %d\n", clabel->config_order);
+#endif
 	       
 }
 
@@ -2709,6 +2715,7 @@ rf_create_auto_sets(ac_list)
 			/* this one is easy :) */
 			config_sets->ac = ac;
 			config_sets->next = NULL;
+			config_sets->rootable = 0;
 			ac->next = NULL;
 		} else {
 			/* which set does this component fit into? */
@@ -2733,6 +2740,7 @@ rf_create_auto_sets(ac_list)
 				cset->ac = ac;
 				ac->next = NULL;
 				cset->next = config_sets;
+				cset->rootable = 0;
 				config_sets = cset;
 			}
 		}
@@ -2782,16 +2790,72 @@ rf_does_it_fit(cset, ac)
 	return(1);
 }
 
-#if 0
-int have_enough();
 int
-have_enough()
+rf_have_enough_components(cset)
+	RF_ConfigSet_t *cset;
 {
+	RF_AutoConfig_t *ac;
+	RF_AutoConfig_t *auto_config;
+	RF_ComponentLabel_t *clabel;
+	int r,c;
+	int num_rows;
+	int num_cols;
+	int num_missing;
+
 	/* check to see that we have enough 'live' components
 	   of this set.  If so, we can configure it if necessary */
 
-}
+	num_rows = cset->ac->clabel->num_rows;
+	num_cols = cset->ac->clabel->num_columns;
+
+	/* XXX Check for duplicate components!?!?!? */
+
+	num_missing = 0;
+	auto_config = cset->ac;
+
+	for(r=0; r<num_rows; r++) {
+		for(c=0; c<num_cols; c++) {
+			ac = auto_config;
+			while(ac!=NULL) {
+				if (ac->clabel==NULL) {
+					/* big-time bad news. */
+					goto fail;
+				}
+				if ((ac->clabel->row == r) &&
+				    (ac->clabel->column == c)) {
+					/* it's this one... */
+#if DEBUG
+					printf("Found: %s at %d,%d\n",
+					       ac->devname,r,c);
 #endif
+					break;
+				}
+				ac=ac->next;
+			}
+			if (ac==NULL) {
+				/* Didn't find one here! */
+				num_missing++;
+			}
+		}
+	}
+
+	clabel = cset->ac->clabel;
+
+	if (((clabel->parityConfig == '0') && (num_missing > 0)) ||
+	    ((clabel->parityConfig == '1') && (num_missing > 1)) ||
+	    ((clabel->parityConfig == '4') && (num_missing > 1)) ||
+	    ((clabel->parityConfig == '5') && (num_missing > 1))) {
+		/* XXX this needs to be made *much* more general */
+		/* Too many failures */
+		return(0);
+	}
+	/* otherwise, all is well, and we've got enough to take a kick
+	   at autoconfiguring this set */
+	return(1);
+fail:
+	return(0);
+
+}
 
 void
 rf_create_configuration(ac,config,raidPtr)
@@ -2934,4 +2998,102 @@ raid_init_component_label(raidPtr, clabel)
 	clabel->autoconfigure = 0;
 	clabel->root_partition = 0;
 	clabel->last_unit = raidPtr->raidid;
+	clabel->config_order = 0;
+}
+
+int
+rf_auto_config_set(cset,unit)
+	RF_ConfigSet_t *cset;
+	int *unit;
+{
+	RF_Raid_t *raidPtr;
+	RF_Config_t *config;
+	int raidID;
+	int retcode;
+
+	printf("Starting autoconfigure on raid%d\n",raidID);
+
+	retcode = 0;
+	*unit = -1;
+
+	/* 1. Create a config structure */
+
+	config = (RF_Config_t *)malloc(sizeof(RF_Config_t),
+				       M_RAIDFRAME,
+				       M_NOWAIT);
+	if (config==NULL) {
+		printf("Out of mem!?!?\n");
+				/* XXX do something more intelligent here. */
+		return(1);
+	}
+	/* XXX raidID needs to be set correctly.. */
+
+	/* 
+	   2. Figure out what RAID ID this one is supposed to live at 
+	   See if we can get the same RAID dev that it was configured
+	   on last time.. 
+	*/
+
+	raidID = cset->ac->clabel->last_unit;
+	if (raidID >= numraid) {
+		/* let's not wander off into lala land. */
+		raidID = numraid - 1;
+	}
+	if (raidPtrs[raidID]->valid != 0) {
+
+		/* 
+		   Nope... Go looking for an alternative...  
+		   Start high so we don't immediately use raid0 if that's
+		   not taken. 
+		*/
+
+		for(raidID = numraid; raidID >= 0; raidID--) {
+			if (raidPtrs[raidID]->valid == 0) {
+				/* can use this one! */
+				break;
+			}
+		}
+	}
+
+	if (raidID < 0) {
+		/* punt... */
+		printf("Unable to auto configure this set!\n");
+		printf("(Out of RAID devs!)\n");
+		return(1);
+	}
+
+	raidPtr = raidPtrs[raidID];
+
+	/* XXX all this stuff should be done SOMEWHERE ELSE! */
+	raidPtr->raidid = raidID;
+	raidPtr->openings = RAIDOUTSTANDING;
+
+	/* 3. Build the configuration structure */
+	rf_create_configuration(cset->ac, config, raidPtr);
+
+	/* 4. Do the configuration */
+	retcode = rf_Configure(raidPtr, config, cset->ac);
+	
+	if (retcode == 0) {
+#if DEBUG
+		printf("Calling raidinit()\n");
+#endif
+				/* XXX the 0 below is bogus! */
+		retcode = raidinit(0, raidPtrs[raidID], raidID);
+		if (retcode) {
+			printf("init returned: %d\n",retcode);
+		}
+		rf_markalldirty( raidPtrs[raidID] );
+		if (cset->ac->clabel->root_partition==1) {
+			/* everything configured just fine.  Make a note
+			   that this set is eligible to be root. */
+			cset->rootable = 1;
+		}
+	}
+
+	/* 5. Cleanup */
+	free(config, M_RAIDFRAME);
+	
+	*unit = raidID;
+	return(retcode);
 }
