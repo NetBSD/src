@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.20 2003/04/19 19:36:20 fvdl Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.21 2003/04/20 15:49:08 fvdl Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.20 2003/04/19 19:36:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.21 2003/04/20 15:49:08 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,6 +424,9 @@ ahc_isa_attach(parent, self, aux)
 	ahc->flags |= AHC_PAGESCBS;
 	ahc->tag = iot;
 	ahc->bsh = ioh;
+
+	if (ahc_softc_init(ahc) != 0)
+		goto free_io;
 
 	ahc_intr_enable(ahc, FALSE);
 
