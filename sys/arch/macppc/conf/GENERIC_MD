@@ -1,12 +1,9 @@
-#	$NetBSD: GENERIC_MD,v 1.7 2002/04/02 05:30:43 lukem Exp $
+#	$NetBSD: GENERIC_MD,v 1.7.12.1 2004/11/12 06:20:47 jmc Exp $
 #
 # GENERIC_MD config file
 #
 
 include "arch/macppc/conf/GENERIC"
-
-# Change base address to 0x800000 to use large memory disk.
-makeoptions	TEXTADDR=0x800000
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
