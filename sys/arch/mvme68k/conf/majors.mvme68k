@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvme68k,v 1.1.2.2 2002/05/30 07:14:47 gehenna Exp $
+#	$NetBSD: majors.mvme68k,v 1.1.2.3 2002/07/14 18:37:20 gehenna Exp $
 #
 # Device majors for mvme68k
 #
@@ -35,3 +35,4 @@ device-major	scsibus		char 36			scsibus
 device-major	raid		char 37  block 16	raid
 device-major	svr4_net	char 38			compat_svr4
 device-major	clockctl	char 39			clockctl
+device-major	systrace	char 40			systrace
