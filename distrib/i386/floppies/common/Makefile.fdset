@@ -1,37 +1,29 @@
-#	$NetBSD: Makefile.inc,v 1.29 2002/01/08 04:00:01 tv Exp $
+#	$NetBSD: Makefile.fdset,v 1.1 2002/02/03 16:22:22 lukem Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
 BASENAME?=	boot
 IMAGE1?=	${BASENAME}1.fs
 FSTMP=		ustar.tmp
 MDEC=		${DESTDIR}/usr/mdec
 BOOTCODE?=	${MDEC}/biosboot.sym
 #BOOTCODE=	${MDEC}/biosboot_com0.sym	# Serial output
-STRIP?=		strip
-MOUNT_POINT?=	/mnt
 
-DISKTYPE?=	floppy3
 DISKSIZE?=	2880
-BLOCK8K?=	179
 
 CLEANFILES+=	netbsd boot ustar.tmp
 
-realall:	unconfig netbsd boot
-	tar cvf ${FSTMP} boot netbsd
+realall:	netbsd boot
+	${PAX} -wvf ${FSTMP} boot netbsd
 	@echo
 	@echo Making disk number one
-	-mv -f ${IMAGE1} ${IMAGE1}.tmp
-	dd if=/dev/zero of=${IMAGE1}.tmp count=${DISKSIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE1}.tmp
-	disklabel -rw ${VND} ${DISKTYPE}
-	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_RDEV}
+	rm -rf empty
+	mkdir -m 755 empty
+	${MAKEFS} -s ${DISKSIZE}b ${IMAGE1}.tmp empty
+	dd bs=8k seek=1 count=$$((${DISKSIZE} / 16 - 1)) \
+	    if=${FSTMP} of=${IMAGE1}.tmp
 	@echo "installing new bootblocks"
-	${MDEC}/installboot -b 17 -v -f ${BOOTCODE} ${VND_RDEV}
-	vnconfig -u ${VND}
+	${MDEC}/installboot -b 17 -v -f ${BOOTCODE} ${IMAGE1}.tmp
 	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
 		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
 		disks=$$(($$size / $$dksize + 1)); \
@@ -42,15 +34,16 @@ realall:	unconfig netbsd boot
 				echo Making disk number $$d.; \
 				IMAGE=${BASENAME}$${d}.fs; \
 				echo USTARFS $$d > $${IMAGE}; \
-				skip=$$((($$d - 1) * ${BLOCK8K})); \
+				skip=$$((($$d - 1) * (${DISKSIZE} / 16 - 1))); \
 				if test $$d -eq $$disks; then \
 					dd bs=8k seek=1 skip=$${skip} \
 						conv=sync \
 						if=${FSTMP} of=$${IMAGE}; \
 				else \
 					dd bs=8k seek=1 skip=$${skip} \
-						conv=sync count=${BLOCK8K} \
-						if=${FSTMP} of=$${IMAGE}; \
+					    conv=sync \
+					    count=$$((${DISKSIZE} / 16 - 1)) \
+					    if=${FSTMP} of=$${IMAGE}; \
 				fi; \
 				d=$$(($$d + 1)); \
 			done; \
@@ -85,18 +78,15 @@ netbsd: ${KERN}
 boot: ${BOOTCODE}
 	rm -f boot
 	cp ${BOOTCODE} boot
-	strip boot
+	${STRIP} boot
 
 release:
 	-mkdir -p ${RELEASEDIR}/installation/floppy
 	cp -p ${BASENAME}?.fs ${RELEASEDIR}/installation/floppy
 	
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-
 clean cleandir distclean:
-	/bin/rm -f *.core ${CLEANFILES} ${BASENAME}?.fs ${IMAGE1}.tmp
+	rm -f *.core ${CLEANFILES} ${BASENAME}?.fs ${IMAGE1}.tmp
+	rm -rf empty
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>

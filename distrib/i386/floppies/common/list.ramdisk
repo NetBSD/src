@@ -1,0 +1,21 @@
+#	$NetBSD: list.ramdisk,v 1.1 2002/02/03 16:22:22 lukem Exp $
+
+# various files that we need in /etc for the install
+COPY	${_SRC_TOP_}/etc/group		etc/group
+COPY	${_SRC_TOP_}/etc/master.passwd	etc/master.passwd
+COPY	${_SRC_TOP_}/etc/protocols	etc/protocols
+COPY	${_SRC_TOP_}/etc/netconfig	etc/netconfig
+COPY	${_SRC_TOP_}/etc/services	etc/services
+
+COPY	${_SRC_TOP_}/etc/etc.i386/MAKEDEV	dev/MAKEDEV
+
+# we need the boot block in /usr/mdec + the MBR copy
+COPY	${DESTDIR}/usr/mdec/biosboot.sym	usr/mdec/biosboot.sym
+COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
+COPY	${DESTDIR}/usr/mdec/mbr_bootsel		usr/mdec/mbr_bootsel
+
+# and the common installation tools
+COPY	${CURDIR}/../common/termcap.mini	usr/share/misc/termcap
+
+# and the installation tools
+CMD	sed -e "s/@BOOTMODEL@/${BOOTMODEL}/" < ${CURDIR}/../common/dot.profile > .profile

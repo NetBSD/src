@@ -1,47 +1,49 @@
-#	$NetBSD: Makefile,v 1.4 2001/10/21 23:23:20 jmc Exp $
+#	$NetBSD: Makefile,v 1.5 2002/02/03 16:22:24 lukem Exp $
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
+.include "../Makefile.inc"
 .include <bsd.kernobj.mk>
 .include <bsd.own.mk>
 
-MDEC=		${DESTDIR}/usr/mdec
-MDSETIMAGE?=	${DESTDIR}/usr/sbin/mdsetimage
-STRIP?=		strip
+#	create ${RAMDISK_*} variables
+#
+RAMDISKS=	RAMDISK_S	ramdisk-rescuesmall	\
+		RAMDISK_T	ramdisk-rescuetiny
 
-RAMDISK_T!=	cd ${.CURDIR}/../ramdisk-rescuetiny/; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-rescuetiny.fs\n" | \
+.for V F in ${RAMDISKS}
+${V}!=		cd ${.CURDIR}/../${F}/; \
+	        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/${F}.fs\n" | \
 		${MAKE} -s -f-
-RAMDISK_S!=	cd ${.CURDIR}/../ramdisk-rescuesmall/; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-rescuesmall.fs\n" | \
-		${MAKE} -s -f-
+.endfor
 
-netbsd.INSTALL_TINY.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_TINY/netbsd ${RAMDISK_T}
-	cp ${KERNOBJDIR}/INSTALL_TINY/netbsd netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK_T}
-	nm netbsd.tmp > netbsd.INSTALL_TINY.symbols
+#	create netbsd.*.gz targets
+#
+#	TARGETS is a list of:
+#		KERNEL_name	fs-image
+#
+TARGETS=	INSTALL_SMALL	${RAMDISK_S}	\
+		INSTALL_TINY	${RAMDISK_T}
+
+.for K R in ${TARGETS}
+KERNELS+=	netbsd.${K}.gz
+KERNELSYMS+=	netbsd.${K}.symbols
+netbsd.${K}.gz: .NOTMAIN ${KERNOBJDIR}/${K}/netbsd ${R}
+	@echo "Populating ${K} with ${R}"
+	cp ${KERNOBJDIR}/${K}/netbsd netbsd.tmp
+	${MDSETIMAGE} -v netbsd.tmp ${R}
+	${NM} netbsd.tmp > netbsd.${K}.symbols
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
+.endfor
 
-netbsd.INSTALL_SMALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_SMALL/netbsd ${RAMDISK_S}
-	cp ${KERNOBJDIR}/INSTALL_SMALL/netbsd netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK_S}
-	nm netbsd.tmp > netbsd.INSTALL_SMALL.symbols
-	${STRIP} netbsd.tmp
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
-
-KERNELS=netbsd.INSTALL_TINY.gz netbsd.INSTALL_SMALL.gz
-
+#	do the work
+#
 all: ${KERNELS}
 
 release:
 
 clean cleandir distclean:
-	rm -f *.core ${KERNELS} netbsd.INSTALL_TINY.symbols \
-		netbsd.INSTALL_SMALL.symbols
+	rm -f *.core netbsd.tmp ${KERNELS} ${KERNELSYMS}
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+.include <bsd.prog.mk>
