@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.9 1998/03/21 20:14:14 pk Exp $ */
+/*	$NetBSD: power.c,v 1.10 1998/06/06 21:40:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,8 +59,6 @@ struct cfattach power_ca = {
  * This is the driver for the "power" register available on some Sun4m
  * machines. This allows the machine to remove power automatically when
  * shutdown or halted or whatever.
- *
- * XXX: this capability is not utilized in the current kernel.
  */
 
 static int
@@ -106,5 +104,7 @@ powerattach(parent, self, aux)
 void
 powerdown()
 {
-	*POWER_REG |= POWER_OFF;
+	/* Only try if the power node was attached. */
+	if (power_reg != NULL)
+		*POWER_REG |= POWER_OFF;
 }
