@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.9 1997/07/13 19:57:59 christos Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.10 1997/07/20 13:33:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -57,9 +57,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "Id: res_comp.c,v 8.11 1996/12/02 09:17:22 vixie Exp";
+static char rcsid[] = "$Id: res_comp.c,v 8.12 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_comp.c,v 1.9 1997/07/13 19:57:59 christos Exp $");
+__RCSID("$NetBSD: res_comp.c,v 1.10 1997/07/20 13:33:28 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,7 +92,7 @@ dn_expand(msg, eomorig, comp_dn, exp_dn, length)
 	register char *dn;
 	register int n, c;
 	char *eom;
-	int len = -1, checked = 0;
+	int len = -1, checked = 0, octets = 0;
 
 	dn = exp_dn;
 	cp = comp_dn;
@@ -106,6 +106,9 @@ dn_expand(msg, eomorig, comp_dn, exp_dn, length)
 		 */
 		switch (n & INDIR_MASK) {
 		case 0:
+			octets += (n + 1);
+			if (octets > MAXCDNAME)
+				return (-1);
 			if (dn != exp_dn) {
 				if (dn >= eom)
 					return (-1);
@@ -177,6 +180,8 @@ dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr)
 
 	dn = (u_char *)exp_dn;
 	cp = comp_dn;
+	if (length > MAXCDNAME)
+		length = MAXCDNAME;
 	eob = cp + length;
 	lpp = cpp = NULL;
 	if (dnptrs != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.4 1997/07/13 19:57:51 christos Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.5 1997/07/20 13:33:26 mrg Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -19,9 +19,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp";
+static char rcsid[] = "$Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.4 1997/07/13 19:57:51 christos Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.5 1997/07/20 13:33:26 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
