@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.138 2001/02/01 19:45:19 itojun Exp $
+#	$NetBSD: NetBSD.dist,v 1.139 2001/02/04 16:51:47 nonaka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1242,6 +1242,11 @@ en_US.ISO8859-1
 # ./usr/share/locale/en_US.ISO8859-15
 en_US.ISO8859-15
 # ./usr/share/locale/en_US.ISO8859-15
+..
+
+# ./usr/share/locale/en_US.UTF-2
+en_US.UTF-2
+# ./usr/share/locale/en_US.UTF-2
 ..
 
 # ./usr/share/locale/en_US.UTF-8
