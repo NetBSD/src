@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.h,v 1.5 2003/07/16 05:08:09 itojun Exp $	*/
+/*	$NetBSD: rijndael-api-fst.h,v 1.6 2003/08/18 02:36:17 elric Exp $	*/
 
 /**
  * rijndael-api-fst.h
@@ -83,8 +83,9 @@ typedef struct {
 
 /*  The structure for cipher information */
 typedef struct {                    /* changed order of the components */
+    u_int32_t  IV[RIJNDAEL_MAX_IV_SIZE / sizeof(u_int32_t)];
+			/* A possible Initialization Vector for ciphering */
     BYTE  mode;                     /* MODE_ECB, MODE_CBC, or MODE_CFB1 */
-    BYTE  IV[RIJNDAEL_MAX_IV_SIZE];          /* A possible Initialization Vector for ciphering */
 } cipherInstance;
 
 /*  Function prototypes  */

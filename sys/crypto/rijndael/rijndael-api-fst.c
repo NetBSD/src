@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.16 2003/07/24 14:51:34 itojun Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.17 2003/08/18 02:36:17 elric Exp $	*/
 
 /**
  * rijndael-api-fst.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.16 2003/07/24 14:51:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.17 2003/08/18 02:36:17 elric Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -126,7 +126,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 		break;
 		
 	case MODE_CBC:
-		iv = cipher->IV;
+		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
 			((u_int32_t*)block)[0] = ((u_int32_t*)input)[0] ^ ((u_int32_t*)iv)[0];
 			((u_int32_t*)block)[1] = ((u_int32_t*)input)[1] ^ ((u_int32_t*)iv)[1];
@@ -140,7 +140,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 		break;
 
     case MODE_CFB1:
-		iv = cipher->IV;
+		iv = (u_int8_t *)cipher->IV;
         for (i = numBlocks; i > 0; i--) {
 			memcpy(outBuffer, input, 16);
             for (k = 0; k < 128; k++) {
@@ -202,7 +202,7 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 		break;
 
 	case MODE_CBC:
-		iv = cipher->IV;
+		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
 			((u_int32_t*)block)[0] = ((u_int32_t*)input)[0] ^ ((u_int32_t*)iv)[0];
 			((u_int32_t*)block)[1] = ((u_int32_t*)input)[1] ^ ((u_int32_t*)iv)[1];
@@ -256,7 +256,7 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 		break;
 		
 	case MODE_CBC:
-		iv = cipher->IV;
+		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
 			rijndaelDecrypt(key->rk, key->Nr, input, block);
 			((u_int32_t*)block)[0] ^= ((u_int32_t*)iv)[0];
@@ -271,7 +271,7 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 		break;
 
     case MODE_CFB1:
-		iv = cipher->IV;
+		iv = (u_int8_t *)cipher->IV;
         for (i = numBlocks; i > 0; i--) {
 			memcpy(outBuffer, input, 16);
             for (k = 0; k < 128; k++) {
