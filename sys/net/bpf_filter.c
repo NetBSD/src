@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.9 1995/03/28 20:01:10 jtc Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.10 1995/04/01 03:04:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993
@@ -69,10 +69,9 @@
 
 #ifdef _KERNEL
 #include <sys/mbuf.h>
-#define MINDEX(m, k) \
+#define MINDEX(len, m, k) \
 { \
-	register int len = m->m_len; \
- \
+	len = m->m_len; \
 	while (k >= len) { \
 		k -= len; \
 		m = m->m_next; \
@@ -91,14 +90,7 @@ m_xword(m, k, err)
 	register u_char *cp, *np;
 	register struct mbuf *m0;
 
-	len = m->m_len;
-	while (k >= len) {
-		k -= len;
-		m = m->m_next;
-		if (m == 0)
-			goto bad;
-		len = m->m_len;
-	}
+	MINDEX(len, m, k);
 	cp = mtod(m, u_char *) + k;
 	if (len - k >= 4) {
 		*err = 0;
@@ -112,15 +104,13 @@ m_xword(m, k, err)
 	switch (len - k) {
 
 	case 1:
-		return (cp[k] << 24) | (np[0] << 16) | (np[1] << 8) | np[2];
+		return (cp[0] << 24) | (np[0] << 16) | (np[1] << 8) | np[2];
 
 	case 2:
-		return (cp[k] << 24) | (cp[k + 1] << 16) | (np[0] << 8) | 
-			np[1];
+		return (cp[0] << 24) | (cp[1] << 16) | (np[0] << 8) | np[1];
 
 	default:
-		return (cp[k] << 24) | (cp[k + 1] << 16) | (cp[k + 2] << 8) |
-			np[0];
+		return (cp[0] << 24) | (cp[1] << 16) | (cp[2] << 8) | np[0];
 	}
     bad:
 	*err = 1;
@@ -136,14 +126,7 @@ m_xhalf(m, k, err)
 	register u_char *cp;
 	register struct mbuf *m0;
 
-	len = m->m_len;
-	while (k >= len) {
-		k -= len;
-		m = m->m_next;
-		if (m == 0)
-			goto bad;
-		len = m->m_len;
-	}
+	MINDEX(len, m, k);
 	cp = mtod(m, u_char *) + k;
 	if (len - k >= 2) {
 		*err = 0;
@@ -153,7 +136,7 @@ m_xhalf(m, k, err)
 	if (m0 == 0)
 		goto bad;
 	*err = 0;
-	return (cp[k] << 8) | mtod(m0, u_char *)[0];
+	return (cp[0] << 8) | mtod(m0, u_char *)[0];
  bad:
 	*err = 1;
 	return 0;
@@ -245,11 +228,12 @@ bpf_filter(pc, p, wirelen, buflen)
 			if (k >= buflen) {
 #ifdef _KERNEL
 				register struct mbuf *m;
+				register int len;
 
 				if (buflen != 0)
 					return 0;
 				m = (struct mbuf *)p;
-				MINDEX(m, k);
+				MINDEX(len, m, k);
 				A = mtod(m, u_char *)[k];
 				continue;
 #else
@@ -310,11 +294,12 @@ bpf_filter(pc, p, wirelen, buflen)
 			if (k >= buflen) {
 #ifdef _KERNEL
 				register struct mbuf *m;
+				register int len;
 
 				if (buflen != 0)
 					return 0;
 				m = (struct mbuf *)p;
-				MINDEX(m, k);
+				MINDEX(len, m, k);
 				A = mtod(m, char *)[k];
 				continue;
 #else
@@ -329,11 +314,12 @@ bpf_filter(pc, p, wirelen, buflen)
 			if (k >= buflen) {
 #ifdef _KERNEL
 				register struct mbuf *m;
+				register int len;
 
 				if (buflen != 0)
 					return 0;
 				m = (struct mbuf *)p;
-				MINDEX(m, k);
+				MINDEX(len, m, k);
 				X = (mtod(m, char *)[k] & 0xf) << 2;
 				continue;
 #else
