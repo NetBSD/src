@@ -1,4 +1,4 @@
-.\"	$NetBSD: setrunqueue.9,v 1.2 2002/02/13 08:18:51 ross Exp $
+.\"	$NetBSD: setrunqueue.9,v 1.3 2002/07/05 04:03:15 nathanw Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,3 +69,15 @@ function removes the given process from the system run queue. It is an
 error to call
 .Nm remrunqueue
 with a process that is not on the system run queue.
+.Pp
+These functions must be called with the scheduler lock held and at the
+.Nm splsched
+interrupt protection level. The macros 
+.Dv SCHED_LOCK(s) ,
+.Dv SCHED_UNLOCK(s) ,
+and
+.Dv SCHED_ASSERT_LOCKED() ,
+are provided for this locking interface.
+
+.Sh SEE ALSO
+.Xr splsched 9 ,
