@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.44 1997/09/19 13:55:35 leo Exp $	*/
+/*	$NetBSD: param3.h,v 1.45 1997/09/20 12:10:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -66,9 +66,9 @@
 
 #define	UPAGES		2		/* pages of u-area */
 
-#include <m68k/param.h>
+#define MSGBUFSIZE	(4096 - 4 * sizeof(long))
 
-#define MSGBUFSIZE	(4096 - 3 * sizeof(long))
+#include <m68k/param.h>
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
