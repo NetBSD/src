@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.40 2002/04/03 15:56:58 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.41 2002/04/03 16:04:04 wiz Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -8,7 +8,6 @@
 /dev/i4btel1
 /dev/i4btrc0
 /dev/i4btrc1
-/dev/log
 /etc/disklabels
 /sbin/dumpfs
 /sbin/dumplfs
