@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.9 2000/12/04 18:48:18 scw Exp $	*/
+/*	$NetBSD: prom.h,v 1.10 2000/12/05 21:57:13 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -176,16 +176,30 @@ struct mvmeprom_args {
 	MVMEPROM_GETRES(ret); \
 	return (!(ret & 0x4));		/* return a 'status' */
 
-#define MVMEPROM_REG_DEVLUN	"%d0"
-#define MVMEPROM_REG_CTRLLUN	"%d1"
-#define MVMEPROM_REG_FLAGS	"%d4"
-#define MVMEPROM_REG_CTRLADDR	"%a0"
-#define MVMEPROM_REG_ENTRY	"%a1"
-#define MVMEPROM_REG_CONFBLK	"%a2"
-#define MVMEPROM_REG_NBARGSTART	"%a3"
-#define MVMEPROM_REG_NBARGEND	"%a4"
-#define MVMEPROM_REG_ARGSTART	"%a5"
-#define MVMEPROM_REG_ARGEND	"%fp"
+#define MVMEPROM_REG_DEVLUN	%d0
+#define MVMEPROM_REG_CTRLLUN	%d1
+#define MVMEPROM_REG_FLAGS	%d4
+#define MVMEPROM_REG_CTRLADDR	%a0
+#define MVMEPROM_REG_ENTRY	%a1
+#define MVMEPROM_REG_CONFBLK	%a2
+#define MVMEPROM_REG_NBARGSTART	%a3
+#define MVMEPROM_REG_NBARGEND	%a4
+#define MVMEPROM_REG_ARGSTART	%a5
+#define MVMEPROM_REG_ARGEND	%a6
+
+#define MVMEPROM_ARGS_DEVLUN	0x00
+#define MVMEPROM_ARGS_CTRLLUN	0x04
+#define MVMEPROM_ARGS_FLAGS	0x08
+#define MVMEPROM_ARGS_CTRLADDR	0x0c
+#define MVMEPROM_ARGS_ENTRY	0x10
+#define MVMEPROM_ARGS_CONFBLK	0x14
+#define MVMEPROM_ARGS_NBARGSTART 0x18
+#define MVMEPROM_ARGS_NBARGEND	0x1c
+#define MVMEPROM_ARGS_ARGSTART	0x20
+#define MVMEPROM_ARGS_ARGEND	0x24
+#define MVMEPROM_ARGS_CPUTYP	0x28
+#define MVMEPROM_ARGS_MAX	0x2c
+
 
 #ifndef RB_NOSYM
 #define RB_NOSYM 0x400
