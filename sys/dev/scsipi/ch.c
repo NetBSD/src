@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.40 1999/09/30 22:57:53 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.41 2000/01/04 22:35:57 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -402,6 +402,9 @@ chioctl(dev, cmd, data, flags, p)
 
 	case CHIOIELEM:
 		error = ch_ielem(sc);
+		if (error == 0) {
+			sc->sc_link->flags |= SDEV_MEDIA_LOADED;
+		}
 		break;
 
 	case OCHIOGSTATUS:
@@ -463,46 +466,49 @@ ch_interpret_sense(xs)
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
 	struct ch_softc *sc = sc_link->device_softc;
-	int error, retval = SCSIRET_CONTINUE;
+	u_int16_t asc_ascq;
 
 	/*
-	 * If it isn't an extended or extended/defered error, let
+	 * If it isn't an extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
 	    (sense->error_code & SSD_ERRCODE) != 0x71)
-		return (retval);
+		return (SCSIRET_CONTINUE);
 
-	if ((sense->flags & SSD_KEY) == SKEY_UNIT_ATTENTION) {
-		/*
-		 * The element status has possibly changed, usually because
-		 * an operator has opened the door.  We need to initialize
-		 * the element status.  If we haven't gotten our params yet,
-		 * then we are about to (we are getting here via chopen()).
-		 * Just notify ch_get_params() that we need to do an
-		 * Init-Element-Status.  Otherwise, we need to call
-		 * ch_get_params() ourselves.
-		 */
-		retval = SCSIRET_RETRY;
-		if (sc->sc_link->flags & SDEV_MEDIA_LOADED) {
-			sc->sc_link->flags &= ~SDEV_MEDIA_LOADED;
-			if ((xs->xs_control &
-			     XS_CTL_IGNORE_MEDIA_CHANGE) == 0) {
-				error = ch_get_params(sc, 0);
-				if (error)
-					retval = error;
-			}
-		}
+	/*
+	 * We're only interested in condtions that
+	 * indicate potential inventory violation.
+	 *
+	 * We use ASC/ASCQ codes for this.
+	 */
 
+	asc_ascq = (((u_int16_t) sense->add_sense_code) << 8) |
+	    sense->add_sense_code_qual;
+
+	switch (asc_ascq) {
+	case 0x2800:
+		/* "Not Ready To Ready Transition (Medium May Have Changed)" */
+	case 0x2900:
+		/* "Power On, Reset, or Bus Device Reset Occurred" */
+		sc->sc_link->flags &= ~SDEV_MEDIA_LOADED;
 		/*
-		 * Enqueue an Element-Status-Changed event, and wake up
-		 * any processes waiting for them.
+		 * Enqueue an Element-Status-Changed event, and
+		 * wake up any processes waiting for them.
 		 */
-		if ((xs->xs_control & XS_CTL_IGNORE_MEDIA_CHANGE) == 0)
+		if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) == 0) {
 			ch_event(sc, CHEV_ELEMENT_STATUS_CHANGED);
+		}
+		/*
+		 * When we get interrupt threads, we can possibly
+		 * run automatic corrective commands here if the
+		 * policy is that we do so.
+		 */
+		break;
+	default:
+		break;
 	}
-
-	return (retval);
+	return (SCSIRET_CONTINUE);
 }
 
 void
@@ -1159,7 +1165,7 @@ ch_get_params(sc, scsiflags)
 	sc->sc_firsts[CHET_DT] = _2btol(sense_data.pages.ea.fdtea);
 	sc->sc_counts[CHET_DT] = _2btol(sense_data.pages.ea.ndte);
 
-	/* XXX ask for page trasport geom */
+	/* XXX ask for transport geometry page XXX */
 
 	/*
 	 * Grab info from the capabilities page.
@@ -1192,9 +1198,10 @@ ch_get_params(sc, scsiflags)
 		sc->sc_exchangemask[from] = exchanges[from];
 	}
 
+#ifdef	CH_AUTOMATIC_IELEM_POLICY
 	/*
-	 * If we need to do an Init-Element-Status, do that now that
-	 * we know what's in the changer.
+	 * If we need to do an Init-Element-Status,
+	 * do that now that we know what's in the changer.
 	 */
 	if ((scsiflags & XS_CTL_IGNORE_MEDIA_CHANGE) == 0) {
 		if ((sc->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
@@ -1204,6 +1211,7 @@ ch_get_params(sc, scsiflags)
 		else
 			sc->sc_link->flags &= ~SDEV_MEDIA_LOADED;
 	}
+#endif
 	return (error);
 }
 
