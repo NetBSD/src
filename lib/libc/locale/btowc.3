@@ -1,4 +1,4 @@
-.\" $NetBSD: btowc.3,v 1.3 2003/04/16 13:34:40 wiz Exp $
+.\" $NetBSD: btowc.3,v 1.4 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -48,7 +48,7 @@ function converts a single byte character
 in the initial shift state of the current locale to a corresponding
 wide character.
 .Pp
-The behaviour of the
+The behaviour of
 .Fn btowc
 is affected by the
 .Dv LC_CTYPE
@@ -57,10 +57,10 @@ category of the current locale.
 .Sh RETURN VALUES
 The
 .Fn btowc
-returns:
+function returns:
 .Bl -tag -width 012345678901
 .It Dv WEOF
-if
+If
 .Fa c
 is
 .Dv EOF
@@ -68,7 +68,7 @@ or if (unsigned char)
 .Fa c
 does not correspond to a valid single byte character representation.
 .It (otherwise)
-a wide character corresponding to
+A wide character corresponding to
 .Fa c .
 .El
 .\" ----------------------------------------------------------------------
