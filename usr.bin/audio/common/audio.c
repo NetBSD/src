@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.14 2002/01/15 08:19:37 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.15 2002/01/15 23:48:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -48,7 +48,7 @@
 /* what format am i? */
 
 struct {
-	char *fname;
+	const char *fname;
 	int fno;
 } formats[] = {
 	{ "sunau",		AUDIO_FORMAT_SUN },
@@ -78,7 +78,7 @@ audio_format_from_str(str)
 
 /* back and forth between encodings */
 struct {
-	char *ename;
+	const char *ename;
 	int eno;
 } encs[] = {
 	{ AudioEmulaw,		AUDIO_ENCODING_ULAW },
@@ -105,7 +105,7 @@ struct {
 };
 
 
-char *
+const char *
 audio_enc_from_val(val)
 	int	val;
 {
@@ -140,7 +140,7 @@ decode_int(arg, intp)
 	char	*ep;
 	int	ret;
 
-	ret = strtoul(arg, &ep, 0);
+	ret = (int)strtoul(arg, &ep, 0);
 
 	if (ep[0] == '\0') {
 		*intp = ret;
@@ -165,13 +165,13 @@ decode_time(arg, tvp)
 	s = copy;
 	
 	/* handle [hh:]mm:ss.dd */
-	if ((colon = strchr(s, ':'))) {
+	if ((colon = strchr(s, ':')) != NULL) {
 		*colon++ = '\0';
 		decode_int(s, &first);
 		tvp->tv_sec = first * 60;	/* minutes */
 		s = colon;
 
-		if ((colon = strchr(s, ':'))) {
+		if ((colon = strchr(s, ':')) != NULL) {
 			*colon++ = '\0';
 			decode_int(s, &first);
 			tvp->tv_sec *= 60;
@@ -179,7 +179,7 @@ decode_time(arg, tvp)
 			s = colon;
 		}
 	}
-	if ((dot = strchr(s, '.'))) {
+	if ((dot = strchr(s, '.')) != NULL) {
 		int 	i, base = 100000;
 
 		*dot++ = '\0';

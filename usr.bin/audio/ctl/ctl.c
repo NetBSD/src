@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.27 2001/03/28 03:18:39 simonb Exp $	*/
+/*	$NetBSD: ctl.c,v 1.28 2002/01/15 23:48:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@
 
 #include "libaudio.h"
 
-struct field *findfield (char *name);
-void prfield (struct field *p, char *sep);
+struct field *findfield (const char *name);
+void prfield (struct field *p, const char *sep);
 void rdfield (struct field *p, char *q);
 void getinfo (int fd);
 void audioctl_write (int, int, char *[]);
@@ -71,7 +71,7 @@ char encbuf[1000];
 int properties, fullduplex, rerror;
 
 struct field {
-	char *name;
+	const char *name;
 	void *valp;
 	int format;
 #define STRING 1
@@ -144,7 +144,7 @@ struct field {
 };
 
 static struct {
-	char *name;
+	const char *name;
 	u_int prop;
 } props[] = {
 	{ "full_duplex",	AUDIO_PROP_FULLDUPLEX },
@@ -155,7 +155,7 @@ static struct {
 
 struct field *
 findfield(name)
-	char *name;
+	const char *name;
 {
 	int i;
 	for (i = 0; fields[i].name; i++)
@@ -167,10 +167,10 @@ findfield(name)
 void
 prfield(p, sep)
 	struct field *p;
-	char *sep;
+	const char *sep;
 {
 	u_int v;
-	char *cm, *encstr;
+	const char *cm, *encstr;
 	int i;
 
 	if (sep)
@@ -345,7 +345,7 @@ main(argc, argv)
 	int aflag = 0, wflag = 0;
 	struct stat dstat, ostat;
 	const char *file;
-	char *sep = "=";
+	const char *sep = "=";
 
 	file = getenv("AUDIOCTLDEVICE");
 	if (file == 0)
