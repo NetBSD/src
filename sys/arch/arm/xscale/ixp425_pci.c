@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci.c,v 1.1 2003/09/25 14:11:18 ichiro Exp $ */
+/*	$NetBSD: ixp425_pci.c,v 1.2 2003/10/08 14:55:04 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.1 2003/09/25 14:11:18 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.2 2003/10/08 14:55:04 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,19 +70,28 @@ pcireg_t ixp425_pci_conf_read(void *, pcitag_t, int);
 #define	MAX_PCI_DEVICES	32
 
 void
-ixp425_pci_init(pci_chipset_tag_t pc, void *cookie)
+ixp425_pci_init(struct ixp425_softc *sc)
 {
+	pci_chipset_tag_t pc = &sc->ia_pci_chipset;
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
-	struct ixp425_softc *sc = cookie;
 	struct extent *ioext, *memext;
 #endif
-	pc->pc_conf_v = cookie;
+	/*
+	 * Initialise the PCI chipset tag
+	 */
+	pc->pc_conf_v = sc;
 	pc->pc_attach_hook = ixp425_pci_attach_hook;
 	pc->pc_bus_maxdevs = ixp425_pci_bus_maxdevs;
 	pc->pc_make_tag = ixp425_pci_make_tag;
 	pc->pc_decompose_tag = ixp425_pci_decompose_tag;
 	pc->pc_conf_read = ixp425_pci_conf_read;
 	pc->pc_conf_write = ixp425_pci_conf_write;
+
+	/*
+	 * Initialize the bus space tags.
+	 */
+	ixp425_io_bs_init(&sc->sc_pci_iot, sc);
+	ixp425_mem_bs_init(&sc->sc_pci_memt, sc);
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 	ioext  = extent_create("pciio", 0, IXP425_PCI_IO_SIZE - 1,
