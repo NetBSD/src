@@ -1,7 +1,8 @@
-#	$Id: Makefile,v 1.1 1993/08/23 09:23:04 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/10/03 13:50:49 pk Exp $
 
 LIB=	cc1
 NOPROFILE=
+NOPIC=
 
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch -I${.CURDIR}/../arch/${MACHINE}
 .PATH:	${.CURDIR}/../arch/${MACHINE}
