@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rl_cardbus.c,v 1.2 2000/04/11 06:57:59 haya Exp $	*/
+/*	$NetBSD: if_rl_cardbus.c,v 1.3 2000/04/19 08:44:32 haya Exp $	*/
 /*
  * Copyright (c) 2000 Masanori Kanaoka
  * All rights reserved.
@@ -125,7 +125,7 @@ struct rl_cardbus_softc {
 	int sc_intrline;
 };
 
-struct cfattach rl_cardbus_ca = {
+struct cfattach rtk_cardbus_ca = {
 	sizeof(struct rl_cardbus_softc), rl_cardbus_match, rl_cardbus_attach,
 };
 
