@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.7 2001/10/11 14:01:36 tsutsui Exp $	*/
+/*      $NetBSD: clock.c,v 1.8 2002/12/20 16:54:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
 #include <machine/cpu.h>
 
 static	todr_chip_handle_t todr_handle;
-static	void (*cpu_initclocks_hook) __P((int, int));
+static	void (*cpu_initclocks_hook)(int, int);
 
 /*
  * Common parts of todclock autoconfiguration.

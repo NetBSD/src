@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 2002/11/02 20:03:07 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.23 2002/12/20 16:54:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,16 +74,16 @@
 #include <compat/sunos/sunos_syscall.h>
 #endif
 
-int	writeback __P((struct frame *fp, int docachepush));
-void	trap __P((int type, u_int code, u_int v, struct frame frame));
+int writeback(struct frame *fp, int docachepush);
+void trap(int type, u_int code, u_int v, struct frame frame);
 
 #ifdef DEBUG
-void	dumpssw __P((u_short));
-void	dumpwb __P((int, u_short, u_int, u_int));
+void dumpssw(u_short);
+void dumpwb(int, u_short, u_int, u_int);
 #endif
 
-static inline void userret __P((struct proc *p, struct frame *fp,
-	    u_quad_t oticks, u_int faultaddr, int fromtrap));
+static inline void userret(struct proc *p, struct frame *fp,
+	    u_quad_t oticks, u_int faultaddr, int fromtrap);
 
 int	astpending;
 
@@ -561,7 +561,7 @@ trap(type, code, v, frame)
 
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
-			int pmap_mapmulti __P((pmap_t, vaddr_t));
+			int pmap_mapmulti(pmap_t, vaddr_t);
 			vaddr_t bva;
 
 			rv = pmap_mapmulti(map->pmap, va);

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.8 2002/09/27 15:36:28 provos Exp $	*/
+/*	$NetBSD: isr.c,v 1.9 2002/12/20 16:54:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,8 +60,8 @@
 isr_autovec_list_t isr_autovec[NISRAUTOVEC];
 struct	isr_vectored isr_vectored[NISRVECTORED];
 
-void set_vector_entry __P((int, void *));
-void * get_vector_entry __P((int));
+void set_vector_entry(int, void *);
+void *get_vector_entry(int);
 
 void
 isrinit()
@@ -80,7 +80,7 @@ isrinit()
  */
 void
 isrlink_autovec(func, arg, ipl, priority)
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 	int ipl;
 	int priority;
@@ -155,7 +155,7 @@ isrlink_autovec(func, arg, ipl, priority)
  */
 void
 isrlink_vectored(func, arg, ipl, vec)
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 	int ipl, vec;
 {
