@@ -1867,6 +1867,9 @@ bpttraps:
 IDTVEC(syscall)
 	pushl	$0	# Room for tf_err
 	pushfl		# Room for tf_trapno
+	pushfl		# turn off trace bit
+	andb	$~(PSL_T>>8),1(%esp)
+	popfl
 	INTRENTRY
 	movl	TF_TRAPNO(%esp),%eax	# copy eflags from tf_trapno to fs_eflags
 	movl	%eax,TF_EFLAGS(%esp)
