@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360var.h,v 1.5 1999/10/20 15:22:26 enami Exp $	*/
+/*	$NetBSD: aic6360var.h,v 1.6 2000/01/07 08:12:15 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -109,7 +109,7 @@ struct aic_tinfo {
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 	u_char	width;		/* Width suggestion */
-} tinfo_t;
+};
 
 struct aic_softc {
 	struct device sc_dev;

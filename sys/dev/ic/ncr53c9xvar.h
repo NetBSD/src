@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.18 1999/09/22 03:31:23 mhitch Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.19 2000/01/07 08:12:15 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ struct ncr53c9x_tinfo {
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 	u_char	pad[3];
-} tinfo_t;
+};
 
 /* Register a linenumber (for debugging) */
 #define LOGLINE(p)
