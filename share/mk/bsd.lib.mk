@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.153 1999/06/07 01:37:00 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.154 1999/06/10 00:40:05 simonb Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -15,16 +15,17 @@ __initialized__:
 realinstall:	checkver libinstall
 clean cleandir distclean: cleanlib
 
-.if exists(${.CURDIR}/shlib_version)
-SHLIB_MAJOR != . ${.CURDIR}/shlib_version ; echo $$major
-SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
+.if exists(${SHLIB_VERSION_FILE})
+SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major
+SHLIB_MINOR != . ${SHLIB_VERSION_FILE} ; echo $$minor
 
 # Check for higher installed library versions.
 .if !defined(NOCHECKVER) && !defined(NOCHECKVER_${LIB}) && \
 	exists(${BSDSRCDIR}/lib/checkver)
 checkver:
 	@(cd ${.CURDIR} && \
-		${BSDSRCDIR}/lib/checkver -d ${DESTDIR}${LIBDIR} ${LIB})
+		${BSDSRCDIR}/lib/checkver -v ${SHLIB_VERSION_FILE} \
+		    -d ${DESTDIR}${LIBDIR} ${LIB})
 .else
 checkver:
 .endif
