@@ -78,7 +78,7 @@ db_regs_t	ddb_regs;		/* register state */
 #define	db_clear_single_step(regs)	((regs)->sr &= ~SR_T1)
 #define	db_set_single_step(regs)	((regs)->sr |=  SR_T1)
 
-#define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BRKPT)
+#define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)
 #define	IS_WATCHPOINT_TRAP(type, code)	((type) == T_WATCHPOINT)
 
 #define	M_RTS		0xffff0000
