@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.173 2001/04/29 22:44:31 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.174 2001/04/30 19:00:41 ross Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.173 2001/04/29 22:44:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2001/04/30 19:00:41 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1452,8 +1452,10 @@ pmap_page_protect(vm_page_t pg, vm_prot_t prot)
 	pv_entry_t pv, nextpv;
 	boolean_t needkisync = FALSE;
 	long cpu_id = cpu_number();
-
 #ifdef DEBUG
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
 	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
 		printf("pmap_page_protect(%p, %x)\n", pg, prot);
@@ -2873,7 +2875,7 @@ pmap_pv_dump(paddr_t pa)
 
 	simple_lock(&pg->pvh_slock);
 
-	printf("pa 0x%lx (attrs = 0x%x):\n", pa, pvh->pvh_attrs);
+	printf("pa 0x%lx (attrs = 0x%x):\n", pa, pg->pvh_attrs);
 	for (pv = LIST_FIRST(&pg->pvh_list); pv != NULL;
 	     pv = LIST_NEXT(pv, pv_list))
 		printf("     pmap %p, va 0x%lx\n",
