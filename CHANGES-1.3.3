@@ -1183,3 +1183,18 @@ distrib/pmax/miniroot/dot.profile		patch (new)
 distrib/pmax/miniroot/list			1.1-1.6 (new)
 
   Build the pmax miniroot with the crunch tools.
+
+distrib/notes/pmax/QUICK.INSTALL		1.1-1.2 (new)
+
+  Some quick notes on installing NetBSD/pmax, but not a replacement
+  for the true "INSTALL" notes.  (simonb)
+
+distrib/notes/pmax/install			1.11-1.14
+
+  Mention that Ultrix doesn't have Rock Ridge extenstions so some paths
+  on a CD-ROM will be truncated/mangled.  (PR#6296)  Warn that messages
+  about "using ULTRIX label information" may appear when disklabeling
+  old Ultrix disks.  (PR#6300)  Reference the section on dd'ing a disk
+  image into the swap partition of an Ultrix disk in the "QUICK.INSTALL"
+  notes.  (PR#6299)  Mention that it may be necessary to hand-mount a CD
+  on /mnt2 before starting sysinst.  (Partial fix for PR#6307)  (simonb)
