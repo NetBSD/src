@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.2.2.3 2002/09/06 08:33:43 jdolecek Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.1.4.2 2002/10/18 10:55:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 #include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/bootconfig.h>
+#include <machine/isa_machdep.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -501,28 +502,33 @@ isa_intr_init(void)
 	static void *isa_ih;
 
 	isa_icu_init();
-	isa_ih = intr_claim(IRQ_IN_L2, IPL_BIO, "isabus",
+	/* something break the build in an informative way */
+#ifndef ISA_FOOTBRIDGE_IRQ 
+#warning Before using isa with footbridge you must define ISA_FOOTBRIDGE_IRQ
+#endif
+	isa_ih = intr_claim(ISA_FOOTBRIDGE_IRQ, IPL_BIO, "isabus",
 	    isa_irqdispatch, NULL);
+	
 }
 
 /* Static array of ISA DMA segments. We only have one on CATS */
 #if NISADMA > 0
-struct arm32_dma_range cats_isa_dma_ranges[1];
+struct arm32_dma_range machdep_isa_dma_ranges[1];
 #endif
 
 void
-isa_cats_init(iobase, membase)
+isa_footbridge_init(iobase, membase)
 	u_int iobase, membase;
 {
 #if NISADMA > 0
 	extern struct arm32_dma_range *footbridge_isa_dma_ranges;
 	extern int footbridge_isa_dma_nranges;
 
-	cats_isa_dma_ranges[0].dr_sysbase = bootconfig.dram[0].address;
-	cats_isa_dma_ranges[0].dr_busbase = bootconfig.dram[0].address;
-	cats_isa_dma_ranges[0].dr_len = (16 * 1024 * 1024);
+	machdep_isa_dma_ranges[0].dr_sysbase = bootconfig.dram[0].address;
+	machdep_isa_dma_ranges[0].dr_busbase = bootconfig.dram[0].address;
+	machdep_isa_dma_ranges[0].dr_len = (16 * 1024 * 1024);
 
-	footbridge_isa_dma_ranges = cats_isa_dma_ranges;
+	footbridge_isa_dma_ranges = machdep_isa_dma_ranges;
 	footbridge_isa_dma_nranges = 1;
 #endif
 

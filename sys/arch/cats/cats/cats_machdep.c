@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.1.2.7 2002/10/10 18:32:12 jdolecek Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.1.2.8 2002/10/18 10:54:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -906,7 +906,7 @@ consinit(void)
 
 #if NISA > 0
 	/* Initialise the ISA subsystem early ... */
-	isa_cats_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
+	isa_footbridge_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
 #endif
 
 	footbridge_pci_bs_tag_init();
