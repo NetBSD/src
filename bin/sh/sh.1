@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.30 1999/07/06 14:01:01 christos Exp $
+.\"	$NetBSD: sh.1,v 1.31 1999/09/27 19:34:25 mjl Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -42,7 +42,7 @@
 sh \- command interpreter (shell)
 .Sh SYNOPSIS
 .Nm sh
-.Op Fl /+aCefnuvxIimqsVEb
+.Op Fl /+aCefnuvxIimqsVEbc
 .Op Fl o Ar longname
 .Bk -words
 .Op Ar target ...
@@ -82,7 +82,10 @@ the file can be executed directly by the shell.
 If no args are present and if the standard input of the shell
 is connected to a terminal (or if the
 .Fl i
-flag is set), the shell is considered an interactive shell.  An
+flag is set),
+and the 
+.Fl c
+option is not present, the shell is considered an interactive shell.  An
 interactive shell generally prompts before each command and handles
 programming and command errors differently (as described below). When
 first starting, the shell inspects argument 0, and if it begins with a
@@ -167,6 +170,9 @@ builtin (described later).
 .Bl -tag -width aaaallexportfoo -offset indent
 .It Fl a Em allexport
 Export all variables assigned to. (UNIMPLEMENTED for 4.4alpha)
+.It Fl c
+Read commands from the command line.
+No commands will be read from the standard input.
 .It Fl C Em noclobber
 Don't overwrite existing files with
 .Dq > .
