@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.130 2000/06/27 23:34:45 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.131 2000/06/27 23:52:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -545,12 +545,12 @@ getnewvnode(tag, mp, vops, vpp)
  * of a locking race.
  */
 void
-vinsheadfree(vp)
+ungetnewvnode(vp)
 	struct vnode *vp;
 {
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount != 1)
-		panic("vinsheadfree: busy vnode");
+		panic("ungetnewvnode: busy vnode");
 #endif
 	vp->v_usecount--;
 	insmntque(vp, NULL);
