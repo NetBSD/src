@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.15 1998/07/28 11:41:46 mycroft Exp $	*/
+/*	$NetBSD: sem.c,v 1.16 1998/08/19 01:31:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.15 1998/07/28 11:41:46 mycroft Exp $");
+__RCSID("$NetBSD: sem.c,v 1.16 1998/08/19 01:31:46 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,7 +207,7 @@ execute(t, wanttty, pipein, pipeout)
 	 * We have to fork for eval too.
 	 */
 	    (bifunc && (t->t_dflg & (F_PIPEIN | F_PIPEOUT)) != 0 &&
-	     bifunc->bfunct == doeval))
+	     bifunc->bfunct == doeval)) {
 	    if (t->t_dtyp == NODE_PAREN ||
 		t->t_dflg & (F_REPEAT | F_AMPERSAND) || bifunc) {
 		forked++;
@@ -350,6 +350,7 @@ execute(t, wanttty, pipein, pipeout)
 		}
 
 	    }
+	}
 	if (pid != 0) {
 	    /*
 	     * It would be better if we could wait for the whole job when we
