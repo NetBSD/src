@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.7.2.1 2001/08/08 16:13:44 nathanw Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.7.2.2 2001/11/16 01:33:22 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -321,7 +321,6 @@ clnt_dg_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	struct timeval startime, curtime;
 	int firsttimeout = 1;
 #ifdef _REENTRANT
-	int dtbsize = __rpc_dtbsize();
 	sigset_t mask;
 #endif
 	sigset_t newmask;
