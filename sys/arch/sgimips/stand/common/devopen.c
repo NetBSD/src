@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 2003/08/07 16:29:27 agc Exp $	*/
+/*	$NetBSD: devopen.c,v 1.4 2003/09/28 08:21:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@ devopen(f, fname, file)
 	if (strncmp(cp, "scsi", 4) == 0) {
 		strcpy(devtype, "scsi");
 	} else if (strncmp(cp, "dksc", 4) == 0) {
-		strcpy(devtype, "dksi");
+		strcpy(devtype, "dksc");
 	} else {
 		return ENXIO;
 	}
