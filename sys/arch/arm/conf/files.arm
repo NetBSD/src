@@ -1,7 +1,14 @@
-#	$NetBSD: files.arm,v 1.11 2001/02/25 15:31:39 bjh21 Exp $
+#	$NetBSD: files.arm,v 1.12 2001/02/25 17:23:11 bjh21 Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
+
+# What mode are we running in?  These are mutually exclusive for now.
+defopt	opt_progmode.h	PROG26 PROG32
+# CPU types
+defopt	opt_cputypes.h	CPU_ARM2 CPU_ARM250 CPU_ARM3 : PROG26
+defopt	opt_cputypes.h	CPU_ARM6 CPU_ARM7 CPU_ARM7500 CPU_ARM8 CPU_SA110
+			CPU_SA1110 : PROG32
 
 # generic networking files
 file	arch/arm/arm/in_cksum_arm.c		inet
