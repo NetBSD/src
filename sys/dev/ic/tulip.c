@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.17 1999/09/25 00:27:00 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.18 1999/09/26 03:39:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1674,9 +1674,10 @@ void
 tlp_read_srom(sc, word, wordcnt, data)
 	struct tulip_softc *sc;
 	int word, wordcnt;
-	u_int16_t *data;
+	u_int8_t *data;
 {
 	u_int32_t miirom;
+	u_int16_t datain;
 	int i, x;
 
 	tlp_srom_idle(sc);
@@ -1717,13 +1718,15 @@ tlp_read_srom(sc, word, wordcnt, data)
 
 		/* Shift out data. */
 		miirom &= ~MIIROM_SROMDI;
-		data[i] = 0;
+		datain = 0;
 		for (x = 16; x > 0; x--) {
 			SROM_EMIT(sc, miirom|MIIROM_SROMSK);
 			if (TULIP_ISSET(sc, CSR_MIIROM, MIIROM_SROMDO))
-				data[i] |= (1 << (x - 1));
+				datain |= (1 << (x - 1));
 			SROM_EMIT(sc, miirom);
 		}
+		data[2 * i] = datain & 0xff;
+		data[(2 * i) + 1] = datain >> 8;
 
 		/* Clear CHIP SELECT. */
 		miirom &= ~MIIROM_SROMCS;

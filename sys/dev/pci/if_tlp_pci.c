@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.13 1999/09/25 00:27:00 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.14 1999/09/26 03:39:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -490,12 +490,11 @@ tlp_pci_attach(parent, self, aux)
 	    }
 
 	default:
-		tlp_read_srom(sc, 0, sizeof(sc->sc_srom) >> 1,
-		    (u_int16_t *)sc->sc_srom);
+		tlp_read_srom(sc, 0, sizeof(sc->sc_srom) >> 1, sc->sc_srom);
 #if 0
 		printf("SROM CONTENTS:");
 		for (i = 0; i < sizeof(sc->sc_srom); i++) {
-			if ((i % 10) == 0)
+			if ((i % 8) == 0)
 				printf("\n\t");
 			printf("0x%02x ", sc->sc_srom[i]);
 		}
