@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.33 2002/01/28 09:57:01 aymeric Exp $ */
+/*	$NetBSD: mgnsc.c,v 1.34 2002/09/27 20:30:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.33 2002/01/28 09:57:01 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.34 2002/09/27 20:30:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ void mgnsc_dump(void);
 #ifdef DEBUG
 #endif
 
-struct cfattach mgnsc_ca = {
+const struct cfattach mgnsc_ca = {
 	sizeof(struct siop_softc), mgnscmatch, mgnscattach
 };
 

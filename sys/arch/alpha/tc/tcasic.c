@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $ */
+/* $NetBSD: tcasic.c,v 1.37 2002/09/27 20:29:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.37 2002/09/27 20:29:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $")
 int	tcasicmatch(struct device *, struct cfdata *, void *);
 void	tcasicattach(struct device *, struct device *, void *);
 
-struct cfattach tcasic_ca = {
+const struct cfattach tcasic_ca = {
 	sizeof (struct device), tcasicmatch, tcasicattach,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.7 2002/09/27 15:35:46 provos Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.8 2002/09/27 20:30:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -108,7 +108,7 @@ int lmcaudio_rate	__P((int rate));
 void lmcaudio_shutdown	__P((void));
 
 
-struct cfattach lmcaudio_ca = {
+const struct cfattach lmcaudio_ca = {
 	sizeof(struct lmcaudio_softc), lmcaudio_probe, lmcaudio_attach
 };
 

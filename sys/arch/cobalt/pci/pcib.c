@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.4 2002/03/10 03:15:24 augustss Exp $	*/
+/*	$NetBSD: pcib.c,v 1.5 2002/09/27 20:31:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -47,7 +47,7 @@ static int	pcib_match(struct device *, struct cfdata *, void *);
 static void	pcib_attach(struct device *, struct device *, void *);
 static int	icu_intr(void *);
 
-struct cfattach pcib_ca = {
+const struct cfattach pcib_ca = {
 	sizeof(struct device), pcib_match, pcib_attach
 };
 

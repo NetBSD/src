@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1 2001/05/14 18:23:07 drochner Exp $	*/
+/*	$NetBSD: if_le.c,v 1.2 2002/09/27 20:31:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -57,7 +57,7 @@
 int lematch __P((struct device *, struct cfdata *, void *));
 void leattach __P((struct device *, struct device *, void *));
 
-struct cfattach le_ca = {
+const struct cfattach le_ca = {
 	sizeof(struct am79900_softc), lematch, leattach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.3 2002/03/27 16:39:51 christos Exp $ */
+/* $NetBSD: toccata.c,v 1.4 2002/09/27 20:30:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.3 2002/03/27 16:39:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.4 2002/09/27 20:30:19 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,7 +233,7 @@ struct toccata_softc {
 int toccata_match (struct device *, struct cfdata *, void *);
 void toccata_attach (struct device *, struct device *, void *);
 
-struct cfattach toccata_ca = {
+const struct cfattach toccata_ca = {
         sizeof(struct toccata_softc), toccata_match, toccata_attach
 };
 

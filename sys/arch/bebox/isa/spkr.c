@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.9 2002/09/27 02:24:10 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.10 2002/09/27 20:31:10 thorpej Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -42,7 +42,7 @@ struct spkr_softc {
 	struct device sc_dev;
 };
 
-struct cfattach spkr_ca = {
+const struct cfattach spkr_ca = {
 	sizeof(struct spkr_softc), spkrprobe, spkrattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.26 2002/01/28 09:57:04 aymeric Exp $ */
+/*	$NetBSD: wstsc.c,v 1.27 2002/09/27 20:30:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.26 2002/01/28 09:57:04 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.27 2002/09/27 20:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ extern int sci_data_wait;
 
 int supradma_pseudo = 0;	/* 0=none, 1=byte, 2=word */
 
-struct cfattach wstsc_ca = {
+const struct cfattach wstsc_ca = {
 	sizeof(struct sci_softc), wstscmatch, wstscattach
 };
 

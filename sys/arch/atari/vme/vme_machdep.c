@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.9 2000/06/29 08:28:25 mrg Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.10 2002/09/27 20:31:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ static int	vmebusprint __P((void *auxp, const char *));
 static int	vmebusmatch __P((struct device *, struct cfdata *, void *));
 static void	vmebusattach __P((struct device *, struct device *, void *));
 
-struct cfattach avmebus_ca = {
+const struct cfattach avmebus_ca = {
 	sizeof(struct device), vmebusmatch, vmebusattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip.c,v 1.2 2002/09/27 03:17:44 thorpej Exp $ */
+/*	$NetBSD: ixpsip.c,v 1.3 2002/09/27 20:30:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -53,7 +53,7 @@ static void	ixpsip_attach(struct device *, struct device *, void *);
 static int	ixpsip_search(struct device *, struct cfdata *, void *);
 static int	ixpsip_print(void *, const char *);
 
-struct cfattach ixpsip_ca = {
+const struct cfattach ixpsip_ca = {
 	sizeof(struct ixpsip_softc), ixpsip_match, ixpsip_attach,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.4 2002/09/27 15:35:31 provos Exp $	*/
+/*	$NetBSD: rapide.c,v 1.5 2002/09/27 20:29:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -125,7 +125,7 @@ void	rapide_attach	__P((struct device *, struct device *, void *));
 void	rapide_shutdown	__P((void *arg));
 int	rapide_intr	__P((void *));
 
-struct cfattach rapide_ca = {
+const struct cfattach rapide_ca = {
 	sizeof(struct rapide_softc), rapide_probe, rapide_attach
 };
 

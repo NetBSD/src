@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.19 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: lpt.c,v 1.20 2002/09/27 20:30:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -127,7 +127,7 @@ int lpthwintr __P((struct lpt_softc *, int));
 static void lpattach __P((struct device *, struct device *, void *));
 static int  lpmatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach lp_ca = {
+const struct cfattach lp_ca = {
 	sizeof(struct lpt_softc), lpmatch, lpattach
 };
 

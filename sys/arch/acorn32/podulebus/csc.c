@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.5 2002/09/27 15:35:30 provos Exp $	*/
+/*	$NetBSD: csc.c,v 1.6 2002/09/27 20:29:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 void cscattach   __P((struct device *, struct device *, void *));
 int  cscmatch    __P((struct device *, struct cfdata *, void *));
 
-struct cfattach csc_ca = {
+const struct cfattach csc_ca = {
 	sizeof(struct csc_softc), cscmatch, cscattach
 };
 

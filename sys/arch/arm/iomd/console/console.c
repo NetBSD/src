@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: console.c,v 1.5 2002/09/27 20:30:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -1242,14 +1242,14 @@ rpcattach(parent, self, aux)
 }
 
 /*
-struct cfattach rpc_ca = {
+const struct cfattach rpc_ca = {
 	sizeof(struct device), rpcprobe, rpcattach
 };
 
 extern struct cfdriver rpc_cd;
 */
 
-struct cfattach vt_ca = {
+const struct cfattach vt_ca = {
 	sizeof(struct device), rpcprobe, rpcattach
 };
 

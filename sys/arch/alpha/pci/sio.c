@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.33 2000/07/29 23:18:47 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.34 2002/09/27 20:29:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.33 2000/07/29 23:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.34 2002/09/27 20:29:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,13 +112,13 @@ struct sio_softc {
 int	siomatch __P((struct device *, struct cfdata *, void *));
 void	sioattach __P((struct device *, struct device *, void *));
 
-struct cfattach sio_ca = {
+const struct cfattach sio_ca = {
 	sizeof(struct sio_softc), siomatch, sioattach,
 };
 
 int	pcebmatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach pceb_ca = {
+const struct cfattach pceb_ca = {
 	sizeof(struct sio_softc), pcebmatch, sioattach,
 };
 

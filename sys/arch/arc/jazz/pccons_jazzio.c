@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_jazzio.c,v 1.1 2001/06/13 15:05:46 soda Exp $ */
+/* $NetBSD: pccons_jazzio.c,v 1.2 2002/09/27 20:30:33 thorpej Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*
@@ -49,7 +49,7 @@
 int	pccons_jazzio_match __P((struct device *, struct cfdata *, void *));
 void	pccons_jazzio_attach __P((struct device *, struct device *, void *));
 
-struct cfattach pc_jazzio_ca = {
+const struct cfattach pc_jazzio_ca = {
 	sizeof(struct pc_softc),
 	pccons_jazzio_match, pccons_jazzio_attach,
 };
