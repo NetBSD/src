@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.23 2000/09/25 23:37:55 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.24 2001/01/04 03:57:58 lukem Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.23 2000/09/25 23:37:55 itojun Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.24 2001/01/04 03:57:58 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -54,10 +54,11 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.23 2000/09/25 23:37:55 itojun Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <assert.h>
 #include <netdb.h>
 #include <resolv.h>
-#include <string.h>
 #include <stddef.h>
+#include <string.h>
 
 #ifdef __weak_alias
 __weak_alias(getnameinfo,_getnameinfo)
@@ -123,6 +124,10 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	u_int32_t v4a;
 	char numserv[512];
 	char numaddr[512];
+
+	/* sa is checked below */
+	/* host may be NULL */
+	/* serv may be NULL */
 
 	if (sa == NULL)
 		return ENI_NOSOCKET;
@@ -306,6 +311,10 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 	int numaddrlen;
 	char numaddr[512];
 
+	_DIAGASSERT(sa != NULL);
+	_DIAGASSERT(addr != NULL);
+	_DIAGASSERT(host != NULL);
+
 	if (inet_ntop(AF_INET6, addr, numaddr, sizeof(numaddr))
 	    == NULL)
 		return ENI_SYSTEM;
@@ -350,8 +359,14 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 	size_t bufsiz;
 	int flags;
 {
-	unsigned int ifindex = (unsigned int)sa6->sin6_scope_id;
-	const struct in6_addr *a6 = &sa6->sin6_addr;
+	unsigned int ifindex;
+	const struct in6_addr *a6;
+
+	_DIAGASSERT(sa6 != NULL);
+	_DIAGASSERT(buf != NULL);
+	
+	ifindex = (unsigned int)sa6->sin6_scope_id;
+	a6 = &sa6->sin6_addr;
 
 #ifdef notyet
 	if (flags & NI_NUMERICSCOPE) {

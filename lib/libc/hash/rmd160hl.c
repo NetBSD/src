@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160hl.c,v 1.4 2000/12/11 19:12:35 ad Exp $	*/
+/*	$NetBSD: rmd160hl.c,v 1.5 2001/01/04 03:56:17 lukem Exp $	*/
 
 /* rmd160hl.c
  * ----------------------------------------------------------------------------
@@ -13,19 +13,20 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rmd160hl.c,v 1.4 2000/12/11 19:12:35 ad Exp $");
+__RCSID("$NetBSD: rmd160hl.c,v 1.5 2001/01/04 03:56:17 lukem Exp $");
 #endif	/* not lint */
 
 #include <sys/types.h>
 
 #include "namespace.h"
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <rmd160.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #if defined(__weak_alias)
 __weak_alias(RMD160End,_RMD160End)
@@ -40,6 +41,9 @@ RMD160End(RMD160_CTX *ctx, char *buf)
     char *p = buf;
     u_char digest[20];
     static const char hex[]="0123456789abcdef";
+
+    _DIAGASSERT(ctx != NULL);
+    /* buf may be NULL */
 
     if (p == NULL && (p = malloc(41)) == NULL)
 	return 0;
@@ -60,6 +64,9 @@ RMD160File(char *filename, char *buf)
     RMD160_CTX ctx;
     int fd, num, oerrno;
 
+    _DIAGASSERT(filename != NULL);
+    /* XXX: buf may be NULL ? */
+
     RMD160Init(&ctx);
 
     if ((fd = open(filename, O_RDONLY)) < 0)
@@ -78,6 +85,9 @@ char *
 RMD160Data(const u_char *data, size_t len, char *buf)
 {
     RMD160_CTX ctx;
+
+    _DIAGASSERT(data != NULL);
+    /* XXX: buf may be NULL ? */
 
     RMD160Init(&ctx);
     RMD160Update(&ctx, data, len);

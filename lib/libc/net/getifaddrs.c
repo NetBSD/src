@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.6 2000/10/27 15:48:49 itojun Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.7 2001/01/04 03:57:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getifaddrs.c,v 1.6 2000/10/27 15:48:49 itojun Exp $");
+__RCSID("$NetBSD: getifaddrs.c,v 1.7 2001/01/04 03:57:58 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: getifaddrs.c,v 1.6 2000/10/27 15:48:49 itojun Exp $");
 #include <net/if_dl.h>
 #endif
 
+#include <assert.h>
 #include <errno.h>
 #include <ifaddrs.h>
 #include <stdlib.h>
@@ -118,6 +119,8 @@ getifaddrs(struct ifaddrs **pif)
 	size_t len, alen;
 	char *data;
 	char *names;
+
+	_DIAGASSERT(pif != NULL);
 
 #ifdef	NET_RT_IFLIST
 	mib[0] = CTL_NET;
@@ -392,5 +395,8 @@ getifaddrs(struct ifaddrs **pif)
 void
 freeifaddrs(struct ifaddrs *ifp)
 {
+
+	_DIAGASSERT(ifp != NULL);
+
 	free(ifp);
 }
