@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.3 1998/02/28 01:16:43 pk Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.4 1998/03/21 20:14:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -255,21 +255,15 @@ ie_obio_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
 
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name)) /* correct name? */
+	if (uoba->uoba_isobio4 == 0)
 		return (0);
 
-	switch (ca->ca_bustype) {
-	default:
-		return (0);
-	case BUS_OBIO:
-		if (probeget(ra->ra_vaddr, 1) != -1)
-			return (1);
-		break;
-	}
-	return (0);
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
+			       0, 1, NULL, NULL));
 }
 
 void
@@ -278,14 +272,16 @@ ie_obio_attach(parent, self, aux)
 	struct device *self;
 	void   *aux;
 {
-	u_int8_t myaddr[ETHER_ADDR_LEN];
-	extern void myetheraddr(u_char *);	/* should be elsewhere */
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	struct ie_softc *sc = (void *) self;
-	struct confargs *ca = aux;
-	struct intrhand *ih;
-	register struct bootpath *bp;
+	bus_space_handle_t bh;
+	struct bootpath *bp;
 	volatile struct ieob *ieo;
 	vm_offset_t pa;
+	struct intrhand *ih;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
+extern	void myetheraddr(u_char *);	/* should be elsewhere */
 
 	sc->bt = 0;
 
@@ -299,8 +295,16 @@ ie_obio_attach(parent, self, aux)
 	sc->ie_bus_write24 = ie_obio_write24;
 	sc->sc_msize = 65536; /* XXX */
 
-	sc->sc_reg = mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct ieob));
-	ieo = (volatile struct ieob *) sc->sc_reg;
+	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
+			 0,
+			 sizeof(struct ieob),
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
+		return;
+	}
+	sc->sc_reg = (void *)bh;
+	ieo = (volatile struct ieob *)bh;
 
 	/*
 	 * the rest of the IE_OBIO case needs to be cleaned up
@@ -355,13 +359,24 @@ ie_obio_attach(parent, self, aux)
 	 * to IEOB_ADBASE to be safe.
 	 */
 
+#if 0
+	|---//--- ISCP-SCB-----scp-|--//- buffers -//-|... |iscp-scb-----SCP-|
+	|         |                |                  |    |                 |
+	|         |<----- NBPG --->|                  |    |<----- NBPG ---->|
+	|         |<------------- msize ------------->|    |       ^
+	|         |                                                |
+	|         \@maddr                                 (last page dbl mapped)
+	|
+	\@IEOB_ADBASE
+#endif
+
 	pa = pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_maddr);
 	if (pa == 0)
 		panic("ie pmap_extract");
 
 	pmap_enter(pmap_kernel(), trunc_page(IEOB_ADBASE+IE_SCP_ADDR),
-	    (vm_offset_t)pa | PMAP_NC /*| PMAP_IOC*/,
-	    VM_PROT_READ | VM_PROT_WRITE, 1);
+		   (vm_offset_t)pa | PMAP_NC /*| PMAP_IOC*/,
+		   VM_PROT_READ | VM_PROT_WRITE, 1);
 
 	sc->scp = IEOB_ADBASE + IE_SCP_ADDR;
 
@@ -375,15 +390,12 @@ ie_obio_attach(parent, self, aux)
 	myetheraddr(myaddr);
 	i82586_attach(sc, "onboard", myaddr, media, NMEDIA, media[0]);
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		panic("ie_obio: can't malloc interrupt handler");
+	/* Establish interrupt channel */
+	ih = bus_intr_establish(oba->oba_bustag,
+				oba->oba_pri, 0,
+				i82586_intr, sc);
 
-	ih->ih_fun = i82586_intr;
-	ih->ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, ih);
-
-	bp = ca->ca_ra.ra_bp;
+	bp = oba->oba_bp;
 	if (bp != NULL && strcmp(bp->name, "ie") == 0 &&
 	    sc->sc_dev.dv_unit == bp->val[1])
 		bp->dev = &sc->sc_dev;
