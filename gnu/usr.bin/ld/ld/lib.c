@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.19.2.1 1999/10/22 09:23:17 he Exp $	*/
+/*	$NetBSD: lib.c,v 1.19.2.2 2000/01/15 17:16:11 he Exp $	*/
 
 /*
  *	- library routines
@@ -391,7 +391,7 @@ linear_library(fd, entry)
 			return;
 
 		read_entry_symbols(fd, subentry);
-		subentry->strings = (char *)alloca(subentry->string_size);
+		subentry->strings = (char *)malloc(subentry->string_size);
 		read_entry_strings(fd, subentry);
 
 		if (!(link_mode & FORCEARCHIVE) &&
@@ -399,6 +399,7 @@ linear_library(fd, entry)
 			if (subentry->symbols)
 				free(subentry->symbols);
 			free(subentry->filename);
+			free(subentry->strings);
 			free(subentry);
 		} else {
 			read_entry_relocation(fd, subentry);
@@ -409,6 +410,7 @@ linear_library(fd, entry)
 			else
 				entry->subfiles = subentry;
 			prev = subentry;
+			free(subentry->strings);
 			subentry->strings = 0;	/* Since space will dissapear
 						 * on return */
 		}
@@ -645,9 +647,13 @@ read_shared_object(fd, entry)
 
 	/* Read symbols (text segment) */
 	n = sdt.sdt_strings - sdt.sdt_nzlist;
-	entry->nsymbols = n /
-		(has_nz ? sizeof(struct nzlist) : sizeof(struct nlist));
-	nzp = (struct nzlist *)(np = (struct nlist *)alloca (n));
+	if (has_nz) {
+		entry->nsymbols = n / sizeof(struct nzlist);
+		nzp = (struct nzlist *)malloc(n);
+	} else {
+		entry->nsymbols = n / sizeof(struct nlist);
+		np = (struct nlist *)malloc(n);
+	}
 	entry->symbols = (struct localsymbol *)
 		xmalloc(entry->nsymbols * sizeof(struct localsymbol));
 
@@ -668,9 +674,9 @@ read_shared_object(fd, entry)
 	/* Convert to structs localsymbol */
 	for (i = 0; i < entry->nsymbols; i++) {
 		if (has_nz) {
-			entry->symbols[i].nzlist = *nzp++;
+			entry->symbols[i].nzlist = nzp[i];
 		} else {
-			entry->symbols[i].nzlist.nlist = *np++;
+			entry->symbols[i].nzlist.nlist = np[i];
 			entry->symbols[i].nzlist.nz_size = 0;
 		}
 		entry->symbols[i].symbol = NULL;
@@ -679,10 +685,14 @@ read_shared_object(fd, entry)
 		entry->symbols[i].gotslot_offset = -1;
 		entry->symbols[i].flags = 0;
 	}
+	if (has_nz)
+		free(nzp);
+	else
+		free(np);
 
 	/* Read strings (text segment) */
 	n = entry->string_size = sdt.sdt_str_sz;
-	entry->strings = (char *)alloca(n);
+	entry->strings = (char *)malloc(n);
 	entry->strings_offset = text_offset(entry) + sdt.sdt_strings;
 	if (lseek(fd,
 	    entry->strings_offset -
@@ -693,6 +703,7 @@ read_shared_object(fd, entry)
 		errx(1, "%s: premature EOF reading strings",
 			get_file_name(entry));
 	enter_file_symbols (entry);
+	free(entry->strings);
 	entry->strings = 0;
 
 	/*
