@@ -7,7 +7,7 @@
 #include "sys/file.h"
 #include "sys/conf.h"
 
-#include "mon.h"
+#include "machine/mon.h"
 #include "../sun3/cons.h"
 
 #include "prom.h"
@@ -34,7 +34,7 @@ int promopen(dev, flag, mode, p)
     int unit;
     int s,error=0;
 
-    unit = UNIT(dev);
+    unit = minor(dev);
     if (unit >= NPROM)
 	return ENXIO;
     prom = &prom_softc[unit];
@@ -79,7 +79,7 @@ promclose(dev, flag, mode, p)
     int unit;
     struct prom_softc *prom;    
 
-    unit = UNIT(dev);
+    unit = minor(dev);
     if (unit >= NPROM)
 	return ENXIO;
     prom = &prom_softc[unit];
@@ -93,7 +93,7 @@ promread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &prom_softc[UNIT(dev)].t;
+	register struct tty *tp = &prom_softc[minor(dev)].t;
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -101,7 +101,7 @@ promwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &prom_softc[UNIT(dev)].t;
+	register struct tty *tp = &prom_softc[minor(dev)].t;
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -112,6 +112,7 @@ promcnprobe(cp)
 {
     int prommajor;
 
+    mon_printf("prom console probed (start)\n");
     /* locate the major number */
     for (prommajor = 0; prommajor < nchrdev; prommajor++)
 	if (cdevsw[prommajor].d_open == promopen)
@@ -121,6 +122,7 @@ promcnprobe(cp)
     cp->cn_pri = CN_NORMAL;	/* will always exist but you don't
 				 * want to use it unless you have to
 				 */
+    mon_printf("prom console probed (end)\n");
 }
 
 int promstart(tp)
@@ -129,6 +131,7 @@ int promstart(tp)
     int s;
     int c;
 
+    mon_printf("promstart called\n");
     s = spltty();
     if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) goto out;
     if (RB_LEN(&tp->t_out) <= tp->t_lowat) {
@@ -169,22 +172,26 @@ promstop(tp, flag)
 promcninit(cp)
      struct consdev *cp;
 {
-    mon_printf("prom\n");
+    cp->cn_tp = &prom_softc[0].t;
+    mon_printf("prom console initialized\n");
 }
 
 
 promcngetc(dev)
      dev_t dev;
 {
-    mon_printf("not sure how to do promcngetc()\n yet");
+    mon_printf("not sure how to do promcngetc() yet\n");
 }
 
 /*
  * Console kernel output character routine.
  */
-promcnputc(c)
-	int c;
+promcnputc(dev, c)
+     dev_t dev;
+     int c;
 {
+    if (minor(dev) != 0)
+	mon_printf("non unit 0 prom console???\n");
     mon_putchar(c);
 }
 
