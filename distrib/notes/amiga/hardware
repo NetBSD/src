@@ -49,6 +49,7 @@ Supported devices include:
 		    Merlin.
 		A2410.
 		Cybervision 64.
+		Cybervision 64/3D.**)
 
 	Audio I/O:
 		Amiga builtin (currently 8bit-mode only)
@@ -68,14 +69,15 @@ Supported devices include:
 			Archive Viper, Cipher SCSI-2 ST150.
 	Scanners:
 		SCSI-2 scanners behaving as SCSI-2 scanner devices,
-		HP Scanjet II, Mustek SCSI scanner.**)
+		HP Scanjet II, Mustek SCSI scanner.***)
 	CD-ROM drives:
 		Most SCSI CD-ROM drives
 	Serial cards:
+		HyperCom 3 and 4
 		MultiFaceCard II and III
 		A2232
 	Amiga floppy drives with Amiga (880/1760kB) and 
-		IBM (720/1440kB) encoding. ***)
+		IBM (720/1440kB) encoding. ****)
 	Amiga parallel port.
 	Amiga serial port.
 	Amiga mouse.
@@ -90,20 +92,25 @@ release. Especially (but this is an incomplete list), there is no
 driver for:
 
 	Blizzard III SCSI option, Cyberstorm Mk III SCSI option,
-	Ferret SCSI, Oktagon SCSI, CyberVision 64/3D.
+	Ferret SCSI, Oktagon SCSI.
 
 Known problems with some hardware:
 
 	*) the Emplant SCSI adapter has been reported by a party to
 	hang after doing part of the installation without problems.
 
-	**) SCSI scanner support is machine independent, so it should
+	**) There is currently no support for the CyberVision 64/3D
+	in ZorroII mode only in ZorroIII mode. There is also a problem
+	that textmode of the Console produce a black screen so the
+	console driver is not enabled.
+
+	***) SCSI scanner support is machine independent, so it should
 	work, but hasn't been tested yet on most Amiga configurations.
 	There are reports that the Mustek and HP Scanjet hang if
 	accessed from the A3000. This might apply to other
 	33C93-Adapters, too.
 
-	***) Our floppy driver doesn't notice when mounted floppies are 
+	****) Our floppy driver doesn't notice when mounted floppies are 
 	write-protected at the moment. Your floppy will stay
 	unchanged, but you might not notice that you didn't write
 	anything due to the buffer cache. Also note that HD floppy
