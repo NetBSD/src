@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 1996/11/06 13:51:49 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.20 1996/11/09 22:28:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -57,6 +57,7 @@ bdev_decl(vnd);
 #include "rd.h"
 bdev_decl(rd);
 #include "fd.h"
+#include "hdfd.h"
 bdev_decl(fd);
 bdev_decl(sw);
 #include "sd.h"
@@ -72,7 +73,7 @@ struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NVND,vnd),	/* 0: vnode disk driver */
 	bdev_rd_init(NRD,rd),		/* 1: ram disk - for install disk */
-	bdev_disk_init(NFD,fd),		/* 2: floppy disk */
+	bdev_disk_init(NFD+NHDFD,fd),	/* 2: floppy disk */
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
@@ -182,7 +183,7 @@ struct cdevsw	cdevsw[] =
 	cdev_view_init(NVIEW,view),	/* 13: /dev/view00 /dev/view01, ... */
 	cdev_mouse_init(NKBD,kbd),	/* 14: /dev/kbd	*/
 	cdev_mouse_init(NMOUSE,ms),	/* 15: /dev/mouse0 /dev/mouse1 */
-	cdev_disk_init(NFD,fd),		/* 16: floppy disk */
+	cdev_disk_init(NFD+NHDFD,fd),	/* 16: floppy disk */
 	cdev_disk_init(NVND,vnd),	/* 17: vnode disk driver */
 	cdev_fd_init(1,filedesc),	/* 18: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 19: Berkeley packet filter */
