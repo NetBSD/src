@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_chksum.c,v 1.8 1996/04/22 01:43:45 christos Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.9 1996/10/10 23:22:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -123,8 +123,8 @@ iso_check_csum(m, len)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CHKSUM]) {
-		printf("iso_check_csum: m %p, l x%x, m->m_len x%x\n",
-		       m, l, m->m_len);
+		kprintf("iso_check_csum: m %p, l x%x, m->m_len x%x\n",
+		    m, l, m->m_len);
 	}
 #endif
 
@@ -139,9 +139,9 @@ iso_check_csum(m, len)
 			m = m->m_next;
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CHKSUM]) {
-				printf("iso_check_csum: new mbuf\n");
+				kprintf("iso_check_csum: new mbuf\n");
 				if (l - i < m->m_len)
-					printf(
+					kprintf(
 		       "bad mbuf chain in check csum l 0x%x i 0x%x m_data %p",
 					       l, i, m->m_data);
 			}
@@ -154,8 +154,8 @@ iso_check_csum(m, len)
 	if (((int) c0 % 255) || ((int) c1 % 255)) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CHKSUM]) {
-			printf("BAD iso_check_csum l 0x%x cum 0x%x len 0x%x, i 0x%x",
-			       l, cum, len, i);
+			kprintf("BAD iso_check_csum l 0x%x cum 0x%x len 0x%x, i 0x%x",
+			    l, cum, len, i);
 		}
 #endif
 		return ((int) c0 % 255) << 8 | ((int) c1 % 255);
@@ -199,8 +199,8 @@ iso_gen_csum(m, n, l)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CHKSUM]) {
-		printf("enter gen csum m %p n 0x%x l 0x%x\n", 
-		       m, n - 1, l);
+		kprintf("enter gen csum m %p n 0x%x l 0x%x\n", 
+		    m, n - 1, l);
 	}
 #endif
 
@@ -217,7 +217,7 @@ iso_gen_csum(m, n, l)
 				xloc = loc + mtod(m, u_char *);
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_CHKSUM]) {
-					printf("1: zeroing xloc %p loc 0x%x\n",
+					kprintf("1: zeroing xloc %p loc 0x%x\n",
 					    xloc, loc);
 				}
 #endif
@@ -230,7 +230,7 @@ iso_gen_csum(m, n, l)
 					yloc = 1 + xloc;
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_CHKSUM]) {
-						printf(
+						kprintf(
 					"2: zeroing yloc %p loc 0x%x\n",
 					yloc, loc);
 					}
@@ -241,7 +241,7 @@ iso_gen_csum(m, n, l)
 					yloc = mtod(m->m_next, u_char *);
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_CHKSUM]) {
-						printf(
+						kprintf(
 					    "3: zeroing yloc %p \n", yloc);
 					}
 #endif
@@ -260,7 +260,7 @@ iso_gen_csum(m, n, l)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CHKSUM]) {
-		printf("gen csum final xloc %p yloc %p\n", xloc, yloc);
+		kprintf("gen csum final xloc %p yloc %p\n", xloc, yloc);
 	}
 #endif
 
@@ -272,7 +272,7 @@ iso_gen_csum(m, n, l)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CHKSUM]) {
-		printf("gen csum end \n");
+		kprintf("gen csum end \n");
 	}
 #endif
 }
@@ -312,7 +312,7 @@ m_compress(in, out)
 		*out = in;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REQUEST]) {
-			printf("m_compress returning 0x%x: A\n", in->m_len);
+			kprintf("m_compress returning 0x%x: A\n", in->m_len);
 		}
 #endif
 		splx(s);
@@ -323,7 +323,7 @@ m_compress(in, out)
 		*out = in;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REQUEST]) {
-			printf("m_compress returning -1: B\n");
+			kprintf("m_compress returning -1: B\n");
 		}
 #endif
 		splx(s);
@@ -335,11 +335,11 @@ m_compress(in, out)
 	while (in) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REQUEST]) {
-			printf("m_compress in %p *out %p\n", in, *out);
-			printf("m_compress in: len 0x%x, off %p\n",
-				in->m_len, in->m_data);
-			printf("m_compress *out: len 0x%x, off %p\n",
-				(*out)->m_len, (*out)->m_data);
+			kprintf("m_compress in %p *out %p\n", in, *out);
+			kprintf("m_compress in: len 0x%x, off %p\n",
+			    in->m_len, in->m_data);
+			kprintf("m_compress *out: len 0x%x, off %p\n",
+			    (*out)->m_len, (*out)->m_data);
 		}
 #endif
 		if (in->m_flags & M_EXT) {
@@ -358,7 +358,7 @@ m_compress(in, out)
 
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_REQUEST]) {
-				printf("m_compress copying len %d\n", len);
+				kprintf("m_compress copying len %d\n", len);
 			}
 #endif
 			bcopy(mtod(in, caddr_t), mtod((*out), caddr_t) + (*out)->m_len,
@@ -374,7 +374,7 @@ m_compress(in, out)
 				*out = in;
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_REQUEST]) {
-					printf("m_compress returning -1: B\n");
+					kprintf("m_compress returning -1: B\n");
 				}
 #endif
 				splx(s);
@@ -388,7 +388,7 @@ m_compress(in, out)
 	m_freem(in);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_REQUEST]) {
-		printf("m_compress returning 0x%x: A\n", datalen);
+		kprintf("m_compress returning 0x%x: A\n", datalen);
 	}
 #endif
 	splx(s);

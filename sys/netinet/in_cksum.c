@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.11 1996/04/08 19:55:37 jonathan Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.12 1996/10/10 23:12:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -140,7 +140,7 @@ in_cksum(m, len)
 			s_util.c[0] = *(u_int8_t *)w;
 	}
 	if (len)
-		printf("cksum: out of data\n");
+		kprintf("cksum: out of data\n");
 	if (mlen == -1) {
 		/* The last mbuf has odd # of bytes. Follow the
 		   standard (the odd byte may be shifted left by 8 bits

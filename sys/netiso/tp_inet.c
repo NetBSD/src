@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.12 1996/09/17 16:43:48 mycroft Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.13 1996/10/10 23:22:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -344,8 +344,8 @@ tpip_mtu(v)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("tpip_mtu(tpcb %p)\n", tpcb);
-		printf("tpip_mtu routing to addr 0x%x\n", inp->inp_faddr.s_addr);
+		kprintf("tpip_mtu(tpcb %p)\n", tpcb);
+		kprintf("tpip_mtu routing to addr 0x%x\n", inp->inp_faddr.s_addr);
 	}
 #endif
 	tpcb->tp_routep = &(inp->inp_route.ro_rt);
@@ -443,7 +443,7 @@ tpip_output_dg(m0, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
-		printf("tpip_output_dg  datalen 0x%x m0 %p\n", datalen, m0);
+		kprintf("tpip_output_dg  datalen 0x%x m0 %p\n", datalen, m0);
 	}
 #endif
 
@@ -482,7 +482,7 @@ tpip_output_dg(m0, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
-		printf("tpip_output_dg after ip_output\n");
+		kprintf("tpip_output_dg after ip_output\n");
 	}
 #endif
 
@@ -555,7 +555,7 @@ tpip_input(m, va_alist)
 		if ((m = m_pullup(m, hdrlen)) == MNULL) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_TPINPUT]) {
-				printf("tp_input, pullup 2!\n");
+				kprintf("tp_input, pullup 2!\n");
 			}
 #endif
 			goto discard;
@@ -596,7 +596,7 @@ tpip_input(m, va_alist)
 discard:
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tpip_input DISCARD\n");
+		kprintf("tpip_input DISCARD\n");
 	}
 #endif
 #ifdef TPPT
@@ -741,7 +741,7 @@ void
 dump_inaddr(addr)
 	register struct sockaddr_in *addr;
 {
-	printf("INET: port 0x%x; addr 0x%x\n", addr->sin_port, addr->sin_addr.s_addr);
+	kprintf("INET: port 0x%x; addr 0x%x\n", addr->sin_port, addr->sin_addr.s_addr);
 }
 #endif	/* ARGO_DEBUG */
 #endif	/* INET */

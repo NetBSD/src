@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.15 1996/05/09 22:29:37 scottr Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.16 1996/10/10 23:22:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -140,10 +140,10 @@ eonattach()
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
-		printf("eonattach()\n");
+		kprintf("eonattach()\n");
 	}
 #endif
-	sprintf(ifp->if_xname, "eon%d", 0);
+	ksprintf(ifp->if_xname, "eon%d", 0);
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_softc = NULL;
 	/* since everything will go out over ether or token ring */
@@ -161,7 +161,7 @@ eonattach()
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
-		printf("eonattach()\n");
+		kprintf("eonattach()\n");
 	}
 #endif
 }
@@ -189,7 +189,7 @@ eonioctl(ifp, cmd, data)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
-		printf("eonioctl (cmd 0x%lx) \n", cmd);
+		kprintf("eonioctl (cmd 0x%lx) \n", cmd);
 	}
 #endif
 
@@ -252,9 +252,9 @@ eoniphdr(hdr, loc, ro, class, zero)
 	mhead.m_next = 0;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
-		printf("eonoutput : gen csum (%p, offset %d, datalen %d)\n",
-		       &mhead, _offsetof(struct eon_hdr, eonh_csum),
-		       sizeof(struct eon_hdr));
+		kprintf("eonoutput : gen csum (%p, offset %d, datalen %d)\n",
+		    &mhead, _offsetof(struct eon_hdr, eonh_csum),
+		    sizeof(struct eon_hdr));
 	}
 #endif
 	iso_gen_csum(&mhead,
@@ -360,7 +360,7 @@ eonoutput(ifp, m, sdst, rt)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
-		printf("eonoutput \n");
+		kprintf("eonoutput \n");
 	}
 #endif
 
@@ -398,7 +398,7 @@ einval:
 		}
 	}
 	if ((m->m_flags & M_PKTHDR) == 0) {
-		printf("eon: got non headered packet\n");
+		kprintf("eon: got non headered packet\n");
 		goto einval;
 	}
 	ei = &el->el_ei;
@@ -426,8 +426,8 @@ send:
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
-		printf("eonoutput dst ip addr : %x\n", ei->ei_ip.ip_dst.s_addr);
-		printf("eonoutput ip_output : eonip header:\n");
+		kprintf("eonoutput dst ip addr : %x\n", ei->ei_ip.ip_dst.s_addr);
+		kprintf("eonoutput ip_output : eonip header:\n");
 		dump_buf(ei, sizeof(struct eon_iphdr));
 	}
 #endif
@@ -470,8 +470,8 @@ eoninput(m, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
-		printf("eoninput() %p m_data %p m_len 0x%x dequeued\n",
-		       m, (m ? m->m_data : 0), m ? m->m_len : 0);
+		kprintf("eoninput() %p m_data %p m_len 0x%x dequeued\n",
+		    m, (m ? m->m_data : 0), m ? m->m_len : 0);
 	}
 #endif
 
@@ -485,7 +485,7 @@ eoninput(m, va_alist)
 	drop:
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_EON]) {
-				printf("eoninput: DROP \n");
+				kprintf("eoninput: DROP \n");
 			}
 #endif
 			eonifp->if_ierrors++;
@@ -512,8 +512,8 @@ eoninput(m, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
-		printf("eoninput csum ok class 0x%x\n", eonhdr->eonh_class);
-		printf("eoninput: eon header:\n");
+		kprintf("eoninput csum ok class 0x%x\n", eonhdr->eonh_class);
+		kprintf("eoninput: eon header:\n");
 		dump_buf(eonhdr, sizeof(struct eon_hdr));
 	}
 #endif
@@ -551,7 +551,7 @@ eoninput(m, va_alist)
 		m->m_pkthdr.rcvif = eonifp;	/* KLUDGE */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_EON]) {
-			printf("eoninput to clnl IFQ\n");
+			kprintf("eoninput to clnl IFQ\n");
 		}
 #endif
 		ifq = &clnlintrq;
@@ -567,9 +567,9 @@ eoninput(m, va_alist)
 		IF_ENQUEUE(ifq, m);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_EON]) {
-			printf(
-			       "%p enqueued on clnp Q: m_len 0x%x m_type 0x%x m_data %p\n",
-			       m, m->m_len, m->m_type, m->m_data);
+			kprintf(
+			    "%p enqueued on clnp Q: m_len 0x%x m_type 0x%x m_data %p\n",
+			    m, m->m_len, m->m_type, m->m_data);
 			dump_buf(mtod(m, caddr_t), m->m_len);
 		}
 #endif
@@ -587,9 +587,9 @@ eonctlinput(cmd, sa, dummy)
 	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
-		printf("eonctlinput: cmd 0x%x addr: ", cmd);
+		kprintf("eonctlinput: cmd 0x%x addr: ", cmd);
 		dump_isoaddr((struct sockaddr_iso *) sin);
-		printf("\n");
+		kprintf("\n");
 	}
 #endif
 
@@ -623,7 +623,9 @@ eonctlinput(cmd, sa, dummy)
 	case PRC_REDIRECT_TOSHOST:
 	case PRC_MSGSIZE:
 	case PRC_PARAMPROB:
-		/* printf("eonctlinput: ICMP cmd 0x%x\n", cmd ); */
+#if 0
+		kprintf("eonctlinput: ICMP cmd 0x%x\n", cmd );
+#endif
 		break;
 	}
 	return NULL;

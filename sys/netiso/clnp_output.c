@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.9 1996/04/13 01:34:32 cgd Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.10 1996/10/10 23:21:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -221,10 +221,10 @@ clnp_output(m0, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_OUTPUT]) {
-		printf("clnp_output: to %s", clnp_iso_addrp(dst));
-		printf(" from %s of %d bytes\n", clnp_iso_addrp(src), datalen);
-		printf("\toptions %p, flags x%x, isop_clnpcache %p\n",
-		       isop->isop_options, flags, isop->isop_clnpcache);
+		kprintf("clnp_output: to %s", clnp_iso_addrp(dst));
+		kprintf(" from %s of %d bytes\n", clnp_iso_addrp(src), datalen);
+		kprintf("\toptions %p, flags x%x, isop_clnpcache %p\n",
+		    isop->isop_options, flags, isop->isop_clnpcache);
 	}
 #endif
 
@@ -236,18 +236,18 @@ clnp_output(m0, va_alist)
 	 */
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_OUTPUT]) {
-		printf("clnp_output: ck cache: clcp %p\n", clcp);
+		kprintf("clnp_output: ck cache: clcp %p\n", clcp);
 		if (clcp != NULL) {
-			printf("\tclc_dst %s\n", clnp_iso_addrp(&clcp->clc_dst));
-			printf("\tisop_opts %p, clc_opts %p\n",
-			       isop->isop_options, clcp->clc_options);
+			kprintf("\tclc_dst %s\n", clnp_iso_addrp(&clcp->clc_dst));
+			kprintf("\tisop_opts %p, clc_opts %p\n",
+			    isop->isop_options, clcp->clc_options);
 			if (isop->isop_route.ro_rt)
-				printf("\tro_rt %p, rt_flags x%x\n",
-				       isop->isop_route.ro_rt,
-				       isop->isop_route.ro_rt->rt_flags);
-			printf("\tflags x%x, clc_flags x%x\n", flags,
-			       clcp->clc_flags);
-			printf("\tclc_hdr %p\n", clcp->clc_hdr);
+				kprintf("\tro_rt %p, rt_flags x%x\n",
+				    isop->isop_route.ro_rt,
+				    isop->isop_route.ro_rt->rt_flags);
+			kprintf("\tflags x%x, clc_flags x%x\n", flags,
+			    clcp->clc_flags);
+			kprintf("\tclc_hdr %p\n", clcp->clc_hdr);
 		}
 	}
 #endif
@@ -265,7 +265,7 @@ clnp_output(m0, va_alist)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_OUTPUT]) {
-			printf("clnp_output: using cache\n");
+			kprintf("clnp_output: using cache\n");
 		}
 #endif
 
@@ -306,7 +306,7 @@ clnp_output(m0, va_alist)
 					 */
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_OUTPUT]) {
-						printf("clnp_output: no mbufs to allocate to cache\n");
+						kprintf("clnp_output: no mbufs to allocate to cache\n");
 					}
 #endif
 					flags |= CLNP_NOCACHE;
@@ -332,7 +332,7 @@ clnp_output(m0, va_alist)
 					 */
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_OUTPUT]) {
-						printf(
+						kprintf(
 				    "clnp_output: freeing old clc_hdr %p\n",
 					       clcp->clc_hdr);
 					}
@@ -340,7 +340,7 @@ clnp_output(m0, va_alist)
 					m_free(clcp->clc_hdr);
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_OUTPUT]) {
-						printf("clnp_output: freed old clc_hdr (done)\n");
+						kprintf("clnp_output: freed old clc_hdr (done)\n");
 					}
 #endif
 				}
@@ -348,7 +348,7 @@ clnp_output(m0, va_alist)
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_OUTPUT]) {
-			printf("clnp_output: NEW clcp %p\n", clcp);
+			kprintf("clnp_output: NEW clcp %p\n", clcp);
 		}
 #endif
 		bzero((caddr_t) clcp, sizeof(struct clnp_cache));
@@ -367,7 +367,7 @@ clnp_output(m0, va_alist)
 			    (oidx->cni_er_reason != ER_INVALREAS)) {
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_OUTPUT]) {
-					printf("clnp_output: pkt dropped - option unsupported\n");
+					kprintf("clnp_output: pkt dropped - option unsupported\n");
 				}
 #endif
 				m_freem(m0);
@@ -380,7 +380,7 @@ clnp_output(m0, va_alist)
 		if ((flags & (CLNP_VFLAGS)) != flags) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_OUTPUT]) {
-				printf("clnp_output: packet dropped - flags unsupported\n");
+				kprintf("clnp_output: packet dropped - flags unsupported\n");
 			}
 #endif
 			INCSTAT(cns_odropped);
@@ -435,7 +435,7 @@ clnp_output(m0, va_alist)
 		if ((isop->isop_options) && CLNPSRCRT_VALID(oidx)) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_OUTPUT]) {
-				printf("clnp_output: calling clnp_srcroute\n");
+				kprintf("clnp_output: calling clnp_srcroute\n");
 			}
 #endif
 			error = clnp_srcroute(isop->isop_options, oidx, &isop->isop_route,
@@ -451,8 +451,8 @@ clnp_output(m0, va_alist)
 		if (error || (clcp->clc_ifa == 0)) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_OUTPUT]) {
-				printf("clnp_output: route failed, errno %d\n", error);
-				printf("@clcp:\n");
+				kprintf("clnp_output: route failed, errno %d\n", error);
+				kprintf("@clcp:\n");
 				dump_buf(clcp, sizeof(struct clnp_cache));
 			}
 #endif
@@ -463,8 +463,8 @@ clnp_output(m0, va_alist)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_OUTPUT]) {
-			printf("clnp_output: packet routed to %s\n",
-			       clnp_iso_addrp(
+			kprintf("clnp_output: packet routed to %s\n",
+			    clnp_iso_addrp(
 				 &satosiso(clcp->clc_firsthop)->siso_addr));
 		}
 #endif
@@ -478,7 +478,7 @@ clnp_output(m0, va_alist)
 			src = &(clcp->clc_ifa->ia_addr.siso_addr);
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_OUTPUT]) {
-				printf("clnp_output: new src %s\n", clnp_iso_addrp(src));
+				kprintf("clnp_output: new src %s\n", clnp_iso_addrp(src));
 			}
 #endif
 		}
@@ -576,7 +576,7 @@ clnp_output(m0, va_alist)
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_DUMPOUT]) {
 			struct mbuf    *mdump = m;
-			printf("clnp_output: sending dg:\n");
+			kprintf("clnp_output: sending dg:\n");
 			while (mdump != NULL) {
 				dump_buf(mtod(mdump, caddr_t), mdump->m_len);
 				mdump = mdump->m_next;

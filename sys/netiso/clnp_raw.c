@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.11 1996/09/08 14:28:08 mycroft Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.12 1996/10/10 23:21:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -219,10 +219,10 @@ rclnp_ctloutput(op, so, level, optname, m)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CTLOUTPUT]) {
-		printf("rclnp_ctloutput: op = x%x, level = x%x, name = x%x\n",
-		       op, level, optname);
+		kprintf("rclnp_ctloutput: op = x%x, level = x%x, name = x%x\n",
+		    op, level, optname);
 		if (*m != NULL) {
-			printf("rclnp_ctloutput: %d bytes of mbuf data\n", (*m)->m_len);
+			kprintf("rclnp_ctloutput: %d bytes of mbuf data\n", (*m)->m_len);
 			dump_buf(mtod((*m), caddr_t), (*m)->m_len);
 		}
 	}

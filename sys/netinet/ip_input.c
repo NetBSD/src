@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.37 1996/09/21 19:44:33 perry Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.38 1996/10/10 23:12:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -898,7 +898,7 @@ save_rte(option, dst)
 	olen = option[IPOPT_OLEN];
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf("save_rte: olen %d\n", olen);
+		kprintf("save_rte: olen %d\n", olen);
 #endif
 	if (olen > sizeof(ip_srcrt) - (1 + sizeof(dst)))
 		return;
@@ -931,7 +931,7 @@ ip_srcroute()
 	    OPTSIZ;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf("ip_srcroute: nhops %d mlen %d", ip_nhops, m->m_len);
+		kprintf("ip_srcroute: nhops %d mlen %d", ip_nhops, m->m_len);
 #endif
 
 	/*
@@ -941,7 +941,7 @@ ip_srcroute()
 	*(mtod(m, struct in_addr *)) = *p--;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf(" hops %x", ntohl(mtod(m, struct in_addr *)->s_addr));
+		kprintf(" hops %x", ntohl(mtod(m, struct in_addr *)->s_addr));
 #endif
 
 	/*
@@ -961,7 +961,7 @@ ip_srcroute()
 	while (p >= ip_srcrt.route) {
 #ifdef DIAGNOSTIC
 		if (ipprintfs)
-			printf(" %x", ntohl(q->s_addr));
+			kprintf(" %x", ntohl(q->s_addr));
 #endif
 		*q++ = *p--;
 	}
@@ -971,7 +971,7 @@ ip_srcroute()
 	*q = ip_srcrt.dst;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf(" %x\n", ntohl(q->s_addr));
+		kprintf(" %x\n", ntohl(q->s_addr));
 #endif
 	return (m);
 }
@@ -1042,7 +1042,7 @@ ip_forward(m, srcrt)
 	dest = 0;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf("forward: src %x dst %x ttl %x\n",
+		kprintf("forward: src %x dst %x ttl %x\n",
 		    ip->ip_src.s_addr, ip->ip_dst.s_addr, ip->ip_ttl);
 #endif
 	if (m->m_flags & M_BCAST || in_canforward(ip->ip_dst) == 0) {
@@ -1106,7 +1106,7 @@ ip_forward(m, srcrt)
 		    code = ICMP_REDIRECT_HOST;
 #ifdef DIAGNOSTIC
 		    if (ipprintfs)
-		    	printf("redirect (%d) to %x\n", code, (u_int32_t)dest);
+		    	kprintf("redirect (%d) to %x\n", code, (u_int32_t)dest);
 #endif
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.12 1996/04/13 01:34:26 cgd Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.13 1996/10/10 23:21:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -123,12 +123,12 @@ clnp_init()
 	 * CLNP protox initialization
 	 */
 	if ((pr = pffindproto(PF_ISO, ISOPROTO_RAW, SOCK_RAW)) == 0)
-		printf("clnl_init: no raw CLNP\n");
+		kprintf("clnl_init: no raw CLNP\n");
 	else
 		clnp_protox[ISOPROTO_RAW] = pr - isosw;
 
 	if ((pr = pffindproto(PF_ISO, ISOPROTO_TP, SOCK_SEQPACKET)) == 0)
-		printf("clnl_init: no tp/clnp\n");
+		kprintf("clnl_init: no tp/clnp\n");
 	else
 		clnp_protox[ISOPROTO_TP] = pr - isosw;
 
@@ -215,15 +215,15 @@ next:
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
 		int             i;
-		printf("clnlintr: src:");
+		kprintf("clnlintr: src:");
 		for (i = 0; i < 6; i++)
-			printf("%x%c", sh.snh_shost[i] & 0xff,
-			       (i < 5) ? ':' : ' ');
-		printf(" dst:");
+			kprintf("%x%c", sh.snh_shost[i] & 0xff,
+			    (i < 5) ? ':' : ' ');
+		kprintf(" dst:");
 		for (i = 0; i < 6; i++)
-			printf("%x%c", sh.snh_dhost[i] & 0xff,
-			       (i < 5) ? ':' : ' ');
-		printf("\n");
+			kprintf("%x%c", sh.snh_dhost[i] & 0xff,
+			    (i < 5) ? ':' : ' ');
+		kprintf("\n");
 	}
 #endif
 
@@ -322,9 +322,9 @@ clnp_input(m, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
-		printf(
-		       "clnp_input: proccessing dg; First mbuf m_len %d, m_type x%x, %s\n",
-		 m->m_len, m->m_type, IS_CLUSTER(m) ? "cluster" : "normal");
+		kprintf(
+		    "clnp_input: proccessing dg; First mbuf m_len %d, m_type x%x, %s\n",
+		    m->m_len, m->m_type, IS_CLUSTER(m) ? "cluster" : "normal");
 	}
 #endif
 	need_afrin = 0;
@@ -344,15 +344,15 @@ clnp_input(m, va_alist)
 	if (argo_debug[D_DUMPIN]) {
 		struct mbuf    *mhead;
 		int             total_len = 0;
-		printf("clnp_input: clnp header:\n");
+		kprintf("clnp_input: clnp header:\n");
 		dump_buf(mtod(m, caddr_t), clnp->cnf_hdr_len);
-		printf("clnp_input: mbuf chain:\n");
+		kprintf("clnp_input: mbuf chain:\n");
 		for (mhead = m; mhead != NULL; mhead = mhead->m_next) {
-			printf("m %p, len %d\n", mhead, mhead->m_len);
+			kprintf("m %p, len %d\n", mhead, mhead->m_len);
 			total_len += mhead->m_len;
 		}
-		printf("clnp_input: total length of mbuf chain %d:\n",
-		       total_len);
+		kprintf("clnp_input: total length of mbuf chain %d:\n",
+		total_len);
 	}
 #endif
 
@@ -399,8 +399,8 @@ clnp_input(m, va_alist)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
-		printf("clnp_input: from %s", clnp_iso_addrp(&src));
-		printf(" to %s\n", clnp_iso_addrp(&dst));
+		kprintf("clnp_input: from %s", clnp_iso_addrp(&src));
+		kprintf(" to %s\n", clnp_iso_addrp(&dst));
 	}
 #endif
 
@@ -463,9 +463,9 @@ clnp_input(m, va_alist)
 			clnp_discard(m, (char) errcode);
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_INPUT]) {
-				printf(
-				       "clnp_input: dropped (err x%x) due to bad options\n",
-				       errcode);
+				kprintf(
+				    "clnp_input: dropped (err x%x) due to bad options\n",
+				    errcode);
 			}
 #endif
 			return;
@@ -477,7 +477,7 @@ clnp_input(m, va_alist)
 	if (clnp_ours(&dst) == 0) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_INPUT]) {
-			printf("clnp_input: forwarding packet not for us\n");
+			kprintf("clnp_input: forwarding packet not for us\n");
 		}
 #endif
 		clnp_forward(m, seg_len, &dst, oidxp, seg_off, shp);
@@ -546,9 +546,9 @@ clnp_input(m, va_alist)
 	case CLNP_ECR:
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_INPUT]) {
-			printf("clnp_input: raw input of %d bytes\n",
-			       clnp->cnf_type & CNF_SEG_OK ?
-			       seg_part.cng_tot_len : seg_len);
+			kprintf("clnp_input: raw input of %d bytes\n",
+			    clnp->cnf_type & CNF_SEG_OK ?
+			    seg_part.cng_tot_len : seg_len);
 		}
 #endif
 		(*isosw[clnp_protox[ISOPROTO_RAW]].pr_input)(m, &source,
@@ -559,7 +559,7 @@ clnp_input(m, va_alist)
 	case CLNP_EC:
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_INPUT]) {
-			printf("clnp_input: echoing packet\n");
+			kprintf("clnp_input: echoing packet\n");
 		}
 #endif
 		(void) clnp_echoreply(m, (clnp->cnf_type & CNF_SEG_OK ?
@@ -568,8 +568,8 @@ clnp_input(m, va_alist)
 		break;
 
 	default:
-		printf("clnp_input: unknown clnp pkt type %d\n",
-		       clnp->cnf_type & CNF_TYPE);
+		kprintf("clnp_input: unknown clnp pkt type %d\n",
+		    clnp->cnf_type & CNF_TYPE);
 		clnp_stat.cns_delivered--;
 		clnp_stat.cns_noproto++;
 		clnp_discard(m, GEN_HDRSYNTAX);
