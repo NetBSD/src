@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4 2004/12/10 18:47:52 christos Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4.2.1 2004/12/17 10:31:59 bouyer Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -296,9 +296,16 @@ breakpoint(void)
 	__asm __volatile("int $3");
 }
 
-#define read_psl()	read_eflags()
-#define write_psl(x)	write_eflags(x)
+#define read_psl() (HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask)
+#define write_psl(x) do {						\
+    __insn_barrier();							\
+    HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask = (x) ;	\
+    __insn_barrier();							\
+    if ((x) == 0 && HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_pending) \
+	hypervisor_force_callback();					\
+} while (0)
 
+    
 /*
  * XXX Maybe these don't belong here...
  */
