@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.20 2000/03/23 06:33:12 thorpej Exp $	*/
+/*	$NetBSD: par.c,v 1.21 2000/03/26 10:15:32 frueauf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -60,6 +60,8 @@
 #include <machine/conf.h>
 
 struct	par_softc {
+	struct device sc_dev;
+
 	int	sc_flags;
 	struct	parparam sc_param;
 #define sc_burst sc_param.burst
