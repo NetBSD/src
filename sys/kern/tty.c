@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.103 1998/02/13 21:53:46 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.104 1998/02/14 01:26:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -790,6 +790,11 @@ ttioctl(tp, cmd, data, flag, p)
 		if (!isctty(p, tp))
 			return (ENOTTY);
 		*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
+		break;
+	case TIOCGSID:			/* get sid of tty */
+		if (!isctty(p, tp))
+			return (ENOTTY);
+		*(int *)data = tp->t_session->s_sid;
 		break;
 #ifdef TIOCHPCL
 	case TIOCHPCL:			/* hang up on last close */
