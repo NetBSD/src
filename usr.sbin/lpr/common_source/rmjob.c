@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.11 1997/07/10 06:19:54 mikel Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.12 1997/10/05 11:52:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)rmjob.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
 static char rcsid[] = "$NetBSD";
 #endif
@@ -321,7 +321,7 @@ rmremote()
 	register char *cp, *s;
 	register int i, rem, len;
 
-	if (!sendtorem)
+	if (!remote)
 		return;	/* not sending to a remote machine */
 
 	/*
@@ -359,7 +359,7 @@ rmremote()
 	cp[0] = '\n';
 	cp[1] = '\0';
 
-	rem = getport(RM);
+	rem = getport(RM, 0);
 	if (rem < 0) {
 		if (from != host)
 			printf("%s: ", host);

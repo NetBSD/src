@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.6 1997/07/10 05:34:48 mikel Exp $	*/
+/*	$NetBSD: lpc.c,v 1.7 1997/10/05 11:52:30 mrg Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)lpc.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,9 +54,15 @@ static char sccsid[] = "@(#)lpc.c	8.1 (Berkeley) 6/6/93";
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <grp.h>
+#include <sys/param.h>
 #include "lp.h"
 #include "lpc.h"
 #include "extern.h"
+
+#ifndef LPR_OPER
+#define LPR_OPER	"operator"	/* group name of lpr operators */
+#endif
 
 /*
  * lpc -- line printer control program
@@ -78,6 +84,7 @@ static void		 cmdscanner __P((int));
 static struct cmd	*getcmd __P((char *));
 static void		 intr __P((int));
 static void		 makeargv __P((void));
+static int		 ingroup __P((char *));
 
 int
 main(argc, argv)
@@ -102,7 +109,7 @@ main(argc, argv)
 			printf("?Invalid command\n");
 			exit(1);
 		}
-		if (c->c_priv && getuid()) {
+		if (c->c_priv && getuid() && ingroup(LPR_OPER) == 0) {
 			printf("?Privileged command\n");
 			exit(1);
 		}
@@ -158,7 +165,7 @@ cmdscanner(top)
 			printf("?Invalid command\n");
 			continue;
 		}
-		if (c->c_priv && getuid()) {
+		if (c->c_priv && getuid() && ingroup(LPR_OPER) == 0) {
 			printf("?Privileged command\n");
 			continue;
 		}
@@ -167,7 +174,7 @@ cmdscanner(top)
 	longjmp(toplevel, 0);
 }
 
-struct cmd *
+static struct cmd *
 getcmd(name)
 	register char *name;
 {
@@ -282,4 +289,34 @@ help(argc, argv)
 			printf("%-*s\t%s\n", HELPINDENT,
 				c->c_name, c->c_help);
 	}
+}
+
+/*
+ * return non-zero if the user is a member of the given group
+ */
+static int
+ingroup(grname)
+	char *grname;
+{
+	static struct group *gptr=NULL;
+	static gid_t groups[NGROUPS];
+	register gid_t gid;
+	register int i;
+
+	if (gptr == NULL) {
+		if ((gptr = getgrnam(grname)) == NULL) {
+			fprintf(stderr, "Warning: unknown group '%s'\n",
+				grname);
+			return(0);
+		}
+		if (getgroups(NGROUPS, groups) < 0) {
+			perror("getgroups");
+			exit(1);
+		}
+	}
+	gid = gptr->gr_gid;
+	for (i = 0; i < NGROUPS; i++)
+		if (gid == groups[i])
+			return(1);
+	return(0);
 }
