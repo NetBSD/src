@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.143 2000/12/31 03:13:51 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.144 2001/01/08 07:05:47 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -748,7 +748,7 @@ vtruncbuf(vp, lbn, slpflag, slptimeo)
 		simple_lock(&uobj->vmobjlock);
 		rv = (uobj->pgops->pgo_flush)(uobj,
 		    round_page(lbn << vp->v_mount->mnt_fs_bshift),
-		    vp->v_uvm.u_size, PGO_FREE);
+		    vp->v_uvm.u_size, PGO_FREE|PGO_SYNCIO);
 		simple_unlock(&uobj->vmobjlock);
 		if (!rv) {
 			splx(s);
