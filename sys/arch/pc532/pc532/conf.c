@@ -40,7 +40,7 @@
  *
  *	@(#)conf.c	5.8 (Berkeley) 5/12/91
  *
- *	$Id: conf.c,v 1.7 1994/05/17 17:31:33 phil Exp $
+ *	$Id: conf.c,v 1.8 1994/05/25 00:03:06 phil Exp $
  */
 
 #include "param.h"
@@ -261,3 +261,14 @@ struct	consdev constab[] = {
 	{ 0 },
 };
 /* end XXX */
+
+
+/*
+ * Returns true if dev is /dev/zero.
+ */
+iszerodev(dev)
+	dev_t dev;
+{
+
+	return (major(dev) == mem_no && minor(dev) == 12);
+}
