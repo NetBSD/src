@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.7 1998/08/28 14:19:44 garbled Exp $
+.\"	$NetBSD: packages.7,v 1.8 1998/09/14 17:33:01 garbled Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -282,6 +282,16 @@ Additional environment variables passed to scripts in
 .Pa ${SCRIPTDIR}
 executed by
 .Pa bsd.pkg.mk .
+.It MAKE_ENV	
+Additional environment variables passed to sub-make in build stage.
+.It CFLAGS	
+Any CFLAGS you wish passed to the configure script and/or sub-make in
+build stage.
+.It LDFLAGS	
+Any LDFLAGS you wish passed to the configure script and/or sub-make in
+build stage.  LDFLAGS is pre-loaded with rpath settings for ELF machines
+depending on the setting of USE_X11 or USE_MOTIF.  If you do not wish
+to override these settings, use LDFLAGS+=.
 .It MAKE_ENV	
 Additional environment variables passed to sub-make in build stage.
 .It IS_INTERACTIVE
