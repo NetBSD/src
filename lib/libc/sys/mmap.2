@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.7 1997/07/12 18:44:48 perry Exp $
+.\"	$NetBSD: mmap.2,v 1.8 1997/07/15 06:47:38 mikel Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,7 +127,7 @@ Notify the kernel that the region may contain semaphores and that special
 handling may be necessary.
 .It Dv MAP_INHERIT
 Permit regions to be inherited across
-.Xr exec 2
+.Xr execve 2
 system calls.
 .It Dv MAP_PRIVATE
 Modifications are private.
@@ -196,10 +196,10 @@ parameter wasn't available.
 .Dv MAP_ANON
 was specified and insufficient memory was available.
 .Sh "SEE ALSO"
-.Xr getpagesize 2 ,
-.Xr msync 2 ,
-.Xr munmap 2 ,
-.Xr mprotect 2 ,
 .Xr madvise 2 ,
 .Xr mincore 2 ,
-.Xr mlock 2
+.Xr mlock 2 ,
+.Xr mprotect 2 ,
+.Xr msync 2 ,
+.Xr munmap 2 ,
+.Xr getpagesize 3
