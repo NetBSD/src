@@ -639,6 +639,12 @@ boot(arghowto)
 			printf("giving up\n");
 		else
 			printf("done\n");
+                /*
+                 * If we've been adjusting the clock, the todr
+                 * will be out of synch; adjust it now.
+                 */
+                resettodr();
+
 		DELAY(10000);			/* wait for printf to finish */
 	}
 	splhigh();
@@ -798,36 +804,12 @@ setregs(p, entry, stack, retval)
  */
 
 /*
- * Initialize segments & interrupt table
+ * Initialize segments and descriptor tables
  */
 
-#define	GNULL_SEL	0	/* Null Descriptor */
-#define	GCODE_SEL	1	/* Kernel Code Descriptor */
-#define	GDATA_SEL	2	/* Kernel Data Descriptor */
-#define	GLDT_SEL	3	/* LDT - eventually one per process */
-#define	GTGATE_SEL	4	/* Process task switch gate */
-#define	GPANIC_SEL	5	/* Task state to consider panic from */
-#define	GPROC0_SEL	6	/* Task state process slot zero and up */
-#define	GUSERLDT_SEL	7	/* User LDT */
-#define NGDT 	GUSERLDT_SEL+1
-
-union descriptor gdt[NGDT];
-
-/* interrupt descriptor table */
-struct gate_descriptor idt[NIDT];
-
-/* local descriptor table */
-#define	LSYS5CALLS_SEL	0	/* forced by intel BCS */
-#define	LSYS5SIGR_SEL	1
-
-#define	L43BSDCALLS_SEL	2	/* notyet */
-#define	LUCODE_SEL	3
-#define	LUDATA_SEL	4
-/* seperate stack, es,fs,gs sels ? */
-/* #define	LPOSIXCALLS_SEL	5	/* notyet */
-#define NLDT		LUDATA_SEL+1
-
-union descriptor ldt[NLDT];
+union descriptor	gdt[NGDT];
+struct gate_descriptor	idt[NIDT];
+union descriptor	ldt[NLDT];
 
 int _default_ldt, currentldt;
 
