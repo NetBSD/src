@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.130 2001/05/21 13:45:11 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.131 2001/06/29 14:57:18 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.130 2001/05/21 13:44:48 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.131 2001/06/29 14:56:22 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -1061,6 +1061,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Synergy 21 S21810+ NE2000 Compatible Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_CNET_NE2000,
+	    PCMCIA_CIS_CNET_NE2000,
+	    0,
+	    "CNet",
+	    "CNet CN40BC NE2000 Compatible"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1534,6 +1541,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Synergy 21",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_CNET, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "CNet",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }

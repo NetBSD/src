@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.130 2001/05/21 13:45:10 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.131 2001/06/29 14:57:17 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.130 2001/05/21 13:44:48 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.131 2001/06/29 14:56:22 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -524,6 +524,7 @@
 #define	PCMCIA_VENDOR_AMD	-1	/* AMD */
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
 #define	PCMCIA_VENDOR_SYNERGY21	-1	/* Synergy 21 */
+#define	PCMCIA_VENDOR_CNET	-1	/* CNet */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -659,3 +660,6 @@
 #define	PCMCIA_CIS_SYNERGY21_S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
 #define	PCMCIA_PRODUCT_SYNERGY21_S21810	-1
 #define	PCMCIA_STR_SYNERGY21_S21810	"Synergy 21 S21810+ NE2000 Compatible Card"
+#define	PCMCIA_CIS_CNET_NE2000	{ "CNet", "CN40BC Ethernet", "D", "NE2000" }
+#define	PCMCIA_PRODUCT_CNET_NE2000	-1
+#define	PCMCIA_STR_CNET_NE2000	"CNet CN40BC NE2000 Compatible"
