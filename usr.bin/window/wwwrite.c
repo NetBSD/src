@@ -1,4 +1,4 @@
-/*	$NetBSD: wwwrite.c,v 1.4 1996/02/08 20:45:12 mycroft Exp $	*/
+/*	$NetBSD: wwwrite.c,v 1.5 1996/02/08 21:49:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwwrite.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwwrite.c,v 1.4 1996/02/08 20:45:12 mycroft Exp $";
+static char rcsid[] = "$NetBSD: wwwrite.c,v 1.5 1996/02/08 21:49:19 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,8 @@ int n;
 			if (w->ww_cur.r >= w->ww_i.t
 			    && w->ww_cur.r < w->ww_i.b) {
 				register union ww_char *ns = wwns[w->ww_cur.r];
-				register char *smap = &wwsmap[w->ww_cur.r][col];
+				register unsigned char *smap =
+				    &wwsmap[w->ww_cur.r][col];
 				register char *win = w->ww_win[w->ww_cur.r];
 				int nchanged = 0;
 
