@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.32 2000/08/25 03:11:14 sommerfeld Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.33 2000/08/26 00:08:43 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1190,9 +1190,7 @@ wi_setdef(sc, wreq)
 		sc->wi_pm_enabled = wreq->wi_val[0];
 		break;
 	case WI_RID_MICROWAVE_OVEN:
-#if 0
 		sc->wi_mor_enabled = wreq->wi_val[0];
-#endif
 		break;
 	case WI_RID_MAX_SLEEP:
 		sc->wi_max_sleep = wreq->wi_val[0];
@@ -1268,9 +1266,7 @@ wi_getdef(sc, wreq)
 		wreq->wi_val[0] = sc->wi_pm_enabled;
 		break;
 	case WI_RID_MICROWAVE_OVEN:
-#if 0
 		wreq->wi_val[0] = sc->wi_mor_enabled;
-#endif
 		break;
 	case WI_RID_MAX_SLEEP:
 		wreq->wi_val[0] = sc->wi_max_sleep;
