@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.1 1995/03/31 02:54:29 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.2 1995/07/01 23:55:43 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,6 +39,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
+#include <sys/buf.h>
 
 #include <sys/syscallargs.h>
 #include <compat/svr4/svr4_types.h>
@@ -51,8 +52,6 @@
 #include <machine/reg.h>
 #include <machine/svr4_machdep.h>
 
-extern int _ucodesel, _udatasel;
-
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
 
 void
@@ -61,8 +60,7 @@ svr4_getcontext(p, uc, mask, oonstack)
 	struct svr4_ucontext *uc;
 	int mask, oonstack;
 {
-#ifdef notyet
-	struct trapframe *tf = (struct trapframe *)p->p_md.md_regs;
+	struct trapframe *tf = (struct trapframe *)p->p_md.md_tf;
 	struct sigacts *psp = p->p_sigacts;
 	svr4_greg_t* r = uc->uc_mcontext.greg;
 	svr4_stack_t *s = &uc->uc_stack;
@@ -73,25 +71,25 @@ svr4_getcontext(p, uc, mask, oonstack)
 	/*
 	 * Set the general purpose registers
 	 */
-	r[SVR4_X86_GS] = 0;
-	r[SVR4_X86_FS] = 0;
-	r[SVR4_X86_ES] = tf->tf_es;
-	r[SVR4_X86_DS] = tf->tf_ds;
-	r[SVR4_X86_EDI] = tf->tf_edi;
-	r[SVR4_X86_ESI] = tf->tf_esi;
-	r[SVR4_X86_EBP] = tf->tf_ebp;
-	r[SVR4_X86_ESP] = tf->tf_esp;
-	r[SVR4_X86_EBX] = tf->tf_ebx;
-	r[SVR4_X86_EDX] = tf->tf_edx;
-	r[SVR4_X86_ECX] = tf->tf_ecx;
-	r[SVR4_X86_EAX] = tf->tf_eax;
-	r[SVR4_X86_TRAPNO] = 0;
-	r[SVR4_X86_ERR] = 0;
-	r[SVR4_X86_EIP] = tf->tf_eip;
-	r[SVR4_X86_CS] = tf->tf_cs;
-	r[SVR4_X86_EFL] = tf->tf_eflags;
-	r[SVR4_X86_UESP] = 0;
-	r[SVR4_X86_SS] = tf->tf_ss;
+	r[SVR4_SPARC_PSR] = tf->tf_psr;
+	r[SVR4_SPARC_PC] = tf->tf_pc;
+	r[SVR4_SPARC_nPC] = tf->tf_npc;
+	r[SVR4_SPARC_Y] = tf->tf_y;
+	r[SVR4_SPARC_G1] = tf->tf_global[1];
+	r[SVR4_SPARC_G2] = tf->tf_global[2];
+	r[SVR4_SPARC_G3] = tf->tf_global[3];
+	r[SVR4_SPARC_G4] = tf->tf_global[4];
+	r[SVR4_SPARC_G5] = tf->tf_global[5];
+	r[SVR4_SPARC_G6] = tf->tf_global[6];
+	r[SVR4_SPARC_G7] = tf->tf_global[7];
+	r[SVR4_SPARC_O0] = tf->tf_out[0];
+	r[SVR4_SPARC_O1] = tf->tf_out[1];
+	r[SVR4_SPARC_O2] = tf->tf_out[2];
+	r[SVR4_SPARC_O3] = tf->tf_out[3];
+	r[SVR4_SPARC_O4] = tf->tf_out[4];
+	r[SVR4_SPARC_O5] = tf->tf_out[5];
+	r[SVR4_SPARC_O6] = tf->tf_out[6];
+	r[SVR4_SPARC_O7] = tf->tf_out[7];
 
 	/*
 	 * Set the signal stack
@@ -107,7 +105,6 @@ svr4_getcontext(p, uc, mask, oonstack)
 	 * Set the flags
 	 */
 	uc->uc_flags = SVR4_UC_ALL;
-#endif
 }
 
 
@@ -120,13 +117,13 @@ svr4_getcontext(p, uc, mask, oonstack)
  * make sure that the user has not modified the
  * psl to gain improper privileges or to cause
  * a machine fault.
+ * This is almost like sigreturn() and it shows.
  */
 int
 svr4_setcontext(p, uc)
 	struct proc *p;
 	struct svr4_ucontext *uc;
 {
-#ifdef notyet
 	struct sigcontext *scp, context;
 	struct sigacts *psp = p->p_sigacts;
 	register struct trapframe *tf;
@@ -138,20 +135,22 @@ svr4_setcontext(p, uc)
 	/*
 	 * XXX:
 	 * Should we check the value of flags to determine what to restore?
-	 * What to do with uc_link?
-	 * What to do with floating point stuff?
-	 * Should we bother with the rest of the registers that we
-	 * set to 0 right now?
 	 */
 
-	tf = (struct trapframe *)p->p_md.md_regs;
+	write_user_windows();
+	if (rwindow_save(p))
+		sigexit(p, SIGILL);
 
-	/*
-	 * Check for security violations.
-	 */
-	if (((r[SVR4_X86_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    ISPL(r[SVR4_X86_CS]) != SEL_UPL)
-		return (EINVAL);
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sigreturn: %s[%d], sigcntxp %x\n",
+		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
+#endif
+
+	if ((int)uc & 3 || useracc((caddr_t)uc, sizeof *uc, B_WRITE) == 0)
+		return EINVAL;
+
+	tf = (struct trapframe *)p->p_md.md_tf;
 
 	/*
 	 * restore signal stack
@@ -167,23 +166,54 @@ svr4_setcontext(p, uc)
 	/*
 	 * Restore register context.
 	 */
-	tf->tf_es = r[SVR4_X86_ES];
-	tf->tf_ds = r[SVR4_X86_DS];
-	tf->tf_edi = r[SVR4_X86_EDI];
-	tf->tf_esi = r[SVR4_X86_ESI];
-	tf->tf_ebp = r[SVR4_X86_EBP];
-	tf->tf_ebx = r[SVR4_X86_EBX];
-	tf->tf_edx = r[SVR4_X86_EDX];
-	tf->tf_ecx = r[SVR4_X86_ECX];
-	tf->tf_eax = r[SVR4_X86_EAX];
-	tf->tf_eip = r[SVR4_X86_EIP];
-	tf->tf_cs = r[SVR4_X86_CS];
-	tf->tf_eflags = r[SVR4_X86_EFL];
-	tf->tf_ss = r[SVR4_X86_SS];
-	tf->tf_esp = r[SVR4_X86_ESP];
+	/*
+	 * Only the icc bits in the psr are used, so it need not be
+	 * verified.  pc and npc must be multiples of 4.  This is all
+	 * that is required; if it holds, just do it.
+	 */
+	if (((r[SVR4_SPARC_PC] | r[SVR4_SPARC_nPC]) & 3) != 0)
+		return EINVAL;
+
+	/* take only psr ICC field */
+	tf->tf_psr = (tf->tf_psr & ~PSR_ICC) | (r[SVR4_SPARC_PSR] & PSR_ICC);
+	tf->tf_pc = r[SVR4_SPARC_PC];
+	tf->tf_npc = r[SVR4_SPARC_nPC];
+	tf->tf_y = r[SVR4_SPARC_Y];
+	tf->tf_out[0] = r[SVR4_SPARC_O0];
+	tf->tf_out[6] = r[SVR4_SPARC_O6];
+#if 0
+	/* I don't think that we need to restore those */
+	tf->tf_global[1] = r[SVR4_SPARC_G1];
+	tf->tf_global[2] = r[SVR4_SPARC_G2];
+	tf->tf_global[3] = r[SVR4_SPARC_G3];
+	tf->tf_global[4] = r[SVR4_SPARC_G4];
+	tf->tf_global[5] = r[SVR4_SPARC_G5];
+	tf->tf_global[6] = r[SVR4_SPARC_G6];
+	tf->tf_global[7] = r[SVR4_SPARC_G7];
+
+	tf->tf_out[1] = r[SVR4_SPARC_O1];
+	tf->tf_out[2] = r[SVR4_SPARC_O2];
+	tf->tf_out[3] = r[SVR4_SPARC_O3];
+	tf->tf_out[4] = r[SVR4_SPARC_O4];
+	tf->tf_out[5] = r[SVR4_SPARC_O5];
+	tf->tf_out[7] = r[SVR4_SPARC_O7];
+#endif
 
 	return EJUSTRETURN;
-#endif
+}
+
+static void
+svr4_getsiginfo(si, sig, code, addr)
+	union svr4_siginfo	*si;
+	int			 sig;
+	u_long			 code;
+	caddr_t			 addr;
+{
+	si->si_signo = bsd_to_svr4_signum(sig);
+	si->si_errno = 0;
+	si->si_addr  = addr;
+	si->si_code  = code;	/* XXX */
+	si->si_trap  = 1;	/* XXX */
 }
 
 
@@ -202,15 +232,17 @@ svr4_sendsig(catcher, sig, mask, code)
 	int sig, mask;
 	u_long code;
 {
-#ifdef notyet
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack;
-	extern char esigcode[], svr4_sigcode[];
+	int oonstack, oldsp, newsp, addr;
+	svr4_greg_t* r = frame.sf_uc.uc_mcontext.greg;
+	extern char svr4_sigcode[], svr4_esigcode[];
 
-	tf = (struct trapframe *)p->p_md.md_regs;
+
+	tf = (struct trapframe *)p->p_md.md_tf;
+	oldsp = tf->tf_out[6];
 	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 
 	/*
@@ -222,34 +254,36 @@ svr4_sendsig(catcher, sig, mask, code)
 		    psp->ps_sigstk.ss_size - sizeof(struct svr4_sigframe));
 		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else {
-		fp = (struct svr4_sigframe *)tf->tf_esp - 1;
+		fp = (struct svr4_sigframe *)oldsp;
 	}
 
 	/* 
 	 * Build the argument list for the signal handler.
-	 * Notes:
-	 * 	- we always build the whole argument list, even when we
-	 *	  don't need to [when SA_SIGINFO is not set, we don't need
-	 *	  to pass all sf_si and sf_uc]
-	 *	- we don't pass the correct signal address [we need to
-	 *	  modify many kernel files to enable that]
 	 */
-
+	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_pc);
 	svr4_getcontext(p, &frame.sf_uc, mask, oonstack);
-	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_eip);
-
 	frame.sf_signum = frame.sf_si.si_signo;
 	frame.sf_sip = &fp->sf_si;
 	frame.sf_ucp = &fp->sf_uc;
 	frame.sf_handler = catcher;
-	printf("sig = %d, sip %x, ucp = %x, handler = %x\n", 
-	       frame.sf_signum, frame.sf_sip, frame.sf_ucp, frame.sf_handler);
+	/*
+	 * Modify the signal context to be used by sigreturn.
+	 */
+	frame.sf_uc.uc_mcontext.greg[SVR4_SPARC_SP] = oldsp;
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	newsp = (int)fp - sizeof(struct rwindow);
+	write_user_windows();
+
+	if (rwindow_save(p) || copyout(&frame, fp, sizeof(frame)) != 0 ||
+	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
+#ifdef DEBUG
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("sendsig: window save or copyout error\n");
+#endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
@@ -257,19 +291,15 @@ svr4_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_esp = (int)fp;
-	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - svr4_sigcode));
-	tf->tf_eflags &= ~PSL_VM;
-	tf->tf_cs = _ucodesel;
-	tf->tf_ds = _udatasel;
-	tf->tf_es = _udatasel;
-	tf->tf_ss = _udatasel;
-#endif
+	addr = (int)PS_STRINGS - (svr4_esigcode - svr4_sigcode);
+	tf->tf_global[1] = (int) catcher;
+	tf->tf_pc = addr;
+	tf->tf_npc = addr + 4;
+	tf->tf_out[6] = newsp;
 }
 
 
 /*
- * syssparc
  */
 int
 svr4_sysarch(p, uap, retval)
@@ -277,86 +307,9 @@ svr4_sysarch(p, uap, retval)
 	struct svr4_sysarch_args *uap;
 	register_t *retval;
 {
-#ifdef notdef
-	caddr_t sg = stackgap_init();
-	int error;
-	*retval = 0;	/* XXX: What to do */
-
-	DPRINTF(("op %d, a1 %x\n", SCARG(uap, op), SCARG(uap, a1)));
-
 	switch (SCARG(uap, op)) {
-	case SVR4_SYSARCH_FPHW:
-		return 0;
-
-	case SVR4_SYSARCH_DSCR:
-#ifdef USER_LDT
-		{
-			struct i386_set_ldt_args {
-				int start;
-				union descriptor *desc;
-				int num;
-			} sa, *sap;
-
-			struct sysarch_args ua;
-
-			struct svr4_ssd ssd;
-			union descriptor bsd;
-
-
-			if ((error = copyin(SCARG(uap, a1), &ssd,
-					    sizeof(ssd))) != 0)
-				return error;
-
-			DPRINTF(("s=%x, b=%x, l=%x, a1=%x a2=%x\n",
-				 ssd.selector, ssd.base, ssd.limit,
-				 ssd.access1, ssd.access2));
-
-			/* We can only set ldt's for now. */
-			if (!ISLDT(ssd.selector))
-				return EPERM;
-
-			/* Oh, well we don't cleanup either */
-			if (ssd.access1 == 0)
-				return 0;
-
-			bsd.sd.sd_lobase = ssd.base & 0xffffff;
-			bsd.sd.sd_hibase = (ssd.base >> 24) & 0xff;
-
-			bsd.sd.sd_lolimit = ssd.limit & 0xffff;
-			bsd.sd.sd_hilimit = (ssd.limit >> 16) & 0xf;
-
-			bsd.sd.sd_type = ssd.access1 & 0x1f;
-			bsd.sd.sd_dpl =  (ssd.access1 >> 5) & 0x3;
-			bsd.sd.sd_p = (ssd.access1 >> 7) & 0x1;
-
-			bsd.sd.sd_xx = ssd.access2 & 0x3;
-			bsd.sd.sd_def32 = (ssd.access2 >> 2) & 0x1;
-			bsd.sd.sd_gran = (ssd.access2 >> 3)& 0x1;
-
-			sa.start = IDXSEL(ssd.selector);
-			sa.desc = stackgap_alloc(&sg, sizeof(union descriptor));
-			sa.num = 1;
-			sap = stackgap_alloc(&sg,
-					     sizeof(struct i386_set_ldt_args));
-
-			if ((error = copyout(&sa, sap, sizeof(sa))) != 0)
-				return error;
-
-			SCARG(&ua, op) = I386_SET_LDT;
-			SCARG(&ua, parms) = (char *) sap;
-
-			if ((error = copyout(&bsd, sa.desc, sizeof(bsd))) != 0)
-				return error;
-
-			error = sysarch(p, &ua, retval);
-			*retval = 0;
-			return error;
-		}
-#endif
-
 	default:
-		DPRINTF(("svr4_sysarch(%d)\n", SCARG(uap, op)));
-		return 0;
+		printf("svr4_sysarch(%d)\n", SCARG(uap, op));
+		return EINVAL;
 	}
-#endif
 }
