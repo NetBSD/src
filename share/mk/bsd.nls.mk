@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.19 1999/09/04 21:48:33 fredb Exp $
+#	$NetBSD: bsd.nls.mk,v 1.20 2000/01/22 19:31:02 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -34,7 +34,7 @@ NLSNAME=lib${LIB}
 
 .if defined(NLSALL)
 .if ${MKNLS} != "no"
-all: ${NLSALL}
+realall: ${NLSALL}
 .endif
 
 cleannls:
