@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.49 2001/05/31 21:56:23 tron Exp $
+# $NetBSD: obsolete.mi,v 1.50 2001/06/20 02:13:14 assar Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -527,6 +527,7 @@
 /usr/include/g++/typemacros.h
 /usr/include/g++/values.h
 /usr/include/history.h
+/usr/include/krb5/asn1.h
 /usr/include/krb5/kadm5_err.h
 /usr/include/netinet/if_arc.h
 /usr/include/netinet6/icmp6.h

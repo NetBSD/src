@@ -1,7 +1,7 @@
-# $NetBSD: shl.elf,v 1.45 2001/06/03 13:41:59 simonb Exp $
+# $NetBSD: shl.elf,v 1.46 2001/06/20 02:13:15 assar Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./usr/lib/libamu.so.2		base-amd-shlib
-./usr/lib/libasn1.so.5		base-krb5-shlib
+./usr/lib/libasn1.so.6		base-krb5-shlib
 ./usr/lib/libbz2.so.1		base-sys-shlib
 ./usr/lib/libc.so.12		base-sys-shlib
 ./usr/lib/libcdk.so.0		base-sys-shlib
@@ -24,7 +24,7 @@
 ./usr/lib/libkafs.so.5		base-krb5-shlib
 ./usr/lib/libkdb.so.5		base-krb4-shlib
 ./usr/lib/libkrb.so.5		base-krb4-shlib
-./usr/lib/libkrb5.so.16		base-krb5-shlib
+./usr/lib/libkrb5.so.17		base-krb5-shlib
 ./usr/lib/libkstream.so.2	base-krb4-shlib
 ./usr/lib/libkvm.so.5		base-sys-shlib
 ./usr/lib/libm.so.0		base-sys-shlib
