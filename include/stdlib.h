@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.26 1997/07/13 18:01:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -104,6 +104,7 @@ void	*malloc __P((size_t));
 void	 qsort __P((void *, size_t, size_t,
 	    int (*)(const void *, const void *)));
 int	 rand __P((void));
+int	 rand_r __P((unsigned int *));
 void	*realloc __P((void *, size_t));
 void	 srand __P((unsigned));
 double	 strtod __P((const char *, char **));
