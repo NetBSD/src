@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.82 1997/10/12 23:13:35 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.83 1997/10/13 08:35:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2136,6 +2136,7 @@ nfs_readdirrpc(vp, uiop, cred)
 			if (tlen == len)
 				tlen += 4;	/* To ensure null termination */
 			tlen += sizeof (off_t) + sizeof (int);
+			tlen = (int)ALIGN(tlen);
 			left = NFS_DIRFRAGSIZ - blksiz;
 			if ((tlen + DIRHDSIZ) > left) {
 				dp->d_reclen += left;
@@ -2144,7 +2145,6 @@ nfs_readdirrpc(vp, uiop, cred)
 				uiop->uio_resid -= left;
 				blksiz = 0;
 				NFS_STASHCOOKIE(dp, uiop->uio_offset);
-				NFS_MARKCACHED(dp, 0);
 			}
 			if ((tlen + DIRHDSIZ) > uiop->uio_resid)
 				bigenough = 0;
@@ -2190,7 +2190,6 @@ nfs_readdirrpc(vp, uiop, cred)
 					    fxdr_unsigned(off_t, *tl);
 				}
 				NFS_STASHCOOKIE(dp, uiop->uio_offset);
-				NFS_MARKCACHED(dp, 0);
 			}
 			if (v3)
 				tl += 2;
@@ -2215,7 +2214,6 @@ nfs_readdirrpc(vp, uiop, cred)
 		left = NFS_DIRFRAGSIZ - blksiz;
 		dp->d_reclen += left;
 		NFS_STASHCOOKIE(dp, uiop->uio_offset);
-		NFS_MARKCACHED(dp, 0);
 		uiop->uio_iov->iov_base += left;
 		uiop->uio_iov->iov_len -= left;
 		uiop->uio_resid -= left;
@@ -2312,6 +2310,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 			if (tlen == len)
 				tlen += 4;	/* To ensure null termination*/
 			tlen += sizeof (off_t) + sizeof (int);
+			tlen = (int)ALIGN(tlen);
 			left = NFS_DIRFRAGSIZ - blksiz;
 			if ((tlen + DIRHDSIZ) > left) {
 				dp->d_reclen += left;
@@ -2319,7 +2318,6 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				uiop->uio_iov->iov_len -= left;
 				uiop->uio_resid -= left;
 				NFS_STASHCOOKIE(dp, uiop->uio_offset);
-				NFS_MARKCACHED(dp, 0);
 				blksiz = 0;
 			}
 			if ((tlen + DIRHDSIZ) > uiop->uio_resid)
@@ -2356,7 +2354,6 @@ nfs_readdirplusrpc(vp, uiop, cred)
 					uiop->uio_offset =
 						fxdr_cookie3(tl);
 				NFS_STASHCOOKIE(dp, uiop->uio_offset);
-				NFS_MARKCACHED(dp, 0);
 			}
 			tl += 2;
 
@@ -2427,7 +2424,6 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		left = NFS_DIRFRAGSIZ - blksiz;
 		dp->d_reclen += left;
 		NFS_STASHCOOKIE(dp, uiop->uio_offset);
-		NFS_MARKCACHED(dp, 0);
 		uiop->uio_iov->iov_base += left;
 		uiop->uio_iov->iov_len -= left;
 		uiop->uio_resid -= left;
