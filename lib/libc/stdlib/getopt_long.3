@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt_long.3,v 1.12 2003/04/16 13:34:46 wiz Exp $
+.\"	$NetBSD: getopt_long.3,v 1.13 2003/05/29 17:48:49 kleink Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -154,12 +154,12 @@ static struct option longopts[] = {
 	{ "buffy",	no_argument,		0, 		'b' },
 	{ "floride",	required_argument,	0, 	       	'f' },
 	{ "daggerset",	no_argument,		\*[Am]daggerset,	1 },
-	{ 0, 		0,			0, 		0 }
+	{ NULL,		0,			NULL, 		0 }
 };
 
 bflag = 0;
 while ((ch = getopt_long(argc, argv, "bf:", longopts, NULL)) != -1)
-	switch(ch) {
+	switch (ch) {
 	case 'b':
 		bflag = 1;
 		break;
