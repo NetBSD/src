@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.584 2003/10/23 00:47:45 briggs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.585 2003/10/23 16:02:09 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.588 2003/10/23 00:46:56 briggs Exp 
+ *	NetBSD: pcidevs,v 1.589 2003/10/23 15:54:13 fvdl Exp 
  */
 
 /*
@@ -2294,6 +2294,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Broadcom Corporation",
 	    "BCM5705M 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705_ALT,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5705 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5782,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5782 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5901,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5901 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5901A2,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5901A 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
