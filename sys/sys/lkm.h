@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lkm.h,v 1.4 1994/05/05 09:43:58 mycroft Exp $
+ *	$Id: lkm.h,v 1.5 1994/06/08 11:38:41 mycroft Exp $
  */
 
 #ifndef _SYS_LKM_H_
@@ -80,7 +80,9 @@ struct lkm_vfs {
 	int	lkm_ver;
 	char	*lkm_name;
 	u_long	lkm_offset;
+#if 0
 	u_long	lkm_flags;
+#endif
 	struct vfsops	*lkm_vfsops;
 };
 
