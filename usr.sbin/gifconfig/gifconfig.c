@@ -1,3 +1,5 @@
+/*	$NetBSD: gifconfig.c,v 1.2 1999/07/06 13:21:12 itojun Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
