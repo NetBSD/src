@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.16 1997/04/13 13:45:02 mrg Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.17 1997/09/02 21:48:50 is Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$NetBSD: traceroute.c,v 1.16 1997/04/13 13:45:02 mrg Exp $";
+static char rcsid[] = "$NetBSD: traceroute.c,v 1.17 1997/09/02 21:48:50 is Exp $";
 #endif
 #endif /* not lint */
 
@@ -517,6 +517,8 @@ main(argc, argv)
 					if (ttl_flag)
 						Printf(" (ttl = %d)",
 						    ip->ip_ttl);
+					if (i == -1)
+						break;
 					switch(i - 1) {
 					case ICMP_UNREACH_PORT:
 #ifndef ARCHAIC
@@ -545,6 +547,14 @@ main(argc, argv)
 					case ICMP_UNREACH_SRCFAIL:
 						++unreachable;
 						Printf(" !S");
+						break;
+					case ICMP_UNREACH_ADMIN_PROHIBIT:
+						++unreachable;
+						Printf(" !A");
+						break;
+					default:
+						++unreachable;
+						printf(" !<%d>", i-1);
 						break;
 					}
 					break;
