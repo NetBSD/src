@@ -1,4 +1,4 @@
-.\" $NetBSD: greconfig.8,v 1.3 1998/10/31 13:07:02 hwr Exp $
+.\" $NetBSD: greconfig.8,v 1.4 1999/01/26 21:32:40 hwr Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,7 +78,6 @@ when IP packets are to be encapsulated.
 .It Fl p Ar proto
 Sets the way how packets are encapsulated. Currently supported values are:
 .Bl -tag -width aaa
-.It 4 IPIP encapsulation as described in RFC 2003
 .It 47 GRE encapsulation as described in RFC 1701,1702
 .It 55 MOBILE encapsulation as described in RFC 2004
 .El
@@ -107,8 +106,6 @@ as arguments to
 .Xr netintro 4
 .Pp
 A description of GRE encapsulation can be found in RFC 1701, RFC 1702.
-.Pp
-A description of IPIP encapsulation can be found in RFC 2003.
 .Pp
 A description of MOBILE encapsulation can be found in RFC 2004.
 
