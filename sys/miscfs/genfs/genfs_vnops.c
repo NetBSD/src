@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.19 2000/08/03 20:41:27 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.20 2000/09/19 22:01:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -79,6 +79,8 @@ genfs_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_flags;
+		off_t offlo;
+		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
