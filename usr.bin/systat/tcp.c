@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.1 1999/05/30 20:26:21 ad Exp $ */
+/*	$NetBSD: tcp.c,v 1.2 1999/07/30 16:08:59 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tcp.c,v 1.1 1999/05/30 20:26:21 ad Exp $");
+__RCSID("$NetBSD: tcp.c,v 1.2 1999/07/30 16:08:59 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -88,6 +88,7 @@ closetcp(w)
 void
 labeltcp(void)
 {
+
 	wmove(wnd, 0, 0); wclrtoeol(wnd);
 
 	LHD(0,  "connections initiated");		
@@ -211,6 +212,7 @@ showtcp(void)
 int
 inittcp(void)
 {
+
 	if (namelist[0].n_type == 0) {
 		if (kvm_nlist(kd, namelist)) {
 			nlisterr(namelist);
@@ -227,6 +229,7 @@ inittcp(void)
 void
 fetchtcp(void)
 {
+
 	oldstat = curstat;
 	KREAD((void *)namelist[0].n_value, &curstat, sizeof(curstat));
 }
