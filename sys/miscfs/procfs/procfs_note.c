@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_note.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_note.c,v 1.3 1994/05/04 03:42:19 cgd Exp $
+ *	$Id: procfs_note.c,v 1.4 1994/05/04 05:41:55 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -119,7 +119,7 @@ pfs_donote(curp, p, pfs, uio)
 			return 0;
 		sig = ffs((long)mask);
 		
-		if (error = pfs_readnote(sig, pfs, uio))
+		if (error = pfs_readnote(sig, uio))
 			return error;
 		
 		p->p_sig &= ~mask;
