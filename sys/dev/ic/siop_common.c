@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.23 2002/04/23 20:41:15 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.24 2002/04/25 20:05:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.23 2002/04/23 20:41:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.24 2002/04/25 20:05:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -687,19 +687,16 @@ siop_ioctl(chan, cmd, arg, flag, p)
 	struct proc *p;
 {
 	struct siop_common_softc *sc = (void *)chan->chan_adapter->adapt_dev;
-	u_int8_t scntl1;
-	int s;
 
 	switch (cmd) {
 	case SCBUSIORESET:
-		s = splbio();
-		scntl1 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1);
-		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1,
-		    scntl1 | SCNTL1_RST);
-		/* minimum 25 us, more time won't hurt */
-		delay(100);
-		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1, scntl1);
-		splx(s);
+		/*
+		 * abort the script. This will trigger an interrupt, which will
+		 * trigger a bus reset.
+		 * We can't safely trigger the reset here as we can't access
+		 * the required register while the script is running.
+		 */
+		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_ISTAT, ISTAT_ABRT);
 		return (0);
 	default:
 		return (ENOTTY);
