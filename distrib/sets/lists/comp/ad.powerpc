@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.10 2000/06/11 14:13:00 tsubai Exp $
+# $NetBSD: ad.powerpc,v 1.11 2000/06/26 15:49:43 kleink Exp $
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
 ./usr/include/powerpc/aout_machdep.h	comp-c-include
@@ -17,6 +17,7 @@
 ./usr/include/powerpc/hid_601.h	comp-c-include
 ./usr/include/powerpc/ieee.h	comp-c-include
 ./usr/include/powerpc/ieeefp.h	comp-c-include
+./usr/include/powerpc/int_types.h	comp-c-include
 ./usr/include/powerpc/ipkdb.h	comp-c-include
 ./usr/include/powerpc/kcore.h	comp-c-include
 ./usr/include/powerpc/limits.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.mvme68k,v 1.16 2000/04/29 03:46:29 thorpej Exp $
+# $NetBSD: md.mvme68k,v 1.17 2000/06/26 15:49:54 kleink Exp $
 ./usr/include/mvme68k	comp-c-include
 ./usr/include/mvme68k/_G_config.h	comp-c-include
 ./usr/include/mvme68k/ansi.h	comp-c-include
@@ -17,6 +17,7 @@
 ./usr/include/mvme68k/frame.h	comp-c-include
 ./usr/include/mvme68k/ieee.h	comp-c-include
 ./usr/include/mvme68k/ieeefp.h	comp-c-include
+./usr/include/mvme68k/int_types.h	comp-c-include
 ./usr/include/mvme68k/intr.h	comp-c-include
 ./usr/include/mvme68k/kcore.h	comp-c-include
 ./usr/include/mvme68k/limits.h	comp-c-include
