@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.24 1996/01/15 21:53:50 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.25 1996/01/28 19:48:39 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -360,7 +360,7 @@ fdattach(pdp, dp, auxp)
 	/*
 	 * enable disk related interrupts
 	 */
-	custom.dmacon = DMAF_SETCLR | DMAF_DISK;
+	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_DISK;
 	/* XXX why softint */
 	custom.intena = INTF_SETCLR |INTF_SOFTINT | INTF_DSKBLK;
 	ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_FLG;
