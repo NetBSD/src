@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.22 2000/02/02 16:04:42 itojun Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.23 2000/02/03 16:20:49 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -937,19 +937,9 @@ smc91cxx_read(sc)
 	 */
 	if ((ifp->if_flags & IFF_PROMISC) != 0) {
 		/*
-		 * Drop multicast/broadcast packet looped back from myself.
+		 * Drop packet looped back from myself.
 		 */
-		if ((eh->ether_dhost[0] & 1) == 1 &&	/* mcast || bcast */
-		    ether_cmp(eh->ether_shost, LLADDR(ifp->if_sadl)) == 0) {
-			m_freem(m);
-			goto out;
-		}
-
-		/*
-		 * If this is unicast and not for me, drop it.
-		 */
-		if ((eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
-		    ether_cmp(eh->ether_dhost, LLADDR(ifp->if_sadl)) != 0) {
+		if (ether_cmp(eh->ether_shost, LLADDR(ifp->if_sadl)) == 0) {
 			m_freem(m);
 			goto out;
 		}
@@ -962,6 +952,15 @@ smc91cxx_read(sc)
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
+
+	/*
+	 * If this is unicast and not for me, drop it.
+	 */
+	if ((eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
+	    ether_cmp(eh->ether_dhost, LLADDR(ifp->if_sadl)) != 0) {
+		m_freem(m);
+		goto out;
+	}
 
 	m->m_pkthdr.len = m->m_len = packetlen;
 	(*ifp->if_input)(ifp, m);
