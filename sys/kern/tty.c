@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.96 1997/06/20 10:50:11 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.97 1997/10/09 12:49:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -2073,7 +2073,7 @@ ttysleep(tp, chan, pri, wmesg, timo)
 	struct tty *tp;
 	void *chan;
 	int pri, timo;
-	char *wmesg;
+	const char *wmesg;
 {
 	int error;
 	short gen;
