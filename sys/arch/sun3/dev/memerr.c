@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.7 1996/12/17 21:10:50 gwr Exp $ */
+/*	$NetBSD: memerr.c,v 1.8 1997/04/28 21:59:22 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,7 +99,11 @@ memerr_match(parent, cf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	/* The peek returns -1 on bus error. */
+	/* We use obio_mapin(), so require OBIO. */
+	if (ca->ca_bustype != BUS_OBIO)
+		return (0);
+
+	/* Make sure there is something there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
 
@@ -140,7 +144,7 @@ memerr_attach(parent, self, args)
 	printf(": (%s memory)\n", sc->sc_typename);
 
 	mer = (struct memerr *)
-	    obio_alloc(ca->ca_paddr, sizeof(*mer));
+	    obio_mapin(ca->ca_paddr, sizeof(*mer));
 	if (mer == NULL)
 		panic("memerr: can not map register");
 	sc->sc_reg = mer;
