@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.5 1994/06/29 06:40:26 cgd Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.6 1995/03/08 02:16:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -636,7 +636,7 @@ register struct tp_pcb *tpcb;
  */
 tp_attach(so, protocol)
 	struct socket 			*so;
-	int 					protocol;
+	long				protocol;
 {
 	register struct tp_pcb	*tpcb;
 	int 					error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.5 1994/06/29 06:39:25 cgd Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.6 1995/03/08 02:16:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -268,7 +268,7 @@ cltp_usrreq(so, req, m, nam, control)
 	int s, error = 0;
 
 	if (req == PRU_CONTROL)
-		return (iso_control(so, (int)m, (caddr_t)nam,
+		return (iso_control(so, (long)m, (caddr_t)nam,
 			(struct ifnet *)control));
 	if ((isop == NULL && req != PRU_ATTACH) ||
 	    (control && control->m_len)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_errno.h,v 1.5 1994/06/29 06:39:44 cgd Exp $	*/
+/*	$NetBSD: iso_errno.h,v 1.6 1995/03/08 02:16:13 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -112,7 +112,9 @@ SOFTWARE.
 /*                                                                            */
 /******************************************************************************/
 
+#ifdef notdef	/* This doesn't look like legal C to me or the compiler. */
 #define E_CLNL_???	(CLNL_ERROR_MASK | 0x1)	 /* explanation */
+#endif
 
 /******************************************************************************/
 /*                                                                            */
