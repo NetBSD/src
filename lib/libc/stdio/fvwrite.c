@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.9 1998/08/28 21:33:11 perry Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.10 1998/10/15 07:10:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.9 1998/08/28 21:33:11 perry Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.10 1998/10/15 07:10:38 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -122,18 +122,20 @@ __sfvwrite(fp, uio)
 			    (__SALC | __SSTR) && fp->_w < len) {
 				size_t blen = fp->_p - fp->_bf._base;
 				unsigned char *_base;
+				int _size;
 
-				/*
-				 * Alloc an extra 128 bytes (+ 1 for NULL)
-				 * so we don't call realloc(3) so often.
-				 */
-				fp->_w = len + 128;
-				fp->_bf._size = blen + len + 128;
-				_base = realloc(fp->_bf._base, fp->_bf._size + 1);
+				/* Allocate space exponentially. */
+				_size = fp->_bf._size;
+				do {
+					_size = (_size << 1) + 1;
+				} while (_size < blen + len);
+				_base = realloc(fp->_bf._base, _size + 1);
 				if (_base == NULL)
 					goto err;
+				fp->_w += _size - fp->_bf._size;
 				fp->_bf._base = _base;
-				fp->_p = fp->_bf._base + blen;
+				fp->_bf._size = _size;
+				fp->_p = _base + blen;
 			}
 			w = fp->_w;
 			if (fp->_flags & __SSTR) {
