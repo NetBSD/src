@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.65 2003/08/22 00:46:25 petrov Exp $	*/
+/*	$NetBSD: psycho.c,v 1.66 2003/08/27 15:59:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.65 2003/08/22 00:46:25 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.66 2003/08/27 15:59:54 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -717,7 +717,7 @@ psycho_alloc_extent(pp, node, ss, name)
 	bsize = BUS_ADDR(pr->size_hi, pr->size_lo);
 
 	/* get available lists */
-	if (PROM_getprop(node, "available", sizeof(*pa), &num, (void *)&pa)) {
+	if (PROM_getprop(node, "available", sizeof(*pa), &num, &pa)) {
 		printf("psycho_alloc_extent: PROM_getprop failed\n");
 		return NULL;
 	}
@@ -778,7 +778,7 @@ psycho_get_bus_range(node, brp)
 {
 	int n;
 
-	if (PROM_getprop(node, "bus-range", sizeof(*brp), &n, (void *)&brp))
+	if (PROM_getprop(node, "bus-range", sizeof(*brp), &n, &brp))
 		panic("could not get psycho bus-range");
 	if (n != 2)
 		panic("broken psycho bus-range");
@@ -792,7 +792,7 @@ psycho_get_ranges(node, rp, np)
 	int *np;
 {
 
-	if (PROM_getprop(node, "ranges", sizeof(**rp), np, (void **)rp))
+	if (PROM_getprop(node, "ranges", sizeof(**rp), np, rp))
 		panic("could not get psycho ranges");
 	DPRINTF(PDB_PROM, ("psycho debug: got `ranges' for node %08x: %d entries\n", node, *np));
 }
@@ -949,7 +949,7 @@ psycho_iommu_init(sc, tsbsize)
 	 * `#virtual-dma-addr-cells' and DTRT, but I'm lazy.
 	 */
 	if (!PROM_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
-		(void *)&vdma)) {
+		&vdma)) {
 		/* Damn.  Gotta use these values. */
 		iobase = vdma[0];
 #define	TSBCASE(x)	case 1<<((x)+23): tsbsize = (x); break

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.47 2003/08/01 12:19:50 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.48 2003/08/27 15:59:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.47 2003/08/01 12:19:50 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.48 2003/08/27 15:59:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -464,7 +464,7 @@ vmeattach_iommu(parent, self, aux)
 	 * Get "range" property.
 	 */
 	if (PROM_getprop(node, "ranges", sizeof(struct rom_range),
-		    &sc->sc_nrange, (void **)&sc->sc_range) != 0) {
+		    &sc->sc_nrange, &sc->sc_range) != 0) {
 		panic("%s: can't get ranges property", self->dv_xname);
 	}
 
@@ -932,6 +932,7 @@ sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	bus_addr_t dva;
 	bus_size_t sgsize;
+	u_long ldva;
 	vaddr_t va, voff;
 	pmap_t pmap;
 	int pagesz = PAGE_SIZE;
@@ -953,9 +954,10 @@ sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 			     (flags & BUS_DMA_NOWAIT) == 0
 					? EX_WAITOK
 					: EX_NOWAIT,
-			     (u_long *)&dva);
+			     &ldva);
 	if (error != 0)
 		return (error);
+	dva = (bus_addr_t)ldva;
 
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;

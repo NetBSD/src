@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.12 2003/07/15 00:04:58 lukem Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.13 2003/08/27 15:59:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.12 2003/07/15 00:04:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.13 2003/08/27 15:59:50 mrg Exp $");
 
 #include "opt_kgdb.h"
 
@@ -384,7 +384,7 @@ findzs(zs)
 			vaddrs = vstore;
 			nvaddrs = sizeof(vstore)/sizeof(vstore[0]);
 			if (PROM_getprop(node, "address", sizeof(int),
-				    &nvaddrs, (void **)&vaddrs) != 0)
+				    &nvaddrs, &vaddrs) != 0)
 				return (NULL);
 
 			return ((void *)vaddrs[0]);

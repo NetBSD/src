@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.26 2002/12/10 13:44:48 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.27 2003/08/27 15:59:49 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.26 2002/12/10 13:44:48 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.27 2003/08/27 15:59:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ qecattach(parent, self, aux)
 	 * Collect address translations from the OBP.
 	 */
 	error = PROM_getprop(node, "ranges", sizeof(struct openprom_range),
-			 &sc->sc_nrange, (void **)&sc->sc_range);
+			 &sc->sc_nrange, &sc->sc_range);
 	switch (error) {
 	case 0:
 		break;
