@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.62 2003/02/25 13:37:00 wiz Exp $	*/
+/*	$NetBSD: options.c,v 1.63 2003/03/31 20:10:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.62 2003/02/25 13:37:00 wiz Exp $");
+__RCSID("$NetBSD: options.c,v 1.63 2003/03/31 20:10:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,7 +229,7 @@ pax_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getopt_long(argc, argv,
-	    "ab:cdf:iklno:p:rs:tuvwx:zAB:DE:G:HLMN:OPT:U:XYZ",
+	    "ab:cdf:ijklno:p:rs:tuvwx:zAB:DE:G:HLMN:OPT:U:XYZ",
 	    pax_longopts, NULL)) != -1) {
 		switch (c) {
 		case 'a':
@@ -275,6 +275,13 @@ pax_options(int argc, char **argv)
 			 */
 			iflag = 1;
 			flg |= IF;
+			break;
+		case 'j':
+			/*
+			 * pass through bzip2
+			 */
+			jflag = 1;
+			gzip_program = BZIP2_CMD;
 			break;
 		case 'k':
 			/*
@@ -1930,20 +1937,20 @@ void
 pax_usage(void)
 {
 	fprintf(stderr,
-"Usage: pax [-cdnvzO] [-E limit] [-f archive] [-N dbdir] [-s replstr] ...\n"
+"Usage: pax [-cdjnvzO] [-E limit] [-f archive] [-N dbdir] [-s replstr] ...\n"
 "           [-U user] ... [-G group] ... [-T [from_date][,to_date]] ...\n"
 "           [pattern ...]\n");
 	fprintf(stderr,
-"       pax -r [-cdiknuvzADOYZ] [-E limit] [-f archive] [-N dbdir]\n"
+"       pax -r [-cdijknuvzADOYZ] [-E limit] [-f archive] [-N dbdir]\n"
 "           [-o options] ... [-p string] ... [-s replstr] ... [-U user] ...\n"
 "           [-G group] ... [-T [from_date][,to_date]] ... [pattern ...]\n");
 	fprintf(stderr,
-"       pax -w [-dituvzAHLMOPX] [-b blocksize] [[-a] [-f archive]] [-x format]\n"
+"       pax -w [-dijtuvzAHLMOPX] [-b blocksize] [[-a] [-f archive]] [-x format]\n"
 "           [-B bytes] [-N dbdir] [-o options] ... [-s replstr] ...\n"
 "           [-U user] ... [-G group] ...\n"
 "           [-T [from_date][,to_date][/[c][m]]] ... [file ...]\n");
 	fprintf(stderr,
-"       pax -r -w [-diklntuvzADHLMOPXYZ] [-N dbdir] [-p string] ...\n"
+"       pax -r -w [-dijklntuvzADHLMOPXYZ] [-N dbdir] [-p string] ...\n"
 "           [-s replstr] ... [-U user] ... [-G group] ...\n"
 "           [-T [from_date][,to_date][/[c][m]]] ... [file ...] directory\n");
 	exit(1);
