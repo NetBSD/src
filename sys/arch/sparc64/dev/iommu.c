@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.74 2004/06/03 06:17:05 petrov Exp $	*/
+/*	$NetBSD: iommu.c,v 1.75 2004/07/01 06:40:36 petrov Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.74 2004/06/03 06:17:05 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.75 2004/07/01 06:40:36 petrov Exp $");
 
 #include "opt_ddb.h"
 
@@ -684,7 +684,7 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 		left -= segs[i].ds_len;
 		pa = segs[i].ds_addr + segs[i].ds_len;
 	}
-	sgsize = round_page(sgsize);
+	sgsize = round_page(sgsize) + PAGE_SIZE; /* XXX reserve extra dvma page */
 
 	s = splhigh();
 	/*
