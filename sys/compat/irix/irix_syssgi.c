@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.28 2002/06/12 20:33:20 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.29 2002/09/21 21:14:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.28 2002/06/12 20:33:20 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.29 2002/09/21 21:14:57 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.28 2002/06/12 20:33:20 manu Exp $"
 
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
+#include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_prctl.h>
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
@@ -392,8 +393,8 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 				   
 				vcp->ev_addr += base_vcp->ev_addr;
 			}
-			/* Eventually do it for a whole share group */
-			if ((error = irix_sync_saddr_vmcmd(p, vcp)) != 0)
+			IRIX_VM_SYNC(p, error = (*vcp->ev_proc)(p, vcp));
+			if (error)
 				goto bad;
 		}
 		pht++;
