@@ -1,10 +1,13 @@
-#	$NetBSD: bsd.own.mk,v 1.16 1995/04/21 02:56:24 cgd Exp $
+#	$NetBSD: bsd.own.mk,v 1.17 1995/06/02 02:52:04 brezak Exp $
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
 SKEY=		yes
 # Defining `KERBEROS' causes support for Kerberos authentication to be
 # compiled in.
 #KERBEROS=	yes
+# Defining 'KERBEROS5' causes support for Kerberos5 authentication to be
+# compiled in.
+#KERBEROS5=	yes
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
@@ -15,6 +18,9 @@ BINGRP?=	bin
 BINOWN?=	bin
 BINMODE?=	555
 NONBINMODE?=	444
+
+# Define MANZ to have the man pages compressed (gzip)
+#MANZ=		1
 
 MANDIR?=	/usr/share/man/cat
 MANGRP?=	bin

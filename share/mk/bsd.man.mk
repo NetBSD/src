@@ -1,5 +1,7 @@
-#	$NetBSD: bsd.man.mk,v 1.18 1994/12/28 21:46:29 mycroft Exp $
+#	$NetBSD: bsd.man.mk,v 1.19 1995/06/02 02:52:07 brezak Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
+
+MANTARGET?=	cat
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -21,6 +23,7 @@ MANALL=	${MAN:S/.1$/.cat1/g:S/.2$/.cat2/g:S/.3$/.cat3/g:S/.4$/.cat4/g:S/.5$/.cat
 .endif
 
 MINSTALL=	install ${COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE}
+MCOMPRESS=	gzip -f
 
 maninstall:
 .if defined(MANALL)
@@ -30,6 +33,14 @@ maninstall:
 		echo ${MINSTALL} $$page $$instpage; \
 		${MINSTALL} $$page $$instpage; \
 	done
+.if defined(MANZ)
+	@for page in ${MANALL}; do \
+		dir=${DESTDIR}${MANDIR}`expr $$page : '.*\.cat\([1-8]\)'`; \
+		instpage=$${dir}${MANSUBDIR}/`expr $$page : '\(.*\)\.cat[1-8]'`.0; \
+		echo "compressing $$instpage"; \
+		${MCOMPRESS} $$instpage; \
+	done
+.endif
 .endif
 .if defined(MLINKS) && !empty(MLINKS)
 	@set ${MLINKS}; \
@@ -37,11 +48,12 @@ maninstall:
 		name=$$1; \
 		shift; \
 		dir=${DESTDIR}${MANDIR}`expr $$name : '.*\.\(.*\)'`; \
-		l=$${dir}${MANSUBDIR}/`expr $$name : '\(.*\)\..*'`.0; \
+		l=$${dir}${MANSUBDIR}/`expr $$name : '\(.*\)\..*'`.0*; \
+		z=`expr $$l : '.*0\.\(.*\)'`; \
 		name=$$1; \
 		shift; \
 		dir=${DESTDIR}${MANDIR}`expr $$name : '.*\.\(.*\)'`; \
-		t=$${dir}${MANSUBDIR}/`expr $$name : '\(.*\)\..*'`.0; \
+		t=$${dir}${MANSUBDIR}/`expr $$name : '\(.*\)\..*'`.0$${z:+.}$${z}; \
 		echo $$t -\> $$l; \
 		rm -f $$t; \
 		ln $$l $$t; \
