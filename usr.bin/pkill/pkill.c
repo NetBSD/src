@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.6 2004/01/06 07:35:58 itojun Exp $	*/
+/*	$NetBSD: pkill.c,v 1.7 2004/02/15 17:03:30 soren Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.6 2004/01/06 07:35:58 itojun Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.7 2004/02/15 17:03:30 soren Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -411,8 +411,10 @@ usage(void)
 	else
 		ustr = "[-signal] [-fnvx]";
 
-	fprintf(stderr, "usage: %s %s [-G gid] [-P ppid] [-U uid] [-g pgrp] "
-	    "[-s sid] [-t tty] [-u euid] pattern ...\n", getprogname(), ustr);
+	fprintf(stderr,
+		"usage: %s %s [-G gid] [-P ppid] [-U uid] [-g pgrp] [-s sid]\n"
+		"             [-t tty] [-u euid] pattern ...\n", getprogname(),
+		ustr);
 
 	exit(STATUS_ERROR);
 }
