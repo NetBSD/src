@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.30 1997/03/26 01:46:49 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.31 1997/03/27 22:50:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.30 1997/03/26 01:46:49 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.31 1997/03/27 22:50:12 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ int	clearaddr, s;
 int	newaddr = 1;
 int	nsellength = 1;
 int	af;
-int	mflag;
+int	mflag, lflag;
 
 void 	notealias __P((char *, int));
 void 	notrailers __P((char *, int));
@@ -240,10 +240,14 @@ main(argc, argv)
 
 	/* Parse command-line options */
 	aflag = mflag = 0;
-	while ((ch = getopt(argc, argv, "am")) != -1) {
+	while ((ch = getopt(argc, argv, "alm")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag = 1;
+			break;
+
+		case 'l':
+			lflag = 1;
 			break;
 
 		case 'm':
@@ -258,8 +262,15 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	/* -a means print all interfaces */
-	if (aflag) {
+	/*
+	 * -l means "list all interfaces", and is mutally exclusive with
+	 * all other flags/commands.
+	 *
+	 * -a means "print status of all interfaces".
+	 */
+	if (lflag && (aflag || mflag || argc))
+		usage();
+	if (aflag || lflag) {
 		if (argc > 1)
 			usage();
 		else if (argc == 1) {
@@ -419,7 +430,7 @@ printall()
 	const struct sockaddr_dl *sdl = NULL;
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
-	int i;
+	int i, idx;
 
 	ifc.ifc_len = sizeof(inbuf);
 	ifc.ifc_buf = inbuf;
@@ -430,7 +441,7 @@ printall()
 		err(1, "SIOCGIFCONF");
 	ifr = ifc.ifc_req;
 	ifreq.ifr_name[0] = '\0';
-	for (i = 0; i < ifc.ifc_len; ) {
+	for (i = 0, idx = 0; i < ifc.ifc_len; idx++) {
 		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
 		i += sizeof(ifr->ifr_name) +
 			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
@@ -443,6 +454,17 @@ printall()
 			continue;
 		strncpy(name, ifr->ifr_name, sizeof(ifr->ifr_name));
 		ifreq = *ifr;
+
+		/*
+		 * Are we just listing the interfaces?
+		 */
+		if (lflag) {
+			if (idx)
+				putchar(' ');
+			printf(name);
+			continue;
+		}
+
 		if (getinfo(&ifreq) < 0)
 			continue;
 		if (sdl == NULL) {
@@ -452,6 +474,8 @@ printall()
 			sdl = NULL;
 		}
 	}
+	if (lflag)
+		putchar('\n');
 }
 
 #define RIDADDR 0
@@ -1319,7 +1343,8 @@ adjust_nsellength()
 void
 usage()
 {
-	fprintf(stderr, "usage: ifconfig [ -m ] interface\n%s%s%s%s%s%s%s%s%s",
+	fprintf(stderr,
+	    "usage: ifconfig [ -m ] interface\n%s%s%s%s%s%s%s%s%s%s",
 		"\t[ af [ address [ dest_addr ] ] [ up ] [ down ] ",
 		"[ netmask mask ] ]\n",
 		"\t[ metric n ]\n",
@@ -1328,6 +1353,7 @@ usage()
 		"\t[ mediaopt mopts ]\n",
 		"\t[ -mediaopt mopts ]\n",
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n",
-		"       ifconfig -a [ -m ] [ af ]\n");
+		"       ifconfig -a [ -m ] [ af ]\n",
+		"       ifconfig -l\n");
 	exit(1);
 }
