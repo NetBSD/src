@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 1999/07/28 01:17:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77 1999/07/28 05:37:54 thorpej Exp $	*/
 
 /*
  *
@@ -392,11 +392,11 @@ extern vaddr_t pentium_idt_vaddr;
 
 static struct pv_entry	*pmap_add_pvpage __P((struct pv_page *, boolean_t));
 static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, int, boolean_t));
-static struct pv_entry	*pmap_alloc_pv __P((int)); /* see codes below */
+static struct pv_entry	*pmap_alloc_pv __P((struct pmap *, int)); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
 #define ALLOCPV_TRY	1	/* just try to allocate, don't steal */
 #define ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
-static struct pv_entry	*pmap_alloc_pvpage __P((int));
+static struct pv_entry	*pmap_alloc_pvpage __P((struct pmap *, int));
 static void		 pmap_enter_pv __P((struct pv_head *,
 					    struct pv_entry *, struct pmap *,
 					    vaddr_t, struct vm_page *));
@@ -432,6 +432,8 @@ static boolean_t	 pmap_try_steal_pv __P((struct pv_head *,
 						struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
 
+void			pmap_kenter_pa0 __P((vaddr_t, paddr_t, vm_prot_t,
+					     boolean_t));
 void			pmap_pinit __P((pmap_t));
 void			pmap_release __P((pmap_t));
 
@@ -605,16 +607,31 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
+
+	pmap_kenter_pa0(va, pa, prot, FALSE);
+}
+
+void
+pmap_kenter_pa0(va, pa, prot, islocked)
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+	boolean_t islocked;
+{
 	struct pmap *pm = pmap_kernel();
 	pt_entry_t *pte, opte;
 	int s;
 
-	s = splimp();
-	simple_lock(&pm->pm_obj.vmobjlock);
+	if (islocked == FALSE) {
+		s = splimp();
+		simple_lock(&pm->pm_obj.vmobjlock);
+	}
 	pm->pm_stats.resident_count++;
 	pm->pm_stats.wired_count++;
-	simple_unlock(&pm->pm_obj.vmobjlock);
-	splx(s);
+	if (islocked == FALSE) {
+		simple_unlock(&pm->pm_obj.vmobjlock);
+		splx(s);
+	}
 
 	pte = vtopte(va);
 	opte = *pte;
@@ -1071,7 +1088,8 @@ pmap_init()
  */
 
 __inline static struct pv_entry *
-pmap_alloc_pv(mode)
+pmap_alloc_pv(pmap, mode)
+	struct pmap *pmap;
 	int mode;
 {
 	struct pv_page *pvpage;
@@ -1104,10 +1122,10 @@ pmap_alloc_pv(mode)
 
 	if (pv_nfpvents < PVE_LOWAT || pv == NULL) {
 		if (pv == NULL)
-			pv = pmap_alloc_pvpage((mode == ALLOCPV_TRY) ?
+			pv = pmap_alloc_pvpage(pmap, (mode == ALLOCPV_TRY) ?
 					       mode : ALLOCPV_NEED);
 		else
-			(void) pmap_alloc_pvpage(ALLOCPV_NONEED);
+			(void) pmap_alloc_pvpage(pmap, ALLOCPV_NONEED);
 	}
 
 	simple_unlock(&pvalloc_lock);
@@ -1127,7 +1145,8 @@ pmap_alloc_pv(mode)
  */
 
 static struct pv_entry *
-pmap_alloc_pvpage(mode)
+pmap_alloc_pvpage(pmap, mode)
+	struct pmap *pmap;
 	int mode;
 {
 	struct vm_page *pg;
@@ -1199,9 +1218,13 @@ pmap_alloc_pvpage(mode)
 
 	/*
 	 * add a mapping for our new pv_page and free its entrys (save one!)
+	 *
+	 * NOTE: If we are allocating a PV page for the kernel pmap, the
+	 * pmap is already locked!  (...but entering the mapping is safe...)
 	 */
 
-	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
+	pmap_kenter_pa0(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL,
+	    (pmap == pmap_kernel()) ? TRUE : FALSE);
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = NULL;
 	return(pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
@@ -3277,7 +3300,7 @@ pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
 		 */
 
 		if (move == FALSE) {
-			pve = pmap_alloc_pv(ALLOCPV_TRY);
+			pve = pmap_alloc_pv(dstpmap, ALLOCPV_TRY);
 			if (pve == NULL)
 				return(FALSE); 		/* punt! */
 		} else {
@@ -3526,7 +3549,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	if (pmap_initialized && bank != -1) {
 		pvh = &vm_physmem[bank].pmseg.pvhead[off];
 		if (pve == NULL)
-			pve = pmap_alloc_pv(ALLOCPV_NEED);
+			pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
 		/* lock pvh when adding */
 		pmap_enter_pv(pvh, pve, pmap, va, ptp);
 	} else {
