@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.82 1998/02/22 15:13:36 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.83 1998/02/22 15:25:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5040,7 +5040,7 @@ ENTRY(qzero)
 	nop
 
 /*
- * kernel bcopy/memcpy
+ * kernel bcopy
  * Assumes regions do not overlap; has no useful return value.
  *
  * Must not use %g7 (see copyin/copyout above).
@@ -5048,14 +5048,6 @@ ENTRY(qzero)
 
 #define	BCOPY_SMALL	32	/* if < 32, copy by bytes */
 
-ENTRY(memcpy)
-	/*
-	 * Swap args for bcopy.  Gcc generates calls to memcpy for
-	 * structure assignments.
-	 */
-	mov	%o0, %o3
-	mov	%o1, %o0
-	mov	%o3, %o1
 ENTRY(bcopy)
 	cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
