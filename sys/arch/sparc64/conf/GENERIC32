@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.59 2003/02/27 19:22:47 perseant Exp $
+# 	$NetBSD: GENERIC32,v 1.60 2003/03/22 06:39:43 nakayama Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.59 $"
+#ident 		"GENERIC-$Revision: 1.60 $"
 
 maxusers	64
 
@@ -537,6 +537,73 @@ pseudo-device	ipfilter
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+
+
+#### CardBus and PCMCIA devices
+
+# PCI CardBus bridge support
+#cbb*	at pci? dev ? function ?
+#cardslot* at cbb?
+
+# CardBus bus support
+#cardbus* at cardslot?
+#pcmcia* at cardslot?
+
+## CardBus cards; UT marks untested.
+
+# CardBus serial interfaces
+#com*	at cardbus? dev ? function ?	# Modems and serial cards UT
+
+# CardBus SCSI controllers
+#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
+#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480 UT
+
+# CardBus network interfaces
+#ex*	at cardbus? dev ? function ?	# 3Com 3C575TX UT
+#fxp*	at cardbus? dev ? function ?	# Intel i8255x UT
+#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139 UT
+#tlp*	at cardbus? dev ? function ?	# DECchip 21143 UT
+
+# CardBus USB controllers
+#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
+#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+
+# CardBus IEEE1394 controllers
+#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller UT
+
+## PCMCIA cards; UT marks untested.
+
+# PCMCIA serial interfaces
+#com*	at pcmcia? function ?		# Modems and serial cards
+
+#pcmcom* at pcmcia? function ?		# PCMCIA multi-port serial cards UT
+#com*	at pcmcom? slave ?		# ...and the slave devices
+
+# PCMCIA SCSI controllers
+#aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI UT
+#esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI UT
+
+# PCMCIA IDE controllers
+#wdc*	at pcmcia? function ?
+#wd*	at wdc? channel ? drive ? flags 0x0000
+
+# PCMCIA network interfaces
+#an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11) UT
+#awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS) UT
+#cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer UT
+#ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+#mbe*	at pcmcia? function ?		# MB8696x based Ethernet UT
+#ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+#ray*	at pcmcia? function ?		# Raytheon Raylink (802.11) UT
+#sm*	at pcmcia? function ?		# Megahertz Ethernet UT
+# tr at pcmcia has problems with Cardbus bridges
+#tr*	at pcmcia? function ?		# TROPIC based Token-Ring UT
+#wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
+#xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet UT
+
+#mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
+#com*	at mhzc?
+#sm*	at mhzc?
 
 
 #### Audio and video devices
