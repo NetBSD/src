@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.8 1997/07/18 03:38:33 jtk Exp $	*/
+/*	$NetBSD: dio.c,v 1.9 1997/10/01 16:28:22 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
