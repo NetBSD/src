@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.16 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.17 2004/09/14 20:20:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.16 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.17 2004/09/14 20:20:47 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,15 +467,15 @@ ef_match(parent, cf, aux)
 		if (bus->isa_cards[idx].available != 1)
 			continue;
 
-		if (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+		if (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 		    ia->ia_io[0].ir_addr != bus->isa_cards[idx].iobase)
 			continue;
 
-		if (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+		if (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM &&
 		    ia->ia_iomem[0].ir_addr != bus->isa_cards[idx].maddr)
 			continue;
 
-		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 		    ia->ia_irq[0].ir_irq != bus->isa_cards[idx].irq)
 			continue;
 

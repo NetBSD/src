@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.16 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: ega.c,v 1.17 2004/09/14 20:20:46 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.16 2004/03/24 17:26:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.17 2004/09/14 20:20:46 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,17 +465,17 @@ ega_match(parent, match, aux)
 		return (0);
 
 	/* If values are hardwired to something that they can't be, punt. */
-	if ((ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	if ((ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 	     ia->ia_io[0].ir_addr != 0x3d0 &&
 	     ia->ia_io[0].ir_addr != 0x3b0) ||
 	    /* ia->ia_io[0].ir_size != 0 || XXX isa.c */
-	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+	    (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM &&
 	     ia->ia_iomem[0].ir_addr != 0xb8000 &&
 	     ia->ia_iomem[0].ir_addr != 0xb0000) ||
 	    (ia->ia_iomem[0].ir_size != 0 &&
 	     ia->ia_iomem[0].ir_size != 0x8000) ||
-	    ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT ||
-	    ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT)
+	    ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ ||
+	    ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ)
 		return (0);
 
 	if (ega_is_console(ia->ia_iot))

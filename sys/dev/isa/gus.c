@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.83 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: gus.c,v 1.84 2004/09/14 20:20:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.83 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.84 2004/09/14 20:20:47 drochner Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -451,13 +451,11 @@ CFATTACH_DECL(gus, sizeof(struct gus_softc),
  */
 
 static const int gus_irq_map[] = {
-	ISACF_IRQ_DEFAULT, ISACF_IRQ_DEFAULT, 1, 3, ISACF_IRQ_DEFAULT, 2,
-	ISACF_IRQ_DEFAULT, 4, ISACF_IRQ_DEFAULT, 1, ISACF_IRQ_DEFAULT, 5,
-	6, ISACF_IRQ_DEFAULT, ISACF_IRQ_DEFAULT, 7
+	-1, -1, 1, 3, -1, 2, -1, 4,
+	-1, 1, -1, 5, 6, -1, -1, 7
 };
 static const int gus_drq_map[] = {
-	ISACF_DRQ_DEFAULT, 1, ISACF_DRQ_DEFAULT, 2, ISACF_DRQ_DEFAULT, 3,
-	4, 5
+	-1, 1, -1, 2, -1, 3, 4, 5
 };
 
 /*
@@ -695,7 +693,7 @@ gusprobe(parent, match, aux)
 	if (ia->ia_ndrq > 1)
 		recdrq = ia->ia_drq[1].ir_drq;
 	else
-		recdrq = ISACF_DRQ_DEFAULT;
+		recdrq = ISA_UNKNOWN_DRQ;
 
 	/*
 	 * Before we do anything else, make sure requested IRQ and DRQ are
@@ -703,22 +701,22 @@ gusprobe(parent, match, aux)
 	 */
 
 	/* XXX range check before indexing!! */
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT ||
-	    gus_irq_map[ia->ia_irq[0].ir_irq] == ISACF_IRQ_DEFAULT) {
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ ||
+	    gus_irq_map[ia->ia_irq[0].ir_irq] == -1) {
 		printf("gus: invalid irq %d, card not probed\n",
 		    ia->ia_irq[0].ir_irq);
 		return 0;
 	}
 
-	if (ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT ||
-	    gus_drq_map[ia->ia_drq[0].ir_drq] == ISACF_DRQ_DEFAULT) {
+	if (ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ ||
+	    gus_drq_map[ia->ia_drq[0].ir_drq] == -1) {
 		printf("gus: invalid drq %d, card not probed\n",
 		    ia->ia_drq[0].ir_drq);
 		return 0;
 	}
 
-	if (recdrq != ISACF_DRQ_DEFAULT) {
-		if (recdrq > 7 || gus_drq_map[recdrq] == ISACF_DRQ_DEFAULT) {
+	if (recdrq != ISA_UNKNOWN_DRQ) {
+		if (recdrq > 7 || gus_drq_map[recdrq] == -1) {
 		   printf("gus: invalid second DMA channel (%d), card not "
 		       "probed\n", recdrq);
 		   return 0;
@@ -726,7 +724,7 @@ gusprobe(parent, match, aux)
 	} else
 		recdrq = ia->ia_drq[0].ir_drq;
 
-	if (iobase == ISACF_PORT_DEFAULT) {
+	if (iobase == ISA_UNKNOWN_PORT) {
 		int i;
 		for(i = 0; i < gus_addrs; i++)
 			if (gus_test_iobase(ia->ia_iot, gus_base_addrs[i])) {
