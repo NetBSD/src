@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.15 1994/11/21 21:33:51 gwr Exp $	*/
+/*	$NetBSD: mon.h,v 1.16 1995/02/07 05:01:05 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -36,7 +36,7 @@
  * sprite distribution.
  *
  * In particular, this file came out of the Walnut Creek cdrom collection
- * which contained no warnings about any possible copyright infringement
+ * which contained no warnings about any possible copyright infringement.
  * It was also indentical to a file in the sprite kernel tar file found on
  * allspice.berkeley.edu.
  * It also written in the annoying sprite coding style.  I've made
@@ -75,34 +75,10 @@
 #define PROM_BASE       0x0fef0000
 
 /*
- * The table entry that describes a device.  It exists in the PROM; a
- * pointer to it is passed in MachMonBootParam.  It can be used to locate
- * PROM subroutines for opening, reading, and writing the device.
- *
- * When using this interface, only one device can be open at once.
- *
- * NOTE: I am not sure what arguments boot, open, close, and strategy take.  
- * What is here is just translated verbatim from the sun monitor code.  We 
- * should figure this out eventually if we need it.
- */
-
-typedef struct {
-	char	devName[2];		/* The name of the device */
-	int	(*probe)();		/* probe() --> -1 or found controller 
-					   number */
-	int	(*boot)();		/* boot(bp) --> -1 or start address */
-	int	(*open)();		/* open(iobp) --> -1 or 0 */
-	int	(*close)();		/* close(iobp) --> -1 or 0 */
-	int	(*strategy)();		/* strategy(iobp,rw) --> -1 or 0 */
-	char	*desc;			/* Printable string describing dev */
-} MachMonBootTable;
-
-/*
  * Structure set up by the boot command to pass arguments to the program that
  * is booted.
  */
-
-typedef struct {
+typedef struct bootparam {
 	char		*argPtr[8];	/* String arguments */
 	char		strings[100];	/* String table for string arguments */
 	char		devName[2];	/* Device name */
@@ -110,7 +86,7 @@ typedef struct {
 	int		unitNum;	/* Unit number */
 	int		partNum;	/* Partition/file number */
 	char		*fileName;	/* File name, points into strings */
-	MachMonBootTable   *bootTable;	/* Points to table entry for device */
+	struct boottab   *bootDevice;	/* Defined in saio.h */
 } MachMonBootParam;
 
 /*
@@ -121,7 +97,6 @@ typedef struct {
  *       I have not translated.  If anyone needs to use these they should
  *       translate these structs into Sprite format.
  */
-
 typedef struct {
 	char		*initSp;		/* Initial system stack ptr  
 						 * for hardware */
@@ -133,7 +108,7 @@ typedef struct {
 	 * Monitor and hardware revision and identification
 	 */
 
-	MachMonBootParam **bootParam;		/* Info for bootstrapped pgm */
+	struct bootparam **bootParam;		/* Info for bootstrapped pgm */
  	unsigned	*memorySize;		/* Usable memory in bytes */
 
 	/* 
