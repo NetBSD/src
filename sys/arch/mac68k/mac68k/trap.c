@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.51 1997/05/19 10:15:06 veego Exp $	*/
+/*	$NetBSD: trap.c,v 1.52 1997/05/20 03:25:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,6 +131,7 @@ int mmupid = -1;
 /* trap() and syscall() only called from locore */
 void	trap __P((int, unsigned, register unsigned, struct frame));
 void	syscall __P((register_t, struct frame));
+void	child_return __P((struct proc *, struct frame)); /* XXX */
 
 static inline void userret __P((struct proc *p, struct frame *fp,
 	    u_quad_t oticks, u_int faultaddr, int fromtrap));

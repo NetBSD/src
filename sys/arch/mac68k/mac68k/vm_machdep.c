@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 1997/05/19 10:15:07 veego Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 1997/05/20 03:25:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,6 +77,7 @@ void
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
+	void child_return __P((struct proc *, struct frame)); /* XXX */
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
 	register struct switchframe *sf;
