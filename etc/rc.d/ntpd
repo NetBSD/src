@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpd,v 1.10 2002/07/02 14:47:22 itohy Exp $
+# $NetBSD: ntpd,v 1.11 2004/03/31 17:52:06 fredb Exp $
 #
 
 # PROVIDE: ntpd
@@ -13,7 +13,7 @@
 name="ntpd"
 rcvar=$name
 command="/usr/sbin/${name}"
-pidfile="/var/run/${name}.pid"
+pidfile="${ntpd_chrootdir}/var/run/${name}.pid"
 start_precmd="ntpd_precmd"
 required_files="/etc/ntp.conf"
 
