@@ -18,7 +18,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /*
- * $Id: tc-i386.h,v 1.2 1994/06/22 15:14:32 pk Exp $
+ * $Id: tc-i386.h,v 1.3 1994/08/24 20:04:35 pk Exp $
  */
 
 #ifndef TC_I386
@@ -29,8 +29,6 @@
 #define REVERSE_SORT_RELOCS
 
 #define LOCAL_LABELS_FB
-
-#define NO_LISTING
 
 #define tc_coff_symbol_emit_hook(a)	; /* not used */
 
