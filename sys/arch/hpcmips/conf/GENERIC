@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.34 2000/03/11 08:51:55 shin Exp $
+# 	$NetBSD: GENERIC,v 1.35 2000/03/12 05:04:44 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.34 $"
+#ident 		"GENERIC-$Revision: 1.35 $"
 
 maxusers	8
 
@@ -119,11 +119,11 @@ vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
 vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 intr 5
 
 # Workstation Console attachments
-fb*		at	mainbus0
-wsdisplay*	at	fb?
-#bivideo0	at	mainbus0
-#hpcfb*		at	bivideo0
-#wsdisplay*	at	hpcfb?
+#fb*		at	mainbus0
+#wsdisplay*	at	fb?
+bivideo0	at	mainbus0
+hpcfb*		at	bivideo0
+wsdisplay*	at	hpcfb?
 wskbd*		at	vrkiu? mux 1
 wsmouse*	at	vrpiu? mux 0
 
