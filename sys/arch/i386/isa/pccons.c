@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.69 1994/10/26 18:06:35 mycroft Exp $
+ *	$Id: pccons.c,v 1.70 1994/10/26 18:13:39 mycroft Exp $
  */
 
 /*
@@ -721,12 +721,16 @@ pccnpollc(dev, on)
 
 	polling = on;
 	if (!on) {
+		register int s;
+
 		/*
 		 * If disabling polling, make sure there are no bytes left in
 		 * the FIFO, holding up the interrupt line.  Otherwise we
 		 * won't get any further interrupts.
 		 */
+		s = spltty();
 		pcrint();
+		splx(s);
 	}
 }	
 
