@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.27 1999/09/16 00:54:15 mycroft Exp $	*/
+/*	$NetBSD: suff.c,v 1.28 2000/01/22 19:28:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.27 1999/09/16 00:54:15 mycroft Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.28 2000/01/22 19:28:11 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.27 1999/09/16 00:54:15 mycroft Exp $");
+__RCSID("$NetBSD: suff.c,v 1.28 2000/01/22 19:28:11 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2302,9 +2302,10 @@ SuffFindDeps (gn, slst)
     GNode         *gn;	      	/* node we're dealing with */
     Lst		  slst;
 {
-    if (gn->type & OP_DEPS_FOUND) {
+    if (gn->type & (OP_DEPS_FOUND|OP_PHONY)) {
 	/*
 	 * If dependencies already found, no need to do it again...
+	 * If this is a .PHONY target, we do not apply suffix rules.
 	 */
 	return;
     } else {
