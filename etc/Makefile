@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.306 2005/03/08 07:39:30 martin Exp $
+#	$NetBSD: Makefile,v 1.307 2005/03/21 23:09:39 tron Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -338,11 +338,19 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV
 #
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 OBSOLETE.files=		base comp etc games man misc text
+.if ${MKX11} != "no"
+OBSOLETE.files+=	xbase xcomp xfont xserver
+.endif
 
 install-obsolete-lists: .PHONY
 	mkdir -p ${OBSOLETE.dir}
+.if ${MKX11} != "no"
+	(cd ${NETBSDSRCDIR}/distrib/sets && \
+	    MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -b -t ${OBSOLETE.dir})
+.else
 	(cd ${NETBSDSRCDIR}/distrib/sets && \
 	    MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -t ${OBSOLETE.dir})
+.endif
 .for file in ${OBSOLETE.files}
 	${_MKMSG_INSTALL} ${DESTDIR}/var/db/obsolete/${file}
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
