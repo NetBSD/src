@@ -188,7 +188,7 @@ dump_host(fp, hp)
 			int hlen = haddrlength(hp->htype);
 			fprintf(fp, "\\\n\t:ht=%u:", (unsigned) hp->htype);
 			if (hp->flags.haddr) {
-				fprintf(fp, "ha=%s:",
+				fprintf(fp, "ha=\"%s\":",
 						haddrtoa(hp->haddr, hlen));
 			}
 		}

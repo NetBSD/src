@@ -71,6 +71,7 @@ setarp(s, ia, ha, len)
 	u_char *ha;
 	int len;
 {
+#ifdef	SIOCSARP
 	struct arpreq arpreq;		/* Arp request ioctl block */
 	struct sockaddr_in *si;
 #ifdef	SVR4
@@ -121,6 +122,23 @@ setarp(s, ia, ha, len)
 		report(LOG_ERR, "ioctl SIOCSARP: %s", get_errmsg());
 	}
 #endif	/* SVR4 */
+#else	/* SIOCSARP */
+	/*
+	 * Oh well, SIOCSARP is not defined.  Just run arp(8).
+	 * XXX - Gag!
+	 */
+	char buf[256];
+	int status;
+
+	sprintf(buf, "arp -s %s %s temp",
+			inet_ntoa(ia), haddrtoa(ha, len));
+	if (debug > 2)
+		report(LOG_INFO, buf);
+	status = system(buf);
+	if (status)
+		report(LOG_ERR, "arp failed, exit code=0x%x", status);
+	return;
+#endif	/* SIOCSARP */
 }
 
 
@@ -140,7 +158,7 @@ haddrtoa(haddr, hlen)
 
 	bufptr = haddrbuf;
 	while (hlen > 0) {
-		sprintf(bufptr, "%02X.", (unsigned) (*haddr++ & 0xFF));
+		sprintf(bufptr, "%02X:", (unsigned) (*haddr++ & 0xFF));
 		bufptr += 3;
 		hlen--;
 	}
