@@ -31,23 +31,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)a.out.h	5.6 (Berkeley) 4/30/91
- *	$Id: a.out.h,v 1.9 1993/10/02 20:14:19 pk Exp $
+ *	$Id: a.out.h,v 1.10 1993/10/18 09:50:27 pk Exp $
  */
 
 #ifndef	_AOUT_H_
 #define	_AOUT_H_
 
 #include <sys/exec.h>
+#include <machine/exec.h>
 
-#if defined(amiga) || defined(sun3)
-#define	__LDPGSZ	8192
-#endif
-#if defined(hp300) || defined(i386) || defined(pc532)
-#define	__LDPGSZ	4096
-#endif
-#if defined(tahoe) || defined(vax)
-#define	__LDPGSZ	1024
-#endif
 
 #define N_GETMAGIC(ex) \
     ( (((ex).a_midmag)&0xffff0000) ? (ntohl(((ex).a_midmag))&0xffff) : ((ex).a_midmag))
@@ -98,18 +90,6 @@
 /* String table offset. */
 #define	N_STROFF(ex) 	(N_SYMOFF(ex) + (ex).a_syms)
 
-/* Relocation format. */
-struct relocation_info {
-	int r_address;			/* offset in text or data segment */
-	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
-			 r_pcrel :  1,	/* 1 if value should be pc-relative */
-			r_length :  2,	/* log base 2 of value's width */
-			r_extern :  1,	/* 1 if need to add symbol to value */
-		       r_baserel :  1,	/* linkage table relative */
-		      r_jmptable :  1,	/* relocate to jump table */
-		      r_relative :  1,	/* load address relative */
-			  r_copy :  1;	/* run time copy */
-};
 
 #define _AOUT_INCLUDE_
 #include <nlist.h>
