@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.49 2000/09/09 04:49:55 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.50 2000/10/20 17:48:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -783,6 +783,10 @@ sys_lfs_segclean(p, v, retval)
 	if (sup->su_flags & SEGUSE_ACTIVE) {
 		brelse(bp);
 		return (EBUSY);
+	}
+	if (!(sup->su_flags & SEGUSE_DIRTY)) {
+		brelse(bp);
+		return (EALREADY);
 	}
 	
 	fs->lfs_avail += fsbtodb(fs, fs->lfs_ssize);
