@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.3 1996/08/09 00:00:13 thorpej Exp $	*/
+/*	$NetBSD: extent.h,v 1.4 1996/10/17 08:29:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,19 +71,21 @@ struct extent_fixed {
 
 /* ex_flags; for internal use only */
 #define EXF_FIXED	0x01		/* extent uses fixed storage */
-#define EXF_NOBLOB	0x02		/* solid chunks, not goey blobs */
+#define EXF_NOCOALESCE	0x02		/* coalescing of regions not allowed */
 #define EXF_WANTED	0x04		/* someone asleep on extent */
 #define EXF_FLWANTED	0x08		/* someone asleep on freelist */
 
-#define EXF_BITS	"\20\4FLWANTED\3WANTED\2NOBLOB\1FIXED"
+#define EXF_BITS	"\20\4FLWANTED\3WANTED\2NOCOALESCE\1FIXED"
 
 /* misc. flags passed to extent functions */
 #define EX_NOWAIT	0x00		/* not safe to sleep */
 #define EX_WAITOK	0x01		/* safe to sleep */
 #define EX_FAST		0x02		/* take first fit in extent_alloc() */
 #define EX_CATCH	0x04		/* catch signals while sleeping */
-#define EX_NOBLOB	0x08		/* create a non-blobbing extent */
+#define EX_NOCOALESCE	0x08		/* create a non-coalescing extent */
 #define EX_MALLOCOK	0x10		/* safe to call malloc() */
+#define EX_WAITSPACE	0x20		/* wait for space to become free */
+#define EX_BOUNDZERO	0x40		/* boundary lines start at 0 */
 
 /*
  * Special place holders for "alignment" and "boundary" arguments,
@@ -93,22 +95,19 @@ struct extent_fixed {
 #define EX_NOBOUNDARY	0		/* don't do boundary checking */
 
 #ifdef _KERNEL
-#define EXTENT_ALIGN(_start, _align)	\
-	(((_start) + ((_align) - 1)) & (-(_align)))
+#define EXTENT_FIXED_STORAGE_SIZE(_nregions)		\
+	(ALIGN(sizeof(struct extent_fixed)) +		\
+	((ALIGN(sizeof(struct extent_region))) *	\
+	 (_nregions)))
 
-#define EXTENT_FIXED_STORAGE_SIZE(_nregions)	\
-	(EXTENT_ALIGN(sizeof(struct extent_fixed), sizeof(long)) +	\
-	((EXTENT_ALIGN(sizeof(struct extent_region), sizeof(long))) *	\
-	(_nregions)))
-
-struct extent *extent_create __P((char *, u_long, u_long, int,
-	caddr_t, size_t, int));
-void extent_destroy __P((struct extent *));
-int extent_alloc_subregion __P((struct extent *, u_long, u_long,
-	u_long, u_long, u_long, int, u_long *));
-int extent_alloc_region __P((struct extent *, u_long, u_long, int));
-int extent_free __P((struct extent *, u_long, u_long, int));
-void extent_print __P((struct extent *));
+struct	extent *extent_create __P((char *, u_long, u_long, int,
+	    caddr_t, size_t, int));
+void	extent_destroy __P((struct extent *));
+int	extent_alloc_subregion __P((struct extent *, u_long, u_long,
+	    u_long, u_long, u_long, int, u_long *));
+int	extent_alloc_region __P((struct extent *, u_long, u_long, int));
+int	extent_free __P((struct extent *, u_long, u_long, int));
+void	extent_print __P((struct extent *));
 
 /* Simple case of extent_alloc_subregion() */
 #define extent_alloc(_ex, _size, _alignment, _boundary, _flags, _result) \
