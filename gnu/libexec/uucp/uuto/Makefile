@@ -1,9 +1,8 @@
 # Makefile for uuto
-# $Id: Makefile,v 1.3 1993/09/30 02:19:36 cgd Exp $
+# $Id: Makefile,v 1.4 1994/12/22 13:13:44 cgd Exp $
 
 BINDIR=		$(bindir)
 
-NOPROG=
 CLEANFILES=	uuto
 
 all:	${CLEANFILES}
