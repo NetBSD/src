@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.4 2004/09/08 12:11:25 yamt Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.5 2004/11/13 21:13:07 yamt Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.80 2004/03/09 21:44:41 mcbride Exp $ */
 
 /*
@@ -134,7 +134,6 @@ int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 struct pool		 pf_frent_pl, pf_frag_pl, pf_cache_pl, pf_cent_pl;
 struct pool		 pf_state_scrub_pl;
 int			 pf_nfrents, pf_ncache;
-
 
 void
 pf_normalize_init(void)
