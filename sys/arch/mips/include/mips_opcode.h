@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.10 2003/08/07 16:28:28 agc Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.11 2003/10/15 06:46:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -122,7 +122,6 @@ typedef union {
 #define OP_BNE		005
 #define OP_BLEZ		006
 #define OP_BGTZ		007
-#define OP_SYNC		017
 
 #define OP_ADDI		010
 #define OP_ADDIU	011
