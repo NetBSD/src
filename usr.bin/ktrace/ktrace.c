@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.30 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.31 2004/02/28 01:37:56 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.30 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.31 2004/02/28 01:37:56 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,8 +101,8 @@ main(argc, argv)
 	outfile = DEF_TRACEFILE;
 #endif
 
-	while ((ch = getopt(argc,argv, OPTIONS)) != -1)
-		switch((char)ch) {
+	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
+		switch ((char)ch) {
 		case 'a':
 			append = 1;
 			break;
@@ -184,9 +184,9 @@ main(argc, argv)
 
 	if ((pidset && *argv) || (!pidset && !*argv)) {
 #ifdef KTRUSS
-	    if (!infile)
+		if (!infile)
 #endif
-		usage();
+			usage();
 	}
 
 #ifdef KTRUSS
@@ -203,7 +203,7 @@ main(argc, argv)
 	 * than in a traced subprocess.
 	 */
 	free(malloc(1));
-	
+
 	(void)signal(SIGSYS, no_ktrace);
 	if (clear != NOTSET) {
 		if (clear == CLEARALL) {
@@ -225,7 +225,7 @@ main(argc, argv)
 		(void)close(fd);
 	}
 
-	if (*argv) { 
+	if (*argv) {
 #ifdef KTRUSS
 		if (do_ktrace(outfile, ops, trpoints, getpid()) == 1) {
 			execvp(argv[0], &argv[0]);
@@ -255,12 +255,13 @@ rpid(p)
 		warnx("illegal process id.");
 		usage();
 	}
-	return(atoi(p));
+	return (atoi(p));
 }
 
 void
 usage()
 {
+
 #ifdef KTRUSS
 # define LONG_OPTION "[-e emulation] [-m maxdata] [-o outfile] "
 # define SHRT_OPTION "RT"
@@ -280,11 +281,12 @@ usage()
 static const char *ktracefile = NULL;
 void
 no_ktrace(sig)
-        int sig;
+	int sig;
 {
+
 	if (ktracefile)
 		(void)unlink(ktracefile);
-        (void)errx(1, "ktrace(2) system call not supported in the running"
+	(void)errx(1, "ktrace(2) system call not supported in the running"
 	    " kernel; re-compile kernel with `options KTRACE'");
 }
 
@@ -299,11 +301,11 @@ do_ktrace(tracefile, ops, trpoints, pid)
 
 	if (!tracefile || strcmp(tracefile, "-") == 0) {
 		int pi[2], dofork, fpid;
-		
+
 		if (pipe(pi) < 0)
 			err(1, "pipe(2)");
-		fcntl(pi[0], F_SETFD, FD_CLOEXEC|fcntl(pi[0], F_GETFD, 0));
-		fcntl(pi[1], F_SETFD, FD_CLOEXEC|fcntl(pi[1], F_GETFD, 0));
+		fcntl(pi[0], F_SETFD, FD_CLOEXEC | fcntl(pi[0], F_GETFD, 0));
+		fcntl(pi[1], F_SETFD, FD_CLOEXEC | fcntl(pi[1], F_GETFD, 0));
 
 		dofork = (pid == getpid());
 
@@ -340,7 +342,8 @@ do_ktrace(tracefile, ops, trpoints, pid)
 				char	buf[512];
 				int	n, cnt = 0;
 
-				while ((n = read(pi[0], buf, sizeof(buf)))>0) {
+				while ((n =
+				    read(pi[0], buf, sizeof(buf))) > 0) {
 					write(1, buf, n);
 					cnt += n;
 				}
