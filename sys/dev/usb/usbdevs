@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.239 2002/03/28 20:42:08 ichiro Exp $
+$NetBSD: usbdevs,v 1.240 2002/03/31 00:41:37 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -525,6 +525,7 @@ product CONNECTIX QUICKCAM	0x0001	QuickCam
 /* Corega products */
 product COREGA ETHER_USB_T	0x0001	Ether USB-T
 product COREGA FETHER_USB_TX	0x0004	FEther USB-TX
+product COREGA WLAN_USB_USB_11	0x000c	WirelessLAN USB-11
 product COREGA FETHER_USB_TXS	0x000d	FEther USB-TXS
 
 /* Creative products */
