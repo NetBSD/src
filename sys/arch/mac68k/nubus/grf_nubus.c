@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.13 1996/10/11 00:24:45 christos Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.14 1996/10/13 03:21:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -198,7 +198,7 @@ grfmv_attach(parent, self, aux)
 
 	mode = NUBUS_RSRC_FIRSTMODE;
 	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0) {
-		kprintf("\n%s: probe failed to get board rsrc.\n",
+		printf("\n%s: probe failed to get board rsrc.\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -207,14 +207,14 @@ grfmv_attach(parent, self, aux)
 
 	if (nubus_find_rsrc(&sc->sc_slot, &mode_dir, VID_PARAMS, &dirent)
 	    <= 0) {
-		kprintf("\n%s: probe failed to get mode dir.\n",
+		printf("\n%s: probe failed to get mode dir.\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	if (nubus_get_ind_data(&sc->sc_slot, &dirent, (caddr_t) &image_store,
 				sizeof(struct image_data)) <= 0) {
-		kprintf("\n%s: probe failed to get indirect mode data.\n",
+		printf("\n%s: probe failed to get indirect mode data.\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -237,7 +237,7 @@ grfmv_attach(parent, self, aux)
 		CARD_NAME_LEN);
 	cardname[CARD_NAME_LEN-1] = '\0';
 
-	kprintf(": %s\n", cardname);
+	printf(": %s\n", cardname);
 
 	add_nubus_intr(sc->sc_slot.slot, grfmv_intr, sc);
 

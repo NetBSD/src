@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.27 1996/10/11 00:25:14 christos Exp $	*/
+/*	$NetBSD: macrom.c,v 1.28 1996/10/13 03:21:40 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -137,7 +137,7 @@ mrg_Delay()
 		: "a0" );
 
 #if defined(MRG_DEBUG)
-	kprintf("mrg: mrg_Delay(%d) = %d ms\n", ticks, ticks * 60);
+	printf("mrg: mrg_Delay(%d) = %d ms\n", ticks, ticks * 60);
 #endif
 	delay(ticks * TICK_DURATION);
 	return(ticks);	/* The number of ticks since startup should be
@@ -174,7 +174,7 @@ mrg_VBLQueue()
 		} else
 		{
 #if defined(MRG_DEBUG)
-kprintf("mrg: mrg_VBLQueue: calling VBL task at 0x%x with VBLTask block at %p\n",
+printf("mrg: mrg_VBLQueue: calling VBL task at 0x%x with VBLTask block at %p\n",
 			   *((u_int32_t *)(vbltask + vblAddr)), vbltask);
 #endif	      
 		    asm("   movml	#0xfffe, sp@-
@@ -186,12 +186,12 @@ kprintf("mrg: mrg_VBLQueue: calling VBL task at 0x%x with VBLTask block at %p\n"
 			: "g" (vbltask), "g" (*((caddr_t)(vbltask + vblAddr)))
 			: "a0", "a1");
 #if defined(MRG_DEBUG)
-		    kprintf("mrg: mrg_VBLQueue: back from VBL task\n");
+		    printf("mrg: mrg_VBLQueue: back from VBL task\n");
 #endif	      
 		    if ( 0 == *((u_int16_t *)(vbltask + vblCount)) )
 		    {
 #if defined(MRG_DEBUG)
-		kprintf("mrg: mrg_VBLQueue: removing VBLTask block at %p\n",
+		printf("mrg: mrg_VBLQueue: removing VBLTask block at %p\n",
 			       vbltask);
 #endif	      
 			*((u_int32_t *)(last_vbltask + qLink)) = *((u_int32_t *)(vbltask + qLink));
@@ -213,7 +213,7 @@ void
 mrg_init_stub_1()
 {
   	asm("movml #0xffff, sp@-");
-	kprintf("mrg: hit mrg_init_stub_1\n");
+	printf("mrg: hit mrg_init_stub_1\n");
   	asm("movml sp@+, #0xffff");
 }
 
@@ -230,7 +230,7 @@ Count_Resources(u_int32_t rsrc_type)
     short count = 0;
 
 #if defined(MRG_DEBUG)
-    kprintf("Count_Resources looking for 0x%08lx at 0x%08lx\n",
+    printf("Count_Resources looking for 0x%08lx at 0x%08lx\n",
 	(long)rsrc_type, (long)rsrc);
 #endif
 /*
@@ -242,7 +242,7 @@ Count_Resources(u_int32_t rsrc_type)
     while (rsrc != 0) {
 #if defined(MRG_DEBUG)
 	if (rsrc_type == 0)
-            kprintf("0x%08lx: %04x %04x %04x %04x %08x %08x %08x %04x\n",
+            printf("0x%08lx: %04x %04x %04x %04x %08x %08x %08x %04x\n",
                 (long)rsrc, rsrc->unknown[0], rsrc->unknown[1],
 		rsrc->unknown[2], rsrc->unknown[3], rsrc->next,
 		rsrc->body, rsrc->name, rsrc->index);
@@ -252,7 +252,7 @@ Count_Resources(u_int32_t rsrc_type)
         rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + ROMBase);
     }
 #if defined(MRG_DEBUG)
-    kprintf("Count_Resources found %d\n", count);
+    printf("Count_Resources found %d\n", count);
 #endif
     return count;
 }
@@ -315,7 +315,7 @@ mrg_1sec_timer_tick()
 void
 mrg_lvl1dtpanic()		/* Lvl1DT stopper */
 {
-	kprintf("Agh!  I was called from Lvl1DT!!!\n");
+	printf("Agh!  I was called from Lvl1DT!!!\n");
 #if DDB
 	Debugger();
 #endif
@@ -406,14 +406,14 @@ mrg_pmintr()	/* Call ROM PM Interrupt */
 void
 mrg_notrap()
 {
-	kprintf("Aigh!\n");
+	printf("Aigh!\n");
 	panic("mrg_notrap: We're doomed!\n");
 }
 
 int
 myowntrap()
 {
-	kprintf("Oooo!  My Own Trap Routine!\n");
+	printf("Oooo!  My Own Trap Routine!\n");
 	return(50);
 }
 
@@ -430,7 +430,7 @@ mrg_NewPtr()
 		: "=g" (trapword), "=g" (numbytes) : : "d0", "d1");
 
 #if defined(MRG_SHOWTRAPS)
-	kprintf("mrg: NewPtr(%d bytes, %sclear, %ssys)", numbytes,
+	printf("mrg: NewPtr(%d bytes, %sclear, %ssys)", numbytes,
 		TRAP_SYS(trapword) ? "" : "no ",
 		TRAP_CLEAR(trapword) ? "" : "no ");
 #endif
@@ -443,11 +443,11 @@ mrg_NewPtr()
 	if(ptr == NULL){
 		result = memFullErr;
 #if defined(MRG_SHOWTRAPS)
-		kprintf(" failed.\n");
+		printf(" failed.\n");
 #endif
 	}else{
 #if defined(MRG_SHOWTRAPS)
-		kprintf(" succeded = %x.\n", ptr);
+		printf(" succeded = %x.\n", ptr);
 #endif
 		*(u_int32_t *)ptr = numbytes;
 		ptr += 4;
@@ -467,7 +467,7 @@ mrg_DisposPtr()
 	asm("	movl	a0, %0" : "=g" (ptr) : : "a0");
 
 #if defined(MRG_SHOWTRAPS)
-	kprintf("mrg: DisposPtr(%x)\n", ptr);
+	printf("mrg: DisposPtr(%x)\n", ptr);
 #endif
 
 	if(ptr == 0){
@@ -487,7 +487,7 @@ mrg_GetPtrSize()
 	asm("	movl	a0, %0" : "=g" (ptr) : : "a0");
 
 #if defined(MRG_SHOWTRAPS)
-	kprintf("mrg: GetPtrSize(%x)\n", ptr);
+	printf("mrg: GetPtrSize(%x)\n", ptr);
 #endif
 
 	if(ptr == 0){
@@ -507,7 +507,7 @@ mrg_SetPtrSize()
 		: "=g" (ptr), "=g" (newbytes) : : "d0", "a1");
 
 #if defined(MRG_SHOWTRAPS)
-	kprintf("mrg: SetPtrSize(%x, %d) failed\n", ptr, newbytes);
+	printf("mrg: SetPtrSize(%x, %d) failed\n", ptr, newbytes);
 #endif
 
 	return(memFullErr);	/* How would I handle this, anyway? */
@@ -536,7 +536,7 @@ mrg_SetTrapAddress()
                 : "=g" (ptr), "=g" (trap_num) : : "d0", "a0");
 
 #if defined(MRG_DEBUG)
-        kprintf("mrg: trap 0x%x set to 0x%lx\n", trap_num, (long)ptr);
+        printf("mrg: trap 0x%x set to 0x%lx\n", trap_num, (long)ptr);
 #endif
         mrg_OStraps[trap_num] = ptr;
 /*
@@ -544,7 +544,7 @@ mrg_SetTrapAddress()
  */
         if (trap_num == 0x92) {
 #if defined(MRG_DEBUG)
-            kprintf("mrg: reconfigured Egret address from 0x%lx to 0x%lx\n",
+            printf("mrg: reconfigured Egret address from 0x%lx to 0x%lx\n",
                 (long)jEgret, (long)ptr);
 #endif
             jEgret = (void (*))ptr;
@@ -602,7 +602,7 @@ mrg_aline_super(struct frame *frame)
         int danprint=0; /* This shouldn't be necessary, but seems to be.  */
 
 #if defined(MRG_DEBUG)
-	kprintf("mrg: a super");
+	printf("mrg: a super");
 #endif
 
 	trapword = *(u_short *)frame->f_pc;
@@ -611,7 +611,7 @@ mrg_aline_super(struct frame *frame)
           danprint = 1;
 
 #if defined(MRG_DEBUG)
-	kprintf(" wd 0x%lx", (long)trapword);
+	printf(" wd 0x%lx", (long)trapword);
 #endif
 	isOStrap = ! TRAP_TOOLBOX(trapword);
 	trapnum = TRAP_NUM(trapword);
@@ -620,15 +620,15 @@ mrg_aline_super(struct frame *frame)
 		/*
 		 * Without these print statements, ADBReInit fails on IIsi
 		 * It is unclear why--perhaps a compiler bug?  delay()s do not
-		 * work, nor does some assembly similar to the  kprintf calls.
-		 * A kprintf(""); is sufficient, but gcc -Wall is noisy about
+		 * work, nor does some assembly similar to the  printf calls.
+		 * A printf(""); is sufficient, but gcc -Wall is noisy about
 		 * it, so I figured backspace is harmless enough...
 		 */
-		kprintf("\010"); kprintf("\010");
+		printf("\010"); printf("\010");
 	}
 
 #if defined(MRG_DEBUG)
-	kprintf(" %s # 0x%x", isOStrap? "OS" :
+	printf(" %s # 0x%x", isOStrap? "OS" :
 		"ToolBox", trapnum);
 #endif
 
@@ -637,12 +637,12 @@ mrg_aline_super(struct frame *frame)
 
 	trapaddr = mrg_OStraps[trapnum];
 #if defined(MRG_DEBUG)
-	kprintf(" addr 0x%lx\n", (long)trapaddr);
- 	kprintf("    got:    d0 = 0x%8x,  a0 = 0x%8x, called from: 0x%8x\n",
+	printf(" addr 0x%lx\n", (long)trapaddr);
+ 	printf("    got:    d0 = 0x%8x,  a0 = 0x%8x, called from: 0x%8x\n",
 		frame->f_regs[0], frame->f_regs[8], frame->f_pc	);
 #endif
 	if(trapaddr == NULL){
-		kprintf("unknown %s trap 0x%x, no trap address available\n",
+		printf("unknown %s trap 0x%x, no trap address available\n",
 			isOStrap ? "OS" : "ToolBox", trapword);
 		panic("mrg_aline_super()");
 	}
@@ -685,9 +685,9 @@ mrg_aline_super(struct frame *frame)
 	troff();
 #endif
 #if defined(MRG_DEBUG)
-	kprintf("    result: d0 = 0x%8x,  a0 = 0x%8x\n",
+	printf("    result: d0 = 0x%8x,  a0 = 0x%8x\n",
 		d0bucket, a0bucket );
- 	kprintf(" bk");
+ 	printf(" bk");
 #endif
 
 	frame->f_regs[0] = d0bucket;
@@ -697,7 +697,7 @@ mrg_aline_super(struct frame *frame)
 	frame->f_pc += 2;	/* skip offending instruction */
 
 #if defined(MRG_DEBUG)
-	kprintf(" exit\n");
+	printf(" exit\n");
 #endif
 }
 
@@ -725,16 +725,16 @@ dumptrace()
 #if defined(MRG_TRACE)
 	u_int32_t *traceindex;
 
-	kprintf("instruction trace:\n");
+	printf("instruction trace:\n");
 	traceindex = traceloopptr + 1;
 	while(traceindex != traceloopptr)
 	{
-		kprintf("    %08x\n", *traceindex++);
+		printf("    %08x\n", *traceindex++);
 		if(traceindex == &traceloopend)
 			traceindex = &traceloopstart[0];
 	}
 #else
-	kprintf("mrg: no trace functionality enabled\n");
+	printf("mrg: no trace functionality enabled\n");
 #endif
 }
 
@@ -771,34 +771,34 @@ mrg_init()
 					 
 #if defined(MRG_TEST)
 	if (ROMResourceMap) {
-        kprintf("mrg: testing CountResources\n");
+        printf("mrg: testing CountResources\n");
         asm("   clrl    sp@-
                 clrl    sp@-
                 .word   0xa99c
                 movw    sp@+, %0"
                 : "=g" (rcnt));
-        kprintf("mrg: found %d resources in ROM\n", rcnt);
+        printf("mrg: found %d resources in ROM\n", rcnt);
         asm("   clrl    sp@-
                 movl    #0x44525652, sp@-
                 .word   0xa99c
                 movw    sp@+, %0"
                 : "=g" (rcnt));
-        kprintf("mrg: %d are DRVR resources\n", rcnt);
+        printf("mrg: %d are DRVR resources\n", rcnt);
         if (rcnt == 0)
             panic("Oops! No DRVR Resources found in ROM\n");
 	}
 #endif
 #if defined(MRG_TEST)
 	if (ROMResourceMap) {
-        kprintf("mrg: testing GetIndResource\n");
+        printf("mrg: testing GetIndResource\n");
         asm("   clrl    sp@-
                 movl    #0x44525652, sp@-
                 movw    #0x01, sp@-
                 .word   0xa99d
                 movl    sp@+, %0"
                 : "=g" (handle));
-        kprintf("Handle to first DRVR resource is 0x%08lx\n", (long)handle);
-        kprintf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
+        printf("Handle to first DRVR resource is 0x%08lx\n", (long)handle);
+        printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
             (long)Get_Ind_Resource(0x44525652, 1),
 	    (long)*Get_Ind_Resource(0x44525652, 1),
                (long) *((u_int32_t *) *Get_Ind_Resource(0x44525652, 1)));
@@ -808,46 +808,46 @@ mrg_init()
                 .word   0xa99d
                 movl    sp@+, %0"
                 : "=g" (handle));
-        kprintf("Handle to second DRVR resource is 0x%08lx\n", (long)handle);
-        kprintf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
+        printf("Handle to second DRVR resource is 0x%08lx\n", (long)handle);
+        printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
             (long)Get_Ind_Resource(0x44525652, 2),
 	    (long)*Get_Ind_Resource(0x44525652, 2),
               (long)  *((u_int32_t *) *Get_Ind_Resource(0x44525652, 2)));
 	}
 #endif
 	if(mrg_romready()){
-		kprintf("mrg: '%s' ROM glue", mrg_romident);
+		printf("mrg: '%s' ROM glue", mrg_romident);
 
 #if defined(MRG_TRACE)
 #if defined(MRG_FOLLOW)
-		kprintf(", tracing on (verbose)");
+		printf(", tracing on (verbose)");
 #else /* ! defined (MRG_FOLLOW) */
-		kprintf(", tracing on (silent)");
+		printf(", tracing on (silent)");
 #endif /* defined(MRG_FOLLOW) */
 #else /* !defined(MRG_TRACE) */
-		kprintf(", tracing off");
+		printf(", tracing off");
 #endif	/* defined(MRG_TRACE) */
 
 #if defined(MRG_DEBUG)
-		kprintf(", debug on");
+		printf(", debug on");
 #else /* !defined(MRG_DEBUG) */
-		kprintf(", debug off");
+		printf(", debug off");
 #endif /* defined(MRG_DEBUG) */
 
 #if defined(MRG_SHOWTRAPS)
-		kprintf(", verbose traps");
+		printf(", verbose traps");
 #else /* !defined(MRG_SHOWTRAPS) */
-		kprintf(", silent traps");
+		printf(", silent traps");
 #endif /* defined(MRG_SHOWTRAPS) */
 	}else{
-		kprintf("mrg: kernel has no ROM vectors for this machine!\n");
+		printf("mrg: kernel has no ROM vectors for this machine!\n");
 		return;
 	}
 
-	kprintf("\n");
+	printf("\n");
 
 #if defined(MRG_DEBUG)
-	kprintf("mrg: start init\n");
+	printf("mrg: start init\n");
 #endif
 		/* expected globals */
 	ExpandMem = &mrg_ExpandMem[0];
@@ -878,7 +878,7 @@ mrg_init()
 	strcpy(&FinderName[1], findername);
 	FinderName[0] = (u_char) strlen(findername);
 #if defined(MRG_DEBUG)
-	kprintf("After setting globals\n");
+	printf("After setting globals\n");
 #endif
 
 		/* Fake jump points */
@@ -906,56 +906,56 @@ mrg_init()
 		case MACH_68030:	CPUFlag = 3;	break;
 		case MACH_68040:	CPUFlag = 4;	break;
 		default:
-			kprintf("mrg: unknown CPU type; cannot set CPUFlag\n");
+			printf("mrg: unknown CPU type; cannot set CPUFlag\n");
 			break;
 	}
 
 #if defined(MRG_TEST)
-	kprintf("Allocating a pointer...\n");
+	printf("Allocating a pointer...\n");
 	ptr = (caddr_t)NewPtr(1024);
-	kprintf("Result is 0x%lx.\n", (long)ptr);
+	printf("Result is 0x%lx.\n", (long)ptr);
 	sizeptr = GetPtrSize((Ptr)ptr);
-	kprintf("Pointer size is %d\n", sizeptr);
-	kprintf("Freeing the pointer...\n");
+	printf("Pointer size is %d\n", sizeptr);
+	printf("Freeing the pointer...\n");
 	DisposPtr((Ptr)ptr);
-	kprintf("Free'd.\n");
+	printf("Free'd.\n");
 
 	for(i = 0; i < 500000; i++)
-		if((i % 100000) == 0)kprintf(".");
-	kprintf("\n");
+		if((i % 100000) == 0)printf(".");
+	printf("\n");
 
 	mrg_ResErr = 0xdead;	/* set an error we know */
-	kprintf("Getting error code...\n");
+	printf("Getting error code...\n");
 	i = ResError();
-	kprintf("Result code (0xdeadbaaf): %x\n", i);
-	kprintf("Getting an ADBS Resource...\n");
+	printf("Result code (0xdeadbaaf): %x\n", i);
+	printf("Getting an ADBS Resource...\n");
 	handle = GetResource(0x41244253, 2);
-	kprintf("Handle result from GetResource: 0x%lx\n", (long)handle);
-	kprintf("Getting error code...\n");
+	printf("Handle result from GetResource: 0x%lx\n", (long)handle);
+	printf("Getting error code...\n");
 	i = ResError();
-	kprintf("Result code (-192?) : %d\n", i);
+	printf("Result code (-192?) : %d\n", i);
 
 	for(i = 0; i < 500000; i++)
-		if((i % 100000) == 0)kprintf(".");
-	kprintf("\n");
+		if((i % 100000) == 0)printf(".");
+	printf("\n");
 
 #if defined(MRG_TRACE)
-	kprintf("Turning on a trace\n");
+	printf("Turning on a trace\n");
 	tron();
-	kprintf("We are now tracing\n");
+	printf("We are now tracing\n");
 	troff();
-	kprintf("Turning off trace\n");
+	printf("Turning off trace\n");
 	dumptrace();
 #endif /* MRG_TRACE */
 
 	for(i = 0; i < 500000; i++)
-		if((i % 100000) == 0)kprintf(".");
-	kprintf("\n");
+		if((i % 100000) == 0)printf(".");
+	printf("\n");
 #endif /* MRG_TEST */
 
 #if defined(MRG_DEBUG)
-	kprintf("after setting jump points\n");
-	kprintf("mrg: end init\n");
+	printf("after setting jump points\n");
+	printf("mrg: end init\n");
 #endif
 
 	if (current_mac_model->class == MACH_CLASSII) {
@@ -967,7 +967,7 @@ mrg_init()
 		 * the first 
 		 */
 #ifdef DIAGNOSTIC
-		kprintf("mrg: I/O map kludge for old ROMs that use hardware %s",
+		printf("mrg: I/O map kludge for old ROMs that use hardware %s",
 			"addresses directly.\n");
 #endif
 		pmap_map(0x50f00000, 0x50f00000, 0x50f00000 + 0x4000,
@@ -994,13 +994,13 @@ setup_egret(void)
 			: "a0", "a1");
 		jEgret = (void (*)) mrg_OStraps[0x92]; /* may have been set in asm() */
 	}
-	else kprintf("Help ...  No vector for InitEgret!!\n");
+	else printf("Help ...  No vector for InitEgret!!\n");
 	
 #if defined(MRG_DEBUG)
-	kprintf("mrg: ADBIntrVector: 0x%8lx,  mrg_ADBIntrVector: 0x%8lx\n",
+	printf("mrg: ADBIntrVector: 0x%8lx,  mrg_ADBIntrVector: 0x%8lx\n",
 			(long) mrg_romadbintr,
 			*((long *) 0x19a));
-	kprintf("mrg: EgretOSTrap: 0x%8lx\n",
+	printf("mrg: EgretOSTrap: 0x%8lx\n",
 			(long) mrg_OStraps[0x92]);
 #endif
 }
@@ -1009,16 +1009,16 @@ void
 mrg_initadbintr()
 {
 	if (mac68k_machine.do_graybars)
-		kprintf("Got following HwCfgFlags: 0x%4x, 0x%8x, 0x%8x, 0x%8x\n",
+		printf("Got following HwCfgFlags: 0x%4x, 0x%8x, 0x%8x, 0x%8x\n",
 				HwCfgFlags, HwCfgFlags2, HwCfgFlags3, ADBReInit_JTBL);
 
         if ( (HwCfgFlags == 0) && (HwCfgFlags2 == 0) && (HwCfgFlags3 == 0) ){
 
-		kprintf("Caution: No HwCfgFlags from Booter, please "
+		printf("Caution: No HwCfgFlags from Booter, please "
 			"use at least booter version 1.8.\n");
 
 		if (current_mac_model->class == MACH_CLASSIIsi) {
-			kprintf("     ...  Using defaults for IIsi.\n");
+			printf("     ...  Using defaults for IIsi.\n");
 
 			/* Egret and ADBReInit look into these HwCfgFlags */
 			HwCfgFlags = 0xfc00;	
@@ -1026,7 +1026,7 @@ mrg_initadbintr()
 			HwCfgFlags3 = 0x000001a6;
 		}
 
-		kprintf("Using HwCfgFlags: 0x%4x, 0x%8x, 0x%8x\n",
+		printf("Using HwCfgFlags: 0x%4x, 0x%8x, 0x%8x\n",
 			HwCfgFlags, HwCfgFlags2, HwCfgFlags3);
 	}
 
@@ -1038,23 +1038,23 @@ mrg_initadbintr()
 	if (   ((HwCfgFlags3 & 0x0e) == 0x06 )
 	    || ((HwCfgFlags3 & 0x70) == 0x20 )) {
 		if (mac68k_machine.do_graybars)
-			kprintf("mrg: setup_egret:\n");
+			printf("mrg: setup_egret:\n");
 
 		setup_egret();
 
 		if (mac68k_machine.do_graybars)
-			kprintf("mrg: setup_egret: done.\n");
+			printf("mrg: setup_egret: done.\n");
 
 	} else {
 
 		if (mac68k_machine.do_graybars)
-			kprintf("mrg: Not setting up egret.\n");
+			printf("mrg: Not setting up egret.\n");
 
 		via_reg(VIA1, vIFR) = 0x4;
 		via_reg(VIA1, vIER) = 0x84;
 
 		if (mac68k_machine.do_graybars)
-			kprintf("mrg: ADB interrupts enabled.\n");
+			printf("mrg: ADB interrupts enabled.\n");
 	}	
 }
 
@@ -1086,7 +1086,7 @@ mrg_fixupROMBase(obase, nbase)
 
         if (0 != mrg_ADBIntrPtr) {
                 mrg_romadbintr = mrg_ADBIntrPtr;
-                kprintf("mrg_fixup: using ADBIntrPtr from booter: 0x%08lx\n",
+                printf("mrg_fixup: using ADBIntrPtr from booter: 0x%08lx\n",
                         (long)mrg_ADBIntrPtr);
         } else
             mrg_romadbintr = rom->adbintr == 0 ?
@@ -1142,9 +1142,9 @@ mrg_fixupROMBase(obase, nbase)
                 0 : rom->InitEgret - oldbase + newbase;
 
         if (rom->jClkNoMem == 0) {
-                kprintf("WARNING: don't have a value for jClkNoMem, please contac
+                printf("WARNING: don't have a value for jClkNoMem, please contac
 t:  walter@ghpc8.ihf.rwth-aachen.de\n");
-                kprintf("Can't read RTC without it. Using MacOS boot time.\n");
+                printf("Can't read RTC without it. Using MacOS boot time.\n");
                 jClkNoMem = 0;
         }
         else
@@ -1194,33 +1194,33 @@ t:  walter@ghpc8.ihf.rwth-aachen.de\n");
 		    0 : mrg_AVInitEgretJT[i] - oldbase + newbase;
 
 #if defined(MRG_DEBUG)
-        kprintf("mrg: ROM adbintr 0x%08lx -> 0x%08lx\n",
+        printf("mrg: ROM adbintr 0x%08lx -> 0x%08lx\n",
                 (long)rom->adbintr, (long)mrg_romadbintr);
-        kprintf("mrg: ROM pmintr 0x%08lx -> 0x%08lx\n",
+        printf("mrg: ROM pmintr 0x%08lx -> 0x%08lx\n",
                 (long)rom->pmintr, (long)mrg_rompmintr);
-        kprintf("mrg: OS trap 0x77 (CountADBs) = 0x%08lx -> 0x%08lx\n",
+        printf("mrg: OS trap 0x77 (CountADBs) = 0x%08lx -> 0x%08lx\n",
                 (long)rom->CountADBs, (long)mrg_OStraps[0x77]);
-        kprintf("mrg: OS trap 0x78 (GetIndADB) = 0x%08lx -> 0x%08lx\n",
+        printf("mrg: OS trap 0x78 (GetIndADB) = 0x%08lx -> 0x%08lx\n",
                 (long)rom->GetIndADB, (long)mrg_OStraps[0x78]);
-        kprintf("mrg: OS trap 0x79 (GetADBInfo) = 0x%08lx -> 0x%08lx\n",
+        printf("mrg: OS trap 0x79 (GetADBInfo) = 0x%08lx -> 0x%08lx\n",
                 (long)rom->GetADBInfo, (long)mrg_OStraps[0x79]);
-        kprintf("mrg: OS trap 0x7a (SetADBInfo) = 0x%08lx -> 0x%08lx\n",
+        printf("mrg: OS trap 0x7a (SetADBInfo) = 0x%08lx -> 0x%08lx\n",
                 (long)rom->SetADBInfo, (long)mrg_OStraps[0x7a]);
-        kprintf("mrg: OS trap 0x7b (ADBReInit) = 0x%08lx -> 0x%08lx\n",
+        printf("mrg: OS trap 0x7b (ADBReInit) = 0x%08lx -> 0x%08lx\n",
                 (long)rom->ADBReInit, (long)mrg_OStraps[0x7b]);
-        kprintf("mrg: OS trap 0x7c (ADBOp) = 0x%08lx -> 0x%08lx\n",
+        printf("mrg: OS trap 0x7c (ADBOp) = 0x%08lx -> 0x%08lx\n",
                 (long)rom->ADBOp, (long)mrg_OStraps[0x7c]);
-        kprintf("mrg: OS trap 0x85 (PMgrOp) = 0x%08lx -> 0x%08lx\n",
+        printf("mrg: OS trap 0x85 (PMgrOp) = 0x%08lx -> 0x%08lx\n",
                 (long)rom->PMgrOp, (long)mrg_OStraps[0x85]);
-        kprintf("mrg: OS trap 0x92 (Egret) = 0x%08lx -> 0x%08lx\n",
+        printf("mrg: OS trap 0x92 (Egret) = 0x%08lx -> 0x%08lx\n",
                 (long)rom->Egret, (long)mrg_OStraps[0x92]);
-        kprintf("mrg: ROM ADBAltInit 0x%08lx -> 0x%08lx\n",
+        printf("mrg: ROM ADBAltInit 0x%08lx -> 0x%08lx\n",
                 (long)rom->ADBAlternateInit, (long)mrg_ADBAlternateInit);
-        kprintf("mrg: ROM ADBReInit_JTBL 0x%08lx -> 0x%08lx\n",
+        printf("mrg: ROM ADBReInit_JTBL 0x%08lx -> 0x%08lx\n",
                 (long)rom->ADBReInit_JTBL, (long)ADBReInit_JTBL);
-        kprintf("mrg: ROM InitEgret  0x%08lx -> 0x%08lx\n",
+        printf("mrg: ROM InitEgret  0x%08lx -> 0x%08lx\n",
                 (long)rom->InitEgret, (long)mrg_InitEgret);
-        kprintf("mrg: ROM Resource list-head 0x%08lx -> 0x%08lx\n",
+        printf("mrg: ROM Resource list-head 0x%08lx -> 0x%08lx\n",
                 (long)rom->ROMResourceMap, (long)ROMResourceMap);
 #endif
 }   

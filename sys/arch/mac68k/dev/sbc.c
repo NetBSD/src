@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.12 1996/10/11 00:24:59 christos Exp $	*/
+/*	$NetBSD: sbc.c,v 1.13 1996/10/13 03:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -106,7 +106,7 @@
 	int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 
 # ifndef DDB
-#  define	Debugger()	kprintf("Debug: sbc.c:%d\n", __LINE__)
+#  define	Debugger()	printf("Debug: sbc.c:%d\n", __LINE__)
 # endif
 # define	SBC_BREAK \
 		do { if (sbc_debug & SBC_DB_BREAK) Debugger(); } while (0)
@@ -327,8 +327,8 @@ sbc_attach(parent, self, args)
 	}
 
 	if (sc->sc_options)
-		kprintf(": options=%b", sc->sc_options, SBC_OPTIONS_BITS);
-	kprintf("\n");
+		printf(": options=%b", sc->sc_options, SBC_OPTIONS_BITS);
+	printf("\n");
 
 	/* Now enable SCSI interrupts through VIA2, if appropriate */
 	if (sc->sc_options & SBC_INTR)
@@ -336,7 +336,7 @@ sbc_attach(parent, self, args)
 
 #ifdef SBC_DEBUG
 	if (sbc_debug)
-		kprintf("%s: softc=%p regs=%p\n", ncr_sc->sc_dev.dv_xname,
+		printf("%s: softc=%p regs=%p\n", ncr_sc->sc_dev.dv_xname,
 		    sc, sc->sc_regs);
 	ncr_sc->sc_link.flags |= sbc_link_flags;
 #endif
@@ -477,7 +477,7 @@ sbc_irq_intr(p)
 				SCI_CLR_INTR(ncr_sc);	/* RST interrupt */
 #ifdef SBC_DEBUG
 			else {
-				kprintf("%s: spurious intr\n",
+				printf("%s: spurious intr\n",
 				    ncr_sc->sc_dev.dv_xname);
 				SBC_BREAK;
 			}
@@ -497,26 +497,26 @@ decode_5380_intr(ncr_sc)
 	if (((csr & ~(SCI_CSR_PHASE_MATCH | SCI_CSR_ATN)) == SCI_CSR_INT) &&
 	    ((bus_csr & ~(SCI_BUS_MSG | SCI_BUS_CD | SCI_BUS_IO | SCI_BUS_DBP)) == SCI_BUS_SEL)) {
 		if (csr & SCI_BUS_IO)
-			kprintf("%s: reselect\n", ncr_sc->sc_dev.dv_xname);
+			printf("%s: reselect\n", ncr_sc->sc_dev.dv_xname);
 		else
-			kprintf("%s: select\n", ncr_sc->sc_dev.dv_xname);
+			printf("%s: select\n", ncr_sc->sc_dev.dv_xname);
 	} else if (((csr & ~SCI_CSR_ACK) == (SCI_CSR_DONE | SCI_CSR_INT)) &&
 	    ((bus_csr & (SCI_BUS_RST | SCI_BUS_BSY | SCI_BUS_SEL)) == SCI_BUS_BSY))
-		kprintf("%s: dma eop\n", ncr_sc->sc_dev.dv_xname);
+		printf("%s: dma eop\n", ncr_sc->sc_dev.dv_xname);
 	else if (((csr & ~SCI_CSR_PHASE_MATCH) == SCI_CSR_INT) &&
 	    ((bus_csr & ~SCI_BUS_RST) == 0))
-		kprintf("%s: bus reset\n", ncr_sc->sc_dev.dv_xname);
+		printf("%s: bus reset\n", ncr_sc->sc_dev.dv_xname);
 	else if (((csr & ~(SCI_CSR_DREQ | SCI_CSR_ATN | SCI_CSR_ACK)) == (SCI_CSR_PERR | SCI_CSR_INT | SCI_CSR_PHASE_MATCH)) &&
 	    ((bus_csr & (SCI_BUS_RST | SCI_BUS_BSY | SCI_BUS_SEL)) == SCI_BUS_BSY))
-		kprintf("%s: parity error\n", ncr_sc->sc_dev.dv_xname);
+		printf("%s: parity error\n", ncr_sc->sc_dev.dv_xname);
 	else if (((csr & ~SCI_CSR_ATN) == SCI_CSR_INT) &&
 	    ((bus_csr & (SCI_BUS_RST | SCI_BUS_BSY | SCI_BUS_REQ | SCI_BUS_SEL)) == (SCI_BUS_BSY | SCI_BUS_REQ)))
-		kprintf("%s: phase mismatch\n", ncr_sc->sc_dev.dv_xname);
+		printf("%s: phase mismatch\n", ncr_sc->sc_dev.dv_xname);
 	else if (((csr & ~SCI_CSR_PHASE_MATCH) == (SCI_CSR_INT | SCI_CSR_DISC)) &&
 	    (bus_csr == 0))
-		kprintf("%s: disconnect\n", ncr_sc->sc_dev.dv_xname);
+		printf("%s: disconnect\n", ncr_sc->sc_dev.dv_xname);
 	else
-		kprintf("%s: unknown intr: csr=%x, bus_csr=%x\n",
+		printf("%s: unknown intr: csr=%x, bus_csr=%x\n",
 		    ncr_sc->sc_dev.dv_xname, csr, bus_csr);
 }
 #endif
@@ -578,7 +578,7 @@ sbc_pdma_out(ncr_sc, phase, count, data)
 #undef  W1
 #undef  W4
 		if (sbc_wait_dreq(ncr_sc))
-			kprintf("%s: timeout waiting for DREQ.\n",
+			printf("%s: timeout waiting for DREQ.\n",
 			    ncr_sc->sc_dev.dv_xname);
 
 		*byte_data = 0;
@@ -590,7 +590,7 @@ sbc_pdma_out(ncr_sc, phase, count, data)
 	return count - len;
 
 timeout:
-	kprintf("%s: pdma_out: timeout len=%d count=%d\n",
+	printf("%s: pdma_out: timeout len=%d count=%d\n",
 	    ncr_sc->sc_dev.dv_xname, len, count);
 	if ((*ncr_sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0) {
 		*ncr_sc->sci_icmd &= ~SCI_ICMD_DATA;
@@ -700,7 +700,7 @@ sbc_pdma_in(ncr_sc, phase, count, data)
 	return count - len;
 
 timeout:
-	kprintf("%s: pdma_in: timeout len=%d count=%d\n",
+	printf("%s: pdma_in: timeout len=%d count=%d\n",
 	    ncr_sc->sc_dev.dv_xname, len, count);
 
 	SCI_CLR_INTR(ncr_sc);
@@ -755,7 +755,7 @@ sbc_drq_intr(p)
 
 #ifdef SBC_DEBUG
 	if (sbc_debug & SBC_DB_INTR)
-		kprintf("%s: drq intr, dh_len=0x%x, dh_flags=0x%x\n",
+		printf("%s: drq intr, dh_len=0x%x, dh_flags=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, dh->dh_len, dh->dh_flags);
 #endif
 
@@ -773,7 +773,7 @@ sbc_drq_intr(p)
 				  - (u_long) sc->sc_drq_addr));
 
 			if ((count < 0) || (count > dh->dh_len)) {
-				kprintf("%s: complete=0x%x (pending 0x%x)\n",
+				printf("%s: complete=0x%x (pending 0x%x)\n",
 				    ncr_sc->sc_dev.dv_xname, count, dh->dh_len);
 				panic("something is wrong");
 			}
@@ -784,7 +784,7 @@ sbc_drq_intr(p)
 
 #ifdef SBC_DEBUG
 		if (sbc_debug & SBC_DB_INTR)
-			kprintf("%s: drq /berr, complete=0x%x (pending 0x%x)\n",
+			printf("%s: drq /berr, complete=0x%x (pending 0x%x)\n",
 			   ncr_sc->sc_dev.dv_xname, count, dh->dh_len);
 #endif
 		mac68k_buserr_addr = 0;
@@ -924,7 +924,7 @@ sbc_drq_intr(p)
 
 #ifdef SBC_DEBUG
 	if (sbc_debug & (SBC_DB_REG | SBC_DB_INTR))
-		kprintf("%s: drq intr complete: csr=0x%x, bus_csr=0x%x\n",
+		printf("%s: drq intr complete: csr=0x%x, bus_csr=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, *ncr_sc->sci_csr,
 		    *ncr_sc->sci_bus_csr);
 #endif
@@ -1015,7 +1015,7 @@ sbc_dma_poll(ncr_sc)
 	 */
 #ifdef SBC_DEBUG
 	if (sbc_debug & SBC_DB_DMA)
-		kprintf("%s: lost DRQ interrupt?\n", ncr_sc->sc_dev.dv_xname);
+		printf("%s: lost DRQ interrupt?\n", ncr_sc->sc_dev.dv_xname);
 #endif
 	sr->sr_flags |= SR_OVERDUE;
 }
@@ -1058,7 +1058,7 @@ sbc_dma_start(ncr_sc)
 
 #ifdef SBC_DEBUG
 	if (sbc_debug & SBC_DB_DMA)
-		kprintf("%s: PDMA started, va=%p, len=0x%x\n",
+		printf("%s: PDMA started, va=%p, len=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, dh->dh_addr, dh->dh_len);
 #endif
 }
@@ -1082,7 +1082,7 @@ sbc_dma_stop(ncr_sc)
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef SBC_DEBUG
 		if (sbc_debug & SBC_DB_DMA)
-			kprintf("%s: dma_stop: DMA not running\n",
+			printf("%s: dma_stop: DMA not running\n",
 			    ncr_sc->sc_dev.dv_xname);
 #endif
 		return;
@@ -1094,7 +1094,7 @@ sbc_dma_stop(ncr_sc)
 
 #ifdef SBC_DEBUG
 		if (sbc_debug & SBC_DB_DMA)
-			kprintf("%s: dma_stop: ntrans=0x%x\n",
+			printf("%s: dma_stop: ntrans=0x%x\n",
 			    ncr_sc->sc_dev.dv_xname, ntrans);
 #endif
 
@@ -1116,7 +1116,7 @@ sbc_dma_stop(ncr_sc)
 
 #ifdef SBC_DEBUG
 	if (sbc_debug & SBC_DB_REG)
-		kprintf("%s: dma_stop: csr=0x%x, bus_csr=0x%x\n",
+		printf("%s: dma_stop: csr=0x%x, bus_csr=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, *ncr_sc->sci_csr,
 		    *ncr_sc->sci_bus_csr);
 #endif
