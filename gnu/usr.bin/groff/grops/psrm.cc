@@ -121,7 +121,7 @@ resource *resource_manager::lookup_resource(resource_type type,
 					    string &version,
 					    unsigned revision)
 {
-  for (resource *r = resource_list; r; r = r->next)
+  resource *r; for (r = resource_list; r; r = r->next)
     if (r->type == type
 	&& r->name == name
 	&& r->version == version
@@ -137,7 +137,7 @@ resource *resource_manager::lookup_resource(resource_type type,
 
 resource *resource_manager::lookup_font(const char *name)
 {
-  for (resource *r = resource_list; r; r = r->next)
+  resource *r; for (r = resource_list; r; r = r->next)
     if (r->type == RESOURCE_FONT
 	&& strlen(name) == r->name.length()
 	&& memcmp(name, r->name.contents(), r->name.length()) == 0)
@@ -159,14 +159,14 @@ typedef resource *Presource;	// Work around g++ bug.
 void resource_manager::document_setup(ps_output &out)
 {
   int nranks = 0;
-  for (resource *r = resource_list; r; r = r->next)
+  resource *r; for (r = resource_list; r; r = r->next)
     if (r->rank >= nranks)
       nranks = r->rank + 1;
   if (nranks > 0) {
     // Sort resource_list in reverse order of rank.
     Presource *head = new Presource[nranks + 1];
     Presource **tail = new Presource *[nranks + 1];
-    for (int i = 0; i < nranks + 1; i++) {
+    int i; for (i = 0; i < nranks + 1; i++) {
       head[i] = 0;
       tail[i] = &head[i];
     }
@@ -510,7 +510,7 @@ resource *resource_manager::read_resource_arg(const char **ptr)
     error("missing resource type");
     return 0;
   }
-  for (int ri = 0; ri < NRESOURCES; ri++)
+  int ri; for (ri = 0; ri < NRESOURCES; ri++)
     if (strlen(resource_table[ri]) == *ptr - name
 	&& memcmp(resource_table[ri], name, *ptr - name) == 0)
       break;
@@ -833,7 +833,7 @@ static unsigned parse_extensions(const char *ptr)
     do {
       ++ptr;
     } while (*ptr != '\0' && !white_space(*ptr));
-    for (int i = 0; i < NEXTENSIONS; i++)
+    int i; for (i = 0; i < NEXTENSIONS; i++)
       if (strlen(extension_table[i]) == ptr - name
 	  && memcmp(extension_table[i], name, ptr - name) == 0) {
 	flags |= (1 << i);
@@ -932,7 +932,7 @@ void resource_manager::process_file(int rank, FILE *fp, const char *filename,
       if (buf[0] == '%') {
 	if (buf[1] == '%') {
 	  const char *ptr;
-	  for (int i = 0; i < NCOMMENTS; i++)
+	  int i; for (i = 0; i < NCOMMENTS; i++)
 	    if (ptr = matches_comment(buf, comment_table[i].name)) {
 	      copy_this_line
 		= (this->*(comment_table[i].proc))(ptr, rank, fp, outfp);
@@ -955,7 +955,7 @@ void resource_manager::process_file(int rank, FILE *fp, const char *filename,
 	      had_language_level_comment = 1;
 	    }
 	    else {
-	      for (int i = 0; i < NHEADER_COMMENTS; i++)
+	      for (i = 0; i < NHEADER_COMMENTS; i++)
 		if (matches_comment(buf, header_comment_table[i])) {
 		  interesting = 1;
 		  break;
@@ -1028,7 +1028,7 @@ static void print_ps_string(const string &s, FILE *outfp)
     return;
   }
   int level = 0;
-  for (int i = 0; i < len; i++)
+  int i; for (i = 0; i < len; i++)
     if (str[i] == '(')
       level++;
     else if (str[i] == ')' && --level < 0)

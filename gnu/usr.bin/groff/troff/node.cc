@@ -610,7 +610,7 @@ tfont::tfont(tfont_spec &spec) : tfont_spec(spec)
   next = tfont_list;
   tfont_list = this;
   tfont_spec plain_spec = plain();
-  for (tfont *p = tfont_list; p; p = p->next)
+  tfont *p; for (p = tfont_list; p; p = p->next)
     if (*p == plain_spec) {
       plain_version = p;
       break;
@@ -2374,7 +2374,7 @@ void overstrike_node::overstrike(node *n)
   hunits w = n->width();
   if (w > max_width)
     max_width = w;
-  for (node **p = &list; *p; p = &(*p)->next)
+  node **p; for (p = &list; *p; p = &(*p)->next)
     ;
   n->next = 0;
   *p = n;
@@ -2968,7 +2968,7 @@ void dbreak_node::split(int where, node **prep, node **postp)
     if (pre == 0)
       *prep = next;
     else {
-      for (node *tem = pre; tem->next != 0; tem = tem->next)
+      node *tem; for (tem = pre; tem->next != 0; tem = tem->next)
 	;
       tem->next = next;
       *prep = pre;
@@ -3519,7 +3519,7 @@ void bracket_node::tprint(troff_output_file *out)
   if (list == 0)
     return;
   int npieces = 0;
-  for (node *tem = list; tem; tem = tem->next)
+  node *tem; for (tem = list; tem; tem = tem->next)
     ++npieces;
   vunits h = list->size();
   vunits totalh = h*npieces;
@@ -4552,7 +4552,7 @@ void special_request()
 
 int next_available_font_position()
 {
-  for (int i = 1; i < font_table_size && font_table[i] != 0; i++)
+  int i; for (i = 1; i < font_table_size && font_table[i] != 0; i++)
     ;
   return i;
 }

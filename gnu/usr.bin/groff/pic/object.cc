@@ -512,7 +512,7 @@ void object_list::append(object *obj)
 
 void object_list::wrap_up_block(object_list *ol)
 {
-  for (object *p = tail; p && p->type() != MARK_OBJECT; p = p->prev)
+  object *p; for (p = tail; p && p->type() != MARK_OBJECT; p = p->prev)
     ;
   assert(p != 0);
   ol->head = p->next;
@@ -595,7 +595,7 @@ void graphic_object::add_text(text_item *t, int a)
 {
   aligned = a;
   int len = 0;
-  for (text_item *p = t; p; p = p->next)
+  text_item *p; for (p = t; p; p = p->next)
     len++;
   if (len == 0)
     text = 0;
@@ -1341,7 +1341,7 @@ linear_object *object_spec::make_line(position *curpos, direction *dirp)
   // Absolutise all movements
   position endpos = startpos;
   int nsegments = 0;
-  for (segment *s = segment_list; s; s = s->next, nsegments++)
+  segment *s; for (s = segment_list; s; s = s->next, nsegments++)
     if (s->is_absolute)
       endpos = s->pos;
     else {
@@ -1767,7 +1767,7 @@ void path::append(corner c)
 
 void path::append(char *s)
 {
-  for (string_list **p = &label_list; *p; p = &(*p)->next)
+  string_list **p; for (p = &label_list; *p; p = &(*p)->next)
     ;
   *p = new string_list(s);
 }

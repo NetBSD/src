@@ -268,7 +268,7 @@ void do_file(const char *filename)
 	int n;
 	int *p = 0;
 	int szp = 0;
-	for (int np = 0; possibly_get_integer(&n); np++) {
+	int np; for (np = 0; possibly_get_integer(&n); np++) {
 	  if (np >= szp) {
 	    if (szp == 0) {
 	      szp = 16;
@@ -290,7 +290,7 @@ void do_file(const char *filename)
 	    env.hpos += p[0];
 	}
 	else { 
-	  for (int i = 0; i < np/2; i++) {
+	  int i; for (i = 0; i < np/2; i++) {
 	    env.hpos += p[i*2];
 	    env.vpos += p[i*2 + 1];
 	  }

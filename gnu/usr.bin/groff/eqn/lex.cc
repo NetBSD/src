@@ -251,7 +251,7 @@ static struct {
 
 void init_table(const char *device)
 {
-  for (int i = 0; i < sizeof(token_table)/sizeof(token_table[0]); i++) {
+  int i; for (i = 0; i < sizeof(token_table)/sizeof(token_table[0]); i++) {
     definition *def = new definition;
     def->is_macro = 0;
     def->tok = token_table[i].token;
@@ -472,7 +472,7 @@ argument_macro_input::argument_macro_input(const char *body, int ac,
 					   char **av, input *x)
 : input(x), argc(ac), ap(0)
 {
-  for (int i = 0; i < argc; i++)
+  int i; for (i = 0; i < argc; i++)
     argv[i] = av[i];
   p = s = strsave(body);
   int j = 0;
@@ -687,7 +687,7 @@ void interpolate_macro_with_args(const char *body)
 {
   char *argv[9];
   int argc = 0;
-  for (int i = 0; i < 9; i++)
+  int i; for (i = 0; i < 9; i++)
     argv[i] = 0;
   int level = 0;
   int c;

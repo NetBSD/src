@@ -51,7 +51,7 @@ private:
 character_indexer::character_indexer()
 : next_index(0)
 {
-  for (int i = 0; i < 256; i++)
+  int i; for (i = 0; i < 256; i++)
     ascii_index[i] = -1;
   for (i = 0; i < NSMALL; i++)
     small_number_index[i] = -1;

@@ -28,7 +28,7 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 static int is_good_size(int p)
 {
   const int SMALL = 10;
-  for (unsigned i = 2; i <= p/2; i++)
+  unsigned i; for (i = 2; i <= p/2; i++)
     if (p % i == 0)
       return 0;
   for (i = 0x100; i != 0; i <<= 8)
@@ -49,7 +49,7 @@ dictionary::dictionary(int n) : threshold(0.5), factor(1.5), used(0), size(n)
 
 void *dictionary::lookup(symbol s, void *v)
 {
-  for (int i = int(s.hash() % size); 
+  int i; for (i = int(s.hash() % size); 
        table[i].v != 0;
        i == 0 ? i = size - 1: --i)
     if (s == table[i].s) {
@@ -96,7 +96,7 @@ void *dictionary::lookup(const char *p)
 void *dictionary::remove(symbol s)
 {
   // this relies on the fact that we are using linear probing
-  for (int i = int(s.hash() % size);
+  int i; for (i = int(s.hash() % size);
        table[i].v != 0 && s != table[i].s;
        i == 0 ? i = size - 1: --i)
     ;

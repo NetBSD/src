@@ -218,7 +218,7 @@ void tty_printer::add_char(unsigned char c, int h, int v, unsigned char mode)
   // characters before normal characters at each hpos, and otherwise
   // in order of occurrence.
 
-  for (glyph **pp = lines + (vpos - 1); *pp; pp = &(*pp)->next)
+  glyph **pp; for (pp = lines + (vpos - 1); *pp; pp = &(*pp)->next)
     if (int((*pp)->hpos) < hpos
 	|| ((*pp)->hpos == hpos && (*pp)->draw_mode() >= g->draw_mode()))
       break;
@@ -270,7 +270,7 @@ void tty_printer::end_page(int page_length)
   if (page_length % font::vert != 0)
     error("vertical position at end of page not multiple of vertical resolution");
   int lines_per_page = page_length / font::vert;
-  for (int last_line = nlines; last_line > 0; last_line--)
+  int last_line; for (last_line = nlines; last_line > 0; last_line--)
     if (lines[last_line - 1])
       break;
 #if 0

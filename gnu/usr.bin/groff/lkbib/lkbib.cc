@@ -96,7 +96,7 @@ main(int argc, char **argv)
   if (list.nfiles() == 0)
     fatal("no databases");
   int total_len = 0;
-  for (int i = optind; i < argc; i++)
+  int i; for (i = optind; i < argc; i++)
     total_len += strlen(argv[i]);
   total_len += argc - optind - 1 + 1; // for spaces and '\0'
   char *buffer = new char[total_len];
@@ -110,7 +110,7 @@ main(int argc, char **argv)
   search_list_iterator iter(&list, buffer);
   const char *start;
   int len;
-  for (int count = 0; iter.next(&start, &len); count++) {
+  int count; for (count = 0; iter.next(&start, &len); count++) {
     if (fwrite(start, 1, len, stdout) != len)
       fatal("write error on stdout: %1", strerror(errno));
     // Can happen for last reference in file.

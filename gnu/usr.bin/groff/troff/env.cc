@@ -136,7 +136,7 @@ void environment::output(node *nd, int no_fill, vunits vs, int ls,
       )
     curdiv->output(nd, no_fill, vs, ls, width);
   else {
-    for (pending_output_line **p = &pending_lines; *p; p = &(*p)->next)
+    pending_output_line **p; for (p = &pending_lines; *p; p = &(*p)->next)
       ;
     *p = new pending_output_line(nd, no_fill, vs, ls, width);
   }
@@ -1586,7 +1586,7 @@ void environment::hyphenate_line()
   if (line == 0)
     return;
   hyphenation_type prev_type = line->get_hyphenation_type();
-  for (node **startp = &line->next; *startp != 0; startp = &(*startp)->next) {
+  node **startp; for (startp = &line->next; *startp != 0; startp = &(*startp)->next) {
     hyphenation_type this_type = (*startp)->get_hyphenation_type();
     if (prev_type == HYPHEN_BOUNDARY && this_type == HYPHEN_MIDDLE)
       break;
@@ -1705,7 +1705,7 @@ void environment::possibly_break_line(int forced)
     space_total = 0;
     width_total = 0;
     node *first_non_discardable = 0;
-    for (node *tem = line; tem != 0; tem = tem->next)
+    node *tem; for (tem = line; tem != 0; tem = tem->next)
       if (!tem->discardable())
 	first_non_discardable = tem;
     node *to_be_discarded;
@@ -2025,7 +2025,7 @@ tab_stops::~tab_stops()
 tab_type tab_stops::distance_to_next_tab(hunits curpos, hunits *distance)
 {
   hunits lastpos = 0;
-  for (tab *tem = initial_list; tem && tem->pos <= curpos; tem = tem->next)
+  tab *tem; for (tem = initial_list; tem && tem->pos <= curpos; tem = tem->next)
     lastpos = tem->pos;
   if (tem) {
     *distance = tem->pos - curpos;
@@ -2053,7 +2053,7 @@ const char *tab_stops::to_string()
   static int buf_size = 0;
   // figure out a maximum on the amount of space we can need
   int count = 0;
-  for (tab *p = initial_list; p; p = p->next)
+  tab *p; for (p = initial_list; p; p = p->next)
     ++count;
   for (p = repeated_list; p; p = p->next)
     ++count;
@@ -2149,7 +2149,7 @@ void tab_stops::clear()
 
 void tab_stops::add_tab(hunits pos, tab_type type, int repeated)
 {
-  for (tab **p = repeated ? &repeated_list : &initial_list; *p; p = &(*p)->next)
+  tab **p; for (p = repeated ? &repeated_list : &initial_list; *p; p = &(*p)->next)
     ;
   *p = new tab(pos, type);
 }
@@ -2282,7 +2282,7 @@ void environment::wrap_up_tab()
     field_spaces += tab_field_spaces;
   }
   if (tab_contents != 0) {
-    for (node *tem = tab_contents; tem->next != 0; tem = tem->next)
+    node *tem; for (tem = tab_contents; tem->next != 0; tem = tem->next)
       ;
     tem->next = line;
     line = tab_contents;
@@ -2390,7 +2390,7 @@ void environment::wrap_up_field()
 	    current_tab = TAB_NONE;
 	  }
 	  if (tab_contents != 0) {
-	    for (node *tem = tab_contents; tem->next != 0; tem = tem->next)
+	    node *tem; for (tem = tab_contents; tem->next != 0; tem = tem->next)
 	      ;
 	    tem->next = line;
 	    line = tab_contents;
@@ -2901,7 +2901,7 @@ void hyphen_trie::insert_pattern(const char *pat, int patlen, int *num)
 
 void hyphen_trie::hyphenate(const char *word, int len, int *hyphens)
 {
-  for (int j = 0; j < len+1; j++)
+  int j; for (j = 0; j < len+1; j++)
     hyphens[j] = 0;
   for (j = 0; j < len - 1; j++) {
     h = hyphens + j;
@@ -2986,7 +2986,7 @@ void hyphenate(hyphen_list *h, unsigned flags)
   int len = 0;
   char hbuf[WORD_MAX+2];
   char *buf = hbuf + 1;
-  for (hyphen_list *tem = h; tem && len < WORD_MAX; tem = tem->next) {
+  hyphen_list *tem; for (tem = h; tem && len < WORD_MAX; tem = tem->next) {
     if (tem->hyphenation_code != 0)
       buf[len++] = tem->hyphenation_code;
     else

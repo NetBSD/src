@@ -190,7 +190,7 @@ const token_info *lookup_token(const char *start, const char *end)
 
 static void init_ascii()
 {
-  for (const char *p = "abcdefghijklmnopqrstuvwxyz"; *p; p++) {
+  const char *p; for (p = "abcdefghijklmnopqrstuvwxyz"; *p; p++) {
     char buf[2];
     buf[0] = *p;
     buf[1] = '\0';
@@ -296,7 +296,7 @@ static void init_two_char_letter(char l1, char l2, char u1, char u2,
 
 static void init_special_chars()
 {
-  for (const char *p = "':^`~"; *p; p++)
+  const char *p; for (p = "':^`~"; *p; p++)
     for (const char *q = "aeiouy"; *q; q++) {
       // Use a variable to work around bug in gcc 2.0
       char c = cmupper(*q);

@@ -45,7 +45,7 @@ int interpret_lf_args(const char *p)
     change_lineno(ln);
     return 1;
   }
-  for (const char *q = p;
+  const char *q; for (q = p;
        *q != '\0' && *q != ' ' && *q != '\n' && *q != '\\';
        q++)
     ;

@@ -361,7 +361,7 @@ void interpolate_macro_with_args(const char *body)
 {
   char *argv[9];
   int argc = 0;
-  for (int i = 0; i < 9; i++)
+  int i; for (i = 0; i < 9; i++)
     argv[i] = 0;
   int level = 0;
   int c;

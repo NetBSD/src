@@ -305,7 +305,7 @@ void dvi_printer::set_char(int index, font *f, const environment *env, int w)
   if (env->size != cur_point_size || f != cur_font) {
     cur_font = f;
     cur_point_size = env->size;
-    for (int i = 0;; i++) {
+    int i; for (i = 0;; i++) {
       if (i >= FONTS_MAX) {
 	fatal("too many output fonts required");
       }
