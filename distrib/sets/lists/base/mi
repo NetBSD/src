@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.353 2002/10/01 22:43:04 provos Exp $
+# $NetBSD: mi,v 1.354 2002/10/04 14:57:11 jwise Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -383,7 +383,7 @@
 ./usr/bin/join		base-util-bin
 ./usr/bin/jot		base-util-bin
 ./usr/bin/kdestroy	base-krb5-bin
-./usr/bin/kdump		base-krb5-bin
+./usr/bin/kdump		base-debug-bin
 ./usr/bin/kinit		base-krb5-bin
 ./usr/bin/klist		base-krb5-bin
 ./usr/bin/kpasswd	base-krb5-bin
