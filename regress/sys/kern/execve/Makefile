@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1998/09/12 20:17:43 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.8 1998/12/21 07:58:52 mjacob Exp $
 
 PROG=	doexec
 NOMAN=	noman, no way, man
@@ -6,7 +6,7 @@ NOMAN=	noman, no way, man
 LDSTATIC= -static		# only static compilation makes sense here
 
 .if (defined(DESTDIR))
-LDLIBS+= ${LIBCRT0} -lgcc -lc
+LDLIBS+= ${LIBCRT0} -lgcc -lc ${LIBCRTBEGIN} ${LIBCRTENT}
 GOODAOUT_LIB= -nostdlib -L${DESTDIR}/usr/lib ${LDSTATIC}
 .else
 GOODAOUT_LIB= ${LDSTATIC}
