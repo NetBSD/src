@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vmes.c,v 1.1 1996/03/26 14:38:34 gwr Exp $	*/
+/*	$NetBSD: if_ie_vmes.c,v 1.2 1996/03/26 22:04:28 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -57,8 +57,8 @@
 #include <machine/vmparam.h>
 
 #include "i82586.h"
-#include "if_ie.h"
-#include "if_ie_subr.h"
+#include "if_iereg.h"
+#include "if_ievar.h"
 
 static void ie_vmereset __P((struct ie_softc *));
 static void ie_vmeattend __P((struct ie_softc *));

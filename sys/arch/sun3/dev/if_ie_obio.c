@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.1 1996/03/26 14:38:31 gwr Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.2 1996/03/26 22:04:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -58,8 +58,8 @@
 #include <machine/vmparam.h>
 
 #include "i82586.h"
-#include "if_ie.h"
-#include "if_ie_subr.h"
+#include "if_iereg.h"
+#include "if_ievar.h"
 
 static void ie_obreset __P((struct ie_softc *));
 static void ie_obattend __P((struct ie_softc *));
