@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/01/18 06:58:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 2004/05/08 21:51:51 kleink Exp $
 
 INCSDIR= /usr/include/sun2
 
@@ -19,6 +19,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h vuid_event.h \
+	wchar_limits.h \
 	z8530var.h
 
 .include <bsd.kinc.mk>

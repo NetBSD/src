@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.1 2003/08/19 10:53:05 ragge Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.2 2004/05/08 21:51:51 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -138,16 +138,6 @@
 #define	SIZE_MAX	0xfffffffffUL			/* size_t	  */
 #else
 #define	SIZE_MAX	0xfffffffffU			/* size_t	  */
-#endif
-
-#ifndef WCHAR_MIN /* also possibly defined in <wchar.h> */
-/* limits of wchar_t */
-#define	WCHAR_MIN	(-0x7ffffffff-1)		/* wchar_t	  */
-#define	WCHAR_MAX	0x7ffffffff			/* wchar_t	  */
-
-/* limits of wint_t */
-#define	WINT_MIN	(-0x7ffffffff-1)		/* wint_t	  */
-#define	WINT_MAX	0x7ffffffff			/* wint_t	  */
 #endif
 
 #endif /* !_PDP10_INT_LIMITS_H_ */
