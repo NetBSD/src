@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.19 2004/01/11 18:37:52 jdolecek Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.20 2004/03/14 00:45:21 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ struct	lwp {
 	int	l_holdcnt;	/* If non-zero, don't swap. */
 	void	*l_ctxlink;	/* uc_link {get,set}context */
 	int	l_dupfd;	/* Sideways return value from cloning devices XXX */
-	struct sastack	*l_upcallstack;	/* Upcall stack used during blocking upcall */
+	void	*l_fill1;	/* XXXcl temporarily unused */
 
 #define l_endzero l_priority
 
@@ -118,8 +118,6 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SA_PAGEFAULT	0x4000000 /* SA LWP in pagefault handler */
 #define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
 #define	L_SA_IDLE	0x20000000 /* VP is idle */
-#define	L_SA_WOKEN	0x40000000 /* LWP is on sa_woken queue */
-#define	L_SA_RECYCLE	0x80000000 /* LWP should be recycled in sa_setwoken */
 
 /*
  * Status values.
