@@ -1,6 +1,6 @@
-.\"	$NetBSD: pkg_admin.1,v 1.8.4.3 2002/02/23 18:02:46 he Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.8.4.4 2003/03/15 20:12:04 he Exp $
 .\"
-.\" Copyright (c) 1999 Hubert Feyrer.  All rights reserved.
+.\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 4, 2000
+.Dd August 4, 2002
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -41,7 +41,8 @@
 .Sh DESCRIPTION
 This command performs various administrative tasks around the
 .Nx
-Packages System. Available commands are:
+Packages System.
+Available commands are:
 .Pp
 .Bl -tag -width check
 .It Fl V
@@ -49,15 +50,16 @@ Print version number and exit.
 .It Cm check Op Ar pkg ...
 Use this command to check the files belonging to some or all of the
 packages installed on the local machine against their MD5 checksum
-noted in their +CONTENTS files. If no additional argument is given,
-the files of all installed packages are checked, else only the named
-packages will be checked (wildcards can be used here, see
+noted in their +CONTENTS files.
+If no additional argument is given, the files of all installed packages
+are checked, else only the named packages will be checked (wildcards can
+be used here, see
 .Xr pkg_info 1 ) .
 .Pp
 The packages' +CONTENTS files will be parsed and the MD5
-checksum will be checked for every file found. A warning message is
-printed if the expected checksum differs from the checksum of the file
-on disk.
+checksum will be checked for every file found.
+A warning message is printed if the expected checksum differs from the
+checksum of the file on disk.
 .Pp
 .It Cm dump
 Dump the contents of the package database, similar to
@@ -68,9 +70,11 @@ and the data field - the package the file belongs to.
 .It Cm lsbest /dir/pkgpattern
 List all/best package matching pattern in the given directory.
 Can be used to work around limitations of /bin/sh and other
-filename globbing mechanisms. This option implements matching of
+filename globbing mechanisms.
+This option implements matching of
 pkg-wildcards against arbitrary files, useful mainly in the build
-system itself. See
+system itself.
+See
 .Xr pkg_info 1
 for a description of the pattern.
 .Pp
@@ -93,6 +97,8 @@ yui# pkg_admin lsall /usr/pkgsrc/packages/i386ELF/All/'{mit,unproven}-pthread*'
 /usr/pkgsrc/packages/i386ELF/All/mit-pthreads-1.60b6.tgz
 /usr/pkgsrc/packages/i386ELF/All/unproven-pthreads-0.15.tgz
 .Ed
+.It Cm pmatch pattern pkg
+Returns true if pkg matches pattern, false else.
 .It Cm rebuild
 Rebuild the package database mapping from scratch, scanning
 subdirectories in
@@ -128,7 +134,8 @@ Where to register packages instead of
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
-.Xr pkg_info 1
+.Xr pkg_info 1 ,
+.Xr packages 7
 .Sh HISTORY
 The
 .Nm
