@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: auth.c,v 1.12 1996/03/23 05:43:11 scottr Exp $";
+static char rcsid[] = "$Id: auth.c,v 1.13 1996/04/09 05:29:25 cgd Exp $";
 #endif
 
 #include <stdio.h>
@@ -908,7 +908,7 @@ ip_addr_check(addr, addrs)
 	if (ptr_mask != NULL)
 	    *ptr_mask = '/';
 
-	if (a == -1L)
+	if (a == 0xffffffff)
 	    syslog (LOG_WARNING,
 		    "unknown host %s in auth. address list",
 		    addrs->word);
