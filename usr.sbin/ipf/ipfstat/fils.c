@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.9.2.2 1997/11/17 16:26:51 mrg Exp $	*/
+/*	$NetBSD: fils.c,v 1.9.2.3 1998/07/23 00:26:50 mellon Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -48,7 +48,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: fils.c,v 2.0.2.25.2.1 1997/11/06 21:21:19 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: fils.c,v 2.0.2.25.2.4 1998/06/08 06:58:12 darrenr Exp ";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -260,7 +260,7 @@ struct	friostat	*fp;
 			fp->f_st[1].fr_pull[0], fp->f_st[1].fr_pull[1]);
 	PRINTF("Fastroute successes:\t%lu\tfailures:\t%lu\n",
 			fp->f_froute[0], fp->f_froute[1]);
-	PRINTF("TCP cksum fails in:\t%lu\tout%lu\n",
+	PRINTF("TCP cksum fails(in):\t%lu\t(out):\t%lu\n",
 			fp->f_st[0].fr_tcpbad, fp->f_st[1].fr_tcpbad);
 
 	PRINTF("Packet log flags set: (%#x)\n", frf);
@@ -291,13 +291,13 @@ frentry_t *fp;
 			fp->fr_flags |= FR_OUTQUE;
 		if (opts & (OPT_HITS|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%qd ", fp->fr_hits);
+			PRINTF("%qd ", (long long)fp->fr_hits);
 #else
 			PRINTF("%ld ", fp->fr_hits);
 #endif
 		if (opts & (OPT_ACCNT|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%qd ", fp->fr_bytes);
+			PRINTF("%qd ", (long long)fp->fr_bytes);
 #else
 			PRINTF("%ld ", fp->fr_bytes);
 #endif
@@ -385,7 +385,8 @@ ips_stat_t *ipsp;
 				ips.is_state[1]);
 #ifdef	USE_QUAD_T
 			PRINTF("\tpkts %qd bytes %qd",
-				ips.is_pkts, ips.is_bytes);
+				(long long)ips.is_pkts,
+				(long long)ips.is_bytes);
 #else
 			PRINTF("\tpkts %ld bytes %ld",
 				ips.is_pkts, ips.is_bytes);
@@ -448,6 +449,13 @@ ips_stat_t *ipsp;
 			PRINTF("\n");
 			/* ... phil@ultimate.com */
 
+			PRINTF("\tpkt_flags & %x = %x,\t", ips.is_flags & 0xf,
+				ips.is_flags >> 4);
+			PRINTF("\tpkt_options & %x = %x\n", ips.is_optmsk,
+				ips.is_opt);
+			PRINTF("\tpkt_security & %x = %x, pkt_auth & %x = %x\n",
+				ips.is_secmsk, ips.is_sec, ips.is_authmsk,
+				ips.is_auth);
 			istab[i] = ips.is_next;
 		}
 }
@@ -487,8 +495,8 @@ int fd;
 fr_authstat_t *asp;
 {
 #ifdef	USE_QUAD_T
-	printf("Authorisation hits: %qd\tmisses %qd\n", asp->fas_hits,
-		asp->fas_miss);
+	printf("Authorisation hits: %qd\tmisses %qd\n",
+		(long long)asp->fas_hits, (long long)asp->fas_miss);
 #else
 	printf("Authorisation hits: %ld\tmisses %ld\n", asp->fas_hits,
 		asp->fas_miss);
