@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.58 2002/11/30 13:47:19 fvdl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.59 2003/01/10 23:37:34 jmmv Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.58 2002/11/30 13:47:19 fvdl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.59 2003/01/10 23:37:34 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -773,7 +773,7 @@ configure_bootsel(void)
 		mbs->flags |= BFL_SELACTIVE;
 	} else {
 		if (mbs->flags & BFL_SELACTIVE) {
-			printf("The bootselector is installed and active.");
+			printf("The bootselector is installed and active.\n");
 			if (!yesno("Do you want to change its settings?")) {
 				if (yesno("Do you want to deactivate it?")) {
 					mbs->flags &= ~BFL_SELACTIVE;
@@ -783,7 +783,7 @@ configure_bootsel(void)
 				return;
 			}
 		} else {
-			printf("The bootselector is installed but not active.");
+			printf("The bootselector is installed but not active.\n");
 			if (yesno("Do you want to activate it?")) {
 				mbs->flags |= BFL_SELACTIVE;
 				bootsel_modified = 1;
