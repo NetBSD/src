@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.82 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.83 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -245,6 +245,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	auich(4): Added support for nForce2 MCP-T.  [gendalia 20030116]
 	ex(4): Added support for 3c905CX-TX.  [gendalia 20030116]
 	texinfo(1): upgraded to 4.3 [wiz 20030117]
+	pthreads: Merge nathanw_sa branch, implementing p1003.1 POSIX thread
+		and Scheduler Activation thread interface [thorpej 20030117]
 	cpio(1): removed GNU cpio (replaced by pax frontend) [wiz 20030118]
 	tar(1): removed GNU tar (replaced by pax frontend) [wiz 20030118]
 	semaphores: Added p1003.1b semaphores from freebsd [christos 20030120]
