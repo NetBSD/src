@@ -267,15 +267,24 @@ fetch_kcore_registers (pcb)
    */
   if (target_read_memory(pcb->pcb_tss.tss_esp+4,
                          (char *)regs, sizeof(regs)))
-    error("Cannot read ebx, esi, and edi.");
+    {
+      warning("cannot read switchframe registers");
+      i=3; supply_register(i, (char *)&i);
+      i=6; supply_register(i, (char *)&i);
+      i=7; supply_register(i, (char *)&i);
+      i=8; supply_register(i, (char *)&i);
+    }
+  else
+    {
+      supply_register(3, (char *)&regs[2]);
+      supply_register(6, (char *)&regs[1]);
+      supply_register(7, (char *)&regs[0]);
+      supply_register(8, (char *)&regs[3]);
+    }
   for (i = 0, regno = 0; regno < 3; regno++)
     supply_register(regno, (char *)&i);
-  supply_register(3, (char *)&regs[2]);
   supply_register(4, (char *)&pcb->pcb_tss.tss_esp);
   supply_register(5, (char *)&pcb->pcb_tss.tss_ebp);
-  supply_register(6, (char *)&regs[1]);
-  supply_register(7, (char *)&regs[0]);
-  supply_register(8, (char *)&regs[3]);
   for (i = 0, regno = 9; regno < 10; regno++)
     supply_register(regno, (char *)&i);
 #if 0
