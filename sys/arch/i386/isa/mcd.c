@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.20 1994/10/27 04:17:57 cgd Exp $	*/
+/*	$NetBSD: mcd.c,v 1.21 1994/10/28 23:39:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -56,6 +56,7 @@
 #include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/device.h>
+#include <sys/disk.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -69,19 +70,8 @@
 #define MCD_TRACE(fmt,a,b,c,d)	{if (sc->debug) {printf("%s: st=%02x: ", sc->sc_dev.dv_xname, sc->status); printf(fmt,a,b,c,d);}}
 #endif
 
-#define	MCDPART(dev)	((minor(dev) & 0x7f) % MAXPARTITONS)
-#define	MCDUNIT(dev)	((minor(dev) & 0x7f) / MAXPARTITONS)
-#define	MCDPHYS(dev)	(minor(dev) & 0x80)
-
-/* flags */
-#define MCDOPEN		0x0001	/* device opened */
-#define MCDVALID	0x0002	/* parameters loaded */
-#define MCDWAIT		0x0004	/* waiting for something */
-#define MCDLABEL	0x0008	/* label is read */
-#define	MCDREADRAW	0x0010	/* read raw mode (2352 bytes) */
-#define	MCDVOLINFO	0x0020	/* already read volinfo */
-#define	MCDTOC		0x0040	/* already read toc */
-#define	MCDMBXBSY	0x0080	/* local mbx is busy */
+#define	MCDPART(dev)	DISKPART(dev)
+#define	MCDUNIT(dev)	DISKUNIT(dev)
 
 /* status */
 #define	MCDAUDIOBSY	MCD_ST_AUDIOBSY		/* playing audio */
@@ -94,7 +84,7 @@
 #define MCD_LASTPLUS1	170	/* special toc entry */
 
 struct mcd_mbx {
-	short		unit;
+	struct mcd_softc *softc;
 	short		retry;
 	short		nblk;
 	int		sz;
@@ -103,33 +93,41 @@ struct mcd_mbx {
 	int		p_offset;
 	short		count;
 	short		state;
+#define MCD_S_BEGIN	0
+#define MCD_S_WAITSTAT	1
+#define MCD_S_WAITMODE	2
+#define MCD_S_WAITREAD	3
 };
 
 struct mcd_softc {
 	struct	device sc_dev;
+	struct	dkdevice sc_dk;
 	struct	intrhand sc_ih;
 
 	u_short	iobase;
 	short	config;
 	short	flags;
+#define MCDOPEN		0x0001	/* device opened */
+#define MCDVALID	0x0002	/* parameters loaded */
+#define MCDLABEL	0x0004	/* label is read */
+#define	MCDVOLINFO	0x0008	/* already read volinfo */
+#define	MCDTOC		0x0010	/* already read toc */
+#define	MCDMBXBSY	0x0020	/* local mbx is busy */
 	short	status;
 	int	blksize;
 	u_long	disksize;
-	struct	disklabel dlabel;
-	int	partflags[MAXPARTITIONS];
-	int	openflags;
 	struct	mcd_volinfo volinfo;
 	struct	mcd_qchninfo toc[MCD_MAXTOCS];
 	short	audio_status;
 	struct	mcd_read2 lastpb;
 	short	debug;
-	struct	buf head;	/* head of buf queue */
+	struct	buf buf_queue;
 	struct	mcd_mbx mbx;
 };
 
 /* prototypes */
-int mcdopen __P((dev_t));
-int mcdclose __P((dev_t));
+int mcdopen __P((dev_t, int, int, struct proc *));
+int mcdclose __P((dev_t, int, int));
 int mcd_start __P((struct mcd_softc *));
 int mcdioctl __P((dev_t, int, caddr_t, int, struct proc *));
 int mcd_getdisklabel __P((struct mcd_softc *));
@@ -184,12 +182,6 @@ struct cfdriver mcdcd = {
 #define DELAY_GETREPLY	200000l		/* 200000 * 2us */
 #define DELAY_SEEKREAD	20000l		/* 20000 * 1us */
 
-/* reader state machine */
-#define MCD_S_BEGIN	0
-#define MCD_S_WAITSTAT	1
-#define MCD_S_WAITMODE	2
-#define MCD_S_WAITREAD	3
-
 void
 mcdattach(parent, self, aux)
 	struct device *parent, *self;
@@ -214,10 +206,12 @@ mcdattach(parent, self, aux)
 }
 
 int
-mcdopen(dev)
+mcdopen(dev, flag, fmt, p)
 	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
 {
-	int unit, part, phys;
+	int unit, part;
 	struct mcd_softc *sc;
 	
 	unit = MCDUNIT(dev);
@@ -228,57 +222,73 @@ mcdopen(dev)
 		return ENXIO;
 
 	part = MCDPART(dev);
-	phys = MCDPHYS(dev);
 	
-	/* Invalidated in the meantime?  Mark all open part's invalid. */
-	if (!(sc->flags & MCDVALID) && sc->openflags)
-		return ENXIO;
+	/* If it's been invalidated forget the label. */
+	if ((sc->flags & MCDVALID) == 0) {
+		sc->flags &= ~(MCDLABEL | MCDVOLINFO | MCDTOC);
+
+		/* If any partition still open, then don't allow fresh open. */
+		if (sc->sc_dk.dk_openmask != 0)
+			return ENXIO;
+	}
 
 	if (mcd_getstat(sc, 1) < 0)
 		return ENXIO;
 
-	/* XXX Get a default disklabel. */
-	mcd_getdisklabel(sc);
-
 	if (mcdsize(dev) < 0) {
 		printf("%s: failed to get disk size\n", sc->sc_dev.dv_xname);
 		return ENXIO;
-	} else
-		sc->flags |= MCDVALID;
+	}
+
+	sc->flags |= MCDVALID;
+
+	/* XXX Get a default disklabel. */
+	mcd_getdisklabel(sc);
 
 	MCD_TRACE("open: partition=%d disksize=%d blksize=%d\n", part,
 	    sc->disksize, sc->blksize, 0);
 
 	if (part != RAW_PART &&
-	    (part >= sc->dlabel.d_npartitions ||
-	    sc->dlabel.d_partitions[part].p_fstype == FS_UNUSED))
+	    (part >= sc->sc_dk.dk_label.d_npartitions ||
+	     sc->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED))
 		return ENXIO;
 
-	sc->partflags[part] |= MCDOPEN;
-	sc->openflags |= (1 << part);
-	if (part == RAW_PART && phys != 0)
-		sc->partflags[part] |= MCDREADRAW;
+	/* Insure only one open at a time. */
+	switch (fmt) {
+	case S_IFCHR:
+		sc->sc_dk.dk_copenmask |= (1 << part);
+		break;
+	case S_IFBLK:
+		sc->sc_dk.dk_bopenmask |= (1 << part);
+		break;
+	}
+	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
+
 	return 0;
 }
 
 int
-mcdclose(dev)
+mcdclose(dev, flag, fmt)
 	dev_t dev;
+	int flag, fmt;
 {
-	int unit, part;
-	struct mcd_softc *sc;
+	struct mcd_softc *sc = mcdcd.cd_devs[MCDUNIT(dev)];
+	int part = MCDPART(dev);
 	
-	unit = MCDUNIT(dev);
-	part = MCDPART(dev);
-	sc = mcdcd.cd_devs[unit];
+	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
 
 	/* Get status. */
 	mcd_getstat(sc, 1);
 
-	/* Close channel. */
-	sc->partflags[part] &= ~(MCDOPEN | MCDREADRAW);
-	sc->openflags &= ~(1 << part);
-	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
+	switch (fmt) {
+	case S_IFCHR:
+		sc->sc_dk.dk_copenmask &= ~(1 << part);
+		break;
+	case S_IFBLK:
+		sc->sc_dk.dk_bopenmask &= ~(1 << part);
+		break;
+	}
+	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
 	return 0;
 }
@@ -298,7 +308,6 @@ mcdstrategy(bp)
 		printf("%s: strategy: blkno=%d bcount=%d\n",
 		    sc->sc_dev.dv_xname, bp->b_blkno, bp->b_bcount);
 		bp->b_error = EINVAL;
-		bp->b_flags |= B_ERROR;
 		goto bad;
 	}
 
@@ -326,12 +335,12 @@ mcdstrategy(bp)
 			goto bad;
 		}
 		/* Adjust transfer if necessary. */
-		if (bounds_check_with_label(bp, &sc->dlabel, 1) <= 0)
+		if (bounds_check_with_label(bp, &sc->sc_dk.dk_label, 0) <= 0)
 			goto done;
 	}
 	
 	/* Queue it. */
-	qp = &sc->head;
+	qp = &sc->buf_queue;
 	s = splbio();
 	disksort(qp, bp);
 	splx(s);
@@ -345,46 +354,55 @@ bad:
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
-	return;
 }
 
 int
 mcd_start(sc)
 	struct mcd_softc *sc;
 {
-	struct buf *bp, *qp = &sc->head;
-	struct partition *p;
-	int s = splbio();
+	struct buf *bp, *qp = &sc->buf_queue;
+	int part;
+	int s;
 	
+loop:
+	s = splbio();
+
 	if (sc->flags & MCDMBXBSY) {
 		splx(s);
 		return;
 	}
 
-	if ((bp = qp->b_actf) != 0) {
-		/* Block found to process; dequeue. */
-		MCD_TRACE("start: found block bp=0x%x\n", bp, 0, 0, 0);
-		qp->b_actf = bp->b_actf;
-		splx(s);
-	} else {
+	if ((bp = qp->b_actf) == 0) {
 		/* Nothing to do; */
 		splx(s);
 		return;
 	}
 
+	/* Block found to process; dequeue. */
+	MCD_TRACE("start: found block bp=0x%x\n", bp, 0, 0, 0);
+	qp->b_actf = bp->b_actf;
+	splx(s);
+
 	/* Changed media? */
 	if (!(sc->flags	& MCDVALID)) {
 		MCD_TRACE("start: drive not valid\n", 0, 0, 0, 0);
-		return;
+		sc->flags &= ~(MCDLABEL | MCDVOLINFO | MCDTOC);
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
+		goto loop;
 	}
 
-	p = &sc->dlabel.d_partitions[MCDPART(bp->b_dev)];
-
 	sc->flags |= MCDMBXBSY;
-	sc->mbx.unit = sc->sc_dev.dv_unit;
+	sc->mbx.softc = sc;
 	sc->mbx.retry = MCD_RETRIES;
 	sc->mbx.bp = bp;
-	sc->mbx.p_offset = p->p_offset;
+	part = MCDPART(bp->b_dev);
+	if (part == RAW_PART)
+		sc->mbx.p_offset = 0;
+	else
+		sc->mbx.p_offset =
+		    sc->sc_dk.dk_label.d_partitions[part].p_offset;
 
 	/* Calling the read routine. */
 	sc->mbx.state = MCD_S_BEGIN;
@@ -404,27 +422,22 @@ mcdioctl(dev, cmd, addr, flags, p)
 	
 	if (!(sc->flags & MCDVALID))
 		return EIO;
+
 	MCD_TRACE("ioctl: cmd=0x%x\n", cmd, 0, 0, 0);
 
 	switch (cmd) {
 	case DIOCSBAD:
 		return EINVAL;
-	case DIOCGDINFO:
-	case DIOCGPART:
-	case DIOCWDINFO:
-	case DIOCSDINFO:
-	case DIOCWLABEL:
-		return ENOTTY;
 	case CDIOCPLAYTRACKS:
-		return mcd_playtracks(sc, (struct ioc_play_track *) addr);
+		return mcd_playtracks(sc, (struct ioc_play_track *)addr);
 	case CDIOCPLAYBLOCKS:
-		return mcd_play(sc, (struct mcd_read2 *) addr);
+		return mcd_play(sc, (struct mcd_read2 *)addr);
 	case CDIOCREADSUBCHANNEL:
-		return mcd_subchan(sc, (struct ioc_read_subchannel *) addr);
+		return mcd_subchan(sc, (struct ioc_read_subchannel *)addr);
 	case CDIOREADTOCHEADER:
-		return mcd_toc_header(sc, (struct ioc_toc_header *) addr);
+		return mcd_toc_header(sc, (struct ioc_toc_header *)addr);
 	case CDIOREADTOCENTRYS:
-		return mcd_toc_entry(sc, (struct ioc_read_toc_entry *) addr);
+		return mcd_toc_entry(sc, (struct ioc_read_toc_entry *)addr);
 	case CDIOCSETPATCH:
 	case CDIOCGETVOL:
 	case CDIOCSETVOL:
@@ -453,6 +466,13 @@ mcdioctl(dev, cmd, addr, flags, p)
 	case CDIOCRESET:
 		return EINVAL;
 	default:
+#if 0
+	case DIOCGDINFO:
+	case DIOCGPART:
+	case DIOCWDINFO:
+	case DIOCSDINFO:
+	case DIOCWLABEL:
+#endif
 		return ENOTTY;
 	}
 #ifdef DIAGNOSTIC
@@ -470,27 +490,28 @@ mcd_getdisklabel(sc)
 {
 	
 	if (sc->flags & MCDLABEL)
-		return -1;
+		return 0;
 	
-	bzero(&sc->dlabel, sizeof(struct disklabel));
-	strncpy(sc->dlabel.d_typename, "Mitsumi CD ROM ", 16);
-	strncpy(sc->dlabel.d_packname, "unknown        ", 16);
-	sc->dlabel.d_secsize 	= sc->blksize;
-	sc->dlabel.d_nsectors	= 100;
-	sc->dlabel.d_ntracks	= 1;
-	sc->dlabel.d_ncylinders	= (sc->disksize /100) + 1;
-	sc->dlabel.d_secpercyl	= 100;
-	sc->dlabel.d_secperunit	= sc->disksize;
-	sc->dlabel.d_rpm	= 300;
-	sc->dlabel.d_interleave	= 1;
-	sc->dlabel.d_flags	= D_REMOVABLE;
-	sc->dlabel.d_npartitions= 1;
-	sc->dlabel.d_partitions[0].p_offset = 0;
-	sc->dlabel.d_partitions[0].p_size = sc->disksize;
-	sc->dlabel.d_partitions[0].p_fstype = 9;
-	sc->dlabel.d_magic	= DISKMAGIC;
-	sc->dlabel.d_magic2	= DISKMAGIC;
-	sc->dlabel.d_checksum	= dkcksum(&sc->dlabel);
+	bzero(&sc->sc_dk.dk_label, sizeof(struct disklabel));
+	bzero(&sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	strncpy(sc->sc_dk.dk_label.d_typename, "Mitsumi CD ROM", 16);
+	strncpy(sc->sc_dk.dk_label.d_packname, "unknown", 16);
+	sc->sc_dk.dk_label.d_secsize 	= sc->blksize;
+	sc->sc_dk.dk_label.d_nsectors	= 100;
+	sc->sc_dk.dk_label.d_ntracks	= 1;
+	sc->sc_dk.dk_label.d_ncylinders	= (sc->disksize /100) + 1;
+	sc->sc_dk.dk_label.d_secpercyl	= 100;
+	sc->sc_dk.dk_label.d_secperunit	= sc->disksize;
+	sc->sc_dk.dk_label.d_rpm	= 300;
+	sc->sc_dk.dk_label.d_interleave	= 1;
+	sc->sc_dk.dk_label.d_flags	= D_REMOVABLE;
+	sc->sc_dk.dk_label.d_npartitions= RAW_PART + 1;
+	sc->sc_dk.dk_label.d_partitions[0].p_offset = 0;
+	sc->sc_dk.dk_label.d_partitions[0].p_size = sc->disksize;
+	sc->sc_dk.dk_label.d_partitions[0].p_fstype = 9;
+	sc->sc_dk.dk_label.d_partitions[RAW_PART].p_offset = 0;
+	sc->sc_dk.dk_label.d_partitions[RAW_PART].p_size = sc->disksize;
+	sc->sc_dk.dk_label.d_partitions[RAW_PART].p_fstype = 9;
 	
 	sc->flags |= MCDLABEL;
 	return 0;
@@ -846,11 +867,11 @@ mcd_doread(arg)
 	void *arg;
 {
 	struct mcd_mbx *mbx = arg;
-	struct mcd_softc *sc = mcdcd.cd_devs[mbx->unit];
+	struct mcd_softc *sc = mbx->softc;
 	u_short iobase = sc->iobase;
 	struct buf *bp = mbx->bp;
 
-	int rm, i, k;
+	int i, k;
 	struct mcd_read2 rbuf;
 	int blkno;
 	caddr_t	addr;
@@ -888,18 +909,10 @@ loop:
 			goto readerr;
 		}
 
-		/* Check for raw/cooked mode. */
-		if (sc->flags & MCDREADRAW) {
-			rm = MCD_MD_RAW;
-			mbx->sz = MCDRBLK;
-		} else {
-			rm = MCD_MD_COOKED;
-			mbx->sz = sc->blksize;
-		}
-
 		mcd_put(iobase + mcd_command, MCD_CMDSETMODE);
-		mcd_put(iobase + mcd_command, rm);
+		mcd_put(iobase + mcd_command, MCD_MD_COOKED);
 
+		mbx->sz = sc->blksize;
 		mbx->count = RDELAY_WAITMODE;
 		mbx->state = MCD_S_WAITMODE;
 		timeout(mcd_doread, mbx, hz / 100);
@@ -1107,7 +1120,6 @@ mcd_read_toc(sc)
 	sc->toc[idx].hd_pos_msf[2] = sc->volinfo.vol_msf[2];
 
 	sc->flags |= MCDTOC;
-
 	return 0;
 }
 
