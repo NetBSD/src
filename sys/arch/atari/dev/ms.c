@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.3 1995/07/27 06:35:46 leo Exp $
+/*	$NetBSD: ms.c,v 1.4 1996/04/12 08:37:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -62,9 +62,13 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/signalvar.h>
 
+#include <machine/msioctl.h>
 #include <atari/dev/event_var.h>
 #include <atari/dev/vuid_event.h>
+#include <atari/dev/kbdvar.h>
+#include <atari/dev/msvar.h>
 
 #include "mouse.h"
 #if NMOUSE > 0
@@ -75,38 +79,24 @@
 #define NMOUSE 1
 #endif
 
-typedef void	(*FPV)();
+typedef void	(*FPV) __P((void *));
 
-/*
- * Mouse specific packages produced by the keyboard. Currently, we only
- * define the REL_MOUSE package, as this is the only one used.
- */
-typedef struct {
-	u_char	id;
-	char	dx;
-	char	dy;
-} REL_MOUSE;
+static struct ms_softc	ms_softc[NMOUSE];
 
-#define IS_REL_MOUSE(id)	(((u_int)(id) & 0xF8) == 0xF8)
-#define TIMEOUT_ID		(0xFC)
-
-static struct ms_softc {
-	u_char			ms_buttons; /* button states		*/
-	struct	evvar		ms_events;  /* event queue state	*/
-	int			ms_dx;	    /* accumulated dx		*/
-	int			ms_dy;	    /* accumulated dy		*/
-	struct firm_event	ms_bq[2];   /* Button queue		*/
-	int			ms_bq_idx;  /* Button queue index	*/
-} ms_softc[NMOUSE];
+dev_type_open(msopen);
+dev_type_close(msclose);
+dev_type_read(msread);
+dev_type_ioctl(msioctl);
+dev_type_select(msselect);
 
 static	void	ms_3b_delay __P((struct ms_softc *));
-	void	mouse_soft __P((REL_MOUSE *, int));
 
 int
 mouseattach(cnt)
 	int cnt;
 {
 	printf("1 mouse configured\n");
+	ms_softc[0].ms_emul3b = 0 /*1*/; /* XXX: default behaviour.... */
 	return(NMOUSE);
 }
 
@@ -118,51 +108,76 @@ struct ms_softc	*ms;
 
 	rel_ms.id = TIMEOUT_ID;
 	rel_ms.dx = rel_ms.dy = 0;
-	mouse_soft(&rel_ms, sizeof(rel_ms));
+	mouse_soft(&rel_ms, sizeof(rel_ms), KBD_TIMEO_PKG);
 }
 /* 
  * Note that we are called from the keyboard software interrupt!
  */
 void
-mouse_soft(rel_ms, size)
+mouse_soft(rel_ms, size, type)
 REL_MOUSE	*rel_ms;
-int		size;
+int		size, type;
 {
 	struct ms_softc		*ms = &ms_softc[0];
 	struct firm_event	*fe, *fe2;
+	REL_MOUSE		fake_mouse;
 	int			get, put;
 	int			sps;
 	u_char			mbut, bmask;
-	int			is_timeout;
 	int			flush_buttons;
-	int			id;
 
-	if (!IS_REL_MOUSE(rel_ms->id))
-		return;	/* Probably some other message */
 	if (ms->ms_events.ev_io == NULL)
 		return;
+
+	switch (type) {
+	    case KBD_JOY1_PKG:
+		/*
+		 * There are some mice that have their middle button
+		 * wired to the 'up' bit of joystick 1....
+		 * Simulate a mouse packet with dx = dy = 0, the middle
+		 * button state set by UP and the other buttons unchanged.
+		 * Flush all button changes.
+		 */
+		flush_buttons = 1;
+		fake_mouse.id = (rel_ms->dx & 1 ? 4 : 0) | (ms->ms_buttons & 3);
+		fake_mouse.dx = fake_mouse.dy = 0;
+		rel_ms = &fake_mouse;
+		break;
+	    case KBD_TIMEO_PKG:
+		/*
+		 * Timeout package. No button changes and no movement.
+		 * Flush all button changes.
+		 */
+		flush_buttons = 1;
+		fake_mouse.id = ms->ms_buttons;
+		fake_mouse.dx = fake_mouse.dy = 0;
+		rel_ms = &fake_mouse;
+		break;
+	    case KBD_RMS_PKG:
+		/*
+		 * Normal mouse package. Always copy the middle button
+		 * status. The emulation code decides if button changes
+		 * must be flushed.
+		 */
+		rel_ms->id = (ms->ms_buttons & 4) | (rel_ms->id & 3);
+		flush_buttons = (ms->ms_emul3b) ? 0 : 1;
+		break;
+	    default:
+		return;
+	}
 
 	sps = splev();
 	get = ms->ms_events.ev_get;
 	put = ms->ms_events.ev_put;
 	fe  = &ms->ms_events.ev_q[put];
 
-	if (rel_ms->id == TIMEOUT_ID) {
-		is_timeout = 1;
-		id = ms->ms_buttons;
-	}
-	else {
-		is_timeout = 0;
-		id = (rel_ms->id & 3) | (ms->ms_buttons & 4);
-	}
-
-	if (!is_timeout && ms->ms_bq_idx)
+	if ((type != KBD_TIMEO_PKG) && ms->ms_emul3b && ms->ms_bq_idx)
 		untimeout((FPV)ms_3b_delay, (void *)ms);
 
 	/*
-	 * Button states are encoded in the lower 2 bits of 'id'
+	 * Button states are encoded in the lower 3 bits of 'id'
 	 */
-	if (!(mbut = (id ^ ms->ms_buttons)) && (put != get)) {
+	if (!(mbut = (rel_ms->id ^ ms->ms_buttons)) && (put != get)) {
 		/*
 		 * Compact dx/dy messages. Always generate an event when
 		 * a button is pressed or the event queue is empty.
@@ -207,76 +222,71 @@ int		size;
 		}
 		else fe++;
 	}
-	if (mbut && !is_timeout) {
-		for (bmask = 1; bmask < 0x04; bmask <<= 1) {
+	if (mbut && (type != KBD_TIMEO_PKG)) {
+		for (bmask = 1; bmask < 0x08; bmask <<= 1) {
 			if (!(mbut & bmask))
 				continue;
 			fe2 = &ms->ms_bq[ms->ms_bq_idx++];
-			fe2->id    = bmask & 1 ? MS_RIGHT : MS_LEFT;
-			fe2->value = id & bmask ? VKEY_DOWN : VKEY_UP;
+			if (bmask == 1)
+				fe2->id = MS_RIGHT;
+			else if (bmask == 2)
+				fe2->id = MS_LEFT;
+			else fe2->id = MS_MIDDLE;
+			fe2->value = rel_ms->id & bmask ? VKEY_DOWN : VKEY_UP;
 			fe2->time  = time;
 		}
 	}
-	if (ms->ms_bq_idx) {
+
+	/*
+	 * Handle 3rd button emulation.
+	 */
+	if (ms->ms_emul3b && ms->ms_bq_idx && (type != KBD_TIMEO_PKG)) {
 		/*
-		 * We have at least one button, handle it.
+		 * If the middle button is pressed, any change to
+		 * one of the other buttons releases all.
 		 */
-		flush_buttons = (is_timeout) ? 1 : 0;
-		if (ms->ms_bq_idx == 2) {
+		if ((ms->ms_buttons & 4) && (mbut & 3)) {
+			ms->ms_bq[0].id = MS_MIDDLE;
+			ms->ms_bq_idx   = 1;
+			rel_ms->id      = 0;
+			flush_buttons   = 1;
+			goto out;
+		}
+	    	if (ms->ms_bq_idx == 2) {
 			if (ms->ms_bq[0].value == ms->ms_bq[1].value) {
 				/* Must be 2 button presses! */
-				if (ms->ms_bq[0].id != ms->ms_bq[1].id) {
-					ms->ms_bq[0].id = MS_MIDDLE;
-					ms->ms_bq_idx = 1;
-					id = 7;
-				}
+				ms->ms_bq[0].id = MS_MIDDLE;
+				ms->ms_bq_idx   = 1;
+				rel_ms->id      = 7;
 			}
-			flush_buttons = 1;
 		}
-		else {
-			if (ms->ms_bq[0].value == VKEY_UP) {
-				/*
-				 * Release of a button is always flushed
-				 * immediately. If the middle button is
-				 * active, the release event is his. Mark
-				 * all buttons released, this also surpresses
-				 * a spurious release event of the not-yet-
-				 * released button.
-				 */
-				if( id & 4) {
-					ms->ms_bq[0].id = MS_MIDDLE;
-					id = 0;
-				}
-				flush_buttons = 1;
-			}
-			else if (!is_timeout) {
-				timeout((FPV)ms_3b_delay, (void *)ms, 10);
+		else if (ms->ms_bq[0].value == VKEY_DOWN) {
+			timeout((FPV)ms_3b_delay, (void *)ms, 10);
+			goto out;
+		}
+		flush_buttons   = 1;
+	}
+out:
+	if (flush_buttons) {
+		int	i;
+
+		for (i = 0; i < ms->ms_bq_idx; i++) {
+			if ((++put) % EV_QSIZE == get) {
+				ms->ms_bq_idx = 0;
+				put--;
 				goto out;
 			}
-		}
-		if (flush_buttons) {
-			int	i;
-
-			for (i = 0; i < ms->ms_bq_idx; i++) {
-				if ((++put) % EV_QSIZE == get) {
-					ms->ms_bq_idx = 0;
-					put--;
-					goto out;
-				}
-				*fe = ms->ms_bq[i];
-				if (put >= EV_QSIZE) {
-					put = 0;
-					fe  = &ms->ms_events.ev_q[0];
-				}
-				else fe++;
+			*fe = ms->ms_bq[i];
+			if (put >= EV_QSIZE) {
+				put = 0;
+				fe  = &ms->ms_events.ev_q[0];
 			}
-			ms->ms_bq_idx = 0;
+			else fe++;
 		}
+		ms->ms_bq_idx = 0;
 	}
-
-out:
 	ms->ms_events.ev_put = put;
-	ms->ms_buttons       = id;
+	ms->ms_buttons       = rel_ms->id;
 	splx(sps);
 	EV_WAKEUP(&ms->ms_events);
 }
@@ -287,7 +297,7 @@ dev_t		dev;
 int		flags, mode;
 struct proc	*p;
 {
-	u_char		report_ms[] = { 0x08 };
+	u_char		report_ms_joy[] = { 0x14, 0x08 };
 	struct ms_softc	*ms;
 	int		unit;
 
@@ -310,7 +320,7 @@ struct proc	*p;
 	/*
 	 * Enable mouse reporting.
 	 */
-	kbd_write(report_ms, sizeof(report_ms));
+	kbd_write(report_ms_joy, sizeof(report_ms_joy));
 	return(0);
 }
 
@@ -320,7 +330,7 @@ dev_t		dev;
 int		flags, mode;
 struct proc	*p;
 {
-	u_char		disable_ms[] = { 0x12 };
+	u_char		disable_ms_joy[] = { 0x12, 0x1a };
 	int		unit;
 	struct ms_softc	*ms;
 
@@ -330,7 +340,7 @@ struct proc	*p;
 	/*
 	 * Turn off mouse interrogation.
 	 */
-	kbd_write(disable_ms, sizeof(disable_ms));
+	kbd_write(disable_ms_joy, sizeof(disable_ms_joy));
 	ev_fini(&ms->ms_events);
 	ms->ms_events.ev_io = NULL;
 	return(0);
@@ -363,6 +373,12 @@ struct proc		*p;
 	ms = &ms_softc[unit];
 
 	switch (cmd) {
+	case  MIOCS3B_EMUL:
+		ms->ms_emul3b = (*(int *)data != 0) ? 1 : 0;
+		return (0);
+	case  MIOCG3B_EMUL:
+		*(int *)data = ms->ms_emul3b;
+		return (0);
 	case FIONBIO:		/* we will remove this someday (soon???) */
 		return(0);
 	case FIOASYNC:

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.8 1996/03/27 12:15:28 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.9 1996/04/12 08:37:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -43,43 +43,27 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/kernel.h>
+#include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <dev/cons.h>
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <machine/acia.h>
-#include <atari/dev/ym2149reg.h>
 #include <atari/dev/itevar.h>
-#include <atari/dev/kbdreg.h>
 #include <atari/dev/event_var.h>
 #include <atari/dev/vuid_event.h>
+#include <atari/dev/ym2149reg.h>
+#include <atari/dev/kbdreg.h>
+#include <atari/dev/kbdvar.h>
+#include <atari/dev/msvar.h>
 
 #include "mouse.h"
-
-/*
- * The ringbuffer is the interface between the hard and soft interrupt handler.
- * The hard interrupt runs straight from the MFP interrupt.
- */
-#define KBD_RING_SIZE	256   /* Sz of input ring buffer, must be power of 2 */
-#define KBD_RING_MASK	255   /* Modulo mask for above			     */
 
 static u_char		kbd_ring[KBD_RING_SIZE];
 static volatile u_int	kbd_rbput = 0;	/* 'put' index			*/
 static u_int		kbd_rbget = 0;	/* 'get' index			*/
 static u_char		kbd_soft  = 0;	/* 1: Softint has been scheduled*/
-
-struct kbd_softc {
-	int		k_event_mode;	/* if 1, collect events,	*/
-					/*   else pass to ite		*/
-	struct evvar	k_events;	/* event queue state		*/
-	u_char		k_soft_cs;	/* control-reg. copy		*/
-	u_char		k_package[20];	/* XXX package being build	*/
-	u_char		k_pkg_size;	/* Size of the package		*/
-	u_char		k_pkg_idx;
-	u_char		*k_sendp;	/* Output pointer		*/
-	int		k_send_cnt;	/* Chars left for output	*/
-};
 
 static struct kbd_softc kbd_softc;
 
@@ -92,8 +76,6 @@ dev_type_select(kbdselect);
 
 /* Interrupt handler */
 void	kbdintr __P((int));
-
-void	kbd_write __P((u_char *, int));
 
 static void kbdsoft __P((void));
 static void kbdattach __P((struct device *, struct device *, void *));
@@ -108,6 +90,7 @@ struct cfattach kbd_ca = {
 struct cfdriver kbd_cd = {
 	NULL, "kbd", DV_DULL, NULL, 0
 };
+
 
 /*ARGSUSED*/
 static	int
@@ -362,18 +345,23 @@ kbdsoft()
 			 * continue.
 			 */
 			if (k->k_pkg_size && (k->k_pkg_idx < k->k_pkg_size)) {
-				k->k_package[k->k_pkg_idx++] = code;
-				if (k->k_pkg_idx == k->k_pkg_size) {
-				    k->k_pkg_size = 0;
+			    k->k_package[k->k_pkg_idx++] = code;
+			    if (k->k_pkg_idx == k->k_pkg_size) {
+				/*
+				 * Package is complete.
+				 */
+				switch(k->k_pkg_type) {
 #if NMOUSE > 0
-				    /*
-				     * Package is complete, we can now
-				     * send it to the mouse driver...
-				     */
-				    mouse_soft(k->k_package, k->k_pkg_size);
+				    case KBD_AMS_PKG:
+				    case KBD_RMS_PKG:
+				    case KBD_JOY1_PKG:
+			 		mouse_soft((REL_MOUSE *)k->k_package,
+						k->k_pkg_size, k->k_pkg_type);
 #endif /* NMOUSE */
 				}
-				continue;
+				k->k_pkg_size = 0;
+			    }
+			    continue;
 			}
 			/*
 			 * If this is a package header, init pkg. handling.
@@ -428,7 +416,7 @@ kbdbell()
 {
 	register int	i, sps;
 
-	sps = spltty();
+	sps = splhigh();
 	for (i = 0; i < sizeof(sound); i++) {
 		YM2149->sd_selr = i;
 		YM2149->sd_wdat = sound[i];
@@ -548,22 +536,30 @@ u_char		 msg_start;
 	kp->k_package[0] = msg_start;
 	switch (msg_start) {
 		case 0xf6:
+			kp->k_pkg_type = KBD_MEM_PKG;
 			kp->k_pkg_size = 8;
 			break;
 		case 0xf7:
+			kp->k_pkg_type = KBD_AMS_PKG;
 			kp->k_pkg_size = 6;
 			break;
 		case 0xf8:
 		case 0xf9:
 		case 0xfa:
 		case 0xfb:
+			kp->k_pkg_type = KBD_RMS_PKG;
 			kp->k_pkg_size = 3;
 			break;
 		case 0xfc:
+			kp->k_pkg_type = KBD_CLK_PKG;
 			kp->k_pkg_size = 7;
 			break;
 		case 0xfe:
+			kp->k_pkg_type = KBD_JOY0_PKG;
+			kp->k_pkg_size = 2;
+			break;
 		case 0xff:
+			kp->k_pkg_type = KBD_JOY1_PKG;
 			kp->k_pkg_size = 2;
 			break;
 		default:
