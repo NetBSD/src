@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.2 1999/11/15 18:49:10 fvdl Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.3 2000/07/09 00:59:06 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -70,10 +70,9 @@ vfs_allocate_syncvnode(mp)
 	int error;
 
 	/* Allocate a new vnode */
-	if ((error = getnewvnode(VT_VFS, mp, sync_vnodeop_p, &vp)) != 0) {
-		mp->mnt_syncer = NULL;
+	if ((error = getnewvnode(VT_VFS, mp, sync_vnodeop_p, &vp)) != 0)
 		return (error);
-	}
+
 	vp->v_writecount = 1;
 	vp->v_type = VNON;
 	/*
@@ -95,6 +94,23 @@ vfs_allocate_syncvnode(mp)
 	vn_syncer_add_to_worklist(vp, syncdelay > 0 ? next % syncdelay : 0);
 	mp->mnt_syncer = vp;
 	return (0);
+}
+
+/*
+ * Destroy the filesystem syncer vnode for the specified mount point.
+ */
+void
+vfs_deallocate_syncvnode(mp)
+	struct mount *mp;
+{
+	struct vnode *vp;
+
+	vp = mp->mnt_syncer;
+	mp->mnt_syncer = 0;
+	vn_syncer_remove_from_worklist(vp);
+	vp->v_writecount = 0;
+	vgone(vp);
+	vrele(vp);
 }
 
 /*

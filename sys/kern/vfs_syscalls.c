@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.159 2000/06/27 17:41:52 mrg Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.160 2000/07/09 00:59:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -329,10 +329,8 @@ update:
 			if (mp->mnt_syncer == NULL)
 				error = vfs_allocate_syncvnode(mp);
 		} else {
-			if (mp->mnt_syncer != NULL) {
-				vgone(mp->mnt_syncer);
-				mp->mnt_syncer = NULL;
-			}
+			if (mp->mnt_syncer != NULL)
+				vfs_deallocate_syncvnode(mp);
 		}
 		vfs_unbusy(mp);
 		return (error);
@@ -498,10 +496,8 @@ dounmount(mp, flags, p)
 	async = mp->mnt_flag & MNT_ASYNC;
 	mp->mnt_flag &= ~MNT_ASYNC;
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
-	if (mp->mnt_syncer != NULL) {
-		vgone(mp->mnt_syncer);
-		mp->mnt_syncer = NULL;
-	}
+	if (mp->mnt_syncer != NULL)
+		vfs_deallocate_syncvnode(mp);
 	if (((mp->mnt_flag & MNT_RDONLY) ||
 	    (error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) == 0) ||
 	    (flags & MNT_FORCE))
