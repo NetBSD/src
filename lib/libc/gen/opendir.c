@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)opendir.c	8.2 (Berkeley) 2/12/94";*/
-static char rcsid[] = "$Id: opendir.c,v 1.3 1994/07/27 14:39:46 jtc Exp $";
+static char rcsid[] = "$Id: opendir.c,v 1.4 1994/09/15 10:48:51 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ opendir(name)
         struct stat statb;
 	register DIR *dirp;
 	register int fd;
+	register int pagesz;
 
 	if ((fd = open(name, 0)) == -1)
 		return NULL;
@@ -69,18 +70,17 @@ opendir(name)
 		return NULL;
 	}
 	/*
-	 * If CLBYTES is an exact multiple of DIRBLKSIZ, use a CLBYTES
-	 * buffer that it cluster boundary aligned.
+	 * If the machine's page size is an exact multiple of DIRBLKSIZ,
+	 * use a buffer that is cluster boundary aligned.
 	 * Hopefully this can be a big win someday by allowing page trades
 	 * to user space to be done by getdirentries()
 	 */
-	if ((CLBYTES % DIRBLKSIZ) == 0) {
-		dirp->dd_buf = malloc(CLBYTES);
-		dirp->dd_len = CLBYTES;
-	} else {
-		dirp->dd_buf = malloc(DIRBLKSIZ);
+	if (((pagesz = getpagesize()) % DIRBLKSIZ) == 0)
+		dirp->dd_len = pagesz;
+	else
 		dirp->dd_len = DIRBLKSIZ;
-	}
+
+	dirp->dd_buf = malloc(dirp->dd_len);
 	if (dirp->dd_buf == NULL) {
 		close (fd);
 		return NULL;
