@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.22 2002/01/24 22:35:38 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.23 2002/01/29 22:39:10 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2942,6 +2942,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Symbios Logic",
 	    "53c860",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1510D,
+	    0,
+	    "Symbios Logic",
+	    "53c1510D",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_896,
