@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/12/12 11:44:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/11/23 02:15:47 lha Exp $
 
 .include "../Makefile.inc"
 
@@ -19,7 +19,7 @@ SRCS+=	ibcs2_errno.c ibcs2_exec.c ibcs2_fcntl.c ibcs2_ioctl.c ibcs2_ipc.c \
 # MD source
 .if ${MACHINE} == "i386"
 .PATH: $S/arch/i386/i386
-SRCS+=	ibcs2_sigcode.s ibcs2_machdep.c ibcs2_syscall.c
+SRCS+=	ibcs2_sigcode.S ibcs2_machdep.c ibcs2_syscall.c
 .endif
 
 .include <bsd.kmod.mk>
