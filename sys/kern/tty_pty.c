@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.11 1993/07/19 05:52:32 mycroft Exp $
+ *	$Id: tty_pty.c,v 1.12 1993/08/29 13:47:47 deraadt Exp $
  */
 
 /*
@@ -221,20 +221,20 @@ ptswrite(dev, uio, flag)
  * Start output on pseudo-tty.
  * Wake up process selecting or sleeping for input from controlling tty.
  */
-int
+void
 ptsstart(tp)
 	struct tty *tp;
 {
 	register struct pt_ioctl *pti = &pt_ioctl[minor(tp->t_dev)];
 
 	if (tp->t_state & TS_TTSTOP)
-		return 0;	/* XXX should we return 1? */
+		return;
 	if (pti->pt_flags & PF_STOPPED) {
 		pti->pt_flags &= ~PF_STOPPED;
 		pti->pt_send = TIOCPKT_START;
 	}
 	ptcwakeup(tp, FREAD);
-	return 0;
+	return;
 }
 
 void

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: dcm.c 1.26 91/01/21
  *	from: @(#)dcm.c	7.14 (Berkeley) 6/27/91
- *	$Id: dcm.c,v 1.8 1993/08/01 19:23:58 mycroft Exp $
+ *	$Id: dcm.c,v 1.9 1993/08/29 13:46:32 deraadt Exp $
  */
 
 /*
@@ -73,7 +73,8 @@
 #endif
 
 int	ttrstrt();
-int	dcmprobe(), dcmstart(), dcmintr(), dcmparam();
+int	dcmprobe(), dcmintr(), dcmparam();
+void	dcmstart();
 
 struct	driver dcmdriver = {
 	dcmprobe, "dcm",
@@ -875,6 +876,7 @@ dcmparam(tp, t)
 	return (0);
 }
  
+void
 dcmstart(tp)
 	register struct tty *tp;
 {

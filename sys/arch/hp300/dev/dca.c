@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dca.c	7.12 (Berkeley) 6/27/91
- *	$Id: dca.c,v 1.8 1993/07/12 11:38:03 mycroft Exp $
+ *	$Id: dca.c,v 1.9 1993/08/29 13:46:31 deraadt Exp $
  */
 
 #include "dca.h"
@@ -61,7 +61,8 @@ struct	driver dcadriver = {
 	dcaprobe, "dca",
 };
 
-int	dcastart(), dcaparam(), dcaintr();
+void	dcastart();
+int	dcaparam(), dcaintr();
 int	dcasoftCAR;
 int	dca_active;
 int	dca_hasfifo;
@@ -538,6 +539,7 @@ dcaparam(tp, t)
 	return (0);
 }
  
+void
 dcastart(tp)
 	register struct tty *tp;
 {
