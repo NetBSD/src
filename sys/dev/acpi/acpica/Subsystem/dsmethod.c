@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.6 2003/03/04 17:25:13 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.7 2003/05/25 10:08:24 kochi Exp $");
 
 #define __DSMETHOD_C__
 
@@ -380,6 +380,8 @@ AcpiDsCallControlMethod (
     {
         return_ACPI_STATUS (AE_NULL_OBJECT);
     }
+
+    ObjDesc->Method.OwningId = AcpiUtAllocateOwnerId (ACPI_OWNER_TYPE_METHOD);
 
     /* Init for new method, wait on concurrency semaphore */
 
