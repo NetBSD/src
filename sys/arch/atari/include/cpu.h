@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1.1.1 1995/03/26 07:12:07 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1995/03/30 06:01:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -153,7 +153,7 @@ extern unsigned char ssir;
 #define	MHZ_33		4
 #define	MHZ_50		6
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern int machineid, mmutype, cpu040;
 #endif
 
