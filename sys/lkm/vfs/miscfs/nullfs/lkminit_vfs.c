@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.2 1997/05/19 23:26:35 jtc Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.3 1997/10/21 16:16:02 is Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,13 +49,13 @@
 /*
  * This is the vfsops table for the file system in question
  */
-extern struct vfsops null_vfsops;
-extern struct vnodeopv_desc null_vnodeop_opv_desc;
+extern struct vfsops nullfs_vfsops;
+extern struct vnodeopv_desc nullfs_vnodeop_opv_desc;
 
 /*
  * declare the filesystem
  */
-MOD_VFS("nullfs", -1, &null_vfsops);
+MOD_VFS("nullfs", -1, &nullfs_vfsops);
 
 /*
  * entry point
@@ -71,8 +71,8 @@ nullfs_lkmentry(lkmtp, cmd, ver)
 	 * opv_desc is listed in vfs_opv_descs[] in vfs_conf.c.  For
 	 * loaded modules, we have to do it manually.
 	 */
-	vfs_opv_init_explicit(&null_vnodeop_opv_desc);
-	vfs_opv_init_default(&null_vnodeop_opv_desc);
+	vfs_opv_init_explicit(&nullfs_vnodeop_opv_desc);
+	vfs_opv_init_default(&nullfs_vnodeop_opv_desc);
 
 	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc)
 }
