@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.99 2003/02/01 06:23:53 thorpej Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.100 2003/02/05 21:38:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.99 2003/02/01 06:23:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.100 2003/02/05 21:38:45 pk Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1492,6 +1492,7 @@ lookahead_pagemove(struct buf **bpp, int nblocks, size_t *size)
 #define BQUEUES 4 /* XXX */
 #define BQ_EMPTY 3 /* XXX */
 extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
+extern struct simplelock bqueue_slock;
 
 #define	BUFHASH(dvp, lbn)	\
 	(&bufhashtbl[((long)(dvp) / sizeof(*(dvp)) + (int)(lbn)) & bufhash])
@@ -1527,7 +1528,9 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 
 	/* Get an empty buffer header, or maybe one with something on it */
 	s = splbio();
+	simple_lock(&bqueue_slock);
 	if((bp = bufqueues[BQ_EMPTY].tqh_first) != NULL) {
+		simple_lock(&bp->b_interlock);
 		bremfree(bp);
 		/* clear out various other fields */
 		bp->b_flags = B_BUSY;
@@ -1546,12 +1549,12 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 		if (bp->b_vp)
 			brelvp(bp);
 	}
-	splx(s);
 	while (!bp)
 		bp = getnewbuf(0, 0);
-	s = splbio();
 	bgetvp(vp, bp);
 	binshash(bp,&invalhash);
+	simple_unlock(&bp->b_interlock);
+	simple_unlock(&bqueue_slock);
 	splx(s);
 	bp->b_bcount = 0;
 	bp->b_blkno = bp->b_lblkno = addr;
@@ -1917,7 +1920,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			cl->bpp[cl->bufcount++] = bp;
 			vp = bp->b_vp;
 			s = splbio();
-			++vp->v_numoutput;
+			V_INCR_NUMOUTPUT(vp);
 			splx(s);
 
 			/*
@@ -1972,7 +1975,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			wakeup(vp);
 		}
 		s = splbio();
-		++cbp->b_vp->v_numoutput;
+		V_INCR_NUMOUTPUT(cbp->b_vp);
 		splx(s);
 		/*
 		 * In order to include the summary in a clustered block,
@@ -2046,7 +2049,7 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	vop_strategy_a.a_desc = VDESC(vop_strategy);
 	vop_strategy_a.a_bp = bp;
 	s = splbio();
-	++bp->b_vp->v_numoutput;
+	V_INCR_NUMOUTPUT(bp->b_vp);
 	splx(s);
 	++fs->lfs_iocount;
 	(strategy)(&vop_strategy_a);

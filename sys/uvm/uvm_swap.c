@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.75 2003/02/01 06:23:55 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.76 2003/02/05 21:38:46 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.75 2003/02/01 06:23:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.76 2003/02/05 21:38:46 pk Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1168,7 +1168,7 @@ swstrategy(bp)
 		 */
 		if ((bp->b_flags & B_READ) == 0) {
 			vwakeup(bp);	/* kills one 'v_numoutput' on drum */
-			vp->v_numoutput++;	/* put it on swapdev */
+			V_INCR_NUMOUTPUT(vp);	/* put it on swapdev */
 		}
 
 		/*
@@ -1286,6 +1286,7 @@ sw_reg_strategy(sdp, bp, bn)
 		 * cast pointers between the two structure easily.
 		 */
 		getvndbuf(nbp);
+		simple_lock_init(&nbp->vb_buf.b_interlock);
 		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
 		nbp->vb_buf.b_bcount   = sz;
 		nbp->vb_buf.b_bufsize  = sz;
@@ -1368,7 +1369,7 @@ sw_reg_start(sdp)
 		    "sw_reg_start:  bp %p vp %p blkno %p cnt %lx",
 		    bp, bp->b_vp, bp->b_blkno, bp->b_bcount);
 		if ((bp->b_flags & B_READ) == 0)
-			bp->b_vp->v_numoutput++;
+			V_INCR_NUMOUTPUT(bp->b_vp);
 
 		VOP_STRATEGY(bp);
 	}
@@ -1698,6 +1699,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * /dev/drum's vnode [swapdev_vp].
 	 */
 
+	simple_lock_init(&bp->b_interlock);
 	bp->b_flags = B_BUSY | B_NOCACHE | (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_vnbufs.le_next = NOLIST;
@@ -1714,7 +1716,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 
 	if (write) {
 		s = splbio();
-		swapdev_vp->v_numoutput++;
+		V_INCR_NUMOUTPUT(swapdev_vp);
 		splx(s);
 	}
 

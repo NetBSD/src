@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.90 2003/01/25 23:09:59 kleink Exp $	*/
+/*	$NetBSD: vnd.c,v 1.91 2003/02/05 21:38:39 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.90 2003/01/25 23:09:59 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.91 2003/02/05 21:38:39 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -490,6 +490,7 @@ vndstrategy(bp)
 		s = splbio();
 		nbp = VND_GETBUF(vnd);
 		splx(s);
+		simple_lock_init(&nbp->vb_buf.b_interlock);
 		nbp->vb_buf.b_flags = flags;
 		nbp->vb_buf.b_bcount = sz;
 		nbp->vb_buf.b_bufsize = round_page((ulong)addr + sz)

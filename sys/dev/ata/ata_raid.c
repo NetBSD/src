@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.1 2003/01/27 18:21:27 thorpej Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.2 2003/02/05 21:38:40 pk Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -296,6 +296,7 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *buf,
 	int error;
 
 	bp = pool_get(&bufpool, PR_WAITOK);
+	simple_lock_init(&bp->b_interlock);
 	LIST_INIT(&bp->b_dep);
 
 	bp->b_vp = vp;

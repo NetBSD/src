@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.6 2003/02/02 20:55:16 bouyer Exp $ */
+/* $NetBSD: cgd.c,v 1.7 2003/02/05 21:38:40 pk Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.6 2003/02/02 20:55:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.7 2003/02/05 21:38:40 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,6 +307,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 		disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
 		return;
 	}
+	simple_lock_init(&cbp->cb_buf.b_interlock);
 	cbp->cb_buf.b_data = newaddr;
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = cgdiodone;

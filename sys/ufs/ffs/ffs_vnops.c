@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.53 2003/01/29 03:06:40 simonb Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.54 2003/02/05 21:38:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.53 2003/01/29 03:06:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.54 2003/02/05 21:38:44 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,10 +306,13 @@ ffs_fsync(v)
 	}
 
 	if (ap->a_flags & FSYNC_WAIT) {
+		simple_lock(&global_v_numoutput_slock);
 		while (vp->v_numoutput > 0) {
 			vp->v_flag |= VBWAIT;
-			tsleep(&vp->v_numoutput, PRIBIO + 1, "fsync_range", 0);
+			ltsleep(&vp->v_numoutput, PRIBIO + 1, "fsync_range", 0,
+				&global_v_numoutput_slock);
 		}
+		simple_unlock(&global_v_numoutput_slock);
 	}
 	splx(s);
 
@@ -398,11 +401,13 @@ loop:
 		goto loop;
 	}
 	if (ap->a_flags & FSYNC_WAIT) {
+		simple_lock(&global_v_numoutput_slock);
 		while (vp->v_numoutput) {
 			vp->v_flag |= VBWAIT;
-			(void) tsleep(&vp->v_numoutput, PRIBIO + 1,
-			    "ffsfsync", 0);
+			(void) ltsleep(&vp->v_numoutput, PRIBIO + 1,
+			    "ffsfsync", 0, &global_v_numoutput_slock);
 		}
+		simple_unlock(&global_v_numoutput_slock);
 		splx(s);
 
 		if (ap->a_flags & FSYNC_DATAONLY)

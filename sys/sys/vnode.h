@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.102 2003/02/01 06:23:52 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.103 2003/02/05 21:38:43 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -155,6 +155,18 @@ struct vnode {
 #define	VDIRTY		0x8000	/* vnode possibly has dirty pages */
 
 #define	VSIZENOTSET	((voff_t)-1)
+
+/*
+ * Use a global lock for all v_numoutput updates.	
+ * Define a convenience macro to increment by one.
+ * Note: the only place where v_numoutput is decremented is in vwakeup().
+ */
+extern struct simplelock global_v_numoutput_slock;
+#define V_INCR_NUMOUTPUT(vp) do {			\
+	simple_lock(&global_v_numoutput_slock);		\
+	(vp)->v_numoutput++;				\
+	simple_unlock(&global_v_numoutput_slock);	\
+} while (/*CONSTCOND*/ 0)
 
 /*
  * Valid states for the fingerprint flag - if signed exec is being used

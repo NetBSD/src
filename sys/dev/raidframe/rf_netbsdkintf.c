@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.153 2003/02/01 06:23:40 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.154 2003/02/05 21:38:40 pk Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,7 +111,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.153 2003/02/01 06:23:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.154 2003/02/05 21:38:40 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1835,6 +1835,12 @@ rf_DispatchKernelIO(queue, req)
 	}
 #endif
 	raidbp = pool_get(&raidframe_cbufpool, PR_NOWAIT);
+	if (raidbp == NULL) {
+		bp->b_flags |= B_ERROR;
+		bp->b_error = ENOMEM;
+		return (ENOMEM);
+	}
+	simple_lock_init(&raidbp->rf_buf.b_interlock);
 
 	/*
 	 * context for raidiodone
