@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.52 2001/09/03 01:33:38 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.53 2001/12/06 23:51:04 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -57,7 +57,6 @@
 #include <machine/conf.h>
 
 #include "wd.h"
-#include "fdc.h"
 #include "md.h"
 #include "sd.h"
 #include "st.h"
@@ -86,7 +85,7 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 14: */
 	bdev_lkm_dummy(),		/* 15: */
 	bdev_disk_init(NWD, wd),	/* 16: Internal IDE disk */
-	bdev_disk_init(NFDC, fd),	/* 17: floppy diskette */
+	bdev_lkm_dummy(),		/* 17: was fd */
 	bdev_disk_init(NMD, md),	/* 18: memory disk */
 	bdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	bdev_lkm_dummy(),		/* 20: */
@@ -157,8 +156,6 @@ cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
 
-#include "vt.h"
-#include "vidcconsole.h"                                 
 #include "pty.h"
 #define ptstty          ptytty
 #define ptsioctl        ptyioctl
@@ -171,16 +168,10 @@ cdev_decl(i4btel);
 #include "uk.h"
 #include "ss.h"
 #include "tun.h"
-#include "qms.h"
 #include "opms.h"
-#include "beep.h"
-#include "kbd.h"
 #include "audio.h"
 #include "midi.h"
 #include "sequencer.h"
-#include "iic.h"
-#include "rtc.h"
-#include "vidcconsole.h"
 #include "ipfilter.h"
 #include "rnd.h"
 #include "fcom.h"
@@ -214,9 +205,7 @@ struct cdevsw cdevsw[] = {
 	cdev_swap_init(1, sw),          /*  1: /dev/drum (swap pseudo-device) */
 	cdev_cn_init(1, cn),            /*  2: virtual console */
 	cdev_ctty_init(1,ctty),         /*  3: controlling terminal */
-#if	(defined(RISCPC) || defined(RC7500)) && (NVIDCCONSOLE>0)
-	cdev_physcon_init(NVT, physcon),/*  4: RPC console */
-#elif	defined(SHARK) && (NPC > 0)
+#if	defined(SHARK) && (NPC > 0)
 	cdev_pc_init(1,pc),		/*  4: PC console */
 #elif	(defined(OFWGENCFG) || defined(SHARK))
 	cdev_tty_init(NOFCONS,ofcons_),	/*  4: Openfirmware console */
@@ -227,15 +216,15 @@ struct cdevsw cdevsw[] = {
 	cdev_ptc_init(NPTY,ptc),        /*  6: pseudo-tty master */
 	cdev_tty_init(NPTY,pts),        /*  7: pseudo-tty slave */
 	cdev_lpt_init(NLPT,lpt),        /*  8: parallel printer */
-	cdev_mouse_init(NQMS,qms),	/*  9: qms driver */
+	cdev_lkm_dummy(),		/*  9: was qms */
 	cdev_beep_init(NBEEP,beep),	/* 10: simple beep device */
-	cdev_kbd_init(NKBD,kbd),	/* 11: kbd device */
+	cdev_lkm_dummy(),		/* 11: was kbd */
 	cdev_tty_init(NCOM,com),        /* 12: serial port */
 	cdev_lkm_dummy(),		/* 13: */
 	cdev_lkm_dummy(),		/* 14: */
 	cdev_lkm_dummy(),		/* 15: */
 	cdev_disk_init(NWD, wd),        /* 16: ST506/ESDI/IDE disk */
-	cdev_disk_init(NFDC, fd),       /* 17: floppy diskette */
+	cdev_lkm_dummy(),		/* 17: was fd */
 	cdev_disk_init(NMD, md),        /* 18: memory disk driver */
 	cdev_disk_init(NVND,vnd),       /* 19: vnode disk driver */
 	cdev_lkm_dummy(),		/* 20: */
@@ -260,8 +249,8 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 39: reserved */
 	cdev_mouse_init(NOPMS,pms),     /* 40: PS2 mouse driver */
 	cdev_lkm_dummy(),		/* 41: reserved */
-	cdev_iic_init(NIIC, iic),	/* 42: IIC bus driver */
-	cdev_rtc_init(NRTC, rtc),	/* 43: RTC driver */
+	cdev_lkm_dummy(),		/* 42: was iic */
+	cdev_lkm_dummy(),		/* 43: was rtc */
 	cdev_lkm_dummy(),		/* 44: reserved */
 	cdev_lkm_dummy(),		/* 45: reserved */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 46: ip-filter device */
@@ -365,7 +354,7 @@ static int chrtoblktbl[] = {
     /* 14 */        NODEV,
     /* 15 */        NODEV,
     /* 16 */        16,
-    /* 17 */        17,
+    /* 17 */        NODEV,
     /* 18 */        18,
     /* 19 */        19,
     /* 20 */        NODEV,
@@ -463,7 +452,6 @@ chrtoblk(dev)
 
 #include <dev/cons.h>
 
-cons_decl(rpcconsole);
 cons_decl(com);   
 cons_decl(ofcons_);
 cons_decl(pc);
@@ -472,9 +460,7 @@ struct consdev constab[] = {
 #if (NCOM > 0)
 	cons_init(com),
 #endif
-#if (NVT + NRPC > 0)
-	cons_init(rpcconsole),
-#elif (NPC > 0)
+#if (NPC > 0)
 	cons_init(pc),
 #elif (NOFCONS > 0)			/* XXX should work together */
 	cons_init(ofcons_),
