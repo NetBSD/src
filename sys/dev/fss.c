@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.1 2003/12/10 11:40:11 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.2 2003/12/13 18:59:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.1 2003/12/10 11:40:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.2 2003/12/13 18:59:29 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,10 +124,7 @@ typedef enum {
 	FSS_WRITE
 } fss_io_type;
 
-static int fss_attached;
-
 void fssattach(int);
-int fssdetach(void);
 
 dev_type_open(fss_open);
 dev_type_close(fss_close);
@@ -171,9 +168,6 @@ fssattach(int num)
 	int i;
 	struct fss_softc *sc;
 
-	if (fss_attached != 0)
-		return;
-
 	for (i = 0; i < NFSS; i++) {
 		sc = &fss_softc[i];
 		sc->sc_unit = i;
@@ -181,28 +175,6 @@ fssattach(int num)
 		lockinit(&sc->sc_lock, PRIBIO, "fsslock", 0, 0);
 		bufq_alloc(&sc->sc_bufq, BUFQ_FCFS|BUFQ_SORT_RAWBLOCK);
 	}
-
-	fss_attached = 1;
-}
-
-int
-fssdetach(void)
-{
-	int i;
-
-	if (fss_attached == 0)
-		return 0;
-
-	for (i = 0; i < NFSS; i++)
-		if (fss_softc[i].sc_flags != 0)
-			return EBUSY;
-
-	for (i = 0; i < NFSS; i++)
-		bufq_free(&fss_softc[i].sc_bufq);
-
-	fss_attached = 0;
-	
-	return 0;
 }
 
 int
@@ -507,14 +479,14 @@ fss_copy_on_write(struct fss_softc *sc, struct buf *bp)
  * Lookup and open needed files.
  *
  * Returns dev and size of the underlying block device.
- * Initialzes the fields sc_mntname, sc_bs_vp, sc_mount and sc_strategy
+ * Initializes the fields sc_mntname, sc_bs_vp, sc_mount and sc_strategy
  */
 static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
     dev_t *bdev, off_t *bsize, struct proc *p)
 {
 	int error;
-	struct stat stat;
+	struct partinfo dpart;
 	struct statfs statfs;
 	struct nameidata nd;
 	const struct bdevsw *bdevsw;
@@ -554,13 +526,14 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 	}
 
-	if ((error = vn_stat(nd.ni_vp, &stat, p)) != 0) {
+	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD, p->p_ucred, p);
+	if (error) {
 		vrele(nd.ni_vp);
 		return error;
 	}
 
 	*bdev = nd.ni_vp->v_rdev;
-	*bsize = stat.st_size;
+	*bsize = (off_t)dpart.disklab->d_secsize*dpart.part->p_size;
 	vrele(nd.ni_vp);
 
 	if ((bdevsw = bdevsw_lookup(*bdev)) == NULL)
