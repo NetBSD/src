@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: arp.c,v 1.5 1994/05/13 08:09:22 mycroft Exp $";
+static char *rcsid = "$Id: arp.c,v 1.6 1995/02/25 08:49:51 chopps Exp $";
 #endif /* not lint */
 
 /*
@@ -84,7 +84,7 @@ main(argc, argv)
 	int ch;
 
 	pid = getpid();
-	while ((ch = getopt(argc, argv, "ands")) != EOF)
+	while ((ch = getopt(argc, argv, "andsf")) != EOF)
 		switch((char)ch) {
 		case 'a':
 			dump(0);
@@ -101,6 +101,10 @@ main(argc, argv)
 			if (argc < 4 || argc > 7)
 				usage();
 			exit(set(argc-2, &argv[2]) ? 1 : 0);
+		case 'f':
+			if (argc != 3)
+				usage();
+			exit(file(agrv[2]));
 		case '?':
 		default:
 			usage();
