@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.h,v 1.3 2000/11/24 10:21:30 scw Exp $	*/
+/*	$NetBSD: sunos_exec.h,v 1.4 2001/11/26 18:15:16 fredette Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -36,13 +36,16 @@ struct sunos_exec {
 	u_char	a_machtype;	/* machine type */
 	u_short	a_magic;	/* magic number */
 };
+#define SUNOS_M_68010	1	/* runs on 68010 and 68020 */
 #define SUNOS_M_68020	2	/* runs only on 68020 */
 #define	SUNOS_M_SPARC	3	/* runs only on SPARC */
 
 #ifdef __sparc__
-#define SUNOS_M_NATIVE	SUNOS_M_SPARC
+#define SUNOS_M_NATIVE(m)	((m) == SUNOS_M_SPARC)
+#elif defined(__mc68010__)
+#define SUNOS_M_NATIVE(m)	((m) == SUNOS_M_68010)
 #else
-#define SUNOS_M_NATIVE	SUNOS_M_68020
+#define SUNOS_M_NATIVE(m)	((m) == SUNOS_M_68010 || (m) == SUNOS_M_68020)
 #endif
 
 #define SUNOS_AOUT_HDR_SIZE (sizeof(struct exec))
