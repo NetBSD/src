@@ -1,4 +1,4 @@
-/*	$NetBSD: nca.c,v 1.1 1998/10/25 18:41:56 christos Exp $	*/
+/*	$NetBSD: nca.c,v 1.2 1998/10/25 23:48:30 scottr Exp $	*/
 
 /*-
  * Copyright (c)  1998 The NetBSD Foundation, Inc.
@@ -435,8 +435,8 @@ nca_attach(parent, self, aux)
 	/*
 	 * Initialize fields used by the MI code
 	 */
-	sc->iot = iot;
-	sc->ioh = ioh;
+	sc->sc_regt = iot;
+	sc->sc_regh = ioh;
 
 	/*
 	 * Allocate DMA handles.
