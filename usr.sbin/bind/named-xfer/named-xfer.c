@@ -1,3 +1,5 @@
+/*	$NetBSD: named-xfer.c,v 1.2 1998/10/14 20:56:49 tron Exp $	*/
+
 /*
  * The original version of xfer by Kevin Dunlap.
  * Completed and integrated with named by David Waitzman
@@ -110,7 +112,7 @@ char copyright[] =
 
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)named-xfer.c	4.18 (Berkeley) 3/7/91";
-static char rcsid[] = "$Id: named-xfer.c,v 1.1.1.1 1998/10/05 18:02:00 tron Exp $";
+static char rcsid[] = "Id: named-xfer.c,v 8.38 1998/03/27 00:19:28 halley Exp";
 #endif /* not lint */
 
 #include "port_before.h"
