@@ -1,4 +1,4 @@
-.\"	$NetBSD: swap.8,v 1.1.2.2 1997/03/17 00:20:24 mrg Exp $
+.\"	$NetBSD: swap.8,v 1.1.2.2.2.1 1997/05/11 07:59:37 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -37,8 +37,8 @@
 .Nd system swap management tool
 .Sh SYNOPSIS
 .Nm
-.\" SWAP_OFF_WORKS: .Op Fl Aadkl
-.Op Fl Aakl
+.\" SWAP_OFF_WORKS: .Op Fl Aadkls
+.Op Fl Aakls
 .Op Fl p Ar priority
 .Ar device
 .Nm swapon
@@ -101,7 +101,11 @@ file.
 .It Fl l
 The
 .Fl l
-option lists the current swap devices, and their usage statistics.
+option lists the current swap devices and files, and their usage statistics.
+.It Fl s
+The
+.Fl s
+option displays a single line summary of current swap statistics.
 .It Fl p
 The
 .Fl p
@@ -133,10 +137,6 @@ but is no longer distributed with
 The
 .Nm
 program was written by Matthew R. Green <mrg@eterna.com.au>.
-.Sh BUGS
-The
-.Fl A
-option could also handle priorities in the fstab file somehow.
 .Sh SEE ALSO
 .Xr swapon 2 ,
 .Xr fstab 5 .
