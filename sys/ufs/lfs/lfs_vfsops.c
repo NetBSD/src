@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.42 1999/11/09 02:21:06 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.43 1999/11/12 16:56:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -311,8 +311,6 @@ lfs_mount(mp, path, data, ndp, p)
 	return (0);
 }
 
-extern struct lock ufs_hashlock;
-
 /*
  * Common code for mount and mountroot
  * LFS specific
@@ -334,8 +332,6 @@ lfs_mountfs(devvp, mp, p)
 	int error, i, ronly, size;
 	struct ucred *cred;
         SEGUSE *sup;
-	IFILE *ifp;
-	ino_t ino, maxino;
 
 	cred = p ? p->p_ucred : NOCRED;
 	/*
@@ -464,30 +460,6 @@ lfs_mountfs(devvp, mp, p)
         LFS_SEGENTRY(sup, fs, datosn(fs, fs->lfs_offset), bp); 
         sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
         (void) VOP_BWRITE(bp); 
-
-	/*
-	 * Look for unreferenced inodes, that can be created if the Ifile
-	 * is written but inodes are not, because of an intervening crash.
-	 * We recognize these by if_daddr==UNASSIGNED.
-	 */
-	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
-	maxino = ((VTOI(fs->lfs_ivnode)->i_ffs_size >> fs->lfs_bshift)
-		- fs->lfs_segtabsz - fs->lfs_cleansz) * INOPB(fs);
-	for(ino=LFS_FIRST_INUM; ino < maxino; ++ino) {
-		LFS_IENTRY(ifp, fs, ino, bp);
-		if(ifp->if_daddr == UNASSIGNED) {
-#ifdef DEBUG
-			printf("lfs_mountfs: linking unref ino %d back into the free list\n", ino);
-#endif
-			ifp->if_daddr = LFS_UNUSED_DADDR;
-			++ifp->if_version;
-			ifp->if_nextfree = fs->lfs_free;
-			fs->lfs_free = ino;
-			(void) VOP_BWRITE(bp);
-		} else
-			brelse(bp);
-	}
-	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 
 	return (0);
 out:
