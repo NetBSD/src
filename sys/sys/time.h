@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.30.2.6 2002/02/28 19:58:09 nathanw Exp $	*/
+/*	$NetBSD: time.h,v 1.30.2.7 2002/07/12 03:06:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -186,7 +186,9 @@ struct 	ptimer {
 	struct proc *pt_proc; 
 };
 
-#define	TIMER_MAX 32
+#define	TIMER_MAX	32
+#define	TIMERS_ALL	0
+#define	TIMERS_POSIX	1
 
 int	itimerfix __P((struct timeval *tv));
 int	itimerdecr __P((struct itimerval *itp, int usec));
@@ -199,7 +201,7 @@ int	settimeofday1 __P((const struct timeval *, const struct timezone *,
 int	adjtime1 __P((const struct timeval *, struct timeval *, struct proc *));
 int	clock_settime1 __P((clockid_t, const struct timespec *));
 void	timers_alloc __P((struct proc *));
-void	timers_free __P((struct proc *));
+void	timers_free __P((struct proc *, int));
 void	realtimerexpire __P((void *));
 #else /* !_KERNEL */
 
