@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_map.c	7.3 (Berkeley) 4/21/91
- *	$Id: vm_map.c,v 1.4 1993/05/20 03:59:28 cgd Exp $
+ *	$Id: vm_map.c,v 1.5 1993/06/27 06:38:50 andrew Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -69,6 +69,7 @@
 
 #include "param.h"
 #include "malloc.h"
+#include "systm.h"
 #include "vm.h"
 #include "vm_page.h"
 #include "vm_object.h"
@@ -114,6 +115,8 @@
  *	shadow object creation can be delayed until a write operation
  *	occurs.
  */
+
+int vm_map_delete(vm_map_t, vm_offset_t, vm_offset_t);
 
 /*
  *	vm_map_startup:
@@ -220,7 +223,7 @@ vm_map_t vm_map_create(pmap, min, max, pageable)
 	boolean_t	pageable;
 {
 	register vm_map_t	result;
-	extern vm_map_t		kernel_map, kmem_map;
+	extern vm_map_t		kmem_map;
 
 	if (kmem_map == NULL) {
 		result = kmap_free;
@@ -273,7 +276,7 @@ vm_map_entry_t vm_map_entry_create(map)
 	vm_map_t	map;
 {
 	vm_map_entry_t	entry;
-	extern vm_map_t		kernel_map, kmem_map, mb_map, buffer_map, pager_map;
+	extern vm_map_t	kernel_map, kmem_map, mb_map, buffer_map, pager_map;
 
 	if (map == kernel_map || map == kmem_map || map == mb_map
 		|| map == buffer_map || map == pager_map) {
@@ -390,6 +393,7 @@ void vm_map_deallocate(map)
  *
  *	Requires that the map be locked, and leaves it so.
  */
+int
 vm_map_insert(map, object, offset, start, end)
 	vm_map_t	map;
 	vm_object_t	object;
@@ -603,6 +607,7 @@ boolean_t vm_map_lookup_entry(map, address, entry)
  *	returned in the same parameter.
  *
  */
+int
 vm_map_find(map, object, offset, addr, length, find_space)
 	vm_map_t	map;
 	vm_object_t	object;
@@ -900,6 +905,7 @@ void _vm_map_clip_end(map, entry, end)
  *	range from the superior map, and then destroy the
  *	submap (if desired).  [Better yet, don't try it.]
  */
+int
 vm_map_submap(map, start, end, submap)
 	register vm_map_t	map;
 	register vm_offset_t	start;
@@ -943,6 +949,7 @@ vm_map_submap(map, start, end, submap)
  *	specified, the maximum protection is to be set;
  *	otherwise, only the current protection is affected.
  */
+int
 vm_map_protect(map, start, end, new_prot, set_max)
 	register vm_map_t	map;
 	register vm_offset_t	start;
@@ -1064,6 +1071,7 @@ vm_map_protect(map, start, end, new_prot, set_max)
  *	affects how the map will be shared with
  *	child maps at the time of vm_map_fork.
  */
+int
 vm_map_inherit(map, start, end, new_inheritance)
 	register vm_map_t	map;
 	register vm_offset_t	start;
@@ -1116,6 +1124,7 @@ vm_map_inherit(map, start, end, new_inheritance)
  *	The map must not be locked, but a reference
  *	must remain to the map throughout the call.
  */
+int
 vm_map_pageable(map, start, end, new_pageable)
 	register vm_map_t	map;
 	register vm_offset_t	start;
@@ -1125,7 +1134,10 @@ vm_map_pageable(map, start, end, new_pageable)
 	register vm_map_entry_t	entry;
 	vm_map_entry_t		temp_entry;
 	register vm_offset_t	failed;
+#ifdef vm_fault_wire_can_fail
+	/* vm_fault.c needs to be updated also, if this option is used XXX */
 	int			rv;
+#endif
 
 	vm_map_lock(map);
 
@@ -1278,9 +1290,12 @@ vm_map_pageable(map, start, end, new_pageable)
 		    lock_write_to_read(&map->lock);
 		}
 
-		rv = 0;
+#ifdef vm_fault_wire_can_fail
+		rv = KERN_SUCCESS;
+#endif
 		entry = temp_entry;
 		while (entry != &map->header && entry->start < end) {
+#ifdef vm_fault_wire_can_fail
 		    /*
 		     * If vm_fault_wire fails for any page we need to
 		     * undo what has been done.  We decrement the wiring
@@ -1290,15 +1305,19 @@ vm_map_pageable(map, start, end, new_pageable)
 		     * XXX this violates the locking protocol on the map,
 		     * needs to be fixed.
 		     */
-		    if (rv)
+		    if (rv != KERN_SUCCESS)
 			entry->wired_count--;
 		    else if (entry->wired_count == 1) {
 			rv = vm_fault_wire(map, entry->start, entry->end);
-			if (rv) {
+			if (rv != KERN_SUCCESS) {
 			    failed = entry->start;
 			    entry->wired_count--;
+			}
 		    }
-		    }
+#else
+		    if (entry->wired_count == 1)
+		    	vm_fault_wire(map, entry->start, entry->end);
+#endif
 		    entry = entry->next;
 		}
 
@@ -1308,11 +1327,13 @@ vm_map_pageable(map, start, end, new_pageable)
 		else {
 		    lock_clear_recursive(&map->lock);
 		}
-		if (rv) {
+#ifdef vm_fault_wire_can_fail
+		if (rv != KERN_SUCCESS) {
 		    vm_map_unlock(map);
 		    (void) vm_map_pageable(map, start, failed, TRUE);
 		    return(rv);
 		}
+#endif
 	}
 
 	vm_map_unlock(map);
@@ -1341,7 +1362,8 @@ void vm_map_entry_unwire(map, entry)
  *
  *	Deallocate the given entry from the target map.
  */		
-void vm_map_entry_delete(map, entry)
+void
+vm_map_entry_delete(map, entry)
 	register vm_map_t	map;
 	register vm_map_entry_t	entry;
 {
@@ -1368,6 +1390,7 @@ void vm_map_entry_delete(map, entry)
  *	When called with a sharing map, removes pages from
  *	that region from all physical maps.
  */
+int
 vm_map_delete(map, start, end)
 	register vm_map_t	map;
 	vm_offset_t		start;
@@ -1463,6 +1486,7 @@ vm_map_delete(map, start, end)
  *	Remove the given address range from the target map.
  *	This is the exported form of vm_map_delete.
  */
+int
 vm_map_remove(map, start, end)
 	register vm_map_t	map;
 	register vm_offset_t	start;
@@ -1672,6 +1696,7 @@ void vm_map_copy_entry(src_map, dst_map, src_entry, dst_entry)
  *	map to make copies.  This also reduces map
  *	fragmentation.]
  */
+int
 vm_map_copy(dst_map, src_map,
 			  dst_addr, len, src_addr,
 			  dst_alloc, src_destroy)

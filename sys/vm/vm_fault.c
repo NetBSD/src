@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_fault.c	7.6 (Berkeley) 5/7/91
- *	$Id: vm_fault.c,v 1.3 1993/05/20 03:59:20 cgd Exp $
+ *	$Id: vm_fault.c,v 1.4 1993/06/27 06:38:48 andrew Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -91,6 +91,7 @@
  *	The map in question must be referenced, and remains so.
  *	Caller may hold no locks.
  */
+int
 vm_fault(map, vaddr, fault_type, change_wiring)
 	vm_map_t	map;
 	vm_offset_t	vaddr;
@@ -890,7 +891,6 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 	UNLOCK_AND_DEALLOCATE;
 
 	return(KERN_SUCCESS);
-
 }
 
 /*
@@ -898,7 +898,8 @@ thread_wakeup(&vm_pages_needed); /* XXX */
  *
  *	Wire down a range of virtual addresses in a map.
  */
-void vm_fault_wire(map, start, end)
+int
+vm_fault_wire(map, start, end)
 	vm_map_t	map;
 	vm_offset_t	start, end;
 {
@@ -922,8 +923,19 @@ void vm_fault_wire(map, start, end)
 	 */
 
 	for (va = start; va < end; va += PAGE_SIZE) {
-		(void) vm_fault(map, va, VM_PROT_NONE, TRUE);
+		int rv;
+
+		if ((rv = vm_fault(map, va, VM_PROT_NONE, TRUE)) !=
+				KERN_SUCCESS) {
+#ifdef notyet
+	/* XXX print a diagnostic so we know if this is being used */
+			printf("vm_fault_wire() - wire failed\n");
+			return(rv);
+#endif
+		}
 	}
+
+	return(KERN_SUCCESS);
 }
 
 
@@ -932,7 +944,8 @@ void vm_fault_wire(map, start, end)
  *
  *	Unwire a range of virtual addresses in a map.
  */
-void vm_fault_unwire(map, start, end)
+void
+vm_fault_unwire(map, start, end)
 	vm_map_t	map;
 	vm_offset_t	start, end;
 {
