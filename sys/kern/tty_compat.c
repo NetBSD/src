@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_compat.c	7.10 (Berkeley) 5/9/91
- *	$Id: tty_compat.c,v 1.9 1994/02/09 21:06:48 mycroft Exp $
+ *	$Id: tty_compat.c,v 1.10 1994/02/24 01:03:15 paulus Exp $
  */
 
 /* 
@@ -286,8 +286,8 @@ ttcompatgetflags(tp)
 	if ((iflag&IXANY) == 0)
 		flags |= DECCTQ;
 	flags |= lflag&(ECHO|MDMBUF|TOSTOP|FLUSHO|NOHANG|PENDIN|NOFLSH);
-if (ttydebug)
-	printf("getflags: %x\n", flags);
+	if (ttydebug)
+	    printf("getflags: %x\n", flags);
 	return (flags);
 }
 
@@ -340,7 +340,7 @@ ttcompatsetflags(tp, t)
 			iflag &= ~ISTRIP;
 	} else {
 		cflag |= CS7;
-		if ((flags&(EVENP|ODDP)) && (flags&ANYP) != ANYP)
+		if ((flags&(EVENP|ODDP)))
 			cflag |= PARENB;
 		iflag |= ISTRIP;
 	}
@@ -410,7 +410,7 @@ ttcompatsetlflags(tp, t)
 			iflag &= ~ISTRIP;
 	} else if ((flags&RAW) == 0) {
 		cflag |= CS7;
-		if ((flags&(EVENP|ODDP)) && (flags&ANYP) != ANYP)
+		if ((flags&(EVENP|ODDP)))
 			cflag |= PARENB;
 		oflag |= ISTRIP|OPOST;
 	}
