@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.13 1998/07/15 12:38:29 pk Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.14 1998/07/23 20:57:17 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -71,6 +72,8 @@ static	struct extent_region *extent_alloc_region_descriptor
 static	void extent_free_region_descriptor __P((struct extent *,
 	    struct extent_region *));
 
+static pool_handle_t expool;
+
 /*
  * Macro to align to an arbitrary power-of-two boundary.
  */
@@ -94,6 +97,11 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 	size_t sz = storagesize;
 	struct extent_region *rp;
 	int fixed_extent = (storage != NULL);
+
+	if (expool == NULL &&
+	    (expool = pool_create(sizeof(struct extent_region), 0, 0,
+				 0, "extent", 0, 0, 0, 0)) == NULL)
+		return (NULL);
 
 #ifdef DIAGNOSTIC
 	/* Check arguments. */
@@ -796,6 +804,7 @@ extent_free(ex, start, size, flags)
 	simple_lock(&ex->ex_slock);
 	exflags = ex->ex_flags;
 	simple_unlock(&ex->ex_slock);
+
 	if ((exflags & EXF_NOCOALESCE) == 0) {
 		/* Allocate a region descriptor. */
 		nrp = extent_alloc_region_descriptor(ex, flags);
@@ -957,9 +966,7 @@ extent_alloc_region_descriptor(ex, flags)
 	}
 
  alloc:
-	rp = (struct extent_region *)
-	    malloc(sizeof(struct extent_region), ex->ex_mtype,
-	    (flags & EX_WAITOK) ? M_WAITOK : M_NOWAIT);
+	rp = pool_get(expool, (flags & EX_WAITOK) ? PR_WAITOK : 0);
 
 	if (rp != NULL)
 		rp->er_flags = ER_ALLOC;
@@ -993,7 +1000,7 @@ extent_free_region_descriptor(ex, rp)
 				    er_link);
 				goto wake_em_up;
 			} else {
-				free(rp, ex->ex_mtype);
+				pool_put(expool, rp);
 			}
 		} else {
 			/* Clear all flags. */
@@ -1012,7 +1019,7 @@ extent_free_region_descriptor(ex, rp)
 	/*
 	 * We know it's dynamically allocated if we get here.
 	 */
-	free(rp, ex->ex_mtype);
+	pool_put(expool, rp);
 }
 
 void
