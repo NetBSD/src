@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.11 2000/02/06 11:11:31 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.12 2000/02/07 03:51:59 itojun Exp $	*/
 
-/* just for backward compatibility, will go away soon
+/* just for backward compatibility, will go away soon */
 #include <netinet/icmp6.h>
