@@ -5,22 +5,12 @@ showstoppers for merge back to -current:
  - change splraise/spllower to not touch local apic, since that's very
 slow (requires cheap per-cpu storage).
 
- - quad cpu ppro sporadically jumps into the stack; need to diagnose
-this.
-
- - implement per cpu ring buffer with trap logs (including the "last
-branch from/to" MSR contents) to allow for sane debugging.
-
  - rewrite interrupt dispatch so that multi-level shared interrupts
    are no longer broken.
 
- - figure out why ahc on serverworks fails to find its interrupt.
-
  - careful code review of all diffs from -current
 
- - try to render APM *harmless* (and functional in uniprocessor
-configurations).  it can't possibly work correctly when multiple cpu's
-are running, but..
+ - make sure APM isn't rendered non-functional on uniprocessors 
 
 "would be nice":
 
@@ -39,9 +29,6 @@ have variable-speed TSC.
 
  - investigate using per-cpu, more ephemeral, descriptors for TSS and
 LDT.
-
- - make halt -p work in MULTIPROCESSOR config (the one APM feature
-everyone wants)
 
 -----
 
@@ -82,3 +69,23 @@ done a while ago:
  - per-cpu GDT and MP-safing of gdt.c.  this seems like severe
 overkill so just one descriptor is different.  
 
+[2002/05/18  20:57:28  sommerfeld]
+
+ - figure out why ahc on serverworks fails to find its interrupt.
+
+answer: pci interrupt routing needs to be done using unswizzled pins,
+not just unswizzled devices.
+
+also done recently:
+
+ - quad cpu ppro sporadically jumps into the stack; need to diagnose
+this.
+
+ - implement per cpu ring buffer with trap logs (including the "last
+branch from/to" MSR contents) to allow for sane debugging.
+
+ - make halt -p work in MULTIPROCESSOR config (the one APM feature
+everyone wants)
+
+ - try to render APM *harmless* in MP configs.  it can't possibly work
+correctly when multiple cpu's are running, but..
