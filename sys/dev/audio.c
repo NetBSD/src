@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.21 2005/01/01 16:18:26 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.22 2005/01/01 17:35:27 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.21 2005/01/01 16:18:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.22 2005/01/01 17:35:27 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2071,8 +2071,9 @@ audiostartp(struct audio_softc *sc)
 		    sc->sc_pr.s.end, sc->sc_pr.blksize,
 		    audio_pint, (void *)sc, &sc->sc_rr.s.param);
 	else
-		error = sc->hw_if->start_output(sc->hw_hdl, sc->sc_pr.s.outp,
-		    sc->sc_pr.blksize, audio_pint, (void *)sc);
+		error = sc->hw_if->start_output(sc->hw_hdl,
+		    __UNCONST(sc->sc_pr.s.outp), sc->sc_pr.blksize,
+		    audio_pint, (void *)sc);
 	if (error) {
 		DPRINTF(("audiostartp failed: %d\n", error));
 		return error;
@@ -2164,7 +2165,7 @@ audio_pint(void *v)
 		DPRINTFN(5, ("audio_pint: mmapped outp=%p cc=%d inp=%p\n",
 			     cb->s.outp, blksize, cb->s.inp));
 		if (!hw->trigger_output)
-			(void)hw->start_output(sc->hw_hdl, cb->s.outp,
+			(void)hw->start_output(sc->hw_hdl, __UNCONST(cb->s.outp),
 			    blksize, audio_pint, (void *)sc);
 		return;
 	}
@@ -2243,8 +2244,8 @@ audio_pint(void *v)
 
 	DPRINTFN(5, ("audio_pint: outp=%p cc=%d\n", cb->s.outp, blksize));
 	if (!hw->trigger_output) {
-		error = hw->start_output(sc->hw_hdl, cb->s.outp, blksize,
-		    audio_pint, (void *)sc);
+		error = hw->start_output(sc->hw_hdl, __UNCONST(cb->s.outp),
+		    blksize, audio_pint, (void *)sc);
 		if (error) {
 			/* XXX does this really help? */
 			DPRINTF(("audio_pint restart failed: %d\n", error));
@@ -2881,6 +2882,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 
 	if (modechange) {
 		int indep;
+		int n;
 
 		indep = hw->get_props(sc->hw_hdl) & AUDIO_PROP_INDEPENDENT;
 		if (!indep) {
@@ -2921,9 +2923,10 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		memset(rs, 0, sizeof(rs));
 		from_param = &pp;
 		for (i = 0; i < pfilters.req_size; i++) {
-			to_param = &pfilters.filters[i].param;
+			n = pfilters.req_size - i;
+			to_param = &pfilters.filters[n].param;
 			audio_check_params(to_param);
-			pf[i] = pfilters.filters[i].factory(sc, from_param,
+			pf[i] = pfilters.filters[n].factory(sc, from_param,
 							    to_param);
 			if (pf[i] == NULL)
 				break;
@@ -2992,8 +2995,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			sc->sc_pr.s.param = pp;
 			sc->sc_pustream = &sc->sc_pr.s;
 		} else {
-			sc->sc_pr.s.param
-				= pfilters.filters[pfilters.req_size - 1].param;
+			sc->sc_pr.s.param = pfilters.filters[0].param;
 			sc->sc_pustream = &sc->sc_pstreams[0];
 		}
 		if (rfilters.req_size <= 0) {

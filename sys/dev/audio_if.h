@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.54.2.9 2004/12/29 19:55:16 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.54.2.10 2005/01/01 17:35:27 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -142,9 +142,8 @@ typedef stream_filter_t *stream_filter_factory_t(struct audio_softc *,
 /**
  * filter pipeline request
  *
- * filters[0] is the first filter.  The audio_params_t instance for the
- * hardware is filters[0].param for recording and filters[req_size -1].param
- * for playing.
+ * filters[0] is the first filter for playing or the last filter for recording.
+ * The audio_params_t instance for the hardware is filters[0].param.
  */
 #ifndef AUDIO_MAX_FILTERS
 # define AUDIO_MAX_FILTERS	8
@@ -194,7 +193,7 @@ struct audio_hw_if {
 	/* Start input/output routines. These usually control DMA. */
 	int	(*init_output)(void *, void *, int);
 	int	(*init_input)(void *, void *, int);
-	int	(*start_output)(void *, const void *, int,
+	int	(*start_output)(void *, void *, int,
 				    void (*)(void *), void *);
 	int	(*start_input)(void *, void *, int,
 				   void (*)(void *), void *);
@@ -222,10 +221,10 @@ struct audio_hw_if {
 
 	int	(*get_props)(void *); /* device properties */
 
-	int	(*trigger_output)(void *, const void *, void *, int,
-		    void (*)(void *), void *, audio_params_t *);
+	int	(*trigger_output)(void *, void *, void *, int,
+		    void (*)(void *), void *, const audio_params_t *);
 	int	(*trigger_input)(void *, void *, void *, int,
-		    void (*)(void *), void *, audio_params_t *);
+		    void (*)(void *), void *, const audio_params_t *);
 	int	(*dev_ioctl)(void *, u_long, caddr_t, int, struct proc *);
 };
 
