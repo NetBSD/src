@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/05/11 20:47:00 veego Exp $
+#	$NetBSD: Makefile,v 1.11 1999/06/27 12:56:00 mrg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -18,7 +18,6 @@ MDEC=		${DESTDIR}/usr/mdec
 IMAGE?=		ramdisk-${REV}.fs
 
 LISTS=		list
-CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
 SIZE=		1656k
@@ -26,7 +25,7 @@ DISKTYPE=	instfs
 GEOM=		512/18/2/92
 INO_BYTES=	4096
 
-all: ${CBIN} 
+all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
@@ -47,8 +46,11 @@ unconfig:
 	-vnconfig -u ${VND_DEV}
 	-/bin/rm -f ${IMAGE}
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+
+${CBIN}.conf: ${LISTS}
+	awk -f ${MINIROOT}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
@@ -57,6 +59,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 ${CBIN}: libhack.o
 
 # Use stubs to eliminate some large stuff from libc
+NOLIBHACKOPENDIR=1
 HACKSRC=${TOP}/../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
