@@ -49,6 +49,7 @@ alpha*-*-linux*)	gdb_target=alpha-linux ;;
 
 arc-*-*)		gdb_target=arc ;;
 
+arm*-*-netbsd*)		gdb_target=nbsd ;;
 arm*-wince-pe)		gdb_target=wince ;;
 arm*-*-linux*)		gdb_target=linux 
 			configdirs="$configdirs gdbserver"
