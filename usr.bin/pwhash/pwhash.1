@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwhash.1,v 1.2 2002/10/02 07:35:29 wiz Exp $
+.\"	$NetBSD: pwhash.1,v 1.3 2004/10/12 16:46:59 sjg Exp $
 .\"	$OpenBSD: encrypt.1,v 1.16 2000/11/09 17:52:07 aaron Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -36,6 +36,7 @@
 .Op Fl k
 .Op Fl m
 .Op Fl p | Ar string
+.Op Fl S Ar rounds
 .Op Fl s Ar salt
 .Sh DESCRIPTION
 .Nm
@@ -59,6 +60,10 @@ terminating newline.
 Encrypt the string using MD5.
 .It Fl p
 Prompt for a single string with echo turned off.
+.It Fl S Ar rounds
+Encrypt the salt with HMAC-SHA1 using the password as key and the specified
+.Ar rounds
+as a hint for the number of iterations.
 .It Fl s Ar salt
 Encrypt the string using DES, with the specified
 .Ar salt .
