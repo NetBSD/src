@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ptrace.h	7.4 (Berkeley) 2/22/91
- *	$Id: ptrace.h,v 1.8 1994/01/09 16:52:11 cgd Exp $
+ *	$Id: ptrace.h,v 1.9 1994/01/09 23:58:45 cgd Exp $
  */
 
 #ifndef _SYS_PTRACE_H_
@@ -46,10 +46,8 @@
 #define	PT_WRITE_U	6	/* write word in child's user structure */
 #define	PT_CONTINUE	7	/* continue the child */
 #define	PT_KILL		8	/* kill the child process */
-#ifdef notyet
 #define	PT_ATTACH	9	/* attach to running process */
 #define	PT_DETACH	10	/* detach from running process */
-#endif notyet
 
 #define	PT_FIRSTMACH	32	/* for machine-specific requests */
 #include <machine/ptrace.h>	/* machine-specific requests, if any */
