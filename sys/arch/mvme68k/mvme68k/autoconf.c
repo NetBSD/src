@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 1996/04/26 19:26:25 chuck Exp $ */
+/*	$NetBSD: autoconf.c,v 1.6 1996/05/08 05:58:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
