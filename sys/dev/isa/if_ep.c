@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.73 1995/06/12 00:09:49 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.74 1995/07/23 16:42:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -465,12 +465,11 @@ startagain:
 	m0 = sc->sc_arpcom.ac_if.if_snd.ifq_head;
 	if (m0 == 0)
 		return;
-#if 0
+
+	/* We need to use m->m_pkthdr.len, so require the header */
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("epstart: no header mbuf");
 	len = m0->m_pkthdr.len;
-#else
-	for (len = 0, m = m0; m; m = m->m_next)
-		len += m->m_len;
-#endif
 
 	pad = (4 - len) & 3;
 
