@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.8 2001/04/10 08:08:02 itojun Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.9 2001/05/15 14:50:53 itojun Exp $	*/
 /*	$OpenBSD: ssh-agent.c,v 1.54 2001/04/03 13:56:11 stevesk Exp $	*/
 
 /*
@@ -94,9 +94,27 @@ char socket_dir[1024];
 
 extern char *__progname;
 
-int	prepare_select(fd_set **, fd_set **, int *);
+/* prototypes */
+void idtab_init(void);
+Idtab *idtab_lookup(int);
+Key *lookup_private_key(Key *, int *, int);
+void process_request_identities(SocketEntry *, int);
+void process_authentication_challenge1(SocketEntry *);
+void process_sign_request2(SocketEntry *);
+void process_remove_identity(SocketEntry *, int);
+void process_remove_all_identities(SocketEntry *, int);
+void process_add_identity(SocketEntry *, int);
+void process_message(SocketEntry *);
+void new_socket(int, int);
+int	prepare_select(fd_set **, fd_set **, int *);;
+void after_select(fd_set *, fd_set *);
+void check_parent_exists(int);
+void cleanup_socket(void);
+void cleanup_exit(int);
+void cleanup_handler(int);
+void usage(void);
 
-static void
+void
 idtab_init(void)
 {
 	int i;
@@ -107,7 +125,7 @@ idtab_init(void)
 }
 
 /* return private key table for requested protocol version */
-static Idtab *
+Idtab *
 idtab_lookup(int version)
 {
 	if (version < 1 || version > 2)
@@ -116,7 +134,7 @@ idtab_lookup(int version)
 }
 
 /* return matching private key for given public key */
-static Key *
+Key *
 lookup_private_key(Key *key, int *idx, int version)
 {
 	int i;
@@ -132,7 +150,7 @@ lookup_private_key(Key *key, int *idx, int version)
 }
 
 /* send list of supported public keys to 'client' */
-static void
+void
 process_request_identities(SocketEntry *e, int version)
 {
 	Idtab *tab = idtab_lookup(version);
@@ -164,7 +182,7 @@ process_request_identities(SocketEntry *e, int version)
 }
 
 /* ssh1 only */
-static void
+void
 process_authentication_challenge1(SocketEntry *e)
 {
 	Key *key, *private;
@@ -230,7 +248,7 @@ send:
 }
 
 /* ssh2 only */
-static void
+void
 process_sign_request2(SocketEntry *e)
 {
 	extern int datafellows;
@@ -275,7 +293,7 @@ process_sign_request2(SocketEntry *e)
 }
 
 /* shared */
-static void
+void
 process_remove_identity(SocketEntry *e, int version)
 {
 	Key *key = NULL, *private;
@@ -336,7 +354,7 @@ process_remove_identity(SocketEntry *e, int version)
 	    success ? SSH_AGENT_SUCCESS : SSH_AGENT_FAILURE);
 }
 
-static void
+void
 process_remove_all_identities(SocketEntry *e, int version)
 {
 	u_int i;
@@ -357,7 +375,7 @@ process_remove_all_identities(SocketEntry *e, int version)
 	return;
 }
 
-static void
+void
 process_add_identity(SocketEntry *e, int version)
 {
 	Key *k = NULL;
@@ -441,7 +459,7 @@ send:
 
 /* dispatch incoming messages */
 
-static void
+void
 process_message(SocketEntry *e)
 {
 	u_int msg_len;
@@ -505,7 +523,7 @@ process_message(SocketEntry *e)
 	}
 }
 
-static void
+void
 new_socket(int type, int fd)
 {
 	u_int i, old_alloc;
@@ -585,7 +603,7 @@ prepare_select(fd_set **fdrp, fd_set **fdwp, int *fdl)
 	return (1);
 }
 
-static void
+void
 after_select(fd_set *readset, fd_set *writeset)
 {
 	u_int i;
@@ -657,7 +675,7 @@ after_select(fd_set *readset, fd_set *writeset)
 		}
 }
 
-static void
+void
 check_parent_exists(int sig)
 {
 	int save_errno = errno;
@@ -671,7 +689,7 @@ check_parent_exists(int sig)
 	errno = save_errno;
 }
 
-static void
+void
 cleanup_socket(void)
 {
 	if (socket_name[0])
@@ -680,21 +698,21 @@ cleanup_socket(void)
 		rmdir(socket_dir);
 }
 
-static void
+void
 cleanup_exit(int i)
 {
 	cleanup_socket();
 	exit(i);
 }
 
-static void
+void
 cleanup_handler(int sig)
 {
 	cleanup_socket();
 	_exit(2);
 }
 
-static void
+void
 usage(void)
 {
 	fprintf(stderr, "ssh-agent version %s\n", SSH_VERSION);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.9 2001/04/10 08:08:04 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.10 2001/05/15 14:50:54 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -46,10 +46,16 @@ extern char *__progname;
 /* AF_UNSPEC or AF_INET or AF_INET6 */
 extern int IPv4or6;
 
+/* prototypes */
+int ssh_proxy_connect(const char *, u_short, struct passwd *, const char *);
+int ssh_create_socket(struct passwd *, int, int);
+void ssh_exchange_identification(void);
+int read_yes_or_no(const char *, int);
+
 /*
  * Connect to the given ssh server using a proxy command.
  */
-static int
+int
 ssh_proxy_connect(const char *host, u_short port, struct passwd *pw,
 		  const char *proxy_command)
 {
@@ -149,7 +155,7 @@ ssh_proxy_connect(const char *host, u_short port, struct passwd *pw,
 /*
  * Creates a (possibly privileged) socket for use as the ssh connection.
  */
-static int
+int
 ssh_create_socket(struct passwd *pw, int privileged, int family)
 {
 	int sock;
@@ -322,7 +328,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
  * Waits for the server identification string, and sends our own
  * identification string.
  */
-static void
+void
 ssh_exchange_identification(void)
 {
 	char buf[256], remote_version[256];	/* must be same size! */
@@ -423,7 +429,7 @@ ssh_exchange_identification(void)
 }
 
 /* defaults to 'no' */
-static int
+int
 read_yes_or_no(const char *prompt, int defval)
 {
 	char buf[1024];

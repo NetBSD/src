@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.8 2001/04/10 08:08:04 itojun Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.9 2001/05/15 14:50:54 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -60,6 +60,9 @@ extern char *client_version_string;
 extern char *server_version_string;
 extern Options options;
 
+/* prototypes */
+int check_host_key_callback(Key *);
+
 /*
  * SSH2 key exchange
  */
@@ -72,7 +75,7 @@ struct sockaddr *xxx_hostaddr;
 
 Kex *xxx_kex = NULL;
 
-static int
+int
 check_host_key_callback(Key *hostkey)
 {
 	check_host_key(xxx_host, xxx_hostaddr, hostkey,
@@ -165,24 +168,29 @@ struct Authmethod {
 	int	*batch_flag;	/* flag in option struct that disables method */
 };
 
-void	input_userauth_success(int type, int plen, void *ctxt);
-void	input_userauth_failure(int type, int plen, void *ctxt);
-void	input_userauth_banner(int type, int plen, void *ctxt);
-void	input_userauth_error(int type, int plen, void *ctxt);
-void	input_userauth_info_req(int type, int plen, void *ctxt);
-void	input_userauth_pk_ok(int type, int plen, void *ctxt);
+void	input_userauth_success(int, int, void *);
+void	input_userauth_failure(int, int, void *);
+void	input_userauth_banner(int, int, void *);
+void	input_userauth_error(int, int, void *);
+void	input_userauth_info_req(int, int, void *);
+void	input_userauth_pk_ok(int, int, void *);
 
-int	userauth_none(Authctxt *authctxt);
-int	userauth_pubkey(Authctxt *authctxt);
-int	userauth_passwd(Authctxt *authctxt);
-int	userauth_kbdint(Authctxt *authctxt);
+int	userauth_none(Authctxt *);
+int	userauth_pubkey(Authctxt *);
+int	userauth_passwd(Authctxt *);
+int	userauth_kbdint(Authctxt *);
 
 void	userauth(Authctxt *authctxt, char *authlist);
 
-static int
-sign_and_send_pubkey(Authctxt *authctxt, Key *k,
-    sign_cb_fn *sign_callback);
-static void	clear_auth_state(Authctxt *authctxt);
+int send_pubkey_test(Authctxt *, Key *, sign_cb_fn *, int);
+int sign_and_send_pubkey(Authctxt *, Key *, sign_cb_fn *);
+void clear_auth_state(Authctxt *);
+Key *load_identity_file(char *);
+int identity_sign_cb(Authctxt *, Key *, u_char **, int *, u_char *, int);
+int agent_sign_cb(Authctxt *, Key *, u_char **, int *, u_char *, int);
+int key_sign_cb(Authctxt *, Key *, u_char **, int *, u_char *, int);
+int userauth_pubkey_agent(Authctxt *);
+int authmethod_is_enabled(Authmethod *);
 
 Authmethod *authmethod_get(char *authlist);
 Authmethod *authmethod_lookup(const char *name);
@@ -447,7 +455,7 @@ userauth_passwd(Authctxt *authctxt)
 	return 1;
 }
 
-static void
+void
 clear_auth_state(Authctxt *authctxt)
 {
 	/* XXX clear authentication state */
@@ -460,7 +468,7 @@ clear_auth_state(Authctxt *authctxt)
 	authctxt->last_key_sign = NULL;
 }
 
-static int
+int
 sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 {
 	Buffer b;
@@ -545,7 +553,7 @@ sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 	return 1;
 }
 
-static int
+int
 send_pubkey_test(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback,
     int hint)
 {
@@ -578,7 +586,7 @@ send_pubkey_test(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback,
 	return 1;
 }
 
-static Key *
+Key *
 load_identity_file(char *filename)
 {
 	Key *private;
@@ -616,7 +624,7 @@ load_identity_file(char *filename)
 	return private;
 }
 
-static int
+int
 identity_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
     u_char *data, int datalen)
 {
@@ -634,19 +642,19 @@ identity_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
 	return ret;
 }
 
-static int agent_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
+int agent_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
     u_char *data, int datalen)
 {
 	return ssh_agent_sign(authctxt->agent, key, sigp, lenp, data, datalen);
 }
 
-static int key_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
+int key_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
     u_char *data, int datalen)
 {
 	return key_sign(key, sigp, lenp, data, datalen);
 }
 
-static int
+int
 userauth_pubkey_agent(Authctxt *authctxt)
 {
 	static int called = 0;
@@ -793,7 +801,7 @@ input_userauth_info_req(int type, int plen, void *ctxt)
  * given auth method name, if configurable options permit this method fill
  * in auth_ident field and return true, otherwise return false.
  */
-static int
+int
 authmethod_is_enabled(Authmethod *method)
 {
 	if (method == NULL)

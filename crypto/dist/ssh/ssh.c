@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.11 2001/04/10 08:08:03 itojun Exp $	*/
+/*	$NetBSD: ssh.c,v 1.12 2001/05/15 14:50:54 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -135,9 +135,19 @@ Buffer command;
 /* Should we execute a command or invoke a subsystem? */
 int subsystem_flag = 0;
 
+/* prototypes */
+void usage(void);
+void rsh_connect(char *, char *, Buffer *);
+void x11_get_proto(char *, int, char *, int);
+void ssh_init_forwarding(void);
+void check_agent_present(void);
+void client_subsystem_reply(int, int, void *);
+void ssh_session2_callback(int, void *);
+int ssh_session2_command(void);
+
 /* Prints a help message to the user.  This function never returns. */
 
-static void
+void
 usage(void)
 {
 	fprintf(stderr, "Usage: %s [options] host [command]\n", __progname);
@@ -190,7 +200,7 @@ usage(void)
  * Connects to the given host using rsh (or prints an error message and exits
  * if rsh is not available).  This function never returns.
  */
-static void
+void
 rsh_connect(char *host, char *user, Buffer * command)
 {
 	char *args[10];
@@ -689,7 +699,7 @@ main(int ac, char **av)
 	return exit_status;
 }
 
-static void
+void
 x11_get_proto(char *proto, int proto_len, char *data, int data_len)
 {
 	char line[512];
@@ -728,7 +738,7 @@ x11_get_proto(char *proto, int proto_len, char *data, int data_len)
 	}
 }
 
-static void
+void
 ssh_init_forwarding(void)
 {
 	int success = 0;
@@ -762,7 +772,7 @@ ssh_init_forwarding(void)
 	}
 }
 
-static void
+void
 check_agent_present(void)
 {
 	if (options.forward_agent) {
@@ -912,7 +922,7 @@ ssh_session(void)
 	return client_loop(have_tty, tty_flag ? options.escape_char : -1, 0);
 }
 
-static void
+void
 client_subsystem_reply(int type, int plen, void *ctxt)
 {
 	int id, len;
@@ -927,7 +937,7 @@ client_subsystem_reply(int type, int plen, void *ctxt)
 		    len, buffer_ptr(&command), id);
 }
 
-static void
+void
 ssh_session2_callback(int id, void *arg)
 {
 	int len;
@@ -1001,7 +1011,7 @@ ssh_session2_callback(int id, void *arg)
 	packet_set_interactive(interactive);
 }
 
-static int
+int
 ssh_session2_command(void)
 {
 	int id, window, packetmax;

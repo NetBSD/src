@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.11 2001/04/10 08:07:55 itojun Exp $	*/
+/*	$NetBSD: auth1.c,v 1.12 2001/05/15 14:50:49 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -40,10 +40,14 @@ char *ssh_krb_user;
 /* import */
 extern ServerOptions options;
 
+/* prototype */
+char *get_authname(int);
+void do_authloop(Authctxt *);
+
 /*
  * convert ssh auth msg type into description
  */
-static char *
+char *
 get_authname(int type)
 {
 	static char buf[1024];
@@ -72,7 +76,7 @@ get_authname(int type)
  * read packets, try to authenticate the user and
  * return only if authentication is successful
  */
-static void
+void
 do_authloop(Authctxt *authctxt)
 {
 	int authenticated = 0;

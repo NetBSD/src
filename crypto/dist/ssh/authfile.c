@@ -1,4 +1,4 @@
-/*	$NetBSD: authfile.c,v 1.5 2001/04/10 08:07:55 itojun Exp $	*/
+/*	$NetBSD: authfile.c,v 1.6 2001/05/15 14:50:49 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -56,6 +56,15 @@ RCSID("$OpenBSD: authfile.c,v 1.30 2001/03/26 23:12:42 markus Exp $");
 static const char authfile_id_string[] =
     "SSH PRIVATE KEY FILE FORMAT 1.1\n";
 
+/* prototype */
+int key_save_private_rsa1(Key *, const char *, const char *, const char *);
+int key_save_private_pem(Key *, const char *, const char *, const char *);
+Key *key_load_public_rsa1(int, const char *, char **);
+Key *key_load_private_rsa1(int, const char *, const char *, char **);
+Key *key_load_private_pem(int, int, const char *, char **);
+int key_perm_ok(int, const char *);
+int key_try_load_public(Key *, const char *, char **);
+
 /*
  * Saves the authentication (private) key in a file, encrypting it with
  * passphrase.  The identification of the file (lowest 64 bits of n) will
@@ -63,7 +72,7 @@ static const char authfile_id_string[] =
  * passphrase.
  */
 
-static int
+int
 key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
     const char *comment)
 {
@@ -158,7 +167,7 @@ key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
 }
 
 /* save SSH v2 key in OpenSSL PEM format */
-static int
+int
 key_save_private_pem(Key *key, const char *filename, const char *_passphrase,
     const char *comment)
 {
@@ -225,7 +234,7 @@ key_save_private(Key *key, const char *filename, const char *passphrase,
  * otherwise.
  */
 
-static Key *
+Key *
 key_load_public_rsa1(int fd, const char *filename, char **commentp)
 {
 	Buffer buffer;
@@ -305,7 +314,7 @@ key_load_public_type(int type, const char *filename, char **commentp)
  * Assumes we are called under uid of the owner of the file.
  */
 
-static Key *
+Key *
 key_load_private_rsa1(int fd, const char *filename, const char *passphrase,
     char **commentp)
 {
@@ -429,7 +438,7 @@ fail:
 	return NULL;
 }
 
-static Key *
+Key *
 key_load_private_pem(int fd, int type, const char *passphrase,
     char **commentp)
 {
@@ -480,7 +489,7 @@ key_load_private_pem(int fd, int type, const char *passphrase,
 	return prv;
 }
 
-static int
+int
 key_perm_ok(int fd, const char *filename)
 {
 	struct stat st;
@@ -563,7 +572,7 @@ key_load_private(const char *filename, const char *passphrase,
 	}
 }
 
-static int
+int
 key_try_load_public(Key *k, const char *filename, char **commentp)
 {
 	FILE *f;

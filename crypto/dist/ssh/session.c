@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.11 2001/04/11 23:39:46 itojun Exp $	*/
+/*	$NetBSD: session.c,v 1.12 2001/05/15 14:50:52 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -98,6 +98,25 @@ void	do_child(Session *s, const char *command);
 void	do_authenticated1(Authctxt *authctxt);
 void	do_authenticated2(Authctxt *authctxt);
 
+void xauthfile_cleanup_proc(void *);
+void pty_cleanup_proc(void *);
+void child_set_env(char ***, u_int *, const char *, const char *);
+void read_environment_file(char ***, u_int *, const char *);
+void session_dump(void);
+Session *session_by_channel(int);
+Session *session_by_pid(pid_t);
+int session_window_change_req(Session *);
+int session_pty_req(Session *);
+int session_subsystem_req(Session *);
+int session_x11_req(Session *);
+int session_shell_req(Session *);
+int session_exec_req(Session *);
+int session_auth_agent_req(Session *);
+void session_exit_message(Session *, int);
+void session_free(Session *);
+void session_close(Session *);
+char *session_tty_list(void);
+
 /* import */
 extern ServerOptions options;
 extern char *__progname;
@@ -152,7 +171,7 @@ do_authenticated(Authctxt *authctxt)
 /*
  * Remove local Xauthority file.
  */
-static void
+void
 xauthfile_cleanup_proc(void *ignore)
 {
 	debug("xauthfile_cleanup_proc called");
@@ -174,7 +193,7 @@ xauthfile_cleanup_proc(void *ignore)
  * Function to perform cleanup if we get aborted abnormally (e.g., due to a
  * dropped connection).
  */
-static void
+void
 pty_cleanup_proc(void *session)
 {
 	Session *s=session;
@@ -745,7 +764,7 @@ do_login(Session *s, const char *command)
  * Sets the value of the given variable in the environment.  If the variable
  * already exists, its value is overriden.
  */
-static void
+void
 child_set_env(char ***envp, u_int *envsizep, const char *name,
 	      const char *value)
 {
@@ -786,7 +805,7 @@ child_set_env(char ***envp, u_int *envsizep, const char *name,
  * Otherwise, it must consist of empty lines, comments (line starts with '#')
  * and assignments of the form name=value.  No other forms are allowed.
  */
-static void
+void
 read_environment_file(char ***env, u_int *envsize,
 		      const char *filename)
 {
@@ -1242,7 +1261,7 @@ session_new(void)
 	return NULL;
 }
 
-static void
+void
 session_dump(void)
 {
 	int i;
@@ -1274,7 +1293,7 @@ session_open(int chanid)
 	return 1;
 }
 
-static Session *
+Session *
 session_by_channel(int id)
 {
 	int i;
@@ -1290,7 +1309,7 @@ session_by_channel(int id)
 	return NULL;
 }
 
-static Session *
+Session *
 session_by_pid(pid_t pid)
 {
 	int i;
@@ -1305,7 +1324,7 @@ session_by_pid(pid_t pid)
 	return NULL;
 }
 
-static int
+int
 session_window_change_req(Session *s)
 {
 	s->col = packet_get_int();
@@ -1317,7 +1336,7 @@ session_window_change_req(Session *s)
 	return 1;
 }
 
-static int
+int
 session_pty_req(Session *s)
 {
 	u_int len;
@@ -1366,7 +1385,7 @@ session_pty_req(Session *s)
 	return 1;
 }
 
-static int
+int
 session_subsystem_req(Session *s)
 {
 	u_int len;
@@ -1393,7 +1412,7 @@ session_subsystem_req(Session *s)
 	return success;
 }
 
-static int
+int
 session_x11_req(Session *s)
 {
 	int fd;
@@ -1449,7 +1468,7 @@ session_x11_req(Session *s)
 	return 1;
 }
 
-static int
+int
 session_shell_req(Session *s)
 {
 	/* if forced_command == NULL, the shell is execed */
@@ -1462,7 +1481,7 @@ session_shell_req(Session *s)
 	return 1;
 }
 
-static int
+int
 session_exec_req(Session *s)
 {
 	u_int len;
@@ -1482,7 +1501,7 @@ session_exec_req(Session *s)
 	return 1;
 }
 
-static int
+int
 session_auth_agent_req(Session *s)
 {
 	static int called = 0;
@@ -1597,7 +1616,7 @@ session_pty_cleanup(Session *s)
 		error("close(s->ptymaster): %s", strerror(errno));
 }
 
-static void
+void
 session_exit_message(Session *s, int status)
 {
 	Channel *c;
@@ -1642,7 +1661,7 @@ session_exit_message(Session *s, int status)
 	s->chanid = -1;
 }
 
-static void
+void
 session_free(Session *s)
 {
 	debug("session_free: session %d pid %d", s->self, s->pid);
@@ -1657,7 +1676,7 @@ session_free(Session *s)
 	s->used = 0;
 }
 
-static void
+void
 session_close(Session *s)
 {
 	session_pty_cleanup(s);
@@ -1706,7 +1725,7 @@ session_close_by_channel(int id, void *arg)
 	}
 }
 
-static char *
+char *
 session_tty_list(void)
 {
 	static char buf[1024];
