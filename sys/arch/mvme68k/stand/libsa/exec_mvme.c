@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.3 1996/05/28 19:07:32 chuck Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.4 1998/08/01 11:22:53 scw Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -68,7 +68,7 @@ exec_mvme(file, flag)
 	/*
 	 * Read in the exec header, and validate it.
 	 */
-	if (read(io, (char *)&x, sizeof(x)) != sizeof(x))
+	if (read(io, (void *)&x, sizeof(x)) != sizeof(x))
 		goto shread;
 	if (N_BADMAG(x)) {
 		errno = EFTYPE;
@@ -89,9 +89,10 @@ exec_mvme(file, flag)
 	loadaddr = (void *)(x.a_entry & ~sizeof(x));
 
 	cp = loadaddr;
-	magic = N_GETMAGIC(x);
+	magic = (int)N_GETMAGIC(x);
 	if (magic == ZMAGIC)
 		cp += sizeof(x);
+	/*LINTED*/
 	entry = (void (*)())cp;
 
 	/*
@@ -105,10 +106,10 @@ exec_mvme(file, flag)
 	 * Read in the text segment.
 	 */
 	printf("%d", x.a_text);
-	cc = x.a_text;
+	cc = (int)x.a_text;
 	if (magic == ZMAGIC) 
 		cc = cc - sizeof(x); /* a.out header part of text in zmagic */
-	if (read(io, cp, cc) != cc)
+	if (read(io, cp, (size_t)cc) != (size_t)cc)
 		goto shread;
 	cp += cc;
 
@@ -116,7 +117,8 @@ exec_mvme(file, flag)
 	 * NMAGIC may have a gap between text and data.
 	 */
 	if (magic == NMAGIC) {
-		register int mask = N_PAGSIZ(x) - 1;
+		int mask = N_PAGSIZ(x) - 1;
+		/*LINTED*/
 		while ((int)cp & mask)
 			*cp++ = 0;
 	}
@@ -125,22 +127,25 @@ exec_mvme(file, flag)
 	 * Read in the data segment.
 	 */
 	printf("+%d", x.a_data);
-	if (read(io, cp, x.a_data) != x.a_data)
+	if (read(io, cp, (size_t)x.a_data) != (size_t)x.a_data)
 		goto shread;
-	cp += x.a_data;
+	cp += (int)x.a_data;
 
 	/*
 	 * Zero out the BSS section.
 	 * (Kernel doesn't care, but do it anyway.)
 	 */
 	printf("+%d", x.a_bss);
-	cc = x.a_bss;
+	cc = (int)x.a_bss;
+	/*LINTED*/
 	while ((int)cp & 3) {
 		*cp++ = 0;
 		--cc;
 	}
+	/*LINTED*/
 	ip = (int*)cp;
 	cp += cc;
+	/*LINTED*/
 	while ((char*)ip < cp)
 		*ip++ = 0;
 
@@ -148,18 +153,20 @@ exec_mvme(file, flag)
 	 * Read in the symbol table and strings.
 	 * (Always set the symtab size word.)
 	 */
-	*ip++ = x.a_syms;
+	*ip++ = (int)x.a_syms;
+	/*LINTED*/
 	cp = (char*) ip;
 
 	if (x.a_syms > 0 && (flag & RB_NOSYM) == 0) {
 
 		/* Symbol table and string table length word. */
-		cc = x.a_syms;
+		cc = (int)x.a_syms;
 		printf("+[%d", cc);
 		cc += sizeof(int);	/* strtab length too */
-		if (read(io, cp, cc) != cc)
+		if (read(io, cp, (size_t)cc) != (size_t)cc)
 			goto shread;
-		cp += x.a_syms;
+		cp += (int)x.a_syms;
+		/*LINTED*/
 		ip = (int*)cp;  	/* points to strtab length */
 		cp += sizeof(int);
 
@@ -169,14 +176,14 @@ exec_mvme(file, flag)
 		cc -= sizeof(int);
 		if (cc <= 0)
 			goto shread;
-		if (read(io, cp, cc) != cc)
+		if (read(io, cp, (size_t)cc) != (size_t)cc)
 			goto shread;
 		cp += cc;
 	}
 	printf("=0x%x\n", cp - loadaddr);
 	close(io);
 
-	printf("Start @ 0x%x ...\n", (int)entry);
+	printf("Start @ 0x%p ...\n", entry);
 	(*entry)(flag, bugargs.ctrl_addr, 
 				bugargs.ctrl_lun, bugargs.dev_lun, 0, cp);
 	printf("exec: kernel returned!\n");
