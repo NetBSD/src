@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1994/12/20 05:35:13 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 1995/01/24 06:18:16 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -197,6 +197,15 @@ load_u_area()
 	} while (ptep < limit);
 }
 
+/*
+ * This function exists just so stack traces show the right caller
+ * when the first interrupts come in (else ddb gets confused).
+ */
+static void
+enable_interrupts()
+{
+	(void)spl0();
+}
 
 /*
  * This is called early in init_main.c:main(), after the
@@ -311,7 +320,10 @@ void cpu_startup()
      */
     nofault = NULL;
     configure();
+
 	cold = 0;
+	enable_interrupts();
+
 #ifdef	COMPAT_SUNOS
 	hack_sun_reboot();	/* XXX - Temporary hack... */
 #endif
