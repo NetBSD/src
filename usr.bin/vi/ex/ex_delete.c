@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_delete.c	8.7 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_delete.c	8.13 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,9 +65,15 @@ ex_delete(sp, ep, cmdp)
 {
 	recno_t lno;
 
-	/* Yank the lines. */
-	if (cut(sp, ep, NULL, F_ISSET(cmdp, E_BUFFER) ? &cmdp->buffer : NULL,
-	    &cmdp->addr1, &cmdp->addr2, CUT_DELETE | CUT_LINEMODE))
+	/*
+	 * !!!
+	 * Historically, lines deleted in ex were not placed in the numeric
+	 * buffers.  We follow historic practice so that we don't overwrite
+	 * vi buffers accidentally.
+	 */
+	if (cut(sp, ep,
+	    F_ISSET(cmdp, E_BUFFER) ? &cmdp->buffer : NULL,
+	    &cmdp->addr1, &cmdp->addr2, CUT_LINEMODE))
 		return (1);
 
 	/* Delete the lines. */

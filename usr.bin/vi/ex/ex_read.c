@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_read.c	8.26 (Berkeley) 3/23/94";
+static const char sccsid[] = "@(#)ex_read.c	8.40 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,8 +59,11 @@ static char sccsid[] = "@(#)ex_read.c	8.26 (Berkeley) 3/23/94";
 
 /*
  * ex_read --	:read [file]
- *		:read [! cmd]
- *	Read from a file or utility.
+ *		:read [!cmd]
+ * Read from a file or utility.
+ *
+ * !!!
+ * Historical vi wouldn't undo a filter read, for no apparent reason.
  */
 int
 ex_read(sp, ep, cmdp)
@@ -69,75 +72,128 @@ ex_read(sp, ep, cmdp)
 	EXCMDARG *cmdp;
 {
 	struct stat sb;
+	CHAR_T *arg, *name;
+	EX_PRIVATE *exp;
 	FILE *fp;
 	MARK rm;
 	recno_t nlines;
-	size_t blen, len;
-	int btear, itear, rval;
-	char *bp, *name;
+	size_t arglen, blen, len;
+	int btear, farg, rval;
+	char *p;
 
 	/*
-	 * If "read !", it's a pipe from a utility.
-	 *
-	 * !!!
-	 * Historical vi wouldn't undo a filter read, for no apparent
-	 * reason.
+	 *  0 args: we're done.
+	 *  1 args: check for "read !arg".
+	 *  2 args: check for "read ! arg".
+	 * >2 args: object, too many args.
 	 */
-	if (F_ISSET(cmdp, E_FORCE)) {
-		/* Expand the user's argument. */
-		if (argv_exp1(sp, ep,
-		    cmdp, cmdp->argv[0]->bp, cmdp->argv[0]->len, 0))
+	farg = 0;
+	switch (cmdp->argc) {
+	case 0:
+		break;
+	case 1:
+		arg = cmdp->argv[0]->bp;
+		arglen = cmdp->argv[0]->len;
+		if (*arg == '!') {
+			++arg;
+			--arglen;
+			farg = 1;
+		}
+		break;
+	case 2:
+		if (cmdp->argv[0]->len == 1 && cmdp->argv[0]->bp[0] == '!')  {
+			arg = cmdp->argv[1]->bp;
+			arglen = cmdp->argv[1]->len;
+			farg = 2;
+			break;
+		}
+		/* FALLTHROUGH */
+	default:
+		goto badarg;
+	}
+
+	if (farg != 0) {
+		/* File name and bang expand the user's argument. */
+		if (argv_exp1(sp, ep, cmdp, arg, arglen, 1))
 			return (1);
 
-		/* If argc still 1, there wasn't anything to expand. */
-		if (cmdp->argc == 1) {
-			msgq(sp, M_ERR, "Usage: %s.", cmdp->cmd->usage);
+		/* If argc unchanged, there wasn't anything to expand. */
+		if (cmdp->argc == farg)
+			goto usage;
+
+		/* Set the last bang command. */
+		exp = EXP(sp);
+		if (exp->lastbcomm != NULL)
+			free(exp->lastbcomm);
+		if ((exp->lastbcomm = strdup(cmdp->argv[farg]->bp)) == NULL) {
+			msgq(sp, M_SYSERR, NULL);
 			return (1);
 		}
 
 		/* Redisplay the user's argument if it's changed. */
 		if (F_ISSET(cmdp, E_MODIFY) && IN_VI_MODE(sp)) {
-			len = cmdp->argv[1]->len;
-			GET_SPACE_RET(sp, bp, blen, len + 2);
-			bp[0] = '!';
-			memmove(bp + 1, cmdp->argv[1], cmdp->argv[1]->len + 1);
-			(void)sp->s_busy(sp, bp);
-			FREE_SPACE(sp, bp, blen);
+			len = cmdp->argv[farg]->len;
+			GET_SPACE_RET(sp, p, blen, len + 2);
+			p[0] = '!';
+			memmove(p + 1,
+			    cmdp->argv[farg]->bp, cmdp->argv[farg]->len + 1);
+			(void)sp->s_busy(sp, p);
+			FREE_SPACE(sp, p, blen);
 		}
 
-		if (filtercmd(sp, ep,
-		    &cmdp->addr1, NULL, &rm, cmdp->argv[1]->bp, FILTER_READ))
+		if (filtercmd(sp, ep, &cmdp->addr1,
+		    NULL, &rm, cmdp->argv[farg]->bp, FILTER_READ))
 			return (1);
+
+		/* The filter version of read set the autoprint flag. */
+		F_SET(EXP(sp), EX_AUTOPRINT);
+
+		/* If in vi mode, move to the first nonblank. */
 		sp->lno = rm.lno;
+		if (IN_VI_MODE(sp)) {
+			sp->cno = 0;
+			(void)nonblank(sp, ep, sp->lno, &sp->cno);
+		}
 		return (0);
 	}
 
-	/* Expand the user's argument. */
-	if (argv_exp2(sp, ep,
-	    cmdp, cmdp->argv[0]->bp, cmdp->argv[0]->len, 0))
+	/* Shell and file name expand the user's argument. */
+	if (argv_exp2(sp, ep, cmdp, arg, arglen, 0))
 		return (1);
 
+	/*
+	 *  0 args: no arguments, read the current file, don't set the
+	 *	    alternate file name.
+	 *  1 args: read it, switching to it or settgin the alternate file
+	 *	    name.
+	 * >1 args: object, too many args.
+	 */
 	switch (cmdp->argc) {
 	case 1:
-		/*
-		 * No arguments, read the current file.
-		 * Doesn't set the alternate file name.
-		 */
-		name = FILENAME(sp->frp);
+		name = sp->frp->name;
 		break;
 	case 2:
-		/*
-		 * One argument, read it.
-		 * Sets the alternate file name.
-		 */
 		name = cmdp->argv[1]->bp;
-		set_alt_name(sp, name);
+		/*
+		 * !!!
+		 * Historically, if you had an "unnamed" file, the read command
+		 * renamed the file.
+		 */
+		if (F_ISSET(sp->frp, FR_TMPFILE) &&
+		    !F_ISSET(sp->frp, FR_READNAMED)) {
+			if ((p = v_strdup(sp,
+			    cmdp->argv[1]->bp, cmdp->argv[1]->len)) != NULL) {
+				free(sp->frp->name);
+				sp->frp->name = p;
+			}
+			F_SET(sp->frp, FR_NAMECHANGE | FR_READNAMED);
+		} else
+			set_alt_name(sp, name);
 		break;
 	default:
-		/* If expanded to more than one argument, object. */
-		msgq(sp, M_ERR,
+badarg:		msgq(sp, M_ERR,
 		    "%s expanded into too many file names", cmdp->argv[0]->bp);
-		msgq(sp, M_ERR, "Usage: %s.", cmdp->cmd->usage);
+usage:		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
 		return (1);
 	}
 
@@ -148,27 +204,20 @@ ex_read(sp, ep, cmdp)
 	 * was no way to "force" it.
 	 */
 	if ((fp = fopen(name, "r")) == NULL || fstat(fileno(fp), &sb)) {
-		msgq(sp, M_SYSERR, name);
+		msgq(sp, M_SYSERR, "%s", name);
 		return (1);
 	}
 	if (!S_ISREG(sb.st_mode)) {
 		(void)fclose(fp);
-		msgq(sp, M_ERR, "Only regular files may be read.");
+		msgq(sp, M_ERR, "Only regular files may be read");
 		return (1);
 	}
 
-	/*
-	 * Nvi handles the interrupt when reading from a file, but not
-	 * when reading from a filter, since the terminal settings have
-	 * been reset.
-	 */
+	/* Turn on busy message. */
 	btear = F_ISSET(sp, S_EXSILENT) ? 0 : !busy_on(sp, "Reading...");
-	itear = !intr_init(sp);
 	rval = ex_readfp(sp, ep, name, fp, &cmdp->addr1, &nlines, 1);
 	if (btear)
 		busy_off(sp);
-	if (itear)
-		intr_end(sp);
 
 	/*
 	 * Set the cursor to the first line read in, if anything read
@@ -180,7 +229,6 @@ ex_read(sp, ep, cmdp)
 	if (nlines)
 		++sp->lno;
 
-	F_SET(EXP(sp), EX_AUTOPRINT);
 	return (rval);
 }
 
@@ -214,8 +262,9 @@ ex_readfp(sp, ep, name, fp, fm, nlinesp, success_msg)
 	ccnt = 0;
 	lcnt = 0;
 	for (lno = fm->lno; !ex_getline(sp, fp, &len); ++lno, ++lcnt) {
-		if (F_ISSET(sp, S_INTERRUPTED)) {
-			msgq(sp, M_INFO, "Interrupted.");
+		if (INTERRUPTED(sp)) {
+			if (!success_msg)
+				msgq(sp, M_INFO, "Interrupted");
 			break;
 		}
 		if (file_aline(sp, ep, 1, lno, exp->ibp, len)) {
@@ -226,12 +275,12 @@ ex_readfp(sp, ep, name, fp, fm, nlinesp, success_msg)
 	}
 
 	if (ferror(fp)) {
-		msgq(sp, M_SYSERR, name);
+		msgq(sp, M_SYSERR, "%s", name);
 		rval = 1;
 	}
 
 	if (fclose(fp)) {
-		msgq(sp, M_SYSERR, name);
+		msgq(sp, M_SYSERR, "%s", name);
 		return (1);
 	}
 
@@ -243,7 +292,8 @@ ex_readfp(sp, ep, name, fp, fm, nlinesp, success_msg)
 		*nlinesp = lcnt;
 
 	if (success_msg)
-		msgq(sp, M_INFO, "%s: %lu line%s, %lu characters.",
+		msgq(sp, M_INFO, "%s%s: %lu line%s, %lu characters",
+		    INTERRUPTED(sp) ? "Interrupted read: " : "",
 		    name, lcnt, lcnt == 1 ? "" : "s", ccnt);
 
 	return (0);

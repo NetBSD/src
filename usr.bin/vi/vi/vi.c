@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)vi.c	8.57 (Berkeley) 3/18/94";
+static const char sccsid[] = "@(#)vi.c	8.90 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,13 +57,13 @@ static char sccsid[] = "@(#)vi.c	8.57 (Berkeley) 3/18/94";
 #include "vcmd.h"
 
 static int getcmd __P((SCR *, EXF *,
-		VICMDARG *, VICMDARG *, VICMDARG *, int *));
-static inline int
+		VICMDARG *, VICMDARG *, VICMDARG *, int *, int *));
+static __inline int
 	   getcount __P((SCR *, ARG_CHAR_T, u_long *));
-static inline int
+static __inline int
 	   getkey __P((SCR *, CH *, u_int));
 static int getkeyword __P((SCR *, EXF *, VICMDARG *, u_int));
-static int getmotion __P((SCR *, EXF *, VICMDARG *, VICMDARG *));
+static int getmotion __P((SCR *, EXF *, VICMDARG *, VICMDARG *, int *));
 
 /*
  * Side-effect:
@@ -85,22 +85,41 @@ vi(sp, ep)
 	MARK abs;
 	VICMDARG cmd, *vp;
 	u_int flags, saved_mode;
-	int comcount, eval;
+	int comcount, eval, mapped;
 
 	/* Start vi and paint the screen. */
 	if (v_init(sp, ep))
 		return (1);
-	if (sp->s_refresh(sp, ep)) {
-		(void)v_end(sp);
-		return (1);
-	}
 
 	/* Command initialization. */
 	memset(&cmd, 0, sizeof(VICMDARG));
 
 	for (eval = 0, vp = &cmd;;) {
-		if (!MAPPED_KEYS_WAITING(sp) && log_cursor(sp, ep))
-			goto err;
+		/* Refresh the screen. */
+		sp->showmode = "Command";
+		if (sp->s_refresh(sp, ep)) {
+			eval = 1;
+			break;
+		}
+
+		/* Set the new favorite position. */
+		if (F_ISSET(vp, VM_RCM_SET | VM_RCM_SETFNB | VM_RCM_SETNNB)) {
+			sp->rcm_last = 0;
+			(void)sp->s_column(sp, ep, &sp->rcm);
+		}
+
+		/*
+		 * If not currently in a map, log the cursor position,
+		 * and set a flag so that this command can become the
+		 * DOT command.
+		 */
+		if (MAPPED_KEYS_WAITING(sp))
+			mapped = 1;
+		else {
+			if (log_cursor(sp, ep))
+				goto err;
+			mapped = 0;
+		}
 
 		/*
 		 * We get a command, which may or may not have an associated
@@ -108,7 +127,7 @@ vi(sp, ep)
 		 * function to get the resulting mark.  We then call the
 		 * command setting the cursor to the resulting mark.
 		 */
-		if (getcmd(sp, ep, DOT, vp, NULL, &comcount))
+		if (getcmd(sp, ep, DOT, vp, NULL, &comcount, &mapped))
 			goto err;
 
 		/*
@@ -127,8 +146,8 @@ vi(sp, ep)
 		    getkeyword(sp, ep, vp, vp->flags))
 			goto err;
 
-		/* If a non-relative movement, copy the future absolute mark. */
-		if (F_ISSET(vp, V_ABS)) {
+		/* Prepare to set the previous context. */
+		if (F_ISSET(vp, V_ABS | V_ABS_C | V_ABS_L)) {
 			abs.lno = sp->lno;
 			abs.cno = sp->cno;
 		}
@@ -152,7 +171,7 @@ vi(sp, ep)
 		if (F_ISSET(vp, V_MOTION)) {
 			flags = F_ISSET(vp, VM_RCM_MASK);
 			F_CLR(vp, VM_RCM_MASK);
-			if (getmotion(sp, ep, DOTMOTION, vp))
+			if (getmotion(sp, ep, DOTMOTION, vp, &mapped))
 				goto err;
 			if (F_ISSET(vp, VM_NOMOTION))
 				goto err;
@@ -184,7 +203,7 @@ vi(sp, ep)
 		/* Make sure no function left the temporary space locked. */
 		if (F_ISSET(sp->gp, G_TMP_INUSE)) {
 			msgq(sp, M_ERR,
-			    "Error: vi: temporary buffer not released.");
+			    "Error: vi: temporary buffer not released");
 			return (1);
 		}
 #endif
@@ -195,14 +214,17 @@ vi(sp, ep)
 		 if (saved_mode != F_ISSET(sp, S_SCREENS | S_MAJOR_CHANGE))
 			break;
 
-		/* Set the absolute mark. */
-		if (F_ISSET(vp, V_ABS) && mark_set(sp, ep, ABSMARK1, &abs, 1))
-			goto err;
-
-		/* Set the dot command structure. */
-		if (F_ISSET(vp, V_DOT)) {
+		/*
+		 * Set the dot command structure.
+		 *
+		 * !!!
+		 * Historically, no command which used any mapped keys became
+		 * the dot command.
+		 */
+		if (F_ISSET(vp, V_DOT) && !mapped) {
 			*DOT = cmd;
 			F_SET(DOT, VC_ISDOT);
+
 			/*
 			 * If a count was supplied for both the command and
 			 * its motion, the count was used only for the motion.
@@ -210,6 +232,9 @@ vi(sp, ep)
 			 */
 			if (F_ISSET(vp, VC_C1RESET))
 				F_SET(DOT, VC_C1SET);
+
+			/* VM flags aren't retained. */
+			F_CLR(DOT, VM_COMMASK | VM_RCM_MASK);
 		}
 
 		/*
@@ -240,21 +265,7 @@ vi(sp, ep)
 			vp->m_final.cno = sp->s_rcm(sp, ep, vp->m_final.lno);
 			break;
 		case VM_RCM_SETLAST:
-			sp->rcmflags = RCM_LAST;
-			break;
-		case VM_RCM_SETLFNB:
-			/*
-			 * If we changed lines, move to the first non-blank.
-			 * This is the hack that makes logical scrolling on
-			 * really long lines work.
-			 */
-			if (vp->m_start.lno != vp->m_final.lno) {
-				vp->m_final.cno = 0;
-				if (nonblank(sp, ep,
-				    vp->m_final.lno, &vp->m_final.cno))
-					goto err;
-				sp->rcmflags = RCM_FNB;
-			}
+			sp->rcm_last = 1;
 			break;
 		case VM_RCM_SETFNB:
 			vp->m_final.cno = 0;
@@ -262,7 +273,6 @@ vi(sp, ep)
 		case VM_RCM_SETNNB:
 			if (nonblank(sp, ep, vp->m_final.lno, &vp->m_final.cno))
 				goto err;
-			sp->rcmflags = RCM_FNB;
 			break;
 		default:
 			abort();
@@ -272,25 +282,41 @@ vi(sp, ep)
 		sp->lno = vp->m_final.lno;
 		sp->cno = vp->m_final.cno;
 
-		if (!MAPPED_KEYS_WAITING(sp)) {
+		/*
+		 * Set the absolute mark -- set even if a tags or similar
+		 * command, since the tag may be moving to the same file.
+		 */
+		if ((F_ISSET(vp, V_ABS) ||
+		    F_ISSET(vp, V_ABS_L) && sp->lno != abs.lno ||
+		    F_ISSET(vp, V_ABS_C) &&
+		    (sp->lno != abs.lno || sp->cno != abs.cno)) &&
+		    mark_set(sp, ep, ABSMARK1, &abs, 1))
+			goto err;
+
+		if (!MAPPED_KEYS_WAITING(sp))
 			(void)msg_rpt(sp, 1);
 
-			if (0)
-err:				term_map_flush(sp, "Vi error");
-		}
-
-		/* Refresh the screen. */
-		if (sp->s_refresh(sp, ep)) {
-			eval = 1;
-			break;
-		}
-
-		/* Set the new favorite position. */
-		if (F_ISSET(vp, VM_RCM_SET)) {
-			sp->rcmflags = 0;
-			(void)sp->s_column(sp, ep, &sp->rcm);
-		}
+		/*
+		 * Check and clear the interrupts.  There's an obvious race,
+		 * but it's not worth cleaning up.  This is done after the
+		 * err: lable, so that if the "error" was an interupt it gets
+		 * cleaned up.
+		 *
+		 * !!!
+		 * Previous versions of nvi cleared mapped characters on error,
+		 * even if it wasn't an interrupt.  This feature was removed as
+		 * users complained that it wasn't historic practice and that
+		 * they used leading (illegal) <escape> characters in the map
+		 * to clean up vi state before the map was interpreted.
+		 */
+err:		if (INTERRUPTED(sp))
+			term_flush(sp, "Interrupted", CH_MAPPED);
+		CLR_INTERRUPT(sp);
 	}
+
+	/* Free allocated keyword memory. */
+	if (cmd.keyword != NULL)
+		free(cmd.keyword);
 
 	return (v_end(sp) || eval);
 }
@@ -298,8 +324,27 @@ err:				term_map_flush(sp, "Vi error");
 #define	KEY(key, map) {							\
 	if (getkey(sp, &ikey, map))					\
 		return (1);						\
+	if (ikey.value == K_ESCAPE)					\
+		goto esc;						\
+	if (F_ISSET(&ikey, CH_MAPPED))					\
+		*mappedp = 1;						\
 	key = ikey.ch;							\
 }
+
+/*
+ * The O_TILDEOP option makes the ~ command take a motion instead
+ * of a straight count.  This is the replacement structure we use
+ * instead of the one currently in the VIKEYS table.
+ *
+ * XXX
+ * Note, I used VC_Y instead of creating a new motion command, it's
+ * a lot easier.
+ */
+VIKEYS const tmotion = {
+	v_mulcase,	V_CNT|V_DOT|V_MOTION|VC_Y|VM_RCM_SET,
+	"[count]~[count]motion",
+	" ~ change case to motion"
+};
 
 /*
  * getcmd --
@@ -315,39 +360,52 @@ err:				term_map_flush(sp, "Vi error");
  *	[count] key [character]
  */
 static int
-getcmd(sp, ep, dp, vp, ismotion, comcountp)
+getcmd(sp, ep, dp, vp, ismotion, comcountp, mappedp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *dp, *vp;
 	VICMDARG *ismotion;	/* Previous key if getting motion component. */
-	int *comcountp;
+	int *comcountp, *mappedp;
 {
+	enum { COMMANDMODE, ISPARTIAL, NOTPARTIAL } cpart;
 	VIKEYS const *kp;
 	u_int flags;
 	CH ikey;
 	CHAR_T key;
+	char *s;
 
 	/* Refresh the command structure. */
 	memset(&vp->vp_startzero, 0,
 	    (char *)&vp->vp_endzero - (char *)&vp->vp_startzero);
 
-	/* An escape bells the user if in command mode. */
-	if (getkey(sp, &ikey, TXT_MAPCOMMAND)) {
-		if (ikey.value == K_ESCAPE && ismotion == NULL)
-			msgq(sp, M_BERR, "Already in command mode");
-		return (1);
-	}
-
-	key = ikey.ch;
-	if (key > MAXVIKEY) {
-		msgq(sp, M_BERR, "%s isn't a vi command", charname(sp, key));
-		return (1);
-	}
+	/*
+	 * Get a key.
+	 *
+	 * <escape> cancels partial commands, i.e. a command where at least
+	 * one non-numeric character has been entered.  Otherwise, it beeps
+	 * the terminal.
+	 *
+	 * !!!
+	 * POSIX 1003.2-1992 explicitly disallows cancelling commands where
+	 * all that's been entered is a number, requiring that the terminal
+	 * be alerted.
+	 */
+	cpart = ismotion == NULL ? COMMANDMODE : ISPARTIAL;
+	KEY(key, TXT_MAPCOMMAND);
+	if (ismotion == NULL)
+		cpart = NOTPARTIAL;
 
 	/* Pick up optional buffer. */
 	if (key == '"') {
+		cpart = ISPARTIAL;
+		if (ismotion != NULL) {
+			msgq(sp, M_BERR,
+			    "Buffers should be specified before the command");
+			return (1);
+		}
 		KEY(vp->buffer, 0);
 		F_SET(vp, VC_BUFFER);
+
 		KEY(key, TXT_MAPCOMMAND);
 	}
 
@@ -360,30 +418,54 @@ getcmd(sp, ep, dp, vp, ismotion, comcountp)
 			return (1);
 		F_SET(vp, VC_C1SET);
 		*comcountp = 1;
+
 		KEY(key, TXT_MAPCOMMAND);
 	} else
 		*comcountp = 0;
 
 	/* Pick up optional buffer. */
 	if (key == '"') {
+		cpart = ISPARTIAL;
 		if (F_ISSET(vp, VC_BUFFER)) {
-			msgq(sp, M_ERR, "Only one buffer can be specified.");
+			msgq(sp, M_ERR, "Only one buffer can be specified");
+			return (1);
+		}
+		if (ismotion != NULL) {
+			msgq(sp, M_BERR,
+			    "Buffers should be specified before the command");
 			return (1);
 		}
 		KEY(vp->buffer, 0);
 		F_SET(vp, VC_BUFFER);
+
 		KEY(key, TXT_MAPCOMMAND);
 	}
 
+	/* Check for an OOB command key. */
+	cpart = ISPARTIAL;
+	if (key > MAXVIKEY) {
+		msgq(sp, M_BERR, "%s isn't a vi command", KEY_NAME(sp, key));
+		return (1);
+	}
+	kp = &vikeys[vp->key = key];
+
+	/* The tildeop option makes the ~ command take a motion. */
+	if (key == '~' && O_ISSET(sp, O_TILDEOP))
+		kp = &tmotion;
+
+	vp->kp = kp;
+
 	/*
 	 * Find the command.  The only legal command with no underlying
-	 * function is dot.
+	 * function is dot.  It's historic practice that <escape> doesn't
+	 * just erase the preceding number, it beeps the terminal as well.
+	 * It's a common problem, so just beep the terminal unless verbose
+	 * was set.
 	 */
-	kp = vp->kp = &vikeys[vp->key = key];
 	if (kp->func == NULL) {
 		if (key != '.') {
-			msgq(sp, M_ERR,
-			    "%s isn't a command", charname(sp, key));
+			msgq(sp, ikey.value == K_ESCAPE ? M_BERR : M_ERR,
+			    "%s isn't a vi command", KEY_NAME(sp, key));
 			return (1);
 		}
 
@@ -393,7 +475,7 @@ getcmd(sp, ep, dp, vp, ismotion, comcountp)
 
 		/* A repeatable command must have been executed. */
 		if (!F_ISSET(dp, VC_ISDOT)) {
-			msgq(sp, M_ERR, "No command to repeat.");
+			msgq(sp, M_ERR, "No command to repeat");
 			return (1);
 		}
 
@@ -421,6 +503,7 @@ getcmd(sp, ep, dp, vp, ismotion, comcountp)
 		return (0);
 	}
 
+	/* Set the flags based on the command flags. */
 	flags = kp->flags;
 
 	/* Check for illegal count. */
@@ -434,8 +517,10 @@ getcmd(sp, ep, dp, vp, ismotion, comcountp)
 			goto usage;
 
 		/* Required buffer. */
-		if (LF_ISSET(V_RBUF))
+		if (LF_ISSET(V_RBUF)) {
 			KEY(vp->buffer, 0);
+			F_SET(vp, VC_BUFFER);
+		}
 	}
 
 	/*
@@ -444,10 +529,22 @@ getcmd(sp, ep, dp, vp, ismotion, comcountp)
 	 * characters do just frost your shorts?
 	 */
 	if (vp->key == '[' || vp->key == ']' || vp->key == 'Z') {
+		/*
+		 * Historically, half entered [[, ]] or Z commands weren't
+		 * cancelled by <escape>, the terminal was beeped instead.
+		 * POSIX.2-1992 probably didn't notice, and requires that
+		 * they be cancelled instead of beeping.  Seems fine to me.
+		 */
 		KEY(key, TXT_MAPCOMMAND);
+
 		if (vp->key != key) {
-usage:			msgq(sp, M_ERR, "Usage: %s", ismotion != NULL ?
-			    vikeys[ismotion->key].usage : kp->usage);
+usage:			if (ismotion == NULL)
+				s = kp->usage;
+			else if (ismotion->key == '~' && O_ISSET(sp, O_TILDEOP))
+				s = tmotion.usage;
+			else
+				s = vikeys[ismotion->key].usage;
+			msgq(sp, M_ERR, "Usage: %s", s);
 			return (1);
 		}
 	}
@@ -467,8 +564,8 @@ usage:			msgq(sp, M_ERR, "Usage: %s", ismotion != NULL ?
 	 * imply the current line.
 	 */
 	if (ismotion != NULL && ismotion->key != key && !LF_ISSET(V_MOVE)) {
-		msgq(sp, M_ERR, "%s may not be used as a motion command.",
-		    charname(sp, key));
+		msgq(sp, M_ERR, "%s may not be used as a motion command",
+		    KEY_NAME(sp, key));
 		return (1);
 	}
 
@@ -477,6 +574,18 @@ usage:			msgq(sp, M_ERR, "Usage: %s", ismotion != NULL ?
 		KEY(vp->character, 0);
 
 	return (0);
+
+esc:	switch (cpart) {
+	case COMMANDMODE:
+		msgq(sp, M_BERR, "Already in command mode");
+		break;
+	case ISPARTIAL:
+		break;
+	case NOTPARTIAL:
+		(void)sp->s_bell(sp);
+		break;
+	}
+	return (1);
 }
 
 /*
@@ -485,10 +594,11 @@ usage:			msgq(sp, M_ERR, "Usage: %s", ismotion != NULL ?
  * Get resulting motion mark.
  */
 static int
-getmotion(sp, ep, dm, vp)
+getmotion(sp, ep, dm, vp, mappedp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *dm, *vp;
+	int *mappedp;
 {
 	MARK m;
 	VICMDARG motion;
@@ -496,11 +606,16 @@ getmotion(sp, ep, dm, vp)
 	u_long cnt;
 	int notused;
 
-	/* If '.' command, use the dot motion, else get the motion command. */
+	/*
+	 * If '.' command, use the dot motion, else get the motion command.
+	 * Clear any line motion flags, the subsequent motion isn't always
+	 * the same, i.e. "/aaa" may or may not be a line motion.
+	 */
 	if (F_ISSET(vp, VC_ISDOT)) {
 		motion = *dm;
 		F_SET(&motion, VC_ISDOT);
-	} else if (getcmd(sp, ep, NULL, &motion, vp, &notused))
+		F_CLR(&motion, VM_COMMASK);
+	} else if (getcmd(sp, ep, NULL, &motion, vp, &notused, mappedp))
 		return (1);
 
 	/*
@@ -530,7 +645,7 @@ getmotion(sp, ep, dm, vp)
 	 * the resulting mark.
  	 */
 	if (vp->key == motion.key) {
-		F_SET(vp, VM_LMODE);
+		F_SET(vp, VM_LDOUBLE | VM_LMODE);
 
 		/* Set the origin of the command. */
 		vp->m_start.lno = sp->lno;
@@ -563,8 +678,12 @@ getmotion(sp, ep, dm, vp)
 		 */
 		F_SET(&motion, vp->kp->flags & VC_COMMASK);
 
-		/* Copy the key flags into the local structure. */
-		F_SET(&motion, motion.kp->flags);
+		/*
+		 * Copy the key flags into the local structure, except for
+		 * the RCM flags, the motion command will set the RCM flags
+		 * in the vp structure as necessary.
+		 */
+		F_SET(&motion, motion.kp->flags & ~VM_RCM_MASK);
 
 		/*
 		 * Set the three cursor locations to the current cursor.  This
@@ -582,13 +701,13 @@ getmotion(sp, ep, dm, vp)
 			return (1);
 
 		/*
-		 * Copy line mode and cursor position information from the
-		 * motion command structure.  The commands can flag the
+		 * Copy cut buffer, line mode and cursor position information
+		 * from the motion command structure, i.e. anything that the
+		 * motion command can set for us.  The commands can flag the
 		 * movement as a line motion (see v_sentence) as well as set
 		 * the VM_RCM_* flags explicitly.
 		 */
-		F_SET(vp,
-		    F_ISSET(&motion, VM_LMODE | VM_NOMOTION | VM_RCM_MASK));
+		F_SET(vp, F_ISSET(&motion, VM_COMMASK | VM_RCM_MASK));
 
 		/*
 		 * Motion commands can reset all of the cursor information.
@@ -646,17 +765,19 @@ getkeyword(sp, ep, kp, flags)
 			GETLINE_ERR(sp, sp->lno);
 		return (1);
 	}
-	beg = sp->cno;
 
-	/* May not be a keyword at all. */
-	if (p == NULL || len == 0 ||
+	/*
+	 * !!!
+	 * Historically, tag commands skipped over any leading whitespace
+	 * characters.
+	 */
+	for (beg = sp->cno; beg < len && isspace(p[beg]); ++beg);
+
+	if (beg >= len ||
 	    LF_ISSET(V_KEYW) && !inword(p[beg]) ||
 	    LF_ISSET(V_KEYNUM) && !innum(p[beg]) &&
-	    p[beg] != '-' && p[beg] != '+') {
-noword:		msgq(sp, M_BERR, "Cursor not in a %s",
-		    LF_ISSET(V_KEYW) ? "word" : "number");
-		return (1);
-	}
+	    p[beg] != '-' && p[beg] != '+')
+		goto noword;
 
 	/*
 	 * !!!
@@ -664,8 +785,8 @@ noword:		msgq(sp, M_BERR, "Cursor not in a %s",
 	 * used for cursor-word searching and for tags.  Historical vi
 	 * only used the word in a tag search from the cursor to the end
 	 * of the word, i.e. if the cursor was on the 'b' in " abc ", the
-	 * tag was "bc".  For no particular reason, we make cursor word
-	 * searches follow the same rule.
+	 * tag was "bc".  For no particular reason, we make the cursor
+	 * word searches follow the same rule.
 	 */
 	if (beg != 0)
 		if (LF_ISSET(V_KEYW)) {
@@ -702,10 +823,10 @@ noword:		msgq(sp, M_BERR, "Cursor not in a %s",
 		}
 
 	if (LF_ISSET(V_KEYW)) {
-		for (end = sp->cno; ++end < len && inword(p[end]););
+		for (end = beg; ++end < len && inword(p[end]););
 		--end;
 	} else {
-		for (end = sp->cno; ++end < len;) {
+		for (end = beg; ++end < len;) {
 			if (p[end] == 'X' || p[end] == 'x') {
 				if (end != beg + 1 || p[beg] != '0')
 					break;
@@ -716,8 +837,11 @@ noword:		msgq(sp, M_BERR, "Cursor not in a %s",
 		}
 
 		/* Just a sign isn't a number. */
-		if (end == beg && (p[beg] == '+' || p[beg] == '-'))
-			goto noword;
+		if (end == beg && (p[beg] == '+' || p[beg] == '-')) {
+noword:			msgq(sp, M_BERR, "Cursor not in a %s",
+			    LF_ISSET(V_KEYW) ? "word" : "number");
+			return (1);
+		}
 		--end;
 	}
 
@@ -748,7 +872,7 @@ noword:		msgq(sp, M_BERR, "Cursor not in a %s",
  * getcount --
  *	Return the next count.
  */
-static inline int
+static __inline int
 getcount(sp, fkey, countp)
 	SCR *sp;
 	ARG_CHAR_T fkey;
@@ -784,19 +908,30 @@ getcount(sp, fkey, countp)
  * getkey --
  *	Return the next key.
  */
-static inline int
+static __inline int
 getkey(sp, ikeyp, map)
 	SCR *sp;
 	CH *ikeyp;
 	u_int map;
 {
 	switch (term_key(sp, ikeyp, map)) {
-	case INP_OK:
-		break;
 	case INP_EOF:
 	case INP_ERR:
 		F_SET(sp, S_EXIT_FORCE);
 		return (1);
+	case INP_INTR:
+		/*
+		 * !!!
+		 * Historically, vi beeped on command level interrupts.
+		 *
+		 * Historically, vi exited to ex mode if no file was named
+		 * on the command line, and two interrupts were generated
+		 * in a row.  (Just figured you might want to know that.)
+		 */
+		(void)sp->s_bell(sp);
+		return (1);
+	case INP_OK:
+		return (0);
 	}
-	return (ikeyp->value == K_ESCAPE);
+	/* NOTREACHED */
 }

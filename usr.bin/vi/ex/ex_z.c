@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_z.c	8.5 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_z.c	8.7 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,6 +65,7 @@ ex_z(sp, ep, cmdp)
 	EXF *ep;
 	EXCMDARG *cmdp;
 {
+	MARK abs;
 	recno_t cnt, equals, lno;
 	int eofcheck;
 
@@ -118,6 +119,14 @@ ex_z(sp, ep, cmdp)
 		cnt = (cnt - 1) / 2;
 		cmdp->addr1.lno = lno > cnt ? lno - cnt : 1;
 		cmdp->addr2.lno = lno + cnt;
+
+		/*
+		 * !!!
+		 * Historically, z. set the absolute cursor mark.
+		 */
+		abs.lno = sp->lno;
+		abs.cno = sp->cno;
+		(void)mark_set(sp, ep, ABSMARK1, &abs, 1);
 		break;
 	case E_F_EQUAL:		/* Center with hyphens. */
 		/*

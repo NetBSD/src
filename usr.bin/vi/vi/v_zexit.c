@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_zexit.c	8.7 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)v_zexit.c	8.12 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,25 +64,18 @@ v_zexit(sp, ep, vp)
 	EXF *ep;
 	VICMDARG *vp;
 {
+	/* Write back any modifications. */
 	if (F_ISSET(ep, F_MODIFIED) &&
 	    file_write(sp, ep, NULL, NULL, NULL, FS_ALL))
 		return (1);
 
-	/*
-	 * !!!
-	 * Historic practice: quit! or two quit's done in succession
-	 * (where ZZ counts as a quit) didn't check for other files.
-	 *
-	 * Check for related screens; quit if they exist, the user will
-	 * get a message on the last screen.
-	 */
-	if (sp->ccnt != sp->q_ccnt + 1 &&
-	    ep->refcnt <= 1 && file_unedited(sp) != NULL) {
-		sp->q_ccnt = sp->ccnt;
-		msgq(sp, M_ERR,
-		    "More files to edit; use \":n\" to go to the next file");
+	/* Check to make sure it's not a temporary file. */
+	if (file_m3(sp, ep, 0))
 		return (1);
-	}
+
+	/* Check for more files to edit. */
+	if (ex_ncheck(sp, 0))
+		return (1);
 
 	F_SET(sp, S_EXIT);
 	return (0);

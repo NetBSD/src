@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_shell.c	8.21 (Berkeley) 3/23/94";
+static const char sccsid[] = "@(#)ex_shell.c	8.25 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,25 +93,29 @@ ex_exec_proc(sp, cmd, p1, p2)
 	/* Save ex/vi terminal settings, and restore the original ones. */
 	teardown = !ex_sleave(sp);
 
+	/*
+	 * Flush waiting messages (autowrite, for example) so the output
+	 * matches historic practice.
+	 */
+	(void)sex_refresh(sp, sp->ep);
+
 	/* Put out various messages. */
 	if (p1 != NULL)
 		(void)write(STDOUT_FILENO, p1, strlen(p1));
 	if (p2 != NULL)
 		(void)write(STDOUT_FILENO, p2, strlen(p2));
 
-
+	SIGBLOCK(sp->gp);
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
+		SIGUNBLOCK(sp->gp);
+
 		msgq(sp, M_SYSERR, "vfork");
 		rval = 1;
-		goto err;
+		break;
 	case 0:				/* Utility. */
-		/*
-		 * The utility has default signal behavior.  Don't bother
-		 * using sigaction(2) 'cause we want the default behavior.
-		 */
-		(void)signal(SIGINT, SIG_DFL);
-		(void)signal(SIGQUIT, SIG_DFL);
+		/* The utility has default signal behavior. */
+		sig_end();
 
 		if ((name = strrchr(O_STR(sp, O_SHELL), '/')) == NULL)
 			name = O_STR(sp, O_SHELL);
@@ -122,12 +126,15 @@ ex_exec_proc(sp, cmd, p1, p2)
 		    O_STR(sp, O_SHELL), strerror(errno));
 		_exit(127);
 		/* NOTREACHED */
+	default:			/* Parent. */
+		SIGUNBLOCK(sp->gp);
+
+		rval = proc_wait(sp, (long)pid, cmd, 0);
+		break;
 	}
 
-	rval = proc_wait(sp, (long)pid, cmd, 0);
-
 	/* Restore ex/vi terminal settings. */
-err:	if (teardown)
+	if (teardown)
 		ex_rleave(sp);
 
 	/*
