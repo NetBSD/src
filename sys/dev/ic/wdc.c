@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.107 2002/01/07 22:11:17 dbj Exp $ */
+/*	$NetBSD: wdc.c,v 1.108 2002/01/13 17:24:28 christos Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.107 2002/01/07 22:11:17 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.108 2002/01/13 17:24:28 christos Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1488,6 +1488,49 @@ wdccommand(chp, drive, command, cylin, head, sector, count, precomp)
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi, cylin >> 8);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sector, sector);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt, count);
+
+	/* Send command. */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_command, command);
+	return;
+}
+
+/*
+ * Send a 48-bit addressing command. The drive should be ready.
+ * Assumes interrupts are blocked.
+ */
+void
+wdccommandext(chp, drive, command, blkno, count)
+	struct channel_softc *chp;
+	u_int8_t drive;
+	u_int8_t command;
+	u_int64_t blkno;
+	u_int16_t count;
+{
+	WDCDEBUG_PRINT(("wdccommandext %s:%d:%d: command=0x%x blkno=%d "
+	    "count=%d\n", chp->wdc->sc_dev.dv_xname,
+	    chp->channel, drive, command, (u_int32_t) blkno, count),
+	    DEBUG_FUNCS);
+
+	if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+		chp->wdc->select(chp,drive);
+
+	/* Select drive, head, and addressing mode. */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+	    (drive << 4) | WDSD_LBA);
+
+	/* previous */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_features, 0);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt, count >> 8);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_lba_hi, blkno >> 40);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_lba_mi, blkno >> 32);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_lba_lo, blkno >> 24);
+
+	/* current */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_features, 0);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt, count);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_lba_hi, blkno >> 16);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_lba_mi, blkno >> 8);
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_lba_lo, blkno);
 
 	/* Send command. */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_command, command);
