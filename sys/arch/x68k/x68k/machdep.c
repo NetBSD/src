@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1998/11/29 16:20:13 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 1999/01/09 22:10:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -515,10 +515,10 @@ again:
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
 	/*
