@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)df.1	6.9 (Berkeley) 6/17/91
-.\"	$Id: df.1,v 1.4 1993/08/01 07:48:50 mycroft Exp $
+.\"	from: @(#)df.1	6.10 (Berkeley) 3/1/92
+.\"	$Id: df.1,v 1.5 1993/08/06 17:05:09 mycroft Exp $
 .\"
-.Dd June 17, 1991
+.Dd March 1, 1992
 .Dt DF 1
 .Os BSD 4
 .Sh NAME
@@ -70,6 +70,16 @@ When this option is specified,
 .Nm df
 will not request new statistics from the filesystems, but will respond
 with the possibly stale statistics that were previously obtained.
+.El
+.Sh ENVIRONMENTAL VARIABLES
+.Bl -tag -width BLOCKSIZE
+.It Ev BLOCKSIZE
+If the environmental variable
+.Ev BLOCKSIZE
+is set, and the
+.Fl k
+option is not specified, the block counts will be displayed in units of that
+size block.
 .El
 .Sh BUGS
 The
