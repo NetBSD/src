@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.192 2004/03/14 01:08:48 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.193 2004/03/26 17:34:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.192 2004/03/14 01:08:48 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.193 2004/03/26 17:34:18 drochner Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -580,11 +580,7 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 	fp = (struct frame *)l->l_md.md_regs;
 	fp->f_regs[_R_CAUSE] = cause;
 	fp->f_regs[_R_BADVADDR] = vaddr;
-#ifdef __HAVE_SIGINFO
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-#else
-	(*p->p_emul->e_trapsignal)(l, ksi.ksi_signo, ksi.ksi_trap);
-#endif
 	if ((type & T_USER) == 0)
 		panic("trapsignal");
 	userret(l);
