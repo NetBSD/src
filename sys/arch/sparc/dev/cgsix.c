@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgsix.c,v 1.2 93/10/18 00:01:51 torek Exp 
- * $Id: cgsix.c,v 1.1 1993/11/11 03:36:52 deraadt Exp $
+ * $Id: cgsix.c,v 1.2 1993/11/30 20:55:12 deraadt Exp $
  */
 
 /*
@@ -56,7 +56,7 @@
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/fbio.h>
+#include <machine/fbio.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
