@@ -1,4 +1,4 @@
-.\" $NetBSD: greconfig.8,v 1.6 1999/11/02 10:31:31 lukem Exp $
+.\" $NetBSD: greconfig.8,v 1.7 2000/05/27 10:42:25 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,8 @@ The options have the following meanings:
 .Bl -tag -width flag
 .It Fl i Ar unit
 Denotes the interface that is to be set/displayed. Unit is in the form
-``greN'' where N is an integer from zero to the maximum numbers of
+.Dq greN
+where N is an integer from zero to the maximum numbers of
 units. This option is always required.
 .It Fl d Ar dst
 Sets the IP address of the remote tunnel end. This may be the same as the
@@ -83,7 +84,7 @@ Sets the way how packets are encapsulated. Currently supported values are:
 .El
 .It Fl v
 Give a little more verbose output when running 
-.Nm .
+.Nm Ns .
 .El
 .Pp
 Note that the values for 
@@ -96,7 +97,10 @@ For tunnels that run IP as encapsulated protocol, the tunnel endpoints
 can be set with the normal
 .Xr ifconfig .
 In this case, the encapsulation protocol can be chosen by giving
-``link0'' for IPIP encapsulation and ``-link0'' GRE encapsulation
+.Dq link0
+for IPIP encapsulation and 
+.Dq -link0
+GRE encapsulation
 as arguments to
 .Xr ifconfig .
 .Sh SEE ALSO
