@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.16.2.2 2001/09/18 19:13:49 fvdl Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.16.2.3 2001/09/21 12:08:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,8 +135,8 @@ static void seq_wakeup(int *);
 
 struct midi_softc;
 int midiseq_out __P((struct midi_dev *, u_char *, u_int, int));
-struct midi_dev *midiseq_open __P((int, int));
-void midiseq_close __P((struct midi_dev *));
+struct midi_dev *midiseq_open __P((int, int, struct proc *));
+void midiseq_close __P((struct midi_dev *, int, struct proc *));
 void midiseq_reset __P((struct midi_dev *));
 int midiseq_noteon __P((struct midi_dev *, int, int, int));
 int midiseq_noteoff __P((struct midi_dev *, int, int, int));
@@ -198,7 +198,7 @@ sequenceropen(devvp, flags, ifmt, p)
 	sc->devs = malloc(nmidi * sizeof(struct midi_dev *),
 			  M_DEVBUF, M_WAITOK);
 	for (unit = 0; unit < nmidi; unit++) {
-		md = midiseq_open(unit, flags);
+		md = midiseq_open(unit, flags, p);
 		if (md) {
 			sc->devs[sc->nmidi++] = md;
 			md->seq = sc;
@@ -330,7 +330,7 @@ sequencerclose(devvp, flags, ifmt, p)
 	splx(s);
 
 	for (n = 0; n < sc->nmidi; n++)
-		midiseq_close(sc->devs[n]);
+		midiseq_close(sc->devs[n], flags, p);
 	free(sc->devs, M_DEVBUF);
 	sc->isopen = 0;
 	return (0);
@@ -1109,11 +1109,11 @@ midiseq_major(void)
 }
 
 struct midi_dev *
-midiseq_open(unit, flags)
+midiseq_open(unit, flags, p)
 	int unit;
 	int flags;
+	struct proc *p;
 {
-	extern struct cfdriver midi_cd;
 	int error, maj;
 	struct vnode *vp;
 	struct midi_dev *md;
@@ -1123,15 +1123,20 @@ midiseq_open(unit, flags)
 	/* XXX DEVVP */
 
 	maj = midiseq_major();
+	if (maj == -1)
+		return NULL;
 	if ((error = cdevvp(makedev(maj, unit), &vp)) != 0)
-		return (0);
+		return NULL;
 
 	DPRINTFN(2, ("midiseq_open: %d %d\n", unit, flags));
-	error = midiopen(vp, flags, 0, 0);
-	vrele(vp);
-	if (error)
-		return (0);
-	sc = midi_cd.cd_devs[unit];
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_OPEN(vp, flags, p->p_ucred, p, NULL);
+	if (error != 0) {
+		vput(vp);
+		return NULL;
+	}
+	VOP_UNLOCK(vp, 0);
+	sc = vp->v_devcookie;
 	sc->seqopen = 1;
 	md = malloc(sizeof *md, M_DEVBUF, M_WAITOK);
 	sc->seq_md = md;
@@ -1143,27 +1148,23 @@ midiseq_open(unit, flags)
 	md->subtype = 0;
 	md->nr_voices = 128;	/* XXX */
 	md->instr_bank_size = 128; /* XXX */
+	md->devvp = vp;
 	if (mi.props & MIDI_PROP_CAN_INPUT)
 		md->capabilities |= SYNTH_CAP_INPUT;
 	return (md);
 }
 
 void
-midiseq_close(md)
+midiseq_close(md, flag, p)
 	struct midi_dev *md;
+	int flag;
+	struct proc *p;
 {
 	struct vnode *vp;
-	int error, maj;
 
-	/* XXX DEVVP */
-
-	maj = midiseq_major();
-	if ((error = cdevvp(makedev(maj, md->unit), &vp)) != 0)
-		return;
-
-	DPRINTFN(2, ("midiseq_close: %d\n", md->unit));
-	midiclose(vp, 0, 0, 0);
-	vrele(vp);
+	vn_lock(md->devvp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(md->devvp, flag, p->p_ucred, p);
+	vput(vp);
 	free(md, M_DEVBUF);
 }
 
@@ -1382,36 +1383,23 @@ midiseq_putc(md, data)
  */
 
 int
-midi_unit_count()
-{
-	return (0);
-}
-
-int
-midiopen(devvp, flags, ifmt, p)
-	struct vnode *devvp;
-	int flags, ifmt;
-	struct proc *p;
+midiopen(struct vnode *devvp, int flags, int ifmt, struct proc *p)
 {
 	return (ENXIO);
 }
 
-struct cfdriver midi_cd;
+
+int
+midi_unit_count()
+{
+	return (0);
+}
 
 void
 midi_getinfo(dev, mi)
 	dev_t dev;
 	struct midi_info *mi;
 {
-}
-
-int
-midiclose(devvp, flags, ifmt, p)
-	struct vnode *devvp;
-	int flags, ifmt;
-	struct proc *p;
-{
-	return (ENXIO);
 }
 
 int
