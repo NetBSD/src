@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.18 2000/06/05 21:47:25 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.19 2000/06/07 14:40:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -87,6 +87,7 @@ struct scsipi_adapter siop_adapter = {
 	siop_scsicmd,
 	siop_minphys,
 	siop_ioctl,
+	NULL,
 	NULL,
 };
 
