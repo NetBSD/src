@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.4 1998/10/30 12:16:59 ws Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.5 1999/03/08 00:09:25 fvdl Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -114,8 +114,7 @@ ENTRY(biosread)
 
 /*
 #
-# get_diskinfo():  return a word that represents the
-#	max number of sectors and  heads and drives for this device
+# get_diskinfo():  takes a pointer to a biosdisk_ll struct, and fills it in.
 #
 */
 
@@ -129,7 +128,9 @@ ENTRY(get_diskinfo)
 	push	%esi
 	push	%edi
 
-	movb	8(%ebp), %dl		# diskinfo(drive #)
+	movl	8(%ebp), %esi		# diskinfo(drive #)
+	movb	(%esi), %dl
+	pushl	%esi
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
@@ -156,12 +157,20 @@ ok:
 	data32
 	call	_C_LABEL(real_to_prot)	# back to protected mode
 
-	xorl	%eax, %eax
+	popl	%esi
 
-	/*form a longword representing all this gunk*/
-	movb	%dh, %ah		# max head
-	andb	$0x3f, %cl		# mask of cylinder gunk
-	movb	%cl, %al		# max sector (and # sectors)
+	movzbl	%dh, %eax
+	movl	%eax, 8(%esi)		# heads
+	movb	%cl, %al
+	andb	$0x3f, %al
+	movzbl	%al, %ebx
+	movl	%ebx, 4(%esi)		# sectors per track
+	xorl	%eax, %eax
+	movb	%ch, %al
+	andl	$0x0c0, %ecx
+	shll	$2, %ecx
+	orl	%ecx, %eax
+	movl	%eax, 12(%esi)		# cylinders
 
 	pop	%edi
 	pop	%esi
@@ -217,7 +226,7 @@ ENTRY(int13_extension)
 /*
 # BIOS call "INT 0x13 Function 0x42" to read sectors from disk into memory
 #	Call with	%ah = 0x42
-#			%ds:%di = parameter block
+#			%ds:%si = parameter block
 #			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
 #	Return:		
 #			%al = 0x0 on success; err code on failure
@@ -237,6 +246,39 @@ ENTRY(biosextread)
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
 	movb	$0x42, %ah	# subfunction
+	int	$0x13
+	setc	%bl
+
+	data32
+	call	_C_LABEL(real_to_prot) # back to protected mode
+
+	xorl	%eax, %eax
+	movb	%bl, %al	# return value in %ax
+
+	pop	%edi
+	pop	%esi
+	pop	%edx
+	pop	%ecx
+	popl	%ebx
+	popl	%ebp
+	ret
+
+ENTRY(int13_getextinfo)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx
+	push	%ecx
+	push	%edx
+	push	%esi
+	push	%edi
+
+	movb	8(%ebp), %dl	# device
+	movl	12(%ebp), %esi	# parameter block
+	movl	$0x01a, (%esi)	# length (v 1.x)
+
+	call	_C_LABEL(prot_to_real)	# enter real mode
+
+	movb	$0x48, %ah	# subfunction
 	int	$0x13
 	setc	%bl
 
