@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.135 2001/06/02 16:17:09 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.136 2001/08/06 10:25:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -531,7 +531,7 @@ ip_input(struct mbuf *m)
 	 * not the decapsulated packet.
 	 */
 #ifdef IPSEC
-	if (!ipsec_gethist(m, NULL))
+	if (!ipsec_getnhist(m))
 #else
 	if (1)
 #endif

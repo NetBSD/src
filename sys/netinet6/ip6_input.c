@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.41 2001/04/13 23:30:26 thorpej Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.42 2001/08/06 10:25:01 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ ip6_input(m)
 	 * not the decapsulated packet.
 	 */
 #ifdef IPSEC
-	if (!ipsec_gethist(m, NULL))
+	if (!ipsec_getnhist(m))
 #else
 	if (1)
 #endif

@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.h,v 1.21 2001/08/05 22:20:44 itojun Exp $	*/
-/*	$KAME: ipsec.h,v 1.41 2001/01/23 04:42:30 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.22 2001/08/06 10:25:01 itojun Exp $	*/
+/*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -83,6 +83,18 @@ struct secpolicy {
 	struct ipsecrequest *req;
 				/* pointer to the ipsec request tree, */
 				/* if policy == IPSEC else this value == NULL.*/
+
+	/*
+	 * lifetime handler.
+	 * the policy can be used without limitiation if both lifetime and
+	 * validtime are zero.
+	 * "lifetime" is passed by sadb_lifetime.sadb_lifetime_addtime.
+	 * "validtime" is passed by sadb_lifetime.sadb_lifetime_usetime.
+	 */
+	long created;		/* time created the policy */
+	long lastused;		/* updated every when kernel sends a packet */
+	long lifetime;		/* duration of the lifetime of this policy */
+	long validtime;		/* duration this policy is valid without use */
 };
 
 /* Request for IPsec */
@@ -103,6 +115,14 @@ struct inpcbpolicy {
 	struct secpolicy *sp_in;
 	struct secpolicy *sp_out;
 	int priv;			/* privileged socket ? */
+
+	/* cached policy */
+	/* XXX 3 == IPSEC_DIR_MAX */
+	struct secpolicy *cache[3];
+	struct secpolicyindex cacheidx[3];
+	int cachegen[3]; 	/* cache generation #, the time we filled it */
+	int cacheflags;	
+#define IPSEC_PCBSP_CONNECTED	1
 };
 
 /* SP acquiring list table. */
@@ -115,7 +135,15 @@ struct secspacq {
 	int count;		/* for lifetime */
 	/* XXX: here is mbuf place holder to be sent ? */
 };
-#endif /*_KERNEL*/
+
+struct ipsecaux {
+	struct socket *so;
+	int hdrs;	/* # of ipsec headers */
+
+	struct secpolicy *sp;
+	struct ipsecrequest *req;
+};
+#endif /* _KERNEL */
 
 /* according to IANA assignment, port 0x0000 and proto 0xff are reserved. */
 #define IPSEC_PORT_ANY		0
@@ -198,6 +226,9 @@ struct ipsecstat {
 	u_quad_t out_esphist[256];
 	u_quad_t out_ahhist[256];
 	u_quad_t out_comphist[256];
+
+	u_quad_t spdcachelookup;
+	u_quad_t spdcachemiss;
 };
 
 /*
@@ -293,6 +324,10 @@ extern int ip6_ipsec_ecn;
 
 #define ipseclog(x)	do { if (ipsec_debug) log x; } while (0)
 
+extern int ipsec_pcbconn __P((struct inpcbpolicy *));
+extern int ipsec_pcbdisconn __P((struct inpcbpolicy *));
+extern int ipsec_invalpcbcacheall __P((void));
+
 extern struct secpolicy *ipsec4_getpolicybysock
 	__P((struct mbuf *, u_int, struct socket *, int *));
 extern struct secpolicy *ipsec4_getpolicybyaddr
@@ -375,6 +410,7 @@ extern void ipsec_delaux __P((struct mbuf *));
 extern int ipsec_setsocket __P((struct mbuf *, struct socket *));
 extern struct socket *ipsec_getsocket __P((struct mbuf *));
 extern int ipsec_addhist __P((struct mbuf *, int, u_int32_t)); 
+extern int ipsec_getnhist __P((struct mbuf *));
 extern struct ipsec_history *ipsec_gethist __P((struct mbuf *, int *));
 extern void ipsec_clearhist __P((struct mbuf *));
 
