@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2003/10/27 17:19:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2003/10/28 01:30:41 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -38,7 +38,7 @@ CLEANFILES+=	${LIB2FUNCS} ${LIB2DIVMOD} cs-tconfig.h tconfig.h
 .if ${MACHINE_ARCH} == "m68000"
 CPICFLAGS:=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
-_TRADIONAL_CPP=
+_TRADITIONAL_CPP=
 fpgnulib.c: ${DIST}/gcc/config/m68k/fpgnulib.c
 	cp ${DIST}/gcc/config/m68k/fpgnulib.c fpgnulib.c
 xfgnulib.c: ${DIST}/gcc/config/m68k/fpgnulib.c
