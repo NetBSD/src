@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.5 1998/05/29 16:21:28 msaitoh Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.6 1998/07/01 07:13:41 marc Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -161,12 +161,20 @@ pcmcia_scan_cis(dev, fct, arg)
 
 			/* two special-case tuples */
 
-			if (tuple.code == 0) {
+			if (tuple.code == PCMCIA_CISTPL_NULL) {
 				DPRINTF(("CISTPL_NONE\n 00\n"));
 				tuple.ptr++;
 				continue;
-			} else if (tuple.code == 0xff) {
+			} else if (tuple.code == PCMCIA_CISTPL_END) {
 				DPRINTF(("CISTPL_END\n ff\n"));
+				/* Call the function for the END tuple, since
+				   the CIS semantics depend on it */
+				if ((*fct) (&tuple, arg)) {
+					pcmcia_chip_mem_unmap(pct, pch,
+							      window);
+					ret = 1;
+					goto done;
+				}
 				tuple.ptr++;
 				break;
 			}
@@ -598,13 +606,18 @@ pcmcia_parse_cis_tuple(tuple, arg)
 	struct cis_state *state = arg;
 
 	switch (tuple->code) {
-	case PCMCIA_CISTPL_LONGLINK_MFC:
-		/*
-		 * this tuple's structure was dealt with in scan_cis.  deal
-		 * with the semantics here: remove any functions which have
-		 * already been made, clear state->pf, reset the counter
+	case PCMCIA_CISTPL_END:
+		/* if we've seen a LONGLINK_MFC, and this is the first
+		 * END after it, reset the function list.  
+		 *
+		 * XXX This might also be the right place to start a
+		 * new function, but that assumes that a function
+		 * definition never crosses any longlink, and I'm not
+		 * sure about that.  This is probably safe for MFC
+		 * cards, but what we have now isn't broken, so I'd
+		 * rather not change it.
 		 */
-		{
+		if (state->gotmfc == 1) {
 			struct pcmcia_function *pf, *pfnext;
 
 			for (pf = state->card->pf_head.sqh_first; pf != NULL;
@@ -616,9 +629,18 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			SIMPLEQ_INIT(&state->card->pf_head);
 
 			state->count = 0;
-			state->gotmfc = 1;
+			state->gotmfc = 2;
 			state->pf = NULL;
 		}
+		break;
+	case PCMCIA_CISTPL_LONGLINK_MFC:
+		/*
+		 * this tuple's structure was dealt with in scan_cis.  here,
+		 * record the fact that the MFC tuple was seen, so that
+		 * functions declared before the MFC link can be cleaned
+		 * up.
+		 */
+		state->gotmfc = 1;
 		break;
 #ifdef PCMCIACISDEBUG
 	case PCMCIA_CISTPL_DEVICE:
@@ -738,7 +760,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			    tuple->length));
 			break;
 		}
-		if ((state->pf == NULL) || state->gotmfc) {
+		if ((state->pf == NULL) || (state->gotmfc == 2)) {
 			state->pf = malloc(sizeof(*state->pf), M_DEVBUF,
 			    M_NOWAIT);
 			bzero(state->pf, sizeof(*state->pf));
@@ -779,6 +801,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			if (state->pf == NULL) {
 				state->pf = malloc(sizeof(*state->pf),
 				    M_DEVBUF, M_NOWAIT);
+				bzero(state->pf, sizeof(*state->pf));
 				state->pf->number = state->count++;
 				state->pf->last_config_index = -1;
 				SIMPLEQ_INIT(&state->pf->cfe_head);
