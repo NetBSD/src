@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.8 2003/09/26 17:44:51 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.9 2003/10/16 22:26:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -165,6 +165,11 @@ void		 rl_callback_handler_install(const char *, VFunction *);
 void		 rl_callback_handler_remove(void);
 void		 rl_redisplay(void);
 int		 rl_get_previous_history(int, int);
+void		 rl_prep_terminal(int);
+void		 rl_deprep_terminal(void);
+int		 rl_read_init_file(const char *);
+int		 rl_parse_and_bind(const char *);
+void		 rl_stuff_char(int);
 
 /*
  * The following are not implemented
