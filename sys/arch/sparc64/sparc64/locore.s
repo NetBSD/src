@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.173 2003/03/24 13:27:44 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.174 2003/04/04 21:35:39 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -8600,6 +8600,7 @@ ENTRY(pmap_zero_page)
 	flush	%o3
 	retl
 	 wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Make C code happy
+
 /*
  * pmap_copy_page(paddr_t src, paddr_t dst)
  *
@@ -8607,19 +8608,19 @@ ENTRY(pmap_zero_page)
  * We need to use a global reg for ldxa/stxa
  * so the top 32-bits cannot be lost if we take
  * a trap and need to save our stack frame to a
- * 32-bit stack.  We will unroll the loop by 8 to
+ * 32-bit stack.  We will unroll the loop by 4 to
  * improve performance.
  *
- * We also need to blast the D$ and flush like
- * pmap_zero_page.
+ * XXX We also need to blast the D$ and flush like
+ * XXX pmap_zero_page.
  */
 ENTRY(pmap_copy_page)
+#ifndef _LP64
 	!!
 	!! If we have 64-bit physical addresses (and we do now)
 	!! we need to move the pointer from %o0:%o1 to %o0 and
 	!! %o2:%o3 to %o1
 	!!
-#ifndef _LP64
 #if PADDRT == 8
 	COMBINE(%o0, %o1, %o0)
 	COMBINE(%o2, %o3, %o1)
@@ -8645,12 +8646,6 @@ ENTRY(pmap_copy_page)
 3:
 #endif
 #if 1
-	/*
-	 * XXXX
-	 * We will make use of all global regs.  This may cause problems
-	 * if we ever decide to store static data in a global reg, like
-	 * a pointer to curcpu or something.
-	 */
 	set	NBPG, %o2
 	wr	%g0, ASI_PHYS_CACHED, %asi
 1:
@@ -8666,9 +8661,8 @@ ENTRY(pmap_copy_page)
 	stxa	%o5, [%o1 + 0x18] %asi
 	bg,pt	%icc, 1b		! We don't care about pages >4GB
 	 inc	0x20, %o1
-	wr	%g0, ASI_PRIMARY_NOFAULT, %asi
 	retl
-	 clr	%g4			! Restore g4
+	 wr	%g0, ASI_PRIMARY_NOFAULT, %asi
 #else
 	set	NBPG, %o3
 	add	%o3, %o0, %o3
