@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrs.h,v 1.2 2000/02/23 15:29:19 itojun Exp $	*/
+/*	$NetBSD: ifaddrs.h,v 1.3 2000/03/02 18:29:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -53,4 +53,4 @@ extern int getifaddrs __P((struct ifaddrs **));
 extern void freeifaddrs __P((struct ifaddrs *));
 __END_DECLS
 
-#endif
+#endif /* !_IFADDRS_H_ */
