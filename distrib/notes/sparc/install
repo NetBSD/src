@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.24 2000/08/22 13:44:45 abs Exp $	
+.\"	$NetBSD: install,v 1.25 2000/08/24 16:41:04 abs Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,9 +99,21 @@ below.
 .
 .Ss2 Installing NetBSD by using the bootable floppy.
 .
-The NetBSD install floppy works only on the sun4c and sun4m class
-machines.  From the OpenBOOT prompt, the following should boot the
-floppy.
+The NetBSD install floppy works only on the sun4c and sun4m class.
+Making the install floppy is simple:
+.Pp
+On NetBSD as well as SunOS you use the following two commands:
+.Dl # Ic "fdformat"
+.Dl # Ic "dd if=boot-142.fs of=/dev/rfd0a bs=36k"
+(Be sure that the `fdformat' command completes successfully before proceeding
+to the `dd' step; on NetBSD, a string of all `V's, and on SunOS, a string of
+all `.'s.).
+.Pp
+On a Windows system you can use the
+.Nm rawrite.exe
+command provided with the NetBSD/i386 install tools.
+.Pp
+From the OpenBOOT prompt, the following should boot the floppy.
 .Dl ok Ic "boot fd(,,1)                 # for version 1 OpenBOOT ROMs
 .Dl ok Ic "boot /fd                     # either of these for version
 .Dl ok Ic "boot floppy                  # 2 OpenBOOT ROMs
