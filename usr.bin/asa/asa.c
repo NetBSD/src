@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Winning Strategies, Inc.
+ * Copyright (c) 1993,94 Winning Strategies, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Header: /cvsroot/src/usr.bin/asa/asa.c,v 1.5 1994/01/29 01:43:04 jtc Exp $
+ *	$Header: /cvsroot/src/usr.bin/asa/asa.c,v 1.6 1994/11/14 21:51:30 jtc Exp $
  */
 
 #ifndef lint
-static char *rcsid = "$Id: asa.c,v 1.5 1994/01/29 01:43:04 jtc Exp $";
+static char *rcsid = "$Id: asa.c,v 1.6 1994/11/14 21:51:30 jtc Exp $";
 #endif
 
 #include <stdio.h>
@@ -47,6 +47,7 @@ main (argc, argv)
 {
 	FILE *fp;
 
+	/* skip progname */
 	argv++;
 
         fp = stdin;
@@ -60,7 +61,7 @@ main (argc, argv)
                 asa (fp);
                 if (fp != stdin)
                         (void)fclose(fp);
-        } while (*++argv);
+        } while (*argv++);
 
 	exit (0);
 }
