@@ -1,7 +1,7 @@
-/*	$OpenBSD: uuencode.c,v 1.12 2001/03/01 02:27:18 deraadt Exp $	*/
+/* $OpenBSD: sftp-glob.h,v 1.1 2001/03/13 22:42:54 djm Exp $ */
 
 /*
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,54 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-#include "xmalloc.h"
-#include "uuencode.h"
-
-#include <resolv.h>
-
-RCSID("$OpenBSD: uuencode.c,v 1.12 2001/03/01 02:27:18 deraadt Exp $");
+/* Remote sftp filename globbing */
 
 int
-uuencode(u_char *src, u_int srclength,
-    char *target, size_t targsize)
-{
-	return __b64_ntop(src, srclength, target, targsize);
-}
+remote_glob(int fd_in, int fd_out, const char *pattern, int flags, 
+    const int (*errfunc)(const char *, int), glob_t *pglob);
 
-int
-uudecode(const char *src, u_char *target, size_t targsize)
-{
-	int len;
-	char *encoded, *p;
-
-	/* copy the 'readonly' source */
-	encoded = xstrdup(src);
-	/* skip whitespace and data */
-	for (p = encoded; *p == ' ' || *p == '\t'; p++)
-		;
-	for (; *p != '\0' && *p != ' ' && *p != '\t'; p++)
-		;
-	/* and remote trailing whitespace because __b64_pton needs this */
-	*p = '\0';
-	len = __b64_pton(encoded, target, targsize);
-	xfree(encoded);
-	return len;
-}
-
-void
-dump_base64(FILE *fp, u_char *data, int len)
-{
-	u_char *buf = xmalloc(2*len);
-	int i, n;
-
-	n = uuencode(data, len, buf, 2*len);
-	for (i = 0; i < n; i++) {
-		fprintf(fp, "%c", buf[i]);
-		if (i % 70 == 69)
-			fprintf(fp, "\n");
-	}
-	if (i % 70 != 69)
-		fprintf(fp, "\n");
-	xfree(buf);
-}
