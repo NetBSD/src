@@ -19,13 +19,13 @@
  *		-d	use compiled-in rootdev
  *		-r	specify root device
  *
- *	$NetBSD: loadbsd.c,v 1.1.8.1.2.1 1999/06/21 01:04:14 thorpej Exp $
+ *	$NetBSD: loadbsd.c,v 1.1.8.1.2.2 1999/08/02 21:49:44 thorpej Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.1.8.1.2.1 1999/06/21 01:04:14 thorpej Exp $");
-#define VERSION	"$Revision: 1.1.8.1.2.1 $ $Date: 1999/06/21 01:04:14 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.1.8.1.2.2 1999/08/02 21:49:44 thorpej Exp $");
+#define VERSION	"$Revision: 1.1.8.1.2.2 $ $Date: 1999/08/02 21:49:44 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -69,7 +69,7 @@ const struct hatbl {
 
 /*
  * parse interface name
- * returns the next position
+ * return the next position
  */
 static const char *
 lookupif(name, pif, punit)
@@ -150,7 +150,7 @@ get_current_scsi_interface(pif, punit)
  *		/spc@0/sd@1,2:e
  *
  *	partial form:
- *		/mha@0/sd@1	= /mha@0/sd@1,0,:a
+ *		/mha@0/sd@1	= /mha@0/sd@1,0:a
  *		sd@1:e		= /current_device/sd@1,0e
  *		sd@1,2:e	= /current_device/sd@1,2:e
  */
@@ -556,7 +556,7 @@ main(argc, argv)
 	tramp->xk.boothowto = boothowto;
 
 	/*
-	 * we never returns, and make sure the disk cache
+	 * we never return, and make sure the disk cache
 	 * be flushed (if write-back cache is enabled)
 	 */
 	if (opt_v)

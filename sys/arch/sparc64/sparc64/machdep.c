@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36.2.1.2.2 1999/07/01 23:23:20 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.36.2.1.2.3 1999/08/02 21:43:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1093,7 +1093,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	while (buflen > 0 && i < map->_dm_segcnt) {
 		paddr_t pa;
 
-		pa = pmap_extract(pmap_kernel(), vaddr);
+		(void) pmap_extract(pmap_kernel(), vaddr, &pa);
 		buflen -= NBPG;
 		vaddr += NBPG;
 		if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
