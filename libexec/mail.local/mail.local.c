@@ -1,8 +1,8 @@
-/*	$NetBSD: mail.local.c,v 1.10 1997/04/21 11:29:28 mrg Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.11 1997/10/07 13:07:45 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,31 +33,34 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$NetBSD: mail.local.c,v 1.10 1997/04/21 11:29:28 mrg Exp $";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
+#if 0
+static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
+#else
+__RCSID("$NetBSD: mail.local.c,v 1.11 1997/10/07 13:07:45 mrg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+
 #include <netinet/in.h>
-#include <syslog.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <pwd.h>
-#include <time.h>
-#include <unistd.h>
+
 #include <errno.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
+
 #include "pathnames.h"
 
 #define	FATAL		1
@@ -68,17 +71,20 @@ void	err __P((int, const char *, ...));
 void	notifybiff __P((char *));
 int	store __P((char *));
 void	usage __P((void));
+int	main __P((int, char **));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	extern char *optarg;
 	struct passwd *pw;
-	int ch, fd, eval, lockfile=0;
+	int ch, fd, eval, lockfile = 0;
 	uid_t uid;
 	char *from;
+
+	/* use a reasonable umask */
+	(void) umask(0077);
 
 	openlog("mail.local", LOG_PERROR, LOG_MAIL);
 
@@ -126,7 +132,7 @@ int
 store(from)
 	char *from;
 {
-	FILE *fp;
+	FILE *fp = NULL;	/* XXX gcc */
 	time_t tval;
 	int fd, eline;
 	char *tn, line[2048];
