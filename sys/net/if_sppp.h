@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.15 2002/01/15 12:28:08 martin Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.16 2002/03/02 16:23:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Martin Husemann. All rights reserved.
@@ -103,3 +103,19 @@ struct spppauthfailuresettings {
 	int	max_failures;		/* max. allowed authorization failures */
 };
 #define	SPPPSETAUTHFAILURE	_IOW('i', 128, struct spppauthfailuresettings)
+
+/* set the DNS options we would like to query during PPP negotiation */
+struct spppdnssettings {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	int	query_dns;		/* bitmask (bits 0 and 1) for DNS options to query in IPCP */
+};
+#define	SPPPSETDNSOPTS		_IOW('i', 129, struct spppdnssettings)
+#define	SPPPGETDNSOPTS		_IOWR('i', 130, struct spppdnssettings)
+
+/* get the DNS addresses we received from the peer */
+struct spppdnsaddrs {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	u_int32_t dns[2];		/* IP addresses */
+};
+
+#define SPPPGETDNSADDRS		_IOWR('i', 131, struct spppdnsaddrs)
