@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_balloc.c,v 1.24 2000/07/04 22:30:37 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.25 2000/09/09 04:49:54 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -108,6 +108,7 @@ int lfs_fragextend __P((struct vnode *, int, int, ufs_daddr_t, struct buf **));
  * to disk are given the new special disk address UNWRITTEN == -2, so that
  * they can be differentiated from completely new blocks.
  */
+/* VOP_BWRITE NIADDR+2 times */
 int
 lfs_balloc(v)
 	void *v;
@@ -169,7 +170,7 @@ lfs_balloc(v)
 			ip->i_ffs_size = (lastblock + 1) * fs->lfs_bsize;
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			VOP_BWRITE(bp);
+			(void) VOP_BWRITE(bp);
 		}
 	}
 
@@ -328,6 +329,7 @@ lfs_balloc(v)
 	return (0);
 }
 
+/* VOP_BWRITE 1 time */
 int
 lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	struct vnode *vp;
