@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.8 1994/09/28 11:31:26 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.9 1994/10/29 07:59:33 cgd Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -60,8 +60,8 @@ u_short lastdtime;
 void
 unix2dostime(tsp, ddp, dtp)
 	struct timespec *tsp;
-	u_short *ddp;
-	u_short *dtp;
+	u_int16_t *ddp;
+	u_int16_t *dtp;
 {
 	u_long t;
 	u_long days;
@@ -134,8 +134,8 @@ u_long lastseconds;
  */
 void
 dos2unixtime(dd, dt, tsp)
-	u_short dd;
-	u_short dt;
+	u_int dd;
+	u_int dt;
 	struct timespec *tsp;
 {
 	u_long seconds;
