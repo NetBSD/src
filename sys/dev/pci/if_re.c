@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re.c,v 1.3 2004/05/30 03:51:48 toshii Exp $	*/
+/*	$NetBSD: if_re.c,v 1.4 2004/06/01 15:17:49 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -120,6 +120,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -918,6 +919,7 @@ re_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: attach aborted due to hardware diag failure\n",
 		    sc->sc_dev.dv_xname);
 		ether_ifdetach(ifp);
+		if_detach(ifp);
 		goto fail;
 	}
 
@@ -926,6 +928,8 @@ re_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		error = ENXIO;
+		ether_ifdetach(ifp);
+		if_detach(ifp);
 		goto fail;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -936,6 +940,8 @@ re_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		ether_ifdetach(ifp);
+		if_detach(ifp);
 		return;
 	}
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
