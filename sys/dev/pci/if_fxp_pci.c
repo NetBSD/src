@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.8.4.2 2001/03/22 02:46:02 he Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.8.4.3 2001/08/16 17:37:40 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -101,10 +101,16 @@ struct fxp_pci_softc {
 	pcireg_t psc_regs[0x20>>2];	/* saved PCI config regs (sparse) */
 	pcitag_t psc_tag;		/* pci register tag */
 	void *psc_powerhook;		/* power hook */
+
+	int psc_pwrmgmt_csr_reg;	/* ACPI power management register */
+	pcireg_t psc_pwrmgmt_csr;	/* ...and the contents at D0 */
 };
 
 int	fxp_pci_match __P((struct device *, struct cfdata *, void *));
 void	fxp_pci_attach __P((struct device *, struct device *, void *));
+
+int	fxp_pci_enable __P((struct fxp_softc *));
+void	fxp_pci_disable __P((struct fxp_softc *));
 
 static void	fxp_pci_confreg_restore __P((struct fxp_pci_softc *psc));
 static void	fxp_pci_power __P((int why, void *arg));
@@ -248,11 +254,7 @@ fxp_pci_attach(parent, self, aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	int flags;
- 	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
-
-	sc->sc_enabled = 1;
-	sc->sc_enable = NULL;
-	sc->sc_disable = NULL;
+ 	int pci_pwrmgmt_cap_reg;
 
 	/*
 	 * Map control/status registers.
@@ -355,16 +357,21 @@ fxp_pci_attach(parent, self, aux)
 	    &pci_pwrmgmt_cap_reg, 0)) {
 		pcireg_t reg;
 
-		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + 4;
-		reg = pci_conf_read(pc, pa->pa_tag, pci_pwrmgmt_csr_reg);
-		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
-		    pci_conf_write(pc, pa->pa_tag, pci_pwrmgmt_csr_reg,
-			(reg & ~PCI_PMCSR_STATE_MASK) |
-			PCI_PMCSR_STATE_D0);
-		}
+		sc->sc_enable = fxp_pci_enable;
+		sc->sc_disable = fxp_pci_disable;
+
+		psc->psc_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + 4;
+		reg = pci_conf_read(pc, pa->pa_tag, psc->psc_pwrmgmt_csr_reg);
+		psc->psc_pwrmgmt_csr = (reg & ~PCI_PMCSR_STATE_MASK) |
+		    PCI_PMCSR_STATE_D0;
+		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0)
+			pci_conf_write(pc, pa->pa_tag, psc->psc_pwrmgmt_csr_reg,
+			    psc->psc_pwrmgmt_csr);
 	}
 	/* Restore PCI configuration registers. */
 	fxp_pci_confreg_restore(psc);
+
+	sc->sc_enabled = 1;
 
 	/*
 	 * Map and establish our interrupt.
@@ -388,11 +395,46 @@ fxp_pci_attach(parent, self, aux)
 
 	/* Finish off the attach. */
 	fxp_attach(sc);
+	if (sc->sc_disable != NULL)
+		fxp_disable(sc);
 
 	/* Add a suspend hook to restore PCI config state */
 	psc->psc_powerhook = powerhook_establish(fxp_pci_power, psc);
 	if (psc->psc_powerhook == NULL)
 		printf ("%s: WARNING: unable to establish pci power hook\n",
 		    sc->sc_dev.dv_xname);
-	
+}
+
+int
+fxp_pci_enable(struct fxp_softc *sc)
+{
+	struct fxp_pci_softc *psc = (void *) sc;
+
+#if 0
+	printf("%s: going to power state D0\n", sc->sc_dev.dv_xname);
+#endif
+
+	/* Bring the device into D0 power state. */
+	pci_conf_write(psc->psc_pc, psc->psc_tag,
+	    psc->psc_pwrmgmt_csr_reg, psc->psc_pwrmgmt_csr);
+
+	/* Now restore the configuration registers. */
+	fxp_pci_confreg_restore(psc);
+
+	return (0);
+}
+
+void
+fxp_pci_disable(struct fxp_softc *sc)
+{
+	struct fxp_pci_softc *psc = (void *) sc;
+
+#if 0
+	printf("%s: going to power state D3\n", sc->sc_dev.dv_xname);
+#endif
+
+	/* Put the device into D3 state. */
+	pci_conf_write(psc->psc_pc, psc->psc_tag,
+	    psc->psc_pwrmgmt_csr_reg, (psc->psc_pwrmgmt_csr &
+	    ~PCI_PMCSR_STATE_MASK) | PCI_PMCSR_STATE_D3);
 }

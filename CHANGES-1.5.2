@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.21 2001/08/16 17:28:19 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.22 2001/08/16 17:37:40 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -250,3 +250,8 @@ distrib/notes/macppc/install			patch
 distrib/notes/common/main			1.126-1.130,1.133-1.135
 
   Bring list of developers current.
+
+sys/dev/pci/if_fxp_pci.c			1.19
+
+  Add enable/disable hooks on devices that have ACPI power management
+  capability, using D3 and D0 power states.
