@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.12 2003/07/02 13:18:17 kanaoka Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.13 2003/08/05 14:24:45 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.12 2003/07/02 13:18:17 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.13 2003/08/05 14:24:45 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,11 +124,6 @@ struct vald_acpi_softc {
 	int lcd_index;			/* index of lcd brightness table */
 
 	int	sc_ac_status;		/* AC adaptor status when attach */
-	
-
-	/* for GHCI Method */
-	ACPI_OBJECT sc_Arg[GHCI_WORDS];		/* Input Arg */
-	ACPI_OBJECT sc_Ret[GHCI_WORDS+1];	/* Return buffer */
 };
 
 #define AVALD_F_VERBOSE		0x01	/* verbose events */
@@ -195,17 +190,11 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct vald_acpi_softc *sc = (void *) self;
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
-	UINT32 i, value, result;
+	UINT32 value, result;
 
 	printf(": Toshiba VALD\n");
 
 	sc->sc_node = aa->aa_node;
-
-	/* Initialize input Arg */ 
-	for (i = 0; i < GHCI_WORDS; i++) {
-		sc->sc_Arg[i].Type = ACPI_TYPE_INTEGER;
-		sc->sc_Arg[i].Integer.Value = 0;
-	}
 
 	/* Get AC adaptor status via _PSR. */
 	rv = acpi_eval_integer(ACPI_ROOT_OBJECT,
@@ -349,22 +338,34 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
     UINT32 reg, UINT32 *value, UINT32 *result)
 {
 	ACPI_STATUS rv;
+	ACPI_OBJECT Arg[GHCI_WORDS];
 	ACPI_OBJECT_LIST ArgList;
 	ACPI_OBJECT *param, *PrtElement;
 	ACPI_BUFFER buf;
+	int		i;
 	
-	sc->sc_Arg[0].Integer.Value = 0xfe00;
-	sc->sc_Arg[1].Integer.Value = reg;
-	sc->sc_Arg[2].Integer.Value = 0;
+	for (i = 0; i < GHCI_WORDS; i++) {
+		Arg[i].Type = ACPI_TYPE_INTEGER;
+		Arg[i].Integer.Value = 0;
+	}
+
+	Arg[0].Integer.Value = 0xfe00;
+	Arg[1].Integer.Value = reg;
+	Arg[2].Integer.Value = 0;
 
 	ArgList.Count = GHCI_WORDS;
-	ArgList.Pointer = sc->sc_Arg;
+	ArgList.Pointer = Arg;
 
-	buf.Pointer = sc->sc_Ret;
-	buf.Length = sizeof(sc->sc_Ret);
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, 
-	    "GHCI", &ArgList, &buf);	
+	    "GHCI", &ArgList, &buf);
+	if (rv != AE_OK) {
+		printf("%s: failed to evaluate GHCI: 0x%x\n",
+		    sc->sc_dev.dv_xname, rv);
+		return (rv);
+	}	
 
 	*result = GHCI_NOT_SUPPORT;
 	*value = 0;
@@ -378,6 +379,9 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 		if (PrtElement->Type == ACPI_TYPE_INTEGER)
 			*value = PrtElement->Integer.Value;
 	}
+
+	if (buf.Pointer)
+		AcpiOsFree(buf.Pointer);
 	return (rv);
 }
 
@@ -391,23 +395,35 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
     UINT32 reg, UINT32 value, UINT32 *result)
 {
 	ACPI_STATUS rv;
+	ACPI_OBJECT Arg[GHCI_WORDS];
 	ACPI_OBJECT_LIST ArgList;
 	ACPI_OBJECT *param, *PrtElement;
 	ACPI_BUFFER buf;
+	int	i;
+
 	
-	sc->sc_Arg[0].Integer.Value = 0xff00;
-	sc->sc_Arg[1].Integer.Value = reg;
-	sc->sc_Arg[2].Integer.Value = value;
+	for (i = 0; i < GHCI_WORDS; i++) {
+		Arg[i].Type = ACPI_TYPE_INTEGER;
+		Arg[i].Integer.Value = 0;
+	}
+
+	Arg[0].Integer.Value = 0xff00;
+	Arg[1].Integer.Value = reg;
+	Arg[2].Integer.Value = value;
 
 	ArgList.Count = GHCI_WORDS;
-	ArgList.Pointer = sc->sc_Arg;
+	ArgList.Pointer = Arg;
 
-	buf.Pointer = sc->sc_Ret;
-	buf.Length = sizeof(sc->sc_Ret);
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, 
 	    "GHCI", &ArgList, &buf);	
-
+	if (rv != AE_OK) {
+		printf("%s: failed to evaluate GHCI: 0x%x\n",
+		    sc->sc_dev.dv_xname, rv);
+		return (rv);
+	}
 	*result = GHCI_NOT_SUPPORT;	
 	param = (ACPI_OBJECT *)buf.Pointer;
 	if (param->Type == ACPI_TYPE_PACKAGE) {
@@ -415,6 +431,9 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	    	if (PrtElement->Type == ACPI_TYPE_INTEGER)
 			*result = PrtElement->Integer.Value;
 	}
+
+	if (buf.Pointer)
+		AcpiOsFree(buf.Pointer);	
 	return (rv);
 }
 
@@ -471,7 +490,8 @@ vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 #endif
 	}
 
-	AcpiOsFree(buf.Pointer);
+	if (buf.Pointer)
+		AcpiOsFree(buf.Pointer);
 	return (AE_OK);
 }
 
