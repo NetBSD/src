@@ -1,4 +1,4 @@
-.\"     $NetBSD: namecache.9,v 1.8 2003/04/16 13:35:31 wiz Exp $
+.\"     $NetBSD: namecache.9,v 1.9 2004/12/28 18:36:45 yamt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,10 +95,11 @@ struct  namecache {
         LIST_ENTRY(namecache) nc_hash;  /* hash chain */
         TAILQ_ENTRY(namecache) nc_lru;  /* LRU chain */
         LIST_ENTRY(namecache) nc_vhash; /* directory hash chain */
+        LIST_ENTRY(namecache) nc_dvlist;
         struct  vnode *nc_dvp;          /* vnode of parent of name */
-        u_long  nc_dvpid;               /* capability number of nc_dvp */
+        LIST_ENTRY(namecache) nc_vlist;
         struct  vnode *nc_vp;           /* vnode the name refers to */
-        u_long  nc_vpid;                /* capability number of nc_vp */
+        int     nc_flags;               /* copy of componentname's ISWHITEOUT */
         char    nc_nlen;                /* length of name */
         char    nc_name[NCHNAMLEN];     /* segment name */
 };
