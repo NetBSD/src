@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.33 1993/09/28 03:25:03 andrew Exp $
+ *	$Id: pccons.c,v 1.34 1993/09/28 04:55:17 mycroft Exp $
  */
 
 /*
@@ -1342,11 +1342,11 @@ static Scan_def	scan_codes[] =
 	ASCII,	"m",		"M",		"\r",		/* 50 m */
 	ASCII,	",",		"<",		"<",		/* 51 , */
 	ASCII,	".",		">",		">",		/* 52 . */
-	ASCII,	"/",		"?",		"\177",		/* 53 / */
+	ASCII,	"/",		"?",		"\037",		/* 53 / */
 	SHIFT,	"",		"",		"",		/* 54 shift */
 	KP,	"*",		"*",		"*",		/* 55 kp * */
 	ALT,	"",		"",		"",		/* 56 alt */
-	ASCII,	" ",		" ",		" ",		/* 57 space */
+	ASCII,	" ",		" ",		"\000",		/* 57 space */
 	CAPS,	"",		"",		"",		/* 58 caps */
 	FUNC,	"\033[M",	"\033[Y",	"\033[k",	/* 59 f1 */
 	FUNC,	"\033[N",	"\033[Z",	"\033[l",	/* 60 f2 */
