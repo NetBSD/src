@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.88 2004/03/27 14:52:36 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.89 2004/03/27 14:55:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.88 2004/03/27 14:52:36 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.89 2004/03/27 14:55:24 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -880,6 +880,7 @@ elapsed(void *arg, VARENT *ve, int mode)
 				v->width = fmtlen;
 		}
 	} else {
+		printed_something = 0;
 		fmtlen = v->width;
 
 		if (days > 0) {
