@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.38 2000/01/11 13:01:52 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.39 2000/05/09 22:39:35 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -90,26 +90,23 @@ struct cfattach iommu_ca = {
 
 /* IOMMU DMA map functions */
 int	iommu_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
+			bus_size_t, struct proc *, int));
 int	iommu_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
+			struct mbuf *, int));
 int	iommu_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
+			struct uio *, int));
 int	iommu_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
+			bus_dma_segment_t *, int, bus_size_t, int));
 void	iommu_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	iommu_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
+			bus_size_t, int));
 
-int	iommu_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
-	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-void	iommu_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs));
 int	iommu_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags));
+			int nsegs, size_t size, caddr_t *kvap, int flags));
 int	iommu_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+			int nsegs, int off, int prot, int flags));
+int	iommu_dvma_alloc(bus_dmamap_t, vaddr_t, bus_size_t, bus_size_t, int,
+			bus_addr_t *, bus_size_t *);
 
 
 struct sparc_bus_dma_tag iommu_dma_tag = {
@@ -123,8 +120,8 @@ struct sparc_bus_dma_tag iommu_dma_tag = {
 	iommu_dmamap_unload,
 	iommu_dmamap_sync,
 
-	iommu_dmamem_alloc,
-	iommu_dmamem_free,
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
 	iommu_dmamem_map,
 	_bus_dmamem_unmap,
 	iommu_dmamem_mmap
@@ -338,23 +335,25 @@ iommu_attach(parent, self, aux)
 }
 
 void
-iommu_enter(va, pa)
-	bus_addr_t va;
+iommu_enter(dva, pa)
+	bus_addr_t dva;
 	paddr_t pa;
 {
 	struct iommu_softc *sc = iommu_sc;
 	int pte;
 
-#ifdef DEBUG
-	if (va < sc->sc_dvmabase)
-		panic("iommu_enter: va 0x%lx not in DVMA space", (long)va);
+	/* This routine relies on the fact that sc->sc_pagesize == PAGE_SIZE */
+
+#ifdef DIAGNOSTIC
+	if (dva < sc->sc_dvmabase)
+		panic("iommu_enter: dva 0x%lx not in DVMA space", (long)dva);
 #endif
 
 	pte = atop(pa) << IOPTE_PPNSHFT;
 	pte &= IOPTE_PPN;
 	pte |= IOPTE_V | IOPTE_W | (has_iocache ? IOPTE_C : 0);
-	sc->sc_ptes[atop(va - sc->sc_dvmabase)] = pte;
-	IOMMU_FLUSHPAGE(sc, va);
+	sc->sc_ptes[atop(dva - sc->sc_dvmabase)] = pte;
+	IOMMU_FLUSHPAGE(sc, dva);
 }
 
 /*
@@ -437,24 +436,21 @@ if ((int)sc->sc_dvmacur + len > 0)
 
 
 /*
- * IOMMU DMA map functions.
+ * Common routine to allocate space in the IOMMU map.
  */
 int
-iommu_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
+iommu_dvma_alloc(map, va, len, boundary, flags, dvap, sgsizep)
 	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
+	vaddr_t va;
+	bus_size_t len;
+	bus_size_t boundary;
 	int flags;
+	bus_addr_t *dvap;
+	bus_size_t *sgsizep;
 {
 	bus_size_t sgsize;
-	bus_addr_t dva;
-	bus_addr_t boundary;
-	vaddr_t va = (vaddr_t)buf;
 	u_long align, voff;
 	u_long ex_start, ex_end;
-	pmap_t pmap;
 	int s, error;
 
 	/*
@@ -464,17 +460,13 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	voff = va & PGOFSET;
 	va &= ~PGOFSET;
 
-	/*
-	 * Make sure that on error condition we return "no valid mappings".
-	 */
-	map->dm_nsegs = 0;
-
-	if (buflen > map->_dm_size)
+	if (len > map->_dm_size)
 		return (EINVAL);
 
-	sgsize = (buflen + voff + PGOFSET) & ~PGOFSET;
+	sgsize = (len + voff + PGOFSET) & ~PGOFSET;
 	align = dvma_cachealign ? dvma_cachealign : NBPG;
-	boundary = map->_dm_boundary;
+	if (boundary == 0)
+		boundary = map->_dm_boundary;
 
 	s = splhigh();
 
@@ -491,20 +483,49 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 					sgsize, align, va & (align-1), boundary,
 					(flags & BUS_DMA_NOWAIT) == 0
 						? EX_WAITOK : EX_NOWAIT,
-					(u_long *)&dva);
+					(u_long *)dvap);
 	splx(s);
 
-	if (error != 0)
+	*sgsizep = sgsize;
+	return (error);
+}
+
+/*
+ * IOMMU DMA map functions.
+ */
+int
+iommu_dmamap_load(t, map, buf, buflen, p, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	void *buf;
+	bus_size_t buflen;
+	struct proc *p;
+	int flags;
+{
+	bus_size_t sgsize;
+	bus_addr_t dva;
+	vaddr_t va = (vaddr_t)buf;
+	pmap_t pmap;
+	int error;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
+
+	/* Allocate IOMMU resources */
+	if ((error = iommu_dvma_alloc(map, va, buflen, 0, flags,
+					&dva, &sgsize)) != 0)
 		return (error);
 
-	cpuinfo.cache_flush(buf, buflen);
+	cpuinfo.cache_flush(buf, buflen); /* XXX - move to bus_dma_sync? */
 
 	/*
 	 * We always use just one segment.
 	 */
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
-	map->dm_segs[0].ds_addr = dva + voff;
+	map->dm_segs[0].ds_addr = dva + (va & PGOFSET);
 	map->dm_segs[0].ds_len = buflen;
 
 	if (p != NULL)
@@ -521,9 +542,9 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 
 		iommu_enter(dva, pa);
 
-		dva += NBPG;
-		va += NBPG;
-		sgsize -= NBPG;
+		dva += PAGE_SIZE;
+		va += PAGE_SIZE;
+		sgsize -= PAGE_SIZE;
 	}
 
 	return (0);
@@ -570,37 +591,84 @@ iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
+	vm_page_t m;
+	paddr_t pa;
+	bus_addr_t dva;
+	bus_size_t sgsize;
+	struct pglist *mlist;
+	int error;
 
-	panic("_bus_dmamap_load_raw: not implemented");
+	map->dm_nsegs = 0;
+
+#ifdef DIAGNOSTIC
+	/* XXX - unhelpful since we can't reset these in map_unload() */
+	if (segs[0].ds_addr != 0 || segs[0].ds_len != 0)
+		panic("iommu_dmamap_load_raw: segment already loaded: "
+			"addr 0x%lx, size 0x%lx",
+			segs[0].ds_addr, segs[0].ds_len);
+#endif
+
+	/* Allocate IOMMU resources */
+	if ((error = iommu_dvma_alloc(map, segs[0]._ds_va, size,
+				      segs[0]._ds_boundary,
+				      flags, &dva, &sgsize)) != 0)
+		return (error);
+
+	/*
+	 * Note DVMA address in case bus_dmamem_map() is called later.
+	 * It can then insure cache coherency by choosing a KVA that
+	 * is aligned to `ds_addr'.
+	 */
+	segs[0].ds_addr = dva;
+	segs[0].ds_len = size;
+
+	map->dm_segs[0].ds_addr = dva;
+	map->dm_segs[0].ds_len = size;
+
+	/* Map physical pages into IOMMU */
+	mlist = segs[0]._ds_mlist;
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		if (sgsize == 0)
+			panic("iommu_dmamap_load_raw: size botch");
+		pa = VM_PAGE_TO_PHYS(m);
+		iommu_enter(dva, pa);
+		dva += PAGE_SIZE;
+		sgsize -= PAGE_SIZE;
+	}
+
+	map->dm_nsegs = 1;
+	map->dm_mapsize = size;
+
+	return (0);
 }
 
 /*
- * Common function for unloading a DMA map.  May be called by
- * bus-specific DMA map unload functions.
+ * Unload an IOMMU DMA map.
  */
 void
 iommu_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	bus_addr_t addr;
+	bus_dma_segment_t *segs = map->dm_segs;
+	int nsegs = map->dm_nsegs;
+	bus_addr_t dva;
 	bus_size_t len;
-	int s, error;
+	int i, s, error;
 
-	if (map->dm_nsegs != 1)
-		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
+	for (i = 0; i < nsegs; i++) {
+		dva = segs[i].ds_addr;
+		len = segs[i].ds_len;
+		len = ((dva & PGOFSET) + len + PGOFSET) & ~PGOFSET;
+		dva &= ~PGOFSET;
 
-	addr = map->dm_segs[0].ds_addr;
-	len = map->dm_segs[0].ds_len;
-	len = ((addr & PGOFSET) + len + PGOFSET) & ~PGOFSET;
-	addr &= ~PGOFSET;
-
-	iommu_remove(addr, len);
-	s = splhigh();
-	error = extent_free(iommu_dvmamap, addr, len, EX_NOWAIT);
-	splx(s);
-	if (error != 0)
-		printf("warning: %ld of DVMA space lost\n", (long)len);
+		iommu_remove(dva, len);
+		s = splhigh();
+		error = extent_free(iommu_dvmamap, dva, len, EX_NOWAIT);
+		splx(s);
+		if (error != 0)
+			printf("warning: %ld of DVMA space lost\n", (long)len);
+	}
 
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
@@ -608,8 +676,7 @@ iommu_dmamap_unload(t, map)
 }
 
 /*
- * Common function for DMA map synchronization.  May be called
- * by bus-specific DMA map synchronization functions.
+ * DMA map synchronization.
  */
 void
 iommu_dmamap_sync(t, map, offset, len, ops)
@@ -626,106 +693,7 @@ iommu_dmamap_sync(t, map, offset, len, ops)
 }
 
 /*
- * Common function for DMA-safe memory allocation.  May be called
- * by bus-specific DMA memory allocation functions.
- */
-int
-iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
-{
-	paddr_t pa;
-	bus_addr_t dva;
-	vm_page_t m;
-	int s, error;
-	u_long ex_start, ex_end;
-	struct pglist *mlist;
-
-	size = round_page(size);
-	error = _bus_dmamem_alloc_common(t, size, alignment, boundary,
-					 segs, nsegs, rsegs, flags);
-	if (error != 0)
-		return (error);
-
-	s = splhigh();
-
-	if ((flags & BUS_DMA_24BIT) != 0) {
-		ex_start = D24_DVMA_BASE;
-		ex_end = D24_DVMA_END;
-	} else {
-		ex_start = iommu_dvmamap->ex_start;
-		ex_end = iommu_dvmamap->ex_end;
-	}
-
-	error = extent_alloc_subregion(iommu_dvmamap,
-					ex_start, ex_end,
-					size, alignment, boundary,
-					(flags & BUS_DMA_NOWAIT) == 0
-						? EX_WAITOK : EX_NOWAIT,
-					(u_long *)&dva);
-	splx(s);
-	if (error != 0)
-		return (error);
-
-	/*
-	 * Compute the location, size, and number of segments actually
-	 * returned by the VM code.
-	 */
-	segs[0].ds_addr = dva;
-	segs[0].ds_len = size;
-	*rsegs = 1;
-
-	mlist = segs[0]._ds_mlist;
-	/* Map memory into DVMA space */
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
-		pa = VM_PAGE_TO_PHYS(m);
-
-		iommu_enter(dva, pa);
-		dva += PAGE_SIZE;
-	}
-
-	return (0);
-}
-
-/*
- * Common function for freeing DMA-safe memory.  May be called by
- * bus-specific DMA memory free functions.
- */
-void
-iommu_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-{
-	bus_addr_t addr;
-	bus_size_t len;
-	int s, error;
-
-	if (nsegs != 1)
-		panic("bus_dmamem_free: nsegs = %d", nsegs);
-
-	addr = segs[0].ds_addr;
-	len = segs[0].ds_len;
-
-	iommu_remove(addr, len);
-	s = splhigh();
-	error = extent_free(iommu_dvmamap, addr, len, EX_NOWAIT);
-	splx(s);
-	if (error != 0)
-		printf("warning: %ld of DVMA space lost\n", (long)len);
-	/*
-	 * Return the list of pages back to the VM system.
-	 */
-	_bus_dmamem_free_common(t, segs, nsegs);
-}
-
-/*
- * Common function for mapping DMA-safe memory.  May be called by
- * bus-specific DMA memory map functions.
+ * Map DMA-safe memory.
  */
 int
 iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
@@ -737,11 +705,10 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int flags;
 {
 	vm_page_t m;
-	vaddr_t va, sva;
+	vaddr_t va;
 	bus_addr_t addr;
 	struct pglist *mlist;
 	int cbit;
-	size_t oversize;
 	u_long align;
 
 	if (nsegs != 1)
@@ -753,28 +720,22 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	size = round_page(size);
 
 	/*
-	 * Find a region of kernel virtual addresses that can accomodate
-	 * our aligment requirements.
+	 * In case the segment has already been loaded by
+	 * iommu_dmamap_load_raw(), find a region of kernel virtual
+	 * addresses that can accomodate our aligment requirements.
 	 */
-	oversize = size + align - PAGE_SIZE;
-	sva = uvm_km_valloc(kernel_map, oversize);
-	if (sva == 0)
+	va = _bus_dma_valloc_skewed(size, 0, align, segs[0].ds_addr & -align);
+	if (va == 0)
 		return (ENOMEM);
 
-	/* Compute start of aligned region */
-	va = sva;
-	va += ((segs[0].ds_addr & (align - 1)) + align - va) & (align - 1);
-
-	/* Return excess virtual addresses */
-	if (va != sva)
-		(void)uvm_unmap(kernel_map, sva, va);
-	if (va + size != sva + oversize)
-		(void)uvm_unmap(kernel_map, va + size, sva + oversize);
-
-
+	segs[0]._ds_va = va;
 	*kvap = (caddr_t)va;
-	mlist = segs[0]._ds_mlist;
 
+	/*
+	 * Map the pages allocated in _bus_dmamem_alloc() to the
+	 * kernel virtual address space.
+	 */
+	mlist = segs[0]._ds_mlist;
 	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
 
 		if (size == 0)
@@ -796,8 +757,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
- * bus-specific DMA mmap(2)'ing functions.
+ * mmap(2)'ing DMA-safe memory.
  */
 int
 iommu_dmamem_mmap(t, segs, nsegs, off, prot, flags)
