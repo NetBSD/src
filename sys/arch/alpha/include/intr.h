@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.49 2001/07/27 00:25:19 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.49.36.1 2005/03/30 10:21:54 tron Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -300,6 +300,8 @@ void	alpha_shared_intr_set_dfltsharetype(struct alpha_shared_intr *,
 	    unsigned int, int);
 void	alpha_shared_intr_set_maxstrays(struct alpha_shared_intr *,
 	    unsigned int, int);
+void	alpha_shared_intr_reset_strays(struct alpha_shared_intr *,
+	    unsigned int);
 void	alpha_shared_intr_stray(struct alpha_shared_intr *, unsigned int,
 	    const char *);
 void	alpha_shared_intr_set_private(struct alpha_shared_intr *,
