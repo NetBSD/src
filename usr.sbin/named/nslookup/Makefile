@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1997/04/14 09:46:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 1997/05/06 20:46:33 gwr Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:48 vixie Exp 
 
-.PATH:	${.CURDIR}/../nslookup \
+.PATH.c: ${.CURDIR}/../nslookup \
 	${.CURDIR}/../man
 
 PROG=	nslookup

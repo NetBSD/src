@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 1997/03/24 22:00:08 christos Exp $
+#	$NetBSD: Makefile,v 1.5 1997/05/06 20:45:58 gwr Exp $
 
-.PATH:	${.CURDIR}/../lint1
+.PATH.c: ${.CURDIR}/../lint1
 
 PROG=	xlint
 PROGNAME= lint

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1996/06/07 01:39:10 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9 1997/05/06 20:45:54 gwr Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	w
@@ -10,6 +10,6 @@ BINGRP=	kmem
 BINMODE=2555
 LINKS=	${BINDIR}/w ${BINDIR}/uptime
 
-.PATH: ${.CURDIR}/../../bin/ps
+.PATH.c: ${.CURDIR}/../../bin/ps
 
 .include <bsd.prog.mk>

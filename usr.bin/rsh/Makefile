@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/02/24 00:00:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 1997/05/06 20:45:39 gwr Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	rsh
@@ -9,6 +9,6 @@ BINMODE=4555
 #DPADD=	${LIBKRB} ${LIBDES}
 #LDADD=	-lkrb -ldes
 #INSTALLFLAGS=-fschg
-.PATH:	${.CURDIR}/../rlogin
+.PATH.c: ${.CURDIR}/../rlogin
 
 .include <bsd.prog.mk>

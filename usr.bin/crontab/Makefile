@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/01/09 20:18:32 tls Exp $
+#	$NetBSD: Makefile,v 1.16 1997/05/06 20:45:31 gwr Exp $
 
 PROG=	crontab
 SRCS=	crontab.c misc.c entry.c env.c
@@ -7,6 +7,6 @@ BINOWN =root
 BINMODE=4555
 MAN=	crontab.1 crontab.5
 
-.PATH: ${.CURDIR}/../../usr.sbin/cron
+.PATH.c: ${.CURDIR}/../../usr.sbin/cron
 
 .include <bsd.prog.mk>
