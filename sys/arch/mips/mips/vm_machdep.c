@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.54 2000/04/12 01:37:58 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55 2000/04/16 09:09:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.54 2000/04/12 01:37:58 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2000/04/16 09:09:42 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,11 +294,17 @@ pagemove(from, to, size)
 #endif
 	invalid = (CPUISMIPS3) ? MIPS3_PG_NV | MIPS3_PG_G : MIPS1_PG_NV;
 	while (size > 0) {
-		MIPS_TBIS((vaddr_t)from);
-		MachTLBUpdate((vaddr_t)to, fpte->pt_entry);	/* ??? */
-		*tpte = *fpte;
+		tpte->pt_entry = fpte->pt_entry;
 		fpte->pt_entry = invalid;
-
+#if defined(MIPS1) && !defined(MIPS3)
+	{
+		extern void mips1_TBRPL(vaddr_t, vaddr_t, p_addr_t);
+		mips1_TBRPL((vaddr_t)from, (vaddr_t)to, tpte->pt_entry);
+	}
+#else
+		MIPS_TBIS((vaddr_t)from);
+		MachTLBUpdate((vaddr_t)to, tpte->pt_entry);
+#endif
 		fpte++; tpte++;
 		size -= PAGE_SIZE;
 		from += PAGE_SIZE;
