@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.93 2002/04/05 18:27:53 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.94 2002/06/21 13:27:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.93 2002/04/05 18:27:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.94 2002/06/21 13:27:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -999,17 +999,20 @@ ncr53c9x_ioctl(chan, cmd, arg, flag, p)
 	int flag;
 	struct proc *p;
 {
-	/* struct ncr53c9x_softc *sc = (void *)chan->chan_adapter->adapt_dev; */
+	struct ncr53c9x_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	int s, error = 0;
 
-	s = splbio();
 
 	switch (cmd) {
+	case SCBUSIORESET:
+		s = splbio();
+		ncr53c9x_scsi_reset(sc);
+		splx(s);
+		break;
 	default:
 		error = ENOTTY;
 		break;
 	}
-	splx(s);
 	return (error);
 }
 
