@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.60.2.3 2002/01/28 20:50:40 nathanw Exp $	*/
+/*	$NetBSD: namespace.h,v 1.60.2.4 2002/02/06 23:03:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -191,6 +191,9 @@
 #define execvp			_execvp
 #define fdopen			_fdopen
 #define fgetln			_fgetln
+#define flockfile		_flockfile
+#define ftrylockfile		_ftrylockfile
+#define funlockfile		_funlockfile
 #define fnmatch			_fnmatch
 #define fpgetmask		_fpgetmask
 #define fpgetround		_fpgetround
