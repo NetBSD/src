@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3 1999/09/03 04:49:24 itojun Exp $	*/
+/*	$NetBSD: defs.h,v 1.4 1999/12/10 06:13:31 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -35,7 +35,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: defs.h,v 1.3 1999/08/24 16:45:23 jinmei Exp
+ *  KAME Id: defs.h,v 1.5 1999/10/27 11:40:29 jinmei Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -359,7 +359,7 @@ extern void	dvmrp_accept_g_ack             __P((u_int32 src, u_int32 dst,
 void init_mld6 __P((void));
 void send_mld6 __P((int type, int code, struct sockaddr_in6 *src,
 		    struct sockaddr_in6 *dst, struct in6_addr *group,
-		    int index, int delay, int datalen));
+		    int index, int delay, int datalen, int alert));
 
 /* mld6_proto.c */
 extern void     query_groups            __P((struct uvif *v));
@@ -490,7 +490,7 @@ extern int receive_pim6_join_prune    __P((struct sockaddr_in6 *src,
 extern int send_pim6_jp              __P((mrtentry_t *mrtentry_ptr, int action,
 					  mifi_t mifi,
 					  struct sockaddr_in6 *target_addr, 
-					  u_int16 holdtime));
+					  u_int16 holdtime, int echo));
 
 extern int receive_pim6_assert        __P((struct sockaddr_in6 *src,
 					   char *pim_message, int datalen));
@@ -600,5 +600,5 @@ extern void    check_vif_state         __P((void));
 extern vifi_t  local_address           __P((struct sockaddr_in6 *src));
 extern vifi_t  find_vif_direct         __P((struct sockaddr_in6 *src));
 extern vifi_t  find_vif_direct_local   __P((struct sockaddr_in6 *src));
-extern u_int32 max_local_address       __P((void));
-
+extern struct sockaddr_in6 *max_global_address __P((void));
+extern struct sockaddr_in6 *uv_global __P((vifi_t vifi));
