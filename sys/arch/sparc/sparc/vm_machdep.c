@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.17 1995/12/11 12:32:56 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.18 1995/12/11 12:44:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@ kdvma_mapin(va, len, canwait)
 
 caddr_t
 dvma_malloc(len, kaddr, flags)
-	int	len;
+	size_t	len;
 	void	*kaddr;
 	int	flags;
 {
@@ -124,7 +124,7 @@ dvma_malloc(len, kaddr, flags)
 void
 dvma_free(dva, len, kaddr)
 	caddr_t	dva;
-	int	len;
+	size_t	len;
 	void	*kaddr;
 {
 	vm_offset_t	kva = *(vm_offset_t *)kaddr;
