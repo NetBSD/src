@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.26 2000/03/24 22:16:42 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.27 2000/03/29 18:30:46 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -834,9 +834,9 @@ umass_scsipi_scsi_cmd(xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		scsipi_done(xs);
 		if (xs->xs_control & XS_CTL_POLL)
-			return (SUCCESSFULLY_QUEUED);
-		else
 			return (COMPLETE);
+		else
+			return (SUCCESSFULLY_QUEUED);
 	}
 
 #ifdef UMASS_DEBUG
