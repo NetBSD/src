@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.55 2001/08/17 05:51:53 chs Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.56 2001/08/18 05:34:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -260,8 +260,13 @@ spec_read(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	void *win;
-	vsize_t bytelen;
+ 	struct proc *p = uio->uio_procp;
+	struct buf *bp;
+	daddr_t bn, nextbn;
+	int bsize, bscale, ssize;
+	struct partinfo dpart;
+	int n, on, majordev;
+	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
 	int error = 0;
 
 #ifdef DIAGNOSTIC
@@ -273,26 +278,56 @@ spec_read(v)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	if (vp->v_type == VCHR) {
+	switch (vp->v_type) {
+
+	case VCHR:
 		VOP_UNLOCK(vp, 0);
 		error = (*cdevsw[major(vp->v_rdev)].d_read)
 			(vp->v_rdev, uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
-	}
-	KASSERT(vp->v_type == VBLK);
 
-	if (uio->uio_offset < 0) {
-		return (EINVAL);
+	case VBLK:
+		if (uio->uio_offset < 0)
+			return (EINVAL);
+		bsize = BLKDEV_IOSIZE;
+		ssize = DEV_BSIZE;
+		if ((majordev = major(vp->v_rdev)) < nblkdev &&
+		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
+		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
+			if (dpart.part->p_fstype == FS_BSDFFS &&
+			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
+				bsize = dpart.part->p_frag *
+				    dpart.part->p_fsize;
+			if (dpart.disklab->d_secsize != 0)
+				ssize = dpart.disklab->d_secsize;
+		}
+		bscale = bsize / ssize;
+		do {
+			bn = (uio->uio_offset / ssize) &~ (bscale - 1);
+			on = uio->uio_offset % bsize;
+			n = min((unsigned)(bsize - on), uio->uio_resid);
+			if (vp->v_lastr + bscale == bn) {
+				nextbn = bn + bscale;
+				error = breadn(vp, bn, bsize, &nextbn,
+					&bsize, 1, NOCRED, &bp);
+			} else
+				error = bread(vp, bn, bsize, NOCRED, &bp);
+			vp->v_lastr = bn;
+			n = min(n, bsize - bp->b_resid);
+			if (error) {
+				brelse(bp);
+				return (error);
+			}
+			error = uiomove((char *)bp->b_data + on, n, uio);
+			brelse(bp);
+		} while (error == 0 && uio->uio_resid > 0 && n != 0);
+		return (error);
+
+	default:
+		panic("spec_read type");
 	}
-	do {
-		bytelen = uio->uio_resid;
-		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, &bytelen,
-		    UBC_READ);
-		error = uiomove(win, bytelen, uio);
-		ubc_release(win, 0);
-	} while (error == 0 && uio->uio_resid > 0);
-	return (error);
+	/* NOTREACHED */
 }
 
 /*
@@ -311,8 +346,13 @@ spec_write(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	void *win;
-	vsize_t bytelen;
+	struct proc *p = uio->uio_procp;
+	struct buf *bp;
+	daddr_t bn;
+	int bsize, bscale, ssize;
+	struct partinfo dpart;
+	int n, on, majordev;
+	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
 	int error = 0;
 
 #ifdef DIAGNOSTIC
@@ -322,27 +362,64 @@ spec_write(v)
 		panic("spec_write proc");
 #endif
 
-	if (vp->v_type == VCHR) {
+	switch (vp->v_type) {
+
+	case VCHR:
 		VOP_UNLOCK(vp, 0);
 		error = (*cdevsw[major(vp->v_rdev)].d_write)
 			(vp->v_rdev, uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
-	}
-	KASSERT(vp->v_type == VBLK);
 
-	if (uio->uio_resid == 0)
-		return (0);
-	if (uio->uio_offset < 0)
-		return (EINVAL);
-	do {
-		bytelen = uio->uio_resid;
-		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, &bytelen,
-		    UBC_WRITE);
-		error = uiomove(win, bytelen, uio);
-		ubc_release(win, 0);
-	} while (error == 0 && uio->uio_resid > 0);
-	return (error);
+	case VBLK:
+		if (uio->uio_resid == 0)
+			return (0);
+		if (uio->uio_offset < 0)
+			return (EINVAL);
+		bsize = BLKDEV_IOSIZE;
+		ssize = DEV_BSIZE;
+		if ((majordev = major(vp->v_rdev)) < nblkdev &&
+		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
+		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
+			if (dpart.part->p_fstype == FS_BSDFFS &&
+			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
+				bsize = dpart.part->p_frag *
+				    dpart.part->p_fsize;
+			if (dpart.disklab->d_secsize != 0)
+				ssize = dpart.disklab->d_secsize;
+		}
+		bscale = bsize / ssize;
+		do {
+			bn = (uio->uio_offset / ssize) &~ (bscale - 1);
+			on = uio->uio_offset % bsize;
+			n = min((unsigned)(bsize - on), uio->uio_resid);
+			if (n == bsize)
+				bp = getblk(vp, bn, bsize, 0, 0);
+			else
+				error = bread(vp, bn, bsize, NOCRED, &bp);
+			if (error) {
+				brelse(bp);
+				return (error);
+			}
+			n = min(n, bsize - bp->b_resid);
+			error = uiomove((char *)bp->b_data + on, n, uio);
+			if (error)
+				brelse(bp);
+			else {
+				if (n + on == bsize)
+					bawrite(bp);
+				else
+					bdwrite(bp);
+				if (bp->b_flags & B_ERROR)
+					error = bp->b_error;
+			}
+		} while (error == 0 && uio->uio_resid > 0 && n != 0);
+		return (error);
+
+	default:
+		panic("spec_write type");
+	}
+	/* NOTREACHED */
 }
 
 /*
