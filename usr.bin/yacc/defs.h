@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)defs.h	5.5 (Berkeley) 1/20/91
+ *	@(#)defs.h	5.6 (Berkeley) 5/24/93
  */
 
 #include <assert.h>
@@ -221,6 +221,7 @@ extern char lflag;
 extern char rflag;
 extern char tflag;
 extern char vflag;
+extern char *symbol_prefix;
 
 extern char *myname;
 extern char *cptr;
