@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47 2005/01/07 11:32:43 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.48 2005/01/17 15:28:51 cube Exp $
 #
 # GENERIC machine description file
 # 
@@ -202,6 +202,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl		1	# Serial Line IP
 #pseudo-device	tun		1	# network tunneling over tty
+#pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre		1	# generic L3 over IP tunnel
 #pseudo-device	gif		1	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
