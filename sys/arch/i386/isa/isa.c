@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.19 1993/10/27 06:48:36 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.20 1993/10/31 23:43:07 mycroft Exp $
  */
 
 /*
@@ -101,7 +101,6 @@ isaattach(parent, self, aux)
 	printf("\n");
 
 	isa_defaultirq();
-	intr_enable(IRQ_SLAVE);
 
 	/* Iterate ``isasubmatch'' over all devices configured here. */
 	(void)config_search(isasubmatch, self, (void *)NULL);
