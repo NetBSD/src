@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.8 2000/07/10 10:19:27 itojun Exp $	*/
+/*	$NetBSD: message.c,v 1.8.2.1 2002/10/01 23:45:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: message.c,v 1.8 2000/07/10 10:19:27 itojun Exp $");
+__RCSID("$NetBSD: message.c,v 1.8.2.1 2002/10/01 23:45:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: message.c,v 1.8 2000/07/10 10:19:27 itojun Exp $");
 char msgs[NMESSAGES][DCOLS] = {"", "", "", "", ""};
 short msg_col = 0, imsg = -1;
 boolean msg_cleared = 1, rmsg = 0;
-char hunger_str[8] = "";
+char hunger_str[HUNGER_STR_LEN] = "";
 const char *more = "-more-";
 
 void
