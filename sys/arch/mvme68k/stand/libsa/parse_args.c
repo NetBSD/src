@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_args.c,v 1.2 1997/12/17 21:33:10 scw Exp $	*/
+/*	$NetBSD: parse_args.c,v 1.3 2000/07/10 20:33:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -35,7 +35,6 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <machine/prom.h>
-#include <a.out.h>
 
 #include "stand.h"
 #include "libsa.h"
