@@ -1,4 +1,4 @@
-.\" Copyright (c) 1986, 1993, 1994 The Regents of the University of California.
+.\" Copyright (c) 1980, 1993, 1994 Regents of the University of California.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)Title	8.5 (Berkeley) 8/8/94
+.\"	@(#)title.prm	8.4 (Berkeley) 8/8/94
 .\"
 .af % i
 .nr LL 6.5i
@@ -43,15 +43,16 @@
 .nr VS 39
 .LP
 .ft B
-.ce 2
+.ce 3
 4.4BSD
-System Manager's Manual
+Programmer's
+Reference Manual
 .nr PS 24
 .nr VS 32
 .LP
 .ft B
 .ce 1
-(SMM)
+(PRM)
 .bp
 \&
 .sp |0.83i
@@ -103,15 +104,16 @@ on system administration topics.
 .nr VS 39
 .LP
 .ft B
-.ce 2
+.ce 3
 4.4BSD
-System Manager's Manual
+Programmer's
+Reference Manual
 .nr PS 24
 .nr VS 32
 .LP
 .ft B
 .ce 1
-(SMM)
+(PRM)
 .sp 1i
 .nr PS 24
 .nr VS 26
@@ -133,7 +135,7 @@ April, 1994
 .ce 2
 Computer Systems Research Group
 University of California at Berkeley
-.sp 2.75i
+.sp 2.2i
 .nr PS 12
 .nr VS 14.5
 .LP
@@ -151,11 +153,11 @@ Sebastopol, CA 94572
 First Printing, 1994
 .br
 Second Printing, 1995
-.sp 0.8
+.sp 1
 .LP
-Copyright 1979, 1980, 1983, 1986, 1988, 1989, 1991, 1992, 1993, 1994
+Copyright 1979, 1980, 1983, 1986, 1993, 1994
 The Regents of the University of California.  All rights reserved.
-.sp 0.8
+.sp 1
 .LP
 Other than the specific manual pages and documents listed below
 as copyrighted by AT&T,
@@ -191,11 +193,12 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.\s+1\fP
-.sp 0.8
+.sp 1
 .LP
 The Institute of Electrical and Electronics Engineers and the American
 National Standards Committee X3, on Information Processing Systems have
 given us permission to reprint portions of their documentation.
+.sp 0.5
 .LP
 In the following statement, the phrase ``this text'' refers to portions
 of the system documentation.
@@ -207,6 +210,7 @@ Standard Portable Operating System Interface for Computer Environments
 Engineers, Inc.  In the event of any discrepancy between these versions
 and the original IEEE Standard, the original IEEE Standard is the referee
 document.''
+.sp 0.5
 .LP
 In the following statement, the phrase ``This material'' refers to portions
 of the system documentation.
@@ -216,25 +220,23 @@ Standards Committee X3, on Information Processing Systems.  Computer and
 Business Equipment Manufacturers Association (CBEMA), 311 First St., NW,
 Suite 500, Washington, DC 20001-2178.  The developmental work of
 Programming Language C was completed by the X3J11 Technical Committee.''
-.sp 0.8
+.sp 1
 .LP
-Manual pages cron.8, icheck.8, ncheck.8, and sa.8
-and documents SMM:15, 16, and 17
+Manual pages ptrace.2, ecvt.3, mp.3, plot.3, L-devices.5, L-dialcodes.5,
+L.aliases.5, L.cmds.5, L.sys.5, USERFILE.5, dump.5, and plot.5
 are copyright 1979, AT&T Bell Laboratories, Incorporated.
-Document SMM:14 is a modification of an earlier document that
-is copyrighted 1979 by AT&T Bell Laboratories, Incorporated.
 Holders of \x'-1p'UNIX\v'-4p'\s-3TM\s0\v'4p'/32V,
 System III, or System V software licenses are
 permitted to copy these documents, or any portion of them,
 as necessary for licensed use of the software,
 provided this copyright notice and statement of permission
 are included.
-.sp 0.8
+.sp 1
 .LP
 The views and conclusions contained in this manual are those of the
 authors and should not be interpreted as representing official policies,
 either expressed or implied, of the Regents of the University of California.
-.sp 0.8
+.sp 1
 .LP
 The 4.4BSD Daemon used on the cover is
 copyright 1994 by Marshall Kirk McKusick
@@ -243,18 +245,16 @@ and is reproduced with permission.
 This book was printed and bound in the United States of America.
 .br
 Distributed by O'Reilly & Associates, Inc.
-.sp 0.8
+.sp 1
 .IP "[recycle logo]" 16
 This book is printed on acid-free paper with 50% recycled content,
 10-13% post-consumer waste. O'Reilly & Associates is committed to
 using paper with the highest recycled content available consistent
 with high quality.
 .LP
-.sp 0.8
-ISBN: 1-56592-080-5
+.sp 1
+ISBN: 1-56592-078-3
 .bp
-.OH '\s10Contents''- % -\s0'
-.EH '\s10- % -''Contents\s0'
 \&
 .sp |1.5i
 .nr PS 24
@@ -263,132 +263,18 @@ ISBN: 1-56592-080-5
 .ce 1
 \fBContents\fP
 .sp 1
-.nr PS 12
-.nr VS 14
-.IP
-.tl 'Introduction''vii'
-.sp
-.IP
-.tl 'List of Manual Pages''ix'
-.sp
-.IP
-.tl 'Permuted Index''xxxix'
-.sp
-.IP
-.tl 'Reference Manual Section 8''tabbed M8'
-.QP
-Section 8 of the UNIX Programmer's Manual contains information related to
-system operation, administration, and maintenance.
-.sp
-.IP
-.tl 'Installing and Operating 4.4BSD''tabbed 1'
-.QP
-The definitive reference document for those occasions when
-you find you need to start over again.
-.sp
-.IP
-.tl 'Building 4.4BSD Kernels with \fIConfig\fP''tabbed 2'
-.QP
-In-depth discussions of the use and operation of the \fIconfig\fP
-program, and how to build your very own Unix kernel.
-.sp
-.IP
-.tl 'Fsck \- The UNIX File System Check Program''tabbed 3'
-.QP
-A reference document for using the \fIfsck\fP program during
-times of file system distress.
-.sp
-.IP
-.tl 'Disc Quotas in a UNIX Environment''tabbed 4'
-.QP
-A light introduction to the techniques
-for limiting the use of disc resources.
-.sp
-.IP
-.tl 'A Fast File System for UNIX''tabbed 5'
-.QP
-A description of the 4.4BSD file system organization,
-design and implementation.
-.sp
-.IP
-.tl 'The 4.4BSD NFS Implementation''tabbed 6'
-.QP
-An overview of the design, implementation, and use of NFS on 4.4BSD.
-.sp
-.IP
-.tl 'Line Printer Spooler Manual''tabbed 7'
-.QP
-This document describes the structure and installation procedure
-for the line printer spooling system.  
-.sp
-.IP
-.tl 'Sendmail Installation and Operation Guide''tabbed 8'
-.QP
-The last word in installing and operating the \fIsendmail\fP program.
-.sp 0.8
-.IP
-.tl 'Sendmail \- An Internetwork Mail Router''tabbed 9'
-.QP
-An overview document on the design and implementation of \fIsendmail\fP.
-.sp 0.8
-.IP
-.tl 'Name Server Operations Guide for BIND''tabbed 10'
-.QP
-Setting up and operating the name to Internet addressing software.
-If you have a network this will be of interest.
-.sp 0.8
-.IP
-.tl 'Timed Installation and Operation Guide''tabbed 11'
-.QP
-Describes how to maintain time synchronization between machines
-in a local network.
-.sp 0.8
-.IP
-.tl 'The Berkeley UNIX Time Synchronization Protocol''tabbed 12'
-.QP
-The protocols and algorithms used by timed,
-the network time synchronization daemon.
-.sp 0.8
-.IP
-.tl 'AMD \- The 4.4BSD Automounter''tabbed 13'
-.QP
-Automatically mounting file systems on demand.
-.sp 0.8
-.IP
-.tl 'Installation and Operation of UUCP''tabbed 14'
-.QP
-Describes the implementation of uucp; for the installer and administrator.
-.sp 0.8
-.IP
-.tl 'A Dial\-Up Network of UNIX Systems''tabbed 15'
-.QP
-Describes UUCP, a program for communicating files between UNIX systems.
-.sp 0.8
-.IP
-.tl 'On the Security of UNIX''tabbed 16'
-.QP
-Hints on how to break UNIX, and how to avoid your system being broken.
-.sp 0.8
-.IP
-.tl 'Password Security \- A Case History''tabbed 17'
-.QP
-How the bad guys used to be able to break the password algorithm, and why
-they cannot now (at least not so easily).
-.sp 0.8
-.IP
-.tl 'Networking Implementation Notes, 4.4BSD Edition''tabbed 18'
-.QP
-A concise description of the system interfaces used within the
-networking subsystem.
-.sp 0.8
-.IP
-.tl 'The PERL Programming Language''tabbed 19'
-.QP
-The Practical Extraction and Report Language is ideal for
-writing those pesky adminitration scripts.
-.sp 0.8
-.IP
-.tl 'List of Documents''inside back cover'
+.nr PS 14
+.nr VS 17
+.LP
+.TS
+expand;
+l r.
+Introduction	vii
+List of Manual Pages	ix
+Permuted Index	xxix
+Reference Manual Sections 2, 3, 4, 5	tabbed pages
+List of Documents	inside back cover
+.TE
 .if o .bp
 \&
 .EH ''''
@@ -655,14 +541,14 @@ Finally, there is a list of documents on the inside back cover of each volume.
 .ds Dt \\$3
 .so \\$1
 ..
-.t ../../man/man0/toc1 1 "Commands and Application Programs"
-.t ../../man/man0/toc2 2 "System Calls"
-.t ../../man/man0/toc3 3 "C Library Subroutines"
-.t ../../man/man0/toc4 4 "Special Files"
-.t ../../man/man0/toc5 5 "File Formats"
-.t ../../man/man0/toc6 6 "Games"
-.t ../../man/man0/toc7 7 "Miscellaneous"
-.t ../../man/man0/toc8 8 "System Maintenance"
+.t toc1 1 "Commands and Application Programs"
+.t toc2 2 "System Calls"
+.t toc3 3 "C Library Subroutines"
+.t toc4 4 "Special Files"
+.t toc5 5 "File Formats"
+.t toc6 6 "Games"
+.t toc7 7 "Miscellaneous"
+.t toc8 8 "System Maintenance"
 .in -\nxi
 .cs 3
 .ta .5i 1i 1.5i 2i 2.5i 3i 3.5i 4i 4.5i 5i 5.5i 6i 6.5i
@@ -698,6 +584,6 @@ Finally, there is a list of documents on the inside back cover of each volume.
 .ta 6i-\w\\*(s5u
 \h"3i-\w\\$1\\*(s1\\$2\\*(s2u"\\$1\\*(s1\\$2\\*(s2\\$3\\*(s3\\$4\\*y\\$5
 ..
-.so ../../man/man0/ptxx
+.so ptxx
 .cs 3
 .ta .5i 1i 1.5i 2i 2.5i 3i 3.5i 4i 4.5i 5i 5.5i 6i 6.5i
