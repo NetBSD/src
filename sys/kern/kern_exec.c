@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.188 2004/07/18 21:29:26 chs Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.189 2004/09/10 06:09:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.188 2004/07/18 21:29:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.189 2004/09/10 06:09:15 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1304,8 +1304,8 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 	 * in all processes that need this sigcode. The creation is simple,
 	 * we create an object, add a permanent reference to it, map it in
 	 * kernel space, copy out the sigcode to it and unmap it.
-	 * The we map it with PROT_READ|PROT_EXEC into the process just
-	 * the way sys_mmap would map it.
+	 * We map it with PROT_READ|PROT_EXEC into the process just
+	 * the way sys_mmap() would map it.
 	 */
 
 	uobj = *e->e_sigobject;
