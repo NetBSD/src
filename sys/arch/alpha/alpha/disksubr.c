@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.16 1998/10/15 19:08:33 drochner Exp $ */
+/* $NetBSD: disksubr.c,v 1.17 2000/01/18 19:34:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 1998/10/15 19:08:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2000/01/18 19:34:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 1998/10/15 19:08:33 drochner Exp $
 #include <machine/autoconf.h>
 
 extern struct device *bootdv;
-
-#define	b_cylin	b_resid				/* XXX */
 
 /* was this the boot device ? */
 void
@@ -95,7 +93,7 @@ readdisklabel(dev, strat, lp, clp)
 	/* next, dig out disk label */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);  
@@ -131,7 +129,7 @@ readdisklabel(dev, strat, lp, clp)
 			else
 				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
 			bp->b_bcount = lp->d_secsize;
-			bp->b_cylin = lp->d_ncylinders - 1;
+			bp->b_cylinder = lp->d_ncylinders - 1;
 			(*strat)(bp);
 
 			/* if successful, validate, otherwise try another */
@@ -233,7 +231,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;           /* get current label */
 	(*strat)(bp);
