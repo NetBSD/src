@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.91 1999/07/22 21:08:31 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.92 1999/07/25 06:30:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -631,7 +631,7 @@ killpg1(cp, signum, pgid, all)
 		/* 
 		 * broadcast 
 		 */
-		proclist_lock_read(0);
+		proclist_lock_read();
 		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || 
 			    p == cp || !CANSIGNAL(cp, pc, p, signum))
