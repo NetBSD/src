@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.43 2003/05/04 10:01:20 tsutsui Exp $
+#	$NetBSD: files.arc,v 1.44 2003/05/04 10:07:50 tsutsui Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -114,7 +114,6 @@ file arch/arc/arc/cpu.c			cpu
 device	jazzio {}
 attach	jazzio at mainbus		# optional
 file	arch/arc/jazz/jazzio.c		jazzio
-file	arch/arc/jazz/dma.c		# XXX jazzio
 file	arch/arc/jazz/jazzdmatlb.c	# XXX jazzio
 file	arch/arc/jazz/bus_dma_jazz.c	# XXX jazzio
 
