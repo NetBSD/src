@@ -1,6 +1,6 @@
-#	$NetBSD: files.tc,v 1.6 1997/03/15 18:12:02 is Exp $
+#	$NetBSD: files.tc,v 1.7 1997/07/20 20:32:14 pk Exp $
 #
-# Config.new file and device description for machine-independent
+# Config file and device description for machine-independent
 # TurboChannel code.  Included by ports that need it.
 
 device	tc {[slot = -1], [offset = -1]}
