@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.38 1993/11/02 23:14:50 cgd Exp $
+#	$Id: bsd.lib.mk,v 1.39 1993/11/14 16:45:05 pk Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -145,7 +145,7 @@ realinstall:
 	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
-.if !defined(NOPIC) && defined(INSTALL_PIC_ARCHIVE)
+.if !defined(NOPIC)
 #	ranlib lib${LIB}_pic.a
 	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}
