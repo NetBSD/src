@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.9 1996/06/11 03:39:20 scottr Exp $
+#	$NetBSD: SPOT,v 1.10 1996/06/20 04:11:55 scottr Exp $
 #
 # SPOT
 
@@ -23,9 +23,9 @@ options		DDB
 options		FFS
 options		QUOTA		# fast filesystem with user and group quotas
 options		MFS		# memory-based filesystem
-#options	NFSSERVER	# Sun NFS-compatible filesystem
-#options	NFSCLIENT	# Sun NFS-compatible filesystem
-#options	NULLFS		# Null (formerly loop-back) filesystem
+options		NFSSERVER	# Sun NFS-compatible filesystem
+options		NFSCLIENT	# Sun NFS-compatible filesystem
+options		NULLFS		# Null (formerly loop-back) filesystem
 options		CD9660		# ISO-9660 w/ RockRidge
 options		KERNFS		# kernel data-structure filesystem
 options		FDESC		# user file descriptor filesystem
