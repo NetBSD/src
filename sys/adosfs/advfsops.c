@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.42 2000/03/16 18:08:21 jdolecek Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.43 2000/11/08 08:06:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -211,8 +211,12 @@ adosfs_mountfs(devvp, mp, p)
 		amp->bsize = parp->p_fsize * parp->p_frag;
 		amp->secsperblk = parp->p_frag;
 	}
-	amp->rootb = (parp->p_size / amp->secsperblk - 1 + parp->p_cpg) >> 1;
-	amp->numblks = parp->p_size / amp->secsperblk - parp->p_cpg;
+
+	/* invalid fs ? */
+	if (amp->secsperblk == 0) {
+		error = EINVAL;
+		goto fail;
+	}
 
 	bp = NULL;
 	if ((error = bread(devvp, (daddr_t)BBOFF,
@@ -223,10 +227,14 @@ adosfs_mountfs(devvp, mp, p)
 	amp->dostype = adoswordn(bp, 0);
 	brelse(bp);
 
+	/* basic sanity checks */
 	if (amp->dostype < 0x444f5300 || amp->dostype > 0x444f5305) {
 		error = EINVAL;
 		goto fail;
 	}
+
+	amp->rootb = (parp->p_size / amp->secsperblk - 1 + parp->p_cpg) >> 1;
+	amp->numblks = parp->p_size / amp->secsperblk - parp->p_cpg;
 
 	amp->nwords = amp->bsize >> 2;
 	amp->dbsize = amp->bsize - (IS_FFS(amp) ? 0 : OFS_DATA_OFFSET);
