@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.26 2000/10/11 20:23:54 is Exp $	*/
+/*	$NetBSD: create.c,v 1.27 2000/10/15 12:27:25 is Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.26 2000/10/11 20:23:54 is Exp $");
+__RCSID("$NetBSD: create.c,v 1.27 2000/10/15 12:27:25 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,12 +170,12 @@ statf(p)
 	if (keys & F_NLINK && p->fts_statp->st_nlink != 1)
 		output(&indent, "nlink=%u", p->fts_statp->st_nlink);
 	if (keys & F_SIZE && S_ISREG(p->fts_statp->st_mode))
-		output(&indent, "size=%qd", p->fts_statp->st_size);
+		output(&indent, "size=%lld", (long long)p->fts_statp->st_size);
 #ifndef __APPLE__
 # ifdef BSD4_4
 	if (keys & F_TIME)
 		output(&indent, "time=%ld.%ld",
-		    p->fts_statp->st_mtimespec.tv_sec,
+		    (long)p->fts_statp->st_mtimespec.tv_sec,
 		    p->fts_statp->st_mtimespec.tv_nsec);
 # else
 		output(&indent, "time=%ld.%ld",
