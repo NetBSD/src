@@ -1,4 +1,4 @@
-#	$NetBSD: WARPED,v 1.5 1996/03/05 01:32:35 thorpej Exp $
+#	$NetBSD: WARPED,v 1.6 1996/03/16 06:09:15 thorpej Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -57,7 +57,7 @@ com1	at isa? port 0x2f8 irq 3
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
-pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
+pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 fdc0    at isa? port 0x3f0 irq 6 drq 2  # standard PC floppy controllers
 fd*     at fdc? drive ?

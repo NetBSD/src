@@ -1,4 +1,4 @@
-#	$NetBSD: PATEK,v 1.33 1996/03/12 01:32:56 perry Exp $
+#	$NetBSD: PATEK,v 1.34 1996/03/16 06:09:09 thorpej Exp $
 #
 #	PATEK -- Mycroft's 486 test box
 #
@@ -109,7 +109,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #lms1	at isa? port 0x238 irq 5
 mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
+pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
