@@ -1,4 +1,4 @@
-# $NetBSD: md.evbsh3,v 1.7 2000/08/06 22:37:18 wiz Exp $
+# $NetBSD: md.evbsh3,v 1.8 2001/01/16 17:36:03 itojun Exp $
 ./usr/include/evbsh3	comp-c-include
 ./usr/include/evbsh3/ansi.h	comp-c-include
 ./usr/include/evbsh3/aout_machdep.h	comp-c-include
@@ -28,7 +28,6 @@
 ./usr/include/evbsh3/loadfile_machdep.h	comp-c-include
 ./usr/include/evbsh3/lock.h	comp-c-include
 ./usr/include/evbsh3/math.h	comp-c-include
-./usr/include/evbsh3/mmeye.h	comp-c-include
 ./usr/include/evbsh3/param.h	comp-c-include
 ./usr/include/evbsh3/pcb.h	comp-c-include
 ./usr/include/evbsh3/pio.h	comp-c-include
