@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.5 2001/07/11 05:02:39 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.6 2001/07/23 21:21:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1765,6 +1765,7 @@ cpu_upcall(struct lwp *l)
 	tf->tf_eip = (int)((caddr_t) p->p_sigctx.ps_sigcode + (
 		(caddr_t)upcallcode - (caddr_t)sigcode));
 	tf->tf_esp = (int) sf;
+	tf->tf_ebp = 0; /* indicate call-frame-top to debuggers */
 	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
