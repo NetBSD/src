@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.19 2002/12/28 06:14:07 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.20 2002/12/30 01:56:44 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.19 2002/12/28 06:14:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.20 2002/12/30 01:56:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
     void **status)
 {
 	struct acpi_make_devnode_state *state = context;
-#ifdef ACPI_DEBUG
+#if defined(ACPI_DEBUG) || defined(ACPI_EXTRA_DEBUG)
 	struct acpi_softc *sc = state->softc;
 #endif
 	struct acpi_scope *as = state->scope;
