@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.34 2000/07/19 10:52:35 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.35 2000/07/24 15:15:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.34 2000/07/19 10:52:35 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.35 2000/07/24 15:15:25 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -260,7 +260,7 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 		}
 		
 		/*
-		 * We may only change the file's group as non-root.
+		 * We may only change the file's owner as non-root.
 		 */
 		if (myeuid != 0) {
 			if (pw->pw_uid != myeuid)
@@ -489,7 +489,8 @@ log_trim(struct conf_entry *log)
 	pid_t pid;
 
 	/* Remove oldest historical log. */
-	snprintf(file1, sizeof (file1), "%s.%d", log->logfile, log->numhist - 1);
+	snprintf(file1, sizeof (file1), "%s.%d", log->logfile,
+	    log->numhist - 1);
 
 	PRINFO(("rm -f %s\n", file1));
 	if (!noaction)
