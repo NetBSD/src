@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.6 1995/08/01 23:15:36 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.7 1995/08/10 04:21:37 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -116,13 +116,13 @@ struct pmax_fb mfbfb;
 /*
  * Forward references.
  */
-static void mfbScreenInit();
-static void mfbLoadCursor();
+static void mfbScreenInit __P(());
+static void mfbLoadCursor __P((u_short *ptr));
 static void mfbRestoreCursorColor();
-static void mfbCursorColor();
-void mfbPosCursor();
-static void mfbInitColorMap();
-static void mfbLoadColorMap();
+static void mfbCursorColor  __P((u_int *color));
+void mfbPosCursor  __P((int x, int y));
+static void mfbInitColorMap __P(());
+static void mfbLoadColorMap __P((ColorMap *ptr));
 static void mfbConfigMouse(), mfbDeconfigMouse();
 static void bt455_video_on(), bt455_video_off(), bt431_select_reg();
 static void bt431_write_reg(), bt431_init();
@@ -148,10 +148,6 @@ extern int pmax_boardtype;
 extern u_short defCursor[32];
 extern struct consdev cn_tab;
 
-int	mfbprobe();
-struct	driver mfbdriver = {
-	"mfb", mfbprobe, 0, 0,
-};
 
 #define	MFB_OFFSET_VRAM		0x200000	/* from module's base */
 #define MFB_OFFSET_BT431	0x180000	/* Bt431 registers */
@@ -160,20 +156,61 @@ struct	driver mfbdriver = {
 #define MFB_OFFSET_ROM		0x0		/* Diagnostic ROM */
 #define MFB_FB_SIZE		0x200000	/* frame buffer size */
 
-/*
- * Test to see if device is present.
- * Return true if found and initialized ok.
- */
-/*ARGSUSED*/
-mfbprobe(cp)
-	register struct pmax_ctlr *cp;
-{
-	register struct pmax_fb *fp = &mfbfb;
+#include <sys/device.h>
+#include <machine/autoconf.h>
 
-	if (!fp->initialized && !mfbinit(cp->pmax_addr))
+/*
+ * Autoconfiguration data for config.new.
+ * Use static-sized softc until config.old and old autoconfig
+ * code is completely gone.
+ */
+
+int mfbmatch __P((struct device *, void *, void *));
+void mfbattach __P((struct device *, struct device *, void *));
+
+struct cfdriver mfbcd = {
+	NULL, "mfb", mfbmatch, mfbattach, DV_DULL, sizeof(struct device), 0
+};
+
+int
+mfbmatch(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct cfdata *cf = match;
+	struct confargs *ca = aux;
+	static int nmfbs = 1;
+
+	/* make sure that we're looking for this type of device. */
+	if (!BUS_MATCHNAME(ca, "PMAG-AA "))
 		return (0);
-	printf("mfb0 (mono display)\n");
+
+#ifdef notyet
+	/* if it can't have the one mentioned, reject it */
+	if (cf->cf_unit >= nmfbs)
+		return (0);
+#endif
 	return (1);
+}
+
+void
+mfbattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct confargs *ca = aux;
+
+	if (!mfbinit(BUS_CVTADDR(ca)))
+		return;
+
+	/* mark slot as potential console */
+	framebuffer_in_slot(ca->ca_slotpri);
+
+	/* no interrupts for MFB */
+	/*BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);*/
+	printf("\n");
 }
 
 /*ARGSUSED*/
