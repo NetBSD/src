@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.73 1999/11/28 17:36:34 scw Exp $
+# $NetBSD: md_share,v 1.74 1999/12/15 20:38:41 garbled Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -280,7 +280,6 @@
 ./usr/share/man/cat8/hpcmips/makedev.0
 ./usr/share/man/cat8/i386/MAKEDEV.0
 ./usr/share/man/cat8/i386/apm.0
-./usr/share/man/cat8/i386/apmd.0
 ./usr/share/man/cat8/i386/boot.0
 ./usr/share/man/cat8/i386/boot_console.0
 ./usr/share/man/cat8/i386/dosboot.0

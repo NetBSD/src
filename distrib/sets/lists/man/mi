@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.181 1999/12/12 11:37:17 augustss Exp $
+# $NetBSD: mi,v 1.182 1999/12/15 20:38:41 garbled Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -634,6 +634,7 @@
 ./usr/share/man/cat8/adduser.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amq.0
+./usr/share/man/cat8/apmd.0
 ./usr/share/man/cat8/arp.0
 ./usr/share/man/cat8/atactl.0
 ./usr/share/man/cat8/atrun.0
@@ -1544,6 +1545,7 @@
 ./usr/share/man/man8/adduser.8
 ./usr/share/man/man8/amd.8
 ./usr/share/man/man8/amq.8
+./usr/share/man/man8/apmd.8
 ./usr/share/man/man8/arp.8
 ./usr/share/man/man8/atactl.8
 ./usr/share/man/man8/atrun.8
