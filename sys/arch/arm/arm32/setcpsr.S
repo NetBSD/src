@@ -1,4 +1,4 @@
-/*	$NetBSD: setcpsr.S,v 1.1 2001/07/28 13:28:03 chris Exp $	*/
+/*	$NetBSD: setcpsr.S,v 1.2 2002/08/15 01:37:02 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -56,7 +56,7 @@
  */
 
 ENTRY_NP(SetCPSR)
-        mrs     r3, cpsr_all		/* Set the CPSR */
+        mrs     r3, cpsr		/* Set the CPSR */
 	bic	r2, r3, r0
         eor     r2, r2, r1
         msr     cpsr_all, r2
@@ -72,7 +72,7 @@ ENTRY_NP(SetCPSR)
  */
 
 ENTRY_NP(GetCPSR)
-        mrs     r0, cpsr_all		/* Get the CPSR */
+        mrs     r0, cpsr		/* Get the CPSR */
 
 	mov	pc, lr
 

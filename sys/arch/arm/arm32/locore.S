@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2002/04/25 23:23:23 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2002/08/15 01:37:02 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -54,15 +54,15 @@
 ENTRY_NP(kernel_text)
 
 ASENTRY_NP(start)
-	add	r1, pc, #(Lstart - . - 8)
+	add	r1, pc, #(.Lstart - . - 8)
 	ldmia	r1, {r1, r2, sp}	/* Set initial stack and */
 	sub	r2, r2, r1		/* get zero init data */
 	mov	r3, #0
 
-L1:
+.L1:
 	str	r3, [r1], #0x0004	/* Zero the bss */
 	subs	r2, r2, #4
-	bgt	L1
+	bgt	.L1
 
 	mov	fp, #0x00000000		/* trace back starts here */
 	bl	_C_LABEL(initarm)	/* Off we go */
@@ -81,7 +81,7 @@ L1:
 	b	_C_LABEL(panic)
 	/* NOTEACHED */
 
-Lstart:
+.Lstart:
 	.word	_edata
 	.word	_end
 	.word	svcstk + INIT_ARM_STACK_SIZE
@@ -104,7 +104,7 @@ Lcpufuncs:
 	.word	_C_LABEL(cpufuncs)
 
 ENTRY_NP(cpu_reset)
-	mrs     r2, cpsr_all
+	mrs     r2, cpsr
 	bic	r2, r2, #(PSR_MODE)
 	orr     r2, r2, #(PSR_SVC32_MODE)
 	orr	r2, r2, #(I32_bit | F32_bit)
@@ -114,10 +114,10 @@ ENTRY_NP(cpu_reset)
 	ldr	r4, [r4]
 
 	ldr	r0, Lcpufuncs
-	add	lr, pc, #Lboot_cache_purged - . - 8
+	add	lr, pc, #.Lboot_cache_purged - . - 8
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
-Lboot_cache_purged:
+.Lboot_cache_purged:
 
 	/*
 	 * Load the cpu_reset_needs_v4_MMU_disable flag to determine if it's
@@ -170,18 +170,18 @@ ENTRY_NP(Execute)
 	stmfd	sp!, {r2, r4-r7, fp, ip, lr, pc}
 	sub	fp, ip, #4
 	mov	ip, r3
-	ldr	r7, return
+	ldr	r7, .Lreturn
 	stmfd	sp!, {r0, r7}
-	add	r7, pc, #LExec - . - 8
+	add	r7, pc, #.LExec - . - 8
 	mov	r5, r1
-	mrs	r4, cpsr_all
+	mrs	r4, cpsr
 	ldmia	r2, {r0-r3}
 	mov	r6, sp
 	mov	sp, ip
 	msr	cpsr_all, r5
 	mov	pc, r6
-LExec:
-	mrs	r5, cpsr_all
+.LExec:
+	mrs	r5, cpsr
 /* XXX Cannot switch thus easily back from user mode */
 	msr	cpsr_all, r4
 	add	sp, r6, #8
@@ -189,7 +189,7 @@ LExec:
 	stmia	r6, {r0-r3}
 	mov	r0, r5
 	ldmdb	fp, {r4-r7, fp, sp, pc}
-return:
+.Lreturn:
 	mov	pc, r7
 #endif
 
@@ -219,7 +219,7 @@ ENTRY_NP(abort)
  */
 
 ENTRY(atomic_set_bit)
-	mrs	r2, cpsr_all
+	mrs	r2, cpsr
 	orr	r3, r2, #(I32_bit)
 	msr	cpsr_all, r3
 
@@ -232,7 +232,7 @@ ENTRY(atomic_set_bit)
 
 
 ENTRY(atomic_clear_bit)
-	mrs	r2, cpsr_all
+	mrs	r2, cpsr
 	orr	r3, r2, #(I32_bit)
 	msr	cpsr_all, r3
 
