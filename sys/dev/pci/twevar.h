@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.13 2002/12/13 23:31:33 christos Exp $	*/
+/*	$NetBSD: twevar.h,v 1.14 2003/09/21 18:35:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -119,5 +119,19 @@ static __inline__ size_t twe_get_maxsegs(void) {
 static __inline__ size_t twe_get_maxxfer(size_t maxsegs) {
 	return (maxsegs - 1) * PAGE_SIZE;
 }
+
+/*
+ * Structures used to convert numeric codes to strings.
+ */
+struct twe_code_table {
+	uint32_t	code;
+	const char	*string;
+};
+extern const struct twe_code_table twe_table_status[];
+extern const struct twe_code_table twe_table_unitstate[];
+extern const struct twe_code_table twe_table_unittype[];
+extern const struct twe_code_table twe_table_stripedepth[];
+
+const char *twe_describe_code(const struct twe_code_table *, uint32_t);
 
 #endif	/* !_PCI_TWEVAR_H_ */
