@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.11 1998/09/16 13:36:23 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.12 1998/09/20 19:37:51 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,7 +62,8 @@ struct module_info {
 	void (*cache_enable)__P((void));
 	int  ncontext;			/* max. # of contexts (we use) */
 
-	void (*get_faultstatus)__P((void));
+	void (*get_syncflt)__P((void));
+	int  (*get_asyncflt)__P((u_int *, u_int *));
 	void (*cache_flush)__P((caddr_t, u_int));
 	void (*vcache_flush_page)__P((int));
 	void (*vcache_flush_segment)__P((int, int));
@@ -70,8 +71,7 @@ struct module_info {
 	void (*vcache_flush_context)__P((void));
 	void (*pcache_flush_line)__P((int, int));
 	void (*pure_vcache_flush)__P((void));
-	void (*memerr)__P((unsigned, u_int, u_int, u_int, u_int,
-			   struct trapframe *));
+	void (*memerr)__P((unsigned, u_int, u_int, struct trapframe *));
 };
 
 
@@ -167,7 +167,14 @@ struct cpu_info {
 	void	(*hotfix) __P((struct cpu_info *));
 
 	/* locore defined: */
-	void	(*get_faultstatus) __P((void));
+	void	(*get_syncflt) __P((void));		/* Not C-callable */
+	int	(*get_asyncflt) __P((u_int *, u_int *));
+
+	/* Synchronous Fault Status; temporary storage */
+	struct {
+		int	sfsr;
+		int	sfva;
+	} syncfltdump;
 
 	/* Cache handling functions */
 	void	(*cache_enable) __P((void));
@@ -193,9 +200,7 @@ struct cpu_info {
 	 * Memory error handler; parity errors, unhandled NMIs and other
 	 * unrecoverable faults end up here.
 	 */
-	void	(*memerr)__P((unsigned, u_int, u_int, u_int, u_int,
-			      struct trapframe *));
-	/* XXX: Add more here! */
+	void	(*memerr)__P((unsigned, u_int, u_int, struct trapframe *));
 };
 
 /*
