@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.41 2000/12/01 12:28:34 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.42 2000/12/01 21:48:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -28,22 +28,24 @@
  * SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
-#include "opt_compat_freebsd.h"
-#include "opt_compat_linux.h"
-#include "opt_compat_sunos.h"
 #include "opt_compat_43.h"
 #include "opt_sysv.h"
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
-    defined(COMPAT_FREEBSD)
-#define COMPAT_OLDSOCK /* used by <sys/socket.h> */
-#endif
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
+#endif
+
+/*
+ * Though COMPAT_OLDSOCK is needed only for COMPAT_43, SunOS, Linux,
+ * HP-UX, FreeBSD, Ultrix, OSF1, we define it unconditionally so that
+ * this would be LKM-safe.
+ */
+#define COMPAT_OLDSOCK /* used by <sys/socket.h> */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +89,7 @@
 #include <net/if.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <machine/frame.h>
@@ -94,6 +97,9 @@
 #if defined(DDB)
 #include <ddb/ddbvar.h>
 #endif
+
+/* this is provided by kern/kern_exec.c */
+extern int exec_maxhdrsz;
 
 static __inline void netbsd32_from_timeval __P((struct timeval *, struct netbsd32_timeval *));
 static __inline void netbsd32_to_timeval __P((struct netbsd32_timeval *, struct timeval *));
@@ -129,6 +135,29 @@ static int dofilereadv32 __P((struct proc *, int, struct file *, struct netbsd32
 static int dofilewritev32 __P((struct proc *, int, struct file *, struct netbsd32_iovec *, 
 			       int,  off_t *, int, register_t *));
 static int change_utimes32 __P((struct vnode *, struct timeval *, struct proc *));
+
+extern char netbsd32_sigcode[], netbsd32_esigcode[];
+extern struct sysent netbsd32_sysent[];
+#ifdef SYSCALL_DEBUG
+extern const char * const netbsd32_syscallnames[];
+#endif
+
+const struct emul emul_netbsd32 = {
+	"netbsd32",
+	"/emul/netbsd32",
+	NULL,
+	netbsd32_sendsig,
+	netbsd32_SYS_syscall,
+	netbsd32_SYS_MAXSYSCALL,
+	netbsd32_sysent,
+#ifdef SYSCALL_DEBUG
+	netbsd32_syscallnames,
+#else
+	NULL,
+#endif
+	netbsd32_sigcode,
+	netbsd32_esigcode,
+};
 
 /* converters for structures that we need */
 static __inline void
@@ -268,6 +297,7 @@ netbsd32_to_iovecin(iov32p, iovp, len)
 		iovp->iov_base = (void *)(u_long)iov_base;
 		iovp->iov_len = (size_t)iov_len;
 	}
+	return error;
 }
 
 /* msg_iov must be done separately */
@@ -580,7 +610,7 @@ netbsd32_exit(p, v, retval)
 	struct sys_exit_args ua;
 
 	NETBSD32TO64_UAP(rval);
-	sys_exit(p, &ua, retval);
+	return sys_exit(p, &ua, retval);
 }
 
 int
@@ -1564,6 +1594,7 @@ netbsd32_profil(p, v, retval)
 	return (sys_profil(p, &ua, retval));
 }
 
+#ifdef KTRACE
 int
 netbsd32_ktrace(p, v, retval)
 	struct proc *p;
@@ -1584,6 +1615,7 @@ netbsd32_ktrace(p, v, retval)
 	NETBSD32TO64_UAP(pid);
 	return (sys_ktrace(p, &ua, retval));
 }
+#endif /* KTRACE */
 
 int
 netbsd32_sigaction(p, v, retval)
@@ -4094,8 +4126,7 @@ netbsd32_mmap(p, v, retval)
 	NETBSD32TOX_UAP(pos, off_t);
 	error = sys_mmap(p, &ua, (register_t *)&rt);
 	if ((long)rt > (long)UINT_MAX)
-		printf("netbsd32_mmap: retval out of range: 0x%qx",
-		    rt);
+		printf("netbsd32_mmap: retval out of range: %p", rt);
 	*retval = (netbsd32_voidp)(u_long)rt;
 	return (error);
 }
@@ -5198,7 +5229,7 @@ netbsd32___stat13(p, v, retval)
 	int error;
 	struct nameidata nd;
 	caddr_t sg;
-	char *path;
+	const char *path;
 
 	path = (char *)(u_long)SCARG(uap, path);
 	sg = stackgap_init(p->p_emul);
@@ -5272,7 +5303,7 @@ netbsd32___lstat13(p, v, retval)
 	int error;
 	struct nameidata nd;
 	caddr_t sg;
-	char *path;
+	const char *path;
 
 	path = (char *)(u_long)SCARG(uap, path);
 	sg = stackgap_init(p->p_emul);
@@ -5399,6 +5430,7 @@ netbsd32_getsid(p, v, retval)
 	return (sys_getsid(p, &ua, retval));
 }
 
+#ifdef KTRACE
 int
 netbsd32_fktrace(p, v, retval)
 	struct proc *p;
@@ -5419,6 +5451,7 @@ netbsd32_fktrace(p, v, retval)
 	NETBSD32TO64_UAP(pid);
 	return (sys_fktrace(p, &ua, retval));
 }
+#endif /* KTRACE */
 
 int
 netbsd32_preadv(p, v, retval)
