@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.14 2001/07/22 11:29:47 wiz Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -263,6 +263,8 @@ adjust_timing(chp)
 				dmamode = drvp->DMA_mode;
 		}
 	}
+	if (piomode == -1)
+		return; /* No drive */
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		if (drvp->drive_flags & DRIVE) {
