@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.24 2002/06/09 12:19:39 martin Exp $
+.\" $NetBSD: gre.4,v 1.25 2002/06/09 19:17:43 itojun Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,17 +112,14 @@ be given as
 .Bl -tag -width bbb
 .It link0
 IPPROTO_GRE
-.It link2
+.It -link0
 IPPROTO_MOBILE
 .El
-to
-.Ic ifconfig .
-As the linkN flags are not mutually exclusive, modes must be set by applying
-positive and negative flags as e.g.
-.Ic ifconfig
-link0 -link1 -link2
 .Pp
-Side note: the link1 flag is not used to choose encapsulation, but
+to
+.Xr ifconfig 8 .
+.Pp
+The link1 flag is not used to choose encapsulation, but
 to modify the internal route search for the remote
 tunnel endpoint, see the bugs section below.
 .It GREGPROTO :
@@ -147,7 +144,7 @@ On host A
 .Bd -literal
    # route add default B
    # ifconfig greN create
-   # greconfig -i greN -s A -d D
+   # ifconfig greN tunnel A D
    # ifconfig greN A D netmask 0xffffffff linkX up
    # route add E D
 .Ed
@@ -167,7 +164,7 @@ On Host D
 .Bd -literal
    # route add default C
    # ifconfig greN create
-   # greconfig -i greN -s d -d A
+   # ifconfig tunnel greN D A
    # ifconfig greN D A
 .Ed
 .Pp
@@ -198,7 +195,7 @@ Assuming router A has the (external) IP address A and the internal address
 On router A:
 .Bd -literal
    # ifconfig greN create
-   # greconfig -i greN -s A -d B
+   # ifconfig greN tunnel A B
    # ifconfig greN 192.168.1.1 192.168.2.1 link1
    # route add -net 192.168.2 -netmask 255.255.255.0 192.168.2.1
 .Ed
@@ -206,7 +203,7 @@ On router A:
 On router B:
 .Bd -literal
    # ifconfig greN create
-   # greconfig -i greN -s B -d A
+   # ifconfig greN tunnel B A
    # ifconfig greN 192.168.2.1 192.168.1.1 link1
    # route add -net 192.168.1 -netmask 255.255.255.0 192.168.1.1
 .Ed
@@ -228,7 +225,8 @@ one over the tunnel.
 (Basically, there needs to be a route to the decapsulating host that
 does not run over the tunnel, as this would be a loop ..)
 If the addresses are ambigous, doing the
-.Xr greconfig 8
+.Xr ifconfig 8
+.Li tunnel
 step before the
 .Xr ifconfig 8
 call to set the
@@ -253,7 +251,6 @@ in the kernel config file or by issuing the appropriate option to
 .Xr netintro 4 ,
 .Xr options 4 ,
 .Xr protocols 5 ,
-.Xr greconfig 8 ,
 .Xr ifconfig 8 ,
 .Xr sysctl 8
 .Pp
@@ -269,8 +266,9 @@ one directly over the tunnel to prevent loops. This is possibly not
 the best solution.
 .Pp
 To avoid the address munging described above, turn on the link1 flag
-on the ifconfig command line.  This implies that the GRE packet
-destination (set via greconfig -d) and the ifconfig remote host are
+on the ifconfig command line.
+This implies that the GRE packet
+destination and the ifconfig remote host are
 not the same IP addresses, and that the GRE destination does not route
 over the greX interface itself.
 .Pp
