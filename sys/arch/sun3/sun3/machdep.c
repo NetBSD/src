@@ -1,4 +1,6 @@
-/* Copyright (c) 1993 Adam Glass
+/*
+ * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +40,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.36 1994/07/27 04:52:00 gwr Exp $
+ *	$Id: machdep.c,v 1.37 1994/09/20 16:50:28 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -92,15 +94,16 @@
 
 #include <net/netisr.h>
 
-#ifdef COMPAT_SUNOS
-void sun_sendsig();
-#endif
-
 extern char *cpu_string;
 int physmem;
 int cold;
 extern char kstack[];
 extern short exframesize[];
+
+#ifdef COMPAT_SUNOS
+void sun_sendsig();
+static void hack_sun_reboot();	/* XXX - Temporary hack... */
+#endif
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -166,6 +169,11 @@ void load_u_area(pcbp)
 }
 
 
+/*
+ * This is called early in init_main.c:main(), after the
+ * kernel memory allocator is ready for use, but before
+ * the creation of process 0,1,2 and mountroot, etc.
+ */
 void cpu_startup()
 {
     caddr_t v;
@@ -173,8 +181,6 @@ void cpu_startup()
     vm_size_t size;    
     int base, residual;
     vm_offset_t minaddr, maxaddr, uarea_pages;
-
-	/* XXX - Get boot parameters from PROM. */
 
     /* msgbuf mapped earlier, should figure out why? */
     printf(version);
@@ -276,11 +282,10 @@ void cpu_startup()
      */
     nofault = NULL;
     configure();
-
-	swapconf();
-	dumpconf();
-
-    cold = 0;
+	cold = 0;
+#ifdef	COMPAT_SUNOS
+	hack_sun_reboot();	/* XXX - Temporary hack... */
+#endif
 }
 
 /*
@@ -346,18 +351,14 @@ allocsys(v)
 	return v;
 }
 
-void internal_configure()
-{
-    obio_internal_configure();
-}
-
+/*
+ * This is called at the beginning of init_main.c:main()
+ * to get the console device ready for kernel printf calls.
+ */
 void consinit()
 {
     extern void cninit();
     cninit();
-
-	/* XXX - Temporary hack... */
-    boothowto = RB_SINGLE | RB_NOSYNC | RB_KDB;
 
 #ifdef DDB
 	/* Well, this is where the hp300 does it... -gwr */
@@ -365,11 +366,6 @@ void consinit()
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif DDB
-}
-
-void cpu_reset()
-{
-    sun3_rom_reboot();
 }
 
 /*
@@ -546,8 +542,6 @@ struct hpuxsigframe {
 	int	hsf_regs[15];
 };
 #endif
-
-#define	DEBUG XXX
 
 #ifdef DEBUG
 int sigdebug = 0;
@@ -1053,94 +1047,236 @@ sigreturn(p, uap, retval)
 	return (EJUSTRETURN);
 }
 
-int waittime = -1;
 
-void boot(howto)
-     int howto;
+/*
+ * Do a sync in preparation for a reboot.
+ * XXX - This could probably be common code. -gwr
+ */
+int waittime = -1;	/* XXX - Who else looks at this? -gwr */
+static void reboot_sync()
 {
-    printf("kernel ended deliberately\n");
-
-    if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
 	struct buf *bp;
 	int iter, nbusy;
 
+	if (waittime >= 0)
+		return;
 	waittime = 0;
+
+	/* XXX - Should this be spl0() like hp300? -gwr */
 	(void) splnet();
+
 	printf("syncing disks... ");
-		/*
-		 * Release inodes held by texts before update.
-		 */
+	/*
+	 * Release vnodes held by texts before sync.
+	 */
 	if (panicstr == 0)
-	    vnode_pager_umount(NULL);
+		vnode_pager_umount(NULL);
+
 	sync(&proc0, (void *)0, (int *)0);
 	
 	for (iter = 0; iter < 20; iter++) {
-	    nbusy = 0;
-	    for (bp = &buf[nbuf]; --bp >= buf; )
-		if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-		    nbusy++;
-	    if (nbusy == 0)
-		break;
-	    printf("%d ", nbusy);
-	    DELAY(40000 * iter);
+		nbusy = 0;
+		for (bp = &buf[nbuf]; --bp >= buf; )
+			if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
+				nbusy++;
+		if (nbusy == 0)
+			break;
+		printf("%d ", nbusy);
+		DELAY(40000 * iter);
 	}
 	if (nbusy)
-	    printf("giving up\n");
+		printf("giving up\n");
 	else
-	    printf("done\n");
+		printf("done\n");
 	DELAY(10000);			/* wait for printf to finish */
-    }
-    /*
-     * If we've been adjusting the clock, the todr
-     * will be out of synch; adjust it now.
-     */
-    resettodr();
-    splhigh();
-    if (howto&RB_HALT) {
-	printf("\n");
-	printf("The operating system has halted.\n");
-	sun3_rom_halt();
-    } else {
-	if (howto & RB_DUMP) {
-		dumpsys();
-	}
-    }
-    sun3_rom_reboot();
-    for(;;) ;
-    /*NOTREACHED*/
 }
+
+/*
+ * Common part of the BSD and SunOS reboot system calls.
+ */
+static int reboot2(howto, user_boot_string)
+	int howto;
+	char *user_boot_string;
+{
+	char *bs, *p;
+	char default_boot_string[16];
+
+	if ((howto & RB_NOSYNC) == 0) {
+		reboot_sync();
+	}
+
+	/*
+	 * If we've been adjusting the clock, the todr
+	 * will be out of synch; adjust it now.
+	 */
+	resettodr();
+
+	/* Write out a crash dump if asked. */
+	splhigh();
+	if (howto & RB_DUMP)
+		dumpsys();
+
+	if (howto & RB_HALT) {
+		printf("Kernel halted.\n");
+		sun3_rom_halt();
+	}
+
+	/*
+	 * Automatic reboot.
+	 */
+	bs = user_boot_string;
+	if (bs == NULL) {
+		/*
+		 * Build our own boot string with an empty
+		 * boot device/file and (maybe) some flags.
+		 * The PROM will supply the device/file name.
+		 */
+		bs = default_boot_string;
+		*bs = '\0';
+		if (howto & (RB_KDB|RB_ASKNAME|RB_SINGLE)) {
+			/* Append the boot flags. */
+			p = bs;
+			*p++ = ' ';
+			*p++ = '-';
+			if (howto & RB_KDB)
+				*p++ = 'd';
+			if (howto & RB_ASKNAME)
+				*p++ = 'a';
+			if (howto & RB_SINGLE)
+				*p++ = 's';
+			*p = '\0';
+		}
+	}
+	printf("Kernel rebooting...\n");
+	sun3_rom_reboot(bs);
+	/*NOTREACHED*/
+}
+
+/*
+ * BSD reboot system call
+ * XXX - Should be named: cpu_reboot maybe? -gwr
+ * XXX - It would be nice to allow a second argument
+ * that specifies a machine-dependent boot string that
+ * is passed to the boot program if RB_STRING is set.
+ */
+void boot(howto)
+	int howto;
+{
+	(void) reboot2(howto, NULL);
+}
+
+#ifdef	COMPAT_SUNOS
+/*
+ * SunOS reboot system call (for compatibility).
+ * Sun lets you pass in a boot string which the PROM
+ * saves and provides to the next boot program.
+ * XXX - Stuff this into sun_sysent at boot time?
+ */
+static struct sun_howto_conv {
+	int sun_howto;
+	int bsd_howto;
+} sun_howto_conv[] = {
+	0x001,	RB_ASKNAME,
+	0x002,	RB_SINGLE,
+	0x004,	RB_NOSYNC,
+	0x008,	RB_HALT,
+	0x080,	RB_DUMP,
+};
+struct sun_reboot_args {
+	int howto;
+	char *bootstr;
+};
+int sun_reboot(p, uap, retval)
+	struct proc *p;
+	struct sun_reboot_args *uap;
+	int *retval;
+{
+	struct sun_howto_conv *convp;
+	int error, bsd_howto, sun_howto;
+	char bs[128];
+	char *bsd_bootstr = NULL;
+
+	if (error = suser(p->p_ucred, &p->p_acflag))
+		return (error);
+
+	/*
+	 * Convert howto bits to BSD format.
+	 */
+	sun_howto = uap->howto;
+	bsd_howto = 0;
+	convp = sun_howto_conv;
+	while (convp->sun_howto) {
+		if (sun_howto &  convp->sun_howto)
+			bsd_howto |= convp->bsd_howto;
+		convp++;
+	}
+
+	/*
+	 * Sun RB_STRING (Get user supplied bootstring.)
+	 */
+	bsd_bootstr = NULL;
+	if (sun_howto & 0x200) {
+		error = copyinstr(uap->bootstr, bs, sizeof(bs), 0);
+		if (error) return error;
+		bsd_bootstr = bs;
+	}
+
+	return (reboot2(bsd_howto, bsd_bootstr));
+}
+/*
+ * XXX - Temporary hack:  Install sun_reboot() syscall.
+ * Fix compat/sunos/sun_sysent instead.
+ */
+static void hack_sun_reboot()
+{
+	extern struct sysent sun_sysent[];
+	sun_sysent[55].sy_narg = 2;
+	sun_sysent[55].sy_call = sun_reboot;
+}
+#endif	/* COMPAT_SUNOS */
 
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number for savecore */
-int	dumpsize = 0;		/* also for savecore */
-long	dumplo = 0;
+u_long	dumpmag = 0x8fca0101;	/* magic number */
+int 	dumpsize = 0;		/* pages */
+long	dumplo = 0; 		/* blocks */
 
+/*
+ * This is called by cpu_startup to set dumplo, dumpsize.
+ * Dumps always skip the first CLBYTES of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end.
+ */
+void
 dumpconf()
 {
-	int nblks;
+	int nblks;	/* size of dump area */
+	int maj;
+	int (*getsize)();
 
-	dumpsize = physmem;
+	if (dumpdev == NODEV)
+		return;
 
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		/*
-		 * Don't dump on the first CLBYTES (why CLBYTES?)
-		 * in case the dump device includes a disk label.
-		 */
-		if (dumplo < btodb(CLBYTES))
-			dumplo = btodb(CLBYTES);
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	getsize = bdevsw[maj].d_psize;
+	if (getsize == NULL)
+		return;
+	nblks = (*getsize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
 
-		/*
-		 * If dumpsize is too big for the partition, truncate it.
-		 * Otherwise, put the dump at the end of the partition
-		 * by making dumplo as large as possible.
-		 */
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo + ctod(dumpsize) > nblks)
-			dumplo = nblks - ctod(dumpsize);
+	/* Position dump image near end of space, page aligned. */
+	dumpsize = physmem; /* pages */
+	dumplo = nblks - ctod(dumpsize);
+	dumplo &= ~(ctod(1)-1);
+
+	/* If it does not fit, truncate it by moving dumplo. */
+	if (dumplo < ctod(1)) {
+		dumplo = ctod(1);
+		dumpsize = dtoc(nblks - dumplo);
 	}
 }
 
