@@ -1,14 +1,14 @@
-# $NetBSD: INSTALL,v 1.4.2.2 2000/09/02 21:40:17 is Exp $
+# $NetBSD: INSTALL,v 1.4.2.3 2001/01/25 17:04:14 jhawk Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.143.2.3 2000/08/11 20:18:00 mason Exp $
+#$ NetBSD: GENERIC,v 1.143.2.5 2001/01/25 16:40:57 jhawk Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.4.2.2 $"
+#ident  		"GENERIC-$Revision: 1.4.2.3 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -221,7 +221,7 @@ lpt0		at drsupio? port ?	# DraCo parallel
 
 #Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
-ne*		at zbus0		# AriadneII
+ne*		at zbus0		# AriadneII, X-surf
 ed*		at zbus0		# Hydra, ASDG LanRover
 es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
@@ -329,7 +329,7 @@ pseudo-device	ccd		4	# concatenated disk devices
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 #rnd is EXPERIMENTAL at this point.
-#pseudo-device  rnd                     # /dev/random and in-kernel generator
+pseudo-device  rnd                     # /dev/random and in-kernel generator
 #options        RND_COM                 # use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?
