@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.81 1998/02/22 09:31:00 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.82 1998/02/22 15:13:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4432,8 +4432,7 @@ Lsw_panic_srun:
  * IT MIGHT BE WORTH SAVING BEFORE ENTERING idle TO AVOID HAVING TO
  * SAVE LATER WHEN SOMEONE ELSE IS READY ... MUST MEASURE!
  */
-	.globl	_runtime
-	.globl	_time
+	.globl	___ffstab
 ENTRY(cpu_switch)
 	/*
 	 * REGISTER USAGE AT THIS POINT:
@@ -4479,22 +4478,13 @@ ENTRY(cpu_switch)
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
-	/*
-	 * We're about to run a (possibly) new process.  Set runtime
-	 * to indicate its start time.
-	 */
-	sethi	%hi(_time), %o0
-	ldd	[%o0 + %lo(_time)], %o2
-	sethi	%hi(_runtime), %o0
-	std	%o2, [%o0 + %lo(_runtime)]
-
 	ld	[%g2 + %lo(_whichqs)], %o3
 
 	/*
 	 * Optimized inline expansion of `which = ffs(whichqs) - 1';
 	 * branches to idle if ffs(whichqs) was 0.
 	 */
-	set	ffstab, %o2
+	set	___ffstab, %o2
 	andcc	%o3, 0xff, %o1		! byte 0 zero?
 	bz,a	1f			! yes, try byte 1
 	 srl	%o3, 8, %o0
