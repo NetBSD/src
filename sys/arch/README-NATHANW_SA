@@ -1,0 +1,30 @@
+$NetBSD: README-NATHANW_SA,v 1.1.2.1 2002/06/20 22:40:31 thorpej Exp $
+
+The following people are working on various architectures for
+the nathanw_sa branch.  Please contact these people to coordinate
+changes made to these platform's files:
+
+	alpha		Nathan Williams <nathanw@netbsd.org>
+
+	arm		Jason Thorpe <thorpej@netbsd.org>
+			Ben Harris <thorpej@netbsd.org>
+
+	i386		Nathan Williams <nathanw@netbsd.org>
+
+	m68k		Gregory McGarry <gmcgarry@netbsd.org>
+
+	mips		Gregory McGarry <gmcgarry@netbsd.org>
+			Wayne Knowles <wdk@netbsd.org>
+
+	powerpc		Allen Briggs <briggs@netbsd.org>
+			Nathan Williams <nathanw@netbsd.org>
+
+	sh3		Jason Thorpe <thorpej@netbsd.org>
+
+	sparc		Paul Krannenburg <pk@netbsd.org>
+
+	sparc64		Andrey Petrov <petrov@netbsd.org>
+
+	vax		Anders Magnussen <ragge@netbsd.org>
+
+	x86_64		Frank van der Linden <fvdl@netbsd.org>
