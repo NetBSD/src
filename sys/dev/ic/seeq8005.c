@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.7 2000/12/14 06:27:26 thorpej Exp $ */
+/* $NetBSD: seeq8005.c,v 1.8 2000/12/23 16:37:20 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -58,7 +58,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.7 2000/12/14 06:27:26 thorpej Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.8 2000/12/23 16:37:20 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -235,10 +235,10 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr)
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
 
-	printf("\n");
-
 	/* Test the RAM */
 	ea_ramtest(sc);
+
+	printf("\n");
 }
 
 
