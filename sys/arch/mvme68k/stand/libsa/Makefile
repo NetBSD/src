@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/03/27 20:18:25 scw Exp $
+#	$NetBSD: Makefile,v 1.22 2003/02/04 13:34:56 matt Exp $
 
 LIB=sa
 
@@ -27,7 +27,7 @@ SRC_sa= alloc.c \
 	open.c \
 	panic.c printf.c \
 	read.c \
-	sprintf.c strerror.c subr_prf.c \
+	snprintf.c sprintf.c strerror.c subr_prf.c \
 	twiddle.c \
 	udp.c ufs.c
 
@@ -54,6 +54,7 @@ DEFS= ${DBG} #-fno-defer-pop
 CPPFLAGS+= -DSUPPORT_BOOTP -DSUPPORT_DHCP
 CPPFLAGS+= -DSUPPORT_RARP -DSUPPORT_BOOTPARAM
 CPPFLAGS+= -DSUPPORT_NFS -DNFS_NOSYMLINK
+CPPFLAGS+= -D__daddr_t=int32_t
 
 CLEANFILES+= SRT0.o
 
