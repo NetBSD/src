@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.40 1997/07/20 19:48:08 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.41 1997/08/09 03:41:07 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2155,9 +2155,10 @@ END(mips3_switch_exit)
  * Also, there should be no TLB faults at this point.
  *
  * Entered from CPU-common cpu_switch()
- * v0 = Address Space Identifier (TLB PID) for this process
- * t0 = First u.pte
- * t1 = Second u.pte
+ * a0 = p_addr [curpcb]
+ * a1 = First u.pte
+ * a2 = Second u.pte
+ * a3 = Address Space Identifier (TLB PID) for this process
  */
 /*
  * XXXX - almost done with the UADDR mapping; only the kernel stack should
@@ -2168,15 +2169,19 @@ END(mips3_switch_exit)
  * begins on an even or odd page.  Also, any current mapping for the u-area
  * address space needs to be flushed as well.
  *
+ * Both UADDR and p_addr are mapped global.
+ *
  * NB: cannot be profiled due to weird argument-assing convention.
  *     mcount would trash v0, t0, t1.
  */
 NLEAF(mips3_cpu_switch_resume)
-	or	v0, v0, UADDR			# v0 = first HI entry
+	li	v0, UADDR			# Hi entry = UADD, ASID = 0
+	ori	a1, MIPS3_PG_G			# set PG_G
+	ori	a2, MIPS3_PG_G			# set PG_G
 	mtc0	zero, MIPS_COP_0_TLB_INDEX	# set the index register
 	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
-	mtc0	t0, MIPS_COP_0_TLB_LO0		# init low entry 0
-	mtc0	t1, MIPS_COP_0_TLB_LO1		# init low entry 1
+	mtc0	a1, MIPS_COP_0_TLB_LO0		# init low entry 0
+	mtc0	a2, MIPS_COP_0_TLB_LO1		# init low entry 1
 	nop
 	nop
 	tlbwi					# Write the TLB entry.
@@ -2185,17 +2190,13 @@ NLEAF(mips3_cpu_switch_resume)
 	nop
 	nop
 # now map the p_addr pages
-	andi	v0, PG_ASID
-	or	v0, s0
-	ori	t0, MIPS3_PG_G		# XXX set PG_G
-	ori	t1, MIPS3_PG_G		# XXX set PG_G
 	li	s1, MIPS3_PG_ODDPG
-	and	s1, v0				# does p_addr start on odd page
+	and	s1, a0				# does p_addr start on odd page
 	beq	s1, zero, 1f			# no, only one TLB entry needed
 # p_addr starts on an odd page, need to set up 2 TLB entries
-	addu	v0, v0, MIPS3_PG_ODDPG		# map second page
+	addu	a0, a0, MIPS3_PG_ODDPG		# map second page
 # see if this address currently exists in TLB
-	mtc0	v0, MIPS_COP_0_TLB_HI
+	mtc0	a0, MIPS_COP_0_TLB_HI
 	nop
 	tlbp					# probe for existing entry
 	nop
@@ -2211,22 +2212,22 @@ NLEAF(mips3_cpu_switch_resume)
 	nop
 	tlbwi
 	nop
-	mtc0	v0, MIPS_COP_0_TLB_HI		# restore high entry
+	mtc0	a0, MIPS_COP_0_TLB_HI		# restore high entry
 2:
-	mtc0	t1, MIPS_COP_0_TLB_LO0		# even page to LO0
-	li	s1, MIPS3_PG_G		# XXX set PG_G
+	mtc0	a2, MIPS_COP_0_TLB_LO0		# even page to LO0
+	li	s1, MIPS3_PG_G			# invalid page set PG_G
 	mtc0	s1, MIPS_COP_0_TLB_LO1		# invalid page to LO1
 	li	s1, 2				# use TLB entry 2 for even page
 	mtc0	s1, MIPS_COP_0_TLB_INDEX
 	nop
 	tlbwi					# write odd page TLB entry
-	move	t1, t0				# odd page to LO1
-	li	t0, MIPS3_PG_G		# XXX PG_G	# clear LO0
-	addi	v0, v0, -NBPG * 2		# backup to odd page mapping
+	move	a2, a1				# odd page to LO1
+	li	a1, MIPS3_PG_G			# LO0
+	addi	a0, a0, -NBPG * 2		# backup to odd page mapping
 # set up TLB entry 1
 1:
 # see if this address currently exists in TLB
-	mtc0	v0, MIPS_COP_0_TLB_HI
+	mtc0	a0, MIPS_COP_0_TLB_HI
 	nop
 	tlbp					# probe for existing entry
 	nop
@@ -2242,14 +2243,17 @@ NLEAF(mips3_cpu_switch_resume)
 	nop
 	tlbwi
 	nop
-	mtc0	v0, MIPS_COP_0_TLB_HI		# restore high entry
+	mtc0	a0, MIPS_COP_0_TLB_HI		# restore high entry
 2:
-	mtc0	t0, MIPS_COP_0_TLB_LO0		# first page
-	mtc0	t1, MIPS_COP_0_TLB_LO1		# second page
+	mtc0	a1, MIPS_COP_0_TLB_LO0		# first page
+	mtc0	a2, MIPS_COP_0_TLB_LO1		# second page
 	li	s1, 1				# use TLB entry 1
 	mtc0	s1, MIPS_COP_0_TLB_INDEX
 	nop
 	tlbwi					# write TLB entry
+	nop
+
+	mtc0	a3, MIPS_COP_0_TLB_HI		# set current ASID
 /*
  * Now running on new u struct.
  * Restore registers and return.
