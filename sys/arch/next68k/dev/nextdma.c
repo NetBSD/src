@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.22 2000/08/09 02:26:26 tv Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.23 2001/04/02 05:29:43 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -71,7 +71,6 @@ void next_dma_rotate __P((struct nextdma_config *));
 
 void next_dma_setup_cont_regs __P((struct nextdma_config *));
 void next_dma_setup_curr_regs __P((struct nextdma_config *));
-void next_dma_finish_xfer __P((struct nextdma_config *));
 
 void
 nextdma_config(nd)
@@ -209,7 +208,7 @@ next_dma_rotate(nd)
 
 #ifdef DIAGNOSTIC
 	if (nd->_nd_map) {
-		nd->_nd_map->dm_segs[nd->_nd_idx].ds_xfer_len = 0x1234beef;
+		nd->_nd_map->dm_segs[nd->_nd_idx].ds_xfer_len = 666666666;
 	}
 #endif
 
@@ -412,47 +411,6 @@ next_dma_print(nd)
 }
 
 /****************************************************************/
-void
-next_dma_finish_xfer(nd)
-	struct nextdma_config *nd;
-{
-	bus_addr_t onext;
-	bus_addr_t olimit;
-	bus_addr_t slimit;
-			
-	onext = nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr;
-	olimit = onext + nd->_nd_map->dm_segs[nd->_nd_idx].ds_len;
-
-	if ((nd->_nd_map_cont == NULL) && (nd->_nd_idx+1 == nd->_nd_map->dm_nsegs)) {
-		slimit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT);
-	} else {
-		slimit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT);
-	}
-
-	if (nd->nd_intr == NEXT_I_ENETX_DMA) {
-		slimit &= ~0x80000000;
-	}
-
-#ifdef DIAGNOSTIC
-	if ((slimit < onext) || (slimit > olimit)) {
-		next_dma_print(nd);
-		panic("DMA: Unexpected registers in finish_xfer\n");
-	}
-#endif
-
-	nd->_nd_map->dm_segs[nd->_nd_idx].ds_xfer_len = slimit-onext;
-
-	/* If we've reached the end of the current map, then inform
-	 * that we've completed that map.
-	 */
-	if (nd->_nd_map && ((nd->_nd_idx+1) == nd->_nd_map->dm_nsegs)) {
-		if (nd->nd_completed_cb) 
-			(*nd->nd_completed_cb)(nd->_nd_map, nd->nd_cb_arg);
-	}
-	nd->_nd_map = 0;
-	nd->_nd_idx = 0;
-}
-
 
 int
 nextdma_intr(arg)
@@ -488,69 +446,129 @@ nextdma_intr(arg)
 
   {
     int state = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_CSR);
+		
+		if (state & DMACSR_COMPLETE) {
+			bus_addr_t onext;
+			bus_addr_t olimit;
+			bus_addr_t slimit;
+
+			DPRINTF(("DMA: finishing xfer\n"));
+			
+			onext = nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr;
+			olimit = onext + nd->_nd_map->dm_segs[nd->_nd_idx].ds_len;
+
+			if (state & DMACSR_ENABLE) {
+				if (state & DMACSR_SUPDATE) {
+#ifdef DIAGNOSTIC
+					printf("DMA: please send this output to port-next68k-maintainer@netbsd.org:\n");
+					next_dma_print(nd);
+					panic("DMA: condition not yet documented to occur\n");
+#endif
+					slimit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT);
+				} else {
+					slimit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT);
+				}
+			} else {
+				if (state & DMACSR_SUPDATE) {
+					slimit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT);
+				} else {
+					slimit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT);
+				}
+			}
+
+			if (nd->nd_intr == NEXT_I_ENETX_DMA) {
+				slimit &= ~0x80000000;
+			}
 
 #ifdef DIAGNOSTIC
-		if ((!(state & DMACSR_COMPLETE)) || (state & DMACSR_SUPDATE)) {
-			char sbuf[256];
+			if ((slimit < onext) || (slimit > olimit)) {
+				next_dma_print(nd);
+				panic("DMA: Unexpected limit registers in finish_xfer\n");
+			}
+#endif
 
+#if (defined(ND_DEBUG))
+			if (nextdma_debug > 2) next_dma_print(nd);
+#endif
+
+			nd->_nd_map->dm_segs[nd->_nd_idx].ds_xfer_len = slimit-onext;
+
+			/* If we've reached the end of the current map, then inform
+			 * that we've completed that map.
+			 */
+			if (nd->_nd_map && ((nd->_nd_idx+1) == nd->_nd_map->dm_nsegs)) {
+				if (nd->nd_completed_cb) 
+					(*nd->nd_completed_cb)(nd->_nd_map, nd->nd_cb_arg);
+			}
+			nd->_nd_map = 0;
+			nd->_nd_idx = 0;
+		}
+#ifdef DIAGNOSTIC
+		else if ((state & DMACSR_ENABLE) || (state & DMACSR_SUPDATE)) {
 			next_dma_print(nd);
-
-			bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
-			panic("DMA Unexpected dma state in interrupt (0x%s)", sbuf);
+			panic("DMA Unexpected dma state in interrupt\n");
 		}
 #endif
 
-		next_dma_finish_xfer(nd);
+		if (state & DMACSR_ENABLE) {
 
-		/* Check to see if we are expecting dma to shut down */
-		if ((nd->_nd_map == NULL) && (nd->_nd_map_cont == NULL)) {
+			next_dma_rotate(nd);
+			next_dma_setup_cont_regs(nd);
 
-#ifdef DIAGNOSTIC
-			if (state & DMACSR_ENABLE) {
-				char sbuf[256];
+			{
+				u_long dmadir;								/* 	DMACSR_SETREAD or DMACSR_SETWRITE */
+				
+				if (state & DMACSR_READ) {
+					dmadir = DMACSR_SETREAD;
+				} else {
+					dmadir = DMACSR_SETWRITE;
+				}
 
-				next_dma_print(nd);
-
-				bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
-				panic("DMA: unexpected DMA state at shutdown (0x%s)\n", sbuf);
+				if ((nd->_nd_map_cont == NULL) && (nd->_nd_idx+1 == nd->_nd_map->dm_nsegs)) {
+					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+							DMACSR_CLRCOMPLETE | dmadir);
+				} else {
+					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+							DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETSUPDATE);
+				}
 			}
-#endif
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-					DMACSR_CLRCOMPLETE | DMACSR_RESET);
 			
-			DPRINTF(("DMA: a normal and expected shutdown occurred\n"));
-			if (nd->nd_shutdown_cb) (*nd->nd_shutdown_cb)(nd->nd_cb_arg);
+		} else {
 
+			/* Cleanup incomplete transfers */
+			if (nd->_nd_map) {
+				DPRINTF(("DMA: shutting down with non null map\n"));
+				nd->_nd_map->dm_segs[nd->_nd_idx].ds_xfer_len = 0;
+				if ((nd->_nd_idx+1) == nd->_nd_map->dm_nsegs) {
+					if (nd->nd_completed_cb) 
+						(*nd->nd_completed_cb)(nd->_nd_map, nd->nd_cb_arg);
+				}
+				nd->_nd_map = 0;
+				nd->_nd_idx = 0;
+			}
+
+			/* Cleanup more incomplete transfers */
+			if (nd->_nd_map_cont) {
+				DPRINTF(("DMA: shutting down with non null continue map\n"));
+
+				while(nd->_nd_idx_cont < nd->_nd_map_cont->dm_nsegs) {
+					nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_xfer_len = 0;
+					nd->_nd_idx_cont++;
+				}
+				if (nd->nd_completed_cb) 
+					(*nd->nd_completed_cb)(nd->_nd_map_cont, nd->nd_cb_arg);
+								
+				nd->_nd_map_cont = 0;
+				nd->_nd_idx_cont = 0;
+			}
+
+			DPRINTF(("DMA: a shutdown occurred\n"));
+			
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, DMACSR_CLRCOMPLETE | DMACSR_RESET);
+
+			if (nd->nd_shutdown_cb) (*nd->nd_shutdown_cb)(nd->nd_cb_arg);
 			return(1);
 		}
-
-		next_dma_rotate(nd);
-		next_dma_setup_cont_regs(nd);
-
-		{
-			u_long dmadir;								/* 	DMACSR_SETREAD or DMACSR_SETWRITE */
-
-			if (state & DMACSR_READ) {
-				dmadir = DMACSR_SETREAD;
-			} else {
-				dmadir = DMACSR_SETWRITE;
-			}
-
-				/* we used to SETENABLE here only
-                                   conditionally, but we got burned
-                                   because DMA sometimes would shut
-                                   down between when we checked and
-                                   when we acted upon it.  CL19991211 */
-			if ((nd->_nd_map_cont == NULL) && (nd->_nd_idx+1 == nd->_nd_map->dm_nsegs)) {
-				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-						  DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETENABLE);
-			} else {
-				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-						  DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETSUPDATE | DMACSR_SETENABLE);
-			}
-
-		}
-
 	}
 
 #ifdef ND_DEBUG
@@ -655,7 +673,7 @@ nextdma_start(nd, dmadir)
 	next_dma_setup_cont_regs(nd);
 
 #if (defined(ND_DEBUG))
-	if (nextdma_debug) next_dma_print(nd);
+	if (nextdma_debug > 2) next_dma_print(nd);
 #endif
 
 	if ((nd->_nd_map_cont == NULL) && (nd->_nd_idx+1 == nd->_nd_map->dm_nsegs)) {
