@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.519 2002/10/02 03:20:40 grant Exp $
+# $NetBSD: mi,v 1.520 2002/10/05 06:02:58 grant Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -573,6 +573,7 @@
 ./usr/share/man/cat4/ccd.0			man-sys-catman
 ./usr/share/man/cat4/cd.0			man-sys-catman
 ./usr/share/man/cat4/cfb.0			man-sys-catman
+./usr/share/man/cat4/cgd.0			man-sys-catman
 ./usr/share/man/cat4/ch.0			man-sys-catman
 ./usr/share/man/cat4/cir.0			man-sys-catman
 ./usr/share/man/cat4/clcs.0			man-sys-catman
@@ -1302,6 +1303,7 @@
 ./usr/share/man/cat8/ccdconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/cesfic/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/cesfic/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/cgdconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/chat.0			man-ppp-catman
 ./usr/share/man/cat8/chown.0			man-sysutil-catman
 ./usr/share/man/cat8/chroot.0			man-sysutil-catman
@@ -2324,6 +2326,7 @@
 ./usr/share/man/man4/ccd.4			man-sys-man
 ./usr/share/man/man4/cd.4			man-sys-man
 ./usr/share/man/man4/cfb.4			man-sys-man
+./usr/share/man/man4/cgd.4			man-sys-man
 ./usr/share/man/man4/ch.4			man-sys-man
 ./usr/share/man/man4/cir.4			man-sys-man
 ./usr/share/man/man4/clcs.4			man-sys-man
@@ -3053,6 +3056,7 @@
 ./usr/share/man/man8/ccdconfig.8		man-sysutil-man
 ./usr/share/man/man8/cesfic/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/cesfic/makedev.8		man-sysutil-man
+./usr/share/man/man8/cgdconfig.8		man-sysutil-man
 ./usr/share/man/man8/chat.8			man-ppp-man
 ./usr/share/man/man8/chown.8			man-sysutil-man
 ./usr/share/man/man8/chroot.8			man-sysutil-man

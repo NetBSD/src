@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.489 2002/10/05 05:43:38 gmcgarry Exp $
+#	$NetBSD: mi,v 1.490 2002/10/05 06:02:56 grant Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -122,6 +122,7 @@
 ./usr/include/dev/ata/atareg.h		comp-c-include
 ./usr/include/dev/ata/atavar.h		comp-c-include
 ./usr/include/dev/ccdvar.h		comp-c-include
+./usr/include/dev/cgdvar.h		comp-c-include
 ./usr/include/dev/dec			comp-c-include
 ./usr/include/dev/dec/dec_boot.h	comp-c-include
 ./usr/include/dev/dec/lk201.h		comp-c-include
