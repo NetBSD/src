@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.6 1999/05/19 20:34:19 ad Exp $ */
+/*	$NetBSD: rcons.h,v 1.7 1999/05/20 19:56:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,7 +109,6 @@ void rcons_pctrl __P((struct rconsole *, int));
 void rcons_esc __P((struct rconsole *, int));
 void rcons_doesc __P((struct rconsole *, int));
 void rcons_sgresc __P((struct rconsole *, int));
-void rcons_init __P((struct rconsole *));
 void rcons_text __P((struct rconsole *, unsigned char *, int));
 void rcons_cursor __P((struct rconsole *));
 void rcons_invert __P((struct rconsole *, int));
