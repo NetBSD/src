@@ -1,4 +1,4 @@
-/*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
+/*	$NetBSD: unfdpass.c,v 1.4 1999/01/21 09:54:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/un.h>
+#include <sys/uio.h>
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -60,9 +62,13 @@ int	main __P((int, char *[]));
 void	child __P((void));
 void	catch_sigchld __P((int));
 
+#define	FILE_SIZE	128
+#define	MSG_SIZE	-1
+#define	NFILES		24
+
 struct fdcmessage {
 	struct cmsghdr cm;
-	int files[2];
+	int files[NFILES];
 };
 
 struct crcmessage {
@@ -76,9 +82,12 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+#if MSG_SIZE >= 0
+	struct iovec iov;
+#endif
 	struct msghdr msg;
 	int listensock, sock, fd, i, status;
-	char fname[16], buf[64];
+	char fname[16], buf[FILE_SIZE];
 	struct cmsghdr *cmp;
 	struct {
 		struct fdcmessage fdcm;
@@ -94,7 +103,7 @@ main(argc, argv)
 	/*
 	 * Create the test files.
 	 */
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < NFILES; i++) {
 		(void) sprintf(fname, "file%d", i + 1);
 		if ((fd = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == -1)
 			err(1, "open %s", fname);
@@ -157,11 +166,18 @@ main(argc, argv)
 	/*
 	 * Grab the descriptors and credentials passed to us.
 	 */
+
 	(void) memset(&msg, 0, sizeof(msg));
 	msg.msg_control = (caddr_t) &message;
 	msg.msg_controllen = sizeof(message);
+#if MSG_SIZE >= 0
+	iov.iov_base = buf;
+	iov.iov_len = MSG_SIZE;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+#endif
 
-	if (recvmsg(sock, &msg, 0) < 0)
+	if (recvmsg(sock, &msg, 0) == -1)
 		err(1, "recvmsg");
 
 	(void) close(sock);
@@ -206,7 +222,7 @@ main(argc, argv)
 	if (files == NULL)
 		warnx("didn't get fd control message");
 	else {
-		for (i = 0; i < 2; i++) {
+		for (i = 0; i < NFILES; i++) {
 			(void) memset(buf, 0, sizeof(buf));
 			if (read(files[i], buf, sizeof(buf)) <= 0)
 				err(1, "read file %d", i + 1);
@@ -247,8 +263,11 @@ catch_sigchld(sig)
 void
 child()
 {
+#if MSG_SIZE >= 0
+	struct iovec iov;
+#endif
 	struct msghdr msg;
-	char fname[16], buf[64];
+	char fname[16], buf[FILE_SIZE];
 	struct cmsghdr *cmp;
 	struct fdcmessage fdcm;
 	int i, fd, sock;
@@ -271,7 +290,7 @@ child()
 	/*
 	 * Open the files again, and pass them to the child over the socket.
 	 */
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < NFILES; i++) {
 		(void) sprintf(fname, "file%d", i + 1);
 		if ((fd = open(fname, O_RDONLY, 0666)) == -1)
 			err(1, "child open %s", fname);
@@ -281,13 +300,19 @@ child()
 	(void) memset(&msg, 0, sizeof(msg));
 	msg.msg_control = (caddr_t) &fdcm;
 	msg.msg_controllen = sizeof(fdcm);
+#if MSG_SIZE >= 0
+	iov.iov_base = buf;
+	iov.iov_len = MSG_SIZE;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+#endif
 
 	cmp = CMSG_FIRSTHDR(&msg);
 	cmp->cmsg_len = sizeof(fdcm);
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_RIGHTS;
 
-	if (sendmsg(sock, &msg, 0))
+	if (sendmsg(sock, &msg, 0) == -1)
 		err(1, "child sendmsg");
 
 	/*
