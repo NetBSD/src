@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.5 1997/07/06 16:19:40 mycroft Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.6 1997/09/14 14:58:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -29,8 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsirand.c,v 1.5 1997/07/06 16:19:40 mycroft Exp $";
+__RCSID("$NetBSD: fsirand.c,v 1.6 1997/09/14 14:58:54 lukem Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -150,7 +151,7 @@ fixinodes(fd, fs, lab, pflag, xorval)
 
 		for (dip = dibuf; dip < &dibuf[inopb]; dip++) {
 			if (pflag)
-				printf("ino %d gen %x\n", ino, dip->di_gen);
+				printf("ino %d gen 0x%x\n", ino, dip->di_gen);
 			else
 				dip->di_gen = random() ^ xorval;
 			if (++ino > imax)
