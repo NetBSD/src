@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.23.2.2 1999/09/13 22:09:03 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.23.2.3 1999/09/13 22:49:43 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.23.2.2 1999/09/13 22:09:03 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.23.2.3 1999/09/13 22:49:43 he Exp $");
 #endif
 #endif
 
@@ -562,7 +562,7 @@ pkg_do(char *pkg)
 	}
 	if (!NoDeInstall && fexists(DEINSTALL_FNAME)) {
 		if (Fake)
-			printf("Would execute de-install script at this point.\n");
+			printf("Would execute de-install script at this point (arg: DEINSTALL).\n");
 		else {
 			vsystem("%s +x %s", CHMOD, DEINSTALL_FNAME);	/* make sure */
 			if (vsystem("./%s %s DEINSTALL", DEINSTALL_FNAME, pkg)) {
@@ -572,22 +572,14 @@ pkg_do(char *pkg)
 			}
 		}
 	}
-	if (chdir(home) == FAIL) {
-		cleanup(0);
-		errx(2, "Toto! This doesn't look like Kansas anymore!");
-	}
 	if (!Fake) {
 		/* Some packages aren't packed right, so we need to just ignore delete_package()'s status.  Ugh! :-( */
 		if (delete_package(FALSE, CleanDirs, &Plist) == FAIL)
 			warnx(
 			    "couldn't entirely delete package (perhaps the packing list is\n"
 			    "incorrectly specified?)");
-		if (vsystem("%s -r %s", REMOVE_CMD, LogDir)) {
-			warnx("couldn't remove log entry in %s, deinstall failed", LogDir);
-			if (!Force)
-				return 1;
-		}
 	}
+	/* Remove this package from the +REQUIRED_BY list of the packages this depends on */
 	for (p = Plist.head; p; p = p->next) {
 		if (p->type != PLIST_PKGDEP)
 			continue;
@@ -609,7 +601,7 @@ pkg_do(char *pkg)
 	}
 	if (!NoDeInstall && fexists(DEINSTALL_FNAME)) {
 		if (Fake)
-			printf("Would execute post-de-install script at this point.\n");
+			printf("Would execute post-de-install script at this point (arg: POST-DEINSTALL).\n");
 		else {
 			vsystem("chmod +x %s", DEINSTALL_FNAME);	/* make sure */
 			if (vsystem("./%s %s POST-DEINSTALL", DEINSTALL_FNAME, pkg)) {
@@ -617,6 +609,19 @@ pkg_do(char *pkg)
 				if (!Force)
 					return 1;
 			}
+		}
+	}
+	/* Change out of LogDir before we remove it */
+	if (chdir(home) == FAIL) {
+		cleanup(0);
+		errx(2, "Toto! This doesn't look like Kansas anymore!");
+	}
+	if (!Fake) {
+		/* Finally nuke the +-files and the pkgdb-dir (/var/db/pkg/foo) */
+		if (vsystem("%s -r %s", REMOVE_CMD, LogDir)) {
+			warnx("couldn't remove log entry in %s, deinstall failed", LogDir);
+			if (!Force)
+				return 1;
 		}
 	}
 	return 0;
