@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.39 2000/04/11 06:50:37 nisimura Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.40 2000/05/29 12:09:45 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.39 2000/04/11 06:50:37 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.40 2000/05/29 12:09:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,8 +357,8 @@ dec_3maxplus_intr(status, cause, pc, ipending)
 				printf("%s\n", "Power supply overheating");
 			}
 
-#define ERRORS	(IOASIC_INTR_ISDN_OVRUN|IOASIC_INTR_ISDN_READ_E|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
-#define PTRLOAD (IOASIC_INTR_ISDN_PTR_LOAD|IOASIC_INTR_SCSI_PTR_LOAD)
+#define ERRORS	(IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
+#define PTRLOAD	(IOASIC_INTR_SCSI_PTR_LOAD)
 	/*
 	 * XXX future project is here XXX
 	 * IOASIC DMA completion interrupt (PTR_LOAD) should be checked
