@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12 2004/09/16 03:57:11 rumble Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.12.6.1 2005/02/02 12:30:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2004/09/16 03:57:11 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12.6.1 2005/02/02 12:30:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -747,7 +747,7 @@ _bus_dmamem_map(void *cookie, bus_dma_segment_t *segs, int nsegs,
 
 	size = round_page(size);
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 
 	if (va == 0)
 		return (ENOMEM);
@@ -792,7 +792,9 @@ _bus_dmamem_unmap(void *cookie, caddr_t kva, size_t size)
 
 	size = round_page(size);
 
-	uvm_km_free(kernel_map, (vaddr_t)kva, size);
+	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.10 2004/09/17 14:11:22 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10.6.1 2005/02/02 12:30:37 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.10 2004/09/17 14:11:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.10.6.1 2005/02/02 12:30:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	uva = sh5_trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	len = sh5_round_page(off + len);
-	kva = uvm_km_valloc_wait(phys_map, len);
+	kva = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
@@ -296,7 +296,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	len = sh5_round_page(off + len);
 	pmap_kremove(kva, len);
 	pmap_update(pmap_kernel());
-	uvm_km_free_wakeup(phys_map, kva, len);
+	uvm_km_free_wakeup(phys_map, kva, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
