@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.37 2002/05/12 15:48:37 wiz Exp $
+.\"	$NetBSD: routed.8,v 1.37.2.1 2004/04/01 03:07:56 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -631,8 +631,7 @@ sets the preference in Router Discovery Advertisements to the optionally
 signed integer
 .Ar N .
 The default preference is 0.
-Default routes with smaller or more negative preferences are preferred by
-clients.
+Default routes with larger preferences are preferred by clients.
 .It Cm rdisc_interval Ns \&= Ns Ar N
 sets the nominal interval with which Router Discovery Advertisements
 are transmitted to N seconds and their lifetime to 3*N.
