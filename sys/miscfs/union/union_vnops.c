@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.25 1995/07/13 13:19:18 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.26 1996/02/09 14:45:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -944,54 +944,55 @@ union_remove(ap)
 int
 union_link(ap)
 	struct vop_link_args /* {
+		struct vnode *a_dvp;
 		struct vnode *a_vp;
-		struct vnode *a_tdvp;
 		struct componentname *a_cnp;
 	} */ *ap;
 {
 	int error = 0;
-	struct union_node *un;
+	struct union_node *dun;
+	struct vnode *dvp;
 	struct vnode *vp;
-	struct vnode *tdvp;
 
-	un = VTOUNION(ap->a_vp);
+	dun = VTOUNION(ap->a_dvp);
 
-	if (ap->a_vp->v_op != ap->a_tdvp->v_op) {
-		tdvp = ap->a_tdvp;
+	if (ap->a_dvp->v_op != ap->a_vp->v_op) {
+		vp = ap->a_vp;
 	} else {
-		struct union_node *tdun = VTOUNION(ap->a_tdvp);
-		if (tdun->un_uppervp == NULLVP) {
-			VOP_LOCK(ap->a_tdvp);
-			if (un->un_uppervp == tdun->un_dirvp) {
-				un->un_flags &= ~UN_ULOCK;
-				VOP_UNLOCK(un->un_uppervp);
+		struct union_node *un = VTOUNION(ap->a_vp);
+
+		if (un->un_uppervp == NULLVP) {
+			VOP_LOCK(ap->a_vp);
+			if (dun->un_uppervp == un->un_dirvp) {
+				dun->un_flags &= ~UN_ULOCK;
+				VOP_UNLOCK(dun->un_uppervp);
 			}
-			error = union_copyup(tdun, 1, ap->a_cnp->cn_cred,
+			error = union_copyup(un, 1, ap->a_cnp->cn_cred,
 						ap->a_cnp->cn_proc);
-			if (un->un_uppervp == tdun->un_dirvp) {
-				VOP_LOCK(un->un_uppervp);
-				un->un_flags |= UN_ULOCK;
+			if (dun->un_uppervp == un->un_dirvp) {
+				VOP_LOCK(dun->un_uppervp);
+				dun->un_flags |= UN_ULOCK;
 			}
-			VOP_UNLOCK(ap->a_tdvp);
+			VOP_UNLOCK(ap->a_vp);
 		}
-		tdvp = tdun->un_uppervp;
+		vp = un->un_uppervp;
 	}
 
-	vp = un->un_uppervp;
-	if (vp == NULLVP)
+	dvp = dun->un_uppervp;
+	if (dvp == NULLVP)
 		error = EROFS;
 
 	if (error) {
-		vput(ap->a_vp);
+		vput(ap->a_dvp);
 		return (error);
 	}
 
-	FIXUP(un);
-	VREF(vp);
-	un->un_flags |= UN_KLOCK;
-	vput(ap->a_vp);
+	FIXUP(dun);
+	VREF(dvp);
+	dun->un_flags |= UN_KLOCK;
+	vput(ap->a_dvp);
 
-	return (VOP_LINK(vp, tdvp, ap->a_cnp));
+	return (VOP_LINK(dvp, vp, ap->a_cnp));
 }
 
 int

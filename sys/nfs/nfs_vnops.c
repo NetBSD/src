@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.56 1996/02/01 00:41:19 jtc Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.57 1996/02/09 14:46:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1301,13 +1301,13 @@ nfs_renameit(sdvp, scnp, sp)
 int
 nfs_link(ap)
 	struct vop_link_args /* {
+		struct vnode *a_dvp;
 		struct vnode *a_vp;
-		struct vnode *a_tdvp;
 		struct componentname *a_cnp;
 	} */ *ap;
 {
+	register struct vnode *dvp = ap->a_dvp;
 	register struct vnode *vp = ap->a_vp;
-	register struct vnode *tdvp = ap->a_tdvp;
 	register struct componentname *cnp = ap->a_cnp;
 	register u_int32_t *tl;
 	register caddr_t cp;
@@ -1316,12 +1316,12 @@ nfs_link(ap)
 	int error = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 
-	if (vp->v_mount != tdvp->v_mount) {
-		/*VOP_ABORTOP(vp, cnp);*/
-		if (tdvp == vp)
-			vrele(vp);
+	if (dvp->v_mount != vp->v_mount) {
+		/*VOP_ABORTOP(dvp, cnp);*/
+		if (vp == dvp)
+			vrele(dvp);
 		else
-			vput(vp);
+			vput(dvp);
 		return (EXDEV);
 	}
 
@@ -1330,21 +1330,21 @@ nfs_link(ap)
 	 * doesn't get "out of sync" with the server.
 	 * XXX There should be a better way!
 	 */
-	VOP_FSYNC(tdvp, cnp->cn_cred, MNT_WAIT, cnp->cn_proc);
+	VOP_FSYNC(vp, cnp->cn_cred, MNT_WAIT, cnp->cn_proc);
 
 	nfsstats.rpccnt[NFSPROC_LINK]++;
-	nfsm_reqhead(tdvp, NFSPROC_LINK,
+	nfsm_reqhead(vp, NFSPROC_LINK,
 		NFSX_FH*2+NFSX_UNSIGNED+nfsm_rndup(cnp->cn_namelen));
-	nfsm_fhtom(tdvp);
 	nfsm_fhtom(vp);
+	nfsm_fhtom(dvp);
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
-	nfsm_request(tdvp, NFSPROC_LINK, cnp->cn_proc, cnp->cn_cred);
+	nfsm_request(vp, NFSPROC_LINK, cnp->cn_proc, cnp->cn_cred);
 	nfsm_reqdone;
 	FREE(cnp->cn_pnbuf, M_NAMEI);
-	VTONFS(tdvp)->n_attrstamp = 0;
-	VTONFS(vp)->n_flag |= NMODIFIED;
 	VTONFS(vp)->n_attrstamp = 0;
-	vrele(vp);
+	VTONFS(dvp)->n_flag |= NMODIFIED;
+	VTONFS(dvp)->n_attrstamp = 0;
+	vrele(dvp);
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
 	 */
