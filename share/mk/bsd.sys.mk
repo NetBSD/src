@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.50 2001/09/08 01:00:44 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.51 2001/10/09 05:19:04 enami Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -61,6 +61,7 @@ STRIP?=		strip
 CONFIG?=	config
 RPCGEN?=	rpcgen
 MKLOCALE?=	mklocale
+MTREE?=		mtree
 
 .SUFFIXES:	.m .o .ln .lo
 
