@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.164 1997/09/16 14:35:32 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165 1997/09/16 15:51:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -2337,6 +2337,11 @@ mac68k_set_io_offsets(base)
 		SCSIBase = base;
 		break;
 	case MACH_CLASSIIfx:
+		/*
+		 * Note that sccA base address is based on having
+		 * the serial port in `compatible' mode (set in
+		 * the Serial Switch control panel before booting).
+		 */
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0x4020;
 		SCSIBase = base;
