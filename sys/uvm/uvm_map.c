@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.87 2000/12/13 08:06:11 enami Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.88 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -211,7 +211,7 @@ uvm_mapent_alloc(map)
 		me->flags = 0;
 		/* me can't be null, wait ok */
 	} else {
-		s = splimp();	/* protect kentry_free list with splimp */
+		s = splvm();	/* protect kentry_free list with splvm */
 		simple_lock(&uvm.kentry_lock);
 		me = uvm.kentry_free;
 		if (me) uvm.kentry_free = me->next;
@@ -246,7 +246,7 @@ uvm_mapent_free(me)
 	if ((me->flags & UVM_MAP_STATIC) == 0) {
 		pool_put(&uvm_map_entry_pool, me);
 	} else {
-		s = splimp();	/* protect kentry_free list with splimp */
+		s = splvm();	/* protect kentry_free list with splvm */
 		simple_lock(&uvm.kentry_lock);
 		me->next = uvm.kentry_free;
 		uvm.kentry_free = me;

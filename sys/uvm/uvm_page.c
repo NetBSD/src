@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.46 2000/12/01 09:54:42 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.47 2001/01/14 02:10:02 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -159,7 +159,7 @@ uvm_pageinsert(pg)
 #endif
 
 	buck = &uvm.page_hash[uvm_pagehash(pg->uobject,pg->offset)];
-	s = splimp();
+	s = splvm();
 	simple_lock(&uvm.hashlock);
 	TAILQ_INSERT_TAIL(buck, pg, hashq);	/* put in hash */
 	simple_unlock(&uvm.hashlock);
@@ -186,7 +186,7 @@ uvm_pageremove(pg)
 
 	KASSERT(pg->flags & PG_TABLED);
 	buck = &uvm.page_hash[uvm_pagehash(pg->uobject,pg->offset)];
-	s = splimp();
+	s = splvm();
 	simple_lock(&uvm.hashlock);
 	TAILQ_REMOVE(buck, pg, hashq);
 	simple_unlock(&uvm.hashlock);
@@ -794,7 +794,7 @@ uvm_page_rehash()
 	 * now replace the old buckets with the new ones and rehash everything
 	 */
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&uvm.hashlock);
 	uvm.page_hash = newbuckets;
 	uvm.page_nhash = bucketcount;
