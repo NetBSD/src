@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.59 2000/05/09 00:32:21 thorpej Exp $
+#	$NetBSD: Makefile.atari,v 1.60 2000/05/09 00:56:23 hubertf Exp $
 
 # Makefile for NetBSD
 #
@@ -210,5 +210,17 @@ locore.o pmap.o sys_machdep.o: Makefile
 
 locore.o: ${ATARI}/atari/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

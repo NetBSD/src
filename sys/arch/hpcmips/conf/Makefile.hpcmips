@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcmips,v 1.16 2000/05/09 00:32:22 thorpej Exp $
+#	$NetBSD: Makefile.hpcmips,v 1.17 2000/05/09 00:56:24 hubertf Exp $
 
 # Makefile for NetBSD
 #
@@ -226,5 +226,17 @@ locore_mips3.o: ${MIPS}/mips/locore_mips3.S assym.h
 
 locore_machdep.o: ${HPCMIPS}/hpcmips/locore_machdep.S assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

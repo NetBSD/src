@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3.be,v 1.4 2000/02/01 05:25:46 tsutsui Exp $
+#	$NetBSD: Makefile.sh3.be,v 1.5 2000/05/09 00:56:27 hubertf Exp $
 
 # Makefile for NetBSD
 #
@@ -186,5 +186,17 @@ locore.o machdep.o: Makefile
 
 locore.o: ${SH3}/sh3/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

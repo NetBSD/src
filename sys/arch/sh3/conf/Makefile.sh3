@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.5 2000/05/09 00:32:26 thorpej Exp $
+#	$NetBSD: Makefile.sh3,v 1.6 2000/05/09 00:56:27 hubertf Exp $
 
 # Makefile for NetBSD
 #
@@ -200,5 +200,17 @@ locore.o: ${SH3}/sh3/locore.s assym.h
 # XXX compile ffs_inode.c always with -O0 to avoid egcs-1.1.2 bug.
 #ffs_inode.o: $S/ufs/ffs/ffs_inode.c
 #	${CC} ${CFLAGS} -O0 ${CPPFLAGS} ${PROF} -c $<
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES
