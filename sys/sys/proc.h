@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.39 1995/04/13 20:48:59 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.40 1995/04/22 19:40:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -70,6 +70,32 @@ struct	pgrp {
 };
 
 /*
+ * One structure allocated per emulation.
+ */
+struct exec_package;
+struct ps_strings;
+
+struct	emul {
+	char	e_name[8];		/* Symbolic name */
+	int	*e_errno;		/* Errno array */
+					/* Signal sending function */
+	void	(*e_sendsig) __P((sig_t, int, int, u_long));
+	int	e_nosys;		/* Offset of the nosys() syscall */
+	int	e_nsysent;		/* Number of system call entries */
+	struct sysent *e_sysent;	/* System call array */
+	char	**e_syscallnames;	/* System call name array */
+	int	e_arglen;		/* Extra argument size in words */
+					/* Copy arguments on the stack */
+	void	*(*e_copyargs) __P((struct exec_package *, struct ps_strings *,
+				    void *, void *));
+					/* Set registers before execution */
+	void	(*e_setregs) __P((struct proc *, struct exec_package *,
+				  u_long, register_t *));
+	char	*e_sigcode;		/* Start of sigcode */
+	char	*e_esigcode;		/* End of sigcode */
+};
+
+/*
  * Description of a process.
  *
  * This structure contains the information needed to manage a thread of
@@ -97,7 +123,7 @@ struct	proc {
 #define	p_rlimit	p_limit->pl_rlimit
 
 	int	p_flag;			/* P_* flags. */
-	u_char	p_emul;			/* Operating system being emulated. */
+	u_char	p_unused;		/* XXX: used to be emulation flag */
 	char	p_stat;			/* S* process status. */
 	char	p_pad1[2];
 
@@ -137,8 +163,10 @@ struct	proc {
 	struct	vnode *p_textvp;	/* Vnode of executable. */
 
 	int	p_holdcnt;		/* If non-zero, don't swap. */
+	struct	emul *p_emul;		/* Emulation information */
 
-	long	p_spare[2];		/* pad to 256, avoid shifting eproc. */
+	long	p_spare[1];		/* pad to 256, avoid shifting eproc. */
+
 
 /* End area that is zeroed on creation. */
 #define	p_endzero	p_startcopy
@@ -202,18 +230,6 @@ struct	proc {
 /* XXX Not sure what to do with these, yet. */
 #define	P_FSTRACE	0x10000	/* tracing via file system (elsewhere?) */
 #define	P_SSTEP		0x20000	/* process needs single-step fixup ??? */
-
-/*
- * Definitions for the p_emul flag.
- */
-#define	EMUL_NETBSD	0		/* default, naturally */
-#define	EMUL_SUNOS	1		/* sunos 4.x binaries */
-#define	EMUL_HPUX	2		/* HPUX binaries */
-#define	EMUL_ULTRIX	3		/* Ultrix binaries */
-#define	EMUL_SVR4	4		/* Intel Binary compat; SVR4 */
-#define	EMUL_IBCS2	5		/* Intel Binary compat; SCO, ISC */
-#define	EMUL_OSF1	7		/* OSF/1 binaries */
-#define	EMUL_LINUX	9		/* Linux a.out binaries */
 
 /*
  * MOVE TO ucred.h?
