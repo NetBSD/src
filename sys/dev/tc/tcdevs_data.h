@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs_data.h,v 1.13 1999/09/18 01:46:25 ad Exp $	*/
+/*	$NetBSD: tcdevs_data.h,v 1.14 1999/09/26 09:20:04 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.11 1999/09/18 01:46:01 ad Exp 
+ *	NetBSD: tcdevs,v 1.12 1999/09/26 09:18:53 mrg Exp 
  */
 
 /*
@@ -43,6 +43,11 @@ struct tc_knowndev tc_knowndevs[] = {
 	    "AV01B-AA",
 	    TC_DEVICE_AV01B_AA,
 	    TC_DESCRIPTION_AV01B_AA,
+	},
+	{
+	    "AV300-AA",
+	    TC_DEVICE_AV300_AA,
+	    TC_DESCRIPTION_AV300_AA,
 	},
 	{
 	    "DGLTA-FA",
@@ -153,6 +158,11 @@ struct tc_knowndev tc_knowndevs[] = {
 	    "PMAZC-AA",
 	    TC_DEVICE_PMAZC_AA,
 	    TC_DESCRIPTION_PMAZC_AA,
+	},
+	{
+	    "PMTNV-AA",
+	    TC_DEVICE_PMTNV_AA,
+	    TC_DESCRIPTION_PMTNV_AA,
 	},
 	{
 	    "T1D4PKT ",
