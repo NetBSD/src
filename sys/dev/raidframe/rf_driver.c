@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.76 2003/12/29 05:48:13 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.77 2003/12/29 05:52:58 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.76 2003/12/29 05:48:13 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.77 2003/12/29 05:52:58 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -147,13 +147,6 @@ RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 #define WAIT_FOR_QUIESCENCE(_raid_) \
 	ltsleep(&((_raid_)->accesses_suspended), PRIBIO, \
 		"raidframe quiesce", 0, &((_raid_)->access_suspend_mutex))
-
-#define IO_BUF_ERR(bp, err) { \
-	bp->b_flags |= B_ERROR; \
-	bp->b_resid = bp->b_bcount; \
-	bp->b_error = err; \
-	biodone(bp); \
-}
 
 static int configureCount = 0;	/* number of active configurations */
 static int isconfigged = 0;	/* is basic raidframe (non per-array)
@@ -588,7 +581,11 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		printf("DoAccess: raid addr %lu too large to access %lu sectors.  Max legal addr is %lu\n",
 		    (u_long) raidAddress, (u_long) numBlocks, (u_long) raidPtr->totalSectors);
 
-		IO_BUF_ERR(bp, ENOSPC);
+
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		bp->b_error = ENOSPC;
+		biodone(bp);
 		return (ENOSPC);
 	}
 	desc = rf_AllocRaidAccDesc(raidPtr, type, raidAddress,
