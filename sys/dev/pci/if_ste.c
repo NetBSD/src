@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.8 2002/06/01 17:20:13 bouyer Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.9 2002/06/01 17:24:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.8 2002/06/01 17:20:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.9 2002/06/01 17:24:38 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -504,9 +504,9 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
-	 * Default the transmit threshold to 128 bytes.
+	 * Default the transmit threshold to 1504 bytes.
 	 */
-	sc->sc_txthresh = 128;
+	sc->sc_txthresh = 1504;
 
 	/*
 	 * Disable MWI if the PCI layer tells us to.
