@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.16 2001/02/14 21:10:20 christos Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.17 2001/03/04 21:30:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -637,6 +637,17 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* NetMos 2S1P PCI 16C650 : 2S, 1P */
+	{   "NetMos NM9835 Dual UART and 1284 Printer port",
+	    {	0x9710,	0x9835,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
 	    },
 	},
 
