@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: lorder.sh,v 1.5 1997/07/20 23:25:12 cgd Exp $
+#	$NetBSD: lorder.sh,v 1.6 1997/07/22 05:21:03 cgd Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -41,15 +41,15 @@
 # Once we find it, we canonicalize its name and set the path to the
 # default path so that other commands we use are picked properly.
 
-if ! type ${NM:=nm} > /dev/null 2>&1; then
+if ! type "${NM:=nm}" > /dev/null 2>&1; then
         PATH=/bin:/usr/bin
         export PATH
-        if ! type ${NM} > /dev/null 2>&1; then
+        if ! type "${NM}" > /dev/null 2>&1; then
                 echo "lorder: ${NM}: not found"
                 exit 1
         fi
 fi
-cmd='set `type ${NM}` ; eval echo \$$#'
+cmd='set `type "${NM}"` ; eval echo \$$#'
 NM=`eval $cmd`
 PATH=/bin:/usr/bin
 export PATH
