@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2001/02/05 02:07:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2002/03/02 14:59:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.12 2001/02/05 02:07:53 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2002/03/02 14:59:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: main.c,v 1.12 2001/02/05 02:07:53 christos Exp $");
 
 extern char *version;
 
-int	main __P((int, char **));
+int	main(int, char **);
 
 /*
  * Mail -- a mail program
@@ -66,9 +66,7 @@ int	main __P((int, char **));
 jmp_buf	hdrjmp;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int i;
 	struct name *to, *cc, *bcc, *smopts;
@@ -273,8 +271,7 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
  * Interrupt printing of the headers.
  */
 void
-hdrstop(signo)
-	int signo;
+hdrstop(int signo)
 {
 
 	fflush(stdout);
@@ -291,7 +288,7 @@ hdrstop(signo)
  * Width is either 80 or ws_col;
  */
 void
-setscreensize()
+setscreensize(void)
 {
 	struct termios tbuf;
 	struct winsize ws;

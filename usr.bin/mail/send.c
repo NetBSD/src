@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.13 2001/02/05 02:07:53 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.14 2002/03/02 14:59:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.13 2001/02/05 02:07:53 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.14 2002/03/02 14:59:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,11 +61,8 @@ extern char *tempMail;
  * prefix is a string to prepend to each output line.
  */
 int
-sendmessage(mp, obuf, doign, prefix)
-	struct message *mp;
-	FILE *obuf;
-	struct ignoretab *doign;
-	char *prefix;
+sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
+	    char *prefix)
 {
 	long count;
 	FILE *ibuf;
@@ -238,10 +235,7 @@ sendmessage(mp, obuf, doign, prefix)
  * Output a reasonable looking status field.
  */
 void
-statusput(mp, obuf, prefix)
-	struct message *mp;
-	FILE *obuf;
-	char *prefix;
+statusput(struct message *mp, FILE *obuf, char *prefix)
 {
 	char statout[3];
 	char *cp = statout;
@@ -261,9 +255,8 @@ statusput(mp, obuf, prefix)
  * which does all the dirty work.
  */
 int
-mail(to, cc, bcc, smopts, subject)
-	struct name *to, *cc, *bcc, *smopts;
-	char *subject;
+mail(struct name *to, struct name *cc, struct name *bcc,
+     struct name *smopts, char *subject)
 {
 	struct header head;
 
@@ -282,8 +275,7 @@ mail(to, cc, bcc, smopts, subject)
  * the mail routine below.
  */
 int
-sendmail(v)
-	void *v;
+sendmail(void *v)
 {
 	char *str = v;
 	struct header head;
@@ -302,9 +294,7 @@ sendmail(v)
  * in the passed header.  (Internal interface).
  */
 void
-mail1(hp, printheaders)
-	struct header *hp;
-	int printheaders;
+mail1(struct header *hp, int printheaders)
 {
 	char *cp;
 	int pid;
@@ -417,9 +407,7 @@ out:
  * the distribution list into the appropriate fields.
  */
 void
-fixhead(hp, tolist)
-	struct header *hp;
-	struct name *tolist;
+fixhead(struct header *hp, struct name *tolist)
 {
 	struct name *np;
 
@@ -446,9 +434,7 @@ fixhead(hp, tolist)
  * and return the new file.
  */
 FILE *
-infix(hp, fi)
-	struct header *hp;
-	FILE *fi;
+infix(struct header *hp, FILE *fi)
 {
 	FILE *nfo, *nfi;
 	int c;
@@ -493,10 +479,7 @@ infix(hp, fi)
  * passed file buffer.
  */
 int
-puthead(hp, fo, w)
-	struct header *hp;
-	FILE *fo;
-	int w;
+puthead(struct header *hp, FILE *fo, int w)
 {
 	int gotcha;
 
@@ -518,11 +501,7 @@ puthead(hp, fo, w)
  * Format the given header line to not exceed 72 characters.
  */
 void
-fmt(str, np, fo, comma)
-	char *str;
-	struct name *np;
-	FILE *fo;
-	int comma;
+fmt(char *str, struct name *np, FILE *fo, int comma)
 {
 	int col, len;
 
@@ -554,9 +533,7 @@ fmt(str, np, fo, comma)
 
 /*ARGSUSED*/
 int
-savemail(name, fi)
-	char name[];
-	FILE *fi;
+savemail(char name[], FILE *fi)
 {
 	FILE *fo;
 	char buf[BUFSIZ];

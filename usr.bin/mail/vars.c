@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.6 1998/10/08 17:36:56 wsanchez Exp $	*/
+/*	$NetBSD: vars.c,v 1.7 2002/03/02 14:59:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: vars.c,v 1.6 1998/10/08 17:36:56 wsanchez Exp $");
+__RCSID("$NetBSD: vars.c,v 1.7 2002/03/02 14:59:38 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,8 +55,7 @@ __RCSID("$NetBSD: vars.c,v 1.6 1998/10/08 17:36:56 wsanchez Exp $");
  * Assign a value to a variable.
  */
 void
-assign(name, value)
-	char name[], value[];
+assign(char name[], char value[])
 {
 	struct var *vp;
 	int h;
@@ -80,8 +79,7 @@ assign(name, value)
  * Thus, we cannot free same!
  */
 void
-v_free(cp)
-	char *cp;
+v_free(char *cp)
 {
 	if (*cp)
 		free(cp);
@@ -93,8 +91,7 @@ v_free(cp)
  */
 
 char *
-vcopy(str)
-	char str[];
+vcopy(char str[])
 {
 	char *new;
 	unsigned len;
@@ -114,8 +111,7 @@ vcopy(str)
  */
 
 char *
-value(name)
-	char name[];
+value(char name[])
 {
 	struct var *vp;
 
@@ -130,8 +126,7 @@ value(name)
  */
 
 struct var *
-lookup(name)
-	char name[];
+lookup(char name[])
 {
 	struct var *vp;
 
@@ -146,8 +141,7 @@ lookup(name)
  */
 
 struct grouphead *
-findgroup(name)
-	char name[];
+findgroup(char name[])
 {
 	struct grouphead *gh;
 
@@ -161,8 +155,7 @@ findgroup(name)
  * Print a group out on stdout
  */
 void
-printgroup(name)
-	char name[];
+printgroup(char name[])
 {
 	struct grouphead *gh;
 	struct group *gp;
@@ -182,8 +175,7 @@ printgroup(name)
  * the variable or group hash table.
  */
 int
-hash(name)
-	char *name;
+hash(char *name)
 {
 	int h = 0;
 

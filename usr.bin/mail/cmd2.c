@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.11 2001/02/05 02:07:52 christos Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.12 2002/03/02 14:59:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.11 2001/02/05 02:07:52 christos Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.12 2002/03/02 14:59:35 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: cmd2.c,v 1.11 2001/02/05 02:07:52 christos Exp $");
  * More user commands.
  */
 extern int wait_status;
-static int igcomp __P((const void *, const void *));
+static int igcomp(const void *, const void *);
 
 /*
  * If any arguments were given, go to the next applicable argument
@@ -59,8 +59,7 @@ static int igcomp __P((const void *, const void *));
  * If given as first command with no arguments, print first message.
  */
 int
-next(v)
-	void *v;
+next(void *v)
 {
 	int *msgvec = v;
 	struct message *mp;
@@ -139,8 +138,7 @@ hitit:
  * so we can discard when the user quits.
  */
 int
-save(v)
-	void *v;
+save(void *v)
 {
 	char *str = v;
 
@@ -151,8 +149,7 @@ save(v)
  * Copy a message to a file without affected its saved-ness
  */
 int
-copycmd(v)
-	void *v;
+copycmd(void *v)
 {
 	char *str = v;
 
@@ -164,11 +161,7 @@ copycmd(v)
  * If mark is true, mark the message "saved."
  */
 int
-save1(str, mark, cmd, ignore)
-	char str[];
-	int mark;
-	char *cmd;
-	struct ignoretab *ignore;
+save1(char str[], int mark, char *cmd, struct ignoretab *ignore)
 {
 	int *ip;
 	struct message *mp;
@@ -225,8 +218,7 @@ save1(str, mark, cmd, ignore)
  * file name, minus header and trailing blank line.
  */
 int
-swrite(v)
-	void *v;
+swrite(void *v)
 {
 	char *str = v;
 
@@ -243,9 +235,7 @@ swrite(v)
  */
 
 char *
-snarf(linebuf, flag)
-	char linebuf[];
-	int *flag;
+snarf(char linebuf[], int *flag)
 {
 	char *cp;
 
@@ -281,8 +271,7 @@ snarf(linebuf, flag)
  * Delete messages.
  */
 int
-delete(v)
-	void *v;
+delete(void *v)
 {
 	int *msgvec = v;
 	delm(msgvec);
@@ -293,8 +282,7 @@ delete(v)
  * Delete messages, then type the new dot.
  */
 int
-deltype(v)
-	void *v;
+deltype(void *v)
 {
 	int *msgvec = v;
 	int list[2];
@@ -320,8 +308,7 @@ deltype(v)
  * Internal interface.
  */
 int
-delm(msgvec)
-	int *msgvec;
+delm(int *msgvec)
 {
 	struct message *mp;
 	int *ip;
@@ -359,8 +346,7 @@ delm(msgvec)
  * Undelete the indicated messages.
  */
 int
-undeletecmd(v)
-	void *v;
+undeletecmd(void *v)
 {
 	int *msgvec = v;
 	struct message *mp;
@@ -379,8 +365,7 @@ undeletecmd(v)
  * Interactively dump core on "core"
  */
 int
-core(v)
-	void *v;
+core(void *v)
 {
 	int pid;
 
@@ -406,8 +391,7 @@ core(v)
  * Clobber as many bytes of stack as the user requests.
  */
 int
-clobber(v)
-	void *v;
+clobber(void *v)
 {
 	char **argv = v;
 	int times;
@@ -424,8 +408,7 @@ clobber(v)
  * Clobber the stack.
  */
 void
-clob1(n)
-	int n;
+clob1(int n)
 {
 	char buf[512];
 	char *cp;
@@ -442,8 +425,7 @@ clob1(n)
  * If no arguments, print the current list of retained fields.
  */
 int
-retfield(v)
-	void *v;
+retfield(void *v)
 {
 	char **list = v;
 
@@ -455,8 +437,7 @@ retfield(v)
  * If no arguments, print the current list of ignored fields.
  */
 int
-igfield(v)
-	void *v;
+igfield(void *v)
 {
 	char **list = v;
 
@@ -464,8 +445,7 @@ igfield(v)
 }
 
 int
-saveretfield(v)
-	void *v;
+saveretfield(void *v)
 {
 	char **list = v;
 
@@ -473,8 +453,7 @@ saveretfield(v)
 }
 
 int
-saveigfield(v)
-	void *v;
+saveigfield(void *v)
 {
 	char **list = v;
 
@@ -482,10 +461,7 @@ saveigfield(v)
 }
 
 int
-ignore1(list, tab, which)
-	char *list[];
-	struct ignoretab *tab;
-	char *which;
+ignore1(char *list[], struct ignoretab *tab, char *which)
 {
 	char field[LINESIZE];
 	int h;
@@ -514,9 +490,7 @@ ignore1(list, tab, which)
  * Print out all currently retained fields.
  */
 int
-igshow(tab, which)
-	struct ignoretab *tab;
-	char *which;
+igshow(struct ignoretab *tab, char *which)
 {
 	int h;
 	struct ignore *igp;
@@ -542,8 +516,7 @@ igshow(tab, which)
  * Compare two names for sorting ignored field list.
  */
 static int
-igcomp(l, r)
-	const void *l, *r;
+igcomp(const void *l, const void *r)
 {
 	return (strcmp(*(char **)l, *(char **)r));
 }

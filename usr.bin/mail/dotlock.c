@@ -1,4 +1,4 @@
-/*	$NetBSD: dotlock.c,v 1.4 1998/07/06 06:51:55 mrg Exp $	*/
+/*	$NetBSD: dotlock.c,v 1.5 2002/03/02 14:59:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dotlock.c,v 1.4 1998/07/06 06:51:55 mrg Exp $");
+__RCSID("$NetBSD: dotlock.c,v 1.5 2002/03/02 14:59:36 wiz Exp $");
 #endif
 
 #include "rcv.h"
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: dotlock.c,v 1.4 1998/07/06 06:51:55 mrg Exp $");
 #define O_SYNC	0
 #endif
 
-static int create_exclusive __P((const char *));
+static int create_exclusive(const char *);
 /*
  * Create a unique file. O_EXCL does not really work over NFS so we follow
  * the following trick: [Inspired by  S.R. van den Berg]
@@ -53,8 +53,7 @@ static int create_exclusive __P((const char *));
  * - if the link count was 2, then we are ok; else we've failed.
  */
 static int
-create_exclusive(fname)
-	const char *fname;
+create_exclusive(const char *fname)
 {
 	char path[MAXPATHLEN], hostname[MAXHOSTNAMELEN + 1];
 	const char *ptr;
@@ -129,12 +128,14 @@ bad:
 	return -1;
 }
 
+/*
+ * fname -- Pathname to lock
+ * pollinterval -- Interval to check for lock, -1 return
+ * fp -- File to print message
+ * msg -- Message to print
+ */
 int
-dot_lock(fname, pollinterval, fp, msg)
-	const char *fname;	/* Pathname to lock */
-	int pollinterval;	/* Interval to check for lock, -1 return */
-	FILE *fp;		/* File to print message */
-	const char *msg;	/* Message to print */
+dot_lock(const char *fname, int pollinterval, FILE *fp, const char *msg)
 {
 	char path[MAXPATHLEN];
 	sigset_t nset, oset;
@@ -177,8 +178,7 @@ dot_lock(fname, pollinterval, fp, msg)
 }
 
 void
-dot_unlock(fname)
-	const char *fname;
+dot_unlock(const char *fname)
 {
 	char path[MAXPATHLEN];
 

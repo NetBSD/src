@@ -1,4 +1,4 @@
-/*	$NetBSD: v7.local.c,v 1.10 1998/07/26 22:07:27 mycroft Exp $	*/
+/*	$NetBSD: v7.local.c,v 1.11 2002/03/02 14:59:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: v7.local.c,v 1.10 1998/07/26 22:07:27 mycroft Exp $");
+__RCSID("$NetBSD: v7.local.c,v 1.11 2002/03/02 14:59:38 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,7 @@ __RCSID("$NetBSD: v7.local.c,v 1.10 1998/07/26 22:07:27 mycroft Exp $");
  * mail is queued).
  */
 void
-findmail(user, buf)
-	char *user, *buf;
+findmail(char *user, char *buf)
 {
 	char *mbox;
 
@@ -75,7 +74,7 @@ findmail(user, buf)
  * Get rid of the queued mail.
  */
 void
-demail()
+demail(void)
 {
 
 	if (value("keep") != NOSTR || rm(mailname) < 0)
@@ -86,7 +85,7 @@ demail()
  * Discover user login name.
  */
 const char *
-username()
+username(void)
 {
 	const char *np;
 	uid_t uid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.16 2001/02/05 02:07:53 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.17 2002/03/02 14:59:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.16 2001/02/05 02:07:53 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.17 2002/03/02 14:59:36 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,7 @@ char	*prompt = "& ";
  * signficance for mbox and so forth.
  */
 int
-setfile(name)
-	char *name;
+setfile(char *name)
 {
 	FILE *ibuf;
 	int i;
@@ -173,7 +172,7 @@ nomail:
  * started reading mail.
  */
 int
-incfile()
+incfile(void)
 {
 	int newsize;
 	int omsgCount = msgCount;
@@ -206,7 +205,7 @@ int	reset_on_stop;			/* do a reset() if stopped */
  * print no prompt.
  */
 void
-commands()
+commands(void)
 {
 	int eofloop = 0;
 	int n;
@@ -288,9 +287,7 @@ commands()
  * Contxt is non-zero if called while composing mail.
  */
 int
-execute(linebuf, contxt)
-	char linebuf[];
-	int contxt;
+execute(char linebuf[], int contxt)
 {
 	char word[LINESIZE];
 	char *arglist[MAXARGC];
@@ -487,8 +484,7 @@ out:
  * lists to message list functions.
  */
 void
-setmsize(sz)
-	int sz;
+setmsize(int sz)
 {
 
 	if (msgvec != 0)
@@ -502,8 +498,7 @@ setmsize(sz)
  */
 
 const struct cmd *
-lex(word)
-	char word[];
+lex(char word[])
 {
 	const struct cmd *cp;
 
@@ -518,8 +513,7 @@ lex(word)
  * Return true if yep.
  */
 int
-isprefix(as1, as2)
-	char *as1, *as2;
+isprefix(char *as1, char *as2)
 {
 	char *s1, *s2;
 
@@ -543,8 +537,7 @@ int	inithdr;			/* am printing startup headers */
 
 /*ARGSUSED*/
 void
-intr(s)
-	int s;
+intr(int s)
 {
 
 	noreset = 0;
@@ -568,8 +561,7 @@ intr(s)
  * When we wake up after ^Z, reprint the prompt.
  */
 void
-stop(s)
-	int s;
+stop(int s)
 {
 	sig_t old_action = signal(s, SIG_DFL);
 	sigset_t nset;
@@ -591,8 +583,7 @@ stop(s)
  */
 /*ARGSUSED*/
 void
-hangup(s)
-	int s;
+hangup(int s)
 {
 
 	/* nothing to do? */
@@ -604,7 +595,7 @@ hangup(s)
  * give the message count, and print a header listing.
  */
 void
-announce()
+announce(void)
 {
 	int vec[2], mdot;
 
@@ -624,8 +615,7 @@ announce()
  * Return a likely place to set dot.
  */
 int
-newfileinfo(omsgCount)
-	int omsgCount;
+newfileinfo(int omsgCount)
 {
 	struct message *mp;
 	int u, n, mdot, d, s, l;
@@ -689,8 +679,7 @@ newfileinfo(omsgCount)
 
 /*ARGSUSED*/
 int
-pversion(v)
-	void *v;
+pversion(void *v)
 {
 	printf("Version %s\n", version);
 	return(0);
@@ -700,8 +689,7 @@ pversion(v)
  * Load a file of user definitions.
  */
 void
-load(name)
-	char *name;
+load(char *name)
 {
 	FILE *in, *oldin;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.7 1998/07/26 22:07:27 mycroft Exp $	*/
+/*	$NetBSD: temp.c,v 1.8 2002/03/02 14:59:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: temp.c,v 1.7 1998/07/26 22:07:27 mycroft Exp $");
+__RCSID("$NetBSD: temp.c,v 1.8 2002/03/02 14:59:38 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ char	*tempMesg;
 char	*tmpdir;
 
 void
-tinit()
+tinit(void)
 {
 	const char *cp;
 

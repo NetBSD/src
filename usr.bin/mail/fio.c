@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.14 2001/12/19 00:06:11 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.15 2002/03/02 14:59:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.14 2001/12/19 00:06:11 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.15 2002/03/02 14:59:36 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,9 +57,7 @@ extern char *tmpdir;
  * Set up the input pointers while copying the mail file into /tmp.
  */
 void
-setptr(ibuf, offset)
-	FILE *ibuf;
-	off_t offset;
+setptr(FILE *ibuf, off_t offset)
 {
 	int c, count;
 	char *cp, *cp2;
@@ -172,10 +170,7 @@ setptr(ibuf, offset)
  * characters written, including the newline if requested.
  */
 int
-putline(obuf, linebuf, outlf)
-	FILE *obuf;
-	char *linebuf;
-	int   outlf;
+putline(FILE *obuf, char *linebuf, int outlf)
 {
 	int c;
 
@@ -196,10 +191,7 @@ putline(obuf, linebuf, outlf)
  * include the newline at the end.
  */
 int
-readline(ibuf, linebuf, linesize)
-	FILE *ibuf;
-	char *linebuf;
-	int linesize;
+readline(FILE *ibuf, char *linebuf, int linesize)
 {
 	int n;
 
@@ -217,8 +209,7 @@ readline(ibuf, linebuf, linesize)
  * passed message pointer.
  */
 FILE *
-setinput(mp)
-	struct message *mp;
+setinput(struct message *mp)
 {
 
 	fflush(otf);
@@ -232,9 +223,7 @@ setinput(mp)
  * a dynamically allocated message structure.
  */
 void
-makemessage(f, omsgCount)
-	FILE *f;
-	int omsgCount;
+makemessage(FILE *f, int omsgCount)
 {
 	int size = (msgCount + 1) * sizeof (struct message);
 	struct message *nmessage = realloc(message, size);
@@ -261,9 +250,7 @@ makemessage(f, omsgCount)
  * If the write fails, return 1, else 0
  */
 int
-append(mp, f)
-	struct message *mp;
-	FILE *f;
+append(struct message *mp, FILE *f)
 {
 	return fwrite((char *) mp, sizeof *mp, 1, f) != 1;
 }
@@ -272,8 +259,7 @@ append(mp, f)
  * Delete a file, but only if the file is a plain file.
  */
 int
-rm(name)
-	char *name;
+rm(char *name)
 {
 	struct stat sb;
 
@@ -292,7 +278,7 @@ static sigset_t nset, oset;
  * Hold signals SIGHUP, SIGINT, and SIGQUIT.
  */
 void
-holdsigs()
+holdsigs(void)
 {
 
 	if (sigdepth++ == 0) {
@@ -308,7 +294,7 @@ holdsigs()
  * Release signals SIGHUP, SIGINT, and SIGQUIT.
  */
 void
-relsesigs()
+relsesigs(void)
 {
 
 	if (--sigdepth == 0)
@@ -320,8 +306,7 @@ relsesigs()
  * the passed buffer.
  */
 off_t
-fsize(iob)
-	FILE *iob;
+fsize(FILE *iob)
 {
 	struct stat sbuf;
 
@@ -342,8 +327,7 @@ fsize(iob)
  * Return the file name as a dynamic string.
  */
 char *
-expand(name)
-	char *name;
+expand(char *name)
 {
 	char xname[PATHSIZE];
 	char cmdbuf[PATHSIZE];		/* also used for file names */
@@ -433,8 +417,7 @@ expand(name)
  * Determine the current folder directory name.
  */
 int
-getfold(name)
-	char *name;
+getfold(char *name)
 {
 	char *folder;
 
@@ -453,7 +436,7 @@ getfold(name)
  * Return the name of the dead.letter file.
  */
 char *
-getdeadletter()
+getdeadletter(void)
 {
 	char *cp;
 

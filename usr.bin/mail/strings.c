@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.c,v 1.6 1997/10/19 05:03:54 lukem Exp $	*/
+/*	$NetBSD: strings.c,v 1.7 2002/03/02 14:59:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: strings.c,v 1.6 1997/10/19 05:03:54 lukem Exp $");
+__RCSID("$NetBSD: strings.c,v 1.7 2002/03/02 14:59:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,8 +62,7 @@ __RCSID("$NetBSD: strings.c,v 1.6 1997/10/19 05:03:54 lukem Exp $");
  */
 
 char *
-salloc(size)
-	int size;
+salloc(int size)
 {
 	char *t;
 	int s;
@@ -103,7 +102,7 @@ salloc(size)
  * since last reset.
  */
 void
-sreset()
+sreset(void)
 {
 	struct strings *sp;
 	int index;
@@ -125,7 +124,7 @@ sreset()
  * Meant to be called in main, after initialization.
  */
 void
-spreserve()
+spreserve(void)
 {
 	struct strings *sp;
 

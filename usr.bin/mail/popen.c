@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.9 1998/12/19 16:34:04 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.10 2002/03/02 14:59:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.9 1998/12/19 16:34:04 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.10 2002/03/02 14:59:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,13 +64,12 @@ struct child {
 	struct child *link;
 };
 static struct child *child;
-static struct child *findchild __P((int));
-static void delchild __P((struct child *));
-static int file_pid __P((FILE *));
+static struct child *findchild(int);
+static void delchild(struct child *);
+static int file_pid(FILE *);
 
 FILE *
-Fopen(file, mode)
-	char *file, *mode;
+Fopen(char *file, char *mode)
 {
 	FILE *fp;
 
@@ -82,9 +81,7 @@ Fopen(file, mode)
 }
 
 FILE *
-Fdopen(fd, mode)
-	int fd;
-	char *mode;
+Fdopen(int fd, char *mode)
 {
 	FILE *fp;
 
@@ -96,17 +93,14 @@ Fdopen(fd, mode)
 }
 
 int
-Fclose(fp)
-	FILE *fp;
+Fclose(FILE *fp)
 {
 	unregister_file(fp);
 	return fclose(fp);
 }
 
 FILE *
-Popen(cmd, mode)
-	char *cmd;
-	char *mode;
+Popen(char *cmd, char *mode)
 {
 	int p[2];
 	int myside, hisside, fd0, fd1;
@@ -140,8 +134,7 @@ Popen(cmd, mode)
 }
 
 int
-Pclose(ptr)
-	FILE *ptr;
+Pclose(FILE *ptr)
 {
 	int i;
 	sigset_t nset, oset;
@@ -159,7 +152,7 @@ Pclose(ptr)
 }
 
 void
-close_all_files()
+close_all_files(void)
 {
 
 	while (fp_head)
@@ -170,9 +163,7 @@ close_all_files()
 }
 
 void
-register_file(fp, pipe, pid)
-	FILE *fp;
-	int pipe, pid;
+register_file(FILE *fp, int pipe, int pid)
 {
 	struct fp *fpp;
 
@@ -186,8 +177,7 @@ register_file(fp, pipe, pid)
 }
 
 void
-unregister_file(fp)
-	FILE *fp;
+unregister_file(FILE *fp)
 {
 	struct fp **pp, *p;
 
@@ -201,8 +191,7 @@ unregister_file(fp)
 }
 
 static int
-file_pid(fp)
-	FILE *fp;
+file_pid(FILE *fp)
 {
 	struct fp *p;
 
@@ -222,11 +211,8 @@ file_pid(fp)
  */
 /*VARARGS4*/
 int
-run_command(cmd, mask, infd, outfd, a0, a1, a2)
-	char *cmd;
-	sigset_t *mask;
-	int infd, outfd;
-	char *a0, *a1, *a2;
+run_command(char *cmd, sigset_t *mask, int infd, int outfd, char *a0,
+	    char *a1, char *a2)
 {
 	int pid;
 
@@ -237,11 +223,8 @@ run_command(cmd, mask, infd, outfd, a0, a1, a2)
 
 /*VARARGS4*/
 int
-start_command(cmd, mask, infd, outfd, a0, a1, a2)
-	char *cmd;
-	sigset_t *mask;
-	int infd, outfd;
-	char *a0, *a1, *a2;
+start_command(char *cmd, sigset_t *mask, int infd, int outfd,
+	      char *a0, char *a1, char *a2)
 {
 	int pid;
 
@@ -266,9 +249,7 @@ start_command(cmd, mask, infd, outfd, a0, a1, a2)
 }
 
 void
-prepare_child(nset, infd, outfd)
-	sigset_t *nset;
-	int infd, outfd;
+prepare_child(sigset_t *nset, int infd, int outfd)
 {
 	int i;
 	sigset_t eset;
@@ -291,8 +272,7 @@ prepare_child(nset, infd, outfd)
 }
 
 int
-wait_command(pid)
-	int pid;
+wait_command(int pid)
 {
 
 	if (wait_child(pid) < 0) {
@@ -303,8 +283,7 @@ wait_command(pid)
 }
 
 static struct child *
-findchild(pid)
-	int pid;
+findchild(int pid)
 {
 	struct child **cpp;
 
@@ -321,8 +300,7 @@ findchild(pid)
 }
 
 static void
-delchild(cp)
-	struct child *cp;
+delchild(struct child *cp)
 {
 	struct child **cpp;
 
@@ -333,8 +311,7 @@ delchild(cp)
 }
 
 void
-sigchild(signo)
-	int signo;
+sigchild(int signo)
 {
 	int pid;
 	int status;
@@ -357,8 +334,7 @@ int wait_status;
  * Wait for a specific child to die.
  */
 int
-wait_child(pid)
-	int pid;
+wait_child(int pid)
 {
 	sigset_t nset, oset;
 	struct child *cp = findchild(pid);
@@ -378,8 +354,7 @@ wait_child(pid)
  * Mark a child as don't care.
  */
 void
-free_child(pid)
-	int pid;
+free_child(int pid)
 {
 	sigset_t nset, oset;
 	struct child *cp = findchild(pid);
