@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 1999/10/18 20:13:55 pk Exp $
+#	$NetBSD: Makefile,v 1.24 2000/01/10 15:17:30 pk Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ VND?=		vnd0c
 VND_DEV=	/dev/${VND}
 VND_RDEV=	/dev/r${VND}
 VND_GEOM?=
-IMAGE?=		miniroot-${REV}.fs
+IMAGE?=		miniroot.fs
 IMAGESIZE?=	12288 # 6MB in 512 byte blocks
 NEWFSOPTS?=
 MOUNT_POINT?=	/mnt
@@ -75,8 +75,8 @@ release:
 	@false
 .else
 release: $(IMAGE)
-	gzip -c -9 < $(.OBJDIR)/miniroot-${REV}.fs \
-		> $(RELEASEDIR)/installation/miniroot/miniroot-${REV}.fs.gz
+	gzip -c -9 < $(.OBJDIR)/miniroot.fs \
+		> $(RELEASEDIR)/installation/miniroot/miniroot.fs.gz
 .endif	# RELEASEDIR check
 .endif	# DESTDIR check
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/11/09 15:48:02 mycroft Exp $
+#	$NetBSD: Makefile,v 1.5 2000/01/10 15:17:32 pk Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -34,7 +34,7 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}${RAW_PART}
 VND_CRDEV=	/dev/r${VND}${RAW_PART}
-IMAGE?=		syramdisk-${REV}.fs
+IMAGE?=		syramdisk.fs
 CSIZE?=         3312
 MDEC=		${DESTDIR}/usr/mdec
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1999/11/09 22:24:21 pk Exp $
+#	$NetBSD: Makefile,v 1.15 2000/01/10 15:17:32 pk Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -15,7 +15,7 @@ VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
 MDEC=		${DESTDIR}/usr/mdec
-IMAGE?=		ramdisk-${REV}.fs
+IMAGE?=		ramdisk.fs
 
 LISTS=		list
 MTREE=		mtree.conf
@@ -73,8 +73,8 @@ release:
 	@false
 .else
 release: $(IMAGE)
-	gzip -c -9 < $(.OBJDIR)/ramdisk-${REV}.fs \
-		> $(RELEASEDIR)/installation/bootfs/ramdisk-${REV}.fs.gz
+	gzip -c -9 < $(.OBJDIR)/ramdisk.fs \
+		> $(RELEASEDIR)/installation/bootfs/ramdisk.fs.gz
 .endif	# RELEASEDIR check
 
 .include <bsd.obj.mk>
