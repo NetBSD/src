@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.4 1996/01/29 23:54:15 gwr Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.5 1997/03/11 18:23:55 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -62,32 +62,8 @@
 #include "bootparam.h"
 #include "dev_net.h"
 
-extern int debug;
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
-/*
- * Various globals needed by the network code:
- */
-
-/* for arp.c, rarp.c */
-u_char bcea[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-
-struct	in_addr myip;		/* my ip address */
-struct	in_addr rootip;		/* root ip address */
-struct	in_addr gateip;		/* swap ip address */
-n_long	netmask;		/* subnet or net mask */
-
-char rootpath[FNAME_SIZE];
-
-int hostnamelen;
-char hostname[FNAME_SIZE];
-
-int domainnamelen;
-char domainname[FNAME_SIZE];
-
-/*
- * Local things...
- */
 static int netdev_sock = -1;
 static int netdev_opens;
 
