@@ -104,6 +104,7 @@ main(argc, argv)
 		scan_option("-E");
 		scan_option("-m");
 		scan_option("-G");
+		scan_option("-f");
 		scan_option(getenv("MORE"));
 	} else
 		scan_option(getenv("LESS"));
