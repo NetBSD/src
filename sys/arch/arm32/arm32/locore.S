@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.14 1996/10/16 19:32:18 ws Exp $ */
+/* $NetBSD: locore.S,v 1.15 1996/11/23 04:02:41 mark Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -38,10 +38,38 @@
 #include <machine/param.h>
 #include <sys/syscall.h>
 
-/* What size shoudl this really be ? It is only used by init_arm() */
+/* What size should this really be ? It is only used by init_arm() */
 
 #define INIT_ARM_STACK_SIZE	2048
 
+#ifdef CPU_SA110
+
+#define PUSHFRAME \
+	str	lr, [sp, #-4]!;		/* Push the return address */ \
+	sub	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
+	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
+	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
+	add	r0, sp, #(4*13);	/* Adjust the stack pointer */ \
+	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
+        mov     r0, r0;                 /* NOP for previous instruction */ \
+	mrs	r0, spsr_all;		/* Put the SPSR on the stack */ \
+	str	r0, [sp, #-4]!;
+
+/*
+ * PULLFRAME - macro to pull a trap frame from the stack in the current mode
+ * Since the current mode is used, the SVC R14 field is ignored.
+ */
+
+#define PULLFRAME \
+        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */ \
+        msr     spsr_all, r0; \
+        ldmia   sp, {r0-r14}^;		/* Restore the registers (user mode) */ \
+        mov     r0, r0;                 /* NOP for previous instruction */ \
+	add	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
+ 	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
+ 	ldr	lr, [sp], #0x0004;	/* Pull the return address */
+
+#else
 #define PUSHFRAME \
 	str	lr, [sp, #-4]!;		/* Push the return address */ \
 	sub	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
@@ -58,6 +86,7 @@
         mov     r0, r0;                 /* NOP for previous instruction */ \
  	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
  	ldr	lr, [sp], #0x0004;	/* Pull the return address */
+#endif
 
 /* register equates */
 fp	.req	r11
@@ -95,11 +124,16 @@ L1:
 
 	mov	sp, r0
 
+	mov	fp, #0x00000000		/* trace back starts here */
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+
 /* Setup an initial trap frame for start_init to use */
 
 	PUSHFRAME
 
-	mov	fp, #0x00000000		/* trace back starts here */
+/*	mov	fp, #0x00000000*/		/* trace back starts here */
 	mov	r0, sp			/* parameter to main is trap frame*/ 
 
 	bl	_main			/* Lets light the flame and start her up */
@@ -532,13 +566,13 @@ return:
  */
 	.global _setjmp
 ENTRY(setjmp)
-        stmia	r0, {r4-r14}
-        mov	r0, #0x00000000
-        mov	r15, r14
+	stmia	r0, {r4-r14}
+	mov	r0, #0x00000000
+	mov	r15, r14
 
 	.global _longjmp
 ENTRY(longjmp)
-        ldmia	r2, {r4-r14}
+	ldmia	r0, {r4-r14}
 	mov	r0, #0x00000001
 	mov	r15, r14
 
