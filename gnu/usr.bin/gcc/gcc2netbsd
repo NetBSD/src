@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.12 1996/05/23 04:54:42 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.11 1996/05/19 05:19:52 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -204,19 +204,19 @@ sub dumpgens {
     print ODATA "c-parse.h\n\n";
 
     foreach $n (@genh) {
-	print ODATA "insn-$n.h: gen$n \$(MD)\n";
+	print ODATA "insn-$n.h: gen$n\n";
 	print ODATA "\t./gen$n \$(MD) > insn-$n.h\n\n";
 	print ODATA "CLEANFILES += insn-$n.h gen$n gen$n.o\n\n";
     }
 
     foreach $n (@genbc) {
-	print ODATA "bc-$n.h: bi-$n \$(BCDEF)\n";
+	print ODATA "bc-$n.h: bi-$n\n";
 	print ODATA "\t./bi-$n < \$(BCDEF) > bc-$n.h\n\n";
 	print ODATA "CLEANFILES += bc-$n.h bi-$n bi-$n.o\n\n";
     }
 
     foreach $n (@genc) {
-	print ODATA "insn-$n.c: gen$n\n \$(MD)";
+	print ODATA "insn-$n.c: gen$n\n";
 	print ODATA "\t./gen$n \$(MD) > insn-$n.c\n";
 	print ODATA "CLEANFILES += insn-$n.c gen$n gen$n.o\n\n";
     }

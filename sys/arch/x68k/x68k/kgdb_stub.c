@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.1 1996/05/05 12:17:26 oki Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
  */
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.1 1996/05/05 12:17:26 oki Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $";
 #endif
 
 #include <sys/param.h>

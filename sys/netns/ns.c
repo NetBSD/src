@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.11 1996/05/22 13:56:20 mycroft Exp $	*/
+/*	$NetBSD: ns.c,v 1.10 1996/02/13 22:13:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -43,7 +43,6 @@
 #include <sys/errno.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -63,12 +62,11 @@ extern struct sockaddr_ns ns_netmask, ns_hostmask;
  */
 /* ARGSUSED */
 int
-ns_control(so, cmd, data, ifp, p)
+ns_control(so, cmd, data, ifp)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
 	register struct ifnet *ifp;
-	struct proc *p;
 {
 	register struct ifreq *ifr = (struct ifreq *)data;
 	register struct ns_aliasreq *ifra = (struct ns_aliasreq *)data;
@@ -110,7 +108,7 @@ ns_control(so, cmd, data, ifp, p)
 		return (0);
 	}
 
-	if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+	if ((so->so_state & SS_PRIV) == 0)
 		return (EPERM);
 
 	switch (cmd) {

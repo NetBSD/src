@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.21 1996/05/22 13:55:02 mycroft Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.20 1996/05/17 22:45:32 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -913,8 +913,7 @@ sys_getsockname(p, v, retval)
 	m = m_getclr(M_WAIT, MT_SONAME);
 	if (m == NULL)
 		return (ENOBUFS);
-	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, (struct mbuf *)0,
-	    m, (struct mbuf *)0, (struct proc *)0);
+	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, 0, m, 0);
 	if (error)
 		goto bad;
 	if (len > m->m_len)
@@ -959,8 +958,7 @@ sys_getpeername(p, v, retval)
 	m = m_getclr(M_WAIT, MT_SONAME);
 	if (m == NULL)
 		return (ENOBUFS);
-	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, (struct mbuf *)0,
-	    m, (struct mbuf *)0, (struct proc *)0);
+	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, 0, m, 0);
 	if (error)
 		goto bad;
 	if (len > m->m_len)

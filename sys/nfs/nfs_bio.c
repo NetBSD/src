@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.26 1996/05/23 22:47:27 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.25 1996/02/29 20:26:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -173,11 +173,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 			return (error);
 		}
 	    }
-	    /*
-	     * Don't cache symlinks.
-	     */
-	    if (np->n_flag & NQNFSNONCACHE
-		|| ((vp->v_flag & VROOT) && vp->v_type == VLNK)) {
+	    if (np->n_flag & NQNFSNONCACHE) {
 		switch (vp->v_type) {
 		case VREG:
 			return (nfs_readrpc(vp, uio, cred));

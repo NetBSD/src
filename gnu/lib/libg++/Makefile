@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1996/05/22 01:48:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 1996/05/16 21:03:24 phil Exp $
 
 SUBDIR= libg++ libstdc++ # libio libiostream
 
@@ -10,6 +10,12 @@ HEADERS= cassert cctype cerrno cfloat ciso646 climits clocale cmath complex \
 
 
 includes:
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++/gen
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++/std
 	@echo installing includes from libg++/src
 	@(cd libg++/src ; for j in *.[ih]; do \
 		cmp -s $$j ${DESTDIR}/usr/include/g++/$$j || \

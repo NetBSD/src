@@ -3,7 +3,7 @@
  * from: amiga/stand/loadkmap/loadkmap.c
  * Copyright 1993 by Masaru Oki
  *
- * $Id: loadfont.c,v 1.1 1996/05/05 12:17:17 oki Exp $
+ * $Id: loadfont.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
  */
 
 #include <stdio.h>

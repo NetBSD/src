@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 1996/05/22 17:52:48 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 1996/05/18 16:01:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1235,6 +1235,21 @@ netintr()
 #endif
 }
 
+#if defined(DEBUG) && !defined(PANICBUTTON)
+#define PANICBUTTON
+#endif
+
+#ifdef PANICBUTTON
+int     panicbutton = 1;	/* non-zero if panic buttons are enabled */
+int     crashandburn = 0;
+int     candbdelay = 50;	/* give em half a second */
+
+candbtimer()
+{
+	crashandburn = 0;
+}
+#endif
+
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
@@ -1933,14 +1948,12 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACPB170, "PowerBook", " 170 ", MACH_CLASSPB, &romvecs[1]},
 	{MACH_MACPB180, "PowerBook", " 180 ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB180C, "PowerBook", " 180c ", MACH_CLASSPB, &romvecs[5]},
-
-/* The Duos */
-	{MACH_MACPB210, "PowerBook Duo", " 210 ", MACH_CLASSDUO, &romvecs[5]},
-	{MACH_MACPB230, "PowerBook Duo", " 230 ", MACH_CLASSDUO, &romvecs[5]},
-	{MACH_MACPB250, "PowerBook Duo", " 250 ", MACH_CLASSDUO, &romvecs[5]},
-	{MACH_MACPB270, "PowerBook Duo", " 270 ", MACH_CLASSDUO, &romvecs[5]},
-	{MACH_MACPB280, "PowerBook Duo", " 280 ", MACH_CLASSDUO, &romvecs[5]},
-	{MACH_MACPB280C, "PowerBook Duo", " 280C ", MACH_CLASSDUO, &romvecs[5]},
+	{MACH_MACPB210, "PowerBook", " 210 ", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB230, "PowerBook", " 230 ", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB250, "PowerBook", " 250 ", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB270, "PowerBook", " 270 ", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB280, "PowerBook", " 280 ", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB280C, "PowerBook", " 280C ", MACH_CLASSPB, &romvecs[5]},
 
 /* The Performas... */
 	{MACH_MACP600, "Performa", " 600 ", MACH_CLASSIIvx, &romvecs[2]},
@@ -2186,22 +2199,6 @@ setmachdep()
 		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
 		/* Are we disabling something important? */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
-		break;
-	case MACH_CLASSDUO:
-		/*
-		 * The Duo definitely does not use a VIA2, but it looks
-		 * like the VIA2 functions might be on the MSC at the RBV
-		 * locations.  The rest is copied from the Powerbooks.
-		 */
-		VIA2 = 0x13;
-		IOBase = 0x50f00000;
-		Via1Base = (volatile u_char *) IOBase;
-		mac68k_machine.scsi80 = 1;
-		mac68k_machine.sccClkConst = 115200;
-		/* Disable everything but PM; we need it. */
-		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
-		/* Are we disabling something important? */
-		via_reg(VIA2, rIER) = 0x7f;	/* disable VIA2 int */
 		break;
 	case MACH_CLASSQ:
 		VIA2 = 1;

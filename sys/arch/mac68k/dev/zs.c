@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.2 1996/05/23 05:18:48 briggs Exp $	*/
+/*	$NetBSD: zs.c,v 1.1 1996/05/18 18:54:37 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -637,7 +637,7 @@ zscninit(struct consdev * cp)
 	 * number. :-)
          */
         zscnsetup();
-        printf("\nNetBSD/mac68k console\n");
+        printf("Whee! we are the console!\n");
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 1996/05/22 17:53:24 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 1996/05/05 16:33:46 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -208,7 +208,6 @@ extern unsigned char ssir;
 #define MACH_CLASSIIvx	0x0006	/* Similar to IIsi -- different via2 emul? */
 #define MACH_CLASSLC	0x0007	/* Low-Cost/Performa/Wal-Mart Macs. */
 #define MACH_CLASSPB	0x0008	/* Powerbooks.  Power management. */
-#define MACH_CLASSDUO	0x0009	/* Powerbooks Duos.  More integration/Docks. */
 #define MACH_CLASSIIfx	0x0080	/* The IIfx is in a class by itself. */
 #define MACH_CLASSQ	0x0100	/* Centris/Quadras. */
 

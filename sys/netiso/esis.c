@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.15 1996/05/22 13:55:50 mycroft Exp $	*/
+/*	$NetBSD: esis.c,v 1.14 1996/05/07 02:45:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,6 @@ SOFTWARE.
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -159,16 +158,17 @@ esis_init()
  */
 /* ARGSUSED */
 int
-esis_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+esis_usrreq(so, req, m, nam, control)
+	struct socket  *so;	/* socket: used only to get to this code */
+	int             req;	/* request */
+	struct mbuf    *m;	/* data for request */
+	struct mbuf    *nam;	/* optional name */
+	struct mbuf    *control;/* optional control */
 {
 	struct rawcb   *rp = sotorawcb(so);
 	int             error = 0;
 
-	if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+	if ((so->so_state & SS_PRIV) == 0) {
 		error = EACCES;
 		goto release;
 	}

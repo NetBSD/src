@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.14 1996/05/22 13:54:55 mycroft Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -131,7 +131,7 @@ soo_ioctl(fp, cmd, data, p)
 	if (IOCGROUP(cmd) == 'r')
 		return (rtioctl(cmd, data, p));
 	return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL, 
-	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)0, p));
+	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)0));
 }
 
 int
@@ -185,8 +185,8 @@ soo_stat(so, ub)
 	bzero((caddr_t)ub, sizeof (*ub));
 	ub->st_mode = S_IFSOCK;
 	return ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
-	    (struct mbuf *)ub, (struct mbuf *)0, (struct mbuf *)0,
-	    (struct proc *)0));
+	    (struct mbuf *)ub, (struct mbuf *)0, 
+	    (struct mbuf *)0));
 }
 
 /* ARGSUSED */

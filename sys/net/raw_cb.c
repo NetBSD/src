@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.10 1996/05/23 18:35:02 mycroft Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.9 1996/02/13 22:00:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -107,7 +107,7 @@ raw_detach(rp)
 		m_freem(dtom(rp->rcb_laddr));
 	rp->rcb_laddr = 0;
 #endif
-	free((caddr_t)rp, M_PCB);
+	free((caddr_t)(rp), M_PCB);
 }
 
 /*
@@ -115,7 +115,7 @@ raw_detach(rp)
  */
 void
 raw_disconnect(rp)
-	register struct rawcb *rp;
+	struct rawcb *rp;
 {
 
 #ifdef notdef
@@ -126,3 +126,21 @@ raw_disconnect(rp)
 	if (rp->rcb_socket->so_state & SS_NOFDREF)
 		raw_detach(rp);
 }
+
+#ifdef notdef
+int
+raw_bind(so, nam)
+	register struct socket *so;
+	struct mbuf *nam;
+{
+	struct sockaddr *addr = mtod(nam, struct sockaddr *);
+	register struct rawcb *rp;
+
+	if (ifnet == 0)
+		return (EADDRNOTAVAIL);
+	rp = sotorawcb(so);
+	nam = m_copym(nam, 0, M_COPYALL, M_WAITOK);
+	rp->rcb_laddr = mtod(nam, struct sockaddr *);
+	return (0);
+}
+#endif
