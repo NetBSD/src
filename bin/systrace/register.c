@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.5 2002/11/02 19:43:27 provos Exp $	*/
+/*	$NetBSD: register.c,v 1.6 2002/11/02 19:49:21 provos Exp $	*/
 /*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -161,6 +161,9 @@ systrace_initcb(void)
  	X(intercept_register_sccb("netbsd", "socket", trans_cb, NULL));
  	intercept_register_translation("netbsd", "socket", 0, &ic_sockdom);
  	intercept_register_translation("netbsd", "socket", 1, &ic_socktype);
+ 	X(intercept_register_sccb("netbsd", "kill", trans_cb, NULL));
+ 	intercept_register_translation("netbsd", "kill", 0, &ic_pidname);
+ 	intercept_register_translation("netbsd", "kill", 1, &ic_signame);
 #else
 	X(intercept_register_gencb(gen_cb, NULL));
 	X(intercept_register_sccb("native", "open", trans_cb, NULL));
@@ -260,6 +263,9 @@ systrace_initcb(void)
  	X(intercept_register_sccb("native", "socket", trans_cb, NULL));
  	intercept_register_translation("native", "socket", 0, &ic_sockdom);
  	intercept_register_translation("native", "socket", 1, &ic_socktype);
+ 	X(intercept_register_sccb("native", "kill", trans_cb, NULL));
+ 	intercept_register_translation("native", "kill", 0, &ic_pidname);
+ 	intercept_register_translation("native", "kill", 1, &ic_signame);
 #endif
 
 #if !(defined(__NetBSD__) && !defined(HAVE_LINUX_FCNTL_H))
