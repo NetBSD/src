@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.72 2003/10/11 04:50:49 lukem Exp $ */
+/*	$NetBSD: fdisk.c,v 1.73 2003/11/21 21:47:42 lukem Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.72 2003/10/11 04:50:49 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.73 2003/11/21 21:47:42 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2031,6 +2031,7 @@ print_params(void)
 {
 
 	if (sh_flag) {
+		printf("DISK=%s\n", disk);
 		printf("DLCYL=%d\nDLHEAD=%d\nDLSEC=%d\nDLSIZE=%"PRIdaddr"\n",
 			cylinders, heads, sectors, disksectors);
 		printf("BCYL=%d\nBHEAD=%d\nBSEC=%d\nBDLSIZE=%"PRIdaddr"\n",
