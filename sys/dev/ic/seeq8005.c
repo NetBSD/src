@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.11 2001/03/24 20:38:41 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.12 2001/03/24 23:31:06 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -64,7 +64,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.11 2001/03/24 20:38:41 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.12 2001/03/24 23:31:06 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -123,7 +123,7 @@ int seeq_debug = 0;
 #endif
 #define dprintf(x) DPRINTF(SEEQ_DEBUG_MISC, x)
 
-#define	SEEQ_TX_BUFFER_SIZE		0x600		/* (> MAX_ETHER_LEN) */
+#define	SEEQ_TX_BUFFER_SIZE		0x800		/* (> MAX_ETHER_LEN) */
 
 /*
  * prototypes
@@ -148,6 +148,7 @@ static void ea_read(struct seeq8005_softc *, int, int);
 static struct mbuf *ea_get(struct seeq8005_softc *, int, int, struct ifnet *);
 static void ea_getpackets(struct seeq8005_softc *);
 static void eatxpacket(struct seeq8005_softc *);
+static int ea_writembuf(struct seeq8005_softc *, struct mbuf *, int);
 static void ea_mc_reset(struct seeq8005_softc *);
 static void ea_mc_reset_8004(struct seeq8005_softc *);
 static void ea_mc_reset_8005(struct seeq8005_softc *);
@@ -209,10 +210,11 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	/*
 	 * Set up tx and rx buffers.
 	 *
-	 * We use approximately a third of the packet memory for TX
+	 * We use approximately a quarter of the packet memory for TX
 	 * buffers and the rest for RX buffers
 	 */
-	sc->sc_tx_bufs = sc->sc_buffersize / SEEQ_TX_BUFFER_SIZE / 3;	
+	/* sc->sc_tx_bufs = sc->sc_buffersize / SEEQ_TX_BUFFER_SIZE / 4; */
+	sc->sc_tx_bufs = 1;
 	sc->sc_tx_bufsize = sc->sc_tx_bufs * SEEQ_TX_BUFFER_SIZE;
 	sc->sc_rx_bufsize = sc->sc_buffersize - sc->sc_tx_bufsize;
 	sc->sc_enabled = 0;
@@ -806,10 +808,8 @@ eatxpacket(struct seeq8005_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct mbuf *m, *m0;
+	struct mbuf *m0;
 	struct ifnet *ifp;
-	int len, nextpacket;
-	u_int8_t hdr[4];
 
 	ifp = &sc->sc_ethercom.ec_if;
 
@@ -840,53 +840,8 @@ eatxpacket(struct seeq8005_softc *sc)
 	sc->sc_config2 &= ~SEEQ_CFG2_OUTPUT;
 	bus_space_write_2(iot, ioh, SEEQ_CONFIG2, sc->sc_config2);
 
-	/*
-	 * Copy the frame to the start of the transmit area on the card,
-	 * leaving four bytes for the transmit header.
-	 */
-	len = 0;
-	for (m = m0; m; m = m->m_next) {
-		if (m->m_len == 0)
-			continue;
-		ea_writebuf(sc, mtod(m, caddr_t), 4 + len, m->m_len);
-		len += m->m_len;
-	}
+	ea_writembuf(sc, m0, 0x0000);
 	m_freem(m0);
-
-
-	/* If packet size is odd round up to the next 16 bit boundry */
-	if (len % 2)
-		++len;
-
-	len = max(len, ETHER_MIN_LEN);
-	
-	if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN))
-		log(LOG_WARNING, "%s: oversize packet = %d bytes\n",
-		    sc->sc_dev.dv_xname, len);
-
-#if 0 /*def SEEQ_TX_DEBUG*/
-	dprintf(("ea: xfr pkt length=%d...\n", len));
-
-	dprintf(("%s-->", ether_sprintf(sc->sc_pktbuf+6)));
-	dprintf(("%s\n", ether_sprintf(sc->sc_pktbuf)));
-#endif
-
-/*	dprintf(("st=%04x\n", bus_space_read_2(iot, ioh, SEEQ_STATUS)));*/
-
-	/* Follow it with a NULL packet header */
-	bus_space_write_2(iot, ioh, SEEQ_BUFWIN, 0x0000);
-	bus_space_write_2(iot, ioh, SEEQ_BUFWIN, 0x0000);
-
-
-	/* Write the packet header */
-
-	nextpacket = len + 4;
-	hdr[0] = (nextpacket >> 8) & 0xff;
-	hdr[1] = nextpacket & 0xff;
-	hdr[2] = SEEQ_PKTCMD_TX | SEEQ_PKTCMD_DATA_FOLLOWS |
-		SEEQ_TXCMD_XMIT_SUCCESS_INT | SEEQ_TXCMD_COLLISION_INT;
-	hdr[3] = 0; /* Status byte -- will be update by hardware. */
-	ea_writebuf(sc, hdr, 0x0000, 4);
 
 	bus_space_write_2(iot, ioh, SEEQ_TX_PTR, 0x0000);
 
@@ -907,6 +862,57 @@ eatxpacket(struct seeq8005_softc *sc)
 #endif
 }
 
+/*
+ * Copy a packet from an mbuf to the transmit buffer on the card.
+ *
+ * Puts a valid Tx header at the start of the packet, and a null header at
+ * the end.
+ */
+static int
+ea_writembuf(struct seeq8005_softc *sc, struct mbuf *m0, int bufstart)
+{
+	struct mbuf *m;
+	int len, nextpacket;
+	u_int8_t hdr[4];
+
+	/*
+	 * Copy the datagram to the packet buffer.
+	 */
+	ea_writebuf(sc, NULL, bufstart + 4, 0);
+
+	len = 0;
+	for (m = m0; m; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
+		ea_writebuf(sc, mtod(m, caddr_t), -1, m->m_len);
+		len += m->m_len;
+	}
+
+	/* If packet size is odd round up to the next 16 bit boundry */
+	if (len % 2)
+		++len;
+
+	len = max(len, ETHER_MIN_LEN);
+
+	ea_writebuf(sc, NULL, bufstart + 4 + len, 0);
+	/* Follow it with a NULL packet header */
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN, 0x0000);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN, 0x0000);
+
+	/* Ok we now have a packet len bytes long in our packet buffer */
+	DPRINTF(SEEQ_DEBUG_TX, ("seeq_writembuf: length=%d\n", len));
+
+	/* Write the packet header */
+	nextpacket = len + 4;
+	hdr[0] = (nextpacket >> 8) & 0xff;
+	hdr[1] = nextpacket & 0xff;
+	hdr[2] = SEEQ_PKTCMD_TX | SEEQ_PKTCMD_DATA_FOLLOWS |
+		SEEQ_TXCMD_XMIT_SUCCESS_INT | SEEQ_TXCMD_COLLISION_INT;
+	hdr[3] = 0; /* Status byte -- will be update by hardware. */
+	ea_writebuf(sc, hdr, 0x0000, 4);
+
+	return len;
+}
 
 /*
  * Ethernet controller interrupt.
