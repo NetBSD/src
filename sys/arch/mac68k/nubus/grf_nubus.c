@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.15 1996/12/16 16:17:06 scottr Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.16 1997/02/20 00:23:28 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -42,6 +42,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/grfioctl.h>
 #include <machine/viareg.h>
