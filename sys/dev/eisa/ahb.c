@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.10 1997/08/27 11:24:40 bouyer Exp $	*/
+/*	$NetBSD: ahb.c,v 1.10.4.1 1997/10/29 00:19:27 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -159,7 +159,7 @@ void	ahb_timeout __P((void *));
 int	ahb_create_ecbs __P((struct ahb_softc *));
 
 integrate void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
-integrate void ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
+integrate int ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 
 struct scsipi_adapter ahb_switch = {
 	ahb_scsi_cmd,
@@ -497,13 +497,13 @@ ahb_free_ecb(sc, ecb)
 /*
  * Create a set of ecbs and add them to the free list.
  */
-integrate void
+integrate int
 ahb_init_ecb(sc, ecb)
 	struct ahb_softc *sc;
 	struct ahb_ecb *ecb;
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
-	int hashnum;
+	int hashnum, error;
 
 	/*
 	 * XXX Should we put a DIAGNOSTIC check for multiple
@@ -515,20 +515,34 @@ ahb_init_ecb(sc, ecb)
 	/*
 	 * Create the DMA maps for this ECB.
 	 */
-	if (bus_dmamap_create(dmat, sizeof(struct ahb_ecb), 1, 
-	    sizeof(struct ahb_ecb), 0, BUS_DMA_NOWAIT, &ecb->dmamap_self) ||
+	error = bus_dmamap_create(dmat, sizeof(struct ahb_ecb), 1,
+	    sizeof(struct ahb_ecb), 0, BUS_DMA_NOWAIT, &ecb->dmamap_self);
+	if (error) {
+		printf("%s: can't create ecb dmamap_self\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
 
-					/* XXX What's a good value for this? */
-	    bus_dmamap_create(dmat, AHB_MAXXFER, AHB_NSEG, AHB_MAXXFER,
-	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &ecb->dmamap_xfer))
-		panic("ahb_init_ecb: can't create DMA maps");
+	error = bus_dmamap_create(dmat, AHB_MAXXFER, AHB_NSEG, AHB_MAXXFER,
+	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &ecb->dmamap_xfer);
+	if (error) {
+		printf("%s: can't create ecb dmamap_xfer\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
 
 	/*
 	 * Load the permanent DMA maps.
 	 */
-	if (bus_dmamap_load(dmat, ecb->dmamap_self, ecb,
-	    sizeof(struct ahb_ecb), NULL, BUS_DMA_NOWAIT))
-		panic("ahb_init_ecb: can't load permanent maps");
+	error = bus_dmamap_load(dmat, ecb->dmamap_self, ecb,
+	    sizeof(struct ahb_ecb), NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: can't load ecb dmamap_self\n",
+		    sc->sc_dev.dv_xname);
+		bus_dmamap_destroy(dmat, ecb->dmamap_self);
+		bus_dmamap_destroy(dmat, ecb->dmamap_xfer);
+		return (error);
+	}
 
 	/*
 	 * put in the phystokv hash table
@@ -539,6 +553,7 @@ ahb_init_ecb(sc, ecb)
 	ecb->nexthash = sc->sc_ecbhash[hashnum];
 	sc->sc_ecbhash[hashnum] = ecb;
 	ahb_reset_ecb(sc, ecb);
+	return (0);
 }
 
 int
@@ -553,23 +568,33 @@ ahb_create_ecbs(sc)
 	size = NBPG;
 	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT);
-	if (error)
+	if (error) {
+		printf("%s: can't allocate memory for ecbs\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
+	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    (caddr_t *)&ecb, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
 	if (error) {
+		printf("%s: can't map memory for ecbs\n",
+		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return (error);
 	}
 
 	bzero(ecb, size);
 	while (size > sizeof(struct ahb_ecb)) {
-		ahb_init_ecb(sc, ecb);
-		sc->sc_numecbs++;
+		error = ahb_init_ecb(sc, ecb);
+		if (error) {
+			printf("%s: can't initialize ecb\n",
+			    sc->sc_dev.dv_xname);
+			return (error);
+		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_ecb, ecb, chain);
 		(caddr_t)ecb += ALIGN(sizeof(struct ahb_ecb));
 		size -= ALIGN(sizeof(struct ahb_ecb));
+		sc->sc_numecbs++;
 	}
 
 	return (0);
@@ -602,7 +627,13 @@ ahb_get_ecb(sc, flags)
 			break;
 		}
 		if (sc->sc_numecbs < AHB_ECB_MAX) {
-			if (ahb_create_ecbs(sc)) {
+			/*
+			 * ahb_create_ecbs() might have managed to create
+			 * one before it failed.  If so, don't abort,
+			 * just grab it and continue to hobble along.
+			 */
+			if (ahb_create_ecbs(sc) != 0 &&
+			    sc->sc_free_ecb.tqh_first == NULL) {
 				printf("%s: can't allocate ecbs\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
