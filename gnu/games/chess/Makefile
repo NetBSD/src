@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.14 1998/02/18 22:47:41 jtc Exp $
+#	$NetBSD: Makefile,v 1.15 1998/04/18 00:48:18 ross Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
 
-.if (${MACHINE_ARCH} != "alpha")
 PROG=	chess
 SRCS=	gnuchess.c uxdsp.c move.c
 CPPFLAGS+=-DNEWMOVE=12
@@ -10,7 +9,6 @@ LDADD=	-lcurses -lgnumalloc
 HIDEGAME=hidegame
 FILES=gnuchess.book
 FILESDIR=/usr/share/games
-.endif
 
 MAN=	chess.6
 CLEANFILES += chess.6
