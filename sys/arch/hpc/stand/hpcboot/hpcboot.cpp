@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.12 2003/12/23 16:50:22 uwe Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.13 2004/01/02 12:13:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -219,6 +219,8 @@ hpcboot(void *arg)
 			error_message = TEXT("Canceled by user.\n");
 			goto failed_exit;
 		}
+		// redraw areas damaged by the dialog
+		UpdateWindow(menu._root->_window);
 	}
 
 	f._arch->jump(p, f._loader->tagStart());
