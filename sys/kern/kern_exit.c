@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.109 2003/02/14 10:11:57 dsl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.110 2003/02/17 23:45:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.109 2003/02/14 10:11:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.110 2003/02/17 23:45:47 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -176,7 +176,7 @@ exit1(struct lwp *l, int rv)
 	 * We're trying to get out of here. 
 	 */
 	sa = 0;
-	if (l->l_flag & L_SA) {
+	if (p->p_sa != NULL) {
 		l->l_flag &= ~L_SA;
 		p->p_flag &= ~P_SA;
 		sa = 1;
