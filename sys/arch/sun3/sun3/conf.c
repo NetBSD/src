@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.57 1997/10/17 02:00:39 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.57.4.1 1998/01/27 01:14:27 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -90,11 +90,7 @@ cdev_decl(ctty);
 #define fbpoll seltrue
 cdev_decl(fb);
 
-#ifdef	sun3x
 #include "fdc.h"	/* has NFDC and NFD; see files.sun3x */
-#else
-#define	NFD 0
-#endif
 bdev_decl(fd);
 cdev_decl(fd);
 
