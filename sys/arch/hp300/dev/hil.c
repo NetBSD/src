@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.53 2002/11/26 19:50:23 christos Exp $	*/
+/*	$NetBSD: hil.c,v 1.54 2003/01/28 22:35:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.53 2002/11/26 19:50:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.54 2003/01/28 22:35:07 wiz Exp $");
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -1108,7 +1108,7 @@ hilevent(hilp)
 		 * Copy data to queue.
 		 * If this is the first queue we construct the packet
 		 * with length, timestamp and poll buffer data.
-		 * For second and sucessive packets we just duplicate
+		 * For second and successive packets we just duplicate
 		 * the first packet.
 		 */
 		pp = (u_char *) &hq->hil_event[hq->hil_evqueue.tail];

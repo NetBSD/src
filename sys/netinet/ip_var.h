@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.49 2002/09/11 02:41:20 itojun Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.50 2003/01/28 22:35:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -144,7 +144,7 @@ struct	ipstat {
 	u_quad_t ips_localout;		/* total ip packets generated here */
 	u_quad_t ips_odropped;		/* lost packets due to nobufs, etc. */
 	u_quad_t ips_reassembled;	/* total packets reassembled ok */
-	u_quad_t ips_fragmented;	/* datagrams sucessfully fragmented */
+	u_quad_t ips_fragmented;	/* datagrams successfully fragmented */
 	u_quad_t ips_ofragments;	/* output fragments created */
 	u_quad_t ips_cantfrag;		/* don't fragment flag was set, etc. */
 	u_quad_t ips_badoptions;	/* error in option processing */

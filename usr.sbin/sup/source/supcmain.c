@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.18 2002/07/10 21:28:13 wiz Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.19 2003/01/28 22:35:23 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -272,7 +272,7 @@
  *	the user and group specified by the remote system.  Changed
  *	execute code to invalidate collection if execute command returns
  *	with a non-zero exit status.  Added support for execv() of
- *	original arguments of supfile is upgraded sucessfully.  Changed
+ *	original arguments of supfile is upgraded successfully.  Changed
  *	copyfile to always use a temp file if possible. [V5.7]
  *
  * 04-Jan-86  Glenn Marcy (gm0w) at Carnegie-Mellon University
