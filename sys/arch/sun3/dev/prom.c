@@ -15,7 +15,7 @@
 struct prom_softc {
     int flags;
     int nopen;
-    struct tty *tp;
+    struct tty t;
 } prom_softc[NPROM];
 
 #if NPROM > 1
@@ -36,12 +36,8 @@ promopen(dev, flag, mode, p)
     if (unit >= NCOM)
 	return ENXIO;
     prom = &prom_softc[unit];
-    if (!prom->tp) {
-	MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
-	bzero(tp, sizeof(struct tty));
-	prom->tp = tp;
-    }
-    else tp = prom->tp;
+    bzero(&prom->t, sizeof(struct tty));
+    tp = &prom->t;
     tp->t_oproc = promstart;
     tp->t_dev = dev;
     if ((tp->t_state & TS_ISOPEN) == 0) {
@@ -83,11 +79,9 @@ promclose(dev, flag, mode, p)
     if (unit >= NCOM)
 	return ENXIO;
     prom = &prom_softc[unit];
-    tp = prom->tp;
+    tp = &prom->t;
     (*linesw[tp->t_line].l_close)(tp, flag);
     ttyclose(tp);
-    FREE(tp, M_TTYS);
-    prom->tp = NULL;
     return 0;
 }
 
@@ -95,7 +89,7 @@ promread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = prom_softc[UNIT(dev)]->tp;
+	register struct tty *tp = &prom_softc[UNIT(dev)]->t;
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -103,7 +97,7 @@ promwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = prom_softc[UNIT(dev)]->tp;
+	register struct tty *tp = &prom_softc[UNIT(dev)]->t;
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -171,7 +165,7 @@ promstop(tp, flag)
 promcninit(cp)
      struct consdev *cp;
 {
-    
+    mon_printf("prom\n");
 }
 
 
