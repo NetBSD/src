@@ -1,7 +1,7 @@
-/*	$NetBSD: print-ether.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
+/*	$NetBSD: print-ether.c,v 1.3 2001/09/19 03:37:58 itojun Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-ether.c,v 1.64 2001/06/21 17:56:03 itojun Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-ether.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+__RCSID("$NetBSD: print-ether.c,v 1.3 2001/09/19 03:37:58 itojun Exp $");
 #endif
 #endif
 

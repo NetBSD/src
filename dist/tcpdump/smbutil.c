@@ -1,11 +1,12 @@
-/*	$NetBSD: smbutil.c,v 1.2 2001/06/25 20:00:01 itojun Exp $	*/
+/*	$NetBSD: smbutil.c,v 1.3 2001/09/19 03:37:58 itojun Exp $	*/
 
 /*
-   Copyright (C) Andrew Tridgell 1995-1999
-
-   This software may be distributed either under the terms of the
-   BSD-style license that accompanies tcpdump or the GNU GPL version 2
-   or later */
+ * Copyright (C) Andrew Tridgell 1995-1999
+ *
+ * This software may be distributed either under the terms of the
+ * BSD-style license that accompanies tcpdump or the GNU GPL version 2
+ * or later
+ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -17,7 +18,7 @@
 static const char rcsid[] =
      "@(#) Header: /tcpdump/master/tcpdump/smbutil.c,v 1.15 2001/06/25 18:58:09 itojun Exp";
 #else
-__RCSID("$NetBSD: smbutil.c,v 1.2 2001/06/25 20:00:01 itojun Exp $");
+__RCSID("$NetBSD: smbutil.c,v 1.3 2001/09/19 03:37:58 itojun Exp $");
 #endif
 #endif
 
