@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,79 +32,51 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)mkfifo.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)mkfifo.c	8.2 (Berkeley) 1/5/94";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern int errno, optind;
-	int ch, exitval, pflag;
+	extern int optind;
+	int ch, exitval;
 
-	pflag = 0;
-	while ((ch = getopt(argc, argv, "p")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != EOF)
 		switch(ch) {
-		case 'p':
-			pflag = 1;
-			break;
 		case '?':
 		default:
 			usage();
 		}
-
-	if (!*(argv += optind))
+	argc -= optind;
+	argv += optind;
+	if (argv[0] == NULL)
 		usage();
 
-	for (exitval = 0; *argv; ++argv) {
-		if (pflag && build(*argv)) {
-			exitval |= 1;
-			continue;
+	for (exitval = 0; *argv != NULL; ++argv)
+		if (mkfifo(*argv, S_IRWXU | S_IRWXG | S_IRWXO) < 0) {
+			warn("%s", *argv);
+			exitval = 1;
 		}
-		if (mkfifo(*argv, 0777) < 0) {
-			(void)fprintf(stderr, "mkfifo: %s: %s\n",
-			    *argv, strerror(errno));
-			exitval |= 1;
-		}
-	}
 	exit(exitval);
-}
-
-build(path)
-	char *path;
-{
-	register char *p;
-	struct stat sb;
-
-	for (p = path; *p; p++) {
-		if (*p  != '/')
-			continue;
-		if (stat(path, &sb)) {
-			if (errno != ENOENT || mkdir(path, 0777) < 0) {
-				(void)fprintf(stderr, "mkdir: %s: %s\n",
-				    path, strerror(errno));
-				return(1);
-			}
-		}
-		*p = '/';
-	}
-	return(0);
 }
 
 usage()
 {
-	(void)fprintf(stderr, "usage: mkfifo [-p] fifoname ...\n");
+	(void)fprintf(stderr, "usage: mkfifo fifoname ...\n");
 	exit(1);
 }
