@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	5.26 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: savecore.c,v 1.6 1994/02/14 19:32:21 cgd Exp $";
+static char rcsid[] = "$Id: savecore.c,v 1.7 1994/04/04 22:45:08 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,9 +49,13 @@ static char rcsid[] = "$Id: savecore.c,v 1.6 1994/02/14 19:32:21 cgd Exp $";
 #include <sys/file.h>
 #include <sys/syslog.h>
 #include <dirent.h>
-#include <stdio.h>
+#include <errno.h>
 #include <nlist.h>
 #include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
 
 #define	DAY	(60L*60L*24L)
 #define	LEEWAY	(3*DAY)
@@ -88,37 +92,32 @@ struct nlist dump_nl[] = {	/* name list for dumped system */
 	{ "" },
 };
 
-char	*system;
+char	*kernel;
 char	*dirname;			/* directory to save dumps in */
 char	*ddname;			/* name of dump device */
 int	dumpfd;				/* read/write descriptor on block dev */
-char	*find_dev();
 dev_t	dumpdev;			/* dump device */
 time_t	dumptime;			/* time the dump was taken */
 int	dumplo;				/* where dump starts on dumpdev */
 int	dumpsize;			/* amount of memory dumped */
 int	dumpmag;			/* magic number in dump */
 time_t	now;				/* current date */
-char	*path();
-char	*malloc();
-char	*ctime();
 char	vers[80];
 char	core_vers[80];
 char	panic_mesg[80];
 int	panicstr;
-off_t	lseek();
-off_t	Lseek();
 int	verbose;
 int	force;
 int	clear;
-extern	int errno;
+
+char	*path __P((char *));
+char	*find_dev __P((dev_t, int));
+off_t	Lseek __P((int, off_t, int));
 
 main(argc, argv)
 	char **argv;
 	int argc;
 {
-	extern char *optarg;
-	extern int optind;
 	int ch;
 	char *cp;
 
@@ -148,7 +147,7 @@ main(argc, argv)
 		dirname = argv[0];
 	}
 	if (argc == 2)
-		system = argv[1];
+		kernel = argv[1];
 
 	openlog("savecore", LOG_ODELAY, LOG_AUTH);
 
@@ -184,7 +183,7 @@ dump_exists()
 {
 	int word;
 
-	Lseek(dumpfd, (off_t)(dumplo + ok(dump_nl[X_DUMPMAG].n_value)), L_SET);
+	Lseek(dumpfd, dumplo + ok(dump_nl[X_DUMPMAG].n_value), L_SET);
 	Read(dumpfd, (char *)&word, sizeof (word));
 	if (verbose && word != dumpmag)
 		printf("magic number mismatch: %x != %x\n", word, dumpmag);
@@ -195,7 +194,7 @@ clear_dump()
 {
 	int zero = 0;
 
-	Lseek(dumpfd, (off_t)(dumplo + ok(dump_nl[X_DUMPMAG].n_value)), L_SET);
+	Lseek(dumpfd, dumplo + ok(dump_nl[X_DUMPMAG].n_value), L_SET);
 	Write(dumpfd, (char *)&zero, sizeof (zero));
 }
 
@@ -258,7 +257,7 @@ read_kmem()
 	char *dump_sys;
 	int kmem, i;
 	
-	dump_sys = system ? system : _PATH_UNIX;
+	dump_sys = kernel ? kernel : _PATH_UNIX;
 	nlist(_PATH_UNIX, current_nl);
 	nlist(dump_sys, dump_nl);
 	/*
@@ -282,19 +281,19 @@ read_kmem()
 			exit(1);
 		}
 	kmem = Open(_PATH_KMEM, O_RDONLY);
-	Lseek(kmem, (long)current_nl[X_DUMPDEV].n_value, L_SET);
+	Lseek(kmem, current_nl[X_DUMPDEV].n_value, L_SET);
 	Read(kmem, (char *)&dumpdev, sizeof (dumpdev));
 	if (dumpdev == NODEV) {
 		if (verbose)
 			printf("dumpdev = NODEV\n");
 		exit(2);
 	}
-	Lseek(kmem, (long)current_nl[X_DUMPLO].n_value, L_SET);
+	Lseek(kmem, current_nl[X_DUMPLO].n_value, L_SET);
 	Read(kmem, (char *)&dumplo, sizeof (dumplo));
 	if (verbose)
 		printf("dumplo = %d (%d * %d)\n", dumplo, dumplo/DEV_BSIZE,
 		    DEV_BSIZE);
-	Lseek(kmem, (long)current_nl[X_DUMPMAG].n_value, L_SET);
+	Lseek(kmem, current_nl[X_DUMPMAG].n_value, L_SET);
 	Read(kmem, (char *)&dumpmag, sizeof (dumpmag));
 	dumplo *= DEV_BSIZE;
 	ddname = find_dev(dumpdev, S_IFBLK);
@@ -304,7 +303,7 @@ read_kmem()
 		log(LOG_ERR, "Couldn't fdopen kmem\n");
 		exit(1);
 	}
-	if (system)
+	if (kernel)
 		return;
 	fseek(fp, (long)current_nl[X_VERSION].n_value, L_SET);
 	fgets(vers, sizeof (vers), fp);
@@ -324,7 +323,7 @@ check_kmem()
 
 	fseek(fp, (off_t)(dumplo+ok(dump_nl[X_VERSION].n_value)), L_SET);
 	fgets(core_vers, sizeof (core_vers), fp);
-	if (!eq(vers, core_vers) && system == 0) {
+	if (!eq(vers, core_vers) && kernel == 0) {
 		log(LOG_WARNING, "Warning: %s version mismatch:\n", _PATH_UNIX);
 		log(LOG_WARNING, "\t%s\n", vers);
 		log(LOG_WARNING, "and\t%s\n", core_vers);
@@ -346,7 +345,7 @@ get_crashtime()
 {
 	time_t clobber = (time_t)0;
 
-	Lseek(dumpfd, (off_t)(dumplo + ok(dump_nl[X_TIME].n_value)), L_SET);
+	Lseek(dumpfd, dumplo + ok(dump_nl[X_TIME].n_value), L_SET);
 	Read(dumpfd, (char *)&dumptime, sizeof dumptime);
 	if (dumptime == 0) {
 		if (verbose)
@@ -429,7 +428,7 @@ save_core()
 		return;
 	}
 	bounds = read_number("bounds");
-	ifd = Open(system ? system : _PATH_UNIX, O_RDONLY);
+	ifd = Open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
 	(void)sprintf(cp, "system.%d", bounds);
 	ofd = Create(path(cp), 0644);
 	while((n = Read(ifd, cp, BUFSIZE)) > 0)
@@ -441,11 +440,11 @@ save_core()
 			rawname(ddname));
 		ifd = dumpfd;
 	}
-	Lseek(dumpfd, (off_t)(dumplo + ok(dump_nl[X_DUMPSIZE].n_value)), L_SET);
+	Lseek(dumpfd, dumplo + ok(dump_nl[X_DUMPSIZE].n_value), L_SET);
 	Read(dumpfd, (char *)&dumpsize, sizeof (dumpsize));
 	(void)sprintf(cp, "ram.%d", bounds);
 	ofd = Create(path(cp), 0644);
-	Lseek(ifd, (off_t)dumplo, L_SET);
+	Lseek(ifd, dumplo, L_SET);
 	dumpsize *= NBPG;
 	log(LOG_NOTICE, "Saving %d bytes of image in ram.%d\n",
 	    dumpsize, bounds);
@@ -519,7 +518,7 @@ Read(fd, buff, size)
 off_t
 Lseek(fd, off, flag)
 	int fd, flag;
-	long off;
+	off_t off;
 {
 	long ret;
 
