@@ -1,4 +1,4 @@
-/*	$NetBSD: bitstring.h,v 1.7 2003/08/07 09:44:09 agc Exp $	*/
+/*	$NetBSD: bitstring.h,v 1.8 2005/02/06 04:38:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -89,8 +89,8 @@ typedef	unsigned char bitstr_t;
 
 				/* clear bits start ... stop in bitstring */
 #define	bit_nclear(name, start, stop) do { \
-	register bitstr_t *_name = name; \
-	register int _start = start, _stop = stop; \
+	bitstr_t *_name = name; \
+	int _start = start, _stop = stop; \
 	while (_start <= _stop) { \
 		bit_clear(_name, _start); \
 		_start++; \
@@ -99,8 +99,8 @@ typedef	unsigned char bitstr_t;
 
 				/* set bits start ... stop in bitstring */
 #define	bit_nset(name, start, stop) do { \
-	register bitstr_t *_name = name; \
-	register int _start = start, _stop = stop; \
+	bitstr_t *_name = name; \
+	int _start = start, _stop = stop; \
 	while (_start <= _stop) { \
 		bit_set(_name, _start); \
 		_start++; \
@@ -109,8 +109,8 @@ typedef	unsigned char bitstr_t;
 
 				/* find first bit clear in name */
 #define	bit_ffc(name, nbits, value) do { \
-	register bitstr_t *_name = name; \
-	register int _bit, _nbits = nbits, _value = -1; \
+	bitstr_t *_name = name; \
+	int _bit, _nbits = nbits, _value = -1; \
 	for (_bit = 0; _bit < _nbits; ++_bit) \
 		if (!bit_test(_name, _bit)) { \
 			_value = _bit; \
@@ -121,8 +121,8 @@ typedef	unsigned char bitstr_t;
 
 				/* find first bit set in name */
 #define	bit_ffs(name, nbits, value) do { \
-	register bitstr_t *_name = name; \
-	register int _bit, _nbits = nbits, _value = -1; \
+	bitstr_t *_name = name; \
+	int _bit, _nbits = nbits, _value = -1; \
 	for (_bit = 0; _bit < _nbits; ++_bit) \
 		if (bit_test(_name, _bit)) { \
 			_value = _bit; \
