@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/04/03 14:28:57 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.15 2002/04/03 15:53:21 bjh21 Exp $
 
 KDIR=	/sys/arch/bebox/include
 INCSDIR= /usr/include/bebox
@@ -16,7 +16,7 @@ INCS=   ansi.h aout_machdep.h asm.h \
 	limits.h lock.h \
 	math.h mouse.h \
 	param.h pcb.h pccons.h pio.h pmap.h powerpc.h proc.h profile.h \
-	psl.h pte.h ptrace.h \
+	psl.h ptrace.h \
 	reg.h reloc.h \
 	setjmp.h signal.h spkr.h stdarg.h \
 	trap.h types.h \
