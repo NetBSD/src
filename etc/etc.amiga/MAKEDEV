@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.47 1999/01/26 12:49:24 frueauf Exp $
+#	$NetBSD: MAKEDEV,v 1.48 1999/05/11 20:45:38 is Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -72,7 +72,8 @@
 #	pty*	set of 16 master and slave pseudo terminals
 #
 # Printers:
-#	par*	motherboard parallel port
+#	par0	Amiga motherboard parallel port
+#	lpt*	lpt parallel port (DraCo mainboard, soon HyperCom etc.)
 #
 # Special purpose devices:
 #	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
@@ -106,6 +107,7 @@ do
 case $i in
 all)
 	sh $0 std fd fd0 fd1 fd2 fd3 kbd mouse0 mouse1 par0
+	sh $0 lpt0 lpt1 lpt2 lpt3
 	sh $0 ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6 ttye7
 	sh $0 grf0 grf1 grf2 grf3 grf4 grf5 grf6 grf7
 	sh $0 tty00 ttyA0 ttyA1
@@ -346,6 +348,12 @@ par*)
 	esac
 	;;
 
+lpt*)
+	unit=${i#lpt};  chr=33
+	rm -f lpt${unit} lpt${unit}a
+	mknod lpt${unit}	c $chr $unit
+	mknod lpt${unit}a	c $chr $(($unit + 128))
+	;;
 
 ttye*)
 	unit=${i#ttye};	chr=13
