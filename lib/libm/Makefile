@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.40 1998/08/09 23:51:33 perry Exp $
+#  $NetBSD: Makefile,v 1.41 1998/08/22 12:49:08 ragge Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -67,9 +67,11 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 	    s_ceil.S s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S \
 	    s_log1p.S s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
 .elif (${MACHINE_ARCH} == "vax")
-.PATH:	${.CURDIR}/arch/vax
-NOIEEE_ARCH=n_infnan.S n_argred.S n_sqrt.S
-ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_sincos.S n_tan.S n_support.S 
+#.PATH:	${.CURDIR}/arch/vax
+#NOIEEE_ARCH= n_infnan.S n_argred.S n_sqrt.S
+#ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_support.S n_sincos.S n_tan.S
+# XXX - ripped out due to lack of the insn polyd in the Mariah chip,
+# and emulation code isn't written yet.
 .endif
 
 .PATH:	${.CURDIR}/man
@@ -113,8 +115,9 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
 	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_floor.c n_fmod.c n_gamma.c \
 	n_lgamma.c n_j0.c n_j1.c n_jn.c n_log.c n_log10.c n_log1p.c \
-	n_log__L.c n_pow.c n_sinh.c n_tanh.c n_atan2.c n_cabs.c n_cbrt.c \
-	n_sqrt.c n_sincos.c n_tan.c n_argred.c n_support.c n_infnan.c
+	n_log__L.c n_pow.c n_sinh.c n_tanh.c \
+	n_sincos.c n_tan.c 
+#	n_sqrt.c n_argred.c n_infnan.c n_atan2.c n_cabs.c n_cbrt.c n_support.c 
 
 
 # NetBSD's C library supplies these functions:
@@ -131,6 +134,11 @@ SRCS=	${COMMON_SRCS}
     SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
 .endfor
 
+.if (${MACHINE_ARCH} == "vax") # XXX until POLYD is written.
+SRCS:=${SRCS} arch/vax/n_sqrt.S arch/vax/n_argred.S arch/vax/n_infnan.S \
+	arch/vax/n_atan2.S arch/vax/n_cabs.S arch/vax/n_cbrt.S \
+	arch/vax/n_support.S 
+.endif
 
 NOLINT=		nolint (XXX lint bugs on some archs and needs stubs)
 
