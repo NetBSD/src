@@ -1,4 +1,6 @@
-/*	$NetBSD: readconf.h,v 1.8 2001/11/07 06:26:48 itojun Exp $	*/
+/*	$NetBSD: readconf.h,v 1.9 2002/03/08 02:00:53 itojun Exp $	*/
+/*	$OpenBSD: readconf.h,v 1.42 2002/03/04 17:27:39 stevesk Exp $	*/
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,8 +13,6 @@
  * incompatible with the protocol description in the RFC file, it must be
  * called by a name other than "ssh" or "Secure Shell".
  */
-
-/* RCSID("$OpenBSD: readconf.h,v 1.40 2001/10/01 21:51:16 markus Exp $"); */
 
 #ifndef READCONF_H
 #define READCONF_H
@@ -82,7 +82,7 @@ typedef struct {
 	char   *user;		/* User to log in as. */
 	int     escape_char;	/* Escape character; -2 = none */
 
-	char   *system_hostfile;/* Path for /etc/ssh_known_hosts. */
+	char   *system_hostfile;/* Path for /etc/ssh/ssh_known_hosts. */
 	char   *user_hostfile;	/* Path for $HOME/.ssh/known_hosts. */
 	char   *system_hostfile2;
 	char   *user_hostfile2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.7 2001/09/27 03:24:03 itojun Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.8 2002/03/08 02:00:52 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: hostfile.c,v 1.28 2001/06/25 08:25:37 markus Exp $");
+RCSID("$OpenBSD: hostfile.c,v 1.29 2001/12/18 10:04:21 jakob Exp $");
 
 #include "packet.h"
 #include "match.h"
@@ -50,7 +50,7 @@ RCSID("$OpenBSD: hostfile.c,v 1.28 2001/06/25 08:25:37 markus Exp $");
  * pointer over the key.  Skips any whitespace at the beginning and at end.
  */
 
-static int
+int
 hostfile_read_key(char **cpp, u_int *bitsp, Key *ret)
 {
 	char *cp;
@@ -70,17 +70,6 @@ hostfile_read_key(char **cpp, u_int *bitsp, Key *ret)
 	*cpp = cp;
 	*bitsp = key_size(ret);
 	return 1;
-}
-
-int
-auth_rsa_read_key(char **cpp, u_int *bitsp, BIGNUM * e, BIGNUM * n)
-{
-	Key *k = key_new(KEY_RSA1);
-	int ret = hostfile_read_key(cpp, bitsp, k);
-	BN_copy(e, k->rsa->e);
-	BN_copy(n, k->rsa->n);
-	key_free(k);
-	return ret;
 }
 
 static int

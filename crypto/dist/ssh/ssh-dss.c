@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-dss.c,v 1.8 2001/12/06 03:54:06 itojun Exp $	*/
+/*	$NetBSD: ssh-dss.c,v 1.9 2002/03/08 02:00:55 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-dss.c,v 1.10 2001/12/05 10:06:12 deraadt Exp $");
+RCSID("$OpenBSD: ssh-dss.c,v 1.14 2002/02/28 15:46:33 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -43,13 +43,13 @@ RCSID("$OpenBSD: ssh-dss.c,v 1.10 2001/12/05 10:06:12 deraadt Exp $");
 int
 ssh_dss_sign(
     Key *key,
-    u_char **sigp, int *lenp,
-    u_char *data, int datalen)
+    u_char **sigp, u_int *lenp,
+    u_char *data, u_int datalen)
 {
 	DSA_SIG *sig;
-	EVP_MD *evp_md = EVP_sha1();
+	const EVP_MD *evp_md = EVP_sha1();
 	EVP_MD_CTX md;
-	u_char *digest, *ret, sigblob[SIGBLOB_LEN];
+	u_char *ret, digest[EVP_MAX_MD_SIZE], sigblob[SIGBLOB_LEN];
 	u_int rlen, slen, len, dlen;
 	Buffer b;
 
@@ -57,16 +57,13 @@ ssh_dss_sign(
 		error("ssh_dss_sign: no DSA key");
 		return -1;
 	}
-	dlen = evp_md->md_size;
-	digest = xmalloc(dlen);
 	EVP_DigestInit(&md, evp_md);
 	EVP_DigestUpdate(&md, data, datalen);
-	EVP_DigestFinal(&md, digest, NULL);
+	EVP_DigestFinal(&md, digest, &dlen);
 
 	sig = DSA_do_sign(digest, dlen, key->dsa);
+	memset(digest, 'd', sizeof(digest));
 
-	memset(digest, 0, dlen);
-	xfree(digest);
 	if (sig == NULL) {
 		error("ssh_dss_sign: sign failed");
 		return -1;
@@ -110,13 +107,13 @@ ssh_dss_sign(
 int
 ssh_dss_verify(
     Key *key,
-    u_char *signature, int signaturelen,
-    u_char *data, int datalen)
+    u_char *signature, u_int signaturelen,
+    u_char *data, u_int datalen)
 {
 	DSA_SIG *sig;
-	EVP_MD *evp_md = EVP_sha1();
+	const EVP_MD *evp_md = EVP_sha1();
 	EVP_MD_CTX md;
-	u_char *digest, *sigblob;
+	u_char digest[EVP_MAX_MD_SIZE], *sigblob;
 	u_int len, dlen;
 	int rlen, ret;
 	Buffer b;
@@ -159,9 +156,12 @@ ssh_dss_verify(
 	}
 
 	/* parse signature */
-	sig = DSA_SIG_new();
-	sig->r = BN_new();
-	sig->s = BN_new();
+	if ((sig = DSA_SIG_new()) == NULL)
+		fatal("ssh_dss_verify: DSA_SIG_new failed");
+	if ((sig->r = BN_new()) == NULL)
+		fatal("ssh_dss_verify: BN_new failed");
+	if ((sig->s = BN_new()) == NULL)
+		fatal("ssh_dss_verify: BN_new failed");
 	BN_bin2bn(sigblob, INTBLOB_LEN, sig->r);
 	BN_bin2bn(sigblob+ INTBLOB_LEN, INTBLOB_LEN, sig->s);
 
@@ -171,16 +171,13 @@ ssh_dss_verify(
 	}
 
 	/* sha1 the data */
-	dlen = evp_md->md_size;
-	digest = xmalloc(dlen);
 	EVP_DigestInit(&md, evp_md);
 	EVP_DigestUpdate(&md, data, datalen);
-	EVP_DigestFinal(&md, digest, NULL);
+	EVP_DigestFinal(&md, digest, &dlen);
 
 	ret = DSA_do_verify(digest, dlen, sig, key->dsa);
+	memset(digest, 'd', sizeof(digest));
 
-	memset(digest, 0, dlen);
-	xfree(digest);
 	DSA_SIG_free(sig);
 
 	debug("ssh_dss_verify: signature %s",

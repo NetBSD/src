@@ -1,4 +1,4 @@
-/*	$NetBSD: authfile.c,v 1.11 2001/12/06 03:54:05 itojun Exp $	*/
+/*	$NetBSD: authfile.c,v 1.12 2002/03/08 02:00:51 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfile.c,v 1.40 2001/12/05 10:06:12 deraadt Exp $");
+RCSID("$OpenBSD: authfile.c,v 1.48 2002/02/28 15:46:33 markus Exp $");
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -51,6 +51,7 @@ RCSID("$OpenBSD: authfile.c,v 1.40 2001/12/05 10:06:12 deraadt Exp $");
 #include "ssh.h"
 #include "log.h"
 #include "authfile.h"
+#include "rsa.h"
 
 /* Version identification string for SSH v1 identity files. */
 static const char authfile_id_string[] =
@@ -68,8 +69,8 @@ key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
     const char *comment)
 {
 	Buffer buffer, encrypted;
-	char buf[100], *cp;
-	int fd, i;
+	u_char buf[100], *cp;
+	int fd, i, cipher_num;
 	CipherContext ciphercontext;
 	Cipher *cipher;
 	u_int32_t rand;
@@ -78,11 +79,9 @@ key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
 	 * If the passphrase is empty, use SSH_CIPHER_NONE to ease converting
 	 * to another cipher; otherwise use SSH_AUTHFILE_CIPHER.
 	 */
-	if (strcmp(passphrase, "") == 0)
-		cipher = cipher_by_number(SSH_CIPHER_NONE);
-	else
-		cipher = cipher_by_number(SSH_AUTHFILE_CIPHER);
-	if (cipher == NULL)
+	cipher_num = (strcmp(passphrase, "") == 0) ?
+	    SSH_CIPHER_NONE : SSH_AUTHFILE_CIPHER;
+	if ((cipher = cipher_by_number(cipher_num)) == NULL)
 		fatal("save_private_key_rsa: bad cipher");
 
 	/* This buffer is used to built the secret part of the private key. */
@@ -119,7 +118,7 @@ key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
 	buffer_put_char(&encrypted, 0);
 
 	/* Store cipher type. */
-	buffer_put_char(&encrypted, cipher->number);
+	buffer_put_char(&encrypted, cipher_num);
 	buffer_put_int(&encrypted, 0);	/* For future extension */
 
 	/* Store public key.  This will be in plain text. */
@@ -129,11 +128,13 @@ key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
 	buffer_put_cstring(&encrypted, comment);
 
 	/* Allocate space for the private part of the key in the buffer. */
-	buffer_append_space(&encrypted, &cp, buffer_len(&buffer));
+	cp = buffer_append_space(&encrypted, buffer_len(&buffer));
 
-	cipher_set_key_string(&ciphercontext, cipher, passphrase);
-	cipher_encrypt(&ciphercontext, (u_char *) cp,
-	    (u_char *) buffer_ptr(&buffer), buffer_len(&buffer));
+	cipher_set_key_string(&ciphercontext, cipher, passphrase,
+	    CIPHER_ENCRYPT);
+	cipher_crypt(&ciphercontext, cp,
+	    buffer_ptr(&buffer), buffer_len(&buffer));
+	cipher_cleanup(&ciphercontext);
 	memset(&ciphercontext, 0, sizeof(ciphercontext));
 
 	/* Destroy temporary data. */
@@ -148,7 +149,7 @@ key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
 	if (write(fd, buffer_ptr(&encrypted), buffer_len(&encrypted)) !=
 	    buffer_len(&encrypted)) {
 		error("write to key file %s failed: %s", filename,
-		      strerror(errno));
+		    strerror(errno));
 		buffer_free(&encrypted);
 		close(fd);
 		unlink(filename);
@@ -168,8 +169,8 @@ key_save_private_pem(Key *key, const char *filename, const char *_passphrase,
 	int fd;
 	int success = 0;
 	int len = strlen(_passphrase);
-	char *passphrase = (len > 0) ? (char *)_passphrase : NULL;
-	EVP_CIPHER *cipher = (len > 0) ? EVP_des_ede3_cbc() : NULL;
+	u_char *passphrase = (len > 0) ? (u_char *)_passphrase : NULL;
+	const EVP_CIPHER *cipher = (len > 0) ? EVP_des_ede3_cbc() : NULL;
 
 	if (len > 0 && len <= 4) {
 		error("passphrase too short: have %d bytes, need > 4", len);
@@ -240,7 +241,7 @@ key_load_public_rsa1(int fd, const char *filename, char **commentp)
 	lseek(fd, (off_t) 0, SEEK_SET);
 
 	buffer_init(&buffer);
-	buffer_append_space(&buffer, &cp, len);
+	cp = buffer_append_space(&buffer, len);
 
 	if (read(fd, cp, (size_t) len) != (size_t) len) {
 		debug("Read from key file %.200s failed: %.100s", filename,
@@ -314,18 +315,16 @@ key_load_private_rsa1(int fd, const char *filename, const char *passphrase,
 	int i, check1, check2, cipher_type;
 	off_t len;
 	Buffer buffer, decrypted;
-	char *cp;
+	u_char *cp;
 	CipherContext ciphercontext;
 	Cipher *cipher;
-	BN_CTX *ctx;
-	BIGNUM *aux;
 	Key *prv = NULL;
 
 	len = lseek(fd, (off_t) 0, SEEK_END);
 	lseek(fd, (off_t) 0, SEEK_SET);
 
 	buffer_init(&buffer);
-	buffer_append_space(&buffer, &cp, len);
+	cp = buffer_append_space(&buffer, len);
 
 	if (read(fd, cp, (size_t) len) != (size_t) len) {
 		debug("Read from key file %.200s failed: %.100s", filename,
@@ -379,12 +378,14 @@ key_load_private_rsa1(int fd, const char *filename, const char *passphrase,
 	}
 	/* Initialize space for decrypted data. */
 	buffer_init(&decrypted);
-	buffer_append_space(&decrypted, &cp, buffer_len(&buffer));
+	cp = buffer_append_space(&decrypted, buffer_len(&buffer));
 
 	/* Rest of the buffer is encrypted.  Decrypt it using the passphrase. */
-	cipher_set_key_string(&ciphercontext, cipher, passphrase);
-	cipher_decrypt(&ciphercontext, (u_char *) cp,
-	    (u_char *) buffer_ptr(&buffer), buffer_len(&buffer));
+	cipher_set_key_string(&ciphercontext, cipher, passphrase,
+	    CIPHER_DECRYPT);
+	cipher_crypt(&ciphercontext, cp,
+	    buffer_ptr(&buffer), buffer_len(&buffer));
+	cipher_cleanup(&ciphercontext);
 	memset(&ciphercontext, 0, sizeof(ciphercontext));
 	buffer_free(&buffer);
 
@@ -407,17 +408,7 @@ key_load_private_rsa1(int fd, const char *filename, const char *passphrase,
 	buffer_get_bignum(&decrypted, prv->rsa->p);		/* q */
 
 	/* calculate p-1 and q-1 */
-	ctx = BN_CTX_new();
-	aux = BN_new();
-
-	BN_sub(aux, prv->rsa->q, BN_value_one());
-	BN_mod(prv->rsa->dmq1, prv->rsa->d, aux, ctx);
-
-	BN_sub(aux, prv->rsa->p, BN_value_one());
-	BN_mod(prv->rsa->dmp1, prv->rsa->d, aux, ctx);
-
-	BN_clear_free(aux);
-	BN_CTX_free(ctx);
+	rsa_generate_additional_parameters(prv->rsa);
 
 	buffer_free(&decrypted);
 	close(fd);
@@ -451,7 +442,7 @@ key_load_private_pem(int fd, int type, const char *passphrase,
 		debug("PEM_read_PrivateKey failed");
 		(void)ERR_get_error();
 	} else if (pk->type == EVP_PKEY_RSA &&
-	     (type == KEY_UNSPEC||type==KEY_RSA)) {
+	    (type == KEY_UNSPEC||type==KEY_RSA)) {
 		prv = key_new(KEY_UNSPEC);
 		prv->rsa = EVP_PKEY_get1_RSA(pk);
 		prv->type = KEY_RSA;
@@ -460,7 +451,7 @@ key_load_private_pem(int fd, int type, const char *passphrase,
 		RSA_print_fp(stderr, prv->rsa, 8);
 #endif
 	} else if (pk->type == EVP_PKEY_DSA &&
-	     (type == KEY_UNSPEC||type==KEY_DSA)) {
+	    (type == KEY_UNSPEC||type==KEY_DSA)) {
 		prv = key_new(KEY_UNSPEC);
 		prv->dsa = EVP_PKEY_get1_DSA(pk);
 		prv->type = KEY_DSA;

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-chall.c,v 1.5 2001/11/07 06:26:47 itojun Exp $	*/
+/*	$NetBSD: auth2-chall.c,v 1.6 2002/03/08 02:00:51 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -24,10 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: auth2-chall.c,v 1.8 2001/09/27 15:31:17 markus Exp $");
+RCSID("$OpenBSD: auth2-chall.c,v 1.16 2002/01/13 17:57:37 markus Exp $");
 
 #include "ssh2.h"
 #include "auth.h"
+#include "buffer.h"
 #include "packet.h"
 #include "xmalloc.h"
 #include "dispatch.h"
@@ -36,7 +37,7 @@ RCSID("$OpenBSD: auth2-chall.c,v 1.8 2001/09/27 15:31:17 markus Exp $");
 
 static int auth2_challenge_start(Authctxt *);
 static int send_userauth_info_request(Authctxt *);
-static void input_userauth_info_response(int, int, void *);
+static void input_userauth_info_response(int, u_int32_t, void *);
 
 #ifdef BSD_AUTH
 extern KbdintDevice bsdauth_device;
@@ -69,22 +70,25 @@ static KbdintAuthctxt *
 kbdint_alloc(const char *devs)
 {
 	KbdintAuthctxt *kbdintctxt;
+	Buffer b;
 	int i;
-	char buf[1024];
 
 	kbdintctxt = xmalloc(sizeof(KbdintAuthctxt));
 	if (strcmp(devs, "") == 0) {
-		buf[0] = '\0';
+		buffer_init(&b);
 		for (i = 0; devices[i]; i++) {
-			if (i != 0)
-				strlcat(buf, ",", sizeof(buf));
-			strlcat(buf, devices[i]->name, sizeof(buf));
+			if (buffer_len(&b) > 0)
+				buffer_append(&b, ",", 1);
+			buffer_append(&b, devices[i]->name,
+			    strlen(devices[i]->name));
 		}
-		debug("kbdint_alloc: devices '%s'", buf);
-		kbdintctxt->devices = xstrdup(buf);
+		buffer_append(&b, "\0", 1);
+		kbdintctxt->devices = xstrdup(buffer_ptr(&b));
+		buffer_free(&b);
 	} else {
 		kbdintctxt->devices = xstrdup(devs);
 	}
+	debug("kbdint_alloc: devices '%s'", kbdintctxt->devices);
 	kbdintctxt->ctxt = NULL;
 	kbdintctxt->device = NULL;
 
@@ -152,9 +156,21 @@ auth2_challenge(Authctxt *authctxt, char *devs)
 
 	if (authctxt->user == NULL || !devs)
 		return 0;
-	if (authctxt->kbdintctxt == NULL) 
+	if (authctxt->kbdintctxt == NULL)
 		authctxt->kbdintctxt = kbdint_alloc(devs);
 	return auth2_challenge_start(authctxt);
+}
+
+/* unregister kbd-int callbacks and context */
+void
+auth2_challenge_stop(Authctxt *authctxt)
+{
+	/* unregister callback */
+	dispatch_set(SSH2_MSG_USERAUTH_INFO_RESPONSE, NULL);
+	if (authctxt->kbdintctxt != NULL)  {
+		kbdint_free(authctxt->kbdintctxt);
+		authctxt->kbdintctxt = NULL;
+	}
 }
 
 /* side effect: sets authctxt->postponed if a reply was sent*/
@@ -167,21 +183,18 @@ auth2_challenge_start(Authctxt *authctxt)
 	    kbdintctxt->devices ?  kbdintctxt->devices : "<empty>");
 
 	if (kbdint_next_device(kbdintctxt) == 0) {
-		kbdint_free(kbdintctxt);
-		authctxt->kbdintctxt = NULL;
+		auth2_challenge_stop(authctxt);
 		return 0;
 	}
 	debug("auth2_challenge_start: trying authentication method '%s'",
 	    kbdintctxt->device->name);
 
 	if ((kbdintctxt->ctxt = kbdintctxt->device->init_ctx(authctxt)) == NULL) {
-		kbdint_free(kbdintctxt);
-		authctxt->kbdintctxt = NULL;
+		auth2_challenge_stop(authctxt);
 		return 0;
 	}
 	if (send_userauth_info_request(authctxt) == 0) {
-		kbdint_free(kbdintctxt);
-		authctxt->kbdintctxt = NULL;
+		auth2_challenge_stop(authctxt);
 		return 0;
 	}
 	dispatch_set(SSH2_MSG_USERAUTH_INFO_RESPONSE,
@@ -226,7 +239,7 @@ send_userauth_info_request(Authctxt *authctxt)
 }
 
 static void
-input_userauth_info_response(int type, int plen, void *ctxt)
+input_userauth_info_response(int type, u_int32_t seq, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
 	KbdintAuthctxt *kbdintctxt;
@@ -249,7 +262,7 @@ input_userauth_info_response(int type, int plen, void *ctxt)
 		for (i = 0; i < nresp; i++)
 			response[i] = packet_get_string(NULL);
 	}
-	packet_done();
+	packet_check_eom();
 
 	if (authctxt->valid) {
 		res = kbdintctxt->device->respond(kbdintctxt->ctxt,
@@ -272,10 +285,8 @@ input_userauth_info_response(int type, int plen, void *ctxt)
 		break;
 	case 1:
 		/* Authentication needs further interaction */
-		authctxt->postponed = 1;
-		if (send_userauth_info_request(authctxt) == 0) {
-			authctxt->postponed = 0;
-		}
+		if (send_userauth_info_request(authctxt) == 1)
+			authctxt->postponed = 1;
 		break;
 	default:
 		/* Failure! */
@@ -285,18 +296,12 @@ input_userauth_info_response(int type, int plen, void *ctxt)
 	len = strlen("keyboard-interactive") + 2 +
 		strlen(kbdintctxt->device->name);
 	method = xmalloc(len);
-	method[0] = '\0';
-	strlcat(method, "keyboard-interactive", len);
-	strlcat(method, "/", len);
-	strlcat(method, kbdintctxt->device->name, len);
+	snprintf(method, len, "keyboard-interactive/%s",
+	    kbdintctxt->device->name);
 
 	if (!authctxt->postponed) {
-		/* unregister callback */
-		dispatch_set(SSH2_MSG_USERAUTH_INFO_RESPONSE, NULL);
-
 		if (authenticated) {
-			kbdint_free(kbdintctxt);
-			authctxt->kbdintctxt = NULL;
+			auth2_challenge_stop(authctxt);
 		} else {
 			/* start next device */
 			/* may set authctxt->postponed */

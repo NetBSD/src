@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.9 2001/06/23 19:37:38 itojun Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.10 2002/03/08 02:00:51 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,10 +15,9 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rhosts.c,v 1.24 2001/06/23 15:12:17 itojun Exp $");
+RCSID("$OpenBSD: auth-rhosts.c,v 1.27 2002/03/04 12:43:06 markus Exp $");
 
 #include "packet.h"
-#include "xmalloc.h"
 #include "uidswap.h"
 #include "pathnames.h"
 #include "log.h"
@@ -157,7 +156,7 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 	const char *hostname, *ipaddr;
 	int ret;
 
-	hostname = get_canonical_hostname(options.reverse_mapping_check);
+	hostname = get_canonical_hostname(options.verify_reverse_mapping);
 	ipaddr = get_remote_ipaddr();
 	ret = auth_rhosts2(pw, client_user, hostname, ipaddr);
 	return ret;
@@ -187,7 +186,7 @@ auth_rhosts2(struct passwd *pw, const char *client_user, const char *hostname,
 	 * servers.
 	 */
 	for (rhosts_file_index = 0; rhosts_files[rhosts_file_index];
-	     rhosts_file_index++) {
+	    rhosts_file_index++) {
 		/* Check users .rhosts or .shosts. */
 		snprintf(buf, sizeof buf, "%.500s/%.100s",
 			 pw->pw_dir, rhosts_files[rhosts_file_index]);
@@ -205,16 +204,16 @@ auth_rhosts2(struct passwd *pw, const char *client_user, const char *hostname,
 
 	/* If not logging in as superuser, try /etc/hosts.equiv and shosts.equiv. */
 	if (pw->pw_uid != 0) {
-		if (check_rhosts_file(_PATH_RHOSTS_EQUIV, hostname, ipaddr, client_user,
-				      pw->pw_name)) {
+		if (check_rhosts_file(_PATH_RHOSTS_EQUIV, hostname, ipaddr,
+		    client_user, pw->pw_name)) {
 			packet_send_debug("Accepted for %.100s [%.100s] by /etc/hosts.equiv.",
-					  hostname, ipaddr);
+			    hostname, ipaddr);
 			return 1;
 		}
-		if (check_rhosts_file(_PATH_SSH_HOSTS_EQUIV, hostname, ipaddr, client_user,
-				      pw->pw_name)) {
+		if (check_rhosts_file(_PATH_SSH_HOSTS_EQUIV, hostname, ipaddr,
+		    client_user, pw->pw_name)) {
 			packet_send_debug("Accepted for %.100s [%.100s] by %.100s.",
-				      hostname, ipaddr, _PATH_SSH_HOSTS_EQUIV);
+			    hostname, ipaddr, _PATH_SSH_HOSTS_EQUIV);
 			return 1;
 		}
 	}
@@ -231,7 +230,7 @@ auth_rhosts2(struct passwd *pw, const char *client_user, const char *hostname,
 	}
 	if (options.strict_modes &&
 	    ((st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
-	     (st.st_mode & 022) != 0)) {
+	    (st.st_mode & 022) != 0)) {
 		log("Rhosts authentication refused for %.100s: bad ownership or modes for home directory.",
 		    pw->pw_name);
 		packet_send_debug("Rhosts authentication refused for %.100s: bad ownership or modes for home directory.",
@@ -243,7 +242,7 @@ auth_rhosts2(struct passwd *pw, const char *client_user, const char *hostname,
 
 	/* Check all .rhosts files (currently .shosts and .rhosts). */
 	for (rhosts_file_index = 0; rhosts_files[rhosts_file_index];
-	     rhosts_file_index++) {
+	    rhosts_file_index++) {
 		/* Check users .rhosts or .shosts. */
 		snprintf(buf, sizeof buf, "%.500s/%.100s",
 			 pw->pw_dir, rhosts_files[rhosts_file_index]);
@@ -258,7 +257,7 @@ auth_rhosts2(struct passwd *pw, const char *client_user, const char *hostname,
 		 */
 		if (options.strict_modes &&
 		    ((st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
-		     (st.st_mode & 022) != 0)) {
+		    (st.st_mode & 022) != 0)) {
 			log("Rhosts authentication refused for %.100s: bad modes for %.200s",
 			    pw->pw_name, buf);
 			packet_send_debug("Bad file modes for %.200s", buf);

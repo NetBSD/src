@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.20 2001/12/06 03:54:06 itojun Exp $
+.\"	$NetBSD: sshd.8,v 1.21 2002/03/08 02:00:57 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.155 2001/12/01 21:41:48 markus Exp $
+.\" $OpenBSD: sshd.8,v 1.170 2002/02/28 20:46:10 stevesk Exp $
 .Dd September 25, 1999
 .Dt SSHD 8
 .Os
@@ -50,6 +50,7 @@
 .Op Fl g Ar login_grace_time
 .Op Fl h Ar host_key_file
 .Op Fl k Ar key_gen_time
+.Op Fl o Ar option
 .Op Fl p Ar port
 .Op Fl u Ar len
 .Sh DESCRIPTION
@@ -208,12 +209,18 @@ If the client fails to authenticate the user within
 this many seconds, the server disconnects and exits.
 A value of zero indicates no limit.
 .It Fl h Ar host_key_file
-Specifies the file from which the host key is read (default
-.Pa /etc/ssh_host_key ) .
+Specifies a file from which a host key is read.
 This option must be given if
 .Nm
 is not run as root (as the normal
-host file is normally not readable by anyone but root).
+host key files are normally not readable by anyone but root).
+The default is
+.Pa /etc/ssh_host_key
+for protocol version 1, and
+.Pa /etc/ssh_host_rsa_key
+and
+.Pa /etc/ssh_host_dsa_key
+for protocol version 2.
 It is possible to have multiple host key files for
 the different protocol versions and host key algorithms.
 .It Fl i
@@ -238,9 +245,16 @@ it becomes impossible to recover the key for decrypting intercepted
 communications even if the machine is cracked into or physically
 seized.
 A value of zero indicates that the key will never be regenerated.
+.It Fl o Ar option
+Can be used to give options in the format used in the configuration file.
+This is useful for specifying options for which there is no separate
+command-line flag.
 .It Fl p Ar port
 Specifies the port on which the server listens for connections
 (default 22).
+Multiple port options are permitted.
+Ports specified in the configuration file are ignored when a
+command-line port is specified.
 .It Fl q
 Quiet mode.
 Nothing is sent to the system log.
@@ -249,7 +263,7 @@ authentication, and termination of each connection is logged.
 .It Fl t
 Test mode.
 Only check the validity of the configuration file and sanity of the keys.
-This is useful for updating 
+This is useful for updating
 .Nm
 reliably as configuration options may change.
 .It Fl u Ar len
@@ -280,6 +294,11 @@ Authentication mechanisms that may require DNS include
 and using a
 .Cm from="pattern-list"
 option in a key file.
+Configuration options that require DNS include using a
+USER@HOST pattern in
+.Cm AllowUsers
+or
+.Cm DenyUsers .
 .It Fl D
 When this option is specified
 .Nm
@@ -316,7 +335,7 @@ Specifies whether an AFS token may be forwarded to the server.
 Default is
 .Dq yes .
 .It Cm AllowGroups
-This keyword can be followed by a list of group names, separated
+This keyword can be followed by a list of group name patterns, separated
 by spaces.
 If specified, login is allowed only for users whose primary
 group or supplementary group list matches one of the patterns.
@@ -326,7 +345,7 @@ and
 can be used as
 wildcards in the patterns.
 Only group names are valid; a numerical group ID is not recognized.
-By default login is allowed regardless of the group list.
+By default, login is allowed for all groups.
 .Pp
 .It Cm AllowTcpForwarding
 Specifies whether TCP forwarding is permitted.
@@ -337,7 +356,7 @@ users are also denied shell access, as they can always install their
 own forwarders.
 .Pp
 .It Cm AllowUsers
-This keyword can be followed by a list of user names, separated
+This keyword can be followed by a list of user name patterns, separated
 by spaces.
 If specified, login is allowed only for users names that
 match one of the patterns.
@@ -347,7 +366,7 @@ and
 can be used as
 wildcards in the patterns.
 Only user names are valid; a numerical user ID is not recognized.
-By default login is allowed regardless of the user name.
+By default, login is allowed for all users.
 If the pattern takes the form USER@HOST then USER and HOST
 are separately checked, restricting logins to particular
 users from particular hosts.
@@ -365,7 +384,7 @@ After expansion,
 is taken to be an absolute path or one relative to the user's home
 directory.
 The default is
-.Dq .ssh/authorized_keys
+.Dq .ssh/authorized_keys .
 .It Cm Banner
 In some jurisdictions, sending a warning message before authentication
 may be relevant for getting legal protection.
@@ -384,7 +403,11 @@ The default is
 Specifies the ciphers allowed for protocol version 2.
 Multiple ciphers must be comma-separated.
 The default is
-.Dq aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour.
+.Pp
+.Bd -literal
+  ``aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour,
+    aes192-cbc,aes256-cbc''
+.Ed
 .It Cm ClientAliveInterval
 Sets a timeout interval in seconds after which if no data has been received
 from the client,
@@ -418,20 +441,20 @@ The default value is 3. If
 is left at the default, unresponsive ssh clients
 will be disconnected after approximately 45 seconds.
 .It Cm DenyGroups
-This keyword can be followed by a number of group names, separated
+This keyword can be followed by a list of group name patterns, separated
 by spaces.
-Users whose primary group or supplementary group list matches
-one of the patterns aren't allowed to log in.
+Login is disallowed for users whose primary group or supplementary
+group list matches one of the patterns.
 .Ql \&*
 and
 .Ql ?
 can be used as
 wildcards in the patterns.
 Only group names are valid; a numerical group ID is not recognized.
-By default login is allowed regardless of the group list.
+By default, login is allowed for all groups.
 .Pp
 .It Cm DenyUsers
-This keyword can be followed by a number of user names, separated
+This keyword can be followed by a list of user name patterns, separated
 by spaces.
 Login is disallowed for user names that match one of the patterns.
 .Ql \&*
@@ -439,7 +462,10 @@ and
 .Ql ?
 can be used as wildcards in the patterns.
 Only user names are valid; a numerical user ID is not recognized.
-By default login is allowed regardless of the user name.
+By default, login is allowed for all users.
+If the pattern takes the form USER@HOST then USER and HOST
+are separately checked, restricting logins to particular
+users from particular hosts.
 .It Cm GatewayPorts
 Specifies whether remote hosts are allowed to connect to ports
 forwarded for the client.
@@ -468,9 +494,15 @@ and applies to protocol version 2 only.
 The default is
 .Dq no .
 .It Cm HostKey
-Specifies the file containing the private host keys (default
-.Pa /etc/ssh_host_key )
-used by SSH protocol versions 1 and 2.
+Specifies a file containing a private host key
+used by SSH.
+The default is
+.Pa /etc/ssh_host_key
+for protocol version 1, and
+.Pa /etc/ssh_host_rsa_key
+and
+.Pa /etc/ssh_host_dsa_key
+for protocol version 2.
 Note that
 .Nm
 will refuse to use a file if it is group/world-accessible.
@@ -510,7 +542,7 @@ or
 The default is
 .Dq no .
 .It Cm KeepAlive
-Specifies whether the system should send keepalive messages to the
+Specifies whether the system should send TCP keepalive messages to the
 other side.
 If they are sent, death of the connection or crash of one
 of the machines will be properly noticed.
@@ -525,12 +557,11 @@ users and consuming server resources.
 The default is
 .Dq yes
 (to send keepalives), and the server will notice
-if the network goes down or the client host reboots.
+if the network goes down or the client host crashes.
 This avoids infinitely hanging sessions.
 .Pp
 To disable keepalives, the value should be set to
-.Dq no
-in both the server and the client configuration files.
+.Dq no .
 .It Cm KerberosAuthentication
 Specifies whether Kerberos authentication is allowed.
 This can be in the form of a Kerberos ticket, or if
@@ -613,9 +644,10 @@ The default is 600 (seconds).
 Gives the verbosity level that is used when logging messages from
 .Nm sshd .
 The possible values are:
-QUIET, FATAL, ERROR, INFO, VERBOSE and DEBUG.
-The default is INFO.
-Logging with level DEBUG violates the privacy of users
+QUIET, FATAL, ERROR, INFO, VERBOSE, DEBUG, DEBUG1, DEBUG2 and DEBUG3.
+The default is INFO.  DEBUG and DEBUG1 are equivalent.  DEBUG2
+and DEBUG3 each specify higher levels of debugging output.
+Logging with a DEBUG level violates the privacy of users
 and is not recommended.
 .It Cm MACs
 Specifies the available MAC (message authentication code) algorithms.
@@ -736,14 +768,6 @@ Specifies whether public key authentication is allowed.
 The default is
 .Dq yes .
 Note that this option applies to protocol version 2 only.
-.It Cm ReverseMappingCheck
-Specifies whether
-.Nm
-should try to verify the remote host name and check that
-the resolved host name for the remote IP address maps back to the
-very same IP address.
-The default is
-.Dq no .
 .It Cm RhostsAuthentication
 Specifies whether authentication using rhosts or /etc/hosts.equiv
 files is sufficient.
@@ -811,6 +835,14 @@ will be disabled because
 does not know how to handle
 .Xr xauth 1
 cookies.
+.It Cm VerifyReverseMapping
+Specifies whether
+.Nm
+should try to verify the remote host name and check that
+the resolved host name for the remote IP address maps back to the
+very same IP address.
+The default is
+.Dq no .
 .It Cm X11DisplayOffset
 Specifies the first display number available for
 .Nm sshd Ns 's
@@ -828,6 +860,31 @@ way, as users can always install their own forwarders.
 X11 forwarding is automatically disabled if
 .Cm UseLogin
 is enabled.
+.It Cm X11UseLocalhost
+Specifies whether
+.Nm
+should bind the X11 forwarding server to the loopback address or to
+the wildcard address.  By default,
+.Nm
+binds the forwarding server to the loopback address and sets the
+hostname part of the
+.Ev DISPLAY
+environment variable to
+.Dq localhost .
+This prevents remote hosts from connecting to the fake display.
+However, some older X11 clients may not function with this
+configuration.
+.Cm X11UseLocalhost
+may be set to
+.Dq no
+to specify that the forwarding server should be bound to the wildcard
+address.
+The argument must be
+.Dq yes
+or
+.Dq no .
+The default is
+.Dq yes .
 .It Cm XAuthLocation
 Specifies the location of the
 .Xr xauth 1

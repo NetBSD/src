@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.15 2001/12/06 03:54:06 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.16 2002/03/08 02:00:56 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.116 2001/12/05 10:06:13 deraadt Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.119 2002/01/21 15:13:51 markus Exp $");
 
 #include <openssl/bn.h>
 
@@ -32,6 +32,7 @@ RCSID("$OpenBSD: sshconnect.c,v 1.116 2001/12/05 10:06:13 deraadt Exp $");
 #include "readconf.h"
 #include "atomicio.h"
 #include "misc.h"
+#include "readpass.h"
 
 char *client_version_string = NULL;
 char *server_version_string = NULL;
@@ -106,7 +107,7 @@ ssh_proxy_connect(const char *host, u_short port, struct passwd *pw,
 	/* Create pipes for communicating with the proxy. */
 	if (pipe(pin) < 0 || pipe(pout) < 0)
 		fatal("Could not create pipes to communicate with the proxy: %.100s",
-		      strerror(errno));
+		    strerror(errno));
 
 	debug("Executing proxy command: %.500s", command_string);
 
@@ -255,7 +256,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	int full_failure = 1;
 
 	debug("ssh_connect: getuid %u geteuid %u anon %d",
-	      (u_int) getuid(), (u_int) geteuid(), anonymous);
+	    (u_int) getuid(), (u_int) geteuid(), anonymous);
 
 	/* Get default port if port has not been set. */
 	if (port == 0) {
@@ -333,7 +334,6 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 				 * which connect() has already returned an
 				 * error.
 				 */
-				shutdown(sock, SHUT_RDWR);
 				close(sock);
 			}
 		}
@@ -422,7 +422,7 @@ ssh_exchange_identification(void)
 	    &remote_major, &remote_minor, remote_version) != 3)
 		fatal("Bad remote protocol version identification: '%.100s'", buf);
 	debug("Remote protocol version %d.%d, remote software version %.100s",
-	      remote_major, remote_minor, remote_version);
+	    remote_major, remote_minor, remote_version);
 
 	compat_datafellows(remote_version);
 	mismatch = 0;
@@ -482,40 +482,24 @@ ssh_exchange_identification(void)
 static int
 confirm(const char *prompt)
 {
-	char buf[1024];
-	FILE *f;
-	int retval = -1;
+	const char *msg, *again = "Please type 'yes' or 'no': ";
+	char *p;
+	int ret = -1;
 
 	if (options.batch_mode)
 		return 0;
-	if (isatty(STDIN_FILENO))
-		f = stdin;
-	else
-		f = fopen(_PATH_TTY, "rw");
-	if (f == NULL)
-		return 0;
-	fflush(stdout);
-	fprintf(stderr, "%s", prompt);
-	while (1) {
-		if (fgets(buf, sizeof(buf), f) == NULL) {
-			fprintf(stderr, "\n");
-			strlcpy(buf, "no", sizeof buf);
-		}
-		/* Remove newline from response. */
-		if (strchr(buf, '\n'))
-			*strchr(buf, '\n') = 0;
-		if (strcmp(buf, "yes") == 0)
-			retval = 1;
-		else if (strcmp(buf, "no") == 0)
-			retval = 0;
-		else
-			fprintf(stderr, "Please type 'yes' or 'no': ");
-
-		if (retval != -1) {
-			if (f != stdin)
-				fclose(f);
-			return retval;
-		}
+	for (msg = prompt;;msg = again) {
+		p = read_passphrase(msg, RP_ECHO);
+		if (p == NULL ||
+		    (p[0] == '\0') || (p[0] == '\n') ||
+		    strncasecmp(p, "no", 2) == 0)
+			ret = 0;
+		if (strncasecmp(p, "yes", 3) == 0)
+			ret = 1;
+		if (p)
+			xfree(p);
+		if (ret != -1)
+			return ret;
 	}
 }
 
@@ -536,7 +520,8 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 	HostStatus ip_status;
 	int local = 0, host_ip_differ = 0;
 	char ntop[NI_MAXHOST];
-	int host_line, ip_line;
+	char msg[1024];
+	int len, host_line, ip_line;
 	const char *host_file = NULL, *ip_file = NULL;
 
 	/*
@@ -610,7 +595,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 	 */
 	host_file = user_hostfile;
 	host_status = check_host_in_hostfile(host_file, host, host_key,
-	     file_key, &host_line);
+	    file_key, &host_line);
 	if (host_status == HOST_NEW) {
 		host_file = system_hostfile;
 		host_status = check_host_in_hostfile(host_file, host, host_key,
@@ -653,7 +638,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 				    "'%.128s' not in list of known hosts.",
 				    type, ip);
 			else if (!add_host_to_hostfile(user_hostfile, ip,
-			     host_key))
+			    host_key))
 				log("Failed to add the %s host key for IP "
 				    "address '%.128s' to the list of known "
 				    "hosts (%.30s).", type, ip, user_hostfile);
@@ -678,18 +663,16 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			goto fail;
 		} else if (options.strict_host_key_checking == 2) {
 			/* The default */
-			char prompt[1024];
 			fp = key_fingerprint(host_key, SSH_FP_MD5, SSH_FP_HEX);
-			snprintf(prompt, sizeof(prompt),
+			snprintf(msg, sizeof(msg),
 			    "The authenticity of host '%.200s (%s)' can't be "
 			    "established.\n"
 			    "%s key fingerprint is %s.\n"
 			    "Are you sure you want to continue connecting "
 			    "(yes/no)? ", host, ip, type, fp);
 			xfree(fp);
-			if (!confirm(prompt)) {
+			if (!confirm(msg))
 				goto fail;
-			}
 		}
 		if (options.check_host_ip && ip_status == HOST_NEW) {
 			snprintf(hostline, sizeof(hostline), "%s,%s", host, ip);
@@ -779,7 +762,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			error("Port forwarding is disabled to avoid "
 			    "man-in-the-middle attacks.");
 			options.num_local_forwards =
-			     options.num_remote_forwards = 0;
+			    options.num_remote_forwards = 0;
 		}
 		/*
 		 * XXX Should permit the user to change to use the new id.
@@ -793,20 +776,28 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 
 	if (options.check_host_ip && host_status != HOST_CHANGED &&
 	    ip_status == HOST_CHANGED) {
-		log("Warning: the %s host key for '%.200s' "
-		    "differs from the key for the IP address '%.128s'",
-		    type, host, ip);
-		if (host_status == HOST_OK)
-			log("Matching host key in %s:%d", host_file, host_line);
-		log("Offending key for IP in %s:%d", ip_file, ip_line);
+		snprintf(msg, sizeof(msg),
+		    "Warning: the %s host key for '%.200s' "
+		    "differs from the key for the IP address '%.128s'"
+		    "\nOffending key for IP in %s:%d",
+		    type, host, ip, ip_file, ip_line);
+		if (host_status == HOST_OK) {
+			len = strlen(msg);
+			snprintf(msg + len, sizeof(msg) - len,
+			    "\nMatching host key in %s:%d",
+			     host_file, host_line);
+		}
 		if (options.strict_host_key_checking == 1) {
+			log(msg);
 			error("Exiting, you have requested strict checking.");
 			goto fail;
 		} else if (options.strict_host_key_checking == 2) {
-			if (!confirm("Are you sure you want " 
-			    "to continue connecting (yes/no)? ")) {
+			strlcat(msg, "\nAre you sure you want "
+			    "to continue connecting (yes/no)? ", sizeof(msg));
+			if (!confirm(msg))
 				goto fail;
-			}
+		} else {
+			log(msg);
 		}
 	}
 

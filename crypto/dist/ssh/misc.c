@@ -1,6 +1,5 @@
-/*	$NetBSD: misc.c,v 1.8 2001/12/06 03:54:05 itojun Exp $	*/
-/*	$OpenBSD: misc.c,v 1.13 2001/12/05 10:06:12 deraadt Exp $	*/
-
+/*	$NetBSD: misc.c,v 1.9 2002/03/08 02:00:53 itojun Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 2002/03/08 02:00:53 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: misc.c,v 1.13 2001/12/05 10:06:12 deraadt Exp $");
+RCSID("$OpenBSD: misc.c,v 1.19 2002/03/04 17:27:39 stevesk Exp $");
 
 #include "misc.h"
 #include "log.h"
@@ -66,9 +65,8 @@ set_nonblock(int fd)
 	debug("fd %d setting O_NONBLOCK", fd);
 	val |= O_NONBLOCK;
 	if (fcntl(fd, F_SETFL, val) == -1)
-		if (errno != ENODEV)
-			error("fcntl(%d, F_SETFL, O_NONBLOCK): %s",
-			    fd, strerror(errno));
+		debug("fcntl(%d, F_SETFL, O_NONBLOCK): %s",
+		    fd, strerror(errno));
 }
 
 void
@@ -88,9 +86,30 @@ unset_nonblock(int fd)
 	debug("fd %d clearing O_NONBLOCK", fd);
 	val &= ~O_NONBLOCK;
 	if (fcntl(fd, F_SETFL, val) == -1)
-		if (errno != ENODEV)
-			error("fcntl(%d, F_SETFL, O_NONBLOCK): %s",
-			    fd, strerror(errno));
+		debug("fcntl(%d, F_SETFL, O_NONBLOCK): %s",
+		    fd, strerror(errno));
+}
+
+/* disable nagle on socket */
+void
+set_nodelay(int fd)
+{
+	int opt;
+	socklen_t optlen;
+
+	optlen = sizeof opt;
+	if (getsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &opt, &optlen) == -1) {
+		error("getsockopt TCP_NODELAY: %.100s", strerror(errno));
+		return;
+	}
+	if (opt == 1) {
+		debug2("fd %d is TCP_NODELAY", fd);
+		return;
+	}
+	opt = 1;
+	debug("fd %d setting TCP_NODELAY", fd);
+	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof opt) == -1)
+		error("setsockopt TCP_NODELAY: %.100s", strerror(errno));
 }
 
 /* Characters considered whitespace in strsep calls. */
@@ -293,7 +312,7 @@ addargs(arglist *args, char *fmt, ...)
 	if (args->list == NULL) {
 		args->nalloc = 32;
 		args->num = 0;
-	} else if (args->num+2 >= args->nalloc) 
+	} else if (args->num+2 >= args->nalloc)
 		args->nalloc *= 2;
 
 	args->list = xrealloc(args->list, args->nalloc * sizeof(char *));

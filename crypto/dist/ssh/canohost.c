@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.10 2001/12/06 03:54:05 itojun Exp $	*/
+/*	$NetBSD: canohost.c,v 1.11 2002/03/08 02:00:52 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: canohost.c,v 1.28 2001/12/05 03:56:39 itojun Exp $");
+RCSID("$OpenBSD: canohost.c,v 1.31 2002/02/27 21:23:13 stevesk Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -28,7 +28,7 @@ static void check_ip_options(int, char *);
  */
 
 static char *
-get_remote_hostname(int socket, int reverse_mapping_check)
+get_remote_hostname(int socket, int verify_reverse_mapping)
 {
 	struct sockaddr_storage from;
 	int i;
@@ -47,13 +47,13 @@ get_remote_hostname(int socket, int reverse_mapping_check)
 		check_ip_options(socket, ntop);
 
 	if (getnameinfo((struct sockaddr *)&from, fromlen, ntop, sizeof(ntop),
-	     NULL, 0, NI_NUMERICHOST) != 0)
+	    NULL, 0, NI_NUMERICHOST) != 0)
 		fatal("get_remote_hostname: getnameinfo NI_NUMERICHOST failed");
 
 	debug3("Trying to reverse map address %.100s.", ntop);
 	/* Map the IP address to a host name. */
 	if (getnameinfo((struct sockaddr *)&from, fromlen, name, sizeof(name),
-	     NULL, 0, NI_NAMEREQD) != 0) {
+	    NULL, 0, NI_NAMEREQD) != 0) {
 		/* Host name not found.  Use ip address. */
 		log("Could not reverse map address %.100s.", ntop);
 		return xstrdup(ntop);
@@ -69,7 +69,7 @@ get_remote_hostname(int socket, int reverse_mapping_check)
 		if (isupper(name[i]))
 			name[i] = tolower(name[i]);
 
-	if (!reverse_mapping_check)
+	if (!verify_reverse_mapping)
 		return xstrdup(name);
 	/*
 	 * Map it back to an IP address and check that the given
@@ -133,7 +133,7 @@ check_ip_options(int socket, char *ipaddr)
 	else
 		ipproto = IPPROTO_IP;
 	option_size = sizeof(options);
-	if (getsockopt(socket, ipproto, IP_OPTIONS, (void *)options,
+	if (getsockopt(socket, ipproto, IP_OPTIONS, options,
 	    &option_size) >= 0 && option_size != 0) {
 		text[0] = '\0';
 		for (i = 0; i < option_size; i++)
@@ -153,14 +153,14 @@ check_ip_options(int socket, char *ipaddr)
  */
 
 const char *
-get_canonical_hostname(int reverse_mapping_check)
+get_canonical_hostname(int verify_reverse_mapping)
 {
 	static char *canonical_host_name = NULL;
-	static int reverse_mapping_checked = 0;
+	static int verify_reverse_mapping_done = 0;
 
 	/* Check if we have previously retrieved name with same option. */
 	if (canonical_host_name != NULL) {
-		if (reverse_mapping_checked != reverse_mapping_check)
+		if (verify_reverse_mapping_done != verify_reverse_mapping)
 			xfree(canonical_host_name);
 		else
 			return canonical_host_name;
@@ -169,11 +169,11 @@ get_canonical_hostname(int reverse_mapping_check)
 	/* Get the real hostname if socket; otherwise return UNKNOWN. */
 	if (packet_connection_is_on_socket())
 		canonical_host_name = get_remote_hostname(
-		    packet_get_connection_in(), reverse_mapping_check);
+		    packet_get_connection_in(), verify_reverse_mapping);
 	else
 		canonical_host_name = xstrdup("UNKNOWN");
 
-	reverse_mapping_checked = reverse_mapping_check;
+	verify_reverse_mapping_done = verify_reverse_mapping;
 	return canonical_host_name;
 }
 
@@ -209,7 +209,7 @@ get_socket_address(int socket, int remote, int flags)
 	}
 	/* Get the address in ascii. */
 	if (getnameinfo((struct sockaddr *)&addr, addrlen, ntop, sizeof(ntop),
-	     NULL, 0, flags) != 0) {
+	    NULL, 0, flags) != 0) {
 		error("get_socket_ipaddr: getnameinfo %d failed", flags);
 		return NULL;
 	}
@@ -260,11 +260,11 @@ get_remote_ipaddr(void)
 }
 
 const char *
-get_remote_name_or_ip(u_int utmp_len, int reverse_mapping_check)
+get_remote_name_or_ip(u_int utmp_len, int verify_reverse_mapping)
 {
 	static const char *remote = "";
 	if (utmp_len > 0)
-		remote = get_canonical_hostname(reverse_mapping_check);
+		remote = get_canonical_hostname(verify_reverse_mapping);
 	if (utmp_len == 0 || strlen(remote) > utmp_len)
 		remote = get_remote_ipaddr();
 	return remote;
@@ -295,7 +295,7 @@ get_sock_port(int sock, int local)
 	}
 	/* Return port number. */
 	if (getnameinfo((struct sockaddr *)&from, fromlen, NULL, 0,
-	     strport, sizeof(strport), NI_NUMERICSERV) != 0)
+	    strport, sizeof(strport), NI_NUMERICSERV) != 0)
 		fatal("get_sock_port: getnameinfo NI_NUMERICSERV failed");
 	return atoi(strport);
 }

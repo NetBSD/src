@@ -1,4 +1,4 @@
-/*	$NetBSD: scard.c,v 1.2 2001/12/13 15:53:54 he Exp $	*/
+/*	$NetBSD: scard.c,v 1.3 2002/03/08 02:00:54 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #ifdef SMARTCARD
 #include "includes.h"
-RCSID("$OpenBSD: scard.c,v 1.15 2001/09/28 09:49:31 djm Exp $");
+RCSID("$OpenBSD: scard.c,v 1.17 2001/12/27 18:22:16 markus Exp $");
 
 #include <openssl/engine.h>
 #include <sectok.h>
@@ -49,7 +49,7 @@ static int cla = 0x00;	/* class */
 
 /* interface to libsectok */
 
-static int 
+static int
 sc_open(void)
 {
 	int sw;
@@ -80,7 +80,7 @@ sc_open(void)
 	return sc_fd;
 }
 
-static int 
+static int
 sc_enable_applet(void)
 {
 	static u_char aid[] = {0xfc, 0x53, 0x73, 0x68, 0x2e, 0x62, 0x69, 0x6e};
@@ -96,7 +96,7 @@ sc_enable_applet(void)
 	return 0;
 }
 
-static int 
+static int
 sc_init(void)
 {
 	int status;
@@ -116,7 +116,7 @@ sc_init(void)
 	return 0;
 }
 
-static int 
+static int
 sc_read_pubkey(Key * k)
 {
 	u_char buf[2], *n;
@@ -134,7 +134,7 @@ sc_read_pubkey(Key * k)
 
 	/* get key size */
 	sectok_apdu(sc_fd, CLA_SSH, INS_GET_KEYLENGTH, 0, 0, 0, NULL,
-	     sizeof(buf), buf, &sw);
+	    sizeof(buf), buf, &sw);
 	if (!sectok_swOK(sw)) {
 		error("could not obtain key length: %s", sectok_get_sw(sw));
 		goto err;
@@ -205,7 +205,7 @@ sc_private_decrypt(int flen, u_char *from, u_char *to, RSA *rsa, int padding)
 		goto err;
 	}
 	sectok_apdu(sc_fd, CLA_SSH, INS_GET_RESPONSE, 0, 0, 0, NULL,
-	     len, padded, &sw);
+	    len, padded, &sw);
 	if (!sectok_swOK(sw)) {
 		error("sc_private_decrypt: INS_GET_RESPONSE failed: %s",
 		    sectok_get_sw(sw));
@@ -250,7 +250,7 @@ sc_private_encrypt(int flen, u_char *from, u_char *to, RSA *rsa, int padding)
 		goto err;
 	}
 	sectok_apdu(sc_fd, CLA_SSH, INS_GET_RESPONSE, 0, 0, 0, NULL,
-	     len, to, &sw);
+	    len, to, &sw);
 	if (!sectok_swOK(sw)) {
 		error("sc_private_decrypt: INS_GET_RESPONSE failed: %s",
 		    sectok_get_sw(sw));
@@ -321,7 +321,8 @@ sc_get_engine(void)
 	smart_rsa.rsa_sign	= def->rsa_sign;
 	smart_rsa.rsa_verify	= def->rsa_verify;
 
-	smart_engine = ENGINE_new();
+	if ((smart_engine = ENGINE_new()) == NULL)
+		fatal("ENGINE_new failed");
 
 	ENGINE_set_id(smart_engine, "sectok");
 	ENGINE_set_name(smart_engine, "libsectok");

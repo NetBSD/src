@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.17 2001/12/06 03:54:06 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.18 2002/03/08 02:00:57 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,11 +41,11 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.214 2001/12/05 10:06:13 deraadt Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.228 2002/02/27 21:23:13 stevesk Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
-#include <openssl/hmac.h>
+#include <openssl/md5.h>
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -391,7 +391,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 		fatal_cleanup();
 	}
 	debug("Client protocol version %d.%d; client software version %.100s",
-	      remote_major, remote_minor, remote_version);
+	    remote_major, remote_minor, remote_version);
 
 	compat_datafellows(remote_version);
 
@@ -459,7 +459,7 @@ destroy_sensitive_data(void)
 		key_free(sensitive_data.server_key);
 		sensitive_data.server_key = NULL;
 	}
-	for(i = 0; i < options.num_host_key_files; i++) {
+	for (i = 0; i < options.num_host_key_files; i++) {
 		if (sensitive_data.host_keys[i]) {
 			key_free(sensitive_data.host_keys[i]);
 			sensitive_data.host_keys[i] = NULL;
@@ -472,33 +472,37 @@ destroy_sensitive_data(void)
 static char *
 list_hostkey_types(void)
 {
-	static char buf[1024];
+	Buffer b;
+	char *p;
 	int i;
-	buf[0] = '\0';
-	for(i = 0; i < options.num_host_key_files; i++) {
+
+	buffer_init(&b);
+	for (i = 0; i < options.num_host_key_files; i++) {
 		Key *key = sensitive_data.host_keys[i];
 		if (key == NULL)
 			continue;
 		switch (key->type) {
 		case KEY_RSA:
 		case KEY_DSA:
-			strlcat(buf, key_ssh_name(key), sizeof buf);
-			strlcat(buf, ",", sizeof buf);
+			if (buffer_len(&b) > 0)
+				buffer_append(&b, ",", 1);
+			p = key_ssh_name(key);
+			buffer_append(&b, p, strlen(p));
 			break;
 		}
 	}
-	i = strlen(buf);
-	if (i > 0 && buf[i-1] == ',')
-		buf[i-1] = '\0';
-	debug("list_hostkey_types: %s", buf);
-	return buf;
+	buffer_append(&b, "\0", 1);
+	p = xstrdup(buffer_ptr(&b));
+	buffer_free(&b);
+	debug("list_hostkey_types: %s", p);
+	return p;
 }
 
 static Key *
 get_hostkey_by_type(int type)
 {
 	int i;
-	for(i = 0; i < options.num_host_key_files; i++) {
+	for (i = 0; i < options.num_host_key_files; i++) {
 		Key *key = sensitive_data.host_keys[i];
 		if (key != NULL && key->type == type)
 			return key;
@@ -533,6 +537,31 @@ drop_connection(int startups)
 
 	debug("drop_connection: p %g, r %g", p, r);
 	return (r < p) ? 1 : 0;
+}
+
+static void
+usage(void)
+{
+	fprintf(stderr, "sshd version %s\n", SSH_VERSION);
+	fprintf(stderr, "Usage: %s [options]\n", __progname);
+	fprintf(stderr, "Options:\n");
+	fprintf(stderr, "  -f file    Configuration file (default %s)\n", _PATH_SERVER_CONFIG_FILE);
+	fprintf(stderr, "  -d         Debugging mode (multiple -d means more debugging)\n");
+	fprintf(stderr, "  -i         Started from inetd\n");
+	fprintf(stderr, "  -D         Do not fork into daemon mode\n");
+	fprintf(stderr, "  -t         Only test configuration file and keys\n");
+	fprintf(stderr, "  -q         Quiet (no logging)\n");
+	fprintf(stderr, "  -p port    Listen on the specified port (default: 22)\n");
+	fprintf(stderr, "  -k seconds Regenerate server key every this many seconds (default: 3600)\n");
+	fprintf(stderr, "  -g seconds Grace period for authentication (default: 600)\n");
+	fprintf(stderr, "  -b bits    Size of server RSA key (default: 768 bits)\n");
+	fprintf(stderr, "  -h file    File from which to read host key (default: %s)\n",
+	    _PATH_HOST_KEY_FILE);
+	fprintf(stderr, "  -u len     Maximum hostname length for utmp recording\n");
+	fprintf(stderr, "  -4         Use IPv4 only\n");
+	fprintf(stderr, "  -6         Use IPv6 only\n");
+	fprintf(stderr, "  -o option  Process the option as if it was read from a configuration file.\n");
+	exit(1);
 }
 
 /*
@@ -570,7 +599,7 @@ main(int ac, char **av)
 	initialize_server_options(&options);
 
 	/* Parse command-line arguments. */
-	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:dDeiqtQ46")) != -1) {
+	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:o:dDeiqtQ46")) != -1) {
 		switch (opt) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -652,27 +681,15 @@ main(int ac, char **av)
 		case 'u':
 			utmp_len = atoi(optarg);
 			break;
+		case 'o':
+			if (process_server_config_line(&options, optarg,
+			    "command-line", 0) != 0)
+				exit(1);
+			break;
 		case '?':
 		default:
-			fprintf(stderr, "sshd version %s\n", SSH_VERSION);
-			fprintf(stderr, "Usage: %s [options]\n", __progname);
-			fprintf(stderr, "Options:\n");
-			fprintf(stderr, "  -f file    Configuration file (default %s)\n", _PATH_SERVER_CONFIG_FILE);
-			fprintf(stderr, "  -d         Debugging mode (multiple -d means more debugging)\n");
-			fprintf(stderr, "  -i         Started from inetd\n");
-			fprintf(stderr, "  -D         Do not fork into daemon mode\n");
-			fprintf(stderr, "  -t         Only test configuration file and keys\n");
-			fprintf(stderr, "  -q         Quiet (no logging)\n");
-			fprintf(stderr, "  -p port    Listen on the specified port (default: 22)\n");
-			fprintf(stderr, "  -k seconds Regenerate server key every this many seconds (default: 3600)\n");
-			fprintf(stderr, "  -g seconds Grace period for authentication (default: 600)\n");
-			fprintf(stderr, "  -b bits    Size of server RSA key (default: 768 bits)\n");
-			fprintf(stderr, "  -h file    File from which to read host key (default: %s)\n",
-			    _PATH_HOST_KEY_FILE);
-			fprintf(stderr, "  -u len     Maximum hostname length for utmp recording\n");
-			fprintf(stderr, "  -4         Use IPv4 only\n");
-			fprintf(stderr, "  -6         Use IPv6 only\n");
-			exit(1);
+			usage();
+			break;
 		}
 	}
 	SSLeay_add_all_algorithms();
@@ -683,8 +700,10 @@ main(int ac, char **av)
 	 * key (unless started from inetd)
 	 */
 	log_init(__progname,
-	    options.log_level == -1 ? SYSLOG_LEVEL_INFO : options.log_level,
-	    options.log_facility == -1 ? SYSLOG_FACILITY_AUTH : options.log_facility,
+	    options.log_level == SYSLOG_LEVEL_NOT_SET ?
+	    SYSLOG_LEVEL_INFO : options.log_level,
+	    options.log_facility == SYSLOG_FACILITY_NOT_SET ?
+	    SYSLOG_FACILITY_AUTH : options.log_facility,
 	    !inetd_flag);
 
 	/* Read server configuration options from the configuration file. */
@@ -703,14 +722,14 @@ main(int ac, char **av)
 
 	/* load private host keys */
 	sensitive_data.host_keys = xmalloc(options.num_host_key_files*sizeof(Key*));
-	for(i = 0; i < options.num_host_key_files; i++)
+	for (i = 0; i < options.num_host_key_files; i++)
 		sensitive_data.host_keys[i] = NULL;
 	sensitive_data.server_key = NULL;
 	sensitive_data.ssh1_host_key = NULL;
 	sensitive_data.have_ssh1_key = 0;
 	sensitive_data.have_ssh2_key = 0;
 
-	for(i = 0; i < options.num_host_key_files; i++) {
+	for (i = 0; i < options.num_host_key_files; i++) {
 		key = key_load_private(options.host_key_files[i], "", NULL);
 		sensitive_data.host_keys[i] = key;
 		if (key == NULL) {
@@ -807,7 +826,7 @@ main(int ac, char **av)
 	/* Chdir to the root directory so that the current disk can be
 	   unmounted if desired. */
 	chdir("/");
-	
+
 	/* ignore SIGPIPE */
 	signal(SIGPIPE, SIG_IGN);
 
@@ -859,11 +878,11 @@ main(int ac, char **av)
 			 * close.
 			 */
 			setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR,
-			    (void *) &on, sizeof(on));
+			    &on, sizeof(on));
 			linger.l_onoff = 1;
 			linger.l_linger = 5;
 			setsockopt(listen_sock, SOL_SOCKET, SO_LINGER,
-			    (void *) &linger, sizeof(linger));
+			    &linger, sizeof(linger));
 
 			debug("Bind to port %s on %s.", strport, ntop);
 
@@ -994,6 +1013,7 @@ main(int ac, char **av)
 				}
 				if (fcntl(newsock, F_SETFL, 0) < 0) {
 					error("newsock del O_NONBLOCK: %s", strerror(errno));
+					close(newsock);
 					continue;
 				}
 				if (drop_connection(startups) == 1) {
@@ -1106,11 +1126,11 @@ main(int ac, char **av)
 	/* setsockopt(sock_in, SOL_SOCKET, SO_REUSEADDR, (void *)&on, sizeof(on)); */
 	linger.l_onoff = 1;
 	linger.l_linger = 5;
-	setsockopt(sock_in, SOL_SOCKET, SO_LINGER, (void *) &linger, sizeof(linger));
+	setsockopt(sock_in, SOL_SOCKET, SO_LINGER, &linger, sizeof(linger));
 
 	/* Set keepalives if requested. */
 	if (options.keepalives &&
-	    setsockopt(sock_in, SOL_SOCKET, SO_KEEPALIVE, (void *)&on,
+	    setsockopt(sock_in, SOL_SOCKET, SO_KEEPALIVE, &on,
 	    sizeof(on)) < 0)
 		error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
 
@@ -1163,8 +1183,9 @@ main(int ac, char **av)
 	 * machine, he can connect from any port.  So do not use these
 	 * authentication methods from machines that you do not trust.
 	 */
-	if (remote_port >= IPPORT_RESERVED ||
-	    remote_port < IPPORT_RESERVED / 2) {
+	if (options.rhosts_authentication &&
+	    (remote_port >= IPPORT_RESERVED ||
+	    remote_port < IPPORT_RESERVED / 2)) {
 		debug("Rhosts Authentication disabled, "
 		    "originating port %d not trusted.", remote_port);
 		options.rhosts_authentication = 0;
@@ -1208,7 +1229,6 @@ static void
 do_ssh1_kex(void)
 {
 	int i, len;
-	int plen, slen;
 	int rsafail = 0;
 	BIGNUM *session_key_int;
 	u_char session_key[SSH_SESSION_KEY_LENGTH];
@@ -1292,7 +1312,7 @@ do_ssh1_kex(void)
 	    BN_num_bits(sensitive_data.ssh1_host_key->rsa->n));
 
 	/* Read clients reply (cipher type and session key). */
-	packet_read_expect(&plen, SSH_CMSG_SESSION_KEY);
+	packet_read_expect(SSH_CMSG_SESSION_KEY);
 
 	/* Get cipher type and check whether we accept this. */
 	cipher_type = packet_get_char();
@@ -1309,13 +1329,13 @@ do_ssh1_kex(void)
 	debug("Encryption type: %.200s", cipher_name(cipher_type));
 
 	/* Get the encrypted integer. */
-	session_key_int = BN_new();
-	packet_get_bignum(session_key_int, &slen);
+	if ((session_key_int = BN_new()) == NULL)
+		fatal("do_ssh1_kex: BN_new failed");
+	packet_get_bignum(session_key_int);
 
 	protocol_flags = packet_get_int();
 	packet_set_protocol_flags(protocol_flags);
-
-	packet_integrity_check(plen, 1 + 8 + slen + 4, SSH_CMSG_SESSION_KEY);
+	packet_check_eom();
 
 	/*
 	 * Decrypt it using our private server key and private host key (key
@@ -1385,7 +1405,7 @@ do_ssh1_kex(void)
 	}
 	if (rsafail) {
 		int bytes = BN_num_bytes(session_key_int);
-		char *buf = xmalloc(bytes);
+		u_char *buf = xmalloc(bytes);
 		MD5_CTX md;
 
 		log("do_connection: generating a fake encryption key");

@@ -1,5 +1,5 @@
-.\"	$NetBSD: ssh-keyscan.1,v 1.8 2001/09/27 03:24:06 itojun Exp $
-.\"	$OpenBSD: ssh-keyscan.1,v 1.12 2001/09/05 06:23:07 deraadt Exp $
+.\"	$NetBSD: ssh-keyscan.1,v 1.9 2002/03/08 02:00:56 itojun Exp $
+.\"	$OpenBSD: ssh-keyscan.1,v 1.14 2002/02/13 08:33:47 mpech Exp $
 .\"
 .\" Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
 .\"
@@ -105,7 +105,7 @@ Print the
 host key for machine
 .Pa hostname :
 .Bd -literal
-ssh-keyscan hostname
+$ ssh-keyscan hostname
 .Ed
 .Pp
 Find all hosts from the file
@@ -113,7 +113,7 @@ Find all hosts from the file
 which have new or different keys from those in the sorted file
 .Pa ssh_known_hosts :
 .Bd -literal
-ssh-keyscan -t rsa,dsa -f ssh_hosts | \e\ 
+$ ssh-keyscan -t rsa,dsa -f ssh_hosts | \e\ 
 	sort -u - ssh_known_hosts | diff ssh_known_hosts -
 .Ed
 .Sh FILES

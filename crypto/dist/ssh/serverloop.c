@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.15 2001/12/06 03:54:05 itojun Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.16 2002/03/08 02:00:54 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.85 2001/12/05 03:50:01 itojun Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.98 2002/02/06 14:55:16 markus Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -93,6 +93,51 @@ static volatile sig_atomic_t child_terminated = 0;	/* The child has terminated. 
 /* prototypes */
 static void server_init_dispatch(void);
 
+/*
+ * we write to this pipe if a SIGCHLD is caught in order to avoid
+ * the race between select() and child_terminated
+ */
+static int notify_pipe[2];
+static void
+notify_setup(void)
+{
+	if (pipe(notify_pipe) < 0) {
+		error("pipe(notify_pipe) failed %s", strerror(errno));
+	} else if ((fcntl(notify_pipe[0], F_SETFD, 1) == -1) ||
+	    (fcntl(notify_pipe[1], F_SETFD, 1) == -1)) {
+		error("fcntl(notify_pipe, F_SETFD) failed %s", strerror(errno));
+		close(notify_pipe[0]);
+		close(notify_pipe[1]);
+	} else {
+		set_nonblock(notify_pipe[0]);
+		set_nonblock(notify_pipe[1]);
+		return;
+	}
+	notify_pipe[0] = -1;	/* read end */
+	notify_pipe[1] = -1;	/* write end */
+}
+static void
+notify_parent(void)
+{
+	if (notify_pipe[1] != -1)
+		write(notify_pipe[1], "", 1);
+}
+static void
+notify_prepare(fd_set *readset)
+{
+	if (notify_pipe[0] != -1)
+		FD_SET(notify_pipe[0], readset);
+}
+static void
+notify_done(fd_set *readset)
+{
+	char c;
+
+	if (notify_pipe[0] != -1 && FD_ISSET(notify_pipe[0], readset))
+		while (read(notify_pipe[0], &c, 1) != -1)
+			debug2("notify_done: reading");
+}
+
 static void
 sigchld_handler(int sig)
 {
@@ -100,6 +145,7 @@ sigchld_handler(int sig)
 	debug("Received SIGCHLD.");
 	child_terminated = 1;
 	signal(SIGCHLD, sigchld_handler);
+	notify_parent();
 	errno = save_errno;
 }
 
@@ -164,15 +210,21 @@ make_packets_from_stdout_data(void)
 static void
 client_alive_check(void)
 {
+	static int had_channel = 0;
 	int id;
+
+	id = channel_find_open();
+	if (id == -1) {
+		if (!had_channel)
+			return;
+		packet_disconnect("No open channels after timeout!");
+	}
+	had_channel = 1;
 
 	/* timeout, check to see how many we have had */
 	if (++client_alive_timeouts > options.client_alive_count_max)
 		packet_disconnect("Timeout, your session not responding.");
 
-	id = channel_find_open();
-	if (id == -1)
-		packet_disconnect("No open channels after timeout!");
 	/*
 	 * send a bogus channel request with "wantreply",
 	 * we should get back a failure
@@ -196,12 +248,12 @@ wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
 	int client_alive_scheduled = 0;
 
 	/*
-	 * if using client_alive, set the max timeout accordingly, 
+	 * if using client_alive, set the max timeout accordingly,
 	 * and indicate that this particular timeout was for client
 	 * alive by setting the client_alive_scheduled flag.
 	 *
 	 * this could be randomized somewhat to make traffic
-	 * analysis more difficult, but we're not doing it yet.  
+	 * analysis more difficult, but we're not doing it yet.
 	 */
 	if (compat20 &&
 	    max_time_milliseconds == 0 && options.client_alive_interval) {
@@ -243,6 +295,7 @@ wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
 		if (fdin != -1 && buffer_len(&stdin_buffer) > 0)
 			FD_SET(fdin, *writesetp);
 	}
+	notify_prepare(*readsetp);
 
 	/*
 	 * If we have buffered packet data going to the client, mark that
@@ -280,6 +333,8 @@ wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
 			error("select: %.100s", strerror(errno));
 	} else if (ret == 0 && client_alive_scheduled)
 		client_alive_check();
+
+	notify_done(*readsetp);
 }
 
 /*
@@ -358,14 +413,10 @@ process_output(fd_set * writeset)
 		if (len < 0 && (errno == EINTR || errno == EAGAIN)) {
 			/* do nothing */
 		} else if (len <= 0) {
-#ifdef USE_PIPES
-			close(fdin);
-#else
 			if (fdin != fdout)
 				close(fdin);
 			else
 				shutdown(fdin, SHUT_WR); /* We will no longer send. */
-#endif
 			fdin = -1;
 		} else {
 			/* Successful write. */
@@ -469,6 +520,8 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 	connection_in = packet_get_connection_in();
 	connection_out = packet_get_connection_out();
 
+	notify_setup();
+
 	previous_stdout_buffer_bytes = 0;
 
 	/* Set approximate I/O buffer size. */
@@ -513,14 +566,10 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 		 * input data, cause a real eof by closing fdin.
 		 */
 		if (stdin_eof && fdin != -1 && buffer_len(&stdin_buffer) == 0) {
-#ifdef USE_PIPES
-			close(fdin);
-#else
 			if (fdin != fdout)
 				close(fdin);
 			else
 				shutdown(fdin, SHUT_WR); /* We will no longer send. */
-#endif
 			fdin = -1;
 		}
 		/* Make packets from buffered stderr data to send to the client. */
@@ -574,6 +623,7 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 		max_fd = MAX(max_fd, fdin);
 		max_fd = MAX(max_fd, fdout);
 		max_fd = MAX(max_fd, fderr);
+		max_fd = MAX(max_fd, notify_pipe[0]);
 
 		/* Sleep in select() until we can do something. */
 		wait_until_can_do_something(&readset, &writeset, &max_fd,
@@ -599,7 +649,7 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 	drain_output();
 
 	debug("End of interactive session; stdin %ld, stdout (read %ld, sent %ld), stderr %ld bytes.",
-	      stdin_bytes, fdout_bytes, stdout_bytes, stderr_bytes);
+	    stdin_bytes, fdout_bytes, stdout_bytes, stderr_bytes);
 
 	/* Free and clear the buffers. */
 	buffer_free(&stdin_buffer);
@@ -624,7 +674,7 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 	/* We no longer want our SIGCHLD handler to be called. */
 	signal(SIGCHLD, SIG_DFL);
 
-	wait_pid = waitpid(-1, &wait_status, child_terminated ? WNOHANG : 0);
+	wait_pid = waitpid(-1, &wait_status, 0);
 	if (wait_pid == -1)
 		packet_disconnect("wait: %.100s", strerror(errno));
 	else if (wait_pid != pid)
@@ -648,8 +698,7 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 		 * the exit status.
 		 */
 		do {
-			int plen;
-			type = packet_read(&plen);
+			type = packet_read();
 		}
 		while (type != SSH_CMSG_EXIT_CONFIRMATION);
 
@@ -698,7 +747,11 @@ server_loop2(Authctxt *authctxt)
 	connection_in = packet_get_connection_in();
 	connection_out = packet_get_connection_out();
 
+	notify_setup();
+
 	max_fd = MAX(connection_in, connection_out);
+	max_fd = MAX(max_fd, notify_pipe[0]);
+
 	xxx_authctxt = authctxt;
 
 	server_init_dispatch();
@@ -736,20 +789,20 @@ server_loop2(Authctxt *authctxt)
 }
 
 static void
-server_input_channel_failure(int type, int plen, void *ctxt)
+server_input_channel_failure(int type, u_int32_t seq, void *ctxt)
 {
 	debug("Got CHANNEL_FAILURE for keepalive");
-	/* 
+	/*
 	 * reset timeout, since we got a sane answer from the client.
 	 * even if this was generated by something other than
 	 * the bogus CHANNEL_REQUEST we send for keepalives.
 	 */
-	client_alive_timeouts = 0; 
+	client_alive_timeouts = 0;
 }
 
 
 static void
-server_input_stdin_data(int type, int plen, void *ctxt)
+server_input_stdin_data(int type, u_int32_t seq, void *ctxt)
 {
 	char *data;
 	u_int data_len;
@@ -759,14 +812,14 @@ server_input_stdin_data(int type, int plen, void *ctxt)
 	if (fdin == -1)
 		return;
 	data = packet_get_string(&data_len);
-	packet_integrity_check(plen, (4 + data_len), type);
+	packet_check_eom();
 	buffer_append(&stdin_buffer, data, data_len);
 	memset(data, 0, data_len);
 	xfree(data);
 }
 
 static void
-server_input_eof(int type, int plen, void *ctxt)
+server_input_eof(int type, u_int32_t seq, void *ctxt)
 {
 	/*
 	 * Eof from the client.  The stdin descriptor to the
@@ -774,12 +827,12 @@ server_input_eof(int type, int plen, void *ctxt)
 	 * drained.
 	 */
 	debug("EOF received for stdin.");
-	packet_integrity_check(plen, 0, type);
+	packet_check_eom();
 	stdin_eof = 1;
 }
 
 static void
-server_input_window_size(int type, int plen, void *ctxt)
+server_input_window_size(int type, u_int32_t seq, void *ctxt)
 {
 	int row = packet_get_int();
 	int col = packet_get_int();
@@ -787,7 +840,7 @@ server_input_window_size(int type, int plen, void *ctxt)
 	int ypixel = packet_get_int();
 
 	debug("Window change received.");
-	packet_integrity_check(plen, 4 * 4, type);
+	packet_check_eom();
 	if (fdin != -1)
 		pty_change_window_size(fdin, row, col, xpixel, ypixel);
 }
@@ -804,7 +857,7 @@ server_request_direct_tcpip(char *ctype)
 	target_port = packet_get_int();
 	originator = packet_get_string(NULL);
 	originator_port = packet_get_int();
-	packet_done();
+	packet_check_eom();
 
 	debug("server_request_direct_tcpip: originator %s port %d, target %s port %d",
 	   originator, originator_port, target, target_port);
@@ -818,10 +871,6 @@ server_request_direct_tcpip(char *ctype)
 	c = channel_new(ctype, SSH_CHANNEL_CONNECTING,
 	    sock, sock, -1, CHAN_TCP_WINDOW_DEFAULT,
 	    CHAN_TCP_PACKET_DEFAULT, 0, xstrdup("direct-tcpip"), 1);
-	if (c == NULL) {
-		error("server_request_direct_tcpip: channel_new failed");
-		close(sock);
-	}
 	return c;
 }
 
@@ -831,7 +880,7 @@ server_request_session(char *ctype)
 	Channel *c;
 
 	debug("input_session_request");
-	packet_done();
+	packet_check_eom();
 	/*
 	 * A server session has no fd to read or write until a
 	 * CHANNEL_REQUEST for a shell is made, so we set the type to
@@ -841,23 +890,17 @@ server_request_session(char *ctype)
 	c = channel_new(ctype, SSH_CHANNEL_LARVAL,
 	    -1, -1, -1, /*window size*/0, CHAN_SES_PACKET_DEFAULT,
 	    0, xstrdup("server-session"), 1);
-	if (c == NULL) {
-		error("server_request_session: channel_new failed");
-		return NULL;
-	}
 	if (session_open(xxx_authctxt, c->self) != 1) {
 		debug("session open failed, free channel %d", c->self);
 		channel_free(c);
 		return NULL;
 	}
-	channel_register_callback(c->self, SSH2_MSG_CHANNEL_REQUEST,
-	    session_input_channel_req, (void *)0);
 	channel_register_cleanup(c->self, session_close_by_channel);
 	return c;
 }
 
 static void
-server_input_channel_open(int type, int plen, void *ctxt)
+server_input_channel_open(int type, u_int32_t seq, void *ctxt)
 {
 	Channel *c = NULL;
 	char *ctype;
@@ -907,7 +950,7 @@ server_input_channel_open(int type, int plen, void *ctxt)
 }
 
 static void
-server_input_global_request(int type, int plen, void *ctxt)
+server_input_global_request(int type, u_int32_t seq, void *ctxt)
 {
 	char *rtype;
 	int want_reply;
@@ -939,11 +982,8 @@ server_input_global_request(int type, int plen, void *ctxt)
 			packet_send_debug("Server has disabled port forwarding.");
 		} else {
 			/* Start listening on the port */
-			success = channel_request_forwarding(
-			    listen_address, listen_port,
-			    /*unspec host_to_connect*/ "<unspec host>",
-			    /*unspec port_to_connect*/ 0,
-			    options.gateway_ports, /*remote*/ 1);
+			success = channel_setup_remote_fwd_listener(
+			    listen_address, listen_port, options.gateway_ports);
 		}
 		xfree(listen_address);
 	}
@@ -952,6 +992,33 @@ server_input_global_request(int type, int plen, void *ctxt)
 		    SSH2_MSG_REQUEST_SUCCESS : SSH2_MSG_REQUEST_FAILURE);
 		packet_send();
 		packet_write_wait();
+	}
+	xfree(rtype);
+}
+static void
+server_input_channel_req(int type, u_int32_t seq, void *ctxt)
+{
+	Channel *c;
+	int id, reply, success = 0;
+	char *rtype;
+
+	id = packet_get_int();
+	rtype = packet_get_string(NULL);
+	reply = packet_get_char();
+
+	debug("server_input_channel_req: channel %d request %s reply %d",
+	    id, rtype, reply);
+
+	if ((c = channel_lookup(id)) == NULL)
+		packet_disconnect("server_input_channel_req: "
+		    "unknown channel %d", id);
+	if (c->type == SSH_CHANNEL_LARVAL || c->type == SSH_CHANNEL_OPEN)
+		success = session_input_channel_req(c, rtype);
+	if (reply) {
+		packet_start(success ?
+		    SSH2_MSG_CHANNEL_SUCCESS : SSH2_MSG_CHANNEL_FAILURE);
+		packet_put_int(c->remote_id);
+		packet_send();
 	}
 	xfree(rtype);
 }
@@ -968,7 +1035,7 @@ server_init_dispatch_20(void)
 	dispatch_set(SSH2_MSG_CHANNEL_OPEN, &server_input_channel_open);
 	dispatch_set(SSH2_MSG_CHANNEL_OPEN_CONFIRMATION, &channel_input_open_confirmation);
 	dispatch_set(SSH2_MSG_CHANNEL_OPEN_FAILURE, &channel_input_open_failure);
-	dispatch_set(SSH2_MSG_CHANNEL_REQUEST, &channel_input_channel_request);
+	dispatch_set(SSH2_MSG_CHANNEL_REQUEST, &server_input_channel_req);
 	dispatch_set(SSH2_MSG_CHANNEL_WINDOW_ADJUST, &channel_input_window_adjust);
 	dispatch_set(SSH2_MSG_GLOBAL_REQUEST, &server_input_global_request);
 	/* client_alive */

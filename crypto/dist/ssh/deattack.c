@@ -1,6 +1,4 @@
-/*	$NetBSD: deattack.c,v 1.10 2001/12/06 03:54:05 itojun Exp $	*/
-/*	$OpenBSD: deattack.c,v 1.16 2001/12/05 03:56:39 itojun Exp $	*/
-
+/*	$NetBSD: deattack.c,v 1.11 2002/03/08 02:00:52 itojun Exp $	*/
 /*
  * Cryptographic attack detector for ssh - source code
  *
@@ -21,6 +19,8 @@
  */
 
 #include "includes.h"
+RCSID("$OpenBSD: deattack.c,v 1.18 2002/03/04 17:27:39 stevesk Exp $");
+
 #include "deattack.h"
 #include "log.h"
 #include "crc32.h"
@@ -38,7 +38,7 @@
 #define HASH_FACTOR(x)	((x)*3/2)
 #define HASH_UNUSEDCHAR	(0xff)
 #define HASH_UNUSED	(0xffff)
-#define HASH_IV     	(0xfffe)
+#define HASH_IV		(0xfffe)
 
 #define HASH_MINBLOCKS	(7*SSH_BLOCKSIZE)
 
@@ -136,7 +136,7 @@ detect_attack(u_char *buf, u_int32_t len, u_char *IV)
 
 	for (c = buf, j = 0; c < (buf + len); c += SSH_BLOCKSIZE, j++) {
 		for (i = HASH(c) & (n - 1); h[i] != HASH_UNUSED;
-		     i = (i + 1) & (n - 1)) {
+		    i = (i + 1) & (n - 1)) {
 			if (h[i] == HASH_IV) {
 				if (!CMP(c, IV)) {
 					if (check_crc(c, buf, len, IV))

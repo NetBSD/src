@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.6 2001/09/27 03:24:03 itojun Exp $	*/
-/*	$OpenBSD: misc.h,v 1.10 2001/06/26 17:27:24 markus Exp $	*/
+/*	$NetBSD: misc.h,v 1.7 2002/03/08 02:00:53 itojun Exp $	*/
+/*	$OpenBSD: misc.h,v 1.11 2002/01/24 21:09:25 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,6 +17,7 @@ char	*chop(char *);
 char	*strdelim(char **);
 void	 set_nonblock(int);
 void	 unset_nonblock(int);
+void	 set_nodelay(int);
 int	 a2port(const char *);
 char	*cleanhostname(char *);
 char	*colon(char *);

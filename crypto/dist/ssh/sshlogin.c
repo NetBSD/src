@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.2 2001/12/13 15:53:54 he Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.3 2002/03/08 02:00:57 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshlogin.c,v 1.2 2001/03/24 16:43:27 stevesk Exp $");
+RCSID("$OpenBSD: sshlogin.c,v 1.3 2001/12/19 07:18:56 deraadt Exp $");
 
 #include <util.h>
 #include <utmp.h>
@@ -87,7 +87,7 @@ get_last_login_time(uid_t uid, const char *logname,
 
 void
 record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
-	     const char *host, struct sockaddr * addr)
+	const char *host, struct sockaddr * addr)
 {
 	int fd;
 	struct lastlog ll;

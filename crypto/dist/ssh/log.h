@@ -1,5 +1,5 @@
-/*	$NetBSD: log.h,v 1.4 2002/02/10 16:23:34 bjh21 Exp $	*/
-/*	$OpenBSD: log.h,v 1.4 2001/06/26 17:27:24 markus Exp $	*/
+/*	$NetBSD: log.h,v 1.5 2002/03/08 02:00:53 itojun Exp $	*/
+/*	$OpenBSD: log.h,v 1.6 2002/02/22 12:20:34 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -60,5 +60,7 @@ void     debug3(const char *, ...) __attribute__((format(printf, 1, 2)));
 void     fatal_cleanup(void);
 void     fatal_add_cleanup(void (*) (void *), void *);
 void     fatal_remove_cleanup(void (*) (void *), void *);
+
+void	 do_log(LogLevel, const char *, va_list);
 
 #endif
