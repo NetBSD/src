@@ -1,4 +1,4 @@
-.\" $NetBSD: sysinst,v 1.2.2.4 2000/04/30 10:25:30 he Exp $
+.\" $NetBSD: sysinst,v 1.2.2.5 2000/05/22 21:15:14 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,79 +68,149 @@ to use.
 .It_need
 .Em Possible Tn PCMCIA Em issues
 .Pp
-There is a serious bug that may make installation of
+There is a serious problem that may make installation of
 .Nx
 on
 .Tn PCMCIA
-machines difficult. This bug does not make
-.Em use
-of
+machines difficult. This problem does not make
+.Em using
 .Tn PCMCIA
 difficult once a machine is installed. If you do not have
 .Tn PCMCIA
-on your machine (
-.Tn PCMCIA
+on your machine
+.Tn ( PCMCIA
 is only really used on laptop machines),
 you can skip this section, and ignore the
 .Dq Bq Tn PCMCIA
 notes.
 .Pp
-This will explain how to work around the installation problem.
+This section explains how to work around the installation problem.
 .Pp
-The bug is this: The kernel keeps careful track of what interrupts
-and i/o ports are in use during autoconfiguration. It then allows
+The kernel keeps careful track of what interrupts
+and I/O ports are in use during autoconfiguration. It then allows
 the
 .Tn PCMCIA
-devices to pick unused interrupts and ports.
-Unfortunately, not all devices are included in the
+devices to pick unused interrupts and I/O ports.
+Unfortunately, the
 .Tn Li INSTALL
-kernels in order to save space. Let's say your laptop has a
-soundblaster device built in. The
+kernel may not detect all devices in your system. This may
+be because the
+.Tn Li INSTALL
+kernel only supports the minimum set of devices to install
+.Nx
+on your system, or it may be that
+.Nx
+does not have support for the device causing the conflict.
+.Pp
+For example, suppose your laptop has a
+soundblaster device built in; the
 .Tn Li INSTALL
 kernel has no sound support. The
 .Tn PCMCIA No code might allocate your soundblaster's
 .Tn IRQ No and I/O ports to
 .Tn PCMCIA
-devices, causing them not to work. This
-is especially bad if one of the devices in question is your
-ethernet card.
+devices, causing them not to work, or to lock up the system. This is
+especially bad if one of the devices in question is your ethernet
+card.
 .Pp
 This problem will impact some, but not all, users of
 .Tn PCMCIA .
-If this bug is affecting you, watch the
-.Bq Tn PCMCIA
+If this problem is affecting you, watch the
+.Dq .Bq Tn PCMCIA
 notes that will appear in this document.
 .if r_i386 \{\
 .Pp
-If the kernel by default allocates an interrupt for PCMCIA which is
-allocated to other (typically undetected) hardware, you may use a
-workaround by booting the install kernel with "boot -d" to drop into
-DDB (the in-kernel debugger) and use "write pcic_isa_intr_alloc_mask 0x0a00"
-(or any appropriate value for your machine) to mask out the offending
-interrupt before continuing.
-This mask value is a logical-or of power of 2 of usable interrupts,
-for example, the value corresponding to irq 9 is 0x0200, and the value
-corresponding to irq 11 is 0x0800, so 0x0a00 means that irq 9 and irq 11
-are usable.
-By default the kernel is allowed to choose otherwise-unused IRQs
-other than 10, and the corresponding mask is 0xfbff.
+It can be difficult to distinguish an interrupt conflict from
+an I/O space conflict. There are no hard-and-fast rules, but
+interrupt conflicts are more likely to lock up the machine,
+and I/O space conflicts are more likely to result in misbehavior
+(e.g. a network card that cannot send or receive packets).
 .Pp
-After installation, this value can be written to the kernel image
-directly by
+The kernel selects a free interrupt according to a mask of allowable
+interrupts, stored in the kernel global variable
+.Va pcic_isa_intr_alloc_mask .
+This mask is a logical-or of power-of-2s of allowable interrupts:
+.Bd -literal -offset 04n
+.Em "IRQ Val      IRQ Val      IRQ Val       IRQ Val"
+ 0  0x0001    4  0x0010    8  0x0100    12  0x1000
+ 1  0x0002    5  0x0020    9  0x0200    13  0x2000
+ 2  0x0004    6  0x0040   10  0x0400    14  0x4000
+ 3  0x0008    7  0x0080   11  0x0800    15  0x8000
+.Ed
+.Pp
+For example, 0x0a00 allows both irq 9 and irq 11. By default,
+the
+.Tn Li INSTALL
+kernel permits all IRQs other than 3, 5, and 10, so the corresponding
+mask is 0xfb5f. The
+.Tn Li GENERIC
+kernel, however, permits IRQs other than 3 and 5 (the presumption here
+is that IRQ 10 may be assigned to a device that the
+.Tn Li GENERIC
+kernel
+supports, but that the
+.Tn Li INSTALL
+does not).
+.Pp
+The kernel selects IO space by assigning cards io space within a
+predefined range.  The range is specified as a base and size,
+specified by the kernel global variables
+.Va pcic_isa_alloc_iobase
+and
+.Va pcic_isa_alloc_iosize .
+For systems with 12-bit addressing (most), the kernel defaults to a
+base of 0x400 and a size of 0xbff (a range of 0x400-0xfff).
+For systems with 10-bit addressing, the kernel defaults to a
+base of 0x300 and a size of 0xff (range of 0x300-0x3ff).
+.Pp
+Unfortunately, these ranges may conflict with some devices. In the
+event of a conflict, try a base of 0x330 with a size of 0x0bf (range
+of 0x330-0x3ff).
+.Pp
+In order to work around this at installation time, you may
+boot the
+.Tn Li INSTALL
+kernel with
+.Ic boot Fl d ,
+in order to enter
+.Xr ddb 4
+(the in-kernel debugger), and then use the
+.Ic write
+command to alter the variable values:
+.Bd -literal
+db> write pcic_isa_intr_alloc_mask 0x0a00
+_pcic_isa_intr_alloc_mask		0xfb5f = 0xa00
+db> write pcic_isa_alloc_iobase 0x330
+_pcic_isa_alloc_iobase		0x400 = 0x330
+db> write pcic_isa_alloc_iosize 0x0bf
+pcic_isa_alloc_iosize		0xbff = 0xbf
+db> continue
+.Ed
+.Pp
+After installation, this value can be permanently written to the kernel image
+directly with:
 .Pp
 .Bd -literal
 # cp /netbsd /netbsd.bak
 # gdb --write /netbsd
 (gdb) set pcic_isa_intr_alloc_mask=0x0a00
+(gdb) set pcic_isa_alloc_iobase=0x330
+(gdb) set pcic_isa_alloc_iosize=0x0bf
 (gdb) quit
 #
 .Ed
 .Pp
-or you could specify this value when configuring your kernel with
-"options PCIC_ISA_INTR_ALLOC_MASK=0x0a00".
+or you could specify these value when configuring your kernel, e.g.:
+.Bd -literal
+options PCIC_ISA_INTR_ALLOC_MASK=0x0a00
+options PCIC_ISA_ALLOC_IOBASE=0x330
+options PCIC_ISA_ALLOC_IOSIZE=0x0bf
+.Ed
 .Pp
 If you can
-get your PCMCIA card to work using this hack, you may also ignore the
+get your
+.Tn PCMCIA
+card to work using this hack, you may also ignore the
 .Bq Tn PCMCIA
 notes later in this document.
 .Pp

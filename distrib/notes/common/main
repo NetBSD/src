@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.26 2000/04/30 20:21:46 he Exp $
+.\" $NetBSD: main,v 1.6.2.27 2000/05/22 21:15:13 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -242,6 +242,12 @@ The following are the major known issues with
 .Nx
 1.4.3.
 .Bl -bullet
+.It
+.Tn PCMCIA support may require hand adjustment to function properly. See
+.Sx Possible Tn PCMCIA Sx issues
+under
+.Sx Installing the NetBSD System
+for more details.
 .El
 .Ss Known caveats with 1.4.2
 The following are the major known issues with
