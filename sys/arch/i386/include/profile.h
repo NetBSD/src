@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.19 2004/05/24 14:01:10 yamt Exp $	*/
+/*	$NetBSD: profile.h,v 1.20 2005/02/21 01:17:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -30,6 +30,10 @@
  *
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
 
 #include <machine/cpufunc.h>
 
@@ -66,6 +70,26 @@ mcount()								\
 }
 
 #ifdef _KERNEL
-#define	MCOUNT_ENTER	do { s = (int)read_psl(); disable_intr(); } while (0)
-#define	MCOUNT_EXIT	do { write_psl(s); } while (0)
+#ifdef MULTIPROCESSOR
+__cpu_simple_lock_t __mcount_lock;
+
+#define	MCOUNT_ENTER_MP							\
+	__cpu_simple_lock(&__mcount_lock);
+#define	MCOUNT_EXIT_MP							\
+	__cpu_simple_unlock(&__mcount_lock);
+
+#else
+#define MCOUNT_ENTER_MP
+#define MCOUNT_EXIT_MP
+#endif
+
+#define	MCOUNT_ENTER							\
+	s = (int)read_psl();						\
+	disable_intr();							\
+	MCOUNT_ENTR_MP
+
+#define	MCOUNT_EXIT							\
+	MCOUNT_EXIT_MP							\
+	write_psl(s);
+
 #endif /* _KERNEL */
