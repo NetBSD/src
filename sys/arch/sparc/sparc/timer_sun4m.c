@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.9 2004/05/12 15:44:28 pk Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.10 2004/07/01 09:59:00 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.9 2004/05/12 15:44:28 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.10 2004/07/01 09:59:00 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -104,19 +104,9 @@ int
 clockintr_4m(void *cap)
 {
 	volatile int discard;
-	int s;
-
-	/*
-	 * Protect the clearing of the clock interrupt.  If we don't
-	 * do this, and we're interrupted (by the zs, for example),
-	 * the clock stops!
-	 * XXX WHY DOES THIS HAPPEN?
-	 */
-	s = splhigh();
 
 	/* read the limit register to clear the interrupt */
 	discard = timerreg4m->t_limit;
-	splx(s); 
 
 	hardclock((struct clockframe *)cap);
 	return (1);
