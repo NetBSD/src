@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.2 2000/11/27 08:43:40 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.3 2000/12/10 19:28:09 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -325,7 +325,7 @@ again:
 		uvm_unlock_pageq();
 
 		pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
-			   VM_PROT_ALL, access_type);
+			   VM_PROT_READ | VM_PROT_WRITE, access_type);
 
 		pg->flags &= ~(PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
