@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.23 1997/04/13 20:14:29 cgd Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.23.4.1 1997/07/30 07:05:38 marc Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -173,7 +173,7 @@ ep_pci_attach(parent, self, aux)
 
 	printf(": %s\n", model);
 
-	epconfig(sc, EP_CHIPSET_VORTEX);
+	epconfig(sc, EP_CHIPSET_VORTEX, NULL);
 
 	/* Enable the card. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,

@@ -1,1 +1,0 @@
-#include "vax/netbsd.h"
