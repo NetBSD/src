@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.26 2000/09/25 12:35:53 martin Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.27 2000/09/25 15:00:08 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.78 2000/09/22 05:29:48 itojun Exp $	*/
 
 /*
@@ -67,8 +67,8 @@
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
-#ifdef INET6
 #include <netinet/ip6.h>
+#ifdef INET6
 #include <netinet6/ip6_var.h>
 #endif
 #include <netinet/in_pcb.h>
@@ -810,9 +810,7 @@ ipsec4_get_ulp(m, spidx, needport)
 	int needport;
 {
 	struct ip ip;
-#ifdef INET6
 	struct ip6_ext ip6e;
-#endif
 	u_int8_t nxt;
 	int off;
 	struct tcphdr th;
@@ -869,7 +867,6 @@ ipsec4_get_ulp(m, spidx, needport)
 		case IPPROTO_ICMP:
 			spidx->ul_proto = nxt;
 			return;
-#ifdef INET6
 		case IPPROTO_AH:
 			if (m->m_pkthdr.len > off + sizeof(ip6e))
 				return;
@@ -877,7 +874,6 @@ ipsec4_get_ulp(m, spidx, needport)
 			off += (ip6e.ip6e_len + 2) << 2;
 			nxt = ip6e.ip6e_nxt;
 			break;
-#endif
 		/* XXX other headers to look at? */
 		default:
 			return;
