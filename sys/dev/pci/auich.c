@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.29 2002/10/11 04:11:28 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.30 2002/10/12 19:45:54 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.29 2002/10/11 04:11:28 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.30 2002/10/12 19:45:54 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -693,7 +693,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 		p->hw_precision = 16;
 
-		/* If manaural is requested, aurateconv expands a monaural
+		/* If monaural is requested, aurateconv expands a monaural
 		 * stream to stereo. */
 		if (p->channels < 2)
 			p->hw_channels = 2;
