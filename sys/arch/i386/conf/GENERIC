@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.152 1998/06/03 21:17:52 mjacob Exp $
+#	$NetBSD: GENERIC,v 1.153 1998/06/06 10:14:21 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -398,6 +398,7 @@ sb*	at isapnp?			# SoundBlaster-compatible audio
 ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 
 # ISA audio devices
+aria0	at isa? port 0x290 irq 10 		# Aria
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
@@ -406,6 +407,7 @@ sb0	at isa? port 0x220 irq 7 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # Audio support
+audio*	at aria?
 audio*  at eap?
 audio*	at gus?
 audio*	at guspnp?
