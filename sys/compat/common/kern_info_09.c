@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.7 2000/06/28 15:39:25 mrg Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.8 2000/07/14 07:12:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -108,7 +108,8 @@ compat_09_sys_uname(p, v, retval)
 		syscallarg(struct outsname *) name;
 	} */ *uap = v;
 	struct outsname outsname;
-	char *cp, *dp, *ep;
+	const char *cp;
+	char *dp, *ep;
 
 	strncpy(outsname.sysname, ostype, sizeof(outsname.sysname));
 	strncpy(outsname.nodename, hostname, sizeof(outsname.nodename));
