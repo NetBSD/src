@@ -145,12 +145,8 @@ nb_encname_len(const char *str)
 static void
 memsetw(char *dst, int n, u_short word)
 {
-	unsigned char c2 = word & 0x00ff;
-	unsigned char c1 = (word>>8) & 0x00ff;
-	while (n--) {
-		*dst++ = c1;
-		*dst++ = c2;
-	}
+	for(; n > 0; n--, dst += 2)
+		memcpy(dst, &word, 2);
 }
 
 int
