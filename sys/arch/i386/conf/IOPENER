@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.37 2003/04/10 22:06:58 christos Exp $
+#	$NetBSD: IOPENER,v 1.38 2003/09/09 07:14:01 itojun Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.37 $"
+#ident 		"IOPENER-$Revision: 1.38 $"
 
 maxusers	32		# estimated number of users
 
@@ -69,6 +69,7 @@ options 	COMPAT_12	# NetBSD 1.2, 386BSD, and BSDI
 options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
 options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
+options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
