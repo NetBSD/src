@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983, 1995 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
@@ -16,8 +16,8 @@
 #####
 #####		SENDMAIL CONFIGURATION FILE
 #####
-##### built by ca@wiz.smi.sendmail.com on Sun Jan 18 09:54:46 PST 2004
-##### in /extra/home/ca/sm-8.12.11/OpenSource/sendmail-8.12.11/cf/cf
+##### built by ca@wiz.smi.sendmail.com on Tue Jan 11 20:36:43 PST 2005
+##### in /extra/home/ca/sm-8.13.3/OpenSource/sendmail-8.13.3/cf/cf
 ##### using ../ as configuration include directory
 #####
 ######################################################################
@@ -27,7 +27,7 @@
 ######################################################################
 ######################################################################
 
-#####  Id: cfhead.m4,v 8.108.2.6 2003/12/05 02:26:47 ca Exp  #####
+#####  Id: cfhead.m4,v 8.116 2004/01/28 22:02:22 ca Exp  #####
 #####  Id: cf.m4,v 8.32 1999/02/07 07:26:14 gshapiro Exp  #####
 #####  Id: generic-solaris.mc,v 8.13 2001/06/27 21:46:30 gshapiro Exp  #####
 
@@ -41,7 +41,7 @@
 
 
 
-#####  Id: proto.m4,v 8.649.2.30 2004/01/11 17:54:06 ca Exp  #####
+#####  Id: proto.m4,v 8.711 2004/08/04 21:29:55 ca Exp  #####
 
 # level 10 config file format
 V10/Berkeley
@@ -122,7 +122,7 @@ DnMAILER-DAEMON
 CPREDIRECT
 
 # Configuration version number
-DZ8.12.11
+DZ8.13.3
 
 
 ###############
@@ -145,7 +145,7 @@ O AliasFile=/etc/mail/aliases
 O MinFreeBlocks=100
 
 # maximum message size
-#O MaxMessageSize=1000000
+#O MaxMessageSize=0
 
 # substitution for space (blank) characters
 O BlankSub=.
@@ -295,12 +295,12 @@ O Timeout.queuereturn=5d
 #O Timeout.queuereturn.normal=5d
 #O Timeout.queuereturn.urgent=2d
 #O Timeout.queuereturn.non-urgent=7d
-
+#O Timeout.queuereturn.dsn=5d
 O Timeout.queuewarn=4h
 #O Timeout.queuewarn.normal=4h
 #O Timeout.queuewarn.urgent=1h
 #O Timeout.queuewarn.non-urgent=12h
-
+#O Timeout.queuewarn.dsn=4h
 #O Timeout.hoststatus=30m
 #O Timeout.resolver.retrans=5s
 #O Timeout.resolver.retrans.first=5s
@@ -339,6 +339,9 @@ O StatusFile=/etc/mail/statistics
 # fallback MX host
 #O FallbackMXhost=fall.back.host.net
 
+# fallback smart host
+#O FallbackSmartHost=fall.back.host.net
+
 # if we are the best MX host for a site, try it directly instead of config err
 #O TryNullMXList=False
 
@@ -348,6 +351,9 @@ O StatusFile=/etc/mail/statistics
 # load average at which we refuse connections
 #O RefuseLA=12
 
+# log interval when refusing connections for this long
+#O RejectLogInterval=3h
+
 # load average at which we delay connections; 0 means no limit
 #O DelayLA=0
 
@@ -356,6 +362,9 @@ O StatusFile=/etc/mail/statistics
 
 # maximum number of new connections per second
 #O ConnectionRateThrottle=0
+
+# Width of the window 
+#O ConnectionRateWindowSize=60s
 
 # work recipient factor
 #O RecipientFactor=30000
@@ -370,7 +379,7 @@ O StatusFile=/etc/mail/statistics
 #O RetryFactor=90000
 
 # default character set
-#O DefaultCharSet=iso-8859-1
+#O DefaultCharSet=unknown-8bit
 
 # service switch file (name hardwired on Solaris, Ultrix, OSF/1, others)
 #O ServiceSwitchFile=/etc/mail/service.switch
@@ -429,11 +438,11 @@ O OperatorChars=.:%@!^/[]+
 #O RunAsUser=sendmail
 
 # maximum number of recipients per SMTP envelope
-#O MaxRecipientsPerMessage=100
+#O MaxRecipientsPerMessage=0
 
 # limit the rate recipients per SMTP envelope are accepted
 # once the threshold number of recipients have been rejected
-#O BadRcptThrottle=20
+#O BadRcptThrottle=0
 
 # shall we get local names from our installed interfaces?
 #O DontProbeInterfaces=False
@@ -451,7 +460,7 @@ O OperatorChars=.:%@!^/[]+
 #O ControlSocketName=/var/spool/mqueue/.control
 
 # Maximum MIME header length to protect MUAs
-#O MaxMimeHeaderLength=2048/1024
+#O MaxMimeHeaderLength=0/0
 
 # Maximum length of the sum of all headers
 O MaxHeadersLength=32768
@@ -474,8 +483,14 @@ O MaxHeadersLength=32768
 # lookup type to find information about local mailboxes
 #O MailboxDatabase=pw
 
+# override compile time flag REQUIRES_DIR_FSYNC
+#O RequiresDirfsync=true
+
 # list of authentication mechanisms
 #O AuthMechanisms=EXTERNAL GSSAPI KERBEROS_V4 DIGEST-MD5 CRAM-MD5
+
+# Authentication realm
+#O AuthRealm
 
 # default authentication information for outgoing connections
 #O DefaultAuthInfo=/etc/mail/default-auth-info
@@ -505,6 +520,8 @@ O MaxHeadersLength=32768
 #O ClientCertFile
 # Client private key
 #O ClientKeyFile
+# File containing certificate revocation lists 
+#O CRLFile
 # DHParameters (only required if DSA/DH is used)
 #O DHParameters
 # Random data source (required for systems without /dev/urandom under OpenSSL)
@@ -955,6 +972,8 @@ R<$+> $*			$@ $2
 ###  check_relay -- check hostname/address on SMTP startup
 ######################################################################
 
+
+
 SLocal_check_relay
 Scheck_relay
 R$*			$: $1 $| $>"Local_check_relay" $1
@@ -1097,6 +1116,7 @@ R$+ < @ $* $=R >	$@ RELAY
 
 
 
+
 # check for local user (i.e. unqualified address)
 R$*			$: <?> $1
 R<?> $* < @ $+ >	$: <REMOTE> $1 < @ $2 >
@@ -1122,7 +1142,7 @@ R$=w			$@ RELAY		... and see if it is local
 
 # check client name: first: did it resolve?
 R$*			$: < $&{client_resolve} >
-R<TEMP>			$#TEMP $@ 4.7.1 $: "450 Relaying temporarily denied. Cannot resolve PTR record for " $&{client_addr}
+R<TEMP>			$#TEMP $@ 4.4.0 $: "450 Relaying temporarily denied. Cannot resolve PTR record for " $&{client_addr}
 R<FORGED>		$#error $@ 5.7.1 $: "550 Relaying denied. IP name possibly forged " $&{client_name}
 R<FAIL>			$#error $@ 5.7.1 $: "550 Relaying denied. IP name lookup failed " $&{client_name}
 R$*			$: <@> $&{client_name}
@@ -1162,6 +1182,28 @@ R$*			$#error $@ 5.7.1 $: "550 " $&{auth_authen} " not allowed to act as " $&{au
 ######################################################################
 SLocal_Relay_Auth
 
+######################################################################
+###  srv_features: which features to offer to a client?
+###	(done in server)
+######################################################################
+Ssrv_features
+
+
+######################################################################
+###  try_tls: try to use STARTTLS?
+###	(done in client)
+######################################################################
+Stry_tls
+
+
+######################################################################
+###  tls_rcpt: is connection with server "good" enough?
+###	(done in client, per recipient)
+###
+###	Parameters:
+###		$1: recipient
+######################################################################
+Stls_rcpt
 
 
 ######################################################################
@@ -1213,6 +1255,10 @@ SRelayTLS
 ######################################################################
 Sauthinfo
 
+
+
+
+
 #
 ######################################################################
 ######################################################################
@@ -1236,7 +1282,7 @@ Sauthinfo
 ###   Local and Program Mailer specification   ###
 ##################################################
 
-#####  Id: local.m4,v 8.58 2000/10/26 01:58:29 ca Exp  #####
+#####  Id: local.m4,v 8.59 2004/11/23 00:37:25 ca Exp  #####
 
 #
 #  Envelope sender rewriting
@@ -1376,3 +1422,33 @@ Mrelay,		P=[IPC], F=mDFMuXa8, S=EnvFromSMTP/HdrFromSMTP, R=MasqSMTP, E=\r\n, L=2
 		T=DNS/RFC822/SMTP,
 		A=TCP $h
 
+### generic-solaris.mc ###
+# divert(-1)
+# #
+# # Copyright (c) 1998, 1999, 2001 Sendmail, Inc. and its suppliers.
+# #	All rights reserved.
+# # Copyright (c) 1983 Eric P. Allman.  All rights reserved.
+# # Copyright (c) 1988, 1993
+# #	The Regents of the University of California.  All rights reserved.
+# #
+# # By using this file, you agree to the terms and conditions set
+# # forth in the LICENSE file which can be found at the top level of
+# # the sendmail distribution.
+# #
+# #
+# 
+# #
+# #  This is a generic configuration file for SunOS 5.x (a.k.a. Solaris 2.x
+# #  and Solaris 7 through the present version).
+# #
+# #  It has support for local and SMTP mail only.  If you want to
+# #  customize it, copy it to a name appropriate for your environment
+# #  and do the modifications there.
+# #
+# 
+# divert(0)dnl
+# VERSIONID(`Id: generic-solaris.mc,v 8.13 2001/06/27 21:46:30 gshapiro Exp')
+# OSTYPE(solaris2)dnl
+# DOMAIN(generic)dnl
+# MAILER(local)dnl
+# MAILER(smtp)dnl

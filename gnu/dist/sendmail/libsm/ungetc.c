@@ -1,11 +1,11 @@
-/* $NetBSD: ungetc.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $ */
+/* $NetBSD: ungetc.c,v 1.1.1.3 2005/03/15 02:05:56 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ungetc.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
+__RCSID("$NetBSD: ungetc.c,v 1.1.1.3 2005/03/15 02:05:56 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2001, 2004 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: ungetc.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_IDSTR(id, "@(#)Id: ungetc.c,v 1.28 2001/09/11 04:04:49 gshapiro Exp")
+SM_IDSTR(id, "@(#)Id: ungetc.c,v 1.29 2004/08/03 20:54:49 ca Exp")
 
 #include <stdlib.h>
 #include <string.h>
@@ -31,6 +31,8 @@ SM_IDSTR(id, "@(#)Id: ungetc.c,v 1.28 2001/09/11 04:04:49 gshapiro Exp")
 #include <sm/assert.h>
 #include <sm/conf.h>
 #include "local.h"
+
+static void	sm_submore_x __P((SM_FILE_T *));
 
 /*
 **  SM_SUBMORE_X -- expand ungetc buffer
@@ -52,7 +54,7 @@ SM_IDSTR(id, "@(#)Id: ungetc.c,v 1.28 2001/09/11 04:04:49 gshapiro Exp")
 
 static void
 sm_submore_x(fp)
-	register SM_FILE_T *fp;
+	SM_FILE_T *fp;
 {
 	register int i;
 	register unsigned char *p;

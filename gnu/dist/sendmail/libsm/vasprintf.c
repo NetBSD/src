@@ -1,7 +1,7 @@
-/* $NetBSD: vasprintf.c,v 1.1.1.3 2004/03/25 19:02:30 atatat Exp $ */
+/* $NetBSD: vasprintf.c,v 1.1.1.4 2005/03/15 02:05:56 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vasprintf.c,v 1.1.1.3 2004/03/25 19:02:30 atatat Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.1.1.4 2005/03/15 02:05:56 atatat Exp $");
 #endif
 
 /*
@@ -30,7 +30,7 @@ __RCSID("$NetBSD: vasprintf.c,v 1.1.1.3 2004/03/25 19:02:30 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: vasprintf.c,v 1.26.2.1 2003/06/03 02:14:09 ca Exp")
+SM_RCSID("@(#)Id: vasprintf.c,v 1.27 2003/06/03 02:14:24 ca Exp")
 #include <stdlib.h>
 #include <errno.h>
 #include <sm/io.h>
