@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.150 2002/05/12 20:33:50 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.150.4.1 2002/06/07 19:39:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.150 2002/05/12 20:33:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.150.4.1 2002/06/07 19:39:21 thorpej Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -1662,6 +1662,8 @@ ip_forward(m, srcrt)
 					ro = &sp->req->sav->sah->sa_route;
 					if (ro->ro_rt && ro->ro_rt->rt_ifp) {
 						dummyifp.if_mtu =
+						    ro->ro_rt->rt_rmx.rmx_mtu ?
+						    ro->ro_rt->rt_rmx.rmx_mtu :
 						    ro->ro_rt->rt_ifp->if_mtu;
 						dummyifp.if_mtu -= ipsechdr;
 						destifp = &dummyifp;
