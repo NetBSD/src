@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.96 2000/02/06 07:29:56 fair Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.97 2000/02/08 04:13:51 fair Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1239,7 +1239,7 @@ killproc(p, why)
  * does not return.
  */
 
-#if defined(DIAGNOSTIC) || defined(DEBUG)
+#if defined(DEBUG)
 int	kern_logsigexit = 1;	/* not static to make public for sysctl */
 #else
 int	kern_logsigexit = 0;	/* not static to make public for sysctl */
