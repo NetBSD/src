@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -10,7 +10,7 @@
  * the sendmail distribution.
  *
  *
- *	Id: conf.h,v 8.496.4.20 2000/07/15 17:35:19 gshapiro Exp
+ *	Id: conf.h,v 8.496.4.37 2001/02/12 21:40:16 gshapiro Exp
  */
 
 /*
@@ -90,6 +90,7 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 #define MAXSHORTSTR	203		/* max short string length */
 #define MAXMACNAMELEN	25		/* max macro name length */
 #define MAXMACROID	0377		/* max macro id number */
+					/* Must match (BITMAPBITS - 1) */
 #ifndef MAXHDRSLEN
 # define MAXHDRSLEN	(32 * 1024)	/* max size of message headers */
 #endif /* ! MAXHDRSLEN */
@@ -487,6 +488,9 @@ typedef int		pid_t;
 #  endif /* ! __svr4__ */
 #  define GIDSET_T	gid_t
 #  define USE_SA_SIGACTION	1	/* use sa_sigaction field */
+#  if _FFR_MILTER
+#   define BROKEN_PTHREAD_SLEEP	1	/* sleep after pthread_create() fails */
+#  endif /* _FFR_MILTER */
 #  ifndef _PATH_UNIX
 #   define _PATH_UNIX		"/dev/ksyms"
 #  endif /* ! _PATH_UNIX */
@@ -525,18 +529,27 @@ typedef int		pid_t;
 #  endif /* SOLARIS >= 20500 || (SOLARIS < 10000 && SOLARIS >= 205) */
 #  if SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206)
 #   define HASSNPRINTF	1		/* has snprintf starting in 2.6 */
+#  else /* SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206) */
+#   if _FFR_MILTER
+#    define SM_INT32	int	/* 32bit integer */
+#   endif /* _FFR_MILTER */
 #  endif /* SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206) */
 #  if SOLARIS >= 20700 || (SOLARIS < 10000 && SOLARIS >= 207)
 #   ifndef LA_TYPE
 #    include <sys/loadavg.h>
-#    define LA_TYPE	LA_SUBR		/* getloadavg(3c) appears in 2.7 */
+#    if SOLARIS >= 20900 || (SOLARIS < 10000 && SOLARIS >= 209)
+#     include <sys/pset.h>
+#     define LA_TYPE	LA_PSET	/* pset_getloadavg(3c) appears in 2.9 */
+#    else
+#     define LA_TYPE	LA_SUBR	/* getloadavg(3c) appears in 2.7 */
+#    endif /* SOLARIS >= 20900 || (SOLARIS < 10000 && SOLARIS >= 209) */
 #   endif /* ! LA_TYPE */
 #   define HASGETUSERSHELL 1	/* getusershell(3c) bug fixed in 2.7 */
 #  endif /* SOLARIS >= 20700 || (SOLARIS < 10000 && SOLARIS >= 207) */
 #  if SOLARIS >= 20800 || (SOLARIS < 10000 && SOLARIS >= 208)
-#   undef NETINET6
-#   define NETINET6	1	/* IPv6 added in 2.8 */
 #   define HASSTRL	1	/* str*(3) added in 2.8 */
+#   undef _PATH_SENDMAILPID	/* tmpfs /var/run added in 2.8 */
+#   define _PATH_SENDMAILPID	"/var/run/sendmail.pid"
 #  endif /* SOLARIS >= 20800 || (SOLARIS < 10000 && SOLARIS >= 208) */
 #  ifndef HASGETUSERSHELL
 #   define HASGETUSERSHELL 0	/* getusershell(3) causes core dumps pre-2.7 */
@@ -956,6 +969,9 @@ typedef int		pid_t;
 # if defined(__NetBSD__) && ((__NetBSD_Version__ > 102070000) || (NetBSD1_2 > 8) || defined(NetBSD1_4) || defined(NetBSD1_3))
 #   define HASURANDOMDEV	1	/* has /dev/urandom(4) */
 # endif /* defined(__NetBSD__) && ((__NetBSD_Version__ > 102070000) || (NetBSD1_2 > 8) || defined(NetBSD1_4) || defined(NetBSD1_3)) */
+# if defined(__NetBSD__) && defined(__NetBSD_Version__) && __NetBSD_Version__ >= 104170000
+#  define HASSETUSERCONTEXT	1	/* BSDI-style login classes */
+# endif
 # if defined(__FreeBSD__)
 #  define HASSETLOGIN	1	/* has setlogin(2) */
 #  if __FreeBSD_version >= 227001
@@ -994,6 +1010,12 @@ typedef int		pid_t;
 #   define HASSTRL	0	/* strlcat(3) is broken in 2.5 and earlier */
 #  else /* OpenBSD < 199912 */
 #   define HASSTRL	1	/* has strlc{py,at}(3) functions */
+#   if OpenBSD >= 200006
+#    define HASSRANDOMDEV	1	/* has srandomdev(3) */
+#   endif
+#   if OpenBSD >= 200012
+#    define HASSETUSERCONTEXT	1	/* BSDI-style login classes */
+#   endif
 #  endif /* OpenBSD < 199912 */
 # endif /* defined(__OpenBSD__) */
 #endif /* defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) */
@@ -1696,6 +1718,7 @@ typedef int		pid_t;
 # define __svr4__
 # define SYS5SIGNALS		1
 # define HASSETSID		1
+# define HASSNPRINTF		1
 # define HASSETREUID		1
 # define HASWAITPID		1
 # define HASGETDTABLESIZE	1
@@ -1715,6 +1738,10 @@ typedef int		pid_t;
 # ifndef _PATH_SENDMAILPID
 #  define _PATH_SENDMAILPID	"/etc/sendmail.pid"
 # endif /* ! _PATH_SENDMAILPID */
+# undef offsetof		/* avoid stddefs.h, sys/sysmacros.h conflict */
+#if !defined(SM_SET_H_ERRNO) && defined(_REENTRANT)
+# define SM_SET_H_ERRNO(err)	set_h_errno((err))
+#endif /* ! SM_SET_H_ERRNO && _REENTRANT */
 #endif /* __svr5__ */
 
 /* ###################################################################### */
@@ -2710,6 +2737,10 @@ typedef void		(*sigfunc_t) __P((int));
 # define FORK		fork		/* function to call to fork mailer */
 #endif /* ! FORK */
 
+/* setting h_errno */
+#ifndef SM_SET_H_ERRNO
+# define SM_SET_H_ERRNO(err)	h_errno = (err)
+#endif /* SM_SET_H_ERRNO */
 
 /* random routine -- set above using #ifdef _osname_ or in Makefile */
 #if HASRANDOM
@@ -2789,9 +2820,14 @@ typedef void		(*sigfunc_t) __P((int));
 # define LOG_DEBUG	7	/* debug-level messages */
 #endif /* !LOG */
 
-#if SFIO && defined(ERRLIST_PREDEFINED)
-# undef ERRLIST_PREDEFINED
-#endif /* SFIO && defined(ERRLIST_PREDEFINED) */
+#if SFIO
+# ifdef ERRLIST_PREDEFINED
+#  undef ERRLIST_PREDEFINED
+# endif /* ERRLIST_PREDEFINED */
+# if !HASSNPRINTF
+#  define HASSNPRINTF	1	/* sfio includes snprintf() */
+# endif /* !HASSNPRINTF */
+#endif /* SFIO */
 
 #ifndef SFIO_STDIO_COMPAT
 # define SFIO_STDIO_COMPAT	0
