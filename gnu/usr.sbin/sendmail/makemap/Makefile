@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/02/08 13:45:35 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2000/04/05 10:29:37 erh Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ DIST=		${.CURDIR}/../../../dist
 
 PROG=		makemap
 
-SRCS=		makemap.c safefile.c
+SRCS=		makemap.c safefile.c snprintf.c
 MAN=		makemap.8
 CPPFLAGS+=	-I${DIST}/sendmail/src ${DBMDEF} -DNOT_SENDMAIL
 
