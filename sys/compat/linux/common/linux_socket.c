@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.46.2.2 2004/08/03 10:44:05 skrll Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.46.2.3 2004/09/03 12:45:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.46.2.2 2004/08/03 10:44:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.46.2.3 2004/09/03 12:45:16 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1535,7 +1535,7 @@ linux_sa_get(p, sgp, sap, osa, osalen)
 #ifdef DEBUG_LINUX
 	DPRINTF(("family %d, len = %d [ ", sa->sa_family, sa->sa_len));
 	for (bdom = 0; bdom < sizeof(sa->sa_data); bdom++)
-	    DPRINTF(("%02x ", sa->sa_data[bdom]));
+	    DPRINTF(("%02x ", (unsigned char) sa->sa_data[bdom]));
 	DPRINTF(("\n"));
 #endif
 

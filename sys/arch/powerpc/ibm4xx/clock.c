@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8.2.1 2004/08/03 10:39:28 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.8.2.2 2004/09/03 12:45:05 skrll Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.1 2004/08/03 10:39:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.2 2004/09/03 12:45:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -209,7 +209,7 @@ delay(unsigned int n)
 	    "	cmplw %0,%2	\n"
 	    "	blt 1b		\n"
 	    "2: 		\n"
-	    : "=r"(scratch) : "r"(tbh), "r"(tbl) : "cr0");
+	    : "=&r"(scratch) : "r"(tbh), "r"(tbl) : "cr0");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.8.24.1 2004/08/03 10:36:40 skrll Exp $	*/
+/*	$NetBSD: m68k.h,v 1.8.24.2 2004/09/03 12:44:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -134,27 +134,27 @@ extern	int mmutype;		/* MMU on this host */
 struct trapframe;
 
 /* copypage.s */
-void	copypage040 __P((void *fromaddr, void *toaddr));
-void	copypage __P((void *fromaddr, void *toaddr));
-void	zeropage __P((void *addr));
+void	copypage040(void *fromaddr, void *toaddr);
+void	copypage(void *fromaddr, void *toaddr);
+void	zeropage(void *addr);
 
 /* locore.s (XXX: move to support.s?) */
-int 	getdfc __P((void));
-int 	getsfc __P((void));
+int 	getdfc(void);
+int 	getsfc(void);
 
 /* w16copy.s */
-void	w16zero __P((void *, u_int));
-void	w16copy __P((const void *, void *, u_int));
+void	w16zero(void *, u_int);
+void	w16copy(const void *, void *, u_int);
 
 #ifdef MAPPEDCOPY
 /* mappedcopy.c */
-int	mappedcopyin __P((void *fromp, void *top, size_t count));
-int	mappedcopyout __P((void *fromp, void *top, size_t count));
+int	mappedcopyin(void *fromp, void *top, size_t count);
+int	mappedcopyout(void *fromp, void *top, size_t count);
 extern	u_int mappedcopysize;
 #endif /* MAPPEDCOPY */
 
 /* regdump.c */
-void	regdump __P((struct trapframe *, int));
+void	regdump(struct trapframe *, int);
 
 #endif /* _KERNEL */
 #endif /* _M68K_M68K_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41.2.1 2004/08/03 10:34:37 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41.2.2 2004/09/03 12:44:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -188,41 +188,40 @@ extern int astpending;		/* need to trap before returning to user mode */
 
 #ifdef _KERNEL
 extern	char *intiobase, *intiolimit;
-extern	void (*vectab[]) __P((void));
+extern	void (*vectab[])(void);
 
 struct frame;
 struct fpframe;
 struct pcb;
 
 /* locore.s functions */
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
-int	suline __P((caddr_t, caddr_t));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
-void	proc_trampoline __P((void));
-void	loadustp __P((int));
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
+int	suline(caddr_t, caddr_t);
+void	savectx(struct pcb *);
+void	switch_exit(struct lwp *);
+void	switch_lwp_exit(struct lwp *);
+void	proc_trampoline(void);
+void	loadustp(int);
 
-void	doboot __P((void))
-	__attribute__((__noreturn__));
-void	ecacheon __P((void));
-void	ecacheoff __P((void));
+void	doboot(void) __attribute__((__noreturn__));
+void	ecacheon(void);
+void	ecacheoff(void);
 
 /* clock.c functions */
-void	hp300_calibrate_delay __P((void));
+void	hp300_calibrate_delay(void);
 
 /* machdep.c functions */
-int	badaddr __P((caddr_t));
-int	badbaddr __P((caddr_t));
+int	badaddr(caddr_t);
+int	badbaddr(caddr_t);
 
 /* sys_machdep.c functions */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
+int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
 
 /* vm_machdep.c functions */
-void	physaccess __P((caddr_t, caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
-int	kvtop __P((caddr_t));
+void	physaccess(caddr_t, caddr_t, int, int);
+void	physunaccess(caddr_t, int);
+int	kvtop(caddr_t);
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()

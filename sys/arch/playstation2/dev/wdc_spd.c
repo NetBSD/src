@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.3.6.2 2004/08/25 06:57:19 skrll Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.3.6.3 2004/09/03 12:45:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.3.6.2 2004/08/25 06:57:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.3.6.3 2004/09/03 12:45:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 
 	wdc->sc_atac.atac_cap =
 	    ATAC_CAP_DMA | ATAC_CAP_UDMA | ATAC_CAP_DATA16;
-	wdc->sc_atac.atac_PIO_cap = 0;
+	wdc->sc_atac.atac_pio_cap = 0;
 	sc->sc_chanlist[0] = &sc->sc_channel;
 	wdc->sc_atac.atac_channels = sc->sc_chanlist;
 	wdc->sc_atac.atac_nchannels = 1;

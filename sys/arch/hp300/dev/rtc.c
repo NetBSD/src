@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.6.6.1 2004/08/03 10:34:24 skrll Exp $	*/
+/*	$NetBSD: rtc.c,v 1.6.6.2 2004/09/03 12:44:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.6.6.1 2004/08/03 10:34:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.6.6.2 2004/09/03 12:44:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,25 +99,22 @@ struct rtc_softc {
 	bus_space_handle_t sc_bsh;
 };
 
-static int rtcmatch(struct device *, struct cfdata *, void *);
-static void rtcattach(struct device *, struct device *, void *aux);
+static int	rtcmatch(struct device *, struct cfdata *, void *);
+static void	rtcattach(struct device *, struct device *, void *aux);
 
 CFATTACH_DECL(rtc, sizeof (struct rtc_softc),
     rtcmatch, rtcattach, NULL, NULL);
 
-static int rtc_gettime(todr_chip_handle_t, struct timeval *);
-static int rtc_settime(todr_chip_handle_t, struct timeval *);
-static int rtc_getcal(todr_chip_handle_t, int *);
-static int rtc_setcal(todr_chip_handle_t, int);
+static int	rtc_gettime(todr_chip_handle_t, struct timeval *);
+static int	rtc_settime(todr_chip_handle_t, struct timeval *);
+static int	rtc_getcal(todr_chip_handle_t, int *);
+static int	rtc_setcal(todr_chip_handle_t, int);
 static u_int8_t	rtc_readreg(struct rtc_softc *, int);
-static u_int8_t rtc_writereg(struct rtc_softc *, int, u_int8_t);
+static u_int8_t	rtc_writereg(struct rtc_softc *, int, u_int8_t);
 
 
 static int
-rtcmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+rtcmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -128,9 +125,7 @@ rtcmatch(parent, match, aux)
 }
 
 static void
-rtcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+rtcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	struct rtc_softc *sc = (struct rtc_softc *)self;

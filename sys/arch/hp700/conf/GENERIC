@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15.2.2 2004/08/05 20:23:05 skrll Exp $
+# $NetBSD: GENERIC,v 1.15.2.3 2004/09/03 12:44:39 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.15.2.2 $"
+#ident 		"GENERIC-$Revision: 1.15.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -163,12 +163,21 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 # wscons options
 #
 # builtin terminal emulations
-options 	WSEMUL_DUMB
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
-# different kernel output - see dev/wscons/wsdisplayvar.h
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR=""
+#options 	WS_DEFAULT_MONOATTR=""
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
+#options 	WS_KERNEL_COLATTR=""
+#options 	WS_KERNEL_MONOATTR=""
+# customization of console border color
+options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
+#options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
@@ -182,6 +191,16 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	PCDISPLAY_SOFTCURSOR
 # modify the screen type of the console; defaults to "80x25"
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
+# work around a hardware bug that loaded fonts don't work; found on ATI cards
+#options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
+# the following enables some functions to get mouse console support.
+# if you want a really secure system, it may be better not to enable them,
+# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
+#options 	WSDISPLAY_CHARFUNCS		# mouse console support
+# console scrolling support.
+#options 	WSDISPLAY_SCROLLSUPPORT
+# enable VGA raster mode capable of displaying multilingual text on console
+#options 	VGA_RASTERCONSOLE
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -253,17 +272,14 @@ eisa*	at mongoose?
 #hms*		at hil? code 1	# mice & trackballs
 
 # wscons
-#pckbc*		at gsc?			# pc keyboard controller
-#pckbd*		at pckbc?		# PC keyboard
-#pms*		at pckbc?		# PS/2 mouse for wsmouse
-#vga*		at pci? dev ? function ?
-#wsdisplay*	at sti?
-#wsdisplay*	at vga? console ?
-#wsdisplay*	at pcdisplay? console ?
-#wskbd*		at pckbd? console ?
+gsckbc*		at gsc?			# pc keyboard controller
+pckbd*		at gsckbc?		# PC keyboard
+pms*		at gsckbc?		# PS/2 mouse for wsmouse
+wskbd*		at pckbd? console ?
+wsmouse*	at pms? mux 0
 #wskbd*		at hkbd? console ?
-#wsmouse*	at pms? mux 0
 #wsmouse*	at hms? mux 0
+wsdisplay*	at sti?
 
 # Serial Devices
 

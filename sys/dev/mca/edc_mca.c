@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.21.6.1 2004/08/03 10:48:23 skrll Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.21.6.2 2004/09/03 12:45:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.21.6.1 2004/08/03 10:48:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.21.6.2 2004/09/03 12:45:27 skrll Exp $");
 
 #include "rnd.h"
 
@@ -81,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.21.6.1 2004/08/03 10:48:23 skrll Exp $
 #include <dev/mca/edcreg.h>
 #include <dev/mca/edvar.h>
 #include <dev/mca/edcvar.h>
+
+#include "locators.h"
 
 #define EDC_ATTN_MAXTRIES	10000	/* How many times check for unbusy */
 #define EDC_MAX_CMD_RES_LEN	8
@@ -147,6 +149,18 @@ edc_mca_probe(parent, match, aux)
 	}
 }
 
+static int
+edcsubmatch(struct device *parent, struct cfdata *cf,
+	    const locdesc_t *ldesc, void *aux)
+{
+
+	if (cf->cf_loc[EDCCF_DRIVE] != EDCCF_DRIVE_DEFAULT &&
+	    cf->cf_loc[EDCCF_DRIVE] != ldesc->locs[EDCCF_DRIVE])
+		return (0);
+
+	return (config_match(parent, cf, aux));
+}
+
 void
 edc_mca_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -159,6 +173,8 @@ edc_mca_attach(parent, self, aux)
 	int irq, drq, iobase;
 	const char *typestr;
 	int devno, error;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
@@ -287,13 +303,13 @@ edc_mca_attach(parent, self, aux)
 		/* "SOFT" reset */
 		edc_do_attn(sc, ATN_RESET_ATTACHMENT, DASD_DEVNO_CONTROLLER,0);
 	}
-		
+
 	/*
 	 * Since interrupts are disabled, it's necessary
 	 * to detect the interrupt request and call edc_intr()
 	 * explicitly. See also edc_run_cmd().
 	 */
-	while(bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_BUSY) {
+	while (bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_BUSY) {
 		if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_INTR)
 			edc_intr(sc);
 
@@ -304,10 +320,13 @@ edc_mca_attach(parent, self, aux)
 	sc->sc_flags |= DASD_QUIET;
 
 	/* check for attached disks */
-	for(devno=0; devno < sc->sc_maxdevs; devno++) {
+	for (devno = 0; devno < sc->sc_maxdevs; devno++) {
 		eda.edc_drive = devno;
+		ldesc->len = 1;
+		ldesc->locs[EDCCF_DRIVE] = devno;
 		sc->sc_ed[devno] =
-			(void *) config_found_sm(self, &eda, NULL, NULL);
+			(void *) config_found_sm_loc(self, "edc", ldesc, &eda,
+						     NULL, edcsubmatch);
 
 		/* If initialization did not succeed, NULL the pointer. */
 		if (sc->sc_ed[devno]
@@ -322,7 +341,7 @@ edc_mca_attach(parent, self, aux)
 	 * Check if there are any disks attached. If not, disestablish
 	 * the interrupt.
 	 */
-	for(devno=0; devno < sc->sc_maxdevs; devno++) {
+	for (devno = 0; devno < sc->sc_maxdevs; devno++) {
 		if (sc->sc_ed[devno])
 			break;
 	}

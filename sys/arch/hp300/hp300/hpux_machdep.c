@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.35.2.2 2004/08/03 10:34:37 skrll Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.35.2.3 2004/09/03 12:44:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.35.2.2 2004/08/03 10:34:37 skrll Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.35.2.3 2004/09/03 12:44:39 skrll Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ static const char context_fpu[] =
 static const char context_nofpu[] =
     "standalone HP-MC68020 HP-MC68010 localroot default";
 
-static struct valtostr context_table[] = {
+static const struct valtostr context_table[] = {
 	{ FPU_68060,	&context_040[0] },
 	{ FPU_68040,	&context_040[0] },
 	{ FPU_68882,	&context_fpu[0] },
@@ -197,9 +197,7 @@ struct bsdfp {
  * m68k-specific setup for HP-UX executables.
  */
 int
-hpux_cpu_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+hpux_cpu_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	/* struct hpux_exec *hpux_ep = epp->ep_hdr; */
 
@@ -218,9 +216,7 @@ hpux_cpu_makecmds(l, epp)
  * in ev->ev_len.
  */
 int
-hpux_cpu_vmcmd(p, ev)
-	struct proc *p;
-	struct exec_vmcmd *ev;
+hpux_cpu_vmcmd(struct proc *p, struct exec_vmcmd *ev)
 {
 	struct hpux_exec *execp = (struct hpux_exec *)ev->ev_addr;
 
@@ -247,7 +243,7 @@ hpux_cpu_vmcmd(p, ev)
  * Return arch-type for hpux_sys_sysconf()
  */
 int
-hpux_cpu_sysconf_arch()
+hpux_cpu_sysconf_arch(void)
 {
 
 	switch (cputype) {
@@ -267,10 +263,7 @@ hpux_cpu_sysconf_arch()
  * HP-UX advise(2) system call.
  */
 int
-hpux_sys_advise(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_advise(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_advise_args *uap = v;
 	int error = 0;
@@ -301,10 +294,7 @@ hpux_sys_advise(l, v, retval)
  * Man page lies, behaviour here is based on observed behaviour.
  */
 int
-hpux_sys_getcontext(lp, v, retval)
-	struct lwp *lp;
-	void *v;
-	register_t *retval;
+hpux_sys_getcontext(struct lwp *lp, void *v, register_t *retval)
 {
 	struct hpux_sys_getcontext_args *uap = v;
 	const char *str;
@@ -339,9 +329,7 @@ hpux_sys_getcontext(lp, v, retval)
  * XXX This probably doesn't work anymore, BTW.  --thorpej
  */
 int
-hpux_to_bsd_uoff(off, isps, l)
-	int *off, *isps;
-	struct lwp *l;
+hpux_to_bsd_uoff(int *off, int *isps, struct lwp *l)
 {
 	int *ar0 = l->l_md.md_regs;
 	struct hpux_fp *hp;
@@ -592,10 +580,7 @@ hpux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  */
 /* ARGSUSED */
 int
-hpux_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_sigreturn_args /* {
 		syscallarg(struct hpuxsigcontext *) sigcntxp;
@@ -736,10 +721,7 @@ hpux_sys_sigreturn(l, v, retval)
  * Set registers on exec.
  */
 void
-hpux_setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+hpux_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame;
 

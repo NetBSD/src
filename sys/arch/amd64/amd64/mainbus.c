@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6.2.1 2004/08/03 10:31:30 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.2.2 2004/09/03 12:44:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.1 2004/08/03 10:31:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.2 2004/09/03 12:44:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ mainbus_attach(parent, self, aux)
 			caa.cpu_role = CPU_ROLE_SP;
 			caa.cpu_func = 0;
                         
-			config_found(self, &caa, mainbus_print);
+			config_found_ia(self, "cpubus", &caa, mainbus_print);
 		}
 	}
 
@@ -211,13 +211,12 @@ mainbus_attach(parent, self, aux)
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
 		mba.mba_acpi.aa_ic = &x86_isa_chipset;
-		config_found(self, &mba.mba_acpi, mainbus_print);
+		config_found_ia(self, "acpibus", &mba.mba_acpi, mainbus_print);
 	}
 #endif
 
 #if NPCI > 0
 	if (pci_mode != 0) {
-		mba.mba_pba.pba_busname = "pci";
 		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
@@ -228,22 +227,22 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_bridgetag = NULL;
 #if defined(MPACPI) && defined(MPACPI_SCANPCI)
 		if (mpacpi_active)
-			mpacpi_scan_pci(self, &mba.mba_pba, mainbus_print);
+			mpacpi_scan_pci(self, &mba.mba_pba, pcibusprint);
 		else
 #endif
 #if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
 		if (mpbios_scanned != 0)
-			mpbios_scan_pci(self, &mba.mba_pba, mainbus_print);
+			mpbios_scan_pci(self, &mba.mba_pba, pcibusprint);
 		else
 #endif
-		config_found(self, &mba.mba_pba, mainbus_print);
+		config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
 
 	}
 #endif
 
 #if NISA > 0
 	if (isa_has_been_seen == 0)
-		config_found(self, &mba_iba, mainbus_print);
+		config_found_ia(self, "isabus", &mba_iba, isabusprint);
 #endif
 
 }
@@ -257,7 +256,5 @@ mainbus_print(aux, pnp)
 
 	if (pnp)
 		aprint_normal("%s at %s", mba->mba_busname, pnp);
-	if (strcmp(mba->mba_busname, "pci") == 0)
-		aprint_normal(" bus %d", mba->mba_pba.pba_bus);
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.1.60.1 2004/08/03 10:34:38 skrll Exp $	*/
+/*	$NetBSD: sd.c,v 1.1.60.2 2004/09/03 12:44:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -154,13 +154,6 @@ sdinit(ctlr, unit)
 	return 1;
 }
 
-#ifdef COMPAT_NOLABEL
-struct	sdminilabel defaultpinfo = {
-	8,
-	{ 1024, 17408, 0, 17408, 115712, 218112, 82944, 115712 }
-};
-#endif
-
 char io_buf[MAXBSIZE];
 
 static int
@@ -190,17 +183,11 @@ sdgetinfo(ss)
 	
 	msg = getdisklabel(io_buf, lp);
 	if (msg) {
-		printf("sd(%d,%d,%d): WARNING: %s, ",
+		printf("sd(%d,%d,%d): WARNING: %s\n",
 		       ss->sc_ctlr, ss->sc_unit, ss->sc_part, msg);
-#ifdef COMPAT_NOLABEL
-		printf("using old default partitioning\n");
-		*pi = defaultpinfo;
-#else
-		printf("defining `c' partition as entire disk\n");
 		pi->npart = 3;
 		pi->offset[0] = pi->offset[1] = -1;
 		pi->offset[2] = 0;
-#endif
 	} else {
 		pi->npart = lp->d_npartitions;
 		for (i = 0; i < pi->npart; i++)

@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.2 2004/08/03 10:56:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.3 2004/09/03 12:45:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -147,7 +147,6 @@ ffs_snapshot(mp, vp, ctime)
 	struct buf *bp, *ibp;
 	struct vattr vat;
 	struct vnode *xvp, *nvp, *devvp;
-	struct vop_vfree_args args;
 
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
@@ -405,12 +404,9 @@ loop:
 			    BLK_NOCOPY);
 		if (blkno)
 			db_assign(xp, loc, blkno);
-		if (!error) {
-			args.a_pvp = vp;
-			args.a_ino = xp->i_number;
-			args.a_mode = xp->i_mode;
-			error = ffs_freefile(&args);
-		}
+		if (!error)
+			error = ffs_freefile(copy_fs, vp, xp->i_number,
+			    xp->i_mode);
 		VOP_UNLOCK(xvp, 0);
 		if (error) {
 			free(copy_fs->fs_csp, M_UFSMNT);

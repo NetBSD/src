@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.37.2.1 2004/08/03 10:36:14 skrll Exp $ */
+/* $NetBSD: pnpbios.c,v 1.37.2.2 2004/09/03 12:44:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.37.2.1 2004/08/03 10:36:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.37.2.2 2004/09/03 12:44:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,11 +252,6 @@ pnpbios_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct pnpbios_attach_args *paa = aux;
-
-	/* These are not the droids you're looking for. */
-	if (strcmp(paa->paa_busname, "pnpbios") != 0)
-		return (0);
 
 	/* There can be only one! */
 	if (pnpbios_softc != NULL)

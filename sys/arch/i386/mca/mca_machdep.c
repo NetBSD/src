@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.21.2.1 2004/08/03 10:36:13 skrll Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.21.2.2 2004/09/03 12:44:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.21.2.1 2004/08/03 10:36:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.21.2.2 2004/09/03 12:44:48 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -169,8 +169,7 @@ mca_attach_hook(parent, self, mba)
 
 	if (bus_space_map(dmaiot, DMA_CMD, 1, 0, &dmacmdh)
 	    || bus_space_map(dmaiot, DMA_EXEC, 1, 0, &dmaexech))
-		panic("%s: couldn't map DMA registers",
-			mba->mba_busname);
+		panic("mca: couldn't map DMA registers");
 }
 
 /*

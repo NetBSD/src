@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.615.2.3 2004/08/25 06:57:34 skrll Exp $
+#	$NetBSD: files,v 1.615.2.4 2004/09/03 12:45:16 skrll Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -440,6 +440,10 @@ device	mpt: scsi
 file	dev/ic/mpt.c			mpt
 file	dev/ic/mpt_debug.c		mpt
 file	dev/ic/mpt_netbsd.c		mpt
+
+# Workbit NinjaSCSI-32 controllers
+device	njs: scsi
+file	dev/ic/ninjascsi32.c		njs
 
 # Symbios/NCR 53c700 SCSI controllers
 device	oosiop: scsi
@@ -889,6 +893,10 @@ file	dev/ic/vga_common.c	vga | vga_rasterconsole
 device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
+
+# STI (hp graphics)
+device	sti: wsemuldisplaydev
+file	dev/ic/sti.c		sti & (sti_pci | sti_sgc | sti_phantom)
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have

@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.1.10.1 2004/08/03 10:35:37 skrll Exp $	*/
+/*	$NetBSD: reg.h,v 1.1.10.2 2004/09/03 12:44:47 skrll Exp $	*/
 
 /*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
 
@@ -137,6 +137,8 @@
 #define	DR0_PCXL2_L1DHPMC_DIS	9	/* r/w L1 D-cache hpmc disable */
 #define	DR0_PCXL2_L2DHPMC	10	/* r/c L1 I-cache error flag */
 #define	DR0_PCXL2_L2DHPMC_DIS	11	/* r/w L1 I-cache hpmc disable */
+#define	DR0_PCXL2_SCRATCH	12	/* r/w scratch register */
+#define	DR0_PCXL2_ACCEL_IO	13	/*  /w enable accel IO writes */
 #define	DR0_PCXL2_STORE0	16	/* r/w scratch space */
 #define	DR0_PCXL2_PFMASK	17	/* r/w power-fail trap mask */
 #define	DR0_PCXL2_STORE1	18	/* r/w scratch */
@@ -154,6 +156,16 @@
 #define	DR_DTLB			8
 
 #define	DR_ITLB			9
+
+#define	DR0_PCXL2_HTLB_ADDR	24	/* page address of the htlb */
+#define	DR0_PCXL2_HTLB_CFG	25	/* htlb config */
+#define	DR0_PCXL2_HTLB_P	0	/* r   latches power fail signal */
+#define	DR0_PCXL2_HTLB_MASK	19	/*   w 12bit mask of the hash */
+#define	DR0_PCXL2_HTLB_FP	26	/* r/w 3bit FP delay */
+#define	DR0_PCXL2_HTLB_I	28	/* r/w disable ITLB htlb lookup */
+#define	DR0_PCXL2_HTLB_U	29	/* r/w set cr28 only if tag nomatch */
+#define	DR0_PCXL2_HTLB_N	30	/* r/w set cr28 from w3 or w7 (0) */
+#define	DR0_PCXL2_HTLB_D	31	/* r/w disable DTLB htlb lookup */
 
 #define	DR_ITLB_SIZE_1		24
 #define	DR_ITLB_SIZE_0		25

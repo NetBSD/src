@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.15.2.1 2004/08/03 10:33:46 skrll Exp $
+#	$NetBSD: files.cobalt,v 1.15.2.2 2004/09/03 12:44:29 skrll Exp $
 
 maxpartitions 16
 
@@ -13,7 +13,7 @@ attach cpu at mainbus
 file arch/cobalt/cobalt/cpu.c		cpu
 
 attach com at mainbus with com_mainbus
-file arch/cobalt/dev/com_mainbus.c	com_mainbus
+file arch/cobalt/dev/com_mainbus.c	com_mainbus	needs-flag
 
 device panel: hd44780
 attach panel at mainbus

@@ -1,4 +1,4 @@
-/*	$NetBSD: edcvar.h,v 1.4 2001/11/24 12:46:15 jdolecek Exp $	*/
+/*	$NetBSD: edcvar.h,v 1.4.16.1 2004/09/03 12:45:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
 struct ed_attach_args {
 	int	edc_drive;
 };
-
-#define	edccf_unit	cf_loc[EDCCF_DRIVE]
 
 int	edc_run_cmd __P((struct edc_mca_softc *, int,
 		int, u_int16_t [], int, int));

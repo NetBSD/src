@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dv.c,v 1.24.2.1 2004/08/03 10:34:23 skrll Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.24.2.2 2004/09/03 12:44:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.24.2.1 2004/08/03 10:34:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.24.2.2 2004/09/03 12:44:30 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -151,17 +151,17 @@ __KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.24.2.1 2004/08/03 10:34:23 skrll Exp $"
 
 #include "ite.h"
 
-int	dv_init __P((struct grf_data *, int, caddr_t));
-int	dv_mode __P((struct grf_data *, int, caddr_t));
-void	dv_reset __P((struct dvboxfb *));
+static int	dv_init(struct grf_data *, int, caddr_t);
+static int	dv_mode(struct grf_data *, int, caddr_t);
+static void	dv_reset(struct dvboxfb *);
 
-int	dvbox_intio_match __P((struct device *, struct cfdata *, void *));
-void	dvbox_intio_attach __P((struct device *, struct device *, void *));
+static int	dvbox_intio_match(struct device *, struct cfdata *, void *);
+static void	dvbox_intio_attach(struct device *, struct device *, void *);
 
-int	dvbox_dio_match __P((struct device *, struct cfdata *, void *));
-void	dvbox_dio_attach __P((struct device *, struct device *, void *));
+static int	dvbox_dio_match(struct device *, struct cfdata *, void *);
+static void	dvbox_dio_attach(struct device *, struct device *, void *);
 
-int	dvboxcnattach __P((bus_space_tag_t, bus_addr_t, int));
+int	dvboxcnattach(bus_space_tag_t, bus_addr_t, int);
 
 CFATTACH_DECL(dvbox_intio, sizeof(struct grfdev_softc),
     dvbox_intio_match, dvbox_intio_attach, NULL, NULL);
@@ -170,7 +170,7 @@ CFATTACH_DECL(dvbox_dio, sizeof(struct grfdev_softc),
     dvbox_dio_match, dvbox_dio_attach, NULL, NULL);
 
 /* DaVinci grf switch */
-struct grfsw dvbox_grfsw = {
+static struct grfsw dvbox_grfsw = {
 	GID_DAVINCI, GRFDAVINCI, "dvbox", dv_init, dv_mode
 };
 
@@ -178,27 +178,24 @@ static int dvconscode;
 static caddr_t dvconaddr;
 
 #if NITE > 0
-void	dvbox_init __P((struct ite_data *));
-void	dvbox_deinit __P((struct ite_data *));
-void	dvbox_putc __P((struct ite_data *, int, int, int, int));
-void	dvbox_cursor __P((struct ite_data *, int));
-void	dvbox_clear __P((struct ite_data *, int, int, int, int));
-void	dvbox_scroll __P((struct ite_data *, int, int, int, int));
-void	dvbox_windowmove __P((struct ite_data *, int, int, int, int,
-		int, int, int));
+static void	dvbox_init(struct ite_data *);
+static void	dvbox_deinit(struct ite_data *);
+static void	dvbox_putc(struct ite_data *, int, int, int, int);
+static void	dvbox_cursor(struct ite_data *, int);
+static void	dvbox_clear(struct ite_data *, int, int, int, int);
+static void	dvbox_scroll(struct ite_data *, int, int, int, int);
+static void	dvbox_windowmove(struct ite_data *, int, int, int, int,
+			int, int, int);
 
 /* DaVinci ite switch */
-struct itesw dvbox_itesw = {
+static struct itesw dvbox_itesw = {
 	dvbox_init, dvbox_deinit, dvbox_clear, dvbox_putc,
 	dvbox_cursor, dvbox_scroll, ite_readbyte, ite_writeglyph
 };
 #endif /* NITE > 0 */
 
-int
-dvbox_intio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+dvbox_intio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
@@ -219,10 +216,8 @@ dvbox_intio_match(parent, match, aux)
 	return (0);
 }
 
-void
-dvbox_intio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+dvbox_intio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct intio_attach_args *ia = aux;
@@ -235,11 +230,8 @@ dvbox_intio_attach(parent, self, aux)
 	grfdev_attach(sc, dv_init, grf, &dvbox_grfsw);
 }
 
-int
-dvbox_dio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+dvbox_dio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
@@ -250,10 +242,8 @@ dvbox_dio_match(parent, match, aux)
 	return (0);
 }
 
-void
-dvbox_dio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+dvbox_dio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct dio_attach_args *da = aux;
@@ -280,11 +270,8 @@ dvbox_dio_attach(parent, self, aux)
  * Must point g_display at a grfinfo structure describing the hardware.
  * Returns 0 if hardware not present, non-zero ow.
  */
-int
-dv_init(gp, scode, addr)
-	struct grf_data *gp;
-	int scode;
-	caddr_t addr;
+static int
+dv_init(struct grf_data *gp, int scode, caddr_t addr)
 {
 	struct dvboxfb *dbp;
 	struct grfinfo *gi = &gp->g_display;
@@ -339,8 +326,7 @@ dv_init(gp, scode, addr)
  *  Magic code herein.
  */
 void
-dv_reset(dbp)
-	struct dvboxfb *dbp;
+dv_reset(struct dvboxfb *dbp)
 {
 	dbp->reset = 0x80;
 	DELAY(100);
@@ -391,11 +377,8 @@ dv_reset(dbp)
  * Right now all we can do is grfon/grfoff.
  * Return a UNIX error number or 0 for success.
  */
-int
-dv_mode(gp, cmd, data)
-	struct grf_data *gp;
-	int cmd;
-	caddr_t data;
+static int
+dv_mode(struct grf_data *gp, int cmd, caddr_t data)
 {
 	struct dvboxfb *dbp;
 	int error = 0;
@@ -484,9 +467,8 @@ dv_mode(gp, cmd, data)
 #define REGBASE		((struct dvboxfb *)(ip->regbase))
 #define WINDOWMOVER	dvbox_windowmove
 
-void
-dvbox_init(ip)
-	struct ite_data *ip;
+static void
+dvbox_init(struct ite_data *ip)
 {
 	int i;
 
@@ -581,9 +563,8 @@ dvbox_init(ip)
 			 ip->ftwidth, RR_COPYINVERTED);
 }
 
-void
-dvbox_deinit(ip)
-	struct ite_data *ip;
+static void
+dvbox_deinit(struct ite_data *ip)
 {
 	dvbox_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
 	db_waitbusy(ip->regbase);
@@ -591,10 +572,8 @@ dvbox_deinit(ip)
 	ip->flags &= ~ITE_INITED;
 }
 
-void
-dvbox_putc(ip, c, dy, dx, mode)
-	struct ite_data *ip;
-	int dy, dx, c, mode;
+static void
+dvbox_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
 {
 	int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
 
@@ -603,10 +582,8 @@ dvbox_putc(ip, c, dy, dx, mode)
 			 ip->ftheight, ip->ftwidth, wrr);
 }
 
-void
-dvbox_cursor(ip, flag)
-	struct ite_data *ip;
-	int flag;
+static void
+dvbox_cursor(struct ite_data *ip, int flag)
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -618,10 +595,8 @@ dvbox_cursor(ip, flag)
 		erase_cursor(ip)
 }
 
-void
-dvbox_clear(ip, sy, sx, h, w)
-	struct ite_data *ip;
-	int sy, sx, h, w;
+static void
+dvbox_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 {
 	dvbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
 			 sy * ip->ftheight, sx * ip->ftwidth,
@@ -629,10 +604,8 @@ dvbox_clear(ip, sy, sx, h, w)
 			 RR_CLEAR);
 }
 
-void
-dvbox_scroll(ip, sy, sx, count, dir)
-	struct ite_data *ip;
-	int sy, count, dir, sx;
+static void
+dvbox_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
 {
 	int dy;
 	int dx = sx;
@@ -664,10 +637,9 @@ dvbox_scroll(ip, sy, sx, count, dir)
 			 width  * ip->ftwidth, RR_COPY);
 }
 
-void
-dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
-	struct ite_data *ip;
-	int sy, sx, dy, dx, h, w, func;
+static void
+dvbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
+    int w, int func)
 {
 	struct dvboxfb *dp = REGBASE;
 	if (h == 0 || w == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.26.2.2 2004/08/03 10:44:54 skrll Exp $	*/
+/*	$NetBSD: ld.c,v 1.26.2.3 2004/09/03 12:45:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.26.2.2 2004/08/03 10:44:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.26.2.3 2004/09/03 12:45:17 skrll Exp $");
 
 #include "rnd.h"
 
@@ -78,14 +78,14 @@ static void	ldunlock(struct ld_softc *);
 
 extern struct	cfdriver ld_cd;
 
-dev_type_open(ldopen);
-dev_type_close(ldclose);
-dev_type_read(ldread);
-dev_type_write(ldwrite);
-dev_type_ioctl(ldioctl);
-dev_type_strategy(ldstrategy);
-dev_type_dump(lddump);
-dev_type_size(ldsize);
+static dev_type_open(ldopen);
+static dev_type_close(ldclose);
+static dev_type_read(ldread);
+static dev_type_write(ldwrite);
+static dev_type_ioctl(ldioctl);
+static dev_type_strategy(ldstrategy);
+static dev_type_dump(lddump);
+static dev_type_size(ldsize);
 
 const struct bdevsw ld_bdevsw = {
 	ldopen, ldclose, ldstrategy, ldioctl, lddump, ldsize, D_DISK
@@ -271,7 +271,7 @@ ldshutdown(void *cookie)
 }
 
 /* ARGSUSED */
-int
+static int
 ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ld_softc *sc;
@@ -315,7 +315,7 @@ ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 
 /* ARGSUSED */
-int
+static int
 ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ld_softc *sc;
@@ -350,7 +350,7 @@ ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 
 /* ARGSUSED */
-int
+static int
 ldread(dev_t dev, struct uio *uio, int ioflag)
 {
 
@@ -358,7 +358,7 @@ ldread(dev_t dev, struct uio *uio, int ioflag)
 }
 
 /* ARGSUSED */
-int
+static int
 ldwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 
@@ -366,7 +366,7 @@ ldwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 /* ARGSUSED */
-int
+static int
 ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
 {
 	struct ld_softc *sc;
@@ -478,7 +478,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
 	return (error);
 }
 
-void
+static void
 ldstrategy(struct buf *bp)
 {
 	struct ld_softc *sc;
@@ -617,7 +617,7 @@ lddone(struct ld_softc *sc, struct buf *bp)
 	}
 }
 
-int
+static int
 ldsize(dev_t dev)
 {
 	struct ld_softc *sc;
@@ -734,7 +734,7 @@ ldunlock(struct ld_softc *sc)
 /*
  * Take a dump.
  */
-int
+static int
 lddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	struct ld_softc *sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10.2.2 2004/08/25 06:57:20 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10.2.3 2004/09/03 12:45:05 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.2.2 2004/08/25 06:57:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.2.3 2004/09/03 12:45:05 skrll Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -399,6 +399,12 @@ struct evcnt pmap_evcnt_ptes_removed =
 struct evcnt pmap_evcnt_ptes_changed =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
 	    "pmap", "ptes changed");
+struct evcnt pmap_evcnt_pvos_reclaimed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "pvos reclaimed");
+struct evcnt pmap_evcnt_pvos_failed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "pvo allocation failures");
 
 /*
  * From pmap_subr.c
@@ -406,6 +412,57 @@ struct evcnt pmap_evcnt_ptes_changed =
 extern struct evcnt pmap_evcnt_zeroed_pages;
 extern struct evcnt pmap_evcnt_copied_pages;
 extern struct evcnt pmap_evcnt_idlezeroed_pages;
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_mappings);
+EVCNT_ATTACH_STATIC(pmap_evcnt_mappings_replaced);
+EVCNT_ATTACH_STATIC(pmap_evcnt_unmappings);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_kernel_mappings);
+EVCNT_ATTACH_STATIC(pmap_evcnt_kernel_unmappings);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_mappings);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_cached);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_synced);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_synced_clear_modify);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_page_protect);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_clear_modify);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_zero_page);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_copy_page);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_zeroed_pages);
+EVCNT_ATTACH_STATIC(pmap_evcnt_copied_pages);
+EVCNT_ATTACH_STATIC(pmap_evcnt_idlezeroed_pages);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_updates);
+EVCNT_ATTACH_STATIC(pmap_evcnt_collects);
+EVCNT_ATTACH_STATIC(pmap_evcnt_copies);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_ptes_spilled);
+EVCNT_ATTACH_STATIC(pmap_evcnt_ptes_unspilled);
+EVCNT_ATTACH_STATIC(pmap_evcnt_ptes_evicted);
+EVCNT_ATTACH_STATIC(pmap_evcnt_ptes_removed);
+EVCNT_ATTACH_STATIC(pmap_evcnt_ptes_changed);
+
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 0);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 1);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 2);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 3);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 4);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 5);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 6);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 7);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 0);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 1);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 2);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 3);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 4);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 5);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 6);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 7);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_pvos_reclaimed);
+EVCNT_ATTACH_STATIC(pmap_evcnt_pvos_failed);
 #else
 #define	PMAPCOUNT(ev)	((void) 0)
 #define	PMAPCOUNT2(ev)	((void) 0)
@@ -1057,54 +1114,6 @@ pmap_init(void)
 
 	pmap_initialized = 1;
 
-#ifdef PMAPCOUNTERS
-	evcnt_attach_static(&pmap_evcnt_mappings);
-	evcnt_attach_static(&pmap_evcnt_mappings_replaced);
-	evcnt_attach_static(&pmap_evcnt_unmappings);
-
-	evcnt_attach_static(&pmap_evcnt_kernel_mappings);
-	evcnt_attach_static(&pmap_evcnt_kernel_unmappings);
-
-	evcnt_attach_static(&pmap_evcnt_exec_mappings);
-	evcnt_attach_static(&pmap_evcnt_exec_cached);
-	evcnt_attach_static(&pmap_evcnt_exec_synced);
-	evcnt_attach_static(&pmap_evcnt_exec_synced_clear_modify);
-
-	evcnt_attach_static(&pmap_evcnt_exec_uncached_page_protect);
-	evcnt_attach_static(&pmap_evcnt_exec_uncached_clear_modify);
-	evcnt_attach_static(&pmap_evcnt_exec_uncached_zero_page);
-	evcnt_attach_static(&pmap_evcnt_exec_uncached_copy_page);
-
-	evcnt_attach_static(&pmap_evcnt_zeroed_pages);
-	evcnt_attach_static(&pmap_evcnt_copied_pages);
-	evcnt_attach_static(&pmap_evcnt_idlezeroed_pages);
-
-	evcnt_attach_static(&pmap_evcnt_updates);
-	evcnt_attach_static(&pmap_evcnt_collects);
-	evcnt_attach_static(&pmap_evcnt_copies);
-
-	evcnt_attach_static(&pmap_evcnt_ptes_spilled);
-	evcnt_attach_static(&pmap_evcnt_ptes_unspilled);
-	evcnt_attach_static(&pmap_evcnt_ptes_evicted);
-	evcnt_attach_static(&pmap_evcnt_ptes_removed);
-	evcnt_attach_static(&pmap_evcnt_ptes_changed);
-	evcnt_attach_static(&pmap_evcnt_ptes_primary[0]);
-	evcnt_attach_static(&pmap_evcnt_ptes_primary[1]);
-	evcnt_attach_static(&pmap_evcnt_ptes_primary[2]);
-	evcnt_attach_static(&pmap_evcnt_ptes_primary[3]);
-	evcnt_attach_static(&pmap_evcnt_ptes_primary[4]);
-	evcnt_attach_static(&pmap_evcnt_ptes_primary[5]);
-	evcnt_attach_static(&pmap_evcnt_ptes_primary[6]);
-	evcnt_attach_static(&pmap_evcnt_ptes_primary[7]);
-	evcnt_attach_static(&pmap_evcnt_ptes_secondary[0]);
-	evcnt_attach_static(&pmap_evcnt_ptes_secondary[1]);
-	evcnt_attach_static(&pmap_evcnt_ptes_secondary[2]);
-	evcnt_attach_static(&pmap_evcnt_ptes_secondary[3]);
-	evcnt_attach_static(&pmap_evcnt_ptes_secondary[4]);
-	evcnt_attach_static(&pmap_evcnt_ptes_secondary[5]);
-	evcnt_attach_static(&pmap_evcnt_ptes_secondary[6]);
-	evcnt_attach_static(&pmap_evcnt_ptes_secondary[7]);
-#endif
 }
 
 /*
@@ -1513,6 +1522,7 @@ pmap_pvo_reclaim(struct pmap *pm)
 			if ((pvo->pvo_vaddr & PVO_WIRED) == 0) {
 				pmap_pvo_remove(pvo, -1, FALSE);
 				pmap_pvo_reclaim_nextidx = idx;
+				PMAPCOUNT(pvos_reclaimed);
 				return pvo;
 			}
 		}
@@ -1579,6 +1589,9 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	/*
 	 * If we aren't overwriting an mapping, try to allocate
 	 */
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
+	--pmap_pvo_enter_depth;
+#endif
 	pmap_interrupts_restore(msr);
 	pvo = pool_get(pl, poolflags);
 
@@ -1595,6 +1608,9 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 
 	msr = pmap_interrupts_off();
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
+	++pmap_pvo_enter_depth;
+#endif
 	if (pvo == NULL) {
 		pvo = pmap_pvo_reclaim(pm);
 		if (pvo == NULL) {
@@ -1603,6 +1619,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 			pmap_pvo_enter_depth--;
 #endif
+			PMAPCOUNT(pvos_failed);
 			pmap_interrupts_restore(msr);
 			return ENOMEM;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.11.6.1 2004/08/03 10:34:24 skrll Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.11.6.2 2004/09/03 12:44:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -139,10 +139,3 @@ struct	rd_softc {
 
 #define	RDRETRY		5
 #define RDWAITC		1	/* min time for timeout in seconds */
-
-#ifdef _KERNEL
-extern	struct rdidentinfo rdidentinfo[];
-
-/* rd_subr.c */
-void	rdmakedisklabel __P((int, struct disklabel *));
-#endif

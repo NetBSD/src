@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.17.6.1 2004/08/03 10:34:23 skrll Exp $	*/
+/*	$NetBSD: itevar.h,v 1.17.6.2 2004/09/03 12:44:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -112,14 +112,14 @@ struct ite_data {
 };
 
 struct itesw {
-	void	(*ite_init) __P((struct ite_data *));
-	void	(*ite_deinit) __P((struct ite_data *));
-	void	(*ite_clear) __P((struct ite_data *, int, int, int, int));
-	void	(*ite_putc) __P((struct ite_data *, int, int, int, int));
-	void	(*ite_cursor) __P((struct ite_data *, int));
-	void	(*ite_scroll) __P((struct ite_data *, int, int, int, int));
-	u_char	(*ite_readbyte) __P((struct ite_data *, int));
-	void	(*ite_writeglyph) __P((struct ite_data *, u_char *, u_char *));
+	void	(*ite_init)(struct ite_data *);
+	void	(*ite_deinit)(struct ite_data *);
+	void	(*ite_clear)(struct ite_data *, int, int, int, int);
+	void	(*ite_putc)(struct ite_data *, int, int, int, int);
+	void	(*ite_cursor)(struct ite_data *, int);
+	void	(*ite_scroll)(struct ite_data *, int, int, int, int);
+	u_char	(*ite_readbyte)(struct ite_data *, int);
+	void	(*ite_writeglyph)(struct ite_data *, u_char *, u_char *);
 };
 
 struct ite_softc {
@@ -246,20 +246,20 @@ struct ite_kbdmap {
 };
 
 /* ite.c prototypes */
-int	iteon __P((struct ite_data *, int));
-void	iteoff __P((struct ite_data *, int));
-void	iteinstallkeymap __P((void *));
-void	itefilter __P((char, char));
+int	iteon(struct ite_data *, int);
+void	iteoff(struct ite_data *, int);
+void	iteinstallkeymap(void *);
+void	itefilter(char, char);
 
-void	itedisplaycnattach __P((struct grf_data *, struct itesw *));
-void	itekbdcnattach __P((struct ite_kbdops *, struct ite_kbdmap *));
-void	itecninit __P((void));
-int	itecngetc __P((dev_t));
-void	itecnputc __P((dev_t, int));
+void	itedisplaycnattach(struct grf_data *, struct itesw *);
+void	itekbdcnattach(struct ite_kbdops *, struct ite_kbdmap *);
+void	itecninit(void);
+int	itecngetc(dev_t);
+void	itecnputc(dev_t, int);
 
 /* ite_subr.c prototypes */
-void	ite_fontinfo __P((struct ite_data *));
-void	ite_fontinit __P((struct ite_data *));
-u_char	ite_readbyte __P((struct ite_data *, int));
-void	ite_writeglyph __P((struct ite_data *, u_char *, u_char *));
+void	ite_fontinfo(struct ite_data *);
+void	ite_fontinit(struct ite_data *);
+u_char	ite_readbyte(struct ite_data *, int);
+void	ite_writeglyph(struct ite_data *, u_char *, u_char *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.63.2.1 2004/08/03 10:41:24 skrll Exp $	*/
+/*	$NetBSD: psycho.c,v 1.63.2.2 2004/09/03 12:45:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.63.2.1 2004/08/03 10:41:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.63.2.2 2004/09/03 12:45:08 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -636,14 +636,13 @@ found:
 	/*
 	 * attach the pci.. note we pass PCI A tags, etc., for the sabre here.
 	 */
-	pba.pba_busname = "pci";
 	pba.pba_flags = sc->sc_psycho_this->pp_flags;
 	pba.pba_dmat = sc->sc_psycho_this->pp_dmat;
 	pba.pba_dmat64 = NULL;
 	pba.pba_iot = sc->sc_psycho_this->pp_iot;
 	pba.pba_memt = sc->sc_psycho_this->pp_memt;
 
-	config_found(self, &pba, psycho_print);
+	config_found_ia(self, "pcibus", &pba, psycho_print);
 }
 
 static	int

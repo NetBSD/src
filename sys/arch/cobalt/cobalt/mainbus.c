@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6.2.1 2004/08/03 10:33:46 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.2.2 2004/09/03 12:44:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,20 +26,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.1 2004/08/03 10:33:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.2 2004/09/03 12:44:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <dev/pci/pcivar.h>
 
 #include <mips/cpuregs.h>
 
 #include <machine/autoconf.h>
 
 #include "locators.h"
-#include "pci.h"
 
 static int	mainbus_match(struct device *, struct cfdata *, void *);
 static void	mainbus_attach(struct device *, struct device *, void *);

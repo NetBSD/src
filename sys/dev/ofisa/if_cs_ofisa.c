@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.11 2003/05/03 18:11:32 wiz Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.11.2.1 2004/09/03 12:45:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.11 2003/05/03 18:11:32 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.11.2.1 2004/09/03 12:45:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ cs_ofisa_attach(parent, self, aux)
 		return;
 	}
 
-	isc->sc_drq = ISACF_DRQ_DEFAULT;
+	isc->sc_drq = -1;
 	n = ofisa_dma_get(aa->oba.oba_phandle, &dma, 1);
 #ifdef _CS_OFISA_MD_DMA_FIXUP
 	n = cs_ofisa_md_dma_fixup(parent, self, aux, &dma, 1, n);

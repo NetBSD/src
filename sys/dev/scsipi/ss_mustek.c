@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.18.16.1 2004/08/25 06:58:43 skrll Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.18.16.2 2004/09/03 12:45:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.18.16.1 2004/08/25 06:58:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.18.16.2 2004/09/03 12:45:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -486,6 +486,15 @@ mustek_read(struct ss_softc *ss, struct buf *bp)
 	if (error) {
 		printf("%s: not queued, error %d\n", ss->sc_dev.dv_xname,
 		    error);
+		if (error == ENOMEM) {
+			/*
+			 * out of memory. Keep this buffer in the queue, and
+			 * retry later.
+			 */
+			callout_reset(&ss->sc_callout, hz / 2, ssrestart,
+			    periph);
+			return(0);
+		}
 	} else {
 		ss->sio.scan_lines -= lines_to_read;
 		if (ss->sio.scan_lines < 0)
@@ -494,6 +503,12 @@ mustek_read(struct ss_softc *ss, struct buf *bp)
 		if (ss->sio.scan_window_size < 0)
 			ss->sio.scan_window_size = 0;
 	}
+#ifdef DIAGNOSTIC
+	if (BUFQ_GET(&ss->buf_queue) != bp)
+		panic("ssstart(): dequeued wrong buf");
+#else
+	BUFQ_GET(&ss->buf_queue);
+#endif
 
 	return (0);
 }

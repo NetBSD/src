@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.23.2.1 2004/08/03 10:34:23 skrll Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.23.2.2 2004/09/03 12:44:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.23.2.1 2004/08/03 10:34:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.23.2.2 2004/09/03 12:44:30 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -156,22 +156,22 @@ __KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.23.2.1 2004/08/03 10:34:23 skrll Exp $"
 #include "ite.h"
 
 #define CRTC_DATA_LENGTH  0x0e
-u_char crtc_init_data[CRTC_DATA_LENGTH] = {
-    0x29, 0x20, 0x23, 0x04, 0x30, 0x0b, 0x30,
-    0x30, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00
+static u_char crtc_init_data[CRTC_DATA_LENGTH] = {
+	0x29, 0x20, 0x23, 0x04, 0x30, 0x0b, 0x30,
+	0x30, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00
 };
 
-int	gb_init __P((struct grf_data *gp, int, caddr_t));
-int	gb_mode __P((struct grf_data *gp, int, caddr_t));
-void	gb_microcode __P((struct gboxfb *));
+static int	gb_init(struct grf_data *gp, int, caddr_t);
+static int	gb_mode(struct grf_data *gp, int, caddr_t);
+static void	gb_microcode(struct gboxfb *);
 
-int	gbox_intio_match __P((struct device *, struct cfdata *, void *));
-void	gbox_intio_attach __P((struct device *, struct device *, void *));
+static int	gbox_intio_match(struct device *, struct cfdata *, void *);
+static void	gbox_intio_attach(struct device *, struct device *, void *);
 
-int	gbox_dio_match __P((struct device *, struct cfdata *, void *));
-void	gbox_dio_attach __P((struct device *, struct device *, void *));
+static int	gbox_dio_match(struct device *, struct cfdata *, void *);
+static void	gbox_dio_attach(struct device *, struct device *, void *);
 
-int	gboxcnattach __P((bus_space_tag_t, bus_addr_t, int));
+int	gboxcnattach(bus_space_tag_t, bus_addr_t, int);
 
 CFATTACH_DECL(gbox_intio, sizeof(struct grfdev_softc),
     gbox_intio_match, gbox_intio_attach, NULL, NULL);
@@ -180,7 +180,7 @@ CFATTACH_DECL(gbox_dio, sizeof(struct grfdev_softc),
     gbox_dio_match, gbox_dio_attach, NULL, NULL);
 
 /* Gatorbox grf switch */
-struct grfsw gbox_grfsw = {
+static struct grfsw gbox_grfsw = {
 	GID_GATORBOX, GRFGATOR, "gatorbox", gb_init, gb_mode
 };
 
@@ -188,27 +188,24 @@ static int gbconscode;
 static caddr_t gbconaddr;
 
 #if NITE > 0
-void	gbox_init __P((struct ite_data *));
-void	gbox_deinit __P((struct ite_data *));
-void	gbox_putc __P((struct ite_data *, int, int, int, int));
-void	gbox_cursor __P((struct ite_data *, int));
-void	gbox_clear __P((struct ite_data *, int, int, int, int));
-void	gbox_scroll __P((struct ite_data *, int, int, int, int));
-void	gbox_windowmove __P((struct ite_data *, int, int, int, int,
-		int, int, int));
+static void	gbox_init(struct ite_data *);
+static void	gbox_deinit(struct ite_data *);
+static void	gbox_putc(struct ite_data *, int, int, int, int);
+static void	gbox_cursor(struct ite_data *, int);
+static void	gbox_clear(struct ite_data *, int, int, int, int);
+static void	gbox_scroll(struct ite_data *, int, int, int, int);
+static void	gbox_windowmove(struct ite_data *, int, int, int, int,
+			int, int, int);
 
 /* Gatorbox ite switch */
-struct itesw gbox_itesw = {
+static struct itesw gbox_itesw = {
 	gbox_init, gbox_deinit, gbox_clear, gbox_putc,
 	gbox_cursor, gbox_scroll, ite_readbyte, ite_writeglyph
 };
 #endif /* NITE > 0 */
 
-int
-gbox_intio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+gbox_intio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
@@ -229,10 +226,8 @@ gbox_intio_match(parent, match, aux)
 	return (0);
 }
 
-void
-gbox_intio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+gbox_intio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct intio_attach_args *ia = aux;
@@ -245,11 +240,8 @@ gbox_intio_attach(parent, self, aux)
 	grfdev_attach(sc, gb_init, grf, &gbox_grfsw);
 }
 
-int
-gbox_dio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+gbox_dio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
@@ -260,10 +252,8 @@ gbox_dio_match(parent, match, aux)
 	return (0);
 }
 
-void
-gbox_dio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+gbox_dio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct dio_attach_args *da = aux;
@@ -291,10 +281,7 @@ gbox_dio_attach(parent, self, aux)
  * Returns 0 if hardware not present, non-zero ow.
  */
 int
-gb_init(gp, scode, addr)
-	struct grf_data *gp;
-	int scode;
-	caddr_t addr;
+gb_init(struct grf_data *gp, int scode, caddr_t addr)
 {
 	struct gboxfb *gbp;
 	struct grfinfo *gi = &gp->g_display;
@@ -351,8 +338,7 @@ gb_init(gp, scode, addr)
  * Program the 6845.
  */
 void
-gb_microcode(gbp)
-	struct gboxfb *gbp;
+gb_microcode(struct gboxfb *gbp)
 {
 	int i;
 
@@ -368,10 +354,7 @@ gb_microcode(gbp)
  * Return a UNIX error number or 0 for success.
  */
 int
-gb_mode(gp, cmd, data)
-	struct grf_data *gp;
-	int cmd;
-	caddr_t data;
+gb_mode(struct grf_data *gp, int cmd, caddr_t data)
 {
 	struct gboxfb *gbp;
 	int error = 0;
@@ -450,9 +433,8 @@ gb_mode(gp, cmd, data)
 #define REGBASE     	((struct gboxfb *)(ip->regbase))
 #define WINDOWMOVER 	gbox_windowmove
 
-void
-gbox_init(ip)
-	struct ite_data *ip;
+static void
+gbox_init(struct ite_data *ip)
 {
 	/* XXX */
 	if (ip->regbase == 0) {
@@ -518,9 +500,8 @@ gbox_init(ip)
 			ip->ftwidth, RR_COPYINVERTED);
 }
 
-void
-gbox_deinit(ip)
-	struct ite_data *ip;
+static void
+gbox_deinit(struct ite_data *ip)
 {
 	gbox_windowmove(ip, 0, 0, 0, 0, ip->dheight, ip->dwidth, RR_CLEAR);
 	tile_mover_waitbusy(ip->regbase);
@@ -528,11 +509,8 @@ gbox_deinit(ip)
 	ip->flags &= ~ITE_INITED;
 }
 
-void
-gbox_putc(ip, c, dy, dx, mode)
-	struct ite_data *ip;
-	int dy, dx;
-	int c, mode;
+static void
+gbox_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
 {
 	int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
 
@@ -541,10 +519,8 @@ gbox_putc(ip, c, dy, dx, mode)
 			    ip->ftheight, ip->ftwidth, wrr);
 }
 
-void
-gbox_cursor(ip, flag)
-	struct ite_data *ip;
-	int flag;
+static void
+gbox_cursor(struct ite_data *ip, int flag)
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -556,10 +532,8 @@ gbox_cursor(ip, flag)
 		erase_cursor(ip)
 }
 
-void
-gbox_clear(ip, sy, sx, h, w)
-	struct ite_data *ip;
-	int sy, sx, h, w;
+static void
+gbox_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 {
 	gbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
 			sy * ip->ftheight, sx * ip->ftwidth,
@@ -576,10 +550,8 @@ gbox_clear(ip, sy, sx, h, w)
 			(w)  * ip->ftwidth, \
 			RR_COPY)
 
-void
-gbox_scroll(ip, sy, sx, count, dir)
-	struct ite_data *ip;
-	int sy, dir, sx, count;
+static void
+gbox_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
 {
 	int height, dy, i;
 
@@ -608,10 +580,9 @@ gbox_scroll(ip, sy, sx, count, dir)
 	}
 }
 
-void
-gbox_windowmove(ip, sy, sx, dy, dx, h, w, mask)
-	struct ite_data *ip;
-	int sy, sx, dy, dx, mask, h, w;
+static void
+gbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
+    int w, int mask)
 {
 	int src, dest;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.53.2.1 2004/08/03 10:34:23 skrll Exp $	*/
+/*	$NetBSD: if_le.c,v 1.53.2.2 2004/09/03 12:44:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.53.2.1 2004/08/03 10:34:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.53.2.2 2004/09/03 12:44:30 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -108,37 +108,26 @@ struct  le_softc {
 	bus_space_handle_t sc_bsh2;	/* buffer area */
 };
 
-int	lematch(struct device *, struct cfdata *, void *);
-void	leattach(struct device *, struct device *, void *);
+static int	lematch(struct device *, struct cfdata *, void *);
+static void	leattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(le, sizeof(struct le_softc),
     lematch, leattach, NULL, NULL);
 
-int	leintr(void *);
+static int	leintr(void *);
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
-
-hide void le_copytobuf(struct lance_softc *, void *, int, int);
-hide void le_copyfrombuf(struct lance_softc *, void *, int, int);
-hide void le_zerobuf(struct lance_softc *, int, int);
+static void	le_copytobuf(struct lance_softc *, void *, int, int);
+static void	le_copyfrombuf(struct lance_softc *, void *, int, int);
+static void	le_zerobuf(struct lance_softc *, int, int);
 
 /* offsets for:	   ID,   REGS,    MEM,  NVRAM */
-int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
+static const int lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
 
-hide void lewrcsr(struct lance_softc *, u_int16_t, u_int16_t);
-hide u_int16_t lerdcsr(struct lance_softc *, u_int16_t);
-
-hide void
+static void
 lewrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -154,7 +143,7 @@ lewrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
 	} while ((bus_space_read_1(bst, bsh0, LER0_STATUS) & LE_ACK) == 0);
 }
 
-hide u_int16_t
+static u_int16_t
 lerdcsr(struct lance_softc *sc, u_int16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -173,7 +162,7 @@ lerdcsr(struct lance_softc *sc, u_int16_t port)
 	return (val);
 }
 
-int
+static int
 lematch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct dio_attach_args *da = aux;
@@ -188,7 +177,7 @@ lematch(struct device *parent, struct cfdata *match, void *aux)
  * record.  System will initialize the interface when it is ready
  * to accept packets.
  */
-void
+static void
 leattach(struct device *parent, struct device *self, void *aux)
 {
 	struct dio_attach_args *da = aux;
@@ -260,7 +249,7 @@ leattach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_1(bst, bsh0, LER0_STATUS, LE_IE);
 }
 
-int
+static int
 leintr(void *arg)
 {
 	struct lance_softc *sc = arg;
@@ -282,7 +271,7 @@ leintr(void *arg)
 	return (am7990_intr(sc));
 }
 
-hide void
+static void
 le_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -290,7 +279,7 @@ le_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 	bus_space_write_region_1(lesc->sc_bst, lesc->sc_bsh2, boff, from, len);
 }
 
-hide void
+static void
 le_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -298,7 +287,7 @@ le_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
 	bus_space_read_region_1(lesc->sc_bst, lesc->sc_bsh2, boff, to, len);
 }
 
-hide void
+static void
 le_zerobuf(struct lance_softc *sc, int boff, int len)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;

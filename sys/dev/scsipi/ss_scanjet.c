@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.28.6.2 2004/08/25 06:58:44 skrll Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.28.6.3 2004/09/03 12:45:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28.6.2 2004/08/25 06:58:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28.6.3 2004/09/03 12:45:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28.6.2 2004/08/25 06:58:44 skrll Ex
 #include <sys/device.h>
 #include <sys/conf.h>		/* for cdevsw */
 #include <sys/scanio.h>
+#include <sys/kernel.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -284,11 +285,26 @@ scanjet_read(struct ss_softc *ss, struct buf *bp)
 	if (error) {
 		printf("%s: not queued, error %d\n", ss->sc_dev.dv_xname,
 		    error);
+		if (error == ENOMEM) {
+			/*
+			 * out of memory. Keep this buffer in the queue, and
+			 * retry later.
+			 */
+			callout_reset(&ss->sc_callout, hz / 2, ssrestart,
+			    periph);
+			return(0);
+		}
 	} else {
 		ss->sio.scan_window_size -= bp->b_bcount;
 		if (ss->sio.scan_window_size < 0)
 			ss->sio.scan_window_size = 0;
 	}
+#ifdef DIAGNOSTIC
+	if (BUFQ_GET(&ss->buf_queue) != bp)
+		panic("ssstart(): dequeued wrong buf");
+#else
+	BUFQ_GET(&ss->buf_queue);
+#endif
 
 	return (0);
 }

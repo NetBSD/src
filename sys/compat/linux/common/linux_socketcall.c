@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.25 2003/01/18 21:21:36 thorpej Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.25.2.1 2004/09/03 12:45:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.25 2003/01/18 21:21:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.25.2.1 2004/09/03 12:45:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -140,6 +140,18 @@ linux_sys_socketcall(l, v, retval)
 		linux_socketcall[SCARG(uap, what)].name, error));
 		return error;
 	}
+
+#ifdef DEBUG_LINUX
+	{
+		int i;
+		u_int8_t *data = (void *)&lda.dummy_ints[1];
+
+        	DPRINTF(("linux_socketcall: socket %d [", lda.dummy_ints[0]));
+		for(i=0; i < sizeof(lda) - sizeof(lda.dummy_ints[0]); i++)
+			DPRINTF(("%02x ", data[i]));
+		DPRINTF(("]\n"));
+	}
+#endif
 
 	switch (SCARG(uap, what)) {
 	case LINUX_SYS_socket:
