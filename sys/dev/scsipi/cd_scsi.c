@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.29 2003/09/05 09:04:26 mycroft Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.30 2003/09/07 22:11:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -36,25 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Originally written by Julian Elischer (julian@tfs.com)
- * for TRW Financial Systems for use under the MACH(2.5) operating system.
- *
- * TRW Financial Systems, in accordance with their agreement with Carnegie
- * Mellon University, makes this software available to CMU to distribute
- * or use in any manner that they see fit as long as this message is kept with
- * the software. For this reason TFS also grants any other persons or
- * organisations permission to use or modify this software.
- *
- * TFS supplies this software to be publicly redistributed
- * on the understanding that TFS is not responsible for the correct
- * functioning of this software in any circumstances.
- *
- * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.29 2003/09/05 09:04:26 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.30 2003/09/07 22:11:23 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -69,12 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.29 2003/09/05 09:04:26 mycroft Exp $")
 #include <sys/rnd.h>
 #endif
 
-#include <sys/cdio.h>
-
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_cd.h>
-#include <dev/scsipi/scsi_cd.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/cdvar.h>
 
@@ -93,23 +72,6 @@ struct scsipi_inquiry_pattern cd_scsibus_patterns[] = {
 	{T_CDROM, T_REMOV, /* more luns */
 	 "PIONEER ", "CD-ROM DRM-600  ", ""},
 #endif
-};
-
-int	cd_scsibus_setchan __P((struct cd_softc *, int, int, int, int, int));
-int	cd_scsibus_getvol __P((struct cd_softc *, struct ioc_vol *, int));
-int	cd_scsibus_setvol __P((struct cd_softc *, const struct ioc_vol *,
-	    int));
-int	cd_scsibus_set_pa_immed __P((struct cd_softc *, int));
-int	cd_scsibus_load_unload __P((struct cd_softc *, int, int));
-int	cd_scsibus_setblksize __P((struct cd_softc *));
-
-const struct cd_ops cd_scsibus_ops = {
-	cd_scsibus_setchan,
-	cd_scsibus_getvol,
-	cd_scsibus_setvol,
-	cd_scsibus_set_pa_immed,
-	cd_scsibus_load_unload,
-	cd_scsibus_setblksize,
 };
 
 int
@@ -148,7 +110,7 @@ cd_scsibus_attach(parent, self, aux)
 
 	scsipi_strvis(cd->name, 16, sa->sa_inqbuf.product, 16);
 
-	cdattach(parent, cd, periph, &cd_scsibus_ops);
+	cdattach(parent, cd, periph);
 
 	/*
 	 * Note if this device is ancient.  This is used in cdminphys().
@@ -157,126 +119,4 @@ cd_scsibus_attach(parent, self, aux)
 		cd->flags |= CDF_ANCIENT;
 
 	/* should I get the SCSI_CAP_PAGE here ? */
-}
-
-int
-cd_scsibus_set_pa_immed(cd, flags)
-	struct cd_softc *cd;
-	int flags;
-{
-	struct scsi_cd_mode_data data;
-	int error;
-
-	if ((error = scsipi_mode_sense(cd->sc_periph, SMS_DBD, AUDIO_PAGE,
-	    &data.header, AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK,
-	    CDRETRIES, 20000)) != 0)
-		return (error);
-	data.page.audio.flags &= ~CD_PA_SOTC;
-	data.page.audio.flags |= CD_PA_IMMED;
-	data.header.data_length = 0;
-	return (scsipi_mode_select(cd->sc_periph, SMS_PF,
-	    &data.header, AUDIOPAGESIZE,
-	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
-}
-
-int
-cd_scsibus_setchan(cd, p0, p1, p2, p3, flags)
-	struct cd_softc *cd;
-	int p0, p1, p2, p3;
-	int flags;
-{
-	struct scsi_cd_mode_data data;
-	int error;
-
-	if ((error = scsipi_mode_sense(cd->sc_periph, SMS_DBD, AUDIO_PAGE,
-	    &data.header, AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK,
-	    CDRETRIES, 20000)) != 0)
-		return (error);
-	data.page.audio.port[LEFT_PORT].channels = p0;
-	data.page.audio.port[RIGHT_PORT].channels = p1;
-	data.page.audio.port[2].channels = p2;
-	data.page.audio.port[3].channels = p3;
-	data.header.data_length = 0;
-	return (scsipi_mode_select(cd->sc_periph, SMS_PF,
-	    &data.header, AUDIOPAGESIZE,
-	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
-}
-
-int
-cd_scsibus_getvol(cd, arg, flags)
-	struct cd_softc *cd;
-	struct ioc_vol *arg;
-	int flags;
-{
-
-	struct scsi_cd_mode_data data;
-	int error;
-
-	if ((error = scsipi_mode_sense(cd->sc_periph, SMS_DBD, AUDIO_PAGE,
-	    &data.header, AUDIOPAGESIZE,
-	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
-		return (error);
-	arg->vol[LEFT_PORT] = data.page.audio.port[LEFT_PORT].volume;
-	arg->vol[RIGHT_PORT] = data.page.audio.port[RIGHT_PORT].volume;
-	arg->vol[2] = data.page.audio.port[2].volume;
-	arg->vol[3] = data.page.audio.port[3].volume;
-	return (0);
-}
-
-int
-cd_scsibus_setvol(cd, arg, flags)
-	struct cd_softc *cd;
-	const struct ioc_vol *arg;
-	int flags;
-{
-	struct scsi_cd_mode_data data;
-	int error;
-
-	if ((error = scsipi_mode_sense(cd->sc_periph, SMS_DBD, AUDIO_PAGE,
-	    &data.header, AUDIOPAGESIZE,
-	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
-		return (error);
-	data.page.audio.port[LEFT_PORT].channels = CHANNEL_0;
-	data.page.audio.port[LEFT_PORT].volume = arg->vol[LEFT_PORT];
-	data.page.audio.port[RIGHT_PORT].channels = CHANNEL_1;
-	data.page.audio.port[RIGHT_PORT].volume = arg->vol[RIGHT_PORT];
-	data.page.audio.port[2].volume = arg->vol[2];
-	data.page.audio.port[3].volume = arg->vol[3];
-	data.header.data_length = 0;
-	return (scsipi_mode_select(cd->sc_periph, SMS_PF,
-	    &data.header, AUDIOPAGESIZE,
-	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
-}
-
-int
-cd_scsibus_load_unload(cd, options, slot)
-	struct cd_softc *cd;
-	int options, slot;
-{
-	/*
-	 * Not supported on SCSI CDs that we know of (but we'll leave
-	 * the hook here Just In Case).
-	 */
-	return (ENODEV);
-}
-
-int
-cd_scsibus_setblksize(cd)
-	struct cd_softc *cd;
-{
-	struct {
-		struct scsipi_mode_header header;
-		struct scsi_blk_desc blk_desc;
-	} data;
-	int error;
-
-	if ((error = scsipi_mode_sense(cd->sc_periph, 0, 0, &data.header,
-	    sizeof(data), XS_CTL_DATA_ONSTACK, CDRETRIES,20000)) != 0)
-		return (error);
-
-	_lto3b(2048, data.blk_desc.blklen);
-	data.header.data_length = 0;
-
-	return (scsipi_mode_select(cd->sc_periph, SMS_PF, &data.header,
-	    sizeof(data), XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
 }

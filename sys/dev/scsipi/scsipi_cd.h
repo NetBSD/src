@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.6 2001/09/02 19:35:21 thorpej Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.7 2003/09/07 22:11:24 mycroft Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -27,6 +27,16 @@
  * SCSI and SCSI-like command format
  */
 
+#define	LOAD_UNLOAD	0xa6
+struct scsipi_load_unload {
+	u_int8_t opcode;
+	u_int8_t unused1[3];
+	u_int8_t options;
+	u_int8_t unused2[3];
+	u_int8_t slot;
+	u_int8_t unused3[3];
+} __attribute__((packed));
+
 #define PAUSE			0x4b	/* cdrom pause in 'play audio' mode */
 struct scsipi_pause {
 	u_int8_t opcode;
@@ -34,7 +44,7 @@ struct scsipi_pause {
 	u_int8_t unused[6];
 	u_int8_t resume;
 	u_int8_t control;
-};
+} __attribute__((packed));
 #define	PA_PAUSE	0x00
 #define PA_RESUME	0x01
 
@@ -50,7 +60,7 @@ struct scsipi_play_msf {
 	u_int8_t end_s;
 	u_int8_t end_f;
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 #define PLAY			0x45	/* cdrom play  'play audio' mode */
 struct scsipi_play {
@@ -60,7 +70,7 @@ struct scsipi_play {
 	u_int8_t unused;
 	u_int8_t xfer_len[2];
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 #define READ_HEADER		0x44	/* cdrom read header */
 struct scsipi_read_header {
@@ -70,7 +80,7 @@ struct scsipi_read_header {
 	u_int8_t unused;
 	u_int8_t data_len[2];
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 #define READ_SUBCHANNEL		0x42	/* cdrom read Subchannel */
 struct scsipi_read_subchannel {
@@ -83,7 +93,7 @@ struct scsipi_read_subchannel {
 	u_int8_t track;
 	u_int8_t data_len[2];
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 #define READ_TOC		0x43	/* cdrom read TOC */
 struct scsipi_read_toc {
@@ -93,8 +103,7 @@ struct scsipi_read_toc {
 	u_int8_t from_track;
 	u_int8_t data_len[2];
 	u_int8_t control;
-};
-;
+} __attribute__((packed));
 
 #define READ_CD_CAPACITY	0x25	/* slightly different from disk */
 struct scsipi_read_cd_capacity {
@@ -103,18 +112,18 @@ struct scsipi_read_cd_capacity {
 	u_int8_t addr[4];
 	u_int8_t unused[3];
 	u_int8_t control;
-};
+} __attribute__((packed));
 
 struct scsipi_read_cd_cap_data {
 	u_int8_t addr[4];
 	u_int8_t length[4];
-};
+} __attribute__((packed));
 
 /* mod pages common to scsi and atapi */
 struct cd_audio_page {
-	u_int8_t page_code;
+	u_int8_t pg_code;
 #define		AUDIO_PAGE	0x0e
-	u_int8_t param_len;
+	u_int8_t pg_length;
 	u_int8_t flags;
 #define		CD_PA_SOTC	0x02
 #define		CD_PA_IMMED	0x04

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.202 2003/06/29 22:30:42 fvdl Exp $	*/
+/*	$NetBSD: sd.c,v 1.203 2003/09/07 22:11:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202 2003/06/29 22:30:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.203 2003/09/07 22:11:24 mycroft Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -768,8 +768,7 @@ sdstart(periph)
 		 */
 		if (((bp->b_rawblkno & 0x1fffff) == bp->b_rawblkno) &&
 		    ((nblks & 0xff) == nblks) &&
-		    !(periph->periph_quirks & PQUIRK_ONLYBIG) &&
-		    scsipi_periph_bustype(periph) == SCSIPI_BUSTYPE_SCSI) {
+		    !(periph->periph_quirks & PQUIRK_ONLYBIG)) {
 			/*
 			 * We can fit in a small cdb.
 			 */
