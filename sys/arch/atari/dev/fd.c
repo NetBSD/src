@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.24 1996/11/06 14:03:15 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.25 1996/12/28 23:26:36 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -231,7 +231,7 @@ extern __inline__ u_char read_dmastat(void)
 /*
  * Autoconfig stuff....
  */
-static int	fdcmatch __P((struct device *, void *, void *));
+static int	fdcmatch __P((struct device *, struct cfdata *, void *));
 static int	fdcprint __P((void *, const char *));
 static void	fdcattach __P((struct device *, struct device *, void *));
 
@@ -244,12 +244,11 @@ struct cfdriver fdc_cd = {
 };
 
 static int
-fdcmatch(pdp, match, auxp)
+fdcmatch(pdp, cfp, auxp)
 struct device	*pdp;
-void		*match, *auxp;
+struct cfdata	*cfp;
+void		*auxp;
 {
-	struct cfdata *cfp = match;
-
 	if(strcmp("fdc", auxp) || cfp->cf_unit != 0)
 		return(0);
 	return(1);
@@ -316,7 +315,7 @@ const char	*pnp;
 	return(UNCONF);
 }
 
-static int	fdmatch __P((struct device *, void *, void *));
+static int	fdmatch __P((struct device *, struct cfdata *, void *));
 static void	fdattach __P((struct device *, struct device *, void *));
 
        void	fdstrategy __P((struct buf *));
@@ -331,9 +330,10 @@ struct cfdriver fd_cd = {
 };
 
 static int
-fdmatch(pdp, match, auxp)
+fdmatch(pdp, cfp, auxp)
 struct device	*pdp;
-void		*match, *auxp;
+struct cfdata	*cfp;
+void		*auxp;
 {
 	return(1);
 }
