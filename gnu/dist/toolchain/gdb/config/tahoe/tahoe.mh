@@ -1,4 +1,0 @@
-# OBSOLETE # Host: CCI or Harris Tahoe running BSD Unix
-# OBSOLETE 
-# OBSOLETE XM_FILE= xm-tahoe.h
-# OBSOLETE XDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o core-aout.o

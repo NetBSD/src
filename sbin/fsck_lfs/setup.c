@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.8 2001/01/05 02:02:58 lukem Exp $	 */
+/* $NetBSD: setup.c,v 1.8.2.1 2001/06/27 03:49:41 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -91,15 +91,16 @@ try_verify(struct lfs * osb, struct lfs * nsb)
 {
 	daddr_t         daddr;
 	SEGSUM         *sp;
-	char            summary[LFS_SUMMARY_SIZE];
+	char           *summary;
 	int             bc, flag;
 
 	daddr = osb->lfs_offset;
+	summary = malloc(osb->lfs_sumsize);
 	while (daddr != nsb->lfs_offset) {
 		flag = 0;
 oncemore:
 		/* Read in summary block */
-		bread(fsreadfd, summary, daddr, LFS_SUMMARY_SIZE);
+		bread(fsreadfd, summary, daddr, osb->lfs_sumsize);
 		sp = (SEGSUM *)summary;
 
 		/*
@@ -108,7 +109,7 @@ oncemore:
 		 * setup before we can...fix this
 		 */
 		if (sp->ss_magic != SS_MAGIC ||
-		  sp->ss_sumsum != cksum(&sp->ss_datasum, LFS_SUMMARY_SIZE -
+		  sp->ss_sumsum != cksum(&sp->ss_datasum, osb->lfs_sumsize -
 					 sizeof(sp->ss_sumsum))) {
 			if (flag == 0) {
 				daddr += LFS_SBPAD / dev_bsize;
@@ -119,13 +120,34 @@ oncemore:
 		bc = check_summary(osb, sp, daddr);
 		if (bc == 0)
 			break;
-		daddr += (LFS_SUMMARY_SIZE + bc) / dev_bsize;
-		if (datosn(osb, daddr) != datosn(osb, daddr + (LFS_SUMMARY_SIZE + (1 << osb->lfs_bshift)) / dev_bsize)) {
+		daddr += (osb->lfs_sumsize + bc) / dev_bsize;
+		if (datosn(osb, daddr) != datosn(osb, daddr +
+						 (osb->lfs_sumsize +
+						  (1 << osb->lfs_bshift)) /
+						 dev_bsize))
 			daddr = ((SEGSUM *)summary)->ss_next;
-		}
 	}
 	return daddr;
 }
+
+u_quad_t        maxtable[] = {
+		/* 1 */ -1,
+		/* 2 */ -1,
+		/* 4 */ -1,
+		/* 8 */ -1,
+		/* 16 */ -1,
+		/* 32 */ -1,
+		/* 64 */ -1,
+		/* 128 */ -1,
+		/* 256 */ -1,
+		/* 512 */ NDADDR + 128 + 128 * 128 + 128 * 128 * 128,
+		/* 1024 */ NDADDR + 256 + 256 * 256 + 256 * 256 * 256,
+		/* 2048 */ NDADDR + 512 + 512 * 512 + 512 * 512 * 512,
+		/* 4096 */ NDADDR + 1024 + 1024 * 1024 + 1024 * 1024 * 1024,
+		/* 8192 */ 1 << 31,
+		/* 16 K */ 1 << 31,
+		/* 32 K */ 1 << 31,
+	};
 
 int
 setup(const char *dev)
@@ -237,7 +259,9 @@ setup(const char *dev)
 		} else {
 			memcpy(sb1, &sblock, sizeof(*sb1));
 			if (debug)
-				pwarn("sb0 %d, sb1 %d\n", sb0->lfs_tstamp, sblock.lfs_tstamp);
+				pwarn("sb0 %lld, sb1 %lld\n",
+				      (long long)sb0->lfs_tstamp,
+				      (long long)sblock.lfs_tstamp);
 			/*
 			 * Verify the checkpoint of the newer superblock,
 			 * if the timestamp of the two superblocks is
@@ -257,11 +281,12 @@ setup(const char *dev)
 				if (debug)
 					printf("done.\n");
 				if (daddr == nsb->lfs_offset) {
-					pwarn("Checkpoint verified, recovered %d seconds of data\n", nsb->lfs_tstamp - osb->lfs_tstamp);
+					pwarn("Checkpoint verified, recovered %lld seconds of data\n",
+					      (long long)nsb->lfs_tstamp - (long long)osb->lfs_tstamp);
 					memcpy(&sblock, nsb, sizeof(*nsb));
 					sbdirty();
 				} else {
-					pwarn("Checkpoint invalid, lost %d seconds of data\n", nsb->lfs_tstamp - osb->lfs_tstamp);
+					pwarn("Checkpoint invalid, lost %lld seconds of data\n", (long long)nsb->lfs_tstamp - (long long)osb->lfs_tstamp);
 					memcpy(&sblock, osb, sizeof(*osb));
 				}
 			}
@@ -276,31 +301,29 @@ setup(const char *dev)
 		printf("lfs_bsize = %lu\n", (unsigned long)sblock.lfs_bsize);
 		printf("lfs_fsize = %lu\n", (unsigned long)sblock.lfs_fsize);
 		printf("lfs_frag  = %lu\n", (unsigned long)sblock.lfs_frag);
-		printf("INOPB(fs) = %lu\n", (unsigned long) INOPB(&sblock));
+		printf("INOPB(fs) = %lu\n", (unsigned long)INOPB(&sblock));
+		if (sblock.lfs_version > 1)
+			printf("INOPS(fs) = %lu\n",
+			       (unsigned long)INOPS(&sblock));
 		/* printf("fsbtodb(fs,1) = %lu\n",fsbtodb(&sblock,1)); */
 	}
-#if 0				/* FFS-specific fs-clean check */
-	if (debug)
-		printf("clean = %d\n", sblock.lfs_clean);
-	if (sblock.lfs_clean & FS_ISCLEAN) {
-		if (doskipclean) {
-			pwarn("%sile system is clean; not checking\n",
-			      preen ? "f" : "** F");
-			return (-1);
-		}
-		if (!preen)
-			pwarn("** File system is already clean\n");
-	}
-	maxino = sblock.lfs_ncg * sblock.lfs_ipg;
-#else
+	/* Compatibility */
+	if (sblock.lfs_version == 1)
+		sblock.lfs_sumsize = LFS_V1_SUMMARY_SIZE;
 	initbarea(&iblk);
-	iblk.b_un.b_buf = malloc(sblock.lfs_bsize);
+	iblk.b_un.b_buf = malloc(sblock.lfs_ibsize);
 	if (bread(fsreadfd, (char *)iblk.b_un.b_buf, idaddr,
-		  (long)sblock.lfs_bsize) != 0) {
+		  (long)sblock.lfs_ibsize) != 0) {
 		printf("Couldn't read disk block %d\n", idaddr);
 		exit(1);
 	}
 	idinode = lfs_difind(&sblock, sblock.lfs_ifile, &ifblock);
+	if (idinode == NULL) {
+		printf("Ifile inode not found at daddr 0x%x\n", idaddr);
+		exit(1);
+		/* XXX find it in the segment summaries */
+	}
+		
 	maxino = ((idinode->di_size
 	    - (sblock.lfs_cleansz + sblock.lfs_segtabsz) * sblock.lfs_bsize)
 		  / sblock.lfs_bsize) * sblock.lfs_ifpb;
@@ -310,39 +333,8 @@ setup(const char *dev)
 	memset(din_table, 0, maxino * sizeof(*din_table));
 	seg_table = (SEGUSE *)malloc(sblock.lfs_nseg * sizeof(SEGUSE));
 	memset(seg_table, 0, sblock.lfs_nseg * sizeof(SEGUSE));
-#endif
 	maxfsblock = sblock.lfs_size * (sblock.lfs_bsize / dev_bsize);
-#if 0
-	sizepb = sblock.lfs_bsize;
-	maxfilesize = sblock.lfs_bsize * NDADDR - 1;
-	for (i = 0; i < NIADDR; i++) {
-		sizepb *= NINDIR(&sblock);
-		maxfilesize += sizepb;
-	}
-	maxfilesize++;		/* XXX */
-#else				/* LFS way */
-	{
-		u_quad_t        maxtable[] = {
-			 /* 1 */ -1,
-			 /* 2 */ -1,
-			 /* 4 */ -1,
-			 /* 8 */ -1,
-			 /* 16 */ -1,
-			 /* 32 */ -1,
-			 /* 64 */ -1,
-			 /* 128 */ -1,
-			 /* 256 */ -1,
-			 /* 512 */ NDADDR + 128 + 128 * 128 + 128 * 128 * 128,
-			 /* 1024 */ NDADDR + 256 + 256 * 256 + 256 * 256 * 256,
-			 /* 2048 */ NDADDR + 512 + 512 * 512 + 512 * 512 * 512,
-			 /* 4096 */ NDADDR + 1024 + 1024 * 1024 + 1024 * 1024 * 1024,
-			 /* 8192 */ 1 << 31,
-			 /* 16 K */ 1 << 31,
-			 /* 32 K */ 1 << 31,
-		};
-		maxfilesize = maxtable[sblock.lfs_bshift] << sblock.lfs_bshift;
-	}
-#endif
+	maxfilesize = maxtable[sblock.lfs_bshift] << sblock.lfs_bshift;
 	if ((sblock.lfs_minfree < 0 || sblock.lfs_minfree > 99)) {
 		pfatal("IMPOSSIBLE MINFREE=%d IN SUPERBLOCK",
 		       sblock.lfs_minfree);
@@ -351,7 +343,6 @@ setup(const char *dev)
 			sbdirty();
 		}
 	}
-	/* XXX used to be ~(sblock.lfs_bsize - 1) */
 	if (sblock.lfs_bmask != sblock.lfs_bsize - 1) {
 		pwarn("INCORRECT BMASK=%x IN SUPERBLOCK (should be %x)",
 		      (unsigned int)sblock.lfs_bmask,

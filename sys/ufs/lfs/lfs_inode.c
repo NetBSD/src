@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.51 2001/05/30 11:57:18 mrg Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.51.2.1 2001/06/27 03:49:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,18 +111,30 @@ lfs_ifind(fs, ino, bp)
 	ino_t ino;
 	struct buf *bp;
 {
-	int cnt;
 	struct dinode *dip = (struct dinode *)bp->b_data;
-	struct dinode *ldip;
+	struct dinode *ldip, *fin;
 	
-	for (cnt = INOPB(fs), ldip = dip + (cnt - 1); cnt--; --ldip)
+	if (fs->lfs_version == 1)
+		fin = dip + INOPB(fs);
+	else
+		fin = dip + INOPS(fs);
+
+	/*
+	 * XXX we used to go from the top down here, presumably with the
+	 * idea that the same inode could be written twice in the same
+	 * block (which is not supposed to be true).
+	 */
+	for (ldip = dip; ldip < fin; ++ldip)
 		if (ldip->di_inumber == ino)
 			return (ldip);
-	
+
+	printf("searched %d entries\n", (int)(fs->lfs_version == 1 ?
+					      INOPB(fs) :
+					      INOPS(fs)));
 	printf("offset is 0x%x (seg %d)\n", fs->lfs_offset,
-	       datosn(fs,fs->lfs_offset));
+	       datosn(fs, fs->lfs_offset));
 	printf("block is 0x%x (seg %d)\n", bp->b_blkno,
-	       datosn(fs,bp->b_blkno));
+	       datosn(fs, bp->b_blkno));
 	panic("lfs_ifind: dinode %u not found", ino);
 	/* NOTREACHED */
 }

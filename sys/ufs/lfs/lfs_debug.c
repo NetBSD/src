@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.11 2000/09/09 04:49:54 perseant Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.11.4.1 2001/06/27 03:49:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ lfs_dump_super(lfsp)
 	       "nextseg	 ", lfsp->lfs_nextseg,
 	       "curseg	 ", lfsp->lfs_curseg,
 	       "offset	 ", lfsp->lfs_offset);
-	printf("tstamp	 %x\n", lfsp->lfs_tstamp);
+	printf("tstamp	 %llx\n", (long long)lfsp->lfs_tstamp);
 }
 
 void
@@ -195,11 +195,11 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 	
 	if(sp->sum_bytes_left > 484) {
 		printf("%s:%d: bad value (%d = -%d) for sum_bytes_left\n",
-		       file, line, sp->sum_bytes_left, LFS_SUMMARY_SIZE-sp->sum_bytes_left);
+		       file, line, sp->sum_bytes_left, fs->lfs_sumsize-sp->sum_bytes_left);
 		panic("too many bytes");
 	}
 	
-	actual = LFS_SUMMARY_SIZE
+	actual = fs->lfs_sumsize
 		/* amount taken up by FINFOs */
 		- ((char *)&(sp->fip->fi_blocks[sp->fip->fi_nblocks]) - (char *)(sp->segsum))
 			/* amount taken up by inode blocks */
@@ -217,16 +217,16 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 	if(actual != sp->sum_bytes_left)
 		printf("%s:%d: warning: segsum miscalc at %d (-%d => %d)\n",
 		       file, line, sp->sum_bytes_left,
-		       LFS_SUMMARY_SIZE-sp->sum_bytes_left,
+		       fs->lfs_sumsize-sp->sum_bytes_left,
 		       actual);
 #endif
 	if(sp->sum_bytes_left > 0
-	   && ((char *)(sp->segsum))[LFS_SUMMARY_SIZE
+	   && ((char *)(sp->segsum))[fs->lfs_sumsize
 				     - sizeof(ufs_daddr_t) * ((sp->ninodes+INOPB(fs)-1) / INOPB(fs))
 				     - sp->sum_bytes_left] != '\0') {
 		printf("%s:%d: warning: segsum overwrite at %d (-%d => %d)\n",
 		       file, line, sp->sum_bytes_left,
-		       LFS_SUMMARY_SIZE-sp->sum_bytes_left,
+		       fs->lfs_sumsize-sp->sum_bytes_left,
 		       actual);
 #ifdef DDB
 		Debugger();

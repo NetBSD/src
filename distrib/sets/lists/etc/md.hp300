@@ -1,4 +1,0 @@
-# $NetBSD: md.hp300,v 1.4 2001/01/26 01:39:17 jwise Exp $
-./etc/fstab.rd		etc-sys-etc
-./etc/fstab.sd		etc-sys-etc
-./etc/ld.so.conf	etc-sys-etc

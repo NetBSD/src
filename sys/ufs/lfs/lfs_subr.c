@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.17 2000/09/09 04:49:55 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.17.4.1 2001/06/27 03:49:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ lfs_seglock(fs, flags)
 	fs->lfs_lockpid = curproc->p_pid;
 	
 	sp = fs->lfs_sp = malloc(sizeof(struct segment), M_SEGMENT, M_WAITOK);
-	sp->bpp = malloc(((LFS_SUMMARY_SIZE - sizeof(SEGSUM)) /
+	sp->bpp = malloc(((fs->lfs_sumsize - SEGSUM_SIZE(fs)) /
 			  sizeof(ufs_daddr_t) + 1) * sizeof(struct buf *),
 			 M_SEGMENT, M_WAITOK);
 	sp->seg_flags = flags;
@@ -240,13 +240,15 @@ lfs_segunlock(fs)
 		ckp = sp->seg_flags & SEGM_CKP;
 		if (sp->bpp != sp->cbpp) {
 			/* Free allocated segment summary */
-			fs->lfs_offset -= btodb(LFS_SUMMARY_SIZE);
+			fs->lfs_offset -= btodb(fs->lfs_sumsize);
                         lfs_freebuf(*sp->bpp);
 		} else
 			printf ("unlock to 0 with no summary");
 
 		free(sp->bpp, M_SEGMENT);
+		sp->bpp = NULL;
 		free(sp, M_SEGMENT);
+		fs->lfs_sp = NULL;
 
 		/*
 		 * If the I/O count is non-zero, sleep until it reaches zero.

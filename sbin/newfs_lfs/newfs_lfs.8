@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_lfs.8,v 1.12 2001/06/05 11:22:51 wiz Exp $
+.\"	$NetBSD: newfs_lfs.8,v 1.12.2.1 2001/06/27 03:49:42 perseant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,6 +83,13 @@ shift, unless these are overridden by command-line flags.
 The fragment size of the file system in bytes.  If not specified,
 the fragment size is taken from the partition label, or if the partition
 label indicates 0, a compile-time default of 1K is used.
+.It Fl i
+For a version 2 file system, specify the file system identifier, a 32-bit
+unsigned integer.  This number
+is used to distinguish partial segments from this file system from other
+patrial segments with the same serial number from a previous filesystem,
+when rolling forward.  If this flag is not given the identifier is chosen
+at random.
 .It Fl L
 Create a log-structured file system (LFS).  This is the default, and this
 option is provided for compatibility only.
@@ -96,8 +103,14 @@ of letting
 do the computation.  Do not use this option.
 .It Fl N
 Do not actually create the filesystem.
+.It Fl O Ar offset
+Start the first segment this many sectors from the beginning of the
+partition.  The default is zero.
 .It Fl s Ar size
 The size of the file system in sectors.
+.It Fl v Ar version
+Make a filesystem with the specified disk layout version.  Valid options
+are 1 (the default) or 2.
 .El
 .Sh SEE ALSO
 .Xr disktab 5 ,
@@ -115,6 +128,16 @@ The size of the file system in sectors.
 .%J "Proceedings of the Winter 1993 USENIX Conference"
 .%D January 25-29, 1993
 .%P pp. 315-331
+.Re
+.Rs
+.%A J. Matthews
+.%A D. Roselli
+.%A A. Costello
+.%A R. Wang
+.%A T. Anderson
+.%T "Improving the Performance of Log-Structured File Systems with Adaptive Methods"
+.%J "Proceedings of the Sixteenth ACM SOSP"
+.%D October 1997
 .Re
 .Rs
 .%A J. Matthews

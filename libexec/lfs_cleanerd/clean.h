@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.10 2001/02/04 22:12:47 christos Exp $	*/
+/*	$NetBSD: clean.h,v 1.10.2.1 2001/06/27 03:49:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ typedef struct fs_info {
  * XXX: size (in bytes) of a segment
  *	should lfs_bsize be fsbtodb(fs,1), blksize(fs), or lfs_dsize? 
  */
-#define seg_size(fs) ((fs)->lfs_ssize << (fs)->lfs_bshift)
+#define seg_size(fs) dbtob(segtodb((fs), 1))
 
 /* daddr -> byte offset */
 #define datobyte(fs, da) (((off_t)(da)) << (fs)->fi_daddr_shift)
@@ -103,13 +103,21 @@ typedef struct fs_info {
 #define CLEANSIZE(fsp)	(fsp->fi_lfs.lfs_cleansz << fsp->fi_lfs.lfs_bshift)
 #define SEGTABSIZE(fsp)	(fsp->fi_lfs.lfs_segtabsz << fsp->fi_lfs.lfs_bshift)
 
-#define IFILE_ENTRY(fs, if, i) \
-	((IFILE *)((caddr_t)(if) + ((i) / (fs)->lfs_ifpb << (fs)->lfs_bshift)) \
-	+ (i) % (fs)->lfs_ifpb)
+#define IFILE_ENTRY(fs, ife, i) 					\
+	((fs)->lfs_version == 1 ?					\
+	(IFILE *)((IFILE_V1 *)((caddr_t)(ife) + ((i) / (fs)->lfs_ifpb <<\
+		(fs)->lfs_bshift)) + (i) % (fs)->lfs_ifpb) :		\
+	((IFILE *)((caddr_t)(ife) + ((i) / (fs)->lfs_ifpb <<		\
+		(fs)->lfs_bshift)) + (i) % (fs)->lfs_ifpb))
 
-#define SEGUSE_ENTRY(fs, su, i) \
-	((SEGUSE *)((caddr_t)(su) + (fs)->lfs_bsize * ((i) / (fs)->lfs_sepb)) +\
-	(i) % (fs)->lfs_sepb)
+#define SEGUSE_ENTRY(fs, su, i) 					\
+	((fs)->lfs_version == 1 ?					\
+	(SEGUSE *)((SEGUSE_V1 *)((caddr_t)(su) + (fs)->lfs_bsize *	\
+				((i) / (fs)->lfs_sepb)) +		\
+				(i) % (fs)->lfs_sepb) :			\
+	((SEGUSE *)((caddr_t)(su) + (fs)->lfs_bsize *			\
+				((i) / (fs)->lfs_sepb)) +		\
+				(i) % (fs)->lfs_sepb))
 
 __BEGIN_DECLS
 int	 dump_summary __P((struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t));

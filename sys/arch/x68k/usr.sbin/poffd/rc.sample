@@ -1,8 +1,0 @@
-#	$NetBSD: rc.sample,v 1.2 1998/01/05 20:52:36 perry Exp $
-#
-# echo -n starting machine-specific deamons:
-if [ -x /etc/shutdown.local ]; then
-	echo -n ' poffd';		poffd "/etc/shutdown.local %"
-fi
-
-# echo '.'

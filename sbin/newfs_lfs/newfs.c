@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.6 2000/12/05 19:51:15 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.6.2.1 2001/06/27 03:49:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.6 2000/12/05 19:51:15 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.6.2.1 2001/06/27 03:49:42 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,15 +78,17 @@ __RCSID("$NetBSD: newfs.c,v 1.6 2000/12/05 19:51:15 perseant Exp $");
 
 #define	COMPAT			/* allow non-labeled disks */
 
-int	Nflag;			/* run without writing file system */
+int	version = 1;		/* what version of lfs to make */
+int	Nflag = 0;		/* run without writing file system */
 int	fssize;			/* file system size */
 int	sectorsize;		/* bytes/sector */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
+int	ibsize = 0;		/* inode block size */
+int	interleave = 0;		/* segment interleave */
 int	minfree = MINFREE;	/* free space threshold */
 int     minfreeseg = 0;         /* free segments reserved for the cleaner */
-int	bbsize = BBSIZE;	/* boot block size */
-int	sbsize = SBSIZE;	/* superblock size */
+u_int32_t roll_id = 0;		/* roll-forward id */
 u_long	memleft;		/* virtual memory available */
 caddr_t	membase;		/* start address of memory based filesystem */
 #ifdef COMPAT
@@ -105,7 +107,8 @@ static void rewritelabel __P((char *, int, struct disklabel *));
 #endif
 static void usage __P((void));
 
-#define CHUNKSIZE 65536
+/* CHUNKSIZE should be larger than MAXPHYS */
+#define CHUNKSIZE (1024 * 1024)
 
 static size_t
 auto_segsize(int fd, off_t len, int version)
@@ -145,17 +148,14 @@ auto_segsize(int fd, off_t len, int version)
 	if (seeks == 0)
 		seeks = 1;
 
-	printf("bandwidth %ld B/s, seek time %ld ms (%ld seeks/s)\n",
+	printf("bw = %ld B/s, seek time %ld ms (%ld seeks/s)\n",
 		(long)bw, 1000/seeks, seeks);
 	final = dbtob(btodb(4 * bw / seeks));
-
-	/* Version 1 filesystems have po2 segment sizes */
 	if (version == 1) {
 		for (i = 0; final; final >>= 1, i++)
 			;
 		final = 1 << i;
 	}
-
 	printf("using initial segment size %ld\n", (long)final);
 	return final;
 }
@@ -170,6 +170,7 @@ main(argc, argv)
 	struct disklabel *lp;
 	struct stat st;
 	int debug, force, fsi, fso, segsize, maxpartitions;
+	daddr_t start;
 	char *cp, *opstring;
 
 	if ((progname = strrchr(*argv, '/')) != NULL)
@@ -181,9 +182,9 @@ main(argc, argv)
 	if (maxpartitions > 26)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
-	opstring = "AB:DFLNb:f:M:m:s:";
+	opstring = "AB:DFI:LNb:f:M:O:i:m:r:s:v:";
 
-	debug = force = segsize = 0;
+	debug = force = segsize = start = 0;
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch(ch) {
 		case 'A':	/* Adaptively configure segment size */
@@ -199,6 +200,9 @@ main(argc, argv)
 		case 'F':
 			force = 1;
 			break;
+		case 'I':
+			interleave = atoi(optarg);
+			break;
 		case 'L':	/* Compatibility only */
 			break;
 		case 'M':
@@ -206,6 +210,9 @@ main(argc, argv)
 			break;
 		case 'N':
 			Nflag++;
+			break;
+		case 'O':
+			start = atoi(optarg);
 			break;
 #ifdef COMPAT
 		case 'T':
@@ -220,13 +227,26 @@ main(argc, argv)
 			if ((fsize = atoi(optarg)) <= 0)
 				fatal("%s: bad frag size", optarg);
 			break;
+		case 'i':
+			if ((ibsize = atoi(optarg)) <= 0)
+				fatal("%s: bad inode block size", optarg);
+			break;
 		case 'm':
 			if ((minfree = atoi(optarg)) < 0 || minfree > 99)
 				fatal("%s: bad free space %%\n", optarg);
 			break;
+		case 'r':
+			if ((roll_id = strtoul(optarg, NULL, 0)) == 0)
+				fatal("%s: bad roll-forward id\n", optarg);
+			break;
 		case 's':
 			if ((fssize = atoi(optarg)) <= 0)
 				fatal("%s: bad file system size", optarg);
+			break;
+		case 'v':
+			version = atoi(optarg);
+			if (version <= 0 || version > LFS_VERSION)
+				fatal("%s: bad version", optarg);
 			break;
 		case '?':
 		default:
@@ -303,11 +323,12 @@ main(argc, argv)
 
 	/* Try autoconfiguring segment size, if asked to */
 	if (segsize == -1)
-		segsize = auto_segsize(fsi, dbtob(pp->p_size), 1);
+		segsize = auto_segsize(fsi, dbtob(pp->p_size), version);
 
 	/* If we're making a LFS, we break out here */
 	exit(make_lfs(fso, lp, pp, minfree, bsize, fsize, segsize,
-		      minfreeseg));
+		      minfreeseg, version, start, ibsize, interleave,
+                      roll_id));
 }
 
 #ifdef COMPAT
@@ -421,12 +442,14 @@ usage()
 	fprintf(stderr, "where fsoptions are:\n");
 	fprintf(stderr, "\t-A (autoconfigure segment size)\n");
 	fprintf(stderr, "\t-B segment size in bytes\n");
-	fprintf(stderr, "\t-D debug\n");
+	fprintf(stderr, "\t-D (debug)\n");
 	fprintf(stderr,
 	    "\t-N (do not create file system, just print out parameters)\n");
+	fprintf(stderr, "\t-O first segment offset in sectors\n");
 	fprintf(stderr, "\t-b block size in bytes\n");
 	fprintf(stderr, "\t-f frag size in bytes\n");
 	fprintf(stderr, "\t-m minimum free space %%\n");
 	fprintf(stderr, "\t-s file system size in sectors\n");
+	fprintf(stderr, "\t-v version\n");
 	exit(1);
 }

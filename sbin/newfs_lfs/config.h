@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.5 2000/09/09 04:49:56 perseant Exp $	*/
+/*	$NetBSD: config.h,v 1.5.2.1 2001/06/27 03:49:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,20 +36,13 @@
  */
 
 /*
- * The first boot and super blocks are given in absolute disk addresses.
- * The byte-offset forms are preferred, as they don't imply a sector size.
- */
-#define BBSIZE		8192
-#define SBSIZE		8192
-
-/*
  * The following two constants set the default block and fragment sizes.
  * Both constants must be a power of 2 and meet the following constraints:
  *	MINBSIZE <= DESBLKSIZE <= MAXBSIZE
  *	sectorsize <= DESFRAGSIZE <= DESBLKSIZE
  *	DESBLKSIZE / DESFRAGSIZE <= 8
  */
-#define	DFL_FRAGSIZE	1024
+#define	DFL_FRAGSIZE	512
 #define	DFL_BLKSIZE	8192
 
 /*
@@ -67,11 +60,10 @@
 
 /*
  * The following constants set the default block and segment size for a log
- * structured file system.  Both must be powers of two and the segment size
- * must be a multiple of the block size.  We also set minimum block and segment
- * sizes.
+ * structured file system.  The block size must be a power of two and less
+ * than the segment size.
  */
-#define	LFS_MINSEGSIZE		(64*1024)
+#define	LFS_MINSEGSIZE		(64 * 1024)
 #define	DFL_LFSSEG		(1024 * 1024)
 #define	DFL_LFSSEG_SHIFT	20
 #define	DFL_LFSSEG_MASK		0xFFFFF
