@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.43 2001/11/13 07:48:44 lukem Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.44 2001/12/20 03:32:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.43 2001/11/13 07:48:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.44 2001/12/20 03:32:31 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -388,10 +388,13 @@ void	SIP_DECL(sis900_set_filter)(struct sip_softc *);
 void	SIP_DECL(dp83815_set_filter)(struct sip_softc *);
 
 #if defined(DP83820)
-void	SIP_DECL(dp83820_read_macaddr)(struct sip_softc *, u_int8_t *);
+void	SIP_DECL(dp83820_read_macaddr)(struct sip_softc *,
+	    const struct pci_attach_args *, u_int8_t *);
 #else
-void	SIP_DECL(sis900_read_macaddr)(struct sip_softc *, u_int8_t *);
-void	SIP_DECL(dp83815_read_macaddr)(struct sip_softc *, u_int8_t *);
+void	SIP_DECL(sis900_read_macaddr)(struct sip_softc *,
+	    const struct pci_attach_args *, u_int8_t *);
+void	SIP_DECL(dp83815_read_macaddr)(struct sip_softc *,
+	    const struct pci_attach_args *, u_int8_t *);
 #endif /* DP83820 */
 
 int	SIP_DECL(intr)(void *);
@@ -432,7 +435,8 @@ struct sip_variant {
 	void	(*sipv_mii_writereg)(struct device *, int, int, int);
 	void	(*sipv_mii_statchg)(struct device *);
 	void	(*sipv_set_filter)(struct sip_softc *);
-	void	(*sipv_read_macaddr)(struct sip_softc *, u_int8_t *);
+	void	(*sipv_read_macaddr)(struct sip_softc *, 
+		    const struct pci_attach_args *, u_int8_t *);
 };
 
 #if defined(DP83820)
@@ -724,7 +728,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 * in the softc.
 	 */
 	sc->sc_cfg = 0;
-	(*sip->sip_variant->sipv_read_macaddr)(sc, enaddr);
+	(*sip->sip_variant->sipv_read_macaddr)(sc, pa, enaddr);
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));
@@ -2934,7 +2938,8 @@ SIP_DECL(dp83815_mii_statchg)(struct device *self)
 
 #if defined(DP83820)
 void
-SIP_DECL(dp83820_read_macaddr)(struct sip_softc *sc, u_int8_t *enaddr)
+SIP_DECL(dp83820_read_macaddr)(struct sip_softc *sc,
+    const struct pci_attach_args *pa, u_int8_t *enaddr)
 {
 	u_int16_t eeprom_data[SIP_DP83820_EEPROM_LENGTH / 2];
 	u_int8_t cksum, *e, match;
@@ -2978,12 +2983,43 @@ SIP_DECL(dp83820_read_macaddr)(struct sip_softc *sc, u_int8_t *enaddr)
 }
 #else /* ! DP83820 */
 void
-SIP_DECL(sis900_read_macaddr)(struct sip_softc *sc, u_int8_t *enaddr)
+SIP_DECL(sis900_read_macaddr)(struct sip_softc *sc,
+    const struct pci_attach_args *pa, u_int8_t *enaddr)
 {
 	u_int16_t myea[ETHER_ADDR_LEN / 2];
 
-	SIP_DECL(read_eeprom)(sc, SIP_EEPROM_ETHERNET_ID0 >> 1,
-	    sizeof(myea) / sizeof(myea[0]), myea);
+	switch (PCI_REVISION(pa->pa_class)) {
+	case SIS_REV_630S:
+	case SIS_REV_630E:
+	case SIS_REV_630EA1:
+		/*
+		 * The MAC address for the on-board Ethernet of
+		 * the SiS 630 chipset is in the NVRAM.  Kick
+		 * the chip into re-loading it from NVRAM, and
+		 * read the MAC address out of the filter registers.
+		 */
+		bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_CR, CR_RLD);
+
+		bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RFCR,
+		    RFCR_RFADDR_NODE0);
+		myea[0] = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_RFDR) &
+		    0xffff;
+
+		bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RFCR,
+		    RFCR_RFADDR_NODE2);
+		myea[1] = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_RFDR) &
+		    0xffff;
+
+		bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RFCR,
+		    RFCR_RFADDR_NODE4);
+		myea[2] = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_RFDR) &
+		    0xffff;
+		break;
+
+	default:
+		SIP_DECL(read_eeprom)(sc, SIP_EEPROM_ETHERNET_ID0 >> 1,
+		    sizeof(myea) / sizeof(myea[0]), myea);
+	}
 
 	enaddr[0] = myea[0] & 0xff;
 	enaddr[1] = myea[0] >> 8;
@@ -2998,7 +3034,8 @@ static const u_int8_t bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 #define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
 
 void
-SIP_DECL(dp83815_read_macaddr)(struct sip_softc *sc, u_int8_t *enaddr)
+SIP_DECL(dp83815_read_macaddr)(struct sip_softc *sc,
+    const struct pci_attach_args *pa, u_int8_t *enaddr)
 {
 	u_int16_t eeprom_data[SIP_DP83815_EEPROM_LENGTH / 2], *ea;
 	u_int8_t cksum, *e, match;
