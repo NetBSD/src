@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 2000/01/10 03:53:22 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.36 2000/04/06 13:32:49 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1187,7 +1187,7 @@ kfault:
 	}
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW)) {
 		extern void* return_from_trap __P((void));
-		if ((void*)tf->tf_pc == (void*)return_from_trap) {
+		if ((void *)(u_long)tf->tf_pc == (void *)return_from_trap) {
 			printf("Returning from stack datafault\n");
 		}
 	}
@@ -1868,7 +1868,7 @@ syscall(code, tf, pc)
 	}
 
 #ifdef DEBUG
-/*	printf("code=%x, nsys=%x\n", code, nsys);*/
+/*	printf("code=%x, nsys=%x\n", code, nsys); */
 	if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
 		printf("%d syscall(%d[%x]): tstate=%x:%x %s\n", curproc?curproc->p_pid:-1, code, code,
 		       (int)(tf->tf_tstate>>32), (int)(tf->tf_tstate),
@@ -1963,7 +1963,7 @@ syscall(code, tf, pc)
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))	{ 
 				int k;
 				printf("Copyin args of %d from %p:\n", j, 
-				       (caddr_t)(tf->tf_out[6] + offsetof(struct frame32, fr_argx)));
+				       (caddr_t)(u_long)(tf->tf_out[6] + offsetof(struct frame32, fr_argx)));
 				for (k=0; k<j; k++)
 					printf("arg %d = %p at %d val %p\n", k, (long)temp[k], nap+k, (long)args.i[nap+k]);
 			}
