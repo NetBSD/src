@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.18 2000/05/08 16:30:58 itojun Exp $	*/
+/*	$NetBSD: cons.h,v 1.18.20.1 2002/05/16 12:34:57 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,21 +68,12 @@ struct consdev {
 #define CN_INTERNAL	2	/* "internal" bit-mapped display */
 #define CN_REMOTE	3	/* serial interface with remote bit set */
 
-/* XXX */
-#define	CONSMAJOR	0
-
 #ifdef _KERNEL
 
 extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
 
 void	cninit __P((void));
-int	cnopen __P((dev_t, int, int, struct proc *));
-int	cnclose __P((dev_t, int, int, struct proc *));
-int	cnread __P((dev_t, struct uio *, int));
-int	cnwrite __P((dev_t, struct uio *, int));
-int	cnioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	cnpoll __P((dev_t, int, struct proc *));
 int	cngetc __P((void));
 int	cngetsn __P((char *, int));
 void	cnputc __P((int));
@@ -99,17 +90,20 @@ void	nullcnpollc __P((dev_t, int));
 #define	dev_type_cnpollc(n)	void n __P((dev_t, int))
 #define	dev_type_cnbell(n)	void n __P((dev_t, u_int, u_int, u_int));
 
+#define	dev_decl(n,t)		__CONCAT(dev_type_,t)(__CONCAT(n,t))
+#define	dev_init(n,t)		__CONCAT(n,t)
+
 #define	cons_decl(n) \
 	dev_decl(n,cnprobe); dev_decl(n,cninit); dev_decl(n,cngetc); \
 	dev_decl(n,cnputc); dev_decl(n,cnpollc); dev_decl(n,cnbell);
 
 #define	cons_init(n) { \
-	dev_init(1,n,cnprobe), dev_init(1,n,cninit), dev_init(1,n,cngetc), \
-	dev_init(1,n,cnputc), dev_init(1,n,cnpollc) }
+	dev_init(n,cnprobe), dev_init(n,cninit), dev_init(n,cngetc), \
+	dev_init(n,cnputc), dev_init(n,cnpollc) }
 
 #define	cons_init_bell(n) { \
-	dev_init(1,n,cnprobe), dev_init(1,n,cninit), dev_init(1,n,cngetc), \
-	dev_init(1,n,cnputc), dev_init(1,n,cnpollc), dev_init(1,n,cnbell) }
+	dev_init(n,cnprobe), dev_init(n,cninit), dev_init(n,cngetc), \
+	dev_init(n,cnputc), dev_init(n,cnpollc), dev_init(n,cnbell) }
 
 #endif
 
