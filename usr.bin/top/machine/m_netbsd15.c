@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.20 2003/10/03 15:32:06 christos Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.21 2003/10/16 06:34:19 itojun Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -36,12 +36,12 @@
  *		Tomas Svensson <ts@unix1.net>
  *
  *
- * $Id: m_netbsd15.c,v 1.20 2003/10/03 15:32:06 christos Exp $
+ * $Id: m_netbsd15.c,v 1.21 2003/10/16 06:34:19 itojun Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.20 2003/10/03 15:32:06 christos Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.21 2003/10/16 06:34:19 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -423,7 +423,7 @@ get_process_info(si, sel, compare)
 	int i;
 	int total_procs;
 	int active_procs;
-	struct kinfo_proc2 **prefp;
+	struct kinfo_proc2 **prefp, **n;
 	struct kinfo_proc2 *pp;
 
 	/* these are copied out of sel for speed */
@@ -436,12 +436,19 @@ get_process_info(si, sel, compare)
 
 
 	pbase = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc2), &nproc);
-	if (nproc > onproc)
-		pref = (struct kinfo_proc2 **) realloc(pref,
-		    sizeof(struct kinfo_proc2 *) * (onproc = nproc));
-	if (pref == NULL || pbase == NULL) {
+	if (pbase == NULL) {
 		(void) fprintf(stderr, "top: Out of memory.\n");
 		quit(23);
+	}
+	if (nproc > onproc) {
+		n = (struct kinfo_proc2 **) realloc(pref,
+		    sizeof(struct kinfo_proc2 *) * nproc);
+		if (n == NULL) {
+			(void) fprintf(stderr, "top: Out of memory.\n");
+			quit(23);
+		}
+		pref = n;
+		onproc = nproc;
 	}
 	/* get a pointer to the states summary array */
 	si->procstates = process_states;

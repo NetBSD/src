@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.11 2003/08/07 11:13:06 agc Exp $	*/
+/*	$NetBSD: apply.c,v 1.12 2003/10/16 06:42:18 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.11 2003/08/07 11:13:06 agc Exp $");
+__RCSID("$NetBSD: apply.c,v 1.12 2003/10/16 06:42:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, clen, debug, i, l, magic, n, nargs, rval;
-	char *c, *cmd, *p, *q;
+	char *c, *cmd, *p, *q, *nc;
 
 	debug = 0;
 	magic = '%';		/* Default magic char is `%'. */
@@ -158,8 +158,13 @@ main(argc, argv)
 		 */
 		for (l = strlen(cmd), i = 0; i < nargs; i++)
 			l += strlen(argv[i+1]);
-		if (l > clen && (c = realloc(c, clen = l)) == NULL)
-			err(1, "malloc");
+		if (l > clen) {
+			nc = realloc(c, l);
+			if (nc == NULL)
+				err(1, "malloc");
+			c = nc;
+			clen = l;
+		}
 
 		/* Expand command argv references. */
 		for (p = cmd, q = c; *p != '\0'; ++p)

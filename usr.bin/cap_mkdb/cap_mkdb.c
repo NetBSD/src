@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.18 2003/08/07 11:13:15 agc Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.19 2003/10/16 06:43:52 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.18 2003/08/07 11:13:15 agc Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.19 2003/10/16 06:43:52 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -171,7 +171,7 @@ db_build(char **ifiles)
 	recno_t reccnt;
 	size_t len, bplen;
 	int st;
-	char *bp, *p, *t;
+	char *bp, *p, *t, *n;
 
 	data.data = NULL;
 	key.data = NULL;
@@ -183,9 +183,11 @@ db_build(char **ifiles)
 		 */
 		len = strlen(bp);
 		if (bplen <= len + 2) {
-			bplen += MAX(256, len + 2);
-			if ((data.data = realloc(data.data, bplen)) == NULL)
+			if ((n = realloc(data.data,
+			    bplen + MAX(256, len + 2))) == NULL)
 				err(1, "realloc");
+			data.data = n;
+			bplen += MAX(256, len + 2);
 		}
 
 		/* Find the end of the name field. */

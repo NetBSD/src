@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.24 2003/10/11 09:06:03 wiz Exp $   */
+/*      $NetBSD: whois.c,v 1.25 2003/10/16 06:36:51 itojun Exp $   */
 /*	$OpenBSD: whois.c,v 1.28 2003/09/18 22:16:15 fgsch Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.24 2003/10/11 09:06:03 wiz Exp $");
+__RCSID("$NetBSD: whois.c,v 1.25 2003/10/16 06:36:51 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,6 +280,7 @@ static char *
 choose_server(const char *name, const char *country)
 {
 	static char *server;
+	char *nserver;
 	const char *qhead;
 	char *ep;
 	size_t len;
@@ -298,8 +299,9 @@ choose_server(const char *name, const char *country)
 	} else if (isdigit((unsigned char)*(++qhead)))
 		return (ANICHOST);
 	len = strlen(qhead) + sizeof(QNICHOST_TAIL);
-	if ((server = realloc(server, len)) == NULL)
+	if ((nserver = realloc(server, len)) == NULL)
 		err(1, "realloc");
+	server = nserver;
 	(void)strlcpy(server, qhead, len);
 	(void)strlcat(server, QNICHOST_TAIL, len);
 	return (server);
