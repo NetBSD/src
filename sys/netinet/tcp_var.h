@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.90.4.2 2003/10/22 06:06:13 jmc Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.90.4.3 2004/04/20 20:26:57 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -594,7 +594,8 @@ struct	tcpstat {
 #endif
 #define	TCPCTL_RSTPPSLIMIT	24	/* RST pps limit */
 #define	TCPCTL_DELACK_TICKS	25	/* # ticks to delay ACK */
-#define	TCPCTL_MAXID		26
+#define	TCPCTL_ACKDROPRATELIMIT	28	/* SYN/RST -> ACK rate limit */
+#define	TCPCTL_MAXID		29
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -623,6 +624,9 @@ struct	tcpstat {
 	{ 0, 0 }, \
 	{ "rstppslimit", CTLTYPE_INT }, \
 	{ "delack_ticks", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "ackdropppslimit", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -649,6 +653,7 @@ extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_log_refused;	/* log refused connections */
 
 extern	int tcp_rst_ppslim;
+extern	int tcp_ackdrop_ppslim;
 
 extern	int tcp_syn_cache_size;
 extern	struct syn_cache_head tcp_syn_cache[];
@@ -681,6 +686,9 @@ extern	u_long syn_cache_count;
 	{ 0 },					\
 	{ 1, 0, &tcp_rst_ppslim },		\
 	{ 1, 0, &tcp_delack_ticks },		\
+	{ 0 },					\
+	{ 0 },					\
+	{ 1, 0, &tcp_ackdrop_ppslim },		\
 }
 
 int	 tcp_attach __P((struct socket *));
