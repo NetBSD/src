@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 1997/05/31 21:21:13 cjs Exp $
+#	$NetBSD: Makefile,v 1.43 1997/10/27 18:06:39 thorpej Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -40,7 +40,7 @@ afterinstall:
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 .endif
 
-build:
+build: beforeinstall
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 	${MAKE} includes
 .if !defined(UPDATE)
