@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.12 2003/10/20 00:12:10 matt Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.13 2004/03/12 19:13:37 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,7 +52,7 @@ struct shared_bbinfo bbinfo = {
 };
 
 #ifndef DEFAULT_ENTRY_POINT
-#define	DEFAULT_ENTRY_POINT	0x600000
+#define	DEFAULT_ENTRY_POINT	0xE00000
 #endif
 
 void (*entry_point)(int, int, void *) = (void *)DEFAULT_ENTRY_POINT;
