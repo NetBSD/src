@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.16 2003/06/29 22:32:28 fvdl Exp $	*/
+/*	$NetBSD: sem.h,v 1.17 2004/10/06 15:39:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -214,10 +214,6 @@ struct sem_sysctl_info {
  */
 extern struct seminfo seminfo;
 extern struct semid_ds *sema;		/* semaphore id pool */
-extern struct __sem *sem;		/* semaphore pool */
-extern struct map *semmap;		/* semaphore allocation map */
-extern struct sem_undo *semu_list;	/* list of active undo structures */
-extern int *semu;			/* undo structure pool */
 
 /*
  * Macro to find a particular sem_undo vector
