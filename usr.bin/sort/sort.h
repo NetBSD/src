@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.5 2000/10/16 21:53:19 jdolecek Exp $	*/
+/*	$NetBSD: sort.h,v 1.6 2001/01/08 18:00:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -142,5 +142,6 @@ extern u_char d_mask[NBINS];
 extern int SINGL_FLD, SEP_FLAG, UNIQUE;
 extern int REC_D;
 extern const char *tmpdir;
+extern int stable_sort;
 
 #include "extern.h"
