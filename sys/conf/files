@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.77 1996/02/27 21:59:14 cgd Exp $
+#	$NetBSD: files,v 1.78 1996/02/28 01:42:42 cgd Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -30,7 +30,9 @@ define	aic7xxx		# Adaptec aic7770 and aic7870 SCSI controllers
 # These should be defined here, because some of these busses can have
 # devices which provide these attributes, and we'd like to avoid hairy
 # ordering constraints on inclusion of the busses' "files" files.
+define	isabus { }			# ISA attachment
 define	eisabus { }			# EISA attachment
+define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus { }			# TurboChannel attachment
 
 # legitimate pseudo-devices
