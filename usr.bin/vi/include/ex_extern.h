@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_extern.h,v 1.2 1998/01/09 08:08:19 perry Exp $	*/
+/*	$NetBSD: ex_extern.h,v 1.3 1999/01/08 06:16:55 abs Exp $	*/
 
 int ex __P((SCR **));
 int ex_cmd __P((SCR *));
@@ -94,6 +94,9 @@ int re_compile __P((SCR *,
     char *, char **, size_t *, regex_t *, u_int));
 void re_error __P((SCR *, int, regex_t *));
 int ex_tag_first __P((SCR *, char *));
+#ifdef GTAGS
+int ex_rtag_push __P((SCR *, EXCMD *));
+#endif
 int ex_tag_push __P((SCR *, EXCMD *));
 int ex_tag_next __P((SCR *, EXCMD *));
 int ex_tag_prev __P((SCR *, EXCMD *));
