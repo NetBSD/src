@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.19 2002/12/21 23:50:00 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.20 2002/12/26 11:41:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.19 2002/12/21 23:50:00 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.20 2002/12/26 11:41:46 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -453,6 +453,30 @@ mach_right_get(mp, p, type)
 	struct mach_right *mr;
 	struct mach_emuldata *med;
 
+#ifdef DEBUG_MACH
+	printf("pid %d: get ", p->p_pid);
+	switch (type) {
+	case MACH_PORT_RIGHT_SEND:
+		printf("send right on port %p", mp);
+		break;
+	case MACH_PORT_RIGHT_RECEIVE:
+		printf("receive right on port %p", mp);
+		break;
+	case MACH_PORT_RIGHT_SEND_ONCE:
+		printf("send once right on port %p", mp);
+		break;
+	case MACH_PORT_RIGHT_PORT_SET:
+		printf("port set"); 
+		break;
+	case MACH_PORT_RIGHT_DEAD_NAME:
+		printf("dead name"); 
+		break;
+	default:
+		printf("unknown right");
+		break;
+	}
+#endif
+
 	med = (struct mach_emuldata *)p->p_emuldata;
 
 	/* Send and receive right must return an existing right */
@@ -467,7 +491,7 @@ mach_right_get(mp, p, type)
 
 		if (mr != NULL) {
 			mr->mr_refcount++;
-			return mr;
+			goto out;
 		}
 	}
 
@@ -514,6 +538,10 @@ mach_right_get(mp, p, type)
 		uprintf("mach_right_get: unknown right %d\n", type);
 		break;
 	}
+out:
+#ifdef DEBUG_MACH
+	printf(": right %p\n", mr);
+#endif
 	return mr;
 }
 
@@ -521,6 +549,30 @@ void
 mach_right_put(mr)
 	struct mach_right *mr;
 {
+#ifdef DEBUG_MACH
+	printf("pid %d: drop ", mr->mr_p->p_pid);
+	switch (mr->mr_type) {
+	case MACH_PORT_RIGHT_SEND:
+		printf("send right on port %p", mr->mr_port);
+		break;
+	case MACH_PORT_RIGHT_RECEIVE:
+		printf("receive right on port %p", mr->mr_port);
+		break;
+	case MACH_PORT_RIGHT_SEND_ONCE:
+		printf("send once right on port %p", mr->mr_port);
+		break;
+	case MACH_PORT_RIGHT_PORT_SET:
+		printf("port set"); 
+		break;
+	case MACH_PORT_RIGHT_DEAD_NAME:
+		printf("dead name"); 
+		break;
+	default:
+		printf("unknown right");
+		break;
+	}
+	printf(": right %p\n", mr);
+#endif
 	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
 	mach_right_put_exclocked(mr);
 	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
