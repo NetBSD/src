@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.5 1993/11/14 16:51:33 pk Exp $
+ *	$Id: md.c,v 1.6 1993/12/08 10:14:46 pk Exp $
  */
 
 #include <sys/param.h>
@@ -242,7 +242,7 @@ long	where;
 long	*savep;
 {
 	*savep = *(long *)where;
-	*(char *)where = BPT;
+	*(char *)where = TRAP;
 }
 
 #ifdef NEED_SWAP

@@ -1,5 +1,5 @@
 /*
- * $Id: etc.c,v 1.3 1993/12/07 01:44:23 mycroft Exp $
+ * $Id: etc.c,v 1.4 1993/12/08 10:13:50 pk Exp $
  */
 
 #include <sys/param.h>
@@ -72,7 +72,7 @@ fatal(fmt, va_alist)
 	(void)fprintf(stderr, "\n");
 	va_end(ap);
 
-	if (outdesc >= 0)
+	if (outdesc > 0)
 		unlink(output_filename);
 	exit(1);
 }
@@ -150,22 +150,6 @@ xrealloc(ptr, size)
 }
 
 
-#ifdef USG
-void
-bzero(p, n)
-	char *p;
-{
-	memset (p, 0, n);
-}
-
-void
-bcopy(from, to, n)
-	char *from, *to;
-{
-	memcpy (to, from, n);
-}
-#endif
-
 
 /* These must move */
 
@@ -192,8 +176,10 @@ mywrite (buf, count, eltsize, desc)
 	}
 }
 
-/* Output PADDING zero-bytes to descriptor OUTDESC.
-   PADDING may be negative; in that case, do nothing.  */
+/*
+ * Output PADDING zero-bytes to descriptor OUTDESC.
+ * PADDING may be negative; in that case, do nothing.
+ */
 
 void
 padfile (padding, outdesc)

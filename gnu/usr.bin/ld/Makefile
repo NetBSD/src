@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1993/12/05 00:54:41 cgd Exp $
+# $Id: Makefile,v 1.10 1993/12/08 10:13:47 pk Exp $
 #
 
 PROG=	ld
@@ -8,8 +8,11 @@ CFLAGS += -g -I$(.CURDIR) -I$(.CURDIR)/$(MACHINE_ARCH)
 LDADD+=	-lgnumalloc
 DPADD+= /usr/lib/libgnumalloc.a
 
-SUBDIR=	ldconfig ldd rtld
+SUBDIR=	ldconfig ldd
+.if !defined(NOPIC)
+SUBDIR+= rtld
+.endif
 
-.PATH: $(.CURDIR)/$(MACHINE_ARCH)
+.PATH: $(.CURDIR)/$(MACHINE)
 
 .include <bsd.prog.mk>
