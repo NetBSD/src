@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.16 1998/08/13 02:10:39 eeh Exp $	*/
+/*	$NetBSD: types.h,v 1.16.2.1 1998/11/19 01:51:59 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,9 +43,26 @@
 
 #include <sys/cdefs.h>
 
+/*
+ * Note that mips_reg_t is distinct from the register_t defined 
+ * in <types.h> to allow these structures to be as hidden from
+ * the rest of the operating system as possible.
+ * 
+ * _MIPS64 == 1 allows registers to survive context switches such
+ * as traps and interrupts so "leaf" routines can use 64 bit ops.
+ */
+
+#if _MIPS64 >= 1
+typedef long long mips_reg_t;
+typedef unsigned long long mips_ureg_t;
+#else
+typedef long mips_reg_t;
+typedef unsigned long mips_ureg_t;
+#endif
+
 #if defined(_KERNEL)
 typedef struct label_t {
-	int val[12];
+	mips_reg_t val[12];
 } label_t;
 #endif
 
