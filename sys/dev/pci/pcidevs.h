@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.103 1998/12/18 21:08:37 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.104 1998/12/20 16:06:25 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.97 1998/12/18 21:08:19 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.98 1998/12/20 16:05:32 drochner Exp 
  */
 
 /*
@@ -1159,3 +1159,5 @@
 /* Ziatech products */
 #define	PCI_PRODUCT_ZIATECH_ZT8905	0x8905		/* PCI-ST32 Bridge */
 
+/* Zoran products */
+#define	PCI_PRODUCT_ZORAN_ZR36120	0x6120		/* Video Controller */
