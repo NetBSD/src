@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.27 2003/09/07 15:59:39 itojun Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.28 2003/09/12 07:38:11 itojun Exp $	*/
 /*	$KAME: key_debug.c,v 1.36 2003/06/27 06:46:01 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.27 2003/09/07 15:59:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.28 2003/09/12 07:38:11 itojun Exp $");
 
 #ifdef _KERNEL
 #include "opt_inet.h"
@@ -75,6 +75,9 @@ static void kdebug_sadb_sa __P((struct sadb_ext *));
 static void kdebug_sadb_address __P((struct sadb_ext *));
 static void kdebug_sadb_key __P((struct sadb_ext *));
 static void kdebug_sadb_x_sa2 __P((struct sadb_ext *));
+#ifdef SADB_X_EXT_TAG
+static void kdebug_sadb_x_tag __P((struct sadb_ext *));
+#endif
 
 #ifdef _KERNEL
 static void kdebug_secreplay __P((struct secreplay *));
@@ -160,6 +163,9 @@ kdebug_sadb_ext_typestr(type)
 		TYPESTR(X_EXT_KMPRIVATE),
 		TYPESTR(X_EXT_POLICY),
 		TYPESTR(X_EXT_SA2),
+#ifdef SADB_X_EXT_TAG
+		TYPESTR(X_EXT_TAG),
+#endif
 		{ NULL }
 	};
 
@@ -245,6 +251,11 @@ kdebug_sadb(base)
 		case SADB_X_EXT_SA2:
 			kdebug_sadb_x_sa2(ext);
 			break;
+#ifdef SADB_X_EXT_TAG
+		case SADB_X_EXT_TAG:
+			kdebug_sadb_x_tag(ext);
+			break;
+#endif
 		default:
 			printf("kdebug_sadb: invalid ext_type %u was passed.\n",
 			    ext->sadb_ext_type);
@@ -484,6 +495,23 @@ kdebug_sadb_x_sa2(ext)
 
 	return;
 }
+
+#ifdef SADB_X_EXT_TAG
+static void
+kdebug_sadb_x_tag(ext)
+	struct sadb_ext *ext;
+{
+	struct sadb_x_tag *tag = (struct sadb_x_tag *)ext;
+
+	/* sanity check */
+	if (ext == NULL)
+		panic("kdebug_sadb_x_tag: NULL pointer was passed.");
+
+	printf("sadb_x_sa2{ tag=\"%s\" }\n", tag->sadb_x_tag_name);
+
+	return;
+}
+#endif
 
 void
 kdebug_sadb_x_policy(ext)
