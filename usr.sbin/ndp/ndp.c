@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.30 2004/01/08 06:56:25 itojun Exp $	*/
+/*	$NetBSD: ndp.c,v 1.31 2004/02/10 14:44:32 itojun Exp $	*/
 /*	$KAME: ndp.c,v 1.104 2003/06/27 07:48:39 itojun Exp $	*/
 
 /*
@@ -771,6 +771,7 @@ again:;
 
 	if (repeat) {
 		printf("\n");
+		fflush(stdout);
 		sleep(repeat);
 		goto again;
 	}
