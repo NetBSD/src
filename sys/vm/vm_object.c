@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	vm_object.c,v 1.4 1993/06/30 03:48:26 andrew Exp
+ *	$Id: vm_object.c,v 1.7 1993/08/07 06:03:02 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -1507,7 +1507,6 @@ boolean_t vm_object_coalesce(prev_object, next_object,
 	return(TRUE);
 }
 
-#if	defined(DDB) || defined(DEBUG)
 /*
  *	vm_object_print:	[ debug ]
  */
@@ -1526,10 +1525,10 @@ void vm_object_print(object, full)
 	iprintf("Object 0x%x: size=0x%x, res=%d, ref=%d, ",
 		(int) object, (int) object->size,
 		object->resident_page_count, object->ref_count);
-	db_printf("pager=0x%x+0x%x, shadow=(0x%x)+0x%x\n",
+	printf("pager=0x%x+0x%x, shadow=(0x%x)+0x%x\n",
 	       (int) object->pager, (int) object->paging_offset,
 	       (int) object->shadow, (int) object->shadow_offset);
-	db_printf("cache: next=0x%x, prev=0x%x\n",
+	printf("cache: next=0x%x, prev=0x%x\n",
 	       object->cached_list.next, object->cached_list.prev);
 
 	if (!full)
@@ -1542,18 +1541,17 @@ void vm_object_print(object, full)
 		if (count == 0)
 			iprintf("memory:=");
 		else if (count == 6) {
-			db_printf("\n");
+			printf("\n");
 			iprintf(" ...");
 			count = 0;
 		} else
-			db_printf(",");
+			printf(",");
 		count++;
 
-		db_printf("(off=0x%x,page=0x%x)", p->offset, VM_PAGE_TO_PHYS(p));
+		printf("(off=0x%x,page=0x%x)", p->offset, VM_PAGE_TO_PHYS(p));
 		p = (vm_page_t) queue_next(&p->listq);
 	}
 	if (count != 0)
-		db_printf("\n");
+		printf("\n");
 	indent -= 2;
 }
-#endif
