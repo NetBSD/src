@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.364 2002/11/03 15:53:42 wiz Exp $
+# $NetBSD: mi,v 1.365 2002/11/17 15:51:21 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1204,6 +1204,7 @@
 ./usr/share/man/cat4/amiga			base-man-share
 ./usr/share/man/cat4/arm32			base-man-share
 ./usr/share/man/cat4/atari			base-man-share
+./usr/share/man/cat4/dreamcast			base-man-share
 ./usr/share/man/cat4/evbarm			base-man-share
 ./usr/share/man/cat4/hp300			base-man-share
 ./usr/share/man/cat4/i386			base-man-share
@@ -1300,6 +1301,7 @@
 ./usr/share/man/man4/amiga		base-man-share
 ./usr/share/man/man4/arm32		base-man-share
 ./usr/share/man/man4/atari		base-man-share
+./usr/share/man/man4/dreamcast		base-man-share
 ./usr/share/man/man4/evbarm		base-man-share
 ./usr/share/man/man4/hp300		base-man-share
 ./usr/share/man/man4/i386		base-man-share
@@ -1395,6 +1397,8 @@
 ./usr/share/man/html4/amiga		base-man-share
 ./usr/share/man/html4/arm32		base-man-share
 ./usr/share/man/html4/atari		base-man-share
+./usr/share/man/html4/dreamcast		base-man-share
+./usr/share/man/html4/evbarm		base-man-share
 ./usr/share/man/html4/hp300		base-man-share
 ./usr/share/man/html4/i386		base-man-share
 ./usr/share/man/html4/mac68k		base-man-share
