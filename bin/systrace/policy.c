@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.11 2003/03/26 17:00:57 atatat Exp $	*/
+/*	$NetBSD: policy.c,v 1.12 2003/04/16 08:07:51 itojun Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.11 2003/03/26 17:00:57 atatat Exp $");
+__RCSID("$NetBSD: policy.c,v 1.12 2003/04/16 08:07:51 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,7 +141,7 @@ int
 systrace_initpolicy(char *file, char *path)
 {
 	gid_t groups[NGROUPS_MAX];
-	char gidbuf[10];
+	char gidbuf[11];
 	int i;
 
 	SPLAY_INIT(&policyroot);
