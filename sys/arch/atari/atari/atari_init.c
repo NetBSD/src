@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.24 1997/01/04 00:06:21 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.25 1997/01/12 15:40:14 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -58,12 +58,14 @@
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <machine/scu.h>
+#include <machine/acia.h>
 #include <machine/kcore.h>
 #include <atari/atari/intr.h>
 #include <atari/atari/stalloc.h>
 #include <atari/dev/ym2149reg.h>
 
 void start_c __P((int, u_int, u_int, u_int, char *));
+static void atari_hwinit __P((void));
 static void cpu_init_kcorehdr __P((u_long));
 static void mmu030_setup __P((st_entry_t *, u_int, pt_entry_t *, u_int,
 			      pt_entry_t *, u_int, u_int));
@@ -467,9 +469,11 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		 * movel #$0xc000,d0;
 		 * movec d0,TC
 		 */
-		asm volatile ("movel %0,a0;.word 0x4e7b,0x8807" : : "a" (Sysseg_pa) : "a0");
+		asm volatile ("movel %0,a0;.word 0x4e7b,0x8807" : :
+						"a" (Sysseg_pa) : "a0");
 		asm volatile (".word 0xf518" : : );
-		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" : : :"d0" );
+		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" : : :
+						"d0" );
 	} else
 #endif
 	{
@@ -497,15 +501,66 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	curproc = &proc0;
 	curpcb  = &((struct user *)proc0paddr)->u_pcb;
 
+	/*
+	 * Get the hardware into a defined state
+	 */
+	atari_hwinit();
+
+	/*
+	 * Initialize stmem allocator
+	 */
+	init_stmem();
+
+	/*
+	 * Initialize interrupt mapping.
+	 */
+	intr_init();
+}
+
+/*
+ * Try to figure out on what type of machine we are running
+ * Note: This module runs *before* the io-mapping is setup!
+ */
+static void
+set_machtype()
+{
+	stio_addr = 0xff8000;	/* XXX: For TT & Falcon only */
+	if(badbaddr((caddr_t)&MFP2->mf_gpip)) {
+		/*
+		 * Watch out! We can also have a Hades with < 16Mb
+		 * RAM here...
+		 */
+		if(!badbaddr((caddr_t)&MFP->mf_gpip)) {
+			machineid |= ATARI_FALCON;
+			return;
+		}
+	}
+	if(!badbaddr((caddr_t)(PCI_CONFB_PHYS + PCI_CONFM_PHYS)))
+		machineid |= ATARI_HADES;
+	else machineid |= ATARI_TT;
+}
+
+static void
+atari_hwinit()
+{
+	/*
+	 * Initialize the sound chip
+	 */
 	ym2149_init();
+
+	/*
+	 * Make sure that the midi acia will not generate an interrupt
+	 * unless something attaches to it. We cannot do this for the
+	 * keyboard acia because this breaks the '-d' option of the
+	 * booter...
+	 */
+	MDI->ac_cs = 0;
 
 	/*
 	 * Initialize both MFP chips (if both present!) to generate
 	 * auto-vectored interrupts with EOI. The active-edge registers are
 	 * set up. The interrupt enable registers are set to disable all
 	 * interrupts.
-	 * A test on presence on the second MFP determines if this is a
-	 * TT030 or a Falcon. This is added to 'machineid'.
 	 */
 	MFP->mf_iera  = MFP->mf_ierb = 0;
 	MFP->mf_imra  = MFP->mf_imrb = 0;
@@ -530,33 +585,6 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		 */
 		SCU->sys_mask |= SCU_IRQ7;
 #endif
-		
-	}
-
-	/*
-	 * Initialize stmem allocator
-	 */
-	init_stmem();
-
-	/*
-	 * Initialize interrupt mapping.
-	 */
-	intr_init();
-}
-
-/*
- * Try to figure out on what type of machine we are running
- * Note: This module runs *before* 
- */
-static void
-set_machtype()
-{
-	if(!badbaddr((caddr_t)(PCI_CONFB_PHYS + PCI_CONFM_PHYS)))
-		machineid |= ATARI_HADES;
-	else {
-		if(!badbaddr((caddr_t)&MFP2->mf_gpip))
-			machineid |= ATARI_TT;
-		else machineid |= ATARI_FALCON;
 	}
 }
 
