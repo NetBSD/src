@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.40 2005/03/20 09:02:33 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.41 2005/03/20 09:08:51 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -688,7 +688,7 @@ Description:	simplify/improve kernel memory management and bootstrap
 Status:		Active
 Start Date:	Tue Jan 25 2005
 End Date:	
-Base Tag:	yamt-km-base{,2}, yamt-km-doc-base
+Base Tag:	yamt-km-base{,2,3}, yamt-km-doc-base
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		yamt-km: src/sys
 		yamt-km-doc: src/share/man/man9/uvm.9
