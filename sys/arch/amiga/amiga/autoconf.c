@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.52 1997/07/19 00:01:52 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.53 1997/07/22 15:03:22 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -252,7 +252,12 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "clock", simple_devprint);
 	if (is_a3000() || is_a4000()) {
 		config_found(dp, "a34kbbc", simple_devprint);
-	} else if (!is_draco() && !is_a1200()) {
+	} else if (
+#ifdef DRACO
+	    !is_draco() &&
+#endif
+	    !is_a1200()) {
+
 		config_found(dp, "a2kbbc", simple_devprint);
 	}
 #ifdef DRACO
