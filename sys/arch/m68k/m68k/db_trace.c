@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.13 1996/02/09 21:51:41 gwr Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14 1996/02/13 17:34:46 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -263,9 +263,11 @@ findentry(sp)
 	register	val;
 	db_addr_t	addr, calladdr, nextword;
 	label_t		db_jmpbuf;
-	label_t		*savejmp = db_recover;
+	label_t		*savejmp;
 
-	if (setjmp(*(db_recover = &db_jmpbuf))) {
+	savejmp = db_recover;
+	db_recover = &db_jmpbuf;
+	if (setjmp(&db_jmpbuf)) {
 		/* oops -- we touched something we ought not to have */
 		/* cannot trace caller of "start" */
 		sp->k_entry = MAXINT;
