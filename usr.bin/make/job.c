@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.19 1997/07/01 21:17:24 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.20 1997/08/25 19:31:58 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.19 1997/07/01 21:17:24 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.20 1997/08/25 19:31:58 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -1057,7 +1057,7 @@ Job_Touch(gn, silent)
 		 * modification time, then close the file.
 		 */
 		if (read(streamID, &c, 1) == 1) {
-		    (void) lseek(streamID, 0L, L_SET);
+		    (void) lseek(streamID, (off_t)0, SEEK_SET);
 		    (void) write(streamID, &c, 1);
 		}
 
@@ -1226,7 +1226,7 @@ JobExec(job, argv)
 	if (dup2(FILENO(job->cmdFILE), 0) == -1)
 	    Punt("Cannot dup2: %s", strerror(errno));
 	(void) fcntl(0, F_SETFD, 0);
-	(void) lseek(0, 0, L_SET);
+	(void) lseek(0, (off_t)0, SEEK_SET);
 
 	if (usePipes) {
 	    /*

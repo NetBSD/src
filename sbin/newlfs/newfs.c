@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.6 1997/08/01 06:18:29 mikel Exp $	*/
+/*	$NetBSD: newfs.c,v 1.7 1997/08/25 19:31:52 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.3 (Berkeley) 4/22/94";
 #else
-static char rcsid[] = "$NetBSD: newfs.c,v 1.6 1997/08/01 06:18:29 mikel Exp $";
+static char rcsid[] = "$NetBSD: newfs.c,v 1.7 1997/08/25 19:31:52 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -422,8 +422,8 @@ rewritelabel(s, fd, lp)
 		*(struct disklabel *)(blk + LABELOFFSET) = *lp;
 		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
 		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
-			if (lseek(cfd, (off_t)(alt + i) * lp->d_secsize,
-			    L_SET) == -1)
+			if (lseek(cfd, (off_t)((alt + i) * lp->d_secsize),
+			    SEEK_SET) == -1)
 				fatal("lseek to badsector area: %s",
 				    strerror(errno));
 			if (write(cfd, blk, lp->d_secsize) < lp->d_secsize)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmpproto.c,v 1.8 1997/07/28 05:39:21 thorpej Exp $	*/
+/*	$NetBSD: rmpproto.c,v 1.9 1997/08/25 19:32:06 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rmpproto.c,v 1.8 1997/07/28 05:39:21 thorpej Exp $");
+__RCSID("$NetBSD: rmpproto.c,v 1.9 1997/08/25 19:32:06 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -461,7 +461,7 @@ SendReadRepl(rconn)
 	 *  Position read head on file according to info in request packet.
 	 */
 	GETWORD(req->r_rrq.rmp_offset, size);
-	if (lseek(oldconn->bootfd, (off_t)size, L_SET) < 0) {
+	if (lseek(oldconn->bootfd, (off_t)size, SEEK_SET) < 0) {
 		syslog(LOG_ERR, "SendReadRepl: lseek: %m (%s)",
 		       EnetStr(rconn));
 		rpl->r_rrpl.rmp_retcode = RMP_E_ABORT;
