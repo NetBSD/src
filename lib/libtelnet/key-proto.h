@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.10 2000/06/22 06:47:46 thorpej Exp $	*/
+/*	$NetBSD: key-proto.h,v 1.4 2000/06/22 06:47:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -31,74 +31,38 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)key-proto.h	8.1 (Berkeley) 6/4/93
  */
 
+/*
+ * Copyright (C) 1990 by the Massachusetts Institute of Technology
+ *
+ * Export of this software from the United States of America is assumed
+ * to require a specific license from the United States Government.
+ * It is the responsibility of any person or organization contemplating
+ * export to obtain such a license before exporting.
+ *
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
+ */
+
+#ifndef	__KEY_PROTO__
+#define	__KEY_PROTO__
+
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93";
-#else
-__RCSID("$NetBSD: misc.c,v 1.10 2000/06/22 06:47:46 thorpej Exp $");
+#define P __P
+
+int key_file_exists P((void));
+void key_lookup P((unsigned char *, Block));
+void key_stream_init P((Block, Block, int));
+unsigned char key_stream P((int, int));
 #endif
-#endif /* not lint */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "misc.h"
-#include "auth.h"
-#include "encrypt.h"
-
-const char *RemoteHostName;
-const char *LocalHostName;
-char *UserNameRequested = 0;
-int ConnectedCount = 0;
-
-	void
-auth_encrypt_init(local, remote, name, server)
-	const char *local;
-	const char *remote;
-	const char *name;
-	int server;
-{
-	RemoteHostName = remote;
-	LocalHostName = local;
-#if	defined(AUTHENTICATION)
-	auth_init(name, server);
-#endif
-#ifdef	ENCRYPTION
-	encrypt_init(name, server);
-#endif	/* ENCRYPTION */
-	if (UserNameRequested) {
-		free(UserNameRequested);
-		UserNameRequested = 0;
-	}
-}
-
-	void
-auth_encrypt_user(name)
-	const char *name;
-{
-	if (UserNameRequested)
-		free(UserNameRequested);
-	UserNameRequested = name ? strdup(name) : 0;
-}
-
-	void
-auth_encrypt_connect(cnt)
-	int cnt;
-{
-}
-
-	void
-printd(data, cnt)
-	const unsigned char *data;
-	int cnt;
-{
-	if (cnt > 16)
-		cnt = 16;
-	while (cnt-- > 0) {
-		printf(" %02x", *data);
-		++data;
-	}
-}
