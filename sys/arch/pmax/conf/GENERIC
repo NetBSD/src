@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.83 2000/09/13 03:44:38 nisimura Exp $
+# 	$NetBSD: GENERIC,v 1.84 2000/09/16 00:09:14 simonb Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident		"GENERIC-$Revision: 1.83 $"
+#ident		"GENERIC-$Revision: 1.84 $"
 
 maxusers	64
 
@@ -72,6 +72,8 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP         # FFS soft updates support.
+# VNODE_OP_NOINLINE will produce smaller and possibly slightly faster kernels
+#options 	VNODE_OP_NOINLINE	# don't inline vnode op calls
 
 # Networking options
 options 	INET		# Internet protocols
