@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.3 2002/12/01 00:15:36 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.4 2002/12/04 23:13:09 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -258,9 +258,9 @@ IDTVEC(recurse_/**/name/**/num)						;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
 IDTVEC(resume_/**/name/**/num)						\
-	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
-	pushl	%ebx							;\
 	movl	%ebx,%esi						;\
+	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
+	movl	IS_MAXLEVEL(%ebp),%ebx					;\
 	jmp	1f							;\
 IDTVEC(intr_/**/name/**/num)						;\
 	pushl	$0			/* dummy error code */		;\
@@ -275,12 +275,12 @@ IDTVEC(intr_/**/name/**/num)						;\
 	movl	CPUVAR(ILEVEL),%esi					;\
 	cmpl	%ebx,%esi						;\
 	jae	10f			/* currently masked; hold it */	;\
-	pushl	%esi							;\
-	movl	%ebx,CPUVAR(ILEVEL)					;\
 	incl	MY_COUNT+V_INTR		/* statistical info */		;\
 	addl	$1,IS_EVCNTLO(%ebp)	/* inc event counter */		;\
 	adcl	$0,IS_EVCNTHI(%ebp)					;\
 1:									\
+	pushl	%esi							;\
+	movl	%ebx,CPUVAR(ILEVEL)					;\
 	sti								;\
 	incl	CPUVAR(IDEPTH)						;\
 	movl	IS_HANDLERS(%ebp),%ebx					;\
