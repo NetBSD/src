@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.2 1995/09/03 22:26:02 pk Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.3 1995/09/26 21:04:27 pk Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -170,11 +170,6 @@ ncr5380_send_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	int	sense;
-
-#ifdef	DIAGNOSTIC
-	if ((getsr() & PSL_IPL) < PSL_IPL2)
-		panic("ncr_send_cmd: bad spl");
-#endif
 
 #ifdef	DEBUG
 	if (ncr5380_debug & 2)
