@@ -1,4 +1,4 @@
-/* $NetBSD: bootblks.c,v 1.3 1998/07/28 20:10:54 drochner Exp $ */
+/* $NetBSD: bootblks.c,v 1.4 1999/09/10 16:41:10 drochner Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -79,7 +79,7 @@ createfileondev(diskdev, bootblkname, bp, size)
 				       bootblkpath, backuppath);
 		havebackup = 1;
 	}
-	fd = open(bootblkpath, O_RDWR | O_CREAT | O_EXCL, 0444);
+	fd = open(bootblkpath, O_RDWR | O_CREAT | O_EXCL, 0400);
 	if (fd < 0) {
 		warn("open %s", bootblkpath);
 		goto out;
