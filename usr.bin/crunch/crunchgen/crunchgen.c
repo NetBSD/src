@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.22 2001/09/24 01:05:47 tls Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.23 2001/10/04 04:17:04 jmc Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.22 2001/09/24 01:05:47 tls Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.23 2001/10/04 04:17:04 jmc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -87,12 +87,13 @@ char outmkname[MAXPATHLEN], outcfname[MAXPATHLEN], execfname[MAXPATHLEN];
 char tempfname[MAXPATHLEN], cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
 char topdir[MAXPATHLEN];
 char libdir[MAXPATHLEN] = "/usr/lib";
+char dbg[MAXPATHLEN] = "-Os";
 int linenum = -1;
 int goterror = 0;
 
 char *pname = "crunchgen";
 
-int verbose, readcache;	/* options */
+int verbose, readcache, useobjs;	/* options */
 int reading_cache;
 char *machine;
 char *makeobjdirprefix;
@@ -134,18 +135,21 @@ int main(int argc, char **argv)
     makeobjdirprefix = getenv("MAKEOBJDIRPREFIX");
     verbose = 1;
     readcache = 1;
+    useobjs = 0;
     *outmkname = *outcfname = *execfname = '\0';
     
     if(argc > 0) pname = argv[0];
 
-    while((optc = getopt(argc, argv, "m:c:e:fqD:L:")) != -1) {
+    while((optc = getopt(argc, argv, "m:c:d:e:foqD:L:")) != -1) {
 	switch(optc) {
 	case 'f':	readcache = 0; break;
 	case 'q':	verbose = 0; break;
+	case 'o':       useobjs = 1; break;
 
 	case 'm':	strcpy(outmkname, optarg); break;
 	case 'c':	strcpy(outcfname, optarg); break;
 	case 'e':	strcpy(execfname, optarg); break;
+	case 'd':       strcpy(dbg, optarg); break;
 
 	case 'D':	strcpy(topdir, optarg); break;
 	case 'L':	strcpy(libdir, optarg); break;
@@ -520,7 +524,7 @@ void fillin_program(prog_t *p)
 		p->srcdir = strdup(path);
 	}
     }
-    if(!p->objdir && p->srcdir) {
+    if(!p->objdir && p->srcdir && useobjs) {
 	if (makeobjdirprefix) {
 	    (void)snprintf(path, sizeof(path), "%s/%s", makeobjdirprefix, p->srcdir);
 	    if (is_dir(path))
@@ -546,12 +550,20 @@ void fillin_program(prog_t *p)
     if(!p->objs && p->srcdir && is_nonempty_file(path))
 	fillin_program_objs(p, p->srcdir);
 
-    if(!p->objpaths && p->objdir && p->objs)
-	for(s = p->objs; s != NULL; s = s->next) {
-	    (void)snprintf(line, sizeof(line), "%s/%s", p->objdir, s->str);
-	    add_string(&p->objpaths, line);
+    if(!p->objpaths && p->objs) {
+	if (p->objdir && useobjs) {
+	    for(s = p->objs; s != NULL; s = s->next) {
+		(void)snprintf(line, sizeof(line), "%s/%s", p->objdir, s->str);
+		add_string(&p->objpaths, line);
+	    }
+	} else {
+	    for(s = p->objs; s != NULL; s = s->next) {
+		(void)snprintf(line, sizeof(line), "%s/%s", p->ident, s->str);
+		add_string(&p->objpaths, line);
+	    }
 	}
-
+    }
+	    
     if(!p->srcdir && verbose)
 	fprintf(stderr, "%s: %s: warning: could not find source directory.\n",
 		infilename, p->name);
@@ -599,6 +611,7 @@ void fillin_program_objs(prog_t *p, char *dirpath)
     if((f = popen(line, "r+")) == NULL) {
 	perror("submake pipe");
 	goterror = 1;
+	unlink(tempfname);
 	return;
     }
 
@@ -668,7 +681,7 @@ void gen_specials_cache(void)
 	fprintf(cachef, "\n");
 	if(p->srcdir)
 	    fprintf(cachef, "special %s srcdir %s\n", p->name, p->srcdir);
-	if(p->objdir)
+	if(p->objdir && useobjs)
 	    fprintf(cachef, "special %s objdir %s\n", p->name, p->objdir);
 	if(p->objs) {
 	    fprintf(cachef, "special %s objs", p->name);
@@ -789,7 +802,7 @@ void top_makefile_rules(FILE *outmk)
 {
     prog_t *p;
 
-    fprintf(outmk, "DBG=-Os\n");
+    fprintf(outmk, "DBG=%s\n", dbg);
     fprintf(outmk, "STRIP?=strip\n");
     fprintf(outmk, "CRUNCHIDE?=crunchide\n");
     fprintf(outmk, "LIBS=");
@@ -800,7 +813,8 @@ void top_makefile_rules(FILE *outmk)
     for(p = progs; p != NULL; p = p->next)
 	fprintf(outmk, " %s.cro", p->name);
     fprintf(outmk, "\n");
-
+    fprintf(outmk, "CRUNCHEDOBJSDIRS=${CRUNCHED_OBJS:R}\n\n");
+    
     fprintf(outmk, "SUBMAKE_TARGETS=");
     for(p = progs; p != NULL; p = p->next)
 	fprintf(outmk, " %s_make", p->ident);
@@ -813,7 +827,7 @@ void top_makefile_rules(FILE *outmk)
     fprintf(outmk, "\t$(STRIP) %s\n", execfname);
     fprintf(outmk, "all: objs exe\nobjs: $(SUBMAKE_TARGETS)\n");
     fprintf(outmk, "exe: %s\n", execfname);
-    fprintf(outmk, "clean:\n\trm -f %s *.cro *.o *_stub.c\n",
+    fprintf(outmk, "clean:\n\trm -rf %s *.cro *.o *_stub.c ${CRUNCHEDOBJSDIRS}\n",
 	    execfname);
 }
 
@@ -822,28 +836,38 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 {
     fprintf(outmk, "\n# -------- %s\n\n", p->name);
 
-    if(p->srcdir && p->objs) {
+    fprintf(outmk,   "%s_OBJPATHS=", p->ident);
+    output_strlst(outmk, p->objpaths);
+
+    if(p->srcdir && p->objs && !useobjs) {
 	fprintf(outmk, "%s_SRCDIR=%s\n", p->ident, p->srcdir);
 	fprintf(outmk, "%s_OBJS=", p->ident);
 	output_strlst(outmk, p->objs);
-	fprintf(outmk, "%s_make:\n", p->ident);
-	fprintf(outmk, "\t(cd $(%s_SRCDIR); %s cleanobjs ; %s DBG=${DBG} $(%s_OBJS))\n\n", 
-		p->ident, makebin, makebin, p->ident);
+	fprintf(outmk, "%s_make: ${%s_OBJPATHS}\n", p->ident, p->ident);
+	fprintf(outmk, "${%s_OBJPATHS}: \n", p->ident, p->ident);
+	fprintf(outmk, "\tif [ \\! -d %s ]; then mkdir %s; fi; cd %s; \\\n",
+	    p->ident, p->ident, p->ident);
+	fprintf(outmk, "\tprintf \".PATH: ${%s_SRCDIR}\\n.CURDIR:= ${%s_SRCDIR}\\n"
+	    ".include \\\"\\$${.CURDIR}/Makefile\\\"\\n\" \\\n", p->ident, p->ident);
+	fprintf(outmk, "\t| make COPTS= DBG=${DBG} -f- depend ${%s_OBJS}\n\n",
+	    p->ident);
     }
     else
-	fprintf(outmk, "%s_make:\n\t@echo \"** cannot make objs for %s\"\n\n", 
+        fprintf(outmk, "%s_make:\n\t@echo \"** Using existing objs for %s\"\n\n", 
 		p->ident, p->name);
 
-    fprintf(outmk,   "%s_OBJPATHS=", p->ident);
-    output_strlst(outmk, p->objpaths);
 
     fprintf(outmk, "%s_stub.c:\n", p->name);
     fprintf(outmk, "\techo \""
 	           "int _crunched_%s_stub(int argc, char **argv, char **envp)"
 	           "{return main(argc,argv,envp);}\" >%s_stub.c\n",
 	    p->ident, p->name);
-    fprintf(outmk, "%s.cro: %s_stub.o $(%s_OBJPATHS)\n",
-	    p->name, p->name, p->ident);
+    if (useobjs)
+	    fprintf(outmk, "%s.cro: %s_stub.o\n",
+		p->name, p->name, p->ident);
+    else
+	    fprintf(outmk, "%s.cro: %s_stub.o ${%s_OBJPATHS}\n",
+		p->name, p->name, p->ident);
     fprintf(outmk, "\t${LD} -dc -r -o %s.cro %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
     fprintf(outmk, "\t${CRUNCHIDE} -k _crunched_%s_stub %s.cro\n", 

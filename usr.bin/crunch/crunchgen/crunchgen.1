@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.11 2000/10/30 10:16:15 garbled Exp $
+.\"	$NetBSD: crunchgen.1,v 1.12 2001/10/04 04:17:04 jmc Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -95,12 +95,19 @@ The default name is ``<conf-name>.c''.
 Set crunched binary executable file name to
 .Ar exec-file-name .
 The default name is ``<conf-name>''.
+.It Fl d Ar build-options
+Set the DBG variable in the generated makefile to 
+.Ar build-options .
+The default flags are -Os.
 .It Fl f
 Flush cache.  Forces the recalculation of cached parameters.
 .It Fl m Ar makefile-name
 Set output Makefile name to
 .Ar makefile-name .
 The default name is ``<conf-name>.mk''.
+.It Fl o
+Use existing object files. Rather than rebuilding object files via reach-over
+makefiles, instead search for and use existing object files.
 .It Fl q
 Quiet operation.  Status messages are suppressed.
 .It Fl D Ar src-root
@@ -179,6 +186,10 @@ and if that is not found, the
 .Ar srcdir
 itself becomes the
 .Ar objdir .
+.br 
+.Nm Note:
+This option only takes effect if the -o option to use existing object files is also 
+specified.
 .It Nm special Ar progname Nm objs Ar object-file-name ...
 Set the list of object files for program
 .Ar progname .
@@ -229,6 +240,10 @@ If the environment variable
 .Ev MAKEOBJDIRPREFIX
 is set, the object directory will be prefixed with the path contained in this
 environment variable.
+.br 
+.Nm Note:
+This variable is only used if the -o option to use existing object files is also 
+specified.
 .It Ev MACHINE
 If the environment variable
 .Ev MACHINE
@@ -236,6 +251,10 @@ is set, it is used as the name of the machine type, when accessing object
 directories of the form obj.MACHINE.  If it is not set, it defaults to 
 the machine type returned by
 .Xr uname 3 .
+.br 
+.Nm Note:
+This option is only used if the -o option to use existing object files is also 
+specified.
 .It Ev MAKE
 If the environment variable
 .Ev MAKE
