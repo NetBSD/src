@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.34.4.1 1996/06/13 23:31:14 jtc Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.34.4.2 1996/07/11 00:46:04 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -333,7 +333,7 @@ calcru(p, up, sp, ip)
 	register struct timeval *ip;
 {
 	register u_quad_t u, st, ut, it, tot;
-	register u_long sec, usec;
+	register long sec, usec;
 	register int s;
 	struct timeval tv;
 
