@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.11 1999/02/17 21:44:55 mycroft Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.12 1999/03/22 09:44:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -134,7 +134,9 @@ gus_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	if (!isapnp_devmatch(aux, &isapnp_gus_devinfo))
+	int variant;
+
+	if (!isapnp_devmatch(aux, &isapnp_gus_devinfo, &variant))
 		return 0;
 
 	gus_0 = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.9 1998/10/31 01:44:16 thorpej Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.10 1999/03/22 09:44:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,9 @@ ne_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return isapnp_devmatch(aux, &isapnp_ne_devinfo);
+	int variant;
+
+	return (isapnp_devmatch(aux, &isapnp_ne_devinfo, &variant));
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.17 1998/11/04 00:30:36 fvdl Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.18 1999/03/22 09:44:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -94,7 +94,9 @@ ep_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return isapnp_devmatch(aux, &isapnp_ep_devinfo);
+	int variant;
+
+	return (isapnp_devmatch(aux, &isapnp_ep_devinfo, &variant));
 }
 
 void

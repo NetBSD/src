@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.11 1999/02/22 03:24:34 mycroft Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.12 1999/03/22 09:44:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,7 +84,9 @@ wdc_isapnp_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return isapnp_devmatch(aux, &isapnp_wdc_devinfo);
+	int variant;
+
+	return (isapnp_devmatch(aux, &isapnp_wdc_devinfo, &variant));
 }
 
 void
