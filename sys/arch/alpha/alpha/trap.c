@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 1996/07/14 04:36:21 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 1996/07/15 08:28:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -652,6 +652,81 @@ reg_to_Sfloat(r)
 	return (result);
 }
 
+/*
+ * Conversion of T floating datums to and from register format
+ * requires no bit reordering whatsoever.
+ */
+unsigned long
+Tfloat_reg_cvt(input)
+	unsigned long input;
+{
+
+	return (input);
+}
+
+#ifdef FIX_UNALIGNED_VAX_FP
+unsigned long
+Ffloat_to_reg(f)
+	unsigned int f;
+{
+	unsigned long sign, expn, frlo, frhi;
+	unsigned long result;
+
+	sign = (f & 0x00008000) >> 15;
+	expn = (f & 0x00007f80) >>  7;
+	frhi = (f & 0x0000007f) >>  0;
+	frlo = (f & 0xffff0000) >> 16;
+
+	/* map exponent part, as appropriate. */
+	if ((expn & 0x80) != 0)
+		expn = (0x400 | (expn & ~0x80));
+	else if ((expn & 0x80) == 0 && expn != 0)
+		expn = (0x380 | (expn & ~0x80));
+
+	result = (sign << 63) | (expn << 52) | (frhi << 45) | (frlo << 29);
+	return (result);
+}
+
+unsigned int
+reg_to_Ffloat(r)
+	unsigned long r;
+{
+	unsigned long sign, expn, frhi, frlo;
+	unsigned int result;
+
+	sign = (r & 0x8000000000000000) >> 63;
+	expn = (r & 0x7ff0000000000000) >> 52;
+	frhi = (r & 0x000fe00000000000) >> 45;
+	frlo = (r & 0x00001fffe0000000) >> 29;
+
+	/* map exponent part, as appropriate. */
+	expn = (expn & 0x7f) | ((expn & 0x400) != 0 ? 0x80 : 0x00);
+
+	result = (sign << 15) | (expn << 7) | (frhi << 0) | (frlo << 16);
+	return (result);
+}
+
+/*
+ * Conversion of G floating datums to and from register format is
+ * symmetrical.  Just swap shorts in the quad...
+ */
+unsigned long
+Gfloat_reg_cvt(input)
+	unsigned long input;
+{
+	unsigned long a, b, c, d;
+	unsigned long result;
+
+	a = (input & 0x000000000000ffff) >> 0;
+	b = (input & 0x00000000ffff0000) >> 16;
+	c = (input & 0x0000ffff00000000) >> 32;
+	d = (input & 0xffff000000000000) >> 48;
+
+	result = (a << 48) | (b << 32) | (c << 16) | (d << 0);
+	return (result);
+}
+#endif /* FIX_UNALIGNED_VAX_FP */
+
 extern int	alpha_unaligned_print, alpha_unaligned_fix;
 extern int	alpha_unaligned_sigbus;
 
@@ -749,7 +824,7 @@ unaligned_fixup(va, opcode, reg, p)
 			break;
 
 		case 0x21:			/* ldg */
-			unaligned_load_floating(longdata, Gfloat_to_reg);
+			unaligned_load_floating(longdata, Gfloat_reg_cvt);
 			break;
 #endif
 
@@ -758,7 +833,7 @@ unaligned_fixup(va, opcode, reg, p)
 			break;
 
 		case 0x23:			/* ldt */
-			unaligned_load_floating(longdata, );
+			unaligned_load_floating(longdata, Tfloat_reg_cvt);
 			break;
 
 #ifdef FIX_UNALIGNED_VAX_FP
@@ -767,7 +842,7 @@ unaligned_fixup(va, opcode, reg, p)
 			break;
 
 		case 0x25:			/* stg */
-			unaligned_store_floating(longdata, reg_to_Gfloat);
+			unaligned_store_floating(longdata, Gfloat_reg_cvt);
 			break;
 #endif
 
@@ -776,7 +851,7 @@ unaligned_fixup(va, opcode, reg, p)
 			break;
 
 		case 0x27:			/* stt */
-			unaligned_store_floating(longdata, );
+			unaligned_store_floating(longdata, Tfloat_reg_cvt);
 			break;
 
 		case 0x28:			/* ldl */
