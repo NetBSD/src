@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.5 2001/09/07 04:12:10 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.6 2001/09/20 00:01:10 toshii Exp $	*/
 /*	$KAME: parse.y,v 1.63 2001/08/17 06:28:49 itojun Exp $	*/
 
 /*
@@ -1020,7 +1020,7 @@ setkeymsg_add(type, satype, srcs, dsts)
 			    sizeof(m_addr), (caddr_t)sa, salen);
 
 			/* set dst */
-			sa = s->ai_addr;
+			sa = d->ai_addr;
 			salen = d->ai_addr->sa_len;
 			m_addr.sadb_address_len = PFKEY_UNIT64(sizeof(m_addr) +
 			    PFKEY_ALIGN8(salen));
