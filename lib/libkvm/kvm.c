@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.27 1994/03/01 22:14:13 phil Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.28 1994/03/31 06:06:00 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -696,7 +696,7 @@ kvm_getu(p)
 	 */
 	up = (char *) p->p_addr;
 	for (i = 0; i < UPAGES; i++) {
-		klseek(kmem, (long)up, 0);
+		klseek(kmem, (off_t)up, 0);
 		if (read(kmem, user.upages[i], CLBYTES) != CLBYTES) {
 			setsyserr("cant read page %x of u of pid %d from %s",
 			    up, p->p_pid, kmemf);
