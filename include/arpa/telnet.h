@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.h,v 1.4 1994/10/26 00:56:46 cgd Exp $	*/
+/*	$NetBSD: telnet.h,v 1.5 1997/03/25 18:46:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -198,16 +198,33 @@ char *telopts[NTELOPTS+1] = {
 #define	SLC_XOFF	16
 #define	SLC_FORW1	17
 #define	SLC_FORW2	18
+#define	SLC_MCL         19
+#define	SLC_MCR         20
+#define	SLC_MCWL        21
+#define	SLC_MCWR        22
+#define	SLC_MCBOL       23
+#define	SLC_MCEOL       24
+#define	SLC_INSRT       25
+#define	SLC_OVER        26
+#define	SLC_ECR         27
+#define	SLC_EWR         28
+#define	SLC_EBOL        29
+#define	SLC_EEOL        30
 
-#define	NSLC		18
+#define	NSLC		30
 
 /*
  * For backwards compatability, we define SLC_NAMES to be the
  * list of names if SLC_NAMES is not defined.
  */
-#define	SLC_NAMELIST	"0", "SYNCH", "BRK", "IP", "AO", "AYT", "EOR", \
-			"ABORT", "EOF", "SUSP", "EC", "EL", "EW", "RP", \
-			"LNEXT", "XON", "XOFF", "FORW1", "FORW2", 0,
+#define	SLC_NAMELIST	"0", "SYNCH", "BRK", "IP", "AO", "AYT", "EOR",	\
+ 			"ABORT", "EOF", "SUSP", "EC", "EL", "EW", "RP",	\
+ 			"LNEXT", "XON", "XOFF", "FORW1", "FORW2",	\
+ 			"MCL", "MCR", "MCWL", "MCWR", "MCBOL",		\
+ 			"MCEOL", "INSRT", "OVER", "ECR", "EWR",		\
+ 			"EBOL", "EEOL",					\
+ 			0,
+
 #ifdef	SLC_NAMES
 char *slc_names[] = {
 	SLC_NAMELIST
