@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.39 1997/10/07 10:02:03 drochner Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.40 1997/10/09 08:35:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -150,7 +150,8 @@ shm_delete_mapping(p, shmmap_s)
 	segnum = IPCID_TO_IX(shmmap_s->shmid);
 	shmseg = &shmsegs[segnum];
 	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
-	result = vm_map_remove(&p->p_vmspace->vm_map, shmmap_s->va, shmmap_s->va + size);
+	result = vm_map_remove(&p->p_vmspace->vm_map,
+			       shmmap_s->va, shmmap_s->va + size);
 	if (result != KERN_SUCCESS)
 		return EINVAL;
 	shmmap_s->shmid = -1;
@@ -387,6 +388,7 @@ shmget_allocate_segment(p, uap, mode, retval)
 	struct shmid_ds *shmseg;
 	struct shm_handle *shm_handle;
 	vm_pager_t pager;
+	int error = 0;
 	
 	if (SCARG(uap, size) < shminfo.shmmin ||
 	    SCARG(uap, size) > shminfo.shmmax)
@@ -421,9 +423,9 @@ shmget_allocate_segment(p, uap, mode, retval)
 	
 	shm_handle->shm_object = vm_object_allocate(size);
 	if (shm_handle->shm_object == NULL) {
-		free(shm_handle, M_SHM);
-		shmseg->shm_perm.mode = SHMSEG_FREE;
-		return ENOMEM;
+		/* XXX cannot happen */
+		error = ENOMEM;
+		goto out;
 	}
 	/*
 	 * We make sure that we have allocated a pager before we need
@@ -431,10 +433,8 @@ shmget_allocate_segment(p, uap, mode, retval)
 	 */
 	pager = vm_pager_allocate(PG_DFLT, 0, size, VM_PROT_DEFAULT, 0);
 	if (pager == NULL) {
-		vm_object_deallocate(shm_handle->shm_object);
-		free(shm_handle, M_SHM);
-		shmseg->shm_perm.mode = SHMSEG_FREE;
-		return ENOMEM;
+		error = ENOMEM;
+		goto out;
 	}
 	vm_object_setpager(shm_handle->shm_object, pager, 0, 0);
 	shmseg->shm_internal = shm_handle;
@@ -449,6 +449,16 @@ shmget_allocate_segment(p, uap, mode, retval)
 	shmseg->shm_ctime = time.tv_sec;
 	shm_committed += btoc(size);
 	shm_nused++;
+
+out:
+	if (error) {
+		if (shm_handle->shm_object != NULL)
+			vm_object_deallocate(shm_handle->shm_object);
+		free(shm_handle, M_SHM);
+		shmseg->shm_perm.mode = (shmseg->shm_perm.mode & SHMSEG_WANTED)
+		    | SHMSEG_FREE;
+	} else
+		*retval = shmid;
 	if (shmseg->shm_perm.mode & SHMSEG_WANTED) {
 		/*
 		 * Somebody else wanted this key while we were asleep.  Wake
@@ -457,8 +467,7 @@ shmget_allocate_segment(p, uap, mode, retval)
 		shmseg->shm_perm.mode &= ~SHMSEG_WANTED;
 		wakeup((caddr_t)shmseg);
 	}
-	*retval = shmid;
-	return 0;
+	return error;
 }
 
 int
