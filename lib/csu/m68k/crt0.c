@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.7 1994/03/28 05:26:07 cgd Exp $
+ *	$Id: crt0.c,v 1.8 1994/04/05 02:26:16 cgd Exp $
  */
 
 
@@ -102,7 +102,8 @@ char			*__progname = empty;
     __syscall(SYS_mmap, (addr), (len), (prot), _MAP_NEW|(flags), (fd), (off))
 #else
 #define mmap(addr, len, prot, flags, fd, off)	\
-    __syscall(SYS_mmap, (addr), (len), (prot), (flags), (fd), (off_t)(off))
+    __syscall(SYS___syscall, (quad_t)SYS_mmap, (addr), (len), (prot), (flags), \
+	(fd), 0, (off_t)(off))
 #endif
 
 #define _FATAL(str) \
