@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 1999/09/12 01:17:29 chs Exp $	   */
+/*	$NetBSD: pmap.c,v 1.72 1999/10/27 16:37:54 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -237,7 +237,7 @@ pmap_bootstrap()
 	virtual_end = TRUNC_PAGE(virtual_end);
 
 
-#if defined(PMAPDEBUG)
+#if 0 /* Breaks cninit() on some machines */
 	cninit();
 	printf("Sysmap %p, istack %lx, scratch %p\n",Sysmap,istack,scratch);
 	printf("etext %p\n", &etext);
