@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.16 2001/09/16 05:32:20 uch Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.17 2001/10/24 04:09:23 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -303,16 +303,15 @@ __find_pcic(void)
 #ifdef DEBUG_FIND_PCIC_I82365SL_ONLY
 			    if (reg == 0x82 || reg == 0x83) {
 #else
-				    if ((reg & 0xc0) == 0x80) {
+			    if ((reg & 0xc0) == 0x80) {
 #endif
 					    found++;
-				    }
 			    }
 			    if (found)
 				    printf("\nfound %d socket at %#x"
 					"(base from %#x)\n", found, addr,
 					i + port - VR_ISA_PORT_BASE);
-		    };
+		    }
 	    }
 	step = 0x1000000;
 	printf("\nFinding PCIC. Trying ISA port %#x-%#x step %#x\n", 
