@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.29 2003/04/04 04:03:18 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.30 2003/08/17 18:08:17 chs Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -362,12 +362,14 @@
 #define	  MSSCR0_SHDEN		  0x80000000 /* 0: Shared-state enable */
 #define	  MSSCR0_SHDPEN3	  0x40000000 /* 1: ~SHD[01] signal enable in MEI mode */
 #define	  MSSCR0_L1INTVEN	  0x38000000 /* 2-4: L1 data cache ~HIT intervention enable */
-#define	  MSSCR0_L2INTVEN	  0x07000000 /* 5-7: L2 data cache ~HIT intervention enable*/
+#define	  MSSCR0_L2INTVEN	  0x07000000 /* 5-7: L2 data cache ~HIT intervention enable */
 #define	  MSSCR0_DL1HWF		  0x00800000 /* 8: L1 data cache hardware flush */
 #define	  MSSCR0_MBO		  0x00400000 /* 9: must be one */
 #define	  MSSCR0_EMODE		  0x00200000 /* 10: MPX bus mode (read-only) */
 #define	  MSSCR0_ABD		  0x00100000 /* 11: address bus driven (read-only) */
-#define	  MSSCR0_MBZ		  0x000fffff /* 12-31: must be zero */
+#define	  MSSCR0_BMODE		  0x0000c000 /* 16-17: Bus Mode (read-only) (7450) */
+#define	  MSSCR0_ID		  0x00000040 /* 26: Processor ID */
+#define	  MSSCR0_L2PFE		  0x00000003 /* 30-31: L2 prefetching enabled (7450) */
 #define	SPR_DAC2		0x3f7	/* 4.. Data Address Compare 2 */
 #define	SPR_L2PM		0x3f8	/* .6. L2 Private Memory Control Register */
 #define	SPR_L2CR		0x3f9	/* .6. L2 Control Register */
