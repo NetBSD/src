@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.c,v 1.7 1995/03/04 01:56:04 cgd Exp $	*/
+/*	$NetBSD: signal.c,v 1.8 1997/07/13 19:46:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)signal.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: signal.c,v 1.7 1995/03/04 01:56:04 cgd Exp $";
+__RCSID("$NetBSD: signal.c,v 1.8 1997/07/13 19:46:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

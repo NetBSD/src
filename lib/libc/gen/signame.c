@@ -1,4 +1,4 @@
-/*	$NetBSD: signame.c,v 1.6 1995/03/04 01:56:05 cgd Exp $	*/
+/*	$NetBSD: signame.c,v 1.7 1997/07/13 19:46:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "from: @(#)siglist.c	5.6 (Berkeley) 2/23/91";*/
 #else
-static char rcsid[] = "$NetBSD: signame.c,v 1.6 1995/03/04 01:56:05 cgd Exp $";
+__RCSID("$NetBSD: signame.c,v 1.7 1997/07/13 19:46:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

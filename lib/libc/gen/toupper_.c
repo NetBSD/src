@@ -1,12 +1,13 @@
-/*	$NetBSD: toupper_.c,v 1.7 1995/05/11 23:03:44 jtc Exp $	*/
+/*	$NetBSD: toupper_.c,v 1.8 1997/07/13 19:46:23 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_RCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: toupper_.c,v 1.7 1995/05/11 23:03:44 jtc Exp $";
+__RCSID("$NetBSD: toupper_.c,v 1.8 1997/07/13 19:46:23 christos Exp $");
 #endif /* LIBC_RCS and not lint */
 
 #include <stdio.h>

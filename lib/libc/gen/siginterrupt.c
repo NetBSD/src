@@ -1,4 +1,4 @@
-/*	$NetBSD: siginterrupt.c,v 1.7 1996/04/03 19:49:03 jtc Exp $	*/
+/*	$NetBSD: siginterrupt.c,v 1.8 1997/07/13 19:46:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)siginterrupt.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: siginterrupt.c,v 1.7 1996/04/03 19:49:03 jtc Exp $";
+__RCSID("$NetBSD: siginterrupt.c,v 1.8 1997/07/13 19:46:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

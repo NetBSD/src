@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.c,v 1.6 1995/02/25 08:50:56 cgd Exp $	*/
+/*	$NetBSD: assert.c,v 1.7 1997/07/13 19:45:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)assert.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: assert.c,v 1.6 1995/02/25 08:50:56 cgd Exp $";
+__RCSID("$NetBSD: assert.c,v 1.7 1997/07/13 19:45:38 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
