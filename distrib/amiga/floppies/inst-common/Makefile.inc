@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 1997/05/14 22:19:48 is Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1997/06/23 21:18:34 thorpej Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -16,11 +16,13 @@ LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
 
+DISKTYPE=	miniroot
+
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} bs=128k count=32
-	vnconfig -v -c ${VND_DEV} ${IMAGE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND_DEV} ${IMAGE}
 	installboot ${MDEC}/xxboot ${VND_RDEV}
-	newfs -c 64 -m 0 -o space ${VND_RDEV} miniroot
+	newfs -c 64 -m 0 -o space ${VND_RDEV} ${DISKTYPE}
 	mount -t ffs ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
