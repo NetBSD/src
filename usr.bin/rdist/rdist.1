@@ -1,5 +1,5 @@
-.\" Copyright (c) 1985, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1985, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)rdist.1	6.11 (Berkeley) 7/27/91
+.\"	@(#)rdist.1	8.3 (Berkeley) 3/17/94
 .\"
-.Dd July 27, 1991
+.Dd March 17, 1994
 .Dt RDIST 1
 .Os BSD 4.3
 .Sh NAME
@@ -42,7 +42,7 @@
 .Op Fl nqbRhivwy
 .Op Fl f Ar distfile
 .Op Fl d Ar var=value
-.Op Fl m host
+.Op Fl m Ar host
 .Op Ar name ...
 .Nm rdist
 .Op Fl nqbRhivwy
@@ -139,12 +139,12 @@ link itself.
 .It Fl i
 Ignore unresolved links.
 .Nm Rdist
-will normally try to maintain the link structure of files being transfered
+will normally try to maintain the link structure of files being transferred
 and warn the user if all the links cannot be found.
 .It Fl m Ar host
 Limit which machines are to be updated. Multiple
 .Fl m
-arguments can be given to limit updates to a subset of the hosts listed the
+arguments can be given to limit updates to a subset of the hosts listed in the
 .Ar distfile  .
 .It Fl n
 Print the commands without executing them. This option is
@@ -158,7 +158,7 @@ option suppresses this.
 .It Fl R
 Remove extraneous files. If a directory is being updated, any files that exist
 on the remote host that do not exist in the master directory are removed.
-This is useful for maintaining truely identical copies of directories.
+This is useful for maintaining truly identical copies of directories.
 .It Fl v
 Verify that the files are up to date on all the hosts. Any files
 that are out of date will be displayed but no files will be changed
@@ -287,7 +287,7 @@ unless the destination name is of the format ``login@host".
 The
 .Ic notify
 command is used to mail the list of files updated (and any errors
-that may have occured) to the listed names.
+that may have occurred) to the listed names.
 If no `@' appears in the name, the destination host is appended to
 the name
 (e.g., name1@host, name2@host, ...).
