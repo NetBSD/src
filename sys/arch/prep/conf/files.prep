@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.29 2002/04/22 09:41:20 augustss Exp $
+#	$NetBSD: files.prep,v 1.30 2002/04/25 20:38:18 nonaka Exp $
 #
 # prep-specific configuration info
 #
@@ -21,6 +21,7 @@ file	arch/prep/prep/autoconf.c
 file	arch/prep/prep/bus_space.c
 file	arch/prep/prep/clock.c
 file	arch/prep/prep/conf.c
+file	arch/prep/prep/consinit.c
 file	arch/prep/prep/disksubr.c		disk
 file	arch/prep/prep/extintr.c
 file	arch/prep/prep/machdep.c
