@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.62 2003/04/03 02:39:50 jrf Exp $	*/
+/*	$NetBSD: route.c,v 1.63 2003/04/21 13:42:50 jrf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.62 2003/04/03 02:39:50 jrf Exp $");
+__RCSID("$NetBSD: route.c,v 1.63 2003/04/21 13:42:50 jrf Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,13 +163,6 @@ main(argc, argv)
 	if (argc < 2)
 		usage(NULL);
 
-	/* The -d (debugonly) and -t (tflag) are for program debugging
-	 * and are deliberately not documented.
-	 *
-	 * debugonly fakes the operation. If it is manipulating a route
-	 * it will flush all routes not associated with a network interface.
-	 * tflag uses /dev/null instead of a real socket.
-	 */
 	while ((ch = getopt(argc, argv, "fnqvdts")) != -1)
 		switch(ch) {
 		case 'f':
@@ -1063,12 +1056,30 @@ inet_makenetandmask(net, isin)
 	else if (net < 128) {
 		addr = net << IN_CLASSA_NSHIFT;
 		mask = IN_CLASSA_NET;
-	} else if (net < 65536) {
+	} else if (net < 192) {
+		addr = net << IN_CLASSA_NSHIFT;
+		mask = IN_CLASSB_NET;
+	} else if (net < 224) {
+		addr = net << IN_CLASSA_NSHIFT;
+		mask = IN_CLASSC_NET;
+	} else if (net < 256) {
+		addr = net << IN_CLASSA_NSHIFT;
+		mask = IN_CLASSD_NET;
+	} else if (net < 49152) { /* 192 * 256 */
 		addr = net << IN_CLASSB_NSHIFT;
 		mask = IN_CLASSB_NET;
-	} else if (net < 16777216L) {
+	} else if (net < 57344) { /* 224 * 256 */
+		addr = net << IN_CLASSB_NSHIFT;
+		mask = IN_CLASSC_NET;
+	} else if (net < 65536) { /* XXX See above */
+		addr = net << IN_CLASSB_NSHIFT;
+		mask = IN_CLASSB_NET;
+	} else if (net < 14680064L) { /* 224 * 65536 */
 		addr = net << IN_CLASSC_NSHIFT;
 		mask = IN_CLASSC_NET;
+	} else if (net < 16777216L) { 
+		addr = net << IN_CLASSC_NSHIFT;
+		mask = IN_CLASSD_NET;
 	} else {
 		addr = net;
 		if ((addr & IN_CLASSA_HOST) == 0)
