@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 1998/02/10 14:09:11 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.24 1998/02/18 02:05:36 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -174,7 +174,6 @@ boolean_t	 pmap_is_modified __P((vm_offset_t pa));
 boolean_t	 pmap_is_referenced __P((vm_offset_t pa));
 #endif	/* PMAP_NEW */
 
-vm_offset_t	 pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 #if !defined(MACHINE_NEW_NONCONTIG)
 #ifndef pmap_page_index
 int		 pmap_page_index __P((vm_offset_t));
