@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.3 1997/04/14 16:56:26 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.4 1997/04/18 05:53:41 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996, 1997 John P. Wittkoski
@@ -53,13 +53,11 @@
 #define printf_intr printf
 #else
 #include "via.h"				/* for macos based testing */
+typedef unsigned char	u_char;
 #endif
 
 /* more verbose for testing */
 /*#define DEBUG*/
-
-/* include changes to work with Takashi's Power Manager support */
-/*#define ADB_PB_TESTING*/
 
 /* some misc. leftovers */
 #define vPB		0x0000
@@ -155,10 +153,10 @@ struct ADBDevEntry	{
  * Used to hold ADB commands that are waiting to be sent out.
  */
 struct adbCmdHoldEntry {
-	u_char outBuf[MAX_ADB_MSG_LENGTH];	/* our message */
-	u_char *saveBuf;	/* buffer to know where to save result */
-	u_char *compRout;	/* completion routine pointer */
-	u_char *data;		/* completion routine data pointer */
+	u_char	outBuf[MAX_ADB_MSG_LENGTH];	/* our message */
+	u_char	*saveBuf;	/* buffer to know where to save result */
+	u_char	*compRout;	/* completion routine pointer */
+	u_char	*data;		/* completion routine data pointer */
 };
 
 /*
@@ -199,51 +197,49 @@ struct ADBDevEntry ADBDevTable[16];	/* our ADB device table */
 int	ADBNumDevices;		/* number of ADB devices found with ADBReInit */
 
 extern struct mac68k_machine_S mac68k_machine;
-extern int zshard(int);
 
-#ifdef ADB_PB_TESTING
-extern void pm_setup_adb(void);
-extern void pm_check_adb_devices(int);
-extern void pm_intr(void);
-extern int pm_adb_op(u_char *, void *, void *, int);
-extern void pm_init_adb_device(void);
-#endif
+int	zshard __P((int));
 
+void	pm_setup_adb __P((void));
+void	pm_check_adb_devices __P((int));
+void	pm_intr __P((void));
+int	pm_adb_op __P((u_char *, void *, void *, int));
+void	pm_init_adb_device __P((void));
 
 /*
  * The following are private routines.
  */
-void print_single __P((unsigned char *));
-void adb_intr __P((void));
-void adb_intr_II __P((void));
-void adb_intr_IIsi __P((void));
-void adb_intr_cuda __P((void));
-int send_adb_II __P((unsigned char *, unsigned char *, void *, void *, int));
-int send_adb_IIsi __P((unsigned char *, unsigned char *, void *, void *, int));
-int send_adb_cuda __P((unsigned char *, unsigned char *, void *, void *, int));
-void adb_intr_cuda_test __P((void));
-void adb_handle_unsol __P((unsigned char *));
-void adb_op_comprout __P((void));
-void adb_reinit __P((void));
-int count_adbs __P((void));
-int get_ind_adb_info __P((ADBDataBlock *, int));
-int get_adb_info __P((ADBDataBlock *, int));
-int set_adb_info __P((ADBSetInfoBlock *, int));
-void adb_setup_hw_type __P((void));
-int adb_op __P((Ptr, Ptr, Ptr, short));
-void adb_handle_unsol __P((unsigned char *));
-int adb_op_sync __P((Ptr, Ptr, Ptr, short));
-void adb_read_II __P((unsigned char *));
-void adb_cleanup __P((unsigned char *));
-void adb_cleanup_IIsi __P((unsigned char *));
-void adb_comp_exec __P((void));
-int adb_cmd_result __P((unsigned char *));
-int adb_cmd_extra __P((unsigned char *));
-int adb_guess_next_device __P((void));
-int adb_prog_switch_enable __P((void));
-int adb_prog_switch_disable __P((void));
+void	print_single __P((u_char *));
+void	adb_intr __P((void));
+void	adb_intr_II __P((void));
+void	adb_intr_IIsi __P((void));
+void	adb_intr_cuda __P((void));
+int	send_adb_II __P((u_char *, u_char *, void *, void *, int));
+int	send_adb_IIsi __P((u_char *, u_char *, void *, void *, int));
+int	send_adb_cuda __P((u_char *, u_char *, void *, void *, int));
+void	adb_intr_cuda_test __P((void));
+void	adb_handle_unsol __P((u_char *));
+void	adb_op_comprout __P((void));
+void	adb_reinit __P((void));
+int	count_adbs __P((void));
+int	get_ind_adb_info __P((ADBDataBlock *, int));
+int	get_adb_info __P((ADBDataBlock *, int));
+int	set_adb_info __P((ADBSetInfoBlock *, int));
+void	adb_setup_hw_type __P((void));
+int	adb_op __P((Ptr, Ptr, Ptr, short));
+void	adb_handle_unsol __P((u_char *));
+int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
+void	adb_read_II __P((u_char *));
+void	adb_cleanup __P((u_char *));
+void	adb_cleanup_IIsi __P((u_char *));
+void	adb_comp_exec __P((void));
+int	adb_cmd_result __P((u_char *));
+int	adb_cmd_extra __P((u_char *));
+int	adb_guess_next_device __P((void));
+int	adb_prog_switch_enable __P((void));
+int	adb_prog_switch_disable __P((void));
 /* we should create this and it will be the public version */
-int send_adb __P((unsigned char *, void *, void *));
+int	send_adb __P((u_char *, void *, void *));
 
   
 /*
@@ -1488,6 +1484,7 @@ adb_handle_unsol(u_char *in)
                 
         case ADB_HW_PB:
 		return;		/* how does PM handle "unsolicited" messages? */
+
         case ADB_HW_UNKNOWN:
                 return;
         }
@@ -1550,7 +1547,12 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 		break;
 
         case ADB_HW_PB:
-                return -1;
+		result = pm_adb_op((u_char *)buffer, (void *)compRout,
+		    (void *)data, (int)command);
+		if (result == 0)
+			return 0;
+		else
+			return -1;
                 break;
 
         case ADB_HW_CUDA:
@@ -1588,10 +1590,8 @@ adb_cleanup(u_char *in)
                 break;
 
         case ADB_HW_PB:
-#ifdef ADB_PB_TESTING
 		/* TO DO: really PM_VIA_CLR_INTR - should we put it in pm_direct.h? */
                 via_reg(VIA1, vIFR) = 0x90;   /* clear interrupt */
-#endif
                 break;
 
         case ADB_HW_CUDA:
@@ -1682,13 +1682,13 @@ adb_reinit(void)
 	int	nonewtimes;	/* times thru loop w/o any new devices */
 	ADBDataBlock data;	/* temp. holder for getting device info */
 
+	(void)(&s);		/* work around lame GCC bug */
+
         /* Make sure we are not interrupted while building the table. */
-#ifdef ADB_PB_TESTING		/* later this ifdef should come out */
 	if (adbHardware != ADB_HW_PB )	/* ints must be on for PB? */
-#endif
        		s = splhigh();
 
-        ADBNumDevices=0;	/* no devices yet */
+        ADBNumDevices = 0;	/* no devices yet */
 
         /* Let intr routines know we are running reinit */
         adbStarting = 1;
@@ -1869,9 +1869,7 @@ adb_reinit(void)
         adbStarting = 0;        /* not starting anymore */
         printf_intr("adb: ADBReInit complete\n");
 
-#ifdef ADB_PB_TESTING		/* later this ifdef should come out */
 	if (adbHardware != ADB_HW_PB )	/* ints must be on for PB? */
-#endif
         	splx(s);
         return;
 }
@@ -2041,15 +2039,9 @@ adb_setup_hw_type(void)
         case 33:        /* PowerBook 180 */
         case 71:        /* PowerBook 180c */
         case 115:       /* PowerBook 150 */
-#ifdef ADB_PB_TESTING
                 adbHardware=ADB_HW_PB;
                 pm_setup_adb();
                 printf_intr("adb: using PowerBook 100-series hardware support\n");
-#else
-                adbHardware = ADB_HW_UNKNOWN;   /* really ADB_HW_PB, but that's not done yet */
-                printf_intr("adb: hardware type (PowerBook 1xx) not yet supported for this machine\n");
-                printf_intr("adb: ADB support is disabled\n");
-#endif
                 break;
         case 29:        /* PowerBook Duo 210 */
         case 32:        /* PowerBook Duo 230 */
@@ -2058,15 +2050,9 @@ adb_setup_hw_type(void)
         case 77:        /* PowerBook Duo 270 */
         case 102:       /* PowerBook Duo 280 */
         case 103:       /* PowerBook Duo 280c */
-#ifdef ADB_PB_TESTING
-                adbHardware=ADB_HW_PB;
+                adbHardware = ADB_HW_PB;
                 pm_setup_adb();
 		printf_intr("adb: using PowerBook Duo-series and PowerBook 500-series hardware support\n");
-#else
-                adbHardware = ADB_HW_UNKNOWN;   /* really ADB_HW_PB, but that's not done yet */
-                printf_intr("adb: hardware type (PowerBook Duo/5xx) not yet supported for this machine\n");
-                printf_intr("adb: ADB support is disabled\n");
-#endif
                 break;
         case 60:        /* Centris 660AV */
         case 78:        /* Quadra 840AV */
@@ -2170,9 +2156,7 @@ mrg_adbintr(void)
 long
 mrg_pmintr(void)	/* we don't do this yet */
 {
-#ifdef ADB_PB_TESTING
 	pm_intr();
-#endif
 	return 1;	/* mimic mrg_pmintr in macrom.h just in case */
 }
 #endif /* !MRG_ADB */
