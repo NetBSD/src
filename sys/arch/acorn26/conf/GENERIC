@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.16.2.1 2004/06/30 20:59:45 jdc Exp $
+# $NetBSD: GENERIC,v 1.16.2.2 2004/07/02 17:40:29 he Exp $
 #
 # GENERIC machine description file
 # 
@@ -120,6 +120,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
