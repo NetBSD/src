@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 1998/02/18 13:48:32 tsubai Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 1998/06/09 11:30:09 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -48,8 +48,6 @@ struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mbmatch, mbattach
 };
 
-extern struct cfdriver mainbus_cd;
-
 static int
 mbmatch(parent, cfdata, aux)
 	struct device *parent;
@@ -64,8 +62,6 @@ mbmatch(parent, cfdata, aux)
 	return 1;
 }
 
-int ncpus = 0;	/* only support uniprocessors, for now */
-
 static void
 mbattach(parent, self, aux)
 	struct device *parent;
@@ -75,17 +71,8 @@ mbattach(parent, self, aux)
 	register struct device *mb = self;
 	struct confargs nca;
 
-	extern int ncpus;
-
 	printf("\n");
 
-	/*
-	 * if we ever support multi-CPU DEcstations (5800 family),
-	 * the Alpha port's mainbus.c has an example of attaching
-	 * multiple CPUs.
-	 *
-	 * For now, we only have one. Attach it directly.
-	 */
 	nca.ca_name = "cpu";
 	nca.ca_slot = 0;
 	nca.ca_offset = 0;
