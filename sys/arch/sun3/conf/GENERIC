@@ -1,7 +1,7 @@
-#	$NetBSD: GENERIC,v 1.12 1995/01/24 05:48:27 gwr Exp $
+#	$NetBSD: GENERIC,v 1.13 1995/02/11 21:01:20 gwr Exp $
 
 #
-# GENERIC kernel - supports root on: le0, sd*
+# GENERIC kernel - supports root on: ie0, le0, sd*, ...
 #
 
 include "std.sun3"
@@ -12,6 +12,7 @@ options		"SUN3_60"
 options		"SUN3_110"
 options		"SUN3_160"
 options		"SUN3_260"
+options 	FPCOPROC
 options		GENERIC
 
 # Needs to be set per system.  i.e change these as you see fit
