@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.13.4.1 1999/12/04 19:53:12 he Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.13.4.2 1999/12/16 22:22:05 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -389,7 +389,7 @@ fdcattach(parent, self, aux)
 	/*
 	 * Setup the interrupt logic.
 	 */
-	MFP2->mf_iprb &= ~IB_DCHG;
+	MFP2->mf_iprb  = (u_int8_t)~IB_DCHG;
 	MFP2->mf_imrb |= IB_DCHG;
 	MFP2->mf_aer  |= 0x10; /* fdc int low->high */
 
