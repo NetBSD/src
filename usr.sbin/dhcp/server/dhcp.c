@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.7 1999/03/26 17:52:46 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.8 1999/03/29 23:08:23 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -310,6 +310,25 @@ void dhcprequest (packet)
            available for the client, NAK it. */
 	if (!lease && ours) {
 		nak_lease (packet, &cip);
+		return;
+	}
+
+	/* If we're not allowed to serve this client anymore, don't. */
+	if (!lease -> host &&
+	    !lease -> subnet -> group -> boot_unknown_clients) {
+		note ("Ignoring unknown client %s",
+		      print_hw_addr (packet -> raw -> htype,
+				     packet -> raw -> hlen,
+				     packet -> raw -> chaddr));
+		return;
+	} else if (lease -> host &&
+		    !lease -> host -> group -> allow_booting) {
+		note ("Declining to renew client %s",
+		      lease -> host -> name
+		      ? lease -> host -> name
+		      : print_hw_addr (packet -> raw -> htype,
+				       packet -> raw -> hlen,
+				       packet -> raw -> chaddr));
 		return;
 	}
 
@@ -1274,7 +1293,6 @@ struct lease *find_lease (packet, share, ours)
 	struct iaddr cip;
 	struct host_decl *hp, *host = (struct host_decl *)0;
 	struct lease *fixed_lease;
-	int i;
 
 	/* Figure out what IP address the client is requesting, if any. */
 	if (packet -> options [DHO_DHCP_REQUESTED_ADDRESS].len &&
