@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.270 2000/10/19 05:52:16 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.271 2000/10/27 17:37:03 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.266 2000/10/19 05:51:34 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.267 2000/10/27 17:36:44 thorpej Exp 
  */
 
 /*
@@ -3500,6 +3500,66 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "PC Technology",
 	    "RZ1000",
+	},
+	{
+	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_ROSB4,
+	    0,
+	    "Pequr Technology",
+	    "ROSB4 SouthBridge",
+	},
+	{
+	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_XX5,
+	    0,
+	    "Pequr Technology",
+	    "PCIHB5",
+	},
+	{
+	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CIOB20,
+	    0,
+	    "Pequr Technology",
+	    "I/O Bridge",
+	},
+	{
+	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_XX7,
+	    0,
+	    "Pequr Technology",
+	    "PCIHB7",
+	},
+	{
+	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CNB20HE,
+	    0,
+	    "Pequr Technology",
+	    "CNB20HE Host",
+	},
+	{
+	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CNB20LE,
+	    0,
+	    "Pequr Technology",
+	    "CNB20LE Host",
+	},
+	{
+	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CIOB30,
+	    0,
+	    "Pequr Technology",
+	    "CIOB30",
+	},
+	{
+	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CMIC_HE,
+	    0,
+	    "Pequr Technology",
+	    "CMIC_HE Host",
+	},
+	{
+	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_IDE,
+	    0,
+	    "Pequr Technology",
+	    "IDE",
+	},
+	{
+	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_USB,
+	    0,
+	    "Pequr Technology",
+	    "USB",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9060ES,
