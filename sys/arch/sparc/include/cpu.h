@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2000/06/03 20:43:28 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.40 2000/06/05 20:47:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
  */
 #define	curcpu()		(cpuinfo.ci_self)
 #define	curproc			(curcpu()->ci_curproc)
-#define	CPU_IS_PRIMARY(ci)	((ci)->ci_master)
+#define	CPU_IS_PRIMARY(ci)	((ci)->master)
 
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
