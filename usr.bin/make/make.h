@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.49 2003/09/27 21:29:37 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.50 2003/12/07 20:30:28 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -413,6 +413,7 @@ extern int debug;
 #define DEBUG_FOR	0x0400
 #define DEBUG_SHELL	0x0800
 #define DEBUG_ERROR	0x1000
+#define	DEBUG_GRAPH3	0x10000
 
 #define CONCAT(a,b)	a##b
 
