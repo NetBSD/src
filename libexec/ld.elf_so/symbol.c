@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.20 2002/09/23 23:56:49 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.21 2002/09/24 20:23:12 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -75,7 +75,7 @@ _rtld_elf_hash(name)
 
 const Elf_Sym *
 _rtld_symlook_list(const char *name, unsigned long hash, Objlist *objlist,
-  const Obj_Entry **defobj_out)
+  const Obj_Entry **defobj_out, bool in_plt)
 {
 	const Elf_Sym *symp;
 	const Elf_Sym *def;
@@ -85,7 +85,7 @@ _rtld_symlook_list(const char *name, unsigned long hash, Objlist *objlist,
 	def = NULL;
 	defobj = NULL;
 	SIMPLEQ_FOREACH(elm, objlist, link) {
-		if ((symp = _rtld_symlook_obj(name, hash, elm->obj))
+		if ((symp = _rtld_symlook_obj(name, hash, elm->obj, in_plt))
 		    != NULL) {
 			if ((def == NULL) ||
 			    (ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
@@ -110,10 +110,11 @@ _rtld_symlook_list(const char *name, unsigned long hash, Objlist *objlist,
  * eliminates many recomputations of the hash value.
  */
 const Elf_Sym *
-_rtld_symlook_obj(name, hash, obj)
+_rtld_symlook_obj(name, hash, obj, in_plt)
 	const char *name;
 	unsigned long hash;
 	const Obj_Entry *obj;
+	bool in_plt;
 {
 	unsigned long symnum;
 
@@ -129,6 +130,11 @@ _rtld_symlook_obj(name, hash, obj)
 		if (name[1] == strp[1] && !strcmp(name, strp)) {
 			if (symp->st_shndx != SHN_UNDEF)
 				return symp;
+#ifndef __mips__
+			else if (!in_plt && symp->st_value != 0 &&
+			     ELF_ST_TYPE(symp->st_info) == STT_FUNC)
+				return symp;
+#endif
 			else
 				return NULL;
 		}
@@ -167,7 +173,7 @@ _rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
 	defobj = NULL;
 	
 	if (refobj->symbolic) {	/* Look first in the referencing object */
-		symp = _rtld_symlook_obj(name, hash, refobj);
+		symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
 		if (symp != NULL) {
 			def = symp;
 			defobj = refobj;
@@ -176,7 +182,7 @@ _rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
 	
 	/* Search all objects loaded at program start up. */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj);
+		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, in_plt);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
@@ -188,7 +194,7 @@ _rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
 	SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
 		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
 			break;
-		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj);
+		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj, in_plt);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
@@ -198,7 +204,7 @@ _rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
 	
 	/* Search all RTLD_GLOBAL objects. */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-		symp = _rtld_symlook_list(name, hash, &_rtld_list_global, &obj);
+		symp = _rtld_symlook_list(name, hash, &_rtld_list_global, &obj, in_plt);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
