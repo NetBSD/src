@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.3 1998/09/12 15:05:49 rvb Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.4 1998/09/15 02:02:59 rvb Exp $	*/
 
 /*
  * 
@@ -28,7 +28,7 @@
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
  * 
- * 	@(#) cfs/cfs_subr.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
+ * 	@(#) coda/coda_subr.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
  */
 
 /* 
@@ -46,6 +46,9 @@
 /*
  * HISTORY
  * $Log: coda_subr.c,v $
+ * Revision 1.4  1998/09/15 02:02:59  rvb
+ * Final piece of rename cfs->coda
+ *
  * Revision 1.3  1998/09/12 15:05:49  rvb
  * Change cfs/CFS in symbols, strings and constants to coda/CODA
  * to avoid fs conflicts.
@@ -219,10 +222,10 @@
 #include <sys/select.h>
 #include <sys/mount.h>
 
-#include <cfs/coda.h>
-#include <cfs/cnode.h>
-#include <cfs/cfs_subr.h>
-#include <cfs/cfsnc.h>
+#include <coda/coda.h>
+#include <coda/cnode.h>
+#include <coda/coda_subr.h>
+#include <coda/coda_namecache.h>
 
 int coda_active = 0;
 int coda_reuse = 0;
