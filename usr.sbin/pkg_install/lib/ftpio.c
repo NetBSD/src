@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.63 2004/10/30 15:04:45 dsl Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.64 2004/10/31 02:45:37 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.63 2004/10/30 15:04:45 dsl Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.64 2004/10/31 02:45:37 grant Exp $");
 #endif
 
 /*-
@@ -1178,12 +1178,29 @@ unpackURL(const char *url, const char *dir)
 
 	{
 		char cmd[1024];
+		const char *decompress_cmd = NULL;
+		const char *suf;
 
 		if (Verbose)
 			printf("unpackURL '%s' to '%s'\n", url, dir);
 
+		suf = suffix_of(pkg);
+		if (!strcmp(suf, "tbz") || !strcmp(suf, "bz2"))
+			decompress_cmd = BZIP2_CMD;
+		else if (!strcmp(suf, "tgz") || !strcmp(suf, "gz"))
+			decompress_cmd = GZIP_CMD;
+		else if (!strcmp(suf, "tar"))
+			; /* do nothing */
+		else
+			errx(EXIT_FAILURE, "don't know how to decompress %s, sorry", pkg);
+
 		/* yes, this is gross, but needed for borken ftp(1) */
-		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | " TAR_CMD " -%sx -f - | tee /dev/stderr )\"\n", pkg, dir, Verbose?"vv":"");
+		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s; " TAR_CMD " %s %s -%sx -f - | tee /dev/stderr )\"\n",
+		    pkg, dir,
+		    decompress_cmd != NULL ? "--use-compress-program" : "",
+		    decompress_cmd != NULL ? decompress_cmd : "",
+		    Verbose? "vv" : "");
+
 		rc = ftp_cmd(cmd, "\n(226|550).*\n");
 		if (rc != 226) {
 			warnx("Cannot fetch file (%d!=226)!", rc);
