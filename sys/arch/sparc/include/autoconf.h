@@ -1,4 +1,40 @@
-/*	$NetBSD: autoconf.h,v 1.21 1998/01/25 16:51:16 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.22 1998/03/21 19:36:27 pk Exp $ */
+
+/*-
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +84,9 @@
  * Autoconfiguration information.
  */
 
+#include <machine/bus.h>
+#include <sparc/dev/sbusvar.h>
+
 /*
  * Most devices are configured according to information kept in
  * the FORTH PROMs.  In particular, we extract the `name', `reg',
@@ -57,36 +96,20 @@
  * fake name ("mainbus").
  */
 
-#define	RA_MAXVADDR	8		/* max (virtual) addresses per device */
-#define	RA_MAXREG	16		/* max # of register banks per device */
-#define	RA_MAXINTR	8		/* max interrupts per device */
-
-struct romaux {
-	const char *ra_name;		/* name from FORTH PROM */
-	int	ra_node;		/* FORTH PROM node ID */
-	void	*ra_vaddrs[RA_MAXVADDR];/* ROM mapped virtual addresses */
-	int	ra_nvaddrs;		/* # of ra_vaddrs[]s, may be 0 */
-#define ra_vaddr	ra_vaddrs[0]	/* compatibility */
-
-	struct rom_reg {
-		int	rr_iospace;	/* register space (obio, etc) */
-		void	*rr_paddr;	/* register physical address */
-		int	rr_len;		/* register length */
-	} ra_reg[RA_MAXREG];
-	int	ra_nreg;		/* # of ra_reg[]s */
-#define ra_iospace	ra_reg[0].rr_iospace
-#define ra_paddr	ra_reg[0].rr_paddr
-#define ra_len		ra_reg[0].rr_len
-
-	struct rom_intr {		/* interrupt information: */
-		int	int_pri;		/* priority (IPL) */
-		int	int_vec;		/* vector (always 0?) */
-	} ra_intr[RA_MAXINTR];
-	int	ra_nintr;		/* number of interrupt info elements */
-
-	struct	bootpath *ra_bp;	/* used for locating boot device */
+/* Device register space description */
+struct rom_reg {
+	u_int32_t	rr_iospace;	/* register space (obio, etc) */
+	u_int32_t	rr_paddr;	/* register physical address */
+	u_int32_t	rr_len;		/* register length */
 };
 
+/* Interrupt information */
+struct rom_intr {
+	u_int32_t	int_pri;	/* priority (IPL) */
+	u_int32_t	int_vec;	/* vector (always 0?) */
+};
+
+/* Address translation accross busses */
 struct rom_range {		/* Only used on v3 PROMs */
 	u_int32_t	cspace;		/* Client space */
 	u_int32_t	coffset;	/* Client offset */
@@ -95,18 +118,57 @@ struct rom_range {		/* Only used on v3 PROMs */
 	u_int32_t	size;		/* Size in bytes of this range */
 };
 
-
-struct confargs {
-	int	ca_bustype;
-	struct	romaux ca_ra;
-	int	ca_slot;
-	int	ca_offset;
+/* Attach arguments presented by mainbus_attach() */
+struct mainbus_attach_args {
+	bus_space_tag_t	ma_bustag;	/* parent bus tag */
+	bus_dma_tag_t	ma_dmatag;
+	char		*ma_name;	/* PROM node name */
+	int		ma_node;	/* PROM handle */
+	int		ma_iospace;	/* device I/O space */
+	void		*ma_paddr;	/* register physical address */
+	int		ma_size;	/* register physical size */
+	int		ma_pri;		/* priority (IPL) */
+	void		*ma_promvaddr;	/* PROM virtual address, if any */
+	struct bootpath *ma_bp;		/* used for locating boot device */
 };
-#define BUS_MAIN	0
-#define BUS_OBIO	1
-#define BUS_VME16	2
-#define BUS_VME32	3
-#define BUS_SBUS	4
+
+/* Attach arguments presented to devices by obio_attach() (sun4 only) */
+struct obio4_attach_args {
+	int		oba_placeholder;/* obio/sbus attach args sharing */
+	bus_space_tag_t	oba_bustag;	/* parent bus tag */
+	bus_dma_tag_t	oba_dmatag;
+	void		*oba_paddr;	/* register physical address */
+	int		oba_pri;	/* interrupt priority (IPL) */
+	struct bootpath *oba_bp;	/* used for locating boot device */
+};
+
+union obio_attach_args {
+	/* sun4m obio space is treated like an sbus slot */
+	int				uoba_isobio4;
+	struct sbus_attach_args		uoba_sbus;	/* Sbus view */
+	struct obio4_attach_args	uoba_oba4;	/* sun4 on-board view */
+};
+
+int	obio_bus_map __P((
+		bus_space_tag_t,
+		void *		/*physical addr*/,
+		int		/*offset*/,
+		size_t		/*size*/,
+		int		/*flags*/,
+		void *		/*preferred virtual address */,
+		bus_space_handle_t *));
+
+/* obio specific bus flag */
+#define OBIO_BUS_MAP_USE_ROM	BUS_SPACE_MAP_BUS1
+
+int	obio_bus_probe __P((
+		bus_space_tag_t,
+		void *				/* phys addr */,
+		int				/* offset */,
+		size_t				/* size */,
+		int (*) __P((void *, void *)),	/* callback */
+		void *				/* arg */));
+
 
 /*
  * mapiodev maps an I/O device to a virtual address, returning the address.
@@ -115,18 +177,10 @@ struct confargs {
  * you get it from ../sparc/vaddrs.h.
  */
 void	*mapdev __P((struct rom_reg *pa, int va,
-		     int offset, int size));
+		     int offset, int size));	/* OBSOLETE */
 #define	mapiodev(pa, offset, size) \
-	mapdev(pa, 0, offset, size)
-/*
- * REG2PHYS is provided for drivers with a `d_mmap' function.
- */
-#define REG2PHYS(rr, offset) \
-	(((u_int)(rr)->rr_paddr + (offset)) | PMAP_IOENC((rr)->rr_iospace) )
+	mapdev(pa, 0, offset, size)		/* OBSOLETE */
 
-/* For sun4/obio busses */
-void	*obio_bus_map __P((struct rom_reg *, int));
-void	obio_bus_untmp __P((void));
 
 /*
  * The various getprop* functions obtain `properties' from the ROMs.
@@ -141,18 +195,25 @@ int	getpropint __P((int node, char *name, int deflt));
 /* Frequently used options node */
 extern int optionsnode;
 
+	/* new interfaces: */
+int	getpropA __P((int, char *, int, int *, void **));
+char	*getpropstringA __P((int, char *, char *));
+
 /*
- * The romprop function gets physical and virtual addresses from the PROM
- * and fills in a romaux.  It returns 1 on success, 0 if the physical
- * address is not available as a "reg" property.
+ * Helper routines to get some of the more common properties. These
+ * only get the first item in case the property value is an array.
+ * Drivers that "need to know it all" can call getprop() directly.
  */
-int	romprop __P((struct romaux *ra, const char *name, int node));
+int	getprop_reg1 __P((int, struct rom_reg *));
+int	getprop_intr1 __P((int, int *));
+int	getprop_address1 __P((int, void **));
+
 
 /*
  * The matchbyname function is useful in drivers that are matched
  * by romaux name, i.e., all `mainbus attached' devices.  It expects
  * its aux pointer to point to a pointer to the name (the address of
- * a romaux structure suffices, for instance).
+ * a romaux structure suffices, for instance). (OBSOLETE)
  */
 struct device;
 struct cfdata;
