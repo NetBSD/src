@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.3.2.5 2005/01/24 08:59:40 skrll Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.3.2.6 2005/02/04 11:48:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -66,10 +66,10 @@ struct verified_exec_params  {
 #define VERIEXECLOAD _IOW('S', 0x1, struct verified_exec_params)
 
 #ifdef _KERNEL
-void	verifiedexecattach __P((struct device *, struct device *, void *));
-int     verifiedexecopen __P((dev_t, int, int, struct lwp *));
-int     verifiedexecclose __P((dev_t, int, int, struct lwp *));
-int     verifiedexecioctl __P((dev_t, u_long, caddr_t, int, struct lwp *));
+void	verifiedexecattach(struct device *, struct device *, void *);
+int     verifiedexecopen(dev_t, int, int, struct lwp *);
+int     verifiedexecclose(dev_t, int, int, struct lwp *);
+int     verifiedexecioctl(dev_t, u_long, caddr_t, int, struct lwp *);
 /*
  * list structure definitions - needed in kern_exec.c
  */

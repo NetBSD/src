@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.20 2002/10/02 16:33:57 thorpej Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.20.6.1 2005/02/04 11:46:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.20 2002/10/02 16:33:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.20.6.1 2005/02/04 11:46:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ struct com_isapnp_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int	com_isapnp_match __P((struct device *, struct cfdata *, void *));
-void	com_isapnp_attach __P((struct device *, struct device *, void *));
+int	com_isapnp_match(struct device *, struct cfdata *, void *);
+void	com_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(com_isapnp, sizeof(struct com_isapnp_softc),
     com_isapnp_match, com_isapnp_attach, NULL, NULL);

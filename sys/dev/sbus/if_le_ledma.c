@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.22.6.3 2004/09/21 13:33:13 skrll Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.22.6.4 2005/02/04 11:47:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.22.6.3 2004/09/21 13:33:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.22.6.4 2005/02/04 11:47:23 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -93,8 +93,8 @@ struct	le_softc {
 #define MEMSIZE		(16*1024)	/* LANCE memory size */
 #define LEDMA_BOUNDARY	(16*1024*1024)	/* must not cross 16MB boundary */
 
-int	lematch_ledma __P((struct device *, struct cfdata *, void *));
-void	leattach_ledma __P((struct device *, struct device *, void *));
+int	lematch_ledma(struct device *, struct cfdata *, void *);
+void	leattach_ledma(struct device *, struct device *, void *);
 
 /*
  * Media types supported by the Sun4m.
@@ -106,11 +106,11 @@ static int lemedia[] = {
 };
 #define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
 
-void	lesetutp __P((struct lance_softc *));
-void	lesetaui __P((struct lance_softc *));
+void	lesetutp(struct lance_softc *);
+void	lesetaui(struct lance_softc *);
 
-int	lemediachange __P((struct lance_softc *));
-void	lemediastatus __P((struct lance_softc *, struct ifmediareq *));
+int	lemediachange(struct lance_softc *);
+void	lemediastatus(struct lance_softc *, struct ifmediareq *);
 
 CFATTACH_DECL(le_ledma, sizeof(struct le_softc),
     lematch_ledma, leattach_ledma, NULL, NULL);
@@ -121,11 +121,11 @@ extern struct cfdriver le_cd;
 #include "opt_ddb.h"
 #endif
 
-static void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-static u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
-static void lehwreset __P((struct lance_softc *));
-static void lehwinit __P((struct lance_softc *));
-static void lenocarrier __P((struct lance_softc *));
+static void lewrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+static u_int16_t lerdcsr(struct lance_softc *, u_int16_t);
+static void lehwreset(struct lance_softc *);
+static void lehwinit(struct lance_softc *);
+static void lenocarrier(struct lance_softc *);
 
 static void
 lewrcsr(sc, port, val)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.42.2.8 2005/01/17 19:31:24 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.42.2.9 2005/02/04 11:46:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.42.2.8 2005/01/17 19:31:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.42.2.9 2005/02/04 11:46:37 skrll Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -178,6 +178,7 @@ static int bge_rxthresh_nodenum;
 
 int bge_probe(struct device *, struct cfdata *, void *);
 void bge_attach(struct device *, struct device *, void *);
+void bge_powerhook(int, void *);
 void bge_release_resources(struct bge_softc *);
 void bge_txeof(struct bge_softc *);
 void bge_rxeof(struct bge_softc *);
@@ -675,7 +676,7 @@ bge_update_all_threshes(int lvl)
 	/*
 	 * Now search all the interfaces for this name/number
 	 */
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		if (strncmp(ifp->if_xname, namebuf, namelen) != 0)
 		      continue;
 		/* We got a match: update if doing auto-threshold-tuning */
@@ -2579,6 +2580,11 @@ bge_attach(parent, self, aux)
 #endif /* BGE_EVENT_COUNTERS */
 	DPRINTFN(5, ("callout_init\n"));
 	callout_init(&sc->bge_timeout);
+
+	sc->bge_powerhook = powerhook_establish(bge_powerhook, sc);
+	if (sc->bge_powerhook == NULL)
+		printf("%s: WARNING: unable to establish PCI power hook\n",
+		    sc->bge_dev.dv_xname);
 }
 
 void
@@ -4006,4 +4012,36 @@ SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
 
 err:
 	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+
+void
+bge_powerhook(int why, void *hdl)
+{
+	struct bge_softc *sc = (struct bge_softc *)hdl;
+	struct ifnet *ifp = &sc->ethercom.ec_if;
+	struct pci_attach_args *pa = &(sc->bge_pa);
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+
+	switch (why) {
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+		bge_shutdown(sc);
+		break;
+	case PWR_SOFTRESUME:
+		if (ifp->if_flags & IFF_UP) {
+			ifp->if_flags &= ~IFF_RUNNING;
+			bge_init(ifp);
+		}
+		break;
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		pci_conf_capture(pc, tag, &sc->bge_pciconf);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(pc, tag, &sc->bge_pciconf);
+		break;
+	}
+
+	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.61.2.6 2005/01/17 19:31:24 skrll Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.61.2.7 2005/02/04 11:46:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.61.2.6 2005/01/17 19:31:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.61.2.7 2005/02/04 11:46:38 skrll Exp $");
 
 #include "rnd.h"
 
@@ -643,6 +643,23 @@ vr_rxeof(struct vr_softc *sc)
 			VR_INIT_RXDESC(sc, i);
 
 			continue;
+		} else if (!(rxstat & VR_RXSTAT_FIRSTFRAG) ||
+		           !(rxstat & VR_RXSTAT_LASTFRAG)) {
+			/*
+			 * This driver expects to receive whole packets every
+			 * time.  In case we receive a fragment that is not
+			 * a complete packet, we discard it.
+			 */
+			ifp->if_ierrors++;
+
+			printf("%s: receive error: incomplete frame; "
+			       "size = %d, status = 0x%x\n",
+			       sc->vr_dev.dv_xname,
+			       VR_RXBYTES(le32toh(d->vr_status)), rxstat);
+
+			VR_INIT_RXDESC(sc, i);
+
+			continue;
 		}
 
 		bus_dmamap_sync(sc->vr_dmat, ds->ds_dmamap, 0,
@@ -650,6 +667,30 @@ vr_rxeof(struct vr_softc *sc)
 
 		/* No errors; receive the packet. */
 		total_len = VR_RXBYTES(le32toh(d->vr_status));
+#ifdef DIAGNOSTIC
+		if (total_len == 0) {
+			/*
+			 * If we receive a zero-length packet, we probably
+			 * missed to handle an error condition above.
+			 * Discard it to avoid a later crash.
+			 */
+			ifp->if_ierrors++;
+
+			printf("%s: receive error: zero-length packet; "
+			       "status = 0x%x\n",
+			       sc->vr_dev.dv_xname, rxstat);
+
+			VR_INIT_RXDESC(sc, i);
+
+			continue;
+		}
+#endif
+
+		/*
+		 * The Rhine chip includes the CRC with every packet.
+		 * Trim it off here.
+		 */
+		total_len -= ETHER_CRC_LEN;
 
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
@@ -723,12 +764,6 @@ vr_rxeof(struct vr_softc *sc)
 		bus_dmamap_sync(sc->vr_dmat, ds->ds_dmamap, 0,
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
-
-		/*
-		 * The Rhine chip includes the FCS with every
-		 * received packet.
-		 */
-		m->m_flags |= M_HASFCS;
 
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
@@ -994,6 +1029,7 @@ vr_start(struct ifnet *ifp)
 			error = bus_dmamap_load_mbuf(sc->vr_dmat,
 			    ds->ds_dmamap, m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
+				m_freem(m);
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->vr_dev.dv_xname, error);
 				break;
@@ -1121,7 +1157,7 @@ vr_init(struct ifnet *ifp)
 	VR_SETBIT(sc, VR_TXCFG, VR_TXTHRESH_STORENFWD);
 
 	/*
-	 * Initialize the transmit desciptor ring.  txlast is initialized
+	 * Initialize the transmit descriptor ring.  txlast is initialized
 	 * to the end of the list so that it will wrap around to the first
 	 * descriptor when the first packet is transmitted.
 	 */

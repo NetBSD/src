@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.1.48.3 2004/09/21 13:29:47 skrll Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.1.48.4 2005/02/04 11:46:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,4 +26,4 @@
  *
  */
 
-int pcdisplay_cnattach __P((bus_space_tag_t, bus_space_tag_t));
+int pcdisplay_cnattach(bus_space_tag_t, bus_space_tag_t);

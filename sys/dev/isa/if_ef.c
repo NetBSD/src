@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.15.6.3 2004/09/21 13:29:44 skrll Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.15.6.4 2005/02/04 11:46:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.15.6.3 2004/09/21 13:29:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.15.6.4 2005/02/04 11:46:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,25 +95,25 @@ int eftp_media[] = {
 #define NEFTP_MEDIA       (sizeof(eftp_media) / sizeof(eftp_media[0]))
 
 /* Routines required by the MI i82586 driver API */
-static void 	ef_reset __P((struct ie_softc *, int));
-static void 	ef_hwinit __P((struct ie_softc *));
-static void 	ef_atten __P((struct ie_softc *, int));
-static int 	ef_intrhook __P((struct ie_softc *, int));
+static void 	ef_reset(struct ie_softc *, int);
+static void 	ef_hwinit(struct ie_softc *);
+static void 	ef_atten(struct ie_softc *, int);
+static int 	ef_intrhook(struct ie_softc *, int);
 
-static void	ef_copyin __P((struct ie_softc *, void *, int, size_t));
-static void	ef_copyout __P((struct ie_softc *, const void *, int, size_t));
+static void	ef_copyin(struct ie_softc *, void *, int, size_t);
+static void	ef_copyout(struct ie_softc *, const void *, int, size_t);
 
-static u_int16_t ef_read_16 __P((struct ie_softc *, int));
-static void	ef_write_16 __P((struct ie_softc *, int, u_int16_t));
-static void	ef_write_24 __P((struct ie_softc *, int, int));
+static u_int16_t ef_read_16(struct ie_softc *, int);
+static void	ef_write_16(struct ie_softc *, int, u_int16_t);
+static void	ef_write_24(struct ie_softc *, int, int);
 
-static void	ef_mediastatus __P((struct ie_softc *, struct ifmediareq *));
+static void	ef_mediastatus(struct ie_softc *, struct ifmediareq *);
 
 /* Local routines */
-static int 	ef_port_check __P((bus_space_tag_t, bus_space_handle_t));
+static int 	ef_port_check(bus_space_tag_t, bus_space_handle_t);
 
-int ef_match __P((struct device *, struct cfdata *, void *));
-void ef_attach __P((struct device *, struct device *, void *));
+int ef_match(struct device *, struct cfdata *, void *);
+void ef_attach(struct device *, struct device *, void *);
 
 /*
  * This keeps track of which ISAs have been through an ie probe sequence.

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.3.6.4 2005/01/26 08:20:26 skrll Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.3.6.5 2005/02/04 11:46:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.3.6.4 2005/01/26 08:20:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.3.6.5 2005/02/04 11:46:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,8 @@ int lptdebug = 1;
 #define	LPTUNIT(s)	(minor(s) & 0x0f)
 #define	LPTFLAGS(s)	(minor(s) & 0xf0)
 
-static void lpt_wakeup __P((void *arg));
-static int pushbytes __P((struct lpt_softc *));
+static void lpt_wakeup(void *arg);
+static int pushbytes(struct lpt_softc *);
 
 extern struct cfdriver lpt_cd;
 

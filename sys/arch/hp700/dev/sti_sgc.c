@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.4.6.4 2005/01/24 08:34:12 skrll Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.4.6.5 2005/02/04 11:44:19 skrll Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.4.6.4 2005/01/24 08:34:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.4.6.5 2005/02/04 11:44:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.4.6.4 2005/01/24 08:34:12 skrll Exp $"
 #define	STI_GOPT2_REV	0x70
 #define	STI_GOPT3_REV	0xd0
 #define	STI_GOPT4_REV	0x00
+#define	STI_GOPT5_REV	0x20
+#define	STI_GOPT6_REV	0x40
 
 /* internal EG */
 #define	STI_INEG_REV	0x60
@@ -107,6 +109,8 @@ sti_sgc_getrom(struct confargs *ca)
 	case STI_GOPT2_REV:
 	case STI_GOPT3_REV:
 	case STI_GOPT4_REV:
+	case STI_GOPT5_REV:
+	case STI_GOPT6_REV:
 		/* these share the onboard's prom */
 		pagezero_cookie = hp700_pagezero_map();
 		rom = PAGE0->pd_resv2[1];

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30.2.5 2005/01/24 08:34:27 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30.2.6 2005/02/04 11:44:48 skrll Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -94,6 +94,7 @@ struct cpu_info {
 	struct cache_info ci_ci;		
 	void *ci_sysmon_cookie;
 	void (*ci_idlespin)(void);
+	uint32_t ci_khz;
 	struct evcnt ci_ev_clock;	/* clock intrs */
 	struct evcnt ci_ev_softclock;	/* softclock intrs */
 	struct evcnt ci_ev_softnet;	/* softnet intrs */

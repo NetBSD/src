@@ -1,4 +1,4 @@
-/*	$NetBSD: userconf.h,v 1.2 2001/07/14 12:05:53 kleink Exp $	*/
+/*	$NetBSD: userconf.h,v 1.2.22.1 2005/02/04 11:48:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,6 @@
 #ifndef _SYS_USERCONF_H_
 #define _SYS_USERCONF_H_
 
-void user_config __P((void));
+void user_config(void);
 
 #endif /* !_SYS_USERCONF_H_ */

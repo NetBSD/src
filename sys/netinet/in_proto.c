@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.58.6.4 2005/01/24 08:35:53 skrll Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.58.6.5 2005/02/04 11:47:48 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.58.6.4 2005/01/24 08:35:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.58.6.5 2005/02/04 11:47:48 skrll Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -146,6 +146,8 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.58.6.4 2005/01/24 08:35:53 skrll Exp 
 #include <netinet/ip_gre.h>
 #endif
 
+#include "bridge.h"
+
 DOMAIN_DEFINE(inetdomain);	/* forward declare and add to link set */
 
 const struct protosw inetsw[] = {
@@ -224,6 +226,13 @@ const struct protosw inetsw[] = {
   encap_init,	0,		0,		0,
 },
 #endif /* INET6 */
+#if NBRIDGE > 0
+{ SOCK_RAW,	&inetdomain,	IPPROTO_ETHERIP,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+  encap4_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
+  rip_usrreq,
+  encap_init,		0,		0,		0,
+},
+#endif
 #if NGRE > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_GRE,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   gre_input,	rip_output,	rip_ctlinput,	rip_ctloutput,

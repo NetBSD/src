@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.15.6.3 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.15.6.4 2005/02/04 11:47:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.15.6.3 2004/09/21 13:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.15.6.4 2005/02/04 11:47:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,10 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.15.6.3 2004/09/21 13:33:27 skrll Exp $"
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static void kbd_zs_rxint __P((struct zs_chanstate *));
-static void kbd_zs_stint __P((struct zs_chanstate *, int));
-static void kbd_zs_txint __P((struct zs_chanstate *));
-static void kbd_zs_softint __P((struct zs_chanstate *));
+static void kbd_zs_rxint(struct zs_chanstate *);
+static void kbd_zs_stint(struct zs_chanstate *, int);
+static void kbd_zs_txint(struct zs_chanstate *);
+static void kbd_zs_softint(struct zs_chanstate *);
 
 struct zsops zsops_kbd = {
 	kbd_zs_rxint,	/* receive char available */
@@ -96,7 +96,7 @@ struct zsops zsops_kbd = {
 
 static int	kbd_zs_match(struct device *, struct cfdata *, void *);
 static void	kbd_zs_attach(struct device *, struct device *, void *);
-static void	kbd_zs_write_data __P((struct kbd_sun_softc *, int));
+static void	kbd_zs_write_data(struct kbd_sun_softc *, int);
 
 CFATTACH_DECL(kbd_zs, sizeof(struct kbd_sun_softc),
     kbd_zs_match, kbd_zs_attach, NULL, NULL);

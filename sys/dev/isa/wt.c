@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.61.2.2 2004/09/21 13:29:49 skrll Exp $	*/
+/*	$NetBSD: wt.c,v 1.61.2.3 2005/02/04 11:46:10 skrll Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.61.2.2 2004/09/21 13:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.61.2.3 2005/02/04 11:46:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,23 +165,23 @@ const struct cdevsw wt_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
-int wtwait __P((struct wt_softc *sc, int catch, char *msg));
-int wtcmd __P((struct wt_softc *sc, int cmd));
-int wtstart __P((struct wt_softc *sc, int flag, void *vaddr, size_t len));
-void wtdma __P((struct wt_softc *sc));
-void wttimer __P((void *arg));
-void wtclock __P((struct wt_softc *sc));
-int wtreset __P((bus_space_tag_t, bus_space_handle_t, struct wtregs *));
-int wtsense __P((struct wt_softc *sc, int verbose, int ignore));
-int wtstatus __P((struct wt_softc *sc));
-void wtrewind __P((struct wt_softc *sc));
-int wtreadfm __P((struct wt_softc *sc));
-int wtwritefm __P((struct wt_softc *sc));
-u_char wtsoft __P((struct wt_softc *sc, int mask, int bits));
+int wtwait(struct wt_softc *sc, int catch, char *msg);
+int wtcmd(struct wt_softc *sc, int cmd);
+int wtstart(struct wt_softc *sc, int flag, void *vaddr, size_t len);
+void wtdma(struct wt_softc *sc);
+void wttimer(void *arg);
+void wtclock(struct wt_softc *sc);
+int wtreset(bus_space_tag_t, bus_space_handle_t, struct wtregs *);
+int wtsense(struct wt_softc *sc, int verbose, int ignore);
+int wtstatus(struct wt_softc *sc);
+void wtrewind(struct wt_softc *sc);
+int wtreadfm(struct wt_softc *sc);
+int wtwritefm(struct wt_softc *sc);
+u_char wtsoft(struct wt_softc *sc, int mask, int bits);
 
-int wtprobe __P((struct device *, struct cfdata *, void *));
-void wtattach __P((struct device *, struct device *, void *));
-int wtintr __P((void *sc));
+int wtprobe(struct device *, struct cfdata *, void *);
+void wtattach(struct device *, struct device *, void *);
+int wtintr(void *sc);
 
 CFATTACH_DECL(wt, sizeof(struct wt_softc),
     wtprobe, wtattach, NULL, NULL);

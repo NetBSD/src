@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.32.6.3 2004/09/21 13:37:11 skrll Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.32.6.4 2005/02/04 11:47:47 skrll Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.32.6.3 2004/09/21 13:37:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.32.6.4 2005/02/04 11:47:47 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -65,13 +65,15 @@ __KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.32.6.3 2004/09/21 13:37:11 skrll Exp $"
 #include <net/if_gif.h>
 
 #include "gif.h"
+#include "bridge.h"
+#include <net/if_ether.h>
 
 #include <machine/stdarg.h>
 
 #include <net/net_osdep.h>
 
-static int gif_validate4 __P((const struct ip *, struct gif_softc *,
-	struct ifnet *));
+static int gif_validate4(const struct ip *, struct gif_softc *,
+	struct ifnet *);
 
 #if NGIF > 0
 int ip_gif_ttl = GIF_TTL;
@@ -87,16 +89,16 @@ const struct protosw in_gif_protosw =
 };
 
 int
-in_gif_output(ifp, family, m)
-	struct ifnet	*ifp;
-	int		family;
-	struct mbuf	*m;
+in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct sockaddr_in *dst = (struct sockaddr_in *)&sc->gif_ro.ro_dst;
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
+#if NBRIDGE > 0
+	struct etherip_header eiphdr;
+#endif
 	int proto, error;
 	u_int8_t tos;
 
@@ -143,6 +145,20 @@ in_gif_output(ifp, family, m)
 	case AF_ISO:
 		proto = IPPROTO_EON;
 		tos = 0;
+		break;
+#endif
+#if NBRIDGE > 0
+	case AF_LINK:
+		proto = IPPROTO_ETHERIP;
+		eiphdr.eip_ver = ETHERIP_VERSION & ETHERIP_VER_VERS_MASK;
+		eiphdr.eip_pad = 0;
+		/* prepend Ethernet-in-IP header */
+		M_PREPEND(m, sizeof(struct etherip_header), M_DONTWAIT);
+		if (m && m->m_len < sizeof(struct etherip_header))
+			m = m_pullup(m, sizeof(struct etherip_header));
+		if (m == NULL)
+			return ENOBUFS;
+		bcopy(&eiphdr, mtod(m, struct etherip_header *), sizeof(struct etherip_header));
 		break;
 #endif
 	default:
@@ -292,6 +308,11 @@ in_gif_input(struct mbuf *m, ...)
 		af = AF_ISO;
 		break;
 #endif
+#if NBRIDGE > 0
+	case IPPROTO_ETHERIP:
+		af = AF_LINK;
+		break;	
+#endif
 	default:
 		ipstat.ips_nogif++;
 		m_freem(m);
@@ -305,10 +326,7 @@ in_gif_input(struct mbuf *m, ...)
  * validate outer address.
  */
 static int
-gif_validate4(ip, sc, ifp)
-	const struct ip *ip;
-	struct gif_softc *sc;
-	struct ifnet *ifp;
+gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
 {
 	struct sockaddr_in *src, *dst;
 	struct in_ifaddr *ia4;
@@ -368,11 +386,7 @@ gif_validate4(ip, sc, ifp)
  * matched the physical addr family.  see gif_encapcheck().
  */
 int
-gif_encapcheck4(m, off, proto, arg)
-	const struct mbuf *m;
-	int off;
-	int proto;
-	void *arg;
+gif_encapcheck4(const struct mbuf *m, int off, int proto, void *arg)
 {
 	struct ip ip;
 	struct gif_softc *sc;
@@ -390,8 +404,7 @@ gif_encapcheck4(m, off, proto, arg)
 #endif
 
 int
-in_gif_attach(sc)
-	struct gif_softc *sc;
+in_gif_attach(struct gif_softc *sc)
 {
 #ifndef GIF_ENCAPCHECK
 	struct sockaddr_in mask4;
@@ -415,8 +428,7 @@ in_gif_attach(sc)
 }
 
 int
-in_gif_detach(sc)
-	struct gif_softc *sc;
+in_gif_detach(struct gif_softc *sc)
 {
 	int error;
 

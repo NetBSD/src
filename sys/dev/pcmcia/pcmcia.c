@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.35.2.5 2004/09/21 13:32:21 skrll Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.35.2.6 2005/02/04 11:47:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.35.2.5 2004/09/21 13:32:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.35.2.6 2005/02/04 11:47:09 skrll Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -78,13 +78,13 @@ int	pcmcia_verbose = 1;
 int	pcmcia_verbose = 0;
 #endif
 
-int	pcmcia_match __P((struct device *, struct cfdata *, void *));
-int	pcmcia_submatch __P((struct device *, struct cfdata *,
-			     const locdesc_t *, void *));
-void	pcmcia_attach __P((struct device *, struct device *, void *));
+int	pcmcia_match(struct device *, struct cfdata *, void *);
+int	pcmcia_submatch(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
+void	pcmcia_attach(struct device *, struct device *, void *);
 int	pcmcia_rescan(struct device *, const char *, const int *);
 void	pcmcia_childdetached(struct device *, struct device *);
-int	pcmcia_print __P((void *, const char *));
+int	pcmcia_print(void *, const char *);
 
 CFATTACH_DECL2(pcmcia, sizeof(struct pcmcia_softc),
     pcmcia_match, pcmcia_attach, NULL, NULL,
@@ -760,7 +760,7 @@ void *
 pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 	struct pcmcia_function *pf;
 	int ipl;
-	int (*ih_fct) __P((void *));
+	int (*ih_fct)(void *);
 	void *ih_arg;
 {
 
@@ -930,7 +930,7 @@ pcmcia_config_unmap(pf)
 int
 pcmcia_function_configure(pf, validator)
 	struct pcmcia_function *pf;
-	int (*validator) __P((struct pcmcia_config_entry *));
+	int (*validator)(struct pcmcia_config_entry *);
 {
 	struct pcmcia_config_entry *cfe;
 	int error = ENOENT;

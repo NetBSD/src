@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.16.16.3 2004/09/21 13:33:12 skrll Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.16.16.4 2005/02/04 11:47:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.16.16.3 2004/09/21 13:33:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.16.16.4 2005/02/04 11:47:22 skrll Exp $");
 
 #include "opt_rasops.h"
 
@@ -50,12 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.16.16.3 2004/09/21 13:33:12 skrll Exp 
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops8_putchar __P((void *, int, int, u_int, long attr));
+static void 	rasops8_putchar(void *, int, int, u_int, long attr);
 #ifndef RASOPS_SMALL
-static void 	rasops8_putchar8 __P((void *, int, int, u_int, long attr));
-static void 	rasops8_putchar12 __P((void *, int, int, u_int, long attr));
-static void 	rasops8_putchar16 __P((void *, int, int, u_int, long attr));
-static void	rasops8_makestamp __P((struct rasops_info *ri, long));
+static void 	rasops8_putchar8(void *, int, int, u_int, long attr);
+static void 	rasops8_putchar12(void *, int, int, u_int, long attr);
+static void 	rasops8_putchar16(void *, int, int, u_int, long attr);
+static void	rasops8_makestamp(struct rasops_info *ri, long);
 
 /*
  * 4x1 stamp for optimized character blitting

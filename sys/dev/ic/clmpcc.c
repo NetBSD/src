@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.22.6.1 2005/01/26 08:20:26 skrll Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.22.6.2 2005/02/04 11:45:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.22.6.1 2005/01/26 08:20:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.22.6.2 2005/02/04 11:45:24 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -74,14 +74,13 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.22.6.1 2005/01/26 08:20:26 skrll Exp $"
 #endif
 
 
-static int	clmpcc_init	__P((struct clmpcc_softc *sc));
-static void	clmpcc_shutdown	__P((struct clmpcc_chan *));
-static int	clmpcc_speed	__P((struct clmpcc_softc *, speed_t,
-					int *, int *));
-static int	clmpcc_param	__P((struct tty *, struct termios *));
-static void	clmpcc_set_params __P((struct clmpcc_chan *));
-static void	clmpcc_start	__P((struct tty *));
-static int 	clmpcc_modem_control	__P((struct clmpcc_chan *, int, int));
+static int	clmpcc_init(struct clmpcc_softc *sc);
+static void	clmpcc_shutdown(struct clmpcc_chan *);
+static int	clmpcc_speed(struct clmpcc_softc *, speed_t, int *, int *);
+static int	clmpcc_param(struct tty *, struct termios *);
+static void	clmpcc_set_params(struct clmpcc_chan *);
+static void	clmpcc_start(struct tty *);
+static int 	clmpcc_modem_control(struct clmpcc_chan *, int, int);
 
 #define	CLMPCCUNIT(x)		(minor(x) & 0x7fffc)
 #define CLMPCCCHAN(x)		(minor(x) & 0x00003)
@@ -125,25 +124,25 @@ static struct clmpcc_softc *cons_sc = NULL;
 static int cons_chan;
 static int cons_rate;
 
-static int	clmpcc_common_getc	__P((struct clmpcc_softc *, int));
-static void	clmpcc_common_putc	__P((struct clmpcc_softc *, int, int));
-int		clmpcccngetc	__P((dev_t));
-void		clmpcccnputc	__P((dev_t, int));
+static int	clmpcc_common_getc(struct clmpcc_softc *, int);
+static void	clmpcc_common_putc(struct clmpcc_softc *, int, int);
+int		clmpcccngetc(dev_t);
+void		clmpcccnputc(dev_t, int);
 
 
 /*
  * Convenience functions, inlined for speed
  */
 #define	integrate   static inline
-integrate u_int8_t  clmpcc_rdreg __P((struct clmpcc_softc *, u_int));
-integrate void      clmpcc_wrreg __P((struct clmpcc_softc *, u_int, u_int));
-integrate u_int8_t  clmpcc_rdreg_odd __P((struct clmpcc_softc *, u_int));
-integrate void      clmpcc_wrreg_odd __P((struct clmpcc_softc *, u_int, u_int));
-integrate void      clmpcc_wrtx_multi __P((struct clmpcc_softc *, u_int8_t *,
-					u_int));
-integrate u_int8_t  clmpcc_select_channel __P((struct clmpcc_softc *, u_int));
-integrate void      clmpcc_channel_cmd __P((struct clmpcc_softc *,int,int));
-integrate void      clmpcc_enable_transmitter __P((struct clmpcc_chan *));
+integrate u_int8_t  clmpcc_rdreg(struct clmpcc_softc *, u_int);
+integrate void      clmpcc_wrreg(struct clmpcc_softc *, u_int, u_int);
+integrate u_int8_t  clmpcc_rdreg_odd(struct clmpcc_softc *, u_int);
+integrate void      clmpcc_wrreg_odd(struct clmpcc_softc *, u_int, u_int);
+integrate void      clmpcc_wrtx_multi(struct clmpcc_softc *, u_int8_t *,
+					u_int);
+integrate u_int8_t  clmpcc_select_channel(struct clmpcc_softc *, u_int);
+integrate void      clmpcc_channel_cmd(struct clmpcc_softc *,int,int);
+integrate void      clmpcc_enable_transmitter(struct clmpcc_chan *);
 
 #define clmpcc_rd_msvr(s)	clmpcc_rdreg_odd(s,CLMPCC_REG_MSVR)
 #define clmpcc_wr_msvr(s,r,v)	clmpcc_wrreg_odd(s,r,v)
@@ -1444,7 +1443,7 @@ clmpcc_softintr(arg)
 	struct clmpcc_softc *sc = (struct clmpcc_softc *)arg;
 	struct clmpcc_chan *ch;
 	struct tty *tp;
-	int (*rint) __P((int, struct tty *));
+	int (*rint)(int, struct tty *);
 	u_char *get;
 	u_char reg;
 	u_int c;

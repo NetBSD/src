@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.31.6.5 2004/10/19 15:57:26 skrll Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.31.6.6 2005/02/04 11:47:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.31.6.5 2004/10/19 15:57:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.31.6.6 2005/02/04 11:47:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,9 @@ struct cis_state {
 	struct pcmcia_function *pf;
 };
 
-int	pcmcia_parse_cis_tuple __P((struct pcmcia_tuple *, void *));
-static int decode_funce __P((struct pcmcia_tuple *, struct pcmcia_function *));
-static void create_pf __P((struct cis_state *));
+int	pcmcia_parse_cis_tuple(struct pcmcia_tuple *, void *);
+static int decode_funce(struct pcmcia_tuple *, struct pcmcia_function *);
+static void create_pf(struct cis_state *);
 
 
 static void
@@ -124,7 +124,7 @@ pcmcia_read_cis(sc)
 int
 pcmcia_scan_cis(dev, fct, arg)
 	struct device *dev;
-	int (*fct) __P((struct pcmcia_tuple *, void *));
+	int (*fct)(struct pcmcia_tuple *, void *);
 	void *arg;
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;

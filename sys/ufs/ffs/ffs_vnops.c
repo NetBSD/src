@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.59.2.4 2004/09/21 13:39:09 skrll Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.59.2.5 2005/02/04 11:48:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.59.2.4 2004/09/21 13:39:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.59.2.5 2005/02/04 11:48:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,9 +317,17 @@ ffs_fsync(v)
 	}
 	splx(s);
 
-	return (VOP_UPDATE(vp, NULL, NULL,
+	error = VOP_UPDATE(vp, NULL, NULL,
 	    ((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
-	    ? UPDATE_WAIT : 0));
+	    ? UPDATE_WAIT : 0);
+
+	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
+		int l = 0;
+		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
+			ap->a_l->l_proc->p_ucred, ap->a_l);
+	}
+
+	return error;
 }
 
 /*
@@ -451,7 +459,15 @@ loop:
 		waitfor = 0;
 	else
 		waitfor = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
-	return (VOP_UPDATE(vp, NULL, NULL, waitfor));
+	error = VOP_UPDATE(vp, NULL, NULL, waitfor);
+
+	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
+		int i = 0;
+		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
+			ap->a_l->l_proc->p_ucred, ap->a_l);
+	}
+
+	return error;
 }
 
 /*

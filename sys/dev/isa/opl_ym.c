@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ym.c,v 1.6.6.3 2004/09/21 13:29:47 skrll Exp $	*/
+/*	$NetBSD: opl_ym.c,v 1.6.6.4 2005/02/04 11:46:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.6.6.3 2004/09/21 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.6.6.4 2005/02/04 11:46:09 skrll Exp $");
 
 #include "mpu_ym.h"
 
@@ -64,10 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.6.6.3 2004/09/21 13:29:47 skrll Exp $")
 #include <dev/ic/opl3sa3reg.h>
 #include <dev/isa/ymvar.h>
 
-int	opl_ym_match __P((struct device *, struct cfdata *, void *));
-void	opl_ym_attach __P((struct device *, struct device *, void *));
+int	opl_ym_match(struct device *, struct cfdata *, void *);
+void	opl_ym_attach(struct device *, struct device *, void *);
 #ifndef AUDIO_NO_POWER_CTL
-int	opl_ym_power_ctl __P((void *, int));
+int	opl_ym_power_ctl(void *, int);
 #endif
 
 CFATTACH_DECL(opl_ym, sizeof(struct opl_softc),

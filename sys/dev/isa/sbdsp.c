@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.112.2.4 2005/01/17 19:31:11 skrll Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.112.2.5 2005/02/04 11:46:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.112.2.4 2005/01/17 19:31:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.112.2.5 2005/02/04 11:46:10 skrll Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -760,7 +760,7 @@ sbdsp_set_params(
 
 		if (swcode != NULL)
 			fil->append(fil, swcode, &hw);
-		DPRINTF(("sbdsp_set_params: model=%d, mode=%d, rate=%ld, "
+		DPRINTF(("sbdsp_set_params: model=%d, mode=%d, rate=%u, "
 			 "prec=%d, chan=%d, enc=%d -> tc=%02x, cmd=%02x, "
 			 "bmode=%02x, cmdchan=%02x\n", sc->sc_model, mode,
 			 p->sample_rate, p->precision, p->channels,

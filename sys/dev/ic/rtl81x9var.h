@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.10.20.5 2005/01/24 08:35:19 skrll Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.10.20.6 2005/02/04 11:45:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -146,9 +146,9 @@ struct rtk_softc {
 	void	*sc_powerhook;			/* power management hook */
 
 	/* Power management hooks. */
-	int	(*sc_enable)	__P((struct rtk_softc *));
-	void	(*sc_disable)	__P((struct rtk_softc *));
-	void	(*sc_power)	__P((struct rtk_softc *, int));
+	int	(*sc_enable)	(struct rtk_softc *);
+	void	(*sc_disable)	(struct rtk_softc *);
+	void	(*sc_power)	(struct rtk_softc *, int);
 #if NRND > 0
 	rndsource_element_t     rnd_source;
 #endif
@@ -202,10 +202,10 @@ struct rtk_softc {
 #define RTK_PME_STATUS		0x8000
 
 #ifdef _KERNEL
-u_int16_t rtk_read_eeprom __P((struct rtk_softc *, int, int));
-void	rtk_setmulti	__P((struct rtk_softc *));
-void	rtk_attach	__P((struct rtk_softc *));
-int	rtk_detach	__P((struct rtk_softc *));
-int	rtk_activate	__P((struct device *, enum devact));
-int	rtk_intr	__P((void *));
+u_int16_t rtk_read_eeprom(struct rtk_softc *, int, int);
+void	rtk_setmulti(struct rtk_softc *);
+void	rtk_attach(struct rtk_softc *);
+int	rtk_detach(struct rtk_softc *);
+int	rtk_activate(struct device *, enum devact);
+int	rtk_intr(void *);
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.81.2.5 2004/12/18 09:33:06 skrll Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.81.2.6 2005/02/04 11:47:49 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.81.2.5 2004/12/18 09:33:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.81.2.6 2005/02/04 11:47:49 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -163,18 +163,15 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.81.2.5 2004/12/18 09:33:06 skrll Ex
  */
 /*ARGSUSED*/
 int
-tcp_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+tcp_usrreq(struct socket *so, int req,
+    struct mbuf *m, struct mbuf *nam, struct mbuf *control, struct lwp *l)
 {
-	struct proc *p;
 	struct inpcb *inp;
 #ifdef INET6
 	struct in6pcb *in6p;
 #endif
 	struct tcpcb *tp = NULL;
+	struct proc *p;
 	int s;
 	int error = 0;
 #ifdef TCP_DEBUG
@@ -609,11 +606,8 @@ release:
 }
 
 int
-tcp_ctloutput(op, so, level, optname, mp)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **mp;
+tcp_ctloutput(int op, struct socket *so, int level, int optname,
+    struct mbuf **mp)
 {
 	int error = 0, s;
 	struct inpcb *inp;
@@ -769,8 +763,7 @@ int	tcp_recvspace = TCP_RECVSPACE;
  * bufer space, and entering LISTEN state if to accept connections.
  */
 int
-tcp_attach(so)
-	struct socket *so;
+tcp_attach(struct socket *so)
 {
 	struct tcpcb *tp;
 	struct inpcb *inp;
@@ -853,8 +846,7 @@ tcp_attach(so)
  * send segment to peer (with FIN).
  */
 struct tcpcb *
-tcp_disconnect(tp)
-	struct tcpcb *tp;
+tcp_disconnect(struct tcpcb *tp)
 {
 	struct socket *so;
 
@@ -892,8 +884,7 @@ tcp_disconnect(tp)
  * We can let the user exit from the close as soon as the FIN is acked.
  */
 struct tcpcb *
-tcp_usrclosed(tp)
-	struct tcpcb *tp;
+tcp_usrclosed(struct tcpcb *tp)
 {
 
 	switch (tp->t_state) {

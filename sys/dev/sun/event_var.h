@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.6.2.4 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: event_var.h,v 1.6.2.5 2005/02/04 11:47:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,16 +72,16 @@ struct evvar {
 		psignal((ev)->ev_io, SIGIO); \
 }
 
-void	ev_init __P((struct evvar *));
-void	ev_fini __P((struct evvar *));
-int	ev_read __P((struct evvar *, struct uio *, int));
-int	ev_poll __P((struct evvar *, int, struct lwp *));
-int	ev_kqfilter __P((struct evvar *, struct knote *));
+void	ev_init(struct evvar *);
+void	ev_fini(struct evvar *);
+int	ev_read(struct evvar *, struct uio *, int);
+int	ev_poll(struct evvar *, int, struct lwp *);
+int	ev_kqfilter(struct evvar *, struct knote *);
 
 /*
  * Hook for 32-bit compatibility on a 64-bit kernel.
  */
-extern	int (*ev_out32_hook) __P((struct firm_event *, int, struct uio *));
+extern	int (*ev_out32_hook)(struct firm_event *, int, struct uio *);
 
 /*
  * PEVENT is set just above PSOCK, which is just above TTIPRI, on the

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.19.2.3 2004/09/21 13:31:03 skrll Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.19.2.4 2005/02/04 11:46:38 skrll Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.19.2.3 2004/09/21 13:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.19.2.4 2005/02/04 11:46:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,12 +81,10 @@ struct en_pci_softc {
  */
 
 #if !defined(MIDWAY_ENIONLY)
-static  void eni_get_macaddr __P((struct en_pci_softc *,
-		struct pci_attach_args *));
+static  void eni_get_macaddr(struct en_pci_softc *, struct pci_attach_args *);
 #endif
 #if !defined(MIDWAY_ADPONLY)
-static  void adp_get_macaddr __P((struct en_pci_softc *,
-		struct pci_attach_args *));
+static  void adp_get_macaddr(struct en_pci_softc *, struct pci_attach_args *);
 #endif
 
 /* 
@@ -121,8 +119,8 @@ static  void adp_get_macaddr __P((struct en_pci_softc *,
  * prototypes
  */
 
-static	int en_pci_match __P((struct device *, struct cfdata *, void *));
-static	void en_pci_attach __P((struct device *, struct device *, void *));
+static	int en_pci_match(struct device *, struct cfdata *, void *);
+static	void en_pci_attach(struct device *, struct device *, void *);
 
 /*
  * PCI autoconfig attachments
@@ -133,7 +131,7 @@ CFATTACH_DECL(en_pci, sizeof(struct en_pci_softc),
 
 #if !defined(MIDWAY_ENIONLY)
 
-static void adp_busreset __P((void *));
+static void adp_busreset(void *);
 
 /*
  * bus specific reset function [ADP only!]

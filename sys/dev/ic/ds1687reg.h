@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1687reg.h,v 1.2.2.3 2004/09/21 13:27:55 skrll Exp $ 	*/
+/*	$NetBSD: ds1687reg.h,v 1.2.2.4 2005/02/04 11:45:24 skrll Exp $ 	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -166,7 +166,6 @@
 #define	DS1687_BANK1_ADATE	0x49	/* BANK1: Alarm: Date (1-31) */
 
 #define	DS1687_NBASEREGS	0x0d	/* 14 registers; CMOS follows */
-#define	D1687_NVRAM_START	0xe	/* start of NVRAM: offset 14 */
 
 /* Layout of software shadow copy of TOD registers */
 #define DS1687_NHDW_TODREGS	0x0a	/* 10 basic TOD registers */
@@ -189,8 +188,8 @@
  * RTC register/NVRAM read and write functions -- machine-dependent.
  * Appropriately manipulate RTC registers to get/put data values.
  */
-u_int ds1687_read __P((void *, u_int));
-void ds1687_write __P((void *, u_int, u_int));
+u_int ds1687_read(void *, u_int);
+void ds1687_write(void *, u_int, u_int);
 
 /*
  * A collection of TOD/Alarm registers.

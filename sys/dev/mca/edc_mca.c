@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.21.6.5 2004/11/02 07:51:55 skrll Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.21.6.6 2005/02/04 11:46:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.21.6.5 2004/11/02 07:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.21.6.6 2005/02/04 11:46:29 skrll Exp $");
 
 #include "rnd.h"
 
@@ -120,19 +120,19 @@ struct edc_mca_softc {
 	u_int16_t status_block[EDC_MAX_CMD_RES_LEN];
 };
 
-int	edc_mca_probe	__P((struct device *, struct cfdata *, void *));
-void	edc_mca_attach	__P((struct device *, struct device *, void *));
+int	edc_mca_probe(struct device *, struct cfdata *, void *);
+void	edc_mca_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(edc_mca, sizeof(struct edc_mca_softc),
     edc_mca_probe, edc_mca_attach, NULL, NULL);
 
-static int	edc_intr __P((void *));
-static void	edc_dump_status_block __P((struct edc_mca_softc *,
-		    u_int16_t *, int));
-static int	edc_do_attn __P((struct edc_mca_softc *, int, int, int));
-static void	edc_cmd_wait __P((struct edc_mca_softc *, int, int));
-static void	edcworker __P((void *));
-static void	edc_spawn_worker __P((void *));
+static int	edc_intr(void *);
+static void	edc_dump_status_block(struct edc_mca_softc *,
+		    u_int16_t *, int);
+static int	edc_do_attn(struct edc_mca_softc *, int, int, int);
+static void	edc_cmd_wait(struct edc_mca_softc *, int, int);
+static void	edcworker(void *);
+static void	edc_spawn_worker(void *);
 
 int
 edc_mca_probe(parent, match, aux)

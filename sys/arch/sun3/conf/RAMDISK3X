@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK3X,v 1.22.6.3 2004/09/21 13:23:19 skrll Exp $
+# $NetBSD: RAMDISK3X,v 1.22.6.4 2005/02/04 11:45:07 skrll Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -91,7 +91,7 @@ le0 at obio0 addr 0x65002000 ipl 3
 # Both `dma' and `esp' are needed.
 # See GENERIC3X for the flags description.
 dma0 at obio0 addr 0x66001000 ipl 2
-esp0 at obio0 addr 0x66000000 ipl 2 flags 0xff0f
+esp0 at obio0 addr 0x66000000 ipl 2 flags 0x000000
 
 # Floppy drive
 fdc0 at obio0 addr 0x6e000000 ipl 6 vect 0x40
@@ -136,3 +136,4 @@ pseudo-device	md		2
 # Misc.
 pseudo-device	loop		1	# network loopback
 pseudo-device	sl		2	# CSLIP
+#pseudo-device	fss		4	# file system snapshot device

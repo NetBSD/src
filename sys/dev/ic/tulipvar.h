@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.48.6.4 2004/11/02 07:51:31 skrll Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.48.6.5 2005/02/04 11:45:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -192,9 +192,9 @@ struct tulip_softc;
  * Media init, change, status function pointers.
  */
 struct tulip_mediasw {
-	void	(*tmsw_init) __P((struct tulip_softc *));
-	void	(*tmsw_get) __P((struct tulip_softc *, struct ifmediareq *));
-	int	(*tmsw_set) __P((struct tulip_softc *));
+	void	(*tmsw_init)(struct tulip_softc *);
+	void	(*tmsw_get)(struct tulip_softc *, struct ifmediareq *);
+	int	(*tmsw_set)(struct tulip_softc *);
 };
 
 /*
@@ -276,9 +276,8 @@ struct tulip_21x4x_media {
 	int		tm_type;	/* type of media; see tulipreg.h */
 	const char	*tm_name;	/* name of media */
 
-	void		(*tm_get) __P((struct tulip_softc *,
-			    struct ifmediareq *));
-	int		(*tm_set) __P((struct tulip_softc *));
+	void		(*tm_get)(struct tulip_softc *, struct ifmediareq *);
+	int		(*tm_set)(struct tulip_softc *);
 
 	int		tm_phyno;	/* PHY # on MII */
 
@@ -385,25 +384,25 @@ struct tulip_softc {
 	u_int32_t	sc_sia_cap;	/* SIA media capabilities (21143) */
 
 	/* Reset function. */
-	void		(*sc_reset) __P((struct tulip_softc *));
+	void		(*sc_reset)(struct tulip_softc *);
 
 	/* Pre-init function. */
-	void		(*sc_preinit) __P((struct tulip_softc *));
+	void		(*sc_preinit)(struct tulip_softc *);
 
 	/* Filter setup function. */
-	void		(*sc_filter_setup) __P((struct tulip_softc *));
+	void		(*sc_filter_setup)(struct tulip_softc *);
 
 	/* Media status update function. */
-	void		(*sc_statchg) __P((struct device *));
+	void		(*sc_statchg)(struct device *);
 
 	/* Media tick function. */
-	void		(*sc_tick) __P((void *));
+	void		(*sc_tick)(void *);
 	struct callout sc_tick_callout;
 
 	/* Power management hooks. */
-	int		(*sc_enable) __P((struct tulip_softc *));
-	void		(*sc_disable) __P((struct tulip_softc *));
-	void		(*sc_power) __P((struct tulip_softc *, int));
+	int		(*sc_enable)(struct tulip_softc *);
+	void		(*sc_disable)(struct tulip_softc *);
+	void		(*sc_power)(struct tulip_softc *, int);
 
 	/*
 	 * The Winbond 89C840F places registers 4 bytes apart, instead
@@ -595,23 +594,22 @@ extern const struct tulip_mediasw tlp_al981_mediasw;
 extern const struct tulip_mediasw tlp_an985_mediasw;
 extern const struct tulip_mediasw tlp_dm9102_mediasw;
 
-void	tlp_attach __P((struct tulip_softc *, const u_int8_t *));
-int	tlp_activate __P((struct device *, enum devact));
-int	tlp_detach __P((struct tulip_softc *));
-int	tlp_intr __P((void *));
-int	tlp_read_srom __P((struct tulip_softc *));
-int	tlp_srom_crcok __P((const u_int8_t *));
-int	tlp_isv_srom __P((const u_int8_t *));
-int	tlp_isv_srom_enaddr __P((struct tulip_softc *, u_int8_t *));
-int	tlp_parse_old_srom __P((struct tulip_softc *, u_int8_t *));
-void	tlp_reset __P((struct tulip_softc *));
+void	tlp_attach(struct tulip_softc *, const u_int8_t *);
+int	tlp_activate(struct device *, enum devact);
+int	tlp_detach(struct tulip_softc *);
+int	tlp_intr(void *);
+int	tlp_read_srom(struct tulip_softc *);
+int	tlp_srom_crcok(const u_int8_t *);
+int	tlp_isv_srom(const u_int8_t *);
+int	tlp_isv_srom_enaddr(struct tulip_softc *, u_int8_t *);
+int	tlp_parse_old_srom(struct tulip_softc *, u_int8_t *);
+void	tlp_reset(struct tulip_softc *);
 
-int	tlp_mediachange __P((struct ifnet *));
-void	tlp_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int	tlp_mediachange(struct ifnet *);
+void	tlp_mediastatus(struct ifnet *, struct ifmediareq *);
 
-void	tlp_21140_gpio_get __P((struct tulip_softc *sc,
-	    struct ifmediareq *ifmr));
-int	tlp_21140_gpio_set __P((struct tulip_softc *sc));
+void	tlp_21140_gpio_get(struct tulip_softc *sc, struct ifmediareq *ifmr);
+int	tlp_21140_gpio_set(struct tulip_softc *sc);
 
 #endif /* _KERNEL */
 

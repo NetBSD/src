@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.40.2.7 2005/01/17 19:32:55 skrll Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.40.2.8 2005/02/04 11:48:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -210,6 +210,9 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
 				   implies stale cache */
 #define	NREMOVED	0x2000	/* Has been removed */
 #define	NUSEOPENCRED	0x4000	/* Try open cred first rather than owner's */
+#define	NEOFVALID	0x8000	/* dir: n_direofoffset is valid */
+
+#define	NFS_EOFVALID(ndp)	((ndp)->n_flag & NEOFVALID)
 
 /*
  * Convert between nfsnode pointers and vnode pointers

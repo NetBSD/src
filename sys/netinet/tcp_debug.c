@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.18.6.4 2005/01/17 19:32:54 skrll Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.18.6.5 2005/02/04 11:47:48 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.18.6.4 2005/01/17 19:32:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.18.6.5 2005/02/04 11:47:48 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -111,11 +111,7 @@ int	tcpconsdebug = 0;
  * Tcp debug routines
  */
 void
-tcp_trace(act, ostate, tp, m, req)
-	short act, ostate;
-	struct tcpcb *tp;
-	struct mbuf *m;
-	int req;
+tcp_trace(short act, short ostate, struct tcpcb *tp, struct mbuf *m, int req)
 {
 	tcp_seq seq, ack;
 	int len, flags;

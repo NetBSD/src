@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.89.2.3 2004/08/12 11:42:21 skrll Exp $	*/
+/*	$NetBSD: in.c,v 1.89.2.4 2005/02/04 11:47:45 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.89.2.3 2004/08/12 11:42:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.89.2.4 2005/02/04 11:47:45 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -135,13 +135,13 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.89.2.3 2004/08/12 11:42:21 skrll Exp $");
 #endif
 
 #ifdef INET
-static u_int in_mask2len __P((struct in_addr *));
-static void in_len2mask __P((struct in_addr *, u_int));
-static int in_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
-	struct ifnet *, struct proc *));
+static u_int in_mask2len(struct in_addr *);
+static void in_len2mask(struct in_addr *, u_int);
+static int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
+	struct ifnet *, struct proc *);
 
-static int in_addprefix __P((struct in_ifaddr *, int));
-static int in_scrubprefix __P((struct in_ifaddr *));
+static int in_addprefix(struct in_ifaddr *, int);
+static int in_scrubprefix(struct in_ifaddr *);
 
 #ifndef SUBNETSARELOCAL
 #define	SUBNETSARELOCAL	1
@@ -168,8 +168,7 @@ static TAILQ_HEAD(, in_ifaddr) in_mk = TAILQ_HEAD_INITIALIZER(in_mk);
  * Otherwise, it includes only the directly-connected (sub)nets.
  */
 int
-in_localaddr(in)
-	struct in_addr in;
+in_localaddr(struct in_addr in)
 {
 	struct in_ifaddr *ia;
 
@@ -191,8 +190,7 @@ in_localaddr(in)
  * may be forwarded.
  */
 int
-in_canforward(in)
-	struct in_addr in;
+in_canforward(struct in_addr in)
 {
 	u_int32_t net;
 
@@ -210,8 +208,7 @@ in_canforward(in)
  * Trim a mask in a sockaddr
  */
 void
-in_socktrim(ap)
-	struct sockaddr_in *ap;
+in_socktrim(struct sockaddr_in *ap)
 {
 	char *cplim = (char *) &ap->sin_addr;
 	char *cp = (char *) (&ap->sin_addr + 1);
@@ -229,8 +226,7 @@ in_socktrim(ap)
  *  "dotted quad" representation for printing.
  */
 const char *
-in_fmtaddr(addr)
-	struct in_addr addr;
+in_fmtaddr(struct in_addr addr)
 {
 	static char buf[sizeof("123.456.789.123")];
 
@@ -252,7 +248,7 @@ in_fmtaddr(addr)
 unsigned long in_maxmtu;
 
 void
-in_setmaxmtu()
+in_setmaxmtu(void)
 {
 	struct in_ifaddr *ia;
 	struct ifnet *ifp;
@@ -271,8 +267,7 @@ in_setmaxmtu()
 }
 
 static u_int
-in_mask2len(mask)
-	struct in_addr *mask;
+in_mask2len(struct in_addr *mask)
 {
 	u_int x, y;
 	u_char *p;
@@ -293,9 +288,7 @@ in_mask2len(mask)
 }
 
 static void
-in_len2mask(mask, len)
-	struct in_addr *mask;
-	u_int len;
+in_len2mask(struct in_addr *mask, u_int len)
 {
 	u_int i;
 	u_char *p;
@@ -314,12 +307,8 @@ in_len2mask(mask, len)
  */
 /* ARGSUSED */
 int
-in_control(so, cmd, data, ifp, p)
-	struct socket *so;
-	u_long cmd;
-	caddr_t data;
-	struct ifnet *ifp;
-	struct proc *p;
+in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
+    struct proc *p)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct in_ifaddr *ia = 0;
@@ -570,9 +559,7 @@ in_control(so, cmd, data, ifp, p)
 }
 
 void
-in_purgeaddr(ifa, ifp)
-	struct ifaddr *ifa;
-	struct ifnet *ifp;
+in_purgeaddr(struct ifaddr *ifa, struct ifnet *ifp)
 {
 	struct in_ifaddr *ia = (void *) ifa;
 
@@ -588,8 +575,7 @@ in_purgeaddr(ifa, ifp)
 }
 
 void
-in_purgeif(ifp)
-	struct ifnet *ifp;
+in_purgeif(struct ifnet *ifp)
 {
 	struct ifaddr *ifa, *nifa;
 
@@ -623,12 +609,8 @@ in_purgeif(ifp)
  *	other values may be returned from in_ioctl()
  */
 static int
-in_lifaddr_ioctl(so, cmd, data, ifp, p)
-	struct socket *so;
-	u_long cmd;
-	caddr_t	data;
-	struct ifnet *ifp;
-	struct proc *p;
+in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
+    struct ifnet *ifp, struct proc *p)
 {
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
 	struct ifaddr *ifa;
@@ -736,7 +718,7 @@ in_lifaddr_ioctl(so, cmd, data, ifp, p)
 			}
 		}
 
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			if (!cmp)
@@ -796,9 +778,7 @@ in_lifaddr_ioctl(so, cmd, data, ifp, p)
  * Delete any existing route for an interface.
  */
 void
-in_ifscrub(ifp, ia)
-	struct ifnet *ifp;
-	struct in_ifaddr *ia;
+in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
 {
 
 	in_scrubprefix(ia);
@@ -809,11 +789,8 @@ in_ifscrub(ifp, ia)
  * and routing table entry.
  */
 int
-in_ifinit(ifp, ia, sin, scrub)
-	struct ifnet *ifp;
-	struct in_ifaddr *ia;
-	struct sockaddr_in *sin;
-	int scrub;
+in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
+    struct sockaddr_in *sin, int scrub)
 {
 	u_int32_t i;
 	struct sockaddr_in oldaddr;
@@ -917,9 +894,7 @@ bad:
  * does nothing if there's some interface address with the same prefix already.
  */
 static int
-in_addprefix(target, flags)
-	struct in_ifaddr *target;
-	int flags;
+in_addprefix(struct in_ifaddr *target, int flags)
 {
 	struct in_ifaddr *ia;
 	struct in_addr prefix, mask, p;
@@ -967,8 +942,7 @@ in_addprefix(target, flags)
  * with the same prefix (otherwise we lose the route mistakenly).
  */
 static int
-in_scrubprefix(target)
-	struct in_ifaddr *target;
+in_scrubprefix(struct in_ifaddr *target)
 {
 	struct in_ifaddr *ia;
 	struct in_addr prefix, mask, p;
@@ -1026,9 +1000,7 @@ in_scrubprefix(target)
  * Return 1 if the address might be a local broadcast address.
  */
 int
-in_broadcast(in, ifp)
-	struct in_addr in;
-	struct ifnet *ifp;
+in_broadcast(struct in_addr in, struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 
@@ -1042,7 +1014,7 @@ in_broadcast(in, ifp)
 	 * with a broadcast address.
 	 */
 #define ia (ifatoia(ifa))
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
+	IFADDR_FOREACH(ifa, ifp)
 		if (ifa->ifa_addr->sa_family == AF_INET &&
 		    !in_hosteq(in, ia->ia_addr.sin_addr) &&
 		    (in_hosteq(in, ia->ia_broadaddr.sin_addr) ||
@@ -1062,9 +1034,7 @@ in_broadcast(in, ifp)
  * Add an address to the list of IP multicast addresses for a given interface.
  */
 struct in_multi *
-in_addmulti(ap, ifp)
-	struct in_addr *ap;
-	struct ifnet *ifp;
+in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 {
 	struct in_multi *inm;
 	struct ifreq ifr;
@@ -1128,8 +1098,7 @@ in_addmulti(ap, ifp)
  * Delete a multicast address record.
  */
 void
-in_delmulti(inm)
-	struct in_multi *inm;
+in_delmulti(struct in_multi *inm)
 {
 	struct ifreq ifr;
 	int s = splsoftnet();

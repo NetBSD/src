@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.15.6.4 2004/09/21 13:30:16 skrll Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.15.6.5 2005/02/04 11:46:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.15.6.4 2004/09/21 13:30:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.15.6.5 2005/02/04 11:46:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ int	pcicisapnp_debug = 0 /* XXX */ ;
 #define	DPRINTF(arg)
 #endif
 
-int pcic_isapnp_match __P((struct device *, struct cfdata *, void *));
-void	pcic_isapnp_attach __P((struct device *, struct device *, void *));
+int pcic_isapnp_match(struct device *, struct cfdata *, void *);
+void	pcic_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcic_isapnp, sizeof(struct pcic_isa_softc),
     pcic_isapnp_match, pcic_isapnp_attach, NULL, NULL);

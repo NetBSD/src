@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.30.2.4 2004/11/14 08:15:06 skrll Exp $
+#	$NetBSD: JORNADA720,v 1.30.2.5 2005/02/04 11:44:19 skrll Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.30.2.4 $"
+#ident 		"GENERIC-$Revision: 1.30.2.5 $"
 
 # estimated number of users
 maxusers	32
@@ -247,6 +247,7 @@ pseudo-device	tb	1		# tablet line discipline
 #pseudo-device	cgd	2		# cryptographic disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	fss	4		# file system snapshot device
 
 pseudo-device	biconsdev 1		# build-in console device
 pseudo-device	wsmux

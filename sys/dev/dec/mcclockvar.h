@@ -1,4 +1,4 @@
-/* $NetBSD: mcclockvar.h,v 1.4 1997/06/22 08:02:19 jonathan Exp $ */
+/* $NetBSD: mcclockvar.h,v 1.4.54.1 2005/02/04 11:45:23 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,9 +33,8 @@ struct mcclock_softc {
 };
 
 struct mcclock_busfns {
-	void    (*mc_bf_write) __P((struct mcclock_softc *, u_int, u_int));
-	u_int   (*mc_bf_read) __P((struct mcclock_softc *, u_int));
+	void    (*mc_bf_write)(struct mcclock_softc *, u_int, u_int);
+	u_int   (*mc_bf_read)(struct mcclock_softc *, u_int);
 };
 
-void	mcclock_attach __P((struct mcclock_softc *,
-	    const struct mcclock_busfns *));
+void mcclock_attach(struct mcclock_softc *, const struct mcclock_busfns *);

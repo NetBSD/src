@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33.2.3 2004/09/21 13:21:38 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33.2.4 2005/02/04 11:44:56 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.2.3 2004/09/21 13:21:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.2.4 2005/02/04 11:44:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -1429,6 +1429,23 @@ pmap_collect(pmap_t pm)
 }
 
 /*
+ * Register hardware-assisted page copy/zero helpers
+ */
+static void (*pmap_helper_zero_page)(void *, paddr_t);
+static void (*pmap_helper_copy_page)(void *, paddr_t, paddr_t);
+static void *pmap_helper_arg;
+
+void
+pmap_register_copyzero_helpers(void (*zero)(void *, paddr_t),
+    void (*copy)(void *, paddr_t, paddr_t), void *arg)
+{
+
+	pmap_helper_zero_page = zero;
+	pmap_helper_copy_page = copy;
+	pmap_helper_arg = arg;
+}
+
+/*
  * Fill the given physical page with zeroes.
  */
 void
@@ -1440,13 +1457,10 @@ pmap_zero_page(paddr_t pa)
 
 	pmap_zero_page_events.ev_count++;
 
-	/*
-	 * Purge/invalidate the cache for any other mappings to this PA.
-	 *
-	 * XXX: This should not be necessary, but is here as a fail-safe.
-	 * We should really panic if there are any existing mappings...
-	 */
-	pmap_copyzero_page_dpurge(pa, &pmap_zero_page_dpurge_events);
+	if (pmap_helper_zero_page) {
+		(*pmap_helper_zero_page)(pmap_helper_arg, pa);
+		return;
+	}
 
 	/*
 	 * Note: We could use the KSEG0 address of PA, assuming it resides
@@ -1478,15 +1492,14 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	pmap_copy_page_events.ev_count++;
 
 	/*
-	 * Purge/invalidate the cache for any other mappings to the source
-	 * and destination PAs.
-	 *
-	 * XXX: This should not be necessary for the destination PA, but is
-	 * here as a fail-safe. We should really panic if there are any
-	 * existing mappings for dst...
+	 * Purge the cache for any other mappings to the source PA
 	 */
 	pmap_copyzero_page_dpurge(src, &pmap_copy_page_dpurge_src_events);
-	pmap_copyzero_page_dpurge(dst, &pmap_copy_page_dpurge_dst_events);
+
+	if (pmap_helper_copy_page) {
+		(*pmap_helper_copy_page)(pmap_helper_arg, src, dst);
+		return;
+	}
 
 	/*
 	 * Note: We could use the KSEG0 addresses of src and dst, assuming
@@ -1521,25 +1534,28 @@ pmap_copyzero_page_dpurge(paddr_t pa, struct evcnt *ev)
 	/*
 	 * One or more cacheable mappings already exist for this
 	 * physical page. We now have to take preventative measures
-	 * to purge all dirty data back to the page and ensure no
-	 * valid cache lines remain which reference the page.
+	 * to purge all dirty data back to the page.
 	 */
 	LIST_FOREACH(pvo, pvo_head, pvo_vlink) {
 		KDASSERT((paddr_t)(pvo->pvo_ptel & SH5_PTEL_PPN_MASK) == pa);
 
+		/*
+		 * Ignore user-space mappings which are not resident
+		 * in a PTEG. There's no way they can be in the cache.
+		 */
 		if (PVO_VADDR(pvo) < SH5_KSEG0_BASE && !PVO_PTEGIDX_ISSET(pvo))
 			continue;
 
 		cpu_cache_dpurge_iinv(PVO_VADDR(pvo), pa, PAGE_SIZE);
-
 		ev->ev_count++;
-
+#if 0
 		/*
-		 * If the first mapping is writable, then we don't need
-		 * to purge the others; they must all be at the same VA.
+		 * If we find a writable mapping, we don't need to purge the
+		 * others as they must all be at the same VA.
 		 */
 		if (PVO_ISWRITABLE(pvo))
 			break;
+#endif
 	}
 }
 
@@ -2316,37 +2332,46 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	 */
 	if (pm == pmap_kernel() &&
 	    va < SH5_KSEG1_BASE && va >= SH5_KSEG0_BASE) {
-		*pap = (paddr_t)(va - SH5_KSEG0_BASE) + pmap_kseg0_pa;
+		if (__predict_true(pap != NULL))
+			*pap = (paddr_t)(va - SH5_KSEG0_BASE) + pmap_kseg0_pa;
 		PMPRINTF(("KSEG0. pa 0x%lx\n", *pap));
 		return (TRUE);
 	}
 
 	s = splvm();
+
 	pvo = pmap_pvo_find_va(pm, va, NULL);
 	if (pvo != NULL) {
-		*pap = (pvo->pvo_ptel & SH5_PTEL_PPN_MASK) |
-		    sh5_page_offset(va);
+		if (__predict_true(pap != NULL))
+			*pap = (pvo->pvo_ptel & SH5_PTEL_PPN_MASK) |
+			    sh5_page_offset(va);
 		found = TRUE;
 		PMPRINTF(("%smanaged pvo. pa 0x%lx\n",
-		    PVO_ISMANAGED(pvo) ? "" : "un", *pap));
+		    PVO_ISMANAGED(pvo) ? "" : "un",
+		    pap ? *pap : ((pvo->pvo_ptel & SH5_PTEL_PPN_MASK) |
+		    sh5_page_offset(va))));
 	} else
 	if (pm == pmap_kernel()) {
 		ptel_t ptel;
 		idx = kva_to_iptidx(va);
 		if (idx >= 0 &&
 		    (ptel = pmap_kernel_ipt_get_ptel(&pmap_kernel_ipt[idx]))) {
-			*pap = (ptel & SH5_PTEL_PPN_MASK) | sh5_page_offset(va);
+			if (__predict_true(pap != NULL))
+				*pap = (ptel & SH5_PTEL_PPN_MASK) |
+				    sh5_page_offset(va);
 			found = TRUE;
-			PMPRINTF(("no pvo, but kipt pa 0x%lx\n", *pap));
+			PMPRINTF(("no pvo, but kipt pa 0x%lx\n",
+			    pap ? *pap : ((pvo->pvo_ptel & SH5_PTEL_PPN_MASK) |
+			    sh5_page_offset(va))));
 		}
 	}
+
+	splx(s);
 
 #ifdef DEBUG
 	if (!found)
 		PMPRINTF(("not found.\n"));
 #endif
-
-	splx(s);
 
 	return (found);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.102.2.8 2004/11/02 07:53:23 skrll Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.102.2.9 2005/02/04 11:47:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.8 2004/11/02 07:53:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.9 2005/02/04 11:47:42 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -825,7 +825,7 @@ setroot(bootdv, bootpartition)
 	if (vops != NULL && vops->vfs_mountroot == mountroot &&
 	    rootspec == NULL &&
 	    (bootdv == NULL || bootdv->dv_class != DV_IFNET)) {
-		TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		IFNET_FOREACH(ifp) {
 			if ((ifp->if_flags &
 			     (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
 				break;

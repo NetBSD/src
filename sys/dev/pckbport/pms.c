@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.2.4.7 2005/01/24 08:35:36 skrll Exp $ */
+/* $NetBSD: pms.c,v 1.2.4.8 2005/02/04 11:47:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.2.4.7 2005/01/24 08:35:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.2.4.8 2005/02/04 11:47:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,8 +348,11 @@ pms_power(int why, void *v)
 		break;
 	case PWR_RESUME:
 #ifdef PMS_SYNAPTICS_TOUCHPAD
-		if (sc->protocol == PMS_SYNAPTICS)
+		if (sc->protocol == PMS_SYNAPTICS) {
 			pms_synaptics_resume(sc);
+			sc->sc_suspended = 0;
+			do_enable(sc);
+		}
 #endif
 		if (sc->sc_enabled && sc->sc_suspended) {
 			/* recheck protocol & init mouse */
@@ -357,6 +360,7 @@ pms_power(int why, void *v)
 			sc->sc_suspended = 0;
 			do_enable(sc); /* only if we were suspended */
 		}
+		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
 	case PWR_SOFTRESUME:

@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.1.2.4 2004/11/29 07:24:05 skrll Exp $ */
+/* $NetBSD: if_mec.c,v 1.1.2.5 2005/02/04 11:44:49 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.1.2.4 2004/11/29 07:24:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.1.2.5 2005/02/04 11:44:49 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1345,6 +1345,12 @@ mec_rxintr(struct mec_softc *sc)
 		}
 
 		/*
+		 * The MEC includes the CRC with every packet.  Trim
+		 * it off here.
+		 */
+		len -= ETHER_CRC_LEN;
+
+		/*
 		 * now allocate an mbuf (and possibly a cluster) to hold
 		 * the received packet.
 		 */
@@ -1381,7 +1387,6 @@ mec_rxintr(struct mec_softc *sc)
 
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
-		m->m_flags |= M_HASFCS;
 
 		ifp->if_ipackets++;
 

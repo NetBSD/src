@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.17.6.3 2004/09/21 13:33:13 skrll Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.17.6.4 2005/02/04 11:47:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.17.6.3 2004/09/21 13:33:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.17.6.4 2005/02/04 11:47:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ struct hmesbus_softc {
 	struct	sbusdev		hsc_sbus;	/* SBus device */
 };
 
-int	hmematch_sbus __P((struct device *, struct cfdata *, void *));
-void	hmeattach_sbus __P((struct device *, struct device *, void *));
+int	hmematch_sbus(struct device *, struct cfdata *, void *);
+void	hmeattach_sbus(struct device *, struct device *, void *);
 
 CFATTACH_DECL(hme_sbus, sizeof(struct hmesbus_softc),
     hmematch_sbus, hmeattach_sbus, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.45.2.5 2005/01/24 08:35:19 skrll Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.45.2.6 2005/02/04 11:45:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45.2.5 2005/01/24 08:35:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45.2.6 2005/02/04 11:45:27 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -131,35 +131,35 @@ __KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45.2.5 2005/01/24 08:35:19 skrll Exp $
 #define STATIC static
 #endif
 
-STATIC void rtk_reset		__P((struct rtk_softc *));
-STATIC void rtk_rxeof		__P((struct rtk_softc *));
-STATIC void rtk_txeof		__P((struct rtk_softc *));
-STATIC void rtk_start		__P((struct ifnet *));
-STATIC int rtk_ioctl		__P((struct ifnet *, u_long, caddr_t));
-STATIC int rtk_init		__P((struct ifnet *));
-STATIC void rtk_stop		__P((struct ifnet *, int));
+STATIC void rtk_reset		(struct rtk_softc *);
+STATIC void rtk_rxeof		(struct rtk_softc *);
+STATIC void rtk_txeof		(struct rtk_softc *);
+STATIC void rtk_start		(struct ifnet *);
+STATIC int rtk_ioctl		(struct ifnet *, u_long, caddr_t);
+STATIC int rtk_init		(struct ifnet *);
+STATIC void rtk_stop		(struct ifnet *, int);
 
-STATIC void rtk_watchdog	__P((struct ifnet *));
-STATIC void rtk_shutdown	__P((void *));
-STATIC int rtk_ifmedia_upd	__P((struct ifnet *));
-STATIC void rtk_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+STATIC void rtk_watchdog(struct ifnet *);
+STATIC void rtk_shutdown(void *);
+STATIC int rtk_ifmedia_upd(struct ifnet *);
+STATIC void rtk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-STATIC void rtk_eeprom_putbyte	__P((struct rtk_softc *, int, int));
-STATIC void rtk_mii_sync	__P((struct rtk_softc *));
-STATIC void rtk_mii_send	__P((struct rtk_softc *, u_int32_t, int));
-STATIC int rtk_mii_readreg	__P((struct rtk_softc *, struct rtk_mii_frame *));
-STATIC int rtk_mii_writereg	__P((struct rtk_softc *, struct rtk_mii_frame *));
+STATIC void rtk_eeprom_putbyte(struct rtk_softc *, int, int);
+STATIC void rtk_mii_sync(struct rtk_softc *);
+STATIC void rtk_mii_send(struct rtk_softc *, u_int32_t, int);
+STATIC int rtk_mii_readreg(struct rtk_softc *, struct rtk_mii_frame *);
+STATIC int rtk_mii_writereg(struct rtk_softc *, struct rtk_mii_frame *);
 
-STATIC int rtk_phy_readreg	__P((struct device *, int, int));
-STATIC void rtk_phy_writereg	__P((struct device *, int, int, int));
-STATIC void rtk_phy_statchg	__P((struct device *));
-STATIC void rtk_tick		__P((void *));
+STATIC int rtk_phy_readreg(struct device *, int, int);
+STATIC void rtk_phy_writereg(struct device *, int, int, int);
+STATIC void rtk_phy_statchg(struct device *);
+STATIC void rtk_tick		(void *);
 
-STATIC int rtk_enable		__P((struct rtk_softc *));
-STATIC void rtk_disable		__P((struct rtk_softc *));
-STATIC void rtk_power		__P((int, void *));
+STATIC int rtk_enable		(struct rtk_softc *);
+STATIC void rtk_disable		(struct rtk_softc *);
+STATIC void rtk_power		(int, void *);
 
-STATIC int rtk_list_tx_init	__P((struct rtk_softc *));
+STATIC int rtk_list_tx_init(struct rtk_softc *);
 
 #define EE_SET(x)					\
 	CSR_WRITE_1(sc, RTK_EECMD,			\

@@ -1,4 +1,4 @@
-#	$NetBSD: files.tsarm,v 1.5.4.2 2005/01/17 19:29:13 skrll Exp $
+#	$NetBSD: files.tsarm,v 1.5.4.3 2005/02/04 11:44:18 skrll Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -31,9 +31,13 @@ device tsrtc: mc146818
 attach tsrtc at tspldbus
 file	arch/evbarm/tsarm/tsrtc.c		tsrtc
 
-device	tslcd: hd44780
+device	tslcd: hd44780, wsemuldisplaydev
 attach	tslcd at tspldbus
 file	arch/evbarm/tsarm/tslcd.c		tslcd
+
+device  tskp: matrixkp, wskbddev
+attach	tskp at tspldbus
+file	arch/evbarm/tsarm/tskp.c		tskp
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.52.2.3 2004/11/02 07:51:30 skrll Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.52.2.4 2005/02/04 11:45:24 skrll Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.52.2.3 2004/11/02 07:51:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.52.2.4 2005/02/04 11:45:24 skrll Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -73,16 +73,16 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.52.2.3 2004/11/02 07:51:30 skrll Exp $"
 int	dp8390_debug = 0;
 #endif
 
-static __inline__ void	dp8390_xmit __P((struct dp8390_softc *));
+static __inline__ void	dp8390_xmit(struct dp8390_softc *);
 
-static __inline__ void	dp8390_read_hdr __P((struct dp8390_softc *,
-			    int, struct dp8390_ring *));
-static __inline__ int	dp8390_ring_copy __P((struct dp8390_softc *,
-			    int, caddr_t, u_short));
-static __inline__ int	dp8390_write_mbuf __P((struct dp8390_softc *,
-			    struct mbuf *, int));
+static __inline__ void	dp8390_read_hdr(struct dp8390_softc *,
+			    int, struct dp8390_ring *);
+static __inline__ int	dp8390_ring_copy(struct dp8390_softc *,
+			    int, caddr_t, u_short);
+static __inline__ int	dp8390_write_mbuf(struct dp8390_softc *,
+			    struct mbuf *, int);
 
-static int		dp8390_test_mem __P((struct dp8390_softc *));
+static int		dp8390_test_mem(struct dp8390_softc *);
 
 /*
  * Standard media init routine for the dp8390.
@@ -1353,11 +1353,11 @@ dp8390_detach(sc, flags)
 }
 
 #ifdef IPKDB_DP8390
-static void dp8390_ipkdb_hwinit __P((struct ipkdb_if *));
-static void dp8390_ipkdb_init __P((struct ipkdb_if *));
-static void dp8390_ipkdb_leave __P((struct ipkdb_if *));
-static int dp8390_ipkdb_rcv __P((struct ipkdb_if *, u_char *, int));
-static void dp8390_ipkdb_send __P((struct ipkdb_if *, u_char *, int));
+static void dp8390_ipkdb_hwinit(struct ipkdb_if *);
+static void dp8390_ipkdb_init(struct ipkdb_if *);
+static void dp8390_ipkdb_leave(struct ipkdb_if *);
+static int dp8390_ipkdb_rcv(struct ipkdb_if *, u_char *, int);
+static void dp8390_ipkdb_send(struct ipkdb_if *, u_char *, int);
 
 /*
  * This is essentially similar to dp8390_config above.

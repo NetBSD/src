@@ -1,4 +1,4 @@
-/*	$NetBSD: kprintf.h,v 1.3.2.3 2004/09/21 13:38:46 skrll Exp $	*/
+/*	$NetBSD: kprintf.h,v 1.3.2.4 2005/02/04 11:48:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -85,7 +85,7 @@ do {									\
 /*
  * NOTE: the kprintf mutex must be held when these functions are called!
  */
-int	kprintf __P((const char *, int, void *, char *, _BSD_VA_LIST_));
-void	klogpri __P((int));
+int	kprintf(const char *, int, void *, char *, _BSD_VA_LIST_);
+void	klogpri(int);
 
 #endif /* _SYS_KPRINTF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpuvar.h,v 1.3.36.4 2004/11/02 07:51:31 skrll Exp $	*/
+/*	$NetBSD: mpuvar.h,v 1.3.36.5 2005/02/04 11:45:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,11 +42,11 @@ struct mpu_softc {
 	bus_space_handle_t ioh;		/* handle */
 	char *model;
 	int	open;
-	void	(*intr)__P((void *, int)); /* midi input intr handler */
+	void	(*intr)(void *, int);	/* midi input intr handler */
 	void	*arg;			/* arg for intr() */
 
 #ifndef AUDIO_NO_POWER_CTL
-	int	(*powerctl)__P((void *, int));
+	int	(*powerctl)(void *, int);
 	void	*powerarg;
 #endif
 };
@@ -54,9 +54,9 @@ struct mpu_softc {
 #ifdef _KERNEL
 extern const struct midi_hw_if mpu_midi_hw_if;
 
-int	mpu_find __P((struct mpu_softc *));
-void	mpu_attach __P((struct mpu_softc *));
-int	mpu_intr __P((void *));
+int	mpu_find(struct mpu_softc *);
+void	mpu_attach(struct mpu_softc *);
+int	mpu_intr(void *);
 #endif
 
 #define MPU401_NPORT	2

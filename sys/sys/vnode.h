@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.112.2.11 2005/01/17 19:33:10 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.112.2.12 2005/02/04 11:48:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -100,7 +100,7 @@ struct vnode {
 	long		v_writecount;		/* reference count of writers */
 	long		v_holdcnt;		/* page & buffer references */
 	struct mount	*v_mount;		/* ptr to vfs we are in */
-	int		(**v_op) __P((void *));	/* vnode operations vector */
+	int		(**v_op)(void *);	/* vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */
@@ -287,6 +287,7 @@ extern const int	vttoif_tab[];
 #define	FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
 #define	FSYNC_RECLAIM	0x0004		/* fsync: hint: vnode is being reclaimed */
 #define	FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
+#define	FSYNC_CACHE	0x0100		/* fsync: flush disk caches too */
 
 #define	UPDATE_WAIT	0x0001		/* update: wait for completion */
 #define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */

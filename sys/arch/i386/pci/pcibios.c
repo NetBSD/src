@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.11.2.5 2004/11/29 07:24:04 skrll Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.11.2.6 2005/02/04 11:44:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.11.2.5 2004/11/29 07:24:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.11.2.6 2005/02/04 11:44:31 skrll Exp $");
 
 #include "opt_pcibios.h"
 
@@ -151,7 +151,7 @@ struct pci_bridge_hook_arg {
 };
 
 void
-pcibios_init()
+pcibios_init(void)
 {
 	struct bios32_entry_info ei;
 	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2;
@@ -246,7 +246,7 @@ pcibios_init()
 }
 
 void
-pcibios_pir_init()
+pcibios_pir_init(void)
 {
 	char *devinfo;
 	paddr_t pa;
@@ -498,7 +498,7 @@ pcibios_return_code(u_int16_t ax, const char *func)
 }
 
 void
-pcibios_print_exclirq()
+pcibios_print_exclirq(void)
 {
 	int i;
 
@@ -515,7 +515,7 @@ pcibios_print_exclirq()
 #ifdef PCIBIOS_LIBRETTO_FIXUP
 /* for Libretto L2/L3 hack */
 static void 
-pcibios_fixup_pir_table()
+pcibios_fixup_pir_table(void)
 {
 	struct pcibios_linkmap *m;
 
@@ -524,8 +524,7 @@ pcibios_fixup_pir_table()
 }
 
 void 
-pcibios_fixup_pir_table_mask(mask)
-	struct pcibios_linkmap *mask;
+pcibios_fixup_pir_table_mask(struct pcibios_linkmap *mask)
 {
 	int i, j;
 
@@ -542,7 +541,7 @@ pcibios_fixup_pir_table_mask(mask)
 
 #ifdef PCIINTR_DEBUG
 void
-pcibios_print_pir_table()
+pcibios_print_pir_table(void)
 {
 	int i, j;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.7.16.4 2005/01/17 19:30:39 skrll Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.7.16.5 2005/02/04 11:45:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -84,14 +84,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.7.16.4 2005/01/17 19:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.7.16.5 2005/02/04 11:45:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <dev/clock_subr.h>
 
-static inline int leapyear __P((int year));
+static inline int leapyear(int year);
 #define FEBRUARY	2
 #define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
 #define	days_in_month(a) 	(month_days[(a) - 1])

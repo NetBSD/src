@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.17.6.3 2004/09/21 13:29:44 skrll Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.17.6.4 2005/02/04 11:46:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.17.6.3 2004/09/21 13:29:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.17.6.4 2005/02/04 11:46:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,29 +88,29 @@ struct ix_softc {
 	void		*sc_ih;		/* interrupt handle */
 };
 
-static void 	ix_reset __P((struct ie_softc *, int));
-static void 	ix_atten __P((struct ie_softc *, int));
-static int 	ix_intrhook __P((struct ie_softc *, int));
+static void 	ix_reset(struct ie_softc *, int);
+static void 	ix_atten(struct ie_softc *, int);
+static int 	ix_intrhook(struct ie_softc *, int);
 
-static void     ix_copyin __P((struct ie_softc *, void *, int, size_t));
-static void     ix_copyout __P((struct ie_softc *, const void *, int, size_t));
+static void     ix_copyin(struct ie_softc *, void *, int, size_t);
+static void     ix_copyout(struct ie_softc *, const void *, int, size_t);
 
-static void	ix_bus_barrier __P((struct ie_softc *, int, int, int));
+static void	ix_bus_barrier(struct ie_softc *, int, int, int);
 
-static u_int16_t ix_read_16 __P((struct ie_softc *, int));
-static void	ix_write_16 __P((struct ie_softc *, int, u_int16_t));
-static void	ix_write_24 __P((struct ie_softc *, int, int));
-static void	ix_zeromem  __P((struct ie_softc *, int, int));
+static u_int16_t ix_read_16(struct ie_softc *, int);
+static void	ix_write_16(struct ie_softc *, int, u_int16_t);
+static void	ix_write_24(struct ie_softc *, int, int);
+static void	ix_zeromem (struct ie_softc *, int, int);
 
-static void	ix_mediastatus __P((struct ie_softc *, struct ifmediareq *));
+static void	ix_mediastatus(struct ie_softc *, struct ifmediareq *);
 
-static u_int16_t ix_read_eeprom __P((bus_space_tag_t, bus_space_handle_t, int));
-static void	ix_eeprom_outbits __P((bus_space_tag_t, bus_space_handle_t, int, int));
-static int	ix_eeprom_inbits  __P((bus_space_tag_t, bus_space_handle_t));
-static void	ix_eeprom_clock   __P((bus_space_tag_t, bus_space_handle_t, int));
+static u_int16_t ix_read_eeprom(bus_space_tag_t, bus_space_handle_t, int);
+static void	ix_eeprom_outbits(bus_space_tag_t, bus_space_handle_t, int, int);
+static int	ix_eeprom_inbits (bus_space_tag_t, bus_space_handle_t);
+static void	ix_eeprom_clock  (bus_space_tag_t, bus_space_handle_t, int);
 
-int ix_match __P((struct device *, struct cfdata *, void *));
-void ix_attach __P((struct device *, struct device *, void *));
+int ix_match(struct device *, struct cfdata *, void *);
+void ix_attach(struct device *, struct device *, void *);
 
 /*
  * EtherExpress/16 support routines

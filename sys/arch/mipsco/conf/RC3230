@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.14.2.4 2004/11/14 08:15:16 skrll Exp $
+# 	$NetBSD: RC3230,v 1.14.2.5 2005/02/04 11:44:45 skrll Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -142,6 +142,7 @@ pseudo-device	bpfilter	16	# Berkeley Packet Filter
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	strip		1	# radio clock
 #pseudo-device	ipfilter		# ip filter
 pseudo-device	clockctl		# user control of clock subsystem

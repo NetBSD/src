@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.6.6.3 2004/09/21 13:30:17 skrll Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.6.6.4 2005/02/04 11:46:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.6.6.3 2004/09/21 13:30:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.6.6.4 2005/02/04 11:46:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.6.6.3 2004/09/21 13:30:17 skrll Exp 
 
 #include <dev/mca/if_lereg.h>
 
-int 	le_mca_match __P((struct device *, struct cfdata *, void *));
-void	le_mca_attach __P((struct device *, struct device *, void *));
+int 	le_mca_match(struct device *, struct cfdata *, void *);
+void	le_mca_attach(struct device *, struct device *, void *);
 
 struct le_mca_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
@@ -93,16 +93,16 @@ struct le_mca_softc {
 	bus_space_handle_t sc_memh;
 };
 
-static void le_mca_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-static u_int16_t le_mca_rdcsr __P((struct lance_softc *, u_int16_t));  
-static void le_mca_hwreset __P((struct lance_softc *));
-static int le_mca_intredge __P((void *));
+static void le_mca_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+static u_int16_t le_mca_rdcsr(struct lance_softc *, u_int16_t);  
+static void le_mca_hwreset(struct lance_softc *);
+static int le_mca_intredge(void *);
 
 static void	le_mca_copytobuf(struct lance_softc *, void *, int, int);
 static void	le_mca_copyfrombuf(struct lance_softc *, void *, int, int);
 static void	le_mca_zerobuf(struct lance_softc *, int, int);
 
-static __inline void le_mca_wrreg __P((struct le_mca_softc *, int, int));
+static __inline void le_mca_wrreg(struct le_mca_softc *, int, int);
 #define le_mca_set_RAP(sc, reg_number) \
 		le_mca_wrreg(sc, reg_number, RAP | REGWRITE)
 

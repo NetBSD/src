@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.32.2.3 2004/09/21 13:38:47 skrll Exp $	*/
+/*	$NetBSD: mman.h,v 1.32.2.4 2005/02/04 11:48:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -155,23 +155,23 @@ typedef	__off_t		off_t;		/* file offset */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void   *mmap __P((void *, size_t, int, int, int, off_t));
-int	munmap __P((void *, size_t));
-int	mprotect __P((void *, size_t, int));
+void   *mmap(void *, size_t, int, int, int, off_t);
+int	munmap(void *, size_t);
+int	mprotect(void *, size_t, int);
 #ifdef __LIBC12_SOURCE__
-int	msync __P((void *, size_t));
-int	__msync13 __P((void *, size_t, int));
+int	msync(void *, size_t);
+int	__msync13(void *, size_t, int);
 #else
-int	msync __P((void *, size_t, int))	__RENAME(__msync13);
+int	msync(void *, size_t, int) __RENAME(__msync13);
 #endif
-int	mlock __P((const void *, size_t));
-int	munlock __P((const void *, size_t));
-int	mlockall __P((int));
-int	munlockall __P((void));
+int	mlock(const void *, size_t);
+int	munlock(const void *, size_t);
+int	mlockall(int);
+int	munlockall(void);
 #if defined(_NETBSD_SOURCE)
-int	madvise __P((void *, size_t, int));
-int	mincore __P((void *, size_t, char *));
-int	minherit __P((void *, size_t, int));
+int	madvise(void *, size_t, int);
+int	mincore(void *, size_t, char *);
+int	minherit(void *, size_t, int);
 #endif
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.190.2.8 2005/01/17 19:32:26 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.190.2.9 2005/02/04 11:47:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.190.2.8 2005/01/17 19:32:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.190.2.9 2005/02/04 11:47:42 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -402,6 +402,8 @@ checkdirs(olddp)
 	proclist_lock_read();
 	PROCLIST_FOREACH(p, &allproc) {
 		cwdi = p->p_cwdi;
+		if (!cwdi)
+			continue;
 		if (cwdi->cwdi_cdir == olddp) {
 			vrele(cwdi->cwdi_cdir);
 			VREF(newdp);
@@ -3012,7 +3014,7 @@ sys_fsync(l, v, retval)
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0, l);
 	if (error == 0 && bioops.io_fsync != NULL &&
 	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioops.io_fsync)(vp);
+		(*bioops.io_fsync)(vp, 0);
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp, 0);
 	FILE_UNUSE(fp, l);
@@ -3065,6 +3067,8 @@ sys_fsync_range(l, v, retval)
 		nflags = FSYNC_DATAONLY | FSYNC_WAIT;
 	else
 		nflags = FSYNC_WAIT;
+	if (flags & FDISKSYNC)
+		nflags |= FSYNC_CACHE;
 
 	len = SCARG(uap, length);
 	/* If length == 0, we do the whole file, and s = l = 0 will do that */
@@ -3086,7 +3090,7 @@ sys_fsync_range(l, v, retval)
 
 	if (error == 0 && bioops.io_fsync != NULL &&
 	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioops.io_fsync)(vp);
+		(*bioops.io_fsync)(vp, nflags);
 
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, l);

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.4 2002/10/02 16:34:04 thorpej Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.4.6.1 2005/02/04 11:46:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.4 2002/10/02 16:34:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.4.6.1 2005/02/04 11:46:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.4 2002/10/02 16:34:04 thorpej Exp $
 
 #include <dev/ic/joyvar.h>
 
-int	joy_isapnp_match __P((struct device *, struct cfdata *, void *));
-void	joy_isapnp_attach __P((struct device *, struct device *, void *));
+int	joy_isapnp_match(struct device *, struct cfdata *, void *);
+void	joy_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(joy_isapnp, sizeof(struct joy_softc),
     joy_isapnp_match, joy_isapnp_attach, NULL, NULL);
