@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.197 2003/10/20 07:31:52 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.198 2003/10/21 03:48:43 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2512,3 +2512,11 @@ usr.sbin/user/user.c				1.51.2.4->1.70
 
 	Numerous bug fixes, blowfish password support.
 	[agc, ticket #1147]
+
+sys/dev/pcmcia/pcmcia_cis.c			1.30-1.31
+sys/dev/pcmcia/pcmcia_cis_quirks.c		1.19-1.20
+sys/dev/pcmcia/pcmciavar.h			1.16-1.17
+
+	Fix support for multi-function pcmcia cards
+	[chris christos, ticket #699]
+
