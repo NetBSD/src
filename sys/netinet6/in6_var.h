@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.21 2001/10/18 07:44:34 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.22 2001/12/18 03:04:03 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  * hour rule for hosts).  they should never be modified by nd6_timeout or
  * anywhere else.
  *	userland -> kernel: accept pltime/vltime
- *	kernel -> userland: throuw up everything
+ *	kernel -> userland: throw up everything
  *	in kernel: modify preferred/expire only
  */
 struct in6_addrlifetime {
