@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.21 2000/06/12 10:29:36 veego Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.22 2001/03/26 06:13:13 mike Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,10 +9,10 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.21 2000/06/12 10:29:36 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.22 2001/03/26 06:13:13 mike Exp $";
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.4 2000/06/06 15:49:15 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.7 2000/11/27 10:26:56 darrenr Exp";
 #endif
 #endif
 
@@ -162,6 +162,7 @@ ipfr_t *table[];
 	idx += ip->ip_src.s_addr;
 	frag.ipfr_dst.s_addr = ip->ip_dst.s_addr;
 	idx += ip->ip_dst.s_addr;
+	frag.ipfr_ifp = fin->fin_ifp;
 	idx *= 127;
 	idx %= IPFT_SIZE;
 
@@ -220,7 +221,7 @@ u_int pass;
 	ipfr_t	*ipf;
 
 	if ((ip->ip_v != 4) || (fr_frag_lock))
-		return NULL;
+		return -1;
 	WRITE_ENTER(&ipf_frag);
 	ipf = ipfr_new(ip, fin, pass, ipfr_heads);
 	RWLOCK_EXIT(&ipf_frag);
@@ -237,7 +238,7 @@ nat_t *nat;
 	ipfr_t	*ipf;
 
 	if ((ip->ip_v != 4) || (fr_frag_lock))
-		return NULL;
+		return -1;
 	WRITE_ENTER(&ipf_natfrag);
 	ipf = ipfr_new(ip, fin, pass, ipfr_nattab);
 	if (ipf != NULL) {
@@ -276,6 +277,7 @@ ipfr_t *table[];
 	idx += ip->ip_src.s_addr;
 	frag.ipfr_dst.s_addr = ip->ip_dst.s_addr;
 	idx += ip->ip_dst.s_addr;
+	frag.ipfr_ifp = fin->fin_ifp;
 	idx *= 127;
 	idx %= IPFT_SIZE;
 
