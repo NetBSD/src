@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.486 2004/10/04 06:05:50 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.487 2004/10/04 06:07:24 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7739,3 +7739,8 @@ sys/nfs/nfs_subs.c				1.137
 	nfs_enterdircache: initialize dc_flags of a newly allocated dircache 
 	entry.
 	[yamt, ticket #889]
+
+sys/sys/param.h					patched by hand
+share/tmac/doc-common				patched by hand
+
+	Welcome to 2.0_RC3
