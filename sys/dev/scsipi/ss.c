@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.45 2002/10/23 09:13:50 jdolecek Exp $	*/
+/*	$NetBSD: ss.c,v 1.46 2003/01/21 00:24:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.45 2002/10/23 09:13:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.46 2003/01/21 00:24:20 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -455,7 +455,6 @@ ssstrategy(bp)
 
 	splx(s);
 	return;
-	bp->b_flags |= B_ERROR;
 done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
