@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.9 1998/11/19 19:39:14 kenh Exp $	*/
+/*	$NetBSD: apmd.c,v 1.10 1998/12/19 15:27:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ sigexit(int signo)
 void
 usage(void)
 {
-    fprintf(stderr,"usage: %s [-d] [-t timo] [-s] [-a] [-f devfile] [-S sockfile]\n\t[-m sockmode] [-o sockowner]\n", __progname);
+    fprintf(stderr,"usage: %s [-d] [-s] [-a] [-l] [-q] [-t seconds] [-S sockname]\n\t[-m sockmode] [-o sockowner:sockgroup] [-f devname]\n", __progname);
     exit(1);
 }
 
@@ -303,6 +303,7 @@ main(int argc, char *argv[])
     struct apm_event_info apmevent;
     int suspends, standbys, resumes;
     int noacsleep = 0;
+    int lowbattsleep = 0;
     mode_t mode = 0660;
     struct timeval tv = {TIMO, 0}, stv;
     const char *sockname = sockfile;
@@ -320,6 +321,9 @@ main(int argc, char *argv[])
 	    break;
 	case 'a':
 	    noacsleep = 1;
+	    break;
+	case 'l':
+	    lowbattsleep = 1;
 	    break;
 	case 'd':
 	    debug = 1;
@@ -429,8 +433,11 @@ main(int argc, char *argv[])
 		case APM_SUSPEND_REQ:
 		case APM_USER_SUSPEND_REQ:
 		case APM_CRIT_SUSPEND_REQ:
-		case APM_BATTERY_LOW:
 		    suspends++;
+		    break;
+		case APM_BATTERY_LOW:
+		    if (lowbattsleep)
+			suspends++;
 		    break;
 		case APM_USER_STANDBY_REQ:
 		case APM_STANDBY_REQ:
@@ -531,7 +538,8 @@ do_etc_file(const char *file)
     }
 }
 
-void do_ac_state(int state)
+void
+do_ac_state(int state)
 {
 	switch (state) {
 	case APM_AC_OFF:
