@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.3 1998/07/27 19:25:34 pk Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.4 1998/07/29 18:33:27 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -169,5 +169,6 @@ lebufattach(parent, self, aux)
 		sbus_setup_attach_args((struct sbus_softc *)parent,
 				       sbt, sc->sc_dmatag, node, bp, &sa);
 		(void)config_found(&sc->sc_dev, (void *)&sa, lebufprint);
+		sbus_destroy_attach_args(&sa);
 	}
 }

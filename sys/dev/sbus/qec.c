@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.2 1998/07/28 00:44:39 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.3 1998/07/29 18:33:27 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ qecattach(parent, self, aux)
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = getpropA(node, "ranges", sizeof(struct rom_range),
+	error = getpropA(node, "ranges", sizeof(struct sbus_range),
 			 &sc->sc_nrange, (void **)&sc->sc_range);
 	switch (error) {
 	case 0:
@@ -216,6 +216,7 @@ qecattach(parent, self, aux)
 		sbus_setup_attach_args((struct sbus_softc *)parent,
 				       sbt, sc->sc_dmatag, node, bp, &sa);
 		(void)config_found(&sc->sc_dev, (void *)&sa, qecprint);
+		sbus_destroy_attach_args(&sa);
 	}
 	free(rr, M_DEVBUF);
 }
