@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.73 1997/04/19 03:10:57 perry Exp $
+#	$NetBSD: rc,v 1.74 1997/04/23 01:24:22 perry Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -251,6 +251,23 @@ echo clearing /tmp
     find . ! -name . ! -name lost+found ! -name quota.user \
 	! -name quota.group -exec rm -rf -- {} \; -type d -prune)
 
+# Update kernel info in /etc/motd
+# Must be done *before* interactive logins are possible to prevent
+# possible race conditions.
+if [ "$update_motd" != NO ]; then
+	echo 'updating motd.'
+	if [ ! -f /etc/motd ]; then
+		install -c -o root -g wheel -m 664 /dev/null /etc/motd
+	fi
+	T=/tmp/_motd
+	rm -f $T
+	sysctl -n kern.version | sed 1q > $T
+	echo "" >> $T
+	sed '1,/^$/d' < /etc/motd >> $T
+	cmp -s $T /etc/motd || cp $T /etc/motd
+	rm -f $T
+fi
+
 if [ -f /var/account/acct ]; then
 	echo 'turning on accounting';	accton /var/account/acct
 fi
@@ -364,19 +381,6 @@ if [ "$kerberos_server" = YES ]; then
 	echo -n ' kadmind';	kadmind -n >> /var/log/kadmind.log &
 	echo '.'
 fi
-
-# Hack the Message Of The Day
-if [ ! -f /etc/motd ]; then
-	install -c -o root -g wheel -m 664 /dev/null /etc/motd
-fi
-T=/tmp/_motd
-rm -f $T
-sysctl -n kern.version | sed 1q > $T
-echo "" >> $T
-sed '1,/^$/d' < /etc/motd >> $T
-cmp -s $T /etc/motd || cp $T /etc/motd
-rm -f $T
-
 
 . /etc/rc.local
 
