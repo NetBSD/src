@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.7 2004/11/14 11:26:47 yamt Exp $	*/
+/*	$NetBSD: ftp-proxy.c,v 1.8 2004/11/19 20:52:10 wiz Exp $	*/
 /*	$OpenBSD: ftp-proxy.c,v 1.37 2004/07/11 01:54:36 brad Exp $ */
 
 /*
@@ -176,13 +176,13 @@ static void
 usage(void)
 {
 	syslog(LOG_NOTICE,
-	    "usage: %s -i [-AnrVw] [-a address] [-D debuglevel [-g group]"
-	    " [-M maxport] [-m minport] [-t timeout] [-u user]"
-	    " [-R address[:port]] [-S address]", __progname);
+	    "usage: %s -i [-AnrVw] [-a address] [-D debuglevel] [-g group]"
+	    " [-M maxport] [-m minport] [-R address[:port]] [-S address]"
+	    " [-t timeout] [-u user]", __progname);
 	syslog(LOG_NOTICE,
-	    "usage: %s -p [-AnrVw] [-a address] [-D debuglevel [-g group]"
-	    " [-M maxport] [-m minport] [-t timeout] [-u user]"
-	    " [-R address[:port]] [-S address]", __progname);
+	    "usage: %s -p [-AnrVw] [-a address] [-D debuglevel] [-g group]"
+	    " [-M maxport] [-m minport] [-R address[:port]] [-S address]"
+	    " [-t timeout] [-u user]", __progname);
 	exit(EX_USAGE);
 }
 
