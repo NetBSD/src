@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.19.2.3 2002/06/18 14:31:26 lukem Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.19.2.4 2002/11/19 21:28:34 tron Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.19.2.3 2002/06/18 14:31:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.19.2.4 2002/11/19 21:28:34 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,6 +226,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_EMTAC_WLAN,
 	  PCMCIA_CIS_EMTAC_WLAN,
 	  PCMCIA_STR_EMTAC_WLAN },
+
+	{ PCMCIA_VENDOR_NETGEAR_2,
+	  PCMCIA_PRODUCT_NETGEAR_2_MA401,
+	  PCMCIA_CIS_NETGEAR_2_MA401,
+	  PCMCIA_STR_NETGEAR_2_MA401 },
 
 	{ PCMCIA_VENDOR_INTERSIL,
 	  PCMCIA_PRODUCT_GEMTEK_WLAN,
