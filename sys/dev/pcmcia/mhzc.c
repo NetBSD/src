@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.13 2002/10/02 16:52:19 thorpej Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.14 2003/01/01 00:10:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.13 2002/10/02 16:52:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.14 2003/01/01 00:10:23 thorpej Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -341,7 +341,7 @@ mhzc_print(aux, pnp)
 	const char *name = aux;
 
 	if (pnp)
-		printf("%s at %s(*)",  name, pnp);
+		aprint_normal("%s at %s(*)",  name, pnp);
 
 	return (UNCONF);
 }

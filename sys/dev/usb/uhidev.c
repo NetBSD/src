@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.11 2002/11/08 22:03:50 kristerw Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.12 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -267,9 +267,9 @@ uhidevprint(void *aux, const char *pnp)
 	struct uhidev_attach_arg *uha = aux;
 
 	if (pnp)
-		printf("uhid at %s", pnp);
+		aprint_normal("uhid at %s", pnp);
 	if (uha->reportid != 0)
-		printf(" reportid %d", uha->reportid);
+		aprint_normal(" reportid %d", uha->reportid);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.29 2002/12/10 13:44:48 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.30 2003/01/01 00:10:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.29 2002/12/10 13:44:48 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.30 2003/01/01 00:10:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ stp4020print(aux, busname)
 	struct pcmciabus_attach_args *paa = aux;
 	struct stp4020_socket *h = paa->pch;
 
-	printf(" socket %d", h->sock);
+	aprint_normal(" socket %d", h->sock);
 	return (UNCONF);
 }
 

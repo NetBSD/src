@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.66 2002/10/23 09:14:08 jdolecek Exp $ */
+/* $NetBSD: wskbd.c,v 1.67 2003/01/01 00:10:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.66 2002/10/23 09:14:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.67 2003/01/01 00:10:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -322,9 +322,9 @@ wskbddevprint(void *aux, const char *pnp)
 #endif
 
 	if (pnp)
-		printf("wskbd at %s", pnp);
+		aprint_normal("wskbd at %s", pnp);
 #if 0
-	printf(" console %d", ap->console);
+	aprint_normal(" console %d", ap->console);
 #endif
 
 	return (UNCONF);
