@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.85 2003/11/01 23:04:32 tsutsui Exp $
+#	$NetBSD: files.sparc64,v 1.86 2003/11/02 09:33:56 he Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -40,7 +40,7 @@ device ebus {[addr = -1]}: pcibus
 attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
 
-device clock: mk48txx
+device clock: mk48txx, mc146818
 attach clock at mainbus, sbus with clock_sbus
 attach clock at ebus with clock_ebus
 
