@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.21 2003/04/20 15:49:08 fvdl Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.22 2003/04/20 16:54:23 fvdl Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.21 2003/04/20 15:49:08 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.22 2003/04/20 16:54:23 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,6 +417,8 @@ ahc_isa_attach(parent, self, aux)
 	 */
 	ahc->sc_dmaflags = ISABUS_DMA_32BIT;
 
+	ahc_set_name(ahc, ahc->sc_dev.dv_xname);
+	ahc->parent_dmat = ia->ia_dmat;
 	ahc->channel = 'A';
 	ahc->chip =  AHC_AIC7770|AHC_VL;
 	ahc->features = AHC_AIC7770_FE;
