@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2002/08/22 15:43:08 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 2002/08/23 11:59:40 scw Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1642,7 +1642,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			PMAPCOUNT(exec_cached);
 #if defined(DEBUG) || defined(PMAPDEBUG)
 			if (pmapdebug & PMAPDEBUG_ENTER)
-				printf(" marked-as-exec"));
+				printf(" marked-as-exec");
 			else if (pmapdebug & PMAPDEBUG_EXEC)
 				printf("[pmap_enter: %#lx: marked-as-exec]\n",
 				    pg->phys_addr);
