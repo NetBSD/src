@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.12 2002/03/18 15:20:08 tv Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.13 2002/05/07 02:00:17 uwe Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -255,7 +255,7 @@ LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
 	${CC} -E -C ${AFLAGS} ${CPPFLAGS} ${_sfile} | \
 	      awk -f $S/kern/genlintstub.awk >${.TARGET}
 .endfor
-lint: ${CFILES} ${KERNLINTSTUBS} ${MI_CFILES} ${MD_CFILES}
+lint: ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
 	@${LINT} ${KERNLINTFLAGS} ${CPPFLAGS} -UKGDB \
 	    ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES} | \
 	    grep -v 'static function .* unused'
