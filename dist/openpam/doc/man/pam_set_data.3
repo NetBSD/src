@@ -1,4 +1,4 @@
-.\"	$NetBSD: pam_set_data.3,v 1.4 2005/02/22 15:15:51 wiz Exp $
+.\"	$NetBSD: pam_set_data.3,v 1.5 2005/02/26 20:58:24 christos Exp $
 .\"
 .\"-
 .\" Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -35,7 +35,7 @@
 .\"
 .\" $P4$
 .\"
-.Dd February 10, 2004
+.Dd February 1, 2005
 .Dt PAM_SET_DATA 3
 .Os
 .Sh NAME
@@ -53,16 +53,16 @@ The
 .Nm
 function associates a pointer to an opaque object
 with an arbitrary string specified by the
-.Va module_data_name
+.Fa module_data_name
 argument,
 in the PAM context specified by the
-.Va pamh
+.Fa pamh
 argument.
 .Pp
 If not
 .Dv NULL ,
 the
-.Ar cleanup
+.Fa cleanup
 argument should point to a function
 responsible for releasing the resources associated with the object.
 .Pp
@@ -96,7 +96,7 @@ The
 function and this manual page were developed for the
 .Fx
 Project by ThinkSec AS and Network Associates Laboratories, the
-Security Research Division of Network Associates, Inc.  under
+Security Research Division of Network Associates, Inc.& under
 DARPA/SPAWAR contract N66001-01-C-8035
 .Pq Dq CBOSS ,
 as part of the DARPA CHATS research program.
