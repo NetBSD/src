@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.12 1999/07/30 14:03:55 darrenr Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.13 1999/10/29 09:11:49 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.12 1999/07/30 14:03:55 darrenr Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.13 1999/10/29 09:11:49 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,10 +199,16 @@ main(argc, argv)
 	}
 
 	if (*argv) { 
+#ifdef KTRUSS
 		if (do_ktrace(outfile, ops, trpoints, getpid()) == 1) {
 			execvp(argv[0], &argv[0]);
 			err(1, "exec of '%s' failed", argv[0]);
 		}
+#else
+		(void) do_ktrace(outfile, ops, trpoints, getpid());
+		execvp(argv[0], &argv[0]);
+		err(1, "exec of '%s' failed", argv[0]);
+#endif
 	} else
 		(void)do_ktrace(outfile, ops, trpoints, pid);
 	exit(0);
@@ -271,13 +277,29 @@ do_ktrace(tracefile, ops, trpoints, pid)
 
 		dofork = (pid == getpid());
 
+#ifdef KTRUSS
+		if (dofork)
+			fpid = vfork();
+		else
+			fpid = pid;	/* XXX: Gcc */
+#else
 		if (dofork)
 			fpid = fork();
 		else
-			fpid = pid;	/* XXX: Gcc */
-		if (fpid) {
+			fpid = 0;	/* XXX: Gcc */
+#endif
+#ifdef KTRUSS
+		if (fpid)
+#else
+		if (!dofork || !fpid)
+#endif
+		{
 			if (!dofork)
+#ifdef KTRUSS
 				ret = fktrace(pi[1], ops, trpoints, fpid);
+#else
+				ret = fktrace(pi[1], ops, trpoints, pid);
+#endif
 			else
 				close(pi[1]);
 #ifdef KTRUSS
@@ -293,14 +315,20 @@ do_ktrace(tracefile, ops, trpoints, pid)
 					cnt += n;
 				}
 			}
+			if (dofork)
+				_exit(0);
 #endif
 			return 0;
 		}
 		close(pi[0]);
+#ifdef KTRUSS
 		if (dofork && !fpid) {
 			ret = fktrace(pi[1], ops, trpoints, getpid());
 			return 1;
 		}
+#else
+		ret = fktrace(pi[1], ops, trpoints, pid);
+#endif
 	} else
 		ret = ktrace(tracefile, ops, trpoints, pid);
 	if (ret < 0)
