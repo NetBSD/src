@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/04/13 16:40:33 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2002/04/24 21:09:57 thorpej Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -7,21 +7,21 @@
 
 
 #	TARGETS is a list of:
-#		KERNEL_name	RELOC_ADDR
+#		KERNEL_name	RELOC_ADDR	WHICH_kernel
 #	
-TARGETS=	IQ80310		0x00080000	\
-		IQ80321		0xf0080000
+TARGETS=	IQ80310		0x00080000	netbsd		\
+		IQ80321		0xf0080000	netbsd
 
-.for K R in ${TARGETS}					# {
+.for K R W in ${TARGETS}				# {
 
 GZB${K}DIR!=	cd ${.CURDIR}/../gzboot_${K}_flash_${R} && ${PRINTOBJDIR}
 GZB${K}=	${GZB${K}DIR}/gzboot_${K}_${R}.sym
 
 GZIMGS+=	gzimg_${K}_flash_${R}.gz
 
-gzimg_${K}_flash_${R}.gz: .NOTMAIN ${GZB${K}} ${KERNOBJDIR}/${K}/netbsd.bin
+gzimg_${K}_flash_${R}.gz: .NOTMAIN ${GZB${K}} ${KERNOBJDIR}/${K}/${W}.bin
 	@echo "Populating ${.TARGET}"
-	cp ${KERNOBJDIR}/${K}/netbsd.bin netbsd.tmp
+	cp ${KERNOBJDIR}/${K}/${W}.bin netbsd.tmp
 	gzip -9f netbsd.tmp
 	cp ${GZB${K}} gzboot.sym
 	${MDSETIMAGE} -v -s gzboot.sym netbsd.tmp.gz
