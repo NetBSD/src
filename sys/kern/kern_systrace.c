@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.15.2.2 2002/09/06 08:48:01 jdolecek Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.15.2.3 2002/09/25 13:28:17 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.15.2.2 2002/09/06 08:48:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.15.2.3 2002/09/25 13:28:17 jdolecek Exp $");
 
 #include "opt_systrace.h"
 
@@ -82,8 +82,8 @@ int	systracef_poll(struct file *, int, struct proc *);
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_select(struct file *, int, struct proc *);
-int	systracef_kqfilter(struct file *, struct knote *);
 #endif
+int	systracef_kqfilter(struct file *, struct knote *);
 int	systracef_ioctl(struct file *, u_long, caddr_t, struct proc *);
 int	systracef_stat(struct file *, struct stat *, struct proc *);
 int	systracef_close(struct file *, struct proc *);
@@ -170,6 +170,9 @@ static struct fileops systracefops = {
 #endif
 	systracef_stat,
 	systracef_close
+#ifdef __NetBSD__
+	, systracef_kqfilter
+#endif
 };
 
 struct pool systr_proc_pl;
@@ -444,14 +447,12 @@ systracef_select(struct file *fp, int which, struct proc *p)
 }
 #endif /* __NetBSD__ */
 
-#ifndef __NetBSD__
 /* ARGSUSED */
 int
 systracef_kqfilter(struct file *fp, struct knote *kn)
 {
 	return (1);
 }
-#endif
 
 
 /* ARGSUSED */
