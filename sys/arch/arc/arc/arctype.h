@@ -1,4 +1,4 @@
-/*	$NetBSD: arctype.h,v 1.7 2000/06/09 05:41:57 soda Exp $	*/
+/*	$NetBSD: arctype.h,v 1.8 2001/02/17 04:27:53 tsutsui Exp $	*/
 /*	$OpenBSD: archtype.h,v 1.6 1999/01/27 04:46:04 imp Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #define	DESKSTATION_TYNE	0x08	/* Deskstation xxx */
 #define	NKK_AQUARIUS		0x09	/* NKK R4{67}00 PC */
 #define	SNI_RM200		0x0a	/* Siemens Nixdorf RM200 */
+#define	NEC_JC94		0x0b	/* NEC Express5800/230 */
 
 #if 0 /* XXX */
 #define	SGI_CLASS		0x10	/* Silicon Graphics Class */
