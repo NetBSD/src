@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.17 2001/12/17 12:16:15 gehenna Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.18 2001/12/22 13:21:59 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.17 2001/12/17 12:16:15 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.18 2001/12/22 13:21:59 gehenna Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -149,6 +149,8 @@ umass_attach_bus(struct umass_softc *sc)
 
 		if (sc->sc_quirks & UMASS_QUIRK_NO_TEST_UNIT_READY)
 			sc->bus.sc_channel.chan_defquirks |= PQUIRK_NOTUR;
+		if (sc->sc_quirks & UMASS_QUIRK_NO_REQUEST_SENSE)
+			sc->bus.sc_channel.chan_defquirks |= PQUIRK_NOSENSE;
 		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n",
 				     USBDEVNAME(sc->sc_dev)));
 		sc->bus.sc_child =
@@ -459,6 +461,32 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		break;
 
 	case STATUS_CMD_UNKNOWN:
+		/* we can't issue REQUEST SENSE */
+		if (xs->xs_periph->periph_quirks & PQUIRK_NOSENSE) {
+			/*
+			 * If no residue and no other USB error,
+			 * command succeeded.
+			 */
+			if (residue == 0) {
+				xs->error = XS_NOERROR;
+				break;
+			}
+
+			/*
+			 * Some devices return a short INQUIRY
+			 * response, omitting response data from the
+			 * "vendor specific data" on...
+			 */
+			if (xs->cmd->opcode == INQUIRY &&
+			    residue < xs->datalen) {
+				xs->error = XS_NOERROR;
+				break;
+			}
+
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+		}
+		/* FALLTHROUGH */
 	case STATUS_CMD_FAILED:
 		/* fetch sense data */
 		memset(&sc->bus.sc_sense_cmd, 0, sizeof(sc->bus.sc_sense_cmd));
@@ -577,6 +605,7 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	periph->periph_channel = chan;
 	periph->periph_switch = &atapi_probe_periphsw;
 	periph->periph_target = target;
+	periph->periph_quirks = chan->chan_defquirks;
 
 	DPRINTF(UDMASS_SCSI, ("umass_atapi_probe_device: doing inquiry\n"));
 	/* Now go ask the device all about itself. */

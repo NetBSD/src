@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.9 2001/12/17 12:16:15 gehenna Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.10 2001/12/22 13:21:59 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -185,6 +185,7 @@ struct umass_softc {
 #define	UMASS_QUIRK_NO_START_STOP	0x00000004
 #define	UMASS_QUIRK_FORCE_SHORT_INQUIRY	0x00000008
 #define	UMASS_QUIRK_WRONG_CSWSIG	0x00000010
+#define	UMASS_QUIRK_NO_REQUEST_SENSE	0x00000020
 
 	/* Bulk specific variables for transfers in progress */
 	umass_bbb_cbw_t		cbw;	/* command block wrapper */
