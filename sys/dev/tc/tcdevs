@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.8 1998/01/30 02:24:58 thorpej Exp $
+$NetBSD: tcdevs,v 1.9 1998/05/27 02:51:02 matt Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -56,6 +56,7 @@ device	PMAZB-AA	tcds	53c94 TCDS SCSI option card
 device	PMAZC-AA	tcds	53c94 TCDS Fast SCSI option card
 device	T1D4PKT		ds	DECWRL Turbochannel T1
 device	T3PKT		tt	DECWRL Turbochannel T3
+device	PMAT-AA 	tra	DEC TurboChannel Token Ring Controller
 
 # the following entries are unconfirmed
 #device	PMAD-AB		le	LANCE Ethernet
