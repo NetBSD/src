@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.15 1999/12/04 12:18:21 ragge Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.16 1999/12/15 07:10:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -140,8 +140,10 @@ lfs_bwrite(v)
 	register struct buf *bp = ap->a_bp;
 
 #ifdef DIAGNOSTIC
-	if(bp->b_flags & B_ASYNC)
+        if(VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0
+	   && (bp->b_flags & B_ASYNC)) {
 		panic("bawrite LFS buffer");
+	}
 #endif /* DIAGNOSTIC */
 	return lfs_bwrite_ext(bp,0);
 }
@@ -184,6 +186,19 @@ lfs_bwrite_ext(bp, flags)
 	struct inode *ip;
 	int db, error, s;
 	
+	/*
+	 * Don't write *any* blocks if we're mounted read-only.
+	 * In particular the cleaner can't write blocks either.
+	 */
+        if(VTOI(bp->b_vp)->i_lfs->lfs_ronly) {
+		bp->b_flags &= ~(B_DELWRI|B_LOCKED|B_READ|B_ERROR);
+		if(bp->b_flags & B_CALL)
+			bp->b_flags &= ~B_BUSY;
+		else
+			brelse(bp);
+		return EROFS;
+	}
+
 	/*
 	 * Set the delayed write flag and use reassignbuf to move the buffer
 	 * from the clean list to the dirty one.
@@ -242,17 +257,7 @@ lfs_bwrite_ext(bp, flags)
 		++locked_queue_count;
 		locked_queue_bytes += bp->b_bufsize;
 		s = splbio();
-#ifdef LFS_HONOR_RDONLY
-		/*
-		 * XXX KS - Don't write blocks if we're mounted ro.
-		 * Placement here means that the cleaner can't write
-		 * blocks either.
-		 */
-	        if(VTOI(bp->b_vp)->i_lfs->lfs_ronly)
-			bp->b_flags &= ~(B_DELWRI|B_LOCKED);
-		else
-#endif
-			bp->b_flags |= B_DELWRI | B_LOCKED;
+		bp->b_flags |= B_DELWRI | B_LOCKED;
 		bp->b_flags &= ~(B_READ | B_ERROR);
 		reassignbuf(bp, bp->b_vp);
 		splx(s);
@@ -316,8 +321,12 @@ lfs_flush(fs, flags)
 	
 	if(lfs_dostats) 
 		++lfs_stats.write_exceeded;
-	if (lfs_writing && flags==0) /* XXX flags */
+	if (lfs_writing && flags==0) {/* XXX flags */
+#ifdef DEBUG_LFS
+		printf("lfs_flush: not flushing because another flush is active\n");
+#endif
 		return;
+	}
 	lfs_writing = 1;
 	
 	simple_lock(&mountlist_slock);
@@ -378,6 +387,10 @@ lfs_check(vp, blkno, flags)
 	{
 		if(lfs_dostats)
 			++lfs_stats.wait_exceeded;
+#ifdef DEBUG_LFS
+		printf("lfs_check: waiting: count=%d, bytes=%ld\n",
+			locked_queue_count, locked_queue_bytes);
+#endif
 		error = tsleep(&locked_queue_count, PCATCH | PUSER,
 			       "buffers", hz * LFS_BUFWAIT);
 	}

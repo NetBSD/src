@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.18 1999/12/08 23:17:31 simonb Exp $	*/
+/*	$NetBSD: lfs.h,v 1.19 1999/12/15 07:10:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,6 @@
 /* #define DEBUG_LFS */              /* Intensive debugging of LFS subsystem */
 
 /* #define LFS_ATIME_IFILE */         /* Store atime in Ifile, don't push */
-/* #define LFS_HONOR_RDONLY */        /* Don't write blocks if mounted ro */
 
 /*
  * Parameters and generic definitions

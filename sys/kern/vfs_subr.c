@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.115 1999/11/23 23:52:40 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.116 1999/12/15 07:10:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2294,7 +2294,9 @@ vfs_shutdown()
 			 * written will be remarked as dirty until other
 			 * buffers are written.
 			 */
-			if (bp->b_flags & B_DELWRI) {
+			if (bp->b_vp && bp->b_vp->v_mount
+			    && (bp->b_vp->v_mount->mnt_flag & MNT_SOFTDEP)
+			    && (bp->b_flags & B_DELWRI)) {
 				s = splbio();
 				bremfree(bp);
 				bp->b_flags |= B_BUSY;
