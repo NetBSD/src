@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25 2000/06/08 23:01:22 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.26 2000/06/29 07:37:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,8 +58,6 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
-
-#include <vm/vm.h>
 
 #include <dev/cons.h>
 
