@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.18 2003/05/09 01:09:13 lukem Exp $	*/
+/*	$NetBSD: pax.h,v 1.19 2003/06/23 13:33:15 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,8 +42,6 @@
 #if HAVE_CONFIG_H
 #include "config.h"
 #else
-#define HAVE_LCHMOD 1
-#define HAVE_LCHOWN 1
 #define HAVE_LUTIMES 1
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #endif
