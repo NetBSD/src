@@ -1,4 +1,4 @@
-.\"	$NetBSD: popen.3,v 1.13 2003/08/07 16:42:55 agc Exp $
+.\"	$NetBSD: popen.3,v 1.14 2004/07/14 19:12:26 kleink Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -160,6 +160,13 @@ function does not reliably set
 .Xr fopen 3 ,
 .Xr stdio 3 ,
 .Xr system 3
+.Sh STANDARDS
+The
+.Fn popen
+and
+.Fn pclose
+functions conform to
+.St -p1003.2-92 .
 .Sh HISTORY
 A
 .Fn popen
