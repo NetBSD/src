@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.10 2001/09/22 17:22:25 explorer Exp $	*/
+/*	$NetBSD: wireg.h,v 1.11 2001/10/13 15:00:23 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -96,18 +96,24 @@
  * register space access macros
  */
 #define CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, val)
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg) , val)
 #define CSR_WRITE_2(sc, reg, val)	\
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, reg, val)
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), val)
 #define CSR_WRITE_1(sc, reg, val)	\
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, val)
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), val)
 
 #define CSR_READ_4(sc, reg)		\
-	bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg)
+	bus_space_read_4(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg))
 #define CSR_READ_2(sc, reg)		\
-	bus_space_read_2(sc->sc_iot, sc->sc_ioh, reg)
+	bus_space_read_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg))
 #define CSR_READ_1(sc, reg)		\
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, reg)
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg))
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define bus_space_write_stream_2	bus_space_write_2
@@ -117,13 +123,17 @@
 #endif
 
 #define CSR_WRITE_STREAM_2(sc, reg, val)	\
-	bus_space_write_stream_2(sc->sc_iot, sc->sc_ioh, reg, val)
+	bus_space_write_stream_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), val)
 #define CSR_WRITE_MULTI_STREAM_2(sc, reg, val, count)	\
-	bus_space_write_multi_stream_2(sc->sc_iot, sc->sc_ioh, reg, val, count)
+	bus_space_write_multi_stream_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), val, count)
 #define CSR_READ_STREAM_2(sc, reg)		\
-	bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh, reg)
+	bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg))
 #define CSR_READ_MULTI_STREAM_2(sc, reg, buf, count)		\
-	bus_space_read_multi_stream_2(sc->sc_iot, sc->sc_ioh, reg, buf, count)
+	bus_space_read_multi_stream_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), buf, count)
 
 /*
  * The WaveLAN/IEEE cards contain an 802.11 MAC controller which Lucent
@@ -165,12 +175,13 @@
  */
 
 /*
- * Size of Hermes I/O space.
+ * Size of Hermes & Prism2 I/O space.
  */
 #define WI_IOSIZE		0x40
+#define WI_PCI_CBMA		0x10	/* Configuration Base Memory Address */
 
 /*
- * Hermes register definitions and what little I know about them.
+ * Hermes & Prism2 register definitions 
  */
 
 /* Hermes command/status registers. */
@@ -285,7 +296,7 @@
 #define WI_SW0			0x28
 #define WI_SW1			0x2A
 #define WI_SW2			0x2C
-#define WI_SW3			0x2E
+#define WI_SW3			0x2E 	/* does not appear in Prism2 */
 
 #define WI_CNTL			0x14
 
@@ -298,6 +309,25 @@
 #define WI_AUX_PAGE		0x3A
 #define WI_AUX_OFFSET		0x3C
 #define WI_AUX_DATA		0x3E
+
+/*
+ * PCI Host Interface Registers (HFA3842 Specific)
+ * The value of all Register's Offset, such as WI_INFO_FID and WI_PARAM0,
+ * has doubled.
+ */
+#define WI_PCI_COR		0x4C
+#define WI_PCI_HCR		0x5C
+#define WI_PCI_MASTER0_ADDRH	0x80
+#define WI_PCI_MASTER0_ADDRL	0x84
+#define WI_PCI_MASTER0_LEN	0x88
+#define WI_PCI_MASTER0_CON	0x8C
+
+#define WI_PCI_STATUS		0x98
+
+#define WI_PCI_MASTER1_ADDRH	0xA0
+#define WI_PCI_MASTER1_ADDRL	0xA4
+#define WI_PCI_MASTER1_LEN	0xA8
+#define WI_PCI_MASTER1_CON	0xAC	
 
 /*
  * One form of communication with the Hermes is with what Lucent calls
@@ -381,6 +411,7 @@ struct wi_ltv_ver {
 #define WI_NIC_HWB1153	0x8007
 #define WI_NIC_P2_SST	0x8008	/* Prism2 with SST flush */
 #define WI_NIC_PRISM2_5	0x800C
+#define WI_NIC_3874A	0x8013	/* Prism2.5 Mini-PCI */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.5 2001/09/22 17:22:25 explorer Exp $	*/
+/*	$NetBSD: wivar.h,v 1.6 2001/10/13 15:00:24 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -50,6 +50,7 @@ struct wi_softc	{
 	int sc_enabled;
 	int sc_prism2;
 	int sc_prism2_ver;
+	int sc_pci; /* attach to PCI-Bus */
 
 	bus_space_tag_t		sc_iot;	/* bus cookie */
 	bus_space_handle_t	sc_ioh; /* bus i/o handle */
@@ -96,3 +97,4 @@ int	wi_activate __P((struct device *, enum devact));
 int	wi_intr __P((void *arg));
 void	wi_power __P((struct wi_softc *, int));
 void	wi_shutdown __P((struct wi_softc *));
+void	wi_pci_reset __P((struct wi_softc *));
