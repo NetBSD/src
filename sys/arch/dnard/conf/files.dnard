@@ -1,4 +1,4 @@
-#	$NetBSD: files.dnard,v 1.6 2001/03/14 14:39:46 toshii Exp $
+#	$NetBSD: files.dnard,v 1.7 2001/05/06 18:01:43 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -100,8 +100,6 @@ file	arch/arm32/arm32/autoconf.c
 file	arch/arm32/arm32/blockio.S
 file	arch/arm32/arm32/bus_dma.c
 file	arch/arm32/arm32/conf.c
-file	arch/arm32/arm32/cpufunc.c
-file	arch/arm32/arm32/cpufunc_asm.S
 file	arch/arm32/arm32/cpuswitch.S
 file	arch/arm32/arm32/exception.S
 file	arch/arm32/arm32/fault.c
