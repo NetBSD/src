@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.10 1999/11/02 16:52:25 drochner Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.11 2001/07/07 22:57:57 perry Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -207,8 +207,9 @@ readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
 			/* copy data from read-ahead to user buffer */
 			if (nsec > num)
 				nsec = num;
-			bcopy(diskbuf + (dblk - ra_first) * BIOSDISK_SECSIZE,
-			    buf, nsec * BIOSDISK_SECSIZE);
+			memcpy(buf,
+			       diskbuf + (dblk - ra_first) * BIOSDISK_SECSIZE,
+			       nsec * BIOSDISK_SECSIZE);
 		}
 		buf += nsec * BIOSDISK_SECSIZE;
 		num -= nsec;
