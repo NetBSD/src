@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.46 1997/05/09 22:16:40 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.47 1997/05/23 09:45:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -195,14 +195,21 @@ sbmatch(sc)
 	}
 
 	if (ISSB16CLASS(sc)) {
+		int w, r;
 #if 0
 		printf("%s: old drq conf %02x\n", sc->sc_dev.dv_xname,
 		    sbdsp_mix_read(sc, SBP_SET_DRQ));
 		printf("%s: try drq conf %02x\n", sc->sc_dev.dv_xname,
 		    drq_conf[sc->sc_drq16] | drq_conf[sc->sc_drq8]);
 #endif
-		sbdsp_mix_write(sc, SBP_SET_DRQ,
-		    drq_conf[sc->sc_drq16] | drq_conf[sc->sc_drq8]);
+		w = drq_conf[sc->sc_drq16] | drq_conf[sc->sc_drq8];
+		sbdsp_mix_write(sc, SBP_SET_DRQ, w);
+		r = sbdsp_mix_read(sc, SBP_SET_DRQ) & 0xeb;
+		if (r != w) {
+			printf("%s: setting drq mask %02x failed, got %02x\n",
+			    sc->sc_dev.dv_xname, w, r);
+			return 0;
+		}
 #if 0
 		printf("%s: new drq conf %02x\n", sc->sc_dev.dv_xname,
 		    sbdsp_mix_read(sc, SBP_SET_DRQ));
@@ -214,8 +221,14 @@ sbmatch(sc)
 		printf("%s: try irq conf %02x\n", sc->sc_dev.dv_xname,
 		    irq_conf[sc->sc_irq]);
 #endif
-		sbdsp_mix_write(sc, SBP_SET_IRQ,
-		    irq_conf[sc->sc_irq]);
+		w = irq_conf[sc->sc_irq];
+		sbdsp_mix_write(sc, SBP_SET_IRQ, w);
+		r = sbdsp_mix_read(sc, SBP_SET_IRQ) & 0x0f;
+		if (r != w) {
+			printf("%s: setting irq mask %02x failed, got %02x\n",
+			    sc->sc_dev.dv_xname, w, r);
+			return 0;
+		}
 #if 0
 		printf("%s: new irq conf %02x\n", sc->sc_dev.dv_xname,
 		    sbdsp_mix_read(sc, SBP_SET_IRQ));
