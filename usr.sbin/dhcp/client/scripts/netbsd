@@ -1,22 +1,25 @@
 #!/bin/sh
 #
-# $NetBSD: netbsd,v 1.15 2001/04/17 23:25:38 kleink Exp $
+# $NetBSD: netbsd,v 1.16 2001/06/18 19:01:52 drochner Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
 RESOLV=/etc/resolv.conf
 
 make_resolv_conf() {
-	echo search $new_domain_name > $RESOLV
-	for nameserver in $new_domain_name_servers; do
-		echo nameserver $nameserver >> $RESOLV
-	done
+	if [ "x$new_domain_name" != x ] && \
+	   [ x"$new_domain_name_servers" != x ]; then
+		echo search $new_domain_name > $RESOLV
+		for nameserver in $new_domain_name_servers; do
+			echo nameserver $nameserver >> $RESOLV
+		done
+	fi
 }
 
 # Must be used on exit.   Invokes the local dhcp client exit hooks, if any.
 exit_with_hooks() {
 	exit_status=$1
-	if [ -x "$EXITHOOKS" ]; then
+	if [ -f "$EXITHOOKS" ]; then
 		. "$EXITHOOKS"
 	fi
 	# probably should do something with exit status of the local script
@@ -51,7 +54,7 @@ delete_old_routes() {
 }
 
 # Invoke the local dhcp client enter hooks, if they exist.
-if [ -x $ENTERHOOKS ]; then
+if [ -f $ENTERHOOKS ]; then
 	exit_status=0
 	. $ENTERHOOKS
 	# allow the local script to abort processing of this state
@@ -174,7 +177,7 @@ BOUND|RENEW|REBIND|REBOOT)
 	exit_with_hooks 0
 	;;
 
-EXPIRE|FAIL)
+EXPIRE|FAIL|RELEASE|STOP)
 	if [ ! -z "$old_nis_domain" ]; then
 		if type domainname > /dev/null 2>&1; then
 			# delete the old nis domain name
