@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.13 2000/10/11 20:23:57 is Exp $	*/
+/*	$NetBSD: supextern.h,v 1.14 2000/12/30 21:36:23 martin Exp $	*/
 
 struct stat;
 
@@ -193,7 +193,11 @@ int msgxpatch __P((void));
 int msgcompress __P((void));
 
 /* vprintf.c */
+/* XXX already in system headers included already - but with different
+   argument declarations! */
+#if 0
 int vprintf __P((const char *, va_list));
 int vfprintf __P((FILE *, const char *, va_list));
 int vsprintf __P((char *, const char *, va_list));
 int vsnprintf __P((char *, size_t, const char *, va_list));
+#endif
