@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.133 2001/06/18 02:00:55 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.133.2.1 2001/07/10 13:26:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -55,6 +55,7 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/signalvar.h>
+#include <sys/event.h>
 
 /*
  * One structure allocated per session.
@@ -205,6 +206,7 @@ struct proc {
 					 * Per-process emulation data, or NULL.
 					 * Malloc type M_EMULDATA
 					 */
+	struct klist	p_klist;	/* Knotes attached to this process */
 
 /*
  * End area that is zeroed on creation
