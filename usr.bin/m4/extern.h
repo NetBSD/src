@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1997/12/02 22:34:00 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1997/12/29 19:52:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,6 +68,7 @@ void	onintr __P((int));
 void	pbnum __P((int));
 void	pbstr __P((char *));
 void	putback __P((int));
+void	putbackeof __P((void));
 void	remhash __P((char *, int));
 void	usage __P((void));
 
