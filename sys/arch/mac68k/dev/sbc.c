@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.27 1997/06/29 06:10:37 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.28 1997/06/30 05:24:35 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -97,8 +97,9 @@ struct cfdriver sbc_cd = {
 	NULL, "sbc", DV_DULL
 };
 
+static	int	sbc_wait_busy __P((struct ncr5380_softc *));
 static	int	sbc_ready __P((struct ncr5380_softc *));
-static	void	sbc_wait_not_req __P((struct ncr5380_softc *));
+static	int	sbc_wait_dreq __P((struct ncr5380_softc *));
 
 static void
 sbc_minphys(struct buf *bp)
@@ -112,6 +113,72 @@ sbc_minphys(struct buf *bp)
 /***
  * General support for Mac-specific SCSI logic.
  ***/
+
+/* These are used in the following inline functions. */
+int sbc_wait_busy_timo = 1000 * 5000;	/* X2 = 10 S. */
+int sbc_ready_timo = 1000 * 5000;	/* X2 = 10 S. */
+int sbc_wait_dreq_timo = 1000 * 5000;	/* X2 = 10 S. */
+
+/* Return zero on success. */
+static __inline__ int
+sbc_wait_busy(sc)
+	struct ncr5380_softc *sc;
+{
+	int timo = sbc_wait_busy_timo;
+	for (;;) {
+		if (SCI_BUSY(sc)) {
+			timo = 0;	/* return 0 */
+			break;
+		}
+		if (--timo < 0)
+			break;	/* return -1 */
+		delay(2);
+	}
+	return (timo);
+}
+
+static __inline__ int
+sbc_ready(sc)
+	struct ncr5380_softc *sc;
+{
+	int timo = sbc_ready_timo;
+
+	for (;;) {
+		if ((*sc->sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH))
+		    == (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) {
+			timo = 0;
+			break;
+		}
+		if (((*sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0)
+		    || (SCI_BUSY(sc) == 0)) {
+			timo = -1;
+			break;
+		}
+		if (--timo < 0)
+			break;	/* return -1 */
+		delay(2);
+	}
+	return (timo);
+}
+
+static __inline__ int
+sbc_wait_dreq(sc)
+	struct ncr5380_softc *sc;
+{
+	int timo = sbc_wait_dreq_timo;
+
+	for (;;) {
+		if ((*sc->sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH))
+		    == (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) {
+			timo = 0;
+			break;
+		}
+		if (--timo < 0)
+			break;	/* return -1 */
+		delay(2);
+	}
+	return (timo);
+}
 
 void
 sbc_irq_intr(p)
@@ -147,8 +214,8 @@ void
 decode_5380_intr(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	u_char csr = *ncr_sc->sci_csr;
-	u_char bus_csr = *ncr_sc->sci_bus_csr;
+	u_int8_t csr = *ncr_sc->sci_csr;
+	u_int8_t bus_csr = *ncr_sc->sci_bus_csr;
 
 	if (((csr & ~(SCI_CSR_PHASE_MATCH | SCI_CSR_ATN)) == SCI_CSR_INT) &&
 	    ((bus_csr & ~(SCI_BUS_MSG | SCI_BUS_CD | SCI_BUS_IO | SCI_BUS_DBP)) == SCI_BUS_SEL)) {
@@ -182,53 +249,11 @@ decode_5380_intr(ncr_sc)
  * The following code implements polled PDMA.
  ***/
 
-#define	TIMEOUT	5000000			/* x 2 usec = 10 sec */
-
-static __inline__ int
-sbc_ready(sc)
-	struct ncr5380_softc *sc;
-{
-	int i = TIMEOUT;
-
-	for (;;) {
-		if ((*sc->sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) ==
-		    (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH))
-			return 1;
-		if (((*sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0) ||
-		    (SCI_BUSY(sc) == 0))
-			return 0;
-		if (--i < 0)
-			break;
-		delay(2);
-	}
-
-	printf("%s: ready timeout\n", sc->sc_dev.dv_xname);
-	return 0;
-}
-
-static __inline__ void
-sbc_wait_not_req(sc)
-	struct ncr5380_softc *sc;
-{
-	int i = TIMEOUT;
-
-	for (;;) {
-		if ((*sc->sci_bus_csr & SCI_BUS_REQ) == 0 ||
-		    (*sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0 ||
-		    SCI_BUSY(sc) == 0) {
-			return;
-		}
-		if (--i < 0)
-			break;
-		delay(2);
-	}
-	printf("%s: pdma not_req timeout\n", sc->sc_dev.dv_xname);
-}
-
 int
 sbc_pdma_in(ncr_sc, phase, datalen, data)
 	struct ncr5380_softc *ncr_sc;
-	int phase, datalen;
+	int phase;
+	int datalen;
 	u_char *data;
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
@@ -236,25 +261,31 @@ sbc_pdma_in(ncr_sc, phase, datalen, data)
 	volatile u_int8_t *byte_data = (u_int8_t *)sc->sc_nodrq_addr;
 	int resid, s;
 
+	if (datalen < ncr_sc->sc_min_dma_len ||
+	    (sc->sc_options & SBC_PDMA) == 0)
+		return ncr5380_pio_in(ncr_sc, phase, datalen, data);
+
 	s = splbio();
+	if (sbc_wait_busy(ncr_sc)) {
+		splx(s);
+		return 0;
+	}
+
 	*ncr_sc->sci_mode |= SCI_MODE_DMA;
 	*ncr_sc->sci_irecv = 0;
 
-#define R4	*((u_int32_t *)data)++ = *long_data++
-#define R1	*data++ = *byte_data++
+#define R4	*((u_int32_t *)data)++ = *long_data
+#define R1	*((u_int8_t *)data)++ = *byte_data
 	for (resid = datalen; resid >= 128; resid -= 128) {
-		if (sbc_ready(ncr_sc) == 0)
+		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		R4; R4; R4; R4; R4; R4; R4; R4;
 		R4; R4; R4; R4; R4; R4; R4; R4;
 		R4; R4; R4; R4; R4; R4; R4; R4;
-		R4; R4; R4; R4; R4; R4; R4; R4;
-
-		long_data = (u_int32_t *)sc->sc_drq_addr;
-		byte_data = (u_int8_t *)sc->sc_nodrq_addr;
+		R4; R4; R4; R4; R4; R4; R4; R4;		/* 128 */
 	}
 	while (resid) {
-		if (sbc_ready(ncr_sc) == 0)
+		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		R1;
 		resid--;
@@ -262,92 +293,86 @@ sbc_pdma_in(ncr_sc, phase, datalen, data)
 #undef R4
 #undef R1
 
-	sbc_wait_not_req(ncr_sc);
 interrupt:
 	SCI_CLR_INTR(ncr_sc);
 	*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
+	*ncr_sc->sci_icmd = 0;
 	splx(s);
-	return datalen - resid;
+	return (datalen - resid);
 }
 
 int
 sbc_pdma_out(ncr_sc, phase, datalen, data)
 	struct ncr5380_softc *ncr_sc;
-	int phase, datalen;
+	int phase;
+	int datalen;
 	u_char *data;
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	volatile u_int32_t *long_data = (u_int32_t *)sc->sc_drq_addr;
 	volatile u_int8_t *byte_data = (u_int8_t *)sc->sc_nodrq_addr;
-	int i, s, resid;
-	u_char icmd;
+	int resid, s;
+	u_int8_t icmd;
 
-	if (datalen < ncr_sc->sc_min_dma_len)
+	if (datalen < ncr_sc->sc_min_dma_len ||
+	    (sc->sc_options & SBC_PDMA) == 0)
 		return ncr5380_pio_out(ncr_sc, phase, datalen, data);
 
 	s = splbio();
+	if (sbc_wait_busy(ncr_sc)) {
+		splx(s);
+		return 0;
+	}
+
 	icmd = *(ncr_sc->sci_icmd) & SCI_ICMD_RMASK;
 	*ncr_sc->sci_icmd = icmd | SCI_ICMD_DATA;
 	*ncr_sc->sci_mode |= SCI_MODE_DMA;
 	*ncr_sc->sci_dma_send = 0;
 
-	resid = datalen;
-	if (sbc_ready(ncr_sc) == 0)
-		goto interrupt;
-
-#define W1	*byte_data++ = *data++
-#define W4	*long_data++ = *((u_int32_t *)data)++
-	while (resid >= 64) {
-		if (sbc_ready(ncr_sc) == 0)
+#define W1	*byte_data = *((u_int8_t *)data)++
+#define W4	*long_data = *((u_int32_t *)data)++
+	for (resid = datalen; resid >= 64; resid -= 64) {
+		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		W1;
-		resid--;
-		if (sbc_ready(ncr_sc) == 0)
+		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		W1;
-		resid--;
-		if (sbc_ready(ncr_sc) == 0)
+		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		W1;
-		resid--;
-		if (sbc_ready(ncr_sc) == 0)
+		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		W1;
-		resid--;
-		if (sbc_ready(ncr_sc) == 0)
+		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		W4; W4; W4; W4;
 		W4; W4; W4; W4;
 		W4; W4; W4; W4;
 		W4; W4; W4;
-		resid -= 60;
-
-		long_data = (u_int32_t *)sc->sc_drq_addr;
-		byte_data = (u_int8_t *)sc->sc_nodrq_addr;
 	}
-	for (; resid; resid--) {
-		if (sbc_ready(ncr_sc) == 0)
+	while (resid) {
+		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		W1;
+		resid--;
 	}
 #undef  W1
 #undef  W4
+	if (sbc_wait_dreq(ncr_sc))
+		printf("%s: timeout waiting for DREQ.\n",
+		    ncr_sc->sc_dev.dv_xname);
 
-	for (i = TIMEOUT; i > 0; i--) {
-		if ((*ncr_sc->sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH))
-		    != SCI_CSR_DREQ)
-			break;
-	}
-	if (i == 0)
-		printf("%s: timeout waiting for final SCI_DSR_DREQ.\n",
-			ncr_sc->sc_dev.dv_xname);
-#ifdef __notyet__	/* not sure why this is ever necessary... */
-	else
-		*byte_data = 0;
-#endif
+	*byte_data = 0;
+	goto done;
 
-	sbc_wait_not_req(ncr_sc);
 interrupt:
+	if ((*ncr_sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0) {
+		*ncr_sc->sci_icmd = icmd & ~SCI_ICMD_DATA;
+		--resid;
+	}
+
+done:
 	SCI_CLR_INTR(ncr_sc);
 	*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
 	*ncr_sc->sci_icmd = icmd;
@@ -556,7 +581,7 @@ sbc_drq_intr(p)
 	 * OK.  No bus error occurred above.  Clear the nofault flag
 	 * so we no longer short-circuit bus errors.
 	 */
-	nofault = (int *) 0;
+	nofault = (int *)0;
 
 #ifdef SBC_DEBUG
 	if (sbc_debug & (SBC_DB_REG | SBC_DB_INTR))
