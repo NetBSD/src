@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.109 1997/09/16 20:34:23 is Exp $	*/
+/*	$NetBSD: com.c,v 1.110 1997/09/19 01:17:37 enami Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -812,7 +812,7 @@ com_modem(sc, onoff)
 
 static u_char
 cflag2lcr(cflag)
-tcflag_t cflag;
+	tcflag_t cflag;
 {
 	u_char lcr = 0;
 
@@ -838,7 +838,7 @@ tcflag_t cflag;
 	if (ISSET(cflag, CSTOPB))
 		SET(lcr, LCR_STOPB);
 
-	return(lcr);
+	return (lcr);
 }
 
 int
@@ -1623,7 +1623,7 @@ cominit(iot, iobase, rate, frequency, cflag, iohp)
 	bus_space_handle_t ioh;
 
 	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
-		return(ENOMEM); /* ??? */
+		return (ENOMEM); /* ??? */
 
 	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
 	rate = comspeed(rate, frequency);
@@ -1636,7 +1636,7 @@ cominit(iot, iobase, rate, frequency, cflag, iohp)
 	bus_space_write_1(iot, ioh, com_ier, 0);
 
 	*iohp = ioh;
-	return(0);
+	return (0);
 }
 
 /*
@@ -1655,7 +1655,8 @@ comcnattach(iot, iobase, rate, frequency, cflag)
 	comcngetc, comcnputc, comcnpollc, NODEV, CN_NORMAL};
 
 	res = cominit(iot, iobase, rate, frequency, cflag, &comconsioh);
-	if(res) return(res);
+	if (res)
+		return (res);
 
 	cn_tab = &comcons;
 
@@ -1664,7 +1665,7 @@ comcnattach(iot, iobase, rate, frequency, cflag)
 	comconsrate = rate;
 	comconscflag = cflag;
 
-	return(0);
+	return (0);
 }
 
 int
@@ -1706,10 +1707,11 @@ com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	int res;
 
 	if (iot == comconstag && iobase == comconsaddr)
-		return(EBUSY); /* cannot share with console */
+		return (EBUSY); /* cannot share with console */
 
 	res = cominit(iot, iobase, rate, frequency, cflag, &com_kgdb_ioh);
-	if(res) return(res);
+	if (res)
+		return (res);
 
 	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
 	kgdb_dev = 123; /* unneeded, only to satisfy some tests */
@@ -1717,7 +1719,7 @@ com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	com_kgdb_iot = iot;
 	com_kgdb_addr = iobase;
 
-	return(0);
+	return (0);
 }
 
 /* ARGSUSED */
@@ -1744,23 +1746,24 @@ com_kgdb_putc(arg, c)
  console or KGDB (and not yet autoconf attached) */
 int
 com_is_console(iot, iobase, ioh)
-bus_space_tag_t iot;
-int iobase;
-bus_space_handle_t *ioh;
+	bus_space_tag_t iot;
+	int iobase;
+	bus_space_handle_t *ioh;
 {
 	bus_space_handle_t help;
 
-	if (!comconsattached
-	    && iot == comconstag && iobase == comconsaddr)
+	if (!comconsattached &&
+	    iot == comconstag && iobase == comconsaddr)
 		help = comconsioh;
 #ifdef KGDB
-	else if (!com_kgdb_attached
-		 && iot == com_kgdb_iot && iobase == com_kgdb_addr)
+	else if (!com_kgdb_attached &&
+	    iot == com_kgdb_iot && iobase == com_kgdb_addr)
 		help = com_kgdb_ioh;
 #endif
 	else
-		return(0);
+		return (0);
 
-	if(ioh) *ioh = help;
-	return(1);
+	if (ioh)
+		*ioh = help;
+	return (1);
 }
