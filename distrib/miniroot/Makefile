@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2002/02/12 01:38:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.48 2002/02/12 11:17:47 is Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -11,9 +11,10 @@ ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
 .include "${ARCHDIR}/Makefile.inc"
 .endif
 
+HOST_RAWPART!=	sysctl -n kern.rawpartition | tr '0-9a-f' 'a-p'
 VND?=		vnd0
-VND_DEV=	/dev/${VND}c
-VND_RDEV=	/dev/r${VND}c
+VND_DEV=	/dev/${VND}${HOST_RAWPART}
+VND_RDEV=	/dev/r${VND}${HOST_RAWPART}
 VND_GEOM?=
 IMAGE?=		miniroot.fs
 IMAGESIZE?=	14336 # 7MB in 512 byte blocks
