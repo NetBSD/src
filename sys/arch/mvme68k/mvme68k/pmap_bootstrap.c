@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.2 1996/04/26 19:27:02 chuck Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.3 1997/03/18 21:31:48 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -50,7 +50,7 @@
 
 #define RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
 
-extern char *etext;
+extern char *kernel_text, *etext;
 extern int Sysptsize;
 extern char *proc0paddr;
 extern st_entry_t *Sysseg;
@@ -304,11 +304,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	pte = &((u_int *)kptpa)[m68k_btop(KERNBASE)];
 	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
-#if defined(KGDB) || defined(DDB)
-	protopte = firstpa | PG_RW | PG_V;	/* XXX RW for now */
-#else
 	protopte = firstpa | PG_RO | PG_V;
-#endif
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
