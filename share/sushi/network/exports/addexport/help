@@ -1,0 +1,26 @@
+Under NetBSD, you may only export a complete filesystem, you cannot
+export a subdirectory of a filesystem.  Therefore only filesystem mount
+points will be displayed to you.
+
+If you choose to export all subdirectories, clients may mount any
+subdirectory of the mount point, rather than the entire mount point.
+
+Mapping root access to a specific user or group means that root on the
+client machine, will have the access permissions of the user/group selected.
+
+Allowing unreserved port connections may sometimes be needed for less secure
+client implementations.  Using this option will decrease the security of your
+system.
+
+Setting the network and netmask allows you to export a filesystem to an
+entire network, or subnet.
+
+Hosts/netgroups to export mount to, allows you to specify individual hosts,
+or netgroups as may be defined in an /etc/netgroup file, that are allowed to
+mount filesystems from this host.  You may specify IP's, hostnames, or
+netgroups.  Multiple hosts to export to should be space separated.
+
+For more information and details on exporting filesystems, please see the
+exports(5) manpage.
+
+$NetBSD: help,v 1.1 2001/04/25 03:43:26 garbled Exp $

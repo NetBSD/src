@@ -1,0 +1,13 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/25 03:43:38 garbled Exp $
+
+if [ -z "$2" ]; then
+	ypinit -s $1
+else
+	ypinit -s $1 $2
+fi
+if [ "$?" = "0" ]; then
+	echo "YP/NIS Slave initialization complete"
+else
+	echo "YP/NIS Slave initialization failed"
+fi

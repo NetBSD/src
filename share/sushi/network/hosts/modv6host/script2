@@ -1,0 +1,6 @@
+#!/bin/sh
+# $NetBSD: script2,v 1.1 2001/04/25 03:43:33 garbled Exp $
+
+a=`expr $1 + 1`
+x=$(echo `eval echo \\$$a`)
+echo $x

@@ -1,0 +1,13 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/25 03:43:37 garbled Exp $
+
+if [ -z "$1" ]; then
+	ypinit -m
+else
+	ypinit -m $1
+fi
+if [ "$?" = "0" ]; then
+	echo "YP/NIS Master initialization complete"
+else
+	echo "YP/NIS Master initialization failed"
+fi

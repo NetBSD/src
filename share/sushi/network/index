@@ -1,0 +1,7 @@
+# $NetBSD: index,v 1.1 2001/04/25 03:43:25 garbled Exp $
+interfaces	interfaces	Show or configure network adapters
+hosts		hosts		Modify the hosts file
+routing		routing		Show or configure basic routing
+hostname	hostname	Modify this machine's hostname
+exports		exports		Modify NFS exported filesystems
+yp		yp		Setup or Configure NIS/YP
