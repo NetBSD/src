@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.12 2002/06/01 23:50:53 lukem Exp $	 */
+/*	$NetBSD: symbol.c,v 1.13 2002/09/05 16:33:57 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -154,10 +154,8 @@ _rtld_symlook_obj(name, hash, obj, in_plt)
  * defining object via the reference parameter DEFOBJ_OUT.
  */
 const Elf_Sym *
-_rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
-	const Obj_Entry *obj_list;
+_rtld_find_symdef(r_info, refobj, defobj_out, in_plt)
 	Elf_Addr r_info;
-	const char *name;
 	Obj_Entry *refobj;
 	const Obj_Entry **defobj_out;
 	bool in_plt;
@@ -169,11 +167,11 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 	const Obj_Entry *obj;
 	const Obj_Entry *defobj;
 	const Objlist_Entry *elm;
+	const char     *name;
 	unsigned long   hash;
 
 	ref = refobj->symtab + symnum;
-	if (name == NULL)
-		name = refobj->strtab + ref->st_name;
+	name = refobj->strtab + ref->st_name;
 
 	hash = _rtld_elf_hash(name);
 	def = NULL;

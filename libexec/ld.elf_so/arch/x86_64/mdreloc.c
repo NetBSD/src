@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.6 2002/09/05 15:38:33 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.7 2002/09/05 16:33:58 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -104,8 +104,7 @@ _rtld_relocate_nonplt_object(Obj_Entry *obj, const Elf_Rela *rela, bool dodebug)
 	case R_TYPE(32):	/* word32 S + A, truncate */
 	case R_TYPE(32S):	/* word32 S + A, signed truncate */
 	case R_TYPE(GOT32):	/* word32 G + A (XXX can we see these?) */
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 		tmp32 = (Elf32_Addr)(u_long)(defobj->relocbase + def->st_value +
@@ -118,8 +117,7 @@ _rtld_relocate_nonplt_object(Obj_Entry *obj, const Elf_Rela *rela, bool dodebug)
 		    (void *)(unsigned long)*where32, defobj->path));
 		break;
 	case R_TYPE(64):	/* word64 S + A */
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -133,8 +131,7 @@ _rtld_relocate_nonplt_object(Obj_Entry *obj, const Elf_Rela *rela, bool dodebug)
 		    (void *)*where64, defobj->path));
 		break;
 	case R_TYPE(PC32):	/* word32 S + A - P */
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 		tmp32 = (Elf32_Addr)(u_long)(defobj->relocbase + def->st_value +
@@ -146,8 +143,7 @@ _rtld_relocate_nonplt_object(Obj_Entry *obj, const Elf_Rela *rela, bool dodebug)
 		    (void *)(unsigned long)*where32, defobj->path));
 		break;
 	case R_TYPE(GLOB_DAT):	/* word64 S */
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 
@@ -172,8 +168,7 @@ _rtld_relocate_nonplt_object(Obj_Entry *obj, const Elf_Rela *rela, bool dodebug)
 		break;
 
 	default:
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, true);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
 		rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
 		    "addend = %p, contents = %p, symbol = %s",
 		    (u_long)ELF_R_SYM(rela->r_info),
@@ -206,8 +201,7 @@ _rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
 
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
 
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, true);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
 		if (def == NULL)
 			return -1;
 

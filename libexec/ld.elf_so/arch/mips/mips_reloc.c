@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.6 2002/09/05 15:38:28 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.7 2002/09/05 16:33:58 junyoung Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -49,8 +49,7 @@ _rtld_bind_mips(a0, a1, a2, a3)
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 
-	def = _rtld_find_symdef(_rtld_objlist, a0 << 8, NULL, obj, &defobj,
-	    true);
+	def = _rtld_find_symdef(a0 << 8, obj, &defobj, true);
 	if (def) {
 		u[obj->local_gotno + a0 - obj->gotsym] = (Elf_Addr)
 		    (def->st_value + defobj->relocbase);
@@ -85,8 +84,7 @@ _rtld_setup_pltgot(obj)
 				sym, sym->st_name + obj->strtab, *got));
 
 		info = ELF32_R_INFO(obj->symtabno - i - 1, sym->st_info);
-		def = _rtld_find_symdef(_rtld_objlist, info, NULL, obj, 
-					&defobj, true);
+		def = _rtld_find_symdef(info, obj, &defobj, true);
 
 		if (def == NULL)
 			_rtld_error(
