@@ -1,6 +1,6 @@
 #	from: @(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 #	Id: bsd.port.subdir.mk,v 1.19 1997/03/09 23:10:56 wosch Exp 
-#	$NetBSD: bsd.port.subdir.mk,v 1.5 1998/01/08 10:59:47 agc Exp $
+#	$NetBSD: bsd.port.subdir.mk,v 1.6 1998/01/27 23:04:48 hubertf Exp $
 #
 # The include file <bsd.port.subdir.mk> contains the default targets
 # for building ports subdirectories. 
@@ -30,7 +30,8 @@
 #
 #	afterinstall, all, beforeinstall, build, checksum, clean,
 #	configure, depend, describe, extract, fetch, fetch-list,
-#	install, package, readmes, realinstall, reinstall, tags
+#	install, package, readmes, realinstall, reinstall, tags,
+#	mirror-distfiles
 #
 
 
@@ -80,7 +81,8 @@ ${SUBDIR}::
 	${MAKE} all
 
 .for __target in all fetch fetch-list package extract configure \
-		 build clean depend describe reinstall tags checksum
+		 build clean depend describe reinstall tags checksum \
+		 mirror-distfiles
 .if !target(__target)
 ${__target}: _SUBDIRUSE
 .endif
