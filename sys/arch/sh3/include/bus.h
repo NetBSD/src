@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 2002/02/12 15:26:47 uch Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 2002/02/28 01:58:53 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,6 @@
  */
 #define	SH3_BUS_SPACE_IO	0	/* space is i/o space */
 #define SH3_BUS_SPACE_MEM	1	/* space is mem space */
-#ifdef SH4_PCMCIA
 #define SH3_BUS_SPACE_PCMCIA_IO 2	/* PCMCIA IO space */
 #define SH3_BUS_SPACE_PCMCIA_MEM 3	/* PCMCIA Mem space */
 #define SH3_BUS_SPACE_PCMCIA_ATT 4	/* PCMCIA Attr space */
@@ -97,7 +96,6 @@
             (SH3_BUS_SPACE_PCMCIA_MEM|SH3_BUS_SPACE_PCMCIA_8BIT)
 #define SH3_BUS_SPACE_PCMCIA_ATT8 \
             (SH3_BUS_SPACE_PCMCIA_ATT|SH3_BUS_SPACE_PCMCIA_8BIT)
-#endif
 
 /*
  * Bus address and size types
@@ -721,181 +719,5 @@ bus_space_copy_region_4(bus_space_tag_t t, bus_space_handle_t h1,
 #define	BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
 #define	BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
 #endif
-
-/*
- * Flags used in various bus DMA methods.
- */
-#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
-#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
-#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
-#define	BUS_DMAMEM_NOSYNC	0x004	/* map memory to not require sync */
-#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x020
-#define	BUS_DMA_BUS3		0x040
-#define	BUS_DMA_BUS4		0x080
-#define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
-#define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
-
-/* Forwards needed by prototypes below. */
-struct mbuf;
-struct uio;
-
-#if 0
-/*
- *	bus_dmasync_op_t
- *
- *	Operations performed by bus_dmamap_sync().
- */
-typedef enum {
-	BUS_DMASYNC_PREREAD,
-	BUS_DMASYNC_POSTREAD,
-	BUS_DMASYNC_PREWRITE,
-	BUS_DMASYNC_POSTWRITE,
-} bus_dmasync_op_t;
-
-typedef struct sh3_bus_dma_tag		*bus_dma_tag_t;
-typedef struct sh3_bus_dmamap		*bus_dmamap_t;
-
-/*
- *	bus_dma_segment_t
- *
- *	Describes a single contiguous DMA transaction.  Values
- *	are suitable for programming into DMA registers.
- */
-struct sh3_bus_dma_segment {
-	bus_addr_t	ds_addr;	/* DMA address */
-	bus_size_t	ds_len;		/* length of transfer */
-};
-typedef struct sh3_bus_dma_segment	bus_dma_segment_t;
-
-/*
- *	bus_dma_tag_t
- *
- *	A machine-dependent opaque type describing the implementation of
- *	DMA for a given bus.
- */
-
-struct sh3_bus_dma_tag {
-	void	*_cookie;		/* cookie used in the guts */
-
-	/*
-	 * DMA mapping methods.
-	 */
-	int	(*_dmamap_create)(bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
-	void	(*_dmamap_destroy)(bus_dma_tag_t, bus_dmamap_t);
-	int	(*_dmamap_load)(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int);
-	int	(*_dmamap_load_mbuf)(bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int);
-	int	(*_dmamap_load_uio)(bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int);
-	int	(*_dmamap_load_raw)(bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int);
-	void	(*_dmamap_unload)(bus_dma_tag_t, bus_dmamap_t);
-	void	(*_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t,
-	    bus_dmasync_op_t);
-
-	/*
-	 * DMA memory utility functions.
-	 */
-	int	(*_dmamem_alloc)(bus_dma_tag_t, bus_size_t, bus_size_t,
-	    bus_size_t, bus_dma_segment_t *, int, int *, int);
-	void	(*_dmamem_free)(bus_dma_tag_t,
-	    bus_dma_segment_t *, int);
-	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
-	    int, size_t, caddr_t *, int);
-	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
-	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
-	    int, off_t, int, int);
-};
-
-#define	bus_dmamap_create(t, s, n, m, b, f, p)			\
-	(*(t)->_dmamap_create)((t), (s), (n), (m), (b), (f), (p))
-#define	bus_dmamap_destroy(t, p)				\
-	(*(t)->_dmamap_destroy)((t), (p))
-#define	bus_dmamap_load(t, m, b, s, p, f)			\
-	(*(t)->_dmamap_load)((t), (m), (b), (s), (p), (f))
-#define	bus_dmamap_load_mbuf(t, m, b, f)			\
-	(*(t)->_dmamap_load_mbuf)((t), (m), (b), (f))
-#define	bus_dmamap_load_uio(t, m, u, f)				\
-	(*(t)->_dmamap_load_uio)((t), (m), (u), (f))
-#define	bus_dmamap_load_raw(t, m, sg, n, s, f)			\
-	(*(t)->_dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
-#define	bus_dmamap_unload(t, p)					\
-	(*(t)->_dmamap_unload)((t), (p))
-#define	bus_dmamap_sync(t, p, o)				\
-	(void)((t)->_dmamap_sync ?				\
-	    (*(t)->_dmamap_sync)((t), (p), (o)) : (void)0)
-
-#define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
-	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
-#define	bus_dmamem_free(t, sg, n)				\
-	(*(t)->_dmamem_free)((t), (sg), (n))
-#define	bus_dmamem_map(t, sg, n, s, k, f)			\
-	(*(t)->_dmamem_map)((t), (sg), (n), (s), (k), (f))
-#define	bus_dmamem_unmap(t, k, s)				\
-	(*(t)->_dmamem_unmap)((t), (k), (s))
-#define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
-	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
-
-/*
- *	bus_dmamap_t
- *
- *	Describes a DMA mapping.
- */
-struct sh3_bus_dmamap {
-	/*
-	 * PRIVATE MEMBERS: not for use my machine-independent code.
-	 */
-	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
-	int		_dm_segcnt;	/* number of segs this map can map */
-	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
-	bus_size_t	_dm_boundary;	/* don't cross this */
-	int		_dm_flags;	/* misc. flags */
-
-	void		*_dm_cookie;	/* cookie for bus-specific functions */
-
-	/*
-	 * PUBLIC MEMBERS: these are used by machine-independent code.
-	 */
-	int		dm_nsegs;	/* # valid segments in mapping */
-	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
-};
-
-#ifdef _SH3_BUS_DMA_PRIVATE
-int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
-	    bus_size_t, int, bus_dmamap_t *);
-void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
-int	_bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int);
-int	_bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int);
-int	_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int);
-int	_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int);
-void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_dmasync_op_t);
-
-int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
-	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
-void	_bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs);
-int	_bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags);
-void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
-	    size_t size);
-paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, off_t off, int prot, int flags);
-
-int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
-	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    vm_offset_t low, vm_offset_t high);
-#endif /* _SH3_BUS_DMA_PRIVATE */
-
-#endif /* 0 */
 
 #endif /* _SH3_BUS_H_ */
