@@ -1,6 +1,0 @@
-#	$NetBSD: std.newsmips,v 1.7 2000/06/22 20:27:54 fvdl Exp $
-
-machine newsmips mips
-
-options	EXEC_ELF32	# exec ELF32 binaries
-options	EXEC_SCRIPT	# exec #! scripts

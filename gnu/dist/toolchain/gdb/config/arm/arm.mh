@@ -1,6 +1,0 @@
-# OBSOLETE # Host: Acorn RISC machine running RISCiX (4.3bsd)
-# OBSOLETE XDEPFILES= infptrace.o inftarg.o fork-child.o arm-xdep.o arm-convert.o 
-# OBSOLETE 
-# OBSOLETE XM_FILE= xm-arm.h
-# OBSOLETE 
-# OBSOLETE NAT_FILE= nm-arm.h

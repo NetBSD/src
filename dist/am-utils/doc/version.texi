@@ -1,3 +1,0 @@
-@set UPDATED 7 February 2000
-@set EDITION 6.0.3
-@set VERSION 6.0.3

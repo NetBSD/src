@@ -1,8 +1,0 @@
-#	$NetBSD: std.pmax,v 1.12 2000/06/22 20:27:55 fvdl Exp $
-# standard, required pmax info
-
-machine pmax mips
-
-# Standard exec-package options
-options 	EXEC_ELF32	# 32-bit ELF support (native format)
-options 	EXEC_SCRIPT	# exec of #! scripts

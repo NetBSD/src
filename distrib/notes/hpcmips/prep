@@ -1,9 +1,0 @@
-.\"	$NetBSD: prep,v 1.2 2000/07/07 01:39:27 imp Exp $	
-
-First and foremost, before beginning the installation process,
-.Em make sure you have a reliable backup
-of any data on your Windows CE memory and settings that you
-wish to keep.
-Sadly, there is no freely available program to accomplish this task,
-so you must use ActiveSync or another commercially available program to
-backup your Windows CE machine before installing NetBSD/hpcmips.

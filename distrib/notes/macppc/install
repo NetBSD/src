@@ -1,3 +1,0 @@
-.\"	$NetBSD: install,v 1.2 1999/04/15 11:45:58 tsubai Exp $
-.
-.so ../common/sysinst

@@ -1,6 +1,0 @@
-# $NetBSD: std.arm26,v 1.1 2000/05/09 21:55:58 bjh21 Exp $
-
-# Standard NetBSD/arm26 options
-
-machine arm26
-

@@ -1,3 +1,0 @@
-# $NetBSD: obsolete.powerpc,v 1.1 2000/06/11 14:13:01 tsubai Exp $
-/usr/include/powerpc/va-ppc.h
-/usr/include/powerpc/vmparam.h

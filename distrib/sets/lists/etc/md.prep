@@ -1,4 +1,0 @@
-# $NetBSD: md.prep,v 1.1 2000/08/06 16:11:33 nonaka Exp $
-./etc/fstab.nfs
-./etc/fstab.sd
-./etc/fstab.wd

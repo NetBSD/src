@@ -1,3 +1,0 @@
-mkdir /var/spool/postfix/etc
-chmod 755 /var/spool/postfix/etc
-cp /etc/localtime /etc/services /etc/resolv.conf /var/spool/postfix/etc

@@ -1,7 +1,0 @@
-# $NetBSD: std.sh3,v 1.4 2000/06/22 20:27:56 fvdl Exp $
-#
-# standard, required NetBSD/sh3 'options'
-
-machine sh3
-
-options EXEC_SCRIPT	# exec #! scripts
