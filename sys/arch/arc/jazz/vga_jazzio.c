@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.5 2001/06/13 15:12:28 soda Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.6 2001/09/14 01:10:12 thorpej Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -55,20 +55,18 @@
 
 #define WSDISPLAY_TYPE_JAZZVGA	WSDISPLAY_TYPE_PCIVGA	/* XXX not really */
 
-struct vga_jazzio_softc {
-	struct device sc_dev; 
-#if 0
-	struct vga_config *sc_vc;	/* VGA configuration */
-#endif
-};
-
 int	vga_jazzio_init_tag __P((char*, bus_space_tag_t *, bus_space_tag_t *));
 paddr_t	vga_jazzio_mmap __P((void *, off_t, int));
 int	vga_jazzio_match __P((struct device *, struct cfdata *, void *));
 void	vga_jazzio_attach __P((struct device *, struct device *, void *));
 
 struct cfattach vga_jazzio_ca = {
-	sizeof(struct vga_jazzio_softc), vga_jazzio_match, vga_jazzio_attach,
+	sizeof(struct vga_softc), vga_jazzio_match, vga_jazzio_attach,
+};
+
+const struct vga_funcs vga_jazzio_funcs = {
+	NULL,
+	vga_jazzio_mmap,
 };
 
 int
@@ -151,17 +149,15 @@ vga_jazzio_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-#if 0
-	struct vga_jazzio_softc *sc = (struct vga_jazzio_softc *)self;
-#endif
+	struct vga_softc *sc = (void *) self;
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot, memt;
 
 	printf("\n");
 
 	vga_jazzio_init_tag(ja->ja_name, &iot, &memt);
-	vga_common_attach(self, iot, memt, WSDISPLAY_TYPE_JAZZVGA,
-	    vga_jazzio_mmap);
+	vga_common_attach(sc, iot, memt, WSDISPLAY_TYPE_JAZZVGA,
+	    &vga_jazzio_funcs);
 }
 
 int
