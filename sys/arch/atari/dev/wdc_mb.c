@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.6 1999/02/19 20:57:14 leo Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.7 1999/08/06 08:27:31 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,9 +183,9 @@ wdc_mb_attach(parent, self, aux)
 	/*
 	 * Setup & enable disk related interrupts.
 	 */
-	MFP->mf_ierb  |= IB_DINT;
-	MFP->mf_iprb  &= ~IB_DINT;
-	MFP->mf_imrb  |= IB_DINT;
+	MFP->mf_ierb |= IB_DINT;
+	MFP->mf_iprb  = (u_int8_t)~IB_DINT;
+	MFP->mf_imrb |= IB_DINT;
 }
 
 /*
@@ -220,7 +220,7 @@ void *softc;
 	/*
 	 * Flush pending interrupts before giving-up lock
 	 */
-	single_inst_bclr_b(MFP->mf_iprb, IB_DINT);
+	MFP->mf_iprb = (u_int8_t)~IB_DINT;
 
 	/*
 	 * Only free the lock on a Falcon. On the Hades, keep it.
