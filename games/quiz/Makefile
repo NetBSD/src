@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.1 (Berkeley) 11/10/91
-#	$Id: Makefile,v 1.3 1993/08/01 05:44:38 mycroft Exp $
+#	$Id: Makefile,v 1.4 1993/10/01 00:02:17 jtc Exp $
 
 PROG=	quiz
 MAN6=	quiz.0
@@ -11,15 +11,8 @@ CATS=	africa america areas arith asia babies bard chinese collectives \
 HIDEGAME=hidegame
 
 beforeinstall:
-	@if [ ! -d ${DESTDIR}/usr/share/games/quiz.db ]; then \
-                /bin/rm -f ${DESTDIR}/usr/share/games/quiz.db ; \
-                mkdir -p ${DESTDIR}/usr/share/games/quiz.db ; \
-                chown root.wheel ${DESTDIR}/usr/share/games/quiz.db ; \
-                chmod 755 ${DESTDIR}/usr/share/games/quiz.db ; \
-        else \
-                true ; \
-        fi
+	@install -d -o root -g wheel -m 755 ${DESTDIR}/usr/share/games/quiz.db
 	(cd ${.CURDIR}/datfiles; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    ${CATS} ${DESTDIR}/usr/share/games/quiz.db)
+		${CATS} ${DESTDIR}/usr/share/games/quiz.db)
 
 .include <bsd.prog.mk>
