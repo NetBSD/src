@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.27 2004/08/07 10:47:19 rearnsha Exp $
+#	$NetBSD: INTEGRATOR,v 1.28 2004/08/07 10:54:54 rearnsha Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -156,6 +156,10 @@ plrtc0		at ifpga? offset 0x05000000
 
 # PCI bus via ifpga
 pci0		at ifpga?			# PCI bus
+
+# Compact PCI bus via PCI bridge.
+ppb*		at pci? dev? function ?		# PCI-PCI bridges
+pci*		at ppb? bus ?
 
 # PCI IDE Controllers and Devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
