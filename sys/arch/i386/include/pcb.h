@@ -75,7 +75,6 @@ struct pcb {
 #define	FP_SOFTFP	0x20	/* process using software fltng pnt emulator */
 	int	pcb_iml;	/* interrupt mask level */
 	caddr_t	pcb_onfault;	/* copyin/out fault recovery */
-	int	unused;
 };
 
 #ifdef KERNEL
