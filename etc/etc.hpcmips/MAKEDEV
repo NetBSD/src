@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.12 2000/07/27 18:43:22 mason Exp $
+#	$NetBSD: MAKEDEV,v 1.13 2000/09/23 04:27:18 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -75,6 +75,9 @@
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
 #	ugen*	Generic device
+#	urio*	Diamond Rio 500
+#	uscanner*	Scanners
+#	ttyU*	Modem
 #
 # Special purpose devices:
 #	fd	file descriptors
@@ -129,6 +132,8 @@ usbs)
 	sh $0 uhid0 uhid1 uhid2 uhid3
 	sh $0 ulpt0 ulpt1 
 	sh $0 ttyU0 ttyU1
+	sh $0 urio0
+	sh $0 uscanner0 uscanner1
 	;;
 
 std)
@@ -208,6 +213,26 @@ ugen*)
 		chown root.wheel $ugenj
 		chmod 600 $ugenj
 	done
+	;;
+
+urio*)
+	unit=${i#urio}
+	urio=urio$unit
+	major=39
+	rm -f $urio
+	mknod $urio c $major $unit
+	chown root.wheel $urio
+	chmod 600 $urio
+	;;
+
+uscanner*)
+	unit=${i#uscanner}
+	uscanner=uscanner$unit
+	major=40
+	rm -f $uscanner
+	mknod $uscanner c $major $unit
+	chown root.wheel $uscanner
+	chmod 600 $uscanner
 	;;
 
 wscons)
