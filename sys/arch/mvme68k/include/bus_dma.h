@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.1.2.1 2000/03/11 20:51:51 scw Exp $	*/
+/* $NetBSD: bus_dma.h,v 1.1.2.2 2000/03/13 12:15:29 scw Exp $	*/
 
 /*
  * This file was extracted from from next68k/include/bus.h
@@ -90,10 +90,10 @@
 #define	BUS_DMA_BUS4		0x80
 
 /*
- * This is not yet supported, but strictly speaking it should be used
- * by the onboard ethernet drivers for allocating buffers...
+ * Flags to constrain the physical memory allocated for DMA
  */
-#define BUS_DMA_24BIT		BUS_DMA_BUS1
+#define BUS_DMA_ONBOARD_RAM	BUS_DMA_BUS1
+#define BUS_DMA_24BIT		BUS_DMA_BUS2
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

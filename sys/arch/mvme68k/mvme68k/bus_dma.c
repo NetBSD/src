@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.1.2.1 2000/03/11 20:51:52 scw Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.1.2.2 2000/03/13 12:15:30 scw Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.1 2000/03/11 20:51:52 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.2 2000/03/13 12:15:30 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.1 2000/03/11 20:51:52 scw Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
+#include <sys/kcore.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -62,9 +63,12 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.1 2000/03/11 20:51:52 scw Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
+#include <machine/pmap.h>
 #define _MVME68K_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <m68k/cacheops.h>
+
+extern	phys_ram_seg_t mem_clusters[];
 
 int	_bus_dmamap_load_buffer_direct_common __P((bus_dma_tag_t,
 	    bus_dmamap_t, void *, bus_size_t, struct proc *, int,
@@ -456,24 +460,24 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #ifdef DIAGNOSTIC
 			if ((p % 16) || (e % 16)) {
 				panic("unaligned address in _bus_dmamap_sync while flushing.\n"
-						"address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+				    "address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
 			}
 #endif
-#ifdef M68040
 /*
- * XXXSCW: What about 68060?
+ * Need stuff for 030 & 060
  */
+#ifdef M68040
 			if (mmutype == MMU_68040) {
 				while((p<e)&&(!p%NBPG)) {
-					DCFL(p);							/* flush cache line */
+					DCFL(p);	/* flush cache line */
 					p += 16;
 				}
 				while(p+NBPG<=e) {
-					DCFP(p);							/* flush page */
+					DCFP(p);	/* flush page */
 					p += NBPG;
 				}
 				while(p<e) {
-					DCFL(p);							/* flush cache line */
+					DCFL(p);	/* flush cache line */
 					p += 16;
 				}
 			}
@@ -481,7 +485,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #ifdef DIAGNOSTIC
 			if (p != e) {
 				panic("overrun in _bus_dmamap_sync while flushing.\n"
-						"address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+				    "address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
 			}
 #endif
 		}
@@ -495,24 +499,21 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #ifdef DIAGNOSTIC
 			if ((p % 16) || (e % 16)) {
 				panic("unaligned address in _bus_dmamap_sync while purging.\n"
-						"address=0x%08x, end=0x%08x, ops=0x%x", p,e,ops);
+				    "address=0x%08x, end=0x%08x, ops=0x%x", p,e,ops);
 			}
 #endif
 #ifdef M68040
-/*
- * XXXSCW: What about 68060?
- */
 			if (mmutype == MMU_68040) {
 				while((p<e)&&(!p%NBPG)) {
-					DCPL(p);							/* purge cache line */
+					DCPL(p);	/* purge cache line */
 					p += 16;
 				}
 				while(p+NBPG<=e) {
-					DCPP(p);							/* purge page */
+					DCPP(p);	/* purge page */
 					p += NBPG;
 				}
 				while(p<e) {
-					DCPL(p);							/* purge cache line */
+					DCPL(p);	/* purge cache line */
 					p += 16;
 				}
 			}
@@ -520,7 +521,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #ifdef DIAGNOSTIC
 			if (p != e) {
 				panic("overrun in _bus_dmamap_sync while flushing.\n"
-						"address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+				    "address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
 			}
 #endif
 		}
@@ -549,10 +550,36 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	/* Always round the size. */
 	size = round_page(size);
 
-	high = avail_end - PAGE_SIZE;
+	/*
+	 * Assume any memory will do (this includes off-board RAM)
+	 */
+	high = avail_end;
+
+	if ( (flags & BUS_DMA_ONBOARD_RAM) != 0 ) {
+		/*
+		 * Constrain the memory to 'onboard' RAM only
+		 */
+		high = mem_clusters[0].size;
+	}
+
+	if ( (flags & BUS_DMA_24BIT) != 0 && (high & 0xff000000u) != 0 ) {
+		/*
+		 * We need to constrain the memory to a 24-bit address
+		 */
+		high = 0x01000000u;
+	}
+
+	high -= PAGE_SIZE;
 
 	/*
 	 * Allocate pages from the VM system.
+	 *
+	 * XXXSCW: This will be sub-optimal if the base-address of offboard
+	 * RAM is significantly higher than the end-address of onboard RAM.
+	 * (Due to how uvm_pglistalloc() is implemented.)
+	 *
+	 * uvm_pglistalloc() also currently ignores the 'nsegs' parameter,
+	 * and always returns only one (contiguous) segment.
 	 */
 	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(size, avail_start, high, alignment, boundary,
@@ -571,6 +598,17 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	m = m->pageq.tqe_next;
 
 	for (; m != NULL; m = m->pageq.tqe_next) {
+		if ( curseg > segs ) {
+#ifdef DIAGNOSTIC
+			printf("_bus_dmamem_alloc: too many segments!\n");
+#ifdef DEBUG
+			panic("_bus_dmamem_alloc");
+#endif
+#endif
+			uvm_pglistfree(&mlist);
+			return (-1);
+		}
+
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < avail_start || curaddr >= high) {
@@ -657,11 +695,19 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		    addr += NBPG, va += NBPG, size -= NBPG) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
+
+			/* Cache-inhibit the page if necessary */
+			if ( (flags & BUS_DMA_COHERENT) != 0 )
+				_pmap_set_page_cacheinhibit(pmap_kernel(), va);
+
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		}
 	}
+
+	if ( (flags & BUS_DMA_COHERENT) != 0 )
+		TBIAS();
 
 	return (0);
 }
@@ -676,6 +722,8 @@ _bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
+	caddr_t va;
+	size_t s;
 
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
@@ -683,6 +731,15 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
+
+	/*
+	 * Re-enable cacheing on the range
+	 * XXXSCW: There should be some way to indicate that the pages
+	 * were mapped DMA_MAP_COHERENT in the first place...
+	 */
+	for (s = 0, va = kva; s < size; s += PAGE_SIZE, va += PAGE_SIZE)
+		_pmap_set_page_cacheable(pmap_kernel(), va);
+
 	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
 
@@ -712,6 +769,10 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			off -= segs[i].ds_len;
 			continue;
 		}
+
+		/*
+		 * XXXSCW: What about BUS_DMA_COHERENT ??
+		 */
 
 		return (m68k_btop((caddr_t)segs[i].ds_addr + off));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.3.10.1 2000/03/11 20:51:49 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.3.10.2 2000/03/13 12:15:26 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -255,7 +255,8 @@ ie_pcctwo_attach(parent, self, args)
 
 	/* Get contiguous DMA-able memory for the IE chip */
 	if ( bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, NBPG, 0,
-	    &seg, 1, &rseg, BUS_DMA_NOWAIT ) != 0 ) {
+	    &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT | BUS_DMA_ONBOARD_RAM | BUS_DMA_24BIT) != 0 ) {
 		printf("%s: Failed to allocate ether buffer\n", self->dv_xname);
 		return;
 	}
@@ -264,14 +265,6 @@ ie_pcctwo_attach(parent, self, args)
 	    ether_data_buff_size, (caddr_t *) &sc->sc_maddr,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0 ) {
 		printf("%s: Failed to map ether buffer\n", self->dv_xname);
-		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
-		return;
-	}
-
-	if ( seg.ds_addr & 0xff000000 ) {
-		printf("%s: Ether buffer out of range!\n", self->dv_xname);
-		bus_dmamem_unmap(pa->pa_dmat, sc->sc_maddr,
-		    ether_data_buff_size);
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
 		return;
 	}
