@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.5 1997/10/03 19:55:17 christos Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.6 1998/09/25 19:10:25 hwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ip.c,v 1.66 97/05/28 12:51:43 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.5 1997/10/03 19:55:17 christos Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.6 1998/09/25 19:10:25 hwr Exp $");
 #endif
 #endif
 
@@ -469,6 +469,21 @@ ip_print(register const u_char *bp, register u_int length)
 				return;
   			}
   			break;
+
+#ifndef IPPROTO_MOBILE
+#define IPPROTO_MOBILE 55
+#endif
+		case IPPROTO_MOBILE:
+			if (vflag)
+				(void)printf("mobile %s > %s: ",
+					     ipaddr_string(&ip->ip_src),
+					     ipaddr_string(&ip->ip_dst));
+			mobile_print(cp, len);
+			if (! vflag) {
+				printf(" (mobile encap)");
+				return;
+			}
+			break;
 
 		default:
 			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),
