@@ -1,4 +1,4 @@
-/*	$NetBSD: mdprologue.S,v 1.9 1998/10/31 08:59:58 matt Exp $	*/
+/*	$NetBSD: mdprologue.S,v 1.9.2.1 1999/06/28 23:21:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas <matt@3am-software.com>
@@ -92,8 +92,8 @@ _binder_entry:
 	pushab	1f		/*   by issuing an */
 	rei			/*   rei. */
 1:	movl	r0, 24(sp)	/* save return address onto stack */
-	popr	$0x3f		/* restore r0 to r5 */
-	tstw	*(sp)		/* does the entry mask save any regs */
+	bicw3	6(fp),(r0),r0	/* does the entry mask save any additional regs */
+	popr	$0x3f		/* restore r0 to r5 (cond flags aren't modified) */
 	bneq	2f		/* yes? do it the hard way */
 	addl2	$2,(sp)		/* no? skip past the mask */
 	rsb			/*    and jump to it */
