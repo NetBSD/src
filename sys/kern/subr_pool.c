@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.27 1999/06/06 22:20:15 pk Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.28 1999/07/27 21:31:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
+#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -836,6 +837,13 @@ _pool_put(pp, v, file, line)
 		pr_printlog(pp, NULL, printf);
 		panic("pool_put: %s: page header missing", pp->pr_wchan);
 	}
+
+#ifdef LOCKDEBUG
+	/*
+	 * Check if we're freeing a locked simple lock.
+	 */
+	simple_lock_freecheck((caddr_t)pi, ((caddr_t)pi) + pp->pr_size);
+#endif
 
 	/*
 	 * Return to item list.
