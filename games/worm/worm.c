@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.11 1999/08/08 03:08:08 hubertf Exp $	*/
+/*	$NetBSD: worm.c,v 1.12 1999/08/10 21:52:43 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.11 1999/08/08 03:08:08 hubertf Exp $");
+__RCSID("$NetBSD: worm.c,v 1.12 1999/08/10 21:52:43 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,6 @@ void	process __P((char));
 void	prize __P((void));
 int	rnd __P((int));
 void	setup __P((void));
-void	suspend __P((int));
 void	wake __P((int));
 
 int
@@ -111,7 +110,6 @@ main(argc, argv)
 	signal(SIGALRM, wake);
 	signal(SIGINT, leave);
 	signal(SIGQUIT, leave);
-	signal(SIGTSTP, suspend);	/* process control signal */
 	initscr();
 	crmode();
 	noecho();
@@ -250,7 +248,6 @@ process(ch)
 		case 'K': y--; running = RUNLEN/2; ch = tolower(ch); break;
 		case 'L': x++; running = RUNLEN; ch = tolower(ch); break;
 		case '\f': setup(); return;
-		case CNTRL('Z'): suspend(0); return;
 		case CNTRL('C'): crash(); return;
 		case CNTRL('D'): crash(); return;
 		default: if (! running) alarm(1);
@@ -299,26 +296,7 @@ process(ch)
 void
 crash()
 {
-	sleep(2);
-	clear();
-	move(23, 0);
-	refresh();
 	leave(0);
-}
-
-void
-suspend(dummy)
-	int dummy;
-{
-	move(LINES-1, 0);
-	refresh();
-	endwin();
-	fflush(stdout);
-	kill(getpid(), SIGTSTP);
-	signal(SIGTSTP, suspend);
-	crmode();
-	noecho();
-	setup();
 }
 
 void
