@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.16 2001/07/30 17:05:51 mhitch Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.17 2001/08/24 15:33:17 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #define DEC_PROM_MAGIC	0x30464354
 
-typedef struct {
+typedef struct memmap {
 	int	pagesize;	/* system page size */
 	u_char	bitmap[15360];	/* bit for each page indicating safe to use */
 } memmap;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2000/01/11 20:36:17 ad Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2001/08/24 15:33:17 mhitch Exp $	*/
 
 #ifndef _PMAX_VMPARAM_H_
 #define _PMAX_VMPARAM_H_
@@ -15,6 +15,6 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_FIRST8	1
 
-#define	VM_PHYSSEG_MAX		2
+#define	VM_PHYSSEG_MAX		16	/* 15 + 1 free lists */
 
 #endif	/* !_PMAX_VMPARAM_H_ */

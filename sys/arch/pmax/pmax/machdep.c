@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193 2001/08/22 06:59:42 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.194 2001/08/24 15:33:16 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2001/08/22 06:59:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2001/08/24 15:33:16 mhitch Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -333,30 +333,27 @@ mach_init(argc, argv, code, cv, bim, bip)
 	physmem = (*platform.memsize)(kernend);
 
 	/*
-	 * Now that we know how much memory we have, initialize the
-	 * mem cluster array.
-	 */
-	mem_clusters[0].start = 0;		/* XXX is this correct? */
-	mem_clusters[0].size  = ctob(physmem);
-	mem_cluster_cnt = 1;
-
-	/*
 	 * Load the rest of the available pages into the VM system.
 	 * Put the first 8M of RAM onto a lower-priority free list, since
 	 * some TC boards (e.g. PixelStamp boards) are only able to DMA
 	 * into this region, and we want them to have a fighting chance of
 	 * allocating their DMA memory during autoconfiguration.
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	if (last <= (8 * 1024 * 1024)) {
-		uvm_page_physload(atop(first), atop(last), atop(first),
-		    atop(last), VM_FREELIST_DEFAULT);
-	} else {
-		uvm_page_physload(atop(first), atop(8 * 1024 * 1024),
-		    atop(first), atop(8 * 1024 * 1024), VM_FREELIST_FIRST8);
-		uvm_page_physload(atop(8 * 1024 * 1024), atop(last),
-		    atop(8 * 1024 * 1024), atop(last), VM_FREELIST_DEFAULT);
+	for (i = 0, physmem = 0; i < mem_cluster_cnt; ++i) {
+		first = mem_clusters[i].start;
+		if (first == 0)
+			first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
+		last = mem_clusters[i].start + mem_clusters[i].size;
+		physmem += atop(mem_clusters[i].size);
+		if (i != 0 || last <= (8 * 1024 * 1024)) {
+			uvm_page_physload(atop(first), atop(last), atop(first),
+			    atop(last), VM_FREELIST_DEFAULT);
+		} else {
+			uvm_page_physload(atop(first), atop(8 * 1024 * 1024),
+			    atop(first), atop(8 * 1024 * 1024), VM_FREELIST_FIRST8);
+			uvm_page_physload(atop(8 * 1024 * 1024), atop(last),
+			    atop(8 * 1024 * 1024), atop(last), VM_FREELIST_DEFAULT);
+		}
 	}
 
 	/*
@@ -654,6 +651,14 @@ memsize_scan(first)
 		mem++;
 	}
 
+	/*
+	 * Now that we know how much memory we have, initialize the
+	 * mem cluster array.
+	 */
+	mem_clusters[0].start = 0;		/* XXX is this correct? */
+	mem_clusters[0].size  = ctob(physmem);
+	mem_cluster_cnt = 1;
+
 	/* clear any memory error conditions possibly caused by probe */
 	(*platform.bus_reset)();
 	return (mem);
@@ -666,8 +671,38 @@ int
 memsize_bitmap(first)
 	caddr_t first;
 {
+	memmap *prom_memmap = (memmap *)first;
+	int i, mapbytes;
+	int segstart, curaddr, xsize, segnum;
 
-	panic("memsize_bitmap not implemented");
+	mapbytes = prom_getbitmap(prom_memmap);
+	if (mapbytes == 0)
+		return (memsize_scan(first));
+
+	segstart = curaddr = i = segnum = 0;
+	xsize = prom_memmap->pagesize * 8;
+	while (i < mapbytes) {
+		while (prom_memmap->bitmap[i] == 0xff && i < mapbytes) {
+			++i;
+			curaddr += xsize;
+		}
+		if (curaddr > segstart) {
+			mem_clusters[segnum].start = segstart;
+			mem_clusters[segnum].size = curaddr - segstart;
+			++segnum;
+		}
+		while (i < mapbytes && prom_memmap->bitmap[i] != 0xff) {
+			++i;
+			curaddr += xsize;
+		}
+		segstart = curaddr;
+	}
+	mem_cluster_cnt = segnum;
+	for (i = 0; i < segnum; ++i) {
+		printf("segment %2d start %08lx size %08lx\n", i,
+		    (long)mem_clusters[i].start, (long)mem_clusters[i].size);
+	}
+	return (mapbytes * 8);
 }
 
 /*
