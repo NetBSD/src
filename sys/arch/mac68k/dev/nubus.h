@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.6 1995/05/05 05:40:13 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.7 1995/06/21 02:57:19 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -43,6 +43,8 @@
  * and DrHW     1 (TFB).
  */
 
+#include <machine/cpu.h>
+
 #define NUBUS_CATEGORY_BOARD	0x0001
 
 #define NUBUS_CATEGORY_DISPLAY	0x0003
@@ -61,6 +63,7 @@
 #define    NUBUS_DRHW_KINETICS	0x0106
 #define   NUBUS_DRSW_ASANTE	0x0104
 #define    NUBUS_DRHW_SONIC	0x0110
+#define   NUBUS_DRSW_FARALLON	0x010C
 
 #define NUBUS_CATEGORY_FONT	0x0009	/* KanjiTalk Font Card? */
 
@@ -211,8 +214,10 @@ typedef struct _NUBUS_EXEC_BLOCK {
 #define NUBUS_MAX_SLOT		0xE
 #define NUBUS_ROM_TEST_PATTERN	0x5A932BC7
 
-#define NUBUS_BASE_TO_SLOT(x)	(((x) >> 24) & 0x0F)
-#define NUBUS_SLOT_TO_BASE(x)	(0xF0000000 | (((x) & 0xF) << 24))
+#define NUBUS_BASE_TO_SLOT(x)	(((((x)-NuBusBase) >> 24) & 0x0F) + \
+				 NUBUS_MIN_SLOT)
+#define NUBUS_SLOT_TO_BASE(x)	(NuBusBase + \
+				 ((((x)-NUBUS_MIN_SLOT) & 0xF) << 24))
 
 struct nubus_softc {
 	struct	device	sc_dev;
