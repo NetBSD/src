@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2000/05/18 02:12:45 matt Exp $
+#	$NetBSD: list,v 1.7 2000/05/24 23:20:47 matt Exp $
 
 # Do this first in case spwd.db and pwd.db fill disk
 COPY	${CURDIR}/../../../etc/master.passwd	etc/master.passwd
@@ -9,7 +9,7 @@ SPECIAL	/bin/rm etc/pwd.db
 # copy the MAKEDEV script and make some devices
 COPY	${CURDIR}/../../../etc/etc.vax/MAKEDEV	dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV std mt0 st0 rd0 rd1 dz0 dl0 dhu0 rx0
-SPECIAL	cd dev; sh MAKEDEV ra0 ra1 hp0 hp1 sd0 sd1 sd2 md0 pty0
+SPECIAL	cd dev; sh MAKEDEV ra0 ra1 hp0 hp1 sd0 sd1 sd2 md0 pty0 cd0 cd1
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # copy the crunched binary, link to it, and kill it
