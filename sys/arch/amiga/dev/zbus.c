@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.34 1997/09/15 21:37:35 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.35 1997/10/19 19:07:08 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -134,6 +134,7 @@ static struct aconfdata aconftab[] = {
 	{ "bztzsc", 	8512,	24},	/* Blizzard 2060 SCSI */
 	{ "cbiisc", 	8512,	25},	/* Cyberstorm Mk II SCSI */
 	{ "grfcv",	8512,	34},	/* CyberVison 64 */
+	{ "grfcv3d",	8512,	67},	/* CyberVison 64/3D */
 	/* Hacker Inc. */
 	{ "mlhsc",	2011,	1 },
 	/* Resource Management Force */
@@ -191,7 +192,8 @@ static struct preconfdata preconftab[] = {
 	{2167,	1, 0},	/* Domino mem */
 	{2167,	2, 0},	/* Domino regs */
 	{2167,	3, 0},	/* Domino regs (proto 16M) */
-	{2181,	0, 0}	/* oMniBus mem or regs */
+	{2181,	0, 0},	/* oMniBus mem or regs */
+	{8512,	67, 0}	/* Cybervison 64/3D */		/* grf7 */
 };
 static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
