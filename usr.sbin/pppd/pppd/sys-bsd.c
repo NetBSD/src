@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sys-bsd.c,v 1.12 1996/03/28 02:51:02 paulus Exp $";
+static char rcsid[] = "$Id: sys-bsd.c,v 1.13 1996/10/16 00:15:51 jtk Exp $";
 #endif
 
 /*
@@ -643,6 +643,7 @@ get_loop_output()
 {
     int rv = 0;
     int n;
+    struct ppp_idle idle;
 
     while ((n = read(loop_master, inbuf, sizeof(inbuf))) >= 0) {
 	if (loop_chars(inbuf, n))
@@ -656,7 +657,16 @@ get_loop_output()
 	syslog(LOG_ERR, "read from loopback: %m");
 	die(1);
     }
-
+    if (get_idle_time(0, &idle)) {
+	/* somebody sent a packet which poked the active filter. */
+	/* VJ compression may result in get_loop_output() never
+	   matching the idle filter since it's applied here in user space
+	   after the kernel has compressed the packet.
+	   The kernel applies the active filter before the VJ compression. */
+	if (idle.xmit_idle < idle_time_limit)
+	    rv = 1;
+	SYSDEBUG((LOG_DEBUG, "xmit idle %d", idle.xmit_idle));
+    }
     return rv;
 }
 
