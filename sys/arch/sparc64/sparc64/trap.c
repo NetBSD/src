@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54 2000/09/28 19:56:13 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.55 2000/12/02 03:57:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1779,10 +1779,10 @@ syscall(code, tf, pc)
 	register struct trapframe64 *tf;
 	register_t pc;
 {
-	register int i, nsys, nap;
-	register int64_t *ap;
-	register struct sysent *callp;
-	register struct proc *p;
+	int i, nsys, nap;
+	int64_t *ap;
+	const struct sysent *callp;
+	struct proc *p;
 	int error = 0, new;
 	union args {
 		register32_t i[8];
