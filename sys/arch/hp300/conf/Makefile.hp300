@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.49 1997/02/04 04:32:00 perry Exp $
+#	$NetBSD: Makefile.hp300,v 1.50 1997/02/04 05:08:33 perry Exp $
 
 # Makefile for NetBSD
 #
@@ -139,7 +139,7 @@ cleankernel:
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${HP300}/hp300/Locore.c ${CFILES} ${HP300}/hp300/swapgeneric.c \
+	    ${HP300}/hp300/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 1996/12/23 08:37:37 matthias Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 1997/02/04 04:57:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -126,11 +126,6 @@ void	child_return __P((struct proc *, struct syscframe frame));
 
 /* vm_machdep.c */
 int kvtop __P((caddr_t));
-
-#ifdef GENERIC
-/* swapgeneric.c */
-void	setconf __P((void));
-#endif /* GENERIC */
 
 #endif /* _KERNEL */
 

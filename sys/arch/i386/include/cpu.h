@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 1996/12/03 23:54:54 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 1997/02/04 04:57:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -177,11 +177,6 @@ void	vm86_gpfault __P((struct proc *, int));
 
 /* trap.c */
 void	child_return __P((struct proc *, struct trapframe));
-
-#ifdef GENERIC
-/* swapgeneric.c */
-void	setconf __P((void));
-#endif /* GENERIC */
 
 #endif /* _KERNEL */
 
