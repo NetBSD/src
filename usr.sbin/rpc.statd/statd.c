@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.9 1997/10/21 20:38:11 christos Exp $	*/
+/*	$NetBSD: statd.c,v 1.10 1997/10/25 01:29:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.9 1997/10/21 20:38:11 christos Exp $");
+__RCSID("$NetBSD: statd.c,v 1.10 1997/10/25 01:29:30 thorpej Exp $");
 #endif
 
 
@@ -536,8 +536,8 @@ init_file(filename)
 	case 0:
 		/* Existing database */
 		if (data.size != sizeof(status_info))
-			errx(1, "database corrupted %d != %d",
-			    data.size, sizeof(status_info));
+			errx(1, "database corrupted %lu != %lu",
+			    (u_long)data.size, (u_long)sizeof(status_info));
 		break;
 	default:
 		abort();
