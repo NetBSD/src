@@ -1,4 +1,9 @@
-	$NetBSD: whatis,v 1.9 1999/04/09 20:55:28 is Exp $	
+	$NetBSD: whatis,v 1.10 1999/04/15 14:49:11 is Exp $	
 
 This is the fifth public release of NetBSD for the Amiga and DraCo
 line of computers.
+
+New port-specific features include: Support for the Cyberstorm Mk.3/
+Cyberstorm PPC SCSI board, ATAPI devices on the internal IDE port, 
+more audio formats supported by the Amiga custom chip audio driver,
+and a spanish keyboard map for the text console driver.
