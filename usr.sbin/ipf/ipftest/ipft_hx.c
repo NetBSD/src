@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_hx.c,v 1.1.1.3 1997/05/25 11:46:07 darrenr Exp $	*/
+/*	$NetBSD: ipft_hx.c,v 1.1.1.4 1997/05/27 22:17:10 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995 by Darren Reed.
@@ -42,7 +42,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_hx.c,v 1.1.1.3 1997/05/25 11:46:07 darrenr Exp $";
+static	char	rcsid[] = "Id: ipft_hx.c,v 2.0.2.4 1997/04/30 13:55:07 darrenr Exp ";
 #endif
 
 extern	int	opts;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_pc.c,v 1.1.1.3 1997/05/25 11:46:02 darrenr Exp $	*/
+/*	$NetBSD: ipft_pc.c,v 1.1.1.4 1997/05/27 22:17:07 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -33,7 +33,7 @@
 #include "pcap.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ipft_pc.c,v 1.1.1.3 1997/05/25 11:46:02 darrenr Exp $";
+static	char	rcsid[] = "Id: ipft_pc.c,v 2.0.2.4 1997/04/30 13:55:09 darrenr Exp ";
 #endif
 
 struct	llc	{

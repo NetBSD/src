@@ -1,302 +1,150 @@
-/*	$NetBSD: ip_compat.h,v 1.1.1.2 1997/05/25 11:46:47 darrenr Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.1.1.3 1997/05/27 22:18:14 thorpej Exp $	*/
 
 /*
- * (C)opyright 1993-1997 by Darren Reed.
+ * (C)opyright 1995 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * This code may be freely distributed as long as it retains this notice
+ * and is not changed in any way.  The author accepts no responsibility
+ * for the use of this software.  I hate legaleese, don't you ?
  *
- * @(#)ip_compat.h	1.8 1/14/96
- * $Id: ip_compat.h,v 1.1.1.2 1997/05/25 11:46:47 darrenr Exp $
+ * @(#)ip_compat.h	1.2 12/7/95
  */
 
-#ifndef	__IP_COMPAT_H__
-#define	__IP_COMPAT_H__
-
-#ifndef	__P
-# ifdef	__STDC__
-#  define	__P(x)  x
-# else
-#  define	__P(x)  ()
-# endif
-#endif
-
-#ifndef	SOLARIS
-#define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
-#endif
-
-#if defined(_KERNEL) && !defined(KERNEL)
-#define	KERNEL
-#endif
-#if defined(KERNEL) && !defined(_KERNEL)
-#define	_KERNEL
-#endif
-
-#if defined(__SVR4) || defined(__svr4__)
-#define index   strchr
-# ifndef	_KERNEL
-#  define	bzero(a,b)	memset(a,0,b)
-#  define	bcmp		memcmp
-#  define	bcopy(a,b,c)	memmove(b,a,c)
-# endif
-#endif
-
-#if	SOLARIS
-# define	MTYPE(m)	((m)->b_datap->db_type)
-# include	<sys/ioccom.h>
-# include	<sys/sysmacros.h>
 /*
- * because Solaris 2 defines these in two places :-/
+ * These #ifdef's are here mainly for linux, but who knows, they may
+ * not be in other places or maybe one day linux will grow up and some
+ * of these will turn up there too.
  */
-# undef	IPOPT_EOL
-# undef	IPOPT_NOP
-# undef	IPOPT_LSRR
-# undef	IPOPT_RR
-# undef	IPOPT_SSRR
-# ifndef	_KERNEL
-#  define	_KERNEL
-#  undef	RES_INIT
-#  include <inet/common.h>
-#  include <inet/ip.h>
-#  include <inet/ip_ire.h>
-#  undef	_KERNEL
-# else
-#  include <inet/common.h>
-#  include <inet/ip.h>
-#  include <inet/ip_ire.h>
-# endif
+#ifndef	ICMP_UNREACH
+# define	ICMP_UNREACH	ICMP_DEST_UNREACH
 #endif
-#define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
-
-#ifndef	IP_OFFMASK
-#define	IP_OFFMASK	0x1fff
+#ifndef	ICMP_SOURCEQUENCH
+# define	ICMP_SOURCEQUENCH	ICMP_SOURCE_QUENCH
 #endif
-
-#if	BSD > 199306
-# define	USE_QUAD_T
-# define	U_QUAD_T	u_quad_t
-# define	QUAD_T		quad_t
-#else
-# define	U_QUAD_T	u_long
-# define	QUAD_T		long
+#ifndef	ICMP_TIMXCEED
+# define	ICMP_TIMXCEED	ICMP_TIME_EXCEEDED
 #endif
-
-#ifndef	MAX
-#define	MAX(a,b)	(((a) > (b)) ? (a) : (b))
+#ifndef	ICMP_PARAMPROB
+# define	ICMP_PARAMPROB	ICMP_PARAMETERPROB
 #endif
-
-/*
- * Security Options for Intenet Protocol (IPSO) as defined in RFC 1108.
- *
- * Basic Option
- *
- * 00000001   -   (Reserved 4)
- * 00111101   -   Top Secret
- * 01011010   -   Secret
- * 10010110   -   Confidential
- * 01100110   -   (Reserved 3)
- * 11001100   -   (Reserved 2)
- * 10101011   -   Unclassified
- * 11110001   -   (Reserved 1)
- */
-#define	IPSO_CLASS_RES4		0x01
-#define	IPSO_CLASS_TOPS		0x3d
-#define	IPSO_CLASS_SECR		0x5a
-#define	IPSO_CLASS_CONF		0x96
-#define	IPSO_CLASS_RES3		0x66
-#define	IPSO_CLASS_RES2		0xcc
-#define	IPSO_CLASS_UNCL		0xab
-#define	IPSO_CLASS_RES1		0xf1
-
-#define	IPSO_AUTH_GENSER	0x80
-#define	IPSO_AUTH_ESI		0x40
-#define	IPSO_AUTH_SCI		0x20
-#define	IPSO_AUTH_NSA		0x10
-#define	IPSO_AUTH_DOE		0x08
-#define	IPSO_AUTH_UN		0x06
-#define	IPSO_AUTH_FTE		0x01
-
-/*
- * IP option #defines
- */
-/*#define	IPOPT_RR	7 */
-#define	IPOPT_ZSU	10	/* ZSU */
-#define	IPOPT_MTUP	11	/* MTUP */
-#define	IPOPT_MTUR	12	/* MTUR */
-#define	IPOPT_ENCODE	15	/* ENCODE */
-/*#define	IPOPT_TS	68 */
-#define	IPOPT_TR	82	/* TR */
-/*#define	IPOPT_SECURITY	130 */
-/*#define	IPOPT_LSRR	131 */
-#define	IPOPT_E_SEC	133	/* E-SEC */
-#define	IPOPT_CIPSO	134	/* CIPSO */
-/*#define	IPOPT_SATID	136 */
-#ifndef	IPOPT_SID
-# define	IPOPT_SID	IPOPT_SATID
+#ifndef	IPVERSION
+# define	IPVERSION	4
 #endif
-/*#define	IPOPT_SSRR	137 */
-#define	IPOPT_ADDEXT	147	/* ADDEXT */
-#define	IPOPT_VISA	142	/* VISA */
-#define	IPOPT_IMITD	144	/* IMITD */
-#define	IPOPT_EIP	145	/* EIP */
-#define	IPOPT_FINN	205	/* FINN */
-
-
-#ifdef	__FreeBSD__
-# include <machine/spl.h>
-# if defined(IPFILTER_LKM) && !defined(ACTUALLY_LKM_NOT_KERNEL)
-#  define	ACTUALLY_LKM_NOT_KERNEL
-# endif
+#ifndef	IPOPT_MINOFF
+# define	IPOPT_MINOFF	4
 #endif
-
-/*
- * Build some macros and #defines to enable the same code to compile anywhere
- * Well, that's the idea, anyway :-)
- */
-#if defined(_KERNEL) || defined(KERNEL)
-# if SOLARIS
-#  define	MUTEX_ENTER(x)	mutex_enter(x)
-#  define	MUTEX_EXIT(x)	mutex_exit(x)
-#  define	MTOD(m,t)	(t)((m)->b_rptr)
-#  define	IRCOPY(a,b,c)	copyin((a), (b), (c))
-#  define	IWCOPY(a,b,c)	copyout((a), (b), (c))
-# else
-#  define	MUTEX_ENTER(x)	;
-#  define	MUTEX_EXIT(x)	;
-#  ifndef linux
-#   define	MTOD(m,t)	mtod(m,t)
-#   define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
-#   define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
-#  endif
-# endif /* SOLARIS */
-
-# ifdef sun
-#  if defined(__svr4__) || defined(__SVR4)
-extern	ill_t	*get_unit __P((char *));
-#   define	GETUNIT(n)	get_unit((n))
-#  else
-#   include	<sys/kmem_alloc.h>
-#   define	GETUNIT(n)	ifunit((n), IFNAMSIZ)
-#  endif
-# else
-#  define	GETUNIT(n)	ifunit((n))
-# endif /* sun */
-
-# if defined(sun) && !defined(linux)
-#  define	UIOMOVE(a,b,c,d)	uiomove(a,b,c,d)
-#  define	SLEEP(id, n)	sleep((id), PZERO+1)
-#  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
-#  define	KFREES(x,s)	kmem_free((char *)(x), (s))
-#  if SOLARIS
-typedef	struct	qif	{
-	struct	qif	*qf_next;
-	ill_t	*qf_ill;
-	kmutex_t	qf_lock;
-	void	*qf_iptr;
-	void	*qf_optr;
-	queue_t	*qf_in;
-	queue_t	*qf_out;
-	void	*qf_wqinfo;
-	void	*qf_rqinfo;
-	int	(*qf_inp) __P((queue_t *, mblk_t *));
-	int	(*qf_outp) __P((queue_t *, mblk_t *));
-	mblk_t	*qf_m;
-	int	qf_len;
-	char	qf_name[8];
-	/*
-	 * in case the ILL has disappeared...
-	 */
-	int	qf_hl;	/* header length */
-} qif_t;
-#   define	SPLNET(x)	;
-#   undef	SPLX
-#   define	SPLX(x)		;
-#   ifdef	sparc
-#    define	ntohs(x)	(x)
-#    define	ntohl(x)	(x)
-#    define	htons(x)	(x)
-#    define	htonl(x)	(x)
-#   endif
-#   define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
-#   define	GET_MINOR(x)	getminor(x)
-#  else
-#   define	KMALLOC(a,b,c)	(a) = (b)new_kmem_alloc((c), KMEM_NOSLEEP)
-#  endif /* __svr4__ */
-# endif /* sun && !linux */
-# ifndef	GET_MINOR
-#  define	GET_MINOR(x)	minor(x)
-# endif
-# if BSD >= 199306 || defined(__FreeBSD__)
-#  include <vm/vm.h>
-#  if !defined(__FreeBSD__) || (defined (__FreeBSD__) && __FreeBSD__>=3)
-#   include <vm/vm_extern.h>
-#   include <sys/proc.h>
-extern	vm_map_t	kmem_map;
-#  else
-#   include <vm/vm_kern.h>
-#  endif /* __FreeBSD__ */
-/*
-#  define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc(kmem_map, (c))
-#  define	KFREE(x)	kmem_free(kmem_map, (vm_offset_t)(x), \
-					  sizeof(*(x)))
-#  define	KFREES(x,s)	kmem_free(kmem_map, (vm_offset_t)(x), (s))
-*/
-#  ifdef	M_PFIL
-#   define	KMALLOC(a, b, c)	MALLOC((a), b, (c), M_PFIL, M_NOWAIT)
-#   define	KFREE(x)	FREE((x), M_PFIL)
-#   define	KFREES(x,s)	FREE((x), M_PFIL)
-#  else
-#   define	KMALLOC(a, b, c)	MALLOC((a), b, (c), M_TEMP, M_NOWAIT)
-#   define	KFREE(x)	FREE((x), M_TEMP)
-#   define	KFREES(x,s)	FREE((x), M_TEMP)
-#  endif
-#  define	UIOMOVE(a,b,c,d)	uiomove(a,b,d)
-#  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
-# endif /* BSD */
-# if defined(NetBSD1_0) && (NetBSD1_0 > 1)
-#  define	SPLNET(x)	x = splsoftnet()
-# else
-#  if !SOLARIS
-#   define	SPLNET(x)	x = splnet()
-#   define	SPLX(x)		(void) splx(x)
-#  endif
-# endif
-# define	PANIC(x,y)	if (x) panic y
-#else
-# define	PANIC(x,y)	;
-# define	MUTEX_ENTER(x)	;
-# define	MUTEX_EXIT(x)	;
-# define	SPLNET(x)	;
-# undef		SPLX
-# define	SPLX(x)		;
-# define	KMALLOC(a,b,c)	(a) = (b)malloc(c)
-# define	KFREE(x)	free(x)
-# define	KFREES(x,s)	free(x)
-# define	GETUNIT(x)	get_unit(x)
-# define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
-# define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
-#endif /* KERNEL */
+#ifndef	IPOPT_COPIED
+# define	IPOPT_COPIED(x)	((x)&0x80)
+#endif
+#ifndef	IPOPT_EOL
+# define	IPOPT_EOL	0
+#endif
+#ifndef	IPOPT_NOP
+# define	IPOPT_NOP	1
+#endif
+#ifndef	IP_MF
+# define	IP_MF	((u_short)0x2000)
+#endif
+#ifndef	ETHERTYPE_IP
+# define	ETHERTYPE_IP	((u_short)0x0800)
+#endif
+#ifndef	TH_FIN
+# define	TH_FIN	0x01
+#endif
+#ifndef	TH_SYN
+# define	TH_SYN	0x02
+#endif
+#ifndef	TH_RST
+# define	TH_RST	0x04
+#endif
+#ifndef	TH_PUSH
+# define	TH_PUSH	0x08
+#endif
+#ifndef	TH_ACK
+# define	TH_ACK	0x10
+#endif
+#ifndef	TH_URG
+# define	TH_URG	0x20
+#endif
+#ifndef	IPOPT_EOL
+# define	IPOPT_EOL	0
+#endif
+#ifndef	IPOPT_NOP
+# define	IPOPT_NOP	1
+#endif
+#ifndef	IPOPT_RR
+# define	IPOPT_RR	7
+#endif
+#ifndef	IPOPT_TS
+# define	IPOPT_TS	68
+#endif
+#ifndef	IPOPT_SECURITY
+# define	IPOPT_SECURITY	130
+#endif
+#ifndef	IPOPT_LSRR
+# define	IPOPT_LSRR	131
+#endif
+#ifndef	IPOPT_SATID
+# define	IPOPT_SATID	136
+#endif
+#ifndef	IPOPT_SSRR
+# define	IPOPT_SSRR	137
+#endif
+#ifndef	IPOPT_SECUR_UNCLASS
+# define	IPOPT_SECUR_UNCLASS	((u_short)0x0000)
+#endif
+#ifndef	IPOPT_SECUR_CONFID
+# define	IPOPT_SECUR_CONFID	((u_short)0xf135)
+#endif
+#ifndef	IPOPT_SECUR_EFTO
+# define	IPOPT_SECUR_EFTO	((u_short)0x789a)
+#endif
+#ifndef	IPOPT_SECUR_MMMM
+# define	IPOPT_SECUR_MMMM	((u_short)0xbc4d)
+#endif
+#ifndef	IPOPT_SECUR_RESTR
+# define	IPOPT_SECUR_RESTR	((u_short)0xaf13)
+#endif
+#ifndef	IPOPT_SECUR_SECRET
+# define	IPOPT_SECUR_SECRET	((u_short)0xd788)
+#endif
+#ifndef IPOPT_SECUR_TOPSECRET
+# define	IPOPT_SECUR_TOPSECRET	((u_short)0x6bc5)
+#endif
 
 #ifdef linux
-# define	ICMP_UNREACH	ICMP_DEST_UNREACH
-# define	ICMP_SOURCEQUENCH	ICMP_SOURCE_QUENCH
-# define	ICMP_TIMXCEED	ICMP_TIME_EXCEEDED
-# define	ICMP_PARAMPROB	ICMP_PARAMETERPROB
+# if LINUX < 0200
+#  define	icmp	icmphdr
+#  define	icmp_type	type
+#  define	icmp_code	code
+# endif
 
-# define	TH_FIN	0x01
-# define	TH_SYN	0x02
-# define	TH_RST	0x04
-# define	TH_PUSH	0x08
-# define	TH_ACK	0x10
-# define	TH_URG	0x20
+/*
+ * From /usr/include/netinet/ip_var.h
+ * !%@#!$@# linux...
+ */
+struct ipovly {
+	caddr_t	ih_next, ih_prev;	/* for protocol sequence q's */
+	u_char	ih_x1;			/* (unused) */
+	u_char	ih_pr;			/* protocol */
+	short	ih_len;			/* protocol length */
+	struct	in_addr ih_src;		/* source internet address */
+	struct	in_addr ih_dst;		/* destination internet address */
+};
 
 typedef	struct	{
 	__u16	th_sport;
 	__u16	th_dport;
 	__u32	th_seq;
 	__u32	th_ack;
-	__u8	th_x;
+# if defined(__i386__) || defined(__MIPSEL__) || defined(__alpha__) ||\
+    defined(vax)
+	__u8	th_res:4;
+	__u8	th_off:4;
+#else
+	__u8	th_off:4;
+	__u8	th_res:4;
+#endif
 	__u8	th_flags;
 	__u16	th_win;
 	__u16	th_sum;
@@ -306,8 +154,8 @@ typedef	struct	{
 typedef	struct	{
 	__u16	uh_sport;
 	__u16	uh_dport;
-	__u16	uh_ulen;
-	__u16	uh_sun;
+	__s16	uh_ulen;
+	__u16	uh_sum;
 } udphdr_t;
 
 typedef	struct	{
@@ -330,10 +178,13 @@ typedef	struct	{
 	struct	in_addr	ip_dst;
 } ip_t;
 
-/*
- * Structure of an icmp header.
- */
-struct icmp {
+typedef	struct	{
+	__u8	ether_dhost[6];
+	__u8	ether_shost[6];
+	__u16	ether_type;
+} ether_header_t;
+
+typedef struct icmp {
 	u_char	icmp_type;		/* type of message, see below */
 	u_char	icmp_code;		/* type sub code */
 	u_short	icmp_cksum;		/* ones complement cksum of struct */
@@ -346,11 +197,11 @@ struct icmp {
 		} ih_idseq;
 		int ih_void;
 	} icmp_hun;
-# define	icmp_pptr	icmp_hun.ih_pptr
-# define	icmp_gwaddr	icmp_hun.ih_gwaddr
-# define	icmp_id		icmp_hun.ih_idseq.icd_id
-# define	icmp_seq	icmp_hun.ih_idseq.icd_seq
-# define	icmp_void	icmp_hun.ih_void
+#define	icmp_pptr	icmp_hun.ih_pptr
+#define	icmp_gwaddr	icmp_hun.ih_gwaddr
+#define	icmp_id		icmp_hun.ih_idseq.icd_id
+#define	icmp_seq	icmp_hun.ih_idseq.icd_seq
+#define	icmp_void	icmp_hun.ih_void
 	union {
 		struct id_ts {
 			n_time its_otime;
@@ -364,52 +215,30 @@ struct icmp {
 		u_long	id_mask;
 		char	id_data[1];
 	} icmp_dun;
-# define	icmp_otime	icmp_dun.id_ts.its_otime
-# define	icmp_rtime	icmp_dun.id_ts.its_rtime
-# define	icmp_ttime	icmp_dun.id_ts.its_ttime
-# define	icmp_ip		icmp_dun.id_ip.idi_ip
-# define	icmp_mask	icmp_dun.id_mask
-# define	icmp_data	icmp_dun.id_data
-};
-
-struct ipovly {
-	caddr_t	ih_next, ih_prev;	/* for protocol sequence q's */
-	u_char	ih_x1;			/* (unused) */
-	u_char	ih_pr;			/* protocol */
-	short	ih_len;			/* protocol length */
-	struct	in_addr ih_src;		/* source internet address */
-	struct	in_addr ih_dst;		/* destination internet address */
-};
-
-# define	SPLX(x)		(void)
-# define	SPLNET(x)	(void)
+#define	icmp_otime	icmp_dun.id_ts.its_otime
+#define	icmp_rtime	icmp_dun.id_ts.its_rtime
+#define	icmp_ttime	icmp_dun.id_ts.its_ttime
+#define	icmp_ip		icmp_dun.id_ip.idi_ip
+#define	icmp_mask	icmp_dun.id_mask
+#define	icmp_data	icmp_dun.id_data
+} icmphdr_t;
 
 # define	bcopy(a,b,c)	memmove(b,a,c)
 # define	bcmp(a,b,c)	memcmp(a,b,c)
 
-# define	UNITNAME(n)	dev_get((n))
 # define	ifnet	device
 
-# define	KMALLOC(a,b,c)	(a) = (b)kmalloc((c), GFP_ATOMIC)
-# define	KFREE(x)	kfree_s((x), sizeof(*(x)))
-# define	KFREES(x,s)	kfree_s((x), (s))
-# define	IRCOPY(a,b,c)	{ \
-				 error = verify_area(VERIFY_READ, \
-						     (b) ,sizeof((b))); \
-				 if (!error) \
-					memcpy_fromfs((b), (a), (c)); \
-				}
-# define	IWCOPY(a,b,c)	{ \
-				 error = verify_area(VERIFY_WRITE, \
-						     (b) ,sizeof((b))); \
-				 if (!error) \
-					memcpy_tofs((b), (a), (c)); \
-				}
 #else
-typedef	struct	tcphdr	tcphdr_t;
-typedef	struct	udphdr	udphdr_t;
-typedef	struct	icmp	icmphdr_t;
-typedef	struct	ip	ip_t;
-#endif /* linux */
 
-#endif	/* __IP_COMPAT_H__ */
+typedef	struct	udphdr	udphdr_t;
+typedef	struct	tcphdr	tcphdr_t;
+typedef	struct	ip	ip_t;
+typedef	struct	ether_header	ether_header_t;
+
+#endif
+
+#if defined(__SVR4) || defined(__svr4__)
+# define	bcopy(a,b,c)	memmove(b,a,c)
+# define	bcmp(a,b,c)	memcmp(a,b,c)
+# define	bzero(a,b)	memset(a,0,b)
+#endif
