@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.6 1998/07/18 05:04:39 lukem Exp $ */
+/*	$NetBSD: apm.c,v 1.7 1998/11/13 22:44:17 abs Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -255,9 +255,9 @@ main(int argc, char *argv[])
 		      APM_IOC_SUSPEND : APM_IOC_STANDBY, 0) == -1)
 		err(1, "cannot enter requested power state");
 	    if (action == SUSPEND)
-		printf("System will enter suspend mode momentarily.\n");
+		printf("System will enter suspend mode in a moment.\n");
 	    else
-		printf("System will enter standby mode momentarily.\n");
+		printf("System will enter standby mode in a moment.\n");
 	    exit(0);
 	} else if (fd == -1)
 	    err(1, "cannot contact APM daemon at socket " _PATH_APM_SOCKET);
@@ -298,10 +298,10 @@ main(int argc, char *argv[])
 	}
 	switch (reply.newstate) {
 	case SUSPEND:
-	    printf("System will enter suspend mode momentarily.\n");
+	    printf("System will enter suspend mode in a moment.\n");
 	    break;
 	case STANDBY:
-	    printf("System will enter standby mode momentarily.\n");
+	    printf("System will enter standby mode in a moment.\n");
 	    break;
 	default:
 	    break;
