@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.33 2000/09/15 14:09:10 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.34 2000/10/01 03:29:13 takemura Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -339,6 +339,18 @@ struct wsdisplay_kbddata {
 	int idx;
 };
 #define _O_WSDISPLAYIO_SETKEYBOARD _IOWR('W', 81, struct wsdisplay_kbddata)
+
+/* Misc control.  Not applicable to all display types. */
+struct wsdisplay_param {
+        int param;
+#define	WSDISPLAYIO_PARAM_BACKLIGHT	1
+#define	WSDISPLAYIO_PARAM_BRIGHTNESS	2
+#define	WSDISPLAYIO_PARAM_CONTRAST	3
+        int min, max, curval;
+        int reserved[4];
+};
+#define	WSDISPLAYIO_GETPARAM	_IOWR('W', 82, struct wsdisplay_param)
+#define	WSDISPLAYIO_SETPARAM	_IOWR('W', 83, struct wsdisplay_param)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
