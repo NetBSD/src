@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.50 2001/10/28 17:16:58 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.51 2001/11/07 14:13:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -338,6 +338,9 @@ USB_DETACH(ums)
 
 	DPRINTF(("ums_detach: sc=%p flags=%d\n", sc, flags));
 
+	/* No need to do reference counting of ums, wsmouse has all the goo. */
+	if (sc->sc_wsmousedev != NULL)
+		rv = config_detach(sc->sc_wsmousedev, flags);
 #ifdef DIAGNOSTIC
 	if (sc->sc_intrpipe != NULL) {
 		printf("ums_disable: intr pipe still open\n");
@@ -346,9 +349,6 @@ USB_DETACH(ums)
 		sc->sc_intrpipe = NULL;
 	}
 #endif
-	/* No need to do reference counting of ums, wsmouse has all the goo. */
-	if (sc->sc_wsmousedev != NULL)
-		rv = config_detach(sc->sc_wsmousedev, flags);
 	if (rv == 0) {
 		free(sc->sc_loc_btn, M_USBDEV);
 		free(sc->sc_ibuf, M_USBDEV);
@@ -457,6 +457,7 @@ ums_disable(void *v)
 	/* Disable interrupts. */
 	usbd_abort_pipe(sc->sc_intrpipe);
 	usbd_close_pipe(sc->sc_intrpipe);
+	sc->sc_intrpipe = NULL;
 
 	sc->sc_enabled = 0;
 }
