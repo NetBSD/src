@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_i386,v 1.2 1998/10/03 20:17:38 christos Exp $
+#	$NetBSD: files.linux_i386,v 1.3 1999/01/03 05:29:31 erh Exp $
 #
 # Config file description for i386-dependent Linux compat code.
 
@@ -6,16 +6,5 @@ file	compat/linux/arch/i386/linux_machdep.c		compat_linux
 file	compat/linux/arch/i386/linux_syscalls.c		compat_linux
 file	compat/linux/arch/i386/linux_sysent.c		compat_linux
 file	compat/linux/arch/i386/linux_sigarray.c		compat_linux
+file	compat/linux/arch/i386/linux_commons.c		compat_linux
 
-file	compat/linux/common/linux_pipe.c		compat_linux
-file	compat/linux/common/linux_ipccall.c		compat_linux
-file	compat/linux/common/linux_misc_notalpha.c	compat_linux
-file	compat/linux/common/linux_sig_notalpha.c	compat_linux
-file	compat/linux/common/linux_sigaction.c		compat_linux
-file	compat/linux/common/linux_socketcall.c		compat_linux
-file	compat/linux/common/linux_llseek.c		compat_linux
-file	compat/linux/common/linux_break.c		compat_linux
-file	compat/linux/common/linux_oldmmap.c		compat_linux
-file	compat/linux/common/linux_oldselect.c		compat_linux
-file	compat/linux/common/linux_olduname.c		compat_linux
-file	compat/linux/common/linux_oldolduname.c		compat_linux
