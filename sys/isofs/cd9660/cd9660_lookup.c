@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.8 1994/07/19 15:10:50 mycroft Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.9 1994/07/19 15:14:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -241,7 +241,7 @@ searchloop:
 		 * read the next directory block.
 		 * Release previous if it exists.
 		 */
-		if ((dp->i_offset & bmask) == 0)
+		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
 			if (error =
