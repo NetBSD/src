@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/11/24 01:54:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2000/01/23 17:04:11 mycroft Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -67,7 +67,9 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.NOPATH: machine
 ${OBJS}: machine
+machine:
 	ln -s ../../include machine
 
 .if CROSS
