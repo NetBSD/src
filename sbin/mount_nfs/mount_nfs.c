@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.23 1999/06/25 19:28:37 perseant Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.24 1999/11/21 00:53:58 mjl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.23 1999/06/25 19:28:37 perseant Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.24 1999/11/21 00:53:58 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -801,10 +801,11 @@ xdr_fh(xdrsp, np)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n",
-"[-23bcCdiKklMPqsT] [-a maxreadahead] [-D deadthresh]",
-"\t[-g maxgroups] [-L leaseterm] [-m realm] [-o options] [-R retrycnt]",
-"\t[-r readsize] [-t timeout] [-w writesize] [-x retrans]",
+	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n%s\n",
+"[-23bcCdiKlpPqsTUX] [-a maxreadahead] [-D deadthresh]",
+"\t[-g maxgroups] [-I readdirsize] [-L leaseterm] [-m realm]",
+"\t[-o options] [-R retrycnt] [-r readsize] [-t timeout]",
+"\t[-w writesize] [-x retrans]",
 "\trhost:path node");
 	exit(1);
 }
