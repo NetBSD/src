@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.6 1996/04/03 09:45:45 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.7 1996/04/11 22:27:59 cgd Exp $	*/
 
 #define AHADIAG
 #define integrate
@@ -378,8 +378,8 @@ ahaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-	sc->sc_ih = isa_intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, ahaintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
+	    IPL_BIO, ahaintr, sc);
 
 	/*
 	 * ask the adapter what subunits are present

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.89 1996/03/27 04:03:05 cgd Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.90 1996/04/11 22:29:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -456,8 +456,8 @@ epattach(parent, self, aux)
 #endif
 	{
 		struct isa_attach_args *ia = aux;
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET,
-		    epintr, sc);
+		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
+		    IST_EDGE, IPL_NET, epintr, sc);
 	}
 }
 

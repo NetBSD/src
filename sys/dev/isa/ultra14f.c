@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.63 1996/03/17 00:53:58 thorpej Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.64 1996/04/11 22:30:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -610,8 +610,8 @@ uhaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&uha->sc_id, &uha->sc_dev);
 #endif
-	uha->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO,
-	    uha->intr, uha);
+	uha->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_BIO, uha->intr, uha);
 
 	/*
 	 * ask the adapter what subunits are present

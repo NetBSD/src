@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.36 1996/04/10 19:03:46 mycroft Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.37 1996/04/11 22:29:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -64,7 +64,11 @@
 #include <sys/device.h>
 #include <sys/syslog.h>
 
-#include <machine/cpu.h>
+#ifdef i386							/* XXX */
+#include <machine/cpu.h>					/* XXX */
+#else								/* XXX */
+#include <machine/intr.h>
+#endif								/* XXX */
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -268,8 +272,8 @@ lptattach(parent, self, aux)
 	bus_io_write_1(bc, ioh, lpt_control, LPC_NINIT);
 
 	if (ia->ia_irq != IRQUNK)
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY,
-		    lptintr, sc);
+		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+		    IPL_TTY, lptintr, sc);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.46 1996/03/17 00:53:44 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.47 1996/04/11 22:29:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -231,8 +231,8 @@ mcdattach(parent, self, aux)
 
 	mcd_soft_reset(sc);
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, mcdintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_BIO, mcdintr, sc);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt.c,v 1.6 1996/04/03 09:45:47 mycroft Exp $	*/
+/*	$NetBSD: bt.c,v 1.7 1996/04/11 22:28:25 cgd Exp $	*/
 
 #define BTDIAG
 #define integrate
@@ -378,8 +378,8 @@ btattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-	sc->sc_ih = isa_intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, btintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
+	    IPL_BIO, btintr, sc);
 
 	/*
 	 * ask the adapter what subunits are present

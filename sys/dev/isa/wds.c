@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.3 1996/04/10 23:01:13 cgd Exp $	*/
+/*	$NetBSD: wds.c,v 1.4 1996/04/11 22:30:38 cgd Exp $	*/
 
 #define	WDSDIAG
 #define	integrate
@@ -295,8 +295,8 @@ wdsattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-	sc->sc_ih = isa_intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, wdsintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
+	    IPL_BIO, wdsintr, sc);
 
 	/*
 	 * ask the adapter what subunits are present

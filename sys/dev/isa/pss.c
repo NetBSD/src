@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.12 1996/03/17 00:53:49 thorpej Exp $	*/
+/*	$NetBSD: pss.c,v 1.13 1996/04/11 22:29:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1020,13 +1020,13 @@ pssattach(parent, self, aux)
 #endif
 
     /* Setup interrupt handler for PSS */
-    sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, pssintr,
-	sc);
+    sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, IPL_AUDIO,
+	pssintr, sc);
 
     vers = (inw(sc->sc_iobase+PSS_ID_VERS)&0xff) - 1;
     printf(": ESC614%c\n", (vers > 0)?'A'+vers:' ');
     
-    (void)config_found(self, NULL, NULL);
+    (void)config_found(self, ia->ia_ic, NULL);		/* XXX */
 
     sc->out_port = PSS_MASTER_VOL;
 
@@ -1046,6 +1046,7 @@ spattach(parent, self, aux)
 {
     struct ad1848_softc *sc = (struct ad1848_softc *)self;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    isa_chipset_tag_t ic = aux;				/* XXX */
     int iobase = cf->cf_iobase;
 
     sc->sc_iobase = iobase;
@@ -1055,8 +1056,8 @@ spattach(parent, self, aux)
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 
-    sc->sc_ih = isa_intr_establish(cf->cf_irq, IST_EDGE, IPL_AUDIO, ad1848_intr,
-	sc);
+    sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
+	ad1848_intr, sc);
 
     /* XXX might use pssprint func ?? */
     printf(" port 0x%x-0x%x irq %d drq %d",
@@ -1075,6 +1076,7 @@ mpuattach(parent, self, aux)
 {
     struct mpu_softc *sc = (struct mpu_softc *)self;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    isa_chipset_tag_t ic = aux;				/* XXX */
     int iobase = cf->cf_iobase;
 
     sc->sc_iobase = iobase;
@@ -1083,8 +1085,8 @@ mpuattach(parent, self, aux)
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 
-    sc->sc_ih = isa_intr_establish(cf->cf_irq, IST_EDGE, IPL_AUDIO, mpuintr,
-	sc);
+    sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
+        mpuintr, sc);
 
     /* XXX might use pssprint func ?? */
     printf(" port 0x%x-0x%x irq %d\n",

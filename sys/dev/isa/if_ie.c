@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.46 1996/03/17 00:53:34 thorpej Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.47 1996/04/11 22:29:27 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -780,8 +780,8 @@ ieattach(parent, self, aux)
 	    sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, ieintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_NET, ieintr, sc);
 }
 
 /*

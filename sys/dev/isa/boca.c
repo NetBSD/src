@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.11 1996/04/04 07:08:16 cgd Exp $	*/
+/*	$NetBSD: boca.c,v 1.12 1996/04/11 22:28:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,6 +36,11 @@
 #include <sys/param.h>
 #include <sys/device.h>
 
+#ifdef i386							/* XXX */
+#include <machine/cpu.h>					/* XXX */
+#else								/* XXX */
+#include <machine/intr.h>
+#endif								/* XXX */
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -166,8 +171,8 @@ bocaattach(parent, self, aux)
 			sc->sc_alive |= 1 << i;
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, bocaintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_TTY, bocaintr, sc);
 }
 
 int

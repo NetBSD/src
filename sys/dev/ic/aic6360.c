@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.43 1996/04/03 15:58:13 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.44 1996/04/11 22:28:08 cgd Exp $	*/
 
 #define	integrate	static inline
 
@@ -779,8 +779,8 @@ aicattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, aicintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_BIO, aicintr, sc);
 
 	config_found(self, &sc->sc_link, aicprint);
 }

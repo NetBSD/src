@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.10 1996/03/17 00:54:03 thorpej Exp $	*/
+/*	$NetBSD: wss.c,v 1.11 1996/04/11 22:30:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -253,7 +253,8 @@ wssattach(parent, self, aux)
 #ifdef NEWCONFIG
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-    sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, ad1848_intr,	&sc->sc_ad1848);
+    sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, IPL_AUDIO,
+        ad1848_intr, &sc->sc_ad1848);
 
     ad1848_attach(&sc->sc_ad1848);
     

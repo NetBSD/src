@@ -1,4 +1,4 @@
-/*	$NetBSD: aha284x.c,v 1.3 1996/03/17 00:52:58 thorpej Exp $	*/
+/*	$NetBSD: aha284x.c,v 1.4 1996/04/11 22:28:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Graff.  All rights reserved.
@@ -178,8 +178,8 @@ ahe_attach(parent, self, aux)
 #ifdef NEWCONFIG
         isa_establish(&ahc->sc_id, &ahc->sc_dev);
 #endif
-        ahc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO,
-					ahcintr, ahc);
+        ahc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+            IPL_BIO, ahcintr, ahc);
 
 	/*
 	 * attach the devices on the bus
