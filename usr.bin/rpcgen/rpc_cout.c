@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.15 1998/12/19 21:19:11 christos Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.16 2000/06/02 23:30:17 fvdl Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.15 1998/12/19 21:19:11 christos Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.16 2000/06/02 23:30:17 fvdl Exp $");
 #endif
 #endif
 
@@ -193,6 +193,17 @@ print_ifopen(indent, name)
 	int     indent;
 	char   *name;
 {
+	char _t_kludge[32];
+
+	/*
+	 * XXX Solaris seems to strip the _t. No idea why.
+	 */
+	if (!strcmp(name, "rpcprog_t") || !strcmp(name, "rpcvers_t") ||
+	    !strcmp(name, "rpcproc_t") || !strcmp(name, "rpcprot_t") ||
+	    !strcmp(name, "rpcport_t") || !strcmp(name, "rpcpinline_t")) {
+		strncpy(_t_kludge, name, strlen(name) - 2);
+		name = _t_kludge;
+	}
 	tabify(fout, indent);
 	f_print(fout, "if (!xdr_%s(xdrs", name);
 }
