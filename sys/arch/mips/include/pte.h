@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11 2001/03/23 01:27:59 simonb Exp $	*/
+/*	$NetBSD: pte.h,v 1.12 2002/03/05 15:39:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,10 +56,6 @@
 #include <mips/mips1_pte.h>
 #include <mips/mips3_pte.h>
 
-#if !defined(MIPS1) && !defined(MIPS3)
-#error Must include at least one MIPS architecture.
-#endif
-
 #define	PG_ASID	0x000000ff	/* Address space ID */
 
 #ifndef _LOCORE
@@ -84,7 +80,7 @@ int pmap_is_page_ro(pmap_t, vaddr_t, int);
 
 
 /* MIPS1-only */
-#if defined(MIPS1) && !defined(MIPS3)
+#if defined(MIPS1) && !defined(MIPS3_PLUS)
 #define	mips_pg_v(entry)	((entry) & MIPS1_PG_V)
 #define	mips_pg_wired(entry)	((entry) & MIPS1_PG_WIRED)
 
@@ -105,8 +101,8 @@ int pmap_is_page_ro(pmap_t, vaddr_t, int);
 #endif /* mips1 */
 
 
-/* MIPS3-only */
-#if !defined(MIPS1) && defined(MIPS3)
+/* MIPS3 (or greater) only */
+#if !defined(MIPS1) && defined(MIPS3_PLUS)
 #define	mips_pg_v(entry)	((entry) & MIPS3_PG_V)
 #define	mips_pg_wired(entry)	((entry) & MIPS3_PG_WIRED)
 
@@ -126,8 +122,8 @@ int pmap_is_page_ro(pmap_t, vaddr_t, int);
 #define	mips_paddr_to_tlbpfn(x)		mips3_paddr_to_tlbpfn((x))
 #endif /* mips3 */
 
-/* MIPS1 and MIPS3 */
-#if defined(MIPS1) && defined(MIPS3)
+/* MIPS1 and MIPS3 (or greater) */
+#if defined(MIPS1) && defined(MIPS3_PLUS)
 
 static __inline int
     mips_pg_v(unsigned int entry),
@@ -151,7 +147,7 @@ static __inline int
 mips_pg_v(entry)
 	unsigned int entry;
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (entry & MIPS3_PG_V);
 	return (entry & MIPS1_PG_V);
 }
@@ -160,7 +156,7 @@ static __inline int
 mips_pg_wired(entry)
 	unsigned int entry;
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (entry & MIPS3_PG_WIRED);
 	return (entry & MIPS1_PG_WIRED);
 }
@@ -168,7 +164,7 @@ mips_pg_wired(entry)
 static __inline unsigned int
 mips_pg_m_bit()
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_D);
 	return (MIPS1_PG_D);
 }
@@ -176,7 +172,7 @@ mips_pg_m_bit()
 static __inline unsigned int
 mips_pg_ro_bit()
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_RO);
 	return (MIPS1_PG_RO);
 }
@@ -184,7 +180,7 @@ mips_pg_ro_bit()
 static __inline unsigned int
 mips_pg_rw_bit()
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_D);
 	return (MIPS1_PG_RW);
 }
@@ -192,7 +188,7 @@ mips_pg_rw_bit()
 static __inline unsigned int
 mips_pg_ropage_bit()
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_ROPAGE);
 	return (MIPS1_PG_RO);
 }
@@ -200,7 +196,7 @@ mips_pg_ropage_bit()
 static __inline unsigned int
 mips_pg_rwpage_bit()
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_RWPAGE);
 	return (MIPS1_PG_RWPAGE);
 }
@@ -208,7 +204,7 @@ mips_pg_rwpage_bit()
 static __inline unsigned int
 mips_pg_cwpage_bit()
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_CWPAGE);
 	return (MIPS1_PG_CWPAGE);
 }
@@ -217,7 +213,7 @@ mips_pg_cwpage_bit()
 static __inline unsigned int
 mips_pg_global_bit()
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_G);
 	return (MIPS1_PG_G);
 }
@@ -225,7 +221,7 @@ mips_pg_global_bit()
 static __inline unsigned int
 mips_pg_wired_bit()
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PG_WIRED);
 	return (MIPS1_PG_WIRED);
 }
@@ -234,7 +230,7 @@ static __inline paddr_t
 PTE_TO_PADDR(pte)
 	unsigned int pte;
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PTE_TO_PADDR(pte));
 	return (MIPS1_PTE_TO_PADDR(pte));
 }
@@ -244,7 +240,7 @@ PAGE_IS_RDONLY(pte, va)
 	unsigned int pte;
 	vaddr_t va;
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PAGE_IS_RDONLY(pte, va));
 	return (MIPS1_PAGE_IS_RDONLY(pte, va));
 }
@@ -253,7 +249,7 @@ static __inline paddr_t
 mips_tlbpfn_to_paddr(pfn)
 	unsigned int pfn;
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (mips3_tlbpfn_to_paddr(pfn));
 	return (mips1_tlbpfn_to_paddr(pfn));
 }
@@ -262,7 +258,7 @@ static __inline unsigned int
 mips_paddr_to_tlbpfn(pa)
 	paddr_t pa;
 {
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		return (mips3_paddr_to_tlbpfn(pa));
 	return (mips1_paddr_to_tlbpfn(pa));
 }
