@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.65 2001/04/03 15:07:23 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.66 2001/04/16 14:37:43 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -228,6 +228,9 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		nfsstats.biocache_reads++;
 
 		error = 0;
+		if (uio->uio_offset >= np->n_size) {
+			break;
+		}
 		while (uio->uio_resid > 0) {
 			void *win;
 			vsize_t bytelen = MIN(np->n_size - uio->uio_offset,
