@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 2002/07/10 15:52:07 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 2002/07/12 19:52:21 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -322,14 +322,6 @@ void
 trapa(struct proc *p, struct trapframe *tf)
 {
 	u_int trapcode;
-
-#ifdef SIMULATED_CLOCK
-	if (!USERMODE(tf) && tf->tf_state.sf_tra == 0) {
-		hardclock((struct clockframe *)&tf->tf_state);
-		tf->tf_state.sf_spc += 4;	/* Skip over the trapa */
-		return;
-	}
-#endif
 
 #ifdef DIAGNOSTIC
 	const char *pstr;
