@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.50 1998/07/29 11:39:25 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.51 1998/08/17 21:16:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -157,7 +157,7 @@ wssattach(sc)
 
 	sc->sc_ad1848.parent = sc;
 
-	audio_attach_mi(&wss_hw_if, 0, &sc->sc_ad1848, &sc->sc_dev);
+	audio_attach_mi(&wss_hw_if, &sc->sc_ad1848, &sc->sc_dev);
 }
 
 int

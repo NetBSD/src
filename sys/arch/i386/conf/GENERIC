@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.175 1998/08/13 17:47:56 rvb Exp $
+#	$NetBSD: GENERIC,v 1.176 1998/08/17 21:16:10 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -456,12 +456,16 @@ sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
+# OPL[23] FM syntheziers
+opl*	at sb?
+
 # USB Audio devices
 #uaudio*	at uhub? port ?
 
 # Audio support
 audio*	at aria?
 audio*	at eap?
+audio*	at ess?
 audio*	at gus?
 audio*	at guspnp?
 audio*	at pas?
@@ -470,11 +474,11 @@ audio*	at sp?
 #audio*	at uaudio?
 audio*	at wss?
 audio*	at ym?
-audio*	at ess?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
 midi*	at sb?			# SB MPU401 port
+midi*	at opl?			# OPL FM synth
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker

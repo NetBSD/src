@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.15 1998/08/15 03:02:46 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.16 1998/08/17 21:16:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -458,7 +458,7 @@ eap_attach(parent, self, aux)
 	ctl.un.mask = 1 << EAP_MIC_VOL;
 	eap_mixer_set_port(sc, &ctl);
 
-	audio_attach_mi(&eap_hw_if, 0, sc, &sc->sc_dev);
+	audio_attach_mi(&eap_hw_if, sc, &sc->sc_dev);
 }
 
 int

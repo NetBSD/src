@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.22 1998/01/12 10:39:10 thorpej Exp $	*/
+/*	$NetBSD: aucc.c,v 1.23 1998/08/17 21:16:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -246,7 +246,7 @@ auccattach(parent, self, args)
 		return;
 	}
 
-	audio_attach_mi(&sa_hw_if, 0, sc, &sc->sc_dev);
+	audio_attach_mi(&sa_hw_if, sc, &sc->sc_dev);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.22 1998/08/12 19:13:14 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.23 1998/08/17 21:16:13 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -875,7 +875,7 @@ essattach(sc)
 	sprintf(ess_device.name, "ES%s", essmodel[sc->sc_model]);
 	sprintf(ess_device.version, "0x%04x", sc->sc_version);
 
-	audio_attach_mi(&ess_hw_if, 0, sc, &sc->sc_dev);
+	audio_attach_mi(&ess_hw_if, sc, &sc->sc_dev);
 
 #ifdef AUDIO_DEBUG
 	ess_printsc(sc);

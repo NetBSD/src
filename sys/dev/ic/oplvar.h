@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.4 1998/08/17 21:16:12 augustss Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.1 1998/08/17 21:16:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,57 +35,53 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_DEV_MIDIVAR_H_
-#define _SYS_DEV_MIDIVAR_H_
+#include <dev/midivar.h>
+#include <dev/midisynvar.h>
 
-#define MIDI_BUFSIZE 1024
-
-#include "sequencer.h"
-
-struct midi_buffer {
-	u_char	*inp;
-	u_char	*outp;
-	u_char	*end;
-	int	used;
-	int	usedhigh;
-	u_char	start[MIDI_BUFSIZE];
+struct opl_voice {
+	int voiceno;
+	int iooffs;
+	u_int8_t op[4];
+	struct opl_operators *patch;
+	u_int8_t rB0;
 };
 
-#define MIDI_MAX_WRITE 32	/* max bytes written with busy wait */
-#define MIDI_WAIT 10000		/* microseconds to wait after busy wait */
+struct opl_softc {
+	struct midi_softc sc_mididev;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int	offs;
+	int	model;
+#define OPL_2 2
+#define OPL_3 3
+	struct	midisyn syn;
 
-struct midi_softc {
-	struct	device dev;
-	void	*hw_hdl;	/* Hardware driver handle */
-	struct	midi_hw_if *hw_if; /* Hardware interface */
-	struct	device *sc_dev;	/* Hardware device struct */
-	int	isopen;		/* Open indicator */
-	int	flags;		/* Open flags */
-	struct	midi_buffer outbuf;
-	struct	midi_buffer inbuf;
-	int	props;
-	int	rchan, wchan;
-	int	pbus;
-	struct	selinfo wsel;	/* write selector */
-	struct	selinfo rsel;	/* read selector */
-	struct	proc *async;	/* process who wants audio SIGIO */
-
-	/* MIDI input state machine */
-	int	in_state;
-#define MIDI_IN_START 0
-#define MIDI_IN_DATA 1
-#define MIDI_IN_SYSEX 2
-	u_char	in_msg[3];
-	u_char	in_status;
-	u_int	in_left;
-	u_int	in_pos;
-
-#if NSEQUENCER > 0
-	/* Synthesizer emulation stuff */
-	int	seqopen;
-#endif
+	struct opl_voice voices[OPL3_NVOICE];
+	int volume;
 };
 
-#define MIDIUNIT(d) ((d) & 0xff)
+struct opl_attach_arg {
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int offs;
+	int done;
+};
 
-#endif /* _SYS_DEV_MIDIVAR_H_ */
+struct opl_operators {
+	u_int8_t opl3;
+	u_int8_t ops[22];
+#define OO_CHARS	0
+#define OO_KSL_LEV	2
+#define OO_ATT_DEC	4
+#define OO_SUS_REL	6
+#define OO_WAV_SEL	8
+#define OO_FB_CONN	10
+#define OO_4OP_OFFS	11
+};
+
+#define OPL_NINSTR 256
+extern struct opl_operators opl2_instrs[];
+extern struct opl_operators opl3_instrs[];
+
+int	opl_find __P((struct opl_softc *));
+void	opl_attach __P((struct opl_softc *));
