@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.20 1999/06/06 02:47:48 thorpej Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.21 1999/08/23 01:09:42 christos Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.20 1999/06/06 02:47:48 thorpej Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.21 1999/08/23 01:09:42 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -20,6 +20,7 @@ __RCSID("$NetBSD: bootparamd.c,v 1.20 1999/06/06 02:47:48 thorpej Exp $");
 #include <sys/socket.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <err.h>
 #include <netdb.h>
 #include <stdlib.h>
@@ -143,6 +144,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	static bp_whoami_res res;
 	struct hostent *he;
 	struct in_addr haddr;
+	int e;
 
 	if (debug)
 		warnx("whoami got question for %d.%d.%d.%d",
@@ -174,7 +176,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	if (dolog)
 		syslog(LOG_NOTICE, "This is host %s", askname);
 
-	if (!lookup_bootparam(askname, hostname, NULL, NULL, NULL)) {
+	if ((e = lookup_bootparam(askname, hostname, NULL, NULL, NULL)) == 0) {
 		res.client_name = hostname;
 		getdomainname(domain_name, MAX_MACHINE_NAME);
 		res.domain_name = domain_name;
@@ -201,10 +203,11 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 
 		return (&res);
 	}
+	errno = e;
 	if (debug)
-		warnx("whoami failed");
+		warn("whoami failed");
 	if (dolog)
-		syslog(LOG_NOTICE, "whoami failed");
+		syslog(LOG_NOTICE, "whoami failed %m");
 	return (NULL);
 }
 
@@ -333,6 +336,8 @@ lookup_bootparam(client, client_canonical, id, server, path)
 				break;
 			}
 #endif
+			if (debug)
+				warnx("match %s with %s", word, client);
 			/* See if this line's client is the one we are
 			 * looking for */
 			if (strcasecmp(word, client) != 0) {
