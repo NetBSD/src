@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.33 1998/11/03 18:14:55 simonb Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.34 1999/03/11 20:23:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.33 1998/11/03 18:14:55 simonb Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.34 1999/03/11 20:23:58 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,6 +161,7 @@ mkfs(pp, fsys, fi, fo)
 	int32_t postblsize, rotblsize, totalsbsize;
 	time_t utime;
 	quad_t sizepb;
+	char *writebuf2;		/* dynamic buffer */
 
 #ifndef STANDALONE
 	time(&utime);
@@ -630,15 +631,26 @@ next:
 	for (cylno = 0; cylno < sblock.fs_ncg; cylno++)
 		wtfs(fsbtodb(&sblock, cgsblock(&sblock, cylno)),
 		    sbsize, writebuf);
-	if (needswap)
-		ffs_csum_swap(fscs, (struct csum*)writebuf, sblock.fs_cssize);
-	else
-		memcpy(writebuf, fscs, sblock.fs_cssize);
+
+	/*
+	 * if we need to swap, create a buffer for the cylinder summaries
+	 * to get swapped to.
+	 */
+	if (needswap) {
+		if ((writebuf2=malloc(sblock.fs_cssize)) == NULL)
+			exit(12);
+		ffs_csum_swap(fscs, (struct csum*)writebuf2, sblock.fs_cssize);
+	} else
+		writebuf2 = (char *)fscs;
+
 	for (i = 0; i < sblock.fs_cssize; i += sblock.fs_bsize)
 		wtfs(fsbtodb(&sblock, sblock.fs_csaddr + numfrags(&sblock, i)),
 			sblock.fs_cssize - i < sblock.fs_bsize ?
 			    sblock.fs_cssize - i : sblock.fs_bsize,
-			((char *)writebuf) + i);
+			((char *)writebuf2) + i);
+	if (writebuf2 != (char *)fscs)
+		free(writebuf2);
+
 	/*
 	 * Update information about this partion in pack
 	 * label, to that it may be updated on disk.
