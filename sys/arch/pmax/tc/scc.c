@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.58 2000/01/07 14:12:51 simonb Exp $	*/
+/*	$NetBSD: scc.c,v 1.59 2000/01/08 01:02:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.58 2000/01/07 14:12:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.59 2000/01/08 01:02:40 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.58 2000/01/07 14:12:51 simonb Exp $");
 
 #include "rasterconsole.h"
 
-extern void ttrstrt	__P((void *));
+void	ttrstrt __P((void *));
 
 
 /*
@@ -263,7 +263,7 @@ static struct scc_softc coldcons_softc;
 static struct consdev scccons = {
 	NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
 };
-void scc_consinit __P((dev_t dev, struct scc_regmap *sccaddr));
+void	scc_consinit __P((dev_t dev, struct scc_regmap *sccaddr));
 
 
 /*

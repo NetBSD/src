@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201.c,v 1.17 1999/12/23 15:42:06 ad Exp $	*/
+/*	$NetBSD: lk201.c,v 1.18 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -384,7 +384,7 @@ lk_mapchar(cc, len)
  */
 void
 lk_divert(getfn, in_dev)
-	int (*getfn) __P ((dev_t dev));
+	int (*getfn) __P((dev_t dev));
 	dev_t in_dev;
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.41 1999/12/15 14:48:24 ad Exp $	*/
+/*	$NetBSD: mfb.c,v 1.42 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.41 1999/12/15 14:48:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.42 2000/01/08 01:02:35 simonb Exp $");
 
 #include "fb.h"
 #include "mfb.h"
@@ -111,35 +111,35 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.41 1999/12/15 14:48:24 ad Exp $");
 struct fbuaccess mfbu;
 struct pmax_fbtty mfbfb;
 
-void mfbPosCursor  __P((struct fbinfo *fi, int x, int y));
+void	mfbPosCursor __P((struct fbinfo *fi, int x, int y));
 
 
 int	mfbinit __P((struct fbinfo *fi, caddr_t mfbaddr, int unit, int silent));
 
 #if 1	/* these  go away when we use the abstracted-out chip drivers */
-static void mfbLoadCursor __P((struct fbinfo *fi, u_short *ptr));
-static void mfbRestoreCursorColor __P((struct fbinfo *fi));
-static void mfbCursorColor  __P((struct fbinfo *fi, u_int *color));
+static void	mfbLoadCursor __P((struct fbinfo *fi, u_short *ptr));
+static void	mfbRestoreCursorColor __P((struct fbinfo *fi));
+static void	mfbCursorColor  __P((struct fbinfo *fi, u_int *color));
 
-static void mfbInitColorMapBlack __P((struct fbinfo *fi, int blackpix));
-static void mfbInitColorMap __P((struct fbinfo *fi));
-static int mfbLoadColorMap __P((struct fbinfo *fi, u_char *mapbits,
-				int index, int count));
-static int mfbLoadColorMapNoop __P((struct fbinfo *fi, const u_char *mapbits,
-				int index, int count));
-#endif /* 0 */
+static void	mfbInitColorMapBlack __P((struct fbinfo *fi, int blackpix));
+static void	mfbInitColorMap __P((struct fbinfo *fi));
+static int	mfbLoadColorMap __P((struct fbinfo *fi, u_char *mapbits,
+		    int index, int count));
+static int	mfbLoadColorMapNoop __P((struct fbinfo *fi,
+		    const u_char *mapbits, int index, int count));
+#endif /* 1 */
 
 /* new-style raster-cons "driver" methods */
 
-int mfbGetColorMap __P((struct fbinfo *fi, u_char *, int, int));
+int		mfbGetColorMap __P((struct fbinfo *fi, u_char *, int, int));
 
 
-static int bt455_video_on __P((struct fbinfo *));
-static int bt455_video_off __P((struct fbinfo *));
+static int	bt455_video_on __P((struct fbinfo *));
+static int	bt455_video_off __P((struct fbinfo *));
 
-static void  bt431_init __P((bt431_regmap_t *regs));
-static void  bt431_select_reg __P((bt431_regmap_t *regs, int regno));
-static void  bt431_write_reg __P((bt431_regmap_t *regs, int regno, int val));
+static void	bt431_init __P((bt431_regmap_t *regs));
+static void	bt431_select_reg __P((bt431_regmap_t *regs, int regno));
+static void	bt431_write_reg __P((bt431_regmap_t *regs, int regno, int val));
 
 #ifdef notused
 static u_char bt431_read_reg __P((bt431_regmap_t *regs, int regno));
@@ -188,9 +188,9 @@ struct fbdriver mfb_driver = {
 /*
  * driver frontend declaration for autoconfiguration.
  */
-int mfbmatch __P((struct device *, struct cfdata *, void *));
-void mfbattach __P((struct device *, struct device *, void *));
-int mfb_intr __P((void *sc));
+int	mfbmatch __P((struct device *, struct cfdata *, void *));
+void	mfbattach __P((struct device *, struct device *, void *));
+int	mfb_intr __P((void *sc));
 
 struct cfattach mfb_ca = {
 	sizeof(struct fbinfo), mfbmatch, mfbattach

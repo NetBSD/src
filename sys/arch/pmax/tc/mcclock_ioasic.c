@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.9 1999/11/15 09:50:43 nisimura Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.10 2000/01/08 01:02:40 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.9 1999/11/15 09:50:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.10 2000/01/08 01:02:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.9 1999/11/15 09:50:43 nisimura 
 
 #include  <dev/dec/mcclock_pad32.h>
 
-int  mcclock_ioasic_match __P((struct device *, struct cfdata *, void *));
-void mcclock_ioasic_attach __P((struct device *, struct device *, void *));
+int	mcclock_ioasic_match __P((struct device *, struct cfdata *, void *));
+void	mcclock_ioasic_attach __P((struct device *, struct device *, void *));
 
 struct cfattach mcclock_ioasic_ca = {
 	sizeof (struct mcclock_pad32_softc),

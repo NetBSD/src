@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3min.c,v 1.5 1999/05/26 04:23:59 nisimura Exp $	*/
+/*	$NetBSD: memc_3min.c,v 1.6 2000/01/08 01:02:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.5 1999/05/26 04:23:59 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.6 2000/01/08 01:02:39 simonb Exp $");
 
 /*
  * Motherboard memory error contoller used in both
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.5 1999/05/26 04:23:59 nisimura Exp $
 
 
 /* forward declarations */
-static unsigned kn02ba_recover_erradr __P((u_int phys, u_int mer));
+static unsigned	kn02ba_recover_erradr __P((u_int phys, u_int mer));
 
 
 static unsigned

@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_3max.c,v 1.4 1999/12/11 13:49:18 simonb Exp $ */
+/* $NetBSD: ibus_3max.c,v 1.5 2000/01/08 01:02:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.4 1999/12/11 13:49:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.5 2000/01/08 01:02:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ struct ibus_attach_args kn02sys_devs[] = {
 };
 const int kn02sys_ndevs = sizeof(kn02sys_devs) / sizeof(kn02sys_devs[0]);
 
-static int  kn02sys_match __P((struct device *, struct cfdata *, void *));
-static void kn02sys_attach __P((struct device *, struct device *, void *));
+static int	kn02sys_match __P((struct device *, struct cfdata *, void *));
+static void	kn02sys_attach __P((struct device *, struct device *, void *));
 
 struct cfattach kn02sys_ca = {
         sizeof(struct ibus_softc), kn02sys_match, kn02sys_attach,
