@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2003/08/07 09:37:36 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,13 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2003/08/07 09:37:36 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
 # include	"robots.h"
 
-int main __P((int, char **));
+int main(int, char **);
 
 extern const char	*Scorefile;
 extern int	Max_per_uid;

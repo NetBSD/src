@@ -1,4 +1,4 @@
-/*	$NetBSD: bcd.c,v 1.12 2003/08/07 09:37:04 agc Exp $	*/
+/*	$NetBSD: bcd.c,v 1.13 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: bcd.c,v 1.12 2003/08/07 09:37:04 agc Exp $");
+__RCSID("$NetBSD: bcd.c,v 1.13 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,8 +124,8 @@ const u_short holes[256] = {
  */
 #define	bit(w,i)	((w)&(1<<(i)))
 
-int	main __P((int, char *[]));
-void	printcard __P((char *));
+int	main(int, char *[]);
+void	printcard(char *);
 
 int
 main(argc, argv)

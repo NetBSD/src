@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.13 2003/08/07 09:37:02 agc Exp $	*/
+/*	$NetBSD: init.c,v 1.14 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,15 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.13 2003/08/07 09:37:02 agc Exp $");
+__RCSID("$NetBSD: init.c,v 1.14 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
-static int checkout __P((const char *));
-static const char *getutmp __P((void));
-static int wizard __P((const char *));
+static int checkout(const char *);
+static const char *getutmp(void);
+static int wizard(const char *);
 
 void
 initialize(filename)

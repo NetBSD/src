@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.vault.c,v 1.6 2003/04/02 18:36:41 jsm Exp $	*/
+/*	$NetBSD: hack.vault.c,v 1.7 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.vault.c,v 1.6 2003/04/02 18:36:41 jsm Exp $");
+__RCSID("$NetBSD: hack.vault.c,v 1.7 2004/01/27 20:30:29 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -114,8 +114,8 @@ static struct monst *guard;
 static int      gdlevel;
 #define	EGD	((struct egd *)(&(guard->mextra[0])))
 
-static void restfakecorr __P((void));
-static int goldincorridor __P((void));
+static void restfakecorr(void);
+static int goldincorridor(void);
 
 static void
 restfakecorr()
