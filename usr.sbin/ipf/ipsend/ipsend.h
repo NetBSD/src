@@ -1,7 +1,7 @@
-/*	$NetBSD: ipsend.h,v 1.3.2.1 1997/10/30 07:17:26 mrg Exp $	*/
+/*	$NetBSD: ipsend.h,v 1.3.2.2 1998/11/24 07:22:14 cgd Exp $	*/
 
 /*
- * ipsend.h (C) 1997 Darren Reed
+ * ipsend.h (C) 1997-1998 Darren Reed
  *
  * This was written to test what size TCP fragments would get through
  * various TCP/IP packet filters, as used in IP firewalls.  In certain
