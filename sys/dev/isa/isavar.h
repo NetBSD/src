@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.41 2003/07/08 10:06:32 itojun Exp $	*/
+/*	$NetBSD: isavar.h,v 1.42 2004/08/30 10:30:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -236,6 +236,8 @@ struct isa_softc {
 #define		cf_irq			cf_loc[ISACF_IRQ]
 #define		cf_drq			cf_loc[ISACF_DRQ]
 #define		cf_drq2			cf_loc[ISACF_DRQ2]
+
+int	isabusprint(void *, const char *);
 
 /*
  * ISA interrupt handler manipulation.
