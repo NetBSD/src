@@ -98,26 +98,27 @@ FreeBSD 2.1                  |
     |  FreeBSD 2.2.1         |                    |
     |      |                 |                    |
     |  FreeBSD 2.2.2         |                OpenBSD 2.1
-    |      |              NetBSD 1.3              |
-    |  FreeBSD 2.2.5         |    |               |
-    |      |                 | NetBSD 1.3.1   OpenBSD 2.2
-    |      |                 |    |               |
-    |  FreeBSD 2.2.6         |    |           OpenBSD 2.3
-    |      |                 | NetBSD 1.3.2       |
-    |      |                 |    |               |
-    |  FreeBSD 2.2.7         |    |               |
-    |      |                 | NetBSD 1.3.3       |
     |      |                 |                    |
-    |  FreeBSD 2.2.8         |                    |
+    |  FreeBSD 2.2.5         |                    |
+    |      |                 |                OpenBSD 2.2
+    |      |              NetBSD 1.3              |
+    |  FreeBSD 2.2.6         |    |               |       
+    |      |                 | NetBSD 1.3.1       |
+    |      |                 |    |           OpenBSD 2.3
+    |      |                 | NetBSD 1.3.2       |
+    |  FreeBSD 2.2.7         |    |               |
+    |      |                 |    |               |
+    |  FreeBSD 2.2.8         |    |               |
+    |                        |    |               |
+FreeBSD 3.0                  |    |           OpenBSD 2.4
+    |                        | NetBSD 1.3.3       |
+    *---FreeBSD 3.1          |                    |
+    |      |              NetBSD 1.4              |
+    |   FreeBSD 3.2          |                OpenBSD 2.5
     |                        |                    |
-    |                        |                OpenBSD 2.4
-FreeBSD 3.0                  |                    |
-    |                        |                    |
-FreeBSD 3.1               NetBSD 1.4              |
+FreeBSD 4.0-CURRENT       NetBSD -current     OpenBSD -current
     |                        |                    |
     v                        v                    v
-
-
 
 
 Time
@@ -241,10 +242,11 @@ FreeBSD 2.2.1           1997-04-xx [FBD]
 NetBSD 1.2.1            1997-05-20 [NBD]
 OpenBSD 2.1             1997-06-01 [OBD]
 FreeBSD 2.2.2           1997-06-xx [FBD]
-NetBSD 1.3              1997-09-24 [NBD]
 FreeBSD 2.2.5           1997-11-xx [FBD]
 OpenBSD 2.2             1997-12-01 [OBD]
+NetBSD 1.3              1997-01-04 [NBD]
 FreeBSD 2.2.6           1998-03-xx [FBD]
+NetBSD 1.3.1            1997-04-xx [NBD]
 OpenBSD 2.3             1998-05-19 [OBD]
 NetBSD 1.3.2            1998-05-24 [NBD]
 FreeBSD 2.2.7           1998-07-xx [FBD]
@@ -252,6 +254,9 @@ FreeBSD 3.0             1998-10-16 [FBD]
 FreeBSD 2.2.8           1998-11-29 [FBD]
 OpenBSD 2.4             1998-12-01 [OBD]
 NetBSD 1.3.3            1998-12-23 [NBD]
+FreeBSD 3.1             1999-02-15 [FBD]
+NetBSD 1.4              1999-05-12 [NBD]
+OpenBSD 2.5             1999-05-19 [OBD]
 
 
 Bibliography
@@ -302,4 +307,4 @@ URL: ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/src/share/misc/bsd-family
 
 $FreeBSD: Date: 1999/01/15 17:21:39 $ $FreeBSD Revision: 1.11 $
 
-$NetBSD: bsd-family-tree,v 1.3 1999/05/11 22:30:08 jwise Exp $
+$NetBSD: bsd-family-tree,v 1.4 1999/06/29 02:06:40 abs Exp $
