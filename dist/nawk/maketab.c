@@ -103,6 +103,7 @@ struct xx
 	{ ARG, "arg", "arg" },
 	{ VARNF, "getnf", "NF" },
 	{ GETLINE, "getline", "getline" },
+	{ GENSUB, "gensub", "gensub" },
 	{ 0, "", "" },
 };
 

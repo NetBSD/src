@@ -124,6 +124,8 @@ extern Cell	*rlengthloc;	/* RLENGTH */
 #define	FTOUPPER 12
 #define	FTOLOWER 13
 #define	FFLUSH	14
+#define FSYSTIME	15
+#define FSTRFTIME	16
 
 /* Node:  parse tree is made of nodes, with Cell's at bottom */
 
