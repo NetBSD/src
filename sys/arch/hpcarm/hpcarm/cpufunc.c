@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.2 2001/02/25 21:31:15 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.3 2001/03/09 12:13:15 toshii Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -114,8 +114,8 @@ struct cpu_functions sa110_cpufuncs = {
 	sa110_cache_purgeD_rng,		/* cache_purgeD_rng	*/
 	sa110_cache_syncI_rng,		/* cache_syncI_rng	*/
 
-	sa110_dataabt_fixup,		/* dataabt_fixup	*/
-	sa110_prefetchabt_fixup,	/* prefetchabt_fixup	*/
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,	/* prefetchabt_fixup	*/
 
 	sa110_context_switch,		/* context_switch	*/
 
@@ -170,32 +170,17 @@ set_cpufuncs()
 #error PMAP_DEBUG must be defined to use DEBUG_FAULT_CORRECTION
 #endif
 
-#ifdef CPU_SA110
 /*
- * SA110 data abort fixup
- *
- * Nothing required
+ * Null abort fixup routine.
+ * For use when no fixup is required.
  */
 int
-sa110_dataabt_fixup(arg)
+cpufunc_null_fixup(arg)
 	void *arg;
 {
 	return(ABORT_FIXUP_OK);
 }
 
-/*
- * SA110 prefetch abort fixup
- *
- * Nothing required
- */
-int
-sa110_prefetchabt_fixup(arg)
-	void *arg;
-{
-	return(ABORT_FIXUP_OK);
-}
-
-#endif	/* CPU_SA110 */
 
 /*
  * CPU Setup code

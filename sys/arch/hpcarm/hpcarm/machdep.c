@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2001/03/04 23:25:02 bjh21 Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2001/03/09 12:13:15 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -117,7 +117,6 @@ void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 
-void pmap_bootstrap		__P((vm_offset_t kernel_l1pt));
 u_long strtoul			__P((const char *s, char **ptr, int base));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
