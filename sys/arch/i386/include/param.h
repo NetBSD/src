@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.29.8.1 1997/03/12 14:34:47 is Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,9 +60,16 @@
  * Round p (pointer or byte index) up to a correctly-aligned value
  * for all data types (int, long, ...).   The result is u_int and
  * must be cast to any desired pointer type.
+ *
+ * ALIGNED_POINTER is a boolean macro that checks whether an address
+ * is valid to fetch data elements of type t from on this architecture.
+ * This does not reflect the optimal alignment, just the possibility
+ * (within reasonable limits). 
+ *
  */
-#define ALIGNBYTES	(sizeof(int) - 1)
-#define ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define ALIGNBYTES		(sizeof(int) - 1)
+#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define ALIGNED_POINTER(p,t)	1
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
@@ -96,7 +103,11 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+
+#ifndef MCLSHIFT
+# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
+#endif	/* MCLSHIFT */
+
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 #define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 

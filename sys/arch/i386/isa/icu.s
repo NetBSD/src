@@ -1,7 +1,7 @@
-/*	$NetBSD: icu.s,v 1.47 1996/08/15 15:34:07 mycroft Exp $	*/
+/*	$NetBSD: icu.s,v 1.47.6.1 1997/03/12 14:34:50 is Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -126,8 +126,14 @@ IDTVEC(doreti)
  * Soft interrupt handlers
  */
 
-IDTVEC(softtty)
-	/* XXXX nothing for now */
+IDTVEC(softserial)
+	movl	_imask + IPL_SOFTSERIAL * 4,%eax
+	movl	%eax,_cpl
+#include "com.h"
+#if NCOM > 0
+	call	_comsoft
+#endif
+	movl	%ebx,_cpl
 	jmp	%esi
 
 #define DONET(s, c) \
@@ -138,7 +144,7 @@ IDTVEC(softtty)
 1:
 
 IDTVEC(softnet)
-	leal	SIR_NETMASK(%ebx),%eax
+	movl	_imask + IPL_SOFTNET * 4,%eax
 	movl	%eax,_cpl
 	xorl	%edi,%edi
 	xchgl	_netisr,%edi
@@ -172,7 +178,7 @@ IDTVEC(softnet)
 	jmp	%esi
 
 IDTVEC(softclock)
-	leal	SIR_CLOCKMASK(%ebx),%eax
+	movl	_imask + IPL_SOFTCLOCK * 4,%eax
 	movl	%eax,_cpl
 	call	_softclock
 	movl	%ebx,_cpl
