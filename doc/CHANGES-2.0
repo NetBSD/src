@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.206 2004/05/14 06:35:03 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.207 2004/05/14 07:45:10 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2407,4 +2407,29 @@ sys/miscfs/kernfs/kernfs_subr.c			1.6
 	is available in the entry's struct kern_target and every entry has a
 	(possibly shared) struct kern_target now.
 	[cl, ticket #322]
+
+lib/libc/sys/msgget.2				1.13
+lib/libc/sys/semget.2				1.16
+lib/libc/sys/shmget.2				1.18-1.19
+
+	Elaborate on IPC_EXCL in the description.
+	[kleink, ticket #327]
+
+sys/arch/sh5/include/setjmp.h			1.6
+
+	Avoid lint failure in setjmp.h; lint doesn't handle __attribute__
+	modified declarations.
+	[he, ticket #328]
+
+x11/lib/OSmesa/Makefile				1.12
+
+	Drop optmization to -O0 for sh5 for one file to work around an
+	internal compiler error.
+	[he, ticket #329]
+
+x11/Xserver/GL/GLcore/Makefile.GLcore		1.7
+
+	Drop optmization to -O0 for sh5 for one file to work around an
+	internal compiler error.
+	[he, ticket #332]
 
