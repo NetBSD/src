@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.1 2003/08/24 17:33:29 marcus Exp $	*/
+/*	$NetBSD: aica.c,v 1.2 2003/08/24 19:44:29 marcus Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.1 2003/08/24 17:33:29 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.2 2003/08/24 19:44:29 marcus Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,11 @@ struct {
 	{AudioEslinear,		AUDIO_ENCODING_SLINEAR,		8},
 	{AudioEulinear,		AUDIO_ENCODING_ULINEAR,		8},
 	{AudioEmulaw,		AUDIO_ENCODING_ULAW,		8},
+	{AudioEalaw,		AUDIO_ENCODING_ALAW,		8},
 	{AudioEslinear_be,	AUDIO_ENCODING_SLINEAR_BE,	16},
 	{AudioEslinear_le,	AUDIO_ENCODING_SLINEAR_LE,	16},
+	{AudioEulinear_be,	AUDIO_ENCODING_ULINEAR_BE,	16},
+	{AudioEulinear_le,	AUDIO_ENCODING_ULINEAR_LE,	16},
 };
 
 int aica_match(struct device *, struct cfdata *, void *);
