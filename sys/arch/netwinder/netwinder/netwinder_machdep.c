@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.18 2002/02/20 20:41:18 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.19 2002/02/21 02:52:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -159,10 +159,6 @@ int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
 int fcomcndetach __P((void));
 
 void isa_netwinder_init __P((u_int iobase, u_int membase));
-
-vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
-			     vm_offset_t pa, vm_size_t size, u_int acc,
-			     u_int flg));
 
 void process_kernel_args	__P((char *));
 void data_abort_handler		__P((trapframe_t *frame));
@@ -602,20 +598,20 @@ initarm(bootinfo)
 		 */
 		textsize = textsize & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
-		logical  = map_chunk(0, l2pagetable, KERNEL_BASE,
+		logical = pmap_map_chunk(0, l2pagetable, KERNEL_BASE,
 		    physical_start, KERNEL_TEXT_BASE - KERNEL_BASE,
-		    AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(0, l2pagetable, KERNEL_BASE + logical,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		logical += pmap_map_chunk(0, l2pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
-		    AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(0, l2pagetable, KERNEL_BASE + logical,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		logical += pmap_map_chunk(0, l2pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, totalsize - textsize,
-		    AP_KRW, PT_CACHEABLE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #if 0
-		logical += map_chunk(0, l2pagetable, KERNEL_BASE + logical,
+		logical += pmap_map_chunk(0, l2pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, kernexec->a_syms + sizeof(int)
 		    + *(u_int *)((int)end + kernexec->a_syms + sizeof(int)),
-		    AP_KRW, PT_CACHEABLE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
 	}
 #else
@@ -648,16 +644,17 @@ initarm(bootinfo)
 #endif
 
 	/* Map the stack pages */
-	map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    PD_SIZE, AP_KRW, 0);
+	pmap_map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
+	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
+	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
+	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
+	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+
+	pmap_map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
