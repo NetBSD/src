@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.25 1996/11/09 23:22:19 pk Exp $
+#	$NetBSD: Makefile,v 1.26 1996/11/26 17:46:50 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 
 SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libl \
 	libm libpcap libresolv librmt librpcsvc libskey libterm libutil \
-	liby libz
+	libwrap liby libz
 
 # XXX Temporary until all ports are able to use libkvm (leo)
 .if	(${MACHINE} == "alpha") || \
