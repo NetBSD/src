@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.37 2003/04/06 17:23:26 fvdl Exp $	*/
+/*	$NetBSD: utilities.c,v 1.38 2003/04/13 10:22:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.37 2003/04/06 17:23:26 fvdl Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.38 2003/04/13 10:22:40 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: utilities.c,v 1.37 2003/04/06 17:23:26 fvdl Exp $");
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -548,9 +549,12 @@ void
 catchquit(sig)
 	int sig;
 {
+	int errsave = errno;
+
 	printf("returning to single-user after file system check\n");
 	returntosingle = 1;
 	(void)signal(SIGQUIT, SIG_DFL);
+	errno = errsave;
 }
 
 /*
@@ -561,10 +565,12 @@ void
 voidquit(sig)
 	int sig;
 {
+	int errsave = errno;
 
 	sleep(1);
 	(void)signal(SIGQUIT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_DFL);
+	errno = errsave;
 }
 
 /*
