@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/11/09 01:52:55 matt Exp $
+#	$NetBSD: Makefile,v 1.20 2001/05/02 06:56:29 matt Exp $
 
 S=	${.CURDIR}/../../../..
 NOMAN=	1
@@ -48,12 +48,12 @@ vers.c: ${.CURDIR}/version
 	sh ${S}/conf/newvers_stand.sh -NM ${.CURDIR}/version "${MACHINE}"
 
 ${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -N -Ttext ${RELOC} -e nisse -o ${PROG} ${OBJS} \
+	${LD} -N -Ttext ${RELOC} -e nisse -o ${PROG}.sym ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 .if ${OBJECT_FMT} != "ELF"
-	/usr/sbin/mopa.out ${PROG} ${PROG}.mop
+	/usr/sbin/mopa.out ${PROG}.sym ${PROG}.mop
 .endif
-	${STRIP} ${PROG}
+	${STRIP} -o ${PROG} ${PROG}.sym
 	${SIZE} ${PROG}
 
 install:
