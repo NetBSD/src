@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.8 1997/10/14 09:20:09 mark Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.9 1998/08/15 02:57:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -72,10 +72,12 @@ db_regs_t		ddb_regs;	/* register state */
 #define	inst_branch(ins)	(((ins) & 0x0f000000) == 0x0a000000)
 #define inst_load(ins)		0
 #define inst_store(ins)		0
-#define inst_unconditional_flow_transfer(ins)	(((ins) & INSN_COND_MASK) == INSN_COND_AL)
+#define inst_unconditional_flow_transfer(ins)	\
+	((((ins) & INSN_COND_MASK) == INSN_COND_AL) && \
+	(inst_call(ins) | inst_branch(ins)))
 
 #define getreg_val			(0)
-#define next_instr_address(pc, bd)	(pc + INSN_SIZE)
+#define next_instr_address(pc, bd)	((bd) ? (pc) : (pc + INSN_SIZE))
 
 #define DB_MACHINE_COMMANDS
 
