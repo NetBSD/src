@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.6 1999/08/21 06:17:46 simonb Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.7 1999/08/22 14:02:34 kleink Exp $
 
 # System configuration variables:
 #
@@ -67,7 +67,7 @@ SYMLINKS+=	${KDIR} ${INCSDIR}
 .PRECIOUS: ${DESTDIR}${INCSDIR}
 .PHONY: ${DESTDIR}${INCSDIR}
 ${DESTDIR}${INCSDIR}:
-	@if [ ! -d ${.TARGET} ] || [ -L ${.TARGET} ] ; then \
+	@if [ ! -d ${.TARGET} ] || [ -h ${.TARGET} ] ; then \
 		echo creating ${.TARGET}; \
 		/bin/rm -rf ${.TARGET}; \
 		${INSTALL} ${INSTPRIV} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
