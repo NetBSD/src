@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.42 1999/06/20 06:08:13 cgd Exp $	*/
+/*	$NetBSD: defs.h,v 1.43 1999/06/22 00:43:57 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,6 +91,8 @@ EXTERN char machine[SSTRSIZE] INIT(MACH);
 
 EXTERN int yesno;
 EXTERN int ignorerror;
+EXTERN int ttysig_ignore;
+EXTERN pid_t ttysig_forward;
 EXTERN int layoutkind;
 EXTERN int sizemult INIT(1);
 EXTERN char *multname; 
