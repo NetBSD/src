@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.10 2002/11/19 16:29:32 christos Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.11 2002/11/21 19:53:41 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.10 2002/11/19 16:29:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.11 2002/11/21 19:53:41 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
+#include <sys/exec_macho.h>
 #include <sys/malloc.h>
 
 #include <sys/syscall.h>
@@ -99,15 +100,22 @@ const struct emul emul_mach = {
 /*
  * Copy arguments onto the stack in the normal way, but add some
  * extra information in case of dynamic binding.
+ * XXX This needs a cleanup: it is not used anymore by the Darwin 
+ * emulation, and it probably contains Darwin specific bits. 
  */
 int
 exec_mach_copyargs(struct proc *p, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
+	struct exec_macho_emul_arg *emea;
 	size_t len;
 	size_t zero = 0;
 	int pagelen = PAGE_SIZE;
 	int error;
+	
+	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
+	
+	*stackp -= 16;
 
 	if ((error = copyout(&pagelen, *stackp, sizeof(pagelen))) != 0) {
 		DPRINTF(("mach: copyout pagelen failed\n"));
@@ -126,15 +134,15 @@ exec_mach_copyargs(struct proc *p, struct exec_package *pack,
 	}
 	*stackp += sizeof(zero);
 
-	if ((error = copyoutstr(pack->ep_emul_arg, *stackp, MAXPATHLEN, &len))
-	    != 0) {
+	if ((error = copyoutstr(emea->filename, 
+	    *stackp, MAXPATHLEN, &len)) != 0) {
 		DPRINTF(("mach: copyout path failed\n"));
 		return error;
 	}
 	*stackp += len + 1;
 
 	/* We don't need this anymore */
-	free(pack->ep_emul_arg, MAXPATHLEN);
+	free(pack->ep_emul_arg, M_EXEC);
 	pack->ep_emul_arg = NULL;
 
 	len = len % sizeof(zero);
