@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.84 1997/06/05 20:57:13 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.85 1997/06/16 21:12:38 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -911,12 +911,30 @@ Lsetcpu040:
 	movl	#CPU_68040,a0@
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
-	btst	#7,sp@(3)		| XXX
+#ifndef BB060STUPIDROM
+	btst	#7,sp@(3)
 	jeq	Lstartnot040
+	movl	#CPU_68060,a0@		| and in the cputype
 	orl	#IC60_CABC,d0		| XXX and clear all 060 branch cache 
-	/*
-	 * XXX need to set MMU_68060 and CPU_68060 in here!
-	 */
+#else
+	movc	d0,cacr
+	bset	#30,d0			| not allocate data cache bit
+	movc	d0,cacr			| does it stick?
+	movc	cacr,d0
+	tstl	d0
+	jeq	Lstartnot040
+	bset	#7,sp@(3)		| note it is '60 family in machineid
+	movl	#CPU_68060,a0@		| and in the cputype
+	orl	#IC60_CABC,d0		| XXX and clear all 060 branch cache 
+	.word	0x4e7a,0x1808		| movc	pcr,d1
+	swap	d1
+	cmpw	#0x430,d1		
+	jne	Lstartnot040		| but no FPU
+	bset	#6,sp@(3)		| yes, we have FPU, note that
+	swap	d1
+	bclr	#1,d1			| ... and switch it on.
+	.word	0x4e7b,0x1808		| movc	d1,pcr
+#endif
 Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 	movl	#Lvectab,a0
