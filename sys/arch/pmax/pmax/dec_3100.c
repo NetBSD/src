@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.7 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: dec_3100.c,v 1.8 1999/03/25 19:55:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -134,7 +134,7 @@ dec_3100_init()
 	platform.cons_init = dec_3100_cons_init;
 	platform.device_register = dec_3100_device_register;
 
-	strcpy(cpu_model, "DECstation 2100 or 3100 (PMAX)");
+	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 3 : 2);
 
 	dec_3100_os_init();
 }
