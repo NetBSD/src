@@ -1,4 +1,4 @@
-/*	$NetBSD: activate.c,v 1.6 1997/09/15 05:58:22 lukem Exp $	*/
+/*	$NetBSD: activate.c,v 1.7 1997/09/16 12:32:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,12 +36,12 @@
  * SUCH DAMAGE.
  *
  *	from: Id: activate.c,v 1.2 1992/05/27 07:09:27 jsp Exp
- *	@(#)activate.c	8.2 (Berkeley) 3/27/94
+ *	@(#)activate.c	8.3 (Berkeley) 4/28/95
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: activate.c,v 1.6 1997/09/15 05:58:22 lukem Exp $");
+__RCSID("$NetBSD: activate.c,v 1.7 1997/09/16 12:32:23 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>

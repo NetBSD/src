@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.9 1997/09/15 05:58:26 lukem Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.10 1997/09/16 12:32:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -44,9 +44,9 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mount_portal.c	8.4 (Berkeley) 3/27/94";
+static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.9 1997/09/15 05:58:26 lukem Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.10 1997/09/16 12:32:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "o:")) != -1) {
 		switch (ch) {
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags);
+			getmntopts(optarg, mopts, &mntflags, 0);
 			break;
 		default:
 			error = 1;
@@ -185,7 +185,7 @@ main(argc, argv)
 	sprintf(tag, "portal:%d", getpid() + 1);
 	args.pa_config = tag;
 
-	rc = mount(MOUNT_PORTAL, mountpt, mntflags, &args);
+	rc = mount("portal", mountpt, mntflags, &args);
 	if (rc < 0)
 		err(1, "%s", "");
 
