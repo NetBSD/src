@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.131 2000/01/22 19:31:02 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.132 2000/01/22 19:53:53 mycroft Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -161,13 +161,13 @@ subdir-install:	.NOTMAIN beforeinstall
 realinstall:	.NOTMAIN beforeinstall
 afterinstall:	.NOTMAIN subdir-install realinstall
 .endif
-.endif
 all:		.NOTMAIN realall subdir-all
 subdir-all:	.NOTMAIN
 realall:	.NOTMAIN
 depend:		.NOTMAIN realdepend subdir-depend
 subdir-depend:	.NOTMAIN
 realdepend:	.NOTMAIN
+.endif
 
 # Define MKxxx variables (which are either yes or no) for users
 # to set in /etc/mk.conf and override on the make commandline.
