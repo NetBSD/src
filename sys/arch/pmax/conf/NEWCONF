@@ -2,7 +2,7 @@
 # DECstation (3100 or 5000/xxx)
 #
 #	Generic config.new configuration for NetBSD/pmax
-# 	$NetBSD: NEWCONF,v 1.4 1995/09/18 03:09:03 jonathan Exp $
+# 	$NetBSD: NEWCONF,v 1.5 1995/10/05 01:53:07 jonathan Exp $
 #
 include		"std.pmax"
 
@@ -180,9 +180,6 @@ pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	loop
 pseudo-device	vnd		4	# virtual disk ick
 
-#pseudo-device	ether		# From old config. what does it mean?
-# rcons is not yet merged in
-pseudo-device	rcons		1 	# hack
-# until rcons is finished
+#pseudo-device	ether			# From old config. what does it mean?
+pseudo-device	rasterconsole	1 	# NB: raster console requires "fb"
 pseudo-device	fb		3	# up to 3 framebuffers
-
