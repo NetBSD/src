@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sleep.c,v 1.2 2003/03/08 08:03:36 lukem Exp $ */
+/*	$NetBSD: pthread_sleep.c,v 1.3 2004/06/24 22:18:11 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sleep.c,v 1.2 2003/03/08 08:03:36 lukem Exp $");
+__RCSID("$NetBSD: pthread_sleep.c,v 1.3 2004/06/24 22:18:11 nathanw Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -134,8 +134,10 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 			TIMEVAL_TO_TIMESPEC(&now, rmtp);
 			timespecsub(&sleeptime, rmtp, rmtp);
 		}
-	}
-
+	} else if (rmtp)
+		timespecclear(rmtp);
+	       
+	
 	return retval;
 }
 
