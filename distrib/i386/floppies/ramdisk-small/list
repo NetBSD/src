@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2000/09/27 16:04:17 fvdl Exp $
+#	$NetBSD: list,v 1.2 2000/09/27 18:53:57 fvdl Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -78,7 +78,6 @@ COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
 COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
 COPY	${CURDIR}/../../../../etc/netconfig	etc/netconfig
 COPY	${CURDIR}/../../../../etc/services	etc/services
-COPY	${CURDIR}/../../../../usr.sbin/dhcp/client/scripts/netbsd etc/dhclient-script
 
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
 SPECIAL /bin/rm etc/spwd.db
@@ -86,7 +85,7 @@ SPECIAL /bin/rm etc/pwd.db
 
 # copy the MAKEDEV script and make some devices
 COPY	${CURDIR}/../../../../etc/etc.i386/MAKEDEV	dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV ramdisk bpf0 bpf1
+SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the boot block in /usr/mdec + the MBR copy
