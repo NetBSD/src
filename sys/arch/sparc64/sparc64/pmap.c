@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 2000/08/02 22:25:45 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 2000/08/30 14:59:48 soren Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 /*
@@ -461,13 +461,13 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #ifdef DEBUG
 	if (pmapdebug & PDB_BOOT) {
 		/* print out mem list */
-		prom_printf("Available virutal memory:\r\n");
+		prom_printf("Available virtual memory:\r\n");
 		for (mp = memlist; mp->size; mp++) {
 			prom_printf("memlist start %p size %lx\r\n", 
 				    (void *)(u_long)mp->start,
 				    (u_long)mp->size);
 		}
-		prom_printf("End of available virutal memory\r\n");
+		prom_printf("End of available virtual memory\r\n");
 	}
 #endif
 	/* 
