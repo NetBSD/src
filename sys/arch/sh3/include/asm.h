@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6 2001/04/09 20:31:20 marcus Exp $	*/
+/*	$NetBSD: asm.h,v 1.7 2001/06/10 19:06:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,12 +68,20 @@
 # define _ALIGN_TEXT .align 2
 #endif
 
+#ifdef __ELF__
 #define _ENTRY(x) \
 	.text ;\
 	_ALIGN_TEXT; \
 	.globl x; \
 	.type x,@function; \
 	x:
+#else
+#define _ENTRY(x) \
+	.text ;\
+	_ALIGN_TEXT; \
+	.globl x; \
+	x:
+#endif
 
 # define _PROF_PROLOGUE
 
@@ -83,9 +91,14 @@
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y));\
 	_PROF_PROLOGUE
 
+#ifdef __ELF__
 #define	ALTENTRY(name)	.globl _C_LABEL(name); \
 	.type _C_LABEL(name),@function; \
 	_C_LABEL(name):
+#else
+#define	ALTENTRY(name)	.globl _C_LABEL(name); \
+	_C_LABEL(name):
+#endif
 
 #define	ASMSTR		.asciz
 
