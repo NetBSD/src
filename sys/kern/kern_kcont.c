@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.9 2004/03/27 00:42:38 jonathan Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.10 2004/04/25 16:42:41 simonb Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,7 +37,7 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.9 2004/03/27 00:42:38 jonathan Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.10 2004/04/25 16:42:41 simonb Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,7 +86,7 @@ static void *kc_si_softserial;
 /*
  * Pool allocator structure.
  */
-static struct pool kc_pool;
+POOL_INIT(kc_pool, sizeof(struct kc), 0, 0, 0, "kcpl", NULL);
 
 /*
  * Process-context continuation queue.
@@ -397,8 +397,6 @@ kcont_init(void)
 	kc_si_softserial = softintr_establish(IPL_SOFTSERIAL,
 	    kcont_run_softserial, &kcq_softserial);
 #endif	/* __HAVE_GENERIC_SOFT_INTERRUPTS */
-
-	pool_init(&kc_pool, sizeof(struct kc), 0, 0, 0, "kcpl", NULL);
 
 	/*
 	 * Create kc_queue for process-context continuations, and

@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.14 2003/08/07 16:34:07 agc Exp $	*/
+/*	$NetBSD: lockf.h,v 1.15 2004/04/25 16:42:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -69,9 +69,7 @@ struct lockf {
 #define MAXDEPTH 50
 
 #ifdef _KERNEL
-
 int lf_advlock(struct vop_advlock_args *, struct lockf **, off_t);
-
 #endif /* _KERNEL */
 
 #endif /* !_SYS_LOCKF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.35 2004/04/21 01:05:38 christos Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.36 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.35 2004/04/21 01:05:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.36 2004/04/25 16:42:41 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -109,7 +109,8 @@ int smbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp);
 int smbfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int smbfs_vptofh(struct vnode *, struct fid *);
 
-extern struct pool smbfs_node_pool;
+POOL_INIT(smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0, "smbfsnopl",
+    &pool_allocator_nointr);
 extern struct vnodeopv_desc smbfs_vnodeop_opv_desc;
 
 static const struct vnodeopv_desc *smbfs_vnodeopv_descs[] = {
@@ -357,9 +358,6 @@ smbfs_quotactl(mp, cmd, uid, arg, p)
 void
 smbfs_init(void)
 {
-	pool_init(&smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0,
-		"smbfsnopl", &pool_allocator_nointr);
-
 #ifdef _LKM
 	/* Need explicit attach if LKM */
 	malloc_type_attach(M_SMBNODENAME);
