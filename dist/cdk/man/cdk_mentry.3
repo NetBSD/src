@@ -1,0 +1,526 @@
+.de It
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH cdk_mentry 3 "24 April 1997"
+.SH NAME
+newCDKMentry, activateCDKMentry, injectCDKMentry, setCDKMentry, 
+setCDKMentryValue, getCDKMentryValue,
+setCDKMentryMin, getCDKMentryMin,
+setCDKMentryFillerChar, getCDKMentryFillerChar,
+setCDKMentryBox, getCDKMentryBox,
+setCDKMentryULChar, setCDKMentryURChar,
+setCDKMentryLLChar, setCDKMentryLRChar,
+setCDKMentryVerticalChar, setCDKMentryHorizontalChar,
+setCDKMentryBoxAttribute,
+setCDKMentryBackgroundColor,
+setCDKMentryCB,
+drawCDKMentry, eraseCDKMentry, cleanCDKMentry, destroyCDKMentry,
+setCDKMentryPreProcess, setCDKMentryPostProcess  \- Creates a managed curses 
+multiple line entry widget.
+.SH SYNOPSIS
+.LP
+.B cc
+.RI "[ " "flag" " \|.\|.\|. ] " "file" " \|.\|.\|."
+.B \-lcdk
+.RI "[ " "library" " \|.\|.\|. ]"
+.LP
+#include <cdk.h>
+.LP
+.BI "CDKMENTRY *newCDKMentry (CDKSCREEN *" "cdkscreen",
+.BI "int " "xpos",
+.BI "int " "ypos",
+.BI "char *" "title",
+.BI "char *" "label",
+.BI "chtype " "fieldAttribute",
+.BI "chtype " "fillerCharacter",
+.BI "EDisplayType " "displayType",
+.BI "int " "fieldWidth",
+.BI "int " "fieldRows",
+.BI "int " "logicalRows",
+.BI "int " "minimumLength",
+.BI "boolean " "box",
+.BI "boolean " "shadow");
+.LP
+.BI "char *activateCDKMentry (CDKMENTRY *" "mentry",
+.BI "chtype *" "actions");
+.LP
+.BI "char *injectCDKMentry (CDKMENTRY *" "mentry", 
+.BI "chtype " "input");
+.LP
+.BI "void setCDKMentry (CDKMENTRY *" "mentry",
+.BI "char *" "value",
+.BI "int " "minimumLength",
+.BI "boolean " "box");
+.LP
+.BI "void setCDKMmentryValue (CDKMENTRY *" "mentry",
+.BI "char *" "value");
+.LP
+.BI "char *getCDKMmentryValue (CDKMENTRY *" "mentry");
+.LP
+.BI "void setCDKMmentryMin (CDKMENTRY *" "mentry",
+.BI "int " "minimum");
+.LP
+.BI "int getCDKMmentryMin (CDKMENTRY *" "mentry");
+.LP
+.BI "void setCDKMmentryBox (CDKMENTRY *" "mentry",
+.BI "boolean " "box");
+.LP
+.BI "boolean getCDKMmentryBox (CDKMENTRY *" "mentry");
+.LP
+.BI "void setCDKMmentryBox (CDKMENTRY *" "mentry",
+.BI "boolean " "box");
+.LP
+.BI "boolean getCDKMmentryBox (CDKMENTRY *" "mentry");
+.LP
+.BI "void setCDKMentryCB (CDKMENTRY *" "mentry",
+.BI "MENTRYCB " "callBackFunction");
+.LP
+.BI "void setCDKMentryULChar (CDKMENTRY *", "mentry",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKMentryURChar (CDKMENTRY *", "mentry",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKMentryLLChar (CDKMENTRY *", "mentry",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKMentryLRChar (CDKMENTRY *", "mentry",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKMentryVerticalChar (CDKMENTRY *", "mentry",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKMentryHorizontalChar (CDKMENTRY *", "mentry",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKMentryBoxAttribute (CDKMENTRY *", "mentry",
+.BI "chtype " "character");
+.LP
+.BI "void setCDKMentryBackgroundColor (CDKMENTRY *", "mentry",
+.BI "char * " "color");
+.LP
+.BI "void moveCDKMentry (CDKMENTRY *" "mentry",
+.BI "int " "box",
+.BI "int " "box",
+.BI "boolean " "relative",
+.BI "boolean " "refresh");
+.LP
+.BI "void positionCDKMentry (CDKMENTRY *" "mentry");
+.LP
+.BI "void drawCDKMentry (CDKMENTRY *" "mentry",
+.BI "boolean " "box");
+.LP
+.BI "void eraseCDKMentry (CDKMENTRY *" "mentry");
+.LP
+.BI "void cleanCDKMentry (CDKMENTRY *" "mentry");
+.LP
+.BI "void destroyCDKMentry (CDKMENTRY *" "mentry");
+.LP
+.BI "void setCDKMentryPreProcess (CDKMENTRY *" "mentry",
+.BI "PROCESSFN " "callback",
+.BI "void * " "data");
+.LP
+.BI "void setCDKMentryPostProcess (CDKMENTRY *" "mentry",
+.BI "PROCESSFN " "callback",
+.BI "void * " "data");
+.LP
+.BI "void bindCDKObject (EObjectType " "widgetType",
+.BI "void *" "object",
+.BI "chtype " "key",
+.BI "BINDFN " "function",
+.BI "void *" "data");
+.SH DESCRIPTION
+The Cdk mentry widget creates a multiple line entry box with a label and an 
+entry field. The following are functions which create or manipulate the Cdk 
+mentry box widget.
+
+.SH AVAILABLE FUNCTIONS
+CDKMENTRY *newCDKMentry (CDKSCREEN *\f2screen\f1, int \f2xpos\f1, int \f2ypos\f1, char *\f2title\f1, char *\f2label\f1, chtype \f2fieldAttribute\f1, chtype \f2fillerCharacter\f1, chtype \f2displayType\f1, int \f2fieldWidth\f1, int \f2fieldRows\f1, int \f2logicalRows\f1, int \f2minimumLength\f1, boolean \f2box\f1, boolean \f2shadow\f1);
+.RS 3
+This function creates a pointer to a mentry widget. The \f2screen\f1 parameter
+is the screen you wish this widget to be placed in. The parameter \f2xpos\f1
+controls the placement of the object along the horizontal axis. This parameter
+can accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 controls the placement
+of the object along the vertical axis. This parameter can accept an integer 
+value or one of the pre-defined values of \f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1.
+The \f2title\f1 parameter is the string which will be displayed at the top of the 
+widget. The title can be more than one line; just provide a carriage return 
+character at the line break. The \f2label\f1 parameter is the string which 
+will be displayed in the label of the mentry field. The \f2fieldAttribute\f1 
+is the attribute of the characters to be displayed when they are typed in. 
+\f2filler\f1 is the character which is to be displayed in an empty space in 
+the mentry field. The parameter \f2displayType\f1 tells how the mentry field 
+will behave when a character is entered into the field. The following table 
+outlines valid values for this field and what they mean:
+.LP
+.RS 3
+.nf 
+\f2Display_Type      Meaning\f1
+vCHAR             Only accepts alphabetic characters.
+vLCHAR            Only accepts alphabetic characters.
+                  Maps the character to lower case
+                  when a character has been accepted.
+vUCHAR            Only accepts alphabetic characters.
+                  Maps the character to upper case
+                  when a character has been accepted.
+vHCHAR            Only accepts alphabetic characters.
+                  Displays a \f4.\f1 when a character
+                  has been accepted.
+vUHCHAR           Only accepts alphabetic characters.
+                  Displays a \f4.\f1 and maps the
+                  character to upper case when a
+                  character has been accepted.
+vLHCHAR           Only accepts alphabetic characters.
+                  Displays a \f4.\f1 and maps the
+                  character to lower case when a
+                  character has been accepted.
+vINT              Only accepts numeric characters.
+vHINT             Only accepts numeric characters.
+                  Displays a \f4.\f1 when a character
+                  has been accepted.
+vMIXED            Accepts any character types.
+vLMIXED           Accepts any character types.
+                  Maps the character to lower case
+                  when an alphabetic character has
+                  been accepted.
+vUMIXED           Accepts any character types.
+                  Maps the character to upper case
+                  when an alphabetic character has
+                  been accepted.
+vHMIXED           Accepts any character types.
+                  Displays a \f4.\f1 when a character
+                  has been accepted.
+vLHMIXED          Accepts any character types.
+                  Displays a \f4.\f1 and maps the
+                  character to lower case when a
+                  character has been accepted.
+vUHMIXED          Accepts any character types.
+                  Displays a \f4.\f1 and maps the
+                  character to upper case when a
+                  character has been accepted.
+vVIEWONLY         Uneditable field.
+.LP
+.fi
+.RE
+The parameters \f2fieldRows\f1 and \f2fieldWidth\f1 control the height and width of 
+the field of the widget. If you provide a value of zero for either of the values,
+the field in the widget will be made as large as it can both in width and in height.
+If you provide a negative value, the field will be created the full height or width 
+minus the value provided.  While \f2logicalRows\f1 states how many rows the mentry 
+field will have. The parameter \f2minimumLength\f1 states how many characters have 
+to be entered before the use can exit the mentry field. The \f2callBackFunction\f1 
+is where the use can swap out the key processing element of the widget. The \f2box\f1 
+parameter states whether the widget will be drawn with a box around it or not. The 
+\f2shadow\f1 parameter accepts a boolean value to turn the shadow on or off 
+around this widget. If the widget could not be created then a \f4NULL\f1 pointer is 
+returned.
+.RE
+
+char *activateCDKMentry (CDKMENTRY *\f2mentry\f1, chtype *\f2actions\f1);
+.RS 3
+This function activates the mentry widget and lets the user interact with the
+widget. The parameter \f2mentry\f1 is a pointer to a non-NULL mentry widget.
+If the \f2actions\f1 parameter is passed with a non-NULL value, the characters
+in the array will be injected into the widget. To activate the widget
+interactively pass in a \f4NULL\f1 pointer for \f2actions\f1. If the character entered
+into this widget is \f4RETURN\f1 or \f4TAB\f1 then this function will return 
+a \f4char *\f1 representing the information typed into the widget and the 
+structure member \f4exitType\f1 will be set to \f4vNORMAL\f1. If the character
+entered was \f4ESCAPE\f1 then the function will returns \f4NULL\f1 pointer and 
+the structure member \f4exitType\f1 is set to \f4vESCAPE_HIT\f1.
+.RE
+
+char *injectCDKMentry (CDKMENTRY *\f2mentry\f1, chtype \f2character\f1);
+.RS 3
+This function injects a single character into the widget. The parameter 
+\f2mentry\f1 is a pointer to a non-NULL mentry. The parameter 
+\f2character\f1 is the character to inject into the widget. If the character 
+injected into this widget was \f4RETURN\f1 or \f4TAB\f1 then this function will
+return a \f4char *\f1 representing the information typed into the widget and the 
+structure member \f4exitType\f1 will be set to \f4vNORMAL\f1. If the character
+entered was \f4ESCAPE\f1 then the function will returns \f4NULL\f1 pointer and 
+the structure member \f4exitType\f1 is set to \f4vESCAPE_HIT\f1. Any other 
+character injected into the widget will set the structure member \f4exitType\f1 
+to \f4vEARLY_EXIT\f1 and the function will return a \f4NULL\f1 pointer.
+.RE
+
+void setCDKMentry (CDKMENTRY *\f2mentry\f1, char *\f2value\f1, int \f2minimumLength\f1, boolean \f2box\f1);
+.RS 3
+This function lets the programmer modify certain elements of an already defined
+entry widget. The parameter names correspond to the same parameter names listed 
+in the \f4newCDKMentry\f1 function.
+.RE
+
+void setCDKMentryValue (CDKMENTRY *\f2mentry\f1, char *\f2value\f1);
+.RS 3
+This sets the current value of the widget.
+.RE
+
+char *getCDKMentryValue (CDKMENTRY *\f2mentry\f1);
+.RS 3
+This returns the current value of the widget.
+.RE
+
+void setCDKMentryMin (CDKMENTRY *\f2mentry\f1, int \f2maximum\f1);
+.RS 3
+This sets the minimum length of the string that the widget will allow.
+.RE
+
+int getCDKMentryMin (CDKMENTRY *\f2mentry\f1);
+.RS 3
+This returns the minimum length of a string the widget will allow.
+.RE
+
+void setCDKMentryFillerChar (CDKMENTRY *\f2mentry\f1, chtype \f2filler\f1);
+.RS 3
+This sets the character to use when drawing unused space in the field.
+.RE
+
+chtype getCDKMentryFillerChar (CDKMENTRY *\f2mentry\f1);
+.RS 3
+This returns the character being used to draw unused space in the widget.
+.RE
+
+void setCDKMentryBox (CDKMENTRY *\f2mentry\f1, boolean \f2boxWidget\f1);
+.RS 3
+This sets whether or not the widget will be draw with a box around it.
+.RE
+
+boolean getCDKMentryBox (CDKMENTRY *\f2mentry\f1);
+.RS 3
+This returns whether or not the widget will be drawn with a box around it.
+.RE
+
+void setCDKMentryULChar (CDKMENTRY *\f2mentry\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKMentryURChar (CDKMENTRY *\f2mentry\f1, chtype \f2character\f1);
+.RS 3
+This function sets the upper right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKMentryLLChar (CDKMENTRY *\f2mentry\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower left hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKMentryLRChar (CDKMENTRY *\f2mentry\f1, chtype \f2character\f1);
+.RS 3
+This function sets the lower right hand corner of the widgets box to
+the given character.
+.RE
+
+void setCDKMentryVerticalChar (CDKMENTRY *\f2mentry\f1, chtype \f2character\f1);
+.RS 3
+This function sets the vertical drawing character for the box to
+the given character.
+.RE
+
+void setCDKMentryHorizontalChar (CDKMENTRY *\f2mentry\f1, chtype \f2character\f1);
+.RS 3
+This function sets the horizontal drawing character for the box to
+the given character.
+.RE
+
+void setCDKMentryBoxAttribute (CDKMENTRY *\f2mentry\f1, chtype \f2attribute\f1);
+.RS 3
+This function sets the attribute of the box.
+.RE
+
+void setCDKMentryBackgroundColor (CDKMENTRY *\f2mentry\f1, char *\f2color\f1);
+.RS 3
+This sets the background color of the widget. The parameter \f2color\f1
+is in the format of the Cdk format strings. To get more information look
+at the \f4cdk_display\f1 manual page.
+.RE
+
+void setCDKMentryCB (CDKMENTRY *\f2mentry\f1, MENTRYCB \f2callbackFunction\f1);
+.RS 3
+This function allows the programmer to set a different widget input handler.
+The parameter \f2callbackFunction\f1 is of type \f4MENTRYCB\f1. The current
+default function is \f4CDKMentryCallBack\f1.
+.RE
+
+void moveCDKMentry (CDKMENTRY *\f2mentry\f1, int \f2xpos\f1, int \f2ypos\f1, boolean \f2relative\f1, boolean \f2refresh\f1);
+.RS 3
+This function moves the given widget to the given position. The parameters
+\f2xpos\f1 and \f2ypos\f1 is the new position of the widget. The parameter
+\f2xpos\f1 can accept an integer value or one of the pre-defined values of
+\f4TOP\f1, \f4BOTTOM\f1, and \f4CENTER\f1. The parameter \f2ypos\f1 can 
+accept an integer value or one of the pre-defined values of \f4LEFT\f1,
+\f4RIGHT\f1, and \f4CENTER\f1. The parameter \f2relative\f1 states whether
+the \f2xpos\f1/\f2ypos\f1 pair is a relative move or an absolute move. For
+example if \f2xpos\f1 = 1 and \f2ypos\f1 = 2 and \f2relative\f1 = \f2TRUE\f1,
+then the widget would move one row down and two columns right. If the value
+of \f2relative\f1 was \f2FALSE\f1 then the widget would move to the position
+(1,2). Do not use the values of \f4TOP\f1, \f4BOTTOM\f1, \f4LEFT\f1, 
+\f4RIGHT\f1, or \f4CENTER\f1 when \f2relative\f1 = \f4TRUE\f1. (wierd things
+may happen). The final parameter \f2refresh\f1 is a boolean value which 
+states whether the widget will get refreshed after the move or not.
+.RE
+
+void positionCDKMentry (CDKMENTRY *\f2mentry\f1);
+.RS 3
+This function allows the user to move the widget around the screen via the
+cursor/keypad keys. The following key bindings can be used to move the
+widget around the screen.
+.LP
+.nf
+\f4Key Bindings\f1
+.RS 3
+\f2Key          Action\f1
+Up Arrow     Moves the widget up one line.
+Down Arrow   Moves the widget down one line.
+Left Arrow   Moves the widget left one column
+Right Arrow  Moves the widget right one column
+Keypad-1     Moves the widget down one line
+             and left one column.
+Keypad-2     Moves the widget down one line.
+Keypad-3     Moves the widget down one line
+             and right one column.
+Keypad-4     Moves the widget left one column
+Keypad-5     Centers the widget both vertically
+             and horizontally.
+Keypad-6     Moves the widget right one column
+Keypad-7     Moves the widget up one line
+             and left one column.
+Keypad-8     Moves the widget up one line.
+Keypad-9     Moves the widget up one line
+             and right one column.
+t            Moves the widget to the top of the screen.
+b            Moves the widget to the bottom of the screen.
+l            Moves the widget to the left of the screen.
+r            Moves the widget to the right of the screen.
+c            Centers the widget between the left and 
+             right of the window.
+C            Centers the widget between the top and 
+             bottom of the window.
+Escape       Returns the widget to it's original position.
+Return       Exits the function and leaves the widget
+             where it was.
+.fi
+.RE
+.RS 3
+.LP
+Keypad means that if the keyboard you are using has a keypad, then the
+Num-Lock light has to be on in order to use the keys as listed. (The
+numeric keys at the top of the keyboard will work as well.)
+.LP
+void drawCDKMentry(CDKMENTRY *\f2mentry\f1, boolean \f2box\f1);
+.RS 3
+This function draws the widget on the screen. The \f2box\f1 option 
+draws the widget with or without a box.
+.RE
+
+void eraseCDKMentry (CDKMENTRY *\f2mentry\f1);
+.RS 3
+This function removes the widget from the screen. This does \f4NOT\f1 destroy
+the widget.
+.RE
+
+void cleanCDKMentry (CDKMENTRY *\f2mentry\f1);
+.RS 3
+This function clears the information from the field.
+.RE
+
+void destroyCDKMentry (CDKMENTRY *\f2mentry\f1);
+.RS 3
+This function removes the widget from the screen and frees up any memory the
+object may be using.
+.RE
+
+void setCDKMentryPreProcess (CDKMENTRY *\f2mentry\f1, PROCESSFN \f2function\f1, void *\f2data\f1);
+.RS 3
+This function allows the user to have the widget call a function after a key
+is hit and before the key is applied to the widget. The parameter \f2function\f1
+if of type \f4PROCESSFN\f1. The parameter \f2data\f1 is a pointer to 
+\f4void\f1. To learn more about pre-processing read the \f4cdk_process\f1
+manual page.
+.RE
+ 
+void setCDKMentryPostProcess (CDKMENTRY *\f2mentry\f1, PROCESSFN \f2function\f1, void *\f2data\f1);
+.RS 3
+This function allows the user to have the widget call a function after the
+key has been applied to the widget.  The parameter \f2function\f1 if of type
+\f4PROCESSFN\f1. The parameter \f2data\f1 is a pointer to \f4void\f1. To
+learn more about post-processing read the \f4cdk_process\f1 manual page.
+.RE
+
+void bindCDKObject (EObjectType \f2widgetType\f1, void *\f2object\f1, char \f2key\f1, BINDFN \f2function\f1, void *\f2data\f1);
+.RS 3
+This function allows the user to create special key bindings. The 
+\f2widgetType\f1 parameter is a defined type which states what Cdk object 
+type is being used. The \f2object\f1 parameter is the pointer to the widget 
+object. The \f2widgetType\f1 parameter is a defined type which states what 
+Cdk object type is being used. To learn more about the type \f4EObjectType\f1 
+read the \f4cdk_binding\f1 manual page. The \f2object\f1 parameter is the 
+pointer to the widget object. The \f2key\f1 is the character to bind. The 
+\f2function\f1 is the function type. To learn more about the key binding 
+callback function types read the \f4cdk_binding\f1 manual page. The last 
+parameter \f2data\f1 is a pointer to any data that needs to get passed to
+the callback function.
+.RE
+.SH KEY BINDINGS
+When the widget is activated there are several default key bindings which will
+help the user enter or manipulate the information quickly. The following table
+outlines the keys and their actions for this widget.
+.LP
+.RS 3
+.nf
+\f2Key         Action\f1
+Left Arrow  Moves the cursor the the left.
+CTRL-B      Moves the cursor the the left.
+Right Arrow Moves the cursor the the right.
+CTRL-F      Moves the cursor the the right.
+Up Arrow    Moves the cursor one row down.
+Down Arrow  Moves the cursor one row up.
+Delete      Deletes the character to the left of the cursor.
+Backspace   Deletes the character to the left of the cursor.
+CTRL-H      Deletes the character to the left of the cursor.
+CTRL-V      Pastes whatever is in the paste buffer, into the widget.
+CTRL-X      Cuts the contents from the widget and saves a copy in 
+            the paste buffer.
+CTRL-Y      Copies the contents of the widget into the paste buffer.
+CTRL-U      Erases the contents of the widget.
+CTRL-A      Moves the cursor to the begining of the entry field.
+CTRL-E      Moves the cursor to the end of the entry field.
+CTRL-T      Transposes the characer under the cursor with the
+            character to the right.
+Return      Exits the widget and returns a \f4char *\f1 representing
+            the information which was typed into the field. It also
+            sets the structure member \f4exitType\f1 in the widget
+            pointer to \f4vNORMAL\f1.
+Tab         Exits the widget and returns a \f4char *\f1 representing
+            the information which was typed into the field. It also
+            sets the structure member \f4exitType\f1 in the widget
+            pointer to \f4vNORMAL\f1.
+Escape      Exits the widget and returns a \f4NULL\f1 pointer. It also
+            sets the structure member \f4exitType\f1 in the widget pointer
+            to the value of \f4vESCAPE_HIT\f1.
+Ctrl-L      Refreshes the screen.
+.RE
+.fi
+.SH SEE ALSO
+.BR cdk (3),
+.BR cdk_binding (3),
+.BR cdk_display (3),
+.BR cdk_screen (3)
+.SH NOTES
+.PP
+The header file \f4<cdk.h>\f1 automatically includes the header files
+\f4<curses.h>\f1, \f4<stdlib.h>\f1, \f4<string.h>\f1, \f4<ctype.h>\f1,
+\f4<unistd.h>\f1, \f4<dirent.h>\f1, \f4<time.h>\f1, \f4<errno.h>\f1,
+\f4<pwd.h>\f1, \f4<grp.h>\f1, \f4<sys/stat.h>\f1, and \f4<sys/types.h>\f1.
+The \f4<curses.h>\f1 header file includes \f4<stdio.h>\f1 and \f4<unctrl.h>\f1.
+.PP
+If you have \f4Ncurses\f1 installed on your machine add -DNCURSES to the 
+compile line to include the Ncurses header files instead.
