@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.48 1996/10/25 21:33:33 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.49 1996/11/13 19:34:31 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -1328,7 +1328,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.48 1996/10/25 21:33:33 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.49 1996/11/13 19:34:31 cgd Exp $\n";
 #endif
 
 u_long	ncr_version = NCR_VERSION	* 11
@@ -3110,7 +3110,7 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 		*/
 
 		if (opcode == 0) {
-			printf ("%s: ERROR0 IN SCRIPT at %d.\n",
+			printf ("%s: ERROR0 IN SCRIPT at %ld.\n",
 				ncr_name(np), src-start-1);
 			DELAY (1000000);
 		};
@@ -3135,7 +3135,7 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 			if ((tmp2 & RELOC_MASK) == RELOC_KVAR)
 				tmp2 = 0;
 			if ((tmp1 ^ tmp2) & 3) {
-				printf ("%s: ERROR1 IN SCRIPT at %d.\n",
+				printf ("%s: ERROR1 IN SCRIPT at %ld.\n",
 					ncr_name(np), src-start-1);
 				DELAY (1000000);
 			};
@@ -5671,7 +5671,7 @@ static void ncr_int_ma (ncb_p np)
 
 	if (DEBUG_FLAGS & DEBUG_PHASE) {
 		PRINT_ADDR(cp->xfer);
-		printf ("newcmd[%d] %x %x %x %x.\n",
+		printf ("newcmd[%ld] %x %x %x %x.\n",
 			newcmd - cp->patch,
 			(unsigned)newcmd[0],
 			(unsigned)newcmd[1],
