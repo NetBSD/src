@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.16 2004/08/11 06:56:57 mycroft Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.17 2004/09/13 12:34:00 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.16 2004/08/11 06:56:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.17 2004/09/13 12:34:00 drochner Exp $");
 
 #undef	TCICDEBUG
 
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.16 2004/08/11 06:56:57 mycroft Exp $");
 #include <dev/ic/tcic2reg.h>
 #include <dev/ic/tcic2var.h>
 
+#include "locators.h"
+
 #ifdef TCICDEBUG
 int	tcic_debug = 1;
 #define	DPRINTF(arg) if (tcic_debug) printf arg;
@@ -68,7 +70,8 @@ int	tcic_debug = 1;
 void	tcic_attach_socket __P((struct tcic_handle *));
 void	tcic_init_socket __P((struct tcic_handle *));
 
-int	tcic_submatch __P((struct device *, struct cfdata *, void *));
+int	tcic_submatch __P((struct device *, struct cfdata *,
+			   const locdesc_t *, void *));
 int	tcic_print  __P((void *arg, const char *pnp));
 int	tcic_intr_socket __P((struct tcic_handle *));
 
@@ -409,6 +412,8 @@ tcic_attach_socket(h)
 	struct tcic_handle *h;
 {
 	struct pcmciabus_attach_args paa;
+	int help[3];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	/* initialize the rest of the handle */
 
@@ -425,8 +430,12 @@ tcic_attach_socket(h)
 	paa.iobase = h->sc->iobase;
 	paa.iosize = h->sc->iosize;
 
-	h->pcmcia = config_found_sm(&h->sc->dev, &paa, tcic_print,
-	    tcic_submatch);
+	ldesc->len = 2;
+	ldesc->locs[PCMCIABUSCF_CONTROLLER] = 0;
+	ldesc->locs[PCMCIABUSCF_SOCKET] = h->sock;
+
+	h->pcmcia = config_found_sm_loc(&h->sc->dev, "pcmciabus", ldesc, &paa,
+					tcic_print, tcic_submatch);
 
 	/* if there's actually a pcmcia device attached, initialize the slot */
 
@@ -529,41 +538,19 @@ tcic_init_socket(h)
 }
 
 int
-tcic_submatch(parent, cf, aux)
+tcic_submatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 
-	struct pcmciabus_attach_args *paa = aux;
-	struct tcic_handle *h = (struct tcic_handle *) paa->pch;
-
-	switch (h->sock) {
-	case 0:
-		if (cf->pcmciabuscf_controller !=
-		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->pcmciabuscf_controller != 0)
-			return 0;
-		if (cf->pcmciabuscf_socket !=
-		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->pcmciabuscf_socket != 0)
-			return 0;
-
-		break;
-	case 1:
-		if (cf->pcmciabuscf_controller !=
-		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->pcmciabuscf_controller != 0)
-			return 0;
-		if (cf->pcmciabuscf_socket !=
-		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->pcmciabuscf_socket != 1)
-			return 0;
-
-		break;
-	default:
-		panic("unknown tcic socket");
-	}
+	if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] != PCMCIABUSCF_CONTROLLER_DEFAULT &&
+	    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != ldesc->locs[PCMCIABUSCF_CONTROLLER])
+		return 0;
+	if (cf->cf_loc[PCMCIABUSCF_SOCKET] != PCMCIABUSCF_SOCKET_DEFAULT &&
+	    cf->cf_loc[PCMCIABUSCF_SOCKET] != ldesc->locs[PCMCIABUSCF_SOCKET])
+		return 0;
 
 	return (config_match(parent, cf, aux));
 }
@@ -580,16 +567,8 @@ tcic_print(arg, pnp)
 	if (pnp)
 		aprint_normal("pcmcia at %s", pnp);
 
-	switch (h->sock) {
-	case 0:
-		aprint_normal(" socket 0");
-		break;
-	case 1:
-		aprint_normal(" socket 1");
-		break;
-	default:
-		panic("unknown tcic socket");
-	}
+	aprint_normal(" socket %d", h->sock);
+
 	return (UNCONF);
 }
 
