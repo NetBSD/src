@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_tworeg.h,v 1.1.16.5 2000/03/18 16:56:48 scw Exp $ */
+/*	$NetBSD: vme_tworeg.h,v 1.1.16.6 2000/03/18 22:00:18 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -411,7 +411,7 @@
 	 */
 #define VME2LCSR_INTERRUPT_LEVEL_BASE	0x78
 #define  VME2_NUM_IL_REGS		4
-#define	 VME2_ILOFFSET_FROM_VECTOR(v)	((((VME2_NUM_IL_REGS*8) - 1) - (v)) / 2)
+#define	 VME2_ILOFFSET_FROM_VECTOR(v)	(((((VME2_NUM_IL_REGS*8)-1)-(v))/8)<<2)
 #define	 VME2_ILSHIFT_FROM_VECTOR(v)	(((v) & 7) * 4)
 #define	 VME2_INTERRUPT_LEVEL_MASK	(0x0fu)
 
