@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.15 1998/09/10 19:55:30 kenh Exp $
+$NetBSD: pcmciadevs,v 1.16 1998/09/20 19:19:54 dbj Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,8 @@ product 3COM 3C589		0x0589 3Com 3c589 10Mbps Ethernet
 product 3COM 3C574		0x0574 3Com 3c574-TX 10/100Mbps Ethernet
 
 /* Dayna Products */
-product DAYNA COMMUNICARD_E	0x002d Dayna CommuniCard E
+product DAYNA COMMUNICARD_E_1	0x002d Dayna CommuniCard E
+product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
 
 /* DIGITAL Products */
 product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
