@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.71 2002/04/17 16:23:08 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.72 2002/11/08 00:13:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -381,6 +381,7 @@
 #define rpc_broadcast		_rpc_broadcast
 #define rpc_broadcast_exp	_rpc_broadcast_exp
 #define rpc_call		_rpc_call
+#define rpc_control		_rpc_control
 #define rpc_reg			_rpc_reg
 #define rpcb_getmaps		_rpcb_getmaps
 #define rpcb_gettime		_rpcb_gettime
