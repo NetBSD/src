@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.4 2001/09/05 13:34:54 tsutsui Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.5 2001/09/11 07:30:51 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ get_pte(va)
 
 void
 set_pte(va, pa)
-	vvaddr_t va;	/* virt. address */
+	vaddr_t va;	/* virt. address */
 	u_int pa;	/* phys. address */
 {
 	u_int	pn;
