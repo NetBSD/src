@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.13 1998/06/25 03:40:30 eeh Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.14 1998/07/12 18:27:06 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -91,7 +91,7 @@ enum Elf_e_ident {
 	Elf_ei_data,
 	Elf_ei_version,
 	Elf_ei_pad,
-	Elf_ei_size = 16,
+	Elf_ei_size = 16
 };
 
 enum Elf_e_version {
