@@ -1,4 +1,4 @@
-/*	$NetBSD: mcadevs.h,v 1.14 2001/04/20 11:19:51 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.15 2001/04/23 06:10:09 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -63,6 +63,7 @@
 #define	MCA_PRODUCT_AT1720AT	0x6416	/* ATI AT1720AT */
 #define	MCA_PRODUCT_AT1720FT	0x6419	/* ATI AT1720FT */
 #define	MCA_PRODUCT_NEOCOM1	0x6791	/* NeoTecH Single RS-232 Async. Adapter, SM110 */
+#define	MCA_PRODUCT_SKNET	0x6BE9	/* SKNET Ethernet Adapter */
 #define	MCA_PRODUCT_WD_8003E	0x6FC0	/* WD EtherCard PLUS/A (WD8003E/A or WD8003ET/A) */
 #define	MCA_PRODUCT_WD_8003ST	0x6FC1	/* WD StarCard PLUS/A (WD8003ST/A) */
 #define	MCA_PRODUCT_WD_8003W	0x6FC2	/* WD EtherCard PLUS 10T/A (WD8003W/A) */
