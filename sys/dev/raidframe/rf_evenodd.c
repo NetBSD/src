@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.8 2002/09/07 23:11:46 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.9 2002/09/23 02:40:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.8 2002/09/07 23:11:46 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.9 2002/09/23 02:40:08 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -94,7 +94,6 @@ rf_ConfigureEvenOdd(listp, raidPtr, cfgPtr)
 
 	/* fill in the remaining layout parameters */
 	layoutPtr->numStripe = layoutPtr->stripeUnitsPerDisk;
-	layoutPtr->bytesPerStripeUnit = layoutPtr->sectorsPerStripeUnit << raidPtr->logBytesPerSector;
 	layoutPtr->numDataCol = raidPtr->numCol - 2;	/* ORIG:
 							 * layoutPtr->numDataCol
 							 * = raidPtr->numCol-1;  */
