@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.26 1997/08/25 19:31:55 kleink Exp $	*/
+/*	$NetBSD: login.c,v 1.27 1997/10/12 12:31:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.26 1997/08/25 19:31:55 kleink Exp $");
+__RCSID("$NetBSD: login.c,v 1.27 1997/10/12 12:31:40 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -314,10 +314,10 @@ main(argc, argv)
 
 		(void)setpriority(PRIO_PROCESS, 0, -4);
 
-#ifdef SKEY
 		p = NULL;
 		pwprompt = "Password:";
 		
+#ifdef SKEY
 		if (require_skey > 1)		/* -s -s */
 			p = skeypw;
 		else if (skey_haskey(username) == 0) {
@@ -332,8 +332,9 @@ main(argc, argv)
 				pwprompt = skprompt;
 			}
 		}
-		if (p == NULL)
 #endif
+
+		if (p == NULL)
 			p = getpass(pwprompt);
 
 		if (pwd) {
