@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.c,v 1.2 2000/05/07 00:24:33 wiz Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.3 2000/05/07 14:43:32 veego Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.9 2000/02/12 08:49:21 peter Exp */
 
@@ -81,10 +81,6 @@
 #include <dev/bktr/bktr_tuner.h>
 #include <dev/bktr/bktr_card.h>
 #include <dev/bktr/bktr_audio.h>
-#endif
-
-#ifdef __NetBSD__
-static int bootverbose = 1;
 #endif
 
 /* Various defines */
