@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.35 2000/09/28 06:24:48 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.36 2000/09/28 06:29:41 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1296,7 +1296,7 @@ wi_getdef(sc, wreq)
 #if 0
 		error = EIO;
 #else
-#ifdef DIAGNOSTIC
+#ifdef WI_DEBUG
 		printf("%s: wi_getdef: unknown request %d\n",
 		    sc->sc_dev.dv_xname, wreq->wi_type);
 #endif
