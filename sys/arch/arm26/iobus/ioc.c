@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.13 2001/08/19 15:27:44 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.14 2001/08/25 17:59:38 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.13 2001/08/19 15:27:44 bjh21 Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.14 2001/08/25 17:59:38 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -117,13 +117,9 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * IRQ/FIQ: mask out all, leave clearing latched interrupts
 	 * till someone asks.
-	 *
-	 * In fact, the masks will be in this state already.  See
-	 * start.c for details.
 	 */
-	bus_space_write_1(bst, bsh, IOC_IRQMSKA, 0x00);
-	bus_space_write_1(bst, bsh, IOC_IRQMSKB, 0x00);
-	bus_space_write_1(bst, bsh, IOC_FIQMSK,  0x00);
+	ioc_irq_setmask(0);
+	ioc_fiq_setmask(0);
 	/*-
 	 * Timers:
 	 * Timers 0/1 are set up by ioc_initclocks (called by cpu_initclocks).
