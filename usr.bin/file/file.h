@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.12 1998/09/20 15:27:16 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.13 1998/09/30 18:51:13 thorpej Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -48,12 +48,12 @@ struct magic {
 #define ADD	4		/* if '>&' appears,  */
 	short cont_level;	/* level of ">" */
 	struct {
-		char type;	/* byte short long */
+		unsigned char type; /* byte short long */
 		int32 offset;	/* offset from indirection */
 	} in;
 	int32 offset;		/* offset to magic number */
 	unsigned char reln;	/* relation (0=eq, '>'=gt, etc) */
-	char type;		/* int, short, long or string. */
+	unsigned char type;	/* int, short, long or string. */
 	char vallen;		/* length of string value, if any */
 #define 			BYTE	1
 #define				SHORT	2
