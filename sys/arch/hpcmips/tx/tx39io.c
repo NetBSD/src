@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.2 1999/12/07 17:08:11 uch Exp $ */
+/*	$NetBSD: tx39io.c,v 1.3 1999/12/23 16:58:07 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -40,6 +40,7 @@
 
 #define TX39IO_ATTACH_DUMMYHANDLER 0
 #undef TX39IO_MFIOOUTPORT_ON
+#undef TX39IO_MFIOOUTPORT_OFF
 
 int	tx39io_match __P((struct device*, struct cfdata*, void*));
 void	tx39io_attach __P((struct device*, struct device*, void*));
@@ -64,7 +65,7 @@ void	__dump_and_attach_handler __P((tx_chipset_tag_t, u_int32_t, u_int32_t, u_in
 #define STD_OUT		2
 #define STD_INOUT	3
 
-struct {
+const struct {
 	char *std_pin_name;
 	int  std_type;
 } mfio_map[TX39_IO_MFIO_MAX] = {
@@ -297,17 +298,25 @@ __dump_and_attach_handler(tc, reg_dir, reg_out, reg_in, reg_pwr,
 	}
 	
 	if (ISSET(reg_dir, i)) {
-#ifdef TX39IO_MFIOOUTPORT_ON
+#if defined TX39IO_MFIOOUTPORT_ON || defined TX39IO_MFIOOUTPORT_OFF
 		txreg_t reg;
 		if (io) {
 #ifdef TX392X			
 			reg = tx_conf_read(tc, TX39_IODATAINOUT_REG);
+#ifdef TX39IO_MFIOOUTPORT_ON
 			reg |= (1 << (i + 16));
+#else
+			reg &= ~(1 << (i + 16));
+#endif
 			tx_conf_write(tc, TX39_IODATAINOUT_REG, reg);
 #endif /* TX392X */
 		} else {
 			reg = tx_conf_read(tc, TX39_IOMFIODATAOUT_REG);
+#ifdef TX39IO_MFIOOUTPORT_ON
 			reg |= (1 << i);
+#else
+			reg &= ~(1 << i);
+#endif
 			tx_conf_write(tc, TX39_IOMFIODATAOUT_REG, reg);
 		}
 #endif /* TX39IO_MFIOOUTPORT_ON */
