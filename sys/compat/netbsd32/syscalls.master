@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18 2001/02/02 13:01:44 mrg Exp $
+	$NetBSD: syscalls.master,v 1.19 2001/04/10 11:11:17 kleink Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -499,7 +499,7 @@
 304	STD		{ int netbsd32_lchflags(const netbsd32_charp path, netbsd32_u_long flags); }
 305	STD		{ int sys_issetugid(void); }
 306	STD		{ int netbsd32_utrace(const netbsd32_charp label, netbsd32_voidp addr, \
-				netbsd32_size_t len); }
+			    netbsd32_size_t len); }
 ;
 ; Syscalls 307 and 308 are reserved for getcontext and setcontext
 ;
