@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.8 2004/02/11 01:01:37 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.9 2004/02/20 18:11:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.8 2004/02/11 01:01:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.9 2004/02/20 18:11:16 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_execfmt.h"
 #include "opt_user_ldt.h"
 
 #include <sys/param.h>
@@ -80,6 +81,19 @@ static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
 static int check_sigcontext32(const struct netbsd32_sigcontext *,
     struct trapframe *);
 static int check_mcontext32(const mcontext32_t *, struct trapframe *);
+
+#ifdef EXEC_AOUT
+/*
+ * There is no native a.out -- this function is required
+ * for i386 a.out emulation (COMPAT_NETBSD32+EXEC_AOUT).
+ */
+int
+cpu_exec_aout_makecmds(struct proc *p, struct exec_package *e)
+{
+
+	return ENOEXEC;
+}
+#endif
 
 void
 netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
