@@ -33,22 +33,23 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: brk.S,v 1.3 1999/01/14 22:48:22 kleink Exp $"
+	.asciz "$NetBSD: brk.S,v 1.3.10.1 2000/08/22 07:35:44 kleink Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 	.globl	curbrk
 	.globl	___minbrk
-ENTRY(_brk, 0)
-	jbr	ok
 
-ENTRY(brk, 0)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(brk, _brk)
+#endif
+
+ENTRY(_brk, 0)
 	cmpl	4(ap),___minbrk
-	bgeq	ok
+	bgeq	1f
 	movl	___minbrk,4(ap)
-ok:
-	chmk	$ SYS_break
+1:	chmk	$ SYS_break
 	jcs	err
 	movl	4(ap),curbrk
 	clrl	r0
