@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.69 2001/10/30 06:43:55 kml Exp $
+.\"	$NetBSD: sysctl.8,v 1.70 2001/10/30 07:28:22 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -367,11 +367,39 @@ privilege can change the value.
 Entries found under
 .Dq vendor.<vendor>
 are left to be specified (and used) by vendors
-using the NetBSD operating system in their products. 
-Values and structure are vendor-defined, and no registry 
+using the
+.Nx
+operating system in their products.
+Values and structure are vendor-defined, and no registry
 exists right now.
+.Sh FILES
+.Bl -tag -width <netinet6/udp6Xvar.h> -compact
+.It Pa <sys/sysctl.h>
+definitions for top level identifiers, second level kernel and hardware
+identifiers, and user level identifiers
+.It Pa <sys/socket.h>
+definitions for second level network identifiers
+.It Pa <sys/gmon.h>
+definitions for third level profiling identifiers
+.It Pa <uvm/uvm_param.h>
+definitions for second level virtual memory identifiers
+.It Pa <netinet/in.h>
+definitions for third level IPv4/v6 identifiers and
+fourth level IPv4/v6 identifiers
+.It Pa <netinet/icmp_var.h>
+definitions for fourth level ICMP identifiers
+.It Pa <netinet/icmp6.h>
+definitions for fourth level ICMPv6 identifiers
+.It Pa <netinet/tcp_var.h>
+definitions for fourth level TCP identifiers
+.It Pa <netinet/udp_var.h>
+definitions for fourth level UDP identifiers
+.It Pa <netinet6/udp6_var.h>
+definitions for fourth level IPv6 UDP identifiers
+.It Pa <netinet6/ipsec.h>
+definitions for fourth level IPsec identifiers
+.El
 .Sh EXAMPLES
-.Pp
 For example, to retrieve the maximum number of processes allowed
 in the system, one would use the following request:
 .Bd -literal -offset indent -compact
@@ -412,34 +440,6 @@ sysctl -w proc.curproc.corename=/var/tmp/%u/%n.core
 .Ed
 changes the value for the sysctl process itself, and will not have the desired
 effect.
-
-.Sh FILES
-.Bl -tag -width <netinet6/udp6Xvar.h> -compact
-.It Pa <sys/sysctl.h>
-definitions for top level identifiers, second level kernel and hardware
-identifiers, and user level identifiers
-.It Pa <sys/socket.h>
-definitions for second level network identifiers
-.It Pa <sys/gmon.h>
-definitions for third level profiling identifiers
-.It Pa <uvm/uvm_param.h>
-definitions for second level virtual memory identifiers
-.It Pa <netinet/in.h>
-definitions for third level IPv4/v6 identifiers and
-fourth level IPv4/v6 identifiers
-.It Pa <netinet/icmp_var.h>
-definitions for fourth level ICMP identifiers
-.It Pa <netinet/icmp6.h>
-definitions for fourth level ICMPv6 identifiers
-.It Pa <netinet/tcp_var.h>
-definitions for fourth level TCP identifiers
-.It Pa <netinet/udp_var.h>
-definitions for fourth level UDP identifiers
-.It Pa <netinet6/udp6_var.h>
-definitions for fourth level IPv6 UDP identifiers
-.It Pa <netinet6/ipsec.h>
-definitions for fourth level IPsec identifiers
-.El
 .Sh SEE ALSO
 .Xr sysctl 3
 .Sh HISTORY
