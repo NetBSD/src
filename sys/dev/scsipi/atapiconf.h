@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.15 2004/08/04 22:34:01 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.16 2004/08/12 04:31:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_SCSIPI_ATAPICONF_H
+#define _DEV_SCSIPI_ATAPICONF_H
+
 #include <dev/scsipi/scsipiconf.h>
 
 struct atapibus_softc {
@@ -56,3 +59,5 @@ void	atapi_print_addr __P((struct scsipi_periph *));
 int	atapi_interpret_sense __P((struct scsipi_xfer *));
 int	atapi_scsipi_cmd __P((struct scsipi_periph *, struct scsipi_generic *,
 	    int, void *, size_t, int, int, struct buf *, int));
+
+#endif /* _DEV_SCSIPI_ATAPICONF_H */
