@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.15 1997/12/02 11:00:59 jonathan Exp $ */
+/*	$NetBSD: disks.c,v 1.16 1997/12/05 14:01:01 jonathan Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -442,7 +442,11 @@ do_fsck(const char *diskpart)
 	}
 
 	endwin();
+#ifdef	DEBUG_SETS
+	err = run_prog ("/sbin/fsck_ffs %s%s", upgr, raw);
+#else
 	err = run_prog ("/sbin/fsck_ffs -f %s%s", upgr, raw);
+#endif	
 		wrefresh(stdscr);
 	return err;
 }
@@ -554,8 +558,8 @@ fsck_disks (void)
 	}
 
 	/* Check the target /etc/fstab exists before trying to parse it. */
-	if (target_verify_dir("/etc") != 0 || 
-	    target_verify_file("/etc/fstab") != 0) {
+	if (target_dir_exists_p("/etc") == 0 || 
+	    target_file_exists_p("/etc/fstab") == 0) {
 		msg_display(MSG_noetcfstab, diskdev);
 		process_menu(MENU_ok);
 		return 0;
@@ -578,7 +582,9 @@ fsck_disks (void)
 	  	if (fsck_with_error_menu(dev[i]))
 			return 0;
 
+#ifdef DEBUG
 		printf("sysinst: mount %s\n", dev[i]);
+#endif
 		if (target_mount_with_error_menu("", dev[i], mnt[i]) != 0) {
 			return 0;
 		}
