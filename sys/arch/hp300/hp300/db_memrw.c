@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.4 1997/04/27 20:43:39 thorpej Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.5 1997/06/10 18:48:47 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ db_write_text(addr, size, data)
 		/*
 		 * Get the VA for the page.
 		 */
-		pgva = hp300_trunc_page((u_long)dst);
+		pgva = m68k_trunc_page((u_long)dst);
 
 		/*
 		 * Save this destination address, for TLB
