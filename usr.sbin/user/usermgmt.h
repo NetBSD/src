@@ -1,4 +1,4 @@
-/* $NetBSD: usermgmt.h,v 1.5 2001/02/19 23:22:49 cgd Exp $ */
+/* $NetBSD: usermgmt.h,v 1.6 2002/07/09 10:34:44 tron Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,18 +33,18 @@
 #ifndef USERMGMT_H_
 #define USERMGMT_H_
 
-int useradd __P((int, char **));
-int usermod __P((int, char **));
-int userdel __P((int, char **));
-int groupadd __P((int, char **));
-int groupdel __P((int, char **));
-int groupmod __P((int, char **));
+int useradd (int, char **);
+int usermod (int, char **);
+int userdel (int, char **);
+int groupadd (int, char **);
+int groupdel (int, char **);
+int groupmod (int, char **);
 
 #ifdef EXTENSIONS
-int userinfo __P((int, char **));
-int groupinfo __P((int, char **));
+int userinfo (int, char **);
+int groupinfo (int, char **);
 #endif
 
-void usermgmt_usage __P((const char *));
+void usermgmt_usage (const char *);
 
 #endif
