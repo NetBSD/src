@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.11 2000/06/11 09:19:27 veego Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.12 2000/06/11 09:21:16 veego Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ __END_DECLS
 #define LINUX_K_MEDIUMRAW 2
 
 /*
- * VT ioctl calls in Linux (the ones that pcvt can handle)
+ * VT ioctl calls in Linux (the ones that the pcvt emulation in wscons can handle)
  */
 #define LINUX_VT_OPENQRY    0x5600
 #define LINUX_VT_GETMODE    0x5601
