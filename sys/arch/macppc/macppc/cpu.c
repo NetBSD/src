@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 2000/09/12 14:47:38 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13 2000/10/28 21:57:43 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -157,6 +157,8 @@ cpuattach(parent, self, aux)
 		panic("cpuattach");
 	}
 
+	asm ("mfspr %0,1008" : "=r"(hid0));
+
 	/*
 	 * Configure power-saving mode.
 	 */
@@ -164,25 +166,30 @@ cpuattach(parent, self, aux)
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
-		/* Select DOZE mode. */
-		__asm __volatile ("mfspr %0,1008" : "=r"(hid0));
-		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
-		hid0 |= HID0_DOZE | HID0_DPM;
-		__asm __volatile ("mtspr 1008,%0" :: "r"(hid0));
-		powersave = 1;
-		break;
 	case MPC750:
 	case MPC7400:
-		/* Select NAP mode. */
-		__asm __volatile ("mfspr %0,1008" : "=r"(hid0));
+		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
-		hid0 |= HID0_NAP | HID0_DPM;
-		__asm __volatile ("mtspr 1008,%0" :: "r"(hid0));
+		hid0 |= HID0_DOZE | HID0_DPM;
 		powersave = 1;
 		break;
+
 	default:
 		/* No power-saving mode is available. */
 	}
+
+#ifdef NAPMODE
+	switch (vers) {
+	case MPC750:
+	case MPC7400:
+		/* Select NAP mode. */
+		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
+		hid0 |= HID0_NAP;
+		break;
+	}
+#endif
+
+	asm volatile ("mtspr 1008,%0" :: "r"(hid0));
 
 	/*
 	 * Display cache configuration.
