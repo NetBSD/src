@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tip.1	6.8 (Berkeley) 7/27/91
-.\"	$Id: tip.1,v 1.5 1994/01/11 18:49:28 jtc Exp $
+.\"	$Id: tip.1,v 1.6 1994/09/19 12:26:18 mycroft Exp $
 .\"
 .Dd July 27, 1991
 .Dt TIP 1
@@ -405,7 +405,7 @@ and
 .Ev ${PHONES}
 are also exported.
 .Sh FILES
-.Bl -tag -width /var/spool/uucp/LCK..* -compact
+.Bl -tag -width /var/spool/lock/LCK..* -compact
 .It Pa /etc/remote
 Global system descriptions.
 .It Pa /etc/phones
@@ -420,7 +420,7 @@ Initialization file.
 Record file.
 .It /var/log/aculog
 Line access log.
-.It Pa /var/spool/uucp/LCK..*
+.It Pa /var/spool/lock/LCK..*
 Lock file to avoid conflicts with
 .Xr uucp .
 .El
