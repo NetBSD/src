@@ -1566,10 +1566,10 @@ dtors_section()							\
 }
 
 #define ASM_OUTPUT_REG_PUSH(file, v) \
-  fprintf ((file), "\tmov.l\tr%s,-@r15\n", (v));
+  fprintf ((file), "\tmov.l\tr%d,@-r15\n", (v));
 
 #define ASM_OUTPUT_REG_POP(file, v) \
-  fprintf ((file), "\tmov.l\t@r15+,r%s\n", (v));
+  fprintf ((file), "\tmov.l\t@r15+,r%d\n", (v));
 
 /* The assembler's names for the registers.  RFP need not always be used as
    the Real framepointer; it can also be used as a normal general register.
