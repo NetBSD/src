@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: getdate.y,v 1.4 1997/10/18 08:40:46 lukem Exp $	*/
+/*	$NetBSD: getdate.y,v 1.5 2000/11/19 11:15:01 mrg Exp $	*/
 
 /*
 **
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getdate.y,v 1.4 1997/10/18 08:40:46 lukem Exp $");
+__RCSID("$NetBSD: getdate.y,v 1.5 2000/11/19 11:15:01 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -88,16 +88,16 @@ static time_t	yyRelMonth;
 static time_t	yyRelSeconds;
 
 /* Prototyes for local functions. */
-static	int yyerror __P((const char *));
-static	time_t ToSeconds __P((time_t, time_t, time_t, MERIDIAN));
-static	time_t Convert __P((time_t, time_t, time_t, time_t, time_t, time_t,
-	    MERIDIAN, DSTMODE));
-static	time_t DSTcorrect __P((time_t, time_t));
-static	time_t RelativeDate __P((time_t, time_t, time_t));
-static	time_t RelativeMonth __P((time_t, time_t));
-static	int LookupWord __P((char *));
-static	int yylex __P((void));
-static	int yyparse __P((void));
+static	int yyerror (const char *);
+static	time_t ToSeconds (time_t, time_t, time_t, MERIDIAN);
+static	time_t Convert (time_t, time_t, time_t, time_t, time_t, time_t,
+	    MERIDIAN, DSTMODE);
+static	time_t DSTcorrect (time_t, time_t);
+static	time_t RelativeDate (time_t, time_t, time_t);
+static	time_t RelativeMonth (time_t, time_t);
+static	int LookupWord (char *);
+static	int yylex (void);
+static	int yyparse (void);
 
 %}
 
