@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.27 1999/03/16 01:19:56 mycroft Exp $
+.\"	$NetBSD: doc-common,v 1.28 1999/03/23 06:44:39 mycroft Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -298,7 +298,7 @@
 ..
 .de Pp
 .sp \\n(Ppu
-.ne 2
+.if !\\n(cR .ne 2
 .ns
 ..
 .de Lp
@@ -321,7 +321,7 @@
 ..
 .de Ss
 .sp
-.ne 3
+.if !\\n(cR .ne 3
 .ti -.25i
 \&\\*(sH\\$1 \|\\$2 \|\\$3 \|\\$4 \|\\$5 \|\\$6 \|\\$7 \|\\$8 \|\\$9
 \&\fP\s0
