@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.20.2.1 1999/06/08 06:34:28 scottr Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.20.2.2 1999/11/02 06:46:12 scottr Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -238,7 +238,8 @@ snsetup(sc, lladdr)
 #ifdef SNDEBUG
 	camdump(sc);
 #endif
-	printf(" address %s\n", ether_sprintf(lladdr));
+	printf("%s: Ethernet address %s\n",
+	    sc->sc_dev.dv_xname, ether_sprintf(lladdr));
 
 #ifdef SNDEBUG
 	printf("%s: buffers: rra=%p cda=%p rda=%p tda=%p\n",

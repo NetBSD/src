@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.14 1999/02/11 06:41:08 ender Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.14.2.1 1999/11/02 06:46:12 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -84,7 +84,8 @@ void	extdms_complete __P((void));
 #define ADB_HW_IISI		0x2	/* Mac IIsi series */
 #define ADB_HW_PB		0x3	/* PowerBook series */
 #define ADB_HW_CUDA		0x4	/* Machines with a Cuda chip */
-#define	MAX_ADB_HW		4	/* Number of ADB hardware types */
+#define ADB_HW_IOP		0x5	/* Machines with an IOP */
+#define	MAX_ADB_HW		5	/* Number of ADB hardware types */
 
 #ifndef MRG_ADB
 /* adb_direct.c */
