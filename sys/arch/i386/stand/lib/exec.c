@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.19 2003/08/07 16:28:03 agc Exp $	 */
+/*	$NetBSD: exec.c,v 1.20 2003/11/10 08:51:52 wiz Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -180,7 +180,7 @@ exec_netbsd(file, loadaddr, boothowto)
 		/*
 		 * We now have done our last DOS IO, so we may
 		 * trash the OS. Copy the data from the temporary
-		 * buffer to its real adress.
+		 * buffer to its real address.
 		 */
 		marks[MARK_START] -= loadaddr;
 		marks[MARK_END] -= loadaddr;

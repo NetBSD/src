@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.14 2003/08/07 16:26:29 agc Exp $	*/
+/*	$NetBSD: esc.c,v 1.15 2003/11/10 08:51:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.14 2003/08/07 16:26:29 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.15 2003/11/10 08:51:51 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1370,7 +1370,7 @@ esc_postaction(dev, rp, nexus)
 			dev->sc_dma_len = dev->sc_dma_blk_len;
 		  }
 
-		  /* Load DMA with adress and length of transfer. */
+		  /* Load DMA with address and length of transfer. */
 		  dev->sc_setup_dma(dev, (void *)dev->sc_dma_buf,
 		  		    dev->sc_dma_len,
 				    ((nexus->state == ESC_NS_DATA_OUT) ?
