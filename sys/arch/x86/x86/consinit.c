@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1 2003/02/27 01:49:05 fvdl Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2 2003/03/02 18:27:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1 2003/02/27 01:49:05 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2 2003/03/02 18:27:14 fvdl Exp $");
 
 #include "opt_kgdb.h"
 
@@ -63,7 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1 2003/02/27 01:49:05 fvdl Exp $");
 #endif
 #include "pckbd.h" /* for pckbc_machdep_cnattach */
 
+#ifndef __x86_64__
 #include "pc.h"
+#endif
 #if (NPC > 0)
 #include <machine/pccons.h>
 #endif
