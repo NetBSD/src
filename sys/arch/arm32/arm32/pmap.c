@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 1998/07/06 02:40:43 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 1998/07/07 01:18:47 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -2006,10 +2006,8 @@ pmap_nightmare(pmap, pv, va, prot)
 		}
 	}
 	if (entries > 1) {
-#ifdef PORTMASTER
 /*		printf("pmap_nightmare: e=%d w=%d p=%d c=%d va=%lx [",
 		    entries, writeable, (prot & VM_PROT_WRITE), cacheable, va);*/
-#endif
 		for (npv = pv; npv; npv = npv->pv_next) {
 			/* Count mappings in the same pmap */
 			if (pmap == npv->pv_pmap) {
@@ -2031,11 +2029,9 @@ pmap_nightmare(pmap, pv, va, prot)
 	} else {
 		if ((prot & VM_PROT_WRITE) == 0)
 			cacheable = PT_C;
-#ifdef PORTMASTER
 /*		if (cacheable == 0)
 			printf("pmap_nightmare: w=%d p=%d va=%lx c=%d\n",
 			    writeable, (prot & VM_PROT_WRITE), va, cacheable);*/
-#endif
 	}
 	return(cacheable);
 }
@@ -2071,10 +2067,8 @@ pmap_nightmare1(pmap, pv, va, prot, cacheable)
 		}
 	}
 	if (entries > 1) {
-#ifdef PORTMASTER
 /*		printf("pmap_nightmare1: e=%d w=%d p=%d c=%d va=%lx [",
 		    entries, writeable, (prot & VM_PROT_WRITE), cacheable, va);*/
-#endif
 		for (npv = pv; npv; npv = npv->pv_next) {
 			/* Count mappings in the same pmap */
 			if (pmap == npv->pv_pmap) {
@@ -2275,7 +2269,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 		}
 	} else {
 		/* pte is not valid so we must be hooking in a new page */
-		cpu_cache_purgeID_rng(va, NBPG);
 
 		++pmap->pm_stats.resident_count;
 		if (wired)
