@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.13 2001/07/08 17:58:29 thorpej Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.14 2001/11/13 07:56:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.14 2001/11/13 07:56:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isapnp.c,v 1.5 1999/03/22 10:00:10 mycroft Exp $	*/
+/*	$NetBSD: aic_isapnp.c,v 1.6 2001/11/13 07:56:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic_isapnp.c,v 1.6 2001/11/13 07:56:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

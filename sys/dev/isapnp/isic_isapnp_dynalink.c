@@ -33,7 +33,7 @@
  *	isdn4bsd layer1 driver for Dynalink IS64PH isdn TA
  *	==================================================
  *
- *	$Id: isic_isapnp_dynalink.c,v 1.2 2001/02/20 22:24:39 martin Exp $
+ *	$Id: isic_isapnp_dynalink.c,v 1.3 2001/11/13 07:56:42 lukem Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -73,6 +73,9 @@
 
 	This driver might also work for Asuscom cards.
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.3 2001/11/13 07:56:42 lukem Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DYNALINK
