@@ -1,6 +1,4 @@
-/*
- *	$Id: psl.h,v 1.3 1994/02/04 08:20:05 glass Exp $
- */
+/*	$NetBSD: psl.h,v 1.4 1994/10/26 09:11:07 cgd Exp $	*/
 
 /* Just use the common m68k definition */
 #include <m68k/psl.h>

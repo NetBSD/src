@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.s,v 1.8 1994/10/26 09:13:17 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
@@ -38,8 +40,7 @@
  *
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
- *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp
+ *	@(#)locore.s	7.11 (Berkeley) 5/9/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: genassym.c,v 1.22 1994/10/26 09:12:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass, Gordon Ross
  * Copyright (c) 1982, 1990, 1993
@@ -31,9 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
- *	from: genassym.c,v 1.9 1994/05/23 06:14:19 mycroft
- *	$Id: genassym.c,v 1.21 1994/09/20 16:53:40 gwr Exp $
+ *	@(#)genassym.c	8.3 (Berkeley) 1/4/94
  */
 
 #define KERNEL

@@ -1,3 +1,5 @@
+/*	$NetBSD: ms.c,v 1.2 1994/10/26 09:09:10 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +43,7 @@
  *
  *	@(#)ms.c	8.1 (Berkeley) 6/11/93
  *
- * from: Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
- * $Id: ms.c,v 1.1 1994/02/23 08:28:49 glass Exp $
+ * Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
  */
 
 /*

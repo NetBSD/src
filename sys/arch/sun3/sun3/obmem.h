@@ -1,3 +1,5 @@
+/*	$NetBSD: obmem.h,v 1.4 1994/10/26 09:10:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/obmem.h,v 1.3 1994/02/04 08:20:03 glass Exp $
  */
 
 /* put something in here about framebuffers... */

@@ -1,3 +1,5 @@
+/*	$NetBSD: prom.c,v 1.13 1994/10/26 09:09:19 cgd Exp $	*/
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>

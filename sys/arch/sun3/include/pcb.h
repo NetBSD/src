@@ -1,3 +1,5 @@
+/*	$NetBSD: pcb.h,v 1.7 1994/10/26 09:10:56 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
@@ -37,8 +39,7 @@
  * SUCH DAMAGE.
  *
  *	from: Utah Hdr: pcb.h 1.14 91/03/25
- *	from: @(#)pcb.h	8.1 (Berkeley) 6/10/93
- *	$Id: pcb.h,v 1.6 1994/05/27 14:55:24 gwr Exp $
+ *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
 #include <machine/frame.h>

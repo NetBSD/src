@@ -1,3 +1,5 @@
+/*	$NetBSD: pte.h,v 1.7 1994/10/26 09:11:10 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
@@ -27,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Header: /cvsroot/src/sys/arch/sun3/include/pte.h,v 1.6 1994/05/27 14:55:26 gwr Exp $
  */
 
 #ifndef _MACHINE_PTE_H

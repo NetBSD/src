@@ -1,6 +1,4 @@
-/*
- *	$Id: ansi.h,v 1.3 1994/02/04 08:19:48 glass Exp $
- */
+/*	$NetBSD: ansi.h,v 1.4 1994/10/26 09:09:52 cgd Exp $	*/
 
 /* Just use the common m68k definition */
 #include <m68k/ansi.h>
