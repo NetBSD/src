@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  * from:@(#)types.h	7.2 (Berkeley) 7/14/92
- * $Id: types.h,v 1.1.1.1 1993/10/12 03:22:42 deraadt Exp $
+ * $Id: types.h,v 1.2 1994/03/14 02:12:06 cgd Exp $
  */
 
 #ifndef	_MACHTYPES_H_
@@ -51,7 +51,7 @@ typedef struct label_t {
 typedef	u_long	vm_offset_t;
 typedef	u_long	vm_size_t;
 
-#ifdef	__GNUC__
+#ifdef	__GNUC__	/* XXX SHOULD GO AWAY */
 typedef	char			s1byte_t;	/* Basic data types. */
 typedef	unsigned char		u1byte_t;
 typedef	short			s2byte_t;
@@ -63,5 +63,18 @@ typedef	unsigned long long	u8byte_t;
 typedef	float			f4byte_t;
 typedef	double			f8byte_t;
 #endif
+
+/*
+ * Basic integral types.  Omit the typedef if
+ * not possible for a machine/compiler combination.
+ */
+typedef	signed char		   int8_t;
+typedef	unsigned char		 u_int8_t;
+typedef	short			  int16_t;
+typedef	unsigned short		u_int16_t;
+typedef	int			  int32_t;
+typedef	unsigned int		u_int32_t;
+typedef	long long		  int64_t;
+typedef	unsigned long long	u_int64_t;
 
 #endif	/* _MACHTYPES_H_ */
