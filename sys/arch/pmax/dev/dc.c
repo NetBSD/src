@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.16.4.3 1996/06/13 08:03:01 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.16.4.4 1996/06/13 22:47:07 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -216,7 +216,7 @@ dcmatch(parent, match, aux)
 #if NTC > 0
 	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		if (strcmp(d->iada_modname, "dc") != 0 &&
-		    strcmp(d->iada_modname, "dc7085") == 0)
+		    strcmp(d->iada_modname, "dc7085") != 0)
 			return (0);
 	}
 	else
@@ -228,6 +228,8 @@ dcmatch(parent, match, aux)
 		    strcmp(ca->ca_name, "dc7085") != 0)
 			return (0);
 	}
+	else
+		return (0);
 
 	/*
 	 * Use statically-allocated softc and attach code until
