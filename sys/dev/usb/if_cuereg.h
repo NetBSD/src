@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.9 2000/03/24 22:13:24 augustss Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.10 2000/03/29 18:24:52 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -167,7 +167,7 @@ struct cue_cdata {
 struct cue_softc {
 	USBBASEDEVICE		cue_dev;
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 	struct arpcom		arpcom;
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)
 #elif defined(__NetBSD__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.9 2000/03/24 22:13:23 augustss Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.10 2000/03/29 18:24:52 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -241,6 +241,13 @@ struct aue_softc {
 #endif
 #define GET_IFP(sc) (&(sc)->aue_ec.ec_if)
 #define GET_MII(sc) (&(sc)->aue_mii)
+#elif defined(__OpenBSD__)
+	struct arpcom		arpcom;
+	struct mii_data		aue_mii;
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
+#define GET_IFP(sc) (&(sc)->arpcom.ac_if)
 #endif
 
 	usb_callout_t		aue_stat_ch;

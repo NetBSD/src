@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.42 2000/03/27 12:33:57 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.43 2000/03/29 18:24:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -249,7 +249,7 @@ USB_ATTACH(usb)
 		sc->sc_bus->use_polling--;
 
 	config_pending_incr();
-	kthread_create(usb_create_event_thread, sc);
+	usb_kthread_create(usb_create_event_thread, sc);
 
 #if defined(__FreeBSD__)
 	make_dev(&usb_cdevsw, device_get_unit(self), UID_ROOT, GID_OPERATOR,
@@ -266,7 +266,7 @@ usb_create_event_thread(arg)
 {
 	struct usb_softc *sc = arg;
 
-	if (kthread_create1(usb_event_thread, sc, &sc->sc_event_thread,
+	if (usb_kthread_create1(usb_event_thread, sc, &sc->sc_event_thread,
 			   "%s", sc->sc_dev.dv_xname)) {
 		printf("%s: unable to create event thread for\n",
 		       sc->sc_dev.dv_xname);
