@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.25 1996/02/18 11:53:51 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.26 1996/03/13 00:44:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1796,6 +1796,7 @@ void
 nfs_invaldir(vp)
 	register struct vnode *vp;
 {
+#ifdef notdef /* XXX */
 	register struct nfsnode *np = VTONFS(vp);
 
 #ifdef DIAGNOSTIC
@@ -1807,6 +1808,7 @@ nfs_invaldir(vp)
 	np->n_cookieverf.nfsuquad[1] = 0;
 	if (np->n_cookies.lh_first)
 		np->n_cookies.lh_first->ndm_eocookie = 0;
+#endif
 }
 
 /*
