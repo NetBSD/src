@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_m68k.c,v 1.1 1994/05/09 04:09:24 cgd Exp $";
+static char *rcsid = "$Id: kvm_m68k.c,v 1.2 1994/09/18 03:32:51 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -71,7 +71,7 @@ static char *rcsid = "$Id: kvm_m68k.c,v 1.1 1994/05/09 04:09:24 cgd Exp $";
 struct vmstate {
 	u_long lowram;
 	int mmutype;
-	struct ste *Sysseg;
+	st_entry_t *Sysseg;
 };
 
 #define KREAD(kd, addr, p)\
@@ -98,7 +98,11 @@ _kvm_initvtop(kd)
 	kd->vmst = vm;
 
 	nlist[0].n_name = "_lowram";
+#if defined(amiga) || defined(mac68k)
+	nlist[1].n_name = "_cpu040";
+#else
 	nlist[1].n_name = "_mmutype";
+#endif
 	nlist[2].n_name = "_Sysseg";
 	nlist[3].n_name = 0;
 
@@ -125,7 +129,7 @@ _kvm_initvtop(kd)
 static int
 _kvm_vatop(kd, sta, va, pa)
 	kvm_t *kd;
-	struct ste *sta;
+	st_entry_t *sta;
 	u_long va;
 	u_long *pa;
 {
@@ -150,8 +154,11 @@ _kvm_vatop(kd, sta, va, pa)
 		return (NBPG - offset);
 	}
 	lowram = vm->lowram;
+#if defined(amiga) || defined(mac68k)
+	{ int cpu040 = vm->mmutype;
+#else
 	if (vm->mmutype == -2) {
-		struct ste *sta2;
+		st_entry_t *sta2;
 
 		addr = (u_long)&sta[va >> SG4_SHIFT1];
 		/*
@@ -169,7 +176,7 @@ _kvm_vatop(kd, sta, va, pa)
 				 ste);
 			return((off_t)0);
 		}
-		sta2 = (struct ste *)(ste & SG4_ADDR1);
+		sta2 = (st_entry_t *)(ste & SG4_ADDR1);
 		addr = (u_long)&sta2[(va & SG4_MASK2) >> SG4_SHIFT2];
 		/*
 		 * Address from level 1 STE is a physical address,
@@ -183,9 +190,10 @@ _kvm_vatop(kd, sta, va, pa)
 				 ste);
 			return((off_t)0);
 		}
-		sta2 = (struct ste *)(ste & SG4_ADDR2);
+		sta2 = (st_entry_t *)(ste & SG4_ADDR2);
 		addr = (u_long)&sta2[(va & SG4_MASK3) >> SG4_SHIFT3];
 	} else {
+#endif
 		addr = (u_long)&sta[va >> SEGSHIFT];
 		/*
 		 * Can't use KREAD to read kernel segment table entries.
@@ -202,7 +210,7 @@ _kvm_vatop(kd, sta, va, pa)
 			return((off_t)0);
 		}
 		p = btop(va & SG_PMASK);
-		addr = (ste & SG_FRAME) + (p * sizeof(struct pte));
+		addr = (ste & SG_FRAME) + (p * sizeof(pt_entry_t));
 	}
 	/*
 	 * Address from STE is a physical address so don't use kvm_read.
@@ -252,7 +260,7 @@ _kvm_uvatop(kd, p, va, pa)
 	 * the MMU type.
 	 */
 	if (ISALIVE(kd)) {
-		struct pte *ptab;
+		pt_entry_t *ptab;
 		int pte, offset;
 
 		kva = (int)&vms->vm_pmap.pm_ptab;

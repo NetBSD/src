@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.7 1994/07/28 21:46:34 gwr Exp $
+#	$Id: Makefile,v 1.8 1994/09/18 03:32:50 mycroft Exp $
 
 LIB=	kvm
 CFLAGS+=-DLIBC_SCCS
@@ -10,12 +10,7 @@ SRCS=	kvm_${MACHINE}.c
 .else
 # Less specific name (i.e. m68k)
 CFLAGS+=-D${MACHINE}
-# XXX - Should merge m68k versions...
-.if	(${MACHINE_ARCH} == "m68k")
-SRCS=	kvm_o${MACHINE_ARCH}.c
-.else
 SRCS=	kvm_${MACHINE_ARCH}.c
-.endif
 .endif
 
 SRCS+=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
