@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.45 2002/04/12 17:37:30 manu Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.45.4.1 2004/12/16 05:11:35 jmc Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.45 2002/04/12 17:37:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.45.4.1 2004/12/16 05:11:35 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ svr4_sys_sigaction(p, v, retval)
 			return (error);
 		svr4_to_native_sigaction(&nssa, &nbsa);
 	}
-	error = sigaction1(p, svr4_to_native_signo[SCARG(uap, signum)],
+	error = sigaction1(p, svr4_to_native_signo[SVR4_SIGNO(SCARG(uap, signum))],
 	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
 	if (error)
 		return (error);
@@ -472,7 +472,7 @@ svr4_sys_kill(p, v, retval)
 	struct sys_kill_args ka;
 
 	SCARG(&ka, pid) = SCARG(uap, pid);
-	SCARG(&ka, signum) = svr4_to_native_signo[SCARG(uap, signum)];
+	SCARG(&ka, signum) = svr4_to_native_signo[SVR4_SIGNO(SCARG(uap, signum))];
 	return sys_kill(p, &ka, retval);
 }
 
