@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.428 2002/05/18 07:19:42 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.429 2002/05/19 00:01:29 sommerfeld Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.425 2002/05/18 07:19:16 matt Exp 
+ *	NetBSD: pcidevs,v 1.426 2002/05/18 23:58:00 sommerfeld Exp 
  */
 
 /*
@@ -3460,6 +3460,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82439HX System Controller (TXC)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_IOxAPIC,
+	    0,
+	    "Intel",
+	    "82870P2 P64H2 IOxAPIC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP,
 	    0,
 	    "Intel",
@@ -3722,6 +3728,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82820 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_PPB,
+	    0,
+	    "Intel",
+	    "82870P2 P64H2 PCI-to-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_IOxAPIC,
+	    0,
+	    "Intel",
+	    "82870P2 P64H2 IOxAPIC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_HPLUG,
+	    0,
+	    "Intel",
+	    "82870P2 P64H2 Hot Plug Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
