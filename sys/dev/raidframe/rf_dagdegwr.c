@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.5 2000/01/07 03:40:57 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.6 2001/01/26 04:05:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -511,7 +511,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
   pda_p->numSector = num; \
   pda_p->next = NULL; \
   RF_MallocAndAdd(pda_p->bufPtr,rf_RaidAddressToByte(raidPtr,num),(char *), allocList)
-
+#if (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_EVENODD > 0)
 void 
 rf_WriteGenerateFailedAccessASMs(
     RF_Raid_t * raidPtr,
@@ -840,3 +840,4 @@ rf_DoubleDegSmallWrite(
 		DISK_NODE_PARAMS(wqNodes[1], pda);
 	}
 }
+#endif   /* (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_EVENODD > 0) */
