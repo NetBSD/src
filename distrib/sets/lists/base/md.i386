@@ -1,5 +1,13 @@
 ./sbin/fdisk
+./usr/bin/cursor
 ./usr/bin/fdformat
+./usr/bin/fontedit
+./usr/bin/kcon
+./usr/bin/loadfont
+./usr/bin/mcon
+./usr/bin/scon
+./usr/bin/vt220keys
+./usr/bin/vttest
 ./usr/lib/libamu.so.0.0
 ./usr/lib/libbfd.so.0.0
 ./usr/lib/libc.so.12.20
@@ -9,6 +17,7 @@
 ./usr/lib/libg++.so.4.0
 ./usr/lib/libgnumalloc.so.0.0
 ./usr/lib/libi386.so.0.2
+./usr/lib/libkeycap.so.0.0
 ./usr/lib/libkvm.so.4.0
 ./usr/lib/libm.so.0.1
 ./usr/lib/libntp.so.0.0
@@ -41,4 +50,14 @@
 ./usr/sbin/apm
 ./usr/sbin/apmd
 ./usr/sbin/bad144
+./usr/sbin/ispcvt
 ./usr/sbin/zzz
+./usr/share/pcvt/fonts/vt220h.808
+./usr/share/pcvt/fonts/vt220h.810
+./usr/share/pcvt/fonts/vt220h.814
+./usr/share/pcvt/fonts/vt220h.816
+./usr/share/pcvt/fonts/vt220l.808
+./usr/share/pcvt/fonts/vt220l.810
+./usr/share/pcvt/fonts/vt220l.814
+./usr/share/pcvt/fonts/vt220l.816
+./usr/share/pcvt/keycap.pcvt
