@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122 2001/04/22 18:21:50 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.123 2001/04/22 23:42:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2001/04/22 18:21:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2001/04/22 23:42:15 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1339,20 +1339,6 @@ pmap_kenter_pa(va, pa, prot)
 	vm_prot_t prot;
 {
 	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
-}
-
-void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i;
-
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-	}
 }
 
 void
