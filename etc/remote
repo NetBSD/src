@@ -1,4 +1,4 @@
-#	$NetBSD: remote,v 1.6 1997/02/15 10:02:27 mikel Exp $
+#	$NetBSD: remote,v 1.7 1997/04/24 00:35:47 mellon Exp $
 #	from: @(#)remote	8.1 (Berkeley) 6/10/93
 #
 # remote -- remote host description file
@@ -16,6 +16,8 @@
 # br	baud rate (defaults to 300)
 # fs	frame size (default is BUFSIZ) -- used in buffering writes on
 #	receive operations
+# dc	direct connect -- the remote system is hardwired to a tty and
+#	doesn't set Carrier Detect.
 # tc	to continue a capability
 
 # UNIX system definitions
@@ -32,5 +34,7 @@ dial1200|1200 Baud Hayes attributes:\
         :dv=/dev/tty00:br#1200:cu=/dev/tty00:at=hayes:du:
 
 # Hardwired line
+com0c|com0:dv=/dev/tty00:br#9600:dc:
+com0b:dv=/dev/tty00:br#2400:dc:
 # REMEMBER NOT TO USE PARITY!
-console:dv=/dev/tty01:br#9600:pa=none:
+console:dv=/dev/tty01:br#9600:pa=none:dc:
