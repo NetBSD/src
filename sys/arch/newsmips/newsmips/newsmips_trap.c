@@ -1,4 +1,4 @@
-/*	$NetBSD: newsmips_trap.c,v 1.5 1998/06/25 21:19:16 thorpej Exp $	*/
+/*	$NetBSD: newsmips_trap.c,v 1.6 1999/10/17 15:06:46 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,12 +77,11 @@ void dma_intr __P((void));
 void print_int_stat __P((char *));
 void exec_hb_intr2 __P((void));
 void exec_hb_intr4 __P((void));
+void news3400_errintr __P((u_int));
 
 extern int leintr __P((int));
 extern int sc_intr __P((void));
 extern void kbm_rint __P((int));
-
-extern u_int intrcnt[];
 
 static int badaddr_flag;
 
@@ -131,10 +130,9 @@ news3400_intr(mask, pc, statusReg, causeReg)
 	splx(MIPS_SR_INT_ENA_CUR | (statusReg & MIPS_INT_MASK_2));
 
 	if (mask & MIPS_INT_MASK_5) {		/* level 5 interrupt */
-		printf("level 5 interrupt: PC %x CR %x SR %x\n",
-			pc, causeReg, statusReg);
-		/* causeReg &= ~MIPS_INT_MASK_5; */
-		/* panic("level 5 interrupt"); */
+		*(char *)INTCLR0 = INTCLR0_PERR;
+		news3400_errintr(pc);
+		causeReg &= ~MIPS_INT_MASK_5;
 	}
 	if (mask & MIPS_INT_MASK_4) {		/* level 4 interrupt */
 		/*
@@ -157,13 +155,12 @@ news3400_intr(mask, pc, statusReg, causeReg)
 		MIPS_SR_INT_ENA_CUR);
 }
 
-#ifdef notyet
-static void
-news3400_errintr()
+void
+news3400_errintr(pc)
+	u_int pc;
 {
-	panic("Memory error interrupt");
+	printf("Memory error interrupt(?) at 0x%x\n", pc);
 }
-#endif
 
 #include <newsmips/dev/dmac_0448.h>
 
@@ -359,4 +356,28 @@ void
 exec_hb_intr4()
 {
 	printf("stray hb interrupt level 4\n");
+}
+
+int
+news3400_badaddr(addr, size)
+	void *addr;
+	u_int size;
+{
+	volatile int x;
+
+	badaddr_flag = 0;
+
+	switch (size) {
+	case 1:
+		x = *(volatile int8_t *)addr;
+		break;
+	case 2:
+		x = *(volatile int16_t *)addr;
+		break;
+	case 4:
+		x = *(volatile int32_t *)addr;
+		break;
+	}
+
+	return badaddr_flag;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 1998/10/06 20:50:17 thorpej Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.4 1999/10/17 15:06:45 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -49,4 +49,5 @@ struct confargs {
 /* Locator aliases */
 #define cf_addr	cf_loc[0]
 
-int	badaddr __P((void *, u_int));
+int news3400_badaddr __P((void *, u_int));
+#define badaddr news3400_badaddr
