@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.19 2002/06/11 05:33:51 itojun Exp $ */
+/* $NetBSD: chio.c,v 1.20 2003/08/04 22:31:21 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.19 2002/06/11 05:33:51 itojun Exp $");
+__RCSID("$NetBSD: chio.c,v 1.20 2003/08/04 22:31:21 jschauma Exp $");
 #endif
 
 #include <sys/param.h>
@@ -63,9 +63,12 @@ __RCSID("$NetBSD: chio.c,v 1.19 2002/06/11 05:33:51 itojun Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include "defs.h"
 #include "pathnames.h"
+
+int stdout_ok;
 
 int main(int, char *[]);
 static void usage(void);
@@ -75,6 +78,7 @@ static int parse_element_unit(const char *);
 static int parse_special(const char *);
 static int is_special(const char *);
 static const char *bits_to_string(int, const char *);
+char *printescaped(const char *);
 
 static int do_move(const char *, int, char **);
 static int do_exchange(const char *, int, char **);
@@ -154,6 +158,7 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -161,6 +166,9 @@ main(int argc, char *argv[])
 
 	if (argc == 0)
 		usage();
+		/* NOTREACHED */
+
+	stdout_ok = isatty(STDOUT_FILENO);
 
 	/* Get the default changer if not already specified. */
 	if (changer_name == NULL)
@@ -169,18 +177,21 @@ main(int argc, char *argv[])
 
 	/* Open the changer device. */
 	if ((changer_fd = open(changer_name, O_RDWR, 0600)) == -1)
-		err(1, "%s: open", changer_name);
+		err(EXIT_FAILURE, "%s: open", printescaped(changer_name));
+		/* NOTREACHED */
 
 	/* Register cleanup function. */
 	if (atexit(cleanup))
-		err(1, "can't register cleanup function");
+		err(EXIT_FAILURE, "can't register cleanup function");
+		/* NOTREACHED */
 
 	/* Find the specified command. */
 	for (i = 0; commands[i].cc_name != NULL; ++i)
 		if (strcmp(*argv, commands[i].cc_name) == 0)
 			break;
 	if (commands[i].cc_name == NULL)
-		errx(1, "unknown command: %s", *argv);
+		errx(EXIT_FAILURE, "unknown command: %s", *argv);
+		/* NOTREACHED */
 
 	/* Skip over the command name and call handler. */
 	++argv; --argc;
@@ -204,9 +215,11 @@ do_move(const char *cname, int argc, char **argv)
 	if (argc < 4) {
 		warnx("%s: too few arguments", cname);
 		usage();
+		/*NOTREACHED*/
 	} else if (argc > 5) {
 		warnx("%s: too many arguments", cname);
 		usage();
+		/*NOTREACHED*/
 	}
 	(void)memset(&cmd, 0, sizeof(cmd));
 
@@ -234,7 +247,7 @@ do_move(const char *cname, int argc, char **argv)
 			cmd.cm_flags |= CM_INVERT;
 			break;
 		default:
-			errx(1, "%s: inappropriate modifier `%s'",
+			errx(EXIT_FAILURE, "%s: inappropriate modifier `%s'",
 			    cname, *argv);
 			/* NOTREACHED */
 		}
@@ -242,7 +255,8 @@ do_move(const char *cname, int argc, char **argv)
 
 	/* Send command to changer. */
 	if (ioctl(changer_fd, CHIOMOVE, &cmd))
-		err(1, "%s: CHIOMOVE", changer_name);
+		err(EXIT_FAILURE, "%s: CHIOMOVE", printescaped(changer_name));
+		/* NOTREACHED */
 
 	return (0);
 }
@@ -263,9 +277,11 @@ do_exchange(const char *cname, int argc, char **argv)
 	if (argc < 4) {
 		warnx("%s: too few arguments", cname);
 		usage();
+		/*NOTREACHED*/
 	} else if (argc > 8) {
 		warnx("%s: too many arguments", cname);
 		usage();
+		/*NOTREACHED*/
 	}
 	(void)memset(&cmd, 0, sizeof(cmd));
 
@@ -317,7 +333,7 @@ do_exchange(const char *cname, int argc, char **argv)
 			cmd.ce_flags |= CE_INVERT2;
 			break;
 		default:
-			errx(1, "%s: inappropriate modifier `%s'",
+			errx(EXIT_FAILURE, "%s: inappropriate modifier `%s'",
 			    cname, *argv);
 			/* NOTREACHED */
 		}
@@ -325,7 +341,8 @@ do_exchange(const char *cname, int argc, char **argv)
 
 	/* Send command to changer. */
 	if (ioctl(changer_fd, CHIOEXCHANGE, &cmd))
-		err(1, "%s: CHIOEXCHANGE", changer_name);
+		err(EXIT_FAILURE, "%s: CHIOEXCHANGE", printescaped(changer_name));
+		/* NOTREACHED */
 
 	return (0);
 }
@@ -346,9 +363,11 @@ do_position(const char *cname, int argc, char **argv)
 	if (argc < 2) {
 		warnx("%s: too few arguments", cname);
 		usage();
+		/*NOTREACHED*/
 	} else if (argc > 3) {
 		warnx("%s: too many arguments", cname);
 		usage();
+		/*NOTREACHED*/
 	}
 	(void)memset(&cmd, 0, sizeof(cmd));
 
@@ -368,7 +387,7 @@ do_position(const char *cname, int argc, char **argv)
 			cmd.cp_flags |= CP_INVERT;
 			break;
 		default:
-			errx(1, "%s: inappropriate modifier `%s'",
+			errx(EXIT_FAILURE, "%s: inappropriate modifier `%s'",
 			    cname, *argv);
 			/* NOTREACHED */
 		}
@@ -376,7 +395,8 @@ do_position(const char *cname, int argc, char **argv)
 
 	/* Send command to changer. */
 	if (ioctl(changer_fd, CHIOPOSITION, &cmd))
-		err(1, "%s: CHIOPOSITION", changer_name);
+		err(EXIT_FAILURE, "%s: CHIOPOSITION", printescaped(changer_name));
+		/* NOTREACHED */
 
 	return (0);
 }
@@ -386,22 +406,27 @@ static int
 do_params(const char *cname, int argc, char **argv)
 {
 	struct changer_params data;
+	char *cn;
 
 	/* No arguments to this command. */
 	if (argc) {
 		warnx("%s: no arguements expected", cname);
 		usage();
+		/* NOTREACHED */
 	}
+	
+	cn = printescaped(changer_name);
 
 	/* Get params from changer and display them. */
 	(void)memset(&data, 0, sizeof(data));
 	if (ioctl(changer_fd, CHIOGPARAMS, &data))
-		err(1, "%s: CHIOGPARAMS", changer_name);
+		err(EXIT_FAILURE, "%s: CHIOGPARAMS", cn);
+		/* NOTREACHED */
 
 #define	PLURAL(n)	(n) > 1 ? "s" : ""
 
 	(void)printf("%s: %d slot%s, %d drive%s, %d picker%s",
-	    changer_name,
+	    cn,
 	    data.cp_nslots, PLURAL(data.cp_nslots),
 	    data.cp_ndrives, PLURAL(data.cp_ndrives),
 	    data.cp_npickers, PLURAL(data.cp_npickers));
@@ -411,8 +436,9 @@ do_params(const char *cname, int argc, char **argv)
 
 #undef PLURAL
 
-	(void)printf("\n%s: current picker: %d\n", changer_name,
-	    data.cp_curpicker);
+	(void)printf("\n%s: current picker: %d\n", cn, data.cp_curpicker);
+
+	free(cn);
 
 	return (0);
 }
@@ -422,18 +448,24 @@ static int
 do_getpicker(const char *cname, int argc, char **argv)
 {
 	int picker;
+	char *cn;
 
 	/* No arguments to this command. */
 	if (argc) {
 		warnx("%s: no arguments expected", cname);
 		usage();
+		/*NOTREACHED*/
 	}
+
+	cn = printescaped(changer_name);
 
 	/* Get current picker from changer and display it. */
 	if (ioctl(changer_fd, CHIOGPICKER, &picker))
-		err(1, "%s: CHIOGPICKER", changer_name);
+		err(EXIT_FAILURE, "%s: CHIOGPICKER", cn);
+		/* NOTREACHED */
 
-	(void)printf("%s: current picker: %d\n", changer_name, picker);
+	(void)printf("%s: current picker: %d\n", cn, picker);
+	free(cn);
 
 	return (0);
 }
@@ -446,16 +478,18 @@ do_setpicker(const char *cname, int argc, char **argv)
 	if (argc < 1) {
 		warnx("%s: too few arguments", cname);
 		usage();
+		/*NOTREACHED*/
 	} else if (argc > 1) {
 		warnx("%s: too many arguments", cname);
 		usage();
+		/*NOTREACHED*/
 	}
 
 	picker = parse_element_unit(*argv);
 
 	/* Set the changer picker. */
 	if (ioctl(changer_fd, CHIOSPICKER, &picker))
-		err(1, "%s: CHIOSPICKER", changer_name);
+		err(EXIT_FAILURE, "%s: CHIOSPICKER", printescaped(changer_name));
 
 	return (0);
 }
@@ -469,6 +503,7 @@ do_status(const char *cname, int argc, char **argv)
 	int i, chet, count, echet, flags, have_ucount, have_unit;
 	int schet, ucount, unit;
 	size_t size;
+	char *cn;
 
 	flags = 0;
 	have_ucount = 0;
@@ -487,7 +522,10 @@ do_status(const char *cname, int argc, char **argv)
 	if (argc > 4) {
 		warnx("%s: too many arguments", cname);
 		usage();
+		/*NOTREACHED*/
 	}
+
+	cn = printescaped(changer_name);
 
 	/*
 	 * Get params from changer.  Specifically, we need the element
@@ -495,7 +533,8 @@ do_status(const char *cname, int argc, char **argv)
 	 */
 	(void)memset(&data, 0, sizeof(data));
 	if (ioctl(changer_fd, CHIOGPARAMS, &data))
-		err(1, "%s: CHIOGPARAMS", changer_name);
+		err(EXIT_FAILURE, "%s: CHIOGPARAMS", cn);
+		/* NOTREACHED */
 
 	schet = CHET_MT;
 	echet = CHET_DT;
@@ -509,10 +548,13 @@ do_status(const char *cname, int argc, char **argv)
 			if (argc != 1) {
 				warnx("%s: malformed command line", cname);
 				usage();
+				/*NOTREACHED*/
 			}
 			if (parse_special(argv[0]) != SW_VOLTAGS)
-				errx(1, "%s: inappropriate special word: %s",
+				errx(EXIT_FAILURE,
+				    "%s: inappropriate special word: %s",
 				    cname, argv[0]);
+				/* NOTREACHED */
 			flags |= CESR_VOLTAGS;
 			continue;
 		}
@@ -526,6 +568,7 @@ do_status(const char *cname, int argc, char **argv)
 			    have_ucount) {
 				warnx("%s: malformed command line", cname);
 				usage();
+				/*NOTREACHED*/
 			}
 			schet = echet = parse_element_type(argv[0]);
 			continue;
@@ -538,6 +581,7 @@ do_status(const char *cname, int argc, char **argv)
 		if (schet != echet) {
 			warnx("%s: malformed command line", cname);
 			usage();
+			/*NOTREACHED*/
 		}
 
 		i = parse_element_unit(argv[0]);
@@ -551,6 +595,7 @@ do_status(const char *cname, int argc, char **argv)
 		} else {
 			warnx("%s: malformed command line", cname);
 			usage();
+			/*NOTREACHED*/
 		}
 	}
 
@@ -578,8 +623,9 @@ do_status(const char *cname, int argc, char **argv)
 				continue;
 			else {
 				(void)printf("%s: no %s elements\n",
-				    changer_name,
+				    cn,
 				    elements[chet].et_name);
+				free(cn);
 				return (0);
 			}
 		}
@@ -599,14 +645,16 @@ do_status(const char *cname, int argc, char **argv)
 		}
 
 		if ((unit + ucount) > count)
-			errx(1, "%s: unvalid unit/count %d/%d",
+			errx(EXIT_FAILURE, "%s: unvalid unit/count %d/%d",
 			    cname, unit, ucount);
+			/* NOTREACHED */
 
 		size = ucount * sizeof(struct changer_element_status);
 
 		/* Allocate storage for the status bytes. */
 		if ((ces = malloc(size)) == NULL)
-			errx(1, "can't allocate status storage");
+			errx(EXIT_FAILURE, "can't allocate status storage");
+			/* NOTREACHED */
 
 		(void)memset(ces, 0, size);
 		(void)memset(&cmd, 0, sizeof(cmd));
@@ -624,7 +672,8 @@ do_status(const char *cname, int argc, char **argv)
 
 		if (ioctl(changer_fd, CHIOGSTATUS, &cmd)) {
 			free(ces);
-			err(1, "%s: CHIOGSTATUS", changer_name);
+			err(EXIT_FAILURE, "%s: CHIOGSTATUS", cn);
+			/* NOTREACHED */
 		}
 
 		/* Dump the status for each element of this type. */
@@ -670,7 +719,8 @@ do_ielem(const char *cname, int argc, char **argv)
 {
 
 	if (ioctl(changer_fd, CHIOIELEM, NULL))
-		err(1, "%s: CHIOIELEM", changer_name);
+		err(EXIT_FAILURE, "%s: CHIOIELEM", printescaped(changer_name));
+		/* NOTREACHED */
 
 	return (0);
 }
@@ -699,6 +749,7 @@ do_cdlu(const char *cname, int argc, char **argv)
 
 	if (argc < 1 || argc > 2)
 		usage();
+		/*NOTREACHED*/
 
 	for (i = 0; cdlu_subcmds[i].sw_name != NULL; i++) {
 		if (strcmp(argv[0], cdlu_subcmds[i].sw_name) == 0) {
@@ -708,6 +759,7 @@ do_cdlu(const char *cname, int argc, char **argv)
 	}
 	if (cdlu_subcmds[i].sw_name == NULL)
 		usage();
+		/*NOTREACHED*/
 
 	if (strcmp(argv[0], "abort") == 0)
 		cmd.slot = 0;
@@ -719,7 +771,8 @@ do_cdlu(const char *cname, int argc, char **argv)
 	 * XXX handling for cdlu; think about this some more.
 	 */
 	if (ioctl(changer_fd, CDIOCLOADUNLOAD, &cmd))
-		err(1, "%s: CDIOCLOADUNLOAD", changer_name);
+		err(EXIT_FAILURE, "%s: CDIOCLOADUNLOAD", printescaped(changer_name));
+		/* NOTREACHED */
 
 	return (0);
 }
@@ -733,7 +786,7 @@ parse_element_type(const char *cp)
 		if (strcmp(elements[i].et_name, cp) == 0)
 			return (elements[i].et_type);
 
-	errx(1, "invalid element type `%s'", cp);
+	errx(EXIT_FAILURE, "invalid element type `%s'", cp);
 	/* NOTREACHED */
 }
 
@@ -745,7 +798,7 @@ parse_element_unit(const char *cp)
 
 	i = (int)strtol(cp, &p, 10);
 	if ((i < 0) || (*p != '\0'))
-		errx(1, "invalid unit number `%s'", cp);
+		errx(EXIT_FAILURE, "invalid unit number `%s'", cp);
 
 	return (i);
 }
@@ -759,7 +812,7 @@ parse_special(const char *cp)
 	if (val)
 		return (val);
 
-	errx(1, "invalid modifier `%s'", cp);
+	errx(EXIT_FAILURE, "invalid modifier `%s'", cp);
 	/* NOTREACHED */
 }
 
@@ -825,4 +878,28 @@ usage(void)
 		    commands[i].cc_args);
 	exit(1);
 	/* NOTREACHED */
+}
+
+char *
+printescaped(const char *src)
+{
+	size_t len;
+	char *retval;
+
+	len = strlen(src);
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
+		errx(EXIT_FAILURE, "%s: name too long", src);
+		/* NOTREACHED */
+	}
+
+	retval = (char *)malloc(4*len+1);
+	if (retval != NULL) {
+		if (stdout_ok)
+			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
+		else
+			(void)strcpy(retval, src);
+		return retval;
+	} else
+		errx(EXIT_FAILURE, "out of memory!");
+		/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.35 2001/09/16 13:35:52 wiz Exp $ */
+/* $NetBSD: date.c,v 1.36 2003/08/04 22:31:22 jschauma Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.35 2001/09/16 13:35:52 wiz Exp $");
+__RCSID("$NetBSD: date.c,v 1.36 2003/08/04 22:31:22 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,8 @@ badformat(void)
 static void
 badtime(void)
 {
-	errx(1, "illegal time");
+	errx(EXIT_FAILURE, "illegal time");
+	/* NOTREACHED */
 }
 
 #define ATOI2(s) ((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))

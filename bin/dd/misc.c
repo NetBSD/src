@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.14 2001/11/26 00:56:33 enami Exp $	*/
+/*	$NetBSD: misc.c,v 1.15 2003/08/04 22:31:23 jschauma Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,10 +42,11 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.14 2001/11/26 00:56:33 enami Exp $");
+__RCSID("$NetBSD: misc.c,v 1.15 2003/08/04 22:31:23 jschauma Exp $");
 #endif
 #endif /* not lint */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
 
@@ -55,6 +56,7 @@ __RCSID("$NetBSD: misc.c,v 1.14 2001/11/26 00:56:33 enami Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <inttypes.h>
+#include <vis.h>
 
 #include "dd.h"
 #include "extern.h"
@@ -117,4 +119,28 @@ terminate(int notused)
 
 	exit(0);
 	/* NOTREACHED */
+}
+
+char *
+printescaped(const char *src)
+{
+	size_t len;
+	char *retval;
+
+	len = strlen(src);
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
+		errx(EXIT_FAILURE, "%s: name too long", src);
+		/* NOTREACHED */
+	}
+
+	retval = (char *)malloc(4*len+1);
+	if (retval != NULL) {
+		if (isatty(STDOUT_FILENO))
+			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
+		else
+			(void)strcpy(retval, src);
+		return retval;
+	} else
+		errx(EXIT_FAILURE, "out of memory!");
+		/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: echo.c,v 1.9 2001/07/29 22:36:11 wiz Exp $	*/
+/* $NetBSD: echo.c,v 1.10 2003/08/04 22:31:23 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,15 +44,23 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)echo.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: echo.c,v 1.9 2001/07/29 22:36:11 wiz Exp $");
+__RCSID("$NetBSD: echo.c,v 1.10 2003/08/04 22:31:23 jschauma Exp $");
 #endif
 #endif /* not lint */
 
+#include <sys/param.h>
+
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <vis.h>
+
+int stdout_ok;
 
 int main(int, char *[]);
+char *printescaped(const char *);
 
 /* ARGSUSED */
 int
@@ -60,6 +68,7 @@ main(int argc, char *argv[])
 {
 	int nflag;
 
+	stdout_ok = isatty(STDOUT_FILENO);
 	/* This utility may NOT do getopt(3) option parsing. */
 	if (*++argv && !strcmp(*argv, "-n")) {
 		++argv;
@@ -69,7 +78,10 @@ main(int argc, char *argv[])
 		nflag = 0;
 
 	while (*argv) {
-		(void)printf("%s", *argv);
+		char *n;
+		n = printescaped(*argv);
+		(void)printf("%s", n);
+		free(n);
 		if (*++argv)
 			(void)putchar(' ');
 	}
@@ -77,4 +89,28 @@ main(int argc, char *argv[])
 		(void)putchar('\n');
 	exit(0);
 	/* NOTREACHED */
+}
+
+char *
+printescaped(const char *src)
+{
+	size_t len;
+	char *retval;
+
+	len = strlen(src);
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
+		errx(EXIT_FAILURE, "%s: name too long", src);
+		/* NOTREACHED */
+	}
+
+	retval = (char *)malloc(4*len+1);
+	if (retval != NULL) {
+		if (stdout_ok)
+			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
+		else
+			(void)strcpy(retval, src);
+		return retval;
+	} else
+		errx(EXIT_FAILURE, "out of memory!");
+		/* NOTREACHED */
 }

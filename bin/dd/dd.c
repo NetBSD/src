@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.29 2002/09/04 04:21:54 enami Exp $	*/
+/*	$NetBSD: dd.c,v 1.30 2003/08/04 22:31:23 jschauma Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.29 2002/09/04 04:21:54 enami Exp $");
+__RCSID("$NetBSD: dd.c,v 1.30 2003/08/04 22:31:23 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,13 +131,16 @@ setup(void)
 	} else {
 		in.fd = open(in.name, O_RDONLY, 0);
 		if (in.fd < 0)
-			err(1, "%s", in.name);
+			err(EXIT_FAILURE, "%s", printescaped(in.name));
+			/* NOTREACHED */
 	}
 
 	getfdtype(&in);
 
-	if (files_cnt > 1 && !(in.flags & ISTAPE))
-		errx(1, "files is not supported for non-tape devices");
+	if (files_cnt > 1 && !(in.flags & ISTAPE)) {
+		errx(EXIT_FAILURE, "files is not supported for non-tape devices");
+		/* NOTREACHED */
+	}
 
 	if (out.name == NULL) {
 		/* No way to check for read access here. */
@@ -156,8 +159,10 @@ setup(void)
 			out.fd = open(out.name, O_WRONLY | OFLAGS, DEFFILEMODE);
 			out.flags |= NOREAD;
 		}
-		if (out.fd < 0)
-			err(1, "%s", out.name);
+		if (out.fd < 0) {
+			err(EXIT_FAILURE, "%s", printescaped(out.name));
+			/* NOTREACHED */
+		}
 	}
 
 	getfdtype(&out);
@@ -167,13 +172,17 @@ setup(void)
 	 * record oriented I/O, only need a single buffer.
 	 */
 	if (!(ddflags & (C_BLOCK|C_UNBLOCK))) {
-		if ((in.db = malloc(out.dbsz + in.dbsz - 1)) == NULL)
-			err(1, NULL);
+		if ((in.db = malloc(out.dbsz + in.dbsz - 1)) == NULL) {
+			err(EXIT_FAILURE, NULL);
+			/* NOTREACHED */
+		}
 		out.db = in.db;
 	} else if ((in.db =
 	    malloc((u_int)(MAX(in.dbsz, cbsz) + cbsz))) == NULL ||
-	    (out.db = malloc((u_int)(out.dbsz + cbsz))) == NULL)
-		err(1, NULL);
+	    (out.db = malloc((u_int)(out.dbsz + cbsz))) == NULL) {
+		err(EXIT_FAILURE, NULL);
+		/* NOTREACHED */
+	}
 	in.dbp = in.db;
 	out.dbp = out.db;
 
@@ -198,7 +207,8 @@ setup(void)
 	if (ddflags & (C_LCASE|C_UCASE)) {
 #ifdef	NO_CONV
 		/* Should not get here, but just in case... */
-		errx(1, "case conv and -DNO_CONV");
+		errx(EXIT_FAILURE, "case conv and -DNO_CONV");
+		/* NOTREACHED */
 #else	/* NO_CONV */
 		u_int cnt;
 
@@ -233,8 +243,10 @@ getfdtype(IO *io)
 	struct mtget mt;
 	struct stat sb;
 
-	if (fstat(io->fd, &sb))
-		err(1, "%s", io->name);
+	if (fstat(io->fd, &sb)) {
+		err(EXIT_FAILURE, "%s", printescaped(io->name));
+		/* NOTREACHED */
+	}
 	if (S_ISCHR(sb.st_mode))
 		io->flags |= ioctl(io->fd, MTIOCGET, &mt) ? ISCHR : ISTAPE;
 	else if (lseek(io->fd, (off_t)0, SEEK_CUR) == -1 && errno == ESPIPE)
@@ -273,13 +285,18 @@ dd_in(void)
 
 		/* Read error. */
 		if (n < 0) {
+			char *fn;
+
+			fn = printescaped(in.name);
 			/*
 			 * If noerror not specified, die.  POSIX requires that
 			 * the warning message be followed by an I/O display.
 			 */
-			if (!(flags & C_NOERROR))
-				err(1, "%s", in.name);
-			warn("%s", in.name);
+			if (!(flags & C_NOERROR)) {
+				err(EXIT_FAILURE, "%s", fn);
+				/* NOTREACHED */
+			}
+			warn("%s", fn);
 			summary();
 
 			/*
@@ -290,7 +307,7 @@ dd_in(void)
 			 */
 			if (!(in.flags & (ISPIPE|ISTAPE)) &&
 			    lseek(in.fd, (off_t)in.dbsz, SEEK_CUR))
-				warn("%s", in.name);
+				warn("%s", fn);
 
 			/* If sync not specified, omit block and continue. */
 			if (!(ddflags & C_SYNC))
@@ -299,6 +316,8 @@ dd_in(void)
 			/* Read errors count as full blocks. */
 			in.dbcnt += in.dbrcnt = in.dbsz;
 			++st.in_full;
+
+			free(fn);
 
 		/* Handle full input blocks. */
 		} else if (n == in.dbsz) {
@@ -368,10 +387,14 @@ dd_close(void)
 	 * may be shared among with other processes and close(2) just
 	 * decreases the reference count.
 	 */
-	if (out.fd == STDOUT_FILENO && fsync(out.fd) == -1 && errno != EINVAL)
-		err(1, "fsync stdout");
-	if (close(out.fd) == -1)
-		err(1, "close");
+	if (out.fd == STDOUT_FILENO && fsync(out.fd) == -1 && errno != EINVAL) {
+		err(EXIT_FAILURE, "fsync stdout");
+		/* NOTREACHED */
+	}
+	if (close(out.fd) == -1) {
+		err(EXIT_FAILURE, "close");
+		/* NOTREACHED */
+	}
 }
 
 void
@@ -400,12 +423,18 @@ dd_out(int force)
 	outp = out.db;
 	for (n = force ? out.dbcnt : out.dbsz;; n = out.dbsz) {
 		for (cnt = n;; cnt -= nw) {
+			char *fn;
+
+			fn = printescaped(out.name);
 			nw = bwrite(out.fd, outp, cnt);
 			if (nw <= 0) {
 				if (nw == 0)
-					errx(1, "%s: end of device", out.name);
+					errx(EXIT_FAILURE,
+						"%s: end of device", fn);
+					/* NOTREACHED */
 				if (errno != EINTR)
-					err(1, "%s", out.name);
+					err(EXIT_FAILURE, "%s", fn);
+					/* NOTREACHED */
 				nw = 0;
 			}
 			outp += nw;
@@ -422,12 +451,14 @@ dd_out(int force)
 				break;
 			if (out.flags & ISCHR && !warned) {
 				warned = 1;
-				warnx("%s: short write on character device",
-				    out.name);
+				warnx("%s: short write on character device", fn);
 			}
 			if (out.flags & ISTAPE)
-				errx(1, "%s: short write on tape device",
-				    out.name);
+				errx(EXIT_FAILURE,
+					"%s: short write on tape device", fn);
+				/* NOTREACHED */
+
+			free(fn);
 		}
 		if ((out.dbcnt -= n) < out.dbsz)
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.21 2002/11/29 13:11:10 lukem Exp $	*/
+/*	$NetBSD: args.c,v 1.22 2003/08/04 22:31:23 jschauma Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.21 2002/11/29 13:11:10 lukem Exp $");
+__RCSID("$NetBSD: args.c,v 1.22 2003/08/04 22:31:23 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,20 +109,28 @@ jcl(char **argv)
 	in.dbsz = out.dbsz = 512;
 
 	while ((oper = *++argv) != NULL) {
-		if ((arg = strchr(oper, '=')) == NULL)
-			errx(1, "unknown operand %s", oper);
+		if ((arg = strchr(oper, '=')) == NULL) {
+			errx(EXIT_FAILURE, "unknown operand %s", oper);
+			/* NOTREACHED */
+		}
 		*arg++ = '\0';
-		if (!*arg)
-			errx(1, "no value specified for %s", oper);
+		if (!*arg) {
+			errx(EXIT_FAILURE, "no value specified for %s", oper);
+			/* NOTREACHED */
+		}
 		tmp.name = oper;
 		if (!(ap = (struct arg *)bsearch(&tmp, args,
 		    sizeof(args)/sizeof(struct arg), sizeof(struct arg),
-		    c_arg)))
-			errx(1, "unknown operand %s", tmp.name);
-		if (ddflags & ap->noset)
-			errx(1,
+		    c_arg))) {
+			errx(EXIT_FAILURE, "unknown operand %s", tmp.name);
+			/* NOTREACHED */
+		}
+		if (ddflags & ap->noset) {
+			errx(EXIT_FAILURE,
 			    "%s: illegal argument combination or already set",
 			    tmp.name);
+			/* NOTREACHED */
+		}
 		ddflags |= ap->set;
 		ap->f(arg);
 	}
@@ -148,8 +156,10 @@ jcl(char **argv)
 	 * Block/unblock requires cbs and vice-versa.
 	 */
 	if (ddflags & (C_BLOCK|C_UNBLOCK)) {
-		if (!(ddflags & C_CBS))
-			errx(1, "record operations require cbs");
+		if (!(ddflags & C_CBS)) {
+			errx(EXIT_FAILURE, "record operations require cbs");
+			/* NOTREACHED */
+		}
 		cfunc = ddflags & C_BLOCK ? block : unblock;
 	} else if (ddflags & C_CBS) {
 		if (ddflags & (C_ASCII|C_EBCDIC)) {
@@ -160,9 +170,11 @@ jcl(char **argv)
 				ddflags |= C_BLOCK;
 				cfunc = block;
 			}
-		} else
-			errx(1,
+		} else {
+			errx(EXIT_FAILURE,
 			    "cbs meaningless if not doing record operations");
+			/* NOTREACHED */
+		}
 	} else
 		cfunc = def;
 
@@ -274,7 +286,8 @@ static void
 f_conv(char *arg)
 {
 
-	errx(1, "conv option disabled");
+	errx(EXIT_FAILURE, "conv option disabled");
+	/* NOTREACHED */
 }
 #else	/* NO_CONV */
 
@@ -309,10 +322,14 @@ f_conv(char *arg)
 		tmp.name = strsep(&arg, ",");
 		if (!(cp = (struct conv *)bsearch(&tmp, clist,
 		    sizeof(clist)/sizeof(struct conv), sizeof(struct conv),
-		    c_conv)))
-			errx(1, "unknown conversion %s", tmp.name);
-		if (ddflags & cp->noset)
-			errx(1, "%s: illegal conversion combination", tmp.name);
+		    c_conv))) {
+			errx(EXIT_FAILURE, "unknown conversion %s", tmp.name);
+			/* NOTREACHED */
+		}
+		if (ddflags & cp->noset) {
+			errx(EXIT_FAILURE, "%s: illegal conversion combination", tmp.name);
+			/* NOTREACHED */
+		}
 		ddflags |= cp->set;
 		if (cp->ctab)
 			ctab = cp->ctab;

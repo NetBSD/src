@@ -1,4 +1,4 @@
-/* $NetBSD: chmod.c,v 1.28 2002/07/07 11:44:02 bjh21 Exp $ */
+/* $NetBSD: chmod.c,v 1.29 2003/08/04 22:31:22 jschauma Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,12 +44,13 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.28 2002/07/07 11:44:02 bjh21 Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.29 2003/08/04 22:31:22 jschauma Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include <err.h>
 #include <errno.h>
@@ -60,9 +61,13 @@ __RCSID("$NetBSD: chmod.c,v 1.28 2002/07/07 11:44:02 bjh21 Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
-int main(int, char *[]);
-void usage(void);
+int stdout_ok;
+
+int	main(int, char *[]);
+void	usage(void);
+char	*printescaped(const char *);
 
 int
 main(int argc, char *argv[])
@@ -71,7 +76,7 @@ main(int argc, char *argv[])
 	FTSENT *p;
 	mode_t *set;
 	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
-	char *mode;
+	char *mode, *fn;
 	int (*change_mode)(const char *, mode_t);
 
 	setprogname(argv[0]);
@@ -131,11 +136,15 @@ done:	argv += optind;
 	if (argc < 2)
 		usage();
 
+	stdout_ok = isatty(STDOUT_FILENO);
+
 	fts_options = FTS_PHYSICAL;
 	if (Rflag) {
-		if (hflag)
-			errx(1,
+		if (hflag) {
+			errx(EXIT_FAILURE,
 		"the -R and -h options may not be specified together.");
+			/* NOTREACHED */
+		}
 		if (Hflag)
 			fts_options |= FTS_COMFOLLOW;
 		if (Lflag) {
@@ -150,11 +159,15 @@ done:	argv += optind;
 		change_mode = chmod;
 
 	mode = *argv;
-	if ((set = setmode(mode)) == NULL)
-		errx(1, "invalid file mode: %s", mode);
+	if ((set = setmode(mode)) == NULL) {
+		errx(EXIT_FAILURE, "invalid file mode: %s", mode);
+		/* NOTREACHED */
+	}
 
-	if ((ftsp = fts_open(++argv, fts_options, 0)) == NULL)
-		err(1, "fts_open");
+	if ((ftsp = fts_open(++argv, fts_options, 0)) == NULL) {
+		err(EXIT_FAILURE, "fts_open");
+		/* NOTREACHED */
+	}
 	for (rval = 0; (p = fts_read(ftsp)) != NULL;) {
 		switch (p->fts_info) {
 		case FTS_D:
@@ -162,14 +175,18 @@ done:	argv += optind;
 				(void)fts_set(ftsp, p, FTS_SKIP);
 			break;
 		case FTS_DNR:			/* Warn, chmod, continue. */
-			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
+			fn = printescaped(p->fts_path);
+			warnx("%s: %s", fn, strerror(p->fts_errno));
+			free(fn);
 			rval = 1;
 			break;
 		case FTS_DP:			/* Already changed at FTS_D. */
 			continue;
 		case FTS_ERR:			/* Warn, continue. */
 		case FTS_NS:
-			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
+			fn = printescaped(p->fts_path);
+			warnx("%s: %s", fn, strerror(p->fts_errno));
+			free(fn);
 			rval = 1;
 			continue;
 		case FTS_SL:			/* Ignore. */
@@ -188,12 +205,16 @@ done:	argv += optind;
 		}
 		if ((*change_mode)(p->fts_accpath,
 		    getmode(set, p->fts_statp->st_mode)) && !fflag) {
-			warn("%s", p->fts_path);
+			fn = printescaped(p->fts_path);
+			warn("%s", fn);
+			free(fn);
 			rval = 1;
 		}
 	}
-	if (errno)
-		err(1, "fts_read");
+	if (errno) {
+		err(EXIT_FAILURE, "fts_read");
+		/* NOTREACHED */
+	}
 	exit(rval);
 	/* NOTREACHED */
 }
@@ -206,4 +227,28 @@ usage(void)
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
+}
+
+char *
+printescaped(const char *src)
+{
+	size_t len;
+	char *retval;
+
+	len = strlen(src);
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
+		errx(EXIT_FAILURE, "%s: name too long", src);
+		/* NOTREACHED */
+	}
+
+	retval = (char *)malloc(4*len+1);
+	if (retval != NULL) {
+		if (stdout_ok)
+			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
+		else
+			(void)strcpy(retval, src);
+		return retval;
+	} else
+		errx(EXIT_FAILURE, "out of memory!");
+		/* NOTREACHED */
 }

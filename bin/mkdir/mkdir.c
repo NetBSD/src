@@ -1,4 +1,4 @@
-/* $NetBSD: mkdir.c,v 1.29 2003/03/10 23:33:10 lukem Exp $ */
+/* $NetBSD: mkdir.c,v 1.30 2003/08/04 22:31:24 jschauma Exp $ */
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,12 +43,13 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.29 2003/03/10 23:33:10 lukem Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.30 2003/08/04 22:31:24 jschauma Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include <err.h>
 #include <errno.h>
@@ -57,10 +58,14 @@ __RCSID("$NetBSD: mkdir.c,v 1.29 2003/03/10 23:33:10 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
+
+int	stdout_ok;			/* stdout connected to a terminal */
 
 int	mkpath(char *, mode_t, mode_t);
 void	usage(void);
 int	main(int, char *[]);
+char	*printescaped(const char *);
 
 int
 main(int argc, char *argv[])
@@ -88,20 +93,28 @@ main(int argc, char *argv[])
 			pflag = 1;
 			break;
 		case 'm':
-			if ((set = setmode(optarg)) == NULL)
-				errx(1, "invalid file mode: %s", optarg);
+			if ((set = setmode(optarg)) == NULL) {
+				errx(EXIT_FAILURE, "invalid file mode: %s",
+					printescaped(optarg));
+				/* NOTREACHED */
+			}
 			mode = getmode(set, S_IRWXU | S_IRWXG | S_IRWXO);
 			free(set);
 			break;
 		case '?':
 		default:
 			usage();
+			/* NOTREACHED */
 		}
 	argc -= optind;
 	argv += optind;
 
-	if (*argv == NULL)
+	if (*argv == NULL) {
 		usage();
+		/* NOTREACHED */
+	}
+
+	stdout_ok = isatty(STDOUT_FILENO);
 
 	for (exitval = EXIT_SUCCESS; *argv != NULL; ++argv) {
 		char *slash;
@@ -127,7 +140,10 @@ main(int argc, char *argv[])
 				 */
 				if ((mode & ~(S_IRWXU|S_IRWXG|S_IRWXO)) != 0 &&
 				    chmod(*argv, mode) == -1) {
-					warn("%s", *argv);
+					char *fn;
+					fn = printescaped(*argv);
+					warn("%s", fn);
+					free(fn);
 					exitval = EXIT_FAILURE;
 				}
 			}
@@ -147,11 +163,12 @@ int
 mkpath(char *path, mode_t mode, mode_t dir_mode)
 {
 	struct stat sb;
-	char *slash;
+	char *slash, *fn;
 	int done, rv;
 
 	done = 0;
 	slash = path;
+	fn = printescaped(path);
 
 	for (;;) {
 		slash += strspn(slash, "/");
@@ -172,13 +189,15 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 			if (stat(path, &sb) < 0) {
 					/* Not there; use mkdir()s error */
 				errno = sverrno;
-				warn("%s", path);
+				warn("%s", fn);
+				free(fn);
 				return -1;
 			}
 			if (!S_ISDIR(sb.st_mode)) {
 					/* Is there, but isn't a directory */
 				errno = ENOTDIR;
-				warn("%s", path);
+				warn("%s", fn);
+				free(fn);
 				return -1;
 			}
 		} else if (done) {
@@ -193,7 +212,8 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 			 */
 			if ((mode & ~(S_IRWXU|S_IRWXG|S_IRWXO)) != 0 &&
 			    chmod(path, mode) == -1) {
-				warn("%s", path);
+				warn("%s", fn);
+				free(fn);
 				return -1;
 			}
 		}
@@ -203,6 +223,8 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 		}
 		*slash = '/';
 	}
+
+	free(fn);
 	return 0;
 }
 
@@ -214,4 +236,28 @@ usage(void)
 	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
+}
+
+char *
+printescaped(const char *src)
+{
+	size_t len;
+	char *retval;
+
+	len = strlen(src);
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
+		errx(EXIT_FAILURE, "%s: name too long", src);
+		/* NOTREACHED */
+	}
+
+	retval = (char *)malloc(4*len+1);
+	if (retval != NULL) {
+		if (stdout_ok)
+			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
+		else
+			(void)strcpy(retval, src);
+		return retval;
+	} else
+		errx(EXIT_FAILURE, "out of memory!");
+		/* NOTREACHED */
 }

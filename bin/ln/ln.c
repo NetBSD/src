@@ -1,4 +1,4 @@
-/* $NetBSD: ln.c,v 1.21 2002/12/27 03:50:05 jrf Exp $ */
+/* $NetBSD: ln.c,v 1.22 2003/08/04 22:31:24 jschauma Exp $ */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.21 2002/12/27 03:50:05 jrf Exp $");
+__RCSID("$NetBSD: ln.c,v 1.22 2003/08/04 22:31:24 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,11 +56,14 @@ __RCSID("$NetBSD: ln.c,v 1.21 2002/12/27 03:50:05 jrf Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 int	fflag;				/* Unlink existing files. */
 int	hflag;				/* Check new name for symlink first. */
 int	sflag;				/* Symbolic, not hard, link. */
-int    vflag;                          /* Verbose output */
+int	vflag;                          /* Verbose output */
+int	stdout_ok;			/* stdout connected to a terminal */
+
 					/* System link call. */
 int (*linkf)(const char *, const char *);
 char   linkch;
@@ -68,6 +71,7 @@ char   linkch;
 int	linkit(char *, char *, int);
 void	usage(void);
 int	main(int, char *[]);
+char	*printescaped(const char *);
 
 int
 main(int argc, char *argv[])
@@ -95,6 +99,7 @@ main(int argc, char *argv[])
 		case '?':
 		default:
 			usage();
+			/* NOTREACHED */
 		}
 
 	argv += optind;
@@ -119,18 +124,26 @@ main(int argc, char *argv[])
 		exit(linkit(argv[0], argv[1], 0));
 		/* NOTREACHED */
 	}
+
+	stdout_ok = isatty(STDOUT_FILENO);
+
 					/* ln target1 target2 directory */
 	sourcedir = argv[argc - 1];
 	if (hflag && lstat(sourcedir, &sb) == 0 && S_ISLNK(sb.st_mode)) {
 		/* we were asked not to follow symlinks, but found one at
 		   the target--simulate "not a directory" error */
 		errno = ENOTDIR;
-		err(1, "%s", sourcedir);
+		err(EXIT_FAILURE, "%s", printescaped(sourcedir));
+		/* NOTREACHED */
 	}
-	if (stat(sourcedir, &sb))
-		err(1, "%s", sourcedir);
-	if (!S_ISDIR(sb.st_mode))
+	if (stat(sourcedir, &sb)) {
+		err(EXIT_FAILURE, "%s", printescaped(sourcedir));
+		/* NOTREACHED */
+	}
+	if (!S_ISDIR(sb.st_mode)) {
 		usage();
+		/* NOTREACHED */
+	}
 	for (exitval = 0; *argv != sourcedir; ++argv)
 		exitval |= linkit(*argv, sourcedir, 1);
 	exit(exitval);
@@ -142,11 +155,17 @@ linkit(char *target, char *source, int isdir)
 {
 	struct stat sb;
 	char *p, path[MAXPATHLEN];
+	char *sn, *tn;
+
+	sn = printescaped(source);
+	tn = printescaped(target);
 
 	if (!sflag) {
 		/* If target doesn't exist, quit now. */
 		if (stat(target, &sb)) {
-			warn("%s", target);
+			warn("%s", tn);
+			free(sn);
+			free(tn);
 			return (1);
 		}
 	}
@@ -160,7 +179,9 @@ linkit(char *target, char *source, int isdir)
 			p = target;
 		else
 			++p;
-		(void)snprintf(path, sizeof(path), "%s/%s", source, p);
+		p = printescaped(p);
+		(void)snprintf(path, sizeof(path), "%s/%s", sn, p);
+		free(p);
 		source = path;
 	}
 
@@ -174,8 +195,10 @@ linkit(char *target, char *source, int isdir)
 		return (1);
 	}
 	if (vflag)
-		(void)printf("%s %c> %s\n", source, linkch, target);
+		(void)printf("%s %c> %s\n", sn, linkch, tn);
 
+	free(sn);
+	free(tn);
 	return (0);
 }
 
@@ -188,4 +211,28 @@ usage(void)
 	    getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */
+}
+
+char *
+printescaped(const char *src)
+{
+	size_t len;
+	char *retval;
+
+	len = strlen(src);
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
+		errx(EXIT_FAILURE, "%s: name too long", src);
+		/* NOTREACHED */
+	}
+
+	retval = (char *)malloc(4*len+1);
+	if (retval != NULL) {
+		if (stdout_ok)
+			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
+		else
+			(void)strcpy(retval, src);
+		return retval;
+	} else
+		errx(EXIT_FAILURE, "out of memory!");
+		/* NOTREACHED */
 }

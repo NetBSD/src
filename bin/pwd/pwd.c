@@ -1,4 +1,4 @@
-/* $NetBSD: pwd.c,v 1.14 2001/09/16 22:11:56 wiz Exp $ */
+/* $NetBSD: pwd.c,v 1.15 2003/08/04 22:31:25 jschauma Exp $ */
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -43,12 +43,13 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: pwd.c,v 1.14 2001/09/16 22:11:56 wiz Exp $");
+__RCSID("$NetBSD: pwd.c,v 1.15 2003/08/04 22:31:25 jschauma Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include <err.h>
 #include <errno.h>
@@ -56,16 +57,21 @@ __RCSID("$NetBSD: pwd.c,v 1.14 2001/09/16 22:11:56 wiz Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
+
+int	stdout_ok;			/* stdout connected to a terminal */
 
 static char *getcwd_logical(char *, size_t);
 static void usage(void);
 int main(int, char *[]);
+char *printescaped(const char *);
 
 int
 main(int argc, char *argv[])
 {
 	int ch, lFlag;
 	const char *p;
+	char *pn;
 
 	setprogname(argv[0]);
 	lFlag = 0;
@@ -95,7 +101,11 @@ main(int argc, char *argv[])
 	if (p == NULL)
 		err(EXIT_FAILURE, NULL);
 
-	(void)printf("%s\n", p);
+	stdout_ok = isatty(STDOUT_FILENO);
+
+	pn = printescaped(p);
+	(void)printf("%s\n", pn);
+	free(pn);
 
 	exit(EXIT_SUCCESS);
 	/* NOTREACHED */
@@ -146,4 +156,28 @@ usage(void)
 	(void)fprintf(stderr, "usage: %s [-LP]\n", getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
+}
+
+char *
+printescaped(const char *src)
+{
+	size_t len;
+	char *retval;
+
+	len = strlen(src);
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
+		errx(EXIT_FAILURE, "%s: name too long", src);
+		/* NOTREACHED */
+	}
+
+	retval = (char *)malloc(4*len+1);
+	if (retval != NULL) {
+		if (stdout_ok)
+			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
+		else
+			(void)strcpy(retval, src);
+		return retval;
+	} else
+		errx(EXIT_FAILURE, "out of memory!");
+		/* NOTREACHED */
 }
