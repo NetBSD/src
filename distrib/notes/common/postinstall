@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.31 2002/01/03 03:32:10 mbw Exp $
+.\"	$NetBSD: postinstall,v 1.32 2002/04/14 13:12:38 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -187,7 +187,7 @@ that may require modification or setting up include
 .Pa /etc/nsswitch.conf ,
 and
 .Pa /etc/wscons.conf .
-.ie r_arm32 \{\
+.ie r_shark \{\
 .Pp
 For Digital DNARD machines you will need to edit
 .Pa /etc/ttys
@@ -236,7 +236,7 @@ X11R6 FAQ.
 .br
 .Lk http://www.netbsd.org/Ports/macppc/x11.html
 .\}
-.if \n[arm32]:\n[i386] \{\
+.if \n[cats]:\n[i386]:\n[shark] \{\
 .Pp
 You will need to set up a configuration file, see
 .Pa /usr/X11R6/lib/X11/XF86Config.eg
