@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.5 1997/02/28 19:47:15 gwr Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.6 1997/04/25 22:26:14 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -95,7 +95,6 @@ void sunmon_abort()
 	int s = splhigh();
 
 	_mode_monitor();
-	mon_printf("kernel stop: enter c to continue or g0 to panic\n");
 	delay(100000);
 
 	/*
