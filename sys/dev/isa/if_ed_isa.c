@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed_isa.c,v 1.1.2.1 1997/07/30 07:05:32 marc Exp $	*/
+/*	$NetBSD: if_ed_isa.c,v 1.1.2.2 1997/10/14 01:05:57 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -48,8 +48,6 @@ int ed_find_WD80x3 __P((struct ed_softc *, struct cfdata *,
     struct isa_attach_args *ia));
 int ed_find_3Com __P((struct ed_softc *, struct cfdata *,
     struct isa_attach_args *ia));
-int ed_find_Novell_isa __P((struct ed_softc *, struct cfdata *,
-    struct isa_attach_args *ia));
 
 struct cfattach ed_isa_ca = {
 	sizeof(struct ed_softc), ed_probe_isa, ed_attach_isa
@@ -81,8 +79,6 @@ ed_find(sc, cf, ia)
 	if (ed_find_WD80x3(sc, cf, ia))
 		return (1);
 	if (ed_find_3Com(sc, cf, ia))
-		return (1);
-	if (ed_find_Novell_isa(sc, cf, ia))
 		return (1);
 	return (0);
 }
@@ -356,7 +352,6 @@ ed_find_WD80x3(sc, cf, ia)
 	/* XXX Figure out the shared memory address. */
 
 	sc->isa16bit = isa16bit;
-	sc->mem_shared = 1;
 	ia->ia_msize = memsize;
 	if (bus_space_map(memt, ia->ia_maddr, memsize, 0, &memh))
 		goto out;
@@ -645,7 +640,6 @@ ed_find_3Com(sc, cf, ia)
 
 	sc->vendor = ED_VENDOR_3COM;
 	sc->type_str = "3c503";
-	sc->mem_shared = 1;
 	sc->cr_proto = ED_CR_RD2;
 
 	/*
@@ -834,32 +828,6 @@ ed_find_3Com(sc, cf, ia)
 	return 0;
 }
 
-int
-ed_find_Novell_isa(sc, cf, ia)
-	struct ed_softc *sc;
-	struct cfdata *cf;
-	struct isa_attach_args *ia;
-{
-    int ret; 
-    bus_space_handle_t ioh;
-
-    if (bus_space_map(ia->ia_iot, ia->ia_iobase, ED_NOVELL_IO_PORTS, 0, &ioh))
-	return (0);
-
-    if ((ret = ed_find_Novell(sc, cf, ia->ia_iot, ioh))) {
-	if (ia->ia_irq == IRQUNK) {
-	    printf("%s: %s does not have soft configuration\n",
-		   sc->sc_dev.dv_xname, sc->type_str);
-	    return(0);
-	}
-
-	ia->ia_msize = 0;
-	ia->ia_iosize = ED_NOVELL_IO_PORTS;
-    }
-
-    return(ret);
-}
-
 /*
  * Install interface into kernel networking data structures.
  */
@@ -878,4 +846,3 @@ ed_attach_isa(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, edintr, sc);
 }
-
