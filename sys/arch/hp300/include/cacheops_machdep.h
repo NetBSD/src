@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_machdep.h,v 1.3 2003/08/07 16:27:39 agc Exp $	*/
+/*	$NetBSD: cacheops_machdep.h,v 1.4 2003/09/28 23:21:06 cl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -151,7 +151,7 @@ TBIA_md(void)
 static __inline int __attribute__((__unused__))
 TBIS_md(vaddr_t va)
 {
-	vaddr_t r_va __asm("%a0") = va;
+	register vaddr_t r_va __asm("%a1") = va;
 	int s;
 
 	if (mmutype != MMU_HP) {
