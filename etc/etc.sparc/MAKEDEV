@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.28 1997/07/31 04:08:37 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.29 1997/08/01 19:38:46 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -194,8 +194,8 @@ tun*)
 md*)
 	unit=${i#md}
 	rm -f md$unit
-	mknod md$unit b 5 $unit
-	mknod rmd$unit c 61 $unit
+	mknod md${unit} b 5 $(($unit * 8))
+	mknod rmd${unit} c 61 $((($unit + 16) * 8))
 	chown root.operator md$unit rmd$unit
 	chmod 640 md$unit rmd$unit
 	;;

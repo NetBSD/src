@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.16 1997/07/31 04:08:33 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.17 1997/08/01 19:38:44 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -116,8 +116,8 @@ md*)
 	md*) name=md;	unit=${i#md};	chr=9;	blk=3;;
 	esac
 	rm -f $name$unit r$name$unit
-	mknod $name$unit	b $blk $(($unit +  0))
-	mknod r$name$unit	c $chr $(($unit + 16))
+	mknod $name$unit	b $blk $(($unit * 8 +  0))
+	mknod r$name$unit	c $chr $((($unit + 16) * 8))
 	chgrp operator $name$unit r$name$unit
 	chmod 640 $name$unit r$name$unit
 	;;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 1997/05/23 23:44:34 jeremy Exp $	*/
+/*	$NetBSD: md.c,v 1.14 1997/08/01 19:44:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -54,6 +54,7 @@
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/disklabel.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -223,7 +224,7 @@ int mdsize(dev_t dev)
 	struct md_softc *sc;
 
 	/* Disallow control units. */
-	unit = minor(dev);
+	unit = DISKUNIT(dev);
 	if (unit >= ramdisk_ndevs)
 		return 0;
 	sc = ramdisk_devs[unit];
@@ -245,7 +246,7 @@ mdopen(dev, flag, fmt, proc)
 	int md, unit;
 	struct md_softc *sc;
 
-	md = minor(dev);
+	md = DISKUNIT(dev);
 	unit = MD_UNIT(md);
 	if (unit >= ramdisk_ndevs)
 		return ENXIO;
@@ -286,7 +287,7 @@ mdclose(dev, flag, fmt, proc)
 	int md, unit;
 	struct md_softc *sc;
 
-	md = minor(dev);
+	md = DISKUNIT(dev);
 	unit = MD_UNIT(md);
 	sc = ramdisk_devs[unit];
 
@@ -330,7 +331,7 @@ mdstrategy(bp)
 	caddr_t		addr;
 	size_t		off, xfer;
 
-	md = minor(bp->b_dev);
+	md = DISKUNIT(bp->b_dev);
 	unit = MD_UNIT(md);
 	sc = ramdisk_devs[unit];
 
@@ -392,7 +393,7 @@ mdioctl(dev, cmd, data, flag, proc)
 	struct md_softc	*sc;
 	struct md_conf	*umd;
 
-	md = minor(dev);
+	md = DISKUNIT(dev);
 	unit = MD_UNIT(md);
 	sc = ramdisk_devs[unit];
 

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.13 1997/07/31 04:08:21 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.14 1997/08/01 19:38:30 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -282,11 +282,11 @@ cd*|acd*)
 	;;
 
 md*)
-	unit=`expr $i : 'md\(.*\)'`
+	unit=${i#md}
 	rm -f md${unit}
 	rm -f md${unit}c
 	mknod md${unit} b 18 ${unit}
-	mknod md${unit}c c 18 `expr ${unit} + 16`
+	mknod md${unit}c c 18 $((($unit + 16) * 8))
 	chown root.wheel md${unit}
 	chown root.wheel md${unit}c
 	;;
