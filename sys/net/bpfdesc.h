@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.19 2004/05/29 08:56:19 darrenr Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.20 2004/05/29 14:18:33 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -61,10 +61,8 @@ struct bpf_d {
 	caddr_t		bd_sbuf;	/* store slot */
 	caddr_t		bd_hbuf;	/* hold slot */
 	caddr_t		bd_fbuf;	/* free slot */
-	caddr_t		bd_bufs[2];
 	int 		bd_slen;	/* current length of store buffer */
 	int 		bd_hlen;	/* current length of hold buffer */
-	int		bd_mapbuf;	/* mmap locked buffer */
 
 	int		bd_bufsize;	/* absolute length of buffers */
 
