@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.86 2003/02/04 01:23:53 thorpej Exp $
+# $NetBSD: obsolete.mi,v 1.87 2003/02/11 10:41:55 drochner Exp $
 ./usr/bin/genclass
 ./usr/bin/gettextize
 ./usr/include/bfd
@@ -782,12 +782,15 @@
 ./usr/share/man/cat3/vlimit.0
 ./usr/share/man/cat3/vtimes.0
 ./usr/share/man/cat8/config.new.0
+./usr/share/man/cat9/access.0
 ./usr/share/man/cat9/callout_active.0
 ./usr/share/man/cat9/callout_deactivate.0
 ./usr/share/man/cat9/disk_detatch.0
+./usr/share/man/cat9/kernacc.0
 ./usr/share/man/cat9/pfil_get_head.0
 ./usr/share/man/cat9/simple_lock_unlock.0
 ./usr/share/man/cat9/sleep.0
+./usr/share/man/cat9/useracc.0
 ./usr/share/man/cat9/uvm_vnp_sync.0
 ./usr/share/man/cat9/uvm_vnp_terminate.0
 ./usr/share/man/cat9/vslock.0
@@ -869,12 +872,15 @@
 ./usr/share/man/man3/usb.3
 ./usr/share/man/man3/vlimit.3
 ./usr/share/man/man3/vtimes.3
+./usr/share/man/man9/access.9
 ./usr/share/man/man9/callout_active.9
 ./usr/share/man/man9/callout_deactivate.9
 ./usr/share/man/man9/disk_detatch.9
+./usr/share/man/man9/kernacc.9
 ./usr/share/man/man9/pfil_get_head.9
 ./usr/share/man/man9/simple_lock_unlock.9
 ./usr/share/man/man9/sleep.9
+./usr/share/man/man9/useracc.9
 ./usr/share/man/man9/uvm_vnp_sync.9
 ./usr/share/man/man9/uvm_vnp_terminate.9
 ./usr/share/man/man9/vslock.9

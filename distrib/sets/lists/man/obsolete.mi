@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.58 2003/02/10 13:08:01 drochner Exp $
+# $NetBSD: obsolete.mi,v 1.59 2003/02/11 10:41:56 drochner Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/tar.info
 ./usr/share/man/cat1/amq.0
@@ -115,10 +115,7 @@
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/xntpd.0
 ./usr/share/man/cat8/xntpdc.0
-./usr/share/man/cat9/access.0
 ./usr/share/man/cat9/boot.0
-./usr/share/man/cat9/kernacc.0
-./usr/share/man/cat9/useracc.0
 ./usr/share/man/man1/amq.1
 ./usr/share/man/man1/g711conv.1
 ./usr/share/man/man1/i386
@@ -232,7 +229,4 @@
 ./usr/share/man/man8/vmstat.8
 ./usr/share/man/man8/xntpd.8
 ./usr/share/man/man8/xntpdc.8
-./usr/share/man/man9/access.9
 ./usr/share/man/man9/boot.9
-./usr/share/man/man9/kernacc.9
-./usr/share/man/man9/useracc.9
