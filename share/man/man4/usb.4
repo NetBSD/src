@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.5 1998/10/25 19:24:19 augustss Exp $
+.\" $NetBSD: usb.4,v 1.6 1998/12/07 13:11:47 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -45,6 +45,9 @@
 .Cd "uhub*   at usb?"
 .Cd "uhub*   at uhub? port ?"
 .Cd "XX*     at uhub? port ?"
+.Pp
+.Cd "#include <dev/usb/usb.h>"
+.Cd "#include <dev/usb/usbhid.h>"
 .Pp
 .Sh INTRODUCTION
 .Nx
@@ -195,6 +198,23 @@ This command can be used to execute arbitrary requests on the control
 pipe.  This is DANGEROUS and should be used with great care since it 
 can destroy the bus integrity.
 .El
+.Pp
+The include file
+.Dv <dev/usb/usb.h>
+contains definitions for the types used by the various 
+.Xr ioctl 2
+calls.  The naming convention of the fields for the various USB
+descriptors exactly follows the naming in the USB specification.
+Byte sized fields can be accessed directly, but word (16 bit)
+sized fields must be access by the
+.Dv "UGETW(field)"
+and
+.Dv "USETW(field,value)"
+macros to handle byte order and alignment properly.
+.br
+The include file
+.Dv <dev/usb/usbhid.h>
+similarely contains the definitions for HID devices.
 .Sh SEE ALSO
 .Xr pci 4 ,
 .Xr uaudio 4 ,
