@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.8 1996/06/11 02:14:01 jtc Exp $	*/
+/*	$NetBSD: grp.h,v 1.9 1998/05/06 19:17:37 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -44,9 +44,10 @@
 #define	_GRP_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/types.h>
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	_PATH_GROUP		"/etc/group"
 #endif
 
@@ -60,16 +61,16 @@ struct group {
 __BEGIN_DECLS
 struct group	*getgrgid __P((gid_t));
 struct group	*getgrnam __P((const char *));
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 struct group	*getgrent __P((void));
 void		 setgrent __P((void));
 void		 endgrent __P((void));
+#endif
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 void		 setgrfile __P((const char *));
-#ifndef _XOPEN_SOURCE
 char		*group_from_gid __P((gid_t, int));
 int		 setgroupent __P((int));
-#endif /* !_XOPEN_SOURCE */
-#endif /* !_POSIX_SOURCE */
+#endif
 __END_DECLS
 
 #endif /* !_GRP_H_ */
