@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.1 1996/12/16 20:38:05 cgd Exp $	*/
+/*	$NetBSD: search.c,v 1.2 1997/02/03 19:45:02 cgd Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -125,6 +125,7 @@ _rtld_check_library(
 	    if (*fullpath_p != NULL)
 		free(*fullpath_p);
 	    *fullpath_p = fullpath;
+	    close(fd);
 	    return true;
 
 lose:
