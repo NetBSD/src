@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.19 2000/06/26 14:21:04 mrg Exp $	*/
+/*	$NetBSD: if_le.c,v 1.20 2000/06/29 07:14:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,8 +83,6 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

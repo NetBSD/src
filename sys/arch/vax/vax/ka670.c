@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.5 2000/06/26 14:21:06 mrg Exp $	*/
+/*	$NetBSD: ka670.c,v 1.6 2000/06/29 07:14:27 mrg Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.18 2000/04/18 21:06:12 minoura Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.19 2000/06/29 07:07:56 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@
 #include "opt_m680x0.h"
 
 #include <sys/param.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>	/* XXX needed? */
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>

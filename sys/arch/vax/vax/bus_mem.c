@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_mem.c,v 1.7 2000/06/26 14:21:05 mrg Exp $ */
+/*	$NetBSD: bus_mem.c,v 1.8 2000/06/29 07:14:23 mrg Exp $ */
 /*
  * Copyright (c) 1998 Matt Thomas
  * All rights reserved.
@@ -37,8 +37,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

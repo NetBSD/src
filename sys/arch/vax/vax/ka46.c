@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.14 2000/06/26 14:21:05 mrg Exp $ */
+/*	$NetBSD: ka46.c,v 1.15 2000/06/29 07:14:26 mrg Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.22 2000/06/04 06:16:58 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.23 2000/06/29 07:14:23 mrg Exp $	*/
 
 /* 
  * :set tabs=4
@@ -45,7 +45,7 @@
 #include <sys/reboot.h>
 #include <sys/systm.h> /* just for boothowto --eichin */
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

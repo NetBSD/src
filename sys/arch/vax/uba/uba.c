@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.49 2000/06/26 14:21:05 mrg Exp $	   */
+/*	$NetBSD: uba.c,v 1.50 2000/06/29 07:14:21 mrg Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -51,7 +51,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
