@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.108 2004/08/30 00:34:42 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.109 2004/09/10 10:00:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.108 2004/08/30 00:34:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.109 2004/09/10 10:00:33 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -551,7 +551,7 @@ vndstrategy(struct buf *bp)
 		nbp->vb_buf.b_blkno = nbp->vb_buf.b_rawblkno = nbn + btodb(off);
 		nbp->vb_buf.b_proc = bp->b_proc;
 		nbp->vb_buf.b_iodone = vndiodone;
-		nbp->vb_buf.b_vp = NULLVP;
+		nbp->vb_buf.b_vp = vp;
 
 		nbp->vb_xfer = vnx;
 
@@ -566,7 +566,7 @@ vndstrategy(struct buf *bp)
 			goto out;
 		}
 		vnx->vx_pending++;
-		bgetvp(vp, &nbp->vb_buf);
+
 		BUFQ_PUT(&vnd->sc_tab, &nbp->vb_buf);
 		vndstart(vnd);
 		splx(s);
@@ -671,9 +671,6 @@ vndiodone(struct buf *bp)
 #endif
 		vnx->vx_error = vbp->vb_buf.b_error;
 	}
-
-	if (vbp->vb_buf.b_vp != NULLVP)
-		brelvp(&vbp->vb_buf);
 
 	VND_PUTBUF(vnd, vbp);
 
