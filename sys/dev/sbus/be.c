@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.4 1999/02/19 14:57:00 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.5 1999/03/23 00:27:09 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -142,7 +142,6 @@ struct be_softc {
 	u_int	sc_rev;
 
 	int	sc_channel;		/* channel number */
-	int	sc_promisc;
 	int	sc_burst;
 	int	sc_conf;
 #define BE_CONF_MII	1
@@ -951,7 +950,6 @@ beioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		sc->sc_promisc = ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI);
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -1043,7 +1041,7 @@ beinit(sc)
 	bus_space_write_4(t, br, BE_BRI_HASHTAB2, 0);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB3, 0);
 
-	DELAY(20);
+	be_mcreset(sc);
 
 	bus_space_write_4(t, br, BE_BRI_RANDSEED, 0xbd);
 
@@ -1113,24 +1111,27 @@ be_mcreset(sc)
 	u_int32_t crc;
 	u_int16_t hash[4];
 	u_int8_t octet;
+	u_int32_t v;
 	int i, j;
 	struct ether_multi *enm;
 	struct ether_multistep step;
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		v = bus_space_read_4(t, br, BE_BRI_RXCFG);
+		v |= BE_BR_RXCFG_PMISC;
+		bus_space_write_4(t, br, BE_BRI_RXCFG, v);
+		return;
+	}
+
+	v = bus_space_read_4(t, br, BE_BRI_RXCFG);
+	v &= ~BE_BR_RXCFG_PMISC;
+	bus_space_write_4(t, br, BE_BRI_RXCFG, v);
 
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		bus_space_write_4(t, br, BE_BRI_HASHTAB0, 0xffff);
 		bus_space_write_4(t, br, BE_BRI_HASHTAB1, 0xffff);
 		bus_space_write_4(t, br, BE_BRI_HASHTAB2, 0xffff);
 		bus_space_write_4(t, br, BE_BRI_HASHTAB3, 0xffff);
-		return;
-	}
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		u_int32_t v;
-
-		v = bus_space_read_4(t, br, BE_BRI_RXCFG);
-		v |= BE_BR_RXCFG_PMISC;
-		bus_space_write_4(t, br, BE_BRI_RXCFG, v);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.4 1999/03/09 00:42:20 mrg Exp $	*/
+/*	$NetBSD: qe.c,v 1.5 1999/03/23 00:27:09 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -145,7 +145,6 @@ struct qe_softc {
 	int	sc_channel;		/* channel number */
 	u_int	sc_rev;			/* board revision */
 
-	int	sc_promisc;
 	int	sc_burst;
 
 	struct  qec_ring	sc_rb;	/* Packet Ring Buffer */
@@ -902,7 +901,6 @@ qeioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		sc->sc_promisc = ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI);
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -911,13 +909,15 @@ qeioctl(ifp, cmd, data)
 			 */
 			qestop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
+
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    (ifp->if_flags & IFF_RUNNING) == 0) {
+			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			qeinit(sc);
+
 		} else {
 			/*
 			 * Reset the interface to pick up changes in any other
@@ -1054,6 +1054,9 @@ qeinit(sc)
 			  QE_MR_MACCC_ENXMT | QE_MR_MACCC_ENRCV |
 			  ((ifp->if_flags&IFF_PROMISC) ? QE_MR_MACCC_PROM : 0));
 
+	/* Reset multicast filter */
+	qe_mcreset(sc);
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	splx(s);
@@ -1074,77 +1077,85 @@ qe_mcreset(sc)
 	struct ether_multistep step;
 	u_int32_t crc;
 	u_int16_t hash[4];
-	u_int8_t octet, maccc = 0, *ladrp = (u_int8_t *)&hash[0];
+	u_int8_t octet, maccc, *ladrp = (u_int8_t *)&hash[0];
 	int i, j;
 
 #if defined(SUN4U) || defined(__GNUC__)
 	(void)&t;
 #endif
+
+	maccc = QE_MR_MACCC_ENXMT | QE_MR_MACCC_ENRCV;
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		maccc |= QE_MR_MACCC_PROM;
+		bus_space_write_1(t, mr, QE_MRI_MACCC, maccc);
+		return;
+	}
+
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		bus_space_write_1(t, mr, QE_MRI_IAC,
 				  QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
 		for (i = 0; i < 8; i++)
 			bus_space_write_1(t, mr, QE_MRI_LADRF, 0xff);
 		bus_space_write_1(t, mr, QE_MRI_IAC, 0);
-	} else if (ifp->if_flags & IFF_PROMISC) {
-		maccc |= QE_MR_MACCC_PROM;
-	} else {
-		hash[3] = hash[2] = hash[1] = hash[0] = 0;
-
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-				 ETHER_ADDR_LEN) != 0) {
-				/*
-				 * We must listen to a range of multicast
-				 * addresses. For now, just accept all
-				 * multicasts, rather than trying to set only
-				 * those filter bits needed to match the range.
-				 * (At this time, the only use of address
-				 * ranges is for IP multicast routing, for
-				 * which the range is big enough to require
-				 * all bits set.)
-				 */
-				bus_space_write_1(t, mr, QE_MRI_IAC,
-					 QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
-				for (i = 0; i < 8; i++)
-					bus_space_write_1(t, mr, QE_MRI_LADRF,
-							  0xff);
-				bus_space_write_1(t, mr, QE_MRI_IAC, 0);
-				ifp->if_flags |= IFF_ALLMULTI;
-				break;
-			}
-
-			crc = 0xffffffff;
-
-			for (i = 0; i < ETHER_ADDR_LEN; i++) {
-				octet = enm->enm_addrlo[i];
-
-				for (j = 0; j < 8; j++) {
-					if ((crc & 1) ^ (octet & 1)) {
-						crc >>= 1;
-						crc ^= MC_POLY_LE;
-					}
-					else
-						crc >>= 1;
-					octet >>= 1;
-				}
-			}
-
-			crc >>= 26;
-			hash[crc >> 4] |= 1 << (crc & 0xf);
-			ETHER_NEXT_MULTI(step, enm);
-		}
-
-		bus_space_write_1(t, mr, QE_MRI_IAC,
-				  QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
-		for (i = 0; i < 8; i++)
-			bus_space_write_1(t, mr, QE_MRI_LADRF, ladrp[i]);
-		bus_space_write_1(t, mr, QE_MRI_IAC, 0);
+		bus_space_write_1(t, mr, QE_MRI_MACCC, maccc);
+		return;
 	}
 
-	bus_space_write_1(t, mr, QE_MRI_MACCC,
-			  maccc | QE_MR_MACCC_ENXMT | QE_MR_MACCC_ENRCV);
+	hash[3] = hash[2] = hash[1] = hash[0] = 0;
+
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			 ETHER_ADDR_LEN) != 0) {
+			/*
+			 * We must listen to a range of multicast
+			 * addresses. For now, just accept all
+			 * multicasts, rather than trying to set only
+			 * those filter bits needed to match the range.
+			 * (At this time, the only use of address
+			 * ranges is for IP multicast routing, for
+			 * which the range is big enough to require
+			 * all bits set.)
+			 */
+			bus_space_write_1(t, mr, QE_MRI_IAC,
+				 QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
+			for (i = 0; i < 8; i++)
+				bus_space_write_1(t, mr, QE_MRI_LADRF,
+						  0xff);
+			bus_space_write_1(t, mr, QE_MRI_IAC, 0);
+			ifp->if_flags |= IFF_ALLMULTI;
+			break;
+		}
+
+		crc = 0xffffffff;
+
+		for (i = 0; i < ETHER_ADDR_LEN; i++) {
+			octet = enm->enm_addrlo[i];
+
+			for (j = 0; j < 8; j++) {
+				if ((crc & 1) ^ (octet & 1)) {
+					crc >>= 1;
+					crc ^= MC_POLY_LE;
+				}
+				else
+					crc >>= 1;
+				octet >>= 1;
+			}
+		}
+
+		crc >>= 26;
+		hash[crc >> 4] |= 1 << (crc & 0xf);
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+	bus_space_write_1(t, mr, QE_MRI_IAC,
+			  QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
+	for (i = 0; i < 8; i++)
+		bus_space_write_1(t, mr, QE_MRI_LADRF, ladrp[i]);
+	bus_space_write_1(t, mr, QE_MRI_IAC, 0);
+
+	bus_space_write_1(t, mr, QE_MRI_MACCC, maccc);
 }
 
 /*
