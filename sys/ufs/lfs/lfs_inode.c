@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.45 2000/10/14 23:22:14 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.46 2000/11/17 19:14:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -690,11 +690,7 @@ restart:
 			bp->b_flags &= ~B_DELWRI;
 			fs->lfs_avail += btodb(bp->b_bcount);
 		}
-		if (bp->b_flags & B_LOCKED) {
-			bp->b_flags &= ~B_LOCKED;
-			--locked_queue_count;
-			locked_queue_bytes -= bp->b_bcount;
-		}
+		LFS_UNLOCK_BUF(bp);
 		brelse(bp);
 	}
 
@@ -717,11 +713,7 @@ restart:
 			bp->b_flags &= ~B_DELWRI;
 			fs->lfs_avail += btodb(bp->b_bcount);
 		}
-		if (bp->b_flags & B_LOCKED) {
-			bp->b_flags &= ~B_LOCKED;
-			--locked_queue_count;
-			locked_queue_bytes -= bp->b_bcount;
-		}
+		LFS_UNLOCK_BUF(bp);
 		brelse(bp);
 	}
 
