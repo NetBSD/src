@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.515 2003/01/18 17:50:31 thorpej Exp $
+#	$NetBSD: mi,v 1.516 2003/01/19 13:06:50 lha Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -791,6 +791,7 @@
 ./usr/include/sys/siginfo.h		comp-c-include
 ./usr/include/sys/signal.h		comp-c-include
 ./usr/include/sys/signalvar.h		comp-c-include
+./usr/include/sys/sigtypes.h		comp-c-include
 ./usr/include/sys/socket.h		comp-c-include
 ./usr/include/sys/socketvar.h		comp-c-include
 ./usr/include/sys/sockio.h		comp-c-include
@@ -1097,6 +1098,15 @@
 ./usr/share/man/cat2/__clone.0		comp-c-catman
 ./usr/share/man/cat2/__syscall.0	comp-c-catman
 ./usr/share/man/cat2/_exit.0		comp-c-catman
+./usr/share/man/cat2/_lwp_continue.0	comp-c-catman
+./usr/share/man/cat2/_lwp_create.0	comp-c-catman
+./usr/share/man/cat2/_lwp_exit.0	comp-c-catman
+./usr/share/man/cat2/_lwp_getprivate.0	comp-c-catman
+./usr/share/man/cat2/_lwp_self.0	comp-c-catman
+./usr/share/man/cat2/_lwp_setprivate.0	comp-c-catman
+./usr/share/man/cat2/_lwp_suspend.0	comp-c-catman
+./usr/share/man/cat2/_lwp_wait.0	comp-c-catman
+./usr/share/man/cat2/_lwp_wakeup.0	comp-c-catman
 ./usr/share/man/cat2/accept.0		comp-c-catman
 ./usr/share/man/cat2/access.0		comp-c-catman
 ./usr/share/man/cat2/acct.0		comp-c-catman
@@ -1304,6 +1314,7 @@
 ./usr/share/man/cat2/x86_64_get_mtrr.0		comp-c-catman
 ./usr/share/man/cat2/x86_64_iopl.0		comp-c-catman
 ./usr/share/man/cat2/x86_64_set_mtrr.0		comp-c-catman
+./usr/share/man/cat3/_lwp_makecontext.0		comp-c-catman
 ./usr/share/man/cat3/BIO_ctrl.0			comp-c-catman
 ./usr/share/man/cat3/BIO_f_base64.0		comp-c-catman
 ./usr/share/man/cat3/BIO_f_buffer.0		comp-c-catman
@@ -4102,6 +4113,15 @@
 ./usr/share/man/man2/__clone.2			comp-c-man
 ./usr/share/man/man2/__syscall.2		comp-c-man
 ./usr/share/man/man2/_exit.2		comp-c-man
+./usr/share/man/man2/_lwp_continue.2	comp-c-man
+./usr/share/man/man2/_lwp_create.2	comp-c-man
+./usr/share/man/man2/_lwp_exit.2	comp-c-man
+./usr/share/man/man2/_lwp_getprivate.2	comp-c-man
+./usr/share/man/man2/_lwp_self.2	comp-c-man
+./usr/share/man/man2/_lwp_setprivate.2	comp-c-man
+./usr/share/man/man2/_lwp_suspend.2	comp-c-man
+./usr/share/man/man2/_lwp_wait.2	comp-c-man
+./usr/share/man/man2/_lwp_wakeup.2	comp-c-man
 ./usr/share/man/man2/accept.2		comp-c-man
 ./usr/share/man/man2/access.2		comp-c-man
 ./usr/share/man/man2/acct.2		comp-c-man
@@ -4309,6 +4329,7 @@
 ./usr/share/man/man2/x86_64_get_mtrr.2		comp-c-man
 ./usr/share/man/man2/x86_64_iopl.2		comp-c-man
 ./usr/share/man/man2/x86_64_set_mtrr.2		comp-c-man
+./usr/share/man/man3/_lwp_makecontext.3		comp-c-man
 ./usr/share/man/man3/BIO_ctrl.3			comp-c-man
 ./usr/share/man/man3/BIO_f_base64.3		comp-c-man
 ./usr/share/man/man3/BIO_f_buffer.3		comp-c-man
