@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.29 2003/05/16 19:57:22 dsl Exp $	*/
+/*	$NetBSD: mdb.c,v 1.30 2003/06/03 11:51:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -163,19 +163,18 @@ write_menu_file (char *initcode)
 		(void) fprintf (out_file, "#define DYNAMIC_MENUS\n\n");
 
 	(void) fprintf (out_file,
-		"struct menudesc;\n"	
-		"typedef\n"
+		"typedef struct menudesc menudesc;\n"	
+		"typedef struct menu_ent menu_ent;\n"	
 		"struct menu_ent {\n"
 		"	const char	*opt_name;\n"
 		"	int		opt_menu;\n"
 		"	int		opt_flags;\n"
-		"	int		(*opt_action)(struct menudesc *);\n"
-		"} menu_ent ;\n\n"
+		"	int		(*opt_action)(menudesc *, menu_ent *, void *);\n"
+		"};\n\n"
 		"#define OPT_SUB	1\n"
 		"#define OPT_ENDWIN	2\n"
 		"#define OPT_EXIT	4\n"
 		"#define OPT_NOMENU	-1\n\n"
-		"typedef\n"
 		"struct menudesc {\n"
 		"	const char	*title;\n"
 		"	int		y, x;\n"
@@ -190,7 +189,7 @@ write_menu_file (char *initcode)
 		"	const char	*exitstr;\n"
 		"	void		(*post_act)(void);\n"
 		"	void		(*exit_act)(void);\n"
-		"} menudesc ;\n"
+		"};\n"
 		"\n"
 		"/* defines for mopt field. */\n"
 		"#define MC_NOEXITOPT 1\n"
@@ -207,7 +206,7 @@ write_menu_file (char *initcode)
 		"\n"
 		"/* Prototypes */\n"
 		"int menu_init (void);\n"
-		"void process_menu (int num);\n"
+		"void process_menu (int num, void *arg);\n"
 		"void __menu_initerror (void);\n"
 		);
 
@@ -275,20 +274,16 @@ write_menu_file (char *initcode)
 		}
 		j = 0;
 		toptn = menus[i]->info->optns;
-		while (toptn != NULL) {
-			if (strlen(toptn->optact.code)) {
-				(void) fprintf (out_file,
-					"int opt_act_%d_%d(menudesc *m);\n"
-					"/*ARGSUSED*/\n"
-					"int opt_act_%d_%d(menudesc *m)\n"
-					"{\t%s\n\treturn %s;\n}\n\n",
-					i, j, i, j, toptn->optact.code,
-					(toptn->doexit ? "1" : "0"));
-						
-				
-			}
-			j++;
-			toptn = toptn->next;
+		for (;toptn != NULL; j++, toptn = toptn->next) {
+			if (strlen(toptn->optact.code) == 0)
+				continue;
+
+			(void) fprintf (out_file,
+				"/*ARGSUSED*/\n"
+				"static int opt_act_%d_%d(menudesc *m, menu_ent *opt, void *arg)\n"
+				"{\n\t%s\n\treturn %s;\n}\n\n",
+				i, j, toptn->optact.code,
+				(toptn->doexit ? "1" : "0"));
 		}
 
 	}
