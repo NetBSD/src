@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.4 1997/12/15 13:19:47 bouyer Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.5 1998/02/23 22:55:09 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -211,11 +211,15 @@ menu editfsparts, y=13, exit;
 	option "Changer d'unité", action { reask_sizemult(); };
  
 
-menu md_distcustom, exit, title " Sélection des composants";
+menu md_distcustom, x=30, y=3, exit, title " Sélection des composants";
 	display action { show_cur_distsets (); };
 	option  "Outils de développement ", 	 action { toggle_getit (3); };
 	option  "Jeux", 		 action { toggle_getit (4); };
 	option  "Pages de manuel", 	 action { toggle_getit (5); };
 	option  "Divers", 	 action { toggle_getit (6); };
 	option  "Outils de manipulation de textes", action { toggle_getit (7); };
-
+	option  "X11 base et clients",	 action { toggle_getit (8); };
+	option  "X11 polices",		 action { toggle_getit (9); };
+	option  "X11 serveurs",		 action { toggle_getit (10); };
+	option  "X11 clients contribués",	 action { toggle_getit (11); };
+	option  "X11 développement",	 action { toggle_getit (12); };
