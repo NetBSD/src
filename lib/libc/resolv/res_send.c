@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.1.1.1 2004/05/20 17:18:54 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.2 2004/05/20 17:59:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -155,9 +155,9 @@ res_ourserver_p(const res_state statp, const struct sockaddr *sa) {
 
 	switch (sa->sa_family) {
 	case AF_INET:
-		inp = (const struct sockaddr_in *)sa;
+		inp = (const struct sockaddr_in *)(void *)sa;
 		for (ns = 0;  ns < statp->nscount;  ns++) {
-			srv = (struct sockaddr_in *)get_nsaddr(statp, ns);
+			srv = (struct sockaddr_in *)(void *)get_nsaddr(statp, (size_t)ns);
 			if (srv->sin_family == inp->sin_family &&
 			    srv->sin_port == inp->sin_port &&
 			    (srv->sin_addr.s_addr == INADDR_ANY ||
@@ -168,9 +168,9 @@ res_ourserver_p(const res_state statp, const struct sockaddr *sa) {
 	case AF_INET6:
 		if (EXT(statp).ext == NULL)
 			break;
-		in6p = (const struct sockaddr_in6 *)sa;
+		in6p = (const struct sockaddr_in6 *)(void *)sa;
 		for (ns = 0;  ns < statp->nscount;  ns++) {
-			srv6 = (struct sockaddr_in6 *)get_nsaddr(statp, ns);
+			srv6 = (struct sockaddr_in6 *)(void *)get_nsaddr(statp, (size_t)ns);
 			if (srv6->sin6_family == in6p->sin6_family &&
 			    srv6->sin6_port == in6p->sin6_port &&
 #ifdef HAVE_SIN6_SCOPE_ID
@@ -204,7 +204,7 @@ res_nameinquery(const char *name, int type, int class,
 		const u_char *buf, const u_char *eom)
 {
 	const u_char *cp = buf + HFIXEDSZ;
-	int qdcount = ntohs(((const HEADER*)buf)->qdcount);
+	int qdcount = ntohs(((const HEADER*)(const void *)buf)->qdcount);
 
 	while (qdcount-- > 0) {
 		char tname[MAXDNAME+1];
@@ -241,7 +241,7 @@ res_queriesmatch(const u_char *buf1, const u_char *eom1,
 		 const u_char *buf2, const u_char *eom2)
 {
 	const u_char *cp = buf1 + HFIXEDSZ;
-	int qdcount = ntohs(((const HEADER*)buf1)->qdcount);
+	int qdcount = ntohs(((const HEADER*)(const void *)buf1)->qdcount);
 
 	if (buf1 + HFIXEDSZ > eom1 || buf2 + HFIXEDSZ > eom2)
 		return (-1);
@@ -250,11 +250,11 @@ res_queriesmatch(const u_char *buf1, const u_char *eom1,
 	 * Only header section present in replies to
 	 * dynamic update packets.
 	 */
-	if ((((const HEADER *)buf1)->opcode == ns_o_update) &&
-	    (((const HEADER *)buf2)->opcode == ns_o_update))
+	if ((((const HEADER *)(const void *)buf1)->opcode == ns_o_update) &&
+	    (((const HEADER *)(const void *)buf2)->opcode == ns_o_update))
 		return (1);
 
-	if (qdcount != ntohs(((const HEADER*)buf2)->qdcount))
+	if (qdcount != ntohs(((const HEADER*)(const void *)buf2)->qdcount))
 		return (0);
 	while (qdcount-- > 0) {
 		char tname[MAXDNAME+1];
@@ -309,8 +309,8 @@ res_nsend(res_state statp,
 		else
 			for (ns = 0; ns < statp->nscount; ns++) {
 				if (statp->nsaddr_list[ns].sin_family &&
-				    !sock_eq((struct sockaddr *)&statp->nsaddr_list[ns],
-					     (struct sockaddr *)&EXT(statp).ext->nsaddrs[ns])) {
+				    !sock_eq((struct sockaddr *)(void *)&statp->nsaddr_list[ns],
+					     (struct sockaddr *)(void *)&EXT(statp).ext->nsaddrs[ns])) {
 					needclose++;
 					break;
 				}
@@ -319,12 +319,12 @@ res_nsend(res_state statp,
 					continue;
 				peerlen = sizeof(peer);
 				if (getsockname(EXT(statp).nssocks[ns],
-				    (struct sockaddr *)&peer, &peerlen) < 0) {
+				    (struct sockaddr *)(void *)&peer, &peerlen) < 0) {
 					needclose++;
 					break;
 				}
-				if (!sock_eq((struct sockaddr *)&peer,
-				    get_nsaddr(statp, ns))) {
+				if (!sock_eq((struct sockaddr *)(void *)&peer,
+				    get_nsaddr(statp, (size_t)ns))) {
 					needclose++;
 					break;
 				}
@@ -389,7 +389,7 @@ res_nsend(res_state statp,
 	    for (ns = 0; ns < statp->nscount; ns++) {
 		struct sockaddr *nsap;
 		int nsaplen;
-		nsap = get_nsaddr(statp, ns);
+		nsap = get_nsaddr(statp, (size_t)ns);
 		nsaplen = get_salen(nsap);
 		statp->_flags &= ~RES_F_LASTMASK;
 		statp->_flags |= (ns << RES_F_LASTSHIFT);
@@ -425,7 +425,7 @@ res_nsend(res_state statp,
 		}
 
 		Dprint(((statp->options & RES_DEBUG) &&
-			getnameinfo(nsap, nsaplen, abuf, sizeof(abuf),
+			getnameinfo(nsap, (socklen_t)nsaplen, abuf, sizeof(abuf),
 				    NULL, 0, niflags) == 0),
 		       (stdout, ";; Querying server (# %d) address = %s\n",
 			ns + 1, abuf));
@@ -582,7 +582,7 @@ send_vc(res_state statp,
 	u_char *cp;
 	void *tmp;
 
-	nsap = get_nsaddr(statp, ns);
+	nsap = get_nsaddr(statp, (size_t)ns);
 	nsaplen = get_salen(nsap);
 
 	connreset = 0;
@@ -595,8 +595,8 @@ send_vc(res_state statp,
 		ISC_SOCKLEN_T size = sizeof peer;
 
 		if (getpeername(statp->_vcsock,
-				(struct sockaddr *)&peer, &size) < 0 ||
-		    !sock_eq((struct sockaddr *)&peer, nsap)) {
+				(struct sockaddr *)(void *)&peer, &size) < 0 ||
+		    !sock_eq((struct sockaddr *)(void *)&peer, nsap)) {
 			res_nclose(statp);
 			statp->_flags &= ~RES_F_VC;
 		}
@@ -627,7 +627,7 @@ send_vc(res_state statp,
 			}
 		}
 		errno = 0;
-		if (connect(statp->_vcsock, nsap, nsaplen) < 0) {
+		if (connect(statp->_vcsock, nsap, (socklen_t)nsaplen) < 0) {
 			*terrno = errno;
 			Aerror(statp, stderr, "connect/vc", errno, nsap,
 			    nsaplen);
@@ -640,10 +640,10 @@ send_vc(res_state statp,
 	/*
 	 * Send length & message
 	 */
-	ns_put16((u_short)buflen, (u_char*)&len);
+	ns_put16((u_short)buflen, (u_char*)(void *)&len);
 	iov[0] = evConsIovec(&len, INT16SZ);
 	DE_CONST(buf, tmp);
-	iov[1] = evConsIovec(tmp, buflen);
+	iov[1] = evConsIovec(tmp, (size_t)buflen);
 	if (writev(statp->_vcsock, iov, 2) != (INT16SZ + buflen)) {
 		*terrno = errno;
 		Perror(statp, stderr, "write failed", errno);
@@ -656,9 +656,9 @@ send_vc(res_state statp,
  read_len:
 	cp = ans;
 	len = INT16SZ;
-	while ((n = read(statp->_vcsock, (char *)cp, (int)len)) > 0) {
+	while ((n = read(statp->_vcsock, (char *)cp, (size_t)len)) > 0) {
 		cp += n;
-		if ((len -= n) <= 0)
+		if ((len -= n) == 0)
 			break;
 	}
 	if (n <= 0) {
@@ -702,7 +702,7 @@ send_vc(res_state statp,
 		return (0);
 	}
 	cp = ans;
-	while (len != 0 && (n = read(statp->_vcsock, (char *)cp, (int)len)) > 0){
+	while (len != 0 && (n = read(statp->_vcsock, (char *)cp, (size_t)len)) > 0){
 		cp += n;
 		len -= n;
 	}
@@ -756,8 +756,8 @@ send_dg(res_state statp,
 	const u_char *buf, int buflen, u_char *ans, int anssiz,
 	int *terrno, int ns, int *v_circuit, int *gotsomewhere)
 {
-	const HEADER *hp = (const HEADER *) buf;
-	HEADER *anhp = (HEADER *) ans;
+	const HEADER *hp = (const HEADER *)(const void *)buf;
+	HEADER *anhp = (HEADER *)(void *)ans;
 	const struct sockaddr *nsap;
 	int nsaplen;
 	struct timespec now, timeout, finish;
@@ -766,7 +766,7 @@ send_dg(res_state statp,
 	ISC_SOCKLEN_T fromlen;
 	int resplen, seconds, n, s;
 
-	nsap = get_nsaddr(statp, ns);
+	nsap = get_nsaddr(statp, (size_t)ns);
 	nsaplen = get_salen(nsap);
 	if (EXT(statp).nssocks[ns] == -1) {
 		EXT(statp).nssocks[ns] = socket(nsap->sa_family, SOCK_DGRAM, 0);
@@ -801,7 +801,7 @@ send_dg(res_state statp,
 		 * error message is received.  We can thus detect
 		 * the absence of a nameserver without timing out.
 		 */
-		if (connect(EXT(statp).nssocks[ns], nsap, nsaplen) < 0) {
+		if (connect(EXT(statp).nssocks[ns], nsap, (socklen_t)nsaplen) < 0) {
 			Aerror(statp, stderr, "connect(dg)", errno, nsap,
 			    nsaplen);
 			res_nclose(statp);
@@ -813,7 +813,7 @@ send_dg(res_state statp,
 	}
 	s = EXT(statp).nssocks[ns];
 #ifndef CANNOT_CONNECT_DGRAM
-	if (send(s, (const char*)buf, buflen, 0) != buflen) {
+	if (send(s, (const char*)buf, (size_t)buflen, 0) != buflen) {
 		Perror(statp, stderr, "send", errno);
 		res_nclose(statp);
 		return (0);
@@ -836,7 +836,7 @@ send_dg(res_state statp,
 	if (seconds <= 0)
 		seconds = 1;
 	now = evNowTime();
-	timeout = evConsTime(seconds, 0);
+	timeout = evConsTime((long)seconds, 0);
 	finish = evAddTime(now, timeout);
 	goto nonow;
  wait:
@@ -847,7 +847,7 @@ send_dg(res_state statp,
 	if (evCmpTime(finish, now) > 0)
 		timeout = evSubTime(finish, now);
 	else
-		timeout = evConsTime(0, 0);
+		timeout = evConsTime(0L, 0);
 	n = pselect(s + 1, &dsmask, NULL, NULL, &timeout, NULL);
 	if (n == 0) {
 		Dprint(statp->options & RES_DEBUG, (stdout, ";; timeout\n"));
@@ -863,8 +863,8 @@ send_dg(res_state statp,
 	}
 	errno = 0;
 	fromlen = sizeof(from);
-	resplen = recvfrom(s, (char*)ans, anssiz,0,
-			   (struct sockaddr *)&from, &fromlen);
+	resplen = recvfrom(s, (char*)ans, (size_t)anssiz,0,
+			   (struct sockaddr *)(void *)&from, &fromlen);
 	if (resplen <= 0) {
 		Perror(statp, stderr, "recvfrom", errno);
 		res_nclose(statp);
@@ -895,7 +895,7 @@ send_dg(res_state statp,
 		goto wait;
 	}
 	if (!(statp->options & RES_INSECURE1) &&
-	    !res_ourserver_p(statp, (struct sockaddr *)&from)) {
+	    !res_ourserver_p(statp, (struct sockaddr *)(void *)&from)) {
 		/*
 		 * response from wrong server? ignore it.
 		 * XXX - potential security hazard could
@@ -977,7 +977,7 @@ Aerror(const res_state statp, FILE *file, const char *string, int error,
 	alen = alen;
 
 	if ((statp->options & RES_DEBUG) != 0U) {
-		if (getnameinfo(address, alen, hbuf, sizeof(hbuf),
+		if (getnameinfo(address, (socklen_t)alen, hbuf, sizeof(hbuf),
 		    sbuf, sizeof(sbuf), niflags)) {
 			strncpy(hbuf, "?", sizeof(hbuf) - 1);
 			hbuf[sizeof(hbuf) - 1] = '\0';
@@ -1009,13 +1009,13 @@ sock_eq(struct sockaddr *a, struct sockaddr *b) {
 		return 0;
 	switch (a->sa_family) {
 	case AF_INET:
-		a4 = (struct sockaddr_in *)a;
-		b4 = (struct sockaddr_in *)b;
+		a4 = (struct sockaddr_in *)(void *)a;
+		b4 = (struct sockaddr_in *)(void *)b;
 		return a4->sin_port == b4->sin_port &&
 		    a4->sin_addr.s_addr == b4->sin_addr.s_addr;
 	case AF_INET6:
-		a6 = (struct sockaddr_in6 *)a;
-		b6 = (struct sockaddr_in6 *)b;
+		a6 = (struct sockaddr_in6 *)(void *)a;
+		b6 = (struct sockaddr_in6 *)(void *)b;
 		return a6->sin6_port == b6->sin6_port &&
 #ifdef HAVE_SIN6_SCOPE_ID
 		    a6->sin6_scope_id == b6->sin6_scope_id &&
