@@ -68,6 +68,7 @@
 ./usr/share/man/cat1/expand.0
 ./usr/share/man/cat1/expr.0
 ./usr/share/man/cat1/false.0
+./usr/share/man/cat1/fdformat.0
 ./usr/share/man/cat1/fg.0
 ./usr/share/man/cat1/fgrep.0
 ./usr/share/man/cat1/file.0
@@ -999,6 +1000,7 @@
 ./usr/share/man/man1/expand.1
 ./usr/share/man/man1/expr.1
 ./usr/share/man/man1/false.1
+./usr/share/man/man1/fdformat.1
 ./usr/share/man/man1/fg.1
 ./usr/share/man/man1/fgrep.1
 ./usr/share/man/man1/file.1
