@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.6 1999/03/22 05:35:41 eeh Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.7 1999/05/11 05:06:17 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -462,7 +462,7 @@
 	register int _lduba_v; \
 	if (asi == ASI_PHYS_CACHED) { \
 		__asm __volatile("wr %2,%%g0,%%asi; " \
-" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " lduba [%1]%%asi,%0" : "=r" (_lduba_v) : \
 		"r" ((long long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
@@ -486,7 +486,7 @@
 	register int _lduha_v; \
 	if (asi == ASI_PHYS_CACHED) { \
 		__asm __volatile("wr %2,%%g0,%%asi; " \
-" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " lduha [%1]%%asi,%0" : "=r" (_lduha_v) : \
 		"r" ((long long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
@@ -510,7 +510,7 @@
 	register int _lda_v; \
 	if (asi == ASI_PHYS_CACHED) { \
 		__asm __volatile("wr %2,%%g0,%%asi; " \
-" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " lda [%1]%%asi,%0" : "=r" (_lda_v) : \
 		"r" ((int)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
@@ -525,7 +525,7 @@
 	register int _lda_v; \
 	if (asi == ASI_PHYS_CACHED) { \
 		__asm __volatile("wr %2,%%g0,%%asi; " \
-" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " ldswa [%1]%%asi,%0" : "=r" (_lda_v) : \
 		"r" ((int)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
@@ -557,7 +557,7 @@
 	register long long _lda_v; \
 	if (asi == ASI_PHYS_CACHED) { \
 		__asm __volatile("wr %2,%%g0,%%asi; " \
-" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " ldda [%1]%%asi,%0" : "=r" (_lda_v) : \
 		"r" ((int)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
@@ -573,7 +573,7 @@
 	register long _lda_v; \
 	if (asi == ASI_PHYS_CACHED) { \
 		__asm __volatile("wr %2,%%g0,%%asi; "\
-" andn %1,0x1f,%2; stxa %%g0,[%2] %3; membar #Sync; " \
+" andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " ldxa [%1]%%asi,%0" : "=r" (_lda_v) : \
 		"r" ((long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
@@ -588,7 +588,7 @@
 	volatile register long _ldxa_lo, _ldxa_hi; \
 	if (asi == ASI_PHYS_CACHED) { \
 		__asm __volatile("wr %3,%%g0,%%asi; " \
-" andn %2,0x1f,%3; stxa %%g0,[%3] %4; membar #Sync; " \
+" andn %2,0x1f,%0; stxa %%g0,[%0] %4; membar #Sync; " \
 " ldxa [%2]%%asi,%0; srlx %0,32,%1; srl %0,0,%0" : \
 		"=r" (_ldxa_lo), "=r" (_ldxa_hi) : \
 		"r" ((long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
