@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.70 2002/09/04 01:32:44 matt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.71 2002/10/23 09:14:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.70 2002/09/04 01:32:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.71 2002/10/23 09:14:29 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.70 2002/09/04 01:32:44 matt Exp 
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#include <sys/event.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -216,6 +217,10 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 		return (error);
 	}
 	*retval = fd;
+
+	/* connection has been removed from the listen queue */
+	KNOTE(&so->so_rcv.sb_sel.si_klist, 0);
+
 	{ struct socket *aso = TAILQ_FIRST(&so->so_q);
 	  if (soqremque(aso, 1) == 0)
 		panic("accept");

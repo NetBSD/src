@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.84 2002/10/02 16:33:34 thorpej Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.85 2002/10/23 09:13:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.84 2002/10/02 16:33:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.85 2002/10/23 09:13:19 jdolecek Exp $");
 
 #include "opt_kgdb.h"
 
@@ -231,7 +231,7 @@ dev_type_poll(zspoll);
 
 const struct cdevsw zstty_cdevsw = {
 	zsopen, zsclose, zsread, zswrite, zsioctl,
-	zsstop, zstty, zspoll, nommap, D_TTY
+	zsstop, zstty, zspoll, nommap, ttykqfilter, D_TTY
 };
 
 struct zsops zsops_tty;

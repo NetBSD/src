@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.40 2001/12/18 07:51:16 chs Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.41 2002/10/23 09:14:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.40 2001/12/18 07:51:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.41 2002/10/23 09:14:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -948,6 +948,7 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
 	{ &vop_poll_desc, genfs_poll },			/* poll */
+	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, genfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, genfs_fsync },		/* fsync */

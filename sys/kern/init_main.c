@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.208 2002/10/01 18:11:58 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.209 2002/10/23 09:14:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.208 2002/10/01 18:11:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.209 2002/10/23 09:14:12 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.208 2002/10/01 18:11:58 thorpej Exp 
 #include <sys/reboot.h>
 #include <sys/user.h>
 #include <sys/sysctl.h>
+#include <sys/event.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -211,6 +212,9 @@ main(void)
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
 	 */
 	mbinit();
+
+	/* Initialize kqueues. */
+	kqueue_init();
 
 	/* Initialize sockets. */
 	soinit();

@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.4 2002/01/26 13:40:53 aymeric Exp $	*/
+/*	$NetBSD: event_var.h,v 1.5 2002/10/23 09:10:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@ struct evvar {
 #define	splev()	spltty()
 
 #define	EV_WAKEUP(ev) { \
-	selwakeup(&(ev)->ev_sel); \
+	selnotify(&(ev)->ev_sel, 0); \
 	if ((ev)->ev_wanted) { \
 		(ev)->ev_wanted = 0; \
 		wakeup((caddr_t)(ev)); \
@@ -81,6 +81,7 @@ void	ev_init(struct evvar *);
 void	ev_fini(struct evvar *);
 int	ev_read(struct evvar *, struct uio *, int);
 int	ev_poll(struct evvar *, int, struct proc *);
+int	ev_kqfilter(struct evvar *, struct knote *);
 
 /*
  * PEVENT is set just above PSOCK, which is just above TTIPRI, on the

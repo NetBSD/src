@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.29 2002/10/02 16:02:33 thorpej Exp $ */
+/*	$NetBSD: hp.c,v 1.30 2002/10/23 09:12:33 jdolecek Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,6 +53,7 @@
 #include <sys/syslog.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <machine/bus.h>
 #include <machine/trap.h>
@@ -99,7 +100,7 @@ const struct bdevsw hp_bdevsw = {
 
 const struct cdevsw hp_cdevsw = {
 	hpopen, hpclose, hpread, hpwrite, hpioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 #define HP_WCSR(reg, val) \

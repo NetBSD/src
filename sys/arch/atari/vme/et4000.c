@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.9 2002/10/02 05:04:27 thorpej Exp $	*/
+/*	$NetBSD: et4000.c,v 1.10 2002/10/23 09:10:55 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -58,6 +58,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 #include <atari/vme/vmevar.h>
 
 #include <machine/iomap.h>
@@ -142,7 +143,7 @@ dev_type_mmap(etmmap);
 
 const struct cdevsw et_cdevsw = {
 	etopen, etclose, etread, etwrite, etioctl,
-	nostop, notty, nopoll, etmmap,
+	nostop, notty, nopoll, etmmap, nokqfilter,
 };
 
 /*

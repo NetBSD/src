@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.33 2002/10/02 05:04:25 thorpej Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.34 2002/10/23 09:10:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -258,7 +258,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void	fdstart __P((struct fd_softc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.7 2002/10/02 15:52:41 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.8 2002/10/23 09:12:03 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -661,7 +661,7 @@ dev_type_ioctl(scrioctl);
 
 const struct cdevsw scr_cdevsw = {
 	scropen, scrclose, noread, nowrite, scrioctl,
-	nostop, notty, nopoll, nommap, D_TTY
+	nostop, notty, nopoll, nommap, nokqfilter, D_TTY
 };
 
 /*

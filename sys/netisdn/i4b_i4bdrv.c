@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.20 2002/09/06 13:18:43 gehenna Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.21 2002/10/23 09:14:45 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.20 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.21 2002/10/23 09:14:45 jdolecek Exp $");
 
 #include "isdn.h"
 
@@ -118,6 +118,7 @@ PDEVSTATIC int isdnioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, str
 
 #ifdef OS_USES_POLL
 PDEVSTATIC int isdnpoll __P((dev_t dev, int events, struct proc *p));
+PDEVSTATIC int isdnkqfilter __P((dev_t dev, struct knote *kn));
 #else
 PDEVSTATIC int isdnselect __P((dev_t dev, int rw, struct proc *p));
 #endif
@@ -196,7 +197,7 @@ SYSINIT(i4bdev,SI_SUB_DRIVERS,SI_ORDER_MIDDLE+CDEV_MAJOR,i4b_drvinit,NULL)
 #ifdef __NetBSD__
 const struct cdevsw isdn_cdevsw = {
 	isdnopen, isdnclose, isdnread, nowrite, isdnioctl,
-	nostop, notty, isdnpoll, nommap,
+	nostop, notty, isdnpoll, nommap, isdnkqfilter,
 };
 #endif /* __NetBSD__ */
 
@@ -942,6 +943,66 @@ isdnpoll(dev_t dev, int events, struct proc *p)
 	return(0);
 }
 
+static void
+filt_i4brdetach(struct knote *kn)
+{
+	int s;
+
+	s = splnet();
+	SLIST_REMOVE(&select_rd_info.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_i4bread(struct knote *kn, long hint)
+{
+	struct mbuf *m;
+
+	if (IF_QEMPTY(&i4b_rdqueue))
+		return (0);
+
+	IF_POLL(&i4b_rdqueue, m);
+
+	kn->kn_data = m->m_len;
+	return (1);
+}
+
+static const struct filterops i4bread_filtops =
+	{ 1, NULL, filt_i4brdetach, filt_i4bread };
+
+static const struct filterops i4b_seltrue_filtops =
+	{ 1, NULL, filt_i4brdetach, filt_seltrue };
+
+int
+isdnkqfilter(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &select_rd_info.si_klist;
+		kn->kn_fop = &i4bread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &select_rd_info.si_klist;
+		kn->kn_fop = &i4b_seltrue_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = NULL;
+
+	s = splnet();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
 #endif /* OS_USES_SELECT */
 
 /*---------------------------------------------------------------------------*
@@ -981,7 +1042,7 @@ i4bputqueue(struct mbuf *m)
 	if(selflag)
 	{
 		selflag = 0;
-		selwakeup(&select_rd_info);
+		selnotify(&select_rd_info, 0);
 	}
 }
 
@@ -1022,7 +1083,7 @@ i4bputqueue_hipri(struct mbuf *m)
 	if(selflag)
 	{
 		selflag = 0;
-		selwakeup(&select_rd_info);
+		selnotify(&select_rd_info, 0);
 	}
 }
 
