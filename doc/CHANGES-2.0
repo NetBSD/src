@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.157 2004/04/29 04:33:19 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.158 2004/04/29 04:34:12 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1570,3 +1570,9 @@ libexec/ld.elf_so/arch/vax/Makefile.inc		1.9
 	The -symbolic flag in gcc 2.95.3 is not passed to the linker, which is
 	required.  Restore the -Bsymbolic option in LDFLAGS on the vax.
 	[mhitch, ticket #219]
+
+sys/dev/acpi/acpi_ec.c				1.30
+
+	EcGpeHandler: in the case that the ec is EcLock'ed, always set
+	EC_F_PENDQUERY flag so that AcpiClearGpe() will be called later.
+	[yamt, ticket #221]
