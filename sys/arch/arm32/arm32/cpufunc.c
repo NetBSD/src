@@ -1,6 +1,8 @@
-/*	$NetBSD: cpufunc.c,v 1.1 1997/02/04 05:50:21 mark Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.1.8.1 1997/10/15 05:24:24 thorpej Exp $	*/
 
 /*
+ * arm8 support code Copyright (c) 1997 ARM Limited
+ * arm8 support code Copyright (c) 1997 Causality Limited
  * Copyright (c) 1997 Mark Brinicombe.
  * Copyright (c) 1997 Causality Limited
  * All rights reserved.
@@ -42,8 +44,10 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/bootconfig.h>
 
 #ifdef CPU_ARM6
 struct cpu_functions arm6_cpufuncs = {
@@ -108,7 +112,10 @@ struct cpu_functions arm6_cpufuncs = {
 	arm6_dataabt_fixup,		/* dataabt_fixup	*/
 	arm6_prefetchabt_fixup,		/* prefetchabt_fixup	*/
 
-	arm67_context_switch		/* context_switch	*/
+	arm67_context_switch,		/* context_switch	*/
+
+	arm6_setup			/* cpu setup		*/
+
 };
 #endif	/* CPU_ARM6 */
 
@@ -175,9 +182,81 @@ struct cpu_functions arm7_cpufuncs = {
 	arm7_dataabt_fixup,		/* dataabt_fixup	*/
 	arm7_prefetchabt_fixup,		/* prefetchabt_fixup	*/
 
-	arm67_context_switch		/* context_switch	*/
+	arm67_context_switch,		/* context_switch	*/
+
+	arm7_setup			/* cpu setup		*/
+
 };
 #endif	/* CPU_ARM7 */
+
+#ifdef CPU_ARM8
+struct cpu_functions arm8_cpufuncs = {
+	/* CPU functions */
+	
+	cpufunc_id,			/* id			 */
+
+	/* MMU functions */
+
+	cpufunc_control,		/* control		*/
+	cpufunc_domains,		/* domain		*/
+	arm8_setttb,			/* setttb		*/
+	cpufunc_faultstatus,		/* faultstatus		*/
+	cpufunc_faultaddress,		/* faultaddress		*/
+
+	/* TLB functions */
+
+	arm8_tlb_flushID,		/* tlb_flushID		*/
+	arm8_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	arm8_tlb_flushID,		/* tlb_flushI		*/
+	arm8_tlb_flushID_SE,		/* tlb_flushI_SE	*/
+	arm8_tlb_flushID,		/* tlb_flushD		*/
+	arm8_tlb_flushID_SE,		/* tlb_flushD_SE	*/
+
+	/* Cache functions */
+
+	arm8_cache_flushID,		/* cache_flushID	*/
+	arm8_cache_flushID_E,		/* cache_flushID_SE	*/
+	arm8_cache_flushID,		/* cache_flushI		*/
+	arm8_cache_flushID_E,		/* cache_flushI_SE	*/
+	arm8_cache_flushID,		/* cache_flushD		*/
+	arm8_cache_flushID_E,		/* cache_flushD_SE	*/
+
+	arm8_cache_cleanID,		/* cache_cleanID	s*/
+	arm8_cache_cleanID_E,		/* cache_cleanID_E	s*/
+	arm8_cache_cleanID,		/* cache_cleanD		s*/
+	arm8_cache_cleanID_E,		/* cache_cleanD_E	*/
+
+	arm8_cache_purgeID,		/* cache_purgeID	s*/
+	arm8_cache_purgeID_E,		/* cache_purgeID_E	s*/
+	arm8_cache_purgeID,		/* cache_purgeD		s*/
+	arm8_cache_purgeID_E,		/* cache_purgeD_E	s*/
+
+	/* Other functions */
+
+	cpufunc_nullop,			/* flush_prefetchbuf	*/
+	cpufunc_nullop,			/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	(void *)cpufunc_nullop,		/* sleep		*/
+
+	/* Soft functions */
+
+	(void *)cpufunc_nullop,		/* cache_syncI		*/
+	(void *)arm8_cache_cleanID,	/* cache_cleanID_rng	*/
+	(void *)arm8_cache_cleanID,	/* cache_cleanD_rng	*/
+	(void *)arm8_cache_purgeID,	/* cache_purgeID_rng	*/
+	(void *)arm8_cache_purgeID,	/* cache_purgeD_rng	*/
+	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
+
+	arm8_dataabt_fixup,		/* dataabt_fixup	*/
+	arm8_prefetchabt_fixup,		/* prefetchabt_fixup	*/
+
+	arm8_context_switch,		/* context_switch	*/
+
+	arm8_setup			/* cpu setup		*/
+};          
+#endif	/* CPU_ARM8 */
 
 #ifdef CPU_SA110
 struct cpu_functions sa110_cpufuncs = {
@@ -196,7 +275,7 @@ struct cpu_functions sa110_cpufuncs = {
 	/* TLB functions */
 
 	sa110_tlb_flushID,		/* tlb_flushID		*/
-	(void *)sa110_tlb_flushID,	/* tlb_flushID_SE	*/
+	sa110_tlb_flushID_SE,		/* tlb_flushID_SE		*/
 	sa110_tlb_flushI,		/* tlb_flushI		*/
 	(void *)sa110_tlb_flushI,	/* tlb_flushI_SE	*/
 	sa110_tlb_flushD,		/* tlb_flushD		*/
@@ -242,8 +321,9 @@ struct cpu_functions sa110_cpufuncs = {
 	sa110_dataabt_fixup,		/* dataabt_fixup	*/
 	sa110_prefetchabt_fixup,	/* prefetchabt_fixup	*/
 
-	sa110_context_switch		/* context_switch	*/
+	sa110_context_switch,		/* context_switch	*/
 
+	sa110_setup			/* cpu setup		*/
 };          
 #endif	/* CPU_SA110 */
 
@@ -274,11 +354,7 @@ set_cpufuncs()
 #endif	/* CPU_ARM7 */
 #ifdef CPU_ARM8
 	case ID_ARM810:
-		/*
-		 * Bzzzz. And the answer was ...
-		 */
-/*		panic("ARM8 architectures are not yet supported\n");*/
-		return(ARCHITECTURE_NOT_SUPPORTED);
+		cpufuncs = arm8_cpufuncs;
 		break;
 #endif	/* CPU_ARM8 */
 #ifdef CPU_SA110
@@ -304,15 +380,32 @@ set_cpufuncs()
  *
  * DEBUG_FAULT_CORRECTION - Print debugging information during the
  * correction of registers after a fault.
- * CPU_LATE_ABORT - Architectures supporting both early and late aborts
- * should use late aborts (only affects ARM6)
+ * ARM6_LATE_ABORT - ARM6 supports both early and late aborts
+ * when defined should use late aborts
  */
 
-#if defined(CPU_ARM6) || defined(CPU_ARM7)
-extern int pmap_debug_level;
+#if defined(DEBUG_FAULT_CORRECTION) && !defined(PMAP_DEBUG)
+#error PMAP_DEBUG must be defined to use DEBUG_FAULT_CORRECTION
 #endif
 
+#if defined(CPU_ARM6) || defined(CPU_ARM7)
+#ifdef DEBUG_FAULT_CORRECTION
+extern int pmap_debug_level;
+#endif
+#endif
+
+#ifdef POSTMORTEM
+#define DISASSEMBLE(x)	disassemble(x)
+#else
+#define DISASSEMBLE(x)
+#endif	/* POSTMORTEM */
+
 #ifdef CPU_ARM6
+/*
+ * ARM6 data abort fixup
+ *
+ * Register fixing is required
+ */
 int
 arm6_dataabt_fixup(arg)
 	void *arg;
@@ -360,27 +453,27 @@ arm6_dataabt_fixup(arg)
 	if ((fault_instruction & 0x0fb00ff0) == 0x01000090) {
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 	} else if ((fault_instruction & 0x0c000000) == 0x04000000) {
 
 	/* Was is a ldr/str instruction */
 
-#ifdef CPU_LATE_ABORT
+#ifdef ARM6_LATE_ABORT
 
 		/* This is for late abort only */
 
 		int base;
 		int offset;
 		int *registers = &frame->tf_r0;
-#endif	/* CPU_LATE_ABORT */
+#endif	/* ARM6_LATE_ABORT */
 
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		
-#ifdef CPU_LATE_ABORT
+#ifdef ARM6_LATE_ABORT
 
 /* This is for late abort only */
 
@@ -388,11 +481,11 @@ arm6_dataabt_fixup(arg)
 	    || (fault_instruction & (1 << 21)) != 0) {
 		base = (fault_instruction >> 16) & 0x0f;
 		if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 			panic("Abort handler cannot fix this :-(\n");
 		}
 		if (base == 15) {
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 			panic("Abort handler cannot fix this :-(\n");
 		}
 #ifdef DEBUG_FAULT_CORRECTION
@@ -414,7 +507,7 @@ arm6_dataabt_fixup(arg)
 
 			offset = fault_instruction & 0x0f;
 			if (offset == base) {
-				disassemble(fault_pc);
+				DISASSEMBLE(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
                 
@@ -425,12 +518,12 @@ arm6_dataabt_fixup(arg)
 				shift = (fault_instruction >> 7) & 0x1f;
 			else {
 				if ((fault_instruction & (1 << 7)) != 0) {
-					disassemble(fault_pc);
+					DISASSEMBLE(fault_pc);
 					panic("Abort handler cannot fix this :-(\n");
 				}
 				shift = ((fault_instruction >> 8) & 0xf);
 				if (base == shift) {
-					disassemble(fault_pc);
+					DISASSEMBLE(fault_pc);
 					panic("Abort handler cannot fix this :-(\n");
 				}
 #ifdef DEBUG_FAULT_CORRECTION
@@ -456,8 +549,8 @@ arm6_dataabt_fixup(arg)
 				offset = (int)(((int)offset) >> shift);
 				break;
 			case 3 : /* Rotate right */
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this yet :-(\n");
+				DISASSEMBLE(fault_pc);
+				panic("Abort handler cannot fix this :-(\n");
 				break;
 			}
 
@@ -478,7 +571,7 @@ arm6_dataabt_fixup(arg)
 			printf("r%d=%08x\n", base, registers[base]);
 #endif	/* DEBUG_FAULT_CORRECTION */
 	}
-#endif	/* CPU_LATE_ABORT */
+#endif	/* ARM6_LATE_ABORT */
 	} else if ((fault_instruction & 0x0e000000) == 0x08000000) {
 		int base;
 		int loop;
@@ -488,7 +581,7 @@ arm6_dataabt_fixup(arg)
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0) {
 			printf("LDM/STM\n");
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 		}
 #endif	/* DEBUG_FAULT_CORRECTION */
 		if (fault_instruction & (1 << 21)) {
@@ -498,7 +591,7 @@ arm6_dataabt_fixup(arg)
 #endif	/* DEBUG_FAULT_CORRECTION */
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 15) {
-				disassemble(fault_pc);
+				DISASSEMBLE(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 			/* Count registers transferred */
@@ -536,7 +629,7 @@ arm6_dataabt_fixup(arg)
 
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 
 /* Only need to fix registers if write back is turned on */
@@ -544,25 +637,29 @@ arm6_dataabt_fixup(arg)
 		if ((fault_instruction & (1 << 21)) != 0) {
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-				disassemble(fault_pc);
+				DISASSEMBLE(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 			if (base == 15) {
-				disassemble(fault_pc);
+				DISASSEMBLE(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 
 			offset = (fault_instruction & 0xff) << 2;
+#ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >= 0)
 				printf("r%d=%08x\n", base, registers[base]);
+#endif	/* DEBUG_FAULT_CORRECTION */
 			if ((fault_instruction & (1 << 23)) != 0)
 				offset = -offset;
 			registers[base] += offset;
+#ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >= 0)
 				printf("r%d=%08x\n", base, registers[base]);
+#endif	/* DEBUG_FAULT_CORRECTION */
 		}
 	} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
-		disassemble(fault_pc);
+		DISASSEMBLE(fault_pc);
 		panic("How did this happen ...\nWe have faulted on a non data transfer instruction");
 	}
 
@@ -592,19 +689,28 @@ arm6_dataabt_fixup(arg)
 		 */
 	}
 
-	return(0);
+	return(ABORT_FIXUP_OK);
 }
 
-
+/*
+ * ARM6 prefetch abort fixup
+ *
+ * Nothing required
+ */
 int
 arm6_prefetchabt_fixup(arg)
 	void *arg;
 {
-	return(0);
+	return(ABORT_FIXUP_OK);
 }
 #endif	/* CPU_ARM6 */
 
 #ifdef CPU_ARM7
+/*
+ * ARM7 data abort fixup
+ *
+ * Late abort model applies so register fixing is required
+ */
 int
 arm7_dataabt_fixup(arg)
 	void *arg;
@@ -652,7 +758,7 @@ arm7_dataabt_fixup(arg)
 	if ((fault_instruction & 0x0fb00ff0) == 0x01000090) {
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 	} else if ((fault_instruction & 0x0c000000) == 0x04000000) {
 
@@ -665,7 +771,7 @@ arm7_dataabt_fixup(arg)
 
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		
 	/* This is for late abort only */
@@ -674,11 +780,11 @@ arm7_dataabt_fixup(arg)
 	    || (fault_instruction & (1 << 21)) != 0) {
 		base = (fault_instruction >> 16) & 0x0f;
 		if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 			panic("Abort handler cannot fix this :-(\n");
 		}
 		if (base == 15) {
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 			panic("Abort handler cannot fix this :-(\n");
 		}
 #ifdef DEBUG_FAULT_CORRECTION
@@ -700,7 +806,7 @@ arm7_dataabt_fixup(arg)
 
 			offset = fault_instruction & 0x0f;
 			if (offset == base) {
-				disassemble(fault_pc);
+				DISASSEMBLE(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
                 
@@ -711,12 +817,12 @@ arm7_dataabt_fixup(arg)
 				shift = (fault_instruction >> 7) & 0x1f;
 			else {
 				if ((fault_instruction & (1 << 7)) != 0) {
-					disassemble(fault_pc);
+					DISASSEMBLE(fault_pc);
 					panic("Abort handler cannot fix this :-(\n");
 				}
 				shift = ((fault_instruction >> 8) & 0xf);
 				if (base == shift) {
-					disassemble(fault_pc);
+					DISASSEMBLE(fault_pc);
 					panic("Abort handler cannot fix this :-(\n");
 				}
 #ifdef DEBUG_FAULT_CORRECTION
@@ -742,8 +848,8 @@ arm7_dataabt_fixup(arg)
 				offset = (int)(((int)offset) >> shift);
 				break;
 			case 3 : /* Rotate right */
-				disassemble(fault_pc);
-				panic("Abort handler cannot fix this yet :-(\n");
+				DISASSEMBLE(fault_pc);
+				panic("Abort handler cannot fix this :-(\n");
 				break;
 			}
 
@@ -773,7 +879,7 @@ arm7_dataabt_fixup(arg)
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0) {
 			printf("LDM/STM\n");
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 		}
 #endif	/* DEBUG_FAULT_CORRECTION */
 		if (fault_instruction & (1 << 21)) {
@@ -783,7 +889,7 @@ arm7_dataabt_fixup(arg)
 #endif	/* DEBUG_FAULT_CORRECTION */
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 15) {
-				disassemble(fault_pc);
+				DISASSEMBLE(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 			/* Count registers transferred */
@@ -821,7 +927,7 @@ arm7_dataabt_fixup(arg)
 
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
+			DISASSEMBLE(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 
 /* Only need to fix registers if write back is turned on */
@@ -829,25 +935,29 @@ arm7_dataabt_fixup(arg)
 		if ((fault_instruction & (1 << 21)) != 0) {
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-				disassemble(fault_pc);
+				DISASSEMBLE(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 			if (base == 15) {
-				disassemble(fault_pc);
+				DISASSEMBLE(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 
 			offset = (fault_instruction & 0xff) << 2;
+#ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >= 0)
 				printf("r%d=%08x\n", base, registers[base]);
+#endif	/* DEBUG_FAULT_CORRECTION */
 			if ((fault_instruction & (1 << 23)) != 0)
 				offset = -offset;
 			registers[base] += offset;
+#ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >= 0)
 				printf("r%d=%08x\n", base, registers[base]);
+#endif	/* DEBUG_FAULT_CORRECTION */
 		}
 	} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
-		disassemble(fault_pc);
+		DISASSEMBLE(fault_pc);
 		panic("How did this happen ...\nWe have faulted on a non data transfer instruction");
 	}
 
@@ -877,30 +987,338 @@ arm7_dataabt_fixup(arg)
 		 */
 	}
 
-	return(0);
+	return(ABORT_FIXUP_OK);
 }
 
-
+/*
+ * ARM7 prefetch abort fixup
+ *
+ * Nothing required
+ */
 int
 arm7_prefetchabt_fixup(arg)
 	void *arg;
 {
-	return(0);
+	return(ABORT_FIXUP_OK);
 }
 #endif	/* CPU_ARM7 */
 
+#ifdef CPU_ARM8
+/*
+ * ARM8 data abort fixup
+ *
+ * Nothing required
+ */
+int
+arm8_dataabt_fixup(arg)
+	void *arg;
+{
+	return(ABORT_FIXUP_OK);
+}
+
+/*
+ * ARM8 prefetch abort fixup
+ *
+ * Nothing required
+ */
+int
+arm8_prefetchabt_fixup(arg)
+	void *arg;
+{
+	return(ABORT_FIXUP_OK);
+}
+#endif	/* CPU_ARM8 */
+
+
 #ifdef CPU_SA110
+/*
+ * SA110 data abort fixup
+ *
+ * Nothing required
+ */
 int
 sa110_dataabt_fixup(arg)
 	void *arg;
 {
-	return(0);
+	return(ABORT_FIXUP_OK);
 }
 
+/*
+ * SA110 prefetch abort fixup
+ *
+ * Nothing required
+ */
 int
 sa110_prefetchabt_fixup(arg)
 	void *arg;
 {
-	return(0);
+	return(ABORT_FIXUP_OK);
+}
+
+#endif	/* CPU_SA110 */
+
+/*
+ * CPU Setup code
+ */
+
+#define IGN	0
+#define OR	1
+#define BIC	2
+
+struct cpu_option {
+	char	*co_name;
+	int	co_falseop;
+	int	co_trueop;
+	int	co_value;
+};
+
+static u_int
+parse_cpu_options(args, optlist, cpuctrl)
+	char *args;
+	struct cpu_option *optlist;    
+	u_int cpuctrl; 
+{
+	int integer;
+
+	while (optlist->co_name) {
+		if (get_bootconf_option(args, optlist->co_name,
+		    BOOTOPT_TYPE_BOOLEAN, &integer)) {
+			if (integer) {
+				if (optlist->co_trueop == OR)
+					cpuctrl |= optlist->co_value;
+				else if (optlist->co_trueop == BIC)
+					cpuctrl &= ~optlist->co_value;
+			} else {
+				if (optlist->co_falseop == OR)
+					cpuctrl |= optlist->co_value;
+				else if (optlist->co_falseop == BIC)
+					cpuctrl &= ~optlist->co_value;
+			}
+		}
+		++optlist;
+	}
+	return(cpuctrl);
+}
+
+#if defined (CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM8)
+struct cpu_option arm678_options[] = {
+#ifdef COMPAT_12
+	{ "nocache",		IGN, BIC, CPU_CONTROL_IDC_ENABLE },
+	{ "nowritebuf",		IGN, BIC, CPU_CONTROL_WBUF_ENABLE },
+#endif	/* COMPAT_12 */
+	{ "cpu.cache",		BIC, OR,  CPU_CONTROL_IDC_ENABLE },
+	{ "cpu.nocache",	OR,  BIC, CPU_CONTROL_IDC_ENABLE },
+	{ "cpu.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ "cpu.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
+	{ NULL,			IGN, IGN, 0 }
+};
+#endif	/* CPU_ARM6 || CPU_ARM7 || CPU_ARM8 */
+
+#ifdef CPU_ARM6
+struct cpu_option arm6_options[] = {
+	{ "arm6.cache",		BIC, OR,  CPU_CONTROL_IDC_ENABLE },
+	{ "arm6.nocache",	OR,  BIC, CPU_CONTROL_IDC_ENABLE },
+	{ "arm6.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ "arm6.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
+	{ NULL,			IGN, IGN, 0 }
+};
+
+void
+arm6_setup(args)
+	char *args;
+{
+	int cpuctrl;
+	int cpuctrlmask;
+
+	/* Set up default control registers bits */
+	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IDC_ENABLE | CPU_CONTROL_WBUF_ENABLE;
+	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IDC_ENABLE | CPU_CONTROL_WBUF_ENABLE
+		 | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_BEND_ENABLE
+		 | CPU_CONTROL_AFLT_ENABLE;
+
+#ifdef ARM6_LATE_ABORT
+	cpu_ctrl |= CPU_CONTROL_LABT_ENABLE;
+#endif	/* ARM6_LATE_ABORT */
+
+	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
+	cpuctrl = parse_cpu_options(args, arm6_options, cpuctrl);
+
+	/* Clear out the cache */
+	cpu_cache_purgeID();
+
+	/* Set the control register */    
+	cpu_control(0xffffffff, cpuctrl);
+}
+#endif	/* CPU_ARM6 */
+
+#ifdef CPU_ARM7
+struct cpu_option arm7_options[] = {
+	{ "arm7.cache",		BIC, OR,  CPU_CONTROL_IDC_ENABLE },
+	{ "arm7.nocache",	OR,  BIC, CPU_CONTROL_IDC_ENABLE },
+	{ "arm7.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ "arm7.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
+#ifdef COMPAT_12
+	{ "fpaclk2",		BIC, OR,  CPU_CONTROL_CPCLK },
+#endif	/* COMPAT_12 */
+	{ "arm700.fpaclk",	BIC, OR,  CPU_CONTROL_CPCLK },
+	{ NULL,			IGN, IGN, 0 }
+};
+
+void
+arm7_setup(args)
+	char *args;
+{
+	int integer;
+	int cpuctrl;
+	int cpuctrlmask;
+
+	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IDC_ENABLE | CPU_CONTROL_WBUF_ENABLE;
+	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IDC_ENABLE | CPU_CONTROL_WBUF_ENABLE
+		 | CPU_CONTROL_CPCLK | CPU_CONTROL_LABT_ENABLE
+		 | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_BEND_ENABLE
+		 | CPU_CONTROL_AFLT_ENABLE;
+
+	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
+	cpuctrl = parse_cpu_options(args, arm7_options, cpuctrl);
+
+	/* Clear out the cache */
+	cpu_cache_purgeID();
+
+	/* Set the control register */    
+	cpu_control(0xffffffff, cpuctrl);
+}
+#endif	/* CPU_ARM7 */
+
+#ifdef CPU_ARM8
+struct cpu_option arm8_options[] = {
+	{ "arm8.cache",		BIC, OR,  CPU_CONTROL_IDC_ENABLE },
+	{ "arm8.nocache",	OR,  BIC, CPU_CONTROL_IDC_ENABLE },
+	{ "arm8.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ "arm8.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
+#ifdef COMPAT_12
+	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
+#endif	/* COMPAT_12 */
+	{ "cpu.branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
+	{ "arm8.branchpredict",	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
+	{ NULL,			IGN, IGN, 0 }
+};
+
+void
+arm8_setup(args)
+	char *args;
+{
+	int integer;
+	int cpuctrl;
+	int cpuctrlmask;
+	int clocktest;
+	int setclock = 0;
+
+	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IDC_ENABLE | CPU_CONTROL_WBUF_ENABLE;
+	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IDC_ENABLE | CPU_CONTROL_WBUF_ENABLE
+		 | CPU_CONTROL_BPRD_ENABLE | CPU_CONTROL_ROM_ENABLE
+		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE;
+
+	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
+	cpuctrl = parse_cpu_options(args, arm8_options, cpuctrl);
+
+	/* Get clock configuration */
+	clocktest = arm8_clock_config(0, 0) & 0x0f;
+
+	/* Special ARM8 clock and test configuration */
+	if (get_bootconf_option(args, "arm8.clock.reset", BOOTOPT_TYPE_BOOLEAN, &integer)) {
+		clocktest = 0;
+		setclock = 1;
+	}
+	if (get_bootconf_option(args, "arm8.clock.dynamic", BOOTOPT_TYPE_BOOLEAN, &integer)) {
+		if (integer)
+			clocktest |= 0x01;
+		else
+			clocktest &= ~(0x01);
+		setclock = 1;
+	}
+	if (get_bootconf_option(args, "arm8.clock.sync", BOOTOPT_TYPE_BOOLEAN, &integer)) {
+		if (integer)
+			clocktest |= 0x02;
+		else
+			clocktest &= ~(0x02);
+		setclock = 1;
+	}
+	if (get_bootconf_option(args, "arm8.clock.fast", BOOTOPT_TYPE_BININT, &integer)) {
+		clocktest = (clocktest & ~0xc0) | (integer & 3) << 2;
+		setclock = 1;
+	}
+	if (get_bootconf_option(args, "arm8.test", BOOTOPT_TYPE_BININT, &integer)) {
+		clocktest |= (integer & 7) << 5;
+		setclock = 1;
+	}
+	
+	/* Clear out the cache */
+	cpu_cache_purgeID();
+
+	/* Set the control register */    
+	cpu_control(0xffffffff, cpuctrl);
+
+	/* Set the clock/test register */    
+	if (setclock)
+		arm8_clock_config(0x7f, clocktest);
+}
+#endif	/* CPU_ARM8 */
+
+#ifdef CPU_SA110
+struct cpu_option sa110_options[] = {
+#ifdef COMPAT_12
+	{ "nocache",		IGN, BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "nowritebuf",		IGN, BIC, CPU_CONTROL_WBUF_ENABLE },
+#endif	/* COMPAT_12 */
+	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "sa110.cache",	BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "sa110.icache",	BIC, OR,  CPU_CONTROL_IC_ENABLE },
+	{ "sa110.dcache",	BIC, OR,  CPU_CONTROL_DC_ENABLE },
+	{ "cpu.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ "cpu.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
+	{ "sa110.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ NULL,			IGN, IGN, 0 }
+};
+
+void
+sa110_setup(args)
+	char *args;
+{
+	int cpuctrl;
+	int cpuctrlmask;
+
+	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+		 | CPU_CONTROL_WBUF_ENABLE;
+	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_ROM_ENABLE
+		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
+		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_BPRD_ENABLE
+		 | CPU_CONTROL_CPCLK;
+
+	cpuctrl = parse_cpu_options(args, sa110_options, cpuctrl);
+
+	/* Clear out the cache */
+	cpu_cache_purgeID();
+
+	/* Set the control register */    
+/*	cpu_control(cpuctrlmask, cpuctrl);*/
+	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_SA110 */
