@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.15 1999/02/09 20:34:16 christos Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.16 1999/04/23 06:15:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -46,6 +46,7 @@
 #include <sys/vnode.h>
 #include <sys/socketvar.h>
 
+#include <compat/osf1/osf1_errno.h>
 #include <compat/osf1/osf1_syscall.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
@@ -69,7 +70,7 @@ const char osf1_emul_path[] = "/emul/osf1";
 
 struct emul emul_osf1 = {
 	"osf1",
-	NULL,
+	netbsd_to_osf1_errno,
 	sendsig,
 	OSF1_SYS_syscall,
 	OSF1_SYS_MAXSYSCALL,
