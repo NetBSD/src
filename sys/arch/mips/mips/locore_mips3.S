@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.57 2000/10/05 02:36:45 cgd Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.58 2000/10/24 03:23:19 castor Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2212,8 +2212,8 @@ LEAF_NOPROFILE(mips3_TBIS)
 	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# save current ASID
 	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
-	and	a0, a0, v0			# make sure valid entryHi
-	dmtc0	a0, MIPS_COP_0_TLB_HI		# look for the vaddr & ASID
+	and	t2, a0, v0			# make sure valid entryHi
+	dmtc0	t2, MIPS_COP_0_TLB_HI		# look for the vaddr & ASID
 	nop
 	nop
 	tlbp					# probe the entry in question
@@ -2223,6 +2223,22 @@ LEAF_NOPROFILE(mips3_TBIS)
 	#nop					# -slip-
 	#nop					# -slip-
 	bltz	v0, 1f				# index < 0 then skip
+	mfc0	t1, MIPS_COP_0_TLB_WIRED
+	bge	v0, t1, 2f
+	/*
+	 * The TLB entry is wired down, so invalidate only this half.
+	 */
+	andi	t2, a0, MIPS3_PG_ODDPG		# delay slot
+	tlbr
+	bnez	t2, 3f
+	li	t1, MIPS3_PG_G
+	dmtc0	t1, MIPS_COP_0_TLB_LO0
+	b	4f
+	nop
+3:	dmtc0	t1, MIPS_COP_0_TLB_LO1	
+	b	4f
+						# -slip-
+2:
 	li	t1, MIPS_KSEG0_START		# invalid address
 	dmtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	dmtc0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
@@ -2230,6 +2246,7 @@ LEAF_NOPROFILE(mips3_TBIS)
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out pageMask
 	nop
 	nop
+4:
 	tlbwi
 	nop
 	nop
