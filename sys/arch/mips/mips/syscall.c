@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6 2001/12/02 08:28:18 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.7 2002/02/02 20:28:59 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2001/12/02 08:28:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2002/02/02 20:28:59 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -237,6 +237,9 @@ EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
 	/* XXX register_t vs. mips_reg_t */
 	error = (*callp->sy_call)(p, args, (register_t *)&frame->f_regs[V0]);
 
+	if (p->p_emul->e_errno)
+		error = p->p_emul->e_errno[error];
+
 	switch (error) {
 	case 0:
 		frame->f_regs[A3] = 0;
@@ -362,6 +365,9 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 
 	/* XXX register_t vs. mips_reg_t */
 	error = (*callp->sy_call)(p, args, (register_t *)&frame->f_regs[V0]);
+
+	if (p->p_emul->e_errno)
+		error = p->p_emul->e_errno[error];
 
 	switch (error) {
 	case 0:
