@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.4 1994/10/26 02:03:21 cgd Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.5 1996/04/21 21:11:25 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -60,6 +60,10 @@ struct vbl_node grf_vbl_node;
 #define ABS(type, val) \
     (type) (((int)(val) < 0) ? -(val) : (val))
 
+void grf_vbl_function __P((void *data));
+dmode_t *get_best_display_mode __P((u_long, u_long, u_char));
+
+
 void
 grf_vbl_function(data)
 	void *data;
@@ -112,7 +116,7 @@ get_best_display_mode(width, height, depth)
 	monitor_t *m;
 	dmode_t *d, *save;
 	dimen_t dim;
-	long dx, dy, ct, dt;
+	long dx, dy, ct, dt = 0;
  
 	save = NULL;
 	for (m = monitors->lh_first; m != NULL; m = m->link.le_next) {

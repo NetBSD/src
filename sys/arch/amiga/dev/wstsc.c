@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.10 1996/03/17 01:17:56 thorpej Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.11 1996/04/21 21:12:43 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -59,7 +59,7 @@ int wstsc_dma_xfer_in2 __P((struct sci_softc *dev, int len,
     register u_short *buf, int phase));
 int wstsc_dma_xfer_out2 __P((struct sci_softc *dev, int len,
     register u_short *buf, int phase));
-int wstsc_intr __P((struct sci_softc *));
+int wstsc_intr __P((void *));
 
 struct scsi_adapter wstsc_scsiswitch = {
 	sci_scsicmd,
@@ -75,10 +75,11 @@ struct scsi_device wstsc_scsidev = {
 	NULL,		/* Use default done routine */
 };
 
-#define QPRINTF
-
 #ifdef DEBUG
 extern int sci_debug;
+#define QPRINTF(a) if (sci_debug > 1) printf a
+#else
+#define QPRINTF(a)
 #endif
 
 extern int sci_data_wait;
@@ -101,7 +102,6 @@ wstscmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;
@@ -201,10 +201,11 @@ wstsc_dma_xfer_in (dev, len, buf, phase)
 	int phase;
 {
 	int wait = sci_data_wait;
-	u_char csr;
-	u_char *obp = (u_char *) buf;
 	volatile register u_char *sci_dma = dev->sci_idata;
 	volatile register u_char *sci_csr = dev->sci_csr;
+#ifdef DEBUG
+	u_char *obp = (u_char *) buf;
+#endif
 
 	QPRINTF(("supradma_in %d, csr=%02x\n", len, *dev->sci_bus_csr));
 
@@ -287,8 +288,6 @@ wstsc_dma_xfer_out (dev, len, buf, phase)
 	int phase;
 {
 	int wait = sci_data_wait;
-	u_char csr;
-	u_char *obp = buf;
 	volatile register u_char *sci_dma = dev->sci_data;
 	volatile register u_char *sci_csr = dev->sci_csr;
 
@@ -312,7 +311,7 @@ wstsc_dma_xfer_out (dev, len, buf, phase)
 #ifdef DEBUG
 				if (sci_debug)
 					printf("supradma_out fail: l%d i%x w%d\n",
-					len, csr, wait);
+					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode = 0;
 				return 0;
@@ -341,11 +340,14 @@ wstsc_dma_xfer_in2 (dev, len, buf, phase)
 	register u_short *buf;
 	int phase;
 {
-	int wait = sci_data_wait;
-	u_char csr;
-	u_char *obp = (u_char *) buf;
 	volatile register u_short *sci_dma = (u_short *)(dev->sci_idata + 0x10);
 	volatile register u_char *sci_csr = dev->sci_csr + 0x10;
+#ifdef DEBUG
+	u_char *obp = (u_char *) buf;
+#endif
+#if 0
+	int wait = sci_data_wait;
+#endif
 
 	QPRINTF(("supradma_in2 %d, csr=%02x\n", len, *dev->sci_bus_csr));
 
@@ -428,11 +430,14 @@ wstsc_dma_xfer_out2 (dev, len, buf, phase)
 	register u_short *buf;
 	int phase;
 {
-	int wait = sci_data_wait;
-	u_char csr;
-	u_char *obp = (u_char *) buf;
 	volatile register u_short *sci_dma = (ushort *)(dev->sci_data + 0x10);
 	volatile register u_char *sci_bus_csr = dev->sci_bus_csr;
+#ifdef DEBUG
+	u_char *obp = (u_char *) buf;
+#endif
+#if 0
+	int wait = sci_data_wait;
+#endif
 
 	QPRINTF(("supradma_out2 %d, csr=%02x\n", len, *dev->sci_bus_csr));
 
@@ -525,10 +530,10 @@ wstsc_dma_xfer_out2 (dev, len, buf, phase)
 }
 
 int
-wstsc_intr(dev)
-	struct sci_softc *dev;
+wstsc_intr(arg)
+	void *arg;
 {
-	int i, found;
+	struct sci_softc *dev = arg;
 	u_char stat;
 
 	if ((*(dev->sci_csr + 0x10) & SCI_CSR_INT) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.30 1996/03/17 05:58:58 mhitch Exp $	*/
+/*	$NetBSD: ser.c,v 1.31 1996/04/21 21:12:28 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -45,7 +45,6 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/uio.h>
@@ -60,6 +59,9 @@
 #include <amiga/amiga/cc.h>
 
 #include <dev/cons.h>
+
+#include <sys/conf.h>
+#include <machine/conf.h>
 
 #include "ser.h"
 #if NSER > 0
@@ -89,7 +91,22 @@ struct cfdriver ser_cd = {
 
 #define splser() spl5()
 
-int	serstart(), serparam(), serintr(), serhwiflow();
+void	serstart __P((struct tty *));
+int	serparam __P((struct tty *, struct termios *)); 
+void	serintr __P((int));
+int	serhwiflow __P((struct tty *, int));
+int	sermctl __P((dev_t dev, int, int));
+void	ser_fastint __P((void));
+void	sereint __P((int, int));
+static	void ser_putchar __P((struct tty *, u_short));
+void	ser_outintr __P((void));
+void	sercnprobe __P((struct consdev *));
+void	sercninit __P((struct consdev *));
+void	serinit __P((int, int));          
+int	sercngetc __P((dev_t dev));
+void	sercnputc __P((dev_t, int));
+void	sercnpollc __P((dev_t, int));
+
 int	ser_active;
 int	ser_hasfifo;
 int	nser = NSER;
@@ -109,26 +126,26 @@ struct	tty ser_cons;
 struct	tty *ser_tty[NSER];
 
 struct speedtab serspeedtab[] = {
-	0,	0,
-	50,	SERBRD(50),
-	75,	SERBRD(75),
-	110,	SERBRD(110),
-	134,	SERBRD(134),
-	150,	SERBRD(150),
-	200,	SERBRD(200),
-	300,	SERBRD(300),
-	600,	SERBRD(600),
-	1200,	SERBRD(1200),
-	1800,	SERBRD(1800),
-	2400,	SERBRD(2400),
-	4800,	SERBRD(4800),
-	9600,	SERBRD(9600),
-	19200,	SERBRD(19200),
-	38400,	SERBRD(38400),
-	57600,	SERBRD(57600),
-	76800,	SERBRD(76800),
-	115200,	SERBRD(115200),
-	-1,	-1
+	{ 0,		0		},
+	{ 50,		SERBRD(50)	},
+	{ 75,		SERBRD(75)	},
+	{ 110,		SERBRD(110)	},
+	{ 134,		SERBRD(134)	},
+	{ 150,		SERBRD(150)	},
+	{ 200,		SERBRD(200)	},
+	{ 300,		SERBRD(300)	},
+	{ 600,		SERBRD(600)	},
+	{ 1200,		SERBRD(1200)	},
+	{ 1800,		SERBRD(1800)	},
+	{ 2400,		SERBRD(2400)	},
+	{ 4800,		SERBRD(4800)	},
+	{ 9600,		SERBRD(9600)	},
+	{ 19200,	SERBRD(19200)	},
+	{ 38400,	SERBRD(38400)	},
+	{ 57600,	SERBRD(57600)	},
+	{ 76800,	SERBRD(76800)	},
+	{ 115200,	SERBRD(115200)	},
+	{ -1,		-1 }
 };
 
 
@@ -474,7 +491,7 @@ ser_fastint()
 }
 
 
-int
+void
 serintr(unit)
 	int unit;
 {
@@ -516,7 +533,7 @@ serintr(unit)
 	splx(s1);
 }
 
-int
+void
 sereint(unit, stat)
 	int unit, stat;
 {
@@ -701,7 +718,7 @@ serparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	int cfcr, cflag, unit, ospeed;
+	int cflag, unit, ospeed;
 	
 	cflag = t->c_cflag;
 	unit = SERUNIT(tp->t_dev);
@@ -786,7 +803,6 @@ void
 ser_outintr()
 {
 	struct tty *tp = ser_tty[0];
-	u_short c;
 	int s;
 
 	tp = ser_tty[0];
@@ -825,7 +841,7 @@ out:
 	splx(s);
 }
 
-int
+void
 serstart(tp)
 	struct tty *tp;
 {
@@ -893,6 +909,7 @@ out:
 int
 serstop(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	int s;
 
@@ -902,6 +919,7 @@ serstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
+	return 0;
 }
 
 int
@@ -910,7 +928,7 @@ sermctl(dev, bits, how)
 	int bits, how;
 {
 	int unit, s;
-	u_char ub;
+	u_char ub = 0;
 
 	unit = SERUNIT(dev);
 
@@ -976,7 +994,7 @@ sermctl(dev, bits, how)
 /*
  * Following are all routines needed for SER to act as console
  */
-int
+void
 sercnprobe(cp)
 	struct consdev *cp;
 {
@@ -1004,6 +1022,7 @@ sercnprobe(cp)
 #endif
 }
 
+void
 sercninit(cp)
 	struct consdev *cp;
 {
@@ -1016,6 +1035,7 @@ sercninit(cp)
 	serconsinit = 1;
 }
 
+void
 serinit(unit, rate)
 	int unit, rate;
 {
@@ -1029,7 +1049,9 @@ serinit(unit, rate)
 	splx(s);
 }
 
+int
 sercngetc(dev)
+	dev_t dev;
 {
 	u_short stat;
 	int c, s;
@@ -1052,12 +1074,12 @@ sercngetc(dev)
 /*
  * Console kernel output character routine.
  */
+void
 sercnputc(dev, c)
 	dev_t dev;
 	int c;
 {
 	register int timo;
-	short stat;
 	int s;
 
 	s = splhigh();

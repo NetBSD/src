@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.13 1996/03/17 05:58:39 mhitch Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.14 1996/04/21 21:11:17 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -39,6 +39,7 @@
 */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
@@ -88,7 +89,7 @@ extern unsigned char kernel_font_8x11[];
  * initial driver, has made an agreement with MS not to document
  * the driver source (see also his comment below).
  * -> ALL comments after
- * -> "/* -------------- START OF CODE -------------- * /"
+ * -> " -------------- START OF CODE -------------- "
  * -> have been added by myself (mw) from studying the publically
  * -> available "NCR 77C32BLT" Data Manual
  */
@@ -740,9 +741,9 @@ rh_load_mon(gp, md)
 	struct MonDef *md;
 {
 	struct grfinfo *gi = &gp->g_display;
-	volatile unsigned char *ba;
-	volatile unsigned char *fb;
-	short FW, clksel, HDE, VDE;
+	volatile caddr_t ba;
+	volatile caddr_t fb;
+	short FW, clksel, HDE = 0, VDE;
 	unsigned short *c, z;
 	const unsigned char *f;
 
@@ -1414,7 +1415,7 @@ int rh_default_gfx = 4;
 
 static struct MonDef *current_mon;
 
-int  rh_mode     __P((struct grf_softc *, int, void *, int, int));
+int  rh_mode     __P((struct grf_softc *, u_long, void *, u_long, int));
 void grfrhattach __P((struct device *, struct device *, void *));
 int  grfrhprint  __P((void *, char *));
 int  grfrhmatch  __P((struct device *, void *, void *));
@@ -1448,7 +1449,7 @@ grfrhmatch(pdp, match, auxp)
 #endif
 			return(0);
 	if (zap->manid != 18260 || 
-			(zap->prodid != 16) && (zap->prodid != 19))
+			((zap->prodid != 16) && (zap->prodid != 19)))
 		return(0);
 #ifdef RETINACONSOLE
 	if (amiga_realconfig == 0 || rhconunit != cfp->cf_unit) {
@@ -1475,7 +1476,6 @@ grfrhattach(pdp, dp, auxp)
 	void *auxp;
 {
 	static struct grf_softc congrf;
-	static int coninited;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
 
@@ -1533,7 +1533,7 @@ rh_getvmode(gp, vm)
 		vm->mode_num = (current_mon - monitor_defs) + 1;
 
 	md = monitor_defs + (vm->mode_num - 1);
-	strncpy (vm->mode_descr, monitor_descr + (vm->mode_num - 1),
+	strncpy (vm->mode_descr, monitor_descr[vm->mode_num - 1],
 	   sizeof (vm->mode_descr));
 	vm->pixel_clock  = md->FQ;
         vm->disp_width   = (md->DEP == 4) ? md->MW : md->TX;
@@ -1586,7 +1586,6 @@ rh_setvmode(gp, mode, type)
 	unsigned mode;
         enum mode_type type;
 {
-	struct MonDef *md;
 	int error;
 
 	if (!mode || mode > rh_mon_max)
@@ -1608,11 +1607,13 @@ rh_setvmode(gp, mode, type)
  * Change the mode of the display.
  * Return a UNIX error number or 0 for success.
  */
+int
 rh_mode(gp, cmd, arg, a2, a3)
 	register struct grf_softc *gp;
-	int cmd;
+	u_long cmd;
 	void *arg;
-	int a2, a3;
+	u_long a2;
+	int a3;
 {
 	switch (cmd) {
 	case GM_GRFON:
@@ -1644,7 +1645,7 @@ rh_mode(gp, cmd, arg, a2, a3)
 		return(EINVAL);
 #endif
 	case GM_GRFIOCTL:
-		return(rh_ioctl (gp, (u_long) arg, (caddr_t) a2));
+		return(rh_ioctl (gp, a2, arg));
 
 	default:
 		break;
@@ -1891,7 +1892,9 @@ rh_setspriteinfo (gp, info)
 	struct grf_spriteinfo *info;
 {
 	volatile unsigned char *ba, *fb;
+#if 0
 	u_char control;
+#endif
 
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
@@ -2041,5 +2044,7 @@ rh_bitblt (gp, bb)
 		RZ3BitBlit16(gp, bb);
         else
                 RZ3BitBlit24(gp, bb);
+
+	return(0);
 }
 #endif	/* NGRF */

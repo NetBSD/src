@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.7 1995/04/10 09:10:21 mycroft Exp $	*/
+/*	$NetBSD: ms.c,v 1.8 1996/04/21 21:12:13 veego Exp $	*/
 
 /*
  * based on:
@@ -53,19 +53,22 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/signalvar.h>
 
 #include <amiga/dev/event_var.h>
 #include <amiga/dev/vuid_event.h>
 
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
+
+#include <sys/conf.h>
+#include <machine/conf.h>
 
 #include "mouse.h"
 #if NMOUSE > 0
@@ -79,6 +82,7 @@
 void msintr __P((void *));
 void ms_enable __P((dev_t));
 void ms_disable __P((dev_t));
+int mouseattach __P((int));
 
 int
 mouseattach(cnt)
@@ -315,7 +319,7 @@ msopen(dev, flags, mode, p)
 	struct proc *p;
 {
 	struct ms_softc *ms;
-	int s, error, unit;
+	int unit;
 
 	unit = minor(dev);
 	ms = &ms_softc[unit];

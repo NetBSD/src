@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.17 1996/03/17 01:17:45 thorpej Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.18 1996/04/21 21:12:11 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -53,8 +53,10 @@
 int mgnscprint __P((void *auxp, char *));
 void mgnscattach __P((struct device *, struct device *, void *));
 int mgnscmatch __P((struct device *, void *, void *));
-int siopintr __P((struct siop_softc *));
-int mgnsc_dmaintr __P((struct siop_softc *));
+int mgnsc_dmaintr __P((void *));
+#ifdef DEBUG
+void mgnsc_dump __P((void));
+#endif
 
 struct scsi_adapter mgnsc_scsiswitch = {
 	siop_scsicmd,
@@ -90,7 +92,6 @@ mgnscmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;
@@ -164,9 +165,10 @@ mgnscprint(auxp, pnp)
  */
 
 int
-mgnsc_dmaintr(sc)
-	struct siop_softc *sc;
+mgnsc_dmaintr(arg)
+	void *arg;
 {
+	struct siop_softc *sc = arg;
 	siop_regmap_p rp;
 	u_char istat;
 

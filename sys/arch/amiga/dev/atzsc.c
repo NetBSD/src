@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.15 1996/03/18 04:58:37 mhitch Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.16 1996/04/21 21:10:51 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -58,8 +58,12 @@ int atzscmatch __P((struct device *, void *, void *));
 void atzsc_enintr __P((struct sbic_softc *));
 void atzsc_dmastop __P((struct sbic_softc *));
 int atzsc_dmanext __P((struct sbic_softc *));
-int atzsc_dmaintr __P((struct sbic_softc *));
+int atzsc_dmaintr __P((void *));
 int atzsc_dmago __P((struct sbic_softc *, char *, int, int));
+
+#ifdef DEBUG
+void atzsc_dump __P((void));
+#endif
 
 struct scsi_adapter atzsc_scsiswitch = {
 	sbic_scsicmd,
@@ -96,7 +100,6 @@ atzscmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;
@@ -157,7 +160,7 @@ atzscattach(pdp, dp, auxp)
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x91);
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 77;
 	
-	printf(": dmamask 0x%x\n", ~sc->sc_dmamask);
+	printf(": dmamask 0x%lx\n", ~sc->sc_dmamask);
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
@@ -267,9 +270,10 @@ atzsc_dmastop(dev)
 }
 
 int
-atzsc_dmaintr(dev)
-	struct sbic_softc *dev;
+atzsc_dmaintr(arg)
+	void *arg;
 {
+	struct sbic_softc *dev = arg;
 	volatile struct sdmac *sdp;
 	int stat, found;
 
@@ -312,7 +316,6 @@ atzsc_dmanext(dev)
 	struct sbic_softc *dev;
 {
 	volatile struct sdmac *sdp;
-	int i, stat;
 
 	sdp = dev->sc_cregs;
 

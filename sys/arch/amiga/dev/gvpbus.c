@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.10 1996/03/17 01:17:23 thorpej Exp $	*/
+/*	$NetBSD: gvpbus.c,v 1.11 1996/04/21 21:11:36 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,6 +31,7 @@
  */
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/zbusvar.h>
 #include <amiga/dev/gvpbusvar.h>
@@ -54,7 +55,6 @@ gvpbusmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cdp = match;
 	struct zbus_args *zap;
 
 	zap = auxp;
@@ -78,7 +78,6 @@ gvpbusattach(pdp, dp, auxp)
 {
 	struct zbus_args *zap;
 	struct gvpbus_args ga;
-	u_char *idreg;
 
 	zap = auxp;
 	bcopy(zap, &ga.zargs, sizeof(struct zbus_args));

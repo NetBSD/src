@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.14 1996/03/28 19:23:34 is Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.15 1996/04/21 21:12:04 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -52,7 +52,7 @@ int ivscprint __P((void *auxp, char *));
 void ivscattach __P((struct device *, struct device *, void *));
 int ivscmatch __P((struct device *, void *, void *));
 
-int ivsc_intr __P((struct sci_softc *));
+int ivsc_intr __P((void *));
 int ivsc_dma_xfer_in __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
 int ivsc_dma_xfer_out __P((struct sci_softc *dev, int len,
@@ -72,10 +72,12 @@ struct scsi_device ivsc_scsidev = {
 	NULL,		/* Use default done routine */
 };
 
-#define QPRINTF
 
 #ifdef DEBUG
 extern int sci_debug;
+#define QPRINTF(a) if (sci_debug > 1) printf a
+#else
+#define QPRINTF(a)
 #endif
 
 extern int sci_data_wait;
@@ -188,10 +190,11 @@ ivsc_dma_xfer_in (dev, len, buf, phase)
 	int phase;
 {
 	int wait = sci_data_wait;
-	u_char csr;
-	u_char *obp = buf;
 	volatile register u_char *sci_dma = dev->sci_idata + 0x20;
 	volatile register u_char *sci_csr = dev->sci_csr;
+#ifdef DEBUG
+	u_char *obp = buf;
+#endif
 
 	QPRINTF(("ivsc_dma_in %d, csr=%02x\n", len, *dev->sci_bus_csr));
 
@@ -209,7 +212,7 @@ ivsc_dma_xfer_in (dev, len, buf, phase)
 #ifdef DEBUG
 				if (sci_debug)
 					printf("ivsc_dma_in2 fail: l%d i%x w%d\n",
-					len, csr, wait);
+					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
 				return 0;
@@ -246,7 +249,7 @@ ivsc_dma_xfer_in (dev, len, buf, phase)
 #ifdef DEBUG
 				if (sci_debug)
 					printf("ivsc_dma_in1 fail: l%d i%x w%d\n",
-					len, csr, wait);
+					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
 				return 0;
@@ -273,8 +276,6 @@ ivsc_dma_xfer_out (dev, len, buf, phase)
 	int phase;
 {
 	int wait = sci_data_wait;
-	u_char csr;
-	u_char *obp = buf;
 	volatile register u_char *sci_dma = dev->sci_data + 0x20;
 	volatile register u_char *sci_csr = dev->sci_csr;
 
@@ -298,7 +299,7 @@ ivsc_dma_xfer_out (dev, len, buf, phase)
 #ifdef DEBUG
 				if (sci_debug)
 					printf("ivsc_dma_out fail: l%d i%x w%d\n",
-					len, csr, wait);
+					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
 				return 0;
@@ -319,9 +320,10 @@ ivsc_dma_xfer_out (dev, len, buf, phase)
 }
 
 int
-ivsc_intr(dev)
-	struct sci_softc *dev;
+ivsc_intr(arg)
+	void *arg;
 {
+	struct sci_softc *dev = arg;
 	u_char stat;
 
 	if ((*dev->sci_csr & SCI_CSR_INT) == 0)
