@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.15 1995/05/27 08:12:51 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.16 1995/08/18 08:20:26 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -156,7 +156,9 @@ busattach(parent, child, args, bustype)
 	oca.ca_ra.ra_nintr = 1;
 	oca.ca_ra.ra_name = cf->cf_driver->cd_name;
 	if (ca->ca_ra.ra_bp != NULL &&
-	    strcmp(ca->ca_ra.ra_bp->name, "sbus") == 0)
+	  ((bustype == BUS_VME16 && strcmp(ca->ca_ra.ra_bp->name,"vmes") ==0) ||
+	   (bustype == BUS_VME32 && strcmp(ca->ca_ra.ra_bp->name,"vmel") ==0) ||
+	   (bustype == BUS_OBIO && strcmp(ca->ca_ra.ra_bp->name,"obio") == 0)))
 		oca.ca_ra.ra_bp = ca->ca_ra.ra_bp + 1;
 	else
 		oca.ca_ra.ra_bp = NULL;
