@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.17 2003/06/03 11:54:53 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.18 2003/06/10 17:47:20 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -333,20 +333,6 @@ menu sanity, title "Choose an option";
  * This menu shouldn't be used in the mac68k port, but it needs to be
  *  defined because it's referenced from the toplevel code.
  */
-menu editfsparts, y=13, exit;
-	display action  {
-			ask_sizemult(dlcylsize);
-			msg_display(MSG_fspart, multname);
-			disp_cur_fspart(-1, 1);
-		};
-	option "Change a", action { editpart = A;}, sub menu edfspart;
-	option "Change b", action { editpart = B;}, sub menu edfspart;
-	option "Change e", action { editpart = E;}, sub menu edfspart;
-	option "Change f", action { editpart = F;}, sub menu edfspart;
-	option "Change g", action { editpart = G;}, sub menu edfspart;
-	option "Change h", action { editpart = H;}, sub menu edfspart;
-	option "Set new allocation size", action { reask_sizemult(dlcylsize); };
-
 menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
 	display action { show_cur_distsets (); };
 	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };

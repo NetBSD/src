@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.5 2003/06/03 11:54:51 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.6 2003/06/10 17:47:18 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -94,23 +94,6 @@ menu cyl1024;
 
 		c1024_resp = 3;
 	};
-
-menu editfsparts, y=12, exit;
-	display action  {
-			ask_sizemult(dlcylsize);
-			msg_display(MSG_fspart, multname);
-			disp_cur_fspart(-1, 1);
-		};
-	option "Change a", action { editpart = A;}, sub menu edfspart;
-	option "Change b", action { editpart = B;}, sub menu edfspart;
-	option "NetBSD partition - can't change", action {};
-	option "Whole disk - can't change", action {};
-	option "Change e", action { editpart = E;}, sub menu edfspart;
-	option "Change f", action { editpart = F;}, sub menu edfspart;
-	option "Change g", action { editpart = G;}, sub menu edfspart;
-	option "Change h", action { editpart = H;}, sub menu edfspart;
-	option "Set new allocation size", action { reask_sizemult(dlcylsize); };
- 
 
 menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
 	display action { show_cur_distsets (); };

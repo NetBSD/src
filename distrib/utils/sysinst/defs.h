@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.84 2003/06/09 19:06:48 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.85 2003/06/10 17:47:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -104,6 +104,7 @@ typedef struct _partinfo {
 	int	pi_fsize;
 	char	pi_mount[20];
 	int8_t	pi_newfs;
+	int8_t	pi_reset;
 } partinfo;	/* Single partition from a disklabel */
 
 /* variables */
@@ -298,8 +299,10 @@ void	emptylabel(partinfo *);
 int	savenewlabel(partinfo *, int);
 int	incorelabel(const char *, partinfo *);
 int	edit_and_check_label(partinfo *, int, int, int);
-int	getpartoff(msg, int);
-int	getpartsize(msg, int, int);
+int	getpartoff(int);
+int	getpartsize(int, int);
+int	set_bsize(partinfo *, int);
+int	set_fsize(partinfo *, int);
 
 /* from install.c */
 void	do_install(void);

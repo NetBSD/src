@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.1 2002/02/11 13:50:18 skrll Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.2 2003/06/10 17:47:18 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,22 +39,6 @@
 
 /* cats machine dependent menus, french */
 
-menu editfsparts, y=12, exit;
-	display action  {
-			ask_sizemult(dlcylsize);
-			msg_display(MSG_catsfspart, disk->dd_name, multname);
-			disp_cur_fspart(-1, 1);
-		};
-	option "Changer a", action { editpart = A;}, sub menu edfspart;
-	option "Changer b", action { editpart = B;}, sub menu edfspart;
-	option "Totalité du disque - Changement impossible", action {};
-	option "Changer d", action { editpart = D;}, sub menu edfspart;
-	option "Changer e", action { editpart = E;}, sub menu edfspart;
-	option "Changer f", action { editpart = F;}, sub menu edfspart;
-	option "Changer g", action { editpart = G;}, sub menu edfspart;
-	option "Changer h", action { editpart = H;}, sub menu edfspart;
-	option "Nouvelle taille d'allocation", action { reask_sizemult(dlcylsize); };
- 
 menu md_distcustom, x=26, y=5, exit, title "Sélection des composants";
 	display action { show_cur_distsets (); };
 	option	"Kernel",		 action { toggle_getit (0); };

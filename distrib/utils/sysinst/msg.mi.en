@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.101 2003/06/09 19:06:48 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.102 2003/06/10 17:47:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -224,6 +224,15 @@ message askfssize
 message askunits
 {Change input units (sectors/cylinders/MB)}
 
+message NetBSD_partition_cant_change
+{NetBSD partition - can't change}
+
+message Whole_disk_cant_change
+{Whole disk - can't change}
+
+message Boot_partition_cant_change
+{Boot partition - can't change}
+
 message add_another_ptn
 {Add a user defined partition}
 
@@ -238,8 +247,10 @@ message startoutsidedisk
 }
 
 message endoutsidedisk
-{With this value, the partition end is beyond the end of the disk. Your
-partition size has been truncated to %d %s.
+{With this value, the partition end is beyond the end of the disk.
+Your partition size has been truncated to %d %s.
+
+Type enter to continue
 }
 
 message fspart
@@ -276,11 +287,60 @@ message edfspart
 
 The current values for partition %c are:
 
+                    MB cylinders   sectors
+	       ------- --------- ---------
 }
+
+message fstype_fmt
+{  FStype: %9s}
+
+message start_fmt
+{   start: %9d %9d %9d}
+
+message size_fmt
+{    size: %9d %9d %9d}
+
+message end_fmt
+{     end: %9d %9d %9d}
+
+message bsize_fmt
+{   bsize: %9d bytes}
+
+message fsize_fmt
+{   fsize: %9d bytes}
+
+message preserve_fmt
+{preserve: %9s}
+
+message mount_fmt
+{mount pt: %9s}
+
+message restore
+{Restore original values}
 
 message not42bsd
 {Partition %c is not of type 4.2BSD and thus does not have a block and
 frag size to set.
+}
+
+message label_size
+{%s
+Special values that can be entered for the size value:
+    -1:   use until the end of the NetBSD part of the disk
+   a-%c:   end this partition where partition X starts
+
+size (%s)}
+
+message label_offset
+{%s
+Special values that can be entered for the offset value:
+    -1:   start at the beginning of the NetBSD part of the disk
+   a-%c:   start at the end of previous partition (a, b, ..., %c)
+
+start (%s)}
+
+message invalid_sector_number
+{Badly formed sector number
 }
 
 message packname
@@ -846,22 +906,6 @@ and is thus empty.  Do you want to set a root password for the system now?}
 message rootsh
 {You can now select which shell to use for the root user. The default is
 /bin/csh, but you may prefer another one.}
-
-message label_size_special
-{
-Special values that can be entered for the size value:
-    -1:   use until the end of the NetBSD part of the disk
-   a-%c:   end this partition where partition X starts
-
-}
-
-message label_offset_special
-{
-Special values that can be entered for the offset value:
-    -1:   start at the beginning of the NetBSD part of the disk
-   a-%c:   start at the end of previous partition (a, b, ..., %c)
-
-}
 
 message postuseexisting
 {

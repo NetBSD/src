@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md,v 1.2 2003/06/03 11:54:52 dsl Exp $	*/
+/*	$NetBSD: menus.md,v 1.3 2003/06/10 17:47:19 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -106,31 +106,6 @@ menu cyl1024;
 
 		c1024_resp = 3;
 	};
-
-menu editfsparts, y=13, exit;
-	display action  {
-			ask_sizemult(dlcylsize);
-			msg_display(MSG_fspart, multname);
-			disp_cur_fspart(-1, 1);
-		};
-	option MSG_Change_a, action { editpart = A;}, sub menu edfspart;
-	option MSG_Change_b, action { editpart = B;}, sub menu edfspart;
-	option MSG_NetBSD_partition_cant_change, action {};
-	option MSG_Whole_disk_cant_change, action {};
-	option MSG_Change_e, action { editpart = E;}, sub menu edfspart;
-	option MSG_Change_f, action { editpart = F;}, sub menu edfspart;
-	option MSG_Change_g, action { editpart = G;}, sub menu edfspart;
-	option MSG_Change_h, action { editpart = H;}, sub menu edfspart;
-	option MSG_Change_i, action { editpart = I;}, sub menu edfspart;
-	option MSG_Change_j, action { editpart = J;}, sub menu edfspart;
-	option MSG_Change_k, action { editpart = K;}, sub menu edfspart;
-	option MSG_Change_l, action { editpart = L;}, sub menu edfspart;
-	option MSG_Change_m, action { editpart = M;}, sub menu edfspart;
-	option MSG_Change_n, action { editpart = N;}, sub menu edfspart;
-	option MSG_Change_o, action { editpart = O;}, sub menu edfspart;
-	option MSG_Change_p, action { editpart = P;}, sub menu edfspart;
-	option MSG_Set_new_allocation_size, action { reask_sizemult(dlcylsize); };
- 
 
 menu md_distcustom, x=26, y=5, exit, title MSG_Selection_toggles_inclusion;
 	display action { show_cur_distsets (); };

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.32 2003/06/06 14:31:27 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.33 2003/06/10 17:47:19 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -169,41 +169,6 @@ pointing to an unmounted file system. It has been given a '.old' extension.
 Once you bring your upgraded system back up, you may need to take care
 of merging the newly created /emul/aout directory with the old one.
 }
-
-message Change_a
-{Change a}
-message Change_b
-{Change b}
-message NetBSD_partition_cant_change
-{NetBSD partition - can't change}
-message Whole_disk_cant_change
-{Whole disk - can't change}
-message Change_e
-{Change e}
-message Change_f
-{Change f}
-message Change_g
-{Change g}
-message Change_h
-{Change h}
-message Change_i
-{Change i}
-message Change_j
-{Change j}
-message Change_k
-{Change k}
-message Change_l
-{Change l}
-message Change_m
-{Change m}
-message Change_n
-{Change n}
-message Change_o
-{Change o}
-message Change_p
-{Change p}
-message Set_new_allocation_size
-{Set new allocation size}
 
 message Selection_toggles_inclusion
 {Selection toggles inclusion}

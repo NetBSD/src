@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.14 2003/06/06 21:37:13 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.15 2003/06/10 17:47:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,11 +99,10 @@ struct ptn_info {
 		int	dflt_size;
 		int	size;
 	}		ptn_sizes[NUM_PTN_MENU];
+	int		menu_no;
 	int		free_parts;
 	int		free_space;
 	struct ptn_size *pool_part;
-	int		menu_no;
-	WINDOW		*msg_win;
 	menu_ent	ptn_menus[NUM_PTN_MENU];
 	char		ptn_titles[NUM_PTN_MENU][70];
 	char		exit_msg[70];
@@ -216,7 +215,7 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 {
 	struct ptn_info *pi = arg;
 	struct ptn_size *p;
-	char answer[20];
+	char answer[10];
 	char *cp;
 	int size;
 	int mult;
@@ -228,7 +227,7 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 		return 0;
 
 	if (p->mount[0] == 0) {
-		msg_prompt_win(MSG_askfsmount, pi->msg_win,
+		msg_prompt_win(MSG_askfsmount, -1, -1, 0, 18,
 			NULL, p->mount, sizeof p->mount);
 		if (p->mount[0] == 0)
 			return 0;
@@ -241,7 +240,7 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 		size /= sizemult;
 		snprintf(answer, sizeof answer, "%d", size);
 
-		msg_prompt_win(MSG_askfssize, pi->msg_win,
+		msg_prompt_win(MSG_askfssize, -1, -1, 0, 18,
 			answer, answer, sizeof answer,
 			p->mount, multname);
 		size = strtoul(answer, &cp, 0);
@@ -324,26 +323,13 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 		{ PART_USR,	"/usr",	DEFUSRSIZE },
 		{ PART_ANY,	"/var",	DEFVARSIZE },
 		{ PART_ANY,	"/home",	0 },
-	} };
+	}, -1 };
 	menu_ent *m;
 
 	if (maxpart > MAXPARTITIONS)
 		maxpart = MAXPARTITIONS;	/* sanity */
 
-	if (pi.msg_win == NULL) {
-		pi.msg_win = newwin(3, getmaxx(stdscr) - 30,
-				    getmaxy(stdscr) - 4,  15);
-		if (pi.msg_win == NULL)
-			return;
-		if (has_colors()) {
-			/*
-			 * XXX This color trick should be done so much better,
-			 * but is it worth it?
-			 */
-			wbkgd(pi.msg_win, COLOR_PAIR(1));
-			wattrset(pi.msg_win, COLOR_PAIR(1));
-		}
-
+	if (pi.menu_no < 0) {
 		/* If installing X increase default size of /usr */
 		if (layoutkind == 2) {
 			pi.ptn_sizes[0].dflt_size += XNEEDMB;
@@ -382,10 +368,10 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 			0, 9, 12, sizeof pi.ptn_titles[0],
 			MC_SCROLL | MC_NOBOX | MC_NOCLEAR, NULL, NULL,
 			"help", pi.exit_msg);
-	}
 
-	if (pi.menu_no < 0)
-		return;
+		if (pi.menu_no < 0)
+			return;
+	}
 
 	msg_display(MSG_ptnsizes);
 	msg_table_add(MSG_ptnheaders);

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.5 2003/06/03 11:54:53 dsl Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.6 2003/06/10 17:47:20 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.13 2001/11/29 23:20:58 thorpej Exp 	*/
 
@@ -336,20 +336,6 @@ menu sanity, title "Wybierz opcje";
  *  defined because it's referenced from the toplevel code.
  */
  
-menu editfsparts, y=13, exit;
-	display action  {
-			ask_sizemult(dlcylsize);
-			msg_display(MSG_fspart, multname);
-			disp_cur_fspart(-1, 1);
-		};
-	option "Zmien a", action { editpart = A;}, sub menu edfspart;
-	option "Zmien b", action { editpart = B;}, sub menu edfspart;
-	option "Zmien e", action { editpart = E;}, sub menu edfspart;
-	option "Zmien f", action { editpart = F;}, sub menu edfspart;
-	option "Zmien g", action { editpart = G;}, sub menu edfspart;
-	option "Zmien h", action { editpart = H;}, sub menu edfspart;
-	option "Ustaw nowy przydzial rozmiarow", action { reask_sizemult(dlcylsize); };
-
 menu md_distcustom, x=26, y=5, exit, title "Wybierz";
 	display action { show_cur_distsets (); };
 	option  "Kernel (GENERIC)",	 action { toggle_getit (0); };
