@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.83 2000/11/19 01:34:58 sommerfeld Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.84 2000/11/19 01:46:26 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -102,6 +102,7 @@ static int sysctl_msgbuf __P((void *, size_t *));
 static int sysctl_doeproc __P((int *, u_int, void *, size_t *));
 #ifdef MULTIPROCESSOR
 static int sysctl_docptime __P((void *, size_t *, void *));
+static int sysctl_ncpus __P((void));
 #endif
 static void fill_kproc2 __P((struct proc *, struct kinfo_proc2 *));
 static int sysctl_procargs __P((int *, u_int, void *, size_t *, struct proc *));
@@ -259,6 +260,10 @@ int defcorenamelen = sizeof(DEFCORENAME);
 extern	int	kern_logsigexit;
 extern	fixpt_t	ccpu;
 
+#ifndef MULTIPROCESSOR
+#define sysctl_ncpus() 1
+#endif
+
 #ifdef MULTIPROCESSOR
 
 #ifndef CPU_INFO_FOREACH
@@ -287,6 +292,19 @@ sysctl_docptime(oldp, oldlenp, newp)
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
 	    cp_time, sizeof(cp_time)));
 }
+
+static int
+sysctl_ncpus(void)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	int ncpus = 0;
+	for (CPU_INFO_FOREACH(cii, ci))
+		ncpus++;
+	return ncpus;
+}
+
 #endif
 
 /*
@@ -548,7 +566,7 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case HW_MODEL:
 		return (sysctl_rdstring(oldp, oldlenp, newp, cpu_model));
 	case HW_NCPU:
-		return (sysctl_rdint(oldp, oldlenp, newp, 1));	/* XXX */
+		return (sysctl_rdint(oldp, oldlenp, newp, sysctl_ncpus()));
 	case HW_BYTEORDER:
 		return (sysctl_rdint(oldp, oldlenp, newp, BYTE_ORDER));
 	case HW_PHYSMEM:
