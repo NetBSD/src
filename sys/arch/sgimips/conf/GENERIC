@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.22 2003/09/28 07:39:48 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.23 2003/09/28 12:56:09 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.22 $"
+#ident		"GENERIC-$Revision: 1.23 $"
 
 maxusers	32
 
@@ -83,7 +83,6 @@ options 	COMPAT_16	# NetBSD 1.6
 
 #options 	COMPAT_IRIX	# binary compatibility with IRIX
 #options	COMPAT_LINUX	# binary compatibility with Linux
-#options	COMPAT_ULTRIX	# binary compatibility with Ultrix 
 
 # File systems
 file-system 	FFS		# UFS
@@ -146,7 +145,7 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT
 #options 	MEMORY_DISK_SERVER=0
-#options 	MINIROOTSIZE=8192
+#options 	MEMORY_DISK_ROOT_SIZE=8192
 
 #options 	SCSI_DELAY=5
 
@@ -196,13 +195,13 @@ ahc1 		at pci0 dev 2 function ?
 scsibus0 	at ahc0 channel ?
 scsibus1 	at ahc1 channel ?
 
-sd*     at scsibus? target ? lun ?	# SCSI disks
-st*     at scsibus? target ? lun ?	# SCSI tapes
-cd*     at scsibus? target ? lun ?	# SCSI CD-ROMs
-ch*     at scsibus? target ? lun ?	# SCSI changer devices
-ss*     at scsibus? target ? lun ?	# SCSI scanners
-ses*    at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
-uk*     at scsibus? target ? lun ?	# unknown SCSI
+sd* 	at scsibus? target ? lun ?	# SCSI disks
+st* 	at scsibus? target ? lun ?	# SCSI tapes
+cd* 	at scsibus? target ? lun ?	# SCSI CD-ROMs
+ch* 	at scsibus? target ? lun ?	# SCSI changer devices
+ss* 	at scsibus? target ? lun ?	# SCSI scanners
+ses* 	at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
+uk* 	at scsibus? target ? lun ?	# unknown SCSI
 
 #pckbd*		at pckbc?
 #pms*		at pckbc?
