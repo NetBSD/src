@@ -1,4 +1,4 @@
-/* $NetBSD: makemodes.c,v 1.8 1997/01/28 05:04:10 mark Exp $ */
+/*	$NetBSD: makemodes.c,v 1.9 1997/10/14 11:59:49 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
