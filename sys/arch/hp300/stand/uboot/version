@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.13 2001/11/09 19:53:12 scw Exp $
+$NetBSD: version,v 1.14 2001/12/14 06:08:35 gmcgarry Exp $
 
 1.1:		Initial version
 1.2:		Added support for network booting
@@ -14,3 +14,4 @@ $NetBSD: version,v 1.13 2001/11/09 19:53:12 scw Exp $
 1.12:		loadfile() update:  ELF symbols no longer need backward seeks.
 1.13:		loadfile() update to avoid backwards seeks for ELF Program
 		Headers.
+1.14		Default to BOOTP network boot
