@@ -41,7 +41,7 @@
 #include <krb_err.h>
 #include <kadm_err.h>
 
-RCSID("$Id: version4.c,v 1.1.1.1.2.1 2001/04/05 23:23:00 he Exp $");
+RCSID("$Id: version4.c,v 1.1.1.1.2.2 2002/10/21 20:20:35 perry Exp $");
 
 #define KADM_NO_OPCODE -1
 #define KADM_NO_ENCRYPT -2
@@ -822,6 +822,13 @@ decode_packet(krb5_context context,
     off += _krb5_get_int(msg + off, &rlen, 4);
     memset(&authent, 0, sizeof(authent));
     authent.length = message.length - rlen - KADM_VERSIZE - 4;
+
+    if(authent.length >= MAX_KTXT_LEN) {
+       krb5_warnx(context, "received bad rlen (%lu)", (unsigned long)rlen);
+       make_you_loose_packet (KADM_LENGTH_ERROR, reply);
+       return;
+    }
+
     memcpy(authent.dat, (char*)msg + off, authent.length);
     off += authent.length;
     
