@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.30 1999/05/12 21:21:48 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.30.14.1 2001/06/17 22:29:16 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,7 +105,6 @@ process_read_regs(p, regs)
 	struct reg *regs;
 {
 	struct trapframe *tf = process_frame(p);
-	struct pcb *pcb = &p->p_addr->u_pcb;
 
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
@@ -117,8 +116,8 @@ process_read_regs(p, regs)
 	} else
 #endif
 	{
-		regs->r_gs = pcb->pcb_gs;
-		regs->r_fs = pcb->pcb_fs;
+		regs->r_gs = tf->tf_gs;
+		regs->r_fs = tf->tf_fs;
 		regs->r_es = tf->tf_es;
 		regs->r_ds = tf->tf_ds;
 		regs->r_eflags = tf->tf_eflags;
@@ -178,8 +177,6 @@ process_write_regs(p, regs)
 	struct reg *regs;
 {
 	struct trapframe *tf = process_frame(p);
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
@@ -191,19 +188,6 @@ process_write_regs(p, regs)
 	} else
 #endif
 	{
-#define	verr_ldt(slot)	(slot < pmap->pm_ldt_len && \
-			 (pmap->pm_ldt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
-			 pmap->pm_ldt[slot].sd.sd_dpl == SEL_UPL && \
-			 pmap->pm_ldt[slot].sd.sd_p == 1)
-#define	verr_gdt(slot)	(slot < NGDT && \
-			 (gdt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
-			 gdt[slot].sd.sd_dpl == SEL_UPL && \
-			 gdt[slot].sd.sd_p == 1)
-#define	verr(sel)	(ISLDT(sel) ? verr_ldt(IDXSEL(sel)) : \
-				      verr_gdt(IDXSEL(sel)))
-#define	valid_sel(sel)	(ISPL(sel) == SEL_UPL && verr(sel))
-#define	null_sel(sel)	(!ISLDT(sel) && IDXSEL(sel) == 0)
-
 		/*
 		 * Check for security violations.
 		 */
@@ -211,18 +195,8 @@ process_write_regs(p, regs)
 		    !USERMODE(regs->r_cs, regs->r_eflags))
 			return (EINVAL);
 
-		simple_lock(&pmap->pm_lock);
-
-		if ((regs->r_gs != pcb->pcb_gs && \
-		     !valid_sel(regs->r_gs) && !null_sel(regs->r_gs)) ||
-		    (regs->r_fs != pcb->pcb_fs && \
-		     !valid_sel(regs->r_fs) && !null_sel(regs->r_fs)))
-			return (EINVAL);
-
-		simple_unlock(&pmap->pm_lock);
-
-		pcb->pcb_gs = regs->r_gs;
-		pcb->pcb_fs = regs->r_fs;
+		tf->tf_gs = regs->r_gs;
+		tf->tf_fs = regs->r_fs;
 		tf->tf_es = regs->r_es;
 		tf->tf_ds = regs->r_ds;
 		tf->tf_eflags = regs->r_eflags;
