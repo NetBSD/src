@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.15 1996/02/10 22:10:45 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.16 1996/02/22 21:07:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -29,38 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-
-#ifdef DBG_NOSTATIC
-#	define	static
-#endif
-#ifdef DBG_SEL
-#	define	DBG_SELPRINT(a,b)	printf(a,b)
-#else
-#	define DBG_SELPRINT(a,b)
-#endif
-#ifdef DBG_PIO
-#	define DBG_PIOPRINT(a,b,c) 	printf(a,b,c)
-#else
-#	define DBG_PIOPRINT(a,b,c)
-#endif
-#ifdef DBG_INF
-#	define DBG_INFPRINT(a,b,c)	a(b,c)
-#else
-#	define DBG_INFPRINT(a,b,c)
-#endif
-#ifdef DBG_PID
-	/* static	char	*last_hit = NULL, *olast_hit = NULL; */
-	static char *last_hit[DBG_PID];
-#	define	PID(a)	\
-	{ int i; \
-	  for (i=0; i< DBG_PID-1; i++) \
-		last_hit[i] = last_hit[i+1]; \
-	  last_hit[DBG_PID-1] = a; } \
-		/* olast_hit = last_hit; last_hit = a; */
-#else
-#	define	PID(a)
-#endif
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -104,7 +72,7 @@ static u_char	busy;
 
 static void	ncr5380_minphys(struct buf *bp);
 static int	ncr5380_scsi_cmd(struct scsi_xfer *xs);
-static int	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
+static void	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
 struct scsi_adapter ncr5380_switch = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()			*/
@@ -330,7 +298,8 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	 * We do not queue RESET commands
 	 */
 	if (flags & SCSI_RESET) {
-		scsi_reset(xs->sc_link->adapter_softc, "Got reset-command");
+		scsi_reset_verbose(xs->sc_link->adapter_softc,
+				   "Got reset-command");
 		return (COMPLETE);
 	}
 
@@ -469,7 +438,7 @@ ncr5380_minphys(struct buf *bp)
 }
 #undef MIN_PHYS
 
-static int
+static void
 ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 {
 	u_char	*b = (u_char *) xs->cmd;
@@ -744,8 +713,8 @@ struct ncr_softc *sc;
 static int
 scsi_select(reqp, code)
 SC_REQ	*reqp;
+int	code;
 {
-	u_long			timeout;
 	u_char			tmp[1];
 	u_char			phase;
 	u_long			cnt;
@@ -966,7 +935,7 @@ SC_REQ	*reqp;
 
 			transfer_pio(&phase, &msg, &len, 0);
 		}
-		else scsi_reset(sc, "Connected to unidentified target");
+		else scsi_reset_verbose(sc, "Connected to unidentified target");
 
 		SET_5380_REG(NCR5380_ICOM, 0);
 		reqp->xs->error = code ? code : XS_DRIVER_STUFFUP;
@@ -1030,7 +999,8 @@ struct ncr_softc *sc;
 		reqp->xs->error = XS_TIMEOUT;
 		finish_req(reqp);
 		if (!(tmp & SC_S_REQ))
-			scsi_reset(sc, "Timeout waiting for phase-change");
+			scsi_reset_verbose(sc,
+					   "Timeout waiting for phase-change");
 		PID("info_transf2");
 		return (0);
 	}
@@ -1261,7 +1231,7 @@ struct ncr_softc *sc;
 	u_char	msg;
 	u_char	target_mask;
 	int	abort = 0;
-	SC_REQ	*tmp, *prev;
+	SC_REQ	*tmp = NULL, *prev;
 
 	PID("reselect1");
 	target_mask = GET_5380_REG(NCR5380_DATA) & ~SC_HOST_ID;
@@ -1282,7 +1252,7 @@ struct ncr_softc *sc;
 	}
 	if (GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) {
 		/* Damn SEL isn't dropping */
-		scsi_reset(sc, "Target won't drop SEL during Reselect");
+		scsi_reset_verbose(sc, "Target won't drop SEL during Reselect");
 		return;
 	}
 
@@ -1336,7 +1306,7 @@ struct ncr_softc *sc;
 
 		SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
 		if (transfer_pio(&phase, &msg, &len, 0) || len)
-			scsi_reset(sc, "Failure to abort reselection");
+			scsi_reset_verbose(sc, "Failure to abort reselection");
 	}
 	else {
 		connected = tmp;
@@ -1702,15 +1672,11 @@ u_long		 len;
 	return (-1);
 }
 
-static void
-scsi_reset(sc, why)
-struct ncr_softc *sc;
-const char	 *why;
+void
+scsi_reset()
 {
 	SC_REQ	*tmp, *next;
 	int	sps;
-
-	ncr_aprint(sc, "Resetting SCSI-bus (%s)\n", why);
 
 	PID("scsi_reset1");
 	sps = splbio();
@@ -1756,6 +1722,16 @@ const char	 *why;
 	 * value is arbitrary but should be relatively long.
 	 */
 	delay(100000);
+}
+
+static void
+scsi_reset_verbose(sc, why)
+struct ncr_softc *sc;
+const char	 *why;
+{
+	ncr_aprint(sc, "Resetting SCSI-bus (%s)\n", why);
+
+	scsi_reset();
 }
 
 /*
@@ -1961,7 +1937,7 @@ show_request(reqp, qtxt)
 SC_REQ	*reqp;
 char	*qtxt;
 {
-	printf("REQ-%s: %d %x[%d] cmd[0]=%x S=%x M=%x R=%x resid=%d dr_flag=%x %s\n",
+	printf("REQ-%s: %d %p[%d] cmd[0]=%x S=%x M=%x R=%x resid=%d dr_flag=%x %s\n",
 			qtxt, reqp->targ_id, reqp->xdata_ptr, reqp->xdata_len,
 			reqp->xcmd.opcode, reqp->status, reqp->message,
 			reqp->xs->error, reqp->xs->resid, reqp->dr_flag,
@@ -1980,7 +1956,7 @@ show_signals(dmstat, idstat)
 u_char	dmstat, idstat;
 {
 	u_short	tmp, mask;
-	int	i, j, need_pipe;
+	int	j, need_pipe;
 
 	tmp = idstat | ((dmstat & 3) << 8);
 	printf("Bus signals (%02x/%02x): ", idstat, dmstat & 3);
@@ -1996,6 +1972,7 @@ u_char	dmstat, idstat;
 	printf("\n");
 }
 
+void
 scsi_show()
 {
 	SC_REQ	*tmp;
@@ -2003,6 +1980,8 @@ scsi_show()
 	u_char	idstat, dmstat;
 	int	i;
 
+	printf("scsi_show: main_running is%s running\n",
+		main_running ? "" : " not");
 	for (tmp = issue_q; tmp; tmp = tmp->next)
 		show_request(tmp, "ISSUED");
 	for (tmp = discon_q; tmp; tmp = tmp->next)
