@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.6 1999/08/13 01:43:33 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.7 1999/08/13 03:41:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -62,7 +62,6 @@
 #include "rf_utils.h"
 #include "rf_cpuutil.h"
 #include "rf_shutdown.h"
-#include "rf_sys.h"
 
 #include "rf_kintf.h"
 
