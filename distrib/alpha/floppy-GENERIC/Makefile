@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/04/13 13:26:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2002/04/14 08:30:41 lukem Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
@@ -31,7 +31,7 @@ all: GENERIC.fs
 
 GENERIC.fs: ${GZKERNEL} ${MDEC}/boot ${MDEC}/bootxx.old
 	@echo Creating tar image
-	tar cvf ustar.tmp ${MDEC}/boot ${GZKERNEL}
+	${PAX} -wvf ustar.tmp ${MDEC}/boot ${GZKERNEL}
 	@echo Creating vn image
 	dd if=/dev/zero of=${.TARGET}.tmp count=2880
 	vnconfig -t ${DISKTYPE} -v -c ${VND} ${.TARGET}.tmp
