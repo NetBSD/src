@@ -1,4 +1,4 @@
-.\"	$NetBSD: plip.4,v 1.1 1995/06/22 04:49:02 phil Exp $
+.\"	$NetBSD: plip.4,v 1.2 1995/06/27 18:11:07 phil Exp $
 .\"
 .\" Copyright (c) 1994 Matthias Pfaller.
 .\" All rights reserved.
@@ -28,7 +28,6 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: plip.4,v 1.1 1995/06/22 04:49:02 phil Exp $
 .\"
 .Dd December 1, 1994
 .Dt PLIP 4 pc532
@@ -82,10 +81,12 @@ interface.
 .Xr ifconfig 8
 .Sh DIAGNOSTICS
 .Bl -diag
-.It plip?: tx hard error
+.It "plip?: tx hard error"
 Packet transmission failed even after PLIPMXRETRY (20) retries.
-.It plip?: rx hard error
-PLIPMXERRS (100) packets caused receive errors in sequence.
-.It plip?: checksum error
+.It "plip?: rx hard error"
+PLIPMXERRS (20) packets caused receive errors in sequence.
+.It "plip?: checksum error"
 A packet with a bad checksum was received.
+.It "plip?: packet > MTU"
+A bogus packet longer then MTU was received.
 .El
