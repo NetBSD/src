@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.138 1997/09/02 17:22:47 gwr Exp $
+#	$NetBSD: files,v 1.139 1997/09/02 21:35:03 gwr Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -422,8 +422,8 @@ file netns/spp_usrreq.c			ns
 file nfs/krpc_subr.c			nfs
 file nfs/nfs_bio.c			nfs
 file nfs/nfs_boot.c			nfs
-file nfs/nfs_bootdhcp.c 		nfs & ether
-file nfs/nfs_bootparam.c		nfs & ether
+file nfs/nfs_bootdhcp.c 		nfs & arp
+file nfs/nfs_bootparam.c		nfs & arp
 file nfs/nfs_node.c			nfs
 file nfs/nfs_nqlease.c			nfsserver | nfs
 file nfs/nfs_serv.c			nfsserver
