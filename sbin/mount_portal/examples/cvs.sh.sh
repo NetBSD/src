@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: cvs.sh.sh,v 1.1 2001/12/11 15:35:53 bgrayson Exp $
+#	$NetBSD: cvs.sh.sh,v 1.2 2003/07/12 23:02:59 atatat Exp $
 
 # ensure that HOME is set for pserver modes
 UID=`id -u`
@@ -29,7 +29,7 @@ case $1 in
 esac
 
 for file; do
-	if ( echo $file | egrep -qi '(.*),(-r)?([0-9\.]+|[-a-z0-9]+)$' ); then
+	if ( echo $file | egrep -qi '(.*),(-r)?([0-9\.]+|[-_a-z0-9]+)$' ); then
 		rev="-r`expr "$file" : '.*,\(.*\)' | sed 's/^-r//'`"
 		file="`expr "$file" : '\(.*\),.*'`"
 	else
