@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.80 2004/10/30 18:08:36 thorpej Exp $	*/
+/*	$NetBSD: atw.c,v 1.81 2004/12/27 01:51:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.80 2004/10/30 18:08:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.81 2004/12/27 01:51:49 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -3539,7 +3539,7 @@ atw_start(struct ifnet *ifp)
 		 * probably strip FCS just in case it sticks around in
 		 * bridged packets.
 		 */
-		hh->atw_service = IEEE80211_PLCP_SERVICE; /* XXX guess */
+		hh->atw_service = 0x00; /* XXX guess */
 		hh->atw_paylen = htole16(m0->m_pkthdr.len -
 		    sizeof(struct atw_frame));
 

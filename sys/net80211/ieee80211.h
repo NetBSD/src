@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.9 2004/12/23 05:25:41 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.10 2004/12/27 01:51:49 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -53,9 +53,6 @@ struct ieee80211_plcp_hdr {
 } __attribute__((__packed__));
 
 #define IEEE80211_PLCP_SFD      0xF3A0 
-#define IEEE80211_PLCP_SERVICE  0x00
-#define IEEE80211_PLCP_SERVICE_PBCC  0x08	/* PBCC encoded */
-#define IEEE80211_PLCP_SERVICE_LENEXT  0x80	/* length extension bit */
 
 /*
  * generic definitions for IEEE 802.11 frames
@@ -614,7 +611,7 @@ struct ieee80211_duration {
 	uint16_t	d_rts_dur;
 	uint16_t	d_data_dur;
 	uint16_t	d_plcp_len;
-	uint8_t		d_plcp_svc;
+	uint8_t		d_residue;	/* unused octets in time slot */
 };
 
 /* One Time Unit (TU) is 1Kus = 1024 microseconds. */

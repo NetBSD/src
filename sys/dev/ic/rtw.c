@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.24 2004/12/26 22:59:41 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.25 2004/12/27 01:51:49 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.24 2004/12/26 22:59:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.25 2004/12/27 01:51:49 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -2740,7 +2740,7 @@ rtw_start(struct ifnet *ifp)
 		ctl1 = LSHIFT(d0->d_plcp_len, RTW_TXCTL1_LENGTH_MASK) |
 		    LSHIFT(d0->d_rts_dur, RTW_TXCTL1_RTSDUR_MASK);
 
-		if ((d0->d_plcp_svc & IEEE80211_PLCP_SERVICE_LENEXT) != 0)
+		if (d0->d_residue)
 			ctl1 |= RTW_TXCTL1_LENGEXT;
 
 		/* TBD fragmentation */
