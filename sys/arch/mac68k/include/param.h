@@ -68,12 +68,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: param.h,v 1.1.1.1 1993/09/29 06:09:22 briggs Exp $"
-
 /*
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
- *	@(#)param.h	7.8 (Berkeley) 6/28/91
+ *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
+ *	$Id: param.h,v 1.2 1993/11/29 00:38:20 briggs Exp $
  */
 
 #ifndef PSL_IPL

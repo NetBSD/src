@@ -26,10 +26,8 @@
 /*
  * HISTORY
  * $Log: scsi_5380.h,v $
- * Revision 1.1.1.1  1993/09/29 06:09:20  briggs
- * The current MacBSD architecture sub-directory for NetBSD-0.9--more or
- * less.  It needs some help to get to be -current.  Support for minimal
- * hardware on the SE/30, II, IIx, and IIcx exists.
+ * Revision 1.2  1993/11/29 00:38:38  briggs
+ * Added signal.h for -current.  The rest is formatting changes.
  *
  * Revision 2.3  91/08/24  12:25:10  af
  * 	Moved padding of regmap in impl file.
@@ -49,7 +47,6 @@
  *
  *	Defines for the NCR 5380 (SCSI chip), aka Am5380
  */
-#ident "$Id: scsi_5380.h,v 1.1.1.1 1993/09/29 06:09:20 briggs Exp $"
 
 /*
  * Register map

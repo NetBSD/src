@@ -1,5 +1,5 @@
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
+/*
+ * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,25 +30,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)stdarg.h	7.2 (Berkeley) 5/4/91
- *	$Id: stdarg.h,v 1.2 1993/11/29 00:38:44 briggs Exp $
+ *	from: @(#)signal.h	7.16 (Berkeley) 3/17/91
+ *	signal.h,v 1.1 1993/10/13 07:58:39 cgd Exp
  */
 
-typedef char *va_list;
+#ifndef _MACHINE_SIGNAL_H_
+#define _MACHINE_SIGNAL_H_
 
-#ifdef KERNEL
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type)))[-1]
-#else
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type) < sizeof(int) ? \
-		(abort(), 0) : sizeof(type)))[-1]
-#endif
+typedef int sig_atomic_t;
 
-#define	va_end(ap)
+/*
+ * Get the "code" values
+ */
+#include <machine/trap.h>
 
-#define	__va_promote(type) \
-	(((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
+/*
+ * Information pushed on stack when a signal is delivered.
+ * This is used by the kernel to restore state following
+ * execution of the signal handler.  It is also made available
+ * to the handler to allow it to restore state properly if
+ * a non-standard exit is performed.
+ */
+struct	sigcontext {
+	int	sc_onstack;		/* sigstack state to restore */
+	int	sc_mask;		/* signal mask to restore */
+	int	sc_sp;			/* sp to restore */
+	int	sc_fp;			/* fp to restore */
+	int	sc_ap;			/* ap to restore */
+	int	sc_pc;			/* pc to restore */
+	int	sc_ps;			/* psl to restore */
+};
 
-#define	va_start(ap, last) \
-	(ap = ((char *)&(last) + __va_promote(last)))
+#endif	/* _MACHINE_SIGNAL_H_ */

@@ -30,10 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
 */
-#ident "$Id: endian.h,v 1.1.1.1 1993/09/29 06:09:24 briggs Exp $"
 
 /*
- *	@(#)endian.h	7.7 (Berkeley) 4/3/91
+ *	from: @(#)endian.h	7.7 (Berkeley) 4/3/91
+ *	$Id: endian.h,v 1.2 1993/11/29 00:38:01 briggs Exp $
  */
 
 /*
@@ -52,9 +52,7 @@
 
 #define	BYTE_ORDER	BIG_ENDIAN
 
-#ifndef KERNEL
 #include <sys/cdefs.h>
-#endif
 
 #define __word_swap_long(x) \
 ({ register u_long X = (x); \

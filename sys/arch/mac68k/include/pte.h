@@ -68,11 +68,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: pte.h,v 1.1.1.1 1993/09/29 06:09:21 briggs Exp $"
 /*
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
- *	@(#)pte.h	7.3 (Berkeley) 5/8/91
+ *	from: @(#)pte.h	7.3 (Berkeley) 5/8/91
+ *	$Id: pte.h,v 1.2 1993/11/29 00:38:33 briggs Exp $
  */
 
 /*

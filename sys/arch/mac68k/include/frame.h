@@ -35,12 +35,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ident "$Id: frame.h,v 1.1.1.1 1993/09/29 06:09:23 briggs Exp $"
-
 /*
  * from: Utah $Hdr: frame.h 1.1 90/07/09$
  *
- *	@(#)frame.h	7.2 (Berkeley) 11/2/90
+ *	from: @(#)frame.h	7.2 (Berkeley) 11/2/90
+ *	$Id: frame.h,v 1.2 1993/11/29 00:38:10 briggs Exp $
  */
 
 struct frame {

@@ -30,12 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ansi.h	7.1 (Berkeley) 3/9/91
+ *	from: @(#)ansi.h	7.1 (Berkeley) 3/9/91
+ *	$Id: ansi.h,v 1.2 1993/11/29 00:37:54 briggs Exp $
  */
 
 #ifndef	_ANSI_H_
 #define	_ANSI_H_
-#ident "$Id: ansi.h,v 1.1.1.1 1993/09/29 06:09:24 briggs Exp $"
 
 /*
  * Types which are fundamental to the implementation and may appear in

@@ -30,9 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)proc.h	7.1 (Berkeley) 5/15/91
+ *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
+ *	$Id: proc.h,v 1.2 1993/11/29 00:38:29 briggs Exp $
  */
-#ident "$Id: proc.h,v 1.1.1.1 1993/09/29 06:09:22 briggs Exp $"
 
 /*
  * Machine-dependent part of the proc structure for hp300.

@@ -35,45 +35,29 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/*-
- * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
- *			Michael L. Finch, Bradley A. Grantham, and
- *			Lawrence A. Kesteloot
- * All rights reserved.
+
+/*
+ *	Copyright (c) 1992, 1993 BCDL Labs.  All rights reserved.
+ *	Allen Briggs, Chris Caputo, Michael Finch, Brad Grantham, Lawrence Kesteloot
+
+ *	Redistribution of this source code or any part thereof is permitted,
+ *	 provided that the following conditions are met:
+ *	1) Utilized source contains the copyright message above, this list
+ *	 of conditions, and the following disclaimer.
+ *	2) Binary objects containing compiled source reproduce the
+ *	 copyright notice above on startup.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the Alice Group.
- * 4. The names of the Alice Group or any of its members may not be used
- *    to endorse or promote products derived from this software without
- *    specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE ALICE GROUP ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE ALICE GROUP BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ *	CAVEAT: This source code is provided "as-is" by BCDL Labs, and any
+ *	 warranties of ANY kind are disclaimed.  We don't even claim that it
+ *	 won't crash your hard disk.  Basically, we want a little credit if
+ *	 it works, but we don't want to get mail-bombed if it doesn't. 
  */
-#ident "$Id: cpu.h,v 1.1.1.1 1993/09/29 06:09:24 briggs Exp $"
 
 /*
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
- *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
+ *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
+ *	$Id: cpu.h,v 1.2 1993/11/29 00:37:59 briggs Exp $
  */
 
 /*
@@ -145,7 +129,7 @@ typedef struct intrframe {
 int	astpending;		/* need to trap before returning to user mode */
 int	want_resched;		/* resched() was called */
 
-
+/* XXX why is this duplicated in mtpr.h? brad@fcr.com */
 /*
  * simulated software interrupt register
  */
@@ -153,10 +137,12 @@ extern unsigned char ssir;
 
 #define SIR_NET		0x1
 #define SIR_CLOCK	0x2
+#define SIR_SERIAL	0x4
 
 #define siroff(x)	ssir &= ~(x)
 #define setsoftnet()	ssir |= SIR_NET
 #define setsoftclock()	ssir |= SIR_CLOCK
+#define setsoftserial()	ssir |= SIR_SERIAL
 
 
 
@@ -172,8 +158,8 @@ extern unsigned char ssir;
 #define MACH_MAC2SI		18
 #define MACH_MAC2CI		11
 #define MACH_MAC2CX		8
+#define MACH_MACSE30		9
 #define MACH_MAC2FX		13
-#define MACH_MACSE30		14
 
 /* MF processor passed in */
 #define MACH_68020	0
@@ -198,6 +184,7 @@ extern	char *extiobase, *extiolimit;
 /* physical memory sections */
 #define	ROMBASE		(0x40000000)
 #define IOBASE		(0x50000000)
+#define INTIOBASE	IOBASE
 #define IOTOP		(0x51000000)	/* ~ 128 K */
 #define IOMAPSIZE	btoc(IOTOP - IOBASE)
 
@@ -219,14 +206,11 @@ extern	char *extiobase, *extiolimit;
  * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
  * conversion between physical and kernel virtual addresses is easy.
  */
-#ifdef WE_DONT_KNOW_WHAT_THIS_DOES
-#define	ISIOVA(va) \
-	((char *)(va) >= iobase && (char *)(va) < iolimit)
-#define	IOV(pa)		((int)(pa)-IOBASE+(int)iobase)
-#define	IOP(va)		((int)(va)-(int)iobase+IOBASE)
-#define	IOPOFF(pa)	((int)(pa)-IOBASE)
-#define	IOMAPSIZE	btoc(IOTOP-IOBASE)
-#endif
+#define	ISIIOVA(va) \
+	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
+#define	IIOV(pa)	((int)(pa)-INTIOBASE+(int)intiobase)
+#define	IIOP(va)	((int)(va)-(int)intiobase+INTIOBASE)
+#define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
 
 /*
    ALICE 05/24/92,13:25:19 BG -- We need to make sure to map NuBus memory in
