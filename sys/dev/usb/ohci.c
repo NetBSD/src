@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.7 1998/08/02 22:30:52 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.8 1998/08/05 10:16:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -691,7 +691,7 @@ ohci_ctrl_done(sc, reqh)
 	DPRINTFN(10,("ohci_ctrl_done: reqh=%p\n", reqh));
 
 	if (!reqh->isreq) {
-		panic("uhci_ctrl_done: not a request\n");
+		panic("ohci_ctrl_done: not a request\n");
 		return;
 	}
 
@@ -1914,14 +1914,11 @@ void
 ohci_device_intr_abort(reqh)
 	usbd_request_handle reqh;
 {
-	struct uhci_pipe *opipe;
-
 	/* XXX inactivate */
 	usbd_delay_ms(reqh->pipe->device->bus, 1);	/* make sure it is finished */
 	if (reqh->pipe->intrreqh == reqh) {
 		DPRINTF(("ohci_device_intr_abort: remove\n"));
 		reqh->pipe->intrreqh = 0;
-		opipe = (struct uhci_pipe *)reqh->pipe;
 		ohci_intr_done((ohci_softc_t *)reqh->pipe->device->bus, reqh);
 	}
 }
