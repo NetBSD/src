@@ -1,4 +1,4 @@
-/*	$NetBSD: print-mpls.c,v 1.3 2002/02/18 09:37:08 itojun Exp $	*/
+/*	$NetBSD: print-mpls.c,v 1.4 2002/05/31 09:45:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 2001 WIDE Project.  All rights reserved.
@@ -32,9 +32,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-mpls.c,v 1.2 2001/06/26 06:24:57 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-mpls.c,v 1.3 2002/05/07 18:35:39 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-mpls.c,v 1.3 2002/02/18 09:37:08 itojun Exp $");
+__RCSID("$NetBSD: print-mpls.c,v 1.4 2002/05/31 09:45:45 itojun Exp $");
 #endif
 #endif
 
@@ -90,23 +90,24 @@ mpls_print(const u_char *bp, u_int length)
 
 	p = bp;
 	printf("MPLS");
-	TCHECK2(*p, sizeof(v));
-	memcpy(&v, p, sizeof(v));
-	v = (u_int32_t)ntohl(v);
-	printf(" (");	/*)*/
-	printf("label 0x%x", MPLS_LABEL(v));
-	if (vflag &&
-	    MPLS_LABEL(v) < sizeof(mpls_labelname) / sizeof(mpls_labelname[0]))
-		printf("(%s)", mpls_labelname[MPLS_LABEL(v)]);
-	if (MPLS_EXP(v))
-		printf(" exp 0x%x", MPLS_EXP(v));
-	if (MPLS_STACK(v))
-		printf("[S]");
-	printf(" TTL %u", MPLS_TTL(v));
-	/*(*/
-	printf(")");
+	do {
+		TCHECK2(*p, sizeof(v));
+		v = EXTRACT_32BITS(p);
+		printf(" (");	/*)*/
+		printf("label 0x%x", MPLS_LABEL(v));
+		if (vflag &&
+		    MPLS_LABEL(v) < sizeof(mpls_labelname) / sizeof(mpls_labelname[0]))
+			printf("(%s)", mpls_labelname[MPLS_LABEL(v)]);
+		if (MPLS_EXP(v))
+			printf(" exp 0x%x", MPLS_EXP(v));
+		if (MPLS_STACK(v))
+			printf("[S]");
+		printf(" TTL %u", MPLS_TTL(v));
+		/*(*/
+		printf(")");
 
-	p += sizeof(v);
+		p += sizeof(v);
+	} while (!MPLS_STACK(v));
 
 	switch (MPLS_LABEL(v)) {
 	case 0:	/* IPv4 explicit NULL label */

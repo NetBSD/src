@@ -1,4 +1,4 @@
-/*	$NetBSD: print-esp.c,v 1.3 2002/02/18 09:37:06 itojun Exp $	*/
+/*	$NetBSD: print-esp.c,v 1.4 2002/05/31 09:45:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-esp.c,v 1.20 2002/01/21 11:39:59 mcr Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-esp.c,v 1.24 2002/04/07 02:16:03 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-esp.c,v 1.3 2002/02/18 09:37:06 itojun Exp $");
+__RCSID("$NetBSD: print-esp.c,v 1.4 2002/05/31 09:45:45 itojun Exp $");
 #endif
 #endif
 
@@ -47,10 +47,10 @@ __RCSID("$NetBSD: print-esp.c,v 1.3 2002/02/18 09:37:06 itojun Exp $");
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/des.h>
 #include <openssl/blowfish.h>
-#ifdef HAVE_RC5_H
+#ifdef HAVE_OPENSSL_RC5_H
 #include <openssl/rc5.h>
 #endif
-#ifdef HAVE_CAST_H
+#ifdef HAVE_OPENSSL_CAST_H
 #include <openssl/cast.h>
 #endif
 #endif

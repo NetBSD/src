@@ -1,4 +1,4 @@
-/*	$NetBSD: print-arp.c,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
+/*	$NetBSD: print-arp.c,v 1.4 2002/05/31 09:45:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-arp.c,v 1.51 2001/09/17 21:57:54 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-arp.c,v 1.53 2002/04/25 04:37:31 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-arp.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
+__RCSID("$NetBSD: print-arp.c,v 1.4 2002/05/31 09:45:44 itojun Exp $");
 #endif
 #endif
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: print-arp.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
  * arp_tha and arp_tpa in that order, according to the lengths
  * specified.  Field names used correspond to RFC 826.
  */
-struct	arphdr {
+struct	arp_pkthdr {
 	u_short	ar_hrd;		/* format of hardware address */
 #define ARPHRD_ETHER 	1	/* ethernet hardware format */
 #define ARPHRD_IEEE802	6	/* token-ring hardware format */
@@ -87,10 +87,10 @@ struct	arphdr {
 	u_char	ar_tha[];	/* target hardware address */
 	u_char	ar_tpa[];	/* target protocol address */
 #endif
-#define ar_sha(ap)	(((const caddr_t)((ap)+1))+0)
-#define ar_spa(ap)	(((const caddr_t)((ap)+1))+  (ap)->ar_hln)
-#define ar_tha(ap)	(((const caddr_t)((ap)+1))+  (ap)->ar_hln+(ap)->ar_pln)
-#define ar_tpa(ap)	(((const caddr_t)((ap)+1))+2*(ap)->ar_hln+(ap)->ar_pln)
+#define ar_sha(ap)	(((const u_char *)((ap)+1))+0)
+#define ar_spa(ap)	(((const u_char *)((ap)+1))+  (ap)->ar_hln)
+#define ar_tha(ap)	(((const u_char *)((ap)+1))+  (ap)->ar_hln+(ap)->ar_pln)
+#define ar_tpa(ap)	(((const u_char *)((ap)+1))+2*(ap)->ar_hln+(ap)->ar_pln)
 };
 
 #define ARP_HDRLEN	8
@@ -110,10 +110,10 @@ static u_char ezero[6];
 void
 arp_print(const u_char *bp, u_int length, u_int caplen)
 {
-	const struct arphdr *ap;
+	const struct arp_pkthdr *ap;
 	u_short pro, hrd, op;
 
-	ap = (const struct arphdr *)bp;
+	ap = (const struct arp_pkthdr *)bp;
 	TCHECK(*ap);
 	if ((const u_char *)(ar_tpa(ap) + PLN(ap)) > snapend) {
 		(void)printf("truncated-arp");

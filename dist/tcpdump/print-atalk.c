@@ -1,4 +1,4 @@
-/*	$NetBSD: print-atalk.c,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
+/*	$NetBSD: print-atalk.c,v 1.4 2002/05/31 09:45:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,9 +27,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-atalk.c,v 1.70 2001/11/15 08:23:12 itojun Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-atalk.c,v 1.71 2002/02/05 10:03:34 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-atalk.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
+__RCSID("$NetBSD: print-atalk.c,v 1.4 2002/05/31 09:45:44 itojun Exp $");
 #endif
 #endif
 
@@ -119,6 +119,14 @@ llap_print(register const u_char *bp, u_int length)
 	register const struct atShortDDP *sdp;
 	u_short snet;
 
+	/*
+	 * Our packet is on a 4-byte boundary, as we're either called
+	 * directly from a top-level link-layer printer (ltalk_if_print)
+	 * or from the UDP printer.  The LLAP+DDP header is a multiple
+	 * of 4 bytes in length, so the DDP payload is also on a 4-byte
+	 * boundary, and we don't need to align it before calling
+	 * "ddp_print()".
+	 */
 	lp = (const struct LAP *)bp;
 	bp += sizeof(*lp);
 	length -= sizeof(*lp);
@@ -400,6 +408,11 @@ nbp_print(register const struct atNBP *np, u_int length, register u_short snet,
 		(const struct atNBPtuple *)((u_char *)np + nbpHeaderSize);
 	int i;
 	const u_char *ep;
+
+	if (length < nbpHeaderSize) {
+		(void)printf(" truncated-nbp %d", length);
+		return;
+	}
 
 	length -= nbpHeaderSize;
 	if (length < 8) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rx.c,v 1.5 2002/02/18 09:37:09 itojun Exp $	*/
+/*	$NetBSD: print-rx.c,v 1.6 2002/05/31 09:45:46 itojun Exp $	*/
 
 /*
  * Copyright: (c) 2000 United States Government as represented by the
@@ -38,9 +38,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-rx.c,v 1.27 2001/10/20 07:41:55 itojun Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-rx.c,v 1.29 2002/04/30 06:45:08 guy Exp";
 #else
-__RCSID("$NetBSD: print-rx.c,v 1.5 2002/02/18 09:37:09 itojun Exp $");
+__RCSID("$NetBSD: print-rx.c,v 1.6 2002/05/31 09:45:46 itojun Exp $");
 #endif
 #endif
 
@@ -51,7 +51,9 @@ __RCSID("$NetBSD: print-rx.c,v 1.5 2002/02/18 09:37:09 itojun Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef TIME_WITH_SYS_TIME
 #include <time.h>
+#endif
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -762,15 +764,15 @@ rx_cache_find(const struct rx_header *rxh, const struct ip *ip, int sport,
  * This is the sickest one of all
  */
 
-#define VECOUT(MAX) { char *sp; \
-			char s[AFSNAMEMAX]; \
+#define VECOUT(MAX) { u_char *sp; \
+			u_char s[AFSNAMEMAX]; \
 			int k; \
 			if ((MAX) + 1 > sizeof(s)) \
 				goto trunc; \
 			TCHECK2(bp[0], (MAX) * sizeof(int32_t)); \
 			sp = s; \
 			for (k = 0; k < (MAX); k++) { \
-				*sp++ = (char) EXTRACT_32BITS(bp); \
+				*sp++ = (u_char) EXTRACT_32BITS(bp); \
 				bp += sizeof(int32_t); \
 			} \
 			s[(MAX)] = '\0'; \
@@ -1135,7 +1137,7 @@ acl_print(u_char *s, int maxsize, u_char *end)
 			goto finish;
 		s += n;
 		printf(" +{");
-		fn_print(user, NULL);
+		fn_print((u_char *)user, NULL);
 		printf(" ");
 		ACLOUT(acl);
 		printf("}");
@@ -1148,7 +1150,7 @@ acl_print(u_char *s, int maxsize, u_char *end)
 			goto finish;
 		s += n;
 		printf(" -{");
-		fn_print(user, NULL);
+		fn_print((u_char *)user, NULL);
 		printf(" ");
 		ACLOUT(acl);
 		printf("}");

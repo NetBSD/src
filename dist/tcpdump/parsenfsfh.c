@@ -1,4 +1,4 @@
-/*	$NetBSD: parsenfsfh.c,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
+/*	$NetBSD: parsenfsfh.c,v 1.4 2002/05/31 09:45:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -46,9 +46,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.23 2001/09/17 21:57:53 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.24 2002/04/24 06:27:06 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: parsenfsfh.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
+__RCSID("$NetBSD: parsenfsfh.c,v 1.4 2002/05/31 09:45:44 itojun Exp $");
 #endif
 #endif
 
@@ -115,11 +115,11 @@ __RCSID("$NetBSD: parsenfsfh.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
 	((lsb) + ((e)<<8) + ((d)<<16) + ((c)<<24))
 #endif
 
-static int is_UCX(unsigned char *);
+static int is_UCX(const unsigned char *);
 
 void
 Parse_fh(fh, len, fsidp, inop, osnamep, fsnamep, ourself)
-register caddr_t *fh;
+register const unsigned char *fh;
 int len;
 my_fsid *fsidp;
 ino_t *inop;
@@ -127,7 +127,7 @@ const char **osnamep;		/* if non-NULL, return OS name here */
 const char **fsnamep;		/* if non-NULL, return server fs name here (for VMS) */
 int ourself;		/* true if file handle was generated on this host */
 {
-	register unsigned char *fhp = (unsigned char *)fh;
+	register const unsigned char *fhp = fh;
 	u_int32_t temp;
 	int fhtype = FHT_UNKNOWN;
 	int i;
@@ -443,7 +443,7 @@ int ourself;		/* true if file handle was generated on this host */
  */
 static int
 is_UCX(fhp)
-unsigned char *fhp;
+const unsigned char *fhp;
 {
 	register int i;
 	int seen_null = 0;

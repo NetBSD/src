@@ -1,4 +1,4 @@
-/*	$NetBSD: print-fddi.c,v 1.3 2002/02/18 09:37:06 itojun Exp $	*/
+/*	$NetBSD: print-fddi.c,v 1.4 2002/05/31 09:45:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-fddi.c,v 1.53 2001/11/14 16:46:34 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-fddi.c,v 1.55 2002/05/29 10:06:27 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-fddi.c,v 1.3 2002/02/18 09:37:06 itojun Exp $");
+__RCSID("$NetBSD: print-fddi.c,v 1.4 2002/05/31 09:45:45 itojun Exp $");
 #endif
 #endif
 
@@ -226,7 +226,7 @@ extract_fddi_addrs(const struct fddi_header *fddip, char *fsrc, char *fdst)
  * Print the FDDI MAC header
  */
 static inline void
-fddi_print(register const struct fddi_header *fddip, register u_int length,
+fddi_hdr_print(register const struct fddi_header *fddip, register u_int length,
 	   register const u_char *fsrc, register const u_char *fdst)
 {
 	const char *srcname, *dstname;
@@ -253,28 +253,16 @@ fddi_smt_print(const u_char *p, u_int length)
 	printf("<SMT printer not yet implemented>");
 }
 
-/*
- * This is the top level routine of the printer.  'sp' is the points
- * to the FDDI header of the packet, 'tvp' is the timestamp,
- * 'length' is the length of the packet off the wire, and 'caplen'
- * is the number of bytes actually captured.
- */
 void
-fddi_if_print(u_char *pcap, const struct pcap_pkthdr *h,
-	      register const u_char *p)
+fddi_print(const u_char *p, u_int length, u_int caplen)
 {
-	u_int caplen = h->caplen;
-	u_int length = h->len;
 	const struct fddi_header *fddip = (const struct fddi_header *)p;
 	struct ether_header ehdr;
 	u_short extracted_ethertype;
 
-	++infodelay;
-	ts_print(&h->ts);
-
 	if (caplen < FDDI_HDRLEN) {
 		printf("[|fddi]");
-		goto out;
+		return;
 	}
 	/*
 	 * Get the FDDI addresses into a canonical form
@@ -295,7 +283,7 @@ fddi_if_print(u_char *pcap, const struct pcap_pkthdr *h,
 	packetp = (u_char *)&ehdr;
 
 	if (eflag)
-		fddi_print(fddip, length, ESRC(&ehdr), EDST(&ehdr));
+		fddi_hdr_print(fddip, length, ESRC(&ehdr), EDST(&ehdr));
 
 	/* Skip over FDDI MAC header */
 	length -= FDDI_HDRLEN;
@@ -313,7 +301,7 @@ fddi_if_print(u_char *pcap, const struct pcap_pkthdr *h,
 			 * handle intelligently
 			 */
 			if (!eflag)
-				fddi_print(fddip, length + FDDI_HDRLEN,
+				fddi_hdr_print(fddip, length + FDDI_HDRLEN,
 				    ESRC(&ehdr), EDST(&ehdr));
 			if (extracted_ethertype) {
 				printf("(LLC %s) ",
@@ -327,15 +315,40 @@ fddi_if_print(u_char *pcap, const struct pcap_pkthdr *h,
 	else {
 		/* Some kinds of FDDI packet we cannot handle intelligently */
 		if (!eflag)
-			fddi_print(fddip, length + FDDI_HDRLEN, ESRC(&ehdr),
+			fddi_hdr_print(fddip, length + FDDI_HDRLEN, ESRC(&ehdr),
 			    EDST(&ehdr));
 		if (!xflag && !qflag)
 			default_print(p, caplen);
 	}
-	if (xflag)
-		default_print(p, caplen);
-out:
+}
+
+/*
+ * This is the top level routine of the printer.  'sp' is the points
+ * to the FDDI header of the packet, 'tvp' is the timestamp,
+ * 'length' is the length of the packet off the wire, and 'caplen'
+ * is the number of bytes actually captured.
+ */
+void
+fddi_if_print(u_char *pcap, const struct pcap_pkthdr *h,
+	      register const u_char *p)
+{
+	u_int caplen = h->caplen;
+	u_int length = h->len;
+
+	++infodelay;
+	ts_print(&h->ts);
+
+	fddi_print(p, length, caplen);
+
+	/*
+	 * If "-x" was specified, print stuff past the FDDI header,
+	 * if there's anything to print.
+	 */
+	if (xflag && caplen > FDDI_HDRLEN)
+		default_print(p + FDDI_HDRLEN, caplen - FDDI_HDRLEN);
+
 	putchar('\n');
+
 	--infodelay;
 	if (infoprint)
 		info(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-radius.c,v 1.4 2002/02/18 09:37:09 itojun Exp $	*/
+/*	$NetBSD: print-radius.c,v 1.5 2002/05/31 09:45:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 Alfredo Andres Omella.  All rights reserved.
@@ -48,9 +48,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "Id: print-radius.c,v 1.10 2001/10/22 06:58:33 itojun Exp";
+    "Id: print-radius.c,v 1.11 2002/04/20 09:40:42 guy Exp";
 #else
-__RCSID("$NetBSD: print-radius.c,v 1.4 2002/02/18 09:37:09 itojun Exp $");
+__RCSID("$NetBSD: print-radius.c,v 1.5 2002/05/31 09:45:46 itojun Exp $");
 #endif
 #endif
 
@@ -65,6 +65,10 @@ __RCSID("$NetBSD: print-radius.c,v 1.4 2002/02/18 09:37:09 itojun Exp $");
 #include <netinet/in.h>
 
 #include <stdio.h>
+
+#ifdef TIME_WITH_SYS_TIME
+#include <time.h>
+#endif
 
 #include "interface.h"
 #include "addrtoname.h"

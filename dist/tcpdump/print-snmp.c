@@ -1,4 +1,4 @@
-/*	$NetBSD: print-snmp.c,v 1.4 2002/02/18 09:37:10 itojun Exp $	*/
+/*	$NetBSD: print-snmp.c,v 1.5 2002/05/31 09:45:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -62,9 +62,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-snmp.c,v 1.50 2001/09/17 22:16:53 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-snmp.c,v 1.52 2002/05/07 18:27:40 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-snmp.c,v 1.4 2002/02/18 09:37:10 itojun Exp $");
+__RCSID("$NetBSD: print-snmp.c,v 1.5 2002/05/31 09:45:46 itojun Exp $");
 #endif
 #endif
 
@@ -695,13 +695,17 @@ asn1_print(struct be *elem)
 			
 			/*
 			 * first subitem encodes two items with 1st*OIDMUX+2nd
+			 * (see X.690:1997 clause 8.19 for the details)
 			 */
 			if (first < 0) {
+			        int s;
 				if (!nflag)
 					objp = mibroot;
 				first = 0;
-				OBJ_PRINT(o/OIDMUX, first);
-				o %= OIDMUX;
+				s = o / OIDMUX;
+				if (s > 2) s = 2;
+				OBJ_PRINT(s, first);
+				o -= s * OIDMUX;
 			}
 			OBJ_PRINT(o, first);
 			if (--first < 0)
@@ -882,16 +886,19 @@ static void smi_decode_oid(struct be *elem, unsigned int *oid,
 	    
 		/*
 		 * first subitem encodes two items with 1st*OIDMUX+2nd
+		 * (see X.690:1997 clause 8.19 for the details)
 		 */
 		if (first < 0) {
 		        first = 0;
 			if (*oidlen < oidsize) {
-			    oid[(*oidlen)++] = o/OIDMUX;
+			    oid[*oidlen] = o / OIDMUX;
+			    if (oid[*oidlen] > 2) oid[*oidlen] = 2;
 			}
-			o %= OIDMUX;
+			o -= oid[*oidlen] * OIDMUX;
+			if (*oidlen < oidsize) (*oidlen)++;
 		}
 		if (*oidlen < oidsize) {
-		    oid[(*oidlen)++] = o;
+			oid[(*oidlen)++] = o;
 		}
 		o = 0;
 	}
@@ -1462,7 +1469,7 @@ pdu_print(const u_char *np, u_int length, int version)
 	}
 
 	if (vflag) {
-		fputs("} ", stdout);
+		fputs(" } ", stdout);
 	}
 }
 
