@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.h,v 1.11 1994/11/30 18:25:29 pk Exp $
+ *	$Id: md.h,v 1.12 1995/08/04 21:32:15 pk Exp $
  */
 
 /*
@@ -96,7 +96,7 @@
 #define RELOC_JMPTAB_P(r)		((r)->r_type == RELOC_JMP_TBL)
 
 #define RELOC_BASEREL_P(r) \
-        ((r)->r_type >= RELOC_BASE10 && (r)->r_type <= RELOC_BASE22)
+	((r)->r_type >= RELOC_BASE10 && (r)->r_type <= RELOC_BASE22)
 
 #define RELOC_RELATIVE_P(r)		((r)->r_type == RELOC_RELATIVE)
 #define RELOC_COPY_DAT (RELOC_RELATIVE+1)	/*XXX*/
@@ -108,14 +108,24 @@
 
 /*
  * Define the range of usable Global Offset Table offsets
- * when using sparc 13 bit relocation types (-4096 - 4092).
+ * when using sparc 13 bit relocation types (-4096 - 4092);
+ * this is the case if the object files are compiles with `-fpic'.
+ * IF a "large" model is used (i.e. `-fPIC'), pairs of
+ * <RELOC_BASE10,RELOC_BASE22> relocations are used which establish
+ * 32-bit addressability of the GOT table.
  */
-#define MAX_GOTSIZE			(8192)
-#define MAX_GOTOFF			(4092)
-#define MIN_GOTOFF			(-4096)
+#define MAX_GOTOFF(t)		((t)==PIC_TYPE_SMALL?4092:LONG_MAX)
+#define MIN_GOTOFF(t)		((t)==PIC_TYPE_SMALL?-4096:LONG_MIN)
+
+#define RELOC_PIC_TYPE(r) ( \
+	((r)->r_type == RELOC_BASE10 || (r)->r_type == RELOC_BASE22) \
+		? PIC_TYPE_LARGE \
+		: ((r)->r_type==RELOC_BASE13 ? \
+			PIC_TYPE_SMALL : \
+			PIC_TYPE_NONE) )
 
 #define CHECK_GOT_RELOC(r) \
-		((r)->r_type == RELOC_PC10 || (r)->r_type == RELOC_PC22)
+	((r)->r_type == RELOC_PC10 || (r)->r_type == RELOC_PC22)
 
 #define md_got_reloc(r)			(-(r)->r_address)
 
