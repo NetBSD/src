@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.20 1996/10/03 02:16:18 thorpej Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.21 1996/10/03 05:02:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -31,9 +31,6 @@
  */
 
 #define	ELFSIZE		32				/* XXX should die */
-#ifndef EXEC_ELF32					/* XXX should die */
-#define	EXEC_ELF32					/* XXX should die */
-#endif							/* XXX should die */
 
 #include <sys/param.h>
 #include <sys/systm.h>
