@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.8 1998/07/05 02:12:30 jonathan Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.9 1998/07/05 03:14:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
+#include "opt_llc.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
