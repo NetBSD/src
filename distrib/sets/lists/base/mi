@@ -468,8 +468,6 @@
 ./usr/sbin/named.restart
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nslookup
-./usr/sbin/nsquery
-./usr/sbin/nstest
 ./usr/sbin/pac
 ./usr/sbin/portmap
 ./usr/sbin/pppd
