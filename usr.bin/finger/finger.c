@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.7 1997/05/17 19:42:24 pk Exp $	*/
+/*	$NetBSD: finger.c,v 1.8 1997/09/09 02:41:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -54,7 +54,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$NetBSD: finger.c,v 1.7 1997/05/17 19:42:24 pk Exp $";
+static char rcsid[] = "$NetBSD: finger.c,v 1.8 1997/09/09 02:41:08 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -81,7 +81,7 @@ static char rcsid[] = "$NetBSD: finger.c,v 1.7 1997/05/17 19:42:24 pk Exp $";
 #include "extern.h"
 
 time_t now;
-int entries, lflag, sflag, mflag, oflag, pplan;
+int entries, lflag, sflag, mflag, oflag, gflag, pplan;
 char tbuf[1024];
 
 int
@@ -94,7 +94,7 @@ main(argc, argv)
 
 	oflag = 1;		/* default to old "office" behavior */
 
-	while ((ch = getopt(argc, argv, "lmpsho")) != EOF)
+	while ((ch = getopt(argc, argv, "lmpshog")) != EOF)
 		switch(ch) {
 		case 'l':
 			lflag = 1;		/* long format */
@@ -113,6 +113,9 @@ main(argc, argv)
 			break;
 		case 'o':
 			oflag = 1;		/* office info */
+			break;
+		case 'g':
+			gflag = 1;		/* no gecos info, besides name */
 			break;
 		case '?':
 		default:
