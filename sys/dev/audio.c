@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.55 1997/07/28 01:31:50 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.56 1997/07/28 09:28:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1357,6 +1357,9 @@ audio_mmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
+#ifndef i386
+	return ENXIO;
+#else
 	int s;
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_softc[unit];
@@ -1366,7 +1369,7 @@ audio_mmap(dev, off, prot)
 	DPRINTF(("audio_mmap: off=%d, prot=%d\n", off, prot));
 
 	if (!(hw->props & AUDIO_PROP_MMAP))
-		return -1;
+		return ENXIO;
 #if 0
 /* XXX
  * The idea here was to use the protection to determine if
@@ -1386,13 +1389,13 @@ audio_mmap(dev, off, prot)
 	else if (prot == VM_PROT_READ)
 		cb = &sc->sc_rr;
 	else
-		return -1;
+		return EINVAL;
 #else
 	cb = &sc->sc_pr;
 #endif
 
 	if (off >= cb->bufsize)
-		return -1;
+		return EINVAL;
 	if (!cb->mmapped) {
 		cb->mmapped = 1;
 		if (cb == &sc->sc_pr) {
@@ -1410,6 +1413,7 @@ audio_mmap(dev, off, prot)
 	}
 
 	return i386_btop(vtophys((caddr_t)cb->start + off));
+#endif
 }
 
 void
