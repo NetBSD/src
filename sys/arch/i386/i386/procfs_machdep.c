@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.10 2002/10/01 12:57:00 fvdl Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.11 2002/10/04 19:39:54 joda Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.10 2002/10/01 12:57:00 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.11 2002/10/04 19:39:54 joda Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ extern int cpu_class;
 static const char * const i386_features[] = {
 	"fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce",
 	"cx8", "apic", "10", "sep", "mtrr", "pge", "mca", "cmov",
-	"fgpat", "pse36", "psn", "19", "20", "21", "22", "mmx",
-	"fxsr", "xmm", "26", "27", "28", "29", "30", "31"
+	"pat", "pse36", "pn", "clflush", "20", "dts", "acpi", "mmx",
+	"fxsr", "sse", "sse2", "ss", "ht", "tm", "ia64", "31"
 };
 
 
