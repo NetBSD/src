@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.74 2004/07/24 01:26:20 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.75 2004/07/24 04:59:01 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.74 2004/07/24 01:26:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.75 2004/07/24 04:59:01 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2030,11 +2030,13 @@ atw_filter_setup(struct atw_softc *sc)
 		hash = atw_calchash(enm->enm_addrlo);
 		hashes[hash >> 5] |= 1 << (hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
+		sc->sc_opmode |= ATW_NAR_MM;
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
 
 allmulti:
+	sc->sc_opmode |= ATW_NAR_MM;
 	ifp->if_flags |= IFF_ALLMULTI;
 	hashes[0] = hashes[1] = 0xffffffff;
 
