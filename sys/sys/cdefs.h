@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.25 1998/03/01 02:24:12 fvdl Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.26 1998/05/22 00:19:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@
  * in <machine/cdefs.h>.
  */
 #define	___STRING(x)	__STRING(x)
-#define	___CONCAT(x)	__CONCAT(x)
+#define	___CONCAT(x,y)	__CONCAT(x,y)
 
 #include <machine/cdefs.h>
 
