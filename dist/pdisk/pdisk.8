@@ -1,4 +1,4 @@
-.\"	$NetBSD: pdisk.8,v 1.7 2002/09/09 13:07:36 dbj Exp $
+.\"	$NetBSD: pdisk.8,v 1.8 2002/09/17 07:42:56 dbj Exp $
 .Dd August 19, 2002
 .Os
 .Dt PDISK 8
@@ -121,10 +121,10 @@ Most of the commands will change the index numbers of all partitions
 after the affected partition.
 You are advised to print the table as frequently as necessary.
 .Pp
-Creating more than fifteen partitions is not advised.
+.\"Creating more than fifteen partitions is not advised.
 .\"There may be a bug in old linux kernels which causes
 .\"access to the whole disk fail if more than fifteen partitions are in the map.
-.Pp
+.\".Pp
 The
 .Ic c
 (create new partition) command is the only one with complicated arguments.
@@ -149,16 +149,17 @@ to indicate the size in kilobytes, megabytes, or gigabytes respectively.
 The last argument is the name of the partition.
 This can be a single word without quotes, or a string surrounded by
 single or double quotes.
-The type of the created partition is the correct type for
-Linux but not for
-.Nx .
+The type of the created partition is the correct type for a
+.Nx
+root partition.
 .Pp
 The
 .Ic C
-command is identical to the
+command is similar to the
 .Ic c
 command, with the addition of a partition type argument after the
-other arguments.
+other arguments.  The Block Zero Block magic bits are not set using
+this method.
 .Pp
 The
 .Ic i
@@ -203,7 +204,9 @@ The
 .Fl -logical
 option has not been heavily tested.
 .Pp
-.Nm
-cannot create
+When creating a standard
 .Nx
-partitions.  This is being worked on.
+partition,
+.Nm
+should prompt for the filesystem type to fill in the
+Block Zero Block magic bits.

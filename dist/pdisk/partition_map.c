@@ -722,6 +722,19 @@ create_data(const char *name, const char *dptype, u32 base, u32 length)
 	strncpy(data->dpme_type, dptype, DPISTRLEN);
 	data->dpme_lblock_start = 0;
 	data->dpme_lblocks = data->dpme_pblocks;
+	memset(data->dpme_bzb,0,sizeof(data->dpme_bzb));
+	/* if this function was explicitly invoked with the kUnixType constant,
+	 * then make a default unix root partition with appropriate
+	 * bzb magic set.
+	 */
+	if (dptype == kUnixType) {
+	    BZB *bp = (BZB *)data->dpme_bzb;
+	    bp->bzb_magic = BZBMAGIC;
+	    bp->bzb_inode = 1;
+	    bp->bzb_type = FST;
+	    bzb_root_set(bp,1);
+	    bzb_usr_set(bp,1);
+	}
 	if (strcmp(data->dpme_type, kHFSType) == 0) { /* XXX this is gross, fix it! */
 	    data->dpme_flags = APPLE_HFS_FLAGS_VALUE;
 	}
