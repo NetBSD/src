@@ -1,4 +1,4 @@
-/* $Id: */
+/*	$NetBSD: puccn.h,v 1.2 2000/12/09 06:54:27 imp Exp $ */
 
 /*
  * Derived from  pci.c
