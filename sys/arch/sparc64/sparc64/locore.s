@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.175 2003/04/27 10:42:53 ragge Exp $	*/
+/*	$NetBSD: locore.s,v 1.176 2003/04/29 05:53:11 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -333,7 +333,7 @@
 	sethi	%hi(FPLWP), %l1;							     \
 	add	%fp, STKB-FS_SIZE, %l0;		/* Allocate a fpstate */		     \
 	LDPTR	[%l1 + %lo(FPLWP)], %l2;	/* Load fplwp */			     \
-	andn	%l0, BLOCK_SIZE, %l0;		/* Align it */				     \
+	andn	%l0, BLOCK_ALIGN, %l0;		/* Align it */				     \
 	clr	%l3;				/* NULL fpstate */			     \
 	brz,pt	%l2, 1f;			/* fplwp == NULL? */			     \
 	 add	%l0, -STKB-CC64FSZ-(siz), %sp;	/* Set proper %sp */			     \
