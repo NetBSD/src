@@ -1,4 +1,4 @@
-#	$NetBSD: genlintstub.awk,v 1.6 2002/10/23 00:11:00 perry Exp $
+#	$NetBSD: genlintstub.awk,v 1.7 2003/05/20 20:25:31 kristerw Exp $
 #
 # Copyright 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -68,7 +68,7 @@ BEGIN	{
 		printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
 		printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
 		printf "/* This file was automatically generated. */\n";
-		printf "/* see genasmstub.awk for details.        */\n";
+		printf "/* see genlintstub.awk for details.       */\n";
 		printf "/* This file was automatically generated. */\n";
 		printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
 		printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
