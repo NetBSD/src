@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.44 2003/04/10 22:07:01 christos Exp $
+# $NetBSD: GENERIC,v 1.45 2003/04/19 16:35:03 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.44 $"
+#ident 		"GENERIC-$Revision: 1.45 $"
 
 maxusers	8
 
@@ -52,7 +52,7 @@ options 	USERCONF		# userconf(4) support
 #options 	NEW_BUFQ_STRATEGY
 
 # Debugging options
-options 	DIAGNOSTIC		# extra kernel sanity checking
+#options 	DIAGNOSTIC		# extra kernel sanity checking
 #options 	DEBUG			# extra kernel debugging support
 #options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 options 	DDB			# kernel dynamic debugger
