@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.13 1998/10/11 23:07:42 chuck Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.14 1998/10/16 19:34:57 tv Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -1136,7 +1136,7 @@ ReFault:
 		anon = uvm_analloc();
 		if (anon)
 			pg = uvm_pagealloc(NULL, 0, anon);
-#if defined(sparc) || defined(arm32)
+#ifdef __GNUC__
 		else
 			pg = NULL; /* XXX: gcc */
 #endif
@@ -1508,7 +1508,7 @@ Case2:
 		anon = uvm_analloc();
 		if (anon)
 			pg = uvm_pagealloc(NULL, 0, anon); /* BUSY+CLEAN+FAKE */
-#if defined(sparc) || defined(arm32)
+#ifdef __GNUC__
 		else
 			pg = NULL; /* XXX: gcc */
 #endif
