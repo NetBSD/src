@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 1998/04/25 18:06:44 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 1998/04/26 21:12:04 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -302,10 +302,6 @@ struct pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
 void	pmap_collect_pv __P((void));
 
-#if !defined(MACHINE_NEW_NONCONTIG)
-#define	pa_to_pvh(pa)		(&pv_table[pmap_page_index((pa))])
-#define	pa_to_attribute(pa)	(&pmap_attributes[pmap_page_index((pa))])
-#else
 #define	pa_to_pvh(pa)							\
 ({									\
 	int bank_, pg_;							\
@@ -321,7 +317,6 @@ void	pmap_collect_pv __P((void));
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
 	&vm_physmem[bank_].pmseg.attrs[pg_];				\
 })
-#endif /* MACHINE_NEW_NONCONTIG */
 
 /*
  * Internal routines
@@ -341,44 +336,6 @@ void	pmap_check_wiring    __P((char *, vm_offset_t));
 #define	PRM_TFLUSH	1
 #define	PRM_CFLUSH	2
 
-#if !defined(MACHINE_NEW_NONCONTIG)
-/*
- * Bootstrap memory allocator. This function allows for early dynamic
- * memory allocation until the virtual memory system has been bootstrapped.
- * After that point, either kmem_alloc or malloc should be used. This
- * function works by stealing pages from the (to be) managed page pool,
- * stealing virtual address space, then mapping the pages and zeroing them.
- *
- * It should be used from pmap_bootstrap till vm_page_startup, afterwards
- * it cannot be used, and will generate a panic if tried. Note that this
- * memory will never be freed, and in essence it is wired down.
- */
-void *
-pmap_bootstrap_alloc(size)
-	int size;
-{
-	extern boolean_t vm_page_startup_initialized;
-	vm_offset_t val;
-	
-	if (vm_page_startup_initialized)
-		panic("pmap_bootstrap_alloc: called after startup initialized");
-	size = round_page(size);
-	val = virtual_avail;
-
-	virtual_avail = pmap_map(virtual_avail, avail_start,
-		avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
-	avail_start += size;
-
-	avail_remaining -= m68k_btop(size);
-	/* XXX hope this doesn't pop it into the next range: */
-	avail_next += size;
-
-	bzero((caddr_t)val, size);
-	return ((void *)val);
-}
-#endif /* ! MACHINE_NEW_NONCONTIG */
-
-#if defined(MACHINE_NEW_NONCONTIG)
 /*
  *	Routine:	pmap_virtual_space
  *
@@ -395,7 +352,6 @@ pmap_virtual_space(vstartp, vendp)
 	*vstartp = virtual_avail;
 	*vendp = virtual_end;
 }
-#endif /* MACHINE_NEW_NONCONTIG */
 
 /*
  *	Initialize the pmap module.
@@ -407,13 +363,11 @@ pmap_init()
 {
 	vm_offset_t	addr, addr2;
 	vm_size_t	s;
-	int		rv;
-	int		npages;
-#if defined(MACHINE_NEW_NONCONTIG)
 	struct pv_entry	*pv;
 	char		*attr;
+	int		rv;
+	int		npages;
 	int		bank;
-#endif
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -480,15 +434,8 @@ pmap_init()
 	 * Allocate memory for random pmap data structures.  Includes the
 	 * initial segment table, pv_head_table and pmap_attributes.
 	 */
-#if defined(MACHINE_NEW_NONCONTIG)
 	for (page_cnt = 0, bank = 0; bank < vm_nphysseg; bank++)
 		page_cnt += vm_physmem[bank].end - vm_physmem[bank].start;
-#else
-	/*
-	 * This is wasteful on MACHINE_NONCONTIG.  Is it avoidable?
-	 */
-	page_cnt = atop(high[numranges - 1] - 1);
-#endif
 	s = MAC_STSIZE;					/* Segtabzero */
 	s += page_cnt * sizeof(struct pv_entry);	/* pv table */
 	s += page_cnt * sizeof(char);			/* attribute table */
@@ -518,7 +465,6 @@ pmap_init()
 		       pv_table, pmap_attributes);
 #endif
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	/*
 	 * Now that the pv and attribute tables have been allocated,
 	 * assign them to the memory segments.
@@ -532,7 +478,6 @@ pmap_init()
 		pv += npages;
 		attr += npages;
 	}
-#endif
 
 	/*
 	 * Allocate physical memory for kernel PT pages and their management.
@@ -1621,11 +1566,7 @@ void
 pmap_collect(pmap)
 	pmap_t		pmap;
 {
-#if defined(MACHINE_NEW_NONCONTIG)
-	int bank, s;
-#else
 	int s;
-#endif /* MACHINE_NEW_NONCONTIG */
 
 	if (pmap != pmap_kernel())
 		return;
@@ -1638,14 +1579,9 @@ pmap_collect(pmap)
 	kpt_stats.collectscans++;
 #endif
 	s = splimp();
-#if defined(MACHINE_NEW_NONCONTIG)
 	for (bank = 0; bank < vm_nphysseg; bank++)
 		pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
 		    ptoa(vm_physmem[bank].end));
-#else
-	for (bank = 0; bank < numranges; bank++)
-		pmap_collect1(pmap, low[bank], high[bank]);
-#endif /* MACHINE_NEW_NONCONTIG */
 	splx(s);
 
 #ifdef notyet
@@ -2649,54 +2585,6 @@ pmap_check_wiring(str, va)
 	if (entry->wired_count != count)
 		printf("*%s*: %lx: w%d/a%d\n",
 		       str, va, entry->wired_count, count);
-}
-#endif
-
-#ifdef MACHINE_NONCONTIG
-/*
- * LAK: These functions are from NetBSD/i386 and are used for
- *  the non-contiguous memory machines, such as the IIci, IIsi, and IIvx.
- *  See the functions in sys/vm that #ifdef MACHINE_NONCONTIG.
- */
-
-/*
- * pmap_free_pages()
- *
- *   Returns the number of free physical pages left.
- */
-
-unsigned int
-pmap_free_pages()
-{
-	/* printf ("pmap_free_pages(): returning %d\n", avail_remaining); */
-	return avail_remaining;
-}
-
-/*
- * pmap_next_page()
- *
- *   Stores in *addrp the next available page, skipping the hole between
- *   bank A and bank B.
- */
-
-int
-pmap_next_page(addrp)
-	vm_offset_t *addrp;
-{
-	if (avail_next == high[avail_range]) {
-		avail_range++;
-		if (avail_range >= numranges) {
-			/* printf ("pmap_next_page(): returning FALSE\n"); */
-			return FALSE;
-		}
-		avail_next = low[avail_range];
-	}
-
-	*addrp = avail_next;
-	/* printf ("pmap_next_page(): returning 0x%x\n", avail_next); */
-	avail_next += NBPG;
-	avail_remaining--;
-	return TRUE;
 }
 #endif
 
