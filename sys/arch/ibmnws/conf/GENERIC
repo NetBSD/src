@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.3 2004/04/28 23:49:42 rjs Exp $
+#	$NetBSD: GENERIC,v 1.4 2004/04/28 23:51:24 rjs Exp $
 #
 #
 
@@ -238,6 +238,10 @@ icsphy* at mii? phy ?                   # Integrated Circuit Systems ICS189x
 #tqphy*  at mii? phy ?                   # TDK Semiconductor PHYs
 #ukphy*  at mii? phy ?                   # generic unknown PHYs
 #urlphy* at mii? phy ?                   # Realtek RTL8150L internal PHYs
+
+# Audio support
+paud0 at isa? port 0x830 irq 10 drq 0 drq2 1
+audio*	at audiobus?
 
 # Pseudo-Devices
 
