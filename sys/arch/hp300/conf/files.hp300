@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.25 1997/04/14 02:28:53 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.26 1997/04/27 21:05:49 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -6,6 +6,20 @@
 maxpartitions 8
 
 maxusers 2 8 64
+
+# CPU configuration options.
+defopt	HP320
+defopt	HP330
+defopt	HP340
+defopt	HP345
+defopt	HP350
+defopt	HP360
+defopt	HP370
+defopt	HP375
+defopt	HP380
+defopt	HP400
+defopt	HP425
+defopt	HP433
 
 # NOTE!  The order of these lines is significant!  Don't change them
 # unless you absolutely know what you're doing!
