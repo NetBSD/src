@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.264 2004/06/14 03:20:09 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.265 2004/06/14 03:48:40 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3672,3 +3672,9 @@ sys/dev/acpi/files.acpi				patch
 
 	Add ACPI_DISABLE_ON_POWEROFF option. PR#24869
 	[kochi, ticket #463]
+
+usr.sbin/ntp/ntptrace/ntptrace.awk		1.6
+
+	Make this a shell script (invoking awk), rather than an awk script, to
+	ake the option parsing work as expected. PR#25553
+	[fredb, ticket #464]
