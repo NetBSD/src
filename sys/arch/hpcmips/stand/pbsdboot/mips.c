@@ -1,4 +1,4 @@
-/*	$NetBSD: mips.c,v 1.2 1999/10/30 11:03:39 uch Exp $	*/
+/*	$NetBSD: mips.c,v 1.3 2000/01/16 03:07:32 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.

@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.1.1.1 1999/09/16 12:23:28 takemura Exp $	*/
+/*	$NetBSD: alloc.c,v 1.2 2000/01/16 03:07:22 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
