@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.36 1999/11/28 06:32:04 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.37 2000/01/20 13:19:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.36 1999/11/28 06:32:04 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.37 2000/01/20 13:19:46 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -90,7 +90,7 @@ complete_ambiguous(word, list, words)
 	StringList *words;
 {
 	char insertstr[MAXPATHLEN];
-	char *lastmatch;
+	char *lastmatch, *p;
 	int i, j;
 	size_t matchlen, wordlen;
 
@@ -99,7 +99,9 @@ complete_ambiguous(word, list, words)
 		return (CC_ERROR);	/* no choices available */
 
 	if (words->sl_cur == 1) {	/* only once choice available */
-		char *p = words->sl_str[0] + wordlen;
+		p = words->sl_str[0] + wordlen;
+		if (*p == '\0')		/* at end of word? */
+			return (CC_REFRESH);
 		ftpvis(insertstr, sizeof(insertstr), p, strlen(p));
 		if (el_insertstr(el, insertstr) == -1)
 			return (CC_ERROR);
