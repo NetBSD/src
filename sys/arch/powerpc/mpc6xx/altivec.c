@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.6.2.3 2002/08/01 04:03:52 nathanw Exp $	*/
+/*	$NetBSD: altivec.c,v 1.6.2.4 2002/10/18 19:13:38 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -239,7 +239,7 @@ save_vec_lwp(l)
 	 * It must be on another CPU, flush it from there.
 	 */
 
-	mp_save_vec_proc(p);
+	mp_save_vec_lwp(l);
 #endif
 }
 

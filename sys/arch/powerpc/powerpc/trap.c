@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.16 2002/10/18 02:39:33 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.17 2002/10/18 19:13:39 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -196,7 +196,7 @@ trap(struct trapframe *frame)
 		if ((frame->dsisr & DSISR_NOTFOUND) &&
 		    vm_map_pmap(map)->pm_evictions > 0 &&
 		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->dar))) {
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
 
@@ -247,7 +247,7 @@ trap(struct trapframe *frame)
 		if ((frame->srr1 & DSISR_NOTFOUND) &&
 		    vm_map_pmap(map)->pm_evictions > 0 &&
 		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->srr0))) {
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
 
