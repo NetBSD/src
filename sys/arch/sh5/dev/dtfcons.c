@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfcons.c,v 1.4 2002/10/02 15:52:36 thorpej Exp $	*/
+/*	$NetBSD: dtfcons.c,v 1.5 2002/10/04 10:16:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -63,10 +63,19 @@
 
 #include <dev/cons.h>
 
-
-cdev_decl(dtfcons);
+dev_type_open(dtfconsopen);
+dev_type_close(dtfconsclose);
+dev_type_read(dtfconsread);
+dev_type_write(dtfconswrite);
+dev_type_ioctl(dtfconsioctl);
+dev_type_tty(dtfconstty);
+dev_type_poll(dtfconspoll);
 cons_decl(dtfcons);
 
+const struct cdevsw dtf_cdevsw = {
+	dtfconsopen, dtfconsclose, dtfconsread, dtfconswrite, dtfconsioctl,
+	nostop, dtfconstty, dtfconspoll, nommap, D_TTY
+};
 
 static int dtfconsmatch(struct device *, struct cfdata *, void *);
 static void dtfconsattach(struct device *, struct device *, void *);
