@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.35 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: pax.c,v 1.36 2004/10/10 21:53:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.35 2004/06/20 22:20:14 jmc Exp $");
+__RCSID("$NetBSD: pax.c,v 1.36 2004/10/10 21:53:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ static int gen_init(void);
 int	act = ERROR;		/* read/write/append/copy */
 FSUB	*frmt = NULL;		/* archive format type */
 int	cflag;			/* match all EXCEPT pattern/file */
-int	cwdfd;			/* starting cwd */
+int	cwdfd = -1;		/* starting cwd */
 int	dflag;			/* directory member match only  */
 int	iflag;			/* interactive file/archive rename */
 int	jflag;			/* pass through bzip2 */
@@ -248,6 +248,17 @@ main(int argc, char **argv)
 	listf = stderr;
 
 	/*
+	 * parse options, determine operational mode
+	 */
+	options(argc, argv);
+
+	/*
+	 * general init
+	 */
+	if ((gen_init() < 0) || (tty_init() < 0))
+		return(exit_val);
+
+	/*
 	 * Keep a reference to cwd, so we can always come back home.
 	 */
 	cwdfd = open(".", O_RDONLY);
@@ -273,13 +284,6 @@ main(int argc, char **argv)
 		memcpy(tempfile, tmpdir, tdlen);
 	tempbase = tempfile + tdlen;
 	*tempbase++ = '/';
-
-	/*
-	 * parse options, determine operational mode, general init
-	 */
-	options(argc, argv);
-	if ((gen_init() < 0) || (tty_init() < 0))
-		return(exit_val);
 
 	(void)time(&starttime);
 #ifdef SIGINFO
