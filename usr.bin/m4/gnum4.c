@@ -1,4 +1,4 @@
-/*	$NetBSD: gnum4.c,v 1.4 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: gnum4.c,v 1.5 2004/10/30 20:39:35 dsl Exp $	*/
 /* $OpenBSD: gnum4.c,v 1.15 2001/10/13 20:18:48 espie Exp $ */
 
 /*
@@ -320,7 +320,7 @@ add_replace(string, re, replace, pm)
 				p++;
 				continue;
 			}
-			if (isdigit(p[1])) {
+			if (isdigit((unsigned char)p[1])) {
 				add_sub(*(++p) - '0', string, re, pm);
 				continue;
 			}
