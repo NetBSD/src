@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rshd.8	6.11 (Berkeley) 4/20/91
-.\"	$Id: rshd.8,v 1.2 1993/08/01 07:39:54 mycroft Exp $
+.\"	$Id: rshd.8,v 1.3 1993/12/23 09:05:45 cgd Exp $
 .\"
 .Dd April 20, 1991
 .Dt RSHD 8
@@ -40,7 +40,7 @@
 .Nd remote shell server
 .Sh SYNOPSIS
 .Nm rshd
-.Op Fl aln
+.Op Fl alnL
 .Sh DESCRIPTION
 The
 .Nm rshd
@@ -135,13 +135,22 @@ shell of the user.  The
 shell inherits the network connections established
 by
 .Nm rshd .
+.El
 .Pp
 Transport-level keepalive messages are enabled unless the
 .Fl n
 option is present.
 The use of keepalive messages allows sessions to be timed out
 if the client crashes or becomes unreachable.
-.El
+.Pp
+The 
+.Fl L
+option causes all successful accesses to be logged to
+.Xr syslogd 8
+as
+.Li auth.info
+messages and all failed accesses to be logged as
+.Li auth.notice .
 .Sh DIAGNOSTICS
 Except for the last one listed below,
 all diagnostic messages
