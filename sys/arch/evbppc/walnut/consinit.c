@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.4 2003/07/25 11:44:21 scw Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5 2003/07/25 13:56:11 scw Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4 2003/07/25 11:44:21 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5 2003/07/25 13:56:11 scw Exp $");
 
 #include "opt_kgdb.h"
 
@@ -118,6 +118,7 @@ consinit(void)
 	    COM_TYPE_NORMAL, comcnmode))
 		panic("can't init serial console @%x", CONADDR);
 	else
+		return;
 #endif
 	panic("console device missing -- serial console not in kernel");
 	/* Of course, this is moot if there is no console... */
