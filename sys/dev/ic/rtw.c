@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.35 2004/12/29 01:13:07 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.36 2004/12/29 19:41:04 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.35 2004/12/29 01:13:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.36 2004/12/29 19:41:04 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1389,7 +1389,7 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			rr->rr_chan_flags =
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
 			rr->rr_antsignal = rssi;
-			rr->rr_barker_lock = sq;
+			rr->rr_barker_lock = htole16(sq);
 
 			bpf_mtap2(sc->sc_radiobpf, (caddr_t)rr,
 			    sizeof(sc->sc_rxtapu), m);
@@ -2119,9 +2119,11 @@ rtw_disable(struct rtw_softc *sc)
 		return;
 
 	/* turn off PHY */
-	if ((rc = rtw_pwrstate(sc, RTW_OFF)) != 0)
+	if ((sc->sc_flags & RTW_F_INVALID) == 0 &&
+	    (rc = rtw_pwrstate(sc, RTW_OFF)) != 0) {
 		printf("%s: failed to turn off PHY (%d)\n",
 		    sc->sc_dev.dv_xname, rc);
+	}
 
 	if (sc->sc_disable != NULL)
 		(*sc->sc_disable)(sc);
@@ -3546,6 +3548,8 @@ int
 rtw_detach(struct rtw_softc *sc)
 {
 	int pri;
+
+	sc->sc_flags |= RTW_F_INVALID;
 
 	switch (sc->sc_attach_state) {
 	case FINISHED:
