@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lfs_syscalls.c	8.5 (Berkeley) 4/20/94
- *	$Id: lfs_syscalls.c,v 1.1 1994/06/08 11:42:46 mycroft Exp $
+ *	$Id: lfs_syscalls.c,v 1.2 1994/06/16 03:25:40 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -465,7 +465,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp)
 		if ((*vpp)->v_flag & VXLOCK)
 			printf ("Cleaned vnode VXLOCKED\n");
 		ip = VTOI(*vpp);
-		if (ip->i_flags & IN_LOCKED)
+		if (ip->i_flag & IN_LOCKED)
 			printf("cleaned vnode locked\n");
 		if (!(ip->i_flag & IN_MODIFIED)) {
 			++ump->um_lfs->lfs_uinodes;
