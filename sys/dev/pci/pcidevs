@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.121 1999/05/20 09:23:08 augustss Exp $
+$NetBSD: pcidevs,v 1.122 1999/05/23 21:26:54 veego Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -552,7 +552,9 @@ product 3DFX VOODOO2	0x0002	Voodoo2
 product 3DLABS 300SX	0x0001	GLINT 300SX
 product 3DLABS 500TX	0x0002	GLINT 500TX
 product 3DLABS DELTA	0x0003	GLINT DELTA
+product 3DLABS PERMEDIA	0x0004	GLINT Permedia
 product 3DLABS 500MX	0x0006	GLINT 500MX
+product 3DLABS PERMEDI2	0x0007	GLINT Permedia 2
 
 /* ACC Products */
 product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
@@ -578,6 +580,7 @@ product ALI M1461	0x1461	M1461 Host-PCI Bridge
 product ALI M1531	0x1531	M1531 Host-PCI Bridge
 product ALI M1541	0x1541	M1541 Host-PCI Bridge
 product ALI M1543	0x1533	M1543 PCI-ISA Bridge
+product ALI M3309	0x3309	M3309 MPEG Decoder
 product ALI M4803	0x5215	M4803
 product ALI M5229	0x5229	M5229 UDMA IDE Controller
 product ALI M5237	0x5237	M5237 USB Host Controller
@@ -595,9 +598,11 @@ product ADP 2940	0x7178	AHA-2940
 product ADP 3940	0x7278	AHA-3940
 product ADP 3985	0x7378	AHA-3985
 product ADP 2944	0x7478	AHA-2944
+product ADP AIC7895	0x7895	AIC-7895 Ultra
 product ADP AIC7880	0x8078	AIC-7880 Ultra
 product ADP 2940U	0x8178	AHA-2940 Ultra
 product ADP 3940U	0x8278	AHA-3940 Ultra
+product ADP 389XU	0x8378	AHA-389X Ultra
 product ADP 2944U	0x8478	AHA-2944 Ultra
 
 product ADP2 2940U2	0x0010	AHA-2940 Ultra2
@@ -637,8 +642,22 @@ product ATI MACH64_CX	0x4358	Mach64 CX
 product ATI MACH64_ET	0x4554	Mach64 ET
 product ATI MACH64_VT	0x4654	Mach64 VT
 product ATI MACH64_B	0x4750	Mach64 B
+product ATI MACH64_GB	0x4742	Mach64 GB
+product ATI MACH64_GD	0x4744	Mach64 GD
+product ATI MACH64_GI	0x4749	Mach64 GI
+product ATI MACH64_GP	0x4750	Mach64 GP
+product ATI MACH64_GQ	0x4751	Mach64 GQ
 product ATI MACH64_GT	0x4754	Mach64 GT
+product ATI MACH64_GU	0x4755	Mach64 GU
+product ATI MACH64_GV	0x4756	Mach64 GV
+product ATI MACH64_GW	0x4757	Mach64 GW
 product ATI MACH64_GX	0x4758	Mach64 GX
+product ATI MACH64_GZ	0x475a	Mach64 GZ
+product ATI MACH64_LB	0x4c42	Mach64 LB
+product ATI MACH64_LD	0x4c44	Mach64 LD
+product ATI MACH64_LG	0x4c47	Mach64 LG
+product ATI MACH64_LI	0x4c49	Mach64 LI
+product ATI MACH64_LP	0x4c50	Mach64 LP
 
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
@@ -689,8 +708,10 @@ product CIRRUS CL_GD5434_4	0x00a4	CL-GD5434-4
 product CIRRUS CL_GD5434_8	0x00a8	CL-GD5434-8
 product CIRRUS CL_GD5436	0x00ac	CL-GD5436
 product CIRRUS CL_GD5446	0x00b8	CL-GD5446
+product CIRRUS CL_GD5480	0x00bc	CL-GD5480
 product CIRRUS CL_PD6729	0x1100	CL-PD6729
 product	CIRRUS CL_PD6832	0x1100	CL-PD6832 PCI-CardBus Bridge
+product	CIRRUS CL_PD6833	0x1113	CL-PD6833 PCI-CardBus Bridge
 product CIRRUS CL_GD7542	0x1200	CL-GD7542
 product CIRRUS CL_GD7543	0x1202	CL-GD7543
 product CIRRUS CL_GD7541	0x1204	CL-GD7541
@@ -793,7 +814,8 @@ product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
 
 /* ESS Technology Inc products */
-product ESSTECH	SOLO1	0x1969	SOLO-1 AudioDrive
+product ESSTECH	SOLO1		0x1969	SOLO-1 AudioDrive
+product ESSTECH	MAESTRO2E	0x1978	Maestro 2E
 
 /* 2 Micro Inc */
 product 2MICRO  OZ6832	0x6832	OZ6832 CardBus Controller
@@ -911,9 +933,10 @@ product MATROX MILLENNIUM	0x0519	MGA Millennium 2064W (\"Storm\")
 product MATROX MYSTIQUE		0x051a	MGA Mystique 1064SG
 product MATROX MILLENNIUM2	0x051b	MGA Millennium II 2164W
 product MATROX MILLENNIUM2_AGP	0x051f	MGA Millennium II 2164WA-B AG
-product MATROX G200		0x0521	MGA G200
+product MATROX G200_PCI		0x0520	MGA G200 PCI
+product MATROX G200_AGP		0x0521	MGA G200 AGP
 product MATROX IMPRESSION	0x0d10	MGA Impression
-product MATROX G100		0x1000	MGA G100
+product MATROX G100_PCI		0x1000	MGA G100 PCI
 product MATROX G100_AGP		0x1001	MGA G100 AGP
 
 /* Mylex products */
@@ -1028,8 +1051,8 @@ product S3 TRIO32	0x8810	Trio32
 product S3 TRIO64	0x8811	Trio32/64
 product S3 AURORA64P	0x8812	Aurora64V+
 product S3 TRIO64UVP	0x8814	Trio64UV+
-product S3 868		0x8880	868
 product S3 VIRGE_VX	0x883d	ViRGE/VX
+product S3 868		0x8880	868
 product S3 928		0x88b0	86C928
 product S3 864_0	0x88c0	86C864-0 (\"Vision864\")
 product S3 864_1	0x88c1	86C864-1 (\"Vision864\")
@@ -1044,8 +1067,12 @@ product S3 968_1	0x88f1	86C968-1 (\"Vision968\")
 product S3 968_2	0x88f2	86C968-2 (\"Vision968\")
 product S3 968_3	0x88f3	86C968-3 (\"Vision968\")
 product S3 TRIO64V2_DX	0x8901	Trio64V2/DX
+product S3 PLATO_PX	0x8901	Plato/PX
 product S3 TRIO3D	0x8904	86C365 Trio3D
 product S3 VIRGE_DX	0x8a01	ViRGE/DX
+product S3 VIRGE_GX2	0x8a10	ViRGE/GX2
+product S3 VIRGE_MX	0x8c01	ViRGE/MX
+product S3 VIRGE_MXP	0x8c03	ViRGE/MXP
 product	S3 SONICVIBES	0xca00	SonicVibes
 
 /* SGS Thomson products */
@@ -1102,10 +1129,10 @@ product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-pcmcia Bridge
 product TI	PCI1131		0xac15	PCI1131 PCI-CardBus Bridge
 product TI	PCI1250		0xac16	PCI1250 PCI-CardBus Bridge
-product TI	PCI1251		0xac1d	PCI1251 PCI-CardBus Bridge
 product TI	PCI1220		0xac17	PCI1220 PCI-CardBus Bridge
 product TI	PCI1221		0xac19	PCI1221 PCI-CardBus Bridge
-product TI	PCI1225		0xac1C	PCI1225 PCI-CardBus Bridge
+product TI	PCI1225		0xac1c	PCI1225 PCI-CardBus Bridge
+product TI	PCI1251		0xac1d	PCI1251 PCI-CardBus Bridge
 product TI	PCI2030		0xac20	PCI2030 PCI-CardBus Bridge
   
 /* Toshiba products */
