@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/04/15 15:29:11 kleink Exp $
+#	$NetBSD: Makefile,v 1.6 2001/04/15 17:13:16 kleink Exp $
 
 KDIR=	/sys/arch/sandpoint/include
 INCSDIR= /usr/include/sandpoint
@@ -10,8 +10,8 @@ INCS=   ansi.h aout_machdep.h asm.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h fpu.h frame.h \
 	ieee.h ieeefp.h \
-	int_const.h int_limits.h int_mwgwtypes.h int_types.h intr.h \
-	ipkdb.h \
+	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
+	intr.h ipkdb.h \
 	kcore.h kgdb.h \
 	limits.h lock.h \
 	machine_type.h math.h \

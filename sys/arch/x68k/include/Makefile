@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2001/04/15 15:29:13 kleink Exp $
+#	$NetBSD: Makefile,v 1.18 2001/04/15 17:13:18 kleink Exp $
 
 KDIR=	/sys/arch/x68k/include
 INCSDIR= /usr/include/x68k
@@ -11,8 +11,8 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	float.h frame.h \
 	grfioctl.h \
 	ieee.h ieeefp.h \
-	int_const.h int_limits.h int_mwgwtypes.h int_types.h intr.h \
-	iteioctl.h \
+	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
+	intr.h iteioctl.h \
 	kbd.h kbio.h kcore.h \
 	math.h \
 	lock.h limits.h \

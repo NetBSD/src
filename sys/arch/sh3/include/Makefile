@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/04/15 15:29:11 kleink Exp $
+#	$NetBSD: Makefile,v 1.11 2001/04/15 17:13:17 kleink Exp $
 
 KDIR=	/sys/arch/sh3/include
 INCSDIR= /usr/include/sh3
@@ -10,7 +10,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \
 	ieee.h ieeefp.h \
-	int_const.h int_limits.h int_mwgwtypes.h int_types.h \
+	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intcreg.h intr.h \
 	limits.h lock.h \
 	math.h mmureg.h \
