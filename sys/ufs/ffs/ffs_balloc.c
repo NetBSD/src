@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.31 2003/01/24 21:55:21 fvdl Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.32 2003/03/15 01:10:18 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.31 2003/01/24 21:55:21 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.32 2003/03/15 01:10:18 kristerw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -512,49 +512,4 @@ fail:
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	return (error);
-}
-
-
-int
-ffs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    struct ucred *cred)
-{
-	struct inode *ip = VTOI(vp);
-	struct fs *fs = ip->i_fs;
-	int error, delta, bshift, bsize;
-	UVMHIST_FUNC("ffs_gop_alloc"); UVMHIST_CALLED(ubchist);
-
-	error = 0;
-	bshift = fs->fs_bshift;
-	bsize = 1 << bshift;
-
-	delta = off & (bsize - 1);
-	off -= delta;
-	len += delta;
-
-	while (len > 0) {
-		bsize = MIN(bsize, len);
-
-		error = VOP_BALLOC(vp, off, bsize, cred, flags, NULL);
-		if (error) {
-			goto out;
-		}
-
-		/*
-		 * increase file size now, VOP_BALLOC() requires that
-		 * EOF be up-to-date before each call.
-		 */
-
-		if (ip->i_ffs_size < off + bsize) {
-			UVMHIST_LOG(ubchist, "vp %p old 0x%x new 0x%x",
-			    vp, ip->i_ffs_size, off + bsize, 0);
-			ip->i_ffs_size = off + bsize;
-		}
-
-		off += bsize;
-		len -= bsize;
-	}
-
-out:
-	return error;
 }
