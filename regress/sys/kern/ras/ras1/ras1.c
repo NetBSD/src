@@ -1,4 +1,4 @@
-/* $NetBSD: ras1.c,v 1.4 2004/01/07 19:42:22 martin Exp $ */
+/* $NetBSD: ras1.c,v 1.5 2004/01/18 16:47:06 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <signal.h>
 #include <sys/ras.h>
@@ -57,11 +58,6 @@ int
 main(void)
 {
 
-#ifndef	__HAVE_RAS
-	printf("RAS is not supported on this architecture\n");
-	return 0;
-#endif
-
         signal(SIGVTALRM, handler);
 
         itv.it_interval.tv_sec = 0;
@@ -71,8 +67,13 @@ main(void)
         setitimer(ITIMER_VIRTUAL, &itv, NULL);
 
 	if (rasctl((caddr_t)&&start, (caddr_t)&&end - (caddr_t)&&start,
-	    RAS_INSTALL) < 0)
+	    RAS_INSTALL) < 0) {
+		if (errno == EOPNOTSUPP) {
+			printf("RAS is not supported on this architecture\n");
+			return 0;
+		}
 		return (1);
+	}
 
 	__insn_barrier();
 start:
