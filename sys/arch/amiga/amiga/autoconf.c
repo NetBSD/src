@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.91 2003/01/20 21:24:56 aymeric Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.92 2003/10/27 09:56:56 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.91 2003/01/20 21:24:56 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92 2003/10/27 09:56:56 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,6 +459,7 @@ findroot(void)
 			    dkp->dk_driver->d_strategy == NULL)
 				continue;
 
+			bdp = NULL;
 #if NFD > 0
 			if (fd_bdevsw.d_strategy == dkp->dk_driver->d_strategy)
 				bdp = &fd_bdevsw;
