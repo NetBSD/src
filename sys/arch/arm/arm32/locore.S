@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.40 2001/06/11 22:08:42 chris Exp $	*/
+/*	$NetBSD: locore.S,v 1.1 2001/07/28 15:08:11 chris Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
