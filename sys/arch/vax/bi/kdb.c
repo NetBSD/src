@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.4 1996/10/13 03:34:47 christos Exp $ */
+/*	$NetBSD: kdb.c,v 1.5 1997/01/11 11:34:39 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -71,7 +71,6 @@ struct	kdb_softc {
 	struct	device sc_dev;		/* Autoconfig info */
 	struct	ivec_dsp sc_ivec;	/* Interrupt vector handler */
 	struct	mscp_pack sc_kdb;	/* Struct for kdb communication */
-	struct	buf sc_ktab;		/* queue for waiting xfers */
 	struct	mscp_softc *sc_softc;	/* MSCP info (per mscpvar.h) */
 	struct	kdb_regs *sc_kr;	/* KDB controller registers */
 	struct	mscp *sc_mscp;		/* Keep pointer to active mscp */
@@ -84,7 +83,7 @@ void	kdbintr __P((int));
 void	kdbctlrdone __P((struct device *, int));
 int	kdbprint __P((void *, const char *));
 void	kdbsaerror __P((struct device *, int));
-int	kdbgo __P((struct device *));
+int	kdbgo __P((struct device *, struct buf *));
 
 struct	cfdriver kdb_cd = {
 	NULL, "kdb", DV_DULL
@@ -155,7 +154,6 @@ kdbattach(parent, self, aux)
 
 	ma.ma_mc = &kdb_mscp_ctlr;
 	ma.ma_type = MSCPBUS_DISK|MSCPBUS_KDB;
-	ma.ma_cbuf = &sc->sc_ktab;
 	ma.ma_uuda = (struct mscp_pack *)kvtophys(&sc->sc_kdb);
 	ma.ma_uda = &sc->sc_kdb;
 	ma.ma_ip = &sc->sc_kr->kdb_ip;
@@ -175,13 +173,13 @@ kdbattach(parent, self, aux)
 }
 
 int
-kdbgo(usc)
+kdbgo(usc, bp)
 	struct device *usc;
+	struct buf *bp;
 {
 	struct kdb_softc *sc = (void *)usc;
-	struct buf *bp = sc->sc_ktab.b_forw->b_actf;
 	struct mscp_softc *mi = sc->sc_softc;
-	struct mscp *mp = mi->mi_mscp;
+	struct mscp *mp = (void *)bp->b_actb;
         struct  pcb *pcb;
         pt_entry_t *pte;
         int     pfnum, npf, o, i;
@@ -238,7 +236,7 @@ kdbgo(usc)
 		mp->mscp_seq.seq_mapbase = i;
 	} else
 		mp->mscp_seq.seq_mapbase = (unsigned)pte;
-	mscp_dgo(mi, KDB_MAP | o, info);
+	mscp_dgo(mi, KDB_MAP | o, info, bp);
 	return 1;
 }
 
