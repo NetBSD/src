@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.90 2004/01/09 19:00:16 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.91 2004/01/16 12:47:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.90 2004/01/09 19:00:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.91 2004/01/16 12:47:37 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -317,6 +317,8 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 {
 	int s;
 
+	LOCK_ASSERT(!simple_lock_held(&pp->pr_slock) || pq != NULL);
+
 	/*
 	 * If the page was idle, decrement the idle page count.
 	 */
@@ -336,12 +338,13 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 	 * Unlink a page from the pool and release it (or queue it for release).
 	 */
 	LIST_REMOVE(ph, ph_pagelist);
+	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
+		SPLAY_REMOVE(phtree, &pp->pr_phtree, ph);
 	if (pq) {
 		LIST_INSERT_HEAD(pq, ph, ph_pagelist);
 	} else {
 		pool_allocator_free(pp, ph->ph_page);
 		if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
-			SPLAY_REMOVE(phtree, &pp->pr_phtree, ph);
 			s = splvm();
 			pool_put(&phpool, ph);
 			splx(s);
@@ -733,12 +736,13 @@ pool_get(struct pool *pp, int flags)
 		v = pool_allocator_alloc(pp, flags);
 		if (__predict_true(v != NULL))
 			ph = pool_alloc_item_header(pp, v, flags);
-		simple_lock(&pp->pr_slock);
-		pr_enter(pp, file, line);
 
 		if (__predict_false(v == NULL || ph == NULL)) {
 			if (v != NULL)
 				pool_allocator_free(pp, v);
+
+			simple_lock(&pp->pr_slock);
+			pr_enter(pp, file, line);
 
 			/*
 			 * We were unable to allocate a page or item
@@ -771,6 +775,8 @@ pool_get(struct pool *pp, int flags)
 		}
 
 		/* We have more memory; add it to the pool */
+		simple_lock(&pp->pr_slock);
+		pr_enter(pp, file, line);
 		pool_prime_page(pp, v, ph);
 		pp->pr_npagealloc++;
 
@@ -953,7 +959,9 @@ pool_do_put(struct pool *pp, void *v)
 		    (pp->pr_npages > pp->pr_maxpages ||
 		     (pp->pr_roflags & PR_IMMEDRELEASE) != 0 ||
 		     (pp->pr_alloc->pa_flags & PA_WANT) != 0)) {
+			simple_unlock(&pp->pr_slock);
 			pr_rmpage(pp, ph, NULL);
+			simple_lock(&pp->pr_slock);
 		} else {
 			LIST_REMOVE(ph, ph_pagelist);
 			LIST_INSERT_HEAD(&pp->pr_emptypages, ph, ph_pagelist);
@@ -1039,14 +1047,15 @@ pool_prime(struct pool *pp, int n)
 		cp = pool_allocator_alloc(pp, PR_NOWAIT);
 		if (__predict_true(cp != NULL))
 			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-		simple_lock(&pp->pr_slock);
 
 		if (__predict_false(cp == NULL || ph == NULL)) {
 			if (cp != NULL)
 				pool_allocator_free(pp, cp);
+			simple_lock(&pp->pr_slock);
 			break;
 		}
 
+		simple_lock(&pp->pr_slock);
 		pool_prime_page(pp, cp, ph);
 		pp->pr_npagealloc++;
 		pp->pr_minpages++;
@@ -1073,6 +1082,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	unsigned int ioff = pp->pr_itemoffset;
 	int n;
 	int s;
+
+	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
 
 #ifdef DIAGNOSTIC
 	if (((u_long)cp & (pp->pr_alloc->pa_pagesz - 1)) != 0)
@@ -1163,13 +1174,14 @@ pool_catchup(struct pool *pp)
 		cp = pool_allocator_alloc(pp, PR_NOWAIT);
 		if (__predict_true(cp != NULL))
 			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-		simple_lock(&pp->pr_slock);
 		if (__predict_false(cp == NULL || ph == NULL)) {
 			if (cp != NULL)
 				pool_allocator_free(pp, cp);
 			error = ENOMEM;
+			simple_lock(&pp->pr_slock);
 			break;
 		}
+		simple_lock(&pp->pr_slock);
 		pool_prime_page(pp, cp, ph);
 		pp->pr_npagealloc++;
 	}
@@ -1320,7 +1332,6 @@ pool_reclaim(struct pool *pp)
 		if (pp->pr_roflags & PR_PHINPAGE) {
 			continue;
 		}
-		SPLAY_REMOVE(phtree, &pp->pr_phtree, ph);
 		s = splvm();
 		pool_put(&phpool, ph);
 		splx(s);
@@ -1955,6 +1966,8 @@ pool_allocator_alloc(struct pool *org, int flags)
 	int s, freed;
 	void *res;
 
+	LOCK_ASSERT(!simple_lock_held(&org->pr_slock));
+
 	do {
 		if ((res = (*pa->pa_alloc)(org, flags)) != NULL)
 			return (res);
@@ -2024,6 +2037,8 @@ pool_allocator_free(struct pool *pp, void *v)
 {
 	struct pool_allocator *pa = pp->pr_alloc;
 	int s;
+
+	LOCK_ASSERT(!simple_lock_held(&pp->pr_slock));
 
 	(*pa->pa_free)(pp, v);
 
