@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.2 1995/03/29 21:24:14 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.3 1995/06/16 15:08:05 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -65,5 +65,6 @@ _hoppabort: .word 0x0
         movl    4(ap),r6
         movl    8(ap),r11
         movl    0xc(ap),r10
+	movl	0x10(ap),r9
         calls   $0,(r6)
 
