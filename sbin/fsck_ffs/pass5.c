@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.23.4.1 2000/07/27 02:05:13 mycroft Exp $	*/
+/*	$NetBSD: pass5.c,v 1.23.4.2 2001/11/24 22:08:39 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.23.4.1 2000/07/27 02:05:13 mycroft Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.23.4.2 2001/11/24 22:08:39 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ pass5()
 	long i, j, k;
 	struct csum *cs;
 	struct csum cstotal;
-	struct inodesc idesc[3];
+	struct inodesc idesc[4];
 	char buf[MAXBSIZE];
 	struct cg *newcg = (struct cg *)buf;
 	struct ocg *ocg = (struct ocg *)buf;
@@ -175,7 +175,7 @@ pass5()
 			fs->fs_postblformat);
 	}
 	memset(&idesc[0], 0, sizeof idesc);
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 4; i++) {
 		idesc[i].id_type = ADDR;
 		if (doinglevel2)
 			idesc[i].id_fix = FIX;
@@ -193,6 +193,40 @@ pass5()
 			pfatal("CG %d: PASS5: BAD MAGIC NUMBER\n", c);
 		if(doswap)
 			cgdirty();
+		/*
+		 * While we have the disk head where we want it,
+		 * write back the superblock to the spare at this
+		 * cylinder group.
+		 */
+		if ((cvtlevel && sblk.b_dirty) || doswap) {
+			bwrite(fswritefd, sblk.b_un.b_buf,
+			    fsbtodb(sblock, cgsblock(sblock, c)),
+			    sblock->fs_sbsize);
+		} else {
+			/*
+			 * Read in the current alternate superblock,
+			 * and compare it to the master.  If it's
+			 * wrong, fix it up.
+			 */
+			getblk(&asblk, cgsblock(sblock, c), sblock->fs_sbsize);
+			if (asblk.b_errs)
+				pfatal("CG %d: UNABLE TO READ ALTERNATE "
+				    "SUPERBLK\n", c);
+			else {
+				memmove(altsblock, asblk.b_un.b_fs,
+				    sblock->fs_sbsize);
+				if (needswap)
+					ffs_sb_swap(asblk.b_un.b_fs, altsblock,
+					    needswap);
+			}
+			if ((asblk.b_errs || cmpsblks(sblock, altsblock)) &&
+			     dofix(&idesc[3],
+				   "ALTERNATE SUPERBLK(S) ARE INCORRECT")) {
+				bwrite(fswritefd, sblk.b_un.b_buf,
+				    fsbtodb(sblock, cgsblock(sblock, c)),
+				    sblock->fs_sbsize);
+			}
+		}
 		dbase = cgbase(fs, c);
 		dmax = dbase + fs->fs_fpg;
 		if (dmax > fs->fs_size)
@@ -210,15 +244,15 @@ pass5()
 		newcg->cg_cs.cs_nffree = 0;
 		newcg->cg_cs.cs_nbfree = 0;
 		newcg->cg_cs.cs_nifree = fs->fs_ipg;
-		if (cg->cg_rotor < newcg->cg_ndblk)
+		if (cg->cg_rotor >= 0 && cg->cg_rotor < newcg->cg_ndblk)
 			newcg->cg_rotor = cg->cg_rotor;
 		else
 			newcg->cg_rotor = 0;
-		if (cg->cg_frotor < newcg->cg_ndblk)
+		if (cg->cg_frotor >= 0 && cg->cg_frotor < newcg->cg_ndblk)
 			newcg->cg_frotor = cg->cg_frotor;
 		else
 			newcg->cg_frotor = 0;
-		if (cg->cg_irotor < newcg->cg_niblk)
+		if (cg->cg_irotor >= 0 && cg->cg_irotor < newcg->cg_niblk)
 			newcg->cg_irotor = cg->cg_irotor;
 		else
 			newcg->cg_irotor = 0;
@@ -379,11 +413,11 @@ pass5()
 	if (fs->fs_postblformat == FS_42POSTBLFMT)
 		fs->fs_nrpos = savednrpos;
 	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof *cs) != 0) {
-	    if(dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
-		memmove(&fs->fs_cstotal, &cstotal, sizeof *cs);
-		fs->fs_ronly = 0;
-		fs->fs_fmod = 0;
-		sbdirty();
+		if (dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
+			memmove(&fs->fs_cstotal, &cstotal, sizeof *cs);
+			fs->fs_ronly = 0;
+			fs->fs_fmod = 0;
+			sbdirty();
 		} else
 			markclean = 0;
 	}
