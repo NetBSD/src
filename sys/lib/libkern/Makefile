@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 1998/02/22 06:54:38 mycroft Exp $
+#	$NetBSD: Makefile,v 1.41 1998/05/27 00:46:32 explorer Exp $
 
 LIB=	kern
 NOPIC=
@@ -20,7 +20,7 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 .endif
 
 # Other stuff
-SRCS+=	md5c.c
+SRCS+=	md5c.c sha1.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
