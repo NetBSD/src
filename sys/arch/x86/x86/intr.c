@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 2003/10/30 21:19:54 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.12 2003/11/06 23:04:03 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2003/10/30 21:19:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2003/11/06 23:04:03 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -259,7 +259,7 @@ intr_find_mpmapping(int bus, int pin, int *handle)
 #if NPCI > 0
 	while (intr_scan_bus(bus, pin, handle) != 0) {
 		if (intr_find_pcibridge(bus, &pci_bridge_tag,
-		    &pci_chipset_tag) < 0)
+		    &pci_chipset_tag) != 0)
 			return ENOENT;
 		dev = pin >> 2;
 		pin = pin & 3;
