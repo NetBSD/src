@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.64 1999/07/17 21:35:49 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.65 1999/07/18 00:41:56 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1721,6 +1721,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 	boolean_t set_max;
 {
 	vm_map_entry_t current, entry;
+	int rv = KERN_SUCCESS;
 	UVMHIST_FUNC("uvm_map_protect"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,new_prot=0x%x)",
 	map, start, end, new_prot);
@@ -1741,13 +1742,15 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 
 	current = entry;
 	while ((current != &map->header) && (current->start < end)) {
-		if (UVM_ET_ISSUBMAP(current))
-			return (KERN_INVALID_ARGUMENT);
-		if ((new_prot & current->max_protection) != new_prot) {
-			vm_map_unlock(map);
-			return (KERN_PROTECTION_FAILURE);
+		if (UVM_ET_ISSUBMAP(current)) {
+			rv = KERN_INVALID_ARGUMENT;
+			goto out;
 		}
-			current = current->next;
+		if ((new_prot & current->max_protection) != new_prot) {
+			rv = KERN_PROTECTION_FAILURE;
+			goto out;
+		}
+		current = current->next;
 	}
 
 	/* go back and fix up protections (no need to clip this time). */
@@ -1772,18 +1775,48 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 		 */
 
 		if (current->protection != old_prot) {
-
 			/* update pmap! */
 			pmap_protect(map->pmap, current->start, current->end,
 			    current->protection & MASK(entry));
-
 		}
+
+		/*
+		 * If the map is configured to lock any future mappings,
+		 * wire this entry now if the old protection was VM_PROT_NONE
+		 * and the new protection is not VM_PROT_NONE.
+		 */
+
+		if ((map->flags & VM_MAP_WIREFUTURE) != 0 &&
+		    VM_MAPENT_ISWIRED(entry) == 0 &&
+		    old_prot == VM_PROT_NONE &&
+		    new_prot != VM_PROT_NONE) {
+			if (uvm_map_pageable(map, entry->start,
+			    entry->end, FALSE,
+			    UVM_LK_ENTER|UVM_LK_EXIT) != KERN_SUCCESS) {
+				/*
+				 * If locking the entry fails, remember the
+				 * error if it's the first one.  Note we
+				 * still continue setting the protection in
+				 * the map, but will return the resource
+				 * shortage condition regardless.
+				 *
+				 * XXX Ignore what the actual error is,
+				 * XXX just call it a resource shortage
+				 * XXX so that it doesn't get confused
+				 * XXX what uvm_map_protect() itself would
+				 * XXX normally return.
+				 */
+				rv = KERN_RESOURCE_SHORTAGE;
+			}
+		}
+
 		current = current->next;
 	}
 	
+ out:
 	vm_map_unlock(map);
-	UVMHIST_LOG(maphist, "<- done",0,0,0,0);
-	return(KERN_SUCCESS);
+	UVMHIST_LOG(maphist, "<- done, rv=%d",rv,0,0,0);
+	return (rv);
 }
 
 #undef  max
