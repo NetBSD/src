@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.c,v 1.5 2001/01/04 03:56:17 lukem Exp $	*/
+/*	$NetBSD: rmd160.c,v 1.5.2.1 2002/04/25 04:01:42 nathanw Exp $	*/
 
 /********************************************************************\
  *
@@ -18,10 +18,14 @@
  *
 \********************************************************************/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rmd160.c,v 1.5 2001/01/04 03:56:17 lukem Exp $");
+__RCSID("$NetBSD: rmd160.c,v 1.5.2.1 2002/04/25 04:01:42 nathanw Exp $");
 #endif	/* not lint */
+#endif
 
 /* header files */
 #include <sys/types.h>
@@ -34,6 +38,8 @@ __RCSID("$NetBSD: rmd160.c,v 1.5 2001/01/04 03:56:17 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#if !HAVE_RMD160_H
 
 #if !defined(_KERNEL) && defined(__weak_alias)
 __weak_alias(RMD160Transform,_RMD160Transform)
@@ -449,3 +455,4 @@ RMD160Final(u_char digest[20], RMD160_CTX *context)
 }
 
 /************************ end of file rmd160.c **********************/
+#endif /* HAVE_RMD160_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_amd1.c,v 1.2.2.2 2002/03/22 20:42:17 nathanw Exp $	*/
+/*	$NetBSD: multibyte_amd1.c,v 1.2.2.3 2002/04/25 04:01:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_amd1.c,v 1.2.2.2 2002/03/22 20:42:17 nathanw Exp $");
+__RCSID("$NetBSD: multibyte_amd1.c,v 1.2.2.3 2002/04/25 04:01:43 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -81,6 +81,22 @@ mbsinit(const mbstate_t *ps)
 }
 
 size_t
+mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
+{
+	size_t ret;
+	int err0;
+
+	_fixup_ps(_CurrentRuneLocale, ps, s==NULL);
+
+	err0 = _citrus_ctype_mbrtowc(_ps_to_ctype(ps), pwc, s, n,
+				      _ps_to_private(ps), &ret);
+	if (err0)
+		errno = err0;
+
+	return ret;
+}
+
+size_t
 mbsrtowcs(wchar_t *pwcs, const char **s, size_t n, mbstate_t *ps)
 {
 	size_t ret;
@@ -104,7 +120,7 @@ wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 
 	_fixup_ps(_CurrentRuneLocale, ps, s==NULL);
 
-	err0 =  _citrus_ctype_wcrtomb(_ps_to_ctype(ps), s, wc,
+	err0 = _citrus_ctype_wcrtomb(_ps_to_ctype(ps), s, wc,
 				       _ps_to_private(ps), &ret);
 	if (err0)
 		errno = err0;

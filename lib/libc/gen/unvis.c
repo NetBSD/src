@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.19.6.2 2002/03/22 20:42:14 nathanw Exp $	*/
+/*	$NetBSD: unvis.c,v 1.19.6.3 2002/04/25 04:01:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.19.6.2 2002/03/22 20:42:14 nathanw Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.19.6.3 2002/04/25 04:01:42 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,8 +73,11 @@ __warn_references(unvis,
 #define	S_CTRL		4	/* control char started (^) */
 #define	S_OCTAL2	5	/* octal digit 2 */
 #define	S_OCTAL3	6	/* octal digit 3 */
+#define S_HEX1		7	/* hex digit */
+#define S_HEX2		8	/* hex digit 2 */
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
+#define xtod(c)		(isdigit(c) ? (c - '0') : ((tolower(c) - 'a') + 10))
 
 int
 unvis(cp, c, astate, flag)
@@ -99,7 +102,8 @@ __unvis13(cp, c, astate, flag)
 	_DIAGASSERT(astate != NULL);
 
 	if (flag & UNVIS_END) {
-		if (*astate == S_OCTAL2 || *astate == S_OCTAL3) {
+		if (*astate == S_OCTAL2 || *astate == S_OCTAL3
+		    || *astate == S_HEX2) {
 			*astate = S_GROUND;
 			return (UNVIS_VALID);
 		} 
@@ -114,6 +118,10 @@ __unvis13(cp, c, astate, flag)
 			*astate = S_START;
 			return (0);
 		} 
+		if ((flag & VIS_HTTPSTYLE) && c == '%') {
+			*astate = S_HEX1;
+			return (0);
+		}
 		*cp = c;
 		return (UNVIS_VALID);
 
@@ -236,7 +244,24 @@ __unvis13(cp, c, astate, flag)
 		 * we were done, push back passed char
 		 */
 		return (UNVIS_VALIDPUSH);
-			
+	case S_HEX1:
+		if (isxdigit(c)) {
+			*cp = xtod(c);
+			*astate = S_HEX2;
+			return (0);
+		}
+		/* 
+		 * no - done with current sequence, push back passed char 
+		 */
+		*astate = S_GROUND;
+		return (UNVIS_VALIDPUSH);
+	case S_HEX2:
+                *astate = S_GROUND;
+                if (isxdigit(c)) {
+                        *cp = xtod(c) | (*cp << 4);
+			return (UNVIS_VALID);
+		}
+                return (UNVIS_VALIDPUSH);
 	default:	
 		/* 
 		 * decoder in unknown state - (probably uninitialized) 
@@ -254,9 +279,10 @@ __unvis13(cp, c, astate, flag)
  */
 
 int
-strunvis(dst, src)
+strunvisx(dst, src, flag)
 	char *dst;
 	const char *src;
+	int flag;
 {
 	char c;
 	char *start = dst;
@@ -267,7 +293,7 @@ strunvis(dst, src)
 
 	while ((c = *src++) != '\0') {
 	again:
-		switch (__unvis13(dst, c, &state, 0)) {
+		switch (__unvis13(dst, c, &state, flag)) {
 		case UNVIS_VALID:
 			dst++;
 			break;
@@ -285,5 +311,13 @@ strunvis(dst, src)
 		dst++;
 	*dst = '\0';
 	return (dst - start);
+}
+
+int
+strunvis(dst, src)
+	char *dst;
+	const char *src;
+{
+	return strunvisx(dst, src, 0);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf8.c,v 1.2.2.2 2002/03/22 20:42:03 nathanw Exp $	*/
+/*	$NetBSD: citrus_utf8.c,v 1.2.2.3 2002/04/25 04:01:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf8.c,v 1.2.2.2 2002/03/22 20:42:03 nathanw Exp $");
+__RCSID("$NetBSD: citrus_utf8.c,v 1.2.2.3 2002/04/25 04:01:40 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -113,14 +113,10 @@ typedef struct {
 		_UTF8State	s_mbsrtowcs;
 		_UTF8State	s_wcrtomb;
 		_UTF8State	s_wcsrtombs;
-		_UTF8State	s_wcstombs;
 		_UTF8State	s_wctomb;
 	} states;
 } _UTF8CTypeInfo;
 
-#define	_TO_EI(_cl_)			((_UTF8EncodingInfo *)(_cl_))
-#define	_TO_CEI(_cl_)			((_UTF8CTypeInfo *)(_cl_))
-#define _TO_STATE(_ps_)			((_UTF8State *)(_ps_))
 #define _CEI_TO_EI(_cei_)		(&(_cei_)->ei)
 #define _CEI_TO_STATE(_ei_, _func_)	(_ei_)->states.s_##_func_
 
@@ -128,8 +124,9 @@ typedef struct {
 #define _ENCODING_INFO			_UTF8EncodingInfo
 #define _CTYPE_INFO			_UTF8CTypeInfo
 #define _ENCODING_STATE			_UTF8State
-#define _ENCODING_MB_CUR_MAX(_cl_)	6
+#define _ENCODING_MB_CUR_MAX(_ei_)	6
 #define _ENCODING_IS_STATE_DEPENDENT	0
+#define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
 
 static __inline void

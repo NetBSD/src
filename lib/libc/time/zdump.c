@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.10.12.2 2002/03/22 20:42:46 nathanw Exp $	*/
+/*	$NetBSD: zdump.c,v 1.10.12.3 2002/04/25 04:01:47 nathanw Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -6,7 +6,7 @@
 #if 0
 static char	elsieid[] = "@(#)zdump.c	7.29";
 #else
-__RCSID("$NetBSD: zdump.c,v 1.10.12.2 2002/03/22 20:42:46 nathanw Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.10.12.3 2002/04/25 04:01:47 nathanw Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -237,7 +237,7 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 		t += SECSPERHOUR * HOURSPERDAY;
 		show(argv[i], t, TRUE);
 		tm = *localtime(&t);
-		(void) strncpy(buf, abbr(&tm), (sizeof buf) - 1);
+		(void) strlcpy(buf, abbr(&tm), (sizeof buf));
 		for ( ; ; ) {
 			if (cutoff != NULL && t >= cuttime)
 				break;
@@ -252,8 +252,8 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 				strcmp(abbr(&newtm), buf) != 0) {
 					newt = hunt(argv[i], t, newt);
 					newtm = *localtime(&newt);
-					(void) strncpy(buf, abbr(&newtm),
-						(sizeof buf) - 1);
+					(void) strlcpy(buf, abbr(&newtm),
+						(sizeof buf));
 			}
 			t = newt;
 			tm = newtm;
@@ -293,7 +293,7 @@ time_t	hit;
 	static char	loab[MAX_STRING_LENGTH];
 
 	lotm = *localtime(&lot);
-	(void) strncpy(loab, abbr(&lotm), (sizeof loab) - 1);
+	(void) strlcpy(loab, abbr(&lotm), (sizeof loab));
 	while ((hit - lot) >= 2) {
 		t = lot / 2 + hit / 2;
 		if (t <= lot)

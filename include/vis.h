@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.11 1999/11/25 16:55:50 wennmach Exp $	*/
+/*	$NetBSD: vis.h,v 1.11.6.1 2002/04/25 04:07:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -58,6 +58,7 @@
  * other
  */
 #define	VIS_NOSLASH	0x40	/* inhibit printing '\' */
+#define	VIS_HTTPSTYLE	0x80	/* http-style escape % HEX HEX */
 
 /*
  * unvis return codes
@@ -83,6 +84,7 @@ int	strsvis __P((char *, const char *, int, const char *));
 int	strvisx __P((char *, const char *, size_t, int));
 int	strsvisx __P((char *, const char *, size_t, int, const char *));
 int	strunvis __P((char *, const char *));
+int	strunvisx __P((char *, const char *, int));
 #ifdef __LIBC12_SOURCE__
 int	unvis __P((char *, int, int *, int));
 int	__unvis13 __P((char *, int, int *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.24 2000/01/22 22:19:10 mycroft Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.24.6.1 2002/04/25 04:01:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.24 2000/01/22 22:19:10 mycroft Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.24.6.1 2002/04/25 04:01:41 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,7 +151,7 @@ loop:
 	 * Save the last component name and get the full pathname of
 	 * the current directory.
 	 */
-	(void)strncpy(wbuf, p, (sizeof(wbuf) - 1));
+	(void)strlcpy(wbuf, p, sizeof(wbuf));
 
 	/*
 	 * Call the inernal internal version of getcwd which

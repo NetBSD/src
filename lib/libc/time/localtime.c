@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.24.2.5 2002/03/22 20:42:46 nathanw Exp $	*/
+/*	$NetBSD: localtime.c,v 1.24.2.6 2002/04/25 04:01:46 nathanw Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.75";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.24.2.5 2002/03/22 20:42:46 nathanw Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.24.2.6 2002/04/25 04:01:46 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1023,7 +1023,7 @@ tzset_unlocked P((void))
 		return;
 	lcl_is_set = strlen(name) < sizeof lcl_TZname;
 	if (lcl_is_set)
-		(void)strncpy(lcl_TZname, name, sizeof(lcl_TZname) - 1);
+		(void)strlcpy(lcl_TZname, name, sizeof(lcl_TZname));
 
 #ifdef ALL_STATE
 	if (lclptr == NULL) {

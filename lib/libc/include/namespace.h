@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.60.2.5 2002/02/25 00:43:47 nathanw Exp $	*/
+/*	$NetBSD: namespace.h,v 1.60.2.6 2002/04/25 04:01:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@
 #define inet_pton	_inet_pton
 #define pipe		_pipe
 #define sbrk		_sbrk
+#define strlcat		_strlcat
+#define strlcpy		_strlcpy
 #define strtoimax	_strtoimax
 #define strtoll		_strtoll
 #define strtoull	_strtoull

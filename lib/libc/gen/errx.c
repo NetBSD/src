@@ -1,4 +1,4 @@
-/*	$NetBSD: errx.c,v 1.4.10.2 2002/03/22 20:42:06 nathanw Exp $	*/
+/*	$NetBSD: errx.c,v 1.4.10.3 2002/04/25 04:01:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: errx.c,v 1.4.10.2 2002/03/22 20:42:06 nathanw Exp $");
+__RCSID("$NetBSD: errx.c,v 1.4.10.3 2002/04/25 04:01:41 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ __weak_alias(errx, _errx)
 #endif
 
 __dead void
-#if __STDC__
+#ifdef __STDC__
 _errx(int eval, const char *fmt, ...)
 #else
 _errx(va_alist)
@@ -69,7 +69,7 @@ _errx(va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	int eval;
