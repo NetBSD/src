@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.9 2000/07/09 00:46:26 mycroft Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.10 2000/07/15 21:36:19 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -192,6 +192,8 @@ fxp_pci_confreg_restore(psc)
 	if (((reg = pci_conf_read(psc->psc_pc, psc->psc_tag,
 	    PCI_COMMAND_STATUS_REG)) & 0xffff) != 0)
 		return;
+#else
+	reg = pci_conf_read(psc->psc_pc, psc->psc_tag, PCI_COMMAND_STATUS_REG);
 #endif
 
 	pci_conf_write(psc->psc_pc, psc->psc_tag,
