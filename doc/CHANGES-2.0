@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.2 2004/03/29 05:21:50 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.3 2004/03/29 10:56:21 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -13,3 +13,44 @@ share/tmac/doc-common                           patched by hand
 sys/sys/param.h                                 patched by hand
 
         Update to 2.0_BETA
+
+dist/ipf/tools/ipmon.c				1.3
+
+	Don't create unnecessary ifdefs that are due to character signness in
+	different platforms.
+	[jmc, ticket #5]
+
+usr.sbin/ipf/Makefile.inc			1.12
+usr.sbin/ipf/ipf/Makefile			1.18
+usr.sbin/ipf/ipfstat/Makefile			1.17
+usr.sbin/ipf/ipftest/Makefile			1.25
+usr.sbin/ipf/ipmon/Makefile			1.18
+usr.sbin/ipf/ipnat/Makefile			1.20
+usr.sbin/ipf/ippool/Makefile			1.4
+usr.sbin/ipf/ipresend/Makefile			1.17
+usr.sbin/ipf/ipsend/Makefile			1.20
+usr.sbin/ipf/iptest/Makefile			1.16
+usr.sbin/ipf/libipf/Makefile			1.2
+
+	de-lint makefiles:
+	* fix -j N parallel build issues
+	* support MAKEVERBOSE
+	* move NOxxx= to before <bsd.own.mk>
+	* remove unnecessary -ll (except for ipsend)
+	* remove unnecessary CPPFLAGS
+	* only build libipf.a (we don't need libipf_p.a or libipf_pic.a)
+	* fix dependencies upon libipf.a
+	[martti, ticket #7]
+
+usr.sbin/ipf/ipsend/Makefile			1.21
+
+	Use iplang_l.l instead of iplang_l.c in SRCS, and tweak appropriately.
+	[martti, ticket #8]
+
+usr.bin/gzip/zdiff				1.3
+usr.bin/gzip/zmore				1.3
+
+	s/compress/gzip/, our compress is not the backend for gzip.
+	Noted by hubertf.
+	[wiz, ticket #9]
+
