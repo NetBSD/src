@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.77 2002/05/23 23:05:26 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.78 2002/05/24 22:13:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.77 2002/05/23 23:05:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.78 2002/05/24 22:13:57 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1661,7 +1661,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				} else {
 					bremfree(bp);
 					bp->b_flags |= B_DONE;
+					s = splbio();
 					reassignbuf(bp, bp->b_vp);
+					splx(s);
 					LFS_UNLOCK_BUF(bp);
 					brelse(bp);
 				}
