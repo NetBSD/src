@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.11 1998/07/12 09:59:30 mrg Exp $	*/
+/*	$NetBSD: tip.h,v 1.12 1998/12/19 23:00:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,8 +41,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/dir.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -50,8 +48,10 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <libgen.h>
+#include <dirent.h>
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
