@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.52 2002/06/07 17:13:56 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.53 2002/06/07 22:03:02 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.52 2002/06/07 17:13:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.53 2002/06/07 22:03:02 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1547,6 +1547,82 @@ do { \
 		if (op == PRCO_SETOPT && *mp)
 			(void)m_free(*mp);
 	}
+	return(error);
+}
+
+int
+ip6_raw_ctloutput(op, so, level, optname, mp)
+	int op;
+	struct socket *so;
+	int level, optname;
+	struct mbuf **mp;
+{
+	int error = 0, optval, optlen;
+	const int icmp6off = offsetof(struct icmp6_hdr, icmp6_cksum);
+	struct in6pcb *in6p = sotoin6pcb(so);
+	struct mbuf *m = *mp;
+
+	optlen = m ? m->m_len : 0;
+
+	if (level != IPPROTO_IPV6) {
+		if (op == PRCO_SETOPT && *mp)
+			(void)m_free(*mp);
+		return(EINVAL);
+	}
+		
+	switch (optname) {
+	case IPV6_CHECKSUM:
+		/*
+		 * For ICMPv6 sockets, no modification allowed for checksum
+		 * offset, permit "no change" values to help existing apps.
+		 *
+		 * XXX 2292bis says: "An attempt to set IPV6_CHECKSUM
+		 * for an ICMPv6 socket will fail."
+		 * The current behavior does not meet 2292bis.
+		 */
+		switch (op) {
+		case PRCO_SETOPT:
+			if (optlen != sizeof(int)) {
+				error = EINVAL;
+				break;
+			}
+			optval = *mtod(m, int *);
+			if ((optval % 2) != 0) {
+				/* the API assumes even offset values */
+				error = EINVAL;
+			} else if (so->so_proto->pr_protocol ==
+			    IPPROTO_ICMPV6) {
+				if (optval != icmp6off)
+					error = EINVAL;
+			} else
+				in6p->in6p_cksum = optval;
+			break;
+
+		case PRCO_GETOPT:
+			if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
+				optval = icmp6off;
+			else
+				optval = in6p->in6p_cksum;
+
+			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = sizeof(int);
+			*mtod(m, int *) = optval;
+			break;
+
+		default:
+			error = EINVAL;
+			break;
+		}
+		break;
+
+	default:
+		error = ENOPROTOOPT;
+		break;
+	}
+
+	if (op == PRCO_SETOPT && m)
+		(void)m_free(m);
+
 	return(error);
 }
 
