@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.72 2000/03/22 01:41:41 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.73 2000/03/26 22:38:28 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -828,6 +828,8 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_CHECK_COPYBACK_STATUS:
 	case RAIDFRAME_SET_AUTOCONFIG:
 	case RAIDFRAME_SET_ROOT:
+	case RAIDFRAME_DELETE_COMPONENT:
+	case RAIDFRAME_INCORPORATE_HOT_SPARE:
 		if ((rs->sc_flags & RAIDF_INITED) == 0)
 			return (ENXIO);
 	}
@@ -1102,6 +1104,20 @@ raidioctl(dev, cmd, data, flag, p)
 		return(retcode);
 
 	case RAIDFRAME_REMOVE_HOT_SPARE:
+		return(retcode);
+
+	case RAIDFRAME_DELETE_COMPONENT:
+		componentPtr = (RF_SingleComponent_t *)data;
+		memcpy( &component, componentPtr, 
+			sizeof(RF_SingleComponent_t));
+		retcode = rf_delete_component(raidPtr, &component);
+		return(retcode);
+
+	case RAIDFRAME_INCORPORATE_HOT_SPARE:
+		componentPtr = (RF_SingleComponent_t *)data;
+		memcpy( &component, componentPtr, 
+			sizeof(RF_SingleComponent_t));
+		retcode = rf_incorporate_hot_spare(raidPtr, &component);
 		return(retcode);
 
 	case RAIDFRAME_REBUILD_IN_PLACE:
