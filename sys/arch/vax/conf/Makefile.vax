@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.64 2001/11/20 12:56:42 lukem Exp $
+#	$NetBSD: Makefile.vax,v 1.65 2001/11/23 05:19:02 atatat Exp $
 
 # Makefile for NetBSD
 #
@@ -27,21 +27,13 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 VAX=		$S/arch/vax
 GENASSYM=	${VAX}/vax/genassym.cf
-MD_CPPFLAGS=	-D_VAX_INLINE_
 
 ##
 ## (2) compile settings
 ##
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT \
-		${MD_CPPFLAGS}
-COPTS?=		-O2
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-
-HAVE_EGCS!=	${CC} --version | egrep "^(2\.8|2\.9[0-4]|egcs)" ; echo
-.if (${HAVE_EGCS} != "")
+CPPFLAGS+=	-D_VAX_INLINE_
+AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 CFLAGS+=	-mno-pic
-.endif
 
 ##
 ## (3) libkern and compat
