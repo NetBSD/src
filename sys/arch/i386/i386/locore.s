@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.222.2.1 2000/08/16 23:18:21 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.222.2.2 2001/04/25 09:30:42 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -216,6 +216,7 @@
 
 	.globl	_C_LABEL(cpu),_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
+	.globl	_C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 #ifdef COMPAT_OLDBOOT
@@ -236,6 +237,7 @@ _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
 _C_LABEL(cpu_vendor):	.space	16	# vendor string returned by `cpuid'
 					#   instruction
+_C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.long	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0paddr):	.long	0
@@ -497,6 +499,10 @@ try586:	/* Use the `cpuid' instruction. */
 	cpuid
 	movl	%eax,RELOC(cpu_id)	# store cpu_id and features
 	movl	%edx,RELOC(cpu_feature)
+
+	/* Brand ID is bits 0-7 of %ebx */
+	andl	$255,%ebx
+	movl	%ebx,RELOC(cpu_brand_id)
 
 2:
 	/*
