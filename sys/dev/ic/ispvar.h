@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.43 2001/03/14 05:14:36 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.44 2001/05/16 03:58:34 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -499,6 +499,7 @@ typedef struct ispsoftc {
 #define	ISP_HA_FC		0xf0
 #define	ISP_HA_FC_2100		0x10
 #define	ISP_HA_FC_2200		0x20
+#define	ISP_HA_FC_2300		0x30
 
 #define	IS_SCSI(isp)	(isp->isp_type & ISP_HA_SCSI)
 #define	IS_1240(isp)	(isp->isp_type == ISP_HA_SCSI_1240)
@@ -511,9 +512,13 @@ typedef struct ispsoftc {
 #define	IS_ULTRA2(isp)	(IS_1080(isp) || IS_1280(isp) || IS_12160(isp))
 #define	IS_ULTRA3(isp)	(IS_12160(isp))
 
-#define	IS_FC(isp)	(isp->isp_type & ISP_HA_FC)
-#define	IS_2100(isp)	(isp->isp_type == ISP_HA_FC_2100)
-#define	IS_2200(isp)	(isp->isp_type == ISP_HA_FC_2200)
+#define	IS_FC(isp)	((isp)->isp_type & ISP_HA_FC)
+#define	IS_2100(isp)	((isp)->isp_type == ISP_HA_FC_2100)
+#define	IS_2200(isp)	((isp)->isp_type == ISP_HA_FC_2200)
+#define	IS_2300(isp)	((isp)->isp_type == ISP_HA_FC_2300)
+
+/* 2300 Support isn't ready yet */
+#define	ISP_DISABLE_2300_SUPPORT	1
 
 /*
  * DMA cookie macros
@@ -810,7 +815,6 @@ void isp_prt(struct ispsoftc *, int level, const char *, ...);
  *	ISP_SWIZZLE_SNS_REQ
  *	ISP_UNSWIZZLE_SNS_RSP
  *	ISP_SWIZZLE_NVRAM_WORD
- *
- *
  */
+
 #endif	/* _ISPVAR_H */
