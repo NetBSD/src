@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.88 2002/01/19 18:45:13 oster Exp $
+# $NetBSD: GENERIC,v 1.89 2002/01/27 13:23:28 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@
 
 include 	"arch/sun3/conf/std.sun3"
 
-#ident 		"GENERIC-$Revision: 1.88 $"
+#ident 		"GENERIC-$Revision: 1.89 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -45,6 +45,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:
 options 	DDB

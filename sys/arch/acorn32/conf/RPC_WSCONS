@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.6 2002/01/25 15:20:56 reinoud Exp $
+#	$NetBSD: RPC_WSCONS,v 1.7 2002/01/27 13:23:09 jdolecek Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -109,6 +109,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
 
