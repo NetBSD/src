@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.83 1996/05/30 18:24:09 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.84 1996/07/10 18:14:04 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -1240,7 +1240,9 @@ comintr(arg)
 						    sc->sc_mcr);
 					}
 				}
+#ifdef DDB
 			next:
+#endif
 #ifdef COM_DEBUG
 				if (++n >= 32)
 					goto ohfudge;
