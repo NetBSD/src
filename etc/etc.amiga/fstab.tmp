@@ -10,7 +10,7 @@
 #	unknonwn and NBU type filesystems are addressed in physical
 #	offset (on media) order.  So in this example the bsd usr part is
 #	first on the disk followed by the ados.
-#/dev/sd0e	/amiga	ados	rw
+#/dev/sd0e	/amiga	ados	ro
 #	process file system
 #procfs	/proc	procfs	ro
 #	kernel file system
