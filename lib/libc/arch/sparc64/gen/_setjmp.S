@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.5 2003/08/07 16:42:27 agc Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.6 2004/12/07 08:20:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.5 2003/08/07 16:42:27 agc Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.6 2004/12/07 08:20:07 martin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,41 +51,26 @@
  * will generate a "return(v?v:1)" from
  * the last call to
  *	_setjmp(a)
- * by unwinding the call stack.
  * The previous signal state is NOT restored.
  */
 
 ENTRY(_setjmp)
-	stx	%sp, [%o0+0x00]	/* store caller's stack pointer */
-	stx	%o7, [%o0+0x08]	/* ... return pc */
-	stx	%fp, [%o0+0x10]	/* ... and frame pointer */
+	stx	%sp, [%o0+0]	/* store caller's stack pointer */
+	stx	%o7, [%o0+8]	/* and return pc */
 	retl
 	 clr	%o0		! return 0
 
 ENTRY(_longjmp)
-	mov	1, %g6
-	movrnz	%o1, %o1, %g6	! compute v ? v : 1 in a global register
-	mov	%o0, %g1	! save a in another global register
-	ldx	[%g1+0x10], %g7	/* get caller's frame */
-1:
-	cmp	%fp, %g7	! compare against desired frame
-	bl,a	1b		! if below,
-	 restore		!    pop frame and loop
-	be,a	2f		! if there,
-	 ldx	[%g1+0], %o2	!    fetch return %sp
-
-Lbotch:
-	call	_C_LABEL(longjmperror)	! otherwise, went too far; bomb out
-	nop
-	unimp	0
-
-2:
-	cmp	%o2, %sp	! %sp must not decrease
-	bge,a	3f
-	 mov	%o2, %sp	! it is OK, put it in place
-	b,a	Lbotch
-3:
-	ldx	[%g1+0x8], %o3	! fetch pc
-	jmp	%o3 + 8		! success, return %g6
-	 mov	%g6, %o0
-
+	save	%sp, -CC64FSZ, %sp
+	flushw
+	/*
+	 * We restore the saved stack pointer to %fp, then issue
+	 * a `restore' instruction which will reload the register
+	 * window from the stack.
+	 */
+	ldx	[%i0+8], %i7
+	ldx	[%i0+0], %fp
+	mov	1, %i0
+	movrnz	%i1, %i1, %i0	! compute v ? v : 1
+	ret
+	 restore
