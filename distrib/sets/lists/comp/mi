@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.531 2003/02/04 01:23:52 thorpej Exp $
+#	$NetBSD: mi,v 1.532 2003/02/04 12:59:08 scw Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3425,6 +3425,8 @@
 ./usr/share/man/cat9/cache_purgevfs.0		comp-sys-catman
 ./usr/share/man/cat9/cache_revlookup.0		comp-sys-catman
 ./usr/share/man/cat9/callout.0		comp-sys-catman
+./usr/share/man/cat9/callout_active.0	comp-sys-catman
+./usr/share/man/cat9/callout_deactivate.0	comp-sys-catman
 ./usr/share/man/cat9/callout_init.0	comp-sys-catman
 ./usr/share/man/cat9/callout_pending.0	comp-sys-catman
 ./usr/share/man/cat9/callout_reset.0	comp-sys-catman
@@ -6464,6 +6466,8 @@
 ./usr/share/man/man9/cache_purgevfs.9		comp-sys-man
 ./usr/share/man/man9/cache_revlookup.9		comp-sys-man
 ./usr/share/man/man9/callout.9		comp-sys-man
+./usr/share/man/man9/callout_active.9	comp-sys-man
+./usr/share/man/man9/callout_deactivate.9	comp-sys-man
 ./usr/share/man/man9/callout_init.9	comp-sys-man
 ./usr/share/man/man9/callout_pending.9	comp-sys-man
 ./usr/share/man/man9/callout_reset.9	comp-sys-man
