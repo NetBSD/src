@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.4 1997/10/16 18:23:38 carrel Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,8 @@
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+
+#include <vm/vm.h>
 
 #include <sys/syscallargs.h>
 
