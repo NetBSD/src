@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.43 2002/06/29 08:32:31 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.44 2002/07/01 20:31:32 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1488,7 +1488,29 @@ Now you need to mount your destination root partition:
 .Em Finalizing your installation
 .Pp
 Congratulations, you have successfully installed
-.Nx \*V .
+.Nx*V .
+.if r_cats \{\
+.Pp
+To finalize the installation of
+.Nx*M
+certain parameters on the Cyclone firmware need to changed. The reason
+is that the Cyclone firmware is unable to boot anything other than an
+a.out format kernels.
+.Pp
+Kernels created on a
+.Nx*V
+\*M system are natively ELF and converted to a.out. This conversion
+process loses the symbol information used for, amongst other things,
+kernel memory grovelers such as vmstat.  The workaround to the problem
+is to provide both the native ELF kernel (with all the symbol
+information) and the a.out kernel. These are available as /netbsd
+and /netbsd.aout respectively. As the a.out format kernel is not named
+in such a way that the Cyclone firmware will automatically find it the
+following command should be issued as the firmware prompt.
+.Pp
+.Dl boot> Ic "set boot wd0:/netbsd.aout"
+.Pp
+.\}
 .if !r_macppc \{\
 You can now reboot the machine, and boot
 .Nx
