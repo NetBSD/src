@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.13.2.1 1999/04/19 15:19:27 perry Exp $	*/
+/*	$NetBSD: install.c,v 1.13.2.2 1999/06/24 22:58:20 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -117,12 +117,13 @@ do_install()
 	msg_display(MSG_disksetupdone);
 
 	getchar();
-	puts(CL); /* just to make sure */
+	puts(CL);		/* XXX */
 	wclear(stdscr);
 	wrefresh(stdscr);
 
 	/* Unpack the distribution. */
-	get_and_unpack_sets(MSG_instcomplete, MSG_abortinst);
+	if (get_and_unpack_sets(MSG_instcomplete, MSG_abortinst) != 0)
+		return;
 
 	sanity_check();
 
