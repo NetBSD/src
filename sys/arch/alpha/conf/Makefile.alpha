@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.16 1996/05/19 21:16:51 cgd Exp $
+#	$NetBSD: Makefile.alpha,v 1.17 1996/07/09 00:46:01 cgd Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,8 @@ ALPHA=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dalpha
-CFLAGS=		${DEBUG} -O2 -Werror -mno-fp-regs
+CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS=		${DEBUG} -O2 -mno-fp-regs ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext fffffc0000230000 -e __start -G 4
 
