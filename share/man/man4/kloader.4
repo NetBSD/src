@@ -1,4 +1,4 @@
-.\"	$NetBSD: kloader.4,v 1.1 2004/04/03 02:33:40 uwe Exp $
+.\"	$NetBSD: kloader.4,v 1.2 2004/04/03 15:19:49 wiz Exp $
 .\"
 .\" Copyright (c) 2004 Valeriy E. Ushakov
 .\" All rights reserved.
@@ -41,7 +41,7 @@ firmware.
 .Pp
 Some platforms supported by
 .Nx
-do not have a firmware that can boot
+do not have a firmware that can boot the
 .Nx
 kernel.
 Examples are game consoles (dreamcast and playstation2 ports), and
@@ -56,9 +56,9 @@ launching the bootloader program, and finally booting
 again.
 This problem is addressed by
 .Nm ,
-that allows currently running kernel to serve as a bootloader for the
-kernel being booted, thus avoiding the burden of booting into the
-native OS first.
+which allows the currently running kernel to serve as a bootloader
+for the kernel being booted, thus avoiding the burden of booting
+into the native OS first.
 .Pp
 When
 .Nm
@@ -68,7 +68,7 @@ causes the
 .Nm
 to load the new kernel into memory, and arrange for control to be
 passed to the new kernel \(em just like a standalone bootloader does.
-The new kernel then boots in an ordinary manner.
+The new kernel then boots in the ordinary manner.
 .Sh SEE ALSO
 .Xr reboot 2 ,
 .Xr boot 8 ,
@@ -85,7 +85,7 @@ and
 .Fa bootstr
 arguments passed to the
 .Xr reboot 2
-system call, and reboots the system with previous boot settings.
+system call, and reboots the system with the previous boot settings.
 .Pp
 .Nm
 doesn't support booting compressed kernels.
