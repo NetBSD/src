@@ -1,4 +1,4 @@
-#	$NetBSD: protocols,v 1.11 2001/02/28 16:10:22 atatat Exp $
+#	$NetBSD: protocols,v 1.12 2003/09/08 21:02:55 itojun Exp $
 #
 # Internet (IP) protocols
 #
@@ -64,7 +64,7 @@ narp	54	NARP		# NBMA Address Resolution Protocol
 mobile	55	MOBILE		# IP Mobility (IP tunneling)
 tlsp	56	TLSP		# Transport Layer Security Protocol
 skip	57	SKIP
-ipv6-icmp	58	IPv6-ICMP	# ICMP version 6
+ipv6-icmp	58	IPv6-ICMP icmp6	# ICMP version 6
 ipv6-nonxt	59	IPv6-NoNxt	# No Next Header for IPv6
 ipv6-opts	60	IPv6-Opts	# Destination Options for IPv6
 #	61			# any host internal protocol
