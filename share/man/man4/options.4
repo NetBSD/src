@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.38 1998/01/18 18:43:54 is Exp $
+.\"	$NetBSD: options.4,v 1.39 1998/01/18 19:07:19 is Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -912,6 +912,13 @@ These option set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
 .El
+.Ss amiga-specific Options
+.Bl -ohang
+.It Cd options BB060STUPIDROM
+When the bootloader (which passes AmigaOS ROM information) claims we have
+a M68060 cpu without FPU, go look into the Processor Configuration Register
+to find out. You need this with Amiga ROMs up to (at least) V40.xxx (OS3.1),
+when you boot via the bootblocks and don't have a DraCo.
 .Ss atari-specific Options
 .Bl -ohang
 .It Cd options DISKLABEL_AHDI
