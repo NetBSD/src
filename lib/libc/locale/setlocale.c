@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)setlocale.c	5.2 (Berkeley) 2/24/91";*/
-static char rcsid[] = "$Id: setlocale.c,v 1.2 1993/08/01 18:39:59 mycroft Exp $";
+static char rcsid[] = "$Id: setlocale.c,v 1.3 1993/08/06 22:56:18 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <locale.h>
@@ -51,9 +51,11 @@ setlocale(category, locale)
 	int category;
 	const char *locale;
 {
-	if ((unsigned int)category >= _LC_LAST)
+	if (category < 0  || category >= _LC_LAST)
 		return (NULL);
-	if (locale == NULL)
+	if (locale == NULL)		/* return current locale */
+		return (C);
+	if (*locale == '\0')		/* set default locale */
 		return (C);
 	return(strcmp(locale, C) ? NULL : C);
 }
