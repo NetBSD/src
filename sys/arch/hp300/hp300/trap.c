@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.9 1994/04/02 21:36:10 mycroft Exp $
+ *	$Id: trap.c,v 1.10 1994/04/05 02:48:23 mycroft Exp $
  */
 
 #include "param.h"
@@ -120,7 +120,7 @@ userret(p, pc, oticks)
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
-		psig(i);
+		psig(sig);
 	p->p_pri = p->p_usrpri;
 	if (want_resched) {
 		/*
@@ -137,7 +137,7 @@ userret(p, pc, oticks)
 		swtch();
 		splx(s);
 		while ((sig = CURSIG(p)) != 0)
-			psig(i);
+			psig(sig);
 	}
 
 	/*
