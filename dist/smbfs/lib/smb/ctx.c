@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctx.c,v 1.3 2003/04/04 08:05:32 jdolecek Exp $");
+__RCSID("$NetBSD: ctx.c,v 1.4 2003/04/07 12:36:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -366,7 +366,7 @@ smb_parse_owner(char *pair, uid_t *uid, gid_t *gid)
 			if (gr) {
 				*gid = gr->gr_gid;
 			} else
-				smb_error("Invalid group name %s, ignored",
+				smb_error("Invalid group name '%s', ignored",
 				    0, cp);
 		}
 	}
@@ -375,7 +375,7 @@ smb_parse_owner(char *pair, uid_t *uid, gid_t *gid)
 		if (pw) {
 			*uid = pw->pw_uid;
 		} else
-			smb_error("Invalid user name %s, ignored", 0, pair);
+			smb_error("Invalid user name '%s', ignored", 0, pair);
 	}
 	endpwent();
 	return 0;
@@ -412,7 +412,7 @@ smb_ctx_opt(struct smb_ctx *ctx, int opt, const char *arg)
 			    &ctx->ct_sh.ioc_group);
 		}
 		if (*p && error == 0) {
-			error = smb_parse_owner(cp, &ctx->ct_ssn.ioc_owner,
+			error = smb_parse_owner(p, &ctx->ct_ssn.ioc_owner,
 			    &ctx->ct_ssn.ioc_group);
 		}
 		free(p);
