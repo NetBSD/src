@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.17 1999/04/29 16:14:04 christos Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.18 2000/04/11 04:37:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -167,7 +167,7 @@ sunos_exec_aout_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
