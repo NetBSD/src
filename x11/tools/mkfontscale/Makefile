@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/04/12 03:11:00 dbj Exp $
+#	$NetBSD: Makefile,v 1.4 2004/04/12 15:41:27 dbj Exp $
 
 NOMAN=		1
 
@@ -54,6 +54,10 @@ HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11/fonts \
 		-I${X11SRCDIR.xc}/lib/font/include \
 		-I${X11SRCDIR.xc}/include/fonts
+
+# This tells a cross build on darwin not to bother with
+# resource fork font support which needs the carbon libraries.
+HOST_CPPFLAGS+=	-DDARWIN_NO_CARBON
 
 SRCS=	${SRCS.mkfontscale} ${SRCS.freetype} ${SRCS.fontenc}
 
