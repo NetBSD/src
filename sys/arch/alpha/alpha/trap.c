@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 1996/07/15 08:28:09 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 1996/08/20 23:05:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -184,6 +184,15 @@ sigfpe:			i = SIGFPE;
 
 		case ALPHA_IF_CODE_OPDEC:
 			ucode = a0;		/* trap type */
+#ifdef NEW_PMAP
+{
+int instr;
+printf("REAL SIGILL: PC = 0x%lx, RA = 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
+printf("INSTRUCTION (%d) = 0x%lx\n", copyin((void*)framep->tf_regs[FRAME_PC] - 4, &instr, 4), instr);
+regdump(framep);
+panic("foo");
+}
+#endif
 			i = SIGILL;
 			break;
 
@@ -215,14 +224,29 @@ sigfpe:			i = SIGFPE;
 		break;
 
 	case ALPHA_KENTRY_MM:
+#ifdef NEW_PMAP
+		printf("mmfault: 0x%lx, 0x%lx, %d\n", a0, a1, a2);
+#endif
 		switch (a1) {
 		case ALPHA_MMCSR_FOR:
 		case ALPHA_MMCSR_FOE:
+#ifdef NEW_PMAP
+			printf("mmfault for/foe in\n");
+#endif
 			pmap_emulate_reference(p, a0, user, 0);
+#ifdef NEW_PMAP
+			printf("mmfault for/foe out\n");
+#endif
 			goto out;
 
 		case ALPHA_MMCSR_FOW:
+#ifdef NEW_PMAP
+			printf("mmfault fow in\n");
+#endif
 			pmap_emulate_reference(p, a0, user, 1);
+#ifdef NEW_PMAP
+			printf("mmfault fow out\n");
+#endif
 			goto out;
 
 		case ALPHA_MMCSR_INVALTRANS:
@@ -236,6 +260,9 @@ sigfpe:			i = SIGFPE;
 			extern int fswintrberr();
 			extern vm_map_t kernel_map;
 
+#ifdef NEW_PMAP
+			printf("mmfault invaltrans/access in\n");
+#endif
 			/*
 			 * If it was caused by fuswintr or suswintr,
 			 * just punt.  Note that we check the faulting
@@ -248,9 +275,15 @@ sigfpe:			i = SIGFPE;
 			    p->p_addr->u_pcb.pcb_onfault ==
 			      (unsigned long)fswintrberr &&
 			    p->p_addr->u_pcb.pcb_accessaddr == a0) {
+#ifdef NEW_PMAP
+				printf("mmfault nfintr in\n");
+#endif
 				framep->tf_regs[FRAME_PC] =
 				    p->p_addr->u_pcb.pcb_onfault;
 				p->p_addr->u_pcb.pcb_onfault = 0;
+#ifdef NEW_PMAP
+				printf("mmfault nfintr out\n");
+#endif
 				goto out;
 			}
 
@@ -281,7 +314,13 @@ sigfpe:			i = SIGFPE;
 			}
 	
 			va = trunc_page((vm_offset_t)a0);
+#ifdef NEW_PMAP
+			printf("mmfault going to vm_fault\n");
+#endif
 			rv = vm_fault(map, va, ftype, FALSE);
+#ifdef NEW_PMAP
+			printf("mmfault back from vm_fault\n");
+#endif
 			/*
 			 * If this was a stack access we keep track of the
 			 * maximum accessed stack size.  Also, if vm_fault
@@ -301,10 +340,17 @@ sigfpe:			i = SIGFPE;
 				} else if (rv == KERN_PROTECTION_FAILURE)
 					rv = KERN_INVALID_ADDRESS;
 			}
-			if (rv == KERN_SUCCESS)
+			if (rv == KERN_SUCCESS) {
+#ifdef NEW_PMAP
+				printf("mmfault vm_fault success\n");
+#endif
 				goto out;
+			}
 
 			if (!user) {
+#ifdef NEW_PMAP
+				printf("mmfault check copyfault\n");
+#endif
 				/* Check for copyin/copyout fault */
 				if (p != NULL &&
 				    p->p_addr->u_pcb.pcb_onfault != 0) {
@@ -462,6 +508,9 @@ syscall(code, framep)
 #endif
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args + hidden);
+#ifdef NEW_PMAP
+	printf("called from 0x%lx, ra 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
+#endif
 #endif
 	if (error == 0) {
 		rval[0] = 0;
@@ -493,6 +542,9 @@ syscall(code, framep)
 	p = curproc;
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
+#ifdef NEW_PMAP
+	printf("outgoing pc 0x%lx, ra 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
+#endif
 #endif
 
 	userret(p, framep->tf_regs[FRAME_PC], sticks);
