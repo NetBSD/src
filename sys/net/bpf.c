@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.53 2000/03/30 09:45:33 augustss Exp $	*/
+/*	$NetBSD: bpf.c,v 1.54 2000/04/12 04:20:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -57,9 +57,6 @@
 #include <sys/vnode.h>
 
 #include <sys/file.h>
-#if defined(sparc) && BSD < 199103
-#include <sys/stream.h>
-#endif
 #include <sys/tty.h>
 #include <sys/uio.h>
 
@@ -80,19 +77,7 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 
-/*
- * Older BSDs don't have kernel malloc.
- */
-#if BSD < 199103
-extern bcopy();
-static caddr_t bpf_alloc();
-#include <net/bpf_compat.h>
-#define BPF_BUFSIZE (MCLBYTES-8)
-#define UIOMOVE(cp, len, code, uio) uiomove(cp, len, code, uio)
-#else
 #define BPF_BUFSIZE 8192		/* 4096 too small for FDDI frames */
-#define UIOMOVE(cp, len, code, uio) uiomove(cp, len, uio)
-#endif
 
 #define PRINET  26			/* interruptible */
 
@@ -214,13 +199,8 @@ bpf_movein(uio, linktype, mtu, mp, sockp)
 	m->m_pkthdr.rcvif = 0;
 	m->m_pkthdr.len = len - hlen;
 	if (len > MHLEN - align) {
-#if BSD >= 199103
 		MCLGET(m, M_WAIT);
 		if ((m->m_flags & M_EXT) == 0) {
-#else
-		MCLGET(m);
-		if (m->m_len != MCLBYTES) {
-#endif
 			error = ENOBUFS;
 			goto bad;
 		}
@@ -228,24 +208,16 @@ bpf_movein(uio, linktype, mtu, mp, sockp)
 
 	/* Insure the data is properly aligned */
 	if (align > 0) {
-#if BSD >= 199103
 		m->m_data += align;
-#else
-		m->m_off += align;
-#endif
 		m->m_len -= align;
 	}
 
-	error = UIOMOVE(mtod(m, caddr_t), len, UIO_WRITE, uio);
+	error = uiomove(mtod(m, caddr_t), len, uio);
 	if (error)
 		goto bad;
 	if (hlen != 0) {
 		memcpy(sockp->sa_data, mtod(m, caddr_t), hlen);
-#if BSD >= 199103
 		m->m_data += hlen; /* XXX */
-#else
-		m->m_off += hlen;
-#endif
 		len -= hlen;
 	}
 	m->m_len = len;
@@ -407,45 +379,6 @@ bpfclose(dev, flag, mode, p)
 }
 
 /*
- * Support for SunOS, which does not have tsleep.
- */
-#if BSD < 199103
-static
-bpf_timeout(arg)
-	caddr_t arg;
-{
-	struct bpf_d *d = (struct bpf_d *)arg;
-	d->bd_timedout = 1;
-	wakeup(arg);
-}
-
-#define BPF_SLEEP(chan, pri, s, t) bpf_sleep((struct bpf_d *)chan)
-
-int
-bpf_sleep(d)
-	struct bpf_d *d;
-{
-	int rto = d->bd_rtout;
-	int st;
-
-	if (rto != 0) {
-		d->bd_timedout = 0;
-		timeout(bpf_timeout, (caddr_t)d, rto);
-	}
-	st = sleep((caddr_t)d, PRINET|PCATCH);
-	if (rto != 0) {
-		if (d->bd_timedout == 0)
-			untimeout(bpf_timeout, (caddr_t)d);
-		else if (st == 0)
-			return EWOULDBLOCK;
-	}
-	return (st != 0) ? EINTR : 0;
-}
-#else
-#define BPF_SLEEP tsleep
-#endif
-
-/*
  * Rotate the packet buffers in descriptor d.  Move the store buffer
  * into the hold slot, and the free buffer into the store slot.
  * Zero the length of the new store buffer.
@@ -497,7 +430,7 @@ bpfread(dev, uio, ioflag)
 			break;
 		}
 		if (d->bd_rtout != -1)
-			error = BPF_SLEEP((caddr_t)d, PRINET|PCATCH, "bpf",
+			error = tsleep((caddr_t)d, PRINET|PCATCH, "bpf",
 					  d->bd_rtout);
 		else
 			error = EWOULDBLOCK; /* User requested non-blocking I/O */
@@ -539,7 +472,7 @@ bpfread(dev, uio, ioflag)
 	 * We know the entire buffer is transferred since
 	 * we checked above that the read buffer is bpf_bufsize bytes.
 	 */
-	error = UIOMOVE(d->bd_hbuf, d->bd_hlen, UIO_READ, uio);
+	error = uiomove(d->bd_hbuf, d->bd_hlen, uio);
 
 	s = splimp();
 	d->bd_fbuf = d->bd_hbuf;
@@ -568,17 +501,9 @@ bpf_wakeup(d)
 			psignal (p, SIGIO);
 	}
 
-#if BSD >= 199103
 	selwakeup(&d->bd_sel);
 	/* XXX */
 	d->bd_sel.si_pid = 0;
-#else
-	if (d->bd_selproc) {
-		selwakeup(d->bd_selproc, (int)d->bd_selcoll);
-		d->bd_selcoll = 0;
-		d->bd_selproc = 0;
-	}
-#endif
 }
 
 int
@@ -612,11 +537,7 @@ bpfwrite(dev, uio, ioflag)
 		dst.sa_family = pseudo_AF_HDRCMPLT;
 
 	s = splsoftnet();
-#if BSD >= 199103
-	error = (*ifp->if_output)(ifp, m, &dst, (struct rtentry *)0);
-#else
-	error = (*ifp->if_output)(ifp, m, &dst);
-#endif
+	error = (*ifp->if_output)(ifp, m, &dst, NULL);
 	splx(s);
 	/*
 	 * The driver frees the mbuf.
@@ -714,9 +635,6 @@ bpfioctl(dev, cmd, addr, flag, p)
 	 * Set buffer length.
 	 */
 	case BIOCSBLEN:
-#if BSD < 199103
-		error = EINVAL;
-#else
 		if (d->bd_bif != 0)
 			error = EINVAL;
 		else {
@@ -728,7 +646,6 @@ bpfioctl(dev, cmd, addr, flag, p)
 				*(u_int *)addr = size = BPF_MINBUFSIZE;
 			d->bd_bufsize = size;
 		}
-#endif
 		break;
 
 	/*
@@ -1226,13 +1143,7 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	 * Append the bpf header.
 	 */
 	hp = (struct bpf_hdr *)(d->bd_sbuf + curlen);
-#if BSD >= 199103
 	microtime(&hp->bh_tstamp);
-#elif defined(sun)
-	uniqtime(&hp->bh_tstamp);
-#else
-	hp->bh_tstamp = time;
-#endif
 	hp->bh_datalen = pktlen;
 	hp->bh_hdrlen = hdrlen;
 	/*
@@ -1295,14 +1206,7 @@ bpfattach(driverp, ifp, dlt, hdrlen)
 	u_int dlt, hdrlen;
 {
 	struct bpf_if *bp;
-#if BSD < 199103
-	static struct bpf_if bpf_ifs[NBPFILTER];
-	static int bpfifno;
-
-	bp = (bpfifno < NBPFILTER) ? &bpf_ifs[bpfifno++] : 0;
-#else
 	bp = (struct bpf_if *)malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
-#endif
 	if (bp == 0)
 		panic("bpfattach");
 
@@ -1400,7 +1304,6 @@ bpf_change_type(driverp, dlt, hdrlen)
 	bp->bif_hdrlen = BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen;
 }
 
-#if BSD >= 199103
 /* XXX This routine belongs in net/if.c. */
 /*
  * Set/clear promiscuous mode on interface ifp based on the truth value
@@ -1452,35 +1355,3 @@ ifpromisc(ifp, pswitch)
 	}
 	return (ret);
 }
-#endif
-
-#if BSD < 199103
-/*
- * Allocate some memory for bpf.  This is temporary SunOS support, and
- * is admittedly a hack.
- * If resources unavailable, return 0.
- */
-static caddr_t
-bpf_alloc(size, canwait)
-	int size;
-	int canwait;
-{
-	struct mbuf *m;
-
-	if ((unsigned)size > (MCLBYTES-8))
-		return 0;
-
-	MGET(m, canwait, MT_DATA);
-	if (m == 0)
-		return 0;
-	if ((unsigned)size > (MLEN-8)) {
-		MCLGET(m);
-		if (m->m_len != MCLBYTES) {
-			m_freem(m);
-			return 0;
-		}
-	}
-	*mtod(m, struct mbuf **) = m;
-	return mtod(m, caddr_t) + 8;
-}
-#endif
