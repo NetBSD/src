@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rm.c	4.26 (Berkeley) 3/10/91";*/
-static char rcsid[] = "$Id: rm.c,v 1.10 1993/11/16 23:16:49 jtc Exp $";
+static char rcsid[] = "$Id: rm.c,v 1.11 1993/11/16 23:59:17 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -79,7 +79,7 @@ main(argc, argv)
 	setlocale(LC_ALL, "");
 
 	rflag = 0;
-	while ((ch = getopt(argc, argv, "dfiRr")) != EOF)
+	while ((ch = getopt(argc, argv, "dfiRr")) != -1)
 		switch(ch) {
 		case 'd':
 			dflag = 1;
@@ -107,15 +107,15 @@ main(argc, argv)
 		usage();
 
 	checkdot(argv);
-	if (!*argv)
-		exit(fflag ? 0 : retval);
 
-	stdin_ok = isatty(STDIN_FILENO);
+	if (*argv) {
+		stdin_ok = isatty(STDIN_FILENO);
 
-	if (rflag)
-		rmtree(argv);
-	else
-		rmfile(argv);
+		if (rflag)
+			rmtree(argv);
+		else
+			rmfile(argv);
+	}
 
 	exit(retval);
 }
@@ -153,7 +153,7 @@ rmtree(argv)
 		case FTS_DNR:
 		case FTS_ERR:
 			error(p->fts_path, errno);
-			exit(1);
+			continue;
 		/*
 		 * FTS_NS: assume that if can't stat the file, it can't be
 		 * unlinked.
