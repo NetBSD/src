@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.45 1998/02/05 19:59:54 drochner Exp $	*/
+/*	$NetBSD: clock.c,v 1.46 1998/04/16 20:15:10 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -104,16 +104,26 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/nvram.h>
 #include <i386/isa/timerreg.h>
-#include <i386/isa/spkrreg.h>
+
+#include "pcppi.h"
+#if (NPCPPI > 0)
+#include <dev/isa/pcppivar.h>
+
+int sysbeepmatch __P((struct device *, struct cfdata *, void *));
+void sysbeepattach __P((struct device *, struct device *, void *));
+
+struct cfattach sysbeep_ca = {
+	sizeof(struct device), sysbeepmatch, sysbeepattach
+};
+
+static int ppi_attached;
+static pcppi_tag_t ppicookie;
+#endif /* PCPPI */
 
 static void initrtclock __P((void));
 void	spinwait __P((int));
-#if 0
-void	findcpuspeed __P((void));
-#endif
 int	clockintr __P((void *));
 int	gettick __P((void));
-void	sysbeepstop __P((void *));
 void	sysbeep __P((int, int));
 void	rtcinit __P((void));
 int	rtcget __P((mc_todregs *));
@@ -200,10 +210,6 @@ startrtclock()
 	u_long tval;
 	u_long t, msb, lsb, quotient, remainder;
 
-#if 0
-	findcpuspeed();		/* use the clock (while it's free)
-					to find the cpu speed */
-#endif
 	if (!rtclock_tval)
 		initrtclock();
 
@@ -376,72 +382,37 @@ delay(n)
 	}
 }
 
-static int beeping;
+#if (NPCPPI > 0)
+int
+sysbeepmatch(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	return (!ppi_attached);
+}
 
 void
-sysbeepstop(arg)
-	void *arg;
+sysbeepattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
+	printf("\n");
 
-	/* disable counter 2 */
-	disable_intr();
-	outb(PITAUX_PORT, inb(PITAUX_PORT) & ~PIT_SPKR);
-	enable_intr();
-	beeping = 0;
+	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
+	ppi_attached = 1;
 }
+#endif
 
 void
 sysbeep(pitch, period)
 	int pitch, period;
 {
-	static int last_pitch;
-
-	if (beeping)
-		untimeout(sysbeepstop, 0);
-	if (pitch == 0 || period == 0) {
-		sysbeepstop(0);
-		last_pitch = 0;
-		return;
-	}
-	if (!beeping || last_pitch != pitch) {
-		disable_intr();
-		outb(TIMER_MODE, TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
-		outb(TIMER_CNTR2, TIMER_DIV(pitch) % 256);
-		outb(TIMER_CNTR2, TIMER_DIV(pitch) / 256);
-		outb(PITAUX_PORT, inb(PITAUX_PORT) | PIT_SPKR);	/* enable counter 2 */
-		enable_intr();
-	}
-	last_pitch = pitch;
-	beeping = 1;
-	timeout(sysbeepstop, 0, period);
-}
-
-#if 0
-unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */
-
-#define FIRST_GUESS   0x2000
-
-void
-findcpuspeed()
-{
-	int i;
-	int remainder;
-
-	/* Put counter in count down mode */
-	outb(TIMER_MODE, TIMER_SEL0 | TIMER_16BIT | TIMER_RATEGEN);
-	outb(TIMER_CNTR0, 0xff);
-	outb(TIMER_CNTR0, 0xff);
-	for (i = FIRST_GUESS; i; i--)
-		;
-	/* Read the value left in the counter */
-	remainder = gettick();
-	/*
-	 * Formula for delaycount is:
-	 *  (loopcount * timer clock speed) / (counter ticks * 1000)
-	 */
-	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
-}
+#if (NPCPPI > 0)
+	if (ppi_attached)
+		pcppi_bell(ppicookie, pitch, period, 0);
 #endif
+}
 
 void
 cpu_initclocks()
