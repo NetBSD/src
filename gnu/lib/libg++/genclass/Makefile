@@ -4,12 +4,9 @@ BINDIR=	/usr/bin
 
 MAN1=	genclass.0
 
-all genclass: ${MAN1}
+all genclass:
 
-clean depend lint tags:
-
-cleandir:
-	rm -f ${MAN1}
+clean cleandir depend lint tags:
 
 beforeinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
