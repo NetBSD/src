@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.5 1998/02/10 14:12:31 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.6 1998/02/19 00:55:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -31,6 +31,7 @@
  * from: Id: uvm_swap.c,v 1.1.2.42 1998/02/02 20:38:06 chuck Exp
  */
 
+#include "fs_nfs.h"
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
