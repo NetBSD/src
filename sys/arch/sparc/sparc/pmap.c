@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.129 1998/09/14 09:46:11 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.130 1998/09/14 22:45:36 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -633,7 +633,7 @@ setpgt4m(ptep, pte)
 	int *ptep;
 	int pte;
 {
-	*ptep = pte;
+	swap(ptep, pte);
 #if 1
 	/* XXX - uncaching in pgt_page_alloc() below is not yet quite Okay */
 	if (cpuinfo.cpu_type == CPUTYP_SS1_MBUS_NOMXCC)
