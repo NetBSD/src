@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.17 1997/05/07 17:06:16 mycroft Exp $
+#	$NetBSD: bsd.dep.mk,v 1.18 1997/05/08 21:18:59 gwr Exp $
 
 .PHONY:		cleandepend
 cleandir:	cleandepend
@@ -10,6 +10,7 @@ MKDEP?=		mkdep
 depend: beforedepend
 .if defined(SRCS)
 depend: .depend
+.NOPATH: .depend
 .depend: ${SRCS}
 	@rm -f .depend
 	@files="${.ALLSRC:M*.s} ${.ALLSRC:M*.S}"; \
