@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.2 1995/09/26 21:24:41 phil Exp $
+#	$Id: Makefile.inc,v 1.2.2.1 1995/10/31 06:49:38 phil Exp $
 
-# Revision is 1.0A
-REV=	10A
+# Revision is 1.1
+REV=	11
