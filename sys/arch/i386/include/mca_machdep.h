@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.5 2001/04/22 11:52:18 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.6 2001/05/02 13:16:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,24 +50,6 @@ struct i386_mca_chipset {
 
 typedef struct i386_mca_chipse *mca_chipset_tag_t;
 typedef int mca_intr_handle_t;
-
-/* System Configuration Block - this info is returned by the BIOS call */
-struct ps2_sys_config {
-	u_int16_t	count;
-	u_int8_t	model;
-	u_int8_t	submodel;
-	u_int8_t	bios_rev;
-	u_int8_t	feature;
-#define FEATURE_RESV	0x01	/* Reserved				*/
-#define FEATURE_MCABUS	0x02	/* MicroChannel Architecture		*/
-#define FEATURE_EBDA	0x04	/* Extended BIOS data area allocated	*/
-#define FEATURE_WAITEV	0x08	/* Wait for external event is supported	*/
-#define FEATURE_KBDINT	0x10	/* Keyboard intercept called by Int 09h	*/
-#define FEATURE_RTC	0x20	/* Real-time clock present		*/
-#define FEATURE_IC2	0x40	/* Second interrupt chip present	*/
-#define FEATURE_DMA3	0x80	/* DMA channel 3 used by hard disk BIOS	*/
-	u_int8_t	pad[10];
-} __attribute__ ((packed));
 
 /*
  * Functions provided to machine-independent MCA code.
