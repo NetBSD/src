@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.75 2003/05/07 19:02:57 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.76 2003/05/16 19:48:29 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,10 +63,6 @@ struct disklist *disklist = NULL;
 struct nativedisk_info *nativedisk;
 struct biosdisk_info *biosdisk = NULL;
 int netbsd_mbr_installed = 0;
-int netbsd_bootsel_installed = 0;
-
-struct mbr_bootsel *mbs;
-int defbootselpart, defbootseldisk;
 
 /* prototypes */
 
@@ -74,7 +70,6 @@ static int md_read_bootcode(const char *, mbr_sector_t *);
 static int count_mbr_parts(struct mbr_partition *);
 static int mbr_part_above_chs(struct mbr_partition *);
 static int mbr_partstart_above_chs(struct mbr_partition *);
-static void configure_bootsel(void);
 static void md_upgrade_mbrtype(void);
 static char *get_bootmodel(void);
 
@@ -110,7 +105,7 @@ edit:
 		if (yesno) {
 			mbr_len = md_read_bootcode(_PATH_BOOTSEL, &mbr);
 			configure_bootsel();
-			netbsd_mbr_installed = netbsd_bootsel_installed = 1;
+			netbsd_mbr_installed = 2;
 		} else {
 			msg_display(MSG_installnormalmbr);
 			process_menu(MENU_yesno);
@@ -124,7 +119,7 @@ edit:
 		netbsd_mbr_installed = 1;
 	}
 
-	if (mbr_partstart_above_chs(part) && !netbsd_mbr_installed) {
+	if (mbr_partstart_above_chs(part) && netbsd_mbr_installed == 0) {
 		msg_display(MSG_installmbr);
 		process_menu(MENU_yesno);
 		if (yesno) {
@@ -146,6 +141,7 @@ md_read_bootcode(const char *path, mbr_sector_t *mbr)
 	int fd, cc;
 	struct stat st;
 	size_t len;
+	mbr_sector_t new_mbr;
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
@@ -156,15 +152,25 @@ md_read_bootcode(const char *path, mbr_sector_t *mbr)
 		return -1;
 	}
 
-	if (mbr->mbr_bootsel.mbrb_magic != native_to_le16(MBR_MAGIC))
-		len = offsetof(mbr_sector_t, mbr_parts);
-	else
-		len = offsetof(mbr_sector_t, mbr_bootsel);
-
-	if (read(fd, mbr, len) != len) {
+	if (read(fd, &new_mbr, sizeof new_mbr) != sizeof new_mbr) {
 		close(fd);
 		return -1;
 	}
+
+	if (mbr->mbr_bootsel.mbrb_magic == native_to_le16(MBR_MAGIC)) {
+		len = offsetof(mbr_sector_t, mbr_bootsel);
+		if (!(mbr->mbr_bootsel.mbrb_flags & BFL_NEWMBR))
+			/*
+			 * Meaning of keys has changed, force a sensible
+			 * default (old code didn't preseve the answer).
+			 */
+			mbr->mbr_bootsel.mbrb_defkey = SCAN_ENTER;
+	} else
+		len = offsetof(mbr_sector_t, mbr_parts);
+
+	memcpy(mbr, &new_mbr, len);
+	/* Keep flags from object file - indicate the properties */
+	mbr->mbr_bootsel.mbrb_flags = new_mbr.mbr_bootsel.mbrb_flags;
 	mbr->mbr_signature = native_to_le16(MBR_MAGIC);
 
 	close(fd);
@@ -613,35 +619,6 @@ static int
 mbr_partstart_above_chs(mbr_partition_t *pt)
 {
 	return (pt[bsdpart].mbrp_start >= bcyl * bhead * bsec);
-}
-
-static void
-configure_bootsel(void)
-{
-	struct mbr_partition *parts = &mbr.mbr_parts[0];
-	int i;
-
-	mbs = &mbr.mbr_bootsel;
-	mbs->mbrb_flags = BFL_SELACTIVE;
-
-	/* Setup default labels for partitions, since if not done by user */
-	/* they don't get set and and bootselector doesn't 'appear' when  */
-	/* it's loaded.                                                   */
-	for (i = 0; i < NMBRPART; i++) {
-		if (parts[i].mbrp_typ != 0 && mbs->mbrb_nametab[i][0] == '\0')
-			snprintf(mbs->mbrb_nametab[i], sizeof(mbs->mbrb_nametab[0]),
-			    "entry %d", i);
-	}
-
-	process_menu(MENU_configbootsel);
-
-	for (i = 0; i < NMBRPART; i++) {
-		if (parts[i].mbrp_typ != 0 &&
-		   parts[i].mbrp_start >= (bcyl * bhead * bsec)) {
-			mbs->mbrb_flags |= BFL_EXTINT13;
-			break;
-		}
-	}
 }
 
 char *
