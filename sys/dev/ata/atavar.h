@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.64 2004/08/20 23:26:54 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.65 2004/10/30 23:10:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -70,11 +70,14 @@ struct ata_xfer {
 	void	(*c_kill_xfer)(struct ata_channel *, struct ata_xfer *, int);
 };
 
-/* vlags in c_flags */
+/* flags in c_flags */
 #define	C_ATAPI		0x0001		/* xfer is ATAPI request */
 #define	C_TIMEOU	0x0002		/* xfer processing timed out */
 #define	C_POLL		0x0004		/* command is polled */
 #define	C_DMA		0x0008		/* command uses DMA */
+#define C_WAIT		0x0010		/* can use tsleep */
+#define C_WAITACT	0x0020		/* wakeup when active */
+#define C_FREE		0x0040		/* call ata_free_xfer() asap */
 
 /* reasons for c_kill_xfer() */
 #define KILL_GONE 1 /* device is gone */
