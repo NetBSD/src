@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.1.2.5 1997/07/01 22:23:04 thorpej Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.1.2.6 1997/07/01 23:45:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -152,8 +152,6 @@ cd_scsibus_attach(parent, self, aux)
 		cd->flags |= CDF_ANCIENT;
 
 	/* should I get the SCSI_CAP_PAGE here ? */
-
-	printf("\n");
 }
 
 /*
