@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.46 2001/04/14 22:53:35 kleink Exp $
+# $NetBSD: md.sparc,v 1.47 2001/04/15 15:33:09 kleink Exp $
 ./usr/include/sparc	comp-c-include
 ./usr/include/sparc/_G_config.h	comp-c-include
 ./usr/include/sparc/ansi.h	comp-c-include
@@ -25,6 +25,7 @@
 ./usr/include/sparc/ieee.h	comp-c-include
 ./usr/include/sparc/ieeefp.h	comp-c-include
 ./usr/include/sparc/int_const.h	comp-c-include
+./usr/include/sparc/int_limits.h	comp-c-include
 ./usr/include/sparc/int_mwgwtypes.h	comp-c-include
 ./usr/include/sparc/int_types.h	comp-c-include
 ./usr/include/sparc/kbd.h	comp-c-include
