@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.31.2.8 2002/01/08 00:33:34 nathanw Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31.2.9 2002/01/09 02:59:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.8 2002/01/08 00:33:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.9 2002/01/09 02:59:24 nathanw Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1490,7 +1490,7 @@ genfs_compat_getpages(void *v)
 	int i, error, orignpages, npages;
 	struct iovec iov;
 	struct uio uio;
-	struct ucred *cred = curproc->p_ucred;
+	struct ucred *cred = curproc->l_proc->p_ucred;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 
 	error = 0;
@@ -1529,7 +1529,7 @@ genfs_compat_getpages(void *v)
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_resid = PAGE_SIZE;
-		uio.uio_procp = curproc;
+		uio.uio_procp = curproc->l_proc;
 		error = VOP_READ(vp, &uio, 0, cred);
 		if (error) {
 			break;
@@ -1562,7 +1562,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	off_t offset;
 	struct iovec iov;
 	struct uio uio;
-	struct ucred *cred = curproc->p_ucred;
+	struct ucred *cred = curproc->l_proc->p_ucred;
 	struct buf *bp;
 	vaddr_t kva;
 	int s, error;
@@ -1579,7 +1579,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_resid = npages << PAGE_SHIFT;
-	uio.uio_procp = curproc;
+	uio.uio_procp = curproc->l_proc;
 	error = VOP_WRITE(vp, &uio, 0, cred);
 
 	s = splbio();
