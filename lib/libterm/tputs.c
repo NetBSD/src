@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.13 1999/09/20 04:48:06 lukem Exp $	*/
+/*	$NetBSD: tputs.c,v 1.14 1999/10/04 23:16:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.13 1999/09/20 04:48:06 lukem Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.14 1999/10/04 23:16:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ void
 tputs(cp, affcnt, outc)
 	const char *cp;
 	int affcnt;
-	void (*outc) __P((int));
+	int (*outc) __P((int));
 {
 	int i = 0;
 	int mspc10;
@@ -127,7 +127,7 @@ tputs(cp, affcnt, outc)
 	 * The guts of the string.
 	 */
 	while (*cp)
-		(*outc)(*cp++);
+		(void)(*outc)(*cp++);
 
 	/*
 	 * If no delay needed, or output speed is
@@ -148,7 +148,7 @@ tputs(cp, affcnt, outc)
 	mspc10 = tmspc10[ospeed];
 	i += mspc10 / 2;
 	for (i /= mspc10; i > 0; i--)
-		(*outc)(PC);
+		(void)(*outc)(PC);
 }
 
 
