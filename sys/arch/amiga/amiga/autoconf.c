@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.59 1998/01/15 21:55:51 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.60 1998/07/03 22:25:35 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -54,9 +54,7 @@ struct devnametobdevmaj amiga_nam2blk[] = {
 	{ "fd",		2 },
 	{ "sd",		4 },
 	{ "cd",		7 },
-#ifdef notyet
-	{ "md",		XXX },
-#endif
+	{ "md",		15 },
 	{ NULL,		0 },
 };
 u_long boot_partition;

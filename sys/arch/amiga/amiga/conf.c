@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.48 1997/10/16 23:37:34 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.49 1998/07/03 22:25:35 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -59,6 +59,7 @@
 #include "ss.h"
 #include "ch.h"
 #include "uk.h"
+#include "md.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -77,6 +78,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
+	bdev_disk_init(NMD,md),		/* 15: memory disk */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -145,6 +147,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ipf_init(NIPFILTER,ipl),	/* 40: ip-filter device */
 	cdev_audio_init(NAUDIO,audio),	/* 41: cc audio interface */
 	cdev_rnd_init(NRND,rnd),	/* 42: random source pseudo-device */
+	cdev_disk_init(NMD,md),		/* 43: memory disk */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -250,6 +253,7 @@ static int chrtoblktab[] = {
  	/* 40 */	NODEV,
  	/* 41 */	NODEV,
  	/* 42 */	NODEV,
+	/* 43 */	15,		/* md */
 };
 
 /*
