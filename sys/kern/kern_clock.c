@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.29 1996/03/07 14:31:18 christos Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.30 1996/03/08 06:27:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -363,8 +363,8 @@ hardclock(frame)
 	register int delta, needsoft;
 	extern int tickdelta;
 	extern long timedelta;
-	register int time_update;
 #ifdef NTP
+	register int time_update;
 	register int ltemp;
 #endif
 
@@ -444,9 +444,9 @@ hardclock(frame)
 	BUMPTIME(&time, delta);		/* XXX Now done using NTP code below */
 #endif
 	BUMPTIME(&mono_time, delta);
-	time_update = delta;
 
 #ifdef NTP	/* XXX Start of David L. Mills' ntp precision-time fragment */
+	time_update = delta;
 
 	/*
 	 * Beginning of precision-kernel code fragment
@@ -497,12 +497,6 @@ hardclock(frame)
 #endif /* HIGHBALL */
 
 	/*
-	 * End of precision-kernel code fragment
-	 */
-
-	/*
-	 * Beginning of precision-kernel code fragment
-	 *
 	 * On rollover of the second the phase adjustment to be used for
 	 * the next second is calculated. Also, the maximum error is
 	 * increased by the tolerance. If the PPS frequency discipline
