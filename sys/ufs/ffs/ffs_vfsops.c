@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.95 2002/03/31 20:53:25 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.96 2002/04/01 01:52:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.95 2002/03/31 20:53:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.96 2002/04/01 01:52:44 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -207,26 +207,8 @@ ffs_mount(mp, path, data, ndp, p)
 	} else {
 		/* New mounts must have a filename for the device */
 		if (args.fspec == NULL)
-			return EINVAL;
-
-		/* Check for update-only flags */
-		if (mp->mnt_flag &
-		    (MNT_WANTRDWR |	/*
-					 * Upgrading from read-only to
-					 * read-write can only occur after
-					 * the initial mount
-					 */
-		     MNT_EXRDONLY |
-		     MNT_DEFEXPORTED |
-		     MNT_EXPORTANON |
-		     MNT_EXKERB |	/* Only update mounts are allowed */
-		     MNT_EXNORESPORT |  /* to affect exporting		  */
-		     MNT_EXPUBLIC |
-		     MNT_DELEXPORT))
-		return EINVAL;
+			return (EINVAL);
 	}
-
-	error = 0;
 
 	if (args.fspec) {
 		/*
@@ -252,13 +234,6 @@ ffs_mount(mp, path, data, ndp, p)
 			 */
 			if (devvp != ump->um_devvp)
 				error = EINVAL;
-			else
-				/*
-				 * The initial mount got a reference on this
-				 * device, so drop the one obtained via
-				 * namei(), above
-				 */
-				vrele(devvp);
 		}
 	}
 
@@ -268,8 +243,9 @@ ffs_mount(mp, path, data, ndp, p)
 	 */
 	if (error == 0 && p->p_ucred->cr_uid != 0) {
 		accessmode = VREAD;
-		if ((!update && (mp->mnt_flag & MNT_RDONLY) == 0) ||
-		     (update && (mp->mnt_flag & MNT_WANTRDWR)))
+		if (update ?
+		    (mp->mnt_flag & MNT_WANTRDWR) != 0 :
+		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
@@ -293,14 +269,22 @@ ffs_mount(mp, path, data, ndp, p)
 		if ((mp->mnt_flag & (MNT_SOFTDEP | MNT_ASYNC)) ==
 		    (MNT_SOFTDEP | MNT_ASYNC)) {
 			printf("%s fs uses soft updates, "
-			       "ignoring async mode\n",
-			       fs->fs_fsmnt);
+			    "ignoring async mode\n",
+			    fs->fs_fsmnt);
 			mp->mnt_flag &= ~MNT_ASYNC;
 		}
 	} else {
 		/*
-		 * Update the mount
+		 * Update the mount.
 		 */
+
+		/*
+		 * The initial mount got a reference on this
+		 * device, so drop the one obtained via
+		 * namei(), above.
+		 */
+		vrele(devvp);
+
 		fs = ump->um_fs;
 		if (fs->fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			/*
@@ -372,7 +356,7 @@ ffs_mount(mp, path, data, ndp, p)
 		}
 
 		if (mp->mnt_flag & MNT_RELOAD) {
-			error = ffs_reload(mp, ndp->ni_cnd.cn_cred, p);
+			error = ffs_reload(mp, p->p_ucred, p);
 			if (error)
 				return (error);
 		}
