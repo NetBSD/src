@@ -6,6 +6,3 @@ For the pc532 port, there are a few known problems.  They include:
 
   c) The serial drivers do not have all the desired features.  (ttyflags
 	is the most glaring.)
-
-  d) The disk driver is polled, not interrupt driven.
-

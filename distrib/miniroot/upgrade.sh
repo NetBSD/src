@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.7 1996/08/25 14:49:06 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.8 1996/10/09 00:13:36 jtc Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -65,6 +65,9 @@ MODE="upgrade"
 # include common subroutines
 . install.sub
 
+# which sets?
+THESETS="$UPGRSETS"
+
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
 echo -n "Proceed with upgrade? [n] "
@@ -85,8 +88,10 @@ md_set_term
 # XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
 ls -l /dev > /dev/null 2>&1
 
-# We don't like it, but it sure makes a few things a lot easier.
-do_mfs_mount "/tmp" "2048"
+# Make sure we can write files (at least in /tmp)
+# This might make an MFS mount on /tmp, or it may
+# just re-mount the root with read-write enabled.
+md_makerootwritable
 
 while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
@@ -224,7 +229,6 @@ check_fs /tmp/fstab.shadow
 # Mount filesystems.
 mount_fs /tmp/fstab.shadow
 
-THESETS="$UPGRSETS"
 echo -n	"Are the upgrade sets on one of your normally mounted (local) filesystems? [y] "
 getresp "y"
 case "$resp" in

@@ -14,7 +14,7 @@ To prepare for installing via a tape:
 	appear on the tape before any other files.  To copy
 	this onto tape, use a command like the following:
 
-		dd if=SYS_INST of=<tape_device> bs=20b
+		dd if=SYS_INST of=<tape_device> obs=20b conv=osync
 
 	Note that not all HP BOOTROMs support booting from
 	SCSI tapes.
@@ -27,8 +27,8 @@ To prepare for installing via a tape:
 	way to do this is with the dd(1) command.  Make sure you
 	use a `no-rewind-on-close' tape device.  For example:
 
-		for file in base11.tar.gz etc11.tar.gz; do
-			dd if=${file} of=/dev/nrst0 bs=20b
+		for file in base12.tar.gz etc12.tar.gz; do
+			dd if=${file} of=/dev/nrst0
 		done
 
 	Note that depending on your tape drive, you may need to
@@ -74,7 +74,11 @@ To prepare for installing via FTP:
 	file server, you may want to keep the following information
 	handy:
 
-		IP Address: 205.149.163.23
+		IP Address: ftp.NetBSD.ORG
 		Login: anonymous
 		Password: <your e-mail address>
-		Server path: /pub/NetBSD/NetBSD-1.1/hp300/binary
+		Server path: /pub/NetBSD/NetBSD-1.2/hp300/binary
+
+	Note: if you're not using a nameserver duing installation,
+	you might find 206.86.8.12 handy; it's the IP address of
+	ftp.NetBSD.ORG as of September 2, 1996.

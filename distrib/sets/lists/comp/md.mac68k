@@ -7,6 +7,7 @@
 ./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
 ./usr/include/m68k/ieeefp.h
+./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
 ./usr/include/m68k/profile.h
 ./usr/include/m68k/psl.h
@@ -21,6 +22,7 @@
 ./usr/include/machine/adbsys.h
 ./usr/include/machine/ansi.h
 ./usr/include/machine/asm.h
+./usr/include/machine/autoconf.h
 ./usr/include/machine/cdefs.h
 ./usr/include/machine/cpu.h
 ./usr/include/machine/db_machdep.h
@@ -52,7 +54,9 @@
 ./usr/include/machine/trap.h
 ./usr/include/machine/types.h
 ./usr/include/machine/varargs.h
+./usr/include/machine/viareg.h
 ./usr/include/machine/vmparam.h
+./usr/include/machine/z8530var.h
 ./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
 ./usr/lib/libcurses_pic.a

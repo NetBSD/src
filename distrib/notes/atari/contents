@@ -43,7 +43,7 @@ Installation floppy:
 	file system or ftp.  You can also load distribution sets from
 	a SCSI tape or from one of your existing TOS partitions.
 
-	This floppy's are named "miniroot-12.fs.1" and "miniroot-12.fs.2".
+	These floppies are named "miniroot-12.fs.1" and "miniroot-12.fs.2".
 
 The NetBSD/atari binary distribution sets contain the binaries which
 comprise the NetBSD 1.2 release for the atari.  There are seven binary

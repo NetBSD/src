@@ -47,3 +47,22 @@ Also, you cannot use the security modes of the sparc OpenBOOT ROM.
 
     ok setenv security-mode none
 
+
+
+If you're installing NetBSD/sparc for the first time it's a good idea
+to look at the partition sizes of disk you intend installing NetBSD on.
+
+Asumming a classic partition scheme with root (`/') and /usr filesystems,
+a comfortable size for the NetBSD root filesystem partition is about 20MB;
+a good initial size for the swap partition is twice the amount of physical
+memory in your machine (though, unlike SunOS 4.x, there are no restrictions
+on the size of the swap partition that would render part of your memory
+unusable). A full binary installation takes about 60MB in `/usr'.
+
+Some network devices (`le') allow a choice between operating on a UTP
+or a AUI port. Automatic detection of which port is actually connected to
+the wire is not yet fully implemented in this release. This means that
+you may have to specify a `link-layer directive' during the installation
+process. The magic is `link0' to force the use of the UTP port, and `link1'
+to force the use of the AUI port.
+

@@ -27,12 +27,12 @@ Supported devices include:
 			TANDBERG 3600
 		- Should support most CD-ROM drives.
 		- Should support most ZIP/MO drives.
-	- The builtin video controller
-	- The builtin (720Kb/1.44Mb) floppydrive
+	- The buildin video controller
+	- The building (720Kb/1.44Mb) floppydrive
 	- The serial2/modem2 ports
 	- The Falcon FX memory expansion
 	- The atari mouse
 	- A 3-button mouse
 	- The parallel printer
 
-If its not on this list, there is probably no support for it in this release.
+If it's not on this list, there is probably no support for it in this release.

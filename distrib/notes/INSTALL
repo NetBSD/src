@@ -1,4 +1,4 @@
-INSTALLATION NOTES for NetBSD/MACHINE 1.1
+INSTALLATION NOTES for NetBSD/MACHINE 1.2
 
 
 
@@ -10,39 +10,61 @@ NetBSD/MACHINE.
 What is NetBSD?
 ---- -- ------
 
-NetBSD is a Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite
--derived Operating System.  It is a fully functional UN*X-like system
-which runs on many architectures and is being ported to more.  NetBSD, 
-as the name implies, is a creation of the members of the network community
-and without the net it's likely that this release wouldn't have come
-about.
+The NetBSD Operating System is a fully functional UN*X-like system
+derrived from the Berkeley Networking Release 2 (Net/2), 4.4BSD-Lite,
+and 4.4BSD-Lite2 sources.  NetBSD runs on many architectures and is
+being ported to more.
 
-NetBSD 1.1 is a evolutionary release which contains over a year of
-changes to the kernel, user-level utilities, and documentation.
+NetBSD is a creation of the members of the Internet community.
+Without the unique cooperation and coordination the net makes
+possible, it's likely that this release wouldn't have come about.
 
-Continuing the multi-platform tradition, NetBSD has added ports to
-atari and mvme68k based machines.  Kernel interfaces have continued to
-be refined, and now several subsystems and device drivers are shared
-among the different ports.  You can look for this trend to continue.
+The current release has built upon the successful NetBSD 1.1 release
+by integrating many bug fixes, adding new and updated kernel
+subsystems, and adding various userland enhancements.  The results of
+these improvements is a stable operating system fit for production use
+and ready for the next phase of development.
 
-NetBSD 1.1 has significantly enhanced the binary emulation subsystem 
-(which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix
-compatibility) and several kernel subsystems have been generalized
-to support this more readily.  The binary emulation strategy is 
-aimed at making the emulation as accurate as possible.
 
-NetBSD 1.1 is also the first release to see machine-independent disk
-striping.  The concatenated disk driver (ccd), which was previously
-supported only by the hp300 port, has been vastly improved.  Many
-bugs were fixed, and explicit references to device-dependent routines
-removed and replaced by calls to the generic "vnode operation"
-routines.  In addition, several features were added, including partition
-support, dynamic configuration and unconfiguration via a user space system
-utility program, and virtually unlimited number of component devices.
+Significant changes include:
 
-Many new user programs have been added in NetBSD 1.1, as well,
-bringing it closer to our goal of supplying a complete UN*X-like
-environment. 
+	Continuing the multi-platform tradition, the integration of
+	the DEC Alpha port has been completed, and new ports to ARM
+	and x68k have been added.
+
+	NetBSD/sparc now supports 4m machines. 
+
+	NetBSD/amiga now supports the DraCo.
+
+	Standard C Prototypes have been added to the Kernel.
+
+	Kernel NTP (Network Time Protocol) phased lock loop support has
+	been added.  See http://www.eecis.udel.edu/~ntp/ for more 
+	details.
+
+	The PINT (PINT is not TWAIN) SCSI scanner driver interface has
+	been integrated.  See http://www.dol-esa.gov/~kstailey/pint 
+	for more details.
+
+	A new SCSI medium changer driver and the `chio' program used to 
+	operate it has been added.
+
+	The NFS subsystem now supports NFSv3.
+
+	Several performance enhancements have been made to the 
+	networking subsystem.
+
+	GCC, Libg++, and many other third party programs have been 
+	upgraded to more recent versions.
+
+Kernel interfaces have continued to be refined, and more subsystems
+and device drivers are shared among the different ports. You can look
+for this trend to continue.
+
+NetBSD 1.2 also includes some refinement to the NetBSD binary emulation
+system (which includes FreeBSD, HP-UX, iBCS2, Linux, OSF/1, SunOS, SVR4,
+Solaris and Ultrix compatibility), bringing NetBSD closer to the goal of
+making the emulation as accurate as possible.
 
 
 #include "whatis"
@@ -51,16 +73,15 @@ environment.
 The Future of NetBSD:
 --- ------ -- ------
 
-The NetBSD Foundation was recently incorporated as a non-profit
-organization.  It's purpose is to encourage, foster and promote the
+The NetBSD Foundation has been incorporated as a non-profit
+organization.  Its purpose is to encourage, foster and promote the
 free exchange of computer software, namely the NetBSD Operating
 System.  The foundation will allow for many things to be handled more
 smoothly than could be done with our previous informal organization.
 In particular, it provides the framework to deal with other parties
-that wish to become involved in the NetBSD Project. (IN WHAT WAY?  Money, donations, etc)
+that wish to become involved in the NetBSD Project.
 
-We believe that the NetBSD Foundation will help improve the quality 
-of NetBSD by:
+The NetBSD Foundation will help improve the quality of NetBSD by:
 
 	* providing better organization to keep track of development
 	  efforts, including co-ordination with groups working in 
@@ -78,11 +99,14 @@ of NetBSD by:
 
 We hope to have regular releases of the full binary and source trees,
 but these are difficult to coordinate, especially with all of the
-architectures which we now support!  We hope to support even _more_
-hardware in the future, and have a rather large number of other ideas
-about what can be done to improve NetBSD.  We intend to continue our
-current practice of making the NetBSD-current development source
-available on a daily or nearly-daily basis.
+architectures which we now support!  
+
+We hope to support even _more_ hardware in the future, and have a
+rather large number of other ideas about what can be done to improve
+NetBSD.  
+
+We intend to continue our current practice of making the
+NetBSD-current development source available on a daily basis.
 
 We intend to integrate free, positive changes from whatever sources
 will provide them, providing that they are well thought-out and
@@ -98,12 +122,12 @@ Sources of NetBSD:
 
 #include "mirrors"
 
-NetBSD 1.1 Release Contents:
+NetBSD 1.2 Release Contents:
 ------ --- ------- --------
 
-The NetBSD 1.1 release is organized in the following way:
+The NetBSD 1.2 release is organized in the following way:
 
-.../NetBSD-1.1/
+.../NetBSD-1.2/
 		BUGS			Known bugs list (incomplete
 					and out of date).
 
@@ -113,7 +137,7 @@ The NetBSD 1.1 release is organized in the following way:
 		LAST_MINUTE		Last minute changes.
 
 		MIRRORS			A list of sites that mirror
-					the NetBSD 1.1 distribution.
+					the NetBSD 1.2 distribution.
 
 		README.files		README describing the
 					distribution's contents.
@@ -129,7 +153,7 @@ The NetBSD 1.1 release is organized in the following way:
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures that NetBSD
-1.1 has a binary distribution for.  There are also
+1.2 has a binary distribution for.  There are also
 'README.export-control' files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
 distribution (e.g. those containing crypt(3)) that should not be
@@ -141,28 +165,28 @@ The source distribution sets can be found in subdirectories of the
 complete sources to the system.  The source distribution sets 
 are as follows:
 
-	dsrc11	This set contains the "domestic" sources.  These
+	dsrc12	This set contains the "domestic" sources.  These
 		sources contain export-restricted encryption code
 		and should not be exported from the U.S.
 		[ 140K gzipped, 655K uncompressed ]
 
-	gsrc11	This set contains the "gnu" sources, including
+	gsrc12	This set contains the "gnu" sources, including
 		the source for the compiler, assembler, groff,
 		and the other GNU utilities in the binary distribution
 		sets.
 		[ 7.1M gzipped, 30.4M uncompressed ]
 
-	ksrc11	This set contains the sources to the NetBSD 1.1
+	ksrc12	This set contains the sources to the NetBSD 1.2
 		kernel, config(8), config.old(8) and dbsym(8).
 		[ 6.0M gzipped, 27.0M uncompressed ]
 
-	ssrc11	This set contains the "share" sources, which include
+	ssrc12	This set contains the "share" sources, which include
 		the sources for the man pages not associated with
 		any particular program, the sources for the
 		typesettable document set, the dictionaries, and more.
 		[ 2.4M gzipped, 8.9M uncompressed ]
 
-	src11	This set contains all of the NetBSD 1.1 sources which
+	src12	This set contains all of the NetBSD 1.2 sources which
 		are not mentioned above.
 		[ 9.3M gzipped, 41.6M uncompressed ]
 
@@ -233,7 +257,7 @@ Using online NetBSD documentation
 ----- ------ ------ -------------
 
 Documentation is available if you first install the manual
-distribution set.  Traditionally, the UN*X "man pages" (documentation)
+distribution set.  Traditionally, the "man pages" (documentation)
 are denoted by 'name(section)'.  Some examples of this are
 
 	intro(1),
@@ -339,6 +363,10 @@ sun-lamp in the past, people to look after it, and a sense of humor.
 Rob Robertson, too, has added his unique sense of humor to things, and
 for a long time provided the primary FTP site for NetBSD.
 
+Best Internet Communications for hosting the NetBSD FTP and SUP server.
+
+Cygnus Support for hosting the NetBSD Mail server.
+
 Without CVS, this project would be impossible to manage, so our hats
 go off to Brian Berliner, Jeff Polk, and the various other people
 who've had a hand in making CVS a useful tool.
@@ -378,15 +406,17 @@ Christos Zoulas 	<christos@NetBSD.ORG>
 
 The port-masters (and their ports):
 Allen Briggs		<briggs@mail.vt.edu>		(mac68k)
+Mark Brinicombe		<mark@NetBSD.ORG>		(arm32)
 Chuck Cranor		<chuck@NetBSD.ORG>		(mvme68k)
 Chris G. Demetriou	<cgd@NetBSD.ORG>		(alpha)
 Charles Hannum		<mycroft@NetBSD.ORG>		(i386)
 Chris Hopps		<chopps@NetBSD.ORG>		(amiga)
 Paul Kranenburg		<pk@NetBSD.ORG>			(sparc)
-Ted Lemon		<mellon@NetBSD.ORG>		(pmax)
 Anders Magnusson	<ragge@NetBSD.ORG>		(vax)
 Phil Nelson		<phil@NetBSD.ORG>		(pc532)
+Masaru Oki		<oki@NetBSD.ORG>		(x68k)
 Gordon Ross		<gwr@NetBSD.ORG>		(sun3)
+Jonathan Stone		<jonathan@NetBSD.ORG>		(pmax)
 Jason Thorpe		<thorpej@NetBSD.ORG>		(hp300)
 Frank van der Linden	<fvdl@NetBSD.ORG>		(i386)
 Leo Weppelman		<leo@NetBSD.ORG>		(atari)
@@ -396,6 +426,7 @@ Steve Allen		<wormey@eskimo.com>
 John Brezak		<brezak@NetBSD.ORG>
 Aaron Brown		<abrown@NetBSD.ORG>
 Dave Burgess		<burgess@cynjut.infonet.net>
+Bill Coldwell		<billc@warped.com>
 Bernd Ernesti		<veego@NetBSD.ORG>
 Hubert Feyrer		<hubert.feyrer@rz.uni-regensburg.de>
 Brian R. Gaeke		<brg@dgate.org>
@@ -406,6 +437,7 @@ Matthew Green		<mrg@eterna.com.au>
 Michael L. Hitch	<osymh@gemini.oscs.montana.edu>
 Lawrence Kesteloot	<kesteloo@cs.unc.edu>
 John Kohl 		<jtk@NetBSD.ORG>
+Ted Lemon		<mellon@NetBSD.ORG>
 Paul Mackerras	 	<paulus@NetBSD.ORG>
 Neil J. McRae		<neil@domino.org>
 Perry Metzger		<perry@NetBSD.ORG>
@@ -413,11 +445,13 @@ Herb Peyerl		<hpeyerl@beer.org>
 Matthias Pfaller	<leo@marco.de>
 Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
-Scott Reynolds		<scottr@edsi.org>
+Scott Reynolds		<scottr@NetBSD.ORG>
 Karl Schilke (rAT)	<rat@NetBSD.ORG>
 Thor Lancelot Simon	<tls@NetBSD.ORG>
+Noriyuki Soda		<soda@sra.co.jp>
 Wolfgang Solfrank	<ws@tools.de>
 Ignatios Souvatzis	<is@NetBSD.ORG>
+Kevin Sullivan		<sullivan@NetBSD.ORG>
 
 Legal Mumbo-jumbo:
 ----- ----- -----

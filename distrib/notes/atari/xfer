@@ -54,7 +54,6 @@ To prepare for installing via a tape:
 		done
 		mt -f $T rewind
 
-
 	where "<tape_device>" is the name of the (non-rewinding!) tape
 	device that you're using (probably something like /dev/nrst0,
 	but we make no guarantees 8-).
