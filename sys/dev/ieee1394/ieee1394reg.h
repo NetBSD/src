@@ -42,8 +42,12 @@
 #define	IEEE1394_SPD_S100	0	/* 1394-1995 */
 #define	IEEE1394_SPD_S200	1	/* 1394-1995 */
 #define	IEEE1394_SPD_S400	2	/* 1394-1995 */
-#define	IEEE1394_SPD_MAX	3
+#define	IEEE1394_SPD_S800	3	/* 1394a */
+#define	IEEE1394_SPD_S1600	4	/* 1394a */
+#define	IEEE1394_SPD_S3200	5	/* 1394a */
+#define	IEEE1394_SPD_MAX	6
 
-#define	IEEE1394_SPD_STRINGS	"100Mb/s", "200Mb/s", "400Mb/s"
+#define	IEEE1394_SPD_STRINGS	"100Mb/s", "200Mb/s", "400Mb/s", "800Mb/s", \
+		"1.6Gb/s", "3.2Gb/s"
 
 #endif	/* _DEV_IEEE1394_IEEE1394REG_H_ */
