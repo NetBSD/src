@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.6 2001/08/08 16:36:29 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.7 2002/01/28 19:05:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -117,7 +117,19 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 		 */
 		if (mutex->ptm_lock == __SIMPLELOCK_LOCKED) {
 			PTQ_INSERT_TAIL(&mutex->ptm_blocked, self, pt_sleep);
-			self->pt_state = PT_STATE_BLOCKED;
+			/* Locking a mutex is not a cancellation
+			 * point, so we don't need to do the
+			 * test-cancellation dance. We may get woken
+			 * up spuriously by pthread_cancel, though,
+			 * but it's okay since we're just going to
+			 * retry.
+			 */
+			pthread_spinlock(self, &self->pt_statelock);
+			self->pt_state = PT_STATE_BLOCKED_QUEUE;
+			self->pt_sleepq = &mutex->ptm_blocked;
+			self->pt_sleeplock = &mutex->ptm_interlock;
+			pthread_spinunlock(self, &self->pt_statelock);
+
 			pthread__block(self, &mutex->ptm_interlock);
 			/* interlock is not held when we return */
 		} else {
