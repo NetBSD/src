@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.13 1998/01/24 14:00:36 mycroft Exp $	*/
+/*	$NetBSD: npx.h,v 1.14 1999/01/26 14:25:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -126,5 +126,13 @@ struct	emcsts {
  * underflows).  It doesn't make a lot of sense to trap underflow without
  * trapping denormals.
  */
+
+#ifdef _KERNEL
+
+void probeintr __P((void));
+void probetrap __P((void));
+int npx586bug1 __P((int, int));
+
+#endif
 
 #endif /* !_I386_NPX_H_ */
