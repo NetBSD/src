@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.21 2001/06/17 14:39:32 kleink Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.22 2001/08/25 15:05:22 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -728,7 +728,7 @@ svr4_sys_sysarch(p, v, retval)
 
 	switch (SCARG(uap, op)) {
 	default:
-		printf("(sparc) svr4_sysarch(%d)\n", SCARG(uap, op));
+		printf("(sparc64) svr4_sysarch(%d)\n", SCARG(uap, op));
 		return EINVAL;
 	}
 }
