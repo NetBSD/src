@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.11 2001/04/24 04:31:03 thorpej Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.12 2001/05/01 07:32:51 scw Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 2001/04/24 04:31:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2001/05/01 07:32:51 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,16 +476,12 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 	 */
 	if (ops & BUS_DMASYNC_PREWRITE) {
 		for(i=0;i<map->dm_nsegs;i++) {
-			p = map->dm_segs[i]._ds_cpuaddr;
-			e = p + map->dm_segs[i].ds_len;
-#ifdef DIAGNOSTIC
-			if ((p % 16) || (e % 16)) {
-				panic("unaligned address in _bus_dmamap_sync "
-				    "while flushing.\n"
-				    "address=0x%08lx, end=0x%08lx, ops=0x%x",
-				    p, e, ops);
-			}
-#endif
+			/*
+			 * Ensure the start and end addresses are aligned
+			 * on a cacheline boundary.
+			 */
+			p = map->dm_segs[i]._ds_cpuaddr & ~0xf;
+			e = p + ((map->dm_segs[i].ds_len + 15) & ~0xf);
 
 			while((p<e)&&(p%NBPG)) {
 				DCFL_40(p);	/* flush cache line (060 too) */
@@ -504,16 +500,12 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 
 	if (ops & BUS_DMASYNC_POSTREAD) {
 		for(i=0;i<map->dm_nsegs;i++) {
-			p = map->dm_segs[i]._ds_cpuaddr;
-			e = p + map->dm_segs[i].ds_len;
-#ifdef DIAGNOSTIC
-			if ((p % 16) || (e % 16)) {
-				panic("unaligned address in _bus_dmamap_sync "
-				    "while purging.\n"
-				    "address=0x%08lx, end=0x%08lx, ops=0x%x",
-				    p, e, ops);
-			}
-#endif
+			/*
+			 * Ensure the start and end addresses are aligned
+			 * on a cacheline boundary.
+			 */
+			p = map->dm_segs[i]._ds_cpuaddr & ~0xf;
+			e = p + ((map->dm_segs[i].ds_len + 15) & ~0xf);
 
 			while((p<e)&&(p%NBPG)) {
 				DCPL_40(p);	/* purge cache line */
