@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.11 2000/01/22 22:19:12 mycroft Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.11.6.1 2002/12/29 21:59:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.11 2000/01/22 22:19:12 mycroft Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.11.6.1 2002/12/29 21:59:12 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -189,6 +189,9 @@ sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (0);
 	case USER_TZNAME_MAX:
 		*(int *)oldp = NAME_MAX;
+		return (0);
+	case USER_ATEXIT_MAX:
+		*(int *)oldp = -1; /* ANSI C minimum provided; not limited */
 		return (0);
 	default:
 		errno = EINVAL;

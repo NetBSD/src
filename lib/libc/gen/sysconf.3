@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.15.2.3 2002/03/22 20:42:13 nathanw Exp $
+.\"	$NetBSD: sysconf.3,v 1.15.2.4 2002/12/29 21:59:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sysconf.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd January 31, 2002
+.Dd December 19, 2002
 .Dt SYSCONF 3
 .Os
 .Sh NAME
@@ -68,6 +68,9 @@ The available values are as follows:
 .It Li _SC_ARG_MAX
 The maximum bytes of argument to
 .Xr execve 2 .
+.It Li _SC_ATEXIT_MAX
+The maxmimum number of functions that may be registered with
+.Xr atexit 3 .
 .It Li _SC_CHILD_MAX
 The maximum number of simultaneous processes per user id.
 .It Li _SC_CLK_TCK
