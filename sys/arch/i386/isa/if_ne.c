@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ne.c	7.4 (Berkeley) 5/21/91
- *	$Id: if_ne.c,v 1.13 1993/12/20 09:06:07 mycroft Exp $
+ *	$Id: if_ne.c,v 1.14 1994/01/12 02:58:33 mycroft Exp $
  */
 
 /*
@@ -436,7 +436,7 @@ nestart(ifp)
 {
 	register struct ne_softc *ns = &ne_softc[ifp->if_unit];
 	struct mbuf *m0, *m;
-	int len, i, total,t;
+	int len, i;
 	register nec = ns->ns_port;
 	u_char cmd;
 	u_short word;
@@ -468,10 +468,8 @@ nestart(ifp)
 	 * Copy the mbuf chain into the transmit buffer
 	 */
 
-	len = i = 0;
-	t = 0;
-	for (m0 = m; m != 0; m = m->m_next)
-		t += m->m_len;
+	i = 0;
+	len = m->m_pkthdr.len;
 		
 	/* next code derived from neput() */
 		
@@ -492,8 +490,6 @@ nestart(ifp)
 	/* Execute & stuff to card */
 	outb (nec+ds_cmd, DSCM_RWRITE|DSCM_PG0|DSCM_START);
 
-			m = m0;
-	total = t;
 	if (ns->ns_mode & DSDC_WTS) {        /* Word Mode */
 		while (m != 0) {
 			if (m->m_len > 1)
@@ -531,7 +527,6 @@ nestart(ifp)
 	 * Init transmit length registers, and set transmit start flag.
 	 */
 
-	len = total;
 	if (len < ETHER_MIN_LEN) len = ETHER_MIN_LEN;
 	outb(nec+ds0_tbcr0,len&0xff);
 	outb(nec+ds0_tbcr1,(len>>8)&0xff);
