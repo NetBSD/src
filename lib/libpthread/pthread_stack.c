@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.7 2003/03/08 08:03:36 lukem Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.8 2003/07/17 21:07:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_stack.c,v 1.7 2003/03/08 08:03:36 lukem Exp $");
+__RCSID("$NetBSD: pthread_stack.c,v 1.8 2003/07/17 21:07:39 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -57,45 +57,24 @@ static pthread_t
 pthread__stackid_setup(void *base, int size);
 
 
-/* Allocate a stack for a thread, and set it up. It needs to be aligned, so 
+/*
+ * Allocate a stack for a thread, and set it up. It needs to be aligned, so 
  * that a thread can find itself by its stack pointer. 
  */
 int
 pthread__stackalloc(pthread_t *newt)
 {
 	void *addr;
-	int ret;
-	vaddr_t a, b, c, d;
 
-	/* The mmap() interface doesn't let us specify alignment,
-	 * so we work around it by mmap()'ing twice the needed space,
-	 * then unmapping the unaligned stuff on the edges.
-	 */
+	addr = mmap(NULL, PT_STACKSIZE, PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_PRIVATE | MAP_ALIGNED(PT_STACKSIZE_LG), -1, (off_t)0);
 
-	addr = mmap(NULL, 2 * PT_STACKSIZE, PROT_READ|PROT_WRITE,
-	    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
 	if (addr == MAP_FAILED)
 		return ENOMEM;
 
-	a = (vaddr_t) addr;
+	pthread__assert(((intptr_t)addr & PT_STACKMASK) == 0);
 
-	if ((a & PT_STACKMASK) != 0) {
-		b = (a & ~PT_STACKMASK) + PT_STACKSIZE;
-		ret = munmap((void *)a, (size_t)(b-a));
-		if (ret == -1)
-			return ENOMEM;
-	} else {
-		b = a;
-	}
-
-	c = b + PT_STACKSIZE;
-	d = a + 2*PT_STACKSIZE;
-
-	ret = munmap((void *)c, (size_t)(d-c));
-	if (ret == -1)
-		return ENOMEM;
-
-	*newt = pthread__stackid_setup((void *)b, PT_STACKSIZE); 
+	*newt = pthread__stackid_setup(addr, PT_STACKSIZE); 
 	return 0;
 }
 
