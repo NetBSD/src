@@ -1,5 +1,10 @@
 #	from: @(#)bsd.own.mk	0.1 (RGrimes) 4/4/93
-#	$Id: bsd.own.mk,v 1.6 1993/10/04 19:52:53 cgd Exp $
+#	$Id: bsd.own.mk,v 1.7 1993/11/07 09:45:20 cgd Exp $
+
+# where the system object and source trees are kept; can be configurable
+# by the user in case they want them in ~/foosrc and ~/fooobj, for example
+BSDSRCDIR?=	/usr/src
+BSDOBJDIR?=	/usr/obj
 
 BINGRP?=	bin
 BINOWN?=	bin
