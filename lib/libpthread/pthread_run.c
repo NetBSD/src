@@ -26,7 +26,6 @@ pthread__block(pthread_t self, pt_spin_t *queuelock)
 	next = pthread__next(self);
 
 	pthread__locked_switch(self, next, queuelock);
-	
 }
 
 
@@ -37,14 +36,14 @@ pthread__next(pthread_t self)
 	pthread_t next;
 
 	pthread_spinlock(self, &runqueue_lock);
-	next = SIMPLEQ_FIRST(&runqueue);
+	next = PTQ_FIRST(&runqueue);
 	if (next) {
 		assert(next->pt_type == PT_THREAD_NORMAL);
-		SIMPLEQ_REMOVE_HEAD(&runqueue, next, pt_runq);
+		PTQ_REMOVE(&runqueue, next, pt_runq);
 	} else {
-		next = SIMPLEQ_FIRST(&idlequeue);
+		next = PTQ_FIRST(&idlequeue);
 		assert(next != 0);
-		SIMPLEQ_REMOVE_HEAD(&idlequeue, next, pt_runq);
+		PTQ_REMOVE(&idlequeue, next, pt_runq);
 		assert(next->pt_type == PT_THREAD_IDLE);
 	}
 	pthread_spinunlock(self, &runqueue_lock);
@@ -61,7 +60,7 @@ pthread__sched(pthread_t self, pthread_t thread)
 	assert (thread->pt_type == PT_THREAD_NORMAL);
 	thread->rescheds++;
 	pthread_spinlock(self, &runqueue_lock);
-	SIMPLEQ_INSERT_TAIL(&runqueue, thread, pt_runq);
+	PTQ_INSERT_TAIL(&runqueue, thread, pt_runq);
 	pthread_spinunlock(self, &runqueue_lock);
 }
 
@@ -80,7 +79,7 @@ pthread__sched_idle(pthread_t self, pthread_t thread)
 	makecontext(thread->pt_uc, pthread__idle, 0);
 
 	pthread_spinlock(self, &runqueue_lock);
-	SIMPLEQ_INSERT_TAIL(&idlequeue, thread, pt_runq);
+	PTQ_INSERT_TAIL(&idlequeue, thread, pt_runq);
 	pthread_spinunlock(self, &runqueue_lock);
 }
 
@@ -91,9 +90,9 @@ pthread__sched_idle2(pthread_t self)
 	
 	qhead = NULL;
 	pthread_spinlock(self, &deadqueue_lock);
-	while (!SIMPLEQ_EMPTY(&reidlequeue)) {
-		idlethread = SIMPLEQ_FIRST(&reidlequeue);
-		SIMPLEQ_REMOVE_HEAD(&reidlequeue, idlethread, pt_runq);
+	while (!PTQ_EMPTY(&reidlequeue)) {
+		idlethread = PTQ_FIRST(&reidlequeue);
+		PTQ_REMOVE(&reidlequeue, idlethread, pt_runq);
 		idlethread->pt_next = qhead;
 		qhead = idlethread;
 	}
@@ -119,7 +118,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 			qhead->pt_next = NULL;
 			qhead->pt_parent = NULL;
 			qhead->rescheds++;
-			SIMPLEQ_INSERT_TAIL(&runqueue, qhead, pt_runq);
+			PTQ_INSERT_TAIL(&runqueue, qhead, pt_runq);
 		} else if (qhead->pt_type == PT_THREAD_IDLE) {
 			qhead->pt_next = NULL;
 			qhead->pt_parent = NULL;
@@ -127,7 +126,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 			qhead->pt_uc->uc_stack = qhead->pt_stack;
 			qhead->pt_uc->uc_link = NULL;
 			makecontext(qhead->pt_uc, pthread__idle, 0);
-			SIMPLEQ_INSERT_TAIL(&idlequeue, qhead, pt_runq);
+			PTQ_INSERT_TAIL(&idlequeue, qhead, pt_runq);
 		}
 	}
 	pthread_spinunlock(self, &runqueue_lock);
