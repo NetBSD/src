@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.430 2002/05/19 00:19:22 sommerfeld Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431 2002/05/19 16:02:45 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.427 2002/05/19 00:17:34 sommerfeld Exp 
+ *	NetBSD: pcidevs,v 1.428 2002/05/19 16:00:19 bouyer Exp 
  */
 
 /*
@@ -6374,6 +6374,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Triones Technologies",
 	    "HPT366/370 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT372,
+	    0,
+	    "Triones Technologies",
+	    "HPT372 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT374,
+	    0,
+	    "Triones Technologies",
+	    "HPT374 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,
