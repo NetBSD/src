@@ -1,4 +1,4 @@
-#	$NetBSD: files.uba,v 1.9 2001/05/06 17:37:52 ragge Exp $
+#	$NetBSD: files.uba,v 1.10 2001/06/13 06:40:19 lukem Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. Unibus and Q22 bus.
@@ -44,7 +44,7 @@ device	de: ifnet, ether, arp, ifuba
 attach	de at uba
 file	dev/qbus/if_de.c			de
 
-# Interlan Ethernet controller
+# Interlan NI1010 Ethernet controller
 device	il: ifnet, ether, arp, ifuba
 attach	il at uba
 file	dev/qbus/if_il.c			il
