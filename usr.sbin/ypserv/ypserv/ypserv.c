@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.3 1997/03/05 07:19:52 mikel Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.4 1997/04/17 17:46:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -238,6 +238,28 @@ ypprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 	return;
 }
 
+/*
+ * limited NIS version 1 support: the null, domain, and domain_nonack
+ * request/reply format is identical between v1 and v2.  SunOS4's ypbind
+ * makes v1 domain_nonack calls.
+ */
+static void
+ypprog_1(struct svc_req *rqstp, register SVCXPRT *transp)
+{
+	switch (rqstp->rq_proc) {
+	case YPPROC_NULL:
+	case YPPROC_DOMAIN:
+	case YPPROC_DOMAIN_NONACK:
+		ypprog_2(rqstp, transp);
+		return;
+
+	default:
+		svcerr_noproc(transp);
+		_rpcsvcdirty = 0;
+		return;
+	}
+}
+
 int
 main(argc, argv)
 	int argc;
@@ -297,6 +319,7 @@ main(argc, argv)
 
 	sock = RPC_ANYSOCK;
 	(void) pmap_unset(YPPROG, YPVERS);
+	(void) pmap_unset(YPPROG, YPVERS_ORIG);
 
 	ypopenlog();	/* open log file */
 	ypdb_init();	/* init db stuff */
@@ -312,6 +335,10 @@ main(argc, argv)
 		}
 		if (!_rpcpmstart)
 			proto = IPPROTO_UDP;
+		if (!svc_register(transp, YPPROG, YPVERS_ORIG, ypprog_1, proto)) {
+			_msgout("unable to register (YPPROG, YPVERS_ORIG, udp).");
+			exit(1);
+		}
 		if (!svc_register(transp, YPPROG, YPVERS, ypprog_2, proto)) {
 			_msgout("unable to register (YPPROG, YPVERS, udp).");
 			exit(1);
@@ -329,6 +356,10 @@ main(argc, argv)
 		}
 		if (!_rpcpmstart)
 			proto = IPPROTO_TCP;
+		if (!svc_register(transp, YPPROG, YPVERS_ORIG, ypprog_1, proto)) {
+			_msgout("unable to register (YPPROG, YPVERS_ORIG, tcp).");
+			exit(1);
+		}
 		if (!svc_register(transp, YPPROG, YPVERS, ypprog_2, proto)) {
 			_msgout("unable to register (YPPROG, YPVERS, tcp).");
 			exit(1);
