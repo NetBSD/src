@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.173 2003/08/15 03:42:02 jonathan Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.174 2003/08/22 21:53:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.173 2003/08/15 03:42:02 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.174 2003/08/22 21:53:03 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -1742,7 +1742,7 @@ ip_forward(m, srcrt)
 #endif
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
-			  (struct ip_moptions *)0, (struct inpcb *)0);
+	    (struct ip_moptions *)NULL, (struct socket *)NULL);
 
 	if (error)
 		ipstat.ips_cantforward++;

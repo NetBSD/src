@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.46 2003/08/15 03:42:00 jonathan Exp $ */
+/*	$NetBSD: if_gre.c,v 1.47 2003/08/22 21:53:01 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.46 2003/08/15 03:42:00 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.47 2003/08/22 21:53:01 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -337,7 +337,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	ifp->if_obytes += m->m_pkthdr.len;
 	/* send it off */
 	error = ip_output(m, NULL, &sc->route, 0,
-	    (struct ip_moptions *)0, (struct inpcb *)0);
+	    (struct ip_moptions *)NULL, (struct socket *)NULL);
   end:
 	if (error)
 		ifp->if_oerrors++;
