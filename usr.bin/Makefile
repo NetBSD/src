@@ -9,7 +9,7 @@
 #					to SUBDIR
 #
 
-# BROKEN: tn3270
+# BROKEN: tn3270 rcs
 
 SUBDIR=	ar awk biff basename cal calendar \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
@@ -19,7 +19,7 @@ SUBDIR=	ar awk biff basename cal calendar \
 	ktrace last ld leave lex locate lock logger \
 	login logname lorder m4 machine mail make man mesg mkdep mkfifo \
 	mkstr more netstat nfsstat nice nm nohup pagesize \
-	passwd paste pr printenv printf ranlib rcs \
+	passwd paste pr printenv printf ranlib \
 	rdist renice rlogin rsh ruptime rwho script sed \
 	shar showmount size soelim sort split strings \
 	strip su symorder tail talk tar tee telnet tftp time \
