@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.156 2003/01/09 05:55:30 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.157 2003/01/10 16:34:16 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -678,7 +678,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 #ifdef DEBUG
 	if (!cold) {
 		u_int pc, lvl = ((u_int)s & PSR_PIL) >> 8;
-		if (lvl > IPL_CLOCK) {
+		if (lvl > IPL_SCHED) {
 			__asm("mov %%i7, %0" : "=r" (pc) : );
 			printf("%d: xcall at lvl %u from 0x%x\n",
 				cpu_number(), lvl, pc);
