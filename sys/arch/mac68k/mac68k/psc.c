@@ -1,3 +1,5 @@
+/*	$NetBSD: psc.c,v 1.2 1997/11/07 13:31:23 briggs Exp $	*/
+
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
  * All rights reserved.
