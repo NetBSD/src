@@ -1,4 +1,4 @@
-#	$NetBSD: KZSH401,v 1.7 2000/09/24 15:59:31 jdolecek Exp $
+#	$NetBSD: KZSH401,v 1.8 2000/10/17 09:59:29 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -59,7 +59,6 @@ options 	HZ=64		# clock interrupt generates every 1/HZ sec
 #options 	NTP		# NTP phase/frequency locked loop
 
 #options 	KTRACE		# system call tracing via ktrace(1)
-options 	PMAP_NEW	# new pmap interface
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
