@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2001/04/19 07:11:03 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2001/10/26 23:21:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,8 +41,8 @@
 
 #define	_MACHINE	netwinder
 #define	MACHINE		"netwinder"
-#define	_MACHINE_ARCH	arm32
-#define	MACHINE_ARCH	"arm32"
+#define	_MACHINE_ARCH	arm
+#define	MACHINE_ARCH	"arm"
 
 #include <arm/arm32/param.h>
 
