@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.69 2002/06/02 14:12:54 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.70 2002/06/05 10:00:43 enami Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1077,8 +1077,8 @@ set_crypt_type(void)
 		pwc = fopen(fn, "w");
 		fprintf(pwc,
 		    "default:\n"
-		    "  localcipher = des\n"
-		    "  ypcipher = des\n");
+		    "  localcipher = old\n"
+		    "  ypcipher = old\n");
 		fclose(pwc);
 		break;
 	case 2:	/* MD5 */
