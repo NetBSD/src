@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.106 2004/01/25 14:13:08 bjh21 Exp $
+$NetBSD: UPDATING,v 1.107 2004/02/23 22:51:51 reinoud Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,14 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20040223:
+	As stated in
+	http://mail-index.netbsd.org/current-users/2004/01/11/0022.html
+	relating to the ffs superblock layout change, it needs updating
+	fsck_ffs too or it will keep on complaining. Usings fsck without
+	flags will solve the problem when it replaces the superblocks.
+	Please do read the associated message for sure.
 
 20040125:
 	On acorn32, the beep and sysbeep devices are no longer
