@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.23.2.2 1999/06/25 20:51:32 perry Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.23.2.3 1999/09/03 09:00:13 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -735,7 +735,7 @@ lfs_writeinode(fs, sp, ip)
 		if (sup->su_nbytes < DINODE_SIZE) {
 			/* XXX -- Change to a panic. */
 			printf("lfs_writeinode: negative bytes (segment %d short by %d)\n",
-			       datosn(fs, daddr), DINODE_SIZE - sup->su_nbytes);
+			       datosn(fs, daddr), (int)DINODE_SIZE - sup->su_nbytes);
 			panic("lfs_writeinode: negative bytes");
 			sup->su_nbytes = DINODE_SIZE;
 		}
