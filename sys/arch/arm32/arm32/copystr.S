@@ -1,4 +1,4 @@
-/* $NetBSD: copystr.S,v 1.6 1996/10/15 01:00:30 mark Exp $ */
+/*	$NetBSD: copystr.S,v 1.6.10.1 1997/10/15 05:24:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,6 +41,7 @@
  */
 
 #include "assym.h"
+#include <machine/asm.h>
 #include <sys/errno.h>
 
 ip	.req	r12
@@ -64,32 +65,24 @@ Lcurproc:
  * Copy string from r0 to r1
  */
 
-	.global _copystr
-
-_copystr:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(copystr)
 	stmfd	sp!, {r4-r5}
 	teq	r2, #0x00000000
 	moveq	r4, #0x00000000
 	moveq	r5, #0x00000000
-	beq	copystrexit
+	beq	Lcopystrexit
 
 	mov 	r5, #0x00000000
 
-copystr_loop:
+Lcopystr_loop:
 	ldrb	r4, [r0], #0x0001
 	strb	r4, [r1], #0x0001
 	add	r5, r5, #0x00000001
 	teq	r4, #0x00000000
 	teqne	r5, r2
-	bne	copystr_loop
+	bne	Lcopystr_loop
 
-copystrexit:
+Lcopystrexit:
 	teq	r3, #0x00000000
 	strne	r5, [r3]
 
@@ -110,20 +103,12 @@ copystrexit:
  * Copy string from user space to kernel space
  */
 
-	.global _copyinstr
-
-_copyinstr:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(copyinstr)
 	stmfd	sp!, {r4-r6}
 	teq	r2, #0x00000000
 	moveq	r5, #0x00000000
 	moveq	r6, #0x00000000
-	beq	copyinstrexit
+	beq	Lcopyinstrexit
 
 /* Validate addresses */
 
@@ -144,22 +129,22 @@ _copyinstr:
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
-	beq	copystrpcbfault
+	beq	Lcopystrpcbfault
 #endif
 
-	add	r5, pc, #copystrfault - . - 8
+	add	r5, pc, #Lcopystrfault - . - 8
 	str	r5, [r4, #PCB_ONFAULT]
 	mov 	r6, #0x00000000
 
-copyinstr_loop:
+Lcopyinstr_loop:
 	ldrb	r5, [r0], #0x0001
 	strb	r5, [r1], #0x0001
 	add	r6, r6, #0x00000001
 	teq	r5, #0x00000000
 	teqne	r6, r2
-	bne	copyinstr_loop
+	bne	Lcopyinstr_loop
 
-copyinstrexit:
+Lcopyinstrexit:
 	teq	r3, #0x00000000
 	strne	r6, [r3]
 
@@ -181,20 +166,12 @@ copyinstrexit:
  * Copy string from kernel space to user space
  */
 
-	.global _copyoutstr
-
-_copyoutstr:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(copyoutstr)
 	stmfd	sp!, {r4-r6}
 	teq	r2, #0x00000000
 	moveq	r5, #0x00000000
 	moveq	r6, #0x00000000
-	beq	copyinstrexit
+	beq	Lcopyinstrexit
 
 /* Validate addresses */
 
@@ -215,22 +192,22 @@ _copyoutstr:
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
-	beq	copystrpcbfault
+	beq	Lcopystrpcbfault
 #endif
 
-	add	r5, pc, #copystrfault - . - 8
+	add	r5, pc, #Lcopystrfault - . - 8
 	str	r5, [r4, #PCB_ONFAULT]
 	mov 	r6, #0x00000000
 
-copyoutstr_loop:
+Lcopyoutstr_loop:
 	ldrb	r5, [r0], #0x0001
 	strb	r5, [r1], #0x0001
 	add	r6, r6, #0x00000001
 	teq	r5, #0x00000000
 	teqne	r6, r2
-	bne	copyoutstr_loop
+	bne	Lcopyoutstr_loop
 
-copyoutstrexit:
+Lcopyoutstrexit:
 	teq	r3, #0x00000000
 	strne	r6, [r3]
 
@@ -250,7 +227,7 @@ Lvm_maxuser_address:
 Lvm_maxkern_address:
 	.word	VM_MAXKERN_ADDRESS
 
-copystrfault:
+Lcopystrfault:
 	mov	r0, #0x00000000
 	str	r0, [r4, #PCB_ONFAULT]
 	mov	r0, #EFAULT
@@ -263,15 +240,15 @@ Lbadaddress:
 	mov	pc, lr
 
 #ifdef DIAGNOSTIC
-copystrpcbfault:
+Lcopystrpcbfault:
 	mov	r2, r1
 	mov	r1, r0
 	ldr	r2, Lcurproc
 	ldr	r2, [r2]
-	add	r0, pc, #copystrpcbfaulttext - . - 8
+	add	r0, pc, #Lcopystrpcbfaulttext - . - 8
 	b	_panic
 
-copystrpcbfaulttext:
+Lcopystrpcbfaulttext:
 	.asciz	"Yikes - no valid PCB during copystr() addr1=%08x addr2=%08x curproc=%08x\n"
 	.align	0
 #endif

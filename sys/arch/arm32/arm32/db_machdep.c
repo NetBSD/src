@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.6 1996/10/15 01:23:36 mark Exp $ */
+/* $NetBSD: db_machdep.c,v 1.6.10.1 1997/10/15 05:24:59 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -245,5 +245,3 @@ db_show_frame_cmd(addr, have_addr, count, modif)
 	    frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
 	db_printf("slr=%08x\n", frame->tf_svc_lr);
 }
-
-
