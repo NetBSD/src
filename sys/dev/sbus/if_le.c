@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.21 2002/03/20 20:39:15 eeh Exp $	*/
+/*	$NetBSD: if_le.c,v 1.22 2002/09/12 16:01:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.21 2002/03/20 20:39:15 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.22 2002/09/12 16:01:06 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -259,7 +259,7 @@ leattach_sbus(parent, self, aux)
 
 		/* Load DMA buffer */
 		if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap, sc->sc_mem,
-		    MEMSIZE, NULL, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		    MEMSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
 			printf("%s: DMA buffer map load error %d\n",
 				self->dv_xname, error);
 			bus_dmamem_free(dmatag, &seg, rseg);
