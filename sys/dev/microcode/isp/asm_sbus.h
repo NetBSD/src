@@ -1,5 +1,5 @@
-/* $NetBSD: asm_sbus.h,v 1.10 1999/01/31 04:56:20 mjacob Exp $ */
-/* release_01_29_99+ */
+/* $NetBSD: asm_sbus.h,v 1.11 1999/03/17 05:11:57 mjacob Exp $ */
+/* release_03_16_99 */
 /*
  * SBus Qlogic Host Adapter Firmware Tables
  * Copyright (c) 1996, 1997, 1998 by Qlogic Corporation
