@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.46 2003/05/07 13:00:24 grant Exp $	*/
+/*	$NetBSD: ls.c,v 1.47 2003/05/07 13:23:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.46 2003/05/07 13:00:24 grant Exp $");
+__RCSID("$NetBSD: ls.c,v 1.47 2003/05/07 13:23:32 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,6 +155,7 @@ ls_main(int argc, char *argv[])
 		/* The -g option implies -l */
 		case 'g':
 			f_grouponly = 1;
+			/* FALLTHROUGH */
 		case 'l':
 			f_longform = 1;
 			f_column = f_columnacross = f_singlecol = f_stream = 0;
