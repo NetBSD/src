@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.15 1994/01/08 04:59:08 mycroft Exp $
+ *	$Id: vm_object.c,v 1.16 1994/01/15 02:39:58 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -477,8 +477,8 @@ vm_object_page_clean(object, start, end)
 again:
 	p = (vm_page_t) queue_first(&object->memq);
 	while (!queue_end(&object->memq, (queue_entry_t) p)) {
-		if (start == end ||
-		    p->offset >= start && p->offset < end) {
+		if ((start == end || p->offset >= start && p->offset < end) &&
+		    !(p->flags & PG_FICTITIOUS)) {
 			if ((p->flags & PG_CLEAN) &&
 			    pmap_is_modified(VM_PAGE_TO_PHYS(p)))
 				p->flags &= ~PG_CLEAN;
