@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.9 1997/01/09 20:21:40 tls Exp $
+#	$NetBSD: Makefile,v 1.10 1997/07/02 05:42:11 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	su
 BINOWN=	root
 BINMODE=4555
 INSTALLFLAGS=-fschg
+
+# Uncomment the following line to change the group that may su root to "sugroup"
+#
+#CFLAGS+=-DSUGROUP=\"sugroup\"
 
 .include <bsd.prog.mk>
 
