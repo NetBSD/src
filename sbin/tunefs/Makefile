@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/08/19 10:17:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2005/02/09 06:26:13 xtraeme Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -10,6 +10,6 @@ LDADD+=-lutil
 
 .PATH:  ${NETBSDSRCDIR}/sys/ufs/ffs
 
-WARNS?=2
+WARNS=	3
 
 .include <bsd.prog.mk>
