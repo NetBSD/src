@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.18 1996/04/30 00:41:51 pk Exp $	*/
+/*	$NetBSD: pstat.c,v 1.19 1996/05/02 00:13:19 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.18 1996/04/30 00:41:51 pk Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.19 1996/05/02 00:13:19 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -406,6 +406,8 @@ vnode_print(avnode, vp)
 		*fp++ = 'T';
 	if (flag & VSYSTEM)
 		*fp++ = 'S';
+	if (flag & VISTTY)
+		*fp++ = 'I';
 	if (flag & VXLOCK)
 		*fp++ = 'L';
 	if (flag & VXWANT)
