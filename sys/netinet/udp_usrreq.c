@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.92 2001/12/21 02:51:08 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.93 2002/05/12 20:33:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.92 2001/12/21 02:51:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.93 2002/05/12 20:33:51 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -138,6 +138,9 @@ int	udpcksum = 1;
 #else
 int	udpcksum = 0;		/* XXX */
 #endif
+
+struct	inpcbtable udbtable;
+struct	udpstat udpstat;
 
 #ifdef INET
 static void udp4_sendup __P((struct mbuf *, int, struct sockaddr *,

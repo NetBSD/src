@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.51 2001/11/13 00:57:07 lukem Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.52 2002/05/12 20:33:51 matt Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.51 2001/11/13 00:57:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.52 2002/05/12 20:33:51 matt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -116,7 +116,9 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.51 2001/11/13 00:57:07 lukem Exp $
  * Per RFC 768, August, 1980.
  */
 
+struct	in6pcb udb6;
 struct	in6pcb *udp6_last_in6pcb = &udb6;
+struct	udp6stat udp6stat;
 
 static	void udp6_detach __P((struct in6pcb *));
 static	void udp6_notify __P((struct in6pcb *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.89 2002/03/15 09:25:42 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.90 2002/05/12 20:33:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -618,12 +618,12 @@ struct	tcpstat {
 }
 
 #ifdef _KERNEL
-struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
+extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
 #ifdef INET6
-extern struct in6pcb tcb6;
+extern	struct in6pcb tcb6;
 #endif
-struct	tcpstat tcpstat;	/* tcp statistics */
-u_int32_t tcp_now;		/* for RFC 1323 timestamps */
+extern	struct tcpstat tcpstat;	/* tcp statistics */
+extern	u_int32_t tcp_now;	/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_do_sack;	/* SACK enabled/disabled? */
 extern	int tcp_do_win_scale;	/* RFC1323 window scaling enabled/disabled? */

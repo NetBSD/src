@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.149 2002/05/12 15:48:39 wiz Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.150 2002/05/12 20:33:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.149 2002/05/12 15:48:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.150 2002/05/12 20:33:50 matt Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -201,6 +201,8 @@ struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
 extern	struct domain inetdomain;
 int	ipqmaxlen = IFQ_MAXLEN;
+u_long	in_ifaddrhash;				/* size of hash table - 1 */
+int	in_ifaddrentries;			/* total number of addrs */
 struct	in_ifaddrhead in_ifaddr;
 struct	in_ifaddrhashhead *in_ifaddrhashtbl;
 struct	ifqueue ipintrq;

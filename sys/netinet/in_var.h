@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.43 2001/11/04 20:55:27 matt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.44 2002/05/12 20:33:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,11 +131,11 @@ struct	in_aliasreq {
 
 #define	IN_IFADDR_HASH(x) in_ifaddrhashtbl[(u_long)(x) % IN_IFADDR_HASH_SIZE]
 
-u_long in_ifaddrhash;				/* size of hash table - 1 */
-int	in_ifaddrentries;			/* total number of addrs */
 LIST_HEAD(in_ifaddrhashhead, in_ifaddr);	/* Type of the hash head */
 TAILQ_HEAD(in_ifaddrhead, in_ifaddr);		/* Type of the list head */
 
+extern	u_long in_ifaddrhash;			/* size of hash table - 1 */
+extern	int	in_ifaddrentries;		/* total number of addrs */
 extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
 extern  struct in_ifaddrhead in_ifaddr;		/* List head (in ip_input) */
 

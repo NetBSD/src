@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.126 2002/05/07 02:59:39 matt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.127 2002/05/12 20:33:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.126 2002/05/07 02:59:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127 2002/05/12 20:33:50 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -162,6 +162,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.126 2002/05/07 02:59:39 matt Exp $");
 #ifdef INET6
 struct in6pcb tcb6;
 #endif
+
+struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
+struct	tcpstat tcpstat;	/* tcp statistics */
+u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 
 /* patchable/settable parameters for tcp */
 int 	tcp_mssdflt = TCP_MSS;
