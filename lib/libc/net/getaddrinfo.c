@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.60 2002/07/01 21:05:56 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.61 2002/07/01 22:05:08 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.60 2002/07/01 21:05:56 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.61 2002/07/01 22:05:08 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1103,7 +1103,7 @@ ip6_str2scopeid(scope, sin6, scopeid)
   trynumeric:
 	errno = 0;
 	lscopeid = strtoul(scope, &ep, 10);
-	*scopeid = (u_int32_t)(lscopeid & 0xffffffff);
+	*scopeid = (u_int32_t)(lscopeid & 0xffffffffUL);
 	if (errno == 0 && ep && *ep == '\0' && *scopeid == lscopeid)
 		return 0;
 	else
