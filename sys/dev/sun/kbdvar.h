@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.6 2000/05/19 05:26:18 eeh Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.7 2000/09/21 23:40:47 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,11 +83,21 @@ struct kbd_softc {
 
 	/* Stuff our parent setup */
 	union {
-		struct	zs_chanstate *ku_zcs;
-		struct	ucom_softc *ku_usc;
-	} k_cs_u;
-#define	k_cs k_cs_u.ku_zcs
-#define	k_usc k_cs_u.ku_usc
+		struct zs_chanstate *ku_cs;
+		struct ucom_softc *ku_usc;
+		void *ku_priv;
+	} k_u;
+#define	k_cs k_u.ku_cs
+#define	k_usc k_u.ku_usc
+#define k_priv k_u.ku_priv
+
+	/*
+	 * The deviopen and deviclose routines are provided
+	 * by the lower level driver and used as a back door
+	 * when opening and closing the internal device.
+	 */
+	int	(*k_deviopen)	__P((struct device *, int));
+	int	(*k_deviclose)	__P((struct device *, int));
 	void	(*k_write_data) __P((struct kbd_softc *, int));
 
 	/* Flags to communicate with kbd_softint() */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msvar.h,v 1.1 1999/05/14 07:07:16 mrg Exp $	*/
+/*	$NetBSD: msvar.h,v 1.2 2000/09/21 23:40:47 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +80,14 @@
 struct ms_softc {
 	struct	device ms_dev;		/* required first: base device */
 	struct	zs_chanstate *ms_cs;
+
+	/*
+	 * The deviopen and deviclose routines are provided
+	 * by the lower level driver and used as a back door
+	 * when opening and closing the internal device.
+	 */
+	int	(*ms_deviopen)	__P((struct device *, int));
+	int	(*ms_deviclose)	__P((struct device *, int));
 
 	/* Flags to communicate with ms_softintr() */
 	volatile int ms_intr_flags;
