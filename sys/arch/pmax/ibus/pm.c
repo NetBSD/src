@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.1.16.1 2002/03/15 14:22:42 ad Exp $	*/
+/*	$NetBSD: pm.c,v 1.1.16.2 2002/03/16 10:38:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.1.16.1 2002/03/15 14:22:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.1.16.2 2002/03/16 10:38:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,10 +130,10 @@ int	pm_alloc_screen(void *, const struct wsscreen_descr *,
 void	pm_free_screen(void *, void *);
 int	pm_show_screen(void *, void *, int,
 			       void (*) (void *, int, int), void *);
-void	pm_cursor_off(struct rasops_info *);
+void	pm_cursor_off(void);
 void	pm_cursor_on(struct pm_softc *);
-int		pm_cnattach(void);
-void	pm_common_init(struct rasops_info *);
+int	pm_cnattach(void);
+void	pm_common_init(void);
 int	pm_flush(struct pm_softc *);
 int	pm_get_cmap(struct pm_softc *, struct wsdisplay_cmap *);
 int	pm_set_cmap(struct pm_softc *, struct wsdisplay_cmap *);
@@ -207,7 +207,7 @@ pmattach(struct device *parent, struct device *self, void *aux)
 	if (console)
 		sc->sc_nscreens = 1;
 	else
-		pm_common_init(ri);
+		pm_common_init();
 
 	printf(": %dx%d, %dbpp\n", ri->ri_width, ri->ri_height, ri->ri_depth);
 
@@ -247,35 +247,33 @@ pm_init_cmap(struct pm_softc *sc)
 		sc->sc_cmap_size = 256;
 		sc->sc_fb_size = 0x100000;
 	} else {
-		cm->r[0] = 0;
-		cm->g[0] = 0;
-		cm->b[0] = 0;
-		for (index = 1; index < 256; index++) {
-			cm->r[0] = 0xff;
-			cm->g[0] = 0xff;
-			cm->b[0] = 0xff;
-		}
+		cm->r[0] = 0x00;
+		cm->g[0] = 0x00;
+		cm->b[0] = 0x00;
+
+		cm->r[1] = 0x00;
+		cm->g[1] = 0xff;
+		cm->b[1] = 0x00;
 
 		sc->sc_type = WSDISPLAY_TYPE_PM_MONO;
 		sc->sc_cmap_size = 2;
-		sc->sc_fb_size = 0x20000;
+		sc->sc_fb_size = 0x40000;
 	}
 }
 
 void
-pm_common_init(struct rasops_info *ri)
+pm_common_init(void)
 {
-	int cookie, bior;
+	struct rasops_info *ri;
+	int cookie, bior, i;
 	PCCRegs *pcc;
-#if 0
 	VDACRegs *vdac;
-	int i;
-#endif
 	u_int16_t kn01csr;
 
-	printf("pm_common_init: 0\n");
-
 	kn01csr = *(volatile u_int16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
+	pcc = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
+	vdac = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_VDAC);
+	ri = &pm_ri;
 
 	ri->ri_flg = RI_CENTER;
 	ri->ri_depth = ((kn01csr & KN01_CSR_MONO) != 0 ? 1 : 8);
@@ -283,8 +281,6 @@ pm_common_init(struct rasops_info *ri)
 	ri->ri_height = 864;
 	ri->ri_stride = (ri->ri_depth == 8 ? 1024 : 2048 / 8);
 	ri->ri_bits = (void *)MIPS_PHYS_TO_KSEG1(KN01_PHYS_FBUF_START);
-
-	printf("pm_common_init: 1\n");
 
 	/*
 	 * Clear the screen.
@@ -299,8 +295,6 @@ pm_common_init(struct rasops_info *ri)
 	bior = (ri->ri_depth == 8 ? WSDISPLAY_FONTORDER_L2R :
 	    WSDISPLAY_FONTORDER_R2L);
 
-	printf("pm_common_init: 2\n");
-
 	wsfont_init();
 	cookie = wsfont_find(NULL, 8, 0, 0, bior, WSDISPLAY_FONTORDER_L2R);
 	if (cookie <= 0)
@@ -311,35 +305,28 @@ pm_common_init(struct rasops_info *ri)
 		return;
 	}
 
-	printf("pm_common_init: 3\n");
-
 	if (wsfont_lock(cookie, &ri->ri_font)) {
 		printf("pm: couldn't lock font\n");
 		return;
 	}
 	ri->ri_wsfcookie = cookie;
 
-	printf("pm_common_init: 4\n");
-
 	/*
 	 * Set up the raster operations set.
 	 */
 	rasops_init(ri, 34, 80);
-
-	printf("pm_common_init: 5\n");
 
 	pm_stdscreen.nrows = ri->ri_rows;
 	pm_stdscreen.ncols = ri->ri_cols;
 	pm_stdscreen.textops = &ri->ri_ops;
 	pm_stdscreen.capabilities = ri->ri_caps;
 
-	printf("pm_common_init: 6\n");
-
-#if 0
 	/*
 	 * Initalize the VDAC.
 	 */
-	vdac = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_VDAC);
+	*(u_int8_t *)MIPS_PHYS_TO_KSEG1(KN01_PHYS_COLMASK_START) = 0xff;
+	wbflush();
+
 	vdac->overWA = 0x04; wbflush();
 	vdac->over = 0x00; wbflush();
 	vdac->over = 0x00; wbflush();
@@ -372,43 +359,27 @@ pm_common_init(struct rasops_info *ri)
 		vdac->mapWA = 0;
 		wbflush();
 
-		vdac->map = 0x00;
-		wbflush();
-		vdac->map = 0x00;
-		wbflush();
-		vdac->map = 0x00;
-		wbflush();
-
-		for (i = 1; i < 256; i++) {
-			vdac->map = 0xff;
+		for (i = 0; i < 256; i++) {
+			vdac->map = 0x00;
 			wbflush();
-			vdac->map = 0xff;
+			vdac->map = (i < 128 ? 0x00 : 0xff);
 			wbflush();
-			vdac->map = 0xff;
+			vdac->map = 0x00;
 			wbflush();
 		}
 	}
-#endif
-	printf("pm_common_init: 7 - sleeping for 3 seconds\n");
-	DELAY(1000*1000*3)
-	
+
 	/*
 	 * Turn off the hardware cursor sprite for rcons text mode.
 	 */
-	pcc->cmdr = (pm_creg = PCC_FOPB | PCC_VBHI);
+	pcc->cmdr = PCC_FOPB | PCC_VBHI;
 	wbflush();
-
-	printf("pm_common_init: 8 - sleeping for 3 seconds\n");
-	DELAY(1000*1000*3)
-
-	pm_cursor_off(ri);
-
-	printf("pm_common_init: 9 - sleeping for 3 seconds\n");
-	DELAY(1000*1000*3)
+	pm_creg = 0;
+	pm_cursor_off();
 }
 
 void
-pm_cursor_off(struct rasops_info *ri)
+pm_cursor_off(void)
 {
 	PCCRegs *pcc;
 	VDACRegs *vdac;
@@ -461,7 +432,7 @@ pm_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_SMODE:
 		if (*(u_int *)data == WSDISPLAYIO_MODE_EMUL) {
-			pm_cursor_off(ri);
+			pm_cursor_off();
 			pm_init_cmap(sc);
 			memset(ri->ri_bits, 0, ri->ri_stride * ri->ri_height); 
 			sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
@@ -498,7 +469,7 @@ pm_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			} else {
 				pcc->cmdr =
 				    (pm_creg |= (PCC_FOPA | PCC_FOPB));
-				pm_cursor_off(ri);
+				pm_cursor_off();
 			}
 		}
 		rv = 0;
@@ -600,10 +571,11 @@ pm_cnattach(void)
 	struct rasops_info *ri;
 	long defattr;
 
+	ri = &pm_ri;
+
 	printf("pm_cnattach: 0\n");
 
-	ri = &pm_ri;
-	pm_common_init(ri);
+	pm_common_init();
 
 	printf("pm_cnattach: 1\n");
 
@@ -615,7 +587,7 @@ pm_cnattach(void)
 
 	printf("pm_cnattach: 3\n");
 
-	return(0);
+	return (1);
 }
 
 int
@@ -640,7 +612,7 @@ pm_flush(struct pm_softc *sc)
 		if (sc->sc_curenb)
 			pm_cursor_on(sc);
 		else
-			pm_cursor_off(ri);
+			pm_cursor_off();
 	}
 
 	/*
@@ -702,13 +674,32 @@ pm_flush(struct pm_softc *sc)
 		vdac->mapWA = 0;
 		wbflush();
 
-		for (i = 0; i < sc->sc_cmap_size; i++) {
-			vdac->map = cm->r[i];
-			wbflush();
-			vdac->map = cm->g[i];
-			wbflush();
-			vdac->map = cm->b[i];
-			wbflush();
+		if (sc->sc_cmap_size == 2) {
+			for (i = 0; i < 128; i++) {
+				vdac->map = cm->r[0];
+				wbflush();
+				vdac->map = cm->g[0];
+				wbflush();
+				vdac->map = cm->b[0];
+				wbflush();
+			}
+			for (; i < 256; i++) {
+				vdac->map = cm->r[1];
+				wbflush();
+				vdac->map = cm->g[1];
+				wbflush();
+				vdac->map = cm->b[1];
+				wbflush();
+			}
+		} else {
+			for (i = 0; i < sc->sc_cmap_size; i++) {
+				vdac->map = cm->r[i];
+				wbflush();
+				vdac->map = cm->g[i];
+				wbflush();
+				vdac->map = cm->b[i];
+				wbflush();
+			}
 		}
 	}
 
