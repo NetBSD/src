@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.28.2.1 1999/11/08 06:40:24 cgd Exp $	*/
+/*	$NetBSD: ps.c,v 1.28.2.2 2000/05/22 21:40:32 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.28.2.1 1999/11/08 06:40:24 cgd Exp $");
+__RCSID("$NetBSD: ps.c,v 1.28.2.2 2000/05/22 21:40:32 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,9 +122,7 @@ main(argc, argv)
 	char *ttname;
 
 	(void)setegid(getgid());
-	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
-	     ioctl(STDERR_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
-	     ioctl(STDIN_FILENO,  TIOCGWINSZ, (char *)&ws) == -1) ||
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 ||
 	     ws.ws_col == 0)
 		termwidth = 79;
 	else
