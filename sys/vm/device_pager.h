@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.h	8.1 (Berkeley) 6/11/93
- *	$Id: device_pager.h,v 1.5 1993/12/20 12:39:57 cgd Exp $
+ *	$Id: device_pager.h,v 1.5.4.1 1994/03/18 05:45:47 cgd Exp $
  */
 
 #ifndef	_DEVICE_PAGER_
@@ -46,7 +46,7 @@
  * Device pager private data.
  */
 struct devpager {
-	queue_head_t	devp_pglist;	/* list of pages allocated */
+	struct pglist	devp_pglist;	/* list of pages allocated */
 	vm_object_t	devp_object;	/* object representing this device */
 };
 typedef struct devpager	*dev_pager_t;

@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm.h	7.1 (Berkeley) 5/5/91
- *	$Id: vm.h,v 1.9 1994/03/17 02:52:02 cgd Exp $
+ *	$Id: vm.h,v 1.9.2.1 1994/03/18 05:46:04 cgd Exp $
  */
 
-#ifndef _VM_H_
-#define _VM_H_
+#ifndef VM_H
+#define VM_H
 
 typedef int vm_inherit_t;		/* XXX: inheritance codes */
 
@@ -43,30 +43,30 @@ union vm_map_object;
 typedef union vm_map_object vm_map_object_t;
 
 struct vm_map_entry;
-typedef struct vm_map_entry *vm_map_entry_t; 
- 
+typedef struct vm_map_entry *vm_map_entry_t;
+
 struct vm_map;
 typedef struct vm_map *vm_map_t;
- 
-struct vm_object; 
+
+struct vm_object;
 typedef struct vm_object *vm_object_t;
- 
+
 struct vm_page;
 typedef struct vm_page  *vm_page_t;
- 
+
 struct pager_struct;
 typedef struct pager_struct *vm_pager_t;
 
 #include <sys/vmmeter.h>
-#include <vm/queue.h>			/* sys/queue.h in 4.4 */
+#include <sys/queue.h>
 #include <vm/vm_param.h>
 #include <vm/lock.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_inherit.h>
-#include <vm/vm_object.h>
-#include <vm/vm_statistics.h>
-#include <vm/pmap.h>
 #include <vm/vm_map.h>
+#include <vm/vm_object.h>
+#include <vm/pmap.h>
+#include <vm/vm_extern.h>
 
 /*
  * Shareable process virtual address space.
@@ -89,18 +89,4 @@ struct vmspace {
 	caddr_t	vm_daddr;	/* user virtual address of data XXX */
 	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
 };
-
-struct	vmspace *vmspace_alloc __P((vm_offset_t min, vm_offset_t max,
-			int pageable));
-struct	vmspace *vmspace_fork __P((struct vmspace *));
-void	vmspace_free __P((struct vmspace *));
-
-int	vm_fault __P((vm_map_t, vm_offset_t, vm_prot_t, boolean_t));
-void	vm_fault_wire __P((vm_map_t, vm_offset_t, vm_offset_t));
-void	vm_fault_unwire __P((vm_map_t, vm_offset_t, vm_offset_t));
-void	vm_fault_copy_entry __P((vm_map_t, vm_map_t, vm_map_entry_t, vm_map_entry_t));
-
-void	vslock __P((caddr_t, u_int));
-void	vsunlock __P((caddr_t, u_int, int));
-
-#endif /* !_VM_VM_H_ */
+#endif /* VM_H */

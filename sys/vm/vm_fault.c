@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_fault.c	7.6 (Berkeley) 5/7/91
- *	$Id: vm_fault.c,v 1.11 1994/03/17 02:52:04 cgd Exp $
+ *	$Id: vm_fault.c,v 1.11.2.1 1994/03/18 05:46:07 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -114,7 +114,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 	vm_page_t		old_m;
 	vm_object_t		next_object;
 
-	vm_stat.faults++;		/* needs lock XXX */
+	cnt.v_faults++;		/* needs lock XXX */
 /*
  *	Recovery actions
  */
@@ -269,16 +269,14 @@ thread_wakeup(&vm_pages_needed); /* XXX! */
 
 			vm_page_lock_queues();
 			if (m->flags & PG_INACTIVE) {
-				queue_remove(&vm_page_queue_inactive, m,
-						vm_page_t, pageq);
+				TAILQ_REMOVE(&vm_page_queue_inactive, m, pageq);
 				m->flags &= ~PG_INACTIVE;
 				vm_page_inactive_count--;
-				vm_stat.reactivations++;
+				cnt.v_reactivated++;
 			} 
 
 			if (m->flags & PG_ACTIVE) {
-				queue_remove(&vm_page_queue_active, m,
-						vm_page_t, pageq);
+				TAILQ_REMOVE(&vm_page_queue_active, m, pageq);
 				m->flags &= ~PG_ACTIVE;
 				vm_page_active_count--;
 			}
@@ -340,7 +338,7 @@ thread_wakeup(&vm_pages_needed); /* XXX! */
 				 */
 				m = vm_page_lookup(object, offset);
 
-				vm_stat.pageins++;
+				cnt.v_pageins++;
 				m->flags &= ~PG_FAKE;
 				pmap_clear_modify(VM_PAGE_TO_PHYS(m));
 				break;
@@ -411,7 +409,7 @@ thread_wakeup(&vm_pages_needed); /* XXX! */
 			first_m = NULL;
 
 			vm_page_zero_fill(m);
-			vm_stat.zero_fill_count++;
+			cnt.v_zfod++;
 			m->flags &= ~PG_FAKE;
 			break;
 		}
@@ -505,7 +503,7 @@ thread_wakeup(&vm_pages_needed); /* XXX! */
 			 *	Only use the new page below...
 			 */
 
-			vm_stat.cow_faults++;
+			cnt.v_cow_faults++;
 			m = first_m;
 			object = first_object;
 			offset = first_offset;
