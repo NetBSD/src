@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.1 1999/05/12 07:46:43 tron Exp $
+/* $NetBSD: lkminit_vfs.c,v 1.2 1999/05/12 09:00:11 tron Exp $
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,18 +49,18 @@
 /*
  * This is the vfsops table for the file system in question
  */
-extern struct vfsops ntfsfs_vfsops;
+extern struct vfsops ntfs_vfsops;
 
 /*
  * declare the filesystem
  */
-MOD_VFS("ntfsfs", -1, &ntfsfs_vfsops);
+MOD_VFS("ntfs", -1, &ntfs_vfsops);
 
 /*
  * entry point
  */
 int
-ntfsfs_lkmentry(lkmtp, cmd, ver)
+ntfs_lkmentry(lkmtp, cmd, ver)
 	struct lkm_table *lkmtp;	
 	int cmd;
 	int ver;
