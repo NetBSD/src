@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.26 2003/04/03 06:21:36 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.27 2003/04/14 14:36:48 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -160,7 +160,7 @@ ssh_proxy_connect(const char *host, u_short port, const char *proxy_command)
  * Creates a (possibly privileged) socket for use as the ssh connection.
  */
 static int
-ssh_create_socket(int privileged, int family)
+ssh_create_socket(int privileged, struct addrinfo *ai)
 {
 	int sock, gaierr;
 	struct addrinfo hints, *res;
@@ -172,15 +172,16 @@ ssh_create_socket(int privileged, int family)
 	if (privileged) {
 		int p = IPPORT_RESERVED - 1;
 		PRIV_START;
-		sock = rresvport_af(&p, family);
+		sock = rresvport_af(&p, ai->ai_family);
 		PRIV_END;
 		if (sock < 0)
-			error("rresvport: af=%d %.100s", family, strerror(errno));
+			error("rresvport: af=%d %.100s", ai->ai_family,
+			    strerror(errno));
 		else
 			debug("Allocated local port %d.", p);
 		return sock;
 	}
-	sock = socket(family, SOCK_STREAM, 0);
+	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 	if (sock < 0)
 		error("socket: %.100s", strerror(errno));
 
@@ -189,8 +190,9 @@ ssh_create_socket(int privileged, int family)
 		return sock;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = family;
-	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_family = ai->ai_family;
+	hints.ai_socktype = ai->ai_socktype;
+	hints.ai_protocol = ai->ai_protocol;
 	hints.ai_flags = AI_PASSIVE;
 	gaierr = getaddrinfo(options.bind_address, "0", &hints, &res);
 	if (gaierr) {
@@ -292,7 +294,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 				host, ntop, strport);
 
 			/* Create a socket for connecting. */
-			sock = ssh_create_socket(needpriv, ai->ai_family);
+			sock = ssh_create_socket(needpriv, ai);
 			if (sock < 0)
 				/* Any error is already output */
 				continue;
