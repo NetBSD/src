@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.9 2002/08/11 12:08:55 drochner Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.10 2002/08/28 09:38:08 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.9 2002/08/11 12:08:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.10 2002/08/28 09:38:08 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -129,6 +129,10 @@ ieee80211_ifattach(struct ifnet *ifp)
 	int i, rate;
 
 	ether_ifattach(ifp, ic->ic_myaddr);
+#if NBPFILTER > 0
+	bpfattach2(ifp, DLT_IEEE802_11,
+	    sizeof(struct ieee80211_frame_addr4), &ic->ic_rawbpf);
+#endif
 	ieee80211_crc_init();
 	memcpy(ic->ic_chan_active, ic->ic_chan_avail,
 	    sizeof(ic->ic_chan_active));
@@ -236,6 +240,11 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 			goto err;
 		wh = mtod(m, struct ieee80211_frame *);
 	}
+#if NBPFILTER > 0
+	/* copy to listener after decrypt */
+	if (ic->ic_rawbpf)
+		bpf_mtap(ic->ic_rawbpf, m);
+#endif
 
 	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 
