@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.286 2002/04/23 07:20:22 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.287 2002/04/26 14:27:23 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -30,19 +30,11 @@ PRINTOBJDIR=	${MAKE} -V .OBJDIR
 PRINTOBJDIR=	echo # prevent infinite recursion
 .endif
 
-# Where the system object and source trees are kept; can be configurable
-# by the user in case they want them in ~/foosrc and ~/fooobj (for example).
-#
-BSDSRCDIR?=	/usr/src
-BSDOBJDIR?=	/usr/obj
-
 # Determine if running in the NetBSD source tree by checking for the
 # existence of build.sh and tools/ in the current or a parent directory,
 # and setting _SRC_TOP_ to the result.
-# If no match is found, (e.g., make(1) is running outside of the NetBSD
-# source tree), set _SRC_TOP_ to ${BSDSRCDIR}.
 #
-.if !defined(_SRC_TOP_)
+.if !defined(_SRC_TOP_)			# {
 _SRC_TOP_!= cd ${.CURDIR}; while :; do \
 		here=`pwd`; \
 		[ -f build.sh  ] && [ -d tools ] && { echo $$here; break; }; \
@@ -50,27 +42,35 @@ _SRC_TOP_!= cd ${.CURDIR}; while :; do \
 		cd ..; done 
 
 .MAKEOVERRIDES+=	_SRC_TOP_
+
+.endif					# }
+
+# If _SRC_TOP != "", we're within the NetBSD source tree, so set
+# various defaults.
+#
+.if (${_SRC_TOP_} != "")		# {
+
+#   The default for BSDSRCDIR is ${_SRC_TOP_},
+#   and the default for BSDOBJDIR is the objdir of ${BSDSRCDIR}
+#
+BSDSRCDIR?=	${_SRC_TOP_}
+.if !defined(BSDOBJDIR)
+BSDOBJDIR!=	cd ${BSDSRCDIR} && ${PRINTOBJDIR}
 .endif
 
-# (At this point, if not inside the NetBSD source tree, ${_SRC_TOP_} == "").
+.if !defined(_SRC_TOP_OBJ_)
+_SRC_TOP_OBJ_!=		cd ${_SRC_TOP_} && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=	_SRC_TOP_OBJ_
+.endif
+
+.endif	# _SRC_TOP != ""		# }
+
 
 .if (${_SRC_TOP_} != "") && defined(USE_NEW_TOOLCHAIN)
 USETOOLS?=	yes
 .endif
 USETOOLS?=	no
 
-.if (${_SRC_TOP_} == "")
-_SRC_TOP_=	${BSDSRCDIR}		# fall back to ${BSDSRCDIR}
-.endif
-
-# End of logic to set _SRC_TOP_
-#
-
-
-.if !defined(_SRC_TOP_OBJ_)
-_SRC_TOP_OBJ_!=		cd ${_SRC_TOP_} && ${PRINTOBJDIR}
-.MAKEOVERRIDES+=	_SRC_TOP_OBJ_
-.endif
 
 .if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "sh3"
 .BEGIN:
@@ -197,6 +197,12 @@ check_RELEASEDIR: .PHONY .NOTMAIN
 # <empty string>, meaning start from /, the root directory.
 DESTDIR?=
 .endif
+
+# Where the system object and source trees are kept; can be configurable
+# by the user in case they want them in ~/foosrc and ~/fooobj (for example).
+#
+BSDSRCDIR?=	/usr/src
+BSDOBJDIR?=	/usr/obj
 
 BINGRP?=	wheel
 BINOWN?=	root
