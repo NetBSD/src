@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipnat,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: ipnat,v 1.2 2000/03/12 03:49:36 thorpej Exp $
 #
 
 # PROVIDE: ipnat
@@ -26,11 +26,11 @@ ipnat_start()
 	if [ ! -f ${config} ]; then
 		return 0
 	fi
-	echo "Installing NAT rules ..."
 	if ! checkyesno ipfilter || [ ! -f /etc/ipf.conf ]; then
-		echo " (enabling ipfilter)"
+		echo "Enabling ipfilter for NAT."
 		/sbin/ipf -E -Fa
 	fi
+	echo -n "Installing NAT rules ... "
 	/usr/sbin/ipnat -F -f ${config}
 }
 
