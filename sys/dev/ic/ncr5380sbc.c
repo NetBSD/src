@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.17 1997/02/26 22:23:48 gwr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.18 1997/03/04 21:42:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -2479,7 +2479,7 @@ ncr5380_trace(msg, val)
 	register struct trace_ent *tr;
 	register int s;
 
-	s = splhigh();
+	s = splbio();
 
 	tr = &ncr5380_tracebuf[ncr5380_traceidx];
 

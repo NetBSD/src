@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.55 1997/01/10 05:57:10 perry Exp $	*/
+/*	$NetBSD: ncr.c,v 1.56 1997/03/04 21:42:34 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -1351,7 +1351,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.55 1997/01/10 05:57:10 perry Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.56 1997/03/04 21:42:34 mycroft Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -6363,7 +6363,7 @@ static	ccb_p ncr_get_ccb
 	ccb_p cp = (ccb_p) 0;
 	int oldspl;
 
-	oldspl = splhigh();
+	oldspl = splbio();
 	/*
 	**	Lun structure available ?
 	*/
