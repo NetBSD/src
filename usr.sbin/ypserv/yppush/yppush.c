@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.1.1.1 1996/08/09 10:15:01 thorpej Exp $	*/
+/*	$NetBSD: yppush.c,v 1.2 1996/08/09 20:18:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -356,7 +356,7 @@ pushit(instatus, inkey, inkeylen, inval, invallen, indata)
 	if (instatus != YP_TRUE)
 		return instatus;
 
-	push(invallen, inval);
+	push(inkeylen, inkey);
 	return 0;
 }
 
