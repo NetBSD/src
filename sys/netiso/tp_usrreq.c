@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.22 2003/08/07 16:33:43 agc Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.23 2003/08/11 15:17:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.22 2003/08/07 16:33:43 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.23 2003/08/11 15:17:31 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ dump_mbuf(n, str)
 
 	printf("dump %s\n", str);
 
-	if (n == MNULL) {
+	if (n == NULL) {
 		printf("EMPTY:\n");
 		return;
 	}
@@ -184,7 +184,7 @@ tp_rcvoob(tpcb, so, m, outflags, inflags)
 #endif
 
 	/* if you use soreceive */
-	if (m == MNULL)
+	if (m == NULL)
 		return ENOBUFS;
 
 restart:
@@ -226,7 +226,7 @@ restart:
 	m->m_len = 0;
 
 	/* Assuming at most one xpd tpdu is in the buffer at once */
-	while (n != MNULL) {
+	while (n != NULL) {
 		m->m_len += n->m_len;
 		bcopy(mtod(n, caddr_t), mtod(m, caddr_t), (unsigned) n->m_len);
 		m->m_data += n->m_len;	/* so mtod() in bcopy() above gives

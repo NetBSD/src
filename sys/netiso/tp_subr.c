@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr.c,v 1.17 2003/08/07 16:33:41 agc Exp $	*/
+/*	$NetBSD: tp_subr.c,v 1.18 2003/08/11 15:17:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.17 2003/08/07 16:33:41 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.18 2003/08/11 15:17:31 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,7 +563,7 @@ tp_send(tpcb)
 		 */
 		mb = m;
 		m = m_copy(mb, 0, M_COPYALL);
-		if (m == MNULL)
+		if (m == NULL)
 			break;
 #ifdef TPPT
 		if (tp_traceflags[D_STASH]) {
