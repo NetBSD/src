@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.44 2000/02/14 07:01:49 scottr Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.44.4.1 2000/08/06 02:08:05 briggs Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -328,7 +328,7 @@ grfiv_attach(parent, self, aux)
 
 	if (sc->sc_basepa <= mac68k_vidphys &&
 	    mac68k_vidphys < (sc->sc_basepa + length))
-		videoaddr = sc->sc_handle + sc->sc_fbofs; /* XXX big ol' hack */
+		videoaddr = sc->sc_handle.base + sc->sc_fbofs; /* XXX hack */
 
 	gm = &(sc->curr_mode);
 	gm->mode_id = 0;
@@ -340,7 +340,7 @@ grfiv_attach(parent, self, aux)
 	gm->hres = 80;				/* XXX hack */
 	gm->vres = 80;				/* XXX hack */
 	gm->fbsize = gm->height * gm->rowbytes;
-	gm->fbbase = (caddr_t)sc->sc_handle;	/* XXX yet another hack */
+	gm->fbbase = (caddr_t)sc->sc_handle.base; /* XXX yet another hack */
 	gm->fboff = sc->sc_fbofs;
 
 	/* Perform common video attachment. */
