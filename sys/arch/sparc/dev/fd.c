@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.45 1996/12/28 23:27:00 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.46 1997/01/01 23:46:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1980,7 +1980,7 @@ fd_mountroot_hook(dev)
 			break;
 		}
 	}
-#ifdef RAMDISK_HOOKS
+#ifdef MEMORY_DISK_HOOKS
 	{
 	extern int (*md_read_image) __P((size_t *, caddr_t *));
 	md_read_image = fd_read_md_image;
