@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 1999/04/02 09:13:28 cgd Exp $
+# $NetBSD: Makefile,v 1.2 1999/04/05 06:42:15 cgd Exp $
 
 PROG = ustarboot
 
@@ -8,6 +8,7 @@ SRCS+= prom_swpal.S booted_dev.c
 BOOT_RELOC = ${UNIFIED_LOAD_ADDRESS}
 
 CPPFLAGS += ${UNIFIED_CPPFLAGS} \
+		-DBOOT_TYPE_NAME='"ustar"' \
 		-DLIBSA_SINGLE_DEVICE=blkdev \
 		  -D"blkdevioctl(x,y,z)=EINVAL" \
 		-DLIBSA_SINGLE_FILESYSTEM=ustarfs
