@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.6 2003/10/15 11:43:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.7 2003/10/29 21:50:57 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.6 2003/08/19 22:17:03 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.6 2003/10/15 11:43:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.7 2003/10/29 21:50:57 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -523,6 +523,143 @@ ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
 		}
 	}
 	ieee80211_node_critsec_end(ic, s);
+	return ni;
+}
+
+struct ieee80211_node *
+ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
+{
+	struct ieee80211_node *ni;
+	ieee80211_node_critsec_decl(s);
+
+	/*
+	 * The destination address should be in the node table
+	 * unless this is a multicast/broadcast frames or we are
+	 * in station mode.
+	 */
+	if (IEEE80211_IS_MULTICAST(macaddr) ||
+	    ic->ic_opmode == IEEE80211_M_STA)
+		ni = ic->ic_bss;
+	else {
+		ieee80211_node_critsec_begin(ic, s);
+		ni = ieee80211_find_node(ic, macaddr);
+		if (ni == NULL) {
+			if (ic->ic_opmode != IEEE80211_M_MONITOR)
+				ni = ieee80211_dup_bss(ic, macaddr);
+			IEEE80211_DPRINTF(("%s: faked-up node %p for %s\n",
+			    __func__, ni, ether_sprintf(macaddr)));
+			if (ni == NULL) {
+				ieee80211_node_critsec_end(ic, s);
+				/* ic->ic_stats.st_tx_nonode++; XXX statistic */
+				return NULL;
+			}
+			(void)ieee80211_ref_node(ni);
+		}
+		ieee80211_node_critsec_end(ic, s);
+	}
+	return ni;
+}
+
+/*
+ * For some types of packet and for some operating modes, it is
+ * desirable to process a Rx packet using its sender's node-record
+ * instead of the BSS record, when that is possible.
+ *
+ * - AP mode: it is desirable to keep a node-record for every
+ *   authenticated/associated station *in the BSS*. For future use,
+ *   we also track neighboring APs, since they might belong to the
+ *   same ESSID.
+ *
+ * - IBSS mode: it is desirable to keep a node-record for every
+ *   station *in the BSS*.
+ *
+ * - monitor mode: it is desirable to keep a node-record for every
+ *   sender, regardless of BSS.
+ *
+ * - STA mode: the only available node-record is the BSS record,
+ *   ic->ic_bss.
+ *
+ * Of all the 802.11 Control packets, only the node-records for
+ * RTS packets node-record can be looked up.
+ *
+ * Return non-zero if the packet's node-record is kept, zero
+ * otherwise.
+ */
+static __inline int
+ieee80211_needs_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh,
+    u_int8_t **bssid)
+{
+	struct ieee80211_node *bss = ic->ic_bss;
+	int needsnode, rc = 0;
+
+	if (ic->ic_opmode == IEEE80211_M_STA)
+		return 0;
+
+	needsnode = (ic->ic_opmode == IEEE80211_M_MONITOR);
+
+	*bssid = NULL;
+
+	switch (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) {
+	case IEEE80211_FC0_TYPE_CTL:
+		return (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
+		    IEEE80211_FC0_SUBTYPE_RTS;
+
+	case IEEE80211_FC0_TYPE_MGT:
+		*bssid = wh->i_addr3;
+		rc = IEEE80211_ADDR_EQ(*bssid, bss->ni_bssid);
+		break;
+	case IEEE80211_FC0_TYPE_DATA:
+		switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
+		case IEEE80211_FC1_DIR_NODS:
+			*bssid = wh->i_addr3;
+			if (ic->ic_opmode == IEEE80211_M_IBSS ||
+			    ic->ic_opmode == IEEE80211_M_AHDEMO)
+				rc = IEEE80211_ADDR_EQ(*bssid, bss->ni_bssid);
+			break;
+		case IEEE80211_FC1_DIR_TODS:
+			*bssid = wh->i_addr1;
+			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+				rc = IEEE80211_ADDR_EQ(*bssid, bss->ni_bssid);
+			break;
+		case IEEE80211_FC1_DIR_FROMDS:
+		case IEEE80211_FC1_DIR_DSTODS:
+			*bssid = wh->i_addr2;
+			rc = (ic->ic_opmode == IEEE80211_M_HOSTAP);
+			break;
+		}
+		break;
+	}
+	return needsnode || rc;
+}
+
+struct ieee80211_node *
+ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
+{
+	struct ieee80211_node *ni;
+	const static u_int8_t zero[IEEE80211_ADDR_LEN];
+	u_int8_t *bssid;
+	ieee80211_node_critsec_decl(s);
+
+	ieee80211_node_critsec_begin(ic, s);
+
+	if (!ieee80211_needs_rxnode(ic, wh, &bssid))
+	        return ieee80211_ref_node(ic->ic_bss);
+
+	ni = ieee80211_find_node(ic, wh->i_addr2);
+
+	if (ni == NULL) {
+		if (ic->ic_opmode != IEEE80211_M_HOSTAP) {
+			if ((ni = ieee80211_dup_bss(ic, wh->i_addr2)) != NULL)
+				IEEE80211_ADDR_COPY(ni->ni_bssid,
+				    (bssid != NULL) ? bssid : zero);
+
+			IEEE80211_DPRINTF(("%s: faked-up node %p for %s\n",
+			    __func__, ni, ether_sprintf(wh->i_addr2)));
+		}
+		ni = ieee80211_ref_node((ni == NULL) ? ic->ic_bss : ni);
+	}
+	ieee80211_node_critsec_end(ic, s);
+	KASSERT(ni != NULL, ("%s: null node", __func__));
 	return ni;
 }
 
