@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2000/05/27 14:25:00 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2000/05/27 14:45:36 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
+
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_
 
 /*
  * Exported definitions unique to mvme68k/68k cpu support.
@@ -223,3 +226,5 @@ int	dma_cachectl __P((caddr_t, int));
 #define	IIOPOFF(pa)	((u_int)(pa) - intiobase_phys)
 
 #endif /* _KERNEL */
+
+#endif /* _MACHINE_CPU_H_ */
