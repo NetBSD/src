@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2004/05/12 03:58:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2004/05/16 10:25:14 lukem Exp $
 
 .include <bsd.own.mk>
 
 CPPSCRIPTS=	Xresources Xservers.ws xdm-config 
 
-CPPSCRIPTFLAGS_Xresources=	-DXPM -DBITMAPDIR=${X11LIBDIR}/xdm/pixmaps \
+CPPSCRIPTFLAGS_Xresources=	-DXPM -DBITMAPDIR=${X11INCDIR}/X11/pixmaps \
 				-DXDM_PIXMAP=XFree86.xpm \
 				-DXDM_BWPIXMAP=XFree86bw.xpm
 
@@ -16,20 +16,21 @@ DEFAULTVT=	# defined empty
 .endif
 
 CPPSCRIPTFLAGS_Xservers.ws=	-DBINDIR=${X11BINDIR} -DDEFAULTVT=${DEFAULTVT}
-CPPSCRIPTFLAGS_xdm-config=	-DXDMDIR=${X11LIBDIR}/xdm \
-				-DXDMLOGDIR=/var/log \
+CPPSCRIPTFLAGS_xdm-config=	-DXDMDIR=${XDMDIR} \
 				-DXDMAUTHDIR=${XDMVARDIR} \
-				-DXDMPIDDIR=/var/run \
+				-DXDMLOGDIR=${XDMLOGDIR} \
+				-DXDMPIDDIR=${XDMPIDDIR} \
 				-DSU="su -m"
 
-FILES=			GiveConsole TakeConsole XFree86.xpm XFree86bw.xpm \
+CONFIGFILES=		GiveConsole TakeConsole \
 			Xaccess Xservers.fs Xsession Xsetup_0 Xwilling \
 			${CPPSCRIPTS} 
-FILESDIR=		${X11LIBDIR}/xdm
-FILESDIR_XFree86.xpm=	${X11LIBDIR}/xdm/pixmaps
-FILESDIR_XFree86bw.xpm=	${X11LIBDIR}/xdm/pixmaps
+FILES=			XFree86.xpm XFree86bw.xpm 
+FILESDIR=		${XDMDIR}
+FILESDIR_XFree86.xpm=	${X11INCDIR}/X11/pixmaps
+FILESDIR_XFree86bw.xpm=	${X11INCDIR}/X11/pixmaps
 
-SYMLINKS=	Xservers.ws ${X11LIBDIR}/xdm/Xservers
+CONFIGSYMLINKS=		Xservers.ws ${XDMDIR}/Xservers
 
 BUILDSYMLINKS=	Xres.cpp Xresources.cpp \
 		Xserv.ws.cpp Xservers.ws.cpp \
@@ -39,7 +40,7 @@ BUILDSYMLINKS=	Xres.cpp Xresources.cpp \
 
 .include "../Makefile.xdm"
 
-CPPSCRIPTFLAGS_xdm-config+=	-DCHOOSERPATH=${CHOOSERPATH}
+CPPSCRIPTFLAGS_xdm-config+=	-DCHOOSERPATH=${XDMCHOOSERPATH}
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
