@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.31 2004/05/07 00:04:40 ross Exp $	*/
+/*	$NetBSD: nonints.h,v 1.32 2004/05/07 08:12:16 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -90,6 +90,7 @@ void Arch_End(void);
 int Arch_IsLib(GNode *);
 
 /* compat.c */
+int CompatRunCommand(ClientData cmdp, ClientData gnp);
 void Compat_Run(Lst);
 
 /* cond.c */
