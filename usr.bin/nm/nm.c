@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nm.c	5.8 (Berkeley) 5/2/91";*/
-static char rcsid[] = "$Id: nm.c,v 1.4 1994/10/19 20:39:31 pk Exp $";
+static char rcsid[] = "$Id: nm.c,v 1.5 1994/12/24 17:26:46 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -241,13 +241,14 @@ show_archive(fname, fp)
 
 			int len = atoi(&ar_head.ar_name[3]);
 			if (len > namelen) {
-				p -= (int)name;
+				p -= (long)name;
 				name = (char *)erealloc(name, baselen+len);
 				namelen = len;
-				p += (int)name;
+				p += (long)name;
 			}
 			if (fread(p, len, 1, fp) != 1) {
-				(void)fprintf(stderr, "nm: %s: premature EOF.\n", name);
+				(void)fprintf(stderr,
+				    "nm: %s: premature EOF.\n", name);
 				(void)free(name);
 				return 1;
 			}
