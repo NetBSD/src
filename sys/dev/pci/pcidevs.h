@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.330 2001/05/21 22:11:31 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.331 2001/05/31 01:13:33 nisimura Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.324 2001/05/21 22:11:06 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.325 2001/05/31 01:10:34 nisimura Exp 
  */
 
 /*
@@ -1126,6 +1126,8 @@
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (\"NICStAR\") */
+#define	PCI_PRODUCT_IDT_RC32334	0x0204		/* RC32334 System Controller */
+#define	PCI_PRODUCT_IDT_RC32332	0x0205		/* RC32332 System Controller */
 
 /* Industrial Computer Source */
 #define	PCI_PRODUCT_INDCOMPSRC_WDT50x	0x22c0		/* PCI-WDT50x Watchdog Timer */
