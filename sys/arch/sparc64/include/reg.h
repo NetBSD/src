@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.4 1999/11/06 20:13:50 eeh Exp $ */
+/*	$NetBSD: reg.h,v 1.5 1999/12/30 16:20:43 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -154,6 +154,7 @@ struct fp_qentry {
 struct fpstate64 {
 	u_int	fs_regs[64];		/* our view is 64 32-bit registers */
 	int64_t	fs_fsr;			/* %fsr */
+	int	fs_gsr;			/* graphics state reg */
 	int	fs_qsize;		/* actual queue depth */
 	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
 };
@@ -174,6 +175,7 @@ struct fpstate32 {
 struct fpreg64 {
 	u_int	fr_regs[64];		/* our view is 64 32-bit registers */
 	int64_t	fr_fsr;			/* %fsr */
+	int	fr_gsr;			/* graphics state reg */
 	int	fr_qsize;		/* actual queue depth */
 	struct	fp_qentry fr_queue[FP_QSIZE];	/* queue contents */
 };
