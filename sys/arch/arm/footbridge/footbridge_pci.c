@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.3.2.1 2001/09/13 01:13:09 thorpej Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.3.2.2 2002/09/06 08:32:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -111,7 +111,8 @@ struct arm32_bus_dma_tag footbridge_pci_bus_dma_tag = {
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
 	_bus_dmamap_unload,
-	_bus_dmamap_sync,
+	_bus_dmamap_sync,	/* pre */
+	NULL,			/* post */
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4.2.1 2001/09/13 01:14:13 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.4.2.2 2002/09/06 08:38:35 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -123,17 +123,6 @@ cpu_initclocks()
 	__asm __volatile ("mftb %0" : "=r"(lasttb));
 	__asm __volatile ("mtdec %0" :: "r"(ticks_per_intr));
 	__asm __volatile ("mtmsr %0" :: "r"(msr));
-}
-
-static inline u_quad_t
-mftb(void)
-{
-	u_long scratch;
-	u_quad_t tb;
-	
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
-	    : "=r"(tb), "=r"(scratch));
-	return tb;
 }
 
 /*

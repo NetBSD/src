@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.12.2.3 2002/06/23 17:36:51 jdolecek Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.12.2.4 2002/09/06 08:35:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -645,7 +645,7 @@ ite8181_ioctl(v, cmd, data, flag, p)
 		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
 		    sc->sc_fbconf.hf_pack_width != 8 ||
 		    256 <= cmap->index ||
-		    256 < (cmap->index + cmap->count))
+		    256 - cmap->index < cmap->count)
 			return (EINVAL);
 
 		if (!uvm_useracc(cmap->red, cmap->count, B_WRITE) ||

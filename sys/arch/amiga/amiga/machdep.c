@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.163.2.5 2002/06/23 17:34:21 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.163.2.6 2002/09/06 08:31:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163.2.5 2002/06/23 17:34:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163.2.6 2002/09/06 08:31:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,9 +225,8 @@ consinit()
 void
 cpu_startup()
 {
-	register unsigned i;
 	caddr_t v;
-	int base, residual;
+	u_int i, base, residual;
 	char pbuf[9];
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -342,7 +341,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * display memory configuration passed from loadbsd

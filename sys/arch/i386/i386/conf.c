@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.142.2.5 2002/06/23 17:37:23 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.142.2.6 2002/09/06 08:36:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.142.2.5 2002/06/23 17:37:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.142.2.6 2002/09/06 08:36:11 jdolecek Exp $");
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +116,7 @@ cdev_decl(ctty);
 cdev_decl(mm);
 cdev_decl(wd);
 cdev_decl(sw);
+cdev_decl(systrace);
 #include "pty.h"
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
@@ -259,6 +261,12 @@ cdev_decl(pci);
 #include "clockctl.h"
 cdev_decl(clockctl);
 
+#include "kttcp.h"
+cdev_decl(kttcp);
+
+#include "dmoverio.h"
+cdev_decl(dmoverio);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -358,6 +366,13 @@ struct cdevsw	cdevsw[] =
 	cdev_radio_init(NRADIO,radio),	/* 87: generic radio I/O */
 	cdev_netsmb_init(NNETSMB,nsmb_dev_),/* 88: SMB */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 89: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_clonemisc_init(1, systrace),/* 90: system call tracing */
+#else
+	cdev_notdef(),			/* 90: system call tracing */
+#endif
+	cdev__oci_init(NKTTCP,kttcp),	/* 91: kernel ttcp helper */
+	cdev_clonemisc_init(NDMOVERIO,dmoverio),/* 92: data mover interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -489,6 +504,9 @@ static int chrtoblktbl[] = {
 	/* 87 */	NODEV,
 	/* 88 */	NODEV,
 	/* 89 */	NODEV,
+	/* 90 */	NODEV,
+	/* 91 */	NODEV,
+	/* 92 */	NODEV,
 };
 
 /*

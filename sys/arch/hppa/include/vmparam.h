@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.2.2 2002/06/23 17:37:11 jdolecek Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.2.3 2002/09/06 08:35:51 jdolecek Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.17 2001/09/22 18:00:09 miod Exp $	*/
 
@@ -43,8 +43,6 @@
 #define	LOWPAGES	0
 #define	HIGHPAGES	UPAGES
 #define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
-
-#define	__HAVE_PMAP_PHYSSEG
 
 /* Alignment requirement for a uspace. */
 #define	USPACE_ALIGN	NBPG
@@ -106,15 +104,8 @@
 
 #define	VM_PHYSSEG_NOADD	/* XXX until uvm code is fixed */
 
-#define	VM_NFREELIST		2
+#define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-#define	VM_FREELIST_FIRST16	1
-
-#ifdef _KERNEL
-struct pmap_physseg {
-	int pmap_table_off;
-};
-#endif
 
 #endif	/* _HPPA_VMPARAM_H_ */
 

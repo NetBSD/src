@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.189.2.6 2002/06/23 17:34:10 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.189.2.7 2002/09/06 08:31:30 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.189.2.6 $"
+#ident 		"GENERIC-$Revision: 1.189.2.7 $"
 
 maxusers 32
 
@@ -72,8 +72,8 @@ file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system	MSDOSFS		# MS-DOS-compatible file system
 file-system	NTFS		# Windows/NT file system (experimental)
 file-system	NFS		# Sun NFS-compatible file system client
-#file-system	KERNFS		# Kernel variable file system (/kern)
-#file-system	PROCFS		# Process file system (/proc)
+file-system	KERNFS		# Kernel variable file system (/kern)
+file-system	PROCFS		# Process file system (/proc)
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
@@ -239,9 +239,9 @@ agp*	at	irongate?
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
 adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
-#options 	ADW_WDTR_DISABLE		# 	disable WDTR
-#options 	ADW_SDTR_DISABLE		# 	disable SDTR
-#options 	ADW_TAGQ_DISABLE		# 	disable Tag Queuing
+#options 	SCSI_ADW_WDTR_DISABLE		# 	disable WDTR
+#options 	SCSI_ADW_SDTR_DISABLE		# 	disable SDTR
+#options 	SCSI_ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
@@ -526,3 +526,4 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
+pseudo-device	clockctl		# user control of clock subsystem

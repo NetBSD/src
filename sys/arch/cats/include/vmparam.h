@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2.2.4 2002/06/23 17:35:29 jdolecek Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2.2.5 2002/09/06 08:33:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -73,6 +73,11 @@
  * Size of available KVM space, note that growkernel will grow into this.
  */
 #define KERNEL_VM_SIZE	0x0C000000
+
+/*
+ * Override the default pager_map size, there's not enough KVA.
+ */
+#define PAGER_MAP_SIZE		(4 * 1024 * 1024)
 
 /*
  * Size of User Raw I/O map

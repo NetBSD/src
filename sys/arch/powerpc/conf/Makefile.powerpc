@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.13.4.3 2002/06/23 17:39:37 jdolecek Exp $
+#	$NetBSD: Makefile.powerpc,v 1.13.4.4 2002/09/06 08:38:59 jdolecek Exp $
 #
 # Makefile for NetBSD
 #
@@ -49,11 +49,17 @@ AFLAGS+=	${AOPTS}
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o
+.if !defined(SYSTEM_FIRST_OBJ)
+SYSTEM_FIRST_OBJ= locore.o
+.endif
+.if !defined(SYSTEM_FIRST_SFILE)
+SYSTEM_FIRST_SFILE= ${THISPPC}/${MACHINE}/locore.S
+.endif
+MD_OBJS=	${SYSTEM_FIRST_OBJ}
 MD_CFILES=
-MD_SFILES=	${THISPPC}/${MACHINE}/locore.S
+MD_SFILES=	${SYSTEM_FIRST_SFILE}
 
-locore.o: ${THISPPC}/${MACHINE}/locore.S assym.h
+${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
 	${NORMAL_S}
 
 ##

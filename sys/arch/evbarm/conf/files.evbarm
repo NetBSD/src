@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.10.2.4 2002/06/23 17:35:38 jdolecek Exp $
+#	$NetBSD: files.evbarm,v 1.10.2.5 2002/09/06 08:33:58 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -66,9 +66,15 @@ include "dev/cardbus/files.cardbus"		# CARDBus device
 #
 # ARM evaluation board specific devices
 #
+defparam	opt_evbarm_boardtype.h EVBARM_BOARDTYPE
 
 # We need to define the Integrator's "plcom" device here since
 # it we need to generate a "plcom.h" header file for conf.c
 defflag	opt_plcom.h	PLCOM_DEBUG PLCOM_MPLOCK
 device	plcom { }: tty
 file	arch/evbarm/dev/plcom.c			plcom needs-flag
+
+# IXM1200 serial device
+device	ixpcom: tty
+file	arch/arm/ixp12x0/ixp12x0_com.c		ixpcom needs-flag
+file	arch/arm/ixp12x0/ixp12x0_com_io.c       ixpcom

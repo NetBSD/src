@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.26.6.4 2002/06/23 17:37:32 jdolecek Exp $
+#	$NetBSD: Makefile.booters,v 1.26.6.5 2002/09/06 08:36:33 jdolecek Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ BINMODE=444
 
 # Make sure we override any optimization options specified by the
 # user.
-COPTS+=	-Os -mcpu=i386
+COPTS=	-Os -mcpu=i386
 COPTS+= -ffreestanding
 
 I386_STAND_DIR?= $S/arch/i386/stand
@@ -82,8 +82,7 @@ LDFLAGS=-N -M -e _start
 
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
-.PHONY: vers.c
-vers.c: ${VERSIONFILE}
+vers.c: ${VERSIONFILE} ${SOURCES}
 	sh ${S}conf/newvers_stand.sh ${.ALLSRC} 'i386' ${NEWVERSWHAT}
 
 CLEANFILES+= ${BASE}.sym

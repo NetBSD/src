@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.6.2.4 2002/06/23 17:39:49 jdolecek Exp $
+#	$NetBSD: NATSUMI,v 1.6.2.5 2002/09/06 08:39:32 jdolecek Exp $
 #
 #	for development
 #
@@ -402,6 +402,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well
+pseudo-device	clockctl		# user control of clock subsystem
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux

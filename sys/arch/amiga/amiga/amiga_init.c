@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.74.4.2 2002/06/23 17:34:19 jdolecek Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.74.4.3 2002/09/06 08:31:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,7 +35,7 @@
 #include "opt_p5ppc68kboard.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.74.4.2 2002/06/23 17:34:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.74.4.3 2002/09/06 08:31:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,8 @@ alloc_z2mem(amount)
 int kernel_copyback = 1;
 
 void
-start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part)
+start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
+								boot_part)
 	int id;
 	u_int fphystart, fphysize, cphysize;
 	char *esym_addr;
@@ -486,11 +487,13 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 				/* no page table exists, need to allocate it */
 				sg_proto = pstart | SG_U | SG_RW | SG_V;
 				sg = &sg[(loadbase & SG4_MASK2) >> SG4_SHIFT2];
-				sg = (u_int *)((int)sg & ~(NBPG / SG4_LEV3SIZE - 1));
+				sg = (u_int *)((int)sg &
+					~(NBPG / SG4_LEV3SIZE - 1));
 				esg = &sg[NPTEPG / SG4_LEV3SIZE];
 				while (sg < esg) {
 					*sg++ = sg_proto;
-					sg_proto += SG4_LEV3SIZE * sizeof (st_entry_t);
+					sg_proto += SG4_LEV3SIZE *
+						sizeof (st_entry_t);
 				}
 				pg = (u_int *) pstart;
 				esg = (u_int *)&pg[NPTEPG];
@@ -781,14 +784,15 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		else {
 			RELOC(ZTWOMEMADDR, vaddr_t) =
 			    RELOC(CHIPMEMADDR, vaddr_t) + NCHIPMEMPG * NBPG;
-			RELOC(CIAADDR, vaddr_t) =
-			    RELOC(ZTWOMEMADDR, vaddr_t) + RELOC(NZTWOMEMPG, u_int) * NBPG;
+			RELOC(CIAADDR, vaddr_t) = RELOC(ZTWOMEMADDR, vaddr_t) +
+				RELOC(NZTWOMEMPG, u_int) * NBPG;
 		}
 		RELOC(ZTWOROMADDR, vaddr_t)  =
 		    RELOC(CIAADDR, vaddr_t) + NCIAPG * NBPG;
 		RELOC(ZBUSADDR, vaddr_t) =
 		    RELOC(ZTWOROMADDR, vaddr_t) + NZTWOROMPG * NBPG;
-		RELOC(CIAADDR, vaddr_t) += NBPG/2;	/* not on 8k boundery :-( */
+		/* not on 8k boundary :-( */
+		RELOC(CIAADDR, vaddr_t) += NBPG/2;
 		RELOC(CUSTOMADDR, vaddr_t)  =
 		    RELOC(ZTWOROMADDR, vaddr_t) - ZTWOROMBASE + CUSTOMBASE;
 		/*
@@ -805,7 +809,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	 * the `real' place too. protorp[0] is already preset to the
 	 * CRP setting.
 	 */
-	RELOC(protorp[1], u_int) = RELOC(Sysseg_pa, u_int);	/* + segtable address */
+	RELOC(protorp[1], u_int) = RELOC(Sysseg_pa, u_int);
 
 	/*
 	 * copy over the kernel (and all now initialized variables)

@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.5.2.4 2002/06/23 17:39:47 jdolecek Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.5.2.5 2002/09/06 08:39:27 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_altivec.h"
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/disklabel.h>
@@ -40,6 +42,9 @@
 
 int cpu_timebase;
 int cpu_printfataltraps;
+#ifdef PPC_MPC6XX
+extern int powersave;
+#endif
 
 /*
  * Set set up registers on exec.
@@ -85,6 +90,9 @@ setregs(p, pack, stack)
 
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
+#ifdef ALTIVEC
+	tf->vrsave = 0;
+#endif
 	p->p_addr->u_pcb.pcb_flags = 0;
 }
 
@@ -121,6 +129,19 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return sysctl_rdstruct(oldp, oldlenp, newp,
 			&curcpu()->ci_ci, 
 			sizeof(curcpu()->ci_ci));
+#ifdef PPC_MPC6XX
+	case CPU_POWERSAVE:
+		if (powersave < 0)
+			return sysctl_rdint(oldp, oldlenp, newp, powersave);
+		return sysctl_int(oldp, oldlenp, newp, newlen, &powersave);
+	case CPU_ALTIVEC:
+		return sysctl_rdint(oldp, oldlenp, newp, cpu_altivec);
+#else
+	case CPU_ALTIVEC:
+		return sysctl_rdint(oldp, oldlenp, newp, 0);
+#endif
+	case CPU_MODEL:
+		return sysctl_rdstring(oldp, oldlenp, newp, cpu_model);
 	default:
 		break;
 	}

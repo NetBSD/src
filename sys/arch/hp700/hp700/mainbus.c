@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.2.2 2002/06/23 17:36:23 jdolecek Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.2.3 2002/09/06 08:35:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -86,6 +86,8 @@
 #include <machine/autoconf.h>
 
 #include <hp700/hp700/machdep.h>
+#include <hp700/hp700/intr.h>
+#include <hp700/dev/cpudevs.h>
 
 struct mainbus_softc {
 	struct  device sc_dv;
@@ -103,7 +105,7 @@ struct cfattach mainbus_ca = {
 extern struct cfdriver mainbus_cd;
 
 /* from machdep.c */
-extern struct extent *hppa_ex;
+extern struct extent *hp700_io_extent;
 extern struct extent *dma24_ex;
 extern struct pdc_btlb pdc_btlb;
 
@@ -145,10 +147,9 @@ void mbus_cp_4 __P((void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, 
 void mbus_cp_8 __P((void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
 
 int mbus_add_mapping __P((bus_addr_t, bus_size_t, int, bus_space_handle_t *));
+int mbus_remove_mapping __P((bus_space_handle_t, bus_size_t, bus_addr_t *));
 int mbus_map __P((void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *));
-int mbus_map_hpa __P((void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *));
 void mbus_unmap __P((void *, bus_space_handle_t, bus_size_t));
-void mbus_unmap_hpa __P((void *, bus_space_handle_t, bus_size_t));
 int mbus_alloc __P((void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *));
 void mbus_free __P((void *, bus_space_handle_t, bus_size_t));
 int mbus_subregion __P((void *, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *));
@@ -161,7 +162,7 @@ int mbus_dmamap_load_mbuf __P((void *, bus_dmamap_t, struct mbuf *, int));
 int mbus_dmamap_load_uio __P((void *, bus_dmamap_t, struct uio *, int));
 int mbus_dmamap_load_raw __P((void *, bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int));
 void mbus_dmamap_unload __P((void *, bus_dmamap_t));
-void mbus_dmamap_sync __P((void *, bus_dmamap_t, bus_addr_t, bus_size_t, bus_dmasync_op_t));
+void mbus_dmamap_sync __P((void *, bus_dmamap_t, bus_addr_t, bus_size_t, int));
 int mbus_dmamem_alloc __P((void *, bus_size_t, bus_size_t, bus_size_t, bus_dma_segment_t *, int, int *, int));
 void mbus_dmamem_free __P((void *, bus_dma_segment_t *, int));
 int mbus_dmamem_map __P((void *, bus_dma_segment_t *, int, size_t, caddr_t *, int));
@@ -169,129 +170,162 @@ void mbus_dmamem_unmap __P((void *, caddr_t, size_t));
 paddr_t mbus_dmamem_mmap __P((void *, bus_dma_segment_t *, int, off_t, int, int));
 
 int
-mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
+mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
-	register u_int64_t spa, epa;
-	int bank, off;
+	u_int frames;
+	vsize_t btlb_size;
+	int error;
 
-#ifdef BTLBDEBUG
-	printf("bus_mem_add_mapping(%x,%x,%scachable,%p)\n",
-	    bpa, size, cachable?"":"non", bshp);
-#endif
-	if (bpa > 0 && bpa < virtual_start)
-		*bshp = bpa;
-	else if ((bank = vm_physseg_find(atop(bpa), &off)) < 0) {
+	/*
+	 * We must be called with a page-aligned address in 
+	 * I/O space, and with a multiple of the page size.
+	 */
+	KASSERT((bpa & PGOFSET) == 0);
+	KASSERT(bpa >= HPPA_IOSPACE);
+	KASSERT((size & PGOFSET) == 0);
+
+	/*
+	 * Assume that this will succeed.
+	 */
+	*bshp = bpa;
+
+	/*
+	 * Loop while there is space left to map.
+	 */
+	frames = size >> PGSHIFT;
+	while (frames > 0) {
+
 		/*
-		 * determine if we are mapping IO space, or beyond the physmem
-		 * region. use block mapping then
-		 *
-		 * we map the whole bus module (there are 1024 of those max)
-		 * so, check here if it's mapped already, map if needed.
-		 * all mappings are equal mappings.
+		 * If this mapping is more than eight pages long,
+		 * try to add a BTLB entry.
 		 */
-		static u_int32_t bmm[0x4000/32];
-		int flex = HPPA_FLEX(bpa);
-
-#ifdef DEBUG
-		if (cachable) {
-			printf("WARNING: mapping I/O space cachable\n");
-			cachable = 0;
-		}
-#endif
-
-		/* need a new mapping */
-		if (!(bmm[flex / 32] & (1 << (flex % 32)))) {
-			spa = bpa & FLEX_MASK;
-			epa = ((u_long)((u_int64_t)bpa + size +
-				~FLEX_MASK - 1) & FLEX_MASK) - 1;
-#ifdef BTLBDEBUG
-			printf ("bus_mem_add_mapping: adding flex=%x "
-				"%qx-%qx, ", flex, spa, epa);
-#endif
-			while (spa < epa) {
-				vsize_t len = epa - spa;
-				u_int64_t pa;
-				if (len > pdc_btlb.max_size << PGSHIFT)
-					len = pdc_btlb.max_size << PGSHIFT;
-				if (btlb_insert(kernel_pmap->pmap_space, spa,
-						spa, &len,
-						kernel_pmap->pmap_pid |
-					    	pmap_prot(kernel_pmap,
-							  VM_PROT_ALL)) < 0)
-					return -1;
-				pa = spa + len - 1;
-#ifdef BTLBDEBUG
-				printf ("--- %x/%x, %qx, %qx-%qx",
-					flex, HPPA_FLEX(pa), pa, spa, epa);
-#endif
-				/* do the mask */
-				for (; flex <= HPPA_FLEX(pa); flex++) {
-#ifdef BTLBDEBUG
-					printf ("mask %x ", flex);
-#endif
-					bmm[flex / 32] |= (1 << (flex % 32));
-				}
-				spa = pa;
+		if (frames > 8 &&
+		    frames >= hppa_btlb_size_min) {
+			btlb_size = frames;
+			if (btlb_size > hppa_btlb_size_max)
+				btlb_size = hppa_btlb_size_max;
+			btlb_size <<= PGSHIFT;
+			error = hppa_btlb_insert(kernel_pmap->pmap_space, 
+						 bpa,
+						 bpa, &btlb_size,
+						 kernel_pmap->pmap_pid |
+					    	 pmap_prot(kernel_pmap,
+							   VM_PROT_ALL));
+			if (error == 0) {
+				bpa += btlb_size;
+				frames -= (btlb_size >> PGSHIFT);
+				continue;
 			}
-#ifdef BTLBDEBUG
-			printf ("\n");
-#endif
+			else if (error != ENOMEM)
+				return error;
 		}
-#ifdef BTLBDEBUG
-		else {
-			printf("+++ already mapped flex=%x, mask=%x",
-			    flex, bmm[flex / 8]);
-		}
-#endif
-		*bshp = bpa;
-	} else {
-		/* register vaddr_t va; */
 
-#ifdef PMAPDEBUG
-		printf ("%d, %d, %lx\n", bank, off, vm_physmem[0].end);
-#endif
-		spa = hppa_trunc_page(bpa);
-		epa = hppa_round_page(bpa + size);
-
-#ifdef DIAGNOSTIC
-		if (epa <= spa)
-			panic("bus_mem_add_mapping: overflow");
-#endif
-#if 0
-
-		if (!(va = uvm_pagealloc_contig(epa - spa, spa, epa, NBPG)))
-			return (ENOMEM);
-
-		*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
-
-#if notused
-		for (; spa < epa; spa += NBPG, va += NBPG) {
-			if (!cachable)
-				pmap_changebit(va, TLB_UNCACHEABLE, ~0);
-			else
-				pmap_changebit(va, 0, ~TLB_UNCACHEABLE);
-		}
-#endif /* notused */
-#else
-		panic("mbus_add_mapping: not implemented");
-#endif
+		/*
+		 * Enter another single-page mapping.
+		 */
+		pmap_kenter_pa(bpa, bpa, VM_PROT_ALL);
+		bpa += NBPG;
+		frames--;
 	}
 
+	/* Success. */
+	return 0;
+}
+
+/*
+ * This removes a mapping added by mbus_add_mapping.
+ */
+int
+mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
+{
+	bus_addr_t bpa;
+	u_int frames;
+	vsize_t btlb_size;
+	int error;
+
+	/*
+	 * We must be called with a page-aligned address in 
+	 * I/O space, and with a multiple of the page size.
+	 */
+	bpa = *bpap = bsh;
+	KASSERT((bpa & PGOFSET) == 0);
+	KASSERT(bpa >= HPPA_IOSPACE);
+	KASSERT((size & PGOFSET) == 0);
+
+	/*
+	 * Loop while there is space left to unmap.
+	 */
+	frames = size >> PGSHIFT;
+	while (frames > 0) {
+
+		/*
+		 * If this mapping is more than eight pages long,
+		 * try to remove a BTLB entry.
+		 */
+		if (frames > 8 &&
+		    frames >= hppa_btlb_size_min) {
+			btlb_size = frames;
+			if (btlb_size > hppa_btlb_size_max)
+				btlb_size = hppa_btlb_size_max;
+			btlb_size <<= PGSHIFT;
+			error = hppa_btlb_purge(kernel_pmap->pmap_space, 
+						bpa, &btlb_size);
+			if (error == 0) {
+				bpa += btlb_size;
+				frames -= (btlb_size >> PGSHIFT);
+				continue;
+			}
+			else if (error != ENOENT)
+				return error;
+		}
+
+		/*
+		 * Remove another single-page mapping.
+		 */
+		pmap_kremove(bpa, NBPG);
+		bpa += NBPG;
+		frames--;
+	}
+
+	/* Success. */
 	return 0;
 }
 
 int
 mbus_map(void *v, bus_addr_t bpa, bus_size_t size,
-    int cachable, bus_space_handle_t *bshp)
+    int flags, bus_space_handle_t *bshp)
 {
-	register int error;
+	int error;
+	bus_size_t offset;
 
-	if ((error = extent_alloc_region(hppa_ex, bpa, size, EX_NOWAIT)))
+	/*
+	 * We must only be called with addresses in I/O space.
+	 */
+	KASSERT(bpa >= HPPA_IOSPACE);
+
+	/*
+	 * Page-align the I/O address and size.
+	 */
+	offset = (bpa & PGOFSET);
+	bpa -= offset;
+	size += offset;
+	size = hppa_round_page(size);
+
+	/*
+	 * Allocate the region of I/O space.
+	 */
+	error = extent_alloc_region(hp700_io_extent, bpa, size, EX_NOWAIT);
+	if (error)
 		return (error);
 
-	if ((error = mbus_add_mapping(bpa, size, cachable, bshp))) {
-		if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
+	/*
+	 * Map the region of I/O space.
+	 */
+	error = mbus_add_mapping(bpa, size, flags, bshp);
+	*bshp |= offset;
+	if (error) {
+		if (extent_free(hp700_io_extent, bpa, size, EX_NOWAIT)) {
 			printf ("bus_space_map: pa 0x%lx, size 0x%lx\n",
 				bpa, size);
 			printf ("bus_space_map: can't free region\n");
@@ -301,71 +335,72 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size,
 	return error;
 }
 
-/*
- * This is a function used to map a device that should
- * already be mapped by the PROM, so we can use the HPA 
- * directly.
- */
-int
-mbus_map_hpa(void *v, bus_addr_t bpa, bus_size_t size,
-    int cachable, bus_space_handle_t *bshp)
-{
-	*bshp = bpa;
-	return (0);
-}
-
 void
 mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
-	register u_long sva, eva;
-	register bus_addr_t bpa;
+	bus_size_t offset;
+	bus_addr_t bpa;
+	int error;
 
-	sva = hppa_trunc_page(bsh);
-	eva = hppa_round_page(bsh + size);
+	/*
+	 * Page-align the bus_space handle and size.
+	 */
+	offset = bsh & PGOFSET;
+	bsh -= offset;
+	size += offset;
+	size = hppa_round_page(size);
 
-#ifdef DIAGNOSTIC
-	if (eva <= sva)
-		panic("bus_space_unmap: overflow");
-#endif
+	/*
+	 * Unmap the region of I/O space.
+	 */
+	error = mbus_remove_mapping(bsh, size, &bpa);
+	if (error)
+		panic("mbus_unmap: can't unmap region (%d)", error);
 
-	bpa = kvtop((caddr_t)bsh);
-	if (bpa != bsh)
-		uvm_km_free(kernel_map, sva, eva - sva);
-
-	if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
+	/*
+	 * Free the region of I/O space.
+	 */
+	error = extent_free(hp700_io_extent, bpa, size, EX_NOWAIT);
+	if (error) {
 		printf("bus_space_unmap: ps 0x%lx, size 0x%lx\n",
 		    bpa, size);
-		printf("bus_space_unmap: can't free region\n");
+		panic("bus_space_unmap: can't free region (%d)", error);
 	}
-}
-
-/*
- * This is a function used to unmap a device that was
- * already be mapped by the PROM, so we were using the HPA 
- * directly.
- */
-void
-mbus_unmap_hpa(void *v, bus_space_handle_t bsh, bus_size_t size)
-{
 }
 
 int
 mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
-	 bus_size_t align, bus_size_t boundary, int cachable,
+	 bus_size_t align, bus_size_t boundary, int flags,
 	 bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
-	u_long bpa;
+	bus_addr_t bpa;
 	int error;
 
-	if (rstart < hppa_ex->ex_start || rend > hppa_ex->ex_end)
+	if (rstart < hp700_io_extent->ex_start ||
+	    rend > hp700_io_extent->ex_end)
 		panic("bus_space_alloc: bad region start/end");
 
-	if ((error = extent_alloc_subregion1(hppa_ex, rstart, rend, size,
-					    align, 0, boundary, EX_NOWAIT, &bpa)))
+	/*
+	 * Force the allocated region to be page-aligned.
+	 */
+	if (align < NBPG)
+		align = NBPG;
+	size = hppa_round_page(size);
+
+	/*
+	 * Allocate the region of I/O space.
+	 */
+	error = extent_alloc_subregion1(hp700_io_extent, rstart, rend, size,
+					align, 0, boundary, EX_NOWAIT, &bpa);
+	if (error)
 		return (error);
 
-	if ((error = mbus_add_mapping(bpa, size, cachable, bshp))) {
-		if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
+	/*
+	 * Map the region of I/O space.
+	 */
+	error = mbus_add_mapping(bpa, size, flags, bshp);
+	if (error) {
+		if (extent_free(hp700_io_extent, bpa, size, EX_NOWAIT)) {
 			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
 				bpa, size);
 			printf("bus_space_alloc: can't free region\n");
@@ -734,28 +769,6 @@ const struct hppa_bus_space_tag hppa_bustag = {
 	mbus_cp_1,  mbus_cp_2, mbus_cp_4, mbus_cp_8
 };
 
-const struct hppa_bus_space_tag hppa_hpa_bustag = {
-	NULL,
-
-	mbus_map_hpa, mbus_unmap_hpa, mbus_subregion, mbus_alloc, mbus_free,
-	mbus_barrier,
-	mbus_r1,    mbus_r2,   mbus_r4,   mbus_r8,
-	mbus_w1,    mbus_w2,   mbus_w4,   mbus_w8,
-	mbus_rm_1,  mbus_rm_2, mbus_rm_4, mbus_rm_8,
-	mbus_wm_1,  mbus_wm_2, mbus_wm_4, mbus_wm_8,
-	mbus_sm_1,  mbus_sm_2, mbus_sm_4, mbus_sm_8,
-	/* *_stream_* are the same as non-stream for native busses */
-		    mbus_rm_2, mbus_rm_4, mbus_rm_8,
-		    mbus_wm_2, mbus_wm_4, mbus_wm_8,
-	mbus_rr_1,  mbus_rr_2, mbus_rr_4, mbus_rr_8,
-	mbus_wr_1,  mbus_wr_2, mbus_wr_4, mbus_wr_8,
-	/* *_stream_* are the same as non-stream for native busses */
-		    mbus_rr_2, mbus_rr_4, mbus_rr_8,
-		    mbus_wr_2, mbus_wr_4, mbus_wr_8,
-	mbus_sr_1,  mbus_sr_2, mbus_sr_4, mbus_sr_8,
-	mbus_cp_1,  mbus_cp_2, mbus_cp_4, mbus_cp_8
-};
-
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -954,35 +967,26 @@ mbus_dmamap_unload(void *v, bus_dmamap_t map)
 }
 
 void
-mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t addr, bus_size_t size, bus_dmasync_op_t ops)
+mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t addr, bus_size_t size, int ops)
 {
 	/*
 	 * XXX - for now, we flush the whole map.
 	 */
 
-	/* fdc for BUS_DMASYNC_PREWRITE. */
-	if (ops & BUS_DMASYNC_PREWRITE) {
+	/*
+	 * For everything except BUS_DMASYNC_POSTWRITE, flush 
+	 * the map from the cache.  For BUS_DMASYNC_PREREAD and 
+	 * BUS_DMASYNC_POSTREAD we should only need to purge the 
+	 * map, but this isn't good enough for the osiop driver, 
+	 * at least.
+	 */
+	if (ops & (BUS_DMASYNC_PREWRITE |
+		   BUS_DMASYNC_PREREAD |
+		   BUS_DMASYNC_POSTREAD)) {
 		fdcache(HPPA_SID_KERNEL, map->dm_segs[0]._ds_va,
 		    map->dm_mapsize);
 		sync_caches();
 	}
-
-	/*
-	 * Purging on both BUS_DMASYNC_PREREAD and BUS_DMASYNC_POSTREAD
-	 * is hopefully only wasteful, as opposed to necessary.  (It is
-	 * necessary if, for some reason, between PREREAD and POSTREAD,
-	 * some code makes a reference to the DMA region.)  Otherwise,
-	 * ideally I think the purge should only happen on PREREAD.
-	 */
-	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD)) {
-		pdcache(HPPA_SID_KERNEL, map->dm_segs[0]._ds_va,
-		    map->dm_mapsize);
-		sync_caches();
-	}
-
-	/* syncdma for a POSTREAD or a POSTWRITE. */
-	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE))
-		__asm __volatile ("syncdma");
 }
 
 /*
@@ -1241,6 +1245,16 @@ mbmatch(parent, cf, aux)
 	return 1;
 }
 
+static void
+mb_module_callback(struct device *self, struct confargs *ca)
+{
+	ca->ca_iot = &hppa_bustag;
+	ca->ca_dmatag = &hppa_dmatag;
+	ca->ca_irq = HP700CF_IRQ_UNDEF;
+
+	config_found_sm(self, ca, mbprint, mbsubmatch);
+}
+
 void
 mbattach(parent, self, aux)
 	struct device *parent;
@@ -1256,7 +1270,17 @@ mbattach(parent, self, aux)
 	if (pdc_call((iodcio_t)pdc, 0, PDC_HPA, PDC_HPA_DFLT, &pdc_hpa) < 0)
 		panic("mbattach: PDC_HPA failed");
 
-	if (bus_space_map(&hppa_bustag, pdc_hpa.hpa, IOMOD_HPASIZE, 0, &ioh))
+	/*
+	 * Map all of Fixed Physical, Local Broadcast, and 
+	 * Global Broadcast space.  These spaces are adjacent
+	 * and in that order and run to the end of the address 
+	 * space.
+	 */
+	/*
+	 * XXX fredette - this may be a copout, or it may
+ 	 * be a great idea.  I'm not sure which yet.
+	 */
+	if (bus_space_map(&hppa_bustag, FP_ADDR, 0 - FP_ADDR, 0, &ioh))
 		panic("mbattach: cannot map mainbus IO space");
 
 	/*
@@ -1276,12 +1300,7 @@ mbattach(parent, self, aux)
 	nca.ca_dmatag = &hppa_dmatag;
 	config_found(self, &nca, mbprint);
 
-	bzero (&nca, sizeof(nca));
-	nca.ca_name = "mainbus";
-	nca.ca_hpa = 0;
-	nca.ca_iot = &hppa_bustag;
-	nca.ca_dmatag = &hppa_dmatag;
-	pdc_scanbus(self, &nca, -1, MAXMODBUS);
+	pdc_scanbus(self, -1, MAXMODBUS, mb_module_callback);
 }
 
 /*
@@ -1310,8 +1329,11 @@ mbprint(aux, pnp)
 		    ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
 	if (ca->ca_hpa) {
 		printf(" hpa %lx", ca->ca_hpa);
-		if (!pnp && ca->ca_irq >= 0)
+		if (!pnp && ca->ca_irq >= 0) {
 			printf(" irq %d", ca->ca_irq);
+			if (ca->ca_type.iodc_type != HPPA_TYPE_BHA)
+				printf(" ipl %d", _hp700_intr_ipl_next());
+		}
 	}
 
 	return (UNCONF);
@@ -1325,15 +1347,13 @@ mbsubmatch(parent, cf, aux)
 {
 	register struct confargs *ca = aux;
 	register int ret;
+	int saved_irq;
 
-	if (ca->ca_irq != HPPACF_IRQ_UNDEF)
-		ret = 0;
-	else {
-		ca->ca_irq = cf->hppacf_irq;
-		if (!(ret = (*cf->cf_attach->ca_match)(parent, cf, aux)))
-			ca->ca_irq = HPPACF_IRQ_UNDEF;
-	}
-
+	saved_irq = ca->ca_irq;
+	if (cf->hp700cf_irq != HP700CF_IRQ_UNDEF)
+		ca->ca_irq = cf->hp700cf_irq;
+	if (!(ret = (*cf->cf_attach->ca_match)(parent, cf, aux)))
+		ca->ca_irq = saved_irq;
 	return ret;
 }
 

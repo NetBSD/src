@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.245.2.5 2002/06/23 17:34:07 jdolecek Exp $ */
+/* $NetBSD: machdep.c,v 1.245.2.6 2002/09/06 08:31:23 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.5 2002/06/23 17:34:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.6 2002/09/06 08:31:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -850,8 +850,7 @@ pckbc_machdep_cnattach(kbctag, kbcslot)
 void
 cpu_startup()
 {
-	register unsigned i;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -955,7 +954,7 @@ cpu_startup()
 	}
 #endif
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %ld buffers containing %s of memory\n", (long)nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -1497,16 +1496,17 @@ regdump(framep)
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct sigcontext *scp, ksc;
 	struct trapframe *frame;
 	int onstack, fsize, rndfsize;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	frame = p->p_md.md_tf;
 
@@ -1598,12 +1598,33 @@ sendsig(catcher, sig, mask, code)
 		    scp, code);
 #endif
 
-	/* Set up the registers to return to sigcode. */
-	frame->tf_regs[FRAME_PC] = (u_int64_t)p->p_sigctx.ps_sigcode;
+	/*
+	 * Set up the registers to directly invoke the signal handler.  The
+	 * signal trampoline is then used to return from the signal.  Note
+	 * the trampoline version numbers are coordinated with machine-
+	 * dependent code in libc.
+	 */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		frame->tf_regs[FRAME_RA] = (u_int64_t)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		frame->tf_regs[FRAME_RA] =
+		    (u_int64_t)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+	frame->tf_regs[FRAME_PC] = (u_int64_t)catcher;
 	frame->tf_regs[FRAME_A0] = sig;
 	frame->tf_regs[FRAME_A1] = code;
 	frame->tf_regs[FRAME_A2] = (u_int64_t)scp;
-	frame->tf_regs[FRAME_T12] = (u_int64_t)catcher;		/* t12 is pv */
+	frame->tf_regs[FRAME_T12] = (u_int64_t)catcher;
 	alpha_pal_wrusp((unsigned long)scp);
 
 	/* Remember that we're now on the signal stack. */

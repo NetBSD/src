@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.12.2.5 2002/06/23 17:34:37 jdolecek Exp $ */
+/* $NetBSD: machdep.c,v 1.12.2.6 2002/09/06 08:31:58 jdolecek Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -416,8 +416,6 @@ void show_me_regs()
 }
 
 
-paddr_t msgbuf_paddr;
-
 /*
  * This is called during initppc, before the system is really initialized.
  * It shall provide the total and the available regions of RAM.
@@ -702,9 +700,10 @@ identifycpu()
 void
 cpu_startup()
 {
-	int i, size, base, residual;
+	u_int i, base, residual;
 	caddr_t	v;
 	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 	char pbuf[9];
 
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
@@ -799,7 +798,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up the buffers, so they can be used to read disk labels

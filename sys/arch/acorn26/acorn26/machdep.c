@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2.6.2 2002/06/23 17:33:36 jdolecek Exp $ */
+/* $NetBSD: machdep.c,v 1.2.6.3 2002/09/06 08:30:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.6.2 2002/06/23 17:33:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.6.3 2002/09/06 08:30:55 jdolecek Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -125,7 +125,9 @@ haltsys:
 		*(volatile u_int8_t *)0x9c2 = 2; /* Zero page magic */
 		*(volatile u_int32_t *)0
 			= *(volatile u_int32_t *)MEMC_ROM_LOW_BASE;
-		asm volatile("movs pc, #3"); /* reboot in SVC mode */
+		/* reboot in SVC mode, IRQs and FIQs disabled */
+		asm volatile("movs pc, %0" : :
+		    "r" (R15_MODE_SVC | R15_FIQ_DISABLE | R15_IRQ_DISABLE));
 	}
 	panic("cpu_reboot failed");
 }
@@ -137,7 +139,7 @@ haltsys:
 void
 cpu_startup()
 {
-	int i, base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -216,12 +218,14 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
+	curpcb = &proc0.p_addr->u_pcb;
 
 #if 0
 	/* Test exception handlers */

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.38.24.1 2002/02/11 20:08:49 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.38.24.2 2002/09/06 08:38:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,6 +34,8 @@
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +123,11 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 30: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 31: RAIDframe disk driver */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 32: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_clonemisc_init(1, systrace),/* 33: system call tracing */
+#else
+	cdev_notdef(),			/* 33: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -194,6 +201,8 @@ static int chrtoblktbl[] = {
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
 	/* 31 */	13,
+	/* 32 */	NODEV,
+	/* 33 */	NODEV,
 };
 
 /*

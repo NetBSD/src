@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.2.4 2002/06/23 17:40:32 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.5 2002/09/06 08:39:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -59,7 +59,6 @@
 #include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -89,10 +88,8 @@
 
 #include <dev/cons.h>
 
-/* For sysctl(3). */
-char machine[] = MACHINE;
-char machine_arch[] = MACHINE_ARCH;
-char cpu_model[64 + 1];		/* sizeof(arcbios_system_identifier) */
+/* For sysctl_hw. */
+extern char cpu_model[];
 
 struct sgimips_intrhand intrtab[NINTR];
 
@@ -546,8 +543,7 @@ sgimips_count_cpus(struct arcbios_component *node,
 void
 cpu_startup()
 {
-	unsigned i;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -621,32 +617,12 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ctob(arcsmem));
 	printf(", %s for ARCS", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf(", %s in %d buffers\n", pbuf, nbuf);
+	printf(", %s in %u buffers\n", pbuf, nbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
-
-	switch (name[0]) {
-	default:
-		return EOPNOTSUPP;
-	}
 }
 
 int	waittime = -1;

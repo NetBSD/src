@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.6.2.2 2002/06/23 17:35:37 jdolecek Exp $
+#	$NetBSD: IQ80321,v 1.6.2.3 2002/09/06 08:33:56 jdolecek Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -18,12 +18,13 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
-# For StrongARM systems
+# For XScale systems
 options 	CPU_XSCALE_80321	# Support the XScale core
-makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
-#makeoptions	COPTS="-O2 -march=armv5 -mtune=xscale"
+makeoptions	COPTS="-O2 -mcpu=xscale"
 
 # Architecture options
+options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
+#options 	HZ=512
 
 # File systems
 
@@ -121,6 +122,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 
 # Development and Debugging options
 
+options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
@@ -146,7 +148,10 @@ com*		at obio? addr ?		# on-board TI 165C50 UART
 
 # i80321 I/O Processor peripheral support
 iopxs*		at mainbus?
-pci0		at iopxs? bus ?
+
+iopaau*		at iopxs?		# Application Accelerator Unit
+iopwdog*	at iopxs?		# Watchdog timer
+pci0		at iopxs? bus ?		# PCI/PCI-X support
 
 # PCI-PCI bridges
 ppb*		at pci? dev ? function ?
@@ -157,9 +162,11 @@ pci*		at ppb? bus ?
 #
 
 # PCI network devices
+fxp*		at pci? dev ? function ?	# Intel i8255x 10/100 Ethernet
 wm*		at pci? dev ? function ?	# Intel i82544 Gig-E
 
 # MII/PHY support
+inphy*		at mii? phy ?			# Intel i82555 10/100 PHYs
 makphy*		at mii? phy ?			# Marvell 88E1000 PHYs
 ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 
@@ -172,7 +179,13 @@ pseudo-device	vnd		4	# disk-like interface to files
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
 pseudo-device	loop			# network loopback
+pseudo-device	kttcp			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
+
+# data mover pseudo-devices
+#pseudo-device	swdmover		# softare dmover(9) back-end
+pseudo-device	dmoverio		# /dev/dmover dmover(9) interface

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.30.2.1 2002/01/10 19:44:37 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.30.2.2 2002/09/06 08:36:11 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.30.2.1 2002/01/10 19:44:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.30.2.2 2002/09/06 08:36:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,6 +249,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		db_sym_t	sym;
 #define MAXNARG	16
 		char	*argnames[MAXNARG], **argnp = NULL;
+		db_addr_t	lastcallpc;
 
 		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
 		db_symbol_values(sym, &name, NULL);
@@ -348,6 +349,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		}
 
 		lastframe = frame;
+		lastcallpc = callpc;
 		db_nextframe(&frame, &callpc, &frame->f_arg0, is_trap, pr);
 
 		if (frame == 0) {
@@ -356,7 +358,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		}
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */
-			if (frame <= lastframe) {
+			if (frame < lastframe ||
+			    (frame == lastframe && callpc == lastcallpc)) {
 				(*pr)("Bad frame pointer: %p\n", frame);
 				break;
 			}

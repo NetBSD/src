@@ -1,0 +1,5 @@
+# $NetBSD: std.pb1000.el,v 1.1.6.2 2002/09/06 08:34:22 jdolecek Exp $
+
+include	"arch/evbmips/conf/std.pb1000.common"
+
+makeoptions	MACHINE_ARCH="mipsel"

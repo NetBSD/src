@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52.2.4 2002/06/23 17:38:01 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52.2.5 2002/09/06 08:37:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -95,19 +95,21 @@ do {									\
 #define CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
 #define CPU_ROOT_DEVICE		3	/* string: root device name */
+#define CPU_LLSC		4	/* OS/CPU supports LL/SC instruction */
 
 /*
  * Platform can override, but note this breaks userland compatibility
  * with other mips platforms.
  */
 #ifndef CPU_MAXID
-#define CPU_MAXID		4	/* number of valid machdep ids */
+#define CPU_MAXID		5	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "root_device", CTLTYPE_STRING }, \
+	{ "llsc", CTLTYPE_INT }, \
 }
 #endif
 
@@ -215,7 +217,7 @@ extern int mips3_pg_cached;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
-#endif /* MIPS32 */
+#endif /* MIPS64 */
 
 #else /* run-time test */
 

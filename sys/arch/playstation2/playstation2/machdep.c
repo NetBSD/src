@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2.2.3 2002/02/11 20:08:50 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2.2.4 2002/09/06 08:38:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,9 +43,10 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
-#include <sys/sysctl.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -68,10 +69,8 @@
 #include <playstation2/playstation2/kloader.h>
 #endif
 
-/* For sysctl. */
-char machine[] = MACHINE;
-char machine_arch[] = MACHINE_ARCH;
-char cpu_model[] = "SONY PlayStation 2";
+/* For sysctl_hw */
+extern char cpu_model[];
 
 struct cpu_info cpu_info_store;
 
@@ -146,6 +145,8 @@ mach_init()
 	uvm_page_physload(atop(start), atop(start + size),
 	    atop(start), atop(start + size), VM_FREELIST_DEFAULT);
 
+	strcpy(cpu_model, "SONY PlayStation 2");
+
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
@@ -188,8 +189,7 @@ mach_init()
 void
 cpu_startup()
 {
-	unsigned i;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -263,33 +263,12 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf(", %s free", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf(", %s in %d buffers\n", pbuf, nbuf);
+	printf(", %s in %u buffers\n", pbuf, nbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-/*
- * Machine dependent system variables.
- */
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct proc *p)
-{
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
-		    sizeof cn_tab->cn_dev));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 void

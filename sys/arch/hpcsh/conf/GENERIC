@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.4.2.6 2002/06/23 17:36:57 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.4.2.7 2002/09/06 08:35:44 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -64,6 +64,9 @@ options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+
+# Compatibility options
+#options 	BSDDISKLABEL_EI	# endian independent disklabel support
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables
@@ -159,6 +162,7 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux

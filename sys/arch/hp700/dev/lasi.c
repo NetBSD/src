@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.1.2.2 2002/06/23 17:36:20 jdolecek Exp $	*/
+/*	$NetBSD: lasi.c,v 1.1.2.3 2002/09/06 08:35:14 jdolecek Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -63,9 +63,14 @@ struct lasi_trs {
 	u_int32_t lasi_iar;	/* int acquire? register */
 };
 
+#define	LASI_BANK_SZ	0x200000
+#define	LASI_REG_INT	0x100000
+#define	LASI_REG_MISC	0x10c000
+
 struct lasi_softc {
 	struct device sc_dev;
-	struct gscbus_ic sc_ic;
+	
+	struct hp700_int_reg sc_int_reg;
 
 	struct lasi_hwr volatile *sc_hw;
 	struct lasi_trs volatile *sc_trs;
@@ -78,7 +83,44 @@ struct cfattach lasi_ca = {
 	sizeof(struct lasi_softc), lasimatch, lasiattach
 };
 
+/*
+ * Before a module is matched, this fixes up its gsc_attach_args.
+ */
+static void lasi_fix_args __P((void *, struct gsc_attach_args *));
+static void
+lasi_fix_args(void *_sc, struct gsc_attach_args *ga)
+{
+	struct lasi_softc *sc = _sc;
+	hppa_hpa_t module_offset;
+	struct pdc_lan_station_id pdc_mac PDC_ALIGNMENT;
 
+	/*
+	 * Determine this module's interrupt bit.
+	 */
+	module_offset = ga->ga_hpa - (hppa_hpa_t) sc->sc_trs;
+	ga->ga_irq = HP700CF_IRQ_UNDEF;
+#define LASI_IRQ(off, irq) if (module_offset == off) ga->ga_irq = irq
+	LASI_IRQ(0x2000, 7);	/* lpt */
+	LASI_IRQ(0x4000, 13);	/* harmony */
+	LASI_IRQ(0x4040, 16);	/* harmony telephone0 */
+	LASI_IRQ(0x4060, 17);	/* harmony telephone1 */
+	LASI_IRQ(0x5000, 5);	/* com */
+	LASI_IRQ(0x6000, 9);	/* osiop */
+	LASI_IRQ(0x7000, 8);	/* ie */
+	LASI_IRQ(0x8000, 26);	/* pckbc */
+	LASI_IRQ(0xa000, 20);	/* fdc */
+#undef LASI_IRQ
+
+	/*
+	 * If this is the Ethernet adapter, get its Ethernet address.
+	 */
+	if (module_offset == 0x7000) {
+		if (pdc_call((iodcio_t)pdc, 0, PDC_LAN_STATION_ID,
+		     PDC_LAN_STATION_ID_READ, &pdc_mac, ga->ga_hpa) == 0)
+			memcpy(ga->ga_ether_address, pdc_mac.addr,
+				sizeof(ga->ga_ether_address));
+	}
+}
 
 int
 lasimatch(parent, cf, aux)   
@@ -91,6 +133,16 @@ lasimatch(parent, cf, aux)
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_LASI)
 		return 0;
+
+	/* Make sure we have an IRQ. */
+	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
+		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
+
+	/*
+	 * Forcibly mask the HPA down to the start of the LASI
+	 * chip address space.
+	 */
+	ca->ca_hpa &= ~(LASI_BANK_SZ - 1);
 
 	return 1;
 }
@@ -107,16 +159,21 @@ lasiattach(parent, self, aux)
 	bus_space_handle_t ioh;
 	int s, in;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa + 0xc000,
-			  IOMOD_HPASIZE, 0, &ioh)) {
-#ifdef DEBUG
-		printf("lasiattach: can't map IO space\n");
-#endif
-		return;
-	}
+	/*
+	 * Map the LASI interrupt registers.
+	 */
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + LASI_REG_INT,
+			  sizeof(struct lasi_trs), 0, &ioh))
+		panic("lasiattach: can't map interrupt registers");
+	sc->sc_trs = (struct lasi_trs *)ioh;
 
-	sc->sc_trs = (struct lasi_trs *)ca->ca_hpa;
-	sc->sc_hw = (struct lasi_hwr *)(ca->ca_hpa + 0xc000);
+	/*
+	 * Map the LASI miscellaneous registers.
+	 */
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + LASI_REG_MISC,
+			  sizeof(struct lasi_hwr), 0, &ioh))
+		panic("lasiattach: can't map misc registers");
+	sc->sc_hw = (struct lasi_hwr *)ioh;
 
 	/* XXX should we reset the chip here? */
 
@@ -132,14 +189,17 @@ lasiattach(parent, self, aux)
 	sc->sc_trs->lasi_imr = 0;
 	splx(s);
 
-	sc->sc_ic.gsc_type = gsc_lasi;
-	sc->sc_ic.gsc_dv = sc;
-	hp700_intr_reg_establish(&sc->sc_ic.gsc_int_reg);
-	sc->sc_ic.gsc_int_reg.int_reg_mask = &sc->sc_trs->lasi_imr;
-	sc->sc_ic.gsc_int_reg.int_reg_req = &sc->sc_trs->lasi_irr;
+	/* Establish the interrupt register. */
+	hp700_intr_reg_establish(&sc->sc_int_reg);
+	sc->sc_int_reg.int_reg_mask = &sc->sc_trs->lasi_imr;
+	sc->sc_int_reg.int_reg_req = &sc->sc_trs->lasi_irr;
 
+	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
 	ga.ga_name = "gsc";
-	ga.ga_ic = &sc->sc_ic;
+	ga.ga_int_reg = &sc->sc_int_reg;
+	ga.ga_fix_args = lasi_fix_args;
+	ga.ga_fix_args_cookie = sc;
+	ga.ga_scsi_target = 7; /* XXX */
 	config_found(self, &ga, gscprint);
 }

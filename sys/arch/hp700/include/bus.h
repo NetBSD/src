@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1.2.2 2002/06/23 17:36:25 jdolecek Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.2.3 2002/09/06 08:35:21 jdolecek Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -39,18 +39,18 @@
 
 #include <machine/cpufunc.h>
 
-/* addresses in bus space */
+/*
+ * Bus address and size types.
+ */
 typedef u_long bus_addr_t;
 typedef u_long bus_size_t;
-
-/* access methods for bus space */
 typedef u_long bus_space_handle_t;
 
 struct hppa_bus_space_tag {
 	void *hbt_cookie;
 
 	int  (*hbt_map) __P((void *v, bus_addr_t addr, bus_size_t size,
-			     int cacheable, bus_space_handle_t *bshp));
+			     int flags, bus_space_handle_t *bshp));
 	void (*hbt_unmap) __P((void *v, bus_space_handle_t bsh,
 			       bus_size_t size));
 	int  (*hbt_subregion) __P((void *v, bus_space_handle_t bsh,
@@ -58,7 +58,7 @@ struct hppa_bus_space_tag {
 				   bus_space_handle_t *nbshp));
 	int  (*hbt_alloc) __P((void *v, bus_addr_t rstart, bus_addr_t rend,
 			       bus_size_t size, bus_size_t align,
-			       bus_size_t boundary, int cacheable,
+			       bus_size_t boundary, int flags,
 			       bus_addr_t *addrp, bus_space_handle_t *bshp));
 	void (*hbt_free) __P((void *, bus_space_handle_t, bus_size_t));
 	void (*hbt_barrier) __P((void *v, bus_space_handle_t h,
@@ -321,12 +321,10 @@ struct mbuf;
 struct proc;
 struct uio;
 
-typedef enum {
-	BUS_DMASYNC_POSTREAD,
-	BUS_DMASYNC_POSTWRITE,
-	BUS_DMASYNC_PREREAD,
-	BUS_DMASYNC_PREWRITE
-} bus_dmasync_op_t;
+#define	BUS_DMASYNC_POSTREAD	0x01
+#define	BUS_DMASYNC_POSTWRITE	0x02
+#define	BUS_DMASYNC_PREREAD	0x04
+#define	BUS_DMASYNC_PREWRITE	0x08
 
 typedef const struct hppa_bus_dma_tag	*bus_dma_tag_t;
 typedef struct hppa_bus_dmamap	*bus_dmamap_t;
@@ -370,7 +368,7 @@ struct hppa_bus_dma_tag {
 	int	(*_dmamap_load_raw) __P((void *, bus_dmamap_t,
 		    bus_dma_segment_t *, int, bus_size_t, int));
 	void	(*_dmamap_unload) __P((void *, bus_dmamap_t));
-	void	(*_dmamap_sync) __P((void *, bus_dmamap_t, bus_addr_t, bus_size_t, bus_dmasync_op_t));
+	void	(*_dmamap_sync) __P((void *, bus_dmamap_t, bus_addr_t, bus_size_t, int));
 
 	/*
 	 * DMA memory utility functions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3.2.4 2002/06/23 17:34:44 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.3.2.5 2002/09/06 08:32:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,6 +43,8 @@
  *
  * Created      : 17/09/94
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +143,10 @@
 /*#include "plcom.h"*/
 #ifndef NPLCOM
 #define NPLCOM	0
+#endif
+/*#include "ixpcom.h"*/
+#ifndef NIXPCOM
+#define NIXPCOM	0
 #endif
 
 /*
@@ -388,6 +394,7 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 95: */
 	bdev_lkm_dummy(),		/* 96: */
 	bdev_lkm_dummy(),		/* 97: */
+	bdev_lkm_dummy(),		/* 98: */
 };
 
 /* Character devices */
@@ -400,6 +407,15 @@ cdev_decl(isdntel);
 #define ptsioctl        ptyioctl
 #define ptctty          ptytty
 #define ptcioctl        ptyioctl
+
+#include "kttcp.h"
+cdev_decl(kttcp);
+
+#include <dev/sysmon/sysmonconf.h>
+cdev_decl(sysmon);
+
+#include "dmoverio.h"
+cdev_decl(dmoverio);
 
 struct cdevsw cdevsw[] = {
 	cdev_mm_init(1,mm),			/*  0: /dev/{null,mem,kmem,...} */
@@ -500,6 +516,15 @@ struct cdevsw cdevsw[] = {
 	cdev_ir_init(NIRFRAMEDRV,irframe),	/* 95: IrDA frame driver */
 	cdev_ir_init(NCIR,cir),			/* 96: Consumer Ir */
 	cdev_radio_init(NRADIO,radio),		/* 97: generic radio I/O */
+#ifdef SYSTRACE
+	cdev_clonemisc_init(1, systrace),	/* 98: system call tracing */
+#else
+	cdev_notdef(),				/* 98: system call tracing */
+#endif
+	cdev__oci_init(NKTTCP,kttcp),		/* 99: kernel ttcp helper */
+	cdev_tty_init(NIXPCOM,ixpcom),		/* 100: IXP1200 serial port */
+	cdev_sysmon_init(NSYSMON, sysmon),	/* 101: System Monitor */
+	cdev_clonemisc_init(NDMOVERIO,dmoverio),/* 102: data mover interface */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -640,6 +665,11 @@ static int chrtoblktbl[] = {
     /* 95 */	    NODEV,
     /* 96 */	    NODEV,
     /* 97 */	    NODEV,
+    /* 98 */	    NODEV,
+    /* 99 */	    NODEV,
+    /* 100 */	    NODEV,
+    /* 101 */	    NODEV,
+    /* 102 */	    NODEV,
 };
 
 /*

@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.14.2.2 2002/06/23 17:38:50 jdolecek Exp $
+# 	$NetBSD: WAPIKO,v 1.14.2.3 2002/09/06 08:38:16 jdolecek Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -94,3 +94,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
 pseudo-device	ipfilter		# ip filter
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hp700,v 1.1.2.2 2002/06/23 17:36:17 jdolecek Exp $
+# $NetBSD: Makefile.hp700,v 1.1.2.3 2002/09/06 08:35:11 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -85,7 +85,7 @@ locore.o: ${HP700}/hp700/locore.S
 ## (5) link settings
 ##
 LINKFORMAT=	-T ${HP700}/conf/ld.script
-TEXTADDR?=	00080000
+TEXTADDR?=	00200000
 EXTRA_LINKFLAGS= -Map $@.map
 
 ##

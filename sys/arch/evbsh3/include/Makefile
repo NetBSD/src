@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.2 2002/06/23 17:36:03 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.12.2.3 2002/09/06 08:34:29 jdolecek Exp $
 
 KDIR=	/sys/arch/evbsh3/include
 INCSDIR= /usr/include/evbsh3
@@ -14,7 +14,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	intr.h \
 	limits.h lock.h \
 	math.h \
-	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
 	types.h \

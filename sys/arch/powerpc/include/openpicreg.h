@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.2.6.1 2001/09/13 01:14:22 thorpej Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.2.6.2 2002/09/06 08:39:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -85,7 +85,8 @@
  */
 
 /* IPI command reg */
-#define OPENPIC_IPI(cpu, ipi)		(0x20040 + (cpu) * 0x1000 + (ipi))
+#define OPENPIC_IPI(cpu, ipi)		(0x20040 + (cpu) * 0x1000 + \
+					 (ipi) * 0x10)
 
 /* current task priority reg */
 #define OPENPIC_CPU_PRIORITY(cpu)	(0x20080 + (cpu) * 0x1000)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.1.6.4 2002/06/23 17:39:09 jdolecek Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.1.6.5 2002/09/06 08:38:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ STATIC void _gsfb_copycols(void *, int, int, int, int);
 STATIC void _gsfb_erasecols(void *, int, int, int, long);
 STATIC void _gsfb_copyrows(void *, int, int, int);
 STATIC void _gsfb_eraserows(void *, int, int, long);
-STATIC int _gsfb_alloc_attr(void *, int, int, int, long *);
+STATIC int _gsfb_allocattr(void *, int, int, int, long *);
 
 /* access ops */
 STATIC int _gsfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -231,7 +231,7 @@ const struct wsdisplay_emulops _gsfb_emulops = {
 	.erasecols	= _gsfb_erasecols,
 	.copyrows	= _gsfb_copyrows,
 	.eraserows	= _gsfb_eraserows,
-	.alloc_attr	= _gsfb_alloc_attr
+	.allocattr	= _gsfb_allocattr
 };
 
 const struct wsscreen_descr _gsfb_std_screen = {
@@ -496,7 +496,7 @@ _gsfb_eraserows(void *cookie, int row, int nrow, long attr)
 }
 
 int
-_gsfb_alloc_attr(void *cookie, int fg, int bg, int flags, long *attr)
+_gsfb_allocattr(void *cookie, int fg, int bg, int flags, long *attr)
 {
 
 	if ((flags & WSATTR_BLINK) != 0)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.5.2.6 2002/06/23 17:38:40 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.5.2.7 2002/09/06 08:38:07 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -246,3 +246,4 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

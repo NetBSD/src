@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1.2.2 2002/06/23 17:36:24 jdolecek Exp $	*/
+/*	$NetBSD: softintr.c,v 1.1.2.3 2002/09/06 08:35:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1.2.2 2002/06/23 17:36:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1.2.3 2002/09/06 08:35:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -84,12 +84,13 @@ softintr_bootstrap(void)
  *
  *	Initialize the software interrupt system.
  */
-int
-softintr_init(int spl_free)
+void
+softintr_init(void)
 {
 	struct hp700_soft_intr *si;
 	struct device dummy_device;
-	int i, bit_pos, bit_mask;
+	void *ih;
+	int i;
 
 	/* Initialize the soft interrupt "register". */
 	hp700_intr_reg_establish(&int_reg_soft);
@@ -98,27 +99,19 @@ softintr_init(int spl_free)
 	/* Initialize the soft interrupt "bits". */
 	for (i = 0; i < HP700_NSOFTINTR; i++) {
 	
-		/* Allocate an spl bit. */
-		bit_pos = ffs(spl_free);
-		if (bit_pos-- == 0)
-			panic("softintr_init: spl full");
-		bit_mask = (1 << bit_pos);
-		spl_free &= ~bit_mask;
-
 		/* Register our interrupt handler for this bit. */
 		strcpy(dummy_device.dv_xname, hp700_soft_intr_info[i].name);
-		hp700_intr_establish(&dummy_device, hp700_soft_intr_info[i].ipl,
+		ih = hp700_intr_establish(&dummy_device, 
+		    hp700_soft_intr_info[i].ipl,
 		    softintr_dispatch, (void *) (i + 1),
-		    &int_reg_soft, bit_pos);
+		    &int_reg_soft, i);
 		
 		si = &hp700_soft_intrs[i];
 		TAILQ_INIT(&si->softintr_q);
-		si->softintr_ssir = bit_mask;
+		si->softintr_ssir = _hp700_intr_spl_mask(ih);
 	}
 
 	softnetmask = hp700_soft_intrs[HP700_SOFTINTR_SOFTNET].softintr_ssir;
-
-	return spl_free;
 }
 
 /*
@@ -137,13 +130,13 @@ softintr_dispatch(void *arg)
 
 	/* Special handling for softnet. */
 	if (which == HP700_SOFTINTR_SOFTNET) {
-		/* use atomic "load & clear" */
-		/*
-		 * XXX netisr must be 16-byte aligned, but
-		 * we can't control its declaration.
-		 */
-		 __asm __volatile ("ldcws 0(%1), %0"
-				    : "=r" (ni) : "r" (&netisr));
+		__asm __volatile(
+		"	mfctl	%%eiem, %%r22	\n"
+		"	mtctl	%%r0, %%eiem	\n"
+		"	ldw	0(%1), %0	\n"
+		"	stw	%%r0, 0(%1)	\n"
+		"	mtctl	%%r22, %%eiem	\n"
+		: "=&r" (ni) : "r" (&netisr) : "r22");
 #define DONETISR(m,c) if (ni & (1 << (m))) c()
 #include <net/netisr_dispatch.h>
 	}

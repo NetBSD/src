@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.2.6.2 2002/06/23 17:34:51 jdolecek Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.2.6.3 2002/09/06 08:32:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -53,6 +53,7 @@
 			 defined(CPU_ARM8) + defined(CPU_ARM9) +	\
 			 defined(CPU_SA110) + defined(CPU_SA1100) +	\
 			 defined(CPU_SA1110) +				\
+			 defined(CPU_IXP12X0) +				\
 			 defined(CPU_XSCALE_80200) +			\
 			 defined(CPU_XSCALE_80321) +			\
 			 defined(CPU_XSCALE_PXA2X0))
@@ -79,7 +80,8 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) ||	\
-     defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110))
+     defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
+     defined(CPU_IXP12X0))
 #define	ARM_ARCH_4	1
 #else
 #define	ARM_ARCH_4	0
@@ -120,7 +122,7 @@
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
      defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_SA110) ||	\
-     defined(CPU_SA1100) || defined(CPU_SA1110))
+     defined(CPU_SA1100) || defined(CPU_SA1110) || defined(CPU_IXP12X0))
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0
@@ -138,6 +140,19 @@
 				 ARM_MMU_XSCALE)
 #if ARM_NMMUS == 0
 #error ARM_NMMUS is 0
+#endif
+
+/*
+ * Step 4: Define features that may be present on a subset of CPUs
+ *
+ *	ARM_XSCALE_PMU		Performance Monitoring Unit on 80200 and 80321
+ */
+
+#if !defined(_KERNEL_OPT) ||						\
+    (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321))
+#define ARM_XSCALE_PMU	1
+#else
+#define ARM_XSCALE_PMU	0
 #endif
 
 #endif /* _ARM_CPUCONF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13.2.3 2002/03/16 15:59:05 jdolecek Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13.2.4 2002/09/06 08:38:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  */
 
 #ifndef OLDPMAP
+#define USER_SR		11
 #include <powerpc/mpc6xx/vmparam.h>
 #define _MACHINE_VMPARAM_H_
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28.2.2 2002/01/10 19:46:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.2.3 2002/09/06 08:37:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.2.2 2002/01/10 19:46:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.2.3 2002/09/06 08:37:51 jdolecek Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.2.2 2002/01/10 19:46:21 thorpej Exp
 #include <sys/device.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
@@ -105,9 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.2.2 2002/01/10 19:46:21 thorpej Exp
 #include "com.h"			/* XXX */
 
 /* the following is used externally (sysctl_hw) */
-char  machine[] = MACHINE;	/* from <machine/param.h> */
-char  machine_arch[] = MACHINE_ARCH;
-char  cpu_model[40];
+extern char  cpu_model[];
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -389,8 +386,7 @@ mach_init(argc, argv, envp, bim, bip)
 void
 cpu_startup()
 {
-	register unsigned i;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -474,36 +470,12 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-/*
- * machine dependent system variables.
- */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 /*

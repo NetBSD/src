@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7.2.2 2002/02/11 20:07:43 jdolecek Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.2.3 2002/09/06 08:34:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -85,10 +85,66 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
-int	_splraise(int);		/* provided by BSP */
-int	_spllower(int);		/* provided by BSP */
-void	splx(int);		/* provided by BSP */
-void	_setsoftintr(int);	/* provided by BSP */
+#if defined(_LKM)
+
+int	_splraise(int);
+int	_spllower(int);
+void	splx(int);
+void	_setsoftintr(int);
+
+#else	/* _LKM */
+
+#if defined(EVBARM_BOARDTYPE)
+
+#include <machine/cpu.h>
+
+/*
+ * Each board needs to define the following functions:
+ *
+ * int	_splraise(int);
+ * int	_spllower(int);
+ * void	splx(int);
+ * void	_setsoftintr(int);
+ *
+ * These may be defined as functions, static __inline functions, or macros,
+ * but there must be a _spllower() and splx() defined as functions callable
+ * from assembly language (for cpu_switch()).  However, since it's quite
+ * useful to be able to inline splx(), you could do something like the
+ * following:
+ *
+ * in <boardtype>_intr.h:
+ * 	static __inline int
+ *	boardtype_splx(int spl)
+ *	{...}
+ *
+ *	#define splx(nspl)	boardtype_splx(nspl)
+ *	...
+ * and in boardtype's machdep code:
+ *
+ *	...
+ *	#undef splx
+ *	int
+ *	splx(int spl)
+ *	{
+ *		return boardtype_splx(spl);
+ *	}
+ */
+
+#if EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_IQ80310
+#include <arch/evbarm/iq80310/iq80310_intr.h>
+#elif EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_I80321
+#include <arch/arm/xscale/i80321_intr.h>
+#elif EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_IXM1200
+#include <arch/evbarm/ixm1200/ixm1200_intr.h>
+#endif
+
+#else	/* EVBARM_BOARDTYPE */
+
+#error EVBARM_BOARDTYPE not defined.
+
+#endif	/* else EVBARM_BOARDTYPE */
+
+#endif /* else _LKM */
 
 #define	splhigh()	_splraise(IPL_HIGH)
 #define	splsoft()	_splraise(IPL_SOFT)

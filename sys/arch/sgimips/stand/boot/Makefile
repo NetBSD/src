@@ -1,11 +1,16 @@
-#	$NetBSD: Makefile,v 1.3.2.2 2002/01/10 19:48:33 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3.2.3 2002/09/06 08:39:46 jdolecek Exp $
 
 PROG=	boot
+
+# Don't strip the ECOFF'ed version on install -- strip gets confused by that,
+# and it's already stripped since it's a copy of the stripped ELF one.
+#
+STRIPFLAG=
 
 SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c disk.c
 
 ${PROG}: ${PROG}.elf
-	${OBJCOPY} -O ecoff-bigmips ${PROG}.elf ${PROG}
+	${ELF2ECOFF} ${PROG}.elf ${PROG}
 	@${SIZE} ${PROG}
 
 # XXX Temporary hack to install the ELF verision, too.

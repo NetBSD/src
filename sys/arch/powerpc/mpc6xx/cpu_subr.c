@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.1.4.6 2002/06/23 17:39:45 jdolecek Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.1.4.7 2002/09/06 08:39:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -35,6 +35,7 @@
 
 #include "opt_l2cr_config.h"
 #include "opt_multiprocessor.h"
+#include "opt_altivec.h"
 #include "sysmon_envsys.h"
 
 #include <sys/param.h>
@@ -42,6 +43,7 @@
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
+
 #include <powerpc/mpc6xx/hid.h>
 #include <powerpc/mpc6xx/hid_601.h>
 #include <powerpc/spr.h>
@@ -67,6 +69,7 @@ struct cpu_info cpu_info[CPU_MAXNUM];
 struct cpu_info cpu_info_store;
 #endif
 
+int cpu_altivec;
 char cpu_model[80];
 
 void
@@ -74,11 +77,12 @@ cpu_probe_cache(void)
 {
 	u_int assoc, pvr, vers;
 
-	__asm __volatile ("mfpvr %0" : "=r"(pvr));
+	pvr = mfpvr();
 	vers = pvr >> 16;
 
 	switch (vers) {
 #define	K	*1024
+	case IBM750FX:
 	case MPC601:
 	case MPC750:
 	case MPC7450:
@@ -87,9 +91,16 @@ cpu_probe_cache(void)
 		curcpu()->ci_ci.icache_size = 32 K;
 		assoc = 8;
 		break;
+	case MPC603:
+		curcpu()->ci_ci.dcache_size = 8 K;
+		curcpu()->ci_ci.icache_size = 8 K;
+		assoc = 2;
+		break;
 	case MPC603e:
 	case MPC603ev:
 	case MPC604:
+	case MPC8240:
+	case MPC8245:
 		curcpu()->ci_ci.dcache_size = 16 K;
 		curcpu()->ci_ci.icache_size = 16 K;
 		assoc = 4;
@@ -100,8 +111,8 @@ cpu_probe_cache(void)
 		assoc = 4;
 		break;
 	default:
-		curcpu()->ci_ci.dcache_size = PAGE_SIZE;
-		curcpu()->ci_ci.icache_size = PAGE_SIZE;
+		curcpu()->ci_ci.dcache_size = NBPG;
+		curcpu()->ci_ci.icache_size = NBPG;
 		assoc = 1;
 #undef	K
 	}
@@ -113,15 +124,14 @@ cpu_probe_cache(void)
 	/*
 	 * Possibly recolor.
 	 */
-        uvm_page_recolor(atop(curcpu()->ci_ci.dcache_line_size / assoc));
+	uvm_page_recolor(atop(curcpu()->ci_ci.dcache_size / assoc));
 }
 
 struct cpu_info *
 cpu_attach_common(struct device *self, int id)
 {
 	struct cpu_info *ci;
-	u_int hid0, pvr, vers;
-	char model[80];
+	u_int pvr, vers;
 
 	ncpus++;
 #ifdef MULTIPROCESSOR
@@ -145,7 +155,7 @@ cpu_attach_common(struct device *self, int id)
 	ci->ci_intrdepth = -1;
 	ci->ci_dev = self;
 
-	__asm __volatile ("mfpvr %0" : "=r"(pvr));
+	pvr = mfpvr();
 	vers = (pvr >> 16) & 0xffff;
 
 	switch (id) {
@@ -159,8 +169,9 @@ cpu_attach_common(struct device *self, int id)
 		case MPC7410:
 		case MPC7450:
 		case MPC7455:
-			__asm __volatile ("mtspr %1,%0" :: "r"(id), "n"(SPR_PIR));
+			mtspr(SPR_PIR, id);
 		}
+		cpu_setup(self, ci);
 		break;
 	default:
 		if (id >= CPU_MAXNUM) {
@@ -172,11 +183,26 @@ cpu_attach_common(struct device *self, int id)
 		return NULL;
 #endif
 	}
+	return (ci);
+}
+
+void
+cpu_setup(self, ci)
+	struct device *self;
+	struct cpu_info *ci;
+{
+	u_int hid0, pvr, vers;
+	char *bitmask, hidbuf[128];
+	char model[80];
+
+	pvr = mfpvr();
+	vers = (pvr >> 16) & 0xffff;
+
 	cpu_identify(model, sizeof(model));
 	printf(": %s, ID %d%s\n", model,  cpu_number(),
-	    id == 0 ? " (primary)" : "");
+	    cpu_number() == 0 ? " (primary)" : "");
 
-	__asm __volatile("mfspr %0,%1" : "=r"(hid0) : "n"(SPR_HID0));
+	hid0 = mfspr(SPR_HID0);
 	cpu_probe_cache();
 
 	/*
@@ -188,8 +214,11 @@ cpu_attach_common(struct device *self, int id)
 	case MPC603ev:
 	case MPC604ev:
 	case MPC750:
+	case IBM750FX:
 	case MPC7400:
 	case MPC7410:
+	case MPC8240:
+	case MPC8245:
 		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
@@ -204,7 +233,7 @@ cpu_attach_common(struct device *self, int id)
 		/* Select NAP mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_NAP | HID0_DPM;
-		powersave = 1;
+		powersave = 0;		/* but don't use it */
 		break;
 
 	default:
@@ -213,6 +242,7 @@ cpu_attach_common(struct device *self, int id)
 
 #ifdef NAPMODE
 	switch (vers) {
+	case IBM750FX:
 	case MPC750:
 	case MPC7400:
 		/* Select NAP mode. */
@@ -223,47 +253,41 @@ cpu_attach_common(struct device *self, int id)
 #endif
 
 	switch (vers) {
+	case IBM750FX:
 	case MPC750:
 		hid0 &= ~HID0_DBP;		/* XXX correct? */
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		break;
-#if 0
+
 	case MPC7400:
 	case MPC7410:
 		hid0 &= ~HID0_SPD;
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		hid0 |= HID0_EIEC;
 		break;
-#endif
 	}
 
-	__asm __volatile ("mtspr %1,%0" :: "r"(hid0), "n"(SPR_HID0));
+	mtspr(SPR_HID0, hid0);
 
-#if 1
-	{
-		char hidbuf[128];
-		char *bitmask;
-		switch (vers) {
-		case MPC601:
-			bitmask = HID0_601_BITMASK;
-			break;
-		case MPC7450:
-		case MPC7455:
-			bitmask = HID0_7450_BITMASK;
-			break;
-		default:
-			bitmask = HID0_BITMASK;
-			break;
-		}
-		bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
-		printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
+	switch (vers) {
+	case MPC601:
+		bitmask = HID0_601_BITMASK;
+		break;
+	case MPC7450:
+	case MPC7455:
+		bitmask = HID0_7450_BITMASK;
+		break;
+	default:
+		bitmask = HID0_BITMASK;
+		break;
 	}
-#endif
+	bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
+	printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
 
 	/*
 	 * Display speed and cache configuration.
 	 */
-	if (vers == MPC750 || vers == MPC7400 ||
+	if (vers == MPC750 || vers == MPC7400 || vers == IBM750FX ||
 	    vers == MPC7410 || vers == MPC7450 || vers == MPC7455) {
 		printf("%s", self->dv_xname);
 		cpu_print_speed();
@@ -278,7 +302,7 @@ cpu_attach_common(struct device *self, int id)
 	 * XXX supported by Motorola and may return values that are off by 
 	 * XXX 35-55 degrees C.
 	 */
-	if (vers == MPC750)
+	if (vers == MPC750 || vers == IBM750FX)
 		cpu_tau_setup(ci);
 #endif
 
@@ -306,59 +330,68 @@ cpu_attach_common(struct device *self, int id)
 		&ci->ci_ev_traps, self->dv_xname, "user alignment traps");
 	evcnt_attach_dynamic(&ci->ci_ev_ali_fatal, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_ali, self->dv_xname, "user alignment traps");
-	if (vers == MPC7400 || vers == MPC7410 || vers == MPC7450) {
-		evcnt_attach_dynamic(&ci->ci_ev_vec, EVCNT_TYPE_TRAP,
-			&ci->ci_ev_traps, self->dv_xname,
-			"user AltiVec unavailable");
+	evcnt_attach_dynamic(&ci->ci_ev_umchk, EVCNT_TYPE_TRAP,
+		&ci->ci_ev_umchk, self->dv_xname, "user MCHK failures");
+	evcnt_attach_dynamic(&ci->ci_ev_vec, EVCNT_TYPE_TRAP,
+		&ci->ci_ev_traps, self->dv_xname, "AltiVec unavailable");
+#ifdef ALTIVEC
+	if (cpu_altivec) {
 		evcnt_attach_dynamic(&ci->ci_ev_vecsw, EVCNT_TYPE_TRAP,
-			&ci->ci_ev_vec, self->dv_xname,
-			"user AltiVec context switches");
+		    &ci->ci_ev_vec, self->dv_xname, "AltiVec context switches");
 	}
-
-	return ci;
+#endif
 }
 
 struct cputab {
-	int version;
-	char *name;
+	const char name[8];
+	uint16_t version;
+	uint16_t revfmt;
 };
+#define	REVFMT_MAJMIN	1		/* %u.%u */
+#define	REVFMT_HEX	2		/* 0x%04x */
+#define	REVFMT_DEC	3		/* %u */
 static const struct cputab models[] = {
-	{ MPC601,     "601" },
-	{ MPC602,     "602" },
-	{ MPC603,     "603" },
-	{ MPC603e,    "603e" },
-	{ MPC603ev,   "603ev" },
-	{ MPC604,     "604" },
-	{ MPC604ev,   "604ev" },
-	{ MPC620,     "620" },
-	{ MPC750,     "750" },
-	{ MPC7400,   "7400" },
-	{ MPC7410,   "7410" },
-	{ MPC7450,   "7450" },
-	{ MPC7455,   "7455" },
-	{ MPC8240,   "8240" },
-	{ 0,	       NULL }
+	{ "601",	MPC601,		REVFMT_DEC },
+	{ "602",	MPC602,		REVFMT_DEC },
+	{ "603",	MPC603,		REVFMT_MAJMIN },
+	{ "603e",	MPC603e,	REVFMT_MAJMIN },
+	{ "603ev",	MPC603ev,	REVFMT_MAJMIN },
+	{ "604",	MPC604,		REVFMT_MAJMIN },
+	{ "604ev",	MPC604ev,	REVFMT_MAJMIN },
+	{ "620",	MPC620,  	REVFMT_HEX },
+	{ "750",	MPC750,		REVFMT_MAJMIN },
+	{ "750FX",	IBM750FX,	REVFMT_MAJMIN },
+	{ "7400",	MPC7400,	REVFMT_MAJMIN },
+	{ "7410",	MPC7410,	REVFMT_MAJMIN },
+	{ "7450",	MPC7450,	REVFMT_MAJMIN },
+	{ "7455",	MPC7455,	REVFMT_MAJMIN },
+	{ "8240",	MPC8240,	REVFMT_MAJMIN },
+	{ "",		0,		REVFMT_HEX }
 };
 
 void
 cpu_identify(char *str, size_t len)
 {
-	u_int pvr, vers, maj, min;
+	u_int pvr, maj, min;
+	uint16_t vers, rev, revfmt;
 	const struct cputab *cp;
+	const char *name;
+	size_t n;
 
-	asm ("mfpvr %0" : "=r"(pvr));
+	pvr = mfpvr();
 	vers = pvr >> 16;
+	rev = pvr;
 	switch (vers) {
 	case MPC7410:
 		min = (pvr >> 0) & 0xff;
 		maj = min <= 4 ? 1 : 2;
 		break;
 	default:
-		maj = (pvr >>  8) & 0xff;
-		min = (pvr >>  0) & 0xff;
+		maj = (pvr >>  8) & 0xf;
+		min = (pvr >>  0) & 0xf;
 	}
 
-	for (cp = models; cp->name != NULL; cp++) {
+	for (cp = models; cp->name[0] != '\0'; cp++) {
 		if (cp->version == vers)
 			break;
 	}
@@ -369,10 +402,30 @@ cpu_identify(char *str, size_t len)
 		cpu = vers;
 	}
 
-	if (cp->name != NULL) {
-		snprintf(str, len, "%s (Revision %u.%u)", cp->name, maj, min);
+	revfmt = cp->revfmt;
+	name = cp->name;
+	if (rev == MPC750 && pvr == 15) {
+		name = "755";
+		revfmt = REVFMT_HEX;
+	}
+
+	if (cp->name[0] != '\0') {
+		n = snprintf(str, len, "%s (Revision ", cp->name);
 	} else {
-		snprintf(str, len, "Version %x (Revision %u.%u)", vers, maj, min);
+		n = snprintf(str, len, "Version %#x (Revision ", vers);
+	}
+	if (len > n) {
+		switch (revfmt) {
+		case REVFMT_MAJMIN:
+			snprintf(str + n, len - n, "%u.%u)", maj, min);
+			break;
+		case REVFMT_HEX:
+			snprintf(str + n, len - n, "0x%04x)", rev);
+			break;
+		case REVFMT_DEC:
+			snprintf(str + n, len - n, "%u)", rev);
+			break;
+		}
 	}
 }
 
@@ -385,31 +438,49 @@ u_int l2cr_config = 0;
 void
 cpu_config_l2cr(int vers)
 {
-	u_int l2cr, x;
+	u_int l2cr, x, msr;
 
-	__asm __volatile ("mfspr %0,%1" : "=r"(l2cr) : "n"(SPR_L2CR));
+	l2cr = mfspr(SPR_L2CR);
+
+	/*
+	 * For MP systems, the firmware may only configure the L2 cache
+	 * on the first CPU.  In this case, assume that the other CPUs
+	 * should use the same value for L2CR.
+	 */
+	if ((l2cr & L2CR_L2E) != 0 && l2cr_config == 0) {
+		l2cr_config = l2cr;
+	}
 
 	/*
 	 * Configure L2 cache if not enabled.
 	 */
 	if ((l2cr & L2CR_L2E) == 0 && l2cr_config != 0) {
 		l2cr = l2cr_config;
-		asm volatile ("mtspr %1,%0" :: "r"(l2cr), "n"(SPR_L2CR));
+
+		/* Disable interrupts and set the cache config bits. */
+		msr = mfmsr();
+		mtmsr(msr & ~PSL_EE);
+#ifdef ALTIVEC
+		if (cpu_altivec)
+			__asm __volatile("dssall");
+#endif
+		__asm __volatile("sync");
+		mtspr(SPR_L2CR, l2cr & ~L2CR_L2E);
+		__asm __volatile("sync");
 
 		/* Wait for L2 clock to be stable (640 L2 clocks). */
 		delay(100);
 
 		/* Invalidate all L2 contents. */
-		l2cr |= L2CR_L2I;
-		asm volatile ("mtspr %1,%0" :: "r"(l2cr), "n"(SPR_L2CR));
+		mtspr(SPR_L2CR, l2cr | L2CR_L2I);
 		do {
-			asm volatile ("mfspr %0,%1" : "=r"(x) : "n"(SPR_L2CR));
+			x = mfspr(SPR_L2CR);
 		} while (x & L2CR_L2IP);
 
 		/* Enable L2 cache. */
-		l2cr &= ~L2CR_L2I;
 		l2cr |= L2CR_L2E;
-		asm volatile ("mtspr %1,%0" :: "r"(l2cr), "n"(SPR_L2CR));
+		mtspr(SPR_L2CR, l2cr);
+		mtmsr(msr);
 	}
 
 	if (l2cr & L2CR_L2E) {
@@ -418,12 +489,16 @@ cpu_config_l2cr(int vers)
 
 			printf(": 256KB L2 cache");
 
-			__asm __volatile("mfspr %0,%1" :
-			    "=r"(l3cr) : "n"(SPR_L3CR) );
+			l3cr = mfspr(SPR_L3CR);
 			if (l3cr & L3CR_L3E)
 				printf(", %cMB L3 backside cache",
 				   l3cr & L3CR_L3SIZ ? '2' : '1');
 			printf("\n");
+			return;
+		}
+		if (vers == IBM750FX) {
+			printf(": 512KB L2 cache\n");
+			return;
 		}
 		switch (l2cr & L2CR_L2SIZ) {
 		case L2SIZ_256K:
@@ -438,7 +513,11 @@ cpu_config_l2cr(int vers)
 		default:
 			printf(": unknown size");
 		}
-#if 0
+		if (l2cr & L2CR_L2WT) {
+			printf(" write-through");
+		} else {
+			printf(" write-back");
+		}
 		switch (l2cr & L2CR_L2RAM) {
 		case L2RAM_FLOWTHRU_BURST:
 			printf(" Flow-through synchronous burst SRAM");
@@ -455,7 +534,6 @@ cpu_config_l2cr(int vers)
 
 		if (l2cr & L2CR_L2PE)
 			printf(" with parity");
-#endif
 		printf(" backside cache");
 	} else
 		printf(": L2 cache not enabled");
@@ -466,7 +544,7 @@ cpu_config_l2cr(int vers)
 void
 cpu_print_speed(void)
 {
-	u_int64_t cps;
+	uint64_t cps;
 
 	mtspr(SPR_MMCR0, SPR_MMCR0_FC);
 	mtspr(SPR_PMC1, 0);
@@ -474,7 +552,7 @@ cpu_print_speed(void)
 	delay(100000);
 	cps = (mfspr(SPR_PMC1) * 10) + 4999;
 
-	printf(": %qd.%02qd MHz\n", cps / 1000000, (cps / 10000) % 100);
+	printf(": %lld.%02lld MHz\n", cps / 1000000, (cps / 10000) % 100);
 }
 
 #if NSYSMON_ENVSYS > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpt.h,v 1.1.2.2 2002/06/23 17:37:04 jdolecek Exp $	*/
+/*	$NetBSD: hpt.h,v 1.1.2.3 2002/09/06 08:35:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -115,6 +115,9 @@
  *	Pmap header for hppa.
  */
 
+/* Predeclare struct hpt_entry. */
+struct hpt_entry;
+
 /*
  * keep it at 32 bytes for the cache overall satisfaction
  * also, align commonly used pairs on double-word boundary
@@ -127,11 +130,8 @@ struct pv_entry {
 	u_int		pv_tlbpage;	/* physical page (for TLB load) */
 	u_int		pv_tlbprot;	/* TLB format protection */
 	struct pv_entry *pv_hash;	/* VTOP hash bucket list */
-	u_int		pv_flags;	/* flags about this entry */
+	struct hpt_entry *pv_hpt;	/* pointer to HPT entry */
 };
-
-/* These are kept in the pv_flags field. */
-#define	HPPA_PV_UNMANAGED	(1 << 0)	/* mapping is unmanaged */
 
 /*
  * If HPT is defined, we cache the last miss for each bucket using a
@@ -150,6 +150,35 @@ struct hpt_entry {
 	u_int	hpt_tlbprot;	/* prot/access rights (for TLB load) */
 	u_int	hpt_tlbpage;	/* physical page (<<5 for TLB load) */
 	struct pv_entry	*hpt_entry;	/* Pointer to associated hash list */
+};
+
+/*
+ * This structure contains information for a single physical page.
+ */
+struct pv_head {
+
+	/* The struct pv_entry chain for this physical page. */
+	struct pv_entry	*pv_head_pvs;
+
+	/*
+	 * This word has three fields:
+	 *
+	 * The least significant bit is a page-referenced bit.
+	 *
+	 * The next least significant bit is a page-dirty bit.
+	 *
+	 * The remaining bits are the struct pv_entry * of any
+	 * mapping currently in the TLB/cache as writable.
+	 * This address is shifted to the right by two bits.
+	 * (I.e., mask off the referenced and dirty bits to
+	 * recover the pointer.)
+	 */
+	u_int	pv_head_writable_dirty_ref;
+#define PV_HEAD_DIRTY_POS	30
+#define PV_HEAD_DIRTY		(1 << (31 - PV_HEAD_DIRTY_POS))
+#define PV_HEAD_REF_POS		31
+#define PV_HEAD_REF		(1 << (31 - PV_HEAD_REF_POS))
+#define PV_HEAD_WRITABLE_POS	29
 };
 
 #define	HPPA_MAX_PID	0xfffa

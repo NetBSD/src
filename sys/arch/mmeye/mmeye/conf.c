@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6.4.1 2002/02/11 20:08:40 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.6.4.2 2002/09/06 08:37:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -28,6 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,6 +195,11 @@ struct cdevsw	cdevsw[] =
 	cdev_esh_init(NESH, esh_fp),	/* 50: HIPPI (esh) raw device */
 	cdev_wdog_init(NWDOG,wdog),	/* 51: watchdog timer */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 52: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_clonemisc_init(1, systrace),/* 53: system call tracing */
+#else
+	cdev_notdef(),			/* 53: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -287,6 +294,7 @@ static int chrtoblktbl[] = {
 	/* 50 */	NODEV,
 	/* 51 */	NODEV,
 	/* 52 */	NODEV,
+	/* 53 */	NODEV,
 };
 
 /*

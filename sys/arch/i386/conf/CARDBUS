@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.37.2.5 2002/06/23 17:37:16 jdolecek Exp $
+#	$NetBSD: CARDBUS,v 1.37.2.6 2002/09/06 08:35:59 jdolecek Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -10,7 +10,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"CARDBUS-$Revision: 1.37.2.5 $"
+#ident		"CARDBUS-$Revision: 1.37.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -70,7 +70,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 
@@ -260,6 +260,9 @@ options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
+
+# System Controllers
+elansc*	at pci? dev ? function ?	# AMD Elan SC520 System Controller
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -467,23 +470,7 @@ ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 #aha*	at mca? slot ?			# Adaptec AHA-1640
 
 # SCSI bus support
-#scsibus* at adv?
-#scsibus* at adw?
-#scsibus* at aha?
-#scsibus* at ahb?
-scsibus* at ahc?
-scsibus* at aic?
-#scsibus* at bha?
-#scsibus* at dpt?
-scsibus* at esp?
-#scsibus* at iopsp?
-#scsibus* at isp?
-#scsibus* at nca?
-#scsibus* at pcscp?
-#scsibus* at sea?
-#scsibus* at siop?
-#scsibus* at uha?
-#scsibus* at wds?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -541,8 +528,7 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -616,7 +602,7 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
-wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
@@ -723,8 +709,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
-scsibus* at umass? channel ?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
@@ -763,7 +747,6 @@ uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
-scsibus* at usscanner? channel ?
 
 # Y@P firmware loader
 uyap* at uhub? port ?
@@ -827,31 +810,7 @@ opl*	at yds?
 #opl*	at ym?
 
 # Audio support
-#audio*	at aria?
-audio*	at auich?
-audio*	at auvia?
-audio*	at clcs?
-audio*	at clct?
-audio*	at cmpci?
-audio*	at eap?
-audio*	at emuxki?
-audio*	at esa?
-audio*	at esl?
-audio*	at esm?
-audio*	at eso?
-#audio*	at ess?
-audio*	at fms?
-#audio*	at gus?
-#audio*	at guspnp?
-audio*	at neo?
-#audio*	at pas?
-audio*	at sb?
-#audio*	at sp?
-audio*	at sv?
-audio*	at uaudio?
-audio*	at wss?
-audio*	at yds?
-#audio*	at ym?
+audio*	at audiobus?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
@@ -863,15 +822,8 @@ mpu*	at yds?
 #mpu*	at ym?
 
 # MIDI support
-midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
-#midi*	at clct?		# Cirrus Logic CS4281 MIDI port
-#midi*	at cms?			# Creative Music System
-midi*	at eap?			# 137[01] MIDI port
-midi*	at mpu?			# MPU 401
-midi*	at opl?			# OPL FM synth
+midi*	at midibus?
 midi*	at pcppi?		# MIDI interface to the PC speaker
-midi*	at sb?			# SB1 MIDI port
-midi*	at umidi?		# USB MIDI
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -954,6 +906,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

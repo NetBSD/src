@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.32.2.3 2002/06/23 17:37:26 jdolecek Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.32.2.4 2002/09/06 08:36:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32.2.3 2002/06/23 17:37:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32.2.4 2002/09/06 08:36:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32.2.3 2002/06/23 17:37:26 jdolecek Ex
 #include "apm.h"
 #include "pnpbios.h"
 #include "acpi.h"
+#include "vesabios.h"
 
 #if NAPM > 0
 #include <machine/bioscall.h>
@@ -68,6 +69,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32.2.3 2002/06/23 17:37:26 jdolecek Ex
 
 #if NMCA > 0
 #include <dev/mca/mcavar.h>
+#endif
+
+#if NVESABIOS > 0
+#include <arch/i386/bios/vesabios.h>
 #endif
 
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
@@ -95,6 +100,9 @@ union mainbus_attach_args {
 #endif
 #if NACPI > 0
 	struct acpibus_attach_args mba_acpi;
+#endif
+#if NVESABIOS > 0
+	struct vesabios_attach_args mba_vba;
 #endif
 };
 
@@ -142,6 +150,13 @@ mainbus_attach(parent, self, aux)
 	union mainbus_attach_args mba;
 
 	printf("\n");
+
+#if NVESABIOS > 0
+	if (vbeprobe()) {
+		mba.mba_vba.vaa_busname = "vesabios";
+		config_found(self, &mba.mba_vba, mainbus_print);
+	}
+#endif
 
 #if NPCI > 0
 	/*

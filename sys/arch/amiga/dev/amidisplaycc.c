@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.1.6.3 2002/06/23 17:34:24 jdolecek Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.1.6.4 2002/09/06 08:31:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.1.6.3 2002/06/23 17:34:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.1.6.4 2002/09/06 08:31:45 jdolecek Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -146,7 +146,7 @@ void amidisplaycc_copycols(void *, int, int, int, int);
 void amidisplaycc_erasecols(void *, int, int, int, long);
 void amidisplaycc_copyrows(void *, int, int, int);
 void amidisplaycc_eraserows(void *, int, int, long);
-int  amidisplaycc_alloc_attr(void *, int, int, int, long *);
+int  amidisplaycc_allocattr(void *, int, int, int, long *);
 /* end of emulops for wscons */
 
 
@@ -185,7 +185,7 @@ const struct wsdisplay_emulops amidisplaycc_emulops = {
 	amidisplaycc_erasecols,
 	amidisplaycc_copyrows,
 	amidisplaycc_eraserows,
-	amidisplaycc_alloc_attr
+	amidisplaycc_allocattr
 };
 
 /* add some of our own data to the wsscreen_descr */
@@ -386,15 +386,7 @@ amidisplaycc_cninit(struct consdev  * cd)
 	 */
 	config_console();
 
-	/*
-	 * Call the init function in grfabs.c if we have
-	 * no grfcc to do it.
-	 * If grfcc is present it will call grfcc_probe()
-	 * during config_console() above.
-	 */
-#if NGRFCC==0
 	grfcc_probe();
-#endif
 
 #if NVIEW>0
 	viewprobe();
@@ -439,6 +431,12 @@ amidisplaycc_attach(struct device *pdp, struct device *dp, void *auxp)
 	struct amidisplaycc_softc            * adp;
 
 	adp = (struct amidisplaycc_softc*)dp;
+
+	grfcc_probe();
+
+#if NVIEW>0
+	viewprobe();
+#endif
 
 	/*
 	 * Attach only at real configuration time. Console init is done at
@@ -987,7 +985,7 @@ amidisplaycc_eraserows(void *screen, int row, int nrows, long attr)
  * background color, and flags.
  */
 int
-amidisplaycc_alloc_attr(void *screen, int fg, int bg, int flags, long *attrp)
+amidisplaycc_allocattr(void *screen, int fg, int bg, int flags, long *attrp)
 {
 	adccscr_t  * scr;
 	int          maxcolor;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2.10.2 2002/06/23 17:39:38 jdolecek Exp $	*/
+/*	$NetBSD: clock.c,v 1.2.10.3 2002/09/06 08:39:02 jdolecek Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -37,7 +37,6 @@
 #include <sys/systm.h>
 #include <sys/properties.h>
 
-#include <machine/walnut.h>
 #include <machine/dcr.h>
 
 #include <powerpc/spr.h>
@@ -54,7 +53,6 @@ static volatile int tickspending;
 
 void decr_intr(struct clockframe *);	/* called from trap_subr.S */
 void stat_intr(struct clockframe *);	/* called from trap_subr.S */
-static inline u_quad_t mftb(void);
 
 #ifdef FAST_STAT_CLOCK
 /* Stat clock runs at ~ 1.5KHz */
@@ -64,14 +62,14 @@ static inline u_quad_t mftb(void);
 /* Stat clock runs at ~ 95Hz */
 #define PERIOD_POWER	21
 #define TCR_PERIOD	TCR_FP_2_21
-#endif  
+#endif
 
 
 void
 stat_intr(struct clockframe *frame)
 {
 	extern u_long intrcnt[];
-	
+
 	mtspr(SPR_TSR, TSR_FIS);	/* Clear TSR[FIS] */
 	intrcnt[CNT_STATCLOCK]++;
   	statclock(frame);
@@ -131,13 +129,14 @@ decr_intr(struct clockframe *frame)
 void
 cpu_initclocks(void)
 {
+
 	ticks_per_intr = ticks_per_sec / hz;
-	stathz = profhz = ticks_per_sec / (1<<PERIOD_POWER); 
+	stathz = profhz = ticks_per_sec / (1 << PERIOD_POWER);
 	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz, ticks_per_intr);
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	mtspr(SPR_PIT, ticks_per_intr);
 	/* Enable PIT & FIT(2^17c = 0.655ms) interrupts and auto-reload */
-	mtspr(SPR_TCR, TCR_PIE | TCR_ARE | TCR_FIE | TCR_PERIOD);	
+	mtspr(SPR_TCR, TCR_PIE | TCR_ARE | TCR_FIE | TCR_PERIOD);
 }
 
 void
@@ -145,26 +144,12 @@ calc_delayconst(void)
 {
 	unsigned int processor_freq;
 
-	if (board_info_get("processor-frequency", 
+	if (board_info_get("processor-frequency",
 		&processor_freq, sizeof(processor_freq)) == -1)
 		panic("no processor-frequency");
 
 	ticks_per_sec = processor_freq;
 	ns_per_tick = 1000000000 / ticks_per_sec;
-
-	/* Make sure that timers run at CPU frequency */
-	mtdcr(DCR_CPC0_CR1, mfdcr(DCR_CPC0_CR1) & ~CPC0_CR1_CETE);
-}
-
-static inline u_quad_t
-mftb(void)
-{
-	u_long scratch;
-	u_quad_t tb;
-
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
-	    : "=r"(tb), "=r"(scratch));
-	return tb;
 }
 
 /*

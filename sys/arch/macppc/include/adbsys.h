@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.4.4.1 2001/08/03 04:11:55 lukem Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.4.4.2 2002/09/06 08:37:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -99,6 +99,8 @@ typedef struct adb_dev_s{
 #define ADBADDR_TABLET	ADBADDR_ABS
 #define ADBADDR_MODEM	ADBADDR_DATATX
 
+#define ADBADDR_APM	0xac0ff		/* A faux-addr for the APM driver to
+					   latch onto */
 
 	/* Interesting keyboard handler IDs */
 #define ADB_STDKBD	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25.2.2 2002/01/10 19:45:50 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.2.3 2002/09/06 08:37:12 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -281,9 +281,6 @@ device_register(dev, aux)
 			bp++;
 		return;
 	} else {
-#ifdef DEBUG
-		printf("%s -> %s\n", bootpath, dev->dv_xname);
-#endif
 		booted_device = dev;
 		return;
 	}

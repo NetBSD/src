@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.1.2.2 2002/01/10 19:38:31 thorpej Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.1.2.3 2002/09/06 08:32:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ static void	sacc_intr_calculatemasks(struct sacc_softc *);
 static void	sacc_intr_setpolarity(sacc_chipset_tag_t *, int , int);
 int		sacc_intr(void *);
 
-#if hpcarm
+#ifndef hpcarm
 void *softintr_establish(int, int (*)(void *), void *);
 void softintr_schedule(void *);
 #endif
@@ -217,11 +217,12 @@ sacc_intr(arg)
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTSTATCLR1);
 	DPRINTF(("sacc_intr_dispatch: %x %x\n", intstat.lo, intstat.hi));
 
+	/* clear SA1110's GPIO intr status */
+	bus_space_write_4(sc->sc_piot, sc->sc_gpioh,
+			  SAGPIO_EDR, sc->sc_gpiomask);
+
 	for(i = 0, mask = 1; i < 32; i++, mask <<= 1)
 		if (intstat.lo & mask) {
-			/* clear SA1110's GPIO intr status */
-			bus_space_write_4(sc->sc_piot, sc->sc_gpioh,
-					  SAGPIO_EDR, sc->sc_gpiomask);
 			/*
 			 * Clear intr status before calling intr handlers.
 			 * This cause stray interrupts, but clearing
@@ -237,9 +238,6 @@ sacc_intr(arg)
 		}
 	for(i = 0, mask = 1; i < SACCIC_LEN - 32; i++, mask <<= 1)
 		if (intstat.hi & mask) {
-			/* clear SA1110's GPIO intr status */
-			bus_space_write_4(sc->sc_piot, sc->sc_gpioh,
-					  SAGPIO_EDR, sc->sc_gpiomask);
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 					  SACCIC_INTSTATCLR1, 1 << i);
 #ifdef hpcarm

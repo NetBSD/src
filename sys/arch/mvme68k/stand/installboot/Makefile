@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.4.2 2002/01/10 19:46:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6.4.3 2002/09/06 08:38:03 jdolecek Exp $
 
 NOMAN=	# defined
 
@@ -10,7 +10,7 @@ LIBSA=${.CURDIR}/../../../../lib/libsa
 COPTS+= -Wall -Wstrict-prototypes -Wmissing-prototypes
 CPPFLAGS+= -I${LIBSA} -I.
 # Need this to work in the miniroot
-LDSTATIC?=	-static
+LDSTATIC= -static
 
 .BEGIN: machine
 .NOPATH: machine

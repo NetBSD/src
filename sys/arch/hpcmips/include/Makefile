@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.1 2002/01/10 19:44:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.11.2.2 2002/09/06 08:35:42 jdolecek Exp $
 
 KDIR=	/sys/arch/hpcmips/include
 INCSDIR= /usr/include/hpcmips
@@ -15,7 +15,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	kdbparam.h kcore.h \
 	limits.h lock.h locore.h \
 	math.h mips_opcode.h \
-	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h regdef.h regnum.h reloc.h \
 	setjmp.h signal.h stdarg.h sysconf.h \
 	trap.h types.h \

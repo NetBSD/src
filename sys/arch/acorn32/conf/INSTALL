@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.3.2.4 2002/06/23 17:33:54 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.3.2.5 2002/09/06 08:31:03 jdolecek Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.3.2.4 $"
+#ident		"INSTALL-$Revision: 1.3.2.5 $"
 
 # estimated number of users
 maxusers	32
@@ -70,6 +70,8 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER
+
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Networking options
 
@@ -128,7 +130,8 @@ options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Development and Debugging options
 
@@ -268,8 +271,8 @@ scsibus* at cosc?
 ptsc*	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
 
-#csc*	at podulebus?			# Cumana SCSI II card
-#scsibus* at csc?			# Not currently working
+csc*	at podulebus?			# Cumana SCSI II card
+scsibus* at csc?
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?

@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.1.2.2 2002/06/23 17:36:21 jdolecek Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.1.2.3 2002/09/06 08:35:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -83,11 +83,6 @@
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
 
-#ifdef	KGDB
-#include <sys/kgdb.h>
-#include "com.h"
-#endif
-
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 #include <machine/cpufunc.h>
@@ -98,29 +93,38 @@
 int	gscmatch __P((struct device *, struct cfdata *, void *));
 void	gscattach __P((struct device *, struct device *, void *));
 
+struct gsc_softc {
+	struct device sc_dev;
+	struct gsc_attach_args sc_ga;
+	void *sc_ih;
+};
+
 struct cfattach gsc_ca = {
 	sizeof(struct gsc_softc), gscmatch, gscattach
 };
 
-int	gsc_dmamap_create __P((void *, bus_size_t, int,
-			       bus_size_t, bus_size_t, int, bus_dmamap_t *));
-void	gsc_dmamap_destroy __P((void *, bus_dmamap_t));
-int	gsc_dmamap_load __P((void *, bus_dmamap_t, void *,
-			     bus_size_t, struct proc *, int));
-int	gsc_dmamap_load_mbuf __P((void *, bus_dmamap_t, struct mbuf *, int));
-int	gsc_dmamap_load_uio __P((void *, bus_dmamap_t, struct uio *, int));
-int	gsc_dmamap_load_raw __P((void *, bus_dmamap_t,
-				 bus_dma_segment_t *, int, bus_size_t, int));
-void	gsc_dmamap_unload __P((void *, bus_dmamap_t));
-void	gsc_dmamap_sync __P((void *, bus_dmamap_t, bus_addr_t, bus_size_t, bus_dmasync_op_t));
+/*
+ * pdc_scanbus calls this function back with each module
+ * it finds on the GSC bus.  We call the IC-specific function
+ * to fix up the module's attach arguments, then we match
+ * and attach it.
+ */
+static void gsc_module_callback __P((struct device *, struct confargs *));
+static void
+gsc_module_callback(struct device *self, struct confargs *ca)
+{
+	struct gsc_softc *sc = (struct gsc_softc *)self;
+	struct gsc_attach_args ga;
 
-int	gsc_dmamem_alloc __P((void *, bus_size_t, bus_size_t,
-			      bus_size_t, bus_dma_segment_t *, int, int *, int));
-void	gsc_dmamem_free __P((void *, bus_dma_segment_t *, int));
-int	gsc_dmamem_map __P((void *, bus_dma_segment_t *,
-			    int, size_t, caddr_t *, int));
-void	gsc_dmamem_unmap __P((void *, caddr_t, size_t));
-paddr_t	gsc_dmamem_mmap __P((void *, bus_dma_segment_t *, int, off_t, int, int));
+	/* Make the GSC attach args. */
+	ga = sc->sc_ga;
+	ga.ga_ca = *ca;
+	ga.ga_iot = sc->sc_ga.ga_iot;
+	ga.ga_dmatag = sc->sc_ga.ga_dmatag;
+	(*sc->sc_ga.ga_fix_args)(sc->sc_ga.ga_fix_args_cookie, &ga);
+
+	config_found_sm(self, &ga, mbprint, mbsubmatch);
+}
 
 int
 gscmatch(parent, cf, aux)   
@@ -128,9 +132,9 @@ gscmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct gsc_attach_args *ga = aux;
 
-	return !strcmp(ca->ca_name, "gsc");
+	return !strcmp(ga->ga_name, "gsc");
 }
 
 void
@@ -142,10 +146,7 @@ gscattach(parent, self, aux)
 	register struct gsc_softc *sc = (struct gsc_softc *)self;
 	register struct gsc_attach_args *ga = aux;
 
-	sc->sc_iot = ga->ga_iot;
-	sc->sc_ic = ga->ga_ic;
-	sc->sc_intrmask = 0;
-	bzero(sc->sc_intrvs, sizeof(sc->sc_intrvs));
+	sc->sc_ga = *ga;
 
 	if (machine_ledaddr)
 		printf(": %sleds", machine_ledword? "word" : "");
@@ -153,42 +154,12 @@ gscattach(parent, self, aux)
 	printf ("\n");
 
 	/* Add the I/O subsystem's interrupt register. */
-	sc->sc_ic->gsc_int_reg.int_reg_dev = parent->dv_xname;
+	ga->ga_int_reg->int_reg_dev = parent->dv_xname;
 	sc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_NONE,
-					 NULL, &sc->sc_ic->gsc_int_reg,
+					 NULL, ga->ga_int_reg,
 					 &int_reg_cpu, ga->ga_irq);
 
-	/* DMA guts */
-	sc->sc_dmatag._cookie = sc;
-	sc->sc_dmatag._dmamap_create = gsc_dmamap_create;
-	sc->sc_dmatag._dmamap_destroy = gsc_dmamap_destroy;
-	sc->sc_dmatag._dmamap_load = gsc_dmamap_load;
-	sc->sc_dmatag._dmamap_load_mbuf = gsc_dmamap_load_mbuf;
-	sc->sc_dmatag._dmamap_load_uio = gsc_dmamap_load_uio;
-	sc->sc_dmatag._dmamap_load_raw = gsc_dmamap_load_raw;
-	sc->sc_dmatag._dmamap_unload = gsc_dmamap_unload;
-	sc->sc_dmatag._dmamap_sync = gsc_dmamap_sync;
-
-	sc->sc_dmatag._dmamem_alloc = gsc_dmamem_alloc;
-	sc->sc_dmatag._dmamem_free = gsc_dmamem_free;
-	sc->sc_dmatag._dmamem_map = gsc_dmamem_map;
-	sc->sc_dmatag._dmamem_unmap = gsc_dmamem_unmap;
-	sc->sc_dmatag._dmamem_mmap = gsc_dmamem_mmap;
-
-#ifdef	KGDB
-#if NCOM > 0
-	if(!strcmp(KGDB_DEVNAME, "com")) {
-		int com_gsc_kgdb_attach __P((void));
-		if (com_gsc_kgdb_attach() == 0) {
-			if (boothowto & RB_KDB) {
-				kgdb_connect(1);
-			}
-		}
-        }
-#endif
-#endif
-
-	pdc_scanbus(self, &ga->ga_ca, ga->ga_mod, MAXMODBUS);
+	pdc_scanbus(self, ga->ga_mod, MAXMODBUS, gsc_module_callback);
 }
 
 int
@@ -197,165 +168,4 @@ gscprint(aux, pnp)
 	const char *pnp;
 {
 	return (UNCONF);
-}
-
-
-void *
-gsc_intr_establish(sc, pri, irq, handler, arg, dv)
-	struct gsc_softc *sc;
-	int pri;
-	int irq;
-	int (*handler) __P((void *v));
-	void *arg;
-	struct device *dv;
-{
-	return (hp700_intr_establish(dv, pri, handler, arg, 
-				     &sc->sc_ic->gsc_int_reg, irq));
-}
-
-void
-gsc_intr_disestablish(sc, v)
-	struct gsc_softc *sc;
-	void *v;
-{
-	panic("gsc_intr_disestablish: unimplemented");
-}
-
-int
-gsc_dmamap_create(v, size, nseg, maxsegsz, boundary, flags, dmamp)
-	void *v;
-	bus_size_t size;
-	int nseg;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
-{
-	return 0;
-}
-
-void
-gsc_dmamap_destroy(v, map)
-	void *v;
-	bus_dmamap_t map;
-{
-}
-
-int
-gsc_dmamap_load(v, map, buf, buflen, p, flags)
-	void *v;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
-{
-	return 0;
-}
-
-int
-gsc_dmamap_load_mbuf(v, map, mbuf, flags)
-	void *v;
-	bus_dmamap_t map;
-	struct mbuf *mbuf;
-	int flags;
-{
-	return 0;
-}
-
-int
-gsc_dmamap_load_uio(v, map, uio, flags)
-	void *v;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
-{
-	return 0;
-}
-
-int
-gsc_dmamap_load_raw(v, map, segs, nsegs, size, flags)
-	void *v;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
-{
-	return 0;
-}
-
-void
-gsc_dmamap_unload(v, map)
-	void *v;
-	bus_dmamap_t map;
-{
-
-}
-
-void
-gsc_dmamap_sync(v, map, addr, size, op)
-	void *v;
-	bus_dmamap_t map;
-	bus_addr_t addr;
-	bus_size_t size;
-	bus_dmasync_op_t op;
-{
-
-}
-
-int
-gsc_dmamem_alloc(v, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	void *v;
-	bus_size_t size;
-	bus_size_t alignment;
-	bus_size_t boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
-{
-	return 0;
-}
-
-void
-gsc_dmamem_free(v, segs, nsegs)
-	void *v;
-	bus_dma_segment_t *segs;
-	int nsegs;
-{
-
-}
-
-int
-gsc_dmamem_map(v, segs, nsegs, size, kvap, flags)
-	void *v;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
-{
-	return 0;
-}
-
-void
-gsc_dmamem_unmap(v, kva, size)
-	void *v;
-	caddr_t kva;
-	size_t size;
-{
-
-}
-
-paddr_t
-gsc_dmamem_mmap(v, segs, nsegs, off, prot, flags)
-	void *v;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	off_t off;
-	int prot;
-	int flags;
-{
-	return (-1);
 }

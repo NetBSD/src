@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.15.2.6 2002/06/23 17:40:53 jdolecek Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.15.2.7 2002/09/06 08:39:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -246,7 +246,7 @@ sh_proc0_init()
 void
 sh_startup()
 {
-	int i, base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -336,7 +336,7 @@ sh_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -372,12 +372,14 @@ dumpsys()
  * specified pc, psl.
  */
 void
-sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
+sendsig(int sig, sigset_t *mask, u_long code)
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = p->p_md.md_regs;
 
@@ -393,12 +395,6 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	else
 		fp = (struct sigframe *)tf->tf_r15;
 	fp--;
-
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
 
 	/* Save register context. */
 	frame.sf_sc.sc_ssr = tf->tf_ssr;
@@ -438,9 +434,29 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	}
 
 	/*
-	 * Build context to run handler in.
+	 * Build context to run handler in.  We invoke the handler
+	 * directly, only returning via the trampoline.
 	 */
-	tf->tf_spc = (int)p->p_sigctx.ps_sigcode;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		tf->tf_pr = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		tf->tf_pr = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+
+	tf->tf_r4 = sig;
+	tf->tf_r5 = code;
+	tf->tf_r6 = (int)&fp->sf_sc;
+	tf->tf_spc = (int)catcher;
 	tf->tf_r15 = (int)fp;
 
 	/* Remember that we're now on the signal stack. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.1.2.6 2002/06/23 17:34:45 jdolecek Exp $	*/
+/*	$NetBSD: fault.c,v 1.1.2.7 2002/09/06 08:32:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,6 +47,8 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.1.2.7 2002/09/06 08:32:24 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -68,7 +70,6 @@
 #include <arch/arm/arm/disassem.h>
 #include <arm/arm32/machdep.h>
  
-int cowfault __P((vaddr_t));
 extern char fusubailout[];
 
 static void report_abort __P((const char *, u_int, u_int, u_int));
@@ -262,6 +263,7 @@ data_abort_handler(frame)
 		 fault_code != FAULT_PERM_S && fault_code != FAULT_PERM_P)
 	        || pcb->pcb_onfault == fusubailout)) {
 
+		frame->tf_r0 = EFAULT;
 copyfault:
 #ifdef DEBUG
 		printf("Using pcb_onfault=%p addr=%08x st=%08x p=%p\n",
@@ -515,8 +517,10 @@ copyfault:
 			goto out;
 
 		if (user == 0) {
-			if (pcb->pcb_onfault)
+			if (pcb->pcb_onfault) {
+				frame->tf_r0 = rv;
 				goto copyfault;
+			}
 			printf("[u]vm_fault(%p, %lx, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
@@ -691,22 +695,4 @@ prefetch_abort_handler(frame)
 		trapsignal(p, SIGSEGV, fault_pc);
  out:
 	userret(p);
-}
-
-int
-cowfault(va)
-	vaddr_t va;
-{
-	struct vmspace *vm;
-	int error;
-
-	if (va >= VM_MAXUSER_ADDRESS)
-		return (EFAULT);
-
-	/* uvm_fault can't be called from within an interrupt */
-	KASSERT(current_intr_depth == 0);
-	
-	vm = curproc->p_vmspace;
-	error = uvm_fault(&vm->vm_map, va, 0, VM_PROT_WRITE);
-	return error;
 }

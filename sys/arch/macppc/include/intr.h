@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2001/06/08 00:32:03 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.2.1 2002/09/06 08:37:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,9 +75,7 @@ struct intrhand {
 	int	ih_irq;
 };
 
-void clearsoftclock __P((void));
-void clearsoftnet __P((void));
-void softnet __P((void));
+void softnet __P((int));
 void softserial __P((void));
 
 int splraise __P((int));
@@ -141,12 +139,13 @@ extern long intrcnt[];
 #define CNT_SOFTNET	66
 #define CNT_SOFTSERIAL	67
 
-#define MACPPC_IPI_HALT		0x01
-#define MACPPC_IPI_FLUSH_FPU	0x02
-
 #ifdef MULTIPROCESSOR
+#define MACPPC_IPI_HALT		0x0001
+#define MACPPC_IPI_FLUSH_FPU	0x0002
+#define MACPPC_IPI_FLUSH_VEC	0x0004
+
 struct cpu_info;
-void macppc_send_ipi(volatile struct cpu_info *, int);
+void macppc_send_ipi(volatile struct cpu_info *, u_long);
 #endif
 
 #endif /* _LOCORE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14.2.5 2002/06/23 17:34:50 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14.2.6 2002/09/06 08:32:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -57,7 +57,8 @@
 #define	CPU_BOOTED_DEVICE	2	/* string: device we booted from */
 #define	CPU_BOOTED_KERNEL	3	/* string: kernel we booted */
 #define	CPU_CONSDEV		4	/* struct: dev_t of our console */
-#define	CPU_MAXID		5	/* number of valid machdep ids */
+#define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
+#define	CPU_MAXID		6	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -65,6 +66,7 @@
 	{ "booted_device", CTLTYPE_STRING }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "powersave", CTLTYPE_INT }, \
 }    
 
 #ifdef _KERNEL
@@ -88,25 +90,30 @@
 
 #include <arm/armreg.h>
 
+#ifndef _LOCORE
+/* 1 == use cpu_sleep(), 0 == don't */
+extern int cpu_do_powersave;
+#endif
+
 #ifdef __PROG32
 #ifdef _LOCORE
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr_all ; \
+	mrs	r0, cpsr ; \
 	orr	r0, r0, #(I32_bit) ; \
-	msr	cpsr_all, r0 ; \
+	msr	cpsr_c, r0 ; \
 	ldmfd	sp!, {r0}
 
 #define IRQenable \
 	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr_all ; \
+	mrs	r0, cpsr ; \
 	bic	r0, r0, #(I32_bit) ; \
-	msr	cpsr_all, r0 ; \
+	msr	cpsr_c, r0 ; \
 	ldmfd	sp!, {r0}		
 
 #else
-#define IRQdisable SetCPSR(I32_bit, I32_bit);
-#define IRQenable SetCPSR(I32_bit, 0);
+#define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
+#define IRQenable __set_cpsr_c(I32_bit, 0);
 #endif	/* _LOCORE */
 #endif
 

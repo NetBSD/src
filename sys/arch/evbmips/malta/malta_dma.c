@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_dma.c,v 1.2.8.2 2002/06/23 17:35:58 jdolecek Exp $	*/
+/*	$NetBSD: malta_dma.c,v 1.2.8.3 2002/09/06 08:34:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ malta_dma_init(struct malta_config *acp)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * Initialize the DMA tag usd for ISA DMA.
+	 * Initialize the DMA tag used for ISA DMA.
 	 */
 	t = &acp->mc_isa_dmat;
 	t->_cookie = acp;

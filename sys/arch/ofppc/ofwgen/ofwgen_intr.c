@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgen_intr.c,v 1.2.4.2 2002/01/10 19:47:15 thorpej Exp $	*/
+/*	$NetBSD: ofwgen_intr.c,v 1.2.4.3 2002/09/06 08:38:37 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -38,6 +38,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+
+#include <net/netisr.h>
 
 #include <machine/autoconf.h>
 
@@ -202,10 +204,12 @@ do_pending_int(void)
 		}
 		if ((ipending & B(IPL_SOFTNET)) != 0 &&
 		    (cpl & B(IPL_SOFTNET)) == 0) {
+			int pisr = netisr;
+			netisr = 0;
 			cpl |= imask[IPL_SOFTNET];
 			ipending &= ~B(IPL_SOFTNET);
 			__asm __volatile ("mtmsr %0" :: "r"(emsr));
-			softnet();
+			softnet(pisr);
 			continue;
 		}
 		if ((ipending & B(IPL_SOFT)) != 0 &&
@@ -321,10 +325,12 @@ intr_return(struct clockframe *frame, int level)
 		}
 		if ((ipending & B(IPL_SOFTNET)) != 0 &&
 		    (cpl & B(IPL_SOFTNET)) == 0) {
+			int pisr = netisr;
+			netisr = 0;
 			cpl |= imask[IPL_SOFTNET];
 			ipending &= ~B(IPL_SOFTNET);
 			__asm __volatile ("mtmsr %0" :: "r"(emsr));
-			softnet();
+			softnet(pisr);
 			continue;
 		}
 		if ((ipending & B(IPL_SOFT)) != 0 &&

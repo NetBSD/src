@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.8.2.2 2002/06/23 17:39:16 jdolecek Exp $
+#	$NetBSD: PMPPC,v 1.8.2.3 2002/09/06 08:38:55 jdolecek Exp $
 #
 #	PMPPC
 #
@@ -426,6 +426,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

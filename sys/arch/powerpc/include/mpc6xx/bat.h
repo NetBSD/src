@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.1.2.3 2002/06/23 17:39:44 jdolecek Exp $	*/
+/*	$NetBSD: bat.h,v 1.1.2.4 2002/09/06 08:39:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -178,6 +178,8 @@ struct bat {
 	((batl) & BAT601_V)
 
 #ifdef	_KERNEL
+void mpc6xx_batinit(paddr_t, ...);
+void mpc6xx_iobat_add(paddr_t, register_t);
 extern struct bat battable[];
 #endif
 
