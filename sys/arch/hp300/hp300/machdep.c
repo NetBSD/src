@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1995/04/10 13:10:31 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1995/04/21 21:57:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1103,43 +1103,8 @@ boot(howto)
 
 	boothowto = howto;
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
-		register struct buf *bp;
-		int iter, nbusy;
-
 		waittime = 0;
-		(void) spl0();
-		printf("syncing disks... ");
-		/*
-		 * Release vnodes held by texts before sync.
-		 */
-		if (panicstr == 0)
-			vnode_pager_umount(NULL);
-#ifdef notdef
-#include "vn.h"
-#if NVN > 0
-		vnshutdown();
-#endif
-#endif
-		sync(&proc0, (void *)0, (int *)0);
-		/*
-		 * Unmount filesystems
-		 */
-		if (panicstr == 0)
-			vfs_unmountall();
-		for (iter = 0; iter < 20; iter++) {
-			nbusy = 0;
-			for (bp = &buf[nbuf]; --bp >= buf; )
-				if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-					nbusy++;
-			if (nbusy == 0)
-				break;
-			printf("%d ", nbusy);
-			DELAY(40000 * iter);
-		}
-		if (nbusy)
-			printf("giving up\n");
-		else
-			printf("done\n");
+		vfs_shutdown();
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
