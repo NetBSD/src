@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.38 2002/02/13 23:44:56 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.39 2002/02/14 20:28:16 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1862,3 +1862,41 @@ usr.bin/fstat/fstat.c				1.55
 
   Add an extra column for inode numbers, and pull back the mode field
   to just 5 columns if in "numeric" mode.
+
+sys/uvm/uvm_anon.h				1.13
+sys/uvm/uvm_anon.c				1.11
+sys/uvm/uvm_swap.c				1.43
+
+  Make memory allocation failures during ``swapctl -a'' return an error
+  instead of causing a panic.
+
+sys/arch/hpcmips/conf/Makefile.hpcmips		patch
+
+  Make kernel link by reducing gpsize (-G linker option).
+
+sys/arch/macppc/stand/ofwboot/Makefile		1.27
+
+  Make this work with the dependall target.
+
+sbin/fdisk/fdisk.c				1.42
+
+  When fetching the disk's hardware geometry, first attempt the
+  DIOCGDEFLABEL ioctl, then fall back to the DIOCGDINFO ioctl.
+  This ensures that we will get the actual hardware geometry info
+  rather than any bogus info which might have been previously
+  written to the disk's label area.
+
+usr.bin/join/join.c				1.20
+
+  Make the ``-v'' flag print data instead of blank lines.  Fixes
+  part of PR#15412.
+
+sys/dev/pcmcia/pcmciadevs			1.134,1.157 via patch
+sys/dev/pcmcia/pcmciadevs.h			regenerate
+sys/dev/pcmcia/pcmciadevs_data.h		regenerate
+sys/dev/pcmcia/if_ne_pcmcia.c			1.81,1.85 via patch
+
+  Add support for the following cards:
+   o Edimax Technology Inc. EP4000A
+   o Linksys Etherfast clone (Level One)
+   o Zonet Zen
