@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.5 2000/03/18 16:20:06 ragge Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.6 2000/05/22 15:34:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,6 @@
 #include <machine/sid.h>
 #include <machine/scb.h>
 #include <machine/bus.h>
-#include <machine/rpb.h>
 #include <machine/vsbus.h>
 
 #include <dev/ic/lancereg.h>
@@ -292,12 +291,4 @@ le_vsbus_attach(parent, self, aux)
 	printf("\n%s", self->dv_xname);
 
 	am7990_config(&sc->sc_am7990);
-
-	/*
-	 * Register this device as boot device if we booted from it.
-	 * This will fail if there are more than one le in a machine,
-	 * fortunately there may be only one.
-	 */
-	if (B_TYPE(bootdev) == BDEV_LE)
-		booted_from = self;
 }
