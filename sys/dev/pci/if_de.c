@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.81 1998/11/09 23:41:14 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.82 1999/02/28 17:08:51 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -5015,7 +5015,7 @@ tulip_attach(
 
 #if defined(__NetBSD__) && NRND > 0
     rnd_attach_source(&sc->tulip_rndsource, sc->tulip_dev.dv_xname,
-		      RND_TYPE_NET);
+		      RND_TYPE_NET, 0);
 #endif
 }
 

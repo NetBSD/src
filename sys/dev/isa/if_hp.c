@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.27 1998/07/05 06:49:13 jonathan Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.28 1999/02/28 17:09:26 explorer Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -433,7 +433,8 @@ hpattach(dvp)
 #endif
 
 #if NRND > 0
-	rnd_attach_source(&ns->rnd_source, ns->sc_dev.dv_xname, RND_TYPE_NET);
+	rnd_attach_source(&ns->rnd_source, ns->sc_dev.dv_xname,
+			  RND_TYPE_NET, 0);
 #endif
 
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.9 1998/12/27 09:03:15 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.10 1999/02/28 17:11:52 explorer Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -183,7 +183,7 @@ mb8795_config(sc)
 
 #if NRND > 0
   rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-                    RND_TYPE_NET);
+                    RND_TYPE_NET, 0);
 #endif
 
   /* Initialize the dma maps */
