@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.11 2002/07/30 16:29:28 itojun Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.12 2002/08/08 14:38:47 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.11 2002/07/30 16:29:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.12 2002/08/08 14:38:47 itojun Exp $");
 
 #include "opt_systrace.h"
 
@@ -690,7 +690,6 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 		    fst->p_rgid == p->p_cred->p_rgid;
 	}
 
-DPRINTF(("maycontrol=%d\n", maycontrol));
 	if (!maycontrol) {
 		policy = SYSTR_POLICY_PERMIT;
 	} else {
@@ -704,7 +703,6 @@ DPRINTF(("maycontrol=%d\n", maycontrol));
 				policy = strpolicy->sysent[code];
 		}
 	}
-DPRINTF(("policy=%d\n", policy));
 
 	callp = p->p_emul->e_sysent + code;
 	switch (policy) {
