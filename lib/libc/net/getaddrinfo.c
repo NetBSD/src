@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.7 1999/07/04 02:02:29 lukem Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.8 1999/07/06 02:00:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -541,8 +541,6 @@ again:
 		switch (error) {
 		case EAI_AGAIN:
 			goto again;
-		case EAI_FAIL:
-			return error;
 		default:
 			if (ekeep == 0)
 				ekeep = error;
