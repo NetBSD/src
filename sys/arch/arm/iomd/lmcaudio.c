@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.6 2002/06/16 12:38:11 bjh21 Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.7 2002/09/27 15:35:46 provos Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -239,7 +239,7 @@ lmcaudio_attach(parent, self, aux)
 	ag.silence = uvm_km_alloc(kernel_map, NBPG);
 	ag.beep = uvm_km_zalloc(kernel_map, NBPG);
 	if (ag.silence == NULL || ag.beep == NULL)
-		panic("lmcaudio: Cannot allocate memory\n");
+		panic("lmcaudio: Cannot allocate memory");
 	memset((char *)ag.silence, 0, NBPG);
 	memcpy((char *)ag.beep, (char *)beep_waveform, sizeof(beep_waveform));
 

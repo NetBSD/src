@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.6 2002/09/27 15:35:44 provos Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -215,7 +215,7 @@ fcom_attach(parent, self, aux)
 	sc->sc_ih = intr_claim(sc->sc_rx_irq, IPL_SERIAL, "serial rx",
 	    fcom_rxintr, sc);
 	if (sc->sc_ih == NULL)
-		panic("%s: Cannot install rx interrupt handler\n",
+		panic("%s: Cannot install rx interrupt handler",
 		    sc->sc_dev.dv_xname);
 }
 
@@ -294,7 +294,7 @@ fcomclose(dev, flag, mode, p)
 	ttyclose(tp);
 #ifdef DIAGNOSTIC
 	if (sc->sc_rxbuffer[0] == NULL)
-		panic("fcomclose: rx buffers not allocated\n");
+		panic("fcomclose: rx buffers not allocated");
 #endif	/* DIAGNOSTIC */
 	free(sc->sc_rxbuffer[0], M_DEVBUF);
 	free(sc->sc_rxbuffer[1], M_DEVBUF);

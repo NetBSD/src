@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.39 2002/09/27 03:18:07 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.40 2002/09/27 15:36:55 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ obio_submatch(parent, cf, aux)
 	 */
 #ifdef	DIAGNOSTIC
 	if (cf->cf_paddr == -1)
-		panic("obio_submatch: invalid address for: %s%d\n",
+		panic("obio_submatch: invalid address for: %s%d",
 			cf->cf_name, cf->cf_unit);
 #endif
 
@@ -156,7 +156,7 @@ obio_submatch(parent, cf, aux)
 	 */
 #ifdef	DIAGNOSTIC
 	if (cf->cf_intvec != -1)
-		panic("obio_submatch: %s%d can not have a vector\n",
+		panic("obio_submatch: %s%d can not have a vector",
 		    cf->cf_name, cf->cf_unit);
 #endif
 

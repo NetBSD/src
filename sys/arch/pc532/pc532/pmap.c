@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 2002/03/27 04:47:30 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.70 2002/09/27 15:36:34 provos Exp $	*/
 
 /*
  *
@@ -598,7 +598,7 @@ pmap_kremove(va, len)
 			pte = kvtopte(va);
 #ifdef DIAGNOSTIC
 		if (*pte & PG_PVLIST)
-			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n",
+			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx",
 			      va);
 #endif
 		*pte = 0;		/* zap! */

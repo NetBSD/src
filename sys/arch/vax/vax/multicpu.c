@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.12 2002/09/22 05:39:24 gmcgarry Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.13 2002/09/27 15:36:59 provos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -224,7 +224,7 @@ cpu_handle_ipi()
 			Debugger();
 			break;
 		default:
-			panic("cpu_handle_ipi: bad bit %x\n", bitno);
+			panic("cpu_handle_ipi: bad bit %x", bitno);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwscsi.c,v 1.5 2002/02/27 05:11:27 jmc Exp $	*/
+/*	$NetBSD: fwscsi.c,v 1.6 2002/09/27 15:37:21 provos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwscsi.c,v 1.5 2002/02/27 05:11:27 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwscsi.c,v 1.6 2002/09/27 15:37:21 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -182,7 +182,7 @@ fwscsi_scsipi_request(struct scsipi_channel *channel,
 		printf("Got set xfer mode\n");
 		break;
 	default:
-		panic("Unknown request: %d\n", (int)req);
+		panic("Unknown request: %d", (int)req);
 	}
 }
 

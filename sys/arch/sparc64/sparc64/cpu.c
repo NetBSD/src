@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21 2002/09/27 02:24:25 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.22 2002/09/27 15:36:51 provos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -197,7 +197,7 @@ cpu_init(pa, cpu_num)
 		pagesize = TLB_4M;
 		break;
 	default:
-		panic("cpu_start: stack size %x not a machine page size\n",
+		panic("cpu_start: stack size %x not a machine page size",
 			(unsigned)size);
 	}
 	return (pte | TLB_L);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.24 2001/12/04 17:56:36 wiz Exp $	*/
+/*	$NetBSD: intr.c,v 1.25 2002/09/27 15:36:33 provos Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -171,7 +171,7 @@ intr_establish(intr, vector, arg, use, blevel, rlevel, mode)
 		intr = next_sir++;
 	} else {
 		if (ivt[intr].iv_vec != badhard)
-			panic("Interrupt %d already allocated\n", intr);
+			panic("Interrupt %d already allocated", intr);
 		switch (mode) {
 		case RISING_EDGE:
 			ICUW(TPL)  |=  (1 << intr);

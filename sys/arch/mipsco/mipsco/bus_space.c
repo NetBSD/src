@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2001/09/15 00:49:54 wdk Exp $ 	*/
+/*	$NetBSD: bus_space.c,v 1.4 2002/09/27 15:36:24 provos Exp $ 	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ mipsco_bus_space_unmap(bst, bsh, size)
 		/* bus_space_paddr() becomes unavailable after unmapping */
 		err = bus_space_paddr(bst, bsh, &pa);
 		if (err)
-			panic("mipsco_bus_space_unmap: %s va %p: error %d\n",
+			panic("mipsco_bus_space_unmap: %s va %p: error %d",
 			    bst->bs_name, (caddr_t)bsh, err);
 		addr = (bus_size_t)(pa - bst->bs_pbase) + bst->bs_start;
 		extent_free(bst->bs_extent, addr, size,

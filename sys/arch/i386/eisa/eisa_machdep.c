@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.14 2001/11/15 07:03:28 lukem Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.15 2002/09/27 15:36:08 provos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.14 2001/11/15 07:03:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.15 2002/09/27 15:36:08 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,7 +167,7 @@ eisa_intr_string(ec, ih)
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("eisa_intr_string: bogus handle 0x%x\n", ih);
+		panic("eisa_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
@@ -191,7 +191,7 @@ eisa_intr_establish(ec, ih, type, level, func, arg)
 {
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("eisa_intr_establish: bogus handle 0x%x\n", ih);
+		panic("eisa_intr_establish: bogus handle 0x%x", ih);
 
 	return isa_intr_establish(NULL, ih, type, level, func, arg);
 }

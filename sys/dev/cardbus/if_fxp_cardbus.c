@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.13 2001/11/13 12:51:13 lukem Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.14 2002/09/27 15:37:12 provos Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.13 2001/11/13 12:51:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.14 2002/09/27 15:37:12 provos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -282,7 +282,7 @@ fxp_cardbus_detach(self, flags)
 
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
-		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 #endif
 
 	rv = fxp_detach(sc);

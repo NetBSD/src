@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: aed.c,v 1.7 2002/09/27 15:36:22 provos Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -169,7 +169,7 @@ aed_input(event)
 		break;
 	default:                /* God only knows. */
 #ifdef DIAGNOSTIC
-		panic("aed: received event from unsupported device!\n");
+		panic("aed: received event from unsupported device!");
 #endif
 		break;
 	}

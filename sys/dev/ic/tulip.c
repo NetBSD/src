@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.119 2002/09/18 19:12:17 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.120 2002/09/27 15:37:19 provos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.119 2002/09/18 19:12:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.120 2002/09/27 15:37:19 provos Exp $");
 
 #include "bpfilter.h"
 
@@ -1032,7 +1032,7 @@ tlp_intr(arg)
 
 #ifdef DEBUG
 	if (TULIP_IS_ENABLED(sc) == 0)
-		panic("%s: tlp_intr: not enabled\n", sc->sc_dev.dv_xname);
+		panic("%s: tlp_intr: not enabled", sc->sc_dev.dv_xname);
 #endif
 
 	/*

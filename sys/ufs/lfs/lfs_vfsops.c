@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.81 2002/09/21 18:14:50 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.82 2002/09/27 15:38:07 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.81 2002/09/21 18:14:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.82 2002/09/27 15:38:07 provos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1215,7 +1215,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if ((error = VFS_SYNC(mp, 1, p->p_ucred, p)) != 0)
 		return (error);
 	if (LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd))
-		panic("lfs_unmount: still dirty blocks on ifile vnode\n");
+		panic("lfs_unmount: still dirty blocks on ifile vnode");
 
 	/* Explicitly write the superblock, to update serial and pflags */
 	fs->lfs_pflags |= LFS_PF_CLEAN;
@@ -1494,7 +1494,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 #ifdef DIAGNOSTIC
 	if (vp->v_type == VNON) {
-		panic("lfs_vget: ino %d is type VNON! (ifmt %o)\n",
+		panic("lfs_vget: ino %d is type VNON! (ifmt %o)",
 		       ip->i_number, (ip->i_ffs_mode & IFMT) >> 12);
 	}
 #endif

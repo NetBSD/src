@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.65 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: zs.c,v 1.66 2002/09/27 15:36:54 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ zs_attach(parent, self, aux)
 
 	/* Use the mapping setup by the Sun PROM. */
 	if (zsaddr[zs_unit] == NULL)
-		panic("zs_attach: zs%d not mapped\n", zs_unit);
+		panic("zs_attach: zs%d not mapped", zs_unit);
 
 	/*
 	 * Initialize software state for each channel.

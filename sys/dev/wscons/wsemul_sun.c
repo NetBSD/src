@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.16 2002/07/09 07:15:21 junyoung Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.17 2002/09/27 15:37:40 provos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.16 2002/07/09 07:15:21 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.17 2002/09/27 15:37:40 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,7 +516,7 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 			break;
 		default:
 #ifdef DIAGNOSTIC
-			panic("wsemul_sun: invalid state %d\n", edp->state);
+			panic("wsemul_sun: invalid state %d", edp->state);
 #endif
                         /* try to recover, if things get screwed up... */
 			newstate = wsemul_sun_output_normal(edp, *data, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com_io.c,v 1.1 2002/07/15 16:27:17 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_com_io.c,v 1.2 2002/09/27 15:35:48 provos Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -165,7 +165,7 @@ ixpcom_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("ixpcom_bs_alloc(): Help!\n");
+	panic("ixpcom_bs_alloc(): Help!");
 }
 
 void
@@ -174,7 +174,7 @@ ixpcom_bs_free(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	panic("ixpcom_bs_free(): Help!\n");
+	panic("ixpcom_bs_free(): Help!");
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.65 2002/09/06 13:18:43 gehenna Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.66 2002/09/27 15:37:40 provos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.65 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.66 2002/09/27 15:37:40 provos Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -582,7 +582,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 		mux = wsmux_create("dmux", sc->sc_dv.dv_unit);
 	/* XXX panic()ing isn't nice, but attach cannot fail */
 	if (mux == NULL)
-		panic("wsdisplay_common_attach: no memory\n");
+		panic("wsdisplay_common_attach: no memory");
 	sc->sc_input = &mux->sc_base;
 	mux->sc_base.me_dispdv = &sc->sc_dv;
 	printf(" kbdmux %d", kbdmux);

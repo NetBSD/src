@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.4 2002/09/27 03:17:45 thorpej Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.5 2002/09/27 15:35:50 provos Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -238,7 +238,7 @@ sacpcic_read(so, reg)
 		return (bit & cr);
 
 	default:
-		panic("sacpcic_read: bogus register\n");
+		panic("sacpcic_read: bogus register");
 	}
 }
 
@@ -318,7 +318,7 @@ sacpcic_set_power(so, arg)
 		newval = 1;
 		break;
 	default:
-		panic("sacpcic_set_power: bogus arg\n");
+		panic("sacpcic_set_power: bogus arg");
 	}
 
 	s = splbio();
@@ -333,7 +333,7 @@ sacpcic_set_power(so, arg)
 		break;
 	default:
 		splx(s);
-		panic("sacpcic_set_power\n");
+		panic("sacpcic_set_power");
 	}
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCGPIOA_DVR, newval);
 	splx(s);

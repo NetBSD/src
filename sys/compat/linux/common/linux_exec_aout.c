@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.48 2002/08/26 21:06:01 christos Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.49 2002/09/27 15:37:05 provos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.48 2002/08/26 21:06:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.49 2002/09/27 15:37:05 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ exec_linux_aout_prep_qmagic(p, epp)
 	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

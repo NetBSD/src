@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: sio16.c,v 1.7 2002/09/27 15:37:32 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.7 2002/09/27 15:37:32 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -140,7 +140,7 @@ sio16_attach(parent, self, aux)
 	int i;
 
 	if (sa->sa_nreg != 4)
-		panic("sio16_attach: got %d registers intead of 4\n",
+		panic("sio16_attach: got %d registers intead of 4",
 		    sa->sa_nreg);
 
 	/* copy our bus tag, we will need it */

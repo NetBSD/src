@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.20 2001/11/13 12:47:33 lukem Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.21 2002/09/27 15:37:13 provos Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.20 2001/11/13 12:47:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.21 2002/09/27 15:37:13 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ ahc_eisa_attach(parent, self, aux)
 	} else if (strcmp(ea->ea_idstring, "ADP7771") == 0) {
 		printf(": %s\n", EISA_PRODUCT_ADP7771);
 	} else {
-		panic(": Unknown device type %s\n", ea->ea_idstring);
+		panic(": Unknown device type %s", ea->ea_idstring);
 	}
 
 	if (ahc_alloc(ahc, ioh, iot, ea->ea_dmat,

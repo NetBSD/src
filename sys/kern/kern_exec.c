@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.156 2002/09/21 21:15:02 manu Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.157 2002/09/27 15:37:43 provos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.156 2002/09/21 21:15:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.157 2002/09/27 15:37:43 provos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1044,7 +1044,7 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 		break;
 	default:
 #ifdef DIAGNOSTIC
-		panic("execw[] entry with unknown priority %d found\n",
+		panic("execw[] entry with unknown priority %d found",
 			et->es->es_prio);
 #endif
 		break;
@@ -1076,7 +1076,7 @@ exec_init(int init_boot)
 		}
 #ifdef DIAGNOSTIC
 		if (i == 0)
-			panic("no emulations found in execsw_builtin[]\n");
+			panic("no emulations found in execsw_builtin[]");
 #endif
 	}
 

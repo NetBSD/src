@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.37 2002/07/26 01:00:42 wiz Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.38 2002/09/27 15:37:09 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.37 2002/07/26 01:00:42 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.38 2002/09/27 15:37:09 provos Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -487,7 +487,7 @@ wdc_ata_bio_intr(chp, xfer, irq)
 		printf("%s:%d:%d: bad state %d in wdc_ata_bio_intr\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    drvp->state);
-		panic("wdc_ata_bio_intr: bad state\n");
+		panic("wdc_ata_bio_intr: bad state");
 	}
 
 	/*

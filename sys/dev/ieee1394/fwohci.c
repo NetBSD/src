@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.56 2002/09/27 03:18:14 thorpej Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.57 2002/09/27 15:37:21 provos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.56 2002/09/27 03:18:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.57 2002/09/27 15:37:21 provos Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -3209,9 +3209,9 @@ fwohci_write(struct ieee1394_abuf *ab)
 	}
 
 	if (ab->ab_data && ab->ab_uio) 
-		panic("Can't call with uio and data set\n");
+		panic("Can't call with uio and data set");
 	if ((ab->ab_data == NULL) && (ab->ab_uio == NULL))
-		panic("One of either ab_data or ab_uio must be set\n");
+		panic("One of either ab_data or ab_uio must be set");
 
 	memset(&pkt, 0, sizeof(pkt));
 
@@ -3681,7 +3681,7 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		}
 		break;
 	default:
-		panic("Got a callback for a tcode that wasn't requested: %d\n",
+		panic("Got a callback for a tcode that wasn't requested: %d",
 		    ab->ab_tcode);
 		break;
 	}

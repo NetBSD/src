@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.168 2002/08/28 09:47:17 gmcgarry Exp $	*/
+/*	$NetBSD: trap.c,v 1.169 2002/09/27 15:36:10 provos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168 2002/08/28 09:47:17 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.169 2002/09/27 15:36:10 provos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -218,7 +218,7 @@ trap(frame)
 
 			mask = 1 << 0; /* dr0 */
 			if (dr6 & mask) {
-				panic("trap on DR0: maybe kernel stack overflow\n");
+				panic("trap on DR0: maybe kernel stack overflow");
 #if 0
 				dr6 &= ~mask;
 				ldr6(dr6);

@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.14 2001/08/20 12:00:51 wiz Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.15 2002/09/27 15:36:54 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -262,7 +262,7 @@ se_attach(parent, self, args)
 	sc->sc_dma = (struct se_dma_handle *)
 		malloc(i, M_DEVBUF, M_WAITOK);
 	if (sc->sc_dma == NULL)
-		panic("se: dma_malloc failed\n");
+		panic("se: dma_malloc failed");
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 
@@ -603,7 +603,7 @@ se_dma_alloc(ncr_sc)
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("se_dma_alloc: xlen=0x%x\n", xlen);
+		panic("se_dma_alloc: xlen=0x%x", xlen);
 
 	/*
 	 * Never attempt single transfers of more than 63k, because
