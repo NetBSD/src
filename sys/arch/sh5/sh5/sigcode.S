@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.2 2002/07/12 15:42:29 scw Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.3 2002/10/02 08:10:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,12 +45,8 @@
  */
 
 /*
- * Dummy sigcode routine.
- * Signals not yet implemented.
+ * Dummy, zero-length, sigcode routine.
  */
 
 ENTRY_NOPROFILE(sigcode)
-	movi	SYS_exit, r0
-	movi	0x80, r1
-	trapa	r1
 ENTRY_NOPROFILE(esigcode)
