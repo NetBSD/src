@@ -1,3 +1,5 @@
+/*	$NetBSD: sys_machdep.c,v 1.4 1994/10/26 02:33:06 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sys_machdep.c	8.2 (Berkeley) 1/13/94
- *	$Id: sys_machdep.c,v 1.3 1994/10/20 05:02:17 cgd Exp $
+ *	@(#)sys_machdep.c	8.2 (Berkeley) 1/13/94
  */
 
 #include <sys/param.h>

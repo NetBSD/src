@@ -1,3 +1,5 @@
+/*	$NetBSD: pte.h,v 1.3 1994/10/26 02:33:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: pte.h 1.13 92/01/20$
  *
- *	from: @(#)pte.h	8.1 (Berkeley) 6/10/93
- *	$Id: pte.h,v 1.2 1994/06/18 12:10:37 paulus Exp $
+ *	@(#)pte.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

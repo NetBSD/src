@@ -1,3 +1,5 @@
+/*	$NetBSD: swapgeneric.c,v 1.3 1994/10/26 02:33:02 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.2 1994/06/18 12:10:06 paulus Exp $
+ *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
  */
 
 #include <sys/param.h>

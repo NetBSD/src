@@ -1,3 +1,5 @@
+/*	$NetBSD: pmap.c,v 1.4 1994/10/26 02:32:58 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pmap.c	8.5 (Berkeley) 3/21/94
- *	$Id: pmap.c,v 1.3 1994/08/25 06:16:29 paulus Exp $
+ *	@(#)pmap.c	8.5 (Berkeley) 3/21/94
  */
 
 /*

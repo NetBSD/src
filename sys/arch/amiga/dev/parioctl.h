@@ -1,4 +1,4 @@
-/*	$NetBSD: parioctl.h,v 1.4 1994/10/26 02:04:29 cgd Exp $	*/
+/*	$NetBSD: parioctl.h,v 1.5 1994/10/26 02:32:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ppiioctl.h	7.2 (Berkeley) 12/16/90
+ *	@(#)ppiioctl.h	7.2 (Berkeley) 12/16/90
  */
 
 #ifndef _IOCTL_

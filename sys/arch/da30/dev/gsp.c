@@ -1,3 +1,5 @@
+/*	$NetBSD: gsp.c,v 1.3 1994/10/26 02:33:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Paul Mackerras.
  * All rights reserved.
@@ -23,8 +25,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: gsp.c,v 1.2 1994/06/18 12:10:14 paulus Exp $
  */
 
 #include "gsp.h"

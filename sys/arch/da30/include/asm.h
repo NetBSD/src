@@ -1,5 +1,3 @@
-/*
- *	$Id: asm.h,v 1.1 1994/02/22 23:50:49 paulus Exp $
- */
+/*	$NetBSD: asm.h,v 1.2 1994/10/26 02:33:38 cgd Exp $	*/
 
 #include <m68k/asm.h>

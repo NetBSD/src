@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.6 1994/10/26 02:03:44 cgd Exp $	*/
+/*	$NetBSD: idesc.c,v 1.7 1994/10/26 02:31:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)wd.c	7.4 (Berkeley) 5/25/91
+ *	@(#)wd.c	7.4 (Berkeley) 5/25/91
  */
 /*
  * Copyright (c) 1994 Michael L. Hitch

@@ -1,3 +1,5 @@
+#	$NetBSD: AVAGO,v 1.6 1994/10/26 02:32:32 cgd Exp $
+
 machine da30
 
 options		AVAGO

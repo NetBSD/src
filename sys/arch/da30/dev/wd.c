@@ -1,3 +1,5 @@
+/*	$NetBSD: wd.c,v 1.4 1994/10/26 02:33:30 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.3 1994/07/08 12:02:35 paulus Exp $
+ *	@(#)wd.c	7.2 (Berkeley) 5/9/91
  */
 
 #include "wd.h"

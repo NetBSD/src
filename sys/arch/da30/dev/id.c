@@ -1,3 +1,5 @@
+/*	$NetBSD: id.c,v 1.4 1994/10/26 02:33:19 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: id.c,v 1.3 1994/07/08 12:02:28 paulus Exp $
  */
 
 #include "id.h"

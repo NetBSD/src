@@ -1,4 +1,5 @@
-#
+#	$NetBSD: files.da30.newconf,v 1.4 1994/10/26 02:32:36 cgd Exp $
+
 # config file for da30
 
 device iio at root { slot = -1, ipl = 0 }

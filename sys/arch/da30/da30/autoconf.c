@@ -1,3 +1,5 @@
+/*	$NetBSD: autoconf.c,v 1.3 1994/10/26 02:32:39 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -36,8 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: Utah Hdr: autoconf.c 1.31 91/01/21
- *	from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.2 1994/06/18 12:09:42 paulus Exp $
+ *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
  */
 
 /*

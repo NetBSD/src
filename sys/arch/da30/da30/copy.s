@@ -1,3 +1,5 @@
+/*	$NetBSD: copy.s,v 1.2 1994/10/26 02:32:44 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
