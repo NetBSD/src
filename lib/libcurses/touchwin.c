@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.9.6.1 2000/01/09 20:43:22 jdc Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.9.6.2 2000/01/16 18:58:23 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,23 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.9.6.1 2000/01/09 20:43:22 jdc Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.9.6.2 2000/01/16 18:58:23 jdc Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
-
-/*
- * touchline --
- *	Touch a given line.
- */
-int
-bsd_touchline(win, y, sx, ex)
-	WINDOW *win;
-	int     y, sx, ex;
-{
-	return (__touchline(win, y, sx, ex, 1));
-}
 
 /*
  * Touch count lines starting at start.  This is the SUS v2 compliant
