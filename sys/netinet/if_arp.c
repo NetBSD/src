@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.83 2002/06/24 08:42:33 itojun Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.84 2002/06/24 10:52:15 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.83 2002/06/24 08:42:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.84 2002/06/24 10:52:15 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -775,6 +775,13 @@ arpintr()
 
 		arpstat.as_rcvtotal++;
 
+		/*
+		 * First, make sure we have at least struct arphdr.
+		 */
+		if (m->m_len < sizeof(struct arphdr) ||
+		    (ar = mtod(m, struct arphdr *)) == NULL)
+			goto badlen;
+
 		switch (m->m_pkthdr.rcvif->if_type) {
 		case IFT_IEEE1394:
 			arplen = sizeof(struct arphdr) +
@@ -786,9 +793,7 @@ arpintr()
 			break;
 		}
 
-		if (m->m_len >= sizeof(struct arphdr) &&
-		    (ar = mtod(m, struct arphdr *)) &&
-		    /* XXX ntohs(ar->ar_hrd) == ARPHRD_ETHER && */
+		if (/* XXX ntohs(ar->ar_hrd) == ARPHRD_ETHER && */
 		    m->m_len >= arplen)
 			switch (ntohs(ar->ar_pro)) {
 			case ETHERTYPE_IP:
@@ -798,8 +803,10 @@ arpintr()
 			default:
 				arpstat.as_rcvbadproto++;
 			}
-		else
+		else {
+badlen:
 			arpstat.as_rcvbadlen++;
+		}
 		m_freem(m);
 	}
 }
