@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.2 1997/07/18 07:47:32 thorpej Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.3 1997/07/24 08:54:56 phil Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>
@@ -124,7 +124,7 @@ make_passwd(argp, rqstp, transp)
 	if (!noshell)
 		pw->pw_shell = argp->newpw.pw_shell;
 
-	pw_copy(pfd, tfd, pw);
+	pw_copy(pfd, tfd, pw, NULL);
 
 	if (pw_mkdb() < 0) {
 		warnx("pw_mkdb failed");
