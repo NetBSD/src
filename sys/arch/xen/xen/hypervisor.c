@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.11 2005/03/11 15:50:25 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.12 2005/03/11 20:39:39 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.11 2005/03/11 15:50:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.12 2005/03/11 20:39:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.11 2005/03/11 15:50:25 bouyer Exp $
 #include "xennet.h"
 #include "xbd.h"
 #include "npx.h"
+#include "isa.h"
+#include "pci.h"
 
 #include "opt_xen.h"
 
@@ -138,7 +140,9 @@ union hypervisor_attach_cookie {
  */   
 #ifdef DOM0OPS
 int     isa_has_been_seen;
+#if NISA > 0
 struct  x86_isa_chipset x86_isa_chipset;
+#endif
 #endif
 
 /*
@@ -176,9 +180,7 @@ hypervisor_attach(parent, self, aux)
 {
 #ifdef DOM0OPS
 	struct pcibus_attach_args pba;
-#if NISA > 0
 	struct isabus_attach_args iba;
-#endif
 #endif
 	union hypervisor_attach_cookie hac;
 
@@ -241,7 +243,6 @@ hypervisor_attach(parent, self, aux)
 				    pcibusprint);
 			}
 		}
-#if NISA > 0
 		if (isa_has_been_seen == 0) {
 			iba._iba_busname = "isa";
 			iba.iba_iot = X86_BUS_SPACE_IO;
@@ -250,7 +251,6 @@ hypervisor_attach(parent, self, aux)
 			iba.iba_ic = NULL; /* No isa DMA yet */
 			config_found_ia(self, "isabus", &iba, isabusprint);
 		}
-#endif
 
 		xenkernfs_init();
 		xenprivcmd_init();
