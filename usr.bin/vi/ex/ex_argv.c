@@ -294,7 +294,7 @@ argv_exp3(sp, ep, excp, cmd, cmdlen)
 		off = exp->argsoff;
 		exp->args[off]->len = len;
 		for (p = exp->args[off]->bp; len > 0; --len, *p++ = *ap++)
-			if (IS_ESCAPE(sp, *ap))
+			if (IS_ESCAPE(sp, *(u_char *)ap))
 				++ap;
 		*p = '\0';
 	}
