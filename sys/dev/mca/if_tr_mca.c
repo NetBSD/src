@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.4 2001/03/29 08:56:27 jdolecek Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.5 2001/04/05 12:20:26 jdolecek Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,6 +71,30 @@ struct cfattach tr_mca_ca = {
 	sizeof(struct tr_softc), tr_mca_probe, tr_mca_attach
 };
 
+/* supported products */
+static const struct tr_mca_product {
+	u_int32_t tr_id;
+	const char *tr_name;
+} tr_mca_products[] = {
+	{ MCA_PRODUCT_ITR, "IBM Token Ring 16/4 Adapter/A" },
+	{ 0, NULL },
+};
+
+static const struct tr_mca_product *tr_mca_lookup __P((int));
+
+static const struct tr_mca_product *
+tr_mca_lookup(id)
+	int id;
+{
+	const struct tr_mca_product *trp;
+
+	for(trp = tr_mca_products; trp->tr_name; trp++)
+		if (trp->tr_id == id)
+			return (trp);
+
+	return (NULL);
+}
+
 int
 tr_mca_probe(parent, match, aux)
 	struct device  *parent;
@@ -79,12 +103,10 @@ tr_mca_probe(parent, match, aux)
 {
 	struct mca_attach_args *ma = aux;
 
-	switch (ma->ma_id) {
-	case MCA_PRODUCT_ITR:
-		return 1;
-	}
+	if (tr_mca_lookup(ma->ma_id) != NULL)
+		return (1);
 
-	return 0;
+	return (0);
 }
 
 
@@ -98,8 +120,10 @@ tr_mca_attach(parent, self, aux)
 	bus_space_handle_t pioh, mmioh, sramh;
 	int iobase, irq, sram_size, sram_addr, rom_addr;
 	int pos2, pos3, pos4, pos5;
+	const struct tr_mca_product *tp;
 
-	printf("\n");
+	tp = tr_mca_lookup(ma->ma_id);
+	printf(" slot %d: %s\n", ma->ma_slot + 1, tp->tr_name);
 
 	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
