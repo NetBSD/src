@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 2000/07/11 06:34:57 jeffs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43 2000/07/13 07:37:11 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,13 +45,18 @@
  * Exported definitions unique to NetBSD/mips cpu support.
  */
 
-#ifndef CPU_MAXID			/* platform can override */
 /*
  * CTL_MACHDEP definitions.
  */
 #define CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
 #define CPU_ROOT_DEVICE		3	/* string: root device name */
+
+/*
+ * Platform can override, but note this breaks userland compatability
+ * with other mips platforms.
+ */
+#ifndef CPU_MAXID
 #define CPU_MAXID		4	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
