@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.h,v 1.3 2003/01/06 03:44:24 christos Exp $	*/
+/*	$NetBSD: altq_hfsc.h,v 1.4 2003/01/06 14:09:42 christos Exp $	*/
 /*	$KAME: altq_hfsc.h,v 1.6 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ struct hfsc_class_stats {
 	u_int64_t		cur_time;	/* current time */
 	u_int			hif_classes;	/* # of classes in the tree */
 	u_int			hif_packets;	/* # of packets in the tree */
-	struct _hsfc_class_stats_	*stats;	/* pointer to stats array */
+	struct hsfc_basic_class_stats	*stats;	/* pointer to stats array */
 };
 
 #define	HFSC_IF_ATTACH		_IOW('Q', 1, struct hfsc_attach)
