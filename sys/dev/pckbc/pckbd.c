@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.27 2001/11/13 07:24:43 lukem Exp $ */
+/* $NetBSD: pckbd.c,v 1.28 2001/11/13 17:45:07 augustss Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.27 2001/11/13 07:24:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.28 2001/11/13 17:45:07 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,8 +373,12 @@ pckbd_enable(v, on)
 	int res;
 
 	if (on) {
-		if (sc->sc_enabled)
+		if (sc->sc_enabled) {
+#ifdef DIAGNOSTIC
+			printf("pckbd_enable: bad enable\n");
+#endif
 			return (EBUSY);
+		}
 
 		pckbc_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 1);
 
