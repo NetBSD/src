@@ -77,7 +77,7 @@ xterm24|vs100-24|xterm terminal emulator (24 lines) (X11R6 window system):\
 	:co#80:li#24:\
 	:tc=xterm:
 xterm25|vs100-25|xterm terminal emulator (25 lines) (X11R6 window system):\
-	:co#80:li#24:\
+	:co#80:li#25:\
 	:tc=xterm:
 xterms|vs100s|xterm terminal emulator (small) (X11R6 window system):\
 	:tc=xterm24:
