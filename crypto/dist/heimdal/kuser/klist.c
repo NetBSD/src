@@ -34,7 +34,7 @@
 #include "kuser_locl.h"
 #include "rtbl.h"
 
-RCSID("$Id: klist.c,v 1.3 2001/02/11 14:13:10 assar Exp $");
+RCSID("$Id: klist.c,v 1.4 2001/06/19 22:39:56 assar Exp $");
 
 static char*
 printable_time(time_t t)
@@ -275,8 +275,8 @@ print_tickets (krb5_context context,
     }
     while (krb5_cc_next_cred (context,
 			      ccache,
-			      &creds,
-			      &cursor) == 0) {
+			      &cursor,
+			      &creds) == 0) {
 	if(do_verbose){
 	    print_cred_verbose(context, &creds);
 	}else{
@@ -629,7 +629,7 @@ main (int argc, char **argv)
     int optind = 0;
     int exit_status = 0;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
 	usage(1);

@@ -1,12 +1,11 @@
-.\" $Id: krb5.conf.5,v 1.6 2001/06/05 10:19:10 wiz Exp $
+.\" $Id: krb5.conf.5,v 1.7 2001/06/19 22:39:58 assar Exp $
 .\"
 .Dd April 11, 1999
 .Dt KRB5.CONF 5
 .Os
 .Sh NAME
 .Nm /etc/krb5.conf
-.Nd
-Configuration file for Kerberos 5
+.Nd configuration file for Kerberos 5
 .Sh DESCRIPTION
 The 
 .Nm
@@ -47,6 +46,35 @@ name:
 consists of one or more non-white space characters.
 Currently recognised sections and bindings are:
 .Bl -tag -width "xxx" -offset indent
+.It Li [appdefaults]
+Specifies the default values to be used for Kerberos applications.
+You can specify defaults per application, realm, or a combination of
+these.  The preference order is:
+.Bl -enum -compact
+.It
+.Va application Va realm Va option
+.It
+.Va application Va option
+.It
+.Va realm Va option
+.It
+.Va option
+.El
+.Pp
+The supported options are:
+.Bl -tag -width "xxx" -offset indent
+.It Li forwardable = Va boolean
+When obtaining initial credentials, make the credentials forwardable.
+.It Li proxiable = Va boolean
+When obtaining initial credentials, make the credentials proxiable.
+.It Li no-addresses = Va boolean
+When obtaining initial credentials, request them for an empty set of
+addresses, making the tickets valid from any address.
+.It Li ticket_life = Va time
+Default ticket lifetime.
+.It Li renew_lifetime = Va time
+Default renewable ticket lifetime.
+.El
 .It Li [libdefaults]
 .Bl -tag -width "xxx" -offset indent
 .It Li default_realm = Va REALM
@@ -132,6 +160,11 @@ Scan all network interfaces for addresses, as opposed to simply using
 the address associated with the system's host name.
 .It Li fcache_version = Va int
 Use file credential cache format version specified.
+.It Li krb4_get_tickets = Va boolean
+Also get Kerberos 4 tickets in
+.Nm kinit
+and other programs.
+This option is also valid in the [realms] section.
 .El
 .It Li [domain_realm]
 This is a list of mappings from DNS domain to Kerberos realm. Each
@@ -313,4 +346,5 @@ actually used and thus cannot warn about unknown or misspelt ones.
 .Xr krb5_openlog 3 ,
 .Xr krb5_425_conv_principal 3 ,
 .Xr strftime 3 ,
+.Xr kinit 1 ,
 .Xr Source tm

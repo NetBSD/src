@@ -32,7 +32,7 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$Id: kdestroy.c,v 1.3 2001/02/11 14:13:10 assar Exp $");
+RCSID("$Id: kdestroy.c,v 1.4 2001/06/19 22:39:56 assar Exp $");
 
 static const char *cache;
 static int help_flag;
@@ -68,7 +68,7 @@ main (int argc, char **argv)
     int optind = 0;
     int exit_val = 0;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
 
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);

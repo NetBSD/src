@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.2 2001/04/07 21:29:21 thorpej Exp $
+# $Id: Makefile.am,v 1.3 2001/06/19 22:39:53 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -13,6 +13,9 @@ libexec_PROGRAMS = $(DFSPROGS) $(AIX_DFSPROGS)
 dpagaix_CFLAGS = @dpagaix_CFLAGS@
 dpagaix_LDFLAGS = @dpagaix_LDFLAGS@
 dpagaix_LDADD = @dpagaix_LDADD@
+
+dpagaix: $(dpagaix_OBJECTS)
+	ld -edpagaix -o dpagaix $(dpagaix_OBJECTS) $(srcdir)/dfspag.exp
 
 LIB_dce = -ldce
 

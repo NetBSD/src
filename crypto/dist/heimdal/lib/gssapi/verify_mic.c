@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: verify_mic.c,v 1.3 2001/02/11 14:13:11 assar Exp $");
+RCSID("$Id: verify_mic.c,v 1.4 2001/06/19 22:39:57 assar Exp $");
 
 static OM_uint32
 verify_mic_des
@@ -157,6 +157,7 @@ verify_mic_des3
   ret = krb5_crypto_init(gssapi_krb5_context, key,
 			 ETYPE_DES3_CBC_NONE, &crypto);
   if (ret){
+      gssapi_krb5_set_error_string ();
       *minor_status = ret;
       return GSS_S_FAILURE;
   }
@@ -168,6 +169,7 @@ verify_mic_des3
 		      KRB5_KU_USAGE_SEQ,
 		      p, 8, &seq_data);
   if (ret) {
+      gssapi_krb5_set_error_string ();
       krb5_crypto_destroy (gssapi_krb5_context, crypto);
       *minor_status = ret;
       return GSS_S_FAILURE;
@@ -218,6 +220,7 @@ verify_mic_des3
 			      &csum);
   free (tmp);
   if (ret) {
+      gssapi_krb5_set_error_string ();
       krb5_crypto_destroy (gssapi_krb5_context, crypto);
       *minor_status = ret;
       return GSS_S_BAD_MIC;
@@ -248,6 +251,7 @@ gss_verify_mic
 					 context_handle->auth_context,
 					 &key);
     if (ret) {
+	gssapi_krb5_set_error_string ();
 	*minor_status = ret;
 	return GSS_S_FAILURE;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: appdefault.c,v 1.2 2001/04/06 10:10:21 itojun Exp $");
+RCSID("$Id: appdefault.c,v 1.3 2001/06/19 22:39:58 assar Exp $");
 
 void
 krb5_appdefault_boolean(krb5_context context, const char *appname, 
@@ -42,7 +42,7 @@ krb5_appdefault_boolean(krb5_context context, const char *appname,
 {
     
     if(appname == NULL)
-	appname = __progname;
+	appname = getprogname();
     def_val = krb5_config_get_bool_default(context, NULL, def_val, 
 					   "appdefaults", 
 					   option, 
@@ -76,7 +76,7 @@ krb5_appdefault_string(krb5_context context, const char *appname,
 		       const char *def_val, char **ret_val)
 {
     if(appname == NULL)
-	appname = __progname;
+	appname = getprogname();
     def_val = krb5_config_get_string_default(context, NULL, def_val, 
 					     "appdefaults", 
 					     option, 

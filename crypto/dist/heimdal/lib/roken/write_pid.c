@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: write_pid.c,v 1.2 2001/04/07 21:29:25 thorpej Exp $");
+RCSID("$Id: write_pid.c,v 1.3 2001/06/19 22:39:59 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -88,7 +88,7 @@ pidfile(const char *basename)
     if(pidfile_path != NULL)
 	return;
     if(basename == NULL)
-	basename = __progname;
+	basename = getprogname();
     pidfile_path = pid_file_write(basename);
     atexit(pidfile_cleanup);
 }
