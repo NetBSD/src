@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.2 2003/07/15 02:43:29 lukem Exp $	*/
+/*	$NetBSD: kauai.c,v 1.3 2003/08/17 18:10:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.2 2003/07/15 02:43:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.3 2003/08/17 18:10:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,8 @@ kauai_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_KAUAI)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_KAUAI ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_UNINORTH_ATA))
 		return 5;
 
 	return 0;
