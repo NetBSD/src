@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1996/10/03 20:09:44 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.7 1996/10/03 20:09:44 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -63,7 +63,7 @@ int main __P((int, char **));
 static void
 usage()
 {
-	errexit("Usage: fsck_msdos [-pny] filesystem ... \n");
+	errexit("Usage: fsck_msdos [-fnpy] filesystem ... \n");
 }
 
 int
@@ -75,7 +75,7 @@ main(argc, argv)
 	int ret = 0, erg;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "vpynf")) != EOF) {
+	while ((ch = getopt(argc, argv, "pynf")) != EOF) {
 		switch (ch) {
 		case 'f':
 			/*
