@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsbvar.h,v 1.2 1997/03/12 21:11:13 cgd Exp $	*/
+/* $NetBSD: tlsbvar.h,v 1.3 1997/04/06 20:08:41 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
