@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.20 1998/01/20 22:06:02 mycroft Exp $	*/
+/*	$NetBSD: date.c,v 1.21 1998/01/21 00:07:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.20 1998/01/20 22:06:02 mycroft Exp $");
+__RCSID("$NetBSD: date.c,v 1.21 1998/01/21 00:07:44 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,8 @@ main(argc, argv)
 	/* NOTREACHED */
 }
 
-#define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
+#define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
+
 void
 setthetime(p)
 	char *p;
@@ -161,23 +162,20 @@ setthetime(p)
 
 	yearset = 0;
 	switch (strlen(p)) {
-	case 12:
-		lt->tm_year = ATOI2(p);
-		lt->tm_year *= 100;
+	case 12:				/* cc */
+		lt->tm_year = ATOI2(p) * 100 - TM_YEAR_BASE;
 		yearset = 1;
 		/* FALLTHROUGH */
 	case 10:				/* yy */
 		if (yearset) {
-			yearset = ATOI2(p);
-			lt->tm_year += yearset;
+			lt->tm_year += ATOI2(p);
 		} else {
 			yearset = ATOI2(p);
-			if (yearset < 69)		/* hack for 2000 ;-} */
-				lt->tm_year = yearset + 2000;
+			if (yearset < 69)
+				lt->tm_year = yearset + 2000 - TM_YEAR_BASE;
 			else
-				lt->tm_year = yearset + 1900;
+				lt->tm_year = yearset + 1900 - TM_YEAR_BASE;
 		}
-		lt->tm_year -= TM_YEAR_BASE;
 		/* FALLTHROUGH */
 	case 8:					/* mm */
 		lt->tm_mon = ATOI2(p);
