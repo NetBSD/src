@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2002/03/17 22:14:13 tshiozak Exp $
+#	$NetBSD: Makefile,v 1.2 2003/03/25 18:26:54 tshiozak Exp $
 
-SUBDIR=	BIG5 EUC EUCTW ISO2022 MSKanji UTF8
+SUBDIR=	BIG5 EUC EUCTW GBK2K ISO2022 MSKanji UTF8
 
 .include <bsd.subdir.mk>
