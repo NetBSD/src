@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.7 1999/06/08 12:38:20 tron Exp $	*/
+/*	$NetBSD: fgen.l,v 1.8 1999/06/08 12:45:47 tron Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -42,6 +42,8 @@
 	    #define TOKEN struct tok
 */
 %}
+
+%option yylineno
 
 decimal	[0-9]
 hex	[0-9A-Fa-f]
