@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2002/10/22 09:30:27 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 2002/10/22 13:10:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -706,9 +706,16 @@ pmap_pteg_clear_bit(volatile pte_t *pt, struct pvo_entry *pvo, u_int ptebit)
 	pm = pvo->pvo_pmap;
 	pteh = pt->pteh;
 	ptel = pt->ptel;
-	pt->ptel = ptel & ~ptebit;
 
-	if (pm->pm_asid != PMAP_ASID_UNASSIGNED &&
+	/*
+	 * Note:
+	 * We clear the Referenced bit here so that subsequent calls to
+	 * pmap_cache_sync_*() will only purge the cache for the page
+	 * if it has been accessed between now and then.
+	 */
+	pt->ptel = ptel & ~(ptebit | SH5_PTEL_R);
+
+	if ((ptel & SH5_PTEL_R) != 0 && pm->pm_asid != PMAP_ASID_UNASSIGNED &&
 	    pm->pm_asidgen == pmap_asid_generation) {
 		/*
 		 * The mapping may be cached in the TLB. Call cpu-specific
@@ -736,10 +743,12 @@ pmap_kpte_clear_bit(int idx, struct pvo_entry *pvo, ptel_t ptebit)
 {
 	ptel_t ptel;
 
-	__cpu_tlbinv((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
-	    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
-
 	ptel = pmap_kernel_ipt[idx];
+
+	if ((ptel & SH5_PTEL_R) != 0)
+		__cpu_tlbinv((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
+		    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
+
 	pmap_pteg_synch(ptel, pvo);
 
 	/*
@@ -749,8 +758,11 @@ pmap_kpte_clear_bit(int idx, struct pvo_entry *pvo, ptel_t ptebit)
 
 	/*
 	 * It's now safe to change the page table.
+	 * We clear the Referenced bit here so that subsequent calls to
+	 * pmap_cache_sync_*() will only purge the cache for the page
+	 * if it has been accessed between now and then.
 	 */
-	pmap_kernel_ipt[idx] = ptel & ~ptebit;
+	pmap_kernel_ipt[idx] = ptel & ~(ptebit | SH5_PTEL_R);
 }
 
 /*
@@ -768,7 +780,7 @@ static __inline void
 pmap_pteg_set(volatile pte_t *pt, struct pvo_entry *pvo)
 {
 
-	pt->ptel = pvo->pvo_ptel;
+	pt->ptel = pvo->pvo_ptel & ~SH5_PTEL_R;
 	pt->pteh = (pteh_t) PVO_VADDR(pvo);
 	pt->vsid = pvo->pvo_pmap->pm_vsid;
 }
@@ -792,7 +804,7 @@ pmap_pteg_unset(volatile pte_t *pt, struct pvo_entry *pvo)
 	pteh = pt->pteh;
 	pt->pteh = 0;
 
-	if (pm->pm_asid != PMAP_ASID_UNASSIGNED &&
+	if ((ptel & SH5_PTEL_R) != 0 && pm->pm_asid != PMAP_ASID_UNASSIGNED &&
 	    pm->pm_asidgen == pmap_asid_generation) {
 		/*
 		 * The mapping may be in the TLB. Call cpu-specific
@@ -1579,8 +1591,9 @@ pmap_pa_unmap_kva(vaddr_t kva, ptel_t *ptel)
 	oldptel = *ptel;
 	*ptel = 0;
 
-	__cpu_tlbinv(((pteh_t)kva & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
-	    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
+	if ((oldptel & SH5_PTEL_R) != 0)
+		__cpu_tlbinv(((pteh_t)kva & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
+		    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
 
 	pmap_cache_sync_unmap(kva, oldptel);
 
@@ -1642,7 +1655,7 @@ pmap_change_cache_attr(struct pvo_entry *pvo, ptel_t new_mode)
 		pvo->pvo_ptel |= new_mode;
 
 		/* Re-insert it back into the page table */
-		pmap_kernel_ipt[idx] = pvo->pvo_ptel;
+		pmap_kernel_ipt[idx] = pvo->pvo_ptel & ~SH5_PTEL_R;
 	}
 
 	PMPRINTF(("pmap_change_cache_attr: done\n"));
@@ -1827,7 +1840,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 			PVO_PTEGIDX_SET(pvo, i);
 		}
 	} else {
-		pmap_kernel_ipt[idx] = ptel;
+		pmap_kernel_ipt[idx] = ptel & ~SH5_PTEL_R;
 		PMPRINTF((
 		    "pmap_pvo_enter: kva 0x%lx, ptel 0x%lx, kipt (idx %d)\n",
 		    va, (u_long)ptel, idx));
