@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.23 2004/02/16 17:11:27 wiz Exp $	*/
+/*	$NetBSD: locore.S,v 1.24 2004/02/20 17:35:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
 
 #define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg	
 #define SET_CURPCB(reg)			movl	reg,CPUVAR(CURPCB)
-	
+
 #define CLEAR_RESCHED(reg)		movl	reg,CPUVAR(RESCHED)
 
 /* XXX temporary kluge; these should not be here */
@@ -701,6 +701,7 @@ NENTRY(proc_trampoline)
 	pushl	%ebx
 	call	*%esi
 	addl	$4,%esp
+	DO_DEFERRED_SWITCH(%eax)
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -778,7 +779,7 @@ ENTRY(kcopy)
 	pushl	%edi
 	GET_CURPCB(%eax)		# load curpcb into eax and set on-fault
 	pushl	PCB_ONFAULT(%eax)
-	movl	$_C_LABEL(copy_fault), PCB_ONFAULT(%eax)
+	movl	$_C_LABEL(kcopy_fault), PCB_ONFAULT(%eax)
 
 	movl	16(%esp),%esi
 	movl	20(%esp),%edi
@@ -871,6 +872,7 @@ _C_LABEL(copyin_func):
  */
 /* LINTSTUB: Func: int copyout(const void *kaddr, void *uaddr, size_t len) */
 ENTRY(copyout)
+	DO_DEFERRED_SWITCH(%eax)
 	jmp	*_C_LABEL(copyout_func)
 
 #if defined(I386_CPU)
@@ -1012,6 +1014,7 @@ ENTRY(i486_copyout)
  */
 /* LINTSTUB: Func: int copyin(const void *uaddr, void *kaddr, size_t len) */
 ENTRY(copyin)
+	DO_DEFERRED_SWITCH(%eax)
 	jmp	*_C_LABEL(copyin_func)
 
 #if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU) || \
@@ -1062,6 +1065,19 @@ ENTRY(i386_copyin)
 NENTRY(copy_efault)
 	movl	$EFAULT,%eax
 
+/*
+ * kcopy_fault is used by kcopy and copy_fault is used by copyin/out.
+ *
+ * they're distinguished for lazy pmap switching.  see trap().
+ */
+/* LINTSTUB: Ignore */
+NENTRY(kcopy_fault)
+	GET_CURPCB(%edx)
+	popl	PCB_ONFAULT(%edx)
+	popl	%edi
+	popl	%esi
+	ret
+
 /* LINTSTUB: Ignore */
 NENTRY(copy_fault)
 	GET_CURPCB(%edx)
@@ -1082,6 +1098,8 @@ NENTRY(copy_fault)
 ENTRY(copyoutstr)
 	pushl	%esi
 	pushl	%edi
+
+	DO_DEFERRED_SWITCH(%eax)
 
 	movl	12(%esp),%esi		# esi = from
 	movl	16(%esp),%edi		# edi = to
@@ -1200,6 +1218,9 @@ ENTRY(copyoutstr)
 ENTRY(copyinstr)
 	pushl	%esi
 	pushl	%edi
+	
+	DO_DEFERRED_SWITCH(%eax)
+
 	GET_CURPCB(%ecx)
 	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%ecx)
 
@@ -1311,6 +1332,7 @@ ENTRY(copystr)
  */
 /* LINTSTUB: Func: long fuword(const void *base) */
 ENTRY(fuword)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1327,6 +1349,7 @@ ENTRY(fuword)
  */
 /* LINTSTUB: Func: int fusword(const void *base) */
 ENTRY(fusword)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1344,6 +1367,8 @@ ENTRY(fusword)
  */
 /* LINTSTUB: Func: int fuswintr(const void *base) */
 ENTRY(fuswintr)
+	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	jnz	_C_LABEL(fusuaddrfault)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1361,6 +1386,7 @@ ENTRY(fuswintr)
  */
 /* LINTSTUB: Func: int fubyte(const void *base) */
 ENTRY(fubyte)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1405,6 +1431,7 @@ NENTRY(fusuaddrfault)
  */
 /* LINTSTUB: Func: int suword(void *base, long c) */
 ENTRY(suword)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1452,6 +1479,7 @@ ENTRY(suword)
  */
 /* LINTSTUB: Func: int susword(void *base, short c) */
 ENTRY(susword)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1500,6 +1528,8 @@ ENTRY(susword)
  */
 /* LINTSTUB: Func: int suswintr(void *base, short c) */
 ENTRY(suswintr)
+	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	jnz	_C_LABEL(fusuaddrfault)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1537,6 +1567,7 @@ ENTRY(suswintr)
  */
 /* LINTSTUB: Func: int subyte(void *base, int c) */
 ENTRY(subyte)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1722,7 +1753,7 @@ ENTRY(cpu_switch)
 	 */
 
 	pushl	%esi
-	call	_C_LABEL(pmap_deactivate)	# pmap_deactivate(oldproc)
+	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldproc)
 	addl	$4,%esp
 
 	movl	L_ADDR(%esi),%esi
@@ -1748,11 +1779,6 @@ ENTRY(cpu_switch)
 	/* Restore stack pointers. */
 	movl	PCB_ESP(%edi),%esp
 	movl	PCB_EBP(%edi),%ebp
-
-
-	/* Switch address space. */
-	movl	PCB_CR3(%edi),%ecx
-	movl	%ecx,%cr3
 
 	/* Switch TSS. Reset "task busy" flag before loading. */
 #ifdef MULTIPROCESSOR
@@ -1872,7 +1898,7 @@ switch_resume:
 	 */
 
 	pushl	%esi
-	call	_C_LABEL(pmap_deactivate)	# pmap_deactivate(oldproc)
+	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldproc)
 	addl	$4,%esp
 
 	movl	L_ADDR(%esi),%esi
@@ -2066,10 +2092,6 @@ ENTRY(cpu_exit)
 	movl	_C_LABEL(gdt),%eax
 #endif
 
-	/* Switch address space. */
-	movl	PCB_CR3(%esi),%ecx
-	movl	%ecx,%cr3
-
 	/* Switch TSS. */
 	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
 	ltr	%dx
@@ -2134,6 +2156,12 @@ syscall1:
 	INTRENTRY
 
 #ifdef DIAGNOSTIC
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	jz	1f
+	pushl	$6f
+	call	_C_LABEL(printf)
+	addl	$4, %esp
+1:
 	movl	CPUVAR(ILEVEL),%ebx
 	testl	%ebx,%ebx
 	jz	1f
@@ -2151,7 +2179,8 @@ syscall1:
 	pushl	%esp
 	call	*P_MD_SYSCALL(%edx)	# get pointer to syscall() function
 	addl	$4,%esp
-2:	/* Check for ASTs on exit to user mode. */
+syscall_checkast:
+	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%eax)
 	je	1f
@@ -2162,11 +2191,13 @@ syscall1:
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-	jmp	2b
+	jmp	syscall_checkast	/* re-check ASTs */
+1:	CHECK_DEFERRED_SWITCH(%eax)
+	jnz	9f
 #ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
+	INTRFASTEXIT
 #else /* DIAGNOSTIC */
-1:	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
+	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 	INTRFASTEXIT
 3:	sti
@@ -2180,7 +2211,11 @@ syscall1:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"	
+6:	.asciz	"WARNING: WANT PMAPLOAD ON SYSCALL ENTRY\n"	
 #endif /* DIAGNOSTIC */
+9:	sti
+	call	_C_LABEL(pmap_load)
+	jmp	syscall_checkast	/* re-check ASTs */
 
 #if NNPX > 0
 /*

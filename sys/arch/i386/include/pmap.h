@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.78 2003/10/27 13:44:20 junyoung Exp $	*/
+/*	$NetBSD: pmap.h,v 1.79 2004/02/20 17:35:01 yamt Exp $	*/
 
 /*
  *
@@ -342,12 +342,14 @@ void		pmap_activate(struct lwp *);
 void		pmap_bootstrap(vaddr_t);
 boolean_t	pmap_clear_attrs(struct vm_page *, int);
 void		pmap_deactivate(struct lwp *);
+void		pmap_deactivate2(struct lwp *);
 void		pmap_page_remove (struct vm_page *);
 void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
 boolean_t	pmap_test_attrs(struct vm_page *, int);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
 		    struct pcb *);
+void		pmap_load(void);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
