@@ -1,16 +1,13 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.4 1998/04/01 01:50:02 tv Exp $
+#	$NetBSD: Makefile,v 1.5 1998/04/02 06:45:53 mrg Exp $
 
 PROG=	cpp
 BINDIR=	/usr/libexec
-SRCS=	cccp.c cexp.c obstack.c version.c 
+SRCS=	cccp.c cexp.y obstack.c version.c 
 CPPFLAGS+= \
 	-DGCC_INCLUDE_DIR=\"\" \
 	-DTOOL_INCLUDE_DIR=\"\" \
 	-DGPLUSPLUS_INCLUDE_DIR=\"/usr/include/g++\"
-YFLAGS=
-
-CLEANFILES+= cexp.c
 
 LINKS=	/usr/bin/cpp /usr/bin/gcpp
 FILES=usr.bin.cpp.sh
