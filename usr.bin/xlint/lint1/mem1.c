@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.10 2003/10/21 23:58:53 christos Exp $	*/
+/*	$NetBSD: mem1.c,v 1.10.2.1 2004/06/22 07:16:34 tron Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -31,9 +31,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.10 2003/10/21 23:58:53 christos Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.10.2.1 2004/06/22 07:16:34 tron Exp $");
 #endif
 
 #include <sys/types.h>
