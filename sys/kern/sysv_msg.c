@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.13 1995/03/19 23:44:56 mycroft Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.14 1995/06/05 12:56:54 pk Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -974,7 +974,7 @@ msgrcv(p, uap, retval)
 	return(0);
 }
 
-#if defined(COMPAT_10) && !defined(alpha)
+#if defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS)
 int
 compat_10_msgsys(p, uap, retval)
 	struct caller *p;
@@ -1043,4 +1043,4 @@ compat_10_msgsys(p, uap, retval)
 		return (EINVAL);
 	}
 }
-#endif /* defined(COMPAT_10) && !defined(alpha) */
+#endif /* defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS) */
