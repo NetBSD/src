@@ -1,5 +1,3 @@
-/*	$NetBSD: tdb.h,v 1.1.1.1 2000/09/23 22:14:55 christos Exp $	*/
-
 #define STANDALONE	1
 /* 
  * Database functions
