@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 1998/04/13 12:10:27 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.23 1998/08/11 17:52:57 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,9 +41,7 @@
 #include <machine/sid.h>
 #include <machine/clock.h>
 #include <machine/cpu.h>
-
-static unsigned long year;     /*  start of current year in seconds */
-static unsigned long year_len; /* length of current year in 100th of seconds */
+#include <machine/uvax.h>
 
 int	yeartonum __P((int));
 int	numtoyear __P((int));
@@ -57,19 +55,24 @@ void
 microtime(tvp)
 	struct timeval *tvp;
 {
-	u_int int_time, tmp_year;
 	int s, i;
 	static struct timeval lasttime;
 
 	s = splhigh();
-	int_time = mfpr(PR_TODR);
+	bcopy((caddr_t)&time, tvp, sizeof(struct timeval));
 
-	asm ("movc3 %0,(%1),(%2)" 
-		:
-		: "r" (sizeof(struct timeval)),"r" (&time),"r"(tvp)
-		:"r0","r1","r2","r3","r4","r5"); 
-
-	i = mfpr(PR_ICR) + tick; /* Get current interval count */
+	switch (vax_boardtype) {
+#ifdef VAX46
+	case VAX_BTYP_46:
+		i = *(volatile int *)(&vs_cpu->vc_diagtimu);
+		i = (i >> 16) * 1024 + (i & 0x3ff);
+		break;
+#endif
+	default:
+		i = mfpr(PR_ICR);
+		break;
+	}
+	i += tick; /* Get current interval count */
 	tvp->tv_usec += i;
 	while (tvp->tv_usec > 1000000) {
 		tvp->tv_sec++;
@@ -82,13 +85,6 @@ microtime(tvp)
 		tvp->tv_usec -= 1000000;
 	}
 	bcopy(tvp, &lasttime, sizeof(struct timeval));
-	if (int_time > year_len) {
-		mtpr(mfpr(PR_TODR) - year_len, PR_TODR);
-		year += year_len / 100;
-		tmp_year = year / SEC_PER_DAY / 365 + 2;
-		year_len = 100 * SEC_PER_DAY *
-		    ((tmp_year % 4 && tmp_year != 32) ? 365 : 366);
-	}
 	splx(s);
 }
 
@@ -168,7 +164,7 @@ generic_clock()
 }
 #endif
 
-#if VAX650 || VAX630 || VAX410 || VAX43
+#if VAX650 || VAX630 || VAX410 || VAX43 || VAX46
 /*
  * Most microvaxen don't have a interval count register.
  */
