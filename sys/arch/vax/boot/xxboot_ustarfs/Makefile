@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2002/03/29 05:45:08 matt Exp $
+#	$NetBSD: Makefile,v 1.1 2002/03/29 05:45:08 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
-PROG=	xxboot
-LINKS=	${BINDIR}/xxboot ${BINDIR}/raboot 
-LINKS+=	${BINDIR}/xxboot ${BINDIR}/rdboot
-LINKS+=	${BINDIR}/xxboot ${BINDIR}/sdboot
-LINKS+=	${BINDIR}/xxboot ${BINDIR}/hpboot
+.PATH:	${.CURDIR}/../xxboot
+
+PROG=	xxboot_ustarfs
 WARNS?=	1
 
 SRCS=	start.S bootxx.c romread.S str.S
@@ -17,7 +15,7 @@ CPPFLAGS+=-D_STANDALONE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS \
 	-DLIBSA_NO_COMPAT_UFS \
 	-DLIBSA_NO_FS_SYMLINK -DLIBSA_NO_FS_CLOSE \
 	-DLIBSA_NO_FS_WRITE -DLIBSA_NO_FS_SEEK \
-	-DNEED_UFS -DNEED_CD9660
+	-DNEED_USTARFS
 BINDIR=	/usr/mdec
 NOMAN=	# defined
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.15 2002/02/24 01:04:26 matt Exp $ */
+/* $NetBSD: bootxx.c,v 1.16 2002/03/29 05:45:08 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -43,6 +43,7 @@
 #include "lib/libsa/stand.h"
 #include "lib/libsa/ufs.h"
 #include "lib/libsa/cd9660.h"
+#include "lib/libsa/ustarfs.h"
 
 #include "lib/libkern/libkern.h"
 
@@ -188,9 +189,13 @@ die:
  * - Must be the first file on tape.
  */
 struct fs_ops file_system[] = {
+#ifdef NEED_UFS
 	{ ufs_open, 0, ufs_read, 0, 0, ufs_stat },
+#endif
+#ifdef NEED_CD9660
 	{ cd9660_open, 0, cd9660_read, 0, 0, cd9660_stat },
-#if 0
+#endif
+#ifdef NEED_USTARFS
 	{ ustarfs_open, 0, ustarfs_read, 0, 0, ustarfs_stat },
 #endif
 };
