@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 1996/12/28 23:13:35 pk Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 1997/01/06 23:28:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,6 +43,8 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
+#include "fdc.h"
+bdev_decl(fd);
 bdev_decl(sw);
 #include "st.h"
 bdev_decl(st);
@@ -59,7 +61,7 @@ bdev_decl(md);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),			/* 0 */
+	bdev_disk_init(NFDC,fd),	/* 0: PC-ish floppy disk driver */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
@@ -133,6 +135,9 @@ cdev_decl(md);
 cdev_decl(ss);
 #include "uk.h"
 cdev_decl(uk);
+cdev_decl(fd);
+#include "ipl.h"
+cdev_decl(ipl);
 
 cdev_decl(prom);			/* XXX XXX XXX */
 
@@ -173,6 +178,8 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NLPT,lpt),	/* 31: parallel printer */
 	cdev_scanner_init(NSS,ss),	/* 32: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
+	cdev_disk_init(NFDC,fd),	/* 34: PC-ish floppy disk driver */
+	cdev_ipl_init(NIPL,ipl),	/* 35: ip-filter device */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -248,6 +255,8 @@ static int chrtoblktbl[] = {
 	/* 31 */	NODEV,
 	/* 32 */	NODEV,
 	/* 33 */	NODEV,
+	/* 34 */	0,		/* fd */
+	/* 35 */	NODEV,
 };
 
 /*
