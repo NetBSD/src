@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.62 2002/06/27 12:12:49 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.63 2002/07/18 11:59:10 wiz Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.62 2002/06/27 12:12:49 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.63 2002/07/18 11:59:10 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1955,7 +1955,7 @@ ipsec6_hdrsiz(m, dir, in6p)
 
 	/* sanity check */
 	if (m == NULL)
-		return 0;	/* XXX shoud be panic ? */
+		return 0;	/* XXX should be panic ? */
 	if (in6p != NULL && in6p->in6p_socket == NULL)
 		panic("ipsec6_hdrsize: why is socket NULL but there is PCB.");
 
