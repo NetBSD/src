@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.26 2001/09/16 05:32:21 uch Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.27 2001/12/16 09:58:34 takemura Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -55,6 +55,9 @@
 
 #include "locators.h"
 
+/*
+ * constant and macro definitions
+ */
 #define VRGIUDEBUG
 #ifdef VRGIUDEBUG
 #define DEBUG_IO	1
@@ -89,9 +92,43 @@ int vrgiu_intr_led = 0;
 int vrgiu_intr_led = 1;
 #endif /* VRGIU_INTR_NOLED */
 
+#define MAX_GPIO_OUT 50    /* port 32:49 are output only port */
+#define MAX_GPIO_INOUT 32  /* input/output port(0:31) */
+
 #define	LEGAL_INTR_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_INOUT)
 #define	LEGAL_OUT_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_OUT)
 
+/* flags for variant chips */
+#if !defined(VR4122) && !defined(VR4131)
+#define VRGIU_HAVE_PULLUPDNREGS
+#endif
+
+/*
+ * type declarations
+ */
+struct vrgiu_intr_entry {
+	int ih_port;
+	int (*ih_fun)(void *);
+	void *ih_arg;
+	TAILQ_ENTRY(vrgiu_intr_entry) ih_link;
+};
+
+struct vrgiu_softc {
+	struct	device sc_dev;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	/* Interrupt */
+	vrip_chipset_tag_t sc_vc;
+	void *sc_ih;
+	u_int32_t sc_intr_mask;
+	u_int32_t sc_intr_mode[MAX_GPIO_INOUT];
+	TAILQ_HEAD(, vrgiu_intr_entry) sc_intr_head[MAX_GPIO_INOUT]; 
+	struct hpcio_chip sc_iochip;
+};
+
+/*
+ * prototypes
+ */
 int vrgiu_match(struct device*, struct cfdata*, void*);
 void vrgiu_attach(struct device*, struct device*, void*);
 int vrgiu_intr(void*);
@@ -118,6 +155,9 @@ static void vrgiu_update(hpcio_chip_t);
 static void vrgiu_dump(hpcio_chip_t);
 static hpcio_chip_t vrgiu_getchip(void*, int);
 
+/*
+ * variables
+ */
 static struct hpcio_chip vrgiu_iochip = {
 	.hc_portread =		vrgiu_port_read,
 	.hc_portwrite =		vrgiu_port_write,
@@ -135,6 +175,9 @@ struct cfattach vrgiu_ca = {
 
 struct vrgiu_softc *this_giu;
 
+/*
+ * function bodies
+ */
 int
 vrgiu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -240,7 +283,7 @@ vrgiu_dump_iosetting(struct vrgiu_softc *sc)
 
 	iosel= vrgiu_regread_4(sc, GIUIOSEL_REG);
 	inten= vrgiu_regread_4(sc, GIUINTEN_REG);
-#ifdef ONLY_VR4122_4131
+#ifndef VRGIU_HAVE_PULLUPDNREGS
 	useupdn = termupdn = 0;
 #else
 	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
@@ -262,7 +305,7 @@ vrgiu_diff_iosetting()
 
 	iosel= vrgiu_regread_4(sc, GIUIOSEL_REG);
 	inten= vrgiu_regread_4(sc, GIUINTEN_REG);
-#ifdef ONLY_VR4122_4131
+#ifndef VRGIU_HAVE_PULLUPDNREGS
 	useupdn = termupdn = 0;
 #else
 	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
