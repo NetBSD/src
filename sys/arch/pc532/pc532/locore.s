@@ -58,7 +58,7 @@
 /* Net support. */
 #define DONET(s,c)  \
 	.globl c ;\
-	tbitd	c, _netisr(pc) ;\
+	tbitd	s, _netisr(pc) ;\
 	bfc	1f ;\
 	bsr	c ;\
 1:
@@ -1077,18 +1077,6 @@ do_user_intr:
 	movl	f7,PCB_F7(r3)
 
 intr_no_fpu:
-	/* Net processing ... not complete. */
-	bsr	_splnet
-#ifdef INET
-	DONET(NETISR_IP,_ipintr)
-#endif
-#ifdef IMP
-	DONET(NETISR_IMP,_impintr)
-#endif
-#ifdef NS
-	DONET(NETISR_NS,_nsintr)
-#endif
-
 	/* Do a reti to keep the icu happy. */
 	sprw	psr, tos
 	movqw 	0, tos		/* mod = 0 */
@@ -1096,12 +1084,35 @@ intr_no_fpu:
 	reti
 
 do_soft_intr:
+	/* turn on interrupts! */
+	ints_on
+
+	/* Net processing */
+	bsr	_splnet
+	movd	r0, tos
+
+	DONET(NETISR_RAW, _rawintr)
+#ifdef INET
+	DONET(NETISR_IP, _ipintr)
+#endif
+#ifdef IMP
+	DONET(NETISR_IMP, _impintr)
+#endif
+#ifdef NS
+	DONET(NETISR_NS, _nsintr)
+#endif
+#ifdef ISO
+	DONET(NETISR_ISO, _clnlintr)
+#endif
+
 	/* Run with interrupts on. */
-	bsr	_spl0
+	bsr	_splx
+	movd	tos, r0
 
 	cmpqd	0, _want_softclock(pc)
 	beq	no_soft
 	bsr	_splsoftclock
+	movd	r0, tos		/* save the pl */
 	/* Make it a new interrupt frame again. */
 	movd	Cur_pl(pc), tos
 	movqd	0,tos
@@ -1109,15 +1120,10 @@ do_soft_intr:
 	bsr	_softclock
 	adjspb	-12
 	movqd	0, _want_softclock(pc)
+	bsr	_splx
+	movd	tos, r0
 	
 no_soft:
-
-#if 0  /* NNCR > 0 */
-	cmpqd	0, _ncr_needs_finish(pc)
-	beq	no_ncr
-	bsr	_ncr5380_finish	
-no_ncr:
-#endif
 	cmpqd	0, _want_resched(pc)
 	beq	do_usr_ret
 	movd	18, tos
@@ -1262,9 +1268,18 @@ do_spl0:
 
 	/* Now for the software interrupts. ???? */
 
-/*	DONET(NETISR_RAW,_rawintr) */
-#if INET
-	DONET(NETISR_IP,_ipintr)
+	DONET(NETISR_RAW, _rawintr)
+#ifdef INET
+	DONET(NETISR_IP, _ipintr)
+#endif
+#ifdef IMP
+	DONET(NETISR_IMP, _impintr)
+#endif
+#ifdef NS
+	DONET(NETISR_NS, _nsintr)
+#endif
+#ifdef ISO
+	DONET(NETISR_ISO, _clnlintr)
 #endif
 	ints_off
 	comd	_PL_zero(pc), r1
