@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.7 1998/03/28 16:58:04 kleink Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.8 1998/04/01 21:43:52 tv Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -316,7 +316,7 @@ sys_mmap(p, v, retval)
 		 * XXX: how does MAP_ANON fit in the picture?
 		 */
 		if ((flags & (MAP_SHARED|MAP_PRIVATE|MAP_COPY)) == 0) {
-#if defined(DIAGNOSTIC)
+#if defined(DEBUG)
 			printf("WARNING: defaulted mmap() share type to "
 			   "%s (pid %d comm %s)\n", vp->v_type == VCHR ?
 			   "MAP_SHARED" : "MAP_PRIVATE", p->p_pid,
