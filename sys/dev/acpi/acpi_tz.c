@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.1 2003/01/04 05:36:03 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.2 2003/01/05 12:16:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.1 2003/01/04 05:36:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.2 2003/01/05 12:16:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,8 +154,10 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	printf(": ACPI Thermal Zone\n");
 
 	if (acpitz_get_integer(sc, "_TZP", &sc->sc_zone.tzp)) {
+#if 0
 		printf("%s: unable to get poll rate, using default\n",
 		    sc->sc_dev.dv_xname);
+#endif
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
 	}
 	/* XXX a value of 0 means "polling is not necessary" */
@@ -163,14 +165,6 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
 	
 	acpitz_get_status(sc);
-
-	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpitz_notify_handler, sc);
-	if (rv != AE_OK) {
-		printf("%s: unable to install device notify handler\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
 	    ACPI_SYSTEM_NOTIFY, acpitz_notify_handler, sc);
@@ -244,7 +238,7 @@ acpitz_get_integer(struct acpitz_softc *sc, char *cm, UINT32 *rv)
 	status = acpi_eval_integer(sc->sc_devnode->ad_handle, cm, rv);
 	if (status != AE_OK) {
 #ifdef ACPI_DEBUG
-		printf("%s: failed to evalulate %s: %x\n", sc->sc_dev.dv_xname,
+		printf("%s: failed to evaluate %s: %x\n", sc->sc_dev.dv_xname,
 		    cm, status);
 #endif
 		return 1;
