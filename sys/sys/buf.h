@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.36 2000/01/21 23:20:51 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.37 2000/01/24 03:42:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -106,6 +106,14 @@ do {									\
 	TAILQ_INIT(&(bufq)->bq_head);					\
 	(bufq)->bq_barrier = NULL;					\
 } while (/*CONSTCOND*/0)
+
+#define	BUFQ_INSERT_HEAD(bufq, bp)					\
+do {									\
+	TAILQ_INSERT_HEAD(&(bufq)->bq_head, (bp), b_actq);		\
+	if (((bp)->b_flags & B_ORDERED) != 0 &&				\
+	    (bufq)->bq_barrier == NULL)					\
+		(bufq)->bq_barrier = (bp);				\
+} while (0)
 
 #define	BUFQ_INSERT_TAIL(bufq, bp)					\
 do {									\
