@@ -263,7 +263,7 @@ vm_offset_t vm_page_startup(start, end, vaddr)
 	 */
 
 	vm_page_free_count = npages =
-		(end - start)/(PAGE_SIZE + sizeof(struct vm_page));
+		(end - start + sizeof(struct vm_page))/(PAGE_SIZE + sizeof(struct vm_page));
 
 	/*
 	 *	Initialize the mem entry structures now, and
