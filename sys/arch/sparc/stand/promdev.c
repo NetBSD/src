@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.14.2.1 1995/10/13 19:53:55 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.14.2.2 1995/11/14 15:09:56 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -503,7 +503,7 @@ prom_getether(fd, ea)
 			} while (--len > 0);
 		}
 		bcopy(sun4_idprom.id_ether, ea, 6);
-	} else if (promvec->pv_romvec_vers < 2) {
+	} else if (promvec->pv_romvec_vers <= 2) {
 		(void)(*promvec->pv_enaddr)(fd, (char *)ea);
 	} else {
 		char buf[64];
