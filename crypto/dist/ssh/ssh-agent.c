@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.15.2.1 2002/06/26 16:54:06 tv Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.15.2.2 2003/09/17 23:25:53 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -711,7 +711,7 @@ process_message(SocketEntry *e)
 static void
 new_socket(sock_type type, int fd)
 {
-	u_int i, old_alloc;
+	u_int i, old_alloc, new_alloc;
 
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
 		error("fcntl O_NONBLOCK: %s", strerror(errno));
@@ -722,25 +722,26 @@ new_socket(sock_type type, int fd)
 	for (i = 0; i < sockets_alloc; i++)
 		if (sockets[i].type == AUTH_UNUSED) {
 			sockets[i].fd = fd;
-			sockets[i].type = type;
 			buffer_init(&sockets[i].input);
 			buffer_init(&sockets[i].output);
 			buffer_init(&sockets[i].request);
+			sockets[i].type = type;
 			return;
 		}
 	old_alloc = sockets_alloc;
-	sockets_alloc += 10;
+	new_alloc = sockets_alloc + 10;
 	if (sockets)
-		sockets = xrealloc(sockets, sockets_alloc * sizeof(sockets[0]));
+		sockets = xrealloc(sockets, new_alloc * sizeof(sockets[0]));
 	else
-		sockets = xmalloc(sockets_alloc * sizeof(sockets[0]));
+		sockets = xmalloc(new_alloc * sizeof(sockets[0]));
 	for (i = old_alloc; i < sockets_alloc; i++)
 		sockets[i].type = AUTH_UNUSED;
-	sockets[old_alloc].type = type;
+	sockets_alloc = new_alloc;
 	sockets[old_alloc].fd = fd;
 	buffer_init(&sockets[old_alloc].input);
 	buffer_init(&sockets[old_alloc].output);
 	buffer_init(&sockets[old_alloc].request);
+	sockets[old_alloc].type = type;
 }
 
 static int
