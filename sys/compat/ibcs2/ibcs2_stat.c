@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.5 1996/05/03 17:05:32 christos Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.6 1997/10/16 23:52:20 christos Exp $	*/
 /*
  * Copyright (c) 1995 Scott Bartram
  * All rights reserved.
@@ -52,19 +52,22 @@
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_utsname.h>
 
-static void bsd_stat2ibcs_stat __P((struct ostat *, struct ibcs2_stat *));
+static void bsd_stat2ibcs_stat __P((struct stat *, struct ibcs2_stat *));
 static int cvt_statfs __P((struct statfs *, caddr_t, int));
 
 static void
 bsd_stat2ibcs_stat(st, st4)
-	struct ostat *st;
+	struct stat *st;
 	struct ibcs2_stat *st4;
 {
 	bzero(st4, sizeof(*st4));
 	st4->st_dev = (ibcs2_dev_t)st->st_dev;
 	st4->st_ino = (ibcs2_ino_t)st->st_ino;
 	st4->st_mode = (ibcs2_mode_t)st->st_mode;
-	st4->st_nlink = (ibcs2_nlink_t)st->st_nlink;
+	if (st->st_nlink >= (1 << 15))
+		st4->st_nlink = (1 << 15) - 1;
+	else
+		st4->st_nlink = (ibcs2_nlink_t)st->st_nlink;
 	st4->st_uid = (ibcs2_uid_t)st->st_uid;
 	st4->st_gid = (ibcs2_gid_t)st->st_gid;
 	st4->st_rdev = (ibcs2_dev_t)st->st_rdev;
@@ -163,16 +166,16 @@ ibcs2_sys_stat(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
-	struct ostat st;
+	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct compat_43_sys_stat_args cup;
+	struct sys_stat_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
-	if ((error = compat_43_sys_stat(p, &cup, retval)) != 0)
+	if ((error = sys_stat(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
@@ -191,16 +194,16 @@ ibcs2_sys_lstat(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
-	struct ostat st;
+	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct compat_43_sys_lstat_args cup;
+	struct sys_lstat_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
-	if ((error = compat_43_sys_lstat(p, &cup, retval)) != 0)
+	if ((error = sys_lstat(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
@@ -219,15 +222,15 @@ ibcs2_sys_fstat(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
-	struct ostat st;
+	struct stat st;
 	struct ibcs2_stat ibcs2_st;
-	struct compat_43_sys_fstat_args cup;
+	struct sys_fstat_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(st));
-	if ((error = compat_43_sys_fstat(p, &cup, retval)) != 0)
+	if ((error = sys_fstat(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return error;
