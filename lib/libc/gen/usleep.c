@@ -1,4 +1,4 @@
-/*	$NetBSD: usleep.c,v 1.10 1995/10/26 22:07:02 pk Exp $	*/
+/*	$NetBSD: usleep.c,v 1.11 1997/07/13 19:41:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)usleep.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: usleep.c,v 1.10 1995/10/26 22:07:02 pk Exp $";
+__RCSID("$NetBSD: usleep.c,v 1.11 1997/07/13 19:41:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +49,7 @@ static char rcsid[] = "$NetBSD: usleep.c,v 1.10 1995/10/26 22:07:02 pk Exp $";
 #define	TICK	10000		/* system clock resolution in microseconds */
 
 static volatile int ringring;
+static void sleephandler __P((int));
 
 void
 usleep(useconds)
@@ -56,7 +58,6 @@ usleep(useconds)
 	struct itimerval itv, oitv;
 	struct sigaction act, oact;
 	sigset_t set, oset;
-	static void sleephandler();
 
 	if (!useconds)
 		return;
@@ -115,7 +116,8 @@ usleep(useconds)
 }
 
 static void
-sleephandler()
+sleephandler(n)
+	int n;
 {
 	ringring = 1;
 }
