@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.14 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.15 2003/12/17 21:08:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -92,6 +92,11 @@ struct pciide_softc {
 
 	/* for SiS */
 	u_int8_t sis_type;
+
+	/* For Silicon Image SATALink */
+	bus_space_tag_t sc_ba5_st;
+	bus_space_handle_t sc_ba5_sh;
+	int sc_ba5_en;
 
 	/* Vendor info (for interpreting Chip description) */
 	pcireg_t sc_pci_id;
