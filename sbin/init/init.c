@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.58 2003/07/01 16:44:48 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.59 2003/07/12 14:46:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.58 2003/07/01 16:44:48 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.59 2003/07/12 14:46:41 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -933,8 +933,9 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 	sp->se_flags = SE_PRESENT;
 	sp->se_index = session_index;
 
-	sp->se_device = malloc(sizeof(_PATH_DEV) + strlen(typ->ty_name));
-	(void)sprintf(sp->se_device, "%s%s", _PATH_DEV, typ->ty_name);
+	(void)asprintf(&sp->se_device, "%s%s", _PATH_DEV, typ->ty_name);
+	if (!sp->se_device)
+		return NULL;
 
 	if (setupargv(sp, typ) == 0) {
 		free_session(sp);
@@ -964,8 +965,9 @@ setupargv(session_t *sp, struct ttyent *typ)
 		free(sp->se_getty);
 		free(sp->se_getty_argv);
 	}
-	sp->se_getty = malloc(strlen(typ->ty_getty) + strlen(typ->ty_name) + 2);
-	(void) sprintf(sp->se_getty, "%s %s", typ->ty_getty, typ->ty_name);
+	(void)asprintf(&sp->se_getty, "%s %s", typ->ty_getty, typ->ty_name);
+	if (!sp->se_getty)
+		return (0);
 	sp->se_getty_argv = construct_argv(sp->se_getty);
 	if (sp->se_getty_argv == NULL) {
 		warning("can't parse getty for port %s", sp->se_device);
