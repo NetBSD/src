@@ -1,4 +1,4 @@
-.\"	$NetBSD: chpass.1,v 1.17 2001/12/01 18:55:17 wiz Exp $
+.\"	$NetBSD: chpass.1,v 1.18 2002/08/07 23:20:29 soren Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,12 @@
 .Nm
 .Op Fl a Ar list
 .Op Fl s Ar newshell
+.Op Fl l
+.Op user
+.Nm chpass
+.Op Fl a Ar list
+.Op Fl s Ar newshell
+.Op Fl y
 .Op user
 .Sh DESCRIPTION
 .Nm
@@ -70,6 +76,16 @@ The
 .Fl s
 option attempts to change the user's shell to
 .Ar newshell .
+.It Fl l
+This option causes the password to be updated only in the local
+password file.  When changing only the local password,
+.Xr pwd_mkdb  8
+is used to update the password databases.
+.It Fl y
+This forces the YP password database entry to be changed, even if
+the user has an entry in the local database.  The
+.Xr rpc.yppasswdd 8
+daemon should be running on the YP master server.
 .El
 .Pp
 Possible display items are as follows:
