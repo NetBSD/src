@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.4 1994/11/20 20:54:34 deraadt Exp $ */
+/*	$NetBSD: openprom.c,v 1.5 1995/01/10 16:47:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -165,10 +165,11 @@ openpromioctl(dev, cmd, data, flags, p)
 		s = splhigh();
 		len = no->no_proplen(node, name);
 		splx(s);
-		if (len > op->op_buflen)
-			len = op->op_buflen;
-		else
-			op->op_buflen = len;
+		if (len > op->op_buflen) {
+			error = ENOMEM;
+			break;
+		}
+		op->op_buflen = len;
 		/* -1 means no entry; 0 means no value */
 		if (len <= 0)
 			break;
