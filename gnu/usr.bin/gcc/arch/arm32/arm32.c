@@ -1399,9 +1399,6 @@ soft_df_operand (op, mode)
    return 0;
  }
  
- /* Return 1 if OP is a load multiple operation.  It is known to be
-    parallel and the first section will be tested. */
- 
 /* Return 1 if OP is a load multiple operation.  It is known to be
    parallel and the first section will be tested. */
 
