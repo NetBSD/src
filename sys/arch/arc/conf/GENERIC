@@ -1,10 +1,12 @@
-#	$NetBSD: GENERIC,v 1.23 2000/01/23 21:01:52 soda Exp $
+#	$NetBSD: GENERIC,v 1.24 2000/01/24 08:04:11 soda Exp $
 #	$OpenBSD: GENERIC,v 1.17 1997/05/18 13:45:23 pefo Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
 
 include		"arch/arc/conf/std.arc"
+
+#ident		"GENERIC-$Revision: 1.24 $"
 
 maxusers	32
 
