@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.33 2000/12/21 00:46:20 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.34 2001/02/10 04:14:27 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.64 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ in6_pcballoc(so, head)
 
 int
 in6_pcbbind(in6p, nam, p)
-	register struct in6pcb *in6p;
+	struct in6pcb *in6p;
 	struct mbuf *nam;
 	struct proc *p;
 {
@@ -721,18 +721,20 @@ in6_pcbrtentry(in6p)
 	struct in6pcb *in6p;
 {
 	struct route_in6 *ro;
+	struct sockaddr_in6 *dst6;
 
 	ro = &in6p->in6p_route;
+	dst6 = (struct sockaddr_in6 *)&ro->ro_dst;
 
 	if (ro->ro_rt == NULL) {
 		/*
 		 * No route yet, so try to acquire one.
 		 */
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
-			bzero(&ro->ro_dst, sizeof(ro->ro_dst));
-			ro->ro_dst.sin6_family = AF_INET6;
-			ro->ro_dst.sin6_len = sizeof(struct sockaddr_in6);
-			satosin6(&ro->ro_dst)->sin6_addr = in6p->in6p_faddr;
+			bzero(dst6, sizeof(*dst6));
+			dst6->sin6_family = AF_INET6;
+			dst6->sin6_len = sizeof(struct sockaddr_in6);
+			dst6->sin6_addr = in6p->in6p_faddr;
 			rtalloc((struct route *)ro);
 		}
 	}
