@@ -65,6 +65,9 @@ struct ne2000dev {
     { "Linksys EthernetCard",
       0x0149, 0x0265, "LINKSYS", "E-CARD",
       0, -1, { 0x00, 0x80, 0xc8 } },
+    { "Planet SmartCOM 2000",
+      0xffffffff, 0xffff,  "PCMCIA", "UE2212", 0,
+      0xff0, { 0x00, 0x00, 0xe8 } },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
