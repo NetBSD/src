@@ -1,7 +1,7 @@
-/*	$NetBSD: ccdvar.h,v 1.17 1999/01/21 00:35:16 thorpej Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.18 1999/08/11 02:41:02 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -79,7 +79,6 @@
  */
 
 #include <sys/lock.h>
-#include <sys/pool.h>
 #include <sys/queue.h>
 
 /*
@@ -173,7 +172,6 @@ struct ccd_softc {
 	struct ccdgeom   sc_geom;		/* pseudo geometry info */
 	char		 sc_xname[8];		/* XXX external name */
 	struct disk	 sc_dkdev;		/* generic disk device info */
-	struct pool	 sc_cbufpool;		/* component buffer pool */
 	struct lock	 sc_lock;		/* lock on this structure */
 };
 

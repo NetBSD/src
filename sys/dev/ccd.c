@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.62 1999/03/04 02:38:19 mjacob Exp $	*/
+/*	$NetBSD: ccd.c,v 1.63 1999/08/11 02:41:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@
 #include <sys/errno.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/namei.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -133,8 +134,11 @@ struct ccdbuf {
 	SIMPLEQ_ENTRY(ccdbuf) cb_q;	/* fifo of component buffers */
 };
 
-#define	CCD_GETBUF(cs)		pool_get(&(cs)->sc_cbufpool, PR_NOWAIT)
-#define	CCD_PUTBUF(cs, cbp)	pool_put(&(cs)->sc_cbufpool, cbp)
+/* component buffer pool */
+struct pool ccd_cbufpool;
+
+#define	CCD_GETBUF()		pool_get(&ccd_cbufpool, PR_NOWAIT)
+#define	CCD_PUTBUF(cbp)		pool_put(&ccd_cbufpool, cbp)
 
 #define CCDLABELDEV(dev)	\
 	(MAKEDISKDEV(major((dev)), ccdunit((dev)), RAW_PART))
@@ -194,6 +198,10 @@ ccdattach(num)
 	}
 	numccd = num;
 	bzero(ccd_softc, num * sizeof(struct ccd_softc));
+
+	/* Initialize the component buffer pool. */
+	pool_init(&ccd_cbufpool, sizeof(struct ccdbuf), 0,
+	    0, 0, "ccdpl", 0, NULL, NULL, M_DEVBUF);
 
 	/* Initialize per-softc structures. */
 	for (i = 0; i < num; i++) {
@@ -671,7 +679,7 @@ ccdstart(cs, bp)
 			/* Free the already allocated component buffers. */
 			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&cbufq, cbp, cb_q);
-				CCD_PUTBUF(cs, cbp);
+				CCD_PUTBUF(cbp);
 			}
 
 			/* Notify the upper layer we are out of memory. */
@@ -764,7 +772,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	/*
 	 * Fill in the component buf structure.
 	 */
-	cbp = CCD_GETBUF(cs);
+	cbp = CCD_GETBUF();
 	if (cbp == NULL)
 		return (NULL);
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
@@ -854,7 +862,7 @@ ccdiodone(vbp)
 		       cs->sc_xname, bp->b_error, cbp->cb_comp);
 	}
 	count = cbp->cb_buf.b_bcount;
-	CCD_PUTBUF(cs, cbp);
+	CCD_PUTBUF(cbp);
 
 	/*
 	 * If all done, "interrupt".
@@ -1061,10 +1069,6 @@ ccdioctl(dev, cmd, data, flag, p)
 		/* Attach the disk. */
 		disk_attach(&cs->sc_dkdev);
 
-		/* Initialize the component buffer pool. */
-		pool_init(&cs->sc_cbufpool, sizeof(struct ccdbuf), 0,
-		    0, 0, "ccdpl", 0, NULL, NULL, M_DEVBUF);
-
 		/* Try and read the disklabel. */
 		ccdgetdisklabel(dev);
 		break;
@@ -1113,9 +1117,6 @@ ccdioctl(dev, cmd, data, flag, p)
 		free(cs->sc_cinfo, M_DEVBUF);
 		free(cs->sc_itable, M_DEVBUF);
 		cs->sc_flags &= ~CCDF_INITED;
-
-		/* Free the component buffer pool. */
-		pool_destroy(&cs->sc_cbufpool);
 
 		/* Detatch the disk. */
 		disk_detach(&cs->sc_dkdev);
