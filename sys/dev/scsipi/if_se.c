@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.39 2001/11/15 09:48:16 lukem Exp $	*/
+/*	$NetBSD: if_se.c,v 1.39.8.1 2002/05/16 11:38:53 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.39 2001/11/15 09:48:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.39.8.1 2002/05/16 11:38:53 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -206,8 +206,6 @@ struct se_softc {
 	int sc_enabled;
 };
 
-cdev_decl(se);
-
 static int	sematch __P((struct device *, struct cfdata *, void *));
 static void	seattach __P((struct device *, struct device *, void *));
 
@@ -249,6 +247,15 @@ struct cfattach se_ca = {
 };
 
 extern struct cfdriver se_cd;
+
+dev_type_open(seopen);
+dev_type_close(seclose);
+dev_type_ioctl(seioctl);
+
+const struct cdevsw se_cdevsw = {
+	seopen, seclose, noread, nowrite, seioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 const struct scsipi_periphsw se_switch = {
 	NULL,			/* Use default error handler */
