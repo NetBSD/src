@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.14 2000/06/24 06:50:03 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.15 2000/07/08 20:52:19 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1202,37 +1202,6 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp)
 			   packet -> options, DHO_DHCP_SERVER_IDENTIFIER))
 		state -> got_server_identifier = 1;
 
-	/* Replace the old lease hostname with the new one, if it's changed. */
-	oc = lookup_option (&dhcp_universe, packet -> options, DHO_HOST_NAME);
-	memset (&d1, 0, sizeof d1);
-	if (oc)
-		s1 = evaluate_option_cache (&d1, packet, (struct lease *)0,
-					    packet -> options,
-					    (struct option_state *)0,
-					    &global_scope, oc, MDL);
-	if (oc && s1 &&
-	    lease -> client_hostname &&
-	    strlen (lease -> client_hostname) == d1.len &&
-	    !memcmp (lease -> client_hostname, d1.data, d1.len)) {
-		/* Hasn't changed. */
-		data_string_forget (&d1, MDL);
-	} else if (oc && s1) {
-		if (lease -> client_hostname)
-			dfree (lease -> client_hostname, MDL);
-		lease -> client_hostname =
-			dmalloc (d1.len + 1, MDL);
-		if (!lease -> client_hostname)
-			log_error ("no memory for client hostname.");
-		else {
-			memcpy (lease -> client_hostname, d1.data, d1.len);
-			lease -> client_hostname [d1.len] = 0;
-		}
-		data_string_forget (&d1, MDL);
-	} else if (lease -> client_hostname) {
-		dfree (lease -> client_hostname, MDL);
-		lease -> client_hostname = 0;
-	}
-
 	/* Steal the agent options from the packet. */
 	if (packet -> options -> universes [agent_universe.index]) {
 		state -> options -> universes [agent_universe.index] =
@@ -1371,6 +1340,7 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp)
 
 	/* Make sure this packet satisfies the configured minimum
 	   number of seconds. */
+	memset (&d1, 0, sizeof d1);
 	if (offer == DHCPOFFER &&
 	    (oc = lookup_option (&server_universe, state -> options,
 				 SV_MIN_SECS))) {
@@ -1777,6 +1747,32 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp)
 	/* Save any bindings. */
 	lt -> scope.bindings = lease -> scope.bindings;
 	lease -> scope.bindings = (struct binding *)0;
+
+	/* Replace the old lease hostname with the new one, if it's changed. */
+	oc = lookup_option (&dhcp_universe, packet -> options, DHO_HOST_NAME);
+	if (oc)
+		s1 = evaluate_option_cache (&d1, packet, (struct lease *)0,
+					    packet -> options,
+					    (struct option_state *)0,
+					    &global_scope, oc, MDL);
+	if (oc && s1 &&
+	    lease -> client_hostname &&
+	    strlen (lease -> client_hostname) == d1.len &&
+	    !memcmp (lease -> client_hostname, d1.data, d1.len)) {
+		/* Hasn't changed. */
+		data_string_forget (&d1, MDL);
+		lt -> client_hostname = lease -> client_hostname;
+		lease -> client_hostname = (char *)0;
+	} else if (oc && s1) {
+		lt -> client_hostname = dmalloc (d1.len + 1, MDL);
+		if (!lt -> client_hostname)
+			log_error ("no memory for client hostname.");
+		else {
+			memcpy (lt -> client_hostname, d1.data, d1.len);
+			lt -> client_hostname [d1.len] = 0;
+		}
+		data_string_forget (&d1, MDL);
+	}
 
 	/* Don't call supersede_lease on a mocked-up lease. */
 	if (lease -> flags & STATIC_LEASE) {
@@ -3099,7 +3095,8 @@ int allocate_lease (struct lease **lp, struct packet *packet,
 				*peer_has_leases = 1;
 			lease = pool -> backup;
 		}
-	}
+	} else
+		lease = pool -> free;
 #else
 	if (pool -> free)
 		lease = pool -> free;
