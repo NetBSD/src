@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.47 2000/01/23 23:37:42 hubertf Exp $	*/
+/*	$NetBSD: config.h,v 1.47.4.1 2000/10/18 17:10:55 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,6 +82,8 @@
 #define	major(x)	((int)(((u_int)(x) >> 8) & 0xff))
 #define	minor(x)	((int)((x) & 0xff))
 #define	makedev(x,y)	((int)(((x) << 8) | (y)))
+
+#define __attribute__(x)
 #endif	/* MAKE_BOOTSTRAP */
 
 #define ARRCHR '#'
@@ -432,20 +434,24 @@ int	include __P((const char *, int, int));
 void	initsem __P((void));
 
 /* util.c */
-void	*emalloc __P((size_t));
-void	*erealloc __P((void *, size_t));
-char	*estrdup __P((const char *));
-void	prefix_push __P((const char *));
-void	prefix_pop __P((void));
-char	*sourcepath __P((const char *));
-void	warn __P((const char *, ...));			/* immediate warns */
-void	error __P((const char *, ...));			/* immediate errs */
-void	xerror __P((const char *, int, const char *, ...)); /* delayed errs */
-__dead void panic __P((const char *, ...));
-struct nvlist *newnv __P((const char *, const char *, void *, int,
-	    struct nvlist *));
-void	nvfree __P((struct nvlist *));
-void	nvfreel __P((struct nvlist *));
+void	*emalloc(size_t);
+void	*erealloc(void *, size_t);
+char	*estrdup(const char *);
+void	prefix_push(const char *);
+void	prefix_pop(void);
+char	*sourcepath(const char *);
+void	warn(const char *, ...)				/* immediate warns */
+     __attribute__((__format__(__printf__, 1, 2)));	
+void	error(const char *, ...)			/* immediate errs */
+     __attribute__((__format__(__printf__, 1, 2)));
+void	xerror(const char *, int, const char *, ...)	/* delayed errs */
+     __attribute__((__format__(__printf__, 3, 4)));
+__dead void panic(const char *, ...)
+     __attribute__((__format__(__printf__, 1, 2)));
+struct nvlist *newnv(const char *, const char *, void *, int, struct nvlist *);
+void	nvfree(struct nvlist *);
+void	nvfreel(struct nvlist *);
+
 
 /* liby */
 void	yyerror __P((const char *));
