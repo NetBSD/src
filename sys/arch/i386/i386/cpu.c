@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.4 2000/02/21 21:05:57 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.5 2000/02/27 20:42:54 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
 #include "opt_mpbios.h"		/* for MPDEBUG */
 
 #include "lapic.h"
+#include "ioapic.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -102,6 +103,10 @@
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
+#endif
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
 #endif
 
 int     cpu_match __P((struct device *, struct cfdata *, void *));
@@ -244,6 +249,9 @@ cpu_attach(parent, self, aux)
 		 */
 		lapic_enable();
 		lapic_calibrate_timer(ci);
+#endif
+#if NIOAPIC > 0
+		ioapic_bsp_id = caa->cpu_number;
 #endif
 		break;
 		

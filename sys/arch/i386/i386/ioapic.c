@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.2 2000/02/21 18:51:00 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.3 2000/02/27 20:42:54 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ void	apic_vectorset __P((struct ioapic_softc *, int, int));
 
 int apic_verbose = 0;
 
+int ioapic_bsp_id = 0;
 int ioapic_cold = 1;
 
 static __inline  u_int32_t
@@ -324,15 +325,14 @@ apic_set_redir (struct ioapic_softc *sc, int irq)
 		redlo |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
 		redlo &= ~IOAPIC_REDLO_DSTMOD;
 		
-		/* destination: CPU 0 */
+		/* destination: BSP CPU */
 
-		/* XXX assumes primary CPU at apic id 0 */
 		/*
 		 * XXX will want to eventually switch to
 		 * lowest-priority delivery mode, possibly with focus
 		 * processor.
 		 */
-		redhi |= (0 << IOAPIC_REDHI_DEST_SHIFT);
+		redhi |= (ioapic_bsp_id << IOAPIC_REDHI_DEST_SHIFT);
 
 		/* XXX derive this bit from BIOS info */
 		if (pin->ip_type == IST_LEVEL)
