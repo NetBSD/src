@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: rup.1,v 1.6 1993/09/16 01:56:34 jtc Exp $
+.\"	$Id: rup.1,v 1.7 1993/11/10 03:52:18 deraadt Exp $
 .\"
 .Dd June 7, 1993
 .Dt RUP 1
@@ -41,6 +41,7 @@
 .Nd remote status display
 .Sh SYNOPSIS
 .Nm rup
+.Op Fl t
 .Op Ar host ...
 .Sh DESCRIPTION
 .Nm rup
@@ -53,6 +54,13 @@ and the load averages.
 The load average numbers give the number of jobs in the run queue
 averaged over 1, 5 and 15 minutes.
 .Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl t
+For each host, report what it's local time is.
+This is useful for checking time syncronization on a network.
+.El
+.Pp
 The
 .Xr rpc.rstatd 8
 daemon must be running on the remote host for this command to
@@ -62,7 +70,7 @@ uses an RPC protocol defined in /usr/include/rpcsvc/rstat.x.
 .Sh EXAMPLE
 .Bd -unfilled -offset indent -compact
 example% rup otherhost
-otherhost   7:36am  up 6 days, 16:45,  load average: 0.20, 0.23, 0.18
+otherhost      up 6 days, 16:45,  load average: 0.20, 0.23, 0.18
 example%
 .Ed
 .Sh DIAGNOSTICS
