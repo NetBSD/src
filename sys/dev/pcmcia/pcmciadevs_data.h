@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.118 2001/02/11 03:28:16 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.119 2001/02/13 02:09:37 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.118 2001/02/10 14:08:10 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.120 2001/02/13 02:07:53 thorpej Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -170,6 +170,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Digital Equipment Corporation",
 	    "Digital Mobile Media CD-ROM"	},
+	},
+	{
+	    PCMCIA_VENDOR_DLINK_2, PCMCIA_PRODUCT_DLINK_2_DMF560TX,
+	    PCMCIA_CIS_DLINK_2_DMF560TX,
+	    0,
+	    "D-Link",
+	    "D-Link DMF-650TX"	},
 	},
 	{
 	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_MC2_IEEE,
@@ -1121,6 +1128,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Linksys Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_DLINK_2, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "D-Link",
 	    NULL,
 	},
 	{

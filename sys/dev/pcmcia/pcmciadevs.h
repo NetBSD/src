@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.118 2001/02/11 03:28:16 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.119 2001/02/13 02:09:37 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.118 2001/02/10 14:08:10 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.120 2001/02/13 02:07:53 thorpej Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -67,6 +67,7 @@
 #define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec Corporation */
 #define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
+#define	PCMCIA_VENDOR_DLINK_2	0x0143	/* D-Link */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
@@ -165,6 +166,11 @@
 #define	PCMCIA_CIS_DIGITAL_MOBILE_MEDIA_CDROM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM	0x0d00
 #define	PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM	"Digital Mobile Media CD-ROM"
+
+/* D-Link Products */
+#define	PCMCIA_CIS_DLINK_2_DMF560TX	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_DLINK_2_DMF560TX	0xc0ab
+#define	PCMCIA_STR_DLINK_2_DMF560TX	"D-Link DMF-650TX"
 
 /* ELSA Products */
 #define	PCMCIA_CIS_ELSA_MC2_IEEE	{ NULL, NULL, NULL, NULL }
