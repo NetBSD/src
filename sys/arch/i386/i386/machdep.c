@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.241 1997/07/16 00:01:49 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.242 1997/08/12 17:28:12 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -163,6 +163,12 @@
 extern struct proc *npxproc;
 #endif
 
+#ifdef KGDB
+#include <sys/termios.h>
+#include <dev/isa/comreg.h>
+#include <dev/isa/comvar.h>
+#endif
+
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
@@ -192,6 +198,13 @@ struct	msgbuf *msgbufp;
 int	msgbufmapped;
 
 vm_map_t buffer_map;
+
+#ifdef KGDB
+#ifndef KGDB_DEVNAME
+#define KGDB_DEVNAME "com0"
+#endif
+char kgdb_devname[] = KGDB_DEVNAME;
+#endif
 
 extern	int biosbasemem, biosextmem;
 extern	vm_offset_t avail_start, avail_end;
@@ -1483,9 +1496,26 @@ init386(first_avail)
 		Debugger();
 #endif
 #ifdef KGDB
+	com_kgdb_iot = I386_BUS_SPACE_IO;
+	if(!strcmp(kgdb_devname, "com0"))
+		com_kgdb_addr = 0x3f8;
+	else if(!strcmp(kgdb_devname, "com1"))
+		com_kgdb_addr = 0x2f8;
+	else
+		panic("invalid KGDB device %s", kgdb_devname);
+
+	if (bus_space_map(com_kgdb_iot, com_kgdb_addr, COM_NPORTS,
+			  0, &com_kgdb_ioh))
+		panic("can't map KGDB I/O ports");
+
+	cominit(com_kgdb_iot, com_kgdb_ioh, KGDBRATE);
+
+	kgdb_dev = 123; /* unneeded, only to satisfy some tests */
+	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
+
 	if (boothowto & RB_KDB) {
 		kgdb_debug_init = 1;
-		kgdb_connect(0);
+		kgdb_connect(1);
 	}
 #endif
 }
