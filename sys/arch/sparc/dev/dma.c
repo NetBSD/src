@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.10 1995/08/18 10:43:49 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.11 1995/10/24 16:26:54 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -233,7 +233,6 @@ dma_isintr(sc)
 			    (16 * 1024 * 1024) : (64 * 1024))
 #define DMAMAX(a)	(0x01000000 - ((a) & 0x00ffffff))
 
-/*!!!*/int xdmadebug = 0;
 /*
  * start a dma transfer or keep it going
  */
@@ -272,12 +271,6 @@ dma_start(sc, addr, len, datain)
 	/* load the count in */
 	ESPCMD(sc->sc_esp, ESPCMD_NOP|ESPCMD_DMA);
 
-	DMAWAIT1(sc);
-
-	/* clear errors and D_TC flag */
-	DMACSR(sc) |= D_INVALIDATE;
-	DMAWAIT1(sc);
-
 	DMADDR(sc) = *sc->sc_dmaaddr;
 	DMACSR(sc) |= datain|D_EN_DMA|D_INT_EN;
 
@@ -314,8 +307,9 @@ dmaintr(sc)
 	ESP_DMA(("%s: intr\n", sc->sc_dev.dv_xname));
 
 	if (DMACSR(sc) & D_ERR_PEND) {
-		printf("%s: error", sc->sc_dev.dv_xname);
+		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
+		printf("%s: error", sc->sc_dev.dv_xname);
 		return 0;
 	}
 
@@ -326,6 +320,11 @@ dmaintr(sc)
 	/* DMA has stopped */
 	DMACSR(sc) &= ~D_EN_DMA;
 	sc->sc_active = 0;
+
+	DMAWAIT(sc);
+	/* clear errors and D_TC flag */
+	DMACSR(sc) |= D_INVALIDATE;
+	DMAWAIT1(sc);
 
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
@@ -349,7 +348,7 @@ dmaintr(sc)
 		trans = sc->sc_dmasize;
 	}
 
-	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; resid=%d, trans=%d\n", esp[ESP_TCL],esp[ESP_TCM], esp[ESP_TCH], trans, resid));
+	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n", esp[ESP_TCL],esp[ESP_TCM], esp[ESP_TCH], trans, resid));
 
 	if (DMACSR(sc) & D_WRITE)
 		cache_flush(*sc->sc_dmaaddr, trans);
