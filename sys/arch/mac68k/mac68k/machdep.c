@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 1996/08/05 04:36:45 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 1996/08/06 04:03:33 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2394,7 +2394,7 @@ extern int get_pte __P((u_int addr, u_long pte[2], u_short * psr));
 static u_long
 get_physical(u_int addr, u_long * phys)
 {
-	u_long  pte[2], ph;
+	u_long  pte[2], ph, mask;
 	u_short psr;
 	int     i, numbits;
 	extern u_int macos_tc;
@@ -2429,12 +2429,11 @@ get_physical(u_int addr, u_long * phys)
 	/*
 	 * We have to take the most significant "numbits" from
 	 * the returned value "ph", and the rest from our addr.
-	 * Assume that the lower (32-numbits) bits of ph are
-	 * already zero.  Also assume numbits != 0.  Also, notice
-	 * that this is an addition, not an "or".
+	 * Assume that numbits != 0.
 	 */
 
-	*phys = ph + (addr & ((1 << (32 - numbits)) - 1));
+	mask = (1 << (32 - numbits)) - 1;
+	*phys = (ph & ~mask) | (addr & mask);
 
 	return 1;
 }
