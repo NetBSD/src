@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.37 (Berkeley) 7/20/92";*/
-static char rcsid[] = "$Id: print.c,v 1.5 1993/08/07 03:57:03 mycroft Exp $";
+static char rcsid[] = "$Id: print.c,v 1.6 1993/10/14 23:03:41 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -274,6 +274,9 @@ printtype(mode)
 		return (1);
 	case S_IFSOCK:
 		(void)putchar('=');
+		return (1);
+	case S_IFIFO:
+		(void)putchar('|');
 		return (1);
 	}
 	if (mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
