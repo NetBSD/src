@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.264.2.9 2001/03/23 11:32:51 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.264.2.10 2001/03/27 13:08:52 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.264.2.9 $"
+#ident 		"GENERIC-$Revision: 1.264.2.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -395,9 +395,9 @@ ld*	at iop? tid ?			# block devices
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 #ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-#bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
-#isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI (old driver)
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
@@ -405,7 +405,7 @@ pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 # EISA SCSI controllers
 ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
 #ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
-#bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+bha*	at eisa? slot ?			# BusLogic 7xx SCSI
 dpt*	at eisa? slot ?			# DPT EATA SCSI
 uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
@@ -423,8 +423,8 @@ aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 aha1	at isa? port 0x334 irq ? drq ?
 #ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
-#bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
-#bha1	at isa? port 0x334 irq ? drq ?
+bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
+bha1	at isa? port 0x334 irq ? drq ?
 # The "nca" and "dpt" probes might give false hits or hang your machine.
 #dpt0	at isa? port 0x170 irq ? drq ?	# DPT SmartCache/SmartRAID
 nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
@@ -445,11 +445,11 @@ scsibus* at aha?
 scsibus* at ahb?
 #scsibus* at ahc?
 scsibus* at aic?
-#scsibus* at bha?
+scsibus* at bha?
 scsibus* at dpt?
 scsibus* at esp?
-#scsibus* at isp?
-#scsibus* at iopsp?
+scsibus* at isp?
+scsibus* at iopsp?
 scsibus* at nca?
 #scsibus* at ncr?
 scsibus* at pcscp?
