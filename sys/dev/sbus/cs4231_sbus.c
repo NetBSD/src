@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.5 1998/09/07 07:58:45 pk Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.6 1998/09/25 14:19:20 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -622,7 +622,7 @@ cs4231_set_port(addr, cp)
 	struct ad1848_softc *ac = addr;
 
 	DPRINTF(("cs4231_set_port: port=%d", cp->dev));
-	return (ad1848_mixer_get_port(ac, csmapping, nummap, cp));
+	return (ad1848_mixer_set_port(ac, csmapping, nummap, cp));
 }
 
 int
