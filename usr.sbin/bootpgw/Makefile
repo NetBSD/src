@@ -1,7 +1,6 @@
 # bootpgw/Makefile
-# $NetBSD: Makefile,v 1.6 1997/10/25 06:57:57 lukem Exp $
+# $NetBSD: Makefile,v 1.7 1998/03/14 04:51:46 lukem Exp $
 
-WARNS?=	0
 PROG=	bootpgw
 SRCDIR= ${.CURDIR}/../bootpd
 CPPFLAGS+= -DSYSLOG -DDEBUG -I${SRCDIR}

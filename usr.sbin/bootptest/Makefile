@@ -1,7 +1,6 @@
 # bootptest/Makefile
-# $NetBSD: Makefile,v 1.8 1997/10/25 06:57:58 lukem Exp $
+# $NetBSD: Makefile,v 1.9 1998/03/14 04:52:15 lukem Exp $
 
-WARNS?=	0
 PROG=	bootptest
 SRCDIR= ${.CURDIR}/../bootpd
 CPPFLAGS+= -I${SRCDIR}
