@@ -42,7 +42,7 @@
  *	@(#)kbd.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.h,v 1.5 92/11/26 01:15:33 torek Exp  (LBL)
- * $Id: kbd.h,v 1.1 1996/05/05 12:17:15 oki Exp $
+ * $Id: kbd.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
  */
 
 /*
