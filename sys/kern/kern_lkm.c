@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.36 1996/10/13 02:32:31 christos Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.37 1997/05/28 02:41:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -93,7 +93,6 @@ static int _lkm_strmod __P((struct lkm_table *, int));
 #endif
 static int _lkm_exec __P((struct lkm_table *, int));
 
-int lkmexists __P((struct lkm_table *));
 int lkmdispatch __P((struct lkm_table *, int));
 
 /*ARGSUSED*/
