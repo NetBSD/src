@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.2 2002/02/11 17:11:48 uch Exp $	*/
+/*	$NetBSD: debug.h,v 1.3 2002/02/13 16:25:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -116,3 +116,15 @@ void dbg_banner_line(void);
 	const char funcname[] = __FUNCTION__;				\
 	dbg_banner_title(funcname, sizeof funcname);			\
 }
+
+/* HPC_DEBUG_LCD */
+#define RGB565_BLACK		0x0000
+#define RGB565_RED		0xf800
+#define RGB565_GREEN		0x07e0
+#define RGB565_YELLOW		0xffe0
+#define RGB565_BLUE		0x001f
+#define RGB565_MAGENTA		0xf81f
+#define RGB565_CYAN		0x07ff
+#define RGB565_WHITE		0xffff
+
+void dbg_lcd_test(void);

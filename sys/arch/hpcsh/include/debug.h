@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.1 2002/01/29 18:53:07 uch Exp $	*/
+/*	$NetBSD: debug.h,v 1.2 2002/02/13 16:25:36 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -46,16 +46,17 @@
  */
 #ifdef INTERRUPT_MONITOR
 enum heart_beat {
-	HEART_BEAT_CYAN = 0,
-	HEART_BEAT_MAGENTA,
-	HEART_BEAT_BLUE,
-	HEART_BEAT_YELLOW,
-	HEART_BEAT_GREEN,
+	HEART_BEAT_BLACK = 0,
 	HEART_BEAT_RED,
+	HEART_BEAT_GREEN,
+	HEART_BEAT_YELLOW,
+	HEART_BEAT_BLUE,
+	HEART_BEAT_MAGENTA,
+	HEART_BEAT_CYAN,
 	HEART_BEAT_WHITE,
-	HEART_BEAT_BLACK
 };
 void __dbg_heart_beat(enum heart_beat);
 #else
 #define __dbg_heart_beat(x)	((void)0)
 #endif /* INTERRUPT_MONITOR */
+

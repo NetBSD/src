@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2002/02/11 17:32:35 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2002/02/13 16:25:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include "fs_nfs.h"
 #include "biconsdev.h"
 #include "opt_kloader_kernel_path.h"
+#include "debug_hpc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,10 +88,10 @@
 #include <sh3/intcreg.h>
 
 #ifdef DEBUG
-#define DPRINTF(arg) printf arg
-#else
-#define DPRINTF(arg)
-#endif
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	machdep_debug
+#endif /* DEBUG */
+#include <machine/debug.h>
 
 /* 
  * D-RAM location (Windows CE machine specific)
@@ -267,6 +268,9 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		platid.dw.dw1 = bootinfo->platid_machine;
 	}
 	consinit();
+#ifdef HPC_DEBUG_LCD
+	dbg_lcd_test();
+#endif
 
 	/* copy boot parameter for kloader */
 	kloader_bootinfo_set(&kbi, argc, argv, bi, TRUE);
@@ -276,7 +280,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* find memory cluster (# of pages) */
 	physmem = mem_cluster_init(SH3_P1SEG_TO_PHYS(kernend));
 	nkpde = ptoa(physmem) >> (PDSHIFT - 1);
-	DPRINTF(("physmem= %d, nkpde = %d\n", physmem, nkpde));
+	_DPRINTF("physmem= %d, nkpde = %d\n", physmem, nkpde);
 
 	/* steal page dir area, process0 stack, page table area */
 	sz = NBPG + USPACE + NBPG * (1 + nkpde);
@@ -343,7 +347,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* initialize debugger */
 	if (symbolsize) {
 		ddb_init(symbolsize, &end, end + symbolsize);
-		DPRINTF(("symbol size = %d byte\n", symbolsize));
+		_DPRINTF("symbol size = %d byte\n", symbolsize);
 	}
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -357,7 +361,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 
 	/* setup proc0 stack */
 	proc0_sp = (vaddr_t)p + NBPG + USPACE - 16 - sizeof(struct trapframe);
-	DPRINTF(("proc0 stack: 0x%08lx\n", proc0_sp));
+	_DPRINTF("proc0 stack: 0x%08lx\n", proc0_sp);
 
 	/* Set proc0paddr */
 	proc0paddr = (void *)(p + NBPG);
@@ -531,27 +535,27 @@ mem_cluster_init(paddr_t addr)
 #ifdef LOAD_ALL_MEMORY /* notyet */
 	__find_dram_shadow(DRAM_BANK1_START, DRAM_BANK1_END);
 #endif
-	DPRINTF(("mem_cluster_cnt = %d\n", mem_cluster_cnt));
+	_DPRINTF("mem_cluster_cnt = %d\n", mem_cluster_cnt);
 	npages = 0;
 	for (i = 0, seg = mem_clusters; i < mem_cluster_cnt; i++, seg++) {
-		DPRINTF(("mem_clusters[%d] = {0x%lx+0x%lx <0x%lx}", i,
+		_DPRINTF("mem_clusters[%d] = {0x%lx+0x%lx <0x%lx}", i,
 		    (paddr_t)seg->start, (paddr_t)seg->size,
-		    (paddr_t)seg->start + (paddr_t)seg->size));
+		    (paddr_t)seg->start + (paddr_t)seg->size);
 		npages += atop(seg->size);
 #ifdef NARLY_MEMORY_PROBE
 		if (i == 0) {
-			DPRINTF((" don't check.\n"));
+			_DPRINTF(" don't check.\n");
 			continue;
 		}
 		if (__check_dram((paddr_t)seg->start, (paddr_t)seg->start +
 		    (paddr_t)seg->size) != 0)
 			panic("D-RAM check failed.");
 #else
-		DPRINTF(("\n"));
+		_DPRINTF("\n");
 #endif /* NARLY_MEMORY_PROBE */
 	}
 
-	DPRINTF(("total memory = %dMbyte\n", (int)(ptoa(npages) >> 20)));
+	_DPRINTF("total memory = %dMbyte\n", (int)(ptoa(npages) >> 20));
 
 	return (npages);
 }
@@ -569,7 +573,7 @@ mem_cluster_load()
 		start = (paddr_t)mem_clusters[i].start;
 		size = (psize_t)mem_clusters[i].size;
 
-		DPRINTF(("loading 0x%lx,0x%lx\n", start, size));
+		_DPRINTF("loading 0x%lx,0x%lx\n", start, size);
 		start = SH3_PHYS_TO_P1SEG(start);
 		memset((void *)start, 0, size);
 		sh_dcache_wbinv_all();
@@ -581,7 +585,7 @@ mem_cluster_load()
 	/* load cluster 1 only. */
 	start = (paddr_t)mem_clusters[1].start;
 	size = (psize_t)mem_clusters[1].size;
-	DPRINTF(("loading 0x%lx,0x%lx\n", start, size));
+	_DPRINTF("loading 0x%lx,0x%lx\n", start, size);
 
 	start = SH3_PHYS_TO_P1SEG(start);
 	end = start + size;
@@ -599,7 +603,7 @@ __check_dram(paddr_t start, paddr_t end)
 	u_int8_t *page;
 	int i, x;
 
-	DPRINTF((" checking..."));
+	_DPRINTF(" checking...");
 	for (; start < end; start += NBPG) {
 		page = (u_int8_t *)SH3_PHYS_TO_P2SEG (start);
 		x = random();
@@ -615,10 +619,10 @@ __check_dram(paddr_t start, paddr_t end)
 			if (*(volatile int *)(page + i) != (x ^ i))
 				goto bad;
 	}
-	DPRINTF(("success.\n"));
+	_DPRINTF("success.\n");
 	return (0);
  bad:
-	DPRINTF(("failed.\n"));
+	_DPRINTF("failed.\n");
 	return (1);
 }
 #endif /* NARLY_MEMORY_PROBE */
@@ -629,7 +633,7 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 	vaddr_t page, startaddr, endaddr;
 	int x;
 
-	DPRINTF(("search D-RAM from 0x%08lx for 0x%08lx\n", start, end));
+	_DPRINTF("search D-RAM from 0x%08lx for 0x%08lx\n", start, end);
 	startaddr = SH3_PHYS_TO_P2SEG(start);
 	endaddr = SH3_PHYS_TO_P2SEG(end);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.17 2002/02/11 17:32:35 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.18 2002/02/13 16:25:35 uch Exp $
 #
 maxpartitions 8
 
@@ -34,10 +34,7 @@ include "dev/hpc/files.bicons"
 include "dev/hpc/files.hpckbd"
 include "dev/hpc/files.hpcfb"
 
-#
-# Debug utility
-#
-file	arch/hpc/hpc/debug_subr.c
+include "arch/hpc/conf/files.debug"
 file	arch/hpcsh/hpcsh/debug.c
 defflag	opt_interrupt_monitor.h		INTERRUPT_MONITOR
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 2002/01/31 17:56:33 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 2002/02/13 16:25:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2002/01/31 17:56:33 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2002/02/13 16:25:34 uch Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2002/01/31 17:56:33 uch Exp $");
 #include "opt_rtc_offset.h"
 #include "fs_nfs.h"
 #include "opt_kloader_kernel_path.h"
+#include "debug_hpc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2002/01/31 17:56:33 uch Exp $");
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 #include <machine/kloader.h>
+#include <machine/debug.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -297,6 +299,9 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif
 
 	/* Initialize frame buffer (to steal DMA buffer, stay here.) */
+#ifdef HPC_DEBUG_LCD
+	dbg_lcd_test();
+#endif
 	(*platform.fb_init)(&kernend);
 	kernend = (caddr_t)mips_round_page(kernend);
 
