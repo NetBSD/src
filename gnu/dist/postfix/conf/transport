@@ -16,25 +16,44 @@
 #        relay hosts. The mapping is used by the trivial-rewrite(8)
 #        daemon.
 # 
-#        Normally, the transport table is specified as a text  file
-#        that  serves  as  input  to  the  postmap(1) command.  The
-#        result, an indexed file in dbm or db format, is  used  for
-#        fast  searching  by  the  mail system. Execute the command
-#        postmap /etc/postfix/transport in  order  to  rebuild  the
+#        This mapping overrides the default routing that  is  built
+#        into Postfix:
+# 
+#        mydestination
+#               A  list of domains that is by default delivered via
+#               $local_transport.
+# 
+#        virtual_mailbox_domains
+#               A list of domains that is by default delivered  via
+#               $virtual_transport.
+# 
+#        relay_domains
+#               A  list of domains that is by default delivered via
+#               $relay_transport.
+# 
+#        any other destination
+#               Mail for any other destination is by default deliv-
+#               ered via $default_transport.
+# 
+#        Normally,  the transport table is specified as a text file
+#        that serves as  input  to  the  postmap(1)  command.   The
+#        result,  an  indexed file in dbm or db format, is used for
+#        fast searching by the mail  system.  Execute  the  command
+#        postmap  /etc/postfix/transport  in  order  to rebuild the
 #        indexed file after changing the transport table.
 # 
-#        When  the  table  is provided via other means such as NIS,
-#        LDAP or SQL, the same lookups are  done  as  for  ordinary
+#        When the table is provided via other means  such  as  NIS,
+#        LDAP  or  SQL,  the  same lookups are done as for ordinary
 #        indexed files.
 # 
-#        Alternatively,  the  table  can  be provided as a regular-
+#        Alternatively, the table can be  provided  as  a  regular-
 #        expression map where patterns are given as regular expres-
-#        sions.  In  that  case, the lookups are done in a slightly
-#        different way as described in section "REGULAR  EXPRESSION
+#        sions. In that case, the lookups are done  in  a  slightly
+#        different  way as described in section "REGULAR EXPRESSION
 #        TABLES".
 # 
 # TABLE FORMAT
-#        The format of the transport table is as follows:
+#        The input format for the postmap(1) command is as follows:
 # 
 #        pattern result
 #               When  pattern  matches  the  recipient  address  or

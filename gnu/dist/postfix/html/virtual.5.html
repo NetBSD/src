@@ -54,8 +54,7 @@ VIRTUAL(5)                                             VIRTUAL(5)
        different way as described below.
 
 <b>TABLE</b> <b>FORMAT</b>
-       The  format  of  the virtual table is as follows, mappings
-       being tried in the order as listed in this manual page:
+       The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
        <i>pattern</i> <i>result</i>
               When <i>pattern</i> matches a mail address, replace it  by
@@ -138,9 +137,9 @@ VIRTUAL(5)                                             VIRTUAL(5)
            <i>user2@virtual-alias.domain</i>   <i>address2,</i> <i>address3</i>
 
        The <i>virtual-alias.domain</i> <i>anything</i> entry is required for  a
-       virtual alias domain. Without this entry, mail is rejected
-       with "relay access denied", or bounces  with  "mail  loops
-       back to myself".
+       virtual alias domain. <b>Without</b> <b>this</b> <b>entry,</b> <b>mail</b> <b>is</b> <b>rejected</b>
+       <b>with</b> <b>"relay</b> <b>access</b> <b>denied",</b> <b>or</b> <b>bounces</b>  <b>with</b>  <b>"mail</b>  <b>loops</b>
+       <b>back</b> <b>to</b> <b>myself".</b>
 
        Do  not  specify virtual alias domain names in the <b>main.cf</b>
        <b>mydestination</b> or <b>relay</b><i>_</i><b>domains</b> configuration parameters.

@@ -44,7 +44,7 @@
 #include "iostuff.h"
 
 /* Backwards compatibility */
-#ifdef FNDELAY
+#ifndef O_NONBLOCK
 #define PATTERN	FNDELAY
 #else
 #define PATTERN	O_NONBLOCK

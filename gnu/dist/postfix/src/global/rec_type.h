@@ -72,6 +72,13 @@
 #define REC_TYPE_EXTRACT	"EDROPreAFIL"
 
  /*
+  * The subset of inputs that the postdrop command allows.
+  */
+#define REC_TYPE_POST_ENVELOPE	"MFSRVA"
+#define REC_TYPE_POST_CONTENT	"XLN"
+#define REC_TYPE_POST_EXTRACT	"E"
+
+ /*
   * The record at the beginning of the envelope segment specifies the message
   * content size, data offset, and recipient count. These are fixed-width
   * fields so they can be updated in place.
