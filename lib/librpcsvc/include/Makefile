@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1993/10/08 05:26:31 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/10/09 23:31:36 cgd Exp $
 
 RPCDIR=		${.CURDIR}/../src
 .PATH:		${RPCDIR}
@@ -20,7 +20,7 @@ install:
 		install ${COPY} -o bin -g bin -m 444 $$i \
 		    ${DESTDIR}/usr/include/rpcsvc ; \
 	done
-	@for i in $(RPCSRCS) $(RPCHDRS); do \
+	@for i in $(RPCSRCS); do \
 		echo install -c -o bin -g bin -m 444 ${RPCDIR}/$$i \
 		    ${DESTDIR}/usr/include/rpcsvc ; \
 		install -c -o bin -g bin -m 444 ${RPCDIR}/$$i \
