@@ -1,3 +1,0 @@
-@cwd /
-./sbin/fsck_ext2fs
-./sbin/mount_ext2fs

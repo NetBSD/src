@@ -1,9 +1,0 @@
-@cwd /
-./usr/share/locale/es
-./usr/share/locale/es/LC_MESSAGES
-./usr/share/locale/es_ES.ISO8859-1
-./usr/share/locale/es_ES.ISO8859-1/LC_CTYPE
-./usr/share/locale/es_ES.ISO8859-15
-./usr/share/locale/es_ES.ISO8859-15/LC_CTYPE
-./usr/share/nls/es
-./usr/share/nls/es/libc.cat

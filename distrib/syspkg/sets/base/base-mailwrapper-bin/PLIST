@@ -1,8 +1,0 @@
-@cwd /
-./usr/bin/hoststat
-./usr/bin/mailq
-./usr/bin/newaliases
-./usr/bin/purgestat
-./usr/sbin/mailstats
-./usr/sbin/mailwrapper
-./usr/sbin/sendmail

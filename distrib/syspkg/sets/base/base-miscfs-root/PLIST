@@ -1,7 +1,0 @@
-@cwd /
-./sbin/mount_fdesc
-./sbin/mount_null
-./sbin/mount_overlay
-./sbin/mount_portal
-./sbin/mount_umap
-./sbin/mount_union
