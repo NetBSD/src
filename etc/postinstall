@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.2 2002/04/26 15:49:09 lukem Exp $
+# $NetBSD: postinstall,v 1.3 2002/04/26 16:32:49 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -127,7 +127,7 @@ cmpdir()
 		if [ "${_op}" = "check" ]; then
 			msg ${error}
 			failed=1
-		elif ! cp -p ${fs} ${fd}; then
+		elif ! cp ${fs} ${fd}; then
 			msg "Can't copy ${fs} to ${fd}"
 			failed=1
 		else
@@ -443,7 +443,7 @@ DEST_ETC=/etc
 SCRATCHDIR=$( mktemp -d /tmp/_postinstall.XXXXXX ) ||
     err 1 "Can't create scratch directory"
 trap "/bin/rm -rf $SCRATCHDIR ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
-
+umask 022
 
 main $*
 exit 0
