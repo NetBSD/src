@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: grf_tcreg.h 1.10 91/03/25
  *	from: @(#)grf_tcreg.h	7.3 (Berkeley) 5/7/91
- *	$Id: grf_tcreg.h,v 1.3 1993/08/01 19:24:16 mycroft Exp $
+ *	$Id: grf_tcreg.h,v 1.4 1993/08/08 03:42:38 mycroft Exp $
  */
 
 #define tccm_waitbusy(regaddr) \
@@ -114,9 +114,9 @@ struct tcboxfb {
   vu_short 	source_y;		/* source y pixel # 	      0x40f6 */
   u_char 	f15[0x40fa-0x40f6-2];
   vu_short	dest_x;			/* dest x pixel # 	      0x40fa */
-  u_char 	f16[0x40fe-0x40fa-2];
+  u_char 	f16[0x40fe -0x40fa-2];
   vu_short	dest_y;			/* dest y pixel # 	      0x40fe */
-  u_char 	f17[0x4102-0x40fe-2];
+  u_char 	f17[0x4102-0x40fe -2];
   vu_short	wwidth;			/* block mover pixel width    0x4102 */
   u_char	f18[0x4106-0x4102-2];
   vu_short 	wheight;		/* block mover pixel height   0x4106 */
