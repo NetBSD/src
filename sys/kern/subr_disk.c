@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.58 2004/01/10 14:49:44 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.59 2004/02/28 06:28:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,9 +74,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.58 2004/01/10 14:49:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.59 2004/02/28 06:28:48 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_bufq.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -95,6 +96,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.58 2004/01/10 14:49:44 yamt Exp $");
 struct	disklist_head disklist;	/* TAILQ_HEAD */
 int	disk_count;		/* number of drives in global disklist */
 struct simplelock disklist_slock = SIMPLELOCK_INITIALIZER;
+
+#ifdef NEW_BUFQ_STRATEGY
+int bufq_disk_default_strat = BUFQ_READ_PRIO;
+#else /* NEW_BUFQ_STRATEGY */
+int bufq_disk_default_strat = BUFQ_DISKSORT;
+#endif /* NEW_BUFQ_STRATEGY */
 
 /*
  * Compute checksum for disk label.
