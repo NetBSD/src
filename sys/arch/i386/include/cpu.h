@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.18 1994/05/06 12:23:10 mycroft Exp $
+ *	$Id: cpu.h,v 1.19 1994/05/07 00:53:14 cgd Exp $
  */
 
 #ifndef _I386_CPU_H_
@@ -105,5 +105,16 @@ extern int cpu;
 extern int cpu_class;
 extern struct cpu_nameclass i386_cpus[];
 #endif
+
+/* 
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
+
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+}
 
 #endif /* !_I386_CPU_H_ */
