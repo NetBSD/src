@@ -1,4 +1,4 @@
-#	$NetBSD: files.ieee1394,v 1.6 2002/02/27 05:02:25 jmc Exp $
+#	$NetBSD: files.ieee1394,v 1.7 2002/11/22 16:28:55 jmc Exp $
 
 file	dev/ieee1394/fwlynx.c	fwlynx
 file	dev/ieee1394/fwohci.c	fwohci
@@ -8,10 +8,10 @@ attach	fwnode at fwbus: ieee1212
 
 file	dev/ieee1394/fwnode.c		fwnode
 
-device  fwscsi: scsi
-attach  fwscsi at fwnode
+device  sbpscsi: scsi, sbp2
+attach  sbpscsi at fwnode
 
-file    dev/ieee1394/fwscsi.c           fwscsi
+file    dev/ieee1394/sbpscsi.c           sbpscsi
 
 device	fw: arp, ieee1394, ifnet
 attach	fw at fwbus
