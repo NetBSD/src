@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.90 2001/09/04 04:01:49 wiz Exp $
+#       $NetBSD: Makefile,v 1.91 2001/09/09 03:07:10 wiz Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -8,9 +8,9 @@ MAN=	access.9 altq.9 arp.9 audio.9 autoconf.9 bitmask_snprintf.9 \
 	callout.9 cardbus.9 cnmagic.9 config.9 cons.9 copy.9 cpu_reboot.9 \
 	ctxsw.9 disk.9 disklabel.9 \
 	dopowerhooks.9 doshutdownhooks.9 driver.9 ethersubr.9 evcnt.9 \
-	extent.9 fetch.9 fork1.9 humanize_number.9 hz.9 in4_cksum.9 inittodr.9 \
-	intro.9 ioasic.9 ioctl.9 isa.9 isapnp.9 kprintf.9 kthread.9 \
-	linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
+	extent.9 fetch.9 fork1.9 hardclock.9 humanize_number.9 hz.9 \
+	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 isa.9 isapnp.9 \
+	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
 	memcmp.9 memcpy.9 memmove.9 memset.9 \
 	microtime.9 panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
 	pcmcia.9 pfil.9 physio.9 \
