@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.54 1998/07/30 21:58:48 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.55 1998/07/31 04:50:01 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -467,3 +467,12 @@ file	arch/arm32/shark/pccons.c		pc & ofw needs-flag
 device  scr: tty
 file	arch/arm32/shark/scr.c			scr needs-flag
 attach  scr at ofisascr
+
+# XXX REALLY JUST WANT FILES.ISA!!!!
+#
+# ISA Plug 'n Play autoconfiguration glue.
+# THIS MUST COME AFTER ALL MI ISA DEVICES ARE DEFINED.  This is because
+# ISA PnP devices often use `device' declarations listed in this file.
+#
+include "dev/isapnp/files.isapnp"       
+file	arch/arm32/isa/isapnp_machdep.c		isapnp
