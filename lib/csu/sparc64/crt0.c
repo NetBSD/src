@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.6 1999/03/19 23:34:52 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.7 1999/03/20 00:13:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -31,63 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/exec.h>
-#include <sys/syscall.h>
-
-#include <stdlib.h>
-#ifdef DYNAMIC
-#include <dlfcn.h>
-#include "rtld.h"
-#else
-typedef void Obj_Entry;
-#endif
-
-/*
- * Lots of the chunks of this file cobbled together from pieces of
- * other NetBSD crt files, including the common code.
- */
-
-extern int	__syscall __P((int, ...));
-#define	_exit(v)	__syscall(SYS_exit, (v))
-#define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
-
-#define _FATAL(str)				\
-	do {					\
-		write(2, str, sizeof(str));	\
-		_exit(1);			\
-	} while (0)
-
-static char	*_strrchr __P((char *, char));
-
-
-char	**environ;
-char	*__progname = "";
-struct ps_strings *__ps_strings = 0;
-
-extern void	_init __P((void));
-extern void	_fini __P((void));
-
-#ifdef DYNAMIC
-void		_rtld_setup __P((void (*)(void), const Obj_Entry *obj));
-
-const Obj_Entry *__mainprog_obj;
-
-/*
- * Arrange for _DYNAMIC to be weak and undefined (and therefore to show up
- * as being at address zero, unless something else defines it).  That way,
- * if we happen to be compiling without -static but with without any
- * shared libs present, things will still work.
- */
-asm(".weak _DYNAMIC");
-extern int _DYNAMIC;
-#endif /* DYNAMIC */
-
-#ifdef MCRT0
-extern void	monstartup __P((u_long, u_long));
-extern void	_mcleanup __P((void));
-extern unsigned char _etext, _eprol;
-#endif /* MCRT0 */
+#include "common.h"
 
 /*
  * __start needs to gather up argc, argv, env_p, ps_strings, the termination
@@ -120,7 +64,6 @@ __start:
 
 void ___start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
 		struct ps_strings *));
-int main __P((int, char **, char **));
 
 void
 ___start(sp, cleanup, obj, ps_strings)
@@ -166,7 +109,7 @@ ___start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.6 1999/03/19 23:34:52 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.7 1999/03/20 00:13:51 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* XXX XXX XXX THIS SHOULD GO AWAY XXX XXX XXX
