@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.1.2.5 2002/04/11 02:51:35 nathanw Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.1.2.6 2002/04/26 22:10:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,10 +45,9 @@
 #include "pthread_int.h"
 
 static pthread_mutex_t tsd_mutex = PTHREAD_MUTEX_INITIALIZER;
-static int tsd_alloc[PTHREAD_KEYS_MAX];
 static int nextkey;
-
-static void (*tsd_destructors[PTHREAD_KEYS_MAX])(void *);
+int pthread__tsd_alloc[PTHREAD_KEYS_MAX];
+void (*pthread__tsd_destructors[PTHREAD_KEYS_MAX])(void *);
 
 int
 pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
@@ -61,7 +60,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	/* Find an avaliable slot */
 	/* 1. Search from "nextkey" to the end of the list. */
 	for (i = nextkey; i < PTHREAD_KEYS_MAX; i++)
-		if (tsd_alloc[i] == 0)
+		if (pthread__tsd_alloc[i] == 0)
 			break;
 
 	if (i == PTHREAD_KEYS_MAX) {
@@ -69,7 +68,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 		 *    of the list back to "nextkey".
 		 */
 		for (i = 0; i < nextkey; i++)
-			if (tsd_alloc[i] == 0)
+			if (pthread__tsd_alloc[i] == 0)
 				break;
 		
 		if (i == nextkey) {
@@ -82,10 +81,10 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	}
 
 	/* Got one. */
-	tsd_alloc[i] = 1;
+	pthread__tsd_alloc[i] = 1;
 	nextkey = (i + 1) % PTHREAD_KEYS_MAX;
 	pthread_mutex_unlock(&tsd_mutex);
-	tsd_destructors[i] = destructor;
+	pthread__tsd_destructors[i] = destructor;
 	*key = i;
 
 	return 0;
@@ -125,9 +124,9 @@ pthread_key_delete(pthread_key_t key)
 		thread->pt_specific[key] = NULL;
 	pthread_spinunlock(self, &allqueue_lock);
 
-	tsd_destructors[key] = NULL;
+	pthread__tsd_destructors[key] = NULL;
 	pthread_mutex_lock(&tsd_mutex);
-	tsd_alloc[key] = 0;
+	pthread__tsd_alloc[key] = 0;
 	pthread_mutex_unlock(&tsd_mutex);
 
 	return 0;
@@ -138,7 +137,7 @@ pthread_setspecific(pthread_key_t key, const void *value)
 {
 	pthread_t self;
 
-	if (tsd_alloc[key] == 0)
+	if (pthread__tsd_alloc[key] == 0)
 		return EINVAL;
 
 	self = pthread__self();
@@ -157,7 +156,7 @@ pthread_getspecific(pthread_key_t key)
 {
 	pthread_t self;
 
-	if (tsd_alloc[key] == 0)
+	if (pthread__tsd_alloc[key] == 0)
 		return NULL;
 
 	self = pthread__self();
@@ -201,11 +200,11 @@ pthread__destroy_tsd(pthread_t self)
 		done = 1;
 		for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
 			if ((self->pt_specific[i] != NULL) &&
-			    tsd_destructors[i] != NULL) {
+			    pthread__tsd_destructors[i] != NULL) {
 				done = 0;
 				val = self->pt_specific[i];
 				self->pt_specific[i] = NULL; /* see above */
-				tsd_destructors[i](val);
+				pthread__tsd_destructors[i](val);
 			}
 		}
 	} while (!done && iterations--);
