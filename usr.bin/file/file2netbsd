@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: file2netbsd,v 1.6 2000/11/23 23:22:58 pooka Exp $
+#	$NetBSD: file2netbsd,v 1.7 2001/01/01 12:13:58 pooka Exp $
 #
 #  Perl script to convert a standard distribution directory for file into
 #	a NetBSD source tree.
@@ -44,6 +44,10 @@ sub fixrcs
     my ($f, $t) = @_;
     my @keywords = ("Author", "Date", "Header", "Id", "Locker", "Log",
 		    "Name", "RCSfile", "Revision", "Source", "State");
+    my %mansubst = ('__CSECTION__', '1',
+                    '__FSECTION__', '5',
+                    '__VERSION__', $version,
+                    '__MAGIC__', '/usr/share/misc/magic');
     my $state = 0;
     my $hdr = 0;
 
@@ -88,6 +92,9 @@ sub fixrcs
 	foreach $key (@keywords) {
 	    s/\$$key\$/$key/g;
 	    s/\$$key:(.*)\$/$key:$1/g;
+	}
+	while (($from, $to) = each %mansubst) {
+	    s/$from/$to/g;
 	}
 	print OFILE $_;
     }
