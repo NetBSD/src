@@ -1,4 +1,4 @@
-/*	$NetBSD: mc68851.h,v 1.1.1.1 1997/01/14 20:57:07 gwr Exp $	*/
+/*	$NetBSD: mc68851.h,v 1.2 1997/01/16 21:47:31 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,6 +34,13 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * This file should contain the machine-independent definitions
+ * related to the Motorola MC68881 Memory Management Unit (MMU).
+ * Things that depend on the contents of the Translation Control
+ * (TC) register should be in <machine/pte.h>, not here.
  */
 
 #ifndef _SUN3X_MC68851_H
@@ -100,12 +107,14 @@
 #define	MMU_ROUND_UP_C(pa)\
 	((unsigned long) (pa + MMU_PAGE_SIZE - 1) & MMU_PAGE_MASK)
 
-#if 0	/* in param.h */
-#define sun3x_round_page(pa)\
-	((unsigned long) (pa) & MMU_PAGE_MASK)
-#endif
-#define	sun3x_round_up_page(pa)\
-	((unsigned long) (pa + MMU_PAGE_SIZE - 1) & MMU_PAGE_MASK)
+
+/** MC68851 Root Pointer
+ */
+struct mmu_rootptr {
+	u_long limit; /* and type */
+	u_long paddr;
+};
+
 
 /** MC68851 Long Format Table Descriptor
  * The root table for a sun3x pmap is a 128 element array of 'long format
