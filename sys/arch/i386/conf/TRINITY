@@ -1,11 +1,12 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.20 1993/10/01 04:00:45 mycroft Exp $
+#	$Id: TRINITY,v 1.21 1993/10/18 16:25:42 mycroft Exp $
 #
 
 machine		"i386"
 cpu		"I386_CPU"
+cpu		"I486_CPU"
 options		"DUMMY_NOPS"
 options		"MACHINE_NONCONTIG"
 options		XSERVER,UCONSOLE
