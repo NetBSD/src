@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.233 2003/09/13 03:44:20 erh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.234 2003/09/13 19:08:27 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -300,8 +300,8 @@ FFLAGS+=	${FOPTS}
 	rm -f ${.TARGET}.tmp
 
 .if defined(LIB)
-.if ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
-	|| ${MKLINKLIB} != "no"
+.if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
+	|| ${MKLINKLIB} != "no") && ${MKSTATICLIB} != "no"
 _LIBS=lib${LIB}.a
 .else
 _LIBS=
@@ -340,12 +340,12 @@ LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 _LIBS+=llib-l${LIB}.ln
 .endif
 
-.if ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
-	|| ${MKLINKLIB} != "no"
-ALLOBJS=${OBJS} ${POBJS} ${SOBJS}
-.else
-ALLOBJS=${POBJS} ${SOBJS}
+ALLOBJS=
+.if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
+	|| ${MKLINKLIB} != "no") && ${MKSTATICLIB} != "no"
+ALLOBJS+=${OBJS}
 .endif
+ALLOBJS+=${POBJS} ${SOBJS}
 .if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
 ALLOBJS+=${LOBJS}
 .endif
@@ -442,7 +442,7 @@ afterdepend: .depend
 # Make sure it gets defined, in case MKPIC==no && MKLINKLIB==no
 libinstall::
 
-.if ${MKLINKLIB} != "no"
+.if ${MKLINKLIB} != "no" && ${MKSTATICLIB} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 
