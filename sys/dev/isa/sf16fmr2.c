@@ -1,4 +1,4 @@
-/* $NetBSD: sf16fmr2.c,v 1.2 2002/01/02 12:42:23 augustss Exp $ */
+/* $NetBSD: sf16fmr2.c,v 1.3 2002/01/03 18:13:20 augustss Exp $ */
 /* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
@@ -169,7 +169,7 @@ sf2r_attach(struct device *parent, struct device *self, void *aux)
 	sc->tea.write_bit = sf2r_write_bit;
 	sc->tea.read = sf2r_read_register;
 
-	printf(": SoundForte RadioLink SF16-FMR2");
+	printf(": SoundForte RadioLink SF16-FMR2\n");
 	tea5757_set_freq(&sc->tea, sc->stereo, sc->lock, sc->freq);
 	sf2r_set_mute(sc);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.3 2002/01/02 12:42:23 augustss Exp $ */
+/* $NetBSD: radiotrack.c,v 1.4 2002/01/03 18:13:19 augustss Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -177,17 +177,17 @@ rt_attach(struct device *parent, struct device *self, void *aux)
 		/* FALLTHROUGH */
 	case 0x30C:
 		sc->cardtype = CARD_RADIOTRACK;
-		printf(": AIMS Lab Radiotrack or compatible");
+		printf(": AIMS Lab Radiotrack or compatible\n");
 		break;
 	case 0x284:
 		/* FALLTHROUGH */
 	case 0x384:
 		sc->cardtype = CARD_SF16FMI;
-		printf(": SoundForte RadioX SF16-FMI");
+		printf(": SoundForte RadioX SF16-FMI\n");
 		break;
 	default:
 		sc->cardtype = CARD_UNKNOWN;
-		printf(": Unknown card");
+		printf(": Unknown card\n");
 		break;
 	}
 
