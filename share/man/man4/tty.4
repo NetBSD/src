@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.3 1996/03/17 07:13:40 christos Exp $
+.\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -163,7 +163,7 @@ file descriptor zero by the following code fragment:
 Change to the new line discipline pointed to by
 .Fa ldisc .
 The available line disciplines are listed in
-.Pa Aq sys/termios.h
+.Pa Aq sys/ttycom.h
 and currently are:
 .Pp
 .Bl -tag -width TIOCGWINSZ -compact
@@ -173,6 +173,8 @@ Termios interactive line discipline.
 Tablet line discipline.
 .It SLIPDISC
 Serial IP line discipline.
+.It PPPDISC
+Point to Point Protocol line discipline.
 .El
 .Pp
 .It Dv TIOCGETD Fa int *ldisc
