@@ -1,5 +1,6 @@
-/*	$NetBSD: bha.c,v 1.23 1998/04/28 23:57:53 mjacob Exp $	*/
+/*	$NetBSD: bha.c,v 1.24 1998/07/04 22:18:49 jonathan Exp $	*/
 
+#include "opt_ddb.h"
 #undef BHADIAG
 #ifdef DDB
 #define	integrate

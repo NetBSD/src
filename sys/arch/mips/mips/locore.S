@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.49 1998/03/23 00:57:13 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.50 1998/07/04 22:18:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,6 +87,8 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_ddb.h"
+#include "opt_cputype.h"	/* which mips CPU levels do we support? */
 
 #include <sys/errno.h>
 #include <sys/syscall.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.38 1998/02/21 00:37:08 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.39 1998/07/04 22:18:29 jonathan Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,6 +46,7 @@
  */
 
 #include "opt_adb.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

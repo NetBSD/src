@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.48 1998/03/01 02:22:31 fvdl Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.49 1998/07/04 22:18:52 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)subr_prf.c	8.4 (Berkeley) 5/4/95
  */
+#include "opt_ddb.h"
+#include "ipkdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +59,11 @@
 
 #include <dev/cons.h>
 
+#ifdef DDB
+#include <ddb/ddbvar.h>
+#endif
+
+
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both
  * ansi and traditional c complers.
@@ -64,7 +71,6 @@
  */
 #include <machine/stdarg.h>
 
-#include "ipkdb.h"
 
 #ifdef KGDB
 #include <sys/kgdb.h>

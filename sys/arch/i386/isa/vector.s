@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.40 1998/02/10 14:11:28 mrg Exp $	*/
+/*	$NetBSD: vector.s,v 1.41 1998/07/04 22:18:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -29,6 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 
 #include <i386/isa/icu.h>

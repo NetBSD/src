@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.7 1998/06/24 18:41:35 mark Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.8 1998/07/04 22:18:19 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,6 +44,8 @@
  *
  * Created      : 17/09/94
  */
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

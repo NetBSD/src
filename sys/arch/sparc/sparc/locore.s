@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.84 1998/06/26 00:08:42 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.85 1998/07/04 22:18:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -50,6 +50,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "opt_compat_svr4.h"
 

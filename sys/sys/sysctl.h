@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.29 1998/06/28 21:34:59 nathanw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.30 1998/07/04 22:18:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -416,10 +416,9 @@ int net_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
-#ifdef DDB
-int ddb_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		    struct proc *));
-#endif
+
+/* ddb_sysctl() declared in ddb_var.h */
+
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>
 

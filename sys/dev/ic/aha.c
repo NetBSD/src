@@ -1,4 +1,6 @@
-/*	$NetBSD: aha.c,v 1.16 1998/04/29 01:02:44 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.17 1998/07/04 22:18:49 jonathan Exp $	*/
+
+#include "opt_ddb.h"
 
 #undef AHADIAG
 #ifdef DDB

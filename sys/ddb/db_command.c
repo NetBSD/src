@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.25 1998/02/10 14:09:16 mrg Exp $	*/
+/*	$NetBSD: db_command.c,v 1.26 1998/07/04 22:18:48 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -53,6 +53,7 @@
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_ddb.h>
 #endif
 
 /*

@@ -1,4 +1,6 @@
-/*	$NetBSD: wds.c,v 1.33 1998/06/25 19:18:06 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.34 1998/07/04 22:18:51 jonathan Exp $	*/
+
+#include "opt_ddb.h"
 
 #undef WDSDIAG
 #ifdef DDB

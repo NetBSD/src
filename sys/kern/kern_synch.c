@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.51 1998/06/25 21:17:17 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.52 1998/07/04 22:18:51 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -40,6 +40,7 @@
  *	@(#)kern_synch.c	8.9 (Berkeley) 5/19/95
  */
 
+#include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.101 1998/06/30 04:16:00 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.102 1998/07/04 22:18:28 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,6 +77,7 @@
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "assym.h"
 #include <machine/asm.h>

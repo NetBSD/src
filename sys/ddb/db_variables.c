@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.12 1998/01/31 04:14:48 ross Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.13 1998/07/04 22:18:48 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,6 +26,9 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_ddb.h"				/* for sysctl.h */
+#include "opt_ddbparam.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <vm/vm.h>
@@ -33,11 +36,14 @@
 
 #include <machine/db_machdep.h>
 
+#include <ddb/ddbvar.h>
+
 #include <ddb/db_lex.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+
 
 /*
  * If this is non-zero, the DDB will be entered when the system

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.9 1997/11/16 23:51:23 lukem Exp $	*/
+/*	$NetBSD: db_input.c,v 1.10 1998/07/04 22:18:48 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,6 +28,8 @@
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
  */
+
+#include "opt_ddbparam.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.119 1998/07/04 22:18:40 jonathan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,6 +56,7 @@
  * Does not function on multiprocessors (yet).
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.41 1998/03/22 08:24:52 jonathan Exp $ */
+/* $NetBSD: scc.c,v 1.42 1998/07/04 22:18:15 jonathan Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,8 +64,9 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.41 1998/03/22 08:24:52 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.42 1998/07/04 22:18:15 jonathan Exp $");
 
+#include "opt_ddb.h"
 #ifdef alpha
 #include "opt_dec_3000_300.h"
 #endif

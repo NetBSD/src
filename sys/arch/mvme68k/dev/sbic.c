@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.6 1997/08/27 11:23:57 bouyer Exp $	*/
+/*	$NetBSD: sbic.c,v 1.7 1998/07/04 22:18:32 jonathan Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -52,6 +52,7 @@
  * This version of the driver is pretty well generic, so should work with
  * any flavour of WD33C93 chip.
  */
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

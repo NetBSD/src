@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.10 1998/06/14 11:52:35 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.11 1998/07/04 22:18:44 jonathan Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -35,6 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

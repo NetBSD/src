@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.4 1996/11/09 03:26:27 chuck Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.5 1998/07/04 22:18:52 jonathan Exp $	*/
 
 /*
  *
@@ -36,6 +36,8 @@
  * atm_pcb.c: manage atm protocol control blocks and keep IP and NATM
  * from trying to use each other's VCs.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

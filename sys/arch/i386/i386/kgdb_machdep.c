@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.4 1998/03/31 08:18:33 thorpej Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.5 1998/07/04 22:18:24 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_ddb.h"
 
 #if defined(DDB)
 #error "Can't build DDB and KGDB together."

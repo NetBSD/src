@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.84 1998/06/25 21:19:15 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.85 1998/07/04 22:18:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,10 +43,12 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 1998/06/25 21:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 1998/07/04 22:18:30 jonathan Exp $");
 
+#include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
+#include "opt_ddb.h"
 
 #if !defined(MIPS1) && !defined(MIPS3)
 #error  Neither  "MIPS1" (r2000 family), "MIPS3" (r4000 family) was configured.
@@ -115,6 +117,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 1998/06/25 21:19:15 thorpej Exp $");
 int (*mips_hardware_intr) __P((unsigned mask, unsigned pc, unsigned status,
 			       unsigned cause)) =
 	( int (*) __P((unsigned, unsigned, unsigned, unsigned)) ) 0;
+
+#ifdef MIPS3
+extern u_int32_t mips3_intr_cycle_count;
+u_int32_t mips3_intr_cycle_count;
+#endif
+
 
 /*
  * Exception-handling functions, called via ExceptionTable from locore
@@ -1008,6 +1016,14 @@ interrupt(status, cause, pc, frame)
 	struct frame *frame;  
 {
 	unsigned mask;
+	extern u_int32_t mips3_cycle_count __P((void));
+
+	mask = cause & status;	/* pending interrupts & enable mask */
+
+#if defined(MIPS3) && defined(MIPS_INT_MASK_CLOCK)
+	if ((mask & MIPS_INT_MASK_CLOCK) && CPUISMIPS3)
+		mips3_intr_cycle_count = mips3_cycle_count();
+#endif
 
 #ifdef DEBUG
 	trp->status = status;
@@ -1026,8 +1042,6 @@ interrupt(status, cause, pc, frame)
 #else
 	cnt.v_intr++;
 #endif
-	mask = cause & status;	/* pending interrupts & enable mask */
-
 	/* Device interrupt */
 	if (mips_hardware_intr)
 		splx((*mips_hardware_intr)(mask, pc, status, cause));

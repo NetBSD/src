@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.38 1997/11/27 22:43:44 mhitch Exp $	*/
+/*	$NetBSD: siop.c,v 1.39 1998/07/04 22:18:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -42,6 +42,8 @@
 /*
  * AMIGA 53C710 scsi adaptor driver
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

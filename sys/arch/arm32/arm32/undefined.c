@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.12 1998/06/02 20:41:51 mark Exp $	*/
+/*	$NetBSD: undefined.c,v 1.13 1998/07/04 22:18:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,9 @@
 
 #define FAST_FPE
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.125 1998/04/17 13:09:23 drochner Exp $	*/
+/*	$NetBSD: pccons.c,v 1.126 1998/07/04 22:18:26 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -47,6 +47,7 @@
  * XXX Only one of these attachments can be used in one kernel configuration.
  */
 
+#include "opt_ddb.h"
 #include "opt_xserver.h"
 
 #include <sys/param.h>

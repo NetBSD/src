@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.61 1998/06/05 15:00:10 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.62 1998/07/04 22:18:38 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -40,6 +40,7 @@
  *	@(#)fd.c	7.4 (Berkeley) 5/25/91
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

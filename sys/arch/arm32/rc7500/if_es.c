@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.10 1998/01/13 02:10:41 thorpej Exp $	*/
+/*	$NetBSD: if_es.c,v 1.11 1998/07/04 22:18:19 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -40,6 +40,7 @@
  * SMC 91C90 Single-Chip Ethernet Controller
  */
 
+#include "opt_ddb.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

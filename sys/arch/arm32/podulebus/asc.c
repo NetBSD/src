@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.21 1998/01/18 04:11:41 mark Exp $	*/
+/*	$NetBSD: asc.c,v 1.22 1998/07/04 22:18:19 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -48,6 +48,8 @@
  * DMA so the DMA section of this driver and the sbic driver needs
  * to be rewritten.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

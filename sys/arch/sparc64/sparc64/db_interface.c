@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.2 1998/07/04 22:18:42 jonathan Exp $ */
 
 /*
  * Mach Operating System
@@ -31,6 +31,8 @@
 /*
  * Interface to new debugger.
  */
+#include "opt_ddb.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/user.h>

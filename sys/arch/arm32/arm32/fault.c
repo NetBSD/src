@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.24 1998/06/02 20:41:48 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.25 1998/07/04 22:18:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -43,7 +43,9 @@
  * Created      : 28/11/94
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>

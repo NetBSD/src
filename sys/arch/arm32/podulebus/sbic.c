@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.10 1998/05/24 18:19:29 mark Exp $ */
+/* $NetBSD: sbic.c,v 1.11 1998/07/04 22:18:19 jonathan Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -44,6 +44,8 @@
 /*
  * WD 33C93 scsi adaptor driver
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

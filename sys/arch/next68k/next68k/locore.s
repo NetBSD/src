@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 1998/07/04 22:18:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -48,6 +48,8 @@
  * Darrin Jewell <jewell@mit.edu>  Fri Jan  2 14:36:47 1998
  * for the next68k port
  */
+
+#include "opt_ddb.h"
 
 #include "assym.h"
 #include <machine/asm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.38 1998/05/24 19:32:37 is Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.39 1998/07/04 22:18:21 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,6 +31,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.14 1998/06/02 20:41:46 mark Exp $	*/
+/*	$NetBSD: ast.c,v 1.15 1998/07/04 22:18:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -40,6 +40,7 @@
  * Created      : 11/10/94
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

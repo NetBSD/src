@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.10 1998/04/10 08:20:03 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.11 1998/07/04 22:18:21 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -57,6 +57,8 @@
  *  joerg_wunsch@uriah.sax.de (Joerg Wunsch)
  *  dufault@hda.com (Peter Dufault)
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

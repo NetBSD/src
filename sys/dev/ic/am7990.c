@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.44 1998/06/07 08:08:20 fair Exp $	*/
+/*	$NetBSD: am7990.c,v 1.45 1998/07/04 22:18:49 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
+#include "opt_ddb.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.19 1998/06/17 19:33:37 mark Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.20 1998/07/04 22:18:17 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -33,6 +33,7 @@
 /*
  * Interface to new debugger.
  */
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

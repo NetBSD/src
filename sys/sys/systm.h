@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.77 1998/06/14 20:18:56 kleink Exp $	*/
+/*	$NetBSD: systm.h,v 1.78 1998/07/04 22:18:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -296,12 +296,7 @@ void	kmstartup __P((void));
 #include <lib/libkern/libkern.h>
 #endif
 
-#ifdef DDB
-/* debugger entry points */
-void	Debugger __P((void));	/* in DDB only */
-int	read_symtab_from_file __P((struct proc *,struct vnode *,const char *));
-extern	int db_onpanic;
-#endif	/* DDB */
+void	Debugger __P((void));	/* XXX in DDB only */
 
 #ifdef SYSCALL_DEBUG
 void scdebug_call __P((struct proc *, register_t, register_t[]));

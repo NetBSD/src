@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: zs.c,v 1.2 1998/07/04 22:18:33 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
  * and then updated to reflect changes in 1.59
  * by Darrin B Jewell <jewell@mit.edu>  Mon Mar 30 20:24:46 1998
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

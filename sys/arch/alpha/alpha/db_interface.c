@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.2 1997/09/16 19:07:19 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.3 1998/07/04 22:18:13 jonathan Exp $ */
 
 /* 
  * Mach Operating System
@@ -47,9 +47,11 @@
  *	NASA Ames Research Center
  */
 
+#include "opt_ddb.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.2 1997/09/16 19:07:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.3 1998/07/04 22:18:13 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

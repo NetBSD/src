@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.2 1998/07/02 18:58:32 tsubai Exp $	*/
+/*	$NetBSD: zs.c,v 1.3 1998/07/04 22:18:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Bill Studenmund
@@ -52,6 +52,8 @@
  * intermediate version (mac68k using a local, patched version of
  * the m.i. drivers), with NetBSD 1.3 containing a full version.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 1998/06/30 11:59:13 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.21 1998/07/04 22:18:47 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,7 @@
  *	@(#)trap.c	8.5 (Berkeley) 1/4/94
  */
 
+#include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
 #include "opt_compat_sunos.h"

@@ -1,5 +1,6 @@
-/*	$NetBSD: aic6360.c,v 1.57 1998/05/23 18:32:29 matt Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.58 1998/07/04 22:18:49 jonathan Exp $	*/
 
+#include "opt_ddb.h"
 #ifdef DDB
 #define	integrate
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.1 1998/05/15 10:15:48 tsubai Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.2 1998/07/04 22:18:29 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -24,6 +24,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#if defined(_KERNEL)  && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
 
 #include <macppc/dev/dbdma.h>
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.2 1998/05/01 21:14:47 cgd Exp $       */
+/*      $NetBSD: pccons.c,v 1.3 1998/07/04 22:18:20 jonathan Exp $       */
 
 /*
  * Copyright 1997
@@ -100,6 +100,8 @@
 **
 **--
 */
+#include "opt_ddb.h"
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
@@ -3784,11 +3786,3 @@ cga_save_restore(int mode)
 }
 #endif
 #endif
-
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.3 1997/12/07 17:47:48 scottr Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.4 1998/07/04 22:18:27 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -24,14 +24,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
 
 #define	MC_REGSPACING	16
 #define	MC_REGSIZE	MACE_NREGS * MC_REGSPACING

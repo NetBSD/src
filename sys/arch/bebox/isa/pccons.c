@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.8 1998/03/21 22:52:59 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.9 1998/07/04 22:18:22 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -42,6 +42,8 @@
 /*
  * code to work keyboard & display for PC-style console
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

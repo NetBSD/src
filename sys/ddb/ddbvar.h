@@ -1,11 +1,11 @@
-/*	$NetBSD: stub.c,v 1.17 1998/07/04 22:18:44 jonathan Exp $	*/
+/*	$NetBSD: ddbvar.h,v 1.1 1998/07/04 22:18:48 jonathan Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Adam Glass and Gordon W. Ross.
+ * by Jonathan Stone.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,29 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Stubs to supply things needed when some options are OFF.
- */
-
-#include "opt_ddb.h"
-
-#include <sys/cdefs.h>
-
-void Debugger __P((void));
+#ifndef _DDBVAR_H_
+#define _DDBVAR_H_
 
 /*
- * XXX: isr.c:netintr() - move to conf.c?
+ * Externally-visible  debugger state and entrypoints
  */
 
-/*
- * When DDB is included, Debugger() comes from db_interface.c
- * otherwise we get the one compiled here.
- */
-#ifndef DDB
-void
-Debugger()
-{
-	__asm ("trap #15");
-}
-#endif	/* !DDB */
+extern	int db_onpanic;
 
+int ddb_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		    struct proc *));
+
+int	read_symtab_from_file __P((struct proc *,struct vnode *,const char *));
+
+#endif	/* !_DDBVAR_H_ */

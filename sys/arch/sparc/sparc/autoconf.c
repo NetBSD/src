@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.92 1998/06/09 01:57:45 tv Exp $ */
+/*	$NetBSD: autoconf.c,v 1.93 1998/07/04 22:18:39 jonathan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -46,6 +46,7 @@
  *
  *	@(#)autoconf.c	8.4 (Berkeley) 10/1/93
  */
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

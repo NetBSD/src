@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.20 1998/05/24 19:32:34 is Exp $	*/
+/*	$NetBSD: flsc.c,v 1.21 1998/07/04 22:18:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -40,6 +40,8 @@
  * Initial amiga Fastlane driver by Daniel Widenfalk.  Conversion to
  * 53c9x MI driver by Michael L. Hitch (mhitch@montana.edu).
  */
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

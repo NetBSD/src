@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 1998/06/09 01:57:44 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 1998/07/04 22:18:36 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -42,6 +42,7 @@
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
 

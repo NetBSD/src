@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 1998/07/02 18:46:28 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 1998/07/04 22:18:30 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "ipkdb.h"
 

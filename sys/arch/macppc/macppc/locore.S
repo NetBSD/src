@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 1998/06/21 13:46:02 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 1998/07/04 22:18:30 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,9 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ipkdb.h"
+#include "opt_ddb.h"
 #include "opt_uvm.h"
-
+#include "ipkdb.h"
 #include "assym.h"
 
 #include <sys/syscall.h>

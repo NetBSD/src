@@ -42,6 +42,8 @@
  *
  */
 
+#include "opt_ddb.h"
+
 /*---------------------------------------------------------------------------*
  *
  *	pcvt_kbd.c	VT220 Driver Keyboard Interface Code

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.13 1998/05/09 15:04:40 kleink Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.14 1998/07/04 22:18:53 jonathan Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -304,21 +304,8 @@ int			uvm_map_pageable __P((vm_map_t, vm_offset_t,
 				vm_offset_t, boolean_t));
 boolean_t		uvm_map_checkprot __P((vm_map_t, vm_offset_t,
 				vm_offset_t, vm_prot_t));
-#if defined(DDB)
-void			uvm_map_print __P((vm_map_t, boolean_t));
-void			uvm_map_printit __P((vm_map_t, boolean_t,
-				void (*) __P((const char *, ...))));
-#endif
 int			uvm_map_protect __P((vm_map_t, vm_offset_t, 
 				vm_offset_t, vm_prot_t, boolean_t));
-#if defined(DDB)
-void			uvm_object_print __P((struct uvm_object *, boolean_t));
-void			uvm_object_printit __P((struct uvm_object *, boolean_t,
-				void (*) __P((const char *, ...))));
-void			uvm_page_print __P((struct vm_page *, boolean_t));
-void			uvm_page_printit __P((struct vm_page *, boolean_t,
-				void (*) __P((const char *, ...))));
-#endif
 struct vmspace		*uvmspace_alloc __P((vm_offset_t, vm_offset_t,
 				boolean_t));
 void			uvmspace_init __P((struct vmspace *, struct pmap *,

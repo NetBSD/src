@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.17 1998/06/08 18:42:40 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.18 1998/07/04 22:18:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -34,6 +34,8 @@
  */
 
  /* All bugs are subject to removal without further notice */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
