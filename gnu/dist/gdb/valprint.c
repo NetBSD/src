@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "language.h"
 #include "demangle.h"
 #include "annotate.h"
+#include "valprint.h"
 
 #include <errno.h>
 
@@ -225,15 +226,56 @@ val_print_type_code_int (type, valaddr, stream)
 }
 
 /* Print a number according to FORMAT which is one of d,u,x,o,b,h,w,g.
-   The raison d'etre of this function is to consolidate printing of LONG_LONG's
-   into this one function.  Some platforms have long longs but don't have a
-   printf() that supports "ll" in the format string.  We handle these by seeing
-   if the number is actually a long, and if not we just bail out and print the
-   number in hex.  The format chars b,h,w,g are from
-   print_scalar_formatted().  If USE_LOCAL, format it according to the current
-   language (this should be used for most integers which GDB prints, the
-   exception is things like protocols where the format of the integer is
-   a protocol thing, not a user-visible thing).  */
+   The raison d'etre of this function is to consolidate printing of 
+   LONG_LONG's into this one function.  Some platforms have long longs but
+   don't have a printf() that supports "ll" in the format string.  We handle
+   these by seeing if the number is representable as either a signed or
+   unsigned long, depending upon what format is desired, and if not we just
+   bail out and print the number in hex.
+
+   The format chars b,h,w,g are from print_scalar_formatted().  If USE_LOCAL,
+   format it according to the current language (this should be used for most
+   integers which GDB prints, the exception is things like protocols where
+   the format of the integer is a protocol thing, not a user-visible thing).
+   */
+
+#if defined (CC_HAS_LONG_LONG) && !defined (PRINTF_HAS_LONG_LONG)
+static void
+print_decimal (stream, sign, use_local, val_ulong)
+     GDB_FILE *stream;
+     char *sign;
+     int use_local;
+     ULONGEST val_ulong;
+{
+  unsigned long temp[3];
+  int i = 0;
+  do
+    {
+      temp[i] = val_ulong % (1000 * 1000 * 1000);
+      val_ulong /= (1000 * 1000 * 1000);
+      i++;
+    }
+  while (val_ulong != 0 && i < (sizeof (temp) / sizeof (temp[0])));
+  switch (i)
+    {
+    case 1:
+      fprintf_filtered (stream, "%s%lu",
+			sign, temp[0]);
+      break;
+    case 2:
+      fprintf_filtered (stream, "%s%lu%09lu",
+			sign, temp[1], temp[0]);
+      break;
+    case 3:
+      fprintf_filtered (stream, "%s%lu%09lu%09lu",
+			sign, temp[2], temp[1], temp[0]);
+      break;
+    default:
+      abort ();
+    }
+  return;
+}
+#endif
 
 void
 print_longest (stream, format, use_local, val_long)
@@ -243,20 +285,62 @@ print_longest (stream, format, use_local, val_long)
      LONGEST val_long;
 {
 #if defined (CC_HAS_LONG_LONG) && !defined (PRINTF_HAS_LONG_LONG)
-  long vtop, vbot;
-
-  vtop = val_long >> (sizeof (long) * HOST_CHAR_BIT);
-  vbot = (long) val_long;
-
-  if ((format == 'd' && (val_long < INT_MIN || val_long > INT_MAX))
-      || ((format == 'u' || format == 'x') && (unsigned long long)val_long > UINT_MAX))
+  if (sizeof (long) < sizeof (LONGEST))
     {
-      fprintf_filtered (stream, "0x%lx%08lx", vtop, vbot);
-      return;
+      switch (format)
+	{
+	case 'd':
+	  {
+	    /* Print a signed value, that doesn't fit in a long */
+	    if ((long) val_long != val_long)
+	      {
+		if (val_long < 0)
+		  print_decimal (stream, "-", use_local, -val_long);
+		else
+		  print_decimal (stream, "", use_local, val_long);
+		return;
+	      }
+	    break;
+	  }
+	case 'u':
+	  {
+	    /* Print an unsigned value, that doesn't fit in a long */
+	    if ((unsigned long) val_long != (ULONGEST) val_long)
+	      {
+		print_decimal (stream, "", use_local, val_long);
+		return;
+	      }
+	    break;
+	  }
+	case 'x':
+	case 'o':
+	case 'b':
+	case 'h':
+	case 'w':
+	case 'g':
+	  /* Print as unsigned value, must fit completely in unsigned long */
+	  {
+	    unsigned long temp = val_long;
+	    if (temp != val_long)
+	      {
+		/* Urk, can't represent value in long so print in hex.
+		   Do shift in two operations so that if sizeof (long)
+		   == sizeof (LONGEST) we can avoid warnings from
+		   picky compilers about shifts >= the size of the
+		   shiftee in bits */
+		unsigned long vbot = (unsigned long) val_long;
+		LONGEST temp = (val_long >> (sizeof (long) * HOST_CHAR_BIT - 1));
+		unsigned long vtop = temp >> 1;
+		fprintf_filtered (stream, "0x%lx%08lx", vtop, vbot);
+		return;
+	      }
+	    break;
+	  }
+	}
     }
 #endif
 
-#ifdef PRINTF_HAS_LONG_LONG
+#if defined (CC_HAS_LONG_LONG) && defined (PRINTF_HAS_LONG_LONG)
   switch (format)
     {
     case 'd':
@@ -295,7 +379,7 @@ print_longest (stream, format, use_local, val_long)
     default:
       abort ();
     }
-#else /* !PRINTF_HAS_LONG_LONG */
+#else /* !CC_HAS_LONG_LONG || !PRINTF_HAS_LONG_LONG*/
   /* In the following it is important to coerce (val_long) to a long. It does
      nothing if !LONG_LONG, but it will chop off the top half (which we know
      we can ignore) if the host supports long longs.  */
@@ -315,34 +399,34 @@ print_longest (stream, format, use_local, val_long)
       fprintf_filtered (stream,
 			use_local ? local_hex_format_custom ("l")
 				  : "%lx",
-			(long) val_long);
+			(unsigned long) val_long);
       break;
     case 'o':
       fprintf_filtered (stream,
 			use_local ? local_octal_format_custom ("l")
 				  : "%lo",
-			(long) val_long);
+			(unsigned long) val_long);
       break;
     case 'b':
       fprintf_filtered (stream, local_hex_format_custom ("02l"),
-			(long) val_long);
+			(unsigned long) val_long);
       break;
     case 'h':
       fprintf_filtered (stream, local_hex_format_custom ("04l"),
-			(long) val_long);
+			(unsigned long) val_long);
       break;
     case 'w':
       fprintf_filtered (stream, local_hex_format_custom ("08l"),
-			(long) val_long);
+			(unsigned long) val_long);
       break;
     case 'g':
       fprintf_filtered (stream, local_hex_format_custom ("016l"),
-			(long) val_long);
+			(unsigned long) val_long);
       break;
     default:
       abort ();
     }
-#endif /* !PRINTF_HAS_LONG_LONG */
+#endif /* CC_HAS_LONG_LONG || PRINTF_HAS_LONG_LONG */
 }
 
 /* This used to be a macro, but I don't think it is called often enough
@@ -355,16 +439,18 @@ int
 longest_to_int (arg)
      LONGEST arg;
 {
+  /* Let the compiler do the work */
+  int rtnval = (int) arg;
 
-  /* This check is in case a system header has botched the
-     definition of INT_MIN, like on BSDI.  */
-  if (sizeof (LONGEST) <= sizeof (int))
-    return arg;
-
-  if (arg > INT_MAX || arg < INT_MIN)
-    error ("Value out of range.");
-
-  return arg;
+  /* Check for overflows or underflows */
+  if (sizeof (LONGEST) > sizeof (int))
+    {
+      if (rtnval != arg)
+	{
+	  error ("Value out of range.");
+	}
+    }
+  return (rtnval);
 }
 
 /* Print a floating point value of type TYPE, pointed to in GDB by VALADDR,

@@ -70,7 +70,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Signal handler for SIGWINCH `window size changed'. */
 
 #define	SIGWINCH_HANDLER  aix_resizewindow
-extern	void	aix_resizewindow ();
+extern void aix_resizewindow PARAMS ((void));
 
 /* `lines_per_page' and `chars_per_line' are local to utils.c. Rectify this. */
 

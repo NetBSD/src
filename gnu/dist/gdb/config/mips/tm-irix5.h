@@ -19,8 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "mips/tm-irix3.h"
 
-#define FORCE_LONG_LONG
-
 /* When calling functions on Irix 5 (or any MIPS SVR4 ABI compliant
    platform) $25 must hold the function address.  Dest_Reg is a macro
    used in CALL_DUMMY in tm-mips.h.  */
@@ -44,4 +42,3 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #undef SIGFRAME_FPREGSAVE_OFF
 #define SIGFRAME_FPREGSAVE_OFF	(SIGFRAME_BASE + 2 * 4 + 8 + 32 * 8 + 4)
 #define SIGFRAME_REG_SIZE	8
-

@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bcache.h"
 #include "gdb_string.h"		/* For memcpy declaration */
 
+static unsigned int hash PARAMS ((void *, int));
+static void *lookup_cache PARAMS ((void *, int, int, struct bcache *));
+
 /* FIXME:  Incredibly simplistic hash generator.  Probably way too expensive
  (consider long strings) and unlikely to have good distribution across hash
  values for typical input. */
@@ -173,16 +176,40 @@ print_bcache_statistics (bcachep, id)
   printf_filtered ("  Cached '%s' statistics:\n", id);
   printf_filtered ("    Cache hits: %d\n", bcachep -> cache_hits);
   printf_filtered ("    Cache misses: %d\n", bcachep -> cache_misses);
-  printf_filtered ("    Cache hit ratio: %d%%\n", ((bcachep -> cache_hits) * 100) /  (bcachep -> cache_hits + bcachep -> cache_misses));
+  printf_filtered ("    Cache hit ratio: ");
+  if (bcachep -> cache_hits + bcachep -> cache_misses > 0)
+    {
+      printf_filtered ("%d%%\n", ((bcachep -> cache_hits) * 100) /
+		       (bcachep -> cache_hits + bcachep -> cache_misses));
+    }
+  else
+    {
+      printf_filtered ("(not applicable)\n");
+    }
   printf_filtered ("    Space used for caching: %d\n", bcachep -> cache_bytes);
   printf_filtered ("    Space saved by cache hits: %d\n", bcachep -> cache_savings);
   printf_filtered ("    Number of bcache overflows: %d\n", bcachep -> bcache_overflows);
   printf_filtered ("    Number of index buckets used: %d\n", tcount);
   printf_filtered ("    Number of hash table buckets used: %d\n", hcount);
   printf_filtered ("    Number of chained items: %d\n", lcount);
-  printf_filtered ("    Average hash table population: %d%%\n",
-		   (hcount * 100) / (tcount * BCACHE_HASHSIZE));
-  printf_filtered ("    Average chain length %d\n", lcount / hcount);
+  printf_filtered ("    Average hash table population: ");
+  if (tcount > 0)
+    {
+      printf_filtered ("%d%%\n", (hcount * 100) / (tcount * BCACHE_HASHSIZE));
+    }
+  else
+    {
+      printf_filtered ("(not applicable)\n");
+    }
+  printf_filtered ("    Average chain length ");
+  if (hcount > 0)
+    {
+      printf_filtered ("%d\n", lcount / hcount);
+    }
+  else
+    {
+      printf_filtered ("(not applicable)\n");
+    }
   printf_filtered ("    Maximum chain length %d at %d:%d\n", lmax, lmaxt, lmaxh);
 }
 

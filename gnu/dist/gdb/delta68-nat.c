@@ -32,10 +32,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Return the address in the core dump or inferior of register REGNO.
    BLOCKEND is the address of the end of the user structure.  */
 
-unsigned int
+CORE_ADDR
 register_addr (regno, blockend)
      int	regno;
-     int	blockend;
+     CORE_ADDR	blockend;
 {
   static int	sysv68reg[] =
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1, 15, 16 };
@@ -76,4 +76,11 @@ _initialize_delta68_nat ()
       perror ("Cannot get kernel u area address");
       exit (1);
     }
+}
+
+clear_insn_cache ()
+{
+#ifdef MCT_TEXT /* in sys/signal.h on sysV68 R3V7.1 */
+  memctl(0, 4096, MCT_TEXT);
+#endif
 }

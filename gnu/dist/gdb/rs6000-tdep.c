@@ -1,5 +1,5 @@
 /* Target-dependent code for GDB, the GNU debugger.
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995
+   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -44,15 +44,21 @@ static struct sstep_breaks {
   char data[4];
 } stepBreaks[2];
 
-/* Static function prototypes */
+/* Hook for determining the TOC address when calling functions in the
+   inferior under AIX. The initialization code in rs6000-nat.c sets
+   this hook to point to find_toc_address.  */
 
-static CORE_ADDR find_toc_address PARAMS ((CORE_ADDR pc));
+CORE_ADDR (*find_toc_address_hook) PARAMS ((CORE_ADDR)) = NULL;
+
+/* Static function prototypes */
 
 static CORE_ADDR branch_dest PARAMS ((int opcode, int instr, CORE_ADDR pc,
 				      CORE_ADDR safety));
 
 static void frame_get_cache_fsr PARAMS ((struct frame_info *fi,
 					 struct rs6000_framedata *fdatap));
+
+static void pop_dummy_frame PARAMS ((void));
 
 /* Calculate the destination of a branch/jump.  Return -1 if not a branch.  */
 
@@ -63,7 +69,6 @@ branch_dest (opcode, instr, pc, safety)
      CORE_ADDR pc;
      CORE_ADDR safety;
 {
-  register long offset;
   CORE_ADDR dest;
   int immediate;
   int absolute;
@@ -92,7 +97,23 @@ branch_dest (opcode, instr, pc, safety)
 	ext_op = (instr>>1) & 0x3ff;
 
 	if (ext_op == 16)			/* br conditional register */
-	  dest = read_register (LR_REGNUM) & ~3;
+	  {
+	    dest = read_register (LR_REGNUM) & ~3;
+
+	    /* If we are about to return from a signal handler, dest is
+	       something like 0x3c90.  The current frame is a signal handler
+	       caller frame, upon completion of the sigreturn system call
+	       execution will return to the saved PC in the frame.  */
+	    if (dest < TEXT_SEGMENT_BASE)
+	      {
+		struct frame_info *fi;
+
+		fi = get_current_frame ();
+		if (fi != NULL)
+		  dest = read_memory_integer (fi->frame + SIG_FRAME_PC_OFFSET,
+					      4);
+	      }
+	  }
 
 	else if (ext_op == 528)			/* br cond to count reg */
 	  {
@@ -118,7 +139,7 @@ branch_dest (opcode, instr, pc, safety)
 
 void
 single_step (signal)
-     int signal;
+     enum target_signal signal;
 {
 #define	INSNLEN(OPCODE)	 4
 
@@ -339,9 +360,9 @@ skip_prologue (pc, fdata)
 
       /* store parameters in stack via frame pointer */
       } else if (framep &&
-		 (op & 0xfc1f0000) == 0x901f0000 ||	/* st rx,NUM(r1) */
+		 ((op & 0xfc1f0000) == 0x901f0000 ||	/* st rx,NUM(r1) */
 		 (op & 0xfc1f0000) == 0xd81f0000 ||	/* stfd Rx,NUM(r1) */
-		 (op & 0xfc1f0000) == 0xfc1f0000) {	/* frsp, fp?,NUM(r1) */
+		 (op & 0xfc1f0000) == 0xfc1f0000)) {	/* frsp, fp?,NUM(r1) */
 	continue;
 
       /* Set up frame pointer */
@@ -534,6 +555,7 @@ saved SP register!  There should *not* be a separate stack in the
 GDB process that keeps track of these dummy frames!  -- gnu@cygnus.com Aug92
  */
    
+static void
 pop_dummy_frame ()
 {
   CORE_ADDR sp, pc;
@@ -635,31 +657,36 @@ pop_frame ()
    its argumets will be passed by gdb. */
 
 void
-fix_call_dummy (dummyname, pc, fun, nargs, type)
+rs6000_fix_call_dummy (dummyname, pc, fun, nargs, args, type, gcc_p)
      char *dummyname;
      CORE_ADDR pc;
      CORE_ADDR fun;
-     int nargs;					/* not used */
-     int type;					/* not used */
+     int nargs;
+     value_ptr *args;
+     struct type *type;
+     int gcc_p;
 {
 #define	TOC_ADDR_OFFSET		20
 #define	TARGET_ADDR_OFFSET	28
 
   int ii;
   CORE_ADDR target_addr;
-  CORE_ADDR tocvalue;
+
+  if (find_toc_address_hook != NULL)
+    {
+      CORE_ADDR tocvalue;
+
+      tocvalue = (*find_toc_address_hook) (fun);
+      ii  = *(int*)((char*)dummyname + TOC_ADDR_OFFSET);
+      ii = (ii & 0xffff0000) | (tocvalue >> 16);
+      *(int*)((char*)dummyname + TOC_ADDR_OFFSET) = ii;
+
+      ii  = *(int*)((char*)dummyname + TOC_ADDR_OFFSET+4);
+      ii = (ii & 0xffff0000) | (tocvalue & 0x0000ffff);
+      *(int*)((char*)dummyname + TOC_ADDR_OFFSET+4) = ii;
+    }
 
   target_addr = fun;
-  tocvalue = find_toc_address (target_addr);
-
-  ii  = *(int*)((char*)dummyname + TOC_ADDR_OFFSET);
-  ii = (ii & 0xffff0000) | (tocvalue >> 16);
-  *(int*)((char*)dummyname + TOC_ADDR_OFFSET) = ii;
-
-  ii  = *(int*)((char*)dummyname + TOC_ADDR_OFFSET+4);
-  ii = (ii & 0xffff0000) | (tocvalue & 0x0000ffff);
-  *(int*)((char*)dummyname + TOC_ADDR_OFFSET+4) = ii;
-
   ii  = *(int*)((char*)dummyname + TARGET_ADDR_OFFSET);
   ii = (ii & 0xffff0000) | (target_addr >> 16);
   *(int*)((char*)dummyname + TARGET_ADDR_OFFSET) = ii;
@@ -679,7 +706,7 @@ fix_call_dummy (dummyname, pc, fun, nargs, type)
    stack.
 
    If the function is returning a structure, then the return address is passed
-   in r3, then the first 7 words of the parametes can be passed in registers,
+   in r3, then the first 7 words of the parameters can be passed in registers,
    starting from r4. */
 
 CORE_ADDR
@@ -690,15 +717,16 @@ push_arguments (nargs, args, sp, struct_return, struct_addr)
      int struct_return;
      CORE_ADDR struct_addr;
 {
-  int ii, len;
+  int ii;
+  int len = 0;
   int argno;					/* current argument number */
   int argbytes;					/* current argument byte */
   char tmp_buffer [50];
   int f_argno = 0;				/* current floating point argno */
-  value_ptr arg;
+  value_ptr arg = 0;
   struct type *type;
 
-  CORE_ADDR saved_sp, pc;
+  CORE_ADDR saved_sp;
 
   if ( dummy_frame_count <= 0)
     printf_unfiltered ("FATAL ERROR -push_arguments()! frame not found!!\n");
@@ -942,20 +970,29 @@ frameless_function_invocation (fi)
   CORE_ADDR func_start;
   struct rs6000_framedata fdata;
 
-  if (fi->next != NULL)
-    /* Don't even think about framelessness except on the innermost frame.  */
-    /* FIXME: Can also be frameless if fi->next->signal_handler_caller (if
-       a signal happens while executing in a frameless function).  */
+  /* Don't even think about framelessness except on the innermost frame
+     or if the function was interrupted by a signal.  */
+  if (fi->next != NULL && !fi->next->signal_handler_caller)
     return 0;
   
-  func_start = get_pc_function_start (fi->pc) + FUNCTION_START_OFFSET;
+  func_start = get_pc_function_start (fi->pc);
 
   /* If we failed to find the start of the function, it is a mistake
      to inspect the instructions. */
 
   if (!func_start)
-    return 0;
+    {
+      /* A frame with a zero PC is usually created by dereferencing a NULL
+	 function pointer, normally causing an immediate core dump of the
+	 inferior. Mark function as frameless, as the inferior has no chance
+	 of setting up a stack frame.  */
+      if (fi->pc == 0)
+	return 1;
+      else
+	return 0;
+    }
 
+  func_start += FUNCTION_START_OFFSET;
   (void) skip_prologue (func_start, &fdata);
   return fdata.frameless;
 }
@@ -968,7 +1005,6 @@ frame_saved_pc (fi)
 {
   CORE_ADDR func_start;
   struct rs6000_framedata fdata;
-  int frameless;
 
   if (fi->signal_handler_caller)
     return read_memory_integer (fi->frame + SIG_FRAME_PC_OFFSET, 4);
@@ -983,7 +1019,13 @@ frame_saved_pc (fi)
   (void) skip_prologue (func_start, &fdata);
 
   if (fdata.lr_offset == 0 && fi->next != NULL)
-    return read_memory_integer (rs6000_frame_chain (fi) + DEFAULT_LR_SAVE, 4);
+    {
+      if (fi->next->signal_handler_caller)
+	return read_memory_integer (fi->next->frame + SIG_FRAME_LR_OFFSET, 4);
+      else
+	return read_memory_integer (rs6000_frame_chain (fi) + DEFAULT_LR_SAVE,
+				    4);
+    }
 
   if (fdata.lr_offset == 0)
     return read_register (LR_REGNUM);
@@ -1132,110 +1174,18 @@ rs6000_frame_chain (thisframe)
     return 0;
   if (thisframe->signal_handler_caller)
     fp = read_memory_integer (thisframe->frame + SIG_FRAME_FP_OFFSET, 4);
+  else if (thisframe->next != NULL
+	   && thisframe->next->signal_handler_caller
+	   && frameless_function_invocation (thisframe))
+    /* A frameless function interrupted by a signal did not change the
+       frame pointer.  */
+    fp = FRAME_FP (thisframe);
   else
     fp = read_memory_integer ((thisframe)->frame, 4);
 
   return fp;
 }
 
-/* Keep an array of load segment information and their TOC table addresses.
-   This info will be useful when calling a shared library function by hand. */
-   
-struct loadinfo {
-  CORE_ADDR textorg, dataorg;
-  unsigned long toc_offset;
-};
-
-#define	LOADINFOLEN	10
-
-static	struct loadinfo *loadinfo = NULL;
-static	int	loadinfolen = 0;
-static	int	loadinfotocindex = 0;
-static	int	loadinfotextindex = 0;
-
-
-void
-xcoff_init_loadinfo ()
-{
-  loadinfotocindex = 0;
-  loadinfotextindex = 0;
-
-  if (loadinfolen == 0) {
-    loadinfo = (struct loadinfo *)
-               xmalloc (sizeof (struct loadinfo) * LOADINFOLEN);
-    loadinfolen = LOADINFOLEN;
-  }
-}
-
-
-/* FIXME -- this is never called!  */
-void
-free_loadinfo ()
-{
-  if (loadinfo)
-    free (loadinfo);
-  loadinfo = NULL;
-  loadinfolen = 0;
-  loadinfotocindex = 0;
-  loadinfotextindex = 0;
-}
-
-/* this is called from xcoffread.c */
-
-void
-xcoff_add_toc_to_loadinfo (tocoff)
-     unsigned long tocoff;
-{
-  while (loadinfotocindex >= loadinfolen) {
-    loadinfolen += LOADINFOLEN;
-    loadinfo = (struct loadinfo *)
-               xrealloc (loadinfo, sizeof(struct loadinfo) * loadinfolen);
-  }
-  loadinfo [loadinfotocindex++].toc_offset = tocoff;
-}
-
-void
-add_text_to_loadinfo (textaddr, dataaddr)
-     CORE_ADDR textaddr;
-     CORE_ADDR dataaddr;
-{
-  while (loadinfotextindex >= loadinfolen) {
-    loadinfolen += LOADINFOLEN;
-    loadinfo = (struct loadinfo *)
-               xrealloc (loadinfo, sizeof(struct loadinfo) * loadinfolen);
-  }
-  loadinfo [loadinfotextindex].textorg = textaddr;
-  loadinfo [loadinfotextindex].dataorg = dataaddr;
-  ++loadinfotextindex;
-}
-
-
-/* Note that this assumes that the "textorg" and "dataorg" elements of
-   a member of this array are correlated with the "toc_offset" element
-   of the same member.  This is taken care of because the loops which
-   assign the former (in xcoff_relocate_symtab or xcoff_relocate_core)
-   and the latter (in scan_xcoff_symtab, via vmap_symtab, in
-   vmap_ldinfo or xcoff_relocate_core) traverse the same objfiles in
-   the same order.  */
-
-static CORE_ADDR
-find_toc_address (pc)
-     CORE_ADDR pc;
-{
-  int ii, toc_entry, tocbase = 0;
-
-  toc_entry = -1;
-  for (ii=0; ii < loadinfotextindex; ++ii)
-    if (pc > loadinfo[ii].textorg && loadinfo[ii].textorg > tocbase) {
-      toc_entry = ii;
-      tocbase = loadinfo[ii].textorg;
-    }
-
-  if (toc_entry == -1)
-    error ("Unable to find TOC entry for pc 0x%x\n", pc);
-  return loadinfo[toc_entry].dataorg + loadinfo[toc_entry].toc_offset;
-}
-
 /* Return nonzero if ADDR (a function pointer) is in the data space and
    is therefore a special function pointer.  */
 

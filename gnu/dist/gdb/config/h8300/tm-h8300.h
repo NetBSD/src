@@ -19,9 +19,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Contributed by Steve Chamberlain sac@cygnus.com */
 
+#ifdef __STDC__
+struct frame_info;
+struct frame_saved_regs;
+struct value;
+struct type;
+#endif
 
 /* 1 if debugging H8/300H application */
 extern int h8300hmode;
+extern int h8300smode;
 
 /* Number of bytes in a word */
 
@@ -40,9 +47,9 @@ extern int h8300hmode;
    indicate real, cached values.  */
 
 #define INIT_EXTRA_FRAME_INFO(fromleaf, fi) \
-	init_extra_frame_info (fromleaf, fi)
+	h8300_init_extra_frame_info (fromleaf, fi)
 
-extern void init_extra_frame_info ();
+extern void h8300_init_extra_frame_info ();
 
 #define IEEE_FLOAT
 /* Define the bit, byte, and word ordering of the machine.  */
@@ -141,10 +148,12 @@ extern CORE_ADDR h8300_skip_prologue ();
    to be actual register numbers as far as the user is concerned
    but do serve to get the desired values when passed to read_register.  */
 
-#define FP_REGNUM 6		/* Contains address of executing stack frame */
-#define SP_REGNUM 7		/* Contains address of top of stack */
-#define CCR_REGNUM 8		/* Contains processor status */
-#define PC_REGNUM 9		/* Contains program counter */
+#define ARG0_REGNUM    0	/* first reg in which an arg may be passed */
+#define ARGLAST_REGNUM 2	/* last  reg in which an arg may be passed */
+#define FP_REGNUM      6	/* Contain saddress of executing stack frame */
+#define SP_REGNUM      7	/* Contains address of top of stack */
+#define CCR_REGNUM     8	/* Contains processor status */
+#define PC_REGNUM      9	/* Contains program counter */
 
 /* Extract from an array REGBUF containing the (raw) register state
    a function return value of type TYPE, and copy that, in virtual format,
@@ -152,24 +161,33 @@ extern CORE_ADDR h8300_skip_prologue ();
 
 /* FIXME: Won't work with both h8/300's.  */
 
+extern void h8300_extract_return_value PARAMS((struct type *, char *, char *));
 #define EXTRACT_RETURN_VALUE(TYPE,REGBUF,VALBUF) \
-  memcpy (VALBUF, (char *)(REGBUF), TYPE_LENGTH(TYPE))
+    h8300_extract_return_value (TYPE, (char *)(REGBUF), (char *)(VALBUF))
 
 /* Write into appropriate registers a function return value
    of type TYPE, given in virtual format.  Assumes floats are passed
    in d0/d1.  */
 /* FIXME: Won't work with both h8/300's.  */
 
+extern void h8300_store_return_value PARAMS((struct type *, char *));
 #define STORE_RETURN_VALUE(TYPE,VALBUF) \
-  write_register_bytes (0, VALBUF, TYPE_LENGTH (TYPE))
+    h8300_store_return_value(TYPE, (char *) (VALBUF))
+
+/* struct passing and returning stuff */
+#define STORE_STRUCT_RETURN(STRUCT_ADDR, SP)	\
+	write_register (0, STRUCT_ADDR)
+
+#define USE_STRUCT_CONVENTION(gcc_p, type)	(1)
 
 /* Extract from an array REGBUF containing the (raw) register state
    the address in which a function should return its structure value,
    as a CORE_ADDR (or an expression that can be used as one).  */
-/* FIXME: Won't work with both h8/300's.  */
 
-#define EXTRACT_STRUCT_VALUE_ADDRESS(REGBUF) (*(CORE_ADDR *)(REGBUF))
-
+#define EXTRACT_STRUCT_VALUE_ADDRESS(REGBUF) \
+     extract_address (REGBUF + REGISTER_BYTE (0), \
+		      REGISTER_RAW_SIZE (0))
+     
 /* Describe the pointer in each stack frame to the previous stack frame
    (its caller).  */
 
@@ -180,7 +198,6 @@ extern CORE_ADDR h8300_skip_prologue ();
    it means the given frame is the outermost one and has no caller.  */
 
 #define FRAME_CHAIN(FRAME) h8300_frame_chain(FRAME)
-struct frame_info ;
 CORE_ADDR h8300_frame_chain PARAMS ((struct frame_info *));
 
 /* In the case of the H8/300, the frame's nominal address
@@ -211,7 +228,7 @@ CORE_ADDR h8300_frame_chain PARAMS ((struct frame_info *));
    LOCALS1    <-SP POINTS HERE
    */
 
-#define FRAME_SAVED_PC(FRAME) frame_saved_pc(FRAME)
+#define FRAME_SAVED_PC(FRAME) h8300_frame_saved_pc(FRAME)
 
 #define FRAME_ARGS_ADDRESS(fi) frame_args_address(fi)
 
@@ -236,16 +253,8 @@ CORE_ADDR h8300_frame_chain PARAMS ((struct frame_info *));
    the address we return for it IS the sp for the next frame.  */
 
 #define FRAME_FIND_SAVED_REGS(frame_info, frame_saved_regs)	    \
-   frame_find_saved_regs(frame_info, &(frame_saved_regs))
+   h8300_frame_find_saved_regs(frame_info, &(frame_saved_regs))
 
-
-/* Push an empty stack frame, to record the current PC, etc.  */
-
-/*#define PUSH_DUMMY_FRAME	{ h8300_push_dummy_frame (); }*/
-
-/* Discard from the stack the innermost frame, restoring all registers.  */
-
-#define POP_FRAME		{ h8300_pop_frame (); }
 
 typedef unsigned short INSN_WORD;
 
@@ -256,3 +265,40 @@ typedef unsigned short INSN_WORD;
 
 #define NUM_REALREGS 10
 #define NOP { 0x01, 0x80} /* A sleep insn */
+
+#define BELIEVE_PCC_PROMOTION 1
+
+/*
+ * CALL_DUMMY stuff:
+ */
+
+#define USE_GENERIC_DUMMY_FRAMES
+#define CALL_DUMMY			{0}
+#define CALL_DUMMY_LENGTH		(0)
+#define CALL_DUMMY_ADDRESS()		entry_point_address ()
+#define CALL_DUMMY_LOCATION		AT_ENTRY_POINT
+#define CALL_DUMMY_START_OFFSET		(0)
+#define CALL_DUMMY_BREAKPOINT_OFFSET	(0)
+
+extern CORE_ADDR h8300_push_arguments PARAMS ((int nargs, 
+					       struct value **args, 
+					       CORE_ADDR sp,
+					       unsigned char struct_return,
+					       CORE_ADDR struct_addr));
+extern CORE_ADDR h8300_push_return_address PARAMS ((CORE_ADDR, CORE_ADDR));
+
+#define PC_IN_CALL_DUMMY(PC, SP, FP)	generic_pc_in_call_dummy (PC, SP)
+#define FIX_CALL_DUMMY(DUMMY, START_SP, FUNADDR, NARGS, ARGS, TYPE, GCCP)
+#define PUSH_ARGUMENTS(NARGS, ARGS, SP, STRUCT_RETURN, STRUCT_ADDR) \
+  (SP) = h8300_push_arguments (NARGS, ARGS, SP, STRUCT_RETURN, STRUCT_ADDR)
+/* Push an empty stack frame, to record the current PC, etc.  */
+#define PUSH_DUMMY_FRAME	generic_push_dummy_frame ()
+/* Discard from the stack the innermost frame, restoring all registers.  */
+#define POP_FRAME		h8300_pop_frame ()
+#define PUSH_RETURN_ADDRESS(PC, SP)	h8300_push_return_address (PC, SP)
+
+/* override the standard get_saved_register function with 
+   one that takes account of generic CALL_DUMMY frames */
+#define GET_SAVED_REGISTER
+
+

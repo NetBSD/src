@@ -1,0 +1,1385 @@
+This is Info file stabs.info, produced by Makeinfo version 1.68 from
+the input file ../../../devo/gdb/doc/stabs.texinfo.
+
+START-INFO-DIR-ENTRY
+* Stabs: (stabs).                 The "stabs" debugging information format.
+END-INFO-DIR-ENTRY
+
+   This document describes the stabs debugging symbol tables.
+
+   Copyright 1992, 93, 94, 95, 1997 Free Software Foundation, Inc.
+Contributed by Cygnus Support.  Written by Julia Menapace, Jim Kingdon,
+and David MacKenzie.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy or distribute modified versions of this
+manual under the terms of the GPL (for which purpose this text may be
+regarded as a program in the language TeX).
+
+
+File: stabs.info,  Node: Class Instance,  Next: Methods,  Prev: Simple Classes,  Up: Cplusplus
+
+Class Instance
+==============
+
+   As shown above, describing even a simple C++ class definition is
+accomplished by massively extending the stab format used in C to
+describe structure types.  However, once the class is defined, C stabs
+with no modifications can be used to describe class instances.  The
+following source:
+
+     main () {
+             baseA AbaseA;
+     }
+
+yields the following stab describing the class instance.  It looks no
+different from a standard C stab describing a local variable.
+
+     .stabs "name:type_ref(baseA)", N_LSYM, NIL, NIL, frame_ptr_offset
+
+     .stabs "AbaseA:20",128,0,0,-20
+
+
+File: stabs.info,  Node: Methods,  Next: Method Type Descriptor,  Prev: Class Instance,  Up: Cplusplus
+
+Method Definition
+=================
+
+   The class definition shown above declares Ameth.  The C++ source
+below defines Ameth:
+
+     int
+     baseA::Ameth(int in, char other)
+     {
+             return in;
+     };
+
+   This method definition yields three stabs following the code of the
+method.  One stab describes the method itself and following two describe
+its parameters.  Although there is only one formal argument all methods
+have an implicit argument which is the `this' pointer.  The `this'
+pointer is a pointer to the object on which the method was called.  Note
+that the method name is mangled to encode the class name and argument
+types.  Name mangling is described in the ARM (`The Annotated C++
+Reference Manual', by Ellis and Stroustrup, ISBN 0-201-51459-1);
+`gpcompare.texi' in Cygnus GCC distributions describes the differences
+between GNU mangling and ARM mangling.
+
+     .stabs "name:symbol_desriptor(global function)return_type(int)",
+             N_FUN, NIL, NIL, code_addr_of_method_start
+     
+     .stabs "Ameth__5baseAic:F1",36,0,0,_Ameth__5baseAic
+
+   Here is the stab for the `this' pointer implicit argument.  The name
+of the `this' pointer is always `this'.  Type 19, the `this' pointer is
+defined as a pointer to type 20, `baseA', but a stab defining `baseA'
+has not yet been emited.  Since the compiler knows it will be emited
+shortly, here it just outputs a cross reference to the undefined
+symbol, by prefixing the symbol name with `xs'.
+
+     .stabs "name:sym_desc(register param)type_def(19)=
+             type_desc(ptr to)type_ref(baseA)=
+             type_desc(cross-reference to)baseA:",N_RSYM,NIL,NIL,register_number
+     
+     .stabs "this:P19=*20=xsbaseA:",64,0,0,8
+
+   The stab for the explicit integer argument looks just like a
+parameter to a C function.  The last field of the stab is the offset
+from the argument pointer, which in most systems is the same as the
+frame pointer.
+
+     .stabs "name:sym_desc(value parameter)type_ref(int)",
+             N_PSYM,NIL,NIL,offset_from_arg_ptr
+     
+     .stabs "in:p1",160,0,0,72
+
+   << The examples that follow are based on A1.C >>
+
+
+File: stabs.info,  Node: Method Type Descriptor,  Next: Member Type Descriptor,  Prev: Methods,  Up: Cplusplus
+
+The `#' Type Descriptor
+=======================
+
+   This is like the `f' type descriptor for functions (*note Function
+Types::.), except that a function which uses the `#' type descriptor
+takes an extra argument as its first argument, for the `this' pointer.
+The `#' type descriptor is optionally followed by the types of the
+arguments, then another `#'.  If the types of the arguments are
+omitted, so that the second `#' immediately follows the `#' which is
+the type descriptor, the arguments are being omitted (to save space)
+and can be deduced from the mangled name of the method.  After the
+second `#' there is type information for the return type of the method
+and a semicolon.
+
+   Note that although such a type will normally be used to describe
+fields in structures, unions, or classes, for at least some versions of
+the compiler it can also be used in other contexts.
+
+
+File: stabs.info,  Node: Member Type Descriptor,  Next: Protections,  Prev: Method Type Descriptor,  Up: Cplusplus
+
+The `@' Type Descriptor
+=======================
+
+   The `@' type descriptor is for a member (class and variable) type.
+It is followed by type information for the offset basetype, a comma, and
+type information for the type of the field being pointed to.  (FIXME:
+this is acknowledged to be gibberish.  Can anyone say what really goes
+here?).
+
+   Note that there is a conflict between this and type attributes
+(*note String Field::.); both use type descriptor `@'.  Fortunately,
+the `@' type descriptor used in this C++ sense always will be followed
+by a digit, `(', or `-', and type attributes never start with those
+things.
+
+
+File: stabs.info,  Node: Protections,  Next: Method Modifiers,  Prev: Member Type Descriptor,  Up: Cplusplus
+
+Protections
+===========
+
+   In the simple class definition shown above all member data and
+functions were publicly accessable.  The example that follows contrasts
+public, protected and privately accessable fields and shows how these
+protections are encoded in C++ stabs.
+
+   If the character following the `FIELD-NAME:' part of the string is
+`/', then the next character is the visibility.  `0' means private, `1'
+means protected, and `2' means public.  Debuggers should ignore
+visibility characters they do not recognize, and assume a reasonable
+default (such as public) (GDB 4.11 does not, but this should be fixed
+in the next GDB release).  If no visibility is specified the field is
+public.  The visibility `9' means that the field has been optimized out
+and is public (there is no way to specify an optimized out field with a
+private or protected visibility).  Visibility `9' is not supported by
+GDB 4.11; this should be fixed in the next GDB release.
+
+   The following C++ source:
+
+     class vis {
+     private:
+             int   priv;
+     protected:
+             char  prot;
+     public:
+             float pub;
+     };
+
+generates the following stab:
+
+     # 128 is N_LSYM
+     .stabs "vis:T19=s12priv:/01,0,32;prot:/12,32,8;pub:12,64,32;;",128,0,0,0
+
+   `vis:T19=s12' indicates that type number 19 is a 12 byte structure
+named `vis' The `priv' field has public visibility (`/0'), type int
+(`1'), and offset and size `,0,32;'.  The `prot' field has protected
+visibility (`/1'), type char (`2') and offset and size `,32,8;'.  The
+`pub' field has type float (`12'), and offset and size `,64,32;'.
+
+   Protections for member functions are signified by one digit embeded
+in the field part of the stab describing the method.  The digit is 0 if
+private, 1 if protected and 2 if public.  Consider the C++ class
+definition below:
+
+     class all_methods {
+     private:
+             int   priv_meth(int in){return in;};
+     protected:
+             char  protMeth(char in){return in;};
+     public:
+             float pubMeth(float in){return in;};
+     };
+
+   It generates the following stab.  The digit in question is to the
+left of an `A' in each case.  Notice also that in this case two symbol
+descriptors apply to the class name struct tag and struct type.
+
+     .stabs "class_name:sym_desc(struct tag&type)type_def(21)=
+             sym_desc(struct)struct_bytes(1)
+             meth_name::type_def(22)=sym_desc(method)returning(int);
+             :args(int);protection(private)modifier(normal)virtual(no);
+             meth_name::type_def(23)=sym_desc(method)returning(char);
+             :args(char);protection(protected)modifier(normal)virual(no);
+             meth_name::type_def(24)=sym_desc(method)returning(float);
+             :args(float);protection(public)modifier(normal)virtual(no);;",
+             N_LSYM,NIL,NIL,NIL
+
+     .stabs "all_methods:Tt21=s1priv_meth::22=##1;:i;0A.;protMeth::23=##2;:c;1A.;
+             pubMeth::24=##12;:f;2A.;;",128,0,0,0
+
+
+File: stabs.info,  Node: Method Modifiers,  Next: Virtual Methods,  Prev: Protections,  Up: Cplusplus
+
+Method Modifiers (`const', `volatile', `const volatile')
+========================================================
+
+   << based on a6.C >>
+
+   In the class example described above all the methods have the normal
+modifier.  This method modifier information is located just after the
+protection information for the method.  This field has four possible
+character values.  Normal methods use `A', const methods use `B',
+volatile methods use `C', and const volatile methods use `D'.  Consider
+the class definition below:
+
+     class A {
+     public:
+             int ConstMeth (int arg) const { return arg; };
+             char VolatileMeth (char arg) volatile { return arg; };
+             float ConstVolMeth (float arg) const volatile {return arg; };
+     };
+
+   This class is described by the following stab:
+
+     .stabs "class(A):sym_desc(struct)type_def(20)=type_desc(struct)struct_bytes(1)
+             meth_name(ConstMeth)::type_def(21)sym_desc(method)
+             returning(int);:arg(int);protection(public)modifier(const)virtual(no);
+             meth_name(VolatileMeth)::type_def(22)=sym_desc(method)
+             returning(char);:arg(char);protection(public)modifier(volatile)virt(no)
+             meth_name(ConstVolMeth)::type_def(23)=sym_desc(method)
+             returning(float);:arg(float);protection(public)modifer(const volatile)
+             virtual(no);;", ...
+
+     .stabs "A:T20=s1ConstMeth::21=##1;:i;2B.;VolatileMeth::22=##2;:c;2C.;
+                  ConstVolMeth::23=##12;:f;2D.;;",128,0,0,0
+
+
+File: stabs.info,  Node: Virtual Methods,  Next: Inheritence,  Prev: Method Modifiers,  Up: Cplusplus
+
+Virtual Methods
+===============
+
+   << The following examples are based on a4.C >>
+
+   The presence of virtual methods in a class definition adds additional
+data to the class description.  The extra data is appended to the
+description of the virtual method and to the end of the class
+description.  Consider the class definition below:
+
+     class A {
+     public:
+             int Adat;
+             virtual int A_virt (int arg) { return arg; };
+     };
+
+   This results in the stab below describing class A.  It defines a new
+type (20) which is an 8 byte structure.  The first field of the class
+struct is `Adat', an integer, starting at structure offset 0 and
+occupying 32 bits.
+
+   The second field in the class struct is not explicitly defined by the
+C++ class definition but is implied by the fact that the class contains
+a virtual method.  This field is the vtable pointer.  The name of the
+vtable pointer field starts with `$vf' and continues with a type
+reference to the class it is part of.  In this example the type
+reference for class A is 20 so the name of its vtable pointer field is
+`$vf20', followed by the usual colon.
+
+   Next there is a type definition for the vtable pointer type (21).
+This is in turn defined as a pointer to another new type (22).
+
+   Type 22 is the vtable itself, which is defined as an array, indexed
+by a range of integers between 0 and 1, and whose elements are of type
+17.  Type 17 was the vtable record type defined by the boilerplate C++
+type definitions, as shown earlier.
+
+   The bit offset of the vtable pointer field is 32.  The number of bits
+in the field are not specified when the field is a vtable pointer.
+
+   Next is the method definition for the virtual member function
+`A_virt'.  Its description starts out using the same format as the
+non-virtual member functions described above, except instead of a dot
+after the `A' there is an asterisk, indicating that the function is
+virtual.  Since is is virtual some addition information is appended to
+the end of the method description.
+
+   The first number represents the vtable index of the method.  This is
+a 32 bit unsigned number with the high bit set, followed by a
+semi-colon.
+
+   The second number is a type reference to the first base class in the
+inheritence hierarchy defining the virtual member function.  In this
+case the class stab describes a base class so the virtual function is
+not overriding any other definition of the method.  Therefore the
+reference is to the type number of the class that the stab is
+describing (20).
+
+   This is followed by three semi-colons.  One marks the end of the
+current sub-section, one marks the end of the method field, and the
+third marks the end of the struct definition.
+
+   For classes containing virtual functions the very last section of the
+string part of the stab holds a type reference to the first base class.
+This is preceeded by `~%' and followed by a final semi-colon.
+
+     .stabs "class_name(A):type_def(20)=sym_desc(struct)struct_bytes(8)
+             field_name(Adat):type_ref(int),bit_offset(0),field_bits(32);
+             field_name(A virt func ptr):type_def(21)=type_desc(ptr to)type_def(22)=
+             sym_desc(array)index_type_ref(range of int from 0 to 1);
+             elem_type_ref(vtbl elem type),
+             bit_offset(32);
+             meth_name(A_virt)::typedef(23)=sym_desc(method)returning(int);
+             :arg_type(int),protection(public)normal(yes)virtual(yes)
+             vtable_index(1);class_first_defining(A);;;~%first_base(A);",
+             N_LSYM,NIL,NIL,NIL
+
+     .stabs "A:t20=s8Adat:1,0,32;$vf20:21=*22=ar1;0;1;17,32;
+             A_virt::23=##1;:i;2A*-2147483647;20;;;~%20;",128,0,0,0
+
+
+File: stabs.info,  Node: Inheritence,  Next: Virtual Base Classes,  Prev: Virtual Methods,  Up: Cplusplus
+
+Inheritence
+===========
+
+   Stabs describing C++ derived classes include additional sections that
+describe the inheritence hierarchy of the class.  A derived class stab
+also encodes the number of base classes.  For each base class it tells
+if the base class is virtual or not, and if the inheritence is private
+or public.  It also gives the offset into the object of the portion of
+the object corresponding to each base class.
+
+   This additional information is embeded in the class stab following
+the number of bytes in the struct.  First the number of base classes
+appears bracketed by an exclamation point and a comma.
+
+   Then for each base type there repeats a series: a virtual character,
+a visibilty character, a number, a comma, another number, and a
+semi-colon.
+
+   The virtual character is `1' if the base class is virtual and `0' if
+not.  The visibility character is `2' if the derivation is public, `1'
+if it is protected, and `0' if it is private.  Debuggers should ignore
+virtual or visibility characters they do not recognize, and assume a
+reasonable default (such as public and non-virtual) (GDB 4.11 does not,
+but this should be fixed in the next GDB release).
+
+   The number following the virtual and visibility characters is the
+offset from the start of the object to the part of the object
+pertaining to the base class.
+
+   After the comma, the second number is a type_descriptor for the base
+type.  Finally a semi-colon ends the series, which repeats for each
+base class.
+
+   The source below defines three base classes `A', `B', and `C' and
+the derived class `D'.
+
+     class A {
+     public:
+             int Adat;
+             virtual int A_virt (int arg) { return arg; };
+     };
+     
+     class B {
+     public:
+             int B_dat;
+             virtual int B_virt (int arg) {return arg; };
+     };
+     
+     class C {
+     public:
+             int Cdat;
+             virtual int C_virt (int arg) {return arg; };
+     };
+     
+     class D : A, virtual B, public C {
+     public:
+             int Ddat;
+             virtual int A_virt (int arg ) { return arg+1; };
+             virtual int B_virt (int arg)  { return arg+2; };
+             virtual int C_virt (int arg)  { return arg+3; };
+             virtual int D_virt (int arg)  { return arg; };
+     };
+
+   Class stabs similar to the ones described earlier are generated for
+each base class.
+
+     .stabs "A:T20=s8Adat:1,0,32;$vf20:21=*22=ar1;0;1;17,32;
+             A_virt::23=##1;:i;2A*-2147483647;20;;;~%20;",128,0,0,0
+     
+     .stabs "B:Tt25=s8Bdat:1,0,32;$vf25:21,32;B_virt::26=##1;
+             :i;2A*-2147483647;25;;;~%25;",128,0,0,0
+     
+     .stabs "C:Tt28=s8Cdat:1,0,32;$vf28:21,32;C_virt::29=##1;
+             :i;2A*-2147483647;28;;;~%28;",128,0,0,0
+
+   In the stab describing derived class `D' below, the information about
+the derivation of this class is encoded as follows.
+
+     .stabs "derived_class_name:symbol_descriptors(struct tag&type)=
+             type_descriptor(struct)struct_bytes(32)!num_bases(3),
+             base_virtual(no)inheritence_public(no)base_offset(0),
+             base_class_type_ref(A);
+             base_virtual(yes)inheritence_public(no)base_offset(NIL),
+             base_class_type_ref(B);
+             base_virtual(no)inheritence_public(yes)base_offset(64),
+             base_class_type_ref(C); ...
+
+     .stabs "D:Tt31=s32!3,000,20;100,25;0264,28;$vb25:24,128;Ddat:
+             1,160,32;A_virt::32=##1;:i;2A*-2147483647;20;;B_virt:
+             :32:i;2A*-2147483647;25;;C_virt::32:i;2A*-2147483647;
+             28;;D_virt::32:i;2A*-2147483646;31;;;~%20;",128,0,0,0
+
+
+File: stabs.info,  Node: Virtual Base Classes,  Next: Static Members,  Prev: Inheritence,  Up: Cplusplus
+
+Virtual Base Classes
+====================
+
+   A derived class object consists of a concatination in memory of the
+data areas defined by each base class, starting with the leftmost and
+ending with the rightmost in the list of base classes.  The exception
+to this rule is for virtual inheritence.  In the example above, class
+`D' inherits virtually from base class `B'.  This means that an
+instance of a `D' object will not contain its own `B' part but merely a
+pointer to a `B' part, known as a virtual base pointer.
+
+   In a derived class stab, the base offset part of the derivation
+information, described above, shows how the base class parts are
+ordered.  The base offset for a virtual base class is always given as 0.
+Notice that the base offset for `B' is given as 0 even though `B' is
+not the first base class.  The first base class `A' starts at offset 0.
+
+   The field information part of the stab for class `D' describes the
+field which is the pointer to the virtual base class `B'. The vbase
+pointer name is `$vb' followed by a type reference to the virtual base
+class.  Since the type id for `B' in this example is 25, the vbase
+pointer name is `$vb25'.
+
+     .stabs "D:Tt31=s32!3,000,20;100,25;0264,28;$vb25:24,128;Ddat:1,
+            160,32;A_virt::32=##1;:i;2A*-2147483647;20;;B_virt::32:i;
+            2A*-2147483647;25;;C_virt::32:i;2A*-2147483647;28;;D_virt:
+            :32:i;2A*-2147483646;31;;;~%20;",128,0,0,0
+
+   Following the name and a semicolon is a type reference describing the
+type of the virtual base class pointer, in this case 24.  Type 24 was
+defined earlier as the type of the `B' class `this' pointer.  The
+`this' pointer for a class is a pointer to the class type.
+
+     .stabs "this:P24=*25=xsB:",64,0,0,8
+
+   Finally the field offset part of the vbase pointer field description
+shows that the vbase pointer is the first field in the `D' object,
+before any data fields defined by the class.  The layout of a `D' class
+object is a follows, `Adat' at 0, the vtable pointer for `A' at 32,
+`Cdat' at 64, the vtable pointer for C at 96, the virtual base pointer
+for `B' at 128, and `Ddat' at 160.
+
+
+File: stabs.info,  Node: Static Members,  Prev: Virtual Base Classes,  Up: Cplusplus
+
+Static Members
+==============
+
+   The data area for a class is a concatenation of the space used by the
+data members of the class.  If the class has virtual methods, a vtable
+pointer follows the class data.  The field offset part of each field
+description in the class stab shows this ordering.
+
+   << How is this reflected in stabs?  See Cygnus bug #677 for some
+info.  >>
+
+
+File: stabs.info,  Node: Stab Types,  Next: Symbol Descriptors,  Prev: Cplusplus,  Up: Top
+
+Table of Stab Types
+*******************
+
+   The following are all the possible values for the stab type field,
+for a.out files, in numeric order.  This does not apply to XCOFF, but
+it does apply to stabs in sections (*note Stab Sections::.).  Stabs in
+ECOFF use these values but add 0x8f300 to distinguish them from non-stab
+symbols.
+
+   The symbolic names are defined in the file `include/aout/stabs.def'.
+
+* Menu:
+
+* Non-Stab Symbol Types::	Types from 0 to 0x1f
+* Stab Symbol Types::		Types from 0x20 to 0xff
+
+
+File: stabs.info,  Node: Non-Stab Symbol Types,  Next: Stab Symbol Types,  Up: Stab Types
+
+Non-Stab Symbol Types
+=====================
+
+   The following types are used by the linker and assembler, not by stab
+directives.  Since this document does not attempt to describe aspects of
+object file format other than the debugging format, no details are
+given.
+
+`0x0     N_UNDF'
+     Undefined symbol
+
+`0x2     N_ABS'
+     File scope absolute symbol
+
+`0x3     N_ABS | N_EXT'
+     External absolute symbol
+
+`0x4     N_TEXT'
+     File scope text symbol
+
+`0x5     N_TEXT | N_EXT'
+     External text symbol
+
+`0x6     N_DATA'
+     File scope data symbol
+
+`0x7     N_DATA | N_EXT'
+     External data symbol
+
+`0x8     N_BSS'
+     File scope BSS symbol
+
+`0x9     N_BSS | N_EXT'
+     External BSS symbol
+
+`0x0c    N_FN_SEQ'
+     Same as `N_FN', for Sequent compilers
+
+`0x0a    N_INDR'
+     Symbol is indirected to another symbol
+
+`0x12    N_COMM'
+     Common--visible after shared library dynamic link
+
+`0x14 N_SETA'
+`0x15 N_SETA | N_EXT'
+     Absolute set element
+
+`0x16 N_SETT'
+`0x17 N_SETT | N_EXT'
+     Text segment set element
+
+`0x18 N_SETD'
+`0x19 N_SETD | N_EXT'
+     Data segment set element
+
+`0x1a N_SETB'
+`0x1b N_SETB | N_EXT'
+     BSS segment set element
+
+`0x1c N_SETV'
+`0x1d N_SETV | N_EXT'
+     Pointer to set vector
+
+`0x1e N_WARNING'
+     Print a warning message during linking
+
+`0x1f    N_FN'
+     File name of a `.o' file
+
+
+File: stabs.info,  Node: Stab Symbol Types,  Prev: Non-Stab Symbol Types,  Up: Stab Types
+
+Stab Symbol Types
+=================
+
+   The following symbol types indicate that this is a stab.  This is the
+full list of stab numbers, including stab types that are used in
+languages other than C.
+
+`0x20     N_GSYM'
+     Global symbol; see *Note Global Variables::.
+
+`0x22     N_FNAME'
+     Function name (for BSD Fortran); see *Note Procedures::.
+
+`0x24     N_FUN'
+     Function name (*note Procedures::.) or text segment variable
+     (*note Statics::.).
+
+`0x26 N_STSYM'
+     Data segment file-scope variable; see *Note Statics::.
+
+`0x28 N_LCSYM'
+     BSS segment file-scope variable; see *Note Statics::.
+
+`0x2a N_MAIN'
+     Name of main routine; see *Note Main Program::.
+
+`0x2c N_ROSYM'
+     Variable in `.rodata' section; see *Note Statics::.
+
+`0x30     N_PC'
+     Global symbol (for Pascal); see *Note N_PC::.
+
+`0x32     N_NSYMS'
+     Number of symbols (according to Ultrix V4.0); see *Note N_NSYMS::.
+
+`0x34     N_NOMAP'
+     No DST map; see *Note N_NOMAP::.
+
+`0x38 N_OBJ'
+     Object file (Solaris2).
+
+`0x3c N_OPT'
+     Debugger options (Solaris2).
+
+`0x40     N_RSYM'
+     Register variable; see *Note Register Variables::.
+
+`0x42     N_M2C'
+     Modula-2 compilation unit; see *Note N_M2C::.
+
+`0x44     N_SLINE'
+     Line number in text segment; see *Note Line Numbers::.
+
+`0x46     N_DSLINE'
+     Line number in data segment; see *Note Line Numbers::.
+
+`0x48     N_BSLINE'
+     Line number in bss segment; see *Note Line Numbers::.
+
+`0x48     N_BROWS'
+     Sun source code browser, path to `.cb' file; see *Note N_BROWS::.
+
+`0x4a     N_DEFD'
+     GNU Modula2 definition module dependency; see *Note N_DEFD::.
+
+`0x4c N_FLINE'
+     Function start/body/end line numbers (Solaris2).
+
+`0x50     N_EHDECL'
+     GNU C++ exception variable; see *Note N_EHDECL::.
+
+`0x50     N_MOD2'
+     Modula2 info "for imc" (according to Ultrix V4.0); see *Note
+     N_MOD2::.
+
+`0x54     N_CATCH'
+     GNU C++ `catch' clause; see *Note N_CATCH::.
+
+`0x60     N_SSYM'
+     Structure of union element; see *Note N_SSYM::.
+
+`0x62 N_ENDM'
+     Last stab for module (Solaris2).
+
+`0x64     N_SO'
+     Path and name of source file; see *Note Source Files::.
+
+`0x80 N_LSYM'
+     Stack variable (*note Stack Variables::.) or type (*note
+     Typedefs::.).
+
+`0x82     N_BINCL'
+     Beginning of an include file (Sun only); see *Note Include Files::.
+
+`0x84     N_SOL'
+     Name of include file; see *Note Include Files::.
+
+`0xa0     N_PSYM'
+     Parameter variable; see *Note Parameters::.
+
+`0xa2     N_EINCL'
+     End of an include file; see *Note Include Files::.
+
+`0xa4     N_ENTRY'
+     Alternate entry point; see *Note Alternate Entry Points::.
+
+`0xc0     N_LBRAC'
+     Beginning of a lexical block; see *Note Block Structure::.
+
+`0xc2     N_EXCL'
+     Place holder for a deleted include file; see *Note Include Files::.
+
+`0xc4     N_SCOPE'
+     Modula2 scope information (Sun linker); see *Note N_SCOPE::.
+
+`0xe0     N_RBRAC'
+     End of a lexical block; see *Note Block Structure::.
+
+`0xe2     N_BCOMM'
+     Begin named common block; see *Note Common Blocks::.
+
+`0xe4     N_ECOMM'
+     End named common block; see *Note Common Blocks::.
+
+`0xe8     N_ECOML'
+     Member of a common block; see *Note Common Blocks::.
+
+`0xea N_WITH'
+     Pascal `with' statement: type,,0,0,offset (Solaris2).
+
+`0xf0     N_NBTEXT'
+     Gould non-base registers; see *Note Gould::.
+
+`0xf2     N_NBDATA'
+     Gould non-base registers; see *Note Gould::.
+
+`0xf4     N_NBBSS'
+     Gould non-base registers; see *Note Gould::.
+
+`0xf6     N_NBSTS'
+     Gould non-base registers; see *Note Gould::.
+
+`0xf8     N_NBLCS'
+     Gould non-base registers; see *Note Gould::.
+
+
+File: stabs.info,  Node: Symbol Descriptors,  Next: Type Descriptors,  Prev: Stab Types,  Up: Top
+
+Table of Symbol Descriptors
+***************************
+
+   The symbol descriptor is the character which follows the colon in
+many stabs, and which tells what kind of stab it is.  *Note String
+Field::, for more information about their use.
+
+`DIGIT'
+`('
+`-'
+     Variable on the stack; see *Note Stack Variables::.
+
+`:'
+     C++ nested symbol; see *Note Nested Symbols::
+
+`a'
+     Parameter passed by reference in register; see *Note Reference
+     Parameters::.
+
+`b'
+     Based variable; see *Note Based Variables::.
+
+`c'
+     Constant; see *Note Constants::.
+
+`C'
+     Conformant array bound (Pascal, maybe other languages); *Note
+     Conformant Arrays::.  Name of a caught exception (GNU C++).  These
+     can be distinguished because the latter uses `N_CATCH' and the
+     former uses another symbol type.
+
+`d'
+     Floating point register variable; see *Note Register Variables::.
+
+`D'
+     Parameter in floating point register; see *Note Register
+     Parameters::.
+
+`f'
+     File scope function; see *Note Procedures::.
+
+`F'
+     Global function; see *Note Procedures::.
+
+`G'
+     Global variable; see *Note Global Variables::.
+
+`i'
+     *Note Register Parameters::.
+
+`I'
+     Internal (nested) procedure; see *Note Nested Procedures::.
+
+`J'
+     Internal (nested) function; see *Note Nested Procedures::.
+
+`L'
+     Label name (documented by AIX, no further information known).
+
+`m'
+     Module; see *Note Procedures::.
+
+`p'
+     Argument list parameter; see *Note Parameters::.
+
+`pP'
+     *Note Parameters::.
+
+`pF'
+     Fortran Function parameter; see *Note Parameters::.
+
+`P'
+     Unfortunately, three separate meanings have been independently
+     invented for this symbol descriptor.  At least the GNU and Sun
+     uses can be distinguished by the symbol type.  Global Procedure
+     (AIX) (symbol type used unknown); see *Note Procedures::.
+     Register parameter (GNU) (symbol type `N_PSYM'); see *Note
+     Parameters::.  Prototype of function referenced by this file (Sun
+     `acc') (symbol type `N_FUN').
+
+`Q'
+     Static Procedure; see *Note Procedures::.
+
+`R'
+     Register parameter; see *Note Register Parameters::.
+
+`r'
+     Register variable; see *Note Register Variables::.
+
+`S'
+     File scope variable; see *Note Statics::.
+
+`s'
+     Local variable (OS9000).
+
+`t'
+     Type name; see *Note Typedefs::.
+
+`T'
+     Enumeration, structure, or union tag; see *Note Typedefs::.
+
+`v'
+     Parameter passed by reference; see *Note Reference Parameters::.
+
+`V'
+     Procedure scope static variable; see *Note Statics::.
+
+`x'
+     Conformant array; see *Note Conformant Arrays::.
+
+`X'
+     Function return variable; see *Note Parameters::.
+
+
+File: stabs.info,  Node: Type Descriptors,  Next: Expanded Reference,  Prev: Symbol Descriptors,  Up: Top
+
+Table of Type Descriptors
+*************************
+
+   The type descriptor is the character which follows the type number
+and an equals sign.  It specifies what kind of type is being defined.
+*Note String Field::, for more information about their use.
+
+`DIGIT'
+`('
+     Type reference; see *Note String Field::.
+
+`-'
+     Reference to builtin type; see *Note Negative Type Numbers::.
+
+`#'
+     Method (C++); see *Note Method Type Descriptor::.
+
+`*'
+     Pointer; see *Note Miscellaneous Types::.
+
+`&'
+     Reference (C++).
+
+`@'
+     Type Attributes (AIX); see *Note String Field::.  Member (class
+     and variable) type (GNU C++); see *Note Member Type Descriptor::.
+
+`a'
+     Array; see *Note Arrays::.
+
+`A'
+     Open array; see *Note Arrays::.
+
+`b'
+     Pascal space type (AIX); see *Note Miscellaneous Types::.  Builtin
+     integer type (Sun); see *Note Builtin Type Descriptors::.  Const
+     and volatile qualfied type (OS9000).
+
+`B'
+     Volatile-qualified type; see *Note Miscellaneous Types::.
+
+`c'
+     Complex builtin type (AIX); see *Note Builtin Type Descriptors::.
+     Const-qualified type (OS9000).
+
+`C'
+     COBOL Picture type.  See AIX documentation for details.
+
+`d'
+     File type; see *Note Miscellaneous Types::.
+
+`D'
+     N-dimensional dynamic array; see *Note Arrays::.
+
+`e'
+     Enumeration type; see *Note Enumerations::.
+
+`E'
+     N-dimensional subarray; see *Note Arrays::.
+
+`f'
+     Function type; see *Note Function Types::.
+
+`F'
+     Pascal function parameter; see *Note Function Types::
+
+`g'
+     Builtin floating point type; see *Note Builtin Type Descriptors::.
+
+`G'
+     COBOL Group.  See AIX documentation for details.
+
+`i'
+     Imported type (AIX); see *Note Cross-References::.
+     Volatile-qualified type (OS9000).
+
+`k'
+     Const-qualified type; see *Note Miscellaneous Types::.
+
+`K'
+     COBOL File Descriptor.  See AIX documentation for details.
+
+`M'
+     Multiple instance type; see *Note Miscellaneous Types::.
+
+`n'
+     String type; see *Note Strings::.
+
+`N'
+     Stringptr; see *Note Strings::.
+
+`o'
+     Opaque type; see *Note Typedefs::.
+
+`p'
+     Procedure; see *Note Function Types::.
+
+`P'
+     Packed array; see *Note Arrays::.
+
+`r'
+     Range type; see *Note Subranges::.
+
+`R'
+     Builtin floating type; see *Note Builtin Type Descriptors:: (Sun).
+     Pascal subroutine parameter; see *Note Function Types:: (AIX).
+     Detecting this conflict is possible with careful parsing (hint: a
+     Pascal subroutine parameter type will always contain a comma, and
+     a builtin type descriptor never will).
+
+`s'
+     Structure type; see *Note Structures::.
+
+`S'
+     Set type; see *Note Miscellaneous Types::.
+
+`u'
+     Union; see *Note Unions::.
+
+`v'
+     Variant record.  This is a Pascal and Modula-2 feature which is
+     like a union within a struct in C.  See AIX documentation for
+     details.
+
+`w'
+     Wide character; see *Note Builtin Type Descriptors::.
+
+`x'
+     Cross-reference; see *Note Cross-References::.
+
+`Y'
+     Used by IBM's xlC C++ compiler (for structures, I think).
+
+`z'
+     gstring; see *Note Strings::.
+
+
+File: stabs.info,  Node: Expanded Reference,  Next: Questions,  Prev: Type Descriptors,  Up: Top
+
+Expanded Reference by Stab Type
+*******************************
+
+   For a full list of stab types, and cross-references to where they are
+described, see *Note Stab Types::.  This appendix just covers certain
+stabs which are not yet described in the main body of this document;
+eventually the information will all be in one place.
+
+   Format of an entry:
+
+   The first line is the symbol type (see `include/aout/stab.def').
+
+   The second line describes the language constructs the symbol type
+represents.
+
+   The third line is the stab format with the significant stab fields
+named and the rest NIL.
+
+   Subsequent lines expand upon the meaning and possible values for each
+significant stab field.
+
+   Finally, any further information.
+
+* Menu:
+
+* N_PC::			Pascal global symbol
+* N_NSYMS::			Number of symbols
+* N_NOMAP::			No DST map
+* N_M2C::			Modula-2 compilation unit
+* N_BROWS::			Path to .cb file for Sun source code browser
+* N_DEFD::			GNU Modula2 definition module dependency
+* N_EHDECL::			GNU C++ exception variable
+* N_MOD2::			Modula2 information "for imc"
+* N_CATCH::			GNU C++ "catch" clause
+* N_SSYM::			Structure or union element
+* N_SCOPE::			Modula2 scope information (Sun only)
+* Gould::			non-base register symbols used on Gould systems
+* N_LENG::			Length of preceding entry
+
+
+File: stabs.info,  Node: N_PC,  Next: N_NSYMS,  Up: Expanded Reference
+
+N_PC
+====
+
+ - `.stabs': N_PC
+     Global symbol (for Pascal).
+
+          "name" -> "symbol_name"  <<?>>
+          value  -> supposedly the line number (stab.def is skeptical)
+
+          `stabdump.c' says:
+          
+          global pascal symbol: name,,0,subtype,line
+          << subtype? >>
+
+
+File: stabs.info,  Node: N_NSYMS,  Next: N_NOMAP,  Prev: N_PC,  Up: Expanded Reference
+
+N_NSYMS
+=======
+
+ - `.stabn': N_NSYMS
+     Number of symbols (according to Ultrix V4.0).
+
+                  0, files,,funcs,lines (stab.def)
+
+
+File: stabs.info,  Node: N_NOMAP,  Next: N_M2C,  Prev: N_NSYMS,  Up: Expanded Reference
+
+N_NOMAP
+=======
+
+ - `.stabs': N_NOMAP
+     No DST map for symbol (according to Ultrix V4.0).  I think this
+     means a variable has been optimized out.
+
+                  name, ,0,type,ignored (stab.def)
+
+
+File: stabs.info,  Node: N_M2C,  Next: N_BROWS,  Prev: N_NOMAP,  Up: Expanded Reference
+
+N_M2C
+=====
+
+ - `.stabs': N_M2C
+     Modula-2 compilation unit.
+
+          "string" -> "unit_name,unit_time_stamp[,code_time_stamp]"
+          desc   -> unit_number
+          value  -> 0 (main unit)
+                    1 (any other unit)
+
+     See `Dbx and Dbxtool Interfaces', 2nd edition, by Sun, 1988, for
+     more information.
+
+
+
+File: stabs.info,  Node: N_BROWS,  Next: N_DEFD,  Prev: N_M2C,  Up: Expanded Reference
+
+N_BROWS
+=======
+
+ - `.stabs': N_BROWS
+     Sun source code browser, path to `.cb' file
+
+     <<?>> "path to associated `.cb' file"
+
+     Note: N_BROWS has the same value as N_BSLINE.
+
+
+File: stabs.info,  Node: N_DEFD,  Next: N_EHDECL,  Prev: N_BROWS,  Up: Expanded Reference
+
+N_DEFD
+======
+
+ - `.stabn': N_DEFD
+     GNU Modula2 definition module dependency.
+
+     GNU Modula-2 definition module dependency.  The value is the
+     modification time of the definition file.  The other field is
+     non-zero if it is imported with the GNU M2 keyword `%INITIALIZE'.
+     Perhaps `N_M2C' can be used if there are enough empty fields?
+
+
+File: stabs.info,  Node: N_EHDECL,  Next: N_MOD2,  Prev: N_DEFD,  Up: Expanded Reference
+
+N_EHDECL
+========
+
+ - `.stabs': N_EHDECL
+     GNU C++ exception variable <<?>>.
+
+     "STRING is variable name"
+
+     Note: conflicts with `N_MOD2'.
+
+
+File: stabs.info,  Node: N_MOD2,  Next: N_CATCH,  Prev: N_EHDECL,  Up: Expanded Reference
+
+N_MOD2
+======
+
+ - `.stab?': N_MOD2
+     Modula2 info "for imc" (according to Ultrix V4.0)
+
+     Note: conflicts with `N_EHDECL'  <<?>>
+
+
+File: stabs.info,  Node: N_CATCH,  Next: N_SSYM,  Prev: N_MOD2,  Up: Expanded Reference
+
+N_CATCH
+=======
+
+ - `.stabn': N_CATCH
+     GNU C++ `catch' clause
+
+     GNU C++ `catch' clause.  The value is its address.  The desc field
+     is nonzero if this entry is immediately followed by a `CAUGHT' stab
+     saying what exception was caught.  Multiple `CAUGHT' stabs means
+     that multiple exceptions can be caught here.  If desc is 0, it
+     means all exceptions are caught here.
+
+
+File: stabs.info,  Node: N_SSYM,  Next: N_SCOPE,  Prev: N_CATCH,  Up: Expanded Reference
+
+N_SSYM
+======
+
+ - `.stabn': N_SSYM
+     Structure or union element.
+
+     The value is the offset in the structure.
+
+     <<?looking at structs and unions in C I didn't see these>>
+
+
+File: stabs.info,  Node: N_SCOPE,  Next: Gould,  Prev: N_SSYM,  Up: Expanded Reference
+
+N_SCOPE
+=======
+
+ - `.stab?': N_SCOPE
+     Modula2 scope information (Sun linker) <<?>>
+
+
+File: stabs.info,  Node: Gould,  Next: N_LENG,  Prev: N_SCOPE,  Up: Expanded Reference
+
+Non-base registers on Gould systems
+===================================
+
+ - `.stab?': N_NBTEXT
+ - `.stab?': N_NBDATA
+ - `.stab?': N_NBBSS
+ - `.stab?': N_NBSTS
+ - `.stab?': N_NBLCS
+     These are used on Gould systems for non-base registers syms.
+
+     However, the following values are not the values used by Gould;
+     they are the values which GNU has been documenting for these
+     values for a long time, without actually checking what Gould uses.
+     I include these values only because perhaps some someone actually
+     did something with the GNU information (I hope not, why GNU
+     knowingly assigned wrong values to these in the header file is a
+     complete mystery to me).
+
+          240    0xf0     N_NBTEXT  ??
+          242    0xf2     N_NBDATA  ??
+          244    0xf4     N_NBBSS   ??
+          246    0xf6     N_NBSTS   ??
+          248    0xf8     N_NBLCS   ??
+
+
+File: stabs.info,  Node: N_LENG,  Prev: Gould,  Up: Expanded Reference
+
+N_LENG
+======
+
+ - `.stabn': N_LENG
+     Second symbol entry containing a length-value for the preceding
+     entry.  The value is the length.
+
+
+File: stabs.info,  Node: Questions,  Next: Stab Sections,  Prev: Expanded Reference,  Up: Top
+
+Questions and Anomalies
+***********************
+
+   * For GNU C stabs defining local and global variables (`N_LSYM' and
+     `N_GSYM'), the desc field is supposed to contain the source line
+     number on which the variable is defined.  In reality the desc
+     field is always 0.  (This behavior is defined in `dbxout.c' and
+     putting a line number in desc is controlled by `#ifdef
+     WINNING_GDB', which defaults to false). GDB supposedly uses this
+     information if you say `list VAR'.  In reality, VAR can be a
+     variable defined in the program and GDB says `function VAR not
+     defined'.
+
+   * In GNU C stabs, there seems to be no way to differentiate tag
+     types: structures, unions, and enums (symbol descriptor `T') and
+     typedefs (symbol descriptor `t') defined at file scope from types
+     defined locally to a procedure or other more local scope.  They
+     all use the `N_LSYM' stab type.  Types defined at procedure scope
+     are emited after the `N_RBRAC' of the preceding function and
+     before the code of the procedure in which they are defined.  This
+     is exactly the same as types defined in the source file between
+     the two procedure bodies.  GDB overcompensates by placing all
+     types in block #1, the block for symbols of file scope.  This is
+     true for default, `-ansi' and `-traditional' compiler options.
+     (Bugs gcc/1063, gdb/1066.)
+
+   * What ends the procedure scope?  Is it the proc block's `N_RBRAC'
+     or the next `N_FUN'?  (I believe its the first.)
+
+
+File: stabs.info,  Node: Stab Sections,  Next: Symbol Types Index,  Prev: Questions,  Up: Top
+
+Using Stabs in Their Own Sections
+*********************************
+
+   Many object file formats allow tools to create object files with
+custom sections containing any arbitrary data.  For any such object file
+format, stabs can be embedded in special sections.  This is how stabs
+are used with ELF and SOM, and aside from ECOFF and XCOFF, is how stabs
+are used with COFF.
+
+* Menu:
+
+* Stab Section Basics::    How to embed stabs in sections
+* ELF Linker Relocation::  Sun ELF hacks
+
+
+File: stabs.info,  Node: Stab Section Basics,  Next: ELF Linker Relocation,  Up: Stab Sections
+
+How to Embed Stabs in Sections
+==============================
+
+   The assembler creates two custom sections, a section named `.stab'
+which contains an array of fixed length structures, one struct per stab,
+and a section named `.stabstr' containing all the variable length
+strings that are referenced by stabs in the `.stab' section.  The byte
+order of the stabs binary data depends on the object file format.  For
+ELF, it matches the byte order of the ELF file itself, as determined
+from the `EI_DATA' field in the `e_ident' member of the ELF header.
+For SOM, it is always big-endian (is this true??? FIXME).  For COFF, it
+matches the byte order of the COFF headers.  The meaning of the fields
+is the same as for a.out (*note Symbol Table Format::.), except that
+the `n_strx' field is relative to the strings for the current
+compilation unit (which can be found using the synthetic N_UNDF stab
+described below), rather than the entire string table.
+
+   The first stab in the `.stab' section for each compilation unit is
+synthetic, generated entirely by the assembler, with no corresponding
+`.stab' directive as input to the assembler.  This stab contains the
+following fields:
+
+`n_strx'
+     Offset in the `.stabstr' section to the source filename.
+
+`n_type'
+     `N_UNDF'.
+
+`n_other'
+     Unused field, always zero.  This may eventually be used to hold
+     overflows from the count in the `n_desc' field.
+
+`n_desc'
+     Count of upcoming symbols, i.e., the number of remaining stabs for
+     this source file.
+
+`n_value'
+     Size of the string table fragment associated with this source
+     file, in bytes.
+
+   The `.stabstr' section always starts with a null byte (so that string
+offsets of zero reference a null string), followed by random length
+strings, each of which is null byte terminated.
+
+   The ELF section header for the `.stab' section has its `sh_link'
+member set to the section number of the `.stabstr' section, and the
+`.stabstr' section has its ELF section header `sh_type' member set to
+`SHT_STRTAB' to mark it as a string table.  SOM and COFF have no way of
+linking the sections together or marking them as string tables.
+
+   For COFF, the `.stab' and `.stabstr' sections may be simply
+concatenated by the linker.  GDB then uses the `n_desc' fields to
+figure out the extent of the original sections.  Similarly, the
+`n_value' fields of the header symbols are added together in order to
+get the actual position of the strings in a desired `.stabstr' section.
+Although this design obviates any need for the linker to relocate or
+otherwise manipulate `.stab' and `.stabstr' sections, it also requires
+some care to ensure that the offsets are calculated correctly.  For
+instance, if the linker were to pad in between the `.stabstr' sections
+before concatenating, then the offsets to strings in the middle of the
+executable's `.stabstr' section would be wrong.
+
+   The GNU linker is able to optimize stabs information by merging
+duplicate strings and removing duplicate header file information (*note
+Include Files::.).  When some versions of the GNU linker optimize stabs
+in sections, they remove the leading `N_UNDF' symbol and arranges for
+all the `n_strx' fields to be relative to the start of the `.stabstr'
+section.
+
+
+File: stabs.info,  Node: ELF Linker Relocation,  Prev: Stab Section Basics,  Up: Stab Sections
+
+Having the Linker Relocate Stabs in ELF
+=======================================
+
+   This section describes some Sun hacks for Stabs in ELF; it does not
+apply to COFF or SOM.
+
+   To keep linking fast, you don't want the linker to have to relocate
+very many stabs.  Making sure this is done for `N_SLINE', `N_RBRAC',
+and `N_LBRAC' stabs is the most important thing (see the descriptions
+of those stabs for more information).  But Sun's stabs in ELF has taken
+this further, to make all addresses in the `n_value' field (functions
+and static variables) relative to the source file.  For the `N_SO'
+symbol itself, Sun simply omits the address.  To find the address of
+each section corresponding to a given source file, the compiler puts
+out symbols giving the address of each section for a given source file.
+Since these are ELF (not stab) symbols, the linker relocates them
+correctly without having to touch the stabs section.  They are named
+`Bbss.bss' for the bss section, `Ddata.data' for the data section, and
+`Drodata.rodata' for the rodata section.  For the text section, there
+is no such symbol (but there should be, see below).  For an example of
+how these symbols work, *Note Stab Section Transformations::.  GCC does
+not provide these symbols; it instead relies on the stabs getting
+relocated.  Thus addresses which would normally be relative to
+`Bbss.bss', etc., are already relocated.  The Sun linker provided with
+Solaris 2.2 and earlier relocates stabs using normal ELF relocation
+information, as it would do for any section.  Sun has been threatening
+to kludge their linker to not do this (to speed up linking), even
+though the correct way to avoid having the linker do these relocations
+is to have the compiler no longer output relocatable values.  Last I
+heard they had been talked out of the linker kludge.  See Sun point
+patch 101052-01 and Sun bug 1142109.  With the Sun compiler this
+affects `S' symbol descriptor stabs (*note Statics::.) and functions
+(*note Procedures::.).  In the latter case, to adopt the clean solution
+(making the value of the stab relative to the start of the compilation
+unit), it would be necessary to invent a `Ttext.text' symbol, analogous
+to the `Bbss.bss', etc., symbols.  I recommend this rather than using a
+zero value and getting the address from the ELF symbols.
+
+   Finding the correct `Bbss.bss', etc., symbol is difficult, because
+the linker simply concatenates the `.stab' sections from each `.o' file
+without including any information about which part of a `.stab' section
+comes from which `.o' file.  The way GDB does this is to look for an
+ELF `STT_FILE' symbol which has the same name as the last component of
+the file name from the `N_SO' symbol in the stabs (for example, if the
+file name is `../../gdb/main.c', it looks for an ELF `STT_FILE' symbol
+named `main.c').  This loses if different files have the same name
+(they could be in different directories, a library could have been
+copied from one system to another, etc.).  It would be much cleaner to
+have the `Bbss.bss' symbols in the stabs themselves.  Having the linker
+relocate them there is no more work than having the linker relocate ELF
+symbols, and it solves the problem of having to associate the ELF and
+stab symbols.  However, no one has yet designed or implemented such a
+scheme.
+

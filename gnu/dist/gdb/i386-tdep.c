@@ -1,5 +1,6 @@
 /* Intel 386 target-dependent stuff.
-   Copyright (C) 1988, 1989, 1991, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1989, 1991, 1994, 1995, 1996, 1998
+   Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -25,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "target.h"
 #include "floatformat.h"
 #include "symtab.h"
+#include "gdbcmd.h"
 
 static long i386_get_frame_setup PARAMS ((CORE_ADDR));
 
@@ -390,10 +392,11 @@ i386_frame_find_saved_regs (fip, fsrp)
      struct frame_info *fip;
      struct frame_saved_regs *fsrp;
 {
-  long locals;
+  long locals = -1;
   unsigned char op;
   CORE_ADDR dummy_bottom;
   CORE_ADDR adr;
+  CORE_ADDR pc;
   int i;
   
   memset (fsrp, 0, sizeof *fsrp);
@@ -416,7 +419,9 @@ i386_frame_find_saved_regs (fip, fsrp)
       return;
     }
   
-  locals = i386_get_frame_setup (get_pc_function_start (fip->pc));
+  pc = get_pc_function_start (fip->pc);
+  if (pc != 0)
+    locals = i386_get_frame_setup (pc);
   
   if (locals >= 0) 
     {
@@ -655,6 +660,32 @@ i386v4_sigtramp_saved_pc (frame)
 }
 #endif /* I386V4_SIGTRAMP_SAVED_PC */
 
+#ifdef STATIC_TRANSFORM_NAME
+/* SunPRO encodes the static variables.  This is not related to C++ mangling,
+   it is done for C too.  */
+
+char *
+sunpro_static_transform_name (name)
+     char *name;
+{
+  char *p;
+  if (IS_STATIC_TRANSFORM_NAME (name))
+    {
+      /* For file-local statics there will be a period, a bunch
+	 of junk (the contents of which match a string given in the
+	 N_OPT), a period and the name.  For function-local statics
+	 there will be a bunch of junk (which seems to change the
+	 second character from 'A' to 'B'), a period, the name of the
+	 function, and the name.  So just skip everything before the
+	 last period.  */
+      p = strrchr (name, '.');
+      if (p != NULL)
+	name = p + 1;
+    }
+  return name;
+}
+#endif /* STATIC_TRANSFORM_NAME */
+
 
 
 /* Stuff for WIN32 PE style DLL's but is pretty generic really. */
@@ -681,8 +712,10 @@ skip_trampoline_code (pc, name)
   return 0;			/* not a trampoline */
 }
 
+
 void
 _initialize_i386_tdep ()
 {
   tm_print_insn = print_insn_i386;
+  tm_print_insn_info.mach = bfd_lookup_arch (bfd_arch_i386, 0)->mach;
 }

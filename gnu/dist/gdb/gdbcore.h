@@ -50,6 +50,9 @@ extern void memory_error PARAMS ((int status, CORE_ADDR memaddr));
 
 extern void read_memory PARAMS ((CORE_ADDR memaddr, char *myaddr, int len));
 
+extern void read_memory_section PARAMS ((CORE_ADDR memaddr, char *myaddr,
+					 int len, asection *bfd_section));
+
 /* Read an integer from debugged memory, given address and number of
    bytes.  */
 
@@ -58,7 +61,7 @@ extern LONGEST read_memory_integer PARAMS ((CORE_ADDR memaddr, int len));
 /* Read an unsigned integer from debugged memory, given address and
    number of bytes.  */
 
-extern unsigned LONGEST read_memory_unsigned_integer PARAMS ((CORE_ADDR memaddr, int len));
+extern ULONGEST read_memory_unsigned_integer PARAMS ((CORE_ADDR memaddr, int len));
 
 /* This takes a char *, not void *.  This is probably right, because
    passing in an int * or whatever is wrong with respect to
@@ -93,7 +96,7 @@ extern void exec_file_command PARAMS ((char *filename, int from_tty));
 
 extern void validate_files PARAMS ((void));
 
-extern unsigned int register_addr PARAMS ((int regno, int blockend));
+extern CORE_ADDR register_addr PARAMS ((int regno, CORE_ADDR blockend));
 
 extern void registers_fetched PARAMS ((void));
 
@@ -140,7 +143,7 @@ struct core_fns {
      address X is at location core_reg_sect+x+reg_addr. */
 
   void (*core_read_registers) PARAMS ((char *core_reg_sect, unsigned core_reg_size,
-				  int which, unsigned reg_addr));
+				  int which, CORE_ADDR reg_addr));
 
   /* Finds the next struct core_fns.  They are allocated and initialized
      in whatever module implements the functions pointed to; an 

@@ -26,12 +26,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "value.h"
 #include "scm-lang.h"
 #include "valprint.h"
+#include "gdbcore.h"
+
+/* FIXME: Should be in a header file that we import. */
+extern int
+c_val_print PARAMS ((struct type *, char *, CORE_ADDR, GDB_FILE *, int, int,
+		     int, enum val_prettyprint));
+
+static void scm_ipruk PARAMS ((char *, LONGEST, GDB_FILE *));
+static void scm_scmlist_print PARAMS ((LONGEST, GDB_FILE *, int, int,
+				      int, enum val_prettyprint));
+static int scm_inferior_print PARAMS ((LONGEST, GDB_FILE *, int, int,
+				       int, enum val_prettyprint));
 
 /* Prints the SCM value VALUE by invoking the inferior, if appropraite.
    Returns >= 0 on succes;  retunr -1 if the inferior cannot/should not
    print VALUE. */
 
-int
+static int
 scm_inferior_print (value, stream, format, deref_ref, recurse, pretty)
      LONGEST value;
      GDB_FILE *stream;
@@ -82,7 +94,7 @@ static char *scm_isymnames[] =
   "#<unspecified>"
 };
 
-static int
+static void
 scm_scmlist_print (svalue, stream, format, deref_ref, recurse, pretty)
      LONGEST svalue;
      GDB_FILE *stream;
@@ -95,7 +107,7 @@ scm_scmlist_print (svalue, stream, format, deref_ref, recurse, pretty)
   if (recurse > 6)
     {
       fputs_filtered ("...", stream);
-      return 0;
+      return;
     }
   scm_scmval_print (SCM_CAR (svalue), stream, format,
 		    deref_ref, recurse + 1, pretty);
@@ -135,7 +147,7 @@ scm_ipruk (hdr, ptr, stream)
   fprintf_filtered (stream, " 0x%x>", ptr);
 }
 
-int
+void
 scm_scmval_print (svalue, stream, format, deref_ref, recurse, pretty)
      LONGEST svalue;
      GDB_FILE *stream;
@@ -191,7 +203,9 @@ scm_scmval_print (svalue, stream, format, deref_ref, recurse, pretty)
 	case scm_tcs_cons_gloc:
 	  if (SCM_CDR (SCM_CAR (svalue) - 1L) == 0)
 	    {
+#if 0
 	      SCM name;
+#endif
 	      fputs_filtered ("#<latte ", stream);
 #if 1
 	      fputs_filtered ("???", stream);
@@ -351,7 +365,10 @@ scm_scmval_print (svalue, stream, format, deref_ref, recurse, pretty)
 	  goto punk;
 #endif
 	default:
-	punk:scm_ipruk ("type", svalue, stream);
+#if 0
+	punk:
+#endif
+	  scm_ipruk ("type", svalue, stream);
 	}
       break;
     }

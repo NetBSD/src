@@ -25,6 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "language.h"
 #include "c-lang.h"
 
+static void emit_char PARAMS ((int, GDB_FILE *, int));
+
 /* Print the character C on STREAM as part of the contents of a literal
    string whose delimiter is QUOTER.  Note that that format for printing
    characters and strings is language specific. */
@@ -369,7 +371,7 @@ const struct op_print c_op_print_tab[] =
     {NULL, 0, 0, 0}
 };
 
-struct type ** const (c_builtin_types[]) = 
+struct type ** CONST_PTR (c_builtin_types[]) = 
 {
   &builtin_type_int,
   &builtin_type_long,

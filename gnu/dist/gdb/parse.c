@@ -59,9 +59,6 @@ free_funcalls PARAMS ((void));
 static void
 prefixify_expression PARAMS ((struct expression *));
 
-static int
-length_of_subexp PARAMS ((struct expression *, int));
-
 static void
 prefixify_subexp PARAMS ((struct expression *, struct expression *, int, int));
 
@@ -459,13 +456,13 @@ write_dollar_variable (str)
   /* Handle tokens that refer to machine registers:
      $ followed by a register name.  */
   for (i = 0; i < NUM_REGS; i++)
-    if (str.length - 1 == strlen (reg_names[i])
+    if (reg_names[i] && str.length - 1 == strlen (reg_names[i])
 	&& STREQN (str.ptr + 1, reg_names[i], str.length - 1))
       {
 	goto handle_register;
       }
   for (i = 0; i < num_std_regs; i++)
-    if (str.length - 1 == strlen (std_regs[i].name)
+    if (std_regs[i].name && str.length - 1 == strlen (std_regs[i].name)
 	&& STREQN (str.ptr + 1, std_regs[i].name, str.length - 1))
       {
 	i = std_regs[i].regnum;
@@ -525,7 +522,7 @@ prefixify_expression (expr)
 /* Return the number of exp_elements in the subexpression of EXPR
    whose last exp_element is at index ENDPOS - 1 in EXPR.  */
 
-static int
+int
 length_of_subexp (expr, endpos)
      register struct expression *expr;
      register int endpos;

@@ -29,7 +29,7 @@
 #include "gdbcmd.h"
 #include "gdbtypes.h"
 #include "dis-asm.h"
-
+#include "gdbcore.h"
 
 /* Return the saved PC from this frame. */
 

@@ -144,42 +144,6 @@ c_print_type (type, varstring, stream, show, level)
   c_type_print_varspec_suffix (type, stream, show, 0, demangled_args);
 
 }
-
-/* Print the C++ method arguments ARGS to the file STREAM.  */
-
-void
-cp_type_print_method_args (args, prefix, varstring, staticp, stream)
-     struct type **args;
-     char *prefix;
-     char *varstring;
-     int staticp;
-     GDB_FILE *stream;
-{
-  int i;
-
-  fprintf_symbol_filtered (stream, prefix, language_cplus, DMGL_ANSI);
-  fprintf_symbol_filtered (stream, varstring, language_cplus, DMGL_ANSI);
-  fputs_filtered (" (", stream);
-  if (args && args[!staticp] && args[!staticp]->code != TYPE_CODE_VOID)
-    {
-      i = !staticp;		/* skip the class variable */
-      while (1)
-	{
-	  type_print (args[i++], "", stream, 0);
-	  if (!args[i]) 
-	    {
-	      fprintf_filtered (stream, " ...");
-	      break;
-	    }
-	  else if (args[i]->code != TYPE_CODE_VOID)
-	    {
-	      fprintf_filtered (stream, ", ");
-	    }
-	  else break;
-	}
-    }
-  fprintf_filtered (stream, ")");
-}
   
 /* If TYPE is a derived type, then print out derivation information.
    Print only the actual base classes of this type, not the base classes
@@ -274,7 +238,7 @@ c_type_print_varspec_prefix (type, stream, show, passed_a_ptr)
 
     case TYPE_CODE_METHOD:
       if (passed_a_ptr)
-	fprintf_unfiltered (stream, "(");
+	fprintf_filtered (stream, "(");
       c_type_print_varspec_prefix (TYPE_TARGET_TYPE (type), stream, 0, 0);
       if (passed_a_ptr)
 	{
@@ -658,11 +622,11 @@ c_type_print_base (type, stream, show, level)
 		{
 		  char *physname = TYPE_FN_FIELD_PHYSNAME (f, j);
 		  int is_full_physname_constructor = 
-		    ((physname[0]=='_' && physname[1]=='_' && 
-		      (isdigit(physname[2])
-		       || physname[2]=='Q'
-		       || physname[2]=='t'))
-		     || (strncmp(physname, "__ct__", 6) == 0));
+		    ((physname[0] == '_' && physname[1] == '_'
+		      && strchr ("0123456789Qt", physname[2]))
+		     || STREQN (physname, "__ct__", 6)
+		     || DESTRUCTOR_PREFIX_P (physname)
+		     || STREQN (physname, "__dt__", 6));
 
 		  QUIT;
 		  if (TYPE_FN_FIELD_PROTECTED (f, j))
@@ -699,7 +663,7 @@ c_type_print_base (type, stream, show, level)
 		  if (TYPE_TARGET_TYPE (TYPE_FN_FIELD_TYPE (f, j)) == 0)
 		    {
 		      /* Keep GDB from crashing here.  */
-		      fprintf_unfiltered (stream, "<undefined type> %s;\n",
+		      fprintf_filtered (stream, "<undefined type> %s;\n",
 			       TYPE_FN_FIELD_PHYSNAME (f, j));
 		      break;
 		    }
@@ -710,41 +674,35 @@ c_type_print_base (type, stream, show, level)
 		      fputs_filtered (" ", stream);
 		    }
 		  if (TYPE_FN_FIELD_STUB (f, j))
+		    /* Build something we can demangle.  */
+		    mangled_name = gdb_mangle_name (type, i, j);
+		  else
+		    mangled_name = TYPE_FN_FIELD_PHYSNAME (f, j);
+
+		  demangled_name =
+		    cplus_demangle (mangled_name,
+				    DMGL_ANSI | DMGL_PARAMS);
+		  if (demangled_name == NULL)
+		    fprintf_filtered (stream, "<badly mangled name '%s'>",
+				      mangled_name);
+		  else
 		    {
-		      /* Build something we can demangle.  */
-		      mangled_name = gdb_mangle_name (type, i, j);
-		      demangled_name =
-			cplus_demangle (mangled_name,
-					DMGL_ANSI | DMGL_PARAMS);
-		      if (demangled_name == NULL)
-			fprintf_filtered (stream, "<badly mangled name %s>",
-					  mangled_name);
+		      char *demangled_no_class =
+			strchr (demangled_name, ':');
+
+		      if (demangled_no_class == NULL)
+			demangled_no_class = demangled_name;
 		      else
 			{
-			  char *demangled_no_class =
-			    strchr (demangled_name, ':');
-
-			  if (demangled_no_class == NULL)
-			    demangled_no_class = demangled_name;
-			  else
-			    {
-			      if (*++demangled_no_class == ':')
-				++demangled_no_class;
-			    }
-			  fputs_filtered (demangled_no_class, stream);
-			  free (demangled_name);
+			  if (*++demangled_no_class == ':')
+			    ++demangled_no_class;
 			}
-		      free (mangled_name);
+		      fputs_filtered (demangled_no_class, stream);
+		      free (demangled_name);
 		    }
-		  else if (TYPE_FN_FIELD_PHYSNAME (f, j)[0] == '_'
-		          && is_cplus_marker (TYPE_FN_FIELD_PHYSNAME (f, j)[1]))
-		    cp_type_print_method_args (TYPE_FN_FIELD_ARGS (f, j) + 1,
-					       "~", method_name, 0, stream);
-		  else
-		    cp_type_print_method_args (TYPE_FN_FIELD_ARGS (f, j), "",
-					       method_name,
-					       TYPE_FN_FIELD_STATIC_P (f, j),
-					       stream);
+
+		  if (TYPE_FN_FIELD_STUB (f, j))
+		    free (mangled_name);
 
 		  fprintf_filtered (stream, ";\n");
 		}

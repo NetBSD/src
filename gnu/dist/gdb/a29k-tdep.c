@@ -688,7 +688,7 @@ get_saved_register (raw_buffer, optimized, addrp, frame, regnum, lvalp)
 	*lvalp = not_lval;
       return;
     }
-  else if (regnum == PC_REGNUM)
+  else if (regnum == PC_REGNUM && frame->next != NULL)
     {
       if (raw_buffer != NULL)
 	{

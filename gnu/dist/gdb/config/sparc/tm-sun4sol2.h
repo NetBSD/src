@@ -1,5 +1,6 @@
 /* Macro definitions for GDB for a Sun 4 running Solaris 2
-   Copyright 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1989, 1992, 1993, 1994, 1995, 1997, 1998
+   Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -66,8 +67,28 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 
 extern char *sunpro_static_transform_name PARAMS ((char *));
 #define STATIC_TRANSFORM_NAME(x) sunpro_static_transform_name (x)
+#define IS_STATIC_TRANSFORM_NAME(name) ((name)[0] == '$')
 
 #define FAULTED_USE_SIGINFO
 
 /* Enable handling of shared libraries for a.out executables.  */
 #define HANDLE_SVR4_EXEC_EMULATORS
+
+/* Macros to extract process id and thread id from a composite pid/tid */
+#define PIDGET(pid) ((pid) & 0xffff)
+#define TIDGET(pid) (((pid) >> 16) & 0xffff)
+
+/* Macro to extract carry from given regset.  */
+#define PROCFS_GET_CARRY(regset) ((regset)[R_PSR] & PS_FLAG_CARRY)
+
+#ifdef HAVE_THREAD_DB_LIB
+
+extern char *solaris_pid_to_str PARAMS ((int pid));
+#define target_pid_to_str(PID) solaris_pid_to_str (PID)
+
+#else
+
+extern char *procfs_pid_to_str PARAMS ((int pid));
+#define target_pid_to_str(PID) procfs_pid_to_str (PID)
+
+#endif

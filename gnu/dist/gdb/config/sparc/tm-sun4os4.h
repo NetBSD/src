@@ -55,3 +55,4 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 
 extern char *sunpro_static_transform_name PARAMS ((char *));
 #define STATIC_TRANSFORM_NAME(x) sunpro_static_transform_name (x)
+#define IS_STATIC_TRANSFORM_NAME(name) ((name)[0] == '$')

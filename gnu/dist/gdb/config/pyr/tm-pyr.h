@@ -92,9 +92,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define INNER_THAN <
 #define PC_INNER_THAN >
 
-/* Stack has strict alignment.  */
+/* Stack must be aligned on 32-bit boundaries when synthesizing
+   function calls. */
 
-#define STACK_ALIGN(ADDR) (((ADDR)+3)&-4)
+#define STACK_ALIGN(ADDR) (((ADDR) + 3) & -4)
 
 /* Sequence of bytes for breakpoint instruction.  */
 

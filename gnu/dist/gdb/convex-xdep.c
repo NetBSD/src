@@ -193,7 +193,7 @@ static struct type *vector_type ();
 static long *read_vector_register ();
 static long *read_vector_register_1 ();
 static void write_vector_register ();
-static unsigned LONGEST read_comm_register ();
+static ULONGEST read_comm_register ();
 static void write_comm_register ();
 static void convex_cont_command ();
 static void thread_continue ();
@@ -442,7 +442,7 @@ read_vector_register_1 (reg)
 static void
 write_vector_register (reg, element, val)
     int reg, element;
-    unsigned LONGEST val;
+    ULONGEST val;
 {
   if (have_inferior_p ())
     {
@@ -481,7 +481,7 @@ write_vector_register (reg, element, val)
 
 /* Return the contents of communication register NUM.  */ 
 
-static unsigned LONGEST 
+static ULONGEST 
 read_comm_register (num)
      int num;
 {
@@ -503,7 +503,7 @@ read_comm_register (num)
 static void
 write_comm_register (num, val)
      int num;
-     unsigned LONGEST val;
+     ULONGEST val;
 {
   if (have_inferior_p ())
     {

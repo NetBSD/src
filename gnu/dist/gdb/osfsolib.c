@@ -566,9 +566,27 @@ symbol_add_stub (arg)
      char *arg;
 {
   register struct so_list *so = (struct so_list *) arg;	/* catch_errs bogon */
+  CORE_ADDR text_addr = 0;
+
+  if (so -> textsection)
+    text_addr = so -> textsection -> addr;
+  else
+    {
+      asection *lowest_sect;
+
+      /* If we didn't find a mapped non zero sized .text section, set up
+	 text_addr so that the relocation in symbol_file_add does no harm.  */
+
+      lowest_sect = bfd_get_section_by_name (so -> abfd, ".text");
+      if (lowest_sect == NULL)
+	bfd_map_over_sections (so -> abfd, find_lowest_section,
+			       (PTR) &lowest_sect);
+      if (lowest_sect)
+	text_addr = bfd_section_vma (so -> abfd, lowest_sect) + LM_OFFSET (so);
+    }
   
   so -> objfile = symbol_file_add (so -> so_name, so -> from_tty,
-				   so -> textsection -> addr,
+				   text_addr,
 				   0, 0, 0);
   return (1);
 }

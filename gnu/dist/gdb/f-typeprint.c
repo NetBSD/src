@@ -43,6 +43,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 static void f_type_print_args PARAMS ((struct type *, FILE *));
 #endif
 
+static void print_equivalent_f77_float_type PARAMS ((struct type *, FILE *));
+
 static void f_type_print_varspec_suffix PARAMS ((struct type *, FILE *,
 						 int, int, int));
 
@@ -307,7 +309,7 @@ f_type_print_varspec_suffix (type, stream, show, passed_a_ptr, demangled_args)
     }
 }
 
-void
+static void
 print_equivalent_f77_float_type (type, stream)
      struct type *type;
      FILE *stream;

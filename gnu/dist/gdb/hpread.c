@@ -136,6 +136,9 @@ extern struct complaint lbrac_mismatch_complaint;
 
 void hpread_symfile_init  PARAMS ((struct objfile *));
 
+static struct type *
+hpread_read_array_type PARAMS ((dnttpointer, union dnttentry *, struct objfile *));
+
 static struct type *hpread_alloc_type
   PARAMS ((dnttpointer, struct objfile *));
 
@@ -337,7 +340,7 @@ hpread_build_psymtabs (objfile, section_offsets, mainline)
   int dependencies_used, dependencies_allocated;
 
   /* Just in case the stabs reader left turds lying around.  */
-  pending_blocks = 0;
+  free_pending_blocks ();
   make_cleanup (really_free_pendings, 0);
 
   pst = (struct partial_symtab *) 0;
@@ -935,21 +938,8 @@ hpread_end_psymtab (pst, include_list, num_includes, capping_symbol_offset,
 	 is wrong, in that a psymtab with N_SLINE entries but nothing else
 	 is not empty, but we don't realize that.  Fixing that without slowing
 	 things down might be tricky.  */
-      struct partial_symtab *prev_pst;
 
-      /* First, snip it out of the psymtab chain */
-
-      if (pst->objfile->psymtabs == pst)
-	pst->objfile->psymtabs = pst->next;
-      else
-	for (prev_pst = pst->objfile->psymtabs; prev_pst; prev_pst = pst->next)
-	  if (prev_pst->next == pst)
-	    prev_pst->next = pst->next;
-
-      /* Next, put it on a free list for recycling */
-
-      pst->next = pst->objfile->free_psymtabs;
-      pst->objfile->free_psymtabs = pst;
+      discard_psymtab (pst);
 
       /* Indicate that psymtab was thrown away.  */
       pst = (struct partial_symtab *)NULL;
@@ -1092,7 +1082,10 @@ hpread_expand_symtab (objfile, sym_offset, sym_size, text_offset, text_size,
   dn_bufp = hpread_get_lntt (sym_index, objfile);
   if (!((dn_bufp->dblock.kind == (unsigned char) DNTT_TYPE_SRCFILE) ||
 	(dn_bufp->dblock.kind == (unsigned char) DNTT_TYPE_MODULE)))
-    start_symtab ("globals", NULL, 0);
+    {
+      start_symtab ("globals", NULL, 0);
+      record_debugformat ("HP");
+    }
 
   max_symnum = sym_size / sizeof (struct dntt_type_block);
 
@@ -1216,12 +1209,14 @@ hpread_lookup_type (hp_type, objfile)
 	    {
 	      TYPE_VECTOR_LENGTH (objfile) = 100;
 	      TYPE_VECTOR (objfile) = (struct type **)
-		xmalloc (TYPE_VECTOR_LENGTH (objfile) * sizeof (struct type *));
+		xmmalloc (objfile -> md,
+			  TYPE_VECTOR_LENGTH (objfile) * sizeof (struct type *));
 	    }
 	  while (index >= TYPE_VECTOR_LENGTH (objfile))
 	    TYPE_VECTOR_LENGTH (objfile) *= 2;
 	  TYPE_VECTOR (objfile) = (struct type **)
-	    xrealloc ((char *) TYPE_VECTOR (objfile),
+	    xmrealloc (objfile -> md,
+		       (char *) TYPE_VECTOR (objfile),
 		      (TYPE_VECTOR_LENGTH (objfile) * sizeof (struct type *)));
 	  memset (&TYPE_VECTOR (objfile)[old_len], 0,
 		  (TYPE_VECTOR_LENGTH (objfile) - old_len) *
@@ -1287,7 +1282,8 @@ hpread_read_enum_type (hp_type, dn_bufp, objfile)
       sym = (struct symbol *) obstack_alloc (&objfile->symbol_obstack,
 					     sizeof (struct symbol));
       memset (sym, 0, sizeof (struct symbol));
-      SYMBOL_NAME (sym) = name;
+      SYMBOL_NAME (sym) = obsavestring (name, strlen (name), 
+					&objfile->symbol_obstack);
       SYMBOL_CLASS (sym) = LOC_CONST;
       SYMBOL_NAMESPACE (sym) = VAR_NAMESPACE;
       SYMBOL_VALUE (sym) = memp->dmember.value;
@@ -1321,7 +1317,6 @@ hpread_read_enum_type (hp_type, dn_bufp, objfile)
 	  struct symbol *xsym = syms->symbol[j];
 	  SYMBOL_TYPE (xsym) = type;
 	  TYPE_FIELD_NAME (type, n) = SYMBOL_NAME (xsym);
-	  TYPE_FIELD_VALUE (type, n) = 0;
 	  TYPE_FIELD_BITPOS (type, n) = SYMBOL_VALUE (xsym);
 	  TYPE_FIELD_BITSIZE (type, n) = 0;
 	}
@@ -1378,7 +1373,8 @@ hpread_read_function_type (hp_type, dn_bufp, objfile)
       sym = (struct symbol *) obstack_alloc (&objfile->symbol_obstack,
 					     sizeof (struct symbol));
       (void) memset (sym, 0, sizeof (struct symbol));
-      SYMBOL_NAME (sym) = name;
+      SYMBOL_NAME (sym) = obsavestring (name, strlen (name),
+					&objfile->symbol_obstack);
 
       /* Figure out where it lives.  */
       if (paramp->dfparam.regparam)
@@ -1497,14 +1493,15 @@ hpread_read_struct_type (hp_type, dn_bufp, objfile)
       list = new;
 
       list->field.name = VT (objfile) + fieldp->dfield.name;
-      list->field.bitpos = fieldp->dfield.bitoffset;
+      FIELD_BITPOS (list->field) = fieldp->dfield.bitoffset;
       if (fieldp->dfield.bitlength % 8)
-	list->field.bitsize = fieldp->dfield.bitlength;
+	FIELD_BITSIZE (list->field) = fieldp->dfield.bitlength;
       else
-	list->field.bitsize = 0;
+	FIELD_BITSIZE (list->field) = 0;
       nfields++;
       field = fieldp->dfield.nextfield;
-      list->field.type = hpread_type_lookup (fieldp->dfield.type, objfile);
+      FIELD_TYPE (list->field) = hpread_type_lookup (fieldp->dfield.type,
+						     objfile);
     }
 
   TYPE_NFIELDS (type) = nfields;
@@ -1790,7 +1787,7 @@ hpread_process_one_debug_symbol (dn_bufp, name, section_offsets, objfile,
   sym = (struct symbol *) obstack_alloc (&objfile->symbol_obstack,
 					 sizeof (struct symbol));
   memset (sym, 0, sizeof (struct symbol));
-  SYMBOL_NAME (sym) = name;
+  SYMBOL_NAME (sym) = obsavestring (name, strlen (name), &objfile->symbol_obstack);
   SYMBOL_LANGUAGE (sym) = language_auto;
   SYMBOL_INIT_DEMANGLED_NAME (sym, &objfile->symbol_obstack);
   SYMBOL_NAMESPACE (sym) = VAR_NAMESPACE;
@@ -1818,6 +1815,7 @@ hpread_process_one_debug_symbol (dn_bufp, name, section_offsets, objfile,
       if (!last_source_file)
 	{
 	  start_symtab (name, NULL, valu);
+	  record_debugformat ("HP");
 	  SL_INDEX (objfile) = dn_bufp->dsfile.address;
 	}
       else

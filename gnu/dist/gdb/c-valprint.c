@@ -1,5 +1,5 @@
 /* Support for printing C values for GDB, the GNU debugger.
-   Copyright 1986, 1988, 1989, 1991, 1992, 1993, 1994, 1995
+   Copyright 1986, 1988, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997
              Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -152,6 +152,7 @@ c_val_print (type, valaddr, address, stream, format, deref_ref, recurse,
 	{
 	  addr = unpack_pointer (type, valaddr);
 	print_unpacked_pointer:
+          elttype = check_typedef (TYPE_TARGET_TYPE (type));
 
 	  if (TYPE_CODE (elttype) == TYPE_CODE_FUNC)
 	    {
@@ -210,7 +211,7 @@ c_val_print (type, valaddr, address, stream, format, deref_ref, recurse,
 		    {
 		      wtype = TYPE_TARGET_TYPE(type);
 		    }
-		  vt_val = value_at (wtype, vt_address);
+		  vt_val = value_at (wtype, vt_address, NULL);
 		  val_print (VALUE_TYPE (vt_val), VALUE_CONTENTS (vt_val),
 			     VALUE_ADDRESS (vt_val), stream, format,
 			     deref_ref, recurse + 1, pretty);
@@ -260,7 +261,8 @@ c_val_print (type, valaddr, address, stream, format, deref_ref, recurse,
 		value_at
 		  (TYPE_TARGET_TYPE (type),
 		   unpack_pointer (lookup_pointer_type (builtin_type_void),
-				   valaddr));
+				   valaddr),
+		   NULL);
 	      val_print (VALUE_TYPE (deref_val),
 			 VALUE_CONTENTS (deref_val),
 			 VALUE_ADDRESS (deref_val), stream, format,
@@ -284,9 +286,10 @@ c_val_print (type, valaddr, address, stream, format, deref_ref, recurse,
           /* Print the unmangled name if desired.  */
 	  /* Print vtable entry - we only get here if NOT using
 	     -fvtable_thunks.  (Otherwise, look under TYPE_CODE_PTR.) */
-	  print_address_demangle(*((int *) (valaddr +	/* FIXME bytesex */
-	      TYPE_FIELD_BITPOS (type, VTBL_FNADDR_OFFSET) / 8)),
-	      stream, demangle);
+          print_address_demangle (extract_address (
+	        valaddr + TYPE_FIELD_BITPOS (type, VTBL_FNADDR_OFFSET) / 8,
+	        TYPE_LENGTH (TYPE_FIELD_TYPE (type, VTBL_FNADDR_OFFSET))),
+              stream, demangle);
 	}
       else
 	cp_print_value_fields (type, valaddr, address, stream, format,
@@ -464,6 +467,7 @@ c_value_print (val, stream, format, pretty)
 	  fprintf_filtered (stream, ") ");
 	}
     }
-  return (val_print (type, VALUE_CONTENTS (val),
-		     VALUE_ADDRESS (val), stream, format, 1, 0, pretty));
+  return val_print (type, VALUE_CONTENTS (val),
+		    VALUE_ADDRESS (val) + VALUE_OFFSET (val),
+		    stream, format, 1, 0, pretty);
 }

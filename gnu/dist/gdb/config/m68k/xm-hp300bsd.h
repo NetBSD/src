@@ -25,8 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define	HOST_BYTE_ORDER	BIG_ENDIAN
 
-/* Avoid "INT_MIN redefined" preprocessor warnings by defining them here.  */
-#include <sys/param.h>
+#include <sys/param.h>	/* For INT_MIN */
 
 /* Kernel is a bit tenacious about sharing text segments, disallowing bpts.  */
 #define	ONE_PROCESS_WRITETEXT

@@ -1,5 +1,5 @@
 /* Support routines for manipulating internal types for GDB.
-   Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
 This file is part of GDB.
@@ -53,6 +53,18 @@ struct type *builtin_type_long_double;
 struct type *builtin_type_complex;
 struct type *builtin_type_double_complex;
 struct type *builtin_type_string;
+
+struct extra { char str[128]; int len; }; /* maximum extention is 128! FIXME */
+
+static void add_name PARAMS ((struct extra *, char *));
+static void add_mangled_type PARAMS ((struct extra *, struct type *));
+#if 0
+static void cfront_mangle_name PARAMS ((struct type *, int, int));
+#endif
+static void print_bit_vector PARAMS ((B_TYPE *, int));
+static void print_arg_types PARAMS ((struct type **, int));
+static void dump_fn_fieldlists PARAMS ((struct type *, int));
+static void print_cplus_stuff PARAMS ((struct type *, int));
 
 /* Alloc a new type structure and fill it with some defaults.  If
    OBJFILE is non-NULL, then allocate the space for the type structure
@@ -436,6 +448,10 @@ create_array_type (result_type, element_type, range_type)
   memset (TYPE_FIELDS (result_type), 0, sizeof (struct field));
   TYPE_FIELD_TYPE (result_type, 0) = range_type;
   TYPE_VPTR_FIELDNO (result_type) = -1;
+
+  /* TYPE_FLAG_TARGET_STUB will take care of zero length arrays */
+  if (TYPE_LENGTH (result_type) == 0)
+    TYPE_FLAGS (result_type) |= TYPE_FLAG_TARGET_STUB;
 
   return (result_type);
 }
@@ -863,6 +879,35 @@ fill_in_vptr_fieldno (type)
     }
 }
 
+/* Find the method and field indices for the destructor in class type T.
+   Return 1 if the destructor was found, otherwise, return 0.  */
+
+int
+get_destructor_fn_field (t, method_indexp, field_indexp)
+     struct type *t;
+     int *method_indexp;
+     int *field_indexp;
+{
+  int i;
+
+  for (i = 0; i < TYPE_NFN_FIELDS (t); i++)
+    {
+      int j;
+      struct fn_field *f = TYPE_FN_FIELDLIST1 (t, i);
+
+      for (j = 0; j < TYPE_FN_FIELDLIST_LENGTH (t, i); j++)
+	{
+	  if (DESTRUCTOR_PREFIX_P (TYPE_FN_FIELD_PHYSNAME (f, j)))
+	    {
+	      *method_indexp = i;
+	      *field_indexp = j;
+	      return 1;
+	    }
+	}
+    }
+  return 0;
+}
+
 /* Added by Bryan Boreham, Kewill, Sun Sep 17 18:07:17 1989.
 
    If this is a stubbed struct (i.e. declared as struct foo *), see if
@@ -944,7 +989,7 @@ check_typedef (type)
       struct type *range_type;
       struct type *target_type = check_typedef (TYPE_TARGET_TYPE (type));
 
-      if (TYPE_FLAGS (target_type) & TYPE_FLAG_STUB)
+      if (TYPE_FLAGS (target_type) & (TYPE_FLAG_STUB | TYPE_FLAG_TARGET_STUB))
 	{ }
       else if (TYPE_CODE (type) == TYPE_CODE_ARRAY
 	       && TYPE_NFIELDS (type) == 1
@@ -970,6 +1015,202 @@ check_typedef (type)
   TYPE_LENGTH (orig_type) = TYPE_LENGTH (type);
   return type;
 }
+
+/* New code added to support parsing of Cfront stabs strings */
+#include <ctype.h>
+#define INIT_EXTRA { pextras->len=0; pextras->str[0]='\0'; }
+#define ADD_EXTRA(c) { pextras->str[pextras->len++]=c; }
+
+static void 
+add_name(pextras,n) 
+  struct extra * pextras;
+  char * n; 
+{
+  int nlen;
+
+  if ((nlen = (n ? strlen(n) : 0))==0) 
+    return;
+  sprintf(pextras->str+pextras->len,"%d%s",nlen,n);
+  pextras->len=strlen(pextras->str);
+}
+
+static void 
+add_mangled_type(pextras,t) 
+  struct extra * pextras;
+  struct type * t;
+{
+  enum type_code tcode;
+  int tlen, tflags;
+  char * tname;
+
+  tcode = TYPE_CODE(t);
+  tlen = TYPE_LENGTH(t);
+  tflags = TYPE_FLAGS(t);
+  tname = TYPE_NAME(t);
+  /* args of "..." seem to get mangled as "e" */
+
+  switch (tcode) 
+    {
+      case TYPE_CODE_INT: 
+        if (tflags==1)
+          ADD_EXTRA('U');
+        switch (tlen) 
+          {
+            case 1:
+              ADD_EXTRA('c');
+              break;
+            case 2:
+              ADD_EXTRA('s');
+              break;
+            case 4: 
+              {
+              char* pname;
+              if ((pname=strrchr(tname,'l'),pname) && !strcmp(pname,"long"))
+                ADD_EXTRA('l')
+              else
+                ADD_EXTRA('i')
+              }
+              break;
+            default: 
+              {
+          
+                static struct complaint msg = {"Bad int type code length x%x\n",0,0};
+          
+                complain (&msg, tlen);
+          
+              }
+          }
+        break;
+      case TYPE_CODE_FLT: 
+          switch (tlen) 
+            {
+              case 4:
+                ADD_EXTRA('f');
+                break;
+              case 8:
+                ADD_EXTRA('d');
+                break;
+              case 16:
+                ADD_EXTRA('r');
+                break;
+              default: 
+	 	{
+                  static struct complaint msg = {"Bad float type code length x%x\n",0,0};
+          	  complain (&msg, tlen);
+            	}
+      	      }
+            break;
+      case TYPE_CODE_REF:
+        ADD_EXTRA('R');
+        /* followed by what it's a ref to */
+        break;
+      case TYPE_CODE_PTR:
+        ADD_EXTRA('P');
+        /* followed by what it's a ptr to */
+        break;
+      case TYPE_CODE_TYPEDEF: 
+        {
+          static struct complaint msg = {"Typedefs in overloaded functions not yet supported\n",0,0};
+          complain (&msg);
+        }
+      /* followed by type bytes & name */
+      break;
+    case TYPE_CODE_FUNC:
+      ADD_EXTRA('F');
+      /* followed by func's arg '_' & ret types */
+      break;
+    case TYPE_CODE_VOID:
+      ADD_EXTRA('v');
+      break;
+    case TYPE_CODE_METHOD:
+      ADD_EXTRA('M');
+      /* followed by name of class and func's arg '_' & ret types */
+      add_name(pextras,tname);
+      ADD_EXTRA('F');  /* then mangle function */
+      break;
+    case TYPE_CODE_STRUCT: /* C struct */
+    case TYPE_CODE_UNION:  /* C union */
+    case TYPE_CODE_ENUM:   /* Enumeration type */
+      /* followed by name of type */
+      add_name(pextras,tname);
+      break;
+
+    /* errors possible types/not supported */
+    case TYPE_CODE_CHAR:              
+    case TYPE_CODE_ARRAY:  /* Array type */
+    case TYPE_CODE_MEMBER: /* Member type */
+    case TYPE_CODE_BOOL:
+    case TYPE_CODE_COMPLEX:            /* Complex float */
+    case TYPE_CODE_UNDEF:
+    case TYPE_CODE_SET:                /* Pascal sets */
+    case TYPE_CODE_RANGE:  
+    case TYPE_CODE_STRING:
+    case TYPE_CODE_BITSTRING:
+    case TYPE_CODE_ERROR:
+    default: 
+      {
+        static struct complaint msg = {"Unknown type code x%x\n",0,0};
+        complain (&msg, tcode);
+      }
+    }
+  if (t->target_type)
+    add_mangled_type(pextras,t->target_type);
+}
+
+#if 0
+void
+cfront_mangle_name(type, i, j)
+     struct type *type;
+     int i;
+     int j;
+{
+   struct fn_field *f;
+   char *mangled_name = gdb_mangle_name (type, i, j);
+
+   f = TYPE_FN_FIELDLIST1 (type, i);	/* moved from below */
+
+   /* kludge to support cfront methods - gdb expects to find "F" for 
+      ARM_mangled names, so when we mangle, we have to add it here */
+   if (ARM_DEMANGLING) 
+     {
+	int k;
+	char * arm_mangled_name;
+	struct fn_field *method = &f[j];
+	char *field_name = TYPE_FN_FIELDLIST_NAME (type, i);
+        char *physname = TYPE_FN_FIELD_PHYSNAME (f, j);
+        char *newname = type_name_no_tag (type);
+
+        struct type *ftype = TYPE_FN_FIELD_TYPE (f, j);
+	int nargs = TYPE_NFIELDS(ftype);	/* number of args */
+	struct extra extras, * pextras = &extras;	
+	INIT_EXTRA
+
+	if (TYPE_FN_FIELD_STATIC_P (f, j))	/* j for sublist within this list */
+	  ADD_EXTRA('S')
+	ADD_EXTRA('F')
+	/* add args here! */
+	if (nargs <= 1)				/* no args besides this */
+		ADD_EXTRA('v')
+	else {
+	  for (k=1; k<nargs; k++) 
+	    {
+	      struct type * t;
+	      t = TYPE_FIELD_TYPE(ftype,k);
+	      add_mangled_type(pextras,t);
+	    }
+	}
+	ADD_EXTRA('\0')
+	printf("add_mangled_type: %s\n",extras.str); /* FIXME */
+	arm_mangled_name = malloc(strlen(mangled_name)+extras.len);
+        sprintf(arm_mangled_name,"%s%s",mangled_name,extras.str);
+	free(mangled_name);
+	mangled_name = arm_mangled_name;
+     }
+}
+#endif	/* 0 */
+
+#undef ADD_EXTRA
+/* End of new code added to support parsing of Cfront stabs strings */
 
 /* Ugly hack to convert method stubs into method types.
 
@@ -1075,7 +1316,8 @@ check_stub_method (type, i, j)
 
   free (demangled_name);
 
-  f = TYPE_FN_FIELDLIST1 (type, i);
+  f = TYPE_FN_FIELDLIST1 (type, i);	
+
   TYPE_FN_FIELD_PHYSNAME (f, j) = mangled_name;
 
   /* Now update the old "stub" type into a real type.  */

@@ -30,11 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "defs.h"
 #include <ctype.h>
 #include "gdb_string.h"
-#ifdef ANSI_PROTOTYPES
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "symtab.h"
 #include "gdbtypes.h"
@@ -87,6 +82,25 @@ set_check PARAMS ((char *, int));
 
 static void
 set_type_range PARAMS ((void));
+
+static void
+unk_lang_printchar PARAMS ((int, GDB_FILE *));
+
+static void
+unk_lang_printstr PARAMS ((GDB_FILE *, char *, unsigned int, int));
+
+static struct type *
+unk_lang_create_fundamental_type PARAMS ((struct objfile *, int));
+
+static void
+unk_lang_print_type PARAMS ((struct type *, char *, GDB_FILE *, int, int));
+
+static int
+unk_lang_val_print PARAMS ((struct type *, char *, CORE_ADDR, GDB_FILE *,
+			    int, int, int, enum val_prettyprint));
+
+static int
+unk_lang_value_print PARAMS ((value_ptr, GDB_FILE *, int, enum val_prettyprint));
 
 /* Forward declaration */
 extern const struct language_defn unknown_language_defn;
@@ -1219,7 +1233,7 @@ unk_lang_create_fundamental_type (objfile, typeid)
   error ("internal error - unimplemented function unk_lang_create_fundamental_type called.");
 }
 
-void
+static void
 unk_lang_print_type (type, varstring, stream, show, level)
      struct type *type;
      char *varstring;
@@ -1230,7 +1244,7 @@ unk_lang_print_type (type, varstring, stream, show, level)
   error ("internal error - unimplemented function unk_lang_print_type called.");
 }
 
-int
+static int
 unk_lang_val_print (type, valaddr, address, stream, format, deref_ref,
 		    recurse, pretty)
      struct type *type;
@@ -1245,7 +1259,7 @@ unk_lang_val_print (type, valaddr, address, stream, format, deref_ref,
   error ("internal error - unimplemented function unk_lang_val_print called.");
 }
 
-int
+static int
 unk_lang_value_print (val, stream, format, pretty)
      value_ptr val;
      GDB_FILE *stream;
@@ -1255,7 +1269,7 @@ unk_lang_value_print (val, stream, format, pretty)
   error ("internal error - unimplemented function unk_lang_value_print called.");
 }
 
-static struct type ** const (unknown_builtin_types[]) = { 0 };
+static struct type ** CONST_PTR (unknown_builtin_types[]) = { 0 };
 static const struct op_print unk_op_print_tab[] = {
     {NULL, OP_NULL, PREC_NULL, 0}
 };

@@ -1,5 +1,5 @@
 /* C language support definitions for GDB, the GNU debugger.
-   Copyright 1992 Free Software Foundation, Inc.
+   Copyright 1992, 1996 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -45,7 +45,7 @@ extern void c_printstr PARAMS ((GDB_FILE *, char *, unsigned int, int));
 
 extern struct type * c_create_fundamental_type PARAMS ((struct objfile*, int));
 
-extern struct type ** const (c_builtin_types[]);
+extern struct type ** CONST_PTR (c_builtin_types[]);
 
 /* These are in c-typeprint.c: */
 
@@ -55,16 +55,11 @@ c_type_print_base PARAMS ((struct type *, GDB_FILE *, int, int));
 extern void
 c_type_print_varspec_prefix PARAMS ((struct type *, GDB_FILE *, int, int));
 
-extern void
-cp_type_print_method_args PARAMS ((struct type **, char *, char *, int,
-				   GDB_FILE *));
 /* These are in cp-valprint.c */
 
-extern void
-cp_type_print_method_args PARAMS ((struct type **, char *, char *, int,
-				   GDB_FILE *));
-
 extern int vtblprint;		/* Controls printing of vtbl's */
+
+extern int static_field_print;
 
 extern void
 cp_print_class_member PARAMS ((char *, struct type *, GDB_FILE *, char *));

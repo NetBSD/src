@@ -1,5 +1,5 @@
 /* Perform non-arithmetic operations on values, for GDB.
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995
+   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -45,9 +45,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 static int typecmp PARAMS ((int staticp, struct type *t1[], value_ptr t2[]));
 
+#ifdef CALL_DUMMY
 static CORE_ADDR find_function_addr PARAMS ((value_ptr, struct type **));
+static value_ptr value_arg_coerce PARAMS ((value_ptr, struct type *));
+#endif
 
+
+#ifndef PUSH_ARGUMENTS
 static CORE_ADDR value_push PARAMS ((CORE_ADDR, value_ptr));
+#endif
 
 static value_ptr search_struct_field PARAMS ((char *, value_ptr, int,
 					      struct type *, int));
@@ -174,7 +180,7 @@ value_cast (type, arg2)
 	    low_bound = 0, high_bound = 0;
 	  new_length = val_length / element_length;
 	  if (val_length % element_length != 0)
-       warning("array element type size does not divide object size in cast");
+	    warning("array element type size does not divide object size in cast");
 	  /* FIXME-type-allocation: need a way to free this type when we are
 	     done with it.  */
 	  range_type = create_range_type ((struct type *) NULL,
@@ -233,22 +239,46 @@ value_cast (type, arg2)
     {
       if (code1 == TYPE_CODE_PTR && code2 == TYPE_CODE_PTR)
 	{
-	  /* Look in the type of the source to see if it contains the
-	     type of the target as a superclass.  If so, we'll need to
-	     offset the pointer rather than just change its type.  */
 	  struct type *t1 = check_typedef (TYPE_TARGET_TYPE (type));
 	  struct type *t2 = check_typedef (TYPE_TARGET_TYPE (type2));
 	  if (   TYPE_CODE (t1) == TYPE_CODE_STRUCT
 	      && TYPE_CODE (t2) == TYPE_CODE_STRUCT
-	      && TYPE_NAME (t1) != 0) /* if name unknown, can't have supercl */
+	      && !value_logical_not (arg2))
 	    {
-	      value_ptr v = search_struct_field (type_name_no_tag (t1),
-						 value_ind (arg2), 0, t2, 1);
-	      if (v)
+	      value_ptr v;
+
+	      /* Look in the type of the source to see if it contains the
+		 type of the target as a superclass.  If so, we'll need to
+		 offset the pointer rather than just change its type.  */
+	      if (TYPE_NAME (t1) != NULL)
 		{
-		  v = value_addr (v);
-		  VALUE_TYPE (v) = type;
-		  return v;
+		  v = search_struct_field (type_name_no_tag (t1),
+					   value_ind (arg2), 0, t2, 1);
+		  if (v)
+		    {
+		      v = value_addr (v);
+		      VALUE_TYPE (v) = type;
+		      return v;
+		    }
+		}
+
+	      /* Look in the type of the target to see if it contains the
+		 type of the source as a superclass.  If so, we'll need to
+		 offset the pointer rather than just change its type.
+		 FIXME: This fails silently with virtual inheritance.  */
+	      if (TYPE_NAME (t2) != NULL)
+		{
+		  v = search_struct_field (type_name_no_tag (t2),
+					   value_zero (t1, not_lval), 0, t1, 1);
+		  if (v)
+		    {
+		      value_ptr v2 = value_ind (arg2);
+		      VALUE_ADDRESS (v2) -= VALUE_ADDRESS (v)
+					    + VALUE_OFFSET (v);
+		      v2 = value_addr (v2);
+		      VALUE_TYPE (v2) = type;
+		      return v2;
+		    }
 		}
 	    }
 	  /* No superclass found, just fall through to change ptr type.  */
@@ -299,7 +329,8 @@ value_cast (type, arg2)
     }
   else if (VALUE_LVAL (arg2) == lval_memory)
     {
-      return value_at_lazy (type, VALUE_ADDRESS (arg2) + VALUE_OFFSET (arg2));
+      return value_at_lazy (type, VALUE_ADDRESS (arg2) + VALUE_OFFSET (arg2),
+			    VALUE_BFD_SECTION (arg2));
     }
   else if (code1 == TYPE_CODE_VOID)
     {
@@ -337,9 +368,10 @@ value_zero (type, lv)
    the contents are actually required.  */
 
 value_ptr
-value_at (type, addr)
+value_at (type, addr, sect)
      struct type *type;
      CORE_ADDR addr;
+     asection *sect;
 {
   register value_ptr val;
 
@@ -348,10 +380,23 @@ value_at (type, addr)
 
   val = allocate_value (type);
 
-  read_memory (addr, VALUE_CONTENTS_RAW (val), TYPE_LENGTH (type));
+#ifdef GDB_TARGET_IS_D10V
+  if (TYPE_TARGET_TYPE(type) && TYPE_CODE(TYPE_TARGET_TYPE(type)) == TYPE_CODE_FUNC)
+    {
+      int num;
+      short snum;
+      read_memory (addr, (char *)&snum, 2);
+      num = D10V_MAKE_IADDR(snum);
+      memcpy( VALUE_CONTENTS_RAW (val), &num, 4);
+    }
+  else
+#endif
+
+  read_memory_section (addr, VALUE_CONTENTS_RAW (val), TYPE_LENGTH (type), sect);
 
   VALUE_LVAL (val) = lval_memory;
   VALUE_ADDRESS (val) = addr;
+  VALUE_BFD_SECTION (val) = sect;
 
   return val;
 }
@@ -359,9 +404,10 @@ value_at (type, addr)
 /* Return a lazy value with type TYPE located at ADDR (cf. value_at).  */
 
 value_ptr
-value_at_lazy (type, addr)
+value_at_lazy (type, addr, sect)
      struct type *type;
      CORE_ADDR addr;
+     asection *sect;
 {
   register value_ptr val;
 
@@ -373,6 +419,7 @@ value_at_lazy (type, addr)
   VALUE_LVAL (val) = lval_memory;
   VALUE_ADDRESS (val) = addr;
   VALUE_LAZY (val) = 1;
+  VALUE_BFD_SECTION (val) = sect;
 
   return val;
 }
@@ -396,8 +443,30 @@ value_fetch_lazy (val)
   CORE_ADDR addr = VALUE_ADDRESS (val) + VALUE_OFFSET (val);
   int length = TYPE_LENGTH (VALUE_TYPE (val));
 
+#ifdef GDB_TARGET_IS_D10V
+  struct type *type = VALUE_TYPE(val);
+  if (TYPE_TARGET_TYPE(type) && (TYPE_CODE(TYPE_TARGET_TYPE(type)) == TYPE_CODE_FUNC))
+    {
+      int num;
+      short snum;
+      read_memory (addr, (char *)&snum, 2);
+      num = D10V_MAKE_IADDR(snum);
+      memcpy( VALUE_CONTENTS_RAW (val), &num, 4);
+    }
+  else if (TYPE_CODE(type) == TYPE_CODE_PTR )
+    {
+      int num;
+      short snum;
+      snum = read_memory_integer (addr, 2);
+      num = D10V_MAKE_DADDR(snum);
+      store_address ( VALUE_CONTENTS_RAW (val), 4, num); 
+    }
+  else
+#endif
+
   if (length)
-    read_memory (addr, VALUE_CONTENTS_RAW (val), length);
+    read_memory_section (addr, VALUE_CONTENTS_RAW (val), length,
+			 VALUE_BFD_SECTION (val));
   VALUE_LAZY (val) = 0;
   return 0;
 }
@@ -629,7 +698,7 @@ Can't handle bitfield which doesn't fit in a single register.");
       && (VALUE_BITSIZE (toval) < 8 * (int) sizeof (LONGEST)))
     {
       LONGEST fieldval = value_as_long (fromval);
-      LONGEST valmask = (((unsigned LONGEST) 1) << VALUE_BITSIZE (toval)) - 1;
+      LONGEST valmask = (((ULONGEST) 1) << VALUE_BITSIZE (toval)) - 1;
 
       fieldval &= valmask;
       if (!TYPE_UNSIGNED (type) && (fieldval & (valmask ^ (valmask >> 1))))
@@ -677,27 +746,26 @@ value_of_variable (var, b)
      struct block *b;
 {
   value_ptr val;
-  struct frame_info *frame;
+  struct frame_info *frame = NULL;
 
-  if (b == NULL)
-    /* Use selected frame.  */
-    frame = NULL;
-  else
+  if (!b)
+    frame = NULL;		/* Use selected frame.  */
+  else if (symbol_read_needs_frame (var))
     {
       frame = block_innermost_frame (b);
-      if (frame == NULL && symbol_read_needs_frame (var))
-	{
-	  if (BLOCK_FUNCTION (b) != NULL
-	      && SYMBOL_NAME (BLOCK_FUNCTION (b)) != NULL)
-	    error ("No frame is currently executing in block %s.",
-		   SYMBOL_NAME (BLOCK_FUNCTION (b)));
-	  else
-	    error ("No frame is currently executing in specified block");
-	}
+      if (!frame)
+	if (BLOCK_FUNCTION (b)
+	    && SYMBOL_NAME (BLOCK_FUNCTION (b)))
+	  error ("No frame is currently executing in block %s.",
+		 SYMBOL_NAME (BLOCK_FUNCTION (b)));
+	else
+	  error ("No frame is currently executing in specified block");
     }
+
   val = read_var_value (var, frame);
-  if (val == 0)
+  if (!val)
     error ("Address of symbol \"%s\" is unknown.", SYMBOL_SOURCE_NAME (var));
+
   return val;
 }
 
@@ -744,12 +812,15 @@ value_ptr
 value_coerce_function (arg1)
      value_ptr arg1;
 {
+  value_ptr retval;
 
   if (VALUE_LVAL (arg1) != lval_memory)
     error ("Attempt to take address of value not located in memory.");
 
-  return value_from_longest (lookup_pointer_type (VALUE_TYPE (arg1)),
-		(LONGEST) (VALUE_ADDRESS (arg1) + VALUE_OFFSET (arg1)));
+  retval = value_from_longest (lookup_pointer_type (VALUE_TYPE (arg1)),
+			       (LONGEST) (VALUE_ADDRESS (arg1) + VALUE_OFFSET (arg1)));
+  VALUE_BFD_SECTION (retval) = VALUE_BFD_SECTION (arg1);
+  return retval;
 }  
 
 /* Return a pointer value for the object for which ARG1 is the contents.  */
@@ -758,6 +829,8 @@ value_ptr
 value_addr (arg1)
      value_ptr arg1;
 {
+  value_ptr retval;
+
   struct type *type = check_typedef (VALUE_TYPE (arg1));
   if (TYPE_CODE (type) == TYPE_CODE_REF)
     {
@@ -774,8 +847,10 @@ value_addr (arg1)
   if (VALUE_LVAL (arg1) != lval_memory)
     error ("Attempt to take address of value not located in memory.");
 
-  return value_from_longest (lookup_pointer_type (VALUE_TYPE (arg1)),
-		(LONGEST) (VALUE_ADDRESS (arg1) + VALUE_OFFSET (arg1)));
+  retval = value_from_longest (lookup_pointer_type (VALUE_TYPE (arg1)),
+			       (LONGEST) (VALUE_ADDRESS (arg1) + VALUE_OFFSET (arg1)));
+  VALUE_BFD_SECTION (retval) = VALUE_BFD_SECTION (arg1);
+  return retval;
 }
 
 /* Given a value of a pointer type, apply the C unary * operator to it.  */
@@ -797,9 +872,11 @@ value_ind (arg1)
      BUILTIN_TYPE_LONGEST would seem to be a mistake.  */
   if (TYPE_CODE (type1) == TYPE_CODE_INT)
     return value_at (builtin_type_int,
-		     (CORE_ADDR) value_as_long (arg1));
+		     (CORE_ADDR) value_as_long (arg1),
+		     VALUE_BFD_SECTION (arg1));
   else if (TYPE_CODE (type1) == TYPE_CODE_PTR)
-    return value_at_lazy (TYPE_TARGET_TYPE (type1), value_as_pointer (arg1));
+    return value_at_lazy (TYPE_TARGET_TYPE (type1), value_as_pointer (arg1),
+			  VALUE_BFD_SECTION (arg1));
   error ("Attempt to take contents of a non-pointer value.");
   return 0;  /* For lint -- never reached */
 }
@@ -811,7 +888,7 @@ value_ind (arg1)
 CORE_ADDR
 push_word (sp, word)
      CORE_ADDR sp;
-     unsigned LONGEST word;
+     ULONGEST word;
 {
   register int len = REGISTER_SIZE;
   char buffer[MAX_REGISTER_RAW_SIZE];
@@ -849,6 +926,8 @@ push_bytes (sp, buffer, len)
 
 /* Push onto the stack the specified value VALUE.  */
 
+#ifndef PUSH_ARGUMENTS
+
 static CORE_ADDR
 value_push (sp, arg)
      register CORE_ADDR sp;
@@ -867,6 +946,9 @@ value_push (sp, arg)
   return sp;
 }
 
+#endif	/* !PUSH_ARGUMENTS */
+
+#ifdef CALL_DUMMY
 /* Perform the standard coercions that are specified
    for arguments to be passed to C functions.
 
@@ -994,7 +1076,6 @@ find_function_addr (function, retval_type)
   return funaddr;
 }
 
-#if defined (CALL_DUMMY)
 /* All this stuff with a dummy frame may seem unnecessarily complicated
    (why not just save registers in GDB?).  The purpose of pushing a dummy
    frame which looks just like a real frame is so that if you call a
@@ -1024,18 +1105,18 @@ call_function_by_hand (function, nargs, args)
   CORE_ADDR start_sp;
   /* CALL_DUMMY is an array of words (REGISTER_SIZE), but each word
      is in host byte order.  Before calling FIX_CALL_DUMMY, we byteswap it
-     and remove any extra bytes which might exist because unsigned LONGEST is
+     and remove any extra bytes which might exist because ULONGEST is
      bigger than REGISTER_SIZE.  */
-  static unsigned LONGEST dummy[] = CALL_DUMMY;
-  char dummy1[REGISTER_SIZE * sizeof dummy / sizeof (unsigned LONGEST)];
+  static ULONGEST dummy[] = CALL_DUMMY;
+  char dummy1[REGISTER_SIZE * sizeof dummy / sizeof (ULONGEST)];
   CORE_ADDR old_sp;
   struct type *value_type;
   unsigned char struct_return;
-  CORE_ADDR struct_addr;
+  CORE_ADDR struct_addr = 0;
   struct inferior_status inf_status;
   struct cleanup *old_chain;
   CORE_ADDR funaddr;
-  int using_gcc;
+  int using_gcc;	/* Set to version of gcc in use, or zero if not gcc */
   CORE_ADDR real_pc;
   struct type *ftype = check_typedef (SYMBOL_TYPE (function));
 
@@ -1065,8 +1146,8 @@ call_function_by_hand (function, nargs, args)
 
   {
     struct block *b = block_for_pc (funaddr);
-    /* If compiled without -g, assume GCC.  */
-    using_gcc = b == NULL ? 0 : BLOCK_GCC_COMPILED (b);
+    /* If compiled without -g, assume GCC 2.  */
+    using_gcc = (b == NULL ? 2 : BLOCK_GCC_COMPILED (b));
   }
 
   /* Are we returning a value using a structure return or a normal
@@ -1080,7 +1161,7 @@ call_function_by_hand (function, nargs, args)
   for (i = 0; i < (int) (sizeof (dummy) / sizeof (dummy[0])); i++)
     store_unsigned_integer (&dummy1[i * REGISTER_SIZE],
 			    REGISTER_SIZE,
-			    (unsigned LONGEST)dummy[i]);
+			    (ULONGEST)dummy[i]);
 
 #ifdef GDB_TARGET_IS_HPPA
   real_pc = FIX_CALL_DUMMY (dummy1, start_sp, funaddr, nargs, args,
@@ -1137,12 +1218,24 @@ call_function_by_hand (function, nargs, args)
 
   for (i = nargs - 1; i >= 0; i--)
     {
-      struct type *param_type;
-      if (TYPE_NFIELDS (ftype) > i)
-	param_type = TYPE_FIELD_TYPE (ftype, i);
-      else
-	param_type = 0;
-      args[i] = value_arg_coerce (args[i], param_type);
+      /* If we're off the end of the known arguments, do the standard
+	 promotions.  FIXME: if we had a prototype, this should only
+	 be allowed if ... were present.  */
+      if (i >= TYPE_NFIELDS (ftype))
+	args[i] = value_arg_coerce (args[i], 0);
+
+      else 
+	{
+	  struct type *param_type = TYPE_FIELD_TYPE (ftype, i);
+
+	  /* If we have a prototype, cast as for assignment.  */
+	  if (TYPE_FLAGS (ftype) & TYPE_FLAG_PROTOTYPED)
+	    args[i] = value_cast (param_type, args[i]);
+
+	  /* Otherwise, do the standard promotions.  */
+	  else
+	    args[i] = value_arg_coerce (args[i], param_type);
+	}
     }
 
 #if defined (REG_STRUCT_HAS_ADDR)
@@ -1166,6 +1259,9 @@ call_function_by_hand (function, nargs, args)
 	    CORE_ADDR addr;
 	    int len = TYPE_LENGTH (arg_type);
 #ifdef STACK_ALIGN
+  /* MVS 11/22/96: I think at least some of this stack_align code is
+     really broken.  Better to let PUSH_ARGUMENTS adjust the stack in
+     a target-defined manner.  */
 	    int aligned_len = STACK_ALIGN (len);
 #else
 	    int aligned_len = len;
@@ -1202,6 +1298,9 @@ call_function_by_hand (function, nargs, args)
     {
       int len = TYPE_LENGTH (value_type);
 #ifdef STACK_ALIGN
+  /* MVS 11/22/96: I think at least some of this stack_align code is
+     really broken.  Better to let PUSH_ARGUMENTS adjust the stack in
+     a target-defined manner.  */
       len = STACK_ALIGN (len);
 #endif
 #if 1 INNER_THAN 2
@@ -1213,9 +1312,12 @@ call_function_by_hand (function, nargs, args)
 #endif
     }
 
-#ifdef STACK_ALIGN
-  /* If stack grows down, we must leave a hole at the top. */
+#if defined(STACK_ALIGN) && (1 INNER_THAN 2)
+  /* MVS 11/22/96: I think at least some of this stack_align code is
+     really broken.  Better to let PUSH_ARGUMENTS adjust the stack in
+     a target-defined manner.  */
   {
+  /* If stack grows down, we must leave a hole at the top. */
     int len = 0;
 
     for (i = nargs - 1; i >= 0; i--)
@@ -1223,11 +1325,7 @@ call_function_by_hand (function, nargs, args)
 #ifdef CALL_DUMMY_STACK_ADJUST
     len += CALL_DUMMY_STACK_ADJUST;
 #endif
-#if 1 INNER_THAN 2
     sp -= STACK_ALIGN (len) - len;
-#else
-    sp += STACK_ALIGN (len) - len;
-#endif
   }
 #endif /* STACK_ALIGN */
 
@@ -1238,11 +1336,38 @@ call_function_by_hand (function, nargs, args)
     sp = value_push (sp, args[i]);
 #endif /* !PUSH_ARGUMENTS */
 
+#ifdef PUSH_RETURN_ADDRESS	/* for targets that use no CALL_DUMMY */
+  /* There are a number of targets now which actually don't write any
+     CALL_DUMMY instructions into the target, but instead just save the
+     machine state, push the arguments, and jump directly to the callee
+     function.  Since this doesn't actually involve executing a JSR/BSR
+     instruction, the return address must be set up by hand, either by
+     pushing onto the stack or copying into a return-address register
+     as appropriate.  Formerly this has been done in PUSH_ARGUMENTS, 
+     but that's overloading its functionality a bit, so I'm making it
+     explicit to do it here.  */
+  sp = PUSH_RETURN_ADDRESS(real_pc, sp);
+#endif	/* PUSH_RETURN_ADDRESS */
+
+#if defined(STACK_ALIGN) && !(1 INNER_THAN 2)
+  {
+  /* If stack grows up, we must leave a hole at the bottom, note
+     that sp already has been advanced for the arguments!  */
+#ifdef CALL_DUMMY_STACK_ADJUST
+    sp += CALL_DUMMY_STACK_ADJUST;
+#endif
+    sp = STACK_ALIGN (sp);
+  }
+#endif /* STACK_ALIGN */
+
+/* XXX This seems wrong.  For stacks that grow down we shouldn't do
+   anything here!  */
+  /* MVS 11/22/96: I think at least some of this stack_align code is
+     really broken.  Better to let PUSH_ARGUMENTS adjust the stack in
+     a target-defined manner.  */
 #ifdef CALL_DUMMY_STACK_ADJUST
 #if 1 INNER_THAN 2
   sp -= CALL_DUMMY_STACK_ADJUST;
-#else
-  sp += CALL_DUMMY_STACK_ADJUST;
 #endif
 #endif /* CALL_DUMMY_STACK_ADJUST */
 
@@ -1398,6 +1523,7 @@ value_array (lowbound, highbound, elemvec)
 		  VALUE_CONTENTS (elemvec[idx]),
 		  typelength);
 	}
+      VALUE_BFD_SECTION (val) = VALUE_BFD_SECTION (elemvec[0]);
       return val;
     }
 
@@ -1415,7 +1541,7 @@ value_array (lowbound, highbound, elemvec)
 
   /* Create the array type and set up an array value to be evaluated lazily. */
 
-  val = value_at_lazy (arraytype, addr);
+  val = value_at_lazy (arraytype, addr, VALUE_BFD_SECTION (elemvec[0]));
   return (val);
 }
 
@@ -1455,7 +1581,7 @@ value_string (ptr, len)
   addr = allocate_space_in_inferior (len);
   write_memory (addr, ptr, len);
 
-  val = value_at_lazy (stringtype, addr);
+  val = value_at_lazy (stringtype, addr, NULL);
   return (val);
 }
 
@@ -1560,11 +1686,12 @@ search_struct_field (name, arg1, offset, type, looking_for_baseclass)
      int looking_for_baseclass;
 {
   int i;
+  int nbases = TYPE_N_BASECLASSES (type);
 
   CHECK_TYPEDEF (type);
 
   if (! looking_for_baseclass)
-    for (i = TYPE_NFIELDS (type) - 1; i >= TYPE_N_BASECLASSES (type); i--)
+    for (i = TYPE_NFIELDS (type) - 1; i >= nbases; i--)
       {
 	char *t_field_name = TYPE_FIELD_NAME (type, i);
 
@@ -1572,16 +1699,7 @@ search_struct_field (name, arg1, offset, type, looking_for_baseclass)
 	  {
 	    value_ptr v;
 	    if (TYPE_FIELD_STATIC (type, i))
-	      {
-		char *phys_name = TYPE_FIELD_STATIC_PHYSNAME (type, i);
-		struct symbol *sym =
-		    lookup_symbol (phys_name, 0, VAR_NAMESPACE, 0, NULL);
-		if (sym == NULL)
-		    error ("Internal error: could not find physical static variable named %s",
-			   phys_name);
-		v = value_at (TYPE_FIELD_TYPE (type, i),
-			      (CORE_ADDR)SYMBOL_BLOCK_VALUE (sym));
-	      }
+	      v = value_static_field (type, i);
 	    else
 	      v = value_primitive_field (arg1, offset, i, type);
 	    if (v == 0)
@@ -1628,7 +1746,7 @@ search_struct_field (name, arg1, offset, type, looking_for_baseclass)
 	  }
       }
 
-  for (i = TYPE_N_BASECLASSES (type) - 1; i >= 0; i--)
+  for (i = 0;  i < nbases;  i++)
     {
       value_ptr v;
       struct type *basetype = check_typedef (TYPE_BASECLASS (type, i));
@@ -1641,28 +1759,48 @@ search_struct_field (name, arg1, offset, type, looking_for_baseclass)
 
       if (BASETYPE_VIA_VIRTUAL (type, i))
 	{
-	  int boffset = VALUE_OFFSET (arg1) + offset;
+	  int boffset;
+	  value_ptr v2 = allocate_value (basetype);
+
 	  boffset = baseclass_offset (type, i,
-				      VALUE_CONTENTS (arg1) + boffset,
-				      VALUE_ADDRESS (arg1) + boffset);
+				      VALUE_CONTENTS (arg1) + offset,
+				      VALUE_ADDRESS (arg1)
+					+ VALUE_OFFSET (arg1) + offset);
 	  if (boffset == -1)
 	    error ("virtual baseclass botch");
-	  if (found_baseclass)
+
+	  /* The virtual base class pointer might have been clobbered by the
+	     user program. Make sure that it still points to a valid memory
+	     location.  */
+
+	  boffset += offset;
+	  if (boffset < 0 || boffset >= TYPE_LENGTH (type))
 	    {
-	      value_ptr v2 = allocate_value (basetype);
+	      CORE_ADDR base_addr;
+	
+	      base_addr = VALUE_ADDRESS (arg1) + VALUE_OFFSET (arg1) + boffset;
+	      if (target_read_memory (base_addr, VALUE_CONTENTS_RAW (v2),
+				      TYPE_LENGTH (basetype)) != 0)
+		error ("virtual baseclass botch");
+	      VALUE_LVAL (v2) = lval_memory;
+	      VALUE_ADDRESS (v2) = base_addr;
+	    }
+	  else
+	    {
 	      VALUE_LVAL (v2) = VALUE_LVAL (arg1);
 	      VALUE_ADDRESS (v2) = VALUE_ADDRESS (arg1);
-	      VALUE_OFFSET (v2) = VALUE_OFFSET (arg1) + offset + boffset;
+	      VALUE_OFFSET (v2) = VALUE_OFFSET (arg1) + boffset;
 	      if (VALUE_LAZY (arg1))
 		VALUE_LAZY (v2) = 1;
 	      else
 		memcpy (VALUE_CONTENTS_RAW (v2),
-			VALUE_CONTENTS_RAW (arg1) + offset + boffset,
+			VALUE_CONTENTS_RAW (arg1) + boffset,
 			TYPE_LENGTH (basetype));
-	      return v2;
 	    }
-	  v = search_struct_field (name, arg1, offset + boffset,
-				   TYPE_BASECLASS (type, i),
+
+	  if (found_baseclass)
+	    return v2;
+	  v = search_struct_field (name, v2, 0, TYPE_BASECLASS (type, i),
 				   looking_for_baseclass);
 	}
       else if (found_baseclass)
@@ -1698,6 +1836,7 @@ search_struct_method (name, arg1p, args, offset, static_memfuncp, type)
   for (i = TYPE_NFN_FIELDS (type) - 1; i >= 0; i--)
     {
       char *t_field_name = TYPE_FN_FIELDLIST_NAME (type, i);
+      /* FIXME!  May need to check for ARM demangling here */
       if (strncmp(t_field_name, "__", 2)==0 ||
 	strncmp(t_field_name, "op", 2)==0 ||
 	strncmp(t_field_name, "type", 4)==0 )
@@ -1740,11 +1879,29 @@ search_struct_method (name, arg1p, args, offset, static_memfuncp, type)
 
       if (BASETYPE_VIA_VIRTUAL (type, i))
 	{
-	  base_offset = VALUE_OFFSET (*arg1p) + offset;
+	  struct type *baseclass = check_typedef (TYPE_BASECLASS (type, i));
+	  char *base_valaddr;
+
+	  /* The virtual base class pointer might have been clobbered by the
+	     user program. Make sure that it still points to a valid memory
+	     location.  */
+
+	  if (offset < 0 || offset >= TYPE_LENGTH (type))
+	    {
+	      base_valaddr = (char *) alloca (TYPE_LENGTH (baseclass));
+	      if (target_read_memory (VALUE_ADDRESS (*arg1p)
+					+ VALUE_OFFSET (*arg1p) + offset,
+				      base_valaddr,
+				      TYPE_LENGTH (baseclass)) != 0)
+		error ("virtual baseclass botch");
+	    }
+	  else
+	    base_valaddr = VALUE_CONTENTS (*arg1p) + offset;
+
 	  base_offset =
-	    baseclass_offset (type, i,
-			      VALUE_CONTENTS (*arg1p) + base_offset,
-			      VALUE_ADDRESS (*arg1p) + base_offset);
+	    baseclass_offset (type, i, base_valaddr,
+			      VALUE_ADDRESS (*arg1p)
+				+ VALUE_OFFSET (*arg1p) + offset);
 	  if (base_offset == -1)
 	    error ("virtual baseclass botch");
 	}
@@ -1853,11 +2010,19 @@ value_struct_elt (argp, args, name, static_memfuncp, err)
     {
       if (!args[1])
 	{
-	  /* destructors are a special case.  */
-	  v = value_fn_field (NULL, TYPE_FN_FIELDLIST1 (t, 0),
-			      TYPE_FN_FIELDLIST_LENGTH (t, 0), 0, 0);
-	  if (!v) error("could not find destructor function named %s.", name);
-	  else return v;
+	  /* Destructors are a special case.  */
+	  int m_index, f_index;
+
+	  v = NULL;
+	  if (get_destructor_fn_field (t, &m_index, &f_index))
+	    {
+	      v = value_fn_field (NULL, TYPE_FN_FIELDLIST1 (t, m_index),
+				  f_index, NULL, 0);
+	    }
+	  if (v == NULL)
+	    error ("could not find destructor function named %s.", name);
+	  else
+	    return v;
 	}
       else
 	{
@@ -1936,7 +2101,11 @@ check_field_in (type, name)
 
   /* Destructors are a special case.  */
   if (destructor_name_p (name, type))
-    return 1;
+    {
+      int m_index, f_index;
+
+      return get_destructor_fn_field (type, &m_index, &f_index);
+    }
 
   for (i = TYPE_NFN_FIELDS (type) - 1; i >= 0; --i)
     {
@@ -2016,14 +2185,11 @@ value_struct_elt_for_reference (domain, offset, curtype, name, intype)
 	{
 	  if (TYPE_FIELD_STATIC (t, i))
 	    {
-	      char *phys_name = TYPE_FIELD_STATIC_PHYSNAME (t, i);
-	      struct symbol *sym =
-		lookup_symbol (phys_name, 0, VAR_NAMESPACE, 0, NULL);
-	      if (sym == NULL)
-		error ("Internal error: could not find physical static variable named %s",
-		       phys_name);
-	      return value_at (SYMBOL_TYPE (sym),
-			       (CORE_ADDR)SYMBOL_BLOCK_VALUE (sym));
+	      v = value_static_field (t, i);
+	      if (v == NULL)
+		error ("Internal error: could not find static variable %s",
+		       name);
+	      return v;
 	    }
 	  if (TYPE_FIELD_PACKED (t, i))
 	    error ("pointers to bitfield members not allowed");
@@ -2214,7 +2380,7 @@ value_slice (array, lowbound, length)
      done with it.  */
   slice_range_type = create_range_type ((struct type*) NULL,
 					TYPE_TARGET_TYPE (range_type),
-					lowerbound, lowerbound + length - 1);
+					lowbound, lowbound + length - 1);
   if (TYPE_CODE (array_type) == TYPE_CODE_BITSTRING)
     {
       int i;

@@ -50,3 +50,7 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 /* Support for shared libraries.  */
 
 #include "solib.h"
+
+/* Given a pointer to either a gregset_t or fpregset_t, return a
+   pointer to the first register.  */
+#define ALPHA_REGSET_BASE(regsetp)     ((regsetp)->regs)

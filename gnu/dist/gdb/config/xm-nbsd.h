@@ -1,5 +1,5 @@
 /* Host-dependent definitions for any CPU running NetBSD.
-   Copyright 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1996 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -30,8 +30,3 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* NetBSD has termios facilities. */
 #define HAVE_TERMIOS
-
-#if 0
-#define CC_HAS_LONG_LONG	1
-#define PRINTF_HAS_LONG_LONG	1
-#endif

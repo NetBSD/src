@@ -1,5 +1,5 @@
 /* Internal type definitions for GDB.
-   Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1994, 1996 Free Software Foundation, Inc.
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
 This file is part of GDB.
@@ -154,6 +154,12 @@ enum type_code
 
 #define TYPE_FLAG_TARGET_STUB (1 << 3)
 
+/* This is a function type which appears to have a prototype.  We need this
+   for function calls in order to tell us if it's necessary to coerce the args,
+   or to just do the standard conversions.  */
+
+#define TYPE_FLAG_PROTOTYPED (1 << 4)
+
 struct type
 {
 
@@ -266,25 +272,38 @@ struct type
   struct field
     {
 
-      /* Position of this field, counting in bits from start of
-	 containing structure.  For a function type, this is the
-	 position in the argument list of this argument.
-	 For a range bound or enum value, this is the value itself.
-	 (FIXME:  What about ranges larger than host int size?)
-	 For BITS_BIG_ENDIAN=1 targets, it is the bit offset to the MSB.
-	 For BITS_BIG_ENDIAN=0 targets, it is the bit offset to the LSB. */
 
-      int bitpos;
+
+      union field_location
+        {
+	  /* Position of this field, counting in bits from start of
+	     containing structure.
+	     For BITS_BIG_ENDIAN=1 targets, it is the bit offset to the MSB.
+	     For BITS_BIG_ENDIAN=0 targets, it is the bit offset to the LSB.
+	     For a function type, this is the position in the argument list
+	     of this argument.
+	     For a range bound or enum value, this is the value itself. */
+
+	  int bitpos;
+
+	  /* For a static field, if TYPE_FIELD_STATIC_HAS_ADDR then physaddr
+	     is the location (in the target) of the static field.
+	     Otherwise, physname is the mangled label of the static field. */
+
+	  CORE_ADDR physaddr;
+	  char* physname;
+      } loc;
 
       /* Size of this field, in bits, or zero if not packed.
 	 For an unpacked field, the field's type's length
-	 says how many bytes the field occupies.  */
-      /* FIXME: This is abused by TYPE_FIELD_STATIC_PHYSNAME to contain 
-	 a pointer, so it has to be long.  */
+	 says how many bytes the field occupies.
+	 A value of -1 or -2 indicates a static field;  -1 means the location
+	 is specified by the label loc.physname;  -2 means that loc.physaddr
+	 specifies the actual address. */
 
-      long bitsize;
+      int bitsize;
 
-      /* In a struct or enum type, type of this field.
+      /* In a struct or union type, type of this field.
 	 In a function type, type of this argument.
 	 In an array type, the domain-type of the array.  */
 
@@ -297,11 +316,14 @@ struct type
 
     } *fields;
 
-  /* For types with virtual functions, VPTR_BASETYPE is the base class which
-     defined the virtual function table pointer.  
+  /* For types with virtual functions (TYPE_CODE_STRUCT), VPTR_BASETYPE
+     is the base class which defined the virtual function table pointer.  
 
-     For types that are pointer to member types, VPTR_BASETYPE
-     is the type that this pointer is a member of.
+     For types that are pointer to member types (TYPE_CODE_MEMBER),
+     VPTR_BASETYPE is the type that this pointer is a member of.
+
+     For method types (TYPE_CODE_METHOD), VPTR_BASETYPE is the aggregate
+     type that contains the method.
 
      Unused otherwise.  */
 
@@ -321,7 +343,11 @@ struct type
   union type_specific
     {
 
-      /* ARG_TYPES is for TYPE_CODE_METHOD and TYPE_CODE_FUNC.  */
+      /* ARG_TYPES is for TYPE_CODE_METHOD.
+	 Contains the type of each argument, ending with a void type
+	 after the last argument for normal member functions or a NULL
+	 pointer after the last argument for functions with variable
+	 arguments.  */
 
       struct type **arg_types;
 
@@ -427,16 +453,9 @@ struct cplus_struct_type
 
 	  char *physname;
 
-	  /* The return value of the method */
+	  /* The type of the method.  */
 
 	  struct type *type;
-
-	  /* The argument list.  Only valid if is_stub is clear.  Contains
-	     the type of each argument, including `this', and ending with
-	     a NULL pointer after the last argument.  Should not contain
-	     a `this' pointer for static member functions.  */
-
-	  struct type **args;
 
 	  /* For virtual functions.
 	     First baseclass that defines this virtual function.   */
@@ -532,18 +551,27 @@ allocate_cplus_struct_type PARAMS ((struct type *));
 #define TYPE_BASECLASS(thistype,index) (thistype)->fields[index].type
 #define TYPE_N_BASECLASSES(thistype) TYPE_CPLUS_SPECIFIC(thistype)->n_baseclasses
 #define TYPE_BASECLASS_NAME(thistype,index) (thistype)->fields[index].name
-#define TYPE_BASECLASS_BITPOS(thistype,index) (thistype)->fields[index].bitpos
+#define TYPE_BASECLASS_BITPOS(thistype,index) TYPE_FIELD_BITPOS(thistype,index)
 #define BASETYPE_VIA_PUBLIC(thistype, index) (!TYPE_FIELD_PRIVATE(thistype, index))
 #define BASETYPE_VIA_VIRTUAL(thistype, index) \
   B_TST(TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits, (index))
 
+#define FIELD_TYPE(thisfld) ((thisfld).type)
+#define FIELD_NAME(thisfld) ((thisfld).name)
+#define FIELD_BITPOS(thisfld) ((thisfld).loc.bitpos)
+#define FIELD_BITSIZE(thisfld) ((thisfld).bitsize)
+#define FIELD_PHYSNAME(thisfld) ((thisfld).loc.physname)
+#define FIELD_PHYSADDR(thisfld) ((thisfld).loc.physaddr)
+#define SET_FIELD_PHYSNAME(thisfld, name) \
+  ((thisfld).bitsize = -1, FIELD_PHYSNAME(thisfld) = (name))
+#define SET_FIELD_PHYSADDR(thisfld, name) \
+  ((thisfld).bitsize = -2, FIELD_PHYSADDR(thisfld) = (name))
 #define TYPE_FIELD(thistype, n) (thistype)->fields[n]
-#define TYPE_FIELD_TYPE(thistype, n) (thistype)->fields[n].type
-#define TYPE_FIELD_NAME(thistype, n) (thistype)->fields[n].name
-#define TYPE_FIELD_VALUE(thistype, n) (* (int*) &(thistype)->fields[n].type)
-#define TYPE_FIELD_BITPOS(thistype, n) (thistype)->fields[n].bitpos
-#define TYPE_FIELD_BITSIZE(thistype, n) (thistype)->fields[n].bitsize
-#define TYPE_FIELD_PACKED(thistype, n) (thistype)->fields[n].bitsize
+#define TYPE_FIELD_TYPE(thistype, n) FIELD_TYPE(TYPE_FIELD(thistype, n))
+#define TYPE_FIELD_NAME(thistype, n) FIELD_NAME(TYPE_FIELD(thistype, n))
+#define TYPE_FIELD_BITPOS(thistype, n) FIELD_BITPOS(TYPE_FIELD(thistype,n))
+#define TYPE_FIELD_BITSIZE(thistype, n) FIELD_BITSIZE(TYPE_FIELD(thistype,n))
+#define TYPE_FIELD_PACKED(thistype, n) (FIELD_BITSIZE(TYPE_FIELD(thistype,n))!=0)
 
 #define TYPE_FIELD_PRIVATE_BITS(thistype) \
   TYPE_CPLUS_SPECIFIC(thistype)->private_field_bits
@@ -573,8 +601,10 @@ allocate_cplus_struct_type PARAMS ((struct type *));
 #define TYPE_FIELD_VIRTUAL(thistype, n) \
        B_TST(TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits, (n))
 
-#define TYPE_FIELD_STATIC(thistype, n) ((thistype)->fields[n].bitpos == -1)
-#define TYPE_FIELD_STATIC_PHYSNAME(thistype, n) ((char *)(thistype)->fields[n].bitsize)
+#define TYPE_FIELD_STATIC(thistype, n) ((thistype)->fields[n].bitsize < 0)
+#define TYPE_FIELD_STATIC_HAS_ADDR(thistype, n) ((thistype)->fields[n].bitsize == -2)
+#define TYPE_FIELD_STATIC_PHYSNAME(thistype, n) FIELD_PHYSNAME(TYPE_FIELD(thistype, n))
+#define TYPE_FIELD_STATIC_PHYSADDR(thistype, n) FIELD_PHYSADDR(TYPE_FIELD(thistype, n))
 
 #define TYPE_FN_FIELDLISTS(thistype) TYPE_CPLUS_SPECIFIC(thistype)->fn_fieldlists
 #define TYPE_FN_FIELDLIST(thistype, n) TYPE_CPLUS_SPECIFIC(thistype)->fn_fieldlists[n]
@@ -769,6 +799,8 @@ lookup_fundamental_type PARAMS ((struct objfile *, int));
 extern void
 fill_in_vptr_fieldno PARAMS ((struct type *));
 
+extern int get_destructor_fn_field PARAMS ((struct type *, int *, int *));
+
 extern int get_discrete_bounds PARAMS ((struct type*, LONGEST*, LONGEST*));
 
 #if MAINTENANCE_CMDS
@@ -785,5 +817,9 @@ extern int can_dereference PARAMS ((struct type *));
 #if MAINTENANCE_CMDS
 extern void maintenance_print_type PARAMS ((char *, int));
 #endif
+
+/* typeprint.c */
+
+extern void print_type_scalar PARAMS ((struct type *, LONGEST, GDB_FILE *));
 
 #endif	/* GDBTYPES_H */

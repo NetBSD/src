@@ -1,0 +1,224 @@
+This is Info file ./gdb.info, produced by Makeinfo version 1.68 from
+the input file gdb.texinfo.
+
+START-INFO-DIR-ENTRY
+* Gdb: (gdb).                     The GNU debugger.
+END-INFO-DIR-ENTRY
+   This file documents the GNU debugger GDB.
+
+   This is the Fifth Edition, April 1998, of `Debugging with GDB: the
+GNU Source-Level Debugger' for GDB Version .
+
+   Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
+1997, 1998 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+Indirect:
+gdb.info-1: 1037
+gdb.info-2: 50989
+gdb.info-3: 100293
+gdb.info-4: 144637
+gdb.info-5: 193017
+gdb.info-6: 238324
+gdb.info-7: 287491
+gdb.info-8: 337158
+gdb.info-9: 366713
+
+Tag Table:
+(Indirect)
+Node: Top1037
+Node: Summary2501
+Node: Free Software4107
+Node: Contributors4845
+Node: Sample Session9212
+Node: Invocation16078
+Node: Invoking GDB16552
+Node: File Options18428
+Node: Mode Options21531
+Node: Quitting GDB23706
+Node: Shell Commands24572
+Node: Commands25319
+Node: Command Syntax25956
+Node: Completion27819
+Node: Help31904
+Node: Running36211
+Node: Compilation37326
+Node: Starting39122
+Node: Arguments42294
+Node: Environment43298
+Node: Working Directory46394
+Node: Input/Output47134
+Node: Attach48739
+Node: Kill Process50989
+Node: Process Information51959
+Node: Threads53291
+Node: Processes57909
+Node: Stopping59141
+Node: Breakpoints60276
+Node: Set Breaks62537
+Node: Set Watchpoints71001
+Node: Exception Handling73477
+Node: Delete Breaks75991
+Node: Disabling77619
+Node: Conditions80237
+Node: Break Commands84763
+Node: Breakpoint Menus87607
+Node: Continuing and Stepping89283
+Node: Signals96625
+Node: Thread Stops100293
+Node: Stack102619
+Node: Frames104163
+Node: Backtrace106880
+Node: Selection108612
+Node: Frame Info111348
+Node: MIPS Stack113648
+Node: Source114665
+Node: List115614
+Node: Search119139
+Node: Source Path119942
+Node: Machine Code122623
+Node: Data125678
+Node: Expressions127553
+Node: Variables129485
+Node: Arrays132022
+Node: Output Formats134547
+Node: Memory136618
+Node: Auto Display140882
+Node: Print Settings144637
+Node: Value History154465
+Node: Convenience Vars156876
+Node: Registers159659
+Node: Floating Point Hardware164361
+Node: Languages164864
+Node: Setting165968
+Node: Filenames167558
+Node: Manually168142
+Node: Automatically169340
+Node: Show170391
+Node: Checks171293
+Node: Type Checking172649
+Node: Range Checking175346
+Node: Support177687
+Node: C178603
+Node: C Operators179725
+Node: C Constants183780
+Node: Cplus expressions185689
+Node: C Defaults188284
+Node: C Checks188941
+Node: Debugging C189648
+Node: Debugging C plus plus190117
+Node: Modula-2192129
+Node: M2 Operators193017
+Node: Built-In Func/Proc196013
+Node: M2 Constants198752
+Node: M2 Defaults200341
+Node: Deviations200936
+Node: M2 Checks202023
+Node: M2 Scope202823
+Node: GDB/M2203832
+Node: Symbols204771
+Node: Altering211633
+Node: Assignment212601
+Node: Jumping214711
+Node: Signaling216715
+Node: Returning217837
+Node: Calling219029
+Node: Patching219812
+Node: GDB Files220882
+Node: Files221347
+Node: Symbol Errors232283
+Node: Targets235862
+Node: Active Targets236752
+Node: Target Commands238324
+Node: Remote243935
+Node: Remote Serial245396
+Node: Stub Contents248004
+Node: Bootstrapping250105
+Node: Debug Session253901
+Node: Protocol257046
+Node: Server260353
+Node: NetWare264399
+Node: i960-Nindy Remote266361
+Node: Nindy Startup267181
+Node: Nindy Options267866
+Node: Nindy Reset269480
+Node: UDI29K Remote269864
+Node: EB29K Remote270769
+Node: Comms (EB29K)271587
+Node: gdb-EB29K274766
+Node: Remote Log276132
+Node: ST2000 Remote276607
+Node: VxWorks Remote278075
+Node: VxWorks Connection280035
+Node: VxWorks Download280961
+Node: VxWorks Attach282690
+Node: Sparclet Remote283080
+Node: Sparclet File284528
+Node: Sparclet Connection285400
+Node: Sparclet Download285870
+Node: Sparclet Execution286908
+Node: Hitachi Remote287491
+Node: Hitachi Boards288419
+Node: Hitachi ICE289482
+Node: Hitachi Special290270
+Node: MIPS Remote290996
+Node: Simulator295275
+Node: Controlling GDB296765
+Node: Prompt297376
+Node: Editing298150
+Node: History298919
+Node: Screen Size301618
+Node: Numbers303016
+Node: Messages/Warnings304418
+Node: Sequences306426
+Node: Define306986
+Node: Hooks310152
+Node: Command Files311550
+Node: Output313522
+Node: Emacs315929
+Node: GDB Bugs321875
+Node: Bug Criteria322593
+Node: Bug Reporting323347
+Node: Command Line Editing330487
+Node: Introduction and Notation330908
+Node: Readline Interaction331955
+Node: Readline Bare Essentials333087
+Node: Readline Movement Commands334606
+Node: Readline Killing Commands335514
+Node: Readline Arguments337158
+Node: Readline Init File338114
+Node: Readline Init Syntax338941
+Node: Commands For Moving342885
+Node: Commands For History343519
+Node: Commands For Text344600
+Node: Commands For Killing346348
+Node: Numeric Arguments347509
+Node: Commands For Completion347961
+Node: Miscellaneous Commands348673
+Node: Readline vi Mode349439
+Node: Using History Interactively350166
+Node: History Interaction350531
+Node: Event Designators351483
+Node: Word Designators352128
+Node: Modifiers353036
+Node: Formatting Documentation353706
+Node: Installing GDB357031
+Node: Separate Objdir360442
+Node: Config Names362969
+Node: configure Options364389
+Node: Index366713
+
+End Tag Table

@@ -26,6 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "m2-lang.h"
 #include "c-lang.h"
 
+static struct type *m2_create_fundamental_type PARAMS ((struct objfile *, int));
+static void m2_printstr PARAMS ((GDB_FILE *, char *, unsigned int, int));
+static void m2_printchar PARAMS ((int, GDB_FILE *));
+static void emit_char PARAMS ((int, GDB_FILE *, int));
+
 /* Print the character C on STREAM as part of the contents of a literal
    string whose delimiter is QUOTER.  Note that that format for printing
    characters and strings is language specific.
@@ -398,7 +403,7 @@ struct type *builtin_type_m2_card;
 struct type *builtin_type_m2_real;
 struct type *builtin_type_m2_bool;
 
-struct type ** const (m2_builtin_types[]) = 
+struct type ** CONST_PTR (m2_builtin_types[]) = 
 {
   &builtin_type_m2_char,
   &builtin_type_m2_int,

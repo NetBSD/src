@@ -34,6 +34,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include <sys/file.h>
 
+static void
+fetch_inferior_register PARAMS ((int, unsigned int));
+
+static void
+store_inferior_register_1 PARAMS ((int, unsigned int, int));
+
+static void
+store_inferior_register PARAMS ((int, unsigned int));
+
 /* Get kernel_u_addr using HPUX-style nlist().  */
 CORE_ADDR kernel_u_addr;
 
@@ -138,7 +147,6 @@ store_inferior_register (regno, regaddr)
   else
 #endif /* not HPUX_VERSION_5 */
     {
-      char buf[MAX_REGISTER_RAW_SIZE];
       register int i;
       extern char registers[];
       
@@ -185,7 +193,6 @@ store_inferior_registers (regno)
 {
   struct user u;
   register unsigned int ar0_offset;
-  extern char registers[];
 
   if (regno >= FP0_REGNUM)
     {

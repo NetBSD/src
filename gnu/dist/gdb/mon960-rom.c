@@ -1,4 +1,4 @@
-/* Remote target glue for the Intel 960 ROM monitor.
+/* Remote target glue for the Intel 960 MON960 ROM monitor.
    Copyright 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -25,39 +25,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "serial.h"
 #include "srec.h"
 #include "xmodem.h"
+#include "symtab.h"
+#include "symfile.h" /* for generic_load */
 
-#if !defined (HAVE_TERMIOS) && !defined (HAVE_TERMIO) && !defined (HAVE_SGTTY)
-#define HAVE_SGTTY
-#endif
-
-#ifdef HAVE_SGTTY
-#include <sys/ioctl.h>
-#endif
-
-#include <sys/types.h>	/* Needed by file.h on Sys V */
-#include <sys/file.h>
-#include <signal.h>
-#include <sys/stat.h>
 
 #define USE_GENERIC_LOAD
 
-int quiet = 0;	/* 1 => stifle unnecessary messages */
-serial_t mon960_serial;
-char *mon960_ttyname;   /* name of tty to talk to mon960 on, or null */
-static struct monitor_ops mon960_cmds;
+static struct target_ops mon960_ops;
 
-#ifdef USE_GENERIC_LOAD
-extern void generic_load PARAMS ((char* filename, int from_tty));
-#endif
 static void mon960_open PARAMS ((char *args, int from_tty));
 
 #ifdef USE_GENERIC_LOAD
+
 static void
 mon960_load_gen (filename, from_tty) 
     char *filename;
     int from_tty;
 {
   extern int inferior_pid;
+
   generic_load (filename, from_tty);
   /* Finally, make the PC point at the start address */
   if (exec_bfd)
@@ -67,6 +53,7 @@ mon960_load_gen (filename, from_tty)
 }
 
 #else
+
 static void
 mon960_load (desc, file, hashmark)
      serial_t desc;
@@ -97,9 +84,9 @@ mon960_load (desc, file, hashmark)
 	printf_filtered ("%s\t: 0x%4x .. 0x%4x  ", s->name, s->vma,
 			 s->vma + s->_raw_size);
 	gdb_flush (gdb_stdout);
-	monitor_printf (mon960_cmds.load, s->vma);
-	if (mon960_cmds.loadresp)
-	  monitor_expect (mon960_cmds.loadresp, NULL, 0);
+	monitor_printf (current_monitor->load, s->vma);
+	if (current_monitor->loadresp)
+	  monitor_expect (current_monitor->loadresp, NULL, 0);
 	xmodem_init_xfer (desc);
 	section_size = bfd_section_size (abfd, s);
 	for (i = 0; i < section_size; i += XMODEM_DATASIZE)
@@ -122,7 +109,8 @@ mon960_load (desc, file, hashmark)
   if (hashmark) 
     putchar_unfiltered ('\n');
 }
-#endif
+
+#endif /* USE_GENERIC_LOAD */
 
 /* This array of registers need to match the indexes used by GDB.
    This exists because the various ROM monitors use different strings
@@ -133,22 +121,32 @@ mon960_load (desc, file, hashmark)
 /* g0-g14, fp, pfp, sp, rip,r3-15, pc, ac, tc, fp0-3 */ 
 /* NOTE: "ip" is documented as "ir" in the Mon960 UG. */
 /* NOTE: "ir" can't be accessed... but there's an ip and rip. */
-static char *mon960_regnames[NUM_REGS] = {
-  /*  0 */ "pfp", "sp",  "rip", "r3",  "r4",  "r5",  "r6",  "r7", \
-  /*  8 */ "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15",\
-  /* 16 */ "g0",  "g1",  "g2",  "g3",  "g4",  "g5",  "g6",  "g7", \
-  /* 24 */ "g8",  "g9",  "g10", "g11", "g12", "g13", "g14", "fp", \
-  /* 32 */ "pc",  "ac",  "tc",  "ip",  "fp0", "fp1", "fp2", "fp3",\
+static char *full_regnames[NUM_REGS] = {
+  /*  0 */ "pfp", "sp",  "rip", "r3",  "r4",  "r5",  "r6",  "r7",
+  /*  8 */ "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15",
+  /* 16 */ "g0",  "g1",  "g2",  "g3",  "g4",  "g5",  "g6",  "g7",
+  /* 24 */ "g8",  "g9",  "g10", "g11", "g12", "g13", "g14", "fp",
+  /* 32 */ "pc",  "ac",  "tc",  "ip",  "fp0", "fp1", "fp2", "fp3",
   };
+
+static char *mon960_regnames[NUM_REGS];
 
 /* Define the monitor command strings. Since these are passed directly
    through to a printf style function, we may include formatting
    strings. We also need a CR or LF on the end.  */
 
-static struct target_ops mon960_ops;
-
 /* need to pause the monitor for timing reasons, so slow it down */
-static char *mon960_inits[] = {"\n\r\r\r\r\r\r\r\r\r\r\r\r\r\r\n\r\n\r\n", NULL}; /* Exits sub-command mode & download cmds */
+
+#if 0
+/* FIXME: this extremely long init string causes MON960 to return two NAKS
+   instead of performing the autobaud recognition, at least when gdb
+   is running on GNU/Linux.  The short string below works on Linux, and on
+   SunOS using a tcp serial connection.  Must retest on SunOS using a
+   direct serial connection; if that works, get rid of the long string. */
+static char *mon960_inits[] = {"\n\r\r\r\r\r\r\r\r\r\r\r\r\r\r\n\r\n\r\n", NULL};
+#else
+static char *mon960_inits[] = { "\r", NULL};
+#endif
 
 static struct monitor_ops mon960_cmds =
 {
@@ -159,7 +157,7 @@ static struct monitor_ops mon960_cmds =
   mon960_inits,			/* Init strings */
   "go\n\r",			/* continue command */
   "st\n\r",			/* single step */
-  "\n\r",			/* break interrupts the program */
+  NULL,				/* break interrupts the program */
   NULL,				/* set a breakpoint */
 				/* can't use "br" because only 2 hw bps are supported */
   NULL,				/* clear a breakpoint - "de" is for hw bps */
@@ -169,8 +167,8 @@ static struct monitor_ops mon960_cmds =
   {
     /* can't use "mb", "md" or "mo" because they require interaction */
     NULL,			/* setmem.cmdb (addr, value) */
-    "md %x %x\n\r",		/* setmem.cmdw (addr, value) */
-    NULL,			/* setmem.cmdl (addr, value) */
+    NULL,			/* setmem.cmdw (addr, value) */
+    "md %x %x\n\r",		/* setmem.cmdl (addr, value) */
     NULL,			/* setmem.cmdll (addr, value) */
     NULL,			/* setmem.resp_delim */
     NULL,			/* setmem.term */
@@ -221,38 +219,40 @@ static struct monitor_ops mon960_cmds =
   MONITOR_OPS_MAGIC		/* magic */
 };
 
-/* invoked from monitor.c - opens the serial port */
 static void
 mon960_open (args, from_tty)
      char *args;
      int from_tty;
 {
-  char *serial_port_name = args;
-  if (args) 
-    {
-      char *cursor =  serial_port_name = strsave (args);
+  char buf[64];
 
-      while (*cursor && *cursor != ' ')
- 	cursor++;
+  monitor_open (args, &mon960_cmds, from_tty);
 
-      if (*cursor)
-	*cursor++ = 0;
+  /* Attempt to fetch the value of the first floating point register (fp0).
+     If the monitor returns a string containing the word "Bad" we'll assume
+     this processor has no floating point registers, and nullify the 
+     regnames entries that refer to FP registers.  */
 
-      while (*cursor == ' ')
-	cursor++;
+  monitor_printf (mon960_cmds.getreg.cmd, full_regnames[FP0_REGNUM]); /* di fp0 */
+  if (monitor_expect_prompt (buf, sizeof(buf)) != -1)
+    if (strstr(buf, "Bad") != NULL)
+      {
+	int i;
 
-    }
-  monitor_open (serial_port_name, &mon960_cmds, from_tty);
+	for (i = FP0_REGNUM; i < FP0_REGNUM + 4; i++)
+	    mon960_regnames[i] = NULL;
+      }
 }
-
 
 void
 _initialize_mon960 ()
 {
+  memcpy(mon960_regnames, full_regnames, sizeof(full_regnames));
+
   init_monitor_ops (&mon960_ops);
 
   mon960_ops.to_shortname = "mon960"; /* for the target command */
-  mon960_ops.to_longname = "Intel 960 rom monitor";
+  mon960_ops.to_longname = "Intel 960 MON960 monitor";
 #ifdef USE_GENERIC_LOAD
   mon960_ops.to_load = mon960_load_gen; /* FIXME - should go back and try "do" */
 #endif
@@ -261,10 +261,9 @@ _initialize_mon960 ()
   mon960_ops.to_remove_breakpoint = memory_remove_breakpoint; 
 
   mon960_ops.to_doc = 
-    "Debug on an Intel 960 eval board running the Mon960 rom monitor.\n"
-    "Specify the serial device it is connected to (e.g. /dev/ttya).";
+    "Use an Intel 960 board running the MON960 debug monitor.\n\
+Specify the serial device it is connected to (e.g. /dev/ttya).";
 
   mon960_ops.to_open = mon960_open;
   add_target (&mon960_ops);
 }
-

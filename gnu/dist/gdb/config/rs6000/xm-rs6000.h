@@ -72,7 +72,7 @@ extern char *strdup PARAMS ((char *));
 /* Signal handler for SIGWINCH `window size changed'. */
 
 #define	SIGWINCH_HANDLER  aix_resizewindow
-extern	void	aix_resizewindow ();
+extern	void	aix_resizewindow PARAMS ((void));
 
 /* This doesn't seem to be declared in any header file I can find.  */
 char *termdef PARAMS ((int, int));

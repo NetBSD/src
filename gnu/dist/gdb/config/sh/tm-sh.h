@@ -19,6 +19,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Contributed by Steve Chamberlain sac@cygnus.com */
 
+#ifdef __STDC__
+struct frame_info;
+struct frame_saved_regs;
+struct value;
+struct type;
+#endif
+
 #define GDB_TARGET_IS_SH
 
 #define IEEE_FLOAT 1
@@ -48,8 +55,7 @@ extern CORE_ADDR sh_skip_prologue ();
 
    The return address is the value saved in the PR register + 4  */
 
-#define SAVED_PC_AFTER_CALL(frame) \
-  (ADDR_BITS_REMOVE(read_register(PR_REGNUM)))
+#define SAVED_PC_AFTER_CALL(frame) (ADDR_BITS_REMOVE(read_register(PR_REGNUM)))
 
 /* Stack grows downward.  */
 
@@ -60,7 +66,9 @@ extern CORE_ADDR sh_skip_prologue ();
 
 #define BREAKPOINT {0xc3, 0xc3}  /* 0xc3c3 is trapa #c3, and it works in big 
 				    and little endian modes  */
-#define REMOTE_BREAKPOINT { 0xc3, 0x20}
+
+#define BIG_REMOTE_BREAKPOINT    { 0xc3, 0x20 }
+#define LITTLE_REMOTE_BREAKPOINT { 0x20, 0xc3 }
 
 /* If your kernel resets the pc after the trap happens you may need to
    define this before including this file.  */
@@ -99,34 +107,38 @@ extern CORE_ADDR sh_skip_prologue ();
    of data in register N.  */
 
 #define REGISTER_VIRTUAL_TYPE(N) \
-	((((N) >= FP0_REGNUM && (N) < FP15_REGNUM)	\
+	((((N) >= FP0_REGNUM && (N) <= FP15_REGNUM)	\
 	  || (N) == FPUL_REGNUM)			\
-         ? builtin_type_float : builtin_type_int)
+	 ? builtin_type_float : builtin_type_int)
 
 /* Initializer for an array of names of registers.
    Entries beyond the first NUM_REGS are ignored.  */
 
 #define REGISTER_NAMES \
-  {"r0", "r1", "r2", "r3", "r4",  "r5",  "r6", "r7", \
-   "r8", "r9", "r10","r11","r12", "r13", "r14","r15",\
-   "pc", "pr", "gbr","vbr","mach","macl","sr", \
-   "fpul","fpscr", \
-   "fr0", "fr1", "fr2", "fr3", "fr4", "fr5", "fr6", "fr7", \
-   "fr8", "fr9", "fr10","fr11","fr12","fr13","fr14","fr15",\
-   "r0b0", "r1b0", "r2b0", "r3b0", "r4b0", "r5b0", "r6b0", "r7b0", \
-   "r0b1", "r1b1", "r2b1", "r3b1", "r4b1", "r5b1", "r6b1", "r7b1" \
+  { "r0",   "r1",   "r2",   "r3",   "r4",   "r5",   "r6",   "r7",   \
+    "r8",   "r9",   "r10",  "r11",  "r12",  "r13",  "r14",  "r15",  \
+    "pc",   "pr",   "gbr",  "vbr",  "mach", "macl", "sr",           \
+    "fpul", "fpscr", \
+    "fr0",  "fr1",  "fr2",  "fr3",  "fr4",  "fr5",  "fr6",  "fr7",  \
+    "fr8",  "fr9",  "fr10", "fr11", "fr12", "fr13", "fr14", "fr15", \
+    "ssr",  "spc",   \
+    "r0b0", "r1b0", "r2b0", "r3b0", "r4b0", "r5b0", "r6b0", "r7b0", \
+    "r0b1", "r1b1", "r2b1", "r3b1", "r4b1", "r5b1", "r6b1", "r7b1", \
   }
 
-#define NUM_REGS 57
+#define NUM_REGS 59
 
-/* Register numbers of various important registers.
-   Note that some of these values are "real" register numbers,
-   and correspond to the general registers of the machine,
-   and some are "phony" register numbers which are too large
-   to be actual register numbers as far as the user is concerned
-   but do serve to get the desired values when passed to read_register.  */
+/* Register numbers of various important registers.  Note that some of
+   these values are "real" register numbers, and correspond to the
+   general registers of the machine, and some are "phony" register
+   numbers which are too large to be actual register numbers as far as
+   the user is concerned but do serve to get the desired values when
+   passed to read_register.  */
 
 #define R0_REGNUM	0
+#define STRUCT_RETURN_REGNUM 2
+#define ARG0_REGNUM     4
+#define ARGLAST_REGNUM  7
 #define FP_REGNUM 	14
 #define SP_REGNUM 	15
 #define PC_REGNUM 	16
@@ -136,44 +148,50 @@ extern CORE_ADDR sh_skip_prologue ();
 #define MACH_REGNUM 	20
 #define MACL_REGNUM 	21
 #define SR_REGNUM 	22
-#define NUM_REALREGS    23
 #define FPUL_REGNUM	23
+#define FPSCR_REGNUM	24
 #define FP0_REGNUM	25
-#define FP15_REGNUM	41
-#undef  NUM_REALREGS
-#define NUM_REALREGS    57
+#define FP15_REGNUM	40
+#define SSR_REGNUM	41
+#define SPC_REGNUM	42
+#define R0B0_REGNUM	43
+#define R0B1_REGNUM	51
+
+#define NUM_REALREGS	59
 
 /* Store the address of the place in which to copy the structure the
    subroutine will return.  This is called from call_function. 
 
-   We store structs through a pointer passed in R4 */
+   We store structs through a pointer passed in R0 */
 
 #define STORE_STRUCT_RETURN(ADDR, SP) \
-    { write_register (4, (ADDR));  }
+    { write_register (STRUCT_RETURN_REGNUM, (ADDR));  }
+
+#define USE_STRUCT_CONVENTION(gcc_p, type)	(TYPE_LENGTH(type) > 1)
 
 /* Extract from an array REGBUF containing the (raw) register state
    a function return value of type TYPE, and copy that, in virtual format,
    into VALBUF.  */
 
+extern void sh_extract_return_value PARAMS ((struct type *, void *, void *));
 #define EXTRACT_RETURN_VALUE(TYPE,REGBUF,VALBUF) \
-  memcpy (VALBUF, (char *)(REGBUF), TYPE_LENGTH(TYPE))
-
+	sh_extract_return_value (TYPE, REGBUF, VALBUF)
 
 /* Write into appropriate registers a function return value
    of type TYPE, given in virtual format.  
 
-   Things always get returned in R4/R5 */
+   Things always get returned in R0/R1 */
 
 #define STORE_RETURN_VALUE(TYPE,VALBUF) \
-  write_register_bytes (REGISTER_BYTE(4), VALBUF, TYPE_LENGTH (TYPE))
-
+  write_register_bytes (REGISTER_BYTE(0), VALBUF, TYPE_LENGTH (TYPE))
 
 /* Extract from an array REGBUF containing the (raw) register state
    the address in which a function should return its structure value,
    as a CORE_ADDR (or an expression that can be used as one).  */
 
-#define EXTRACT_STRUCT_VALUE_ADDRESS(REGBUF) (*(CORE_ADDR *)(REGBUF))
-
+#define EXTRACT_STRUCT_VALUE_ADDRESS(REGBUF) \
+     extract_address (REGBUF, REGISTER_RAW_SIZE (0))
+
 
 /* Define other aspects of the stack frame. 
    we keep a copy of the worked out return pc lying around, since it
@@ -185,7 +203,8 @@ extern CORE_ADDR sh_skip_prologue ();
     int f_offset;    
 
 #define INIT_EXTRA_FRAME_INFO(fromleaf, fi) \
-    init_extra_frame_info(fromleaf, fi) 
+    sh_init_extra_frame_info(fromleaf, fi) 
+extern void sh_init_extra_frame_info PARAMS ((int, struct frame_info *));
 
 /* A macro that tells us whether the function invocation represented
    by FI does not have a frame on the stack associated with it.  If it
@@ -194,10 +213,9 @@ extern CORE_ADDR sh_skip_prologue ();
 #define FRAMELESS_FUNCTION_INVOCATION(FI, FRAMELESS) \
   (FRAMELESS) = frameless_look_for_prologue(FI)
 
-#define FRAME_CHAIN(FRAME)       sh_frame_chain(FRAME)
-#define FRAME_SAVED_PC(FRAME)    ((FRAME)->return_pc)
-#define FRAME_ARGS_ADDRESS(fi)   (fi)->frame
-#define FRAME_LOCALS_ADDRESS(fi) (fi)->frame
+#define FRAME_SAVED_PC(FRAME)		((FRAME)->return_pc)
+#define FRAME_ARGS_ADDRESS(fi)   	((fi)->frame)
+#define FRAME_LOCALS_ADDRESS(fi) 	((fi)->frame)
 
 /* Set VAL to the number of args passed to frame described by FI.
    Can set VAL to -1, meaning no way to tell.  */
@@ -210,6 +228,9 @@ extern CORE_ADDR sh_skip_prologue ();
 
 #define FRAME_ARGS_SKIP 0
 
+extern void sh_frame_find_saved_regs PARAMS ((struct frame_info *fi, 
+					      struct frame_saved_regs *fsr));
+
 /* Put here the code to store, into a struct frame_saved_regs,
    the addresses of the saved registers of frame described by FRAME_INFO.
    This includes special registers such as pc and fp saved in special
@@ -217,23 +238,53 @@ extern CORE_ADDR sh_skip_prologue ();
    the address we return for it IS the sp for the next frame.  */
 
 #define FRAME_FIND_SAVED_REGS(frame_info, frame_saved_regs)	    \
-   frame_find_saved_regs(frame_info, &(frame_saved_regs))
+   sh_frame_find_saved_regs(frame_info, &(frame_saved_regs))
 
 #define NAMES_HAVE_UNDERSCORE
 
 typedef unsigned short INSN_WORD;
 
-#define ADDR_BITS_REMOVE(addr) ((addr))
+extern CORE_ADDR sh_push_arguments PARAMS ((int nargs, 
+					    struct value **args, 
+					    CORE_ADDR sp,
+					    unsigned char struct_return,
+					    CORE_ADDR struct_addr));
 
-#define CALL_DUMMY_LENGTH 10
+#define USE_GENERIC_DUMMY_FRAMES
+#define CALL_DUMMY                   {0}
+#define CALL_DUMMY_LENGTH            (0)
+#define CALL_DUMMY_START_OFFSET      (0)
+#define CALL_DUMMY_BREAKPOINT_OFFSET (0)
+#define FIX_CALL_DUMMY(DUMMY, STARTADDR, FUNADDR, NARGS, ARGS, TYPE, GCCP) 
+#define CALL_DUMMY_LOCATION          AT_ENTRY_POINT
+#define CALL_DUMMY_ADDRESS()         entry_point_address ()
+extern CORE_ADDR sh_push_return_address   PARAMS ((CORE_ADDR, CORE_ADDR));
+#define PUSH_RETURN_ADDRESS(PC, SP)  sh_push_return_address (PC, SP)
 
-/* Discard from the stack the innermost frame,
-   restoring all saved registers.  */
 
-#define POP_FRAME pop_frame();
+extern CORE_ADDR sh_frame_chain PARAMS ((struct frame_info *));
+#define FRAME_CHAIN(FRAME)           sh_frame_chain(FRAME)
+#define PUSH_DUMMY_FRAME             generic_push_dummy_frame ()
+#define FRAME_CHAIN_VALID(FP, FRAME) generic_frame_chain_valid (FP, FRAME)
+#define PC_IN_CALL_DUMMY(PC, SP, FP) generic_pc_in_call_dummy (PC, SP)
+#define PUSH_ARGUMENTS(NARGS, ARGS, SP, STRUCT_RETURN, STRUCT_ADDR) \
+    (SP) = sh_push_arguments (NARGS, ARGS, SP, STRUCT_RETURN, STRUCT_ADDR)
 
+/* override the standard get_saved_register function with 
+   one that takes account of generic CALL_DUMMY frames */
+#define GET_SAVED_REGISTER
+
+/* Discard from the stack the innermost frame, restoring all saved
+   registers.  */
+
+extern void sh_pop_frame PARAMS ((void));
+#define POP_FRAME sh_pop_frame();
 
 #define NOP   {0x20, 0x0b}
 
 #define REGISTER_SIZE 4
 
+#define COERCE_FLOAT_TO_DOUBLE 1
+
+/* Need this for WinGDB.  See gdb/mswin/{regdoc.h, gdbwin.c, gui.cpp}.  */
+#define TARGET_SH

@@ -1,0 +1,44 @@
+srcname="RDI library"
+srctrigger=ardi.c
+
+# per-host:
+
+. ${srcdir}/../configure.host
+
+echo "rdi-share/configure.in: host is $host, target is $target"
+
+if [ ! -f ${srcdir}/../config/${gdb_host_cpu}/${gdb_host}.mh ]; then
+	echo '***' "GDB remote does not support host ${host}" 1>&2
+	exit 1
+fi
+
+#  We really shouldn't depend on there being a space after XM_FILE= ...
+hostfile=`awk '$1 == "XM_FILE=" { print $2 }' <${srcdir}/../config/${gdb_host_cpu}/${gdb_host}.mh`
+
+# per-target:
+
+. ${srcdir}/../configure.tgt
+
+echo "rdi-share/configure.in: host_cpu is $host_cpu, target_cpu is $target_cpu"
+
+if [ ! -f ${srcdir}/../config/${gdb_target_cpu}/${gdb_target}.mt ]; then
+	echo '***' "GDB remote does not support target ${target}" 1>&2
+	exit 1
+fi
+
+if [ -z "${removing}" ] ; then
+	cat ${srcdir}/../config/${gdb_host_cpu}/${gdb_host}.mh ${srcdir}/../config/${gdb_target_cpu}/${gdb_target}.mt | awk '$1 == "#msg" {
+		print substr($0,6)}'
+fi
+
+#  We really shouldn't depend on there being a space after TM_FILE= ...
+targetfile=`awk '$1 == "TM_FILE=" { print $2 }' <${srcdir}/../config/${gdb_target_cpu}/${gdb_target}.mt`
+
+if [ "${target}" = "${host}" ] ; then
+	nativefile=`awk '$1 == "NAT_FILE=" { print $2 }' <${srcdir}/../config/${gdb_host_cpu}/${gdb_host}.mh`
+fi
+
+host_makefile_frag=../config/${gdb_host_cpu}/${gdb_host}.mh
+target_makefile_frag=../config/${gdb_target_cpu}/${gdb_target}.mt
+
+# post-target:

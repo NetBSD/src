@@ -382,7 +382,7 @@ extern struct type *builtin_type_np1_vector;
 
 #define POP_FRAME  \
 { CORE_ADDR sp = read_register(SP_REGNUM);             \
-  unsigned LONGEST reg;                                   \
+  ULONGEST reg;                                   \
   int regnum;                                          \
   for(regnum = 0;regnum < FP_REGNUM;regnum++){         \
     sp-=REGISTER_SIZE;                         \

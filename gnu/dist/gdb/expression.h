@@ -270,7 +270,6 @@ enum exp_opcode
   STRUCTOP_STRUCT,
   STRUCTOP_PTR,
 
-
   /* C++ */
   /* OP_THIS is just a placeholder for the class instance variable.
      It just comes in a tight (OP_THIS, OP_THIS) pair.  */

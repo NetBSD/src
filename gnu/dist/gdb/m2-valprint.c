@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "valprint.h"
+#include "m2-lang.h"
 
 /* FIXME:  For now, just explicitly declare c_val_print and use it instead */
 

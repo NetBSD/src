@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "floatformat.h"
 #include "target.h"
+#include "gdbcore.h"
 
 static CORE_ADDR next_insn PARAMS ((CORE_ADDR memaddr,
 				    unsigned int *pword1,

@@ -34,8 +34,7 @@ Here is an m-news.h file for gdb.  It supports the 68881 registers.
 #define EXTRACT_RETURN_VALUE(TYPE,REGBUF,VALBUF) \
   { if (TYPE_CODE (TYPE) == TYPE_CODE_FLT) \
       { \
-	REGISTER_CONVERT_TO_VIRTUAL (FP0_REGNUM, \
-				     REGISTER_VIRTUAL_TYPE (FP0_REGNUM), \
+	REGISTER_CONVERT_TO_VIRTUAL (FP0_REGNUM, TYPE, \
 			             &REGBUF[REGISTER_BYTE (FP0_REGNUM)], \
 				     VALBUF); \
       } \
@@ -50,9 +49,8 @@ Here is an m-news.h file for gdb.  It supports the 68881 registers.
   { if (TYPE_CODE (TYPE) == TYPE_CODE_FLT) \
       { \
 	char raw_buf[REGISTER_RAW_SIZE (FP0_REGNUM)]; \
-	REGISTER_CONVERT_TO_RAW (REGISTER_VIRTUAL_TYPE (FP0_REGNUM), \
-				 FP0_REGNUM, VALBUF, raw_buf); \
-	write_register_bytes (FP0_REGNUM, \
+	REGISTER_CONVERT_TO_RAW (TYPE, FP0_REGNUM, VALBUF, raw_buf); \
+	write_register_bytes (REGISTER_BYTE (FP0_REGNUM), \
 			      raw_buf, REGISTER_RAW_SIZE (FP0_REGNUM)); \
       } \
     else \

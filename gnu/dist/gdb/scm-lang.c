@@ -28,10 +28,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "scm-lang.h"
 #include "scm-tags.h"
 #include "gdb_string.h"
+#include "gdbcore.h"
 
-extern struct type ** const (c_builtin_types[]);
-extern value_ptr value_allocate_space_in_inferior PARAMS ((int));
-extern value_ptr find_function_in_inferior PARAMS ((char*));
+static value_ptr evaluate_subexp_scm PARAMS ((struct type *, struct expression *,
+					      int *, enum noside));
+static value_ptr scm_lookup_name PARAMS ((char *));
+static int in_eval_c PARAMS ((void));
+static void scm_printstr PARAMS ((GDB_FILE *, char *, unsigned int, int));
+
+extern struct type ** CONST_PTR (c_builtin_types[]);
 
 struct type *builtin_type_scm;
 
@@ -73,7 +78,6 @@ scm_get_field (svalue, index)
      LONGEST svalue;
      int index;
 {
-  value_ptr val;
   char buffer[20];
   read_memory (SCM2PTR (svalue) + index * TYPE_LENGTH (builtin_type_scm),
 	       buffer, TYPE_LENGTH (builtin_type_scm));
@@ -148,13 +152,13 @@ in_eval_c ()
    First lookup in Scheme context (using the scm_lookup_cstr inferior
    function), then try lookup_symbol for compiled variables. */
 
-value_ptr
+static value_ptr
 scm_lookup_name (str)
      char *str;
 {
   value_ptr args[3];
   int len = strlen (str);
-  value_ptr symval, func, val;
+  value_ptr func, val;
   struct symbol *sym;
   args[0] = value_allocate_space_in_inferior (len);
   args[1] = value_from_longest (builtin_type_int, len);

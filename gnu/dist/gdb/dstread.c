@@ -51,9 +51,6 @@ static int prev_line_number;
 
 static int line_vector_length;
 
-static struct blockvector *
-make_blockvector PARAMS ((struct objfile *));
-
 static int
 init_dst_sections PARAMS ((int));
 
@@ -76,10 +73,6 @@ static void
 dst_symfile_finish PARAMS ((struct objfile *));
 
 static void
-record_minimal_symbol PARAMS ((char *, CORE_ADDR, enum minimal_symbol_type,
-			       struct objfile *));
-
-static void
 dst_end_symtab PARAMS ((struct objfile *));
 
 static void
@@ -90,42 +83,6 @@ dst_start_symtab PARAMS ((void));
 
 static void
 dst_record_line PARAMS ((int, CORE_ADDR));
-
-static struct blockvector *
-make_blockvector (objfile)
-     struct objfile *objfile;
-{
-  register struct pending_block *next, *next1;
-  register struct blockvector *blockvector;
-  register int i;
-
-  /* Count the length of the list of blocks.  */
-
-  for (next = pending_blocks, i = 0; next; next = next->next, i++);
-
-  blockvector = (struct blockvector *)
-		  obstack_alloc (&objfile->symbol_obstack, sizeof (struct blockvector) + (i - 1) * sizeof (struct block *));
-
-  /* Copy the blocks into the blockvector.
-     This is done in reverse order, which happens to put
-     the blocks into the proper order (ascending starting address).
-   */
-
-  BLOCKVECTOR_NBLOCKS (blockvector) = i;
-  for (next = pending_blocks; next; next = next->next)
-    BLOCKVECTOR_BLOCK (blockvector, --i) = next->block;
-
-  /* Now free the links of the list, and empty the list.  */
-
-  for (next = pending_blocks; next; next = next1)
-    {
-      next1 = next->next;
-      free ((PTR)next);
-    }
-  pending_blocks = 0;
-
-  return blockvector;
-}
 
 /* Manage the vector of line numbers.  */
 /* FIXME: Use record_line instead.  */
@@ -220,6 +177,8 @@ dst_end_symtab (objfile)
   symtab->free_ptr = 0;
   symtab->filename = last_source_file;
   symtab->dirname = NULL;
+  symtab->debugformat = obsavestring ("Apollo DST", 10,
+				      &objfile -> symbol_obstack);
   lv = line_vector;
   lv->nitems = line_vector_index;
   symtab->linetable = (struct linetable *)
@@ -232,19 +191,6 @@ dst_end_symtab (objfile)
   line_vector = 0;
   line_vector_length = -1;
   last_source_file = NULL;
-}
-
-static void
-record_minimal_symbol (name, address, type, objfile)
-     char *name;
-     CORE_ADDR address;
-     enum minimal_symbol_type type;
-     struct objfile *objfile;
-{
-  prim_record_minimal_symbol (savestring (name, strlen (name)),
-			      address,
-			      type,
-			      objfile);
 }
 
 /* dst_symfile_init ()
@@ -812,8 +758,8 @@ create_new_symbol(objfile, name)
 	struct symbol *sym = (struct symbol *)
 	       obstack_alloc (&objfile->symbol_obstack, sizeof (struct symbol));
 	memset (sym, 0, sizeof (struct symbol));
-	SYMBOL_NAME (sym) = obstack_copy0 (&objfile->symbol_obstack,
-						name, strlen (name));
+	SYMBOL_NAME (sym) = obsavestring (name, strlen (name),
+					  &objfile->symbol_obstack);
 	SYMBOL_VALUE (sym) = 0;
 	SYMBOL_NAMESPACE (sym) = VAR_NAMESPACE;
 
@@ -1443,7 +1389,6 @@ process_dst_block(objfile, entry)
 	dst_rec_ptr_t child_entry, symbol_entry;
 	struct block *child_block;
 	int	total_symbols = 0;
-	struct pending_block *pblock;
 	char	fake_name[20];
 	static	long	fake_seq = 0;
 	struct symbol_list *symlist, *nextsym;
@@ -1476,7 +1421,7 @@ process_dst_block(objfile, entry)
 	case dst_block_function:
 	case dst_block_subroutine:
 	case dst_block_program:
-		record_minimal_symbol(name, address, mst_text, objfile);
+		prim_record_minimal_symbol(name, address, mst_text, objfile);
 		function = process_dst_function(
 			objfile,
 			symbol_entry,
@@ -1526,11 +1471,6 @@ process_dst_block(objfile, entry)
 	else
 		BLOCK_FUNCTION (block) = 0;
 
-	pblock = (struct pending_block *)
-			xmalloc (sizeof (struct pending_block));
-	pblock->block = block;
-	pblock->next = pending_blocks;
-	pending_blocks = pblock;
 	if (DST_block(entry).child_block_off)
 	{
 		child_entry = (dst_rec_ptr_t) DST_OFFSET(entry,
@@ -1560,6 +1500,7 @@ process_dst_block(objfile, entry)
 				child_entry = NULL;
 		}
 	}
+	record_pending_block (objfile, block, NULL);
 	return block;
 }
 
@@ -1572,7 +1513,6 @@ read_dst_symtab (objfile)
 	dst_rec_ptr_t entry, file_table, root_block;
 	char	*source_file;
 	struct	block *block, *global_block;
-	struct	pending_block *pblock;
 	int	symnum;
 	struct symbol_list *nextsym;
 	int	module_num = 0;
@@ -1597,11 +1537,6 @@ read_dst_symtab (objfile)
 					DST_comp_unit(entry).data_size);
 			dst_start_symtab();
 
-			pblock = (struct pending_block *)
-				xmalloc (sizeof (struct pending_block));
-			pblock->next = NULL;
-			pending_blocks = pblock;
-	
 			block = process_dst_block(objfile, root_block);
 
 			global_block = (struct block *)
@@ -1627,7 +1562,7 @@ read_dst_symtab (objfile)
 			BLOCK_END(global_block) = BLOCK_END(block);
 			BLOCK_SUPERBLOCK(global_block) = 0;
 			BLOCK_SUPERBLOCK(block) = global_block;
-			pblock->block = global_block;
+			record_pending_block (objfile, global_block, NULL);
 
 			complete_symtab(source_file,
 					BLOCK_START(block), 
@@ -1637,7 +1572,7 @@ read_dst_symtab (objfile)
 		}
 	}
 	if (module_num)
-		record_minimal_symbol("<end_of_program>",
+		prim_record_minimal_symbol("<end_of_program>",
 				BLOCK_END(block), mst_text, objfile);
 	/* One more faked symbol to make sure nothing can ever run off the
 	 * end of the symbol table. This one represents the end of the
@@ -1647,7 +1582,7 @@ read_dst_symtab (objfile)
 	 * but no functions are ever mapped to an address higher than
 	 * 40000000
 	 */
-	record_minimal_symbol("<end_of_text>",
+	prim_record_minimal_symbol("<end_of_text>",
 				(CORE_ADDR) 0x40000000,
 				mst_text, objfile);
 	while (struct_list)

@@ -29,18 +29,30 @@ extern char gdbinit[];
 
 /* Generally one should use catch_errors rather than manipulating these
    directly.  The exception is main().  */
-extern jmp_buf error_return;
-extern jmp_buf quit_return;
+#if defined(HAVE_SIGSETJMP)
+#define SIGJMP_BUF		sigjmp_buf
+#define SIGSETJMP(buf)		sigsetjmp(buf, 1)
+#define SIGLONGJMP(buf,val)	siglongjmp(buf,val)
+#else
+#define SIGJMP_BUF		jmp_buf
+#define SIGSETJMP(buf)		setjmp(buf)
+#define SIGLONGJMP(buf,val)	longjmp(buf,val)
+#endif
+
+extern SIGJMP_BUF error_return;
+extern SIGJMP_BUF quit_return;
 
 extern void print_gdb_version PARAMS ((GDB_FILE *));
-extern void print_gnu_advertisement PARAMS ((void));
 
 extern void source_command PARAMS ((char *, int));
 extern void cd_command PARAMS ((char *, int));
 extern void read_command_file PARAMS ((FILE *));
 extern void init_history PARAMS ((void));
 extern void command_loop PARAMS ((void));
+extern int quit_confirm PARAMS ((void));
+extern void quit_force PARAMS ((char *, int));
 extern void quit_command PARAMS ((char *, int));
+extern char *get_prompt PARAMS((void));
 
 /* From random places.  */
 extern int mapped_symbol_files;

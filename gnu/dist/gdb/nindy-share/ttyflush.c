@@ -22,6 +22,11 @@
 #include "defs.h"
 #include "serial.h"
 
+#ifdef _MSC_VER
+# include <stdlib.h>
+# define sleep _sleep
+#endif
+
 /* Flush all pending input and output for SERIAL, wait for a second, and
    then if there is a character pending, discard it and flush again.  */
 

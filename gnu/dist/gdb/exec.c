@@ -1,5 +1,6 @@
 /* Work with executable files, for GDB. 
-   Copyright 1988, 1989, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1988, 1989, 1991, 1992, 1993, 1994, 1997
+             Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -30,7 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include <sys/types.h>
 #endif
 
-#include <sys/param.h>
 #include <fcntl.h>
 #include "gdb_string.h"
 
@@ -57,6 +57,10 @@ static void file_command PARAMS ((char *, int));
 static void set_section_command PARAMS ((char *, int));
 
 static void exec_files_info PARAMS ((struct target_ops *));
+
+static void bfdsec_to_vmap PARAMS ((bfd *, sec_ptr, PTR));
+
+static int ignore PARAMS ((CORE_ADDR, char *));
 
 extern int info_verbose;
 
@@ -183,6 +187,15 @@ exec_file_command (args, from_tty)
       scratch_chan = openp (getenv ("PATH"), 1, filename, 
 			    write_files? O_RDWR|O_BINARY: O_RDONLY|O_BINARY, 0,
 			    &scratch_pathname);
+#if defined(__GO32__) || defined(_WIN32)
+      if (scratch_chan < 0)
+      {
+	char *exename = alloca (strlen (filename) + 5);
+	strcat (strcpy (exename, filename), ".exe");
+	scratch_chan = openp (getenv ("PATH"), 1, exename, write_files ?
+		O_RDWR|O_BINARY : O_RDONLY|O_BINARY, 0, &scratch_pathname);
+      }
+#endif
       if (scratch_chan < 0)
 	perror_with_name (filename);
       exec_bfd = bfd_fdopenr (scratch_pathname, gnutarget, scratch_chan);
@@ -264,6 +277,7 @@ exec_file_command (args, from_tty)
       validate_files ();
 
       set_endian_from_file (exec_bfd);
+      set_architecture_from_file (exec_bfd);
 
       push_target (&exec_ops);
 
@@ -354,20 +368,16 @@ bfdsec_to_vmap(abfd, sect, arg3)
 
   if (STREQ (bfd_section_name (abfd, sect), ".text"))
     {
-      vp->tstart = 0;
+      vp->tstart = bfd_section_vma (abfd, sect);
       vp->tend = vp->tstart + bfd_section_size (abfd, sect);
-
-      /* When it comes to this adjustment value, in contrast to our previous
-	 belief shared objects should behave the same as the main load segment.
-	 This is the offset from the beginning of text section to the first
-	 real instruction. */
-
-      vp->tadj = sect->filepos - bfd_section_vma (abfd, sect);
+      vp->tvma = bfd_section_vma (abfd, sect);
+      vp->toffs = sect->filepos;
     }
   else if (STREQ (bfd_section_name (abfd, sect), ".data"))
     {
-      vp->dstart = 0;
+      vp->dstart = bfd_section_vma (abfd, sect);
       vp->dend = vp->dstart + bfd_section_size (abfd, sect);
+      vp->dvma = bfd_section_vma (abfd, sect);
     }
   /* Silently ignore other types of sections. (FIXME?)  */
 }
@@ -432,25 +442,79 @@ xfer_memory (memaddr, myaddr, len, write, target)
   struct section_table *p;
   CORE_ADDR nextsectaddr, memend;
   boolean (*xfer_fn) PARAMS ((bfd *, sec_ptr, PTR, file_ptr, bfd_size_type));
+  asection *section;
 
   if (len <= 0)
     abort();
+
+  if (overlay_debugging)
+    {
+      section = find_pc_overlay (memaddr);
+      if (pc_in_unmapped_range (memaddr, section))
+	memaddr = overlay_mapped_address (memaddr, section);
+    }
 
   memend = memaddr + len;
   xfer_fn = write ? bfd_set_section_contents : bfd_get_section_contents;
   nextsectaddr = memend;
 
+#if 0 /* Stu's implementation */
+/* If a section has been specified, try to use it.  Note that we cannot use the
+   specified section directly.  This is because it usually comes from the
+   symbol file, which may be different from the exec or core file.  Instead, we
+   have to lookup the specified section by name in the bfd associated with
+   to_sections.  */
+
+  if (target_memory_bfd_section)
+    {
+      asection *s;
+      bfd *abfd;
+      asection *target_section;
+      bfd *target_bfd;
+
+      s = target_memory_bfd_section;
+      abfd = s->owner;
+
+      target_bfd = target->to_sections->bfd;
+      target_section = bfd_get_section_by_name (target_bfd, bfd_section_name (abfd, s));
+
+      if (target_section)
+	{
+	  bfd_vma sec_addr;
+	  bfd_size_type sec_size;
+
+	  sec_addr = bfd_section_vma (target_bfd, target_section);
+	  sec_size = target_section->_raw_size;
+
+	  /* Make sure the requested memory starts inside the section.  */
+
+	  if (memaddr >= sec_addr
+	      && memaddr < sec_addr + sec_size)
+	    {
+	      /* Cut back length in case request overflows the end of the section. */
+	      len = min (len, sec_addr + sec_size - memaddr);
+
+	      res = xfer_fn (target_bfd, target_section, myaddr, memaddr - sec_addr, len);
+
+	      return res ? len : 0;
+	    }
+	}
+    }
+#endif /* 0, Stu's implementation */
   for (p = target->to_sections; p < target->to_sections_end; p++)
     {
-      if (p->addr <= memaddr)
-	if (p->endaddr >= memend)
+      if (overlay_debugging && section && p->the_bfd_section &&
+	  strcmp (section->name, p->the_bfd_section->name) != 0)
+	continue;	/* not the section we need */
+      if (memaddr >= p->addr)
+ 	if (memend <= p->endaddr)
 	  {
 	    /* Entire transfer is within this section.  */
 	    res = xfer_fn (p->bfd, p->the_bfd_section, myaddr,
 			   memaddr - p->addr, len);
 	    return (res != 0) ? len : 0;
 	  }
-	else if (p->endaddr <= memaddr)
+	else if (memaddr >= p->endaddr)
 	  {
 	    /* This section ends before the transfer starts.  */
 	    continue;
@@ -463,8 +527,8 @@ xfer_memory (memaddr, myaddr, len, write, target)
 			   memaddr - p->addr, len);
 	    return (res != 0) ? len : 0;
 	  }
-      else if (p->addr < nextsectaddr)
-	nextsectaddr = p->addr;
+      else
+	nextsectaddr = min (nextsectaddr, p->addr);
     }
 
   if (nextsectaddr >= memend)

@@ -46,3 +46,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define KERNEL_U_SIZE kernel_u_size()
 extern int kernel_u_size PARAMS ((void));
 
+/* poll() doesn't seem to work properly for /proc in this version of the OS.
+   If we only specify POLLPRI, things hang.  It seems to get better when we set
+   POLLOUT, but that always returns POLLNVAL!!!  Also, POLLOUT causes problems
+   on other OSes.  */
+
+#define LOSING_POLL

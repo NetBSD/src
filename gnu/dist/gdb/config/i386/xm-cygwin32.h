@@ -1,5 +1,5 @@
 /* Definitions for hosting on WIN32, for GDB.
-   Copyright 1995, 1996 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -23,19 +23,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define GDBINIT_FILENAME "gdb.ini"
 
-
 #define SLASH_P(X) ((X)=='\\' || (X) == '/')
 #define ROOTED_P(X) ((SLASH_P((X)[0]))|| ((X)[1] ==':'))
 #define SLASH_CHAR '/'
 #define SLASH_STRING "/"
 
-
 /* If we longjmp out of the signal handler we never get another one.
    So disable immediate_quit inside request_quit */
 #define REQUEST_QUIT 
 
-
-
-
-
-
+/* Define this if source files use \r\n rather than just \n.  */
+#define CRLF_SOURCE_FILES

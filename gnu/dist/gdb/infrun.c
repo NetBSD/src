@@ -1,6 +1,6 @@
 /* Target-struct-independent code to start (run) and stop an inferior process.
-   Copyright 1986, 1987, 1988, 1989, 1991, 1992, 1993, 1994, 1995, 1996
-   Free Software Foundation, Inc.
+   Copyright 1986, 1987, 1988, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
+   1998 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -29,17 +29,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "gdbcore.h"
 #include "gdbcmd.h"
 #include "target.h"
-#include "thread.h"
+#include "gdbthread.h"
 #include "annotate.h"
+#include "symfile.h" /* for overlay functions */
 
 #include <signal.h>
-
-/* unistd.h is needed to #define X_OK */
-#ifdef USG
-#include <unistd.h>
-#else
-#include <sys/file.h>
-#endif
 
 /* Prototypes for local functions */
 
@@ -54,6 +48,8 @@ static void sig_print_header PARAMS ((void));
 static void resume_cleanups PARAMS ((int));
 
 static int hook_stop_stub PARAMS ((char *));
+
+static void delete_breakpoint_current_contents PARAMS ((PTR));
 
 /* GET_LONGJMP_TARGET returns the PC at which longjmp() will resume the
    program.  It needs to examine the jmp_buf argument and extract the PC
@@ -87,6 +83,15 @@ static int hook_stop_stub PARAMS ((char *));
 #define DYNAMIC_TRAMPOLINE_NEXTPC(pc) 0
 #endif
 
+/* On SVR4 based systems, determining the callee's address is exceedingly
+   difficult and depends on the implementation of the run time loader.
+   If we are stepping at the source level, we single step until we exit
+   the run time loader code and reach the callee's address.  */
+
+#ifndef IN_SOLIB_DYNSYM_RESOLVE_CODE
+#define IN_SOLIB_DYNSYM_RESOLVE_CODE(pc) 0
+#endif
+
 /* For SVR4 shared libraries, each call goes through a small piece of
    trampoline code in the ".plt" section.  IN_SOLIB_CALL_TRAMPOLINE evaluates
    to nonzero if we are current stopped in one of these. */
@@ -100,6 +105,14 @@ static int hook_stop_stub PARAMS ((char *));
 
 #ifndef IN_SOLIB_RETURN_TRAMPOLINE
 #define IN_SOLIB_RETURN_TRAMPOLINE(pc,name)	0
+#endif
+
+/* On MIPS16, a function that returns a floating point value may call
+   a library helper function to copy the return value to a floating point
+   register.  The IGNORE_HELPER_CALL macro returns non-zero if we
+   should ignore (i.e. step over) this function call.  */
+#ifndef IGNORE_HELPER_CALL
+#define IGNORE_HELPER_CALL(pc)	0
 #endif
 
 /* On some systems, the PC may be left pointing at an instruction that  won't
@@ -151,9 +164,11 @@ static struct symbol *step_start_function;
 
 static int trap_expected;
 
+#ifdef SOLIB_ADD
 /* Nonzero if we want to give control to the user when we're notified
    of shared library events by the dynamic linker.  */
 static int stop_on_solib_events;
+#endif
 
 #ifdef HP_OS_BUG
 /* Nonzero if the next time we try to continue the inferior, it will
@@ -194,13 +209,6 @@ static int breakpoints_failed;
 /* Nonzero after stop if current stack frame should be printed.  */
 
 static int stop_print_frame;
-
-#ifdef NO_SINGLE_STEP
-extern int one_stepped;		/* From machine dependent code */
-extern void single_step ();	/* Same. */
-#endif /* NO_SINGLE_STEP */
-
-extern void write_pc_pid PARAMS ((CORE_ADDR, int));
 
 
 /* Things to clean up if we QUIT out of resume ().  */
@@ -307,7 +315,7 @@ proceed (addr, siggnal, step)
 	 step one instruction before inserting breakpoints
 	 so that we do not stop right away.  */
 
-      if (breakpoint_here_p (read_pc ()))
+      if (read_pc () == stop_pc && breakpoint_here_p (read_pc ()))
 	oneproc = 1;
 
 #ifdef STEP_SKIPS_DELAY
@@ -455,7 +463,7 @@ wait_for_inferior ()
   struct cleanup *old_cleanups;
   struct target_waitstatus w;
   int another_trap;
-  int random_signal;
+  int random_signal = 0;
   CORE_ADDR stop_func_start;
   CORE_ADDR stop_func_end;
   char *stop_func_name;
@@ -491,6 +499,10 @@ wait_for_inferior ()
 
   while (1)
     {
+      extern int overlay_cache_invalid; /* declared in symfile.h */
+
+      overlay_cache_invalid = 1;
+
       /* We have to invalidate the registers BEFORE calling target_wait because
 	 they can be loaded from the target while in target_wait.  This makes
 	 remote debugging a bit more efficient for those targets that provide
@@ -503,19 +515,24 @@ wait_for_inferior ()
       else
 	pid = target_wait (-1, &w);
 
-#ifdef HAVE_NONSTEPPABLE_WATCHPOINT
+    /* Gross.
+
+       We goto this label from elsewhere in wait_for_inferior when we want
+       to continue the main loop without calling "wait" and trashing the
+       waitstatus contained in W.  */
     have_waited:
-#endif
 
       flush_cached_frames ();
 
       /* If it's a new process, add it to the thread database */
 
-      if (pid != inferior_pid
+      if (w.kind != TARGET_WAITKIND_EXITED
+	  && w.kind != TARGET_WAITKIND_SIGNALLED
+	  && pid != inferior_pid
 	  && !in_thread_list (pid))
 	{
-	  fprintf_unfiltered (gdb_stderr, "[New %s]\n", target_pid_to_str (pid));
 	  add_thread (pid);
+	  printf_filtered ("[New %s]\n", target_pid_to_str (pid));
 
 	  /* We may want to consider not doing a resume here in order to give
 	     the user a chance to play with the new thread.  It might be good
@@ -532,12 +549,35 @@ wait_for_inferior ()
       switch (w.kind)
 	{
 	case TARGET_WAITKIND_LOADED:
-	  /* Ignore it gracefully.  */
-	  if (breakpoints_inserted)
+	  /* Ignore gracefully during startup of the inferior, as it
+	     might be the shell which has just loaded some objects,
+	     otherwise add the symbols for the newly loaded objects.  */
+#ifdef SOLIB_ADD
+	  if (!stop_soon_quietly)
 	    {
-	      mark_breakpoints_out ();
-	      insert_breakpoints ();
+	      extern int auto_solib_add;
+
+	      /* Remove breakpoints, SOLIB_ADD might adjust
+		 breakpoint addresses via breakpoint_re_set.  */
+	      if (breakpoints_inserted)
+		remove_breakpoints ();
+
+	      /* Check for any newly added shared libraries if we're
+		 supposed to be adding them automatically.  */
+	      if (auto_solib_add)
+		{
+		  /* Switch terminal for any messages produced by
+		     breakpoint_re_set.  */
+	          target_terminal_ours_for_output ();
+		  SOLIB_ADD (NULL, 0, NULL);
+	          target_terminal_inferior ();
+		}
+
+	      /* Reinsert breakpoints and continue.  */
+	      if (breakpoints_inserted)
+		insert_breakpoints ();
 	    }
+#endif
 	  resume (0, TARGET_SIGNAL_0);
 	  continue;
 
@@ -611,31 +651,38 @@ wait_for_inferior ()
 	 another thread.  If so, then step that thread past the breakpoint,
 	 and continue it.  */
 
-      if (stop_signal == TARGET_SIGNAL_TRAP
-	  && breakpoints_inserted
-	  && breakpoint_here_p (stop_pc - DECR_PC_AFTER_BREAK))
+      if (stop_signal == TARGET_SIGNAL_TRAP)
 	{
-	  random_signal = 0;
-	  if (!breakpoint_thread_match (stop_pc - DECR_PC_AFTER_BREAK, pid))
-	    {
-	      /* Saw a breakpoint, but it was hit by the wrong thread.  Just continue. */
-	      write_pc_pid (stop_pc - DECR_PC_AFTER_BREAK, pid);
+#ifdef NO_SINGLE_STEP
+	  if (one_stepped)
+	    random_signal = 0;
+	  else
+#endif
+	    if (breakpoints_inserted
+		&& breakpoint_here_p (stop_pc - DECR_PC_AFTER_BREAK))
+	      {
+		random_signal = 0;
+		if (!breakpoint_thread_match (stop_pc - DECR_PC_AFTER_BREAK, pid))
+		  {
+		    /* Saw a breakpoint, but it was hit by the wrong thread.  Just continue. */
+		    write_pc_pid (stop_pc - DECR_PC_AFTER_BREAK, pid);
 
-	      remove_breakpoints ();
-	      target_resume (pid, 1, TARGET_SIGNAL_0); /* Single step */
-	      /* FIXME: What if a signal arrives instead of the single-step
-		 happening?  */
+		    remove_breakpoints ();
+		    target_resume (pid, 1, TARGET_SIGNAL_0); /* Single step */
+		    /* FIXME: What if a signal arrives instead of the single-step
+		       happening?  */
 
-	      if (target_wait_hook)
-		target_wait_hook (pid, &w);
-	      else
-		target_wait (pid, &w);
-	      insert_breakpoints ();
+		    if (target_wait_hook)
+		      target_wait_hook (pid, &w);
+		    else
+		      target_wait (pid, &w);
+		    insert_breakpoints ();
 
-	      /* We need to restart all the threads now.  */
-	      target_resume (-1, 0, TARGET_SIGNAL_0);
-	      continue;
-	    }
+		    /* We need to restart all the threads now.  */
+		    target_resume (-1, 0, TARGET_SIGNAL_0);
+		    continue;
+		  }
+	      }
 	}
       else
 	random_signal = 1;
@@ -702,7 +749,6 @@ wait_for_inferior ()
 			     &step_frame_address, &handling_longjmp,
 			     &another_trap);
 	  printf_filtered ("[Switching to %s]\n", target_pid_to_str (pid));
-
 	  flush_cached_frames ();
 	}
 
@@ -717,8 +763,22 @@ wait_for_inferior ()
 
       if (INSTRUCTION_NULLIFIED)
 	{
-	  resume (1, 0);
-	  continue;
+	  struct target_waitstatus tmpstatus;
+
+	  registers_changed ();
+	  target_resume (pid, 1, TARGET_SIGNAL_0);
+
+	  /* We may have received a signal that we want to pass to
+	     the inferior; therefore, we must not clobber the waitstatus
+	     in W.  So we call wait ourselves, then continue the loop
+	     at the "have_waited" label.  */
+	  if (target_wait_hook)
+	    target_wait_hook (pid, &tmpstatus);
+	  else
+	    target_wait (pid, &tmpstatus);
+
+
+	  goto have_waited;
 	}
 
 #ifdef HAVE_STEPPABLE_WATCHPOINT
@@ -756,6 +816,7 @@ wait_for_inferior ()
 	  write_pc (stop_pc - DECR_PC_AFTER_BREAK);
 
 	  remove_breakpoints ();
+	  registers_changed();
 	  target_resume (pid, 1, TARGET_SIGNAL_0); /* Single step */
 
 	  if (target_wait_hook)
@@ -776,6 +837,7 @@ wait_for_inferior ()
 #endif
 
       stop_func_start = 0;
+      stop_func_end = 0;
       stop_func_name = 0;
       /* Don't care about return value; stop_func_start and stop_func_name
 	 will both be 0 if it doesn't work.  */
@@ -836,18 +898,22 @@ wait_for_inferior ()
 	      /* See if there is a breakpoint at the current PC.  */
 	      stop_bpstat = bpstat_stop_status
 		(&stop_pc,
-#if DECR_PC_AFTER_BREAK
+		 (DECR_PC_AFTER_BREAK ?
 		 /* Notice the case of stepping through a jump
 		    that lands just after a breakpoint.
 		    Don't confuse that with hitting the breakpoint.
 		    What we check for is that 1) stepping is going on
 		    and 2) the pc before the last insn does not match
-		    the address of the breakpoint before the current pc.  */
-		 (prev_pc != stop_pc - DECR_PC_AFTER_BREAK
-		  && CURRENTLY_STEPPING ())
-#else /* DECR_PC_AFTER_BREAK zero */
-		 0
-#endif /* DECR_PC_AFTER_BREAK zero */
+		    the address of the breakpoint before the current pc
+		    and 3) we didn't hit a breakpoint in a signal handler
+		    without an intervening stop in sigtramp, which is
+		    detected by a new stack pointer value below
+		    any usual function calling stack adjustments.  */
+		 (CURRENTLY_STEPPING ()
+		  && prev_pc != stop_pc - DECR_PC_AFTER_BREAK
+		  && !(step_range_end
+		       && read_sp () INNER_THAN (step_sp - 16))) :
+		 0)
 		 );
 	      /* Following in case break condition called a
 		 function.  */
@@ -1039,8 +1105,8 @@ wait_for_inferior ()
 	      another_trap = 1;
 	    break;
 
-#ifdef SOLIB_ADD
 	  case BPSTAT_WHAT_CHECK_SHLIBS:
+#ifdef SOLIB_ADD
 	    {
 	      extern int auto_solib_add;
 
@@ -1059,9 +1125,12 @@ wait_for_inferior ()
 		     breakpoint_re_set.  */
 	          target_terminal_ours_for_output ();
 		  SOLIB_ADD (NULL, 0, NULL);
-		  re_enable_breakpoints_in_shlibs ();
 	          target_terminal_inferior ();
 		}
+
+	      /* Try to reenable shared library breakpoints, additional
+		 code segments in shared libraries might be mapped in now. */
+	      re_enable_breakpoints_in_shlibs ();
 
 	      /* If requested, stop when the dynamic linker notifies
 		 gdb of events.  This allows the user to get control
@@ -1080,6 +1149,7 @@ wait_for_inferior ()
 		}
 	    }
 #endif
+	  break;
 
 	  case BPSTAT_WHAT_LAST:
 	    /* Not a real code, but listed here to shut up gcc -Wall.  */
@@ -1156,6 +1226,13 @@ wait_for_inferior ()
 
       /* We stepped out of the stepping range.  */
 
+      /* If we are stepping at the source level and entered the runtime
+         loader dynamic symbol resolution code, we keep on single stepping
+	 until we exit the run time loader code and reach the callee's
+	 address.  */
+      if (step_over_calls < 0 && IN_SOLIB_DYNSYM_RESOLVE_CODE (stop_pc))
+	goto keep_going;
+
       /* We can't update step_sp every time through the loop, because
 	 reading the stack pointer would slow down stepping too much.
 	 But we can update it every time we leave the step range.  */
@@ -1163,7 +1240,8 @@ wait_for_inferior ()
 
       /* Did we just take a signal?  */
       if (IN_SIGTRAMP (stop_pc, stop_func_name)
-	  && !IN_SIGTRAMP (prev_pc, prev_func_name))
+	  && !IN_SIGTRAMP (prev_pc, prev_func_name)
+	  && read_sp () INNER_THAN step_sp)
 	{
 	  /* We've just taken a signal; go until we are back to
 	     the point where we took it and one more.  */
@@ -1180,9 +1258,9 @@ wait_for_inferior ()
 	  {
 	    struct symtab_and_line sr_sal;
 
-	    sr_sal.pc = prev_pc;
-	    sr_sal.symtab = NULL;
-	    sr_sal.line = 0;
+	    INIT_SAL (&sr_sal);		/* initialize to zeroes */
+	    sr_sal.pc      = prev_pc;
+	    sr_sal.section = find_pc_overlay (sr_sal.pc);
 	    /* We could probably be setting the frame to
 	       step_frame_address; I don't think anyone thought to try it.  */
 	    step_resume_breakpoint =
@@ -1227,16 +1305,17 @@ wait_for_inferior ()
 	    SKIP_PROLOGUE (prologue_pc);
 	}
 
-      if ((/* Might be a non-recursive call.  If the symbols are missing
-	      enough that stop_func_start == prev_func_start even though
-	      they are really two functions, we will treat some calls as
-	      jumps.  */
-	   stop_func_start != prev_func_start
+      if (!(step_sp INNER_THAN read_sp ())	/* don't mistake (sig)return as a call */
+	  && (/* Might be a non-recursive call.  If the symbols are missing
+		 enough that stop_func_start == prev_func_start even though
+		 they are really two functions, we will treat some calls as
+		 jumps.  */
+	      stop_func_start != prev_func_start
 
-	   /* Might be a recursive call if either we have a prologue
-	      or the call instruction itself saves the PC on the stack.  */
-	   || prologue_pc != stop_func_start
-	   || read_sp () != step_sp)
+	      /* Might be a recursive call if either we have a prologue
+		 or the call instruction itself saves the PC on the stack.  */
+	      || prologue_pc != stop_func_start
+	      || read_sp () != step_sp)
 	  && (/* PC is completely out of bounds of any known objfiles.  Treat
 		 like a subroutine call. */
 	      ! stop_func_start
@@ -1296,7 +1375,7 @@ wait_for_inferior ()
 	      break;
 	    }
 
-	  if (step_over_calls > 0)
+	  if (step_over_calls > 0 || IGNORE_HELPER_CALL (stop_pc))
 	    /* We're doing a "next".  */
 	    goto step_over_function;
 
@@ -1314,10 +1393,11 @@ wait_for_inferior ()
 	      if (tmp)
 		{
 		  struct symtab_and_line xxx;
-
-		  xxx.pc = tmp;
-		  xxx.symtab = NULL;
-		  xxx.line = 0;
+		  /* Why isn't this s_a_l called "sr_sal", like all of the
+		     other s_a_l's where this code is duplicated?  */
+		  INIT_SAL (&xxx);	/* initialize to zeroes */
+		  xxx.pc      = tmp;
+		  xxx.section = find_pc_overlay (xxx.pc);
 		  step_resume_breakpoint = 
 		    set_momentary_breakpoint (xxx, NULL, bp_step_resume);
 		  insert_breakpoints ();
@@ -1344,15 +1424,16 @@ step_over_function:
 	  {
 	    /* Set a special breakpoint after the return */
 	    struct symtab_and_line sr_sal;
+
+	    INIT_SAL (&sr_sal);		/* initialize to zeroes */
 	    sr_sal.pc = 
-	      ADDR_BITS_REMOVE
-		(SAVED_PC_AFTER_CALL (get_current_frame ()));
-	    sr_sal.symtab = NULL;
-	    sr_sal.line = 0;
+	      ADDR_BITS_REMOVE (SAVED_PC_AFTER_CALL (get_current_frame ()));
+	    sr_sal.section = find_pc_overlay (sr_sal.pc);
 	    step_resume_breakpoint =
 	      set_momentary_breakpoint (sr_sal, get_current_frame (),
 					bp_step_resume);
-	    step_resume_breakpoint->frame = step_frame_address;
+	    if (!IN_SOLIB_DYNSYM_RESOLVE_CODE (sr_sal.pc))
+	      step_resume_breakpoint->frame = step_frame_address;
 	    if (breakpoints_inserted)
 	      insert_breakpoints ();
 	  }
@@ -1394,9 +1475,9 @@ step_into_function:
 	    {
 	      struct symtab_and_line sr_sal;
 
-	      sr_sal.pc = stop_func_start;
-	      sr_sal.symtab = NULL;
-	      sr_sal.line = 0;
+	      INIT_SAL (&sr_sal);	/* initialize to zeroes */
+	      sr_sal.pc      = stop_func_start;
+	      sr_sal.section = find_pc_overlay (stop_func_start);
 	      /* Do not specify what the fp should be when we stop
 		 since on some machines the prologue
 		 is where the new fp value is established.  */
@@ -1438,9 +1519,9 @@ step_into_function:
 	      /* And put the step-breakpoint there and go until there. */
 	      struct symtab_and_line sr_sal;
 
-	      sr_sal.pc = tmp;
-	      sr_sal.symtab = NULL;
-	      sr_sal.line = 0;
+	      INIT_SAL (&sr_sal);	/* initialize to zeroes */
+	      sr_sal.pc      = tmp;
+	      sr_sal.section = find_pc_overlay (sr_sal.pc);
 	      /* Do not specify what the fp should be when we stop
 		 since on some machines the prologue
 		 is where the new fp value is established.  */
@@ -1495,12 +1576,16 @@ step_into_function:
 	}
       step_range_start = sal.pc;
       step_range_end = sal.end;
+      step_frame_address = FRAME_FP (get_current_frame ());
+      current_line = sal.line;
+      current_symtab = sal.symtab;
       goto keep_going;
 
     check_sigtramp2:
       if (trap_expected
 	  && IN_SIGTRAMP (stop_pc, stop_func_name)
-	  && !IN_SIGTRAMP (prev_pc, prev_func_name))
+	  && !IN_SIGTRAMP (prev_pc, prev_func_name)
+	  && read_sp () INNER_THAN step_sp)
 	{
 	  /* What has happened here is that we have just stepped the inferior
 	     with a signal (because it is a signal which shouldn't make
@@ -1514,9 +1599,9 @@ step_into_function:
 	     it says "exceedingly difficult").  */
 	  struct symtab_and_line sr_sal;
 
-	  sr_sal.pc = prev_pc;
-	  sr_sal.symtab = NULL;
-	  sr_sal.line = 0;
+	  INIT_SAL (&sr_sal);		/* initialize to zeroes */
+	  sr_sal.pc      = prev_pc;
+	  sr_sal.section = find_pc_overlay (sr_sal.pc);
 	  /* We perhaps could set the frame if we kept track of what
 	     the frame corresponding to prev_pc was.  But we don't,
 	     so don't.  */
@@ -1776,9 +1861,12 @@ sig_print_info (oursig)
      enum target_signal oursig;
 {
   char *name = target_signal_to_name (oursig);
+  int name_padding = 13 - strlen (name);
+  if (name_padding <= 0)
+    name_padding = 0;
+
   printf_filtered ("%s", name);
-  printf_filtered ("%*.*s ", 13 - strlen (name), 13 - strlen (name),
-		   "                 ");
+  printf_filtered ("%*.*s ", name_padding, name_padding, "                 ");
   printf_filtered ("%s\t", signal_stop[oursig] ? "Yes" : "No");
   printf_filtered ("%s\t", signal_print[oursig] ? "Yes" : "No");
   printf_filtered ("%s\t\t", signal_program[oursig] ? "Yes" : "No");
