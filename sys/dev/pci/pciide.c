@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.33.2.10 2000/08/14 14:15:21 he Exp $	*/
+/*	$NetBSD: pciide.c,v 1.33.2.11 2000/08/14 14:19:33 he Exp $	*/
 
 
 /*
@@ -117,6 +117,8 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_pdc202xx_reg.h>
 #include <dev/pci/pciide_opti_reg.h>
 #include <dev/pci/pciide_hpt_reg.h>
+
+#include "opt_pciide.h"
 
 #if BYTE_ORDER == BIG_ENDIAN
 #define htole16(x)      bswap16((u_int16_t)(x))
@@ -2209,7 +2211,7 @@ cmd0643_9_chip_map(sc, pa)
 			 * with UDMA. Only enable it if we know what we're
 			 * doing
 			 */
-#ifdef PCIIDE_CMD0646U_UDMA
+#ifdef PCIIDE_CMD0646U_ENABLEUDMA
 				sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 				sc->sc_wdcdev.UDMA_cap = 2;
 #endif
@@ -2244,7 +2246,10 @@ cmd0643_9_chip_map(sc, pa)
 			continue;
 		cmd0643_9_setup_channel(&cp->wdc_channel);
 	}
-	/* note - this also make sure we clear the irq disable and reset bits */
+	/*
+	 * note - this also makes sure we clear the irq disable and reset
+	 * bits
+	 */
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, CMD_DMA_MODE, CMD_DMA_MULTIPLE);
 	WDCDEBUG_PRINT(("cmd0643_9_chip_map: timings reg now 0x%x 0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, 0x54),
