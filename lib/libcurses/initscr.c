@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.16 2000/04/17 12:25:46 blymn Exp $	*/
+/*	$NetBSD: initscr.c,v 1.17 2000/04/27 00:23:01 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.16 2000/04/17 12:25:46 blymn Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.17 2000/04/27 00:23:01 jdc Exp $");
 #endif
 #endif	/* not lint */
 
@@ -95,6 +95,14 @@ initscr(void)
 		delwin(stdscr);
 	if ((stdscr = newwin(LINES, COLS, 0, 0)) == ERR) {
 		delwin(curscr);
+		return (NULL);
+	}
+
+	if (__virtscr != NULL)
+		delwin(__virtscr);
+	if ((__virtscr = newwin(LINES, COLS, 0, 0)) == ERR) {
+		delwin(curscr);
+		delwin(stdscr);
 		return (NULL);
 	}
 
