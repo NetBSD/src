@@ -71,9 +71,6 @@
  *
  *---------------------------------------------------------------------------*/
 
-#include "vt.h"
-#if NVT > 0
-
 #include "pcvt_hdr.h"		/* global include */
 
 static void fkey1(void), fkey2(void),  fkey3(void),  fkey4(void);
@@ -1378,11 +1375,7 @@ regular:
 		cpu_reset();
 #endif /* PCVT_CTRL_ALT_DEL */
 
-#if !(PCVT_NETBSD || PCVT_FREEBSD >= 200)
-#include "ddb.h"
-#endif /* !(PCVT_NETBSD || PCVT_FREEBSD >= 200) */
-
-#if NDDB > 0 || defined(DDB)		 /*   Check for cntl-alt-esc	*/
+#ifdef DDB		 /*   Check for cntl-alt-esc	*/
 
   	if((key == 110) && ctrl_down && (meta_down || altgr_down))
  	{
@@ -1391,12 +1384,7 @@ regular:
  		if(!in_Debugger && pcvt_is_console)
  		{
  			in_Debugger = 1;
-#if PCVT_FREEBSD
-			/* the string is actually not used... */
-			Debugger("kbd");
-#else
  			Debugger();
-#endif
  			in_Debugger = 0;
  			if(noblock)
  				return NULL;
@@ -1404,7 +1392,7 @@ regular:
  				goto loop;
  		}
  	}
-#endif /* NDDB > 0 || defined(DDB) */
+#endif /* DDB */
 
 	/* look for keys with special handling */
 	if(key == 128)
@@ -2946,7 +2934,5 @@ cfkey12(void)
 }
 
 #endif	/* PCVT_VT220KEYB */
-
-#endif	/* NVT > 0 */
 
 /* ------------------------------- EOF -------------------------------------*/
