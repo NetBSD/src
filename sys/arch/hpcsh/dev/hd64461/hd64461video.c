@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.19 2003/08/02 22:39:13 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.20 2003/11/01 03:45:52 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.19 2003/08/02 22:39:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.20 2003/11/01 03:45:52 uwe Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -858,6 +858,8 @@ hd64461video_update_videochip_status(struct hd64461video_chip *hvc)
 	u_int16_t r;
 	int i;
 	int depth, width, height;
+
+	depth = 0;		/* XXX: -Wuninitialized */
 
 	/* display mode */
 	r = hd64461_reg_read_2(HD64461_LCDLDR3_REG16);	
