@@ -1,4 +1,4 @@
-/* $NetBSD: upc_iobus.c,v 1.1 2000/08/16 23:56:13 bjh21 Exp $ */
+/* $NetBSD: upc_iobus.c,v 1.2 2000/08/23 17:28:51 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -32,12 +32,13 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: upc_iobus.c,v 1.1 2000/08/16 23:56:13 bjh21 Exp $");
+__RCSID("$NetBSD: upc_iobus.c,v 1.2 2000/08/23 17:28:51 bjh21 Exp $");
 
 #include <sys/device.h>
 
 #include <arch/arm26/iobus/iobusvar.h>
 
+#include <arch/arm26/iobus/iocreg.h>
 #include <machine/irq.h>
 
 #include <dev/ic/upcreg.h>
@@ -90,13 +91,13 @@ upc_iobus_attach(struct device *parent, struct device *self, void *aux)
 		      &upc->sc_ioh);
 	upc_attach(upc);
 
-	irq_establish(0, upc->sc_pintr.uih_level, upc->sc_pintr.uih_func,
-		      upc->sc_pintr.uih_arg);
-	irq_establish(10, upc->sc_irq4.uih_level, upc->sc_irq4.uih_func,
-		      upc->sc_irq4.uih_arg);
-	irq_establish(11, upc->sc_wintr.uih_level, upc->sc_wintr.uih_func,
-		      upc->sc_wintr.uih_arg);
-	irq_establish(12, upc->sc_fintr.uih_level, upc->sc_fintr.uih_func,
-		      upc->sc_fintr.uih_arg);
+	irq_establish(IOC_IRQ_IL2, upc->sc_irq4.uih_level,
+		      upc->sc_irq4.uih_func, upc->sc_irq4.uih_arg);
+	irq_establish(IOC_IRQ_IL3, upc->sc_wintr.uih_level,
+		      upc->sc_wintr.uih_func, upc->sc_wintr.uih_arg);
+	irq_establish(IOC_IRQ_IL4, upc->sc_fintr.uih_level,
+		      upc->sc_fintr.uih_func, upc->sc_fintr.uih_arg);
+	irq_establish(IOC_IRQ_IL6, upc->sc_pintr.uih_level,
+		      upc->sc_pintr.uih_func, upc->sc_pintr.uih_arg);
 	/* IRQ3 on the 82C71x is not connected */
 }
