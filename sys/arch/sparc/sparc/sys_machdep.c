@@ -42,10 +42,9 @@
  *	@(#)sys_machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: sys_machdep.c,v 1.6 92/11/26 03:05:08 torek Exp  (LBL)
- * $Id: sys_machdep.c,v 1.1 1993/10/02 10:24:28 deraadt Exp $
+ * $Id: sys_machdep.c,v 1.2 1993/10/13 09:01:12 deraadt Exp $
  */
 
-#ifdef TRACE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -58,6 +57,7 @@
 #include <sys/buf.h>
 #include <sys/trace.h>
 
+#ifdef TRACE
 int	nvualarm;
 
 struct vtrace_args {
@@ -111,3 +111,23 @@ vdoualarm(arg)
 	nvualarm--;
 }
 #endif
+
+struct sysarch_args {
+	int op;
+	char *parms;
+};
+
+sysarch(p, uap, retval)
+	struct proc *p;
+	register struct sysarch_args *uap;
+	int *retval;
+{
+	int error = 0;
+
+	switch(uap->op) {
+	default:
+		error = EINVAL;
+		break;
+	}
+	return(error);
+}
