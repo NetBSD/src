@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.135 2000/03/21 12:48:46 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.136 2000/03/21 21:29:16 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -99,7 +99,6 @@
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	fbnode;		/* node ID of ROM's console frame buffer */
 int	optionsnode;	/* node ID of ROM's options */
 int	mmu_3l;		/* SUN4_400 models have a 3-level MMU */
 
@@ -1045,10 +1044,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 
 	node = findroot();	/* re-init root node */
-
-	if (prom_version() <= 2)
-		/* remember which frame buffer, if any, is to be `/dev/fb' */
-		fbnode = getpropint(node, "fb", 0);
 
 	/* Find the "options" node */
 	node0 = firstchild(node);
