@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.72 2000/05/26 20:25:57 jhawk Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.73 2000/05/29 23:10:03 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -218,10 +218,18 @@ panic(fmt, va_alist)
 	if (db_onpanic)
 		Debugger();
 	else {
-		printf("Begin traceback...\n");
-		db_stack_trace_print((db_expr_t)__builtin_frame_address(0),
-		    TRUE, 65535, "", printf);
-		printf("End traceback...\n");
+		static int intrace = 0;
+
+		if (intrace==0) {
+			intrace=1;
+			printf("Begin traceback...\n");
+			db_stack_trace_print(
+			    (db_expr_t)__builtin_frame_address(0),
+			    TRUE, 65535, "", printf);
+			printf("End traceback...\n");
+			intrace=0;
+		} else
+			printf("Faulted in mid-traceback; aborting...");
 	}
 #endif
 	cpu_reboot(bootopt, NULL);
