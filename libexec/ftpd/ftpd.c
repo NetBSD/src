@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.88 2000/05/20 02:20:18 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.89 2000/05/20 23:34:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.88 2000/05/20 02:20:18 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.89 2000/05/20 23:34:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -781,7 +781,7 @@ pass(const char *passwd)
 		}
 		rval = 1;
 
-skip:
+ skip:
 		if (pw != NULL && pw->pw_expire && time(NULL) >= pw->pw_expire)
 			rval = 2;
 		/*
@@ -1071,8 +1071,7 @@ retrieve(char *argv[], const char *name)
 	timersub(&finish, &start, &td);
 	tdp = &td;
 	data = -1;
-	pdata = -1;
-done:
+ done:
 	if (log)
 		logcmd("get", byte_count, name, NULL, tdp, NULL);
 	closerv = (*closefunc)(fin);
@@ -1108,6 +1107,9 @@ done:
 		reply(226, "Transfer complete.");
 	}
  cleanupretrieve:
+	if (pdata >= 0)
+		(void)close(pdata);
+	pdata = -1;
 	if (stderrfd != -1)
 		(void)close(stderrfd);
 	if (isconversion)
@@ -1127,7 +1129,7 @@ store(const char *name, const char *mode, int unique)
 	if (unique && stat(name, &st) == 0 &&
 	    (name = gunique(name)) == NULL) {
 		logcmd(desc, -1, name, NULL, NULL, "cannot create unique file");
-		return;
+		goto cleanupstore;
 	}
 
 	if (restart_point)
@@ -1138,7 +1140,7 @@ store(const char *name, const char *mode, int unique)
 	if (fout == NULL) {
 		perror_reply(553, name);
 		logcmd(desc, -1, name, NULL, NULL, strerror(errno));
-		return;
+		goto cleanupstore;
 	}
 	byte_count = -1;
 	if (restart_point) {
@@ -1184,10 +1186,13 @@ store(const char *name, const char *mode, int unique)
 	timersub(&finish, &start, &td);
 	tdp = &td;
 	data = -1;
-	pdata = -1;
-done:
+ done:
 	logcmd(desc, byte_count, name, NULL, tdp, NULL);
 	(*closefunc)(fout);
+ cleanupstore:
+	if (pdata >= 0)
+		(void)close(pdata);
+	pdata = -1;
 }
 
 static FILE *
@@ -1228,7 +1233,7 @@ getdatasock(const char *mode)
 	}
 #endif
 	return (fdopen(s, mode));
-bad:
+ bad:
 	/* Return the real value of errno (close may change it) */
 	t = errno;
 	(void) seteuid((uid_t)pw->pw_uid);
@@ -1451,17 +1456,17 @@ send_data(FILE *instr, FILE *outstr, off_t blksize, int isdata)
 		goto cleanup_send_data;
 	}
 
-data_err:
+ data_err:
 	(void) alarm(0);
 	perror_reply(426, "Data connection");
 	goto cleanup_send_data;
 
-file_err:
+ file_err:
 	(void) alarm(0);
 	perror_reply(551, "Error on input file");
 		/* FALLTHROUGH */
 
-cleanup_send_data:
+ cleanup_send_data:
 	(void) alarm(0);
 	transflag = 0;
 	if (buf)
@@ -1605,17 +1610,17 @@ receive_data(FILE *instr, FILE *outstr)
 		goto cleanup_recv_data;
 	}
 
-data_err:
+ data_err:
 	(void) alarm(0);
 	perror_reply(426, "Data Connection");
 	goto cleanup_recv_data;
 
-file_err:
+ file_err:
 	(void) alarm(0);
 	perror_reply(452, "Error writing file");
 	goto cleanup_recv_data;
 
-cleanup_recv_data:
+ cleanup_recv_data:
 	(void) alarm(0);
 	transflag = 0;
 	total_files_in++;
@@ -1666,7 +1671,7 @@ statcmd(void)
 	union sockunion *su = NULL;
 	static char ntop_buf[INET6_ADDRSTRLEN];
   	u_char *a, *p;
-	int ispassive;
+	int ispassive, af;
 	off_t b, otbi, otbo, otb;
 
 	a = p = (u_char *)NULL;
@@ -1735,7 +1740,7 @@ statcmd(void)
 		total_bytes += b;
 		total_bytes_out += b;
 		su = (union sockunion *)&data_dest;
-printaddr:
+ printaddr:
 		/* PASV/PORT */
 		if (su->su_family == AF_INET) {
 			if (ispassive)
@@ -1790,10 +1795,7 @@ printaddr:
 	    }
 
 		/* EPRT/EPSV */
-epsvonly:;
-	    {
-		int af;
-
+ epsvonly:
 		switch (su->su_family) {
 		case AF_INET:
 			af = 1;
@@ -1819,7 +1821,6 @@ epsvonly:;
 				total_bytes_out += b;
 			}
 		}
-	    }
 	} else
 		lreply(0, "No data connection");
 
@@ -2218,7 +2219,7 @@ passive(void)
 		UC(a[1]), UC(a[2]), UC(a[3]), UC(p[0]), UC(p[1]));
 	return;
 
-pasv_error:
+ pasv_error:
 	(void) close(pdata);
 	pdata = -1;
 	perror_reply(425, "Can't open passive connection");
@@ -2319,7 +2320,7 @@ long_passive(char *cmd, int pf)
 		/* more proper error code? */
 	}
 
-  pasv_error:
+ pasv_error:
 	(void) close(pdata);
 	pdata = -1;
 	perror_reply(425, "Can't open passive connection");
@@ -2447,6 +2448,8 @@ send_file_list(const char *whichf)
 				(void) fclose(dout);
 				transflag = 0;
 				data = -1;
+				if (pdata >= 0)
+					(void)close(pdata);
 				pdata = -1;
 			}
 			goto out;
@@ -2525,9 +2528,11 @@ send_file_list(const char *whichf)
 	transflag = 0;
 	if (dout != NULL)
 		(void) fclose(dout);
+	else if (pdata >= 0)
+		(void)close(pdata);
 	data = -1;
 	pdata = -1;
-out:
+ out:
 	total_xfers++;
 	total_xfers_out++;
 	if (p)
