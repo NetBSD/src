@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	from: @(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
- *	$Id: vm_machdep.c,v 1.15 1994/09/09 23:53:42 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.16 1994/10/20 22:43:23 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -126,6 +126,13 @@ cpu_exit(p)
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 	switch_exit();
 	/* NOTREACHED */
+}
+
+void
+cpu_cleanup(p)
+	struct proc *p;
+{
+
 }
 
 /*
