@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 1999/06/07 20:16:11 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 1999/06/24 08:14:48 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -72,6 +72,7 @@ void
 configure()
 {
 	int node, reg[5];
+	int msr;
 
 	node = OF_finddevice("mac-io");
 	if (node == -1)
@@ -97,12 +98,8 @@ configure()
 	/*
 	 * Now allow hardware interrupts.
 	 */
-	{
-		int msr;
-
-		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-			      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
-	}
+	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+		      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
 }
 
 /*
@@ -130,7 +127,7 @@ findroot()
 	u_int targ, lun = 0;	/* XXX lun */
 	struct device *dv;
 	char *p, *controller = "nodev";
-	char path[64], type[16], name[16];
+	char path[64], type[16], name[16], compat[16];
 
 	booted_device = NULL;
 
@@ -151,10 +148,12 @@ findroot()
 
 	bzero(type, sizeof(type));
 	bzero(name, sizeof(name));
+	bzero(compat, sizeof(compat));
 	if (OF_getprop(node, "device_type", type, 16) == -1)
 		goto out;
 	if (OF_getprop(node, "name", name, 16) == -1)
 		goto out;
+	OF_getprop(node, "compatible", compat, 16);	/* ignore error */
 
 	if (strcmp(type, "block") == 0) {
 		char *addr;
@@ -171,8 +170,11 @@ findroot()
 		bzero(name, sizeof(name));
 		if (OF_getprop(pnode, "name", name, sizeof(name)) == -1)
 			goto out;
+		bzero(compat, sizeof(compat));
+		OF_getprop(pnode, "compatible", compat, 16);
 	}
 
+	if (strcmp(compat, "heathrow-ata") == 0) controller = "wdc";
 	if (strcmp(name, "mace") == 0) controller = "mc";
 	if (strcmp(name, "bmac") == 0) controller = "bm";
 	if (strcmp(name, "ethernet") == 0) controller = "bm";
