@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1998/05/11 19:30:15 mhitch Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1999/01/16 14:59:03 christos Exp $
 
 SRCS+=	rtld_start.S mips_reloc.c
 
@@ -10,7 +10,7 @@ LDFLAGS+= -EB
 .endif
 
 LDFLAGS+= -Bshareable -Bsymbolic -e .rtld_start
-LDFLAGS+= --script ${.CURDIR}/mips/ld.so.script
+LDFLAGS+= --script ${.CURDIR}/arch/mips/ld.so.script
 
 # Link ld.so for backward compatibility with old binaries
 LINKS+=	/usr/libexec/${PROG} /usr/libexec/ld.so
