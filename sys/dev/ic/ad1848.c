@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.6 1999/09/06 17:07:04 rh Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.7 1999/10/05 03:35:12 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -17,10 +17,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD 
- *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
- *    contributors may be used to endorse or promote products derived 
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
@@ -106,6 +106,7 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/fcntl.h>
 /*#include <sys/syslog.h>*/
 /*#include <sys/proc.h>*/
 
@@ -387,7 +388,7 @@ ad1848_attach(sc)
 	for (i = 0; i < 0x10; i++) {
 		ad_write(sc, i, ad1848_init_values[i]);
 		timeout = 100000;
-		while (timeout > 0 && ad_read(sc, AD1848_IADDR) & SP_IN_INIT)
+		while (timeout > 0 && ADREAD(sc, AD1848_IADDR) & SP_IN_INIT)
 			timeout--;
 	}
 	/* ...and additional CS4231 stuff too */
@@ -398,7 +399,7 @@ ad1848_attach(sc)
 				ad_write(sc, i, ad1848_init_values[i]);
 				timeout = 100000;
 				while (timeout > 0 &&
-				       ad_read(sc, AD1848_IADDR) & SP_IN_INIT)
+				       ADREAD(sc, AD1848_IADDR) & SP_IN_INIT)
 					timeout--;
 			}
 	}
@@ -413,6 +414,7 @@ ad1848_attach(sc)
 	ad1848_set_channel_gain(sc, AD1848_DAC_CHANNEL, &vol_mid);
 	ad1848_set_channel_gain(sc, AD1848_MONITOR_CHANNEL, &vol_0);
 	ad1848_set_channel_gain(sc, AD1848_AUX1_CHANNEL, &vol_mid);	/* CD volume */
+	sc->mute[AD1848_MONITOR_CHANNEL] = MUTE_ALL;
 	if (sc->mode >= 2) {
 		ad1848_set_channel_gain(sc, AD1848_AUX2_CHANNEL, &vol_mid); /* CD volume */
 		ad1848_set_channel_gain(sc, AD1848_LINE_CHANNEL, &vol_mid);
@@ -467,17 +469,21 @@ ad1848_mute_channel(sc, device, mute)
 	reg = ad_read(sc, mixer_channel_info[device].left_reg);
 
 	if (mute & MUTE_LEFT) {
-		if (device == AD1848_MONITOR_CHANNEL)
+		if (device == AD1848_MONITOR_CHANNEL) {
+			if (sc->open_mode & FREAD)
+				ad1848_mute_wave_output(sc, WAVE_UNMUTE1, 0);
 			ad_write(sc, mixer_channel_info[device].left_reg,
-				 reg & 0xFE);
-		else
+				 reg & ~DIGITAL_MIX1_ENABLE);
+		} else
 			ad_write(sc, mixer_channel_info[device].left_reg,
 				 reg | 0x80);
 	} else if (!(sc->mute[device] & MUTE_LEFT)) {
-		if (device == AD1848_MONITOR_CHANNEL)
+		if (device == AD1848_MONITOR_CHANNEL) {
 			ad_write(sc, mixer_channel_info[device].left_reg,
-				 reg | 0x01);
-		else
+				 reg | DIGITAL_MIX1_ENABLE);
+			if (sc->open_mode & FREAD)
+				ad1848_mute_wave_output(sc, WAVE_UNMUTE1, 1);
+		} else
 			ad_write(sc, mixer_channel_info[device].left_reg,
 				 reg & ~0x80);
 	}
@@ -507,8 +513,8 @@ ad1848_set_channel_gain(sc, device, gp)
 
 	sc->gains[device] = *gp;
 
-	atten = (AUDIO_MAX_GAIN - gp->left) * info->atten_bits /
-		AUDIO_MAX_GAIN;
+	atten = (AUDIO_MAX_GAIN - gp->left) * (info->atten_bits + 1) /
+		(AUDIO_MAX_GAIN + 1);
 
 	reg = ad_read(sc, info->left_reg) & (info->atten_mask);
 	if (device == AD1848_MONITOR_CHANNEL)
@@ -521,8 +527,8 @@ ad1848_set_channel_gain(sc, device, gp)
 	if (!info->right_reg)
 		return (0);
 
-	atten = (AUDIO_MAX_GAIN - gp->right) * info->atten_bits /
-		AUDIO_MAX_GAIN;
+	atten = (AUDIO_MAX_GAIN - gp->right) * (info->atten_bits + 1) /
+		(AUDIO_MAX_GAIN + 1);
 	reg = ad_read(sc, info->right_reg);
 	reg &= info->atten_mask;
 	ad_write(sc, info->right_reg, (atten & info->atten_bits) | reg);
@@ -561,12 +567,12 @@ ad1848_set_rec_gain(sc, gp)
 
 	sc->rec_gain = *gp;
 
-	gain = (gp->left * GAIN_22_5) / AUDIO_MAX_GAIN;
+	gain = (gp->left * (GAIN_22_5 + 1)) / (AUDIO_MAX_GAIN + 1);
 	reg = ad_read(sc, SP_LEFT_INPUT_CONTROL);
 	reg &= INPUT_GAIN_MASK;
 	ad_write(sc, SP_LEFT_INPUT_CONTROL, (gain & 0x0f) | reg);
 
-	gain = (gp->right * GAIN_22_5) / AUDIO_MAX_GAIN;
+	gain = (gp->right * (GAIN_22_5 + 1)) / (AUDIO_MAX_GAIN + 1);
 	reg = ad_read(sc, SP_RIGHT_INPUT_CONTROL);
 	reg &= INPUT_GAIN_MASK;
 	ad_write(sc, SP_RIGHT_INPUT_CONTROL, (gain & 0x0f) | reg);
@@ -576,24 +582,28 @@ ad1848_set_rec_gain(sc, gp)
 
 
 void
-ad1848_mute_monitor(addr, mute)
-	void *addr;
-	int mute;
+ad1848_mute_wave_output(sc, mute, set)
+	struct ad1848_softc *sc;
+	int mute, set;
 {
-	struct ad1848_softc *sc = addr;
+	int m;
 
-	DPRINTF(("ad1848_mute_monitor: %smuting\n", mute ? "" : "un"));
-	if (sc->mode >= 2) {
-	        ad1848_mute_channel(sc, AD1848_DAC_CHANNEL,
-				    mute ? MUTE_ALL : 0);
-		ad1848_mute_channel(sc, AD1848_MONO_CHANNEL,
-				    mute ? MUTE_MONO : 0);
-		ad1848_mute_channel(sc, AD1848_LINE_CHANNEL,
-				    mute ? MUTE_ALL : 0);
+	DPRINTF(("ad1848_mute_wave_output: %d, %d\n", mute, set));
+
+	if (mute == WAVE_MUTE2_INIT) {
+		sc->wave_mute_status = 0;
+		mute = WAVE_MUTE2;
 	}
+	if (set)
+		m = sc->wave_mute_status |= mute;
+	else
+		m = sc->wave_mute_status &= ~mute;
 
-	ad1848_mute_channel(sc, AD1848_AUX2_CHANNEL, mute ? MUTE_ALL : 0);
-	ad1848_mute_channel(sc, AD1848_AUX1_CHANNEL, mute ? MUTE_ALL : 0);
+	if (m & WAVE_MUTE0 || ((m & WAVE_UNMUTE1) == 0 && m & WAVE_MUTE2))
+		ad1848_mute_channel(sc, AD1848_DAC_CHANNEL, MUTE_ALL);
+	else
+		ad1848_mute_channel(sc, AD1848_DAC_CHANNEL,
+					    sc->mute[AD1848_DAC_CHANNEL]);
 }
 
 int
@@ -978,7 +988,7 @@ ad1848_set_rec_port(sc, port)
 	int port;
 {
 	u_char inp, reg;
- 
+
 	DPRINTF(("ad1848_set_rec_port: 0x%x\n", port));
 
 	if (port == MIC_IN_PORT)
@@ -1032,10 +1042,16 @@ ad1848_open(addr, flags)
 
 	DPRINTF(("ad1848_open: sc=%p\n", sc));
 
+	sc->open_mode = flags;
+
 	/* Enable interrupts */
 	DPRINTF(("ad1848_open: enable intrs\n"));
 	reg = ad_read(sc, SP_PIN_CONTROL);
 	ad_write(sc, SP_PIN_CONTROL, reg | INTERRUPT_ENABLE);
+
+	/* If recording && monitoring, the playback part is also used. */
+	if (flags & FREAD && sc->mute[AD1848_MONITOR_CHANNEL] == 0)
+		ad1848_mute_wave_output(sc, WAVE_UNMUTE1, 1);
 
 #ifdef AUDIO_DEBUG
 	if (ad1848debug)
@@ -1054,6 +1070,10 @@ ad1848_close(addr)
 {
 	struct ad1848_softc *sc = addr;
 	u_char reg;
+
+	sc->open_mode = 0;
+
+	ad1848_mute_wave_output(sc, WAVE_UNMUTE1, 0);
 
 	/* Disable interrupts */
 	DPRINTF(("ad1848_close: disable intrs\n"));
@@ -1083,7 +1103,7 @@ ad1848_commit_settings(addr)
 
 	s = splaudio();
 
-	ad1848_mute_monitor(sc, 1);
+	ad1848_mute_wave_output(sc, WAVE_MUTE0, 1);
 
 	ad_set_MCE(sc, 1);	/* Enables changes to the format select reg */
 
@@ -1133,7 +1153,7 @@ ad1848_commit_settings(addr)
 	ad_set_MCE(sc, 0);
 	wait_for_calibration(sc);
 
-	ad1848_mute_monitor(sc, 0);
+	ad1848_mute_wave_output(sc, WAVE_MUTE0, 0);
 
 	splx(s);
 
