@@ -45,6 +45,7 @@ ENTRY(syscall)
 	pop	%eax	/* syscall number */
 	push	%ecx
 	LCALL(7,0)
+	push	%ecx	/* Keep stack frame consistant */
 	jb	1f
 	ret
 1:
