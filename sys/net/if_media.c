@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.2 1998/08/06 02:19:34 thorpej Exp $	*/
+/*	$NetBSD: if_media.c,v 1.3 1998/08/30 07:39:39 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -444,7 +444,7 @@ ifmedia_printword(ifmw)
 		    (seen_option & IFM_OPTIONS(desc->ifmt_word)) == 0) {
 			if (seen_option == 0)
 				printf(" <");
-			printf("%s%s", seen_option ? "," : ""
+			printf("%s%s", seen_option ? "," : "",
 			    desc->ifmt_string);
 			seen_option |= IFM_OPTIONS(desc->ifmt_word);
 		}
