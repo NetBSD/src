@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.93 2004/01/13 06:17:14 itojun Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.94 2004/03/02 02:26:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.93 2004/01/13 06:17:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.94 2004/03/02 02:26:28 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -460,7 +460,7 @@ in_pcbconnect(v, nam)
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
 	in_pcbstate(inp, INP_CONNECTED);
-#if defined(IPSEC) /*|| defined(FAST_IPSEC)*/ /*XXX*/
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	if (inp->inp_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(inp->inp_sp);
 #endif
@@ -479,7 +479,7 @@ in_pcbdisconnect(v)
 	inp->inp_faddr = zeroin_addr;
 	inp->inp_fport = 0;
 	in_pcbstate(inp, INP_BOUND);
-#if defined(IPSEC) /*|| defined(FAST_IPSEC)*/ /*XXX*/
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	ipsec_pcbdisconn(inp->inp_sp);
 #endif
 	if (inp->inp_socket->so_state & SS_NOFDREF)
