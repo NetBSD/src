@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.89 2004/05/31 08:47:08 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.90 2004/09/17 14:11:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.89 2004/05/31 08:47:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.90 2004/09/17 14:11:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,7 +530,7 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	uiop->uio_resid = len;
 	uiop->uio_rw = UIO_READ;
 	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_procp = (struct proc *)0;
+	uiop->uio_procp = NULL;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
@@ -950,7 +950,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 		uiop->uio_resid = len;
 		uiop->uio_rw = UIO_WRITE;
 		uiop->uio_segflg = UIO_SYSSPACE;
-		uiop->uio_procp = (struct proc *)0;
+		uiop->uio_procp = NULL;
 		uiop->uio_offset = off;
 		error = VOP_WRITE(vp, uiop, ioflags, cred);
 		nfsstats.srvvop_writes++;
@@ -1189,7 +1189,7 @@ loop1:
 		    ioflags = (IO_METASYNC | IO_SYNC | IO_NODELOCKED);
 		uiop->uio_rw = UIO_WRITE;
 		uiop->uio_segflg = UIO_SYSSPACE;
-		uiop->uio_procp = (struct proc *)0;
+		uiop->uio_procp = NULL;
 		uiop->uio_offset = nfsd->nd_off;
 		uiop->uio_resid = nfsd->nd_eoff - nfsd->nd_off;
 		if (uiop->uio_resid > 0) {
@@ -2232,7 +2232,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	io.uio_iovcnt = 1;
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_procp = (struct proc *)0;
+	io.uio_procp = NULL;
 	nfsm_mtouio(&io, len2);
 	if (!v3) {
 		nfsm_dissect(sp, struct nfsv2_sattr *, NFSX_V2SATTR);
@@ -2655,7 +2655,7 @@ again:
 	io.uio_resid = fullsiz;
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_procp = (struct proc *)0;
+	io.uio_procp = NULL;
 	eofflag = 0;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
@@ -2914,7 +2914,7 @@ again:
 	io.uio_resid = fullsiz;
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_procp = (struct proc *)0;
+	io.uio_procp = NULL;
 	eofflag = 0;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);

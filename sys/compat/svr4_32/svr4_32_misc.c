@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.28 2004/04/22 14:32:09 hannken Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.29 2004/09/17 14:11:24 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.28 2004/04/22 14:32:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.29 2004/09/17 14:11:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +304,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
+	auio.uio_procp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -424,7 +424,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
+	auio.uio_procp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*

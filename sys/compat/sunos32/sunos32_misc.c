@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.27 2004/04/25 06:02:20 matt Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.28 2004/09/17 14:11:24 skrll Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.27 2004/04/25 06:02:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.28 2004/09/17 14:11:24 skrll Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -742,7 +742,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
+	auio.uio_procp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
