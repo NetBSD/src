@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.4 1996/10/11 00:46:25 christos Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.5 1996/10/13 02:59:36 christos Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -214,7 +214,7 @@ cgfourteenattach(parent, self, args)
 	 */
 	if (ca->ca_ra.ra_len < 0x10000) {
 #ifdef DIAGNOSTIC
-		kprintf("warning: can't find all cgfourteen registers...\n");
+		printf("warning: can't find all cgfourteen registers...\n");
 #endif
 		ca->ca_ra.ra_len = 0x10000;
 	}
@@ -254,10 +254,10 @@ cgfourteenattach(parent, self, args)
 	 * Let the user know that we're here
 	 */
 #ifdef CG14_CG8
-	kprintf(": cgeight emulated at %dx%dx24bpp",
+	printf(": cgeight emulated at %dx%dx24bpp",
 	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 #else
-	kprintf(": cgthree emulated at %dx%dx8bpp",
+	printf(": cgthree emulated at %dx%dx8bpp",
 	       sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 #endif
 	/*
@@ -295,14 +295,14 @@ cgfourteenattach(parent, self, args)
 
 
 	if (isconsole) {
-		kprintf(" (console)\n");
+		printf(" (console)\n");
 #ifdef notdef
 #ifdef RASTERCONSOLE
 		fbrcons_init(&sc->sc_fb);
 #endif
 #endif /* notdef */
 	} else
-		kprintf("\n");
+		printf("\n");
 
 	/* Attach to /dev/fb */
 	if (node == fbnode)
@@ -604,7 +604,7 @@ cgfourteenmmap(dev, off, prot)
 	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size *
 		sc->sc_fb.fb_type.fb_depth/8) {
 #ifdef DEBUG
-		kprintf("\nmmap request out of bounds: request 0x%x, "
+		printf("\nmmap request out of bounds: request 0x%x, "
 		    "bound 0x%x\n", (unsigned) off, 
 		    (unsigned)sc->sc_fb.fb_type.fb_size);
 #endif
@@ -760,7 +760,7 @@ cg14_get_cmap(p, cm, cmsize)
         if (start >= cmsize || start + count > cmsize)
 #ifdef DEBUG
 	{
-		kprintf("putcmaperror: start %d cmsize %d count %d\n",
+		printf("putcmaperror: start %d cmsize %d count %d\n",
 		    start,cmsize,count);
 #endif
                 return (EINVAL);
@@ -795,7 +795,7 @@ cg14_put_cmap(p, cm, cmsize)
         if (start >= cmsize || start + count > cmsize)
 #ifdef DEBUG
 	{
-		kprintf("putcmaperror: start %d cmsize %d count %d\n",
+		printf("putcmaperror: start %d cmsize %d count %d\n",
 		    start,cmsize,count);
 #endif
                 return (EINVAL);
