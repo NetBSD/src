@@ -1,4 +1,4 @@
-/*	$NetBSD: pmatch.c,v 1.1 1998/06/21 18:43:35 christos Exp $	*/
+/*	$NetBSD: pmatch.c,v 1.1.26.1 2002/01/08 00:32:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991 The Regents of the University of California.
@@ -34,7 +34,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <lib/libkern/libkern.h>
 /*
  * pmatch():

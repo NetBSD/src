@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.40.2.5 2001/11/14 19:18:55 nathanw Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.40.2.6 2002/01/08 00:34:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.40.2.5 2001/11/14 19:18:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.40.2.6 2002/01/08 00:34:46 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -212,6 +212,7 @@ ffs_truncate(v)
 
 	osize = oip->i_ffs_size;
 	ioflag = ap->a_flags;
+	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 
 	/*
 	 * Lengthen the size of the file. We must ensure that the
@@ -220,7 +221,6 @@ ffs_truncate(v)
 	 */
 
 	if (osize < length) {
-		aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 		if (lblkno(fs, osize) < NDADDR &&
 		    lblkno(fs, osize) != lblkno(fs, length) &&
 		    blkroundup(fs, osize) != osize) {
@@ -232,7 +232,8 @@ ffs_truncate(v)
 			if (ioflag & IO_SYNC) {
 				ovp->v_size = blkroundup(fs, osize);
 				simple_lock(&ovp->v_interlock);
-				VOP_PUTPAGES(ovp, osize & ~(fs->fs_bsize - 1),
+				VOP_PUTPAGES(ovp,
+				    trunc_page(osize & ~(fs->fs_bsize - 1)),
 				    round_page(ovp->v_size),
 				    PGO_CLEANIT | PGO_SYNCIO);
 			}
@@ -266,6 +267,11 @@ ffs_truncate(v)
 	if (ovp->v_type == VREG && length < osize && offset != 0) {
 		voff_t eoz;
 
+		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
+		    aflag);
+		if (error) {
+			return error;
+		}
 		size = blksize(fs, oip, lblkno(fs, length));
 		eoz = MIN(lblktosize(fs, lblkno(fs, length)) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
@@ -294,6 +300,8 @@ ffs_truncate(v)
 			    0, 0, ap->a_p)) != 0) {
 				lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 				return (error);
+			if (oip->i_flag & IN_SPACECOUNTED)
+				fs->fs_pendingblocks -= oip->i_ffs_blocks;
 			}
 		} else {
 			uvm_vnp_setsize(ovp, length);
@@ -307,10 +315,6 @@ ffs_truncate(v)
 			return (VOP_UPDATE(ovp, NULL, NULL, 0));
 		}
 	}
-
-	/*
-	 * Reduce the size of the file.
-	 */
 	oip->i_ffs_size = length;
 	uvm_vnp_setsize(ovp, length);
 	/*

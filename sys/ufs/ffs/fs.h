@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.13.2.2 2001/09/21 22:37:06 nathanw Exp $	*/
+/*	$NetBSD: fs.h,v 1.13.2.3 2002/01/08 00:34:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -251,7 +251,9 @@ struct fs {
 	int32_t	 fs_snapinum[20];	/* RESERVED for snapshot inode nums */
 	int32_t	 fs_avgfilesize;	/* expected average file size */
 	int32_t	 fs_avgfpdir;		/* expected # of files per directory */
-	int32_t	 fs_sparecon[28];	/* RESERVED for future constants */
+	int32_t	 fs_sparecon[26];	/* RESERVED for future constants */
+	int32_t  fs_pendingblocks;	/* blocks in process of being freed */
+	int32_t  fs_pendinginodes;	/* inodes in process of being freed */
 	int32_t	 fs_contigsumsize;	/* size of cluster summary array */
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_inodefmt;		/* format of on-disk inodes */

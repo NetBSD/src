@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.21.4.2 2001/11/14 19:17:48 nathanw Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.21.4.3 2002/01/08 00:34:06 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -10,7 +10,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.21.4.2 2001/11/14 19:17:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.21.4.3 2002/01/08 00:34:06 nathanw Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.7 2000/11/27 10:26:56 darrenr Exp";
@@ -21,9 +21,8 @@ static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.7 2000/11/27 10:26:56 da
 # define      _KERNEL
 #endif
 
-#include <sys/errno.h>
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #if !defined(_KERNEL) && !defined(KERNEL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.4.2.1 2001/08/24 00:12:17 nathanw Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.4.2.2 2002/01/08 00:33:55 nathanw Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -35,6 +35,13 @@
 
 /*
  * OS dependencies:
+ * - RTFREE()
+ *   bsdi does not escape this macro using do-clause, so it is recommended
+ *   to escape the macro explicitly.
+ *   e.g.
+ *	if (rt) {
+ *		RTFREE(rt);
+ *	}
  *
  * - whether the IPv4 input routine convert the byte order of some fileds
  *   of the IP header (x: convert to the host byte order, s: strip the header
@@ -128,6 +135,14 @@
  *	OpenBSD 2.8
  *		timeout_{add,set,del} is encouraged (sys/timeout.h)
  *
+ * - kernel internal time structure
+ *	FreeBSD 2, NetBSD, OpenBSD, BSD/OS
+ *		mono_time.tv_u?sec, time.tv_u?sec
+ *	FreeBSD [34]
+ *		time_second
+ *	if you need portability, #ifdef out FreeBSD[34], or use microtime(&tv)
+ *	then touch tv.tv_sec.
+ *
  * - sysctl
  *	NetBSD, OpenBSD
  *		foo_sysctl()
@@ -164,11 +179,15 @@
  *
  * - ovbcopy()
  *	in NetBSD 1.4 or later, ovbcopy() is not supplied in the kernel.
- *	we provide a version here as a macro for memmove.
+ *	we have updated sys/systm.h to include declaration.
  *
  * - splnet()
  *	NetBSD 1.4 or later requires splsoftnet().
  *	other operating systems use splnet().
+ *
+ * - splimp()
+ *	NetBSD-current (2001/4/13): use splnet() in network, splvm() in vm.
+ *	other operating systems: use splimp().
  *
  * - dtom()
  *	NEVER USE IT!
@@ -228,7 +247,9 @@
  *	others: do not increase refcnt for ifp->if_addrlist and in_ifaddr.
  *		use IFAFREE once when ifaddr is disconnected from
  *		ifp->if_addrlist and in_ifaddr.  IFAFREE frees ifaddr when
- *		ifa_refcnt goes negative.
+ *		ifa_refcnt goes negative.  in KAME environment, IFAREF is
+ *		provided as a compatibility wrapper (use it instead of
+ *		ifa_refcnt++ to reduce #ifdef).
  *
  * - ifnet.if_lastchange
  *	freebsd, bsdi, netbsd-current (jun 14 2001-),
@@ -236,6 +257,30 @@
  *		(RFC1573 ifLastChange interpretation)
  *	netbsd151, openbsd29: updated whenever packets go through the interface.
  *		(4.4BSD interpretation)
+ *
+ * - kernel compilation options ("options HOGE" in kernel config file)
+ *	freebsd4: sys/conf/options has to have mapping between option
+ *		and a header file (opt_hoge.h).
+ *	netbsd: by default, -DHOGE will go into
+ *		sys/arch/foo/compile/BAR/Makefile.
+ *		if you define mapping in sys/conf/files, you can create
+ *		a header file like opt_hoge.h to help make dependencies.
+ *	bsdi/openbsd: always use -DHOGE in Makefile.  there's no need/way
+ *		to have opt_hoge.h.
+ *
+ *	therefore, opt_hoge.h is mandatory on freebsd4 only.
+ *
+ * - MALLOC() macro
+ *	Use it only if the size of the allocation is constant.
+ *	When we do NOT collect statistics about kernel memory usage, the result
+ *	of macro expansion contains a large set of condition branches.  If the
+ *	size is not constant, compilation optimization cannot be applied, and
+ *	a bunch of the large branch will be embedded in the kernel code.
+ *
+ * - M_COPY_PKTHDR
+ *	openbsd30: M_COPY_PKTHDR is deprecated.  use M_MOVE_PKTHDR or
+ *		M_DUP_PKTHDR, depending on how you want to handle m_tag.
+ *	others: M_COPY_PKTHDR is available as usual.
  */
 
 #ifndef __NET_NET_OSDEP_H_DEFINED_

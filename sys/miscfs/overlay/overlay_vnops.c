@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vnops.c,v 1.3.2.2 2001/11/14 19:17:10 nathanw Exp $	*/
+/*	$NetBSD: overlay_vnops.c,v 1.3.2.3 2002/01/08 00:33:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: overlay_vnops.c,v 1.3.2.2 2001/11/14 19:17:10 nathanw Exp $
+ *	$Id: overlay_vnops.c,v 1.3.2.3 2002/01/08 00:33:39 nathanw Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -130,13 +130,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vnops.c,v 1.3.2.2 2001/11/14 19:17:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vnops.c,v 1.3.2.3 2002/01/08 00:33:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -170,8 +169,9 @@ const struct vnodeopv_entry_desc overlay_vnodeop_entries[] = {
 	{ &vop_strategy_desc, layer_strategy },
 	{ &vop_bwrite_desc,   layer_bwrite },
 	{ &vop_bmap_desc,     layer_bmap },
+	{ &vop_putpages_desc, layer_putpages },
 
-	{ (struct vnodeop_desc*)NULL, (int(*)__P((void *)))NULL }
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc overlay_vnodeop_opv_desc =
 	{ &overlay_vnodeop_p, overlay_vnodeop_entries };

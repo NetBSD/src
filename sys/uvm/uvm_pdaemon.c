@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.7 2001/11/14 19:19:08 nathanw Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.8 2002/01/08 00:35:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.29.2.7 2001/11/14 19:19:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.29.2.8 2002/01/08 00:35:07 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -367,6 +367,9 @@ uvmpd_scan_inactive(pglst)
 	int swnpages, swcpages;
 	int swslot;
 	int dirtyreacts, t, result;
+	boolean_t anonunder, fileunder, execunder;
+	boolean_t anonover, fileover, execover;
+	boolean_t anonreact, filereact, execreact;
 	UVMHIST_FUNC("uvmpd_scan_inactive"); UVMHIST_CALLED(pdhist);
 
 	/*
@@ -378,6 +381,22 @@ uvmpd_scan_inactive(pglst)
 	swslot = 0;
 	swnpages = swcpages = 0;
 	dirtyreacts = 0;
+
+	/*
+	 * decide which types of pages we want to reactivate instead of freeing
+	 * to keep usage within the minimum and maximum usage limits.
+	 */
+
+	t = uvmexp.active + uvmexp.inactive + uvmexp.free;
+	anonunder = (uvmexp.anonpages <= (t * uvmexp.anonmin) >> 8);
+	fileunder = (uvmexp.filepages <= (t * uvmexp.filemin) >> 8);
+	execunder = (uvmexp.execpages <= (t * uvmexp.execmin) >> 8);
+	anonover = uvmexp.anonpages > ((t * uvmexp.anonmax) >> 8);
+	fileover = uvmexp.filepages > ((t * uvmexp.filemax) >> 8);
+	execover = uvmexp.execpages > ((t * uvmexp.execmax) >> 8);
+	anonreact = anonunder || (!anonover && (fileover || execover));
+	filereact = fileunder || (!fileover && (anonover || execover));
+	execreact = execunder || (!execover && (anonover || fileover));
 	for (p = TAILQ_FIRST(pglst); p != NULL || swslot != 0; p = nextpg) {
 		uobj = NULL;
 		anon = NULL;
@@ -433,24 +452,20 @@ uvmpd_scan_inactive(pglst)
 			 * on to the next page.
 			 */
 
-			t = uvmexp.active + uvmexp.inactive + uvmexp.free;
-			if (anon &&
-			    uvmexp.anonpages <= (t * uvmexp.anonmin) >> 8) {
+			if (uobj && UVM_OBJ_IS_VTEXT(uobj) && execreact) {
 				uvm_pageactivate(p);
-				uvmexp.pdreanon++;
-				continue;
-			}
-			if (uobj && UVM_OBJ_IS_VTEXT(uobj) &&
-			    uvmexp.vtextpages <= (t * uvmexp.vtextmin) >> 8) {
-				uvm_pageactivate(p);
-				uvmexp.pdrevtext++;
+				uvmexp.pdreexec++;
 				continue;
 			}
 			if (uobj && UVM_OBJ_IS_VNODE(uobj) &&
-			    !UVM_OBJ_IS_VTEXT(uobj) &&
-			    uvmexp.vnodepages <= (t * uvmexp.vnodemin) >> 8) {
+			    !UVM_OBJ_IS_VTEXT(uobj) && filereact) {
 				uvm_pageactivate(p);
-				uvmexp.pdrevnode++;
+				uvmexp.pdrefile++;
+				continue;
+			}
+			if (anon && anonreact) {
+				uvm_pageactivate(p);
+				uvmexp.pdreanon++;
 				continue;
 			}
 
@@ -470,18 +485,27 @@ uvmpd_scan_inactive(pglst)
 			 * and make it its own.
 			 */
 
-			/* is page part of an anon or ownerless ? */
-			if ((p->pqflags & PQ_ANON) || uobj == NULL) {
+			/* does the page belong to an object? */
+			if (uobj != NULL) {
+				slock = &uobj->vmobjlock;
+				if (!simple_lock_try(slock)) {
+					continue;
+				}
+				if (p->flags & PG_BUSY) {
+					simple_unlock(slock);
+					uvmexp.pdbusy++;
+					continue;
+				}
+				uvmexp.pdobscan++;
+			} else {
 				KASSERT(anon != NULL);
 				slock = &anon->an_lock;
 				if (!simple_lock_try(slock)) {
-					/* lock failed, skip this page */
 					continue;
 				}
 
 				/*
-				 * if the page is ownerless, claim it in the
-				 * name of "anon"!
+				 * set PQ_ANON if it isn't set already.
 				 */
 
 				if ((p->pqflags & PQ_ANON) == 0) {
@@ -496,18 +520,6 @@ uvmpd_scan_inactive(pglst)
 					continue;
 				}
 				uvmexp.pdanscan++;
-			} else {
-				KASSERT(uobj != NULL);
-				slock = &uobj->vmobjlock;
-				if (!simple_lock_try(slock)) {
-					continue;
-				}
-				if (p->flags & PG_BUSY) {
-					simple_unlock(slock);
-					uvmexp.pdbusy++;
-					continue;
-				}
-				uvmexp.pdobscan++;
 			}
 
 
@@ -720,6 +732,7 @@ uvmpd_scan(void)
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
 	struct vm_anon *anon;
+	struct simplelock *slock;
 	UVMHIST_FUNC("uvmpd_scan"); UVMHIST_CALLED(pdhist);
 
 	uvmexp.pdrevs++;
@@ -795,11 +808,18 @@ uvmpd_scan(void)
 		/*
 		 * lock the page's owner.
 		 */
-		/* is page anon owned or ownerless? */
-		if ((p->pqflags & PQ_ANON) || p->uobject == NULL) {
+
+		if (p->uobject != NULL) {
+			uobj = p->uobject;
+			slock = &uobj->vmobjlock;
+			if (!simple_lock_try(slock)) {
+				continue;
+			}
+		} else {
 			anon = p->uanon;
 			KASSERT(anon != NULL);
-			if (!simple_lock_try(&anon->an_lock)) {
+			slock = &anon->an_lock;
+			if (!simple_lock_try(slock)) {
 				continue;
 			}
 
@@ -809,11 +829,6 @@ uvmpd_scan(void)
 				p->loan_count--;
 				p->pqflags |= PQ_ANON;
 			}
-		} else {
-			uobj = p->uobject;
-			if (!simple_lock_try(&uobj->vmobjlock)) {
-				continue;
-			}
 		}
 
 		/*
@@ -821,10 +836,7 @@ uvmpd_scan(void)
 		 */
 
 		if ((p->flags & PG_BUSY) != 0) {
-			if (p->pqflags & PQ_ANON)
-				simple_unlock(&anon->an_lock);
-			else
-				simple_unlock(&uobj->vmobjlock);
+			simple_unlock(slock);
 			continue;
 		}
 
@@ -865,9 +877,6 @@ uvmpd_scan(void)
 		 * we're done with this page.
 		 */
 
-		if (p->pqflags & PQ_ANON)
-			simple_unlock(&anon->an_lock);
-		else
-			simple_unlock(&uobj->vmobjlock);
+		simple_unlock(slock);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.34.2.4 2001/11/14 19:18:06 nathanw Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.34.2.5 2002/01/08 00:34:17 nathanw Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.34.2.4 2001/11/14 19:18:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.34.2.5 2002/01/08 00:34:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ static int in6_ifattach_loopback __P((struct ifnet *));
 static int
 get_rand_ifid(ifp, in6)
 	struct ifnet *ifp;
-	struct in6_addr *in6;	/*upper 64bits are preserved */
+	struct in6_addr *in6;	/* upper 64bits are preserved */
 {
 	MD5_CTX ctxt;
 	u_int8_t digest[16];
@@ -129,7 +129,7 @@ get_rand_ifid(ifp, in6)
 static int
 get_hw_ifid(ifp, in6)
 	struct ifnet *ifp;
-	struct in6_addr *in6;	/*upper 64bits are preserved */
+	struct in6_addr *in6;	/* upper 64bits are preserved */
 {
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
@@ -816,6 +816,8 @@ statinit:;
 
 /*
  * NOTE: in6_ifdetach() does not support loopback if at this moment.
+ * We don't need this function in bsdi, because interfaces are never removed
+ * from the ifnet list in bsdi.
  */
 void
 in6_ifdetach(ifp)
@@ -893,7 +895,14 @@ in6_ifdetach(ifp)
 	/* cleanup multicast address kludge table, if there is any */
 	in6_purgemkludge(ifp);
 
-	/* remove neighbor management table */
+	/*
+	 * remove neighbor management table.  we call it twice just to make
+	 * sure we nuke everything.  maybe we need just one call.
+	 * XXX: since the first call did not release addresses, some prefixes
+	 * might remain.  We should call nd6_purge() again to release the
+	 * prefixes after removing all addresses above.
+	 * (Or can we just delay calling nd6_purge until at this point?)
+	 */
 	nd6_purge(ifp);
 
 	/* remove route to link-local allnodes multicast (ff02::1) */

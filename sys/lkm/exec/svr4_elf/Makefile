@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2001/11/14 19:17:00 nathanw Exp $
+#	$NetBSD: Makefile,v 1.1.4.3 2002/01/08 00:33:15 nathanw Exp $
 
 .include "../Makefile.inc"
 
@@ -12,8 +12,6 @@ ELFSIZE=32
 
 CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_ELF${ELFSIZE} \
 		-DELFSIZE=${ELFSIZE}
-
-MKMAN=	no
 
 KMOD=	exec_svr4_elf
 

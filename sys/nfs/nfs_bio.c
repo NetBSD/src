@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63.2.7 2001/11/14 19:18:42 nathanw Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.8 2002/01/08 00:34:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.7 2001/11/14 19:18:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.8 2002/01/08 00:34:32 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -645,21 +645,21 @@ nfs_write(v)
 
 		if ((oldoff & ~(nmp->nm_wsize - 1)) !=
 		    (uio->uio_offset & ~(nmp->nm_wsize - 1))) {
-			simple_lock(&vp->v_uobj.vmobjlock);
-			error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
+			simple_lock(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp,
 			    trunc_page(oldoff & ~(nmp->nm_wsize - 1)),
 			    round_page((uio->uio_offset + nmp->nm_wsize - 1) &
 				       ~(nmp->nm_wsize - 1)),
-			    PGO_CLEANIT|PGO_WEAK);
+			    PGO_CLEANIT | PGO_WEAK);
 		}
 	} while (uio->uio_resid > 0);
 	if ((np->n_flag & NQNFSNONCACHE) || (ioflag & IO_SYNC)) {
-		simple_lock(&vp->v_uobj.vmobjlock);
-		error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp,
 		    trunc_page(origoff & ~(nmp->nm_wsize - 1)),
 		    round_page((uio->uio_offset + nmp->nm_wsize - 1) &
 			       ~(nmp->nm_wsize - 1)),
-		    PGO_CLEANIT|PGO_SYNCIO);
+		    PGO_CLEANIT | PGO_SYNCIO);
 	}
 	return error;
 }
@@ -1006,6 +1006,7 @@ nfs_getpages(v)
 	int i, error, npages;
 	boolean_t v3 = NFS_ISV3(vp);
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
+	boolean_t locked = (ap->a_flags & PGO_LOCKED) != 0;
 	UVMHIST_FUNC("nfs_getpages"); UVMHIST_CALLED(ubchist);
 
 	/*
@@ -1038,7 +1039,9 @@ nfs_getpages(v)
 	lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
 	nfs_del_committed_range(vp, origoffset, npages);
 	nfs_del_tobecommitted_range(vp, origoffset, npages);
-	simple_lock(&uobj->vmobjlock);
+	if (!locked) {
+		simple_lock(&uobj->vmobjlock);
+	}
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
 		if (pg == NULL || pg == PGO_DONTCARE) {
@@ -1046,7 +1049,9 @@ nfs_getpages(v)
 		}
 		pg->flags &= ~(PG_NEEDCOMMIT|PG_RDONLY);
 	}
-	simple_unlock(&uobj->vmobjlock);
+	if (!locked) {
+		simple_unlock(&uobj->vmobjlock);
+	}
 	lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
 	return 0;
 }

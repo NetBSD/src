@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.15.6.2 2001/11/14 19:18:32 nathanw Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.15.6.3 2002/01/08 00:34:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,7 +69,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.15.6.2 2001/11/14 19:18:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.15.6.3 2002/01/08 00:34:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,7 +272,7 @@ restart:
  *  tp_usrreq(), PRU_SENDOOB
  * FUNCTION and ARGUMENTS:
  * 	Send what's in the mbuf chain (m) as an XPD TPDU.
- * 	The mbuf may not contain more then 16 bytes of data.
+ * 	The mbuf may not contain more than 16 bytes of data.
  * 	XPD TSDUs aren't segmented, so they translate into
  * 	exactly one XPD TPDU, with EOT bit set.
  * RETURN VALUE:

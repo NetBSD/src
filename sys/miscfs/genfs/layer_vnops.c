@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.5.2.3 2001/11/14 19:17:09 nathanw Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.5.2.4 2002/01/08 00:33:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.5.2.3 2001/11/14 19:17:09 nathanw Exp $
+ *	$Id: layer_vnops.c,v 1.5.2.4 2002/01/08 00:33:36 nathanw Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -236,13 +236,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.5.2.3 2001/11/14 19:17:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.5.2.4 2002/01/08 00:33:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -886,4 +885,59 @@ layer_bwrite(v)
 	bp->b_vp = savedvp;
 
 	return (error);
+}
+
+int
+layer_getpages(v)
+	void *v;
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int error;
+
+	/*
+	 * just pass the request on to the underlying layer.
+	 */
+
+	if (ap->a_flags & PGO_LOCKED) {
+		return EBUSY;
+	}
+	ap->a_vp = LAYERVPTOLOWERVP(vp);
+	simple_unlock(&vp->v_interlock);
+	simple_lock(&ap->a_vp->v_interlock);
+	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
+	return error;
+}
+
+int
+layer_putpages(v)
+	void *v;
+{
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offlo;
+		voff_t a_offhi;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int error;
+
+	/*
+	 * just pass the request on to the underlying layer.
+	 */
+
+	ap->a_vp = LAYERVPTOLOWERVP(vp);
+	simple_unlock(&vp->v_interlock);
+	simple_lock(&ap->a_vp->v_interlock);
+	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
+	return error;
 }

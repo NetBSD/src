@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.26.2.5 2001/11/14 19:18:48 nathanw Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.26.2.6 2002/01/08 00:34:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,10 +29,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.26.2.5 2001/11/14 19:18:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.26.2.6 2002/01/08 00:34:37 nathanw Exp $");
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/lwp.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.31.2.6 2001/11/14 19:18:15 nathanw Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.31.2.7 2002/01/08 00:34:26 nathanw Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.31.2.6 2001/11/14 19:18:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.31.2.7 2002/01/08 00:34:26 nathanw Exp $");
 
 #include "opt_ipsec.h"
 
@@ -516,7 +516,7 @@ rip6_output(m, va_alist)
 #endif /* IPSEC */
 
 	flags = 0;
-#ifdef IPV6_MINMTU
+#ifdef IN6P_MINMTU
 	if (in6p->in6p_flags & IN6P_MINMTU)
 		flags |= IPV6_MINMTU;
 #endif
@@ -544,9 +544,9 @@ rip6_output(m, va_alist)
 	return(error);
 }
 
-/* 
+/*
  * Raw IPv6 socket option processing.
-  */
+ */
 int
 rip6_ctloutput(op, so, level, optname, mp)
 	int op;
@@ -769,7 +769,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 	    }
 
 	case PRU_CONNECT:
-	    {
+	{
 		struct sockaddr_in6 *addr = mtod(nam, struct sockaddr_in6 *);
 		struct in6_addr *in6a = NULL;
 #ifdef ENABLE_DEFAULT_SCOPE
@@ -815,7 +815,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 		in6p->in6p_faddr = addr->sin6_addr;
 		soisconnected(so);
 		break;
-	    }
+	}
 
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
@@ -832,7 +832,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 	 * routine handles any messaging necessary.
 	 */
 	case PRU_SEND:
-	    {
+	{
 		struct sockaddr_in6 tmp;
 		struct sockaddr_in6 *dst;
 
@@ -866,7 +866,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 		error = rip6_output(m, so, dst, control);
 		m = NULL;
 		break;
-	    }
+	}
 
 	case PRU_SENSE:
 		/*

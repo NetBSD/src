@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.28.2.3 2001/11/14 19:18:08 nathanw Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.28.2.4 2002/01/08 00:34:18 nathanw Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.28.2.3 2001/11/14 19:18:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.28.2.4 2002/01/08 00:34:18 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -120,11 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.28.2.3 2001/11/14 19:18:08 nathanw E
 #endif /* IPSEC */
 
 #include <netinet6/ip6protosw.h>
-
-#include "gif.h"
-#if NGIF > 0
-#include <netinet6/in6_gif.h>
-#endif
 
 #include <net/net_osdep.h>
 
@@ -209,29 +204,25 @@ struct ip6protosw inet6sw[] = {
 #endif /* IPSEC */
 #ifdef INET
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  encap6_input,	rip6_output, 	0,		rip6_ctloutput,
+  encap6_input,	rip6_output, 	encap6_ctlinput, rip6_ctloutput,
   rip6_usrreq,
-  0,		0,		0,		0,
+  encap_init,	0,		0,		0,
 },
 #endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  encap6_input, rip6_output,	 0,		rip6_ctloutput,
+  encap6_input, rip6_output,	encap6_ctlinput, rip6_ctloutput,
   rip6_usrreq,
-#ifndef INET6
-  0,		0,		0,		0,
-#else
   encap_init,	0,		0,		0,
-#endif
 },
 #ifdef ISO
 { SOCK_RAW,	&inet6domain,	IPPROTO_EON,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  encap6_input,	rip6_output,	0,		rip6_ctloutput,
+  encap6_input,	rip6_output,	encap6_ctlinput, rip6_ctloutput,
   rip6_usrreq,	/*XXX*/
-  0,		0,		0,		0,
+  encap_init,	0,		0,		0,
 },
 #endif
 { SOCK_RAW,     &inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  pim6_input,    rip6_output,	0,              rip6_ctloutput, 
+  pim6_input,	rip6_output,	0,              rip6_ctloutput, 
   rip6_usrreq,
   0,            0,              0,              0,
 },
@@ -242,15 +233,6 @@ struct ip6protosw inet6sw[] = {
   rip6_init,	0,		0,		0,
 },
 };
-
-#if NGIF > 0
-struct ip6protosw in6_gif_protosw =
-{ SOCK_RAW,	&inet6domain,	0/*IPPROTO_IPV[46]*/,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input, rip6_output,	0,		rip6_ctloutput,
-  rip6_usrreq,
-  0,            0,              0,              0,
-};
-#endif /*NGIF*/
 
 struct domain inet6domain =
     { AF_INET6, "internet6", 0, 0, 0,
@@ -286,14 +268,9 @@ int	ip6_hdrnestlimit = 50;	/* appropriate? */
 int	ip6_dad_count = 1;	/* DupAddrDetectionTransmits */
 u_int32_t ip6_flow_seq;
 int	ip6_auto_flowlabel = 1;
-#if NGIF > 0
-int	ip6_gif_hlim = GIF_HLIM;
-#else
-int	ip6_gif_hlim = 0;
-#endif
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_rr_prune = 5;	/* router renumbering prefix
-				 * walk list every 5 sec.    */
+				 * walk list every 5 sec. */
 int	ip6_v6only = 1;
 
 u_int32_t ip6_id = 0UL;

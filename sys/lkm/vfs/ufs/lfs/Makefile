@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2000/11/30 16:00:56 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2002/01/08 00:33:29 nathanw Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/ufs/lfs
-
-MKMAN=	no
 
 KMOD=	lfs
 

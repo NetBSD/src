@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.9 2000/02/08 16:17:58 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.9.6.1 2002/01/08 00:34:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -27,6 +27,8 @@
  *
  *	Id: ntfs_inode.h,v 1.4 1999/05/12 09:43:00 semenu Exp
  */
+
+#include <miscfs/genfs/genfs_node.h>
 
 /* These flags are kept in i_flag. */
 #if defined(__FreeBSD__)
@@ -87,6 +89,7 @@ struct fnode {
 #ifdef __FreeBSD__
 	struct lock	f_lock;	/* fnode lock >Keep this first< */
 #endif
+	struct genfs_node f_gnode;
 	
 	LIST_ENTRY(fnode) f_fnlist;
 	struct vnode   *f_vp;		/* Associatied vnode */

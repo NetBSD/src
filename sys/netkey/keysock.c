@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.11.2.2 2001/11/14 19:18:36 nathanw Exp $	*/
+/*	$NetBSD: keysock.c,v 1.11.2.3 2002/01/08 00:34:31 nathanw Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11.2.2 2001/11/14 19:18:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11.2.3 2002/01/08 00:34:31 nathanw Exp $");
 
 #include "opt_inet.h"
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

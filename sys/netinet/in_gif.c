@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.19.2.3 2001/11/14 19:17:44 nathanw Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.19.2.4 2002/01/08 00:34:02 nathanw Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.19.2.3 2001/11/14 19:17:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.19.2.4 2002/01/08 00:34:02 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.19.2.3 2001/11/14 19:17:44 nathanw Exp 
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/protosw.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -81,7 +82,13 @@ int ip_gif_ttl = GIF_TTL;
 int ip_gif_ttl = 0;
 #endif
 
-extern struct protosw in_gif_protosw;
+extern struct domain inetdomain;
+struct protosw in_gif_protosw =
+{ SOCK_RAW,	&inetdomain,	0/* IPPROTO_IPV[46] */,	PR_ATOMIC|PR_ADDR,
+  in_gif_input, rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
+  0,            0,              0,              0,
+};
 
 int
 in_gif_output(ifp, family, m)
@@ -120,7 +127,7 @@ in_gif_output(ifp, family, m)
 		tos = ip->ip_tos;
 		break;
 	    }
-#endif /*INET*/
+#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 	    {
@@ -135,7 +142,7 @@ in_gif_output(ifp, family, m)
 		tos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		break;
 	    }
-#endif /*INET6*/
+#endif /* INET6 */
 #ifdef ISO
 	case AF_ISO:
 		proto = IPPROTO_EON;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/12/13 11:18:38 enami Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2002/01/08 00:32:58 nathanw Exp $
 
 .include "../Makefile.inc"
 
@@ -8,7 +8,6 @@ CPPFLAGS+= -DCOMPAT_SVR4 -DSYSVSEM -DSYSVMSG -DSYSVSHM -DSVR4_COMPAT_SOLARIS2
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE \
 		-I. -I${S}
 
-MKMAN=	no
 KMOD=	compat_ibcs2
 
 # common source files

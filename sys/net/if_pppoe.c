@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.3.2.5 2001/11/14 19:17:24 nathanw Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.3.2.6 2002/01/08 00:33:52 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.5 2001/11/14 19:17:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.6 2002/01/08 00:33:52 nathanw Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -91,14 +91,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.5 2001/11/14 19:17:24 nathanw Exp
 		PPPOE_ADD_16(PTR, SESS);	\
 		PPPOE_ADD_16(PTR, LEN)
 
+#define	PPPOE_DISC_TIMEOUT	(hz*5)	/* base for quick timeout calculation */
+#define	PPPOE_SLOW_RETRY	(hz*240)	/* persistent retry interval */
+#define PPPOE_DISC_MAXPADI	4	/* retry PADI four times (quickly) */
+#define	PPPOE_DISC_MAXPADR	2	/* retry PADR twice */
+
 struct pppoe_softc {
 	struct sppp sc_sppp;		/* contains a struct ifnet as first element */
 	LIST_ENTRY(pppoe_softc) sc_list;
 	struct ifnet *sc_eth_if;	/* ethernet interface we are using */
-
-#define	PPPOE_DISC_TIMEOUT	hz/5
-#define PPPOE_DISC_MAXPADI	4	/* retry PADI four times */
-#define	PPPOE_DISC_MAXPADR	2	/* retry PADR twice */
 	
 #define PPPOE_STATE_INITIAL	0
 #define PPPOE_STATE_PADI_SENT	1
@@ -200,12 +201,12 @@ pppoe_clone_create(ifc, unit)
 	sprintf(sc->sc_sppp.pp_if.if_xname, "pppoe%d", unit);
 	sc->sc_sppp.pp_if.if_softc = sc;
 	sc->sc_sppp.pp_if.if_mtu = ETHERMTU - PPPOE_HEADERLEN - 2; /* two byte PPP protocol discriminator, then IP data */
-	sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX | IFF_POINTOPOINT
-	    | IFF_MULTICAST | IFF_LINK1;	/* auto "dial" */
+	sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX|IFF_POINTOPOINT|IFF_MULTICAST;
 	sc->sc_sppp.pp_if.if_type = IFT_PPP;
 	sc->sc_sppp.pp_if.if_hdrlen = sizeof(struct ether_header)+PPPOE_HEADERLEN;
 	sc->sc_sppp.pp_if.if_dlt = DLT_PPP_ETHER;
-	sc->sc_sppp.pp_flags |= PP_NOFRAMING;	/* no serial encapsulation */
+	sc->sc_sppp.pp_flags |= PP_KEEPALIVE|	/* use LCP keepalive */
+				PP_NOFRAMING;	/* no serial encapsulation */
 	sc->sc_sppp.pp_if.if_ioctl = pppoe_ioctl;
 	IFQ_SET_MAXLEN(&sc->sc_sppp.pp_if.if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&sc->sc_sppp.pp_if.if_snd);
@@ -276,6 +277,9 @@ static struct pppoe_softc *
 pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
 {
 	struct pppoe_softc *sc, *t;
+
+	if (LIST_EMPTY(&pppoe_softc_list)) return NULL;
+
 	if (len != sizeof sc) return NULL;
 	memcpy(&t, token, len);
 
@@ -284,24 +288,20 @@ pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
 
 	if (sc != t) {
 #ifdef PPPOE_DEBUG
-		printf("pppoe: invalid host unique value\n");
+		printf("pppoe: alien host unique tag, no session found\n");
 #endif
 		return NULL;
 	}
 
 	/* should be safe to access *sc now */
 	if (sc->sc_state < PPPOE_STATE_PADI_SENT || sc->sc_state >= PPPOE_STATE_SESSION) {
-#ifdef PPPOE_DEBUG
-		printf("%s: state=%d, not accepting host unique\n",
+		printf("%s: host unique tag found, but it belongs to a connection in state %d\n",
 			sc->sc_sppp.pp_if.if_xname, sc->sc_state);
-#endif
 		return NULL;
 	}
 	if (sc->sc_eth_if != rcvif) {
-#ifdef PPPOE_DEBUG
 		printf("%s: wrong interface, not accepting host unique\n",
 			sc->sc_sppp.pp_if.if_xname);
-#endif
 		return NULL;
 	}
 	return sc;
@@ -577,7 +577,8 @@ pppoe_data_input(struct mbuf *m)
         /* fix incoming interface pointer (not the raw ethernet interface anymore) */
         m->m_pkthdr.rcvif = &sc->sc_sppp.pp_if;
 
-        /* pass packet up */
+        /* pass packet up and account for it */
+        sc->sc_sppp.pp_if.if_ipackets++;
         sppp_input(&sc->sc_sppp.pp_if, m);
         return;
 
@@ -609,6 +610,7 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 	    ether_sprintf((const unsigned char *)&sc->sc_dest), m->m_pkthdr.len);
 #endif
 
+	sc->sc_sppp.pp_if.if_opackets++;
 	return sc->sc_eth_if->if_output(sc->sc_eth_if, m, &dst, NULL);
 }
 
@@ -658,6 +660,24 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		return 0;
 	}
 	break;
+	case SIOCSIFFLAGS:
+	{
+		struct ifreq *ifr = (struct ifreq*) data;
+		/*
+		 * Prevent running re-establishment timers overriding
+		 * administrators choice.
+		 */
+		if ((ifr->ifr_flags & IFF_UP) == 0
+		     && sc->sc_state >= PPPOE_STATE_PADI_SENT
+		     && sc->sc_state < PPPOE_STATE_SESSION) {
+			callout_stop(&sc->sc_timeout);
+			sc->sc_state = PPPOE_STATE_INITIAL;
+			sc->sc_padi_retried = 0;
+			sc->sc_padr_retried = 0;
+			memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
+		}
+	}
+	/* FALLTHROUGH */
 	default:
 		return sppp_ioctl(ifp, cmd, data);
 	}
@@ -753,7 +773,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 static void
 pppoe_timeout(void *arg)
 {
-	int x;
+	int x, retry_wait;
 	struct pppoe_softc *sc = (struct pppoe_softc*)arg;
 
 #ifdef PPPOE_DEBUG
@@ -762,15 +782,34 @@ pppoe_timeout(void *arg)
 
 	switch (sc->sc_state) {
 	case PPPOE_STATE_PADI_SENT:
+		/*
+		 * We have two basic ways of retrying:
+		 *  - Quick retry mode: try a few times in short sequence
+		 *  - Slow retry mode: we already had a connection successfully
+		 *    established and will try infinitely (without user
+		 *    intervention)
+		 * We only enter slow retry mode if IFF_LINK1 (aka autodial)
+		 * is not set and we already had a successfull connection.
+		 */
+
+		/* initialize for quick retry mode */
+		retry_wait = PPPOE_DISC_TIMEOUT*(1+sc->sc_padi_retried);
+
 		x = splnet();
 		sc->sc_padi_retried++;
 		if (sc->sc_padi_retried >= PPPOE_DISC_MAXPADI) {
-			pppoe_abort_connect(sc);
-			splx(x);
-			return;
+			if ((sc->sc_sppp.pp_if.if_flags & IFF_LINK1) == 0
+			   && sc->sc_sppp.pp_if.if_ibytes) {
+			    /* slow retry mode */
+			    retry_wait = PPPOE_SLOW_RETRY;
+			} else {
+			    pppoe_abort_connect(sc);
+			    splx(x);
+			    return;
+			}
 		}
 		if (pppoe_send_padi(sc) == 0)
-			callout_reset(&sc->sc_timeout, PPPOE_DISC_TIMEOUT*(1+sc->sc_padi_retried), pppoe_timeout, sc);
+			callout_reset(&sc->sc_timeout, retry_wait, pppoe_timeout, sc);
 		else
 			pppoe_abort_connect(sc);
 		splx(x);
@@ -797,9 +836,7 @@ pppoe_timeout(void *arg)
 		splx(x);
 		break;
 	case PPPOE_STATE_CLOSING:
-		x = splnet();
 		pppoe_disconnect(sc);
-		splx(x);
 		break;
 	default:
 		return;	/* all done, work in peace */
@@ -964,7 +1001,7 @@ pppoe_tlf(struct sppp *sp)
 	 * function and defer disconnecting to the timeout handler.
 	 */
 	sc->sc_state = PPPOE_STATE_CLOSING;
-	callout_reset(&sc->sc_timeout, hz/100, pppoe_timeout, sc);
+	callout_reset(&sc->sc_timeout, hz/50, pppoe_timeout, sc);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.50.2.4 2001/11/14 19:18:58 nathanw Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.50.2.5 2002/01/08 00:34:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.50.2.4 2001/11/14 19:18:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.50.2.5 2002/01/08 00:34:52 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -166,7 +166,7 @@ lfs_update(void *v)
 	 * will cause a panic.  So, we must wait until any pending write
 	 * for our inode completes, if we are called with UPDATE_WAIT set.
 	 */
-	while((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
+	while ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
 	    WRITEINPROG(vp)) {
 #ifdef DEBUG_LFS
 		printf("lfs_update: sleeping on inode %d (in-progress)\n",
@@ -183,17 +183,17 @@ lfs_update(void *v)
 	}
 	
 	/* If sync, push back the vnode and any dirty blocks it may have. */
-	if((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP))==UPDATE_WAIT) {
+	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT) {
 		/* Avoid flushing VDIROP. */
 		++fs->lfs_diropwait;
-		while(vp->v_flag & VDIROP) {
+		while (vp->v_flag & VDIROP) {
 #ifdef DEBUG_LFS
 			printf("lfs_update: sleeping on inode %d (dirops)\n",
 			       ip->i_number);
 			printf("lfs_update: vflags 0x%lx, iflags 0x%x\n",
 				vp->v_flag, ip->i_flag);
 #endif
-			if(fs->lfs_dirops == 0)
+			if (fs->lfs_dirops == 0)
 				lfs_flush_fs(fs, SEGM_SYNC);
 			else
 				tsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync",
@@ -314,7 +314,7 @@ lfs_truncate(void *v)
 	 * hold the inode lock; draining the seglock is sufficient.)
 	 */
 	if (ovp != fs->lfs_unlockvp) {
-		while(fs->lfs_seglock) {
+		while (fs->lfs_seglock) {
 			tsleep(&fs->lfs_seglock, PRIBIO+1, "lfs_truncate", 0);
 		}
 	}

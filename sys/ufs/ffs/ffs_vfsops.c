@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.80.2.5 2001/11/14 19:18:56 nathanw Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80.2.6 2002/01/08 00:34:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.5 2001/11/14 19:18:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.6 2002/01/08 00:34:48 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -213,6 +213,14 @@ ffs_mount(mp, path, data, ndp, p)
 				error = softdep_flushfiles(mp, flags, p);
 			else
 				error = ffs_flushfiles(mp, flags, p);
+			if (fs->fs_pendingblocks != 0 ||
+			    fs->fs_pendinginodes != 0) {
+				printf("%s: update error: blocks %d files %d\n",
+				    fs->fs_fsmnt, fs->fs_pendingblocks,
+				    fs->fs_pendinginodes);
+				fs->fs_pendingblocks = 0;
+				fs->fs_pendinginodes = 0;
+			}
 			if (error == 0 &&
 			    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 			    fs->fs_clean & FS_WASCLEAN) {
@@ -376,9 +384,13 @@ ffs_mount(mp, path, data, ndp, p)
 		fs->fs_fmod = 0;
 		if (fs->fs_clean & FS_WASCLEAN)
 			fs->fs_time = time.tv_sec;
-		else
+		else {
 			printf("%s: file system not clean (fs_clean=%x); please fsck(8)\n",
 			    mp->mnt_stat.f_mntfromname, fs->fs_clean);
+			printf("%s: lost blocks %d files %d\n",
+			    mp->mnt_stat.f_mntfromname, fs->fs_pendingblocks,
+			    fs->fs_pendinginodes);
+		}
 		(void) ffs_cgupdate(ump, MNT_WAIT);
 	}
 	return (0);
@@ -472,6 +484,10 @@ ffs_reload(mountp, cred, p)
 		fs->fs_avgfilesize = AVFILESIZ;
 	if (fs->fs_avgfpdir <= 0)
 		fs->fs_avgfpdir = AFPDIR;
+	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
+		fs->fs_pendingblocks = 0;
+		fs->fs_pendinginodes = 0;
+	}
 
 	ffs_statfs(mountp, &mountp->mnt_stat, p);
 	/*
@@ -659,6 +675,10 @@ ffs_mountfs(devvp, mp, p)
 		error = EINVAL;		/* XXX needs translation */
 		goto out2;
 	}
+	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
+		fs->fs_pendingblocks = 0;
+		fs->fs_pendinginodes = 0;
+	}
 	/* XXX updating 4.2 FFS superblocks trashes rotational layout tables */
 	if (fs->fs_postblformat == FS_42POSTBLFMT && !ronly) {
 		error = EROFS;		/* XXX what should be returned? */
@@ -810,8 +830,9 @@ ffs_unmount(mp, mntflags, p)
 {
 	struct ufsmount *ump;
 	struct fs *fs;
-	int error, flags;
+	int error, flags, penderr;
 
+	penderr = 0;
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
@@ -824,12 +845,25 @@ ffs_unmount(mp, mntflags, p)
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
+	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
+		printf("%s: unmount pending error: blocks %d files %d\n",
+		    fs->fs_fsmnt, fs->fs_pendingblocks, fs->fs_pendinginodes);
+		fs->fs_pendingblocks = 0;
+		fs->fs_pendinginodes = 0;
+		penderr = 1;
+	}
 	if (fs->fs_ronly == 0 &&
 	    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 	    fs->fs_clean & FS_WASCLEAN) {
-		if (mp->mnt_flag & MNT_SOFTDEP)
-			fs->fs_flags &= ~FS_DOSOFTDEP;
-		fs->fs_clean = FS_ISCLEAN;
+		/*
+		 * XXXX don't mark fs clean in the case of softdep
+		 * pending block errors, until they are fixed.
+		 */
+		if (penderr == 0) {
+			if (mp->mnt_flag & MNT_SOFTDEP)
+				fs->fs_flags &= ~FS_DOSOFTDEP;
+			fs->fs_clean = FS_ISCLEAN;
+		}
 		(void) ffs_sbupdate(ump, MNT_WAIT);
 	}
 	if (ump->um_devvp->v_type != VBAD)
@@ -918,12 +952,13 @@ ffs_statfs(mp, sbp, p)
 	sbp->f_iosize = fs->fs_bsize;
 	sbp->f_blocks = fs->fs_dsize;
 	sbp->f_bfree = fs->fs_cstotal.cs_nbfree * fs->fs_frag +
-		fs->fs_cstotal.cs_nffree;
+		fs->fs_cstotal.cs_nffree + dbtofsb(fs, fs->fs_pendingblocks);
 	sbp->f_bavail = (long) (((u_int64_t) fs->fs_dsize * (u_int64_t)
 	    (100 - fs->fs_minfree) / (u_int64_t) 100) -
-	    (u_int64_t) (fs->fs_dsize - sbp->f_bfree));
+	    (u_int64_t) (fs->fs_dsize - sbp->f_bfree) +
+	    (u_int64_t) dbtofsb(fs, fs->fs_pendingblocks));
 	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
-	sbp->f_ffree = fs->fs_cstotal.cs_nifree;
+	sbp->f_ffree = fs->fs_cstotal.cs_nifree + fs->fs_pendinginodes;
 	if (sbp != &mp->mnt_stat) {
 		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
 		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.23.2.6 2001/11/14 19:19:06 nathanw Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.23.2.7 2002/01/08 00:35:02 nathanw Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.23.2.6 2001/11/14 19:19:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.23.2.7 2002/01/08 00:35:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -746,19 +746,52 @@ uvm_unloanpage(ploans, npages)
 	int npages;
 {
 	struct vm_page *pg;
+	struct simplelock *slock;
 
 	uvm_lock_pageq();
 	while (npages-- > 0) {
 		pg = *ploans++;
 
 		/*
-		 * drop our loan.  if page is unowned and we are removing
-		 * the last loan, we can free the page.
-		 * the 
+		 * do a little dance to acquire the object or anon lock
+		 * as appropriate.  we are locking in the wrong order,
+		 * so we have to do a try-lock here.
+		 */
+
+		slock = NULL;
+		while (pg->uobject != NULL || pg->uanon != NULL) {
+			if (pg->uobject != NULL) {
+				slock = &pg->uobject->vmobjlock;
+			} else {
+				slock = &pg->uanon->an_lock;
+			}
+			if (simple_lock_try(slock)) {
+				break;
+			}
+			uvm_unlock_pageq();
+			uvm_lock_pageq();
+			slock = NULL;
+		}
+
+		/*
+		 * drop our loan.  if page is owned by an anon but
+		 * PQ_ANON is not set, the page was loaned to the anon
+		 * from an object which dropped ownership, so resolve
+		 * this by turning the anon's loan into real ownership
+		 * (ie. decrement loan_count again and set PQ_ANON).
+		 * after all this, if there are no loans left, put the
+		 * page back a paging queue (if the page is owned by
+		 * an anon) or free it (if the page is now unowned).
 		 */
 
 		KASSERT(pg->loan_count > 0);
 		pg->loan_count--;
+		if (pg->uobject == NULL && pg->uanon != NULL &&
+		    (pg->pqflags & PQ_ANON) == 0) {
+			KASSERT(pg->loan_count > 0);
+			pg->loan_count--;
+			pg->pqflags |= PQ_ANON;
+		}
 		if (pg->loan_count == 0) {
 			if (pg->uobject == NULL && pg->uanon == NULL) {
 				KASSERT((pg->flags & PG_BUSY) == 0);
@@ -766,9 +799,9 @@ uvm_unloanpage(ploans, npages)
 			} else {
 				uvm_pageactivate(pg);
 			}
-		} else if (pg->loan_count == 1 && pg->uanon != NULL &&
-			   pg->uobject == NULL) {
-			uvm_pageactivate(pg);
+		}
+		if (slock != NULL) {
+			simple_unlock(slock);
 		}
 	}
 	uvm_unlock_pageq();

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.19.2.2 2001/09/21 22:36:57 nathanw Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.19.2.3 2002/01/08 00:34:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,7 +84,6 @@ int nfs_doio __P((struct buf *, struct proc *));
 void nfs_nhinit __P((void));
 void nfs_nhreinit __P((void));
 void nfs_nhdone __P((void));
-u_long nfs_hash __P((nfsfh_t *, int));
 int nfs_nget __P((struct mount *, nfsfh_t *, int, struct nfsnode **));
 
 /* nfs_vnops.c */

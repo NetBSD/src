@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.19.2.2 2001/11/14 19:17:11 nathanw Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.19.2.3 2002/01/08 00:33:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.19.2.2 2001/11/14 19:17:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.19.2.3 2002/01/08 00:33:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.19.2.2 2001/11/14 19:17:11 nathanw 
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
-#include <sys/ptrace.h>
 #include <miscfs/procfs/procfs.h>
 
 #define PROCFS_CTL_ATTACH	1

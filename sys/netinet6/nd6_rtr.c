@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.21.2.4 2001/11/14 19:18:14 nathanw Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.21.2.5 2002/01/08 00:34:25 nathanw Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.21.2.4 2001/11/14 19:18:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.21.2.5 2002/01/08 00:34:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ static int rt6_deleteroute __P((struct radix_node *, void *));
 
 extern int nd6_recalc_reachtm_interval;
 
-struct ifnet *nd6_defifp;
+static struct ifnet *nd6_defifp;
 int nd6_defifindex;
 
 /*
@@ -481,9 +481,9 @@ defrouter_addifreq(ifp)
 	flags = ifa->ifa_flags;
 	if ((ifp->if_flags & IFF_POINTOPOINT) != 0)
 		flags &= ~RTF_CLONING;
-	if ((error = rtrequest(RTM_ADD, (struct sockaddr *)&def,
-			       ifa->ifa_addr, (struct sockaddr *)&mask,
-			       flags, NULL)) != 0) {
+	error = rtrequest(RTM_ADD, (struct sockaddr *)&def, ifa->ifa_addr,
+			  (struct sockaddr *)&mask, flags, NULL);
+	if (error != 0) {
 		nd6log((LOG_ERR,
 		    "defrouter_addifreq: failed to install a route to "
 		    "interface %s (errno = %d)\n",

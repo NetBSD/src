@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.20.2.1 2001/11/14 19:16:45 nathanw Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.20.2.2 2002/01/08 00:32:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.20.2.1 2001/11/14 19:16:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.20.2.2 2002/01/08 00:32:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ clalloc(clp, size, quot)
 			free(clp->c_cs, M_TTYS);
 			return (-1);
 		}
-		memset(clp->c_cs, 0, QMEM(size));
+		memset(clp->c_cq, 0, QMEM(size));
 	} else
 		clp->c_cq = (u_char *)0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.26.2.3 2001/11/14 19:18:00 nathanw Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.26.2.4 2002/01/08 00:34:13 nathanw Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.26.2.3 2001/11/14 19:18:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.26.2.4 2002/01/08 00:34:13 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -426,14 +426,6 @@ ah4_input(m, va_alist)
 			goto fail;
 		}
 
-#if 0 /* XXX should we call ipfw rather than ipsec_in_reject? */
-		/* drop it if it does not match the default policy */
-		if (ipsec4_in_reject(m, NULL)) {
-			ipsecstat.in_polvio++;
-			goto fail;
-		}
-#endif
-
 #if 1
 		/*
 		 * Should the inner packet be considered authentic?
@@ -662,7 +654,7 @@ ah6_input(mp, offp, proto)
 	ip6 = mtod(m, struct ip6_hdr *);
 	nxt = ah->ah_nxt;
 
-	/* find the sassoc.  */
+	/* find the sassoc. */
 	spi = ah->ah_spi;
 
 	if (ntohs(ip6->ip6_plen) == 0) {
@@ -904,14 +896,6 @@ ah6_input(mp, offp, proto)
 			ipsec6stat.in_inval++;
 			goto fail;
 		}
-
-#if 0 /* XXX should we call ipfw rather than ipsec_in_reject? */
-		/* drop it if it does not match the default policy */
-		if (ipsec6_in_reject(m, NULL)) {
-			ipsec6stat.in_polvio++;
-			goto fail;
-		}
-#endif
 
 #if 1
 		/*

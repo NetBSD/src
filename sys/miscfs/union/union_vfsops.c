@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.26.2.3 2001/11/14 19:17:15 nathanw Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.26.2.4 2002/01/08 00:33:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,12 +44,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.26.2.3 2001/11/14 19:17:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.26.2.4 2002/01/08 00:33:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>

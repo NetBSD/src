@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.93.2.8 2001/11/15 11:06:53 pk Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.93.2.9 2002/01/08 00:35:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.8 2001/11/15 11:06:53 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.9 2002/01/08 00:35:02 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2140,7 +2140,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 
 			if (!UVM_ET_ISSUBMAP(entry)) {  /* not submap */
 				if (UVM_ET_ISNEEDSCOPY(entry) &&
-				    ((entry->protection & VM_PROT_WRITE) ||
+				    ((entry->max_protection & VM_PROT_WRITE) ||
 				     (entry->object.uvm_obj == NULL))) {
 					amap_copy(map, entry, M_WAITOK, TRUE,
 					    start, end);
@@ -2193,7 +2193,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 	while (entry != &map->header && entry->start < end) {
 		if (entry->wired_count == 1) {
 			rv = uvm_fault_wire(map, entry->start, entry->end,
-			    entry->protection);
+			    VM_FAULT_WIREMAX, entry->max_protection);
 			if (rv) {
 
 				/*
@@ -2404,7 +2404,7 @@ uvm_map_pageable_all(map, flags, limit)
 
 			if (!UVM_ET_ISSUBMAP(entry)) {	/* not submap */
 				if (UVM_ET_ISNEEDSCOPY(entry) &&
-				    ((entry->protection & VM_PROT_WRITE) ||
+				    ((entry->max_protection & VM_PROT_WRITE) ||
 				     (entry->object.uvm_obj == NULL))) {
 					amap_copy(map, entry, M_WAITOK, TRUE,
 					    entry->start, entry->end);
@@ -2430,7 +2430,7 @@ uvm_map_pageable_all(map, flags, limit)
 	     entry = entry->next) {
 		if (entry->wired_count == 1) {
 			rv = uvm_fault_wire(map, entry->start, entry->end,
-			     entry->protection);
+			    VM_FAULT_WIREMAX, entry->max_protection);
 			if (rv) {
 
 				/*
@@ -2589,7 +2589,6 @@ uvm_map_clean(map, start, end, flags)
 				continue;
 
 			simple_lock(&anon->an_lock);
-
 			pg = anon->u.an_page;
 			if (pg == NULL) {
 				simple_unlock(&anon->an_lock);
@@ -2599,43 +2598,29 @@ uvm_map_clean(map, start, end, flags)
 			switch (flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE)) {
 
 			/*
-			 * XXX In these first 3 cases, we always just
-			 * XXX deactivate the page.  We may want to
-			 * XXX handle the different cases more
-			 * XXX specifically, in the future.
+			 * In these first 3 cases, we just deactivate the page.
 			 */
 
 			case PGO_CLEANIT|PGO_FREE:
 			case PGO_CLEANIT|PGO_DEACTIVATE:
 			case PGO_DEACTIVATE:
  deactivate_it:
-				/* skip the page if it's loaned or wired */
-				if (pg->loan_count != 0 ||
-				    pg->wire_count != 0) {
-					simple_unlock(&anon->an_lock);
-					continue;
-				}
-
-				uvm_lock_pageq();
-
 				/*
-				 * skip the page if it's not actually owned
-				 * by the anon (may simply be loaned to the
-				 * anon).
+				 * skip the page if it's loaned or wired,
+				 * since it shouldn't be on a paging queue
+				 * at all in these cases.
 				 */
 
-				if ((pg->pqflags & PQ_ANON) == 0) {
-					KASSERT(pg->uobject == NULL);
+				uvm_lock_pageq();
+				if (pg->loan_count != 0 ||
+				    pg->wire_count != 0) {
 					uvm_unlock_pageq();
 					simple_unlock(&anon->an_lock);
 					continue;
 				}
 				KASSERT(pg->uanon == anon);
-
-				/* ...and deactivate the page. */
 				pmap_clear_reference(pg);
 				uvm_pagedeactivate(pg);
-
 				uvm_unlock_pageq();
 				simple_unlock(&anon->an_lock);
 				continue;
@@ -2650,7 +2635,7 @@ uvm_map_clean(map, start, end, flags)
 				if (amap_refs(amap) > 1)
 					goto deactivate_it;
 
-				/* XXX skip the page if it's wired */
+				/* skip the page if it's wired */
 				if (pg->wire_count != 0) {
 					simple_unlock(&anon->an_lock);
 					continue;
@@ -2668,6 +2653,9 @@ uvm_map_clean(map, start, end, flags)
  flush_object:
 		/*
 		 * flush pages if we've got a valid backing object.
+		 * note that we must always clean object pages before
+		 * freeing them since otherwise we could reveal stale
+		 * data from files.
 		 */
 
 		offset = current->offset + (start - current->start);
@@ -2675,7 +2663,7 @@ uvm_map_clean(map, start, end, flags)
 		if (uobj != NULL) {
 			simple_lock(&uobj->vmobjlock);
 			error = (uobj->pgops->pgo_put)(uobj, offset,
-			    offset + size, flags);
+			    offset + size, flags | PGO_CLEANIT);
 		}
 		start += size;
 	}

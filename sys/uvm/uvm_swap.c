@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.46.2.5 2001/11/14 19:19:09 nathanw Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.46.2.6 2002/01/08 00:35:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.5 2001/11/14 19:19:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.6 2002/01/08 00:35:07 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.5 2001/11/14 19:19:09 nathanw Ex
  *  - block size
  *  - max byte count in buffer
  *  - buffer
- *  - credentials to use when doing i/o to file
  *
  * userland controls and configures swap with the swapctl(2) system call.
  * the sys_swapctl performs the following operations:
@@ -143,7 +142,6 @@ struct swapdev {
 	int			swd_maxactive;	/* max active i/o reqs */
 	struct buf_queue	swd_tab;	/* buffer list */
 	int			swd_active;	/* number of active buffers */
-	struct ucred		*swd_cred;	/* cred for file access */
 };
 
 /*
@@ -655,13 +653,6 @@ sys_swapctl(l, v, retval)
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
 		BUFQ_INIT(&sdp->swd_tab);
 
-		/*
-		 * XXX Is NFS elaboration necessary?
-		 */
-		if (vp->v_type == VREG) {
-			sdp->swd_cred = crdup(p->p_ucred);
-		}
-
 		swaplist_insert(sdp, spp, priority);
 		simple_unlock(&uvm.swap_data_lock);
 
@@ -682,9 +673,6 @@ sys_swapctl(l, v, retval)
 			(void) swaplist_find(vp, 1);  /* kill fake entry */
 			swaplist_trim();
 			simple_unlock(&uvm.swap_data_lock);
-			if (vp->v_type == VREG) {
-				crfree(sdp->swd_cred);
-			}
 			free(sdp->swd_path, M_VMSWAP);
 			free(sdp, M_VMSWAP);
 			break;
@@ -987,13 +975,10 @@ swap_off(p, sdp)
 	KASSERT(sdp->swd_npginuse == sdp->swd_npgbad);
 
 	/*
-	 * done with the vnode and saved creds.
+	 * done with the vnode.
 	 * drop our ref on the vnode before calling VOP_CLOSE()
 	 * so that spec_close() can tell if this is the last close.
 	 */
-	if (sdp->swd_vp->v_type == VREG) {
-		crfree(sdp->swd_cred);
-	}
 	vrele(sdp->swd_vp);
 	if (sdp->swd_vp != rootvp) {
 		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.23.2.1 2001/11/14 19:17:53 nathanw Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.23.2.2 2002/01/08 00:34:09 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed.
@@ -10,7 +10,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.23.2.1 2001/11/14 19:17:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.23.2.2 2002/01/08 00:34:09 nathanw Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.1 2000/05/06 12:30:50 darrenr Exp";
 #endif
@@ -20,9 +20,8 @@ static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.1 2000/05/06 12:30:50 da
 # define	_KERNEL
 #endif
 
-#include <sys/errno.h>
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #if !defined(__FreeBSD_version)  

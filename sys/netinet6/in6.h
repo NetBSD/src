@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.24.2.5 2001/11/14 19:18:05 nathanw Exp $	*/
+/*	$NetBSD: in6.h,v 1.24.2.6 2002/01/08 00:34:16 nathanw Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -520,6 +520,7 @@ struct in6_pktinfo {
 #define IPV6CTL_KAME_VERSION	20
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
 #define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
+/* 23: reserved */
 #define IPV6CTL_V6ONLY		24
 /* 25 to 27: reserved */
 #define IPV6CTL_ANONPORTMIN	28	/* minimum ephemeral port */
@@ -593,14 +594,16 @@ in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
 	u_int32_t sum = 0;
 	const u_int16_t *w;
 
-	w = (u_int16_t *) src;
+	/*LINTED*/
+	w = (const u_int16_t *) src;
 	sum += w[0];
 	if (!IN6_IS_SCOPE_LINKLOCAL(src))
 		sum += w[1];
 	sum += w[2]; sum += w[3]; sum += w[4]; sum += w[5];
 	sum += w[6]; sum += w[7]; 
 
-	w = (u_int16_t *) dst;
+	/*LINTED*/
+	w = (const u_int16_t *) dst;
 	sum += w[0];
 	if (!IN6_IS_SCOPE_LINKLOCAL(dst))
 		sum += w[1];

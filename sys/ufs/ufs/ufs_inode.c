@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.22.2.6 2001/11/14 19:19:02 nathanw Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.22.2.7 2002/01/08 00:34:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.22.2.6 2001/11/14 19:19:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.22.2.7 2002/01/08 00:34:57 nathanw Exp $");
 
 #include "opt_quota.h"
 
@@ -86,6 +86,8 @@ ufs_inactive(v)
 	 */
 	if (ip->i_ffs_mode == 0)
 		goto out;
+	if (ip->i_ffs_effnlink == 0 && DOINGSOFTDEP(vp))
+		softdep_releasefile(ip);
 
 	if (ip->i_ffs_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 #ifdef QUOTA
@@ -95,10 +97,18 @@ ufs_inactive(v)
 		if (ip->i_ffs_size != 0) {
 			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
 		}
+		/*
+		 * Setting the mode to zero needs to wait for the inode
+		 * to be written just as does a change to the link count.
+		 * So, rather than creating a new entry point to do the
+		 * same thing, we just use softdep_change_linkcnt().
+		 */
 		ip->i_ffs_rdev = 0;
 		mode = ip->i_ffs_mode;
 		ip->i_ffs_mode = 0;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		if (DOINGSOFTDEP(vp))
+			softdep_change_linkcnt(ip);
 		VOP_VFREE(vp, ip->i_number, mode);
 	}
 
@@ -247,7 +257,13 @@ out:
 			pgs[i]->flags |= PG_RELEASED;
 		}
 	}
-	uvm_page_unbusy(pgs, npages);
+	if (error) {
+		uvm_lock_pageq();
+		uvm_page_unbusy(pgs, npages);
+		uvm_unlock_pageq();
+	} else {
+		uvm_page_unbusy(pgs, npages);
+	}
 	simple_unlock(&uobj->vmobjlock);
 	return error;
 }

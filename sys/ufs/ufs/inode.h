@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.23.2.3 2001/11/14 19:19:01 nathanw Exp $	*/
+/*	$NetBSD: inode.h,v 1.23.2.4 2002/01/08 00:34:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -173,6 +173,7 @@ struct inode {
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
 #define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
 #define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
+#define IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
 
 #if defined(_KERNEL)
 #if defined(_KERNEL_OPT)

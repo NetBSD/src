@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.59.2.5 2001/10/22 20:42:11 nathanw Exp $	*/
+/*	$NetBSD: malloc.h,v 1.59.2.6 2002/01/08 00:34:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -48,9 +48,11 @@
 /*
  * flags to malloc
  */
-#define	M_WAITOK	0x0000
-#define	M_NOWAIT	0x0001
-
+#define	M_WAITOK	0x0000	/* can wait for resources */
+#define	M_NOWAIT	0x0001	/* do not wait for resources */
+#define	M_ZERO		0x0002	/* zero the allocation */
+#define	M_CANFAIL	0x0004	/* can fail if requested memory can't ever
+				 * be allocated */
 /*
  * Types of memory to be allocated
  */
@@ -173,10 +175,11 @@
 #define	M_1394CTL	116	/* IEEE 1394 control structures */
 #define	M_1394DATA	117	/* IEEE 1394 data buffers */
 #define	M_PIPE		118	/* Pipe structures */
-#define M_AGP		119	/* AGP memory */
+#define	M_AGP		119	/* AGP memory */
 #define	M_PROP		120	/* Kernel properties structures */
-#define M_SA		121	/* Scheduler activation structures */
-#define	M_LAST		122	/* Must be last type + 1 */
+#define M_NEWDIRBLK	121	/* Unclaimed new dir block (softdeps) */
+#define M_SA		122
+#define	M_LAST		123	/* Must be last type + 1 */
 
 
 #define	INITKMEMNAMES { \
@@ -301,8 +304,9 @@
 	"pipe",		/* 118 M_PIPE */ \
 	"AGP",		/* 119 M_AGP */ \
 	"prop",		/* 120 M_PROP */ \
-	"sa",		/* 121 M_SA */ \
-	NULL,		/* 122 */ \
+	"newdirblk",	/* 121 M_NEWDIRBLK */ \
+	"sa",		/* 122 M_SA */ \
+	NULL,		/* 123 */ \
 }
 
 struct kmemstats {
@@ -435,16 +439,16 @@ extern char			*kmembase;
 extern struct kmembuckets	bucket[];
 
 #ifdef MALLOCLOG
-extern void	*_malloc(unsigned long size, int type, int flags,
-		    const char *file, long line);
-extern void	_free(void *addr, int type, const char *file, long line);
+void	*_malloc(unsigned long size, int type, int flags,
+	    const char *file, long line);
+void	_free(void *addr, int type, const char *file, long line);
 #define	malloc(size, type, flags) \
-		    _malloc((size), (type), (flags), __FILE__, __LINE__)
+	    _malloc((size), (type), (flags), __FILE__, __LINE__)
 #define	free(addr, type) \
-		    _free((addr), (type), __FILE__, __LINE__)
+	    _free((addr), (type), __FILE__, __LINE__)
 #else
-extern void	*malloc(unsigned long size, int type, int flags);
-extern void	free(void *addr, int type);
+void	*malloc(unsigned long size, int type, int flags);
+void	free(void *addr, int type);
 #endif /* MALLOCLOG */
 
 #ifdef MALLOC_DEBUG
@@ -456,7 +460,9 @@ void	debug_malloc_print(void);
 void	debug_malloc_printit(void (*)(const char *, ...), vaddr_t);
 #endif /* MALLOC_DEBUG */
 
-extern void	*realloc(void *curaddr, unsigned long newsize, int type,
-		    int flags);
+void	*realloc(void *curaddr, unsigned long newsize, int type,
+	    int flags);
+unsigned long
+	malloc_roundup(unsigned long);
 #endif /* _KERNEL */
 #endif /* !_SYS_MALLOC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.10 2000/05/19 20:42:21 thorpej Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.10.6.1 2002/01/08 00:34:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -86,3 +86,4 @@ struct mfsnode {
 #define	mfs_update	genfs_badop
 #define	mfs_bwrite	vn_bwrite
 #define	mfs_revoke	genfs_revoke
+#define	mfs_putpages	genfs_null_putpages

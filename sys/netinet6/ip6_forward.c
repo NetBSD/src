@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.18.2.5 2001/11/14 19:18:09 nathanw Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.18.2.6 2002/01/08 00:34:19 nathanw Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.74 2001/06/12 23:54:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.18.2.5 2001/11/14 19:18:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.18.2.6 2002/01/08 00:34:19 nathanw Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -272,7 +272,7 @@ ip6_forward(m, srcrt)
 			break;
 		default:
 			printf("ip6_output (ipsec): error code %d\n", error);
-			/*fall through*/
+			/* fall through */
 		case ENOENT:
 			/* don't show these error codes to the user */
 			break;

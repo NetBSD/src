@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.17.2.1 2001/11/14 19:17:18 nathanw Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.17.2.2 2002/01/08 00:33:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.17.2.1 2001/11/14 19:17:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.17.2.2 2002/01/08 00:33:50 nathanw Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -51,7 +51,6 @@ static const char rcsid[] =
 #endif
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/time.h>
 
 #if !defined(UNALIGNED_ACCESS)

@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_core.c,v 1.14.4.3 2001/11/14 19:18:02 nathanw Exp $	*/
-/*	$KAME: esp_core.c,v 1.52 2001/09/10 04:04:00 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.14.4.4 2002/01/08 00:34:13 nathanw Exp $	*/
+/*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.14.4.3 2001/11/14 19:18:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.14.4.4 2002/01/08 00:34:13 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -511,7 +511,8 @@ esp_cast128_schedule(algo, sav)
 	struct secasvar *sav;
 {
 
-	set_cast128_subkey((u_int32_t *)sav->sched, _KEYBUF(sav->key_enc));
+	set_cast128_subkey((u_int32_t *)sav->sched, _KEYBUF(sav->key_enc),
+		_KEYLEN(sav->key_enc));
 	return 0;
 }
 
@@ -628,8 +629,8 @@ esp_cbc_decrypt(m, off, sav, algo, ivlen)
 {
 	struct mbuf *s;
 	struct mbuf *d, *d0, *dp;
-	int soff, doff;	/* offset from the head of chain, to head of this mbuf  */
-	int sn, dn;	/* offset from the head of the mbuf, to meat  */
+	int soff, doff;	/* offset from the head of chain, to head of this mbuf */
+	int sn, dn;	/* offset from the head of the mbuf, to meat */
 	size_t ivoff, bodyoff;
 	u_int8_t iv[MAXIVLEN], *ivp;
 	u_int8_t sbuf[MAXIVLEN], *sp;
@@ -832,8 +833,8 @@ esp_cbc_encrypt(m, off, plen, sav, algo, ivlen)
 {
 	struct mbuf *s;
 	struct mbuf *d, *d0, *dp;
-	int soff, doff;	/* offset from the head of chain, to head of this mbuf  */
-	int sn, dn;	/* offset from the head of the mbuf, to meat  */
+	int soff, doff;	/* offset from the head of chain, to head of this mbuf */
+	int sn, dn;	/* offset from the head of the mbuf, to meat */
 	size_t ivoff, bodyoff;
 	u_int8_t iv[MAXIVLEN], *ivp;
 	u_int8_t sbuf[MAXIVLEN], *sp;

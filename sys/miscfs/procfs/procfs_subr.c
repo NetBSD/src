@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.36.2.4 2001/11/14 19:17:12 nathanw Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.36.2.5 2002/01/08 00:33:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.36.2.4 2001/11/14 19:17:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.36.2.5 2002/01/08 00:33:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,12 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 		vp->v_type = VREG;
 		break;
 
+#ifdef __HAVE_PROCFS_MACHDEP
+	PROCFS_MACHDEP_NODETYPE_CASES
+		procfs_machdep_allocvp(vp);
+		break;
+#endif
+
 	default:
 		panic("procfs_allocvp");
 	}
@@ -236,6 +242,9 @@ procfs_rw(v)
 	case Pregs:
 	case Pfpregs:
 	case Pmem:
+#if defined(__HAVE_PROCFS_MACHDEP) && defined(PROCFS_MACHDEP_PROTECT_CASES)
+	PROCFS_MACHDEP_PROTECT_CASES
+#endif
 		/*
 		 * Do not allow init to be modified while in secure mode; it
 		 * could be duped into changing the security level.
@@ -280,8 +289,14 @@ procfs_rw(v)
 
 	case Pmeminfo:
 		return (procfs_domeminfo(curp, p, pfs, uio));
+
 	case Pcpuinfo:
 		return (procfs_docpuinfo(curp, p, pfs, uio));
+
+#ifdef __HAVE_PROCFS_MACHDEP
+	PROCFS_MACHDEP_NODETYPE_CASES
+		return (procfs_machdep_rw(curp, p, pfs, uio));
+#endif
 
 	default:
 		return (EOPNOTSUPP);

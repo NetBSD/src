@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.78.2.5 2001/11/14 19:17:12 nathanw Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.78.2.6 2002/01/08 00:33:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.78.2.5 2001/11/14 19:17:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.78.2.6 2002/01/08 00:33:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.78.2.5 2001/11/14 19:17:12 nathan
 #include <sys/mount.h>
 #include <sys/dirent.h>
 #include <sys/resourcevar.h>
-#include <sys/ptrace.h>
 #include <sys/stat.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
@@ -104,6 +103,9 @@ const struct proc_target {
 	{ DT_REG, N("maps"),	Pmaps,		procfs_validmap },
 	{ DT_REG, N("cmdline"), Pcmdline,	NULL },
 	{ DT_REG, N("exe"),	Pfile,		procfs_validfile_linux },
+#ifdef __HAVE_PROCFS_MACHDEP
+	PROCFS_MACHDEP_NODETYPE_DEFNS
+#endif
 #undef N
 };
 static int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
@@ -163,6 +165,7 @@ int	procfs_pathconf	__P((void *));
 #define	procfs_truncate	genfs_eopnotsupp
 #define	procfs_update	genfs_nullop
 #define	procfs_bwrite	genfs_eopnotsupp
+#define procfs_putpages	genfs_null_putpages
 
 static pid_t atopid __P((const char *, u_int));
 
@@ -212,6 +215,7 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_vfree_desc, procfs_vfree },		/* vfree */
 	{ &vop_truncate_desc, procfs_truncate },	/* truncate */
 	{ &vop_update_desc, procfs_update },		/* update */
+	{ &vop_putpages_desc, procfs_putpages },	/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc procfs_vnodeop_opv_desc =
@@ -510,6 +514,9 @@ procfs_getattr(v)
 	case Pmem:
 	case Pregs:
 	case Pfpregs:
+#if defined(__HAVE_PROCFS_MACHDEP) && defined(PROCFS_MACHDEP_PROTECT_CASES)
+	PROCFS_MACHDEP_PROTECT_CASES
+#endif
 		/*
 		 * If the process has exercised some setuid or setgid
 		 * privilege, then rip away read/write permission so
@@ -625,6 +632,12 @@ procfs_getattr(v)
 		vap->va_blocksize = 4 * PAGE_SIZE;
 		vap->va_bytes = vap->va_size = 0;
 		break;
+
+#ifdef __HAVE_PROCFS_MACHDEP
+	PROCFS_MACHDEP_NODETYPE_CASES
+		error = procfs_machdep_getattr(ap->a_vp, vap, procp);
+		break;
+#endif
 
 	default:
 		panic("procfs_getattr");

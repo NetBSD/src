@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2000/12/05 17:01:19 sommerfeld Exp $
+#	$NetBSD: Makefile.inc,v 1.9.2.1 2002/01/08 00:32:54 nathanw Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -62,14 +62,14 @@ ${ZLIB_PROF}:		.NOTMAIN .MAKE __always_make_zlib
 .endif
 
 clean:			.NOTMAIN cleanzlib
-cleanzlib:		.NOTMAIN .MAKE __always_make_zlib
+cleanzlib:		.NOTMAIN
 	@echo cleaning the z library objects
-	@${ZMAKE} clean
+	@if [ -d "$ZDST" ]; then ${ZMAKE} clean; fi
 
 cleandir distclean:	.NOTMAIN cleandirzlib
-cleandirzlib:		.NOTMAIN .MAKE __always_make_zlib
+cleandirzlib:		.NOTMAIN
 	@echo cleandiring the z library objects
-	@${ZMAKE} cleandir
+	@if [ -d "$ZDST" ]; then ${ZMAKE} cleandir; fi
 
 depend:			.NOTMAIN dependzlib
 dependzlib:		.NOTMAIN .MAKE __always_make_zlib
