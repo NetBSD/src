@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.23 1997/07/04 19:22:48 drochner Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.24 1998/02/05 08:00:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -53,6 +53,9 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <vm/vm.h>		/* for vnode_pager_setsize */
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 #include <miscfs/union/union.h>
 
 #ifdef DIAGNOSTIC
@@ -238,7 +241,11 @@ union_newsize(vp, uppersz, lowersz)
 		printf("union: %s size now %qd\n",
 		    uppersz != VNOVAL ? "upper" : "lower", sz);
 #endif
+#if defined(UVM)
+		uvm_vnp_setsize(vp, sz);
+#else
 		vnode_pager_setsize(vp, sz);
+#endif
 	}
 }
 

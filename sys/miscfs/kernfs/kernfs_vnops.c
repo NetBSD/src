@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.53 1997/10/10 02:01:02 fvdl Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.54 1998/02/05 08:00:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,11 @@
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/kernfs/kernfs.h>
 
+#if defined(UVM)
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
+
 #define KSTRING	256		/* Largest I/O available via this filesystem */
 #define	UIO_MX 32
 
@@ -81,7 +86,11 @@ struct kern_target kern_targets[] = {
      { DT_REG, N("hz"),        &hz,          KTT_INT,      VREG, READ_MODE  },
      { DT_REG, N("loadavg"),   0,            KTT_AVENRUN,  VREG, READ_MODE  },
      { DT_REG, N("msgbuf"),    0,	     KTT_MSGBUF,   VREG, READ_MODE  },
+#if defined(UVM)
+     { DT_REG, N("pagesize"),  &uvmexp.pagesize, KTT_INT,  VREG, READ_MODE  },
+#else
      { DT_REG, N("pagesize"),  &cnt.v_page_size, KTT_INT,  VREG, READ_MODE  },
+#endif
      { DT_REG, N("physmem"),   &physmem,     KTT_INT,      VREG, READ_MODE  },
 #if 0
      { DT_DIR, N("root"),      0,            KTT_NULL,     VDIR, DIR_MODE   },

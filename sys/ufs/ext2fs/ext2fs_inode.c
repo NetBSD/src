@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.3 1997/10/09 15:42:50 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.4 1998/02/05 08:00:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -50,6 +50,9 @@
 #include <sys/resourcevar.h>
 
 #include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -260,8 +263,13 @@ ext2fs_truncate(v)
 		if (error)
 			return (error);
 		oip->i_e2fs_size = length;
+#if defined(UVM)
+		uvm_vnp_setsize(ovp, length);
+		(void) uvm_vnp_uncache(ovp);
+#else
 		vnode_pager_setsize(ovp, length);
 		(void) vnode_pager_uncache(ovp);
+#endif
 		if (aflags & B_SYNC)
 			bwrite(bp);
 		else
@@ -289,8 +297,13 @@ ext2fs_truncate(v)
 			return (error);
 		oip->i_e2fs_size = length;
 		size = fs->e2fs_bsize;
+#if defined(UVM)
+		uvm_vnp_setsize(ovp, length);
+		(void) uvm_vnp_uncache(ovp);
+#else
 		vnode_pager_setsize(ovp, length);
 		(void) vnode_pager_uncache(ovp);
+#endif
 		bzero((char *)bp->b_data + offset, (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)

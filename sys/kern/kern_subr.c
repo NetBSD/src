@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.31 1997/10/05 18:39:50 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.32 1998/02/05 07:59:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -152,10 +152,19 @@ uiomove(buf, n, uio)
 			break;
 
 		case UIO_SYSSPACE:
+#if defined(UVM)
+			if (uio->uio_rw == UIO_READ)
+				error = kcopy(cp, iov->iov_base, cnt);
+			else
+				error = kcopy(iov->iov_base, cp, cnt);
+			if (error)
+				return(error);
+#else
 			if (uio->uio_rw == UIO_READ)
 				bcopy(cp, iov->iov_base, cnt);
 			else
 				bcopy(iov->iov_base, cp, cnt);
+#endif
 			break;
 		}
 		iov->iov_base += cnt;

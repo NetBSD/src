@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.86 1997/10/20 22:08:44 thorpej Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.87 1998/02/05 08:00:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,6 +62,10 @@
 #include <sys/stat.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -421,7 +425,11 @@ nfs_open(v)
 			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 				ap->a_p, 1)) == EINTR)
 				return (error);
+#if defined(UVM)
+			(void) uvm_vnp_uncache(vp);
+#else
 			(void) vnode_pager_uncache(vp);
+#endif
 			np->n_brev = np->n_lrev;
 		    }
 		}
@@ -430,7 +438,11 @@ nfs_open(v)
 			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 				ap->a_p, 1)) == EINTR)
 				return (error);
+#if defined(UVM)
+			(void) uvm_vnp_uncache(vp);
+#else
 			(void) vnode_pager_uncache(vp);
+#endif
 			np->n_attrstamp = 0;
 			if (vp->v_type == VDIR) {
 				nfs_invaldircache(vp, 0);
@@ -452,7 +464,11 @@ nfs_open(v)
 				if ((error = nfs_vinvalbuf(vp, V_SAVE,
 					ap->a_cred, ap->a_p, 1)) == EINTR)
 					return (error);
+#if defined(UVM)
+				(void) uvm_vnp_uncache(vp);
+#else
 				(void) vnode_pager_uncache(vp);
+#endif
 				np->n_mtime = vattr.va_mtime.tv_sec;
 			}
 		}
@@ -630,7 +646,11 @@ nfs_setattr(v)
 			 */
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
+#if defined(UVM)
+ 			uvm_vnp_setsize(vp, vap->va_size);
+#else
  			vnode_pager_setsize(vp, vap->va_size);
+#endif
  			if (vap->va_size == 0)
  				error = nfs_vinvalbuf(vp, 0,
  				     ap->a_cred, ap->a_p, 1);
@@ -638,7 +658,11 @@ nfs_setattr(v)
 				error = nfs_vinvalbuf(vp, V_SAVE,
 				     ap->a_cred, ap->a_p, 1);
 			if (error) {
+#if defined(UVM)
+				uvm_vnp_setsize(vp, np->n_size);
+#else
 				vnode_pager_setsize(vp, np->n_size);
+#endif
 				return (error);
 			}
  			tsize = np->n_size;
@@ -653,7 +677,11 @@ nfs_setattr(v)
 	error = nfs_setattrrpc(vp, vap, ap->a_cred, ap->a_p);
 	if (error && vap->va_size != VNOVAL) {
 		np->n_size = np->n_vattr->va_size = tsize;
+#if defined(UVM)
+		uvm_vnp_setsize(vp, np->n_size);
+#else
 		vnode_pager_setsize(vp, np->n_size);
+#endif
 	}
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.45 1997/10/16 23:35:36 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.46 1998/02/05 08:00:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,13 @@
 #define _SYS_VNODE_H_
 
 #include <sys/queue.h>
+#ifdef UVM			/* XXX: clean up includes later */
+#include <vm/pglist.h>		/* XXX */
+#include <vm/vm_param.h>	/* XXX */
+#include <sys/lock.h>		/* XXX */
+#include <uvm/uvm_object.h>	/* XXX */
+#include <uvm/uvm_vnode.h>	/* XXX */
+#endif /* UVM */
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -69,6 +76,9 @@ enum vtagtype	{
 LIST_HEAD(buflists, buf);
 
 struct vnode {
+#ifdef UVM
+	struct uvm_vnode v_uvm;			/* uvm data */
+#endif
 	u_long	v_flag;				/* vnode flags (see below) */
 	short	v_usecount;			/* reference count of users */
 	short	v_writecount;			/* reference count of writers */
@@ -97,7 +107,10 @@ struct vnode {
 	int	v_clen;				/* length of current cluster */
 	int	v_ralen;			/* Read-ahead length */
 	daddr_t	v_maxra;			/* last readahead block */
+#ifdef UVM
+#else
 	long	v_spare[7];			/* round to 128 bytes */
+#endif
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
 };
