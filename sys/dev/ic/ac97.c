@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.3 1999/11/02 17:48:02 augustss Exp $ */
+/*      $NetBSD: ac97.c,v 1.4 1999/11/20 01:16:15 augustss Exp $ */
 /*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
@@ -521,7 +521,17 @@ ac97_attach(hostIf)
 			break;
 		}
 		if (ac97codecid[i].id == 0) {
-			printf("unknown (0x%8x)", id);
+			char pnp[4];
+			pnp[0] = id >> 24;
+			pnp[1] = id >> 16;
+			pnp[2] = id >>  8;
+			pnp[3] = '\0';
+#define ISASCII(c) ((c) >= ' ' && (c) < 0x7f)
+			if (ISASCII(pnp[0]) && ISASCII(pnp[1]) &&
+			    ISASCII(pnp[2]))
+				printf("%s%d", pnp, id & 0xff);
+			else
+				printf("unknown (0x%8x)", id);
 			break;
 		}
 	}
