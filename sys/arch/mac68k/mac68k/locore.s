@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.25 1994/08/08 00:14:42 lkestel Exp $
+ *	$Id: locore.s,v 1.26 1994/09/12 03:37:33 briggs Exp $
  */
 
 #include "assym.s"
@@ -177,10 +177,16 @@ _addrerr:
 	andw	#0x0fff,d0
 	cmpw	#12,d0			| is it address error
 	jeq	Lisaerr
-	movl	a1@(20),sp@(4)		| get fault address
+	movl	a1@(20),d1		| get fault address
 	moveq	#0,d0
 	movw	a1@(12),d0		| get SSW
-	movl	d0,sp@			| pass as code
+	btst	#11,d0			| check for mis-aligned
+	jeq	Lbe1stpg		| no skip
+	addl	#3,d1			| get into next page
+	andl	#PG_FRAME,d1		| and truncate
+Lbe1stpg:
+	movl	d1,sp@(4)		| pass fault address.
+	movl	d0,sp@			| pass SSW as code
 	btst	#10,d0			| test ATC
 	jeq	Lisberr			| it's a bus error
 	jra	Lismerr
