@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2003/06/15 23:08:53 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2003/06/23 22:17:11 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -294,7 +294,7 @@ mach_init(int argc, char *argv[], char *envp[])
 		led_display('c', 'o', 'n', 's');
 		DELAY(160000000 / comcnrate);  
 		if (comcnattach(&acp->ac_iot, 0x3f8, comcnrate,
-		    COM_FREQ,
+		    COM_FREQ, COM_TYPE_NORMAL,
 		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
 			panic("p5064: unable to initialize serial console");
 #else
@@ -336,7 +336,7 @@ mach_init(int argc, char *argv[], char *envp[])
 		led_display('c','o','n','s');
 		DELAY(160000000 / comcnrate);
 		if (comcnattach(&acp->ac_iot, 0x3f8, comcnrate,
-		    COM_FREQ,
+		    COM_FREQ, COM_TYPE_NORMAL,
 		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
 			panic("p6032: unable to initialize serial console");
 #else
