@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.79 1998/10/31 01:44:16 thorpej Exp $
+#	$NetBSD: files.isa,v 1.80 1998/11/22 21:57:48 pk Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -121,12 +121,6 @@ defopt	MCD_PROMISC			# enable "promiscuous" match
 device	scd: disk
 attach	scd at isa
 file	dev/isa/scd.c			scd needs-flag
-
-# XXX THE FOLLOWING BLOCK SHOULD GO INTO conf/files, BUT CANNOT
-# XXX BECAUSE NOT ALL PORTS USE THE MI DRIVER YET.
-
-# ESDI/IDE/etc. controllers
-device  wdc: ata, atapi, wdc_base
 
 attach	wdc at isa with wdc_isa: isadma
 file    dev/isa/wdc_isa.c           	wdc_isa
