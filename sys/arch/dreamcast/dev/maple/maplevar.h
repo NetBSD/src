@@ -1,4 +1,4 @@
-/* $NetBSD: maplevar.h,v 1.2 2001/01/21 22:45:58 marcus Exp $ */
+/* $NetBSD: maplevar.h,v 1.3 2001/02/03 23:25:51 marcus Exp $ */
 /*-
  * Copyright (c) 2001 Marcus Comstedt
  * All rights reserved.
@@ -38,6 +38,8 @@ struct maple_softc {
 
 	struct callout maple_callout_ch;
 	int maple_commands_pending;
+
+	int sc_port_units[MAPLE_PORTS];
 
 	struct maple_unit sc_unit[MAPLE_PORTS][MAPLE_SUBUNITS];
 
