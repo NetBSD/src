@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.61 2004/06/08 03:29:51 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.62 2004/06/09 12:17:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.61 2004/06/08 03:29:51 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.62 2004/06/09 12:17:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -687,8 +687,10 @@ record:
 
 	case VSPLUS:
 	case VSMINUS:
-		if (!set)
+		if (!set) {
 		        argstr(p, flag);
+			break;
+		}
 		if (easy)
 			goto record;
 		break;
