@@ -39,55 +39,49 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/11/93";*/
-static char rcsid[] = "$NetBSD: ls.c,v 1.6 1996/10/10 23:32:59 christos Exp $";
+static char rcsid[] = "$NetBSD: ls.c,v 1.7 1996/10/12 22:13:48 christos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <ufs/dir.h>
+#include <sys/stat.h>
+#include <sys/dirent.h>
+#include <ufs/ufs/dir.h>
+#include <ufs/ufs/dinode.h>
 #include <sys/ttychars.h>
-#include "stand.h"
+#include <lib/libsa/stand.h>
 
+int main __P((void));
+static void ls __P((int));
+
+int
 main()
 {
-	struct dinode *ip;
+	struct stat st;
 	int fd;
 
 	for (;;) {
 		if ((fd = getfile("ls", 0)) == -1)
 			exit();
-		ip = &iob[fd - 3].i_ino;
-		if ((ip->di_mode & IFMT) != IFDIR) {
-			kprintf("ls: not a directory\n");
+
+		if (fstat(fd, &st) == -1) {
+			printf("ls: cannot stat\n");
 			continue;
 		}
-		if (ip->di_size == 0) {
-			kprintf("ls: zero length directory\n");
+
+		if (!S_ISDIR(st.st_mode)) {
+			printf("ls: not a direntory\n");
+			continue;
+		}
+		if (st.st_size == 0) {
+			printf("ls: zero length direntory\n");
 			continue;
 		}
 		ls(fd);
 	}
 }
 
-#define CTRL(x)	(x&037)
-
-getfile(prompt, mode)
-	char *prompt;
-	int mode;
-{
-	int fd;
-	char buf[100];
-
-	do {
-		kprintf("%s: ", prompt);
-		gets(buf);
-		if (buf[0] == CTRL('d') && buf[1] == 0)
-			return (-1);
-	} while ((fd = open(buf, mode)) < 0);
-	return(fd);
-}
-
-typedef struct direct	DP;
-static
+typedef struct dirent	DP;
+static void
 ls(fd)
 	register int fd;
 {
@@ -95,18 +89,18 @@ ls(fd)
 	register char *dp;
 	char dirbuf[DIRBLKSIZ];
 
-	kprintf("\ninode\tname\n");
+	printf("\ninode\tname\n");
 	while ((size = read(fd, dirbuf, DIRBLKSIZ)) == DIRBLKSIZ)
 		for (dp = dirbuf; (dp < (dirbuf + size)) &&
 		    (dp + ((DP *)dp)->d_reclen) < (dirbuf + size);
 		    dp += ((DP *)dp)->d_reclen) {
-			if (((DP *)dp)->d_ino == 0)
+			if (((DP *)dp)->d_fileno == 0)
 				continue;
 			if (((DP *)dp)->d_namlen > MAXNAMLEN+1) {
-				kprintf("Corrupt file name length!  Run fsck soon!\n");
+				printf("Corrupt file name length!  Run fsck soon!\n");
 				return;
 			}
-			kprintf("%d\t%s\n", ((DP *)dp)->d_ino,
+			printf("%d\t%s\n", ((DP *)dp)->d_fileno,
 			    ((DP *)dp)->d_name);
 		}
 }
