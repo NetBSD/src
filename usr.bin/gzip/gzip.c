@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.12 2004/01/01 05:28:44 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.13 2004/01/02 01:34:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.12 2004/01/01 05:28:44 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.13 2004/01/02 01:34:01 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -88,7 +88,9 @@ enum filetype {
 #define ORIG_NAME 	0x08
 
 /* Define this if you have the NetBSD gzopenfull(3) extension to zlib(3) */
+#ifndef HAVE_ZLIB_GZOPENFULL
 #define HAVE_ZLIB_GZOPENFULL 0
+#endif
 
 static	const char	gzip_version[] = "NetBSD gzip 2.1";
 
