@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.28 2002/07/04 14:43:50 junyoung Exp $	*/
+/*	$NetBSD: ofb.c,v 1.29 2002/07/07 18:35:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -250,11 +250,23 @@ ofb_common_init(node, dc)
 	OF_call_method_1("color!", dc->dc_ih, 4, 255, 255, 255, 255);
 
 	/* Enable write-through cache. */
-	if (ofb_enable_cache && battable[0xc].batu == 0) {
-		battable[0xc].batl = BATL(addr & 0xf0000000, BAT_W, BAT_PP_RW);
-		battable[0xc].batu = BATL(0xc0000000, BAT_BL_256M, BAT_Vs);
-		addr &= 0x0fffffff;
-		addr |= 0xc0000000;
+	if (ofb_enable_cache) {
+		vaddr_t va;
+		/*
+		 * Let's try to find an empty BAT to use 
+		 */
+		for (va = SEGMENT_LENGTH; va < (USER_SR << ADDR_SR_SHFT);
+		     va += SEGMENT_LENGTH) {
+			if (battable[va >> ADDR_SR_SHFT].batu == 0) {
+				battable[va >> ADDR_SR_SHFT].batl =
+				    BATL(addr & 0xf0000000, BAT_W, BAT_PP_RW);
+				battable[va >> ADDR_SR_SHFT].batu =
+				    BATL(va, BAT_BL_256M, BAT_Vs);
+				addr &= 0x0fffffff;
+				addr |= va;
+				break;
+			}
+		}
 	}
 
 	/* initialize rasops */
