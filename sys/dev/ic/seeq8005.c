@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.14 2001/03/27 18:03:04 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.15 2001/03/27 20:26:45 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -64,7 +64,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.14 2001/03/27 18:03:04 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.15 2001/03/27 20:26:45 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -860,6 +860,10 @@ eatxpacket(struct seeq8005_softc *sc)
 /*	dprintf(("st=%04x\n", bus_space_read_2(iot, ioh, SEEQ_STATUS)));*/
 	bus_space_write_2(iot, ioh, SEEQ_COMMAND,
 			  sc->sc_command | SEEQ_CMD_TX_ON);
+
+	/* Make sure we notice if the chip goes silent on us. */
+	ifp->if_timer = 5;
+
 #ifdef SEEQ_TX_DEBUG
 	dprintf(("st=%04x\n", bus_space_read_2(iot, ioh, SEEQ_STATUS)));
 	dprintf(("tx: queued\n"));
@@ -1098,6 +1102,16 @@ ea_getpackets(struct seeq8005_softc *sc)
 		/* Zero packet ptr ? then must be null header so exit */
 		if (ptr == 0) break;
 
+		/* Sanity-check the next-packet pointer and flags. */
+		if (__predict_false(ptr < sc->sc_tx_bufsize ||
+		    (ctrl & SEEQ_PKTCMD_TX))) {
+			++ifp->if_ierrors;
+			log(LOG_ERR,
+			    "%s: Rx chain corrupt at %04x (ptr = %04x)\n",
+			    sc->sc_dev.dv_xname, addr, ptr);
+			ea_init(ifp);
+			return;
+		}
 
 		/* Get packet length */
        		len = (ptr - addr) - 4;
@@ -1120,16 +1134,12 @@ ea_getpackets(struct seeq8005_softc *sc)
 		 */
 		if (__predict_false(status & SEEQ_RXSTAT_ERROR_MASK)) {
 			++ifp->if_ierrors;
+			/* XXX oversize packets may be OK */
 			log(LOG_WARNING,
 			    "%s: rx packet error (%02x) - dropping packet\n",
 			    sc->sc_dev.dv_xname, status & 0x0f);
-			sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
-			bus_space_write_2(iot, ioh, SEEQ_CONFIG2,
-					  sc->sc_config2);
-			ea_init(ifp);
-			return;
+			goto pktdone;
 		}
-
 		/*
 		 * Is the packet too big ? - this will probably be trapped
 		 * above as a receive error
@@ -1149,6 +1159,7 @@ ea_getpackets(struct seeq8005_softc *sc)
 		/* Pass data up to upper levels. */
 		ea_read(sc, addr + 4, len);
 
+	pktdone:
 		addr = ptr;
 		++pack;
 	} while (len != 0);
@@ -1431,14 +1442,6 @@ ea_mc_reset_8005(struct seeq8005_softc *sc)
 
 /*
  * Device timeout routine.
- *
- * Ok I am not sure exactly how the device timeout should work....
- * Currently what will happens is that that the device timeout is only
- * set when a packet it received. This indicates we are on an active
- * network and thus we should expect more packets. If non arrive in
- * in the timeout period then we reinitialise as we may have jammed.
- * We zero the timeout at this point so that we don't end up with
- * an endless stream of timeouts if the network goes down.
  */
 
 static void
@@ -1446,17 +1449,15 @@ ea_watchdog(struct ifnet *ifp)
 {
 	struct seeq8005_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: lost Tx interrupt (status = 0x%04x)\n",
+	    sc->sc_dev.dv_xname,
+	    bus_space_read_2(sc->sc_iot, sc->sc_ioh, SEEQ_STATUS));
 	ifp->if_oerrors++;
-	dprintf(("ea_watchdog: "));
-	dprintf(("st=%04x\n",
-		 bus_space_read_2(sc->sc_iot, sc->sc_ioh, SEEQ_STATUS)));
 
 	/* Kick the interface */
 
 	ea_init(ifp);
 
-/*	ifp->if_timer = SEEQ_TIMEOUT;*/
 	ifp->if_timer = 0;
 }
 
