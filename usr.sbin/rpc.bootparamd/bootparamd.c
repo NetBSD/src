@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.19 1999/04/26 02:35:17 abs Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.20 1999/06/06 02:47:48 thorpej Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.19 1999/04/26 02:35:17 abs Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.20 1999/06/06 02:47:48 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -27,6 +27,7 @@ __RCSID("$NetBSD: bootparamd.c,v 1.19 1999/04/26 02:35:17 abs Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -117,6 +118,7 @@ main(argc, argv)
 		if (daemon(0, 0))
 			err(1, "can't detach from terminal");
 	}
+	pidfile(NULL);
 
 	(void) pmap_unset(BOOTPARAMPROG, BOOTPARAMVERS);
 
