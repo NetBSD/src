@@ -1,5 +1,5 @@
-$NetBSD: version,v 1.1 1997/04/16 20:29:24 thorpej Exp $
+$NetBSD: version,v 1.2 1997/04/19 01:39:44 thorpej Exp $
 
-#1.1:		Boot program for OpenFirmware; initial revision
-#1.2:		Boot program rearrangement
+1.1:		Boot program for OpenFirmware; initial revision
+1.2:		Boot program rearrangement
 #1.3:		Added support for loading ELF kernels
