@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.11.2.1 2004/12/29 17:53:48 kent Exp $	*/
+/*	$NetBSD: auconv.c,v 1.11.2.2 2004/12/30 15:15:52 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.1 2004/12/29 17:53:48 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.2 2004/12/30 15:15:52 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -61,9 +61,12 @@ __KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.1 2004/12/29 17:53:48 kent Exp $")
 #if NAURATECONV > 0
 static int auconv_rateconv_supportable(u_int, u_int, u_int);
 static int auconv_rateconv_check_channels(const struct audio_format *, int,
-					  int, struct audio_params *);
+					  int, const audio_params_t *,
+					  stream_filter_list_t *);
 static int auconv_rateconv_check_rates(const struct audio_format *, int,
-				       int, struct audio_params *);
+				       int, const audio_params_t *,
+				       audio_params_t *,
+				       stream_filter_list_t *);
 #endif
 #ifdef AUCONV_DEBUG
 static void auconv_dump_formats(const struct audio_format *, int);
@@ -94,9 +97,9 @@ struct audio_encoding_set {
 				+ sizeof(audio_encoding_t) * (n))
 
 struct conv_table {
-	u_int hw_encoding;
-	u_int hw_precision;
-	u_int hw_subframe;
+	u_int encoding;
+	u_int validbits;
+	u_int precision;
 	stream_filter_factory_t *play_conv;
 	stream_filter_factory_t *rec_conv;
 };
@@ -547,6 +550,38 @@ DEFINE_FILTER(linear16_to_linear8)
 	return 0;
 }
 
+void
+stream_filter_list_append(stream_filter_list_t *list,
+			  stream_filter_factory_t factory,
+			  const audio_params_t *param)
+{
+	if (list->req_size >= AUDIO_MAX_FILTERS) {
+		printf("%s: increase AUDIO_MAX_FILTERS in sys/dev/audio_if.h\n",
+		       __func__);
+		return;
+	}
+	list->filters[list->req_size].factory = factory;
+	list->filters[list->req_size].param = *param;
+	list->req_size++;
+}
+
+void
+stream_filter_list_prepend(stream_filter_list_t *list,
+			   stream_filter_factory_t factory,
+			   const audio_params_t *param)
+{
+	if (list->req_size >= AUDIO_MAX_FILTERS) {
+		printf("%s: increase AUDIO_MAX_FILTERS in sys/dev/audio_if.h\n",
+		       __func__);
+		return;
+	}
+	memmove(&list->filters[1], &list->filters[0],
+		sizeof(struct stream_filter_req) * list->req_size);
+	list->filters[0].factory = factory;
+	list->filters[0].param = *param;
+	list->req_size++;
+}
+
 /**
  * Set appropriate parameters in `param,' and return the index in
  * the hardware capability array `formats.'
@@ -554,16 +589,18 @@ DEFINE_FILTER(linear16_to_linear8)
  * @param formats	[IN] An array of formats which a hardware can support.
  * @param nformats	[IN] The number of elements of the array.
  * @param mode		[IN] Either AUMODE_PLAY or AUMODE_RECORD.
- * @param param		[IN/OUT] Requested format.  param->sw_code may be set.
+ * @param param		[IN] Requested format.  param->sw_code may be set.
  * @param rateconv	[IN] TRUE if aurateconv may be used.
+ * @param list		[OUT] stream_filters required for param.
  * @return The index of selected audio_format entry.  -1 if the device
  *	can not support the specified param.
  */
 int
 auconv_set_converter(const struct audio_format *formats, int nformats,
-		     int mode, struct audio_params *param, int rateconv)
+		     int mode, const audio_params_t *param, int rateconv,
+		     stream_filter_list_t *list)
 {
-	struct audio_params work;
+	audio_params_t work;
 	const struct conv_table *table;
 	int enc;
 	int i, j;
@@ -571,34 +608,22 @@ auconv_set_converter(const struct audio_format *formats, int nformats,
 #ifdef AUCONV_DEBUG
 	auconv_dump_formats(formats, nformats);
 #endif
-	work = *param;
-	work.sw_code = NULL;
-	work.factor = 1;
-	work.factor_denom = 1;
-	work.hw_sample_rate = work.sample_rate;
-	work.hw_encoding = work.encoding;
-	work.hw_precision = work.precision;
-	/* work.hw_subframe = work.precision; */
-	work.hw_channels = work.channels;
-	enc = auconv_normalize_encoding(work.encoding, work.precision);
+	enc = auconv_normalize_encoding(param->encoding, param->precision);
 
 	/* check support by native format */
-	i = auconv_exact_match(formats, nformats, mode, &work);
+	i = auconv_exact_match(formats, nformats, mode, param);
 	if (i >= 0) {
-		*param = work;
 		return i;
 	}
 
-	work = *param;
 #if NAURATECONV > 0
 	/* native format with aurateconv */
 	if (rateconv
-	    && auconv_rateconv_supportable(enc, work.hw_precision,
-					   work.hw_precision)) {
+	    && auconv_rateconv_supportable(enc, param->precision,
+					   param->validbits)) {
 		i = auconv_rateconv_check_channels(formats, nformats,
-						   mode, &work);
+						   mode, param, list);
 		if (i >= 0) {
-			*param = work;
 			return i;
 		}
 	}
@@ -643,17 +668,18 @@ auconv_set_converter(const struct audio_format *formats, int nformats,
 	if (table == NULL)
 		return -1;
 	work = *param;
-	for (j = 0; table[j].hw_precision != 0; j++) {
-		work.hw_encoding = table[j].hw_encoding;
-		work.hw_precision = table[j].hw_precision;
-		/* work.hw_subframe = table[j].hw_subframe; */
+	for (j = 0; table[j].precision != 0; j++) {
+		work.encoding = table[j].encoding;
+		work.precision = table[j].precision;
+		work.validbits = table[j].validbits;
 		i = auconv_exact_match(formats, nformats, mode, &work);
 		if (i >= 0) {
-			*param = work;
-			param->sw_code = mode == AUMODE_PLAY
-				? table[j].play_conv : table[j].rec_conv;
-			param->factor = table[j].factor;
-			param->factor_denom = 1;
+			if (mode == AUMODE_PLAY)
+				stream_filter_list_append
+					(list, table[j].play_conv, &work);
+			else
+				stream_filter_list_prepend
+					(list, table[j].rec_conv, &work);
 			return i;
 		}
 	}
@@ -664,22 +690,24 @@ auconv_set_converter(const struct audio_format *formats, int nformats,
 	if (!rateconv)
 		return -1;
 	work = *param;
-	for (j = 0; table[j].hw_precision != 0; j++) {
-		if (!auconv_rateconv_supportable(table[j].hw_encoding,
-						 table[j].hw_precision,
-						 table[j].hw_subframe))
+	for (j = 0; table[j].precision != 0; j++) {
+		if (!auconv_rateconv_supportable(table[j].encoding,
+						 table[j].precision,
+						 table[j].validbits))
 			continue;
-		work.hw_encoding = table[j].hw_encoding;
-		work.hw_precision = table[j].hw_precision;
-		/* work.hw_subframe = table[j].hw_subframe; */
+		work.encoding = table[j].encoding;
+		work.precision = table[j].precision;
+		work.validbits = table[j].validbits;
 		i = auconv_rateconv_check_channels(formats, nformats,
-						   mode, &work);
+						   mode, &work, list);
 		if (i >= 0) {
-			*param = work;
-			param->sw_code = mode == AUMODE_PLAY
-				? table[j].play_conv : table[j].rec_conv;
-			param->factor = table[j].factor;
-			param->factor_denom = 1;
+			/* work=>hw conversion is already registered */
+			if (mode == AUMODE_PLAY)
+				stream_filter_list_prepend
+					(list, table[j].play_conv, &work);
+			else
+				stream_filter_list_append
+					(list, table[j].rec_conv, &work);
 			return i;
 		}
 	}
@@ -690,67 +718,71 @@ auconv_set_converter(const struct audio_format *formats, int nformats,
 
 #if NAURATECONV > 0
 static int
-auconv_rateconv_supportable(u_int encoding, u_int precision, u_int subframe)
+auconv_rateconv_supportable(u_int encoding, u_int precision, u_int validbits)
 {
 	if (encoding != AUDIO_ENCODING_SLINEAR_LE
 	    && encoding != AUDIO_ENCODING_SLINEAR_BE)
 		return FALSE;
-	if (precision != 16 && precision != 24)
+	if (precision != 16 && precision != 24 && precision != 32)
 		return FALSE;
-	if (precision != subframe)
+	if (precision >= validbits)
 		return FALSE;
 	return TRUE;
 }
 
 static int
 auconv_rateconv_check_channels(const struct audio_format *formats, int nformats,
-			       int mode, struct audio_params *param)
+			       int mode, const audio_params_t *param,
+			       stream_filter_list_t *list)
 {
+	audio_params_t hw_param;
 	int ind, n;
 
+	hw_param = *param;
 	/* check for the specified number of channels */
-	ind = auconv_rateconv_check_rates(formats ,nformats, mode, param);
+	ind = auconv_rateconv_check_rates(formats, nformats, mode, param,
+					  &hw_param, list);
 	if (ind >= 0)
 		return ind;
 
 	/* check for larger numbers */
 	for (n = param->channels + 1; n <= AUDIO_MAX_CHANNELS; n++) {
-		param->hw_channels = n;
-		ind = auconv_rateconv_check_rates(formats, nformats,
-						  mode, param);
+		hw_param.channels = n;
+		ind = auconv_rateconv_check_rates(formats, nformats, mode,
+						  param, &hw_param, list);
 		if (ind >= 0)
 			return ind;
 	}
 
 	/* check for stereo:monaural conversion */
 	if (param->channels == 2) {
-		param->hw_channels = 1;
-		ind = auconv_rateconv_check_rates(formats, nformats,
-						  mode, param);
+		hw_param.channels = 1;
+		ind = auconv_rateconv_check_rates(formats, nformats, mode,
+						  param, &hw_param, list);
 		if (ind >= 0)
 			return ind;
 	}
-	param->hw_channels = param->channels;
 	return -1;
 }
 
 static int
 auconv_rateconv_check_rates(const struct audio_format *formats, int nformats,
-			    int mode, struct audio_params *param)
+			    int mode, const audio_params_t *param,
+			    audio_params_t *hw_param, stream_filter_list_t *list)
 {
 	int ind, i, j, enc, f_enc;
-	u_long rate, minrate, maxrate;
+	u_long rate, minrate, maxrate, orig_rate;;
 
 	/* exact match */
-	ind = auconv_exact_match(formats, nformats, mode, param);
+	ind = auconv_exact_match(formats, nformats, mode, hw_param);
 	if (ind >= 0)
-		return ind;
+		goto found;
 
 	/* determine min/max of specified encoding/precision/channels */
 	minrate = ULONG_MAX;
 	maxrate = 0;
-	enc = auconv_normalize_encoding(param->hw_encoding,
-					param->hw_precision);
+	enc = auconv_normalize_encoding(param->encoding,
+					param->precision);
 	for (i = 0; i < nformats; i++) {
 		if (!AUFMT_IS_VALID(&formats[i]))
 			continue;
@@ -760,11 +792,11 @@ auconv_rateconv_check_rates(const struct audio_format *formats, int nformats,
 						  formats[i].precision);
 		if (f_enc != enc)
 			continue;
-		if (formats[i].precision != param->hw_precision)
+		if (formats[i].precision != hw_param->validbits)
 			continue;
-		if (formats[i].subframe_size != param->hw_precision /*hw_subframe*/)
+		if (formats[i].subframe_size != hw_param->precision)
 			continue;
-		if (formats[i].channels != param->hw_channels)
+		if (formats[i].channels != hw_param->channels)
 			continue;
 		if (formats[i].frequency_type == 0) {
 			if (formats[i].frequency[0] < minrate)
@@ -784,20 +816,28 @@ auconv_rateconv_check_rates(const struct audio_format *formats, int nformats,
 		return -1;
 
 	/* try multiples of sample_rate */
+	orig_rate = hw_param->sample_rate;
 	for (i = 2; (rate = param->sample_rate * i) <= maxrate; i++) {
-		param->hw_sample_rate = rate;
-		ind = auconv_exact_match(formats, nformats, mode, param);
+		hw_param->sample_rate = rate;
+		ind = auconv_exact_match(formats, nformats, mode, hw_param);
 		if (ind >= 0)
-			return ind;
+			goto found;
 	}
 
-	param->hw_sample_rate = param->sample_rate >= minrate
+	hw_param->sample_rate = param->sample_rate >= minrate
 		? maxrate : minrate;
-	ind = auconv_exact_match(formats, nformats, mode, param);
+	ind = auconv_exact_match(formats, nformats, mode, hw_param);
 	if (ind >= 0)
-		return ind;
-	param->hw_sample_rate = param->sample_rate;
+		goto found;
+	hw_param->sample_rate = orig_rate;
 	return -1;
+
+ found:
+	if (mode == AUMODE_PLAY)
+		stream_filter_list_append(list, aurateconv, hw_param);
+	else
+		stream_filter_list_prepend(list, aurateconv, hw_param);
+	return ind;
 }
 #endif /* NAURATECONV */
 
@@ -866,12 +906,12 @@ auconv_dump_formats(const struct audio_format *formats, int nformats)
  */
 static int
 auconv_exact_match(const struct audio_format *formats, int nformats,
-		   int mode, const struct audio_params *param)
+		   int mode, const audio_params_t *param)
 {
 	int i, enc, f_enc;
 
-	enc = auconv_normalize_encoding(param->hw_encoding,
-					param->hw_precision);
+	enc = auconv_normalize_encoding(param->encoding,
+					param->precision);
 	for (i = 0; i < nformats; i++) {
 		if (!AUFMT_IS_VALID(&formats[i]))
 			continue;
@@ -886,14 +926,14 @@ auconv_exact_match(const struct audio_format *formats, int nformats,
 		 * XXX	Is to check precision/channels meaningful for
 		 *	MPEG encodings?
 		 */
-		if (formats[i].precision != param->hw_precision)
+		if (formats[i].precision != param->validbits)
 			continue;
-		if (formats[i].subframe_size != param->hw_precision /*hw_subframe*/)
+		if (formats[i].subframe_size != param->precision)
 			continue;
-		if (formats[i].channels != param->hw_channels)
+		if (formats[i].channels != param->channels)
 			continue;
 		if (!auconv_is_supported_rate(&formats[i],
-					      param->hw_sample_rate))
+					      param->sample_rate))
 			continue;
 		return i;
 	}
