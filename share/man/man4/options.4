@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.97 2000/02/12 21:30:51 is Exp $
+.\"	$NetBSD: options.4,v 1.98 2000/02/27 01:29:48 wrstuden Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -473,6 +473,15 @@ This permits portions of the file hierarchy to be re-mounted in other places.
 The code really exists to provide an example of a stackable file system layer.
 See
 .Xr mount_null 8
+for details.
+.It Cd file-system OVERLAY
+Includes code for a file system filter.
+This permits the overlay file system to intercept all access to an underlying
+file system. This file system is intended to serve as an example of
+a stacking file system which has a need to interpose itself between an
+underlying file system and all other access.
+See
+.Xr mount_overlay 8
 for details.
 .It Cd file-system PORTAL
 .Em [EXPERIMENTAL]
