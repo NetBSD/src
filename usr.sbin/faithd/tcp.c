@@ -1,5 +1,5 @@
-/*	$NetBSD: tcp.c,v 1.7 2002/04/24 12:14:42 itojun Exp $	*/
-/*	$KAME: tcp.c,v 1.8 2001/11/21 07:40:22 itojun Exp $	*/
+/*	$NetBSD: tcp.c,v 1.8 2002/06/07 00:20:45 itojun Exp $	*/
+/*	$KAME: tcp.c,v 1.9 2002/05/26 01:17:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -93,7 +93,8 @@ sig_child(int sig)
 
 	pid = wait3(&status, WNOHANG, (struct rusage *)0);
 	if (pid > 0 && WEXITSTATUS(status))
-		syslog(LOG_WARNING, "child %d exit status 0x%x", pid, status);
+		syslog(LOG_WARNING, "child %ld exit status 0x%x",
+		    (long)pid, status);
 	exit_success("terminate connection due to child termination");
 }
 
