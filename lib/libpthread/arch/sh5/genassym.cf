@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2003/01/21 00:34:56 scw Exp $
+#	$NetBSD: genassym.cf,v 1.2 2003/01/21 11:30:52 scw Exp $
 
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -115,6 +115,7 @@ define STACKSPACE			STACKSPACE
 define _UC_CPU				_UC_CPU
 define _UC_FPU				_UC_FPU
 define _UC_USER				_UC_USER
+define _UC_USER_BIT			_UC_USER_BIT
 
 define SH5_CONREG_USR_FPRS_SHIFT	SH5_CONREG_USR_FPRS_SHIFT
 define SH5_CONREG_USR_FPRS_MASK		SH5_CONREG_USR_FPRS_MASK
