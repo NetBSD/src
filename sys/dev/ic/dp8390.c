@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.19 1998/12/12 16:31:34 mycroft Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.20 1999/02/07 01:54:50 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -16,6 +16,7 @@
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -25,6 +26,10 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -141,6 +146,10 @@ dp8390_config(sc, media, nmedia, defmedia)
 	ether_ifattach(ifp, sc->sc_enaddr);
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
 #endif
 
 	/* Print additional info when attached. */
@@ -614,6 +623,9 @@ dp8390_intr(arg)
 	bus_space_handle_t regh = sc->sc_regh;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	u_char isr;
+#if NRND > 0
+	u_char rndisr;
+#endif
 
 	if (sc->sc_enabled == 0)
 		return (0);
@@ -625,6 +637,10 @@ dp8390_intr(arg)
 	isr = NIC_GET(regt, regh, ED_P0_ISR);
 	if (!isr)
 		return (0);
+
+#if NRND > 0
+	rndisr = isr;
+#endif
 
 	/* Loop until there are no more new interrupts. */
 	for (;;) {
@@ -792,8 +808,14 @@ dp8390_intr(arg)
 
 		isr = NIC_GET(regt, regh, ED_P0_ISR);
 		if (!isr)
-			return (1);
+			goto out;
 	}
+
+ out:
+#if NRND > 0
+	rnd_add_uint32(&sc->rnd_source, rndisr);
+#endif
+	return (1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.10 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.11 1999/02/07 01:54:50 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -12,6 +12,11 @@
  * the author responsible for the proper functioning of this software, nor does
  * the author assume any responsibility for damages incurred with its use.
  */
+
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #define INTERFACE_NAME_LEN	32
 
@@ -57,6 +62,10 @@ struct dp8390_softc {
 	u_int8_t sc_enaddr[6];	/* storage for MAC address */
 
 	int	sc_enabled;	/* boolean; power enabled on interface */
+
+#if NRND > 0
+	rndsource_element_t rnd_source; /* random source */
+#endif
 
 	int	(*test_mem) __P((struct dp8390_softc *));
 	void	(*init_card) __P((struct dp8390_softc *));
