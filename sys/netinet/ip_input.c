@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.114.4.7 2002/02/26 20:57:03 he Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.114.4.8 2002/02/26 21:07:56 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -624,6 +624,13 @@ nofilt:;
 			ipstat.ips_cantforward++;
 			return;
 		}
+#ifdef IPSEC
+		if (ipsec4_in_reject(m, NULL)) {
+			ipsecstat.in_polvio++;
+			goto bad;
+		}
+#endif
+
 		ip_forward(m, 0);
 	}
 	return;
