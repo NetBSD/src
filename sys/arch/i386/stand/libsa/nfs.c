@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.3 2001/07/07 22:57:58 perry Exp $	*/
+/*	$NetBSD: nfs.c,v 1.4 2003/03/11 14:38:45 drochner Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -100,6 +100,12 @@ struct nfs_iodesc {
 	struct nfsv2_fattrs fa;	/* all in network order */
 };
 
+int	nfs_getrootfh __P((struct iodesc *, char *, u_char *));
+int	nfs_lookupfh __P((struct nfs_iodesc *, char *, struct nfs_iodesc *));
+#ifndef NFS_NOSYMLINK
+int	nfs_readlink __P((struct nfs_iodesc *, char *));
+#endif
+ssize_t	nfs_readdata __P((struct nfs_iodesc *, off_t, void *, size_t));
 
 /*
  * Fetch the root file handle (call mount daemon)
