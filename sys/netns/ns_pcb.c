@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns_pcb.c	7.11 (Berkeley) 6/27/91
- *	$Id: ns_pcb.c,v 1.2 1993/05/20 04:35:59 cgd Exp $
+ *	$Id: ns_pcb.c,v 1.2.4.1 1993/09/24 08:56:08 mycroft Exp $
  */
 
 #include "param.h"
@@ -41,6 +41,8 @@
 #include "socket.h"
 #include "socketvar.h"
 #include "protosw.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/route.h"

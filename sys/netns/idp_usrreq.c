@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)idp_usrreq.c	7.11 (Berkeley) 6/27/91
- *	$Id: idp_usrreq.c,v 1.2 1993/05/20 04:35:47 cgd Exp $
+ *	$Id: idp_usrreq.c,v 1.2.4.1 1993/09/24 08:55:58 mycroft Exp $
  */
 
 #include "param.h"
@@ -42,6 +42,8 @@
 #include "socketvar.h"
 #include "errno.h"
 #include "stat.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/route.h"

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_iso.c	7.11 (Berkeley) 5/6/91
- *	$Id: tp_iso.c,v 1.2 1993/05/20 05:27:44 cgd Exp $
+ *	$Id: tp_iso.c,v 1.2.4.1 1993/09/24 08:55:35 mycroft Exp $
  */
 
 /***********************************************************
@@ -94,6 +94,8 @@ SOFTWARE.
 #include "errno.h"
 #include "time.h"
 #include "protosw.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/route.h"

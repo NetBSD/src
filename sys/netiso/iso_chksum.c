@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)iso_chksum.c	7.5 (Berkeley) 5/6/91
- *	$Id: iso_chksum.c,v 1.2 1993/05/20 05:27:15 cgd Exp $
+ *	$Id: iso_chksum.c,v 1.2.4.1 1993/09/24 08:55:29 mycroft Exp $
  */
 
 /***********************************************************
@@ -80,11 +80,12 @@ SOFTWARE.
  * logically adjacent, but may be physically located in separate mbufs.
  */
 
-#ifdef ISO
-#include "argo_debug.h"
 #include "param.h"
 #include "mbuf.h"
-#endif ISO
+
+#include "machine/cpu.h"
+
+#include "argo_debug.h"
 
 #ifndef MNULL
 #define MNULL (struct mbuf *)0

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns.c	7.8 (Berkeley) 6/27/91
- *	$Id: ns.c,v 1.2 1993/05/20 04:35:50 cgd Exp $
+ *	$Id: ns.c,v 1.2.4.1 1993/09/24 08:56:02 mycroft Exp $
  */
 
 #include "param.h"
@@ -42,6 +42,7 @@
 #include "socket.h"
 #include "socketvar.h"
 
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/route.h"

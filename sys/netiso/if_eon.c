@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_eon.c	7.16 (Berkeley) 6/27/91
- *	$Id: if_eon.c,v 1.2 1993/05/20 05:27:12 cgd Exp $
+ *	$Id: if_eon.c,v 1.2.4.1 1993/09/24 08:55:23 mycroft Exp $
  */
 
 /***********************************************************
@@ -83,13 +83,16 @@ SOFTWARE.
 #include "ioctl.h"
 #include "errno.h"
 #include "types.h"
+#include "kernel.h"
+
+#include "machine/mtpr.h"
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/if_types.h"
 #include "../net/if_dl.h"
 #include "../net/netisr.h"
 #include "../net/route.h"
-#include "machine/mtpr.h"
 
 #include "../netinet/in.h"
 #include "../netinet/in_systm.h"
@@ -104,7 +107,7 @@ SOFTWARE.
 #include "argo_debug.h"
 #include "iso_errno.h"
 #include "eonvar.h"
-extern struct timeval time;
+
 extern struct ifnet loif;
 
 #define EOK 0

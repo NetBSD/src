@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cltp_usrreq.c	7.6 (Berkeley) 6/27/91
- *	$Id: cltp_usrreq.c,v 1.2 1993/05/20 05:27:00 cgd Exp $
+ *	$Id: cltp_usrreq.c,v 1.2.4.1 1993/09/24 08:55:21 mycroft Exp $
  */
 
 #ifndef CLTPOVAL_SRC /* XXX -- till files gets changed */
@@ -43,6 +43,8 @@
 #include "socketvar.h"
 #include "errno.h"
 #include "stat.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/route.h"

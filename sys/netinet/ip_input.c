@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_input.c	7.19 (Berkeley) 5/25/91
- *	$Id: ip_input.c,v 1.3 1993/05/20 03:50:25 cgd Exp $
+ *	$Id: ip_input.c,v 1.3.4.1 1993/09/24 08:54:56 mycroft Exp $
  */
 
 #include "param.h"
@@ -44,6 +44,8 @@
 #include "errno.h"
 #include "time.h"
 #include "kernel.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/route.h"

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_timer.c	7.5 (Berkeley) 5/6/91
- *	$Id: tp_timer.c,v 1.2 1993/05/20 05:28:00 cgd Exp $
+ *	$Id: tp_timer.c,v 1.2.4.1 1993/09/24 08:55:40 mycroft Exp $
  */
 
 /***********************************************************
@@ -85,6 +85,8 @@ SOFTWARE.
 #include "time.h"
 #include "malloc.h"
 #include "socket.h"
+
+#include "machine/cpu.h"
 
 #include "tp_param.h"
 #include "tp_timer.h"

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pk_usrreq.c	7.16 (Berkeley) 6/27/91
- *	$Id: pk_usrreq.c,v 1.4 1993/09/06 17:43:33 mycroft Exp $
+ *	$Id: pk_usrreq.c,v 1.4.2.1 1993/09/24 08:54:37 mycroft Exp $
  */
 
 #include "param.h"
@@ -48,6 +48,8 @@
 #include "errno.h"
 #include "ioctl.h"
 #include "stat.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/route.h"

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)hd_input.c	7.7 (Berkeley) 5/29/91
- *	$Id: hd_input.c,v 1.4 1993/09/06 18:09:55 mycroft Exp $
+ *	$Id: hd_input.c,v 1.4.2.1 1993/09/24 08:54:22 mycroft Exp $
  */
 
 #include "param.h"
@@ -48,6 +48,8 @@
 #include "errno.h"
 #include "time.h"
 #include "kernel.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 

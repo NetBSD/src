@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clnp_input.c	7.13 (Berkeley) 5/6/91
- *	$Id: clnp_input.c,v 1.3 1993/05/21 12:50:54 cgd Exp $
+ *	$Id: clnp_input.c,v 1.3.4.1 1993/09/24 08:55:16 mycroft Exp $
  */
 
 /***********************************************************
@@ -70,6 +70,8 @@ SOFTWARE.
 #include "socketvar.h"
 #include "errno.h"
 #include "time.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/if_types.h"

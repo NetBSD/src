@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)iso.c	7.14 (Berkeley) 6/27/91
- *	$Id: iso.c,v 1.2 1993/05/20 05:27:13 cgd Exp $
+ *	$Id: iso.c,v 1.2.4.1 1993/09/24 08:55:26 mycroft Exp $
  */
 
 /***********************************************************
@@ -73,6 +73,8 @@ SOFTWARE.
 #include "socket.h"
 #include "socketvar.h"
 #include "errno.h"
+
+#include "machine/cpu.h"
 
 #include "../net/if.h"
 #include "../net/route.h"

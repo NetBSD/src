@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)iso_pcb.c	7.10 (Berkeley) 6/27/91
- *	$Id: iso_pcb.c,v 1.2 1993/05/20 05:27:19 cgd Exp $
+ *	$Id: iso_pcb.c,v 1.2.4.1 1993/09/24 08:55:31 mycroft Exp $
  */
 
 /***********************************************************
@@ -72,6 +72,8 @@ SOFTWARE.
 #include "socket.h"
 #include "socketvar.h"
 #include "errno.h"
+
+#include "machine/cpu.h"
 
 #include "argo_debug.h"
 #include "iso.h"

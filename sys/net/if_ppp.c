@@ -69,7 +69,7 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.3 1993/09/02 12:10:59 paulus Exp $ */
+/* $Id: if_ppp.c,v 1.3.2.1 1993/09/24 08:53:59 mycroft Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "ppp.h"
@@ -88,6 +88,8 @@
 #include "tty.h"
 #include "kernel.h"
 #include "conf.h"
+
+#include "machine/cpu.h"
 
 #include "if.h"
 #include "if_types.h"
