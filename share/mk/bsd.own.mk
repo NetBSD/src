@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.118 1999/02/12 15:01:08 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.119 1999/02/13 03:04:12 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -181,11 +181,7 @@ MKDOC=no
 MKDOC?=yes
 .endif
 
-.if defined(NOINFO)
-MKINFO=no
-.else
 MKINFO?=yes
-.endif
 
 .if defined(NOLINKLIB)
 MKLINKLIB=no
