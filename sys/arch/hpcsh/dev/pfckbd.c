@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.4 2002/01/27 05:15:35 uch Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.5 2002/01/29 18:53:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 #define DPRINTF_ENABLE
 #define DPRINTF_DEBUG	pfckbd_debug
 #endif
-#include <hpcsh/hpcsh/debug.h>
+#include <machine/debug.h>
 
 STATIC int pfckbd_match(struct device *, struct cfdata *, void *);
 STATIC void pfckbd_attach(struct device *, struct device *, void *);

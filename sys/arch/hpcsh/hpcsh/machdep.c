@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2002/01/27 05:14:34 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2002/01/29 18:53:02 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,8 +73,9 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 #include <machine/autoconf.h>		/* makebootdev() */
+#include <machine/kloader.h>
+
 #include <hpcsh/hpcsh/clockvar.h>
-#include <hpcsh/hpcsh/kloader.h>
 
 #include <sh3/intcreg.h>
 

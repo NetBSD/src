@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.3 2002/01/27 05:15:36 uch Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.4 2002/01/29 18:53:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <machine/intr.h>
 #include <sh3/shbvar.h>
 
-#include <hpcsh/hpcsh/debug.h>
+#include <machine/debug.h>
 
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64461/hd64461reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.6 2001/09/15 12:47:08 uch Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.7 2002/01/29 18:53:13 uch Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,9 +40,7 @@
  * Device driver for PHILIPS UCB1200 Advanced modem/audio analog front-end
  *	Touch panel part.
  */
-#define UCBTPDEBUG
 
-#include "opt_tx39_debug.h"
 #include "opt_use_poll.h"
 
 #include <sys/param.h>
