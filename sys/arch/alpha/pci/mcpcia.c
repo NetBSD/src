@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.9 2000/06/05 21:47:21 thorpej Exp $ */
+/* $NetBSD: mcpcia.c,v 1.10 2000/06/25 19:32:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.9 2000/06/05 21:47:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.10 2000/06/25 19:32:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.9 2000/06/05 21:47:21 thorpej Exp $");
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
 #include <machine/pte.h>
+#include <machine/sysarch.h>
 
 #include <alpha/mcbus/mcbusreg.h>
 #include <alpha/mcbus/mcbusvar.h>
@@ -119,6 +120,9 @@ void	mcpcia_init0 __P((struct mcpcia_config *, int));
  * MCPCIA with an EISA adapter attached to it).
  */
 struct mcpcia_config mcpcia_console_configuration;
+
+int	mcpcia_bus_get_window __P((int, int,
+	    struct alpha_bus_space_translation *abst));
 
 static int
 mcpciaprint(aux, pnp)
@@ -253,6 +257,11 @@ mcpcia_init()
 
 		if (EISA_PRESENT(REGVAL(MCPCIA_PCI_REV(ccp)))) {
 			mcpcia_init0(ccp, 0);
+
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 2;
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 3;
+
+			alpha_bus_get_window = mcpcia_bus_get_window;
 			return;
 		}
 	}
@@ -350,4 +359,28 @@ mcpcia_config_cleanup()
 	(void) timeout (die_heathen_dog, &mcpcia_console_configuration,
 	    30 * hz);
 #endif
+}
+
+int
+mcpcia_bus_get_window(type, window, abst)
+	int type, window;
+	struct alpha_bus_space_translation *abst;
+{
+	struct mcpcia_config *ccp = &mcpcia_console_configuration;
+	bus_space_tag_t st;
+
+	switch (type) {
+	case ALPHA_BUS_TYPE_PCI_IO:
+		st = &ccp->cc_iot;
+		break;
+
+	case ALPHA_BUS_TYPE_PCI_MEM:
+		st = &ccp->cc_memt;
+		break;
+
+	default:
+		panic("mcpcia_bus_get_window");
+	}
+
+	return (alpha_bus_space_get_window(st, window, abst));
 }
