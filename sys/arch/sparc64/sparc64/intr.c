@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17 1999/11/06 20:18:50 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.18 2000/01/10 03:53:21 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,16 +105,20 @@
  */
 struct intrhand *intrlev[MAXINTNUM];
 
-void	strayintr __P((const struct trapframe64 *));
+void	strayintr __P((const struct trapframe64 *, int));
 int	soft01intr __P((void *));
 
 /*
  * Stray interrupt handler.  Clear it if possible.
  * If not, and if we get 10 interrupts in 10 seconds, panic.
  */
+int ignore_stray = 1;
+int straycnt[16];
+
 void
-strayintr(fp)
+strayintr(fp, vectored)
 	const struct trapframe64 *fp;
+	int vectored;
 {
 	static int straytime, nstray;
 	int timesince;
@@ -122,14 +126,18 @@ strayintr(fp)
 	extern int swallow_zsintrs;
 #endif
 
-	return;
+	if (fp->tf_pil < 16)
+		straycnt[(int)fp->tf_pil]++;
+
+	if (ignore_stray)
+		return;
 
 	/* If we're in polled mode ignore spurious interrupts */
 	if ((fp->tf_pil == PIL_SER) /* && swallow_zsintrs */) return;
 
-	printf("stray interrupt ipl %u pc=%lx npc=%lx pstate=%lb\n",
+	printf("stray interrupt ipl %u pc=%lx npc=%lx pstate=%lb vecttored=%d\n",
 		fp->tf_pil, fp->tf_pc, fp->tf_npc, 
-	       (unsigned long)(fp->tf_tstate>>TSTATE_PSTATE_SHIFT), PSTATE_BITS);
+	       (unsigned long)(fp->tf_tstate>>TSTATE_PSTATE_SHIFT), PSTATE_BITS, vectored);
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 500)
