@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmover.9,v 1.3 2002/08/02 23:20:34 wiz Exp $
+.\"	$NetBSD: dmover.9,v 1.4 2002/08/04 04:53:36 thorpej Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -287,6 +287,18 @@ of 3.
 .It Dq xor4
 Perform an XOR operation on 4 inputs.  This algorithm has an input count
 of 4.
+.It Dq xor5
+Perform an XOR operation on 5 inpute.  This algorithm has an input count
+of 5.
+.It Dq xor6
+Perform an XOR operation on 6 inpute.  This algorithm has an input count
+of 6.
+.It Dq xor7
+Perform an XOR operation on 7 inpute.  This algorithm has an input count
+of 7.
+.It Dq xor8
+Perform an XOR operation on 8 inpute.  This algorithm has an input count
+of 8.
 .El
 .Pp
 Users of the
@@ -313,6 +325,18 @@ errors:
 .It DMOVER_FUNC_XOR4
 .Dq xor4
 .Pq Va dmover_funcname_xor4
+.It DMOVER_FUNC_XOR5
+.Dq xor5
+.Pq Va dmover_funcname_xor5
+.It DMOVER_FUNC_XOR6
+.Dq xor6
+.Pq Va dmover_funcname_xor6
+.It DMOVER_FUNC_XOR7
+.Dq xor7
+.Pq Va dmover_funcname_xor7
+.It DMOVER_FUNC_XOR8
+.Dq xor8
+.Pq Va dmover_funcname_xor8
 .El
 .It void Fn dmover_session_destroy "struct dmover_session *session"
 .Pp
