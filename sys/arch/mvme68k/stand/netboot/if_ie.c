@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.7 2002/09/27 15:36:26 provos Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.8 2003/03/13 12:44:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -410,7 +410,7 @@ ie_put(desc, pkt, len)
 
 	if (ie_debug) {
 		printf("ie%d: send %d to %x:%x:%x:%x:%x:%x\n",
-		    desc->io_netif->nif_unit, len,
+		    ((struct netif *)desc->io_netif)->nif_unit, len,
 		    p[0], p[1], p[2], p[3], p[4], p[5]);
 	}
 	return (len);
@@ -444,11 +444,11 @@ ie_init(desc, machdep_hint)
 	struct netif *nif = desc->io_netif;
 
 	if (ie_debug)
-		printf("ie%d: ie_init called\n", desc->io_netif->nif_unit);
+		printf("ie%d: ie_init called\n", nif->nif_unit);
 	machdep_common_ether(desc->myea);
 	memset(&ie_softc, 0, sizeof(ie_softc));
 	ie_softc.sc_reg =
-	    (struct iereg *) ie_config[desc->io_netif->nif_unit].phys_addr;
+	    (struct iereg *) ie_config[nif->nif_unit].phys_addr;
 	ie_softc.sc_mem = (struct iemem *) 0x3e0000;
 	ie_reset(desc->io_netif, desc->myea);
 	printf("device: %s%d attached to %s\n", nif->nif_driver->netif_bname,
