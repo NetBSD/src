@@ -1,7 +1,7 @@
 
- OpenSSL 0.9.5a  1 Apr 2000
+ OpenSSL 0.9.6g 9 August 2002
 
- Copyright (c) 1998-2000 The OpenSSL Project
+ Copyright (c) 1998-2002 The OpenSSL Project
  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
  All rights reserved.
 
@@ -62,7 +62,7 @@
 
      X.509v3 certificates
         X509 encoding/decoding into/from binary ASN1 and a PEM
-             based ascii-binary encoding which supports encryption with a
+             based ASCII-binary encoding which supports encryption with a
              private key.  Program to generate RSA and DSA certificate
              requests and to generate RSA and DSA certificates.
 
@@ -97,19 +97,18 @@
  locations around the world. _YOU_ are responsible for ensuring that your use
  of any algorithms is legal by checking if there are any patents in your
  country.  The file contains some of the patents that we know about or are
- rumoured to exist. This is not a definitive list.
+ rumored to exist. This is not a definitive list.
 
- RSA Data Security holds software patents on the RSA and RC5 algorithms.  If
- their ciphers are used used inside the USA (and Japan?), you must contact RSA
- Data Security for licensing conditions. Their web page is
- http://www.rsa.com/.
+ RSA Security holds software patents on the RC5 algorithm.  If you
+ intend to use this cipher, you must contact RSA Security for
+ licensing conditions. Their web page is http://www.rsasecurity.com/.
 
- RC4 is a trademark of RSA Data Security, so use of this label should perhaps
- only be used with RSA Data Security's permission. 
+ RC4 is a trademark of RSA Security, so use of this label should perhaps
+ only be used with RSA Security's permission. 
 
  The IDEA algorithm is patented by Ascom in Austria, France, Germany, Italy,
- Japan, Netherlands, Spain, Sweden, Switzerland, UK and the USA.  They should
- be contacted if that algorithm is to be used, their web page is
+ Japan, the Netherlands, Spain, Sweden, Switzerland, UK and the USA.  They
+ should be contacted if that algorithm is to be used; their web page is
  http://www.ascom.ch/.
 
  INSTALLATION
@@ -119,12 +118,16 @@
  a Win32 platform, read the INSTALL.W32 file.  For OpenVMS systems, read
  INSTALL.VMS.
 
- For people in the USA, it is possible to compile OpenSSL to use RSA Inc.'s
- public key library, RSAREF, by configuring OpenSSL with the option "rsaref".
-
  Read the documentation in the doc/ directory.  It is quite rough, but it
- lists the functions, you will probably have to look at the code to work out
- how to used them. Look at the example programs.
+ lists the functions; you will probably have to look at the code to work out
+ how to use them. Look at the example programs.
+
+ PROBLEMS
+ --------
+
+ For some platforms, there are some known problems that may affect the user
+ or application author.  We try to collect those in doc/PROBLEMS, with current
+ thoughts on how they should be solved in a future of OpenSSL.
 
  SUPPORT 
  -------
@@ -150,11 +153,13 @@
     - Problem Description (steps that will reproduce the problem, if known)
     - Stack Traceback (if the application dumps core)
 
- Report the bug to the OpenSSL project at:
+ Report the bug to the OpenSSL project via the Request Tracker
+ (http://www.openssl.org/rt2.html) by mail to:
 
     openssl-bugs@openssl.org
 
- Note that mail to openssl-bugs@openssl.org is forwarded to a public
+ Note that mail to openssl-bugs@openssl.org is recorded in the publicly
+ readable request tracker database and is forwarded to a public
  mailing list. Confidential mail may be sent to openssl-security@openssl.org
  (PGP key available from the key servers).
 
@@ -167,6 +172,11 @@
  the string "[PATCH]" in the subject. Please be sure to include a
  textual explanation of what your patch does.
 
+ Note: For legal reasons, contributions from the US can be accepted only
+ if a TSA notification and a copy of the patch is sent to crypt@bis.doc.gov;
+ see http://www.bis.doc.gov/Encryption/PubAvailEncSourceCodeNofify.html [sic]
+ and http://w3.access.gpo.gov/bis/ear/pdf/740.pdf (EAR Section 740.13(e)).
+
  The preferred format for changes is "diff -u" output. You might
  generate it like this:
 
@@ -174,4 +184,4 @@
  # [your changes]
  # ./Configure dist; make clean
  # cd ..
- # diff -urN openssl-orig openssl-work > mydiffs.patch
+ # diff -ur openssl-orig openssl-work > mydiffs.patch
