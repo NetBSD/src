@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.15 2001/01/27 08:09:42 itojun Exp $
+#	$NetBSD: bind2netbsd,v 1.16 2001/02/11 07:04:20 itojun Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,7 +70,7 @@ mkdir -p $dcrypto/lib
 
 ### Copy the files and directories
 cd $r/src
-pax -rvw LICENSE LICENSE_RSA README bin include lib $d
+pax -rvw LICENSE LICENSE_RSA README Version bin include lib $d
 cd $r/src/port/netbsd/include
 pax -rvw port_after.h port_before.h prand_conf.h $d/include
 cd $r/src/port/netbsd/bin
