@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.26 2005/03/04 17:16:13 christos Exp $	*/
+/*	$NetBSD: last.c,v 1.27 2005/03/14 13:34:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.26 2005/03/04 17:16:13 christos Exp $");
+__RCSID("$NetBSD: last.c,v 1.27 2005/03/14 13:34:57 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -90,7 +90,7 @@ __RCSID("$NetBSD: last.c,v 1.26 2005/03/04 17:16:13 christos Exp $");
 #define	TIMEONLY	0x2		/* show time only, not date */
 #define	GMT		0x4		/* show time at GMT, for offsets only */
 
-#define MAXUTMP		1024;
+#define MAXUTMP		1024
 
 typedef struct arg {
 	char	*name;			/* argument */
