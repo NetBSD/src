@@ -1,6 +1,6 @@
-.\" $NetBSD: uplcom.4,v 1.13 2003/11/25 19:05:46 salo Exp $
+.\" $NetBSD: uplcom.4,v 1.14 2004/06/05 11:42:52 jdolecek Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 25, 2003
+.Dd June 5, 2004
 .Dt UPLCOM 4
 .Os
 .Sh NAME
@@ -49,15 +49,18 @@ The
 driver supports the following adapters:
 .Pp
 .Bl -tag -width Dv -offset indent -compact
+.It BAFO BF-800
+.It BAFO BF-810
+.It ELECOM UC-SGT
+.It HAL Corporation Crossam2
 .It IOGEAR UC-232A
 .It I/O DATA USB-RSAQ
 .It I/O DATA USB-RSAQ2
 .It PLANEX USB RS-232 URS-03
-.It BAFO BF-800
-.It BAFO BF-810
-.It ELECOM UC-SGT
 .It Sony Ericsson DCU-10
 .It Sony Ericsson DCU-11
+.It SOURCENEXT KeiKaiDenwa 8
+.It Sitecom CN-116 USB to serial
 .El
 .Sh DESCRIPTION
 The
