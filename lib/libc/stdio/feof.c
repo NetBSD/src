@@ -1,4 +1,4 @@
-/*	$NetBSD: feof.c,v 1.6 1997/07/13 20:14:51 christos Exp $	*/
+/*	$NetBSD: feof.c,v 1.7 1998/11/20 14:44:14 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,11 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)feof.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: feof.c,v 1.6 1997/07/13 20:14:51 christos Exp $");
+__RCSID("$NetBSD: feof.c,v 1.7 1998/11/20 14:44:14 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+#include "reentrant.h"
 
 /*
  * A subroutine version of the macro feof.
@@ -56,5 +57,10 @@ int
 feof(fp)
 	FILE *fp;
 {
-	return (__sfeof(fp));
+	int r;
+
+	FLOCKFILE(fp);
+	r = __sfeof(fp);
+	FUNLOCKFILE(fp);
+	return r;
 }
