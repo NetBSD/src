@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2003/03/12 00:09:52 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2 2003/04/09 18:51:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1 2003/03/12 00:09:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2003/04/09 18:51:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,8 +185,36 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
-		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
-		    NULL, flags, &lastaddr, &seg, first);
+		if (m->m_len == 0)
+			continue;
+		/* XXX Could be better about coalescing. */
+		/* XXX Doesn't check boundaries. */
+		switch (m->m_flags & (M_EXT|M_EXT_CLUSTER)) {
+		case M_EXT|M_EXT_CLUSTER:
+			/* XXX KDASSERT */
+			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
+			lastaddr = m->m_ext.ext_paddr +
+			    (m->m_data - m->m_ext.ext_buf);
+ have_addr:
+			if (first == 0 &&
+			    ++seg >= map->_dm_segcnt) {
+				error = EFBIG;
+				break;
+			}
+			map->dm_segs[seg].ds_addr = lastaddr;
+			map->dm_segs[seg].ds_len = m->m_len;
+			lastaddr += m->m_len;
+			break;
+
+		case 0:
+			lastaddr = m->m_paddr + M_BUFOFFSET(m) +
+			    (m->m_data - M_BUFADDR(m));
+			goto have_addr;
+
+		default:
+			error = _bus_dmamap_load_buffer(t, map, m->m_data,
+			    m->m_len, NULL, flags, &lastaddr, &seg, first);
+		}
 		first = 0;
 	}
 	if (error == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.27 2003/04/01 23:21:12 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.28 2003/04/09 18:51:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -213,6 +213,7 @@ int
 _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
     int flags)
 {
+	struct arm32_dma_range *dr;
 	paddr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
@@ -236,15 +237,66 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
-	/* _bus_dmamap_load_buffer() clears this if we're not... */
-	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
+	/*
+	 * Mbuf chains should almost never have coherent (i.e.
+	 * un-cached) mappings, so clear that flag now.
+	 */
+	map->_dm_flags &= ~ARM32_DMAMAP_COHERENT;
 
 	first = 1;
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
-		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
-		    NULL, flags, &lastaddr, &seg, first);
+		if (m->m_len == 0)
+			continue;
+		/* XXX Could be better about coalescing. */
+		/* XXX Doesn't check boundaries. */
+		switch (m->m_flags & (M_EXT|M_CLUSTER)) {
+		case M_EXT|M_CLUSTER:
+			/* XXX KDASSERT */
+			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
+			lastaddr = m->m_ext.ext_paddr +
+			    (m->m_data - m->m_ext.ext_buf);
+ have_addr:
+			if (first == 0 &&
+			    ++seg >= map->_dm_segcnt) {
+				error = EFBIG;
+				break;
+			}
+			/*
+			 * Make sure we're in an allowed DMA range.
+			 */
+			if (t->_ranges != NULL) {
+				/* XXX cache last result? */
+				dr = _bus_dma_inrange(t->_ranges, t->_nranges,
+				    lastaddr);
+				if (dr == NULL) {
+					error = EINVAL;
+					break;
+				}
+			
+				/*
+				 * In a valid DMA range.  Translate the
+				 * physical memory address to an address
+				 * in the DMA window.
+				 */
+				lastaddr = (lastaddr - dr->dr_sysbase) +
+				    dr->dr_busbase;
+			}
+			map->dm_segs[seg].ds_addr = lastaddr;
+			map->dm_segs[seg].ds_len = m->m_len;
+			lastaddr += m->m_len;
+			break;
+
+		case 0:
+			lastaddr = m->m_paddr + M_BUFOFFSET(m) +
+			    (m->m_data - M_BUFADDR(m));
+			goto have_addr;
+
+		default:
+			error = _bus_dmamap_load_buffer(t, map, m->m_data,
+			    m->m_len, NULL, flags, &lastaddr, &seg, first);
+		}
 		first = 0;
 	}
 	if (error == 0) {
@@ -409,10 +461,29 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		maddr = mtod(m, vaddr_t);
 		maddr += moff;
 
+		/*
+		 * We can save a lot of work here if we know the mapping
+		 * is read-only at the MMU:
+		 *
+		 * If a mapping is read-only, no dirty cache blocks will
+		 * exist for it.  If a writable mapping was made read-only,
+		 * we know any dirty cache lines for the range will have
+		 * been cleaned for us already.  Therefore, if the upper
+		 * layer can tell us we have a read-only mapping, we can
+		 * skip all cache cleaning.
+		 *
+		 * NOTE: This only works if we know the pmap cleans pages
+		 * before making a read-write -> read-only transition.  If
+		 * this ever becomes non-true (e.g. Physically Indexed
+		 * cache), this will have to be revisited.
+		 */
 		switch (ops) {
 		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			cpu_dcache_wbinv_range(maddr, minlen);
-			break;
+			if (! M_ROMAP(m)) {
+				cpu_dcache_wbinv_range(maddr, minlen);
+				break;
+			}
+			/* else FALLTHROUGH */
 
 		case BUS_DMASYNC_PREREAD:
 			if (((maddr | minlen) & arm_dcache_align_mask) == 0)
@@ -422,7 +493,8 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
-			cpu_dcache_wb_range(maddr, minlen);
+			if (! M_ROMAP(m))
+				cpu_dcache_wb_range(maddr, minlen);
 			break;
 		}
 		moff = 0;
