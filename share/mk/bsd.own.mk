@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.58 1998/01/15 09:37:25 agc Exp $
+#	$NetBSD: bsd.own.mk,v 1.59 1998/02/23 10:09:31 jonathan Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -72,14 +72,30 @@ STRIPFLAG?=	-s
 NOPIC=
 .endif
 
+# Data-driven table using make variables to control how 
+# toolchain-dependent targets and shared libraries are built
+# for different platforms and object formats.
+# OBJECT_FMT:		currently either "ELF" or "a.out".
+# SHLIB_TYPE:		"ELF" or "a.out" or "" to force static libraries.
+#
+.if (${MACHINE_ARCH} == "alpha") || \
+    (${MACHINE_ARCH} == "mips") || \
+    (${MACHINE_ARCH} == "powerpc")
+OBJECT_FMT?=ELF
+.else
+OBJECT_FMT?=a.out
+.endif
+
+
 # No lint, for now.
 .if !defined(NONOLINT)
 NOLINT=
 .endif
 
-# Profiling doesn't work on PowerPC yet.
+# Profiling and shared libraries don't work on PowerPC yet.
 .if (${MACHINE_ARCH} == "powerpc")
 NOPROFILE=
+NOSHLIB=
 .endif
 
 TARGETS+=	all clean cleandir depend includes install lint obj regress \

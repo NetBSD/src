@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.10 1997/10/25 06:18:27 cjs Exp $
+#	$NetBSD: Makefile,v 1.11 1998/02/23 10:09:32 jonathan Exp $
 
-.if ${MACHINE} == "alpha"
+.include <bsd.own.mk>			# for OBJECT_FMT definition
+
+.if ((${OBJECT_FMT} == "ELF") && !defined(NOSHLIB)) && \
+    (${MACHINE_ARCH} != "mips")		# mips uses non-native ld.so
 PROG=	ld.elf_so
 .endif
 
