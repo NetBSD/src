@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 1995/06/28 01:48:12 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6 1995/06/28 02:30:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -61,8 +61,8 @@
 #include <alpha/tc/tc.h>
 #include <alpha/tc/asic.h>
 #include <alpha/tc/if_levar.h>
-#include <dev/ic/am7990.h>
-#include <dev/lancevar.h>
+#include <dev/ic/am7990reg.h>
+#include <dev/ic/am7990var.h>
 
 #define	SPARSE
 
@@ -404,4 +404,4 @@ copyfrombuf_gap2(sc, tov, boff, len)
 		*to = *bptr & 0xff;
 }
 
-#include <dev/lance.c>
+#include <dev/ic/am7990.c>
