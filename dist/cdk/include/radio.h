@@ -1,7 +1,7 @@
 #ifndef CDKRADIO_H
 #define CDKRADIO_H	1
 
-#include <cdk.h>
+#include <cdk/cdk.h>
 
 /*
  * Description of the widget:

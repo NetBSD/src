@@ -1,7 +1,7 @@
 #ifndef CDKENTRY_H
 #define CDKENTRY_H	1
 
-#include <cdk.h>
+#include <cdk/cdk.h>
 
 /*
  * Description of the widget:
