@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_util.h,v 1.11 2002/11/29 16:32:50 jdolecek Exp $	*/
+/*	$NetBSD: compat_util.h,v 1.12 2002/11/29 17:08:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -81,6 +81,8 @@ void	*stackgap_alloc(const struct proc *, caddr_t *, size_t);
 
 int emul_find(struct proc *, caddr_t *, const char *, const char *,
 		   const char **, int);
+
+int emul_find_interp(struct proc *, const char *, char *);
 
 unsigned long emul_flags_translate(const struct emul_flags_xtab *tab,
 				   unsigned long in, unsigned long *leftover);
