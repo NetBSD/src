@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
+/*	$NetBSD: fat.c,v 1.9 1998/01/22 18:48:44 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $");
+__RCSID("$NetBSD: fat.c,v 1.9 1998/01/22 18:48:44 ws Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $");
 
 static int checkclnum __P((struct bootblock *, int, cl_t, cl_t *));
 static int clustdiffer __P((cl_t, cl_t *, cl_t *, int));
+static int tryclear __P((struct bootblock *, struct fatEntry *, cl_t, cl_t *));
 
 /*
  * Check a cluster number for valid value
@@ -210,6 +211,8 @@ char *
 rsrvdcltype(cl)
 	cl_t cl;
 {
+	if (cl == CLUST_FREE)
+		return "free";
 	if (cl < CLUST_BAD)
 		return "reserved";
 	if (cl > CLUST_BAD)
@@ -224,9 +227,10 @@ clustdiffer(cl, cp1, cp2, fatnum)
 	cl_t *cp2;
 	int fatnum;
 {
-	if (*cp1 >= CLUST_RSRVD) {
-		if (*cp2 >= CLUST_RSRVD) {
-			if ((*cp1 < CLUST_BAD && *cp2 < CLUST_BAD)
+	if (*cp1 == CLUST_FREE || *cp1 >= CLUST_RSRVD) {
+		if (*cp2 == CLUST_FREE || *cp2 >= CLUST_RSRVD) {
+			if ((*cp1 != CLUST_FREE && *cp1 < CLUST_BAD
+			     && *cp2 != CLUST_FREE && *cp2 < CLUST_BAD)
 			    || (*cp1 > CLUST_BAD && *cp2 > CLUST_BAD)) {
 				pwarn("Cluster %u is marked %s with different indicators, ",
 				      cl, rsrvdcltype(*cp1));
@@ -260,7 +264,7 @@ clustdiffer(cl, cp1, cp2, fatnum)
 		}
 		return FSFATAL;
 	}
-	if (*cp2 >= CLUST_RSRVD) {
+	if (*cp2 == CLUST_FREE || *cp2 >= CLUST_RSRVD) {
 		pwarn("Cluster %u continues with cluster %u in FAT 0, but is marked %s in FAT %d\n",
 		      cl, *cp1, rsrvdcltype(*cp2), fatnum);
 		if (ask(0, "Use continuation from FAT 0")) {
@@ -323,6 +327,23 @@ clearchain(boot, fat, head)
 	}
 }
 
+int
+tryclear(boot, fat, head, trunc)
+	struct bootblock *boot;
+	struct fatEntry *fat;
+	cl_t head;
+	cl_t *trunc;
+{
+	if (ask(0, "Clear chain starting at %u", head)) {
+		clearchain(boot, fat, head);
+		return FSFATMOD;
+	} else if (ask(0, "Truncate")) {
+		*trunc = CLUST_EOF;
+		return FSFATMOD;
+	} else
+		return FSERROR;
+}
+
 /*
  * Check a complete FAT in-memory for crosslinks
  */
@@ -331,7 +352,7 @@ checkfat(boot, fat)
 	struct bootblock *boot;
 	struct fatEntry *fat;
 {
-	cl_t head, p, h;
+	cl_t head, p, h, n;
 	u_int len;
 	int ret = 0;
 	int conf;
@@ -370,54 +391,35 @@ checkfat(boot, fat)
 
 		/* follow the chain to its end (hopefully) */
 		for (p = head;
-		     fat[p].next >= CLUST_FIRST && fat[p].next < boot->NumClusters;
-		     p = fat[p].next)
-			if (fat[fat[p].next].head != head)
+		     (n = fat[p].next) >= CLUST_FIRST && n < boot->NumClusters;
+		     p = n)
+			if (fat[n].head != head)
 				break;
-		if (fat[p].next >= CLUST_EOFS)
+		if (n >= CLUST_EOFS)
 			continue;
 
-		if (fat[p].next == 0) {
-			pwarn("Cluster chain starting at %u ends with free cluster\n", head);
-			if (ask(0, "Clear chain starting at %u", head)) {
-				clearchain(boot, fat, head);
-				ret |= FSFATMOD;
-			} else
-				ret |= FSERROR;
-			continue;
-		}
-		if (fat[p].next >= CLUST_RSRVD) {
+		if (n == CLUST_FREE || n >= CLUST_RSRVD) {
 			pwarn("Cluster chain starting at %u ends with cluster marked %s\n",
-			      head, rsrvdcltype(fat[p].next));
-			if (ask(0, "Clear chain starting at %u", head)) {
-				clearchain(boot, fat, head);
-				ret |= FSFATMOD;
-			} else
-				ret |= FSERROR;
+			      head, rsrvdcltype(n));
+			ret |= tryclear(boot, fat, head, &fat[p].next);
 			continue;
 		}
-		if (fat[p].next < CLUST_FIRST || fat[p].next >= boot->NumClusters) {
+		if (n < CLUST_FIRST || n >= boot->NumClusters) {
 			pwarn("Cluster chain starting at %u ends with cluster out of range (%u)\n",
-			      head, fat[p].next);
-			if (ask(0, "Clear chain starting at %u", head)) {
-				clearchain(boot, fat, head);
-				ret |= FSFATMOD;
-			} else
-				ret |= FSERROR;
+			      head, n);
+			ret |= tryclear(boot, fat, head, &fat[p].next);
+			continue;
 		}
 		pwarn("Cluster chains starting at %u and %u are linked at cluster %u\n",
-		      head, fat[p].head, p);
-		conf = FSERROR;
-		if (ask(0, "Clear chain starting at %u", head)) {
-			clearchain(boot, fat, head);
-			conf = FSFATMOD;
-		}
-		if (ask(0, "Clear chain starting at %u", h = fat[p].head)) {
+		      head, fat[n].head, n);
+		conf = tryclear(boot, fat, head, &fat[p].next);
+		if (ask(0, "Clear chain starting at %u", h = fat[n].head)) {
 			if (conf == FSERROR) {
 				/*
 				 * Transfer the common chain to the one not cleared above.
 				 */
-				for (; p >= CLUST_FIRST && p < boot->NumClusters;
+				for (p = n;
+				     p >= CLUST_FIRST && p < boot->NumClusters;
 				     p = fat[p].next) {
 					if (h != fat[p].head) {
 						/*
