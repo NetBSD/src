@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)utilities.c	5.30 (Berkeley) 7/26/91";*/
-static char rcsid[] = "$Id: utilities.c,v 1.4 1993/08/01 18:27:09 mycroft Exp $";
+static char rcsid[] = "$Id: utilities.c,v 1.5 1994/03/28 06:49:06 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,7 +47,6 @@ static char rcsid[] = "$Id: utilities.c,v 1.4 1993/08/01 18:27:09 mycroft Exp $"
 #include "fsck.h"
 
 long	diskreads, totalreads;	/* Disk cache statistics */
-long	lseek();
 
 ftypeok(dp)
 	struct dinode *dp;
