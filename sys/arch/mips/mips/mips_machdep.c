@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.17 2002/08/01 02:42:34 nathanw Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.18 2002/08/02 09:27:31 gmcgarry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.17 2002/08/01 02:42:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.18 2002/08/02 09:27:31 gmcgarry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -1089,10 +1089,6 @@ setregs(l, pack, stack)
 	l->l_md.md_ss_addr = 0;
 }
 
-struct sigframe {
-	struct	sigcontext sf_sc;	/* actual context */
-};
-
 #ifdef DEBUG
 int sigdebug = 0;
 int sigpid = 0;
@@ -1223,7 +1219,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	/* Remember that we're now on the signal stack. */
