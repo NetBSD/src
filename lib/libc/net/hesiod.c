@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.12 2000/01/22 22:19:15 mycroft Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.13 2000/06/18 04:07:03 ghudson Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -52,7 +52,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.12 2000/01/22 22:19:15 mycroft Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.13 2000/06/18 04:07:03 ghudson Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -413,8 +413,10 @@ get_txt_records(qclass, name)
 		/* Construct the query. */
 	n = res_mkquery(QUERY, name, qclass, T_TXT, NULL, 0,
 	    NULL, qbuf, PACKETSZ);
-	if (n < 0)
+	if (n < 0) {
+		errno = EMSGSIZE;
 		return NULL;
+	}
 
 		/* Send the query. */
 	n = res_send(qbuf, n, abuf, MAX_HESRESP);
