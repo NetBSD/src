@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17 1999/04/28 02:03:13 cgd Exp $
+	$NetBSD: syscalls.master,v 1.18 1999/04/28 02:34:25 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -155,8 +155,8 @@
 90	NOARGS		{ int sys_dup2(u_int from, u_int to); }
 91	STD		{ int osf1_sys_fstat(int fd, void *sb); }
 92	STD		{ int osf1_sys_fcntl(int fd, int cmd, void *arg); }
-93	NOARGS		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
-			    fd_set *ex, struct timeval *tv); }
+93	STD		{ int osf1_sys_select(u_int nd, fd_set *in, \
+			    fd_set *ou, fd_set *ex, struct timeval *tv); }
 94	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 95	NOARGS		{ int sys_fsync(int fd); }

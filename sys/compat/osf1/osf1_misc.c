@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.29 1999/04/28 02:02:50 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.30 1999/04/28 02:34:25 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -1245,5 +1245,51 @@ osf1_sys_gettimeofday(p, v, retval)
 			    (caddr_t)SCARG(uap, tzp), sizeof otv);
 		}
 	}
+	return (error);
+}
+
+int
+osf1_sys_select(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_select_args *uap = v;
+	struct sys_select_args a;
+	struct osf1_timeval otv;
+	struct timeval tv;
+	int error;
+	caddr_t sg;
+
+	SCARG(&a, nd) = SCARG(uap, nd);
+	SCARG(&a, in) = SCARG(uap, in);
+	SCARG(&a, ou) = SCARG(uap, ou);
+	SCARG(&a, ex) = SCARG(uap, ex);
+
+	error = 0;
+	if (SCARG(uap, tv) == NULL)
+		SCARG(&a, tv) = NULL;
+	else {
+		sg = stackgap_init(p->p_emul);
+		SCARG(&a, tv) = stackgap_alloc(&sg, sizeof tv);
+
+		/* get the OSF/1 timeval argument */
+		error = copyin((caddr_t)SCARG(uap, tv),
+		    (caddr_t)&otv, sizeof otv);
+		if (error == 0) {
+
+			/* fill in and copy out the BSD timeval argument */
+			memset(&tv, 0, sizeof tv);
+			tv.tv_sec = otv.tv_sec;
+			tv.tv_usec = otv.tv_usec;
+
+			error = copyout((caddr_t)&tv,
+			    (caddr_t)SCARG(&a, tv), sizeof tv);
+		}
+	}
+
+	if (error == 0)
+		error = sys_select(p, &a, retval);
+
 	return (error);
 }
