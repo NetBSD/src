@@ -5,7 +5,7 @@
 .TH TOP 1 Local
 .UC 4
 .SH NAME
-top \- display and update information about the top cpu processes
+top \- display and update information about the top CPU processes
 .SH SYNOPSIS
 .B top
 [
@@ -40,7 +40,7 @@ If standard output is an intelligent terminal (see below) then
 as many processes as will fit on the terminal screen are displayed
 by default.  Otherwise, a good number of them are shown (around 20).
 .\}
-Raw cpu percentage is used to rank the processes.  If
+Raw CPU percentage is used to rank the processes.  If
 .I number
 is given, then the top
 .I number
@@ -60,8 +60,8 @@ terminal.
 .SH OPTIONS
 .TP
 .B \-S
-Toggle displaying of system processes in the display.  Normally, system
-processes such as the pager and the swapper are shown.
+Toggle displaying of system processes.  Normally, system processes such as
+the pager and the swapper are shown.
 .TP
 .B \-b
 Use \*(lqbatch\*(rq mode.  In this mode, all input from the terminal is
@@ -82,7 +82,7 @@ Do not display idle processes.
 By default, top displays both active and idle processes.
 .TP
 .B \-n
-Use \*(lqnon-interactive\*(rq mode.  This is indentical to \*(lqbatch\*(rq
+Use \*(lqnon-interactive\*(rq mode.  This is identical to \*(lqbatch\*(rq
 mode.
 .TP
 .B \-q
@@ -93,11 +93,11 @@ being very sluggish to improve the possibility of discovering the problem.
 This option can only be used by root.
 .TP
 .B \-u
-Do not take the time to map uid numbers to usernames.  Normally,
+Do not take the time to map UID numbers to usernames.  Normally,
 .I top
 will read as much of the file \*(lq/etc/passwd\*(rq as is necessary to map
 all the user id numbers it encounters into login names.  This option
-disables all that, while possibly decreasing execution time.  The uid
+disables all that, while possibly decreasing execution time.  The UID
 numbers are displayed instead of the names.
 .TP
 .B \-v
@@ -131,7 +131,7 @@ not all operating systems support this option.
 Show only those processes owned by
 .IR username .
 This option currently only accepts usernames and will not understand
-uid numbers.
+UID numbers.
 .PP
 Both
 .I count
@@ -214,6 +214,9 @@ Change the number of processes to display (prompt for new number).
 Change the number of seconds to delay between displays
 (prompt for new number).
 .TP
+.B S
+Toggle between showing and not showing system processes.
+.TP
 .B k
 Send a signal (\*(lqkill\*(rq by default) to a list of processes.  This
 acts similarly to the command
@@ -231,7 +234,7 @@ to all users will be displayed.
 .TP
 .B o
 Change the order in which the display is sorted.  This command is not
-available on all systems.  The sort key names vary fron system to system
+available on all systems.  The sort key names vary from system to system
 but usually include:  \*(lqcpu\*(rq, \*(lqres\*(rq, \*(lqsize\*(rq,
 \*(lqtime\*(rq.  The default is cpu.
 .TP
@@ -262,7 +265,7 @@ the number of processes in each state
 (sleeping, running, starting, zombies, and stopped),
 and a percentage of time spent in each of the processor states
 (user, nice, system, and idle).
-It also includes information about physial and virtual memory allocation.
+It also includes information about physical and virtual memory allocation.
 .PP
 The remainder of the screen displays information about individual
 processes.  This display is similar in spirit to
@@ -276,8 +279,9 @@ NICE is the nice amount (in the range \-20 to 20),
 SIZE is the total size of the process (text, data, and stack),
 RES is the current amount of resident memory (both SIZE and RES are
 given in kilobytes),
-STATE is the current state (one of \*(lqsleep\*(rq, \*(lqWAIT\*(rq,
-\*(lqrun\*(rq, \*(lqidl\*(rq, \*(lqzomb\*(rq, or \*(lqstop\*(rq),
+STATE is the current state (one of \*(lqSTART\*(rq, \*(lqRUN\*(rq,
+\*(lqSTOP\*(rq, \*(lqZOMB\*(rq, \*(lqDEAD\*(rq, or \*(lqCPU\*(rq)
+or wait channel if the state is SLEEP,
 TIME is the number of system and user cpu seconds that the process has used,
 WCPU, when displayed, is the weighted cpu percentage (this is the same
 value that
@@ -287,6 +291,8 @@ CPU is the raw percentage and is the field that is sorted to determine
 the order of the processes, and
 COMMAND is the name of the command that the process is currently running
 (if the process is swapped out, this column is marked \*(lq<swapped>\*(rq).
+On multi-processor systems,
+the STATE field may be followed by a slash and cpu number.
 .SH NOTES
 The \*(lqABANDONED\*(rq state (known in the kernel as \*(lqSWAIT\*(rq) was
 abandoned, thus the name.  A process should never end up in this state.
@@ -301,7 +307,7 @@ TOP	user-configurable defaults for options.
 .br
 /dev/mem		physical memory
 .br
-/etc/passwd		used to map uid numbers to user names
+/etc/passwd		used to map UID numbers to user names
 .br
 /vmunix		system image
 .SH BUGS
@@ -332,5 +338,6 @@ close approximation to reality.
 kill(1),
 ps(1),
 stty(1),
+systat(1),
 mem(4),
 renice(8)
