@@ -1,7 +1,6 @@
 machine da30
 
 options		AVAGO
-#options		GENERIC
 options		DIAGNOSTIC, DEBUG
 options		INET
 options		FFS
@@ -12,13 +11,14 @@ options 	COMPAT_43
 options 	FIFO
 options 	MFS
 options		OLD_EXEC
-options		TIMEZONE = "-600", DST = 2, MAXFDESCS = 2048
+options		TIMEZONE = "-600", DST = 2
 options		DEVPAGER, SWAPPAGER, VNODEPAGER
-options		MSDOSFS
+#options	MSDOSFS
+options		ETHER
 maxusers	2
 
 config	netbsd		root on id0a swap on id0b
-config	wdnetbsd	root on wd0a swap on wd0b
+#config	wdnetbsd	root on wd0a swap on wd0b
 
 pseudo-device	sl
 pseudo-device	ppp 2

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dkbad.c	7.2 (Berkeley) 12/16/90
- *	$Id: dkbad.c,v 1.1 1994/02/22 23:49:36 paulus Exp $
+ *	from: @(#)dkbad.c	8.2 (Berkeley) 1/12/94
+ *	$Id: dkbad.c,v 1.2 1994/06/18 12:09:49 paulus Exp $
  */
 
 #ifndef NOBADSECT

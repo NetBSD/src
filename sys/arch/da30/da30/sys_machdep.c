@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
- *	$Id: sys_machdep.c,v 1.1 1994/02/22 23:49:58 paulus Exp $
+ *	from: @(#)sys_machdep.c	8.2 (Berkeley) 1/13/94
+ *	$Id: sys_machdep.c,v 1.2 1994/06/18 12:10:07 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -46,15 +46,18 @@
 #include <sys/buf.h>
 #include <sys/trace.h>
 
+#include <vm/vm.h>
+
 #ifdef TRACE
 int	nvualarm;
 
+struct vtrace_args {
+	int	request;
+	int	value;
+};
 vtrace(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		int	request;
-		int	value;
-	} *uap;
+	register struct vtrace_args *uap;
 	int *retval;
 {
 	int vdoualarm();
@@ -79,7 +82,7 @@ vtrace(p, uap, retval)
 		if (uap->value <= 0 || uap->value > 60 * hz || nvualarm > 5)
 			return (EINVAL);
 		nvualarm++;
-		timeout(vdoualarm, (caddr_t)p->p_pid, uap->value);
+		timeout(vdoualarm, (void *)p->p_pid, uap->value);
 		break;
 
 	case VTR_STAMP:
@@ -90,11 +93,12 @@ vtrace(p, uap, retval)
 }
 
 vdoualarm(arg)
-	int arg;
+	void *arg;
 {
+	register int pid = (int)arg;
 	register struct proc *p;
 
-	p = pfind(arg);
+	p = pfind(pid);
 	if (p)
 		psignal(p, 16);
 	nvualarm--;
@@ -110,6 +114,10 @@ vdoualarm(arg)
 #define CC_EXTPURGE	0x80000000
 /* XXX end should be */
 
+/*
+ * For lengths up to 1024 we do all affected lines, up to 2*NBPG we
+ * do pages, above that we do the entire cache.
+ */
 /*ARGSUSED1*/
 cachectl(req, addr, len)
 	int req;

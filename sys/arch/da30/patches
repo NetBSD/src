@@ -1,196 +1,64 @@
-*** ./kern/tty_compat.c.orig	Thu Feb 10 22:15:55 1994
---- ./kern/tty_compat.c	Sun Feb 13 22:54:04 1994
+*** spec_vnops.c.orig	Thu Jun  9 20:16:12 1994
+--- spec_vnops.c	Sat Jun 18 17:14:49 1994
 ***************
-*** 287,293 ****
-  		flags |= DECCTQ;
-  	flags |= lflag&(ECHO|MDMBUF|TOSTOP|FLUSHO|NOHANG|PENDIN|NOFLSH);
-  if (ttydebug)
-! 	printf("getflags: %x\n", flags);
-  	return (flags);
-  }
-  
---- 287,294 ----
-  		flags |= DECCTQ;
-  	flags |= lflag&(ECHO|MDMBUF|TOSTOP|FLUSHO|NOHANG|PENDIN|NOFLSH);
-  if (ttydebug)
-! 	printf("getflags: i%x,l%x,c%x,o%x -> %x\n", iflag, lflag, cflag,
-! 	       oflag, flags);
-  	return (flags);
-  }
-  
-***************
-*** 340,346 ****
-  			iflag &= ~ISTRIP;
-  	} else {
-  		cflag |= CS7;
-! 		if ((flags&(EVENP|ODDP)) && (flags&ANYP) != ANYP)
-  			cflag |= PARENB;
-  		iflag |= ISTRIP;
-  	}
---- 341,347 ----
-  			iflag &= ~ISTRIP;
-  	} else {
-  		cflag |= CS7;
-! 		if ((flags&(EVENP|ODDP)))
-  			cflag |= PARENB;
-  		iflag |= ISTRIP;
-  	}
-***************
-*** 358,363 ****
---- 359,368 ----
-  		iflag |= IXOFF;
-  	else
-  		iflag &= ~IXOFF;
-+ 	if (ttydebug)
-+ 	  printf("flags=%x: i%x>%x, l%x>%x, c%x>%x, o%x>%x\n", flags,
-+ 		 t->c_iflag, iflag, t->c_lflag, lflag,
-+ 		 t->c_cflag, cflag, t->c_oflag, oflag);
-  	t->c_iflag = iflag;
-  	t->c_oflag = oflag;
-  	t->c_lflag = lflag;
-***************
-*** 410,416 ****
-  			iflag &= ~ISTRIP;
-  	} else if ((flags&RAW) == 0) {
-  		cflag |= CS7;
-! 		if ((flags&(EVENP|ODDP)) && (flags&ANYP) != ANYP)
-  			cflag |= PARENB;
-  		oflag |= ISTRIP|OPOST;
-  	}
---- 415,421 ----
-  			iflag &= ~ISTRIP;
-  	} else if ((flags&RAW) == 0) {
-  		cflag |= CS7;
-! 		if ((flags&(EVENP|ODDP)))
-  			cflag |= PARENB;
-  		oflag |= ISTRIP|OPOST;
-  	}
-*** ./kern/subr_mcount.c.orig	Sun Feb 13 22:57:45 1994
---- ./kern/subr_mcount.c	Sun Feb 13 22:58:55 1994
-***************
-*** 137,143 ****
-  #if defined(tahoe)
-  	Fix Me!!
-  #endif
-! #if defined(hp300) || defined(amiga)
-  	/*
-  	 * selfpc = pc pushed by mcount jsr,
-  	 * frompcindex = pc pushed by jsr into self.
---- 137,143 ----
-  #if defined(tahoe)
-  	Fix Me!!
-  #endif
-! #if defined(hp300) || defined(amiga) || defined(da30)
-  	/*
-  	 * selfpc = pc pushed by mcount jsr,
-  	 * frompcindex = pc pushed by jsr into self.
-***************
-*** 175,181 ****
-  	asm("	movl (fp),r11");
-  	asm("	movl -8(r11),r11");	/* frompcindex = 1 callf frame back */
-  #endif
-! #if defined(hp300) || defined(amiga)
-  	Fix Me!!
-  #endif
-  #endif /* not __GNUC__ */
---- 175,181 ----
-  	asm("	movl (fp),r11");
-  	asm("	movl -8(r11),r11");	/* frompcindex = 1 callf frame back */
-  #endif
-! #if defined(hp300) || defined(amiga) || defined(da30)
-  	Fix Me!!
-  #endif
-  #endif /* not __GNUC__ */
-***************
-*** 185,191 ****
-  	 * this requires that splhigh() and splx() below
-  	 * do NOT call mcount!
-  	 */
-! #if defined(hp300) || defined(amiga)
-  	asm("movw	sr,%0" : "=g" (s));
-  	asm("movw	#0x2700,sr");
-  #else
---- 185,191 ----
-  	 * this requires that splhigh() and splx() below
-  	 * do NOT call mcount!
-  	 */
-! #if defined(hp300) || defined(amiga) || defined(da30)
-  	asm("movw	sr,%0" : "=g" (s));
-  	asm("movw	#0x2700,sr");
-  #else
-***************
-*** 268,274 ****
-  
-  	}
-  done:
-! #if defined(hp300) || defined(amiga)
-  	asm("movw	%0,sr" : : "g" (s));
-  #else
-  	splx(s);
---- 268,274 ----
-  
-  	}
-  done:
-! #if defined(hp300) || defined(amiga) || defined(da30)
-  	asm("movw	%0,sr" : : "g" (s));
-  #else
-  	splx(s);
-*** ./miscfs/specfs/spec_vnops.c.orig	Thu Jan 27 21:32:20 1994
---- ./miscfs/specfs/spec_vnops.c	Sun Feb 13 22:54:06 1994
-***************
-*** 168,173 ****
---- 168,174 ----
+*** 217,223 ****
+   	struct proc *p = uio->uio_procp;
   	struct buf *bp;
-  	daddr_t bn;
-  	long bsize, bscale;
-+ 	int ssize;
+  	daddr_t bn, nextbn;
+! 	long bsize, bscale;
   	struct partinfo dpart;
-  	register int n, on;
+  	int n, on, majordev, (*ioctl)();
+  	int error = 0;
+--- 217,223 ----
+   	struct proc *p = uio->uio_procp;
+  	struct buf *bp;
+  	daddr_t bn, nextbn;
+! 	long bsize, bscale, ssize;
+  	struct partinfo dpart;
+  	int n, on, majordev, (*ioctl)();
   	int error = 0;
 ***************
-*** 200,217 ****
+*** 245,260 ****
   		if (uio->uio_offset < 0)
   			return (EINVAL);
   		bsize = BLKDEV_IOSIZE;
-  		if ((*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev, DIOCGPART,
-  		    (caddr_t)&dpart, FREAD, p) == 0) {
-  			if (dpart.part->p_fstype == FS_BSDFFS &&
-  			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
-  				bsize = dpart.part->p_frag *
-  				    dpart.part->p_fsize;
-! 		}
-  		if (bsize > MAXBSIZE)
-  			bsize = MAXBSIZE;
+  		dev = vp->v_rdev;
+  		if ((majordev = major(dev)) < nblkdev &&
+  		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
+! 		    (*ioctl)(dev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0 &&
+! 		    dpart.part->p_fstype == FS_BSDFFS &&
+! 		    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
+! 			bsize = dpart.part->p_frag * dpart.part->p_fsize;
 ! 		bscale = bsize / DEV_BSIZE;
   		do {
 ! 			bn = (uio->uio_offset / DEV_BSIZE) &~ (bscale - 1);
   			on = uio->uio_offset % bsize;
-  			n = MIN((unsigned)(bsize - on), uio->uio_resid);
-  			if (vp->v_lastr + bscale == bn)
---- 201,221 ----
+  			n = min((unsigned)(bsize - on), uio->uio_resid);
+  			if (vp->v_lastr + bscale == bn) {
+--- 245,265 ----
   		if (uio->uio_offset < 0)
   			return (EINVAL);
   		bsize = BLKDEV_IOSIZE;
 + 		ssize = DEV_BSIZE;
-  		if ((*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev, DIOCGPART,
-  		    (caddr_t)&dpart, FREAD, p) == 0) {
-+ 			ssize = dpart.disklab->d_secsize;
-  			if (dpart.part->p_fstype == FS_BSDFFS &&
-  			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
-  				bsize = dpart.part->p_frag *
-  				    dpart.part->p_fsize;
-! 		} else
-! 			bdevsw[major(vp->v_rdev)].d_psize(vp->v_rdev, &ssize);
-  		if (bsize > MAXBSIZE)
-  			bsize = MAXBSIZE;
+  		dev = vp->v_rdev;
+  		if ((majordev = major(dev)) < nblkdev &&
+  		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
+! 		    (*ioctl)(dev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
+! 			if (dpart.part->p_fstype == FS_BSDFFS &&
+! 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
+! 				bsize = dpart.part->p_frag *
+! 				    dpart.part->p_fsize;
+! 			if (dpart.disklab->d_secsize != 0)
+! 				ssize = dpart.disklab->d_secsize;
+! 		}
 ! 		bscale = bsize / ssize;
   		do {
 ! 			bn = (uio->uio_offset / ssize) &~ (bscale - 1);
   			on = uio->uio_offset % bsize;
-  			n = MIN((unsigned)(bsize - on), uio->uio_resid);
-  			if (vp->v_lastr + bscale == bn)
+  			n = min((unsigned)(bsize - on), uio->uio_resid);
+  			if (vp->v_lastr + bscale == bn) {
 ***************
-*** 254,260 ****
+*** 299,305 ****
   	struct proc *p = uio->uio_procp;
   	struct buf *bp;
   	daddr_t bn;
@@ -198,7 +66,7 @@
   	struct partinfo dpart;
   	register int n, on;
   	int error = 0;
---- 258,264 ----
+--- 304,310 ----
   	struct proc *p = uio->uio_procp;
   	struct buf *bp;
   	daddr_t bn;
@@ -207,7 +75,7 @@
   	register int n, on;
   	int error = 0;
 ***************
-*** 287,304 ****
+*** 326,341 ****
   		if (uio->uio_offset < 0)
   			return (EINVAL);
   		bsize = BLKDEV_IOSIZE;
@@ -217,186 +85,30 @@
   			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
   				bsize = dpart.part->p_frag *
   				    dpart.part->p_fsize;
-! 		}
-  		if (bsize > MAXBSIZE)
-  			bsize = MAXBSIZE;
+  		}
 ! 		blkmask = (bsize / DEV_BSIZE) - 1;
   		do {
 ! 			bn = (uio->uio_offset / DEV_BSIZE) &~ blkmask;
   			on = uio->uio_offset % bsize;
-  			n = MIN((unsigned)(bsize - on), uio->uio_resid);
+  			n = min((unsigned)(bsize - on), uio->uio_resid);
   			if (n == bsize)
---- 291,311 ----
+--- 331,349 ----
   		if (uio->uio_offset < 0)
   			return (EINVAL);
   		bsize = BLKDEV_IOSIZE;
 + 		ssize = DEV_BSIZE;
   		if ((*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev, DIOCGPART,
   		    (caddr_t)&dpart, FREAD, p) == 0) {
-+ 			ssize = dpart.disklab->d_secsize;
   			if (dpart.part->p_fstype == FS_BSDFFS &&
   			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
   				bsize = dpart.part->p_frag *
   				    dpart.part->p_fsize;
-! 		} else
-! 			bdevsw[major(vp->v_rdev)].d_psize(vp->v_rdev, &ssize);
-  		if (bsize > MAXBSIZE)
-  			bsize = MAXBSIZE;
++ 			if (dpart.disklab->d_secsize != 0)
++ 				ssize = dpart.disklab->d_secsize;
+  		}
 ! 		blkmask = (bsize / ssize) - 1;
   		do {
 ! 			bn = (uio->uio_offset / ssize) &~ blkmask;
   			on = uio->uio_offset % bsize;
-  			n = MIN((unsigned)(bsize - on), uio->uio_resid);
+  			n = min((unsigned)(bsize - on), uio->uio_resid);
   			if (n == bsize)
-*** ./msdosfs/bpb.h.orig	Fri Dec 17 18:00:02 1993
---- ./msdosfs/bpb.h	Sun Feb 13 22:54:06 1994
-***************
-*** 57,71 ****
-   * and longs are just character arrays of the appropriate length.  This is
-   * because the compiler forces shorts and longs to align on word or
-   * halfword boundaries.
-   */
-  #include <machine/endian.h>
-! #if BYTE_ORDER == LITTLE_ENDIAN
-  #define	getushort(x)	*((u_short *)(x))
-  #define	getulong(x)	*((u_long *)(x))
-  #define	putushort(p, v)	(*((u_short *)(p)) = (v))
-  #define	putulong(p, v)	(*((u_long *)(p)) = (v))
-- #else
-  
-  #endif
-  
-  /*
---- 57,81 ----
-   * and longs are just character arrays of the appropriate length.  This is
-   * because the compiler forces shorts and longs to align on word or
-   * halfword boundaries.
-+  *
-+  * XXX The little-endian code here assumes that the processor can access
-+  * 16-bit and 32-bit quantities on byte boundaries.  If this is not true,
-+  * use the macros for the big-endian case.
-   */
-  #include <machine/endian.h>
-! #if BYTE_ORDER == LITTLE_ENDIAN		/* && can do unaligned accesses */
-  #define	getushort(x)	*((u_short *)(x))
-  #define	getulong(x)	*((u_long *)(x))
-  #define	putushort(p, v)	(*((u_short *)(p)) = (v))
-  #define	putulong(p, v)	(*((u_long *)(p)) = (v))
-  
-+ #else
-+ #define getushort(x)	(((u_char *)(x))[0] + (((u_char *)(x))[1] << 8))
-+ #define getulong(x)	(getushort(x) + (getushort(((u_char *)(x)) + 2)) << 16)
-+ #define putushort(p, v)	(((u_char *)(p))[0] = (v), \
-+ 			 ((u_char *)(p))[1] = (v) >> 8)
-+ #define putulong(p, v)	(putushort(p, v), \
-+ 			 putushort(((u_char *)(p)) + 2, (v) >> 16)
-  #endif
-  
-  /*
-*** ./sys/conf.h.orig	Sun Feb 13 23:10:30 1994
---- ./sys/conf.h	Sun Feb 13 23:01:23 1994
-***************
-*** 56,62 ****
-  	int	(*d_ioctl)	__P((dev_t dev, int cmd, caddr_t data,
-  				     int fflag, struct proc *p));
-  	int	(*d_dump)	();	/* parameters vary by architecture */
-! 	int	(*d_psize)	__P((dev_t dev));
-  	int	d_flags;
-  };
-  
---- 56,62 ----
-  	int	(*d_ioctl)	__P((dev_t dev, int cmd, caddr_t data,
-  				     int fflag, struct proc *p));
-  	int	(*d_dump)	();	/* parameters vary by architecture */
-! 	int	(*d_psize)	__P((dev_t dev, int *blksizep));
-  	int	d_flags;
-  };
-  
-***************
-*** 111,116 ****
---- 111,117 ----
-  	dev_t	sw_dev;
-  	int	sw_freed;
-  	int	sw_nblks;
-+ 	int	sw_bshift;
-  	struct	vnode *sw_vp;
-  };
-  
-*** ./sys/disklabel.h.orig	Sun Feb 13 22:58:11 1994
---- ./sys/disklabel.h	Sun Feb 13 23:00:21 1994
-***************
-*** 345,351 ****
-  #endif /* i386 */
-  
-  #if defined(hp300) || defined(mac68k) || defined(vax) || defined(pc532) || \
-!     defined(sun3) || defined(amiga) || defined(sparc)
-  struct cpu_disklabel {
-  };
-  #endif
---- 345,351 ----
-  #endif /* i386 */
-  
-  #if defined(hp300) || defined(mac68k) || defined(vax) || defined(pc532) || \
-!     defined(sun3) || defined(amiga) || defined(sparc) || defined(da30)
-  struct cpu_disklabel {
-  };
-  #endif
-*** ./ufs/ufs_vfsops.c.orig	Thu Jan 27 21:32:44 1994
---- ./ufs/ufs_vfsops.c	Sun Feb 13 22:54:10 1994
-***************
-*** 241,247 ****
-  		havepart = 1;
-  		size = dpart.disklab->d_secsize;
-  	}
-! 	if (error = bread(devvp, SBLOCK, SBSIZE, NOCRED, &bp))
-  		goto out;
-  	fs = bp->b_un.b_fs;
-  	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
---- 241,247 ----
-  		havepart = 1;
-  		size = dpart.disklab->d_secsize;
-  	}
-! 	if (error = bread(devvp, SBOFF / size, SBSIZE, NOCRED, &bp))
-  		goto out;
-  	fs = bp->b_un.b_fs;
-  	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
-***************
-*** 617,623 ****
-  	caddr_t space;
-  	int i, size, error = 0;
-  
-! 	bp = getblk(mp->um_devvp, SBLOCK, (int)fs->fs_sbsize);
-  	bcopy((caddr_t)fs, bp->b_un.b_addr, (u_int)fs->fs_sbsize);
-  	/* Restore compatibility to old file systems.		   XXX */
-  	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
---- 617,624 ----
-  	caddr_t space;
-  	int i, size, error = 0;
-  
-! 	i = SBOFF >> (fs->fs_fshift - fs->fs_fsbtodb);
-! 	bp = getblk(mp->um_devvp, i, (int)fs->fs_sbsize);
-  	bcopy((caddr_t)fs, bp->b_un.b_addr, (u_int)fs->fs_sbsize);
-  	/* Restore compatibility to old file systems.		   XXX */
-  	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
-*** ./vm/vm_swap.c.orig	Sun Feb  6 21:20:26 1994
---- ./vm/vm_swap.c	Sun Feb 13 22:54:11 1994
-***************
-*** 168,174 ****
-  	if (bp->b_vp != NULL)
-  		brelvp(bp);
-  	bp->b_vp = sp->sw_vp;
-! 
-  	VOP_STRATEGY(bp);
-  }
-  
---- 168,177 ----
-  	if (bp->b_vp != NULL)
-  		brelvp(bp);
-  	bp->b_vp = sp->sw_vp;
-! 	if( sp->sw_bshift > 0 )
-! 	    bp->b_blkno <<= sp->sw_bshift;
-! 	else if( sp->sw_bshift < 0 )
-! 	    bp->b_blkno >>= - sp->sw_bshift;
-  	VOP_STRATEGY(bp);
-  }
-  

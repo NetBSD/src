@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1980, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,10 +35,24 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah $Hdr: locore.s 1.58 91/04/22$
- *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.1 1994/02/22 23:49:44 paulus Exp $
+ * from: Utah $Hdr: locore.s 1.66 92/12/22$
+ *
+ *	from: @(#)locore.s	8.5 (Berkeley) 11/14/93
+ *	$Id: locore.s,v 1.2 1994/06/18 12:09:55 paulus Exp $
  */
+
+/*
+ * STACKCHECK enables two types of kernel stack checking:
+ *	1. stack "overflow".  On every clock interrupt we ensure that
+ *	   the current kernel stack has not grown into the user struct
+ *	   page, i.e. size exceeded UPAGES-1 pages.
+ *	2. stack "underflow".  Before every rte to user mode we ensure
+ *	   that we will be exactly at the base of the stack after the
+ *	   exception frame has been popped.
+ * Both checks are performed at splclock since they operate on the
+ * global temporary stack.
+ */
+/* #define	STACKCHECK */
 
 #include "assym.s"
 #include <da30/da30/vectors.s>
@@ -47,6 +61,16 @@ ROM	= 0x800000
 RAMSIZE	= 0x500000
 
 #define RTCADDR(ar)	movl	_RTCbase,ar
+
+/*
+ * Temporary stack for a variety of purposes.
+ * Try and make this the first thing is the data segment so it
+ * is page aligned.  Note that if we overflow here, we run into
+ * our text segment.
+ */
+	.data
+	.space	NBPG
+tmpstk:
 
 	.text
 /*
@@ -84,36 +108,31 @@ _buserr:
 	movl	_nofault,sp@-		| yes,
 	jbsr	_longjmp		|  longjmp(nofault)
 _addrerr:
-	clrw	sp@-			| pad SR to longword
+	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
-	movl	a0,sp@(60)		|   in the savearea
-	lea	sp@(64),a1		| grab base of HW berr frame
+	movl	a0,sp@(FR_SP)		|   in the savearea
+	lea	sp@(FR_HW),a1		| grab base of HW berr frame
 	moveq	#0,d0
-	movw	a1@(12),d0		| grab SSW for fault processing
+	movw	a1@(10),d0		| grab SSW for fault processing
 	btst	#12,d0			| RB set?
 	jeq	LbeX0			| no, test RC
 	bset	#14,d0			| yes, must set FB
-	movw	d0,a1@(12)		| for hardware too
+	movw	d0,a1@(10)		| for hardware too
 LbeX0:
 	btst	#13,d0			| RC set?
 	jeq	LbeX1			| no, skip
 	bset	#15,d0			| yes, must set FC
-	movw	d0,a1@(12)		| for hardware too
+	movw	d0,a1@(10)		| for hardware too
 LbeX1:
 	btst	#8,d0			| data fault?
 	jeq	Lbe0			| no, check for hard cases
-	movl	a1@(18),d1		| fault address is as given in frame
-	movl	d0,d2			| use function code from SSW
+	movl	a1@(16),d1		| fault address is as given in frame
 	jra	Lbe10			| thats it
 Lbe0:
-	moveq	#2,d2			| instruction fault - work out
-	btst	#5,a1@(2)		| function code based on S bit
-	jeq	1f			| user mode => FC is 2
-	moveq	#6,d2			| supervisor mode => FC is 6
-1:	btst	#4,a1@(8)		| long (type B) stack frame?
+	btst	#4,a1@(6)		| long (type B) stack frame?
 	jne	Lbe4			| yes, go handle
-	movl	a1@(4),d1		| no, can use save PC
+	movl	a1@(2),d1		| no, can use save PC
 	btst	#14,d0			| FB set?
 	jeq	Lbe3			| no, try FC
 	addql	#4,d1			| yes, adjust address
@@ -124,30 +143,23 @@ Lbe3:
 	addql	#2,d1			| yes, adjust address
 	jra	Lbe10			| done
 Lbe4:
-	movl	a1@(38),d1		| long format, use stage B address
+	movl	a1@(36),d1		| long format, use stage B address
 	btst	#15,d0			| FC set?
 	jeq	Lbe10			| no, all done
 	subql	#2,d1			| yes, adjust address
 Lbe10:
 	movl	d1,sp@-			| push fault VA
 	movl	d0,sp@-			| and padded SSW
-	movw	a1@(8),d0		| get frame format/vector offset
+	movw	a1@(6),d0		| get frame format/vector offset
 	andw	#0x0FFF,d0		| clear out frame format
 	cmpw	#12,d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
 	movl	d1,a0			| fault address
-	ptestr	d2,a0@,#7		| do a table search
+	ptestr	#1,a0@,#7		| do a table search
 	pmove	psr,sp@			| save result
-	movel	sp@,d0			| get mmusr,,ssw
-	btst	#26,d0			| invalid bit set?
-	jne	Lismerr			| yes, must be MMU fault
-	btst	#27,d0			| no, is write-protect bit set?
-	jeq	1f			| no, must be bus error
-	btst	#8,d0			| yes, is it a data fault?
-	jeq	1f			| no, must be bus error
-	btst	#6,d0			| yes, was it a write?
-	jeq	Lismerr			| yes, was MMU fault
-1:	clrw	sp@			| no, re-clear pad word
+	btst	#7,sp@			| bus error bit set?
+	jeq	Lismerr			| no, must be MMU fault
+	clrw	sp@			| yes, re-clear pad word
 	jra	Lisberr			| and process as normal bus error
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
@@ -160,21 +172,21 @@ Lisberr:
 Ltrapnstkadj:
 	jbsr	_trap			| handle the error
 	lea	sp@(12),sp		| pop value args
-	movl	sp@(60),a0		| restore user SP
+	movl	sp@(FR_SP),a0		| restore user SP
 	movl	a0,usp			|   from save area
-	movw	sp@(64),d0		| need to adjust stack?
+	movw	sp@(FR_ADJ),d0		| need to adjust stack?
 	jne	Lstkadj			| yes, go to it
 	moveml	sp@+,#0x7FFF		| no, restore most user regs
-	addql	#6,sp			| toss SSP and pad
+	addql	#8,sp			| toss SSP and stkadj
 	jra	rei			| all done
 Lstkadj:
-	lea	sp@(66),a1		| pointer to HW frame
+	lea	sp@(FR_HW),a1		| pointer to HW frame
 	addql	#8,a1			| source pointer
 	movl	a1,a0			| source
 	addw	d0,a0			|  + hole size = dest pointer
 	movl	a1@-,a0@-		| copy
 	movl	a1@-,a0@-		|  8 bytes
-	movl	a0,sp@(60)		| new SSP
+	movl	a0,sp@(FR_SP)		| new SSP
 	moveml	sp@+,#0x7FFF		| restore user registers
 	movl	sp@,sp			| and our SP
 	jra	rei			| all done
@@ -196,10 +208,10 @@ _fpunsupp:
  */
 _fpfault:
 #ifdef FPCOPROC
-	clrw	sp@-		| pad SR to longword
+	clrl	sp@-		| stack adjust count
 	moveml	#0xFFFF,sp@-	| save user registers
 	movl	usp,a0		| and save
-	movl	a0,sp@(60)	|   the user stack pointer
+	movl	a0,sp@(FR_SP)	|   the user stack pointer
 	clrl	sp@-		| no VA arg
 	movl	_curpcb,a0	| current pcb
 	lea	a0@(PCB_FPCTX),a0 | address of FP savearea
@@ -224,20 +236,20 @@ Lfptnull:
  * stack adjustment.
  */
 _coperr:
-	clrw	sp@-
+	clrl	sp@-		| stack adjust count
 	moveml	#0xFFFF,sp@-
 	movl	usp,a0		| get and save
-	movl	a0,sp@(60)	|   the user stack pointer
+	movl	a0,sp@(FR_SP)	|   the user stack pointer
 	clrl	sp@-		| no VA arg
 	clrl	sp@-		| or code arg
 	movl	#T_COPERR,sp@-	| push trap type
 	jra	Ltrapnstkadj	| call trap and deal with stack adjustments
 
 _fmterr:
-	clrw	sp@-
+	clrl	sp@-		| stack adjust count
 	moveml	#0xFFFF,sp@-
 	movl	usp,a0		| get and save
-	movl	a0,sp@(60)	|   the user stack pointer
+	movl	a0,sp@(FR_SP)	|   the user stack pointer
 	clrl	sp@-		| no VA arg
 	clrl	sp@-		| or code arg
 	movl	#T_FMTERR,sp@-	| push trap type
@@ -248,31 +260,31 @@ _fmterr:
  * no post-trap stack adjustment.
  */
 _illinst:
-	clrw	sp@-
+	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 	moveq	#T_ILLINST,d0
 	jra	fault
 
 _zerodiv:
-	clrw	sp@-
+	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 	moveq	#T_ZERODIV,d0
 	jra	fault
 
 _chkinst:
-	clrw	sp@-
+	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 	moveq	#T_CHKINST,d0
 	jra	fault
 
 _trapvinst:
-	clrw	sp@-
+	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 	moveq	#T_TRAPVINST,d0
 	jra	fault
 
 _privinst:
-	clrw	sp@-
+	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 	moveq	#T_PRIVINST,d0
 	jra	fault
@@ -280,65 +292,52 @@ _privinst:
 	.globl	fault
 fault:
 	movl	usp,a0			| get and save
-	movl	a0,sp@(60)		|   the user stack pointer
+	movl	a0,sp@(FR_SP)		|   the user stack pointer
 	clrl	sp@-			| no VA arg
 	clrl	sp@-			| or code arg
 	movl	d0,sp@-			| push trap type
 	jbsr	_trap			| handle trap
 	lea	sp@(12),sp		| pop value args
-	movl	sp@(60),a0		| restore
+	movl	sp@(FR_SP),a0		| restore
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most user regs
-	addql	#6,sp			| pop SP and pad word
+	addql	#8,sp			| pop SP and stack adjust
 	jra	rei			| all done
 
 	.globl	_straytrap
 _badtrap:
-	clrw	sp@-			| pad SR
 	moveml	#0xC0C0,sp@-		| save scratch regs
-	movw	sp@(24),sp@-		| push exception vector info
+	movw	sp@(22),sp@-		| push exception vector info
 	clrw	sp@-
-	movl	sp@(24),sp@-		| and PC
+	movl	sp@(22),sp@-		| and PC
 	jbsr	_straytrap		| report
 	addql	#8,sp			| pop args
 	moveml	sp@+,#0x0303		| restore regs
-	addql	#2,sp			| pop padding
 	jra	rei			| all done
 
 	.globl	_syscall
 _trap0:
-	clrw	sp@-			| pad SR to longword
+	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
-	movl	a0,sp@(60)		|   in the savearea
+	movl	a0,sp@(FR_SP)		|   in the savearea
 	movl	d0,sp@-			| push syscall number
 	jbsr	_syscall		| handle it
 	addql	#4,sp			| pop syscall arg
-	movl	sp@(60),a0		| grab and restore
+	movl	sp@(FR_SP),a0		| grab and restore
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most registers
-	addql	#6,sp			| pop SSP and align word
+	addql	#8,sp			| pop SP and stack adjust
 	jra	rei			| all done
 
-/*
- * Routines for traps 1 and 2.  The meaning of the two traps depends
- * on whether we are an HPUX compatible process or a native 4.3 process.
- * Our native 4.3 implementation uses trap 1 as sigreturn() and trap 2
- * as a breakpoint trap.  HPUX uses trap 1 for a breakpoint, so we have
- * to make adjustments so that trap 2 is used for sigreturn.
- */
 _trap1:
-	btst	#PCB_TRCB,pcbflag	| being traced by an HPUX process?
-	jeq	sigreturn		| no, trap1 is sigreturn
-	jra	_trace			| yes, trap1 is breakpoint
+	jra	sigreturn		| trap1 is sigreturn
 
 _trap2:
-	btst	#PCB_TRCB,pcbflag	| being traced by an HPUX process?
-	jeq	_trace			| no, trap2 is breakpoint
-	jra	sigreturn		| yes, trap2 is sigreturn
+	jra	_trace			| trap2 is breakpoint
 
 /*
- * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)
+ * Trap 12 is the entry point for the cachectl "syscall"
  *	cachectl(command, addr, length)
  * command in d0, addr in a1, length in d1
  */
@@ -358,13 +357,13 @@ _trap12:
  * We just pass it on and let trap() sort it all out
  */
 _trap15:
-	clrw	sp@-
+	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 #ifdef KGDB
 	moveq	#T_TRAP15,d0
-	movl	sp@(64),d1		| from user mode?
-	andl	#PSL_S,d1
-	jeq	fault
+	movw	sp@(FR_HW),d1		| get PSW
+	andw	#PSL_S,d1		| from user mode?
+	jeq	fault			| yes, just a regular fault
 	movl	d0,sp@-
 	.globl	_kgdb_trap_glue
 	jbsr	_kgdb_trap_glue		| returns if no debugger
@@ -378,13 +377,13 @@ _trap15:
  * Push the code and treat as a normal fault.
  */
 _trace:
-	clrw	sp@-
+	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 #ifdef KGDB
 	moveq	#T_TRACE,d0
-	movl	sp@(64),d1		| from user mode?
-	andl	#PSL_S,d1
-	jeq	fault
+	movw	sp@(FR_HW),d1		| get SSW
+	andw	#PSL_S,d1		| from user mode?
+	jeq	fault			| no, regular fault
 	movl	d0,sp@-
 	jbsr	_kgdb_trap_glue		| returns if no debugger
 	addl	#4,sp
@@ -401,17 +400,17 @@ sigreturn:
 	lea	sp@(-84),sp		| leave enough space for largest frame
 	movl	sp@(84),sp@		| move up current 8 byte frame
 	movl	sp@(88),sp@(4)
-	movw	#84,sp@-		| default: adjust by 84 bytes
+	movl	#84,sp@-		| default: adjust by 84 bytes
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
-	movl	a0,sp@(60)		|   in the savearea
+	movl	a0,sp@(FR_SP)		|   in the savearea
 	movl	#SYS_sigreturn,sp@-	| push syscall number
 	jbsr	_syscall		| handle it
 	addql	#4,sp			| pop syscall#
-	movl	sp@(60),a0		| grab and restore
+	movl	sp@(FR_SP),a0		| grab and restore
 	movl	a0,usp			|   user SP
-	lea	sp@(64),a1		| pointer to HW frame
-	movw	a1@+,d0			| do we need to adjust the stack?
+	lea	sp@(FR_HW),a1		| pointer to HW frame
+	movw	sp@(FR_ADJ),d0		| do we need to adjust the stack?
 	jeq	Lsigr1			| no, just continue
 	moveq	#92,d1			| total size
 	subw	d0,d1			|  - hole size = frame size
@@ -424,7 +423,7 @@ Lsigrlp:
 	dbf	d1,Lsigrlp		| continue
 	movl	a0,a1			| new HW frame base
 Lsigr1:
-	movl	a1,sp@(60)		| new SP value
+	movl	a1,sp@(FR_SP)		| new SP value
 	moveml	sp@+,#0x7FFF		| restore user registers
 	movl	sp@,sp			| and our SP
 	jra	rei			| all done
@@ -450,27 +449,14 @@ _spurintr:
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
-#if 0
-_lev1intr:
-	addql	#1,_intrcnt+4
-	clrw	sp@-
-	moveml	#0xC0C0,sp@-
-	jbsr	_hilint
-	moveml	sp@+,#0x0303
-	addql	#2,sp
-	addql	#1,_cnt+V_INTR
-	jra	rei
-#endif
-
 _lev1intr:
 _lev2intr:
 _lev3intr:
 _lev4intr:
 _lev6intr:
-	clrw	sp@-
 	moveml	#0xC0C0,sp@-
 	lea	_intrcnt,a0
-	movw	sp@(24),d0		| use vector offset
+	movw	sp@(22),d0		| use vector offset
 	andw	#0xfff,d0		|   sans frame type
 	addql	#1,a0@(-0x60,d0:w)	|     to increment apropos counter
 	movw	sr,sp@-			| push current SR value
@@ -478,135 +464,54 @@ _lev6intr:
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
 	moveml	sp@+,#0x0303
-	addql	#2,sp
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
 _lev5intr:
-	clrw	sp@-
-	moveml	#0xC0C0,sp@-
-#ifdef DEBUG
-	.globl	_panicstr, _regdump, _panic
-	tstl	timebomb		| set to go off?
-	jeq	Lnobomb			| no, skip it
-	subql	#1,timebomb		| decrement
-	jne	Lnobomb			| not ready to go off
-	moveml	sp@+,#0x0303		| temporarily restore regs
-	jra	Lbomb			| go die
-Lnobomb:
-	cmpl	#_kstack+NBPG,sp	| are we still in stack pages?
+#ifdef STACKCHECK
+	.globl	_panicstr,_badkstack
+	cmpl	#_kstack+NBPG,sp	| are we still in stack page?
 	jcc	Lstackok		| yes, continue normally
-	tstl	_curproc		| if !curproc could have swtch_exited,
+	tstl	_curproc		| if !curproc could have switch_exited,
 	jeq	Lstackok		|     might be on tmpstk
 	tstl	_panicstr		| have we paniced?
 	jne	Lstackok		| yes, do not re-panic
-	lea	tmpstk,sp		| no, switch to tmpstk
-	moveml	#0xFFFF,sp@-		| push all registers
-	movl	#Lstkrip,sp@-		| push panic message
-	jbsr	_printf			| preview
+	movl	sp@(4),tmpstk-4		| no, copy common
+	movl	sp@,tmpstk-8		|  frame info
+	movl	sp,tmpstk-16		| no, save original SP
+	lea	tmpstk-16,sp		| switch to tmpstk
+	moveml	#0xFFFE,sp@-		| push remaining registers
+	movl	#1,sp@-			| is an overflow
+	jbsr	_badkstack		| badkstack(1, frame)
 	addql	#4,sp
-	movl	sp,a0			| remember this spot
-	movl	#256,sp@-		| longword count
-	movl	a0,sp@-			| and reg pointer
-	jbsr	_regdump		| dump core
-	addql	#8,sp			| pop params
-	movl	#Lstkrip,sp@-		| push panic message
-	jbsr	_panic			| ES and D
-Lbomb:
-	moveml	#0xFFFF,sp@-		| push all registers
-	movl	sp,a0			| remember this spot
-	movl	#256,sp@-		| longword count
-	movl	a0,sp@-			| and reg pointer
-	jbsr	_regdump		| dump core
-	addql	#8,sp			| pop params
-	movl	#Lbomrip,sp@-		| push panic message
-	jbsr	_panic			| ES and D
-Lstkrip:
-	.asciz	"k-stack overflow"
-Lbomrip:
-	.asciz	"timebomb"
-	.even
+	moveml	sp@+,#0x7FFF		| restore most registers
+	movl	sp@,sp			| and SP
 Lstackok:
 #endif
+	moveml	#0xC0C0,sp@-		| save scratch registers
 	RTCADDR(a0)
 	movb	a0@,d0			| read clock status
-#ifdef PROFTIMER
-	.globl  _profon
-	tstb	_profon			| profile clock on?
-	jeq     Ltimer1			| no, then must be timer1 interrupt
-	btst	#2,d0			| timer3 interrupt?
-	jeq     Ltimer1			| no, must be timer1
-	movb	a0@(CLKMSB3),d1		| clear timer3 interrupt
-	lea	sp@(16),a1		| get pointer to PS
-#ifdef GPROF
-	.globl	_profclock
-	movl	d0,sp@-			| save status so jsr will not clobber
-	movl	a1@,sp@-		| push padded PS
-	movl	a1@(4),sp@-		| push PC
-	jbsr	_profclock		| profclock(pc, ps)
-	addql	#8,sp			| pop params
-#else
-	btst	#5,a1@(2)		| saved PS in user mode?
-	jne	Lttimer1		| no, go check timer1
-	movl	_curpcb,a0		| current pcb
-	tstl	a0@(U_PROFSCALE)	| process being profiled?
-	jeq	Lttimer1		| no, go check timer1
-	movl	d0,sp@-			| save status so jsr will not clobber
-	movl	#1,sp@-
-	pea	a0@(U_PROF)
-	movl	a1@(4),sp@-
-	jbsr    _addupc			| addupc(pc, &u.u_prof, 1)
-	lea	sp@(12),sp		| pop params
-#endif
-	addql	#1,_intrcnt+32		| add another profile clock interrupt
-	movl	sp@+,d0			| get saved clock status
-	RTCADDR(a0)
-Lttimer1:
-	btst	#0,d0			| timer1 interrupt?
-	jeq     Ltimend		        | no, check state of kernel profiling
-Ltimer1:
-#endif
 	movb	d0,a0@			| reset interrupt bits
-	lea	sp@(16),a1		| get pointer to PS
-	movl	a1@,sp@-		| push padded PS
-	movl	a1@(4),sp@-		| push PC
-	lea	sp@,a0			| get pointer to frame
-	movl	a0,sp@-			| push pointer as arg
-	jbsr	_hardclock		| call generic clock int routine
-	addw	#12,sp			| pop params
-	addql	#1,_intrcnt+28		| add another system clock interrupt
-#ifdef PROFTIMER
-Ltimend:
-#ifdef GPROF
-	.globl	_profiling, _startprofclock
-	tstl	_profiling		| kernel profiling desired?
-	jne	Ltimdone		| no, all done
-	bset	#7,_profon		| mark continuous timing
-	jne	Ltimdone		| was already enabled, all done
-	jbsr	_startprofclock		| else turn it on
-Ltimdone:
-#endif
-#endif
-	moveml	sp@+,#0x0303		| restore scratch regs
-	addql	#2,sp			| pop pad word
+	addql	#1,_intrcnt+28		| count clock interrupts
+	lea	sp@(16),a1		| get pointer to clockframe
+	movl	a1,sp@-
+	jbsr	_hardclock		| hardclock(&frame)
+	addw	#4,sp			| pop params
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
+	moveml	sp@+,#0x0303		| restore scratch regs
 	jra	rei			| all done
 
 _lev7intr:
-#ifdef PROFTIMER
-	addql	#1,_intrcnt+36
-#else
 	addql	#1,_intrcnt+32
-#endif
-	clrw	sp@-			| pad SR to longword
+	clrl	sp@-
 	moveml	#0xFFFF,sp@-		| save registers
 	movl	usp,a0			| and save
-	movl	a0,sp@(60)		|   the user stack pointer
+	movl	a0,sp@(FR_SP)		|   the user stack pointer
 	jbsr	_nmihand		| call handler
-	movl	sp@(60),a0		| restore
+	movl	sp@(FR_SP),a0		| restore
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| and remaining registers
-	addql	#6,sp			| pop SSP and align word
+	addql	#8,sp			| pop SP and stack adjust
 	jra	rei			| all done
 
 /*
@@ -616,62 +521,59 @@ _lev7intr:
  * (profiling, scheduling) and software interrupts (network, softclock).
  * We check for ASTs first, just like the VAX.  To avoid excess overhead
  * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.
+ * do not have to do it here.  After identifing that we need an AST we
+ * drop the IPL to allow device interrupts.
  *
  * This code is complicated by the fact that sendsig may have been called
- * necessitating a stack cleanup.  A cleanup should only be needed at this
- * point for coprocessor mid-instruction frames (type 9), but we also test
- * for bus error frames (type 10 and 11).
+ * necessitating a stack cleanup.
  */
 	.comm	_ssir,1
 	.globl	_astpending
 rei:
-#ifdef DEBUG
+#ifdef STACKCHECK
 	tstl	_panicstr		| have we paniced?
-	jne	Ldorte			| yes, do not make matters worse
+	jne	Ldorte1			| yes, do not make matters worse
 #endif
 	tstl	_astpending		| AST pending?
 	jeq	Lchksir			| no, go check for SIR
 	btst	#5,sp@			| yes, are we returning to user mode?
 	jne	Lchksir			| no, go check for SIR
-	clrw	sp@-			| pad SR to longword
+	movw	#PSL_LOWIPL,sr		| lower SPL
+	clrl	sp@-			| stack adjust
 	moveml	#0xFFFF,sp@-		| save all registers
 	movl	usp,a1			| including
-	movl	a1,sp@(60)		|    the users SP
+	movl	a1,sp@(FR_SP)		|    the users SP
 	clrl	sp@-			| VA == none
 	clrl	sp@-			| code == none
 	movl	#T_ASTFLT,sp@-		| type == async system trap
 	jbsr	_trap			| go handle it
 	lea	sp@(12),sp		| pop value args
-	movl	sp@(60),a0		| restore
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| and all remaining registers
-	addql	#4,sp			| toss SSP
-	tstw	sp@+			| do we need to clean up stack?
-	jeq	Ldorte			| no, just continue
-	btst	#7,sp@(6)		| type 9/10/11 frame?
-	jeq	Ldorte			| no, nothing to do
-	btst	#5,sp@(6)		| type 9?
-	jne	Last1			| no, skip
-	movw	sp@,sp@(12)		| yes, push down SR
-	movl	sp@(2),sp@(14)		| and PC
-	clrw	sp@(18)			| and mark as type 0 frame
-	lea	sp@(12),sp		| clean the excess
-	jra	Ldorte			| all done
-Last1:
-	btst	#4,sp@(6)		| type 10?
-	jne	Last2			| no, skip
-	movw	sp@,sp@(24)		| yes, push down SR
-	movl	sp@(2),sp@(26)		| and PC
-	clrw	sp@(30)			| and mark as type 0 frame
-	lea	sp@(24),sp		| clean the excess
-	jra	Ldorte			| all done
-Last2:
-	movw	sp@,sp@(84)		| type 11, push down SR
-	movl	sp@(2),sp@(86)		| and PC
-	clrw	sp@(90)			| and mark as type 0 frame
-	lea	sp@(84),sp		| clean the excess
-	jra	Ldorte			| all done
+	movl	sp@(FR_SP),a0		| restore user SP
+	movl	a0,usp			|   from save area
+	movw	sp@(FR_ADJ),d0		| need to adjust stack?
+	jne	Laststkadj		| yes, go to it
+	moveml	sp@+,#0x7FFF		| no, restore most user regs
+	addql	#8,sp			| toss SP and stack adjust
+#ifdef STACKCHECK
+	jra	Ldorte
+#else
+	rte				| and do real RTE
+#endif
+Laststkadj:
+	lea	sp@(FR_HW),a1		| pointer to HW frame
+	addql	#8,a1			| source pointer
+	movl	a1,a0			| source
+	addw	d0,a0			|  + hole size = dest pointer
+	movl	a1@-,a0@-		| copy
+	movl	a1@-,a0@-		|  8 bytes
+	movl	a0,sp@(FR_SP)		| new SSP
+	moveml	sp@+,#0x7FFF		| restore user registers
+	movl	sp@,sp			| and our SP
+#ifdef STACKCHECK
+	jra	Ldorte
+#else
+	rte				| and do real RTE
+#endif
 Lchksir:
 	tstb	_ssir			| SIR pending?
 	jeq	Ldorte			| no, all done
@@ -684,23 +586,63 @@ Lgotsir:
 	movw	#SPL1,sr		| prevent others from servicing int
 	tstb	_ssir			| too late?
 	jeq	Ldorte			| yes, oh well...
-	clrw	sp@-			| pad SR to longword
+	clrl	sp@-			| stack adjust
 	moveml	#0xFFFF,sp@-		| save all registers
 	movl	usp,a1			| including
-	movl	a1,sp@(60)		|    the users SP
+	movl	a1,sp@(FR_SP)		|    the users SP
 	clrl	sp@-			| VA == none
 	clrl	sp@-			| code == none
 	movl	#T_SSIR,sp@-		| type == software interrupt
 	jbsr	_trap			| go handle it
 	lea	sp@(12),sp		| pop value args
-	movl	sp@(60),a0		| restore
+	movl	sp@(FR_SP),a0		| restore
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| and all remaining registers
-	addql	#6,sp			| pop SSP and align word
+	addql	#8,sp			| pop SP and stack adjust
+#ifdef STACKCHECK
+	jra	Ldorte
+#else
 	rte
+#endif
 Lnosir:
 	movl	sp@+,d0			| restore scratch register
 Ldorte:
+#ifdef STACKCHECK
+	movw	#SPL6,sr		| avoid trouble
+	btst	#5,sp@			| are we returning to user mode?
+	jne	Ldorte1			| no, skip it
+	movl	a6,tmpstk-20
+	movl	d0,tmpstk-76
+	moveq	#0,d0
+	movb	sp@(6),d0		| get format/vector
+	lsrl	#3,d0			| convert to index
+	lea	_exframesize,a6		|  into exframesize
+	addl	d0,a6			|  to get pointer to correct entry
+	movw	a6@,d0			| get size for this frame
+	addql	#8,d0			| adjust for unaccounted for bytes
+	lea	_kstackatbase,a6	| desired stack base
+	subl	d0,a6			|   - frame size == our stack
+	cmpl	a6,sp			| are we where we think?
+	jeq	Ldorte2			| yes, skip it
+	lea	tmpstk,a6		| will be using tmpstk
+	movl	sp@(4),a6@-		| copy common
+	movl	sp@,a6@-		|   frame info
+	clrl	a6@-
+	movl	sp,a6@-			| save sp
+	subql	#4,a6			| skip over already saved a6
+	moveml	#0x7FFC,a6@-		| push remaining regs (d0/a6/a7 done)
+	lea	a6@(-4),sp		| switch to tmpstk (skip saved d0)
+	clrl	sp@-			| is an underflow
+	jbsr	_badkstack		| badkstack(0, frame)
+	addql	#4,sp
+	moveml	sp@+,#0x7FFF		| restore most registers
+	movl	sp@,sp			| and SP
+	rte
+Ldorte2:
+	movl	tmpstk-76,d0
+	movl	tmpstk-20,a6
+Ldorte1:
+#endif
 	rte				| real return
 
 /*
@@ -710,6 +652,8 @@ Ldorte:
  */
 	.data
 	.set	_kstack,USRSTACK
+	.set	_kstackatbase,USRSTACK+UPAGES*NBPG-4
+	.globl	_kstackatbase
 _Umap:	.long	0
 	.globl	_kstack, _Umap
 
@@ -726,6 +670,8 @@ _Umap:	.long	0
  */
 
 	.comm	_lowram,4
+	.comm	_esym,4
+
 	.text
 	.globl	_edata
 	.globl	_etext,_end
@@ -737,12 +683,17 @@ start:
 	movl	#0,a5			| RAM starts at 0
 	RELOC(tmpstk, a0)
 	movl	a0,sp			| give ourselves a temporary stack
+
 	RELOC(_edata,a0)		| clear out BSS
 	movl	#_end-4,d0		| (must be <= 256 kB)
 	subl	#_edata,d0
 	lsrl	#2,d0
 1:	clrl	a0@+
 	dbra	d0,1b
+
+	RELOC(_esym, a0)
+	clrl	a0@			| no symbol table, yet
+
 	RELOC(_lowram, a0)
 	movl	a5,a0@			| store start of physical memory
 	movl	#CACHE_OFF,d0
@@ -760,255 +711,60 @@ start:
 	movc	d0,sfc			|   as source
 	movc	d0,dfc			|   and destination of transfers
 
-/*
- * Allocate kernel segment/page table resources.
- *	a5 contains the PA of lowest RAM page
- *	a4 contains the PA of first available page at any time
- *	d5 contains the VA of first available page at any time
- *	   (since we assume a zero load point, it is also the size of
- *	   allocated space at any time)
- * We assume (i.e. do not check) that the initial page table size
- * (Sysptsize) is big enough to map everything we allocate here.
- *
- * We allocate the IO maps here since the 320/350 MMU registers are
- * mapped in this range and it would be nice to be able to access them
- * after the MMU is turned on.
- */
-	.globl	_Sysseg, _Sysmap, _Sysptmap, _Sysptsize
+/* initialize memory sizes (for pmap_bootstrap) */
+	movl	#RAMSIZE,d1		| last page
+	moveq	#PGSHIFT,d2
+	lsrl	d2,d1			| convert to page (click) number
+	RELOC(_maxmem, a0)
+	movl	d1,a0@			| save as maxmem
+	RELOC(_physmem, a0)
+	movl	d1,a0@			| and physmem
+
+/* configure kernel and proc0 VA space so we can get going */
+	.globl	_Sysseg, _pmap_bootstrap, _avail_start
+#ifdef DDB
+	RELOC(_esym,a0)			| end of static kernel test/data/syms
+	movl	a0@,d5
+	jne	Lstart2
+#endif
 	movl	#_end,d5		| end of static kernel text/data
+Lstart2:
 	addl	#NBPG-1,d5
 	andl	#PG_FRAME,d5		| round to a page
 	movl	d5,a4
-	addl	a5,a4
-/* allocate kernel segment table */
-	RELOC(_Sysseg, a0)
-	movl	d5,a0@			| remember VA for pmap module
-	movl	a4,sp@-			| remember PA for loading MMU
-	addl	#NBPG,a4
-	addl	#NBPG,d5
-/* allocate initial page table pages (including internal IO map) */
-	RELOC(_Sysptsize, a0)
-	movl	a0@,d0			| initial system PT size (pages)
-	addl	#(IIOMAPSIZE+EIOMAPSIZE+NPTEPG-1)/NPTEPG,d0
-					| add pages for IO maps
-	movl	#PGSHIFT,d1
-	lsll	d1,d0			| convert to bytes
-	movl	a4,sp@-			| remember PA for ST load
-	addl	d0,a4
-	addl	d0,d5
-/* allocate kernel page table map */
-	RELOC(_Sysptmap, a0)
-	movl	d5,a0@			| remember VA for pmap module
-	movl	a4,sp@-			| remember PA for PT map load
-	addl	#NBPG,a4
-	addl	#NBPG,d5
-/* compute KVA of Sysptmap; mapped after page table pages */
-	movl	d0,d2			| remember PT size (bytes)
-	moveq	#SG_ISHIFT-PGSHIFT,d1
-	lsll	d1,d0			| page table size serves as seg index
-	RELOC(_Sysmap, a0)
-	movl	d0,a0@			| remember VA for pmap module
-/* initialize ST and PT map: PT pages + PT map */
-	movl	sp@+,a1			| PT map PA
-	movl	sp@+,d4			| start of PT pages
-	movl	sp@+,a0			| ST phys addr
-	lea	a0@(NBPG-4),a2		| (almost) end of ST
-	movl	d4,d3
-	orl	#SG_RW+SG_V,d4		| create proto STE for ST
-	orl	#PG_RW+PG_CI+PG_V,d3	| create proto PTE for PT map
-List1:
-	movl	d4,a0@+
-	movl	d3,a1@+
-	addl	#NBPG,d4
-	addl	#NBPG,d3
-	cmpl	a4,d4			| sleezy, but works ok
-	jcs	List1
-/* initialize ST and PT map: invalidate up to last entry */
-List2:
-	movl	#SG_NV,a0@+
-	movl	#PG_NV,a1@+
-	cmpl	a2,a0
-	jcs	List2
-/*
- * Portions of the last segment of KVA space (0xFFF00000 - 0xFFFFFFFF)
- * are mapped for a couple of purposes. 0xFFF00000 for UPAGES is used
- * for mapping the current process u-area (u + kernel stack).
- */
-	movl	a4,d1			| grab next available for PT page
-	andl	#SG_FRAME,d1		| mask to frame number
-	orl	#SG_RW+SG_V,d1		| RW and valid
-	movl	d1,a0@+			| store in last ST entry
-	movl	a0,a2			| remember addr for PT load
-	andl	#PG_FRAME,d1
-	orl	#PG_RW+PG_V,d1		| convert to PTE
-	movl	d1,a1@+			| store in PT map
-	movl	a4,a0			| physical beginning of PT page
-	lea	a0@(NBPG),a1		| end of page
-Lispt7:
-	movl	#PG_NV,a0@+		| invalidate
-	cmpl	a1,a0
-	jcs	Lispt7
-	addl	#NBPG,a4
-	addl	#NBPG,d5
-/* record KVA at which to access current u-area PTEs */
-	RELOC(_Sysmap, a0)
-	movl	a0@,d0			| get system PT address
-	addl	#NPTEPG*NBPG,d0		| end of system PT
-	subl	#HIGHPAGES*4,d0		| back up to first PTE for u-area
-	RELOC(_Umap, a0)
-	movl	d0,a0@			| remember location
-/* initialize page table pages */
-	movl	a2,a0			| end of ST is start of PT
-	addl	d2,a2			| add size to get end of PT
-/* text pages are read-only */
-	clrl	d0			| assume load at VA 0
-	movl	a5,d1			| get load PA
-	andl	#PG_FRAME,d1		| convert to a page frame
-#ifdef KGDB
-	orl	#PG_RW+PG_V,d1		| XXX: RW for now
-#else
-	orl	#PG_RO+PG_V,d1		| create proto PTE
-#endif
-	movl	#_etext,a1		| go til end of text
-Lipt1:
-	movl	d1,a0@+			| load PTE
-	addl	#NBPG,d1		| increment page frame number
-	addl	#NBPG,d0		| and address counter
-	cmpl	a1,d0			| done yet?
-	jcs	Lipt1			| no, keep going
-/* data, bss and dynamic tables are read/write */
-	andl	#PG_FRAME,d1		| mask out old prot bits
-	orl	#PG_RW+PG_V,d1		| mark as valid and RW
-	movl	d5,a1			| go til end of data allocated so far
-	addl	#(UPAGES+1)*NBPG,a1	| and proc0 PT/u-area (to be allocated)
-Lipt2:
-	movl	d1,a0@+			| load PTE
-	addl	#NBPG,d1		| increment page frame number
-	addl	#NBPG,d0		| and address counter
-	cmpl	a1,d0			| done yet?
-	jcs	Lipt2			| no, keep going
-/* invalidate remainder of kernel PT */
-	movl	a2,a1			| end of PT
-Lipt3:
-	movl	#PG_NV,a0@+		| invalidate PTE
-	cmpl	a1,a0			| done yet?
-	jcs	Lipt3			| no, keep going
-/* go back and validate internal IO PTEs at end of allocated PT space */
-	movl	a2,a0			| end of allocated PT space
-	subl	#(IIOMAPSIZE+EIOMAPSIZE)*4,a0	| back up IOMAPSIZE PTEs
-	subl	#EIOMAPSIZE*4,a2	| only initialize internal IO PTEs
-	movl	#INTIOBASE,d1		| physical internal IO base
-	orl	#PG_RW+PG_CI+PG_V,d1	| create proto PTE
-Lipt4:
-	movl	d1,a0@+			| load PTE
-	addl	#NBPG,d1		| increment page frame number
-	cmpl	a2,a0			| done yet?
-	jcs	Lipt4			| no, keep going
-/* record base KVA of IO spaces which are just before Sysmap */
-	RELOC(_Sysmap, a0)
-	movl	a0@,d0			| Sysmap VA
-	subl	#EIOMAPSIZE*NBPG,d0	| back up size of EIO space
-	RELOC(_extiobase, a0)
-	movl	d0,a0@			| and record
-	RELOC(_intiolimit, a0)
-	movl	d0,a0@			| external base is also internal limit
-	subl	#IIOMAPSIZE*NBPG,d0	| back up size of internal IO space
-	RELOC(_intiobase, a0)
-	movl	d0,a0@			| and record
-/* also record base of clock and MMU registers for fast access */
-	addl	#RTCBASE-INTIOBASE,d0
-	RELOC(_RTCbase, a0)
-	movl	d0,a0@
-	subl	#RTCBASE-INTIOBASE,d0
-/* for now, use the ROM monitor's vector for trap #14. */
-	movel	ROM+0xB8,0xB8
-
-/*
- * Setup page table for process 0.
- *
- * We set up page table access for the kernel via Usrptmap (usrpt)
- * and access to the u-area itself via Umap (u).  First available
- * page (VA: d5, PA: a4) is used for proc0 page table.  Next UPAGES
- * pages following are for u-area.
- */
-	movl	a4,d0
-	movl	d0,d1
-	andl	#PG_FRAME,d1		| mask to page frame number
-	orl	#PG_RW+PG_V,d1		| RW and valid
-	movl	d1,d4			| remember for later Usrptmap load
-	movl	d0,a0			| base of proc0 PT
-	addl	#NBPG,d0		| plus one page yields base of u-area
-	movl	d0,a2			|   and end of PT
-	addl	#NBPG,d5		| keep VA in sync
-/* invalidate entire page table */
-Liudot1:
-	movl	#PG_NV,a0@+		| invalidate PTE
-	cmpl	a2,a0			| done yet?
-	jcs	Liudot1			| no, keep going
-/* now go back and validate u-area PTEs in PT and in Umap */
-	lea	a0@(-HIGHPAGES*4),a0	| base of PTEs for u-area (p_addr)
-	lea	a0@(UPAGES*4),a1	| end of PTEs for u-area
-	lea	a4@(-HIGHPAGES*4),a3	| u-area PTE base in Umap PT
-	movl	d0,d1			| get base of u-area
-	andl	#PG_FRAME,d1		| mask to page frame number
-	orl	#PG_RW+PG_V,d1		| add valid and writable
-Liudot2:
-	movl	d1,a0@+			| validate p_addr PTE
-	movl	d1,a3@+			| validate u PTE
-	addl	#NBPG,d1		| to next page
-	cmpl	a1,a0			| done yet?
-	jcs	Liudot2			| no, keep going
-/* clear process 0 u-area */
-	addl	#NBPG*UPAGES,d0		| end of u-area
-Lclru1:
-	clrl	a2@+			| clear
-	cmpl	d0,a2			| done yet?
-	jcs	Lclru1			| no, keep going
-	movl	a2,a4			| save phys addr of first avail page
-	RELOC(_proc0paddr, a0)
-	movl	d5,a0@			| save KVA of proc0 u-area
-	addl	#UPAGES*NBPG,d5		| increment virtual addr as well
+	addl	a5,a4			| convert to PA
+	pea	a5@			| firstpa
+	pea	a4@			| nextpa
+	jbsr	_pmap_bootstrap		| pmap_bootstrap(firstpa, nextpa)
+	addql	#8,sp
 
 /*
  * Enable the MMU.
  * Since the kernel is mapped logical == physical, we just turn it on.
  */
 	RELOC(_Sysseg, a0)		| system segment table addr
-	movl	a0@,a1			| read value (a KVA)
-	addl	a5,a1			| convert to PA
+	movl	a0@,d1			| read value (a KVA)
+	addl	a5,d1			| convert to PA
 	RELOC(_protorp, a0)
 	movl	#0x80000202,a0@		| nolimit + share global + 4 byte PTEs
-	movl	a1,a0@(4)		| + segtable address
+	movl	d1,a0@(4)		| + segtable address
 	pmove	a0@,srp			| load the supervisor root pointer
 	movl	#0x80000002,a0@		| reinit upper half for CRP loads
 
+/*
 	movl	#0x82c0aa00,a7@-	| value to load TC with
 	pmove	a7@,tc			| load it
 	addql	#4,sp
+*/
 
 /*
  * Should be running mapped from this point on
  */
-/* init mem sizes */
-	movl	#RAMSIZE,d1
-	moveq	#PGSHIFT,d2
-	lsrl	d2,d1			| convert to page (click) number
-	movl	d1,_maxmem		| save as maxmem
-	movl	d1,_physmem		| and physmem
-/*
- * pmap_bootstrap is supposed to be called with mapping off early on
- * to set up the kernel VA space.  However, this only works easily if
- * you have a kernel PA == VA mapping.  Since we do not, we just set
- * up and enable mapping here and then call the bootstrap routine to
- * get the pmap module in sync with reality.
- */
-	.globl	_avail_start
+
+/* select the software page size now */
 	lea	tmpstk,sp		| temporary stack
-	movl	a5,sp@-			| phys load address (assumes VA 0)
-	movl	a4,sp@-			| first available PA
-	jbsr	_pmap_bootstrap		| sync up pmap module
-	addql	#8,sp
-|	movl	_avail_start,a4		| pmap_bootstrap may need RAM
+	jbsr	_vm_set_page_size	| select software page size
+
 /* set kernel stack, user SP, and initial pcb */
 	lea	_kstack,a1		| proc0 kernel stack
 	lea	a1@(UPAGES*NBPG-4),sp	| set kernel stack to end of area
@@ -1016,32 +772,50 @@ Lclru1:
 	movl	a2,usp			| init user SP
 	movl	_proc0paddr,a1		| get proc0 pcb addr
 	movl	a1,_curpcb		| proc0 is running
-	clrw	a1@(PCB_FLAGS)		| clear flags
 #ifdef FPCOPROC
 	clrl	a1@(PCB_FPCTX)		| ensure null FP context
 	movl	a1,sp@-
 	jbsr	_m68881_restore		| restore it (does not kill a1)
 	addql	#4,sp
 #endif
+
 /* flush TLB and turn on caches */
 	jbsr	_TBIA			| invalidate TLB
 	movl	#CACHE_ON,d0
 	movc	d0,cacr			| clear cache(s)
+
 /* final setup for C code */
 	movl	#0,d0			| set VBR
 	movec	d0,vbr
+	jbsr	_isrinit		| be ready for stray ints
 	movw	#PSL_LOWIPL,sr		| lower SPL
 	movl	d7,_boothowto		| save reboot flags
 	movl	d6,_bootdev		|   and boot device
-	jbsr	_main			| call main()
 
-/* proc[1] == init now running here;
- * create a null exception frame and return to user mode in icode
+/*
+ * Create a fake exception frame that returns to user mode,
+ * make space for the rest of a fake saved register set, and
+ * pass the first available RAM and a pointer to the register
+ * set to "main()".  "main()" will call "icode()", which fakes
+ * an "execve()" system call, which is why we need to do that
+ * ("main()" sets "u.u_ar0" to point to the register set).
+ * When "main()" returns, we're running in process 1 and have
+ * successfully faked the "execve()".  We load up the registers from
+ * that set; the "rte" loads the PC and PSR, which jumps to "init".
  */
-	clrw	sp@-			| vector offset/frame type
-	clrl	sp@-			| return to icode location 0
-	movw	#PSL_USER,sp@-		| in user mode
-	rte
+  	clrw	sp@-			| vector offset/frame type
+	clrl	sp@-			| PC - filled in by "execve"
+  	movw	#PSL_USER,sp@-		| in user mode
+	clrw	sp@-			| pad SR to longword
+	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
+	pea	sp@			| addr of space for D0
+	jbsr	_main			| main(firstaddr, r0)
+	addql	#4,sp			| pop args
+	movl	sp@(60),a0		| grab and load
+	movl	a0,usp			|   user SP
+	moveml	sp@+,#0x7FFF		| load most registers (all but SSP)
+	addql	#6,sp			| pop SSP and align word
+  	rte
 
 /*
  * Signal "trampoline" code (20 bytes).  Invoked from RTE setup by sendsig().
@@ -1057,117 +831,71 @@ Lclru1:
  *			.
  *	scp+0->	beginning of signal context frame
  */
-	.globl	_sigcode, _esigcode
+	.globl	_sigcode, _esigcode, _sigcodetrap
 	.data
 _sigcode:
 	movl	sp@(12),a0		| signal handler addr	(4 bytes)
 	jsr	a0@			| call signal handler	(2 bytes)
 	addql	#4,sp			| pop signo		(2 bytes)
+_sigcodetrap:
 	trap	#1			| special syscall entry	(2 bytes)
 	movl	d0,sp@(4)		| save errno		(4 bytes)
-1:	moveq	#1,d0			| syscall == exit	(2 bytes)
+	moveq	#1,d0			| syscall == exit	(2 bytes)
 	trap	#0			| exit(errno)		(2 bytes)
 	jra	1b			| (round to multiple of 4)
 	.align	2
 _esigcode:
 
 /*
- * Icode is copied out to process 1 to exec init.
- * If the exec fails, process 1 exits.
- */
-	.globl	_icode,_szicode
-	.text
-_icode:
-	clrl	sp@-
-|	pea	pc@((argv-.)+2)
-|	pea	pc@((init-.)+2)
-	pea	pc@(argv)
-	pea	pc@(init)
-	clrl	sp@-
-	moveq	#SYS_execve,d0
-	trap	#0
-	moveq	#SYS_exit,d0
-	trap	#0
-init:
-	.asciz	"/sbin/init"
-	.even
-argv:
-	.long	init+6-_icode		| argv[0] = "init" ("/sbin/init" + 6)
-	.long	eicode-_icode		| argv[1] follows icode after copyout
-	.long	0
-eicode:
-
-_szicode:
-	.long	_szicode-_icode
-
-/*
  * Primitives
  */ 
 
-#ifdef	__STDC__
-#ifdef GPROF
-#define	ENTRY(name) \
-	.globl _ ## name; _ ## name: link a6,\#0; jbsr mcount; unlk a6
-#define ALTENTRY(name, rname) \
-	ENTRY(name); jra rname+12
+#ifdef __STDC__
+#define EXPORT(name)		.globl _ ## name; _ ## name:
 #else
-#define	ENTRY(name) \
-	.globl _ ## name; _ ## name:
-#define ALTENTRY(name, rname) \
-	.globl _ ## name; _ ## name:
+#define EXPORT(name)		.globl _/**/name; _/**/name:
 #endif
-
-#else /* traditional cpp */
 #ifdef GPROF
-#define	ENTRY(name) \
-	.globl _/**/name; _/**/name: link a6,#0; jbsr mcount; unlk a6
-#define ALTENTRY(name, rname) \
-	ENTRY(name); jra rname+12
+#if __GNUC__ >= 2
+#define	ENTRY(name)		EXPORT(name) link a6,\#0; jbsr mcount; unlk a6
 #else
-#define	ENTRY(name) \
-	.globl _/**/name; _/**/name:
-#define ALTENTRY(name, rname) \
-	.globl _/**/name; _/**/name:
+#define	ENTRY(name)		EXPORT(name) link a6,#0; jbsr mcount; unlk a6
 #endif
-#endif /* __STDC__ */
+#define ALTENTRY(name, rname)	ENTRY(name); jra rname+12
+#else
+#define	ENTRY(name)		EXPORT(name)
+#define ALTENTRY(name, rname) 	ENTRY(name)
+#endif
 
 /*
- * update profiling information for the user
- * addupc(pc, &u.u_prof, ticks)
+ * For gcc2
  */
-ENTRY(addupc)
-	movl	a2,sp@-			| scratch register
-	movl	sp@(12),a2		| get &u.u_prof
-	movl	sp@(8),d0		| get user pc
-	subl	a2@(8),d0		| pc -= pr->pr_off
-	jlt	Lauexit			| less than 0, skip it
-	movl	a2@(12),d1		| get pr->pr_scale
-	lsrl	#1,d0			| pc /= 2
-	lsrl	#1,d1			| scale /= 2
-	mulul	d1,d0			| pc /= scale
-	moveq	#14,d1
-	lsrl	d1,d0			| pc >>= 14
-	bclr	#0,d0			| pc &= ~1
-	cmpl	a2@(4),d0		| too big for buffer?
-	jge	Lauexit			| yes, screw it
-	addl	a2@,d0			| no, add base
-	movl	d0,sp@-			| push address
-	jbsr	_fusword		| grab old value
-	movl	sp@+,a0			| grab address back
-	cmpl	#-1,d0			| access ok
-	jeq	Lauerror		| no, skip out
-	addw	sp@(18),d0		| add tick to current value
-	movl	d0,sp@-			| push value
-	movl	a0,sp@-			| push address
-	jbsr	_susword		| write back new value
-	addql	#8,sp			| pop params
-	tstl	d0			| fault?
-	jeq	Lauexit			| no, all done
-Lauerror:
-	clrl	a2@(12)			| clear scale (turn off prof)
-Lauexit:
-	movl	sp@+,a2			| restore scratch reg
+ENTRY(__main)
 	rts
+
+/*
+ * copypage(fromaddr, toaddr)
+ *
+ * Optimized version of bcopy for a single page-aligned NBPG byte copy.
+ */
+ENTRY(copypage)
+	movl	sp@(4),a0		| source address
+	movl	sp@(8),a1		| destination address
+	movl	#NBPG/32,d0		| number of 32 byte chunks
+Lmlloop:
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	movl	a0@+,a1@+
+	subql	#1,d0
+	jne	Lmlloop
+	rts
+
+#include <da30/da30/copy.s>
 
 /*
  * non-local gotos
@@ -1179,15 +907,6 @@ ENTRY(setjmp)
 	moveq	#0,d0		| return 0
 	rts
 
-ENTRY(qsetjmp)
-	movl	sp@(4),a0	| savearea pointer
-	lea	a0@(40),a0	| skip regs we do not save
-	movl	a6,a0@+		| save FP
-	movl	sp,a0@+		| save SP
-	movl	sp@,a0@		| and return address
-	moveq	#0,d0		| return 0
-	rts
-
 ENTRY(longjmp)
 	movl	sp@(4),a0
 	moveml	a0@+,#0xFCFC
@@ -1196,49 +915,47 @@ ENTRY(longjmp)
 	rts
 
 /*
- * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs
- * have processes in them.  Setrq puts processes into queues, Remrq
- * removes them from queues.  The running process is on no queue,
- * other processes are on a queue related to p->p_pri, divided by 4
- * actually to shrink the 0-127 range of priorities into the 32 available
+ * The following primitives manipulate the run queues.  _whichqs tells which
+ * of the 32 queues _qs have processes in them.  Setrunqueue puts processes
+ * into queues, Remrq removes them from queues.  The running process is on
+ * no queue, other processes are on a queue related to p->p_priority, divided
+ * by 4 actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
 
 	.globl	_whichqs,_qs,_cnt,_panic
-	.globl	_curproc
-	.comm	_want_resched,4
+	.globl	_curproc,_want_resched
 
 /*
- * Setrq(p)
+ * Setrunqueue(p)
  *
  * Call should be made at spl6(), and p->p_stat should be SRUN
  */
-ENTRY(setrq)
+ENTRY(setrunqueue)
 	movl	sp@(4),a0
-	tstl	a0@(P_RLINK)
+	tstl	a0@(P_BACK)
 	jeq	Lset1
 	movl	#Lset2,sp@-
 	jbsr	_panic
 Lset1:
 	clrl	d0
-	movb	a0@(P_PRI),d0
+	movb	a0@(P_PRIORITY),d0
 	lsrb	#2,d0
 	movl	_whichqs,d1
 	bset	d0,d1
 	movl	d1,_whichqs
 	lslb	#3,d0
 	addl	#_qs,d0
-	movl	d0,a0@(P_LINK)
+	movl	d0,a0@(P_FORW)
 	movl	d0,a1
-	movl	a1@(P_RLINK),a0@(P_RLINK)
-	movl	a0,a1@(P_RLINK)
-	movl	a0@(P_RLINK),a1
-	movl	a0,a1@(P_LINK)
+	movl	a1@(P_BACK),a0@(P_BACK)
+	movl	a0,a1@(P_BACK)
+	movl	a0@(P_BACK),a1
+	movl	a0,a1@(P_FORW)
 	rts
 
 Lset2:
-	.asciz	"setrq"
+	.asciz	"setrunqueue"
 	.even
 
 /*
@@ -1249,7 +966,7 @@ Lset2:
 ENTRY(remrq)
 	movl	sp@(4),a0
 	clrl	d0
-	movb	a0@(P_PRI),d0
+	movb	a0@(P_PRIORITY),d0
 	lsrb	#2,d0
 	movl	_whichqs,d1
 	bclr	d0,d1
@@ -1258,27 +975,27 @@ ENTRY(remrq)
 	jbsr	_panic
 Lrem1:
 	movl	d1,_whichqs
-	movl	a0@(P_LINK),a1
-	movl	a0@(P_RLINK),a1@(P_RLINK)
-	movl	a0@(P_RLINK),a1
-	movl	a0@(P_LINK),a1@(P_LINK)
+	movl	a0@(P_FORW),a1
+	movl	a0@(P_BACK),a1@(P_BACK)
+	movl	a0@(P_BACK),a1
+	movl	a0@(P_FORW),a1@(P_FORW)
 	movl	#_qs,a1
 	movl	d0,d1
 	lslb	#3,d1
 	addl	d1,a1
-	cmpl	a1@(P_LINK),a1
+	cmpl	a1@(P_FORW),a1
 	jeq	Lrem2
 	movl	_whichqs,d1
 	bset	d0,d1
 	movl	d1,_whichqs
 Lrem2:
-	clrl	a0@(P_RLINK)
+	clrl	a0@(P_BACK)
 	rts
 
 Lrem3:
 	.asciz	"remrq"
 Lsw0:
-	.asciz	"swtch"
+	.asciz	"switch"
 	.even
 
 	.globl	_curpcb
@@ -1287,35 +1004,34 @@ Lsw0:
 _masterpaddr:			| XXX compatibility (debuggers)
 _curpcb:
 	.long	0
-pcbflag:
-	.byte	0		| copy of pcb_flags low byte
+mdpflag:
+	.byte	0		| copy of proc md_flags low byte
 	.align	2
 	.comm	nullpcb,SIZEOF_PCB
 	.text
 
 /*
- * At exit of a process, do a swtch for the last time.
+ * At exit of a process, do a switch for the last time.
  * The mapping of the pcb at p->p_addr has already been deleted,
  * and the memory for the pcb+stack has been freed.
  * The ipl is high enough to prevent the memory from being reallocated.
  */
-ENTRY(swtch_exit)
+ENTRY(switch_exit)
 	movl	#nullpcb,_curpcb	| save state into garbage pcb
 	lea	tmpstk,sp		| goto a tmp stack
-	jra	_swtch
+	jra	_cpu_switch
 
 /*
- * When no processes are on the runq, Swtch branches to idle
+ * When no processes are on the runq, Swtch branches to Idle
  * to wait for something to come ready.
  */
-	.globl	Idle
-Lidle:
+	.globl	idle
+idle:
 	stop	#PSL_LOWIPL
 Idle:
-idle:
 	movw	#PSL_HIGHIPL,sr
 	tstl	_whichqs
-	jeq	Lidle
+	jeq	idle
 	movw	#PSL_LOWIPL,sr
 	jra	Lsw1
 
@@ -1325,17 +1041,9 @@ Lbadsw:
 	/*NOTREACHED*/
 
 /*
- * Swtch()
- *
- * NOTE: On the mc68851 (318/319/330) we attempt to avoid flushing the
- * entire ATC.  The effort involved in selective flushing may not be
- * worth it, maybe we should just flush the whole thing?
- *
- * NOTE 2: With the new VM layout we now no longer know if an inactive
- * user's PTEs have been changed (formerly denoted by the SPTECHG p_flag
- * bit).  For now, we just always flush the full ATC.
+ * cpu_switch()
  */
-ENTRY(swtch)
+ENTRY(cpu_switch)
 	movl	_curpcb,a0		| current pcb
 	movw	sr,a0@(PCB_PS)		| save sr before changing ipl
 #ifdef notyet
@@ -1343,6 +1051,7 @@ ENTRY(swtch)
 #endif
 	clrl	_curproc
 	addql	#1,_cnt+V_SWTCH
+
 Lsw1:
 	/*
 	 * Find the highest-priority queue that isn't empty,
@@ -1357,7 +1066,7 @@ Lswchk:
 	addqb	#1,d0
 	cmpb	#32,d0
 	jne	Lswchk
-	jra	idle
+	jra	Idle
 Lswfnd:
 	movw	#PSL_HIGHIPL,sr		| lock out interrupts
 	movl	a0@,d1			| and check again...
@@ -1378,13 +1087,13 @@ Lswok:
 	lslb	#3,d1			| convert queue number to index
 	addl	#_qs,d1			| locate queue (q)
 	movl	d1,a1
-	cmpl	a1@(P_LINK),a1		| anyone on queue?
+	cmpl	a1@(P_FORW),a1		| anyone on queue?
 	jeq	Lbadsw			| no, panic
-	movl	a1@(P_LINK),a0			| p = q->p_link
-	movl	a0@(P_LINK),a1@(P_LINK)		| q->p_link = p->p_link
-	movl	a0@(P_LINK),a1			| q = p->p_link
-	movl	a0@(P_RLINK),a1@(P_RLINK)	| q->p_rlink = p->p_rlink
-	cmpl	a0@(P_LINK),d1		| anyone left on queue?
+	movl	a1@(P_FORW),a0		| p = q->p_forw
+	movl	a0@(P_FORW),a1@(P_FORW)	| q->p_forw = p->p_forw
+	movl	a0@(P_FORW),a1		| q = p->p_forw
+	movl	a0@(P_BACK),a1@(P_BACK)	| q->p_back = p->p_back
+	cmpl	a0@(P_FORW),d1		| anyone left on queue?
 	jeq	Lsw2			| no, skip
 	movl	_whichqs,d1
 	bset	d0,d1			| yes, reset bit
@@ -1404,7 +1113,6 @@ Lsw2:
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
-	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
@@ -1421,10 +1129,10 @@ Lswnofpsave:
 	cmpb	#SRUN,a0@(P_STAT)
 	jne	Lbadsw
 #endif
-	clrl	a0@(P_RLINK)		| clear back link
+	clrl	a0@(P_BACK)		| clear back link
+	movb	a0@(P_MDFLAG+3),mdpflag	| low byte of p_md.md_flags
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
-	movb	a1@(PCB_FLAGS+1),pcbflag | copy of pcb_flags low byte
 
 	/* see if pmap_activate needs to be called; should remove this */
 	movl	a0@(P_VMSPACE),a0	| vmspace = p->p_vmspace
@@ -1442,26 +1150,11 @@ Lswnofpsave:
 	movl	_curpcb,a1		| restore p_addr
 Lswnochg:
 
-#ifdef PROFTIMER
-#ifdef notdef
-	movw	#SPL6,sr		| protect against clock interrupts
-#endif
-	bclr	#0,_profon		| clear user profiling bit, was set?
-	jeq	Lskipoff		| no, clock off or doing kernel only
-#ifdef GPROF
-	tstb	_profon			| kernel profiling also enabled?
-	jlt	Lskipoff		| yes, nothing more to do
-#endif
-	RTCADDR(a0)
-	movb	#0,a0@(CLKCR2)		| no, just user, select CR3
-	movb	#0,a0@(CLKCR3)		| and turn it off
-Lskipoff:
-#endif
 	movl	#PGSHIFT,d1
 	movl	a1,d0
 	lsrl	d1,d0			| convert p_addr to page number
-	lsll	#2,d0			| and now to Systab offset
-	addl	_Sysmap,d0		| add Systab base to get PTE addr
+	lsll	#2,d0			| and now to Sysmap offset
+	addl	_Sysmap,d0		| add Sysmap base to get PTE addr
 #ifdef notdef
 	movw	#PSL_HIGHIPL,sr		| go crit while changing PTEs
 #endif
@@ -1484,25 +1177,9 @@ Lres1:
 	lea	_protorp,a0		| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load new user root pointer
-	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
-#ifdef PROFTIMER
-	tstl	a1@(U_PROFSCALE)	| process being profiled?
-	jeq	Lskipon			| no, do nothing
-	orb	#1,_profon		| turn on user profiling bit
-#ifdef GPROF
-	jlt	Lskipon			| already profiling kernel, all done
-#endif
-	RTCADDR(a0)
-	movl	_profint,d1		| profiling interval
-	subql	#1,d1			|   adjusted
-	movepw	d1,a0@(CLKMSB3)		| set interval
-	movb	#0,a0@(CLKCR2)		| select CR3
-	movb	#64,a0@(CLKCR3)		| turn it on
-Lskipon:
-#endif
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	tstb	a0@			| null state frame?
@@ -1519,7 +1196,7 @@ Lresfprest:
 /*
  * savectx(pcb, altreturn)
  * Update pcb, saving current processor state and arranging
- * for alternate return ala longjmp in swtch if altreturn is true.
+ * for alternate return ala longjmp in switch if altreturn is true.
  */
 ENTRY(savectx)
 	movl	sp@(4),a1
@@ -1527,7 +1204,6 @@ ENTRY(savectx)
 	movl	usp,a0			| grab USP
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
-	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
@@ -1548,87 +1224,116 @@ Lsavedone:
 	rts
 
 /*
- * Copy 1 relocation unit (NBPG bytes)
- * from user virtual address to physical address
+ * {fu,su},{byte,sword,word}
  */
-ENTRY(copyseg)
-	movl	_curpcb,a1			| current pcb
-	movl	#Lcpydone,a1@(PCB_ONFAULT)	| where to return to on a fault
-	movl	sp@(8),d0			| destination page number
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0				| convert to address
-	orl	#PG_CI+PG_RW+PG_V,d0		| make sure valid and writable
-	movl	_CMAP2,a0
-	movl	_CADDR2,sp@-			| destination kernel VA
-	movl	d0,a0@				| load in page table
-	jbsr	_TBIS				| invalidate any old mapping
-	addql	#4,sp
-	movl	_CADDR2,a1			| destination addr
-	movl	sp@(4),a0			| source addr
-	movl	#NBPG/4-1,d0			| count
-Lcpyloop:
-	movsl	a0@+,d1				| read longword
-	movl	d1,a1@+				| write longword
-	dbf	d0,Lcpyloop			| continue until done
-Lcpydone:
-	movl	_curpcb,a1			| current pcb
-	clrl	a1@(PCB_ONFAULT) 		| clear error catch
+ALTENTRY(fuiword, _fuword)
+ENTRY(fuword)
+	movl	sp@(4),a0		| address to read
+	movl	_curpcb,a1		| current pcb
+	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movsl	a0@,d0			| do read from user space
+	nop
+	jra	Lfsdone
+
+ENTRY(fusword)
+	movl	sp@(4),a0
+	movl	_curpcb,a1		| current pcb
+	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	moveq	#0,d0
+	movsw	a0@,d0			| do read from user space
+	nop
+	jra	Lfsdone
+
+/* Just like fusword, but tells trap code not to page in. */
+ENTRY(fuswintr)
+	movl	sp@(4),a0
+	movl	_curpcb,a1
+	movl	#_fswintr,a1@(PCB_ONFAULT)
+	moveq	#0,d0
+	movsw	a0@,d0
+	nop
+	jra	Lfsdone
+
+ALTENTRY(fuibyte, _fubyte)
+ENTRY(fubyte)
+	movl	sp@(4),a0		| address to read
+	movl	_curpcb,a1		| current pcb
+	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	moveq	#0,d0
+	movsb	a0@,d0			| do read from user space
+	nop
+	jra	Lfsdone
+
+Lfserr:
+	moveq	#-1,d0			| error indicator
+Lfsdone:
+	clrl	a1@(PCB_ONFAULT) 	| clear fault address
 	rts
+
+/* Just like Lfserr, but the address is different (& exported). */
+	.globl	_fswintr
+_fswintr:
+	moveq	#-1,d0
+	jra	Lfsdone
+
 
 /*
- * Copy 1 relocation unit (NBPG bytes)
- * from physical address to physical address
+ * Write a longword in user instruction space.
+ * Largely the same as suword but with a final i-cache purge on those
+ * machines with split caches.
  */
-ENTRY(physcopyseg)
-	movl	sp@(4),d0			| source page number
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0				| convert to address
-	orl	#PG_CI+PG_RW+PG_V,d0		| make sure valid and writable
-	movl	_CMAP1,a0
-	movl	d0,a0@				| load in page table
-	movl	_CADDR1,sp@-			| destination kernel VA
-	jbsr	_TBIS				| invalidate any old mapping
-	addql	#4,sp
+ENTRY(suiword)
+	movl	sp@(4),a0		| address to write
+	movl	sp@(8),d0		| value to put there
+	movl	_curpcb,a1		| current pcb
+	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movsl	d0,a0@			| do write to user space
+	nop
+	moveq	#0,d0			| indicate no fault
+	movl	#IC_CLEAR,d1
+	movc	d1,cacr			| invalidate i-cache
+	jra	Lfsdone
 
-	movl	sp@(8),d0			| destination page number
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0				| convert to address
-	orl	#PG_CI+PG_RW+PG_V,d0		| make sure valid and writable
-	movl	_CMAP2,a0
-	movl	d0,a0@				| load in page table
-	movl	_CADDR2,sp@-			| destination kernel VA
-	jbsr	_TBIS				| invalidate any old mapping
-	addql	#4,sp
+ENTRY(suword)
+	movl	sp@(4),a0		| address to write
+	movl	sp@(8),d0		| value to put there
+	movl	_curpcb,a1		| current pcb
+	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movsl	d0,a0@			| do write to user space
+	nop
+	moveq	#0,d0			| indicate no fault
+	jra	Lfsdone
 
-	movl	_CADDR1,a0			| source addr
-	movl	_CADDR2,a1			| destination addr
-	movl	#NBPG/4-1,d0			| count
-Lpcpy:
-	movl	a0@+,a1@+			| copy longword
-	dbf	d0,Lpcpy			| continue until done
-	rts
+ENTRY(susword)
+	movl	sp@(4),a0		| address to write
+	movw	sp@(10),d0		| value to put there
+	movl	_curpcb,a1		| current pcb
+	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movsw	d0,a0@			| do write to user space
+	nop
+	moveq	#0,d0			| indicate no fault
+	jra	Lfsdone
 
-/*
- * zero out physical memory
- * specified in relocation units (NBPG bytes)
- */
-ENTRY(clearseg)
-	movl	sp@(4),d0			| destination page number
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0				| convert to address
-	orl	#PG_CI+PG_RW+PG_V,d0		| make sure valid and writable
-	movl	_CMAP1,a0
-	movl	_CADDR1,sp@-			| destination kernel VA
-	movl	d0,a0@				| load in page map
-	jbsr	_TBIS				| invalidate any old mapping
-	addql	#4,sp
-	movl	_CADDR1,a1			| destination addr
-	movl	#NBPG/4-1,d0			| count
-/* simple clear loop is fastest on 68020 */
-Lclrloop:
-	clrl	a1@+				| clear a longword
-	dbf	d0,Lclrloop			| continue til done
-	rts
+ENTRY(suswintr)
+	movl	sp@(4),a0
+	movw	sp@(10),d0
+	movl	_curpcb,a1
+	movl	#_fswintr,a1@(PCB_ONFAULT)
+	movsw	d0,a0@
+	nop
+	moveq	#0,d0
+	jra	Lfsdone
+
+ALTENTRY(suibyte, _subyte)
+ENTRY(subyte)
+	movl	sp@(4),a0		| address to write
+	movb	sp@(11),d0		| value to put there
+	movl	_curpcb,a1		| current pcb
+	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movsb	d0,a0@			| do write to user space
+	nop
+	moveq	#0,d0			| indicate no fault
+	jra	Lfsdone
 
 /*
  * Invalidate entire TLB.
@@ -1636,6 +1341,8 @@ Lclrloop:
 ENTRY(TBIA)
 __TBIA:
 	pflusha				| flush entire TLB
+	movl	#DC_CLEAR,d0
+	movc	d0,cacr			| invalidate on-chip d-cache
 	rts
 
 /*
@@ -2064,15 +1771,17 @@ ENTRY(prom_getvar)
 	movel	ROM+0x404,a0
 	jmp	a0@
 
+
 	.data
-	.space	NBPG
-tmpstk:
 	.globl	_protorp
 _protorp:
 	.long	0,0		| prototype root pointer
 	.globl	_cold
 _cold:
 	.long	1		| cold start flag
+	.globl	_want_resched
+_want_resched:
+	.long	0
 	.globl	_intiobase, _intiolimit, _extiobase, _RTCbase
 	.globl	_proc0paddr
 _proc0paddr:
@@ -2083,16 +1792,11 @@ _intiolimit:
 	.long	0		| KVA of end of internal IO space
 _extiobase:
 	.long	0		| KVA of base of external IO space
-_RTCbase:
-	.long	0		| KVA of base of clock registers
 #ifdef DEBUG
 	.globl	fulltflush, fullcflush
 fulltflush:
 	.long	0
 fullcflush:
-	.long	0
-	.globl	timebomb
-timebomb:
 	.long	0
 #endif
 /* interrupt counters */
@@ -2105,16 +1809,10 @@ _intrnames:
 	.asciz	"lev4"
 	.asciz	"clock"
 	.asciz	"lev6"
-#ifdef PROFTIMER
-	.asciz  "pclock"
-#endif
 	.asciz	"nmi"
+	.asciz	"statclock"
 _eintrnames:
 	.even
 _intrcnt:
-#ifdef PROFTIMER
 	.long	0,0,0,0,0,0,0,0,0,0
-#else
-	.long	0,0,0,0,0,0,0,0,0
-#endif
 _eintrcnt:

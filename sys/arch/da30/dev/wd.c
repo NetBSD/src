@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.1 1994/02/22 23:50:41 paulus Exp $
+ *	$Id: wd.c,v 1.2 1994/06/18 12:10:20 paulus Exp $
  */
 
 #include "wd.h"
@@ -515,11 +515,11 @@ register struct wfdsoftc *dv;
 	bp = dp->b_actf;
 	if (bp == NULL)
 		return;	
-	dp->b_forw = NULL;
+	dp->b_actf = NULL;
 	if (wfp->wfc_actf == NULL)  /* link unit into active list */
 		wfp->wfc_actf = dp;
 	else
-		wfp->wfc_actl->b_forw = dp;
+		wfp->wfc_actl->b_actf = dp;
 	wfp->wfc_actl = dp;
 	dp->b_active = 1;		/* mark the drive as busy */
 }
@@ -550,7 +550,7 @@ loop:
 		return;
 	bp = dp->b_actf;
 	if (bp == NULL) {
-		wfp->wfc_actf = dp->b_forw;
+		wfp->wfc_actf = dp->b_actf;
 		goto loop;
 	}
 	unit = wdunit(bp->b_dev);
@@ -887,7 +887,7 @@ struct wfcsoftc *wfp;
 	du = &dv->wfd_drive;
 
 	du->dk_skip = 0;
-	wfp->wfc_actf = dp->b_forw;
+	wfp->wfc_actf = dp->b_actf;
 	wfp->wfc_errcnt = 0;
 	wfp->wfc_active = 0;
 	dp->b_actf = bp->b_actf;

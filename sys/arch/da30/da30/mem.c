@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: mem.c 1.14 90/10/12
- *	from: @(#)mem.c	7.5 (Berkeley) 5/7/91
- *	$Id: mem.c,v 1.1 1994/02/22 23:49:47 paulus Exp $
+ * from: Utah $Hdr: mem.c 1.14 90/10/12$
+ *
+ *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
+ *	$Id: mem.c,v 1.2 1994/06/18 12:09:58 paulus Exp $
  */
 
 /*
@@ -54,9 +55,11 @@
 
 #include <vm/vm_param.h>
 #include <vm/lock.h>
-#include <vm/vm_statistics.h>
-#include <vm/pmap.h>
 #include <vm/vm_prot.h>
+#include <vm/pmap.h>
+
+extern u_int lowram;
+caddr_t zeropage;
 
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
@@ -68,8 +71,7 @@ mmrw(dev, uio, flags)
 	register u_int c, v;
 	register struct iovec *iov;
 	int error = 0;
-	caddr_t zbuf = NULL;
-	extern u_int lowram;
+	int kernloc;
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -90,24 +92,26 @@ mmrw(dev, uio, flags)
 			if (v >= 0xFFFFFFFC || v < lowram)
 				return (EFAULT);
 #endif
-			pmap_enter(pmap_kernel(), vmmap, trunc_page(v),
-				uio->uio_rw == UIO_READ ?
-				   VM_PROT_READ : VM_PROT_WRITE, TRUE);
+			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
+			    trunc_page(v), uio->uio_rw == UIO_READ ?
+			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = (int)uio->uio_offset & PGOFSET;
 			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
-			c = MIN(c, (u_int)(NBPG - o));
-			c = MIN(c, (u_int)iov->iov_len);
+			c = min(c, (u_int)(NBPG - o));
+			c = min(c, (u_int)iov->iov_len);
 			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
-			pmap_remove(pmap_kernel(), vmmap, &vmmap[NBPG]);
+			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
+			    (vm_offset_t)&vmmap[NBPG]);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
-			c = MIN(iov->iov_len, MAXPHYS);
-			if (!kernacc((caddr_t)uio->uio_offset, c,
+			kernloc = uio->uio_offset;
+			c = min(iov->iov_len, MAXPHYS);
+			if (!kernacc((caddr_t)kernloc, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)uio->uio_offset, (int)c, uio);
+			error = uiomove((caddr_t)kernloc, (int)c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -122,13 +126,25 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zbuf == NULL) {
-				zbuf = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zbuf, CLBYTES);
+			/*
+			 * On the first call, allocate and zero a page
+			 * of memory for use with /dev/zero.
+			 *
+			 * XXX on the da30 we already know where there
+			 * is a global zeroed page, the null segment table.
+			 */
+			if (zeropage == NULL) {
+#if CLBYTES == NBPG
+				extern caddr_t Segtabzero;
+				zeropage = Segtabzero;
+#else
+				zeropage = (caddr_t)
+					malloc(CLBYTES, M_TEMP, M_WAITOK);
+				bzero(zeropage, CLBYTES);
+#endif
 			}
-			c = MIN(iov->iov_len, CLBYTES);
-			error = uiomove(zbuf, (int)c, uio);
+			c = min(iov->iov_len, CLBYTES);
+			error = uiomove(zeropage, (int)c, uio);
 			continue;
 
 		default:
@@ -141,7 +157,27 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
-	if (zbuf)
-		free(zbuf, M_TEMP);
 	return (error);
+}
+
+mmmap(dev, off, prot)
+	dev_t dev;
+	int off, prot;
+{
+	/*
+	 * /dev/mem is the only one that makes sense through this
+	 * interface.  For /dev/kmem any physaddr we return here
+	 * could be transient and hence incorrect or invalid at
+	 * a later time.  /dev/null just doesn't make any sense
+	 * and /dev/zero is a hack that is handled via the default
+	 * pager in mmap().
+	 */
+	if (minor(dev) != 0)
+		return (-1);
+	/*
+	 * Allow access only up to the 16M point: RAM and I/O.
+	 */
+	if ((unsigned)off >= 0x1000000)
+		return (-1);
+	return (da30_btop(off));
 }

@@ -1,7 +1,7 @@
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.1 1994/02/22 23:51:14 paulus Exp $
+ *	from: @(#)pmap.h	8.1 (Berkeley) 6/10/93
+ *	$Id: pmap.h,v 1.2 1994/06/18 12:10:33 paulus Exp $
  */
 
 #ifndef	_PMAP_MACHINE_
@@ -45,6 +45,9 @@
 #define DA_PAGE_SIZE	NBPG
 #define DA_SEG_SIZE	NBSEG
 
+#define da30_trunc_seg(x)	(((unsigned)(x)) & ~(DA_SEG_SIZE-1))
+#define da30_round_seg(x)	da30_trunc_seg((unsigned)(x) + DA_SEG_SIZE-1)
+
 /*
  * Pmap stuff
  */
@@ -52,6 +55,7 @@ struct pmap {
 	struct pte		*pm_ptab;	/* KVA of page table */
 	struct ste		*pm_stab;	/* KVA of segment table */
 	int			pm_stchanged;	/* ST changed */
+	struct ste		*pm_stpa;	/* ST phys addr */
 	short			pm_sref;	/* segment table ref count */
 	short			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
@@ -61,15 +65,18 @@ struct pmap {
 
 typedef struct pmap	*pmap_t;
 
-extern pmap_t		kernel_pmap;
+extern struct pmap	kernel_pmap_store;
+
+#define kernel_pmap	(&kernel_pmap_store)
+#define	active_pmap(pm) \
+	((pm) == kernel_pmap || (pm) == curproc->p_vmspace->vm_map.pmap)
 
 /*
  * Macros for speed
  */
 #define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
 	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
-		(pcbp)->pcb_ustp = \
-		    da30_btop(pmap_extract(kernel_pmap, (pmapp)->pm_stab)); \
+		(pcbp)->pcb_ustp = da30_btop((vm_offset_t)(pmapp)->pm_stpa); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \
 		(pmapp)->pm_stchanged = FALSE; \
@@ -98,11 +105,11 @@ pv_entry_t	pv_table;		/* array of entries, one per page */
 #define pa_index(pa)		atop(pa - vm_first_phys)
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 
-#define	pmap_kernel()			(kernel_pmap)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 extern	struct pte *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
-#endif	KERNEL
+#endif /* KERNEL */
 
-#endif	_PMAP_MACHINE_
+#endif /* _PMAP_MACHINE_ */

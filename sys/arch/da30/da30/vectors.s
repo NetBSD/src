@@ -1,6 +1,6 @@
 | Copyright (c) 1988 University of Utah
-| Copyright (c) 1990 Regents of the University of California.
-| All rights reserved.
+| Copyright (c) 1990, 1993
+|	The Regents of the University of California.  All rights reserved.
 |
 | Redistribution and use in source and binary forms, with or without
 | modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
 | SUCH DAMAGE.
 |
 |	from: @(#)vectors.s	7.2 (Berkeley) 5/7/91
-|	$Id: vectors.s,v 1.1 1994/02/22 23:50:03 paulus Exp $
+|	$Id: vectors.s,v 1.2 1994/06/18 12:10:11 paulus Exp $
 |
 #define	_fpbsun		_fpfault
 #define	_fpinex		_fpfault

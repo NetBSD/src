@@ -8,7 +8,7 @@
  * warranty, express or implied.  The author makes no representations
  * about the suitability of this software for any purpose.
  *
- *	$Id: raw_diskio.c,v 1.1 1994/02/22 23:49:54 paulus Exp $
+ *	$Id: raw_diskio.c,v 1.2 1994/06/18 12:10:04 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -26,73 +26,78 @@ int
 raw_disk_io(int dev, struct uio *uio, int blocksize)
 {
     struct buf *bp;
-    int err;
+    int err, ioc;
+    struct iovec *iov;
 
     if( uio->uio_offset % blocksize != 0 )
 	return EINVAL;
 
     MALLOC(bp, struct buf *, sizeof(struct buf), M_TEMP, M_WAITOK);
     bzero(bp, sizeof(*bp));
-    bp->b_flags = B_BUSY | B_PHYS;
+    bp->b_flags = B_BUSY | B_PHYS | B_RAW;
     if( uio->uio_rw == UIO_READ )
 	bp->b_flags |= B_READ;
     bp->b_dev = dev;
     bp->b_proc = uio->uio_procp;
 
-    err = uioapply(rawio_piece, bp, blocksize, uio);
-
+    while (uio->uio_resid != 0) {
+	iov = uio->uio_iov;
+	if (iov->iov_len != 0) {
+	    err = rawio_piece(bp, blocksize, uio, iov);
+	    if (err != 0 || iov->iov_len != 0)
+		break;
+	}
+	++uio->uio_iov;
+	--uio->uio_iovcnt;
+    }
+			      
     FREE(bp, M_TEMP);
     return err;
 }
 
 int
-rawio_piece(struct buf *bp, int blocksize, long offset,
-	    int rw, caddr_t addr, u_long *lenp, struct proc *p)
+rawio_piece(struct buf *bp, int blocksize,
+	    struct uio *uio, struct iovec *iov)
 {
-    u_long len, done;
-    int s;
+    int s, todo, done;
     vm_offset_t va;
 
-    len = *lenp;
-    if( len % blocksize != 0 )
+    if (iov->iov_len % blocksize != 0)
 	return EINVAL;
-    if( !useracc(addr, len, (rw == UIO_READ? B_WRITE: B_READ)) )
+    if (!useracc(iov->iov_base, iov->iov_len,
+		 (uio->uio_rw == UIO_READ? B_WRITE: B_READ)))
 	return EFAULT;
 
-    while( len != 0 ){
-	bp->b_un.b_addr = addr;
+    while( iov->iov_len != 0 ){
+	bp->b_data = iov->iov_base;
 	bp->b_flags &= ~B_DONE;
-	bp->b_bcount = min(len, MAXPHYS);
-	bp->b_blkno = offset / blocksize;
+	bp->b_bcount = todo = min(iov->iov_len, MAXPHYS);
+	bp->b_blkno = uio->uio_offset / blocksize;
 
-	for( va = trunc_page(addr); va < (vm_offset_t) addr + bp->b_bcount;
-		va += PAGE_SIZE )
-	    vm_fault(&p->p_vmspace->vm_map, va,
-		     VM_PROT_READ | (rw == UIO_READ? VM_PROT_WRITE: 0), FALSE);
-
-	vslock(addr, bp->b_bcount);
+	vslock(iov->iov_base, todo);
 	vmapbuf(bp);
 
 	cdevsw[major(bp->b_dev)].d_strategy(bp);
 	s = splbio();
 	while( (bp->b_flags & B_DONE) == 0 )
-	    sleep((caddr_t)bp, PRIBIO);
+	    tsleep((caddr_t) bp, PRIBIO + 1, "physio", 0);
 	splx(s);
 
 	vunmapbuf(bp);
-	vsunlock(addr, bp->b_bcount, rw == UIO_READ);
+	vsunlock(iov->iov_base, todo, uio->uio_rw == UIO_READ);
 
-	done = bp->b_bcount - bp->b_resid;
-	len -= done;
-	addr += done;
-	offset += done;
+	done = todo - bp->b_resid;
+	iov->iov_len -= done;
+	iov->iov_base += done;
+	uio->uio_offset += done;
+	uio->uio_resid -= done;
 
-	if( (bp->b_flags & B_ERROR) != 0 || bp->b_error != 0 || bp->b_resid != 0 )
+	if ((bp->b_flags & B_ERROR) != 0 || bp->b_error != 0
+	    || bp->b_resid != 0)
 	    break;
     }
 
-    if( (bp->b_flags & B_ERROR) != 0 && bp->b_error == 0 )
+    if ((bp->b_flags & B_ERROR) != 0 && bp->b_error == 0)
 	bp->b_error = EIO;
-    *lenp = len;
     return bp->b_error;
 }

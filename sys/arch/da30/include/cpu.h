@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: cpu.h 1.16 91/03/25
- *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.1 1994/02/22 23:50:52 paulus Exp $
+ * from: Utah $Hdr: cpu.h 1.16 91/03/25$
+ *
+ *	from: @(#)cpu.h	8.4 (Berkeley) 1/5/94
+ *	$Id: cpu.h,v 1.2 1994/06/18 12:10:27 paulus Exp $
  */
 
 /*
@@ -50,33 +51,33 @@
  */
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
-/*
- * function vs. inline configuration;
- * these are defined to get generic functions
- * rather than inline or machine-dependent implementations
- */
-#define	NEED_MINMAX		/* need {,i,l,ul}{min,max} functions */
-#undef	NEED_FFS		/* don't need ffs function */
-#undef	NEED_BCMP		/* don't need bcmp function */
-#undef	NEED_STRLEN		/* don't need strlen function */
-
-#define	cpu_exec(p)	/* nothing */
-#define	cpu_wait(p)	/* nothing */
+#define	cpu_exec(p)			/* nothing */
+#define	cpu_swapin(p)			/* nothing */
+#define	cpu_wait(p)			/* nothing */
+#define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
+#define cpu_set_init_frame(p, fp)	(p)->p_md.md_regs = fp
 
 /*
- * Arguments to hardclock, softclock and gatherstats
- * encapsulate the previous machine state in an opaque
- * clockframe; for da30, use just what the hardware
- * leaves on the stack.
+ * Arguments to hardclock and gatherstats encapsulate the previous
+ * machine state in an opaque clockframe.  One the da30, we use
+ * what the hardware pushes on an interrupt (frame format 0).
  */
-typedef struct intrframe {
-	int	pc;
-	int	ps;
-} clockframe;
+struct clockframe {
+	u_short	sr;		/* sr at time of interrupt */
+	u_long	pc;		/* pc at time of interrupt */
+	u_short	vo;		/* vector offset (4-word frame) */
+};
 
-#define	CLKF_USERMODE(framep)	(((framep)->ps & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->ps & PSL_IPL7) == 0)
+#define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
+#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
+#if 0
+/* We would like to do it this way... */
+#define	CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
+#else
+/* but until we start using PSL_M, we have to do this instead */
+#define	CLKF_INTR(framep)	(0)	/* XXX */
+#endif
 
 
 /*
@@ -86,11 +87,11 @@ typedef struct intrframe {
 #define	need_resched()	{ want_resched++; aston(); }
 
 /*
- * Give a profiling tick to the current process from the softclock
- * interrupt.  On da30, request an ast to send us through trap(),
- * marking the proc as needing a profiling tick.
+ * Give a profiling tick to the current process when the user profiling
+ * buffer pages are invalid.  On the hp300, request an ast to send us
+ * through trap, marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	{ (p)->p_flag |= SOWEUPC; aston(); }
+#define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -102,6 +103,7 @@ typedef struct intrframe {
 
 int	astpending;		/* need to trap before returning to user mode */
 int	want_resched;		/* resched() was called */
+
 
 /*
  * simulated software interrupt register
@@ -117,6 +119,17 @@ extern unsigned char ssir;
 #define setsoftclock()	ssir |= SIR_CLOCK
 
 extern unsigned long allocate_sir();
+
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
+
+#define CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+}
 
 /* values for cpuspeed (not really related to clock speed due to caches) */
 #define	MHZ_16		2
