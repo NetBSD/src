@@ -1,3 +1,5 @@
+/*	$NetBSD: proc_compare.c,v 1.5.8.1 1996/06/07 01:45:15 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)proc_compare.c	8.2 (Berkeley) 9/23/93";
+#else
+static char rcsid[] = "$NetBSD: proc_compare.c,v 1.5.8.1 1996/06/07 01:45:15 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
