@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.8 1996/03/22 23:25:30 jtc Exp $	*/
+/*	$NetBSD: termcap.c,v 1.9 1996/11/12 07:50:11 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: termcap.c,v 1.8 1996/03/22 23:25:30 jtc Exp $";
+static char rcsid[] = "$NetBSD: termcap.c,v 1.9 1996/11/12 07:50:11 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,13 +92,15 @@ tgetent(bp, name)
 	cp = getenv("TERMCAP");
 	/*
 	 * TERMCAP can have one of two things in it. It can be the
-	 * name of a file to use instead of /etc/termcap. In this
-	 * case it better start with a "/". Or it can be an entry to
-	 * use so we don't have to read the file. In this case it
-	 * has to already have the newlines crunched out.  If TERMCAP
-	 * does not hold a file name then a path of names is searched
-	 * instead.  The path is found in the TERMPATH variable, or
-	 * becomes "$HOME/.termcap /etc/termcap" if no TERMPATH exists.
+	 * name of a file to use instead of
+	 * /usr/share/misc/termcap. In this case it better start with
+	 * a "/". Or it can be an entry to use so we don't have to
+	 * read the file. In this case it has to already have the
+	 * newlines crunched out.  If TERMCAP does not hold a file
+	 * name then a path of names is searched instead.  The path is
+	 * found in the TERMPATH variable, or becomes _PATH_DEF
+	 * ("$HOME/.termcap /usr/share/misc/termcap") if no TERMPATH
+	 * exists.
 	 */
 	if (!cp || *cp != '/') {	/* no TERMCAP or it holds an entry */
 		if ((termpath = getenv("TERMPATH")) != NULL)
