@@ -88,6 +88,27 @@ FILES
      described in release(7).
 
 CONFIGURATION
+   Environment variables
+     Several environment variables control the behaviour of NetBSD builds.
+
+     MACHINE           Machine type.
+
+     MACHINE_ARCH      Machine architecture.
+
+     MAKE              Path name to invoke make(1) as.
+
+     MAKEFLAGS         Flags to invoke make(1) with.
+
+     MAKEOBJDIR        Directory to use as the .OBJDIR for the current direc-
+                       tory.  Used only if MAKEOBJDIRPREFIX is not defined.
+                       MAKEOBJDIR can only be provided in the environment.
+
+     MAKEOBJDIRPREFIX  Top level directory of the object directory tree.  If
+                       this is defined, ${MAKEOBJDIRPREFIX}/${.CURDIR} is used
+                       as the .OBJDIR for the current directory.  The current
+                       directory may be read only.  MAKEOBJDIRPREFIX can only
+                       be provided in the environment.
+
    "make" variables
      Several variables control the behavior of NetBSD builds.  Unless other-
      wise specified, these variables may be set in either the process environ-
@@ -481,4 +502,4 @@ HISTORY
 BUGS
      Many platforms are not yet using the USE_NEW_TOOLCHAIN system.
 
-NetBSD                           March 4, 2002                               8
+NetBSD                           March 5, 2002                               8
