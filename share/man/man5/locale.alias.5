@@ -1,4 +1,4 @@
-.\" $NetBSD: locale.alias.5,v 1.1 2004/07/21 19:49:21 tshiozak Exp $
+.\" $NetBSD: locale.alias.5,v 1.2 2004/07/22 15:10:01 wiz Exp $
 .\"
 .\" Copyright (c)2004 Citrus Project,
 .\" All rights reserved.
@@ -35,13 +35,13 @@
 .Sh DESCRIPTION
 The
 .Nm locale.alias
-file describes locale aliases.  Each line of this file can be described
-as the following BNF:
+file describes locale aliases.
+Each line of this file can be described as the following BNF:
 .Bd -literal -offset indent
 line			:=	src ws dst
 src			:=	locale_name
 			|	locale_category_name
-ws			:=	<white spaces>
+ws			:=	\*[Lt]white spaces\*[Gt]
 dst			:=	locale_name
 			|	"/FORCE"
 locale_category_name	:=	locale_name '/' category_name
@@ -51,23 +51,29 @@ category_name		:=	"LC_CTYPE"
 			|	"LC_NUMERIC"
 			|	"LC_MONETARY"
 			|	"LC_MESSAGES"
-locale_name		:=	<locale name>
+locale_name		:=	\*[Lt]locale name\*[Gt]
 .Ed
-.Sh EXAMPLES
-.Bd -literal -offset indent
-ja_JP.UTF-8/LC_CTYPE		en_US.UTF-8
-.Ed
-This means that "ja_JP.UTF-8" for LC_CTYPE category is redirected to
-"en_US.UTF-8".
-.Bd -literal -offset indent
-Pig				/FORCE
-.Ed
-This means that "Pig" for all categories is forcibly enabled.
 .Sh FILES
 .Bl -tag -width /usr/share/locale/locale.alias -compact
 .It Pa /usr/share/locale/locale.alias
 This file.
 .El
+.Sh EXAMPLES
+.Bd -literal -offset indent
+ja_JP.UTF-8/LC_CTYPE		en_US.UTF-8
+.Ed
+This means that
+.Dq Dv ja_JP.UTF-8
+for
+.Dv LC_CTYPE
+category is redirected to
+.Dq Dv en_US.UTF-8 .
+.Bd -literal -offset indent
+Pig				/FORCE
+.Ed
+This means that
+.Dq Dv Pig
+for all categories is forcibly enabled.
 .Sh SEE ALSO
 .Xr locale 1 ,
 .Xr nls 7
@@ -75,4 +81,4 @@ This file.
 The
 .Nm
 file appeared in
-.Nx 2.1 .
+.Nx 3.0 .
