@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.197 2003/02/26 07:34:34 wiz Exp $
+.\"	$NetBSD: options.4,v 1.198 2003/02/27 20:00:48 perseant Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1546,6 +1546,13 @@ enables logging of IP packets using ip-filter.
 .It Cd options IPFILTER_DEFAULT_BLOCK
 This option sets the default policy of ip-filter.
 If it is set, ip-filter will block packets by default.
+.It Cd options BRIDGE_IPF
+This option causes
+.Em bridge
+devices to use the IP and/or IPv6 filtering hooks, forming
+a link-layer filter that uses protocol-layer rules.
+This option assumes the presence of
+.Em pseudo-device ipfilter .
 .It Cd options MBUFTRACE
 This option can help track down mbuf leaks.
 When enabled, mbufs are tagged with the devices and protocols using them,
