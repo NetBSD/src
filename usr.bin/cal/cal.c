@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.8 1998/02/04 15:17:49 christos Exp $	*/
+/*	$NetBSD: cal.c,v 1.9 1998/04/17 14:01:56 ws Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.8 1998/02/04 15:17:49 christos Exp $");
+__RCSID("$NetBSD: cal.c,v 1.9 1998/04/17 14:01:56 ws Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ char *j_day_headings = "  S   M  Tu   W  Th   F   S";
 /* leap year -- account for gregorian reformation in 1752 */
 #define	leap_year(yr) \
 	((yr) <= 1752 ? !((yr) % 4) : \
-	!(((yr) % 4) && ((yr) % 100)) || !((yr) % 400))
+	(!((yr) % 4) && ((yr) % 100)) || !((yr) % 400))
 
 /* number of centuries since 1700, not inclusive */
 #define	centuries_since_1700(yr) \
