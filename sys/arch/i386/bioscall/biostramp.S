@@ -1,4 +1,4 @@
-/*	$NetBSD: biostramp.S,v 1.6 1997/10/09 08:55:29 jtc Exp $	*/
+/*	$NetBSD: biostramp.S,v 1.7 1998/08/31 23:52:40 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -83,21 +83,21 @@
 	.set BASE_PTR_ADDR,STACK_PTR_ADDR-4
 	.set FUNCTION_ADDR,(BASE_PTR_ADDR-2)
 	.set GDT_COPY_ADDR,(FUNCTION_ADDR-NGDT*8)
-	.set AX_REGADDR,(GDT_COPY_ADDR-2)
-	.set BX_REGADDR,(AX_REGADDR-2)
-	.set CX_REGADDR,(BX_REGADDR-2)
-	.set DX_REGADDR,(CX_REGADDR-2)
-	.set SI_REGADDR,(DX_REGADDR-2)
-	.set DI_REGADDR,(SI_REGADDR-2)
-	.set FLAGS_REGADDR,(DI_REGADDR-2)
-	.set ENDREGADDR,(FLAGS_REGADDR-2)
+	.set EAX_REGADDR,(GDT_COPY_ADDR-4)
+	.set EBX_REGADDR,(EAX_REGADDR-4)
+	.set ECX_REGADDR,(EBX_REGADDR-4)
+	.set EDX_REGADDR,(ECX_REGADDR-4)
+	.set ESI_REGADDR,(EDX_REGADDR-4)
+	.set EDI_REGADDR,(ESI_REGADDR-4)
+	.set EFLAGS_REGADDR,(EDI_REGADDR-4)
+	.set ENDREGADDR,(EFLAGS_REGADDR-4)
 	
 	.set REALSTACK,ENDREGADDR-16		# leave a red zone?
 
 #define COPY_FLAGS (PSL_C|PSL_PF|PSL_AF|PSL_Z|PSL_N|PSL_D|PSL_V)
 
 /*
- * do_bios_call(int function, struct apmregs *regs)
+ * do_bios_call(int function, struct bioscall *regs)
  */
 
 ENTRY(do_bios_call)
@@ -115,26 +115,26 @@ ENTRY(do_bios_call)
 	movl 8(%ebp),%eax
 	movw %ax,FUNCTION_ADDR
 	movl 12(%ebp),%ebx
-	movw APMREG_AX(%ebx),%ax
-	movw %ax,AX_REGADDR
-	movw APMREG_BX(%ebx),%ax
-	movw %ax,BX_REGADDR
-	movw APMREG_CX(%ebx),%ax
-	movw %ax,CX_REGADDR
-	movw APMREG_DX(%ebx),%ax
-	movw %ax,DX_REGADDR
-	movw APMREG_SI(%ebx),%ax
-	movw %ax,SI_REGADDR
-	movw APMREG_DI(%ebx),%ax
-	movw %ax,DI_REGADDR
+	movl BIOSCALLREG_EAX(%ebx),%eax
+	movl %eax,EAX_REGADDR
+	movl BIOSCALLREG_EBX(%ebx),%eax
+	movl %eax,EBX_REGADDR
+	movl BIOSCALLREG_ECX(%ebx),%eax
+	movl %eax,ECX_REGADDR
+	movl BIOSCALLREG_EDX(%ebx),%eax
+	movl %eax,EDX_REGADDR
+	movl BIOSCALLREG_ESI(%ebx),%eax
+	movl %eax,ESI_REGADDR
+	movl BIOSCALLREG_EDI(%ebx),%eax
+	movl %eax,EDI_REGADDR
 	# merge current flags with certain provided flags
-	movw APMREG_FLAGS(%ebx),%cx
+	movl BIOSCALLREG_EFLAGS(%ebx),%ecx
 	pushfl
 	popl %eax
 	andl $~(COPY_FLAGS|PSL_I),%eax
 	andl $COPY_FLAGS,%ecx
 	orl %ecx,%eax
-	movw %ax,FLAGS_REGADDR
+	movl %eax,EFLAGS_REGADDR
 	
 	# save flags, disable interrupts, do real mode stuff
 	pushfl
@@ -217,17 +217,17 @@ xreal:	# really in real mode now
 	lidt IDT_bios
 
 	# Don't forget that we're in real mode, with 16-bit default data.
-	# all these movl's are really movw's !
+	# all these movl's are really movw's, and movw's are movl's!
 	addr32
-	movl DI_REGADDR-MYBASE,%edi
+	movw EDI_REGADDR-MYBASE,%edi
 	addr32
-	movl SI_REGADDR-MYBASE,%esi
+	movw ESI_REGADDR-MYBASE,%esi
 	addr32
-	movl DX_REGADDR-MYBASE,%edx
+	movw EDX_REGADDR-MYBASE,%edx
 	addr32
-	movl CX_REGADDR-MYBASE,%ecx
+	movw ECX_REGADDR-MYBASE,%ecx
 	addr32
-	movl BX_REGADDR-MYBASE,%ebx
+	movw EBX_REGADDR-MYBASE,%ebx
 	addr32
 	movb FUNCTION_ADDR-MYBASE,%al
 	addr32
@@ -237,11 +237,11 @@ xreal:	# really in real mode now
 	ljmp $(MYBASE>>4),$flushit
 flushit:
 	addr32
-	movl FLAGS_REGADDR-MYBASE,%eax
+	movw EFLAGS_REGADDR-MYBASE,%eax
 	pushl %eax
 	popfl
 	addr32
-	movl AX_REGADDR-MYBASE,%eax
+	movw EAX_REGADDR-MYBASE,%eax
 	
 intaddr: 
 	int $0xff
@@ -249,20 +249,20 @@ intaddr:
 	# save results
 	pushf
 	addr32
-	movl %eax,AX_REGADDR-MYBASE
+	movw %eax,EAX_REGADDR-MYBASE
 	addr32
-	movl %ebx,BX_REGADDR-MYBASE
+	movw %ebx,EBX_REGADDR-MYBASE
 	addr32
-	movl %ecx,CX_REGADDR-MYBASE
+	movw %ecx,ECX_REGADDR-MYBASE
 	addr32
-	movl %edx,DX_REGADDR-MYBASE
+	movw %edx,EDX_REGADDR-MYBASE
 	addr32
-	movl %esi,SI_REGADDR-MYBASE
+	movw %esi,ESI_REGADDR-MYBASE
 	addr32
-	movl %edi,DI_REGADDR-MYBASE
+	movw %edi,EDI_REGADDR-MYBASE
 	pop %eax
 	addr32
-	movl %eax,FLAGS_REGADDR-MYBASE
+	movw %eax,EFLAGS_REGADDR-MYBASE
 
 	# and return to protected mode
 	cli	# just to be sure
@@ -304,20 +304,20 @@ x32:
 	# copy back arguments from holding pen
 
 	movl 12(%ebp),%ebx
-	movw AX_REGADDR,%ax
-	movw %ax,APMREG_AX(%ebx)
-	movw BX_REGADDR,%ax
-	movw %ax,APMREG_BX(%ebx)
-	movw CX_REGADDR,%ax
-	movw %ax,APMREG_CX(%ebx)
-	movw DX_REGADDR,%ax
-	movw %ax,APMREG_DX(%ebx)
-	movw SI_REGADDR,%ax
-	movw %ax,APMREG_SI(%ebx)
-	movw DI_REGADDR,%ax
-	movw %ax,APMREG_DI(%ebx)
-	movw FLAGS_REGADDR,%ax
-	movw %ax,APMREG_FLAGS(%ebx)
+	movl EAX_REGADDR,%eax
+	movl %eax,BIOSCALLREG_EAX(%ebx)
+	movl EBX_REGADDR,%eax
+	movl %eax,BIOSCALLREG_EBX(%ebx)
+	movl ECX_REGADDR,%eax
+	movl %eax,BIOSCALLREG_ECX(%ebx)
+	movl EDX_REGADDR,%eax
+	movl %eax,BIOSCALLREG_EDX(%ebx)
+	movl ESI_REGADDR,%eax
+	movl %eax,BIOSCALLREG_ESI(%ebx)
+	movl EDI_REGADDR,%eax
+	movl %eax,BIOSCALLREG_EDI(%ebx)
+	movl EFLAGS_REGADDR,%eax
+	movl %eax,BIOSCALLREG_EFLAGS(%ebx)
 	
 	# finish up, restore registers, and return
 	popfl
