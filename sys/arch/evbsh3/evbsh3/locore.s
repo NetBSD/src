@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.28 2001/01/30 01:32:59 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.29 2001/02/05 16:51:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -65,6 +65,7 @@
 #define SHREG_TTB	0xff000008
 #else
 #define SHREG_BBRA	0xffffffb8
+#define SHREG_CCR	0xffffffec
 #define SHREG_EXPEVT	0xffffffd4
 #define SHREG_INTEVT	0xffffffd8
 #define SHREG_MMUCR	0xffffffe0
