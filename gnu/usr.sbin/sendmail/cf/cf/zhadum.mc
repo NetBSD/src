@@ -38,9 +38,8 @@ divert(-1)
 # Mailer configuration for zhadum.netbsd.org (a.k.a. cvs.netbsd.org).
 
 include(`../m4/cf.m4')
-VERSIONID(`$NetBSD: zhadum.mc,v 1.1.1.1 2000/02/08 13:45:41 tron Exp $')
+VERSIONID(`$NetBSD: zhadum.mc,v 1.2 2003/03/25 12:01:32 tron Exp $')
 OSTYPE(bsd4.4)dnl
+DOMAIN(NetBSD.ORG)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
-
-DOMAIN(NetBSD.ORG)dnl
