@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.117 2003/06/27 07:32:37 sakane Exp $	*/
+/*	$KAME: cfparse.y,v 1.118 2003/07/12 09:34:48 itojun Exp $	*/
 
 %{
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cfparse.y,v 1.18 2003/07/12 09:37:09 itojun Exp $");
+__RCSID("$NetBSD: cfparse.y,v 1.19 2003/08/26 03:31:51 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

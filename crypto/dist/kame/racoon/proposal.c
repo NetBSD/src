@@ -1,4 +1,4 @@
-/*	$KAME: proposal.c,v 1.48 2002/05/07 09:32:50 sakane Exp $	*/
+/*	$KAME: proposal.c,v 1.49 2003/08/19 09:12:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: proposal.c,v 1.3 2003/07/12 09:37:12 itojun Exp $");
+__RCSID("$NetBSD: proposal.c,v 1.4 2003/08/26 03:31:51 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -344,8 +344,9 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 		if (pr1->proto_id != pr2->proto_id) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"proto_id mismatched: "
-				"my:%d peer:%d\n",
-				pr2->proto_id, pr1->proto_id);
+				"my:%s peer:%s\n",
+				s_ipsecdoi_proto(pr2->proto_id),
+				s_ipsecdoi_proto(pr1->proto_id));
 			goto err;
 		}
 		spisizematch = 0;
@@ -379,8 +380,9 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 		if (pr1->encmode != pr2->encmode) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"encmode mismatched: "
-				"my:%d peer:%d\n",
-				pr2->encmode, pr1->encmode);
+				"my:%s peer:%s\n",
+				s_ipsecdoi_encmode(pr2->encmode),
+				s_ipsecdoi_encmode(pr1->encmode));
 			goto err;
 		}
 
@@ -498,8 +500,9 @@ cmpsatrns(tr1, tr2)
 	if (tr1->authtype != tr2->authtype) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"authtype mismatched: "
-			"my:%d peer:%d\n",
-			tr2->authtype, tr1->authtype);
+			"my:%s peer:%s\n",
+			s_ipsecdoi_attr_v(IPSECDOI_ATTR_AUTH, tr2->authtype),
+			s_ipsecdoi_attr_v(IPSECDOI_ATTR_AUTH, tr1->authtype));
 		return 1;
 	}
 

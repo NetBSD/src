@@ -1,4 +1,4 @@
-/*	$KAME: var.h,v 1.13 2003/05/17 18:18:34 itojun Exp $	*/
+/*	$KAME: var.h,v 1.14 2003/07/29 04:46:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
