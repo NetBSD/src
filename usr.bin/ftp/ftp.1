@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.31 1999/01/23 15:46:24 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.32 1999/01/24 02:39:30 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -173,15 +173,24 @@ seconds.
 .It Fl t
 Enables packet tracing.
 .It Fl v
-Enable verbose mode.
-This is the default if input is from a terminal.
+Enable
+.Ic verbose
+and
+.Ic progress .
+This is the default if output is to a terminal (and in the case of
+.Ic progress ,
+.Nm
+is the foreground process).
 Forces
 .Nm
 to show all responses from the remote server, as well
 as report on data transfer statistics.
 .It Fl V
-Disable verbose mode, overriding the default of enabled when input
-is from a terminal.
+Disable
+.Ic verbose
+and
+.Ic progress ,
+overriding the default of enabled when output is to a terminal.
 .El
 .Pp
 The client host with which
@@ -719,7 +728,7 @@ Retrieve
 and display with the program defined in
 .Ev PAGER 
 (which defaults to
-.Xr less 1 ).
+.Xr more 1 ).
 .It Ic passive
 Toggle passive mode.  If passive mode is turned on
 (default is off), the ftp client will

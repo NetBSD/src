@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.39 1999/01/05 23:33:44 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.40 1999/01/24 02:39:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.39 1999/01/05 23:33:44 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.40 1999/01/24 02:39:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,6 @@ cmdabort(notused)
 
 	alarmtimer(0);
 	putc('\n', ttyout);
-	(void)fflush(ttyout);
 	abrtflag++;
 	if (ptflag)
 		longjmp(ptabort, 1);
@@ -241,7 +240,6 @@ command(va_alist)
 			vfprintf(ttyout, fmt, ap);
 		va_end(ap);
 		putc('\n', ttyout);
-		(void)fflush(ttyout);
 	}
 	if (cout == NULL) {
 		warnx("No control connection for command.");
@@ -317,7 +315,6 @@ getreply(expecteof)
 					fputs(
 	    "421 Service not available, remote server has closed connection.\n",
 					    ttyout);
-					(void)fflush(ttyout);
 				}
 				code = 421;
 				return (4);
@@ -409,7 +406,6 @@ abortsend(notused)
 	mflag = 0;
 	abrtflag = 0;
 	fputs("\nsend aborted\nwaiting for remote to finish abort.\n", ttyout);
-	(void)fflush(ttyout);
 	longjmp(sendabort, 1);
 }
 
@@ -607,7 +603,6 @@ sendrequest(cmd, local, remote, printnames)
 			if (bytes < mark)
 				(void)putc('#', ttyout);
 			(void)putc('\n', ttyout);
-			(void)fflush(ttyout);
 		}
 		if (c < 0)
 			warn("local: %s", local);
@@ -645,7 +640,6 @@ sendrequest(cmd, local, remote, printnames)
 			if (bytes < hashbytes)
 				(void)putc('#', ttyout);
 			(void)putc('\n', ttyout);
-			(void)fflush(ttyout);
 		}
 		if (ferror(fin))
 			warn("local: %s", local);
@@ -706,7 +700,6 @@ abortrecv(notused)
 	abrtflag = 0;
 	fputs("\nreceive aborted\nwaiting for remote to finish abort.\n",
 	    ttyout);
-	(void)fflush(ttyout);
 	longjmp(recvabort, 1);
 }
 
@@ -933,7 +926,6 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 			if (bytes < mark)
 				(void)putc('#', ttyout);
 			(void)putc('\n', ttyout);
-			(void)fflush(ttyout);
 		}
 		if (c < 0) {
 			if (errno != EPIPE)
@@ -1011,7 +1003,6 @@ break2:
 			if (bytes < hashbytes)
 				(void)putc('#', ttyout);
 			(void)putc('\n', ttyout);
-			(void)fflush(ttyout);
 		}
 		if (ferror(din)) {
 			if (errno != EPIPE)
@@ -1379,7 +1370,6 @@ abortpt(notused)
 
 	alarmtimer(0);
 	putc('\n', ttyout);
-	(void)fflush(ttyout);
 	ptabflg++;
 	mflag = 0;
 	abrtflag = 0;
