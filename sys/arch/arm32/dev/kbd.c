@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.26 2001/03/18 17:00:56 rearnsha Exp $	*/
+/*	$NetBSD: kbd.c,v 1.26.2.1 2001/09/09 02:28:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -346,6 +346,56 @@ kbdpoll(dev, events, p)
 
 	splx(s);
 	return (revents);
+}
+
+
+static void
+filt_kbdrdetach(struct knote *kn)
+{
+	struct kbd_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_kbdread(struct knote *kn, long hint)
+{
+	struct kbd_softc *sc = (void *) kn->kn_hook;
+
+	kn->kn_data = sc->sc_q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops kbdread_filtops =
+	{ 1, NULL, filt_kbdrdetach, filt_kbdread };
+
+int
+kbdkqfilter(dev_t dev, struct knote *kn)
+{
+	struct kbd_softc *sc = kbd_cd.cd_devs[KBDUNIT(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &kbdread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 
@@ -850,7 +900,7 @@ kbddecodekey(sc, code)
 		s=spltty();
  		(void) b_to_q((char *)&buffer, sizeof(buffer), &sc->sc_q);
  		splx(s);
-		selwakeup(&sc->sc_rsel);
+		selnotify(&sc->sc_rsel, 0);
 
 		if (sc->sc_state & RAWKBD_ASLEEP) {
 			sc->sc_state &= ~RAWKBD_ASLEEP;
