@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.48 1994/10/30 21:43:15 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.49 1994/11/04 00:40:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -94,8 +94,8 @@ int	lkmenodev();
 	(dev_type_strategy((*))) enodev, (dev_type_ioctl((*))) enodev, \
 	(dev_type_dump((*))) enodev, 0, 0 }
 
-#include "wd.h"
-#include "fd.h"
+#include "wdc.h"
+#include "fdc.h"
 #include "wt.h"
 #include "sd.h"
 #include "st.h"
@@ -116,10 +116,10 @@ bdev_decl(vn);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_disk_init(NWD,wd),		/* 0: ST506/ESDI/IDE disk */
+	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(),		/* 1: swap pseudo-device */
 #define	fdopen	Fdopen
-	bdev_disk_init(NFD,fd),		/* 2: floppy diskette */
+	bdev_disk_init(NFDC,fd),	/* 2: floppy diskette */
 #undef	fdopen
 	bdev_tape_init(NWT,wt),		/* 3: QIC-02/QIC-36 tape */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
