@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.2 2002/07/08 17:46:25 augustss Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.3 2002/07/11 21:14:32 augustss Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.2 2002/07/08 17:46:25 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.3 2002/07/11 21:14:32 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,7 +323,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	nbytes = ata_bio->bcount;
 	if (ata_bio->flags & ATA_SINGLE)
 		nblks = 1;
-	else 
+	else
 		nblks = min(ata_bio->multi, nbytes / ata_bio->lp->d_secsize);
 	nbytes = nblks * ata_bio->lp->d_secsize;
 	ata_bio->nblks = nblks;
@@ -357,7 +357,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	}
 	DPRINTF(("%s: bno=%d LBA=%d cyl=%d head=%d sect=%d count=%d multi=%d\n",
 		 __func__, ata_bio->blkno,
-		 (ata_bio->flags & ATA_LBA) != 0, cyl, head, sect, 
+		 (ata_bio->flags & ATA_LBA) != 0, cyl, head, sect,
 		 ata.ac_sector_count, ata_bio->multi));
 	DPRINTF(("    data=%p bcount=%ld, drive=%d\n", ata_bio->databuf,
 		 ata_bio->bcount, drv->drive));
@@ -419,7 +419,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct wdc_command *cmd)
 		else
 			dir = DIR_OUT;
 	}
-	
+
 	if (cmd->bcount > UMASS_MAX_TRANSFER_SIZE) {
 		printf("uisdata_exec_command: large datalen %d\n", cmd->bcount);
 		cmd->flags |= AT_ERROR;

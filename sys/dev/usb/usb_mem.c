@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.23 2002/05/19 06:24:33 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.24 2002/07/11 21:14:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.23 2002/05/19 06:24:33 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.24 2002/07/11 21:14:34 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ Static usbd_status	usb_block_allocmem(bus_dma_tag_t, size_t, size_t,
 					   usb_dma_block_t **);
 Static void		usb_block_freemem(usb_dma_block_t *);
 
-Static LIST_HEAD(, usb_dma_block) usb_blk_freelist = 
+Static LIST_HEAD(, usb_dma_block) usb_blk_freelist =
 	LIST_HEAD_INITIALIZER(usb_blk_freelist);
 Static int usb_blk_nfree = 0;
 /* XXX should have different free list for different tags (for speed) */
@@ -103,7 +103,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
         usb_dma_block_t *p;
 	int s;
 
-	DPRINTFN(5, ("usb_block_allocmem: size=%lu align=%lu\n", 
+	DPRINTFN(5, ("usb_block_allocmem: size=%lu align=%lu\n",
 		     (u_long)size, (u_long)align));
 
 #ifdef DIAGNOSTIC
@@ -150,7 +150,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	if (error)
 		return (USBD_NOMEM);
 
-	error = bus_dmamem_map(tag, p->segs, p->nsegs, p->size, 
+	error = bus_dmamem_map(tag, p->segs, p->nsegs, p->size,
 			       &p->kaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error)
 		goto free;
@@ -160,7 +160,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	if (error)
 		goto unmap;
 
-	error = bus_dmamap_load(tag, p->map, p->kaddr, p->size, NULL, 
+	error = bus_dmamap_load(tag, p->map, p->kaddr, p->size, NULL,
 				BUS_DMA_NOWAIT);
 	if (error)
 		goto destroy;
@@ -231,7 +231,7 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 		}
 		return (err);
 	}
-	
+
 	s = splusb();
 	/* Check for free fragments. */
 	for (f = LIST_FIRST(&usb_frag_freelist); f; f = LIST_NEXT(f, next))
