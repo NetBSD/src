@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbreg.h,v 1.3 2004/05/21 21:45:04 heas Exp $	*/
+/*	$NetBSD: ffbreg.h,v 1.4 2004/07/19 01:00:48 heas Exp $	*/
 /*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
@@ -93,14 +93,14 @@
 #define	FFB_FBC_BW		0x074
 #define	FFB_FBC_SUVTX		0x100
 #define	FFB_FBC_PPC		0x200	/* pixel processor control */
-#define	FFB_FBC_WID		0x204
+#define	FFB_FBC_WID		0x204	/* current WID */
 #define	FFB_FBC_FG		0x208
 #define	FFB_FBC_BG		0x20c
 #define	FFB_FBC_CONSTY		0x210
 #define	FFB_FBC_CONSTZ		0x214
 #define	FFB_FBC_XCLIP		0x218
 #define	FFB_FBC_DCSS		0x21c
-#define	FFB_FBC_VCLIPMIN	0x220
+#define	FFB_FBC_VCLIPMIN	0x220	/* Viewclip XY Min Bounds */
 #define	FFB_FBC_VCLIPMAX	0x224
 #define	FFB_FBC_VCLIPZMIN	0x228
 #define	FFB_FBC_VCLIPZMAX	0x22c
@@ -126,12 +126,12 @@
 #define	FFB_FBC_PPCFG		0x280
 #define	FFB_FBC_PICK		0x284
 #define	FFB_FBC_FILLMODE	0x288
-#define	FFB_FBC_FBRAMWAC	0x28c
+#define	FFB_FBC_FBRAMWAC	0x28c	/* FB RAM Write Address Control */
 #define	FFB_FBC_PMASK		0x290	/* RGB Plane Mask */
 #define	FFB_FBC_XPMASK		0x294	/* X PlaneMask */
 #define	FFB_FBC_YPMASK		0x298
 #define	FFB_FBC_ZPMASK		0x29c
-#define	FFB_FBC_CLIP0MIN	0x2a0
+#define	FFB_FBC_CLIP0MIN	0x2a0	/* Auxilliary Viewport Clips */
 #define	FFB_FBC_CLIP0MAX	0x2a4
 #define	FFB_FBC_CLIP1MIN	0x2a8
 #define	FFB_FBC_CLIP1MAX	0x2ac
@@ -156,8 +156,8 @@
 #define	FFB_FBC_RAWWAC		0x2f8
 #define	FFB_FBC_FBRAMID		0x2fc
 #define	FFB_FBC_DRAWOP		0x300	/* Draw OPeration */
-#define	FFB_FBC_FONTLPAT	0x30c
-#define	FFB_FBC_FONTXY		0x314
+#define	FFB_FBC_FONTLPAT	0x30c	/* Line Pattern control */
+#define	FFB_FBC_FONTXY		0x314	/* XY Font coordinate */
 #define	FFB_FBC_FONTW		0x318	/* Font Width */
 #define	FFB_FBC_FONTINC		0x31c	/* Font Increment */
 #define	FFB_FBC_FONT		0x320
