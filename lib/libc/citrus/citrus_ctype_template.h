@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.16 2003/01/01 14:34:27 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.17 2003/01/01 14:45:13 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -350,7 +350,7 @@ do {									\
 			_pse_ = &_CEI_TO_STATE(_cei_, _func_);		\
 			if (_STATE_NEEDS_EXPLICIT_INIT(_pse_))		\
 			    _FUNCNAME(init_state)(_CEI_TO_EI(_cei_),	\
-							psenc);		\
+							(_pse_));	\
 		} else {						\
 			_pse_ = &_state;				\
 			_FUNCNAME(unpack_state)(_CEI_TO_EI(_cei_),	\
