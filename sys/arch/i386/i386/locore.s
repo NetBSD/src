@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.131 1995/05/04 19:39:08 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.132 1995/05/07 03:16:16 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -577,8 +577,8 @@ ENTRY(linux_sigcode)
 	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
 	jnz	1f
 #endif
-	movl	LINUX_SC_FS(%eax),%ecx
-	movl	LINUX_SC_GS(%eax),%edx
+	movl	LINUX_SC_FS(%ebx),%ecx
+	movl	LINUX_SC_GS(%ebx),%edx
 	movl	%cx,%fs
 	movl	%dx,%gs
 1:	pushl	%eax			# junk to fake return address
