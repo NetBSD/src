@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.97 2005/01/01 21:04:39 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.98 2005/01/01 21:08:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.97 2005/01/01 21:04:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.98 2005/01/01 21:08:02 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -81,6 +81,14 @@ static struct pool phpool[PHPOOL_MAX];
 /* Pool of subpages for use by normal pools. */
 static struct pool psppool;
 #endif
+
+static void *pool_page_alloc_meta(struct pool *, int);
+static void pool_page_free_meta(struct pool *, void *);
+
+/* allocator for pool metadata */
+static struct pool_allocator pool_allocator_meta = {
+	pool_page_alloc_meta, pool_page_free_meta
+};
 
 /* # of seconds to retain page after last use */
 int pool_inactive_time = 10;
@@ -634,13 +642,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 * XXX LOCKING.
 	 */
 	if (phpool[0].pr_size == 0) {
-		struct pool_allocator *pa;
 		int idx;
-#ifdef POOL_SUBPAGE
-		pa = &pool_allocator_kmem;
-#else
-		pa = NULL;
-#endif
 		for (idx = 0; idx < PHPOOL_MAX; idx++) {
 			static char phpool_names[PHPOOL_MAX][6+1+6+1];
 			int nelem;
@@ -655,14 +657,14 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 				    + nelem * sizeof(uint16_t);
 			}
 			pool_init(&phpool[idx], sz, 0, 0, 0,
-			    phpool_names[idx], pa);
+			    phpool_names[idx], &pool_allocator_meta);
 		}
 #ifdef POOL_SUBPAGE
 		pool_init(&psppool, POOL_SUBPAGE, POOL_SUBPAGE, 0,
-		    PR_RECURSIVE, "psppool", &pool_allocator_kmem);
+		    PR_RECURSIVE, "psppool", &pool_allocator_meta);
 #endif
 		pool_init(&pcgpool, sizeof(struct pool_cache_group), 0, 0,
-		    0, "pcgpool", NULL);
+		    0, "pcgpool", &pool_allocator_meta);
 	}
 
 	/* Insert into the list of all pools. */
@@ -2240,14 +2242,29 @@ pool_page_alloc(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-	return ((void *) uvm_km_alloc_poolpage(waitok));
+	return ((void *) uvm_km_alloc_poolpage_cache(kmem_map, NULL, waitok));
 }
 
 void
 pool_page_free(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage((vaddr_t) v);
+	uvm_km_free_poolpage_cache(kmem_map, (vaddr_t) v);
+}
+
+static void *
+pool_page_alloc_meta(struct pool *pp, int flags)
+{
+	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
+
+	return ((void *) uvm_km_alloc_poolpage1(kmem_map, NULL, waitok));
+}
+
+static void
+pool_page_free_meta(struct pool *pp, void *v)
+{
+
+	uvm_km_free_poolpage1(kmem_map, (vaddr_t) v);
 }
 
 #ifdef POOL_SUBPAGE
@@ -2292,7 +2309,7 @@ pool_page_alloc_nointr(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-	return ((void *) uvm_km_alloc_poolpage1(kernel_map,
+	return ((void *) uvm_km_alloc_poolpage_cache(kernel_map,
 	    uvm.kernel_object, waitok));
 }
 
@@ -2300,6 +2317,6 @@ void
 pool_page_free_nointr(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage1(kernel_map, (vaddr_t) v);
+	uvm_km_free_poolpage_cache(kernel_map, (vaddr_t) v);
 }
 #endif /* POOL_SUBPAGE */

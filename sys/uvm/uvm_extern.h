@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.95 2005/01/01 21:02:13 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.96 2005/01/01 21:08:02 yamt Exp $	*/
 
 /*
  *
@@ -609,6 +609,11 @@ vaddr_t			uvm_km_valloc_prefer_wait(struct vm_map *, vsize_t,
 vaddr_t			uvm_km_alloc_poolpage1(struct vm_map *,
 			    struct uvm_object *, boolean_t);
 void			uvm_km_free_poolpage1(struct vm_map *, vaddr_t);
+vaddr_t			uvm_km_alloc_poolpage_cache(struct vm_map *,
+			    struct uvm_object *, boolean_t);
+void			uvm_km_free_poolpage_cache(struct vm_map *, vaddr_t);
+void			uvm_km_vacache_init(struct vm_map *,
+			    const char *, size_t);
 
 extern __inline__ vaddr_t
 uvm_km_kmemalloc(struct vm_map *map, struct uvm_object *obj, vsize_t sz, int flags)

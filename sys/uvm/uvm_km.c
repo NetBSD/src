@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.71 2005/01/01 21:02:13 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.72 2005/01/01 21:08:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.71 2005/01/01 21:02:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.72 2005/01/01 21:08:02 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.71 2005/01/01 21:02:13 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
 
 #include <uvm/uvm.h>
 
@@ -157,6 +158,120 @@ struct vm_map *kernel_map = NULL;
 
 static struct vm_map_kernel	kernel_map_store;
 static struct vm_map_entry	kernel_first_mapent_store;
+
+#if !defined(PMAP_MAP_POOLPAGE)
+
+/*
+ * kva cache
+ *
+ * XXX maybe it's better to do this at the uvm_map layer.
+ */
+
+#define	KM_VACACHE_SIZE	(32 * PAGE_SIZE) /* XXX tune */
+
+static void *km_vacache_alloc(struct pool *, int);
+static void km_vacache_free(struct pool *, void *);
+static void km_vacache_init(struct vm_map *, const char *, size_t);
+
+/* XXX */
+#define	KM_VACACHE_POOL_TO_MAP(pp) \
+	((struct vm_map *)((char *)(pp) - \
+	    offsetof(struct vm_map_kernel, vmk_vacache)))
+
+static void *
+km_vacache_alloc(struct pool *pp, int flags)
+{
+	vaddr_t va;
+	size_t size;
+	struct vm_map *map;
+#if defined(DEBUG)
+	vaddr_t loopva;
+#endif
+	size = pp->pr_alloc->pa_pagesz;
+
+	map = KM_VACACHE_POOL_TO_MAP(pp);
+
+	if (uvm_map(map, &va, size, NULL, UVM_UNKNOWN_OFFSET, size,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+	    UVM_ADV_RANDOM, UVM_FLAG_QUANTUM |
+	    ((flags & PR_WAITOK) ? 0 : UVM_FLAG_TRYLOCK | UVM_FLAG_NOWAIT))))
+		return NULL;
+
+#if defined(DEBUG)
+	for (loopva = va; loopva < va + size; loopva += PAGE_SIZE) {
+		if (pmap_extract(pmap_kernel(), loopva, NULL))
+			panic("km_vacache_free: has mapping");
+	}
+#endif
+
+	return (void *)va;
+}
+
+static void
+km_vacache_free(struct pool *pp, void *v)
+{
+	vaddr_t va = (vaddr_t)v;
+	size_t size = pp->pr_alloc->pa_pagesz;
+	struct vm_map *map;
+#if defined(DEBUG)
+	vaddr_t loopva;
+
+	for (loopva = va; loopva < va + size; loopva += PAGE_SIZE) {
+		if (pmap_extract(pmap_kernel(), loopva, NULL))
+			panic("km_vacache_free: has mapping");
+	}
+#endif
+	map = KM_VACACHE_POOL_TO_MAP(pp);
+	uvm_unmap(map, va, va + size);
+}
+
+/*
+ * km_vacache_init: initialize kva cache.
+ */
+
+static void
+km_vacache_init(struct vm_map *map, const char *name, size_t size)
+{
+	struct vm_map_kernel *vmk;
+	struct pool *pp;
+	struct pool_allocator *pa;
+
+	KASSERT(VM_MAP_IS_KERNEL(map));
+	KASSERT(size < (vm_map_max(map) - vm_map_min(map)) / 2); /* sanity */
+
+	vmk = vm_map_to_kernel(map);
+	pp = &vmk->vmk_vacache;
+	pa = &vmk->vmk_vacache_allocator;
+	memset(pa, 0, sizeof(*pa));
+	pa->pa_alloc = km_vacache_alloc;
+	pa->pa_free = km_vacache_free;
+	pa->pa_pagesz = (unsigned int)size;
+	pool_init(pp, PAGE_SIZE, 0, 0, PR_NOTOUCH | PR_RECURSIVE, name, pa);
+
+	/* XXX for now.. */
+	pool_sethiwat(pp, 0);
+}
+
+void
+uvm_km_vacache_init(struct vm_map *map, const char *name, size_t size)
+{
+
+	map->flags |= VM_MAP_VACACHE;
+	if (size == 0)
+		size = KM_VACACHE_SIZE;
+	km_vacache_init(map, name, size);
+}
+
+#else /* !defined(PMAP_MAP_POOLPAGE) */
+
+void
+uvm_km_vacache_init(struct vm_map *map, const char *name, size_t size)
+{
+
+	/* nothing */
+}
+
+#endif /* !defined(PMAP_MAP_POOLPAGE) */
 
 /*
  * uvm_km_init: init kernel maps and objects to reflect reality (i.e.
@@ -215,6 +330,7 @@ uvm_km_init(start, end)
 	 */
 
 	kernel_map = &kernel_map_store.vmk_map;
+	uvm_km_vacache_init(kernel_map, "kvakernel", 0);
 }
 
 /*
@@ -721,6 +837,55 @@ vaddr_t uvm_km_valloc_wait(struct vm_map *map, vsize_t sz)
 
 /* ARGSUSED */
 vaddr_t
+uvm_km_alloc_poolpage_cache(map, obj, waitok)
+	struct vm_map *map;
+	struct uvm_object *obj;
+	boolean_t waitok;
+{
+#if defined(PMAP_MAP_POOLPAGE)
+	return uvm_km_alloc_poolpage1(map, obj, waitok);
+#else
+	struct vm_page *pg;
+	struct pool *pp = &vm_map_to_kernel(map)->vmk_vacache;
+	vaddr_t va;
+	int s = 0xdeadbeaf; /* XXX: gcc */
+	const boolean_t intrsafe = (map->flags & VM_MAP_INTRSAFE) != 0;
+
+	if ((map->flags & VM_MAP_VACACHE) == 0)
+		return uvm_km_alloc_poolpage1(map, obj, waitok);
+
+	if (intrsafe)
+		s = splvm();
+	va = (vaddr_t)pool_get(pp, waitok ? PR_WAITOK : PR_NOWAIT);
+	if (intrsafe)
+		splx(s);
+	if (va == 0)
+		return 0;
+	KASSERT(!pmap_extract(pmap_kernel(), va, NULL));
+again:
+	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	if (__predict_false(pg == NULL)) {
+		if (waitok) {
+			uvm_wait("plpg");
+			goto again;
+		} else {
+			if (intrsafe)
+				s = splvm();
+			pool_put(pp, (void *)va);
+			if (intrsafe)
+				splx(s);
+			return 0;
+		}
+	}
+	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+	    VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
+
+	return va;
+#endif /* PMAP_MAP_POOLPAGE */
+}
+
+vaddr_t
 uvm_km_alloc_poolpage1(map, obj, waitok)
 	struct vm_map *map;
 	struct uvm_object *obj;
@@ -745,22 +910,15 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 	return (va);
 #else
 	vaddr_t va;
-	int s;
+	int s = 0xdeadbeaf; /* XXX: gcc */
+	const boolean_t intrsafe = (map->flags & VM_MAP_INTRSAFE) != 0;
 
-	/*
-	 * NOTE: We may be called with a map that doens't require splvm
-	 * protection (e.g. kernel_map).  However, it does not hurt to
-	 * go to splvm in this case (since unprocted maps will never be
-	 * accessed in interrupt context).
-	 *
-	 * XXX We may want to consider changing the interface to this
-	 * XXX function.
-	 */
-
-	s = splvm();
+	if (intrsafe)
+		s = splvm();
 	va = uvm_km_kmemalloc(map, obj, PAGE_SIZE,
 	    waitok ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK);
-	splx(s);
+	if (intrsafe)
+		splx(s);
 	return (va);
 #endif /* PMAP_MAP_POOLPAGE */
 }
@@ -770,6 +928,40 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
  *
  * => if the pmap specifies an alternate unmapping method, we use it.
  */
+
+/* ARGSUSED */
+void
+uvm_km_free_poolpage_cache(map, addr)
+	struct vm_map *map;
+	vaddr_t addr;
+{
+#if defined(PMAP_UNMAP_POOLPAGE)
+	uvm_km_free_poolpage1(map, addr);
+#else
+	struct pool *pp;
+	int s = 0xdeadbeaf; /* XXX: gcc */
+	const boolean_t intrsafe = (map->flags & VM_MAP_INTRSAFE) != 0;
+
+	if ((map->flags & VM_MAP_VACACHE) == 0) {
+		uvm_km_free_poolpage1(map, addr);
+		return;
+	}
+
+	KASSERT(pmap_extract(pmap_kernel(), addr, NULL));
+	uvm_km_pgremove_intrsafe(addr, addr + PAGE_SIZE);
+	pmap_kremove(addr, PAGE_SIZE);
+#if defined(DEBUG)
+	pmap_update(pmap_kernel());
+#endif
+	KASSERT(!pmap_extract(pmap_kernel(), addr, NULL));
+	pp = &vm_map_to_kernel(map)->vmk_vacache;
+	if (intrsafe)
+		s = splvm();
+	pool_put(pp, (void *)addr);
+	if (intrsafe)
+		splx(s);
+#endif
+}
 
 /* ARGSUSED */
 void
@@ -783,20 +975,13 @@ uvm_km_free_poolpage1(map, addr)
 	pa = PMAP_UNMAP_POOLPAGE(addr);
 	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 #else
-	int s;
+	int s = 0xdeadbeaf; /* XXX: gcc */
+	const boolean_t intrsafe = (map->flags & VM_MAP_INTRSAFE) != 0;
 
-	/*
-	 * NOTE: We may be called with a map that doens't require splvm
-	 * protection (e.g. kernel_map).  However, it does not hurt to
-	 * go to splvm in this case (since unprocted maps will never be
-	 * accessed in interrupt context).
-	 *
-	 * XXX We may want to consider changing the interface to this
-	 * XXX function.
-	 */
-
-	s = splvm();
+	if (intrsafe)
+		s = splvm();
 	uvm_km_free(map, addr, PAGE_SIZE);
-	splx(s);
+	if (intrsafe)
+		splx(s);
 #endif /* PMAP_UNMAP_POOLPAGE */
 }
