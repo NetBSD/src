@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.2 2001/11/09 07:36:03 thorpej Exp $ */
+/* $NetBSD: dbsym.c,v 1.3 2002/04/01 21:58:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -38,11 +38,10 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: dbsym.c,v 1.2 2001/11/09 07:36:03 thorpej Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.3 2002/04/01 21:58:09 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/exec_elf.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
@@ -53,6 +52,10 @@ __RCSID("$NetBSD: dbsym.c,v 1.2 2001/11/09 07:36:03 thorpej Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+/* BFD ELF headers */
+#include <elf/common.h>
+#include <elf/external.h>
 
 struct symbols {
 	char *name;
@@ -69,7 +72,7 @@ struct symbols {
 int	main(int, char **);
 void	usage(void) __attribute__((noreturn));
 int	find_symtab(bfd *, struct symbols *);
-int	load_symtab(int fd, char **, u_int32_t *);
+int	load_symtab(bfd *, int fd, char **, u_int32_t *);
 
 int	verbose;
 
@@ -127,7 +130,7 @@ main(int argc, char **argv)
 	if (verbose)
 		fprintf(stderr, "got SYMTAB_SPACE symbols from %s\n", kfile);
 
-	if (load_symtab(kfd, &symtab, &symtabsize) != 0)
+	if (load_symtab(abfd, kfd, &symtab, &symtabsize) != 0)
 		errx(1, "could not load symbol table from %s", kfile);
 	if (verbose)
 		fprintf(stderr, "loaded symbol table from %s\n", kfile);
@@ -266,9 +269,7 @@ find_symtab(bfd *abfd, struct symbols *symbols)
 
 /* Note elftype is local to load_symtab()... */
 #define	ELF_TYPE_64	0x01
-#define	ELF_TYPE_BE	0x02
 #define	ISELF64		(elftype & ELF_TYPE_64)
-#define	ISELFBE		(elftype & ELF_TYPE_BE)
 
 /*
  * Field sizes for the Elf exec header:
@@ -292,9 +293,9 @@ find_symtab(bfd *abfd, struct symbols *symbols)
  */
 
 typedef union {
-	Elf32_Ehdr e32hdr;
-	Elf64_Ehdr e64hdr;
-	char e_ident[ELF_NIDENT];
+	Elf32_External_Ehdr e32hdr;
+	Elf64_External_Ehdr e64hdr;
+	char e_ident[16];		/* XXX MAGIC NUMBER */
 } elf_ehdr;
 
 #define	e32_hdr	ehdr.e32hdr
@@ -318,14 +319,13 @@ typedef union {
  */
 
 /* Extract a 32 bit field from Elf32_Shdr */
-#define	SH_E32_32(x, n)	\
-	(ISELFBE ? be32toh(s32hdr[(x)].n) : le32toh(s32hdr[(x)].n))
+#define	SH_E32_32(x, n)		bfd_get_32(abfd, s32hdr[(x)].n)
+
 /* Extract a 32 bit field from Elf64_Shdr */
-#define	SH_E64_32(x, n)	\
-	(ISELFBE ? be32toh(s64hdr[(x)].n) : le32toh(s64hdr[(x)].n))
+#define	SH_E64_32(x, n)		bfd_get_32(abfd, s64hdr[(x)].n)
+
 /* Extract a 64 bit field from Elf64_Shdr */
-#define	SH_E64_64(x, n)	\
-	(ISELFBE ? be64toh(s64hdr[(x)].n) : le64toh(s64hdr[(x)].n))
+#define	SH_E64_64(x, n)		bfd_get_64(abfd, s64hdr[(x)].n)
 
 /* Extract a 32 bit field from either size Shdr */
 #define	SH_E32E32(x, n)	(ISELF64 ? SH_E64_32(x, n) : SH_E32_32(x, n))
@@ -345,11 +345,11 @@ typedef union {
 #define	SH_ENTSIZE(x)	SH_E32E64(x, sh_entsize)
 
 int
-load_symtab(int fd, char **symtab, u_int32_t *symtabsize)
+load_symtab(bfd *abfd, int fd, char **symtab, u_int32_t *symtabsize)
 {
 	elf_ehdr ehdr;
-	Elf32_Shdr *s32hdr;
-	Elf64_Shdr *s64hdr;
+	Elf32_External_Shdr *s32hdr;
+	Elf64_External_Shdr *s64hdr;
 	void *shdr;
 	u_int32_t osymtabsize, sh_offset;
 	int elftype, e_shnum, i, sh_size;
@@ -363,7 +363,10 @@ load_symtab(int fd, char **symtab, u_int32_t *symtabsize)
 	/*
 	 * Check that we are targetting an Elf binary.
 	 */
-	if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0)
+	if (ehdr.e_ident[EI_MAG0] != ELFMAG0 ||
+	    ehdr.e_ident[EI_MAG1] != ELFMAG1 ||
+	    ehdr.e_ident[EI_MAG2] != ELFMAG2 ||
+	    ehdr.e_ident[EI_MAG3] != ELFMAG3)
 		return (1);
 
 	/*
@@ -372,14 +375,13 @@ load_symtab(int fd, char **symtab, u_int32_t *symtabsize)
 	elftype = 0;
 	if (ehdr.e_ident[EI_CLASS] == ELFCLASS64)
 		elftype |= ELF_TYPE_64;
-	if (ehdr.e_ident[EI_DATA] == ELFDATA2MSB)
-		elftype |= ELF_TYPE_BE;
 
 	/*
 	 * Elf exec header.  Only need to allocate space for now,
 	 * the header is copied into place at the end.
 	 */
-	*symtabsize = ISELF64 ? sizeof(Elf64_Ehdr) : sizeof(Elf32_Ehdr);
+	*symtabsize = ISELF64 ? sizeof(Elf64_External_Ehdr)
+			      : sizeof(Elf32_External_Ehdr);
 	*symtab = NULL;
 
 	/*
@@ -388,9 +390,10 @@ load_symtab(int fd, char **symtab, u_int32_t *symtabsize)
 	 */
 	sh_offset = osymtabsize = *symtabsize;
 	e_shnum = (ISELF64
-	    ? (ISELFBE ?  be16toh(e64_hdr.e_shnum) : le16toh(e64_hdr.e_shnum))
-	    : (ISELFBE ?  be16toh(e32_hdr.e_shnum) : le16toh(e32_hdr.e_shnum)));
-	sh_size = e_shnum * (ISELF64 ? sizeof(Elf64_Shdr) : sizeof(Elf32_Shdr));
+	    ? bfd_get_16(abfd, e64_hdr.e_shnum)
+	    : bfd_get_16(abfd, e32_hdr.e_shnum));
+	sh_size = e_shnum * (ISELF64 ? sizeof(Elf64_External_Shdr)
+				     : sizeof(Elf32_External_Shdr));
 	if ((shdr = malloc(sh_size)) == NULL)
 		return (1);
 	if (ISELF64)
@@ -401,8 +404,8 @@ load_symtab(int fd, char **symtab, u_int32_t *symtabsize)
 	*symtabsize += roundup(sh_size, ISELF64 ? 8 : 4);
 
 	e_shoff = (ISELF64
-	   ? (ISELFBE ? be64toh(e64_hdr.e_shoff) : le64toh(e64_hdr.e_shoff))
-	   : (ISELFBE ? be32toh(e32_hdr.e_shoff) : le32toh(e32_hdr.e_shoff)));
+	   ? bfd_get_64(abfd, e64_hdr.e_shoff)
+	   : bfd_get_32(abfd, e32_hdr.e_shoff));
 	if (lseek(fd, e_shoff, SEEK_SET) < 0)
 		return (1);
 	if (read(fd, shdr, sh_size) != sh_size)
@@ -421,19 +424,11 @@ load_symtab(int fd, char **symtab, u_int32_t *symtabsize)
 			    SH_SIZE(i))
 				return (1);
 			if (ISELF64) {
-				if (ISELFBE)
-					s64hdr[i].sh_offset =
-					    htobe64(osymtabsize);
-				else
-					s64hdr[i].sh_offset =
-					    htole64(osymtabsize);
+				bfd_put_64(abfd, osymtabsize,
+				    s64hdr[i].sh_offset);
 			} else {
-				if (ISELFBE)
-					s32hdr[i].sh_offset =
-					    htobe32(osymtabsize);
-				else
-					s32hdr[i].sh_offset =
-					    htole32(osymtabsize);
+				bfd_put_32(abfd, osymtabsize,
+				    s32hdr[i].sh_offset);
 			}
 		}
 	}
@@ -447,17 +442,15 @@ load_symtab(int fd, char **symtab, u_int32_t *symtabsize)
 	 * Update and copy the exec header.
 	 */
 	if (ISELF64) {
-		e64_hdr.e_phoff = 0;
-		e64_hdr.e_shoff = (ISELFBE ?
-		    htobe64(sizeof(Elf64_Ehdr)) : htole64(sizeof(Elf64_Ehdr)));
-		e64_hdr.e_phentsize = 0;
-		e64_hdr.e_phnum = 0;
+		bfd_put_64(abfd, 0, e64_hdr.e_phoff);
+		bfd_put_64(abfd, sizeof(Elf64_External_Ehdr), e64_hdr.e_shoff);
+		bfd_put_16(abfd, 0, e64_hdr.e_phentsize);
+		bfd_put_16(abfd, 0, e64_hdr.e_phnum);
 	} else {
-		e32_hdr.e_phoff = 0;
-		e32_hdr.e_shoff = (ISELFBE ?
-		    htobe32(sizeof(Elf32_Ehdr)) : htole32(sizeof(Elf32_Ehdr)));
-		e32_hdr.e_phentsize = 0;
-		e32_hdr.e_phnum = 0;
+		bfd_put_32(abfd, 0, e32_hdr.e_phoff);
+		bfd_put_32(abfd, sizeof(Elf32_External_Ehdr), e32_hdr.e_shoff);
+		bfd_put_16(abfd, 0, e32_hdr.e_phentsize);
+		bfd_put_16(abfd, 0, e32_hdr.e_phnum);
 	}
 	memcpy(*symtab, &ehdr, sizeof(ehdr));
 
