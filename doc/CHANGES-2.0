@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.449 2004/09/16 03:29:29 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.450 2004/09/16 03:31:48 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7360,3 +7360,9 @@ usr.bin/ipcs/ipcs.c				1.33
 
 	Change copyright to 2-clause BSD-copyright.
 	[hubertf, ticket #850]
+
+distrib/utils/sysinst/util.c			1.130
+
+	Run the new copy of /etc/postinstall, not the one that happens to be 
+	on the users system already.
+	[dsl, ticket #851]
