@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.2 2001/08/03 13:07:03 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.3 2001/08/24 15:28:47 eeh Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -241,6 +241,7 @@ void if_register_receive (info)
 	u_int32_t addr;
 	struct bpf_program p;
 	u_int32_t bits;
+	u_int32_t len;
 #if defined(DEC_FDDI) || defined(NETBSD_FDDI)
 	int link_layer;
 #endif /* DEC_FDDI || NETBSD_FDDI */
@@ -278,8 +279,9 @@ void if_register_receive (info)
 		log_fatal ("Can't set ENBATCH|ENCOPYALL|ENBPFHDR: %m");
 #endif
 	/* Get the required BPF buffer length from the kernel. */
-	if (ioctl (info -> rfdesc, BIOCGBLEN, &info -> rbuf_max) < 0)
+	if (ioctl (info -> rfdesc, BIOCGBLEN, &len) < 0)
 		log_fatal ("Can't get bpf buffer length: %m");
+	info -> rbuf_max = len;
 	info -> rbuf = dmalloc (info -> rbuf_max, MDL);
 	if (!info -> rbuf)
 		log_fatal ("Can't allocate %ld bytes for bpf input buffer.",
