@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/02/04 11:08:37 christos Exp $
+#	$NetBSD: Makefile,v 1.6 1998/04/13 14:10:05 lukem Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
@@ -6,7 +6,7 @@ WARNS?=1
 PROG=	more
 NOMAN=1
 
-CFLAGS+=-I${.CURDIR}
+CPPFLAGS+=-I${.CURDIR}
 SRCS=	ch.c command.c decode.c help.c input.c line.c linenum.c main.c \
 	option.c os.c output.c position.c prim.c screen.c signal.c \
 	ttyin.c
