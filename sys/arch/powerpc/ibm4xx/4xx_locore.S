@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_locore.S,v 1.3 2003/07/25 10:12:42 scw Exp $	*/
+/*	$NetBSD: 4xx_locore.S,v 1.4 2003/08/03 23:26:55 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -89,9 +89,9 @@
 
 	.globl	_C_LABEL(ppc4xx_reset)
 _C_LABEL(ppc4xx_reset):
-	mfspr	3,SPR_DBCR0
-	oris	3,r13,DBCR0_RST_SYSTEM@h
-	mtspr	SPR_DBCR0,3
+	mfspr	%r3,SPR_DBCR0
+	oris	%r3,%r13,DBCR0_RST_SYSTEM@h
+	mtspr	SPR_DBCR0,%r3
 	ba	0
 
 #if 0
@@ -101,17 +101,17 @@ _C_LABEL(ppc4xx_reset):
 /*
  * void bcopy(const void *src, void *dst, size_t len);
  *
- * swap r3 and r4 and fall through to memcopy.
+ * swap %r3 and %r4 and fall through to memcopy.
  */
 	.globl _C_LABEL(bcopy)
 _C_LABEL(bcopy):
-	mr	r0,r3
-	mr	r3,r4
-	mr	r4,r0
+	mr	%r0,%r3
+	mr	%r3,%r4
+	mr	%r4,%r0
 	/* FALLTHROUGH */
 
 /*
- * void * memcpy(void *dst (r3), const void *src (r4), size_t len (r5));
+ * void * memcpy(void *dst (%r3), const void *src (%r4), size_t len (%r5));
  *
  * Copy memory (obviously)
  *
@@ -121,71 +121,71 @@ _C_LABEL(bcopy):
  *
  * Register use:
  *
- *	r1		stack (of course)
- *	r3		dst
- *	r4		src
- *	r5		len
- *	r6		tmp
- *	r7		holds 32
- *	r8		holds dst
- *	r24-r31		block move regs
+ *	%r1		stack (of course)
+ *	%r3		dst
+ *	%r4		src
+ *	%r5		len
+ *	%r6		tmp
+ *	%r7		holds 32
+ *	%r8		holds dst
+ *	%r24-%r31	block move regs
  *
  */
 
 ENTRY(memcpy)
-	stwu	r1,-(10*4)(r1)	/* Allocate some RAM to save 8 regs to. */
-	cmpwi	r5, 32		/* Less than 32 bytes ? */
-	stmw	r24,8(r1)	/* Save ALL regs (could be optimized) */
+	stwu	%r1,-(10*4)(%r1)	/* Allocate some RAM to save 8 regs to. */
+	cmpwi	%r5, 32		/* Less than 32 bytes ? */
+	stmw	%r24,8(%r1)	/* Save ALL regs (could be optimized) */
 
-	mr	r8,r3		/* save dst */
-	li	r7,32
+	mr	%r8,%r3		/* save dst */
+	li	%r7,32
 
-	dcbt	0,r4		/* Start bringing in cache line. */
+	dcbt	%r0,%r4		/* Start bringing in cache line. */
 	blt	1f		/* Finish up */
 
-	neg	r6,r3		/* Find how far unaligned we are... */
-	andi.	r6,r6,31	/* Cache-align dest. */
-	mtxer	r6
-	sub	r5,r5,r6	/* subtract count */
-	lswx	r24,0,r4	/* Load some. */
-	add	r4,r4,r6
-	dcbt	0,r4		/* Fetch next line */
-	stswx	r24,0,r3	/* Store some */
-	add	r3,r3,r6
-	addic.	r6,r5,-32	/* Pre-decrement next line */
+	neg	%r6,%r3		/* Find how far unaligned we are... */
+	andi.	%r6,%r6,31	/* Cache-align dest. */
+	mtxer	%r6
+	sub	%r5,%r5,%r6	/* subtract count */
+	lswx	%r24,%r0,%r4	/* Load some. */
+	add	%r4,%r4,%r6
+	dcbt	%r0,%r4		/* Fetch next line */
+	stswx	%r24,%r0,%r3	/* Store some */
+	add	%r3,%r3,%r6
+	addic.	%r6,%r5,-32	/* Pre-decrement next line */
 	ble	1f		/* Less than 32-bytes? finishup */
 
 	/* Dest should not be cache line aligned. */
 	/* XXX need gas 2.11 to grok dcba insn */
 #ifdef GAS_2_11
-	dcba	0,r3		/* Allocate a line */
+	dcba	%r0,%r3		/* Allocate a line */
 #else
 	.long	0x7c001dec	/* dcba	0,r3 */
 #endif
 0:
-	dcbt	r7,r4		/* Bring in the next line, too */
+	dcbt	%r7,%r4		/* Bring in the next line, too */
 
-	lswi	r24,r4,32
-	addi	r4,r4,32	/* Inc src */
-	mr	r5,r6
+	lswi	%r24,%r4,32
+	addi	%r4,%r4,32	/* Inc src */
+	mr	%r5,%r6
 
-	addic.	r6,r5,-32
-	stswi	r24,r3,32
-	addi	r3,r3,32	/* Inc dst */
+	addic.	%r6,%r5,-32
+	stswi	%r24,%r3,32
+	addi	%r3,%r3,32	/* Inc dst */
 #ifdef GAS_2_11
-	dcba	0,r3		/* Allocate another line */
+	dcba	0,%r3		/* Allocate another line */
 #else
-	.long	0x7c071dec	/* dcba	r7,r3 */
+	.long	0x7c071dec	/* dcba	%r7,%r3 */
 #endif	
 	bgt	0b
 1:
-	mtxer	r5		/* Store byte count */
-	lswx	r24,0,r4	/* Load up to 32 bytes */
-	stswx	r24,0,r3	/* Store up to 32 bytes */
+	mtxer	%r5		/* Store byte count */
+	lswx	%r24,%r0,%r4	/* Load up to 32 bytes */
+	stswx	%r24,%r0,%r3	/* Store up to 32 bytes */
 
-	mr	r3,r8		/* Return dst */
+	mr	%r3,%r8		/* Return dst */
 
-	lmw	r24,8(r1)
-	addi	r1,r1,(10*4)
+	lmw	%r24,8(%r1)
+	addi	%r1,%r1,(10*4)
 	blr
 #endif

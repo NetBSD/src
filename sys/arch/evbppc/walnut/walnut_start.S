@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.7 2003/04/27 10:42:50 ragge Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.8 2003/08/03 23:26:55 eeh Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
  */
 
 #undef PPC_4XX_NOCACHE
+#define _NOREGNAMES
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -147,17 +148,17 @@ __start:
 	nop
 
 1:
-	mr	31,3			/* Save address of PROM info_block */
-	li	0,0
-	mtmsr	0			/* Disable FPU/MMU/exceptions */
+	mr	%r31,%r3		/* Save address of PROM info_block */
+	li	%r0,0
+	mtmsr	%r0			/* Disable FPU/MMU/exceptions */
 	isync
 
 	/* PPC405GP errata, item #58.
 	 * Load string instructions may write incorrect data into the last GPR
 	 * targeted in the operation.
 	 * Workaround: set OCM0_DSCNTL[DSEN]=0 and OCM0_DSCNTL[DOF]=0 */
-	mtdcr	DCR_OCM0_DSCNTL, 0  	/* Disable Data access to OCM */
-	mtdcr	DCR_OCM0_ISCNTL, 0  	/* Disable Instruction access to OCM. Just in case */
+	mtdcr	DCR_OCM0_DSCNTL, %r0  	/* Disable Data access to OCM */
+	mtdcr	DCR_OCM0_ISCNTL, %r0  	/* Disable Instruction access to OCM. Just in case */
 /*
  * Cpu detect.
  *
@@ -165,38 +166,38 @@ __start:
 __start_cpu0:
 #ifdef PPC_4XX_NOCACHE
 	/* Disable all caches for physical addresses */
-	li	0,0
+	li	%r0,0
 #else
 	/* Allow cacheing for only the first 2GB of RAM */
-	lis	0,0xffff
+	lis	%r0,0xffff
 #endif
-	mtdccr	0
-	mticcr	0
+	mtdccr	%r0
+	mticcr	%r0
 
 	/* Invalidate all TLB entries */
 	tlbia
 	sync
 	isync
 /* get start of bss */
-	lis	3,_C_LABEL(_edata)-4@ha
-	addi	3,3,_C_LABEL(_edata)-4@l
+	lis	%r3,_C_LABEL(_edata)-4@ha
+	addi	%r3,%r3,_C_LABEL(_edata)-4@l
 /* get end of kernel memory */
-	lis	8,_C_LABEL(end)@ha
-	addi	8,8,_C_LABEL(end)@l
+	lis	%r8,_C_LABEL(end)@ha
+	addi	%r8,%r8,_C_LABEL(end)@l
 /* zero bss */
-	li	4,0
-2:	stwu	4,4(3)
-	cmpw	3,8
+	li	%r4,0
+2:	stwu	%r4,%r4(3)
+	cmpw	%r3,%r8
 	bne+	2b
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/* If we had symbol table location we'd store it here and would've adjusted r8 here */
-	lis	7,_C_LABEL(startsym)@ha
-	addi	7,7,_C_LABEL(startsym)@l
-	stw	8,0(7)
-	lis	7,_C_LABEL(endsym)@ha
-	addi	7,7,_C_LABEL(endsym)@l
-	stw	8,0(7)
+	lis	%r7,_C_LABEL(startsym)@ha
+	addi	%r7,%r7,_C_LABEL(startsym)@l
+	stw	%r8,0(%r7)
+	lis	%r7,_C_LABEL(endsym)@ha
+	addi	%r7,%r7,_C_LABEL(endsym)@l
+	stw	%r8,0(%r7)
 #endif
 
 	/*
@@ -205,60 +206,60 @@ __start_cpu0:
 	 * XXX: Skip TLB 0 for now, due to unresolved TLB 0 replacement
 	 *	and hard hangs
 	 */
-	li	0,1
-	mtpid	0
+	li	%r0,1
+	mtpid	%r0
 	sync
 
-	li	0,0
+	li	%r0,0
 #ifdef PPC_4XX_NOCACHE
-	li	4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
+	li	%r4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
 #else
-	li	4,TLB_EX|TLB_WR /* |TLB_W */
+	li	%r4,TLB_EX|TLB_WR /* |TLB_W */
 #endif
-        li	3,TLB_VALID|TLB_PG_16M
-        tlbwe	4,0,1			/* Load the data(Low) portion of the entry */
-        tlbwe	3,0,0			/* Load the tag(High) portion of the entry */
+        li	%r3,TLB_VALID|TLB_PG_16M
+        tlbwe	%r4,%r0,1		/* Load the data(Low) portion of the entry */
+        tlbwe	%r3,%r0,0		/* Load the tag(High) portion of the entry */
 
 #if 1
 	/* Damn. Have to be able to access all real memory.... Hardcode for 32M for now. */
-	li	0,1
-	lis	4,0x01000000@h
-	ori	3,4,0
+	li	%r0,1
+	lis	%r4,0x01000000@h
+	ori	%r3,%r4,0
 #ifdef PPC_4XX_NOCACHE
-	addi	4,4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
+	addi	%r4,%r4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
 #else
-	addi	4,4,TLB_EX|TLB_WR /* |TLB_W */
+	addi	%r4,%r4,TLB_EX|TLB_WR /* |TLB_W */
 #endif
-	addi	3,3,TLB_VALID|TLB_PG_16M
-	tlbwe	4,0,1			/* Load the data(Low) portion of the entry */
-	tlbwe	3,0,0			/* Load the tag(High) portion of the entry */
+	addi	%r3,%r3,TLB_VALID|TLB_PG_16M
+	tlbwe	%r4,%r0,1		/* Load the data(Low) portion of the entry */
+	tlbwe	%r3,%r0,0		/* Load the tag(High) portion of the entry */
 #endif
 
 	/* set up a TLB mapping to cover uart0 */
-	lis	3,0xef000000@h		/* Load the virtual address */
-	ori	4,3,0			/* Load the physical address */
+	lis	%r3,0xef000000@h	/* Load the virtual address */
+	ori	%r4,%r3,0		/* Load the physical address */
 
-	clrrwi	4,4,10			/* Mask off the real page number */
+	clrrwi	%r4,%r4,10		/* Mask off the real page number */
 	/* write, execute, cache inhibit, guarded */
-	ori	4,4,(TLB_WR|TLB_EX|TLB_I|TLB_G)
+	ori	%r4,%r4,(TLB_WR|TLB_EX|TLB_I|TLB_G)
 
-	clrrwi	3,3,10			/* Mask off the effective page number */
-	ori	3,3,(TLB_VALID|TLB_PG_16M)
+	clrrwi	%r3,%r3,10		/* Mask off the effective page number */
+	ori	%r3,%r3,(TLB_VALID|TLB_PG_16M)
 
-	li	0,2
+	li	%r0,2
 
-	tlbwe	4,0,1			/* Load the data portion of the entry */
-	tlbwe	3,0,0			/* Load the tag portion of the entry */
+	tlbwe	%r4,%r0,1		/* Load the data portion of the entry */
+	tlbwe	%r3,%r0,0		/* Load the tag portion of the entry */
 
 	/* END of TLB setup */
 
 	INIT_CPUINFO(8,1,9,0)
-	mr	4,8
+	mr	%r4,%r8
 
-	lis	3,__start@ha
-	addi	3,3,__start@l
+	lis	%r3,__start@ha
+	addi	%r3,%r3,__start@l
 
-	mr	6,31			/* info_block address */
+	mr	%r6,%r31		/* info_block address */
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
 
