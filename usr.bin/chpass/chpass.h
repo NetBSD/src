@@ -1,6 +1,8 @@
+/*	$NetBSD: chpass.h,v 1.3 1995/03/26 04:55:26 glass Exp $	*/
+
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,9 +32,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)chpass.h	5.3 (Berkeley) 2/12/91
- *	$Id: chpass.h,v 1.2 1993/08/01 18:18:01 mycroft Exp $
+ *	@(#)chpass.h	8.4 (Berkeley) 4/2/94
  */
+
+struct passwd;
 
 typedef struct _entry {
 	char *prompt;
@@ -49,3 +52,21 @@ typedef struct _entry {
 
 extern ENTRY list[];
 extern uid_t uid;
+
+int	 atot __P((char *, time_t *));
+void	 display __P((int, struct passwd *));
+void	 edit __P((struct passwd *));
+char    *ok_shell __P((char *));
+int	 p_change __P((char *, struct passwd *, ENTRY *));
+int	 p_class __P((char *, struct passwd *, ENTRY *));
+int	 p_expire __P((char *, struct passwd *, ENTRY *));
+int	 p_gecos __P((char *, struct passwd *, ENTRY *));
+int	 p_gid __P((char *, struct passwd *, ENTRY *));
+int	 p_hdir __P((char *, struct passwd *, ENTRY *));
+int	 p_login __P((char *, struct passwd *, ENTRY *));
+int	 p_login __P((char *, struct passwd *, ENTRY *));
+int	 p_passwd __P((char *, struct passwd *, ENTRY *));
+int	 p_shell __P((char *, struct passwd *, ENTRY *));
+int	 p_uid __P((char *, struct passwd *, ENTRY *));
+char    *ttoa __P((time_t));
+int	 verify __P((struct passwd *));
