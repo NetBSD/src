@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.71 2003/08/06 01:02:26 manu Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.72 2003/08/08 18:54:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -828,9 +828,6 @@ int	coredump_writenote_elf64 __P((struct proc *, struct vnode *,
 
 int	elf64_check_header(Elf64_Ehdr *, int);
 #endif
-
-/* common */
-int	exec_elf_setup_stack __P((struct proc *, struct exec_package *));
 
 #endif /* _KERNEL */
 

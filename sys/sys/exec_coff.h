@@ -1,4 +1,4 @@
-/* $NetBSD: exec_coff.h,v 1.4 2003/06/29 22:32:23 fvdl Exp $ */
+/* $NetBSD: exec_coff.h,v 1.5 2003/08/08 18:54:16 christos Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -142,7 +142,6 @@ struct coff_exechdr {
 
 #ifdef _KERNEL
 int     exec_coff_makecmds __P((struct proc *, struct exec_package *));
-int	exec_coff_setup_stack __P((struct proc *, struct exec_package *));
 
 int	exec_coff_prep_omagic __P((struct proc *, struct exec_package *,
 				   struct coff_filehdr *,
