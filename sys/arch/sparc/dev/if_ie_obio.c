@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.15 2000/06/15 12:12:05 pk Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.15.2.1 2000/07/19 02:53:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,10 +100,11 @@
 
 #include <vm/vm.h>
 
-#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
+#include <machine/autoconf.h>
 
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
@@ -421,6 +422,6 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 
 	/* Establish interrupt channel */
 	ih = bus_intr_establish(oba->oba_bustag,
-				oba->oba_pri, 0,
+				oba->oba_pri, IPL_NET, 0,
 				i82586_intr, sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.10 2000/05/10 14:25:43 pk Exp $	*/
+/*	$NetBSD: qe.c,v 1.10.4.1 2000/07/19 02:53:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -121,9 +121,9 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/cpu.h>
+#include <machine/intr.h>
+#include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/qecreg.h>
@@ -251,7 +251,7 @@ qeattach(parent, self, aux)
 	qestop(sc);
 
 	/* Note: no interrupt level passed */
-	(void)bus_intr_establish(sa->sa_bustag, 0, 0, qeintr, sc);
+	(void)bus_intr_establish(sa->sa_bustag, 0, IPL_NET, 0, qeintr, sc);
 	myetheraddr(sc->sc_enaddr);
 
 	/*

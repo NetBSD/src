@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.13 2000/05/10 14:25:43 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.13.4.1 2000/07/19 02:53:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -52,8 +52,9 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
+#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/lebuffervar.h>	/*XXX*/
@@ -289,6 +290,6 @@ leattach_sbus(parent, self, aux)
 
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
-		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri, 0,
-					 am7990_intr, sc);
+		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri,
+					 IPL_NET, 0, am7990_intr, sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.7 2000/06/05 07:59:53 nisimura Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.7.2.1 2000/07/19 02:53:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
@@ -254,7 +254,8 @@ espattach_obio(parent, self, aux)
 	}
 
 	/* Establish interrupt channel */
-	bus_intr_establish(esc->sc_bustag, oba->oba_pri, 0, ncr53c9x_intr, sc);
+	bus_intr_establish(esc->sc_bustag, oba->oba_pri, IPL_BIO, 0,
+			   ncr53c9x_intr, sc);
 
 	/* register interrupt stats */
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,

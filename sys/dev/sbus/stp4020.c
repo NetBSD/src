@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.10 2000/02/22 12:24:53 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.10.4.1 2000/07/19 02:53:08 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <dev/pcmcia/pcmciachip.h>
 
 #include <machine/bus.h>
-#include <machine/autoconf.h>
+#include <machine/intr.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/stp4020reg.h>
@@ -344,10 +344,10 @@ stp4020attach(parent, self, aux)
 	 */
 	if (sa->sa_nintr != 0) {
 		bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
-				   0, stp4020_statintr, sc);
+				   IPL_NONE, 0, stp4020_statintr, sc);
 
 		bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
-				   0, stp4020_iointr, sc);
+				   IPL_NONE, 0, stp4020_iointr, sc);
 	}
 
 	rev = stp4020_rd_sockctl(&sc->sc_socks[0], STP4020_ISR1_IDX) &

@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.20 2000/05/10 14:25:43 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.20.4.1 2000/07/19 02:53:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -111,8 +111,9 @@
 #include <net/bpfdesc.h>
 #endif
 
+#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -301,7 +302,7 @@ beattach(parent, self, aux)
 
 	/* Establish interrupt handler */
 	if (sa->sa_nintr)
-		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri,
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET,
 					 0, beintr, sc);
 
 	myetheraddr(sc->sc_enaddr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.3 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.3.4.1 2000/07/19 02:53:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,8 +55,9 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/ic/hmevar.h>
@@ -191,6 +192,6 @@ hmeattach_sbus(parent, self, aux)
 
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
-		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0,
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0,
 					 hme_intr, sc);
 }

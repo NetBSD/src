@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.10 2000/06/05 07:59:55 nisimura Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.10.2.1 2000/07/19 02:53:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@
 #include <dev/scsipi/scsi_message.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
@@ -384,8 +384,7 @@ espattach(esc, gluep)
 	}
 
 	/* Establish interrupt channel */
-	icookie = bus_intr_establish(esc->sc_bustag,
-				     esc->sc_pri, 0,
+	icookie = bus_intr_establish(esc->sc_bustag, esc->sc_pri, IPL_BIO, 0,
 				     ncr53c9x_intr, sc);
 
 	/* register interrupt stats */

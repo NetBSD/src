@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.46 2000/06/04 19:15:00 cgd Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.46.2.1 2000/07/19 02:53:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -39,8 +39,8 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -235,14 +235,14 @@ am7930_sparc_attach(sc, pri)
 
 #ifndef AUDIO_C_HANDLER
 	auiop = &sc->sc_au;
-	(void)bus_intr_establish(sc->sc_bustag, pri,
+	(void)bus_intr_establish(sc->sc_bustag, pri, IPL_AUDIO,
 				 BUS_INTR_ESTABLISH_FASTTRAP,
 				 (int (*) __P((void *)))amd7930_trap, NULL);
 #else
-	(void)bus_intr_establish(sc->sc_bustag, pri, 0,
+	(void)bus_intr_establish(sc->sc_bustag, pri, IPL_AUDIO, 0,
 				 am7930hwintr, &sc->sc_au);
 #endif
-	(void)bus_intr_establish(sc->sc_bustag, PIL_AUSOFT,
+	(void)bus_intr_establish(sc->sc_bustag, PIL_AUSOFT, IPL_AUDIO,
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 am7930swintr, sc);
 

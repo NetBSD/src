@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.60 2000/06/18 19:19:53 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.60.2.1 2000/07/19 02:53:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -421,7 +421,7 @@ sw_attach(parent, self, aux)
 		oba->oba_pri = 3;
 
 	(void)bus_intr_establish(oba->oba_bustag,
-				 oba->oba_pri, 0,
+				 oba->oba_pri, 0, 0,
 				 si_intr, sc);
 
 	printf(" pri %d\n", oba->oba_pri);
