@@ -1,4 +1,4 @@
-/*	$NetBSD: adcreg.h,v 1.1 2003/10/10 23:52:30 uwe Exp $ */
+/*	$NetBSD: adcreg.h,v 1.2 2003/10/15 22:55:07 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -51,7 +51,7 @@
 
 #define SH7709_ADCSR_BITS						\
 	"\177\020" "b\07F\0" "b\06IE\0" "b\05ST\0" "b\04MULTI\0"	\
-	"f\03\01CKS\0" "f\0\03CS\0"
+	"f\03\01CKS\0" "f\0\03CH\0"
 
 
 #define SH7709_ADCR	0xa4000092
