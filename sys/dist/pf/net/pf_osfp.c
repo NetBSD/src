@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_osfp.c,v 1.2 2004/06/22 14:17:08 itojun Exp $	*/
+/*	$NetBSD: pf_osfp.c,v 1.3 2004/06/29 04:42:55 itojun Exp $	*/
 /*	$OpenBSD: pf_osfp.c,v 1.9 2004/01/04 20:08:42 pvalchev Exp $ */
 
 /*
@@ -243,6 +243,17 @@ pf_osfp_initialize(void)
 	    "pfosfp", NULL);
 	SLIST_INIT(&pf_osfp_list);
 }
+
+#ifdef _LKM
+void
+pf_osfp_destroy(void)
+{
+	pf_osfp_flush();
+
+	pool_destroy(&pf_osfp_pl);
+	pool_destroy(&pf_osfp_entry_pl);
+}
+#endif
 
 /* Flush the fingerprint list */
 void
