@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.56.2.2 2004/08/03 10:54:07 skrll Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.56.2.3 2004/08/18 10:19:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.56.2.2 2004/08/03 10:54:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.56.2.3 2004/08/18 10:19:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,17 +543,15 @@ procfs_hashrem(pp)
 }
 
 void
-procfs_revoke_vnodes(l, arg)
-	struct lwp *l;
+procfs_revoke_vnodes(p, arg)
+	struct proc *p;
 	void *arg;
 {
 	struct pfsnode *pfs, *pnext;
 	struct vnode *vp;
 	struct mount *mp = (struct mount *)arg;
 	struct pfs_hashhead *ppp;
-	struct proc *p;
 
-	p = l->l_proc;
 	if (!(p->p_flag & P_SUGID))
 		return;
 

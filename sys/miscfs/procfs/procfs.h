@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.47.2.2 2004/08/03 10:54:06 skrll Exp $	*/
+/*	$NetBSD: procfs.h,v 1.47.2.3 2004/08/18 10:19:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -202,7 +202,7 @@ int procfs_dofd __P((struct lwp *, struct proc *, struct pfsnode *,
 int procfs_douptime __P((struct lwp *, struct proc *, struct pfsnode *,
     struct uio *));
 
-void procfs_revoke_vnodes __P((struct lwp *, void *));
+void procfs_revoke_vnodes __P((struct proc *, void *));
 void procfs_hashinit __P((void));
 void procfs_hashreinit __P((void));
 void procfs_hashdone __P((void));
