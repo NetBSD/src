@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 1998/07/07 00:16:35 dbj Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include <sys/reboot.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <machine/cpu.h>        /* for NEXT_RAMBASE */
 
@@ -44,7 +45,7 @@ extern int errno;
  * Boot device is derived from PROM provided information.
  */
 
-char *version="$Revision: 1.1.1.1 $";
+char *version="$Revision: 1.2 $";
 extern int subversion;
 #define KNAMEN 100
 char kernel[KNAMEN];
