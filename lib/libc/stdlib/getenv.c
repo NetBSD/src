@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.6 1995/12/28 08:52:18 thorpej Exp $	*/
+/*	$NetBSD: getenv.c,v 1.7 1996/12/20 20:32:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "from: @(#)getenv.c	5.8 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: getenv.c,v 1.6 1995/12/28 08:52:18 thorpej Exp $";
+static char *rcsid = "$NetBSD: getenv.c,v 1.7 1996/12/20 20:32:54 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,14 +69,15 @@ getenv(name)
  */
 char *
 __findenv(name, offset)
-	register char *name;
+	register const char *name;
 	int *offset;
 {
 	extern char **environ;
 	register int len;
 	register char **P, *C;
+	register const char *tmp;
 
-	for (C = name, len = 0; *C && *C != '='; ++C, ++len);
+	for (tmp = name, len = 0; *tmp && *tmp != '='; ++tmp, ++len);
 	for (P = environ; *P; ++P)
 		if (!strncmp(*P, name, len))
 			if (*(C = *P + len) == '=') {
