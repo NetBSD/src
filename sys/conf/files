@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.646 2003/12/07 05:30:22 dyoung Exp $
+#	$NetBSD: files,v 1.647 2003/12/10 11:40:11 hannken Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -985,6 +985,7 @@ defpseudo vnd:		disk
 defpseudo ccd:		disk
 defpseudo cgd:		disk, des, blowfish, cast128, rijndael
 defpseudo md:		disk
+defpseudo fss:		disk
 
 defpseudo pty:		tty
 defpseudo tb:		tty
@@ -1086,6 +1087,7 @@ file	dev/cgd_crypto.c		cgd
 file	dev/clock_subr.c
 file	dev/clockctl.c			clockctl		needs-flag
 file	dev/dksubr.c			cgd
+file	dev/fss.c			fss			needs-count
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
