@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.44 2000/05/29 22:04:11 sommerfeld Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.45 2000/05/29 22:29:01 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,8 @@ ktrsamefile (f1, f2)
 	struct file *f1, *f2;
 {
 	return ((f1 == f2) ||
-	    ((f1->f_type == f2->f_type) &&
+	    ((f1 != NULL) && (f2 != NULL) &&
+		(f1->f_type == f2->f_type) &&
 		(f1->f_data == f2->f_data)));
 }
 
