@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.67 2000/01/25 06:11:25 mycroft Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.68 2000/02/18 08:14:26 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.67 2000/01/25 06:11:25 mycroft Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.68 2000/02/18 08:14:26 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -630,10 +630,11 @@ printalias(iname, af)
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len; ) {
 		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		siz = sizeof(ifr->ifr_name) +
-			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
-				? ifr->ifr_addr.sa_len
-				: sizeof(struct sockaddr));
+		memcpy(ifrbuf, ifr, sizeof(*ifr));
+		siz = ((struct ifreq *)ifrbuf)->ifr_addr.sa_len;
+		if (siz < sizeof(ifr->ifr_addr))
+			siz = sizeof(ifr->ifr_addr);
+		siz += sizeof(ifr->ifr_name);
 		i += siz;
 		/* avoid alignment issue */
 		if (sizeof(ifrbuf) < siz)
@@ -675,10 +676,11 @@ printall()
 	ifreq.ifr_name[0] = '\0';
 	for (i = 0, idx = 0; i < ifc.ifc_len; ) {
 		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		siz = sizeof(ifr->ifr_name) +
-			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
-				? ifr->ifr_addr.sa_len
-				: sizeof(struct sockaddr));
+		memcpy(ifrbuf, ifr, sizeof(*ifr));
+		siz = ((struct ifreq *)ifrbuf)->ifr_addr.sa_len;
+		if (siz < sizeof(ifr->ifr_addr))
+			siz = sizeof(ifr->ifr_addr);
+		siz += sizeof(ifr->ifr_name);
 		i += siz;
 		/* avoid alignment issue */
 		if (sizeof(ifrbuf) < siz)
