@@ -29,7 +29,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.5 2001/02/07 10:55:12 djm Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.8 2001/02/08 17:11:23 stevesk Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -338,7 +338,9 @@ do_ls(int fd_in, int fd_out, char *path)
 			    SSH2_FXP_NAME, type);
 
 		count = buffer_get_int(&msg);
-		debug3("Received %i SSH2_FXP_NAME responses", count);
+		if (count == 0)
+			break;
+		debug3("Received %d SSH2_FXP_NAME responses", count);
 		for(i = 0; i < count; i++) {
 			char *filename, *longname;
 			Attrib *a;
@@ -657,7 +659,7 @@ do_download(int fd_in, int fd_out, char *remote_path, char *local_path,
 			fatal("Received more data than asked for %d > %d",
 			    len, COPY_SIZE);
 
-		debug3("In read loop, got %d offset %lld", len,
+		debug3("In read loop, got %d offset %llu", len,
 		    (unsigned long long)offset);
 		if (atomicio(write, local_fd, data, len) != len) {
 			error("Couldn't write to \"%s\": %s", local_path,
