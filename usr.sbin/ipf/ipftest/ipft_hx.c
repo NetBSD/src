@@ -1,7 +1,7 @@
-/*	$NetBSD: ipft_hx.c,v 1.1.1.6 1997/09/21 16:48:13 veego Exp $	*/
+/*	$NetBSD: ipft_hx.c,v 1.1.1.7 1997/10/30 05:28:09 mrg Exp $	*/
 
 /*
- * (C)opyright 1995 by Darren Reed.
+ * Copyright (C) 1995-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -11,12 +11,12 @@
 #include <ctype.h>
 #include <assert.h>
 #include <string.h>
+#include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
 #else
 #include <sys/byteorder.h>
 #endif
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <stdlib.h>
@@ -26,12 +26,16 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#ifndef	linux
 #include <netinet/ip_var.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/ip_icmp.h>
+#ifndef	linux
 #include <netinet/tcpip.h>
+#endif
 #include <net/if.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
@@ -39,10 +43,13 @@
 #include <netinet/ip_compat.h>
 #include "ipf.h"
 #include "ipt.h"
+#ifdef	linux
+#include "tcpip.h"
+#endif
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static	char	rcsid[] = "Id: ipft_hx.c,v 2.0.2.5 1997/07/20 11:10:32 darrenr Exp ";
+#if !defined(lint)
+static const char sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipft_hx.c,v 2.0.2.8 1997/10/19 15:39:23 darrenr Exp ";
 #endif
 
 extern	int	opts;
