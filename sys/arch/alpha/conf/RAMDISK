@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.1 1996/09/15 17:23:12 cgd Exp $
+#	$NetBSD: RAMDISK,v 1.2 1996/09/16 16:30:45 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -56,7 +56,10 @@ options		LKM
 #options	INSECURE
 
 # Misc. options
-options		PCIVERBOSE	# recognize "unknown" PCI devices
+options		EISAVERBOSE		# recognize "unknown" EISA devices
+options		PCIVERBOSE		# recognize "unknown" PCI devices
+options		TCVERBOSE		# recognize "unknown" TC devices
+options		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 config		netbsd	root on rd0
 #config		netbsd	root on sd0 swap on sd0
