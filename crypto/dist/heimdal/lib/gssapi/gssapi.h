@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: gssapi.h,v 1.1.1.1.2.2 2001/01/25 13:55:58 jhawk Exp $ */
+/* $Id: gssapi.h,v 1.1.1.1.2.3 2001/01/25 16:06:18 jhawk Exp $ */
 
 #ifndef GSSAPI_H_
 #define GSSAPI_H_
@@ -90,6 +90,7 @@ typedef struct gss_OID_set_desc_struct  {
 struct krb5_keytab_data;
 
 typedef int gss_cred_usage_t;
+struct krb5_ccache_data;
 
 typedef struct gss_cred_id_t_desc_struct {
   gss_name_t principal;
