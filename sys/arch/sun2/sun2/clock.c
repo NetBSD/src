@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2001/04/06 15:05:55 fredette Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2001/06/27 02:59:26 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -108,23 +108,26 @@ clock_match(parent, cf, args)
 	struct cfdata *cf;
     void *args;
 {
-	struct confargs *ca = args;
+	struct obio_attach_args *oba = args;
+	bus_space_handle_t bh;
+	int matched;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
 		return (0);
 
 	/* Make sure there is something there... */
-	if (!bus_space_probe(ca->ca_bustag, 0, ca->ca_paddr,
-				1,	/* probe size */
-				0,	/* offset */
-				0,	/* flags */
-				NULL, NULL))
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr, sizeof(struct am9513), 
+			  0, &bh))
+		return (0);
+	matched = (bus_space_peek_2(oba->oba_bustag, bh, 0, NULL) == 0);
+	bus_space_unmap(oba->oba_bustag, bh, sizeof(struct am9513));
+	if (!matched)
 		return (0);
 
 	/* Default interrupt priority. */
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = CLOCK_PRI;
+	if (oba->oba_pri == -1)
+		oba->oba_pri = CLOCK_PRI;
 
 	return (1);
 }
@@ -135,15 +138,15 @@ clock_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	struct confargs *ca = args;
+	struct obio_attach_args *oba = args;
 	bus_space_handle_t bh;
 
 	printf("\n");
 
 	/* Get a mapping for it. */
-	if (bus_space_map(ca->ca_bustag, ca->ca_paddr, sizeof(struct am9513), 0, &bh))
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr, sizeof(struct am9513), 0, &bh))
 		panic("clock_attach");
-	am9513_bt = ca->ca_bustag;
+	am9513_bt = oba->oba_bustag;
 	am9513_bh = bh;
 
 	/*
