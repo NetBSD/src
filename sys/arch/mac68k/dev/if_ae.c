@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.72 2003/01/15 22:20:04 bouyer Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.73 2003/01/21 07:12:54 jdolecek Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -176,7 +176,7 @@ ae_write_mbuf(sc, m, buf)
 		    buf += 2;
 	}
 	if (totlen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
-		bus_space_set_region_1(buft, bufh, buf, 0,
+		bus_space_set_region_1(sc->sc_buft, sc->sc_bufh, buf, 0,
 		    (ETHER_MIN_LEN - ETHER_CRC_LEN - totlen) >> 1);
 		totlen = ETHER_MIN_LEN - ETHER_CRC_LEN;
 	}
