@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.15 2000/02/17 21:25:47 kleink Exp $
+.\"	$NetBSD: audio.9,v 1.16 2000/07/24 15:00:07 ad Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -242,11 +242,11 @@ of the input
 has been determined.  It can be used to initialize looping DMA
 for hardware that needs that.
 Return 0 on success, otherwise an error code.
-.It Dv int start_output(void *hdl, void *block, int bsize,
+.It Dv int start_output(void *hdl, void *block, int blksize,
 .Dv "void (*intr)(void*), void *intrarg)"
 .br
 is called to start the transfer of
-.Va bsize
+.Va blksize
 bytes from
 .Va block
 to the audio hardware.  The call should return when the data
@@ -260,11 +260,11 @@ Calling
 will normally initiate another call to
 .Va start_output .
 Return 0 on success, otherwise an error code.
-.It Dv int start_input(void *hdl, void *block, int bsize,
+.It Dv int start_input(void *hdl, void *block, int blksize,
 .Dv "void (*intr)(void*), void *intrarg)"
 .br
 is called to start the transfer of
-.Va bsize
+.Va blksize
 bytes to
 .Va block
 from the audio hardware.  The call should return when the data
@@ -376,7 +376,7 @@ to the audio hardware, parameterized as in
 The call should return when the data transfer has been initiated
 (normally with DMA).  When the hardware is finished transferring
 each
-.Va bsize
+.Va blksize
 sized block, the function
 .Va intr
 should be called with the argument
@@ -400,7 +400,7 @@ and
 The call should return when the data transfer has been initiated
 (normally with DMA).  When the hardware is finished transferring
 each
-.Va bsize
+.Va blksize
 sized block, the function
 .Va intr
 should be called with the argument
