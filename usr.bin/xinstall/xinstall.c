@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.85 2004/01/30 01:38:25 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.86 2004/02/02 23:25:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.85 2004/01/30 01:38:25 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.86 2004/02/02 23:25:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -646,6 +646,7 @@ install(char *from_name, char *to_name, u_int flags)
 		    O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR)) < 0)
 			err(1, "%s: open", to_name);
 	}
+	digestresult = NULL;
 	if (!devnull) {
 		if ((from_fd = open(from_name, O_RDONLY, 0)) < 0) {
 			(void)unlink(to_name);
