@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.83 2002/07/26 06:16:32 enami Exp $	*/
+/*	$NetBSD: vnd.c,v 1.84 2002/08/02 14:43:32 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.83 2002/07/26 06:16:32 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.84 2002/08/02 14:43:32 oster Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -829,13 +829,6 @@ vndioctl(dev, cmd, data, flag, p)
 			 */
 			geomsize = 32 * 64 * vnd->sc_geom.vng_ncylinders;
 		}
-
-		/*
-		 * Truncate the size to that specified by
-		 * the geometry.
-		 * XXX Should we even bother with this?
-		 */
-		vnd->sc_size = geomsize;
 
 		if ((error = vndsetcred(vnd, p->p_ucred)) != 0)
 			goto close_and_exit;
