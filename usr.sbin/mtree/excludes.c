@@ -33,14 +33,12 @@ static const char rcsid[] =
 #include <sys/types.h>
 #include <sys/queue.h>
 
-#include <err.h>
 #include <fnmatch.h>
-#include <fts.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <util.h>
+/*#include <util.h>*/
 
 #include "extern.h"
 

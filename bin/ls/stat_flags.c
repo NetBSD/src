@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.11 2001/10/18 08:03:46 lukem Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.12 2002/01/29 00:07:28 tv Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,12 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_FTS_H 1
+#define HAVE_STRUCT_STAT_ST_FLAGS 1
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.11 2001/10/18 08:03:46 lukem Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.12 2002/01/29 00:07:28 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,7 +54,10 @@ __RCSID("$NetBSD: stat_flags.c,v 1.11 2001/10/18 08:03:46 lukem Exp $");
 
 #include <stddef.h>
 #include <string.h>
+
+#if HAVE_FTS_H
 #include <fts.h>
+#endif
 
 #include "stat_flags.h"
 
@@ -71,6 +81,7 @@ flags_to_string(u_long flags, const char *def)
 
 	string[0] = '\0';
 	prefix = NULL;
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	if (flags & UF_APPEND)
 		SAPPEND("uappnd");
 	if (flags & UF_IMMUTABLE)
@@ -85,6 +96,7 @@ flags_to_string(u_long flags, const char *def)
 		SAPPEND("arch");
 	if (flags & SF_IMMUTABLE)
 		SAPPEND("schg");
+#endif
 	if (prefix == NULL)
 		strlcpy(string, def, sizeof(string));
 	return (string);
@@ -123,6 +135,8 @@ string_to_flags(char **stringp, u_long *setp, u_long *clrp)
 		*setp = 0;
 	if (clrp)
 		*clrp = 0;
+
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	string = *stringp;
 	while ((p = strsep(&string, "\t ,")) != NULL) {
 		clear = 0;
@@ -170,5 +184,7 @@ string_to_flags(char **stringp, u_long *setp, u_long *clrp)
 			return (1);
 		}
 	}
+#endif
+
 	return (0);
 }

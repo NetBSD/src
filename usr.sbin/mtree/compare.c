@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.36 2001/11/10 14:58:20 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.37 2002/01/29 00:07:27 tv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.36 2001/11/10 14:58:20 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.37 2002/01/29 00:07:27 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: compare.c,v 1.36 2001/11/10 14:58:20 lukem Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
-#include <fts.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -62,7 +61,6 @@ __RCSID("$NetBSD: compare.c,v 1.36 2001/11/10 14:58:20 lukem Exp $");
 #include <sha1.h>
 #endif
 
-#include "mtree.h"
 #include "extern.h"
 
 #define	INDENTNAMELEN	8
@@ -165,6 +163,7 @@ compare(NODE *s, FTSENT *p)
 	}
 	if (Wflag)
 		goto afterpermwhack;
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	if (iflag && !uflag) {
 		if (s->flags & F_FLAGS)
 		    SETFLAGS(p->fts_accpath, s->st_flags,
@@ -179,6 +178,7 @@ compare(NODE *s, FTSENT *p)
 			SP_FLGS);
 		return (label);
         }
+#endif
 	if (s->flags & F_DEV &&
 	    (s->type == F_BLOCK || s->type == F_CHAR) &&
 	    s->st_rdev != p->fts_statp->st_rdev) {
@@ -294,14 +294,16 @@ compare(NODE *s, FTSENT *p)
 #ifdef BSD4_4
 		time_t pmtime = ps->st_mtimespec.tv_sec;
 
+		TIMESPEC_TO_TIMEVAL(&tv[0], &s->st_mtimespec);
 		TIMESPEC_TO_TIMEVAL(&tv[1], &ps->st_mtimespec);
 #else
 		time_t pmtime = (time_t)ps->st_mtime;
 
-		tv[1].tv_sec = ps->st_mtime;
+		tv[0].tv_sec = smtime;
+		tv[0].tv_usec = 0;
+		tv[1].tv_sec = pmtime;
 		tv[1].tv_usec = 0;
 #endif
-		TIMESPEC_TO_TIMEVAL(&tv[0], &s->st_mtimespec);
 
 		if (tv[0].tv_sec != tv[1].tv_sec ||
 		    tv[0].tv_usec != tv[1].tv_usec) {
@@ -321,6 +323,7 @@ compare(NODE *s, FTSENT *p)
 			tab = "\t";
 		}
 	}
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	/*
 	 * XXX
 	 * since chflags(2) will reset file times, the utimes() above
@@ -351,6 +354,7 @@ compare(NODE *s, FTSENT *p)
 			printf(")\n");
 		tab = "\t";
 	}
+#endif
 
 	/*
 	 * from this point, no more permission checking or whacking
