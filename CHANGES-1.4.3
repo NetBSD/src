@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.65 2000/10/04 16:29:21 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.66 2000/10/06 15:58:35 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1400,3 +1400,25 @@ lib/libkvm/kvm_private.h			1.10
 lib/libkvm/kvm_proc.c				1.41 via patch
 
   Format string audit.
+
+usr.bin/top/top.c				1.5
+
+  Plug possible printf string format issue.
+
+lib/libkvm/kvm_sparc.c				1.24
+
+  Fix mismatched int vs. long format error.
+
+lib/libc/sys/Makefile.inc			1.100
+include/unistd.h				1.84
+sys/kern/kern_prot.c				1.57
+sys/kern/syscalls.master			1.101 via patch
+sys/kern/init_sysent.c				regenerate
+sys/kern/syscalls.c				regenerate
+sys/sys/syscall.h				regenerate
+sys/sys/syscallargs.h				regenerate
+lib/libc/shlib_version				patch
+distrib/sets/lists/base/shl.mi			patch
+
+  Introduce the issetugid() system call.
+  Bump libc's tiny number to 2.
