@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.2 1997/01/12 19:12:04 tls Exp $	*/
+/*	$NetBSD: lex.c,v 1.3 1997/07/20 17:42:06 christos Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1033,6 +1033,9 @@ set_prompt(to, s)
 			struct shf *shf;
 			char *ps1;
 			Area *saved_atemp;
+#ifdef __GNUC__
+			(void) &ps1;
+#endif
 
 			ps1 = str_val(global("PS1"));
 			shf = shf_sopen((char *) 0, strlen(ps1) * 2,
