@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.50 2004/08/05 22:57:32 mycroft Exp $	*/
+/*	$NetBSD: wivar.h,v 1.51 2004/08/07 17:12:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -273,7 +273,7 @@ struct wi_card_ident {
 			(sc->sc_pci? reg * 2: reg), buf, count)
 
 
-int	wi_attach(struct wi_softc *);
+int	wi_attach(struct wi_softc *, const u_int8_t *);
 int	wi_detach(struct wi_softc *);
 int	wi_activate(struct device *, enum devact);
 int	wi_intr(void *arg);
