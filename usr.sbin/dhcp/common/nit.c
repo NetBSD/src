@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: nit.c,v 1.1.1.1 1997/03/29 21:52:17 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: nit.c,v 1.1.1.2 1997/06/08 04:54:15 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -246,7 +246,7 @@ void if_register_receive (info)
 #endif /* USE_NIT_RECEIVE */
 
 #ifdef USE_NIT_SEND
-size_t send_packet (interface, packet, raw, len, from, to, hto)
+ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	struct interface_info *interface;
 	struct packet *packet;
 	struct dhcp_packet *raw;
@@ -297,7 +297,7 @@ size_t send_packet (interface, packet, raw, len, from, to, hto)
 #endif /* USE_NIT_SEND */
 
 #ifdef USE_NIT_RECEIVE
-size_t receive_packet (interface, buf, len, from, hfrom)
+ssize_t receive_packet (interface, buf, len, from, hfrom)
 	struct interface_info *interface;
 	unsigned char *buf;
 	size_t len;

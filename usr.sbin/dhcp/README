@@ -51,6 +51,11 @@ programming or debugging on your own to get the DHCP Distribution working.
 
 				LINUX
 
+There are two big LINUX issues: the all-ones broadcast address, and
+operations with more than one  network interface.
+
+                              BROADCAST
+
 In order for dhcpd to work correctly with picky DHCP clients (e.g.,
 Windows 95), it must be able to send packets with an IP destination
 address of 255.255.255.255.  Unfortunately, Linux insists on changing
@@ -83,6 +88,23 @@ Another route that has worked for some users is:
 
 If you are not using eth0 as your network interface, you should
 specify the network interface you *are* using in your route command.
+
+                        MULTIPLE INTERFACES
+
+Most older versions of the Linux kernel do not provide a networking
+API that allows dhcpd to operate correctly if the system has more than one
+broadcast network interface.   However, Linux 2.0 kernels with version
+numbers greater than or equal to 2.0.30 add an API feature: the
+SO_BINDTODEVICE socket option.   If SO_BINDTODEVICE is present, it is
+possible for dhcpd to operate on Linux with more than one network
+interface.   You must be running a 2.0.31 or greater kernel, and you must
+have 2.0.31 system headers installed *before* you build dhcpd.
+
+If you are running a Linux 2.1 kernel, this does not guarantee that you
+have SO_BINDTODEVICE.   Linux 2.0.31 was released quite a while after 2.1
+kernel development began.   I do not know what version of Linux 2.1 has
+this feature.   To find out if yours does, check /usr/include/sys/sock*.h
+to see if SO_BINDTODEVICE is defined.
 
 				 SCO
 
