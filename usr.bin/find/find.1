@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.48 2004/03/30 22:54:04 heas Exp $
+.\"	$NetBSD: find.1,v 1.49 2004/03/31 01:46:22 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd January 30, 2003
+.Dd March 30, 2004
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Nm find
 .Op Fl H | Fl L | Fl P
-.Op Fl Xdhsx
+.Op Fl dhsXx
 .Op Fl f Ar file
 .Op Ar file ...
 .Ar expression
@@ -87,31 +87,6 @@ The
 option causes the file information and file type (see
 .Xr stat 2 )
 returned for each symbolic link to be those of the link itself.
-.It Fl X
-The
-.Fl X
-option is a modification to permit
-.Nm
-to be safely used in conjunction with
-.Xr xargs 1 .
-If a file name contains any of the delimiting characters used by
-.Nm xargs ,
-a diagnostic message is displayed on standard error, and the file
-is skipped.
-The delimiting characters include single
-.Pq Dq \&'
-and double
-.Pq Dq \&"
-quotes, backslash
-.Pq Dq \e ,
-space, tab and newline characters.
-Alternatively, the
-.Ic -print0
-or
-.Ic -printx
-primaries can be used to format the output in a way that
-.Nm xargs
-can accept.
 .It Fl d
 The
 .Fl d
@@ -157,6 +132,31 @@ appears before
 which is different from
 .Dq Li "find ... \&| sort"
 order.
+.It Fl X
+The
+.Fl X
+option is a modification to permit
+.Nm
+to be safely used in conjunction with
+.Xr xargs 1 .
+If a file name contains any of the delimiting characters used by
+.Nm xargs ,
+a diagnostic message is displayed on standard error, and the file
+is skipped.
+The delimiting characters include single
+.Pq Dq \&'
+and double
+.Pq Dq \&"
+quotes, backslash
+.Pq Dq \e ,
+space, tab and newline characters.
+Alternatively, the
+.Ic -print0
+or
+.Ic -printx
+primaries can be used to format the output in a way that
+.Nm xargs
+can accept.
 .It Fl x
 The
 .Fl x
@@ -487,8 +487,6 @@ True if the file is of the specified type.
 Possible file types are as follows:
 .Pp
 .Bl -tag -width flag -offset indent -compact
-.It Cm W
-whiteout
 .It Cm b
 block special
 .It Cm c
@@ -503,6 +501,8 @@ symbolic link
 FIFO
 .It Cm s
 socket
+.It Cm W
+whiteout
 .It Cm w
 whiteout
 .El
