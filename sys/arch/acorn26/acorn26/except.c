@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.4 2003/01/17 21:55:24 thorpej Exp $ */
+/* $NetBSD: except.c,v 1.5 2003/10/26 13:19:30 jdolecek Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.4 2003/01/17 21:55:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.5 2003/10/26 13:19:30 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -210,6 +210,8 @@ do_fault(struct trapframe *tf, struct lwp *l,
 	}
 
 	if (error != 0) {
+		ksiginfo_t ksi;
+
 		curpcb = &l->l_addr->u_pcb;
 		if (curpcb->pcb_onfault != NULL) {
 			tf->tf_r0 = error;
@@ -217,7 +219,11 @@ do_fault(struct trapframe *tf, struct lwp *l,
 			    (register_t)curpcb->pcb_onfault;
 			return;
 		}
-		trapsignal(l, SIGSEGV, va);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = (error == EPERM) ? SEGV_ACCERR : SEGV_MAPERR;
+		ksi.ksi_addr = (void *) va;
+		trapsignal(l, &ksi);
 	}
 }
 
@@ -421,6 +427,7 @@ address_exception_handler(struct trapframe *tf)
 {
 	struct lwp *l;
 	vaddr_t pc;
+	ksiginfo_t ksi;
 
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
@@ -444,7 +451,11 @@ address_exception_handler(struct trapframe *tf)
 		panic("address exception in kernel mode");
 	}
 
-	trapsignal(l, SIGBUS, pc);
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = SIGBUS;
+	ksi.ksi_code = BUS_ADRERR;
+	ksi.ksi_addr = (void *) pc;
+	trapsignal(l, &ksi);
 	userret(l);
 }
 
