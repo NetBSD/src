@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2002/08/31 18:18:14 mycroft Exp $
+#	$NetBSD: Makefile,v 1.53 2002/09/13 18:28:58 mycroft Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -38,7 +38,7 @@ CPPFLAGS+= -DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
 CPPFLAGS+= -I${.CURDIR}
 CPPFLAGS+= -DRTLD_LOADER
 CPPFLAGS+= -D_RTLD_SOURCE
-#CPPFLAGS+= -DDEBUG
+CPPFLAGS+= -DDEBUG
 #CPPFLAGS+= -DRTLD_DEBUG
 #CPPFLAGS+= -DRTLD_DEBUG_RELOC
 #DBG=	-g
