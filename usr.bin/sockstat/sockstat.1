@@ -1,4 +1,4 @@
-.\"	$NetBSD: sockstat.1,v 1.1 2005/03/09 05:20:05 atatat Exp $
+.\"	$NetBSD: sockstat.1,v 1.2 2005/03/09 17:16:30 wiz Exp $
 .\"-
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -122,18 +122,18 @@ sockets.
 .El
 .Pp
 If neither
-.Fl 4 , 6
-or
+.Fl 4 , 6 ,
+nor
 .Fl u
-is specified,
+are specified,
 .Nm
 will list sockets in all three domains.
 .Pp
 If neither
 .Fl c
-or
+nor
 .Fl l
-is specified,
+are specified,
 .Nm
 will list both listening and connected sockets, as well as those
 sockets that are in neither state.
@@ -155,15 +155,15 @@ sockets, or the type of socket (stream or datagram) for
 .Ux
 sockets.
 .It Li LOCAL ADDRESS
-For Internet sockets, this is the address the local end of the socket
-is bound to (see
+For Internet sockets, this is the address to which the local end
+of the socket is bound (see
 .Xr getsockname 2 ) .
 For bound
 .Ux
 sockets, it is the socket's filename or
 .Dq - .
 .It Li FOREIGN ADDRESS
-The address the foreign end of the socket is bound to (see
+The address to which the foreign end of the socket is bound (see
 .Xr getpeername 2 )
 or
 .Dq -
