@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.10 2002/10/02 04:59:47 thorpej Exp $	*/
+/*	$NetBSD: btl.c,v 1.11 2003/01/19 10:06:14 tsutsui Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -884,7 +884,7 @@ bt_done(sc, ccb)
 
 	if((datalen = xs->datalen) != 0) {
 		thiskv = (int)xs->data;
-		sg = ccb->scat_gath;       
+		sg = ccb->scat_gath;
 		seg = phystol(ccb->data_length) / sizeof(struct bt_scat_gath);
 
 		while (seg) {
@@ -954,7 +954,7 @@ bt_find(ia, sc)
 #ifndef notyet
 	/*
 	 * The BusLogic cards implement an Adaptec 1542 (aha)-compatible
-	 * interface. The native bha interface is not compatible with 
+	 * interface. The native bha interface is not compatible with
 	 * an aha. 1542. We need to ensure that we never match an
 	 * Adaptec 1542. We must also avoid sending Adaptec-compatible
 	 * commands to a real bha, lest it go into 1542 emulation mode.
@@ -1356,7 +1356,7 @@ bt_scsi_cmd(xs)
 	return COMPLETE;
 
 badbuf:
-	sg = ccb->scat_gath;       
+	sg = ccb->scat_gath;
 	while (seg) {
 		thisbounce = PHYSTOKV(phystol(sg->seg_addr));
 		bt_free_buf(sc, (struct bt_buf *)thisbounce);

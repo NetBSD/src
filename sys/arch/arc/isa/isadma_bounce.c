@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.4 2001/11/14 18:15:14 thorpej Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.5 2003/01/19 10:06:14 tsutsui Exp $ */
 /* NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp  */
 
 /*-
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.4 2001/11/14 18:15:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.5 2003/01/19 10:06:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ isadma_bounce_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
  */
 int
 isadma_bounce_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
-    struct mbuf *m0, int flags)  
+    struct mbuf *m0, int flags)
 {
 	struct isadma_bounce_cookie *cookie = map->_dm_cookie;
 	int error;

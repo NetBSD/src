@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.7 2002/09/27 15:35:42 provos Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.8 2003/01/19 10:06:15 tsutsui Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -29,7 +29,7 @@
 
 /*
  * Jazz derived system dma driver. Handles resource allocation and
- * logical (virtual) address remaping. 
+ * logical (virtual) address remaping.
  */
 
 #include <sys/param.h>
