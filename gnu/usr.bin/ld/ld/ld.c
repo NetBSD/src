@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.56 1998/08/27 21:20:45 matt Exp $	*/
+/*	$NetBSD: ld.c,v 1.57 1998/09/03 19:17:10 matt Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -1510,7 +1510,10 @@ enter_global_ref(lsp, name, entry)
 	sp->flags |= GS_REFERENCED;
 
 	if (sp == dynamic_symbol || sp == got_symbol
-	    || (sp == plt_symbol && plt_symbol != NULL)) {
+#if 0
+	    || (sp == plt_symbol && plt_symbol != NULL)
+#endif
+	    ) {
 		if (type != (N_UNDF | N_EXT) && !(entry->flags & E_JUST_SYMS))
 			errx(1,"Linker reserved symbol %s defined as type %x ",	
 				name, type);
@@ -1841,8 +1844,10 @@ printf("set_sect_start = %#x, set_sect_size = %#x\n",
 	if (got_symbol->flags & GS_REFERENCED)
 		global_sym_count++;
 
+#if 0
 	if (plt_symbol != NULL && plt_symbol->flags & GS_REFERENCED)
 		global_sym_count++;
+#endif
 
 	if (relocatable_output || building_shared_object) {
 		/* For each alias we write out two struct nlists */
@@ -1911,7 +1916,10 @@ digest_pass1()
 			continue;
 
 		if (sp == got_symbol || sp == dynamic_symbol
-		    || (sp == plt_symbol && plt_symbol != NULL))
+#if 0
+		    || (sp == plt_symbol && plt_symbol != NULL)
+#endif
+		    )
 			continue;
 
 		for (lsp = sp->refs; lsp; lsp = lsp->next) {
