@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.9 1997/01/15 01:28:46 perry Exp $
+#	$NetBSD: HOMEWORLD,v 1.10 1997/01/16 23:30:31 perry Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -8,6 +8,7 @@ include "arch/i386/conf/std.i386"
 #options	I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU	# CPU classes; at least one is REQUIRED
 #options	I586_CPU
+#options	I686_CPU
 #options	MATH_EMULATE	# floating point emulation
 #options	VM86		# Virtual 8086 emulation
 

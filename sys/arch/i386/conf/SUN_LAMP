@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.81 1997/01/15 01:28:49 perry Exp $
+#	$NetBSD: SUN_LAMP,v 1.82 1997/01/16 23:30:33 perry Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -8,6 +8,7 @@ include "arch/i386/conf/std.i386"
 #options	I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
 #options	I586_CPU
+#options	I686_CPU
 #options	MATH_EMULATE	# floating point emulation
 
 # Some BIOSes don't get the size of extended memory right.  If you
