@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.13 2003/06/28 14:22:16 darrenr Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.14 2003/06/29 12:04:32 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.13 2003/06/28 14:22:16 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.14 2003/06/29 12:04:32 martin Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,7 +493,6 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 			rcvflg = MSG_WAITALL;
 			bzero(&auio, sizeof(auio));
 			auio.uio_resid = min(resid, NB_SORECEIVE_CHUNK);
-			auio.uio_procp = p;
 			auio.uio_lwp = l;
 			resid -= auio.uio_resid;
 			/*
