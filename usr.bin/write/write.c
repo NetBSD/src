@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.7 1997/01/20 19:04:59 explorer Exp $	*/
+/*	$NetBSD: write.c,v 1.8 1997/02/11 08:21:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$NetBSD: write.c,v 1.7 1997/01/20 19:04:59 explorer Exp $";
+static char *rcsid = "$NetBSD: write.c,v 1.8 1997/02/11 08:21:03 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,7 +66,7 @@ static char *rcsid = "$NetBSD: write.c,v 1.7 1997/01/20 19:04:59 explorer Exp $"
 void done(); 
 void do_write __P((char *, char *, uid_t));
 void wr_fputs __P((char *));
-void search_utmp __P((char *, char *, char *, uid_t));
+void search_utmp __P((char *, char *, char *, uid_t, int));
 int term_chk __P((char *, int *, time_t *, int));
 int utmp_chk __P((char *, char *));
 
@@ -107,7 +107,7 @@ main(argc, argv)
 	/* check args */
 	switch (argc) {
 	case 2:
-		search_utmp(argv[1], tty, mytty, myuid);
+		search_utmp(argv[1], tty, mytty, myuid, sizeof tty);
 		do_write(tty, mytty, myuid);
 		break;
 	case 3:
@@ -168,9 +168,10 @@ utmp_chk(user, tty)
  * writing from, unless that's the only terminal with messages enabled.
  */
 void
-search_utmp(user, tty, mytty, myuid)
+search_utmp(user, tty, mytty, myuid, ttylen)
 	char *user, *tty, *mytty;
 	uid_t myuid;
+	int ttylen;
 {
 	struct utmp u;
 	time_t bestatime, atime;
@@ -199,7 +200,7 @@ search_utmp(user, tty, mytty, myuid)
 			++nttys;
 			if (atime > bestatime) {
 				bestatime = atime;
-				(void)strcpy(tty, atty);
+				(void)strncpy(tty, atty, ttylen - 1);
 			}
 		}
 
@@ -208,7 +209,7 @@ search_utmp(user, tty, mytty, myuid)
 		errx(1, "%s is not logged in", user);
 	if (nttys == 0) {
 		if (user_is_me) {		/* ok, so write to yourself! */
-			(void)strcpy(tty, mytty);
+			(void)strncpy(tty, mytty, ttylen - 1);
 			return;
 		}
 		errx(1, "%s has messages disabled", user);
@@ -230,7 +231,7 @@ term_chk(tty, msgsokP, atimeP, showerror)
 	struct stat s;
 	char path[MAXPATHLEN];
 
-	(void)snprintf(path, sizeof(path), "/dev/%s", tty);
+	(void)snprintf(path, sizeof path, "/dev/%s", tty);
 	if (stat(path, &s) < 0) {
 		if (showerror)
 			warn("%s", path);
@@ -261,7 +262,7 @@ do_write(tty, mytty, myuid)
 		else
 			login = "???";
 
-	(void)snprintf(path, sizeof(path), "/dev/%s", tty);
+	(void)snprintf(path, sizeof path, "/dev/%s", tty);
 	if ((freopen(path, "w", stdout)) == NULL)
 		err(1, "%s", path);
 
@@ -270,7 +271,7 @@ do_write(tty, mytty, myuid)
 
 	/* print greeting */
 	if (gethostname(host, sizeof(host)) < 0)
-		(void)strcpy(host, "???");
+		(void)strncpy(host, "???", sizeof(host) - 1);
 	now = time((time_t *)NULL);
 	nows = ctime(&now);
 	nows[16] = '\0';
