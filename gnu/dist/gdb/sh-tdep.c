@@ -689,3 +689,180 @@ _initialize_sh_tdep ()
 
   add_com ("regs", class_vars, sh_show_regs, "Print all registers");
 }
+
+#ifdef NO_SINGLE_STEP
+/* Non-zero if we just simulated a single-step ptrace call.  This is
+   needed because we cannot remove the breakpoints in the inferior
+   process until after the `wait' in `wait_for_inferior'.  Used for
+   4.4bsd for mips, where the kernel does not emulate single-step. */
+
+int one_stepped;
+CORE_ADDR target_addr;		/* Branch target offset, if we have a
+				   breakpoint there... */
+CORE_ADDR step_addr;		/* Offset of instruction after instruction
+				   to be stepped, if we have a breakpoint
+				   there. */
+long step_cache [3];		/* Cache for instructions wiped out by
+				   step breakpoint(s)... */
+
+/* single_step() is called just before we want to resume the inferior,
+   if we want to single-step it but there is no hardware or kernel single-step
+   support (as on NetBSD).  We find all the possible targets of the
+   coming instruction and breakpoint them.
+
+   single_step is also called just after the inferior stops.  If we had
+   set up a simulated single-step, we undo our damage. */
+
+/* thoughts:
+
+   For the current instruction, check to see if we're in a delay slot.
+   If we are, the next instruction executed will either be the target of
+   the branch or jump instruction preceding the current instruction, or
+   it will be the instruction following the current instruction.   If
+   we are not, then the next instruction executed will either be the
+   instruction following the current instruction, or the instruction
+   following that (if the current instruction is a branch likely instruction
+   and the branch is not taken).
+
+   So, if we are in a delay slot then we set a breakpoint for the target
+   of the preceding instruction.   Unless the preceding instruction was
+   a jump instruction (only jumps are unconditional), we also set a break-
+   point at the instruction following the current one and the instruction
+   following that.   Setting two breakpoints after the current instruction
+   is cheaper and easier than figuring out whether the current instruction
+   is a branch likely instruction. */
+
+#define IS_JMP(x)		(((x) & 0xf0ff) == 0x402b)
+#define IS_JSR(x)		(((x) & 0xf0ff) == 0x400b)
+
+#define IS_RTS(x)		((x) == 0x000b)
+
+#define IS_BRAF(x)		(((x) & 0xf0ff) == 0x0023)
+#define IS_BSRF(x)		(((x) & 0xf0ff) == 0x0003)
+
+#define IS_BSR(x)		(((x) & 0xf000) == 0xb000)
+#define IS_BRA(x)		(((x) & 0xf000) == 0xa000)
+#define IS_BTS(x)		(((x) & 0xff00) == 0x8d00)
+#define IS_BFS(x)		(((x) & 0xff00) == 0x8f00)
+
+#define IS_BT(x)		(((x) & 0xff00) == 0x8900)
+#define IS_BF(x)		(((x) & 0xff00) == 0x8b00)
+
+
+#define IS_PCLOADFROMREG(x)	((IS_JMP(x)) || (IS_JSR(x)))
+#define IS_ADDPCBYREG(x)	((IS_BRAF(x)) || (IS_BSRF(x)))
+#define IS_ADDPCBYIMM(x)	((IS_BSR(x)) || (IS_BRA(x)) || (IS_BFS(x)) \
+				 || (IS_BTS(x)))
+#define IS_ADDPCBYIMM_ND(x)	((IS_BF(x)) || (IS_BT(x)))
+
+#define IS_DELAYEDBRANCH(x)	(IS_PCLOADFROMREG(x) || IS_RTS(x) \
+				 || IS_ADDPCBYREG(x) || IS_ADDPCBYIMM(x))
+
+#define IS_BRANCH(x)		(IS_DELAYEDBRANCH(x) || IS_ADDPCBYIMM_ND(x))
+
+
+#define M2REG(x)	(((x) & 0x0f00) >> 8)
+#define GETIMM8(x)	((x) & 0x00ff)
+#define IMM8SIGN(x)	((x) & 0x0080)
+#define GETIMM12(x)	((x) & 0x0fff)
+#define IMM12SIGN(x)	((x) & 0x0800)
+
+void
+single_step (ignore)
+     enum target_signal ignore;		/* not used */
+{
+  CORE_ADDR pc;
+  CORE_ADDR epc;
+  CORE_ADDR next;
+  unsigned short delay_instruction;
+  CORE_ADDR offset;
+  unsigned short insn;
+
+  if (!one_stepped)
+    {
+      pc = epc = read_register (PC_REGNUM);
+      insn = read_memory_integer(pc, sizeof(insn));
+
+      if (IS_DELAYEDBRANCH(insn))
+	pc += 2;
+      next = pc + 2;
+      target_addr = 0;
+      step_addr = next;
+
+      if (IS_BRANCH(insn))
+	{
+	  if (IS_PCLOADFROMREG(insn)) {
+	    target_addr = read_register(M2REG (insn));
+	    step_addr = 0;
+	  } else if (IS_RTS(insn)) {
+	    target_addr = read_register(PR_REGNUM);
+	    step_addr = 0;
+	  } else if (IS_ADDPCBYREG(insn)) {
+	    target_addr = next + read_register(M2REG (insn));
+	    step_addr = 0;
+	  } else if (IS_BT(insn) || IS_BF(insn) || IS_BTS(insn)
+		     || IS_BFS(insn)) {
+	    target_addr = GETIMM8(insn);
+	    if (IMM8SIGN(insn))
+	      target_addr |= ~(CORE_ADDR)0x00ff;
+	    target_addr = epc + 4 + (target_addr << 1);
+	  } else if (IS_BSR(insn) || IS_BRA(insn)) {
+	    target_addr = GETIMM12(insn);
+	    if (IMM12SIGN(insn))
+	      target_addr |= ~(CORE_ADDR)0x0fff;
+	    target_addr = next + (target_addr << 1);
+	    step_addr = 0;
+	  }
+	}
+
+	/* Don't try to put down two breakpoints in the same spot... */
+      if (step_addr == target_addr)
+	target_addr = 0;
+
+      if (step_addr)
+	{
+	  target_insert_breakpoint (step_addr, (char *)&step_cache [0]);
+	  if (step_addr + 2 != target_addr)
+	    target_insert_breakpoint (step_addr + 2, (char *)&step_cache [1]);
+        }
+      if (target_addr)
+        {
+	  target_insert_breakpoint (target_addr, (char *)&step_cache [2]);
+	}
+
+	/* If the breakpoint occurred in a branch instruction,
+	   re-run the branch (the breakpoint instruction should
+	   be gone by now)... */
+      if (epc != pc)
+	{
+	  write_register (PC_REGNUM, epc);
+	}
+      one_stepped = 1;
+      return;
+    }
+  else
+    {
+      pc = epc = read_register(PC_REGNUM);
+
+      write_pc(pc -= 2);
+
+      insn = read_memory_integer(pc, sizeof(insn));
+
+      /* Remove step breakpoints */
+      if (step_addr)
+	{
+	  target_remove_breakpoint (step_addr, (char *)&step_cache [0]);
+	  if (step_addr + 2 != target_addr)
+	    target_remove_breakpoint (step_addr + 2, (char *)&step_cache [1]);
+	}
+
+      if (target_addr)
+	{
+          target_remove_breakpoint (target_addr, (char *)&step_cache [2]);
+	  target_addr = 0;
+	}
+
+      one_stepped = 0;
+    }
+}
+#endif	/* NO_SINGLE_STEP */
