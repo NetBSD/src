@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.128 2004/08/16 21:04:08 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.129 2004/08/17 17:12:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1164,7 +1164,8 @@ set_root_password(void)
 	msg_display(MSG_rootpw);
 	process_menu(MENU_yesno, NULL);
 	if (yesno)
-		run_program(RUN_DISPLAY|RUN_CHROOT, "passwd -l root");
+		run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
+			    "passwd -l root");
 	return 0;
 }
 
@@ -1174,7 +1175,7 @@ set_root_shell(void)
 
 	msg_display(MSG_rootsh);
 	process_menu(MENU_rootsh, NULL);
-	run_program(RUN_DISPLAY|RUN_CHROOT, "chpass -s %s root", shellpath);
+	run_program(RUN_DISPLAY | RUN_CHROOT, "chpass -s %s root", shellpath);
 	return 0;
 }
 
