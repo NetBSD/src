@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.2 1997/01/27 22:16:37 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.3 1997/04/25 19:02:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,28 +56,53 @@
  * It is copied from the device early in startup.
  */
 struct idprom identity_prom;
-static char *idprom_va;
+static u_long idprom_pa;
+
+static int  idprom_match __P((struct device *, struct cfdata *, void *));
+static void idprom_attach __P((struct device *, struct device *, void *));
+
+struct cfattach idprom_ca = {
+	sizeof(struct device), idprom_match, idprom_attach
+};
+
+struct cfdriver idprom_cd = {
+	NULL, "idprom", DV_DULL
+};
 
 /*
- * This is called very early during startup to
- * get a copy of the idprom from control space.
+ * Find the IDPROM and copy it to memory.
+ * This is called early during startup,
+ * but late enough so peek_byte() works.
+ * Called by machdep.c:identifycpu()
  */
 void
 idprom_init()
 {
 	struct idprom *idp;
-	char *src, *dst;
+	char *src, *dst, *va;
+	u_long pa;
 	int len, x, xorsum;
 	union {
 		long l;
 		char c[4];
 	} hid;
 
-	idprom_va = obio_find_mapping(OBIO_IDPROM2, sizeof(struct idprom));
+	/* First, probe for a separate IDPROM (3/470). */
+	pa = OBIO_IDPROM1;
+	va = obio_find_mapping(pa, IDPROM_SIZE);
+	if (peek_byte(va) == -1) {
+		/* IDPROM is in the EEPROM */
+		pa = OBIO_IDPROM2;
+		va = obio_find_mapping(pa, IDPROM_SIZE);
+	}
 
+	/* Save the phys. address for idprom_match. */
+	idprom_pa = pa;
+
+	/* Copy the IDPROM contents and do the checksum. */
 	idp = &identity_prom;
 	dst = (char*)idp;
-	src = (char*)idprom_va;
+	src = va;
 	len = IDPROM_SIZE;
 	xorsum = 0;	/* calculated as xor of data */
 
@@ -87,14 +112,10 @@ idprom_init()
 		xorsum ^= x;
 	} while (--len > 0);
 
-	if (xorsum != 0) {
-		mon_printf("idprom_fetch: bad checksum=%d\n", xorsum);
-		sunmon_abort();
-	}
-	if (idp->idp_format < 1) {
-		mon_printf("idprom_fetch: bad version=%d\n", idp->idp_format);
-		sunmon_abort();
-	}
+	if (xorsum != 0)
+		printf("idprom: bad checksum=%d\n", xorsum);
+	if (idp->idp_format < 1)
+		printf("idprom: bad version=%d\n", idp->idp_format);
 
 	/*
 	 * Construct the hostid from the idprom contents.
@@ -107,7 +128,37 @@ idprom_init()
 	hostid = hid.l;
 }
 
-void idprom_etheraddr(eaddrp)
+static int
+idprom_match(parent, cf, args)
+    struct device *parent;
+	struct cfdata *cf;
+    void *args;
+{
+	struct confargs *ca = args;
+
+	/* This driver only supports one unit. */
+	if (cf->cf_unit != 0)
+		return (0);
+
+	/* Match the address we determined earlier. */
+	if (ca->ca_paddr != idprom_pa)
+		return (0);
+
+	return (1);
+}
+
+static void
+idprom_attach(parent, self, args)
+	struct device *parent;
+	struct device *self;
+	void *args;
+{
+
+	printf("\n");
+}
+
+void
+idprom_etheraddr(eaddrp)
 	u_char *eaddrp;
 {
 	u_char *src, *dst;
