@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.293 2005/02/26 21:02:51 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.294 2005/02/28 22:05:59 jwise Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -479,7 +479,7 @@ Current Vers:	3.9 / portable 3.9p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Mailing List:	openssh-unix-announce@mindrot.org
-Responsible:	thorpej, jwise, itojun, christos
+Responsible:	thorpej, itojun, christos, elric
 Notes:
 imported from OpenBSD usr.bin/ssh (it is not from the portable OpenSSH)
 into crypto/dist/openssh.  use openssh2netbsd before import.
