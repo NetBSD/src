@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.14 1996/05/29 06:15:50 mhitch Exp $	*/
+/*	$NetBSD: mfb.c,v 1.15 1996/08/27 02:32:51 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,6 +86,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
+#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -111,16 +112,21 @@ struct fbuaccess mfbu;
 struct pmax_fbtty mfbfb;
 struct fbinfo	mfbfi;	/*XXX*/
 
+extern int pmax_boardtype;
+
 /*
  * Forward references.
  */
+#define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
+static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
+
 extern void fbScreenInit __P((struct fbinfo *fia));
 
 void mfbPosCursor  __P((struct fbinfo *fi, int x, int y));
 
 
 
-int	mfbinit __P((caddr_t mfbaddr, int unit, int silent));
+int	mfbinit __P((struct fbinfo *fi, caddr_t mfbaddr, int unit, int silent));
 
 #if 1	/* these  go away when we use the abstracted-out chip drivers */
 static void mfbLoadCursor __P((struct fbinfo *fi, u_short *ptr));
@@ -195,6 +201,7 @@ struct fbdriver mfb_driver = {
 
 int mfbmatch __P((struct device *, void *, void *));
 void mfbattach __P((struct device *, struct device *, void *));
+int mfb_intr __P((void *sc));
 
 struct cfattach mfb_ca = {
 	sizeof(struct device), mfbmatch, mfbattach
@@ -233,6 +240,7 @@ mfbattach(parent, self, aux)
 	struct tc_attach_args *ta = aux;
 	caddr_t mfbaddr = (caddr_t) ta->ta_addr;
 	int unit = self->dv_unit;
+	struct fbinfo *fi = (struct fbinfo *) self;
 
 #ifdef notyet
 	struct fbinfo *fi = &mfbfi;
@@ -242,12 +250,19 @@ mfbattach(parent, self, aux)
 		return;	/* XXX patch up f softc pointer */
 #endif
 
-
-	if (!mfbinit(mfbaddr, unit, 0))
+	if (!mfbinit(fi, mfbaddr, unit, 0))
 		return;
 
-	/* no interrupts for MFB */
-	/*BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);*/
+	/*
+	 * 3MIN does not mask un-established TC option interrupts,
+	 * so establish a handler.
+	 * XXX Should store cmap updates in softc and apply in the
+	 * interrupt handler, which interrupts during vertical-retrace.
+	 */
+	if (pmax_boardtype == DS_3MIN) {
+		tc_intr_establish(parent, (void*)ta->ta_cookie, TC_IPL_NONE,
+					mfb_intr, fi);
+	}
 	printf("\n");
 }
 
@@ -256,17 +271,33 @@ mfbattach(parent, self, aux)
  * Initialization
  */
 int
-mfbinit(mfbaddr, unit, silent)
+mfbinit(fi, mfbaddr, unit, silent)
+	struct fbinfo *fi;
 	caddr_t mfbaddr;
 	int unit;
 	int silent;
 {
-	register struct fbinfo *fi = &mfbfi;
+	/*
+	 * If this device is being intialized as the console, malloc()
+	 * is not yet up and we must use statically-allocated space.
+	 */
+	if (fi == NULL) {
+		fi = &mfbfi;	/* XXX */
+		fi->fi_cmap_bits = (caddr_t)cmap_bits;
+	}
+	else {
+		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
+		if (fi->fi_cmap_bits == NULL) {
+			printf("mfb%d: no memory for cmap\n", unit);
+			return (0);
+		}
+	}
 
 	/* check for no frame buffer */
-	if (badaddr(mfbaddr, 4))
+	if (badaddr(mfbaddr, 4)) {
+		printf("mfb: bad address 0x%p\n", mfbaddr);
 		return (0);
-
+	}
 
 	/* Fill in main frame buffer info struct. */
 	fi->fi_unit = unit;
@@ -278,7 +309,6 @@ mfbinit(mfbaddr, unit, silent)
 	fi->fi_linebytes = 1280;
 	fi->fi_driver = &mfb_driver;
 	fi->fi_blanked = 0;
-	fi->fi_cmap_bits = (caddr_t)0;
 
 	/* Fill in Frame Buffer Type struct. */
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_MFB;
@@ -717,5 +747,24 @@ bt431_init(regs)
 	BT431_WRITE_REG_AUTOI(regs, 0x00);
 	BT431_WRITE_REG_AUTOI(regs, 0x00);
 }
+
+/*
+ * copied from cfb_intr
+ */
+int
+mfb_intr(sc)
+	void *sc;
+{
+	struct fbinfo *fi = /* XXX (struct fbinfo *)sc */ &mfbfi;
+	volatile int junk;
+	char *slot_addr = (((char *)fi->fi_base) - MFB_OFFSET_BT431);
+
+	/* reset vertical-retrace interrupt by writing a dont-care */
+	junk = *(volatile int*) (slot_addr + MFB_OFFSET_IREQ);
+	*(volatile int*) (slot_addr + MFB_OFFSET_IREQ) = 0;
+
+	return (0);
+}
+
 #endif /* NMFB */
 
