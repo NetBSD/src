@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.4 2003/07/05 16:54:23 tshiozak Exp $
+.\" $NetBSD: iconv.3,v 1.5 2003/07/05 17:34:55 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -128,9 +128,9 @@ places the destination into its initial state and stores the shift
 sequence for switching to the initial state in the buffer pointed
 to by
 .Fa *dst .
-The buffer size is specified by the value pointed by
+The buffer size is specified by the value pointed to by
 .Fa dstleft
-similarly above.
+as above.
 .Fn iconv
 will fail if the buffer is too small to store the shift sequence.
 .It "(src == NULL || *src == NULL) \*[Am]\*[Am] (dst == NULL || *dst == NULL)"
