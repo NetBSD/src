@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.6 1997/03/28 23:47:13 mycroft Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.6.2.1 1997/05/13 03:08:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -113,11 +113,27 @@ bha_isa_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dmat = ia->ia_dmat;
 	if (!bha_find(iot, ioh, &bpd))
 		panic("bha_isa_attach: bha_find failed");
 
+	sc->sc_dmaflags = 0;
 	if (bpd.sc_drq != -1)
-		isa_dmacascade(bpd.sc_drq);
+		isa_dmacascade(parent, bpd.sc_drq);
+	else {
+		/*
+		 * We have a VLB controller.  If we're at least both
+		 * hardware revision E and firmware revision 3.37,
+		 * we can do 32-bit DMA (earlier revisions are buggy
+		 * in this regard).
+		 */
+		bha_inquire_setup_information(sc);
+		if (strcmp(sc->sc_firmware, "3.37") < 0)
+		    printf("%s: buggy VLB controller, disabling 32-bit DMA\n",
+		        sc->sc_dev.dv_xname);
+		else
+			sc->sc_dmaflags = ISABUS_DMA_32BIT;
+	}
 
 	sc->sc_ih = isa_intr_establish(ic, bpd.sc_irq, IST_EDGE, IPL_BIO,
 	    bha_intr, sc);
