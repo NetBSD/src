@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.27 1998/09/26 19:28:12 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.28 2000/11/22 19:20:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.27 1998/09/26 19:28:12 christos Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.28 2000/11/22 19:20:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: miscbltin.c,v 1.27 1998/09/26 19:28:12 christos Exp $");
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "shell.h"
 #include "options.h"
@@ -334,14 +335,14 @@ ulimitcmd(argc, argv)
 	for (l = limits; l->name && l->option != what; l++)
 		;
 	if (!l->name)
-		error("ulimit: internal error (%c)\n", what);
+		error("internal error (%c)", what);
 
 	set = *argptr ? 1 : 0;
 	if (set) {
 		char *p = *argptr;
 
 		if (all || argptr[1])
-			error("ulimit: too many arguments\n");
+			error("too many arguments");
 		if (strcmp(p, "unlimited") == 0)
 			val = RLIM_INFINITY;
 		else {
@@ -354,7 +355,7 @@ ulimitcmd(argc, argv)
 					break;
 			}
 			if (c)
-				error("ulimit: bad number\n");
+				error("bad number");
 			val *= l->factor;
 		}
 	}
@@ -384,12 +385,12 @@ ulimitcmd(argc, argv)
 
 	getrlimit(l->cmd, &limit);
 	if (set) {
-		if (how & SOFT)
-			limit.rlim_cur = val;
 		if (how & HARD)
 			limit.rlim_max = val;
+		if (how & SOFT)
+			limit.rlim_cur = val;
 		if (setrlimit(l->cmd, &limit) < 0)
-			error("ulimit: bad limit\n");
+			error("error setting limit (%s)", strerror(errno));
 	} else {
 		if (how & SOFT)
 			val = limit.rlim_cur;
