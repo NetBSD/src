@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcsh,v 1.9 2003/10/10 22:42:40 jdolecek Exp $
+#	$NetBSD: majors.hpcsh,v 1.10 2003/10/15 18:20:19 jdolecek Exp $
 #
 # Device majors for hpcsh
 #
@@ -41,6 +41,7 @@ device-major	clockctl	char 34			clockctl
 device-major	systrace	char 35			systrace
 device-major	cgd		char 36  block 10	cgd
 device-major	ksyms		char 37			ksyms
+device-major	lkm		char 38			lkm
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
