@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_tty.3,v 1.5 2003/04/16 13:35:01 wiz Exp $
+.\"	$NetBSD: curses_tty.3,v 1.6 2003/06/20 06:58:54 jdc Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd January 9, 2003
+.Dd June 13, 2003
 .Dt CURSES_TTY 3
 .Os
 .Sh NAME
@@ -54,6 +54,8 @@
 .Nm idcok ,
 .Nm idlok ,
 .Nm intrflush ,
+.Nm noqiflush ,
+.Nm qiflush ,
 .Nm killchar ,
 .Nm meta ,
 .Nm napms ,
@@ -106,6 +108,10 @@
 .Fn idlok "WINDOW *win" "boolf flag"
 .Ft int
 .Fn intrflush "WINDOW *win" "boolf flag"
+.Ft void
+.Fn noqiflush "void"
+.Ft void
+.Fn qiflush "void"
 .Ft char
 .Fn killchar "void"
 .Ft int
@@ -239,8 +245,16 @@ The
 function controls whether or not a flush of the input buffer is
 performed when an interrupt key (kill, suspend or quit) is pressed.
 The
-.Fn win
+.Fa win
 parameter is ignored.
+The
+.Fn noqiflush
+function is equivalent to
+.Fn intrflush stdscr FALSE .
+The
+.Fn qiflush
+function is equivalent to
+.Fn intrflush stdscr TRUE .
 .Pp
 The character that performs the line kill function can be determined
 by calling the
