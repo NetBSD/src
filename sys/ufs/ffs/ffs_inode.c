@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.24.2.2 1999/02/25 04:03:31 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.24.2.3 1999/05/30 15:04:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -221,7 +221,7 @@ ffs_truncate(v)
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
 		error = ffs_balloc(oip, lbn, offset + 1, ap->a_cred, &bp, NULL,
-				   aflags, NULL);
+				   aflags);
 		if (error)
 			return (error);
 #endif
@@ -254,14 +254,14 @@ ffs_truncate(v)
 	if (offset == 0) {
 		oip->i_ffs_size = length;
 	} else {
+		lbn = lblkno(fs, length);
 #ifdef UBC
 #else
-		lbn = lblkno(fs, length);
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
 		error = ffs_balloc(oip, lbn, offset, ap->a_cred, &bp, NULL,
-				   aflags, NULL);
+				   aflags);
 		if (error)
 			return (error);
 #endif
