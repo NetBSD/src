@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.72 1998/07/10 20:41:36 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.73 1998/07/13 03:29:49 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.67 1998/07/10 20:40:06 tron Exp 
+ *	NetBSD: pcidevs,v 1.68 1998/07/13 03:29:00 mark Exp 
  */
 
 /*
@@ -152,6 +152,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acer Labs",
 	    "M1461 Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541,
+	    0,
+	    "Acer Labs",
+	    "M1543 Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1543,
