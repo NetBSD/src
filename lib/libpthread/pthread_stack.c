@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.1.2.3 2001/07/13 02:42:39 nathanw Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.1.2.4 2001/07/25 23:54:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -117,7 +117,6 @@ pthread__stackid_setup(void *base, int size)
 {
 	pthread_t t;
 	int pagesize, ret;
-	void *addr;
 
 	/* Deallocate the bottom page but one as a red zone. */
 	/* XXX assumes that the stack grows down. */
