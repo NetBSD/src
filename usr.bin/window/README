@@ -106,12 +106,12 @@ Emacs.
 
      The IO system is semi-synchronous.  Terminal input is signal
 driven, and everything else is done synchronously with a single
-select().  It is roughly event-driven, though not in a clean way.
+poll().  It is roughly event-driven, though not in a clean way.
 
      Normally, in both conversation mode and command mode, window
-sleeps in a select() in wwiomux() waiting for data from the
+sleeps in a poll() in wwiomux() waiting for data from the
 pseudo-terminals.  At the same time, terminal input causes SIGIO which
-is caught by wwrint().  The select() returns when at least one of the
+is caught by wwrint().  The poll() returns when at least one of the
 pseudo-terminals becomes ready for reading.
 
      Wwrint() is the interrupt handler for tty input.  It reads input
@@ -129,7 +129,7 @@ Wwrint() appends characters at the end and increments wwibq (*wwibq++
 wwgetc() and wwpeekc() macros.  As is the convention in C, wwibq
 and wwibe point to one position beyond the end.  In addition,
 wwrint() will do a longjmp(wwjmpbuf) if wwsetjmp is true.  This is
-used by wwiomux() to interrupt the select() which would otherwise
+used by wwiomux() to interrupt the poll() which would otherwise
 resume after the interrupt.  (Actually, I hear this is not true,
 but the longjmp feature is used to avoid a race condition as well.
 Anyway, it means I didn't have to depend on a feature in a
@@ -152,15 +152,15 @@ can check for this condition with wwinterrupt() or by arranging
 that a longjmp() be done.
 
      Wwiomux() copies pseudo-terminal output into their corresponding
-windows.  Without anything to do, it blocks in a select(), waiting for
+windows.  Without anything to do, it blocks in a poll(), waiting for
 read ready on pseudo-terminals.  Reads are done into per-window buffers
 in the window structures.  When there is at least one buffer non-empty,
 wwiomux() finds the top most of these windows and writes it using
-wwwrite().  Then the process is repeated.  A non-blocking select() is
+wwwrite().  Then the process is repeated.  A non-blocking poll() is
 done after a wwwrite() to pick up any output that may have come in
 during the write, which may take a long time.  Specifically, we use
 this to stop output or flush buffer when a pseudo-terminal tells us to
-(we use pty packet mode).  The select() blocks only when all of the
+(we use pty packet mode).  The poll() blocks only when all of the
 windows' buffers are empty.  A wwupdate() is done prior to this, which
 is the only time the screen is guaranteed to be completely up to date.
 Wwiomux() loops until wwinterrupt() becomes true.
