@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.18 1998/04/07 10:16:04 fair Exp $	*/
+/*	$NetBSD: histedit.c,v 1.19 1998/05/20 00:29:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.18 1998/04/07 10:16:04 fair Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.19 1998/05/20 00:29:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ histedit()
 				el_out = fdopen(2, "w");
 			if (el_in == NULL || el_out == NULL)
 				goto bad;
-			el = el_init(arg0, el_in, el_out);
+			el = el_init(arg0, el_in, el_out, el_out);
 			if (el != NULL) {
 				if (hist)
 					el_set(el, EL_HIST, history, hist);
@@ -159,7 +159,7 @@ sethistsize(hs)
 		if (hs == NULL || *hs == '\0' ||
 		   (histsize = atoi(hs)) < 0)
 			histsize = 100;
-		history(hist, &he, H_SETMAXSIZE, histsize);
+		history(hist, &he, H_SETSIZE, histsize);
 	}
 }
 
