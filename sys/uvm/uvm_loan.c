@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.18 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.19 1999/09/12 01:17:36 chs Exp $	*/
 
 /*
  *
@@ -335,7 +335,7 @@ uvm_loananon(ufi, output, flags, anon)
 		pg = anon->u.an_page;
 		if (pg && (pg->pqflags & PQ_ANON) != 0 && anon->an_ref == 1)
 			/* read protect it */
-			pmap_page_protect(PMAP_PGARG(pg), VM_PROT_READ);
+			pmap_page_protect(pg, VM_PROT_READ);
 		anon->an_ref++;
 		**output = anon;
 		*output = (*output) + 1;
@@ -380,7 +380,7 @@ uvm_loananon(ufi, output, flags, anon)
 	pg = anon->u.an_page;
 	uvm_lock_pageq();
 	if (pg->loan_count == 0)
-		pmap_page_protect(PMAP_PGARG(pg), VM_PROT_READ);
+		pmap_page_protect(pg, VM_PROT_READ);
 	pg->loan_count++;
 	uvm_pagewire(pg);	/* always wire it */
 	uvm_unlock_pageq();
@@ -532,7 +532,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loan to wired-kernel page? */
 		uvm_lock_pageq();
 		if (pg->loan_count == 0)
-			pmap_page_protect(PMAP_PGARG(pg), VM_PROT_READ);
+			pmap_page_protect(pg, VM_PROT_READ);
 		pg->loan_count++;
 		uvm_pagewire(pg);
 		uvm_unlock_pageq();
@@ -586,7 +586,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	pg->uanon = anon;
 	uvm_lock_pageq();
 	if (pg->loan_count == 0)
-		pmap_page_protect(PMAP_PGARG(pg), VM_PROT_READ);
+		pmap_page_protect(pg, VM_PROT_READ);
 	pg->loan_count++;
 	uvm_pageactivate(pg);
 	uvm_unlock_pageq();
@@ -750,7 +750,7 @@ uvm_unloanpage(ploans, npages)
 	panic("uvm_unloanpage: page %p unowned but PG_BUSY!", pg);
 
 			/* be safe */
-			pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
+			pmap_page_protect(pg, VM_PROT_NONE);
 			uvm_pagefree(pg);	/* pageq locked above */
 
 		}

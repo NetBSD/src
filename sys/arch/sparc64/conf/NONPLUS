@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.17 1999/07/29 10:37:23 augustss Exp $
+# 	$NetBSD: NONPLUS,v 1.18 1999/09/12 01:17:22 chs Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -36,7 +36,6 @@ config		netbsd	root on ? type ?
 options		UVM_PAGE_TRKOWN
 options		UVMHIST
 #options 	UVMHIST_PRINT	# Loud!
-options 	PMAP_NEW	# new pmap interface; not yet supported
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE

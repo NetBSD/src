@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.25 1999/07/22 22:58:39 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.26 1999/09/12 01:17:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -700,7 +700,7 @@ uvn_releasepg(pg, nextpgp)
 	/*
 	 * dispose of the page [caller handles PG_WANTED]
 	 */
-	pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
+	pmap_page_protect(pg, VM_PROT_NONE);
 	uvm_lock_pageq();
 	if (nextpgp)
 		*nextpgp = pg->pageq.tqe_next;	/* next page for daemon */
@@ -975,9 +975,9 @@ uvn_flush(uobj, start, stop, flags)
 			if ((pp->flags & PG_CLEAN) != 0 && 
 			    (flags & PGO_FREE) != 0 &&
 			    (pp->pqflags & PQ_ACTIVE) != 0)
-				pmap_page_protect(PMAP_PGARG(pp), VM_PROT_NONE);
+				pmap_page_protect(pp, VM_PROT_NONE);
 			if ((pp->flags & PG_CLEAN) != 0 &&
-			    pmap_is_modified(PMAP_PGARG(pp)))
+			    pmap_is_modified(pp))
 				pp->flags &= ~(PG_CLEAN);
 			pp->flags |= PG_CLEANCHK;	/* update "hint" */
 
@@ -1000,8 +1000,7 @@ uvn_flush(uobj, start, stop, flags)
 			if (flags & PGO_DEACTIVATE) {
 				if ((pp->pqflags & PQ_INACTIVE) == 0 &&
 				    pp->wire_count == 0) {
-					pmap_page_protect(PMAP_PGARG(pp),
-					    VM_PROT_NONE);
+					pmap_page_protect(pp, VM_PROT_NONE);
 					uvm_pagedeactivate(pp);
 				}
 
@@ -1010,8 +1009,7 @@ uvn_flush(uobj, start, stop, flags)
 					/* release busy pages */
 					pp->flags |= PG_RELEASED;
 				} else {
-					pmap_page_protect(PMAP_PGARG(pp),
-					    VM_PROT_NONE);
+					pmap_page_protect(pp, VM_PROT_NONE);
 					/* removed page from object */
 					uvm_pagefree(pp);
 				}
@@ -1031,7 +1029,7 @@ uvn_flush(uobj, start, stop, flags)
 
 		pp->flags |= PG_BUSY;	/* we 'own' page now */
 		UVM_PAGE_OWN(pp, "uvn_flush");
-		pmap_page_protect(PMAP_PGARG(pp), VM_PROT_READ);
+		pmap_page_protect(pp, VM_PROT_READ);
 		pp_version = pp->version;
 ReTry:
 		ppsp = pps;
@@ -1180,8 +1178,7 @@ ReTry:
 				} else {
 					ptmp->flags |= (PG_CLEAN|PG_CLEANCHK);
 					if ((flags & PGO_FREE) == 0)
-						pmap_clear_modify(
-						    PMAP_PGARG(ptmp));
+						pmap_clear_modify(ptmp);
 				}
 			}
 	  
@@ -1192,8 +1189,7 @@ ReTry:
 			if (flags & PGO_DEACTIVATE) {
 				if ((pp->pqflags & PQ_INACTIVE) == 0 &&
 				    pp->wire_count == 0) {
-					pmap_page_protect(PMAP_PGARG(ptmp),
-					    VM_PROT_NONE);
+					pmap_page_protect(ptmp, VM_PROT_NONE);
 					uvm_pagedeactivate(ptmp);
 				}
 
@@ -1213,8 +1209,7 @@ ReTry:
 						    "lost!\n");
 						retval = FALSE;
 					}
-					pmap_page_protect(PMAP_PGARG(ptmp),
-					    VM_PROT_NONE);
+					pmap_page_protect(ptmp, VM_PROT_NONE);
 					uvm_pagefree(ptmp);
 				}
 			}
@@ -1546,7 +1541,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 		 */
 
 		ptmp->flags &= ~PG_FAKE;		/* data is valid ... */
-		pmap_clear_modify(PMAP_PGARG(ptmp));	/* ... and clean */
+		pmap_clear_modify(ptmp);		/* ... and clean */
 		pps[lcv] = ptmp;
 
 	}	/* lcv loop */

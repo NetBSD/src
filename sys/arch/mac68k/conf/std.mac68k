@@ -1,4 +1,4 @@
-#	$NetBSD: std.mac68k,v 1.22 1999/03/24 06:06:10 mrg Exp $
+#	$NetBSD: std.mac68k,v 1.23 1999/09/12 01:17:07 chs Exp $
 #
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
@@ -10,5 +10,3 @@ options HZ=60			# mac clock runs at 60hz
 # Executable support
 options 	EXEC_AOUT	# a.out binary support
 options 	EXEC_SCRIPT	# shell script support
-
-#options	PMAP_NEW	# UVM's new pmap interface

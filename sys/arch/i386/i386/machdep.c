@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.363 1999/08/10 12:16:13 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.364 1999/09/12 01:17:06 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1630,9 +1630,7 @@ init386(first_avail)
 	extern void consinit __P((void));
 
 	proc0.p_addr = proc0paddr;
-	/* XXX: PMAP_NEW requires valid curpcb.   also init'd in cpu_startup */
 	curpcb = &proc0.p_addr->u_pcb;
-
 
 	/*
 	 * Initialize the I/O port and I/O mem extent maps.

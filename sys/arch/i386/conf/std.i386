@@ -1,12 +1,8 @@
-# $NetBSD: std.i386,v 1.15 1999/07/05 09:14:10 fvdl Exp $
+# $NetBSD: std.i386,v 1.16 1999/09/12 01:17:05 chs Exp $
 #
 # standard, required NetBSD/i386 'options'
 
 machine i386
-
-# NOTE: PMAP_NEW is no longer optional on the i386 -- the old pmap
-# no longer works, and has been deleted from the source tree.
-options 	PMAP_NEW	# UVM's new pmap interface
 
 options 	EXEC_AOUT	# exec a.out binaries
 options		EXEC_ELF32	# exec ELF binaries

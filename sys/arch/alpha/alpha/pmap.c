@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.110 1999/08/17 18:48:22 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.111 1999/09/12 01:16:56 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -148,14 +148,13 @@
  */
 
 #include "opt_lockdebug.h"
-#include "opt_pmap_new.h"
 #include "opt_new_scc_driver.h"
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 1999/08/17 18:48:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 1999/09/12 01:16:56 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1102,34 +1101,16 @@ pmap_init()
  *
  *	Note: no locking is necessary in this function.
  */
-#if defined(PMAP_NEW)
 pmap_t
 pmap_create()
-#else /* ! PMAP_NEW */
-pmap_t
-pmap_create(size)
-	vsize_t		size;
-#endif /* PMAP_NEW */
 {
 	pmap_t pmap;
 	int i;
 
-#if defined(PMAP_NEW)
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
 		printf("pmap_create()\n");
 #endif
-#else /* ! PMAP_NEW */
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
-		printf("pmap_create(%lx)\n", size);
-#endif
-	/*
-	 * Software use map does not need a pmap
-	 */
-	if (size)
-		return(NULL);
-#endif /* PMAP_NEW */
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
@@ -1358,24 +1339,16 @@ pmap_remove(pmap, sva, eva)
  *	Lower the permission for all mappings to a given page to
  *	the permissions specified.
  */
-#if defined(PMAP_NEW)
 void
 pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t prot;
-#else
-void
-pmap_page_protect(pa, prot)
-	paddr_t		pa;
-	vm_prot_t	prot;
-#endif /* PMAP_NEW */
 {
 	struct pv_head *pvh;
 	pv_entry_t pv, nextpv;
 	int s, ps;
 	boolean_t needisync = FALSE;
 	long cpu_id = alpha_pal_whami();
-#if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DEBUG
@@ -1383,17 +1356,6 @@ pmap_page_protect(pa, prot)
 	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
 		printf("pmap_page_protect(%p, %x)\n", pg, prot);
 #endif
-
-#else /* ! PMAP_NEW */
-
-#ifdef DEBUG
-	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
-	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
-		printf("pmap_page_protect(%lx, %x)\n", pa, prot);
-#endif
-	if (!PAGE_IS_MANAGED(pa))
-		return;
-#endif /* PMAP_NEW */
 
 	/*
 	 * Even though we don't change the mapping of the page,
@@ -1426,7 +1388,7 @@ pmap_page_protect(pa, prot)
 	pvh = pa_to_pvh(pa);
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pvh->pvh_slock);
-	s = splimp();			/* XXX needed w/ PMAP_NEW? */
+	s = splimp();			/* XXX needed? */
 	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL; pv = nextpv) {
 		struct pmap *pmap = pv->pv_pmap;
 
@@ -1755,7 +1717,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 * Enter the mapping into the pv_table if appropriate.
 	 */
 	if (managed) {
-		int s = splimp();	/* XXX needed w/ PMAP_NEW? */
+		int s = splimp();	/* XXX needed? */
 		pmap_pv_enter(pmap, pa, va, pte, TRUE);
 		splx(s);
 	}
@@ -1837,7 +1799,6 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 
-#if defined(PMAP_NEW)
 /*
  * pmap_kenter_pa:		[ INTERFACE ]
  *
@@ -2007,7 +1968,6 @@ pmap_kremove(va, size)
 #endif
 	}
 }
-#endif /* PMAP_NEW */
 
 /*
  * pmap_unwire:			[ INTERFACE ]
@@ -2312,7 +2272,6 @@ pmap_copy_page(src, dst)
  *
  *	Clear the modify bits on the specified physical page.
  */
-#if defined(PMAP_NEW)
 boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
@@ -2343,42 +2302,12 @@ pmap_clear_modify(pg)
 
 	return (rv);
 }
-#else /* ! PMAP_NEW */
-void
-pmap_clear_modify(pa)
-	paddr_t	pa;
-{
-	struct pv_head *pvh;
-	long cpu_id = alpha_pal_whami();
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_modify(%lx)\n", pa);
-#endif
-	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
-		return;
-
-	pvh = pa_to_pvh(pa);
-
-	PMAP_HEAD_TO_MAP_LOCK();
-	simple_lock(&pvh->pvh_slock);
-
-	if (pvh->pvh_attrs & PGA_MODIFIED) {
-		pmap_changebut(pa, PG_FOW, ~0);
-		pvh->pvh_attrs &= ~PGA_MODIFIED;
-	}
-
-	simple_unlock(&pvh->pvh_slock);
-	PMAP_HEAD_TO_MAP_UNLOCK();
-}
-#endif /* PMAP_NEW */
 
 /*
  * pmap_clear_reference:	[ INTERFACE ]
  *
  *	Clear the reference bit on the specified physical page.
  */
-#if defined(PMAP_NEW)
 boolean_t
 pmap_clear_reference(pg)
 	struct vm_page *pg;
@@ -2409,35 +2338,6 @@ pmap_clear_reference(pg)
 
 	return (rv);
 }
-#else /* ! PMAP_NEW */
-void
-pmap_clear_reference(pa)
-	paddr_t	pa;
-{
-	struct pv_head *pvh;
-	long cpu_id = alpha_pal_whami();
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_reference(%lx)\n", pa);
-#endif
-	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
-		return;
-
-	pvh = pa_to_pvh(pa);
-
-	PMAP_HEAD_TO_MAP_LOCK();
-	simple_lock(&pvh->pvh_slock);
-
-	if (pvh->pvh_attrs & PGA_REFERENCED) {
-		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, ~0, cpu_id);
-		pvh->pvh_attrs &= ~PGA_REFERENCED;
-	}
-
-	simple_unlock(&pvh->pvh_slock);
-	PMAP_HEAD_TO_MAP_UNLOCK();
-}
-#endif /* PMAP_NEW */
 
 /*
  * pmap_is_referenced:		[ INTERFACE ]
@@ -2445,7 +2345,6 @@ pmap_clear_reference(pa)
  *	Return whether or not the specified physical page is referenced
  *	by any physical maps.
  */
-#if defined(PMAP_NEW)
 boolean_t
 pmap_is_referenced(pg)
 	struct vm_page *pg;
@@ -2465,29 +2364,6 @@ pmap_is_referenced(pg)
 #endif
 	return (rv);
 }
-#else /* ! PMAP_NEW */
-boolean_t
-pmap_is_referenced(pa)
-	paddr_t	pa;
-{
-	struct pv_head *pvh;
-	boolean_t rv;
-
-	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
-		return 0;
-
-	pvh = pa_to_pvh(pa);
-	simple_lock(&pvh->pvh_slock);
-	rv = ((pvh->pvh_attrs & PGA_REFERENCED) != 0);
-	simple_unlock(&pvh->pvh_slock);
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW) {
-		printf("pmap_is_referenced(%lx) -> %c\n", pa, "FT"[rv]);
-	}
-#endif
-	return rv;
-}
-#endif /* PMAP_NEW */
 
 /*
  * pmap_is_modified:		[ INTERFACE ]
@@ -2495,7 +2371,6 @@ pmap_is_referenced(pa)
  *	Return whether or not the specified physical page is modified
  *	by any physical maps.
  */
-#if defined(PMAP_NEW)
 boolean_t
 pmap_is_modified(pg)
 	struct vm_page *pg;
@@ -2515,29 +2390,6 @@ pmap_is_modified(pg)
 #endif
 	return (rv);
 }
-#else /* ! PMAP_NEW */
-boolean_t
-pmap_is_modified(pa)
-	paddr_t	pa;
-{
-	struct pv_head *pvh;
-	boolean_t rv;
-
-	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
-		return 0;
-
-	pvh = pa_to_pvh(pa);
-	simple_lock(&pvh->pvh_slock);
-	rv = ((pvh->pvh_attrs & PGA_MODIFIED) != 0);
-	simple_unlock(&pvh->pvh_slock);
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW) {
-		printf("pmap_is_modified(%lx) -> %c\n", pa, "FT"[rv]);
-	}
-#endif
-	return rv;
-}
-#endif /* PMAP_NEW */
 
 /*
  * pmap_phys_address:		[ INTERFACE ]
@@ -2721,7 +2573,7 @@ pmap_remove_mapping(pmap, va, pte, dolock, cpu_id, pvp)
 	 * Otherwise remove it from the PV table
 	 * (raise IPL since we may be called at interrupt time).
 	 */
-	s = splimp();		/* XXX needed w/ PMAP_NEW? */
+	s = splimp();		/* XXX needed? */
 	pmap_pv_remove(pmap, pa, va, dolock, pvp);
 	splx(s);
 
@@ -2761,7 +2613,7 @@ pmap_changebit(pa, set, mask, cpu_id)
 		return;
 
 	pvh = pa_to_pvh(pa);
-	s = splimp();			/* XXX needed w/ PMAP_NEW? */
+	s = splimp();			/* XXX needed? */
 	/*
 	 * Loop over all current mappings setting/clearing as appropos.
 	 */
@@ -3414,7 +3266,6 @@ pmap_physpage_delref(kva)
 
 /******************** page table page management ********************/
 
-#if defined(PMAP_NEW)
 /*
  * pmap_growkernel:		[ INTERFACE ]
  *
@@ -3423,7 +3274,6 @@ pmap_physpage_delref(kva)
  *
  *	XXX Implement XXX
  */
-#endif /* PMAP_NEW */
 
 /*
  * pmap_lev1map_create:

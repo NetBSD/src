@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 1999/07/08 18:11:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 1999/09/12 01:17:27 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -578,20 +578,6 @@ static void pmap_page_upload __P((void));
  ** - functions required by the Mach VM Pmap interface, with MACHINE_CONTIG
  **   defined.
  **/
-#ifdef INCLUDED_IN_PMAP_H
-void   pmap_bootstrap __P((void));
-void  *pmap_bootstrap_alloc __P((int));
-void   pmap_enter __P((pmap_t, vm_offset_t, vm_offset_t, vm_prot_t, boolean_t,
-	   vm_prot_t));
-pmap_t pmap_create __P((vm_size_t));
-void   pmap_destroy __P((pmap_t));
-void   pmap_reference __P((pmap_t));
-boolean_t   pmap_is_referenced __P((vm_offset_t));
-boolean_t   pmap_is_modified __P((vm_offset_t));
-void   pmap_clear_modify __P((vm_offset_t));
-boolean_t pmap_extract __P((pmap_t, vaddr_t, paddr_t *));
-u_int  pmap_free_pages __P((void));
-#endif /* INCLUDED_IN_PMAP_H */
 int    pmap_page_index __P((vm_offset_t));
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
@@ -2143,6 +2129,39 @@ pmap_enter_kernel(va, pa, prot)
 	
 }
 
+void
+pmap_kenter_pa(va, pa, prot)
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+{
+	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+}
+
+void
+pmap_kenter_pgs(va, pgs, npgs)
+	vaddr_t va;
+	struct vm_page **pgs;
+	int npgs;
+{
+	int i;
+
+	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
+		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
+				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+	}
+}
+
+void
+pmap_kremove(va, len)
+	vaddr_t va;
+	vsize_t len;
+{
+	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
+		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	}
+}
+
 /* pmap_map			INTERNAL
  **
  * Map a contiguous range of physical memory into a contiguous range of
@@ -2507,17 +2526,12 @@ pmap_collect(pmap)
  * Create and return a pmap structure.
  */
 pmap_t
-pmap_create(size)
-	vm_size_t size;
+pmap_create()
 {
 	pmap_t	pmap;
 
-	if (size)
-		return NULL;
-
 	pmap = (pmap_t) malloc(sizeof(struct pmap), M_VMPMAP, M_WAITOK);
 	pmap_pinit(pmap);
-
 	return pmap;
 }
 
@@ -2646,9 +2660,10 @@ pmap_destroy(pmap)
  * referenced (read from [or written to.])
  */
 boolean_t
-pmap_is_referenced(pa)
-	vm_offset_t pa;
+pmap_is_referenced(pg)
+	struct vm_page *pg;
 {
+	paddr_t   pa = VM_PAGE_TO_PHYS(pg);
 	pv_t      *pv;
 	int       idx, s;
 
@@ -2691,9 +2706,10 @@ pmap_is_referenced(pa)
  * modified (written to.)
  */
 boolean_t
-pmap_is_modified(pa)
-	vm_offset_t pa;
+pmap_is_modified(pg)
+	struct vm_page *pg;
 {
+	paddr_t   pa = VM_PAGE_TO_PHYS(pg);
 	pv_t      *pv;
 	int       idx, s;
 
@@ -2729,10 +2745,11 @@ pmap_is_modified(pa)
  * physical page.
  */
 void
-pmap_page_protect(pa, prot)
-	vm_offset_t pa;
+pmap_page_protect(pg, prot)
+	struct vm_page *pg;
 	vm_prot_t prot;
 {
+	paddr_t   pa = VM_PAGE_TO_PHYS(pg);
 	pv_t      *pv;
 	int       idx, s;
 	vm_offset_t va;
@@ -2876,13 +2893,18 @@ pmap_get_pteinfo(idx, pmap, tbl)
  * physical address.
  *
  */
-void
-pmap_clear_modify(pa)
-	vm_offset_t pa;
+boolean_t
+pmap_clear_modify(pg)
+	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t rv;
+
 	if (!is_managed(pa))
-		return;
+		return FALSE;
+	rv = pmap_is_modified(pg);
 	pmap_clear_pv(pa, PV_FLAGS_MDFY);
+	return rv;
 }
 
 /* pmap_clear_reference			INTERFACE
@@ -2890,13 +2912,18 @@ pmap_clear_modify(pa)
  * Clear the referenced bit on the page at the specified
  * physical address.
  */
-void
-pmap_clear_reference(pa)
-	vm_offset_t pa;
+boolean_t
+pmap_clear_reference(pg)
+	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t rv;
+
 	if (!is_managed(pa))
 		return;
+	rv = pmap_is_referenced(pg);
 	pmap_clear_pv(pa, PV_FLAGS_USED);
+	return rv;
 }
 	
 /* pmap_clear_pv			INTERNAL

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1999/07/18 23:55:57 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 1999/09/12 01:17:23 chs Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 /* #define BOOT_DEBUG */
@@ -1080,34 +1080,16 @@ pmap_virtual_space(start, end)
 /*
  * Create and return a physical map.
  */
-#if defined(PMAP_NEW)
 struct pmap *
 pmap_create()
-#else
-struct pmap *
-pmap_create(size)
-	vsize_t size;
-#endif
 {
 	struct pmap *pm;
 
-#if defined(PMAP_NEW)
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CREATE))
 		printf("pmap_create()\n");
 #endif
-#else /* ! PMAP_NEW */
-#ifdef DEBUG
-	if (pmapdebug & (PDB_CREATE))
-		printf("pmap_create(%lx)\n", size);
-#endif
-	/*
-	 * Software use map does not need a pmap
-	 */
-	if (size)
-		return(NULL);
-#endif /* PMAP_NEW */
-	
+
 	pm = (struct pmap *)malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
 	bzero((caddr_t)pm, sizeof *pm);
 #ifdef DEBUG
@@ -1399,7 +1381,6 @@ pmap_deactivate(p)
 {
 }
 
-#if defined(PMAP_NEW)
 /*
  * pmap_kenter_pa:		[ INTERFACE ]
  *
@@ -1626,7 +1607,6 @@ pmap_kremove(va, size)
 	}
 }
 #endif
-#endif /* PMAP_NEW */
 
 /*
  * Insert physical page at pa into the given pmap at virtual address va.
@@ -2476,21 +2456,13 @@ void tsb_enter(ctx, va, data)
  * Do whatever is needed to sync the MOD/REF flags
  */
 
-#if defined(PMAP_NEW)
 boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
-#else
-void
-pmap_clear_modify(pa)
-	paddr_t pa;
-#endif
 {
-#if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int changed = 0;
 	int modified = 0;
-#endif
 	int i, s;
 	register pv_entry_t pv;
 	
@@ -2505,15 +2477,11 @@ pmap_clear_modify(pa)
 		printf("pmap_clear_modify(%p): page not managed\n", pa);
 		Debugger();
 #endif
-#if defined(PMAP_NEW)
 		/* We always return 0 for I/O mappings */
 		return (changed);
-#else
-		return;
-#endif
 	}
 
-#if defined(PMAP_NEW) && defined(DEBUG)
+#if defined(DEBUG)
 	modified = pmap_is_modified(pg);
 #endif
 	/* Clear all mappings */
@@ -2523,10 +2491,8 @@ pmap_clear_modify(pa)
 	if (pv->pv_va & PV_MOD)
 		pv->pv_va |= PV_WE;	/* Remember this was modified */
 #endif
-#if defined(PMAP_NEW)
 	if (pv->pv_va & PV_MOD)
 		changed |= 1;
-#endif
 	pv->pv_va &= ~(PV_MOD);
 #ifdef DEBUG	
 	if (pv->pv_next && !pv->pv_pmap) {
@@ -2541,10 +2507,8 @@ pmap_clear_modify(pa)
 			/* First clear the mod bit in the PTE and make it R/O */
 			data = pseg_get(pv->pv_pmap, pv->pv_va&PV_VAMASK);
 			/* Need to both clear the modify and write bits */
-#if defined(PMAP_NEW)
 			if (data & (TLB_MODIFY|TLB_W))
 				changed |= 1;
-#endif
 #ifdef HWREF
 			data &= ~(TLB_MODIFY|TLB_W);
 #else
@@ -2563,29 +2527,19 @@ pmap_clear_modify(pa)
 				tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
 			}
 			/* Then clear the mod bit in the pv */
-#if defined(PMAP_NEW)
 			if (pv->pv_va & PV_MOD)
 				changed |= 1;
-#endif
 			pv->pv_va &= ~(PV_MOD);
 		}
 	splx(s);
 	pv_check();
 #ifdef DEBUG
-#if defined(PMAP_NEW)
 	if (pmap_is_modified(pg)) {
 		printf("pmap_clear_modify(): %p still modified!\n", pg);
 		Debugger();
 	}
-#else
-	if (pmap_is_modified(pa)) {
-		printf("pmap_clear_modify(): %p still modified!\n", (long)pa);
-		Debugger();
-	}
-#endif
 #endif
 out:
-#if defined(PMAP_NEW)
 #ifdef DEBUG	
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
 		printf("pmap_clear_modify: page %lx %s\n", (long)pa, 
@@ -2596,25 +2550,16 @@ out:
 	} else return (modified);
 #endif
 	return (changed);
-#endif
 }
 
 
-#if defined(PMAP_NEW)
 boolean_t
 pmap_clear_reference(pg)
 	struct vm_page* pg;
-#else
-void
-pmap_clear_reference(pa)
-	paddr_t pa;
-#endif
 {
-#if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int changed = 0;
 	int referenced = 0;
-#endif
 	int i, s;
 	register pv_entry_t pv;
 
@@ -2628,13 +2573,9 @@ pmap_clear_reference(pa)
 		printf("pmap_clear_reference(%p): page not managed\n", pa);
 		Debugger();
 #endif
-#if defined(PMAP_NEW)
 		return (changed);
-#else
-		return;
-#endif
 	}
-#if defined(PMAP_NEW) && defined(DEBUG)
+#if defined(DEBUG)
 	referenced = pmap_is_referenced(pg);
 #endif
 	/* Clear all references */
@@ -2644,10 +2585,8 @@ pmap_clear_reference(pa)
 	if (pv->pv_va & PV_MOD)
 		printf("pmap_clear_reference(): pv %p still modified\n", (long)pa);
 #endif
-#if defined(PMAP_NEW)
 	if (pv->pv_va & PV_REF)
 		changed |= 1;
-#endif
 	pv->pv_va &= ~(PV_REF);
 #ifdef DEBUG	
 	if (pv->pv_next && !pv->pv_pmap) {
@@ -2666,16 +2605,12 @@ pmap_clear_reference(pa)
 				       pv->pv_va, pv->pv_pmap->pm_ctx, (int)(data>>32), (int)data);
 #endif
 #ifdef HWREF
-#if defined(PMAP_NEW)
 			if (data & TLB_ACCESS)
 				changed |= 1;
-#endif
 			data &= ~TLB_ACCESS;
 #else
-#if defined(PMAP_NEW)
 			if (data < 0)
 				changed |= 1;
-#endif
 			data = 0;
 #endif
 			ASSERT((data & TLB_NFO) == 0);
@@ -2691,10 +2626,8 @@ pmap_clear_reference(pa)
 					tsb[i].data.data = 0;
 				tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
 			}
-#if defined(PMAP_NEW)
 			if (pv->pv_va & PV_REF)
 				changed |= 1;
-#endif
 			pv->pv_va &= ~(PV_REF);
 		}
 	}
@@ -2703,20 +2636,12 @@ pmap_clear_reference(pa)
 	splx(s);
 	pv_check();
 #ifdef DEBUG
-#if defined(PMAP_NEW)
 	if (pmap_is_referenced(pg)) {
 		printf("pmap_clear_reference(): %p still referenced!\n", pg);
 		Debugger();
 	}
-#else
-	if (pmap_is_referenced(pa)) {
-		printf("pmap_clear_reference(): %p still referenced!\n", (long)pa);
-		Debugger();
-	}
-#endif
 #endif
 out:
-#if defined(PMAP_NEW)
 #ifdef DEBUG	
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
 		printf("pmap_clear_reference: page %lx %s\n", (long)pa, 
@@ -2727,22 +2652,13 @@ out:
 	} else return (referenced);
 #endif
 	return (changed);
-#endif
 }
 
-#if defined(PMAP_NEW)
 boolean_t
 pmap_is_modified(pg)
 	struct vm_page* pg;
-#else
-boolean_t
-pmap_is_modified(pa)
-	paddr_t pa;
-#endif
 {
-#if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
 	int i=0, s;
 	register pv_entry_t pv, npv;
 
@@ -2795,19 +2711,11 @@ pmap_is_modified(pa)
 	return (i);
 }
 
-#if defined(PMAP_NEW)
 boolean_t
 pmap_is_referenced(pg)
 	struct vm_page* pg;
-#else
-boolean_t
-pmap_is_referenced(pa)
-	paddr_t pa;
-#endif
 {
-#if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
 	int i=0, s;
 	register pv_entry_t pv, npv;
 
@@ -2910,21 +2818,12 @@ pmap_unwire(pmap, va)
  * Never enable writing as it will break COW
  */
 
-#if defined(PMAP_NEW)
 void
 pmap_page_protect(pg, prot)
 	struct vm_page* pg;
 	vm_prot_t prot;
-#else
-void
-pmap_page_protect(pa, prot)
-	paddr_t pa;
-	vm_prot_t prot;
-#endif
 {
-#if defined(PMAP_NEW)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
 	register pv_entry_t pv;
 	register int i, s;
 	long long clear, set;
@@ -3419,14 +3318,12 @@ pmap_remove_pv(pmap, va, pa)
 			if (pmap == npv->pv_pmap && PV_MATCH(npv,va))
 				goto fnd;
 		}
-#if defined(PMAP_NEW)
 
 		/* 
 		 * Sometimes UVM gets confused and calls pmap_remove() instead
 		 * of pmap_kremove() 
 		 */
 		return; 
-#endif
 #ifdef DIAGNOSTIC
 		printf("pmap_remove_pv(%x, %x, %x) not found\n", pmap, va, pa);
 		
@@ -3607,7 +3504,6 @@ pmap_testout()
 	pa = (paddr_t)VM_PAGE_TO_PHYS(pg);
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0, VM_PROT_ALL);
 
-#if defined(PMAP_NEW)
 	/* Now clear reference and modify */
 	ref = pmap_clear_reference(pg);
 	mod = pmap_clear_modify(pg);
@@ -3684,87 +3580,7 @@ pmap_testout()
 	mod = pmap_is_modified(pg);
 	printf("Checking cleared page: ref %d, mod %d\n",
 	       ref, mod);
-#else
-	/* Now clear reference and modify */
-	pmap_clear_reference(pa);
-	pmap_clear_modify(pa);
-	printf("Clearing page va %p pa %lx\n"
-	       va, (long)pa);
 
-	/* Check it's properly cleared */
-	ref = pmap_is_referenced(pa);
-	mod = pmap_is_modified(pa);
-	printf("Checking cleared page: ref %d, mod %d\n",
-	       ref, mod);
-
-	/* Now clear reference and modify */
-	pmap_clear_reference(pa);
-	pmap_clear_modify(pa);
-	printf("Clearing page va %p pa %lx\n"
-	       va, (long)pa);
-
-	/* Reference page */
-	ref = *loc;
-
-	ref = pmap_is_referenced(pa);
-	mod = pmap_is_modified(pa);
-	printf("Referenced page: ref %d, mod %d\n",
-	       ref, mod);
-
-	/* Now clear reference and modify */
-	pmap_clear_reference(pa);
-	pmap_clear_modify(pa);
-	printf("Clearing page va %p pa %lx\n"
-	       va, (long)pa);
-
-	/* Modify page */
-	*loc = 1;
-
-	ref = pmap_is_referenced(pa);
-	mod = pmap_is_modified(pa);
-	printf("Modified page: ref %d, mod %d\n",
-	       ref, mod);
-
-	/* Now clear reference and modify */
-	pmap_clear_reference(pa);
-	pmap_clear_modify(pa);
-	printf("Clearing page va %p pa %lx\n"
-	       va, (long)pa);
-
-	/* Check it's properly cleared */
-	ref = pmap_is_referenced(pa);
-	mod = pmap_is_modified(pa);
-	printf("Checking cleared page: ref %d, mod %d\n",
-	       ref, mod);
-
-	/* Modify page */
-	*loc = 1;
-
-	ref = pmap_is_referenced(pa);
-	mod = pmap_is_modified(pa);
-	printf("Modified page: ref %d, mod %d\n",
-	       ref, mod);
-
-	/* Unmap page */
-	pmap_remove(pmap_kernel(), va, va+1);
-	ref = pmap_is_referenced(pa);
-	mod = pmap_is_modified(pa);
-	printf("Unmapped page: ref %d, mod %d\n",
-	       ref, mod);
-
-	/* Now clear reference and modify */
-	pmap_clear_reference(pa);
-	pmap_clear_modify(pa);
-	printf("Clearing page va %p pa %lx\n"
-	       va, (long)pa);
-
-	/* Check it's properly cleared */
-	ref = pmap_is_referenced(pa);
-	mod = pmap_is_modified(pa);
-	printf("Checking cleared page: ref %d, mod %d\n",
-	       ref, mod);
-
-#endif
 	pmap_remove(pmap_kernel(), va, va+1);
 	vm_page_free1(pg);
 }

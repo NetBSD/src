@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.11 1999/08/17 05:07:59 dbj Exp $ */
+/* $NetBSD: bus_dma.c,v 1.12 1999/09/12 01:17:15 chs Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -44,11 +44,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_pmap_new.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 1999/08/17 05:07:59 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 1999/09/12 01:17:15 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
