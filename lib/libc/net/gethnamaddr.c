@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.51 2002/08/22 16:32:14 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.52 2002/08/27 08:50:49 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.51 2002/08/22 16:32:14 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.52 2002/08/27 08:50:49 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -123,12 +123,7 @@ static u_int32_t host_addr[16 / sizeof(u_int32_t)];	/* IPv4 or IPv6 */
 static FILE *hostf = NULL;
 static int stayopen = 0;
 
-
-#if PACKETSZ > 1024
-#define	MAXPACKET	PACKETSZ
-#else
-#define	MAXPACKET	1024
-#endif
+#define	MAXPACKET	(64*1024)
 
 typedef union {
     HEADER hdr;
@@ -1125,7 +1120,7 @@ _dns_gethtbyname(rv, cb_data, ap)
 	void	*cb_data;
 	va_list	 ap;
 {
-	querybuf buf;
+	querybuf *buf;
 	int n, type;
 	struct hostent *hp;
 	const char *name;
@@ -1147,11 +1142,19 @@ _dns_gethtbyname(rv, cb_data, ap)
 	default:
 		return NS_UNAVAIL;
 	}
-	if ((n = res_search(name, C_IN, type, buf.buf, sizeof(buf))) < 0) {
+	buf = malloc(sizeof(*buf));
+	if (buf == NULL) {
+		h_errno = NETDB_INTERNAL;
+		return NS_NOTFOUND;
+	}
+	n = res_search(name, C_IN, type, buf->buf, sizeof(buf->buf));
+	if (n < 0) {
+		free(buf);
 		dprintf("res_search failed (%d)\n", n);
 		return NS_NOTFOUND;
 	}
-	hp = getanswer(&buf, n, name, type);
+	hp = getanswer(buf, n, name, type);
+	free(buf);
 	if (hp == NULL)
 		switch (h_errno) {
 		case HOST_NOT_FOUND:
@@ -1174,7 +1177,7 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 {
 	char qbuf[MAXDNAME + 1], *qp, *ep;
 	int n;
-	querybuf buf;
+	querybuf *buf;
 	struct hostent *hp;
 	const unsigned char *uaddr;
 	int len, af, advance;
@@ -1215,21 +1218,28 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 		abort();
 	}
 
-	n = res_query(qbuf, C_IN, T_PTR, (u_char *)(void *)&buf, sizeof(buf));
+	buf = malloc(sizeof(*buf));
+	if (buf == NULL) {
+		h_errno = NETDB_INTERNAL;
+		return NS_NOTFOUND;
+	}
+	n = res_query(qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
 	if (n < 0 && af == AF_INET6) {
 		*qp = '\0';
 		if (strlcat(qbuf, "ip6.int", sizeof(qbuf)) >= sizeof(qbuf)) {
+			free(buf);
 			h_errno = NETDB_INTERNAL;
 			return NS_NOTFOUND;
 		}
-		n = res_query(qbuf, C_IN, T_PTR, (u_char *)(void *)&buf,
-		    sizeof(buf));
+		n = res_query(qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
 	}
 	if (n < 0) {
+		free(buf);
 		dprintf("res_query failed (%d)\n", n);
 		return NS_NOTFOUND;
 	}
-	hp = getanswer(&buf, n, qbuf, T_PTR);
+	hp = getanswer(buf, n, qbuf, T_PTR);
+	free(buf);
 	if (hp == NULL)
 		switch (h_errno) {
 		case HOST_NOT_FOUND:
