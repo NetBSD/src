@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.33 2004/12/29 11:35:03 agc Exp $	*/
+/*	$NetBSD: pen.c,v 1.34 2005/02/20 09:04:18 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.33 2004/12/29 11:35:03 agc Exp $");
+__RCSID("$NetBSD: pen.c,v 1.34 2005/02/20 09:04:18 grant Exp $");
 #endif
 #endif
 
@@ -197,5 +197,5 @@ min_free(char *tmpdir)
 		warn("statvfs");
 		return 0;
 	}
-	return buf.f_bavail * buf.f_bsize;
+	return (uint64_t)buf.f_bavail * buf.f_bsize;
 }
