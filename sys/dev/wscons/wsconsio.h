@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.24 2000/01/08 02:57:24 takemura Exp $ */
+/* $NetBSD: wsconsio.h,v 1.25 2000/01/18 19:52:50 deberg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -157,6 +157,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_LMS	4	/* Logitech busmouse */
 #define		WSMOUSE_TYPE_MMS	5	/* Microsoft InPort mouse */
 #define		WSMOUSE_TYPE_TPANEL	6	/* Generic Touch Panel */
+#define 	WSMOUSE_TYPE_NEXT	7	/* NeXT mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOR('W', 33, u_int)
