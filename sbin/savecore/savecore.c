@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	5.26 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: savecore.c,v 1.10 1994/04/21 07:59:08 cgd Exp $";
+static char rcsid[] = "$Id: savecore.c,v 1.11 1994/05/27 08:40:49 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -174,8 +174,8 @@ main(argc, argv)
 	}
 	if ((!get_crashtime() || !check_space()) && !force)
 		exit(1);
-	save_core();
-	clear_dump();
+	if (save_core() == 0)
+		clear_dump();
 	exit(0);
 }
 
@@ -425,7 +425,7 @@ save_core()
 	cp = malloc(BUFSIZE);
 	if (cp == 0) {
 		log(LOG_ERR, "savecore: Can't allocate i/o buffer.\n");
-		return;
+		return -1;
 	}
 	bounds = read_number("bounds");
 	ifd = Open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
@@ -459,6 +459,7 @@ save_core()
 			else
 				Perror(LOG_ERR, "read from dumpdev: %m",
 				    "read");
+			ret = -1;
 			break;
 		}
 		if ((ret = write(ofd, cp, n)) < n) {
@@ -468,8 +469,10 @@ save_core()
 				log(LOG_ERR, "short write: wrote %d of %d\n",
 				    ret, n);
 			log(LOG_WARNING, "WARNING: ram file may be incomplete\n");
+			ret = -1;
 			break;
 		}
+		ret = 0;
 		dumpsize -= n;
 	}
 	close(ifd);
@@ -482,6 +485,7 @@ save_core()
 	} else
 		Perror(LOG_ERR, "Can't create bounds file %s: %m", bfile);
 	free(cp);
+	return ret;
 }
 
 /*
