@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.45 1994/07/21 07:33:11 cgd Exp $
+#	$Id: Makefile,v 1.46 1994/08/29 04:59:48 mycroft Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -22,8 +22,6 @@ LFILES=	errno.h fcntl.h syslog.h termios.h
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm 
-# the following only used when making copies
-LSUBDIRS= ufs/ffs ufs/lfs ufs/mfs ufs/ufs
 
 NOOBJ=	noobj
 
@@ -70,11 +68,10 @@ copies:
 		rm -rf ${DESTDIR}/usr/include/$$i; \
 		install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/$$i ; \
 	done
-# This would be simpler if we didn't care whether netiso/xebec gets installed.
 	cd ../sys; \
-	pax -rw -pa -L `find ${LDIRS} '(' -type d -path '*/*' -prune ')' -o \
-	    '(' -type f -name '*.h' -print ')'; \
-	    find ${LSUBDIRS} -type f -name '*.h' -print` ${DESTDIR}/usr/include
+	pax -rw -pa -L \
+	    `find ${LDIRS} -type f -name '*.h' '!' -path 'netiso/xebec/*' \
+	    -print` ${DESTDIR}/usr/include
 	rm -rf ${DESTDIR}/usr/include/machine
 	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/machine
 	pax -rw -pa -s "|../sys/arch/${MACHINE}/include||" \
