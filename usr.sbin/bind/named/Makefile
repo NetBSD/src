@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/11/19 21:11:45 tron Exp $
+#	$NetBSD: Makefile,v 1.4 1998/12/15 01:06:04 tron Exp $
 
 .PATH:		${.CURDIR}/../man
 
@@ -12,7 +12,7 @@ SRCS=		db_dump.c db_load.c db_lookup.c db_save.c db_update.c \
 		ns_udp.c ns_config.c ns_update.c tmp_version.c
 CPPFLAGS+=	${INCLUDE}
 LDADD=		${LIBRARY}
-CLEANFILES+=	y.tab.h tmp_version.c
+CLEANFILES+=	y.tab.h named-bootconf tmp_version.c
 MAN=		${PROG}.8 named-bootconf.8
 SCRIPTS=	named-bootconf.sh
 
