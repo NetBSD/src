@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.23 2001/11/13 05:32:50 lukem Exp $	*/
+/*	$NetBSD: midi.c,v 1.23.8.1 2002/05/16 04:52:05 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.23 2001/11/13 05:32:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.23.8.1 2002/05/16 04:52:05 gehenna Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -90,6 +90,18 @@ int	midiprobe(struct device *, struct cfdata *, void *);
 void	midiattach(struct device *, struct device *, void *);
 int	mididetach(struct device *, int);
 int	midiactivate(struct device *, enum devact);
+
+dev_type_open(midiopen);
+dev_type_close(midiclose);
+dev_type_read(midiread);
+dev_type_write(midiwrite);
+dev_type_ioctl(midiioctl);
+dev_type_poll(midipoll);
+
+const struct cdevsw midi_cdevsw = {
+	midiopen, midiclose, midiread, midiwrite, midiioctl,
+	nostop, notty, midipoll, nommap,
+};
 
 struct cfattach midi_ca = {
 	sizeof(struct midi_softc), midiprobe, midiattach,
@@ -179,9 +191,7 @@ mididetach(struct device *self, int flags)
 	wakeup(&sc->rchan);
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == midiopen)
-			break;
+	maj = cdevsw_lookup_major(&midi_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
