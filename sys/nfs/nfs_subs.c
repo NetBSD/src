@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.17 1994/08/17 14:43:53 mycroft Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.18 1994/08/18 22:47:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -96,6 +96,9 @@ extern u_long nqnfs_prog, nqnfs_vers;
 extern int nqsrv_clockskew;
 extern int nqsrv_writeslack;
 extern int nqsrv_maxlease;
+
+LIST_HEAD(nfsnodehashhead, nfsnode);
+extern struct nfsnodehashhead *nfs_hash __P((nfsv2fh_t *));
 
 /*
  * Create the header for an rpc request packet
@@ -621,9 +624,8 @@ nfs_init()
 		NQLOADNOVRAM(nqnfsstarttime);
 		nqnfs_prog = txdr_unsigned(NQNFS_PROG);
 		nqnfs_vers = txdr_unsigned(NQNFS_VER1);
-		nqthead.th_head[0] = &nqthead;
-		nqthead.th_head[1] = &nqthead;
-		nqfhead = hashinit(NQLCHSZ, M_NQLEASE, &nqfheadhash);
+		CIRCLEQ_INIT(&nqtimerhead);
+		nqfhhashtbl = hashinit(NQLCHSZ, M_NQLEASE, &nqfhhash);
 	}
 
 	/*
@@ -658,7 +660,8 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	register struct vattr *vap;
 	register struct nfsv2_fattr *fp;
 	extern int (**spec_nfsv2nodeop_p)();
-	register struct nfsnode *np, *nq, **nhpp;
+	register struct nfsnode *np;
+	register struct nfsnodehashhead *nhpp;
 	register long t1;
 	caddr_t dpos, cp2;
 	int error = 0, isnq;
@@ -714,9 +717,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 				/*
 				 * Discard unneeded vnode, but save its nfsnode.
 				 */
-				if (nq = np->n_forw)
-					nq->n_back = np->n_back;
-				*np->n_back = nq;
+				LIST_REMOVE(np, n_hash);
 				nvp->v_data = vp->v_data;
 				vp->v_data = NULL;
 				vp->v_op = spec_vnodeop_p;
@@ -726,12 +727,8 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 				 * Reinitialize aliased node.
 				 */
 				np->n_vnode = nvp;
-				nhpp = (struct nfsnode **)nfs_hash(&np->n_fh);
-				if (nq = *nhpp)
-					nq->n_back = &np->n_forw;
-				np->n_forw = nq;
-				np->n_back = nhpp;
-				*nhpp = np;
+				nhpp = nfs_hash(&np->n_fh);
+				LIST_INSERT_HEAD(nhpp, np, n_hash);
 				*vpp = vp = nvp;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.5 1994/06/29 06:42:34 cgd Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.6 1994/08/18 22:48:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -65,8 +65,7 @@ struct	nfsmount {
 	int	nm_wsize;		/* Max size of write rpc */
 	int	nm_readahead;		/* Num. of blocks to readahead */
 	int	nm_leaseterm;		/* Term (sec) for NQNFS lease */
-	struct nfsnode *nm_tnext;	/* Head of lease timer queue */
-	struct nfsnode *nm_tprev;
+	CIRCLEQ_HEAD(, nfsnode) nm_timerhead; /* Head of lease timer queue */
 	struct vnode *nm_inprog;	/* Vnode in prog by nqnfs_clientd() */
 	uid_t	nm_authuid;		/* Uid for authenticator */
 	int	nm_authtype;		/* Authenticator type */

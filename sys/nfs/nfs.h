@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.6 1994/08/17 14:43:47 mycroft Exp $	*/
+/*	$NetBSD: nfs.h,v 1.7 1994/08/18 22:47:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -193,7 +193,7 @@ struct nfsreq {
 /*
  * Queue head for nfsreq's
  */
-TAILQ_HEAD(nfsreqs, nfsreq) nfs_reqq;
+TAILQ_HEAD(, nfsreq) nfs_reqq;
 
 /* Flag values for r_flags */
 #define R_TIMING	0x01		/* timing request (in mntp) */
@@ -241,8 +241,8 @@ struct nfsuid {
 
 struct nfssvc_sock {
 	TAILQ_ENTRY(nfssvc_sock) ns_chain;	/* List of all nfssvc_sock's */
-	TAILQ_HEAD(nfsuidlru, nfsuid) ns_uidlruhead;
-	LIST_HEAD(nfsuidhash, nfsuid) *ns_uidhashtbl;
+	TAILQ_HEAD(, nfsuid) ns_uidlruhead;
+	LIST_HEAD(, nfsuid) *ns_uidhashtbl;
 	u_long		ns_uidhash;
 
 	int		ns_flag;
@@ -268,7 +268,7 @@ struct nfssvc_sock {
 #define	SLP_GETSTREAM	0x10
 #define SLP_ALLFLAGS	0xff
 
-TAILQ_HEAD(nfssvc_socks, nfssvc_sock) nfssvc_sockhead;
+TAILQ_HEAD(, nfssvc_sock) nfssvc_sockhead;
 int nfssvc_sockhead_flag;
 #define	SLP_INIT	0x01
 #define	SLP_WANTINIT	0x02
@@ -301,7 +301,7 @@ struct nfsd {
 #define	NFSD_NEEDAUTH	0x04
 #define	NFSD_AUTHFAIL	0x08
 
-TAILQ_HEAD(nfsds, nfsd) nfsd_head;
+TAILQ_HEAD(, nfsd) nfsd_head;
 int nfsd_head_flag;
 #define	NFSD_CHECKSLP	0x01
 
