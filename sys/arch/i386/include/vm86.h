@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.h,v 1.2 1996/02/27 22:32:16 jtc Exp $	*/
+/*	$NetBSD: vm86.h,v 1.3 1996/04/11 07:47:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,6 +48,9 @@
 #define		VM86_SIGNAL	2
 #define		VM86_UNKNOWN	3
 
+#define	VM86_SETDIRECT	(~PSL_USERSTATIC)
+#define	VM86_GETDIRECT	(VM86_SETDIRECT|PSL_MBO|PSL_MBZ)
+
 struct vm86_regs {
 	struct sigcontext vmsc;
 };
@@ -81,6 +84,83 @@ struct vm86_struct {
 #ifdef _KERNEL
 int i386_vm86 __P((struct proc *, char *, register_t *));
 void vm86_gpfault __P((struct proc *, int));
+void vm86_return __P((struct proc *, int));
+
+static __inline__ void
+clr_vif(p)
+	struct proc *p;
+{
+
+	VM86_EFLAGS(p) &= ~PSL_VIF;
+}
+
+static __inline__ void
+set_vif(p)
+	struct proc *p;
+{
+
+	VM86_EFLAGS(p) |= PSL_VIF;
+	if (VM86_EFLAGS(p) & PSL_VIP)
+		vm86_return(p, VM86_STI);
+}
+
+static __inline__ void
+set_vflags(p, flags)
+	struct proc *p;
+	int flags;
+{
+	struct trapframe *tf = p->p_md.md_regs;
+
+	SETFLAGS(VM86_EFLAGS(p), flags, VM86_FLAGMASK(p));
+	SETFLAGS(tf->tf_eflags, flags, VM86_SETDIRECT);
+	if (flags & PSL_I)
+		set_vif(p);
+	else
+		clr_vif(p);
+}
+
+static __inline__ int
+get_vflags(p)
+	struct proc *p;
+{
+	struct trapframe *tf = p->p_md.md_regs;
+	int flags = 0;
+
+	SETFLAGS(flags, VM86_EFLAGS(p), VM86_FLAGMASK(p));
+	SETFLAGS(flags, tf->tf_eflags, VM86_GETDIRECT);
+	if (VM86_EFLAGS(p) & PSL_VIF)
+		flags |= PSL_I;
+	return (flags);
+}
+
+static __inline__ void
+set_vflags_short(p, flags)
+	struct proc *p;
+	int flags;
+{
+	struct trapframe *tf = p->p_md.md_regs;
+
+	SETFLAGS(VM86_EFLAGS(p), flags, VM86_FLAGMASK(p) & 0xffff);
+	SETFLAGS(tf->tf_eflags, flags, VM86_SETDIRECT & 0xffff);
+	if (flags & PSL_I)
+		set_vif(p);
+	else
+		clr_vif(p);
+}
+
+static __inline__ int
+get_vflags_short(p)
+	struct proc *p;
+{
+	struct trapframe *tf = p->p_md.md_regs;
+	int flags = 0;
+
+	SETFLAGS(flags, VM86_EFLAGS(p), VM86_FLAGMASK(p) & 0xffff);
+	SETFLAGS(flags, tf->tf_eflags, VM86_GETDIRECT & 0xffff);
+	if (VM86_EFLAGS(p) & PSL_VIF)
+		flags |= PSL_I;
+	return (flags);
+}
 #else
 int i386_vm86 __P((struct vm86_struct *vmcp));
 #endif
