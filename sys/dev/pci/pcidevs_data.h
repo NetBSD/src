@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.152 1999/08/24 21:32:26 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.153 1999/08/27 23:27:39 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.147 1999/08/24 21:32:04 soren Exp 
+ *	NetBSD: pcidevs,v 1.148 1999/08/27 23:25:36 thorpej Exp 
  */
 
 /*
@@ -2468,6 +2468,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "SonicVibes",
+	},
+	{
+	    PCI_VENDOR_SAMSUNGSEMI, PCI_PRODUCT_SAMSUNGSEMI_KS8920,
+	    0,
+	    "Samsung Semiconductors",
+	    "KS8920 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_2000,
