@@ -1,4 +1,5 @@
-/*	$NetBSD: callout.c,v 1.1 1999/07/17 14:06:24 itojun Exp $	*/
+/*	$NetBSD: callout.c,v 1.2 2000/12/04 07:05:47 itojun Exp $	*/
+/*	$KAME: callout.c,v 1.2 2000/12/04 06:33:09 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file

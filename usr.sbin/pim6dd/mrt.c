@@ -1,4 +1,5 @@
-/*	$NetBSD: mrt.c,v 1.5 2000/05/19 10:43:42 itojun Exp $	*/
+/*	$NetBSD: mrt.c,v 1.6 2000/12/04 07:05:48 itojun Exp $	*/
+/*	$KAME: mrt.c,v 1.4 2000/12/04 06:33:10 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -34,8 +35,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
- *
- *  KAME Id: mrt.c,v 1.3 2000/05/18 16:09:39 itojun Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
