@@ -1,4 +1,4 @@
-/*	$NetBSD: inchstr.c,v 1.1 2001/01/01 10:36:12 simonb Exp $	*/
+/*	$NetBSD: inchstr.c,v 1.2 2002/01/02 10:38:28 blymn Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inchstr.c,v 1.1 2001/01/01 10:36:12 simonb Exp $");
+__RCSID("$NetBSD: inchstr.c,v 1.2 2002/01/02 10:38:28 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -92,7 +92,7 @@ mvwinchstr(WINDOW *win, int y, int x, chtype *chstr)
 {
 	if (wmove(win, y, x) == ERR)
 		return ERR;
-	
+
 	return winchstr(win, chstr);
 }
 
@@ -101,7 +101,7 @@ mvwinchnstr(WINDOW *win, int y, int x, chtype *chstr, int n)
 {
 	if (wmove(win, y, x) == ERR)
 		return ERR;
-	
+
 	return winchnstr(win, chstr, n);
 }
 
