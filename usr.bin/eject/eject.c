@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.12 1999/03/26 09:14:58 bouyer Exp $	*/
+/*	$NetBSD: eject.c,v 1.13 2001/01/21 09:55:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.12 1999/03/26 09:14:58 bouyer Exp $");
+__RCSID("$NetBSD: eject.c,v 1.13 2001/01/21 09:55:40 mycroft Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -79,6 +79,12 @@ struct nicknames_s {
     { "sd", "sd", DISK | NOTLOADABLE },
     { "cdrom", "cd", DISK | LOADABLE },
     { "cd", "cd", DISK | LOADABLE },
+    { "cdr", "cd", DISK | LOADABLE },
+    { "cdrw", "cd", DISK | LOADABLE },
+    { "dvdrom", "cd", DISK | LOADABLE },
+    { "dvd", "cd", DISK | LOADABLE },
+    { "dvdr", "cd", DISK | LOADABLE },
+    { "dvdrw", "cd", DISK | LOADABLE },
     { "mcd", "mcd", DISK | LOADABLE }, /* XXX Is this true? */
     { "tape", "st", TAPE | NOTLOADABLE },
     { "st", "st", TAPE | NOTLOADABLE },
