@@ -1,21 +1,21 @@
-/* $NetBSD: __sigreturn14.S,v 1.3 2003/10/07 17:08:07 skd Exp $ */
+/*	$NetBSD: __sigtramp2.S,v 1.1 2003/10/07 17:08:07 skd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -27,13 +27,20 @@
  * rights to redistribute these changes.
  */
 
-#define __HAVE_SIGINFO
 #include "SYS.h"
 
 /*
- * We must preserve the state of the registers as the user has set them up.
- * However, that doesn't involve any special work on the Alpha.
- * (XXX PROFILING)
+ * The Alpha signal trampoline is invoked only to return from
+ * the signal; the kernel calls the signal handler directly.
+ *
+ * On entry, the stack looks like:
+ *
+ *		ucontext structure	[128] == sp + sizeof(siginfo_t)]
+ *	sp->	siginfo structure	[0]
  */
-
-RSYSCALL(compat_16___sigreturn14)
+NESTED_NOPROFILE(__sigtramp_siginfo_2,0,0,ra,0,0)
+	lda	a0,(128)(sp)		/* get pointer to ucontext */
+	CALLSYS_NOERROR(setcontext)	/* and call setcontext() with it */
+	mov	v0, a0			/* if that failed, get error code */
+	CALLSYS_NOERROR(exit)		/* and call exit() with it */
+END(__sigtramp_siginfo_2)
