@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.10 1994/10/27 04:16:08 cgd Exp $	*/
+/*	$NetBSD: frame.h,v 1.11 1995/05/01 14:13:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,9 +63,14 @@ struct trapframe {
 	int	tf_eip;
 	int	tf_cs;
 	int	tf_eflags;
-	/* below only when transitting rings (e.g. user to kernel) */
+	/* below used when transitting rings (e.g. user to kernel) */
 	int	tf_esp;
 	int	tf_ss;
+	/* below used when switching out of VM86 mode */
+	int	tf_vm86_es;
+	int	tf_vm86_ds;
+	int	tf_vm86_fs;
+	int	tf_vm86_gs;
 };
 
 /* Interrupt stack frame */
