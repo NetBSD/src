@@ -52,7 +52,7 @@ Platform status:
 
 - evbarm: Works.
 
-- evbmips: MALTA compiles, otherwise untested.
+- evbmips: Works
 
 - evbsh3: See sh3.
 
@@ -106,7 +106,7 @@ Platform status:
 
 - sandpoint: GENERIC compiles, otherwise untested.
 
-- sbmips: GENERIC compiles, otherwise untested.
+- sbmips: Works
 
 - sgimips: GENERIC compiles.  Reported to work once upon a time.
 
