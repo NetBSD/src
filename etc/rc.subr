@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.41 2002/02/25 08:11:23 lukem Exp $
+# $NetBSD: rc.subr,v 1.42 2002/02/25 12:49:34 lukem Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -226,13 +226,17 @@ wait_for_pids()
 #
 #	extra_commands	n	List of extra commands supported.
 #
-#	pidfile		n	If set, use check_pidfile $pidfile, else if
-#				$command is set, use check_process $command.
+#	pidfile		n	If set, use check_pidfile $pidfile $command,
+#				otherwise use check_process $command.
+#				In either case, only check if $command is set.
+#
+#	procname	n	Process name to check for instead of $command.
 #
 #	rcvar		n	This is checked with checkyesno to determine
 #				if the action should be run.
 #
 #	${name}_chroot	n	Directory to chroot to before running ${command}
+#				Requires /usr to be mounted.
 #
 #	${name}_chdir	n	Directory to cd to before running ${command}
 #				(if not using ${name}_chroot).
@@ -245,11 +249,14 @@ wait_for_pids()
 #
 #	${name}_user	n	User to run ${command} as, using su(1) if not
 #				using ${name}_chroot.
+#				Requires /usr to be mounted.
 #
 #	${name}_group	n	Group to run chrooted ${command} as.
+#				Requires /usr to be mounted.
 #
 #	${name}_groups	n	Comma separated list of supplementary groups
 #				to run the chrooted ${command} with.
+#				Requires /usr to be mounted.
 #
 #	${_arg}_cmd	n	If set, use this as the action when invoked;
 #				$_arg is available to the action to use.
@@ -282,9 +289,9 @@ wait_for_pids()
 #				${command}
 #
 #	stop		if ${pidfile}
-#				_pid=`check_pidfile $pidfile`
+#				_pid=$(check_pidfile $pidfile $command)
 #			else
-#				_pid=`check_process $command`
+#				_pid=$(check_process $command)
 #			kill $sig_stop $_pid
 #			wait_for_pids $_pid
 #			($sig_stop defaults to TERM.)
@@ -327,12 +334,14 @@ run_rc_command()
 	_keywords="start stop restart rcvar $extra_commands"
 	_pid=
 	_pidcmd=
+	_procname=${procname:-${command}}
+
 					# setup pid check command if not fast
-	if [ -z "$_rc_fast_run" ]; then
+	if [ -z "$_rc_fast_run" -a -n "$_procname" ]; then
 		if [ -n "$pidfile" ]; then
-			_pidcmd='_pid=`check_pidfile '$pidfile' '$command'`'
-		elif [ -n "$command" ]; then
-			_pidcmd='_pid=`check_process '$command'`'
+			_pidcmd='_pid=$(check_pidfile '$pidfile' '$_procname')'
+		else
+			_pidcmd='_pid=$(check_process '$_procname')'
 		fi
 		if [ -n "$_pidcmd" ]; then
 			_keywords="${_keywords} status poll"
@@ -351,6 +360,12 @@ run_rc_command()
 	eval _chdir=\$${name}_chdir	_chroot=\$${name}_chroot \
 	    _nice=\$${name}_nice	_user=\$${name}_user \
 	    _group=\$${name}_group	_groups=\$${name}_groups
+
+	if [ -n "$_user" ]; then	# unset $_user if running as that user
+		if [ "$_user" = "$(id -un)" ]; then
+			unset _user
+		fi
+	fi
 
 					# if ${rcvar} is set, and $1 is not
 					# "rcvar", then run
@@ -571,8 +586,8 @@ run_rc_script()
 		err 3 'USAGE: run_rc_script file arg'
 	fi
 
-	unset	name command command_args extra_commands pidfile rcvar \
-		required_dirs required_files required_vars
+	unset	name command command_args extra_commands pidfile procname \
+		rcvar required_dirs required_files required_vars
 	eval unset ${_arg}_cmd ${_arg}_precmd
 
 	case "$_file" in
