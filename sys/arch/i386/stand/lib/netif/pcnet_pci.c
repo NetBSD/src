@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnet_pci.c,v 1.3 1997/09/17 18:21:44 drochner Exp $	*/
+/*	$NetBSD: pcnet_pci.c,v 1.4 1997/09/20 12:13:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -91,13 +91,13 @@ char *myadr;
   }
 
   for(i=0; i<6; i++)
-	  bi_netif.hw_addr[i] = myadr[i] = eth_myaddr[i] = inb(iobase + i);
+	  myadr[i] = eth_myaddr[i] = inb(iobase + i);
 
   am7990_init();
 
   strncpy(bi_netif.ifname, "le", sizeof(bi_netif.ifname));
   bi_netif.bus = BI_BUS_PCI;
-  bi_netif.addr = iobase;
+  bi_netif.addr.tag = hdl;
 
   BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
 

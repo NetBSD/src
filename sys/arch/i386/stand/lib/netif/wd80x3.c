@@ -1,4 +1,4 @@
-/*	$NetBSD: wd80x3.c,v 1.3 1997/09/17 18:21:44 drochner Exp $	*/
+/*	$NetBSD: wd80x3.c,v 1.4 1997/09/20 12:13:06 drochner Exp $	*/
 
 /* stripped down from netbsd:sys/arch/i386/netboot/wd8x13.c */
 
@@ -235,7 +235,7 @@ char *myadr;
 
   /* get ethernet address */
   for(i = 0; i < 6; i++)
-	  bi_netif.hw_addr[i] = eth_myaddr[i] = myadr[i]= inb(WD_BASEREG + WD_EA0 + i);
+	  eth_myaddr[i] = myadr[i]= inb(WD_BASEREG + WD_EA0 + i);
 
   /* save settings for future use */
   dpc.dc_reg = WD_BASEREG + WD_DP8390;
@@ -256,7 +256,7 @@ char *myadr;
 
   strncpy(bi_netif.ifname, "ed", sizeof(bi_netif.ifname));
   bi_netif.bus = BI_BUS_ISA;
-  bi_netif.addr = WD_BASEREG;
+  bi_netif.addr.iobase = WD_BASEREG;
 
   BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
 
