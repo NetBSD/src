@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.21 1998/04/13 13:19:40 augustss Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.22 1998/04/13 22:18:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -54,7 +54,6 @@
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
 
-#include <dev/isa/mpu401var.h>
 #include <dev/isa/sbreg.h>
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
@@ -149,15 +148,10 @@ sb_isapnp_attach(parent, self, aux)
                 	sc->sc_drq16 = ipa->ipa_drq[1].num;
         } else
         	sc->sc_drq16 = DRQUNK;
-
-	/* LOC */
-	if (ipa->ipa_nio > 1) {
-		sc->sc_mpu_sc.iobase = ipa->ipa_io[1].base;
-		sc->sc_mpu_sc.ioh = ipa->ipa_io[1].h;
-	} else
-		sc->sc_mpu_sc.iobase = 0;
-
-	/* isapnp is a child if isa, and we needs isa for the dma routines. */
+	/*
+	 * isapnp is a child if isa, and we needs isa for the dma
+	 * routines
+	 */
 	sc->sc_isa = parent->dv_parent;
 
 	if (!sbmatch(sc)) {
