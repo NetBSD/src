@@ -1,10 +1,9 @@
-# $NetBSD: Makefile.bootprogs,v 1.9 1999/04/02 07:55:06 ross Exp $
+# $NetBSD: Makefile.bootprogs,v 1.10 1999/04/05 03:35:24 cgd Exp $
 
 S=	${.CURDIR}/../../../..
 
 .PATH:	${.CURDIR}/../common
 
-MKMAN=	no
 STRIPFLAG=
 BINMODE= 444
 
@@ -24,11 +23,15 @@ CLEANFILES+=machine alpha
 
 all: machine-links ${PROG}
 
-AFLAGS += -DASSEMBLER
-#CPPFLAGS+= -nostdinc -I${.OBJDIR}
-CPPFLAGS+= -I${.OBJDIR}
-CPPFLAGS += -D_STANDALONE -I${.CURDIR}/../.. -I${S}
-CFLAGS = ${CWARNFLAGS} -Os -mno-fp-regs -g
+AFLAGS+=	-DASSEMBLER
+# -I${.CURDIR}/../.. done by Makefile.inc
+CPPFLAGS+=	-nostdinc -I${.OBJDIR} -D_STANDALONE -I${S}
+CFLAGS=		-Os -mno-fp-regs -g
+
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+.if (${HAVE_GCC28} != "")
+CWARNFLAGS+=	-Wno-main
+.endif
 
 # For descriptions of regions available to bootstrap programs, see
 # section 3.4.1.2 (pp. III 3-14 - III 3-18) of the second edition of
