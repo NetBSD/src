@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.81 2003/02/09 22:32:21 pk Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.82 2003/05/03 17:57:50 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.81 2003/02/09 22:32:21 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.82 2003/05/03 17:57:50 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -535,7 +535,7 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	vm_prot_t enter_prot, check_prot;
 	boolean_t wired, narrow, promote, locked, shadowed, wire_fault, cow_now;
 	int npages, nback, nforw, centeridx, error, lcv, gotpages;
-	vaddr_t startva, objaddr, currva, offset;
+	vaddr_t startva, objaddr, currva;
 	voff_t uoff;
 	paddr_t pa;
 	struct vm_amap *amap;
@@ -1451,9 +1451,7 @@ Case2:
 			} else {
 				/* write fault: must break the loan here */
 
-				/* alloc new un-owned page */
-				pg = uvm_pagealloc(NULL, 0, NULL, 0);
-
+				pg = uvm_loanbreak(uobjpage);
 				if (pg == NULL) {
 
 					/*
@@ -1475,52 +1473,6 @@ Case2:
 					uvm_wait("flt_noram4");
 					goto ReFault;
 				}
-
-				/*
-				 * copy the data from the old page to the new
-				 * one and clear the fake/clean flags on the
-				 * new page (keep it busy).  force a reload
-				 * of the old page by clearing it from all
-				 * pmaps.  then lock the page queues to
-				 * rename the pages.
-				 */
-
-				uvm_pagecopy(uobjpage, pg);	/* old -> new */
-				pg->flags &= ~(PG_FAKE|PG_CLEAN);
-				pmap_page_protect(uobjpage, VM_PROT_NONE);
-				if (uobjpage->flags & PG_WANTED)
-					wakeup(uobjpage);
-				/* uobj still locked */
-				uobjpage->flags &= ~(PG_WANTED|PG_BUSY);
-				UVM_PAGE_OWN(uobjpage, NULL);
-
-				uvm_lock_pageq();
-				offset = uobjpage->offset;
-				uvm_pagerealloc(uobjpage, NULL, 0);
-
-				/*
-				 * if the page is no longer referenced by
-				 * an anon (i.e. we are breaking an O->K
-				 * loan), then remove it from any pageq's.
-				 */
-				if (uobjpage->uanon == NULL)
-					uvm_pagedequeue(uobjpage);
-
-				/*
-				 * at this point we have absolutely no
-				 * control over uobjpage
-				 */
-
-				/* install new page */
-				uvm_pageactivate(pg);
-				uvm_pagerealloc(pg, uobj, offset);
-				uvm_unlock_pageq();
-
-				/*
-				 * done!  loan is broken and "pg" is
-				 * PG_BUSY.   it can now replace uobjpage.
-				 */
-
 				uobjpage = pg;
 			}
 		}
