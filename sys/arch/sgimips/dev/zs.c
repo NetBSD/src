@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.22 2004/01/18 13:00:05 sekiya Exp $	*/
+/*	$NetBSD: zs.c,v 1.23 2004/04/10 19:20:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.22 2004/01/18 13:00:05 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.23 2004/04/10 19:20:19 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -701,8 +701,16 @@ zscninit(cn)
 
 	cons_port = consdev[7] - '0';
 
+#if 0
+	/*
+	 * If your IP12 serial console goes missing after consinit(),
+	 * try flipping this the other way 'round.  If there are some
+	 * IP12 machines that actually require this, we'll be in for
+	 * a lot of funnies once again...
+	 */
 	if (mach_type == MACH_SGI_IP12)
 		cons_port = 1 - cons_port;
+#endif
 
 	cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), cons_port);
 	cn->cn_pri = CN_REMOTE;
