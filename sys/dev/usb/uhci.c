@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.148 2001/11/21 12:25:55 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.149 2001/11/21 15:48:37 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.148 2001/11/21 12:25:55 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.149 2001/11/21 15:48:37 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1715,7 +1715,7 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 	for (i = ntd; i >= 0; i--) {
 		p = uhci_alloc_std(sc);
 		if (p == NULL) {
-			uhci_free_std_chain(sc, lastp, 0);
+			uhci_free_std_chain(sc, lastp, NULL);
 			return (USBD_NOMEM);
 		}
 		p->link.std = lastp;
@@ -2574,7 +2574,7 @@ uhci_device_intr_done(usbd_xfer_handle xfer)
 		sqh->elink = NULL;
 		sqh->qh.qh_elink = htole32(UHCI_PTR_T);
 	}
-	uhci_free_std_chain(sc, ii->stdstart, 0);
+	uhci_free_std_chain(sc, ii->stdstart, NULL);
 
 	/* XXX Wasteful. */
 	if (xfer->pipe->repeat) {
@@ -2654,7 +2654,7 @@ uhci_device_bulk_done(usbd_xfer_handle xfer)
 
 	uhci_remove_bulk(sc, upipe->u.bulk.sqh);
 
-	uhci_free_std_chain(sc, ii->stdstart, 0);
+	uhci_free_std_chain(sc, ii->stdstart, NULL);
 
 	DPRINTFN(5, ("uhci_bulk_done: length=%d\n", xfer->actlen));
 }
