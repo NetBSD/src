@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.54 2005/01/13 17:03:03 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.55 2005/01/13 17:37:59 kleink Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -38,6 +38,7 @@ CCD	charge coupled device
 CD	compact disc
 CDDA	compact disc digital audio
 CDRAM	cache dynamic random access memory
+CER	canonical encoding rules
 CGA	color graphics array
 CGI	common gateway interface
 CHS	cylinder/head/sector
@@ -63,6 +64,7 @@ DCT	discrete cosine transform
 DDC	display data channel
 DDR	double data rate
 DDWG	digital display working group
+DER	distinguished encoding rules
 DFT	discrete fourier transform
 DHCP	dynamic host configuration protocol
 DIFS	distributed inter-frame space
@@ -93,6 +95,7 @@ EPP	enhanced parallel port
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
 ESDRAM	enhanced synchronous dynamic random access memory
+E-XER	extended XML encoding rules
 FAT	file allocation table
 FBRAM	frame buffer random access memory
 FDDI	fiber distributed data interface
@@ -199,6 +202,7 @@ PCM	pulse code modulation
 PCMCIA	personal computer memory card international association
 PDU	protocol data unit
 PDP	page descriptor page
+PER	packed encoding rules
 PERL	practical extraction [and] report language
 PGP	pretty good privacy
 PIC	programmable interrupt controller
@@ -300,6 +304,7 @@ WAP	wireless application protocol
 WLAN	wireless local area network
 WRAM	window random access memory
 WWW	world wide web
+XER	XML encoding rules
 XGA	extended graphics array
 XML	extensible markup language
 XSL	extensible stylesheet language
