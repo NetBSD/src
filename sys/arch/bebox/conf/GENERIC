@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.26 2000/03/22 00:58:19 cgd Exp $
+#	$NetBSD: GENERIC,v 1.27 2000/04/19 06:50:30 itojun Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 maxusers	32
 
@@ -78,6 +78,7 @@ pseudo-device	loop
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	pty		64
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components

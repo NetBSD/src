@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.69 2000/02/29 06:32:28 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.70 2000/04/19 06:50:35 itojun Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 maxusers	64
 
@@ -202,6 +202,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	gre		 2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 pseudo-device	vnd		 4	# virtual disk ick
 pseudo-device	ccd		 4	# concatenated disks

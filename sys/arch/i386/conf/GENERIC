@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp $
+#	$NetBSD: GENERIC,v 1.326 2000/04/19 06:50:31 itojun Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.325 $"
+#ident 		"GENERIC-$Revision: 1.326 $"
 
 maxusers	32		# estimated number of users
 
@@ -814,6 +814,7 @@ pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals

@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.6 2000/03/18 22:33:02 scw Exp $
+#	$NetBSD: GENERIC,v 1.7 2000/04/19 06:50:33 itojun Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -76,6 +76,7 @@ pseudo-device	loop
 pseudo-device	bpfilter
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	pty
 pseudo-device	vnd 2
 
