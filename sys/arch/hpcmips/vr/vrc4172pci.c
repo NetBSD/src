@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.2 2002/04/14 08:00:00 takemura Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.3 2002/05/03 11:37:49 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -49,11 +49,12 @@
 #include <hpcmips/vr/vrc4172pcireg.h>
 
 #include "pci.h"
+#include "opt_vrc4172pci.h"
 
 #ifdef DEBUG
 #define	DPRINTF(args)	printf args
 #else
-#define	DPRINTF(args)
+#define	DPRINTF(args)	while (0) {}
 #endif
 
 struct vrc4172pci_softc {
@@ -63,6 +64,13 @@ struct vrc4172pci_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct hpcmips_pci_chipset sc_pc;
+#ifdef VRC4172PCI_MCR700_SUPPORT
+	pcireg_t sc_fake_baseaddr;
+	hpcio_chip_t sc_iochip;
+#if 0
+	hpcio_intr_handle_t sc_ih;
+#endif
+#endif /* VRC4172PCI_MCR700_SUPPORT */
 };
 
 static int	vrc4172pci_match(struct device *, struct cfdata *, void *);
@@ -88,6 +96,11 @@ static const struct evcnt *vrc4172pci_intr_evcnt(pci_chipset_tag_t,
 static void	*vrc4172pci_intr_establish(pci_chipset_tag_t,
 		    pci_intr_handle_t, int, int (*)(void *), void *);
 static void	vrc4172pci_intr_disestablish(pci_chipset_tag_t, void *);
+#ifdef VRC4172PCI_MCR700_SUPPORT
+#if 0
+static int	vrc4172pci_mcr700_intr(void *arg);
+#endif
+#endif
 
 struct cfattach vrc4172pci_ca = {
 	sizeof(struct vrc4172pci_softc), vrc4172pci_match, vrc4172pci_attach
@@ -136,6 +149,20 @@ vrc4172pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf("\n");
+
+#ifdef VRC4172PCI_MCR700_SUPPORT
+	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_700)) {
+		/* power USB controller on MC-R700 */
+		sc->sc_iochip = va->va_gpio_chips[VRIP_IOCHIP_VRGIU];
+		hpcio_portwrite(sc->sc_iochip, 45, 1);
+		sc->sc_fake_baseaddr = 0x0afe0000;
+#if 0
+		sc->sc_ih = hpcio_intr_establish(sc->sc_iochip, 1,
+		    HPCIO_INTR_EDGE|HPCIO_INTR_HOLD,
+		    vrc4172pci_mcr700_intr, sc);
+#endif
+	}
+#endif /* VRC4172PCI_MCR700_SUPPORT */
 
 	pc->pc_dev = &sc->sc_dev;
 	pc->pc_attach_hook = vrc4172pci_attach_hook;
@@ -246,10 +273,23 @@ vrc4172pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	struct vrc4172pci_softc *sc = (struct vrc4172pci_softc *)pc->pc_dev;
 	u_int32_t val;
 
+#ifdef VRC4172PCI_MCR700_SUPPORT
+	if (sc->sc_fake_baseaddr != 0 &&
+	    tag == vrc4172pci_make_tag(pc, 0, 0, 1) &&
+	    reg == PCI_MAPREG_START) {
+		val = sc->sc_fake_baseaddr;
+		goto out;
+	}
+#endif /*  VRC4172PCI_MCR700_SUPPORT */
+
 	tag |= VRC4172PCI_CONFADDR_CONFIGEN;
 
 	vrc4172pci_write(sc, VRC4172PCI_CONFAREG, tag | reg);
 	val = vrc4172pci_read(sc, VRC4172PCI_CONFDREG);
+
+#ifdef VRC4172PCI_MCR700_SUPPORT
+ out:
+#endif
 	DPRINTF(("%s: conf_read: tag = 0x%08x, reg = 0x%x, val = 0x%08x\n",
 	    sc->sc_dev.dv_xname, (u_int32_t)tag, reg, val));
 
@@ -264,6 +304,16 @@ vrc4172pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 
 	DPRINTF(("%s: conf_write: tag = 0x%08x, reg = 0x%x, val = 0x%08x\n",
 	    sc->sc_dev.dv_xname, (u_int32_t)tag, reg, (u_int32_t)data));
+
+#ifdef VRC4172PCI_MCR700_SUPPORT
+	if (sc->sc_fake_baseaddr != 0 &&
+	    tag == vrc4172pci_make_tag(pc, 0, 0, 1) &&
+	    reg == PCI_MAPREG_START) {
+		sc->sc_fake_baseaddr = (data & 0xfffff000);
+		return;
+	}
+#endif /*  VRC4172PCI_MCR700_SUPPORT */
+
 	tag |= VRC4172PCI_CONFADDR_CONFIGEN;
 
 	vrc4172pci_write(sc, VRC4172PCI_CONFAREG, tag | reg);
@@ -326,3 +376,19 @@ vrc4172pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 	DPRINTF(("vrc4172pci_intr_disestablish: %p\n", cookie));
 	config_unhook(cookie);
 }
+
+#ifdef VRC4172PCI_MCR700_SUPPORT
+#if 0
+int
+vrc4172pci_mcr700_intr(void *arg)
+{
+	struct vrc4172pci_softc *sc = arg;
+
+	hpcio_intr_clear(sc->sc_iochip, sc->sc_ih);
+	printf("USB port %s\n", hpcio_portread(sc->sc_iochip, 1) ? "ON" : "OFF");
+	hpcio_portwrite(sc->sc_iochip, 45, hpcio_portread(sc->sc_iochip, 1));
+
+	return (0);
+}
+#endif
+#endif /* VRC4172PCI_MCR700_SUPPORT */
