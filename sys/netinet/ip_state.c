@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.21 2000/02/01 21:29:16 veego Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.22 2000/02/07 13:58:00 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_state.c,v 1.21 2000/02/01 21:29:16 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_state.c,v 1.22 2000/02/07 13:58:00 veego Exp $";
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.3.2.18 2000/01/27 08:51:30 darrenr Exp";
@@ -902,7 +902,6 @@ retry_tcp:
 						isp = &ips_table[hvm];
 						if (ips_table[hvm] == NULL)
 							ips_stats.iss_inuse--;
-						fr_delstate(is);
 						ips_num--;
 					}
 #endif
@@ -965,6 +964,10 @@ retry_udp:
 	fr = is->is_rule;
 	fin->fin_fr = fr;
 	pass = is->is_pass;
+#ifndef	_KERNEL
+	if (tcp->th_flags & TCP_CLOSE)
+		fr_delstate(is);
+#endif
 	RWLOCK_EXIT(&ipf_state);
 	if (fin->fin_fi.fi_fl & FI_FRAG)
 		ipfr_newfrag(ip, fin, pass ^ FR_KEEPSTATE);
