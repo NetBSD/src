@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.5 2000/07/23 23:00:54 mycroft Exp $	*/
+/*	$NetBSD: mld6.c,v 1.6 2000/10/12 06:33:24 augustss Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -361,7 +361,7 @@ int recvlen;
 	if (IN6_IS_ADDR_MC_NODELOCAL(&mldh->mld6_addr))
 	{
 		log(LOG_INFO, 0,
-		    "RECV %s with an invalid scope: %s from %s",
+		    "RECV with an invalid scope: %s from %s",
 		    inet6_fmt(&mldh->mld6_addr),
 		    inet6_fmt(&src->sin6_addr));
 		return;			/* discard */

@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.5 2000/07/04 20:27:38 matt Exp $	*/
+/*	$NetBSD: debug.c,v 1.6 2000/10/12 06:33:23 augustss Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -575,7 +575,7 @@ dump_mldqueriers(fp)
  */
 #ifdef __STDC__
 void
-log(int severity, int syserr, char *format,...)
+log(int severity, int syserr, char *format, ...)
 {
     va_list         ap;
     static char     fmt[211] = "warning - ";
