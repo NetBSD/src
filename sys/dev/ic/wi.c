@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.35 2002/01/21 11:28:18 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.36 2002/01/21 11:29:22 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.35 2002/01/21 11:28:18 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.36 2002/01/21 11:29:22 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -469,6 +469,7 @@ void wi_update_stats(sc)
 	struct wi_scan_header	ap2_header;	/* Prism2 header */
 	struct wi_scan_data_p2	ap2;		/* Prism2 scantable*/
 	struct wi_scan_data	ap;		/* Lucent scantable */
+	struct wi_assoc		assoc;		/* Association Status */
 	u_int16_t		id;
 	struct ifnet		*ifp;
 	u_int32_t		*ptr;
@@ -587,6 +588,42 @@ void wi_update_stats(sc)
 		break;
 		}
 
+	case WI_INFO_ASSOC_STAT: {
+		static char *msg[] = {
+			"STA Associated",
+			"STA Reassociated",
+			"STA Disassociated",
+			"Association Failure",
+			"Authentication Faild"
+		};
+		if (gen.wi_len != 10)
+                        break;
+		for (i=0; i < gen.wi_len - 1; i++)
+			((u_int16_t *)&assoc)[i] = CSR_READ_2(sc, WI_DATA1);
+		switch (assoc.wi_assoc_stat) {
+		case ASSOC:
+		case DISASSOC:
+		case ASSOCFAIL:
+		case AUTHFAIL:
+			printf("%s: %s, AP = %x:%x:%x:%x:%x:%x\n",
+				sc->sc_dev.dv_xname,
+				msg[assoc.wi_assoc_stat - 1],
+				assoc.wi_assoc_sta[0]&0xff, assoc.wi_assoc_sta[1]&0xff,
+				assoc.wi_assoc_sta[2]&0xff, assoc.wi_assoc_sta[3]&0xff,
+				assoc.wi_assoc_sta[4]&0xff, assoc.wi_assoc_sta[5]&0xff);
+			break;
+		case REASSOC:
+			printf("%s: %s, AP = %x:%x:%x:%x:%x:%x, OldAP = %x:%x:%x:%x:%x:%x\n",
+				sc->sc_dev.dv_xname, msg[assoc.wi_assoc_stat - 1],
+				assoc.wi_assoc_sta[0]&0xff, assoc.wi_assoc_sta[1]&0xff,
+				assoc.wi_assoc_sta[2]&0xff, assoc.wi_assoc_sta[3]&0xff,
+				assoc.wi_assoc_sta[4]&0xff, assoc.wi_assoc_sta[5]&0xff,
+				assoc.wi_assoc_osta[0]&0xff, assoc.wi_assoc_osta[1]&0xff,
+				assoc.wi_assoc_osta[2]&0xff, assoc.wi_assoc_osta[3]&0xff,
+				assoc.wi_assoc_osta[4]&0xff, assoc.wi_assoc_osta[5]&0xff);
+			break;
+		}
+		}
 	default:
 #if 0
 		printf("Got info type: %04x\n", gen.wi_type);
