@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.13 1997/09/20 06:26:43 enami Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.14 1997/09/20 09:43:22 enami Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.13 1997/09/20 06:26:43 enami Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.14 1997/09/20 09:43:22 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, newl, skip;
-	char *p, *ep;
+	int ch, newl, skip, i;
+	char *p;
 	struct kern_msgbuf *bufp, cur;
 	char *memf, *nlistf, *bufdata;
 	kvm_t *kd;
@@ -132,12 +132,14 @@ main(argc, argv)
 		cur.msg_bufx = 0;
 
 	/*
-	 * The message buffer is circular; start at the read pointer, and
-	 * go to the write pointer - 1.
+	 * The message buffer is circular; start at the write pointer
+	 * (which points the oldest character), and go to the write
+	 * pointer - 1 (which points the newest character).  I.e, loop
+	 * over cur.msg_bufs times.  Unused area is skipped since it
+	 * contains nul.
 	 */
-	p = bufdata + cur.msg_bufx;
-	ep = bufdata + cur.msg_bufx - 1;
-	for (newl = skip = 0; p != ep; ++p) {
+	for (newl = skip = i = 0, p = bufdata + cur.msg_bufx;
+	    i < cur.msg_bufs; i++, p++) {
 		if (p == bufdata + cur.msg_bufs)
 			p = bufdata;
 		ch = *p;
