@@ -1,5 +1,5 @@
 /* files.c -- file-related functions for Texinfo.
-   $Id: files.c,v 1.1.1.1 2001/07/25 16:20:57 assar Exp $
+   $Id: files.c,v 1.2 2002/01/16 17:22:38 tv Exp $
 
    Copyright (C) 1998, 99 Free Software Foundation, Inc.
 
@@ -158,7 +158,7 @@ find_and_load (filename)
     goto error_exit;
 
   /* Load the file, with enough room for a newline and a null. */
-  result = xmalloc (file_size + 2);
+  result = xmalloc (file_size * 2);
 
   /* VMS stat lies about the st_size value.  The actual number of
      readable bytes is always less than this value.  The arcane
