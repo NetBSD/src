@@ -182,6 +182,7 @@
 .\" .	if "\\$3"HOW"	.ds vT NetBSD How Pocket Manual
 .	if "\\$3"LOCAL" .ds vT NetBSD Local Manual
 .	if "\\$3"amiga" .as vT \ (AMIGA Architecture)
+.	if "\\$3"atari" .as vT \ (ATARI Architecture)
 .	if "\\$3"da30"  .as vT \ (DA30 Architecture)
 .	if "\\$3"hp300" .as vT \ (HP300 Architecture)
 .	if "\\$3"i386"  .as vT \ (I386 Architecture)
