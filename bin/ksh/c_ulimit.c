@@ -1,10 +1,10 @@
-/*	$NetBSD: c_ulimit.c,v 1.6 2004/04/17 15:40:12 christos Exp $	*/
+/*	$NetBSD: c_ulimit.c,v 1.7 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
 
 	Reworked to use getrusage() and ulimit() at once (as needed on
-	some schizophenic systems, eg, HP-UX 9.01), made argument parsing
+	some schizophrenic systems, eg, HP-UX 9.01), made argument parsing
 	conform to at&t ksh, added autoconf support.  Michael Rendell, May, '94
 
 	Eric Gisin, September 1988
@@ -20,7 +20,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ulimit.c,v 1.6 2004/04/17 15:40:12 christos Exp $");
+__RCSID("$NetBSD: c_ulimit.c,v 1.7 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -134,11 +134,6 @@ c_ulimit(wp)
 	struct rlimit	limit;
 #endif /* HAVE_SETRLIMIT */
 
-#ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
-	(void) &val;
-#endif
-
 	if (!options[0]) {
 		/* build options string on first call - yuck */
 		char *p = options;
@@ -210,7 +205,7 @@ c_ulimit(wp)
 					val = limit.rlim_cur;
 				else if (how & HARD)
 					val = limit.rlim_max;
-			} else 
+			} else
 #endif /* HAVE_SETRLIMIT */
 #ifdef HAVE_ULIMIT
 			{

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2003/06/23 11:39:00 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.10 2003/06/23 11:39:00 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -88,12 +88,8 @@ static const char *const initcoms [] = {
 	NULL
 };
 
-int main __P((int, char **));
-
 int
-main(argc, argv)
-	int argc;
-	register char **argv;
+main(int argc, char *argv[])
 {
 	register int i;
 	int argi;
@@ -187,8 +183,8 @@ main(argc, argv)
 	}
 
 
-	/* Turn on nohup by default for how - will change to off
-	 * by default once people are aware of its existance
+	/* Turn on nohup by default for now - will change to off
+	 * by default once people are aware of its existence
 	 * (at&t ksh does not have a nohup option - it always sends
 	 * the hup).
 	 */
@@ -343,7 +339,8 @@ main(argc, argv)
 	{
 		struct stat s_stdin;
 
-		if (fstat(0, &s_stdin) >= 0 && S_ISCHR(s_stdin.st_mode))
+		if (fstat(0, &s_stdin) >= 0 && S_ISCHR(s_stdin.st_mode) &&
+		    Flag(FTALKING))
 			reset_nonblock(0);
 	}
 
@@ -462,7 +459,6 @@ include(name, argc, argv, intr_ok)
 	int intr_ok;
 {
 	register Source *volatile s = NULL;
-	Source *volatile sold;
 	struct shf *shf;
 	char **volatile old_argv;
 	volatile int old_argc;
@@ -479,11 +475,9 @@ include(name, argc, argv, intr_ok)
 		old_argv = (char **) 0;
 		old_argc = 0;
 	}
-	sold = source;
 	newenv(E_INCL);
 	i = ksh_sigsetjmp(e->jbuf, 0);
 	if (i) {
-		source = sold;
 		if (s) /* Do this before quitenv(), which frees the memory */
 			shf_close(s->u.shf);
 		quitenv();
@@ -520,7 +514,6 @@ include(name, argc, argv, intr_ok)
 	s->u.shf = shf;
 	s->file = str_save(name, ATEMP);
 	i = shell(s, FALSE);
-	source = sold;
 	shf_close(s->u.shf);
 	quitenv();
 	if (old_argv) {
@@ -553,6 +546,7 @@ shell(s, toplevel)
 	volatile int wastty = s->flags & SF_TTY;
 	volatile int attempts = 13;
 	volatile int interactive = Flag(FTALKING) && toplevel;
+	Source *volatile old_source = source;
 	int i;
 
 	newenv(E_PARSE);
@@ -560,7 +554,6 @@ shell(s, toplevel)
 		really_exit = 0;
 	i = ksh_sigsetjmp(e->jbuf, 0);
 	if (i) {
-		s->start = s->str = null;
 		switch (i) {
 		  case LINTR: /* we get here if SIGINT not caught or ignored */
 		  case LERROR:
@@ -580,16 +573,20 @@ shell(s, toplevel)
 				 * a tty, but to have stopped jobs, one only
 				 * needs FMONITOR set (not FTALKING/SF_TTY)...
 				 */
+				/* toss any input we have so far */
+				s->start = s->str = null;
 				break;
 			}
 			/* fall through... */
 		  case LEXIT:
 		  case LLEAVE:
 		  case LRETURN:
+			source = old_source;
 			quitenv();
 			unwind(i);	/* keep on going */
 			/*NOREACHED*/
 		  default:
+			source = old_source;
 			quitenv();
 			internal_errorf(1, "shell: %d", i);
 			/*NOREACHED*/
@@ -646,6 +643,7 @@ shell(s, toplevel)
 		reclaim();
 	}
 	quitenv();
+	source = old_source;
 	return exstat;
 }
 
@@ -762,7 +760,7 @@ cleanup_parents_env()
 
 	/* Don't clean up temporary files - parent will probably need them.
 	 * Also, can't easily reclaim memory since variables, etc. could be
-	 * anywyere.
+	 * anywhere.
 	 */
 
 	/* close all file descriptors hiding in savefd */
@@ -832,7 +830,7 @@ remove_temps(tp)
 				    APERM);
 				memset(t, 0, sizeof(struct temp));
 				t->name = (char *) &t[1];
-				strcpy(t->name, tp->name);
+				strlcpy(t->name, tp->name, strlen(tp->name) + 1);
 				t->next = delayed_remove;
 				delayed_remove = t;
 			}

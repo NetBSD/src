@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.9 2003/06/23 11:38:59 agc Exp $	*/
+/*	$NetBSD: lex.c,v 1.10 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: lex.c,v 1.9 2003/06/23 11:38:59 agc Exp $");
+__RCSID("$NetBSD: lex.c,v 1.10 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -224,7 +224,7 @@ yylex(cf)
 				if (isalnum(c)) {
 					*wp++ = CHAR, *wp++ = '\\';
 					*wp++ = CHAR, *wp++ = c;
-				} else 
+				} else
 #endif
 				if (c) /* trailing \ is lost */
 					*wp++ = QCHAR, *wp++ = c;
@@ -735,7 +735,7 @@ Done:
 	/* copy word to unprefixed string ident */
 	for (sp = yylval.cp, dp = ident; dp < ident+IDENT && (c = *sp++) == CHAR; )
 		*dp++ = *sp++;
-	/* Make sure the ident array stays '\0' paded */
+	/* Make sure the ident array stays '\0' padded */
 	memset(dp, 0, (ident+IDENT) - dp + 1);
 	if (c != EOS)
 		*ident = '\0';	/* word is not unquoted */
@@ -1129,11 +1129,8 @@ set_prompt(to, s)
 		 */
 		{
 			struct shf *shf;
-			char *ps1;
+			char * volatile ps1;
 			Area *saved_atemp;
-#ifdef __GNUC__
-			(void) &ps1;
-#endif
 
 			ps1 = str_val(global("PS1"));
 			shf = shf_sopen((char *) 0, strlen(ps1) * 2,

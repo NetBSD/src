@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.17 2004/04/17 15:40:12 christos Exp $
+.\" $NetBSD: ksh.Man,v 1.18 2004/07/07 19:20:09 mycroft Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -2157,6 +2157,12 @@ T}
 	emacs	T{
 Enable BRL emacs-like command line editing (interactive shells only);
 see Emacs Editing Mode.
+T}
+	emacs-usemeta	T{
+In emacs command-line editing, use the 8th bit
+as meta (^[) prefix.  This is the default if 
+LC_CTYPE is unset or POSIX respectively C.
+8 
 T}
 	gmacs	T{
 Enable gmacs-like (Gosling emacs) command line editing (interactive shells

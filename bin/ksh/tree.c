@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.4 2003/06/23 11:39:05 agc Exp $	*/
+/*	$NetBSD: tree.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * command tree climbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.4 2003/06/23 11:39:05 agc Exp $");
+__RCSID("$NetBSD: tree.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -378,7 +378,7 @@ int
 #ifdef HAVE_PROTOTYPES
 fptreef(struct shf *shf, int indent, const char *fmt, ...)
 #else
-fptreef(shf, indent, fmt, va_alist) 
+fptreef(shf, indent, fmt, va_alist)
   struct shf *shf;
   int indent;
   const char *fmt;
@@ -388,7 +388,7 @@ fptreef(shf, indent, fmt, va_alist)
   va_list	va;
 
   SH_VA_START(va, fmt);
-  
+
   vfptreef(shf, indent, fmt, va);
   va_end(va);
   return 0;
@@ -514,7 +514,7 @@ tcopy(t, ap)
 		for (tw = t->vars; *tw++ != NULL; )
 			;
 		rw = r->vars = (char **)
-			alloc((int)(tw - t->vars) * sizeof(*tw), ap);
+			alloc((tw - t->vars + 1) * sizeof(*tw), ap);
 		for (tw = t->vars; *tw != NULL; )
 			*rw++ = wdcopy(*tw++, ap);
 		*rw = NULL;
@@ -526,7 +526,7 @@ tcopy(t, ap)
 		for (tw = t->args; *tw++ != NULL; )
 			;
 		rw = r->args = (char **)
-			alloc((int)(tw - t->args) * sizeof(*tw), ap);
+			alloc((tw - t->args + 1) * sizeof(*tw), ap);
 		for (tw = t->args; *tw != NULL; )
 			*rw++ = wdcopy(*tw++, ap);
 		*rw = NULL;
@@ -687,7 +687,7 @@ iocopy(iow, ap)
 
 	for (ior = iow; *ior++ != NULL; )
 		;
-	ior = (struct ioword **) alloc((int)(ior - iow) * sizeof(*ior), ap);
+	ior = (struct ioword **) alloc((ior - iow + 1) * sizeof(*ior), ap);
 
 	for (i = 0; iow[i] != NULL; i++) {
 		register struct ioword *p, *q;

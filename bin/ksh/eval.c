@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.4 2003/06/23 11:38:55 agc Exp $	*/
+/*	$NetBSD: eval.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.4 2003/06/23 11:38:55 agc Exp $");
+__RCSID("$NetBSD: eval.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -175,12 +175,13 @@ expand(cp, wp, f)
 	XString ds;		/* destination string */
 	register char *dp, *sp;	/* dest., source */
 	int fdo, word;		/* second pass flags; have word */
-	int doblank;		/* field spliting of parameter/command subst */
+	int doblank;		/* field splitting of parameter/command subst */
 	Expand x;		/* expansion variables */
 	SubType st_head, *st;
 	int UNINITIALIZED(newlines); /* For trailing newlines in COMSUB */
 	int saw_eq, tilde_ok;
 	int make_magic;
+	size_t len;
 
 	if (cp == NULL)
 		internal_errorf(1, "expand(NULL)");
@@ -421,10 +422,11 @@ expand(cp, wp, f)
 					 * fatal for special builtins (setstr
 					 * does readonly check).
 					 */
-					setstr(st->var, debunk(
-						(char *) alloc(strlen(dp) + 1,
-							ATEMP), dp),
-						KSH_UNWIND_ERROR);
+					len = strlen(dp) + 1;
+					setstr(st->var,
+					    debunk((char *) alloc(len, ATEMP),
+						dp, len),
+					    KSH_UNWIND_ERROR);
 					x.str = str_val(st->var);
 					type = XSUB;
 					if (f&DOBLANK)
@@ -436,9 +438,9 @@ expand(cp, wp, f)
 					char *s = Xrestpos(ds, dp, st->base);
 
 					errorf("%s: %s", st->var->name,
-					    dp == s ? 
+					    dp == s ?
 					      "parameter null or not set"
-					    : (debunk(s, s), s));
+					    : (debunk(s, s, strlen(s) + 1), s));
 				    }
 				}
 				st = st->prev;
@@ -451,7 +453,7 @@ expand(cp, wp, f)
 				c = *sp++ + 0x80;
 				break;
 
-			  case SPAT: /* pattern seperator (|) */
+			  case SPAT: /* pattern separator (|) */
 				make_magic = 1;
 				c = '|';
 				break;
@@ -582,7 +584,7 @@ expand(cp, wp, f)
 				else if ((f & DOPAT) || !(fdo & DOMAGIC_))
 					XPput(*wp, p);
 				else
-					XPput(*wp, debunk(p, p));
+					XPput(*wp, debunk(p, p, strlen(p) + 1));
 				fdo = 0;
 				saw_eq = 0;
 				tilde_ok = (f & (DOTILDE|DOASNTILDE)) ? 1 : 0;
@@ -878,8 +880,10 @@ comsub(xp, cp)
 		openpipe(pv);
 		shf = shf_fdopen(pv[0], SHF_RD, (struct shf *) 0);
 		ofd1 = savefd(1, 0);	/* fd 1 may be closed... */
-		ksh_dup2(pv[1], 1, FALSE);
-		close(pv[1]);
+		if (pv[1] != 1) {
+			ksh_dup2(pv[1], 1, FALSE);
+			close(pv[1]);
+		}
 		execute(t, XFORK|XXCOM|XPIPEO);
 		restfd(1, ofd1);
 		startlast();
@@ -904,7 +908,7 @@ trimsub(str, pat, how)
 	register char *p, c;
 
 	switch (how&0xff) {	/* UCHAR_MAX maybe? */
-	  case '#':		/* shortest at begining */
+	  case '#':		/* shortest at beginning */
 		for (p = str; p <= end; p++) {
 			c = *p; *p = '\0';
 			if (gmatch(str, pat, FALSE)) {
@@ -914,7 +918,7 @@ trimsub(str, pat, how)
 			*p = c;
 		}
 		break;
-	  case '#'|0x80:	/* longest match at begining */
+	  case '#'|0x80:	/* longest match at beginning */
 		for (p = end; p >= str; p--) {
 			c = *p; *p = '\0';
 			if (gmatch(str, pat, FALSE)) {
@@ -956,14 +960,14 @@ glob(cp, wp, markdirs)
 	int oldsize = XPsize(*wp);
 
 	if (glob_str(cp, wp, markdirs) == 0)
-		XPput(*wp, debunk(cp, cp));
+		XPput(*wp, debunk(cp, cp, strlen(cp) + 1));
 	else
 		qsortp(XPptrv(*wp) + oldsize, (size_t)(XPsize(*wp) - oldsize),
 			xstrcmp);
 }
 
 #define GF_NONE		0
-#define GF_EXCHECK	BIT(0)		/* do existance check on file */
+#define GF_EXCHECK	BIT(0)		/* do existence check on file */
 #define GF_GLOBBED	BIT(1)		/* some globbing has been done */
 #define GF_MARKDIR	BIT(2)		/* add trailing / to directories */
 
@@ -1091,7 +1095,7 @@ globit(xs, xpp, sp, wp, check)
 	 */
 	if (!has_globbing(sp, se)) {
 		XcheckN(*xs, xp, se - sp + 1);
-		debunk(xp, sp);
+		debunk(xp, sp, Xnleft(*xs, xp));
 		xp += strlen(xp);
 		*xpp = xp;
 		globit(xs, xpp, np, wp, check);
@@ -1180,15 +1184,18 @@ copy_non_glob(xs, xpp, p)
 
 /* remove MAGIC from string */
 char *
-debunk(dp, sp)
+debunk(dp, sp, dlen)
 	char *dp;
 	const char *sp;
+	size_t dlen;
 {
 	char *d, *s;
 
 	if ((s = strchr(sp, MAGIC))) {
+		if (s - sp >= dlen)
+			return dp;
 		memcpy(dp, sp, s - sp);
-		for (d = dp + (s - sp); *s; s++)
+		for (d = dp + (s - sp); *s && (d - dp < dlen); s++)
 			if (!ISMAGIC(*s) || !(*++s & 0x80)
 			    || !strchr("*+?@! ", *s & 0x7f))
 				*d++ = *s;
@@ -1196,11 +1203,12 @@ debunk(dp, sp)
 				/* extended pattern operators: *+?@! */
 				if ((*s & 0x7f) != ' ')
 					*d++ = *s & 0x7f;
-				*d++ = '(';
+				if (d - dp < dlen)
+					*d++ = '(';
 			}
 		*d = '\0';
 	} else if (dp != sp)
-		strcpy(dp, sp);
+		strlcpy(dp, sp, dlen);
 	return dp;
 }
 
@@ -1343,7 +1351,7 @@ alt_expand(wp, start, exp_start, end, fdo)
 		if (fdo & DOGLOB)
 			glob(start, wp, fdo & DOMARKDIRS);
 		else
-			XPput(*wp, debunk(start, start));
+			XPput(*wp, debunk(start, start, end - start));
 		return;
 	}
 	brace_end = p;

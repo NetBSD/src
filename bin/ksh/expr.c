@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.5 2003/06/23 11:38:57 agc Exp $	*/
+/*	$NetBSD: expr.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: expr.c,v 1.5 2003/06/23 11:38:57 agc Exp $");
+__RCSID("$NetBSD: expr.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -69,7 +69,7 @@ enum prec {
 struct opinfo {
 	char		name[4];
 	int		len;	/* name length */
-	enum prec	prec;	/* precidence: lower is higher */
+	enum prec	prec;	/* precedence: lower is higher */
 };
 
 /* Tokens in this table must be ordered so the longest are first
@@ -146,7 +146,7 @@ static struct tbl *tempvar  ARGS((void));
 static struct tbl *intvar   ARGS((Expr_state *es, struct tbl *vp));
 
 /*
- * parse and evalute expression
+ * parse and evaluate expression
  */
 int
 evaluate(expr, rval, error_ok)
@@ -165,7 +165,7 @@ evaluate(expr, rval, error_ok)
 }
 
 /*
- * parse and evalute expression, storing result in vp.
+ * parse and evaluate expression, storing result in vp.
  */
 int
 v_evaluate(vp, expr, error_ok)
@@ -214,7 +214,7 @@ v_evaluate(vp, expr, error_ok)
 	if (vp->flag & INTEGER)
 		setint_v(vp, v);
 	else
-		/* can fail if readony */
+		/* can fail if readonly */
 		setstr(vp, str_val(v), error_ok);
 
 	quitenv();

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.7 2003/06/23 11:38:58 agc Exp $	*/
+/*	$NetBSD: io.c,v 1.8 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.7 2003/06/23 11:38:58 agc Exp $");
+__RCSID("$NetBSD: io.c,v 1.8 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -327,7 +327,7 @@ restfd(fd, ofd)
 		shf_flush(&shf_iob[fd]);
 	if (ofd < 0)		/* original fd closed */
 		close(fd);
-	else {
+	else if (fd != ofd) {
 		ksh_dup2(ofd, fd, TRUE); /* XXX: what to do if this fails? */
 		close(ofd);
 	}
@@ -371,7 +371,7 @@ check_fd(name, mode, emsgp)
 		}
 		fl &= O_ACCMODE;
 #ifdef OS2
-		if (mode == W_OK ) { 
+		if (mode == W_OK ) {
 		       if (setmode(fd, O_TEXT) == -1) {
 				if (emsgp)
 					*emsgp = "couldn't set write mode";
@@ -381,7 +381,7 @@ check_fd(name, mode, emsgp)
 	      		if (setmode(fd, O_BINARY) == -1) {
 				if (emsgp)
 					*emsgp = "couldn't set read mode";
-				return -1; 
+				return -1;
 			}
 #else /* OS2 */
 		/* X_OK is a kludge to disable this check for dups (x<&1):
@@ -458,7 +458,7 @@ coproc_write_close(fd)
 	}
 }
 
-/* Called to check for existance of/value of the co-process file descriptor.
+/* Called to check for existence of/value of the co-process file descriptor.
  * (Used by check_fd() and by c_read/c_print to deal with -p option).
  */
 int
@@ -511,7 +511,9 @@ maketemp(ap, type, tlist)
 	Temp_type type;
 	struct temp **tlist;
 {
+#ifndef __NetBSD__
 	static unsigned int inc;
+#endif
 	struct temp *tp;
 	int len;
 	int fd;
@@ -525,6 +527,12 @@ maketemp(ap, type, tlist)
 	tp->name = path = (char *) &tp[1];
 	tp->shf = (struct shf *) 0;
 	tp->type = type;
+#ifdef __NetBSD__
+	shf_snprintf(path, len, "%s/shXXXXXXXX", dir);
+	fd = mkstemp(path);
+	if (fd >= 0)
+		tp->shf = shf_fdopen(fd, SHF_WR, (struct shf *) 0);
+#else
 	while (1) {
 		/* Note that temp files need to fit 8.3 DOS limits */
 		shf_snprintf(path, len, "%s/sh%05u.%03x",
@@ -550,7 +558,7 @@ maketemp(ap, type, tlist)
 			 */
 			break;
 	}
-	tp->next = NULL;
+#endif /* __NetBSD__ */
 	tp->pid = procpid;
 
 	tp->next = *tlist;

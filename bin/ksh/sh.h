@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.5 2002/07/11 10:53:19 wiz Exp $	*/
+/*	$NetBSD: sh.h,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.5 2002/07/11 10:53:19 wiz Exp $ */
+/* $Id: sh.h,v 1.6 2004/07/07 19:20:09 mycroft Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -13,7 +13,6 @@
 #else
 # define	ARGS(args)	()	/* K&R declaration */
 #endif
-
 
 /* Start of common headers */
 
@@ -351,7 +350,7 @@ typedef int bool_t;
 /* Table flag type - needs > 16 and < 32 bits */
 typedef INT32 Tflag;
 
-#define	NUFILE	10		/* Number of user-accessible files */
+#define	NUFILE	32		/* Number of user-accessible files */
 #define	FDBASE	10		/* First file usable by Shell */
 
 /* you're not going to run setuid shell scripts, are you? */
@@ -361,7 +360,7 @@ typedef INT32 Tflag;
  * not a char that is used often.  Also, can't use the high bit as it causes
  * portability problems (calling strchr(x, 0x80|'x') is error prone).
  */
-#define	MAGIC		(7)/* prefix for *?[!{,} during expand */
+#define	MAGIC		(7)	/* prefix for *?[!{,} during expand */
 #define ISMAGIC(c)	((unsigned char)(c) == MAGIC)
 #define	NOT		'!'	/* might use ^ (ie, [!...] vs [^..]) */
 
@@ -372,18 +371,16 @@ typedef INT32 Tflag;
 EXTERN	const char *kshname;	/* $0 */
 EXTERN	pid_t	kshpid;		/* $$, shell pid */
 EXTERN	pid_t	procpid;	/* pid of executing process */
-EXTERN	int	ksheuid;	/* effective uid of shell */
+EXTERN	uid_t	ksheuid;	/* effective uid of shell */
 EXTERN	int	exstat;		/* exit status */
 EXTERN	int	subst_exstat;	/* exit status of last $(..)/`..` */
 EXTERN	const char *safe_prompt; /* safe prompt if PS1 substitution fails */
 
-
 /*
  * Area-based allocation built on malloc/free
  */
-
 typedef struct Area {
-	struct Block *freelist;	/* free list */
+	struct link *freelist;	/* free list */
 } Area;
 
 EXTERN	Area	aperm;		/* permanent object space */
@@ -403,7 +400,6 @@ EXTERN	Area	aperm;		/* permanent object space */
 # define kshdebug_printf(a)
 # define kshdebug_dump(a)
 #endif /* KSH_DEBUG */
-
 
 /*
  * parsing & execution environment
@@ -451,7 +447,6 @@ EXTERN	struct env {
 #define LSHELL	8		/* return to interactive shell() */
 #define LAEXPR	9		/* error in arithmetic expression */
 
-
 /* option processing */
 #define OF_CMDLINE	0x01	/* command line */
 #define OF_SET		0x02	/* set builtin */
@@ -478,6 +473,7 @@ enum sh_flag {
 	FCOMMAND,	/* -c: (invocation) execute specified command */
 #ifdef EMACS
 	FEMACS,		/* emacs command editing */
+	FEMACSUSEMETA,	/* use 8th bit as meta */
 #endif
 	FERREXIT,	/* -e: quit on error */
 #ifdef EMACS
@@ -485,7 +481,7 @@ enum sh_flag {
 #endif
 	FIGNOREEOF,	/* eof does not exit */
 	FTALKING,	/* -i: interactive */
-	FKEYWORD,	/* -k: name=value anywere */
+	FKEYWORD,	/* -k: name=value anywhere */
 	FLOGIN,		/* -l: a login shell */
 	FMARKDIRS,	/* mark dirs with / in file name completion */
 	FMONITOR,	/* -m: job control monitoring */
@@ -596,7 +592,6 @@ EXTERN	int volatile fatal_trap;/* received a fatal signal */
 extern	Trap	sigtraps[SIGNALS+1];
 #endif /* !FROM_TRAP_C */
 
-
 #ifdef KSH
 /*
  * TMOUT support
@@ -611,10 +606,8 @@ EXTERN unsigned int ksh_tmout;
 EXTERN enum tmout_enum ksh_tmout_state I__(TMOUT_EXECUTING);
 #endif /* KSH */
 
-
 /* For "You have stopped jobs" message */
 EXTERN int really_exit;
-
 
 /*
  * fast character classes
@@ -637,7 +630,6 @@ extern	short ctypes [];
 #define	letnum(c)	ctype(c, C_ALPHA|C_DIGIT)
 
 EXTERN int ifs0 I__(' ');	/* for "$*" */
-
 
 /* Argument parsing for built-in commands and getopts command */
 
@@ -663,7 +655,6 @@ typedef struct {
 
 EXTERN Getopt builtin_opt;	/* for shell builtin commands */
 EXTERN Getopt user_opt;		/* parsing state for getopts builtin command */
-
 
 #ifdef KSH
 /* This for co-processes */
@@ -696,18 +687,17 @@ EXTERN char	*current_wd;
 EXTERN int	current_wd_size;
 
 #ifdef EDIT
-/* Minimium required space to work with on a line - if the prompt leaves less
+/* Minimum required space to work with on a line - if the prompt leaves less
  * space than this on a line, the prompt is truncated.
  */
 # define MIN_EDIT_SPACE	7
-/* Minimium allowed value for x_cols: 2 for prompt, 3 for " < " at end of line
+/* Minimum allowed value for x_cols: 2 for prompt, 3 for " < " at end of line
  */
 # define MIN_COLS	(2 + MIN_EDIT_SPACE + 3)
 EXTERN	int	x_cols I__(80);	/* tty columns */
 #else
 # define x_cols 80		/* for pr_menu(exec.c) */
 #endif
-
 
 /* These to avoid bracket matching problems */
 #define OPAREN	'('

@@ -1,4 +1,4 @@
-/*	$NetBSD: syn.c,v 1.5 2003/06/23 11:39:03 agc Exp $	*/
+/*	$NetBSD: syn.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * shell parser (C version)
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: syn.c,v 1.5 2003/06/23 11:39:03 agc Exp $");
+__RCSID("$NetBSD: syn.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -577,7 +577,7 @@ function_body(name, ksh_func)
 		/*
 		 * Probably something like foo() followed by eof or ;.
 		 * This is accepted by sh and ksh88.
-		 * To make "typset -f foo" work reliably (so its output can
+		 * To make "typeset -f foo" work reliably (so its output can
 		 * be used as input), we pretend there is a colon here.
 		 */
 		t->left = newtp(TCOM);
@@ -808,7 +808,7 @@ compile(s)
  *	a=[ab]
  *	$ x=typeset; $x a=[ab]; echo "$a"
  *	a=a
- *	$ 
+ *	$
  */
 static int
 assign_command(s)

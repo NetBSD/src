@@ -1,9 +1,9 @@
-/*	$NetBSD: proto.h,v 1.5 2002/09/25 02:41:11 provos Exp $	*/
+/*	$NetBSD: proto.h,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * prototypes for PD-KSH
  * originally generated using "cproto.c 3.5 92/04/11 19:28:01 cthuang "
- * $Id: proto.h,v 1.5 2002/09/25 02:41:11 provos Exp $
+ * $Id: proto.h,v 1.6 2004/07/07 19:20:09 mycroft Exp $
  */
 
 /* alloc.c */
@@ -62,7 +62,7 @@ char *	substitute	ARGS((const char *cp, int f));
 char **	eval		ARGS((char **ap, int f));
 char *	evalstr		ARGS((char *cp, int f));
 char *	evalonestr	ARGS((char *cp, int f));
-char	*debunk		ARGS((char *dp, const char *sp));
+char	*debunk		ARGS((char *dp, const char *sp, size_t dlen));
 void	expand		ARGS((char *cp, XPtrV *wp, int f));
 int glob_str		ARGS((char *cp, XPtrV *wp, int markdirs));
 /* exec.c */
