@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.11 1996/12/09 17:24:55 is Exp $	*/
+/*	$NetBSD: msc.c,v 1.12 1996/12/20 19:21:11 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Zik.
@@ -169,7 +169,7 @@ int mscmatch __P((struct device *, void *, void *));
 void mscattach __P((struct device *, struct device *, void *));
 
 #define	SWFLAGS(dev)	(msc->openflags | (MSCDIALIN(dev) ? 0 : TIOCFLAG_SOFTCAR))
-#define	DEBUG_CD	1
+#define	DEBUG_CD	0
 
 struct cfattach msc_ca = {
 	sizeof(struct device), mscmatch, mscattach
