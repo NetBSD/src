@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.19 2001/08/10 18:51:06 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.20 2001/08/11 20:42:45 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.19 2001/08/10 18:51:06 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.20 2001/08/11 20:42:45 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -839,10 +839,11 @@ eh_mediastatus(struct dp8390_softc *dsc, struct ifmediareq *ifmr)
 	if (ctrl2 & EH_CTRL2_10B2) {
 		ifmr->ifm_active = IFM_ETHER | IFM_10_2;
 	} else {
-		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_AVALID;
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T;
+		ifmr->ifm_status = IFM_AVALID;
 		if ((bus_space_read_1(sc->sc_ctlt, sc->sc_ctlh, 0) &
 		    EH_CTRL_NOLINK) == 0)
-			ifmr->ifm_active |= IFM_ACTIVE;
+			ifmr->ifm_status |= IFM_ACTIVE;
 	}
 
 }
