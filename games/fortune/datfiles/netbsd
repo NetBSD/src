@@ -136,6 +136,9 @@ NetBSD - the power to swerve (penguins, worse than cane toads).
 NetBSD:  The Source is out there.
 		-- Greywolf
 %
+NetBSD - The undiscriminated geek UNIX
+		-- Richard Rauch
+%
 NetBSD - we have nothing to declare but our benchmarks.
 		-- Julian Assange
 %
@@ -152,6 +155,11 @@ NetBSD - your basement or mine?
 		-- Julian Assange
 %
 NetBSD: A drinking group with a serious computing problem.
+%
+NetBSD: A pmap for every occasion.
+		-- David Brownlee
+%
+NetBSD: Abandon all hype, oh ye who enter here.
 %
 NetBSD: Agnostics in the Platform Religious Wars.
 		-- Erik E. Fair
@@ -185,6 +193,9 @@ NetBSD: Designed to be {secure, reliable, portable, CORRECT}
 %
 NetBSD: Download one, get ${NUMPORTS}-1 for free.
 		-- Antti Kantee
+%
+NetBSD: Empowering the VAX generation.
+		-- Andy Doran
 %
 NetBSD: Everyone else is doin' it. But we're doin' it right.
 		-- Herb Peyerl
@@ -233,11 +244,11 @@ NetBSD is PAR -- Powerful, Advanced, Reliable.  Is your OS up to PAR?
 NetBSD is the bomb.  (ok, bad idea)
 		-- Andrew Gillham
 %
-NetBSD: It spanks the knickers off those other operating systems
-		-- Brian D Chase
-%
 NetBSD: It keeps on going...and going...and going...
 		-- Tom Harvey
+%
+NetBSD: It spanks the knickers off those other operating systems
+		-- Brian D Chase
 %
 NetBSD: it'll be there when you're ready for it
 		-- Greg Lehey
@@ -262,6 +273,9 @@ NetBSD: making all computer hardware a commodity.
 NetBSD: Making your net work, and its free to boot!
 		-- Steve Woodford
 %
+NetBSD: Masterly with distinction.  Striking also.
+		-- Andy Doran
+%
 NetBSD: May the Source be with you
 		-- Greg Earle
 %
@@ -278,6 +292,9 @@ NetBSD: My Computer Runs!
 %
 NetBSD: My Computer Works!
 		-- Andrew Gillham
+%
+NetBSD: My other computer also runs NetBSD.
+		-- David Brownlee
 %
 NetBSD, Net Improvement.
 		-- Andrew Gillham
@@ -297,6 +314,9 @@ NetBSD: Network Your World.
 NetBSD: Networking Space
 		-- Andrew Gillham
 %
+NetBSD: No hype required.
+		-- David Brownlee
+%
 NetBSD, No Worries!
 		-- Andrew Gillham
 %
@@ -314,6 +334,12 @@ NetBSD: Oh my god! They support my hardware! You hackers!
 %
 NetBSD: Perpetual performance!
 		-- Lars-Johan Liman
+%
+NetBSD: Pink fluffy chunks or green bits - the choice is yours.
+		-- Andy Doran
+%
+NetBSD: Ports to * boards.
+		-- Steve Woodford
 %
 NetBSD: Power Your Net.
 		-- Andrew Gillham
@@ -464,11 +490,17 @@ NetBSD: Where do you want to have the power to serve, tomorrow?
 NetBSD: Who do you Serve? And who do you Trust?
 		-- David Maxwell
 %
+NetBSD will put hair on a UNIX admin's chest
+		-- Jason R. Fink
+%
 NetBSD: Write Once, Run Everywhere. Java optional.
 		-- Todd Whitesel
 %
 NetBSD: You can't handle it.
 		-- Paul Newhouse
+%
+NetBSD: You choose the hardware, we'll bring the OS.
+		-- David Brownlee
 %
 Of course it runs NetBSD.
 %
@@ -487,37 +519,7 @@ Where would you have rather been today, tomorrow? NetBSD.
 With many thanks to the core team and UCB CSRG.
 		-- Greywolf
 %
-NetBSD: Abandon all hype, oh ye who enter here.
-%
-NetBSD: Ports to * boards.
-		-- Steve Woodford
-%
-NetBSD: Masterly with distinction.  Striking also.
-		-- Andy Doran
-%
-NetBSD: Pink fluffy chunks or green bits - the choice is yours.
-		-- Andy Doran
-%
-NetBSD: Empowering the VAX generation.
-		-- Andy Doran
-%
-NetBSD: A pmap for every occasion.
-		-- David Brownlee
-%
-NetBSD: No hype required.
-		-- David Brownlee
-%
-NetBSD: My other computer also runs NetBSD.
-		-- David Brownlee
-%
-NetBSD will put hair on a UNIX admin's chest
-		-- Jason R. Fink
-%
-NetBSD - The undiscriminated geek UNIX
-		-- Richard Rauch
-%
 Young or old; cutting edge or yesterday's NeWS, NetBSD is the UNIX for you. 
 It can be a hulking monster in your basement, or fit in the palm
 of your hand.
 		-- Richard Rauch
-%
