@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3.6.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3.6.2 2004/12/17 11:08:22 bouyer Exp $	*/
 /*	NetBSD: pmap.h,v 1.79 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -159,7 +159,7 @@
  * the following defines give the virtual addresses of various MMU
  * data structures:
  * PTE_BASE and APTE_BASE: the base VA of the linear PTE mappings
- * PTD_BASE and APTD_BASE: the base VA of the recursive mapping of the PTD
+ * PDP_BASE and APDP_BASE: the base VA of the recursive mapping of the PDP
  * PDP_PDE and APDP_PDE: the VA of the PDE that points back to the PDP/APDP
  */
 
@@ -313,8 +313,8 @@ struct pv_page {
  * global kernel variables
  */
 
-/* PTDpaddr: is the physical address of the kernel's PDP */
-extern u_long PTDpaddr;
+/* PDPpaddr: is the physical address of the kernel's PDP */
+extern u_long PDPpaddr;
 
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
 extern int nkpde;			/* current # of PDEs for kernel */
