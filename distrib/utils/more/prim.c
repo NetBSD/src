@@ -1,4 +1,4 @@
-/*	$NetBSD: prim.c,v 1.6 2001/08/20 12:00:47 wiz Exp $	*/
+/*	$NetBSD: prim.c,v 1.7 2003/08/06 13:36:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)prim.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: prim.c,v 1.6 2001/08/20 12:00:47 wiz Exp $");
+__RCSID("$NetBSD: prim.c,v 1.7 2003/08/06 13:36:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -697,7 +697,7 @@ search(search_forward, pattern, n, wantmatch)
 		pattern = last_pattern;
 	} else
 	{
-		(void)strcpy(lpbuf, pattern);
+		(void)strlcpy(lpbuf, pattern, sizeof(lpbuf));
 		last_pattern = lpbuf;
 	}
 #endif

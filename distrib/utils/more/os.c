@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.4 1998/02/04 11:09:01 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.5 2003/08/06 13:36:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)os.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: os.c,v 1.4 1998/02/04 11:09:01 christos Exp $");
+__RCSID("$NetBSD: os.c,v 1.5 2003/08/06 13:36:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,8 @@ lsystem(cmd)
 			cmd = shell;
 		else
 		{
-			(void)sprintf(cmdbuf, "%s -c \"%s\"", shell, cmd);
+			(void)snprintf(cmdbuf, sizeof(cmdbuf), "%s -c \"%s\"",
+			    shell, cmd);
 			cmd = cmdbuf;
 		}
 	}
@@ -212,6 +213,7 @@ glob(filename)
 	int ch;
 	char *cmd;
 	static char buffer[MAXPATHLEN];
+	size_t l;
 
 	if (filename[0] == '#')
 		return (filename);
@@ -226,26 +228,24 @@ glob(filename)
 		/*
 		 * Read the output of <echo filename>.
 		 */
-		cmd = malloc((u_int)(strlen(filename)+8));
+		asprintf(&cmd, "echo \"%s\"", filename);
 		if (cmd == NULL)
 			return (filename);
-		(void)sprintf(cmd, "echo \"%s\"", filename);
 	} else
 	{
 		/*
 		 * Read the output of <$SHELL -c "echo filename">.
 		 */
-		cmd = malloc((u_int)(strlen(p)+12));
+		asprintf(&cmd, "%s -c \"echo %s\"", p, filename);
 		if (cmd == NULL)
 			return (filename);
-		(void)sprintf(cmd, "%s -c \"echo %s\"", p, filename);
 	}
 
 	if ((f = popen(cmd, "r")) == NULL)
 		return (filename);
 	free(cmd);
 
-	for (p = buffer;  p < &buffer[sizeof(buffer)-1];  p++)
+	for (p = buffer; p < &buffer[sizeof(buffer)-1];  p++)
 	{
 		if ((ch = getc(f)) == '\n' || ch == EOF)
 			break;
@@ -264,14 +264,15 @@ bad_file(filename, message, len)
 	struct stat statbuf;
 
 	if (stat(filename, &statbuf) < 0) {
-		(void)sprintf(message, "%s: %s", filename, strerror(errno));
+		(void)snprintf(message, len, "%s: %s", filename,
+		    strerror(errno));
 		return(message);
 	}
 	if ((statbuf.st_mode & S_IFMT) == S_IFDIR) {
 		static char is_dir[] = " is a directory";
 
 		strtcpy(message, filename, (int)(len-sizeof(is_dir)-1));
-		(void)strcat(message, is_dir);
+		(void)strlcat(message, is_dir, len);
 		return(message);
 	}
 	return((char *)NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.4 1998/02/04 11:09:10 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.5 2003/08/06 13:36:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: screen.c,v 1.4 1998/02/04 11:09:10 christos Exp $");
+__RCSID("$NetBSD: screen.c,v 1.5 2003/08/06 13:36:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ get_term()
  	if ((term = getenv("TERM")) == NULL)
  		term = "unknown";
  	if (tgetent(termbuf, term) <= 0)
- 		(void)strcpy(termbuf, "dumb:co#80:hc:");
+ 		(void)strlcpy(termbuf, "dumb:co#80:hc:", sizeof(termbuf));
 
 	/*
 	 * Get size of the screen.
@@ -400,7 +400,8 @@ get_term()
 			 * No "home" string,
 			 * but we can use "move(0,0)".
 			 */
-			(void)strcpy(sp, tgoto(sc_move, 0, 0));
+			(void)strlcpy(sp, tgoto(sc_move, 0, 0),
+			    sizeof(sbuf) - (sp - sbuf));
 			sc_home = sp;
 			sp += strlen(sp) + 1;
 		}
@@ -418,7 +419,8 @@ get_term()
 			 * No "lower-left" string, 
 			 * but we can use "move(0,last-line)".
 			 */
-			(void)strcpy(sp, tgoto(sc_move, 0, sc_height-1));
+			(void)strlcpy(sp, tgoto(sc_move, 0, sc_height-1),
+			    sizeof(sbuf) - (sp - sbuf));
 			sc_lower_left = sp;
 			sp += strlen(sp) + 1;
 		}

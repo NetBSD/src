@@ -1,4 +1,4 @@
-/*	$NetBSD: help.c,v 1.3 1998/02/04 11:08:49 christos Exp $	*/
+/*	$NetBSD: help.c,v 1.4 2003/08/06 13:36:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: help.c,v 1.3 1998/02/04 11:08:49 christos Exp $");
+__RCSID("$NetBSD: help.c,v 1.4 2003/08/06 13:36:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,6 @@ help()
 {
 	char cmd[MAXPATHLEN + 20];
 
-	(void)sprintf(cmd, "-more %s", _PATH_HELPFILE);
+	(void)snprintf(cmd, sizeof(cmd), "-more %s", _PATH_HELPFILE);
 	lsystem(cmd);
 }

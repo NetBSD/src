@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.3 1998/02/04 11:08:41 christos Exp $	*/
+/*	$NetBSD: ch.c,v 1.4 2003/08/06 13:36:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)ch.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ch.c,v 1.3 1998/02/04 11:08:41 christos Exp $");
+__RCSID("$NetBSD: ch.c,v 1.4 2003/08/06 13:36:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,8 +407,8 @@ ch_init(want_nbufs, keep)
 		 * If we don't have ANY, then quit.
 		 * Otherwise, just report the error and return.
 		 */
-		(void)sprintf(message, "cannot allocate %d buffers",
-		    want_nbufs - nbufs);
+		(void)snprintf(message, sizeof(message),
+		    "cannot allocate %d buffers", want_nbufs - nbufs);
 		error(message);
 		if (nbufs == 0)
 			quit();
