@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.2 2004/09/25 16:42:15 chris Exp $	*/
+/*	$NetBSD: dk.c,v 1.3 2004/09/27 07:56:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -340,7 +340,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	/* Announce our arrival. */
 	aprint_normal("%s at %s: %s\n", sc->sc_devname, pdk->dk_name,
 	    sc->sc_wname);	/* XXX Unicode */
-	aprint_normal("%s: %llu blocks at %lld, type: %s\n",
+	aprint_normal("%s: %"PRIu64" blocks at %"PRId64", type: %s\n",
 	    sc->sc_devname, sc->sc_size, sc->sc_offset, sc->sc_ptype);
 
 	return (0);
