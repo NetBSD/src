@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.30 2000/06/09 15:06:31 enami Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.30.2.1 2000/07/27 16:12:34 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.30 2000/06/09 15:06:31 enami Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.30.2.1 2000/07/27 16:12:34 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -499,8 +499,8 @@ do_io(path, cmd, cciop)
 
 #define KVM_ABORT(kd, str) {						\
 	(void)kvm_close((kd));						\
-	warnx((str));							\
-	warnx(kvm_geterr((kd)));					\
+	warnx("%s", (str));						\
+	warnx("%s", kvm_geterr((kd)));					\
 	return (1);							\
 }
 
@@ -637,7 +637,7 @@ print_ccd_info(cs, kd)
 	    readsize) != readsize) {
 		printf("\n");
 		warnx("can't read component info");
-		warnx(kvm_geterr(kd));
+		warnx("%s", kvm_geterr(kd));
 		goto done;
 	}
 
@@ -647,7 +647,7 @@ print_ccd_info(cs, kd)
 		    cip[i].ci_pathlen) != cip[i].ci_pathlen) {
 			printf("\n");
 			warnx("can't read component pathname");
-			warnx(kvm_geterr(kd));
+			warnx("%s", kvm_geterr(kd));
 			goto done;
 		}
 		printf((i + 1 < cs->sc_nccdisks) ? "%s " : "%s\n", path);
