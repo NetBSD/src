@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.20 1999/04/05 22:03:56 cgd Exp $ */
+/* $NetBSD: boot.c,v 1.21 1999/04/09 17:50:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,8 +63,6 @@ char boot_file[128];
 char boot_flags[128];
 
 struct bootinfo_v1 bootinfo_v1;
-
-extern char bootprog_rev[], bootprog_date[], bootprog_maker[];
 
 paddr_t ffp_save, ptbr_save;
 
