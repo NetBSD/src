@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.72 2003/06/26 03:35:00 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.73 2003/06/26 07:41:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.72 2003/06/26 03:35:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.73 2003/06/26 07:41:48 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -557,6 +557,8 @@ ip_mrouter_detach(ifp)
 	}
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		for (rt = LIST_FIRST(&mfchashtbl[i]); rt; rt = nrt) {
+			nrt = LIST_NEXT(rt, mfc_hash);
+
 			prte = &rt->mfc_stall;
 			for (rte = *prte; rte; rte = nrte) {
 				nrte = rte->next;
@@ -567,6 +569,12 @@ ip_mrouter_detach(ifp)
 				} else
 					prte = &rte->next;
 			}
+
+			if (rt->mfc_expire == 0)
+				continue;
+			nexpire[i]--;
+			++mrtstat.mrts_cache_cleanups;
+			expire_mfc(rt);
 		}
 	}
 }
