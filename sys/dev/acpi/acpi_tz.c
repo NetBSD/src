@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.9 2004/03/24 09:14:58 martin Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.10 2004/04/10 11:48:11 kochi Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.9 2004/03/24 09:14:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.10 2004/04/10 11:48:11 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX a value of 0 means "polling is not necessary" */
 	if (sc->sc_zone.tzp == 0)
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
-	
+
 	acpitz_get_status(sc);
 
 	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.61 2004/03/31 11:19:39 tron Exp $	*/
+/*	$NetBSD: acpi.c,v 1.62 2004/04/10 11:48:10 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.61 2004/03/31 11:19:39 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.62 2004/04/10 11:48:10 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -325,7 +325,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	if ((sc->sc_quirks & (ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ)) == 0)
 		acpi_pci_fixup(sc);
 #endif
- 
+
 	/*
 	 * Scan the namespace and build our device tree.
 	 */
@@ -495,7 +495,7 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	buf.Length = ACPI_ALLOCATE_BUFFER;
 
 #ifdef ACPI_DEBUG
-	printf("acpi_activate_device: %s, old status=%x\n", 
+	printf("acpi_activate_device: %s, old status=%x\n",
 	       (*di)->HardwareId.Value, (*di)->CurrentStatus);
 #endif
 
@@ -512,7 +512,7 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	*di = buf.Pointer;
 
 #ifdef ACPI_DEBUG
-	printf("acpi_activate_device: %s, new status=%x\n", 
+	printf("acpi_activate_device: %s, new status=%x\n",
 	       (*di)->HardwareId.Value, (*di)->CurrentStatus);
 #endif
 }
@@ -642,7 +642,7 @@ acpi_print(void *aux, const char *pnp)
 					}
 				}
 			}
-			    
+
 #endif
 		} else {
 			aprint_normal("ACPI Object Type '%s' (0x%02x) ",
@@ -1053,7 +1053,7 @@ acpi_pci_set_line(int bus, int dev, int pin, int line)
 	pid.Bus = bus;
 	pid.Device = dev;
 	pid.Function = 0;
-	
+
 	err = AcpiOsReadPciConfiguration(&pid, PCI_BHLC_REG, &bhlc, 32);
 	if (err)
 		return;
@@ -1133,7 +1133,7 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 			sc->sc_pci_bus = ACPI_LOWORD(val);
 		}
 	}
-			
+
 
 #ifdef ACPI_DEBUG
 	printf("%s: fixing up PCI bus %d at level %u\n", sc->sc_dev.dv_xname,
@@ -1236,7 +1236,7 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 		resc = ACPI_NEXT_RESOURCE(resc);
 		resn = ACPI_NEXT_RESOURCE(resn);
 		delta = (UINT8 *)resn - (UINT8 *)bufn.Pointer;
-		if (delta >= 
+		if (delta >=
 		    bufn.Length-ACPI_SIZEOF_RESOURCE(ACPI_RESOURCE_DATA)) {
 			bufn.Length *= 2;
 			bufn.Pointer = realloc(bufn.Pointer, bufn.Length,

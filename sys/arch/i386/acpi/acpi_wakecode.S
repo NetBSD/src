@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.2 2003/11/20 12:30:34 junyoung Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.3 2004/04/10 11:50:55 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ wakeup_32:
         movw	%ax,%ds
         jmp	*%ebx
 
-        
+
 	.align	8
 tmp_gdt:
 	.word	0xffff
