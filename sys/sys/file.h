@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)file.h	7.10 (Berkeley) 6/4/91
- *	$Id: file.h,v 1.3 1993/05/20 16:22:15 cgd Exp $
+ *	$Id: file.h,v 1.4 1994/02/04 22:19:41 cgd Exp $
  */
 
 #ifndef _SYS_FILE_H_
@@ -41,6 +41,9 @@
 #include <sys/unistd.h>
 
 #ifdef KERNEL
+struct proc;
+struct uio;
+
 /*
  * Kernel descriptor table.
  * One entry for each open kernel vnode and socket.
