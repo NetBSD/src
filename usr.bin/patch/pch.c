@@ -1,7 +1,7 @@
-/*	$NetBSD: pch.c,v 1.11 2002/03/16 22:36:42 kristerw Exp $	*/
+/*	$NetBSD: pch.c,v 1.12 2002/03/16 23:55:02 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.11 2002/03/16 22:36:42 kristerw Exp $");
+__RCSID("$NetBSD: pch.c,v 1.12 2002/03/16 23:55:02 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -97,14 +97,15 @@ set_hunkmax(void)
 void
 grow_hunkmax(void)
 {
+	char **tp_line;
+	short *tp_len;
+	char *tp_char;
+
 	hunkmax *= 2;
-	/* 
-	 * Note that on most systems, only the p_line array ever gets fresh
-	 * memory since p_len can move into p_line's old space, and p_char
-	 * can move into p_len's old space.  Not on PDP-11's however.  But
-	 * it doesn't matter.
-	 */
 	assert(p_line != NULL && p_len != NULL && p_char != NULL);
+	tp_line = p_line;
+	tp_len = p_len;
+	tp_char = p_char;
 	p_line = realloc(p_line, hunkmax * sizeof(char *));
 	p_len  = realloc(p_len,  hunkmax * sizeof(short));
 	p_char = realloc(p_char, hunkmax * sizeof(char));
@@ -114,6 +115,12 @@ grow_hunkmax(void)
 		fatal("out of memory\n");
 	out_of_mem = TRUE;	/* whatever is null will be allocated again */
 				/* from within plan_a(), of all places */
+	if (p_line == NULL)
+		free(tp_line);
+	if (p_len == NULL)
+		free(tp_len);
+	if (p_char == NULL)
+		free(tp_char);
 }
 
 /*
@@ -861,7 +868,7 @@ another_hunk(void)
 		break;
 	    case '=':
 		ch = ' ';
-		/* FALL THROUGH */
+		/* FALLTHROUGH */
 	    case ' ':
 		if (fillsrc > p_ptrn_lines) {
 		    free(s);
@@ -881,7 +888,7 @@ another_hunk(void)
 		    p_end = fillsrc-1;
 		    return FALSE;
 		}
-		/* FALL THROUGH */
+		/* FALLTHROUGH */
 	    case '+':
 		if (filldst > p_end) {
 		    free(s);
