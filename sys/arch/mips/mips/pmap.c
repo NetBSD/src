@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 1997/07/23 05:41:17 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 1997/07/28 20:41:58 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -1293,6 +1293,15 @@ pmap_zero_page(phys)
 		p += 16;
 	} while (p != end);
 #ifdef MIPS3
+	/* 
+	 * If  we have a virtually-indexed, physically-tagged WB cache,
+	 * and no L2 cache to warn of aliased mappings,	we must force a
+	 * writeback of the destination out of the L1  cache.  If we don't,
+	 * later reads (from virtual addresses mapped to the destination PA)
+	 * might read old stale DRAM footprint, not the just-written data.
+	 * XXX  Do we need to also invalidate any cache lines matching
+	 *      the destination as well?
+	 */
 	if (CPUISMIPS3) {
 		/*XXX FIXME Not very sophisticated */
 		/*	MachFlushCache();*/
@@ -1318,6 +1327,16 @@ pmap_copy_page(src, dst)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
 #ifdef MIPS3
+	/* 
+	 * If  we have a virtually-indexed, physically-tagged cache,
+	 * and no L2 cache to warn of aliased mappings,  we must force an
+	 * write-back of all L1 cache lines of the source physical address,
+	 * irrespective of their  virtual address (cache indexes).
+	 * If we don't, our copy loop might read and copy stale DRAM
+	 * footprint instead of the fresh (but dirty) data in a WB cache.
+	 * XXX invalidate any cached lines of the destination PA
+	 *     here also?
+	 */
 	if (CPUISMIPS3) {
 		/*XXX FIXME Not very sophisticated */
 		/*	MachFlushCache(); */
@@ -1368,6 +1387,15 @@ pmap_copy_page(src, dst)
 		d += 16;
 	} while (s != end);
 #ifdef MIPS3
+	/* 
+	 * If  we have a virtually-indexed, physically-tagged WB cache,
+	 * and no L2 cache to warn of aliased mappings,	we must force a
+	 * writeback of the destination out of the L1  cache.  If we don't,
+	 * later reads (from virtual addresses mapped to the destination PA)
+	 * might read old stale DRAM footprint, not the just-written data.
+	 * XXX  Do we need to also invalidate any cache lines matching
+	 *      the destination as well?
+	 */
 	if (CPUISMIPS3) {
 		/*XXX FIXME Not very sophisticated */
 		/*	MachFlushCache();*/
