@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.5 1996/08/21 14:02:48 jonathan Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.6 1996/08/27 02:32:48 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -409,7 +409,7 @@ tc_consprobeslot(tc_slotaddr)
 
 #if NMFB > 0
 	if (DRIVER_FOR_SLOT(name, "PMAG-AA ") &&
-	    mfbinit(slotaddr, 0, 1)) {
+	    mfbinit(NULL, slotaddr, 0, 1)) {
 		return (1);
 	}
 #endif /* NMFB */
