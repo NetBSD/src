@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzisabr.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: jazzisabr.c,v 1.8 2005/01/22 08:43:02 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzisabr.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzisabr.c,v 1.8 2005/01/22 08:43:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: jazzisabr.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $"
 /* Definition of the driver for autoconfig. */
 int	jazzisabrmatch(struct device *, struct cfdata *, void *);
 void	jazzisabrattach(struct device *, struct device *, void *);
-int	jazzisabr_iointr(unsigned mask, struct clockframe *cf);
+uint32_t jazzisabr_iointr(uint32_t, struct clockframe *);
 
 CFATTACH_DECL(jazzisabr, sizeof(struct isabr_softc),
     jazzisabrmatch, jazzisabrattach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: isabrvar.h,v 1.2 2003/08/07 16:26:50 agc Exp $	*/
+/*	$NetBSD: isabrvar.h,v 1.3 2005/01/22 08:43:02 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -90,6 +90,4 @@ struct isabr_config {
 extern struct isabr_config *isabr_conf;
 
 void isabrattach(struct isabr_softc *);
-int isabr_iointr(unsigned, struct clockframe *);
-
-
+uint32_t isabr_iointr(uint32_t, struct clockframe *);

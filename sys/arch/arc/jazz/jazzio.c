@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.13 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.14 2005/01/22 08:43:02 tsutsui Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.13 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.14 2005/01/22 08:43:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ extern struct cfdriver jazzio_cd;
 
 void	jazzio_intr_establish(int, int (*)(void *), void *);
 void	jazzio_intr_disestablish(int);
-int	jazzio_intr(unsigned, struct clockframe *);
+uint32_t jazzio_intr(uint32_t, struct clockframe *);
 int	jazzio_no_handler(void *);
 
 /*
@@ -215,8 +215,8 @@ jazzio_no_handler(void *arg)
 /*
  *   Handle jazz i/o interrupt.
  */
-int
-jazzio_intr(unsigned mask, struct clockframe *cf)
+uint32_t
+jazzio_intr(uint32_t mask, struct clockframe *cf)
 {
 	unsigned int vector;
 	struct jazzio_intrhand *jirp;
