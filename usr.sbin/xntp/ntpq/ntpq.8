@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpq.8,v 1.1.1.1 1997/04/18 13:29:08 christos Exp $
+.\"	$NetBSD: ntpq.8,v 1.2 1997/04/20 21:53:22 christos Exp $
 .\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
 .\"
 .Dd April 17, 1997
@@ -8,7 +8,7 @@
 .Nm ntpq
 .Nd standard NTP query program
 .Sh SYNOPSIS
-.Nm ntpdate
+.Nm ntpq
 .Op Fl inp
 .Op Fl c Ar command
 .Ar host
@@ -76,8 +76,8 @@ Output all host addresses in dotted-quad numeric format rather than
 converting to the canonical host names.
 .It Fl p
 Print a list of the peers known to the server as well as a summary
-of their state. This is equivalent to the <code>peers</code> interactive
-command.
+of their state. This is equivalent to the 
+.Ar peers interactive command.
 .El
 .Sh INTERNAL COMMANDS
 Interactive format commands consist of a keyword followed by zero to
@@ -109,8 +109,11 @@ than this manual page.
 .It Cd rmvars Ar variable_name Op ...
 .It Cd clearvars
 The data carried by NTP mode 6 messages consists of a list of items
-of the form <code><i>variable_name</i> = <i>value</i></code>, where the
-<code>" = <i>value</i>"</code> is ignored, and can be omitted, in
+of the form 
+.Ar variable_name=value ,
+where the
+.Ar =value
+is ignored, and can be omitted, in
 requests to the server to read variables. .Nm
 maintains an
 internal list in which data to be included in control messages can be
@@ -131,7 +134,8 @@ Authenticated requests causes some servers to handle requests slightly
 differently, and can occasionally melt the CPU in fuzzballs if you turn
 authentication on before doing a peer display.
 .It Cd cooked
-Causes output from query commands to be <code>"cooked"</code>.
+Causes output from query commands to be 
+.Cd cooked .
 Variables which are recognized by the server will have their values
 reformatted for human consumption. Variables which
 .Nm
@@ -281,7 +285,7 @@ command.
 An old form of the 
 .Cd peers command with the reference ID
 replaced by the local interface address.
-.It Cd passociations<
+.It Cd passociations
 Prints association data concerning in-spec peers from the internally
 cached list of associations. This command performs identically to the
 .Cd associations

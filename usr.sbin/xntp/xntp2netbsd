@@ -1,6 +1,6 @@
-#!/usr/gnu/bin/perl
+#!/usr/local/bin/perl
 #
-#	$NetBSD: xntp2netbsd,v 1.4 1997/04/18 19:04:58 christos Exp $
+#	$NetBSD: xntp2netbsd,v 1.5 1997/04/20 21:53:19 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for xntp into
 #	a NetBSD source tree.
@@ -213,7 +213,7 @@ while ($line = <DATA>) {
 	    if ($first) {
 		die "Data section must start with a %% file!";
 	    }
-	    print ODATA "#	\$"."NetBSD".": \$\n";
+	    print ODATA "$cmd[2]	\$"."NetBSD".": \$\n";
 	}
     } else {
 	if ($first) {
@@ -242,18 +242,18 @@ foreach $n (keys(%sedlist)) {
 
 __END__
 %% file usr.sbin/xntp/Makefile
-%% NetBSD
+%% NetBSD #
 SUBDIR= ntpdate ntpq ntptrace xntpd xntpdc
 
 .include <bsd.subdir.mk>
 %% file usr.sbin/xntp/Makefile.inc
-%% NetBSD
+%% NetBSD #
 CFLAGS += -I${.CURDIR}/../include -DHAVE_CONFIG_H
 LDADD += -lntp -lkvm
 DPADD += ${LIBNTP} ${LIBKVM}
 BINDIR = /usr/sbin
 %% file usr.sbin/xntp/xntpd/Makefile
-%% NetBSD
+%% NetBSD #
 
 PROG= xntpd
 %% srcs xntpd
@@ -261,7 +261,7 @@ MAN+= xntpd.8
 
 .include <bsd.prog.mk>
 %% file usr.sbin/xntp/xntpdc/Makefile
-%% NetBSD
+%% NetBSD #
 
 PROG= xntpdc
 %% srcs xntpdc
@@ -269,7 +269,7 @@ MAN+= xntpdc.8
 
 .include <bsd.prog.mk>
 %% file usr.sbin/xntp/ntpq/Makefile
-%% NetBSD
+%% NetBSD #
 
 PROG= ntpq
 %% srcs ntpq
@@ -277,7 +277,7 @@ MAN+= ntpq.8
 
 .include <bsd.prog.mk>
 %% file usr.sbin/xntp/ntpdate/Makefile
-%% NetBSD
+%% NetBSD #
 
 PROG= ntpdate
 %% srcs ntpdate
@@ -285,7 +285,7 @@ MAN+= ntpdate.8
 
 .include <bsd.prog.mk>
 %% file usr.sbin/xntp/ntptrace/Makefile
-%% NetBSD
+%% NetBSD #
 
 PROG= ntptrace
 %% srcs ntptrace
@@ -293,7 +293,7 @@ MAN+= ntptrace.8
 
 .include <bsd.prog.mk>
 %% file lib/libntp/Makefile
-%% NetBSD
+%% NetBSD #
 
 LIB=	ntp
 %% srcs libntp
@@ -303,7 +303,7 @@ CFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../usr.sbin/xntp/include
 
 .include <bsd.lib.mk>
 %% file domestic/lib/libntp/Makefile
-%% NetBSD
+%% NetBSD #
 
 LIB=	ntp
 %% srcs libntp
@@ -976,7 +976,7 @@ char * Version = "5.90 3-NetBSD Thu Apr 17 17:15:47 EDT 1997 (1)";
 /* Define if you have the socket library (-lsocket).  */
 /* #undef HAVE_LIBSOCKET */
 %% file usr.sbin/xntp/ntpdate/ntpdate.8
-.\"	$NetBSD: xntp2netbsd,v 1.4 1997/04/18 19:04:58 christos Exp $
+%% NetBSD .\"
 .\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
 .\"
 .Dd April 17, 1997
@@ -1059,7 +1059,8 @@ daemon (e.g.,
 .Xr xntpd 8 )
 is running on the same host. When running 
 .Nm
-on a regular basis from <code>cron</code>
+on a regular basis from 
+.Xr cron 8
 as an alternative to running a daemon, doing so once every hour or two
 will result in precise enough timekeeping to avoid stepping the clock.
 .Pp
@@ -1147,7 +1148,9 @@ Direct
 to use an unprivileged port or outgoing
 packets. This is most useful when behind a firewall that blocks incoming
 traffic to privileged ports, and you want to synchronise with hosts
-beyond the firewall. Note that the <code>-d</code> option always uses
+beyond the firewall. Note that the 
+.Fl d
+option always uses
 unprivileged ports.
 .It Fl v
 Be verbose.  This option will cause the
@@ -1170,7 +1173,7 @@ and
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
 %% file usr.sbin/xntp/ntpq/ntpq.8
-.\"	$NetBSD: xntp2netbsd,v 1.4 1997/04/18 19:04:58 christos Exp $
+%% NetBSD .\"
 .\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
 .\"
 .Dd April 17, 1997
@@ -1180,7 +1183,7 @@ David L. Mills (mills@udel.edu)
 .Nm ntpq
 .Nd standard NTP query program
 .Sh SYNOPSIS
-.Nm ntpdate
+.Nm ntpq
 .Op Fl inp
 .Op Fl c Ar command
 .Ar host
@@ -1248,8 +1251,8 @@ Output all host addresses in dotted-quad numeric format rather than
 converting to the canonical host names.
 .It Fl p
 Print a list of the peers known to the server as well as a summary
-of their state. This is equivalent to the <code>peers</code> interactive
-command.
+of their state. This is equivalent to the 
+.Ar peers interactive command.
 .El
 .Sh INTERNAL COMMANDS
 Interactive format commands consist of a keyword followed by zero to
@@ -1281,8 +1284,11 @@ than this manual page.
 .It Cd rmvars Ar variable_name Op ...
 .It Cd clearvars
 The data carried by NTP mode 6 messages consists of a list of items
-of the form <code><i>variable_name</i> = <i>value</i></code>, where the
-<code>" = <i>value</i>"</code> is ignored, and can be omitted, in
+of the form 
+.Ar variable_name=value ,
+where the
+.Ar =value
+is ignored, and can be omitted, in
 requests to the server to read variables. .Nm
 maintains an
 internal list in which data to be included in control messages can be
@@ -1303,7 +1309,8 @@ Authenticated requests causes some servers to handle requests slightly
 differently, and can occasionally melt the CPU in fuzzballs if you turn
 authentication on before doing a peer display.
 .It Cd cooked
-Causes output from query commands to be <code>"cooked"</code>.
+Causes output from query commands to be 
+.Cd cooked .
 Variables which are recognized by the server will have their values
 reformatted for human consumption. Variables which
 .Nm
@@ -1453,7 +1460,7 @@ command.
 An old form of the 
 .Cd peers command with the reference ID
 replaced by the local interface address.
-.It Cd passociations<
+.It Cd passociations
 Prints association data concerning in-spec peers from the internally
 cached list of associations. This command performs identically to the
 .Cd associations
@@ -1542,7 +1549,7 @@ queries to a particular host, but doesn't.
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
 %% file usr.sbin/xntp/ntptrace/ntptrace.8
-.\"	$NetBSD: xntp2netbsd,v 1.4 1997/04/18 19:04:58 christos Exp $
+%% NetBSD .\"
 .\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
 .\"
 .Dd April 17, 1997
@@ -1552,7 +1559,7 @@ David L. Mills (mills@udel.edu)
 .Nm ntptrace
 .Nd trace a chain of NTP servers back to the primary
 .Sh SYNOPSIS
-.Nm ntptrace
+.Nm
 .Op Fl vdn
 .Op Fl r Ar retries
 .Op Fl t Ar timeout
@@ -1604,7 +1611,7 @@ samples.
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
 %% file usr.sbin/xntp/xntpd/xntpd.8
-.\"	$NetBSD: xntp2netbsd,v 1.4 1997/04/18 19:04:58 christos Exp $
+%% NetBSD .\"
 .\" Converted from HTML to mandoc by Jason R. Thorpe <thorpej@NetBSD.ORG>
 .Dd April 17, 1997
 .Dt XNTPD 8
@@ -1792,7 +1799,7 @@ than a high stratum workstation, in mind.
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
 %% file usr.sbin/xntp/xntpdc/xntpdc.8
-.\"	$NetBSD: xntp2netbsd,v 1.4 1997/04/18 19:04:58 christos Exp $
+%% NetBSD .\"
 .\" Converted from HTML to mandoc by Jason R. Thorpe <thorpej@NetBSD.ORG>
 .Dd April 17, 1997
 .Dt XNTPDC 8
@@ -1894,7 +1901,8 @@ Output all host addresses in dotted-quad numeric format rather than
 converting to the canonical host names.
 .It Fl p
 Print a list of the peers known to the server as well as a summary
-of their state. This is equivalent to <code>-c peers</code>.
+of their state. This is equivalent to 
+.Fl c Ar peers .
 .It Fl s
 Print a list of the peers known to the server as well as a summary
 of their state, but in a slightly different format than the
