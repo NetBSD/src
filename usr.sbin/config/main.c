@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 1998/06/24 11:20:54 jonathan Exp $	*/
+/*	$NetBSD: main.c,v 1.35 1998/06/28 04:41:36 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,6 +64,8 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include "config.h"
 #include "sem.h"
 
+int	vflag;				/* verbose output */
+
 int	firstfile __P((const char *));
 int	yyparse __P((void));
 
@@ -103,7 +105,7 @@ main(argc, argv)
 	int pflag, ch;
 
 	pflag = 0;
-	while ((ch = getopt(argc, argv, "Dgpb:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "Dgpvb:s:")) != -1) {
 		switch (ch) {
 
 		case 'D':
@@ -134,6 +136,10 @@ main(argc, argv)
 			 * can (and should) use a "makeoptions" line.
 			 */
 			pflag = 1;
+			break;
+
+		case 'v':
+			vflag = 1;
 			break;
 
 		case 'b':
@@ -574,7 +580,7 @@ addoption(name, value)
 		return;
 	}
 
-	if (is_undecl) {
+	if (is_undecl && vflag) {
 		warn("undeclared option `%s' added to IDENT", name);
 	}
 
