@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.11 2003/03/08 08:03:35 lukem Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.12 2003/03/14 22:27:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.11 2003/03/08 08:03:35 lukem Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.12 2003/03/14 22:27:34 nathanw Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -105,7 +105,10 @@ pthread__signal_tramp(int, int, void (*)(int, int, struct sigcontext *),
 
 static int firstsig(const sigset_t *);
 
+int _sys_execve(const char *, char *const [], char *const []);
+
 __strong_alias(__libc_thr_sigsetmask,pthread_sigmask)
+__strong_alias(__exeve,execve)
 
 void
 pthread__signal_init(void)
@@ -892,4 +895,46 @@ pthread__signal_tramp(int sig, int code,
 	_setcontext_u(uc);
        	/*NOTREACHED*//*CONSTCOND*/
 	assert(0);
+}
+
+/*
+ * The execve() system call and the libc exec*() calls that use it are
+ * specified to propagate the signal mask of the current thread to the
+ * initial thread of the new process image. Since thread signal masks
+ * are maintained in userlevel, this wrapper is necessary to give the
+ * kernel the correct value.
+ */
+int
+execve(const char *path, char *const argv[], char *const envp[])
+{
+	pthread_t self;
+	int ret;
+
+	self = pthread__self();
+
+	/*
+	 * Don't acquire pt_process_siglock, even though it seems like
+	 * the right thing to do. The most common reason to be here is
+	 * that we're on the child side of a fork() or vfork()
+	 * call. In either case, another thread could have held
+	 * pt_process_siglock at the moment of forking, and acquiring
+	 * it here would cause us to deadlock. Additionally, in the
+	 * case of vfork(), acquiring the lock here would cause it to
+	 * be locked in the parent's address space and cause a
+	 * deadlock there the next time a signal routine is called.
+	 *
+	 * The remaining case is where a live multithreaded program
+	 * calls exec*() from one of several threads with no explicit
+	 * synchronization. It may get the wrong process sigmask in
+	 * the new process image if another thread executes a signal
+	 * routine between the sigprocmask and the _sys_execve()
+	 * call. I don't have much sympathy for such a program.
+	 */
+	__sigprocmask14(SIG_SETMASK, &self->pt_sigmask, NULL);
+	ret = _sys_execve(path, argv, envp);
+
+	/* Normally, we shouldn't get here; this is an error condition. */
+	__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
+
+	return ret;
 }
