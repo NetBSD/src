@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.9 1998/10/03 16:24:08 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.10 1998/10/08 12:15:24 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -148,7 +148,7 @@ char		*fileURLFilename(char *, char *, int);
 char		*fileURLHost(char *, char *, int);
 char		*fileFindByPath(char *, char *);
 char		*fileGetContents(char *);
-Boolean		make_preserve_name(char *, int, char *, char *);
+Boolean		make_preserve_name(char *, size_t, char *, char *);
 void		write_file(char *, char *);
 void		copy_file(char *, char *, char *);
 void		move_file(char *, char *, char *);
@@ -156,12 +156,6 @@ void		copy_hierarchy(char *, char *, Boolean);
 int		delete_hierarchy(char *, Boolean, Boolean);
 int		unpack(char *, char *);
 void		format_cmd(char *, char *, char *, char *);
-
-/* Msg */
-void		upchuck(const char *);
-void		barf(const char *, ...);
-void		whinge(const char *, ...);
-Boolean		y_or_n(Boolean, const char *, ...);
 
 /* Packing list */
 PackingList	new_plist_entry(void);

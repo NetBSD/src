@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.17 1998/10/04 01:48:16 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.18 1998/10/08 12:15:24 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.17 1998/10/04 01:48:16 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.18 1998/10/08 12:15:24 agc Exp $");
 #endif
 #endif
 
@@ -39,8 +39,50 @@ __RCSID("$NetBSD: file.c,v 1.17 1998/10/04 01:48:16 hubertf Exp $");
 #include <pwd.h>
 #include <time.h>
 
-FILE *
-ftpGetURL(char *url, char *user, char *passwd, int *retcode);
+/* This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
+ * NetBSD's ftp command to do all FTP, which will DTRT for proxies,
+ * etc.
+ */
+static FILE *
+ftpGetURL(char *url, int *retcode)
+{
+	FILE *ftp;
+	pid_t pid_ftp;
+	int p[2];
+
+	*retcode=0;
+
+	if (pipe(p) < 0) {
+		*retcode = 1;
+		return NULL;
+	}
+
+	pid_ftp = fork();
+	if (pid_ftp < 0) {
+		*retcode = 1;
+		return NULL;
+	}
+	if (pid_ftp == 0) {
+		/* child */
+		dup2(p[1],1);
+		close(p[1]);
+
+		fprintf(stderr, ">>> ftp -o - %s\n",url); 
+		execl("/usr/bin/ftp","ftp","-V","-o","-",url,NULL);
+		exit(1);
+	} else {
+		/* parent */
+		ftp = fdopen(p[0],"r");
+
+		close(p[1]);
+
+		if (ftp == (FILE *) NULL) {
+			*retcode = 1;
+			return NULL;
+		}
+	}
+	return ftp;
+}
 
 /* Quick check to see if a file exists */
 Boolean
@@ -202,10 +244,9 @@ char *
 fileGetURL(char *base, char *spec)
 {
     char host[MAXHOSTNAMELEN], file[FILENAME_MAX];
-    char pword[MAXHOSTNAMELEN + 40], *uname, *cp, *rp;
+    char *cp, *rp;
     char fname[FILENAME_MAX];
     char pen[FILENAME_MAX];
-    struct passwd *pw;
     FILE *ftp;
     pid_t tpid;
     int i, status;
@@ -257,25 +298,9 @@ fileGetURL(char *base, char *spec)
 	return NULL;
     }
 
-    /* Maybe change to ftp if this doesn't work */
-    uname = "anonymous";
-
-    /* Make up a convincing "password" */
-    pw = getpwuid(getuid());
-    if (!pw) {
-	warnx("can't get user name for ID %d", getuid());
-	strcpy(pword, "joe@");
-    }
-    else {
-	char me[MAXHOSTNAMELEN + 1];
-
-	gethostname(me, sizeof me);
-	me[sizeof(me) - 1] = '\0';
-	snprintf(pword, sizeof pword, "%s@%s", pw->pw_name, me);
-    }
     if (Verbose)
 	printf("Trying to fetch %s.\n", fname);
-    ftp = ftpGetURL(fname, uname, pword, &status);
+    ftp = ftpGetURL(fname, &status);
     if (ftp) {
 	pen[0] = '\0';
 	if ((rp = make_playpen(pen, 0)) != NULL) {
@@ -393,19 +418,19 @@ fileGetContents(char *fname)
 	errx(2, "can't stat '%s'", fname);
     }
 
-    contents = (char *)malloc(sb.st_size + 1);
+    contents = (char *)malloc((size_t)(sb.st_size) + 1);
     fd = open(fname, O_RDONLY, 0);
     if (fd == FAIL) {
 	cleanup(0);
 	errx(2, "unable to open '%s' for reading", fname);
     }
-    if (read(fd, contents, sb.st_size) != sb.st_size) {
+    if (read(fd, contents, (size_t) sb.st_size) != (size_t) sb.st_size) {
 	cleanup(0);
 	errx(2, "short read on '%s' - did not get %qd bytes",
 			fname, (long long)sb.st_size);
     }
     close(fd);
-    contents[sb.st_size] = '\0';
+    contents[(size_t)sb.st_size] = '\0';
     return contents;
 }
 
@@ -413,7 +438,7 @@ fileGetContents(char *fname)
  * name for it.
  */
 Boolean
-make_preserve_name(char *try, int max, char *name, char *file)
+make_preserve_name(char *try, size_t max, char *name, char *file)
 {
     int len, i;
 
@@ -447,24 +472,23 @@ make_preserve_name(char *try, int max, char *name, char *file)
 void
 write_file(char *name, char *str)
 {
-    FILE *fp;
-    int len;
+	FILE	*fp;
+	size_t	len;
 
-    fp = fopen(name, "w");
-    if (!fp) {
-	cleanup(0);
-	errx(2, "cannot fopen '%s' for writing", name);
-    }
-    len = strlen(str);
-    if (fwrite(str, 1, len, fp) != len) {
-	cleanup(0);
-	errx(2, "short fwrite on '%s', tried to write %d bytes",
+	if ((fp = fopen(name, "w")) == (FILE *) NULL) {
+		cleanup(0);
+		errx(2, "cannot fopen '%s' for writing", name);
+	}
+	len = strlen(str);
+	if (fwrite(str, 1, len, fp) != len) {
+		cleanup(0);
+		errx(2, "short fwrite on '%s', tried to write %d bytes",
 			name, len);
-    }
-    if (fclose(fp)) {
-	cleanup(0);
-	errx(2, "failure to fclose '%s'", name);
-    }
+	}
+	if (fclose(fp)) {
+		cleanup(0);
+		errx(2, "failure to fclose '%s'", name);
+	}
 }
 
 void
@@ -533,7 +557,7 @@ copy_hierarchy(char *dir, char *fname, Boolean to)
 int
 unpack(char *pkg, char *flist)
 {
-    char args[10], suffix[80], *cp;
+    char args[10], suff[80], *cp;
 
     args[0] = '\0';
     /*
@@ -543,8 +567,8 @@ unpack(char *pkg, char *flist)
     if (strcmp(pkg, "-")) {
 	cp = strrchr(pkg, '.');
 	if (cp) {
-	    strcpy(suffix, cp + 1);
-	    if (strchr(suffix, 'z') || strchr(suffix, 'Z'))
+	    strcpy(suff, cp + 1);
+	    if (strchr(suff, 'z') || strchr(suff, 'Z'))
 		strcpy(args, "-z");
 	}
     }
@@ -615,52 +639,4 @@ format_cmd(char *buf, char *fmt, char *dir, char *name)
 	    *buf++ = *fmt++;
     }
     *buf = '\0';
-}
-
-
-/* This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
- * NetBSD's ftp command to do all FTP, which will DTRT for proxies,
- * etc.
- */
-FILE *
-ftpGetURL(char *url, char *user, char *passwd, int *retcode)
-{
-  FILE *ftp;
-  pid_t pid_ftp;
-  int p[2];
-
-  *retcode=0;
-
-  if( pipe(p) < 0){
-    *retcode = 1;
-    return NULL;
-  }
-
-  pid_ftp = fork();
-  if(pid_ftp < 0){
-    *retcode = 1;
-    return NULL;
-  }
-  if(pid_ftp == 0){
-    /* child */
-    dup2(p[1],1);
-    close(p[1]);
-
-
- fprintf(stderr, ">>> ftp -o - %s\n",url); 
-    execl("/usr/bin/ftp","ftp","-V","-o","-",url,NULL);
-    exit(1);
-  }else{
-    /* parent */
-    ftp = fdopen(p[0],"r");
-
-    close(p[1]);
-    
-    if(ftp < 0){
-      *retcode = 1;
-      return NULL;
-    }
-  }
-  
-  return ftp;
 }
