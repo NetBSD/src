@@ -45,7 +45,7 @@ ENTRY(exect)
 	lea	SYS_execve,%eax
 	pushf
 	popl	%edx
-	orl	$ PSL_T,%edx
+	orl	$PSL_T,%edx
 	pushl	%edx
 	popf
 	LCALL(7,0)
