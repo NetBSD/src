@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.550 2003/03/15 19:34:17 jmmv Exp $
+# $NetBSD: GENERIC,v 1.551 2003/03/25 19:37:12 jmmv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.550 $"
+#ident 		"GENERIC-$Revision: 1.551 $"
 
 maxusers	32		# estimated number of users
 
@@ -86,6 +86,13 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Beep when it is safe to power down the system (requires sysbeep)
+#options 	BEEP_ONHALT
+# Some tunable details of the above feature (default values used below)
+#options 	BEEP_ONHALT_COUNT=3	# Times to beep
+#options 	BEEP_ONHALT_PITCH=1500	# Default frequency (in Hz)
+#options 	BEEP_ONHALT_PERIOD=250	# Default duration (in msecs)
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.

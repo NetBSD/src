@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.516 2003/03/03 22:14:16 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.517 2003/03/25 19:37:16 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.516 2003/03/03 22:14:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.517 2003/03/25 19:37:16 jmmv Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.516 2003/03/03 22:14:16 fvdl Exp $");
 #include "opt_realmem.h"
 #include "opt_compat_mach.h"	/* need to get the right segment def */
 #include "opt_mtrr.h"
+#include "opt_beep.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +187,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.516 2003/03/03 22:14:16 fvdl Exp $");
 #ifdef MULTIPROCESSOR		/* XXX */
 #include <machine/mpbiosvar.h>	/* XXX */
 #endif				/* XXX */
+
+#ifndef BEEP_ONHALT_COUNT
+#define BEEP_ONHALT_COUNT 3
+#endif
+#ifndef BEEP_ONHALT_PITCH
+#define BEEP_ONHALT_PITCH 1500
+#endif
+#ifndef BEEP_ONHALT_PERIOD
+#define BEEP_ONHALT_PERIOD 250
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* cpu "architecture" */
@@ -895,6 +906,20 @@ haltsys:
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
+
+#ifdef BEEP_ONHALT
+		{
+			int c;
+			for (c = BEEP_ONHALT_COUNT; c > 0; c--) {
+				sysbeep(BEEP_ONHALT_PITCH,
+				        BEEP_ONHALT_PERIOD * hz / 1000);
+				delay(BEEP_ONHALT_PERIOD * 1000);
+				sysbeep(0, BEEP_ONHALT_PERIOD * hz / 1000);
+				delay(BEEP_ONHALT_PERIOD * 1000);
+			}
+		}
+#endif
+
 		cnpollc(1);	/* for proper keyboard command handling */
 		if (cngetc() == 0) {
 			/* no console attached, so just hlt */
