@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.256 2003/08/22 19:03:03 dsl Exp $
+#	$NetBSD: Makefile,v 1.257 2003/10/24 20:12:04 jdolecek Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -147,11 +147,16 @@ distribution: check_DESTDIR .WAIT distrib-dirs
 	(cd ${.CURDIR}; ${MAKE} install-etc-files)
 .endif	# !DISTRIBUTION_DONE
 
+.PHONY: MAKEDEV
+MAKEDEV:
+	awk -v ETCDIR="${.CURDIR}" -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl > ${.TARGET}
+
+	
 
 # install-etc-files --
 #	Install etc (config) files; not performed by "make build"
 #
-install-etc-files: check_DESTDIR
+install-etc-files: check_DESTDIR MAKEDEV
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${BIN1} ${DESTDIR}/etc
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 \
@@ -176,7 +181,9 @@ install-etc-files: check_DESTDIR
 	) | ${METALOG.add}
 .endif	# MKUNPRIVED != no
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
-	    MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
+	    MAKEDEV ${DESTDIR}/dev
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
+	    MAKEDEV.local ${DESTDIR}/dev
 	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
 	    minfree ${DESTDIR}/var/crash
 .for file in cshrc login profile shrc
