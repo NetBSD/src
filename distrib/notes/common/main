@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.207 2002/07/26 02:45:37 rafal Exp $
+.\"	$NetBSD: main,v 1.208 2002/08/01 06:26:24 junyoung Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -449,6 +449,7 @@ Some highlights include:
 .(bullet
 Ports to new platforms including:
 algor,
+dreamcast,
 evbarm,
 hpcarm,
 hpcsh,
