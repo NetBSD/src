@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.7 1997/09/23 13:56:43 lukem Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.8 1998/06/08 07:13:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,3 +44,4 @@
 #define	_PATH_FTPLOGINMESG	"motd"
 #define	_PATH_FTPUSERS		"ftpusers"
 #define	_PATH_FTPWELCOME	"ftpwelcome"
+#define	TMPFILE			"/tmp/ftpdXXXXXXX"
