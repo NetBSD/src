@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.5 2000/05/16 04:55:59 perseant Exp $	*/
+/* $NetBSD: pass1.c,v 1.6 2000/05/23 01:48:54 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -50,28 +50,29 @@
 #include "extern.h"
 #include "fsutil.h"
 
-SEGUSE *seg_table;
+SEGUSE         *seg_table;
 extern daddr_t *din_table;
 
-static daddr_t badblk;
-static daddr_t dupblk;
-static void checkinode __P((ino_t, struct inodesc *));
-static int i_d_cmp(const void *, const void *);
+static daddr_t  badblk;
+static daddr_t  dupblk;
+static void     checkinode(ino_t, struct inodesc *);
+static int      i_d_cmp(const void *, const void *);
 
-static void bmapcheck(void)
+static void
+bmapcheck(void)
 {
-	int i;
+	int             i;
 
-	if(testbmap(0))
+	if (testbmap(0))
 		raise(1);
-	for(i=0;i<maxfsblock;i++)
-		if(testbmap(i) > maxino)
+	for (i = 0; i < maxfsblock; i++)
+		if (testbmap(i) > maxino)
 			raise(1);
 }
 
 struct ino_daddr {
-	ino_t ino;
-	daddr_t daddr;
+	ino_t           ino;
+	daddr_t         daddr;
 };
 
 static int
@@ -94,29 +95,29 @@ i_d_cmp(const void *va, const void *vb)
 void
 pass1()
 {
-	ino_t inumber;
-	int i, total_segments;
-	struct inodesc idesc;
-        struct dinode *idinode, *tinode;
-        struct ifile *ifp;
-        CLEANERINFO *cp;
+	ino_t           inumber;
+	int             i, total_segments;
+	struct inodesc  idesc;
+	struct dinode  *idinode, *tinode;
+	struct ifile   *ifp;
+	CLEANERINFO    *cp;
 	struct bufarea *bp;
 	struct ino_daddr **dins;
 
-        idinode = lfs_difind(&sblock,sblock.lfs_ifile,&ifblock);
+	idinode = lfs_difind(&sblock, sblock.lfs_ifile, &ifblock);
 
-        /*
+	/*
          * We now have the ifile's inode block in core.  Read out the
          * number of segments.
          */
 #if 1
-        if(pbp != 0)
-            pbp->b_flags &= ~B_INUSE;
-        pbp = getddblk(idinode->di_db[0], sblock.lfs_bsize);
+	if (pbp != 0)
+		pbp->b_flags &= ~B_INUSE;
+	pbp = getddblk(idinode->di_db[0], sblock.lfs_bsize);
 
-        cp = (CLEANERINFO *)(pbp->b_un.b_buf);
+	cp = (CLEANERINFO *)(pbp->b_un.b_buf);
 #endif
-        total_segments = sblock.lfs_size / sblock.lfs_bsize;
+	total_segments = sblock.lfs_size / sblock.lfs_bsize;
 
 	/*
 	 * Find all allocated blocks, initialize numdirs.
@@ -131,49 +132,48 @@ pass1()
 	if (debug)
 		printf("creating inode address table...\n");
 	/* Sort by daddr */
-	dins = (struct ino_daddr **)malloc((maxino+1) * sizeof(*dins));
-	for(i=0;i<=maxino;i++) {
+	dins = (struct ino_daddr **)malloc((maxino + 1) * sizeof(*dins));
+	for (i = 0; i <= maxino; i++) {
 		dins[i] = malloc(sizeof(**dins));
 		dins[i]->ino = i;
 		dins[i]->daddr = lfs_ino_daddr(i);
 	}
-	qsort(dins, maxino+1, sizeof(*dins), i_d_cmp);
+	qsort(dins, maxino + 1, sizeof(*dins), i_d_cmp);
 
 	/* find a value for numdirs, fill in din_table */
 	if (debug)
 		printf("counting dirs...\n");
-	numdirs=0;
-	for(i=0; i <= maxino; i++) {
+	numdirs = 0;
+	for (i = 0; i <= maxino; i++) {
 		inumber = dins[i]->ino;
-		if(inumber == 0 || dins[i]->daddr == 0)
+		if (inumber == 0 || dins[i]->daddr == 0)
 			continue;
 		tinode = lfs_ginode(inumber);
-		if(tinode && (tinode->di_mode & IFMT)==IFDIR)
+		if (tinode && (tinode->di_mode & IFMT) == IFDIR)
 			numdirs++;
 	}
 
 	/* from setup.c */
-        inplast = 0;
-        listmax = numdirs + 10;
-        inpsort = (struct inoinfo **)calloc((unsigned)listmax,
-            sizeof(struct inoinfo *));
-        inphead = (struct inoinfo **)calloc((unsigned)numdirs,
-            sizeof(struct inoinfo *));
-        if (inpsort == NULL || inphead == NULL) {
-                printf("cannot alloc %lu bytes for inphead\n",
-                    (unsigned long)numdirs * sizeof(struct inoinfo *));
+	inplast = 0;
+	listmax = numdirs + 10;
+	inpsort = (struct inoinfo **)calloc((unsigned) listmax,
+					     sizeof(struct inoinfo *));
+	inphead = (struct inoinfo **)calloc((unsigned) numdirs,
+					     sizeof(struct inoinfo *));
+	if (inpsort == NULL || inphead == NULL) {
+		printf("cannot alloc %lu bytes for inphead\n",
+		       (unsigned long)numdirs * sizeof(struct inoinfo *));
 		exit(1);
-        }
-
+	}
 	/* resetinodebuf(); */
 	if (debug)
 		printf("counting blocks...\n");
-        for(i=0; i <= maxino; i++) {
+	for (i = 0; i <= maxino; i++) {
 		inumber = dins[i]->ino;
-		if(inumber == 0 || dins[i]->daddr == 0)
+		if (inumber == 0 || dins[i]->daddr == 0)
 			continue;
-		ifp = lfs_ientry(inumber,&bp);
-		if(ifp && ifp->if_daddr != LFS_UNUSED_DADDR) {
+		ifp = lfs_ientry(inumber, &bp);
+		if (ifp && ifp->if_daddr != LFS_UNUSED_DADDR) {
 			bp->b_flags &= ~B_INUSE;
 			checkinode(inumber, &idesc);
 		} else {
@@ -181,7 +181,7 @@ pass1()
 			statemap[inumber] = USTATE;
 		}
 		free(dins[i]);
-        }
+	}
 	free(dins);
 
 	bmapcheck();
@@ -189,31 +189,28 @@ pass1()
 }
 
 static void
-checkinode(inumber, idesc)
-	ino_t inumber;
-	register struct inodesc *idesc;
+checkinode(ino_t inumber, struct inodesc * idesc)
 {
 	register struct dinode *dp;
-	struct zlncnt *zlnp;
-	int ndb, j;
-	mode_t mode;
-	char *symbuf;
+	struct zlncnt  *zlnp;
+	int             ndb, j;
+	mode_t          mode;
+	char           *symbuf;
 
 	/* dp = getnextinode(inumber); */
-        dp = lfs_ginode(inumber);
+	dp = lfs_ginode(inumber);
 
-        if(dp==NULL) {
-            /* pwarn("Could not find inode %ld\n",(long)inumber); */
-            statemap[inumber]=USTATE;
-            return;
-        }
-
+	if (dp == NULL) {
+		/* pwarn("Could not find inode %ld\n",(long)inumber); */
+		statemap[inumber] = USTATE;
+		return;
+	}
 	mode = dp->di_mode & IFMT;
 
-        /* XXX - LFS doesn't have this particular problem (?) */
+	/* XXX - LFS doesn't have this particular problem (?) */
 	if (mode == 0) {
 		if (memcmp(dp->di_db, zino.di_db, NDADDR * sizeof(daddr_t)) ||
-		    memcmp(dp->di_ib, zino.di_ib, NIADDR * sizeof(daddr_t)) ||
+		  memcmp(dp->di_ib, zino.di_ib, NIADDR * sizeof(daddr_t)) ||
 		    dp->di_mode || dp->di_size) {
 			pwarn("mode=o%o, ifmt=o%o\n", dp->di_mode, mode);
 			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
@@ -227,7 +224,7 @@ checkinode(inumber, idesc)
 		return;
 	}
 	lastino = inumber;
-	if (/* dp->di_size < 0 || */
+	if (			/* dp->di_size < 0 || */
 	    dp->di_size + sblock.lfs_bsize - 1 < dp->di_size) {
 		if (debug)
 			printf("bad size %qu:", (unsigned long long)dp->di_size);
@@ -236,14 +233,14 @@ checkinode(inumber, idesc)
 	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
 		dp = ginode(inumber);
 		dp->di_size = sblock.lfs_fsize;
-		dp->di_mode = IFREG|0600;
+		dp->di_mode = IFREG | 0600;
 		inodirty();
 	}
 	ndb = howmany(dp->di_size, sblock.lfs_bsize);
 	if (ndb < 0) {
 		if (debug)
 			printf("bad size %qu ndb %d:",
-				(unsigned long long)dp->di_size, ndb);
+			       (unsigned long long)dp->di_size, ndb);
 		goto unknown;
 	}
 	if (mode == IFBLK || mode == IFCHR)
@@ -252,7 +249,7 @@ checkinode(inumber, idesc)
 		/*
 		 * Note that the old fastlink format always had di_blocks set
 		 * to 0.  Other than that we no longer use the `spare' field
-		 * (which is now the extended uid) for sanity checking, the
+		 * (which is now the extended uid)for sanity checking, the
 		 * new format is the same as the old.  We simply ignore the
 		 * conversion altogether.  - mycroft, 19MAY1994
 		 */
@@ -261,13 +258,13 @@ checkinode(inumber, idesc)
 		    dp->di_blocks != 0) {
 			symbuf = alloca(secsize);
 			if (bread(fsreadfd, symbuf,
-			    fsbtodb(&sblock, dp->di_db[0]),
-			    (long)secsize) != 0)
+				  fsbtodb(&sblock, dp->di_db[0]),
+				  (long)secsize) != 0)
 				errexit("cannot read symlink");
 			if (debug) {
 				symbuf[dp->di_size] = 0;
-				printf("convert symlink %d(%s) of size %qd\n",
-					inumber, symbuf, (long long)dp->di_size);
+				printf("convert symlink %d(%s)of size %qd\n",
+				  inumber, symbuf, (long long)dp->di_size);
 			}
 			dp = ginode(inumber);
 			memcpy(dp->di_shortlink, symbuf, (long)dp->di_size);
@@ -301,7 +298,7 @@ checkinode(inumber, idesc)
 		if (dp->di_ib[j] != 0) {
 			if (debug)
 				printf("bad indirect addr: %d\n",
-					dp->di_ib[j]);
+				       dp->di_ib[j]);
 			/* goto unknown; */
 		}
 	if (ftypeok(dp) == 0)
@@ -329,9 +326,9 @@ checkinode(inumber, idesc)
 	} else
 		statemap[inumber] = FSTATE;
 	typemap[inumber] = IFTODT(mode);
-#if 0 /* FFS */
+#if 0				/* FFS */
 	if (doinglevel2 &&
-	    (dp->di_ouid != (u_short)-1 || dp->di_ogid != (u_short)-1)) {
+	    (dp->di_ouid != (u_short) - 1 || dp->di_ogid != (u_short) - 1)) {
 		dp = ginode(inumber);
 		dp->di_uid = dp->di_ouid;
 		dp->di_ouid = -1;
@@ -346,7 +343,7 @@ checkinode(inumber, idesc)
 	idesc->id_entryno *= btodb(sblock.lfs_fsize);
 	if (dp->di_blocks != idesc->id_entryno) {
 		pwarn("INCORRECT BLOCK COUNT I=%u (%d should be %d)",
-		    inumber, dp->di_blocks, idesc->id_entryno);
+		      inumber, dp->di_blocks, idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
 		else if (reply("CORRECT") == 0)
@@ -368,24 +365,22 @@ unknown:
 }
 
 int
-pass1check(idesc)
-	register struct inodesc *idesc;
+pass1check(struct inodesc * idesc)
 {
-	int res = KEEPON;
-	int anyout, nfrags;
-	daddr_t blkno = idesc->id_blkno;
+	int             res = KEEPON;
+	int             anyout, nfrags;
+	daddr_t         blkno = idesc->id_blkno;
 	register struct dups *dlp;
-	struct dups *new;
+	struct dups    *new;
 
 	if (!testbmap(blkno)) {
-		seg_table[datosn(&sblock,blkno)].su_nbytes += idesc->id_numfrags * sblock.lfs_fsize;
+		seg_table[datosn(&sblock, blkno)].su_nbytes += idesc->id_numfrags * sblock.lfs_fsize;
 	}
-
 	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
 		if (badblk++ >= MAXBAD) {
 			pwarn("EXCESSIVE BAD BLKS I=%u",
-				idesc->id_number);
+			      idesc->id_number);
 			if (preen)
 				printf(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0)
@@ -401,17 +396,17 @@ pass1check(idesc)
 #ifndef VERBOSE_BLOCKMAP
 			setbmap(blkno);
 #else
-			setbmap(blkno,idesc->id_number);
+			setbmap(blkno, idesc->id_number);
 #endif
 		} else {
 			blkerror(idesc->id_number, "DUP", blkno);
 #ifdef VERBOSE_BLOCKMAP
-                        pwarn("(lbn %d: Holder is %d)\n", idesc->id_lblkno,
+			pwarn("(lbn %d: Holder is %d)\n", idesc->id_lblkno,
 			      testbmap(blkno));
 #endif
 			if (dupblk++ >= MAXDUP) {
 				pwarn("EXCESSIVE DUP BLKS I=%u",
-					idesc->id_number);
+				      idesc->id_number);
 				if (preen)
 					printf(" (SKIPPING)\n");
 				else if (reply("CONTINUE") == 0)
@@ -442,7 +437,7 @@ pass1check(idesc)
 		/*
 		 * count the number of blocks found in id_entryno
 		 */
-		idesc->id_entryno ++;
+		idesc->id_entryno++;
 	}
 	return (res);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.2 1999/07/03 19:55:03 kleink Exp $	*/
+/* $NetBSD: dir.c,v 1.3 2000/05/23 01:48:52 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
-#include <sys/mount.h> /* XXX */
+#include <sys/mount.h>		/* XXX */
 #include <ufs/lfs/lfs.h>
 
 #include <stdio.h>
@@ -48,25 +48,25 @@
 #include "fsutil.h"
 #include "extern.h"
 
-char	*lfname = "lost+found";
-int	lfmode = 01700;
-struct	dirtemplate emptydir = { 0, DIRBLKSIZ };
-struct	dirtemplate dirhead = {
+char           *lfname = "lost+found";
+int             lfmode = 01700;
+struct dirtemplate emptydir = {0, DIRBLKSIZ};
+struct dirtemplate dirhead = {
 	0, 12, DT_DIR, 1, ".",
 	0, DIRBLKSIZ - 12, DT_DIR, 2, ".."
 };
-struct	odirtemplate odirhead = {
+struct odirtemplate odirhead = {
 	0, 12, 1, ".",
 	0, DIRBLKSIZ - 12, 2, ".."
 };
 
-static int expanddir __P((struct dinode *, char *));
-static void freedir __P((ino_t, ino_t));
-static struct direct *fsck_readdir __P((struct inodesc *));
-static struct bufarea *getdirblk __P((daddr_t, long));
-static int lftempname __P((char *, ino_t));
-static int mkentry __P((struct inodesc *));
-static int chgino __P((struct  inodesc *));
+static int      expanddir(struct dinode *, char *);
+static void     freedir(ino_t, ino_t);
+static struct direct *fsck_readdir(struct inodesc *);
+static struct bufarea *getdirblk(daddr_t, long);
+static int      lftempname(char *, ino_t);
+static int      mkentry(struct inodesc *);
+static int      chgino(struct inodesc *);
 
 /*
  * Propagate connected state through the tree.
@@ -108,14 +108,13 @@ propagate()
  * Scan each entry in a directory block.
  */
 int
-dirscan(idesc)
-	register struct inodesc *idesc;
+dirscan(struct inodesc * idesc)
 {
 	register struct direct *dp;
 	register struct bufarea *bp;
-	int dsize, n;
-	long blksiz;
-	char dbuf[DIRBLKSIZ];
+	int             dsize, n;
+	long            blksiz;
+	char            dbuf[DIRBLKSIZ];
 
 	if (idesc->id_type != DATA)
 		errexit("wrong type to dirscan %d\n", idesc->id_type);
@@ -133,8 +132,8 @@ dirscan(idesc)
 		memcpy(dbuf, dp, (size_t)dsize);
 #		if (BYTE_ORDER == LITTLE_ENDIAN)
 			if (!newinofmt) {
-				struct direct *tdp = (struct direct *)dbuf;
-				u_char tmp;
+				struct direct  *tdp = (struct direct *)dbuf;
+				u_char          tmp;
 
 				tmp = tdp->d_namlen;
 				tdp->d_namlen = tdp->d_type;
@@ -145,8 +144,8 @@ dirscan(idesc)
 		if ((n = (*idesc->id_func)(idesc)) & ALTERED) {
 #			if (BYTE_ORDER == LITTLE_ENDIAN)
 				if (!newinofmt && !doinglevel2) {
-					struct direct *tdp;
-					u_char tmp;
+					struct direct  *tdp;
+					u_char          tmp;
 
 					tdp = (struct direct *)dbuf;
 					tmp = tdp->d_namlen;
@@ -156,11 +155,11 @@ dirscan(idesc)
 #			endif
 			bp = getdirblk(idesc->id_blkno, blksiz);
 			memcpy(bp->b_un.b_buf + idesc->id_loc - dsize, dbuf,
-			    (size_t)dsize);
+			       (size_t)dsize);
 			dirty(bp);
 			sbdirty();
 		}
-		if (n & STOP) 
+		if (n & STOP)
 			return (n);
 	}
 	return (idesc->id_filesize > 0 ? KEEPON : STOP);
@@ -170,12 +169,11 @@ dirscan(idesc)
  * get next entry in a directory.
  */
 static struct direct *
-fsck_readdir(idesc)
-	register struct inodesc *idesc;
+fsck_readdir(struct inodesc * idesc)
 {
 	register struct direct *dp, *ndp;
 	register struct bufarea *bp;
-	long size, blksiz, fix, dploc;
+	long            size, blksiz, fix, dploc;
 
 	blksiz = idesc->id_numfrags * sblock.lfs_fsize;
 	bp = getdirblk(idesc->id_blkno, blksiz);
@@ -232,27 +230,24 @@ dpok:
  * This is a superset of the checks made in the kernel.
  */
 int
-dircheck(idesc, dp)
-	struct inodesc *idesc;
-	register struct direct *dp;
+dircheck(struct inodesc * idesc, struct direct * dp)
 {
-	register int size;
-	register char *cp;
-	u_char namlen, type;
-	int spaceleft;
+	register int    size;
+	register char  *cp;
+	u_char          namlen, type;
+	int             spaceleft;
 
 	spaceleft = DIRBLKSIZ - (idesc->id_loc % DIRBLKSIZ);
 	if (dp->d_ino >= maxino ||
 	    dp->d_reclen == 0 ||
 	    dp->d_reclen > spaceleft ||
-	    (dp->d_reclen & 0x3) != 0)
-        {
-            pwarn("ino too large, reclen=0, reclen>space, or reclen&3!=0\n");
-            pwarn("dp->d_ino = 0x%x\tdp->d_reclen = 0x%x\n",
-                   dp->d_ino, dp->d_reclen);
-            pwarn("maxino = 0x%x\tspaceleft = 0x%x\n", maxino, spaceleft);
-            return (0);
-        }
+	    (dp->d_reclen & 0x3) != 0) {
+		pwarn("ino too large, reclen=0, reclen>space, or reclen&3!=0\n");
+		pwarn("dp->d_ino = 0x%x\tdp->d_reclen = 0x%x\n",
+		      dp->d_ino, dp->d_reclen);
+		pwarn("maxino = 0x%x\tspaceleft = 0x%x\n", maxino, spaceleft);
+		return (0);
+	}
 	if (dp->d_ino == 0)
 		return (1);
 	size = DIRSIZ(!newinofmt, dp, 0);
@@ -271,39 +266,34 @@ dircheck(idesc, dp)
 	if (dp->d_reclen < size ||
 	    idesc->id_filesize < size ||
 	    namlen > MAXNAMLEN ||
-	    type > 15)
-        {
-                printf("reclen<size, filesize<size, namlen too large, or type>15\n");
+	    type > 15) {
+		printf("reclen<size, filesize<size, namlen too large, or type>15\n");
 		return (0);
-        }
+	}
 	for (cp = dp->d_name, size = 0; size < namlen; size++)
 		if (*cp == '\0' || (*cp++ == '/')) {
-                    printf("name contains NUL or /\n");
+			printf("name contains NUL or /\n");
 			return (0);
-                }
+		}
 	if (*cp != '\0') {
-                printf("name size misstated\n");
+		printf("name size misstated\n");
 		return (0);
-        }
+	}
 	return (1);
 }
 
 void
-direrror(ino, errmesg)
-	ino_t ino;
-	char *errmesg;
+direrror(ino_t ino, char *errmesg)
 {
 
 	fileerror(ino, ino, errmesg);
 }
 
 void
-fileerror(cwd, ino, errmesg)
-	ino_t cwd, ino;
-	char *errmesg;
+fileerror(ino_t cwd, ino_t ino, char *errmesg)
 {
 	register struct dinode *dp;
-	char pathbuf[MAXPATHLEN + 1];
+	char            pathbuf[MAXPATHLEN + 1];
 
 	pwarn("%s ", errmesg);
 	pinode(ino);
@@ -314,21 +304,19 @@ fileerror(cwd, ino, errmesg)
 		return;
 	}
 	dp = ginode(ino);
-        if(dp==NULL)
-                pfatal("INO is NULL\n");
-        else {
-            if (ftypeok(dp))
-		pfatal("%s=%s\n",
-                       (dp->di_mode & IFMT) == IFDIR ? "DIR" : "FILE", pathbuf);
-            else
-		pfatal("NAME=%s\n", pathbuf);
-        }
+	if (dp == NULL)
+		pfatal("INO is NULL\n");
+	else {
+		if (ftypeok(dp))
+			pfatal("%s=%s\n",
+			       (dp->di_mode & IFMT) == IFDIR ? "DIR" : "FILE", pathbuf);
+		else
+			pfatal("NAME=%s\n", pathbuf);
+	}
 }
 
 void
-adjust(idesc, lcnt)
-	register struct inodesc *idesc;
-	short lcnt;
+adjust(struct inodesc * idesc, short lcnt)
 {
 	register struct dinode *dp;
 
@@ -338,10 +326,10 @@ adjust(idesc, lcnt)
 			clri(idesc, "UNREF", 0);
 	} else {
 		pwarn("LINK COUNT %s", (lfdir == idesc->id_number) ? lfname :
-			((dp->di_mode & IFMT) == IFDIR ? "DIR" : "FILE"));
+		      ((dp->di_mode & IFMT) == IFDIR ? "DIR" : "FILE"));
 		pinode(idesc->id_number);
 		printf(" COUNT %d SHOULD BE %d",
-			dp->di_nlink, dp->di_nlink - lcnt);
+		       dp->di_nlink, dp->di_nlink - lcnt);
 		if (preen) {
 			if (lcnt < 0) {
 				printf("\n");
@@ -357,12 +345,11 @@ adjust(idesc, lcnt)
 }
 
 static int
-mkentry(idesc)
-	struct inodesc *idesc;
+mkentry(struct inodesc * idesc)
 {
 	register struct direct *dirp = idesc->id_dirp;
-	struct direct newent;
-	int newlen, oldlen;
+	struct direct   newent;
+	int             newlen, oldlen;
 
 	newent.d_namlen = strlen(idesc->id_name);
 	newlen = DIRSIZ(0, &newent, 0);
@@ -385,25 +372,24 @@ mkentry(idesc)
 	memcpy(dirp->d_name, idesc->id_name, (size_t)dirp->d_namlen + 1);
 #	if (BYTE_ORDER == LITTLE_ENDIAN)
 		/*
-		 * If the entry was split, dirscan() will only reverse the byte
-		 * order of the original entry, and not the new one, before
-		 * writing it back out.  So, we reverse the byte order here if
-		 * necessary.
-		 */
+	 	* If the entry was split, dirscan()will only reverse the byte
+	 	* order of the original entry, and not the new one, before
+	 	* writing it back out.  So, we reverse the byte order here if
+	 	* necessary.
+	 	*/
 		if (oldlen != 0 && !newinofmt && !doinglevel2) {
-			u_char tmp;
+			u_char          tmp;
 
 			tmp = dirp->d_namlen;
 			dirp->d_namlen = dirp->d_type;
 			dirp->d_type = tmp;
 		}
 #	endif
-	return (ALTERED|STOP);
+	return (ALTERED | STOP);
 }
 
 static int
-chgino(idesc)
-	struct inodesc *idesc;
+chgino(struct inodesc * idesc)
 {
 	register struct direct *dirp = idesc->id_dirp;
 
@@ -414,19 +400,17 @@ chgino(idesc)
 		dirp->d_type = typemap[idesc->id_parent];
 	else
 		dirp->d_type = 0;
-	return (ALTERED|STOP);
+	return (ALTERED | STOP);
 }
 
 int
-linkup(orphan, parentdir)
-	ino_t orphan;
-	ino_t parentdir;
+linkup(ino_t orphan, ino_t parentdir)
 {
 	register struct dinode *dp;
-	int lostdir;
-	ino_t oldlfdir;
-	struct inodesc idesc;
-	char tempname[BUFSIZ];
+	int             lostdir;
+	ino_t           oldlfdir;
+	struct inodesc  idesc;
+	char            tempname[BUFSIZ];
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	dp = ginode(orphan);
@@ -437,9 +421,8 @@ linkup(orphan, parentdir)
 		return (0);
 	if (preen)
 		printf(" (RECONNECTED)\n");
-	else
-		if (reply("RECONNECT") == 0)
-			return (0);
+	else if (reply("RECONNECT") == 0)
+		return (0);
 	if (lfdir == 0) {
 		dp = ginode(ROOTINO);
 		idesc.id_name = lfname;
@@ -525,12 +508,9 @@ linkup(orphan, parentdir)
  * fix an entry in a directory.
  */
 int
-changeino(dir, name, newnum)
-	ino_t dir;
-	char *name;
-	ino_t newnum;
+changeino(ino_t dir, char *name, ino_t newnum)
 {
-	struct inodesc idesc;
+	struct inodesc  idesc;
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = DATA;
@@ -546,14 +526,12 @@ changeino(dir, name, newnum)
  * make an entry in a directory
  */
 int
-makeentry(parent, ino, name)
-	ino_t parent, ino;
-	char *name;
+makeentry(ino_t parent, ino_t ino, char *name)
 {
-	struct dinode *dp;
-	struct inodesc idesc;
-	char pathbuf[MAXPATHLEN + 1];
-	
+	struct dinode  *dp;
+	struct inodesc  idesc;
+	char            pathbuf[MAXPATHLEN + 1];
+
 	if (parent < ROOTINO || parent >= maxino ||
 	    ino < ROOTINO || ino >= maxino)
 		return (0);
@@ -582,13 +560,11 @@ makeentry(parent, ino, name)
  * Attempt to expand the size of a directory
  */
 static int
-expanddir(dp, name)
-	register struct dinode *dp;
-	char *name;
+expanddir(struct dinode * dp, char *name)
 {
-	daddr_t lastbn, newblk;
+	daddr_t         lastbn, newblk;
 	register struct bufarea *bp;
-	char *cp, firstblk[DIRBLKSIZ];
+	char           *cp, firstblk[DIRBLKSIZ];
 
 	lastbn = lblkno(&sblock, dp->di_size);
 	if (lastbn >= NDADDR - 1 || dp->di_db[lastbn] == 0 || dp->di_size == 0)
@@ -600,7 +576,7 @@ expanddir(dp, name)
 	dp->di_size += sblock.lfs_bsize;
 	dp->di_blocks += btodb(sblock.lfs_bsize);
 	bp = getdirblk(dp->di_db[lastbn + 1],
-		(long)dblksize(&sblock, dp, lastbn + 1));
+		       (long)dblksize(&sblock, dp, lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
 	memcpy(firstblk, bp->b_un.b_buf, DIRBLKSIZ);
@@ -614,7 +590,7 @@ expanddir(dp, name)
 		memcpy(cp, &emptydir, sizeof emptydir);
 	dirty(bp);
 	bp = getdirblk(dp->di_db[lastbn + 1],
-		(long)dblksize(&sblock, dp, lastbn + 1));
+		       (long)dblksize(&sblock, dp, lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
 	memcpy(bp->b_un.b_buf, &emptydir, sizeof emptydir);
@@ -639,21 +615,19 @@ bad:
  * allocate a new directory
  */
 int
-allocdir(parent, request, mode)
-	ino_t parent, request;
-	int mode;
+allocdir(ino_t parent, ino_t request, int mode)
 {
-	ino_t ino;
-	char *cp;
-	struct dinode *dp;
+	ino_t           ino;
+	char           *cp;
+	struct dinode  *dp;
 	register struct bufarea *bp;
 	struct dirtemplate *dirp;
 
-	ino = allocino(request, IFDIR|mode);
+	ino = allocino(request, IFDIR | mode);
 	if (newinofmt)
 		dirp = &dirhead;
 	else
-		dirp = (struct dirtemplate *)&odirhead;
+		dirp = (struct dirtemplate *) & odirhead;
 	dirp->dot_ino = ino;
 	dirp->dotdot_ino = parent;
 	dp = ginode(ino);
@@ -673,7 +647,7 @@ allocdir(parent, request, mode)
 	if (ino == ROOTINO) {
 		lncntp[ino] = dp->di_nlink;
 		cacheino(dp, ino);
-		return(ino);
+		return (ino);
 	}
 	if (statemap[parent] != DSTATE && statemap[parent] != DFOUND) {
 		freeino(ino);
@@ -695,10 +669,9 @@ allocdir(parent, request, mode)
  * free a directory inode
  */
 static void
-freedir(ino, parent)
-	ino_t ino, parent;
+freedir(ino_t ino, ino_t parent)
 {
-	struct dinode *dp;
+	struct dinode  *dp;
 
 	if (ino != parent) {
 		dp = ginode(parent);
@@ -712,13 +685,11 @@ freedir(ino, parent)
  * generate a temporary name for the lost+found directory.
  */
 static int
-lftempname(bufp, ino)
-	char *bufp;
-	ino_t ino;
+lftempname(char *bufp, ino_t ino)
 {
-	register ino_t in;
-	register char *cp;
-	int namlen;
+	register ino_t  in;
+	register char  *cp;
+	int             namlen;
 
 	cp = bufp + 2;
 	for (in = maxino; in > 0; in /= 10)
@@ -739,14 +710,12 @@ lftempname(bufp, ino)
  * Ensure that it is held until another is requested.
  */
 static struct bufarea *
-getdirblk(blkno, size)
-	daddr_t blkno;
-	long size;
+getdirblk(daddr_t blkno, long size)
 {
 
 	if (pdirbp != 0)
 		pdirbp->b_flags &= ~B_INUSE;
 	/* pdirbp = getdatablk(blkno, size); */
-        pdirbp = getddblk(blkno,size);
+	pdirbp = getddblk(blkno, size);
 	return (pdirbp);
 }

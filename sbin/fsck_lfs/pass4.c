@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.2 1999/07/03 19:55:03 kleink Exp $	*/
+/* $NetBSD: pass4.c,v 1.3 2000/05/23 01:48:55 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -48,11 +48,11 @@
 void
 pass4()
 {
-	register ino_t inumber;
+	register ino_t  inumber;
 	register struct zlncnt *zlnp;
-	struct dinode *dp;
-	struct inodesc idesc;
-	int n;
+	struct dinode  *dp;
+	struct inodesc  idesc;
+	int             n;
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
@@ -99,18 +99,17 @@ pass4()
 
 		default:
 			errexit("BAD STATE %d FOR INODE I=%d",
-			    statemap[inumber], inumber);
+				statemap[inumber], inumber);
 		}
 	}
 }
 
 int
-pass4check(idesc)
-	register struct inodesc *idesc;
+pass4check(struct inodesc * idesc)
 {
 	register struct dups *dlp;
-	int nfrags, res = KEEPON;
-	daddr_t blkno = idesc->id_blkno;
+	int             nfrags, res = KEEPON;
+	daddr_t         blkno = idesc->id_blkno;
 
 	for (nfrags = idesc->id_numfrags; nfrags > 0; blkno++, nfrags--) {
 		if (chkrange(blkno, 1)) {

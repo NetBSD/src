@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2000/05/16 04:55:59 perseant Exp $	*/
+/* $NetBSD: main.c,v 1.5 2000/05/23 01:48:53 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -52,30 +52,28 @@
 #include "extern.h"
 #include "fsutil.h"
 
-int	returntosingle;
-int	fake_cleanseg = -1;
+int             returntosingle;
+int             fake_cleanseg = -1;
 
-int	main __P((int, char *[]));
+int             main(int, char *[]);
 
-static int	argtoi __P((int, char *, char *, int));
-static int	checkfilesys __P((const char *, char *, long, int));
+static int      argtoi(int, char *, char *, int);
+static int      checkfilesys(const char *, char *, long, int);
 #if 0
-static int	docheck __P((struct fstab *));
+static int      docheck(struct fstab *);
 #endif
-static  void usage __P((void));
+static void     usage(void);
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char **argv)
 {
-	int ch;
-	int ret = 0;
-        char *optstring = "b:C:dm:npy";
+	int             ch;
+	int             ret = 0;
+	char           *optstring = "b:C:dm:npy";
 
 	sync();
 	skipclean = 1;
-        exitonfail = 0;
+	exitonfail = 0;
 	while ((ch = getopt(argc, argv, optstring)) != EOF) {
 		switch (ch) {
 		case 'b':
@@ -89,12 +87,12 @@ main(argc, argv)
 		case 'd':
 			debug++;
 			break;
-                      case 'e':
-                        exitonfail++;
-                        break;
+		case 'e':
+			exitonfail++;
+			break;
 		case 'm':
 			lfmode = argtoi('m', "mode", optarg, 8);
-			if (lfmode &~ 07777)
+			if (lfmode & ~07777)
 				errexit("bad mode to -m: %o\n", lfmode);
 			printf("** lost+found creation mode %o\n", lfmode);
 			break;
@@ -118,7 +116,7 @@ main(argc, argv)
 		}
 	}
 #if 0
-	if(nflag==0) {
+	if (nflag == 0) {
 		errexit("fsck_lfs cannot write to the filesystem yet; the -n flag is required.\n");
 	}
 #endif
@@ -144,13 +142,10 @@ main(argc, argv)
 }
 
 static int
-argtoi(flag, req, str, base)
-	int flag;
-	char *req, *str;
-	int base;
+argtoi(int flag, char *req, char *str, int base)
 {
-	char *cp;
-	int ret;
+	char           *cp;
+	int             ret;
 
 	ret = (int)strtol(str, &cp, base);
 	if (cp == str || *cp)
@@ -163,8 +158,7 @@ argtoi(flag, req, str, base)
  * Determine whether a filesystem should be checked.
  */
 static int
-docheck(fsp)
-	register struct fstab *fsp;
+docheck(struct fstab * fsp)
 {
 
 	if ((strcmp(fsp->fs_vfstype, "ufs") &&
@@ -182,15 +176,11 @@ docheck(fsp)
  */
 /* ARGSUSED */
 static int
-checkfilesys(filesys, mntpt, auxdata, child)
-	const char *filesys;
-        char *mntpt;
-	long auxdata;
-	int child;
+checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 {
-	daddr_t n_ffree=0, n_bfree=0;
-	struct dups *dp;
-	struct zlncnt *zlnp;
+	daddr_t         n_ffree = 0, n_bfree = 0;
+	struct dups    *dp;
+	struct zlncnt  *zlnp;
 
 	if (preen && child)
 		(void)signal(SIGQUIT, voidquit);
@@ -205,41 +195,40 @@ checkfilesys(filesys, mntpt, auxdata, child)
 		return (0);
 	}
 
-	if(preen == 0) {
+	if (preen == 0) {
 		printf("** Last Mounted on %s\n", sblock.lfs_fsmnt);
 		if (hotroot())
 			printf("** Root file system\n");
-        }
-
-        /*
+	}
+	/*
          * 0: check segment checksums, inode ranges
          */
 	if (preen == 0)
-            printf("** Phase 0 - Check Segment Summaries and Inode Free List\n");
-        pass0();
+		printf("** Phase 0 - Check Segment Summaries and Inode Free List\n");
+	pass0();
 
-	if (preen==0) {
+	if (preen == 0) {
 		/*
 		 * 1: scan inodes tallying blocks used
 		 */
 		if (preen == 0)
 			printf("** Phase 1 - Check Blocks and Sizes\n");
 		pass1();
-		
+
 		/*
 		 * 2: traverse directories from root to mark all connected directories
 		 */
 		if (preen == 0)
 			printf("** Phase 2 - Check Pathnames\n");
 		pass2();
-		
+
 		/*
 		 * 3: scan inodes looking for disconnected directories
 		 */
 		if (preen == 0)
 			printf("** Phase 3 - Check Connectivity\n");
 		pass3();
-		
+
 		/*
 		 * 4: scan inodes looking for disconnected files; check reference counts
 		 */
@@ -262,7 +251,6 @@ checkfilesys(filesys, mntpt, auxdata, child)
 		      n_files, n_blks, n_ffree + sblock.lfs_frag * n_bfree);
 		putchar('\n');
 	}
-
 	if (debug) {
 		if (duplist != NULL) {
 			printf("The following duplicate blocks remain:");
@@ -293,15 +281,15 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	if (rerun)
 		printf("\n***** PLEASE RERUN FSCK *****\n");
 	if (hotroot()) {
-		struct statfs stfs_buf;
+		struct statfs   stfs_buf;
 		/*
 		 * We modified the root.  Do a mount update on
 		 * it, unless it is read-write, so we can continue.
 		 */
 		if (statfs("/", &stfs_buf) == 0) {
-			long flags = stfs_buf.f_flags;
+			long            flags = stfs_buf.f_flags;
 			struct ufs_args args;
-			int ret;
+			int             ret;
 
 			if (flags & MNT_RDONLY) {
 				args.fspec = 0;
@@ -310,7 +298,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 				flags |= MNT_UPDATE | MNT_RELOAD;
 				ret = mount(MOUNT_LFS, "/", flags, &args);
 				if (ret == 0)
-					return(0);
+					return (0);
 			}
 		}
 		if (!preen)
@@ -324,11 +312,10 @@ checkfilesys(filesys, mntpt, auxdata, child)
 static void
 usage()
 {
-	extern char *__progname;
+	extern char    *__progname;
 
-	(void) fprintf(stderr,
-	    "Usage: %s [-dnpy] [-b block] [-m mode] filesystem ...\n",
-	    __progname);
+	(void)fprintf(stderr,
+		  "Usage: %s [-dnpy] [-b block] [-m mode] filesystem ...\n",
+		       __progname);
 	exit(1);
 }
-
