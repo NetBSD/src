@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.38 1998/03/17 08:36:57 marc Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.39 1998/04/10 01:39:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -712,6 +712,7 @@ union_access(v)
 	struct union_node *un = VTOUNION(ap->a_vp);
 	int error = EACCES;
 	struct vnode *vp;
+	struct union_mount *um = MOUNTTOUNIONMOUNT(vp->v_mount);
 
 	if ((vp = un->un_uppervp) != NULLVP) {
 		FIXUP(un);
@@ -724,8 +725,6 @@ union_access(v)
 		ap->a_vp = vp;
 		error = VCALL(vp, VOFFSET(vop_access), ap);
 		if (error == 0) {
-			struct union_mount *um = MOUNTTOUNIONMOUNT(vp->v_mount);
-
 			if (um->um_op == UNMNT_BELOW) {
 				ap->a_cred = um->um_cred;
 				error = VCALL(vp, VOFFSET(vop_access), ap);
