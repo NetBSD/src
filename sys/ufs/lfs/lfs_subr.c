@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.11 2000/01/16 09:15:51 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.12 2000/01/19 00:03:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ lfs_segunlock(fs)
 		for (; vp && vp != BEG_OF_VLIST; vp = BACK_VP(vp)) {
 #else
 	loop:
-		for (vp = mp->mnt_vnodelist.lh_first;
+		 for (vp = mp->mnt_vnodelist.lh_first;
 		     vp != NULL;
 		     vp = vp->v_mntvnodes.le_next) {
 #endif
@@ -217,9 +217,8 @@ lfs_segunlock(fs)
 				vp->v_flag &= ~VDIROP;
 				wakeup(&lfs_dirvcount);
 				if(vp->v_usecount == 1) {
-					/* vput will VOP_INACTIVE */
-					VOP_LOCK(vp,LK_EXCLUSIVE);
-					vput(vp);
+					/* vrele may call VOP_INACTIVE */
+					vrele(vp);
 				} else
 					lfs_vunref(vp);
 
