@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.44.2.1 2004/05/22 16:24:16 he Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.44.2.2 2004/06/07 10:20:45 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -104,14 +104,8 @@ do_upgrade(void)
 		return;
 
 	/* Done with disks. Ready to get and unpack tarballs. */
-	msg_display(MSG_disksetupdoneupdate);
-	getchar();
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	wclear(stdscr);
-	wrefresh(stdscr);
-
-	if (get_and_unpack_sets(1, MSG_upgrcomplete, MSG_abortupgr) != 0)
+	if (get_and_unpack_sets(1, MSG_disksetupdoneupdate,
+	    MSG_upgrcomplete, MSG_abortupgr) != 0)
 		return;
 
 #if 0
@@ -291,7 +285,7 @@ do_reinstall_sets(void)
 		return;
 
 	/* Unpack the distribution. */
-	if (get_and_unpack_sets(0, MSG_unpackcomplete, MSG_abortunpack) != 0)
+	if (get_and_unpack_sets(0, NULL, MSG_unpackcomplete, MSG_abortunpack) != 0)
 		return;
 
 	sanity_check();
