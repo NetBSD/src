@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.1 2001/11/09 05:52:21 thorpej Exp $ */
+/* $NetBSD: dbsym.c,v 1.2 2001/11/09 07:36:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: dbsym.c,v 1.1 2001/11/09 05:52:21 thorpej Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.2 2001/11/09 07:36:03 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -123,9 +123,9 @@ main(int argc, char **argv)
 		errx(1, "no symbol table in %s", kfile);
 
 	if (find_symtab(abfd, db_symtab_symbols) != 0)
-		errx(1, "could not find symbols in %s", kfile);
+		errx(1, "could not find SYMTAB_SPACE in %s", kfile);
 	if (verbose)
-		fprintf(stderr, "got symtab symbols from %s\n", kfile);
+		fprintf(stderr, "got SYMTAB_SPACE symbols from %s\n", kfile);
 
 	if (load_symtab(kfd, &symtab, &symtabsize) != 0)
 		errx(1, "could not load symbol table from %s", kfile);
