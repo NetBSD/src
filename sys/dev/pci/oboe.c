@@ -1,7 +1,7 @@
-/*	$NetBSD: oboe.c,v 1.1 2001/12/02 16:30:30 augustss Exp $	*/
+/*	$NetBSD: oboe.c,v 1.2 2001/12/02 20:29:55 augustss Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,9 @@
  */
 
 /*
- * Toshiba OBOE SIR/FIR driver.
+ * Toshiba OBOE IrDA SIR/FIR driver.
+ *
+ * Based on information from the Linux driver, thus the magic hex numbers.
  */
 
 #include <sys/param.h>
@@ -76,8 +78,6 @@ int oboe_reset_params(void *h);
 int oboe_get_speeds(void *h, int *speeds);
 int oboe_get_turnarounds(void *h, int *times);
 int oboe_poll(void *h, int events, struct proc *p);
-
-#define OBOE_DEBUG_XXX
 
 #ifdef OBOE_DEBUG
 #define DPRINTF(x)	if (oboedebug) printf x
@@ -255,7 +255,7 @@ oboe_activate(struct device *self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (sc->sc_child)
+		if (sc->sc_child != NULL)
 			error = config_deactivate(sc->sc_child);
 		else
 			error = 0;
@@ -270,6 +270,7 @@ oboe_detach(struct device *self, int flags)
 #if 0
 	struct oboe_softc *sc = (struct oboe_softc *)self;
 #endif
+	/* XXX needs reference counting for proper detach. */
 	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
 	return (0);
 }
@@ -306,7 +307,7 @@ oboe_close(void *h, int flag, int mode, struct proc *p)
 	splx(s);
 
 	oboe_stopchip(sc);
-	return error;
+	return (error);
 }
 
 int
@@ -343,21 +344,19 @@ oboe_read(void *h, struct uio *uio, int flag)
 		slot = (sc->sc_rxs - sc->sc_saved + RX_SLOTS) % RX_SLOTS;
 		if (uio->uio_resid < sc->sc_lens[slot]) {
 			DPRINTF(("oboe_read: uio buffer smaller than frame size (%d < %d)\n", uio->uio_resid, sc->sc_lens[slot]));
-			error= EIO;
+			error = EINVAL;
 		} else {
 			DPRINTF(("oboe_read: moving %d bytes from %p\n", 
 				 sc->sc_lens[slot],
 				 sc->sc_recv_stores[slot]));
 			error = uiomove(sc->sc_recv_stores[slot], 
 					sc->sc_lens[slot], uio);
-			if (error)
-				printf("uiomove failed: %d, slot=%d\n", error, slot);
 		}
 	}
 	sc->sc_saved--;
 	splx(s);
 
-	return error;
+	return (error);
 }
 
 int
@@ -382,34 +381,35 @@ oboe_write(void *h, struct uio *uio, int flag)
 			break;
 		}
 	}
-	if (!error) {
-		if (sc->sc_taskfile->xmit[sc->sc_txs].control) {
-			DPRINTF(("oboe_write: slot overrun\n"));
-#if 0
-			splx(s);
-			return -EBUSY;
-#endif
-		}
-		
-		sc->sc_taskfile->xmit[sc->sc_txs].len = uio->uio_resid;
-		error = uiomove(sc->sc_xmit_bufs[sc->sc_txs], 
-				uio->uio_resid, uio);
-		OUTB(sc, 0, OBOE_RST);
-		OUTB(sc, 0x1e, OBOE_REG_11);
-
-		sc->sc_taskfile->xmit[sc->sc_txs].control = 0x84;
-		
-		/* Need delay here??? */
-		delay(1000);
-
-		sc->sc_txpending++;
-		OUTB(sc, 0x80, OBOE_RST);
-		OUTB(sc, 1, OBOE_REG_9);
-		sc->sc_txs++;
-		sc->sc_txs %= TX_SLOTS;
+	if (error)
+		goto err;
+	if (sc->sc_taskfile->xmit[sc->sc_txs].control) {
+		DPRINTF(("oboe_write: slot overrun\n"));
 	}
+		
+	sc->sc_taskfile->xmit[sc->sc_txs].len = uio->uio_resid;
+	error = uiomove(sc->sc_xmit_bufs[sc->sc_txs], 
+			uio->uio_resid, uio);
+	if (error)
+		goto err;
+
+	OUTB(sc, 0, OBOE_RST);
+	OUTB(sc, 0x1e, OBOE_REG_11);
+
+	sc->sc_taskfile->xmit[sc->sc_txs].control = 0x84;
+		
+	/* Need delay here??? */
+	delay(1000);
+
+	sc->sc_txpending++;
+	OUTB(sc, 0x80, OBOE_RST);
+	OUTB(sc, 1, OBOE_REG_9);
+	sc->sc_txs++;
+	sc->sc_txs %= TX_SLOTS;
+
+ err:
 	splx(s);
-	return error;
+	return (error);
 }
 
 int
@@ -506,7 +506,7 @@ oboe_intr(void *p)
 	uint8_t irqstat	= INB(sc, OBOE_ISR);
 
 	if (!(irqstat & 0xf8))
-		return 0; /* Not for me? */
+		return (0); /* Not for me? */
 
 	DPRINTF(("oboe_intr stat=0x%x\n", irqstat));
 
@@ -566,7 +566,7 @@ oboe_intr(void *p)
 			wakeup(&sc->sc_txs);
 		}
 	}
-	return 1;
+	return (1);
 }
 
 
