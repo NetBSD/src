@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.35.2.10 2002/12/11 06:51:44 thorpej Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35.2.11 2002/12/19 00:59:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.10 2002/12/11 06:51:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.11 2002/12/19 00:59:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,13 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
 	slept = 0;
 	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail) &&
 	    vp != fs->lfs_unlockvp) {
+#if 0
+		/*
+		 * XXX ideally, we should unlock vnodes here
+		 * because we might sleep very long time.
+		 */
 		VOP_UNLOCK(vp, 0);
+#endif
 
 		if (!slept) {
 #ifdef DEBUG
@@ -155,7 +161,9 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
 			
 		error = tsleep(&fs->lfs_avail, PCATCH | PUSER, "lfs_reserve",
 			       0);
+#if 0
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
+#endif
 		if (error)
 			return error;
 	}
@@ -260,7 +268,10 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	struct lfs *fs;
 	struct inode *ip;
 	int fsb, error, s;
-	
+
+	KASSERT(bp->b_flags & B_BUSY);
+	KASSERT(flags & BW_CLEAN || !(bp->b_flags & B_CALL));
+
 	/*
 	 * Don't write *any* blocks if we're mounted read-only.
 	 * In particular the cleaner can't write blocks either.
@@ -300,7 +311,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		}
 		
 		ip = VTOI(bp->b_vp);
-		if (bp->b_flags & B_CALL) {
+		if (flags & BW_CLEAN) {
 			LFS_SET_UINO(ip, IN_CLEANING);
 		} else {
 			LFS_SET_UINO(ip, IN_MODIFIED);

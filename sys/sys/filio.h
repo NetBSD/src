@@ -1,4 +1,4 @@
-/*	$NetBSD: filio.h,v 1.5 1994/06/29 06:44:14 cgd Exp $	*/
+/*	$NetBSD: filio.h,v 1.5.46.1 2002/12/19 00:59:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -53,5 +53,9 @@
 #define	FIOASYNC	_IOW('f', 125, int)	/* set/clear async i/o */
 #define	FIOSETOWN	_IOW('f', 124, int)	/* set owner */
 #define	FIOGETOWN	_IOR('f', 123, int)	/* get owner */
+#define	FIOGETBMAP	_IOWR('f', 122, daddr_t) /* get underlying block no. */
+
+/* Ugly symbol for compatibility with other operating systems */
+#define	FIBMAP		FIOGETBMAP
 
 #endif /* !_SYS_FILIO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.67.2.9 2002/10/18 02:45:52 nathanw Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.67.2.10 2002/12/19 00:59:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.67.2.9 2002/10/18 02:45:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.67.2.10 2002/12/19 00:59:48 thorpej Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -377,7 +377,6 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 	struct inode *ip;
 	struct vnode *vp, *nvp;
 	int inodes_written = 0, only_cleaning;
-	int needs_unlock;
 
 #ifndef LFS_NO_BACKVP_HACK
 	/* BEGIN HACK */
@@ -404,6 +403,10 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			printf("lfs_writevnodes: starting over\n");
 			goto loop;
 		}
+		
+		if (vp->v_type == VNON) {
+			continue;
+		}
 
 		ip = VTOI(vp);
 		if ((op == VN_DIROP && !(vp->v_flag & VDIROP)) ||
@@ -414,10 +417,6 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		
 		if (op == VN_EMPTY && LIST_FIRST(&vp->v_dirtyblkhd)) {
 			vndebug(vp,"empty");
-			continue;
-		}
-		
-		if (vp->v_type == VNON) {
 			continue;
 		}
 
@@ -431,24 +430,6 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		if (lfs_vref(vp)) {
 			vndebug(vp,"vref");
 			continue;
-		}
-
-		needs_unlock = 0;
-		if (VOP_ISLOCKED(vp)) {
-			if (vp != fs->lfs_ivnode &&
-			    vp->v_lock.lk_lockholder != curproc->p_pid) {
-#ifdef DEBUG_LFS
-				printf("lfs_writevnodes: not writing ino %d,"
-				       " locked by pid %d\n",
-				       VTOI(vp)->i_number,
-				       vp->v_lock.lk_lockholder);
-#endif
-				lfs_vunref(vp);
-				continue;
-			}
-		} else if (vp != fs->lfs_ivnode) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			needs_unlock = 1;
 		}
 
 		only_cleaning = 0;
@@ -480,9 +461,6 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			(void) lfs_writeinode(fs, sp, ip);
 			inodes_written++;
 		}
-
-		if (needs_unlock)
-			VOP_UNLOCK(vp, 0);
 
 		if (lfs_clean_vnhead && only_cleaning)
 			lfs_vunref_head(vp);
@@ -647,9 +625,14 @@ lfs_segwrite(struct mount *mp, int flags)
 			if (ip->i_flag & IN_ALLMOD)
 				++did_ckp;
 			redo = lfs_writeinode(fs, sp, ip);
-			
+
 			vput(vp);
-			redo += lfs_writeseg(fs, sp);
+			/*
+			 * if we know we'll redo, no need to writeseg here.
+			 */
+			if (!(redo && do_ckp)) {
+				redo += lfs_writeseg(fs, sp);
+			}
 			redo += (fs->lfs_flags & LFS_IFDIRTY);
 		} while (redo && do_ckp);
 
@@ -973,13 +956,25 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 * is actually written.
 	 */
 	if (daddr != LFS_UNUSED_DADDR) {
-		LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), bp);
+		u_int32_t oldsn = dtosn(fs, daddr);
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes < DINODE_SIZE * (1 + sp->ndupino)) {
+		int ndupino = (sp->seg_number == oldsn) ? sp->ndupino : 0;
+#endif
+		LFS_SEGENTRY(sup, fs, oldsn, bp);
+#ifdef DIAGNOSTIC
+		if (sup->su_nbytes + DINODE_SIZE * ndupino < DINODE_SIZE) {
 			printf("lfs_writeinode: negative bytes "
-			       "(segment %d short by %d)\n",
+			       "(segment %d short by %d, "
+			       "oldsn=%u, cursn=%u, daddr=%d, su_nbytes=%u, "
+			       "ndupino=%d)\n",
 			       dtosn(fs, daddr),
-			       (int)DINODE_SIZE - sup->su_nbytes);
+			       (int)DINODE_SIZE * (1 - sp->ndupino)
+				   - sup->su_nbytes,
+			       (unsigned int)oldsn,
+			       (unsigned int)sp->seg_number,
+			       (int)daddr,
+			       (unsigned int)sup->su_nbytes,
+			       sp->ndupino);
 			panic("lfs_writeinode: negative bytes");
 			sup->su_nbytes = DINODE_SIZE;
 		}
@@ -1274,13 +1269,18 @@ lfs_updatemeta(struct segment *sp)
 		 * and location.
 		 */
 		if (daddr > 0) {
+			u_int32_t oldsn = dtosn(fs, daddr);
+#ifdef DIAGNOSTIC
+			int ndupino = (sp->seg_number == oldsn) ?
+			    sp->ndupino : 0;
+#endif
 			if (lbn >= 0 && lbn < NDADDR)
 				osize = ip->i_lfs_fragsize[lbn];
 			else
 				osize = fs->lfs_bsize;
-			LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), bp);
+			LFS_SEGENTRY(sup, fs, oldsn, bp);
 #ifdef DIAGNOSTIC
-			if (sup->su_nbytes < osize + DINODE_SIZE * sp->ndupino) {
+			if (sup->su_nbytes + DINODE_SIZE * ndupino < osize) {
 				printf("lfs_updatemeta: negative bytes "
 				       "(segment %d short by %d)\n",
 				       dtosn(fs, daddr),
@@ -1288,8 +1288,9 @@ lfs_updatemeta(struct segment *sp)
 				printf("lfs_updatemeta: ino %d, lbn %d, "
 				       "addr = 0x%x\n", VTOI(sp->vp)->i_number,
 				       lbn, daddr);
+				printf("lfs_updatemeta: ndupino=%d\n", ndupino);
 				panic("lfs_updatemeta: negative bytes");
-				sup->su_nbytes = osize + DINODE_SIZE * sp->ndupino;
+				sup->su_nbytes = osize;
 			}
 #endif
 #ifdef DEBUG_SU_NBYTES
@@ -2062,7 +2063,7 @@ lfs_match_data(struct lfs *fs, struct buf *bp)
 int
 lfs_match_indir(struct lfs *fs, struct buf *bp)
 {
-	int lbn;
+	ufs_daddr_t lbn;
 
 	lbn = bp->b_lblkno;
 	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 0);
@@ -2071,7 +2072,7 @@ lfs_match_indir(struct lfs *fs, struct buf *bp)
 int
 lfs_match_dindir(struct lfs *fs, struct buf *bp)
 {
-	int lbn;
+	ufs_daddr_t lbn;
 
 	lbn = bp->b_lblkno;
 	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 1);
@@ -2080,7 +2081,7 @@ lfs_match_dindir(struct lfs *fs, struct buf *bp)
 int
 lfs_match_tindir(struct lfs *fs, struct buf *bp)
 {
-	int lbn;
+	ufs_daddr_t lbn;
 
 	lbn = bp->b_lblkno;
 	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60.2.16 2002/12/11 15:44:46 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.17 2002/12/19 00:59:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -188,7 +188,8 @@ struct ctlname {
 #define	KERN_LABELSECTOR	62	/* int: disklabel sector */
 #define	KERN_LABELOFFSET	63	/* int: offset of label within sector */
 #define	KERN_LWP		64	/* struct: lwp entries */
-#define	KERN_MAXID		65	/* number of valid kern ids */
+#define	KERN_FORKFSLEEP		65	/* int: sleep length on failed fork */
+#define	KERN_MAXID		66	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -257,6 +258,7 @@ struct ctlname {
 	{ "labelsector", CTLTYPE_INT }, \
 	{ "labeloffset", CTLTYPE_INT }, \
 	{ "lwp", CTLTYPE_STRUCT }, \
+	{ "forkfsleep", CTLTYPE_INT }, \
 }
 
 /*
