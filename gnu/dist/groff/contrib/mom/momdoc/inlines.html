@@ -7,19 +7,19 @@
 
 <!====================================================================>
 
-<a href="docprocessing.html#TOP">Next</a>&nbsp;&nbsp;
+<a href="color.html#TOP">Next</a>&nbsp;&nbsp;
 <a href="goodies.html#TOP">Prev</a>&nbsp;&nbsp;
 <a href="toc.html">Back to Table of Contents</a>
 
 <a name="TOP"></a>
-<h2>
+<h1 align="center">
     <a name="INLINE_ESCAPES"><u>Inline escapes</u></a>
-</h2>
-
+</h1>
+<p>
 <a href="#INLINE_ESCAPES_INTRO">Introduction to inline escapes</a>
 <br>
 <a href="#INDEX_INLINES">Index of inline escapes</a>
-<br>
+<p>
 
 <a name="INLINE_ESCAPES_INTRO">
 	<h2><u>Introduction to inline escapes</u></h2>
@@ -52,14 +52,14 @@ backslash character as part of a line of text, simply enter it twice
 character."  (You can also use <strong>\e</strong> to print a literal
 backslash.)
 <p>
-Groff has a number of ways of recognising what constitutes a complete
+Groff has a number of ways of recognizing what constitutes a complete
 escape sequence.  This is both a boon and a curse; some escape
 sequences have no terminating delimiter and consequently become
 difficult to distinguish from real input text.  Others require
 the use of an opening parenthesis with no corresponding closing
 parenthesis.  Still others need to be enclosed in square brackets.
 <p>
-<strong>Mom</strong> recognises that certain escapes get used more
+<strong>Mom</strong> recognizes that certain escapes get used more
 often than others.  For these, she has a consistent input style that
 takes the form \*[...], which makes them stand out well from the text
 of your documents.  These escapes are the ones listed under
@@ -100,6 +100,7 @@ that take
 		<li><a href="#INLINE_CHARACTERS_GROFF">Special characters</a>
 	</ul>
 </ul>
+<p>
 <hr>
 
 <!---INLINE_FONTS_MOM--->
@@ -129,7 +130,7 @@ for other ways to change fonts inline.
 <a href="docprocessing.html#DOCPROCESSING">document processing macros</a>,
 inline font changes remain in effect only for the duration of the
 current macro.
-<br>
+<p>
 
 <!---INLINE_SIZE_MOM--->
 
@@ -137,42 +138,59 @@ current macro.
 <a name="INLINE_SIZE_MOM"><h3><u>Changing point size</u></h3></a>
 
 <p>
-<strong>Mom</strong>'s inline escape for changing point
-size, sadly, does not observe her normal inline syntax
-<strong>\*[whatever]</strong>.  It's the only exception, and there's
-no way around it.  The escape for changing point size looks like this:
+<strong>Mom</strong> has two inline escapes for changing point
+size:
 <p>
 <pre>
-	\*S[size]
+	\*[SIZE &lt;size&gt;]
 </pre>
 
-where &quot;size&quot; is the new size you want.  For example, to
-change the point size inline to 12 points, you'd enter
+and
+<p>
+<pre>
+	\*[S&lt;size&gt;]
+</pre>
+
+where &quot;size&quot; is the new size you want.  You can use
+either; they behave exactly the same way.  For example, to change
+the point size of type inline to 12 points, you could enter either
+<p>
+<pre>
+	\*[SIZE 12]
+</pre>
+
+or
 <p>
 <pre>
 	\*S[12]
 </pre>
 
-Notice that the new size does not require a
+The advantage of the first form is that it's easy to remember, and
+follows <strong>mom</strong>'s usual inline syntax.  The advantage
+of the second is that it's more concise.
+<p>
+Notice that in both cases, the new size does not require a
 <a href="definitions.html#TERMS_UNITOFMEASURE">unit of measure</a>;
 <a href="definitions.html#TERMS_PICASPOINTS">points</a>
-is assumed.  However, a unit of measure may be appended to the size,
+is assumed.  However, a unit of measure may be appended to the size
 if that's what you wish.  Fractional sizes are, of course, allowed.
 <p>
-The size given to <strong>\*S</strong> may be expressed in plus
-or minus terms, which can be very useful.  In the following
-example, the word &quot;mom&quot; will be output 2 points larger
-than the point size of the rest of the line.
+The size given to <strong>\*[SIZE&nbsp;&lt;size&gt;]</strong> or
+<strong>\*S[&lt;size&gt;]</strong> may be expressed in plus or minus
+terms, which can be very useful.  In the following examples, the word
+&quot;mom&quot; will be output 2 points larger than the point size
+of the rest of the line.
 <p>
 <pre>
 	While she isn't perfect, \*S[+2]mom\*S[-2] isn't half bad.
+	While she isn't perfect, \*[SIZE +2]mom\*[SIZE -2] isn't half bad.
 </pre>
 
 <strong>NOTE:</strong> If you're accustomed to groff's usual way
 of handling inline size requests (<kbd>\sN, \s±N, \s(NN, \s±(NN,
 \s[NNN], \s±[NNN]</kbd>), feel free to continue with your old habits.
 <strong>Mom</strong> doesn't care.
-<br>
+<p>
 
 <!---INLINE_KERNING_MOM--->
 
@@ -187,16 +205,15 @@ for more details).
 <p>
 <strong>Mom</strong> permits inline pairwise
 kerning through the use of the inline escapes
-<p>
+<br>
 <table valign="baseline" summary="inlinekerning">
-<tr><td width="15"><td><strong>\*[BU #]<td></strong>Closes the space between letters (<strong>B</strong>ack <strong>U</strong>nits).
-<tr><td><td><strong>\*[FU #]</strong><td>Opens the space between letters (<strong>F</strong>orward <strong>U</strong>nits).
+<tr><td width="15"><td><pre>\*[BU #]</pre><td>Closes the space between letters (<strong>B</strong>ack <strong>U</strong>nits).
+<tr><td><td><pre>\*[FU #]</pre><td>Opens the space between letters (<strong>F</strong>orward <strong>U</strong>nits).
 </table>
 <br>
 "<strong>#</strong>" is the number of <a
 href="definitions.html#TERMS_KERNUNIT">kern units</a>
-by which to close or open the space between letters.  Decimal fractions
-are allowed.
+by which to close or open the space between letters.
 <p>
 For example,
 <p>
@@ -212,10 +229,10 @@ units closer to the letter A.
 For backward compatibility, the forms
 <p>
 <table valign="baseline" summary="inlinekerningold">
-<tr><td width="15"><td><strong>\*[BU1]...\*[BU36]</strong><td>
+<tr><td width="15"><td><pre>\*[BU1]...\*[BU36]</pre><td>
 Move back 1...36
 <a href="definitions.html#TERMS_KERNUNIT">kern units</a>
-<tr><td><td><strong>\*[FU1]...\*[FU36]</strong><td>
+<tr><td><td><pre>\*[FU1]...\*[FU36]</pre><td>
 Move forward 1...36
 <a href="definitions.html#TERMS_KERNUNIT">kern units</a>
 </table>
@@ -227,7 +244,7 @@ up to a limit of 36).
 between characters pairs that are already automatically kerned
 disables the automatic kerning and uses the value you give to
 <strong>BU</strong> or <strong>FU</strong> instead.
-<br>
+<p>
 
 <!---INLINE_HORIZONTAL_MOM--->
 
@@ -247,12 +264,12 @@ line in order to create special typographic effects.
 <p>
 <table align="left" valign="baseline" summary="inlinehorizontal">
 <a name="FWD"></a>
-<tr><td width="15"><td width="20%"><strong>\*[FWD #&lt;unit&gt;]
+<tr><td width="15"><td width="20%"><pre>\*[FWD #&lt;unit&gt;]</pre>
 <td>Move forward inline the specified number of
 <a href="definitions.html#TERMS_UNITOFMEASURE">units of measure</a>;
 decimal fractions are allowed.
 <a name="BCK"></a>
-<tr><td><td><strong>\*[BCK #&lt;unit&gt;]
+<tr><td><td><pre>\*[BCK #&lt;unit&gt;]</pre>
 <td>Move backward inline the specified number of
 <a href="definitions.html#TERMS_UNITOFMEASURE">units of measure</a>;
 decimal fractions are allowed.
@@ -269,8 +286,8 @@ puts 12 points of space between &quot;1.&quot; and
 <strong>NOTE:</strong> For backward compatibility, the forms
 <p>
 <table valign="baseline" summary="inlinehorizontalold">
-<tr><td width="15"><td><strong>\*[BP.25]...\*[BP12.75]</strong><td>Move back .25...12.75 points
-<tr><td><td><strong>\*[FP.25]...\*[FP12.75]</strong><td>Move forward .25...12.75 points</td></tr>
+<tr><td width="15"><td><pre>\*[BP.25]...\*[BP12.75]</pre><td>Move back .25...12.75 points
+<tr><td><td><pre>\*[FP.25]...\*[FP12.75]</pre><td>Move forward .25...12.75 points</td></tr>
 </table>
 <br>
 also exist (i.e. with no space before the digit and points being
@@ -278,7 +295,7 @@ the unit of measure, hence no unit of measure required).  Both
 accept quarter points, so it's possible to do, for example,
 <strong>\*[FP.5]</strong> or <strong>\*[BP1.25]</strong> up to a limit
 of 12.75 points.
-<br>
+<p>
 
 <!---INLINE_VERTICAL_MOM--->
 
@@ -291,11 +308,11 @@ If you need to move portions of type up or down on a line,
 <p>
 <table valign="baseline" summary="inlinevertical">
 <a name="UP"></a>
-<tr><td width="15"><td><strong>\*[UP #&lt;unit&gt;]</strong>
+<tr><td width="15"><td><pre>\*[UP #&lt;unit&gt;]</pre>
 <td>Move up inline the specified number of
 <a href="definitions.html#TERMS_UNITOFMEASURE">units of measure</a>
 <a name="DOWN"></a>
-<tr><td><td><strong>\*[DOWN #&lt;unit&gt;]</strong>
+<tr><td><td><pre>\*[DOWN #&lt;unit&gt;]</pre>
 <td>Move down inline the specified number of
 <a href="definitions.html#TERMS_UNITOFMEASURE">units of measure</a>
 </table>
@@ -313,16 +330,16 @@ moves back down by the same amount.
 also available:
 <p>
 <table valign="baseline" summary="inlinevertical">
-<tr><td width="15"><td><strong>\*[ALD.25]...\*[ALD12.75]</strong><td>
+<tr><td width="15"><td><pre>\*[ALD.25]...\*[ALD12.75]</pre><td>
 Advance lead .25...12.75 points (move downward)
-<tr><td><td><strong>\*[RLD.25]...\*[RLD12.75]</strong><td>
+<tr><td><td><pre>\*[RLD.25]...\*[RLD12.75]</pre><td>
 Reverse lead .5...12.75 points (move upward)</td></tr>
 </table>
 <p>
 <p>
 Both <strong>\*[ALD]</strong> and <strong>\*[RLD]</strong> work in
-points, hence you musn't use a unit of measure.
-<br>
+points, hence you mustn't use a unit of measure.
+<p>
 
 <!---INLINE_RULE_MOM--->
 
@@ -344,10 +361,27 @@ example:
 </pre>
 
 The above draws a rule the full measure of the 6-pica line length.
-Please note that <strong>\*[$RULE]</strong> should appear on a line by
-itself and that it draws the rule to the full measure, hence it
-<em>cannot</em> be used to fill the remainder of a partial line with
-a rule in this way:
+<p>
+<strong>\*[$RULE]</strong> should appear on a line by itself.  In
+<a href="definitions.html#TERMS_FILLED">fill modes</a>,
+(i.e.
+<a href="typesetting.html#QUAD">QUAD</a>
+or
+<a href="typesetting.html#JUSTIFY">JUSTIFY</a>),
+it requires a
+<a href="typesetting.html#BR">.BR</a>
+on the line immediately before it; in
+<a href="definitions.html#TERMS_NOFILL">nofill modes</a>
+(i.e
+<a href="typesetting.html#LRC">LEFT</a>,
+<a href="typesetting.html#LRC">RIGHT</a>
+or
+<a href="typesetting.html#LRC">CENTER</a>),
+the <strong>.BR</strong> is not required.
+<p>
+Please note that <strong>\*[$RULE]</strong> draws the rule to the
+full measure, hence it <em>cannot</em> be used to fill the remainder
+of a partial line with a rule in this way:
 <p>
 <pre>
 	Signature__________________________________________
@@ -358,13 +392,14 @@ If you wish to accomplish this effect, you have to use
 <a href="goodies.html#PAD"><strong>PAD</strong></a>
 macro and
 <a href="typesetting.html#STRING_TABS">string tabs</a>.
-(See the example provided with
-<a href="goodies.html#PAD_EXAMPLE"><strong>.PAD</strong></a>.
+(See the
+<a href="goodies.html#PAD_EXAMPLE">example</a>
+provided with <strong>PAD</strong>.)
 <p>
 See groff's
 <a href="#INLINE_LINEDRAWING_GROFF">Horizontal line drawing function</a>
 for more information on drawing horizontal rules.
-<br>
+<p>
 <hr>
 
 <!---INLINE_FONT_GROFF--->
@@ -401,7 +436,7 @@ this:
 
 The Unix command &quot;ls -l&quot; will appear in Courier Bold Italic
 in a line that is otherwise in Times Roman.
-<br>
+<p>
 
 <!---INLINE_HORIZONTAL_GROFF--->
 
@@ -432,7 +467,7 @@ position on the current
 moves you 1.25 inches to the left (backwards).
 <strong>\h'-&lt;distance&gt;'</strong> is exactly equivalent to
 <a href="#BCK"><strong>\*[BCK #&lt;unit&gt;]</strong></a>.
-<br>
+<p>
 
 <!---INLINE_VERTICAL_GROFF--->
 
@@ -479,7 +514,7 @@ you've done what you want to do.  Otherwise, the remaining type
 will be set too high (if you used <strong>\v</strong> with the
 minus sign) or too low (if you used <strong>\v</strong> without
 the minus sign).
-<br>
+<p>
 
 <!---INLINE_STRINGWIDTHL_GROFF--->
 
@@ -507,7 +542,7 @@ argument.</em>
 Furthermore, if the string is composed of several words separated
 by spaces, you MUST surround the whole escape with double quotes,
 as in the example above.
-<br>
+<p>
 
 <!---INLINE_LINEDRAWING_GROFF--->
 
@@ -550,8 +585,8 @@ the job,&quot; I prefer a vector drawing program (in my case, tgif)
 when I need to combine type with graphic elements (say, a complex
 ruled form).  Inserting the results into a document is easy enough
 with <strong>.PSPIC</strong> (consult the <strong>grops</strong>
-man page for information on this indispensible and easy-to-use macro).
-<br>
+man page for information on this indispensable and easy-to-use macro).
+<p>
 
 <!---INLINE_CHARACTERS_GROFF--->
 
@@ -566,8 +601,8 @@ these characters, consult the
 For a more complete list, consult the section <em>Special
 Character Names</em> at the end of the <em>Tutorial Examples</em>
 in <strong>cstr54</strong>, available
-<a href="http://www.kohala.com/start/troff/">here</a>.
-
+<a href="http://www.kohala.com/start/troff/">here</a>,
+the groff <strong>info</strong> documentation, or man groff_char.
 <p>
 <pre>
     CHARACTER                   ESCAPE SEQUENCE
@@ -603,7 +638,7 @@ in <strong>cstr54</strong>, available
 </pre>
 
 <hr>
-<a href="docprocessing.html#TOP">Next</a>&nbsp;&nbsp;
+<a href="color.html#TOP">Next</a>&nbsp;&nbsp;
 <a href="goodies.html#TOP">Prev</a>&nbsp;&nbsp;
 <a href="#TOP">Top</a>&nbsp;&nbsp;
 <a href="toc.html">Back to Table of Contents</a>

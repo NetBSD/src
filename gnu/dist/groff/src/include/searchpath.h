@@ -1,7 +1,8 @@
-/*	$NetBSD: searchpath.h,v 1.1.1.2 2003/06/30 17:52:05 wiz Exp $	*/
+/*	$NetBSD: searchpath.h,v 1.1.1.3 2004/07/30 14:44:51 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2003
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -29,4 +30,5 @@ public:
   ~search_path();
   void command_line_dir(const char *);
   FILE *open_file(const char *, char **);
+  FILE *open_file_cautious(const char *, char ** = 0, const char * = 0);
 };

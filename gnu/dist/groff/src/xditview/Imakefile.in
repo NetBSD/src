@@ -1,7 +1,7 @@
 srcdir=@srcdir@
-top_srcdir=@top_srcdir@
+top_srcdir=@abs_top_srcdir@
 VPATH=@srcdir@
-top_builddir=@groff_top_builddir@
+top_builddir=@abs_top_builddir@
 SEP=@PATH_SEPARATOR@
 
 version=`cat $(top_srcdir)/VERSION`

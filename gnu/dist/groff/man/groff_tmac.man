@@ -14,7 +14,7 @@ groff_tmac.5
 
 File position: <groff-source>/man/groff_tmac.man
 
-Last update: 13 Mar 2003
+Last update: 15 Jul 2003
 
 This file is part of groff, the GNU roff type-setting system.
 
@@ -35,6 +35,9 @@ FDL in the main directory of the groff source package.
 .\" --------------------------------------------------------------------
 .\" Setup
 .\" --------------------------------------------------------------------
+.
+.do nr groff_tmac_C \n[.C]
+.cp 0
 .
 .mso www.tmac
 .
@@ -1238,6 +1241,8 @@ the groff language.
 .P
 The Filesystem Hierarchy Standard is available at the
 .URL http://\:www.pathname.com/\:fhs/ "FHS web site" .
+.
+.cp \n[groff_tmac_C]
 .
 .\" Local Variables:
 .\" mode: nroff

@@ -1,5 +1,5 @@
 .TH GROFF_WWW @MAN7EXT@ "@MDATE@" "Groff Version @VERSION@"
-.\" Copyright (C) 2000, 2001, 2002 Free Software Foundation, Inc.
+.\" Copyright (C) 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 .\"      Written by Gaius Mulley (gaius@glam.ac.uk)
 .\"
 .\" This file is part of groff.
@@ -20,6 +20,9 @@
 .\"
 .\" user level guide to using the -mwww macroset
 .\"
+.
+.do nr groff_www_C \n[.C]
+.cp 0
 .
 .do mso www.tmac
 .
@@ -42,7 +45,7 @@ file ...
 This manual page describes the GNU \-mwww macro package, which is part of
 the groff document formatting system.
 The manual page is very a basic guide, and the html device driver
-.RB ( grohtml )
+.RB ( \%grohtml )
 has been completely rewritten but still remains as in an alpha state.
 It has been included into the distribution so that a lot of people have a
 chance to test it.
@@ -52,12 +55,13 @@ file) if you use
 .BR \-Thtml .
 .PP
 To see the hyperlinks in action, please format this man page with the
-.B grohtml
+.B \%grohtml
 device.
 .PP
 Here is a summary of the functions found in this macro set.
 .ta 2iL
 .nf
+\&.JOBNAME	split output into multiple files
 \&.HX	automatic heading level cut off;
 	$1 point for sections/headers
 \&.BCL	specify colours on a web page
@@ -96,10 +100,18 @@ preprocessors is acceptable as input.
 .
 .SH REQUESTS
 .TP
+.B JOBNAME
+Split output into multiple files.
+Its argument is the file stem name for future output files.
+This option is equivalent to
+.BR \%grohtml 's
+.B \-j
+option.
+.TP
 .B HX
 Specify the cut off depth when generating links from section headings.
 For example, a parameter of\~2 would cause
-.B grohtml
+.B \%grohtml
 to generate a list of links for
 .B .NH\ 1
 and
@@ -115,7 +127,7 @@ Whereas
 .RE
 .IP
 will tell
-.B grohtml
+.B \%grohtml
 that no heading links should be created at all.
 Another method for turning automatic headings off is by issuing the
 the command line switch
@@ -313,7 +325,7 @@ End heading.
 .TP
 .B LK
 .TAG LK
-Force grohtml to place the automatically generated links at this position.
+Force \%grohtml to place the automatically generated links at this position.
 If this manual page has been processed with
 .B \-Thtml
 those links can be seen right here.
@@ -323,7 +335,7 @@ those links can be seen right here.
 .
 .SH SECTION HEADING LINKS
 By default
-.B grohtml
+.B \%grohtml
 generates links to all section headings and places these at the top of the
 html document. (See
 .URL #LK LINKS
@@ -335,7 +347,7 @@ Generate a full-width horizontal rule.
 .
 .TP
 .B NHR
-Suppress generation of the top and bottom rules which grohtml emits
+Suppress generation of the top and bottom rules which \%grohtml emits
 by default.
 .
 .TP
@@ -394,12 +406,12 @@ information is currently rendered as a PNG image.
 .SH "SEE ALSO"
 .BR groff (@MAN1EXT@),
 .BR @g@troff (@MAN1EXT@)
-.BR grohtml (@MAN1EXT@),
+.BR \%grohtml (@MAN1EXT@),
 .BR netpbm (1)
 .
 .
 .SH AUTHOR
-.B grohtml
+.B \%grohtml
 was written by
 .MTO gaius@glam.ac.uk "Gaius Mulley"
 .
@@ -409,6 +421,8 @@ Report bugs to the
 .MTO bug-groff@\:gnu.org "Groff Bug Mailing List" .
 Include a complete, self-contained example that will allow the bug to be
 reproduced, and say which version of groff you are using.
+.
+.cp \n[groff_www_C]
 .
 .\" Local Variables:
 .\" mode: nroff
