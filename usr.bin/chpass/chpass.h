@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.h,v 1.6 1997/07/25 06:36:02 mikel Exp $	*/
+/*	$NetBSD: chpass.h,v 1.7 1997/10/18 12:48:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ struct passwd;
 
 typedef struct _entry {
 	char *prompt;
-	int (*func)(), restricted, len;
+	int (*func) __P((char *, struct passwd *, struct _entry *)), restricted, len;
 	char *except, *save;
 } ENTRY;
 
@@ -78,6 +78,8 @@ int	check_yppasswdd __P((void));
 int	pw_yp __P((struct passwd *, uid_t));
 void	yppw_error __P((const char *name, int, int));
 void	yppw_prompt __P((void));
+struct passwd *ypgetpwnam __P((const char *));
+struct passwd *ypgetpwuid __P((uid_t));
 #endif
 
 extern	void (*Pw_error) __P((const char *name, int, int));

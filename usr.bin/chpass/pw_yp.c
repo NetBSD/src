@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.11 1997/07/25 06:37:27 mikel Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.12 1997/10/18 12:49:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -32,32 +32,41 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$NetBSD: pw_yp.c,v 1.11 1997/07/25 06:37:27 mikel Exp $";
+__RCSID("$NetBSD: pw_yp.c,v 1.12 1997/10/18 12:49:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef	YP
 
 #include <err.h>
+#include <errno.h>
+#include <netdb.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netdb.h>
 #include <time.h>
-#include <pwd.h>
-#include <errno.h>
+#include <unistd.h>
+
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+
 #define passwd yp_passwd_rec
 #include <rpcsvc/yppasswd.h>
 #undef passwd
 
+#include "chpass.h"
+
 static char *domain;
+
+static struct passwd *interpret __P((struct passwd *, char *));
+static char *pwskip __P((char *));
 
 /*
  * Check if rpc.yppasswdd is running on the master YP server.
@@ -106,12 +115,10 @@ pw_yp(pw, uid)
 	uid_t uid;
 {
 	char *master;
-	char *pp;
 	int r, rpcport, status;
 	struct yppasswd yppasswd;
 	struct timeval tv;
 	CLIENT *client;
-	extern char *getpass();
 	
 	/*
 	 * Get local domain
@@ -152,7 +159,7 @@ pw_yp(pw, uid)
 	}
 
 	/* prompt for old password */
-	bzero(&yppasswd, sizeof yppasswd);
+	memset(&yppasswd, 0, sizeof yppasswd);
 	yppasswd.oldpass = "none";
 	yppasswd.oldpass = getpass("Old password:");
 	if (!yppasswd.oldpass) {
@@ -209,7 +216,6 @@ interpret(pwent, line)
 	char *line;
 {
 	char	*p = line;
-	int	c;
 
 	pwent->pw_passwd = "*";
 	pwent->pw_uid = 0;
@@ -246,7 +252,7 @@ interpret(pwent, line)
 
 struct passwd *
 ypgetpwnam(nam)
-	char *nam;
+	const char *nam;
 {
 	static struct passwd pwent;
 	static char line[1024];

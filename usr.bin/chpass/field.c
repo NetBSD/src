@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.3 1995/03/26 04:55:28 glass Exp $	*/
+/*	$NetBSD: field.c,v 1.4 1997/10/18 12:49:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)field.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: field.c,v 1.3 1995/03/26 04:55:28 glass Exp $";
+__RCSID("$NetBSD: field.c,v 1.4 1997/10/18 12:49:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,7 +248,7 @@ p_shell(p, pw, ep)
 	struct passwd *pw;
 	ENTRY *ep;
 {
-	char *t, *ok_shell();
+	char *t;
 
 	if (!*p) {
 		pw->pw_shell = _PATH_BSHELL;

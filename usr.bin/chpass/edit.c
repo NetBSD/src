@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.8 1997/02/11 08:26:27 mrg Exp $	*/
+/*	$NetBSD: edit.c,v 1.9 1997/10/18 12:48:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: edit.c,v 1.8 1997/02/11 08:26:27 mrg Exp $";
+__RCSID("$NetBSD: edit.c,v 1.9 1997/10/18 12:48:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +99,7 @@ display(tempname, fd, pw)
 	struct passwd *pw;
 {
 	FILE *fp;
-	char *bp, *p, *ttoa();
+	char *bp, *p;
 
 	if (!(fp = fdopen(fd, "w")))
 		(*Pw_error)(tempname, 1, 1);
@@ -209,7 +210,7 @@ bad:					(void)fclose(fp);
 	len = strlen(list[E_NAME].save) + strlen(list[E_BPHONE].save) +
 	    strlen(list[E_HPHONE].save) + strlen(list[E_LOCATE].save) + 4;
 	if (!(p = malloc(len)))
-		err(1, NULL);
+		err(1, "malloc");
 	(void)snprintf(pw->pw_gecos = p, len, "%s,%s,%s,%s", list[E_NAME].save,
 	    list[E_LOCATE].save, list[E_BPHONE].save, list[E_HPHONE].save);
 
