@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)getmntopts.c	8.1 (Berkeley) 3/27/94";
+/*static char sccsid[] = "from: @(#)getmntopts.c	8.1 (Berkeley) 3/27/94";*/
+static char *rcsid = "$Id: getmntopts.c,v 1.2 1994/06/24 07:32:01 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +55,7 @@ getmntopts(options, m0, flagp)
 {
 	const struct mntopt *m;
 	int negative;
-	char *opt, *optbuf;
+	char *opt, *optbuf, *p;
 
 	/* Copy option string, since it is about to be torn asunder... */
 	if ((optbuf = strdup(options)) == NULL)
@@ -67,6 +68,14 @@ getmntopts(options, m0, flagp)
 			opt += 2;
 		} else
 			negative = 0;
+
+		/*
+		 * for options with assignments in them (ie. quotas)
+		 * ignore the assignment as it's handled elsewhere
+		 */
+		p = strchr(opt, '=');
+		if (p)
+			 *p = '\0';
 
 		/* Scan option table. */
 		for (m = m0; m->m_option != NULL; ++m)
