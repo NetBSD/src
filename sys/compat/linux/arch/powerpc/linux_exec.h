@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.1 2001/01/19 01:31:23 manu Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.2 2001/02/04 22:59:26 christos Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -98,11 +98,11 @@
  */
 #ifdef LINUX_SP_WRAP
 #define LINUX_ELF_AUX_ARGSIZ \
-	((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))) + 16 \
-	+ LINUX_SP_WRAP)
+    ((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))) \
+    + 16 + LINUX_SP_WRAP)
 #else
 #define LINUX_ELF_AUX_ARGSIZ \
-	((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))) + 16)
+    ((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))) + 16)
 #endif
 
 /* XXX should use ELFNAME2 */
@@ -116,7 +116,8 @@ typedef struct {
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-void * linux_elf32_copyargs __P((struct exec_package *, struct ps_strings *, void *, void *)); 
+void * linux_elf32_copyargs __P((struct exec_package *,
+    struct ps_strings *, void *, void *)); 
 __END_DECLS
 #endif /* _KERNEL */
 
