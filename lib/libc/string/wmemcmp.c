@@ -1,4 +1,4 @@
-/*	$NetBSD: wmemcpy.c,v 1.2 2000/12/20 14:53:24 itojun Exp $	*/
+/*	$NetBSD: wmemcmp.c,v 1.1 2000/12/23 23:14:37 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,22 +25,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: wmemcpy.c,v 1.2 2000/12/20 14:08:31 itojun Exp
+ *	citrus Id: wmemcmp.c,v 1.2 2000/12/20 14:08:31 itojun Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wmemcpy.c,v 1.2 2000/12/20 14:53:24 itojun Exp $");
+__RCSID("$NetBSD: wmemcmp.c,v 1.1 2000/12/23 23:14:37 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
-#include <string.h>
 
-wchar_t *
-wmemcpy(d, s, n)
-	wchar_t *d;
-	const wchar_t *s;
+int
+wmemcmp(s1, s2, n)
+	const wchar_t *s1;
+	const wchar_t *s2;
 	size_t n;
 {
-	return (wchar_t *)memcpy(d, s, n * sizeof(wchar_t));
+	size_t i;
+
+	for (i = 0; i < n; i++) {
+		if (*s1 != *s2) {
+			/* wchar might be unsigned */
+			return *s1 > *s2 ? 1 : -1; 
+		}
+		s1++;
+		s2++;
+	}
+	return 0;
 }

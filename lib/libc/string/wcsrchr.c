@@ -1,4 +1,4 @@
-/*	$NetBSD: wmemset.c,v 1.2 2000/12/20 14:53:24 itojun Exp $	*/
+/*	$NetBSD: wcsrchr.c,v 1.1 2000/12/23 23:14:37 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,29 +25,32 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: wmemset.c,v 1.2 2000/12/20 14:08:31 itojun Exp
+ *	citrus Id: wcsrchr.c,v 1.2 2000/12/21 05:07:25 itojun Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wmemset.c,v 1.2 2000/12/20 14:53:24 itojun Exp $");
+__RCSID("$NetBSD: wcsrchr.c,v 1.1 2000/12/23 23:14:37 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
-wchar_t	*
-wmemset(s, c, n)
-	wchar_t *s;
+wchar_t *
+wcsrchr(s, c)
+	const wchar_t *s;
 	wchar_t c;
-	size_t n;
 {
-	size_t i;
-	wchar_t *p;
+	const wchar_t *p;
 
-	p = (wchar_t *)s;
-	for (i = 0; i < n; i++) {
-		*p = c;
+	p = s;
+	while (*p)
 		p++;
+	while (s <= p) {
+		if (*p == c) {
+			/* LINTED interface specification */
+			return (wchar_t *)p;
+		}
+		p--;
 	}
-	return s;
+	return NULL;
 }

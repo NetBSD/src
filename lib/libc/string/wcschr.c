@@ -1,4 +1,4 @@
-/*	$NetBSD: wcscat.c,v 1.2 2000/12/21 05:12:19 itojun Exp $	*/
+/*	$NetBSD: wcschr.c,v 1.1 2000/12/23 23:14:36 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,32 +25,30 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: wcscat.c,v 1.1 1999/12/29 21:47:45 tshiozak Exp
+ *	citrus Id: wcschr.c,v 1.2 2000/12/21 05:07:25 itojun Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcscat.c,v 1.2 2000/12/21 05:12:19 itojun Exp $");
+__RCSID("$NetBSD: wcschr.c,v 1.1 2000/12/23 23:14:36 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
 wchar_t *
-wcscat(s1, s2)
-	wchar_t *s1;
-	const wchar_t *s2;
+wcschr(s, c)
+	const wchar_t *s;
+	wchar_t c;
 {
-	wchar_t *p;
-	wchar_t *q;
-	const wchar_t *r;
+	const wchar_t *p;
 
-	p = s1;
-	while (*p)
+	p = s;
+	while (*p) {
+		if (*p == c) {
+			/* LINTED interface specification */
+			return (wchar_t *)p;
+		}
 		p++;
-	q = p;
-	r = s2;
-	while (*r)
-		*q++ = *r++;
-	*q = '\0';
-	return s1;
+	}
+	return NULL;
 }

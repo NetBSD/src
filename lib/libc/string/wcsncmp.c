@@ -1,4 +1,4 @@
-/*	$NetBSD: wcswidth.c,v 1.2 2000/12/21 08:30:53 itojun Exp $	*/
+/*	$NetBSD: wcsncmp.c,v 1.1 2000/12/23 23:14:36 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,29 +25,26 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: wcswidth.c,v 1.1 1999/12/29 21:47:45 tshiozak Exp
+ *	citrus Id: wcsncmp.c,v 1.1 1999/12/29 21:47:45 tshiozak Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcswidth.c,v 1.2 2000/12/21 08:30:53 itojun Exp $");
+__RCSID("$NetBSD: wcsncmp.c,v 1.1 2000/12/23 23:14:36 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
 int
-wcswidth(s, n)
-	const wchar_t *s;
+wcsncmp(s1, s2, n)
+	const wchar_t *s1;
+	const wchar_t *s2;
 	size_t n;
 {
-	int w;
-
-	w = 0;
-	while (n && *s) {
-		w += wcwidth(*s);
-		s++;
+	while (n && *s1 == *s2 && *s1) {
+		s1++;
+		s2++;
 		n--;
 	}
-
-	return w;
+	return *s1 - *s2;
 }
