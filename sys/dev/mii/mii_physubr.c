@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.26 2001/07/25 22:00:43 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.27 2001/07/27 22:44:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -150,34 +150,6 @@ mii_phy_setmedia(sc)
 		PHY_WRITE(sc, MII_100T2CR, gtcr);
 }
 
-static int
-mii_phy_extcap_to_gtcr(struct mii_softc *sc)
-{
-	int gtcr = 0;
-
-	if (sc->mii_extcapabilities & EXTSR_1000TFDX)
-		gtcr |= GTCR_ADV_1000TFDX;
-	if (sc->mii_extcapabilities & EXTSR_1000THDX)
-		gtcr |= GTCR_ADV_1000THDX;
-
-	return (gtcr);
-}
-
-static int
-mii_phy_extcap_to_anar(struct mii_softc *sc)
-{
-	int anar = 0;
-
-	if (sc->mii_extcapabilities & EXTSR_1000XFDX)
-		anar |= ANAR_X_FD;
-	if (sc->mii_extcapabilities & EXTSR_1000XHDX)
-		anar |= ANAR_X_HD;
-
-	/* XXX PAUSE */
-
-	return (anar);
-}
-
 int
 mii_phy_auto(sc, waitfor)
 	struct mii_softc *sc;
@@ -190,16 +162,38 @@ mii_phy_auto(sc, waitfor)
 		 * Check for 1000BASE-X.  Autonegotiation is a bit
 		 * different on such devices.
 		 */
+		if (sc->mii_flags & MIIF_IS_1000X) {
+			uint16_t anar = 0;
 
-		if (sc->mii_extcapabilities & (EXTSR_1000XFDX|EXTSR_1000XHDX))
-			PHY_WRITE(sc, MII_ANAR, mii_phy_extcap_to_anar(sc));
-		else {
-			PHY_WRITE(sc, MII_ANAR,
-			    BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) |
-			    ANAR_CSMA);
-			if (sc->mii_flags & MIIF_HAVE_GTCR)
-				PHY_WRITE(sc, MII_100T2CR,
-				mii_phy_extcap_to_gtcr(sc));
+			if (sc->mii_extcapabilities & EXTSR_1000XFDX)
+				anar |= ANAR_X_FD;
+			if (sc->mii_extcapabilities & EXTSR_1000XHDX)
+				anar |= ANAR_X_HD;
+
+			if (sc->mii_flags & MIIF_DOPAUSE) {
+				/* XXX Asymmetric vs. symmetric? */
+				anar |= ANLPAR_X_PAUSE_TOWARDS;
+			}
+
+			PHY_WRITE(sc, MII_ANAR, anar);
+		} else {
+			uint16_t anar;
+
+			anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) |
+			    ANAR_CSMA;
+			if (sc->mii_flags & MIIF_DOPAUSE)
+				anar |= ANAR_FC;
+			PHY_WRITE(sc, MII_ANAR, anar);
+			if (sc->mii_flags & MIIF_HAVE_GTCR) {
+				uint16_t gtcr = 0;
+
+				if (sc->mii_extcapabilities & EXTSR_1000TFDX)
+					gtcr |= GTCR_ADV_1000TFDX;
+				if (sc->mii_extcapabilities & EXTSR_1000THDX)
+					gtcr |= GTCR_ADV_1000THDX;
+
+				PHY_WRITE(sc, MII_100T2CR, gtcr);
+			}
 		}
 		PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	}
@@ -462,12 +456,14 @@ mii_phy_add_media(sc)
 		 */
 		if (sc->mii_extcapabilities & EXTSR_1000XHDX) {
 			sc->mii_anegticks = 10;
+			sc->mii_flags |= MIIF_IS_1000X;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, 0,
 			    sc->mii_inst), MII_MEDIA_1000_X);
 			PRINT("1000baseSX");
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000XFDX) {
 			sc->mii_anegticks = 10;
+			sc->mii_flags |= MIIF_IS_1000X;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX,
 			    sc->mii_inst), MII_MEDIA_1000_X_FDX);
 			PRINT("1000baseSX-FDX");
