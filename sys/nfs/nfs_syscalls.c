@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.45 2000/10/23 07:18:27 chs Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.46 2000/10/24 07:08:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -636,8 +636,14 @@ nfssvc_nfsd(nsd, argp, p)
 				 * locking errors (usually, it's due to
 				 * forgetting to vput() something).
 				 */
-				panic("nfsd: locking botch in op %d",
-				    nd ? nd->nd_procnum : -1);
+#ifdef DEBUG
+				extern void printlockedvnodes(void);
+				printlockedvnodes();
+#endif
+				printf("nfsd: locking botch in op %d"
+				    " (before %d, after %d)\n",
+				    nd ? nd->nd_procnum : -1,
+				    lockcount, p->p_locks);
 			}
 #endif
 			if (mreq == NULL)
