@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.56 1997/04/28 02:29:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -137,7 +137,7 @@ sys_ptrace(p, v, retval)
 		 *          compiled with permanently insecure mode turned
 		 *	    on.
 		 */
-		if ((t->p_pid == 1) && (securelevel > -1))
+		if (t == initproc && securelevel > -1)
 			return (EPERM);
 		break;
 
@@ -300,7 +300,6 @@ sys_ptrace(p, v, retval)
 
 	case  PT_ATTACH:
 		/*
-		 * As done in procfs:
 		 * Go ahead and set the trace flag.
 		 * Save the old parent (it's reset in
 		 *   _DETACH, and also in kern_exit.c:wait4()
