@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.8 2000/03/24 22:03:29 augustss Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.9 2000/03/24 22:13:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -163,8 +163,6 @@ struct cue_cdata {
 	int			cue_tx_cnt;
 	int			cue_rx_prod;
 };
-
-#define CUE_INC(x, y)		(x) = (x + 1) % y
 
 struct cue_softc {
 	USBBASEDEVICE		cue_dev;

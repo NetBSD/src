@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.8 2000/03/24 22:03:30 augustss Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.9 2000/03/24 22:13:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -156,8 +156,6 @@ struct kue_cdata {
 	int			kue_tx_cnt;
 	int			kue_rx_prod;
 };
-
-#define KUE_INC(x, y)		(x) = (x + 1) % y
 
 struct kue_softc {
 	USBBASEDEVICE		kue_dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.8 2000/03/24 22:03:29 augustss Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.9 2000/03/24 22:13:23 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -224,8 +224,6 @@ struct aue_cdata {
 	int			aue_tx_cnt;
 	int			aue_rx_prod;
 };
-
-#define AUE_INC(x, y)		(x) = (x + 1) % y
 
 struct aue_softc {
 	USBBASEDEVICE		aue_dev;
