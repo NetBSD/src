@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.16 1994/01/12 02:38:17 mycroft Exp $
+ * $Id: if_ed.c,v 1.17 1994/01/12 04:12:10 mycroft Exp $
  */
 
 /*
@@ -2224,6 +2224,7 @@ ed_pio_write_mbufs(sc,m,dst)
 	unsigned char residual[2];
 	int maxwait=100; /* about 120us */
 
+#ifdef notyet
 #ifdef DEBUG
 	/* First, count up the total number of bytes to copy */
 	for (len = 0, mp = m; mp; mp = mp->m_next)
@@ -2241,6 +2242,11 @@ ed_pio_write_mbufs(sc,m,dst)
 	}
 #else
 	len = m->m_pkthdr.len;
+#endif
+#else
+	/* First, count up the total number of bytes to copy */
+	for (len = 0, mp = m; mp; mp = mp->m_next)
+		len += mp->m_len;
 #endif
 	
 	/* select page 0 registers */
