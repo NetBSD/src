@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.1 1999/07/17 14:06:24 itojun Exp $	*/
+/*	$NetBSD: debug.c,v 1.2 1999/07/21 02:02:27 mjacob Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -345,8 +345,10 @@ log(severity, syserr, format, va_alist)
      * or if we're debugging.
      */
     if (haveterminal && (debug || severity <= LOG_WARNING)) {
+	time_t sectime;
 	gettimeofday(&now,NULL);
-	thyme = localtime(&now.tv_sec);
+	sectime = (time_t) now.tv_sec;
+	thyme = localtime(&sectime);
 	if (!debug)
 	    fprintf(stderr, "%s: ", progname);
 	fprintf(stderr, "%02d:%02d:%02d.%03ld %s", thyme->tm_hour,
