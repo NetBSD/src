@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)badsect.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: badsect.c,v 1.7 1994/06/11 07:50:45 mycroft Exp $";
+static char *rcsid = "$Id: badsect.c,v 1.8 1994/10/31 04:19:00 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -63,6 +63,7 @@ static char *rcsid = "$Id: badsect.c,v 1.7 1994/06/11 07:50:45 mycroft Exp $";
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 union {
