@@ -36,7 +36,7 @@ amiga		compiles
 
 amigappc	
 
-arc
+arc		compiles
 
 arm26
 
@@ -54,7 +54,7 @@ dreamcast
 
 evbsh3
 
-hp300
+hp300		compiles
 
 hpcarm
 
@@ -64,7 +64,7 @@ hpcsh
 
 i386		compiles
 
-luna68k
+luna68k		compiles
 
 mac68k
 
