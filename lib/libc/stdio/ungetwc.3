@@ -1,4 +1,4 @@
-.\"	$NetBSD: ungetwc.3,v 1.1 2001/12/07 11:47:44 yamt Exp $
+.\"	$NetBSD: ungetwc.3,v 1.2 2001/12/07 12:36:40 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,12 +62,10 @@ The pushed-backed wide-characters will be returned by subsequent reads on the
 stream (in reverse order).
 A successful intervening call, using the same stream, to one of the file
 positioning functions
-.Po
 .Xr fseek 3 ,
 .Xr fsetpos 3 ,
 or
 .Xr rewind 3
-.Pc
 will discard the pushed back wide-characters.
 .Pp
 One wide-character of push-back is guaranteed,
