@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.15 2003/08/16 18:08:27 yamt Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.16 2004/04/21 02:22:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,7 +116,7 @@ struct nqlease {
 	struct nqhost	lc_host;	/* Host that got lease */
 	struct nqm	*lc_morehosts;	/* Other hosts that share read lease */
 	fsid_t		lc_fsid;	/* Fhandle */
-	char		lc_fiddata[MAXFIDSZ];
+	char		lc_fiddata[VFS_MAXFIDSZ];
 	struct vnode	*lc_vp;		/* Soft reference to associated vnode */
 };
 #define	lc_flag		lc_host.lph_un.un_udp.udp_flag
