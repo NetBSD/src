@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.77 2001/12/29 18:57:16 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.78 2001/12/30 19:22:28 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.77 2001/12/29 18:57:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.78 2001/12/30 19:22:28 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,7 +459,7 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 	if (ukbddebug > 5) {
 		printf("ukbd_intr: data");
 		for (i = 0; i < len; i++)
-			printf(" %0x02x", ((u_char *)ibuf)[i]);
+			printf(" 0x%02x", ((u_char *)ibuf)[i]);
 		printf("\n");
 	}
 #endif
