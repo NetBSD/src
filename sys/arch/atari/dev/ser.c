@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.3 1998/01/12 18:04:15 thorpej Exp $	*/
+/*	$NetBSD: ser.c,v 1.4 1998/03/25 09:46:10 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,7 +62,8 @@
 
 /* #define SER_DEBUG */
 
-#define	SERUNIT(x)	(minor(x))
+#define	SERUNIT(x)	(minor(x) & 0x7ffff)
+#define	SERDIALOUT(x)	(minor(x) & 0x80000)
 
 /* XXX */
 #define	CONSBAUD	9600
@@ -158,6 +159,7 @@ void	sercnpollc	__P((dev_t, int));
 
 static void sermsrint __P((struct ser_softc *, struct tty*));
 static void serrxint __P((struct ser_softc *, struct tty*));
+static void ser_shutdown __P((struct ser_softc *));
 static int serspeed __P((long));
 static void sersoft __P((void *));
 static void sertxint __P((struct ser_softc *, struct tty*));
@@ -297,13 +299,10 @@ seropen(dev, flag, mode, p)
 
 	s = spltty();
 
-	/* We need to set this early for the benefit of sersoft(). */
-	SET(tp->t_state, TS_WOPEN);
-
 	/*
 	 * Do the following if this is a first open.
 	 */
-	if (!ISSET(tp->t_state, TS_ISOPEN)) {
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 	    struct termios t;
 
 	    /* Turn on interrupts. */
@@ -370,33 +369,28 @@ seropen(dev, flag, mode, p)
 
 	    splx(s2);
 	}
-	error = 0;
-
-	/* If we're doing a blocking open... */
-	if (!ISSET(flag, O_NONBLOCK))
-		/* ...then wait for carrier. */
-		while (!ISSET(tp->t_state, TS_CARR_ON) &&
-		    !ISSET(tp->t_cflag, CLOCAL | MDMBUF)) {
-			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-			    ttopen, 0);
-			if (error) {
-				/*
-				 * If the open was interrupted and nobody
-				 * else has the device open, then hang up.
-				 */
-				if (!ISSET(tp->t_state, TS_ISOPEN)) {
-					ser_modem(sc, 0);
-					CLR(tp->t_state, TS_WOPEN);
-					ttwakeup(tp);
-				}
-				break;
-			}
-			SET(tp->t_state, TS_WOPEN);
-		}
 
 	splx(s);
-	if (error == 0)
-		error = (*linesw[tp->t_line].l_open)(dev, tp);
+
+	error = ttyopen(tp, SERDIALOUT(dev), ISSET(flag, O_NONBLOCK));
+	if (error)
+		goto bad;
+
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
+        if (error)
+		goto bad;
+
+	return (0);
+
+bad:
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
+		/*
+		 * We failed to open the device, and nobody else had it opened.
+		 * Clean up the state as appropriate.
+		 */
+		ser_shutdown(sc);
+	}
+
 	return (error);
 }
  
@@ -409,7 +403,6 @@ serclose(dev, flag, mode, p)
 	int unit = SERUNIT(dev);
 	struct ser_softc *sc = ser_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
-	int s;
 
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
@@ -418,30 +411,15 @@ serclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 
-	/* If we were asserting flow control, then deassert it. */
-	sc->sc_rx_blocked = 1;
-	ser_hwiflow(sc, 1);
-
-	/* Clear any break condition set with TIOCSBRK. */
-	ser_break(sc, 0);
-
-	/*
-	 * Hang up if necessary.  Wait a bit, so the other side has time to
-	 * notice even if we immediately open the port again.
-	 */
-	if (ISSET(tp->t_cflag, HUPCL)) {
-		ser_modem(sc, 0);
-		(void) tsleep(sc, TTIPRI, ttclos, hz);
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
+		/*
+		 * Although we got a last close, the device may still be in
+		 * use; e.g. if this was the dialout node, and there are still
+		 * processes waiting for carrier on the non-dialout node.
+		 */
+		ser_shutdown(sc);
 	}
 
-	s = splserial();
-	/* Turn off interrupts. */
-	CLR(sc->sc_imra, IA_RRDY|IA_RERR|IA_TRDY|IA_TERR);
-	CLR(sc->sc_imrb, IB_SCTS|IB_SDCD);
-	single_inst_bclr_b(MFP->mf_imrb, IB_SCTS|IB_SDCD);
-	single_inst_bclr_b(MFP->mf_imra, IA_RRDY|IA_RERR|IA_TRDY|IA_TERR);
-	splx(s);
-	
 	return (0);
 }
 
@@ -978,6 +956,40 @@ serdiag(arg)
 	    floods, floods == 1 ? "" : "s");
 }
 
+static
+void ser_shutdown(sc)
+	struct ser_softc *sc;
+{
+	int	s;
+	struct tty *tp = sc->sc_tty;
+
+
+	s = splserial();
+	
+	/* If we were asserting flow control, then deassert it. */
+	sc->sc_rx_blocked = 1;
+	ser_hwiflow(sc, 1);
+
+	/* Clear any break condition set with TIOCSBRK. */
+	ser_break(sc, 0);
+
+	/*
+	 * Hang up if necessary.  Wait a bit, so the other side has time to
+	 * notice even if we immediately open the port again.
+	 */
+	if (ISSET(tp->t_cflag, HUPCL)) {
+		ser_modem(sc, 0);
+		(void) tsleep(sc, TTIPRI, ttclos, hz);
+	}
+
+	/* Turn off interrupts. */
+	CLR(sc->sc_imra, IA_RRDY|IA_RERR|IA_TRDY|IA_TERR);
+	CLR(sc->sc_imrb, IB_SCTS|IB_SDCD);
+	single_inst_bclr_b(MFP->mf_imrb, IB_SCTS|IB_SDCD);
+	single_inst_bclr_b(MFP->mf_imra, IA_RRDY|IA_RERR|IA_TRDY|IA_TERR);
+	splx(s);
+}
+
 static void
 serrxint(sc, tp)
 	struct ser_softc	*sc;
@@ -1097,7 +1109,10 @@ sersoft(arg)
 	ser_softintr_scheduled = 0;
 
 	tp = sc->sc_tty;
-	if (tp == NULL || !ISSET(tp->t_state, TS_ISOPEN | TS_WOPEN))
+	if (tp == NULL)
+		return;
+
+	if (!ISSET(tp->t_state, TS_ISOPEN) && (tp->t_wopen == 0))
 		return;
 	
 	if (sc->sc_rx_ready) {

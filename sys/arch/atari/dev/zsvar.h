@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.5 1996/01/24 19:26:40 gwr Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.6 1998/03/25 09:46:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -156,7 +156,8 @@ struct zs_chanstate {
 #define	ZS_WRITE(c, r, v)	((c)->zc_csr = (r), (c)->zc_csr = (v))
 
 /*
- * Split minor into unit & flag nibble.
+ * Split minor into unit, dialin/dialout & flag nibble.
  */
 #define	ZS_UNIT(dev)		((minor(dev) >> 4) & 0xf) 
 #define	ZS_FLAGS(dev)		(minor(dev) & 0xf) 
+#define	ZS_DIALOUT(dev)		(minor(dev) & 0x80000)

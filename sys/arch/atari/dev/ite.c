@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.24 1998/01/12 18:04:06 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.25 1998/03/25 09:46:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/termios.h>
@@ -411,29 +412,42 @@ iteopen(dev, mode, devtype, p)
 			return (error);
 		first = 1;
 	}
-	tp->t_oproc = itestart;
-	tp->t_param = ite_param;
-	tp->t_dev = dev;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		ttychars(tp);
+	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
+		tp->t_oproc = itestart;
+		tp->t_param = ite_param;
+		tp->t_dev = dev;
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
-		tp->t_state = TS_WOPEN | TS_CARR_ON;
+		tp->t_state = TS_CARR_ON;
+		ttychars(tp);
 		ttsetwater(tp);
 	}
+
+
+	error = ttyopen(tp, 0, (mode & O_NONBLOCK) ? 1 : 0);
+	if (error)
+		goto bad;
+
 	error = (*linesw[tp->t_line].l_open) (dev, tp);
-	if (error == 0) {
-		tp->t_winsize.ws_row = ip->rows;
-		tp->t_winsize.ws_col = ip->cols;
-		if (!kbd_init) {
-			kbd_init = 1;
-			kbdenable();
-		}
-	} else if (first)
+	if (error)
+		goto bad;
+
+	tp->t_winsize.ws_row = ip->rows;
+	tp->t_winsize.ws_col = ip->cols;
+	if (!kbd_init) {
+		kbd_init = 1;
+		kbdenable();
+	}
+	return (0);
+
+
+bad:
+	if (first)
 		ite_off(dev, 0);
+
 	return (error);
 }
 
@@ -688,7 +702,7 @@ int	flag;
 		ip->flags &= ~ITE_ACTIVE;
 }
 
-static void
+void
 ite_switch(unit)
 int	unit;
 {
