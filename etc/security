@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.33 1998/09/14 19:42:42 tv Exp $
+#	$NetBSD: security,v 1.34 1999/02/18 18:53:33 abs Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -30,6 +30,10 @@ if ! cd $SECUREDIR; then
 	exit 1
 fi
 
+if [ -z "$max_loginlen" ];then
+    max_loginlen=8
+fi
+
 ERR=secure1.$$
 TMP1=secure2.$$
 TMP2=secure3.$$
@@ -44,13 +48,13 @@ trap '/bin/rm -rf $SECUREDIR ; exit 0' 0 2 3
 MP=/etc/master.passwd
 
 # these is used several times.
-awk -F: '{ print $1 " " $3 }' $MP | sort -k2n > $MPBYUID
+awk -F: '!/^+/ { print $1 " " $3 }' $MP | sort -k2n > $MPBYUID
 awk -F: '{ print $1 " " $9 }' $MP | sort -k2 > $MPBYPATH
 
 # Check the master password file syntax.
 #
 if checkyesno check_passwd; then
-	awk '
+	awk -v "len=$max_loginlen" '
 	BEGIN {
 		while ( getline < "/etc/shells" > 0 ) {
 			if ($LINE ~ /^\#/ || $LINE ~ /^$/ )
@@ -65,13 +69,18 @@ if checkyesno check_passwd; then
 			printf "Line %d is a blank line.\n", NR;
 			next;
 		}
-		if (NF != 10)
+		if (NF != 10 && ($1 != "+" || NF != 1))
 			printf "Line %d has the wrong number of fields.\n", NR;
+		if ($1 == "+" )  {
+			if (NF != 1 && $3 == 0)
+			    printf "Line %d includes entries with uid 0.\n", NR;
+			next;
+		}
 		if ($1 !~ /^[A-Za-z0-9]*$/)
 			printf "Login %s has non-alphanumeric characters.\n",
 			    $1;
-		if (length($1) > 8)
-			printf "Login %s has more than 8 characters.\n", $1;
+		if (length($1) > len)
+			printf "Login %s has more than "len" characters.\n", $1;
 		if ($2 == "")
 			printf "Login %s has no password.\n", $1;
 		if (length($2) != 13 && length($2) != 20 && $2 != "") {
@@ -136,8 +145,11 @@ if checkyesno check_group; then
 			printf "Line %d is a blank line.\n", NR;
 			next;
 		}
-		if (NF != 4)
+		if (NF != 4 && ($1 != "+" || NF != 1))
 			printf "Line %d has the wrong number of fields.\n", NR;
+		if ($1 == "+" )  {
+			next;
+		}
 		if ($1 !~ /^[A-za-z0-9]*$/)
 			printf "Group %s has non-alphanumeric characters.\n",
 			    $1;
