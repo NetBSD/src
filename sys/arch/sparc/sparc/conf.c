@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 1995/04/10 10:02:13 mycroft Exp $ */
+/*	$NetBSD: conf.c,v 1.27 1995/04/10 19:37:49 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,6 @@
 #include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-#include <sys/vnode.h>
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
@@ -125,7 +124,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 /* open, close, ioctl */
 #define	cdev_openprom_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl),
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) nullop, (dev_type_reset((*))) nullop, 0, \
 	(dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev, 0 }
 
@@ -133,7 +132,7 @@ cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
-cdev_devl(mm);
+cdev_decl(mm);
 #include "zs.h"
 cdev_decl(zs);
 cdev_decl(ms);
