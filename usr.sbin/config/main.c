@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 1996/11/11 23:41:54 gwr Exp $	*/
+/*	$NetBSD: main.c,v 1.21 1997/01/31 03:12:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,6 +71,7 @@ static struct hashtab *opttab;
 static struct hashtab *mkopttab;
 static struct nvlist **nextopt;
 static struct nvlist **nextmkopt;
+static struct nvlist **nextfsopt;
 
 static __dead void stop __P((void));
 static int do_option __P((struct hashtab *, struct nvlist ***,
@@ -162,8 +163,10 @@ usage:
 	needcnttab = ht_new();
 	opttab = ht_new();
 	mkopttab = ht_new();
+	fsopttab = ht_new();
 	nextopt = &options;
 	nextmkopt = &mkoptions;
+	nextfsopt = &fsoptions;
 
 	/*
 	 * Handle profiling (must do this before we try to create any
@@ -207,6 +210,11 @@ usage:
 			    "config: need \"maxusers\" line\n");
 			errors++;
 		}
+	}
+	if (fsoptions == NULL) {
+		(void)fprintf(stderr,
+		    "config: need at least one \"file-system\" line\n");
+		errors++;
 	}
 	if (crosscheck() || errors)
 		stop();
@@ -294,6 +302,40 @@ addoption(name, value)
 	*p = 0;
 	n = intern(low);
 	(void)ht_insert(selecttab, n, (void *)n);
+}
+
+/*
+ * Add a file system option.  This routine simply inserts the name into
+ * a list of valid file systems, which is used to validate the root
+ * file system type.  The name is then treated like a standard option.
+ */
+void
+addfsoption(name)
+	const char *name;
+{
+	register struct nvlist *nv;
+	register const char *n; 
+	register char *p, c;
+	char buf[500];
+
+	/* Convert to lowercase. */
+	for (n = name, p = buf; (c = *n) != '\0'; n++)
+		*p++ = isupper(c) ? tolower(c) : c;
+	*p = 0;
+
+	n = intern(buf);
+
+	if (do_option(fsopttab, &nextfsopt, n, NULL, "file-system"))
+		return;
+
+	/* Convert to uppercase. */
+	for (n = name, p = buf; (c = *n) != '\0'; n++)
+		*p++ = islower(c) ? toupper(c) : c;
+	*p = 0;
+
+	n = intern(buf);
+
+	addoption(n, NULL);
 }
 
 /*
