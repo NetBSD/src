@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.46 1997/11/15 09:27:33 ross Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.47 1997/11/17 00:59:56 ross Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -760,7 +760,6 @@ rflag:		ch = *fmt++;
 reswitch:	switch (ch) {
 		/* XXX: non-standard '%:' format */
 #ifndef __powerpc__
-#ifndef __alpha__
 		case ':': 
 			if (oflags != TOBUFONLY) {
 				cp = va_arg(ap, char *);
@@ -768,7 +767,6 @@ reswitch:	switch (ch) {
 					NULL, va_arg(ap, va_list));
 			}
 			continue;	/* no output */
-#endif
 #endif
 		/* XXX: non-standard '%b' format */
 		case 'b': {
