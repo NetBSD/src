@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel.c,v 1.1 2000/11/04 18:47:20 thorpej Exp $	*/
+/*	$NetBSD: weasel.c,v 1.2 2001/04/26 17:58:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -111,7 +111,7 @@ weasel_init(struct weasel_handle *wh)
 	for (i = 0; i < 2000; i++) {
 		delay(1000);
 		bus_space_read_region_1(wh->wh_st, wh->wh_sh,
-		    WEASEL_CONFIG_BLOCK, &cfg, sizeof(cfg));
+		    WEASEL_CONFIG_BLOCK, (u_int8_t *) &cfg, sizeof(cfg));
 		/*
 		 * Compute the checksum of the config block.
 		 */
