@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.10 1994/01/09 18:46:17 ws Exp $
+ *	$Id: kern_lkm.c,v 1.11 1994/01/13 06:24:16 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -789,7 +789,7 @@ int			cmd;
 			 * Search the table looking for a slot...
 			 */
 			for( i = 0; i < nexecs; i++)
-				if( execsw[ i].check == NULL)
+				if( execsw[ i].es_check == NULL)
 					break;		/* found it!*/
 			/* out of allocable slots?*/
 			if( i == nexecs) {
