@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.227 2000/11/21 21:13:23 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.228 2000/12/08 23:14:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2346,10 +2346,6 @@ IDTVEC(osyscall)
 	/* Set eflags in trap frame. */
 	pushfl
 	popl	8(%esp)
-	/* Turn off trace flag and nested task. */
-	pushfl
-	andb	$~((PSL_T|PSL_NT)>>8),1(%esp)
-	popfl
 	pushl	$7		# size of instruction for restart
 	jmp	syscall1
 
