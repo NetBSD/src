@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cftoken.l,v 1.14 2004/04/12 03:34:06 itojun Exp $");
+__RCSID("$NetBSD: cftoken.l,v 1.15 2004/11/10 20:23:28 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,6 +137,7 @@ hexstring	0x{hexdigit}+
 %s S_SAINF S_SAINFS
 %s S_RMT S_RMTS S_RMTP
 %s S_SA
+%s S_GSSENC
 
 %%
 %{
@@ -282,7 +283,16 @@ hexstring	0x{hexdigit}+
 <S_RMTP>authentication_method { YYD; yylval.num = algclass_isakmp_ameth; return(ALGORITHM_CLASS); }
 <S_RMTP>hash_algorithm	{ YYD; yylval.num = algclass_isakmp_hash; return(ALGORITHM_CLASS); }
 <S_RMTP>dh_group	{ YYD; return(DH_GROUP); }
-<S_RMTP>gssapi_id	{ YYD; return(GSSAPI_ID); }
+<S_RMTP>gss_id		{ YYD; return(GSS_ID); }
+<S_RMTP>gssapi_id	{ YYD; return(GSS_ID); } /* for back compatibility */
+
+	/* GSS ID encoding type (global) */
+<S_INI>gss_id_enc	{ BEGIN S_GSSENC; YYDB; return(GSS_ID_ENC); }
+<S_GSSENC>latin1	{ YYD; yylval.num = LC_GSSENC_LATIN1;
+				return(GSS_ID_ENCTYPE); }
+<S_GSSENC>utf-16le	{ YYD; yylval.num = LC_GSSENC_UTF16LE;
+				return(GSS_ID_ENCTYPE); }
+<S_GSSENC>{semi}	{ BEGIN S_INI; YYDB; return(EOS); }
 
 	/* parameter */
 on		{ YYD; yylval.num = TRUE; return(SWITCH); }
