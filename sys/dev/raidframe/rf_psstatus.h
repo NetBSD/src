@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.h,v 1.5 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.h,v 1.6 2004/03/03 00:45:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -118,7 +118,8 @@ rf_FreeParityStripeStatusTable(RF_Raid_t * raidPtr,
 RF_ReconParityStripeStatus_t *
 rf_LookupRUStatus(RF_Raid_t * raidPtr,
     RF_PSStatusHeader_t * pssTable, RF_StripeNum_t psID,
-    RF_ReconUnitNum_t which_ru, RF_PSSFlags_t flags, int *created);
+    RF_ReconUnitNum_t which_ru, RF_PSSFlags_t flags, 
+    RF_ReconParityStripeStatus_t *newpssPtr);
 void 
 rf_PSStatusDelete(RF_Raid_t * raidPtr, RF_PSStatusHeader_t * pssTable,
     RF_ReconParityStripeStatus_t * pssPtr);

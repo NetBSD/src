@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.21 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.22 2004/03/03 00:45:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.21 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.22 2004/03/03 00:45:20 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -147,20 +147,18 @@ rf_FreeParityStripeStatusTable(RF_Raid_t *raidPtr,
 RF_ReconParityStripeStatus_t *
 rf_LookupRUStatus(RF_Raid_t *raidPtr, RF_PSStatusHeader_t *pssTable,
 		  RF_StripeNum_t psID, RF_ReconUnitNum_t which_ru,
-		  RF_PSSFlags_t flags, int *created)
+		  RF_PSSFlags_t flags, RF_ReconParityStripeStatus_t *newpssPtr)
 {
 	RF_PSStatusHeader_t *hdr = &pssTable[RF_HASH_PSID(raidPtr, psID)];
 	RF_ReconParityStripeStatus_t *p, *pssPtr = hdr->chain;
 
-	*created = 0;
 	for (p = pssPtr; p; p = p->next) {
 		if (p->parityStripeID == psID && p->which_ru == which_ru)
 			break;
 	}
 
 	if (!p && (flags & RF_PSS_CREATE)) {
-		Dprintf2("PSS: creating pss for psid %ld ru %d\n", psID, which_ru);
-		p = rf_AllocPSStatus(raidPtr);
+		p = newpssPtr;
 		p->next = hdr->chain;
 		hdr->chain = p;
 
@@ -174,7 +172,6 @@ rf_LookupRUStatus(RF_Raid_t *raidPtr, RF_PSStatusHeader_t *pssTable,
 		p->procWaitList = NULL;
 		p->blockWaitList = NULL;
 		p->bufWaitList = NULL;
-		*created = 1;
 	} else
 		if (p) {	/* we didn't create, but we want to specify
 				 * some new status */
@@ -270,11 +267,9 @@ rf_AllocPSStatus(RF_Raid_t *raidPtr)
 	RF_ReconParityStripeStatus_t *p;
 
 	p = pool_get(&raidPtr->pss_pool, PR_WAITOK);
+	memset(p, 0, sizeof(RF_ReconParityStripeStatus_t));
 	p->issued = pool_get(&raidPtr->pss_issued_pool, PR_WAITOK);
 	memset(p->issued, 0, raidPtr->numCol);
-	p->next = NULL;
-	/* no need to initialize here b/c the only place we're called from is
-	 * the above Lookup */
 	return (p);
 }
 

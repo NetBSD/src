@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.67 2004/03/01 23:30:58 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.68 2004/03/03 00:45:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.67 2004/03/01 23:30:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.68 2004/03/03 00:45:20 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -973,15 +973,23 @@ TryToRead(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	RF_StripeNum_t psid = ctrl->curPSID;
 	RF_ReconUnitNum_t which_ru = ctrl->ru_count;
 	RF_DiskQueueData_t *req;
-	int     status, created = 0;
-	RF_ReconParityStripeStatus_t *pssPtr;
+	int     status;
+	RF_ReconParityStripeStatus_t *pssPtr, *newpssPtr;
 
 	/* if the current disk is too far ahead of the others, issue a
 	 * head-separation wait and return */
 	if (CheckHeadSeparation(raidPtr, ctrl, col, ctrl->headSepCounter, which_ru))
 		return (0);
+
+	/* allocate a new PSS in case we need it */
+	newpssPtr = rf_AllocPSStatus(raidPtr);
+
 	RF_LOCK_PSS_MUTEX(raidPtr, psid);
-	pssPtr = rf_LookupRUStatus(raidPtr, raidPtr->reconControl->pssTable, psid, which_ru, RF_PSS_CREATE, &created);
+	pssPtr = rf_LookupRUStatus(raidPtr, raidPtr->reconControl->pssTable, psid, which_ru, RF_PSS_CREATE, newpssPtr);
+
+	if (pssPtr != newpssPtr) {
+		rf_FreePSStatus(raidPtr, newpssPtr);
+	}
 
 	/* if recon is blocked on the indicated parity stripe, issue a
 	 * block-wait request and return. this also must mark the indicated RU
@@ -1004,7 +1012,7 @@ TryToRead(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	 * have just created a bogus status entry, which we need to delete. */
 	if (rf_CheckRUReconstructed(raidPtr->reconControl->reconMap, ctrl->rbuf->failedDiskSectorOffset)) {
 		Dprintf2("RECON: Skipping psid %ld ru %d: prior recon after stall\n", psid, which_ru);
-		if (created)
+		if (pssPtr == newpssPtr)
 			rf_PSStatusDelete(raidPtr, raidPtr->reconControl->pssTable, pssPtr);
 		rf_CauseReconEvent(raidPtr, col, NULL, RF_REVENT_SKIP);
 		goto out;
@@ -1435,7 +1443,7 @@ rf_ForceOrBlockRecon(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	RF_StripeNum_t stripeID = asmap->stripeID;	/* the stripe ID we're
 							 * forcing recon on */
 	RF_SectorCount_t sectorsPerRU = raidPtr->Layout.sectorsPerStripeUnit * raidPtr->Layout.SUsPerRU;	/* num sects in one RU */
-	RF_ReconParityStripeStatus_t *pssPtr;	/* a pointer to the parity
+	RF_ReconParityStripeStatus_t *pssPtr, *newpssPtr;	/* a pointer to the parity
 						 * stripe status structure */
 	RF_StripeNum_t psid;	/* parity stripe id */
 	RF_SectorNum_t offset, fd_offset;	/* disk offset, failed-disk
@@ -1446,13 +1454,20 @@ rf_ForceOrBlockRecon(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	RF_ReconBuffer_t *new_rbuf;	/* ptr to newly allocated rbufs */
 	RF_DiskQueueData_t *req;/* disk I/O req to be enqueued */
 	RF_CallbackDesc_t *cb;
-	int     created = 0, nPromoted;
+	int     nPromoted;
 
 	psid = rf_MapStripeIDToParityStripeID(&raidPtr->Layout, stripeID, &which_ru);
 
+	/* allocate a new PSS in case we need it */
+        newpssPtr = rf_AllocPSStatus(raidPtr);
+
 	RF_LOCK_PSS_MUTEX(raidPtr, psid);
 
-	pssPtr = rf_LookupRUStatus(raidPtr, raidPtr->reconControl->pssTable, psid, which_ru, RF_PSS_CREATE | RF_PSS_RECON_BLOCKED, &created);
+	pssPtr = rf_LookupRUStatus(raidPtr, raidPtr->reconControl->pssTable, psid, which_ru, RF_PSS_CREATE | RF_PSS_RECON_BLOCKED, newpssPtr);
+
+        if (pssPtr != newpssPtr) {
+                rf_FreePSStatus(raidPtr, newpssPtr);
+        }
 
 	/* if recon is not ongoing on this PS, just return */
 	if (!(pssPtr->flags & RF_PSS_UNDER_RECON)) {
@@ -1557,12 +1572,11 @@ rf_UnblockRecon(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
 	RF_ReconParityStripeStatus_t *pssPtr;
 	RF_ReconUnitNum_t which_ru;
 	RF_StripeNum_t psid;
-	int     created = 0;
 	RF_CallbackDesc_t *cb;
 
 	psid = rf_MapStripeIDToParityStripeID(&raidPtr->Layout, stripeID, &which_ru);
 	RF_LOCK_PSS_MUTEX(raidPtr, psid);
-	pssPtr = rf_LookupRUStatus(raidPtr, raidPtr->reconControl->pssTable, psid, which_ru, RF_PSS_NONE, &created);
+	pssPtr = rf_LookupRUStatus(raidPtr, raidPtr->reconControl->pssTable, psid, which_ru, RF_PSS_NONE, NULL);
 
 	/* When recon is forced, the pss desc can get deleted before we get
 	 * back to unblock recon. But, this can _only_ happen when recon is
