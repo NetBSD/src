@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgc.1,v 1.16 2001/12/01 20:43:39 wiz Exp $
+.\"	$NetBSD: msgc.1,v 1.17 2002/09/26 01:26:53 wiz Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -79,8 +79,8 @@ msgc
 .Ft void
 .Fn msg_table_add "msg msg_no" ...
 .Sh DESCRIPTION
-This implements a curses based message display system.  A source file that
-lists messages with associated names is given to
+This implements a curses based message display system.
+A source file that lists messages with associated names is given to
 .Nm
 and produces both a .c and a .h file that implement the menu system.
 The standard root name of the files is
@@ -103,30 +103,35 @@ The current location defaults to
 .Pa /usr/share/misc/msg_sys.def
 .El
 .Sh SOURCE DESCRIPTION
-The format is very simple.  Each message is started with the word
+The format is very simple.
+Each message is started with the word
 .Sq message
-followed by the name of the message.  The body of the message is
-next and is started by a { and closed by a }.  The braces are not
-part of the message.  Everything, including newlines between the
-braces are part of the message.
+followed by the name of the message.
+The body of the message is next and is started by a { and closed by a }.
+The braces are not part of the message.
+Everything, including newlines between the braces are part of the message.
 .Sh MESSAGE FUNCTIONS
 The defined messages are used through calls routines that manipulate
-the messages.  You first need to set the
+the messages.
+You first need to set the
 .Xr curses 3
 environment up and then tell the message system which window to use
 for displaying message by calling the function
 .Fn msg_window .
 .Pp
 All variable argument lists in the functions are used as
-are arguments to sprintf.  The messages
-may have sprintf conversions in them and the corresponding parameters
-should match.  Messages are identified by name using the notation
+are arguments to
+.Xr sprintf 3 .
+The messages may have
+.Xr sprintf 3
+conversions in them and the corresponding parameters should match.
+Messages are identified by name using the notation
 .Sq MENU_name
 where
 .Dq name
-is the name in the message source file.  (The definitions are accessed
-by including the generated .h file into a source file wanting to use
-the message routines.)
+is the name in the message source file.
+(The definitions are accessed by including the generated .h file into a
+source file wanting to use the message routines.)
 .Pp
 The function
 .Fn msg_string
@@ -144,22 +149,32 @@ The functions
 and
 .Fn msg_display_add
 cause a defined message to be displayed in the message window and does
-the requested conversions before printing.  The difference is that
+the requested conversions before printing.
+The difference is that
 .Fn msg_display
-clears the window before displaying the message. These functions
-fill paragraphs for readability. The
+clears the window before displaying the message.
+These functions fill paragraphs for readability.
+The
 .Fn msg_table_add
 function behaves like
 .Fn msg_display_add
 but does not fill text.
 .Pp
-The remaining functions deal with a prompt facility.  A prompt message
-is either taken from the message directory or from a given string.  The
-message is processed with sprintf and then displayed.  If the parameter
+The remaining functions deal with a prompt facility.
+A prompt message is either taken from the message directory or from a
+given string.
+The message is processed with
+.Xr sprintf 3
+and then displayed.
+If the parameter
 .Ar def
-is non-NULL and not a string of zero length, a default value is printed
-in brackets.  The user is allowed to type in a response.  If the user
-types just the newline character, the default is returned in the value.
+is
+.No non- Ns Dv NULL
+and not a string of zero length, a default value is printed
+in brackets.
+The user is allowed to type in a response.
+If the user types just the newline character, the default is returned
+in the value.
 The parameter
 .Ar max_chars
 is the length of the parameter
@@ -169,8 +184,8 @@ The parameters
 .Ar def
 and
 .Ar val
-may point to the same character array.  If the default is chosen, the
-character array is not changed.
+may point to the same character array.
+If the default is chosen, the character array is not changed.
 The functions
 .Fn msg_echo
 and
