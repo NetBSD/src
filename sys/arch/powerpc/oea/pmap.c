@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2003/10/27 23:08:12 dyoung Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2003/10/27 23:35:41 kleink Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2003/10/27 23:08:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2003/10/27 23:35:41 kleink Exp $");
 
 #include "opt_altivec.h"
 #include "opt_pmap.h"
@@ -2340,6 +2340,8 @@ pmap_print_mmuregs(void)
 	cpuvers = MFPVR() >> 16;
 
 	__asm __volatile ("mfsdr1 %0" : "=r"(sdr1));
+
+	addr = 0;
 	for (i=0; i<16; i++) {
 		soft_sr[i] = MFSRIN(addr);
 		addr += (1 << ADDR_SR_SHFT);
@@ -2370,7 +2372,6 @@ pmap_print_mmuregs(void)
 
 	printf("SDR1:\t%#lx\n", sdr1);
 	printf("SR[]:\t");
-	addr = 0;
 	for (i=0; i<4; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n\t");
