@@ -1,5 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.1 2003/05/23 00:57:27 ichiro Exp $ */
-#define VERBOSE_INIT_ARM
+/*	$NetBSD: ixdp425_machdep.c,v 1.2 2003/05/23 09:34:42 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
