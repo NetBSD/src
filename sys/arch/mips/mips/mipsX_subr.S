@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.2 2002/03/11 16:39:40 uch Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.3 2002/06/01 13:52:23 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -153,22 +153,25 @@
  * Use 64bit cp0 instructions?
  */
 #if defined(MIPS3)
+#define	USE_64BIT_INSTRUCTIONS
 #if defined(MIPS3_5900)		/* the 5900 has mips32-like mmu registers */
-#undef	USE_64BIT_FUNCTIONS
+#undef	USE_64BIT_CP0_FUNCTIONS
 #else
-#define	USE_64BIT_FUNCTIONS
+#define	USE_64BIT_CP0_FUNCTIONS
 #endif
 #endif
 
 #if defined(MIPS32)
-#undef	USE_64BIT_FUNCTIONS
+#undef	USE_64BIT_INSTRUCTIONS
+#undef	USE_64BIT_CP0_FUNCTIONS
 #endif
 
 #if defined(MIPS64)
-#define	USE_64BIT_FUNCTIONS
+#define	USE_64BIT_INSTRUCTIONS
+#define	USE_64BIT_CP0_FUNCTIONS
 #endif
 
-#if defined(USE_64BIT_FUNCTIONS)
+#if defined(USE_64BIT_CP0_FUNCTIONS)
 #define	_SLL		dsll
 #define	_SRL		dsrl
 #define	WIRED_SHIFT	34
@@ -181,7 +184,7 @@
 /*
  * Use correct-sized m?c0/dm?c0 opcodes.
  */
-#if defined(USE_64BIT_FUNCTIONS)
+#if defined(USE_64BIT_CP0_FUNCTIONS)
 #define	_MFC0	dmfc0
 #define	_MTC0	dmtc0
 #else
@@ -362,7 +365,7 @@ VECTOR(MIPSX(TLBMiss), unknown)
 	.set	at
 VECTOR_END(MIPSX(TLBMiss))
 
-#if defined(USE_64BIT_FUNCTIONS)
+#if defined(USE_64BIT_CP0_FUNCTIONS)
 /*
  * mips3_XTLBMiss routine
  *
@@ -414,7 +417,7 @@ VECTOR(MIPSX(XTLBMiss), unknown)
 	nop					#1f: branch delay slot
 	.set	at
 VECTOR_END(MIPSX(XTLBMiss))
-#endif /* USE_64BIT_FUNCTIONS */
+#endif /* USE_64BIT_CP0_FUNCTIONS */
 
 /*
  * Vector to real handler in KSEG1.
@@ -2202,6 +2205,27 @@ LEAF_NOPROFILE(MIPSX(TBIA))
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	COP0_SYNC				# XXXX - not executed!!
 END(MIPSX(TBIA))
+
+#ifdef USE_64BIT_INSTRUCTIONS
+LEAF(MIPSX(pagezero))
+	li	a1, NBPG >> 6
+
+1:	sd	zero, 0(a0)			# try to miss cache first
+	sd	zero, 32(a0)
+	subu	a1, 1
+	sd	zero, 16(a0)
+	sd	zero, 48(a0)
+	sd	zero, 8(a0)			# fill in cache lines
+	sd	zero, 40(a0)
+	sd	zero, 24(a0)
+	sd	zero, 56(a0)
+	bgtz	a1,1b
+	addu	a0, 64
+
+	j	ra
+	nop
+END(MIPSX(pagezero))
+#endif /* USE_64BIT_INSTRUCTIONS */
 
 	.data
 
