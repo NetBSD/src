@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.26 2000/10/11 20:23:48 is Exp $ */
+/*	$NetBSD: arp.c,v 1.27 2001/01/05 19:34:13 christos Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.26 2000/10/11 20:23:48 is Exp $");
+__RCSID("$NetBSD: arp.c,v 1.27 2001/01/05 19:34:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,8 @@ void	usage __P((void));
 static int pid;
 static int nflag, vflag;
 static int s = -1;
+
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -387,7 +389,6 @@ dump(addr)
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
-	extern int h_errno;
 	struct hostent *hp;
 
 	mib[0] = CTL_NET;
@@ -419,14 +420,10 @@ dump(addr)
 			hp = gethostbyaddr((caddr_t)&(sin->sin_addr),
 			    sizeof sin->sin_addr, AF_INET);
 		else
-			hp = 0;
-		if (hp)
-			host = hp->h_name;
-		else {
-			host = "?";
-			if (h_errno == TRY_AGAIN)
-				nflag = 1;
-		}
+			hp = NULL;
+
+		host = hp ? hp->h_name : "?";
+
 		(void)printf("%s (%s) at ", host, inet_ntoa(sin->sin_addr));
 		if (sdl->sdl_alen)
 			sdl_print(sdl);
@@ -502,7 +499,6 @@ atosdl(s, sdl)
 void
 usage()
 {
-	extern char *__progname;
 
 	(void)fprintf(stderr, "usage: %s [-n] hostname\n", __progname);
 	(void)fprintf(stderr, "usage: %s [-n] -a\n", __progname);
