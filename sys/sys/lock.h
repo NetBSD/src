@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2 1997/07/06 12:32:38 fvdl Exp $	*/
+/*	$NetBSD: lock.h,v 1.3 1997/07/06 22:53:14 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -173,7 +173,7 @@ int	lockmgr __P((__volatile struct lock *, u_int flags,
 int	lockstatus __P((struct lock *));
 void	lockmgr_printinfo __P((struct lock *));
 
-#ifdef DEBUG
+#ifdef LOCKDEBUG
 void _simple_unlock __P((__volatile struct simplelock *alp, const char *, int));
 #define simple_unlock(alp) _simple_unlock(alp, __FILE__, __LINE__)
 int _simple_lock_try __P((__volatile struct simplelock *alp, const char *, int));
@@ -181,13 +181,13 @@ int _simple_lock_try __P((__volatile struct simplelock *alp, const char *, int))
 void _simple_lock __P((__volatile struct simplelock *alp, const char *, int));
 #define simple_lock(alp) _simple_lock(alp, __FILE__, __LINE__)
 void simple_lock_init __P((struct simplelock *alp));
-#else /* !DEBUG */
+#else /* !LOCKDEBUG */
 #if NCPUS == 1 /* no multiprocessor locking is necessary */
 #define	simple_lock_init(alp)
 #define	simple_lock(alp)
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
 #define	simple_unlock(alp)
 #endif /* NCPUS == 1 */
-#endif /* !DEBUG */
+#endif /* !LOCKDEBUG */
 
 #endif /* !_LOCK_H_ */
