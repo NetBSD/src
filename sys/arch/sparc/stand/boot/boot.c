@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.18 2003/08/07 16:29:46 agc Exp $ */
+/*	$NetBSD: boot.c,v 1.19 2004/04/08 07:35:34 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -217,7 +217,7 @@ loadk(char *kernel, u_long *marks)
 			goto out;
 		}
 
-		if (pmap_map(0, pa, size) != 0) {
+		if (pa != 0 && pmap_map(0, pa, size) != 0) {
 			error = EFAULT;
 			goto out;
 		}
