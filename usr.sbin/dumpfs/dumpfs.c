@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dumpfs.c	8.2 (Berkeley) 2/2/94";*/
-static char *rcsid = "$Id: dumpfs.c,v 1.6 1994/06/08 18:58:23 mycroft Exp $";
+static char *rcsid = "$Id: dumpfs.c,v 1.7 1994/09/23 02:18:35 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,13 +48,14 @@ static char *rcsid = "$Id: dumpfs.c,v 1.6 1994/06/08 18:58:23 mycroft Exp $";
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
-#include <unistd.h>
-#include <fcntl.h>
+#include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <fstab.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 union {
 	struct fs fs;
@@ -83,7 +84,7 @@ main(argc, argv)
 	register struct fstab *fs;
 	int ch, eval;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:
@@ -213,7 +214,7 @@ dumpfs(name)
 
 err:	if (fd != -1)
 		(void)close(fd);
-	(void)fprintf(stderr, "dumpfs: %s: %s\n", name, strerror(errno));
+	warn("%s", name);
 	return (1);
 };
 
@@ -230,7 +231,7 @@ dumpcg(name, fd, c)
 	    SEEK_SET)) == (off_t)-1)
 		return (1);
 	if (read(fd, &acg, afs.fs_bsize) != afs.fs_bsize) {
-		(void)fprintf(stderr, "dumpfs: %s: error reading cg\n", name);
+		warnx("%s: error reading cg", name);
 		return (1);
 	}
 	printf("magic\t%x\ttell\t%qx\ttime\t%s",
@@ -311,6 +312,7 @@ pbits(vp, max)
 void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: dumpfs filesys | device\n");
 	exit(1);
 }
