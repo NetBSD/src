@@ -111,8 +111,7 @@ vt5     at mainbus?
 
 # IDE disk controller
 wdc0    at mainbus? base 0x002107c0 irq 9
-wd0     at wdc? drive ?
-wd1     at wdc? drive ?
+wd*     at wdc? drive ?
 
 # Floppy disk controller
 fdc0    at mainbus? base 0x00210fc0 irq 12 dack 0x00002000
