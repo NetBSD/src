@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.50 2002/06/01 23:50:53 lukem Exp $	 */
+/*	$NetBSD: rtld.c,v 1.51 2002/07/10 15:12:36 fredette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -800,8 +800,14 @@ _rtld_dlsym(handle, name)
 		}
 	}
 	
-	if (def != NULL)
+	if (def != NULL) {
+#ifdef __HAVE_FUNCTION_DESCRIPTORS
+		if (ELF_ST_TYPE(def->st_info) == STT_FUNC)
+			return (void *)_rtld_function_descriptor_alloc(defobj, 
+			    def, 0);
+#endif /* __HAVE_FUNCTION_DESCRIPTORS */
 		return defobj->relocbase + def->st_value;
+	}
 	
 	_rtld_error("Undefined symbol \"%s\"", name);
 	return NULL;
@@ -813,10 +819,14 @@ _rtld_dladdr(addr, info)
 	Dl_info *info;
 {
 	const Obj_Entry *obj;
-	const Elf_Sym *def;
+	const Elf_Sym *def, *best_def;
 	void *symbol_addr;
 	unsigned long symoffset;
 	
+#ifdef __HAVE_FUNCTION_DESCRIPTORS
+	addr = _rtld_function_descriptor_function(addr);
+#endif /* __HAVE_FUNCTION_DESCRIPTORS */
+
 	obj = _rtld_obj_from_addr(addr);
 	if (obj == NULL) {
 		_rtld_error("No shared object contains address");
@@ -831,6 +841,7 @@ _rtld_dladdr(addr, info)
 	 * Walk the symbol list looking for the symbol whose address is
 	 * closest to the address sent in.
 	 */
+	best_def = NULL;
 	for (symoffset = 0; symoffset < obj->nchains; symoffset++) {
 		def = obj->symtab + symoffset;
 
@@ -853,11 +864,19 @@ _rtld_dladdr(addr, info)
 		/* Update our idea of the nearest symbol. */
 		info->dli_sname = obj->strtab + def->st_name;
 		info->dli_saddr = symbol_addr;
+		best_def = def;
 
 		/* Exact match? */
 		if (info->dli_saddr == addr)
 			break;
 	}
+
+#ifdef __HAVE_FUNCTION_DESCRIPTORS
+	if (best_def != NULL && ELF_ST_TYPE(best_def->st_info) == STT_FUNC)
+		info->dli_saddr = (void *)_rtld_function_descriptor_alloc(obj, 
+		    best_def, 0);
+#endif /* __HAVE_FUNCTION_DESCRIPTORS */
+
 	return 1;
 }
 

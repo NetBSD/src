@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.51 2002/02/03 23:34:42 thorpej Exp $	 */
+/*	$NetBSD: reloc.c,v 1.52 2002/07/10 15:12:35 fredette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -158,9 +158,9 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym   *def;
 	const Obj_Entry *defobj;
-#if defined(__alpha__) || defined(__arm__) || defined(__i386__) || \
-    defined(__m68k__) || defined(__powerpc__) || defined(__sh__) || \
-    defined(__vax__)
+#if defined(__alpha__) || defined(__arm__) || defined(__hppa__) || \
+    defined(__i386__) || defined(__m68k__) || defined(__powerpc__) || \
+    defined(__sh__) || defined(__vax__)
 	Elf_Addr         tmp;
 #endif
 
@@ -379,7 +379,10 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    (void *)*where));
 		break;
 #endif /* ! __alpha__ */
+#endif /* __alpha__ || __i386__ || __m68k__ || __sh__ */
 
+#if defined(__alpha__) || defined(__hppa__) || defined(__i386__) || \
+    defined(__m68k__) || defined(__sh__)
 	case R_TYPE(COPY):
 		/*
 		 * These are deferred until all other relocations have
@@ -395,7 +398,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		}
 		rdbg(dodebug, ("COPY (avoid in main)"));
 		break;
-#endif /* __i386__ || __alpha__ || __m68k__ || defined(__sh__) */
+#endif /* __alpha__ || __hppa__ || __i386__ || __m68k__ || __sh__ */
 
 #if defined(__mips__)
 	case R_TYPE(REL32):
@@ -578,7 +581,105 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    (void *)*where, where, defobj->path));
 		break;
 	}
-#endif
+#endif /* __arm__ */
+
+#ifdef __hppa__
+	case R_TYPE(DIR32):
+		if (ELF_R_SYM(rela->r_info)) {
+			/*
+			 * This is either a DIR32 against a symbol
+			 * (def->st_name != 0), or against a local 
+			 * section (def->st_name == 0).
+			 */
+			def = obj->symtab + ELF_R_SYM(rela->r_info);
+			defobj = obj;
+			if (def->st_name != 0)
+				/*
+		 		 * While we're relocating self, _rtld_objlist
+				 * is NULL, so we just pass in self.
+				 */
+				def = _rtld_find_symdef((_rtld_objlist == NULL ?
+				    obj : _rtld_objlist), rela->r_info, 
+				    NULL, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
+			    rela->r_addend);
+
+			if (*where != tmp)
+				*where = tmp;
+			rdbg(dodebug, ("DIR32 %s in %s --> %p in %s",
+			    defobj->strtab + def->st_name, obj->path,
+			    (void *)*where, defobj->path));
+		} else {
+			extern Elf_Addr	_GLOBAL_OFFSET_TABLE_[];
+			extern Elf_Addr	_GOT_END_[];
+
+			tmp = (Elf_Addr)(obj->relocbase + rela->r_addend);
+
+			/* This is the ...iffy hueristic. */
+			if (!dodebug ||
+			    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
+			    (caddr_t)where >= (caddr_t)_GOT_END_) {
+				if (*where != tmp)
+					*where = tmp;
+				rdbg(dodebug, ("DIR32 in %s --> %p", obj->path,
+				    (void *)*where));
+			} else
+				rdbg(dodebug, ("DIR32 in %s stays at %p",
+				    obj->path, (void *)*where));
+		}
+		break;
+
+	case R_TYPE(PLABEL32):
+		if (ELF_R_SYM(rela->r_info)) {
+			/*
+	 		 * While we're relocating self, _rtld_objlist
+			 * is NULL, so we just pass in self.
+			 */
+			def = _rtld_find_symdef((_rtld_objlist == NULL ?
+			    obj : _rtld_objlist), rela->r_info, 
+			    NULL, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			tmp = _rtld_function_descriptor_alloc(defobj, def, 
+			    rela->r_addend);
+			if (tmp == (Elf_Addr)-1)
+				return -1;
+
+			if (*where != tmp)
+				*where = tmp;
+			rdbg(dodebug, ("PLABEL32 %s in %s --> %p in %s",
+			    defobj->strtab + def->st_name, obj->path,
+			    (void *)*where, defobj->path));
+		} else {
+			/*
+			 * This is a PLABEL for a static function, and the
+			 * dynamic linker has both allocated a PLT entry
+			 * for this function and told us where it is.  We
+			 * can safely use the PLT entry as the PLABEL
+			 * because there should be no other PLABEL reloc
+			 * referencing this function.  This object should
+			 * also have an IPLT relocation to initialize the
+			 * PLT entry.
+			 *
+			 * The dynamic linker should also have ensured
+			 * that the addend has the next-least-significant
+			 * bit set; the $$dyncall millicode uses this to
+			 * distinguish a PLABEL pointer from a plain
+			 * function pointer.
+			 */
+			tmp = (Elf_Addr)(obj->relocbase + rela->r_addend);
+
+			if (*where != tmp)
+				*where = tmp;
+			rdbg(dodebug, ("PLABEL32 in %s --> %p",
+			    obj->path, (void *)*where));
+		}
+		break;
+#endif /* __hppa__ */
 
 	default:
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
@@ -599,7 +700,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 }
 
 
-#if !defined(__powerpc__)
+#if !defined(__powerpc__) && !defined(__hppa__)
 
 int
 _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
@@ -664,7 +765,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 	return 0;
 }
 
-#endif /* __powerpc__ */
+#endif /* __powerpc__  || __hppa__ */
 
 #endif /* __sparc__ || __x86_64__ */
 
@@ -873,6 +974,9 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 #endif
 #if defined(__alpha__)
 			_rtld_setup_alpha_pltgot(obj, dodebug);
+#endif
+#if defined(__hppa__)
+			_rtld_setup_hppa_pltgot(obj);
 #endif
 #if defined(__mips__)
 			_rtld_relocate_mips_got(obj);
