@@ -1,4 +1,4 @@
-/*      $NetBSD: n_exp.c,v 1.3 1998/10/20 02:26:10 matt Exp $ */
+/*      $NetBSD: n_exp.c,v 1.4 1998/11/08 19:29:34 ragge Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -168,9 +168,9 @@ double x, c;
 	double  z,hi,lo;
 	int k;
 
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if (x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 	if ( x <= lnhuge ) {
 		if ( x >= lntiny ) {
 
