@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.1.1.12 1999/04/09 17:52:10 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.1.1.13 1999/04/26 15:43:11 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -268,7 +268,8 @@ void dhcprequest (packet)
 	if (!packet -> shared_network ||
 	    (packet -> raw -> ciaddr.s_addr &&
 	     packet -> raw -> giaddr.s_addr) ||
-	    packet -> options [DHO_DHCP_REQUESTED_ADDRESS].len) {
+	    (packet -> options [DHO_DHCP_REQUESTED_ADDRESS].len &&
+	     !packet -> raw -> ciaddr.s_addr)) {
 		
 		/* If we don't know where it came from but we do know
 		   where it claims to have come from, it didn't come
@@ -1471,7 +1472,7 @@ struct lease *find_lease (packet, share, ours)
 			       : piaddr (cip)),
 			      piaddr (cip));
 			warn ("from the dynamic address pool for %s",
-			      ip_lease -> subnet -> shared_network -> name);
+			      share -> name);
 			if (fixed_lease)
 				ip_lease = (struct lease *)0;
 			strcpy (dhcp_message,

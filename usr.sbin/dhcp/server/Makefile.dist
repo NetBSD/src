@@ -31,6 +31,7 @@
 #
 
 CATMANPAGES = dhcpd.cat8 dhcpd.conf.cat5 dhcpd.leases.cat5
+SEDMANPAGES = dhcpd.man8 dhcpd.conf.man5 dhcpd.leases.man5
 SRCS   = dhcpd.c dhcp.c bootp.c confpars.c db.c
 OBJS   = dhcpd.o dhcp.o bootp.o confpars.o db.o
 PROG   = dhcpd
@@ -67,7 +68,7 @@ clean:
 	-rm -f $(OBJS)
 	
 realclean: clean
-	-rm -f $(PROG) $(CATMANPAGES) *~ #*
+	-rm -f $(PROG) $(CATMANPAGES) $(SEDMANPAGES) *~ #*
 
 distclean: realclean
 	-rm -f Makefile
@@ -76,18 +77,26 @@ distclean: realclean
 # macros aren't available on older unices.   Catted man pages are
 # provided in the distribution so that this doesn't become a problem.
 
-dhcpd.cat8:	dhcpd.8
-	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
-		-e "s#RUNDIR#$(VARRUN)#g" < dhcpd.8 \
-			| nroff -man >dhcpd.cat8
+dhcpd.cat8:	dhcpd.man8
+	nroff -man dhcpd.man8 >dhcpd.cat8
 
-dhcpd.conf.cat5:	dhcpd.conf.5
-	nroff -man dhcpd.conf.5 >dhcpd.conf.cat5
-
-dhcpd.leases.cat5:	dhcpd.leases.5
+dhcpd.man8:	dhcpd.8
 	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
-		-e "s#RUNDIR#$(VARRUN)#g" < dhcpd.leases.5 \
-			| nroff -man >dhcpd.leases.cat5
+		-e "s#RUNDIR#$(VARRUN)#g" < dhcpd.8 >dhcpd.man8
+
+dhcpd.conf.cat5:	dhcpd.conf.man5
+	nroff -man dhcpd.conf.man5 >dhcpd.conf.cat5
+
+dhcpd.conf.man5:	dhcpd.conf.5
+	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#RUNDIR#$(VARRUN)#g" < dhcpd.conf.5 >dhcpd.conf.man5
+
+dhcpd.leases.cat5:	dhcpd.leases.man5
+	nroff -man dhcpd.leases.man5 >dhcpd.leases.cat5
+
+dhcpd.leases.man5:	dhcpd.leases.5
+	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#RUNDIR#$(VARRUN)#g" < dhcpd.leases.5 >dhcpd.leases.man5
 
 dhcpd:	$(OBJS) $(COBJ) $(DHCPLIB)
 	$(CC) $(LFLAGS) -o dhcpd $(OBJS) $(DHCPLIB) $(LIBS)

@@ -31,6 +31,7 @@
 #
 
 CATMANPAGES = dhcp-options.cat5
+SEDMANPAGES = dhcp-options.man5
 SRC    = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
        	 lpf.c packet.c memory.c print.c options.c inet.c convert.c \
 	 tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c dlpi.c
@@ -69,12 +70,16 @@ clean:
 	-rm -f $(OBJ)
 	
 realclean: clean
-	-rm -f libdhcp.a *~ #* $(CATMANPAGES)
+	-rm -f libdhcp.a *~ #* $(CATMANPAGES) $(SEDMANPAGES)
 
 distclean: realclean
 	-rm -f Makefile
 
-dhcp-options.cat5:	dhcp-options.5
-	nroff -man dhcp-options.5 >dhcp-options.cat5
+dhcp-options.cat5:	dhcp-options.man5
+	nroff -man dhcp-options.man5 >dhcp-options.cat5
+
+dhcp-options.man5:	dhcp-options.5
+	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#RUNDIR#$(VARRUN)#g" < dhcp-options.5 >dhcp-options.man5
 
 # Dependencies (semi-automatically-generated)

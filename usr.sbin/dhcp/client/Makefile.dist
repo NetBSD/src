@@ -32,6 +32,8 @@
 
 CATMANPAGES = dhclient.cat8 dhclient.conf.cat5 dhclient-script.cat8 \
 	      dhclient.leases.cat5
+SEDMANPAGES = dhclient.man8 dhclient.conf.man5 dhclient-script.man8 \
+	      dhclient.leases.man5
 SRCS   = dhclient.c clparse.c
 OBJS   = dhclient.o clparse.o
 PROG   = dhclient
@@ -77,7 +79,7 @@ clean:
 	-rm -f $(OBJS)
 	
 realclean: clean
-	-rm -f $(PROG) $(CATMANPAGES) *~ #*
+	-rm -f $(PROG) $(CATMANPAGES) $(SEDMANPAGES) *~ #*
 
 distclean: realclean
 	-rm -f Makefile
@@ -86,24 +88,36 @@ distclean: realclean
 # macros aren't available on older unices.   Catted man pages are
 # provided in the distribution so that this doesn't become a problem.
 
-dhclient.cat8:	dhclient.8
-	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
-		-e "s#RUNDIR#$(VARRUN)#g" < dhclient.8 \
-			| nroff -man >dhclient.cat8
+dhclient.cat8:	dhclient.man8
+	nroff -man dhclient.man8 >dhclient.man8
 
-dhclient-script.cat8:	dhclient-script.8
+dhclient.man8: dhclient.8
+	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#RUNDIR#$(VARRUN)#g" < dhclient.8 >dhclient.man8
+
+dhclient-script.cat8:	dhclient-script.man8
+	nroff -man dhclient-script.man8 >dhclient-script.cat8
+
+dhclient-script.man8:	dhclient-script.8
 	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
 		-e "s#RUNDIR#$(VARRUN)#g" < dhclient-script.8 \
-			| nroff -man >dhclient-script.cat8
+						>dhclient-script.man8
 
-dhclient.conf.cat5:	dhclient.conf.5
-	nroff -man dhclient.conf.5 >dhclient.conf.cat5
+dhclient.conf.man5:	dhclient.conf.5
+	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#RUNDIR#$(VARRUN)#g" < dhclient.conf.5 \
+						>dhclient.conf.man5
 
-dhclient.leases.cat5:	dhclient.leases.5
+dhclient.conf.cat5:	dhclient.conf.man5
+	nroff -man dhclient.conf.man5 >dhclient.conf.cat5
+
+dhclient.leases.man5:	dhclient.leases.5
 	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
 		-e "s#RUNDIR#$(VARRUN)#g" < dhclient.leases.5 \
-			| nroff -man >dhclient.leases.cat5
+						>dhclient.leases.man5
 
+dhclient.leases.cat5:	dhclient.leases.man5
+	nroff -man dhclient.leases.man5 >dhclient.leases.cat5
 
 dhclient:	$(OBJS) $(DHCPLIB)
 	$(CC) $(LFLAGS) -o $(PROG) $(OBJS) $(DHCPLIB) $(LIBS)

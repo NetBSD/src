@@ -31,6 +31,7 @@
 #
 
 CATMANPAGES = dhcrelay.cat8
+SEDMANPAGES = dhcrelay.cat8
 SRCS   = dhcrelay.c
 OBJS   = dhcrelay.o
 PROG   = dhcrelay
@@ -63,7 +64,7 @@ clean:
 	-rm -f $(OBJS) dhclient.o
 	
 realclean: clean
-	-rm -f $(PROG) $(CATMANPAGES) *~ #*
+	-rm -f $(PROG) $(CATMANPAGES) $(SEDMANPAGES) *~ #*
 
 distclean: realclean
 	-rm -f Makefile
@@ -72,10 +73,12 @@ distclean: realclean
 # macros aren't available on older unices.   Catted man pages are
 # provided in the distribution so that this doesn't become a problem.
 
-dhcrelay.cat8:	dhcrelay.8
+dhcrelay.cat8:	dhcrelay.man8
+	nroff -man dhcrelay.man8 >dhcrelay.cat8
+
+dhcrelay.man8:	dhcrelay.8
 	sed -e "s#ETCDIR#$(ETC)#" -e "s#DBDIR#$(VARDB)#" \
-		-e "s#RUNDIR#$(VARRUN)#" < dhcrelay.8 \
-			| nroff -man >dhcrelay.cat8
+		-e "s#RUNDIR#$(VARRUN)#" < dhcrelay.8 >dhcrelay.man8
 
 dhcrelay:	dhcrelay.o $(DHCPLIB)
 	$(CC) $(LFLAGS) -o $(PROG) dhcrelay.o $(DHCPLIB) $(LIBS)
