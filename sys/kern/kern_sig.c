@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.67 1997/10/16 02:45:39 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.67.2.1 1998/11/22 03:31:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1052,9 +1052,12 @@ coredump(p)
 
 	/*
 	 * The core dump will go in the current working directory.  Make
-	 * sure that mount flags allow us to write core dumps there.
+	 * sure that the directory is still there and that the mount flags
+	 * allow us to write core dumps there.
 	 */
-	if (p->p_fd->fd_cdir->v_mount->mnt_flag & MNT_NOCOREDUMP)
+	vp = p->p_fd->fd_cdir;
+	if (vp->v_mount == NULL ||
+	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
 		return (EPERM);
 
 	sprintf(name, "%s.core", p->p_comm);
