@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.14 1994/06/29 06:38:00 cgd Exp $	*/
+/*	$NetBSD: in.c,v 1.15 1994/11/03 14:57:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -147,7 +147,7 @@ in_socktrim(ap)
 	register char *cp = (char *) (&ap->sin_addr + 1);
 
 	ap->sin_len = 0;
-	while (--cp > cplim)
+	while (--cp >= cplim)
 		if (*cp) {
 			(ap)->sin_len = cp - (char *) (ap) + 1;
 			break;
