@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.50.2.1 2001/10/10 11:56:22 fvdl Exp $ */
+/*	$NetBSD: scn.c,v 1.50.2.2 2001/10/13 17:42:39 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -1065,7 +1065,7 @@ scnopen(devvp, flag, mode, p)
 	tp->t_oproc = scnstart;
 	tp->t_param = scnparam;
 	tp->t_hwiflow = scnhwiflow;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
@@ -1318,7 +1318,8 @@ scnhwiflow(tp, stop)
 	struct tty *tp;
 	int stop;
 {
-	struct scn_softc *sc = vdev_privdata(tp->t_devvp);
+	int unit = DEV_UNIT(tp->t_dev);
+	struct scn_softc *sc = SOFTC(unit);
 	int s = splrtty();
 
 	if (!stop) {
@@ -1637,13 +1638,14 @@ opbits(sc, tioc_bits)
 }
 
 int
-scnioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+scnioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t	data;
 	int flag;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	register int unit = DEV_UNIT(dev);
 	register struct scn_softc *sc = SOFTC(unit);
 	register struct tty *tp = sc->sc_tty;
@@ -1652,7 +1654,7 @@ scnioctl(dev, cmd, data, flag, p)
 	error = (*tp->t_linesw->l_ioctl) (tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -1781,10 +1783,10 @@ scnparam(tp, t)
 	struct termios *t;
 {
 	int cflag = t->c_cflag;
-	int unit = DEV_UNIT(vdev_rdev(tp->t_devvp));
+	int unit = DEV_UNIT(tp->t_dev);
 	char mr1, mr2;
 	int error;
-	struct scn_softc *sc = vdev_privdata(tp->t_devvp);
+	struct scn_softc *sc = SOFTC(unit);
 
 	/* Is this a hang up? */
 	if (t->c_ospeed == B0) {

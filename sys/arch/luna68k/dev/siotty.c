@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.8.4.1 2001/10/10 11:56:12 fvdl Exp $ */
+/* $NetBSD: siotty.c,v 1.8.4.2 2001/10/13 17:42:39 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.8.4.1 2001/10/10 11:56:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.8.4.2 2001/10/13 17:42:39 fvdl Exp $");
 
 #include "opt_ddb.h"
 
@@ -199,7 +199,7 @@ static void
 siostart(tp)
 	struct tty *tp;
 {
-	struct siotty_softc *sc = vdev_privdata(tp->t_devvp);
+	struct siotty_softc *sc = siotty_cd.cd_devs[minor(tp->t_dev)];
 	int s, c;
  
 	s = spltty();
@@ -247,7 +247,7 @@ sioparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct siotty_softc *sc = vdev_privdata(tp->t_devvp);
+	struct siotty_softc *sc = siotty_cd.cd_devs[minor(tp->t_dev)];
 	int wr4, s;
 
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
@@ -378,7 +378,7 @@ sioopen(devvp, flag, mode, p)
 	tp->t_oproc = siostart;
 	tp->t_param = sioparam;
 	tp->t_hwiflow = NULL /* XXX siohwiflow XXX */;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		struct termios t;
 
@@ -487,7 +487,7 @@ sioioctl(devvp, cmd, data, flag, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 

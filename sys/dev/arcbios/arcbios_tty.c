@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.1.4.2 2001/10/10 11:56:52 fvdl Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.1.4.3 2001/10/13 17:42:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -77,7 +77,7 @@ arcbios_ttyopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 
 	tp->t_oproc = arcbios_tty_start;
 	tp->t_param = arcbios_tty_param;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_CARR_ON;
 		ttychars(tp);
@@ -148,7 +148,7 @@ arcbios_ttyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 

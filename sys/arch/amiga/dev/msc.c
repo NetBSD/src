@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.19.4.1 2001/10/10 11:55:51 fvdl Exp $	*/
+/*	$NetBSD: msc.c,v 1.19.4.2 2001/10/13 17:42:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Zik.
@@ -163,7 +163,7 @@ struct speedtab mscspeedtab_turbo[] = {
   
 struct   speedtab *mscspeedtab;
 
-int mscmctl __P((struct vnode *devvp, int bits, int howto));
+int mscmctl __P((dev_t dev, int bits, int howto));
 void mscmint __P((register void *data));
 
 int mscmatch __P((struct device *, struct cfdata *, void *));
@@ -324,7 +324,7 @@ mscopen(devvp, flag, mode, p)
 
 	tp->t_oproc = (void (*) (struct tty *)) mscstart;
 	tp->t_param = mscparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	tp->t_hwiflow = mschwiflow;
  
 	/* if port is still closing, just bitbucket remaining characters */
@@ -355,10 +355,10 @@ mscopen(devvp, flag, mode, p)
 		mscparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 
-		(void) mscmctl(devvp, TIOCM_DTR | TIOCM_RTS, DMSET);
+		(void) mscmctl(dev, TIOCM_DTR | TIOCM_RTS, DMSET);
 
 		if ((SWFLAGS(dev) & TIOCFLAG_SOFTCAR) ||
-		    (mscmctl(devvp, 0, DMGET) & TIOCM_CD))
+		    (mscmctl(dev, 0, DMGET) & TIOCM_CD))
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
@@ -420,7 +420,7 @@ mscopen(devvp, flag, mode, p)
 	 * Reset the tty pointer, as there could have been a dialout
 	 * use of the tty with a dialin open waiting.
 	 */
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 
 	return tp->t_linesw->l_open(devvp, tp);
 }
@@ -455,7 +455,7 @@ mscclose(devvp, flag, mode, p)
 	tp = msc_tty[MSCTTY(dev)];
 	tp->t_linesw->l_close(tp, flag);
 
-	(void) mscmctl(devvp, 0, DMSET);
+	(void) mscmctl(dev, 0, DMSET);
 
 	ttyclose(tp);
 
@@ -584,7 +584,7 @@ mscmint (data)
 				 (tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
 
 #ifndef MSCCDHACK
-				if (MSCDIALIN(vdev_rdev(tp->t_devvp)))
+				if (MSCDIALIN(tp->t_dev))
 #endif
 				{
 				    if (tp->t_linesw->l_modem(tp, 0) == 0) {
@@ -605,7 +605,7 @@ mscmint (data)
 			    msc->flags |= TIOCM_CD;
 			    if ((tp = msc_tty[MSCTTYSLOT(MSCSLOTUL(unit, i))]) &&
 				(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
-				    if (MSCDIALIN(vdev_rdev(tp->t_devvp)))
+				    if (MSCDIALIN(tp->t_dev))
 					tp->t_linesw->l_modem(tp, 1);
 			    } /* if tp valid and port open */
 			}		/* CD on/off */
@@ -746,7 +746,7 @@ NoRoomForYa:
 		}
 		/* if output has drained, drop DTR */
 		else if (ms->OutHead == ms->OutTail) {
-		    (void) mscmctl(tp->t_devvp, 0, DMSET);
+		    (void) mscmctl(tp->t_dev, 0, DMSET);
 		    msc->closing = FALSE;
 		}
 	    }
@@ -791,7 +791,7 @@ mscioctl(devvp, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 
 	if (error >= 0)
 		return (error);
@@ -815,31 +815,31 @@ mscioctl(devvp, cmd, data, flag, p)
 			break;
 
 		case TIOCSDTR:
-			(void) mscmctl(devvp, TIOCM_DTR | TIOCM_RTS, DMBIS);
+			(void) mscmctl(dev, TIOCM_DTR | TIOCM_RTS, DMBIS);
 			break;
       
 		case TIOCCDTR:
 			if (!MSCDIALIN(dev))	/* don't let dialins drop DTR */
-				(void) mscmctl(devvp, TIOCM_DTR | TIOCM_RTS, DMBIC);
+				(void) mscmctl(dev, TIOCM_DTR | TIOCM_RTS, DMBIC);
 			break;
       
 		case TIOCMSET:
-			(void) mscmctl(devvp, *(int *)data, DMSET);
+			(void) mscmctl(dev, *(int *)data, DMSET);
 			break;
       
 		case TIOCMBIS:
-			(void) mscmctl(devvp, *(int *)data, DMBIS);
+			(void) mscmctl(dev, *(int *)data, DMBIS);
 			break;
       
 		case TIOCMBIC:
 			if (MSCDIALIN(dev))	/* don't let dialins drop DTR */
-				(void) mscmctl(devvp, *(int *)data & TIOCM_DTR, DMBIC);
+				(void) mscmctl(dev, *(int *)data & TIOCM_DTR, DMBIC);
 			else
-				(void) mscmctl(devvp, *(int *)data, DMBIC);
+				(void) mscmctl(dev, *(int *)data, DMBIC);
 			break;
       
 		case TIOCMGET:
-			*(int *)data = mscmctl(devvp, 0, DMGET);
+			*(int *)data = mscmctl(dev, 0, DMGET);
 			break;
       
 		case TIOCGFLAGS:
@@ -874,11 +874,9 @@ mscparam(tp, t)
 	volatile struct mscstatus *ms;
 	int s, slot;
 	int ospeed = ttspeedtab(t->c_ospeed, mscspeedtab);
-	dev_t dev;
   
 	/* get the device structure */
-	dev = vdev_rdev(tp->t_devvp);
-	slot = MSCSLOT(dev);
+	slot = MSCSLOT(tp->t_dev);
 
 	if (slot >= MSCSLOTS)
 		return ENXIO;
@@ -902,7 +900,7 @@ mscparam(tp, t)
 	/* hang up if baud is zero */
 	if (t->c_ospeed == 0) {
 		if (!MSCDIALIN(dev))  /* don't let dialins drop DTR */
-			(void) mscmctl(tp->t_devvp, 0, DMSET);
+			(void) mscmctl(tp->t_dev, 0, DMSET);
 	} else {
 		/* set the baud rate */
 		s = spltty();
@@ -912,7 +910,7 @@ mscparam(tp, t)
 		 * Make sure any previous hangup is undone, ie.  reenable DTR.
 		 * also mscmctl will cause the speed to be set
 		 */
-		(void) mscmctl (tp->t_devvp, TIOCM_DTR | TIOCM_RTS, DMSET);
+		(void) mscmctl (tp->t_dev, TIOCM_DTR | TIOCM_RTS, DMSET);
 
 		splx(s);
 	}
@@ -935,9 +933,9 @@ mschwiflow(tp, flag)
 /* Rob's version */
 #if 1
 	if (flag)
-		mscmctl( tp->t_devvp, TIOCM_RTS, DMBIC);	/* Clear/Lower RTS */
+		mscmctl( tp->t_dev, TIOCM_RTS, DMBIC);	/* Clear/Lower RTS */
 	else
-		mscmctl( tp->t_devvp, TIOCM_RTS, DMBIS);	/* Set/Raise RTS */
+		mscmctl( tp->t_dev, TIOCM_RTS, DMBIS);	/* Set/Raise RTS */
 
 #else	/* Jukka's version */
 
@@ -981,8 +979,7 @@ mscstart(tp)
 	if (! (tp->t_state & TS_ISOPEN))
 		return;
 
-	dev = vdev_rdev(tp->t_devvp);
-	slot = MSCSLOT(dev);
+	slot = MSCSLOT(tp->t_dev);
 
 #if 0
 	printf("starting msc%d\n", slot);
@@ -1103,8 +1100,8 @@ mscstop(tp, flag)
  * bits can be: TIOCM_DTR, TIOCM_RTS, TIOCM_CTS, TIOCM_CD, TIOCM_RI, TIOCM_DSR
  */
 int
-mscmctl(devvp, bits, how)
-	struct vnode *devvp;
+mscmctl(dev, bits, how)
+	dev_t dev;
 	int bits, how;
 {
 	struct mscdevice *msc;
@@ -1113,10 +1110,8 @@ mscmctl(devvp, bits, how)
 	int s;
 	u_char newcmd;
 	int OldFlags;
-	dev_t dev;
 
 	/* get the device structure */
-	dev = vdev_rdev(devvp);
 	slot = MSCSLOT(dev);
 
 	if (slot >= MSCSLOTS)

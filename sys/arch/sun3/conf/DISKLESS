@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.33 2001/07/08 16:32:25 abs Exp $
+# $NetBSD: DISKLESS,v 1.33.4.1 2001/10/13 17:42:43 fvdl Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -74,7 +74,7 @@ options 	INET		# IP prototol stack support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Work-around for root on slow servers (insurance...)
-options 	NFS_BOOT_RWSIZE=1024
+#options 	NFS_BOOT_RWSIZE=1024
 options 	NFS_BOOT_BOOTPARAM
 
 config		netbsd root on ? type nfs

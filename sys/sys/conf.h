@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.88.4.3 2001/10/01 12:48:10 fvdl Exp $	*/
+/*	$NetBSD: conf.h,v 1.88.4.4 2001/10/13 17:42:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -484,7 +484,7 @@ struct linesw {
 	char	*l_name;	/* Linesw name */
 	int	l_no;		/* Linesw number (compatibility) */
 
-	int	(*l_open)	__P((struct vnode *, struct tty *tp));
+	int	(*l_open)	__P((struct vnode *devvp, struct tty *tp));
 	int	(*l_close)	__P((struct tty *tp, int flags));
 	int	(*l_read)	__P((struct tty *tp, struct uio *uio,
 				     int flag));

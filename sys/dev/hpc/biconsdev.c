@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.2.4.1 2001/10/10 11:56:52 fvdl Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.2.4.2 2001/10/13 17:42:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -112,6 +112,7 @@ biconsdevattach(int n)
 	tp->t_linesw = linesw[0];
 
 
+	tp->t_dev = makedev(maj, 0);
 	tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 	tp->t_param = (int (*)(struct tty *, struct termios *))nullop;
 	tp->t_winsize.ws_row = bicons_height;
@@ -238,7 +239,7 @@ biconsdevioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 
 	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) >= 0)
 		return (error);
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = ttioctl(tp, devvp, cmd, data, flag, p)) >= 0)
 		return (error);
 	return (ENOTTY);
 }

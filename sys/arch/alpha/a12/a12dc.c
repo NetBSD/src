@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.5.6.1 2001/10/10 11:55:48 fvdl Exp $ */
+/* $NetBSD: a12dc.c,v 1.5.6.2 2001/10/13 17:42:31 fvdl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.5.6.1 2001/10/10 11:55:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.5.6.2 2001/10/13 17:42:31 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.5.6.1 $");
+	printf(": driver %s\n", "$Revision: 1.5.6.2 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -253,7 +253,8 @@ a12dcopen(devvp, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = minor(vdev_rdev(devvp));
+	dev_t dev = vdev_rdev(devvp);
+	int unit = minor(dev);
 	struct tty *tp;
 	int s;
  
@@ -280,7 +281,7 @@ a12dcopen(devvp, flag, mode, p)
 
 	tp->t_oproc = a12dcstart;
 	tp->t_param = a12dcparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_CARR_ON;
 		ttychars(tp);
@@ -370,7 +371,7 @@ a12dcioctl(devvp, cmd, data, flag, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 
@@ -403,7 +404,7 @@ a12dcstart(tp)
 	}
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0)
-		a12dccnputc(vdev_rdev(tp->t_devvp), getc(&tp->t_outq));
+		a12dccnputc(tp->t_dev, getc(&tp->t_outq));
 	tp->t_state &= ~TS_BUSY;
 out:
 	splx(s);
@@ -435,7 +436,7 @@ a12dcintr(v)
 	struct tty *tp = v;
 	u_char c;
 
-	while (a12dccnlookc(vdev_rdev(tp->t_devvp), &c)) {
+	while (a12dccnlookc(tp->t_dev, &c)) {
 		if (tp->t_state & TS_ISOPEN)
 			(*tp->t_linesw->l_rint)(c, tp);
 	}

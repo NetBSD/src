@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.14.4.1 2001/10/10 11:56:00 fvdl Exp $	*/
+/*	$NetBSD: ser.c,v 1.14.4.2 2001/10/13 17:42:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -416,7 +416,7 @@ seropen(devvp, flag, mode, p)
 	    tp->t_oproc = serstart;
 	    tp->t_param = serparam;
 	    tp->t_hwiflow = serhwiflow;
-	    tp->t_devvp = devvp;
+	    tp->t_dev = dev;
 
 	    /*
 	     * Initialize the termios status to the defaults.  Add in the
@@ -600,7 +600,7 @@ serioctl(devvp, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -705,7 +705,7 @@ serparam(tp, t)
 	u_char ucr;
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
 
 	/* check requested parameters */
 	if (ospeed < 0)
@@ -916,7 +916,7 @@ serhwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct ser_softc *sc = vdev_privdata(tp->t_devvp);
+	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
 	int s;
 
 	if (sc->sc_mcr_rts == 0)
@@ -975,7 +975,7 @@ void
 serstart(tp)
 	struct tty *tp;
 {
-	struct ser_softc *sc = vdev_privdata(tp->t_devvp);
+	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
 	int s;
 
 	s = spltty();
@@ -1047,7 +1047,7 @@ serstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct ser_softc *sc = vdev_privdata(tp->t_devvp);
+	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
 	int s;
 
 	s = splserial();

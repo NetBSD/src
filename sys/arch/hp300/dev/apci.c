@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.12.4.1 2001/10/10 11:56:04 fvdl Exp $	*/
+/*	$NetBSD: apci.c,v 1.12.4.2 2001/10/13 17:42:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -305,7 +305,7 @@ apciopen(devvp, flag, mode, p)
 		tp = sc->sc_tty;
 	tp->t_oproc = apcistart;
 	tp->t_param = apciparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
@@ -604,7 +604,7 @@ apciioctl(devvp, cmd, data, flag, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -684,7 +684,7 @@ apciparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct apci_softc *sc = vdev_privdata(tp->t_devvp);
+	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(tp->t_dev)];
 	struct apciregs *apci = sc->sc_apci;
 	int cfcr, cflag = t->c_cflag;
 	int ospeed = ttspeedtab(t->c_ospeed, apcispeedtab);
@@ -760,7 +760,7 @@ void
 apcistart(tp)
 	struct tty *tp;
 {
-	struct apci_softc *sc = vdev_privdata(tp->t_devvp);
+	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(tp->t_dev)];
 	struct apciregs *apci = sc->sc_apci;
 	int s, c;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.77.4.5 2001/10/11 12:33:57 fvdl Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.77.4.6 2001/10/13 17:42:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -230,7 +230,6 @@ cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
 static void zs_shutdown __P((struct zstty_softc *));
 static void	zsstart __P((struct tty *));
 static int	zsparam __P((struct tty *, struct termios *));
-static int	cold_zsparam __P((struct tty *, struct termios *, dev_t));
 static void zs_modem __P((struct zstty_softc *, int));
 static void tiocm_to_zs __P((struct zstty_softc *, u_long, int));
 static int  zs_to_tiocm __P((struct zstty_softc *));
@@ -240,7 +239,7 @@ static void zs_maskintr __P((struct zstty_softc *));
 
 /* Low-level routines. */
 static void zstty_rxint   __P((struct zs_chanstate *));
-static void zstty_stint   __P((struct zs_chanstate *, int, dev_t));
+static void zstty_stint   __P((struct zs_chanstate *, int));
 static void zstty_txint   __P((struct zs_chanstate *));
 static void zstty_softint __P((struct zs_chanstate *));
 
@@ -346,6 +345,7 @@ zstty_attach(parent, self, aux)
 	printf("\n");
 
 	tp = ttymalloc();
+	tp->t_dev = dev;
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	tp->t_hwiflow = zshwiflow;
@@ -395,7 +395,7 @@ zstty_attach(parent, self, aux)
 
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
-		(void) cold_zsparam(tp, &t, dev);
+		(void) zsparam(tp, &t);
 
 		s = splzs();
 
@@ -529,7 +529,7 @@ zsopen(devvp, flags, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_devvp = devvp;
+		tp->t_dev = rdev;
 
 		/* Call the power management hook. */
 		if (cs->enable) {
@@ -744,7 +744,7 @@ zsioctl(devvp, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -957,7 +957,7 @@ zsstart(tp)
 	struct zs_chanstate *cs;
 	int s;
 
-	zst = vdev_privdata(tp->t_devvp);
+	zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	cs = zst->zst_cs;
 
 	s = spltty();
@@ -1022,7 +1022,7 @@ zsstop(tp, flag)
 	struct zstty_softc *zst;
 	int s;
 
-	zst = vdev_privdata(tp->t_devvp);
+	zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 
 	s = splzs();
 	if (ISSET(tp->t_state, TS_BUSY)) {
@@ -1046,23 +1046,13 @@ zsparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	return cold_zsparam(tp, t, vdev_rdev(tp->t_devvp));
-}
-
-static int
-cold_zsparam(tp, t, dev)
-	struct tty *tp;
-	struct termios *t;
-	dev_t dev;
-{
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
 	int ospeed, cflag;
 	u_char tmp3, tmp4, tmp5;
 	int s, error;
 
-	zst = device_lookup(&zstty_cd, ZSUNIT(dev));
-
+	zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	cs = zst->zst_cs;
 
 	ospeed = t->c_ospeed;
@@ -1208,7 +1198,7 @@ cold_zsparam(tp, t, dev)
 	 * Force a recheck of the hardware carrier and flow control status,
 	 * since we may have changed which bits we're looking at.
 	 */
-	zstty_stint(cs, 1, dev);
+	zstty_stint(cs, 1);
 
 	splx(s);
 
@@ -1363,7 +1353,7 @@ zshwiflow(tp, block)
 	struct zs_chanstate *cs;
 	int s;
 
-	zst = vdev_privdata(tp->t_devvp);
+	zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 
 	cs = zst->zst_cs;
 
@@ -1438,9 +1428,6 @@ zstty_rxint(cs)
 	u_int cc;
 	u_char rr0, rr1, c;
 
-	if (zst->zst_tty->t_devvp->v_type == VBAD)
-		return;
-
 	end = zst->zst_ebuf;
 	put = zst->zst_rbput;
 	cc = zst->zst_rbavail;
@@ -1458,8 +1445,7 @@ zstty_rxint(cs)
 			zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 		}
 
-		cn_check_magic(zst->zst_tty->t_devvp->v_rdev, c,
-		    zstty_cnm_state);
+		cn_check_magic(zst->zst_tty->t_dev, c, zstty_cnm_state);
 		put[0] = c;
 		put[1] = rr1;
 		put += 2;
@@ -1555,32 +1541,22 @@ zstty_txint(cs)
  * status change interrupt.  (splzs)
  */
 static void
-zstty_stint(cs, force, dev)
+zstty_stint(cs, force)
 	struct zs_chanstate *cs;
 	int force;
-	dev_t dev;
 {
 	struct zstty_softc *zst = cs->cs_private;
 	u_char rr0, delta;
-	dev_t rdev;
 
 	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
-
-	if (force)
-		rdev = dev;
-	else {
-		if (zst->zst_tty->t_devvp->v_type == VBAD)
-			return;
-		rdev = vdev_rdev(zst->zst_tty->t_devvp);
-	}
 
 	/*
 	 * Check here for console break, so that we can abort
 	 * even when interrupts are locking up the machine.
 	 */
 	if (ISSET(rr0, ZSRR0_BREAK))
-		cn_check_magic(rdev, CNC_BREAK, zstty_cnm_state);
+		cn_check_magic(zst->zst_tty->t_dev, CNC_BREAK, zstty_cnm_state);
 
 	if (!force)
 		delta = rr0 ^ cs->cs_rr0;

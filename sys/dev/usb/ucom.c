@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.39.2.2 2001/09/26 15:28:19 fvdl Exp $	*/
+/*	$NetBSD: ucom.c,v 1.39.2.3 2001/10/13 17:42:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -139,8 +139,8 @@ Static void	ucom_hwiflow(struct ucom_softc *);
 Static int	ucomparam(struct tty *, struct termios *);
 Static void	ucomstart(struct tty *);
 Static void	ucom_shutdown(struct ucom_softc *);
-Static int	ucom_do_ioctl(struct ucom_softc *, u_long, caddr_t,
-			      int, struct proc *);
+Static int	ucom_do_ioctl(struct ucom_softc *, struct vnode *, u_long,
+			      caddr_t, int, struct proc *);
 Static void	ucom_dtr(struct ucom_softc *, int);
 Static void	ucom_rts(struct ucom_softc *, int);
 Static void	ucom_break(struct ucom_softc *, int);
@@ -343,7 +343,7 @@ ucomopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_devvp = devvp;
+		tp->t_dev = rdev;
 
 		if (sc->sc_methods->ucom_open != NULL) {
 			error = sc->sc_methods->ucom_open(sc->sc_parent,
@@ -611,15 +611,15 @@ ucomioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 	sc = vdev_privdata(devvp);
 
 	sc->sc_refcnt++;
-	error = ucom_do_ioctl(sc, cmd, data, flag, p);
+	error = ucom_do_ioctl(sc, devvp, cmd, data, flag, p);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
 
 Static int
-ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
-	      int flag, struct proc *p)
+ucom_do_ioctl(struct ucom_softc *sc, struct vnode *devvp, u_long cmd,
+	      caddr_t data, int flag, struct proc *p)
 {
 	struct tty *tp = sc->sc_tty;
 	int error;
@@ -634,7 +634,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -818,7 +818,7 @@ ucomparam(struct tty *tp, struct termios *t)
 	struct ucom_softc *sc;
 	int error;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -917,7 +917,7 @@ ucomstart(struct tty *tp)
 	u_char *data;
 	int cnt;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
 
 	if (sc->sc_dying)
 		return;
@@ -984,7 +984,7 @@ ucomstop(struct tty *tp, int flag)
 	/*struct ucom_softc *sc;*/
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	/*sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];*/
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY)) {

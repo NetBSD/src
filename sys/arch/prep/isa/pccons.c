@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.8.2.1 2001/10/10 11:56:28 fvdl Exp $	*/
+/*	$NetBSD: pccons.c,v 1.8.2.2 2001/10/13 17:42:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -622,7 +622,7 @@ pcopen(devvp, flag, mode, p)
 
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -746,7 +746,7 @@ pcioctl(devvp, cmd, data, flag, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 

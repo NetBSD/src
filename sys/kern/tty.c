@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128.4.3 2001/09/26 15:28:21 fvdl Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.4.4 2001/10/13 17:42:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -61,8 +61,6 @@
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/poll.h>
-
-#include <miscfs/specfs/specdev.h>
 
 static int	ttnread(struct tty *);
 static void	ttyblock(struct tty *);
@@ -241,11 +239,8 @@ ttylopen(struct vnode *devvp, struct tty *tp)
 {
 	int	s;
 
-	if (devvp->v_type != VCHR)
-		return EIO;
-
 	s = spltty();
-	tp->t_devvp = devvp;
+	tp->t_dev = vdev_rdev(devvp);
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		SET(tp->t_state, TS_ISOPEN);
 		memset(&tp->t_winsize, 0, sizeof(tp->t_winsize));
@@ -265,10 +260,11 @@ ttylopen(struct vnode *devvp, struct tty *tp)
 int
 ttyclose(struct tty *tp)
 {
-	extern struct tty *constty;	/* Temporary virtual console. */
-
-	if (constty == tp)
+	if (constty == tp) {
 		constty = NULL;
+		vrele(consvp);
+		consvp = NULL;
+	}
 
 	ttyflush(tp, FREAD | FWRITE);
 
@@ -449,7 +445,7 @@ ttyinput(int c, struct tty *tp)
 			if (CCEQ(cc[VSTOP], c)) {
 				if (!ISSET(tp->t_state, TS_TTSTOP)) {
 					SET(tp->t_state, TS_TTSTOP);
-					(*cdevsw[major(tp->t_devvp->v_rdev)].d_stop)(tp,
+					(*cdevsw[major(tp->t_dev)].d_stop)(tp,
 					   0);
 					return (0);
 				}
@@ -733,7 +729,8 @@ ttyoutput(int c, struct tty *tp)
  */
 /* ARGSUSED */
 int
-ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
+ttioctl(struct tty *tp, struct vnode *devvp, u_long cmd, caddr_t data,
+	int flag, struct proc *p)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
 	extern int	nlinesw;
@@ -819,8 +816,13 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 				return (error);
 #endif
 			constty = tp;
-		} else if (tp == constty)
+			vref(devvp);
+			consvp = devvp;
+		} else if (tp == constty) {
 			constty = NULL;
+			consvp = NULL;
+			vrele(devvp);
+		}
 		break;
 	case TIOCDRAIN:			/* wait till output drained */
 		if ((error = ttywait(tp)) != 0)
@@ -940,7 +942,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	}
 	case TIOCSLINED: {		/* set line discipline */
 		char *name = (char *)data;
-		struct vnode *devvp;
+		dev_t device;
 
 		/* Null terminate to prevent buffer overflow */
 		name[TTLINEDNAMELEN] = 0; 
@@ -951,7 +953,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return (ENXIO);
 
 		if (lp != tp->t_linesw) {
-			devvp = tp->t_devvp;
+			device = tp->t_dev;
 			s = spltty();
 			(*tp->t_linesw->l_close)(tp, flag);
 			error = (*lp->l_open)(devvp, tp);
@@ -986,7 +988,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		s = spltty();
 		if (!ISSET(tp->t_state, TS_TTSTOP)) {
 			SET(tp->t_state, TS_TTSTOP);
-			(*cdevsw[major(tp->t_devvp->v_rdev)].d_stop)(tp, 0);
+			(*cdevsw[major(tp->t_dev)].d_stop)(tp, 0);
 		}
 		splx(s);
 		break;
@@ -1025,7 +1027,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	default:
 #ifdef COMPAT_OLDTTY
-		return (ttcompat(tp, cmd, data, flag, p));
+		return (ttcompat(tp, devvp, cmd, data, flag, p));
 #else
 		return (-1);
 #endif
@@ -1124,11 +1126,6 @@ ttyflush(struct tty *tp, int rw)
 {
 	int	s;
 
-	if (tp->t_devvp->v_specinfo == NULL) {
-		VOP_PRINT(tp->t_devvp);
-		panic("bad specinfo");
-	}
-
 	s = spltty();
 	if (rw & FREAD) {
 		FLUSHQ(&tp->t_canq);
@@ -1140,7 +1137,7 @@ ttyflush(struct tty *tp, int rw)
 	}
 	if (rw & FWRITE) {
 		CLR(tp->t_state, TS_TTSTOP);
-		(*cdevsw[major(tp->t_devvp->v_rdev)].d_stop)(tp, rw);
+		(*cdevsw[major(tp->t_dev)].d_stop)(tp, rw);
 		FLUSHQ(&tp->t_outq);
 		wakeup((caddr_t)&tp->t_outq);
 		selwakeup(&tp->t_wsel);

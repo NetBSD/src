@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.18.4.1 2001/10/10 11:56:58 fvdl Exp $	*/
+/*	$NetBSD: dl.c,v 1.18.4.2 2001/10/13 17:42:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -301,7 +301,7 @@ dlopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 		return ENODEV;
 	tp->t_oproc = dlstart;
 	tp->t_param = dlparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 
 	vdev_setprivdata(devvp, sc);
 
@@ -377,7 +377,7 @@ dlioctl(struct vnode *devvp, unsigned long cmd, caddr_t data, int flag,
         error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
         if (error >= 0)
                 return (error);
-        error = ttioctl(tp, cmd, data, flag, p);
+        error = ttioctl(tp, devvp, cmd, data, flag, p);
         if (error >= 0)
                 return (error);
 
@@ -423,7 +423,7 @@ dlstop(struct tty *tp, int flag)
 static void
 dlstart(struct tty *tp)
 {
-	struct dl_softc *sc = vdev_privdata(tp->t_devvp);
+	struct dl_softc *sc = dl_cd.cd_devs[minor(tp->t_dev)];
 	int s = spltty();
 
         if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))

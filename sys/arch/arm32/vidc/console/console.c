@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.24.4.1 2001/10/10 11:55:58 fvdl Exp $	*/
+/*	$NetBSD: console.c,v 1.24.4.2 2001/10/13 17:42:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -362,7 +362,7 @@ physconopen(devvp, flag, mode, p)
 
 	TP->t_oproc = physconstart;
 	TP->t_param = physconparam;
-	TP->t_devvp = devvp;
+	TP->t_dev   = dev;
 	if ((TP->t_state & TS_ISOPEN) == 0) {
 		ttychars(TP);
 		TP->t_iflag = TTYDEF_IFLAG;
@@ -690,7 +690,7 @@ physconioctl(devvp, cmd, data, flag, p)
 		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 		if (error >= 0)
 			return error;
-		error = ttioctl(tp, cmd, data, flag, p);
+		error = ttioctl(tp, devvp, cmd, data, flag, p);
 		if (error >= 0)
 			return error;
 	} 
@@ -730,7 +730,7 @@ physconstart(tp)
 
 	s = spltty();
 
-	vc = find_vc ( vdev_rdev(tp->t_devvp) );
+	vc = find_vc ( tp->t_dev );
 
 	/* Are we ready to perform output */
 
