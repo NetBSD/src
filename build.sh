@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.117 2003/09/24 00:24:53 lukem Exp $
+#	$NetBSD: build.sh,v 1.118 2003/10/19 03:37:36 matt Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -188,7 +188,7 @@ getarch()
 		MACHINE_ARCH=ns32k
 		;;
 
-	amigappc|bebox|evbppc|macppc|mvmeppc|ofppc|pmppc|prep|sandpoint)
+	amigappc|bebox|evbppc|ibmnws|macppc|mvmeppc|ofppc|pmppc|prep|sandpoint)
 		MACHINE_ARCH=powerpc
 		;;
 
@@ -806,7 +806,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.117 2003/09/24 00:24:53 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.118 2003/10/19 03:37:36 matt Exp $
 #
 
 EOF
