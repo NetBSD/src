@@ -1,4 +1,4 @@
-/*	$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $	*/
+/*	$NetBSD: getcom.c,v 1.4 1997/10/10 11:39:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,16 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $";
+__RCSID("$NetBSD: getcom.c,v 1.4 1997/10/10 11:39:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include <stdio.h>
-#include <ctype.h>
+#include "extern.h"
 
 char *
 getcom(buf, size, prompt, error)
@@ -73,8 +73,8 @@ getcom(buf, size, prompt, error)
  */
 char *
 getword(buf1, buf2, flag)
-	register char *buf1, *buf2;
-	register flag;
+	char *buf1, *buf2;
+	int flag;
 {
 	while (isspace(*buf1))
 		buf1++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: battlestar.c,v 1.4 1997/01/07 11:56:32 tls Exp $	*/
+/*	$NetBSD: battlestar.c,v 1.5 1997/10/10 11:39:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: battlestar.c,v 1.4 1997/01/07 11:56:32 tls Exp $";
+__RCSID("$NetBSD: battlestar.c,v 1.5 1997/10/10 11:39:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,9 +56,12 @@ static char rcsid[] = "$NetBSD: battlestar.c,v 1.4 1997/01/07 11:56:32 tls Exp $
 
 #include "extern.h"
 
+int	main __P((int, char *[]));
+
+int
 main(argc,argv)
-int  argc;
-char **argv;
+	int  argc;
+	char **argv;
 {
 	char mainbuf[LINELENGTH];
 	char *next;
@@ -92,6 +95,6 @@ run:
 		case 0:
 			goto start;
 		default:
-			exit();
+			exit(0);
 	}
 }

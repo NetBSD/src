@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.4 1997/01/07 11:56:50 tls Exp $	*/
+/*	$NetBSD: save.c,v 1.5 1997/10/10 11:40:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,24 +33,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)save.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: save.c,v 1.4 1997/01/07 11:56:50 tls Exp $";
+__RCSID("$NetBSD: save.c,v 1.5 1997/10/10 11:40:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
+void
 restore()
 {
-	char *getenv();
 	char *home;
 	char home1[100];
-	register int n;
+	int n;
 	int tmp;
-	register FILE *fp;
+	FILE *fp;
 
 	home = getenv("HOME");
 	strcpy(home1, home);
@@ -96,12 +97,12 @@ restore()
 	fread(&ego, sizeof ego, 1, fp);
 }
 
+void
 save()
 {
-	char *getenv();
 	char *home;
 	char home1[100];
-	register int n;
+	int n;
 	int tmp;
 	FILE *fp;
 

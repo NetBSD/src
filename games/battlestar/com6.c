@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.6 1997/01/07 11:56:38 tls Exp $	*/
+/*	$NetBSD: com6.c,v 1.7 1997/10/10 11:39:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,17 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: com6.c,v 1.6 1997/01/07 11:56:38 tls Exp $";
+__RCSID("$NetBSD: com6.c,v 1.7 1997/10/10 11:39:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 #include "pathnames.h"
 
+int
 launch()
 {
 	if (testbit(location[position].objects,VIPER) && !notes[CANTLAUNCH]){
@@ -51,7 +53,7 @@ launch()
 			clearbit(location[position].objects,VIPER);
 			position = location[position].up;
 			notes[LAUNCHED] = 1;
-			time++;
+			ourtime++;
 			fuel -= 4;
 			puts("You climb into the viper and prepare for launch.");
 			puts("With a touch of your thumb the turbo engines ignite, thrusting you back into\nyour seat.");
@@ -65,14 +67,16 @@ launch()
 	 return(0);
 }
 
+int
 land()
 {
-	if (notes[LAUNCHED] && testbit(location[position].objects,LAND) && location[position].down){
+	if (notes[LAUNCHED] && testbit(location[position].objects,LAND) &&
+	    location[position].down){
 		notes[LAUNCHED] = 0;
 		position = location[position].down;
 		setbit(location[position].objects,VIPER);
 		fuel -= 2;
-		time++;
+		ourtime++;
 		puts("You are down.");
 		return(1);
 	}
@@ -81,6 +85,7 @@ land()
 	return(0);
 }
 
+void
 die() 		/* endgame */
 {
 	printf("bye.\nYour rating was %s.\n", rate());
@@ -88,6 +93,14 @@ die() 		/* endgame */
 	exit(0);
 }
 
+void
+diesig(dummy)
+	int dummy;
+{
+	die();
+}
+
+void
 live()
 {
 	puts("\nYou win!");
@@ -95,20 +108,13 @@ live()
 	exit(0);
 }
 
-/*
- * sigh -- this program thinks "time" is an int.  It's easier to not load
- * <time.h> than try and fix it.
- */
-#define _KERNEL
-#include <sys/time.h>
-#undef _KERNEL
-
+void
 post(ch)
-char ch;
+	char ch;
 {
 	FILE *fp;
 	struct timeval tv;
-	char *date, *ctime();
+	char *date;
 	sigset_t sigset, osigset;
 
 	sigemptyset(&sigset);
@@ -117,7 +123,7 @@ char ch;
 	gettimeofday(&tv, (struct timezone *)0);	/* can't call time */
 	date = ctime(&tv.tv_sec);
 	date[24] = '\0';
-	if (fp = fopen(_PATH_SCORE,"a")) {
+	if ((fp = fopen(_PATH_SCORE,"a")) != NULL) {
 		fprintf(fp, "%s  %8s  %c%20s", date, uname, ch, rate());
 		if (wiz)
 			fprintf(fp, "   wizard\n");
@@ -167,6 +173,7 @@ rate()
 	}
 }
 
+int
 drive()
 {
 	if (testbit(location[position].objects,CAR)){
@@ -175,7 +182,7 @@ drive()
 		clearbit(location[position].objects,CAR);
 		setbit(location[position].objects,CRASH);
 		injuries[5] = injuries[6] = injuries[7] = injuries[8] = 1;
-		time += 15;
+		ourtime += 15;
 		zzz();
 		return(0);
 	}
@@ -184,6 +191,7 @@ drive()
 	return(-1);
 }
 
+int
 ride()
 {
 	if (testbit(location[position].objects,HORSE)){
@@ -206,11 +214,12 @@ ride()
 	return(-1);
 }
 
+void
 light()		/* synonyms = {strike, smoke} */
 {		/* for matches, cigars */
 	if (testbit(inven,MATCHES) && matchcount){
 		puts("Your match splutters to life.");
-		time++;
+		ourtime++;
 		matchlight = 1;
 		matchcount--;
 		if (position == 217){
