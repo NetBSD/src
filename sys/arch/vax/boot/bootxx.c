@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.8 1997/03/15 13:04:24 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.9 1997/03/22 12:47:29 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -73,7 +73,7 @@ int	command(int, int);
  */
 
 volatile u_int  devtype, bootdev;
-unsigned        opendev, boothowto, bootset;
+unsigned        opendev, boothowto, bootset, memsz;
 
 extern unsigned *bootregs;
 extern struct	rpb *rpb;
@@ -105,11 +105,13 @@ Xmain()
 		rpb->iovec = (int)bqo;
 		bootregs[11] = (int)rpb;
 		bootdev = rpb->devtyp;
+		memsz = rpb->pfncnt << 9;
 
                 break;
 	case VAX_8200:
         case VAX_750:
 		bootdev = bootregs[10];
+		memsz = 0;
 
                 break;
 	default:

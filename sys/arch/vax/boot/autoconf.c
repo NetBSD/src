@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1997/03/15 13:04:23 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.8 1997/03/22 12:47:27 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -71,6 +71,7 @@ static int uda630[]={qbdev(0772150),qbdev(0760334)};
 
 autoconf()
 {
+	extern int memsz;
 
 	switch (vax_cputype) {
 
@@ -79,6 +80,7 @@ autoconf()
 		asm("halt");
 
 	case VAX_8600:
+		memsz = 0;
 		nmba = 8;
 		nuba = 8;
 		nuda = 1;
@@ -90,6 +92,7 @@ autoconf()
 		break;
 
 	case VAX_780:
+		memsz = 0;
 		nmba = 4;
 		nuba = 4;
 		nuda = 1;
@@ -101,6 +104,7 @@ autoconf()
 		break;
 
 	case VAX_750:
+		memsz = 0;
 		nmba = 3;
 		nuba = 2;
 		nuda = 1;
@@ -122,9 +126,15 @@ autoconf()
 		break;
 
 	case VAX_8200:
+		memsz = 0;
 		nbi = 1;
 		biaddr = bi8200;
 		bioaddr = bio8200;
+
+	case VAX_TYP_SOC:
+	case VAX_TYP_RIGEL:
+		break;
+
 	}
 }
 
@@ -139,5 +149,5 @@ getsecs()
 
 	if (todr)
 		return todr/100;
-	return ++fakesecs/100000;
+	return ++fakesecs;
 }
