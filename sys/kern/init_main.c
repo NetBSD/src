@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.134 1998/10/19 22:19:26 tron Exp $	*/
+/*	$NetBSD: init_main.c,v 1.135 1998/11/11 06:34:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -136,9 +136,9 @@ struct	timeval boottime;
 struct	timeval runtime;
 
 static void check_console __P((struct proc *p));
-static void start_init __P((struct proc *));
-static void start_pagedaemon __P((struct proc *));
-static void start_reaper __P((struct proc *));
+static void start_init __P((void *));
+static void start_pagedaemon __P((void *));
+static void start_reaper __P((void *));
 void main __P((void));
 
 extern char sigcode[], esigcode[];
@@ -415,17 +415,15 @@ main()
 	/* Create process 1 (init(8)). */
 	if (fork1(p, 0, NULL, &p2))
 		panic("fork init");
-	cpu_set_kpc(p2, start_init);
+	cpu_set_kpc(p2, start_init, p2);
 
-	/* Create process 2 (the pageout daemon). */
-	if (fork1(p, FORK_SHAREVM, NULL, &p2))
-		panic("fork pager");
-	cpu_set_kpc(p2, start_pagedaemon);
+	/* Create process 2, the pageout daemon kernel thread. */
+	if (fork_kthread(start_pagedaemon, NULL, NULL, "pagedaemon"))
+		panic("fork pagedaemon");
 
-	/* Create process 3 (the process reaper). */
-	if (fork1(p, FORK_SHAREVM, NULL, &p2))
+	/* Create process 3, the process reaper kernel thread. */
+	if (fork_kthread(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
-	cpu_set_kpc(p2, start_reaper);
 
 	/* The scheduler is an infinite loop. */
 #if defined(UVM)
@@ -468,9 +466,10 @@ static char *initpaths[] = {
  * The program is invoked with one argument containing the boot flags.
  */
 static void
-start_init(p)
-	struct proc *p;
+start_init(arg)
+	void *arg;
 {
+	struct proc *p = arg;
 	vaddr_t addr;
 	struct sys_execve_args /* {
 		syscallarg(const char *) path;
@@ -588,16 +587,12 @@ start_init(p)
 	panic("no init");
 }
 
+/* ARGSUSED */
 static void
-start_pagedaemon(p)
-	struct proc *p;
+start_pagedaemon(arg)
+	void *arg;
 {
 
-	/*
-	 * Now in process 2.
-	 */
-	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
-	memcpy(curproc->p_comm, "pagedaemon", sizeof("pagedaemon"));
 #if defined(UVM)
 	uvm_pageout();
 #else
@@ -606,16 +601,12 @@ start_pagedaemon(p)
 	/* NOTREACHED */
 }
 
+/* ARGSUSED */
 static void
-start_reaper(p)
-	struct proc *p;
+start_reaper(arg)
+	void *arg;
 {
 
-	/*
-	 * Now in process 3.
-	 */
-	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
-	memcpy(curproc->p_comm, "reaper", sizeof("reaper"));
 	reaper();
 	/* NOTREACHED */
 }
