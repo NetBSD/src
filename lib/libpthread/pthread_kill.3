@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_kill.3,v 1.5 2003/10/30 11:53:33 jdolecek Exp $
+.\" $NetBSD: pthread_kill.3,v 1.6 2003/10/30 12:57:11 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,9 +97,9 @@ is an invalid or unsupported signal number.
 .El
 .Sh SEE ALSO
 .Xr kill 2 ,
+.Xr sigwait 2 ,
 .Xr pthread_self 3 ,
-.Xr raise 3 ,
-.Xr sigwait 3
+.Xr raise 3
 .Sh STANDARDS
 .Fn pthread_kill
 conforms to
