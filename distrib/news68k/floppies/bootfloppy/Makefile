@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2002/03/05 21:23:29 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2002/03/17 21:34:38 lukem Exp $
 
-TOP=		${.CURDIR}/..
 
-.include "${TOP}/Makefile.inc"
+.include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
-.include <bsd.subdir.mk>
 
 IMAGE=		boot.fs
 KERNDIR!=	cd ${.CURDIR}/../ramdisk-kernel && ${PRINTOBJDIR}
@@ -23,6 +21,8 @@ KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
 
 DISKTYPE=	floppy
+
+CLEANFILES+=	${IMAGE}
 
 # Some reasonable values for the -i parameter to newfs are:
 #
@@ -54,21 +54,12 @@ unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND}
 
-.ifndef RELEASEDIR
-release:
-	@echo set RELEASEDIR first!
-	@false
-.else
-release:
+release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/installation/floppy
 	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
 	gzip -c -9 ${IMAGE} > ${RELEASEDIR}/installation/floppy/${IMAGE}.gz
-.endif
-
-clean cleandir distclean:
-	rm -f *.core ${IMAGE} ${CLEANFILES}
 
 real-floppy:
 	dd if=${IMAGE} of=${FD_RDEV} bs=45k
 
-.include <bsd.obj.mk>
+.include <bsd.prog.mk>
