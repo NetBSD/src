@@ -1,0 +1,254 @@
+.\" $NetBSD: MAKEDEV.8,v 1.1 1999/04/05 03:19:01 cgd Exp $
+.\"
+.\" Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Christopher G. Demetriou
+.\"      for the NetBSD Project.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.\" Copyright (c) 1991 The Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
+.\"
+.Dd April 3, 1999
+.Dt MAKEDEV 8 alpha
+.Os
+.Sh NAME
+.Nm MAKEDEV ,
+.Nm makedev
+.Nd create system and device special files
+.Sh SYNOPSIS
+.Nm MAKEDEV
+.Ar name
+.Op Ar ...
+.Sh DESCRIPTION
+The shell script
+.Nm MAKEDEV ,
+found in the
+.Pa /dev
+directory, is used to create
+the common special
+files.
+.\" See
+.\" .Xr special 8
+.\" for a more complete discussion of special files.
+.Pp
+.Nm MAKEDEV
+takes any number of device names as arguments,
+where the names are the common abbreviation for
+the device.
+.Pp
+The
+.Nx Ns Tn /alpha
+.Nm
+script supports the following special names.
+.Pp
+.Bl -tag -width 01234567 -compact
+.It Ar all
+All known devices for the
+.Nx Ns Tn /alpha ,
+including devices made with
+.Dq local .
+If units are expected for a device
+.Nm MAKEDEV
+supplies the standard numbers.
+.It Ar local
+Configuration specific devices, which are created by running the
+.Pa MAKEDEV.local
+shell script with the argument
+.Dq all .
+.It Ar minimal
+A minimal set of device, for use on install disks, etc.
+.It Ar std
+The standard devices (console, drum, klog, kmem, mem, null, stderr, stdin,
+stdout, tty, zero).
+.It Ar usbs
+All USB devices.
+If units are expected for a device
+.Nm MAKEDEV
+supplies the standard numbers.
+.El
+.Pp
+The
+.Nx Ns Tn /alpha
+.Nm
+script supports the following device names.
+Where a device name is followed by a hash
+sign
+.Pq Dq # ,
+the hash sign must be replaced
+by a unit number.
+.Pp
+.\" XXX lack of -width gets cascading indents?!
+.Bl -tag -width 01
+.It Tape devices
+. Bl -tag -width 01234567 -compact
+. It Ar st#
+SCSI tape drives
+. El
+.It Disk devices
+. Bl -tag -width 01234567 -compact
+. It Ar ccd#
+Concatenated pseudo-disks
+. It Ar cd#
+ATAPI and SCSI CD-ROMs
+. It Ar md#
+Memory pseudo-disks
+. It Ar raid#
+RAIDframe pseudo-disks
+. It Ar sd#
+ATAPI and SCSI disks
+. It Ar vnd#
+File pseudo-disks
+. It Ar wd#
+IDE disks
+. It Ar fd#
+PC-style floppy disks
+. El
+.It Terminals
+. Bl -tag -width 01234567 -compact
+. It Ar ttyB#
+DEC 3000 ZS8530
+. Dq scc
+serial ports
+. It Ar ttyC#
+AlphaStation NS16550
+. Dq com
+serial ports
+. It Ar ttyE#
+Workstation console
+. Dq wscons
+glass-tty emulators
+. El
+.It Pseudo terminals
+. Bl -tag -width 01234567 -compact
+. It Ar pty#
+Set of 16 master and slave pseudo terminals
+. El
+.It Printers
+. Bl -tag -width 01234567 -compact
+. It Ar lpt#
+PC Parallel port driver
+.Pq Dq lpt
+units
+. It Ar lpa#
+Polled PC Parallel port driver
+.Pq Dq lpt
+units
+. El
+.It USB devices
+. Bl -tag -width 01234567 -compact
+. It Ar usb#
+Bus control devices used by
+.Xr usbd 8
+. It Ar uhid#
+USB generic HID devices
+. It Ar ulpt#
+USB printer devices
+. It Ar ugen#
+USB generic devices
+. El
+.It Special purpose devices
+. Bl -tag -width 01234567 -compact
+. It Ar audio#
+Audio devices
+. It Ar bpf#
+Berkeley Packet Filter devices
+. It Ar ch#
+SCSI media changers
+. It Ar fd
+File descriptors
+.Pq Pa /dev/fd/* .
+. It Ar ipl
+IP filter
+. It Ar kbd
+Keyboard (provides events, for X11)
+. It Ar lkm
+Loadable kernel modules interface
+. It Ar mouse
+Mouse (provides events, for X11)
+. It Ar random
+Random number generator
+. It Ar satlink#
+PlanetConnect satellite receiver driver
+. It Ar scsibus#
+SCSI busses
+. It Ar speaker
+PC speaker (IBM BASIC playstring emulation)
+. It Ar ss#
+SCSI scanners
+. It Ar tun#
+Network tunnel driver
+. It Ar uk#
+Unknown SCSI devices
+. El
+.El
+.Sh FILES
+.Bl -tag -width /dev -compact
+.It Pa /dev
+The special file directory.
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr config 8 ,
+.Xr mknod 8
+.\" .Xr special 8
+.Sh BUGS
+This manual page was created from the list at the top of the
+.Nx Ns Tn /alpha
+shell script.  That script's comments may be incorrect, and
+this manual page must be kept in sync with them, so it may be
+even more incorrect.  At the very least, the ordering of device
+names in that file seems almost random.
