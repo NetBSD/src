@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2000/03/06 01:29:04 eeh Exp $	*/
+/*	$NetBSD: boot.c,v 1.12 2000/04/05 06:23:33 mrg Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -100,6 +100,7 @@ int	elf64_exec __P((int, Elf64_Ehdr *, u_int64_t *, void **, void **));
 int	aout_exec __P((int, struct exec *, u_int64_t *, void **));
 #endif
 
+#if 0
 static void
 prom2boot(dev)
 	char *dev;
@@ -115,6 +116,7 @@ prom2boot(dev)
 		lp = cp;
 	*lp = 0;
 }
+#endif
 
 static void
 parseargs(str, howtop)
@@ -134,7 +136,7 @@ parseargs(str, howtop)
 		for (cp = str + strlen(kernelname); str[i]; i++)
 			cp[i] = str[i];
 		/* Copy over kernelname */
-		for (i=0; kernelname[i]; i++)
+		for (i = 0; kernelname[i]; i++)
 			str[i] = kernelname[i];
 	}
 	*howtop = 0;
@@ -563,9 +565,11 @@ main()
 		printf("Invalid Openfirmware environment\n");
 		exit();
 	}
-	prom2boot(bootdev);
+	/*prom2boot(bootdev);*/
+	kernelname = kernels[0];
 	parseargs(bootline, &boothowto);
 	for (i=0;;) {
+		kernelname = kernels[i];
 		if (boothowto & RB_ASKNAME) {
 			printf("Boot: ");
 			gets(bootline);
@@ -582,8 +586,7 @@ main()
 		 */
 		if ((boothowto & RB_ASKNAME) == 0 &&
 		    i != -1 && kernels[++i]) {
-			kernelname = kernels[i];
-			printf(": trying %s...\n", kernelname);
+			printf(": trying %s...\n", kernels[i]);
 		} else {
 			printf("\n");
 			boothowto |= RB_ASKNAME;
