@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.28 2000/02/03 04:09:16 nisimura Exp $	*/
+/* 	$NetBSD: px.c,v 1.29 2000/02/22 12:22:19 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.28 2000/02/03 04:09:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.29 2000/02/22 12:22:19 soda Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -113,7 +113,7 @@ static void	px_load_cursor_data __P((struct px_info *, int, int));
 static void	px_make_cursor __P((struct px_info *));
 static int	px_rect __P((struct px_info *, int, int, int, int, int));
 static void	px_qvss_init __P((struct px_info *));
-static int	px_mmap_info  __P((struct proc *, dev_t, vm_offset_t *));
+static int	px_mmap_info  __P((struct proc *, dev_t, vaddr_t *));
 static void	px_cursor_hack __P((struct fbinfo *, int, int));
 static int	px_probe_sram __P((struct px_info *));
 static void	px_bt459_flush __P((struct px_info *));
@@ -1768,7 +1768,7 @@ pxioctl(dev, cmd, data, flag, p)
 		/*
 		 * Map card info.
 		 */
-		return (px_mmap_info(p, dev, (vm_offset_t *)data));
+		return (px_mmap_info(p, dev, (vaddr_t *)data));
 
 	case QIOCPMSTATE:
 		/*
@@ -1920,12 +1920,12 @@ static int
 px_mmap_info (p, dev, va)
 	struct proc *p;
 	dev_t dev;
-	vm_offset_t *va;
+	vaddr_t *va;
 {
 	struct specinfo si;
 	struct vnode vn;
 	vm_prot_t prot;
-	vm_size_t size;
+	vsize_t size;
 	int flags;
 
 	vn.v_type = VCHR;			/* XXX */
