@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.26 1999/12/12 11:11:17 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.27 1999/12/28 07:14:53 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.26 1999/12/12 11:11:17 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.27 1999/12/28 07:14:53 darrenr Exp $";
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.2.2.10 1999/12/07 12:53:42 darrenr Exp";
@@ -328,6 +328,14 @@ int mode;
 
 	switch (cmd)
 	{
+#ifdef  IPFILTER_LOG
+	case SIOCIPFFB :
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else
+			*(int *)data = ipflog_clear(IPL_LOGNAT);
+		break;
+#endif
 	case SIOCADNAT :
 		if (!(mode & FWRITE)) {
 			error = EPERM;
