@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.20 2000/04/18 22:47:01 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.21 2000/04/19 13:52:39 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.20 2000/04/18 22:47:01 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.21 2000/04/19 13:52:39 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,6 +47,9 @@ __RCSID("$NetBSD: refresh.c,v 1.20 2000/04/18 22:47:01 jdc Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
+/* the following is defined and set up in setterm.c */
+extern struct tinfo *_cursesi_genbuf;
+   
 static int curwin;
 static short ly, lx;
 
@@ -298,7 +301,7 @@ makech(win, wy)
 	u_int	force;
 	int	clsp, nlsp;	/* Last space in lines. */
 	int	lch, wx, y;
-	char	*ce;
+	char	*ce, cm_buff[1024];
 	attr_t	lspb;		/* Last space background colour */
 
 #ifdef __GNUC__
@@ -350,9 +353,10 @@ makech(win, wy)
 		ce = NULL;
 
 	if (force) {
-		if (CM)
-			tputs(tgoto(CM, lx, ly), 0, __cputchar);
-		else {
+		if (CM) {
+			t_goto(_cursesi_genbuf, CM, lx, ly, cm_buff, 1023);
+			tputs(cm_buff, 0, __cputchar);
+		} else {
 			tputs(HO, 0, __cputchar);
 			__mvcur(0, 0, ly, lx, 1);
 		}
