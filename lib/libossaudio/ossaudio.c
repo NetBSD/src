@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.12 2000/08/16 16:14:33 tron Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.13 2001/05/09 21:49:58 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -339,8 +339,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		setblocksize(fd, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = /* XXX */
-		bufinfo.fragstotal = tmpinfo.play.buffer_size / bufinfo.fragsize;
+		bufinfo.fragments = tmpinfo.hiwat - tmpinfo.play.seek /
+						    bufinfo.fragsize;
+		bufinfo.fragstotal = tmpinfo.hiwat;
 		bufinfo.bytes = tmpinfo.play.buffer_size;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
