@@ -1,4 +1,4 @@
-/*	$NetBSD: gfmt.c,v 1.10 1996/05/07 18:20:08 jtc Exp $	*/
+/*	$NetBSD: gfmt.c,v 1.11 1997/07/20 21:31:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)gfmt.c	8.6 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: gfmt.c,v 1.10 1996/05/07 18:20:08 jtc Exp $";
+__RCSID("$NetBSD: gfmt.c,v 1.11 1997/07/20 21:31:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +50,8 @@ static char rcsid[] = "$NetBSD: gfmt.c,v 1.10 1996/05/07 18:20:08 jtc Exp $";
 
 #include "stty.h"
 #include "extern.h"
+
+static void gerr __P((char *));
 
 static void
 gerr(s)
