@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.25 2003/04/02 10:39:50 fvdl Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.26 2003/04/17 09:21:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.25 2003/04/02 10:39:50 fvdl Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.26 2003/04/17 09:21:01 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -704,6 +704,8 @@ setinodebuf(inum)
 	if (inodebuf == NULL &&
 	    (inodebuf = malloc((unsigned)inobufsize)) == NULL)
 		errx(1, "Cannot allocate space for inode buffer");
+	while (nextino < ROOTINO)
+		getnextinode(nextino);
 }
 
 void
