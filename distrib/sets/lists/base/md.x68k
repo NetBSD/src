@@ -1,3 +1,4 @@
+./sbin/ldconfig
 ./usr/bin/bellctrl
 ./usr/bin/loadfont
 ./usr/bin/loadkmap

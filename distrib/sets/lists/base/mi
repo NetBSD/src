@@ -68,7 +68,6 @@
 ./sbin/ifconfig
 ./sbin/init
 ./sbin/ipf
-./sbin/ldconfig
 ./sbin/mknod
 ./sbin/modload
 ./sbin/modunload
@@ -744,7 +743,6 @@
 ./usr/share/man/cat4/pmax
 ./usr/share/man/cat4/sparc
 ./usr/share/man/cat4/sun3
-./usr/share/man/cat4/sun3x
 ./usr/share/man/cat4/vax
 ./usr/share/man/cat4/x68k
 ./usr/share/man/cat5
@@ -764,7 +762,6 @@
 ./usr/share/man/cat8/pmax
 ./usr/share/man/cat8/sparc
 ./usr/share/man/cat8/sun3
-./usr/share/man/cat8/sun3x
 ./usr/share/man/cat8/vax
 ./usr/share/man/cat8/x68k
 ./usr/share/man/cat9
@@ -779,7 +776,6 @@
 ./usr/share/man/cat9/pmax
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sun3
-./usr/share/man/cat9/sun3x
 ./usr/share/man/cat9/vax
 ./usr/share/man/cat9/x68k
 ./usr/share/man/makewhatis.sed
@@ -803,7 +799,6 @@
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/sparc
 ./usr/share/man/man4/sun3
-./usr/share/man/man4/sun3x
 ./usr/share/man/man4/vax
 ./usr/share/man/man4/x68k
 ./usr/share/man/man5
@@ -823,7 +818,6 @@
 ./usr/share/man/man8/pmax
 ./usr/share/man/man8/sparc
 ./usr/share/man/man8/sun3
-./usr/share/man/man8/sun3x
 ./usr/share/man/man8/vax
 ./usr/share/man/man8/x68k
 ./usr/share/man/man9
@@ -838,7 +832,6 @@
 ./usr/share/man/man9/pmax
 ./usr/share/man/man9/sparc
 ./usr/share/man/man9/sun3
-./usr/share/man/man9/sun3x
 ./usr/share/man/man9/vax
 ./usr/share/man/man9/x68k
 ./usr/share/man/whatis.db
