@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.28 2002/07/18 23:23:13 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.29 2002/08/29 16:35:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 	struct sadata *sa = p->p_sa;
 	int error;
 
-	DPRINTF(("sys_sa_enable(pid: %d lid: %d)\n", l->l_proc->p_pid,
+	DPRINTF(("sys_sa_enable(%d.%d)\n", l->l_proc->p_pid,
 	    l->l_lid));
 
 	/* We have to be using scheduler activations */
@@ -223,7 +223,7 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sadata *sa = l->l_proc->p_sa;
 
-	DPRINTF(("sys_sa_concurrency(pid: %d lid: %d)\n", l->l_proc->p_pid,
+	DPRINTF(("sys_sa_concurrency(%d.%d)\n", l->l_proc->p_pid,
 	    l->l_lid));
 
 	/* We have to be using scheduler activations */
@@ -244,7 +244,6 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 	    
 	return (0);
 }
-
 
 int
 sys_sa_yield(struct lwp *l, void *v, register_t *retval)
@@ -396,12 +395,13 @@ sa_switch(struct lwp *l, int type)
 	struct lwp *l2;
 	int error;
 
-	DPRINTFN(4,("sa_switch(type: %d pid: %d.%d)\n", type, p->p_pid,
-	    l->l_lid));
+	DPRINTFN(4,("sa_switch(%d.%d type %d)\n", p->p_pid, l->l_lid,
+	    type));
 	SCHED_ASSERT_LOCKED();
 
 	if (l->l_flag & L_SA_BLOCKING) {
-		/* We've already sent a BLOCKED upcall, but the LWP
+		/*
+		 * We've already sent a BLOCKED upcall, but the LWP
 		 * has been woken up and put to sleep again without
 		 * returning to userland. We don't want to send a
 		 * second BLOCKED upcall.
@@ -411,8 +411,10 @@ sa_switch(struct lwp *l, int type)
 		 */
 		l2 = sa->sa_vp;
 	} else {
-		/* Get an LWP */
-		/* The process of allocating a new LWP could cause
+		/*
+		 * Get a LWP.
+		 *
+		 * The process of allocating a new LWP could cause
 		 * sleeps. We're called from inside sleep, so that
 		 * would be Bad. Therefore, we must use a cached new
 		 * LWP. The first thing that this new LWP must do is
@@ -511,11 +513,12 @@ sa_switchcall(void *arg)
 	l = curlwp;
 	p = l->l_proc;
 	sa = p->p_sa;
-	DPRINTFN(6,("sa_switchcall(pid: %d.%d)\n", p->p_pid, l->l_lid));
+	DPRINTFN(6,("sa_switchcall(%d.%d)\n", p->p_pid, l->l_lid));
 
 	if (LIST_EMPTY(&sa->sa_lwpcache)) {
 		/* Allocate the next cache LWP */
-		DPRINTFN(6,("sa_switchcall(pid: %d.%d) allocating LWP\n", p->p_pid, l->l_lid));
+		DPRINTFN(6,("sa_switchcall(%d.%d) allocating LWP\n",
+		    p->p_pid, l->l_lid));
 		sa_newcachelwp(l);
 	}
 	upcallret(l);
@@ -569,8 +572,8 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	l->l_flag |= (L_DETACHED | L_SA);
 	PHOLD(l);
 	/* XXX lock sadata */	
-	DPRINTFN(5,("sa_addcachelwp(%d) Adding LWP %d to cache\n",
-	    p->p_pid, l->l_lid));
+	DPRINTFN(5,("sa_addcachelwp(%d.%d) Adding LWP %d to cache\n",
+	    p->p_pid, curlwp->l_lid, l->l_lid));
 	LIST_INSERT_HEAD(&sa->sa_lwpcache, l, l_sibling);
 	sa->sa_ncached++;
 	/* XXX unlock */
@@ -596,8 +599,8 @@ sa_getcachelwp(struct proc *p)
 		LIST_REMOVE(l, l_sibling);
 		LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
 		p->p_nlwps++;
-		DPRINTFN(5,("sa_getcachelwp(%d) Got LWP %d from cache.\n",
-		    p->p_pid,l->l_lid));
+		DPRINTFN(5,("sa_getcachelwp(%d.%d) Got LWP %d from cache.\n",
+		    p->p_pid, curlwp->l_lid, l->l_lid));
 	}
 	/* XXX unlock */
 	return l;
@@ -620,13 +623,14 @@ sa_upcall_userret(struct lwp *l)
 	p = l->l_proc;
 	sa = p->p_sa;
 
-	DPRINTFN(7,("sa_upcall_userret(%d.%d)\n",p->p_pid,l->l_lid));
+	DPRINTFN(7,("sa_upcall_userret(%d.%d)\n", p->p_pid, l->l_lid));
 
 	if (l->l_flag & L_SA_BLOCKING) {
 		/* Invoke an "unblocked" upcall */
 		struct lwp *l2;
 		int s;
-		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking ",p->p_pid, l->l_lid));
+		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking ",
+		    p->p_pid, l->l_lid));
 		/*
 		 * Put ourselves on the virtual processor and note that the
 		 * previous occupant of that position was interrupted.
