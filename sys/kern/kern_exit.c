@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.124 2003/09/16 13:46:24 cl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.125 2003/11/03 22:34:51 cl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.124 2003/09/16 13:46:24 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.125 2003/11/03 22:34:51 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -491,14 +491,8 @@ exit_lwps(struct lwp *l)
 	 * them) and then wait for everyone else to finish.  
 	 */
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
-#if 0
 		l2->l_flag &= ~(L_DETACHED|L_SA);
-#endif	
-		l2->l_flag &= ~(L_DETACHED);
 	
-		if(l2->l_flag & L_SA_WANTS_VP)
-			wakeup(l2);
-
 		if (l2->l_wchan == &l2->l_upcallstack)
 			wakeup(&l2->l_upcallstack);
 

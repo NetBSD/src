@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.176 2003/11/02 16:30:55 cl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.177 2003/11/03 22:34:51 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.176 2003/11/02 16:30:55 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.177 2003/11/03 22:34:51 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1598,8 +1598,9 @@ proc_stop(struct proc *p)
 		/*
 		 * Only (try to) put the LWP on the VP in stopped
 		 * state. 
-		 * All other LWPs will suspend in sa_vp_repossess()
-		 * until the VP-LWP donates the VP.
+		 * All other LWPs will suspend in sa_setwoken()
+		 * because the VP-LWP in stopped state cannot be
+		 * repossessed.
 		 */
 		l = p->p_sa->sa_vp;
 		if (l->l_stat == LSONPROC && l->l_cpu == curcpu()) {
