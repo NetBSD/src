@@ -1,4 +1,4 @@
-/*      $NetBSD: pms.c,v 1.3 1998/08/15 03:02:34 mycroft Exp $        */
+/*      $NetBSD: pms.c,v 1.4 1999/01/23 22:18:43 sommerfe Exp $        */
 
 /*
  * Copyright 1997
@@ -192,12 +192,12 @@ int                  pmsintr         __P((void *));
 */
 
 /* Autoconfiguration data structures */
-struct cfattach pms_ca = 
+struct cfattach opms_ca = 
 {
         sizeof(struct pms_softc), pmsprobe, pmsattach,
 };
 
-extern struct cfdriver pms_cd;
+extern struct cfdriver opms_cd;
 
 /* variable to control which debugs printed if kernel compiled with 
 ** option KERNEL_DEBUG. 
@@ -422,11 +422,11 @@ pmsopen(dev, flag, mode, p)
     /* Sanity check the minor device number we have been instructed
     ** to open and set up our softc structure pointer. 
     */
-    if (unit >= pms_cd.cd_ndevs)
+    if (unit >= opms_cd.cd_ndevs)
     {
         return ENXIO;
     }
-    sc = pms_cd.cd_devs[unit];
+    sc = opms_cd.cd_devs[unit];
     if (!sc)
     {
         return ENXIO;
@@ -502,7 +502,7 @@ pmsclose(dev, flag, mode, p)
     int mode;
     struct proc *p;
 {
-    struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+    struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 
     /* Disable the mouse device and interrupts on it. Note that if we don't
     ** flush the device first it seems to generate LOTs of interrupts after
@@ -563,7 +563,7 @@ pmsread(dev, uio, flag)
     struct uio *uio;
     int flag;
 {
-    struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+    struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
     int s;
     int error = 0;
     size_t length;
@@ -665,7 +665,7 @@ pmsioctl(dev, cmd, addr, flag, p)
     int         flag;
     struct proc *p;
 {
-    struct pms_softc     *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+    struct pms_softc     *sc = opms_cd.cd_devs[PMSUNIT(dev)];
     struct mouseinfo     info;
     int                  oldIpl;
     int                  error;
@@ -954,7 +954,7 @@ pmspoll(dev, events, p)
     int events;
     struct proc *p;
 {
-    struct pms_softc     *sc     = pms_cd.cd_devs[PMSUNIT(dev)];
+    struct pms_softc     *sc     = opms_cd.cd_devs[PMSUNIT(dev)];
     int                  revents = 0;
     int                  oldIpl; 
 

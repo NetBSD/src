@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.74 1998/10/12 16:13:04 bouyer Exp $
+#	$NetBSD: files.arm32,v 1.75 1999/01/23 22:18:43 sommerfe Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -152,14 +152,14 @@ file    arch/arm32/iomd/qms_iomd.c		qms_iomd
 define	spckbd { [irq = -1], [port = -1] }
 
 # PS/2 mouse device
-device	pms: tty
-file	arch/arm32/dev/pms.c			pms & pms_iomd needs-flag
-file	arch/arm32/shark/pms.c			pms & ofw needs-flag
-major	{pms = 40}
+device	opms: tty
+file	arch/arm32/dev/pms.c			opms & opms_iomd needs-flag
+file	arch/arm32/shark/pms.c			opms & ofw needs-flag
+major	{opms = 40}
 
-attach	pms at spckbd with pms
-attach	pms at iomd with pms_iomd
-file	arch/arm32/iomd/pms_iomd.c		pms_iomd
+attach	opms at spckbd with opms
+attach	opms at iomd with opms_iomd
+file	arch/arm32/iomd/pms_iomd.c		opms_iomd
 
 # Standard keyboard driver
 device	kbd

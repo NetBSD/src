@@ -1,4 +1,4 @@
-#	$NetBSD: VOYAGER,v 1.43 1998/10/12 16:13:04 bouyer Exp $
+#	$NetBSD: VOYAGER,v 1.44 1999/01/23 22:18:43 sommerfe Exp $
 #
 #	VOYAGER - Mark's development kernel
 #
@@ -139,7 +139,7 @@ kbd*	at iomd?
 qms*	at iomd?
 
 # PS2 mouse via IOMD
-pms*	at iomd?
+opms*	at iomd?
 
 # IIC bus device
 iic*	at iomd?

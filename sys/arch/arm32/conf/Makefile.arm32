@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.43 1999/01/15 23:37:05 thorpej Exp $
+#	$NetBSD: Makefile.arm32,v 1.44 1999/01/23 22:18:42 sommerfe Exp $
 
 # Makefile for NetBSD
 #
@@ -143,7 +143,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 __CLEANKERNEL: .USE
 	@echo "${.TARGET}ing the kernel objects"
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h modedefs.c
 
 __CLEANDEPEND: .USE
 	rm -f .depend
