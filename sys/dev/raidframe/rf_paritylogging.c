@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.20 2003/12/29 05:36:19 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.21 2003/12/29 05:48:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.20 2003/12/29 05:36:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.21 2003/12/29 05:48:13 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -424,11 +424,7 @@ rf_ConfigureParityLogging(
 	}
 	/* initialize parityLogDiskQueue */
 	rf_mutex_init(&raidPtr->parityLogDiskQueue.mutex);
-	rc = rf_create_managed_cond(listp, &raidPtr->parityLogDiskQueue.cond);
-	if (rc) {
-		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
-		return (rc);
-	}
+	raidPtr->parityLogDiskQueue.cond = 0;
 	raidPtr->parityLogDiskQueue.flushQueue = NULL;
 	raidPtr->parityLogDiskQueue.reintQueue = NULL;
 	raidPtr->parityLogDiskQueue.bufHead = NULL;
