@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2003/01/18 06:23:33 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.5 2003/01/19 02:47:36 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,6 +40,8 @@ include <machine/pmap.h>
 
 include <powerpc/cpu.h>
 
+define	CALLFRAMELEN	CALLFRAMELEN
+
 define	FRAMELEN	FRAMELEN
 define	FRAME_0		offsetof(struct trapframe, fixreg[0])
 define	FRAME_1		offsetof(struct trapframe, fixreg[1])
@@ -55,7 +57,7 @@ define	FRAME_DAR	offsetof(struct trapframe, dar)
 define	FRAME_DSISR	offsetof(struct trapframe, dsisr)
 define	FRAME_EXC	offsetof(struct trapframe, exc)
 
-define	SFRAMELEN	roundup(sizeof(struct switchframe), 16)
+define	SFRAMELEN	roundup(sizeof(struct switchframe), CALLFRAMELEN)
 
 define	PCB_PMR		offsetof(struct pcb, pcb_pmreal)
 define	PCB_SP		offsetof(struct pcb, pcb_sp)
