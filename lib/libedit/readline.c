@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.47 2004/09/08 18:15:57 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.48 2005/03/09 23:55:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.47 2004/09/08 18:15:57 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.48 2005/03/09 23:55:35 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -2014,6 +2014,7 @@ rl_callback_read_char()
 		} else
 			wbuf = NULL;
 		(*(void (*)(const char *))rl_linefunc)(wbuf);
+		el_set(e, EL_UNBUFFERED, 1);
 	}
 }
 
