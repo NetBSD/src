@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)fts.c	8.4 (Berkeley) 4/16/94"; */
-static char *rcsid = "$Id: fts.c,v 1.9 1994/04/17 02:21:02 cgd Exp $";
+static char *rcsid = "$Id: fts.c,v 1.10 1994/10/26 20:25:50 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -59,8 +59,9 @@ static u_short	 fts_stat __P((FTS *, FTSENT *, int));
 
 #define	ISDOT(a)	(a[0] == '.' && (!a[1] || a[1] == '.' && !a[2]))
 
-#define	ISSET(opt)	(sp->fts_options & opt)
-#define	SET(opt)	(sp->fts_options |= opt)
+#define	CLR(opt)	(sp->fts_options &= ~(opt))
+#define	ISSET(opt)	(sp->fts_options & (opt))
+#define	SET(opt)	(sp->fts_options |= (opt))
 
 #define	CHDIR(sp, path)	(!ISSET(FTS_NOCHDIR) && chdir(path))
 #define	FCHDIR(sp, fd)	(!ISSET(FTS_NOCHDIR) && fchdir(fd))
@@ -317,8 +318,8 @@ fts_read(sp)
 		} 
 
 		/* Rebuild if only read the names and now traversing. */
-		if (sp->fts_child && sp->fts_options & FTS_NAMEONLY) {
-			sp->fts_options &= ~FTS_NAMEONLY;
+		if (sp->fts_child && ISSET(FTS_NAMEONLY)) {
+			CLR(FTS_NAMEONLY);
 			fts_lfree(sp->fts_child);
 			sp->fts_child = NULL;
 		}
@@ -507,7 +508,7 @@ fts_children(sp, instr)
 		fts_lfree(sp->fts_child);
 
 	if (instr == FTS_NAMEONLY) {
-		sp->fts_options |= FTS_NAMEONLY;
+		SET(FTS_NAMEONLY);
 		instr = BNAMES;
 	} else 
 		instr = BCHILD;
@@ -557,7 +558,7 @@ fts_build(sp, type)
 	FTSENT *cur, *tail;
 	DIR *dirp;
 	void *adjaddr;
-	int cderrno, descend, len, level, maxlen, nlinks, saved_errno;
+	int cderrno, descend, len, level, maxlen, nlinks, saved_errno, nostat;
 	char *cp;
 
 	/* Set current node pointer. */
@@ -582,10 +583,13 @@ fts_build(sp, type)
 	 */
 	if (type == BNAMES)
 		nlinks = 0;
-	else if (ISSET(FTS_NOSTAT) && ISSET(FTS_PHYSICAL))
+	else if (ISSET(FTS_NOSTAT) && ISSET(FTS_PHYSICAL)) {
 		nlinks = cur->fts_nlink - (ISSET(FTS_SEEDOT) ? 0 : 2);
-	else
+		nostat = 1;
+	} else {
 		nlinks = -1;
+		nostat = 0;
+	}
 
 #ifdef notdef
 	(void)printf("nlinks == %d (cur: %d)\n", nlinks, cur->fts_nlink);
@@ -681,7 +685,7 @@ mem1:				saved_errno = errno;
 			p->fts_accpath = cur->fts_accpath;
 		} else if (nlinks == 0
 #ifdef DT_DIR
-		    || nlinks > 0 && 
+		    || nostat && 
 		    dp->d_type != DT_DIR && dp->d_type != DT_UNKNOWN
 #endif
 		    ) {
