@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.1 1995/04/20 05:09:34 jtc Exp $
+#	$NetBSD: bsd.nls.mk,v 1.2 1995/04/27 18:05:38 jtc Exp $
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -14,7 +14,9 @@
 	@rm -f ${.TARGET}
 	gencat ${.TARGET} ${.IMPSRC}
 
+.if defined(NLS) && !empty(NLS)
 NLSALL= ${NLS:.msg=.cat}
+.endif
 
 .if !defined(NLSNAME)
 .if defined(PROG)
