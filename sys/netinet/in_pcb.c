@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.35 1996/10/13 02:03:04 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.36 1996/12/10 11:38:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -82,7 +82,7 @@ in_pcbinit(table, bindhashsize, connecthashsize)
 	    hashinit(bindhashsize, M_PCB, &table->inpt_bindhash);
 	table->inpt_connecthashtbl =
 	    hashinit(connecthashsize, M_PCB, &table->inpt_connecthash);
-	table->inpt_lastport = 0;
+	table->inpt_lastport = IPPORT_RESERVED;
 }
 
 int
@@ -173,13 +173,22 @@ in_pcbbind(v, nam, p)
 	}
 	inp->inp_laddr = sin->sin_addr;
 noname:
-	if (lport == 0)
-		do {
-			if (table->inpt_lastport++ < IPPORT_RESERVED ||
-			    table->inpt_lastport > IPPORT_USERRESERVED)
-				table->inpt_lastport = IPPORT_RESERVED;
-			lport = htons(table->inpt_lastport);
-		} while (in_pcblookup_port(table, inp->inp_laddr, lport, wild));
+	if (lport == 0) {
+		for (lport = table->inpt_lastport + 1;
+		    lport < IPPORT_USERRESERVED; lport++)
+			if (!in_pcblookup_port(table, inp->inp_laddr,
+			    htons(lport), wild))
+				goto found;
+		for (lport = IPPORT_RESERVED;
+		    lport <= table->inpt_lastport; lport++)
+			if (!in_pcblookup_port(table, inp->inp_laddr,
+			    htons(lport), wild))
+				goto found;
+		return (EAGAIN);
+	found:
+		table->inpt_lastport = lport;
+		lport = htons(lport);
+	}
 	inp->inp_lport = lport;
 	in_pcbstate(inp, INP_BOUND);
 	return (0);
