@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.35 1999/01/19 23:39:57 mycroft Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.36 1999/03/30 19:02:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -522,6 +522,15 @@ icmp_reflect(m)
 				continue;
 			break;
 		}
+	/*
+	 * If we still didn't find an address, punt.  We could have an
+	 * interface up (and receiving packets) with no address.
+	 */
+	if (ia == (struct in_ifaddr *)0) {
+		m_freem(m);
+		goto done;
+	}
+
 	t = ia->ia_addr.sin_addr;
 	ip->ip_src = t;
 	ip->ip_ttl = MAXTTL;
