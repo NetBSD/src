@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.5 1996/07/03 17:22:02 chuck Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.6 1996/07/11 22:48:13 chuck Exp $	*/
 
 /*
  *
@@ -163,6 +163,7 @@ struct en_softc {
   u_int32_t otrash;		/* sw copy of counter */
   u_int32_t ttrash;		/* # of RBD's with T bit set */
   u_int32_t mfix;		/* # of times we had to call mfix */
+  u_int32_t mfixfail;		/* # of times mfix failed */
   u_int32_t txmbovr;		/* # of times we dropped due to mbsize */
   u_int32_t dmaovr;		/* tx dma overflow count */
   u_int32_t txoutspace;		/* out of space in xmit buffer */
