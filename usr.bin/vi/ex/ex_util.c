@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_util.c,v 1.7 1998/01/09 08:08:10 perry Exp $	*/
+/*	$NetBSD: ex_util.c,v 1.7.8.1 2000/06/23 16:40:10 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -154,8 +154,13 @@ int
 ex_init(sp)
 	SCR *sp;
 {
-	if (sp->gp->scr_screen(sp, SC_EX))
+	GS *gp;
+
+	gp = sp->gp;
+
+	if (gp->scr_screen(sp, SC_EX))
 		return (1);
+	(void)gp->scr_attr(sp, SA_ALTERNATE, 0);
 
 	sp->rows = O_VAL(sp, O_LINES);
 	sp->cols = O_VAL(sp, O_COLUMNS);

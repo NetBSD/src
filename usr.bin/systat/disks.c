@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.9 1999/12/20 03:45:02 jwise Exp $	*/
+/*	$NetBSD: disks.c,v 1.9.2.1 2000/06/23 16:39:56 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: disks.c,v 1.9 1999/12/20 03:45:02 jwise Exp $");
+__RCSID("$NetBSD: disks.c,v 1.9.2.1 2000/06/23 16:39:56 minoura Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,14 +57,16 @@ void
 disks_add (args)
 	char *args;
 {
-	dkselect(args, 1, dk_select);
+	if (args)
+		dkselect(args, 1, dk_select);
 }
 
 void
 disks_delete (args)
 	char *args;
 {
-	dkselect(args, 0, dk_select);
+	if (args)
+		dkselect(args, 0, dk_select);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.54 2000/05/01 10:35:17 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.54.2.1 2000/06/23 16:30:22 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -102,15 +102,18 @@
 
 struct sockaddr;
 struct tm;
+struct addrinfo;
 
 void	abort_remote(FILE *);
 void	abort_squared(int);
 void	abortpt(int);
 void	abortxfer(int);
 void	account(int, char **);
+void	ai_unmapped(struct addrinfo *);
 void	alarmtimer(int);
 int	another(int *, char ***, const char *);
 int	auto_fetch(int, char **);
+int	auto_put(int, char **, const char *);
 void	blkfree(char **);
 void	cd(int, char **);
 void	cdup(int, char **);
@@ -191,8 +194,9 @@ void	recvrequest(const char *, const char *, const char *,
 	    const char *, int, int);
 void	reget(int, char **);
 char   *remglob(char **, int, char **);
-off_t	remotesize(const char *, int);
 time_t	remotemodtime(const char *, int);
+off_t	remotesize(const char *, int);
+void	remotesyst(void);
 void	removedir(int, char **);
 void	renamefile(int, char **);
 void	reset(int, char **);

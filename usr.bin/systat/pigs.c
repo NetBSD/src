@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.16 2000/01/08 23:12:37 itojun Exp $	*/
+/*	$NetBSD: pigs.c,v 1.16.2.1 2000/06/23 16:40:00 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.16 2000/01/08 23:12:37 itojun Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.16.2.1 2000/06/23 16:40:00 minoura Exp $");
 #endif /* not lint */
 
 /*
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: pigs.c,v 1.16 2000/01/08 23:12:37 itojun Exp $");
 #include <sys/dir.h>
 #include <sys/time.h>
 #include <sys/proc.h>
+#include <sys/sched.h>
 #include <sys/sysctl.h>
 
 #include <curses.h>
@@ -68,7 +69,7 @@ int compare_pctcpu __P((const void *, const void *));
 int nproc;
 struct p_times *pt;
 
-long stime[CPUSTATES];
+u_int64_t stime[CPUSTATES];
 long	mempages;
 int     fscale;
 double  lccpu;
@@ -100,7 +101,7 @@ closepigs(w)
 void
 showpigs()
 {
-	int i, j, y, k;
+	int i, y, k;
 	struct	eproc *ep;
 	float total;
 	int factor;
@@ -143,22 +144,18 @@ showpigs()
 		mvwaddstr(wnd, y, 9, pidstr);
 		(void)snprintf(pidname, sizeof(pidname), "%9.9s", pname);
 		mvwaddstr(wnd, y, 15, pidname);
-		wmove(wnd, y, 25);
-		for (j = pt[k].pt_pctcpu*factor + 0.5; j > 0; j--)
-			waddch(wnd, 'X');
+		mvwhline(wnd, y, 25, 'X', pt[k].pt_pctcpu*factor + 0.5);
 	}
 	wmove(wnd, y, 0); wclrtobot(wnd);
 }
 
 static struct nlist namelist[] = {
 #define X_FIRST		0
-#define X_CPTIME	0
-	{ "_cp_time" },
-#define X_CCPU          1
+#define X_CCPU          0
 	{ "_ccpu" },
-#define X_FSCALE        2
+#define X_FSCALE        1
 	{ "_fscale" },
-#define X_PHYSMEM	3
+#define X_PHYSMEM	2
 	{ "_physmem" },
 	{ "" }
 };
@@ -178,7 +175,7 @@ initpigs()
 			return(0);
 		}
 	}
-	KREAD(NPTR(X_CPTIME), stime, sizeof (stime));
+	(void) fetch_cptime(stime);
 	KREAD(NPTR(X_PHYSMEM), &mempages, sizeof (mempages));
 	NREAD(X_CCPU, &ccpu, sizeof ccpu);
 	NREAD(X_FSCALE,  &fscale, sizeof fscale);
@@ -195,7 +192,7 @@ fetchpigs()
 	struct proc *pp;
 	float *pctp;
 	struct kinfo_proc *kpp;
-	long ctime[CPUSTATES];
+	u_int64_t ctime[CPUSTATES];
 	double t;
 	static int lastnproc = 0;
 
@@ -234,7 +231,7 @@ fetchpigs()
 	/*
 	 * and for the imaginary "idle" process
 	 */
-	KREAD(NPTR(X_CPTIME), ctime, sizeof (ctime));
+	(void) fetch_cptime(ctime);
 	t = 0;
 	for (i = 0; i < CPUSTATES; i++)
 		t += ctime[i] - stime[i];

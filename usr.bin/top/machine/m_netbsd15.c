@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.2 2000/05/26 04:22:01 simonb Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.2.2.1 2000/06/23 16:40:05 minoura Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,12 +34,12 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.2 2000/05/26 04:22:01 simonb Exp $
+ * $Id: m_netbsd15.c,v 1.2.2.1 2000/06/23 16:40:05 minoura Exp $
  */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/dkstat.h>
+#include <sys/sched.h>
 #include <sys/swap.h>
 
 #include <uvm/uvm_extern.h>
@@ -60,6 +60,8 @@
 #include "utils.h"
 #include "display.h"
 #include "loadavg.h"
+
+void percentages64 __P((int, int *, u_int64_t *, u_int64_t *, u_int64_t *));
 
 
 /* get_process_info passes back a handle.  This is what it looks like: */
@@ -110,9 +112,9 @@ static int ccpu;
 
 /* these are for calculating cpu state percentages */
 
-static long cp_time[CPUSTATES];
-static long cp_old[CPUSTATES];
-static long cp_diff[CPUSTATES];
+static u_int64_t cp_time[CPUSTATES];
+static u_int64_t cp_old[CPUSTATES];
+static u_int64_t cp_diff[CPUSTATES];
 
 /* these are for detailing the process states */
 
@@ -152,6 +154,13 @@ char *ordernames[] = {
 };
 
 /* forward definitions for comparison functions */
+static int compare_cpu __P((struct proc **, struct proc **));
+static int compare_prio __P((struct proc **, struct proc **));
+static int compare_res __P((struct proc **, struct proc **));
+static int compare_size __P((struct proc **, struct proc **));
+static int compare_state __P((struct proc **, struct proc **));
+static int compare_time __P((struct proc **, struct proc **));
+
 int (*proc_compares[]) __P((struct proc **, struct proc **)) = {
 	compare_cpu,
 	compare_prio,
@@ -256,12 +265,12 @@ void
 get_system_info(si)
 	struct system_info *si;
 {
-	long total;
 	size_t ssize;
 	int mib[2];
 	struct uvmexp uvmexp;
 	struct swapent *sep, *seporig;
-	int totalsize, size, totalinuse, inuse, ncounted;
+	u_int64_t totalsize, totalinuse;
+	int size, inuse, ncounted;
 	int rnswap, nswap;
 
 	mib[0] = CTL_KERN;
@@ -282,7 +291,7 @@ get_system_info(si)
 	}
 
 	/* convert cp_time counts to percentages */
-	total = percentages(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
+	percentages64(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
 
 	mib[0] = CTL_VM;
 	mib[1] = VM_UVMEXP;
@@ -551,7 +560,7 @@ static int sorted_state[] = {
 
 /* compare_cpu - the comparison function for sorting by cpu percentage */
 
-int
+static int
 compare_cpu(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
@@ -577,7 +586,7 @@ compare_cpu(pp1, pp2)
 
 /* compare_prio - the comparison function for sorting by process priority */
 
-int
+static int
 compare_prio(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
@@ -603,7 +612,7 @@ compare_prio(pp1, pp2)
 
 /* compare_res - the comparison function for sorting by resident set size */
 
-int
+static int
 compare_res(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
@@ -629,7 +638,7 @@ compare_res(pp1, pp2)
 
 /* compare_size - the comparison function for sorting by total memory usage */
 
-int
+static int
 compare_size(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
@@ -655,7 +664,7 @@ compare_size(pp1, pp2)
 
 /* compare_state - the comparison function for sorting by process state */
 
-int
+static int
 compare_state(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
@@ -681,7 +690,7 @@ compare_state(pp1, pp2)
 
 /* compare_time - the comparison function for sorting by total cpu time */
 
-int
+static int
 compare_time(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
@@ -732,4 +741,52 @@ proc_owner(pid)
 			return(pp->p_ruid);
 	}
 	return(-1);
+}
+
+/*
+ *  percentages(cnt, out, new, old, diffs) - calculate percentage change
+ *	between array "old" and "new", putting the percentages i "out".
+ *	"cnt" is size of each array and "diffs" is used for scratch space.
+ *	The array "old" is updated on each call.
+ *	The routine assumes modulo arithmetic.  This function is especially
+ *	useful on BSD mchines for calculating cpu state percentages.
+ */
+
+void
+percentages64(cnt, out, new, old, diffs)
+	int cnt;
+	int *out;
+	u_int64_t *new;
+	u_int64_t *old;
+	u_int64_t *diffs;
+{
+	int i;
+	u_int64_t change;
+	u_int64_t total_change;
+	u_int64_t *dp;
+	u_int64_t half_total;
+
+	/* initialization */
+	total_change = 0;
+	dp = diffs;
+
+	/* calculate changes for each state and the overall change */
+	for (i = 0; i < cnt; i++) {
+		/*
+		 * Don't worry about wrapping - even at hz=1GHz, a
+		 * u_int64_t will last at least 544 years.
+		 */
+		change = *new - *old;
+		total_change += (*dp++ = change);
+		*old++ = *new++;
+	}
+
+	/* avoid divide by zero potential */
+	if (total_change == 0)
+		total_change = 1;
+
+	/* calculate percentages based on overall change, rounding up */
+	half_total = total_change / 2;
+	for (i = 0; i < cnt; i++)
+		*out++ = (int)((*diffs++ * 1000 + half_total) / total_change);
 }

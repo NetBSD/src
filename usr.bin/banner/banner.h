@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.h,v 1.2 1995/04/09 06:00:23 cgd Exp $	*/
+/*	$NetBSD: banner.h,v 1.2.14.1 2000/06/23 16:30:14 minoura Exp $	*/
 
 /*
  *	Various defines needed for code lifted from lpd.
@@ -21,13 +21,8 @@
 
 #define LINELEN		132
 #define BACKGND		' '
-
-#ifdef LPD_CHSET
 #define HEIGHT	9		/* height of characters */
-#define DROP	3		/* offset to drop characters with descenders */
-#else
-#define HEIGHT	8		/* height of characters */
-#define DROP	0		/* offset to drop characters with descenders */
-#endif
 #define WIDTH	8		/* width of characters */
 
+extern char scnkey_lpd[][HEIGHT];
+extern char scnkey_def[][HEIGHT];

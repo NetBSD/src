@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.13 2000/01/08 23:12:37 itojun Exp $  */
+/*      $NetBSD: ps.c,v 1.13.2.1 2000/06/23 16:40:01 minoura Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.13 2000/01/08 23:12:37 itojun Exp $");
+__RCSID("$NetBSD: ps.c,v 1.13.2.1 2000/06/23 16:40:01 minoura Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: ps.c,v 1.13 2000/01/08 23:12:37 itojun Exp $");
 #include <sys/dir.h>
 #include <sys/time.h>
 #include <sys/proc.h>
+#include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
 #include <curses.h>
@@ -187,6 +188,7 @@ state2str(kp)
 
 	case SRUN:
 	case SIDL:
+	case SONPROC:
 		*cp = 'R';
 		break;
 

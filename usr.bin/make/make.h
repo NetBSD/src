@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.25 2000/05/04 18:27:53 drochner Exp $	*/
+/*	$NetBSD: make.h,v 1.25.2.1 2000/06/23 16:39:44 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -230,6 +230,7 @@ typedef struct GNode {
 				     * commands for a target */
 #define OP_SAVE_CMDS	0x04000000  /* Saving commands on .END (Compat) */
 #define OP_DEPS_FOUND	0x02000000  /* Already processed by Suff_FindDeps */
+#define	OP_MARK		0x01000000  /* Node found while expanding .ALLSRC */
 
 /*
  * OP_NOP will return TRUE if the node with the given type was not the
@@ -342,6 +343,7 @@ extern GNode    *DEFAULT;    	/* .DEFAULT rule */
 extern GNode    *VAR_GLOBAL;   	/* Variables defined in a global context, e.g
 				 * in the Makefile itself */
 extern GNode    *VAR_CMD;    	/* Variables defined on the command line */
+extern GNode	*VAR_FOR;	/* Iteration variables */
 extern char    	var_Error[];   	/* Value returned by Var_Parse when an error
 				 * is encountered. It actually points to
 				 * an empty string, so naive callers needn't

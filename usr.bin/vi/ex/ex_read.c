@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_read.c,v 1.7 1998/01/09 08:07:59 perry Exp $	*/
+/*	$NetBSD: ex_read.c,v 1.7.8.1 2000/06/23 16:40:10 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -162,6 +162,12 @@ ex_read(sp, cmdp)
 				ex_emsg(sp, cmdp->cmd->name, EXM_NOCANON_F);
 				return (1);
 			}
+			/*
+			 * !!!
+			 * Historically, the read command doesn't switch to
+			 * the alternate X11 xterm screen, if doing a filter
+			 * read -- don't set SA_ALTERNATE.
+			 */
 			F_SET(sp, SC_SCR_EX | SC_SCR_EXWROTE);
 		}
 

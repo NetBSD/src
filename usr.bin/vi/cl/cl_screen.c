@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_screen.c,v 1.3 1998/01/10 23:04:11 perry Exp $	*/
+/*	$NetBSD: cl_screen.c,v 1.3.8.1 2000/06/23 16:40:08 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -374,16 +374,6 @@ fast:	/* Set the terminal modes. */
 err:		(void)cl_vi_end(sp->gp);
 		return (1);
 	}
-
-	/* If not already done, send the terminal initialization sequence. */
-	if (clp->ti_te == TE_SENT) {
-		clp->ti_te = TI_SENT;
-		if (clp->smcup == NULL)
-			(void)cl_getcap(sp, "smcup", &clp->smcup);
-		if (clp->smcup != NULL)
-			(void)tputs(clp->smcup, 1, cl_putchar);
-		(void)fflush(stdout);
-	}
 	return (0);
 }
 
@@ -498,15 +488,6 @@ fast:	if (tcsetattr(STDIN_FILENO, TCSADRAIN | TCSASOFT, &clp->ex_enter)) {
 		return (1);
 	}
 
-	/* If not already done, send the terminal end sequence. */
-	if (clp->ti_te == TI_SENT) {
-		clp->ti_te = TE_SENT;
-		if (clp->rmcup == NULL)
-			(void)cl_getcap(sp, "rmcup", &clp->rmcup);
-		if (clp->rmcup != NULL)
-			(void)tputs(clp->rmcup, 1, cl_putchar);
-		(void)fflush(stdout);
-	}
 	return (0);
 }
 

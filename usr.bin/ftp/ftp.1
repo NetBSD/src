@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.63 2000/05/01 10:35:18 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.63.2.1 2000/06/23 16:30:23 minoura Exp $
 .\"
 .\" Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd May 1, 2000
+.Dd June 5, 2000
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -116,6 +116,15 @@ Internet file transfer program
 .Ek
 .Bk -words
 .Op http://[\fIuser\fR[:\fIpassword\fR]@]\fIhost\fR[:\fIport\fR]/\fIpath\fR
+.Ek
+.Op Ar \&.\&.\&.
+.Nm ""
+.Fl u Ar url
+.\".Ar ftp://[\fIuser\fR[:\fIpassword\fR]@]\fIhost\fR[:\fIport\fR]/\fIpath\fR[/[file]]
+.\"|
+.\".Ar [\fIuser\fR@]\fIhost\fR:[\fIpath\fR][/[\fIfile\fR]]
+.Bk -words
+file
 .Ek
 .Op Ar \&.\&.\&.
 .Sh DESCRIPTION
@@ -238,6 +247,15 @@ bytes/second.
 Refer to
 .Ic rate
 for more information.
+.It Fl u Ar url file Op \&.\&.\&.
+Upload files on the command line to
+.Ar url
+where
+.Ar url
+is one of the ftp URL types as supported by auto-fetch
+(with an optional target filename for single file uploads), and
+.Ar file
+is one or more local files to be uploaded.
 .It Fl v
 Enable
 .Ic verbose
@@ -401,8 +419,6 @@ chooses to include; for example, most
 systems will produce
 output from the command
 .Ql ls \-l .
-(See also
-.Ic ls . )
 If
 .Ar remote-directory
 is left unspecified, the current working directory is used.
@@ -574,22 +590,8 @@ option.
 .It Ic lpwd
 Print the working directory on the local machine.
 .It Ic \&ls Op Ar remote-directory Op Ar local-file
-Print a list of the files in a
-directory on the remote machine.
-If
-.Ar remote-directory
-is left unspecified, the current working directory is used.
-If interactive prompting is on,
-.Nm
-will prompt the user to verify that the last argument is indeed the
-target local file for receiving
-.Ic ls
-output.
-If no local file is specified, or if
-.Ar local-file
-is
-.Fl  ,
-the output is sent to the terminal.
+A synonym for
+.Ic dir .
 .It Ic macdef Ar macro-name
 Define a macro.
 Subsequent lines are stored as the macro
@@ -861,14 +863,14 @@ command by RFC 1123, some do not.)
 Perform
 .Ic dir
 .Op Ar remote-directory ,
-and display it with the program specified by the
+and display the result with the program specified by the
 .Ic "set pager"
 option.
 .It Ic pls Op Ar remote-directory
 Perform
 .Ic ls
 .Op Ar remote-directory ,
-and display it with the program specified by the
+and display the result with the program specified by the
 .Ic "set pager"
 option.
 .It Ic preserve
@@ -1579,10 +1581,10 @@ with the argument supplied, and reads (writes) from the stdout
 (stdin).
 If the shell command includes spaces, the argument
 must be quoted; e.g.
-.Dq Qq Li \ ls\ \-lt .
+.Dq Qq Li \&| ls\ \-lt .
 A particularly
 useful example of this mechanism is:
-.Dq Li dir \&|more .
+.Dq Li dir \&. \&|more .
 .It
 Failing the above checks, if ``globbing'' is enabled,
 local file names are expanded
@@ -1961,7 +1963,9 @@ were implemented in
 and later releases
 by Luke Mewburn <lukem@netbsd.org>.
 .Pp
-IPv6 support was added by the WIDE/KAME project.
+IPv6 support was added by the WIDE/KAME project
+(but may not be present in all non-NetBSD versions of this program, depending
+if the operating system supports IPv6 in a similar manner to KAME).
 .Sh BUGS
 Correct execution of many commands depends upon proper behavior
 by the remote server.
@@ -1976,3 +1980,20 @@ to and from
 .Bx 4.2
 servers using the ascii type.
 Avoid this problem by using the binary image type.
+.Pp
+.Nm
+assumes that all IPv4 mapped addresses
+.Po
+IPv6 addresses with a form like
+.Li ::ffff:10.1.1.1
+.Pc
+indicate IPv4 destination which can be handled by
+.Dv AF_INET
+sockets.
+However, in certain IPv6 network configuration, the assumption is not true.
+In such an environment, IPv4 mapped address must be passed to
+.Dv AF_INET6
+sockets directly.
+For example, if your site uses SIIT translator for IPv6-to-IPv4 translation,
+.Nm
+is unable to support your configuration.

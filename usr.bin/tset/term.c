@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.13 2000/05/25 12:53:55 blymn Exp $	*/
+/*	$NetBSD: term.c,v 1.13.2.1 2000/06/23 16:40:06 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: term.c,v 1.13 2000/05/25 12:53:55 blymn Exp $");
+__RCSID("$NetBSD: term.c,v 1.13.2.1 2000/06/23 16:40:06 minoura Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,9 +62,10 @@ char	*ttys __P((char *));
  * its termcap entry.
  */
 const char *
-get_termcap_entry(userarg, tcapbufp)
+get_termcap_entry(userarg, tcapbufp, extended)
 	const char *userarg;
 	char **tcapbufp;
+	int extended;
 {
 	struct ttyent *t;
 	int rval;
@@ -134,10 +135,10 @@ found:	if ((p = getenv("TERMCAP")) != NULL && *p != '/')
 	}
 
 	  /* check if we get a truncated termcap entry, fish back the full
-	   * one if need be
+	   * one if need be and the user has asked for it.
 	   */
 	zz_ptr = zz;
-	if (tgetstr("ZZ", &zz_ptr) != NULL) {
+	if ((extended == 1) && (tgetstr("ZZ", &zz_ptr) != NULL)) {
 			  /* it was, fish back the full termcap */
 		sscanf(zz, "%p", &ext_tc);
 		if ((newptr = (char *) realloc(tbuf, strlen(ext_tc) + 1))

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_hout.c,v 1.11 1998/10/19 00:43:59 wsanchez Exp $	*/
+/*	$NetBSD: rpc_hout.c,v 1.11.8.1 2000/06/23 16:39:52 minoura Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_hout.c,v 1.11 1998/10/19 00:43:59 wsanchez Exp $");
+__RCSID("$NetBSD: rpc_hout.c,v 1.11.8.1 2000/06/23 16:39:52 minoura Exp $");
 #endif
 #endif
 
@@ -131,11 +131,11 @@ pxdrfuncdecl(name, pointerp)
 	f_print(fout, "#ifdef __cplusplus\n");
 	f_print(fout, "extern \"C\" bool_t xdr_%s(XDR *, %s%s);\n",
 	    name,
-	    name, pointerp ? ("*") : "");
+	    name, pointerp ? (" *") : "");
 	f_print(fout, "#elif __STDC__\n");
 	f_print(fout, "extern  bool_t xdr_%s(XDR *, %s%s);\n",
 	    name,
-	    name, pointerp ? ("*") : "");
+	    name, pointerp ? (" *") : "");
 	f_print(fout, "#else /* Old Style C */\n");
 	f_print(fout, "bool_t xdr_%s();\n", name);
 	f_print(fout, "#endif /* Old Style C */\n\n");
@@ -176,7 +176,7 @@ pargdef(def)
 			}
 			f_print(fout, "};\n");
 			f_print(fout, "typedef struct %s %s;\n", name, name);
-			pxdrfuncdecl(name, NULL);
+			pxdrfuncdecl(name, 1);
 			f_print(fout, "\n");
 		}
 	}
@@ -241,7 +241,7 @@ puldefine(name, num)
 	char   *name;
 	char   *num;
 {
-	f_print(fout, "#define %s ((u_long)%s)\n", name, num);
+	f_print(fout, "#define %s %s\n", name, num);
 }
 
 static int

@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 1995/04/15 02:31:13 cgd Exp $
+#	$NetBSD: Makefile,v 1.7.14.1 2000/06/23 16:30:26 minoura Exp $
 
 PROG=	ipcs
-BINGRP=	kmem
-BINMODE= 2555
 DPADD+=	${LIBKVM}
 LDADD+=	-lkvm
 

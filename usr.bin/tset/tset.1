@@ -1,4 +1,4 @@
-.\"	$NetBSD: tset.1,v 1.9 1999/03/22 18:16:45 garbled Exp $
+.\"	$NetBSD: tset.1,v 1.9.8.1 2000/06/23 16:40:06 minoura Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Nd terminal initialization
 .Sh SYNOPSIS
 .Nm
-.Op Fl IQrSs
+.Op Fl EIQrSs
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -51,7 +51,7 @@
 .Op Ar terminal
 .br
 .Nm reset
-.Op Fl IQrSs
+.Op Fl EIQrSs
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -123,6 +123,11 @@ not initialized in any way.
 .It Fl e
 Set the erase character to
 .Ar ch .
+.It Fl E
+Emit the extended termcap entry.  By default the termcap entry is
+truncated to 1024 bytes, this flag specifies the untruncated termcap
+entry is to be output.  Using this flag may cause problems with some
+shells.
 .It Fl I
 Do not send the terminal or tab initialization strings to the terminal.
 .It Fl i

@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.7 1997/10/14 02:07:59 lukem Exp $	*/
+/*	$NetBSD: set.c,v 1.7.10.1 2000/06/23 16:40:06 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.2 (Berkeley) 2/28/94";
 #endif
-__RCSID("$NetBSD: set.c,v 1.7 1997/10/14 02:07:59 lukem Exp $");
+__RCSID("$NetBSD: set.c,v 1.7.10.1 2000/06/23 16:40:06 minoura Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -290,7 +290,7 @@ set_tabs()
 {
 	int c;
 	char *capsp, *clear_tabs;
-	char *set_column, *set_pos, *set_tab, *tg_out;
+	char *set_column, *set_tab, *tg_out;
 	char caps[1024];
 
 	capsp = caps;
@@ -302,7 +302,6 @@ set_tabs()
 	}
 
 	set_column = tgetstr("ch", &capsp);
-	set_pos = set_column ? NULL : tgetstr("cm", &capsp);
 
 	if (set_tab) {
 		for (c = 8; c < columns; c += 8) {
@@ -313,8 +312,6 @@ set_tabs()
 			tg_out = "OOPS";
 			if (set_column)
 				tg_out = tgoto(set_column, 0, c);
-			if (*tg_out == 'O' && set_pos)
-				tg_out = tgoto(set_pos, c, lines - 1);
 			if (*tg_out != 'O')
 				tputs(tg_out, 1, outc);
 			else

@@ -1,4 +1,4 @@
-/*	$NetBSD: dohits.h,v 1.4 1998/03/04 13:16:14 christos Exp $	*/
+/*	$NetBSD: dohits.h,v 1.4.8.1 2000/06/23 16:40:04 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -55,5 +55,5 @@ struct thing {
 extern struct Hits Hits[256];		/* one for each of 0x00-0xff */
 extern struct thing *table[100];
 
-void dohits __P((char *, char *));
-unsigned int dohash __P((unsigned int, char *));
+void dohits __P((const char *, const char *));
+unsigned int dohash __P((unsigned int, const char *));

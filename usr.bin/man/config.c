@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.10 1999/04/04 16:57:36 dante Exp $	*/
+/*	$NetBSD: config.c,v 1.10.6.1 2000/06/23 16:39:47 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: config.c,v 1.10 1999/04/04 16:57:36 dante Exp $");
+__RCSID("$NetBSD: config.c,v 1.10.6.1 2000/06/23 16:39:47 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,14 +69,13 @@ struct _head head;
  */
 void
 config(fname)
-	char *fname;
+	const char *fname;
 {
 	TAG *tp;
-	ENTRY *ep;
 	FILE *cfp;
 	size_t len;
 	int lcnt;
-	char *p, *t;
+	char *p, *t, type;
 
 	if (fname == NULL)
 		fname = _PATH_MANCONF;
@@ -103,31 +102,59 @@ config(fname)
 			continue;
 		*t = '\0';
 
-		for (tp = head.tqh_first;	/* Find any matching tag. */
-		    tp != NULL && strcmp(p, tp->s); tp = tp->q.tqe_next);
-
+		tp = getlist(p);
 		if (tp == NULL)		/* Create a new tag. */
 			tp = addlist(p);
 
 		/*
-		 * Attach new records.  The keywords _build and _crunch takes
-		 * the rest of the line as a single entity, everything else is
-		 * whitespace separated.
-		 * The reason we're not just using strtok(3) for all of the
-		 * parsing is so we don't get caught if a line has only a
-		 * single token on it.
+		 * Attach new records. Check to see if it is a
+		 * section record or not.
 		 */
-		if (!strcmp(p, "_build") || !strcmp(p, "_crunch")) {
-			while (*++t && isspace((unsigned char)*t));
-			if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-			    (ep->s = strdup(t)) == NULL)
-				err(1, "malloc");
-			TAILQ_INSERT_TAIL(&tp->list, ep, q);
-		} else for (++t; (p = strtok(t, " \t\n")) != NULL; t = NULL) {
-			if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-			    (ep->s = strdup(p)) == NULL)
-				err(1, "malloc");
-			TAILQ_INSERT_TAIL(&tp->list, ep, q);
+
+		if (*p == '_') {		/* not a section record */
+			/*
+			 * Special cases: _build and _crunch take the 
+			 * rest of the line as a single entry.
+			 */
+			if (!strcmp(p, "_build") || !strcmp(p, "_crunch")) {
+				/*
+				 * The reason we're not just using
+				 * strtok(3) for all of the parsing is
+				 * so we don't get caught if a line
+				 * has only a single token on it.
+				 */
+				while (*++t && isspace((unsigned char)*t));
+				addentry(tp, t, 0);
+			} else {
+				for(++t; (p = strtok(t, " \t\n")) != NULL;
+					t = NULL)
+					addentry(tp, p, 0);
+			}
+				
+		} else {			/* section record */
+
+			/*
+			 * section entries can either be all absolute
+			 * paths or all relative paths, but not both.
+			 */
+			type = (TAILQ_FIRST(&tp->list) != NULL) ?
+			  *(TAILQ_FIRST(&tp->list)->s) : 0;
+
+			for (++t; (p = strtok(t, " \t\n")) != NULL; t = NULL) {
+
+				/* ensure an assigned type */
+				if (type == 0)
+					type = *p;
+				
+				/* check for illegal mix */
+				if (*p != type) {
+	warnx("section %s: %s: invalid entry, does not match previous types",
+	      tp->s, p);
+	warnx("man.conf cannot mix absolute and relative paths in an entry");
+					continue;
+				}
+				addentry(tp, p, 0);
+			}
 		}
 	}
 
@@ -136,15 +163,16 @@ config(fname)
 
 /*
  * addlist --
- *	Add a tag to the list.
+ *	Add a tag to the list.   caller should check for duplicate
+ *	before calling (we don't).
  */
 TAG *
 addlist(name)
-	char *name;
+	const char *name;
 {
 	TAG *tp;
 
-	if ((tp = calloc(1, sizeof(TAG))) == NULL ||
+	if ((tp = malloc(sizeof(TAG))) == NULL ||
 	    (tp->s = strdup(name)) == NULL)
 		err(1, "malloc");
 	TAILQ_INIT(&tp->list);
@@ -158,7 +186,7 @@ addlist(name)
  */
 TAG *
 getlist(name)
-	char *name;
+	const char *name;
 {
 	TAG *tp;
 
@@ -168,41 +196,31 @@ getlist(name)
 	return (NULL);
 }
 
+/*
+ * addentry --
+ *	add an entry to a list.
+ */
 void
-removelist(name)
-	char *name;
-{
+addentry(tp, newent, head)
 	TAG *tp;
+	const char *newent;
+	int head;
+{
 	ENTRY *ep;
 
-	tp = getlist(name);
-	while ((ep = tp->list.tqh_first) != NULL) {
-		free(ep->s);
-		TAILQ_REMOVE(&tp->list, ep, q);
-	}
-	free(tp->s);
-	TAILQ_REMOVE(&head, tp, q);
-
-}
-
-TAG *
-renamelist(oldname, newname)
-	char *oldname;
-	char *newname;
-{
-	TAG *tp;
-
-	if(!(tp = getlist(oldname)))
-		return (NULL);
-	free(tp->s);
-	if(!(tp->s = strdup(newname)))
+	if ((ep = malloc(sizeof(*ep))) == NULL ||
+	    (ep->s = strdup(newent)) == NULL)
 		err(1, "malloc");
-	return (tp);
+	if (head)
+		TAILQ_INSERT_HEAD(&tp->list, ep, q);
+	else
+		TAILQ_INSERT_TAIL(&tp->list, ep, q);
 }
 
+#ifdef MANDEBUG
 void
 debug(l)
-	char *l;
+	const char *l;
 {
 	TAG *tp;
 	ENTRY *ep;
@@ -214,3 +232,4 @@ debug(l)
 			printf("\t%s\n", ep->s);
 	}
 }
+#endif

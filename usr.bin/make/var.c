@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.43 2000/05/14 15:14:41 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.43.2.1 2000/06/23 16:39:45 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.43 2000/05/14 15:14:41 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.43.2.1 2000/06/23 16:39:45 minoura Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.43 2000/05/14 15:14:41 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.43.2.1 2000/06/23 16:39:45 minoura Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1782,12 +1782,13 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		 * so kludge up a Var structure for the modifications
 		 */
 		v = (Var *) emalloc(sizeof(Var));
-		v->name = &str[1];
+		v->name = str;
 		v->val = Buf_Init(1);
 		v->flags = VAR_JUNK;
+		Buf_Destroy (buf, FALSE);
 	    }
-	}
-	Buf_Destroy (buf, TRUE);
+	} else
+	    Buf_Destroy (buf, TRUE);
     }
 
 
@@ -1856,6 +1857,25 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      *				the form '${x:P}'.
      *		  :!<cmd>!	Run cmd much the same as :sh run's the
      *				current value of the variable.
+     * The ::= modifiers, actually assign a value to the variable.
+     * Their main purpose is in supporting modifiers of .for loop
+     * iterators and other obscure uses.  They always expand to
+     * nothing.  In a target rule that would otherwise expand to an
+     * empty line they can be preceded with @: to keep make happy.
+     * Eg.
+     * 
+     * foo:	.USE
+     * .for i in ${.TARGET} ${.TARGET:R}.gz
+     * 		@: ${t::=$i}
+     *		@echo blah ${t:T}
+     * .endfor
+     * 
+     *		  ::=<str>	Assigns <str> as the new value of variable.
+     *		  ::?=<str>	Assigns <str> as value of variable if
+     *				it was not already set.
+     *		  ::+=<str>	Appends <str> to variable.
+     *		  ::!=<cmd>	Assigns output of <cmd> as the new value of
+     *				variable.
      */
     if ((str != (char *)NULL) && haveModifier) {
 	/*
@@ -1870,6 +1890,85 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		printf("Applying :%c to \"%s\"\n", *tstr, str);
 	    }
 	    switch (*tstr) {
+	        case ':':
+		    
+		if (tstr[1] == '=' ||
+		    (tstr[2] == '=' &&
+		     (tstr[1] == '!' || tstr[1] == '+' || tstr[1] == '?'))) {
+		    GNode *v_ctxt;		/* context where v belongs */
+		    char *emsg;
+		    VarPattern	pattern;
+		    int	how;
+
+		    ++tstr;
+		    if (v->flags & VAR_JUNK) {
+			/*
+			 * We need to strdup() it incase
+			 * VarGetPattern() recurses.
+			 */
+			v->name = strdup(v->name);
+			v_ctxt = ctxt;
+		    } else if (ctxt != VAR_GLOBAL) {
+			if (VarFind(v->name, ctxt, 0) == (Var *)NIL)
+			    v_ctxt = VAR_GLOBAL;
+			else
+			    v_ctxt = ctxt;
+		    }
+			
+		    switch ((how = *tstr)) {
+		    case '+':
+		    case '?':
+		    case '!':
+			cp = &tstr[2];
+			break;
+		    default:
+			cp = ++tstr;
+			break;
+		    }
+		    delim = '}';
+		    pattern.flags = 0;
+
+		    if ((pattern.rhs = VarGetPattern(ctxt, err, &cp, delim,
+						     NULL, &pattern.rightLen, NULL)) == NULL) {
+			if (v->flags & VAR_JUNK) {
+			    free(v->name);
+			    v->name = str;
+			}
+			goto cleanup;
+		    }
+		    termc = *--cp;
+		    delim = '\0';
+
+		    switch (how) {
+		    case '+':
+			Var_Append(v->name, pattern.rhs, v_ctxt);
+			break;
+		    case '!':
+			newStr = Cmd_Exec (pattern.rhs, &emsg);
+			if (emsg)
+			    Error (emsg, str);
+			else
+			   Var_Set(v->name, newStr,  v_ctxt);
+			if (newStr)
+			    free(newStr);
+			break;
+		    case '?':
+			if ((v->flags & VAR_JUNK) == 0)
+			    break;
+			/* FALLTHROUGH */
+		    default:
+			Var_Set(v->name, pattern.rhs, v_ctxt);
+			break;
+		    }
+		    if (v->flags & VAR_JUNK) {
+			free(v->name);
+			v->name = str;
+		    }
+		    free(pattern.rhs);
+		    newStr = var_Error;
+		    break;
+		}
+		goto default_case;
 	        case '@':
 		{
 		    VarLoop_t	loop;
@@ -1901,67 +2000,87 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	        case 'D':
 	        case 'U':
 		{
-		    VarPattern 	    pattern;
-		    int what = *tstr;
-			    
-		    pattern.flags = 0;
-		    delim = '}';
+		    Buffer  buf;    	/* Buffer for patterns */
+		    int	    wantit;	/* want data in buffer */
 
-		    cp = ++tstr;
-		    if ((pattern.rhs = VarGetPattern(ctxt, err, &cp, delim,
-						     NULL, &pattern.rightLen, NULL)) == NULL)
-			goto cleanup;
-		    termc = *--cp;
-		    delim = '\0';
+		    /*
+		     * Pass through tstr looking for 1) escaped delimiters,
+		     * '$'s and backslashes (place the escaped character in
+		     * uninterpreted) and 2) unescaped $'s that aren't before
+		     * the delimiter (expand the variable substitution).
+		     * The result is left in the Buffer buf.
+		     */
+		    buf = Buf_Init(0);
+		    for (cp = tstr + 1;
+			 *cp != endc && *cp != ':' && *cp != '\0';
+			 cp++) {
+			if ((*cp == '\\') &&
+			    ((cp[1] == ':') ||
+			     (cp[1] == '$') ||
+			     (cp[1] == endc) ||
+			     (cp[1] == '\\')))
+			{
+			    Buf_AddByte(buf, (Byte) cp[1]);
+			    cp++;
+			} else if (*cp == '$') {
+			    /*
+			     * If unescaped dollar sign, assume it's a
+			     * variable substitution and recurse.
+			     */
+			    char    *cp2;
+			    int	    len;
+			    Boolean freeIt;
 
-		    newStr = str;
-		    if ((v->flags & VAR_JUNK)) {
-			if (what == 'U') {
-			    v->flags |= VAR_KEEP;
-			    newStr = pattern.rhs;
-			} else
-			    free(pattern.rhs); 
+			    cp2 = Var_Parse(cp, ctxt, err, &len, &freeIt);
+			    Buf_AddBytes(buf, strlen(cp2), (Byte *) cp2);
+			    if (freeIt)
+				free(cp2);
+			    cp += len - 1;
+			} else {
+			    Buf_AddByte(buf, (Byte) *cp);
+			}
+		    }
+		    Buf_AddByte(buf, (Byte) '\0');
+
+		    termc = *cp;
+
+		    if (*tstr == 'U')
+			wantit = ((v->flags & VAR_JUNK) != 0);
+		    else
+			wantit = ((v->flags & VAR_JUNK) == 0);
+		    if ((v->flags & VAR_JUNK) != 0)
+			v->flags |= VAR_KEEP;
+		    if (wantit) {
+			newStr = (char *)Buf_GetAll(buf, (int *)NULL);
+			Buf_Destroy(buf, FALSE);
 		    } else {
-			if (what == 'D') 
-			    newStr = pattern.rhs;
-			else
-			    free(pattern.rhs);
+			newStr = str;
+			Buf_Destroy(buf, TRUE);
 		    }
 		    break;
 		}
 	        case 'L':
 		{
-		    if (v->flags & VAR_JUNK) {
+		    if ((v->flags & VAR_JUNK) != 0)
 			v->flags |= VAR_KEEP;
-			/*
-			 * JUNK vars get name = &str[1]
-			 * we want the full name here.
-			 */
-			v->name--;
-		    }
+		    newStr = strdup(v->name);
 		    cp = ++tstr;
 		    termc = *tstr;
-		    newStr = strdup(v->name);
 		    break;
 		}
 	        case 'P':
 		{
 		    GNode *gn;
 		    
-		    if (v->flags & VAR_JUNK) {
+		    if ((v->flags & VAR_JUNK) != 0)
 			v->flags |= VAR_KEEP;
-			/*
-			 * JUNK vars get name = &str[1]
-			 * we want the full name here.
-			 */
-			v->name--;
-		    }
+		    gn = Targ_FindNode(v->name, TARG_NOCREATE);
+		    if (gn == NILGNODE)
+			newStr = strdup(v->name);
+		    else
+			newStr = strdup(gn->path);
 		    cp = ++tstr;
 		    termc = *tstr;
-		    gn = Targ_FindNode(v->name, TARG_NOCREATE);
-		    newStr = strdup((gn == NILGNODE || gn->path == NULL) ?
-			v->name :
-			gn->path);
 		    break;
 		}
 	        case '!':
@@ -2272,6 +2391,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 #endif
                 default:
+		default_case: 
 		{
 #ifdef SYSVVARSUB
 		    /*
@@ -2395,8 +2515,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	     */
 	    *freePtr = TRUE;
 	}
-	free(v->name);
 	Buf_Destroy(v->val, destroy);
+	free((Address)v->name);
 	free((Address)v);
     } else if (v->flags & VAR_JUNK) {
 	/*
@@ -2409,10 +2529,6 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		free(str);
 	    }
 	    *freePtr = FALSE;
-	}
-	Buf_Destroy(v->val, TRUE);
-	free((Address)v);
-	if (!(v->flags & VAR_KEEP)) {
 	    if (dynamic) {
 		str = emalloc(*lengthPtr + 1);
 		strncpy(str, start, *lengthPtr);
@@ -2422,6 +2538,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		str = var_Error;
 	    }
 	}
+	Buf_Destroy(v->val, TRUE);
+	free((Address)v->name);
+	free((Address)v);
     }
     return (str);
 

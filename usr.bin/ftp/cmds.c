@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.85 2000/05/01 10:35:16 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.85.2.1 2000/06/23 16:30:21 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.85 2000/05/01 10:35:16 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.85.2.1 2000/06/23 16:30:21 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -1255,9 +1255,9 @@ ls(int argc, char *argv[])
 	if (argc == 0 && argv != NULL)
 		goto usage;
 
-	cmd = "NLST";
-	if (strcmp(argv[0] + pagecmd, "dir") == 0)
-		cmd = "LIST";
+	cmd = "LIST";
+	if (strcmp(argv[0], "nlist") == 0)
+		cmd = "NLST";
 
 	if (argc > 1)
 		remdir = argv[1];
@@ -1465,6 +1465,7 @@ user(int argc, char *argv[])
 		(void)command("ACCT %s", argv[3]);
 	}
 	connected = -1;
+	remotesyst();
 }
 
 /*
