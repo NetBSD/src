@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.3 2001/02/22 02:33:06 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2001/06/27 05:17:32 enami Exp $
 
 # point top of your KAME tree by ${KAMEROOT}
 LIBPFKEYSRCDIR=	${.CURDIR}/../../../crypto/dist/kame/libipsec
 RACOONSRCDIR=	${.CURDIR}/../../../crypto/dist/kame/racoon
-TCPDUMPSRCDIR=	${.CURDIR}/../../../usr.sbin/tcpdump
+TCPDUMPSRCDIR=	${.CURDIR}/../../../dist/tcpdump
 
 ETCDIR?=	/etc/racoon
 FILESDIR?=	/usr/share/examples/racoon
