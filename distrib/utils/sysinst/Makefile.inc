@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.30 2003/10/26 07:25:33 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.31 2003/11/20 13:13:38 dsl Exp $
 #
 # Makefile for sysinst
 
@@ -13,6 +13,8 @@ MENUS_MD?=	menus.md.${SYSINSTLANG}
 
 .include <bsd.sys.mk>		# for HOST_SH
 .include <bsd.own.mk>		# for mk.conf
+
+_MKSHTARGET_CREATE?=	${_MKSHMSG_CREATE} ${.OBJDIR:T}/${.TARGET}
 
 DPADD=		${LIBCURSES} ${LIBTERMCAP} ${LIBUTIL}
 LDADD=		-lcurses -ltermcap -lutil
@@ -64,26 +66,47 @@ CLEANFILES=	menu_defs.c menu_defs.h menus.def \
 
 .PATH: ${.CURDIR}/../..
 
-menu_defs.c menu_defs.h: menus.def
+menu_defs.h: menu_defs.c
+	[ -f ${.TARGET} ] || { \
+		${_MKSHTARGET_CREATE}; \
+		${TOOL_MENUC} menus.def; \
+	}
+menu_defs.c: menus.def
+	${_MKTARGET_CREATE}
+	[ ! -f menu_defs.h ] || mv -f menu_defs.h menu_defs.oh
 	${TOOL_MENUC} menus.def
+	! cmp -s menu_defs.oh menu_defs.h || mv -f menu_defs.oh menu_defs.h
+	@rm -f menu_defs.oh
 
-msg_defs.c msg_defs.h: msg.def
+msg_defs.h: msg_defs.c
+	[ -f ${.TARGET} ] || { \
+		${_MKSHTARGET_CREATE}; \
+		${TOOL_MSGC} msg.def; \
+	}
+msg_defs.c: msg.def
+	${_MKTARGET_CREATE}
+	[ ! -f msg_defs.h ] || mv -f msg_defs.h msg_defs.oh
 	${TOOL_MSGC} msg.def
+	! cmp -s msg_defs.oh msg_defs.h || mv -f msg_defs.oh msg_defs.h
+	@rm -f msg_defs.oh
 
 # Needed to get proper dependency checks on osrelease
 msgtouch: ${VERDEP}
 	touch ${.TARGET}
 
 msg.def: msg.mi.${SYSINSTLANG} ${MSG_MD} msgtouch
+	${_MKTARGET_CREATE}
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
 menus.def: menus.mi ${MENUS_MD} msgtouch
+	${_MKTARGET_CREATE}
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
 .for LANG in ${LANGUAGES:N${SYSINSTLANG}}
 sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgtouch msg_defs.h
+	${_MKTARGET_CREATE}
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC:M*.${LANG}} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
 	${HOST_SH} ${MSG_XLAT_SH} > ${.TARGET}
