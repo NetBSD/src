@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 1998/11/27 23:10:28 jonathan Exp $
+#	$NetBSD: dot.profile,v 1.2 1999/03/29 07:19:47 simonb Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -32,7 +32,7 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=sun
+TERM=rcons
 export TERM
 HOME=/
 export HOME
