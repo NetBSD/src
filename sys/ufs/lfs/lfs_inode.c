@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.23 1999/04/12 00:25:13 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.24 1999/04/12 00:30:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -408,6 +408,12 @@ lfs_truncate(v)
 	a_released = 0;
 	i_released = 0;
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = bp->b_vnbufs.le_next) {
+
+		/* XXX KS - Don't miscount if we're not truncating to zero. */
+		if(length>0 && !(bp->b_lblkno >= 0 && bp->b_lblkno > lastblock)
+		   && !(bp->b_lblkno < 0 && bp->b_lblkno < -lastblock-NIADDR))
+			continue;
+
 		if (bp->b_flags & B_LOCKED) {
 			a_released += numfrags(fs, bp->b_bcount);
 			/*
