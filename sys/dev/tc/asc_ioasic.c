@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.9 1997/06/22 07:44:04 jonathan Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.10 1997/07/21 05:39:02 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -39,7 +39,7 @@ extern int pmax_boardtype;
 /*
  * Autoconfiguration data for config.
  */
-int asc_ioasic_match __P((struct device *, void *, void *));
+int asc_ioasic_match __P((struct device *, struct cfdata *, void *));
 void asc_ioasic_attach __P((struct device *, struct device *, void *));
 
 struct cfattach asc_ioasic_ca = {
@@ -60,7 +60,7 @@ asic_dma_end __P((asc_softc_t asc, State *state, int flag));
 int
 asc_ioasic_match(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
 	struct ioasicdev_attach_args *d = aux;

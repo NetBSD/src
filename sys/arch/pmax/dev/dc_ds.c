@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.5 1997/06/22 07:42:27 jonathan Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.6 1997/07/21 05:39:11 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -31,7 +31,7 @@ extern struct cfdriver mainbus_cd;	/* XXX */
 /*
  * Autoconfig definition of driver front-end
  */
-int	dc_ds_match  __P((struct device * parent, void *cfdata, void *aux));
+int	dc_ds_match  __P((struct device * parent, struct cfdata *match, void *aux));
 void	dc_ds_attach __P((struct device *parent, struct device *self, void *aux));
 
 struct cfattach dc_ds_ca = {
@@ -64,7 +64,7 @@ dc_ds_consinit(dev)
 int
 dc_ds_match(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
 	struct confargs *ca = aux;

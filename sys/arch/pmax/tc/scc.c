@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.27 1997/07/17 03:16:44 jtk Exp $	*/
+/*	$NetBSD: scc.c,v 1.28 1997/07/21 05:39:41 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -272,7 +272,7 @@ struct speedtab sccspeedtab[] = {
 #endif
 
 /* Definition of the driver for autoconfig. */
-static int	sccmatch  __P((struct device * parent, void *cfdata,
+static int	sccmatch  __P((struct device *parent, struct cfdata *cf,
 			       void *aux)); 
 static void	sccattach __P((struct device *parent, struct device *self,
 			       void *aux)); 
@@ -400,12 +400,11 @@ scc_oconsinit(sc, dev)
  * Return true if found.
  */
 int
-sccmatch(parent, cfdata, aux)
+sccmatch(parent, cf, aux)
 	struct device *parent;
-	void *cfdata;
+	struct cfdata *cf;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 	struct ioasicdev_attach_args *d = aux;
 	void *sccaddr;
 
