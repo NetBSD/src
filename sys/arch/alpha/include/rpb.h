@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.35.2.1 2000/07/03 22:58:30 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.35.2.2 2000/07/06 22:51:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -336,7 +336,7 @@ struct pcs {
  * CTB: Console Terminal Block
  */
 struct ctb {
-	u_int64_t	ctb_type;		/*   0: always 4 */
+	u_int64_t	ctb_type;		/*   0: CTB type */
 	u_int64_t	ctb_unit;		/*   8: */
 	u_int64_t	ctb_reserved;		/*  16: */
 	u_int64_t	ctb_len;		/*  24: bytes of info */
@@ -344,9 +344,12 @@ struct ctb {
 	u_long		ctb_tintr_vec;		/*  40: transmit vec (0x800) */
 	u_long		ctb_rintr_vec;		/*  48: receive vec (0x800) */
 
-#define	CTB_GRAPHICS	   3			/* graphics device */
-#define	CTB_NETWORK	0xC0			/* network device */
-#define	CTB_PRINTERPORT	   2			/* printer port on the SCC */
+#define	CTB_NONE		0x00		/* no console present */
+#define	CTB_SERVICE		0x01		/* service processor */
+#define	CTB_PRINTERPORT		0x02		/* printer port on the SCC */
+#define	CTB_GRAPHICS		0x03		/* graphics device */
+#define	CTB_TYPE4		0x04		/* type 4 CTB */
+#define	CTB_NETWORK		0xC0		/* network device */
 	u_int64_t	ctb_term_type;		/*  56: terminal type */
 
 	u_int64_t	ctb_keybd_type;		/*  64: keyboard nationality */
@@ -376,6 +379,26 @@ struct ctb {
 	u_int64_t	ctb_line_off;		/* 264: line parameter offset */
 	u_int8_t	ctb_csd;		/* 272: console specific data */
 };
+
+struct ctb_tt {
+	u_int64_t	ctb_type;		/*   0: CTB type */
+	u_int64_t	ctb_unit;		/*   8: console unit */
+	u_int64_t	ctb_reserved;		/*  16: reserved */
+	u_int64_t	ctb_length;		/*  24: length */
+	u_int64_t	ctb_csr;		/*  32: address */
+	u_int64_t	ctb_tivec;		/*  40: Tx intr vector */
+	u_int64_t	ctb_rivec;		/*  48: Rx intr vector */
+	u_int64_t	ctb_baud;		/*  56: baud rate */
+	u_int64_t	ctb_put_sts;		/*  64: PUTS status */
+	u_int64_t	ctb_get_sts;		/*  72: GETS status */
+	u_int64_t	ctb_reserved0;		/*  80: reserved */
+};
+
+#define	CTB_TYPE_NONE		0	/* no console present */
+#define	CTB_TYPE_SERVICE	1	/* service processor */
+#define	CTB_TYPE_DZ		2	/* serial line */
+#define	CTB_TYPE_GRAPHICS	3	/* graphics device */
+#define	CTB_TYPE_REMOTE		4	/* remote */
 
 /*
  * Format of the Console Terminal Block Type 4 `turboslot' field:
