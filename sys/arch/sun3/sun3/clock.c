@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.40 1997/04/28 22:04:29 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.41 1997/10/17 03:22:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -273,7 +273,6 @@ void
 clock_intr(cf)
 	struct clockframe cf;
 {
-	extern char _Idle[];	/* locore.s */
 
 	/* Read the clock interrupt register. */
 	intersil_clear();
@@ -285,9 +284,15 @@ clock_intr(cf)
 	/* Read the clock intr. reg. AGAIN! */
 	intersil_clear();
 
-	/* Entertainment! */
-	if (cf.cf_pc == (long)_Idle)
-		leds_intr();
+	
+	{ /* Entertainment! */
+#ifdef	LED_IDLE_CHECK
+		/* With this option, LEDs move only when CPU is idle. */
+		extern char _Idle[];	/* locore.s */
+		if (cf.cf_pc == (long)_Idle)
+#endif
+			leds_intr();
+	}
 
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
