@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.6 1998/11/05 00:19:32 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.7 1998/11/05 04:01:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -286,17 +286,25 @@ sqphy_status(sc)
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if ((bmcr & BMCR_AUTOEN) && (bmsr & BMSR_ACOMP) == 0) {
-		/* Erg, still trying, I guess... */
-		mii->mii_media_active |= IFM_NONE;
-		return;
+	if (bmcr & BMCR_AUTOEN) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+		status = PHY_READ(sc, MII_SQPHY_STATUS);
+		if (status & STATUS_SPD_DET)
+			mii->mii_media_active |= IFM_100_TX;
+		else
+			mii->mii_media_active |= IFM_10_T;
+		if (status & STATUS_DPLX_DET)
+			mii->mii_media_active |= IFM_FDX;
+	} else {
+		if (bmcr & BMCR_S100)
+			mii->mii_media_active |= IFM_100_TX;
+		else
+			mii->mii_media_active |= IFM_10_T;
+		if (bmcr & BMCR_FDX)
+			mii->mii_media_active |= IFM_FDX;
 	}
-
-	status = PHY_READ(sc, MII_SQPHY_STATUS);
-	if (status & STATUS_SPD_DET)
-		mii->mii_media_active |= IFM_100_TX;
-	else
-		mii->mii_media_active |= IFM_10_T;
-	if (status & STATUS_DPLX_DET)
-		mii->mii_media_active |= IFM_FDX;
 }

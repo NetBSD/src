@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.6 1998/11/05 00:19:32 thorpej Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.7 1998/11/05 04:01:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -278,18 +278,26 @@ icsphy_status(sc)
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if ((bmcr & BMCR_AUTOEN) && (qpr & QPR_ACOMP) == 0) {
-		/* Erg, still trying, I guess... */
-		mii->mii_media_active |= IFM_NONE;
-		return;
+	if (bmcr & BMCR_AUTOEN) {
+		if ((qpr & QPR_ACOMP) == 0) {
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+		if (qpr & QPR_SPEED)
+			mii->mii_media_active |= IFM_100_TX;
+		else
+			mii->mii_media_active |= IFM_10_T;
+		if (qpr & QPR_FDX)
+			mii->mii_media_active |= IFM_FDX;
+	} else {
+		if (bmcr & BMCR_S100)
+			mii->mii_media_active |= IFM_100_TX;
+		else
+			mii->mii_media_active |= IFM_10_T;
+		if (bmcr & BMCR_FDX)
+			mii->mii_media_active |= IFM_FDX;
 	}
-
-	if (qpr & QPR_SPEED)
-		mii->mii_media_active |= IFM_100_TX;
-	else
-		mii->mii_media_active |= IFM_10_T;
-	if (qpr & QPR_FDX)
-		mii->mii_media_active |= IFM_FDX;
 }
 
 void
