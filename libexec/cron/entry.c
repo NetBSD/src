@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: entry.c,v 1.1.1.1 1994/01/05 20:40:15 jtc Exp $";
+static char rcsid[] = "$Id: entry.c,v 1.1.1.2 1994/01/11 19:11:11 jtc Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -28,7 +28,6 @@ static char rcsid[] = "$Id: entry.c,v 1.1.1.1 1994/01/05 20:40:15 jtc Exp $";
 
 #include "cron.h"
 #include "externs.h"
-#include <pwd.h>
 
 
 typedef	enum ecode {
@@ -60,15 +59,17 @@ free_entry(e)
 	entry	*e;
 {
 	free(e->cmd);
+	env_free(e->envp);
 	free(e);
 }
 
 
 entry *
-load_entry(file, error_func, syscron)
-	FILE	*file;
-	void	(*error_func)();
-	int	syscron;
+load_entry(file, error_func, pw, envp)
+	FILE		*file;
+	void		(*error_func)();
+	struct passwd	*pw;
+	char		**envp;
 {
 	/* this function reads one crontab entry -- the next -- from a file.
 	 * it skips any leading blank lines, ignores comments, and returns
@@ -87,8 +88,7 @@ load_entry(file, error_func, syscron)
 	entry	*e;
 	int	ch;
 	char	cmd[MAX_COMMAND];
-
-	e = (entry *) calloc(sizeof(entry), sizeof(char));
+	char	envstr[MAX_ENVSTR];
 
 	Debug(DPARS, ("load_entry()...about to eat comments\n"))
 
@@ -102,6 +102,8 @@ load_entry(file, error_func, syscron)
 	 * it may be an @special or it may be the first character
 	 * of a list of minutes.
 	 */
+
+	e = (entry *) calloc(sizeof(entry), sizeof(char));
 
 	if (ch == '@') {
 		/* all of these should be flagged and load-limited; i.e.,
@@ -217,9 +219,7 @@ load_entry(file, error_func, syscron)
 	/* ch is the first character of a command, or a username */
 	unget_char(ch, file);
 
-	e->exec_uid = 0;		/* default to user */
-	if (syscron) {
-		struct passwd	*pw;
+	if (!pw) {
 		char		*username = cmd;	/* temp buffer */
 
 		Debug(DPARS, ("load_entry()...about to parse username\n"))
@@ -236,15 +236,41 @@ load_entry(file, error_func, syscron)
 			ecode = e_username;
 			goto eof;
 		}
-		Debug(DPARS, ("load_entry()...id %d\n",pw->pw_uid))
-		e->exec_uid = pw->pw_uid;
+		Debug(DPARS, ("load_entry()...uid %d, gid %d\n",e->uid,e->gid))
 	}
+
+	e->uid = pw->pw_uid;
+	e->gid = pw->pw_gid;
+
+	/* copy and fix up environment.  some variables are just defaults and
+	 * others are overrides.
+	 */
+	e->envp = env_copy(envp);
+	if (!env_get("SHELL", e->envp)) {
+		sprintf(envstr, "SHELL=%s", _PATH_BSHELL);
+		e->envp = env_set(e->envp, envstr);
+	}
+	if (!env_get("HOME", e->envp)) {
+		sprintf(envstr, "HOME=%s", pw->pw_dir);
+		e->envp = env_set(e->envp, envstr);
+	}
+	if (!env_get("PATH", e->envp)) {
+		sprintf(envstr, "PATH=%s", _PATH_DEFPATH);
+		e->envp = env_set(e->envp, envstr);
+	}
+	sprintf(envstr, "%s=%s", "LOGNAME", pw->pw_name);
+	e->envp = env_set(e->envp, envstr);
+#if defined(BSD)
+	sprintf(envstr, "%s=%s", "USER", pw->pw_name);
+	e->envp = env_set(e->envp, envstr);
+#endif
 
 	Debug(DPARS, ("load_entry()...about to parse command\n"))
 
 	/* Everything up to the next \n or EOF is part of the command...
 	 * too bad we don't know in advance how long it will be, since we
-	 * need to malloc a string for it... so, we limit it to MAX_COMMAND
+	 * need to malloc a string for it... so, we limit it to MAX_COMMAND.
+	 * XXX - should use realloc().
 	 */ 
 	ch = get_string(cmd, MAX_COMMAND, file, "\n");
 
@@ -293,7 +319,7 @@ eof:	/* if we want to return EOF, we have to jump down here and
 	while (ch != EOF && ch != '\n');
 	if (ch == EOF)
 		return NULL;
-	return load_entry(file, error_func, 0);
+	return load_entry(file, error_func, pw, envp);
 }
 
 

@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: database.c,v 1.1.1.1 1994/01/05 20:40:15 jtc Exp $";
+static char rcsid[] = "$Id: database.c,v 1.1.1.2 1994/01/11 19:11:03 jtc Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the log]
@@ -25,7 +25,6 @@ static char rcsid[] = "$Id: database.c,v 1.1.1.1 1994/01/05 20:40:15 jtc Exp $";
 
 #include "cron.h"
 #include "externs.h"
-#include <pwd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -81,15 +80,6 @@ load_database(old_db)
 		return;
 	}
 
-	/* we used to keep this dir open all the time, for the sake of
-	 * efficiency.  however, we need to close it in every fork, and
-	 * we fork a lot more often than the mtime of the dir changes.
-	 */
-	if (!(dir = opendir(SPOOL_DIR))) {
-		log_it("CRON", getpid(), "OPENDIR FAILED", SPOOL_DIR);
-		(void) exit(ERROR_EXIT);
-	}
-
 	/* something's different.  make a new database, moving unchanged
 	 * elements from the old database, reloading elements that have
 	 * actually changed.  Whatever is left in the old database when
@@ -99,8 +89,18 @@ load_database(old_db)
 	new_db.head = new_db.tail = NULL;
 
 	if (syscron_stat.st_mtime) {
-		process_crontab("root", "*root*", SYSCRONTAB,
-				&syscron_stat, &new_db, old_db);
+		process_crontab("root", "*system*",
+				SYSCRONTAB, &syscron_stat,
+				&new_db, old_db);
+	}
+
+	/* we used to keep this dir open all the time, for the sake of
+	 * efficiency.  however, we need to close it in every fork, and
+	 * we fork a lot more often than the mtime of the dir changes.
+	 */
+	if (!(dir = opendir(SPOOL_DIR))) {
+		log_it("CRON", getpid(), "OPENDIR FAILED", SPOOL_DIR);
+		(void) exit(ERROR_EXIT);
 	}
 
 	while (NULL != (dp = readdir(dir))) {
@@ -133,7 +133,7 @@ load_database(old_db)
 	 */
 	Debug(DLOAD, ("unlinking old database:\n"))
 	for (u = old_db->head;  u != NULL;  u = nu) {
-		Debug(DLOAD, ("\t%s\n", env_get("LOGNAME", u->envp)))
+		Debug(DLOAD, ("\t%s\n", u->name))
 		nu = u->next;
 		unlink_user(old_db, u);
 		free_user(u);
@@ -141,7 +141,6 @@ load_database(old_db)
 
 	/* overwrite the database control block with the new one.
 	 */
-	Debug(DLOAD, ("installing new database\n"))
 	*old_db = new_db;
 	Debug(DLOAD, ("load_database is done\n"))
 }
@@ -188,7 +187,7 @@ find_user(db, name)
 	user	*u;
 
 	for (u = db->head;  u != NULL;  u = u->next)
-		if (!strcmp(env_get("LOGNAME", u->envp), name))
+		if (!strcmp(u->name, name))
 			break;
 	return u;
 }
@@ -196,18 +195,18 @@ find_user(db, name)
 
 static void
 process_crontab(uname, fname, tabname, statbuf, new_db, old_db)
-	char		*uname;		/* these are the same except for */
-	char		*fname;		/* *root* processing /etc/crontab */
+	char		*uname;
+	char		*fname;
 	char		*tabname;
 	struct stat	*statbuf;
 	cron_db		*new_db;
 	cron_db		*old_db;
 {
-	struct passwd		*pw;
-	int			crontab_fd = OK - 1;
-	user			*u;
+	struct passwd	*pw = NULL;
+	int		crontab_fd = OK - 1;
+	user		*u;
 
-	if (NULL == (pw = getpwnam(uname))) {
+	if (strcmp(fname, "*system*") && !(pw = getpwnam(uname))) {
 		/* file doesn't have a user in passwd file.
 		 */
 		log_it(fname, getpid(), "ORPHAN", "no passwd entry");
@@ -252,8 +251,7 @@ process_crontab(uname, fname, tabname, statbuf, new_db, old_db)
 		unlink_user(old_db, u);
 		free_user(u);
 	}
-	u = load_user(crontab_fd, pw->pw_name, pw->pw_uid, pw->pw_gid,
-		      pw->pw_dir, (!strcmp(fname, "*root*"))); /* XXX cookie */
+	u = load_user(crontab_fd, pw, fname);
 	if (u != NULL) {
 		u->mtime = statbuf->st_mtime;
 		link_user(new_db, u);
