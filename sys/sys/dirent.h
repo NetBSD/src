@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dir.h	8.1 (Berkeley) 6/2/93
- *	$Id: dirent.h,v 1.4 1994/05/21 03:15:05 cgd Exp $
+ *	$Id: dirent.h,v 1.5 1994/05/23 01:14:59 cgd Exp $
  */
 
 /*
@@ -62,6 +62,7 @@ struct dirent {
 #endif
 };
 
+#ifdef notyet
 /*
  * File types
  */
@@ -79,3 +80,4 @@ struct dirent {
  */
 #define	IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	DTTOIF(dirtype)	((dirtype) << 12)
+#endif
