@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/23 08:45:02 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/03/27 15:30:03 soren Exp $
 
 .include <bsd.own.mk>
 
@@ -32,7 +32,7 @@ LDADD+=	-lx86_64
 DPADD+=	${LIBX86_64}
 .endif
 
-DPADD=	${LIBXF86_OS} ${LIBDUMMY} ${LIBI386} ${LIBM}
+DPADD=	${LIBXF86_OS} ${LIBDUMMY} ${LIBM}
 
 SYMLINKS=	${X11BINDIR}/ioport ${X11BINDIR}/inw \
 		${X11BINDIR}/ioport ${X11BINDIR}/inl \
