@@ -1,4 +1,4 @@
-/*	$NetBSD: ptm.c,v 1.3 2004/11/11 00:03:15 christos Exp $	*/
+/*	$NetBSD: ptm.c,v 1.4 2004/11/11 15:58:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ptm.c,v 1.3 2004/11/11 00:03:15 christos Exp $");
+__RCSID("$NetBSD: ptm.c,v 1.4 2004/11/11 15:58:59 christos Exp $");
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 
 	if (strncmp(ptm.sn, "/dev/tty", 8) != 0)
 		if (strncmp(ptm.sn, "/dev/pts/", 9) != 0)
-		errx(1, "bad slave name %s", ptm.sn);
+			errx(1, "bad slave name %s", ptm.sn);
 
 	if (strncmp(ptm.cn, "/dev/null", 9) != 0) {
 		if (fstat(ptm.cfd, &stm) == -1)
