@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.50 1996/09/09 21:06:56 mycroft Exp $
+#	$NetBSD: Makefile.amiga,v 1.51 1996/12/01 06:12:27 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -25,6 +25,7 @@ CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
+COPTS?= 	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -41,7 +42,7 @@ CMACHFLAGS=	-m68020
 .else
 CMACHFLAGS=	-m68060 -Wa,-m68030
 .endif
-CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float ${CMACHFLAGS}
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${COPT} ${CMACHFLAGS} -msoft-float 
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d

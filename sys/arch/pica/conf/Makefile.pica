@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pica,v 1.9 1996/09/09 21:07:05 mycroft Exp $
+#	$NetBSD: Makefile.pica,v 1.10 1996/12/01 06:12:35 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -25,6 +25,7 @@ CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
+COPTS?= 	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -36,7 +37,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dpica -D__NetBSD__ ${GP}
 CWARNFLAGS=	-Werror
-CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -mips2 -mcpu=r4000
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mips2 -mcpu=r4000
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80080000 -e start
 STRIPFLAGS=	-d

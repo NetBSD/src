@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.31 1996/09/09 21:07:04 mycroft Exp $
+#	$NetBSD: Makefile.pc532,v 1.32 1996/12/01 06:12:34 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -25,6 +25,7 @@ CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
+COPTS?=		-O2 -msb
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -35,7 +36,7 @@ PC532=	$S/arch/pc532
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
 CWARNFLAGS=	-Werror
-CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msb
+CFLAGS=		${DEBUG} ${COPT} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-z -Ttext FE002000 -e start
 STRIPFLAGS=	-d

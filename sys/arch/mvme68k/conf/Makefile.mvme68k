@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.16 1996/09/09 21:07:03 mycroft Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.17 1996/12/01 06:12:33 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -25,6 +25,7 @@ CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
+COPTS?= 	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -36,7 +37,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dmvme68k -DFPCOPROC
 CWARNFLAGS=	-Werror
-CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 8000 -e start
 STRIPFLAGS=	-d
