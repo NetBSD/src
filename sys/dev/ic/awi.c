@@ -844,7 +844,6 @@ awi_rcv_data (sc, m)
 	
 	m_adj(m, sizeof(struct awi_mac_header) + sizeof(struct awi_llc_header) 
 	    - sizeof(struct ether_header));
-	m->m_flags |= M_HASFCS;
 
 #if NBPFILTER > 0
 	/*
@@ -854,7 +853,18 @@ awi_rcv_data (sc, m)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
+#if __NetBSD_Version__ > 104010000
+	m->m_flags |= M_HASFCS;
 	(*ifp->if_input)(ifp, m);
+#else
+	{
+		struct ether_header *eh;
+		eh = mtod(m, struct ether_header *);
+		m_adj(m, sizeof(*eh));
+		m_adj(m, -ETHER_CRC_LEN);
+		ether_input(ifp, eh, m);
+	}
+#endif	
 	return;
  drop:
 	m_freem(m);
@@ -1775,7 +1785,9 @@ int awi_attach (sc)
 	if_attach(ifp);
 	/* Defer ether_ifattach, bpfattach until we get enaddr. */
 	ifp->if_output = awi_drop_output;
+#if __NetBSD_Version__ > 104010000
 	ifp->if_input = awi_drop_input;
+#endif
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
