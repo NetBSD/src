@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.11 1997/04/02 17:10:41 oki Exp $	*/
+/*	$NetBSD: fd.c,v 1.12 1997/07/17 02:16:19 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -62,6 +62,8 @@
 #include <x68k/dev/dmavar.h>
 #include <x68k/dev/fdreg.h>
 #include <x68k/dev/opmreg.h>
+
+#include "locators.h"
 
 #define infdc   (IODEVbase->io_fdc)
 
@@ -425,7 +427,8 @@ fdprobe(parent, match, aux)
 	int found = 0;
 	int i;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
+	if (cf->cf_loc[FDCCF_UNIT] != FDCCF_UNIT_DEFAULT &&
+	    cf->cf_loc[FDCCF_UNIT] != drive)
 		return 0;
 
 	type = &fd_types[0];	/* XXX 1.2MB */
