@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.28 2002/04/25 15:06:23 atatat Exp $
+# $NetBSD: INSTALL,v 1.29 2002/05/30 19:45:49 thorpej Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.178 2002/04/19 16:11:26 heinz Exp $
+# Created from: #NetBSD: GENERIC,v 1.180 2002/05/30 19:45:15 thorpej Exp $
 
 #GENERIC machine description file
 
@@ -26,7 +26,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident  		"GENERIC-$Revision: 1.28 $"
+#ident  		"GENERIC-$Revision: 1.29 $"
 
 makeoptions	COPTS="-Os"
 
@@ -111,7 +111,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #Amiga specific options
 
