@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:45 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/08/02 02:38:19 garbled Exp $
 DIST=		${.CURDIR}/../../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1 ${DIST}/heimdal/lib/roken
 
@@ -10,7 +10,8 @@ HOSTPROG= asn1_compile
 SRCS=	parse.y lex.l main.c hash.c symbol.c gen.c			\
 	gen_encode.c gen_decode.c gen_free.c gen_length.c gen_copy.c	\
 	gen_glue.c							\
-	getarg.c print_version.c warnerr.c strupr.c get_window_size.c
+	getarg.c print_version.c warnerr.c strupr.c get_window_size.c   \
+	strlcpy.c strlcat.c
 
 YHEADER=	1
 
