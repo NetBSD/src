@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.8 1996/04/21 21:12:30 veego Exp $	*/
+/*	$NetBSD: sfas.c,v 1.9 1996/04/23 22:53:23 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -109,7 +109,7 @@ u_char	sfas_inhibit_disc[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 #define QPRINTF(a) if (sfas_debug > 1) printf a
 int	sfas_debug = 0;
 #else
-#define QPRINTF
+#define QPRINTF(a)
 #endif
 
 /*
