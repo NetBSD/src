@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.6 2000/05/18 02:03:36 matt Exp $
+#	$NetBSD: disktab,v 1.7 2000/12/29 03:05:04 matt Exp $
 #
 #	@(#)disktab	8.1 (Berkeley) 6/9/93
 #
@@ -420,8 +420,7 @@ rd52|RD52|DEC RD52 on Microvax:\
 	:pa#15884:oa#0:ba#4096:fa#1024:\
 	:pb#9766:ob#15884:bb#4096:fb#512:tb=swap:\
 	:pc#60480:oc#0:bc#4096:fc#512:\
-	:pg#34830:og#25650:bg#4096:fg#512:\
-	:b0=rdboot:
+	:pg#34830:og#25650:bg#4096:fg#512:
 #
 rd53|RD53|DEC RD53 on Microvax:\
 	:ty=winchester:ns#18:nt#8:nc#963:\
@@ -432,8 +431,7 @@ rd53|RD53|DEC RD53 on Microvax:\
 	:pe#33440:oe#0:be#4096:fe#512:\
 	:pf#105232:of#33440:bf#4096:ff#512:\
 	:pg#89348:og#49324:bg#4096:fg#512:\
-	:ph#122788:oh#15884:bh#4096:fh#512:\
-	:b0=rdboot:
+	:ph#122788:oh#15884:bh#4096:fh#512:
 #
 rd54|RD54|DEC RD54 on Microvax:\
 	:ty=winchester:ns#17:nt#15:nc#1225:\
@@ -444,8 +442,7 @@ rd54|RD54|DEC RD54 on Microvax:\
 	:pd#15884:od#49324:bd#4096:fd#512:\
 	:pe#55936:oe#65208:be#8192:fe#1024:\
 	:pf#190485:of#121144:bf#8192:ff#1024:\
-	:pg#261876:og#49324:bg#8192:fg#1024:\
-	:b0=rdboot:
+	:pg#261876:og#49324:bg#8192:fg#1024:
 #
 qdeagle|qd-eagle|Fujitsu 2351A eagle on QD33 (Microvax):\
 	:ty=winchester:ns#47:nt#20:nc#840:\
@@ -457,8 +454,7 @@ qdeagle|qd-eagle|Fujitsu 2351A eagle on QD33 (Microvax):\
 	:pe#307200:oe#391040:be#8192:fe#1024:\
 	:pf#88736:of#698420:bf#8192:ff#1024:\
 	:pg#412096:og#375060:bg#8192:fg#1024:\
-	:ph#291346:oh#83660:bh#8192:fh#1024:\
-	:b0=rdboot:
+	:ph#291346:oh#83660:bh#8192:fh#1024:
 #
 # floppy disk drives
 #
