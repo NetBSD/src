@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.20 2000/10/10 19:54:39 is Exp $	*/
+/*	$NetBSD: rshd.c,v 1.21 2000/11/09 01:04:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.20 2000/10/10 19:54:39 is Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.21 2000/11/09 01:04:14 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -371,6 +371,7 @@ doit(fromp)
 		 * address corresponds to the name.
 		 */
 		hostname = saddr;
+		res0 = NULL;
 		if (check_all || local_domain(saddr)) {
 			strncpy(remotehost, saddr, sizeof(remotehost) - 1);
 			remotehost[sizeof(remotehost) - 1] = 0;
@@ -414,11 +415,12 @@ doit(fromp)
 					    "Host address mismatch for %s\n";
 					hostname = naddr;
 				}
-				freeaddrinfo(res0);
 			}
 		}
 		hostname = strncpy(hostnamebuf, hostname,
 		    sizeof(hostnamebuf) - 1);
+		if (res0)
+			freeaddrinfo(res0);
 	} else {
 		errorhost = hostname = strncpy(hostnamebuf,
 		    naddr, sizeof(hostnamebuf) - 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.21 2000/04/14 12:29:49 itojun Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.22 2000/11/09 01:04:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.21 2000/04/14 12:29:49 itojun Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.22 2000/11/09 01:04:14 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -299,6 +299,7 @@ doit(f, fromp)
 		 * address corresponds to the name.
 		 */
 		hostname = saddr;
+		res0 = NULL;
 		if (check_all || local_domain(saddr)) {
 			strncpy(hostnamebuf, saddr, sizeof(hostnamebuf) - 1);
 			hostnamebuf[sizeof(hostnamebuf) - 1] = 0;
@@ -337,11 +338,12 @@ doit(f, fromp)
 						    : saddr);
 					hostname = naddr;
 				}
-				freeaddrinfo(res0);
 			}
 		}
 		hostname = strncpy(hostnamebuf, hostname,
 				   sizeof(hostnamebuf) - 1);
+		if (res0)
+			freeaddrinfo(res0);
 	} else
 		hostname = strncpy(hostnamebuf, naddr,
 				   sizeof(hostnamebuf) - 1);
