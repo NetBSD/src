@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.3 2003/07/09 00:55:45 matt Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.4 2003/08/25 20:32:13 ragge Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ ENTRY(pthread__switch, 0)
 	movl	%sp,PT_UC(%r2)		/* self->pt_uc = &context */
 
 	STACK_SWITCH(%r3)		/* r2 = self; r3 = next */
+pthread__switch_return_point: .globl pthread__switch_return_point
 setcontext:
 	pushl	%sp			/* sp = &context */
 	calls	$1,_setcontext_u
