@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.6 2002/08/31 08:42:00 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.7 2002/08/31 09:11:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -845,6 +845,21 @@ Ltrapexit:
 Lsh5_event_interrupt:
 	_INTR_FRAME_SAVE(SZ_INTRFRAME)
 
+#ifdef DEBUG
+	/*
+	 * Catch NMIs early so that we can convert the interrupt frame
+	 * to a regular trapframe and drop into DDB if the NMI button
+	 * is pressed.
+	 *
+	 * This provides a handy way to regain control if the CPU should
+	 * decide to spin at a high ipl.
+	 */
+	pta/l	Lsh5_event_nmi, tr0
+	ld.q	r15, SFO(SF_INTEVT, SZ_INTRFRAME), r0 /* Fetch INTEVT */
+	movi	0x1c0, r1		/* The NMI event code */
+	beq/l	r0, r1, tr0		/* Jump if NMI */
+#endif
+
 	/* sh5_intr_dispatch(struct intrframe *f); */
 	LEAF(_C_LABEL(sh5_intr_dispatch), r0)
 	ptabs/l	r0, tr0
@@ -910,6 +925,19 @@ Lintrexit:
 	_EXCEPTION_EXIT(SZ_INTRFRAME)
 	/* NOTREACHED */
 
+
+#ifdef DEBUG
+Lsh5_event_nmi:
+	/*
+	 * Convert the interrupt frame to a trapframe
+	 */
+	addi	r15, -(SZ_TRAPFRAME - SZ_INTRFRAME), r15
+	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
+	pta/l	Ltrapagain, tr0
+	movi	T_NMI, r0		/* Fabricate an "NMI" event */
+	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0
+	blink	tr0, r63		/* Go back around to deal with it */
+#endif /* DEBUG */
 
 
 /******************************************************************************
