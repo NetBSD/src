@@ -55,10 +55,13 @@
 #define ASM_SPEC " %| %{fpic:-k} %{fPIC:-k -K}"
 
 /* Provide a LIB_SPEC appropriate for NetBSD.  Just select the appropriate
-   libc, depending on whether we're doing profiling.  */
+   libc, depending on whether we're doing profiling; if `-posix' is specified,
+   link against the appropriate libposix first.  */
 
 #undef LIB_SPEC
-#define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
+#define LIB_SPEC							\
+  "%{posix:%{!p:%{!pg:-lposix}}%{p:-lposix_p}%{pg:-lposix_p}}		\
+   %{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
 
 /* Provide a LINK_SPEC appropriate for NetBSD.  Here we provide support
    for the special GCC options -static, -assert, and -nostdlib.  */
