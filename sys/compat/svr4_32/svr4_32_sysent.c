@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_sysent.c,v 1.4 2001/07/01 16:55:41 thorpej Exp $ */
+/* $NetBSD: svr4_32_sysent.c,v 1.5 2001/08/15 05:18:12 eeh Exp $ */
 
 /*
  * System call switch table.
@@ -28,6 +28,12 @@
 #include <compat/svr4_32/svr4_32_resource.h>
 #include <compat/svr4_32/svr4_32_acl.h>
 
+#ifdef COMPAT_43
+#define	compat_43(func) __CONCAT(compat_43_,func)
+#else
+#define	compat_43(func) sys_nosys
+#endif
+
 #define	s(type)	sizeof(type)
 
 struct sysent svr4_32_sysent[] = {
@@ -43,8 +49,8 @@ struct sysent svr4_32_sysent[] = {
 	    netbsd32_write },			/* 4 = netbsd32_write */
 	{ 3, s(struct svr4_32_sys_open_args), 0,
 	    svr4_32_sys_open },			/* 5 = open */
-	{ 1, s(struct sys_close_args), 0,
-	    sys_close },			/* 6 = close */
+	{ 1, s(struct netbsd32_close_args), 0,
+	    netbsd32_close },			/* 6 = netbsd32_close */
 	{ 1, s(struct svr4_32_sys_wait_args), 0,
 	    svr4_32_sys_wait },			/* 7 = wait */
 	{ 2, s(struct svr4_32_sys_creat_args), 0,
@@ -69,8 +75,8 @@ struct sysent svr4_32_sysent[] = {
 	    svr4_32_sys_break },		/* 17 = break */
 	{ 2, s(struct svr4_32_sys_stat_args), 0,
 	    svr4_32_sys_stat },			/* 18 = stat */
-	{ 3, s(struct compat_43_sys_lseek_args), 0,
-	    compat_43_sys_lseek },		/* 19 = lseek */
+	{ 3, s(struct compat_43_netbsd32_olseek_args), 0,
+	    compat_43_netbsd32_olseek },	/* 19 = compat_43_netbsd32_olseek */
 	{ 0, 0, 0,
 	    sys_getpid },			/* 20 = getpid */
 	{ 0, 0, 0,
@@ -286,8 +292,8 @@ struct sysent svr4_32_sysent[] = {
 	    svr4_32_sys_fpathconf },		/* 118 = fpathconf */
 	{ 0, 0, 0,
 	    sys_vfork },			/* 119 = vfork */
-	{ 1, s(struct sys_fchdir_args), 0,
-	    sys_fchdir },			/* 120 = fchdir */
+	{ 1, s(struct netbsd32_fchdir_args), 0,
+	    netbsd32_fchdir },			/* 120 = netbsd32_fchdir */
 	{ 3, s(struct netbsd32_readv_args), 0,
 	    netbsd32_readv },			/* 121 = netbsd32_readv */
 	{ 3, s(struct netbsd32_writev_args), 0,
@@ -520,22 +526,22 @@ struct sysent svr4_32_sysent[] = {
 	    netbsd32_connect },			/* 235 = netbsd32_connect */
 	{ 2, s(struct netbsd32_shutdown_args), 0,
 	    netbsd32_shutdown },		/* 236 = netbsd32_shutdown */
-	{ 4, s(struct compat_43_sys_recv_args), 0,
-	    compat_43_sys_recv },		/* 237 = recv */
-	{ 6, s(struct compat_43_sys_recvfrom_args), 0,
-	    compat_43_sys_recvfrom },		/* 238 = recvfrom */
-	{ 3, s(struct compat_43_sys_recvmsg_args), 0,
-	    compat_43_sys_recvmsg },		/* 239 = recvmsg */
-	{ 4, s(struct compat_43_sys_send_args), 0,
-	    compat_43_sys_send },		/* 240 = send */
-	{ 3, s(struct compat_43_sys_sendmsg_args), 0,
-	    compat_43_sys_sendmsg },		/* 241 = sendmsg */
+	{ 4, s(struct compat_43_netbsd32_orecv_args), 0,
+	    compat_43_netbsd32_orecv },		/* 237 = compat_43_netbsd32_orecv */
+	{ 6, s(struct compat_43_netbsd32_orecvfrom_args), 0,
+	    compat_43_netbsd32_orecvfrom },	/* 238 = compat_43_netbsd32_orecvfrom */
+	{ 3, s(struct compat_43_netbsd32_orecvmsg_args), 0,
+	    compat_43_netbsd32_orecvmsg },	/* 239 = compat_43_netbsd32_orecvmsg */
+	{ 4, s(struct compat_43_netbsd32_osend_args), 0,
+	    compat_43_netbsd32_osend },		/* 240 = compat_43_netbsd32_osend */
+	{ 3, s(struct compat_43_netbsd32_osendmsg_args), 0,
+	    compat_43_netbsd32_osendmsg },	/* 241 = compat_43_netbsd32_osendmsg */
 	{ 6, s(struct netbsd32_sendto_args), 0,
 	    netbsd32_sendto },			/* 242 = netbsd32_sendto */
-	{ 3, s(struct compat_43_sys_getpeername_args), 0,
-	    compat_43_sys_getpeername },	/* 243 = getpeername */
-	{ 3, s(struct compat_43_sys_getsockname_args), 0,
-	    compat_43_sys_getsockname },	/* 244 = getsockname */
+	{ 3, s(struct compat_43_netbsd32_ogetpeername_args), 0,
+	    compat_43_netbsd32_ogetpeername },	/* 243 = compat_43_netbsd32_ogetpeername */
+	{ 3, s(struct compat_43_netbsd32_ogetsockname_args), 0,
+	    compat_43_netbsd32_ogetsockname },	/* 244 = compat_43_netbsd32_ogetsockname */
 	{ 5, s(struct netbsd32_getsockopt_args), 0,
 	    netbsd32_getsockopt },		/* 245 = netbsd32_getsockopt */
 	{ 5, s(struct netbsd32_setsockopt_args), 0,
