@@ -1,3 +1,5 @@
+#	$NetBSD: vchain,v 1.2 1997/02/12 23:35:10 gwr Exp $
+
 #	@(#)vchain	8.1 (Berkeley) 6/10/93
 #
 # Given a vnode, follow its mount pointers
