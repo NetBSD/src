@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.20 1996/09/16 17:22:04 mycroft Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.21 1997/09/05 10:52:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-static char rcsid[] = "$NetBSD: nfsd.c,v 1.20 1996/09/16 17:22:04 mycroft Exp $";
+static char rcsid[] = "$NetBSD: nfsd.c,v 1.21 1997/09/05 10:52:10 fvdl Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,7 @@ main(argc, argv, envp)
 		case 'n':
 			nfsdcnt = atoi(optarg);
 			if (nfsdcnt < 1 || nfsdcnt > MAXNFSDCNT) {
-				warnx("nfsd count %d; reset to %d", DEFNFSDCNT);
+				warnx("nfsd count %d; reset to %d", nfsdcnt, DEFNFSDCNT);
 				nfsdcnt = DEFNFSDCNT;
 			}
 			break;
@@ -213,7 +213,7 @@ main(argc, argv, envp)
 	if (argc == 1) {
 		nfsdcnt = atoi(argv[0]);
 		if (nfsdcnt < 1 || nfsdcnt > MAXNFSDCNT) {
-			warnx("nfsd count %d; reset to %d", DEFNFSDCNT);
+			warnx("nfsd count %d; reset to %d", nfsdcnt, DEFNFSDCNT);
 			nfsdcnt = DEFNFSDCNT;
 		}
 	}
