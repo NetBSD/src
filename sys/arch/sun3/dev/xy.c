@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.34 2001/07/22 13:34:08 wiz Exp $	*/
+/*	$NetBSD: xy.c,v 1.35 2001/09/05 14:03:49 tsutsui Exp $	*/
 
 /*
  *
@@ -232,7 +232,7 @@ xydummystrat(bp)
 {
 	if (bp->b_bcount != XYFM_BPS)
 		panic("xydummystrat");
-	bcopy(xy_labeldata, bp->b_data, XYFM_BPS);
+	memcpy(bp->b_data, xy_labeldata, XYFM_BPS);
 	bp->b_flags |= B_DONE;
 	bp->b_flags &= ~B_BUSY;
 }
@@ -364,7 +364,7 @@ xycattach(parent, self, aux)
 			return;
 		}
 	}
-	bzero(tmp, pbsz);
+	memset(tmp, 0, pbsz);
 	xyc->iopbase = tmp;
 	xyc->dvmaiopb = (struct xy_iopb *)
 		dvma_kvtopa(xyc->iopbase, xyc->bustype);
@@ -372,7 +372,7 @@ xycattach(parent, self, aux)
 	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq), M_DEVBUF, M_NOWAIT);
 	if (xyc->reqs == NULL)
 		panic("xyc malloc");
-	bzero(xyc->reqs, XYC_MAXIOPB * sizeof(struct xy_iorq));
+	memset(xyc->reqs, 0, XYC_MAXIOPB * sizeof(struct xy_iorq));
 
 	/*
 	 * init iorq to iopb pointers, and non-zero fields in the
@@ -496,7 +496,7 @@ xyattach(parent, self, aux)
 	 * Always re-initialize the disk structure.  We want statistics
 	 * to start with a clean slate.
 	 */
-	bzero(&xy->sc_dk, sizeof(xy->sc_dk));
+	memset(&xy->sc_dk, 0, sizeof(xy->sc_dk));
 	xy->sc_dk.dk_driver = &xydkdriver;
 	xy->sc_dk.dk_name = xy->sc_dev.dv_xname;
 
@@ -678,7 +678,7 @@ xy_init(xy)
 		printf("%s: warning: invalid bad144 sector!\n",
 			xy->sc_dev.dv_xname);
 	} else {
-		bcopy(dvmabuf, &xy->dkb, XYFM_BPS);
+		memcpy(&xy->dkb, dvmabuf, XYFM_BPS);
 	}
 
 done:
@@ -784,12 +784,12 @@ xyioctl(dev, command, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		s = splbio();
-		bcopy(addr, &xy->dkb, sizeof(xy->dkb));
+		memcpy(&xy->dkb, addr, sizeof(xy->dkb));
 		splx(s);
 		return 0;
 
 	case DIOCGDINFO:	/* get disk label */
-		bcopy(xy->sc_dk.dk_label, addr, sizeof(struct disklabel));
+		memcpy(addr, xy->sc_dk.dk_label, sizeof(struct disklabel));
 		return 0;
 
 	case DIOCGPART:	/* get partition info */
@@ -1430,7 +1430,7 @@ xyc_chain(xycsc, iorq)
 {
 	int togo, chain, hand;
 	struct xy_iopb *iopb, *prev_iopb;
-	bzero(xycsc->xy_chain, sizeof(xycsc->xy_chain));
+	memset(xycsc->xy_chain, 0, sizeof(xycsc->xy_chain));
 
 	/*
 	 * promote control IOPB to the top
@@ -1563,7 +1563,7 @@ xyc_xyreset(xycsc, xysc)
 	struct xy_iopb tmpiopb;
 	u_long  addr;
 	int     del;
-	bcopy(xycsc->ciopb, &tmpiopb, sizeof(tmpiopb));
+	memcpy(&tmpiopb, xycsc->ciopb, sizeof(tmpiopb));
 	xycsc->ciopb->chen = xycsc->ciopb->done = xycsc->ciopb->errs = 0;
 	xycsc->ciopb->ien = 0;
 	xycsc->ciopb->com = XYCMD_RST;
@@ -1588,7 +1588,7 @@ xyc_xyreset(xycsc, xysc)
 	} else {
 		xycsc->xyc->xyc_csr = XYC_IPND;	/* clear IPND */
 	}
-	bcopy(&tmpiopb, xycsc->ciopb, sizeof(tmpiopb));
+	memcpy(xycsc->ciopb, &tmpiopb, sizeof(tmpiopb));
 }
 
 
