@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.56 2000/05/26 21:20:30 thorpej Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.57 2000/05/31 05:02:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -382,11 +382,10 @@ calcru(p, up, sp, ip)
 	sec = p->p_rtime.tv_sec;
 	usec = p->p_rtime.tv_usec;
 	if (p->p_stat == SONPROC) {
-		/*
-		 * XXX curcpu() is wrong -- needs to be the CPU the
-		 * XXX process is running on. --thorpej
-		 */
-		struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+		struct schedstate_percpu *spc;
+
+		KDASSERT(p->p_cpu != NULL);
+		spc = &p->p_cpu->ci_schedstate;
 
 		/*
 		 * Adjust for the current time slice.  This is actually fairly
