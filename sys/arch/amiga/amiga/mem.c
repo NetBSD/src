@@ -38,7 +38,7 @@
  * from: Utah $Hdr: mem.c 1.14 90/10/12$
  *
  *	@(#)mem.c	7.5 (Berkeley) 5/7/91
- *	$Id: mem.c,v 1.6 1994/02/13 21:13:25 chopps Exp $
+ *	$Id: mem.c,v 1.7 1994/03/08 10:48:51 chopps Exp $
  */
 
 /*
@@ -63,17 +63,21 @@
 extern int kernel_reload_write(struct uio *uio);
 
 /*ARGSUSED*/
+int
 mmrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
 	int flags;
 {
+	extern u_int lowram;
 	register int o;
 	register u_int c, v;
 	register struct iovec *iov;
-	int error = 0;
-	caddr_t zbuf = NULL;
-	extern u_int lowram;
+	int error;
+	caddr_t zbuf;
+
+	zbuf = NULL;
+	error = 0;
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -86,7 +90,9 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
+		/*
+		 * minor device 0 is physical memory
+		 */
 		case 0:
 			v = uio->uio_offset;
 #ifndef DEBUG
@@ -105,22 +111,29 @@ mmrw(dev, uio, flags)
 			pmap_remove(pmap_kernel(), vmmap, &vmmap[NBPG]);
 			continue;
 
-/* minor device 1 is kernel memory */
+		/*
+		 * minor device 1 is kernel memory
+		 */
 		case 1:
 			c = MIN(iov->iov_len, MAXPHYS);
 			if (!kernacc((caddr_t)uio->uio_offset, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)uio->uio_offset, (int)c, uio);
+			error = uiomove((caddr_t)uio->uio_offset,(int)c,uio);
 			continue;
 
-/* minor device 2 is EOF/RATHOLE */
+		/*
+		 * minor device 2 is EOF/RATHOLE
+		 */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
+		/*
+		 * minor device 12 (/dev/zero) is source of nulls on
+                 * read, rathole on write
+		 */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
@@ -135,9 +148,12 @@ mmrw(dev, uio, flags)
 			error = uiomove(zbuf, (int)c, uio);
 			continue;
 
-/* minor device 20 (/dev/reload) represents magic memory
-   which you can write a kernel image to,
-   causing a reboot into that kernel.  */
+		/*
+		 * minor device 20 (/dev/reload) represents
+		 * magic memory which you can write a kernel
+		 * image to, causing a reboot into that
+		 * kernel.
+		 */
 		case 20:
 			/* Reads simply get EOF.  */
 			if (uio->uio_rw == UIO_READ)

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.10 1994/02/28 06:05:44 chopps Exp $
+ *	$Id: autoconf.c,v 1.11 1994/03/08 10:48:49 chopps Exp $
  */
 
 /*
@@ -82,17 +82,29 @@ extern caddr_t ZORRO2ADDR;
 
 /* maps a zorro2 and/or A3000 builtin address into the mapped kva address */
 #define zorro2map(pa) ((caddr_t) ((u_int)ZORRO2ADDR - ZORRO2BASE + (u_int)pa))
+
 /* tests whether the address lies in our zorro2 space */
-#define iszorro2kva(kva) ((u_int)kva >= (u_int)ZORRO2ADDR && (u_int)kva < ((u_int)ZORRO2ADDR+(u_int)ZORRO2TOP-(u_int)ZORRO2BASE))
+#define iszorro2kva(kva) \
+    ((u_int)kva >= (u_int)ZORRO2ADDR && \
+    (u_int)kva < ((u_int)ZORRO2ADDR + (u_int)ZORRO2TOP - (u_int)ZORRO2BASE))
+
 #define iszorro2pa(pa) ((u_int)pa >= ZORRO2BASE && (u_int)pa <= ZORRO2TOP)
 
 #ifdef DEBUG
 int	acdebug = 0;
 #endif
 
+void setroot __P((void));
+void swapconf __P((void));
+void configure __P((void));
+void find_devs __P((void));
+void find_slaves __P((struct amiga_ctlr *));
+void find_busslaves __P((struct amiga_ctlr *, int));
+
 /*
  * Determine mass storage and memory configuration for a machine.
  */
+void
 configure()
 {
 	register struct amiga_hw *hw;
@@ -111,23 +123,13 @@ configure()
 		else
 			found = find_device(hw);
 #ifdef DEBUG
-		if (!found && acdebug) {
+		if (!found && acdebug) 
 			printf("unconfigured device %d/%d\n",
-			       hw->hw_manufacturer, hw->hw_product);
-		}
+			    hw->hw_manufacturer, hw->hw_product);
+		
 #endif
 	}
-
-#if 0
-#include "cd.h"
-#if NCD > 0
-	/*
-	 * Now deal with concatenated disks
-	 */
-	find_cdevices();
-#endif
-#endif
-
+	
 #if GENERIC
 	if ((boothowto & RB_ASKNAME) == 0)
 		setroot();
@@ -141,21 +143,21 @@ configure()
 	custom.intena = INTF_SETCLR | INTF_INTEN;
 }
 
-#define dr_type(d, s)	\
-	(strcmp((d)->d_name, (s)) == 0)
+#define dr_type(d, s) (strcmp((d)->d_name, (s)) == 0)
 
 #define same_hw_ctlr(hw, ac) \
-	(HW_ISFLOPPY(hw) && dr_type((ac)->amiga_driver, "floppy") || \
-	 HW_ISSCSI(hw) && (dr_type((ac)->amiga_driver, "a3000scsi") \
-	 || dr_type((ac)->amiga_driver, "a2091scsi") \
-	 || dr_type((ac)->amiga_driver, "GVPIIscsi") \
-	 || dr_type((ac)->amiga_driver, "Zeusscsi") \
-	 || dr_type((ac)->amiga_driver, "Magnumscsi") \
-	 || dr_type((ac)->amiga_driver, "Mlhscsi") \
-	 || dr_type((ac)->amiga_driver, "Csa12gscsi") \
-	 || dr_type((ac)->amiga_driver, "Suprascsi") \
-	 || dr_type((ac)->amiga_driver, "IVSscsi")))
+    (HW_ISFLOPPY(hw) && dr_type((ac)->amiga_driver, "floppy") || \
+    HW_ISSCSI(hw) && (dr_type((ac)->amiga_driver, "a3000scsi") \
+    || dr_type((ac)->amiga_driver, "a2091scsi") \
+    || dr_type((ac)->amiga_driver, "GVPIIscsi") \
+    || dr_type((ac)->amiga_driver, "Zeusscsi") \
+    || dr_type((ac)->amiga_driver, "Magnumscsi") \
+    || dr_type((ac)->amiga_driver, "Mlhscsi") \
+    || dr_type((ac)->amiga_driver, "Csa12gscsi") \
+    || dr_type((ac)->amiga_driver, "Suprascsi") \
+    || dr_type((ac)->amiga_driver, "IVSscsi")))
 
+int
 find_controller(hw)
 	register struct amiga_hw *hw;
 {
@@ -167,11 +169,12 @@ find_controller(hw)
 #ifdef DEBUG
 	if (acdebug)
 		printf("find_controller: hw: [%d/%d] (%x), type %x...",
-		       hw->hw_manufacturer, hw->hw_product, 
-		       hw->hw_kva, hw->hw_type);
+		    hw->hw_manufacturer, hw->hw_product, 
+		    hw->hw_kva, hw->hw_type);
 #endif
 	sc = (hw->hw_manufacturer << 16) | hw->hw_product;
 	match_c = NULL;
+	
 	for (ac = amiga_cinit; ac->amiga_driver; ac++) {
 		if (ac->amiga_alive)
 			continue;
@@ -199,8 +202,8 @@ find_controller(hw)
 	if (acdebug) {
 		if (match_c)
 			printf("found %s%d\n",
-			       match_c->amiga_driver->d_name,
-			       match_c->amiga_unit);
+			    match_c->amiga_driver->d_name,
+			    match_c->amiga_unit);
 		else
 			printf("not found\n");
 	}
@@ -218,19 +221,21 @@ find_controller(hw)
 	ac = match_c;
 	oaddr = ac->amiga_addr;
 	ac->amiga_addr = hw->hw_kva;
-	if ((*ac->amiga_driver->d_init)(ac)) {
+	if (0 == (*ac->amiga_driver->d_init)(ac)) 
+		ac->amiga_addr = oaddr;
+	else {
 		ac->amiga_alive = 1;
-		printf ("%s%d", ac->amiga_driver->d_name, ac->amiga_unit);
-		printf (" [%d/%d]", hw->hw_manufacturer, hw->hw_product);
+		printf("%s%d", ac->amiga_driver->d_name, ac->amiga_unit);
+		printf(" [%d/%d]", hw->hw_manufacturer, hw->hw_product);
 		if (ac->amiga_flags)
 			printf(", flags 0x%x", ac->amiga_flags);
 		printf("\n");
 		find_slaves(ac);
-	} else
-		ac->amiga_addr = oaddr;
+	}
 	return(1);
 }
 
+int
 find_device(hw)
 	register struct amiga_hw *hw;
 {
@@ -242,10 +247,11 @@ find_device(hw)
 #ifdef DEBUG
 	if (acdebug)
 		printf("find_device: hw: [%d/%d] (%x), type %x...",
-		       hw->hw_manufacturer, hw->hw_product,
-		       hw->hw_kva, hw->hw_type);
+		    hw->hw_manufacturer, hw->hw_product,
+		    hw->hw_kva, hw->hw_type);
 #endif
 	match_d = NULL;
+	
 	for (ad = amiga_dinit; ad->amiga_driver; ad++) {
 		if (ad->amiga_alive)
 			continue;
@@ -259,20 +265,19 @@ find_device(hw)
 		 * (i.e. no longer the select code).  Gotta perform a
 		 * slightly different check for an exact match.
 		 */
-		if (HW_ISDEV(hw, D_BITMAP) && iszorro2kva(ad->amiga_addr))
-		  {
-		    if (ad->amiga_addr == hw->hw_kva)
-		      {
-		        match_d = ad;
-		        break;
-		      }
-		    continue;
-		  }
+		if (HW_ISDEV(hw, D_BITMAP) && iszorro2kva(ad->amiga_addr)) {
+			if (ad->amiga_addr == hw->hw_kva) {
+				match_d = ad;
+				break;
+			}
+			continue;
+		}
 		sc = (int) ad->amiga_addr;
 		/*
 		 * Exact match; all done.
 		 */
-		if (sc > 0 && sc == ((hw->hw_manufacturer << 16) | hw->hw_product)) {
+		if (sc > 0 && 
+		    sc == ((hw->hw_manufacturer << 16) | hw->hw_product)) {
 			match_d = ad;
 			break;
 		}
@@ -308,18 +313,21 @@ find_device(hw)
 	ad->amiga_addr = hw->hw_kva;
 	ad->amiga_serno = hw->hw_serno;
 	ad->amiga_size = hw->hw_size;
-	if ((*ad->amiga_driver->d_init)(ad)) {
+	
+	if (0 == (*ad->amiga_driver->d_init)(ad))
+		ad->amiga_addr = oaddr;
+	else {
 		ad->amiga_alive = 1;
 		printf("%s%d", ad->amiga_driver->d_name, ad->amiga_unit);
-		printf (" [%d/%d]", hw->hw_manufacturer, hw->hw_product);
+		printf(" [%d/%d]", hw->hw_manufacturer, hw->hw_product);
 		if (ad->amiga_flags)
 			printf(", flags 0x%x", ad->amiga_flags);
 		printf("\n");
-	} else
-		ad->amiga_addr = oaddr;
+	}
 	return(1);
 }
 
+void
 find_slaves(ac)
 	struct amiga_ctlr *ac;
 {
@@ -339,6 +347,7 @@ find_slaves(ac)
 
 /*
  */
+void
 find_busslaves(ac, maxslaves)
 	register struct amiga_ctlr *ac;
 	int maxslaves;
@@ -367,11 +376,13 @@ find_busslaves(ac, maxslaves)
 			 */
 			if (ad->amiga_alive || ad->amiga_cdriver == NULL)
 				continue;
-			if (!dr_type(ac->amiga_driver, ad->amiga_cdriver->d_name))
+			else if (0 == dr_type(ac->amiga_driver,
+			    ad->amiga_cdriver->d_name))
 				continue;
-			if (ad->amiga_ctlr >= 0 && ad->amiga_ctlr != ac->amiga_unit)
+			else if (ad->amiga_ctlr >= 0 &&
+			    ad->amiga_ctlr != ac->amiga_unit)
 				continue;
-			if (ad->amiga_slave >= 0 && ad->amiga_slave != s)
+			else if (ad->amiga_slave >= 0 && ad->amiga_slave != s)
 				continue;
 			/*
 			 * Case 0: first possible match.
@@ -390,7 +401,8 @@ find_busslaves(ac, maxslaves)
 			 * "reserve" locations for dynamic addition of
 			 * disk/tape drives by fully qualifing the location.
 			 */
-			if (ad->amiga_slave == s && ad->amiga_ctlr == ac->amiga_unit) {
+			if (ad->amiga_slave == s &&
+			    ad->amiga_ctlr == ac->amiga_unit) {
 				match_s = ad;
 				rescan = 0;
 				break;
@@ -410,7 +422,8 @@ find_busslaves(ac, maxslaves)
 			 * Remember and keep looking for a better match.
 			 */
 			if (ad->amiga_slave == s &&
-			    match_s->amiga_ctlr < 0 && match_s->amiga_slave < 0) {
+			    match_s->amiga_ctlr < 0 &&
+			    match_s->amiga_slave < 0) {
 				match_s = ad;
 				new_c = ac->amiga_unit;
 				continue;
@@ -424,9 +437,10 @@ find_busslaves(ac, maxslaves)
 			continue;
 		}
 		/*
-		 * Found a match.  We need to set amiga_ctlr/amiga_slave properly
-		 * for the init routines but we also need to remember all
-		 * the old values in case this doesn't pan out.
+		 * Found a match.  We need to set
+		 * amiga_ctlr/amiga_slave properly for the init
+		 * routines but we also need to remember all the old
+		 * values in case this doesn't pan out.
 		 */
 		if (match_s) {
 			ad = match_s;
@@ -449,12 +463,14 @@ find_busslaves(ac, maxslaves)
 					printf("found\n");
 #endif
 				printf("%s%d at %s%d, slave %d",
-				       ad->amiga_driver->d_name, ad->amiga_unit,
-				       ac->amiga_driver->d_name, ad->amiga_ctlr,
-				       ad->amiga_slave);
+				       ad->amiga_driver->d_name,
+				       ad->amiga_unit,
+				       ac->amiga_driver->d_name,
+				       ad->amiga_ctlr,ad->amiga_slave);
 				if (ad->amiga_flags)
-					printf(" flags 0x%x", ad->amiga_flags);
+					printf(" flags 0x%x",ad->amiga_flags);
 				printf("\n");
+				
 				ad->amiga_alive = 1;
 				if (ad->amiga_dk && dkn < DK_NDRIVE)
 					ad->amiga_dk = dkn++;
@@ -462,14 +478,19 @@ find_busslaves(ac, maxslaves)
 					ad->amiga_dk = -1;
 				rescan = 1;
 				/*
-				 * The init on this unit suceeded, so we need to
-				 * mark the same device/unit on other hardware
-				 * controllers as "alive" since we can't reuse
-				 * the same unit for that device driver. mlh
+				 * The init on this unit suceeded, so
+				 * we need to mark the same
+				 * device/unit on other hardware
+				 * controllers as "alive" since we
+				 * can't reuse the same unit for that
+				 * device driver. mlh
 				 */
-				for (ad = amiga_dinit; ad->amiga_driver; ad++) {
-					if (ad->amiga_driver == match_s->amiga_driver &&
-					    ad->amiga_unit == match_s->amiga_unit)
+				for (ad = amiga_dinit; ad->amiga_driver;
+				     ad++) {
+					if (ad->amiga_driver ==
+					    match_s->amiga_driver &&
+					    ad->amiga_unit ==
+					    match_s->amiga_unit)
 						ad->amiga_alive = 2;
 				}
 			} else {
@@ -499,14 +520,17 @@ find_busslaves(ac, maxslaves)
 			 * alive fields to -1.
 			 */
 			if (rescan) {
-				for (ad = amiga_dinit; ad->amiga_driver; ad++) {
+				for (ad = amiga_dinit; ad->amiga_driver;
+				    ad++) {
 					if (ad->amiga_alive)
 						continue;
-					if (match_s->amiga_alive == 1) {	/* 1 */
-						if (ad->amiga_flags == match_s->amiga_flags)
+					else if (match_s->amiga_alive == 1) {
+						if (ad->amiga_flags ==
+						    match_s->amiga_flags)
 							ad->amiga_alive = -1;
-					} else {			/* 2 */
-						if (ad->amiga_driver == match_s->amiga_driver)
+					} else { /* 2 */
+						if (ad->amiga_driver ==
+						    match_s->amiga_driver)
 							ad->amiga_alive = -1;
 					}
 				}
@@ -523,11 +547,14 @@ find_busslaves(ac, maxslaves)
 	}
 }
 
+int
 same_hw_device(hw, ad)
 	struct amiga_hw *hw;
 	struct amiga_device *ad;
 {
-	int found = 0;
+	int found;
+
+	found = 0;
 
 	switch (hw->hw_type & ~B_MASK) {
 	case C_FLOPPY:
@@ -570,15 +597,16 @@ char notmappedmsg[] = "WARNING: no space to map IO card, ignored\n";
 /*
  * Scan the IO space looking for devices.
  */
+void
 find_devs()
 {
+  extern int num_ConfigDev;
+  extern struct ConfigDev *ConfigDev;
   short sc;
   u_char *id_reg;
   register caddr_t addr;
   register struct amiga_hw *hw;
   int didmap, sctop;
-  extern int num_ConfigDev;
-  extern struct ConfigDev *ConfigDev;
   struct ConfigDev *cd;
 
 #if 0
@@ -887,125 +915,26 @@ find_devs()
     }
 }
 
-#if 0
-/*
- * Allocate/deallocate a cache-inhibited range of kernel virtual address
- * space mapping the indicated physical address range [pa - pa+size)
- */
-caddr_t
-iomap(pa, size)
-	caddr_t pa;
-	int size;
-{
-	int ix, npf;
-	caddr_t kva;
-
-#ifdef DEBUG
-	if (((int)pa & PGOFSET) || (size & PGOFSET))
-		panic("iomap: unaligned");
-#endif
-	npf = btoc(size);
-	ix = rmalloc(extiomap, npf);
-	if (ix == 0)
-		return(0);
-	kva = extiobase + ctob(ix-1);
-	physaccess(kva, pa, size, PG_RW|PG_CI);
-	return(kva);
-}
-
-iounmap(kva, size)
-	caddr_t kva;
-	int size;
-{
-	int ix;
-
-#ifdef DEBUG
-	if (((int)kva & PGOFSET) || (size & PGOFSET))
-		panic("iounmap: unaligned");
-	if (kva < extiobase || kva >= extiobase + ctob(EIOMAPSIZE))
-		panic("iounmap: bad address");
-#endif
-	physunaccess(kva, size);
-	ix = btoc(kva - extiobase) + 1;
-	rmfree(extiomap, btoc(size), ix);
-}
-#endif
-
-#if NCD > 0
-#include <amiga/dev/cdvar.h>
-
-find_cdevices()
-{
-	register struct cddevice *cd;
-
-	for (cd = cddevice; cd->cd_unit >= 0; cd++) {
-		/*
-		 * XXX
-		 * Assign disk index first so that init routine
-		 * can use it (saves having the driver drag around
-		 * the cddevice pointer just to set up the dk_*
-		 * info in the open routine).
-		 */
-		if (dkn < DK_NDRIVE)
-			cd->cd_dk = dkn++;
-		else
-			cd->cd_dk = -1;
-		if (cdinit(cd))
-			printf("cd%d configured\n", cd->cd_unit);
-		else if (cd->cd_dk >= 0) {
-			cd->cd_dk = -1;
-			dkn--;
-		}
-	}
-}
-#endif
-
-#if 0
-isrinit()
-{
-	register int i;
-
-	for (i = 0; i < NISR; i++)
-		isrqueue[i].isr_forw = isrqueue[i].isr_back = &isrqueue[i];
-}
-
-void
-isrlink(isr)
-	register struct isr *isr;
-{
-	int i = ISRIPL(isr->isr_ipl);
-
-	if (i < 0 || i >= NISR) {
-		printf("bad IPL %d\n", i);
-		panic("configure");
-	}
-	insque(isr, isrqueue[i].isr_back);
-}
-#endif
-
 /*
  * Configure swap space and related parameters.
  */
+void
 swapconf()
 {
 	register struct swdevt *swp;
 	register int nblks;
 
-	for (swp = swdevt; swp->sw_dev; swp++)
-	  {
+	for (swp = swdevt; swp->sw_dev; swp++) {
 		if (bdevsw[major(swp->sw_dev)].d_psize) {
 			nblks =
-			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
+			    bdevsw[major(swp->sw_dev)].d_psize(swp->sw_dev);
 			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-			      {
+			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks)) {
 				swp->sw_nblks = nblks;
-/*				printf ("swap: dev %x = %d\n", swp->sw_dev, nblks);*/
-			      }
+			}
 		}
-	  }
+	}
 	dumpconf();
-
 	printf ("\n");
 }
 
@@ -1028,6 +957,7 @@ static	char devname[][2] = {
  * If we can do so, and not instructed not to do so,
  * change rootdev to correspond to the load device.
  */
+void
 setroot()
 {
 	register struct amiga_ctlr *ac;
@@ -1038,64 +968,62 @@ setroot()
 
 #ifdef DEBUG
 	if (acdebug > 1)
-	  printf ("setroot: boothowto = 0x%x, bootdev = 0x%x\n", boothowto, bootdev);
+		printf("setroot: boothowto = 0x%x, bootdev = 0x%x\n",
+			boothowto, bootdev);
 #endif
 
 	if (boothowto & RB_DFLTROOT ||
-	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
-	  {
+	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC) {
 #ifdef DEBUG
-	    if (acdebug > 1)
-	      printf ("returning due to: bad boothowto\n");
+		if (acdebug > 1)
+			printf("returning due to: bad boothowto\n");
 #endif
-	    return;
-	  }
+		return;
+	}
 	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	if (majdev > sizeof(devname) / sizeof(devname[0]))
-	  {
+	if (majdev > sizeof(devname) / sizeof(devname[0])) {
 #ifdef DEBUG
-	    if (acdebug > 1)
-	      printf ("returning due to: majdev (%d) > maxdevs (%d)\n",
-		      majdev, sizeof(devname) / sizeof(devname[0]));
+		if (acdebug > 1)
+			printf("returning due to: majdev(%d) > maxdevs(%d)\n",
+			    majdev, sizeof(devname) / sizeof(devname[0]));
 #endif
-	    return;
-	  }
+		return;
+	}
+
 	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
-	/* First, find the controller type which support this device.
+	/*
+	 * First, find the controller type which support this device.
+	 * Can have more than one controller for the same device, with
+	 * just one of them configured, so test for
+	 * ad->amiga_cdriver != 0 too.
+	 */
+	for (ad = amiga_dinit; ad->amiga_driver; ad++) {
+		if (ad->amiga_driver->d_name[0] != devname[majdev][0] 
+		    || ad->amiga_driver->d_name[1] != devname[majdev][1])
+			continue;
 
-	   Can have more than one controller for the same device, with 
-	   just one of them configured, so test for ad->amiga_cdriver != 0
-	   too.  */
+		/*
+		 * Next, find the controller of that type corresponding to
+		 * the adaptor number.
+		 */
+		for (ac = amiga_cinit; ac->amiga_driver; ac++)
+			if (ac->amiga_alive && ac->amiga_unit == adaptor &&
+			    ac->amiga_driver == ad->amiga_cdriver)
+				goto found_it;
+	}
 
-	for (ad = amiga_dinit; ad->amiga_driver; ad++)
-	  {
-	    if (ad->amiga_driver->d_name[0] != devname[majdev][0] 
-		|| ad->amiga_driver->d_name[1] != devname[majdev][1])
-	      continue;
-
-	    /*
-	     * Next, find the controller of that type corresponding to
-	     * the adaptor number.
-	     */
-	    for (ac = amiga_cinit; ac->amiga_driver; ac++)
-	      if (ac->amiga_alive && ac->amiga_unit == adaptor &&
-		  ac->amiga_driver == ad->amiga_cdriver)
-		goto found_it;
-	  }
-
-/* could also place after test, but I'd like to be on the safe side */
+	/* could also place after test, but I'd like to be on the safe side */
 found_it:
-	if (ad->amiga_driver == 0)
-	  {
+	if (ad->amiga_driver == 0) {
 #ifdef DEBUG
-	    if (acdebug > 1)
-	      printf ("returning due to: amiga_driver == 0\n");
+		if (acdebug > 1)
+			printf("returning due to: amiga_driver == 0\n");
 #endif
-	    return;
-	  }
+		return;
+	}
 
 	/*
 	 * Finally, find the device in question attached to that controller.
@@ -1105,35 +1033,33 @@ found_it:
 		    ad->amiga_cdriver == ac->amiga_driver &&
 		    ad->amiga_ctlr == ac->amiga_unit)
 			break;
-	if (ad->amiga_driver == 0)
-	  {
+	if (ad->amiga_driver == 0) {
 #ifdef DEBUG
-	    if (acdebug > 1)
-	      printf ("returning due to: no device\n");
+		if (acdebug > 1)
+			printf("returning due to: no device\n");
 #endif
-	    return;
-	  }
+		return;
+	}
 	mindev = ad->amiga_unit;
+
 	/*
 	 * Form a new rootdev
 	 */
 	mindev = (mindev << PARTITIONSHIFT) + part;
 	orootdev = rootdev;
 	rootdev = makedev(majdev, mindev);
+
 	/*
 	 * If the original rootdev is the same as the one
 	 * just calculated, don't need to adjust the swap configuration.
 	 */
-	if (rootdev == orootdev)
-	  {
+	if (rootdev == orootdev) {
 #ifdef DEBUG
-	    if (acdebug > 1)
-	      printf ("returning due to: new root == old root\n");
+		if (acdebug > 1)
+			printf("returning due to: new root == old root\n");
 #endif
-	    return;
-	  }
-
-
+		return;
+	}
 
 	printf("Changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
@@ -1162,9 +1088,11 @@ found_it:
 #endif
 }
 
-/* try to determine, of this machine is an A3000, which has a builtin
-   realtime clock and scsi controller, so that this hardware is only
-   included as "configured" if this IS an A3000  */
+/*
+ * Try to determine, of this machine is an A3000, which has a builtin
+ * realtime clock and scsi controller, so that this hardware is only
+ * included as "configured" if this IS an A3000
+ */
 
 int a3000_flag = 1;		/* patchable */
 #ifdef A4000
@@ -1174,50 +1102,52 @@ int a4000_flag = 0;		/* patchable */
 #endif
 
 int
-is_a3000 ()
+is_a3000()
 {
-  /* this is a dirty kludge.. but how do you do this RIGHT ? :-) */
-  extern long orig_fastram_start;
-  short sc;
-  extern int num_ConfigDev;
-  extern struct ConfigDev *ConfigDev;
-  struct ConfigDev *cd;
+	/* this is a dirty kludge.. but how do you do this RIGHT ? :-) */
+	extern long orig_fastram_start;
+	extern int num_ConfigDev;
+	extern struct ConfigDev *ConfigDev;
+	short sc;
+	struct ConfigDev *cd;
 
-  /* where is fastram on the A4000 ?? */
-  /* if fastram is below 0x07000000, assume it's not an A3000 */
-  if (orig_fastram_start < 0x07000000)
-    return (0);
+	/* where is fastram on the A4000 ?? */
+	/* if fastram is below 0x07000000, assume it's not an A3000 */
+	if (orig_fastram_start < 0x07000000)
+		return (0);
 
-  /* OK, fastram starts at or above 0x07000000, check specific machines */
-  for (sc = 0, cd = ConfigDev; sc < num_ConfigDev; sc++, cd++) {
-    switch (cd->cd_Rom.er_Manufacturer) {
-    case MANUF_PPI:			/* Progressive Peripherals, Inc */
-      switch (cd->cd_Rom.er_Product) {
-      case PROD_PPI_MERCURY:		/* PPI Mercury - it's an A3000 */
-      case PROD_PPI_A3000_040:		/* PP&S A3000 '040 */
-        return (1);
-      case PROD_PPI_ZEUS:		/* PPI Zeus - it's an A2000 */
-      case PROD_PPI_A2000_040:		/* PP&S A2000 '040 */
-      case PROD_PPI_A500_040:		/* PP&S A500 '040 */
-        return (0);
-      }
-      break;
+	/*
+	 * OK, fastram starts at or above 0x07000000, check specific
+	 * machines
+	 */
+	for (sc = 0, cd = ConfigDev; sc < num_ConfigDev; sc++, cd++) {
+		switch (cd->cd_Rom.er_Manufacturer) {
+		case MANUF_PPI:		/* Progressive Peripherals, Inc */
+			switch (cd->cd_Rom.er_Product) {
+			case PROD_PPI_MERCURY:	/* PPI Mercury - A3000 */
+			case PROD_PPI_A3000_040:/* PP&S A3000 '040 */
+				return (1);
+			case PROD_PPI_ZEUS:	/* PPI Zeus - it's an A2000 */
+			case PROD_PPI_A2000_040:/* PP&S A2000 '040 */
+			case PROD_PPI_A500_040:	/* PP&S A500 '040 */
+				return (0);
+			}
+			break;
 
-    case MANUF_IVS:			/* IVS */
-      switch (cd->cd_Rom.er_Product) {
-      case PROD_IVS_VECTOR_ACC:
-	return (0);			/* Is this an A2000 accelerator? */
-      }
-      break;
-    }
-  }
-  /* assume it's an A3000 */
-  return (a3000_flag);
+		case MANUF_IVS:			/* IVS */
+			switch (cd->cd_Rom.er_Product) {
+			case PROD_IVS_VECTOR_ACC:
+				return (0); /* A2000 accelerator? */
+			}
+			break;
+		}
+	}
+	/* XXX assume it's an A3000 */
+	return (a3000_flag);
 }
 
 int
-is_a4000 ()
+is_a4000()
 {
-  /* This is a real dirty kludge.. */
-  return (a4000_flag);
+	return (a4000_flag);		/* XXX */
 }
