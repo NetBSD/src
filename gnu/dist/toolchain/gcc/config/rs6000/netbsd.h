@@ -69,5 +69,6 @@
 #undef CPP_SPEC
 #define CPP_SPEC "\
 %{posix:-D_POSIX_SOURCE} \
+%{pthread:-D_REENTRANT -D_PTHREADS} \
 %{msoft-float:-D_SOFT_FLOAT} \
 %{mcall-sysv: -D_CALL_SYSV} %{mcall-aix: -D_CALL_AIX} %{!mcall-sysv: %{!mcall-aix: -D_CALL_SYSV}}"

@@ -6,7 +6,7 @@
 
 /* Fix up CPP_SPEC.  This merges the code from <netbsd.h> and <sparc/sparc.h> */
 #undef CPP_SPEC
-#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_PTHREADS} \
+#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT -D_PTHREADS} \
 %(cpp_cpu) %(cpp_arch) %(cpp_endian) %(cpp_subtarget)"
 
 #undef CPP_PREDEFINES

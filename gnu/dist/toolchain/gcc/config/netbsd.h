@@ -40,7 +40,9 @@
    for the 2.95.3 STL to work.  */
 
 #undef CPP_SPEC
-#define CPP_SPEC "%(cpp_cpu) %{posix:-D_POSIX_SOURCE} %{pthread:-D_PTHREADS}"
+#define CPP_SPEC \
+  "%(cpp_cpu) %{posix:-D_POSIX_SOURCE} \
+   %{pthread:-D_REENTRANT -D_PTHREADS}"
 
 /* Provide an ASM_SPEC appropriate for NetBSD.  Currently we only deal
    with the options for generating PIC code.  */
