@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.2 2000/03/20 18:48:34 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.3 2000/03/24 14:33:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.2 2000/03/20 18:48:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.3 2000/03/24 14:33:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,10 +307,6 @@ cac_cmd(sc, command, data, datasize, drive, blkno, flags, context)
 		size = datasize;
 		nsegs = 0;
 	}
-
-	/* XXXDEBUG */
-	if (size != datasize)
-		printf("%s: datasize %d != %d", sc->sc_dv.dv_xname, datasize, size);
 
 	ccb->ccb_hdr.drive = drive;
 	ccb->ccb_hdr.size = htole16((sizeof(struct cac_req) + 
