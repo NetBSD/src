@@ -1,5 +1,5 @@
-.\"	$NetBSD: setkey.8,v 1.10 2000/05/15 16:26:16 itojun Exp $
-.\"     $KAME: setkey.8,v 1.26 2000/05/15 16:23:55 itojun Exp $
+.\"	$NetBSD: setkey.8,v 1.11 2000/06/12 10:40:50 itojun Exp $
+.\"     $KAME: setkey.8,v 1.27 2000/06/10 14:17:44 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -130,7 +130,6 @@ Add an SAD entry.
 .It Xo
 .Li get
 .Ar src Ar dst Ar protocol Ar spi
-.Op Fl m Ar mode
 .Li ;
 .Xc
 Show an SAD entry.
@@ -138,7 +137,6 @@ Show an SAD entry.
 .It Xo
 .Li delete
 .Ar src Ar dst Ar protocol Ar spi
-.Op Fl m Ar mode
 .Li ;
 .Xc
 Remove an SAD entry.

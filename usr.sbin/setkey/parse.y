@@ -1,9 +1,10 @@
-/*	$NetBSD: parse.y,v 1.5 2000/03/06 22:19:27 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.6 2000/06/12 10:40:50 itojun Exp $	*/
+/*	$KAME: parse.y,v 1.29 2000/06/10 14:17:44 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,7 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* KAME Id: parse.y,v 1.14 1999/12/30 15:13:27 sakane Exp */
 
 %{
 #include <sys/types.h>
@@ -45,9 +45,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <netdb.h>
 #include <ctype.h>
 #include <errno.h>
 
+#include "libpfkey.h"
 #include "vchar.h"
 
 #define ATOX(c) \
@@ -78,6 +80,7 @@ extern char cmdarg[8192];
 extern int f_debug;
 
 int setkeymsg __P((void));
+static struct addrinfo *parse_addr __P((char *, char *, int));
 static int setvarbuf __P((int *, struct sadb_ext *, int, caddr_t, int));
 void parse_init __P((void));
 void free_buffer __P((void));
@@ -86,7 +89,8 @@ extern int setkeymsg __P((void));
 extern int sendkeymsg __P((void));
 
 extern int yylex __P((void));
-extern void yyerror __P((char *));
+extern void yyfatal __P((const char *));
+extern void yyerror __P((const char *));
 %}
 
 %union {
@@ -96,7 +100,7 @@ extern void yyerror __P((char *));
 
 %token EOT
 %token ADD GET DELETE FLUSH DUMP
-%token IP4_ADDRESS IP6_ADDRESS PREFIX PORT PORTANY
+%token ADDRESS PREFIX PORT PORTANY
 %token UP_PROTO PR_ESP PR_AH PR_IPCOMP
 %token F_PROTOCOL F_AUTH F_ENC F_REPLAY F_COMP F_RAWCPI
 %token F_MODE MODE F_REQID
@@ -112,7 +116,7 @@ extern void yyerror __P((char *));
 %type <num> UP_PROTO PR_ESP PR_AH PR_IPCOMP
 %type <num> ALG_AUTH ALG_ENC ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_COMP
 %type <num> DECSTRING
-%type <val> IP4_ADDRESS IP6_ADDRESS PL_REQUESTS
+%type <val> ADDRESS PL_REQUESTS
 %type <val> key_string policy_requests
 %type <val> QUOTEDSTRING HEXSTRING
 
@@ -154,13 +158,23 @@ add_command
 	/* delete */
 delete_command
 	:	DELETE { p_type = SADB_DELETE; }
-		sa_selector_spec extension_spec EOT
+		sa_selector_spec extension_spec
+		{
+			if (p_mode != IPSEC_MODE_ANY)
+				yyerror("WARNING: mode is obsoleted.");
+		}
+		EOT
 	;
 
 	/* get command */
 get_command
 	:	GET { p_type = SADB_GET; }
-		sa_selector_spec extension_spec EOT
+		sa_selector_spec extension_spec
+		{
+			if (p_mode != IPSEC_MODE_ANY)
+				yyerror("WARNING: mode is obsoleted.");
+		}
+		EOT
 	;
 
 	/* flush */
@@ -345,7 +359,7 @@ key_string
 
 			if ((pp_key = malloc($1.len)) == 0) {
 				free($1.buf);
-				yyerror(strerror(errno));
+				yyerror("not enough core");
 				return -1;
 			}
 			memset(pp_key, 0, $1.len);
@@ -367,7 +381,7 @@ extension_spec
 
 extension
 	:	F_EXT EXTENSION { p_ext |= $2; }
-	|	F_EXT NOCYCLICSEQ { p_ext ^= SADB_X_EXT_CYCSEQ; }
+	|	F_EXT NOCYCLICSEQ { p_ext &= ~SADB_X_EXT_CYCSEQ; }
 	|	F_MODE MODE { p_mode = $2; }
 	|	F_MODE ANY { p_mode = IPSEC_MODE_ANY; }
 	|	F_REQID DECSTRING { p_reqid = $2; }
@@ -401,7 +415,7 @@ spddelete_command:
 			p_type = SADB_X_SPDDELETE;
 			p_satype = SADB_SATYPE_UNSPEC;
 		}
-		sp_selector_spec EOT
+		sp_selector_spec policy_spec EOT
 	;
 
 spddump_command:
@@ -426,12 +440,46 @@ spdflush_command:
 sp_selector_spec
 	:	ipaddress { p_src = pp_addr; }
 		prefix { p_prefs = pp_prefix; }
-		port { _INPORTBYSA(p_src) = htons(pp_port); }
+		port
+		{
+			switch (p_src->sa_family) {
+			case AF_INET:
+				((struct sockaddr_in *)p_src)->sin_port =
+				    htons(pp_port);
+				break;
+#ifdef INET6
+			case AF_INET6:
+				((struct sockaddr_in6 *)p_src)->sin6_port =
+				    htons(pp_port);
+				break;
+#endif
+			default:
+				exit(1); /*XXX*/
+			}
+		}
 		ipaddress { p_dst = pp_addr; }
 		prefix { p_prefd = pp_prefix; }
-		port { _INPORTBYSA(p_dst) = htons(pp_port); }
+		port
+		{
+			switch (p_dst->sa_family) {
+			case AF_INET:
+				((struct sockaddr_in *)p_dst)->sin_port =
+				    htons(pp_port);
+				break;
+#ifdef INET6
+			case AF_INET6:
+				((struct sockaddr_in6 *)p_dst)->sin6_port =
+				    htons(pp_port);
+				break;
+#endif
+			default:
+				exit(1); /*XXX*/
+			}
+		}
 		upper_spec
 		{
+			/* XXX is it something userland should check? */
+#if 0
 			switch (p_upper) {
 			case IPPROTO_ICMP:
 			case IPPROTO_ICMPV6:
@@ -440,57 +488,41 @@ sp_selector_spec
 					yyerror("port number must be \"any\".");
 					return -1;
 				}
+				if ((pp_addr->sa_family == AF_INET6
+				  && p_upper == IPPROTO_ICMP)
+				 || (pp_addr->sa_family == AF_INET
+				  && p_upper == IPPROTO_ICMPV6)) {
+					yyerror("upper layer protocol "
+						"mismatched.\n");
+					return -1;
+				}
 				break;
 			default:
 				break;
 			}
+#endif
 		}
 	;
 
 ipaddress
-	:	IP4_ADDRESS
+	:	ADDRESS
 		{
-			struct sockaddr_in *in;
-			u_int sa_len = $1.len;
+			struct addrinfo *res;
 
-			if ((in = (struct sockaddr_in *)malloc(sa_len)) == 0) {
-				yyerror(strerror(errno));
+			res = parse_addr($1.buf, NULL, AI_NUMERICHOST);
+			if (res == NULL) {
 				free($1.buf);
 				return -1;
 			}
-			memset((caddr_t)in, 0, sa_len);
-
-			in->sin_family = PF_INET;
-			in->sin_len = sa_len;
-			in->sin_port = IPSEC_PORT_ANY;
-			(void)inet_pton(PF_INET, $1.buf, &in->sin_addr);
-
-			pp_addr = (struct sockaddr *)in;
-			free($1.buf);
-		}
-	|	IP6_ADDRESS
-		{
-#ifdef INET6
-			struct sockaddr_in6 *in6;
-			u_int sa_len = $1.len;
-
-			if ((in6 = (struct sockaddr_in6 *)malloc(sa_len)) == 0) {
-				free($1.buf);
-				yyerror(strerror(errno));
-				return -1;
+			pp_addr = (struct sockaddr *)malloc(res->ai_addrlen);
+			if (!pp_addr) {
+				yyerror("not enough core");
+				goto end;
 			}
-			memset((caddr_t)in6, 0, sa_len);
 
-			in6->sin6_family = PF_INET6;
-			in6->sin6_len = sa_len;
-			in6->sin6_port = IPSEC_PORT_ANY;
-			(void)inet_pton(PF_INET6, $1.buf,
-					&in6->sin6_addr);
-
-			pp_addr = (struct sockaddr *)in6;
-#else
-			yyerror("IPv6 address not supported");
-#endif
+			memcpy(pp_addr, res->ai_addr, res->ai_addrlen);
+		    end:
+			freeaddrinfo(res);
 			free($1.buf);
 		}
 	;
@@ -547,12 +579,9 @@ setkeymsg()
 	m_msg.sadb_msg_type = p_type;
 	m_msg.sadb_msg_errno = 0;
 	m_msg.sadb_msg_satype = p_satype;
-	m_msg.sadb_msg_mode = p_mode;
-	m_msg.sadb_msg_reserved1 = 0;
+	m_msg.sadb_msg_reserved = 0;
 	m_msg.sadb_msg_seq = 0;
 	m_msg.sadb_msg_pid = getpid();
-	m_msg.sadb_msg_reqid = p_reqid;
-	m_msg.sadb_msg_reserved2 = 0;
 
 	m_len = sizeof(struct sadb_msg);
 	memcpy(m_buf, &m_msg, m_len);
@@ -632,6 +661,7 @@ setkeymsg()
 	case SADB_GET:
 	    {
 		struct sadb_sa m_sa;
+		struct sadb_x_sa2 m_sa2;
 		struct sadb_address m_addr;
 		u_int len;
 
@@ -648,14 +678,36 @@ setkeymsg()
 		memcpy(m_buf + m_len, &m_sa, len);
 		m_len += len;
 
+		len = sizeof(struct sadb_x_sa2);
+		m_sa2.sadb_x_sa2_len = PFKEY_UNIT64(len);
+		m_sa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
+		m_sa2.sadb_x_sa2_mode = p_mode;
+		m_sa2.sadb_x_sa2_reqid = p_reqid;
+
+		memcpy(m_buf + m_len, &m_sa2, len);
+		m_len += len;
+
 		/* set src */
 		m_addr.sadb_address_len =
 			PFKEY_UNIT64(sizeof(m_addr)
 			           + PFKEY_ALIGN8(p_src->sa_len));
 		m_addr.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
 		m_addr.sadb_address_proto = IPSEC_ULPROTO_ANY;
-		m_addr.sadb_address_prefixlen =
-			_INALENBYAF(p_src->sa_family) << 3;
+		switch (p_src->sa_family) {
+		case AF_INET:
+			m_addr.sadb_address_prefixlen =
+			    sizeof(struct in_addr) << 3;
+			break;
+#ifdef INET6
+		case AF_INET6:
+			m_addr.sadb_address_prefixlen =
+			    sizeof(struct in6_addr) << 3;
+			break;
+#endif
+		default:
+			yyerror("unsupported address family");
+			exit(1);	/*XXX*/
+		}
 		m_addr.sadb_address_reserved = 0;
 
 		setvarbuf(&m_len,
@@ -668,8 +720,21 @@ setkeymsg()
 			           + PFKEY_ALIGN8(p_dst->sa_len));
 		m_addr.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 		m_addr.sadb_address_proto = IPSEC_ULPROTO_ANY;
-		m_addr.sadb_address_prefixlen =
-			_INALENBYAF(p_dst->sa_family) << 3;
+		switch (p_dst->sa_family) {
+		case AF_INET:
+			m_addr.sadb_address_prefixlen =
+			    sizeof(struct in_addr) << 3;
+			break;
+#ifdef INET6
+		case AF_INET6:
+			m_addr.sadb_address_prefixlen =
+			    sizeof(struct in6_addr) << 3;
+			break;
+#endif
+		default:
+			yyerror("unsupported address family");
+			exit(1);	/*XXX*/
+		}
 		m_addr.sadb_address_reserved = 0;
 
 		setvarbuf(&m_len,
@@ -684,17 +749,15 @@ setkeymsg()
 		break;
 
 	case SADB_X_SPDADD:
+	case SADB_X_SPDDELETE:
 	    {
+		struct sadb_address m_addr;
+		u_int8_t plen;
+
 		memcpy(m_buf + m_len, p_policy, p_policy_len);
 		m_len += p_policy_len;
 		free(p_policy);
 		p_policy = NULL;
-	    }
-		/* FALLTHROUGH */
-
-	case SADB_X_SPDDELETE:
-	    {
-		struct sadb_address m_addr;
 
 		/* set src */
 		m_addr.sadb_address_len =
@@ -702,9 +765,21 @@ setkeymsg()
 			           + PFKEY_ALIGN8(p_src->sa_len));
 		m_addr.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
 		m_addr.sadb_address_proto = p_upper;
+		switch (p_src->sa_family) {
+		case AF_INET:
+			plen = sizeof(struct in_addr) << 3;
+			break;
+#ifdef INET6
+		case AF_INET6:
+			plen = sizeof(struct in6_addr) << 3;
+			break;
+#endif
+		default:
+			yyerror("unsupported address family");
+			exit(1);	/*XXX*/
+		}
 		m_addr.sadb_address_prefixlen =
-		    (p_prefs != ~0 ? p_prefs :
-		                     _INALENBYAF(p_src->sa_family) << 3);
+		    (p_prefs != ~0 ? p_prefs : plen);
 		m_addr.sadb_address_reserved = 0;
 
 		setvarbuf(&m_len,
@@ -717,9 +792,21 @@ setkeymsg()
 			           + PFKEY_ALIGN8(p_dst->sa_len));
 		m_addr.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 		m_addr.sadb_address_proto = p_upper;
+		switch (p_dst->sa_family) {
+		case AF_INET:
+			plen = sizeof(struct in_addr) << 3;
+			break;
+#ifdef INET6
+		case AF_INET6:
+			plen = sizeof(struct in6_addr) << 3;
+			break;
+#endif
+		default:
+			yyerror("unsupported address family");
+			exit(1);	/*XXX*/
+		}
 		m_addr.sadb_address_prefixlen =
-		    (p_prefd != ~0 ? p_prefd :
-		                     _INALENBYAF(p_dst->sa_family) << 3);
+		    (p_prefd != ~0 ? p_prefd : plen);
 		m_addr.sadb_address_reserved = 0;
 
 		setvarbuf(&m_len,
@@ -732,6 +819,30 @@ setkeymsg()
 	((struct sadb_msg *)m_buf)->sadb_msg_len = PFKEY_UNIT64(m_len);
 
 	return 0;
+}
+
+static struct addrinfo *
+parse_addr(host, port, flag)
+	char *host;
+	char *port;
+	int flag;
+{
+	struct addrinfo hints, *res = NULL;
+	int error;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = flag;
+	error = getaddrinfo(host, port, &hints, &res);
+	if (error != 0) {
+		yyerror(gai_strerror(error));
+		return NULL;
+	}
+	if (res->ai_next != NULL) {
+		yyerror(gai_strerror(error));
+	}
+	return res;
 }
 
 static int
