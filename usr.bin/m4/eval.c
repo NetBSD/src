@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.9 1997/02/08 23:50:40 cgd Exp $	*/
+/*	$NetBSD: eval.c,v 1.10 1997/10/19 04:39:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: eval.c,v 1.9 1997/02/08 23:50:40 cgd Exp $";
+__RCSID("$NetBSD: eval.c,v 1.10 1997/10/19 04:39:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +52,7 @@ static char rcsid[] = "$NetBSD: eval.c,v 1.9 1997/02/08 23:50:40 cgd Exp $";
  */
 
 #include <sys/types.h>
+#include <err.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -82,11 +84,11 @@ static char rcsid[] = "$NetBSD: eval.c,v 1.9 1997/02/08 23:50:40 cgd Exp $";
 
 void
 eval(argv, argc, td)
-register char *argv[];
-register int argc;
-register int td;
+	char *argv[];
+	int argc;
+	int td;
 {
-	register int c, n;
+	int c, n;
 	static int sysval = 0;
 
 #ifdef DEBUG
@@ -193,7 +195,7 @@ register int td;
 	case INCLTYPE:
 		if (argc > 2)
 			if (!doincl(argv[2]))
-				oops("%s: %s", argv[2], strerror(errno));
+				err(1, "%s", argv[2]);
 		break;
 
 	case SINCTYPE:
@@ -204,7 +206,7 @@ register int td;
 	case PASTTYPE:
 		if (argc > 2)
 			if (!dopaste(argv[2]))
-				oops("%s: %s", argv[2], strerror(errno));
+				err(1, "%s", argv[2]);
 		break;
 
 	case SPASTYPE:
@@ -236,7 +238,6 @@ register int td;
 	 * argv[2])
 	 */
 		if (argc > 3) {
-			int k;
 			for (n = argc - 1; n > 3; n--) {
 				pbstr(rquote);
 				pbstr(argv[n]);
@@ -371,7 +372,7 @@ register int td;
 		break;
 
 	default:
-		oops("%s: major botch.", "eval");
+		errx(1, "eval: major botch");
 		break;
 	}
 }
@@ -383,13 +384,13 @@ char *dumpfmt = "`%s'\t`%s'\n";	       /* format string for dumpdef   */
  */
 void
 expand(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
-	register char *t;
-	register char *p;
-	register int n;
-	register int argno;
+	char *t;
+	char *p;
+	int n;
+	int argno;
 
 	t = argv[0];		       /* defn string as a whole */
 	p = t;
@@ -454,15 +455,15 @@ register int argc;
  */
 void
 dodefine(name, defn)
-register char *name;
-register char *defn;
+	char *name;
+	char *defn;
 {
-	register ndptr p;
+	ndptr p;
 
 	if (!*name)
-		oops("null definition.");
+		errx(1, "null definition");
 	if (STREQ(name, defn))
-		oops("%s: recursive definition.", name);
+		errx(1, "%s: recursive definition", name);
 	if ((p = lookup(name)) == nil)
 		p = addent(name);
 	else if (p->defn != null)
@@ -480,9 +481,9 @@ register char *defn;
  */
 void
 dodefn(name)
-char *name;
+	char *name;
 {
-	register ndptr p;
+	ndptr p;
 
 	if ((p = lookup(name)) != nil && p->defn != null) {
 		pbstr(rquote);
@@ -500,15 +501,15 @@ char *name;
  */
 void
 dopushdef(name, defn)
-register char *name;
-register char *defn;
+	char *name;
+	char *defn;
 {
-	register ndptr p;
+	ndptr p;
 
 	if (!*name)
-		oops("null definition");
+		errx(1, "null definition");
 	if (STREQ(name, defn))
-		oops("%s: recursive definition.", name);
+		errx(1, "%s: recursive definition", name);
 	p = addent(name);
 	if (!*defn)
 		p->defn = null;
@@ -524,10 +525,10 @@ register char *defn;
  */
 void
 dodump(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
-	register int n;
+	int n;
 	ndptr p;
 
 	if (argc > 2) {
@@ -549,8 +550,8 @@ register int argc;
  */
 void
 doifelse(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
 	cycle {
 		if (STREQ(argv[2], argv[3]))
@@ -571,10 +572,10 @@ register int argc;
  */
 int
 doincl(ifile)
-char *ifile;
+	char *ifile;
 {
 	if (ilevel + 1 == MAXINP)
-		oops("too many include files.");
+		errx(1, "too many include files");
 	if ((infile[ilevel + 1] = fopen(ifile, "r")) != NULL) {
 		ilevel++;
 		bbase[ilevel] = bufbase = bp;
@@ -591,10 +592,10 @@ char *ifile;
  */
 int
 dopaste(pfile)
-char *pfile;
+	char *pfile;
 {
 	FILE *pf;
-	register int c;
+	int c;
 
 	if ((pf = fopen(pfile, "r")) != NULL) {
 		while ((c = getc(pf)) != EOF)
@@ -612,8 +613,8 @@ char *pfile;
  */
 void
 dochq(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
 	if (argc > 2) {
 		if (*argv[2])
@@ -636,8 +637,8 @@ register int argc;
  */
 void
 dochc(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
 	if (argc > 2) {
 		if (*argv[2])
@@ -660,7 +661,7 @@ register int argc;
  */
 void
 dodiv(n)
-register int n;
+	int n;
 {
 	int tempfilenum;
 
@@ -673,7 +674,7 @@ register int n;
 	if (outfile[tempfilenum] == NULL) {
 		m4temp[UNIQUE] = tempfilenum + '0';
 		if ((outfile[tempfilenum] = fopen(m4temp, "w")) == NULL)
-			oops("%s: cannot divert.", m4temp);
+			err(1, "%s: cannot divert", m4temp);
 	}
 	oindex = n;
 	active = outfile[tempfilenum];
@@ -685,11 +686,11 @@ register int n;
  */
 void
 doundiv(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
-	register int ind;
-	register int n;
+	int ind;
+	int n;
 
 	if (argc > 2) {
 		for (ind = 2; ind < argc; ind++) {
@@ -710,11 +711,11 @@ register int argc;
  */
 void
 dosub(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
-	register char *ap, *fc, *k;
-	register int nc;
+	char *ap, *fc, *k;
+	int nc;
 
 	if (argc < 5)
 		nc = MAXTOK;
@@ -762,13 +763,13 @@ register int argc;
  */
 void
 map(dest, src, from, to)
-register char *dest;
-register char *src;
-register char *from;
-register char *to;
+	char *dest;
+	char *src;
+	char *from;
+	char *to;
 {
-	register char *tmp;
-	register char sch, dch;
+	char *tmp;
+	char sch, dch;
 	static char mapvec[128] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 		12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
@@ -790,23 +791,23 @@ register char *to;
 	 * "to"
 	 */
 		while (*from)
-			mapvec[*from++] = (*to) ? *to++ : (char) 0;
+			mapvec[(int)*from++] = (*to) ? *to++ : (char) 0;
 
 		while (*src) {
 			sch = *src++;
-			dch = mapvec[sch];
+			dch = mapvec[(int)sch];
 			while (dch != sch) {
 				sch = dch;
-				dch = mapvec[sch];
+				dch = mapvec[(int)sch];
 			}
-			if (*dest = dch)
+			if ((*dest = dch) != 0)
 				dest++;
 		}
 	/*
 	 * restore all the changed characters
 	 */
 		while (*tmp) {
-			mapvec[*tmp] = *tmp;
+			mapvec[(int)*tmp] = *tmp;
 			tmp++;
 		}
 	}
