@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.4 1996/10/13 03:47:29 christos Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.5 1996/10/30 00:24:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -84,28 +84,16 @@ ie_obio_match(parent, vcf, args)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-	int pa, x;
 
-#ifdef	DIAGNOSTIC
-	if (ca->ca_bustype != BUS_OBIO) {
-		printf("ie_obio_match: bustype %d?\n", ca->ca_bustype);
-		return (0);
-	}
-#endif
-
-	/*
-	 * OBIO match functions may be called for every possible
-	 * physical address, so match only our physical address.
-	 */
-	if ((pa = cf->cf_paddr) == -1) {
-		/* Use our default PA. */
-		pa = OBIO_INTEL_ETHER;
-	}
-	if (pa != ca->ca_paddr)
+	/* Make sure there is something there... */
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
 
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
-	return (x != -1);
+	/* Default interrupt priority. */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = 3;
+
+	return (1);
 }
 
 void
@@ -117,12 +105,6 @@ ie_obio_attach(parent, self, args)
 	struct ie_softc *sc = (void *) self;
 	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = args;
-	int intpri;
-
-	/* Default interrupt level. */
-	if ((intpri = cf->cf_intpri) == -1)
-		intpri = 3;
-	printf(" level %d", intpri);
 
 	sc->hard_type = IE_OBIO;
 	sc->reset_586 = ie_obreset;
@@ -177,7 +159,7 @@ ie_obio_attach(parent, self, args)
 	ie_attach(sc);
 
 	/* Install interrupt handler. */
-	isr_add_autovect(ie_intr, (void *)sc, intpri);
+	isr_add_autovect(ie_intr, (void *)sc, ca->ca_intpri);
 }
 
 
