@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.24 2001/08/06 15:56:08 tv Exp $
+#	$NetBSD: Makefile,v 1.25 2001/11/19 05:06:50 perry Exp $
 
-# for OBJECT_FMT, UNPRIVILEGED
+# for OBJECT_FMT, UNPRIVED
 .include <bsd.own.mk>
 
 .if !defined(USE_NEW_TOOLCHAIN)
@@ -147,7 +147,7 @@ ldemul-list.h: Makefile
 afterinstall:
 .if ${MKSHARE} != "no"
 	(cd ldscripts ; pax -rw . ${DESTDIR}${SCRIPTDIR})
-.if !defined(UNPRIVILEGED)
+.if !defined(UNPRIVED)
 	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}${SCRIPTDIR}
 .endif
 	find ${DESTDIR}${SCRIPTDIR} -type f | xargs chmod a=rX
