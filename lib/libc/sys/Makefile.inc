@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.20 1994/04/15 22:48:01 jtc Exp $
+#	$Id: Makefile.inc,v 1.21 1994/05/04 02:32:24 cgd Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -20,7 +20,8 @@ ASM=	accept.o access.o acct.o adjtime.o async_daemon.o bind.o chdir.o \
 	getgroups.o gethostid.o gethostname.o getitimer.o getkerninfo.o \
 	getpagesize.o getpeername.o getpgrp.o getpid.o getppid.o \
 	getpriority.o getrlimit.o getrusage.o getsockname.o getsockopt.o \
-	gettimeofday.o getuid.o ioctl.o kill.o ktrace.o link.o listen.o \
+	gettimeofday.o getuid.o ioctl.o kill.o ktrace.o lfs_bmapv.o \
+	lfs_markv.o lfs_segclean.o lfs_segwait.o link.o listen.o \
 	lstat.o madvise.o mincore.o mkdir.o mkfifo.o mknod.o \
 	mount.o mprotect.o msgsys.o msync.o munmap.o nfssvc.o open.o \
 	profil.o quotactl.o read.o readlink.o readv.o recvfrom.o recvmsg.o \
