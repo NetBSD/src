@@ -1,7 +1,7 @@
-/*	$NetBSD: ncr.c,v 1.37.2.1 1997/07/01 17:34:16 bouyer Exp $	*/
+/*	$NetBSD: ncr.c,v 1.37.2.2 1997/07/17 13:42:38 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1996 Matthias Pfaller.
+ * Copyright (c) 1996, 1997 Matthias Pfaller.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpufunc.h>
 
-
 /*
  * Function declarations:
  */
@@ -67,10 +66,11 @@ static void	ncr_wait_not_req __P((struct ncr5380_softc *sc));
 /*
  * Bit allocation in config's sc_flags field.
  *
- * bit     0: disable disconnect/reconnect
- * bit     1: disable use of interrupts
- * bit     2: reset scsi bus in ncr_attach
- * bits 8-15: disable parity (per target)
+ * bit		0: disable disconnect/reconnect
+ * bit		1: disable use of interrupts
+ * bit		2: reset scsi bus in ncr_attach
+ * bits	8-15: disable parity (per target)
+ * bits	16-23: disable disconnect/reconnect (per target)
  */
 #define NCR_DISABLE_RESELECT	1
 #define NCR_DISABLE_INTERRUPTS	2
@@ -90,7 +90,7 @@ struct scsipi_adapter ncr_switch = {
 
 struct scsipi_device ncr_dev = {
 	NULL,			/* use default error handler		*/
-	NULL,			/* do not have a start functio		*/
+	NULL,			/* do not have a start function		*/
 	NULL,			/* have no async handler		*/
 	NULL			/* Use default done routine		*/
 };
@@ -179,7 +179,8 @@ ncr_attach(parent, self, aux)
 		sc->sc_no_disconnect = 0xff;
 	if (flags & NCR_DISABLE_INTERRUPTS)
 		sc->sc_flags |= NCR5380_FORCE_POLLING;
-	sc->sc_parity_disable = flags >> 8;
+	sc->sc_parity_disable = (flags >>  8) & 0xff;
+	sc->sc_no_disconnect |= (flags >> 16) & 0xff;
 
 	intr_establish(IR_SCSI1, ncr_intr, (void *)sc, sc->sc_dev.dv_xname,
 		IPL_BIO, IPL_BIO, RISING_EDGE);
@@ -231,7 +232,9 @@ ncr_intr(arg)
 #endif
 
 #ifndef NCR_TSIZE_IN
-#define NCR_TSIZE_IN	128
+#define NCR_TSIZE_IN   512
+#define NCR_UNROLL_TIMES   8
+#define NCR_UNROLL_SIZE (NCR_UNROLL_TIMES * sizeof(u_long))
 #endif
 
 #define TIMEOUT	1000000
@@ -259,7 +262,7 @@ ncr_ready(sc)
 static __inline void ncr_wait_not_req(sc)
 	struct ncr5380_softc *sc;
 {
-	register int timo;
+	int timo;
 	for (timo = TIMEOUT; timo; timo--) {
 		if ((*sc->sci_bus_csr & SCI_BUS_REQ) == 0 ||
 		    (*sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0 ||
@@ -284,27 +287,50 @@ ncr_pdma_in(sc, phase, datalen, data)
 	*sc->sci_irecv = 0;
 
 	for (resid = datalen; resid >= NCR_TSIZE_IN; resid -= NCR_TSIZE_IN) {
+		int i;
 		if (ncr_ready(sc) == 0) {
 			goto interrupt;
 		}
-		di();
-		movsd((u_char *)pdma, data, NCR_TSIZE_IN / 4);
-		ei();
+		for (i = (NCR_TSIZE_IN/NCR_UNROLL_SIZE); i--;
+			data += NCR_UNROLL_SIZE) {
+				R4(0); R4(1); R4(2); R4(3);
+				R4(4); R4(5); R4(6); R4(7);
+		}
 	}
 
 	if (resid) {
-		int t;
+		int t = resid/sizeof(u_long);
 		if (ncr_ready(sc) == 0) {
 			goto interrupt;
 		}
-		t = resid / sizeof(int);
-		di();
-		movsd((u_char *)pdma, data, t);
+		/* Use duffs device to copy by 4 byte words */
+		{
+		    int rem, nchunk;
+		    rem = t % NCR_UNROLL_TIMES;
+		    nchunk = t / NCR_UNROLL_TIMES;
+		    data += (rem - 1) * sizeof(u_long);
+		    switch(rem) {
+		        while(nchunk--) {
+		            data += NCR_UNROLL_SIZE;
+		            R4(-7);
+		        case 7: R4(-6);
+		        case 6: R4(-5);
+		        case 5: R4(-4);
+		        case 4: R4(-3);
+		        case 3: R4(-2);
+		        case 2: R4(-1);
+		        case 1: R4(0);
+		        case 0:
+		        }
+		    }
+		    data += sizeof(u_long);
+		}
+
 		t *= sizeof(int);
 		resid -= t;
 
-		movsb((u_char *)pdma, data, resid);
-		ei();
+		for(; resid--; data++)
+			R1(0);
 		resid = 0;
 	}
 	ncr_wait_not_req(sc);

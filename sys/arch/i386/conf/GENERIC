@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.82.2.1 1997/07/01 17:33:55 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.82.2.2 1997/07/17 13:42:32 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -170,6 +170,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
+se0    at scsibus? target ? lun ?
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
@@ -201,7 +202,7 @@ ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
-ep*	at pci? dev ? function ?		# 3C590 ethernet cards
+ep*	at pci? dev ? function ?		# 3C59x/3C90x ethernet cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 
@@ -216,6 +217,9 @@ gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is recor
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+
+# Planetconnect Satellite receiver driver.
+#satlink0 at isa? port 0x300 drq 1
 
 # PnP bus and devices should be declared last 
 isapnp0	at isa? 

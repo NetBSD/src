@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.57.2.1 1997/07/01 17:35:45 bouyer Exp $
+#	$NetBSD: files.amiga,v 1.57.2.2 1997/07/17 13:42:48 bouyer Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -281,6 +281,8 @@ attach	drsc at mainbus
 file  arch/amiga/dev/drsc.c           drsc needs-flag
 
 # list of standard files...
+include    "arch/m68k/fpe/files.fpe"
+
 file	dev/cons.c			ite | ser
 file	dev/cninit.c			ite | ser
 file	arch/amiga/amiga/amiga_init.c
