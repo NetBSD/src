@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.20 2001/03/10 23:52:45 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.21 2001/11/02 05:30:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -470,7 +470,6 @@ extern int	rt_sock;		/* routing socket */
 extern int	rt_sock_seqno;
 extern int	rdisc_sock;		/* router-discovery raw socket */
 
-extern int	seqno;			/* sequence number for messages */
 extern int	supplier;		/* process should supply updates */
 extern int	supplier_set;		/* -s or -q requested */
 extern int	lookforinterfaces;	/* 1=probe for new up interfaces */
