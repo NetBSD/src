@@ -429,8 +429,10 @@
 ./usr/include/g++/std
 ./usr/include/g++/std/bastring.cc
 ./usr/include/g++/std/bastring.h
+./usr/include/g++/std/bastring_inst.h
 ./usr/include/g++/std/complext.cc
 ./usr/include/g++/std/complext.h
+./usr/include/g++/std/complext_inst.h
 ./usr/include/g++/std/dcomplex.h
 ./usr/include/g++/std/fcomplex.h
 ./usr/include/g++/std/ldcomplex.h
