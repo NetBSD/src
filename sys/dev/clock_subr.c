@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.9 2003/08/13 11:35:25 ragge Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.10 2004/12/29 20:55:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.9 2003/08/13 11:35:25 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.10 2004/12/29 20:55:57 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ time_t
 clock_ymdhms_to_secs(dt)
 	struct clock_ymdhms *dt;
 {
-	time_t secs;
+	uint64_t secs;
 	int i, year, days;
 
 	year = dt->dt_year;
@@ -138,6 +138,7 @@ clock_ymdhms_to_secs(dt)
 	 * Compute days since start of time
 	 * First from years, then from months.
 	 */
+	if (year < POSIX_BASE_YEAR) return -1;
 	days = 0;
 	for (i = POSIX_BASE_YEAR; i < year; i++)
 		days += days_in_year(i);
@@ -150,11 +151,12 @@ clock_ymdhms_to_secs(dt)
 	days += (dt->dt_day - 1);
 
 	/* Add hours, minutes, seconds. */
-	secs = ((days
+	secs = (((uint64_t)days
 	    * 24 + dt->dt_hour)
 	    * 60 + dt->dt_min)
 	    * 60 + dt->dt_sec;
 
+	if ((time_t)secs != secs) return -1;
 	return (secs);
 }
 
