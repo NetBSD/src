@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.5 2000/05/15 07:48:25 bouyer Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.6 2000/06/12 20:13:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -276,6 +276,7 @@ static const struct scf_period scf_period[] __attribute__((__unused__)) = {
 #define SIEN0_PAR	0x01
 
 #define SIOP_SIEN1	0x41 /* SCSI interrupt enable 1, R/W */
+#define SIEN1_SBMC	0x10 /* 895 only */
 #define SIEN1_STO	0x04
 #define SIEN1_GEN	0x02
 #define SIEN1_HTH	0x01
@@ -291,6 +292,7 @@ static const struct scf_period scf_period[] __attribute__((__unused__)) = {
 #define SIST0_PAR	0x01
 
 #define SIOP_SIST1	0x43 /* SCSI interrut status 1, RO */
+#define SIST1_SBMC	0x10 /* 895 only */
 #define SIST1_STO	0x04
 #define SIST1_GEN	0x02
 #define SIST1_HTH	0x01

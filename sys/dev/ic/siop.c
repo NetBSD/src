@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.19 2000/06/07 14:40:20 tsutsui Exp $	*/
+/*	$NetBSD: siop.c,v 1.20 2000/06/12 20:13:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -388,8 +388,6 @@ siop_intr(v)
 		}
 	} 
 	if (cbdp == NULL) {
-		printf("%s: current DSA invalid\n",
-		    sc->sc_dev.dv_xname);
 		siop_cmd = NULL;
 	}
 	if (istat & ISTAT_DIP) {
@@ -433,6 +431,9 @@ siop_intr(v)
 			printf("last msg_in=0x%x status=0x%x\n",
 			    siop_cmd->siop_table->msg_in[0],
 			    le32toh(siop_cmd->siop_table->status));
+		else 
+			printf("%s: current DSA invalid\n",
+			    sc->sc_dev.dv_xname);
 		need_reset = 1;
 		}
 	}
@@ -564,6 +565,26 @@ siop_intr(v)
 			    "command\n", sc->sc_dev.dv_xname);
 			goto reset;
 		}
+		if (sist1 & SIST1_SBMC) {
+			/* SCSI bus mode change */
+			if (siop_modechange(sc) == 0 || need_reset == 1)
+				goto reset;
+			if ((istat & ISTAT_DIP) && (dstat & DSTAT_SIR)) {
+				/*
+				 * we have a script interrupt, it will
+				 * restart the script.
+				 */
+				goto scintr;
+			}
+			/*
+			 * else we have to restart it ourselve, at the
+			 * interrupted instruction.
+			 */
+			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
+			    bus_space_read_4(sc->sc_rt, sc->sc_rh,
+			    SIOP_DSP) - 8);
+			return 1;
+		}
 		/* Else it's an unhandled exeption (for now). */
 		printf("%s: unhandled scsi interrupt, sist0=0x%x sist1=0x%x "
 		    "sstat1=0x%x DSA=0x%x DSP=0x%x\n", sc->sc_dev.dv_xname,
@@ -592,7 +613,7 @@ reset:
 		return 1;
 	}
 
-
+scintr:
 	if ((istat & ISTAT_DIP) && (dstat & DSTAT_SIR)) { /* script interrupt */
 		irqcode = bus_space_read_4(sc->sc_rt, sc->sc_rh,
 		    SIOP_DSPS);
