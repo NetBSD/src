@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.10 1997/10/17 04:44:01 jonathan Exp $	*/
+/*	$NetBSD: endian.h,v 1.11 1997/10/20 09:57:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -38,6 +38,19 @@
 #ifndef _MIPS_ENDIAN_H_
 #define	_MIPS_ENDIAN_H_
 
+#ifndef _BYTE_ORDER
+# error  Define MIPS target CPU endian-ness in port-specific header file.
+#endif
+
+/*
+ * Definitions for byte order, according to byte significance from low
+ * address to high.
+ */
+#define	_LITTLE_ENDIAN	1234	/* LSB first: i386, vax */
+#define	_BIG_ENDIAN	4321	/* MSB first: 68000, ibm, net */
+#define	_PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
+
+
 /*
  * Define _NOQUAD if the compiler does NOT support 64-bit integers.
  */
@@ -46,22 +59,25 @@
 /*
  * Define the order of 32-bit words in 64-bit words.
  */
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 #define _QUAD_HIGHWORD 1
 #define _QUAD_LOWWORD 0
+#endif
+
+#if _BYTE_ORDER == _BIG_ENDIAN
+#define _QUAD_HIGHWORD 0
+#define _QUAD_LOWWORD 1
+#endif
+
 
 #ifndef _POSIX_SOURCE
 /*
- * Definitions for byte order, according to byte significance from low
- * address to high.
+ *  Traditional names for byteorder.
  */
-#define	LITTLE_ENDIAN	1234	/* LSB first: i386, vax */
-#define	BIG_ENDIAN	4321	/* MSB first: 68000, ibm, net */
-#define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
-
-#ifndef BYTE_ORDER
-# error  Define MIPS target CPU endian-ness in port-specific header file
-#endif
-
+#define	LITTLE_ENDIAN	_LITTLE_ENDIAN
+#define	BIG_ENDIAN	_BIG_ENDIAN
+#define	PDP_ENDIAN	_PDP_ENDIAN
+#define BYTE_ORDER	_BYTE_ORDER
 
 #ifndef _LOCORE
 /* C-family endian-ness definitions */
@@ -106,7 +122,9 @@ __END_DECLS
 
 #else /* _LOCORE */
 
-/* Assembly-code endian-independent aliases for unaligned memory accesses */
+/*
+ *   Endian-independent assembly-code aliases for unaligned memory accesses.
+ */
 #if BYTE_ORDER == LITTLE_ENDIAN
 # define LWHI lwr
 # define LWLO lwl
