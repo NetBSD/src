@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1998/02/19 23:13:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 1998/02/23 20:05:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 1998/02/19 23:13:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 1998/02/23 20:05:09 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -223,6 +223,11 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	/* clear the BSS segment */
 	v = (caddr_t)mips_round_page(end);
 	bzero(edata, v - edata);
+
+	/*
+	 * Set the VM page size.
+	 */
+	vm_set_page_size();
 
 	boothowto = x_boothowto;
 	bootdev = x_bootdev;
