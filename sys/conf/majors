@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.12 2004/09/25 03:30:44 thorpej Exp $
+# $NetBSD: majors,v 1.13 2005/01/08 22:27:54 cube Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -18,3 +18,4 @@ device-major	ptm		char 165		pty
 device-major	atabus		char 166		atabus
 device-major	drvctl		char 167		drvctl
 device-major	dk		char 168 block 168
+device-major	tap		char 169		tap
