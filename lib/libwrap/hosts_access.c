@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.15 2002/06/06 21:28:49 itojun Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.16 2002/06/22 11:52:40 itojun Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.15 2002/06/06 21:28:49 itojun Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.16 2002/06/22 11:52:40 itojun Exp $");
 #endif
 #endif
 
@@ -202,7 +202,7 @@ char   *list;
 struct request_info *request;
 int   (*match_fn) __P((char *, struct request_info *));
 {
-    char   *tok;
+    char   *tok, *last;
     int l;
 
     /*
@@ -212,7 +212,8 @@ int   (*match_fn) __P((char *, struct request_info *));
      * the match is affected by any exceptions.
      */
 
-    for (tok = strtok(list, sep); tok != 0; tok = strtok((char *) 0, sep)) {
+    for (tok = strtok_r(list, sep, &last); tok != 0;
+      tok = strtok_r(NULL, sep, &last)) {
 	if (STR_EQ(tok, "EXCEPT"))		/* EXCEPT: give up */
 	    return (NO);
 	l = strlen(tok);
@@ -221,9 +222,9 @@ int   (*match_fn) __P((char *, struct request_info *));
 	    tok++;
 	}
 	if (match_fn(tok, request)) {		/* YES: look for exceptions */
-	    while ((tok = strtok((char *) 0, sep)) && STR_NE(tok, "EXCEPT"))
+	    while ((tok = strtok_r(NULL, sep, &last)) && STR_NE(tok, "EXCEPT"))
 		 /* VOID */ ;
-	    return (tok == 0 || list_match((char *) 0, request, match_fn) == 0);
+	    return (tok == 0 || list_match(NULL, request, match_fn) == 0);
 	}
     }
     return (NO);
@@ -283,7 +284,7 @@ struct host_info *host;
 	static char *mydomain = 0;
 	if (mydomain == 0)
 	    yp_get_default_domain(&mydomain);
-	return (innetgr(tok + 1, eval_hostname(host), (char *) 0, mydomain));
+	return (innetgr(tok + 1, eval_hostname(host), NULL, mydomain));
 #else
 	tcpd_warn("netgroup support is disabled");	/* not tcpd_jump() */
 	return (NO);

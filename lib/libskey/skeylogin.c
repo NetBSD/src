@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.16 2000/07/28 16:35:11 thorpej Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.17 2002/06/22 11:59:12 itojun Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -125,6 +125,7 @@ int skeylookup(struct skey *mp, const char *name)
 	int found = 0;
 	long recstart = 0;
 	const char *ht = NULL;
+	char *last;
 
 	if(!(mp->keyfile = openSkey()))
 		return(-1);
@@ -141,22 +142,22 @@ int skeylookup(struct skey *mp, const char *name)
 		rip(mp->buf);
 		if (mp->buf[0] == '#')
 			continue;	/* Comment */
-		if ((mp->logname = strtok(mp->buf, " \t")) == NULL)
+		if ((mp->logname = strtok_r(mp->buf, " \t", &last)) == NULL)
 			continue;
-		if ((cp = strtok(NULL, " \t")) == NULL)
+		if ((cp = strtok_r(NULL, " \t", &last)) == NULL)
 			continue;
 		/* Save hash type if specified, else use md4 */
 		if (isalpha((u_char) *cp)) {
 			ht = cp;
-			if ((cp = strtok(NULL, " \t")) == NULL)
+			if ((cp = strtok_r(NULL, " \t", &last)) == NULL)
 				continue;
 		} else {
 			ht = "md4";
 		}
 		mp->n = atoi(cp);
-		if ((mp->seed = strtok(NULL, " \t")) == NULL)
+		if ((mp->seed = strtok_r(NULL, " \t", &last)) == NULL)
 			continue;
-		if ((mp->val = strtok(NULL, " \t")) == NULL)
+		if ((mp->val = strtok_r(NULL, " \t", &last)) == NULL)
 			continue;
 		if (strcmp(mp->logname, name) == 0) {
 			found = 1;
@@ -185,6 +186,7 @@ int skeylookup(struct skey *mp, const char *name)
 int skeygetnext(struct skey *mp)
 {
 	long recstart = 0;
+	char *last;
 
 	/* Open _PATH_SKEYKEYS if it exists, else return an error */
 	if (mp->keyfile == NULL) {
@@ -203,19 +205,19 @@ int skeygetnext(struct skey *mp)
 		rip(mp->buf);
 		if (mp->buf[0] == '#')
 			continue;	/* Comment */
-		if ((mp->logname = strtok(mp->buf, " \t")) == NULL)
+		if ((mp->logname = strtok_r(mp->buf, " \t", &last)) == NULL)
 			continue;
-		if ((cp = strtok(NULL, " \t")) == NULL)
+		if ((cp = strtok_r(NULL, " \t", &last)) == NULL)
 			continue;
 		/* Save hash type if specified, else use md4 */
 		if (isalpha((u_char) *cp)) {
-			if ((cp = strtok(NULL, " \t")) == NULL)
+			if ((cp = strtok_r(NULL, " \t", &last)) == NULL)
 				continue;
 		}
 		mp->n = atoi(cp);
-		if ((mp->seed = strtok(NULL, " \t")) == NULL)
+		if ((mp->seed = strtok_r(NULL, " \t", &last)) == NULL)
 			continue;
-		if ((mp->val = strtok(NULL, " \t")) == NULL)
+		if ((mp->val = strtok_r(NULL, " \t", &last)) == NULL)
 			continue;
 		/* Got a real entry */
 		break;
@@ -241,7 +243,7 @@ int skeyverify(struct skey *mp, char *response)
 	time_t now;
 	struct tm *tm;
 	char tbuf[27];
-	char *cp;
+	char *cp, *last;
 	int i, rval;
 
 	time(&now);
@@ -293,12 +295,17 @@ int skeyverify(struct skey *mp, char *response)
 		return -1;
 	}
 	rip(mp->buf);
-	mp->logname = strtok(mp->buf, " \t");
-	cp = strtok(NULL, " \t") ;
+	if ((mp->logname = strtok_r(mp->buf, " \t", &last)) == NULL)
+		goto verify_failure;
+	if ((cp = strtok_r(NULL, " \t", &last)) == NULL)
+		goto verify_failure;
 	if (isalpha((u_char) *cp))
-		cp = strtok(NULL, " \t") ;
-	mp->seed = strtok(NULL, " \t");
-	mp->val = strtok(NULL, " \t");
+		if ((cp = strtok_r(NULL, " \t", &last)) == NULL)
+			goto verify_failure;
+	if ((mp->seed = strtok_r(NULL, " \t", &last)) == NULL)
+		goto verify_failure;
+	if ((mp->val = strtok_r(NULL, " \t", &last)) == NULL)
+		goto verify_failure;
 	/* And convert file value to hex for comparison */
 	atob8(filekey, mp->val);
 
@@ -329,8 +336,12 @@ int skeyverify(struct skey *mp, char *response)
 
 	fclose(mp->keyfile);
 	mp->keyfile = NULL;
-
 	return 0;
+
+  verify_failure:
+	fclose(mp->keyfile);
+	mp->keyfile = NULL;
+	return -1;
 }
 
 
