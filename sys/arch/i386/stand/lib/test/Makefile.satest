@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.satest,v 1.1 1998/05/15 17:07:14 drochner Exp $
+# $NetBSD: Makefile.satest,v 1.2 1999/02/19 19:53:01 drochner Exp $
 
 I386_STAND_DIR?= $S/arch/i386/stand
 
@@ -23,7 +23,7 @@ CPPFLAGS+= -DHEAP_VARIABLE
 CFLAGS= -O -g -Wall -fwritable-strings
 
 LDFLAGS= -g -static -Xlinker -M
-LDADD= ${LIBSA} -lz -lkvm -li386 >${PROG}.list
+LDADD= ${LIBSA} -lz -lkvm -li386 >${PROG}.list 2>&1
 CLEANFILES+= ${PROG}.list
 
 .include <bsd.prog.mk>
