@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/11/12 17:09:46 tv Exp $
+#	$NetBSD: Makefile,v 1.10 2001/11/13 17:01:25 tv Exp $
 
 .include "../Makefile.lib"
 
@@ -7,10 +7,12 @@ DIST=		${IDIST}/src/preproc/refer
 
 PROG=		refer
 SRCS=		command.cc ref.cc refer.cc token.cc label.cc
-CPPFLAGS+=	-I${DIST}
+CPPFLAGS+=	-I. -I${DIST}
 LDADD+=		$(LIBBIB) $(LIBGROFF) -lm
 DPADD+=		$(LIBBIB) $(LIBGROFF) $(LIBM)
+DPSRCS+=	label_tab.h
+CLEANFILES+=	label.cc
 
-CLEANFILES+=	label.cc label_tab.h
+label_tab.h: label.cc
 
 .include <bsd.prog.mk>
