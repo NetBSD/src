@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.14 1996/09/02 06:44:12 mycroft Exp $	*/
+/*	$NetBSD: scc.c,v 1.15 1996/09/07 01:25:37 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -453,8 +453,9 @@ sccattach(parent, self, aux)
 		/*
 		 * XXX PROM  and NetBSD unit numbers swapped
 		 * on kn03, maybe kmin?
+		 * And what about maxine?
 		 */
-		if (cn_tab->cn_dev == unit)
+		if (cn_tab->cn_dev == unit && cputype != DS_MAXINE)
 			return;
 
 		/*
