@@ -1,4 +1,4 @@
-/*	$NetBSD: hangman.h,v 1.9 1999/09/08 21:45:28 jsm Exp $	*/
+/*	$NetBSD: hangman.h,v 1.10 1999/09/17 20:45:49 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -78,13 +78,15 @@ extern double Average;
 
 extern const ERR_POS Err_pos[];
 
+extern const char *Dict_name;
+
 extern FILE *Dict;
 
 extern off_t Dict_size;
 
 void    die __P((int)) __attribute__((__noreturn__));
 void    endgame __P((void));
-int	main __P((void));
+int	main __P((int, char *[]));
 void	getguess __P((void));
 void	getword __P((void));
 void	playgame __P((void));
