@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/04/03 21:04:33 tv Exp $
+#	$NetBSD: Makefile,v 1.2 1998/04/10 19:35:22 tv Exp $
 
 LIB=	f2c
 
@@ -39,6 +39,7 @@ USRCS=	Version.c access_.c alarm_.c bes.c chdir_.c chmod_.c ctime_.c date_.c \
 SRCS=	${FSRCS:S@^@libF77/@} ${ISRCS:S@^@libI77/@} ${USRCS:S@^@libU77/@} \
 	f2cext.c
 RT=	${.CURDIR}/../../dist/gcc/f/runtime
+NOLINT=
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${RT}/libF77 -I${RT}/libI77 -I${RT}/libU77 \
 		-DNETBSD_NATIVE -DHAVE_CONFIG_H=1 -DMISSING_FILE_ELEMS=1 \
