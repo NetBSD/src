@@ -1,4 +1,4 @@
-.\"	$NetBSD: tp.4,v 1.6 1997/03/08 14:07:09 mouse Exp $
+.\"	$NetBSD: tp.4,v 1.7 1997/11/27 06:43:33 mikel Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Dt TP 4
 .Os
 .Sh NAME
-.Nm TP
+.Nm tp
 .Nd
 .Tn ISO
 Transport Protocol
@@ -68,7 +68,7 @@ Selector.
 Subclass 4 may make use of the internet
 Internet address format.
 .Pp
-Sockets utilizing the tp protocol are either
+Sockets utilizing the TP protocol are either
 .Dq active
 or
 .Dq passive .
@@ -154,15 +154,15 @@ below for the formats of the data in the ancillary data buffer.
 If the
 .Dv EOTSDU
 is not needed, the normal
-.Xr read 2 ,
+.Xr read 2
 and
 .Xr write 2
 system calls may be used.
 .Pp
 Through the 
-.Xr getsockopt
+.Xr getsockopt 2
 and
-.Xr setsockopt
+.Xr setsockopt 2
 system calls,
 .Tn TP
 supports several options 
@@ -258,8 +258,7 @@ to be confirmed rather than rejected.
 .It Dv TPOPT_PERF_MEAS \&#
 Boolean.
 .br
-When
-.Xr true ,
+When true,
 performance measurements will be kept
 for this connection.  
 When set before a connection is established, the
@@ -269,8 +268,8 @@ connect request packet; if the peer is another
 implementation, this will cause performance measurement to be
 turned on 
 on the passive side as well.
-See
-.Xr tpperf 8 .
+.\" See
+.\" .Xr tpperf 8 .
 .It Dv TPOPT_PSTATISTICS
 No associated value on input.
 On output,
@@ -282,8 +281,8 @@ It can only be used with
 .Xr getsockopt .
 The structure it returns is described in
 .Aq Pa netiso/tp_stat.h .
-See
-.Xr tpperf 8 .
+.\" See
+.\" .Xr tpperf 8 .
 .It Dv TPOPT_FLAGS
 unsigned integer. [0x0]
 .br
@@ -599,13 +598,13 @@ error values as defined in
 .Aq Pa sys/errno.h
 and
 .Aq Pa netiso/iso_errno.h .
-User programs may print messages associated with these value by
-using an expanded version of
-.Xr perror
-found in the
-.Tn ISO
-library,
-.Pa libisodir.a .
+.\" User programs may print messages associated with these value by
+.\" using an expanded version of
+.\" .Xr perror
+.\" found in the
+.\" .Tn ISO
+.\" library,
+.\" .Pa libisodir.a .
 .Pp
 If the
 .Tn TP
@@ -676,11 +675,11 @@ will return
 .Er ENOTCONN .
 .El
 .Sh SEE ALSO
-.Xr tcp 4 ,
 .Xr netstat 1 ,
 .Xr iso 4 ,
 .Xr clnp 4 ,
 .Xr cltp 4 ,
+.Xr tcp 4 ,
 .Xr ifconfig 8 .
 .Sh BUGS
 The protocol definition of expedited data is slightly problematic,
