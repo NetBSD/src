@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_timer.c,v 1.5 2003/07/27 04:52:28 thorpej Exp $	*/
+/*	$NetBSD: becc_timer.c,v 1.6 2005/02/26 12:00:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.5 2003/07/27 04:52:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.6 2005/02/26 12:00:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ inittodr(time_t base)
 
 	if (!badbase) {
 		/*
-		 * See if we tained/lost two or more days; if
+		 * See if we gained/lost two or more days; if
 		 * so, assume something is amiss.
 		 */
 		deltat = time.tv_sec - base;
