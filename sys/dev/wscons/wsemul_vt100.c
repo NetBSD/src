@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.4 1998/06/26 22:35:27 drochner Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.5 1998/06/29 14:04:27 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -141,7 +141,10 @@ wsemul_vt100_cnattach(type, cookie, ccol, crow, defattr)
 	long defattr;
 {
 	struct wsemul_vt100_emuldata *edp;
+#if defined(WS_KERNEL_FG) || defined(WS_KERNEL_BG) || \
+  defined(WS_KERNEL_COLATTR) || defined(WS_KERNEL_MONOATTR)
 	int res;
+#endif
 
 	edp = &wsemul_vt100_console_emuldata;
 	wsemul_vt100_init(edp, type, cookie, ccol, crow, defattr);
