@@ -1,9 +1,12 @@
+./usr/X11R6/include/X11/extensions/dpms.h
+./usr/X11R6/include/X11/extensions/dpmsstr.h
 ./usr/X11R6/include/X11/extensions/xf86vmode.h
 ./usr/X11R6/include/X11/extensions/xf86vmstr.h
 ./usr/X11R6/include/X11/extensions/xf86dga.h
 ./usr/X11R6/include/X11/extensions/xf86dgastr.h
 ./usr/X11R6/include/X11/extensions/xf86misc.h
 ./usr/X11R6/include/X11/extensions/xf86mscstr.h
+./usr/X11R6/lib/libXdpms.a
 ./usr/X11R6/lib/libXxf86misc.a
 ./usr/X11R6/lib/libXxf86vm.a
 ./usr/X11R6/lib/libXxf86dga.a
