@@ -1,4 +1,4 @@
-#	$NetBSD: rc.local,v 1.26 2000/07/22 01:50:30 lukem Exp $
+#	$NetBSD: rc.local,v 1.27 2000/07/24 10:10:05 itojun Exp $
 #	originally from: @(#)rc.local	8.3 (Berkeley) 4/28/94
 #
 # This file is (nearly) the last thing invoked by /etc/rc during a
@@ -16,7 +16,7 @@ echo -n 'starting local daemons:'
 #
 
 #if [ -f /usr/pkg/etc/rc.d/sshd.sh ]; then
-#	/usr/pkg/etc/rc.d/sshd.sh
+#	/usr/pkg/etc/rc.d/sshd.sh start
 #fi
 
 echo '.'
