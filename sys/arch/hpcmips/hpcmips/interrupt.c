@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1 2001/06/13 06:03:11 enami Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2 2001/09/15 14:08:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,10 +44,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/autoconf.h>
-#include <machine/intr.h>
-#include <machine/locore.h>
+#include <machine/locore.h>	/* mips3_cp0_*() */
 #include <machine/sysconf.h>
 
 struct hpcmips_soft_intrhand *softnet_intrhand;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2001/09/15 11:13:21 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12 2001/09/15 14:08:15 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -39,7 +39,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

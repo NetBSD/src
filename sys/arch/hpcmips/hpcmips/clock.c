@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.12 2001/09/15 11:13:20 uch Exp $ */
+/* $NetBSD: clock.c,v 1.13 2001/09/15 14:08:15 uch Exp $ */
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -75,13 +75,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2001/09/15 11:13:20 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2001/09/15 14:08:15 uch Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/sched.h>
+#include <sys/kernel.h>
 
 #include <dev/clock_subr.h>
 #include <machine/clock_machdep.h>
