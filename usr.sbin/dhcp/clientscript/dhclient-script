@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.3 2002/04/02 19:16:59 christos Exp $
+# $NetBSD: dhclient-script,v 1.4 2002/04/10 10:11:41 enami Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -12,10 +12,15 @@ make_resolv_conf() {
 	     \( ! -z "$new_domain_name_servers" \) ]; then
 		if [ -f $RESOLV ]
 		then
-			if ! fgrep -q "$SIGNATURE" $RESOLV
-			then
-				mv $RESOLV $RESOLV.save
-			fi
+			while read line; do
+				case $line in
+				"$SIGNATURE"*)
+					;;
+				*)
+					mv $RESOLV $RESOLV.save;;
+				esac
+				break
+			done < $RESOLV
 		fi
 		echo "$SIGNATURE$(date)" > $RESOLV
 		if [ ! -z "$new_domain_name" ]
@@ -31,10 +36,13 @@ make_resolv_conf() {
 restore_resolv_conf() {
 	if [ -f $RESOLV.save -a -f $RESOLV ]
 	then
-		if fgrep -q "$SIGNATURE" $RESOLV
-		then
-			mv $RESOLV.save $RESOLV.
-		fi
+		while read line; do
+			case $line in
+			"$SIGNATURE"*)
+				mv $RESOLV.save $RESOLV;;
+			esac
+			break
+		done < $RESOLV
 	fi
 }
 
