@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.68 2000/06/13 01:08:43 itojun Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.69 2000/06/16 11:34:55 hannken Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.68 2000/06/13 01:08:43 itojun Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.69 2000/06/16 11:34:55 hannken Exp $");
 #endif
 #endif				/* not lint */
 
@@ -374,7 +374,7 @@ main(argc, argv)
 		if (tcptransp != NULL) {
 			if (!svc_reg(tcptransp, RPCPROG_MNT, RPCMNT_VER1,
 				mntsrv, tcpconf) ||
-			    !svc_reg(udptransp, RPCPROG_MNT, RPCMNT_VER3,
+			    !svc_reg(tcptransp, RPCPROG_MNT, RPCMNT_VER3,
 				mntsrv, tcpconf))
 				syslog(LOG_WARNING, "can't register TCP service");
 			else
