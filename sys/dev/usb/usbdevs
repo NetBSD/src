@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.89 2000/04/07 18:59:58 augustss Exp $
+$NetBSD: usbdevs,v 1.90 2000/04/08 20:14:00 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -395,7 +395,8 @@ product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 serial ports
 
 /* In-System products */
 product INSYSTEM F5U002		0x0002	Parallel printer adapter
-product INSYSTEM ISD110		0x0200  IDE adapter
+product INSYSTEM ISD110		0x0200  IDE adapter ISD110
+product INSYSTEM ISD105		0x0202  IDE adapter ISD105
 
 /* Intel products */
 product INTEL TESTBOARD		0x9890	82930 test board
@@ -528,7 +529,8 @@ product PRIMAX MOUSEINABOX	0x4d02	Mouse-in-a-Box
 product PRIMAX PCGAUMS1		0x4d04	Sony PCGA-UMS1
 
 /* Prolific products */
-product PROLIFIC PL2302		0x0000	PL2302 Host-Host interface
+product PROLIFIC PL2301		0x0000	PL2301 Host-Host interface
+product PROLIFIC PL2302		0x0001	PL2302 Host-Host interface
 
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
