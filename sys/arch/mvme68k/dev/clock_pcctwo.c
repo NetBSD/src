@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.2 1999/02/14 17:54:28 scw Exp $ */
+/*	$NetBSD: clock_pcctwo.c,v 1.3 2000/03/18 22:33:02 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,23 +47,22 @@
 #include <sys/device.h>
 
 #include <machine/psl.h>
-#include <machine/cpu.h>
+#include <machine/bus.h>
 
 #include <mvme68k/mvme68k/clockreg.h>
 #include <mvme68k/mvme68k/clockvar.h>
-
-#include <mvme68k/dev/pccvar.h>
+#include <mvme68k/dev/pcctwovar.h>
 #include <mvme68k/dev/pcctworeg.h>
 
 
-int 	clock_pcctwo_match __P((struct device *, struct cfdata  *, void *));
-void	clock_pcctwo_attach __P((struct device *, struct device *, void *));
-int 	clock_pcctwo_profintr __P((void *));
-int 	clock_pcctwo_statintr __P((void *));
-void	clock_pcctwo_initclocks __P((int, int));
-void	clock_pcctwo_shutdown __P((void *));
+int clock_pcctwo_match __P((struct device *, struct cfdata *, void *));
+void clock_pcctwo_attach __P((struct device *, struct device *, void *));
 
-u_char	clock_pcctwo_lvl;
+struct clock_pcctwo_softc {
+	struct device sc_dev;
+	struct clock_attach_args sc_clock_args;
+	u_char sc_clock_lvl;
+};
 
 struct cfattach clock_pcctwo_ca = {
 	sizeof(struct device), clock_pcctwo_match, clock_pcctwo_attach
@@ -71,81 +70,107 @@ struct cfattach clock_pcctwo_ca = {
 
 extern struct cfdriver clock_cd;
 
+static int clock_pcctwo_profintr __P((void *));
+static int clock_pcctwo_statintr __P((void *));
+static void clock_pcctwo_initclocks __P((void *, int, int));
+static void clock_pcctwo_shutdown __P((void *));
+
+static struct clock_pcctwo_softc *clock_pcctwo_sc;
+
+/* ARGSUSED */
 int
 clock_pcctwo_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct pcc_attach_args *pa = aux;
-	static int clock_pcctwo_matched;
+	struct pcctwo_attach_args *pa = aux;
 
 	/* Only one clock, please. */
-	if (clock_pcctwo_matched)
+	if (clock_pcctwo_sc)
 		return (0);
 
 	if (strcmp(pa->pa_name, clock_cd.cd_name))
 		return (0);
 
-	clock_pcctwo_matched = 1;
-	pa->pa_ipl = cf->pcccf_ipl;
+	pa->pa_ipl = cf->pcctwocf_ipl;
 
 	return (1);
 }
 
+/* ARGSUSED */
 void
 clock_pcctwo_attach(parent, self, aux)
-	struct device *parent, *self;
+	struct device *parent;
+	struct device *self;
 	void *aux;
 {
-	struct pcc_attach_args *pa = aux;
-	caddr_t nvram, clockregs;
+	struct clock_pcctwo_softc *sc;
+	struct pcctwo_attach_args *pa;
+
+	sc = clock_pcctwo_sc = (struct clock_pcctwo_softc *) self;
+	pa = aux;
 
 	if (pa->pa_ipl != CLOCK_LEVEL)
 		panic("clock_pcctwo_attach: wrong interrupt level");
 
-	/* As found on other mvme68k boards */
-	nvram = PCCTWO_VADDR(pa->pa_offset);
-	clockregs = PCCTWO_VADDR(pa->pa_offset + PCCTWO_RTC_OFF);
+	/* Map the RTC's registers */
+	sc->sc_clock_args.ca_bust = pa->pa_bust;
+	bus_space_map(pa->pa_bust, pa->pa_offset,
+	    MK48T_REGSIZE, 0, &sc->sc_clock_args.ca_bush);
+
+	sc->sc_clock_args.ca_arg = sc;
+	sc->sc_clock_args.ca_initfunc = clock_pcctwo_initclocks;
 
 	/* Do common portions of clock config. */
-	clock_config(self, clockregs, nvram, MK48T08_SIZE,
-		     clock_pcctwo_initclocks);
+	clock_config(self, &sc->sc_clock_args);
 
 	/* Ensure our interrupts get disabled at shutdown time. */
-	(void)shutdownhook_establish(clock_pcctwo_shutdown, NULL);
+	(void) shutdownhook_establish(clock_pcctwo_shutdown, NULL);
 
 	/* Attach the interrupt handlers. */
 	pcctwointr_establish(PCCTWOV_TIMER1, clock_pcctwo_profintr,
-			     pa->pa_ipl, NULL);
+	    pa->pa_ipl, NULL);
 	pcctwointr_establish(PCCTWOV_TIMER2, clock_pcctwo_statintr,
-			     pa->pa_ipl, NULL);
-	clock_pcctwo_lvl = (pa->pa_ipl & PCCTWO_ICR_LEVEL_MASK) |
-			   PCCTWO_ICR_ICLR | PCCTWO_ICR_IEN;
+	    pa->pa_ipl, NULL);
+	sc->sc_clock_lvl = (pa->pa_ipl & PCCTWO_ICR_LEVEL_MASK) |
+	    PCCTWO_ICR_ICLR | PCCTWO_ICR_IEN;
 }
 
 void
-clock_pcctwo_initclocks(proftick, stattick)
-	int proftick, stattick;
+clock_pcctwo_initclocks(arg, proftick, stattick)
+	void *arg;
+	int proftick;
+	int stattick;
 {
-	sys_pcctwo->tt1_ctrl = PCCTWO_TT_CTRL_COVF;
-	sys_pcctwo->tt1_counter = 0;
-	sys_pcctwo->tt1_compare = PCCTWO_US2LIM(proftick);
-	sys_pcctwo->tt1_ctrl = PCCTWO_TT_CTRL_CEN | PCCTWO_TT_CTRL_COC;
-	sys_pcctwo->tt1_icr = clock_pcctwo_lvl;
+	struct clock_pcctwo_softc *sc;
 
-	sys_pcctwo->tt2_ctrl = PCCTWO_TT_CTRL_COVF;
-	sys_pcctwo->tt2_counter = 0;
-	sys_pcctwo->tt2_compare = PCCTWO_US2LIM(stattick);
-	sys_pcctwo->tt2_ctrl = PCCTWO_TT_CTRL_CEN | PCCTWO_TT_CTRL_COC;
-	sys_pcctwo->tt2_icr = clock_pcctwo_lvl;
+	sc = arg;
+
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_CONTROL, PCCTWO_TT_CTRL_COVF);
+	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER1_COUNTER, 0);
+	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER1_COMPARE,
+	    PCCTWO_US2LIM(proftick));
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_CONTROL,
+	    PCCTWO_TT_CTRL_CEN | PCCTWO_TT_CTRL_COC);
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_ICSR, sc->sc_clock_lvl);
+
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL, PCCTWO_TT_CTRL_COVF);
+	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER2_COUNTER, 0);
+	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER2_COMPARE,
+	    PCCTWO_US2LIM(stattick));
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL,
+	    PCCTWO_TT_CTRL_CEN | PCCTWO_TT_CTRL_COC);
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_ICSR, sc->sc_clock_lvl);
 }
 
 int
 clock_pcctwo_profintr(frame)
 	void *frame;
 {
-	sys_pcctwo->tt1_icr = clock_pcctwo_lvl;
+
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_ICSR,
+	    clock_pcctwo_sc->sc_clock_lvl);
 	hardclock(frame);
 	clock_profcnt.ev_count++;
 	return (1);
@@ -155,17 +180,21 @@ int
 clock_pcctwo_statintr(frame)
 	void *frame;
 {
+
 	/* Disable the timer interrupt while we handle it. */
-	sys_pcctwo->tt2_icr = 0;
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_ICSR, 0);
 
-	statclock((struct clockframe *)frame);
+	statclock((struct clockframe *) frame);
 
-	sys_pcctwo->tt2_ctrl = PCCTWO_TT_CTRL_COVF;
-	sys_pcctwo->tt2_counter = 0;
-	sys_pcctwo->tt2_compare =
-	    PCCTWO_US2LIM(CLOCK_NEWINT(clock_statvar, clock_statmin));
-	sys_pcctwo->tt2_ctrl = PCCTWO_TT_CTRL_CEN | PCCTWO_TT_CTRL_COC;
-	sys_pcctwo->tt2_icr = clock_pcctwo_lvl;
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL, PCCTWO_TT_CTRL_COVF);
+	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER2_COUNTER, 0);
+	pcc2_reg_write32(sys_pcctwo, PCC2REG_TIMER2_COMPARE,
+	    PCCTWO_US2LIM(CLOCK_NEWINT(clock_statvar, clock_statmin)));
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL,
+	    PCCTWO_TT_CTRL_CEN | PCCTWO_TT_CTRL_COC);
+
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_ICSR,
+	    clock_pcctwo_sc->sc_clock_lvl);
 
 	clock_statcnt.ev_count++;
 	return (1);
@@ -176,9 +205,10 @@ void
 clock_pcctwo_shutdown(arg)
 	void *arg;
 {
+
 	/* Make sure the timer interrupts are turned off. */
-	sys_pcctwo->tt1_ctrl = PCCTWO_TT_CTRL_COVF;
-	sys_pcctwo->tt1_icr = 0;
-	sys_pcctwo->tt2_ctrl = PCCTWO_TT_CTRL_COVF;
-	sys_pcctwo->tt2_icr = 0;
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_CONTROL, PCCTWO_TT_CTRL_COVF);
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER1_ICSR, 0);
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL, PCCTWO_TT_CTRL_COVF);
+	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_ICSR, 0);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.28 1999/07/29 10:37:20 augustss Exp $
+#	$NetBSD: VME147,v 1.29 2000/03/18 22:33:02 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -18,7 +18,7 @@ options 	COMPAT_43
 file-system 	FFS
 file-system 	NFS	
 file-system 	KERNFS
-#file-system 	MFS
+file-system 	MFS
 #file-system	MSDOSFS
 #file-system	UNION
 
@@ -65,13 +65,11 @@ clock0		at pcc? ipl 5
 le0		at pcc? ipl 3
 wdsc0		at pcc? ipl 2
 lpt0		at pcc? ipl 1
-vmechip0	at pcc?
+vmepcc0 	at pcc?
+vme0 		at vmepcc0
 
-vmes0		at vmechip?
-vmel0		at vmechip?
-
-# example only - A24D16 device
-#foo0		at vmes0 atype 24 addr 0x0ef00 ipl 3 vec 0x60
+# Example VMEbus device
+#foo0 		at vme0 addr 0x10001000 am 0x0d irq 2 vect 0x80
 
 scsibus*	at wdsc?
 

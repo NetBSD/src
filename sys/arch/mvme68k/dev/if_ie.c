@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.3 1999/07/08 18:08:55 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.4 2000/03/18 22:33:02 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,31 +60,38 @@
 #include <dev/ic/i82586var.h>
 
 #include <mvme68k/dev/if_iereg.h>
-#include <mvme68k/dev/pccvar.h>
+#include <mvme68k/dev/pcctwovar.h>
 #include <mvme68k/dev/pcctworeg.h>
 
 
-/* Functions required by the i82586 MI driver */
-static void 	ie_reset __P((struct ie_softc *, int));
-static int 	ie_intrhook __P((struct ie_softc *, int));
-static void 	ie_hwinit __P((struct ie_softc *));
-static void 	ie_atten __P((struct ie_softc *));
-
-static void	ie_copyin __P((struct ie_softc *, void *, int, size_t));
-static void	ie_copyout __P((struct ie_softc *, const void *, int, size_t));
-
-static u_int16_t ie_read_16 __P((struct ie_softc *, int));
-static void	ie_write_16 __P((struct ie_softc *, int, u_int16_t));
-static void	ie_write_24 __P((struct ie_softc *, int, int));
-
-int  ie_pcctwo_match  __P((struct device *, struct cfdata *, void *));
+int ie_pcctwo_match __P((struct device *, struct cfdata *, void *));
 void ie_pcctwo_attach __P((struct device *, struct device *, void *));
 
+struct ie_pcctwo_softc {
+	struct ie_softc ps_ie;
+	bus_space_tag_t ps_bust;
+	bus_space_handle_t ps_bush;
+};
+
 struct cfattach ie_pcctwo_ca = {
-	sizeof(struct ie_softc), ie_pcctwo_match, ie_pcctwo_attach
+	sizeof(struct ie_pcctwo_softc), ie_pcctwo_match, ie_pcctwo_attach
 };
 
 extern struct cfdriver ie_cd;
+
+
+/* Functions required by the i82586 MI driver */
+static void ie_reset __P((struct ie_softc *, int));
+static int ie_intrhook __P((struct ie_softc *, int));
+static void ie_hwinit __P((struct ie_softc *));
+static void ie_atten __P((struct ie_softc *));
+
+static void ie_copyin __P((struct ie_softc *, void *, int, size_t));
+static void ie_copyout __P((struct ie_softc *, const void *, int, size_t));
+
+static u_int16_t ie_read_16 __P((struct ie_softc *, int));
+static void ie_write_16 __P((struct ie_softc *, int, u_int16_t));
+static void ie_write_24 __P((struct ie_softc *, int, int));
 
 /*
  * i82596 Support Routines for MVME1[67]7 Boards
@@ -94,14 +101,17 @@ ie_reset(sc, why)
 	struct ie_softc *sc;
 	int why;
 {
-	struct mpu_regs *mpu = (struct mpu_regs *) sc->sc_reg;
+	struct ie_pcctwo_softc *ps;
 	u_int32_t scp_addr;
 
-	switch ( why ) {
-	  case CHIP_PROBE:
-	  case CARD_RESET:
-		mpu->mpu_upper = IE_MPU_RESET;
-		mpu->mpu_lower = 0;
+	ps = (struct ie_pcctwo_softc *) sc;
+
+	switch (why) {
+	case CHIP_PROBE:
+	case CARD_RESET:
+		bus_space_write_2(ps->ps_bust, ps->ps_bush, IE_MPUREG_UPPER,
+		    IE_MPU_RESET);
+		bus_space_write_2(ps->ps_bust, ps->ps_bush, IE_MPUREG_LOWER, 0);
 		delay(1000);
 
 		/*
@@ -112,132 +122,186 @@ ie_reset(sc, why)
 		ie_write_16(sc, IE_ISCP_BUSY(sc->iscp), 1);
 		ie_write_16(sc, IE_SCP_BUS_USE(sc->scp), 0x50);
 
-		scp_addr = sc->scp + (u_int)sc->sc_iobase;
+		scp_addr = sc->scp + (u_int) sc->sc_iobase;
 		scp_addr |= IE_MPU_SCP_ADDRESS;
 
-		mpu->mpu_upper = scp_addr & 0xffff;
-		mpu->mpu_lower = (scp_addr >> 16) & 0xffff;
+		bus_space_write_2(ps->ps_bust, ps->ps_bush, IE_MPUREG_UPPER,
+		    scp_addr & 0xffff);
+		bus_space_write_2(ps->ps_bust, ps->ps_bush, IE_MPUREG_LOWER,
+		    (scp_addr >> 16) & 0xffff);
 		delay(1000);
 		break;
 	}
 }
 
+/* ARGSUSED */
 static int
 ie_intrhook(sc, when)
-	struct ie_softc	*sc;
+	struct ie_softc *sc;
 	int when;
 {
-	if ( when == INTR_EXIT )
-		sys_pcctwo->lanc_icr |= PCCTWO_ICR_ICLR;
+	u_int8_t reg;
 
-	return 0;
+	if (when == INTR_EXIT) {
+		reg = pcc2_reg_read(sys_pcctwo, PCC2REG_ETH_ICSR);
+		reg |= PCCTWO_ICR_ICLR;
+		pcc2_reg_write(sys_pcctwo, PCC2REG_ETH_ICSR, reg);
+	}
+	return (0);
 }
 
+/* ARGSUSED */
 static void
 ie_hwinit(sc)
 	struct ie_softc *sc;
 {
-	sys_pcctwo->lanc_icr |= PCCTWO_ICR_IEN | PCCTWO_ICR_ICLR;
+	u_int8_t reg;
+
+	reg = pcc2_reg_read(sys_pcctwo, PCC2REG_ETH_ICSR);
+	reg |= PCCTWO_ICR_IEN | PCCTWO_ICR_ICLR;
+	pcc2_reg_write(sys_pcctwo, PCC2REG_ETH_ICSR, reg);
 }
 
 static void
 ie_atten(sc)
 	struct ie_softc *sc;
 {
-	((struct mpu_regs *)sc->sc_reg)->mpu_ca = 0;
+	struct ie_pcctwo_softc *ps;
+
+	ps = (struct ie_pcctwo_softc *) sc;
+	bus_space_write_4(ps->ps_bust, ps->ps_bush, IE_MPUREG_CA, 0);
 }
 
 static void
 ie_copyin(sc, dst, offset, size)
-        struct ie_softc *sc;
-        void *dst;
-        int offset;
-        size_t size;
+	struct ie_softc *sc;
+	void *dst;
+	int offset;
+	size_t size;
 {
-	if ( size == 0 )	/* This *can* happen! */
+	if (size == 0)		/* This *can* happen! */
 		return;
 
+#if 0
 	bus_space_read_region_1(sc->bt, sc->bh, offset, dst, size);
+#else
+	/* A minor optimisation ;-) */
+	bcopy((void *) ((u_long) sc->bh + (u_long) offset), dst, size);
+#endif
 }
 
 static void
 ie_copyout(sc, src, offset, size)
-        struct ie_softc *sc;
-        const void *src;
-        int offset;
-        size_t size;
+	struct ie_softc *sc;
+	const void *src;
+	int offset;
+	size_t size;
 {
-	if ( size == 0 )	/* This *can* happen! */
+	if (size == 0)		/* This *can* happen! */
 		return;
 
+#if 0
 	bus_space_write_region_1(sc->bt, sc->bh, offset, src, size);
+#else
+	/* A minor optimisation ;-) */
+	bcopy(src, (void *) ((u_long) sc->bh + (u_long) offset), size);
+#endif
 }
 
 static u_int16_t
 ie_read_16(sc, offset)
-        struct ie_softc *sc;
-        int offset;
+	struct ie_softc *sc;
+	int offset;
 {
-	return bus_space_read_2(sc->bt, sc->bh, offset);
+
+	return (bus_space_read_2(sc->bt, sc->bh, offset));
 }
 
 static void
 ie_write_16(sc, offset, value)
-        struct ie_softc *sc;
-        int offset;
-        u_int16_t value;
+	struct ie_softc *sc;
+	int offset;
+	u_int16_t value;
 {
+
 	bus_space_write_2(sc->bt, sc->bh, offset, value);
 }
 
 static void
 ie_write_24(sc, offset, addr)
-        struct ie_softc *sc;
-        int offset, addr;
+	struct ie_softc *sc;
+	int offset;
+	int addr;
 {
-	addr += (int)sc->sc_iobase;	/* XXXSCW: Is this right? */
+
+	addr += (int) sc->sc_iobase;
 
 	bus_space_write_2(sc->bt, sc->bh, offset, addr & 0xffff);
 	bus_space_write_2(sc->bt, sc->bh, offset + 2, (addr >> 16) & 0x00ff);
 }
 
+/* ARGSUSED */
 int
 ie_pcctwo_match(parent, cf, args)
 	struct device *parent;
 	struct cfdata *cf;
 	void *args;
 {
-	struct pcc_attach_args *pa = args;
+	struct pcctwo_attach_args *pa;
 
-	if ( strcmp(pa->pa_name, ie_cd.cd_name) )
-		return 0;
+	pa = args;
 
-	pa->pa_ipl = cf->pcccf_ipl;
+	if (strcmp(pa->pa_name, ie_cd.cd_name))
+		return (0);
 
-	return 1;
+	pa->pa_ipl = cf->pcctwocf_ipl;
+
+	return (1);
 }
 
+/* ARGSUSED */
 void
 ie_pcctwo_attach(parent, self, args)
 	struct device *parent;
 	struct device *self;
-	void   *args;
+	void *args;
 {
-	struct ie_softc *sc = (void *)self;
-	struct pcc_attach_args *pa = args;
+	struct pcctwo_attach_args *pa;
+	struct ie_pcctwo_softc *ps;
+	struct ie_softc *sc;
 	u_int8_t ethaddr[ETHER_ADDR_LEN];
+	bus_dma_segment_t seg;
+	int rseg;
+
+	pa = (struct pcctwo_attach_args *) args;
+	ps = (struct ie_pcctwo_softc *) self;
+	sc = (struct ie_softc *) self;
 
 	myetheraddr(ethaddr);
 
-	sc->bt = (bus_space_tag_t)0;
-	sc->bh = (bus_space_handle_t)ether_data_buff;
-	sc->sc_maddr = ether_data_buff;
-	sc->sc_msize = ether_data_buff_size;
-	sc->sc_reg = PCCTWO_VADDR(pa->pa_offset);
-	memset(ether_data_buff, 0, ether_data_buff_size);
+	/* Map the MPU controller registers in PCCTWO space */
+	ps->ps_bust = pa->pa_bust;
+	bus_space_map(pa->pa_bust, pa->pa_offset, IE_MPUREG_SIZE,
+	    0, &ps->ps_bush);
 
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr,
-	    (paddr_t *)&sc->sc_iobase);
+	/* Get contiguous DMA-able memory for the IE chip */
+	if (bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, NBPG, 0,
+		&seg, 1, &rseg,
+		BUS_DMA_NOWAIT | BUS_DMA_ONBOARD_RAM | BUS_DMA_24BIT) != 0) {
+		printf("%s: Failed to allocate ether buffer\n", self->dv_xname);
+		return;
+	}
+	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg, ether_data_buff_size,
+	    (caddr_t *) & sc->sc_maddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
+		printf("%s: Failed to map ether buffer\n", self->dv_xname);
+		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		return;
+	}
+	sc->bt = pa->pa_bust;
+	sc->bh = (bus_space_handle_t) sc->sc_maddr;	/* XXXSCW Better way? */
+	sc->sc_iobase = (void *) seg.ds_addr;
+	sc->sc_msize = ether_data_buff_size;
+	memset(sc->sc_maddr, 0, ether_data_buff_size);
 
 	sc->hwreset = ie_reset;
 	sc->hwinit = ie_hwinit;
@@ -275,11 +339,12 @@ ie_pcctwo_attach(parent, self, args)
 	i82586_attach(sc, "onboard", ethaddr, NULL, 0, 0);
 
 	/* Are we the boot device? */
-	if ( PCCTWO_PADDR(pa->pa_offset) == bootaddr )
+	if (PCCTWO_PADDR(pa->pa_offset) == bootaddr)
 		booted_device = self;
 
 	/* Finally, hook the hardware interrupt */
-	sys_pcctwo->lanc_icr = 0;
+	pcc2_reg_write(sys_pcctwo, PCC2REG_ETH_ICSR, 0);
 	pcctwointr_establish(PCCTWOV_LANC_IRQ, i82586_intr, pa->pa_ipl, sc);
-	sys_pcctwo->lanc_icr = pa->pa_ipl | PCCTWO_ICR_ICLR | PCCTWO_ICR_EDGE;
+	pcc2_reg_write(sys_pcctwo, PCC2REG_ETH_ICSR,
+	    pa->pa_ipl | PCCTWO_ICR_ICLR | PCCTWO_ICR_EDGE);
 }

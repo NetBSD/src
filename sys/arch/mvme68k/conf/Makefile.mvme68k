@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.45 2000/02/01 05:25:37 tsutsui Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.46 2000/03/18 22:33:02 scw Exp $
 
 # Makefile for NetBSD
 #
@@ -47,7 +47,8 @@ MVME68K=$S/arch/mvme68k
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmvme68k
-CWARNFLAGS?=	-Werror -Wpointer-arith
+CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
+		-Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif

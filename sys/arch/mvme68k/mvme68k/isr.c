@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.15 2000/02/21 20:38:49 erh Exp $	*/
+/*	$NetBSD: isr.c,v 1.16 2000/03/18 22:33:06 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -282,19 +282,52 @@ isrdispatch_vectored(pc, evec, frame)
 		printf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
 }
 
+/*
+ * netisr junk...
+ * XXX - This really belongs in some common file,
+ *	i.e.  src/sys/net/netisr.c
+ * Also, should use an array of chars instead of
+ * a bitmask to avoid atomicity locking issues.
+ */
+
+#include "arp.h"	/* for NARP */
+#include "ppp.h"
+
+/*
+ * Declarations for the netisr functions...
+ * They are in the header files, but that's not
+ * really a good reason to drag all those in.
+ */
+void netintr __P((void));
+void arpintr __P((void));
+void ipintr __P((void));
+void ip6intr __P((void));
+void atintr __P((void));
+void nsintr __P((void));
+void clnlintr __P((void));
+void ccittintr __P((void));
+void pppintr __P((void));
+
 void
 netintr()
 {
+	int n, s;
+
+	s = splhigh();
+	n = netisr;
+	netisr = 0;
+	splx(s);
 
 #define DONETISR(bit, fn) do {		\
-	if (netisr & (1 << bit)) {	\
-		netisr &= ~(1 << bit);	\
-		fn();			\
-	}				\
-} while (0)
+		if (n & (1 << bit)) 	\
+			fn();		\
+		} while (0)
+
+	s = splsoftnet();
 
 #include <net/netisr_dispatch.h>
 
 #undef DONETISR
 
+	splx(s);
 }

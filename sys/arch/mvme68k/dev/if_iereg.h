@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iereg.h,v 1.2 1999/02/14 17:54:28 scw Exp $ */
+/*	$NetBSD: if_iereg.h,v 1.3 2000/03/18 22:33:02 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,11 +43,11 @@
 #ifndef __mvme68k_if_iereg_h
 #define __mvme68k_if_iereg_h
 
-struct mpu_regs {
-	volatile u_int16_t mpu_upper;	/* Upper Command Word */
-	volatile u_int16_t mpu_lower;	/* Lower Command Word */
-	volatile u_int32_t mpu_ca;	/* Channel Attention. Dummy Rd or Wr */
-};
+#define	IE_MPUREG_UPPER	0x00	/* Upper Command Word */
+#define IE_MPUREG_LOWER	0x02	/* Lower Command Word */
+#define IE_MPUREG_CA	0x04	/* Channel Attention. Dummy Rd or Wr */
+
+#define IE_MPUREG_SIZE	0x08
 
 #define	IE_MPU_RESET		0x00	/* Software Reset */
 #define	IE_MPU_SELF_TEST	0x01	/* Execute a Self-Test */

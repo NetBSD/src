@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_twovar.h,v 1.1 1999/02/20 00:12:01 scw Exp $ */
+/*	$NetBSD: vme_twovar.h,v 1.2 2000/03/18 22:33:04 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,43 +36,72 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __mvme68k_vme_twovar_h
-#define __mvme68k_vme_twovar_h
+#ifndef _MVME68K_VME_TWOVAR_H
+#define _MVME68K_VME_TWOVAR_H
 
-#define VME2_VECTOR_BASE	(0x60u)
-#define	VME2_VECTOR_MIN		0x08
-#define VME2_VECTOR_MAX		0x1f
+struct vmetwo_range {
+	vme_am_t	vr_am;
+	vme_datasize_t	vr_datasize;
+	paddr_t		vr_locstart;
+	paddr_t		vr_mask;
+	vme_addr_t	vr_vmestart;
+	vme_addr_t	vr_vmeend;
+};
 
-#define VME2_VEC_SOFT0		0x08
-#define VME2_VEC_SOFT1		0x09
-#define VME2_VEC_SOFT2		0x0a
-#define VME2_VEC_SOFT3		0x0b
-#define VME2_VEC_SOFT4		0x0c
-#define VME2_VEC_SOFT5		0x0d
-#define VME2_VEC_SOFT6		0x0e
-#define VME2_VEC_SOFT7		0x0f
-#define VME2_VEC_GCSRLM0	0x10
-#define VME2_VEC_GCSRLM1	0x11
-#define VME2_VEC_GCSRSIG0	0x12
-#define VME2_VEC_GCSRSIG1	0x13
-#define VME2_VEC_GCSRSIG2	0x14
-#define VME2_VEC_GCSRSIG3	0x15
-#define VME2_VEC_DMAC		0x16
-#define VME2_VEC_VIA		0x17
-#define VME2_VEC_TT1		0x18
-#define VME2_VEC_TT2		0x19
-#define VME2_VEC_IRQ1		0x1a
-#define VME2_VEC_PARITY_ERROR	0x1b
-#define VME2_VEC_MWP_ERROR	0x1c
-#define VME2_VEC_SYSFAIL	0x1d
-#define VME2_VEC_ABORT		0x1e
-#define VME2_VEC_ACFAIL		0x1f
+#define VME2_AM_DISABLED	((vme_am_t)-1)
+#define	VME2_RANGE_FIXED_A16	0
+#define	VME2_RANGE_FIXED_A24	1
+#define	VME2_RANGE_FIXED_A32	2
+#define VME2_RANGE_PROG_START	3
 
-extern void vmetwo_intr_establish __P((int, void (*) __P((void *)),
-					int, void *));
-extern void vmetwo_intr_disestablish __P((int));
+#define VME2_NRANGES		(VME2_RANGE_PROG_START + VME2_MASTER_WINDOWS)
 
-extern struct vme_two_lcsr *sys_vme_two;
-extern struct vme_two_gcsr *sys_vme_two_gcsr;
+struct vmetwo_softc {
+	struct device		sc_dev;
+	bus_space_tag_t		sc_bust;
+	bus_space_handle_t	sc_lcrh;
+	bus_space_handle_t	sc_gcrh;
+	bus_dma_tag_t		sc_dmat;
+	bus_space_tag_t		sc_vmet;
+	short			sc_irqref[8];
+	struct vmetwo_range	sc_ranges[VME2_NRANGES];
+	struct vme_chipset_tag	sc_vct;
+};
 
-#endif /* __mvme68k_vme_twovar_h */
+
+struct vmetwo_mapresc_t {
+	bus_space_handle_t	pm_handle;
+	bus_addr_t		pm_addr;
+	bus_size_t		pm_size;
+	vme_am_t		pm_am;
+	vme_datasize_t		pm_datasize;
+	int			pm_range;
+};
+
+
+int _vmetwo_map __P((void *, vme_addr_t, vme_size_t, vme_am_t, vme_datasize_t,
+    vme_swap_t, bus_space_tag_t *, bus_space_handle_t *, vme_mapresc_t *));
+
+void _vmetwo_unmap __P((void *, vme_mapresc_t));
+
+int _vmetwo_probe __P((void *, vme_addr_t, vme_size_t, vme_am_t,vme_datasize_t,
+    int (*)(void *, bus_space_tag_t, bus_space_handle_t), void *));
+
+int _vmetwo_intmap __P((void *, int, int, vme_intr_handle_t *));
+
+void *_vmetwo_intr_establish __P((void *, vme_intr_handle_t, int,
+    int (*)(void *), void *));
+
+void _vmetwo_intr_disestablish __P((void *, vme_intr_handle_t));
+
+int _vmetwo_dmamap_create __P((void *, vme_size_t, vme_am_t, vme_datasize_t,
+    vme_swap_t, int, vme_size_t, vme_addr_t, int, bus_dmamap_t *));
+
+void _vmetwo_dmamap_destroy __P((void *, bus_dmamap_t));
+
+int _vmetwo_dmamem_alloc __P((void *, vme_size_t, vme_am_t, vme_datasize_t,
+    vme_swap_t, bus_dma_segment_t *, int, int *, int));
+
+void _vmetwo_dmamem_free __P((void *, bus_dma_segment_t *, int));
+
+#endif /* _MVME68K_VME_TWOVAR_H */

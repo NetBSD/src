@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcctwo.c,v 1.2 1999/02/14 17:54:28 scw Exp $ */
+/*	$NetBSD: lpt_pcctwo.c,v 1.3 2000/03/18 22:33:03 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,31 +41,37 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/buf.h>
 #include <sys/kernel.h>
-#include <sys/ioctl.h>
-#include <sys/uio.h>
+#include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/syslog.h>
 
-#include <machine/cpu.h>
+#include <machine/bus.h>
 
 #include <mvme68k/dev/lptvar.h>
-#include <mvme68k/dev/pccvar.h>
 #include <mvme68k/dev/pcctworeg.h>
+#include <mvme68k/dev/pcctwovar.h>
+
+/*
+ * Autoconfig stuff
+ */
+int lpt_pcctwo_match __P((struct device *, struct cfdata *, void *));
+void lpt_pcctwo_attach __P((struct device *, struct device *, void *));
+
+struct cfattach lpt_pcctwo_ca = {
+	sizeof(struct lpt_softc), lpt_pcctwo_match, lpt_pcctwo_attach
+};
+
+extern struct cfdriver lpt_cd;
 
 
-static int	lpt_pcctwo_intr __P((void *));
-static void	lpt_pcctwo_open __P((struct lpt_softc *, int));
-static void	lpt_pcctwo_close __P((struct lpt_softc *));
-static void	lpt_pcctwo_iprime __P((struct lpt_softc *));
-static void	lpt_pcctwo_speed __P((struct lpt_softc *, int));
-static int	lpt_pcctwo_notrdy __P((struct lpt_softc *, int));
-static void	lpt_pcctwo_wr_data __P((struct lpt_softc *, u_char));
+int lpt_pcctwo_intr __P((void *));
+void lpt_pcctwo_open __P((struct lpt_softc *, int));
+void lpt_pcctwo_close __P((struct lpt_softc *));
+void lpt_pcctwo_iprime __P((struct lpt_softc *));
+void lpt_pcctwo_speed __P((struct lpt_softc *, int));
+int lpt_pcctwo_notrdy __P((struct lpt_softc *, int));
+void lpt_pcctwo_wr_data __P((struct lpt_softc *, u_char));
 
 struct lpt_funcs lpt_pcctwo_funcs = {
 	lpt_pcctwo_open,
@@ -76,50 +82,43 @@ struct lpt_funcs lpt_pcctwo_funcs = {
 	lpt_pcctwo_wr_data
 };
 
-/*
- * Autoconfig stuff
- */
-static int  lpt_pcctwo_match  __P((struct device *, struct cfdata *, void *));
-static void lpt_pcctwo_attach __P((struct device *, struct device *, void *));
-
-struct cfattach lpt_pcctwo_ca = {
-	sizeof(struct lpt_softc), lpt_pcctwo_match, lpt_pcctwo_attach
-};
-
-extern struct cfdriver lpt_cd;
-
-
-/*ARGSUSED*/
-static	int
+/* ARGSUSED */
+int
 lpt_pcctwo_match(parent, cf, args)
 	struct device *parent;
 	struct cfdata *cf;
 	void *args;
 {
-	struct pcc_attach_args *pa = args;
+	struct pcctwo_attach_args *pa;
+
+	pa = args;
 
 	if (strcmp(pa->pa_name, lpt_cd.cd_name))
 		return (0);
 
-	pa->pa_ipl = cf->pcccf_ipl;
+	pa->pa_ipl = cf->pcctwocf_ipl;
 
 	return (1);
 }
 
-/*ARGSUSED*/
-static void
+/* ARGSUSED */
+void
 lpt_pcctwo_attach(parent, self, args)
-struct	device *parent, *self;
-void	*args;
+	struct device *parent;
+	struct device *self;
+	void *args;
 {
-	struct lpt_softc *sc = (void *)self;
-	struct pcc_attach_args *pa = args;
-	struct pcctwo	*regs;
+	struct pcctwo_attach_args *pa;
+	struct lpt_softc *sc;
 
-	/*
-	 * Get pointer to regs
-	 */
-	regs = sc->sc_regs = (void *) PCCTWO_VADDR(pa->pa_offset);
+	pa = (struct pcctwo_attach_args *) args;
+	sc = (struct lpt_softc *) self;
+
+	/* The printer registers are part of the PCCChip2's own registers. */
+	sc->sc_bust = pa->pa_bust;
+	bus_space_map(pa->pa_bust, pa->pa_offset, PCC2REG_SIZE, 0,
+	    &sc->sc_bush);
+
 	sc->sc_ipl = pa->pa_ipl & PCCTWO_ICR_LEVEL_MASK;
 	sc->sc_laststatus = 0;
 	sc->sc_funcs = &lpt_pcctwo_funcs;
@@ -129,12 +128,12 @@ void	*args;
 	/*
 	 * Disable interrupts until device is opened
 	 */
-	regs->prt_ack_icr = 0;
-	regs->prt_fault_icr = 0;
-	regs->prt_sel_icr = 0;
-	regs->prt_pe_icr = 0;
-	regs->prt_busy_icr = 0;
-	regs->prt_ctrl = 0;
+	pcc2_reg_write(sc, PCC2REG_PRT_ACK_ICSR, 0);
+	pcc2_reg_write(sc, PCC2REG_PRT_FAULT_ICSR, 0);
+	pcc2_reg_write(sc, PCC2REG_PRT_SEL_ICSR, 0);
+	pcc2_reg_write(sc, PCC2REG_PRT_PE_ICSR, 0);
+	pcc2_reg_write(sc, PCC2REG_PRT_BUSY_ICSR, 0);
+	pcc2_reg_write(sc, PCC2REG_PRT_CONTROL, 0);
 
 	/*
 	 * Main attachment code
@@ -154,115 +153,126 @@ int
 lpt_pcctwo_intr(arg)
 	void *arg;
 {
-	struct lpt_softc *sc = (struct lpt_softc *)arg;
-	struct pcctwo *regs = sc->sc_regs;
+	struct lpt_softc *sc;
 	int i;
+
+	sc = (struct lpt_softc *) arg;
 
 	/* is printer online and ready for output */
 	if (lpt_pcctwo_notrdy(sc, 0) || lpt_pcctwo_notrdy(sc, 1))
-		return 0;
+		return (0);
 
 	i = lpt_intr(sc);
 
-	if ( regs->prt_input_sr & PCCTWO_PRT_IN_SR_PINT )
-		regs->prt_ack_icr = sc->sc_icr | PCCTWO_ICR_ICLR;
+	if (pcc2_reg_read(sc, PCC2REG_PRT_INPUT_STATUS) & PCCTWO_PRT_IN_SR_PINT)
+		pcc2_reg_write(sc, PCC2REG_PRT_ACK_ICSR,
+		    sc->sc_icr | PCCTWO_ICR_ICLR);
 
-	return i;
+	return (i);
 }
 
-static void
+void
 lpt_pcctwo_open(sc, int_ena)
 	struct lpt_softc *sc;
 	int int_ena;
 {
-	struct pcctwo *regs = sc->sc_regs;
 	int sps;
 
-	regs->prt_ack_icr = PCCTWO_ICR_ICLR | PCCTWO_ICR_EDGE;
-	regs->prt_ctrl |= PCCTWO_PRT_CTRL_DOEN;
+	pcc2_reg_write(sc, PCC2REG_PRT_ACK_ICSR,
+	    PCCTWO_ICR_ICLR | PCCTWO_ICR_EDGE);
 
-	if ( int_ena == 0 ) {
+	pcc2_reg_write(sc, PCC2REG_PRT_CONTROL,
+	    pcc2_reg_read(sc, PCC2REG_PRT_CONTROL) | PCCTWO_PRT_CTRL_DOEN);
+
+	if (int_ena == 0) {
 		sps = splhigh();
 		sc->sc_icr = sc->sc_ipl | PCCTWO_ICR_EDGE;
-		regs->prt_ack_icr = sc->sc_icr;
+		pcc2_reg_write(sc, PCC2REG_PRT_ACK_ICSR, sc->sc_icr);
 		splx(sps);
 	}
 }
 
-static void
+void
 lpt_pcctwo_close(sc)
 	struct lpt_softc *sc;
 {
-	struct pcctwo *regs = sc->sc_regs;
 
-	regs->prt_ack_icr = PCCTWO_ICR_ICLR | PCCTWO_ICR_EDGE;
-	regs->prt_ctrl = 0;
+	pcc2_reg_write(sc, PCC2REG_PRT_ACK_ICSR,
+	    PCCTWO_ICR_ICLR | PCCTWO_ICR_EDGE);
+	pcc2_reg_write(sc, PCC2REG_PRT_CONTROL, 0);
 }
 
-static void
+void
 lpt_pcctwo_iprime(sc)
 	struct lpt_softc *sc;
 {
-	struct pcctwo *regs = sc->sc_regs;
 
-	regs->prt_ctrl |= PCCTWO_PRT_CTRL_INP;
+	pcc2_reg_write(sc, PCC2REG_PRT_CONTROL,
+	    pcc2_reg_read(sc, PCC2REG_PRT_CONTROL) | PCCTWO_PRT_CTRL_INP);
+
 	delay(100);
-	regs->prt_ctrl &= ~PCCTWO_PRT_CTRL_INP;
+
+	pcc2_reg_write(sc, PCC2REG_PRT_CONTROL,
+	    pcc2_reg_read(sc, PCC2REG_PRT_CONTROL) & ~PCCTWO_PRT_CTRL_INP);
+
 	delay(100);
 }
 
-static void
+void
 lpt_pcctwo_speed(sc, speed)
 	struct lpt_softc *sc;
 	int speed;
 {
-	struct pcctwo *regs = sc->sc_regs;
+	u_int8_t reg;
 
-	if ( speed == LPT_STROBE_FAST )
-		regs->prt_ctrl |= PCCTWO_PRT_CTRL_FAST;
+	reg = pcc2_reg_read(sc, PCC2REG_PRT_CONTROL);
+
+	if (speed == LPT_STROBE_FAST)
+		reg |= PCCTWO_PRT_CTRL_FAST;
 	else
-		regs->prt_ctrl &= ~PCCTWO_PRT_CTRL_FAST;
+		reg &= ~PCCTWO_PRT_CTRL_FAST;
+
+	pcc2_reg_write(sc, PCC2REG_PRT_CONTROL, reg);
 }
 
-static int
+int
 lpt_pcctwo_notrdy(sc, err)
 	struct lpt_softc *sc;
 	int err;
 {
-	struct pcctwo *regs = sc->sc_regs;
-	u_char status;
-	u_char new;
+	u_int8_t status;
+	u_int8_t new;
 
 #define	LPS_INVERT	(PCCTWO_PRT_IN_SR_SEL)
 #define	LPS_MASK	(PCCTWO_PRT_IN_SR_SEL | PCCTWO_PRT_IN_SR_FLT | \
 			 PCCTWO_PRT_IN_SR_BSY | PCCTWO_PRT_IN_SR_PE)
 
-	status = (regs->prt_input_sr ^ LPS_INVERT) & LPS_MASK;
+	status = pcc2_reg_read(sc, PCC2REG_PRT_INPUT_STATUS) ^ LPS_INVERT;
+	status &= LPS_MASK;
 
-	if ( err ) {
+	if (err) {
 		new = status & ~sc->sc_laststatus;
 		sc->sc_laststatus = status;
 
-		if ( new & PCCTWO_PRT_IN_SR_SEL )
+		if (new & PCCTWO_PRT_IN_SR_SEL)
 			log(LOG_NOTICE, "%s: offline\n",
-				sc->sc_dev.dv_xname);
-		else if ( new & PCCTWO_PRT_IN_SR_PE )
+			    sc->sc_dev.dv_xname);
+		else if (new & PCCTWO_PRT_IN_SR_PE)
 			log(LOG_NOTICE, "%s: out of paper\n",
-				sc->sc_dev.dv_xname);
-		else if ( new & PCCTWO_PRT_IN_SR_FLT )
+			    sc->sc_dev.dv_xname);
+		else if (new & PCCTWO_PRT_IN_SR_FLT)
 			log(LOG_NOTICE, "%s: output error\n",
-				sc->sc_dev.dv_xname);
+			    sc->sc_dev.dv_xname);
 	}
 
-	return status;
+	return (status);
 }
 
-static void
+void
 lpt_pcctwo_wr_data(sc, data)
 	struct lpt_softc *sc;
 	u_char data;
 {
-	struct pcctwo *regs = sc->sc_regs;
 
-	regs->prt_data = (u_short) data;
+	pcc2_reg_write16(sc, PCC2REG_PRT_DATA, (u_int16_t) data);
 }
