@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.4 2003/07/15 00:24:54 lukem Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.4 2003/07/15 00:24:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -338,6 +338,8 @@ pxa2x0_probe_sdram(vaddr_t memctl_va, paddr_t *start, paddr_t *size)
 			drac = mdcnfg >> MDCNFD_DRAC23_SHIFT;
 			dnb = mdcnfg >> MDCNFD_DNB23_SHIFT;
 			break;
+		default:
+			panic("pxa2x0_probe_sdram: impossible");
 		}
 
 		dwid = 2 << (1 - (dwid & MDCNFD_DWID_MASK));  /* 16/32 width */
