@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.16 2001/08/03 01:11:49 thorpej Exp $	*/
+/*	$NetBSD: npx.h,v 1.17 2001/08/03 01:24:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -148,6 +148,12 @@ struct emcsts {
 #define	__Linux_NPXCW__		0x037f
 /* SVR4 uses the same control word as iBCS2. */
 #define	__SVR4_NPXCW__		0x0262
+
+/*
+ * The default MXCSR value at reset is 0x1f80, IA-32 Instruction
+ * Set Reference, pg. 3-369.
+ */
+#define	__INITIAL_MXCSR__	0x1f80
 
 /*
  * The standard control word from finit is 0x37F, giving:
