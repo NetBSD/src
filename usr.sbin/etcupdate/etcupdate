@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.3.2.2 2002/10/13 23:29:51 lukem Exp $
+# $NetBSD: etcupdate,v 1.3.2.3 2002/10/13 23:31:01 lukem Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -468,7 +468,7 @@ if [ ! -z "${NEED_PWD_MKDB}" ]; then
 		echo ""
 	fi
 fi
-if [ -x /etc/postinstall ]; then
+if [ -x /etc/postinstall -a -z "${BINARY}" ]; then
 	S=`echo ${SRCDIR} | sed 's+/etc++'`
 	echo "*** Running /etc/postinstall"
 	/etc/postinstall -s "${S}" check
