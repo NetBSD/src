@@ -1,4 +1,4 @@
-#	$NetBSD: BISHOP,v 1.6 1998/05/20 18:09:16 thorpej Exp $
+#	$NetBSD: BISHOP,v 1.7 1998/05/24 23:45:30 thorpej Exp $
 #
 # Kernel for bishop.nas.nasa.gov and ripley.nas.nasa.gov (AlphaStation 500
 # and AlphaStation 600, respectively).
@@ -17,7 +17,7 @@ options 	KTRACE			# System call tracing support
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
 #options 	DEBUG			# more expensive debugging code
-#options 	LOCKDEBUG		# debug locks
+options 	LOCKDEBUG		# debug locks
 options 	KMEMSTATS		# malloc statistics
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	DDB			# kernel debugger

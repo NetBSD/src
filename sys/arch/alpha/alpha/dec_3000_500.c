@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.20 1998/03/26 02:43:23 thorpej Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.21 1998/05/24 23:45:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.20 1998/03/26 02:43:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.21 1998/05/24 23:45:29 thorpej Exp $");
 
 #include "opt_new_scc_driver.h"
 
@@ -186,7 +186,7 @@ dec_3000_500_device_register(dev, aux)
 		      == 0) {
 			struct tcdsdev_attach_args *tcdsdev = aux;
 
-			if (tcdsdev->tcdsda_slot == b->channel) {
+			if (tcdsdev->tcdsda_chip == b->channel) {
 				scsidev = dev;
 #if 0
 				printf("\nscsidev = %s\n", dev->dv_xname);
