@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.9 2002/10/23 09:13:53 jdolecek Exp $ */
+/*	$NetBSD: cgsix.c,v 1.10 2003/01/18 10:38:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.9 2002/10/23 09:13:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.10 2003/01/18 10:38:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -956,7 +956,7 @@ cgsixmmap(dev, off, prot)
 
 #ifdef DEBUG
 	{
-	  struct proc *p = curproc;	/* XXX */
+	  struct proc *p = curlwp->l_proc;	/* XXX */
 	  log(LOG_NOTICE, "cgsixmmap(0x%llx) (%s[%d])\n",
 		(long long)off, p->p_comm, p->p_pid);
 	}
