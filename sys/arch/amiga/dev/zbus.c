@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.6 1995/08/18 15:28:19 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.7 1995/08/18 15:58:30 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -97,6 +97,8 @@ static struct aconfdata aconftab[] = {
 	{ "ed",		2121,	1 },
 	/* ASDG */
 	{ "ed",		9999,	9 },		/* XXXX */
+	/* Village Tronic Ariadne */
+	{ "ae",		2167,	201},
 	/* bsc/Alf Data */
 	{ "mfc",	2092,	16 },
 	{ "mfc",	2092,	17 },
