@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)closedir.c	5.9 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: directory.c,v 1.3 1993/08/26 00:44:25 jtc Exp $";
+static char *rcsid = "$Id: directory.c,v 1.4 1994/03/28 02:34:45 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -177,7 +177,6 @@ seekdir(dirp, loc)
 	register struct ddloc **prevlp;
 	register struct ddloc *lp;
 	struct dirent *dp;
-	extern long lseek();
 
 	prevlp = (struct ddloc **)&(dirp->dd_ddloc);
 	lp = *prevlp;
