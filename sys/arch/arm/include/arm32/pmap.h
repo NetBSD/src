@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 2002/02/06 17:41:44 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.24 2002/02/20 00:10:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -138,6 +138,15 @@ typedef struct {
 } pv_addr_t;
 
 /*
+ * Determine various modes for PTEs (user vs. kernel, cacheable
+ * vs. non-cacheable).
+ */
+#define	PTE_KERNEL	0
+#define	PTE_USER	1
+#define	PTE_NOCACHE	0
+#define	PTE_CACHE	1
+
+/*
  * _KERNEL specific macros, functions and prototypes
  */
 
@@ -175,6 +184,9 @@ int pmap_handled_emulation __P((struct pmap *, vaddr_t));
 int pmap_modified_emulation __P((struct pmap *, vaddr_t));
 void pmap_postinit __P((void));
 pt_entry_t *pmap_pte __P((struct pmap *, vaddr_t));
+
+/* Bootstrapping routines. */
+void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
 
 /*
  * Special page zero routine for use by the idle loop (no cache cleans). 

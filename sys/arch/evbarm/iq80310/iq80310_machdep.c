@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.20 2002/02/08 03:41:56 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.21 2002/02/20 00:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -281,7 +281,8 @@ struct l1_sec_map {
 	vaddr_t	va;
 	vaddr_t	pa;
 	vsize_t	size;
-	int flags;
+	vm_prot_t prot;
+	int cache;
 } l1_sec_table[] = {
     /*
      * Map the on-board devices VA == PA so that we can access them
@@ -291,10 +292,12 @@ struct l1_sec_map {
 	IQ80310_OBIO_BASE,
 	IQ80310_OBIO_BASE,
 	IQ80310_OBIO_SIZE,
-	0,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
     },
 
     {
+	0,
 	0,
 	0,
 	0,
@@ -697,9 +700,11 @@ initarm(void *arg)
 		    l1_sec_table[loop].va);
 #endif
 		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_SEC_SIZE)
-			map_section(l1pagetable, l1_sec_table[loop].va + sz,
+			pmap_map_section(l1pagetable,
+			    l1_sec_table[loop].va + sz,
 			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].flags);
+			    l1_sec_table[loop].prot,
+			    l1_sec_table[loop].cache);
 		++loop;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.8 2002/01/30 04:00:47 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.9 2002/02/20 00:10:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -165,8 +165,6 @@ struct user *proc0paddr;
 
 void consinit		__P((void));
 
-void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
-			     int cacheable));
 void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
@@ -327,18 +325,23 @@ struct l1_sec_map {
 	vm_offset_t	va;
 	vm_offset_t	pa;
 	vm_size_t	size;
-	int		flags;
+	vm_prot_t	prot,
+	int		cache;
 } l1_sec_table[] = {
 #if NPLCOM > 0 && defined(PLCONSOLE)
-	{ UART0_BOOT_BASE, IFPGA_IO_BASE + IFPGA_UART0, 1024 * 1024, 0},
-	{ UART1_BOOT_BASE, IFPGA_IO_BASE + IFPGA_UART1, 1024 * 1024, 0},
+	{ UART0_BOOT_BASE, IFPGA_IO_BASE + IFPGA_UART0, 1024 * 1024,
+	  VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE },
+	{ UART1_BOOT_BASE, IFPGA_IO_BASE + IFPGA_UART1, 1024 * 1024,
+	  VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE },
 #endif
 #if NPCI > 0
-	{ IFPGA_PCI_IO_VBASE, IFPGA_PCI_IO_BASE, IFPGA_PCI_IO_VSIZE, 0},
-	{ IFPGA_PCI_CONF_VBASE, IFPGA_PCI_CONF_BASE, IFPGA_PCI_CONF_VSIZE, 0},
+	{ IFPGA_PCI_IO_VBASE, IFPGA_PCI_IO_BASE, IFPGA_PCI_IO_VSIZE,
+	  VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE },
+	{ IFPGA_PCI_CONF_VBASE, IFPGA_PCI_CONF_BASE, IFPGA_PCI_CONF_VSIZE,
+	  VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE },
 #endif
 
-	{ 0, 0, 0, 0 }
+	{ 0, 0, 0, 0, 0 }
 };
 
 /*
@@ -724,9 +727,11 @@ initarm(bootinfo)
 		    l1_sec_table[loop].va);
 #endif
 		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_SEC_SIZE)
-			map_section(l1pagetable, l1_sec_table[loop].va + sz,
+			pmap_map_section(l1pagetable,
+			    l1_sec_table[loop].va + sz,
 			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].flags);
+			    l1_sec_table[loop].prot,
+			    l1_sec_table[loop].cache);
 		++loop;
 	}
 

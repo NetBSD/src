@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.15 2002/01/25 19:19:30 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.16 2002/02/20 00:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -160,8 +160,6 @@ int fcomcndetach __P((void));
 
 void isa_netwinder_init __P((u_int iobase, u_int membase));
 
-void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
-			     int cacheable));
 void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
@@ -307,30 +305,45 @@ struct l1_sec_map {
 	vm_offset_t	va;
 	vm_offset_t	pa;
 	vm_size_t	size;
-	int		flags;
+	vm_prot_t	prot;
+	int		cache;
 } l1_sec_table[] = {
 	/* Map 1MB for CSR space */
 	{ DC21285_ARMCSR_VBASE,			DC21285_ARMCSR_BASE,
-	    DC21285_ARMCSR_VSIZE,		0 },
+	    DC21285_ARMCSR_VSIZE,		VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+
 	/* Map 1MB for fast cache cleaning space */
 	{ DC21285_CACHE_FLUSH_VBASE,		DC21285_SA_CACHE_FLUSH_BASE,
-	    DC21285_CACHE_FLUSH_VSIZE,		1 },
+	    DC21285_CACHE_FLUSH_VSIZE,		VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_CACHE },
+
 	/* Map 1MB for PCI IO space */
 	{ DC21285_PCI_IO_VBASE,			DC21285_PCI_IO_BASE,
-	    DC21285_PCI_IO_VSIZE,		0 },
+	    DC21285_PCI_IO_VSIZE,		VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+
 	/* Map 1MB for PCI IACK space */
 	{ DC21285_PCI_IACK_VBASE,		DC21285_PCI_IACK_SPECIAL,
-	    DC21285_PCI_IACK_VSIZE,		0 },
+	    DC21285_PCI_IACK_VSIZE,		VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+
 	/* Map 16MB of type 1 PCI config access */
 	{ DC21285_PCI_TYPE_1_CONFIG_VBASE,	DC21285_PCI_TYPE_1_CONFIG,
-	    DC21285_PCI_TYPE_1_CONFIG_VSIZE,	0 },
+	    DC21285_PCI_TYPE_1_CONFIG_VSIZE,	VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+
 	/* Map 16MB of type 0 PCI config access */
 	{ DC21285_PCI_TYPE_0_CONFIG_VBASE,	DC21285_PCI_TYPE_0_CONFIG,
-	    DC21285_PCI_TYPE_0_CONFIG_VSIZE,	0 },
+	    DC21285_PCI_TYPE_0_CONFIG_VSIZE,	VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+
 	/* Map 1MB of 32 bit PCI address space for ISA MEM accesses via PCI */
 	{ DC21285_PCI_ISA_MEM_VBASE,		DC21285_PCI_MEM_BASE,
-	    DC21285_PCI_ISA_MEM_VSIZE,		0 },
-	{ 0, 0, 0, 0 }
+	    DC21285_PCI_ISA_MEM_VSIZE,		VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+
+	{ 0, 0, 0, 0, 0 }
 };
 
 /*
@@ -610,8 +623,10 @@ initarm(bootinfo)
 #endif
 	}
 #else
-	map_section(l1pagetable, 0xf0000000, 0x00000000, 1);
-	map_section(l1pagetable, 0xf0100000, 0x00100000, 1);
+	pmap_map_section(l1pagetable, 0xf0000000, 0x00000000,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_section(l1pagetable, 0xf0100000, 0x00100000,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
 #if 0
 	/*
@@ -685,9 +700,11 @@ initarm(bootinfo)
 		    l1_sec_table[loop].va);
 #endif
 		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_SEC_SIZE)
-			map_section(l1pagetable, l1_sec_table[loop].va + sz,
+			pmap_map_section(l1pagetable,
+			    l1_sec_table[loop].va + sz,
 			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].flags);
+			    l1_sec_table[loop].prot,
+			    l1_sec_table[loop].cache);
 		++loop;
 	}
 
