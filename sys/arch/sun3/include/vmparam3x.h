@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3x.h,v 1.4 1998/02/05 04:57:02 gwr Exp $	*/
+/*	$NetBSD: vmparam3x.h,v 1.5 1998/06/10 02:42:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,4 +106,12 @@
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
-#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
+#define MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
+
+#define VM_PHYSSEG_MAX		4
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
+
+struct pmap_physseg {
+	/* NULL */
+};
