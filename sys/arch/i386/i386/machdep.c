@@ -1087,12 +1087,6 @@ init386(first_avail)
 	proc0.p_addr->u_pcb.pcb_ptd = IdlePTD;
 }
 
-void
-setsoftclock()
-{
-	schednetisr(NETISR_SCLK);
-}
-
 /*
  * insert an element into a queue 
  */
