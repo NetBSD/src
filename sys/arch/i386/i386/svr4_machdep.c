@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.28 1996/10/20 22:39:03 hpeyerl Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.29 1997/10/16 04:23:39 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,17 +31,17 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
+#include <sys/exec.h>
 #include <sys/user.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
-#include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
-#include <sys/exec.h>
-
+#include <sys/mount.h>
 #include <sys/syscallargs.h>
+
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
@@ -54,6 +54,7 @@
 #include <machine/specialreg.h>
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
+#include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));

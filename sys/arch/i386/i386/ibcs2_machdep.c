@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.2 1997/10/09 08:53:17 jtc Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.3 1997/10/16 04:23:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <sys/exec.h>
 
 #include <machine/reg.h>
+#include <machine/vmparam.h>
 #include <machine/ibcs2_machdep.h>
 
 void
