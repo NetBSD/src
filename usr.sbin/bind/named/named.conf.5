@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.conf.5,v 1.2 2004/05/20 00:26:19 wiz Exp $
+.\"     $NetBSD: named.conf.5,v 1.3 2004/05/20 01:01:33 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2000 by Internet Software Consortium
 .\"
@@ -22,16 +22,19 @@
 .Nd configuration file for
 .Xr named 8
 .Sh OVERVIEW
-BIND 8 is much more configurable than previous release of BIND.  There
-are entirely new areas of configuration, such as access control lists
-and categorized logging.  Many options that previously applied to all
-zones can now be used selectively.  These features, plus a
-consideration of future configuration needs led to the creation of a
-new configuration file format.
+BIND 8 is much more configurable than previous release of BIND.
+There are entirely new areas of configuration, such as access
+control lists and categorized logging.
+Many options that previously applied to all
+zones can now be used selectively.
+These features, plus a consideration of future configuration needs
+led to the creation of a new configuration file format.
 .Ss General Syntax
 A BIND 8 configuration consists of two general features, statements
-and comments.  All statements end with a semicolon.  Many statements
-can contain substatements, which are each also terminated with a
+and comments.
+All statements end with a semicolon.
+Many statements can contain substatements, which are each also
+terminated with a
 semicolon.
 .Pp
 The following statements are supported:
@@ -65,11 +68,13 @@ The
 and
 .Ic options
 statements may only occur once per configuration, while the rest may
-appear numerous times.  Further detail on each statement is provided
+appear numerous times.
+Further detail on each statement is provided
 in individual sections below.
 .Pp
 Comments may appear anywhere that whitespace may appear in a BIND
-configuration file.  To appeal to programmers of all kinds, they can
+configuration file.
+To appeal to programmers of all kinds, they can
 be written in C, C++, or shell/perl constructs.
 .Pp
 C-style comments start with the two characters
@@ -81,7 +86,8 @@ Because they are completely delimited with these characters,
 they can be used to comment only a portion of a line or to span
 multiple lines.
 .Pp
-C-style comments cannot be nested.  For example, the following is
+C-style comments cannot be nested.
+For example, the following is
 not valid because the entire comment ends with the first
 .Li */ :
 .Bd -literal -offset indent
@@ -97,7 +103,8 @@ C++-style comments start with the two characters
 They cannot be continued across multiple physical lines; to have
 one logical comment span multiple lines, each line must use the
 .Li //
-pair.  For example:
+pair.
+For example:
 .Bd -literal -offset indent
 // This is the start of a comment.  The next line
 // is a new comment, even though it is logically
@@ -108,7 +115,8 @@ Shell-style (or perl-style, if you prefer) comments start with the
 character
 .Li #
 (hash or pound or number or octothorpe or whatever) and continue to
-the end of the physical line, like C++ comments.  For example:
+the end of the physical line, like C++ comments.
+For example:
 .Bd -literal -offset indent
 # This is the start of a comment.  The next line
 # is a new comment, even though it is logically
@@ -119,7 +127,8 @@ the end of the physical line, like C++ comments.  For example:
 you cannot use the
 .Li ;
 (semicolon) character to start a comment such as you would in a zone
-file.  The semicolon indicates the end of a configuration statement,
+file.
+The semicolon indicates the end of a configuration statement,
 so whatever follows it will be interpreted as the start of the next
 statement.
 .Ss Converting from BIND 4.9.x
@@ -129,7 +138,8 @@ by using
 a shell script that is part of the BIND 8.2.x source kit.
 .Sh DOCUMENTATION DEFINITIONS
 Described below are elements used throughout the BIND configuration
-file documentation.  Elements which are only associated with one
+file documentation.
+Elements which are only associated with one
 statement are described only in the section describing that statement.
 .Bl -tag -width 0n
 .It Va acl_name
@@ -150,7 +160,8 @@ elements, as described in the
 section.
 .It Va dotted-decimal
 One or more integers valued 0 through 255 separated only by dots
-(``.''), such as
+.Pq Sq \&. ,
+such as
 .Li 123 ,
 .Li 45.67
 or
@@ -173,13 +184,18 @@ An IP port
 through
 .Li 65535 ,
 with values below 1024 typically restricted to
-root-owned processes.  In some cases an asterisk (``*'') character
+root-owned processes.
+In some cases an asterisk
+.Pq Sq *
+character
 can be used as a place holder to select a random high-numbered port.
 .It Va ip_prefix
 An IP network specified in
 .Va dotted-decimal
-form, followed by  ``/''
-and then the number of bits in the netmask.  E.g.
+form, followed by
+.Sq /
+and then the number of bits in the netmask.
+E.g.,
 .Li 127/8
 is
 the network
@@ -197,7 +213,8 @@ security.
 .It Va number
 A non-negative integer with an entire range limited by the range of a
 C language signed integer (2,147,483,647 on a machine with 32 bit
-integers).  Its acceptable value might further be limited by the
+integers).
+Its acceptable value might further be limited by the
 context in which it is used.
 .It Va size_spec
 A
@@ -234,7 +251,8 @@ respectively.
 .Pp
 Integer storage overflow is currently silently ignored during
 conversion of scaled values, resulting in values less than intended,
-possibly even negative.  Using
+possibly even negative.
+Using
 .Li unlimited
 is the best way to safely set a really large number.
 .It Va yes_or_no
@@ -261,7 +279,8 @@ are also accepted, as are the numbers
 .Ed
 .Ss Definition and Usage
 Address match lists are primarily used to determine access control for
-various server operations.  They are also used to define priorities
+various server operations.
+They are also used to define priorities
 for querying other nameservers and to set the addresses on which
 .Nm named
 will listen for queries.
@@ -277,7 +296,8 @@ notation,
 .It
 an
 .Va ip-prefix
-(in the '/'-notation),
+(in the
+.Sq / No Ns -notation ) ,
 .It
 A
 .Va key_id ,
@@ -294,15 +314,17 @@ another
 .Va address_match_list .
 .El
 .Pp
-Elements can be negated with a leading exclamation mark (``!''), and
-the match list names
+Elements can be negated with a leading exclamation mark
+.Pq Sq \&! ,
+and the match list names
 .Li any ,
 .Li none ,
 .Li localhost
 and
 .Li localnets
-are predefined.  More information on those names can be found in the
-description of the
+are predefined.
+More information on those names can be found in the description of
+the
 .Ic acl
 statement.
 .Pp
@@ -310,27 +332,31 @@ The addition of the
 .Ic key
 clause made the name of this syntactic element something of a
 misnomer, since security keys can be used to validate access without
-regard to a host or network address.  Nonetheless, the term ``address
-match list'' is still used throughout the documentation.
+regard to a host or network address.
+Nonetheless, the term
+.Dq address match list
+is still used throughout the documentation.
 .Pp
 When a given IP address or prefix is compared to an address match
-list, the list is traversed in order until an element matches.  The
-interpretation of a match depends on whether the list is being used
-for access control, defining
+list, the list is traversed in order until an element matches.
+The interpretation of a match depends on whether the list is being
+used for access control, defining
 .Ic listen-on
 ports, or as a topology, and whether the element was
 negated.
 .Pp
 When used as an access control list, a non-negated match allows access
-and a negated match denies access.  If there is no match at all in the
-list, access is denied.  The clauses
+and a negated match denies access.
+If there is no match at all in the list, access is denied.
+The clauses
 .Ic allow-query ,
 .Ic allow-transfer ,
 .Ic allow-update ,
 .Ic allow-recursion ,
 and
 .Ic blackhole
-all use address match lists like this.  Similarly, the
+all use address match lists like this.
+Similarly, the
 .Ic listen-on
 option will cause the server to not accept queries on any of the
 machine's addresses which do not match the list.
@@ -339,18 +365,21 @@ When used with the
 .Ic topology
 option, a non-negated match returns a distance based on its position on
 the list (the closer the match is to the start of the list, the
-shorter the distance is between it and the server).  A negated match
-will be assigned the maximum distance from the server.  If there is no
+shorter the distance is between it and the server).
+A negated match
+will be assigned the maximum distance from the server.
+If there is no
 match, the address will get a distance which is further than any
 non-negated list element, and closer than any negated element.
 .Pp
 Because of the first-match aspect of the algorithm, an element that
 defines a subset of another element in the list should come before the
-broader element, regardless of whether either is negated.  For
-example, in
+broader element, regardless of whether either is negated.
+For example, in
 .Dl 1.2.3/24; !1.2.3.13
 the 1.2.3.13 element is completely useless, because the algorithm will
-match any lookup for 1.2.3.13 to the 1.2.3/24 element.  Using
+match any lookup for 1.2.3.13 to the 1.2.3/24 element.
+Using
 .Dl !1.2.3.13; 1.2.3/24
 fixes that problem by having 1.2.3.13 blocked by the negation but all
 other 1.2.3.* hosts fall through.
@@ -397,8 +426,8 @@ Only one
 statement is used to define as many channels and categories as are wanted.
 If there are multiple logging statements in a configuration, the first
 defined determines the logging, and warnings are issued for the
-others.  If there is no logging statement, the logging configuration
-will be:
+others.
+If there is no logging statement, the logging configuration will be:
 .Bd -literal
     logging {
         category default { default_syslog; default_debug; };
@@ -410,28 +439,32 @@ will be:
 .Pp
 The logging configuration is established as soon as the
 .Ic logging
-statement is parsed.  If you want to redirect
+statement is parsed.
+If you want to redirect
 messages about processing of the entire configuration file, the
 .Ic logging
-statement must appear first.  Even if you do not
+statement must appear first.
+Even if you do not
 redirect configuration file parsing messages, we recommend
 always putting the
 .Ic logging
 statement first so that this rule need not be consciously recalled if
 you ever do want the parser's messages relocated.
 .Ss The channel phrase
-All log output goes to one or more ``channels''; you can make as many
-of them as you want.
+All log output goes to one or more
+.Dq channels ;
+you can make as many of them as you want.
 .Pp
 Every channel definition must include a clause that says whether
 messages selected for the channel go to a file, to a particular syslog
-facility, or are discarded.  It can optionally also limit the message
+facility, or are discarded.
+It can optionally also limit the message
 severity level that will be accepted by the channel (default is
 .Li info ) ,
 and whether to include a time stamp generated by
 .Nm named ,
-the category name, or severity level.  The default is not to include
-any of those three.
+the category name, or severity level.
+The default is not to include any of those three.
 .Pp
 The word
 .Li null
@@ -448,27 +481,31 @@ will be saved each time the file is opened.
 The
 .Ic size
 option for files is simply a hard ceiling on
-log growth.  If the file ever exceeds the size, then
+log growth.
+If the file ever exceeds the size, then
 .Nm named
 will just not write anything more to it until the file is reopened;
-exceeding the size does not automatically trigger a reopen.  The
-default behavior is to not limit the size of the file.
+exceeding the size does not automatically trigger a reopen.
+The default behavior is to not limit the size of the file.
 .Pp
 If you use the
 .Ic version
 logfile option, then
 .Nm named
 will retain that many backup versions of the file
-by renaming them when opening.  For example, if you choose to keep 3
-old versions of the file lamers.log then just before it is opened
-lamers.log.1 is renamed to lames.log.2, lamers.log.0 is renamed to
-lamers.log.1, and lamers.log is renamed to lamers.log.0.  No rolled
+by renaming them when opening.
+For example, if you choose to keep 3 old versions of the file
+lamers.log then just before it is opened lamers.log.1 is renamed
+to lames.log.2, lamers.log.0 is renamed to lamers.log.1, and
+lamers.log is renamed to lamers.log.0.
+No rolled
 versions are kept by default; any existing log file is simply appended.
 The
 .Li unlimited
 keyword is synonymous with
 .Li 99
-in current BIND releases.  Example usage of size and versions options:
+in current BIND releases.
+Example usage of size and versions options:
 .Bd -literal
     channel an_example_level {
         file "lamers.log" versions 3 size 20m;
@@ -481,20 +518,24 @@ The argument for the
 .Ic syslog
 clause is a syslog facility as described in the
 .Xr syslog 3
-manual page.  How
+manual page.
+How
 .Nm syslogd
 will handle messages sent to this facility is described in the
 .Xr syslog.conf 5
-manual page.  If you have a system which uses a very old version of
+manual page.
+If you have a system which uses a very old version of
 syslog that only uses two arguments to the
 .Fn openlog
 function, then this clause is silently ignored.
 .Pp
 The
 .Ic severity
-clause works like syslog's ``priorities'', except that they can also be
-used if you are writing straight to a file rather than using
-syslog.  Messages  which are not at least of the severity level given
+clause works like syslog's
+.Dq priorities ,
+except that they can also be used if you are writing straight to
+a file rather than using syslog.
+Messages which are not at least of the severity level given
 will not be selected for the channel; messages of higher severity
 levels will be accepted.
 .Pp
@@ -513,7 +554,8 @@ will cause messages of severity
 .Li info
 and
 .Li notice
-to be dropped.  If the situation were reversed, with
+to be dropped.
+If the situation were reversed, with
 .Nm named
 writing messages of only
 .Li warning
@@ -522,9 +564,10 @@ or higher, then
 would print all messages it received from the channel.
 .Pp
 The server can supply extensive debugging information when it is in
-debugging mode.  If the server's global debug level is greater than
-zero, then debugging mode will be active.  The global debug level is
-set either by starting the
+debugging mode.
+If the server's global debug level is greater than
+zero, then debugging mode will be active.
+The global debug level is set either by starting the
 .Nm named
 server with the
 .Fl d
@@ -565,11 +608,13 @@ If
 is requested, then the category of the message will be logged as well.
 Finally, if
 .Ic print-severity
-is on, then the severity level of the message will be logged.  The
+is on, then the severity level of the message will be logged.
+The
 .Ic print-
 options may be used
 in any combination, and will always be printed in the following order:
-time, category, severity.  Here is an example where all three
+time, category, severity.
+Here is an example where all three
 .Ic print-
 options are on:
 .Bd -literal
@@ -577,8 +622,8 @@ options are on:
 .Ed
 .Pp
 There are four predefined channels that are used for
-default logging as follows.  How they are used
-used is described in the next section,
+default logging as follows.
+How they are used used is described in the next section,
 .Sx The category phrase .
 .Bd -literal
     channel default_syslog {
@@ -594,7 +639,7 @@ used is described in the next section,
     };
 .Pp
     channel default_stderr { # writes to stderr
-        file \&"<stderr>\&";     # this is illustrative only; there's currently
+        file \&"\*[Lt]stderr\*[Gt]\&";     # this is illustrative only; there's currently
                              # no way of specifying an internal file
                              # descriptor in the configuration language.
         severity info;       # only send priority info and higher
@@ -605,25 +650,27 @@ used is described in the next section,
     };
 .Ed
 .Pp
-Once a channel is defined, it cannot be redefined.  Thus you cannot
+Once a channel is defined, it cannot be redefined.
+Thus you cannot
 alter the built-in channels directly, but you can modify the default
 logging by pointing categories at channels you have defined.
 .Ss The category phrase
 There are many categories, so you can send the logs you want to see
-wherever you want, without seeing logs you don't want.  If you don't
-specify a list of channels for a category, then log messages in that
-category will be sent to the
+wherever you want, without seeing logs you don't want.
+If you don't specify a list of channels for a category, then log
+messages in that category will be sent to the
 .Li default
 category instead.
-If you don't specify a default category, the following ``default
-default'' is used:
+If you don't specify a default category, the following
+.Dq default default
+is used:
 .Bd -literal
     category default { default_syslog; default_debug; };
 .Ed
 .Pp
 As an example, let's say you want to log security events to a file,
-but you also want keep the default logging behavior.  You'd specify
-the following:
+but you also want keep the default logging behavior.
+You'd specify the following:
 .Bd -literal
     channel my_security_channel {
         file \&"my_security_file\&";
@@ -644,9 +691,12 @@ channel:
 The following categories are available:
 .Bl -tag -width 0n
 .It Ic default
-The catch-all.  Many things still aren't classified into categories,
-and they all end up here.  Also, if you don't specify any channels for
-a category, the default category is used instead.  If you do not
+The catch-all.
+Many things still aren't classified into categories,
+and they all end up here.
+Also, if you don't specify any channels for
+a category, the default category is used instead.
+If you do not
 define the default category, the following definition is used:
 .Dl category default { default_syslog; default_debug; };
 .It Ic config
@@ -656,14 +706,15 @@ Low-level configuration file processing.
 .It Ic queries
 A short log message is generated for every query the server receives.
 .It Ic lame-servers
-Messages like ``Lame server on ...''
+Messages like
+.Dq Lame server on ...
 .It Ic statistics
 Statistics.
 .It Ic panic
 If the server has to shut itself down due to an internal problem, it
 will log the problem in this category as well as in the problem's native
-category.  If you do not define the panic category, the following definition
-is used:
+category.
+If you do not define the panic category, the following definition is used:
 .Dl category panic { default_syslog; default_stderr; };
 .It Ic update
 Dynamic updates.
@@ -678,19 +729,24 @@ Zone transfers the server is sending.
 .It Ic db
 All database operations.
 .It Ic eventlib
-Debugging info from the event system.  Only one channel may be specified for
-this category, and it must be a file channel.  If you do not define the
+Debugging info from the event system.
+Only one channel may be specified for
+this category, and it must be a file channel.
+If you do not define the
 eventlib category, the following definition is used:
 .Dl category eventlib { default_debug; };
 .It Ic packet
-Dumps of packets received and sent.  Only one channel may be specified for
-this category, and it must be a file channel.  If you do not define the
+Dumps of packets received and sent.
+Only one channel may be specified for
+this category, and it must be a file channel.
+If you do not define the
 packet category, the following definition is used:
 .Dl category packet { default_debug; };
 .It Ic notify
 The NOTIFY protocol.
 .It Ic cname
-Messages like ``... points to a CNAME''.
+Messages like
+.Dq ... points to a CNAME .
 .It Ic security
 Approved/unapproved requests.
 .It Ic os
@@ -703,9 +759,12 @@ Periodic maintenance events.
 Zone loading messages.
 .It Ic response-checks
 Messages arising from response checking, such as
-``Malformed response ...'', ``wrong ans. name ...'',
-``unrelated additional info ...'', ``invalid RR type ...'',
-and ``bad referral ...''.
+.Dq Malformed response ... ,
+.Dq wrong ans. name ... ,
+.Dq unrelated additional info ... ,
+.Dq invalid RR type ... ,
+and
+.Dq bad referral ... .
 .El
 .Sh THE OPTIONS STATEMENT
 .Ss Syntax
@@ -774,10 +833,11 @@ options {
 .Ed
 .Ss Definition and Usage
 The options statement sets up global options to be used by
-BIND. This statement may appear at only once in a
-configuration file; if more than one occurrence is found, the
-first occurrence determines the actual options used,
-and a warning will be generated.  If there is no options statement,
+BIND.
+This statement may appear at only once in a configuration file; if
+more than one occurrence is found, the first occurrence determines
+the actual options used, and a warning will be generated.
+If there is no options statement,
 an options block with each option set to its default will be used.
 .Ss Server Information
 .Bl -tag -width 0n
@@ -796,8 +856,7 @@ name
 in class chaos.
 The default is the real version number of the server,
 but some server operators prefer the string (
-.Ic surely you must be joking
-).
+.Ic surely you must be joking ) .
 .El
 .Ss Pathnames
 .Bl -tag -width 0n
@@ -811,20 +870,21 @@ is this directory.  If a directory is not
 specified, the working directory defaults to
 .Pa \&. ,
 the directory from which the
-server was started.  The directory specified should be an absolute path.
+server was started.
+The directory specified should be an absolute path.
 .It Ic named-xfer
 The pathname to the named-xfer program that the server uses for
-inbound zone transfers.  If not specified, the default is
-system dependent (e.g.
-.Pa /usr/sbin/named-xfer
-).
+inbound zone transfers.
+If not specified, the default is
+system dependent (e.g.,
+.Pa /usr/sbin/named-xfer ) .
 .It Ic dump-file
 The pathname of the file the server dumps the database to when it
 receives
 .Dv SIGINT
 signal (as sent by
-.Ic ndc dumpdb
-). If not specified, the default is
+.Ic ndc dumpdb ) .
+If not specified, the default is
 .Pa named_dump.db .
 .It Ic memstatistics-file
 The pathname of the file the server writes memory usage statistics to
@@ -835,7 +895,8 @@ is
 If not specified, the default is
 .Pa named.memstats .
 .It Ic pid-file
-The pathname of the file the server writes its process ID in.  If not
+The pathname of the file the server writes its process ID in.
+If not
 specified, the default is operating system dependent, but is usually
 .Pa /var/run/named.pid
 or
@@ -887,9 +948,10 @@ If
 .Li yes ,
 then the server treats all zones as if they are doing zone transfers
 across a dial on demand dialup link, which can be brought up by
-traffic originating from this server.  This has different effects
-according to zone type and concentrates the zone maintenance so that
-it all happens in a short interval, once every
+traffic originating from this server.
+This has different effects according to zone type and concentrates
+the zone maintenance so that it all happens in a short interval,
+once every
 .Ic heartbeat-interval
 and hopefully during the one call.
 It also suppresses some of the normal zone maintenance traffic.
@@ -933,9 +995,10 @@ The default is
 .It Ic fetch-glue
 If
 .Li yes
-(the default), the server will fetch ``glue'' resource
-records it doesn't have when constructing the additional data section of
-a response.
+(the default), the server will fetch
+.Dq glue
+resource records it doesn't have when constructing the additional
+data section of a response.
 .Ic fetch-glue no
 can be used in conjunction with
 .Ic recursion no
@@ -962,7 +1025,8 @@ is order dependent.
 If
 .Li yes ,
 then statistics are kept for every host that the the nameserver
-interacts with.  The default is
+interacts with.
+The default is
 .Li no .
 .Em Note :
 turning on
@@ -980,7 +1044,8 @@ The default is
 If
 .Li yes ,
 then multiple CNAME resource records will be
-allowed for a domain name.  The default is
+allowed for a domain name.
+The default is
 .Li no .
 Allowing multiple CNAME records is against standards and is not recommended.
 Multiple CNAME support is available because previous versions of BIND
@@ -990,11 +1055,12 @@ balancing by a number of sites.
 If
 .Li yes
 (the default), DNS NOTIFY messages are sent when a
-zone the server is authoritative for changes.  The use of NOTIFY
-speeds convergence between the master and its slaves.  Slave servers
-that receive a NOTIFY message and understand it will contact the
-master server for the zone and see if they need to do a zone transfer, and
-if they do, they will initiate it immediately.
+zone the server is authoritative for changes.
+The use of NOTIFY speeds convergence between the master and its
+slaves.
+Slave servers that receive a NOTIFY message and understand it will
+contact the master server for the zone and see if they need to do
+a zone transfer, and if they do, they will initiate it immediately.
 If
 .Li explicit ,
 the DNS NOTIFY messages will only be sent to the addresses in the
@@ -1019,47 +1085,58 @@ If
 and a DNS query requests recursion, then the
 server will attempt to do all the work required to answer the query.
 If recursion is not on, the server will return a referral to the
-client if it doesn't know the answer.  The default is
+client if it doesn't know the answer.
+The default is
 .Li yes .
 See also
 .Ic fetch-glue
 above.
 .It Ic rfc2308-type1
 If
-.Li yes,
+.Li yes ,
 the server will send NS records along with the SOA record for negative
-answers.  You need to set this to no if you have an old BIND server using
+answers.
+You need to set this to no if you have an old BIND server using
 you as a forwarder that does not understand negative answers which contain
-both SOA and NS records or you have an old version of sendmail.  The correct
-fix is to upgrade the broken server or sendmail.  The default is
+both SOA and NS records or you have an old version of sendmail.
+The correct fix is to upgrade the broken server or sendmail.
+The default is
 .Li no .
 .It Ic use-id-pool
 If
-.Li yes,
-the server will keep track of its own outstanding query ID's to avoid duplication
-and increase randomness.  This will result in 128KB more memory being consumed
-by the server.  The default is
+.Li yes ,
+the server will keep track of its own outstanding query IDs to avoid duplication
+and increase randomness.
+This will result in 128KB more memory being consumed by the server.
+The default is
 .Li no .
 .It Ic treat-cr-as-space
 If
-.Li yes,
+.Li yes ,
 the server will treat CR characters the same way it treats a space
-or tab.  This may be necessary when loading zone files on a UNIX system
-that were generated on an NT or DOS machine.  The default is
+or tab.
+This may be necessary when loading zone files on a UNIX system
+that were generated on an NT or DOS machine.
+The default is
 .Li no .
 .El
 .Ss Also-Notify
 .Ic also-notify
 .Pp
 Defines a global list of IP addresses that also get sent NOTIFY messages
-whenever a fresh copy of the zone is loaded. This helps to ensure that copies of
-the zones will quickly converge on ``stealth'' servers.  If an
+whenever a fresh copy of the zone is loaded.
+This helps to ensure that copies of
+the zones will quickly converge on
+.Dq stealth
+servers.
+If an
 .Ic also-notify
 list is given in a
 .Ic zone
 statement, it will override the
 .Ic options also-notify
-statement. When a
+statement.
+When a
 .Ic zone notify
 statement is set to
 .Ic no ,
@@ -1071,25 +1148,29 @@ The default is the empty list (no global notification list).
 .Ss Forwarding
 The forwarding facility can be used to create a large site-wide
 cache on a few servers, reducing traffic over links to external
-nameservers.  It can also be used to allow queries by servers that do
-not have direct access to the Internet, but wish to look up exterior
-names anyway.  Forwarding occurs only on those queries for which the
+nameservers.
+It can also be used to allow queries by servers that do not have
+direct access to the Internet, but wish to look up exterior names
+anyway.
+Forwarding occurs only on those queries for which the
 server is not authoritative and does not have the answer in its cache.
 .Bl -tag -width 0n
 .It Ic forward
 This option is only meaningful if the
 .Ic forwarders
 list is
-not empty.  A value of
+not empty.
+A value of
 .Li first ,
 the default, causes the
 server to query the forwarders first, and if that doesn't answer the
-question the server will then look for the answer itself.  If
+question the server will then look for the answer itself.
+If
 .Li only
 is specified, the server will only query the forwarders.
 .It Ic forwarders
-Specifies the IP addresses to be used for forwarding.  The default is the
-empty list (no forwarding).
+Specifies the IP addresses to be used for forwarding.
+The default is the empty list (no forwarding).
 .El
 .Pp
 Forwarding can also be configured on a per-zone basis, allowing for
@@ -1098,12 +1179,14 @@ You can set particular zones to use different forwarders, or have
 different
 .Ic forward only/first
 behavior, or to not forward
-at all.  See
+at all.
+See
 .Sx THE ZONE STATEMENT
 section for more information.
 .Pp
 Future versions of BIND 8 will provide a more powerful forwarding
-system.  The syntax described above will continue to be supported.
+system.
+The syntax described above will continue to be supported.
 .Ss Name Checking
 The server can check domain names based upon their expected client contexts.
 For example, a domain name used as a hostname can be checked for compliance
@@ -1114,15 +1197,17 @@ Three checking methods are available:
 .It Ic ignore
 No checking is done.
 .It Ic warn
-Names are checked against their expected client contexts.  Invalid names are
+Names are checked against their expected client contexts.
+Invalid names are
 logged, but processing continues normally.
 .It Ic fail
-Names are checked against their expected client contexts.  Invalid names are
-logged, and the offending data is rejected.
+Names are checked against their expected client contexts.
+Invalid names are logged, and the offending data is rejected.
 .El
 .Pp
 The server can check names three areas: master zone files, slave
-zone files, and in responses to queries the server has initiated.  If
+zone files, and in responses to queries the server has initiated.
+If
 .Ic check-names response fail
 has been specified, and
 answering the client's question would require sending an invalid name
@@ -1142,13 +1227,15 @@ may also be specified in the
 .Ic zone
 statement, in which case it overrides the
 .Ic options check-names
-statement.  When used in a
+statement.
+When used in a
 .Ic zone
 statement, the area is not specified (because it can be deduced from
 the zone type).
 .Ss Access Control
 Access to the server can be restricted based on the IP address of the
-requesting system or via shared secret keys.  See
+requesting system or via shared secret keys.
+See
 .Sx ADDRESS MATCH LISTS
 for details on how to specify access criteria.
 .Bl -tag -width 0n
@@ -1159,8 +1246,8 @@ may also be specified in the
 .Ic zone
 statement, in which case it overrides the
 .Ic options allow-query
-statement.  If not specified, the default is to allow queries
-from all hosts.
+statement.
+If not specified, the default is to allow queries from all hosts.
 .Bl -tag -width 0n
 .It Ic allow-recursion
 Specifies which hosts are allowed to ask recursive questions.
@@ -1174,12 +1261,12 @@ may also be specified in the
 .Ic zone
 statement, in which case it overrides the
 .Ic options allow-transfer
-statement.  If not specified, the default
-is to allow transfers from all hosts.
+statement.
+If not specified, the default is to allow transfers from all hosts.
 .It Ic blackhole
 Specifies a list of addresses that the server will not accept queries from
-or use to resolve a query.  Queries from these addresses will not be
-responded to.
+or use to resolve a query.
+Queries from these addresses will not be responded to.
 .El
 .El
 .Ss Interfaces
@@ -1190,11 +1277,13 @@ option.
 .Ic listen-on
 takes an optional port, and an address match list.
 The server will listen on all interfaces allowed by the address match
-list.  If a port is not specified, port 53 will be used.
+list.
+If a port is not specified, port 53 will be used.
 .Pp
 Multiple
 .Ic listen-on
-statements are allowed.  For example,
+statements are allowed.
+For example,
 .Bd -literal
     listen-on { 5.6.7.8; };
     listen-on port 1234 { !1.2.3.4; 1.2/16; };
@@ -1212,14 +1301,16 @@ is specified, the server will listen on port
 If the server doesn't know the answer to a question, it will query
 other nameservers.
 .Ic query-source
-specifies the address and port used for such queries.  If
+specifies the address and port used for such queries.
+If
 .Ic address
 is
 .Li *
 or is omitted, a wildcard IP address
 (
 .Dv INADDR_ANY )
-will be used.  If
+will be used.
+If
 .Va port
 is
 .Li *
@@ -1250,7 +1341,8 @@ packs as many resource records
 as possible into a message.
 .Li many-answers
 is more efficient, but is only known to be understood by BIND 8.1 and
-patched versions of BIND 4.9.5.  The default is
+patched versions of BIND 4.9.5.
+The default is
 .Li one-answer .
 .Ic transfer-format
 may be overridden on a per-server basis by using the
@@ -1258,19 +1350,23 @@ may be overridden on a per-server basis by using the
 statement.
 .It Ic transfers-in
 The maximum number of inbound zone transfers that can be running
-concurrently.  The default value is 10.  Increasing
+concurrently.
+The default value is 10.
+Increasing
 .Ic transfers-in
 may speed up the convergence of slave zones,
 but it also may increase the load on the local system.
 .It Ic transfers-out
 This option will be used in the future to limit the number of
-concurrent outbound zone transfers.  It is checked for syntax, but is
-otherwise ignored.
+concurrent outbound zone transfers.
+It is checked for syntax, but is otherwise ignored.
 .It Ic transfers-per-ns
 The maximum number of inbound zone transfers (
 .Nm named-xfer
 processes) that can be concurrently transferring from a given remote
-nameserver.  The default value is 2.  Increasing
+nameserver.
+The default value is 2.
+Increasing
 .Ic transfers-per-ns
 may speed up the convergence of slave zones, but it also may increase
 the load on the remote nameserver.
@@ -1283,27 +1379,32 @@ statement.
 .It Ic transfer-source
 .Nm transfer-source
 determines which local address will be bound to the TCP connection used to fetch all zones
-transferred inbound by the server.  If not set, it defaults to a system controlled value which will usually be the address of the interface ``closest to`` the remote end.  This
-address must appear in the remote end's
+transferred inbound by the server.
+If not set, it defaults to a system controlled value which will
+usually be the address of the interface ``closest to`` the remote
+end.
+This address must appear in the remote end's
 .Nm allow-transfer
-option for the zones being transferred, if one is specified.  This statement sets the
+option for the zones being transferred, if one is specified.
+This statement sets the
 .Nm transfer-source
 for all zones, but can be overridden on a per-zone basis by including a
 .Nm transfer-source
 statement within the zone block in the configuration file.
 .El
 .Ss Resource Limits
-The server's usage of many system resources can be limited.  Some
-operating systems don't support some of the limits.  On such systems,
-a warning will be issued if the unsupported limit is used.  Some
-operating systems don't support limiting resources, and on these systems
-a
+The server's usage of many system resources can be limited.
+Some operating systems don't support some of the limits.
+On such systems,
+a warning will be issued if the unsupported limit is used.
+Some operating systems don't support limiting resources, and on
+these systems a
 .D1 cannot set resource limits on this system
 message will
 be logged.
 .Pp
-Scaled values are allowed when specifying resource limits.  For
-example,
+Scaled values are allowed when specifying resource limits.
+For example,
 .Li 1G
 can be used instead of
 .Li 1073741824
@@ -1321,11 +1422,12 @@ in the
 section for more details.
 .Bl -tag -width 0n
 .It Ic coresize
-The maximum size of a core dump.  The default value is
+The maximum size of a core dump.
+The default value is
 .Li default .
 .It Ic datasize
-The maximum amount of data memory the server may use.  The default
-value is
+The maximum amount of data memory the server may use.
+The default value is
 .Li default .
 .It Ic files
 The maximum number of files the server may have open concurrently.
@@ -1333,7 +1435,8 @@ The default value is
 .Li unlimited .
 Note that on some operating systems the server cannot set an unlimited
 value and cannot determine the maximum number of open files the kernel
-can support.  On such systems, choosing
+can support.
+On such systems, choosing
 .Li unlimited
 will cause the server to use
 the larger of the
@@ -1352,7 +1455,8 @@ The
 will be used in a future release of the server to limit the size of the transaction
 log kept for Incremental Zone Transfer.
 .It Ic stacksize
-The maximum amount of stack memory the server may use.  The default value is
+The maximum amount of stack memory the server may use.
+The default value is
 .Li default .
 .El
 .Ss Periodic Task Intervals
@@ -1360,43 +1464,52 @@ The maximum amount of stack memory the server may use.  The default value is
 .It Ic cleaning-interval
 The server will remove expired resource records from the cache every
 .Ic cleaning-interval
-minutes.  The default is 60 minutes.  If set
+minutes.
+The default is 60 minutes.
+If set
 to 0, no periodic cleaning will occur.
 .It Ic heartbeat-interval
 The server will perform zone maintenance tasks for all zones marked
 .Ic dialup yes
 whenever this interval expires.
-The default is 60 minutes. Reasonable values are up to 1 day (1440 minutes).
+The default is 60 minutes.
+Reasonable values are up to 1 day (1440 minutes).
 If set to 0, no zone maintenance for these zones will occur.
 .It Ic interface-interval
 The server will scan the network interface list every
 .Ic interface-interval
-minutes.  The default is 60 minutes.
+minutes.
+The default is 60 minutes.
 If set to 0, interface scanning will only occur when the configuration
-file is loaded.  After the scan, listeners will be started on any new
+file is loaded.
+After the scan, listeners will be started on any new
 interfaces (provided they are allowed by the
 .Ic listen-on
-configuration).  Listeners on interfaces that have gone away will be
-cleaned up.
+configuration).
+Listeners on interfaces that have gone away will be cleaned up.
 .It Ic statistics-interval
 Nameserver statistics will be logged every
 .Ic statistics-interval
-minutes.  The default is 60.  If set to 0, no statistics will be logged.
+minutes.
+The default is 60.
+If set to 0, no statistics will be logged.
 .El
 .Ss Topology
 All other things being equal, when the server chooses a nameserver
 to query from a list of nameservers, it prefers the one that is
-topologically closest to itself.  The
+topologically closest to itself.
+The
 .Ic topology
 statement takes an address match list and interprets it in a special way.
 Each top-level list element is assigned a distance.
 Non-negated elements get a distance based on
 their position in the list, where the closer the match is to the start
-of the list, the shorter the distance is between it and the server.  A
-negated match will be assigned the maximum distance from the server.
+of the list, the shorter the distance is between it and the server.
+A negated match will be assigned the maximum distance from the server.
 If there is no match, the address will get a distance which is further
 than any non-negated list element, and closer than any negated
-element.  For example,
+element.
+For example,
 .Bd -literal
     topology {
         10/8;
@@ -1415,16 +1528,17 @@ The default topology is
 .Ss Resource Record sorting
 When returning multiple RRs, the nameserver will normally return them in
 .Ic Round Robin ,
-i.e. after each request, the first RR is put to the end of the list.
+i.e., after each request, the first RR is put to the end of the list.
 As the order of RRs is not defined, this should not cause any problems.
 .Pp
-The client resolver code should re-arrange the RRs as appropriate, i.e. using
-any addresses on the local net in preference to other addresses. However, not all
+The client resolver code should re-arrange the RRs as appropriate, i.e., using
+any addresses on the local net in preference to other addresses.
+However, not all
 resolvers can do this, or are not correctly configured.
 .Pp
 When a client is using a local server, the sorting can be performed in the server,
-based on the client's address. This only requires configuring the nameservers,
-not all the clients.
+based on the client's address.
+This only requires configuring the nameservers, not all the clients.
 .Pp
 The
 .Ic sortlist
@@ -1434,27 +1548,32 @@ specially than the
 statement does.
 .Pp
 Each top level statement in the sortlist must itself be an explicit address match
-list with one or two elements. The first element (which may be an IP address,
+list with one or two elements.
+The first element (which may be an IP address,
 an IP prefix, an ACL name or nested address match list) of each top level list is
 checked against the source address of the query until a match is found.
 .Pp
 Once the source address of the query has been matched, if the top level
 statement contains only one element, the actual primitive element that
 matched the source address is used to select the address in the response to
-move to the beginning of the response. If the statement is a list of two elements,
-the second element is treated like the address match list in a topology
-statement. Each top level element is assigned a distance and the address in the
+move to the beginning of the response.
+If the statement is a list of two elements, the second element is
+treated like the address match list in a topology statement.
+Each top level element is assigned a distance and the address in the
 response with the minimum distance is moved to the beginning of the response.
 .Pp
 In the following example, any queries received from any of the addresses of the
 host itself will get responses preferring addresses on any of the locally
-connected networks. Next most preferred are addresses on the 192.168.1/24
+connected networks.
+Next most preferred are addresses on the 192.168.1/24
 network, and after that either the 192.168.2/24 or 192.168.3/24 network with no
-preference shown between these two networks. Queries received from a host on
+preference shown between these two networks.
+Queries received from a host on
 the 192.168.1/24 network will prefer other addresses on that network to the
-192.168.2/24 and 192.168.3/24 networks. Queries received from a host on the
-192.168.4/24 or the 192.168.5/24 network will only prefer other addresses on
-their directly connected networks.
+192.168.2/24 and 192.168.3/24 networks.
+Queries received from a host on the 192.168.4/24 or the 192.168.5/24
+network will only prefer other addresses on their directly connected
+networks.
 .Bd -literal
 sortlist {
            { localhost;         // IF   the local host
@@ -1476,11 +1595,13 @@ sortlist {
 .Ed
 .Pp
 The following example will give reasonable behavior for the local host and
-hosts on directly connected networks. It is similar to the behavior of the
-address sort in BIND 4.9.x. Responses sent to queries from the local host will
-favor any of the directly connected networks. Responses sent to queries from
-any other hosts on a directly connected network will prefer addresses on that
-same network. Responses to other queries will not be sorted.
+hosts on directly connected networks.
+It is similar to the behavior of the address sort in BIND 4.9.x.
+Responses sent to queries from the local host will
+favor any of the directly connected networks.
+Responses sent to queries from any other hosts on a directly
+connected network will prefer addresses on that same network.
+Responses to other queries will not be sorted.
 .Bd -literal
 sortlist {
             { localhost; localnets; };
@@ -1489,11 +1610,14 @@ sortlist {
 .Ed
 .Ss RRset Ordering
 When multiple records are returned in an answer it may be useful to configure
-the order the records are placed into the response. For example the records for
-a zone might be configured to always be returned in the order they are defined
-in the zone file. Or perhaps a random shuffle of the records as they are
-returned is wanted. The rrset-order statement permits configuration of the
-ordering made of the records in a multiple record response. The default, if no
+the order the records are placed into the response.
+For example the records for a zone might be configured to always
+be returned in the order they are defined in the zone file.
+Or perhaps a random shuffle of the records as they are
+returned is wanted.
+The rrset-order statement permits configuration of the
+ordering made of the records in a multiple record response.
+The default, if no
 ordering is defined, is a cyclic ordering (round robin).
 .Pp
 An
@@ -1532,8 +1656,8 @@ For example:
 .Ed
 .Pp
 will cause any responses for type A records in class IN that have "rc.vix.com" as
-a suffix, to always be returned in random order. All other records are returned
-in cyclic order.
+a suffix, to always be returned in random order.
+All other records are returned in cyclic order.
 .Pp
 If multiple
 .Ic rrset-order
@@ -1568,14 +1692,17 @@ Values less than 512 will be increased to 512 and values greater than
 .Ss Tuning
 .Bl -tag -width 0n
 .It Ic lame-ttl
-Sets the number of seconds to cache a lame server indication.  0 disables
-caching.  Default is 600 (10 minutes).  Maximum value is 1800 (30 minutes)
+Sets the number of seconds to cache a lame server indication.
+0 disables caching.
+Default is 600 (10 minutes).
+Maximum value is 1800 (30 minutes)
 .It Ic max-ncache-ttl
 To reduce network traffic and increase performance the server store negative
 answers.
 .Ic max-ncache-ttl
 is used to set a maximum retention time
-for these answers in the server is seconds.  The default
+for these answers in the server is seconds.
+The default
 .Ic max-ncache-ttl
 is 10800 seconds (3 hours).
 .Ic max-ncache-ttl
@@ -1584,7 +1711,8 @@ answers (7 days) and will be silently truncated to 7 days if set to a
 value which is greater that 7 days.
 .It Ic min-roots
 The minimum number of root servers that is required for a request for the root
-servers to be accepted.  Default is 2.
+servers to be accepted.
+Default is 2.
 .El
 .Sh THE ZONE STATEMENT
 .Ss Syntax
@@ -1638,7 +1766,8 @@ zone \&".\&" [ ( in | hs | hesiod | chaos ) ] {
 The
 .Ic zone
 statement is used to define how information about particular DNS zones
-is managed by the server.  There are five different zone types.
+is managed by the server.
+There are five different zone types.
 .Bl -tag -width 0n
 .It Ic master
 The server has a master copy of the data for the zone and will be able
@@ -1646,13 +1775,16 @@ to provide authoritative answers for it.
 .It Ic slave
 A
 .Ic slave
-zone is a replica of a master zone.  The
+zone is a replica of a master zone.
+The
 .Ic masters
 list specifies one or more IP addresses that the slave contacts to
-update its copy of the zone.  If a
+update its copy of the zone.
+If a
 .Ic port
 is specified then checks to see if the zone is current and zone transfers
-will be done to the port given. If
+will be done to the port given.
+If
 .Ic file
 is specified, then the replica will be written to the named file.
 Use of the
@@ -1669,7 +1801,8 @@ A
 .Ic forward
 zone is used to direct all queries in it to other servers, as described in
 .Sx THE OPTIONS STATEMENT
-section.  The specification of options in such a zone will override
+section.
+The specification of options in such a zone will override
 any global options declared in the
 .Ic options
 statement.
@@ -1692,7 +1825,8 @@ global forwarders.
 .It Ic hint
 The initial set of root nameservers is specified using a
 .Ic hint
-zone.  When the server starts up, it uses the root hints
+zone.
+When the server starts up, it uses the root hints
 to find a root nameserver and get the most recent list of root nameservers.
 .El
 .Pp
@@ -1704,17 +1838,18 @@ for a slave zone, and
 .Ic cache
 for a hint zone.
 .Ss Classes
-The zone's name may optionally be followed by a class.  If a class is not
-specified, class
+The zone's name may optionally be followed by a class.
+If a class is not specified, class
 .Ic in
-(for "internet"), is assumed.  This is correct for the vast majority
-of cases.
+(for "internet"), is assumed.
+This is correct for the vast majority of cases.
 .Pp
 The
 .Ic hesiod
-class is for an information service from MIT's Project Athena.  It is
-used to share information about various systems databases, such as
-users, groups, printers and so on.  More information can be found at
+class is for an information service from MIT's Project Athena.
+It is used to share information about various systems databases,
+such as users, groups, printers and so on.
+More information can be found at
 ftp://athena-dist.mit.edu/pub/ATHENA/usenix/athena_changes.PS.
 The keyword
 .Ic hs
@@ -1722,9 +1857,9 @@ is a synonym for
 .Ic hesiod .
 .Pp
 Another MIT development was CHAOSnet, a LAN protocol created in the
-mid-1970s.  It is still sometimes seen on LISP stations and other
-hardware in the AI community, and zone data for it can be specified
-with the
+mid-1970s.
+It is still sometimes seen on LISP stations and other hardware in
+the AI community, and zone data for it can be specified with the
 .Ic chaos
 class.
 .Ss Options
@@ -1743,7 +1878,8 @@ subsection of
 .Sx THE OPTIONS STATEMENT .
 .It Ic allow-update
 Specifies which hosts are allowed to submit Dynamic DNS updates to the
-server.  The default is to deny updates from all hosts.
+server.
+The default is to deny updates from all hosts.
 .It Ic allow-transfer
 See the description of
 .Ic allow-transfer
@@ -1754,9 +1890,12 @@ subsection of
 .It Ic transfer-source
 .Ic transfer-source
 determines which local address will be bound to the TCP connection
-used to fetch this zone.  If not set, it defaults to a system
+used to fetch this zone.
+If not set, it defaults to a system
 controlled value which will usually be the address of the interface
-``closest to'' the remote end.  This address must appear in the remote end's
+.Dq closest to
+the remote end.
+This address must appear in the remote end's
 .Ic allow-transfer
 option for this zone if one is specified.
 .It Ic max-transfer-time-in
@@ -1792,12 +1931,14 @@ the primary master) plus any IP addresses specified with
 .Ic also-notify
 is not meaningful for
 .Ic stub
-zones.  The default is the empty list.
+zones.
+The default is the empty list.
 .It Ic forward
 .Ic forward
 is only meaningful if the zone has a
 .Ic forwarders
-list. The
+list.
+The
 .Ic only
 value causes the lookup to fail after trying the
 .Ic forwarders
@@ -1891,16 +2032,16 @@ trusted-keys {
 The
 .Ic trusted-keys
 statement is for use with DNSSEC-style security, originally specified
-in RFC 2065.  DNSSEC is meant to
-provide three distinct services: key distribution, data origin
-authentication, and transaction and request authentication.  A
-complete description of DNSSEC and its use is beyond the scope of this
-document, and readers interested in more information should start with
-RFC 2065 and then continue with the Internet Drafts available at
-http://www.ietf.org/ids.by.wg/dnssec.html.
+in RFC 2065.
+DNSSEC is meant to provide three distinct services: key distribution,
+data origin authentication, and transaction and request authentication.
+A complete description of DNSSEC and its use is beyond the scope
+of this document, and readers interested in more information should
+start with RFC 2065 and then continue with the Internet Drafts
+available at http://www.ietf.org/ids.by.wg/dnssec.html.
 .Pp
-Each trusted key is associated with a domain name.  Its attributes are
-the non-negative integral
+Each trusted key is associated with a domain name.
+Its attributes are the non-negative integral
 .Va flags ,
 .Va protocol ,
 and
@@ -1936,7 +2077,8 @@ is
 .Pp
 If you discover that a server is giving out bad data, marking it as
 .Ic bogus
-will prevent further queries to it.  The default value of
+will prevent further queries to it.
+The default value of
 .Ic bogus
 is
 .Li no .
@@ -1950,17 +2092,19 @@ The default value of
 is
 .Li no .
 .Pp
-The server supports two zone transfer methods.  The first,
+The server supports two zone transfer methods.
+The first,
 .Ic one-answer ,
 uses one DNS message per resource record transferred.
 .Ic many-answers
 packs as many resource records as possible into a message.
 .Ic many-answers
 is more efficient, but is only known to be understood by BIND 8.1 and
-patched versions of BIND 4.9.5.  You can specify which method to use
-for a server with the
+patched versions of BIND 4.9.5.
+You can specify which method to use for a server with the
 .Ic transfer-format
-option.  If
+option.
+If
 .Ic transfer-format
 is not specified, the
 .Ic transfer-format
@@ -1971,8 +2115,8 @@ statement will be used.
 The
 .Ic transfers
 will be used in a future release of the server to limit the number of
-concurrent in-bound zone transfers from the specified server.  It is
-checked for syntax but is otherwise ignored.
+concurrent in-bound zone transfers from the specified server.
+It is checked for syntax but is otherwise ignored.
 .Pp
 The
 .Ic keys
@@ -1991,7 +2135,8 @@ statement that references it.
 The
 .Ic keys
 statement is intended for future use by the
-server.  It is checked for syntax but is otherwise ignored.
+server.
+It is checked for syntax but is otherwise ignored.
 .Sh THE CONTROLS STATEMENT
 .Ss Syntax
 .Bd -literal
@@ -2018,17 +2163,20 @@ to and retrieve non-DNS results from a name server.
 A
 .Ic unix
 control channel is a FIFO in the file system, and access to it is
-controlled by normal file system permissions.  It is created by
+controlled by normal file system permissions.
+It is created by
 .Nm named
 with the specified file mode bits (see
 .Xr chmod 1 ) ,
-user and group owner.  Note that, unlike
+user and group owner.
+Note that, unlike
 .Nm chmod ,
 the mode bits specified for
 .Ic perm
 will normally have a leading
 .Li 0
-so the number is interpreted as octal.  Also note that the user and
+so the number is interpreted as octal.
+Also note that the user and
 group ownership specified as
 .Ic owner
 and
@@ -2063,7 +2211,8 @@ The
 .Ic include
 statement inserts the specified file at the point that the
 .Ic include
-statement is encountered.  It cannot be used within another statement,
+statement is encountered.
+It cannot be used within another statement,
 though, so a line such as
 .Dl acl internal_hosts { include "internal_hosts.acl"; };
 is not allowed.
@@ -2081,8 +2230,17 @@ could be used at the top of a BIND configuration file in order to
 include any ACL or key information.
 .Pp
 Be careful not to type
-``#include'', like you would in a C program, because
-``#'' is used to start a comment.
+.Dq #include ,
+like you would in a C program, because
+.Sq #
+is used to start a comment.
+.Sh FILES
+.Bl -tag -width 0n -compact
+.It Pa /etc/named.conf
+The BIND 8
+.Nm named
+configuration file.
+.El
 .Sh EXAMPLES
 The simplest configuration file that is still realistically useful is
 one which simply defines a hint zone that has a full path to the root
@@ -2135,13 +2293,19 @@ zone \&".\&" in {
 	file \&"root.cache\&";
 };
 .Ed
-.Sh FILES
-.Bl -tag -width 0n -compact
-.It Pa /etc/named.conf
-The BIND 8
-.Nm named
-configuration file.
-.El
 .Sh SEE ALSO
 .Xr named 8 ,
 .Xr ndc 8
+.Rs
+.%A D. Eastlake 3rd
+.%A C. Kaufman
+.%T Domain Name System Security Extensions
+.%D January 1997
+.%R RFC 2065
+.Re
+.Rs
+.%A D. Eastlake 3rd
+.%T Domain Name System Security Extensions
+.%D March 1999
+.%R RFC 2535
+.Re
