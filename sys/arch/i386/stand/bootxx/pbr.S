@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.6 2003/08/09 20:57:45 dsl Exp $	*/
+/*	$NetBSD: pbr.S,v 1.7 2003/08/30 13:33:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -377,8 +377,14 @@ _lba_sector:
  * a valid PC disk layout but...).  To do this there must be space here
  * for a 64byte partition table.  There isn't (quite) that much space
  * here, but provided the partition 0 entry is left blank it should be ok.
+ *
+ * Placate certain people by defining the last mbr partition active
+ * and covering the start of the disk.
  */
 
+	. = _C_LABEL(start) + MBR_MAGICOFF - 16
+	.byte	MBR_FLAGS_ACTIVE, 0, 0, 0, MBR_PTYPE_NETBSD, 0, 15, 0
+	.long	0, 15
 	. = _C_LABEL(start) + MBR_MAGICOFF
 pbr_magic:
 	.word	MBR_MAGIC
