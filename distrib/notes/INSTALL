@@ -179,15 +179,27 @@ work in NetBSD _VER:
 
   Description:
 	Due to changes in the NFS subsystem, the old NFS daemon
-	binaries (nfsd and nfsiod) from previous releases will not
-	work correctly. Also, the location of these binaries has
+	binaries (nfsd, nfsiod, mountd) from previous releases will
+        not work correctly. Also, the location of these binaries has
 	changed from the /sbin to the /usr/sbin directory. This
 	will cause the old binaries to still be around after an
 	upgrade, and they will be run by the startup scripts
 	instead of the new ones.
   Fix:
-	Remove the old NFS daemon binaries (/sbin/nfsiod and
-	/sbin/nfsd) after your upgrade has finished.
+	Remove the old NFS daemon binaries (/sbin/nfsiod, /sbin/nfsd,
+	/sbin/mountd) after your upgrade has finished.
+
+
+* More moved programs
+
+  Description:
+  	In order to redice the size of the root partition, some 
+	programs (besides nfsiod and nfsd, see above) were moved
+	from /sbin to /usr/sbin. The programs to be mentioned here
+	are dumpfs, dumplfs and quotacheck.
+  Fix:
+	Remove the old binaries (/sbin/dumpfs, /sbin/dumplfs,
+	/sbin/quotachedk) after your upgrade has finished.
 
 
 * AMANDA, The Advanced Maryland Automatic Network Disk Archiver,
