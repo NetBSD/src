@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.10 2002/11/01 13:18:47 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.11 2002/11/07 08:33:19 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.11 2002/11/01 13:16:36 tron Exp 
+ *	NetBSD: pcidevs,v 1.428.2.12 2002/11/07 08:25:43 tron Exp 
  */
 
 /*
@@ -3226,46 +3226,76 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "i82452 Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543_FIBER,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_FIBER,
 	    0,
 	    "Intel",
-	    "i82453 Gigabit Ethernet (1000BASE-X)",
+	    "i82453GC Gigabit Ethernet (1000BASE-X)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543_SC,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_COPPER,
 	    0,
 	    "Intel",
-	    "i82453-SC Gigabit Ethernet",
+	    "i82543GC Gigabit Ethernet (1000BASE-T)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543_COPPER,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_COPPER,
 	    0,
 	    "Intel",
-	    "i82543 Gigabit Ethernet (1000BASE-T)",
+	    "i82544EI Gigabit Ethernet (1000BASE-T)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544_XT,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_FIBER,
 	    0,
 	    "Intel",
-	    "i82544 Gigabit Ethernet (1000BASE-T)",
+	    "i82544EI Gigabit Ethernet (1000BASE-X)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544_XF,
-	    0,
-	    "Intel",
-	    "i82544 Gigabit Ethernet (1000BASE-X)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_COPPER,
 	    0,
 	    "Intel",
 	    "i82544GC Gigabit Ethernet (1000BASE-T)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_64,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_LOM,
 	    0,
 	    "Intel",
-	    "i82544GC (64-bit) Gigabit Ethernet (1000BASE-T)",
+	    "i82544GC (LOM) Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM,
+	    0,
+	    "Intel",
+	    "i82540EM Gigabit Ethernet (1000BASE-T)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_COPPER,
+	    0,
+	    "Intel",
+	    "i82545EM Gigabit Ethernet (1000BASE-T)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_COPPER,
+	    0,
+	    "Intel",
+	    "i82546EB Gigabit Ethernet (1000BASE-T)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_FIBER,
+	    0,
+	    "Intel",
+	    "i82545EM Gigabit Ethernet (1000BASE-X)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_FIBER,
+	    0,
+	    "Intel",
+	    "i82546EB Gigabit Ethernet (1000BASE-X)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM_LOM,
+	    0,
+	    "Intel",
+	    "i82540EM (LOM) Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
