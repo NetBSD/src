@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.11 2002/12/04 18:07:47 mycroft Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.12 2002/12/04 18:10:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.92 2002/05/31 09:47:23 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.11 2002/12/04 18:07:47 mycroft Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.12 2002/12/04 18:10:20 mycroft Exp $");
 #endif
 #endif
 
@@ -1329,7 +1329,7 @@ parsecreateopres(const u_int32_t *dp, int verbose)
 			if (!(dp = parse_post_op_attr(dp, verbose)))
 				return (0);
 			if (vflag > 1) {
-				printf("dir attr:");
+				printf(" dir attr:");
 				dp = parse_wcc_data(dp, verbose);
 			}
 		}
