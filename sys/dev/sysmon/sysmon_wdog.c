@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.2 2001/01/30 22:24:31 thorpej Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.3 2001/11/13 06:28:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,6 +39,9 @@
  * watchdog function, which provides an abstract interface to the
  * user.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.3 2001/11/13 06:28:55 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
