@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.72 2002/03/13 01:26:54 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.73 2002/03/16 17:03:29 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -51,7 +51,7 @@
 #	floppy	devices needed for install floppies
 #	std	standard devices
 #	local	configuration specific devices
-#	isdn	make ISDN devices
+#	isdns	make ISDN devices
 #
 # Tapes:
 #	st*	SCSI tapes
@@ -90,11 +90,11 @@
 #	lpt*	lpt parallel port (DraCo mainboard, HyperCom etc.)
 #
 # ISDN devices:
-#	i4b	communication between userland isdnd and kernel
-#	i4bctl	control device
-#	i4brbch* raw b-channel access
-#	i4btel*	telephony device
-#	i4btrc*	trace device
+#	isdn		communication between userland isdnd and kernel
+#	isdnctl		control device
+#	isdnbchan*	raw b-channel access
+#	isdntel*	telephony device
+#	isdntrc*	trace device
 #
 # Special purpose devices:
 #	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
@@ -158,7 +158,7 @@ all)
 	makedev tun0 tun1 lkm ipl random local
 	makedev audio0 audio1 audio2 audio3
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
-	makedev isdn
+	makedev isdns
 	;;
 
 floppy)
@@ -169,8 +169,8 @@ floppy)
 	makedev sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 st0 wd0 wd1 md0
 	;;
 
-isdn)
-	makedev i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
+isdns)
+	makedev isdn isdnctl isdnbchan0 isdnbchan1 isdntel0 isdntel1 isdntrc0 isdntrc1
 	;;
 
 std)
@@ -613,37 +613,37 @@ scsibus*)
 	chmod 644 scsibus$unit
 	;;
 
-i4b)
-	rm -f i4b
-	mknod i4b c 45 0
-	chmod 600 i4b
+isdn)
+	rm -f isdn
+	mknod isdn c 45 0
+	chmod 600 isdn
 	;;
 
-i4bctl)
-	rm -f i4bctl
-	mknod i4bctl c 46 0
-	chmod 600 i4bctl
+isdnctl)
+	rm -f isdnctl
+	mknod isdnctl c 46 0
+	chmod 600 isdnctl
 	;;
 
-i4brbch*)
-	unit=${i#i4brbch}
-	rm -f i4brbch$unit
-	mknod i4brbch$unit c 47 $unit
-	chmod 600 i4brbch$unit
+isdnbchan*)
+	unit=${i#isdnbchan}
+	rm -f isdnbchan$unit
+	mknod isdnbchan$unit c 47 $unit
+	chmod 600 isdnbchan$unit
 	;;
 
-i4btel*)
-	unit=${i#i4btel}
-	rm -f i4btel$unit
-	mknod i4btel$unit c 49 $unit
-	chmod 600 i4btel$unit
+isdntel*)
+	unit=${i#isdntel}
+	rm -f isdntel$unit
+	mknod isdntel$unit c 49 $unit
+	chmod 600 isdntel$unit
 	;;
 
-i4btrc*)
-	unit=${i#i4btrc}
-	rm -f i4btrc$unit
-	mknod i4btrc$unit c 48 $unit
-	chmod 600 i4btrc$unit
+isdnrc*)
+	unit=${i#isdntrc}
+	rm -f isdntrc$unit
+	mknod isdntrc$unit c 48 $unit
+	chmod 600 isdntrc$unit
 	;;
 
 local)
