@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.1 1999/03/22 19:15:03 drochner Exp $
+.\" $NetBSD: wsdisplay.4,v 1.2 1999/04/08 16:29:56 drochner Exp $
 
 .Dd March 20, 1999
 .Os
@@ -43,6 +43,17 @@ the
 driver will connect a terminal emulation module and provide a
 tty-like software interface. In contrary, non-emulating displays can only
 be used by special programs like X servers.
+.Pp
+The
+.Em console
+locator in the configuration line refers to the device's use as output
+part of the operating system console. A device specification containing
+a positive value here will only match if the device is in use as system
+console. (The console device selection in early system startup is not
+influenced.) This way, the console device can be connected to a known
+wsdisplay device instance. (Naturally, only
+.Dq emulating
+display devices are usable as console.)
 .Pp
 The logical unit of an independant contents displayed on a display
 (sometimes referred to as
