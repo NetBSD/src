@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.1 2001/06/30 00:10:48 eeh Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.2 2001/07/01 22:19:51 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001	Eduardo E. Horvath
@@ -46,7 +46,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: bcopy.S,v 1.1 2001/06/30 00:10:48 eeh Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.2 2001/07/01 22:19:51 eeh Exp $")
 #endif  /* LIBC_SCCS and not lint */
 
 #define	EMPTY	nop
@@ -101,7 +101,7 @@ ENTRY(bcopy) /* src, dest, size */
 	 cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
 	bge	Lbcopy_fancy	! if >= this many, go be fancy.
-	 btst	7, %o0		! (part of being fancy)
+	 cmp	%o2, 256
 
 	/*
 	 * Not much to copy, just do it a byte at a time.
@@ -124,147 +124,247 @@ Lbcopy_start:
 	/*
 	 * Plenty of data to copy, so try to do it optimally.
 	 */
-Lbcopy_fancy:
-	! check for common case first: everything lines up.
-!	btst	7, %o0		! done already
-	bne	1f
-	 EMPTY
-	btst	7, %o1
-	be,a	Lbcopy_doubles
-	 dec	8, %o2		! if all lined up, len -= 8, goto bcopy_doubes
 1:
+#if 1
 	! If it is big enough, use VIS instructions
-	cmp	%o2, 256
 	bge	Lbcopy_block
-
-	! If the low bits match, we can make these line up.
-1:
-	 xor	%o0, %o1, %o3	! t = src ^ dst;
-	btst	1, %o3		! if (t & 1) {
-	be	1f
-	 btst	1, %o0		! [delay slot: if (src & 1)]
-
-	! low bits do not match, must copy by bytes.
-0:
-	ldsb	[%o0], %o4	!	do {
-	inc	%o0		!		(++dst)[-1] = *src++;
-	inc	%o1
-	deccc	%o2
-	bnz	0b		!	} while (--len != 0);
-	 stb	%o4, [%o1 - 1]
-	retl
 	 nop
-	NOTREACHED
+#endif
+Lbcopy_fancy:
 
-	! lowest bit matches, so we can copy by words, if nothing else
-1:
-	be	1f		! if (src & 1) {
-	 btst	2, %o3		! [delay slot: if (t & 2)]
+	!!
+	!! First align the output to a 8-byte entity
+	!! 
 
-	! although low bits match, both are 1: must copy 1 byte to align
-	ldsb	[%o0], %o4	!	*dst++ = *src++;
-	stb	%o4, [%o1]
-	inc	%o0
-	inc	%o1
-	dec	%o2		!	len--;
-	btst	2, %o3		! } [if (t & 2)]
-1:
-	be	1f		! if (t & 2) {
-	 btst	2, %o0		! [delay slot: if (src & 2)]
-	dec	2, %o2		!	len -= 2;
-0:
-	ldsh	[%o0], %o4	!	do {
-	sth	%o4, [%o1]	!		*(short *)dst = *(short *)src;
-	inc	2, %o0		!		dst += 2, src += 2;
-	deccc	2, %o2		!	} while ((len -= 2) >= 0);
-	bge	0b
-	 inc	2, %o1
-	b	Lbcopy_mopb	!	goto mop_up_byte;
-	 btst	1, %o2		! } [delay slot: if (len & 1)]
-	NOTREACHED
+	save	%sp, -CC64FSZ, %sp
+	mov	%i0, %o0
+	mov	%i1, %o1
+	mov	%i2, %o2
+	
+	btst	1, %o1
+	bz,pt	%icc, 4f
+	 btst	2, %o1
 
-	! low two bits match, so we can copy by longwords
-1:
-	be	1f		! if (src & 2) {
-	 btst	4, %o3		! [delay slot: if (t & 4)]
+	ldub	[%o0], %o4				! Load 1st byte
+	dec	1, %o2
+	brlez,pn	%o2, Lbcopy_finish			! XXXX
+	 inc	1, %o0
+	stb	%o4, [%o1]				! Store 1st byte
+	inc	1, %o1					! Update address
+	btst	2, %o1
+4:	
+	bz,pt	%icc, 4f
+	 btst	1, %o0
+	
+	bz,a	1f
+	 lduh	[%o0], %o4				! Load short
 
-	! although low 2 bits match, they are 10: must copy one short to align
-	ldsh	[%o0], %o4	!	(*short *)dst = *(short *)src;
-	sth	%o4, [%o1]
-	inc	2, %o0		!	dst += 2;
-	inc	2, %o1		!	src += 2;
-	dec	2, %o2		!	len -= 2;
-	btst	4, %o3		! } [if (t & 4)]
-1:
-	be	1f		! if (t & 4) {
-	 btst	4, %o0		! [delay slot: if (src & 4)]
-	dec	4, %o2		!	len -= 4;
-0:
-	ld	[%o0], %o4	!	do {
-	st	%o4, [%o1]	!		*(int *)dst = *(int *)src;
-	inc	4, %o0		!		dst += 4, src += 4;
-	deccc	4, %o2		!	} while ((len -= 4) >= 0);
-	bge	0b
-	 inc	4, %o1
-	b	Lbcopy_mopw	!	goto mop_up_word_and_byte;
-	 btst	2, %o2		! } [delay slot: if (len & 2)]
-	NOTREACHED
+	ldub	[%o0], %o4				! Load bytes
+	ldub	[%o0+1], %o3
+	sllx	%o4, 8, %o4
+	or	%o3, %o4, %o4
+1:	
+	dec	2, %o2
+	brlez,pn	%o2, Lbcopy_finish			! XXXX
+	 inc	2, %o0
+	sth	%o4, [%o1]				! Store 1st short
+	inc	2, %o1
+4:
+	btst	4, %o1
+	bz	4f
+	 btst	3, %o0
 
-	! low three bits match, so we can copy by doublewords
-1:
-	be	1f		! if (src & 4) {
-	 dec	8, %o2		! [delay slot: len -= 8]
-	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
-	st	%o4, [%o1]
-	inc	4, %o0		!	dst += 4, src += 4, len -= 4;
+	bz,a	1f
+	 lduw	[%o0], %o4				! Load word -1
+
+	btst	1, %o0
+	bz,a	2f
+	 lduh	[%o0], %o4
+	
+	ldub	[%o0], %o4
+	lduh	[%o0+1], %o3
+	sllx	%o4, 16, %o4
+	or	%o4, %o3, %o4
+	ldub	[%o0+3], %o3
+	sllx	%o4, 8, %o4
+	ba	1f
+	 or	%o4, %o3, %o4
+2:
+	lduh	[%o0+2], %o3
+	sllx	%o4, 16, %o4
+	or	%o4, %o3, %o4
+1:	
+	dec	4, %o2
+	brlez,pn	%o2, Lbcopy_finish		! XXXX
+	 inc	4, %o0
+	st	%o4, [%o1]				! Store word
 	inc	4, %o1
-	dec	4, %o2		! }
-1:
-Lbcopy_doubles:
-	ldx	[%o0], %g5	! do {
-	stx	%g5, [%o1]	!	*(double *)dst = *(double *)src;
-	inc	8, %o0		!	dst += 8, src += 8;
-	deccc	8, %o2		! } while ((len -= 8) >= 0);
-	bge	Lbcopy_doubles
-	 inc	8, %o1
+4:
+	!!
+	!! We are now 32-bit aligned in the dest.
+	!!
+Lbcopy__common:	
 
-	! check for a usual case again (save work)
-	btst	7, %o2		! if ((len & 7) == 0)
-	be	Lbcopy_done	!	goto bcopy_done;
+	and	%o0, 7, %o4				! Shift amount
+	andn	%o0, 7, %o3				! Source addr
+	sllx	%o4, 3, %o4				! In bits
 
-	 btst	4, %o2		! if ((len & 4)) == 0)
-	be	Lbcopy_mopw	!	goto mop_up_word_and_byte;
-	 btst	2, %o2		! [delay slot: if (len & 2)]
-	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
-	st	%o4, [%o1]
-	inc	4, %o0		!	dst += 4;
-	inc	4, %o1		!	src += 4;
-	btst	2, %o2		! } [if (len & 2)]
-
-1:
-	! mop up trailing word (if present) and byte (if present).
-Lbcopy_mopw:
-	be	Lbcopy_mopb	! no word, go mop up byte
-	 btst	1, %o2		! [delay slot: if (len & 1)]
-	ldsh	[%o0], %o4	! *(short *)dst = *(short *)src;
-	be	Lbcopy_done	! if ((len & 1) == 0) goto done;
-	 sth	%o4, [%o1]
-	ldsb	[%o0 + 2], %o4	! dst[2] = src[2];
-	retl
-	 stb	%o4, [%o1 + 2]
-	NOTREACHED
-
-	! mop up trailing byte (if present).
-Lbcopy_mopb:
-	bne,a	1f
-	 ldsb	[%o0], %o4
-
-Lbcopy_done:
-	retl
+	brz	%o4, Lbcopy_noshift8
 	 nop
+
+	ldx	[%o3], %l0				! Load word -1
+	add	%o3, 8, %o0				! now use %o0 for src
+	ldx	[%o0], %l1				! Load word 0
+
+	add	%o3, 8, %o0				! now use %o0 for src
+	sllx	%l0, %o4, %l0				! Shift high word
+	
+	mov	8<<3, %o3
+	sub	%o3, %o4, %o3			! Reverse shift
+	and	%o3, 0x38, %o3
+	!!
+	!! Continue until our dest is block aligned
+	!!
+
+	!! Unrolled 8 times
+Lbcopy_aligned8:	
+	brz	%o2, Lbcopy_finish
+	 srlx	%l1, %o3, %o5				! Shift low word
+	
+	inc	8, %o0
+	ldx	[%o0], %l2				! Load next part
 1:
-	retl
-	 stb	%o4,[%o1]
+	
+	dec	8, %o2
+	srlx	%l1, %o3, %o5				! Shift low word
+	brlez,pn	%o2, Lbcopy_finish	! Should never happen
+	 or	%o5, %l0, %o5				! Combine
+	
+	inc	8, %o0
+	sllx	%l1, %o4, %l0
+	
+	ldx	[%o0], %l3				! Load next part
+	stx	%o5, [%o1]				! Store result
+	inc	8, %o1
+
+	dec	8, %o2
+	srlx	%l2, %o3, %o5				! Shift low word
+	brlez,pn	%o2, Lbcopy_finish	! Should never happen
+	 or	%o5, %l0, %o5				! Combine
+
+	inc	8, %o0
+	sllx	%l2, %o4, %l0
+	
+	ldx	[%o0], %l4				! Load next part
+	stx	%o5, [%o1]				! Store result
+	inc	8, %o1
+
+	dec	8, %o2
+	srlx	%l3, %o3, %o5				! Shift low word
+	brlez,pn	%o2, Lbcopy_finish	! Should never happen
+	 or	%o5, %l0, %o5				! Combine
+
+	inc	8, %o0
+	sllx	%l3, %o4, %l0
+
+	ldx	[%o0], %l5				! Load next part
+	stx	%o5, [%o1]				! Store result
+	inc	8, %o1
+
+	dec	8, %o2
+	srlx	%l4, %o3, %o5				! Shift low word
+	brlez,pn	%o2, Lbcopy_finish	! Should never happen
+	 or	%o5, %l0, %o5				! Combine
+
+	inc	8, %o0
+	sllx	%l4, %o4, %l0
+	
+	ldx	[%o0], %l6				! Load next part
+	stx	%o5, [%o1]				! Store result
+	inc	8, %o1
+
+	dec	8, %o2
+	srlx	%l5, %o3, %o5				! Shift low word
+	brlez,pn	%o2, Lbcopy_finish	! Should never happen
+	 or	%o5, %l0, %o5				! Combine
+
+	inc	8, %o0
+	sllx	%l5, %o4, %l0
+	
+	ldx	[%o0], %l7				! Load next part
+	stx	%o5, [%o1]				! Store result
+	inc	8, %o1
+
+	dec	8, %o2
+	srlx	%l6, %o3, %o5				! Shift low word
+	brlez,pn	%o2, Lbcopy_finish	! Should never happen
+	 or	%o5, %l0, %o5				! Combine
+
+	inc	8, %o0
+	sllx	%l6, %o4, %l0
+	
+	ldx	[%o0], %l1				! Load next part
+	stx	%o5, [%o1]				! Store result
+	inc	8, %o1
+
+	dec	8, %o2
+	srlx	%l7, %o3, %o5				! Shift low word
+	brlez,pn	%o2, Lbcopy_finish	! Should never happen
+	 or	%o5, %l0, %o5				! Combine
+
+	inc	8, %o0
+	sllx	%l7, %o4, %l0
+	
+	ldx	[%o0], %l2				! Load next part
+	stx	%o5, [%o1]				! Store result
+	ba,pt	%icc, 1b
+	inc	8, %o1
+
+Lbcopy_noshift8:
+	mov	%o3, %o0
+1:	
+	deccc	8, %o2
+	ble,pn	%icc, Lbcopy_finish
+	 ldx	[%o0], %o5
+	inc	8, %o0
+	stx	%o5, [%o1]
+	ba,pt	%icc, 1b
+	 inc	8, %o1
+1:
+Lbcopy_finish:
+	mov	%o5, %o4	! XXXX
+	brz,pn	%o2, 2f					! 100% complete?
+	 cmp	%o2, 8					! Exactly 8 bytes?
+	bz,a,pn	%xcc, 2f
+	 stx	%o4, [%o1]
+
+	btst	4, %o2					! Word store?
+	bz	%xcc, 1f
+	 srlx	%o4, 32, %o5				! Shift high word down
+	stw	%o5, [%o1]
+	inc	4, %o1
+	mov	%o4, %o5				! Operate on the low bits
+1:
+	btst	2, %o2
+	mov	%o5, %o4
+	bz	1f
+	 srlx	%o4, 16, %o5
+	
+	sth	%o5, [%o1]				! Store short
+	inc	2, %o1
+	mov	%o4, %o5				! Operate on low bytes
+1:
+	mov	%o5, %o4
+	btst	1, %o2					! Byte aligned?
+	bz	2f
+	 srlx	%o4, 8, %o5
+
+	stb	%o5, [%o1]				! Store last byte
+	inc	1, %o1					! Update address
+2:	
+Lbcopy_complete:
+	ret
+	 restore %i1, %g0, %o0
 
 #if 1
 
@@ -361,12 +461,6 @@ Lbcopy_block:
 	mov	%i0, %o0				! Src addr.
 	mov	%i1, %o1				! Store our dest ptr here.
 	mov	%i2, %o2				! Len counter
-#else
-	save	%sp, -CC64FSZ, %sp
-	mov	%i0, %o0				! Src addr.
-	mov	%i1, %o1				! Store our dest ptr here.
-	mov	%i2, %o2				! Len counter
-
 #endif
 
 	!!
@@ -457,8 +551,6 @@ Lbcopy_block_common:
 	 mov	-0, %o4
 	alignaddr %o0, %o4, %o4				! base - shift
 
-#	rd	%gsr, %o5	! XXXXXX DEBUG
-	
 	brz,pt	%g1, 1f					! Data loaded?
 	 cmp	%o3, %o4				! Addresses same?
 	beq,pt	%xcc, 3f
