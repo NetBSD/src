@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.29 2001/06/14 05:44:24 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.30 2001/07/18 16:43:09 thorpej Exp $	*/
 /*	$KAME: if_gif.c,v 1.49 2001/06/04 12:03:41 itojun Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ gif_clone_create(ifc, unit)
 	struct gif_softc *sc;
 
 	sc = malloc(sizeof(struct gif_softc), M_DEVBUF, M_WAIT);
-	bzero(sc, sizeof(struct gif_softc));
+	memset(sc, 0, sizeof(struct gif_softc));
 
 	sprintf(sc->gif_if.if_xname, "%s%d", ifc->ifc_name, unit);
 
