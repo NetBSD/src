@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.52 2004/08/19 14:50:52 drochner Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.53 2004/08/23 16:41:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.52 2004/08/19 14:50:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.53 2004/08/23 16:41:48 drochner Exp $");
 
 #include "opt_cardbus.h"
 
@@ -388,7 +388,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	cardbus_function_tag_t cf;
 	int cdstatus;
 	static int wildcard[] = {
-		CARDBUSCF_DEV, CARDBUSCF_FUNCTION
+		CARDBUSCF_DEV_DEFAULT, CARDBUSCF_FUNCTION_DEFAULT
 	};
 
 	cc = sc->sc_cc;
@@ -439,6 +439,11 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 	cc = sc->sc_cc;
 	cf = sc->sc_cf;
 
+	/* XXX what a nonsense */
+	if ((locators[CARDBUSCF_DEV] != CARDBUSCF_DEV_DEFAULT) &&
+	    (locators[CARDBUSCF_DEV] != sc->sc_device))
+		return (0);
+
 	/* inspect initial voltage */
 	if ((cdstatus = (*cf->cardbus_ctrl)(cc, CARDBUS_CD)) == 0) {
 		DPRINTF(("cardbusattach: no CardBus card on cb%d\n",
@@ -488,6 +493,10 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		struct cardbus_attach_args ca;
 		int help[3];
 		locdesc_t *ldesc = (void *)&help; /* XXX */
+
+		if ((locators[CARDBUSCF_FUNCTION] != CARDBUSCF_FUNCTION_DEFAULT)
+		    && (locators[CARDBUSCF_FUNCTION] != function))
+			continue;
 
 		if (cb_findfunc(sc, function))
 			continue;
@@ -621,12 +630,12 @@ cardbussubmatch(struct device *parent, struct cfdata *cf,
 {
 
 	/* ldesc->locs[CARDBUSCF_DEV] is always 0 */
-	if (cf->cardbuscf_dev != CARDBUS_UNK_DEV &&
-	    cf->cardbuscf_dev != ldesc->locs[CARDBUSCF_DEV]) {
+	if (cf->cf_loc[CARDBUSCF_DEV] != CARDBUSCF_DEV_DEFAULT &&
+	    cf->cf_loc[CARDBUSCF_DEV] != ldesc->locs[CARDBUSCF_DEV]) {
 		return (0);
 	}
-	if (cf->cardbuscf_function != CARDBUS_UNK_FUNCTION &&
-	    cf->cardbuscf_function != ldesc->locs[CARDBUSCF_FUNCTION]) {
+	if (cf->cf_loc[CARDBUSCF_FUNCTION] != CARDBUSCF_FUNCTION_DEFAULT &&
+	    cf->cf_loc[CARDBUSCF_FUNCTION] != ldesc->locs[CARDBUSCF_FUNCTION]) {
 		return (0);
 	}
 
