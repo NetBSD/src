@@ -1,4 +1,4 @@
-/* $NetBSD: exception.S,v 1.7 1996/10/16 19:32:08 ws Exp $ */
+/* $NetBSD: exception.S,v 1.8 1996/11/23 04:02:40 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -54,6 +54,34 @@
  * Since the current mode is used, the SVC R14 field is not defined.
  */
 
+#ifdef CPU_SA110
+
+#define PUSHFRAME \
+	str	lr, [sp, #-4]!;		/* Push the return address */ \
+	sub	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
+	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
+	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
+	add	r0, sp, #(4*13);	/* Adjust the stack pointer */ \
+	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
+        mov     r0, r0;                 /* NOP for previous instruction */ \
+	mrs	r0, spsr_all;		/* Put the SPSR on the stack */ \
+	str	r0, [sp, #-4]!;
+
+/*
+ * PULLFRAME - macro to pull a trap frame from the stack in the current mode
+ * Since the current mode is used, the SVC R14 field is ignored.
+ */
+
+#define PULLFRAME \
+        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */ \
+        msr     spsr_all, r0; \
+        ldmia   sp, {r0-r14}^;		/* Restore the registers (user mode) */ \
+        mov     r0, r0;                 /* NOP for previous instruction */ \
+	add	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
+ 	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
+ 	ldr	lr, [sp], #0x0004;	/* Pull the return address */
+
+#else
 #define PUSHFRAME \
 	str	lr, [sp, #-4]!;		/* Push the return address */ \
 	sub	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
@@ -76,6 +104,8 @@
  	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
  	ldr	lr, [sp], #0x0004;	/* Pull the return address */
 
+#endif
+
 /*
  * PUSHFRAMEINSVC - macro to push a trap frame on the stack in SVC32 mode
  * This should only be used if the processor is not currently in SVC32
@@ -84,6 +114,44 @@
  * R14 in SVC mode.  
  */
 
+#ifdef CPU_SA110
+
+#define PUSHFRAMEINSVC \
+	stmdb	sp, {r0-r3};		/* Save 4 registers */ \
+	mov	r0, lr;			/* Save xxx32 r14 */ \
+	mov	r1, sp;			/* Save xxx32 sp */ \
+	mrs	r3, spsr_all;		/* Save xxx32 spsr */ \
+	mrs     r2, cpsr_all; 		/* Get the CPSR */ \
+	bic     r2, r2, #(PSR_MODE);	/* Fix for SVC mode */ \
+	orr     r2, r2, #(PSR_SVC32_MODE); \
+	msr     cpsr_all, r2;		/* Punch into SVC mode */ \
+	str	r0, [sp, #-4]!;		/* Push return address */ \
+	str	lr, [sp, #-4]!;		/* Push SVC r14 */ \
+	msr     spsr_all, r3;		/* Restore correct spsr */ \
+	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
+	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
+	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
+	add	r0, sp, #(4*13);	/* Adjust the stack pointer */ \
+	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
+        mov     r0, r0;                 /* NOP for previous instruction */ \
+	mrs	r0, spsr_all;		/* Put the SPSR on the stack */ \
+	str	r0, [sp, #-4]!
+
+/*
+ * PULLFRAMEFROMSVCANDEXIT - macro to pull a trap frame from the stack
+ * in SVC32 mode and restore the saved processor mode and PC.
+ * This should be used when the SVC R14 register needs to be restored on
+ * exit.
+ */
+
+#define PULLFRAMEFROMSVCANDEXIT \
+        ldr     r0, [sp], #0x0004;	/* Get the SPSR from stack */ \
+        msr     spsr_all, r0;		/* restore SPSR */ \
+        ldmia   sp, {r0-r14}^;		/* Restore the registers (user mode) */ \
+        mov     r0, r0;	  		/* NOP for previous instruction */ \
+	add	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
+	ldmia	sp!, {lr, pc}^		/* Restore lr and exit */
+#else
 #define PUSHFRAMEINSVC \
 	stmdb	sp, {r0-r3};		/* Save 4 registers */ \
 	mov	r0, lr;			/* Save xxx32 r14 */ \
@@ -116,6 +184,8 @@
         ldmdb   sp, {r0-r14}^;		/* Restore the registers (user mode) */ \
         mov     r0, r0;	  		/* NOP for previous instruction */ \
 	ldmia	sp!, {lr, pc}^		/* Restore lr and exit */
+#endif
+
 
 sp	.req	r13
 lr	.req	r14
