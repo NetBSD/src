@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)primes.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: primes.c,v 1.2 1993/08/01 18:53:04 mycroft Exp $";
+static char rcsid[] = "$Id: primes.c,v 1.3 1994/03/01 01:07:48 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -68,6 +68,7 @@ static char rcsid[] = "$Id: primes.c,v 1.2 1993/08/01 18:53:04 mycroft Exp $";
 #include <math.h>
 #include <memory.h>
 #include <ctype.h>
+#include <limits.h>
 #include "primes.h"
 
 /*
@@ -129,11 +130,11 @@ main(argc, argv)
 			fprintf(stderr, "%s: ouch\n", program);
 			exit(1);
 		}
-		if (sscanf(argv[1], "%ld", &start) != 1) {
+		if (sscanf(argv[1], "%lu", &start) != 1) {
 			fprintf(stderr, "%s: ouch\n", program);
 			exit(1);
 		}
-		if (sscanf(argv[2], "%ld", &stop) != 1) {
+		if (sscanf(argv[2], "%lu", &stop) != 1) {
 			fprintf(stderr, "%s: ouch\n", program);
 			exit(1);
 		}
@@ -144,7 +145,7 @@ main(argc, argv)
 			fprintf(stderr, "%s: ouch\n", program);
 			exit(1);
 		}
-		if (sscanf(argv[1], "%ld", &start) != 1) {
+		if (sscanf(argv[1], "%lu", &start) != 1) {
 			fprintf(stderr, "%s: ouch\n", program);
 			exit(1);
 		}
@@ -154,7 +155,7 @@ main(argc, argv)
 		if (read_num_buf(stdin, buf) != NULL) {
 
 			/* convert the buffer */
-			if (sscanf(buf, "%ld", &start) != 1) {
+			if (sscanf(buf, "%lu", &start) != 1) {
 				fprintf(stderr, "%s: ouch\n", program);
 				exit(1);
 			}
@@ -210,9 +211,9 @@ read_num_buf(input, buf)
 	char *p;	/* scan pointer */
 	char *z;	/* zero scan pointer */
 
-	/* form the ascii value of SEMIBIG if needed */
+	/* form the ascii value of BIG if needed */
 	if (!isascii(limit[0]) || !isdigit(limit[0])) {
-		sprintf(limit, "%ld", SEMIBIG);
+		sprintf(limit, "%lu", BIG);
 		limit_len = strlen(limit);
 	}
 	
@@ -234,7 +235,7 @@ read_num_buf(input, buf)
 
 		/* object if - */
 		if (*s == '-') {
-			fprintf(stderr, "%s: ouch\n", program);
+			fprintf(stderr, "%s: ouch for minuses\n", program);
 			continue;
 		}
 
@@ -275,12 +276,12 @@ read_num_buf(input, buf)
 
 		/* reject very large numbers */
 		} else if (len > limit_len) {
-			fprintf(stderr, "%s: ouch\n", program);
+			fprintf(stderr, "%s: %s too big\n", program, z);
 			continue;
 
 		/* carefully check against near limit numbers */
 		} else if (strcmp(z, limit) > 0) {
-			fprintf(stderr, "%s: ouch\n", program);
+			fprintf(stderr, "%s: %s a bit too big\n", program, z);
 			continue;
 		}
 		/* number is near limit, but is under it */
@@ -306,10 +307,9 @@ primes(start, stop)
 	register ubig fact_lim;		/* highest prime for current block */
 
 	/*
-	 * A number of systems can not convert double values 
-	 * into unsigned longs when the values are larger than
-	 * the largest signed value.  Thus we take case when
-	 * the double is larger than the value SEMIBIG. *sigh*
+	 * NetBSD has no problems with handling conversion
+	 * between doubles and unsigned long, so we can go
+	 * all the way to BIG.
 	 */
 	if (start < 3) {
 		start = (ubig)2;
