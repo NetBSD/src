@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.5 2003/12/15 10:26:38 sekiya Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.6 2003/12/15 12:48:37 sekiya Exp $
 #
 # Indy
 
@@ -8,12 +8,12 @@ makeoptions	TEXTADDR=0x88069000	# Indy
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.5 $"
+#ident		"GENERIC-$Revision: 1.6 $"
 
 maxusers	32
 
 # CPU related options
-options 	IP22		# Indigo / Indigo2 / Indy
+options 	IP2X		# Indigo / Indigo2 / Indy
 
 options 	MIPS3		# MIPS3 support
 

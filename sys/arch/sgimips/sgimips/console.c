@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.13 2003/12/15 05:28:14 lonewolf Exp $	*/
+/*	$NetBSD: console.c,v 1.14 2003/12/15 12:48:37 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.13 2003/12/15 05:28:14 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14 2003/12/15 12:48:37 sekiya Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_machtypes.h"
@@ -86,7 +86,7 @@ consinit()
 	dbaud = ARCBIOS->GetEnvironmentVariable("dbaud");
 	speed = strtoul(dbaud, NULL, 10);
 
-#if defined(IP22)
+#if defined(IP2X)
 	if (mach_type == MACH_SGI_IP22) {
 		if (strcmp(consdev, "video()") == 0) {
 			/* XXX Assumes that if output is video() input must be
@@ -108,7 +108,7 @@ consinit()
 #endif
 	
 
-#if (defined(IP20) || defined(IP22)) && (NZSC > 0)
+#if (defined(IP2X)) && (NZSC > 0)
 	if (mach_type == MACH_SGI_IP20 || mach_type == MACH_SGI_IP22) {
 		if (strlen(consdev) == 9 &&
 		    strncmp(consdev, "serial", 6) == 0 &&
@@ -118,7 +118,7 @@ consinit()
 			return;
 		}
 	}
-#endif /* (IP20 || IP22) && (NZSC > 0) */
+#endif /* (IP2X) && (NZSC > 0) */
 
 #if defined(IP32) && (NCOM > 0)
 	if (mach_type == MACH_SGI_IP32) {
@@ -154,10 +154,10 @@ kgdb_port_init()
 		    KGDB_DEVMODE);
 # endif	/* IP32 && (NCOM > 0) */
 
-# if (defined(IP20) || defined(IP22)) && (NZSC > 0)
+# if (defined(IP2X)) && (NZSC > 0)
 	if (mach_type == MACH_SGI_IP20 || mach_type == MACH_SGI_IP22)
 		zs_kgdb_init();			/* XXX */
-# endif /* (IP20 || IP22) && (NZSC > 0) */
+# endif /* (IP2X) && (NZSC > 0) */
 }
 #endif	/* KGDB */
 
