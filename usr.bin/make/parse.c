@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.53 2000/10/11 14:46:12 is Exp $	*/
+/*	$NetBSD: parse.c,v 1.54 2000/12/05 17:07:01 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.53 2000/10/11 14:46:12 is Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.54 2000/12/05 17:07:01 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.53 2000/10/11 14:46:12 is Exp $");
+__RCSID("$NetBSD: parse.c,v 1.54 2000/12/05 17:07:01 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -943,7 +943,7 @@ ParseDoDependency (line)
 			break;
 		    }
 		    case SingleShell:
-			compatMake = 1;
+			compatMake = TRUE;
 			break;
 		    case Order:
 			predecessor = NILGNODE;
