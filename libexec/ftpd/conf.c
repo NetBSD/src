@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.53 2004/12/11 18:37:26 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.54 2005/03/03 22:19:47 ginsbach Exp $	*/
 
 /*-
- * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.53 2004/12/11 18:37:26 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.54 2005/03/03 22:19:47 ginsbach Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -126,6 +126,7 @@ init_curclass(void)
 
 	CURCLASS_FLAGS_SET(checkportcmd);
 	CURCLASS_FLAGS_CLR(denyquick);
+	CURCLASS_FLAGS_CLR(hidesymlinks);
 	CURCLASS_FLAGS_SET(modify);
 	CURCLASS_FLAGS_SET(passive);
 	CURCLASS_FLAGS_CLR(private);
@@ -353,6 +354,9 @@ parse_conf(const char *findclass)
 
 		} else if (strcasecmp(word, "display") == 0) {
 			CONF_STRING(display);
+
+		} else if (strcasecmp(word, "hidesymlinks") == 0) {
+			CONF_FLAG(hidesymlinks);
 
 		} else if (strcasecmp(word, "homedir") == 0) {
 			CONF_STRING(homedir);

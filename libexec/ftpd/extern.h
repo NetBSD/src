@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.51 2004/11/11 01:14:10 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.52 2005/03/03 22:19:47 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 /*-
- * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -252,12 +252,15 @@ typedef enum {
 typedef enum {
 	FLAG_checkportcmd =	1<<0,	/* Check port commands */
 	FLAG_denyquick =	1<<1,	/* Check ftpusers(5) before PASS */
-	FLAG_modify =		1<<2,	/* Allow CHMOD, DELE, MKD, RMD, RNFR,
+	FLAG_hidesymlinks =	1<<2,	/* For symbolic links, list the file
+					   or directory the link references
+					   rather than the link itself */
+	FLAG_modify =		1<<3,	/* Allow CHMOD, DELE, MKD, RMD, RNFR,
 					   UMASK */
-	FLAG_passive =		1<<3,	/* Allow PASV mode */
-	FLAG_private =		1<<4,	/* Don't publish class info in STAT */
-	FLAG_sanenames =	1<<5,	/* Restrict names of uploaded files */ 
-	FLAG_upload =		1<<6,	/* As per modify, but also allow
+	FLAG_passive =		1<<4,	/* Allow PASV mode */
+	FLAG_private =		1<<5,	/* Don't publish class info in STAT */
+	FLAG_sanenames =	1<<6,	/* Restrict names of uploaded files */ 
+	FLAG_upload =		1<<7,	/* As per modify, but also allow
 					   APPE, STOR, STOU */
 } classflag_t;
 
