@@ -1,4 +1,4 @@
-/*	$NetBSD: strsuftoll.c,v 1.1 2002/11/29 12:58:17 lukem Exp $	*/
+/*	$NetBSD: strsuftoll.c,v 1.2 2003/02/08 07:27:51 itohy Exp $	*/
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -74,7 +74,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strsuftoll.c,v 1.1 2002/11/29 12:58:17 lukem Exp $");
+__RCSID("$NetBSD: strsuftoll.c,v 1.2 2003/02/08 07:27:51 itohy Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _LIBC
@@ -100,16 +100,11 @@ __RCSID("$NetBSD: strsuftoll.c,v 1.1 2002/11/29 12:58:17 lukem Exp $");
 #include <string.h>
 
 #ifdef _LIBC
-# define _STRSUFTOLL	_strsuftoll
-# define _STRSUFTOLLX	_strsuftollx
 # ifdef __weak_alias
 __weak_alias(strsuftoll, _strsuftoll)
 __weak_alias(strsuftollx, _strsuftollx)
 # endif
-#else /* !LIBC */
-# define _STRSUFTOLL	strsuftoll
-# define _STRSUFTOLLX	strsuftollx
-#endif /* !LIBC */
+#endif /* LIBC */
 
 /*
  * Convert an expression of the following forms to a (u)int64_t.
@@ -127,7 +122,7 @@ __weak_alias(strsuftollx, _strsuftollx)
  */
 /* LONGLONG */
 long long
-_STRSUFTOLL(const char *desc, const char *val,
+strsuftoll(const char *desc, const char *val,
     long long min, long long max)
 {
 	long long result;
@@ -145,7 +140,7 @@ _STRSUFTOLL(const char *desc, const char *val,
  */
 /* LONGLONG */
 long long
-_STRSUFTOLLX(const char *desc, const char *val,
+strsuftollx(const char *desc, const char *val,
     long long min, long long max, char *ebuf, size_t ebuflen)
 {
 	long long num, t;
