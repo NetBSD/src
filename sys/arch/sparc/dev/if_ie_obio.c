@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.2 1998/02/07 17:28:18 chs Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.3 1998/02/28 01:16:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -108,7 +108,6 @@
 #include <machine/pmap.h>
 #include <machine/bus.h>
 
-#define _NEW_I82586     /* remove after all old drivers are converted */
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
 
