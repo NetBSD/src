@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 2001/02/26 14:01:58 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6 2001/03/01 23:45:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -328,7 +328,7 @@ identify_arm_cpu(cpu_number)
 	case CPU_ID_ARM700 :
 	case CPU_ID_ARM710 :
 	case CPU_ID_ARM7500:
-	case CPU_ID_ARM7100:
+	case CPU_ID_ARM710A:
 	case CPU_ID_ARM710T:
 		cpu_type = (cpuid & CPU_ID_PARTNO_MASK) >> 4;
 		break;

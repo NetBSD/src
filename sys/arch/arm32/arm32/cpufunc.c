@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.13 2001/02/25 21:31:14 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.14 2001/03/01 23:45:57 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -362,7 +362,7 @@ set_cpufuncs()
 	case CPU_ID_ARM700:
 	case CPU_ID_ARM710:
 	case CPU_ID_ARM7500:
-	case CPU_ID_ARM7100:
+	case CPU_ID_ARM710A:
 	case CPU_ID_ARM710T:
 		cpufuncs = arm7_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
