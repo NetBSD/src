@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1997/10/10 02:07:30 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1997/10/11 02:01:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,7 +55,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.5 1997/10/10 02:07:30 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 1997/10/11 02:01:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,7 +229,7 @@ read_file(s)
 	file = s;
 	yyin = fopen(s, "r");
 	if (yyin == NULL) {
-		perror(s);
+		warn("fopen %s", s);
 		return (-1);
 	}
 	retval = yyparse();
@@ -252,7 +252,7 @@ default_game()
 	strcat(games, GAMES);
 
 	if ((fp = fopen(games, "r")) == NULL) {
-		perror(games);
+		warn("fopen %s", games);
 		return (NULL);
 	}
 	if (fgets(line, sizeof(line), fp) == NULL) {
@@ -278,7 +278,7 @@ okay_game(s)
 	strcat(games, GAMES);
 
 	if ((fp = fopen(games, "r")) == NULL) {
-		perror(games);
+		warn("fopen %s", games);
 		return (NULL);
 	}
 	while (fgets(line, sizeof(line), fp) != NULL) {
@@ -312,7 +312,7 @@ list_games()
 	strcat(games, GAMES);
 
 	if ((fp = fopen(games, "r")) == NULL) {
-		perror(games);
+		warn("fopen %s", games);
 		return (-1);
 	}
 	puts("available games:");
