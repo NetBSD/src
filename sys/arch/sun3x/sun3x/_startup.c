@@ -1,4 +1,4 @@
-/*	$NetBSD: _startup.c,v 1.7 1997/01/27 22:22:51 gwr Exp $	*/
+/*	$NetBSD: _startup.c,v 1.8 1997/02/02 08:38:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@ extern char kernel_text[];
 /* These are defined by the linker */
 extern char etext[], edata[], end[];
 char *esym;	/* DDB */
+
+/* m68k common code needs these */
+int	cputype, mmutype;
 
 /*
  * Now our own stuff.
@@ -233,6 +236,10 @@ _verify_hardware()
 		mon_printf("not a sun3x?\n");
 		sunmon_abort();
 	}
+
+	/* Set cputype and mmutype for common m68k code. */
+	cputype = CPU_68030;
+	mmutype = MMU_68030;
 
 	cpu_machine_id = machtype & SUN3X_IMPL_MASK;
 	switch (cpu_machine_id) {
