@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.1 2002/03/22 10:10:57 martti Exp $
+# $NetBSD: etcupdate,v 1.2 2002/05/13 12:43:16 martti Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -467,5 +467,10 @@ if [ ! -z "${NEED_PWD_MKDB}" ]; then
 		     "/etc/master.passwd\" as root"
 		echo ""
 	fi
+fi
+if [ -x /etc/postinstall ]; then
+	S=`echo ${SRCDIR} | sed 's+/etc++'`
+	echo "*** Running /etc/postinstall"
+	/etc/postinstall -s "${S}" check
 fi
 echo "*** All done"
