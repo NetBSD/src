@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.23 2002/10/23 09:13:21 jdolecek Exp $	*/
+/*	$NetBSD: irframe.c,v 1.24 2003/04/17 12:34:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -236,8 +236,8 @@ irframeread(dev_t dev, struct uio *uio, int flag)
 		return (EIO);
 	if (uio->uio_resid < sc->sc_params.maxsize) {
 #ifdef DIAGNOSTIC
-		printf("irframeread: short read %d < %d\n", uio->uio_resid,
-		       sc->sc_params.maxsize);
+		printf("irframeread: short read %ld < %d\n",
+		       (long)uio->uio_resid, sc->sc_params.maxsize);
 #endif
 		return (EINVAL);
 	}
@@ -256,8 +256,8 @@ irframewrite(dev_t dev, struct uio *uio, int flag)
 		return (EIO);
 	if (uio->uio_resid > sc->sc_params.maxsize) {
 #ifdef DIAGNOSTIC
-		printf("irframeread: long write %d > %d\n", uio->uio_resid,
-		       sc->sc_params.maxsize);
+		printf("irframeread: long write %ld > %d\n",
+		       (long)uio->uio_resid, sc->sc_params.maxsize);
 #endif
 		return (EINVAL);
 	}
