@@ -1,4 +1,4 @@
-/* $NetBSD: term_chk.c,v 1.6 2004/10/27 17:48:47 christos Exp $ */
+/* $NetBSD: term_chk.c,v 1.7 2004/11/30 04:08:38 christos Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: term_chk.c,v 1.6 2004/10/27 17:48:47 christos Exp $");
+__RCSID("$NetBSD: term_chk.c,v 1.7 2004/11/30 04:08:38 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ term_chk(uid_t uid, const char *tty, int *msgsokP, time_t *atimeP, int ismytty,
 	struct stat s;
 	int i, fd, serrno;
 
-	if (strcspn(tty, "./") != strlen(tty)) {
+	if (strstr(tty, "../") != NULL) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -111,7 +111,6 @@ check_sender(time_t *atime, uid_t myuid, gid_t saved_egid)
 	int myttyfd;
 	int msgsok;
 	char *mytty;
-	char *cp;
 
 	/* check that sender has write enabled */
 	if (isatty(fileno(stdin)))
@@ -126,8 +125,8 @@ check_sender(time_t *atime, uid_t myuid, gid_t saved_egid)
 		errx(1, "Cannot find your tty");
 	if ((mytty = ttyname(myttyfd)) == NULL)
 		err(1, "Cannot find the name of your tty");
-	if ((cp = strrchr(mytty, '/')) != NULL)
-		mytty = cp + 1;
+	if (strncmp(mytty, _PATH_DEV, sizeof(_PATH_DEV) - 1) == 0)
+		mytty += sizeof(_PATH_DEV) - 1;
 	if (term_chk(myuid, mytty, &msgsok, atime, 1, saved_egid) == -1)
 		err(1, "%s%s", _PATH_DEV, mytty);
 	if (!msgsok) {
