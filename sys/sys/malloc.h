@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)malloc.h	7.25 (Berkeley) 5/15/91
- *	$Id: malloc.h,v 1.11 1993/08/07 08:12:20 cgd Exp $
+ *	$Id: malloc.h,v 1.12 1993/12/06 05:01:59 hpeyerl Exp $
  */
 
 #ifndef _SYS_MALLOC_H_
@@ -98,7 +98,11 @@
 #define M_MISCFSMNT	47	/* miscfs mount structures */
 #define M_ISOFSMNT	48	/* isofs mount structures */
 #define	M_TEMP		49	/* misc temporary data buffers */
-#define	M_LAST		M_TEMP
+#define M_IPMOPTS	50	/* internet multicast options */
+#define M_IPMADDR	51	/* internet multicast address */
+#define M_IFMADDR	52	/* link-level multicast address */
+#define M_MRTABLE	53	/* multicast routing tables */
+#define	M_LAST		M_MRTABLE
 
 #define INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -151,6 +155,10 @@
 	"miscfs mount",	/* 47 M_MISCFSMNT */ \
 	"isofs mount",	/* 48 M_ISOFSMNT */ \
 	"temp",		/* 49 M_TEMP */ \
+        "mcast opts",	/* 50 M_IPMOPTS */ \
+        "ip mcast",	/* 51 M_IPMADDR */ \
+        "if mcast",	/* 52 M_IFMADDR */ \
+        "mcast route",	/* 53 M_MRTABLE */ \
 }
 
 struct kmemstats {

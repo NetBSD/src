@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_ip.c	7.8 (Berkeley) 7/25/90
- *	$Id: raw_ip.c,v 1.5 1993/05/22 11:42:37 cgd Exp $
+ *	$Id: raw_ip.c,v 1.6 1993/12/06 04:59:44 hpeyerl Exp $
  */
 
 #include "param.h"
@@ -119,7 +119,11 @@ rip_output(m, so)
 	return (ip_output(m,
 	   (rp->rinp_flags & RINPF_HDRINCL)? (struct mbuf *)0: rp->rinp_options,
 	    &rp->rinp_route, 
-	   (so->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST));
+	   (so->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST
+#ifdef MULTICAST
+		| IP_MULTICASTOPTS, rp->rinp_rcb.rcb_moptions
+#endif
+	));
 }
 
 /*
@@ -154,10 +158,27 @@ rip_ctloutput(op, so, level, optname, m)
 			else
 				rp->rinp_flags &= ~RINPF_HDRINCL;
 			break;
-
+#ifdef MULTICAST
+		case IP_MULTICAST_IF:
+		case IP_MULTICAST_TTL:
+		case IP_MULTICAST_LOOP:
+		case IP_ADD_MEMBERSHIP:
+		case IP_DROP_MEMBERSHIP:
+			error = ip_setmoptions(optname,
+					       &rp->rinp_rcb.rcb_moptions, *m);
+			break;
+		default:
+#ifdef MROUTING
+			error = ip_mrouter_cmd(optname, so, *m);
+#else
+			error = EINVAL;
+#endif
+			break;
+#else
 		default:
 			error = EINVAL;
 			break;
+#endif
 		}
 		break;
 
@@ -178,7 +199,16 @@ rip_ctloutput(op, so, level, optname, m)
 			(*m)->m_len = sizeof (int);
 			*mtod(*m, int *) = rp->rinp_flags & RINPF_HDRINCL;
 			break;
-
+#ifdef MULTICAST
+		case IP_MULTICAST_IF:
+		case IP_MULTICAST_TTL:
+		case IP_MULTICAST_LOOP:
+		case IP_ADD_MEMBERSHIP:
+		case IP_DROP_MEMBERSHIP:
+			error = ip_getmoptions(optname, 
+						rp->rinp_rcb.rcb_moptions, m);
+                      break;
+#endif
 		default:
 			error = EINVAL;
 			m_freem(*m);
@@ -200,7 +230,9 @@ rip_usrreq(so, req, m, nam, control)
 {
 	register int error = 0;
 	register struct raw_inpcb *rp = sotorawinpcb(so);
-
+#if defined(MULTICAST) && defined(MROUTING)
+	extern struct socket *ip_mrouter;
+#endif
 	switch (req) {
 
 	case PRU_ATTACH:
@@ -216,8 +248,16 @@ rip_usrreq(so, req, m, nam, control)
 	case PRU_DETACH:
 		if (rp == 0)
 			panic("rip_detach");
+#if defined(MULTICAST) && defined(MROUTING)
+		if (so == ip_mrouter)
+			ip_mrouter_done();
+#endif
 		if (rp->rinp_options)
 			m_freem(rp->rinp_options);
+#ifdef MULTICAST
+		if (rp->rinp_rcb.rcb_moptions)
+			ip_freemoptions(rp->rinp_rcb.rcb_moptions);
+#endif
 		if (rp->rinp_route.ro_rt)
 			RTFREE(rp->rinp_route.ro_rt);
 		if (rp->rinp_rcb.rcb_laddr)

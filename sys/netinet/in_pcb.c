@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_pcb.c	7.14 (Berkeley) 4/20/91
- *	$Id: in_pcb.c,v 1.5 1993/06/11 09:12:21 deraadt Exp $
+ *	$Id: in_pcb.c,v 1.6 1993/12/06 04:59:29 hpeyerl Exp $
  */
 
 #include "param.h"
@@ -51,6 +51,9 @@
 #include "ip.h"
 #include "in_pcb.h"
 #include "in_var.h"
+#ifdef MULTICAST
+#include "ip_var.h"
+#endif
 
 struct	in_addr zeroin_addr;
 
@@ -217,6 +220,28 @@ in_pcbconnect(inp, nam)
 			if (ia == 0)
 				return (EADDRNOTAVAIL);
 		}
+#ifdef MULTICAST
+		/*
+		 * If the destination address is multicast and an outgoing
+		 * interface has been set as a multicast option, use the
+		 * address of that interface as our source address.
+		 */
+		if (IN_MULTICAST(ntohl(sin->sin_addr.s_addr)) &&
+		    inp->inp_moptions != NULL) {
+			struct ip_moptions *imo;
+			struct ifnet *ifp;
+			
+			imo = inp->inp_moptions;
+			if (imo->imo_multicast_ifp != NULL) {
+				ifp = imo->imo_multicast_ifp;
+				for (ia = in_ifaddr; ia; ia = ia->ia_next)
+					if (ia->ia_ifp == ifp)
+						break;
+				if (ia == 0)
+					return (EADDRNOTAVAIL);
+			}
+		}
+#endif
 		ifaddr = (struct sockaddr_in *)&ia->ia_addr;
 	}
 	if (in_pcblookup(inp->inp_head,
@@ -257,6 +282,9 @@ in_pcbdetach(inp)
 		(void)m_free(inp->inp_options);
 	if (inp->inp_route.ro_rt)
 		rtfree(inp->inp_route.ro_rt);
+#ifdef MULTICAST
+	ip_freemoptions(inp->inp_moptions);
+#endif
 	remque(inp);
 	(void) m_free(dtom(inp));
 }
