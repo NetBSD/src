@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.22 2001/04/24 06:39:48 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.23 2001/05/14 13:18:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -41,6 +41,13 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 
+#include "pckbc.h"
+#if (NPCKBC > 0)
+#include <dev/ic/pckbcvar.h>
+#include <dev/isa/isareg.h>
+#include <dev/ic/i8042reg.h>
+#endif /* NPCKBC > 0 */
+
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <atari/atari/device.h>
@@ -71,6 +78,12 @@ struct cfattach isabus_ca = {
 	sizeof(struct isabus_softc), isabusmatch, isabusattach
 };
 
+/*
+ * We need some static storage to attach a console keyboard on the Milan
+ * during early console init.
+ */
+static struct atari_bus_space	bs_storage[2];	/* 1 iot, 1 memt */
+
 int
 isabusmatch(pdp, cfp, auxp)
 struct device	*pdp;
@@ -83,7 +96,7 @@ void		*auxp;
 		return (0); /* Wrong number... */
 
 	if(atari_realconfig == 0)
-		return (0);
+		return (1);
 
 	if (machineid & (ATARI_HADES|ATARI_MILAN)) {
 		/*
@@ -109,8 +122,8 @@ void		*auxp;
 
 	iba.iba_busname = "isa";
 	iba.iba_dmat	= &isa_bus_dma_tag;
-	iba.iba_iot     = leb_alloc_bus_space_tag(NULL);
-	iba.iba_memt    = leb_alloc_bus_space_tag(NULL);
+	iba.iba_iot     = leb_alloc_bus_space_tag(&bs_storage[0]);
+	iba.iba_memt    = leb_alloc_bus_space_tag(&bs_storage[1]);
 	iba.iba_ic	= &sc->sc_chipset;
 	if ((iba.iba_iot == NULL) || (iba.iba_memt == NULL)) {
 		printf("leb_alloc_bus_space_tag failed!\n");
@@ -122,6 +135,12 @@ void		*auxp;
 	if (machineid & ATARI_HADES)
 	    MFP->mf_aer |= (IO_ISA1|IO_ISA2); /* ISA interrupts: LOW->HIGH */
 	isa_bus_init();
+	if (dp == NULL) { /* Early init */
+#if (NPCKBC > 0)
+		pckbc_cnattach(iba.iba_iot, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
+#endif
+		return;
+	}
 
 	printf("\n");
 	config_found(dp, &iba, isabusprint);
