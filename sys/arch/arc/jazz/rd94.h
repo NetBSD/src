@@ -1,4 +1,4 @@
-/*	$NetBSD: rd94.h,v 1.4 2001/06/13 15:11:38 soda Exp $	*/
+/*	$NetBSD: rd94.h,v 1.5 2002/12/07 13:09:47 tsutsui Exp $	*/
 /*	$OpenBSD: pica.h,v 1.4 1996/09/14 15:58:28 pefo Exp $ */
 
 /*
@@ -90,6 +90,8 @@
 #define	RD94_SYS_SOUND		(RD94LB+0x10000)/* Sound port */
 #define	RD94_SYS_THERMOMETER	(RD94LB+0x12000)/* DS1620 thermometer */
 
+#define	RD94_SYS_EISA_AS	(RD94_V_EISA_IO+0x70) /* only for J96A */
+
 #define	RD94_SYS_LB_LED		(RD94LB+0xE000)	/* LED/self-test register */
 #define	RD94_SYS_LB_IE1		(RD94LB+0xF000)	/* Local bus int enable */
 #define	RD94_SYS_LB_IE2		(RD94LB+0xF002)	/* Local bus int enable */
@@ -101,5 +103,13 @@
 #define	RD94_P_PCI_MEM		0x100000000LL	/* PCI Memory control */
 #define	RD94_V_PCI_MEM		0xe3000000
 #define	RD94_S_PCI_MEM		0x40000000
+
+#define	RD94_P_EISA_IO		0x90000000	/* PCI I/O control */
+#define	RD94_V_EISA_IO		0xe2000000
+#define	RD94_S_EISA_IO		0x01000000
+
+#define	RD94_P_EISA_MEM		0x100000000LL	/* PCI Memory control */
+#define	RD94_V_EISA_MEM		0xe3000000
+#define	RD94_S_EISA_MEM		0x40000000
 
 #endif	/* _RD94_H_ */
