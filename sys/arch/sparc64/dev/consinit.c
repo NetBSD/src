@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.9 2000/10/20 05:32:35 mrg Exp $	*/
+/*	$NetBSD: consinit.c,v 1.10 2001/08/28 14:51:28 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -218,7 +218,7 @@ consinit()
 #endif
 		consname = "keyboard/display";
 	} else if (fbnode && 
-		   (OF_instance_to_path(stdinnode, buffer, sizeof(buffer) >= 0))) {
+		(OF_instance_to_path(stdinnode, buffer, sizeof(buffer)) >= 0)) {
 		consname = buffer;
 	}
 	printf("console is %s\n", consname);
