@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 2003/01/07 09:02:21 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2003/01/07 15:04:54 taca Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: main.c,v 1.105 2001/03/12 22:58:59 paulus Exp "
 #else
-__RCSID("$NetBSD: main.c,v 1.42 2003/01/07 09:02:21 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 2003/01/07 15:04:54 taca Exp $");
 #endif
 #endif
 
@@ -1134,7 +1134,7 @@ timeout(func, arg, secs, usecs)
     struct callout *newp, *p, **pp;
   
     MAINDEBUG(("Timeout %p:%p in %d.%03d seconds.", func, arg,
-	       time / 1000, time % 1000));
+	       secs, usecs));
   
     /*
      * Allocate timeout.
