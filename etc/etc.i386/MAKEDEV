@@ -79,7 +79,7 @@ all)
 	;;
 
 std)
-	rm -f console drum mem kmem null zero io tty klog stdin stdout stderr acct
+	rm -f console drum mem kmem null zero io tty klog stdin stdout stderr
 	mknod console		c 0 0
 	mknod drum		c 4 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
@@ -100,7 +100,6 @@ std)
 	chown -R bin.bin fd
 	chmod 555 fd
 	chmod 666 fd/*
-	mknod acct		c 26 0	; chmod 600 acct
 	;;
 
 wt*)
