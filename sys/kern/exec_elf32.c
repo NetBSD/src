@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.76 2002/10/05 22:34:05 chs Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.77 2002/11/13 15:49:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.76 2002/10/05 22:34:05 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.77 2002/11/13 15:49:44 jdolecek Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -126,6 +126,7 @@ ELFNAME(copyargs)(struct proc *p, struct exec_package *pack,
 	 * linked binaries
 	 */
 	if ((ap = (struct elf_args *)pack->ep_emul_arg)) {
+		struct vattr *vap = pack->ep_vap;
 
 		a->a_type = AT_PHDR;
 		a->a_v = ap->arg_phaddr;
@@ -156,7 +157,10 @@ ELFNAME(copyargs)(struct proc *p, struct exec_package *pack,
 		a++;
 
 		a->a_type = AT_EUID;
-		a->a_v = p->p_ucred->cr_uid;
+		if (vap->va_mode & S_ISUID)
+			a->a_v = vap->va_uid;
+		else
+			a->a_v = p->p_ucred->cr_uid;
 		a++;
 
 		a->a_type = AT_RUID;
@@ -164,7 +168,10 @@ ELFNAME(copyargs)(struct proc *p, struct exec_package *pack,
 		a++;
 
 		a->a_type = AT_EGID;
-		a->a_v = p->p_ucred->cr_gid;
+		if (vap->va_mode & S_ISGID)
+			a->a_v = vap->va_gid;
+		else
+			a->a_v = p->p_ucred->cr_gid;
 		a++;
 
 		a->a_type = AT_RGID;
