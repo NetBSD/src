@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.289 2004/04/17 10:04:20 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.290 2004/04/19 15:20:42 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289 2004/04/17 10:04:20 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.290 2004/04/19 15:20:42 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -6773,7 +6773,16 @@ pmap_extract4m(pm, va, pap)
 			printf("pmap_extract: invalid pte of type %d\n",
 			       pte & SRMMU_TETYPE);
 #endif
-		goto out;
+		/*
+		 * We can read a spurious invalid pte if the system is in
+		 * the middle of the PTE update protocol. So, acquire the
+		 * demap lock and retry.
+		 */
+		simple_lock(&demap_lock);
+		pte = sp->sg_pte[VA_SUN4M_VPG(va)];
+		simple_unlock(&demap_lock);
+		if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
+			goto out;
 	}
 #ifdef DIAGNOSTIC
 	if (pm != pmap_kernel() && sp->sg_npte <= 0)
