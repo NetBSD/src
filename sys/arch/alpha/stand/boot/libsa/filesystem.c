@@ -1,3 +1,5 @@
+/*	$NetBSD: filesystem.c,v 1.2 1995/02/16 02:33:05 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
@@ -29,8 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *	filesystem.c
- *
- *	$Id: filesystem.c,v 1.1 1995/02/13 23:08:20 cgd Exp $
  */
 
 #include <lib/libsa/stand.h>

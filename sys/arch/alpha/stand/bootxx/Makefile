@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 1995/02/13 23:08:21 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1995/02/16 02:33:06 cgd Exp $
 #
 # BSD Boot blocks for the Alpha
 #

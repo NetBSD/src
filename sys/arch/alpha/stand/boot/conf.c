@@ -1,4 +1,5 @@
-/* BSD $Id: conf.c,v 1.1 1995/02/13 23:08:08 cgd Exp $ */
+/*	$NetBSD: conf.c,v 1.2 1995/02/16 02:32:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
