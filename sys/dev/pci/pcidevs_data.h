@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.31 1997/07/19 09:54:09 cgd Exp 
+ *	NetBSD: pcidevs,v 1.32 1997/08/03 23:40:27 fvdl Exp 
  */
 
 /*
@@ -1613,7 +1613,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
 	    0,
 	    "VIA Technologies",
-	    "VT82C505 (\"Pluto\")",
+	    "VT82C505 (Pluto)",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C561,
@@ -1628,22 +1628,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C576 3V",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586,
+	    0,
+	    "VIA Technologies",
+	    "VT82C586 (Apollo VP) PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570M,
 	    0,
 	    "VIA Technologies",
-	    "VT82C570M (\"Apollo\") Host-PCI Bridge",
+	    "VT82C570M (Apollo) Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570MV,
 	    0,
 	    "VIA Technologies",
-	    "VT82C570M (\"Apollo\") PCI-ISA Bridge",
+	    "VT82C570M (Apollo) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C416MV,
 	    0,
 	    "VIA Technologies",
 	    "VT82C416MV",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
+	    0,
+	    "VIA Technologies",
+	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B,
