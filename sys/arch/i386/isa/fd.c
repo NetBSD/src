@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.28 1994/03/10 19:57:25 mycroft Exp $
+ *	$Id: fd.c,v 1.29 1994/03/10 20:05:30 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -191,7 +191,7 @@ extern int hz;
 int fdprobe(), fdattach(), fd_turnoff();
 
 struct	isa_driver fdcdriver = {
-	fdprobe, fdattach, "fdc",
+	fdcprobe, fdcattach, "fdc",
 };
 
 struct	isa_driver fddriver = {
@@ -201,7 +201,7 @@ struct	isa_driver fddriver = {
 /*
  * probe for existance of controller
  */
-fdprobe(dev)
+fdcprobe(dev)
 struct isa_device *dev;
 {
 	fdc_p fdc = &fdc_data[dev->id_unit];
@@ -234,6 +234,16 @@ struct isa_device *dev;
 	outb(fdc->baseport+fdctl,0); /*XXX*/
 
 	return (IO_FDCSIZE);
+}
+
+fdcattach(dev)
+struct isa_device *dev;
+{
+}
+
+fdprobe(dev)
+struct isa_device *dev;
+{
 }
 
 /*
