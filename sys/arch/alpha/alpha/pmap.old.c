@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.19 1997/09/02 19:00:53 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.20 1997/09/02 20:15:34 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.19 1997/09/02 19:00:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.20 1997/09/02 20:15:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2185,7 +2185,7 @@ pmap_emulate_reference(p, v, user, write)
 		if (p->p_vmspace == NULL)
 			panic("pmap_emulate_reference: bad p_vmspace");
 #endif
-		pte = pmap_pte(&p->p_vmspace->vm_pmap, v);
+		pte = pmap_pte(p->p_vmspace->vm_map.pmap, v);
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
