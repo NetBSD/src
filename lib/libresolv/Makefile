@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	5.1 (Berkeley) 6/5/90
-#	$Id: Makefile,v 1.3 1997/07/20 22:38:45 christos Exp $
+#	$Id: Makefile,v 1.4 1997/07/23 03:14:11 mrg Exp $
 
 LIB=resolv
-CFLAGS+=-DDEBUG -DLIBC_SCCS
+CFLAGS+=-DDEBUG -DLIBC_SCCS -I${.CURDIR}/../libc/include
 
 .PATH:	${.CURDIR}/../libc/net
 

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.8 1997/05/08 21:12:44 gwr Exp $
+#	$Id: Makefile,v 1.9 1997/07/23 03:11:37 mrg Exp $
 
 PROG=	pwd_mkdb
 SRCS=	pwd_mkdb.c getpwent.c
@@ -12,4 +12,4 @@ DPADD+=	${LIBUTIL}
 .include <bsd.prog.mk>
 
 getpwent.o: getpwent.c
-	${CC} ${CFLAGS} ${CPPFLAGS} -UYP -c ${.IMPSRC}
+	${CC} ${CFLAGS} ${CPPFLAGS} -I${.CURDIR}/../../lib/libc/include -UYP -c ${.IMPSRC}
