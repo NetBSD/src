@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1998/08/11 00:03:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1999/09/05 00:40:27 soren Exp $
 
 INCSDIR= /usr/include/dev/mii
 
-INCS=	inphyreg.h mii.h miivar.h nsphyreg.h qsphyreg.h tlphyreg.h tlphyvar.h
+INCS=	inphyreg.h iophyreg.h mii.h miivar.h nsphyreg.h qsphyreg.h tlphyreg.h \
+	tlphyvar.h
 
 .include <bsd.kinc.mk>
