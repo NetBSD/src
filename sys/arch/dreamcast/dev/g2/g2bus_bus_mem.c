@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus_bus_mem.c,v 1.8 2003/07/15 01:31:38 lukem Exp $	*/
+/*	$NetBSD: g2bus_bus_mem.c,v 1.9 2003/08/24 17:33:29 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: g2bus_bus_mem.c,v 1.8 2003/07/15 01:31:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2bus_bus_mem.c,v 1.9 2003/08/24 17:33:29 marcus Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -74,9 +74,20 @@ void	g2bus_bus_mem_write_4(void *, bus_space_handle_t, bus_size_t,
 
 void	g2bus_bus_mem_read_region_1(void *, bus_space_handle_t, bus_size_t,
 	    u_int8_t *, bus_size_t);
+void	g2bus_bus_mem_read_region_2(void *, bus_space_handle_t, bus_size_t,
+	    u_int16_t *, bus_size_t);
+void	g2bus_bus_mem_read_region_4(void *, bus_space_handle_t, bus_size_t,
+	    u_int32_t *, bus_size_t);
 
 void	g2bus_bus_mem_write_region_1(void *, bus_space_handle_t, bus_size_t,
 	    const u_int8_t *, bus_size_t);
+void	g2bus_bus_mem_write_region_2(void *, bus_space_handle_t, bus_size_t,
+	    const u_int16_t *, bus_size_t);
+void	g2bus_bus_mem_write_region_4(void *, bus_space_handle_t, bus_size_t,
+	    const u_int32_t *, bus_size_t);
+
+void	g2bus_bus_mem_set_region_4(void *, bus_space_handle_t, bus_size_t,
+	    u_int32_t, bus_size_t);
 
 u_int8_t g2bus_sparse_bus_mem_read_1(void *, bus_space_handle_t, bus_size_t);
 u_int16_t g2bus_sparse_bus_mem_read_2(void *, bus_space_handle_t, bus_size_t);
@@ -120,8 +131,14 @@ g2bus_bus_mem_init(struct g2bus_softc *sc)
 	t->dbs_w_4 = g2bus_bus_mem_write_4;
 
 	t->dbs_rr_1 = g2bus_bus_mem_read_region_1;
+	t->dbs_rr_2 = g2bus_bus_mem_read_region_2;
+	t->dbs_rr_4 = g2bus_bus_mem_read_region_4;
 
 	t->dbs_wr_1 = g2bus_bus_mem_write_region_1;
+	t->dbs_wr_2 = g2bus_bus_mem_write_region_2;
+	t->dbs_wr_4 = g2bus_bus_mem_write_region_4;
+
+	t->dbs_sr_4 = g2bus_bus_mem_set_region_4;
 }
 
 int
@@ -265,6 +282,36 @@ g2bus_bus_mem_read_region_1(void *v, bus_space_handle_t sh, bus_size_t off,
 }
 
 void
+g2bus_bus_mem_read_region_2(void *v, bus_space_handle_t sh, bus_size_t off,
+    u_int16_t *addr, bus_size_t len)
+{
+	G2LOCK_DECL;
+	__volatile const u_int16_t *baddr = (u_int16_t *)(sh + off);
+
+	G2_LOCK();
+
+	while (len--)
+		*addr++ = *baddr++;
+
+	G2_UNLOCK();
+}
+
+void
+g2bus_bus_mem_read_region_4(void *v, bus_space_handle_t sh, bus_size_t off,
+    u_int32_t *addr, bus_size_t len)
+{
+	G2LOCK_DECL;
+	__volatile const u_int32_t *baddr = (u_int32_t *)(sh + off);
+
+	G2_LOCK();
+
+	while (len--)
+		*addr++ = *baddr++;
+
+	G2_UNLOCK();
+}
+
+void
 g2bus_bus_mem_write_region_1(void *v, bus_space_handle_t sh, bus_size_t off,
     const u_int8_t *addr, bus_size_t len)
 {
@@ -275,6 +322,51 @@ g2bus_bus_mem_write_region_1(void *v, bus_space_handle_t sh, bus_size_t off,
 
 	while (len--)
 		*baddr++ = *addr++;
+
+	G2_UNLOCK();
+}
+
+void
+g2bus_bus_mem_write_region_2(void *v, bus_space_handle_t sh, bus_size_t off,
+    const u_int16_t *addr, bus_size_t len)
+{
+	G2LOCK_DECL;
+	__volatile u_int16_t *baddr = (u_int16_t *)(sh + off);
+
+	G2_LOCK();
+
+	while (len--)
+		*baddr++ = *addr++;
+
+	G2_UNLOCK();
+}
+
+void
+g2bus_bus_mem_write_region_4(void *v, bus_space_handle_t sh, bus_size_t off,
+    const u_int32_t *addr, bus_size_t len)
+{
+	G2LOCK_DECL;
+	__volatile u_int32_t *baddr = (u_int32_t *)(sh + off);
+
+	G2_LOCK();
+
+	while (len--)
+		*baddr++ = *addr++;
+
+	G2_UNLOCK();
+}
+
+void
+g2bus_bus_mem_set_region_4(void *v, bus_space_handle_t sh, bus_size_t off,
+    u_int32_t val, bus_size_t len)
+{
+	G2LOCK_DECL;
+	__volatile u_int32_t *baddr = (u_int32_t *)(sh + off);
+
+	G2_LOCK();
+
+	while (len--)
+		*baddr++ = val;
 
 	G2_UNLOCK();
 }
