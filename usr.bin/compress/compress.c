@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.15 1997/10/19 15:18:43 mycroft Exp $	*/
+/*	$NetBSD: compress.c,v 1.16 1998/03/10 12:45:44 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: compress.c,v 1.15 1997/10/19 15:18:43 mycroft Exp $");
+__RCSID("$NetBSD: compress.c,v 1.16 1998/03/10 12:45:44 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,7 +407,12 @@ setfile(name, fs)
 	if (chmod(name, fs->st_mode))
 		cwarn("chown: %s", name);
 
-	if (chflags(name, fs->st_flags))
+	/*
+	 * Restore the file's flags.  However, do this only if the original
+	 * file had any flags set; this avoids a warning on file-systems that
+	 * do not support flags.
+	 */
+	if (fs->st_flags != 0 && chflags(name, fs->st_flags))
 		cwarn("chflags: %s", name);
 }
 
