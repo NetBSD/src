@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.12 2000/10/10 12:55:24 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.13 2000/10/29 14:08:12 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,15 +35,19 @@
 .so ../common/upgrade
 .Pp
 Upgrading procedure using the
-.Dq script
+.Ic script
 installer is much more complicated than that with
-.Dq sysinst
+.Ic sysinst
 installer.  When the installer comes up,
 you will be presented with a welcome message and a prompt
-asking whether you are going to "install"
+asking whether you are going to
+.Ic install
 .Nx
-or "upgrade"
-an exisiting system.  Select "upgrade" to start.
+or
+.Ic upgrade
+an exisiting system.  Select
+.Ic upgrade
+to start.
 .Pp
 .(enum
 You will be presented with some information about the upgrade
@@ -51,8 +55,9 @@ process and a warning message, and will be asked if you wish
 to proceed with the upgrade process.  If you answer
 negatively, the upgrade process will stop, and your disk will
 not be modified.  If you answer affirmatively, the upgrade
-process will begin, and your disk will be modified.  You may
-press Control-C to stop the upgrade process at any time.
+process will begin, and your disk will be modified.  You may press
+.Key CONTROL-C
+to stop the upgrade process at any time.
 However, if you press it at an inopportune moment, your system
 may be left in an inconsistent (and possibly unusable) state.
 .It
@@ -60,22 +65,40 @@ You will be asked if you wish to upgrade your file systems to
 the new file system format.  If you do, reply affirmatively.
 If you don't have your file systems upgraded now, you should
 probably do it manually after the install process is complete,
-by using "fsck -c 2". Read the fsck(8) manual page for more
+by using
+.Ic "fsck -c 2" .
+Read the
+.Xr fsck 8
+manual page for more
 details. Note that this step is only important when upgrading
-from a pre-NetBSD 1.0 release.
+from a pre
+.Nx 1.0
+release.
 .It
 The upgrade program will then check your root file system,
 and, if you approved, will upgrade it to the new file system
-format.  It will then mount your root file system on /mnt.
+format.  It will then mount your root file system on
+.Pa /mnt .
 .It
 If your file systems are being upgraded, the upgrade script
-will copy the new fsck(8) program to your hard disk and
+will copy the new
+.Xr fsck 8
+program to your hard disk and
 upgrade your remaining file systems.
 .It
 The upgrade program will then automatically replace the boot
 blocks on your disk with newer versions, and mount all of your
-file systems under /mnt.  (In other words, your root partition
-will be mounted on /mnt, your /usr partition on /mnt/usr, etc.)
+file systems under
+.pa /mnt .
+(In other words, your
+.Pa /
+(root) partition will be mounted on
+.Pa /mnt ,
+your
+.Pa /usr
+partition on
+.Pa /mnt/usr ,
+etc.)
 .It
 If you don't already have the
 .Nx
@@ -100,21 +123,33 @@ transfer them again now!)
 .It
 After the software has been transferred to the machine (or
 mounted, in the case of upgrading via NFS or CD-ROM), change
-into the directory containing the "base.tgz" distribution set.
-Once you are there, run the "Set_tmp_dir" command, and press
-return at the prompt to select the default answer for the
+into the directory containing the
+.Pa base.tgz
+distribution set.
+Once you are there, run the
+.Ic Set_tmp_dir
+command, and press
+.Key return
+at the prompt to select the default answer for the
 temporary directory's path name.  (It should be the path name
 of the directory that you're in.)
 .It
-Run the command "Extract kern" to upgrade the kernel.
+Run the command
+.Ic "Extract kern"
+to upgrade the kernel.
 .It
-Run the command "Extract base" to upgrade the base
-distribution.
+Run the command
+.Ic "Extract base"
+to upgrade the base distribution.
 .It
 Repeat the above two steps for all of the sets you wish to
 upgrade.  (For each, change into the directory containing the
-set, run "Set_tmp_dir" and accept the default path name, then
-run the "Extract <setname>" command.)
+set, run
+.Ic Set_tmp_dir
+and accept the default path name, then
+run the
+.Ic "Extract <setname>"
+command.)
 .It
 If you were previously using the security distribution set, you
 .Em must
@@ -125,9 +160,13 @@ you were not previously using the security set, you must
 upgrade to the new version.
 .It
 When you are done upgrading all of the distribution sets you
-wish to upgrade, issue the command "Cleanup".  It will clean
+wish to upgrade, issue the command
+.Ic Cleanup .
+It will clean
 up the installation, by remaking some system databases.  When
-it is complete, all you have to do is to reboot(8) your system.
+it is complete, all you have to do is to
+.Xr reboot 8
+your system.
 .enum)
 .Pp
 .Em Your system has now been upgraded to
@@ -143,29 +182,42 @@ do, to insure that the system works properly.
 .Pp
 First, if you did not upgrade your file systems to the new
 file system format during the upgrade process, and you are
-upgrading from a pre-1.0 NetBSD, you may want to do so now,
-with "fsck -c 2".  If you are unsure about the process, it's
-suggested that you read the fsck(8) manual page.
+upgrading from a pre
+.Nx 1.0,
+you may want to do so now,
+with
+.Ic "fsck -c 2" .
+If you are unsure about the process, it's
+suggested that you read the
+.Xr fsck 8
+manual page.
 .Pp
 Second, you will probably want to get the etc distribution,
-extract it, and compare its contents with those in your /etc/
+extract it, and compare its contents with those in your
+.Pa /etc
 directory.  You will probably want to replace some of your
 system configuration files, or incorporate some of the changes
 in the new versions into yours.
 .Pp
 Third, you will probably want to update the set of device
-nodes you have in /dev.  If you've changed the contents of
-/dev by hand, you will need to be careful about this, but if
-not, you can just cd into /dev, and run the command "sh
-MAKEDEV all".
+nodes you have in
+.Pa /dev .
+If you've changed the contents of
+.Pa /dev
+by hand, you will need to be careful about this, but if not, you can just
+.Ic cd
+into
+.Pa /dev ,
+and run the command
+.Ic "sh MAKEDEV all" .
 .Pp
 Fourth, you must deal with certain changes in the formats of
 some of the configuration files.  The most notable change is
-that the "options" given to many of the file systems in
-/etc/fstab or by hand have changed, and some of the file
-systems have changed names.
-*IMPORTANT*: ANY INSTANCES OF "ufs"
-IN /etc/fstab MUST BE CHANGED TO "ffs".
+that the
+.Sq options
+given to many of the file systems in
+.Pa /etc/fstab
+or by hand have changed, and some of the file systems have changed names.
 .Em Important: any instances of
 .Sy ufs
 .Em in
@@ -174,7 +226,7 @@ IN /etc/fstab MUST BE CHANGED TO "ffs".
 .Sy ffs .
 To find out what the
 new options are, it's suggested that you read the manual page
-for the file systems' mount commands, for example
+for the file system's mount commands, for example
 .Xr mount_nfs 8
 for NFS.
 .(Note
@@ -192,10 +244,16 @@ that you upgraded from and have since
 been removed from the
 .Nx
 distribution.  If you are
-upgrading from a pre-1.0 NetBSD, you might also
+upgrading from a pre
+.Nx 1.0,
+you might also
 want to recompile any locally-built binaries, to take
 advantage of the shared libraries.  (Note that any new
 binaries that you build will be dynamically linked, and
 therefore take advantage of the shared libraries, by default.
 For information on how to make statically linked binaries,
-see the cc(1) and ld(1) manual pages.)
+see the
+.Xr cc 1
+and
+.Xr ld 1
+manual pages.)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.16 2000/10/10 12:55:19 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.17 2000/10/29 14:08:07 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,17 +56,19 @@ whether on the
 .Nx
 partition or on another operating system's partition, before
 beginning the upgrade process. Although the upgrade should not
-damage your filesystem(s) in any way, you never know what may happen.
+damage your file system(s) in any way, you never know what may happen.
 .It
 Download the distribution sets you want from the
-.Pa mac68k/binary/sets
+.Pa \*M/binary/sets
 subdirectory of the
 .Nx \*V
 distribution. You will need the base
 set and the kernel at a minimum. Be sure to download the files in
 .Em binary
-mode. If you will be upgrading from within NetBSD, make sure
-that you place the distribution sets on a filesystem you will be able to
+mode. If you will be upgrading from within
+.Nx ,
+make sure
+that you place the distribution sets on a file system you will be able to
 reach from single-user mode.
 .It
 Install the \*V kernel. You may either use the Installer utility
@@ -76,12 +78,13 @@ subdirectory) or install from within
 .Nx
 (the latter is recommended for speed reasons). If you
 choose the former, proceed as you normally would. If you choose to
-install from within NetBSD, then boot (or shutdown) into single-user
+install from within
+.Nx ,
+then boot (or shutdown) into single-user
 mode and do the following:
-.(disp
-cd /
-pax -zrvpe -f /path/to/kern.tgz
-.disp)
+.Pp
+.Dl # Ic "cd /"
+.Dl # Ic "pax -zrvpe -f /path/to/kern.tgz"
 .Pp
 There is no need to backup your old kernel explicitly since it will be
 incapable of running many of the newer binaries you are about to
@@ -111,13 +114,17 @@ drive on which you have
 .Nx
 partitions) to see how the partitions are
 currently layed out. It is likely that a partition has shifted into the
-.Cm sd Ns Ar X Ns Cm d
+.Li sd Ns Ar X Ns Li d
 or
-.Cm sd Ns Ar X Ns Cm e
+.Li sd Ns Ar X Ns Li e
 slots, slots that often were not available under
-previous releases of NetBSD. If this is the case, you will need to
+previous releases of
+.Nx .
+If this is the case, you will need to
 manually mount your root partition
-.Pq via Sy mount Fl w Cm /
+.Pq Pa /
+via
+.Ic "mount -w /"
 and edit your
 .Pa /etc/fstab
 file to reflect the new partition layout. Unless you are
@@ -129,7 +136,7 @@ the easiest way to fix your
 .Pa /etc/fstab
 file
 is probably to simply do a
-.Ic cat \*> /etc/fstab
+.Ic "cat \*> /etc/fstab"
 and type in the corrected file in its entirety.
 .It
 Install the distribution sets. Keep in mind that the
@@ -138,11 +145,12 @@ distribution takes up a considerably larger amount of disk space than
 did the 1.3 family of distributions. If you are using the Installer,
 proceed normally (remember that you will need to mount non-root
 partitions by hand using the MiniShell before installing). If you are
-installing from within NetBSD, do the following:
-.(disp
-cd /
-pax -zrvpe -f /path/to/base.tgz
-.disp)
+installing from within
+.Nx ,
+do the following:
+.Pp
+.Dl # Ic "cd /"
+.Dl # Ic "pax -zrvpe -f /path/to/base.tgz"
 .Pp
 Keep in mind that there is
 no going back once you have installed the base set short of a complete
@@ -150,30 +158,34 @@ re-install of an earlier distribution. Continue with the appropriate
 command line for each of the other sets you wish to install except for
 the etc set. If you are in the Installer, open up the Minishell and do
 the following:
-.(disp
-cd /tmp
-exit
-.disp)
+.Pp
+.Dl Ic "cd /tmp"
+.Dl Ic "exit"
 .Pp
 Ignore the warning message this will cause. Now, use the Installer to
 install the
-.Sy etc No set (it will install into
-.Pa /tmp No instead of the
-.Pa /etc No directory).
+.Sy etc
+set (it will install into
+.Pa /tmp
+instead of the
+.Pa /etc
+directory).
 .Pp
-If you are in NetBSD, do the following instead:
-.(disp
-cd /tmp
-pax -zrvpe -f /path/to/etc.tgz
-.disp)
+If you are in
+.Nx ,
+do the following instead:
+.Pp
+.Dl # Ic "cd /tmp"
+.Dl # Ic "pax -zrvpe -f /path/to/etc.tgz"
 .It
 If you are in the Installer, quit it and boot into
 .Nx
 in single-user
 mode. From there,
-.Ic cd No to the Pa /tmp/etc
-directory and compare each file
-there with your old files in
+.Ic cd
+to the
+.Pa /tmp/etc
+directory and compare each file there with your old files in
 .Pa /etc .
 You will probably want to replace
 some of your system configuration files, or incorporate some of the
@@ -184,16 +196,21 @@ etc.tgz set:
 .(bullet
 Several of the options given to many of the file systems have changed,
 and some of the file systems have changed names.
-.Em \&It is imperative that
-.Em you change any instances of
-.Ic ufs Em in Pa /etc/fstab Em to
-.Ic ffs .
+.(Note
+It is imperative that you change any instances of
+.Sy ufs
+.Pa /etc/fstab
+to
+.Sy ffs .
+.Note)
 To find out
-more about different filesystem options, read the man page for the
-associated mount command (e.g.
+more about different file system options, read the man page for the
+associated
+.Ic mount
+command (e.g.
 .Xr mount_mfs 8
-for MFS filesystems; note:
-FFS type filesystems are documented in the
+for MFS file systems; note:
+FFS type file systems are documented in the
 .Xr mount 8
 man page). If you
 have not already done so, you may also need to correct
@@ -204,15 +221,16 @@ details.
 You will also probably want to upgrade your device nodes at this time
 as well. Make sure you have installed the latest MAKEDEV script (it
 should be included in the etc set) and perform the following commands:
-.Dl cd /dev
-.Dl sh MAKEDEV all
+.Pp
+.Dl # Ic "cd /dev"
+.Dl # Ic "sh MAKEDEV all"
 .bullet)
 .It
 Run
 .Ic fsck Fl f
-to make sure that your filesystem is still consistent. If
+to make sure that your file system is still consistent. If
 fsck reports any errors, fix them by answering
-.Ic y
+.Sq Ic y
 to its suggested
 solutions
 .(Note

@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.7 2000/10/10 12:55:23 lukem Exp $
+.\"	$NetBSD: xfer,v 1.8 2000/10/29 14:08:11 lukem Exp $
 .
 Installation is supported from several media types, including:
 .(bullet -compact -offset indent
@@ -11,8 +11,11 @@ CD-ROM
 FTP
 .bullet)
 .(Note
-Installing on a "bare" machine requires some bootable
-device; either a tape drive or Sun-compatible NFS server.
+Installing on a
+.Sq bare
+machine requires some bootable device; either a tape drive or
+.Tn Sun Ns No -compatible
+NFS server.
 .Note)
 .Pp
 The procedure for transferring the distribution sets onto
@@ -21,7 +24,8 @@ for each type of media are given below.
 .Pp
 In order to create installation media, you will need all the
 files in the directory
-.Dl \&.../NetBSD-\*V/\*M/
+.Pp
+.Dl Pa \&.../NetBSD-\*V/\*M/
 .
 .Ss2 Creating boot/install tapes
 .
@@ -32,12 +36,14 @@ tape, and another called the
 .Em install No tape.
 .Pp
 The boot tape is created as follows:
-.D1 Ic "cd .../NetBSD-\*V/\*M/installation/tapeimage
-.D1 Ic "sh MakeBootTape /dev/nrst0
+.Pp
+.Dl # Ic "cd .../NetBSD-\*V/\*M/installation/tapeimage"
+.Dl # Ic "sh MakeBootTape /dev/nrst0"
 .Pp
 The install tape is created as follows:
-.D1 Ic "cd .../NetBSD-\*V/\*M/installation/tapeimage
-.D1 Ic "sh MakeInstallTape /dev/nrst0
+.Pp
+.Dl # Ic "cd .../NetBSD-\*V/\*M/installation/tapeimage"
+.Dl # Ic "sh MakeInstallTape /dev/nrst0"
 .Pp
 If the tapes do not work as expected, you may need to explicitly
 set the EOF mark at the end of each tape segment. It may also be
@@ -67,9 +73,14 @@ is normally a task for a system administrator, and is not trivial.
 If you are using a
 .Nx
 system as the boot-server, have a look at
-the diskless(8) manual page for guidelines on how to proceed with
+the
+.Xr diskless 8
+manual page for guidelines on how to proceed with
 this. If the server runs another operating system, consult the
-documentation that came with it (i.e. add_client(8) on SunOS).
+documentation that came with it (i.e.
+.Xr add_client 8
+on
+.Tn SunOS ) .
 .Pp
 When instructed to boot over the network, your \*M expects to be
 able to download a second stage bootstrap program via
@@ -115,7 +126,9 @@ The netboot program will query a bootparamd server to find the
 NFS server address and path name for its root, and then load a
 kernel from that location. The server should have a copy of the
 netbsd-rd kernel in the root area for your client (no other files
-are needed in the client root) and /etc/bootparams on the server
+are needed in the client root) and
+.Pa /etc/bootparams
+on the server
 should have an entry for your client and its root directory.
 The client will need access to the miniroot image, which can be
 provided using NFS or remote shell.
@@ -135,17 +148,22 @@ or network, as described above). You may need to make a boot tape
 on another machine using the files provided on the CD-ROM. Once
 you have booted netbsd-rd (the RAM-disk kernel) and loaded the
 miniroot, you can load any of the distribution sets directly from
-the CD-ROM. The "install" program in the miniroot automates the
+the CD-ROM. The
+.Ic install
+program in the miniroot automates the
 work required to mount the CD-ROM and extract the files.
 .
 .Ss2 Install/Upgrade via FTP
 .
 This method requires that you boot from another device (i.e. tape
 or network, as described above). You may need to make a boot tape
-on another machine using the files in .../install (which you get
-via FTP). Once you have booted netbsd-rd (the RAM-disk kernel)
+on another machine using the files in
+.Pa .../install
+(which you get via FTP). Once you have booted netbsd-rd (the RAM-disk kernel)
 and loaded the miniroot, you can load any of the distribution sets
-over the net using FTP. The "install" program in the miniroot
+over the net using FTP. The
+.Ic install
+program in the miniroot
 automates the work required to configure the network interface and
 transfer the files.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.6 2000/10/10 12:55:23 lukem Exp $
+.\"	$NetBSD: hardware,v 1.7 2000/10/29 14:08:12 lukem Exp $
 .
 .Ss2 Supported hardware
 .(bullet -offset indent
@@ -93,7 +93,7 @@ Here is a table of recommended HD partition sizes for a full install:
 .Pp
 .Bl -column -offset indent Partition Suggested Needed
 .It Partition Ta Suggested Ta Needed
-.It root\ (/) Ta "32 MB"   Ta "16 MB"
+.It /\ (root) Ta "32 MB"   Ta "16 MB"
 .It /usr      Ta "110 MB"  Ta "45 MB"
 .It /var      Ta "20 MB"   Ta "5 MB"
 .It swap      Ta Em 2-3 *RAM
