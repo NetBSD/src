@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.25 2000/01/25 01:16:00 enami Exp $	*/
+/*	$NetBSD: sem.c,v 1.26 2000/05/09 00:34:58 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,7 +147,7 @@ setdefmaxusers(min, def, max)
 {
 
 	if (min < 1 || min > def || def > max)
-		error("maxusers must have 1 <= min <= default <= max");
+		error("maxusers must have 1 <= min (%d) <= default (%d) <= max (%d)", min, def, max);
 	else {
 		minmaxusers = min;
 		defmaxusers = def;
