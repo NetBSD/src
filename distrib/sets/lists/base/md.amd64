@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.1 2003/04/26 18:48:48 fvdl Exp $
+# $NetBSD: md.amd64,v 1.2 2003/04/30 19:57:42 dsl Exp $
 ./sbin/fdisk				base-sysutil-root
 ./usr/bin/fdformat			base-util-bin
 ./usr/lib/libx86_64.so.0		base-sys-shlib
@@ -14,6 +14,7 @@
 ./usr/mdec/installboot			base-sysutil-bin
 ./usr/mdec/mbr				base-sysutil-bin
 ./usr/mdec/mbr_bootsel			base-sysutil-bin
+./usr/mdec/mbr_ext			base-sysutil-bin
 ./usr/mdec/netboot_3c509.rom		base-sysutil-bin
 ./usr/mdec/netboot_3c590.rom		base-sysutil-bin
 ./usr/mdec/netboot_3c90xb.rom		base-sysutil-bin
