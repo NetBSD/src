@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2004/02/07 06:52:07 lukem Exp $
+# $NetBSD: Makefile,v 1.3 2004/03/03 14:32:53 skrll Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -29,6 +29,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc} \
 
 CPPFLAGS.mfbbltC.c=	-DMROP=Mcopy
 CPPFLAGS.mfbbltCI.c=	-DMROP=McopyInverted
+CPPFLAGS.mfbbltO.c=	-DMROP=Mor
 CPPFLAGS.mfbbltG.c=	-DMROP=0
 CPPFLAGS.mfbbltX.c=	-DMROP=Mxor
 CPPFLAGS.mfbigbblak.c=	-DMFBIMAGEGLYPHBLT=mfbImageGlyphBltBlack -DOPEQ=\&=\~
