@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.318 2004/04/29 19:42:29 jonathan Exp $
+#	$NetBSD: Makefile,v 1.319 2004/05/03 02:46:29 kochi Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
@@ -57,7 +57,7 @@ MAN+=	irframe.4 cir.4 irframetty.4 oboe.4
 
 # ACPI devices
 MAN+=	acpi.4 acpiacad.4 acpibat.4 acpibut.4 acpiec.4 acpilid.4 \
-	acpitz.4 spic.4
+	acpitz.4
 
 # Radio devices
 MAN+=	radio.4 az.4 mr.4 rt.4 rtii.4 sf2r.4
