@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.59 1997/09/20 19:00:40 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.60 1997/09/27 18:03:39 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -338,10 +338,12 @@ trap(type, psr, pc, tf)
 #if defined(COMPAT_SVR4)
 badtrap:
 #endif
+#ifdef DIAGNOSTIC
 		/* the following message is gratuitous */
 		/* ... but leave it in until we find anything */
-		printf("%s[%d]: unimplemented software trap 0x%x\n",
+		uprintf("%s[%d]: unimplemented software trap 0x%x\n",
 			p->p_comm, p->p_pid, type);
+#endif
 		trapsignal(p, SIGILL, type);
 		break;
 
