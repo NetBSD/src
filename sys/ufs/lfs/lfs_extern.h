@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.58 2003/12/04 19:38:25 atatat Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.59 2004/03/09 07:43:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -142,6 +142,8 @@ int lfs_reserve(struct lfs *, struct vnode *, struct vnode *, int);
 
 /* lfs_cksum.c */
 u_int32_t cksum(void *, size_t);
+u_int32_t lfs_cksum_part(void *, size_t, u_int32_t);
+#define lfs_cksum_fold(sum)	(sum)
 u_int32_t lfs_sb_cksum(struct dlfs *);
 
 /* lfs_debug.c */

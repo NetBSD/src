@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.151 2004/03/09 06:43:18 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.152 2004/03/09 07:43:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.151 2004/03/09 06:43:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.152 2004/03/09 07:43:49 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1638,7 +1638,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	struct buf **bpp, *bp, *cbp, *newbp;
 	SEGUSE *sup;
 	SEGSUM *ssp;
-	char *datap, *dp;
 	int i, s;
 	int do_again, nblocks, byteoffset;
 	size_t el_size;
@@ -1649,6 +1648,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	struct vnode *vp;
 	int32_t *daddrp;	/* XXX ondisk32 */
 	int changed;
+	u_int32_t sum;
 #if defined(DEBUG) && defined(LFS_PROPELLER)
 	static int propeller;
 	char propstring[4] = "-\\|/";
@@ -1840,11 +1840,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	 * Compute checksum across data and then across summary; the first
 	 * block (the summary block) is skipped.  Set the create time here
 	 * so that it's guaranteed to be later than the inode mod times.
-	 *
-	 * XXX
-	 * Fix this to do it inline, instead of malloc/copy.
 	 */
-	datap = dp = pool_get(&fs->lfs_bpppool, PR_WAITOK);
+	sum = 0;
 	if (fs->lfs_version == 1)
 		el_size = sizeof(u_long);
 	else
@@ -1867,10 +1864,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			} else
 #endif /* LFS_USE_B_INVAL */
 			{
-				memcpy(dp, (*bpp)->b_data + byteoffset,
-				       el_size);
+				sum = lfs_cksum_part(
+				    (*bpp)->b_data + byteoffset, el_size, sum);
 			}
-			dp += el_size;
 		}
 	}
 	if (fs->lfs_version == 1)
@@ -1880,11 +1876,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		ssp->ss_serial = ++fs->lfs_serial;
 		ssp->ss_ident  = fs->lfs_ident;
 	}
-	ssp->ss_datasum = cksum(datap, dp - datap);
-	ssp->ss_sumsum =
-	    cksum(&ssp->ss_datasum, fs->lfs_sumsize - sizeof(ssp->ss_sumsum));
-	pool_put(&fs->lfs_bpppool, datap);
-	datap = dp = NULL;
+	ssp->ss_datasum = lfs_cksum_fold(sum);
+	ssp->ss_sumsum = cksum(&ssp->ss_datasum,
+	    fs->lfs_sumsize - sizeof(ssp->ss_sumsum));
 #ifdef DIAGNOSTIC
 	if (fs->lfs_bfree <
 	    btofsb(fs, ninos * fs->lfs_ibsize) + btofsb(fs, fs->lfs_sumsize))
