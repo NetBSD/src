@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.1 2004/11/11 18:56:25 jdolecek Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.2 2004/11/11 19:19:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.1 2004/11/11 18:56:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.2 2004/11/11 19:19:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.1 2004/11/11 18:56:25 jdolecek Exp
 
 #include <machine/reg.h>
 
+#include <fs/ptyfs/ptyfs.h>
 #include <miscfs/genfs/genfs.h>
-#include <miscfs/ptyfs/ptyfs.h>
 #include <miscfs/specfs/specdev.h>
 
 /*
