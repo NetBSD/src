@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.19 1999/01/16 05:57:47 simonb Exp $
+#	$NetBSD: Makefile,v 1.20 1999/01/18 04:12:15 simonb Exp $
 
 TOP=	${.CURDIR}/../..
 dist=	${TOP}/dist
 srcdir=	${dist}/bc
 
 PROG=	bc
-CPPFLAGS+=-D_POSIX_SOURCE -I${.CURDIR} -I${srcdir}/bc -I${srcdir}/h
+CPPFLAGS+=-D_POSIX_SOURCE -I. -I${.CURDIR} -I${srcdir}/bc -I${srcdir}/h
 LFLAGS+=-I8
 SRCS=	bc.y execute.c getopt.c getopt1.c global.c load.c main.c number.c \
 	scan.l storage.c util.c
