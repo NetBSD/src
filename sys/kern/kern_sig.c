@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.171 2003/10/25 16:50:37 jdolecek Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.172 2003/10/30 16:32:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.171 2003/10/25 16:50:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.172 2003/10/30 16:32:58 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -154,10 +154,8 @@ ksiginfo_put(struct proc *p, const ksiginfo_t *ksi)
 	{
 		CIRCLEQ_FOREACH(kp, &p->p_sigctx.ps_siginfo, ksi_list) {
 			if (kp->ksi_signo == ksi->ksi_signo) {
-				CIRCLEQ_ENTRY(ksiginfo) sv;
-				(void)memcpy(&sv, &kp->ksi_list, sizeof(sv));
-				*kp = *ksi;
-				(void)memcpy(&kp->ksi_list, &sv, sizeof(sv));
+				kp->ksi_info = ksi->ksi_info;
+				kp->ksi_flags = ksi->ksi_flags;
 				goto out;
 			}
 		}
