@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.30 1999/11/18 23:32:27 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.31 1999/12/18 23:22:54 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -168,6 +168,7 @@ USB_MATCH(ugen)
 USB_ATTACH(ugen)
 {
 	USB_ATTACH_START(ugen, sc, uaa);
+	usbd_device_handle udev;
 	char devinfo[1024];
 	usbd_status err;
 	int conf;
@@ -176,8 +177,19 @@ USB_ATTACH(ugen)
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
-	sc->sc_udev = uaa->device;
-	conf = 1;		/* XXX should not hard code 1 */
+	sc->sc_udev = udev = uaa->device;
+
+	/* First set configuration index 0, the default one for ugen. */
+	err = usbd_set_config_index(udev, 0, 0);
+	if (err) {
+		printf("%s: setting configuration index 0 failed\n", 
+		       USBDEVNAME(sc->sc_dev));
+		sc->sc_dying = 1;
+		USB_ATTACH_ERROR_RETURN;
+	}
+	conf = usbd_get_config_descriptor(udev)->bConfigurationValue;
+
+	/* Set up all the local state for this configuration. */
 	err = ugen_set_config(sc, conf);
 	if (err) {
 		printf("%s: setting configuration %d failed\n", 
@@ -215,8 +227,8 @@ ugen_set_config(sc, configno)
 
 	DPRINTFN(1,("ugen_set_config: %s to configno %d, sc=%p\n",
 		    USBDEVNAME(sc->sc_dev), configno, sc));
+	/* Avoid setting the current value. */
 	if (usbd_get_config_descriptor(dev)->bConfigurationValue != configno) {
-		/* Avoid setting the current value. */
 		err = usbd_set_config_no(dev, configno, 0);
 		if (err)
 			return (err);
