@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.2 1997/10/17 06:52:26 mark Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.3 1998/02/21 22:51:43 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -53,8 +53,6 @@
 
 static int  wdc_pioc_probe  __P((struct device *, struct cfdata *, void *));
 static void wdc_pioc_attach __P((struct device *, struct device *, void *));
-
-char *strstr	__P((char *s1, char *s2));
 
 /* device attach structure */
 
