@@ -1,4 +1,4 @@
-/*	$NetBSD: sizemultname.c,v 1.1 2003/01/11 19:44:05 christos Exp $	*/
+/*	$NetBSD: sizemultname.c,v 1.2 2003/06/04 20:05:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,7 +62,7 @@ check_partitions()
 
 	for (i = 0; i < getmaxpartitions(); i++)
 		if (PI_ISBSDFS(&bsdlabel[i]) &&
-		    fsmount[i][0] == '/' && fsmount[i][1] == '\0')
+		    strcmp(bsdlabel[i].pi_mount, "/") == 0)
 			return 1;
 	msg_display(MSG_no_root_fs);
 	getchar();

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.79 2003/05/29 17:54:22 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.80 2003/06/04 20:05:12 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,11 +77,13 @@ extern const char * const fstypenames[];
 #define RUN_SYSTEM	0x0010		/* just use system(3) */
 
 /* Macros */
+#define nelem(x) (sizeof (x) / sizeof *(x))
 
 /* Round up to the next full cylinder size */
-#define NUMSEC(size,sizemult,cylsize) \
-	(((int)(size) == -1) ? -1 : (int)((sizemult == 1) ? (size) : \
-	 (((size)*(sizemult)+(cylsize)-1)/(cylsize))*(cylsize)))
+#define	ROUNDUP(n,d) ((((n) + (d) - 1)/(d)) * (d))
+#define NUMSEC(size, sizemult, cylsize) \
+	((size) == -1 ? -1 : (sizemult) == 1 ? (size) : \
+	 ROUNDUP((size) * (sizemult), (cylsize)))
 
 /* What FS type? */
 #define PI_ISBSDFS(p) ((p)->pi_fstype == FS_BSDLFS || \
@@ -95,11 +97,13 @@ typedef struct distinfo {
 } distinfo;
 
 typedef struct _partinfo {
-	int pi_size;
-	int pi_offset;
-	int pi_fstype;
-	int pi_bsize;
-	int pi_fsize;
+	int	pi_size;
+	int	pi_offset;
+	int	pi_fstype;
+	int	pi_bsize;
+	int	pi_fsize;
+	char	pi_mount[20];
+	int8_t	pi_newfs;
 } partinfo;	/* Single partition from a disklabel */
 
 /* variables */
@@ -175,11 +179,8 @@ EXTERN int current_cylsize;
 /* Information for the NetBSD disklabel */
 enum DLTR {A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z};
 #define partition_name(x)	('a' + (x))
-EXTERN partinfo bsdlabel[16];
-EXTERN char fsmount[16][20] INIT({""});
-#define PM_INIT {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
-EXTERN int preservemount[16] INIT(PM_INIT);
-#undef PM_INIT
+EXTERN partinfo bsdlabel[MAXPARTITIONS];
+
 #define DISKNAME_SIZE 80
 EXTERN char bsddiskname[DISKNAME_SIZE];
 EXTERN char *doessf INIT("");
@@ -262,6 +263,7 @@ EXTERN char fs_mount[MAXFS][STRSIZE];
 #endif
 
 /* needed prototypes */
+void set_menu_numopts(int, int);
 
 /* Machine dependent functions .... */
 int	md_check_partitions(void);

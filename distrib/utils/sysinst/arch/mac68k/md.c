@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.31 2003/06/03 11:54:53 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.32 2003/06/04 20:05:14 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -986,7 +986,7 @@ md_make_bsd_partitions(void)
 		bsdlabel[i].pi_fstype = FS_UNUSED;
 		bsdlabel[i].pi_bsize = 0;
 		bsdlabel[i].pi_fsize = 0;
-		fsmount[i][0] = '\0';
+		bsdlabel[i].pi_mount[0] = 0;
 	}
 	bsdlabel[RAW_PART].pi_size = dlsize;
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2003/06/03 11:54:48 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2003/06/04 20:05:12 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -124,6 +124,11 @@ main(argc, argv)
 	 * XXX window will be overwritten by menus.
 	 */
 	win = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr) - 2, 1, 1);
+	if (win == NULL) {
+		(void)fprintf(stderr,
+			 "sysinst: screen too small\n");
+		exit(1);
+	}
 	if (has_colors()) {
 		/*
 		 * XXX This color trick should be done so much better,
@@ -131,11 +136,6 @@ main(argc, argv)
 		 */
 		wbkgd(win, COLOR_PAIR(1));
 		wattrset(win, COLOR_PAIR(1));
-	}
-	if (win == NULL) {
-		(void)fprintf(stderr,
-			 "sysinst: screen too small\n");
-		exit(1);
 	}
 	if (msg_window(win) != 0) {
 		(void)fprintf(stderr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.1 2003/05/16 19:15:00 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.2 2003/06/04 20:05:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 #define USER_MENU_INIT sysinst_menu_init()
 #define LAST_MSG ((msg)8192)
 static struct menudesc menu_def[];
+static menudesc *menus;
 
 static int
 sysinst_menu_init(void)
@@ -70,6 +71,12 @@ sysinst_menu_init(void)
 				m->opts[opt].opt_name = msg_string(m->opts[opt].opt_name);
 	}
 	return 0;
+}
+
+void
+set_menu_numopts(int menu, int numopts)
+{
+	menus[menu].numopts = numopts;
 }
 }
 
