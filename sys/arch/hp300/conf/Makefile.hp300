@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.hp300,v 1.6 1993/07/31 15:26:48 mycroft Exp $
+#	$Id: Makefile.hp300,v 1.7 1993/08/14 14:20:08 mycroft Exp $
 #
 # Makefile for 4.4 BSD
 #
@@ -70,7 +70,7 @@ SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
 SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X || true; \
-		${LD} $$strip -n -o $@ -e start ${SYSTEM_OBJ} vers.o
+		${LD} -T ${LOAD_ADDRESS} -n -o $@ -e start ${SYSTEM_OBJ} vers.o
 #SYSTEM_LD_TAIL= @echo rearranging symbols;\
 #		symorder symbols.sort $@;\
 SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
@@ -100,7 +100,7 @@ symbols.sort: ${HP300}/hp300/symbols.raw
 	    | sed 's/^	//' | sort -u > symbols.sort
 
 locore.o: assym.s ${HP300}/hp300/vectors.s ${HP300}/hp300/locore.s 
-locore.o: ${HP300}/include/trap.h ${HP300}/include/psl.h ${HP300}/hp300/pte.h
+locore.o: ${HP300}/include/trap.h ${HP300}/include/psl.h ${HP300}/include/pte.h
 locore.o: ${HP300}/include/cpu.h
 	${CPP} -DLOCORE ${COPTS} ${HP300}/hp300/locore.s | ${AS} -o locore.o
 
