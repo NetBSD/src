@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.15 1999/07/08 18:05:24 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.16 1999/09/10 10:12:09 is Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -390,7 +390,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			printf("syncing: %lx,%lx\n", vaddr, length);
 #endif	/* DEBUG_DMA */
 			/* Actually sync the cache */
-			cpu_cache_purgeD_rng(vaddr, len);
+			cpu_cache_purgeD_rng(vaddr, length);
 
 			/* Adjust the length */
 			len -= length;
