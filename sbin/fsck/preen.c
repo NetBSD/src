@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.13 1996/09/23 16:11:35 christos Exp $	*/
+/*	$NetBSD: preen.c,v 1.14 1996/09/27 22:38:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
 #else
-static char rcsid[] = "$NetBSD: preen.c,v 1.13 1996/09/23 16:11:35 christos Exp $";
+static char rcsid[] = "$NetBSD: preen.c,v 1.14 1996/09/27 22:38:43 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,12 +54,12 @@ static char rcsid[] = "$NetBSD: preen.c,v 1.13 1996/09/23 16:11:35 christos Exp 
 #include <unistd.h>
 #include <err.h>
 
-#include "util.h"
-#include "extern.h"
+#include "fsutil.h"
 
 struct partentry {
 	TAILQ_ENTRY(partentry)	 p_entries;
-	char		  	*p_name;	/* device name */
+	char		  	*p_devname;	/* device name */
+	char			*p_mntpt;	/* mount point */
 	char		  	*p_type;	/* filesystem type */
 };
 
@@ -77,18 +77,16 @@ TAILQ_HEAD(disk, diskentry) diskh;
 static int nrun = 0, ndisks = 0;
 
 static struct diskentry *finddisk __P((const char *));
-static void addpart __P((const char *, const char *));
+static void addpart __P((const char *, const char *, const char *));
 static int startdisk __P((struct diskentry *, 
-    int (*)(const char *, const char *, pid_t *)));
-#ifdef DEBUG
+    int (*)(const char *, const char *, const char *, void *)));
 static void printpart __P((void));
-#endif
 
 int
-checkfstab(preen, maxrun, docheck, chkit)
-	int preen, maxrun;
-	int (*docheck) __P((struct fstab *));
-	int (*chkit) __P((const char *, const char *, pid_t *));
+checkfstab(flags, maxrun, docheck, chkit)
+	int flags, maxrun;
+	void *(*docheck) __P((struct fstab *));
+	int (*chkit) __P((const char *, const char *, const char *, void *));
 {
 	struct fstab *fs;
 	struct diskentry *d, *nextdisk;
@@ -107,24 +105,23 @@ checkfstab(preen, maxrun, docheck, chkit)
 			return (8);
 		}
 		while ((fs = getfsent()) != 0) {
-			if ((*docheck)(fs) == 0)
+			if ((*docheck)(fs) == NULL)
 				continue;
 
 			name = blockcheck(fs->fs_spec);
-#ifdef DEBUG
-			if (debug > 1)
+			if (flags & CHECK_DEBUG)
 				printf("pass %d, name %s\n", passno, name);
-#endif
 
-			if (preen == 0 || (passno == 1 && fs->fs_passno == 1)) {
+			if ((flags & CHECK_PREEN) == 0 ||
+			    (passno == 1 && fs->fs_passno == 1)) {
 				if (name == NULL) {
-					if (preen)
+					if (flags & CHECK_PREEN)
 						return 8;
 					else
 						continue;
 				}
 				sumstatus = (*chkit)(fs->fs_vfstype,
-				    name, NULL);
+				    name, fs->fs_file, NULL);
 
 				if (sumstatus)
 					return (sumstatus);
@@ -135,19 +132,17 @@ checkfstab(preen, maxrun, docheck, chkit)
 					sumstatus |= 8;
 					continue;
 				}
-				addpart(fs->fs_vfstype, name);
+				addpart(fs->fs_vfstype, name, fs->fs_file);
 			}
 		}
-		if (preen == 0)
-			return (0);
+		if ((flags & CHECK_PREEN) == 0)
+			return 0;
 	}
 
-#ifdef DEBUG
-	if (debug > 1)
+	if (flags & CHECK_DEBUG)
 		printpart();
-#endif
 
-	if (preen) {
+	if (flags & CHECK_PREEN) {
 		if (maxrun == 0)
 			maxrun = ndisks;
 		if (maxrun > ndisks)
@@ -177,14 +172,16 @@ checkfstab(preen, maxrun, docheck, chkit)
 
 			p = d->d_part.tqh_first;
 
-			if (debug || verbose)
-				(void) printf("done %s(%s) = %x\n", p->p_name, 
-				    p->p_type, status);
+			if (flags & (CHECK_DEBUG|CHECK_VERBOSE))
+				(void) printf("done %s: %s (%s) = %x\n",
+				    p->p_type, p->p_devname, p->p_mntpt,
+				    status);
 
 			if (WIFSIGNALED(status)) {
 				(void) fprintf(stderr,
-				    "%s (%s): EXITED WITH SIGNAL %d\n",
-				    p->p_name, p->p_type, WTERMSIG(status));
+				    "%s: %s (%s): EXITED WITH SIGNAL %d\n",
+				    p->p_type, p->p_devname, p->p_mntpt,
+				    WTERMSIG(status));
 				retcode = 8;
 			}
 
@@ -195,7 +192,7 @@ checkfstab(preen, maxrun, docheck, chkit)
 				sumstatus |= retcode;
 			} else {
 				free(p->p_type);
-				free(p->p_name);
+				free(p->p_devname);
 				free(p);
 			}
 			d->d_pid = 0;
@@ -235,8 +232,8 @@ checkfstab(preen, maxrun, docheck, chkit)
 
 		for (; p; p = p->p_entries.tqe_next)
 			(void) fprintf(stderr,
-			    "%s (%s)%s", p->p_name, p->p_type,
-			    p->p_entries.tqe_next ? ", " : "\n");
+			    "%s: %s (%s)%s", p->p_type, p->p_devname,
+			    p->p_mntpt, p->p_entries.tqe_next ? ", " : "\n");
 
 		return sumstatus;
 	}
@@ -279,7 +276,6 @@ finddisk(name)
 }
 
 
-#ifdef DEBUG
 static void
 printpart()
 {
@@ -290,28 +286,28 @@ printpart()
 		(void) printf("disk %s: ", d->d_name);
 		for (p = d->d_part.tqh_first; p != NULL;
 		    p = p->p_entries.tqe_next)
-			(void) printf("%s ", p->p_name);
+			(void) printf("%s ", p->p_devname);
 		(void) printf("\n");
 	}
 }
-#endif
 
 
 static void
-addpart(type, name)
-	const char *type, *name;
+addpart(type, devname, mntpt)
+	const char *type, *devname, *mntpt;
 {
-	struct diskentry *d = finddisk(name);
+	struct diskentry *d = finddisk(devname);
 	struct partentry *p;
 
 	for (p = d->d_part.tqh_first; p != NULL; p = p->p_entries.tqe_next)
-		if (strcmp(p->p_name, name) == 0) {
-			warnx("%s in fstab more than once!\n", name);
+		if (strcmp(p->p_devname, devname) == 0) {
+			warnx("%s in fstab more than once!\n", devname);
 			return;
 		}
 
 	p = emalloc(sizeof(*p));
-	p->p_name = estrdup(name);
+	p->p_devname = estrdup(devname);
+	p->p_mntpt = estrdup(mntpt);
 	p->p_type = estrdup(type);
 
 	TAILQ_INSERT_TAIL(&d->d_part, p, p_entries);
@@ -321,13 +317,13 @@ addpart(type, name)
 static int
 startdisk(d, checkit)
 	register struct diskentry *d;
-	int (*checkit) __P((const char *, const char *, pid_t *));
+	int (*checkit) __P((const char *, const char *, const char *, void *));
 {
 	register struct partentry *p = d->d_part.tqh_first;
 	int rv;
 
-	while ((rv = (*checkit)(p->p_type, p->p_name, &d->d_pid)) != 0 &&
-	    nrun > 0)
+	while ((rv = (*checkit)(p->p_type, p->p_devname, p->p_mntpt,
+	    &d->d_pid)) != 0 && nrun > 0)
 		sleep(10);
 
 	if (rv == 0)
