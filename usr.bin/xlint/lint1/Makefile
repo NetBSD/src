@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/10/11 14:46:23 is Exp $
+#	$NetBSD: Makefile,v 1.13 2001/08/14 10:18:28 tv Exp $
 
 PROG=	lint1
 SRCS=	cgram.y scan.l mem1.c mem.c err.c main1.c decl.c tree.c func.c \
@@ -21,4 +21,6 @@ realall: lint.7
 
 CLEANFILES+=${MAN}
 
+.ifndef HOSTPROG
 .include <bsd.prog.mk>
+.endif
