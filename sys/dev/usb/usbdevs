@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $
+$NetBSD: usbdevs,v 1.323 2003/05/24 23:29:11 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -347,6 +347,7 @@ vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor JRC		0x1145	Japan Radio Company
+vendor SERVERWORKS	0x1166	ServerWorks
 vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor BELKIN2		0x1293	Belkin Components
 vendor MOBILITY		0x1342	Mobility
@@ -474,7 +475,8 @@ product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE SPEAKERS		0x1101	Speakers
 
 /* Asahi Optical products */
-product ASAHIOPTICAL OPTIO230  0x0004  PENTAX Optio230
+product ASAHIOPTICAL OPTIO230	0x0004	PENTAX Optio230
+product ASAHIOPTICAL OPTIO330	0x0006	Digital camera
 
 /* Asante products */
 product ASANTE EA		0x1427	Ethernet Adapter
@@ -1262,6 +1264,7 @@ product SHUTTLE CF		0x000a	eUSB CompactFlash Adapter
 product SHUTTLE EUSCSI_B	0x000b	eUSCSI Bridge
 product SHUTTLE EUSCSI_C	0x000c	eUSCSI Bridge
 product SHUTTLE CDRW		0x0101	CD-RW Device
+product SHUTTLE SCM		0x1010	SCM Micro
 
 /* Siemens products */
 product SIEMENS SPEEDSTREAM	0x1001	SpeedStream USB
