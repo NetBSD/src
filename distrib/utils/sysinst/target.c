@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.45 2003/11/30 14:36:44 dsl Exp $	*/
+/*	$NetBSD: target.c,v 1.46 2003/12/28 05:30:47 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.45 2003/11/30 14:36:44 dsl Exp $");
+__RCSID("$NetBSD: target.c,v 1.46 2003/12/28 05:30:47 christos Exp $");
 #endif
 
 /*
@@ -370,7 +370,7 @@ mv_within_target_or_die(const char *frompath, const char *topath)
 
 /* Do a cp where both pathnames are within the target filesystem. */
 int
-cp_within_target(const char *frompath, const char *topath)
+cp_within_target(const char *frompath, const char *topath, int optional)
 {
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
@@ -378,6 +378,8 @@ cp_within_target(const char *frompath, const char *topath)
 	strncpy(realfrom, target_expand(frompath), STRSIZE);
 	strncpy(realto, target_expand(topath), STRSIZE);
 
+	if (access(realfrom, R_OK) == -1 && optional)
+		return 0;
 	return (run_program(0, "cp -p %s %s", realfrom, realto));
 }
 
