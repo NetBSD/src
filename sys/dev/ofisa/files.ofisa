@@ -1,9 +1,9 @@
-#	$NetBSD: files.ofisa,v 1.1 1998/02/07 00:46:48 cgd Exp $
+#	$NetBSD: files.ofisa,v 1.2 1998/02/07 00:49:19 cgd Exp $
 
 # OFW ISA bus support
 # XXX eventually we should do something with these locators
 define	ofisa { [i = -1], [it = -1], [iv = -1], [m = -1] }
-device	ofisa: ofisa, openfirm
+device	ofisa class dull: ofisa, openfirm
 attach	ofisa at openfirm
 file	dev/ofisa/ofisa.c		ofisa
 
