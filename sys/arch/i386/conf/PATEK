@@ -1,7 +1,7 @@
 #
 # PATEK -- Mycroft's 486 test box
 #
-#	$Id: PATEK,v 1.8 1994/03/29 04:40:47 mycroft Exp $
+#	$Id: PATEK,v 1.9 1994/03/29 22:59:55 mycroft Exp $
 #
 
 machine		"i386"
@@ -60,7 +60,8 @@ config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3
 
 controller	isa0
 
-device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
+#device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
+device		vt0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
