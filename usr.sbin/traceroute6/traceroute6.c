@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.31 2003/01/21 07:55:17 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.32 2003/01/21 09:15:54 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.31 2003/01/21 07:55:17 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.32 2003/01/21 09:15:54 itojun Exp $");
 #endif
 #endif
 
@@ -377,7 +377,7 @@ main(argc, argv)
 	char hbuf[NI_MAXHOST], src0[NI_MAXHOST];
 	char *ep;
 	int mib[4] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DEFHLIM };
-	size_t size = sizeof(max_hops);
+	size_t size;
 	u_long lport;
 	int minlen;
 
@@ -393,8 +393,9 @@ main(argc, argv)
 	seteuid(getuid());
 	setuid(getuid());
 
-	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_hops, &size,
-	    NULL, 0);
+	size = sizeof(i);
+	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &i, &size, NULL, 0);
+	max_hops = i;
 
 	/* set a minimum set of socket options */
 	on = 1;
@@ -698,8 +699,9 @@ main(argc, argv)
 		}
 	}
 #ifdef SO_SNDBUF
-	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
-	    sizeof(datalen)) < 0) {
+	i = datalen;
+	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&i,
+	    sizeof(i)) < 0) {
 		perror("setsockopt(SO_SNDBUF)");
 		exit(6);
 	}
