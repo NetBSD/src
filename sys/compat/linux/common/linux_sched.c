@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.3 1999/10/21 23:24:08 itohy Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.4 1999/12/04 21:58:05 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ linux_sys_clone(p, v, retval)
 		flags |= FORK_PPWAIT;
 
 	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
-	if (sig < 0 || sig >= LINUX_NSIG)
+	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
 	sig = linux_to_native_sig[sig];
 
