@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.10 1995/03/26 20:30:06 jtc Exp $	*/
+/*	$NetBSD: bpf.h,v 1.11 1995/04/22 13:26:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -133,7 +133,7 @@ struct bpf_hdr {
 	struct timeval	bh_tstamp;	/* time stamp */
 	u_int32_t	bh_caplen;	/* length of captured portion */
 	u_int32_t	bh_datalen;	/* original length of packet */
-	u_short		bh_hdrlen;	/* length of bpf header (this struct
+	u_int16_t	bh_hdrlen;	/* length of bpf header (this struct
 					   plus alignment padding) */
 };
 /*
@@ -220,17 +220,17 @@ struct bpf_hdr {
  * The instruction data structure.
  */
 struct bpf_insn {
-	u_short	code;
-	u_char 	jt;
-	u_char 	jf;
-	int32_t	k;
+	u_int16_t code;
+	u_char 	  jt;
+	u_char 	  jf;
+	int32_t	  k;
 };
 
 /*
  * Macros for insn array initializers.
  */
-#define BPF_STMT(code, k) { (u_short)(code), 0, 0, k }
-#define BPF_JUMP(code, k, jt, jf) { (u_short)(code), jt, jf, k }
+#define BPF_STMT(code, k) { (u_int16_t)(code), 0, 0, k }
+#define BPF_JUMP(code, k, jt, jf) { (u_int16_t)(code), jt, jf, k }
 
 #ifdef _KERNEL
 int	 bpf_validate __P((struct bpf_insn *, int));
