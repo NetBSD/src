@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.72 2001/09/10 04:43:35 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.73 2001/09/10 15:23:10 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -467,7 +467,7 @@ tcp_output(tp)
 		    (tcp_cwm_burstsize * txsegsize) +
 		    (tp->snd_nxt - tp->snd_una));
 	} else {
-		if (idle && tp->t_idle >= tp->t_rxtcur) {
+		if (idle && (tcp_now - tp->t_rcvtime) >= tp->t_rxtcur) {
 			/*
 			 * We have been idle for "a while" and no acks are
 			 * expected to clock out any data we send --
@@ -938,8 +938,8 @@ send:
 			 * Time this transmission if not a retransmission and
 			 * not currently timing anything.
 			 */
-			if (tp->t_rtt == 0) {
-				tp->t_rtt = 1;
+			if (tp->t_rtttime == 0) {
+				tp->t_rtttime = tcp_now;
 				tp->t_rtseq = startseq;
 				tcpstat.tcps_segstimed++;
 			}

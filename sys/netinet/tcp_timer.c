@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.49 2001/09/10 04:24:25 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.50 2001/09/10 15:23:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -220,9 +220,6 @@ tcp_slowtimo()
 					goto tpgone;
 			}
 		}
-		tp->t_idle++;
-		if (tp->t_rtt)
-			tp->t_rtt++;
 tpgone:
 		;
 	}
@@ -253,9 +250,6 @@ dotcb6:
 					goto tp6gone;
 			}
 		}
-		tp->t_idle++;
-		if (tp->t_rtt)
-			tp->t_rtt++;
 tp6gone:
 		;
 	}
@@ -317,7 +311,8 @@ tcp_timers(tp, timer)
 	 */
 	case TCPT_2MSL:
 		if (tp->t_state != TCPS_TIME_WAIT &&
-		    ((tcp_maxidle == 0) || (tp->t_idle <= tcp_maxidle)))
+		    ((tcp_maxidle == 0) ||
+		     ((tcp_now - tp->t_rcvtime) <= tcp_maxidle)))
 			TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_keepintvl);
 		else
 			tp = tcp_close(tp);
@@ -391,7 +386,7 @@ tcp_timers(tp, timer)
 		/*
 		 * If timing a segment in this window, stop the timer.
 		 */
-		tp->t_rtt = 0;
+		tp->t_rtttime = 0;
 		/*
 		 * Remember if we are retransmitting a SYN, because if
 		 * we do, set the initial congestion window must be set
@@ -451,8 +446,8 @@ tcp_timers(tp, timer)
 		if (rto < tp->t_rttmin)
 			rto = tp->t_rttmin;
 		if (tp->t_rxtshift == TCP_MAXRXTSHIFT &&
-		    (tp->t_idle >= tcp_maxpersistidle ||
-		    tp->t_idle >= rto * tcp_totbackoff)) {
+		    ((tcp_now - tp->t_rcvtime) >= tcp_maxpersistidle ||
+		    (tcp_now - tp->t_rcvtime) >= rto * tcp_totbackoff)) {
 			tcpstat.tcps_persistdrops++;
 			tp = tcp_drop(tp, ETIMEDOUT);
 			break;
@@ -486,7 +481,8 @@ tcp_timers(tp, timer)
 		if (so->so_options & SO_KEEPALIVE &&
 		    tp->t_state <= TCPS_CLOSE_WAIT) {
 		    	if ((tcp_maxidle > 0) &&
-			    (tp->t_idle >= tcp_keepidle + tcp_maxidle))
+			    ((tcp_now - tp->t_rcvtime) >=
+			     tcp_keepidle + tcp_maxidle))
 				goto dropit;
 			/*
 			 * Send a packet designed to force a response
