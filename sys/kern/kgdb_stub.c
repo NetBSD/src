@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.3 1997/03/15 18:12:11 is Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.4 1997/09/10 19:39:05 pk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -371,7 +371,11 @@ kgdb_trap(type, regs)
 		FIXUP_PC_AFTER_BREAK(regs);
 #endif
 		/* ... and then advance past it. */
+#ifdef	PC_ADVANCE
+		PC_ADVANCE(regs);
+#else
 		PC_REGS(regs) += BKPT_SIZE;
+#endif
 		kgdb_active = 1;
 	} else {
 		/* Tell remote host that an exception has occured. */
