@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.56 1998/04/12 23:47:44 tv Exp $
+#	$NetBSD: Makefile.pmax,v 1.57 1998/04/19 04:51:18 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -193,6 +193,9 @@ machdep.o: Makefile
 
 # depend on CPU configuration 
 machdep.o mainbus.o trap.o: Makefile
+
+# depend on System V IPC/shmem options
+mips_machdep.o pmap.o: Makefile
 
 
 locore.o: ${MIPS}/mips/locore.S ${MIPS}/mips/locore_r2000.S ${MIPS}/mips/locore_r4000.S assym.h
