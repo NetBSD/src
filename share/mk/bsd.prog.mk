@@ -121,7 +121,7 @@ depend: .depend _PROGSUBDIR
 .if !target(beforeinstall)
 beforeinstall:
 	@if [ ! -d ${DESTDIR}${BINDIR} ]; then \
-                /bin/rm ${DESTDIR}${BINDIR} ; \
+                /bin/rm -f ${DESTDIR}${BINDIR} ; \
                 mkdir -p ${DESTDIR}${BINDIR} ; \
                 chown root.wheel ${DESTDIR}${BINDIR} ; \
                 chmod 755 ${DESTDIR}${BINDIR} ; \
