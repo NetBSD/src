@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.16 1997/10/15 22:00:17 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.17 1997/10/19 11:45:45 explorer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "rnd.h"
+#if NRND > 0 && defined(RND_COM)
+#include <sys/rnd.h>
+#endif
 
 int comcnattach __P((bus_space_tag_t, int, int, int, tcflag_t));
 
@@ -100,6 +105,9 @@ struct com_softc {
 			sc_rx_ready;
 
 	volatile u_char sc_heldchange;
+#if NRND > 0 && defined(RND_COM)
+	rndsource_element_t  rnd_source;
+#endif
 };
 
 /* Macros to clear/set/test flags. */
