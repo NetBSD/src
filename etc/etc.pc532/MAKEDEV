@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.18 1997/08/22 11:34:30 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.19 1997/11/20 05:57:49 fair Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -55,6 +55,7 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	ip filter
+#	random	Random number generator
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	ss*	SCSI scanner
@@ -75,7 +76,8 @@ all)
 	sh $0 pty0 pty1 vnd0 vnd1 bpf0 bpf1 bpf2 bpf3
 	sh $0 tun0 tun1 tun2 lkm ipl ccd0 ccd1 ccd2
 	sh $0 ccd3 md0 ss0 ch0 uk0 uk1 lpt0 lpt1 rtc
-	sh $0 se0 se1 se2 se3
+	sh $0 se0 se1 se2 se3 random
+	sh $0 local
 	;;
 
 floppy)
@@ -296,6 +298,16 @@ rtc)
 	mknod rtc c 2 3
 	chmod 644 rtc
 	;;
+
+random)
+	rm -f random urandom
+	mknod random c 29 0
+	mknod urandom c 29 1
+	chown root.wheel random urandom
+	chmod 444 random
+	chmod 644 urandom
+	;;
+
 
 local)
 	umask 0

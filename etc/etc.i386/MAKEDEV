@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.58 1997/08/22 11:19:43 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.59 1997/11/20 05:57:45 fair Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -70,6 +70,7 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	ip filter
+#	random	Random number generator
 #	speaker	pc speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
 #	audio	audio device
@@ -92,7 +93,7 @@ all)
 	sh $0 std fd wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
 	sh $0 st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1 lpa2
 	sh $0 lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
-	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1
+	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
 	sh $0 speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local satlink0
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8
 	;;
@@ -393,6 +394,15 @@ satlink*)
 	rm -f satlink$unit
 	mknod satlink$unit c 45 $unit
 	chmod 444 satlink$unit
+	;;
+
+random)
+	rm -f random urandom
+	mknod random c 46 0
+	mknod urandom c 46 1
+	chown root.wheel random urandom
+	chmod 444 random
+	chmod 644 urandom
 	;;
 
 local)
