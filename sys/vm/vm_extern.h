@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.44 1999/04/10 13:52:11 drochner Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.45 1999/05/13 21:58:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@ void		 thread_sleep_msg __P((void *, simple_lock_t,
 void		vmapbuf __P((struct buf *, vsize_t));
 void		vunmapbuf __P((struct buf *, vsize_t));
 void		pagemove __P((caddr_t, caddr_t, size_t));
-void		cpu_fork __P((struct proc *, struct proc *));
+void		cpu_fork __P((struct proc *, struct proc *, void *, size_t));
 #ifndef	cpu_swapin
 void		cpu_swapin __P((struct proc *));
 #endif
