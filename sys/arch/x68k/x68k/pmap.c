@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 1997/12/24 17:48:10 oki Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 1998/01/01 19:53:14 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -307,8 +307,6 @@ int		protostfree;	/* prototype (default) free ST map */
 struct pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
 void	pmap_collect_pv __P((void));
-void	pmap_activate __P((pmap_t, struct pcb *));
-void	pmap_deactivate __P((pmap_t, struct pcb *));
 #ifdef COMPAT_HPUX
 int	pmap_mapmulti __P((pmap_t, vm_offset_t));
 #endif /* COMPAT_HPUX */
@@ -831,27 +829,30 @@ pmap_reference(pmap)
 	simple_unlock(&pmap->pm_lock);
 }
 
+/*
+ *	Mark that a processor is about to be used by a given pmap.
+ */
 void
-pmap_activate(pmap, pcb)
-	pmap_t pmap;
-	struct pcb *pcb;
+pmap_activate(p)
+	struct proc *p;
 {
-
-	if (pmap == NULL)
-		return;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
-		printf("pmap_activate(%p, %p)\n", pmap, pcb);
+		printf("pmap_activate(%p)\n");
 #endif
 
-	PMAP_ACTIVATE(pmap, pcb, pmap == curproc->p_vmspace->vm_map.pmap);
+	PMAP_ACTIVATE(pmap, pcb, p == curproc);
 }
 
+/*
+ *	Mark that a processor is no longer in use by a given pmap.
+ */
 void
-pmap_deactivate(pmap, pcb)
-	pmap_t pmap;
-	struct pcb *pcb;
+pmap_deactivate(p)
+	struct proc *p;
 {
 }
 
@@ -2237,8 +2238,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				 * pointer for current process so
 				 * update now to reload hardware.
 				 */
-				if (curproc != NULL &&
-				    ptpmap == curproc->p_vmspace->vm_map.pmap)
+				if (active_user_pmap(ptpmap))
 					PMAP_ACTIVATE(ptpmap,
 					    &curproc->p_addr->u_pcb, 1);
 			}
@@ -2490,7 +2490,7 @@ pmap_enter_ptpage(pmap, va)
 		 * XXX may have changed segment table pointer for current
 		 * process so update now to reload hardware.
 		 */
-		if (pmap == curproc->p_vmspace->vm_map.pmap)
+		if (active_user_pmap(pmap))
 			PMAP_ACTIVATE(pmap, &curproc->p_addr->u_pcb, 1);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))

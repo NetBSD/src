@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 1997/06/10 18:46:30 veego Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 1998/01/01 19:53:00 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -80,16 +80,13 @@ typedef struct pmap *pmap_t;
 /*
  * Macros for speed
  */
-#define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
-	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
-		(pcbp)->pcb_ustp = \
-		    m68k_btop((vm_offset_t)(pmapp)->pm_stpa); \
-		if (iscurproc) \
-			loadustp((pcbp)->pcb_ustp); \
-		(pmapp)->pm_stchanged = FALSE; \
-	}
-
-#define PMAP_DEACTIVATE(pmapp, pcbp)
+#define	PMAP_ACTIVATE(pmap, pcb, iscurproc)				\
+{									\
+	(pcb)->pcb_ustp = m68k_btop((vm_offset_t)(pmap)->pm_stpa);	\
+	if ((iscurproc))						\
+		loadustp((pcb)->pcb_ustp);				\
+	(pmap)->pm_stchanged = FALSE;					\
+}
 
 /*
  * Description of the memory segments. Build in atari_init/start_c().
@@ -165,8 +162,16 @@ struct pmap	kernel_pmap_store;
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
+#define	active_user_pmap(pm) \
+	(curproc && \
+	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
+
 void	pmap_bootstrap __P((vm_offset_t, u_int, u_int));
 void	pmap_changebit __P((vm_offset_t, int, boolean_t));
+
+struct proc;
+void	pmap_activate __P((struct proc *));
+void	pmap_deactivate __P((struct proc *));
 #endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.92 1997/09/29 20:52:05 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.93 1998/01/01 19:52:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1281,18 +1281,17 @@ Lswnofpsave:
 	movb	a1@(PCB_FLAGS+1),pcbflag	| copy of pcb_flags low byte
 
 	/* see if pmap_activate needs to be called; should remove this */
-	movl	a0@(P_VMSPACE),a0		| vmspace = p->p_vmspace
+	movl	a0@(P_VMSPACE),a2		| vmspace = p->p_vmspace
 #ifdef DIAGNOSTIC
-	tstl	a0				| map == VM_MAP_NULL?
+	tstl	a2				| map == VM_MAP_NULL?
 	jeq	Lbadsw				| panic
 #endif
-	movl	a0@(VM_PMAP),a0			| pmap = vmspace->vm_map.pmap
-	tstl	a0@(PM_STCHG)			| pmap->st_changed?
+	movl	a2@(VM_PMAP),a2			| pmap = vmspace->vm_map.pmap
+	tstl	a2@(PM_STCHG)			| pmap->st_changed?
 	jeq	Lswnochg			| no, skip
-	pea	a1@				| push pcb (at p_addr)
-	pea	a0@				| push pmap
-	jbsr	_pmap_activate			| pmap_activate(pmap, pcb)
-	addql	#8,sp
+	pea	a0@				| push proc
+	jbsr	_pmap_activate			| pmap_activate(p)
+	addql	#4,sp
 	movl	_curpcb,a1			| restore p_addr
 Lswnochg:
 	lea	tmpstk,sp			| now goto a tmp stack for NMI
