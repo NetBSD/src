@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.17 2003/06/27 22:31:29 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.18 2003/07/04 12:31:33 wiz Exp $
 .\"	$KAME: racoon.conf.5,v 1.101 2002/07/17 03:43:38 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -303,7 +303,7 @@ specifies a certificate specification.
 .Ar certspec
 is one of followings:
 .Bl -tag -width Ds -compact
-.It Ic x509 Ar certfile Ar privkeyfile;
+.It Ic x509 Ar certfile Ar privkeyfile ;
 .Ar certfile
 means a file name of certificate.
 .Ar privkeyfile
@@ -445,7 +445,7 @@ is one of following:
 for oakley.
 For other transforms, this statement should not be used.
 .\"
-.It Ic hash_algorithm Ar algorithm;
+.It Ic hash_algorithm Ar algorithm ;
 define the hash algorithm used for the phase 1 negotiation.
 This directive must be defined.
 .Ar algorithm
@@ -495,7 +495,7 @@ will obey the policy configured into the kernel by
 and will construct phase 2 proposals by combining
 .Ic sainfo
 specifications in
-.Nm Ns ,
+.Nm ,
 and policies in the kernel.
 .\"
 .Ss Sainfo Specifications
@@ -566,7 +566,7 @@ will compute the actual phase 2 proposals by computing
 the permutation of the specified algorithms,
 and then combining them with the security protocol specified by the SPD.
 For example, if
-.Ic des, 3des, hmac_md5,
+.Ic des , 3des , hmac_md5 ,
 and
 .Ic hmac_sha1
 are specified as algorithms, we have four combinations for use with ESP,
