@@ -1,7 +1,5 @@
-/*	$NetBSD: route6d.c,v 1.8 1999/09/03 04:04:22 itojun Exp $	*/
-
 /*
- * KAME Header: /cvsroot/kame/kame/kame/kame/route6d/route6d.c,v 1.4 1999/09/02 12:18:10 itojun Exp
+ * KAME Header: /cvsroot/kame/kame/kame/kame/route6d/route6d.c,v 1.6 1999/09/10 08:20:59 itojun Exp
  */
 
 /*
@@ -35,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.8 1999/09/03 04:04:22 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.9 1999/09/13 11:07:52 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -52,6 +50,7 @@ __RCSID("$NetBSD: route6d.c,v 1.8 1999/09/03 04:04:22 itojun Exp $");
 #endif
 #include <syslog.h>
 #include <stddef.h>
+#include <err.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -196,6 +195,8 @@ time_t	sup_trig_update = 0;
 
 FILE	*rtlog = NULL;
 
+int logopened = 0;
+
 static	u_long	seq = 0;
 
 #define	RTF_AGGREGATE		0x08000000
@@ -273,7 +274,14 @@ main(argc, argv)
 	sigset_t mask, omask;
 	FILE	*pidfile;
 	extern char *optarg;
+	extern int optind;
 	char *progname;
+
+	progname = strrchr(*argv, '/');
+	if (progname)
+		progname++;
+	else
+		progname = *argv;
 
 	pid = getpid();
 	while ((ch = getopt(argc, argv, "A:N:O:R:T:L:t:adDhlnqsS")) != EOF) {
@@ -311,21 +319,20 @@ main(argc, argv)
 		FLAG('S', Sflag, 1);
 #undef	FLAG
 		default:
-			fprintf(stderr,
-				"Invalid option specified, terminating\n");
-			exit(1);
+			fatal("Invalid option specified, terminating");
 		}
 	}
+	argc -= optind;
+	argv += optind;
+	if (argc > 0)
+		fatal("bogus extra arguments");
+
 	if (geteuid()) {
 		nflag = 1;
 		fprintf(stderr, "No kernel update is allowed\n");
 	}
-	progname = strrchr(*argv, '/');
-	if (progname)
-		progname++;
-	else
-		progname = *argv;
 	openlog(progname, LOG_NDELAY|LOG_PID, LOG_DAEMON);
+	logopened++;
 	init();
 	ifconfig();
 	for (ifcp = ifc; ifcp; ifcp = ifcp->ifc_next) {
