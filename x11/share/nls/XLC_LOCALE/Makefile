@@ -1,0 +1,33 @@
+#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 03:06:29 lukem Exp $
+
+.include <bsd.own.mk>
+
+LTFILES=C armscii-8 en_US.UTF-8 georgian-academy georgian-ps \
+	ibm-cp1133 iscii-dev isiri-3342 iso8859-1 iso8859-2 iso8859-3 \
+	iso8859-4 iso8859-5 iso8859-6 iso8859-7 iso8859-8 iso8859-9 \
+	iso8859-9e iso8859-10 iso8859-11 iso8859-13 iso8859-14 \
+	iso8859-15 ja ja.JIS ja.SJIS ja_JP.UTF-8 ko ko_KR.UTF-8 \
+	koi8-c koi8-r koi8-u microsoft-cp1251 microsoft-cp1255 \
+	microsoft-cp1256 mulelao-1 nokhchi-1 tatar-cyr th_TH \
+	th_TH.UTF-8 tscii-0 vi_VN.tcvn vi_VN.viscii zh_CN zh_CN.gbk \
+	zh_HK.big5 zh_HK.big5hkscs zh_TW zh_TW.UTF-8 zh_TW.big5
+
+FILESNAME=	XLC_LOCALE
+
+.for _F in ${LTFILES}
+${_F}.lt: ${_F}
+	@rm -f ${.TARGET}
+	${CPP} -undef -traditional -DWCHAR32=1 \
+	    < ${.ALLSRC} | ${X11TOOL_UNXCOMM} > ${.TARGET}
+
+FILES+=			${_F}.lt
+FILESDIR_${_F}.lt=	${X11LIBDIR}/locale/${_F}
+CLEANFILES+=		${_F}.lt
+.endfor
+
+realall: ${FILES}
+
+.PATH: ${X11SRCDIR.xc}/nls/XLC_LOCALE
+
+.include <bsd.prog.mk>
+.include <bsd.x11.mk>
