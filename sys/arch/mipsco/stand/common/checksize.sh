@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: checksize.sh,v 1.1 2000/09/18 11:40:48 wdk Exp $
+# $NetBSD: checksize.sh,v 1.2 2000/09/26 09:06:50 wdk Exp $
 #
 # Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
 #
@@ -33,42 +33,29 @@
 #	boot object with headers, to check bss size
 #	boot file (just text+data), to check load and total sizes
 #	maximum load size
-#	maximum total (load + bss) size
 
 progname=$0
-if [ $# != 3 ] || [ ! -f $1 ]; then
-	echo "usage: $progname bootfile maxload maxtotal" 1>&2
+if [ $# != 2 ] || [ ! -f $1 ]; then
+	echo "usage: $progname bootfile maxload" 1>&2
 	exit 1
 fi
 
 bootfile=$1
-maxloadsize=$2
-maxtotalsize=$3
+max_size=$2
 
-if [ "$SIZE" = "" ]; then
-	SIZE=size
-fi
+prog_size=`wc -c $bootfile | awk '{print $1}'`
 
-size_data=`$SIZE $bootfile`
 if [ $? != 0 ]; then
 	echo "$progname: couldn't get size of $bootfile" 2>&1
 	exit 1
 fi
-bss_size=`echo "$size_data" | awk ' NR == 2 { print $3 } '`
-
-load_size=`echo "$size_data" | awk ' NR == 2 { print $1 + $2 } '`
 
 echo -n "checking sizes for $bootfile... "
 
-if expr $load_size \> $maxloadsize >/dev/null 2>&1; then
-	echo "MAXIMUM LOAD SIZE EXCEEDED ($load_size > $maxloadsize)"
+if expr $prog_size \> $max_size >/dev/null 2>&1; then
+	echo "MAXIMUM FILE SIZE EXCEEDED ($prog_size > $max_size)"
 	exit 1
 fi
 
-if expr $load_size + $bss_size \> $maxtotalsize >/dev/null 2>&1; then
-	echo "MAXIMUM TOTAL SIZE EXCEEDED ($load_size + $bss_size > $maxtotalsize)"
-	exit 1
-fi
-
-echo "OK - `expr $maxloadsize - $load_size` bytes free"
+echo "OK - `expr $max_size - $prog_size` bytes free"
 exit 0
