@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.28 1999/09/05 16:14:43 kleink Exp $	*/
+/*	$NetBSD: cp.c,v 1.28.8.1 2000/07/27 16:15:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.28 1999/09/05 16:14:43 kleink Exp $");
+__RCSID("$NetBSD: cp.c,v 1.28.8.1 2000/07/27 16:15:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,7 +268,7 @@ copy(argv, type, fts_options)
 	base = 0;	/* XXX gcc -Wuninitialized (see comment below) */
 
 	if ((ftsp = fts_open(argv, fts_options, mastercmp)) == NULL)
-		err(1, argv[0]);
+		err(1, "%s", argv[0]);
 	for (rval = 0; (curr = fts_read(ftsp)) != NULL;) {
 		switch (curr->fts_info) {
 		case FTS_NS:
