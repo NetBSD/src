@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.213 2004/08/21 01:51:46 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.214 2004/10/25 22:42:09 enami Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.213 2004/08/21 01:51:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.214 2004/10/25 22:42:09 enami Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -125,14 +125,14 @@ extern const struct ata_bustype wdc_ata_bustype; /* in ata_wdc.c */
 /* A fake one, the autoconfig will print "wd at foo ... not configured */
 const struct ata_bustype wdc_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
-	NULL,		/* wdc_ata_bio */
-	NULL,		/* wdc_reset_drive */
-	NULL,		/* wdc_reset_channel */
-	NULL,		/* wdc_exec_command */
-	NULL,		/* ata_get_params */
-	NULL,		/* wdc_ata_addref */
-	NULL,		/* wdc_ata_delref */
-	NULL		/* ata_kill_pending */
+	NULL,				/* wdc_ata_bio */
+	NULL,				/* wdc_reset_drive */
+	wdc_reset_channel,
+	wdc_exec_command,
+	NULL,				/* ata_get_params */
+	NULL,				/* wdc_ata_addref */
+	NULL,				/* wdc_ata_delref */
+	NULL				/* ata_kill_pending */
 };
 #endif
 
