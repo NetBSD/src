@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2001/06/08 14:32:07 wiz Exp $
+#	$NetBSD: Makefile,v 1.47 2001/06/13 15:05:38 simonb Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	compat_freebsd.8 compat_ibcs2.8 compat_linux.8 compat_netbsd32.8 \
@@ -19,7 +19,7 @@ SUBDIR=	man8.alpha man8.amiga man8.arc man8.arm26 man8.arm32 man8.atari \
 	man8.mipsco man8.mmeye man8.mvme68k man8.news68k man8.newsmips \
 	man8.next68k man8.pc532 man8.pmax man8.prep man8.sandpoint \
 	man8.sgimips man8.sparc man8.sparc64 man8.sun2 man8.sun3 man8.vax \
-	man8.x68k
+	man8.walnut man8.x68k
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
