@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.93 2003/03/01 08:01:17 enami Exp $	*/
+/*	$NetBSD: vnd.c,v 1.94 2003/03/27 15:34:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.93 2003/03/01 08:01:17 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.94 2003/03/27 15:34:36 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -402,6 +402,15 @@ vndstrategy(bp)
 	if (DISKPART(bp->b_dev) != RAW_PART)
 		if (bounds_check_with_label(bp, lp, wlabel) <= 0)
 			goto done;
+
+	/*
+	 * check if we're read-only.
+	 */
+	if ((vnd->sc_flags & VNF_READONLY) && !(bp->b_flags & B_READ)) {
+		bp->b_error = EACCES;
+		bp->b_flags |= B_ERROR;
+		goto done;
+	}
 
 	bp->b_resid = bp->b_bcount;
 
@@ -729,6 +738,7 @@ vndioctl(dev, cmd, data, flag, p)
 	struct nameidata nd;
 	int error, part, pmask;
 	size_t geomsize;
+	int fflags;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
@@ -786,17 +796,16 @@ vndioctl(dev, cmd, data, flag, p)
 		if ((error = vndlock(vnd)) != 0)
 			return (error);
 
-		/*
-		 * Always open for read and write.
-		 * This is probably bogus, but it lets vn_open()
-		 * weed out directories, sockets, etc. so we don't
-		 * have to worry about them.
-		 */
+		fflags = FREAD;
+		if ((vio->vnd_flags & VNDIOF_READONLY) == 0)
+			fflags |= FWRITE;
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
-		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
+		if ((error = vn_open(&nd, fflags, 0)) != 0)
 			goto unlock_and_exit;
 		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
 		VOP_UNLOCK(nd.ni_vp, 0);
+		if (!error && nd.ni_vp->v_type != VREG)
+			error = EOPNOTSUPP;
 		if (error)
 			goto close_and_exit;
 		vnd->sc_vp = nd.ni_vp;
@@ -855,6 +864,10 @@ vndioctl(dev, cmd, data, flag, p)
 			vnd->sc_geom.vng_ncylinders = vnd->sc_size / (64 * 32);
 		}
 
+		if (vio->vnd_flags & VNDIOF_READONLY) {
+			vnd->sc_flags |= VNF_READONLY;
+		}
+
 		if ((error = vndsetcred(vnd, p->p_ucred)) != 0)
 			goto close_and_exit;
 		vndthrottle(vnd, vnd->sc_vp);
@@ -890,7 +903,7 @@ vndioctl(dev, cmd, data, flag, p)
 		break;
 
 close_and_exit:
-		(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
+		(void) vn_close(nd.ni_vp, fflags, p->p_ucred, p);
 unlock_and_exit:
 		vndunlock(vnd);
 		return (error);
@@ -1136,15 +1149,18 @@ vndclear(vnd)
 {
 	struct vnode *vp = vnd->sc_vp;
 	struct proc *p = curproc;		/* XXX */
+	int fflags = FREAD;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndclear(%p): vp %p\n", vnd, vp);
 #endif
-	vnd->sc_flags &= ~VNF_INITED;
+	if ((vnd->sc_flags & VNF_READONLY) == 0)
+		fflags |= FWRITE;
+	vnd->sc_flags &= ~(VNF_INITED | VNF_READONLY);
 	if (vp == (struct vnode *)0)
 		panic("vndioctl: null vp");
-	(void) vn_close(vp, FREAD|FWRITE, vnd->sc_cred, p);
+	(void) vn_close(vp, fflags, vnd->sc_cred, p);
 	crfree(vnd->sc_cred);
 	vnd->sc_vp = (struct vnode *)0;
 	vnd->sc_cred = (struct ucred *)0;
