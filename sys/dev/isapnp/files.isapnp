@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.18 1998/08/12 19:16:24 scottr Exp $
+#	$NetBSD: files.isapnp,v 1.19 1998/10/31 01:44:16 thorpej Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -23,7 +23,7 @@ attach	le at isapnp with le_isapnp: le24
 file	dev/isapnp/if_le_isapnp.c		le_isapnp
 
 # NE2000-PnP
-attach	ne at isapnp with ne_isapnp
+attach	ne at isapnp with ne_isapnp: rtl80x9
 file	dev/isapnp/if_ne_isapnp.c		ne_isapnp
 
 # serial ports/modems
