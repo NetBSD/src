@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1 1998/06/12 21:07:24 tsubai Exp $ */
+/*	$NetBSD: installboot.c,v 1.2 1998/06/26 12:29:29 tsubai Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -55,6 +55,10 @@ char	*boot, *proto, *dev;
 
 #define BOOTSECTOR_OFFSET 2048
 
+#ifndef DEFAULT_ENTRY
+#define DEFAULT_ENTRY 0x6c0000
+#endif
+
 struct nlist nl[] = {
 #define X_BLOCKTABLE	0
 	{"_block_table"},
@@ -62,12 +66,15 @@ struct nlist nl[] = {
 	{"_block_count"},
 #define X_BLOCKSIZE	2
 	{"_block_size"},
+#define X_ENTRY_POINT	3
+	{"_entry_point"},
 	{NULL}
 };
 
 daddr_t	*block_table;		/* block number array in prototype image */
 int32_t	*block_count_p;		/* size of this array */
 int32_t	*block_size_p;		/* filesystem block size */
+int32_t	*entry_point_p;		/* entry point */
 int32_t	max_block_count;
 
 char		*loadprotoblocks __P((char *, long *));
@@ -232,6 +239,7 @@ loadprotoblocks(fname, size)
 	block_table = (daddr_t *)(bp + nl[X_BLOCKTABLE].n_value + off);
 	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value + off);
 	block_size_p = (int32_t *)(bp + nl[X_BLOCKSIZE].n_value + off);
+	entry_point_p = (int32_t *)(bp + nl[X_ENTRY_POINT].n_value + off);
 
 	if ((int)block_table & 3) {
 		warn("%s: invalid address: block_table = %x",
@@ -254,10 +262,17 @@ loadprotoblocks(fname, size)
 		close(fd);
 		return NULL;
 	}
+	if ((int)entry_point_p & 3) {
+		warn("%s: invalid address: entry_point_p = %x",
+		     fname, entry_point_p);
+		free(bp);
+		close(fd);
+		return NULL;
+	}
 	max_block_count = *block_count_p;
 
 	if (verbose) {
-		printf("proto bootblock size %ld\n", sz);
+		printf("proto bootblock size: %ld\n", sz);
 	}
 
 	/*
@@ -359,6 +374,13 @@ int	devfd;
 	 * Register block count.
 	 */
 	*block_count_p = ndb;
+
+	/*
+	 * Register entry point.
+	 */
+	*entry_point_p = DEFAULT_ENTRY;
+	if (verbose)
+		printf("entry point: 0x%08x\n", *entry_point_p);
 
 	if (verbose)
 		printf("%s: block numbers: ", boot);

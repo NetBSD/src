@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.1 1998/06/12 21:07:24 tsubai Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.2 1998/06/26 12:29:28 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,12 +37,12 @@
 int (*openfirmware)(void *);
 int stack[1024];
 
-#define MAXBLOCKNUM 16
+#define MAXBLOCKNUM 32
 
 int block_size = 0;
 int block_count = MAXBLOCKNUM;
 int block_table[MAXBLOCKNUM] = { 0 };
-void (*entry)(void *) = (void *)0x3e0000;
+void (*entry_point)(int, int, void *) = (void *)0;
 
 asm("
 	.text
@@ -269,7 +269,7 @@ startup(arg1, arg2, openfirm)
 
 	fd = OF_open(bootpath);
 
-	addr = (char *)entry;
+	addr = (char *)entry_point;
 	for (i = 0; i < block_count; i++) {
 		blk = block_table[i];
 
@@ -289,7 +289,7 @@ startup(arg1, arg2, openfirm)
 		isync
 	" :: "r"(BATU(0)), "r"(BATL(0, 0)));
 
-	entry(openfirm);
+	entry_point(0, 0, openfirm);
 
 	OF_exit();
 	for (;;);
