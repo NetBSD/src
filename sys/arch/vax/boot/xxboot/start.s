@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.2 1999/10/23 14:40:38 ragge Exp $ */
+/*	$NetBSD: start.s,v 1.3 2000/05/20 13:21:29 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -64,19 +64,21 @@ _start:	.globl _start		# this is the symbolic name for the start
 	brb	from_0x0A	# skip ...
 
 .org	0x0C			# 11/750  & 8200 starts here
+	movzbl	$1,_from	# We booted from "old" rom.
 	brw	cont_750
 
 
 from_0x00:			# uVAX from TK50 
 from_0x0A:			# uVAX from disk
-	brw	start_uvax	# all(?) uVAXen continue there
+	movzbl	$2,_from	# Booted from subset-VMB
+	brw	start_uvax	# all uVAXen continue there
 
-from_0x08:			# What comes here???
-	halt
+from_0x08:			# Any machine from VMB
+	movzbl	$4,_from		# Booted from full VMB
+	halt			# Can't handle this...
 
-.org	LABELOFFSET - 6
-regmask: 	.word 0x0fff	# using a variable saves 3 bytes !!!
-bootinfo:	.long 0x0	# another 3 bytes if within byte-offset
+_from:	.long	0		# boot prog type
+	.globl	_from
 
 # the complete area reserved for label
 # must be empty (i.e. filled with zeroes).
@@ -130,28 +132,25 @@ bootinfo:	.long 0x0	# another 3 bytes if within byte-offset
  */
 	.align 2
 cont_750:
-        movl    r0,r10
-        movl    r5, ap	# ap not used here
-        clrl    r5
-        clrl    r4
-        movl    $_start,sp
-1:      incl    r4
-        movl    r4,r8
-        addl2   $0x200,r5
-        cmpl    $16,r4
-        beql    2f
-        pushl   r5
-        jsb     (r6)
-        blbs    r0,1b
-2:      movl	r10, r0
-	movl	r11, r5
-	brw	start_all
+	pushr	$0x131		# save clobbered registers
+	clrl	r4		# r4 == # of blocks transferred
+	movab	_start,r5	# r5 have base address for next transfer
+	pushl	r5		# ...on stack also (Why?)
+1:	incl	r4		# increment block count
+	movl	r4,r8		# LBN is in r8 for rom routine
+	addl2	$0x200,r5	# Increase address for next read
+	cmpl	$16,r4		# read 15 blocks?
+	beql	2f		# Yep
+	movl	r5,(sp)		# move address to stack also
+	jsb	(r6)		# read 512 bytes
+	blbs	r0,1b		# jump if read succeeded
+	halt			# otherwise die...
+2:	tstl	(sp)+		# remove boring arg from stack
+	popr	$0x131		# restore clobbered registers
+	brw	start_all	# Ok, continue...
 
 
 start_uvax:
-	mtpr	$0, $PR_MAPEN	# Turn off MM, please.
-	movl    $_start, sp
-	movl	48(r11), ap
 	brb	start_all
 
 /*
@@ -159,7 +158,8 @@ start_uvax:
  * to RELOC and loads boot.
  */
 start_all:
-	pushr	$0xfff			# save all regs, used later.
+	movl	$_start, sp		# move stack to a better 
+	pushr	$0x1fff			# save all regs, used later.
 
 	subl3	$_start, $_edata, r0	# get size of text+data (w/o bss)
 	moval	_start, r1		# get actual base-address of code
@@ -167,11 +167,11 @@ start_all:
 	movl	$_start, r3		# get relocated base-address of code
 	movc5	r0, (r1), $0, r2, (r3)	# copy code to new location
 	
+	movpsl	-(sp)
 	movl	$relocated, -(sp)	# return-address on top of stack 
-	rsb	 			# can be replaced with new address
+	rei	 			# can be replaced with new address
 relocated:				# now relocation is done !!!
 	movl	sp, _bootregs
-	movl	ap, _boothowto
 	calls	$0, _Xmain		# call Xmain (gcc workaround)which is 
 	halt				# not intended to return ...
 
@@ -180,13 +180,18 @@ relocated:				# now relocation is done !!!
  */
 ENTRY(hoppabort, 0)
 	movl    4(ap),r6
-	movl    8(ap),r11
-	movl    0xc(ap),r10
-	movl	_memsz, r8
-	mnegl	$1, ap		# Hack to figure out boot device.
+	movl	_rpb,r11
+	mnegl	$1,ap		# Hack to figure out boot device.
 	jmp	2(r6)
 #	calls   $0,(r6)
 	halt
+
+ENTRY(unit_init, R6|R7|R8|R9|R10|R11)
+	movl	4(ap),r0		# init routine address
+	movl	8(ap),r9		# RPB in r9
+	movl	12(ap),r1		# VMB argument list
+	callg	(r1),(r0)
+	ret
 
 # A bunch of functions unwanted in boot blocks.
 ENTRY(getchar, 0)
