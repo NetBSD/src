@@ -1,7 +1,7 @@
-/* $NetBSD: mfb.c,v 1.14 1999/06/24 03:51:14 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.15 1999/06/25 03:33:20 nisimura Exp $ */
 
 /*
- * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
+ * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.14 1999/06/24 03:51:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.15 1999/06/25 03:33:20 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.14 1999/06/24 03:51:14 nisimura Exp $");
 #define	bt_ram	2
 #define	bt_ctl	3
 
-#define BT455_SELECT(vdac, regno) do {	\
+#define SELECT455(vdac, regno) do {	\
 	BYTE(vdac, bt_reg) = (regno);	\
 	BYTE(vdac, bt_clr) = 0;		\
 	tc_wmb();			\
@@ -84,11 +84,11 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.14 1999/06/24 03:51:14 nisimura Exp $");
 #define	TWIN_LO(x) (twin = (x) & 0x00ff, twin << 8 | twin)
 #define	TWIN_HI(x) (twin = (x) & 0xff00, twin | twin >> 8)
 
-#define	BT431_SELECT(curs, regno) do {	\
+#define	SELECT431(curs, regno) do {	\
 	HALF(curs, bt_lo) = TWIN(regno);\
 	HALF(curs, bt_hi) = 0;		\
 	tc_wmb();			\
-   } while (0);
+   } while (0)
 
 
 struct fb_devconfig {
@@ -319,8 +319,7 @@ mfbattach(parent, self, aux)
 		    malloc(sizeof(struct fb_devconfig), M_DEVBUF, M_WAITOK);
 		mfb_getdevconfig(ta->ta_addr, sc->sc_dc);
 	}
-	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
-	    sc->sc_dc->dc_depth);
+	printf(": %d x %d, 1bpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht);
 
 	sc->sc_cursor.cc_magic.x = MX_MAGIC_X;
 	sc->sc_cursor.cc_magic.y = MX_MAGIC_Y;
@@ -374,7 +373,11 @@ mfbioctl(v, cmd, data, flag, p)
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
 		if ((dc->dc_blanked == 0) ^ turnoff) {
 			dc->dc_blanked = turnoff;
-			/* XXX later XXX */
+#if 0	/* XXX later XXX */
+	To turn off,
+	- assign Bt455 cmap[1].green with value 0 (black),
+	- assign Bt431 register #0 with value 0x04 to hide sprite cursor.
+#endif	/* XXX XXX XXX */
 		}
 		return (0);
 
@@ -503,13 +506,13 @@ mfbintr(arg)
 	v = sc->sc_changed;
 	sc->sc_changed = 0;	
 	if (v & DATA_ENB_CHANGED) {
-		BT431_SELECT(curs, BT431_REG_COMMAND);
+		SELECT431(curs, BT431_REG_COMMAND);
 		HALF(curs, bt_ctl) = (sc->sc_curenb) ? 0x4444 : 0x0404;
 	}
 	if (v & DATA_CURCMAP_CHANGED) {
 		u_int8_t *cp = sc->sc_cursor.cc_color;
 
-		BT455_SELECT(vdac, 8);
+		SELECT455(vdac, 8);
 		BYTE(vdac, bt_cmap) = 0;	tc_wmb();
 		BYTE(vdac, bt_cmap) = cp[1];	tc_wmb();
 		BYTE(vdac, bt_cmap) = 0;	tc_wmb();
@@ -529,7 +532,7 @@ mfbintr(arg)
 		ip = (u_int8_t *)sc->sc_cursor.cc_image;
 		mp = (u_int8_t *)(sc->sc_cursor.cc_image + CURSOR_MAX_SIZE);
 		bcnt = 0;
-		BT431_SELECT(curs, BT431_REG_CRAM_BASE);
+		SELECT431(curs, BT431_REG_CRAM_BASE);
 
 		/* 64 pixel scan line is consisted with 16 byte cursor ram */
 		while (bcnt < sc->sc_cursor.cc_size.y * 16) {
@@ -567,7 +570,7 @@ mfbinit(dc)
 	void *vdac = (void *)(mfbbase + MX_BT455_OFFSET);
 	int i;
 
-	BT431_SELECT(curs, BT431_REG_COMMAND);
+	SELECT431(curs, BT431_REG_COMMAND);
 	HALF(curs, bt_ctl) = 0x0404;		tc_wmb();
 	HALF(curs, bt_ctl) = 0; /* XLO */	tc_wmb();
 	HALF(curs, bt_ctl) = 0; /* XHI */	tc_wmb();
@@ -583,7 +586,7 @@ mfbinit(dc)
 	HALF(curs, bt_ctl) = 0; /* WHHI */	tc_wmb();
 
 	/* 0: black, 1: white, 8,9: cursor mask, ovly: cursor image */
-	BT455_SELECT(vdac, 0);
+	SELECT455(vdac, 0);
 	BYTE(vdac, bt_cmap) = 0; 		tc_wmb();
 	BYTE(vdac, bt_cmap) = 0; 		tc_wmb();
 	BYTE(vdac, bt_cmap) = 0;		tc_wmb();
@@ -599,7 +602,7 @@ mfbinit(dc)
 	BYTE(vdac, bt_ovly) = 0xff;	tc_wmb();
 	BYTE(vdac, bt_ovly) = 0;	tc_wmb();
 
-	BT431_SELECT(curs, BT431_REG_CRAM_BASE);
+	SELECT431(curs, BT431_REG_CRAM_BASE);
 	for (i = 0; i < 512; i++) {
 		HALF(curs, bt_ram) = 0;	tc_wmb();
 	}
@@ -704,7 +707,7 @@ bt431_set_curpos(sc)
 
 	s = spltty();
 
-	BT431_SELECT(curs, BT431_REG_CURSOR_X_LOW);
+	SELECT431(curs, BT431_REG_CURSOR_X_LOW);
 	HALF(curs, bt_ctl) = TWIN_LO(x);	tc_wmb();
 	HALF(curs, bt_ctl) = TWIN_HI(x);	tc_wmb();
 	HALF(curs, bt_ctl) = TWIN_LO(y);	tc_wmb();
