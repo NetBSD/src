@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.366 2001/06/13 15:18:28 simonb Exp $
+# $NetBSD: mi,v 1.367 2001/06/13 21:05:01 bjh21 Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -576,6 +576,7 @@
 ./usr/share/man/cat4/gsip.0			man-sys-catman
 ./usr/share/man/cat4/gus.0			man-sys-catman
 ./usr/share/man/cat4/guspnp.0			man-sys-catman
+./usr/share/man/cat4/hcide.0			man-sys-catman
 ./usr/share/man/cat4/hme.0			man-sys-catman
 ./usr/share/man/cat4/hp300/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/hp300/cons.0		man-sys-catman
@@ -2110,6 +2111,7 @@
 ./usr/share/man/man4/gsip.4			man-sys-man
 ./usr/share/man/man4/gus.4			man-sys-man
 ./usr/share/man/man4/guspnp.4			man-sys-man
+./usr/share/man/man4/hcide.4			man-sys-man
 ./usr/share/man/man4/hme.4			man-sys-man
 ./usr/share/man/man4/hp300/autoconf.4		man-sys-man
 ./usr/share/man/man4/hp300/cons.4		man-sys-man
