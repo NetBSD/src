@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.271 2001/08/06 06:51:10 garbled Exp $
+# $NetBSD: mi,v 1.272 2001/08/17 07:23:03 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1120,6 +1120,7 @@
 ./usr/share/man/cat4/pc532			base-man-share
 ./usr/share/man/cat4/pmax			base-man-share
 ./usr/share/man/cat4/sparc			base-man-share
+./usr/share/man/cat4/sun2			base-man-share
 ./usr/share/man/cat4/sun3			base-man-share
 ./usr/share/man/cat4/vax			base-man-share
 ./usr/share/man/cat4/x68k			base-man-share
@@ -1197,6 +1198,7 @@
 ./usr/share/man/man4/pc532		base-man-share
 ./usr/share/man/man4/pmax		base-man-share
 ./usr/share/man/man4/sparc		base-man-share
+./usr/share/man/man4/sun2		base-man-share
 ./usr/share/man/man4/sun3		base-man-share
 ./usr/share/man/man4/vax		base-man-share
 ./usr/share/man/man4/x68k		base-man-share
