@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.31 1997/06/15 17:58:59 mhitch Exp $	*/
+/*	$NetBSD: dc.c,v 1.32 1997/06/16 02:53:38 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,6 +62,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
@@ -73,16 +74,16 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
-#include <machine/conf.h>
-#include <sys/device.h>
 #include <machine/autoconf.h>
+#include <machine/conf.h>
+#include <machine/bus.h>			/*  wbflush() */
+
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
 
 #include <machine/dc7085cons.h>
 #include <machine/pmioctl.h>
 
-#include <machine/locore.h>	/* XXX wbflush() */
 
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
