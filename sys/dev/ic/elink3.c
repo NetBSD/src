@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.70 2000/02/02 08:41:00 augustss Exp $	*/
+/*	$NetBSD: elink3.c,v 1.71 2000/02/02 08:57:51 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -520,7 +520,7 @@ epconfig(sc, chipset, enaddr)
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
 
 	/*  Establish callback to reset card when we reboot. */
-	sc->shutdown_hook = shutdownhook_establish(epshutdown, sc);
+	sc->sd_hook = shutdownhook_establish(epshutdown, sc);
 
 	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
 	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
@@ -2111,12 +2111,12 @@ ep_activate(self, act)
 {
 	struct ep_softc *sc = (struct ep_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int rv = 0, s;
+	int error = 0, s;
 
 	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
+		error = EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:
@@ -2124,7 +2124,7 @@ ep_activate(self, act)
 		break;
 	}
 	splx(s);
-	return (rv);
+	return (error);
 }
 
 int
@@ -2137,6 +2137,9 @@ ep_detach(self, flags)
 
 	epdisable(sc);
 
+	untimeout(ep_tick, sc);
+	untimeout(epmbuffill, sc);
+
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 #if NBPFILTER > 0
 	bpfdetach(ifp);
@@ -2144,7 +2147,7 @@ ep_detach(self, flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	shutdownhook_disestablish(sc->shutdown_hook);
+	shutdownhook_disestablish(sc->sd_hook);
 
 	return (0);
 }
