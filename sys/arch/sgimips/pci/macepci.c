@@ -1,4 +1,4 @@
-/*	$NetBSD: macepci.c,v 1.16 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: macepci.c,v 1.17 2004/01/18 00:50:08 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macepci.c,v 1.16 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macepci.c,v 1.17 2004/01/18 00:50:08 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: macepci.c,v 1.16 2003/11/17 10:07:58 keihan Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-
-#include <sgimips/dev/crimereg.h>
 
 #include <sgimips/dev/macereg.h>
 #include <sgimips/dev/macevar.h>
