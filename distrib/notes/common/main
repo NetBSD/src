@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.29 2000/07/01 17:58:07 he Exp $
+.\" $NetBSD: main,v 1.6.2.30 2000/07/01 20:31:42 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -186,9 +186,9 @@ The Macontosh LC Ethernet Adapter is now supported.
 .It
 Fixes to the Alteon Gigabit ethernet driver,
 .Xr ti 4 ,
-has been imported.
+have been imported.
 .It
-The i386 port can now be installed on wd2 or wd3.
+The i386 port can now be installed also on wd2 or wd3.
 .It
 A possible CPU hog problem related to large I/Os has been fixed.
 Fixes SA#2000-005.
@@ -213,7 +213,7 @@ The following are the major known issues with
 .Bl -bullet
 .It
 .Tn PCMCIA
-support may require hand adjustment to function properly.
+support may require manual adjustment to function properly.
 See
 .Sx Possible Tn PCMCIA Sx issues
 under
