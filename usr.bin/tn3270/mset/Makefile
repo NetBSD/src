@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/usr.bin/tn3270/mset/Attic/Makefile,v 1.3 1993/04/27 07:00:41 cgd Exp $
+# $Header: /cvsroot/src/usr.bin/tn3270/mset/Attic/Makefile,v 1.4 1993/04/27 09:51:52 cgd Exp $
 
 .include <../../Makefile.inc>
 
@@ -12,7 +12,7 @@ SRCS += astosc.c map3270.c mset.c
 # this and the dependency hacks below to make 'depend' target
 # work right...
 
-DEPSRCS += astosc.OUT
+DEPSRCS += astosc.OUT map3270.c mset.c
 
 PROG = mset
 
@@ -32,7 +32,7 @@ ${.CURDIR}/../tools/mkastosc/obj/mkastosc:
 
 
 depend: .depend
-.depend: ${SRCS} ${DEPSRCS}
+.depend: ${DEPSRCS}
 	mkdep ${MKDEP} ${CFLAGS:M-[ID]*} ${.ALLSRC:M*.c}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/usr.bin/tn3270/tn3270/Attic/Makefile,v 1.2 1993/04/27 06:47:39 cgd Exp $
+# $Header: /cvsroot/src/usr.bin/tn3270/tn3270/Attic/Makefile,v 1.3 1993/04/27 09:52:01 cgd Exp $
 
 .include <../../Makefile.inc>
 
@@ -20,6 +20,13 @@ SRCS += tn3270.c utilities.c
 # work right...
 
 DEPSRCS += astosc.OUT asc_disp.OUT disp_asc.OUT kbd.OUT
+DEPSRCS += apilib.c api_bsd.c api_exch.c asc_ebc.c dctype.c
+DEPSRCS += ebc_disp.c
+DEPSRCS += map3270.c termin.c
+DEPSRCS += api.c function.c inbound.c oia.c options.c outbound.c
+DEPSRCS += genbsubs.c globals.c system.c termout.c
+DEPSRCS += commands.c main.c network.c ring.c sys_bsd.c telnet.c terminal.c
+DEPSRCS += tn3270.c utilities.c
 
 PROG = tn3270
 
@@ -66,7 +73,7 @@ ${.CURDIR}/../tools/mkhits/obj/mkhits:
 
 
 depend: .depend
-.depend: ${SRCS} ${DEPSRCS}
+.depend: ${DEPSRCS}
 	mkdep ${MKDEP} ${CFLAGS:M-[ID]*} ${.ALLSRC:M*.c}
 
 .include <bsd.prog.mk>
