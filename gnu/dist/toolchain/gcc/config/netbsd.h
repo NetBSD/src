@@ -32,7 +32,7 @@
 #undef STANDARD_STARTFILE_PREFIX
 #define STANDARD_STARTFILE_PREFIX	"/usr/lib/"
 
-#endif
+#endif /* NETBSD_NATIVE */
 
 
 /* Provide a CPP_SPEC appropriate for NetBSD.  Current we just deal with
@@ -143,145 +143,6 @@
 #define ASM_DECLARE_RESULT(FILE, RESULT)
 #endif
 
-/* These macros generate the special .type and .size directives which
-   are used to set the corresponding fields of the linker symbol table
-   entries in an ELF object file under SVR4.  These macros also output
-   the starting labels for the relevant functions/objects.  */
-
-/* XXX.  This is WRONG for alpha.  Needs to be verified on other ELF ports. */
-#ifndef NETBSD_ELF
-
-/* XXX.  This is WRONG for alpha.  Needs to be verified on other ELF ports. */
-#ifndef NETBSD_ELF
-
-/* Write the extra assembler code needed to declare a function properly.
-   Some svr4 assemblers need to also have something extra said about the
-   function's return value.  We allow for that here.  */
-
-#undef ASM_DECLARE_FUNCTION_NAME
-#define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)			\
-  do {									\
-    fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
-    assemble_name (FILE, NAME);						\
-    putc (',', FILE);							\
-    fprintf (FILE, TYPE_OPERAND_FMT, "function");			\
-    putc ('\n', FILE);							\
-    ASM_DECLARE_RESULT (FILE, DECL_RESULT (DECL));			\
-    ASM_OUTPUT_LABEL(FILE, NAME);					\
-  } while (0)
-
-/* Write the extra assembler code needed to declare an object properly.  */
-
-#undef ASM_DECLARE_OBJECT_NAME
-#define ASM_DECLARE_OBJECT_NAME(FILE, NAME, DECL)			\
-  do {									\
-    fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
-    assemble_name (FILE, NAME);						\
-    putc (',', FILE);							\
-    fprintf (FILE, TYPE_OPERAND_FMT, "object");				\
-    putc ('\n', FILE);							\
-    size_directive_output = 0;						\
-    if (!flag_inhibit_size_directive && DECL_SIZE (DECL))		\
-      {									\
-	size_directive_output = 1;					\
-	fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
-	assemble_name (FILE, NAME);					\
-	fprintf (FILE, ",%d\n",  int_size_in_bytes (TREE_TYPE (DECL)));	\
-      }									\
-    ASM_OUTPUT_LABEL(FILE, NAME);					\
-  } while (0)
-
-/* Output the size directive for a decl in rest_of_decl_compilation
-   in the case where we did not do so before the initializer.
-   Once we find the error_mark_node, we know that the value of
-   size_directive_output was set
-   by ASM_DECLARE_OBJECT_NAME when it was run for the same decl.  */
-
-#undef ASM_FINISH_DECLARE_OBJECT
-#define ASM_FINISH_DECLARE_OBJECT(FILE, DECL, TOP_LEVEL, AT_END)	 \
-do {									 \
-     char *name = XSTR (XEXP (DECL_RTL (DECL), 0), 0);			 \
-     if (!flag_inhibit_size_directive && DECL_SIZE (DECL)		 \
-         && ! AT_END && TOP_LEVEL					 \
-	 && DECL_INITIAL (DECL) == error_mark_node			 \
-	 && !size_directive_output)					 \
-       {								 \
-	 size_directive_output = 1;					 \
-	 fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);			 \
-	 assemble_name (FILE, name);					 \
-	 fprintf (FILE, ",%d\n",  int_size_in_bytes (TREE_TYPE (DECL))); \
-       }								 \
-   } while (0)
-
-/* This is how to declare the size of a function.  */
-
-#undef ASM_DECLARE_FUNCTION_SIZE
-#define ASM_DECLARE_FUNCTION_SIZE(FILE, FNAME, DECL)			\
-  do {									\
-    if (!flag_inhibit_size_directive)					\
-      {									\
-        char label[256];						\
-	static int labelno;						\
-	labelno++;							\
-	ASM_GENERATE_INTERNAL_LABEL (label, "Lfe", labelno);		\
-	ASM_OUTPUT_INTERNAL_LABEL (FILE, "Lfe", labelno);		\
-	fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
-	assemble_name (FILE, (FNAME));					\
-        fprintf (FILE, ",");						\
-	assemble_name (FILE, label);					\
-        fprintf (FILE, "-");						\
-	assemble_name (FILE, (FNAME));					\
-	putc ('\n', FILE);						\
-      }									\
-  } while (0)
-
-#endif
-
-/* ELF ports */
-
-#ifdef NETBSD_ELF
-
-/* Provide a STARTFILE_SPEC appropriate for NetBSD ELF targets.  Here we
-   provide support for the special GCC option -static.  On ELF targets,
-   we also add the crtbegin.o file which provides part of the support
-   for getting C++ file-scope static objects constructed before entering
-   `main'. */
-
-#undef STARTFILE_SPEC
-#define	STARTFILE_SPEC \
- "%{!shared: \
-     %{pg:gcrt0%O%s} \
-     %{!pg: \
-        %{p:gcrt0%O%s} \
-        %{!p:crt0%O%s}}} \
-   %{!shared:crtbegin%O%s} %{shared:crtbeginS%O%s}"
-
-/* Provide an ENDFILE_SPEC approrpiate for NetBSD ELF targets.  Here we
-   add crtend.o, which provides part of the support for getting C++
-   file-scope static objects deconstructed after exiting `main'. */
-
-#undef ENDFILE_SPEC
-#define	ENDFILE_SPEC \
- "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
-
-/* Provide a LINK_SPEC appropriate for a NetBSD ELF target.  */
-
-#undef LINK_SPEC
-#define	LINK_SPEC \
- "%{assert*} \
-  %{shared:-shared} \
-  %{!shared: \
-    -dc -dp \
-    %{!nostdlib:%{!r*:%{!e*:-e __start}}} \
-    %{!static: \
-      %{rdynamic:-export-dynamic} \
-      %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
-    %{static:-static}}"
-
-#endif /* NETBSD_ELF */
-
-#endif /* ! NETBSD_ELF */
-
 /* NetBSD ELF support begins here. */
 
 #ifdef NETBSD_ELF
@@ -325,5 +186,97 @@ do {									 \
       %{rdynamic:-export-dynamic} \
       %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
     %{static:-static}}"
+
+/* These macros generate the special .type and .size directives which
+   are used to set the corresponding fields of the linker symbol table
+   entries in an ELF object file under SVR4.  These macros also output
+   the starting labels for the relevant functions/objects.  */
+
+/* Write the extra assembler code needed to declare a function properly.
+   Some svr4 assemblers need to also have something extra said about the
+   function's return value.  We allow for that here.  */
+
+#undef ASM_DECLARE_FUNCTION_NAME
+#define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)			\
+  do {									\
+    fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
+    assemble_name (FILE, NAME);						\
+    putc (',', FILE);							\
+    fprintf (FILE, TYPE_OPERAND_FMT, "function");			\
+    putc ('\n', FILE);							\
+    ASM_DECLARE_RESULT (FILE, DECL_RESULT (DECL));			\
+    ASM_OUTPUT_LABEL(FILE, NAME);					\
+  } while (0)
+
+/* Write the extra assembler code needed to declare an object properly.  */
+
+#undef ASM_DECLARE_OBJECT_NAME
+#define ASM_DECLARE_OBJECT_NAME(FILE, NAME, DECL)			\
+  do {									\
+    fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
+    assemble_name (FILE, NAME);						\
+    putc (',', FILE);							\
+    fprintf (FILE, TYPE_OPERAND_FMT, "object");				\
+    putc ('\n', FILE);							\
+    size_directive_output = 0;						\
+    if (!flag_inhibit_size_directive && DECL_SIZE (DECL))		\
+      {									\
+	size_directive_output = 1;					\
+	fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
+	assemble_name (FILE, NAME);					\
+	putc (',', FILE);						\
+	fprintf (FILE, HOST_WIDE_INT_PRINT_DEC,				\
+		 int_size_in_bytes (TREE_TYPE (DECL)));			\
+	fputc ('\n', FILE);						\
+      }									\
+    ASM_OUTPUT_LABEL(FILE, NAME);					\
+  } while (0)
+
+/* Output the size directive for a decl in rest_of_decl_compilation
+   in the case where we did not do so before the initializer.
+   Once we find the error_mark_node, we know that the value of
+   size_directive_output was set
+   by ASM_DECLARE_OBJECT_NAME when it was run for the same decl.  */
+
+#undef ASM_FINISH_DECLARE_OBJECT
+#define ASM_FINISH_DECLARE_OBJECT(FILE, DECL, TOP_LEVEL, AT_END)	\
+do {									\
+  char *name = XSTR (XEXP (DECL_RTL (DECL), 0), 0);			\
+  if (!flag_inhibit_size_directive && DECL_SIZE (DECL)			\
+      && ! AT_END && TOP_LEVEL						\
+      && DECL_INITIAL (DECL) == error_mark_node				\
+      && !size_directive_output)					\
+    {									\
+      size_directive_output = 1;					\
+      fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
+      assemble_name (FILE, name);					\
+      putc (',', FILE);							\
+      fprintf (FILE, HOST_WIDE_INT_PRINT_DEC,				\
+	       int_size_in_bytes (TREE_TYPE (DECL)));			\
+      fputc ('\n', FILE);						\
+    }									\
+} while (0)
+
+/* This is how to declare the size of a function.  */
+
+#undef ASM_DECLARE_FUNCTION_SIZE
+#define ASM_DECLARE_FUNCTION_SIZE(FILE, FNAME, DECL)			\
+  do {									\
+    if (!flag_inhibit_size_directive)					\
+      {									\
+	char label[256];						\
+	static int labelno;						\
+	labelno++;							\
+	ASM_GENERATE_INTERNAL_LABEL (label, "Lfe", labelno);		\
+	ASM_OUTPUT_INTERNAL_LABEL (FILE, "Lfe", labelno);		\
+	fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
+	assemble_name (FILE, (FNAME));					\
+	fprintf (FILE, ",");						\
+	assemble_name (FILE, label);					\
+	fprintf (FILE, "-");						\
+	assemble_name (FILE, (FNAME));					\
+	putc ('\n', FILE);						\
+      }									\
+  } while (0)
 
 #endif /* NETBSD_ELF */
