@@ -1,4 +1,4 @@
-/*     $NetBSD: bus.h,v 1.5 2000/03/15 16:44:49 drochner Exp $   */
+/*     $NetBSD: bus.h,v 1.6 2000/03/25 15:04:33 uch Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -595,6 +595,8 @@ struct hpcmips_bus_dma_tag {
 	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
 	int	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
 		    int, int, int, int));
+
+	void	*_dmamap_chipset_v;
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
