@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.6 1995/04/21 01:24:26 mellon Exp $	*/
+/*	$NetBSD: dtop.c,v 1.7 1995/08/10 04:21:39 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -108,6 +108,9 @@ SOFTWARE.
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
+#include <sys/device.h>
+#include <machine/autoconf.h>
+
 #include <machine/pmioctl.h>
 #include <machine/machConst.h>
 #include <machine/dc7085cons.h>
@@ -170,6 +173,7 @@ struct dtop_softc {
 typedef struct dtop_softc *dtop_softc_t;
 struct tty *dtop_tty[NDTOP];
 
+
 /*
  * lk201 keyboard divisions and up/down mode key bitmap.
  */
@@ -183,31 +187,87 @@ static u_char divend[NUMDIVS] = {0xff, 0xa5, 0xbc, 0xbe, 0xb2, 0xaf, 0xa8,
  */
 static u_long keymodes[8] = {0, 0, 0, 0, 0, 0x0003e000, 0, 0};
 
+
+
 /*
- * Definition of the driver for the auto-configuration program.
+ * Autoconfiguration data for config.new.
+ * Use the statically-allocated softc until old autoconfig code and
+ * config.old are completely gone.
+ * 
  */
-int	dtopprobe();
-void	dtopintr();
-struct	driver dtopdriver =  {
-	"dtop", dtopprobe, 0, 0, dtopintr,
+int  dtopmatch  __P((struct device * parent, void *cfdata, void *aux));
+void dtopattach __P((struct device *parent, struct device *self, void *aux));
+void dtopintr	__P((int unit));
+
+int dtop_doprobe __P((void *addr, int unit, int pri));
+
+extern struct cfdriver dtopcd;
+struct  cfdriver dtopcd = {
+	NULL, "dtop", dtopmatch, dtopattach, DV_DULL, sizeof(struct device), 0
 };
 
-dtopprobe(cp)
-	struct pmax_ctlr *cp;
+/*
+ * match driver based on name
+ */
+int
+dtopmatch(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct cfdata *cf = match;
+	struct confargs *ca = aux;
+
+	static int nunits = 0;
+
+	if (!BUS_MATCHNAME(ca, "dtop"))
+		return (0);
+
+	/*
+	 * Use statically-allocated softc and attach code until
+	 * old config is completely gone.  Don't  over-run softc.
+	 */
+	if (nunits > NDTOP) {
+		printf("dtop: too many units for old config\n");
+		return (0);
+	}
+	nunits++;
+	return (1);
+}
+
+void
+dtopattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+
+	(void) dtop_doprobe((void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca)),
+			   self->dv_unit, ca->ca_slot);
+
+	/* tie pseudo-slot to device */
+	BUS_INTR_ESTABLISH(ca, dtopintr, self->dv_unit);
+	printf("\n");
+}
+
+dtop_doprobe(addr, unit, priority)
+	void *addr;
+	int unit, priority;
 {
 	register struct tty *tp;
 	register int cntr;
-	int dtopunit = cp->pmax_unit, i, s;
+	int i, s;
 	dtop_softc_t dtop;
 
-	if (dtopunit >= NDTOP)
+	if (unit >= NDTOP)
 		return (0);
-	if (badaddr(cp->pmax_addr, 2))
+	if (badaddr(addr, 2))
 		return (0);
-	dtop = &dtop_softc[dtopunit];
+	dtop = &dtop_softc[unit];
 
 	dtop->poll = (poll_reg_t)MACH_PHYS_TO_UNCACHED(XINE_REG_INTR);
-	dtop->data = (data_reg_t)cp->pmax_addr;
+	dtop->data = (data_reg_t)addr;
 
 	for (i = 0; i < DTOP_MAX_DEVICES; i++)
 		dtop->device[i].handler = dtop_null_device_handler;
@@ -220,7 +280,7 @@ dtopprobe(cp)
 
 	dtop->probed_once = 1;
 	printf("dtop%d at nexus0 csr 0x%x priority %d\n",
-		cp->pmax_unit, cp->pmax_addr, cp->pmax_pri);
+		unit, addr, priority);
 	return (1);
 }
 

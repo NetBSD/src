@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.5 1995/04/10 07:31:22 mycroft Exp $	*/
+/*	$NetBSD: pm.c,v 1.6 1995/08/10 04:21:44 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,6 +74,9 @@ pm needs dc device
 
 #include <vm/vm.h>
 
+#include <sys/device.h>
+#include <machine/autoconf.h>
+
 #include <machine/machConst.h>
 #include <machine/dc7085cons.h>
 #include <machine/pmioctl.h>
@@ -96,14 +99,15 @@ static u_short curReg;		/* copy of PCCRegs.cmdr since it's read only */
 /*
  * Forward references.
  */
-static void pmScreenInit();
-static void pmLoadCursor();
-static void pmRestoreCursorColor();
-static void pmCursorColor();
-void pmPosCursor();
-static void pmInitColorMap();
+static void pmScreenInit __P(());
+static void pmLoadCursor __P((u_short *ptr));
+static void pmRestoreCursorColor __P(());
+static void pmCursorColor __P((u_int *color));
+void pmPosCursor __P((int x, int y));
+static void pmInitColorMap __P(());
+static void pmLoadColorMap __P ((ColorMap *ptr));
+
 static void pmVDACInit();
-static void pmLoadColorMap();
 
 void pmKbdEvent(), pmMouseEvent(), pmMouseButtons();
 extern void dcPutc();
@@ -114,30 +118,55 @@ extern int pmax_boardtype;
 extern u_short defCursor[32];
 extern struct consdev cn_tab;
 
-int	pmprobe();
-struct	driver pmdriver = {
-	"pm", pmprobe, 0, 0,
+/*
+ * Autoconfiguration data for config.new.
+ * Use static-sized softc until config.old and old autoconfig
+ * code is completely gone.
+ */
+
+int pmmatch __P((struct device *, void *, void *));
+void pmattach __P((struct device *, struct device *, void *));
+
+struct cfdriver pmcd = {
+	NULL, "pm", pmmatch, pmattach, DV_DULL, sizeof(struct device), 0
 };
 
-/*
- * Test to see if device is present.
- * Return true if found and initialized ok.
- */
-/*ARGSUSED*/
-pmprobe(cp)
-	register struct pmax_ctlr *cp;
+int
+pmmatch(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
 {
-	register struct pmax_fb *fp = &pmfb;
+	struct cfdata *cf = match;
+	struct confargs *ca = aux;
+	static int npms = 1;
 
-	if (pmax_boardtype != DS_PMAX)
+	/* make sure that we're looking for this type of device. */
+	if (!BUS_MATCHNAME(ca, "pm"))
 		return (0);
-	if (!fp->initialized && !pminit())
+
+#ifdef notyet
+	/* if it can't have the one mentioned, reject it */
+	if (cf->cf_unit >= npms)
 		return (0);
-	if (fp->isMono)
-		printf("pm0 (monochrome display)\n");
-	else
-		printf("pm0 (color display)\n");
+#endif
 	return (1);
+}
+
+void
+pmattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct confargs *ca = aux;
+
+	if (!pminit(BUS_CVTADDR(ca)))
+		return;
+
+	/* no interrupts for PM */
+	/*BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);*/
+	return;
 }
 
 /*ARGSUSED*/

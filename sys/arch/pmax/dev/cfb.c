@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.7 1995/08/04 00:26:46 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.8 1995/08/10 04:21:38 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -156,14 +156,7 @@ extern void (*dtopMouseButtons)();
 extern int pmax_boardtype;
 extern u_short defCursor[32];
 extern struct consdev cn_tab;
-
-/*
- * Autoconfiguration data for config.old
- */
-int	cfbprobe();
-struct	driver cfbdriver = {
-	"cfb", cfbprobe, 0, 0,
-};
+extern void framebuffer_in_slot();
 
 
 #define	CFB_OFFSET_VRAM		0x0		/* from module's base */
@@ -219,41 +212,13 @@ cfbattach(parent, self, aux)
 	if (!cfbinit(BUS_CVTADDR(ca)))
 		return;
 
+	framebuffer_in_slot(ca->ca_slotpri);
+
 	/* no interrupts for CFB */
 	/*BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);*/
-	return;
+	printf("\n");
 }
 
-
-
-/* old-style autoconfig code */
-
-/*
- * Test to see if device is present.
- * Return true if found and initialized ok.
- */
-/*ARGSUSED*/
-cfbprobe(cp)
-	register struct pmax_ctlr *cp;
-{
-	register struct pmax_fb *fp = &cfbfb;
-#ifdef NEWCONF
-	return 0;
-#else
-
-	if (fp->initialized) {
-		printf("cfb: %x: already have one display\n", cp->pmax_addr);
-		return(0);
-	}
-
-
-	if (!fp->initialized && !cfbinit(cp->pmax_addr))
-	
-		return (0);
-	printf("cfb0 (color display)\n");
-	return (1);
-#endif
-}
 
 /*ARGSUSED*/
 cfbopen(dev, flag)

@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.9 1995/08/04 00:26:35 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.10 1995/08/10 04:21:41 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)scc.c	8.2 (Berkeley) 11/30/93
- *      $Id: scc.c,v 1.9 1995/08/04 00:26:35 jonathan Exp $
+ *      $Id: scc.c,v 1.10 1995/08/10 04:21:41 jonathan Exp $
  */
 
 /* 
@@ -118,7 +118,7 @@ extern void ttrstrt	__P((void *));
  */
 int	sccmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	sccattach __P((struct device *parent, struct device *self, void *aux));
-
+void	sccintr __P((int unit));
 int scc_doprobe __P((void *addr, int unit, int flags, int priority));
 
 extern struct cfdriver scccd;
@@ -129,15 +129,11 @@ struct  cfdriver scccd = {
 /*
  * Autoconfiguration data for config.old
  */
-int	sccprobe __P ((struct pmax_ctlr *cp)), sccopen(), sccparam();
 
 void	sccintr(), sccstart();
 int sccGetc __P((dev_t));
 void sccPutc __P((dev_t, int));
 
-struct	driver sccdriver = {
-	"scc", sccprobe, 0, 0, sccintr,
-};
 
 #define	NSCCLINE 	(NSCC*2)
 #define	SCCUNIT(dev)	(minor(dev) >> 1)
@@ -235,20 +231,13 @@ sccattach(parent, self, aux)
 
 	/* tie pseudo-slot to device */
 	BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);
+	printf("\n");
 }
 
 /*
  * Test to see if device is present.
  * Return true if found and initialized ok.
  */
-int
-sccprobe(cp)
-	register struct pmax_ctlr *cp;
-{
-	return scc_doprobe(cp->pmax_addr, cp->pmax_unit,
-			   cp->pmax_flags, cp->pmax_pri);
-}
-
 int
 scc_doprobe(addr, unit, flags, priority)
 	void *addr;
@@ -261,7 +250,6 @@ scc_doprobe(addr, unit, flags, priority)
 	struct tty ctty;
 	struct termios cterm;
 	int s;
-	static int nunits = 0;
 
 
 	if (unit >= NSCC)
@@ -269,11 +257,6 @@ scc_doprobe(addr, unit, flags, priority)
 
 	if (badaddr(addr, 2))
 		return (0);
-
-	if (++nunits > NSCC) {
-		printf("scc%d: static softc full\n", unit);
-		return (0);
-	}
 
 	/*
 	 * For a remote console, wait a while for previous output to
@@ -345,8 +328,6 @@ scc_doprobe(addr, unit, flags, priority)
 		cn_tab.cn_disabled = 0;
 		splx(s);
 	}
-	printf("scc%d at nexus0 csr 0x%x priority %d\n",
-		unit, addr, priority);
 	return (1);
 }
 
