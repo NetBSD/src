@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.26 1994/07/31 14:50:27 briggs Exp $
+ *	$Id: machdep.c,v 1.27 1994/08/08 00:11:40 lkestel Exp $
  */
 
 #include <param.h>
@@ -2623,8 +2623,7 @@ void printstar (void)
 unsigned int get_mapping (void)
 {
 	int			i, same;
-	unsigned long		addr;
-	unsigned long		phys;
+	unsigned long		addr, lastpage, phys;
 
 	numranges = 0;
 	for (i = 0; i < 8; i++) {
@@ -2632,7 +2631,10 @@ unsigned int get_mapping (void)
 		high[i] = 0;
 	}
 
-	for (addr = 0; get_physical (addr, &phys); addr += NBPG) {
+	lastpage = get_top_of_ram ();
+
+	for (addr = 0; addr <= lastpage && get_physical (addr, &phys);
+		addr += NBPG) {
 		/* printf ("0x%x --> 0x%x\n", addr, phys); */
 		if (numranges > 0 && phys == high[numranges - 1]) {
 			high[numranges - 1] += NBPG;
@@ -2771,6 +2773,15 @@ unsigned int get_mapping (void)
 	return low[0];	 /* Return physical address of logical 0 */
 }
 
+/*
+ * remap_kernel()
+ *
+ *   The booter might have loaded the kernel across a bank break.  Since
+ *   locore maps the kernel as if it was load contiguously, we've got
+ *   to go back here and remap it properly according to the bank mapping
+ *   that we found in get_mapping().
+ */
+
 static void remap_kernel (unsigned long *pt)
 {
 	int		i, len, numleft;
@@ -2793,6 +2804,15 @@ static void remap_kernel (unsigned long *pt)
 	}
 	/* Not likely to get here */
 }
+
+/*
+ * remap_nubus()
+ *
+ *   Locore maps all of NuBus space linearly.  Some systems that have
+ *   internal video at physical 0 map the screen into NuBus space.
+ *   Here we go back and remap NuBus the way the MacOS had it so that
+ *   we can use their address for video.
+ */
 
 static void remap_nubus (unsigned long *pt)
 {
@@ -2821,13 +2841,46 @@ static void remap_nubus (unsigned long *pt)
 }
 
 /*
- * LAK: (7/30/94) This function remaps kernel and NuBus pages the way they
- *  were done in MacOS.  "pt" is the address of the first kernel page table.
+ * remap_rom()
+ *
+ *   Remaps the first 8 megs of ROM.  Uses early-termination pages.
  */
 
-void remap_MMU (unsigned long pt)
+static void remap_rom (unsigned long *st)
+{
+        unsigned long   addr, index;
+
+	/*
+	 * Commented out right now because we don't use it and this code
+	 * hasn't been tested yet.  Make sure to uncomment the code in
+	 * pmap_init() if this is uncommented.
+	 */
+
+#if 0
+	addr = 0x40000000;
+	index = addr / 0x400000;
+
+	st[index] = addr | 0x01;
+
+	addr += 0x400000;
+	index++;
+
+	st[index] = addr | 0x01;
+#endif
+}
+
+/*
+ * remap_MMU()
+ *
+ *   This function remaps kernel and NuBus pages the way they were done
+ *   in MacOS.  "st" is the address of the segment table, and "pt" is
+ *   the address of the first kernel page table.
+ */
+
+void remap_MMU (unsigned long st, unsigned long pt)
 {
 	remap_kernel ((unsigned long *)pt);
 	remap_nubus ((unsigned long *)(pt +
 		((Sysptsize + (IIOMAPSIZE+NPTEPG-1)/NPTEPG) << PGSHIFT)));
+	remap_rom ((unsigned long *)st);
 }
