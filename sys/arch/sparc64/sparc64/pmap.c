@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 2000/09/27 18:20:33 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.76 2000/10/19 05:44:39 mrg Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -83,6 +83,7 @@ struct page_size_map page_size_map[] = {
 
 extern int64_t asmptechk __P((union sun4u_data* pseg[], int addr)); /* DEBUG XXXXX */
 
+#if 0
 static int pseg_check __P((struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare));
 static int
 pseg_check(struct pmap *pm, vaddr_t addr, int64_t tte, paddr_t spare)
@@ -117,6 +118,7 @@ pseg_check(struct pmap *pm, vaddr_t addr, int64_t tte, paddr_t spare)
 #define pseg_check(a, b, c, d)
 #define cache_flush_phys(a, b, c)
 /* #define pseg_set(a, b, c, d)	pseg_check(a, b, c, d) */
+#endif
 
 /* These routines are in assembly to allow access thru physical mappings */
 #if 1
