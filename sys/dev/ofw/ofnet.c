@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.13 1998/02/24 05:44:39 mycroft Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.14 1998/06/10 22:58:05 tv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
