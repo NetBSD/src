@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.8 1995/08/12 23:59:50 mycroft Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.9 1995/08/16 00:38:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -592,14 +592,12 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			error = EINVAL; goto done;
 		} 
 		IFPERF(tpcb)
-			if (*mp) {
-				struct mbuf * n;
-				do {
-					MFREE(*mp, n);
-					*mp = n;
-				} while (n);
+			MCLGET(*mp, M_WAITOK);
+			if (((*mp)->m_flags & M_EXT) == 0) {
+				error = ENOBUFS; goto done;
 			}
-			*mp = m_copym(tpcb->tp_p_mbuf, (int)M_COPYALL, M_WAITOK);
+			(*mp)->m_len = sizeof(struct tp_pmeas);
+			bcopy(tpcb->tp_p_meas, mtod(*mp), sizeof(struct tp_pmeas));
 		ENDPERF 
 		else {
 			error = EINVAL; goto done;
