@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.28 2002/08/12 22:39:52 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.29 2002/08/14 18:41:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -244,6 +244,10 @@ int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 void	pthread__testcancel(pthread_t self);
 
 #include "pthread_md.h"
+
+#ifndef PTHREAD_MD_INIT
+#define PTHREAD_MD_INIT
+#endif
 
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \

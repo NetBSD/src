@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.25 2002/05/20 19:18:44 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.26 2002/08/14 18:41:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ void pthread_init(void)
 	/* Start subsystems */
 	pthread__alarm_init();
 	pthread__signal_init();
+	PTHREAD_MD_INIT
 
 	/* Tell libc that we're here and it should role-play accordingly. */
 	__libc_pthread_ops = &pthread_ops;
