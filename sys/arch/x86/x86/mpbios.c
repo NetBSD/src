@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.11 2003/09/06 14:38:43 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.12 2003/10/07 18:10:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,8 +103,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.11 2003/09/06 14:38:43 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.12 2003/10/07 18:10:36 fvdl Exp $");
 
+#include "opt_mpacpi.h"
 #include "opt_mpbios.h"
 
 #include <sys/param.h>
@@ -129,6 +130,11 @@ __KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.11 2003/09/06 14:38:43 fvdl Exp $");
 
 #ifdef X86_MPBIOS_SUPPORT_EISA
 #include <dev/eisa/eisavar.h>	/* for ELCR* def'ns */
+#endif
+
+#ifdef MPACPI
+extern int mpacpi_ncpu;
+extern int mpacpi_nioapic;
 #endif
 
 #include "pci.h"
@@ -185,6 +191,7 @@ static void mp_cfg_eisa_intr __P((const struct mpbios_int *, u_int32_t *));
 static void mp_cfg_isa_intr __P((const struct mpbios_int *, u_int32_t *));
 static void mp_print_isa_intr (int intr);
 
+static void mpbios_default_cpus __P((struct device *));
 static void mpbios_cpu __P((const u_int8_t *, struct device *));
 static void mpbios_bus __P((const u_int8_t *, struct device *));
 static void mpbios_ioapic __P((const u_int8_t *, struct device *));
@@ -530,25 +537,19 @@ mpbios_scan(self)
 
 	/* check for use of 'default' configuration */
 	if (mp_fps->mpfb1 != 0) {
-		struct mpbios_proc pe;
 
 		printf("\n%s: MP default configuration %d\n",
 		    self->dv_xname, mp_fps->mpfb1);
 
-		/* use default addresses */
-		pe.apic_id = lapic_cpu_number();
-		pe.cpu_flags = PROCENTRY_FLAG_EN|PROCENTRY_FLAG_BP;
-		pe.cpu_signature = cpu_info_primary.ci_signature;
-		pe.feature_flags = cpu_info_primary.ci_feature_flags;
+#ifdef MPACPI
+		if (mpacpi_ncpu == 0)
+#endif
+			mpbios_default_cpus(self);
 
-		mpbios_cpu((u_int8_t *)&pe, self);
-
-		pe.apic_id = 1 - lapic_cpu_number();
-		pe.cpu_flags = PROCENTRY_FLAG_EN;
-
-		mpbios_cpu((u_int8_t *)&pe, self);
-
-		mpbios_ioapic((u_int8_t *)&default_ioapic, self);
+#ifdef MPACPI
+		if (mpacpi_nioapic == 0)
+#endif
+			mpbios_ioapic((u_int8_t *)&default_ioapic, self);
 
 		/* XXX */
 		printf("%s: WARNING: interrupts not configured\n",
@@ -623,12 +624,22 @@ mpbios_scan(self)
 		while ((count--) && (position < end)) {
 			switch (type = *(u_char *) position) {
 			case MPS_MCT_CPU:
+#ifdef MPACPI
+				/* ACPI has done this for us */
+				if (mpacpi_ncpu)
+					break;
+#endif
 				mpbios_cpu(position, self);
 				break;
 			case MPS_MCT_BUS:
 				mpbios_bus(position, self);
 				break;
 			case MPS_MCT_IOAPIC:
+#ifdef MPACPI
+				/* ACPI has done this for us */
+				if (mpacpi_nioapic)
+					break;
+#endif
 				mpbios_ioapic(position, self);
 				break;
 			case MPS_MCT_IOINT:
@@ -698,6 +709,24 @@ mpbios_cpu(ent, self)
 	caa.cpu_func = &mp_cpu_funcs;
 
 	config_found_sm(self, &caa, mp_print, mp_match);
+}
+
+static void
+mpbios_default_cpus(struct device *self)
+{
+	struct mpbios_proc pe;
+	/* use default addresses */
+	pe.apic_id = lapic_cpu_number();
+	pe.cpu_flags = PROCENTRY_FLAG_EN|PROCENTRY_FLAG_BP;
+	pe.cpu_signature = cpu_info_primary.ci_signature;
+	pe.feature_flags = cpu_info_primary.ci_feature_flags;
+
+	mpbios_cpu((u_int8_t *)&pe, self);
+
+	pe.apic_id = 1 - lapic_cpu_number();
+	pe.cpu_flags = PROCENTRY_FLAG_EN;
+
+	mpbios_cpu((u_int8_t *)&pe, self);
 }
 
 /*
