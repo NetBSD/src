@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13.4.2 2001/11/17 23:18:22 wdk Exp $	*/
+/*	$NetBSD: proc.h,v 1.13.4.3 2001/11/19 11:14:01 wdk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #ifndef _MIPS_PROC_H_
 #define _MIPS_PROC_H_
 
-struct proc;
+struct lwp;
 
 /*
  * Machine-dependent part of the proc structure for MIPS
