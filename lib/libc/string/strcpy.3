@@ -34,9 +34,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.10 2002/02/07 07:00:32 ross Exp $
+.\"	$NetBSD: strcpy.3,v 1.11 2002/08/11 07:46:56 yamt Exp $
 .\"
-.Dd June 4, 1993
+.Dd August 11, 2002
 .Dt STRCPY 3
 .Os
 .Sh NAME
@@ -98,17 +98,53 @@ return
 The following sets
 .Dq Li chararray
 to
-.Dq Li abc\e0\e0\e0 :
+.Dq Li abc\e0\e0\e0 .
 .Bd -literal -offset indent
-(void)strncpy(chararray, "abc", 6).
+(void)strncpy(chararray, "abc", 6);
 .Ed
 .Pp
 The following sets
 .Dq Li chararray
 to
-.Dq Li abcdef :
+.Dq Li abcdef
+and does
+.Em not
+null terminate
+.Va chararray
+because the source string is >= the length parameter.
+.Fn strncpy
+.Em only
+null terminates the destination string when the length of the source
+string is less than the length parameter.
 .Bd -literal -offset indent
 (void)strncpy(chararray, "abcdefgh", 6);
+.Ed
+.Pp
+The following copies as many characters from
+.Va input
+to
+.Va buf
+as will fit and null terminates the result.
+Because
+.Fn strncpy
+does
+.Em not
+guarantee to null terminate the string itself, we must do this by hand.
+.Bd -literal -offset indent
+char buf[BUFSIZ];
+
+(void)strncpy(buf, input, sizeof(buf) - 1);
+buf[sizeof(buf) - 1] = '\e0';
+.Ed
+.Pp
+Note that
+.Xr strlcpy 3
+is a better choice for this kind of operation.
+The equivalent using
+.Xr strlcpy 3
+is simply:
+.Bd -literal -offset indent
+(void)strlcpy(buf, input, sizeof(buf));
 .Ed
 .Sh SEE ALSO
 .Xr bcopy 3 ,
