@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.15 1997/10/07 20:05:00 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.16 1997/10/17 03:33:39 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -118,6 +118,8 @@ void si_obio_dma_start __P((struct ncr5380_softc *));
 void si_obio_dma_eop __P((struct ncr5380_softc *));
 void si_obio_dma_stop __P((struct ncr5380_softc *));
 
+static void si_obio_reset __P((struct ncr5380_softc *));
+
 static __inline__ void si_obio_udc_write
  __P((volatile struct si_regs *si, int regnum, int value));
 static __inline__ int si_obio_udc_read
@@ -139,26 +141,23 @@ struct cfattach si_obio_ca = {
  * Options for disconnect/reselect, DMA, and interrupts.
  * By default, allow disconnect/reselect on targets 4-6.
  * Those are normally tapes that really need it enabled.
- *
- * XXX - Leave interrupts disabled for now, to avoid the
- * not-yet-identified "everything dumps core" bug...
  */
-int si_obio_options = SI_FORCE_POLLING | 0x0f;
+int si_obio_options = 0x0f;
 
 
 static int
-si_obio_match(parent, cf, args)
-	struct device	*parent;
+si_obio_match(parent, cf, aux)
+	struct device *parent;
 	struct cfdata *cf;
-	void *args;
+	void *aux;
 {
-	struct confargs *ca = args;
+	struct confargs *ca = aux;
 
 	/* We use obio_mapin(), so require OBIO. */
 	if (ca->ca_bustype != BUS_OBIO)
 		return (0);
 
-	/* Make sure there is something there... */
+	/* Make sure something is there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr + 1, 1) == -1)
 		return (0);
 
@@ -212,10 +211,37 @@ si_obio_attach(parent, self, args)
 	/* Attach interrupt handler. */
 	isr_add_autovect(si_intr, (void *)sc, ca->ca_intpri);
 
+	/* Reset the hardware. */
+	si_obio_reset(ncr_sc);
+
 	/* Do the common attach stuff. */
 	si_attach(sc);
 }
 
+static void
+si_obio_reset(struct ncr5380_softc *ncr_sc)
+{
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
+	volatile struct si_regs *si = sc->sc_regs;
+
+#ifdef	DEBUG
+	if (si_debug) {
+		printf("si_obio_reset\n");
+	}
+#endif
+
+	/*
+	 * The SCSI3 controller has an 8K FIFO to buffer data between the
+	 * 5380 and the DMA.  Make sure it starts out empty.
+	 *
+	 * The reset bits in the CSR are active low.
+	 */
+	si->si_csr = 0;
+	delay(10);
+	si->si_csr = SI_CSR_FIFO_RES | SI_CSR_SCSI_RES | SI_CSR_INTR_EN;
+	delay(10);
+	si->fifo_count = 0;
+}
 
 static __inline__ void
 si_obio_udc_write(si, regnum, value)
@@ -446,7 +472,7 @@ si_obio_dma_stop(ncr_sc)
 		printf("si: DMA error, csr=0x%x, reset\n", si->si_csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
-		si_reset_adapter(ncr_sc);
+		si_obio_reset(ncr_sc);
 		goto out;
 	}
 
@@ -466,7 +492,7 @@ si_obio_dma_stop(ncr_sc)
 			if (--tmo <= 0) {
 				printf("si: dma fifo did not empty, reset\n");
 				ncr_sc->sc_state |= NCR_ABORTING;
-				/* si_reset_adapter(ncr_sc); */
+				/* si_obio_reset(ncr_sc); */
 				goto out;
 			}
 			delay(10);
