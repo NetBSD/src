@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.282 2004/04/10 19:40:19 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.283 2004/04/10 19:58:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.282 2004/04/10 19:40:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.283 2004/04/10 19:58:45 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -7776,7 +7776,7 @@ pmap_dumpsize()
 int
 pmap_dumpmmu(dump, blkno)
 	daddr_t blkno;
-	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 {
 	kcore_seg_t	*ksegp;
 	cpu_kcore_hdr_t	*kcpup;
