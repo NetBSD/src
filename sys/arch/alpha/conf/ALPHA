@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.59 1997/08/24 06:37:12 cgd Exp $
+# $NetBSD: ALPHA,v 1.60 1997/08/24 06:40:18 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -101,6 +101,7 @@ options 	EISAVERBOSE		# recognize "unknown" EISA devices
 options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 #options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 
@@ -184,6 +185,7 @@ pms*	at	pcppi?				# PS/2-style mouse (aux port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
+lc*	at	isa? port ? iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
