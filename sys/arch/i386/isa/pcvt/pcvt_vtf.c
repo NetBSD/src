@@ -476,7 +476,7 @@ vt_ri(struct video_state *svsp)
 void
 vt_ind(struct video_state *svsp)
 {
-	if(svsp->cur_offset <= (svsp->scrr_end * svsp->maxcol))
+	if(svsp->cur_offset < (svsp->scrr_end * svsp->maxcol))
 		svsp->cur_offset += svsp->maxcol;
 	else
 		roll_up(svsp, 1);
