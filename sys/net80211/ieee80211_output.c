@@ -48,15 +48,20 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.4 2003/08/19 22:17:0
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
+#ifdef __FreeBSD__
 #include <machine/atomic.h>
- 
+#endif
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 #include <net/if_llc.h>
 
+#include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_var.h>
 
 #include <net/bpf.h>
@@ -104,8 +109,8 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	wh = mtod(m, struct ieee80211_frame *);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT | type;
 	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	*(u_int16_t *)wh->i_dur = 0;
-	*(u_int16_t *)wh->i_seq =
+	*(u_int16_t *)&wh->i_dur[0] = 0;
+	*(u_int16_t *)&wh->i_seq[0] =
 	    htole16(ni->ni_txseq << IEEE80211_SEQ_SEQ_SHIFT);
 	ni->ni_txseq++;
 	IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_macaddr);
@@ -193,8 +198,8 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		goto bad;
 	wh = mtod(m, struct ieee80211_frame *);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA;
-	*(u_int16_t *)wh->i_dur = 0;
-	*(u_int16_t *)wh->i_seq =
+	*(u_int16_t *)&wh->i_dur[0] = 0;
+	*(u_int16_t *)&wh->i_seq[0] =
 	    htole16(ni->ni_txseq << IEEE80211_SEQ_SEQ_SHIFT);
 	ni->ni_txseq++;
 	switch (ic->ic_opmode) {
@@ -284,10 +289,16 @@ ieee80211_getmbuf(int flags, int type, u_int pktlen)
 {
 	struct mbuf *m;
 
+#ifdef __FreeBSD__
 	if (pktlen > MHLEN)
 		MGETHDR(m, flags, type);
 	else
 		m = m_getcl(flags, type, M_PKTHDR);
+#else
+	MGETHDR(m, flags, type);
+	if (m != NULL && pktlen > MHLEN)
+		MCLGET(m, flags);
+#endif
 	return m;
 }
 
