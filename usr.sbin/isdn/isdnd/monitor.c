@@ -1,4 +1,4 @@
-/* $NetBSD: monitor.c,v 1.6 2002/12/06 15:00:15 thorpej Exp $ */
+/* $NetBSD: monitor.c,v 1.7 2003/04/06 21:07:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -650,7 +650,7 @@ monitor_handle_connect(int sockfd, int is_local)
 		I4B_PUT_STR(ictrl, I4B_MON_ICTRL_NAME, ctrl_desc);
 		I4B_PUT_2B(ictrl, I4B_MON_ICTRL_BUSID, ctrl->bri);
 		I4B_PUT_4B(ictrl, I4B_MON_ICTRL_FLAGS, 0);
-		I4B_PUT_4B(ictrl, I4B_MON_ICTRL_NCHAN, 2);
+		I4B_PUT_2B(ictrl, I4B_MON_ICTRL_NCHAN, 2);
 
 		if((sock_write(fd, ictrl, sizeof ictrl)) == -1)
 		{
