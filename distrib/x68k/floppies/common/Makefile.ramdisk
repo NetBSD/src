@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2002/04/28 07:31:54 isaki Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.1 2002/05/07 13:55:42 isaki Exp $
 
 .include "${TOP}/Makefile.inc"
 
