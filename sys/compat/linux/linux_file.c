@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.5 1995/06/24 20:20:13 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.6 1995/07/03 21:33:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -280,7 +280,7 @@ linux_fcntl(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	int fd, cmd, error, *tval,val;
+	int fd, cmd, error, val;
 	caddr_t arg, sg;
 	struct linux_flock lfl;
 	struct flock *bfp, bfl;
@@ -309,16 +309,10 @@ linux_fcntl(p, uap, retval)
 		retval[0] = bsd_to_linux_ioflags(retval[0]);
 		return 0;
 	case LINUX_F_SETFL:
-		if ((error = copyin(SCARG(uap, arg), &val, sizeof (int))))
-			return error;
-		val = linux_to_bsd_ioflags(val);
-		sg = stackgap_init(p->p_emul);
-		tval = (int *) stackgap_alloc(&sg, sizeof (int));
-		if ((error = copyout(&val, tval, sizeof (int))))
-			return error;
+		val = linux_to_bsd_ioflags((int)SCARG(uap, arg));
 		SCARG(&fca, fd) = fd;
 		SCARG(&fca, cmd) = F_SETFL;
-		SCARG(&fca, arg) = tval;
+		SCARG(&fca, arg) = (caddr_t) val;
 		return fcntl(p, &fca, retval);
 	case LINUX_F_GETLK:
 		sg = stackgap_init(p->p_emul);
@@ -361,7 +355,7 @@ linux_fcntl(p, uap, retval)
 	SCARG(&fca, fd) = fd;
 	SCARG(&fca, cmd) = cmd;
 	SCARG(&fca, arg) = arg;
-	return fcntl(p, uap, retval);
+	return fcntl(p, &fca, retval);
 }
 
 /*
