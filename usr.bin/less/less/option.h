@@ -1,7 +1,7 @@
-/*	$NetBSD: option.h,v 1.5 2002/03/05 12:28:35 mrg Exp $	*/
+/*	$NetBSD: option.h,v 1.6 2003/04/14 02:56:47 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -25,6 +25,7 @@
 #define	NO_TOGGLE	0100	/* Option cannot be toggled with "-" cmd */
 #define	HL_REPAINT	0200	/* Repaint hilites after toggling option */
 #define	NO_QUERY	0400	/* Option cannot be queried with "_" cmd */
+#define	INIT_HANDLER	01000	/* Call option handler function at startup */
 
 #define	OTYPE		(BOOL|TRIPLE|NUMBER|STRING|NOVAR)
 
