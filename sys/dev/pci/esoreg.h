@@ -1,4 +1,4 @@
-/*	$NetBSD: esoreg.h,v 1.1 1999/07/12 15:13:31 kleink Exp $	*/
+/*	$NetBSD: esoreg.h,v 1.2 1999/08/14 22:42:16 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -140,6 +140,7 @@
 #define ESO_MIXREG_RMVM		0x62	/* Right Master Volume and Mute */
 #define  ESO_MIXREG_RMVM_MUTE	0x40	 /* Mute enable */
 #define ESO_MIXREG_MVCTL	0x64	/* Master Volume Control */
+#define  ESO_MIXREG_MVCTL_MPUIRQM 0x40	 /* MPU-401 interrupt unmask */
 #define ESO_MIXREG_RVR_MIC	0x68	/* Record mixer: Microphone */
 #define ESO_MIXREG_RVR_A2	0x69	/* Record mixer: Audio 2 */
 #define ESO_MIXREG_RVR_CD	0x6a	/* Record mixer: AuxA/CD */
