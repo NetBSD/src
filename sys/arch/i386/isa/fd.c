@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.89 1996/05/12 01:37:02 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -56,6 +56,7 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/conf.h>
+#include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
