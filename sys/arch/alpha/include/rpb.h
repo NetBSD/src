@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.21 1998/04/29 02:39:24 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.22 1998/06/03 23:07:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -131,6 +131,38 @@ struct rpb {
 #define	SV_ST_AVANTI_4_266	0x00002000
 #define	SV_ST_MUSTANG2_4_100	0x00002400	/* Mustang II;	200 4/100 */
 #define	SV_ST_AVANTI_4_233	0x0000a800	/* AlphaStation 255/233 */
+
+#define	SV_ST_KN20AA		0x00000400	/* AlphaStation 500/600 */
+
+/*
+ * System types for the AXPvme Family
+ */
+#define	SV_ST_AXPVME_64		0x00000000	/* 21068, 64MHz */
+#define	SV_ST_AXPVME_160	0x00000400	/* 21066, 160MHz */
+#define	SV_ST_AXPVME_100	0x00000c00	/* 21066A, 99MHz */
+#define	SV_ST_AXPVME_230	0x00001000	/* 21066A, 231MHz */
+#define	SV_ST_AXPVME_66		0x00001400	/* 21066A, 66MHz */
+#define	SV_ST_AXPVME_166	0x00001800	/* 21066A, 165MHz */
+#define	SV_ST_AXPVME_264	0x00001c00	/* 21066A, 264MHz */
+
+/*
+ * System types for the EB164 Family
+ */
+#define	SV_ST_EB164_266		0x00000400	/* EB164, 266MHz */
+#define	SV_ST_EB164_300		0x00000800	/* EB164, 300MHz */
+#define	SV_ST_ALPHAPC164_366	0x00000c00	/* AlphaPC164, 366MHz */
+#define	SV_ST_ALPHAPC164_400	0x00001000	/* AlphaPC164, 400MHz */
+#define	SV_ST_ALPHAPC164_433	0x00001400	/* AlphaPC164, 433MHz */
+#define	SV_ST_ALPHAPC164_466	0x00001800	/* AlphaPC164, 466MHz */
+#define	SV_ST_ALPHAPC164_500	0x00001c00	/* AlphaPC164, 500MHz */
+#define	SV_ST_ALPHAPC164LX_400	0x00002000	/* AlphaPC164LX, 400MHz */
+#define	SV_ST_ALPHAPC164LX_466	0x00002400	/* AlphaPC164LX, 466MHz */
+#define	SV_ST_ALPHAPC164LX_533	0x00002800	/* AlphaPC164LX, 533MHz */
+#define	SV_ST_ALPHAPC164LX_600	0x00002c00	/* AlphaPC164LX, 600MHz */
+#define	SV_ST_ALPHAPC164SX_400	0x00003000	/* AlphaPC164SX, 400MHz */
+#define	SV_ST_ALPHAPC164SX_466	0x00003400	/* AlphaPC164SX, 433MHz */
+#define	SV_ST_ALPHAPC164SX_533	0x00003800	/* AlphaPC164SX, 533MHz */
+#define	SV_ST_ALPHAPC164SX_600	0x00003c00	/* AlphaPC164SX, 600MHz */
 
 	u_int64_t	rpb_variation;		/*  58 */
 
