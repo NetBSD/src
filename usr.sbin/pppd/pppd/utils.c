@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.2 1999/08/25 02:07:46 christos Exp $	*/
+/*	$NetBSD: utils.c,v 1.3 2000/03/03 15:05:47 tsubai Exp $	*/
 
 /*
  * utils.c - various utility functions used in pppd.
@@ -24,7 +24,7 @@
 #if 0
 #define RCSID	"Id: utils.c,v 1.8 1999/08/13 06:46:22 paulus Exp "
 #else
-__RCSID("$NetBSD: utils.c,v 1.2 1999/08/25 02:07:46 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.3 2000/03/03 15:05:47 tsubai Exp $");
 #endif
 #endif
 
@@ -260,12 +260,7 @@ vslprintf(buf, buflen, fmt, args)
 	    break;
 	case 'r':
 	    f = va_arg(args, char *);
-#ifndef __powerpc__
 	    n = vslprintf(buf, buflen + 1, f, va_arg(args, va_list));
-#else
-	    /* On the powerpc, a va_list is an array of 1 structure */
-	    n = vslprintf(buf, buflen + 1, f, va_arg(args, void *));
-#endif
 	    buf += n;
 	    buflen -= n;
 	    continue;
