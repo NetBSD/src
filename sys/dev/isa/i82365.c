@@ -123,7 +123,7 @@ int pcic_chip_io_map __P((pcmcia_chipset_handle_t, int, bus_size_t,
 			  bus_space_tag_t, bus_space_handle_t, int *));
 void pcic_chip_io_unmap __P((pcmcia_chipset_handle_t, int));
 
-void *pcic_chip_intr_establish __P((pcmcia_chipset_handle_t, int,
+void *pcic_chip_intr_establish __P((pcmcia_chipset_handle_t, u_int16_t, int,
 				    int (*)(void *), void *));
 void pcic_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
 
@@ -1204,8 +1204,9 @@ void pcic_chip_io_unmap(pch, window)
 }
 
 void *
-pcic_chip_intr_establish(pch, ipl, fct, arg)
+pcic_chip_intr_establish(pch, irqmask, ipl, fct, arg)
      pcmcia_chipset_handle_t pch;
+     u_int16_t irqmask;
      int ipl;
      int (*fct)(void *);
      void *arg;
@@ -1215,11 +1216,17 @@ pcic_chip_intr_establish(pch, ipl, fct, arg)
     void *ih;
     int reg;
 
-    isa_intr_alloc(h->sc->ic, 0xffff, IST_PULSE, &irq);
+    /* Mask out IRQs which we shouldn't allocate. */
+    irqmask &= PCIC_INTR_IRQ_VALIDMASK;
+    if (irqmask == 0)
+	return(NULL);
+
+    isa_intr_alloc(h->sc->ic, irqmask, IST_PULSE, &irq);
     if (!(ih = isa_intr_establish(h->sc->ic, irq, IST_PULSE, ipl, fct, arg)))
 	return(NULL);
 
     reg = pcic_read(h, PCIC_INTR);
+    reg &= ~PCIC_INTR_IRQ_MASK;
     reg |= PCIC_INTR_ENABLE;
     reg |= irq;
     pcic_write(h, PCIC_INTR, reg);
@@ -1234,6 +1241,11 @@ void pcic_chip_intr_disestablish(pch, ih)
      void *ih;
 {
     struct pcic_handle *h = (struct pcic_handle *) pch;
+    int reg;
+
+    reg = pcic_read(h, PCIC_INTR);
+    reg &= ~(PCIC_INTR_IRQ_MASK|PCIC_INTR_ENABLE);
+    pcic_write(h, PCIC_INTR, reg);
 
     isa_intr_disestablish(h->sc->ic, ih);
 }
