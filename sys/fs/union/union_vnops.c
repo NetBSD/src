@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.3 2003/06/29 09:56:33 darrenr Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.4 2003/06/29 15:11:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.3 2003/06/29 09:56:33 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.4 2003/06/29 15:11:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ union_lookup1(udvp, dvpp, vpp, cnp)
 		if (vfs_busy(mp, 0, 0))
 			continue;
 
-		error = VFS_ROOT(mp, &tdvp, curlwp);
+		error = VFS_ROOT(mp, &tdvp, cnp->cn_lwp);
 		vfs_unbusy(mp);
 		if (error) {
 			vput(dvp);
@@ -506,7 +506,7 @@ union_lookup(v)
 		VOP_UNLOCK(lowervp, 0);
 
 	error = union_allocvp(ap->a_vpp, dvp->v_mount, dvp, upperdvp, cnp,
-			      uppervp, lowervp, 1);
+			      uppervp, lowervp, 1, cnp->cn_lwp);
 
 	if (error) {
 		if (uppervp != NULLVP)
@@ -558,7 +558,7 @@ union_create(v)
 			return (error);
 
 		error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP, cnp, vp,
-				NULLVP, 1);
+				NULLVP, 1, cnp->cn_lwp);
 		if (error)
 			vput(vp);
 		return (error);
@@ -617,7 +617,7 @@ union_mknod(v)
 			return (error);
 
 		error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP,
-				      cnp, vp, NULLVP, 1);
+				      cnp, vp, NULLVP, 1, cnp->cn_lwp);
 		if (error)
 		    vput(vp);
 		return (error);
@@ -636,13 +636,13 @@ union_open(v)
 		struct vnode *a_vp;
 		int a_mode;
 		struct ucred *a_cred;
-		struct lwp *a_n;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct union_node *un = VTOUNION(ap->a_vp);
 	struct vnode *tvp;
 	int mode = ap->a_mode;
 	struct ucred *cred = ap->a_cred;
-	struct lwp *p = ap->a_l;
+	struct lwp *l = ap->a_l;
 	int error;
 
 	/*
@@ -657,9 +657,9 @@ union_open(v)
 		 */
 		tvp = un->un_lowervp;
 		if ((ap->a_mode & FWRITE) && (tvp->v_type == VREG)) {
-			error = union_copyup(un, (mode&O_TRUNC) == 0, cred, p);
+			error = union_copyup(un, (mode&O_TRUNC) == 0, cred, l);
 			if (error == 0)
-				error = VOP_OPEN(un->un_uppervp, mode, cred, p);
+				error = VOP_OPEN(un->un_uppervp, mode, cred, l);
 			return (error);
 		}
 
@@ -671,7 +671,7 @@ union_open(v)
 			return ENXIO;
 		un->un_openl++;
 		vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_OPEN(tvp, mode, cred, p);
+		error = VOP_OPEN(tvp, mode, cred, l);
 		VOP_UNLOCK(tvp, 0);
 
 		return (error);
@@ -685,7 +685,7 @@ union_open(v)
 
 	FIXUP(un);
 
-	error = VOP_OPEN(tvp, mode, cred, p);
+	error = VOP_OPEN(tvp, mode, cred, l);
 
 	return (error);
 }
@@ -1117,7 +1117,7 @@ union_mmap(v)
 		struct vnode *a_vp;
 		int  a_fflags;
 		struct ucred *a_cred;
-		struct lwe *a_l;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *ovp = OTHERVP(ap->a_vp);
 
@@ -1242,7 +1242,7 @@ union_link(v)
 	} */ *ap = v;
 	int error = 0;
 	struct componentname *cnp = ap->a_cnp;
-	struct lwp *p = cnp->cn_lwp;
+	struct lwp *l = cnp->cn_lwp;
 	struct union_node *dun;
 	struct vnode *vp;
 	struct vnode *dvp;
@@ -1270,7 +1270,7 @@ union_link(v)
 				dun->un_flags &= ~UN_ULOCK;
 				VOP_UNLOCK(dun->un_uppervp, 0);
 			}
-			error = union_copyup(un, 1, cnp->cn_cred, p);
+			error = union_copyup(un, 1, cnp->cn_cred, l);
 			if (dun->un_uppervp == un->un_dirvp) {
 				/*
 				 * During copyup, we dropped the lock on the
@@ -1454,7 +1454,7 @@ union_mkdir(v)
 		}
 
 		error = union_allocvp(ap->a_vpp, ap->a_dvp->v_mount, ap->a_dvp,
-				NULLVP, cnp, vp, NULLVP, 1);
+				NULLVP, cnp, vp, NULLVP, 1, cnp->cn_lwp);
 		vrele(ap->a_dvp);
 		if (error)
 			vput(vp);
