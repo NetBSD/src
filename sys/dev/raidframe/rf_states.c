@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.18 2002/09/17 03:54:43 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.19 2002/09/19 18:54:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.18 2002/09/17 03:54:43 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.19 2002/09/19 18:54:50 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -46,6 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.18 2002/09/17 03:54:43 oster Exp $")
 #include "rf_etimer.h"
 #include "rf_kintf.h"
 
+#ifndef RF_DEBUG_STATES
+#define RF_DEBUG_STATES 0
+#endif
+
 /* prototypes for some of the available states.
 
    States must:
@@ -58,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.18 2002/09/17 03:54:43 oster Exp $")
      - increment desc->state when they have finished their work.
 */
 
+#if RF_DEBUG_STATES
 static char *
 StateName(RF_AccessState_t state)
 {
@@ -85,6 +90,7 @@ StateName(RF_AccessState_t state)
 		return "!!! UnnamedState !!!";
 	}
 }
+#endif
 
 void 
 rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
@@ -92,7 +98,9 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
 	int     suspended = RF_FALSE;
 	int     current_state_index = desc->state;
 	RF_AccessState_t current_state = desc->states[current_state_index];
+#if RF_DEBUG_STATES
 	int     unit = desc->raidPtr->raidid;
+#endif
 
 	do {
 
@@ -137,12 +145,14 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
 		 * have been freed. desc is only freed in LastState, so if we
 		 * renter this function or loop back up, desc should be valid. */
 
+#if RF_DEBUG_STATES
 		if (rf_printStatesDebug) {
 			printf("raid%d: State: %-24s StateIndex: %3i desc: 0x%ld %s\n",
 			       unit, StateName(current_state), 
 			       current_state_index, (long) desc,
 			       suspended ? "callback scheduled" : "looping");
 		}
+#endif
 	} while (!suspended && current_state != rf_LastState);
 
 	return;
