@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.22 1993/12/04 01:20:51 deraadt Exp $
+#	$Id: TDR,v 1.23 1993/12/13 05:03:18 deraadt Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -50,6 +50,7 @@ device		ed0 at isa? port 0x280 net irq 9 iomem 0xd0000 vector edintr
 
 pseudo-device	loop
 pseudo-device	ether
+pseudo-device	tun	2
 pseudo-device	sl	2
 pseudo-device	ppp	2
 pseudo-device	log
