@@ -44,7 +44,7 @@
  * 15 Aug 92    William Jolitz          Large memory bug
  * 15 Aug 92	Terry Lambert		Fixed CMOS RAM size bug
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.3 1993/03/23 08:12:15 cgd Exp $";
 
 
 #include "param.h"
@@ -561,6 +561,7 @@ dumpsys()
 	DELAY(10000);
 }
 
+#ifdef HZ
 microtime(tvp)
 	register struct timeval *tvp;
 {
@@ -574,6 +575,7 @@ microtime(tvp)
 	}
 	splx(s);
 }
+#endif
 
 physstrat(bp, strat, prio)
 	struct buf *bp;
