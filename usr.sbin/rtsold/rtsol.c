@@ -1,5 +1,5 @@
-/*	$NetBSD: rtsol.c,v 1.7 2000/08/13 06:20:03 itojun Exp $	*/
-/*	$KAME: rtsol.c,v 1.11 2000/08/13 06:14:59 itojun Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.8 2001/11/14 01:56:29 itojun Exp $	*/
+/*	$KAME: rtsol.c,v 1.14 2001/11/13 10:31:23 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,6 +91,8 @@ sockopen()
 		return(-1);
 	}
 	memset(&sin6_allrouters, 0, sizeof(struct sockaddr_in6));
+	sin6_allrouters.sin6_family = AF_INET6;
+	sin6_allrouters.sin6_len = sizeof(sin6_allrouters);
 	if (inet_pton(AF_INET6, ALLROUTER,
 		      &sin6_allrouters.sin6_addr.s6_addr) != 1) {
 		warnmsg(LOG_ERR, __FUNCTION__, "inet_pton failed for %s",
