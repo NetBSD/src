@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.13 2002/10/23 09:13:43 jdolecek Exp $ */
+/*	$NetBSD: tcx.c,v 1.14 2003/06/29 09:56:29 darrenr Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.13 2002/10/23 09:13:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.14 2003/06/29 09:56:29 darrenr Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -348,10 +348,10 @@ static int tcx_opens = 0;
 #endif
 
 int
-tcxopen(dev, flags, mode, p)
+tcxopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 #ifdef TCX_CG8
@@ -386,10 +386,10 @@ tcxopen(dev, flags, mode, p)
 }
 
 int
-tcxclose(dev, flags, mode, p)
+tcxclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
 #ifdef TCX_CG8
@@ -424,12 +424,12 @@ tcxclose(dev, flags, mode, p)
 }
 
 int
-tcxioctl(dev, cmd, data, flags, p)
+tcxioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
 	int error;
@@ -497,7 +497,7 @@ tcxioctl(dev, cmd, data, flags, p)
 	default:
 #ifdef DEBUG
 		log(LOG_NOTICE, "tcxioctl(0x%lx) (%s[%d])\n", cmd,
-		    p->p_comm, p->p_pid);
+		    l->l_proc->p_comm, l->l_proc->p_pid);
 #endif
 		return (ENOTTY);
 	}
