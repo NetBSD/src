@@ -1,4 +1,4 @@
-/*	$NetBSD: lisp.c,v 1.4 1997/10/18 13:18:45 lukem Exp $	*/
+/*	$NetBSD: lisp.c,v 1.5 1998/11/06 23:06:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lisp.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: lisp.c,v 1.4 1997/10/18 13:18:45 lukem Exp $");
+__RCSID("$NetBSD: lisp.c,v 1.5 1998/11/06 23:06:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,9 +79,9 @@ l_entries()
 			if (cicmp("wrapper") || cicmp("whopper"))
 				special = YES;
 		}
-		for (; !isspace(*lbp); ++lbp)
+		for (; !isspace((unsigned char)*lbp); ++lbp)
 			continue;
-		for (; isspace(*lbp); ++lbp)
+		for (; isspace((unsigned char)*lbp); ++lbp)
 			continue;
 		for (cp = lbp; *cp && *cp != '\n'; ++cp)
 			continue;

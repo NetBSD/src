@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.5 1998/10/08 01:29:28 wsanchez Exp $	*/
+/*	$NetBSD: pi.c,v 1.6 1998/11/06 23:10:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.5 1998/10/08 01:29:28 wsanchez Exp $");
+__RCSID("$NetBSD: pi.c,v 1.6 1998/11/06 23:10:08 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -171,7 +171,7 @@ boolean
 alldigits(string)
 	char	*string;
 {
-	for (; *string && isdigit(*string); string++)
+	for (; *string && isdigit((unsigned char)*string); string++)
 		continue;
 	return(*string == '\0');
 }
