@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stat.h	8.6 (Berkeley) 3/8/94
- *	$Id: stat.h,v 1.9 1994/05/25 05:34:33 jtc Exp $
+ *	$Id: stat.h,v 1.10 1994/06/14 04:24:04 jtc Exp $
  */
 
 #ifndef _SYS_STAT_H_
@@ -68,7 +68,7 @@ struct stat {
 #ifdef notyet /* XXX */
 	dev_t	st_dev;			/* inode's device */
 #else
-	u_long	st_dev;			/* inode's device */
+	unsigned long	st_dev;		/* inode's device */
 #endif
 	ino_t	st_ino;			/* inode's number */
 	mode_t	st_mode;		/* inode protection mode */
@@ -78,7 +78,7 @@ struct stat {
 #ifdef notyet /* XXX */
 	dev_t	st_rdev;		/* device type */
 #else
-	u_long	st_rdev;		/* device type */
+	unsigned long	st_rdev;	/* device type */
 #endif
 	struct	timespec st_atimespec;	/* time of last access */
 	struct	timespec st_mtimespec;	/* time of last data modification */
