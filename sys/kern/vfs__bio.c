@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: vfs__bio.c,v 1.3 1993/05/18 15:38:35 cgd Exp $
+ *	$Id: vfs__bio.c,v 1.4 1993/06/22 02:33:21 glass Exp $
  */
 
 #include "param.h"
@@ -58,7 +58,7 @@
 #include "vm/vm.h"
 #include "resourcevar.h"
 
-struct buf *getnewbuf(int);
+struct buf *getnewbuf __P((int));
 extern	vm_map_t buffer_map;
 
 /*
@@ -101,8 +101,12 @@ void bufinit()
  * its contents according to the filesystem fill routine.
  */
 int
-bread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
-	struct buf **bpp)
+bread(vp, blkno, size, cred, bpp)
+	struct vnode *vp;
+	daddr_t blkno;
+	int size;
+	struct ucred *cred;
+	struct buf **bpp;
 {
 	struct buf *bp;
 	int rv = 0;
@@ -128,8 +132,14 @@ bread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
  * read-ahead block. [See page 55 of Bach's Book]
  */
 int
-breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno, int rabsize,
-	struct ucred *cred, struct buf **bpp)
+breada(vp, blkno, size, rablkno, rabsize, cred, bpp)
+	struct vnode *vp;
+	daddr_t blkno;
+	int size;
+	daddr_t rablkno;
+	int rabsize;
+	struct ucred *cred;
+	struct buf **bpp;
 {
 	struct buf *bp, *rabp;
 	int rv = 0, needwait = 0;
@@ -171,7 +181,8 @@ breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno, int rabsize,
  * Release buffer on completion.
  */
 int
-bwrite(register struct buf *bp)
+bwrite(bp)
+	register struct buf *bp;
 {
 	int rv;
 
@@ -210,7 +221,8 @@ bwrite(register struct buf *bp)
  * written in the order that the writes are requested.
  */
 void
-bdwrite(register struct buf *bp)
+bdwrite(bp)
+	register struct buf *bp;
 {
 
 	if(!(bp->b_flags & B_BUSY))
@@ -236,7 +248,8 @@ bdwrite(register struct buf *bp)
  * The buffer is released when the I/O completes.
  */
 void
-bawrite(register struct buf *bp)
+bawrite(bp)
+	register struct buf *bp;
 {
 
 	if(!(bp->b_flags & B_BUSY))
@@ -263,7 +276,8 @@ bawrite(register struct buf *bp)
  * Even if the buffer is dirty, no I/O is started.
  */
 void
-brelse(register struct buf *bp)
+brelse(bp)
+       register struct buf *bp;
 {
 	int x;
 
@@ -316,7 +330,8 @@ int allocbufspace;
  * Preference is to AGE list, then LRU list.
  */
 static struct buf *
-getnewbuf(int sz)
+getnewbuf(sz)
+	int sz;
 {
 	struct buf *bp;
 	int x;
@@ -401,7 +416,9 @@ fillin:
  * Check to see if a block is currently memory resident.
  */
 struct buf *
-incore(struct vnode *vp, daddr_t blkno)
+incore(vp, blkno)
+	struct vnode *vp;
+	daddr_t blkno;
 {
 	struct buf *bh;
 	struct buf *bp;
@@ -430,7 +447,10 @@ incore(struct vnode *vp, daddr_t blkno)
  * cached blocks be of the correct size.
  */
 struct buf *
-getblk(register struct vnode *vp, daddr_t blkno, int size)
+getblk(vp, blkno, size)
+	register struct vnode *vp;
+	daddr_t blkno;
+	int size;
 {
 	struct buf *bp, *bh;
 	int x;
@@ -468,7 +488,8 @@ getblk(register struct vnode *vp, daddr_t blkno, int size)
  * Get an empty, disassociated buffer of given size.
  */
 struct buf *
-geteblk(int size)
+geteblk(size)
+	int size;
 {
 	struct buf *bp;
 	int x;
@@ -493,7 +514,9 @@ geteblk(int size)
  * Expanded buffer is returned as value.
  */
 void
-allocbuf(register struct buf *bp, int size)
+allocbuf(bp, size)
+	register struct buf *bp;
+	int size;
 {
 	caddr_t newcontents;
 
@@ -536,7 +559,8 @@ allocbuf(register struct buf *bp, int size)
  * If an invalid block, force it off the lookup hash chains.
  */
 int
-biowait(register struct buf *bp)
+biowait(bp)
+	register struct buf *bp;
 {
 	int x;
 
@@ -569,7 +593,8 @@ biowait(register struct buf *bp)
  * woken up from sleep().
  */
 int
-biodone(register struct buf *bp)
+biodone(bp)
+	register struct buf *bp;
 {
 	int x;
 
