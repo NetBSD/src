@@ -1,7 +1,7 @@
-/*	$NetBSD: inst.c,v 1.3 1996/09/11 18:05:02 thorpej Exp $	*/
+/*	$NetBSD: inst.c,v 1.4 1996/10/07 04:45:10 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Jason R. Thorpe.
+ * Copyright (c) 1995, 1996 Jason R. Thorpe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,7 @@ int	opendisk __P((char *, char *, int, char, int *));
 void	disklabel_edit __P((struct disklabel *));
 void	disklabel_show __P((struct disklabel *));
 int	disklabel_write __P((char *, int, struct open_file *));
+int	a2int __P((char *));
 
 struct	inst_command {
 	char	*ic_cmd;		/* command name */
@@ -108,7 +109,7 @@ main()
 
 	printf("\n>> NetBSD MINIROOT INSTALLATION HP9000/%s CPU\n",
 	       getmachineid());
-	printf(">> $NetBSD: inst.c,v 1.3 1996/09/11 18:05:02 thorpej Exp $\n");
+	printf(">> $NetBSD: inst.c,v 1.4 1996/10/07 04:45:10 thorpej Exp $\n");
 	gethelp();
 
 	for (;;) {
@@ -447,6 +448,8 @@ miniroot()
 	int sfd, dfd, i, nblks;
 	char diskname[64], minirootname[128];
 	char block[DEV_BSIZE];
+	char tapename[64];
+	int fileno;
 	struct stat st;
 	size_t xfersize;
 	struct open_file *disk_ofp;
@@ -459,9 +462,6 @@ miniroot()
 
 	disk_ofp = &files[dfd];
 
-	/*
-	 * XXX We only support NFS for now.
-	 */
  getsource:
 	printf("Source? (N)FS, (t)ape, (d)one > ");
 	bzero(line, sizeof(line));
@@ -472,25 +472,93 @@ miniroot()
 	switch (line[0]) {
 	case 'n':
 	case 'N':
- name_of_miniroot:
+ name_of_nfs_miniroot:
 		printf("Name of miniroot file? ");
 		bzero(line, sizeof(line));
 		bzero(minirootname, sizeof(minirootname));
 		gets(line);
 		if (line[0] == '\0')
-			goto name_of_miniroot;
+			goto name_of_nfs_miniroot;
 		(void)strcat(minirootname, "le0a:");
 		(void)strcat(minirootname, line);
 		if ((sfd = open(minirootname, 0)) < 0) {
 			printf("can't open %s\n", line);
 			return;
 		}
+
+		/*
+		 * Find out how big the miniroot is.  Make sure it's
+		 * an even number of blocks...
+		 */
+		if (fstat(sfd, &st) < 0) {
+			printf("can't stat %s\n", line);
+			goto done;
+		}
+		if (st.st_size % DEV_BSIZE) {
+			printf("Miniroot size must be an even numple of %d\n",
+			    DEV_BSIZE);
+			return;
+		}
+		nblks = (int)(st.st_size / sizeof(block));
+
+		printf("Copying %d blocks from %s to %s...", nblks, line,
+		    diskname);
 		break;
 
 	case 't':
 	case 'T':
-		printf("Sorry, no tape support yet.\n");
-		return;
+ name_of_tape_miniroot:
+		printf("Which tape device? ");
+		bzero(line, sizeof(line));
+		bzero(minirootname, sizeof(minirootname));
+		bzero(tapename, sizeof(tapename));
+		gets(line);
+		if (line[0] == '\0')
+			goto name_of_tape_miniroot;
+		strcat(minirootname, line);
+		strcat(tapename, line);
+
+		printf("File number (first == 1)? ");
+		bzero(line, sizeof(line));
+		gets(line);
+		fileno = a2int(line);
+		if (fileno < 1 || fileno > 8) {
+			printf("Invalid file number: %s\n", line);
+			goto getsource;
+		}
+		for (i = 0; i < sizeof(minirootname); ++i) {
+			if (minirootname[i] == '\0')
+				break;
+		}
+		if (i == sizeof(minirootname) ||
+		    (sizeof(minirootname) - i) < 8) {
+			printf("Invalid device name: %s\n", tapename);
+			goto getsource;
+		}
+		minirootname[i++] = 'a' + (fileno - 1);
+		minirootname[i++] = ':';
+		strcat(minirootname, "XXX");	/* lameness in open() */
+
+		printf("Copy how many %d byte blocks? ", DEV_BSIZE);
+		bzero(line, sizeof(line));
+		gets(line);
+		nblks = a2int(line);
+		if (nblks < 0) {
+			printf("Invalid block count: %s\n", line);
+			goto getsource;
+		} else if (nblks == 0) {
+			printf("Zero blocks?  Ok, aborting.\n");
+			return;
+		}
+
+		if ((sfd = open(minirootname, 0)) < 0) {
+			printf("can't open %s file %c\n", tapename, fileno);
+			return;
+		}
+
+		printf("Copying %s file %c to %s...", tapename, fileno,
+		    diskname);
+		break;
 
 	case 'd':
 	case 'D':
@@ -502,16 +570,10 @@ miniroot()
 	}
 
 	/*
-	 * Have file descriptor, will copy.
+	 * Copy loop...
+	 * This is fairly slow... if someone wants to speed it
+	 * up, they'll get no complaints from me.
 	 */
-	if (fstat(sfd, &st) < 0) {
-		printf("can't stat %s\n", line);
-		goto done;
-	}
-
-	nblks = (int)(st.st_size / sizeof(block));
-	printf("Copying %d blocks from %s to %s\n", nblks, line, diskname);
-
 	for (i = 0; i < nblks; ++i) {
 		if (read(sfd, block, sizeof(block)) != sizeof(block)) {
 			printf("Short read, errno = %d\n", errno);
@@ -520,12 +582,15 @@ miniroot()
 		if ((*disk_ofp->f_dev->dv_strategy)(disk_ofp->f_devdata,
 		    F_WRITE, i, sizeof(block), block, &xfersize) ||
 		    xfersize != sizeof(block)) {
-			printf("Bad write, errno = %d\n", errno);
+			printf("Bad write at block %d, errno = %d\n",
+			    i, errno);
 			goto done;
 		}
 	}
+	printf("done\n");
 
 	printf("Successfully copied miniroot image.\n");
+
  done:
 	close(sfd);
 	close(dfd);
@@ -579,6 +644,23 @@ resetsys()
 	call_req_reboot();
 	printf("panic: can't reboot, halting\n");
 	asm("stop #0x2700");
+}
+
+/*
+ * XXX Should have a generic atoi for libkern/libsa.
+ */
+int
+a2int(cp)
+	char *cp;
+{
+	int i = 0;
+
+	if (*cp == '\0')
+		return (-1);
+
+	while (*cp != '\0')
+		i = i * 10 + *cp++ - '0';
+	return (i);
 }
 
 void
