@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.12 2001/11/09 18:18:19 scw Exp $	*/
+/*	$NetBSD: prom.h,v 1.13 2003/10/24 21:30:06 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -156,7 +156,7 @@ struct mvmeprom_args {
 #endif
 
 #define MVMEPROM_CALL(x) \
-	__asm__ __volatile (__CONCAT("trap #15; .short ", __STRING(x)) )
+	__asm__ __volatile ("trap #15; .short " __STRING(x))
 #define MVMEPROM_NOARG() \
 	__asm__ __volatile ("clrl %sp@-")
 #define MVMEPROM_ARG1(arg) \
