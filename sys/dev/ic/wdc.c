@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.58 1999/02/18 14:45:31 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.59 1999/02/20 23:47:52 hubertf Exp $ */
 
 
 /*
@@ -71,7 +71,9 @@
  *   
  */
 
+#ifndef WDCDEBUG
 #define WDCDEBUG
+#endif /* WDCDEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
