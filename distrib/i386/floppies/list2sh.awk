@@ -1,4 +1,4 @@
-#	$Id: list2sh.awk,v 1.3 1995/06/10 20:24:20 mycroft Exp $
+#	$Id: list2sh.awk,v 1.4 1995/08/14 01:50:13 cgd Exp $
 
 BEGIN {
 	printf("cd ${CURDIR}\n");
@@ -24,6 +24,14 @@ $1 == "SYMLINK" {
 	printf("echo '%s'\n", $0);
 	printf("rm -f ${TARGDIR}/%s\n", $3);
 	printf("(cd ${TARGDIR}; ln -s %s %s)\n", $2, $3);
+	next;
+}
+$1 == "COPYDIR" {
+	printf("echo '%s'\n", $0);
+	printf("(cd ${TARGDIR}/%s && find . ! -name . | xargs /bin/rm -rf)\n",
+	    $3);
+	printf("(cd %s && find . ! -name . | cpio -pdamu ${TARGDIR}/%s)\n", $2,
+	    $3);
 	next;
 }
 $1 == "SPECIAL" {
