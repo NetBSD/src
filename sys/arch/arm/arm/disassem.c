@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.3 2001/01/12 21:56:18 bjh21 Exp $	*/
+/*	$NetBSD: disassem.c,v 1.4 2001/01/12 22:19:15 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -45,8 +45,6 @@
  * Paul Kranenburg
  *
  * This code is not complete. Not all instructions are disassembled.
- * Current LDF, STF and CDT are not supported but these are low priority
- * as FP is not used in the kernel.
  */
 
 #include <sys/param.h>
@@ -131,10 +129,11 @@ static struct arm32_insn arm32_i[] = {
     { 0x0e500ff0, 0x001000f0, "ldrsh",	"daW" },
     { 0x0f200090, 0x00200090, "und",	"x" },	/* Before data processing */
     { 0x0e1000d0, 0x000000d0, "und",	"x" },	/* Before data processing */
-    { 0x0fb00ff0, 0x01000090, "swap",	"Bdmo" },
+    { 0x0fb00ff0, 0x01000090, "swp",	"Bdmo" },
     { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },		/* Before data processing */
     { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },	/* Before data processing */
     { 0x0fb0f000, 0x0320f000, "msr",	"pF2" },	/* Before data processing */
+    { 0x0ffffff0, 0x012fff10, "bx",	"m" },
     { 0x0de00000, 0x00000000, "and",	"Sdn2" },
     { 0x0de00000, 0x00200000, "eor",	"Sdn2" },
     { 0x0de00000, 0x00400000, "sub",	"Sdn2" },
