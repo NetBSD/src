@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.111 2000/06/30 17:10:20 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.112 2000/07/05 04:07:26 sommerfeld Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.111 $"
+#ident 		"GENERIC-$Revision: 1.112 $"
 
 maxusers	32
 
@@ -172,7 +172,7 @@ options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
 options 	ISO,TPIP	# OSI networking
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
