@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.17 1996/03/15 03:03:57 paulus Exp $";
+static char rcsid[] = "$Id: main.c,v 1.18 1996/03/21 18:25:57 jtc Exp $";
 #endif
 
 #include <stdio.h>
@@ -137,7 +137,7 @@ struct protent *protocols[] = {
     NULL
 };
 
-void
+int
 main(argc, argv)
     int argc;
     char *argv[];
