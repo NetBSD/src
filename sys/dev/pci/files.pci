@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.127 2001/03/30 14:32:08 minoura Exp $
+#	$NetBSD: files.pci,v 1.128 2001/05/18 02:03:53 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -349,6 +349,11 @@ file	dev/pci/if_vr.c			vr
 device	sip: ether, ifnet, arp, mii
 attach	sip at pci
 file	dev/pci/if_sip.c		sip
+
+# National Semiconductor DP83820 Gigabit Ethernet
+device	gsip: ether, ifnet, arp, mii
+attach	gsip at pci
+file	dev/pci/if_gsip.c		gsip
 
 # Realtek 8129/8139 Ethernet controllers
 attach	rtk at pci with rtk_pci

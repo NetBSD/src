@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.6 2001/05/15 02:19:05 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.7 2001/05/18 02:03:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -262,7 +262,7 @@ struct sip_desc {
 #define	SIP_EROMAR	0x08	/* EEPROM access register */
 #ifdef DP83820
 #define	EROMAR_MDC	0x00000040	/* MII clock */
-#define	EROMAR_MDDIR	0x00000020	/* MII direction (1 == PHY->MAC) */
+#define	EROMAR_MDDIR	0x00000020	/* MII direction (1 == MAC->PHY) */
 #define	EROMAR_MDIO	0x00000010	/* MII data */
 #endif /* DP83820 */
 #define	EROMAR_EECS	0x00000008	/* chip select */
@@ -444,8 +444,10 @@ struct sip_desc {
 #define	RXCFG_ARP	0x40000000	/* accept runt packets */
 #ifdef DP83820
 #define	RXCFG_STRIPCRC	0x20000000	/* strip CRC */
-#define	RXCFG_RX_FD	0x10000000	/* receive full duplex */
-#define	RXCFG_ALP	0x08000000	/* accept long packets */
+#endif /* DP83820 */
+#define	RXCFG_ATX	0x10000000	/* accept transmit packets */
+#define	RXCFG_AJAB	0x08000000	/* accept jabber packets */
+#ifdef DP83820
 #define	RXCFG_AIRL	0x04000000	/* accept in-range length err packets */
 #define	RXCFG_MXDMA	 0x00700000	/* max DMA burst size */
 #define	RXCFG_MXDMA_1024 0x00000000	/*    1024 bytes */
@@ -457,8 +459,6 @@ struct sip_desc {
 #define	RXCFG_MXDMA_256	 0x00600000	/*     256 bytes */
 #define	RXCFG_MXDMA_512	 0x00700000	/*     512 bytes */
 #else
-#define	RXCFG_ATX	0x10000000	/* accept transmit packets */
-#define	RXCFG_AJAB	0x08000000	/* accept jabber packets */
 #define	RXCFG_MXDMA	0x00700000	/* max DMA burst size */
 #define	RXCFG_MXDMA_512	0x00000000	/*     512 bytes */
 #define	RXCFG_MXDMA_4	0x00100000	/*       4 bytes */
@@ -528,7 +528,8 @@ struct sip_desc {
 #define	RFCR_NS_RFADDR_SOPAS0	0x000a	/* SecureOn 0, 1 */
 #define	RFCR_NS_RFADDR_SOPAS2	0x000c	/* SecureOn 2, 3 */
 #define	RFCR_NS_RFADDR_SOPAS4	0x000e	/* SecureOn 4, 5 */
-#define	RFCR_NS_RFADDR_FILTMEM	0x0100	/* filter memory (hash/pattern) */
+#define	RFCR_NS_RFADDR_FILTMEM	0x0100	/* hash memory */
+#define	RFCR_NS_RFADDR_PATMEM	0x0200	/* pattern memory */
 #else
 #define	RFCR_NS_RFADDR_FILTMEM	0x0200	/* filter memory (hash/pattern) */
 #endif /* DP83820 */
@@ -717,7 +718,17 @@ struct sip_desc {
 
 /*
  * Serial EEPROM data (byte addresses) for the DP83820.
- * XXX Ss. 4.2.4 (PDF page 44).
  */
+#define	SIP_DP83820_EEPROM_SUBSYSTEM_ID	0x00	/* PCI subsystem ID */
+#define	SIP_DP83820_EEPROM_SUBVENDOR_ID	0x02	/* PCI subvendor ID */
+#define	SIP_DP83820_EEPROM_CFGINT	0x04	/* PCI INT [31:16] */
+#define	SIP_DP83820_EEPROM_SOPAS0	0x0e	/* SecureOn [47:32] */
+#define	SIP_DP83820_EEPROM_SOPAS1	0x10	/* SecureOn [31:16] */
+#define	SIP_DP83820_EEPROM_SOPAS2	0x12	/* SecureOn [15:0] */
+#define	SIP_DP83820_EEPROM_PMATCH0	0x14	/* MAC [47:32] */
+#define	SIP_DP83820_EEPROM_PMATCH1	0x16	/* MAC [31:16] */
+#define	SIP_DP83820_EEPROM_PMATCH2	0x18	/* MAC [15:0] */
+#define	SIP_DP83820_EEPROM_CHECKSUM	0x1a	/* checksum */
+#define	SIP_DP83820_EEPROM_LENGTH	0x1c	/* length of EEPROM data */
 
 #endif /* _DEV_PCI_IF_SIPREG_H_ */
