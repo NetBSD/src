@@ -1,11 +1,8 @@
-	$NetBSD: upgrade,v 1.7.2.4 1998/02/07 06:22:52 mellon Exp $	
+	$NetBSD: upgrade,v 1.7.2.5 1998/05/09 04:59:23 mycroft Exp $	
 
-The upgrade to NetBSD _VER is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the _VER sources, and
-it would be very difficult to even compile a set of instructions that
-allowed them to do so.  Because of the various changes to the system,
-it is impractical to upgrade by recompiling from the sources and
-installing.
+The upgrade to NetBSD _VER is a binary upgrade; it can be quite difficult
+to advance to a later version by recompiling from source due primarily
+to interdepencies in the various components.
 
 To do the upgrade, you must have the NetBSD kernel on AmigaDOS and
 you must transfer the miniroot file system miniroot.fs onto the swap
