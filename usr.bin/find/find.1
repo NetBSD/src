@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)find.1	6.29 (Berkeley) 7/29/91
-.\"	$Id: find.1,v 1.4 1993/10/27 17:52:37 jtc Exp $
+.\"	$Id: find.1,v 1.5 1993/12/29 22:22:44 jtc Exp $
 .\"
 .Dd July 29, 1991
 .Dt FIND 1
@@ -393,14 +393,14 @@ utility syntax is a superset of the syntax specified by the
 .St -p1003.2
 standard.
 .Pp
-The
-.Fl s
+The options and the
+.Ic -inum ,
+.Ic -follow ,
+.Ic -fstype ,
+.Ic -links ,
+.Ic -ls 
 and
-.Fl X
-options and the
-.Ic -inum
-and
-.Ic -ls
+.Ic -print0
 primaries are extensions to
 .St -p1003.2 .
 .Pp
@@ -423,9 +423,9 @@ The operator ``-or'' was implemented as ``\-o'', and the operator ``-and''
 was implemented as ``\-a''.
 .Pp
 Historic implementations of the
-.Ic exec
+.Ic -exec
 and
-.Ic ok
+.Ic -ok
 primaries did not replace the string ``{}'' in the utility name or the
 utility arguments if it had preceding or following non-whitespace characters.
 This version replaces it no matter where in the utility name or arguments
