@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.32 1994/04/04 21:49:39 cgd Exp $
+#	$Id: Makefile,v 1.33 1994/04/05 01:56:24 chopps Exp $
 
 # not yet done: catman
 
@@ -18,6 +18,8 @@ SUBDIR+=bad144
 .elif ${MACHINE} == "hp300"
 # probably could be expanded to other machines, too
 SUBDIR+=hilinfo grfinfo
+.elif ${MACHINE} == "amiga"
+SUBDIR+=iteconfig
 .endif
 
 .include <bsd.subdir.mk>
