@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.253 2003/05/10 21:10:40 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.254 2003/06/18 09:34:22 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -53,7 +53,6 @@
 
 /*
  * SPARC physical map management code.
- * Does not function on multiprocessors (yet).
  */
 
 #include "opt_ddb.h"
