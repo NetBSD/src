@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.1 2001/06/13 06:01:52 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.2 2001/06/24 01:19:17 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,6 +35,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "rnd.h"
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -47,6 +50,10 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -56,19 +63,9 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
 #include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/walnut.h>
+#include <machine/walnut.h>								/* XXX - this file shouldn't depend on board-data */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -96,10 +93,15 @@ static int
 emac_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
+	/*
+	 * XXX probe!
+	 * This won't work on some of the NP family processors that have
+	 * multiple EMACs
+	 */
+
 	if (probe_done)
 		return 0;
 
-	/* XXX probe! */
 	probe_done = 1;
 	return 1;
 }
