@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.23 2001/02/19 22:46:14 cgd Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.24 2001/10/09 18:46:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.23 2001/02/19 22:46:14 cgd Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.24 2001/10/09 18:46:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ char	buf[PKTSIZE];
 char	ackbuf[PKTSIZE];
 struct	sockaddr_storage from;
 int	fromlen;
+int	debug;
 
 /*
  * Null-terminated directory prefix list for absolute pathname requests and
@@ -121,6 +122,7 @@ int	main(int, char **);
 void	recvfile(struct formats *);
 void	sendfile(struct formats *);
 void	timer(int);
+static const char *opcode(int);
 int	validate_access(char **, int);
 
 struct formats {
@@ -140,7 +142,7 @@ usage(void)
 {
 
 	syslog(LOG_ERR,
-    "Usage: %s [-ln] [-u user] [-g group] [-s directory] [directory ...]",
+    "Usage: %s [-dln] [-u user] [-g group] [-s directory] [directory ...]",
 		    getprogname());
 	exit(1);
 }
@@ -167,8 +169,11 @@ main(int argc, char *argv[])
 	curuid = getuid();
 	curgid = getgid();
 
-	while ((ch = getopt(argc, argv, "g:lns:u:")) != -1)
+	while ((ch = getopt(argc, argv, "dg:lns:u:")) != -1)
 		switch (ch) {
+		case 'd':
+			debug++;
+			break;
 
 		case 'g':
 			tgtgroup = optarg;
@@ -581,6 +586,28 @@ timer(int dummy)
 	longjmp(timeoutbuf, 1);
 }
 
+static const char *
+opcode(int code)
+{
+	static char buf[64];
+
+	switch (code) {
+	case RRQ:
+		return "RRQ";
+	case WRQ:
+		return "WRQ";
+	case DATA:
+		return "DATA";
+	case ACK:
+		return "ACK";
+	case ERROR:
+		return "ERROR";
+	default:
+		(void)snprintf(buf, sizeof(buf), "*code %d*", code);
+		return buf;
+	}
+}
+
 /*
  * Send the requested file.
  */
@@ -608,6 +635,8 @@ sendfile(struct formats *pf)
 		(void)setjmp(timeoutbuf);
 
 send_data:
+		if (debug)
+			syslog(LOG_DEBUG, "Send DATA %u", block);
 		if (send(peer, dp, size + 4, 0) != size + 4) {
 			syslog(LOG_ERR, "tftpd: write: %m");
 			goto abort;
@@ -623,20 +652,29 @@ send_data:
 			}
 			ap->th_opcode = ntohs((u_short)ap->th_opcode);
 			ap->th_block = ntohs((u_short)ap->th_block);
-
-			if (ap->th_opcode == ERROR)
+			switch (ap->th_opcode) {
+			case ERROR:
 				goto abort;
 
-			if (ap->th_opcode == ACK) {
+			case ACK:
 				if (ap->th_block == block)
-					break;
+					goto done;
+				if (debug)
+					syslog(LOG_DEBUG, "Resync ACK %u != %u",
+					    (unsigned int)ap->th_block, block);
 				/* Re-synchronize with the other side */
 				(void) synchnet(peer);
 				if (ap->th_block == (block -1))
 					goto send_data;
+			default:
+				syslog(LOG_INFO, "Received %s in sendfile\n",
+				    opcode(dp->th_opcode));
 			}
 
 		}
+done:
+		if (debug)
+			syslog(LOG_DEBUG, "Received ACK for block %u", block);
 		block++;
 	} while (size == SEGSIZE);
 abort:
@@ -669,6 +707,8 @@ recvfile(struct formats *pf)
 		timeout = 0;
 		ap->th_opcode = htons((u_short)ACK);
 		ap->th_block = htons((u_short)block);
+		if (debug)
+			syslog(LOG_DEBUG, "Sending ACK for block %u\n", block);
 		block++;
 		(void) setjmp(timeoutbuf);
 send_ack:
@@ -687,18 +727,34 @@ send_ack:
 			}
 			dp->th_opcode = ntohs((u_short)dp->th_opcode);
 			dp->th_block = ntohs((u_short)dp->th_block);
-			if (dp->th_opcode == ERROR)
+			if (debug)
+				syslog(LOG_DEBUG, "Received %s for block %u",
+				    opcode(dp->th_opcode),
+				    (unsigned int)dp->th_block);
+
+			switch (dp->th_opcode) {
+			case ERROR:
 				goto abort;
-			if (dp->th_opcode == DATA) {
-				if (dp->th_block == block) {
-					break;   /* normal */
-				}
+			case DATA:
+				if (dp->th_block == block)
+					goto done;   /* normal */
+				if (debug)
+					syslog(LOG_DEBUG, "Resync %u != %u",
+					    (unsigned int)dp->th_block, block);
 				/* Re-synchronize with the other side */
 				(void) synchnet(peer);
 				if (dp->th_block == (block-1))
 					goto send_ack;          /* rexmit */
+				break;
+			default:
+				syslog(LOG_INFO, "Received %s in recvfile\n",
+				    opcode(dp->th_opcode));
+				break;
 			}
 		}
+done:
+		if (debug)
+			syslog(LOG_DEBUG, "Got block %u", block);
 		/*  size = write(file, dp->th_data, n - 4); */
 		size = writeit(file, &dp, n - 4, pf->f_convert);
 		if (size != (n-4)) {                    /* ahem */
@@ -712,6 +768,8 @@ send_ack:
 
 	ap->th_opcode = htons((u_short)ACK);    /* send the "final" ack */
 	ap->th_block = htons((u_short)(block));
+	if (debug)
+		syslog(LOG_DEBUG, "Send final ACK %u", block);
 	(void) send(peer, ackbuf, 4, 0);
 
 	signal(SIGALRM, justquit);      /* just quit on timeout */
@@ -784,6 +842,8 @@ nak(int error)
 		tp->th_code = htons((u_short)error);
 		strlcpy(tp->th_msg, pe->e_msg, msglen);
 	}
+	if (debug)
+		syslog(LOG_DEBUG, "Send NACK %s", tp->th_msg);
 	length = strlen(tp->th_msg);
 	msglen = &tp->th_msg[length + 1] - buf;
 	if (send(peer, buf, msglen, 0) != msglen)
