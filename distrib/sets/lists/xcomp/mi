@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.25 2005/03/21 14:43:44 tron Exp $
+# $NetBSD: mi,v 1.26 2005/03/22 13:45:46 tron Exp $
 ./etc/mtree/set.xcomp			xcomp-sys-root
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
@@ -604,6 +604,8 @@
 ./usr/X11R6/lib/libXxf86misc_p.a		-unknown-	profile
 ./usr/X11R6/lib/libXxf86vm.a
 ./usr/X11R6/lib/libXxf86vm_p.a		-unknown-	profile
+./usr/X11R6/lib/libdmx.a
+./usr/X11R6/lib/libdmx_p.a		-unknown-	profile
 ./usr/X11R6/lib/libdps.a
 ./usr/X11R6/lib/libdps_p.a		-unknown-	profile
 ./usr/X11R6/lib/libdpstk.a
@@ -3797,6 +3799,7 @@
 ./usr/libdata/lint/llib-lXxf86dga.ln		-unknown-		lint
 ./usr/libdata/lint/llib-lXxf86misc.ln		-unknown-		lint
 ./usr/libdata/lint/llib-lXxf86vm.ln		-unknown-		lint
+./usr/libdata/lint/llib-ldmx.ln			-unknown-		lint
 ./usr/libdata/lint/llib-ldps.ln			-unknown-		lint
 ./usr/libdata/lint/llib-ldpstk.ln		-unknown-		lint
 ./usr/libdata/lint/llib-lexpat.ln		-unknown-		lint
