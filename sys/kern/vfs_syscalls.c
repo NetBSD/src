@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.98 1997/10/03 14:44:26 enami Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.99 1997/10/06 09:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -76,6 +76,36 @@ int dounmount __P((struct mount *, int, struct proc *));
 /*
  * Mount a file system.
  */
+
+#if defined(COMPAT_09) || defined(COMPAT_43)
+/*
+ * This table is used to maintain compatibility with 4.3BSD
+ * and NetBSD 0.9 mount syscalls.  Note, the order is important!
+ */
+static const char *mountcompatnames[] = {
+	NULL,		/* 0 = MOUNT_NONE */
+	MOUNT_FFS,	/* 1 */
+	MOUNT_NFS,	/* 2 */
+	MOUNT_MFS,	/* 3 */
+	MOUNT_MSDOS,	/* 4 */
+	MOUNT_LFS,	/* 5 */
+	NULL,		/* 6 = MOUNT_LOFS */
+	MOUNT_FDESC,	/* 7 */
+	MOUNT_PORTAL,	/* 8 */
+	MOUNT_NULL,	/* 9 */
+	MOUNT_UMAP,	/* 10 */
+	MOUNT_KERNFS,	/* 11 */
+	MOUNT_PROCFS,	/* 12 */
+	MOUNT_AFS,	/* 13 */
+	MOUNT_CD9660,	/* 14 = MOUNT_ISOFS */
+	MOUNT_UNION,	/* 15 */
+	MOUNT_ADOSFS,	/* 16 */
+	MOUNT_EXT2FS,	/* 17 */
+};
+static const int nmountcompatnames = sizeof(mountcompatnames) /
+    sizeof(mountcompatnames[0]);
+#endif /* COMPAT_09 || COMPAT_43 */
+
 /* ARGSUSED */
 int
 sys_mount(p, v, retval)
@@ -183,11 +213,12 @@ sys_mount(p, v, retval)
 		 * filesystem types.
 		 */     
 		fsindex = (u_long)SCARG(uap, type);
-		if (fsindex >= nvfssw || vfssw[fsindex] == NULL) {
+		if (fsindex >= nmountcompatnames ||
+		    mountcompatnames[fsindex] == NULL) {
 			vput(vp);
 			return (ENODEV);
 		}
-		strncpy(fstypename, vfssw[fsindex]->vfs_name, MFSNAMELEN);
+		strncpy(fstypename, mountcompatnames[fsindex], MFSNAMELEN);
 #else
 		vput(vp);
 		return (error);
