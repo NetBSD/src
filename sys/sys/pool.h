@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.21 2001/05/04 19:41:25 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.22 2001/05/09 23:46:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -169,11 +169,6 @@ struct pool {
 #endif /* __POOL_EXPOSE */
 
 #ifdef _KERNEL
-struct pool	*pool_create(size_t, u_int, u_int,
-				 int, const char *, size_t,
-				 void *(*)__P((unsigned long, int, int)),
-				 void  (*)__P((void *, unsigned long, int)),
-				 int);
 void		pool_init(struct pool *, size_t, u_int, u_int,
 				 int, const char *, size_t,
 				 void *(*)__P((unsigned long, int, int)),
@@ -191,7 +186,6 @@ void		_pool_reclaim(struct pool *, const char *, long);
 #define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
 #define		pool_reclaim(h)	_pool_reclaim((h), __FILE__, __LINE__)
 
-int		pool_prime(struct pool *, int, caddr_t);
 void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 void		pool_sethardlimit(struct pool *, int, const char *, int);
