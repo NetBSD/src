@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.4 1994/12/01 22:46:27 gwr Exp $	*/
+/*	$NetBSD: ms.c,v 1.5 1995/03/10 01:57:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,8 +86,6 @@ struct ms_softc {
 
 /*
  * Attach the mouse serial (down-link) interface.
- * Do we need to set it to 1200 baud, 8 bits?
- * Test by power cycling and not booting SunOS before BSD?
  */
 void
 ms_serial(tp, iopen, iclose)
@@ -243,13 +241,18 @@ msopen(dev, flags, mode, p)
 	struct proc *p;
 {
 	int s, error;
+	struct tty *tp;
 
 	if (ms_softc.ms_events.ev_io)
 		return (EBUSY);
 	ms_softc.ms_events.ev_io = p;
 	ev_init(&ms_softc.ms_events);	/* may cause sleep */
+
+	tp = ms_softc.ms_mouse;
+	tp->t_ispeed = tp->t_ospeed = 1200;
+	(*ms_softc.ms_open)(tp);
+
 	ms_softc.ms_ready = 1;		/* start accepting events */
-	(*ms_softc.ms_open)(ms_softc.ms_mouse);
 	return (0);
 }
 
