@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.41 2003/08/11 10:24:41 pk Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.42 2003/09/14 23:47:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.41 2003/08/11 10:24:41 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.42 2003/09/14 23:47:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,14 +184,16 @@ static int amountpipekva = 0;
 
 MALLOC_DEFINE(M_PIPE, "pipe", "Pipe structures");
 
-static void pipeclose(struct pipe *pipe);
+static void pipeclose(struct file *fp, struct pipe *pipe);
 static void pipe_free_kmem(struct pipe *pipe);
 static int pipe_create(struct pipe **pipep, int allockva);
 static int pipelock(struct pipe *pipe, int catch);
 static __inline void pipeunlock(struct pipe *pipe);
-static void pipeselwakeup(struct pipe *pipe, struct pipe *sigp);
+static void pipeselwakeup(struct pipe *pipe, struct pipe *sigp, void *data,
+    int code);
 #ifndef PIPE_NODIRECT
-static int pipe_direct_write(struct pipe *wpipe, struct uio *uio);
+static int pipe_direct_write(struct file *fp, struct pipe *wpipe,
+    struct uio *uio);
 #endif
 static int pipespace(struct pipe *pipe, int size);
 
@@ -221,8 +223,8 @@ sys_pipe(l, v, retval)
 	p = l->l_proc;
 	rpipe = wpipe = NULL;
 	if (pipe_create(&rpipe, 1) || pipe_create(&wpipe, 0)) {
-		pipeclose(rpipe);
-		pipeclose(wpipe);
+		pipeclose(NULL, rpipe);
+		pipeclose(NULL, wpipe);
 		return (ENFILE);
 	}
 
@@ -265,8 +267,8 @@ free3:
 	ffree(rf);
 	fdremove(p->p_fd, retval[0]);
 free2:
-	pipeclose(wpipe);
-	pipeclose(rpipe);
+	pipeclose(NULL, wpipe);
+	pipeclose(NULL, rpipe);
 
 	return (error);
 }
@@ -396,11 +398,14 @@ pipeunlock(pipe)
  * 'sigpipe' side of pipe.
  */
 static void
-pipeselwakeup(selp, sigp)
+pipeselwakeup(selp, sigp, data, code)
 	struct pipe *selp, *sigp;
+	void *data;
+	int code;
 {
 	struct proc *p;
 	pid_t pid;
+	ksiginfo_t ksi;
 
 	selnotify(&selp->pipe_sel, 0);
 	if (sigp == NULL || (sigp->pipe_state & PIPE_ASYNC) == 0)
@@ -410,10 +415,33 @@ pipeselwakeup(selp, sigp)
 	if (pid == 0)
 		return;
 
+	(void)memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = SIGIO;
+	switch (ksi.ksi_code = code) {
+	case POLL_IN:
+		ksi.ksi_band = POLLIN|POLLRDNORM;
+		break;
+	case POLL_OUT:
+		ksi.ksi_band = POLLOUT|POLLWRNORM;
+		break;
+	case POLL_HUP:
+		ksi.ksi_band = POLLHUP;
+		break;
+#if POLL_HUP != POLL_ERR
+	case POLL_ERR:
+		ksi.ksi_band = POLLERR;
+		break;
+#endif
+	default:
+#ifdef DIAGNOSTIC
+		printf("bad siginfo code %d in pipe notification.\n", code);
+#endif
+		break;
+	}
 	if (pid > 0)
-		gsignal(pid, SIGIO);
+		kgsignal(pid, &ksi, data);
 	else if ((p = pfind(-pid)) != NULL)
-		psignal(p, SIGIO);
+		kpsignal(p, &ksi, data);
 }
 
 /* ARGSUSED */
@@ -545,7 +573,8 @@ again:
 			/*
 			 * We want to read more, wake up select/poll.
 			 */
-			pipeselwakeup(rpipe, rpipe->pipe_peer);
+			pipeselwakeup(rpipe, rpipe->pipe_peer, fp->f_data,
+			    POLL_IN);
 
 			/*
 			 * If the "write-side" is blocked, wake it up now.
@@ -597,7 +626,7 @@ unlocked_error:
 	 */
 	if ((bp->size - bp->cnt) >= PIPE_BUF
 	    && (ocnt != bp->cnt || (rpipe->pipe_state & PIPE_SIGNALR))) {
-		pipeselwakeup(rpipe, rpipe->pipe_peer);
+		pipeselwakeup(rpipe, rpipe->pipe_peer, fp->f_data, POLL_OUT);
 		rpipe->pipe_state &= ~PIPE_SIGNALR;
 	}
 
@@ -656,7 +685,8 @@ pipe_loan_free(wpipe)
  * Called with the long-term pipe lock held.
  */
 static int
-pipe_direct_write(wpipe, uio)
+pipe_direct_write(fp, wpipe, uio)
+	struct file *fp;
 	struct pipe *wpipe;
 	struct uio *uio;
 {
@@ -753,7 +783,7 @@ pipe_direct_write(wpipe, uio)
 			wpipe->pipe_state &= ~PIPE_WANTR;
 			wakeup(wpipe);
 		}
-		pipeselwakeup(wpipe, wpipe);
+		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_IN);
 		error = ltsleep(wpipe, PRIBIO | PCATCH, "pipdwt", 0,
 				&wpipe->pipe_slock);
 		if (error == 0 && wpipe->pipe_state & PIPE_EOF)
@@ -773,7 +803,7 @@ pipe_direct_write(wpipe, uio)
 		pipe_loan_free(wpipe);
 
 	if (error) {
-		pipeselwakeup(wpipe, wpipe);
+		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_ERR);
 
 		/*
 		 * If nothing was read from what we offered, return error
@@ -913,7 +943,7 @@ retry:
 		if ((uio->uio_iov->iov_len >= PIPE_MINDIRECT) &&
 		    (fp->f_flag & FNONBLOCK) == 0 &&
 		    (wpipe->pipe_map.kva || (amountpipekva < limitpipekva))) {
-			error = pipe_direct_write(wpipe, uio);
+			error = pipe_direct_write(fp, wpipe, uio);
 
 			/*
 			 * Break out if error occured, unless it's ENOMEM.
@@ -1017,7 +1047,8 @@ retry:
 			 * wake up select/poll.
 			 */
 			if (bp->cnt)
-				pipeselwakeup(wpipe, wpipe);
+				pipeselwakeup(wpipe, wpipe, fp->f_data,
+				    POLL_OUT);
 
 			PIPE_LOCK(wpipe);
 			pipeunlock(wpipe);
@@ -1069,7 +1100,7 @@ retry:
 	 * is only done synchronously), so check only wpipe->pipe_buffer.cnt
 	 */
 	if (bp->cnt)
-		pipeselwakeup(wpipe, wpipe);
+		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_OUT);
 
 	/*
 	 * Arrange for next read(2) to do a signal.
@@ -1233,7 +1264,7 @@ pipe_close(fp, td)
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
 	fp->f_data = NULL;
-	pipeclose(pipe);
+	pipeclose(fp, pipe);
 	return (0);
 }
 
@@ -1266,7 +1297,8 @@ pipe_free_kmem(pipe)
  * shutdown the pipe
  */
 static void
-pipeclose(pipe)
+pipeclose(fp, pipe)
+	struct file *fp;
 	struct pipe *pipe;
 {
 	struct pipe *ppipe;
@@ -1277,7 +1309,8 @@ pipeclose(pipe)
 retry:
 	PIPE_LOCK(pipe);
 
-	pipeselwakeup(pipe, pipe);
+	if (fp)
+		pipeselwakeup(pipe, pipe, fp->f_data, POLL_HUP);
 
 	/*
 	 * If the other side is blocked, wake it up saying that
@@ -1298,7 +1331,8 @@ retry:
 			PIPE_UNLOCK(pipe);
 			goto retry;
 		}
-		pipeselwakeup(ppipe, ppipe);
+		if (fp)
+			pipeselwakeup(ppipe, ppipe, fp->f_data, POLL_HUP);
 
 		ppipe->pipe_state |= PIPE_EOF;
 		wakeup(ppipe);
