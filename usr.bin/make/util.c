@@ -1,11 +1,11 @@
-/*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.11 1997/06/07 16:42:31 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.11 1997/06/07 16:42:31 christos Exp $";
 #endif
 
 #include <stdio.h>
@@ -362,7 +362,9 @@ signal(s, a)) ()
 #ifdef _IOSTRG
 #define STRFLAG	(_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
 #else
+#if 0
 #define STRFLAG	(_IOREAD)		/* XXX: Assume svr4 stdio */
+#endif
 #endif
 
 int
@@ -374,6 +376,7 @@ vsnprintf(s, n, fmt, args)
 {
 	FILE fakebuf;
 
+#ifdef STRFLAG
 	fakebuf._flag = STRFLAG;
 	/*
 	 * Some os's are char * _ptr, others are unsigned char *_ptr...
@@ -388,6 +391,10 @@ vsnprintf(s, n, fmt, args)
 	if (fakebuf._cnt<0)
 	    fakebuf._cnt = 0;
 	return (n-fakebuf._cnt-1);
+#else
+	(void) sprintf(s, fmt, args);
+	return strlen(s);
+#endif
 }
 
 int
