@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: view.c,v 1.2 1994/01/29 06:59:37 chopps Exp $
+ *	$Id: view.c,v 1.3 1994/01/30 08:28:17 chopps Exp $
  */
 
 /* The view major device is a placeholder device.  It serves
@@ -63,20 +63,12 @@
 #include "grf/grf_monitor.h"
 #include "viewioctl.h"
 #include "viewvar.h"
-#if 0
 #include "view.h"
-#endif
-
-/* just one possible right now with the grf kludge */
-#undef NVIEW
-#define NVIEW 1
 
 int viewprobe ();
 
-#if 0
 /* not currently used as independant device */
 struct driver view_driver = { viewprobe, "view" };
-#endif
 
 struct view_softc views[NVIEW];
 static int inited;
@@ -376,7 +368,7 @@ view_use_colormap (vu, ucm)
 			    M_IOCTLOPS, M_WAITOK);
     if (cm) {
 	bcopy (ucm, cm, sizeof (colormap_t));
-	cm->entry = &cm[1];			  /* table directly after. */
+	cm->entry = (u_long *) &cm[1];		 /* table directly after. */
 	if (copyin (ucm->entry, cm->entry, sizeof (u_long)*ucm->size)) 
 	    error = EINVAL;
 	else if (!vu->view || grf_use_colormap (vu->view, cm)) 
