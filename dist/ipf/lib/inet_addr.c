@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.1.1.1.2.1 2004/08/13 03:57:02 jmc Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1990, 1993
@@ -57,7 +57,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static const char rcsid[] = "@(#)Id: inet_addr.c,v 1.8.2.1 2004/03/23 15:15:44 darrenr Exp";
+static const char rcsid[] = "@(#)Id: inet_addr.c,v 1.8.2.2 2004/04/16 23:33:51 darrenr Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -183,18 +183,9 @@ inet_aton(cp, addr)
  * Ascii internet address interpretation routine.
  * The value returned is in network order.
  */
-#if !defined(__hpux)
-# if (defined(SOLARIS2) && (SOLARIS2 > 5)) || \
-    defined(__osf__) || (defined(IRIX) && (IRIX >= 60500)) || \
-    (defined(__FreeBSD__) && (__FreeBSD__ >= 4)) || \
-    defined(__OpenBSD__) || defined(linux) || \
-    (defined(__NetBSD_Version) && (__NetBSD_Version >= 106370000))
-in_addr_t
-# else
-u_long
-# endif
+#if 0
 inet_addr(cp)
-	register const char *cp;
+	const char *cp;
 {
 	struct in_addr val;
 

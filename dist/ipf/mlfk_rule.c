@@ -1,11 +1,11 @@
-/*	$NetBSD: mlfk_rule.c,v 1.1.1.1 2004/03/28 08:55:47 martti Exp $	*/
+/*	$NetBSD: mlfk_rule.c,v 1.1.1.1.2.1 2004/08/13 03:56:45 jmc Exp $	*/
 
 /*
  * Copyright (C) 2000 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: mlfk_rule.c,v 2.4 2001/06/09 17:09:22 darrenr Exp
+ * Id: mlfk_rule.c,v 2.4.4.2 2004/04/16 23:32:08 darrenr Exp
  */
 
 
@@ -56,8 +56,14 @@ ipfrule_modevent(module_t mod, int type, void *unused)
 }
 
 static moduledata_t ipfrulemod = {
-	IPL_VERSION,
+	"ipfrule",
 	ipfrule_modevent,
         0
 };
 DECLARE_MODULE(ipfrule, ipfrulemod, SI_SUB_PROTO_DOMAIN, SI_ORDER_ANY);
+#ifdef	MODULE_DEPEND
+MODULE_DEPEND(ipfrule, ipfilter, 1, 1, 1);
+#endif
+#ifdef	MODULE_VERSION
+MODULE_VERSION(ipfrule, 1);
+#endif
