@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.93 2002/05/19 08:12:55 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.94 2002/05/28 03:17:27 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -956,6 +956,7 @@ The currently defined protocols and names are:
 .It ip6	anonportmax	integer	yes
 .It ip6	lowportmin	integer	yes
 .It ip6	lowportmax	integer	yes
+.It ip6	maxfrags	integer	yes
 .It icmp6	rediraccept	integer	yes
 .It icmp6	redirtimeout	integer	yes
 .It icmp6	nd6_prune	integer	yes
@@ -1075,6 +1076,11 @@ The highest port number to use for TCP and UDP reserved port allocation.
 This cannot be set to less than 0 or greater than 1024, and must
 be greater than
 .Li ip6.lowportmin .
+.It Li ip6.maxfrags
+The maximum number of fragments the node will accept.
+0 means that the node will not accept any fragments.
+-1 means that the node will accept as many fragments as it receives.
+The flag is provided basically for avoiding possible DoS attacks.
 .It Li icmp6.rediraccept
 If set to non-zero, the host will accept ICMPv6 redirect packets.
 Note that IPv6 routers will never accept ICMPv6 redirect packets,
