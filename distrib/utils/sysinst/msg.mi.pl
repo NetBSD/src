@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.35 2004/01/29 08:48:23 lukem Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.35.2.1 2004/04/18 02:26:08 jmc Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -203,7 +203,7 @@ message ptnheaders /* XXX translate */
 }
 
 message askfsmount	/* XXX translate */
-{Mount pount?}
+{Mount point?}
 
 message askfssize	/* XXX translate */
 {Size for %s in %s?}
