@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.60 2003/06/24 09:19:28 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.61 2003/06/24 09:22:06 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -781,3 +781,9 @@ distrib/notes/macppc/hardware			1.36
 	PowerBook G4 (12-inch) and PowerBook G4 (17-inch) supported thanks to
 	HAMAJIMA Katsuomi
 	[mbw, ticket #1327]
+
+sys/arch/macppc/dev/wdc_obio.c			1.25
+
+	Fix wdc_obio_dma_init() confused WDC_DMA_LBA48 with WDC_DMA_READ.
+	This was tested by jtb@netbsd.org.
+	[hamajima, ticket #1328]
