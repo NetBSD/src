@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.2 1995/04/11 02:37:11 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.3 1995/04/11 02:42:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -681,7 +681,7 @@ struct proc	*p;
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-		error = suser(p->p_ucred, p);
+		error = suser(p->p_ucred, &p->p_acflag);
 		if(error != 0)
 			return (EPERM);
 

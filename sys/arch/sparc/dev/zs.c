@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26 1995/04/11 02:38:16 mycroft Exp $ */
+/*	$NetBSD: zs.c,v 1.27 1995/04/11 02:43:02 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1108,7 +1108,7 @@ zsioctl(dev, cmd, data, flag, p)
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-		error = suser(p->p_ucred, p);
+		error = suser(p->p_ucred, &p->p_acflag);
 		if (error != 0)
 			return (EPERM);
 
