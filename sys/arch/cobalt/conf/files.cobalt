@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.14 2002/10/26 13:50:26 jdolecek Exp $
+#	$NetBSD: files.cobalt,v 1.15 2003/01/20 01:26:14 soren Exp $
 
 maxpartitions 16
 
@@ -15,13 +15,9 @@ file arch/cobalt/cobalt/cpu.c		cpu
 attach com at mainbus with com_mainbus
 file arch/cobalt/dev/com_mainbus.c	com_mainbus
 
-#device zsc {[channel = -1]}
-#attach zsc at mainbus with zs_mainbus
-#file arch/cobalt/dev/zs_mainbus.c	zsc_mainbus needs-flag
-
-#device panel
-#attach panel at mainbus
-#file arch/cobalt/dev/panel.c		panel
+device panel: hd44780
+attach panel at mainbus
+file arch/cobalt/dev/panel.c		panel
 
 device gt: pcibus
 attach gt at mainbus
