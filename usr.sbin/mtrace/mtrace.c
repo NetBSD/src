@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.22 2002/08/09 02:09:01 itojun Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.23 2002/08/09 02:09:25 itojun Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.22 2002/08/09 02:09:01 itojun Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.23 2002/08/09 02:09:25 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1165,7 +1165,7 @@ main(int argc, char **argv)
     }
     init_igmp();
     if (setuid(getuid()) == -1)
-	    log(LOG_ERR, errno, "setuid");
+	log(LOG_ERR, errno, "setuid");
 
     argv++, argc--;
     if (argc == 0) goto usage;
