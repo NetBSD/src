@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.155 2001/07/08 10:32:38 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.156 2001/08/03 06:00:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2093,6 +2093,10 @@ vfs_hang_addrlist(mp, nep, argp)
 		mp->mnt_flag |= MNT_DEFEXPORTED;
 		return (0);
 	}
+
+	if (argp->ex_addrlen > MLEN)
+		return (EINVAL);
+
 	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
 	np = (struct netcred *)malloc(i, M_NETADDR, M_WAITOK);
 	memset((caddr_t)np, 0, i);
