@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_ext.c,v 1.12 1995/09/03 01:20:35 mycroft Exp $	*/
+/*	$NetBSD: pcvt_ext.c,v 1.13 1995/09/04 22:33:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -2420,35 +2420,39 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case VT_WAITACTIVE:
 		/* sleep until vt switch happened */
 		i = *(int *)data - 1;
-		
+
 		if(i != -1
 		   && (i < 0 || i >= PCVT_NSCREENS))
 			return EINVAL;
-		
-		if(i != -1
-		   && minor(dev) == i)
+
+		if(i != -1 && current_video_screen == i)
 			return 0;
 
 		if(i == -1)
 		{
+			/* xxx Is this what it is supposed to do? */
 			int x = spltty();
-			vsp->vt_status |= VT_WAIT_ACT;
-			while((error = tsleep((caddr_t)&vsp->smode,
-					      PZERO | PCATCH, "waitvt", 0))
-			      == ERESTART)
-				;
-			vsp->vt_status &= ~VT_WAIT_ACT;
+			i = current_video_screen;
+			error = 0;
+			while (current_video_screen == i &&
+			       (error == 0 || error == ERESTART)) {
+				vs[i].vt_status |= VT_WAIT_ACT;
+				error = tsleep((caddr_t)&vs[i].smode,
+					       PZERO | PCATCH, "waitvt", 0);
+			}
 			splx(x);
 		}
 		else
 		{
 			int x = spltty();
-			vs[i].vt_status |= VT_WAIT_ACT;
-			while((error = tsleep((caddr_t)&vs[i].smode,
-					      PZERO | PCATCH, "waitvt", 0))
-			      == ERESTART)
-				;
-			vs[i].vt_status &= ~VT_WAIT_ACT;
+			error = 0;
+			while (current_video_screen != i &&
+			       (error == 0 || error == ERESTART))
+			{
+				vs[i].vt_status |= VT_WAIT_ACT;
+				error = tsleep((caddr_t)&vs[i].smode,
+					       PZERO | PCATCH, "waitvt", 0);
+			}
 			splx(x);
 		}
 		return error;
