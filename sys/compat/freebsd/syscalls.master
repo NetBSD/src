@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 1995/10/10 01:19:39 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.2 1995/10/10 01:34:37 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -237,8 +237,9 @@
 128	STD		{ int freebsd_sys_rename(char *from, char *to); }
 129	STD		{ int compat_43_freebsd_sys_truncate(char *path, \
 			    long length); } otruncate
-130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
-131	NOARGS		{ int sys_flock(int fd, int how); } oftruncate
+130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); } \
+			    oftruncate
+131	NOARGS		{ int sys_flock(int fd, int how); }
 132	STD		{ int freebsd_sys_mkfifo(char *path, int mode); }
 133	NOARGS		{ int sys_sendto(int s, caddr_t buf, size_t len, \
 			    int flags, caddr_t to, int tolen); }
