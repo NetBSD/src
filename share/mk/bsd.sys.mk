@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.111 2004/01/27 03:31:48 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.112 2004/04/18 03:19:02 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -144,6 +144,7 @@ TOOL_ZIC?=		zic
 .c.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+
 .c.ln:
 	${_MKTARGET_COMPILE}
 	${LINT} ${LINTFLAGS} \
