@@ -61,7 +61,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: open.c,v 1.1 1994/01/26 02:03:52 brezak Exp $
+ *	$Id: open.c,v 1.2 1994/03/01 20:57:56 pk Exp $
  */
 
 #include "stand.h"
@@ -90,6 +90,7 @@ open(fname, mode)
 	for (fd = 0, f = files; fd < SOPEN_MAX; fd++, f++)
 		if (f->f_flags == 0)
 			goto fnd;
+	errno = EMFILE;
 	return (-1);
 fnd:
 	/*
