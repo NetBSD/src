@@ -31,10 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_time.c	7.15 (Berkeley) 3/17/91
- *	$Id: kern_time.c,v 1.2 1993/05/20 02:54:44 cgd Exp $
+ *	$Id: kern_time.c,v 1.3 1993/06/27 06:01:48 andrew Exp $
  */
 
 #include "param.h"
+#include "systm.h"
 #include "resourcevar.h"
 #include "kernel.h"
 #include "proc.h"
@@ -52,6 +53,7 @@
  */
 
 /* ARGSUSED */
+int
 gettimeofday(p, uap, retval)
 	struct proc *p;
 	register struct args {
@@ -76,6 +78,7 @@ gettimeofday(p, uap, retval)
 }
 
 /* ARGSUSED */
+int
 settimeofday(p, uap, retval)
 	struct proc *p;
 	struct args {
@@ -111,6 +114,7 @@ long	timedelta;			/* unapplied time correction, us. */
 long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
 
 /* ARGSUSED */
+int
 adjtime(p, uap, retval)
 	struct proc *p;
 	register struct args {
@@ -173,6 +177,7 @@ adjtime(p, uap, retval)
  * absolute time the timer should go off.
  */
 /* ARGSUSED */
+int
 getitimer(p, uap, retval)
 	struct proc *p;
 	register struct args {
@@ -208,6 +213,7 @@ getitimer(p, uap, retval)
 }
 
 /* ARGSUSED */
+int
 setitimer(p, uap, retval)
 	struct proc *p;
 	register struct args {
@@ -234,10 +240,10 @@ setitimer(p, uap, retval)
 		return (EINVAL);
 	s = splclock();
 	if (uap->which == ITIMER_REAL) {
-		untimeout(realitexpire, (caddr_t)p);
+		untimeout((timeout_t)realitexpire, (caddr_t)p);
 		if (timerisset(&aitv.it_value)) {
 			timevaladd(&aitv.it_value, &time);
-			timeout(realitexpire, (caddr_t)p, hzto(&aitv.it_value));
+			timeout((timeout_t)realitexpire, (caddr_t)p, hzto(&aitv.it_value));
 		}
 		p->p_realtimer = aitv;
 	} else
@@ -254,6 +260,7 @@ setitimer(p, uap, retval)
  * This is where delay in processing this timeout causes multiple
  * SIGALRM calls to be compressed into one.
  */
+void
 realitexpire(p)
 	register struct proc *p;
 {
@@ -269,7 +276,7 @@ realitexpire(p)
 		timevaladd(&p->p_realtimer.it_value,
 		    &p->p_realtimer.it_interval);
 		if (timercmp(&p->p_realtimer.it_value, &time, >)) {
-			timeout(realitexpire, (caddr_t)p,
+			timeout((timeout_t)realitexpire, (caddr_t)p,
 			    hzto(&p->p_realtimer.it_value));
 			splx(s);
 			return;
@@ -284,6 +291,7 @@ realitexpire(p)
  * fix it to have at least minimal value (i.e. if it is less
  * than the resolution of the clock, round it up.)
  */
+int
 itimerfix(tv)
 	struct timeval *tv;
 {
@@ -306,6 +314,7 @@ itimerfix(tv)
  * that it is called in a context where the timers
  * on which it is operating cannot change in value.
  */
+int
 itimerdecr(itp, usec)
 	register struct itimerval *itp;
 	int usec;
@@ -345,6 +354,7 @@ expire:
  * it just gets very confused in this case.
  * Caveat emptor.
  */
+void
 timevaladd(t1, t2)
 	struct timeval *t1, *t2;
 {
@@ -354,6 +364,7 @@ timevaladd(t1, t2)
 	timevalfix(t1);
 }
 
+void
 timevalsub(t1, t2)
 	struct timeval *t1, *t2;
 {
@@ -363,6 +374,7 @@ timevalsub(t1, t2)
 	timevalfix(t1);
 }
 
+void
 timevalfix(t1)
 	struct timeval *t1;
 {

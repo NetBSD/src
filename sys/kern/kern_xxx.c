@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.4 1993/05/20 02:54:46 cgd Exp $
+ *	$Id: kern_xxx.c,v 1.5 1993/06/27 06:01:49 andrew Exp $
  */
 
 #include "param.h"
@@ -42,6 +42,7 @@
 #include "utsname.h"
 
 /* ARGSUSED */
+int
 gethostid(p, uap, retval)
 	struct proc *p;
 	void *uap;
@@ -53,6 +54,7 @@ gethostid(p, uap, retval)
 }
 
 /* ARGSUSED */
+int
 sethostid(p, uap, retval)
 	struct proc *p;
 	struct args {
@@ -69,6 +71,7 @@ sethostid(p, uap, retval)
 }
 
 /* ARGSUSED */
+int
 gethostname(p, uap, retval)
 	struct proc *p;
 	struct args {
@@ -84,6 +87,7 @@ gethostname(p, uap, retval)
 }
 
 /* ARGSUSED */
+int
 sethostname(p, uap, retval)
 	struct proc *p;
 	register struct args {
@@ -105,6 +109,7 @@ sethostname(p, uap, retval)
 }
 
 /* ARGSUSED */
+int
 getdomainname(p, uap, retval)
 	struct proc *p;
 	struct args {
@@ -119,6 +124,7 @@ getdomainname(p, uap, retval)
 }
 
 /* ARGSUSED */
+int
 setdomainname(p, uap, retval)
 	struct proc *p;
 	struct args {
@@ -140,6 +146,7 @@ setdomainname(p, uap, retval)
 }
 
 /* ARGSUSED */
+int
 uname(p, uap, retval)
 	struct proc *p;
 	struct args {
@@ -153,6 +160,7 @@ uname(p, uap, retval)
 }
 
 /* ARGSUSED */
+int
 reboot(p, uap, retval)
 	struct proc *p;
 	struct args {
@@ -169,6 +177,7 @@ reboot(p, uap, retval)
 }
 
 #ifdef COMPAT_43
+int
 oquota()
 {
 

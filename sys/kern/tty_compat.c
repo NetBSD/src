@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_compat.c	7.10 (Berkeley) 5/9/91
- *	$Id: tty_compat.c,v 1.5 1993/06/05 22:40:48 cgd Exp $
+ *	$Id: tty_compat.c,v 1.6 1993/06/27 06:01:57 andrew Exp $
  */
 
 /* 
@@ -80,9 +80,15 @@ static int compatspcodes[] = {
 	1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200
 };
 
+int ttcompatgetflags __P((struct tty *tp));
+void ttcompatsetflags __P((struct tty *tp, struct termios *t));
+void ttcompatsetlflags __P((struct tty *tp, struct termios *t));
+
 /*ARGSUSED*/
+int
 ttcompat(tp, com, data, flag)
 	register struct tty *tp;
+	int com, flag;
 	caddr_t data;
 {
 
@@ -226,6 +232,7 @@ ttcompat(tp, com, data, flag)
 	return (0);
 }
 
+int
 ttcompatgetflags(tp)
 	register struct tty *tp;
 {
@@ -281,6 +288,7 @@ if (ttydebug)
 	return (flags);
 }
 
+void
 ttcompatsetflags(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
@@ -353,6 +361,7 @@ ttcompatsetflags(tp, t)
 	t->c_cflag = cflag;
 }
 
+void
 ttcompatsetlflags(tp, t)
 	register struct tty *tp;
 	register struct termios *t;

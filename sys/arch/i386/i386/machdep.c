@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.31 1993/06/18 06:50:58 cgd Exp $
+ *	$Id: machdep.c,v 1.32 1993/06/27 06:02:52 andrew Exp $
  */
 
 #include "npx.h"
@@ -110,6 +110,9 @@ extern cyloffset;
 
 int cpu_class;
 
+void dumpsys __P((void));
+
+void
 cpu_startup()
 {
 	register int unixsize;
@@ -512,13 +515,13 @@ sigreturn(p, uap, retval)
 int	waittime = -1;
 struct pcb dumppcb;
 
+void
 boot(arghowto)
 	int arghowto;
 {
 	register long dummy;		/* r12 is reserved */
 	register int howto;		/* r11 == how to boot */
 	register int devtype;		/* r10 == major of root dev */
-	extern char *panicstr;
 	extern int cold;
 
 	if(cold) {
@@ -580,13 +583,14 @@ boot(arghowto)
 	/*NOTREACHED*/
 }
 
-int	dumpmag = 0x8fca0101;	/* magic number for savecore */
-int	dumpsize = 0;		/* also for savecore */
+unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
+int		dumpsize = 0;		/* also for savecore */
 /*
  * Doadump comes here after turning off memory management and
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
+void
 dumpsys()
 {
 
@@ -1079,6 +1083,7 @@ clearseg(n) {
  * copy a page of physical memory
  * specified in relocation units (NBPG bytes)
  */
+void
 copyseg(frm, n) {
 
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
@@ -1090,6 +1095,7 @@ copyseg(frm, n) {
  * copy a page of physical memory
  * specified in relocation units (NBPG bytes)
  */
+void
 physcopyseg(frm, to) {
 
 	*(int *)CMAP1 = PG_V | PG_KW | ctob(frm);
@@ -1102,6 +1108,7 @@ physcopyseg(frm, to) {
 	schednetisr(NETISR_AST);
 }*/
 
+void
 setsoftclock() {
 	schednetisr(NETISR_SCLK);
 }

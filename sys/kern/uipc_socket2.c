@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket2.c	7.17 (Berkeley) 5/4/91
- *	$Id: uipc_socket2.c,v 1.3 1993/05/18 18:19:38 cgd Exp $
+ *	$Id: uipc_socket2.c,v 1.4 1993/06/27 06:02:00 andrew Exp $
  */
 
 #include "param.h"
@@ -242,6 +242,7 @@ soqremque(so, q)
  * Data queued for reading in the socket may yet be read.
  */
 
+void
 socantsendmore(so)
 	struct socket *so;
 {
@@ -250,6 +251,7 @@ socantsendmore(so)
 	sowwakeup(so);
 }
 
+void
 socantrcvmore(so)
 	struct socket *so;
 {

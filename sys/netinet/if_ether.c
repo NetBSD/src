@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.c	7.13 (Berkeley) 10/31/90
- *	$Id: if_ether.c,v 1.2 1993/05/20 03:49:56 cgd Exp $
+ *	$Id: if_ether.c,v 1.3 1993/06/27 06:02:37 andrew Exp $
  */
 
 /*
@@ -100,7 +100,9 @@ extern struct ifnet loif;
 /*
  * Timeout routine.  Age arp_tab entries once a minute.
  */
-arptimer()
+/* ARGSUSED */
+void
+arptimer(caddr_t arg)
 {
 	register struct arptab *at;
 	register i;

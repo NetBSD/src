@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.4 1993/05/22 07:59:57 cgd Exp $
+ *	$Id: pmap.c,v 1.5 1993/06/27 06:02:54 andrew Exp $
  */
 
 /*
@@ -1314,6 +1314,7 @@ pmap_kernel()
  *	bzero to clear its contents, one machine dependent page
  *	at a time.
  */
+void
 pmap_zero_page(phys)
 	register vm_offset_t	phys;
 {
@@ -1336,6 +1337,7 @@ pmap_zero_page(phys)
  *	bcopy to copy the page, one machine dependent page at a
  *	time.
  */
+void
 pmap_copy_page(src, dst)
 	register vm_offset_t	src, dst;
 {

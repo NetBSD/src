@@ -31,10 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_ktrace.c	7.15 (Berkeley) 6/21/91
- *	$Id: kern_ktrace.c,v 1.3 1993/05/20 02:54:26 cgd Exp $
+ *	$Id: kern_ktrace.c,v 1.4 1993/06/27 06:01:37 andrew Exp $
  */
 
 #include "param.h"
+#include "systm.h"
 #include "proc.h"
 #include "file.h"
 #include "namei.h"
@@ -43,8 +44,11 @@
 #include "malloc.h"
 #include "syslog.h"
 
+void ktrwrite __P((struct vnode *vp, struct ktr_header *kth));
+
 struct ktr_header *
 ktrgetheader(type)
+	int type;
 {
 	register struct ktr_header *kth;
 	struct proc *p = curproc;	/* XXX */
@@ -58,6 +62,7 @@ ktrgetheader(type)
 	return (kth);
 }
 
+void
 ktrsyscall(vp, code, narg, args)
 	struct vnode *vp;
 	int code, narg, args[];
@@ -80,6 +85,7 @@ ktrsyscall(vp, code, narg, args)
 	FREE(kth, M_TEMP);
 }
 
+void
 ktrsysret(vp, code, error, retval)
 	struct vnode *vp;
 	int code, error, retval;
@@ -98,6 +104,7 @@ ktrsysret(vp, code, error, retval)
 	FREE(kth, M_TEMP);
 }
 
+void
 ktrnamei(vp, path)
 	struct vnode *vp;
 	char *path;
@@ -111,11 +118,13 @@ ktrnamei(vp, path)
 	FREE(kth, M_TEMP);
 }
 
+void
 ktrgenio(vp, fd, rw, iov, len, error)
 	struct vnode *vp;
 	int fd;
 	enum uio_rw rw;
 	register struct iovec *iov;
+	int len, error;
 {
 	struct ktr_header *kth = ktrgetheader(KTR_GENIO);
 	register struct ktr_genio *ktp;
@@ -147,9 +156,11 @@ done:
 	FREE(ktp, M_TEMP);
 }
 
+void
 ktrpsig(vp, sig, action, mask, code)
 	struct	vnode *vp;
 	sig_t	action;
+	int sig, mask, code;
 {
 	struct ktr_header *kth = ktrgetheader(KTR_PSIG);
 	struct ktr_psig	kp;
@@ -171,6 +182,7 @@ ktrpsig(vp, sig, action, mask, code)
  * ktrace system call
  */
 /* ARGSUSED */
+int
 ktrace(curp, uap, retval)
 	struct proc *curp;
 	register struct args {
@@ -270,8 +282,10 @@ done:
 	return (error);
 }
 
+int
 ktrops(curp, p, ops, facs, vp)
 	struct proc *curp, *p;
+	int ops, facs;
 	struct vnode *vp;
 {
 
@@ -305,8 +319,10 @@ ktrops(curp, p, ops, facs, vp)
 	return (1);
 }
 
+int
 ktrsetchildren(curp, top, ops, facs, vp)
 	struct proc *curp, *top;
+	int ops, facs;
 	struct vnode *vp;
 {
 	register struct proc *p;
@@ -339,6 +355,7 @@ ktrsetchildren(curp, top, ops, facs, vp)
 	/*NOTREACHED*/
 }
 
+void
 ktrwrite(vp, kth)
 	struct vnode *vp;
 	register struct ktr_header *kth;
@@ -393,6 +410,7 @@ ktrwrite(vp, kth)
  *
  * TODO: check groups.  use caller effective gid.
  */
+int
 ktrcanset(callp, targetp)
 	struct proc *callp, *targetp;
 {
