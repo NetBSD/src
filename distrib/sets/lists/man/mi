@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.34 2001/12/09 19:39:04 he Exp $
+# $NetBSD: mi,v 1.253.2.35 2001/12/11 14:50:32 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -957,6 +957,7 @@
 ./usr/share/man/cat5/man.conf.0
 ./usr/share/man/cat5/map3270.0
 ./usr/share/man/cat5/master.passwd.0
+./usr/share/man/cat5/moduli.0
 ./usr/share/man/cat5/monthly.conf.0
 ./usr/share/man/cat5/motd.0
 ./usr/share/man/cat5/named.conf.0
@@ -2385,6 +2386,7 @@
 ./usr/share/man/man5/man.conf.5
 ./usr/share/man/man5/map3270.5
 ./usr/share/man/man5/master.passwd.5
+./usr/share/man/man5/moduli.5
 ./usr/share/man/man5/monthly.conf.5
 ./usr/share/man/man5/motd.5
 ./usr/share/man/man5/named.conf.5
