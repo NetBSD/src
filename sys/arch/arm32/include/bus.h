@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 1998/04/19 04:13:24 mark Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 1998/06/27 02:13:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -633,7 +633,7 @@ struct arm32_bus_dma_segment {
 	/*
 	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
-	bus_addr_t	ds_vaddr;	/* Virtual mapped address
+	bus_addr_t	_ds_vaddr;	/* Virtual mapped address
 					 * Used by bus_dmamem_sync() */
 };
 typedef struct arm32_bus_dma_segment	bus_dma_segment_t;
