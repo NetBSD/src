@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.29 1999/04/28 22:35:27 is Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.30 1999/05/30 21:21:36 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -313,7 +313,8 @@ readdisklabel(dev, strat, lp, clp)
 			lp->d_npartitions = (pp - lp->d_partitions) + 1;
 
 #ifdef DIAGNOSTIC
-		if (lp->d_secpercyl != (pbp->e.secpertrk * pbp->e.numheads)) {
+		if (lp->d_secpercyl * lp->d_secsize !=
+		    (pbp->e.secpertrk * pbp->e.numheads * pbp->e.sizeblock<<2)) {
 			if (pbp->partname[0] < sizeof(pbp->partname))
 				pbp->partname[pbp->partname[0] + 1] = 0;
 			else
@@ -360,19 +361,35 @@ readdisklabel(dev, strat, lp, clp)
 		}
 
 		pp->p_size = (pbp->e.highcyl - pbp->e.lowcyl + 1)
-		    * pbp->e.secpertrk * pbp->e.numheads;
+		    * pbp->e.secpertrk * pbp->e.numheads
+		    * (pbp->e.sizeblock >> 7);
 		pp->p_offset = pbp->e.lowcyl * pbp->e.secpertrk
-		    * pbp->e.numheads;
+		    * pbp->e.numheads
+		    * (pbp->e.sizeblock >> 7);
 		pp->p_fstype = adt.fstype;
 		if (adt.archtype == ADT_AMIGADOS) {
 			/*
 			 * Save reserved blocks at begin in cpg and
 			 *  adjust size by reserved blocks at end
 			 */
-			pp->p_fsize = 512;
-			pp->p_frag = pbp->e.secperblk;
-			pp->p_cpg = pbp->e.resvblocks;
-			pp->p_size -= pbp->e.prefac;
+			int bsize,secperblk;
+
+			bsize = pbp->e.sizeblock << 2;
+			secperblk = pbp->e.secperblk;
+			while (bsize > 512) {
+				bsize >>= 1;
+				secperblk <<= 1;
+			}
+			if (bsize == 512) {
+				pp->p_fsize = bsize;
+				pp->p_frag = secperblk;
+				pp->p_cpg = pbp->e.resvblocks;
+				pp->p_size -= pbp->e.prefac
+					      * (pbp->e.sizeblock >> 7);
+			} else {
+				adt.archtype = ADT_UNKNOWN;
+				adt.fstype = FS_UNUSED;
+			}
 		} else if (pbp->e.tabsize > 22 && ISFSARCH_NETBSD(adt)) {
 			pp->p_fsize = pbp->e.fsize;
 			pp->p_frag = pbp->e.frag;
