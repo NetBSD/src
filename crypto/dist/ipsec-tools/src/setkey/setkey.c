@@ -67,7 +67,7 @@
 
 #include "config.h"
 #include "libpfkey.h"
-#include "../../package_version.h"
+#include "package_version.h"
 
 #define strlcpy(d,s,l) (strncpy(d,s,l), (d)[(l)-1] = '\0')
 
