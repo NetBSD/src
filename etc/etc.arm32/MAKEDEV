@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.48 2000/09/23 04:27:18 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.49 2000/11/14 06:55:38 matt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -96,6 +96,7 @@
 #	bpf*	packet filter
 #	beep	riscpc speaker
 #	ipl	IP filter control
+#	openfirm OpenFirmware accessor
 #	random	Random number generator
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
@@ -128,7 +129,7 @@ all)
 	sh $0 lpa0 lpt0 tun0 tun1 tun2 ipl
 	sh $0 beep lkm qms0 pms0 local cpu0 cpu1
 	sh $0 usbs wscons
-	sh $0 mouse-qms0 random
+	sh $0 mouse-qms0 random openfirm
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
@@ -574,6 +575,13 @@ ugen*)
 	done
 	;;
 
+
+openfirm)
+	rm -f openfirm
+	mknod openfirm c 77 0
+	chown root.wheel openfirm
+	chmod 444 openfirm
+	;;
 
 random)
 	rm -f random urandom
