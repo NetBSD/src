@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.156 2004/09/19 08:56:22 tron Exp $
+#	$NetBSD: bsd.README,v 1.157 2004/12/29 14:46:24 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -728,6 +728,22 @@ SRCS		List of source files to build the library.  Suffix types
 		.s, .c, and .f are supported.  Note, .s files are preferred
 		to .c files of the same name.  (This is not the default for
 		versions of make.)
+
+LIBDPLIBS	A list of the tuples:
+			libname  path-to-srcdir-of-libname
+
+		For each tuple;
+		     *	LIBDO.libname contains the .OBJDIR of the library
+			`libname', and if it is not set it is determined
+			from the srcdir and added to MAKEOVERRIDES (the
+			latter is to allow for build time optimization).
+		     *	LDADD gets  -L${LIBDO.libname} -llibname    added.
+		     *	DPADD gets  ${LIBDO.libname}/liblibname.so  or
+				    ${LIBDO.libname}/liblibname.a   added.
+
+		This variable may be used for individual libraries, as
+		well as in parent directories to cache common libraries 
+		as a build-time optimization.
 
 The include file <bsd.lib.mk> includes the file named "../Makefile.inc"
 if it exists, as well as the include file <bsd.man.mk>.
