@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.4 2003/05/11 18:52:39 fvdl Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.5 2003/05/19 23:24:55 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -95,12 +95,6 @@ sysmon_queue_power_event(power_event_t *pev)
 	sysmon_power_event_queue_head =
 	    SYSMON_NEXT_EVENT(sysmon_power_event_queue_head);
 	sysmon_power_event_queue_count++;
-
-	if (sysmon_power_event_queue_flags & PEVQ_F_WAITING) {
-		sysmon_power_event_queue_flags &= ~PEVQ_F_WAITING;
-		wakeup(&sysmon_power_event_queue_count);
-	}
-	selnotify(&sysmon_power_event_queue_selinfo, 0);
 
 	return (1);
 }
@@ -408,12 +402,23 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		strcpy(pev.pev_switch.psws_name, smpsw->smpsw_name);
 
 		rv = sysmon_queue_power_event(&pev);
-		simple_unlock(&sysmon_power_event_queue_slock);
-		if (rv == 0)
+		if (rv == 0) {
+			simple_unlock(&sysmon_power_event_queue_slock);
 			printf("%s: WARNING: state change event %d lost; "
 			    "queue full\n", smpsw->smpsw_name,
 			    pev.pev_type);
-		return;
+			return;
+		} else {
+			if (sysmon_power_event_queue_flags & PEVQ_F_WAITING) {
+				sysmon_power_event_queue_flags &= ~PEVQ_F_WAITING;
+				simple_unlock(&sysmon_power_event_queue_slock);
+				wakeup(&sysmon_power_event_queue_count);
+			} else {
+				simple_unlock(&sysmon_power_event_queue_slock);
+			}
+			selnotify(&sysmon_power_event_queue_selinfo, 0);
+			return;
+		}
 	}
 	simple_unlock(&sysmon_power_event_queue_slock);
 
