@@ -81,7 +81,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 		name_funcs = OPENSSL_malloc(sizeof(NAME_FUNCS));
 		MemCheck_on();
 		if (!name_funcs) return(0);
-		name_funcs->hash_func = lh_strhash;
+		name_funcs->hash_func = (unsigned long (*)(const char *))lh_strhash;
 		name_funcs->cmp_func = OPENSSL_strcmp;
 		name_funcs->free_func = 0; /* NULL is often declared to
 						* ((void *)0), which according

@@ -1,4 +1,4 @@
-#	$NetBSD: ripemd.inc,v 1.3 2000/07/16 07:16:24 mrg Exp $
+#	$NetBSD: ripemd.inc,v 1.4 2003/07/24 14:16:33 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,6 +9,4 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/ripemd
 
-SRCS+=rmd_dgst.c rmd_one.c $(RMD160_ASM_OBJ)
-
-
+SRCS+=rmd_dgst.c rmd_one.c

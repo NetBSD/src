@@ -2,6 +2,7 @@
 $tmp=tmpfile.$$;
 
 $unifdef0 = <<EOF;
+NO_ASN1_FIELD_NAMES
 NO_ASN1_TYPEDEFS
 NO_BF
 NO_BIO
@@ -40,14 +41,21 @@ NO_X509
 OPENSSL_NO_AES
 OPENSSL_NO_BF
 OPENSSL_NO_BIO
+OPENSSL_NO_BUFFER
 OPENSSL_NO_CAST
 OPENSSL_NO_COMP
 OPENSSL_NO_DES
 OPENSSL_NO_DH
 OPENSSL_NO_DSA
+OPENSSL_NO_EC
 OPENSSL_NO_ENGINE
+OPENSSL_NO_ERR
+OPENSSL_NO_EVP
 OPENSSL_NO_FP_API
+OPENSSL_NO_HASH_COMP
+OPENSSL_NO_HMAC
 OPENSSL_NO_IDEA
+OPENSSL_NO_LHASH
 OPENSSL_NO_LOCKING
 OPENSSL_NO_MD2
 OPENSSL_NO_MD4
@@ -56,13 +64,16 @@ OPENSSL_NO_MDC2
 OPENSSL_NO_RC2
 OPENSSL_NO_RC4
 OPENSSL_NO_RC5
+OPENSSL_NO_RIPEMD
 OPENSSL_NO_RMD160
 OPENSSL_NO_RSA
 OPENSSL_NO_SHA
+OPENSSL_NO_SHA0
 OPENSSL_NO_SHA1
 OPENSSL_NO_SOCK
-OPENSSL_NO_SSL2
 OPENSSL_NO_SPEED
+OPENSSL_NO_SSL2
+OPENSSL_NO_STACK
 OPENSSL_NO_STDIO
 OPENSSL_NO_X509
 OPENSSL_SYS_AIX
@@ -90,36 +101,30 @@ OPENSSL_SYS_WIN32_UWIN
 OPENSSL_SYS_WINCE
 OPENSSL_SYS_WINDOWS
 OPENSSL_SYS_WINNT
-OPENSSL_NO_KRB5
 PEDANTIC
 EOF
 
-#$unifdef1 = <<EOF;
-#EOF
+$unifdef1 = <<EOF;
+OPENSSL_NO_KRB5
+TERMIOS
+EOF
 
 $unifdef0 =~ s/\n$//;
 $unifdef0 =~ s/^/-U/;
 $unifdef0 =~ s/\n/\n-U/g;
 $unifdef0 =~ s/\n/ /g;
 $unifdef0 =~ join("\n", $unifdef);
-#$unifdef1 =~ s/\n$//;
-#$unifdef1 =~ s/^/-D/;
-#$unifdef1 =~ s/\n/\n-D/g;
-#$unifdef1 =~ s/\n/ /g;
-#$unifdef1 =~ join("\n", $unifdef);
-#$unifdef = $unifdef0 . ' ' . $unifdef1;
+$unifdef1 =~ s/\n$//;
+$unifdef1 =~ s/^/-D/;
+$unifdef1 =~ s/\n/\n-D/g;
+$unifdef1 =~ s/\n/ /g;
+$unifdef1 =~ join("\n", $unifdef);
+$unifdef = $unifdef0 . ' ' . $unifdef1;
 $unifdef = $unifdef0;
 
 $files = `find . -name \\\*.h -type f -print | grep -v MacOS`;
 foreach $i (split(/[\n ]/, $files)) {
+	print "echo $i\n";
 	print "unifdef $unifdef <$i >$tmp\n";
 	print "mv $tmp $i\n";
 }
-
-#unifdef =~ s/-D/-DOPENSSL_/;
-$files = `find . -name \\\*.h -type f -print | grep -v MacOS`;
-foreach $i (split(/[\n ]/, $files)) {
-	print "unifdef $unifdef <$i >$tmp\n";
-	print "mv $tmp $i\n";
-}
-

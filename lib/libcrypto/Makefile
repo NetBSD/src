@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2003/07/23 05:20:26 itojun Exp $
+#	$NetBSD: Makefile,v 1.34 2003/07/24 14:16:31 itojun Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -34,9 +34,6 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
 
 .include "srcs.inc"
 
-# NetBSD local addition to des library.
-SRCS+=  rnd_keys.c
-
 # NetBSD's crypt(3) library, in lieu of the one included with OpenSSL,
 # since NetBSD's also supports MD5 and Blowfish passwords.
 .PATH: ${NETBSDSRCDIR}/lib/libcrypt
@@ -66,16 +63,15 @@ CLEANFILES+= buildinf.h
 
 # This list is built from the contents of the include/openssl
 # directory in the OpenSSL source distribution.
-INCS+=	asn1.h asn1_mac.h bio.h blowfish.h bn.h buffer.h cast.h comp.h
-INCS+=	conf.h conf_api.h crypto.h des.h dh.h dsa.h dso.h e_os2.h
-INCS+=	ebcdic.h err.h evp.h hmac.h lhash.h md2.h md4.h
-INCS+=	md5.h obj_mac.h objects.h opensslconf.h opensslv.h pem.h
-INCS+=	pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h ripemd.h
-INCS+=	rsaref.h safestack.h sha.h stack.h
-INCS+=	symhacks.h tmdiff.h txt_db.h x509.h x509_vfy.h x509v3.h
-
-INCS+=	rsa.h rsaref.h
-.PATH: ${OPENSSLSRC}/rsaref
+INCS+=	aes.h asn1.h asn1_mac.h asn1t.h bio.h blowfish.h bn.h \
+	buffer.h cast.h comp.h conf.h conf_api.h crypto.h des.h \
+	dh.h dsa.h dso.h e_os2.h ebcdic.h ec.h engine.h \
+	err.h evp.h hmac.h krb5_asn.h lhash.h md2.h md4.h md5.h \
+	obj_mac.h objects.h ocsp.h opensslconf.h opensslv.h ossl_typ.h \
+	pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h ripemd.h \
+	rsa.h safestack.h sha.h stack.h symhacks.h tmdiff.h txt_db.h \
+	ui.h ui_compat.h x509.h x509_vfy.h x509v3.h
+#	des_old.h 
 
 # IDEA - patented, but we install the header anyways
 INCS+=	idea.h

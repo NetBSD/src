@@ -63,7 +63,6 @@
 extern "C" {
 #endif
 
-
 #define CAST_ENCRYPT	1
 #define CAST_DECRYPT	0
 

@@ -62,7 +62,7 @@
 #include <openssl/opensslconf.h>
 #ifndef OPENSSL_SYS_MSDOS
 #ifndef OPENSSL_SYS_VMS
-#include OPENSSL_UNISTD
+#include <unistd.h>
 #else /* OPENSSL_SYS_VMS */
 #ifdef __DECC
 #include <unistd.h>

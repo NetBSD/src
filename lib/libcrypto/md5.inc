@@ -1,4 +1,4 @@
-#	$NetBSD: md5.inc,v 1.3 2000/07/16 07:16:22 mrg Exp $
+#	$NetBSD: md5.inc,v 1.4 2003/07/24 14:16:32 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -10,5 +10,3 @@
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/md5
 
 SRCS+=md5_dgst.c md5_one.c $(MD5_ASM_OBJ)
-
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: mac.c,v 1.5 2003/07/10 01:09:45 lukem Exp $	*/
+/*	$NetBSD: mac.c,v 1.6 2003/07/24 14:16:56 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: mac.c,v 1.5 2002/05/16 22:02:50 markus Exp $");
-__RCSID("$NetBSD: mac.c,v 1.5 2003/07/10 01:09:45 lukem Exp $");
+__RCSID("$NetBSD: mac.c,v 1.6 2003/07/24 14:16:56 itojun Exp $");
 
 #include <openssl/hmac.h>
 
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: mac.c,v 1.5 2003/07/10 01:09:45 lukem Exp $");
 
 struct {
 	char		*name;
-	EVP_MD *	(*mdfunc)(void);
+	const EVP_MD *	(*mdfunc)(void);
 	int		truncatebits;	/* truncate digest if != 0 */
 } macs[] = {
 	{ "hmac-sha1",			EVP_sha1, 0, },

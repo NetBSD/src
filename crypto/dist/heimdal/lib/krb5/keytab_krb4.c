@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 
 __RCSID("$Heimdal: keytab_krb4.c,v 1.10 2002/04/18 14:04:46 joda Exp $"
-        "$NetBSD: keytab_krb4.c,v 1.1.1.5 2002/09/12 12:41:41 joda Exp $");
+        "$NetBSD: keytab_krb4.c,v 1.2 2003/07/24 14:16:56 itojun Exp $");
 
 struct krb4_kt_data {
     char *filename;
@@ -161,7 +161,7 @@ read_v4_entry (krb5_context context,
     krb5_error_code ret;
     char *service, *instance, *realm;
     int8_t kvno;
-    des_cblock key;
+    DES_cblock key;
 
     ret = krb5_ret_stringz(c->sp, &service);
     if (ret)

@@ -1,4 +1,4 @@
-#	$NetBSD: conf.inc,v 1.4 2001/04/12 07:48:04 itojun Exp $
+#	$NetBSD: conf.inc,v 1.5 2003/07/24 14:16:31 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,4 +9,5 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/conf
 
-SRCS+=	conf_err.c conf_lib.c conf_api.c conf_def.c
+SRCS+=	conf_err.c conf_lib.c conf_api.c conf_def.c conf_mod.c \
+	conf_mall.c conf_sap.c

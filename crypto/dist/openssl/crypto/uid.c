@@ -58,7 +58,7 @@
 
 #if defined(__OpenBSD__) || (defined(__FreeBSD__) && __FreeBSD__ > 2)
 
-#include OPENSSL_UNISTD
+#include <unistd.h>
 
 int OPENSSL_issetugid(void)
 	{
@@ -74,7 +74,7 @@ int OPENSSL_issetugid(void)
 
 #else
 
-#include OPENSSL_UNISTD
+#include <unistd.h>
 #include <sys/types.h>
 
 int OPENSSL_issetugid(void)

@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: unwrap.c,v 1.22 2003/03/16 17:54:43 lha Exp $"
-        "$NetBSD: unwrap.c,v 1.8 2003/05/15 21:36:45 lha Exp $");
+        "$NetBSD: unwrap.c,v 1.9 2003/07/24 14:16:55 itojun Exp $");
 
 OM_uint32
 gss_krb5_get_remotekey(const gss_ctx_id_t context_handle,
@@ -74,9 +74,9 @@ unwrap_des
   size_t len;
   MD5_CTX md5;
   u_char hash[16], seq_data[8];
-  des_key_schedule schedule;
-  des_cblock deskey;
-  des_cblock zero;
+  DES_key_schedule schedule;
+  DES_cblock deskey;
+  DES_cblock zero;
   int i;
   int32_t seq_number;
   size_t padlength;
@@ -115,17 +115,17 @@ unwrap_des
 
       for (i = 0; i < sizeof(deskey); ++i)
 	  deskey[i] ^= 0xf0;
-      des_set_key (&deskey, schedule);
+      DES_set_key (&deskey, &schedule);
       memset (&zero, 0, sizeof(zero));
-      des_cbc_encrypt ((void *)p,
+      DES_cbc_encrypt ((void *)p,
 		       (void *)p,
 		       input_message_buffer->length - len,
-		       schedule,
+		       &schedule,
 		       &zero,
 		       DES_DECRYPT);
       
       memset (deskey, 0, sizeof(deskey));
-      memset (schedule, 0, sizeof(schedule));
+      memset (&schedule, 0, sizeof(schedule));
   }
   /* check pad */
 
@@ -144,9 +144,9 @@ unwrap_des
 
   memset (&zero, 0, sizeof(zero));
   memcpy (&deskey, key->keyvalue.data, sizeof(deskey));
-  des_set_key (&deskey, schedule);
-  des_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
-		 schedule, &zero);
+  DES_set_key (&deskey, &schedule);
+  DES_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
+		 &schedule, &zero);
   if (memcmp (p - 8, hash, 8) != 0)
     return GSS_S_BAD_MIC;
 
@@ -164,12 +164,12 @@ unwrap_des
 	  4);
 
   p -= 16;
-  des_set_key (&deskey, schedule);
-  des_cbc_encrypt ((void *)p, (void *)p, 8,
-		   schedule, (des_cblock *)hash, DES_DECRYPT);
+  DES_set_key (&deskey, &schedule);
+  DES_cbc_encrypt ((void *)p, (void *)p, 8,
+		   &schedule, (DES_cblock *)hash, DES_DECRYPT);
 
   memset (deskey, 0, sizeof(deskey));
-  memset (schedule, 0, sizeof(schedule));
+  memset (&schedule, 0, sizeof(schedule));
 
   if (memcmp (p, seq_data, 8) != 0) {
     return GSS_S_BAD_MIC;
@@ -300,7 +300,7 @@ unwrap_des3
       return GSS_S_FAILURE;
   }
   {
-      des_cblock ivec;
+      DES_cblock ivec;
 
       memcpy(&ivec, p + 8, 8);
       ret = krb5_decrypt_ivec (gssapi_krb5_context,

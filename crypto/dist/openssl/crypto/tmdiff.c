@@ -60,7 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/tmdiff.h>
 #if !defined(OPENSSL_SYS_MSDOS)
-#include OPENSSL_UNISTD
+#include <unistd.h>
 #endif
 
 #ifdef TIMEB

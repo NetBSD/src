@@ -1,4 +1,4 @@
-/*	$NetBSD: des.h,v 1.3 2003/07/23 05:43:44 itojun Exp $	*/
+/*	$NetBSD: des.h,v 1.4 2003/07/24 14:16:30 itojun Exp $	*/
 
 /* crypto/des/des.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
@@ -85,11 +85,13 @@ typedef struct des_ks_struct
 		 * 8 byte longs */
 		DES_LONG deslong[2];
 		} ks;
+#if 0
 	int weak_key;
+#endif
 	} des_key_schedule[16];
 
-#define DES_KEY_SZ 	(sizeof(des_cblock))
-#define DES_SCHEDULE_SZ (sizeof(des_key_schedule))
+#define DES_KEY_SZ 	8	/*(sizeof(des_cblock))*/
+#define DES_SCHEDULE_SZ 128	/*(sizeof(des_key_schedule))*/
 
 #define DES_ENCRYPT	1
 #define DES_DECRYPT	0

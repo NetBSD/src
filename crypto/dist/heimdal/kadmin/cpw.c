@@ -32,9 +32,10 @@
  */
 
 #include "kadmin_locl.h"
+#include <openssl/ui.h>
 
 __RCSID("$Heimdal: cpw.c,v 1.13 2001/08/10 08:05:35 joda Exp $"
-        "$NetBSD: cpw.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
+        "$NetBSD: cpw.c,v 1.2 2003/07/24 14:16:55 itojun Exp $");
 
 struct cpw_entry_data {
     int random_key;
@@ -108,7 +109,7 @@ set_password (krb5_principal principal, char *password)
 	krb5_unparse_name(context, principal, &princ_name);
 	asprintf(&prompt, "%s's Password: ", princ_name);
 	free (princ_name);
-	ret = des_read_pw_string(pwbuf, sizeof(pwbuf), prompt, 1);
+	ret = UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), prompt, 1);
 	free (prompt);
 	if(ret){
 	    return 0; /* XXX error code? */

@@ -56,9 +56,6 @@
 #ifndef HEADER_EC_H
 #define HEADER_EC_H
 
-#ifdef OPENSSL_NO_EC
-#error EC is disabled.
-#endif
 
 #include <openssl/bn.h>
 #include <openssl/symhacks.h>

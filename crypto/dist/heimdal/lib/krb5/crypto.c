@@ -31,9 +31,11 @@
  * SUCH DAMAGE. 
  */
 
+#define OPENSSL_DISABLE_OLD_DES_SUPPORT 1
+
 #include "krb5_locl.h"
 __RCSID("$Heimdal: crypto.c,v 1.73 2003/04/01 16:51:54 lha Exp $"
-        "$NetBSD: crypto.c,v 1.11 2003/05/15 21:36:48 lha Exp $");
+        "$NetBSD: crypto.c,v 1.12 2003/07/24 14:16:56 itojun Exp $");
 
 #undef CRYPTO_DEBUG
 #ifdef CRYPTO_DEBUG
@@ -157,24 +159,24 @@ static void
 krb5_DES_random_key(krb5_context context,
 	       krb5_keyblock *key)
 {
-    des_cblock *k = key->keyvalue.data;
+    DES_cblock *k = key->keyvalue.data;
     do {
-	krb5_generate_random_block(k, sizeof(des_cblock));
-	des_set_odd_parity(k);
-    } while(des_is_weak_key(k));
+	krb5_generate_random_block(k, sizeof(DES_cblock));
+	DES_set_odd_parity(k);
+    } while(DES_is_weak_key(k));
 }
 
 static void
 krb5_DES_schedule(krb5_context context,
 	     struct key_data *key)
 {
-    des_set_key(key->key->keyvalue.data, key->schedule->data);
+    DES_set_key(key->key->keyvalue.data, key->schedule->data);
 }
 
 static void
-DES_string_to_key_int(unsigned char *data, size_t length, des_cblock *key)
+DES_string_to_key_int(unsigned char *data, size_t length, DES_cblock *key)
 {
-    des_key_schedule schedule;
+    DES_key_schedule schedule;
     int i;
     int reverse = 0;
     unsigned char *p;
@@ -193,13 +195,13 @@ DES_string_to_key_int(unsigned char *data, size_t length, des_cblock *key)
 	if((i % 8) == 7)
 	    reverse = !reverse;
     }
-    des_set_odd_parity(key);
-    if(des_is_weak_key(key))
+    DES_set_odd_parity(key);
+    if(DES_is_weak_key(key))
 	(*key)[7] ^= 0xF0;
-    des_set_key(key, schedule);
-    des_cbc_cksum((void*)data, key, length, schedule, key);
-    memset(schedule, 0, sizeof(schedule));
-    des_set_odd_parity(key);
+    DES_set_key(key, &schedule);
+    DES_cbc_cksum((void*)data, key, length, &schedule, key);
+    memset(&schedule, 0, sizeof(schedule));
+    DES_set_odd_parity(key);
 }
 
 static krb5_error_code
@@ -212,7 +214,7 @@ krb5_DES_string_to_key(krb5_context context,
 {
     unsigned char *s;
     size_t len;
-    des_cblock tmp;
+    DES_cblock tmp;
 
     len = password.length + salt.saltvalue.length;
     s = malloc(len);
@@ -243,7 +245,7 @@ krb5_DES_string_to_key(krb5_context context,
 static void
 krb5_DES_AFS3_CMU_string_to_key (krb5_data pw,
 			    krb5_data cell,
-			    des_cblock *key)
+			    DES_cblock *key)
 {
     char  password[8+1];	/* crypt is limited to 8 chars anyway */
     int   i;
@@ -256,14 +258,14 @@ krb5_DES_AFS3_CMU_string_to_key (krb5_data pw,
     }
     password[8] = '\0';
 
-    memcpy(key, crypt(password, "p1") + 2, sizeof(des_cblock));
+    memcpy(key, crypt(password, "p1") + 2, sizeof(DES_cblock));
 
     /* parity is inserted into the LSB so left shift each byte up one
        bit. This allows ascii characters with a zero MSB to retain as
        much significance as possible. */
-    for (i = 0; i < sizeof(des_cblock); i++)
+    for (i = 0; i < sizeof(DES_cblock); i++)
 	((unsigned char*)key)[i] <<= 1;
-    des_set_odd_parity (key);
+    DES_set_odd_parity (key);
 }
 
 /*
@@ -272,11 +274,11 @@ krb5_DES_AFS3_CMU_string_to_key (krb5_data pw,
 static void
 krb5_DES_AFS3_Transarc_string_to_key (krb5_data pw,
 				 krb5_data cell,
-				 des_cblock *key)
+				 DES_cblock *key)
 {
-    des_key_schedule schedule;
-    des_cblock temp_key;
-    des_cblock ivec;
+    DES_key_schedule schedule;
+    DES_cblock temp_key;
+    DES_cblock ivec;
     char password[512];
     size_t passlen;
 
@@ -292,20 +294,20 @@ krb5_DES_AFS3_Transarc_string_to_key (krb5_data pw,
     passlen = min(sizeof(password), pw.length + cell.length);
     memcpy(&ivec, "kerberos", 8);
     memcpy(&temp_key, "kerberos", 8);
-    des_set_odd_parity (&temp_key);
-    des_set_key (&temp_key, schedule);
-    des_cbc_cksum ((const void *)password, &ivec, passlen, schedule, &ivec);
+    DES_set_odd_parity (&temp_key);
+    DES_set_key (&temp_key, &schedule);
+    DES_cbc_cksum ((const void *)password, &ivec, passlen, &schedule, &ivec);
 
     memcpy(&temp_key, &ivec, 8);
-    des_set_odd_parity (&temp_key);
-    des_set_key (&temp_key, schedule);
-    des_cbc_cksum ((const void *)password, key, passlen, schedule, &ivec);
+    DES_set_odd_parity (&temp_key);
+    DES_set_key (&temp_key, &schedule);
+    DES_cbc_cksum ((const void *)password, key, passlen, &schedule, &ivec);
     memset(&schedule, 0, sizeof(schedule));
     memset(&temp_key, 0, sizeof(temp_key));
     memset(&ivec, 0, sizeof(ivec));
     memset(password, 0, sizeof(password));
 
-    des_set_odd_parity (key);
+    DES_set_odd_parity (key);
 }
 
 static krb5_error_code
@@ -316,7 +318,7 @@ DES_AFS3_string_to_key(krb5_context context,
 		       krb5_data opaque,
 		       krb5_keyblock *key)
 {
-    des_cblock tmp;
+    DES_cblock tmp;
     if(password.length > 8)
 	krb5_DES_AFS3_Transarc_string_to_key(password, salt.saltvalue, &tmp);
     else
@@ -331,26 +333,26 @@ static void
 DES3_random_key(krb5_context context,
 		krb5_keyblock *key)
 {
-    des_cblock *k = key->keyvalue.data;
+    DES_cblock *k = key->keyvalue.data;
     do {
-	krb5_generate_random_block(k, 3 * sizeof(des_cblock));
-	des_set_odd_parity(&k[0]);
-	des_set_odd_parity(&k[1]);
-	des_set_odd_parity(&k[2]);
-    } while(des_is_weak_key(&k[0]) ||
-	    des_is_weak_key(&k[1]) ||
-	    des_is_weak_key(&k[2]));
+	krb5_generate_random_block(k, 3 * sizeof(DES_cblock));
+	DES_set_odd_parity(&k[0]);
+	DES_set_odd_parity(&k[1]);
+	DES_set_odd_parity(&k[2]);
+    } while(DES_is_weak_key(&k[0]) ||
+	    DES_is_weak_key(&k[1]) ||
+	    DES_is_weak_key(&k[2]));
 }
 
 static void
 DES3_schedule(krb5_context context,
 	      struct key_data *key)
 {
-    des_cblock *k = key->key->keyvalue.data;
-    des_key_schedule *s = key->schedule->data;
-    des_set_key(&k[0], s[0]);
-    des_set_key(&k[1], s[1]);
-    des_set_key(&k[2], s[2]);
+    DES_cblock *k = key->key->keyvalue.data;
+    DES_key_schedule *s = key->schedule->data;
+    DES_set_key(&k[0], &s[0]);
+    DES_set_key(&k[1], &s[1]);
+    DES_set_key(&k[2], &s[2]);
 }
 
 /*
@@ -358,7 +360,7 @@ DES3_schedule(krb5_context context,
  */
 
 static void
-xor (des_cblock *key, const unsigned char *b)
+xor (DES_cblock *key, const unsigned char *b)
 {
     unsigned char *a = (unsigned char*)key;
     a[0] ^= b[0];
@@ -382,7 +384,7 @@ DES3_string_to_key(krb5_context context,
     char *str;
     size_t len;
     unsigned char tmp[24];
-    des_cblock keys[3];
+    DES_cblock keys[3];
     
     len = password.length + salt.saltvalue.length;
     str = malloc(len);
@@ -393,29 +395,29 @@ DES3_string_to_key(krb5_context context,
     memcpy(str, password.data, password.length);
     memcpy(str + password.length, salt.saltvalue.data, salt.saltvalue.length);
     {
-	des_cblock ivec;
-	des_key_schedule s[3];
+	DES_cblock ivec;
+	DES_key_schedule s[3];
 	int i;
 	
 	_krb5_n_fold(str, len, tmp, 24);
 	
 	for(i = 0; i < 3; i++){
 	    memcpy(keys + i, tmp + i * 8, sizeof(keys[i]));
-	    des_set_odd_parity(keys + i);
-	    if(des_is_weak_key(keys + i))
+	    DES_set_odd_parity(keys + i);
+	    if(DES_is_weak_key(keys + i))
 		xor(keys + i, (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
-	    des_set_key(keys + i, s[i]);
+	    DES_set_key(keys + i, &s[i]);
 	}
 	memset(&ivec, 0, sizeof(ivec));
-	des_ede3_cbc_encrypt((const void *)tmp,
+	DES_ede3_cbc_encrypt((const void *)tmp,
 			     (void *)tmp, sizeof(tmp), 
-			     s[0], s[1], s[2], &ivec, DES_ENCRYPT);
+			     &s[0], &s[1], &s[2], &ivec, DES_ENCRYPT);
 	memset(s, 0, sizeof(s));
 	memset(&ivec, 0, sizeof(ivec));
 	for(i = 0; i < 3; i++){
 	    memcpy(keys + i, tmp + i * 8, sizeof(keys[i]));
-	    des_set_odd_parity(keys + i);
-	    if(des_is_weak_key(keys + i))
+	    DES_set_odd_parity(keys + i);
+	    if(DES_is_weak_key(keys + i))
 		xor(keys + i, (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
 	}
 	memset(tmp, 0, sizeof(tmp));
@@ -700,8 +702,8 @@ struct key_type keytype_des = {
     KEYTYPE_DES,
     "des",
     56,
-    sizeof(des_cblock),
-    sizeof(des_key_schedule),
+    sizeof(DES_cblock),
+    sizeof(DES_key_schedule),
     krb5_DES_random_key,
     krb5_DES_schedule,
     des_salt
@@ -711,8 +713,8 @@ struct key_type keytype_des3 = {
     KEYTYPE_DES3,
     "des3",
     168,
-    3 * sizeof(des_cblock), 
-    3 * sizeof(des_key_schedule), 
+    3 * sizeof(DES_cblock), 
+    3 * sizeof(DES_key_schedule), 
     DES3_random_key,
     DES3_schedule,
     des3_salt
@@ -722,8 +724,8 @@ struct key_type keytype_des3_derived = {
     KEYTYPE_DES3,
     "des3",
     168,
-    3 * sizeof(des_cblock),
-    3 * sizeof(des_key_schedule), 
+    3 * sizeof(DES_cblock),
+    3 * sizeof(DES_key_schedule), 
     DES3_random_key,
     DES3_schedule,
     des3_salt_derived
@@ -1180,7 +1182,7 @@ RSA_MD4_DES_checksum(krb5_context context,
 		     Checksum *cksum)
 {
     MD4_CTX md4;
-    des_cblock ivec;
+    DES_cblock ivec;
     unsigned char *p = cksum->checksum.data;
     
     krb5_generate_random_block(p, 8);
@@ -1189,7 +1191,7 @@ RSA_MD4_DES_checksum(krb5_context context,
     MD4_Update (&md4, data, len);
     MD4_Final (p + 8, &md4);
     memset (&ivec, 0, sizeof(ivec));
-    des_cbc_encrypt((const void *)p, 
+    DES_cbc_encrypt((const void *)p, 
 		    (void *)p, 
 		    24, 
 		    key->schedule->data, 
@@ -1208,11 +1210,11 @@ RSA_MD4_DES_verify(krb5_context context,
     MD4_CTX md4;
     unsigned char tmp[24];
     unsigned char res[16];
-    des_cblock ivec;
+    DES_cblock ivec;
     krb5_error_code ret = 0;
 
     memset(&ivec, 0, sizeof(ivec));
-    des_cbc_encrypt(C->checksum.data,
+    DES_cbc_encrypt(C->checksum.data,
 		    (void*)tmp, 
 		    C->checksum.length, 
 		    key->schedule->data,
@@ -1255,7 +1257,7 @@ RSA_MD5_DES_checksum(krb5_context context,
 		     Checksum *C)
 {
     MD5_CTX md5;
-    des_cblock ivec;
+    DES_cblock ivec;
     unsigned char *p = C->checksum.data;
     
     krb5_generate_random_block(p, 8);
@@ -1264,7 +1266,7 @@ RSA_MD5_DES_checksum(krb5_context context,
     MD5_Update (&md5, data, len);
     MD5_Final (p + 8, &md5);
     memset (&ivec, 0, sizeof(ivec));
-    des_cbc_encrypt((const void *)p, 
+    DES_cbc_encrypt((const void *)p, 
 		    (void *)p, 
 		    24, 
 		    key->schedule->data, 
@@ -1283,15 +1285,15 @@ RSA_MD5_DES_verify(krb5_context context,
     MD5_CTX md5;
     unsigned char tmp[24];
     unsigned char res[16];
-    des_cblock ivec;
-    des_key_schedule *sched = key->schedule->data;
+    DES_cblock ivec;
+    DES_key_schedule *sched = key->schedule->data;
     krb5_error_code ret = 0;
 
     memset(&ivec, 0, sizeof(ivec));
-    des_cbc_encrypt(C->checksum.data, 
+    DES_cbc_encrypt(C->checksum.data, 
 		    (void*)tmp, 
 		    C->checksum.length, 
-		    sched[0],
+		    &sched[0],
 		    &ivec,
 		    DES_DECRYPT);
     MD5_Init (&md5);
@@ -1316,9 +1318,9 @@ RSA_MD5_DES3_checksum(krb5_context context,
 		      Checksum *C)
 {
     MD5_CTX md5;
-    des_cblock ivec;
+    DES_cblock ivec;
     unsigned char *p = C->checksum.data;
-    des_key_schedule *sched = key->schedule->data;
+    DES_key_schedule *sched = key->schedule->data;
     
     krb5_generate_random_block(p, 8);
     MD5_Init (&md5);
@@ -1326,10 +1328,10 @@ RSA_MD5_DES3_checksum(krb5_context context,
     MD5_Update (&md5, data, len);
     MD5_Final (p + 8, &md5);
     memset (&ivec, 0, sizeof(ivec));
-    des_ede3_cbc_encrypt((const void *)p, 
+    DES_ede3_cbc_encrypt((const void *)p, 
 			 (void *)p, 
 			 24, 
-			 sched[0], sched[1], sched[2],
+			 &sched[0], &sched[1], &sched[2],
 			 &ivec, 
 			 DES_ENCRYPT);
 }
@@ -1345,15 +1347,15 @@ RSA_MD5_DES3_verify(krb5_context context,
     MD5_CTX md5;
     unsigned char tmp[24];
     unsigned char res[16];
-    des_cblock ivec;
-    des_key_schedule *sched = key->schedule->data;
+    DES_cblock ivec;
+    DES_key_schedule *sched = key->schedule->data;
     krb5_error_code ret = 0;
 
     memset(&ivec, 0, sizeof(ivec));
-    des_ede3_cbc_encrypt(C->checksum.data, 
+    DES_ede3_cbc_encrypt(C->checksum.data, 
 			 (void*)tmp, 
 			 C->checksum.length, 
-			 sched[0], sched[1], sched[2],
+			 &sched[0], &sched[1], &sched[2],
 			 &ivec,
 			 DES_DECRYPT);
     MD5_Init (&md5);
@@ -1942,10 +1944,10 @@ DES_CBC_encrypt_null_ivec(krb5_context context,
 			  int usage,
 			  void *ignore_ivec)
 {
-    des_cblock ivec;
-    des_key_schedule *s = key->schedule->data;
+    DES_cblock ivec;
+    DES_key_schedule *s = key->schedule->data;
     memset(&ivec, 0, sizeof(ivec));
-    des_cbc_encrypt(data, data, len, *s, &ivec, encrypt);
+    DES_cbc_encrypt(data, data, len, s, &ivec, encrypt);
     return 0;
 }
 
@@ -1958,10 +1960,10 @@ DES_CBC_encrypt_key_ivec(krb5_context context,
 			 int usage,
 			 void *ignore_ivec)
 {
-    des_cblock ivec;
-    des_key_schedule *s = key->schedule->data;
+    DES_cblock ivec;
+    DES_key_schedule *s = key->schedule->data;
     memcpy(&ivec, key->key->keyvalue.data, sizeof(ivec));
-    des_cbc_encrypt(data, data, len, *s, &ivec, encrypt);
+    DES_cbc_encrypt(data, data, len, s, &ivec, encrypt);
     return 0;
 }
 
@@ -1974,13 +1976,13 @@ DES3_CBC_encrypt(krb5_context context,
 		 int usage,
 		 void *ivec)
 {
-    des_cblock local_ivec;
-    des_key_schedule *s = key->schedule->data;
+    DES_cblock local_ivec;
+    DES_key_schedule *s = key->schedule->data;
     if(ivec == NULL) {
 	ivec = &local_ivec;
 	memset(local_ivec, 0, sizeof(local_ivec));
     }
-    des_ede3_cbc_encrypt(data, data, len, s[0], s[1], s[2], ivec, encrypt);
+    DES_ede3_cbc_encrypt(data, data, len, &s[0], &s[1], &s[2], ivec, encrypt);
     return 0;
 }
 
@@ -1993,12 +1995,12 @@ DES_CFB64_encrypt_null_ivec(krb5_context context,
 			    int usage,
 			    void *ignore_ivec)
 {
-    des_cblock ivec;
+    DES_cblock ivec;
     int num = 0;
-    des_key_schedule *s = key->schedule->data;
+    DES_key_schedule *s = key->schedule->data;
     memset(&ivec, 0, sizeof(ivec));
 
-    des_cfb64_encrypt(data, data, len, *s, &ivec, &num, encrypt);
+    DES_cfb64_encrypt(data, data, len, s, &ivec, &num, encrypt);
     return 0;
 }
 
@@ -2011,11 +2013,11 @@ DES_PCBC_encrypt_key_ivec(krb5_context context,
 			  int usage,
 			  void *ignore_ivec)
 {
-    des_cblock ivec;
-    des_key_schedule *s = key->schedule->data;
+    DES_cblock ivec;
+    DES_key_schedule *s = key->schedule->data;
     memcpy(&ivec, key->key->keyvalue.data, sizeof(ivec));
 
-    des_pcbc_encrypt(data, data, len, *s, &ivec, encrypt);
+    DES_pcbc_encrypt(data, data, len, s, &ivec, encrypt);
     return 0;
 }
 
@@ -3209,20 +3211,20 @@ krb5_generate_random_block(void *buf, size_t len)
 void
 krb5_generate_random_block(void *buf, size_t len)
 {
-    des_cblock key, out;
-    static des_cblock counter;
-    static des_key_schedule schedule;
+    DES_cblock key, out;
+    static DES_cblock counter;
+    static DES_key_schedule schedule;
     int i;
     static int initialized = 0;
 
     if(!initialized) {
-	des_new_random_key(&key);
-	des_set_key(&key, schedule);
+	DES_new_random_key(&key);
+	DES_set_key(&key, schedule);
 	memset(&key, 0, sizeof(key));
-	des_new_random_key(&counter);
+	DES_new_random_key(&counter);
     }
     while(len > 0) {
-	des_ecb_encrypt(&counter, &out, schedule, DES_ENCRYPT);
+	DES_ecb_encrypt(&counter, &out, schedule, DES_ENCRYPT);
 	for(i = 7; i >=0; i--)
 	    if(counter[i]++)
 		break;
@@ -3263,9 +3265,9 @@ DES3_postproc(krb5_context context,
 	krb5_free_data(context, key->schedule);
 	key->schedule = NULL;
     }
-    des_set_odd_parity((des_cblock*)k);
-    des_set_odd_parity((des_cblock*)(k + 8));
-    des_set_odd_parity((des_cblock*)(k + 16));
+    DES_set_odd_parity((DES_cblock*)k);
+    DES_set_odd_parity((DES_cblock*)(k + 8));
+    DES_set_odd_parity((DES_cblock*)(k + 16));
 }
 
 static krb5_error_code

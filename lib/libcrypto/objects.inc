@@ -1,4 +1,4 @@
-#	$NetBSD: objects.inc,v 1.3 2000/07/16 07:16:23 mrg Exp $
+#	$NetBSD: objects.inc,v 1.4 2003/07/24 14:16:32 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,6 +9,4 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/objects
 
-SRCS+= o_names.c obj_dat.c obj_lib.c obj_err.c
-
-
+SRCS+=	o_names.c obj_dat.c obj_lib.c obj_err.c

@@ -32,9 +32,10 @@
  */
 
 #include "headers.h"
+#include <openssl/ui.h>
 
 __RCSID("$Heimdal: kstash.c,v 1.15 2002/04/18 09:47:25 joda Exp $"
-        "$NetBSD: kstash.c,v 1.1.1.4 2002/09/12 12:41:39 joda Exp $");
+        "$NetBSD: kstash.c,v 1.2 2003/07/24 14:16:55 itojun Exp $");
 
 krb5_context context;
 
@@ -105,7 +106,7 @@ main(int argc, char **argv)
 	    buf[n] = '\0';
 	    buf[strcspn(buf, "\r\n")] = '\0';
 	} else {
-	    if(des_read_pw_string(buf, sizeof(buf), "Master key: ", 1))
+	    if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Master key: ", 1))
 		exit(1);
 	}
 	krb5_string_to_key_salt(context, enctype, buf, salt, &key);

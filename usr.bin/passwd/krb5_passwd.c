@@ -1,4 +1,4 @@
-/* $NetBSD: krb5_passwd.c,v 1.10 2000/11/18 19:29:20 fvdl Exp $ */
+/* $NetBSD: krb5_passwd.c,v 1.11 2003/07/24 14:17:47 itojun Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <err.h>
 #include <pwd.h>
 
-#include <openssl/des.h>
+#include <openssl/ui.h>
 #include <krb5.h>
 
 #include "extern.h"
@@ -160,7 +160,7 @@ krb5_chpw(const char *username)
     krb5_data_zero (&result_string);
 
     /* XXX use getpass? It has a broken interface. */
-    if(des_read_pw_string (pwbuf, sizeof(pwbuf), "New password: ", 1) != 0)
+    if(UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), "New password: ", 1) != 0)
         return 1;
 
     ret = krb5_change_password (context, &cred, pwbuf,

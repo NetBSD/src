@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: wrap.c,v 1.21 2003/03/16 17:57:48 lha Exp $"
-        "$NetBSD: wrap.c,v 1.8 2003/05/15 21:36:45 lha Exp $");
+        "$NetBSD: wrap.c,v 1.9 2003/07/24 14:16:55 itojun Exp $");
 
 OM_uint32
 gss_krb5_get_localkey(const gss_ctx_id_t context_handle,
@@ -129,9 +129,9 @@ wrap_des
   u_char *p;
   MD5_CTX md5;
   u_char hash[16];
-  des_key_schedule schedule;
-  des_cblock deskey;
-  des_cblock zero;
+  DES_key_schedule schedule;
+  DES_cblock deskey;
+  DES_cblock zero;
   int i;
   int32_t seq_number;
   size_t len, total_len, padlength, datalen;
@@ -183,9 +183,9 @@ wrap_des
 
   memset (&zero, 0, sizeof(zero));
   memcpy (&deskey, key->keyvalue.data, sizeof(deskey));
-  des_set_key (&deskey, schedule);
-  des_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
-		 schedule, &zero);
+  DES_set_key (&deskey, &schedule);
+  DES_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
+		 &schedule, &zero);
   memcpy (p - 8, hash, 8);
 
   /* sequence number */
@@ -202,9 +202,9 @@ wrap_des
 	  (context_handle->more_flags & LOCAL) ? 0 : 0xFF,
 	  4);
 
-  des_set_key (&deskey, schedule);
-  des_cbc_encrypt ((void *)p, (void *)p, 8,
-		   schedule, (des_cblock *)(p + 8), DES_ENCRYPT);
+  DES_set_key (&deskey, &schedule);
+  DES_cbc_encrypt ((void *)p, (void *)p, 8,
+		   &schedule, (DES_cblock *)(p + 8), DES_ENCRYPT);
 
   krb5_auth_con_setlocalseqnumber (gssapi_krb5_context,
 			       context_handle->auth_context,
@@ -218,17 +218,17 @@ wrap_des
 
       for (i = 0; i < sizeof(deskey); ++i)
 	  deskey[i] ^= 0xf0;
-      des_set_key (&deskey, schedule);
+      DES_set_key (&deskey, &schedule);
       memset (&zero, 0, sizeof(zero));
-      des_cbc_encrypt ((void *)p,
+      DES_cbc_encrypt ((void *)p,
 		       (void *)p,
 		       datalen,
-		       schedule,
+		       &schedule,
 		       &zero,
 		       DES_ENCRYPT);
       
       memset (deskey, 0, sizeof(deskey));
-      memset (schedule, 0, sizeof(schedule));
+      memset (&schedule, 0, sizeof(schedule));
   }
   if(conf_state != NULL)
       *conf_state = conf_req_flag;
@@ -346,7 +346,7 @@ wrap_des3
   }
 
   {
-      des_cblock ivec;
+      DES_cblock ivec;
 
       memcpy (&ivec, p + 8, 8);
       ret = krb5_encrypt_ivec (gssapi_krb5_context,

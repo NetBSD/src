@@ -1,4 +1,4 @@
-#	$NetBSD: rc4.inc,v 1.3 2000/07/16 07:16:23 mrg Exp $
+#	$NetBSD: rc4.inc,v 1.4 2003/07/24 14:16:33 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -10,5 +10,3 @@
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/rc4
 
 SRCS+=rc4_skey.c rc4_enc.c 
-
-

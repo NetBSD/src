@@ -32,7 +32,7 @@
  */
 
 /* $Heimdal: krb5-v4compat.h,v 1.2 2003/03/18 03:08:20 lha Exp $
-   $NetBSD: krb5-v4compat.h,v 1.1.1.1 2003/05/15 20:28:47 lha Exp $ */
+   $NetBSD: krb5-v4compat.h,v 1.2 2003/07/24 14:16:56 itojun Exp $ */
 
 #ifndef __KRB5_V4COMPAT_H__
 #define __KRB5_V4COMPAT_H__
@@ -61,7 +61,7 @@ struct credentials {
     char    service[ANAME_SZ];	/* Service name */
     char    instance[INST_SZ];	/* Instance */
     char    realm[REALM_SZ];	/* Auth domain */
-    des_cblock session;		/* Session key */
+    DES_cblock session;		/* Session key */
     int     lifetime;		/* Lifetime */
     int     kvno;		/* Key version number */
     struct ktext ticket_st;	/* The ticket itself */

@@ -68,6 +68,7 @@
 #include <openssl/lhash.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -152,12 +153,10 @@ typedef struct x509_lookup_method_st
 			    X509_OBJECT *ret);
 	} X509_LOOKUP_METHOD;
 
-typedef struct x509_store_ctx_st X509_STORE_CTX;
-
 /* This is used to hold everything.  It is used for all certificate
  * validation.  Once we have a certificate chain, the 'verify'
  * function is then called to actually check the cert chain. */
-typedef struct x509_store_st
+struct x509_store_st
 	{
 	/* The following is a cache of trusted certs */
 	int cache; 	/* if true, stash any hits */
@@ -165,13 +164,29 @@ typedef struct x509_store_st
 
 	/* These are external lookup methods */
 	STACK_OF(X509_LOOKUP) *get_cert_methods;
+
+	/* The following fields are not used by X509_STORE but are
+         * inherited by X509_STORE_CTX when it is initialised.
+	 */
+
+	unsigned long flags;	/* Various verify flags */
+	int purpose;
+	int trust;
+	/* Callbacks for various operations */
 	int (*verify)(X509_STORE_CTX *ctx);	/* called to verify a certificate */
 	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);	/* error callback */
+	int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);	/* get issuers cert from ctx */
+	int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer); /* check issued */
+	int (*check_revocation)(X509_STORE_CTX *ctx); /* Check revocation status of chain */
+	int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x); /* retrieve CRL */
+	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl); /* Check CRL validity */
+	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x); /* Check certificate against CRL */
+	int (*cleanup)(X509_STORE_CTX *ctx);
 
 	CRYPTO_EX_DATA ex_data;
 	int references;
 	int depth;		/* how deep to look (still unused -- X509_STORE_CTX's depth is used) */
-	}  X509_STORE;
+	} /* X509_STORE */;
 
 #define X509_STORE_set_depth(ctx,d)       ((ctx)->depth=(d))
 
@@ -187,7 +202,7 @@ struct x509_lookup_st
 	char *method_data;		/* method data */
 
 	X509_STORE *store_ctx;	/* who owns us */
-	};
+	} /* X509_LOOKUP */;
 
 /* This is a used when verifying cert chains.  Since the
  * gathering of the cert chain can take some time (and have to be
@@ -211,6 +226,10 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);		/* error callback */
 	int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);	/* get issuers cert from ctx */
 	int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer); /* check issued */
+	int (*check_revocation)(X509_STORE_CTX *ctx); /* Check revocation status of chain */
+	int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x); /* retrieve CRL */
+	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl); /* Check CRL validity */
+	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x); /* Check certificate against CRL */
 	int (*cleanup)(X509_STORE_CTX *ctx);
 
 	/* The following is built up */
@@ -224,9 +243,10 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 	int error;
 	X509 *current_cert;
 	X509 *current_issuer;	/* cert currently being tested as valid issuer */
+	X509_CRL *current_crl;	/* current CRL */
 
 	CRYPTO_EX_DATA ex_data;
-	};
+	} /* X509_STORE_CTX */;
 
 #define X509_STORE_CTX_set_depth(ctx,d)       ((ctx)->depth=(d))
 
@@ -280,6 +300,9 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 #define		X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH		31
 #define		X509_V_ERR_KEYUSAGE_NO_CERTSIGN			32
 
+#define		X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER		33
+#define		X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION		34
+
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50
 
@@ -287,11 +310,9 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 
 #define	X509_V_FLAG_CB_ISSUER_CHECK		0x1	/* Send issuer+subject checks to verify_cb */
 #define	X509_V_FLAG_USE_CHECK_TIME		0x2	/* Use check time instead of current time */
-
-		  /* These functions are being redefined in another directory,
-		     and clash when the linker is case-insensitive, so let's
-		     hide them a little, by giving them an extra 'o' at the
-		     beginning of the name... */
+#define	X509_V_FLAG_CRL_CHECK			0x4	/* Lookup CRLs */
+#define	X509_V_FLAG_CRL_CHECK_ALL		0x8	/* Lookup CRLs for whole chain */
+#define	X509_V_FLAG_IGNORE_CRITICAL		0x10	/* Ignore unhandled critical extensions */
 
 int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, int type,
 	     X509_NAME *name);
@@ -302,12 +323,16 @@ void X509_OBJECT_free_contents(X509_OBJECT *a);
 X509_STORE *X509_STORE_new(void );
 void X509_STORE_free(X509_STORE *v);
 
+void X509_STORE_set_flags(X509_STORE *ctx, long flags);
+int X509_STORE_set_purpose(X509_STORE *ctx, int purpose);
+int X509_STORE_set_trust(X509_STORE *ctx, int trust);
+
 X509_STORE_CTX *X509_STORE_CTX_new(void);
 
 int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
 
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
-void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
+int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
 			 X509 *x509, STACK_OF(X509) *chain);
 void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);

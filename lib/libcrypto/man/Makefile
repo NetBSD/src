@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2003/06/30 14:19:07 wiz Exp $
+#	$NetBSD: Makefile,v 1.12 2003/07/24 14:16:41 itojun Exp $
 
 # the makefile is not, and should not be visited during normal build process.
 # try to use latest pod2man, which comes with the latest perl.
@@ -6,12 +6,13 @@
 # XXX: remove .UC lines
 
 .include <bsd.own.mk>
-
 CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
-VERSION!=	grep VERSION ${CRYPTODIST}/openssl/Makefile.ssl | head -1 | sed -e 's/VERSION=//'
+.include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
+
+VERSION!=	grep VERSION ${OPENSSLSRC}/Makefile.ssl | head -1 | sed -e 's/VERSION=//'
 
 manpages:
-	for i in ${CRYPTODIST}/openssl/doc/apps/*.pod; do \
+	for i in ${OPENSSLSRC}/doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then \
 			sec=5; \
@@ -28,8 +29,8 @@ manpages:
 			`basename $$i`) | \
 		perl libcrypto.pl >$$dst; \
 	done
-	for i in ${CRYPTODIST}/openssl/doc/crypto/*.pod \
-	    ${CRYPTODIST}/openssl/doc/ssl/*.pod; do \
+	for i in ${OPENSSLSRC}/doc/crypto/*.pod \
+	    ${OPENSSLSRC}/doc/ssl/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "des_modes" ]; then \
 			sec=7; \
@@ -44,10 +45,12 @@ manpages:
 			perl libcrypto.pl >`basename $$i .pod`.$$sec; \
 		fi \
 	done
-	for i in bio blowfish bn bn_internal buffer des dh dsa err evp hmac \
-	lhash md5 mdc2 rand rc4 ripemd rsa sha threads; do \
+	for i in bio blowfish bn bn_internal buffer des dh dsa engine err \
+	    evp hmac lhash md5 mdc2 pem rand rc4 ripemd rsa \
+	    sha threads ui ui_compat; do \
 		mv $$i.3 openssl_$$i.3; \
 	done
 
 clean:
 	-/bin/rm -f *.[0-9]
+

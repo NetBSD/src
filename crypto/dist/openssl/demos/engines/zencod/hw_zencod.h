@@ -5,7 +5,7 @@
  */
 
 
- #ifndef	_HW_ZENCOD_H_
+#ifndef	_HW_ZENCOD_H_
 #define	_HW_ZENCOD_H_
 
 #include <stdio.h>
@@ -157,4 +157,4 @@ typedef int t_zencod_xdes_cipher ( KEY *output, const KEY *input, const KEY *key
 }
 #endif	/* __cplusplus */
 
-#endif	/* !_HW_ZENCOD_H_ */
+#endif /* !_HW_ZENCOD_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: evp.inc,v 1.4 2001/04/12 07:48:04 itojun Exp $
+#	$NetBSD: evp.inc,v 1.5 2003/07/24 14:16:32 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,9 +9,9 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/evp
 
-SRCS+=	encode.c digest.c evp_enc.c evp_key.c \
+SRCS+=	encode.c digest.c evp_enc.c evp_key.c evp_acnf.c \
 	e_des.c e_bf.c e_idea.c e_des3.c \
-	e_rc4.c names.c \
+	e_rc4.c e_aes.c names.c \
 	e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c \
 	m_null.c m_md2.c m_md4.c m_md5.c m_sha.c m_sha1.c \
 	m_dss.c m_dss1.c m_mdc2.c m_ripemd.c \
