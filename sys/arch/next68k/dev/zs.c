@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 2000/03/06 04:14:15 deberg Exp $	*/
+/*	$NetBSD: zs.c,v 1.13 2001/04/05 05:35:12 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -219,6 +219,10 @@ zs_attach(parent, self, aux)
 	printf("\n");
 
 	zs_unit = zsc->zsc_dev.dv_unit;
+
+	if (zs_unit == 0) {
+		zsaddr[0] = (void *)IIOV(NEXT_P_SCC);
+	}
 
 	if (zsaddr[zs_unit] == NULL)
 		panic("zs_attach: zs%d not mapped\n", zs_unit);
