@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.8 1998/12/26 06:17:44 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.9 1998/12/30 03:05:29 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -354,20 +354,20 @@ next_dma_setup_curr_regs(nd)
 
 		if (nd->_nd_map) {
 
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT,
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF,
 					nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
 			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT,
 					nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr +
 					nd->_nd_map->dm_segs[nd->_nd_idx].ds_len);
 		} else {
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT, 0xdeadbeef);
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF, 0xdeadbeef);
 			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT, 0xdeadbeef);
 
 		}
 
 #if 0
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT, 
-				bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT));
+				bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF));
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT,
 				bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT));
 #else
@@ -646,20 +646,20 @@ nextdma_intr(arg)
 
 			if (nd->_nd_map_cont) {
 				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-						DMACSR_SETSUPDATE | DMACSR_SETENABLE);
+						DMACSR_SETSUPDATE | DMACSR_SETENABLE | nd->_nd_dmadir);
 			} else {
 				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 
-						DMACSR_SETENABLE);
+						DMACSR_SETENABLE | nd->_nd_dmadir);
 			}
 
 		} else {
 
 			if (nd->_nd_map_cont) {
 				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-						DMACSR_SETSUPDATE | DMACSR_CLRCOMPLETE);
+						DMACSR_SETSUPDATE | DMACSR_CLRCOMPLETE | nd->_nd_dmadir);
 			} else {
 				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-						DMACSR_CLRCOMPLETE);
+						DMACSR_CLRCOMPLETE | nd->_nd_dmadir);
 			}
 		}
 
@@ -698,7 +698,6 @@ nextdma_start(nd, dmadir)
 	}
 #endif
 
-
   DPRINTF(("DMA start (%ld) intr(0x%b)\n",
           NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
 
@@ -713,6 +712,14 @@ nextdma_start(nd, dmadir)
 	}
 #endif
 
+#ifdef DIAGNOSTIC
+	if ((dmadir != DMACSR_READ) && (dmadir != DMACSR_WRITE)) {
+		panic("DMA: nextdma_start(), dmadir arg must be DMACSR_READ or DMACSR_WRITE\n");
+	}
+#endif
+
+	nd->_nd_dmadir = dmadir;
+
 	/* preload both the current and the continue maps */
 	next_dma_rotate(nd);
 
@@ -725,12 +732,12 @@ nextdma_start(nd, dmadir)
 	next_dma_rotate(nd);
 
 	DPRINTF(("DMA initiating DMA %s of %d segments on intr(0x%b)\n",
-			(dmadir == DMACSR_READ ? "read" : "write"), nd->_nd_map->dm_nsegs,
+			(nd->_nd_dmadir == DMACSR_READ ? "read" : "write"), nd->_nd_map->dm_nsegs,
 			NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
 
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 0);
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 
-			DMACSR_INITBUF | DMACSR_RESET | dmadir);
+			DMACSR_INITBUF | DMACSR_RESET | nd->_nd_dmadir);
 
 	next_dma_setup_curr_regs(nd);
 	next_dma_setup_cont_regs(nd);
@@ -741,10 +748,10 @@ nextdma_start(nd, dmadir)
 
 	if (nd->_nd_map_cont) {
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-				DMACSR_SETSUPDATE | DMACSR_SETENABLE);
+				DMACSR_SETSUPDATE | DMACSR_SETENABLE | nd->_nd_dmadir);
 	} else {
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 
-				DMACSR_SETENABLE);
+				DMACSR_SETENABLE | nd->_nd_dmadir);
 	}
 
 }
