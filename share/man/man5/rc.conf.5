@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.44 2001/04/04 11:13:44 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.45 2001/04/09 16:39:31 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -545,33 +545,12 @@ Runs
 the RIP routing protocol daemon.
 Passes
 .Sy routed_flags .
-This should be
-.Sq NO
-if
-.Sy gated
-is
-.Sq YES .
-.It Sy gated
-.Sq YES
-or
-.Sq NO .
-Runs
-.Xr gated 8 ,
-the multiprotocol routing daemon.
-Passes
-.Sy gated_flags .
-This should be
-.Sq NO
-if
-.Sy routed
-is
-.Sq YES .
-.Xr gated 8
-is not included with the standard
-.Nx
-installation, although it is part of the optional
-.Nx
-package collection.
+.\" This should be
+.\" .Sq NO
+.\" if
+.\" .Sy gated
+.\" is
+.\" .Sq YES .
 .It Sy mrouted
 .Sq YES
 or
