@@ -1,12 +1,14 @@
-# $NetBSD: Makefile,v 1.3 2001/12/12 01:24:02 tv Exp $
+# $NetBSD: Makefile,v 1.4 2002/05/21 23:58:42 bjh21 Exp $
 
 TOSRC=		${.CURDIR}/../../../../..
-SFLIB=		${TOSRC}/lib/libc/softfloat
-.PATH:		${SFLIB} ${.CURDIR}/arch/${MACHINE_ARCH}
+SOFTFLOAT_BITS=	64
+SFLIB1=		${TOSRC}/lib/libc/softfloat
+SFLIB2=		${TOSRC}/lib/libc/softfloat/bits${SOFTFLOAT_BITS}
+.PATH:		${SFLIB1} ${SFLIB2} ${.CURDIR}/arch/${MACHINE_ARCH}
 
 NOMAN=		# defined
 WARNS=		2
-CPPFLAGS+=	-I${.CURDIR}/include -I${SFLIB}
+CPPFLAGS+=	-I${.CURDIR}/include -I${SFLIB1} -I${SFLIB2}
 LDADD+=		-lm
 
 PROG=		testfloat
