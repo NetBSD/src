@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.6 2000/05/23 01:48:53 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.7 2000/06/14 18:43:58 perseant Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -193,12 +193,13 @@ lfs_bmap(struct lfs * fs, struct dinode * idinode, ufs_daddr_t lbn)
  * from a file whose inode has disk address idaddr.  In practice
  * we will only use this to find blocks of the ifile.
  */
+static struct bufarea empty;
+
 struct bufarea *
 getfileblk(struct lfs * fs, struct dinode * idinode, ino_t lbn)
 {
 	struct bufarea *bp;
 	ufs_daddr_t     blkno;
-	static struct bufarea empty;
 	static char     empty_buf[65536];
 
 	empty.b_un.b_buf = &(empty_buf[0]);
@@ -233,6 +234,9 @@ lfs_ientry(ino_t ino, struct bufarea ** bpp)
 	*bpp = getfileblk(&sblock, lfs_ginode(LFS_IFILE_INUM),
 			  ino / sblock.lfs_ifpb + sblock.lfs_cleansz +
 			  sblock.lfs_segtabsz);
+	if (*bpp == &empty) {
+		printf("Warning: ino %d ientry in unassigned block\n", ino);
+	}
 	if (*bpp) {
 		ifp = (((struct ifile *)((*bpp)->b_un.b_buf)) +
 		       (ino % sblock.lfs_ifpb));
@@ -262,7 +266,7 @@ lfs_ino_daddr(ino_t inumber)
 		daddr = din_table[inumber];
 	} else {
 		if (inumber == LFS_IFILE_INUM)
-			daddr = sblock.lfs_idaddr;
+			daddr = idaddr;
 		else {
 			ifp = lfs_ientry(inumber, &bp);
 			if (ifp == NULL) {
@@ -290,12 +294,12 @@ lfs_ginode(ino_t inumber)
 	struct bufarea *bp;
 	daddr_t         daddr;
 
-	if (inumber > maxino)
+	if (inumber >= maxino)
 		errexit("bad inode number %d to lfs_ginode\n", inumber);
 
 #if 0
 	if (inumber == LFS_IFILE_INUM) {
-		daddr = sblock.lfs_idaddr;
+		daddr = idaddr;
 		if (din_table[LFS_IFILE_INUM] == 0) {
 			din_table[LFS_IFILE_INUM] = daddr;
 			seg_table[datosn(&sblock, daddr)].su_nbytes += DINODE_SIZE;
@@ -450,9 +454,8 @@ ckinode(struct dinode *dp, struct inodesc *idesc)
 static int
 iblock(struct inodesc * idesc, long ilevel, u_int64_t isize)
 {
-	register daddr_t *ap;
-	register daddr_t *aplim;
-	register struct bufarea *bp;
+	daddr_t	       *ap, *aplim;
+	struct bufarea *bp;
 	int             i, n, (*func)(struct inodesc *), nif;
 	u_int64_t       sizepb;
 	char            pathbuf[MAXPATHLEN + 1], buf[BUFSIZ];
@@ -481,7 +484,7 @@ iblock(struct inodesc * idesc, long ilevel, u_int64_t isize)
 			if (*ap == 0)
 				continue;
 			(void)sprintf(buf, "PARTIALLY TRUNCATED INODE I=%u",
-				       idesc->id_number);
+					      idesc->id_number);
 			if (dofix(idesc, buf)) {
 				*ap = 0;
 				dirty(bp);
@@ -534,8 +537,10 @@ iblock(struct inodesc * idesc, long ilevel, u_int64_t isize)
 int
 chkrange(daddr_t blk, int cnt)
 {
+	if (blk < btodb(LFS_LABELPAD+LFS_SBPAD)) {
+		return (1);
+	}
 	if (blk > fsbtodb(&sblock, maxfsblock)) {
-		printf("daddr 0x%x too large\n", blk);
 		return (1);
 	}
 	return (0);
@@ -687,7 +692,7 @@ findino(struct inodesc *idesc)
 	if (dirp->d_ino == 0)
 		return (KEEPON);
 	if (strcmp(dirp->d_name, idesc->id_name) == 0 &&
-	    dirp->d_ino >= ROOTINO && dirp->d_ino <= maxino) {
+	    dirp->d_ino >= ROOTINO && dirp->d_ino < maxino) {
 		idesc->id_parent = dirp->d_ino;
 		return (STOP | FOUND);
 	}
@@ -703,7 +708,7 @@ pinode(ino_t ino)
 	time_t          t;
 
 	printf(" I=%u ", ino);
-	if (ino < ROOTINO || ino > maxino)
+	if (ino < ROOTINO || ino >= maxino)
 		return;
 	dp = ginode(ino);
 	if (dp) {

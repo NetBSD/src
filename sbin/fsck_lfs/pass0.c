@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.6 2000/05/30 04:33:14 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.7 2000/06/14 18:43:59 perseant Exp $	 */
 
 /*
  * Copyright (c) 1998 Konrad E. Schroder.
@@ -82,12 +82,17 @@ pass0()
          * Check the inode free list for inuse inodes, and cycles.
 	 * Make sure that all free inodes are in fact on the list.
          */
-	visited = (ino_t *)malloc((maxino + 1) * sizeof(ino_t));
-	memset(visited, 0, (maxino + 1) * sizeof(ino_t));
+	visited = (ino_t *)malloc(maxino * sizeof(ino_t));
+	memset(visited, 0, maxino * sizeof(ino_t));
 
 	lastino = 0;
 	ino = sblock.lfs_free;
 	while (ino) {
+		if (ino >= maxino) {
+			printf("! Ino %d out of range (last was %d)\n", ino,
+			       lastino);
+			break;
+		}
 		if (visited[ino]) {
 			pwarn("! Ino %d already found on the free list!\n",
 			       ino);
@@ -128,7 +133,7 @@ pass0()
 	/*
 	 * Make sure all free inodes were found on the list
 	 */
-	for (ino = ROOTINO+1; ino <= maxino; ++ino) {
+	for (ino = ROOTINO+1; ino < maxino; ++ino) {
 		if (visited[ino])
 			continue;
 
