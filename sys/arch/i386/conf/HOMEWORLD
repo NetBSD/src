@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.18 1997/08/19 23:49:48 augustss Exp $
+#	$NetBSD: HOMEWORLD,v 1.19 1997/10/08 09:32:38 mycroft Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -12,10 +12,13 @@ options 	I486_CPU	# CPU classes; at least one is REQUIRED
 #options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# Virtual 8086 emulation
 
-# Some BIOSes don't get the size of extended memory right.  If you
-# have a broken BIOS, uncomment the following and set the value
-# properly for your system.
-#options 	BIOSEXTMEM=...	# size of extended memory
+# The following options override the memory sizes passed in from the boot
+# block.  Use them *only* if the boot block is unable to determine the correct
+# values.  Note that the BIOS may *correctly* report less that 640k of base
+# memory if the extended BIOS data area is located at the top of base memory
+# (as is the case on most recent systems).
+#options 	REALBASEMEM=...	# size of base memory
+#options 	REALEXTMEM=...	# size of extended memory
 
 options 	DUMMY_NOPS	# speed hack; recommended
 options 	XSERVER,UCONSOLE
