@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.17 2003/01/01 01:47:30 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.18 2003/06/11 07:35:39 hamajima Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -73,6 +73,7 @@ obio_match(parent, cf, aux)
 		case PCI_PRODUCT_APPLE_PADDINGTON:
 		case PCI_PRODUCT_APPLE_KEYLARGO:
 		case PCI_PRODUCT_APPLE_PANGEA_MACIO:
+		case PCI_PRODUCT_APPLE_INTREPID:
 			return 1;
 		}
 
@@ -110,6 +111,7 @@ obio_attach(parent, self, aux)
 	case PCI_PRODUCT_APPLE_PADDINGTON:
 	case PCI_PRODUCT_APPLE_KEYLARGO:
 	case PCI_PRODUCT_APPLE_PANGEA_MACIO:
+	case PCI_PRODUCT_APPLE_INTREPID:
 		node = OF_finddevice("mac-io");
 		if (node == -1)
 			node = OF_finddevice("/pci/mac-io");
