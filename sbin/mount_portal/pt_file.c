@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_file.c,v 1.11 1999/08/16 06:38:12 bgrayson Exp $	*/
+/*	$NetBSD: pt_file.c,v 1.12 2000/01/15 06:21:40 bgrayson Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_file.c,v 1.11 1999/08/16 06:38:12 bgrayson Exp $");
+__RCSID("$NetBSD: pt_file.c,v 1.12 2000/01/15 06:21:40 bgrayson Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -76,23 +76,26 @@ lose_credentials(pcr)
 	 * sure questionable activity is noticed.
 	 */
 	if (getuid() == 0) {
-		/* Set egid, then groups, then uid. */
-		if (setegid(pcr->pcr_gid) < 0) {
-			syslog(LOG_ERR,
-			    "lose_credentials: setegid(%d) failed (%m)",
-			    pcr->pcr_gid);
-			return (errno);
-		}
+		/* Set groups first ... */
 		if (setgroups(pcr->pcr_ngroups, pcr->pcr_groups) < 0) {
 			syslog(LOG_ERR,
 			    "lose_credentials: setgroups() failed (%m)");
 			return (errno);
 		}
-		if (seteuid(pcr->pcr_uid) < 0) {
+		/* ... then gid ... */
+		if (setgid(pcr->pcr_gid) < 0) {
 			syslog(LOG_ERR,
-			    "lose_credentials: seteuid(%d) failed (%m)",
-			    pcr->pcr_uid);
-			return (errno);
+				"lose_credentials: setgid(%d) failed (%m)",
+				pcr->pcr_gid);
+		}
+		/*
+		 * ... and now do the setuid() where we lose all special
+		 * powers (both real and effective userid).
+		 */
+		if (setuid(pcr->pcr_uid) < 0) {
+			syslog(LOG_ERR,
+				"lose_credentials: setuid(%d) failed (%m)",
+				pcr->pcr_uid);
 		}
 		/* The credential change was successful! */
 		DEBUG_SYSLOG(LOG_ERR, "Root-owned mount process lowered credentials -- returning successfully!\n");
