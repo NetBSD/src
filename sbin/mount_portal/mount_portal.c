@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.10 1997/09/16 12:32:23 lukem Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.11 1997/09/21 02:35:42 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.10 1997/09/16 12:32:23 lukem Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.11 1997/09/21 02:35:42 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ sigchld(sig)
 	while ((pid = waitpid((pid_t) -1, (int *) 0, WNOHANG)) > 0)
 		;
 	if (pid < 0 && errno != ECHILD)
-		syslog(LOG_WARNING, "waitpid: %s", strerror(errno));
+		syslog(LOG_WARNING, "waitpid: %m");
 }
 
 static void
@@ -108,9 +108,10 @@ static void
 sigterm(sig)
 	int sig;
 {
+
 	if (unmount(mountpt, MNT_FORCE) < 0)
-		syslog(LOG_WARNING, "sigterm: unmounting %s failed: %s",
-		       mountpt, strerror(errno));
+		syslog(LOG_WARNING, "sigterm: unmounting %s failed: %m",
+		    mountpt);
 }
 
 int
@@ -161,19 +162,15 @@ main(argc, argv)
 	 * Construct the listening socket
 	 */
 	un.sun_family = AF_UNIX;
-	if (sizeof(_PATH_TMPPORTAL) >= sizeof(un.sun_path)) {
-		fprintf(stderr, "mount_portal: portal socket name too long\n");
-		exit(1);
-	}
+	if (sizeof(_PATH_TMPPORTAL) >= sizeof(un.sun_path))
+		errx(1, "portal socket name too long");
 	strcpy(un.sun_path, _PATH_TMPPORTAL);
 	mktemp(un.sun_path);
 	un.sun_len = strlen(un.sun_path);
 
 	so = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (so < 0) {
-		fprintf(stderr, "mount_portal: socket: %s\n", strerror(errno));
-		exit(1);
-	}
+	if (so < 0)
+		err(1, "socket");
 	(void) unlink(un.sun_path);
 	if (bind(so, (struct sockaddr *) &un, sizeof(un)) < 0)
 		err(1, "%s", "");
@@ -185,7 +182,7 @@ main(argc, argv)
 	sprintf(tag, "portal:%d", getpid() + 1);
 	args.pa_config = tag;
 
-	rc = mount("portal", mountpt, mntflags, &args);
+	rc = mount(MOUNT_PORTAL, mountpt, mntflags, &args);
 	if (rc < 0)
 		err(1, "%s", "");
 
@@ -238,7 +235,7 @@ main(argc, argv)
 		if (rc < 0) {
 			if (errno == EINTR)
 				continue;
-			syslog(LOG_ERR, "select: %s", strerror(errno));
+			syslog(LOG_ERR, "select: %m");
 			exit(1);
 		}
 		if (rc == 0)
@@ -252,7 +249,7 @@ main(argc, argv)
 			if (errno == ECONNABORTED)
 				break;
 			if (errno != EINTR) {
-				syslog(LOG_ERR, "accept: %s", strerror(errno));
+				syslog(LOG_ERR, "accept: %m");
 				exit(1);
 			}
 			continue;
@@ -268,7 +265,7 @@ main(argc, argv)
 				sleep(1);
 				goto eagain;
 			}
-			syslog(LOG_ERR, "fork: %s", strerror(errno));
+			syslog(LOG_ERR, "fork: %m");
 			break;
 		case 0:
 			(void) close(so);
@@ -286,6 +283,7 @@ main(argc, argv)
 static void
 usage()
 {
+
 	(void)fprintf(stderr,
 		"usage: mount_portal [-o options] config mount-point\n");
 	exit(1);
