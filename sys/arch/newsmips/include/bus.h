@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 2005/02/06 02:36:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 /*
  * Utility macros; do not use outside this file.
  */
-#define	__PB_TYPENAME_PREFIX(BITS)	___CONCAT(u_int,BITS)
+#define	__PB_TYPENAME_PREFIX(BITS)	___CONCAT(uint,BITS)
 #define	__PB_TYPENAME(BITS)		___CONCAT(__PB_TYPENAME_PREFIX(BITS),_t)
 
 /*
