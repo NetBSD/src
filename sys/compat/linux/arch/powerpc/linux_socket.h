@@ -1,11 +1,11 @@
-/* $NetBSD: linux_mmap.h,v 1.2 2001/01/19 01:31:25 manu Exp $   */
+/*	$NetBSD: linux_socket.h,v 1.1 2001/01/19 01:31:25 manu Exp $ */
 
 /*-
- * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz and Emmanuel Dreyfus.
+ * by Frank van der Linden, Eric Haszlakiewicz and Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,40 +36,55 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _POWERPC_LINUX_MMAP_H
-#define _POWERPC_LINUX_MMAP_H
+#ifndef _POWERPC_LINUX_SOCKET_H
+#define _POWERPC_LINUX_SOCKET_H
 
 /* 
- * LINUX_PROT_* are defined in common/linux_mmap.h 
- * LINUX_MAP_SHARED/PRIVATE are defined in common/linux_mmap.h 
+ * Everything is from Linux's include/asm-ppc/socket.h 
  */
 
-/* 
- * From Linux's include/asm-ppc/mman.h 
+/*
+ * Option levels for [gs]etsockopt(2).  Only SOL_SOCKET is different,
+ * the rest matches IPPROTO_XXX
  */
-#define LINUX_MAP_FIXED		0x0010
-#define LINUX_MAP_ANON		0x0020
+#define LINUX_SOL_SOCKET 1
 
-/* Ignored */
-#define LINUX_MAP_NORESERVE	0x0040
-#define LINUX_MAP_GROWSDOWN	0x0100
-#define LINUX_MAP_DENYWRITE	0x0800
-#define	LINUX_MAP_EXECUTABLE	0x1000
-
-/* 
- * On the PowerPC, we have a problem with the offset argument. It's 32 bit
- * long on Linux and 64 bit long on NetBSD. Therefore we use a wrapper
- * function linux_sys_powerpc_mmap() to linux_sys_mmap()
- * 
- * Linux's off_t is __kernel_off_t (include/linux/types.h) which in turn
- * is a long (include/asm-ppc/posix_types.h)
+/*
+ * Options for [gs]etsockopt(2), socket level.  For Linux, thay
+ * are not masks, but just increasing numbers.
  */
-#define linux_off_t long
 
-#ifdef _KERNEL
-__BEGIN_DECLS 
-int linux_sys_powerpc_mmap(struct proc *, void *, register_t *);
-__END_DECLS
-#endif /* !_KERNEL */ 
+#define LINUX_SO_DEBUG		1
+#define LINUX_SO_REUSEADDR	2
+#define LINUX_SO_TYPE		3
+#define LINUX_SO_ERROR		4
+#define LINUX_SO_DONTROUTE	5
+#define LINUX_SO_BROADCAST	6
+#define LINUX_SO_SNDBUF		7
+#define LINUX_SO_RCVBUF		8
+#define LINUX_SO_KEEPALIVE	9
+#define LINUX_SO_OOBINLINE	10
+#define LINUX_SO_NO_CHECK	11
+#define LINUX_SO_PRIORITY	12
+#define LINUX_SO_LINGER		13
+#define LINUX_SO_BSDCOMPAT	14
+#define LINUX_SO_REUSEPORT	15	/* undef in Linux */
+#define LINUX_SO_RCVLOWAT	16
+#define LINUX_SO_SNDLOWAT	17
+#define LINUX_SO_RCVTIMEO	18
+#define LINUX_SO_SNDTIMEO	19
+#define LINUX_SO_PASSCRED	20
+#define LINUX_SO_PEERCRED	21
+#define LINUX_SO_SECURITY_AUTHENTICATION	22
+#define LINUX_SO_SECURITY_ENCRYPTION_TRANSPORT	23
+#define LINUX_SO_SECURITY_ENCRYPTION_NETWORK	24
 
-#endif /* !_POWERPC_LINUX_MMAP_H */
+#define LINUX_SO_BINDTODEVICE		25
+#define LINUX_SO_ATTACH_FILTER	26
+#define LINUX_SO_DETACH_FILTER	27
+
+#define LINUX_SO_PEERNAME     28
+#define LINUX_SO_TIMESTAMP    29
+#define LINUX_SCM_TIMESTAMP   SO_TIMESTAMP
+
+#endif /* !_I386_POWERPC_SOCKET_H */

@@ -1,11 +1,11 @@
-/* $NetBSD: linux_mmap.h,v 1.2 2001/01/19 01:31:25 manu Exp $   */
+/* $NetBSD: linux_fcntl.h,v 1.1 2001/01/19 01:31:24 manu Exp $ */
 
 /*-
- * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz and Emmanuel Dreyfus.
+ * by Frank van der Linden, Eric Haszlakiewicz, and Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,40 +36,52 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _POWERPC_LINUX_MMAP_H
-#define _POWERPC_LINUX_MMAP_H
+/*
+ * Various flag values used in Linux for open(2) and fcntl(2).
+ */
+
+#ifndef _POWERPC_LINUX_FCNTL_H
+#define _POWERPC_LINUX_FCNTL_H
 
 /* 
- * LINUX_PROT_* are defined in common/linux_mmap.h 
- * LINUX_MAP_SHARED/PRIVATE are defined in common/linux_mmap.h 
+ * read/write mode for open(2) are defined in common/linux_fcntl.h
  */
 
 /* 
- * From Linux's include/asm-ppc/mman.h 
+ * flags used in open(2) 
+ * From Linux's include/asm-ppc/fcntl.h 
  */
-#define LINUX_MAP_FIXED		0x0010
-#define LINUX_MAP_ANON		0x0020
+#define LINUX_O_CREAT		0x0100
+#define LINUX_O_EXCL			0x0200	
+#define LINUX_O_NOCTTY		0x0400
+#define LINUX_O_TRUNC		0x01000
+#define LINUX_O_APPEND		0x02000
+#define LINUX_O_NONBLOCK	0x04000
+#define LINUX_O_NDELAY		LINUX_O_NONBLOCK
+#define LINUX_O_SYNC			0x010000
 
-/* Ignored */
-#define LINUX_MAP_NORESERVE	0x0040
-#define LINUX_MAP_GROWSDOWN	0x0100
-#define LINUX_MAP_DENYWRITE	0x0800
-#define	LINUX_MAP_EXECUTABLE	0x1000
+#define LINUX_FASYNC			0x020000
 
 /* 
- * On the PowerPC, we have a problem with the offset argument. It's 32 bit
- * long on Linux and 64 bit long on NetBSD. Therefore we use a wrapper
- * function linux_sys_powerpc_mmap() to linux_sys_mmap()
- * 
- * Linux's off_t is __kernel_off_t (include/linux/types.h) which in turn
- * is a long (include/asm-ppc/posix_types.h)
+ * fcntl(2) operations 
+ * From Linux's include/asm-ppc/fcntl.h 
  */
-#define linux_off_t long
+#define LINUX_F_DUPFD		0
+#define LINUX_F_GETFD		1
+#define LINUX_F_SETFD		2
+#define LINUX_F_GETFL		3
+#define LINUX_F_SETFL		4
+#define LINUX_F_GETLK		5
+#define LINUX_F_SETLK		6
+#define LINUX_F_SETLKW		7
+#define LINUX_F_SETOWN		8
+#define LINUX_F_GETOWN		9
 
-#ifdef _KERNEL
-__BEGIN_DECLS 
-int linux_sys_powerpc_mmap(struct proc *, void *, register_t *);
-__END_DECLS
-#endif /* !_KERNEL */ 
+#define LINUX_F_RDLCK		0
+#define LINUX_F_WRLCK		1
+#define LINUX_F_UNLCK		2
 
-#endif /* !_POWERPC_LINUX_MMAP_H */
+#define LINUX_LOCK_EX		4  /* F_EXLCK in Linux, and comment "or 3 " */
+#define LINUX_LOCK_SH		8  /* F_SHLCK in Linux, and comment "or 4'  */
+
+#endif /* !_POWERPC_LINUX_FCNTL_H */
