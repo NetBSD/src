@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.106 2004/04/21 03:12:52 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.107 2004/04/21 03:15:44 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1062,3 +1062,13 @@ sys/compat/svr4/svr4_stat.c			1.51
 	Fix the sysinfo(SI_HW_SERIAL, emulation so that we actually get the
 	hostid of the machine rather than always getting "0"
 	[dmcmahill, ticket #161]
+
+lib/libc/compat-43/gethostid.c			1.6
+lib/libc/compat-43/sethostid.c			1.7
+
+	The API to hostid that libc provides may involve a "long", but the
+	interface the kernel provides to libc (and the rest of userland) is an
+	"int".  Therefore, stop pretending that its a long, since that can
+	incur bizarre failure modes if the types also dont have the same size
+	(sparc64, alpha, etc).
+	[atatat, ticket #162]
