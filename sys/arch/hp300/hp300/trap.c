@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.4 1993/08/01 19:24:48 mycroft Exp $
+ *	$Id: trap.c,v 1.5 1994/01/07 00:45:37 mycroft Exp $
  */
 
 #include "param.h"
@@ -466,8 +466,8 @@ syscall(code, frame)
 	struct timeval syst;
 	struct sysent *systab;
 #ifdef HPUXCOMPAT
-	extern struct sysent hpuxsysent[];
-	extern int hpuxnsysent, notimp();
+	extern struct sysent hpux_sysent[];
+	extern int nhpux_sysent, notimp();
 #endif
 
 	cnt.v_syscall++;
@@ -480,8 +480,8 @@ syscall(code, frame)
 	numsys = nsysent;
 #ifdef HPUXCOMPAT
 	if (p->p_flag & SHPUX) {
-		systab = hpuxsysent;
-		numsys = hpuxnsysent;
+		systab = hpux_sysent;
+		numsys = nhpux_sysent;
 	}
 #endif
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
