@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.30 1997/01/03 22:54:26 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.31 1997/01/04 00:08:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -583,7 +583,7 @@ mfp_tima:
 	movl	sp,sp@-			|  push pointer to clockframe
 	jbsr	_hardclock		|  call generic clock int routine
 	addql	#4,sp			|  pop params
-	addql	#1,_intrcnt+4		|  add another system clock interrupt
+	addql	#1,_intrcnt_user+52	|  add another system clock interrupt
 	moveml	sp@+,d0-d1/a0-a1	|  restore scratch regs	
 	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
 	jra	rei			|  all done
@@ -633,19 +633,6 @@ mfp2_5380:
 	movw	sp@(16),sp@-		|  push previous SR value
 	clrw	sp@-			|     padded to longword
 	jbsr	_scsi_ctrl		|  handle interrupt
-	addql	#4,sp			|  pop SR
-	moveml	sp@+,d0-d1/a0-a1
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
-	jra	rei
-
-	/* MFP DMA handler --- fdc/acsi --- */
-mfp_fd_acsi:
-	addql	#1,_intrcnt+12		|  add another fdc/acsi interrupt
-
-	moveml	d0-d1/a0-a1,sp@-	|  Save scratch registers
-	movw	sp@(16),sp@-		|  push previous SR value
-	clrw	sp@-			|     padded to longword
-	jbsr	_cdmaint		|  handle interrupt
 	addql	#4,sp			|  pop SR
 	moveml	sp@+,d0-d1/a0-a1
 	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
