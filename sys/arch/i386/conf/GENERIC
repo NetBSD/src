@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.12 1995/02/21 01:43:02 brezak Exp $
+#	$NetBSD: GENERIC,v 1.13 1995/03/05 22:32:54 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -40,6 +40,7 @@ options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 options		COMPAT_SVR4	# binary compatibility with SVR4
 #options	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+options		COMPAT_LINUX	# binary compatibility with Linux
 
 options		USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
@@ -147,6 +148,7 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN & 3C507 ethernet cards
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
+#de*	at pci? bus ? dev ?
 
 sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
