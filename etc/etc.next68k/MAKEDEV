@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.16 2001/09/10 21:23:56 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.17 2001/10/13 20:20:58 augustss Exp $
 #
 ###########################################################################
 #
@@ -132,6 +132,17 @@ wsmux|wsmouse|wskbd)
 	mknod wskbd c 45 1
 	chown root.wheel wsmouse wskbd
 	chmod 600 wsmouse wskbd
+	;;
+
+wsmuxctl*)
+	unit=${i#wsmuxctl}
+	minor=$(($unit + 128))
+	wsmuxctl=wsmuxctl$unit
+	major=45
+	rm -f $wsmuxctl
+	mknod $wsmuxctl c $major $minor
+	chown root.wheel $wsmuxctl
+	chmod 200 $wsmuxctl
 	;;
 
 wsmux*)

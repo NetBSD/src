@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.3 2001/05/10 01:03:03 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.4 2001/10/13 20:20:56 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -157,6 +157,17 @@ wskbd*)
 	mknod $wskbd c $major $unit
 	chown root.wheel $wskbd
 	chmod 600 $wskbd
+	;;
+
+wsmuxctl*)
+	unit=${i#wsmuxctl}
+	minor=$(($unit + 128))
+	wsmuxctl=wsmuxctl$unit
+	major=29
+	rm -f $wsmuxctl
+	mknod $wsmuxctl c $major $minor
+	chown root.wheel $wsmuxctl
+	chmod 200 $wsmuxctl
 	;;
 
 wsmux*)
