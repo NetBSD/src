@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.164 2002/04/25 15:06:21 atatat Exp $
+# $NetBSD: ALPHA,v 1.165 2002/05/27 23:58:52 lukem Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.164 $"
+ident		"ALPHA-$Revision: 1.165 $"
 
 maxusers 32
 
@@ -270,6 +270,7 @@ pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
 rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
@@ -398,6 +399,10 @@ ne*	at	pcmcia? function ?		# NE2000-compatible Eth.
 sm*	at	pcmcia? function ?		# Megahertz Ethernet
 ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
 wi*	at	pcmcia? function ?		# Lucent WaveLAN/IEEE
+
+# PUC devices
+com*	at puc? port ?			# 16x50s on "universal" comm boards
+lpt*	at puc? port ?			# || ports on "universal" comm boards
 
 # SCSI bus support
 scsibus* at	adv?
