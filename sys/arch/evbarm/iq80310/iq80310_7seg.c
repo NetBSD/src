@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_7seg.c,v 1.2 2001/11/07 02:24:18 thorpej Exp $	*/
+/*	$NetBSD: iq80310_7seg.c,v 1.3 2001/12/01 02:04:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -49,6 +49,8 @@
 
 #define	ASCIIMAP_START	'0'
 #define	ASCIIMAP_END	'9'
+
+static int snakestate;
 
 static const uint8_t asciimap[] = {
 /*	+#####+
@@ -187,6 +189,94 @@ iq80310_7seg(char a, char b)
 	else
 		lsb = asciimap[b - ASCIIMAP_START] | SEG_DP;
 
+	snakestate = 0;
+
 	CPLD_WRITE(IQ80310_7SEG_MSB, msb);
 	CPLD_WRITE(IQ80310_7SEG_LSB, lsb);
+}
+
+static const uint8_t snakemap[][2] = {
+
+/*	+#####+		+#####+
+ *	|     |		|     |
+ *	|     |		|     |
+ *	|     |		|     |
+ *	+-----+		+-----+
+ *	|     |		|     |
+ *	|     |		|     |
+ *	|     |		|     |
+ *	+-----+		+-----+
+ */
+	{ ~SEG_A,	~SEG_A },
+
+/*	+-----+		+-----+
+ *	#     |		|     #
+ *	#     |		|     #
+ *	#     |		|     #
+ *	+-----+		+-----+
+ *	|     |		|     |
+ *	|     |		|     |
+ *	|     |		|     |
+ *	+-----+		+-----+
+ */
+	{ ~SEG_F,	~SEG_B },
+
+/*	+-----+		+-----+
+ *	|     |		|     |
+ *	|     |		|     |
+ *	|     |		|     |
+ *	+-----+		+-----+
+ *	#     |		|     #
+ *	#     |		|     #
+ *	#     |		|     #
+ *	+-----+		+-----+
+ */
+	{ ~SEG_E,	~SEG_C },
+
+/*	+-----+		+-----+
+ *	|     |		|     |
+ *	|     |		|     |
+ *	|     |		|     |
+ *	+-----+		+-----+
+ *	|     |		|     |
+ *	|     |		|     |
+ *	|     |		|     |
+ *	+#####+		+#####+
+ */
+	{ ~SEG_D,	~SEG_D },
+
+/*	+-----+		+-----+
+ *	|     |		|     |
+ *	|     |		|     |
+ *	|     |		|     |
+ *	+-----+		+-----+
+ *	|     #		#     |
+ *	|     #		#     |
+ *	|     #		#     |
+ *	+-----+		+-----+
+ */
+	{ ~SEG_C,	~SEG_E },
+
+/*	+-----+		+-----+
+ *	|     #		#     |
+ *	|     #		#     |
+ *	|     #		#     |
+ *	+-----+		+-----+
+ *	|     |		|     |
+ *	|     |		|     |
+ *	|     |		|     |
+ *	+-----+		+-----+
+ */
+	{ ~SEG_B,	~SEG_F },
+};
+
+void
+iq80310_7seg_snake(void)
+{
+	int cur = snakestate;
+
+	CPLD_WRITE(IQ80310_7SEG_MSB, snakemap[cur][0]);
+	CPLD_WRITE(IQ80310_7SEG_LSB, snakemap[cur][1]);
+
+	snakestate = (snakestate == 5) ? 0 : cur + 1;
 }
