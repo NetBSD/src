@@ -27,7 +27,7 @@
  *	i4b_iframe.c - i frame handling routines
  *	------------------------------------------
  *
- *	$Id: i4b_iframe.c,v 1.1.1.1 2001/01/05 12:50:06 martin Exp $ 
+ *	$Id: i4b_iframe.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -84,7 +84,7 @@ i4b_rxd_i_frame(int unit, struct mbuf *m)
 	int nr;
 	int ns;
 	int p;
-	CRIT_VAR;
+	int s;
 	
 	if(!((l2sc->tei_valid == TEI_VALID) &&
 	     (l2sc->tei == GETTEI(*(ptr+OFF_TEI)))))
@@ -100,7 +100,7 @@ i4b_rxd_i_frame(int unit, struct mbuf *m)
 		return;
 	}
 
-	CRIT_BEG;
+	s = splnet();
 
 	l2sc->stat.rx_i++;		/* update frame count */
 	
@@ -169,7 +169,7 @@ i4b_rxd_i_frame(int unit, struct mbuf *m)
 		{
 			l2sc->va = nr;
 
-			CRIT_END;
+			splx(s);
 
 			return;
 		}
@@ -202,7 +202,7 @@ i4b_rxd_i_frame(int unit, struct mbuf *m)
 		l2sc->Q921_state = ST_AW_EST; 
 	}
 
-	CRIT_END;
+	splx(s);
 }
 
 /*---------------------------------------------------------------------------*
@@ -213,9 +213,9 @@ i4b_i_frame_queued_up(l2_softc_t *l2sc)
 {
 	struct mbuf *m;
 	u_char *ptr;
-	CRIT_VAR;
+	int s;
 
-	CRIT_BEG;
+	s = splnet();
 	
 	if((l2sc->peer_busy) || (l2sc->vs == ((l2sc->va + MAX_K_VALUE) & 127)))
 	{
@@ -239,7 +239,7 @@ i4b_i_frame_queued_up(l2_softc_t *l2sc)
 			NDBGL2(L2_I_MSG, "re-scheduling IFQU call!");
 			START_TIMER(l2sc->IFQU_callout, i4b_i_frame_queued_up, l2sc, IFQU_DLY);
 		}
-		CRIT_END;
+		splx(s);
 		return;
 	}
 
@@ -248,7 +248,7 @@ i4b_i_frame_queued_up(l2_softc_t *l2sc)
 	if(!m)
 	{
 		NDBGL2(L2_I_ERR, "ERROR, mbuf NULL after IF_DEQUEUE");
-		CRIT_END;
+		splx(s);
 		return;
 	}
 
@@ -280,7 +280,7 @@ i4b_i_frame_queued_up(l2_softc_t *l2sc)
 	
 	l2sc->ack_pend = 0;
 
-	CRIT_END;
+	splx(s);
 
 	if(l2sc->T200 == TIMER_IDLE)
 	{

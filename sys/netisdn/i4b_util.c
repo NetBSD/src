@@ -27,7 +27,7 @@
  *	i4b_util.c - layer 2 utility routines
  *	-------------------------------------
  *
- *	$Id: i4b_util.c,v 1.1.1.1 2001/01/05 12:50:07 martin Exp $ 
+ *	$Id: i4b_util.c,v 1.2 2001/01/19 12:44:46 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -95,9 +95,9 @@ i4b_establish_data_link(l2_softc_t *l2sc)
 void
 i4b_clear_exception_conditions(l2_softc_t *l2sc)
 {
-	CRIT_VAR;
+	int s;
 
-	CRIT_BEG;
+	s = splnet();
 	
 /*XXX -------------------------------------------------------------- */
 /*XXX is this really appropriate here or should it moved elsewhere ? */
@@ -119,7 +119,7 @@ i4b_clear_exception_conditions(l2_softc_t *l2sc)
 
 	l2sc->ack_pend = 0;	
 
-	CRIT_END;	
+	splx(s);
 }
 
 /*---------------------------------------------------------------------------*
@@ -171,9 +171,9 @@ i4b_enquiry_response(l2_softc_t *l2sc)
 void
 i4b_invoke_retransmission(l2_softc_t *l2sc, int nr)
 {
-	CRIT_VAR;
+	int s;
 
-	CRIT_BEG;
+	s = splnet();
 
 	NDBGL2(L2_ERROR, "nr = %d", nr );
 	
@@ -207,7 +207,7 @@ i4b_invoke_retransmission(l2_softc_t *l2sc, int nr)
 		i4b_i_frame_queued_up(l2sc);
 	}
 
-	CRIT_END;
+	splx(s);
 }
 
 /*---------------------------------------------------------------------------*
@@ -275,9 +275,9 @@ i4b_rxd_ack(l2_softc_t *l2sc, int nr)
 
 	if(l2sc->ua_num != UA_EMPTY)
 	{
-		CRIT_VAR;
+		int s;
 
-		CRIT_BEG;
+		s = splnet();
 		
 		M128DEC(nr);
 
@@ -287,7 +287,7 @@ i4b_rxd_ack(l2_softc_t *l2sc, int nr)
 		i4b_Dfreembuf(l2sc->ua_frame);
 		l2sc->ua_num = UA_EMPTY;
 		
-		CRIT_END;
+		splx(s);
 	}
 }
 
