@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.9 1996/04/10 16:27:38 jonathan Exp $	*/
+/*	$NetBSD: device.h,v 1.10 1996/09/21 08:45:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,8 @@ struct pmax_driver {
 				/* routine to start operation */
 	void	(*d_start) __P((struct ScsiCmd *cmd));
 				/* routine to call when operation complete */
-	void	(*d_done) __P(());
+	void	(*d_done) __P(( int unit, int errno, int buflen,
+			int status_byte));
 				/* routine to call when interrupt is seen */
 	int	(*d_intr) __P((void* sc));
 };
