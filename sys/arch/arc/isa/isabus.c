@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.6 2000/02/22 11:26:03 soda Exp $	*/
+/*	$NetBSD: isabus.c,v 1.7 2000/03/03 12:50:21 soda Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -105,6 +105,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <arc/arc/arctype.h>
 #include <arc/pica/pica.h>
+#include <arc/pica/rd94.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -174,6 +175,7 @@ isabrattach(parent, self, aux)
 	switch(cputype) {
 	case ACER_PICA_61:
 	case MAGNUM:
+	case NEC_RD94:
 		set_intr(MIPS_INT_MASK_2, isabr_iointr, 3);
 		break;
 	case DESKSTATION_TYNE:
@@ -398,6 +400,10 @@ isabr_iointr(mask, cf)
 	case ACER_PICA_61:
 	case MAGNUM:
 		isa_vector = in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1);
+		break;
+
+	case NEC_RD94:
+		isa_vector = in32(RD94_SYS_INTSTAT2) & (ICU_LEN - 1);
 		break;
 
 	case DESKSTATION_TYNE:

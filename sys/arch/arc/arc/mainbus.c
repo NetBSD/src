@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2000/02/22 11:25:57 soda Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 2000/03/03 12:50:20 soda Exp $	*/
 /*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 /*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
@@ -98,6 +98,7 @@ mbattach(parent, self, aux)
 	switch (cputype) {
 	case ACER_PICA_61:
 	case MAGNUM:
+	case NEC_RD94:
 		nca.ca_name = "pica";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
@@ -117,6 +118,10 @@ mbattach(parent, self, aux)
 
 	/* The following machines have a PCI bus */
 	switch (cputype) {
+	case NEC_RD94:
+		/* XXX */
+		break;
+
 	case ALGOR_P4032:
 	case ALGOR_P5064:
 		nca.ca_name = "pbcpcibr";
@@ -131,6 +136,7 @@ mbattach(parent, self, aux)
 	switch (cputype) {
 	case ACER_PICA_61:
 	case MAGNUM:
+	case NEC_RD94:
 	case DESKSTATION_TYNE:
 	case DESKSTATION_RPC44:
 		nca.ca_name = "isabr";

@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.9 2000/02/22 11:25:56 soda Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.10 2000/03/03 12:50:19 soda Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
 #include <machine/mips_opcode.h>
 
 #include <arc/pica/pica.h>
+#include <arc/pica/rd94.h>
 #include <arc/arc/arctype.h>
 
 #include <sys/cdefs.h>
@@ -148,7 +149,10 @@ set_intr(mask, int_hand, prio)
 		out32(R4030_SYS_EXT_IMASK,
 		    cpu_int_mask & (~MIPS_INT_MASK_4 >> 10));
 		break;
-
+	case NEC_RD94:
+		out32(RD94_SYS_EXT_IMASK,
+		    cpu_int_mask & (~MIPS_INT_MASK_3 >> 10));
+		break;
 	case DESKSTATION_TYNE:
 		break;
 	case DESKSTATION_RPC44:

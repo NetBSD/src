@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.3 2000/02/22 11:25:56 soda Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.4 2000/03/03 12:50:19 soda Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
@@ -62,6 +62,7 @@ static struct systypes {
 #ifdef arc
     { NULL,		"PICA-61",			ACER_PICA_61 },
     { NULL,		"NEC-R94",			ACER_PICA_61 },
+    { NULL,		"NEC-RD94",			NEC_RD94 },
     { NULL,		"DESKTECH-TYNE",		DESKSTATION_TYNE }, 
     { NULL,		"DESKTECH-ARCStation I",	DESKSTATION_RPC44 },
     { NULL,		"Microsoft-Jazz",		MAGNUM },
@@ -337,7 +338,7 @@ bios_ident()
 	for (i = 1; i < sizeof(sid->prodid); i++)
 		printf(":%02x", prodid[i]);
 	printf("]\n");
-	printf("Please contact NetBSD (mailto: port-mips@netbsd.org).\n");
+	printf("Please contact NetBSD (mailto: port-arc@netbsd.org).\n");
 	for (;;)
 		;
 }

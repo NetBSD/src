@@ -1,4 +1,4 @@
-/*	$NetBSD: arctype.h,v 1.5 2000/02/22 11:25:57 soda Exp $	*/
+/*	$NetBSD: arctype.h,v 1.6 2000/03/03 12:50:19 soda Exp $	*/
 /*	$OpenBSD: archtype.h,v 1.6 1999/01/27 04:46:04 imp Exp $	*/
 
 /*
@@ -38,11 +38,11 @@
 #define	ARC_CLASS		0x00	/* Arch class ARC */
 #define	ACER_PICA_61		0x01	/* Acer Labs Pica 61 */
 #define	MAGNUM			0x02	/* Mips MAGNUM R4000 */
-#define	DESKSTATION_RPC44	0x03	/* Deskstation xxx */
-#define	DESKSTATION_TYNE	0x04	/* Deskstation xxx */
-#define	NKK_AQUARIUS		0x05	/* NKK R4{67}00 PC */
-#define NEC_R94			0x06	/* NEC Magnum class */
-#define	SNI_RM200		0x07	/* Siemens Nixdorf RM200 */
+#define	NEC_RD94		0x04	/* NEC RISCstation 2250, etc. */
+#define	DESKSTATION_RPC44	0x05	/* Deskstation xxx */
+#define	DESKSTATION_TYNE	0x06	/* Deskstation xxx */
+#define	NKK_AQUARIUS		0x07	/* NKK R4{67}00 PC */
+#define	SNI_RM200		0x08	/* Siemens Nixdorf RM200 */
 
 #if 0 /* XXX */
 #define	SGI_CLASS		0x10	/* Silicon Graphics Class */

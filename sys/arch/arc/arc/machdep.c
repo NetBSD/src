@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2000/03/03 08:36:21 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2000/03/03 12:50:19 soda Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -101,6 +101,7 @@
 #include <arc/arc/arctype.h>
 #include <arc/arc/arcbios.h>
 #include <arc/pica/pica.h>
+#include <arc/pica/rd94.h>
 #include <arc/dti/desktech.h>
 #include <arc/algor/algor.h>
 
@@ -173,7 +174,9 @@ mach_init __P((int argc, char *argv[], char *envv[]));
 extern void stacktrace __P((void)); /*XXX*/
 #endif
 
+extern void machine_ConfigCache __P((void));
 static void tlb_init_pica __P((void));
+static void tlb_init_nec_rd94 __P((void));
 static void tlb_init_tyne __P((void));
 static int get_simm_size __P((int *, int));
 static char *getenv __P((char *env));
@@ -244,12 +247,14 @@ mach_init(argc, argv, envv)
 	switch (cputype) {
 	case ACER_PICA_61:	/* ALI PICA 61 and MAGNUM is almost the */
 	case MAGNUM:		/* Same kind of hardware. NEC goes here too */
-		if(cputype == MAGNUM) {
+		switch (cputype) {
+		case ACER_PICA_61:
+			strcpy(cpu_model, "Acer Pica-61");
+			break;
+		case MAGNUM:
 			strcpy(cpu_model, "MIPS Magnum");
 			com_freq = COM_FREQ_MAGNUM;
-		}
-		else {
-			strcpy(cpu_model, "Acer Pica-61");
+			break;
 		}
 		pica_bus.bus_base = 0;
 		arc_bus_io.bus_base = PICA_V_ISA_IO;
@@ -265,6 +270,26 @@ mach_init(argc, argv, envv)
 		splvec.splbio = MIPS_INTMASK_0_to_3;
 		splvec.splimp = MIPS_INTMASK_0_to_3;
 		splvec.spltty = MIPS_INTMASK_0_to_3;
+		splvec.splclock = MIPS_INTMASK_0_to_5;
+		splvec.splstatclock = MIPS_INTMASK_0_to_5;
+		break;
+
+	case NEC_RD94:
+		strcpy(cpu_model, "NEC RD94");
+		pica_bus.bus_base = 0;
+		arc_bus_io.bus_base = RD94_V_PCI_IO;
+		arc_bus_mem.bus_base = RD94_V_PCI_MEM;
+		arc_bus_com = &pica_bus;
+		comconstag = &pica_bus;
+		com_console_address = RD94_SYS_COM1;
+
+		/*
+		 * Set up interrupt handling and I/O addresses.
+		 */
+		splvec.splnet = MIPS_INTMASK_0_to_2;
+		splvec.splbio = MIPS_INTMASK_0_to_2;
+		splvec.splimp = MIPS_INTMASK_0_to_2;
+		splvec.spltty = MIPS_INTMASK_0_to_2;
 		splvec.splclock = MIPS_INTMASK_0_to_5;
 		splvec.splstatclock = MIPS_INTMASK_0_to_5;
 		break;
@@ -447,6 +472,10 @@ mach_init(argc, argv, envv)
 		tlb_init_pica();
 		break;
 
+	case NEC_RD94:
+		tlb_init_nec_rd94();
+		break;
+
 	case DESKSTATION_TYNE:
 		tlb_init_tyne();
 		break;
@@ -576,9 +605,25 @@ mach_init(argc, argv, envv)
 	pmap_bootstrap();
 }
 
+void
+machine_ConfigCache()
+{
+	switch (cputype) {
+	case ACER_PICA_61:
+#if 0	/* doesn't work */
+		mips_L2CachePresent = 1;
+		mips_L2CacheSize = 128 * 1024;
+#endif
+		break;
+	case NEC_RD94:
+		mips_L2CacheSize = 1024 * 1024;
+		break;
+	}
+}
+
 /*
  * NOTE:
- *	TLB 0, 1, 2 are reserved by locore_r4000.S.
+ *	TLB 0, 1, 2 are reserved by locore_mips3.S.
  */
 
 void
@@ -615,6 +660,36 @@ tlb_init_pica()
 	tlb.tlb_lo0 = vad_to_pfn(PICA_P_ISA_IO) | MIPS3_PG_IOPAGE;
 	tlb.tlb_lo1 = vad_to_pfn(PICA_P_ISA_MEM) | MIPS3_PG_IOPAGE;
 	mips3_TLBWriteIndexedVPS(7, &tlb);
+}
+
+void
+tlb_init_nec_rd94()
+{
+	struct tlb tlb;
+
+	tlb.tlb_mask = MIPS3_PG_SIZE_256K;
+	tlb.tlb_hi = mips3_vad_to_vpn(RD94_V_LOCAL_IO_BASE);
+	tlb.tlb_lo0 = vad_to_pfn(RD94_P_LOCAL_IO_BASE) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = MIPS3_PG_G;
+	mips3_TLBWriteIndexedVPS(3, &tlb);
+
+	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
+	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO_CTRL);
+	tlb.tlb_lo0 = mips3_vad_to_pfn64(0x108000000LL) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = mips3_vad_to_pfn64(0x108100000LL) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(4, &tlb);
+	
+	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
+	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO);
+	tlb.tlb_lo0 = mips3_vad_to_pfn64(0x108200000LL) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = mips3_vad_to_pfn64(0x108300000LL) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(5, &tlb);
+	
+	tlb.tlb_mask = MIPS3_PG_SIZE_16M;
+	tlb.tlb_hi = mips3_vad_to_vpn(RD94_V_PCI_IO);
+	tlb.tlb_lo0 = vad_to_pfn(RD94_P_PCI_IO) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = mips3_vad_to_pfn64(RD94_P_PCI_MEM) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(6, &tlb);
 }
 
 void
@@ -775,6 +850,13 @@ consinit()
 	case MAGNUM:
 #if NFB > 0
 		fb_console();
+		return;
+#endif
+		break;
+
+	case NEC_RD94:
+#if NTGA_PCI > 0
+		tga_cnattach(/* XXX */);
 		return;
 #endif
 		break;
@@ -997,10 +1079,15 @@ cpu_reboot(howto, bootstr)
 			dumpsys();
 		printf("System restart.\n");
 #if NPC > 0
-		/* This is only done on systems with pccons driver */
-		if(cputype != ALGOR_P4032) {		
+		/* XXX - Currently only done on systems with pccons driver */
+		switch (cputype) {
+		case ALGOR_P4032:
+		case ALGOR_P5064:
+			break;
+		default:
 			(void)kbc_8042sysreset();	/* Try this first */
 			delay(100000);			/* Give it a chance */
+			break;
 		}
 #endif
 		__asm__(" li $2, 0xbfc00000; jr $2; nop\n");
@@ -1053,6 +1140,11 @@ initcpu()
 		 */
 		out16(PICA_SYS_LB_IE,0x000);
 		out32(R4030_SYS_EXT_IMASK, 0x00);
+		break;
+
+	case NEC_RD94:
+		out32(RD94_SYS_LB_IE, 0);
+		out32(RD94_SYS_EXT_IMASK, 0);
 		break;
 	}
 }
