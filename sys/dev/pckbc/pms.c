@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.12 2002/10/02 16:52:04 thorpej Exp $ */
+/* $NetBSD: pms.c,v 1.13 2004/02/27 17:56:01 martin Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.12 2002/10/02 16:52:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.13 2004/02/27 17:56:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ pms_protocol(tag, slot)
 		cmd[0] = PMS_SEND_DEV_ID;
 		res = pckbc_enqueue_cmd(tag, slot, cmd, 1, 1, 1, resp);
 		if (res)
-			return 0;
+			return PMS_UNKNOWN;
 		if (resp[0] == p->response) {
 			DPRINTF(("pms_protocol: found mouse protocol %d\n",
 				tries[j]));
