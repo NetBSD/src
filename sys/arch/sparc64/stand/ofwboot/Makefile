@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2000/07/24 01:49:37 mycroft Exp $
+#	$NetBSD: Makefile,v 1.17 2000/07/24 01:51:44 mycroft Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -73,21 +73,17 @@ ${OBJS}: machine
 machine:
 	ln -s ../../include machine
 
-.PHONY: vers.c
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
+	sh ${CURDIR}/../newvers.sh ${CURDIR}/version ${NEWVERSWHAT}
 
 .if CROSS
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${COMPILE.c} vers.c
 	${LD} -N -p -Ttext ${RELOC} -e ${ENTRY} >lderr -o ${PROG} \
-	    ${OBJS} vers.o -L${SADST} -lsa -L${ZDST} -lz -L${KERNDST} -lkern # solaris linker
+	    ${OBJS} -L${SADST} -lsa -L${ZDST} -lz -L${KERNDST} -lkern # solaris linker
 .else
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${CURDIR}/../newvers.sh ${CURDIR}/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
 	${LD} -X -N -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}	# native linker
+	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}	# native linker
 .endif
 
 .include <bsd.prog.mk>
