@@ -39,7 +39,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: _setjmp.S,v 1.1 1994/05/24 07:12:18 glass Exp $")
+	ASMSTR("$Id: _setjmp.S,v 1.2 1994/11/14 23:48:58 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -55,7 +55,7 @@
 
 	.set	noreorder
 
-LEAF(_setjmp)
+LEAF(__setjmp)
 	li	v0, 0xACEDBADE			# sigcontext magic number
 	sw	ra, (2 * 4)(a0)			# sc_pc = return address
 	sw	v0, (3 * 4)(a0)			#   saved in sc_regs[0]
@@ -85,9 +85,9 @@ LEAF(_setjmp)
 	sw	v0, ((32 + 38) * 4)(a0)
 	j	ra
 	move	v0, zero
-END(_setjmp)
+END(__setjmp)
 
-LEAF(_longjmp)
+LEAF(__longjmp)
 	lw	v0, (3 * 4)(a0)			# get magic number
 	lw	ra, (2 * 4)(a0)
 	bne	v0, 0xACEDBADE, botch		# jump if error
@@ -118,8 +118,8 @@ LEAF(_longjmp)
 	j	ra
 	move	v0, a1
 botch:
-	jal	longjmperror
+	jal	_longjmperror
 	nop
-	jal	abort
+	jal	_abort
 	nop
-END(_longjmp)
+END(__longjmp)

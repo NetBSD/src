@@ -38,16 +38,16 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: brk.s,v 1.1 1994/05/24 07:13:06 glass Exp $")
+	ASMSTR("$Id: brk.s,v 1.2 1994/11/14 23:49:35 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #define	SYS_brk		17
 
-LEAF(brk)
+LEAF(_brk)
 	lw	v0, minbrk
 	bgeu	a0, v0, _brk
 	move	a0, v0		# dont allow break < minbrk
-ALEAF(_brk)
+ALEAF(__brk)
 	li	v0, SYS_brk
 	syscall
 	bne	a3, zero, 1f
@@ -56,4 +56,4 @@ ALEAF(_brk)
 	j	ra
 1:
 	j	_cerror
-END(brk)
+END(_brk)

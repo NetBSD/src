@@ -38,10 +38,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)rindex.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: rindex.s,v 1.1 1994/05/24 07:12:58 glass Exp $")
+	ASMSTR("$Id: rindex.s,v 1.2 1994/11/14 23:49:21 dean Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-LEAF(rindex)
+LEAF(_rindex)
 	move	v0, zero		# default if not found
 1:
 	lbu	a3, 0(a0)		# get a byte
@@ -51,4 +51,4 @@ LEAF(rindex)
 2:
 	bne	a3, zero, 1b		# continue if not end
 	j	ra
-END(rindex)
+END(_rindex)
