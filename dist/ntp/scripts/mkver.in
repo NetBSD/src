@@ -5,12 +5,22 @@ ConfStr="$PROG"
 
 ConfStr="$ConfStr @VERSION@"
 
-case "@LIBRSAREF@" in
+case "$CSET" in
  '') ;;
+ *) ConfStr="$ConfStr@$CSET" ;;
+esac
+
+case "@LIBRSAREF@" in
+ '')
+    case "@AUTOKEY@" in
+     '') ;;
+     *) ConfStr="${ConfStr}-a" ;;
+    esac
+    ;;
  *)  ConfStr="${ConfStr}-r" ;;
 esac
 
-ConfStr="$ConfStr `date`"
+ConfStr="$ConfStr `LC_TIME=C date`"
 
 if [ ! -f .version ]; then
   echo 0 > .version

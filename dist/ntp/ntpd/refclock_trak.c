@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_trak.c,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: refclock_trak.c,v 1.1.1.2 2003/12/04 16:05:29 drochner Exp $	*/
 
 /*
  * refclock_trak - clock driver for the TRAK 8810 GPS Station Clock
@@ -12,19 +12,16 @@
 #include <config.h>
 #endif
 
-#if defined(REFCLOCK) && defined(CLOCK_TRAK)
-
-#include <stdio.h>
-#include <ctype.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
+#if defined(REFCLOCK) && defined(CLOCK_TRAK) && defined(PPS)
 
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
 #include "ntp_unixtime.h"
+
+#include <stdio.h>
+#include <ctype.h>
 
 #ifdef HAVE_SYS_TERMIOS_H
 # include <sys/termios.h>
@@ -330,6 +327,7 @@ trak_receive(
 		refclock_report(peer, CEVNT_BADTIME);
 		return;
         }
+	pp->lastref = pp->lastrec;
 	refclock_receive(peer);
 }
 

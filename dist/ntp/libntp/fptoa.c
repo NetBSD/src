@@ -1,4 +1,4 @@
-/*	$NetBSD: fptoa.c,v 1.1.1.1 2000/03/29 12:38:49 simonb Exp $	*/
+/*	$NetBSD: fptoa.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * fptoa - return an asciized representation of an s_fp number
@@ -9,7 +9,7 @@
 char *
 fptoa(
 	s_fp fpv,
-	int ndec
+	short ndec
 	)
 {
 	u_fp plusfp;

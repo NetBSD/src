@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: ntp_io.h,v 1.1.1.2 2003/12/04 16:05:22 drochner Exp $	*/
 
 #if !defined _NTP_IO_H
 #define _NTP_IO_H
@@ -30,6 +30,23 @@
 #ifdef SYS_WINNT
 # include <io.h>
 # include "win32_io.h"
+#endif
+
+/*
+ * Define FNDELAY and FASYNC using O_NONBLOCK and O_ASYNC if we need
+ * to (and can).  This is here initially for QNX, but may help for
+ * others as well...
+ */
+#ifndef FNDELAY
+# ifdef O_NONBLOCK
+#  define FNDELAY O_NONBLOCK
+# endif
+#endif
+
+#ifndef FASYNC
+# ifdef O_ASYNC
+#  define FASYNC O_ASYNC
+# endif
 #endif
 
 #endif

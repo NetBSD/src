@@ -18,6 +18,8 @@ rc1		start/stop scripts for NTP
 
 rc2		start/stop script for NTP
 
+ntp-close	find public stratum 2 servers that don't respond
+
 ntp-groper	script useful for reaching out and rattling the cages of
 		NTP peers to see if animals are inside the bars
 
