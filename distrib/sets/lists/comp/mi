@@ -164,13 +164,15 @@
 ./usr/include/dev/sun/kbd_xlate.h
 ./usr/include/dev/tc
 ./usr/include/dev/tc/ascvar.h
+./usr/include/dev/tc/clockvar.h
 ./usr/include/dev/tc/if_levar.h
 ./usr/include/dev/tc/ioasicvar.h
+./usr/include/dev/tc/mcclockvar.h
 ./usr/include/dev/tc/tcdevs.h
 ./usr/include/dev/tc/tcdevs_data.h
 ./usr/include/dev/tc/tcreg.h
 ./usr/include/dev/tc/tcvar.h
-./usr/include/dev/vndioctl.h
+./usr/include/dev/vndvar.h
 ./usr/include/dirent.h
 ./usr/include/disktab.h
 ./usr/include/dlfcn.h
@@ -1510,6 +1512,10 @@
 ./usr/share/man/cat3/killpg.0
 ./usr/share/man/cat3/kvm.0
 ./usr/share/man/cat3/kvm_close.0
+./usr/share/man/cat3/kvm_dump.0
+./usr/share/man/cat3/kvm_dump_inval.0
+./usr/share/man/cat3/kvm_dump_mkheader.0
+./usr/share/man/cat3/kvm_dump_wrtheader.0
 ./usr/share/man/cat3/kvm_getargv.0
 ./usr/share/man/cat3/kvm_getenvv.0
 ./usr/share/man/cat3/kvm_geterr.0
