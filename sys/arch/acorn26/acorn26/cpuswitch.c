@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.7 2003/01/17 21:55:23 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.1 2003/05/05 22:43:39 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.7 2003/01/17 21:55:23 thorpej Exp $");
+__RCSID("$NetBSD: cpuswitch.c,v 1.1 2003/05/05 22:43:39 bjh21 Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
