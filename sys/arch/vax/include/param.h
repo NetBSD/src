@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.6 1995/03/18 07:24:01 cgd Exp $    */
+/*      $NetBSD: param.h,v 1.7 1995/03/30 20:43:00 ragge Exp $    */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,7 +118,7 @@
  */ 
 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(512*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(2048*1024/CLBYTES)
 #endif
 
 /*
