@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdreg.h,v 1.2 2002/01/08 21:00:12 bjh21 Exp $	*/
+/*	$NetBSD: iomdreg.h,v 1.3 2003/12/31 14:40:32 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -127,6 +127,22 @@
 
 #define IOMD_DMA_SIZE		24
 #define IOMD_DMA_SPACING	32
+/* Each DMA channel has the same set of registers. */
+#define IOMD_DMAEND_STOP	0x80000000
+#define IOMD_DMAEND_LAST	0x40000000
+#define IOMD_DMAEND_OFFSET	0x00000fff
+#define IOMD_DMACR_CLEAR	0x80
+#define IOMD_DMACR_DIR		0x40
+#define IOMD_DMACR_ENABLE	0x20
+#define IOMD_DMACR_BYTE		0x01
+#define IOMD_DMACR_HALFWORD	0x02
+#define IOMD_DMACR_WORD		0x04
+#define IOMD_DMACR_QUADWORD	0x10
+#define IOMD_DMAST_OVERRUN	0x04
+#define IOMD_DMAST_INT		0x02
+#define IOMD_DMAST_BANKB       	0x01
+#define IOMD_DMAST_BANKA       	0x00
+
 #define IOMD_IO0CURA	0x00000040
 #define IOMD_IO0ENDA	0x00000041
 #define IOMD_IO0CURB	0x00000042
