@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.67 2001/08/07 14:46:09 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.68 2001/08/24 01:48:22 enami Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.67 2001/08/07 14:46:09 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.68 2001/08/24 01:48:22 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -328,12 +328,19 @@ command(ki, ve, mode)
 			} else {
 				/*
 				 * Commands that don't set an argv vector
-				 * (usually system processes) are printed
-				 * with angled brackets.
+				 * are printed with angled brackets if they
+				 * are system commands.  Otherwise they are
+				 * printed within parentheses.
 				 */
-				fmt_putc('[', &left);
-				fmt_puts(name, &left);
-				fmt_putc(']', &left);
+				if (ki->p_flag & P_SYSTEM) {
+					fmt_putc('[', &left);
+					fmt_puts(name, &left);
+					fmt_putc(']', &left);
+				} else {
+					fmt_putc('(', &left);
+					fmt_puts(name, &left);
+					fmt_putc(')', &left);
+				}
 			}
 		} else {
 			fmt_puts(name, &left);
