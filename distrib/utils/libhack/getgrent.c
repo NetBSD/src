@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.4 2001/06/15 17:26:51 tsutsui Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.5 2002/02/02 15:31:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,6 +36,7 @@
 
 /*
  * Copied from:  lib/libc/gen/getgrent.c
+ *	NetBSD: getgrent.c,v 1.42 2002/02/02 15:21:29 lukem Exp
  * and then gutted, leaving only /etc/group support.
  */
 
@@ -48,15 +49,7 @@
 #define getgrnam		_getgrnam
 #define setgrent		_setgrent
 #define setgroupent		_setgroupent
-#endif
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <grp.h>
-
-#ifdef __weak_alias
 __weak_alias(endgrent,_endgrent)
 __weak_alias(getgrent,_getgrent)
 __weak_alias(getgrgid,_getgrgid)
@@ -65,32 +58,42 @@ __weak_alias(setgrent,_setgrent)
 __weak_alias(setgroupent,_setgroupent)
 #endif
 
-static FILE *_gr_fp;
-static struct group _gr_group;
-static int _gr_stayopen;
-static int grscan __P((int, int, const char *));
-static int start_gr __P((void));
+#include <sys/types.h>
+
+#include <grp.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static FILE		*_gr_fp;
+static struct group	_gr_group;
+static int		_gr_filesdone;
+static int		_gr_stayopen;
+
+static int grscan(int, gid_t, const char *);
+static int grstart(void);
+static int grmatchline(int, gid_t, const char *);
 
 #define	MAXGRP		200
-static char *members[MAXGRP];
 #define	MAXLINELENGTH	1024
-static char line[MAXLINELENGTH];
+static char		*members[MAXGRP];
+static char		grline[MAXLINELENGTH];
 
 struct group *
-getgrent()
+getgrent(void)
 {
-	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL))
-		return(NULL);
-	return(&_gr_group);
+	if ((!_gr_fp && !grstart()) || !grscan(0, 0, NULL))
+		return (NULL);
+	return (&_gr_group);
 }
 
 struct group *
-getgrnam(name)
-	const char *name;
+getgrnam(const char *name)
 {
 	int rval;
 
-	if (!start_gr())
+	if (!grstart())
 		return(NULL);
 	rval = grscan(1, 0, name);
 	if (!_gr_stayopen)
@@ -99,16 +102,11 @@ getgrnam(name)
 }
 
 struct group *
-#ifdef __STDC__
 getgrgid(gid_t gid)
-#else
-getgrgid(gid)
-	gid_t gid;
-#endif
 {
 	int rval;
 
-	if (!start_gr())
+	if (!grstart())
 		return(NULL);
 	rval = grscan(1, gid, NULL);
 	if (!_gr_stayopen)
@@ -117,8 +115,9 @@ getgrgid(gid)
 }
 
 static int
-start_gr()
+grstart(void)
 {
+	_gr_filesdone = 0;
 	if (_gr_fp) {
 		rewind(_gr_fp);
 		return(1);
@@ -127,24 +126,24 @@ start_gr()
 }
 
 void
-setgrent()
+setgrent(void)
 {
 	(void) setgroupent(0);
 }
 
 int
-setgroupent(stayopen)
-	int stayopen;
+setgroupent(int stayopen)
 {
-	if (!start_gr())
+	if (!grstart())
 		return(0);
 	_gr_stayopen = stayopen;
 	return(1);
 }
 
 void
-endgrent()
+endgrent(void)
 {
+	_gr_filesdone = 0;
 	if (_gr_fp) {
 		(void)fclose(_gr_fp);
 		_gr_fp = NULL;
@@ -152,57 +151,74 @@ endgrent()
 }
 
 static int
-grscan(search, gid, name)
-	register int search, gid;
-	register const char *name;
+grscan(int search, gid_t gid, const char *name)
 {
-	register char *cp, **m;
-	char *bp;
-
+	if (_gr_filesdone)
+		return 0;
 	for (;;) {
-		if (!fgets(line, sizeof(line), _gr_fp))
-			return(0);
-		bp = line;
+		if (!fgets(grline, sizeof(grline), _gr_fp)) {
+			if (!search)
+				_gr_filesdone = 1;
+			return 0;
+		}
 		/* skip lines that are too big */
-		if (!strchr(line, '\n')) {
+		if (!strchr(grline, '\n')) {
 			int ch;
 
 			while ((ch = getc(_gr_fp)) != '\n' && ch != EOF)
 				;
 			continue;
 		}
-		_gr_group.gr_name = strsep(&bp, ":\n");
-		if (search && name && strcmp(_gr_group.gr_name, name))
-			continue;
-		_gr_group.gr_passwd = strsep(&bp, ":\n");
-		if (!(cp = strsep(&bp, ":\n")))
-			continue;
-		_gr_group.gr_gid = atoi(cp);
-		if (search && name == NULL && _gr_group.gr_gid != gid)
-			continue;
-		cp = NULL;
-		if (bp == NULL)
-			continue;
-		for (m = _gr_group.gr_mem = members;; bp++) {
-			if (m == &members[MAXGRP - 1])
-				break;
-			if (*bp == ',') {
-				if (cp) {
-					*bp = '\0';
-					*m++ = cp;
-					cp = NULL;
-				}
-			} else if (*bp == '\0' || *bp == '\n' || *bp == ' ') {
-				if (cp) {
-					*bp = '\0';
-					*m++ = cp;
-				}
-				break;
-			} else if (cp == NULL)
-				cp = bp;
-		}
-		*m = NULL;
-		return(1);
+		if (grmatchline(search, gid, name))
+			return 1;
 	}
 	/* NOTREACHED */
+}
+
+static int
+grmatchline(int search, gid_t gid, const char *name)
+{
+	unsigned long	id;
+	char		**m;
+	char		*cp, *bp, *ep;
+
+	/* name may be NULL if search is nonzero */
+
+	bp = grline;
+	memset(&_gr_group, 0, sizeof(_gr_group));
+	_gr_group.gr_name = strsep(&bp, ":\n");
+	if (search && name && strcmp(_gr_group.gr_name, name))
+		return 0;
+	_gr_group.gr_passwd = strsep(&bp, ":\n");
+	if (!(cp = strsep(&bp, ":\n")))
+		return 0;
+	id = strtoul(cp, &ep, 10);
+	if (id > GID_MAX || *ep != '\0')
+		return 0;
+	_gr_group.gr_gid = (gid_t)id;
+	if (search && name == NULL && _gr_group.gr_gid != gid)
+		return 0;
+	cp = NULL;
+	if (bp == NULL)
+		return 0;
+	for (_gr_group.gr_mem = m = members;; bp++) {
+		if (m == &members[MAXGRP - 1])
+			break;
+		if (*bp == ',') {
+			if (cp) {
+				*bp = '\0';
+				*m++ = cp;
+				cp = NULL;
+			}
+		} else if (*bp == '\0' || *bp == '\n' || *bp == ' ') {
+			if (cp) {
+				*bp = '\0';
+				*m++ = cp;
+			}
+			break;
+		} else if (cp == NULL)
+			cp = bp;
+	}
+	*m = NULL;
+	return 1;
 }
