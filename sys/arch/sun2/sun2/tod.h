@@ -1,4 +1,4 @@
-/*	$NetBSD: tod.h,v 1.1 2001/04/06 15:05:57 fredette Exp $	*/
+/*	$NetBSD: tod.h,v 1.2 2001/06/11 21:33:47 fredette Exp $	*/
 
 /*
  * Structures and macros des accessing the National Semiconductor
@@ -7,6 +7,7 @@
  * and sys/dev/ic/mm58167var.h.
  */
 
+#if __for_reference_only__
 struct mm58167regs {
   
   /* the various timers.  all of these values are in BCD: */
@@ -56,4 +57,19 @@ struct mm58167regs {
   u_int8_t mm58167_test;	/* test mode - ??? */
   u_int8_t _mm58167_unused15;
 };
+#endif
 
+/*
+ * Register offsets.
+ */
+#define	MM58167REG_MSEC_XXX	0
+#define	MM58167REG_CSEC		2
+#define	MM58167REG_SEC		4
+#define	MM58167REG_MIN		6
+#define	MM58167REG_HOUR		8
+#define	MM58167REG_WDAY		10
+#define	MM58167REG_DAY		12
+#define	MM58167REG_MON		14
+#define	MM58167REG_STATUS	40
+#define	MM58167REG_GO		42
+#define	MM58167REG_BANK_SZ	48
