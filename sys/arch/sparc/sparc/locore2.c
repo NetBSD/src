@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.7 1996/11/06 20:19:53 cgd Exp $ */
+/*	$NetBSD: locore2.c,v 1.8 1997/11/22 03:14:01 tv Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,8 +55,6 @@
 #include <sys/resourcevar.h>
 
 #include <machine/cpu.h>
-
-int	whichqs;
 
 /*
  * Put process p on the run queue indicated by its priority.
