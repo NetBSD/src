@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2004/02/23 21:27:20 skrll Exp $
+#	$NetBSD: Makefile,v 1.68 2004/02/26 21:45:59 enami Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -53,8 +53,8 @@ DBG=		-O3 -fomit-frame-pointer
 CPPFLAGS+=	-DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 .endif
 
-LDADD+=	-L${CLIBOBJ} -L${DESTDIR}${LIBDIR} -lc_pic
-.if ${MKPICINSTALL} != "no" 
+LDADD+=		-L${CLIBOBJ} -L${DESTDIR}${LIBDIR} -lc_pic
+.if ${MKPICINSTALL} != "no"
 DPADD+=		${LIBC_PIC}
 .endif
 DPADD+=		${CLIBOBJ}/libc_pic.a
@@ -74,7 +74,7 @@ SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
 .include <bsd.prog.mk>
 .else
 
-MAN=	ld.elf_so.1
+MAN=		ld.elf_so.1
 
 .include <bsd.man.mk>
 .endif
