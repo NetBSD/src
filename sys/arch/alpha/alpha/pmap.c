@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.39 1998/05/19 02:04:28 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.40 1998/05/19 02:42:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 1998/05/19 02:04:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 1998/05/19 02:42:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,7 @@ vm_offset_t	avail_end;	/* PA of last available physical page */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
-boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
+boolean_t	pmap_initialized;	/* Has pmap_init completed? */
 
 /*
  * Storage for physical->virtual entries and page attributes.
