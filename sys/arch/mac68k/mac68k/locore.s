@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.83 1997/07/04 20:52:56 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.84 1997/07/12 19:03:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,11 +92,6 @@ GLOBAL(kernel_text)
 
 /*
  * Initialization
- */
-
-/*
- * Kernel access to the current processes kernel stack is via a fixed
- * virtual address.  It is at the same address as in the users VA space.
  */
 
 	.data
