@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/09/27 16:04:16 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2 2000/10/09 12:36:27 fvdl Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -31,8 +31,9 @@ RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS}
 realall: ${IMAGE}
 
 ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
-	dd if=/dev/zero of=${IMAGE} count=${RAMDISKSIZE}
-	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/${RAMDISKSPC}/1/${RAMDISKCYLS}
+	rm -f ${IMAGE}.tmp
+	dd if=/dev/zero of=${IMAGE}.tmp count=${RAMDISKSIZE}
+	vnconfig -v -c ${VND_CDEV} ${IMAGE}.tmp 512/${RAMDISKSPC}/1/${RAMDISKCYLS}
 	-disklabel ${VND_CDEV} >tmplabel
 	disklabel -r -R ${VND_CDEV} tmplabel
 	newfs -B le -m 0 -o space -i 3950 -c 80 ${VND_RDEV} 
@@ -45,6 +46,7 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
+	mv -f ${IMAGE}.tmp ${IMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -70,7 +72,7 @@ HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.
 release:
 
 clean cleandir distclean:
-	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
+	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c ${IMAGE}.tmp
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
