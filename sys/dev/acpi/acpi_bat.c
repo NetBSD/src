@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.27 2003/11/01 09:41:25 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.28 2003/11/01 09:49:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.27 2003/11/01 09:41:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.28 2003/11/01 09:49:45 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,7 @@ acpibat_clear_info(struct acpibat_softc *sc)
 	if (sc->sc_available>ABAT_ALV_PRESENCE)
 		sc->sc_available = ABAT_ALV_PRESENCE;
 	sc->sc_data[ACPIBAT_DCAPACITY].validflags &= ~ENVSYS_FCURVALID;
-	sc->sc_data[ACPIBAT_LFCCAPACITY].validflags &= ~(ENVSYS_FCURVALID | ENVSYS_FMAXVALID | ENVSYS_FFRACVALID);
+	sc->sc_data[ACPIBAT_LFCCAPACITY].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_CAPACITY].validflags &= ~ENVSYS_FMAXVALID;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].validflags &= ~ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_DVOLTAGE].validflags &= ~ENVSYS_FCURVALID;
@@ -433,7 +433,7 @@ acpibat_get_info(struct acpibat_softc *sc)
 		ratestring = "power";
 	}
 	INITDATA(ACPIBAT_DCAPACITY, capunit, "design cap");
-	INITDATA(ACPIBAT_LFCCAPACITY, capunit, "lfc cap");
+	INITDATA(ACPIBAT_LFCCAPACITY, capunit, "last full cap");
 	INITDATA(ACPIBAT_WCAPACITY, capunit, "warn cap");
 	INITDATA(ACPIBAT_LCAPACITY, capunit, "low cap");
 	INITDATA(ACPIBAT_LOAD, rateunit, ratestring);
@@ -442,9 +442,8 @@ acpibat_get_info(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s = p2[1].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_DCAPACITY].validflags |= ENVSYS_FCURVALID;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].cur.data_s = p2[2].Integer.Value * 1000;
-	sc->sc_data[ACPIBAT_LFCCAPACITY].max.data_s = p2[1].Integer.Value * 1000;
-	sc->sc_data[ACPIBAT_LFCCAPACITY].validflags |= ENVSYS_FCURVALID | ENVSYS_FMAXVALID | ENVSYS_FFRACVALID;
-	sc->sc_data[ACPIBAT_CAPACITY].max.data_s = p2[1].Integer.Value * 1000;
+	sc->sc_data[ACPIBAT_LFCCAPACITY].validflags |= ENVSYS_FCURVALID;
+	sc->sc_data[ACPIBAT_CAPACITY].max.data_s = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_CAPACITY].validflags |= ENVSYS_FMAXVALID;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].cur.data_s = p2[3].Integer.Value;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].validflags |= ENVSYS_FCURVALID;
@@ -721,7 +720,7 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	}
 	INITDATA(ACPIBAT_PRESENT, ENVSYS_INDICATOR, "present");
 	INITDATA(ACPIBAT_DCAPACITY, capunit, "design cap");
-	INITDATA(ACPIBAT_LFCCAPACITY, capunit, "lfc cap");
+	INITDATA(ACPIBAT_LFCCAPACITY, capunit, "last full cap");
 	INITDATA(ACPIBAT_TECHNOLOGY, ENVSYS_INTEGER, "technology");
 	INITDATA(ACPIBAT_DVOLTAGE, ENVSYS_SVOLTS_DC, "design voltage");
 	INITDATA(ACPIBAT_WCAPACITY, capunit, "warn cap");
