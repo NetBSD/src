@@ -1,3 +1,5 @@
+/*	$NetBSD: _def_time.c,v 1.5 1997/04/29 16:40:16 kleink Exp $	*/
+
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
