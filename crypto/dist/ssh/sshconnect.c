@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.17 2002/06/08 21:17:57 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.18 2002/06/09 22:22:55 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.119 2002/01/21 15:13:51 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.123 2002/06/09 22:17:21 itojun Exp $");
 
 #include <openssl/bn.h>
 
@@ -41,13 +41,13 @@ extern Options options;
 extern char *__progname;
 
 static const char *
-sockaddr_ntop(struct sockaddr *sa)
+sockaddr_ntop(struct sockaddr *sa, socklen_t salen)
 {
 	static char addrbuf[NI_MAXHOST];
 
-	if (getnameinfo(sa, sa->sa_len, addrbuf, sizeof(addrbuf), NULL, 0,
+	if (getnameinfo(sa, salen, addrbuf, sizeof(addrbuf), NULL, 0,
 	    NI_NUMERICHOST) != 0)
-		abort();	/* XXX abort is bad -- do something else */
+		fatal("sockaddr_ntop: getnameinfo NI_NUMERICHOST failed");
 	return addrbuf;
 }
 
@@ -315,8 +315,8 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 				if (errno == ECONNREFUSED)
 					full_failure = 0;
 				log("ssh: connect to address %s port %s: %s",
-				    sockaddr_ntop(ai->ai_addr), strport,
-				    strerror(errno));
+				    sockaddr_ntop(ai->ai_addr, ai->ai_addrlen),
+				    strport, strerror(errno));
 				restore_uid();
 				/*
 				 * Close the failed socket; there appear to
