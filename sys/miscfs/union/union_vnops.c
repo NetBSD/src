@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.48 2000/09/19 22:02:00 fvdl Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.49 2000/12/11 02:50:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -93,6 +93,7 @@ int union_islocked	__P((void *));
 int union_pathconf	__P((void *));
 int union_advlock	__P((void *));
 int union_strategy	__P((void *));
+int union_getpages	__P((void *));
 
 static void union_fixup __P((struct union_node *));
 static int union_lookup1 __P((struct vnode *, struct vnode **,
@@ -142,6 +143,7 @@ struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_islocked_desc, union_islocked },		/* islocked */
 	{ &vop_pathconf_desc, union_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, union_advlock },		/* advlock */
+	{ &vop_getpages_desc, union_getpages },		/* getpages */
 #ifdef notdef
 	{ &vop_blkatoff_desc, union_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, union_valloc },		/* valloc */
@@ -150,7 +152,7 @@ struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_update_desc, union_update },		/* update */
 	{ &vop_bwrite_desc, union_bwrite },		/* bwrite */
 #endif
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc union_vnodeop_opv_desc =
 	{ &union_vnodeop_p, union_vnodeop_entries };
@@ -1970,4 +1972,48 @@ union_strategy(v)
 	bp->b_vp = savedvp;
 
 	return (error);
+}
+
+int
+union_getpages(v)
+	void *v;
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		vm_page_t *a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct vm_page *pg;
+	int error, npages, i;
+
+	/*
+	 * just call into the underlying layer to get the pages.
+	 * XXXUBC for now, mark pages from the lower layer read-only
+	 * so that write faults will come back here again.
+	 */
+
+	ap->a_vp = OTHERVP(vp);
+	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+	simple_lock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
+	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
+	if (error || ap->a_vp == UPPERVP(vp)) {
+		return error;
+	}
+	npages = *ap->a_count;
+	simple_lock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
+	for (i = 0; i < npages; i++) {
+		pg = ap->a_m[i];
+		if (pg == NULL) {
+			continue;
+		}
+		pg->flags |= PG_RDONLY;
+	}
+	simple_unlock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
+	return 0;
 }
