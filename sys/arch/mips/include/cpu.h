@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2002/03/06 07:31:38 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60 2002/03/19 00:53:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -133,6 +133,15 @@ extern int mips3_pg_cached;
 #define	CPU_MIPS_CACHED_CCA_MASK	0x0070
 #define	CPU_MIPS_CACHED_CCA_SHIFT	 4
 #define	MIPS_NOT_SUPP			0x8000
+
+#ifdef _LKM
+/* Assume all CPU architectures are valid for LKM's */
+#define	MIPS1	1
+#define	MIPS3	1
+#define	MIPS4	1
+#define	MIPS32	1
+#define	MIPS64	1
+#endif
 
 #if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 0
 #error at least one of MIPS1, MIPS3, MIPS4, MIPS32 or MIPS64 must be specified
