@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3dreg.h,v 1.1.2.1 1997/10/30 02:04:27 mellon Exp $	*/
+/*	$NetBSD: grf_cv3dreg.h,v 1.1.2.2 1997/11/11 01:47:46 mellon Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -74,14 +74,14 @@ struct grfcv3dtext_mode {
 
 #define vgawio(ba, reg, val) \
 	do { \
-		if (cv3d_zorroIII != 1) { \
+		if (!cv3d_zorroIII) { \
 		        *((volatile caddr_t)(((caddr_t)cv3d_vcode_switch_base) + \
 			    0x04)) = (0x01 & 0xffff); \
 			asm volatile ("nop"); \
 		} \
 		*((volatile caddr_t)(((caddr_t)cv3d_special_register_base) + \
 		    ( ByteAccessIO(reg) & 0xffff ))) = ((val) & 0xff); \
-		if (cv3d_zorroIII != 1) { \
+		if (!cv3d_zorroIII) { \
 		        *((volatile caddr_t)(((caddr_t)cv3d_vcode_switch_base) + \
 			    0x04)) = (0x02 & 0xffff); \
 			asm volatile ("nop"); \
