@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.36 2003/09/13 12:31:35 simonb Exp $ */
+/* $NetBSD: pckbd.c,v 1.37 2003/10/18 09:19:04 manu Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.36 2003/09/13 12:31:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.37 2003/10/18 09:19:04 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,6 +317,7 @@ pckbdattach(parent, self, aux)
 	struct pckbc_attach_args *pa = aux;
 	int isconsole;
 	struct wskbddev_attach_args a;
+	u_char cmd[1];
 
 	printf("\n");
 
@@ -324,10 +325,16 @@ pckbdattach(parent, self, aux)
 
 	if (isconsole) {
 		sc->id = &pckbd_consdata;
+
+		/* 
+		 * Some keyboards are not enabled after a reset, 
+		 * so make sure it is enabled now.
+		 */
+		cmd[0] = KBC_ENABLE;
+		(void) pckbc_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+				      cmd, 1, 0, 0, 0);
 		sc->sc_enabled = 1;
 	} else {
-		u_char cmd[1];
-
 		sc->id = malloc(sizeof(struct pckbd_internal),
 				M_DEVBUF, M_WAITOK);
 		(void) pckbd_init(sc->id, pa->pa_tag, pa->pa_slot, 0);
