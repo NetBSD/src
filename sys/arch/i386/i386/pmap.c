@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.139 2002/10/01 12:56:58 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.140 2002/10/01 19:36:06 fvdl Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2002/10/01 12:56:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2002/10/01 19:36:06 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -273,14 +273,21 @@ static struct lock pmap_main_lock;
  * the next time the pmap is activated on that processor, a new ASN
  * will be allocated (which implicitly invalidates all TLB entries).
  *
- * Note, we can use the pool allocator to allocate job entries
- * since pool pages are mapped with K0SEG, not with the TLB.
+ * Shootdown job queue entries are allocated using a simple special-
+ * purpose allocator for speed.
  */
 struct pmap_tlb_shootdown_job {
 	TAILQ_ENTRY(pmap_tlb_shootdown_job) pj_list;
 	vaddr_t pj_va;			/* virtual address */
 	pmap_t pj_pmap;			/* the pmap which maps the address */
 	pt_entry_t pj_pte;		/* the PTE bits */
+	struct pmap_tlb_shootdown_job *pj_nextfree;
+};
+
+#define PMAP_TLB_SHOOTDOWN_JOB_ALIGN 32
+union pmap_tlb_shootdown_job_al {
+	struct pmap_tlb_shootdown_job pja_job;
+	char pja_align[PMAP_TLB_SHOOTDOWN_JOB_ALIGN];
 };
 
 struct pmap_tlb_shootdown_q {
@@ -294,15 +301,14 @@ struct pmap_tlb_shootdown_q {
 
 #define	PMAP_TLB_MAXJOBS	16
 
-struct pool pmap_tlb_shootdown_job_pool;
-int pj_nentries, pj_nbytes;
-void *pj_page;
-
 void	pmap_tlb_shootdown_q_drain __P((struct pmap_tlb_shootdown_q *));
 struct pmap_tlb_shootdown_job *pmap_tlb_shootdown_job_get
 	    __P((struct pmap_tlb_shootdown_q *));
 void	pmap_tlb_shootdown_job_put __P((struct pmap_tlb_shootdown_q *,
 	    struct pmap_tlb_shootdown_job *));
+
+struct simplelock pmap_tlb_shootdown_job_lock;
+union pmap_tlb_shootdown_job_al *pj_page, *pj_free;
 
 /*
  * global data structures
@@ -476,12 +482,6 @@ static pt_entry_t	*pmap_tmpmap_pvepte __P((struct pv_entry *));
 static void		 pmap_tmpunmap_pa __P((void));
 static void		 pmap_tmpunmap_pvepte __P((struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
-static void		pmap_tlb_pool_page_free(struct pool *, void *);
-static void		*pmap_tlb_pool_page_alloc(struct pool *, int);
-
-static struct pool_allocator pmap_allocator_tlb = {
-	pmap_tlb_pool_page_alloc, pmap_tlb_pool_page_free, 0,
-};
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -1023,11 +1023,7 @@ pmap_bootstrap(kva_start)
 	 * Initialize the TLB shootdown queues.
 	 */
 
-	pool_init(&pmap_tlb_shootdown_job_pool,
-	    sizeof(struct pmap_tlb_shootdown_job),
-	    32,			/* cache-line align XXX magic number*/
-	    0, 0, "pmaptlbpl",
-	    &pmap_allocator_tlb);
+	simple_lock_init(&pmap_tlb_shootdown_job_lock);
 
 	for (i = 0; i < I386_MAXPROCS; i++) {
 		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
@@ -1133,19 +1129,16 @@ pmap_init()
 	pv_nfpvents = 0;
 	(void) pmap_add_pvpage(pv_initpage, FALSE);
 
-	/*
-	 * Prime the TLB shootdown job pool.
-	 */
-	pj_nentries = pmap_tlb_shootdown_job_pool.pr_itemsperpage;
-	pj_nbytes =  pmap_allocator_tlb.pa_pagesz;
-	KASSERT(pj_nbytes != 0);
-	pj_page = (void *)uvm_km_alloc (kernel_map, pj_nbytes);
+	pj_page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE);
 	if (pj_page == NULL)
 		panic("pmap_init: pj_page");
-	pool_prime (&pmap_tlb_shootdown_job_pool, pj_nentries);
-	pool_setlowat(&pmap_tlb_shootdown_job_pool, pj_nentries);
-	pool_sethiwat(&pmap_tlb_shootdown_job_pool, pj_nentries);
-	pool_sethardlimit(&pmap_tlb_shootdown_job_pool, pj_nentries, 0, 0);
+
+	for (i = 0;
+	     i < (PAGE_SIZE / sizeof (union pmap_tlb_shootdown_job_al) - 1);
+	     i++)
+		pj_page[i].pja_job.pj_nextfree = &pj_page[i + 1].pja_job;
+	pj_page[i].pja_job.pj_nextfree = NULL;
+	pj_free = &pj_page[0];
 
 	/*
 	 * done: pmap module is up (and ready for business)
@@ -3332,32 +3325,6 @@ pmap_tlb_ipispin(void)
 
 #endif
 
-static void *
-pmap_tlb_pool_page_alloc(struct pool *pool, int flags)
-{
-	void *r;
-
-#ifdef DIAGNOSTIC
-	KASSERT(pool == &pmap_tlb_shootdown_job_pool);
-	KASSERT(pj_page != NULL);
-#endif
-	/* XXX locking */
-	r = pj_page;
-	pj_page = NULL;
-
-	return (r);
-}
-
-static void
-pmap_tlb_pool_page_free(struct pool *pool, void *v)
-{
-#ifdef DIAGNOSTIC
-	KASSERT(pool == &pmap_tlb_shootdown_job_pool);
-#endif
-	pool_print(pool, "p");
-	panic("pmap_tlb_pool_page_free invoked");
-}
-
 void
 pmap_tlb_shootnow(int32_t cpumask)
 {
@@ -3590,9 +3557,18 @@ pmap_tlb_shootdown_job_get(pq)
 
 	if (pq->pq_count >= PMAP_TLB_MAXJOBS)
 		return (NULL);
-	pj = pool_get(&pmap_tlb_shootdown_job_pool, PR_NOWAIT);
-	if (pj != NULL)
-		pq->pq_count++;
+
+	simple_lock(&pmap_tlb_shootdown_job_lock);
+	if (pj_free == NULL) {
+		simple_unlock(&pmap_tlb_shootdown_job_lock);
+		return NULL;
+	}
+	pj = &pj_free->pja_job;
+	pj_free =
+	    (union pmap_tlb_shootdown_job_al *)pj_free->pja_job.pj_nextfree;
+	simple_unlock(&pmap_tlb_shootdown_job_lock);
+
+	pq->pq_count++;
 	return (pj);
 }
 
@@ -3613,6 +3589,10 @@ pmap_tlb_shootdown_job_put(pq, pj)
 	if (pq->pq_count == 0)
 		panic("pmap_tlb_shootdown_job_put: queue length inconsistency");
 #endif
-	pool_put(&pmap_tlb_shootdown_job_pool, pj);
+	simple_lock(&pmap_tlb_shootdown_job_lock);
+	pj->pj_nextfree = &pj_free->pja_job;
+	pj_free = (union pmap_tlb_shootdown_job_al *)pj;
+	simple_unlock(&pmap_tlb_shootdown_job_lock);
+
 	pq->pq_count--;
 }
