@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.17.2.1 1998/11/09 06:06:37 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.17.2.2 1999/02/25 04:12:50 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -445,7 +445,7 @@ int uvmfault_anonget(ufi, amap, anon)
 
 			if (pg->flags & PG_WANTED) {
 				/* still holding object lock */
-				thread_wakeup(pg);	
+				wakeup(pg);	
 			}
 			/* un-busy! */
 			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
@@ -565,7 +565,7 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	vm_prot_t enter_prot;
 	boolean_t wired, narrow, promote, locked, shadowed;
 	int npages, nback, nforw, centeridx, result, lcv, gotpages;
-	vaddr_t startva, objaddr, currva, offset;
+	vaddr_t startva, objaddr, currva, offset, uoff;
 	paddr_t pa; 
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
@@ -852,23 +852,15 @@ ReFault:
 	 */
 
 	if (uobj && shadowed == FALSE && uobj->pgops->pgo_fault != NULL) {
-
-		/*
-		 * XXXCHS this splhigh is horribly wrong, but it will mask
-		 * some simple_lock problems until I get around to fixing it.
-		 */
-		int s = splhigh();
-
 		simple_lock(&uobj->vmobjlock);
 
 		/* locked: maps(read), amap (if there), uobj */
 		result = uobj->pgops->pgo_fault(&ufi, startva, pages, npages,
 				    centeridx, fault_type, access_type,
 				    PGO_LOCKED);
-		splx(s);
 
 		/* locked: nothing, pgo_fault has unlocked everything */
-		simple_lock_assert(&uobj->vmobjlock, 0);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
 
 		if (result == VM_PAGER_OK)
 			return (KERN_SUCCESS);	/* pgo_fault did pmap enter */
@@ -898,14 +890,14 @@ ReFault:
 
 		uvmexp.fltlget++;
 		gotpages = npages;
-		result = uobj->pgops->pgo_get(uobj, ufi.entry->offset +
+		(void) uobj->pgops->pgo_get(uobj, ufi.entry->offset +
 				(startva - ufi.entry->start),
 				pages, &gotpages, centeridx,
 				UVM_ET_ISCOPYONWRITE(ufi.entry) ?
 				VM_PROT_READ : access_type,
 				ufi.entry->advice, PGO_LOCKED);
 
-		simple_lock_assert(&uobj->vmobjlock, 1);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 
 		/*
 		 * check for pages to map, if we got any
@@ -981,7 +973,7 @@ ReFault:
 		}   /* "gotpages" != 0 */
 
 		/* note: object still _locked_ */
-		simple_lock_assert(&uobj->vmobjlock, 1);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	} else {
 		
 		uobjpage = NULL;
@@ -1026,8 +1018,8 @@ ReFault:
 
 	/* locked: maps(read), amap, anon */
 
-	simple_lock_assert(&amap->am_l, 1);
-	simple_lock_assert(&anon->an_lock, 1);
+	simple_lock_assert(&amap->am_l, SLOCK_LOCKED);
+	simple_lock_assert(&anon->an_lock, SLOCK_LOCKED);
 
 	/*
 	 * no matter if we have case 1A or case 1B we are going to need to
@@ -1062,10 +1054,10 @@ ReFault:
 	uobj = anon->u.an_page->uobject;	/* locked by anonget if !NULL */
 
 	/* locked: maps(read), amap, anon, uobj(if one) */
-	simple_lock_assert(&amap->am_l, 1);
-	simple_lock_assert(&anon->an_lock, 1);
+	simple_lock_assert(&amap->am_l, SLOCK_LOCKED);
+	simple_lock_assert(&anon->an_lock, SLOCK_LOCKED);
 	if (uobj) {
-		simple_lock_assert(&uobj->vmobjlock, 1);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	}
 
 	/*
@@ -1217,8 +1209,8 @@ ReFault:
 	}
 
 	/* locked: maps(read), amap, oanon */
-	simple_lock_assert(&amap->am_l, 1);
-	simple_lock_assert(&oanon->an_lock, 1);
+	simple_lock_assert(&amap->am_l, SLOCK_LOCKED);
+	simple_lock_assert(&oanon->an_lock, SLOCK_LOCKED);
 
 	/*
 	 * now map the page in ...
@@ -1266,7 +1258,7 @@ Case2:
 	 * maps(read), amap(if there), uobj(if !null), uobjpage(if !null)
 	 */
 	if (uobj) {
-		simple_lock_assert(&uobj->vmobjlock, 1);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	}
 
 	/*
@@ -1306,20 +1298,18 @@ Case2:
 		/* locked: maps(read), amap(if there), uobj */
 		uvmfault_unlockall(&ufi, amap, NULL, NULL);
 		/* locked: uobj */
-		simple_lock_assert(&uobj->vmobjlock, 1);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 
 		uvmexp.fltget++;
 		gotpages = 1;
-		result = uobj->pgops->pgo_get(uobj,
-		    (ufi.orig_rvaddr - ufi.entry->start) + ufi.entry->offset,
-		    &uobjpage, &gotpages, 0,
-		    UVM_ET_ISCOPYONWRITE(ufi.entry) ?
-			VM_PROT_READ : access_type,
-			ufi.entry->advice, 0);
+		uoff = (ufi.orig_rvaddr - ufi.entry->start) + ufi.entry->offset;
+		result = uobj->pgops->pgo_get(uobj, uoff, &uobjpage, &gotpages,
+		    0, UVM_ET_ISCOPYONWRITE(ufi.entry) ?
+		    VM_PROT_READ : access_type, ufi.entry->advice, 0);
 
 		/* locked: uobjpage(if result OK) */
-		simple_lock_assert(&uobj->vmobjlock, 0);
-		
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
+
 		/*
 		 * recover from I/O
 		 */
@@ -1358,7 +1348,7 @@ Case2:
 		
 		/* locked(locked): maps(read), amap(if !null), uobj, uobjpage */
 		/* locked(!locked): uobj, uobjpage */
-		simple_lock_assert(&uobj->vmobjlock, 1);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 
 		/*
 		 * verify that the page has not be released and re-verify
@@ -1386,7 +1376,7 @@ Case2:
 			    0,0,0,0);
 			if (uobjpage->flags & PG_WANTED)
 				/* still holding object lock */
-				thread_wakeup(uobjpage);
+				wakeup(uobjpage);
 
 			if (uobjpage->flags & PG_RELEASED) {
 				uvmexp.fltpgrele++;
@@ -1420,7 +1410,7 @@ Case2:
 		 */
 
 		/* locked: maps(read), amap(if !null), uobj, uobjpage */
-		simple_lock_assert(&uobj->vmobjlock, 1);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	}
 
 	/*
@@ -1428,10 +1418,10 @@ Case2:
 	 * maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj)
 	 */
 	if (amap) {
-		simple_lock_assert(&amap->am_l, 1);
+		simple_lock_assert(&amap->am_l, SLOCK_LOCKED);
 	}
 	if (uobj) {
-		simple_lock_assert(&uobj->vmobjlock, 1);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	}
 
 	/*
@@ -1482,7 +1472,7 @@ Case2:
 					 * be released
 					 * */
 					if (uobjpage->flags & PG_WANTED)
-						thread_wakeup(uobjpage);
+						wakeup(uobjpage);
 					uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 					UVM_PAGE_OWN(uobjpage, NULL);
 
@@ -1513,7 +1503,7 @@ Case2:
 				pmap_page_protect(PMAP_PGARG(uobjpage),
 				    VM_PROT_NONE); 
 				if (uobjpage->flags & PG_WANTED)
-					thread_wakeup(uobjpage);
+					wakeup(uobjpage);
 				/* uobj still locked */
 				uobjpage->flags &= ~(PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(uobjpage, NULL);
@@ -1570,10 +1560,11 @@ Case2:
 			 */
 			if (uobjpage != PGO_DONTCARE) {
 				/* still holding object lock */
-				simple_lock_assert(&uobj->vmobjlock, 1);
+				simple_lock_assert(&uobj->vmobjlock,
+						   SLOCK_LOCKED);
 
 				if (uobjpage->flags & PG_WANTED)
-					thread_wakeup(uobjpage);
+					wakeup(uobjpage);
 
 				uvm_lock_pageq();
 				uvm_pageactivate(uobjpage);
@@ -1593,6 +1584,7 @@ Case2:
 			}
 			UVMHIST_LOG(maphist, "  out of RAM, waiting for more",
 			    0,0,0,0);
+			anon->an_ref--;
 			uvm_anfree(anon);
 			uvmexp.fltnoram++;
 			uvm_wait("flt_noram5");
@@ -1604,7 +1596,7 @@ Case2:
 		 */
 
 		if (uobjpage != PGO_DONTCARE) {
-			simple_lock_assert(&uobj->vmobjlock, 1);
+			simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 
 			uvmexp.flt_prcopy++;
 			/* copy page [pg now dirty] */
@@ -1626,7 +1618,7 @@ Case2:
 			 */
 
 			if (uobjpage->flags & PG_WANTED)
-				thread_wakeup(uobjpage);
+				wakeup(uobjpage);
 			uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(uobjpage, NULL);
 			uvm_lock_pageq();
@@ -1678,7 +1670,7 @@ Case2:
 	uvm_unlock_pageq();
 
 	if (pg->flags & PG_WANTED) {
-		thread_wakeup(pg);
+		wakeup(pg);
 	}
 
 	/* 
