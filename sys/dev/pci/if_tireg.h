@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.8 2001/06/30 14:57:00 thorpej Exp $ */
+/* $NetBSD: if_tireg.h,v 1.9 2001/06/30 15:39:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1023,6 +1023,19 @@ struct ti_ring_data {
 	struct ti_gib		ti_info;
 };
 
+#define	TI_CDOFF(x)		offsetof(struct ti_ring_data, x)
+#define	TI_CDRXSTDOFF(x)	TI_CDOFF(ti_rx_std_ring[(x)])
+#define	TI_CDRXJUMBOOFF(x)	TI_CDOFF(ti_rx_jumbo_ring[(x)])
+#define	TI_CDRXMINIOFF(x)	TI_CDOFF(ti_rx_mini_ring[(x)])
+#define	TI_CDRXRTNOFF(x)	TI_CDOFF(ti_rx_return_ring[(x)])
+#define	TI_CDEVENTOFF(x)	TI_CDOFF(ti_event_ring[(x)])
+#define	TI_CDTXOFF(x)		TI_CDOFF(ti_tx_ring[(x)])
+#define	TI_CDEVPRODOFF		TI_CDOFF(ti_ev_prodidx_r)
+#define	TI_CDRTNPRODOFF		TI_CDOFF(ti_return_prodidx_r)
+#define	TI_CDTXCONSOFF		TI_CDOFF(ti_tx_considx_r)
+#define	TI_CDGIBOFF		TI_CDOFF(ti_info)
+#define	TI_CDSTATSOFF		TI_CDOFF(ti_info.ti_stats)
+
 /*
  * Mbuf pointers. We need these to keep track of the virtual addresses
  * of our mbuf chains since we can only convert from physical to virtual,
@@ -1122,6 +1135,18 @@ struct ti_softc {
 	SIMPLEQ_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[TI_TX_RING_CNT];
 };
+
+#define	TI_CDRXSTDADDR(sc, x)	((sc)->info_dmaaddr + TI_CDRXSTDOFF((x)))
+#define	TI_CDRXJUMBOADDR(sc, x)	((sc)->info_dmaaddr + TI_CDRXJUMBOOFF((x)))
+#define	TI_CDRXMINIADDR(sc, x)	((sc)->info_dmaaddr + TI_CDRXMINIOFF((x)))
+#define	TI_CDRXRTNADDR(sc, x)	((sc)->info_dmaaddr + TI_CDRXRTNOFF((x)))
+#define	TI_CDEVENTADDR(sc, x)	((sc)->info_dmaaddr + TI_CDEVENTOFF((x)))
+#define	TI_CDTXADDR(sc, x)	((sc)->info_dmaaddr + TI_CDTXOFF((x)))
+#define	TI_CDEVPRODADDR(sc)	((sc)->info_dmaaddr + TI_CDEVPRODOFF)
+#define	TI_CDRTNPRODADDR(sc)	((sc)->info_dmaaddr + TI_CDRTNPRODOFF)
+#define	TI_CDTXCONSADDR(sc)	((sc)->info_dmaaddr + TI_CDTXCONSOFF)
+#define	TI_CDGIBADDR(sc)	((sc)->info_dmaaddr + TI_CDGIBOFF)
+#define	TI_CDSTATSADDR(sc)	((sc)->info_dmaaddr + TI_CDSTATSOFF)
 
 /*
  * Microchip Technology 24Cxx EEPROM control bytes
