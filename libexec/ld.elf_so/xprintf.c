@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.4 1999/03/01 16:40:08 christos Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.5 1999/03/03 21:18:01 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -38,6 +38,7 @@
 #include <varargs.h>
 #endif
 
+#ifdef RTLD_LOADER
 #define SZ_SHORT	0x01
 #define	SZ_INT		0x02
 #define	SZ_LONG		0x04
@@ -382,3 +383,4 @@ xassert(file, line, failedexpr)
 	abort();
 	/* NOTREACHED */
 }
+#endif
