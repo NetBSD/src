@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.166 2001/12/06 04:34:33 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.167 2001/12/09 03:07:43 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.166 2001/12/06 04:34:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.167 2001/12/09 03:07:43 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1223,8 +1223,8 @@ vput(vp)
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
 	if (vp->v_flag & VEXECMAP) {
-		uvmexp.vtextpages -= vp->v_uobj.uo_npages;
-		uvmexp.vnodepages += vp->v_uobj.uo_npages;
+		uvmexp.execpages -= vp->v_uobj.uo_npages;
+		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag &= ~(VTEXT|VEXECMAP);
 	simple_unlock(&vp->v_interlock);
@@ -1267,8 +1267,8 @@ vrele(vp)
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
 	if (vp->v_flag & VEXECMAP) {
-		uvmexp.vtextpages -= vp->v_uobj.uo_npages;
-		uvmexp.vnodepages += vp->v_uobj.uo_npages;
+		uvmexp.execpages -= vp->v_uobj.uo_npages;
+		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag &= ~(VTEXT|VEXECMAP);
 	if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
@@ -1497,8 +1497,8 @@ vclean(vp, flags, p)
 		panic("vclean: deadlock, vp %p", vp);
 	vp->v_flag |= VXLOCK;
 	if (vp->v_flag & VEXECMAP) {
-		uvmexp.vtextpages -= vp->v_uobj.uo_npages;
-		uvmexp.vnodepages += vp->v_uobj.uo_npages;
+		uvmexp.execpages -= vp->v_uobj.uo_npages;
+		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag &= ~(VTEXT|VEXECMAP);
 
