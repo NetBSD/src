@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.8 2005/01/11 06:42:33 jmc Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.9 2005/01/11 06:44:06 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -136,3 +136,9 @@ sys/nfs/nfsnode.h				1.53
 	Invalidate cache if filesize is changed besides our activity
 	because it means that were out of sync with the server.
 	[yamt, ticket #1079]
+
+sys/dev/ic/tulip.c				1.130
+
+	Silence the 'receive process failed to idle' message on the Davicom 
+	DM9102A.
+	[sketch, ticket #1084]
