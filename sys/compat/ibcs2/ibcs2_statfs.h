@@ -1,7 +1,7 @@
-/*	$NetBSD: ibcs2_statfs.h,v 1.2 1994/10/26 02:53:06 cgd Exp $	*/
+/*	$NetBSD: ibcs2_statfs.h,v 1.2.18.1 1998/05/05 09:39:30 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994 Scott Bartram
+ * Copyright (c) 1994, 1998 Scott Bartram
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,23 @@ struct ibcs2_statfs {
 	long	f_ffree;
 	char	f_fname[6];
 	char	f_fpack[6];
+};
+
+struct ibcs2_statvfs {
+	u_long	f_bsize;
+	u_long	f_frsize;
+	u_long	f_blocks;
+	u_long	f_bfree;
+	u_long	f_bavail;
+	u_long	f_files;
+	u_long	f_ffree;
+	u_long	f_favail;
+	u_long	f_fsid;
+	char    f_basetype[16];
+	u_long	f_flag;
+	u_long	f_namemax;
+	char    f_fstr[32];
+	u_long	pad[16];
 };
 
 #endif /* _IBCS2_STATFS_H */
