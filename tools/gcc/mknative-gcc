@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.12 2004/02/10 09:37:58 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.13 2004/07/01 13:22:25 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -48,6 +48,8 @@ get_libgcc () {
 		LIB1ASMFUNCS LIB1ASMSRC \
 		LIB2_DIVMOD_FUNCS LIB2FUNCS_ST \
 		LIBGCC2_CFLAGS USE_COLLECT2 \
+		SHLIB_MKMAP SHLIB_MKMAP_OPTS \
+		SHLIB_MAPFILES SHLIB_NM_FLAGS \
 		EXTRA_HEADERS \
 		tm_defines xm_file xm_defines \
 		| write_mk gnu/lib/libgcc3/arch/$MACHINE_ARCH.mk
