@@ -1,4 +1,4 @@
-# $Id: README,v 1.1 1994/07/13 20:45:31 gwr Exp $
+# $Id: README,v 1.2 1994/07/18 14:51:24 gwr Exp $
 
 NOTE: THESE INSTRUCTIONS MAY CHANGE WITH EACH SNAPSHOT.
 
@@ -49,7 +49,7 @@ How to set up your NFS server so your Sun3 can boot NetBSD from it:
 	cp etc/fstab.nfs etc/fstab
 	cp /etc/hosts etc/hosts
 	echo client > etc/myname
-	echo "inet client" > etc/hostname.le0
+	echo client > etc/hostname.le0
 
 7.  Export the above.  On sunos, /etc/exports needs:
 	/export/netbsd.sun3/usr -ro
