@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2000/03/29 14:29:34 soren Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2000/04/23 19:57:13 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -235,6 +235,10 @@ main()
 	initio(CONSDEV_PC);
 #endif
 	gateA20();
+
+#ifdef RESET_VIDEO
+	biosvideomode();
+#endif
 
 	print_banner();
 

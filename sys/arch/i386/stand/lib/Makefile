@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/12/21 14:22:54 drochner Exp $
+#	$NetBSD: Makefile,v 1.14 2000/04/23 19:57:14 tsarna Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -15,7 +15,7 @@ CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
 #CPPFLAGS+= -DNO_DISKLABEL
 #CPPFLAGS+= -DSAVE_MEMORY
 
-SRCS= pcio.c conio.S comio.S comio_direct.c
+SRCS= pcio.c conio.S comio.S comio_direct.c biosvideomode.S
 SRCS+= getsecs.c biosgetrtc.S biosdelay.S biosreboot.S gatea20.c
 SRCS+= biosmem.S getextmemx.c biosmemx.S printmemlist.c
 SRCS+= pread.c menuutils.c parseutils.c
