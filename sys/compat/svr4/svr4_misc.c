@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.87 2000/09/13 15:00:24 thorpej Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.88 2000/09/21 21:24:33 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1659,7 +1659,7 @@ svr4_sys_resolvepath(p, v, retval)
 
 	*retval = len;
 bad:
-	vput(nd.ni_vp);
+	vrele(nd.ni_vp);
 	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	return error;
 }
