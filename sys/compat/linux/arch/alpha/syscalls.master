@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2000/12/01 21:02:55 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.24 2000/12/02 16:43:51 jdolecek Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -485,7 +485,7 @@ endif
 301	UNIMPL		sethae
 302	UNIMPL		mount
 303	UNIMPL		old_adjtimex
-304	UNIMPL		swapoff
+304	STD		{ int linux_sys_swapoff(const char *path); }
 305	STD		{ int linux_sys_getdents(int fd, \
 			    struct linux_dirent *dent, unsigned int count); }
 306	UNIMPL		alpha_create_module
