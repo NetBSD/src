@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.15 1998/04/15 21:15:08 drochner Exp $ */
+/* $NetBSD: cfb.c,v 1.16 1998/04/16 12:53:47 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.15 1998/04/15 21:15:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.16 1998/04/16 12:53:47 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,6 +336,7 @@ cfb_alloc_screen(v, type, cookiep, curxp, curyp)
 	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
+	sc->nscreens++;
 	return (0);
 }
 
