@@ -37,9 +37,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * Id: //depot/aic7xxx/aic7xxx/aic79xx.h#93 $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx.h#94 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.h,v 1.14 2003/06/28 04:39:49 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.h,v 1.15 2003/06/28 04:45:25 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -376,7 +376,8 @@ typedef enum {
 	AHD_HP_BOARD	      = 0x100000,
 	AHD_RESET_POLL_ACTIVE = 0x200000,
 	AHD_UPDATE_PEND_CMDS  = 0x400000,
-	AHD_RUNNING_QOUTFIFO  = 0x800000
+	AHD_RUNNING_QOUTFIFO  = 0x800000,
+	AHD_HAD_FIRST_SEL     = 0x1000000
 } ahd_flag;
 
 /************************* Hardware  SCB Definition ***************************/
