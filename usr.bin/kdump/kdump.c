@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.74 2004/02/27 22:44:38 enami Exp $	*/
+/*	$NetBSD: kdump.c,v 1.75 2004/02/27 22:48:56 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.74 2004/02/27 22:44:38 enami Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.75 2004/02/27 22:48:56 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -464,7 +464,7 @@ ktrsyscall(ktr)
 		} else if (strcmp(sys_name, "ptrace") == 0 && argcount >= 1) {
 			putchar('(');
 			if (strcmp(emul->name, "linux") == 0) {
-				if (*ap >= 0 && *ap <= 
+				if (*ap >= 0 && *ap < 
 				    sizeof(linux_ptrace_ops) /
 				    sizeof(linux_ptrace_ops[0]))
 					(void)printf("%s",
@@ -472,10 +472,10 @@ ktrsyscall(ktr)
 				else
 					output_long((long)*ap, 1);
 			} else {
-				  if (*ap >= 0 && *ap <=
+				if (*ap >= 0 && *ap <
 				    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
 					(void)printf("%s", ptrace_ops[*ap]);
-				  else
+				else
 					output_long((long)*ap, 1);
 			}
 			ap++;

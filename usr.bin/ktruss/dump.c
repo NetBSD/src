@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.18 2004/02/26 22:00:57 enami Exp $	*/
+/*	$NetBSD: dump.c,v 1.19 2004/02/27 22:48:56 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.18 2004/02/26 22:00:57 enami Exp $");
+__RCSID("$NetBSD: dump.c,v 1.19 2004/02/27 22:48:56 enami Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -518,7 +518,7 @@ syscallprint(struct ktr_header *kth)
 
 	case SYS_ptrace :
 		if (*ap >= 0 &&
-		    *ap <= sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
+		    *ap < sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
 			wprintf("(%s", ptrace_ops[*ap]);
 		else
 			wprintf("(%ld", (long)*ap);
