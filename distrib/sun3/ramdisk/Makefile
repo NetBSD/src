@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2001/07/30 00:09:08 chs Exp $
+#	$NetBSD: Makefile,v 1.18 2001/10/04 08:17:42 chs Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -23,7 +23,7 @@ VND_RDEV?=	/dev/r${VND}a
 
 # These are all the parameters for the root fs:
 DISKTYPE=	rdroot
-SIZE=		500k
+SIZE=		400k
 # bigendian, minfree, opt, b/i , cpg
 NEWFSARGS= -B be -m 0 -o space -i 4096 -c 20
 
