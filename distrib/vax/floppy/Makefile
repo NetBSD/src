@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/05/02 18:03:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2002/05/05 21:24:51 jdolecek Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,7 +16,7 @@ CLEANFILES+=	netbsd.gz boot.vax ${IMAGE}.tmp
 
 realall: ${IMAGE} ${XXBOOT} ${DESTDIR}/usr/mdec/boot
 
-netbsd.gz: ${INSTKERNOBJ}/netbsd.INSTALL.gz 
+netbsd.gz: ${INSTKERNOBJ}/install.ram.gz
 	cp -f ${.ALLSRC} ${.TARGET}
 
 boot.vax: ${DESTDIR}/usr/mdec/boot
