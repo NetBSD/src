@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.10 2002/09/28 11:03:09 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.11 2002/10/08 15:59:32 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -321,7 +321,7 @@ Lsw2:
 	andc	r0, r2, r5		/* Assume queue is empty, in r5 */
 
 	/* Convert bit number into sched_qs offset */
-#ifdef _ILP64
+#ifdef _LP64
 	shlli	r1, 4, r2		/* sizeof(struct prochd) == 16 */
 #else
 	shlli	r1, 3, r2		/* sizeof(struct prochd) == 8 */
