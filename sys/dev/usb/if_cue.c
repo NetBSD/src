@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.8 2000/02/27 22:15:24 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.9 2000/03/01 19:00:51 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -929,6 +929,7 @@ cue_rxeof(xfer, priv, status)
 		goto done1;
 	}
 
+#if NBPFILTER > 0
 	/*
 	 * Handle BPF listeners. Let the BPF user see the packet, but
 	 * don't pass it up to the ether_input() layer unless it's
@@ -946,6 +947,7 @@ cue_rxeof(xfer, priv, status)
 			goto done1;
 		}
 	}
+#endif
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->cue_dev),
 		    __FUNCTION__, m->m_len));
@@ -1118,12 +1120,14 @@ cue_start(ifp)
 		return;
 	}
 
+#if NBPFILTER > 0
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
 	if (ifp->if_bpf)
 		BPF_MTAP(ifp, m_head);
+#endif
 
 	ifp->if_flags |= IFF_OACTIVE;
 
