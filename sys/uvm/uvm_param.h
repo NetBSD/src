@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.2 2000/11/29 09:52:19 simonb Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.3 2000/12/21 00:52:01 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -152,6 +152,8 @@ typedef int	boolean_t;
 #define	trunc_page(x)	((x) & ~PAGE_MASK)
 
 extern psize_t		mem_size;	/* size of physical memory (bytes) */
+extern int		ubc_nwins;	/* number of UBC mapping windows */
+extern int		ubc_winsize;	/* size of a UBC mapping window */
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */
