@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.30 2000/01/20 17:10:19 mjacob Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.31 2000/02/28 09:46:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -91,6 +91,8 @@ struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	 "FX320S", "", "q01"},			ADEV_NOSENSE},
 	{{T_CDROM, T_REMOV,
 	 "GCD-R580B", "", "1.00"},		ADEV_LITTLETOC},
+	{{T_CDROM, T_REMOV,
+	 "HITACHI CDR-7730", "", "0008a"},	ADEV_NOSENSE},
 	{{T_CDROM, T_REMOV,
 	 "MATSHITA CR-574", "", "1.02"},	ADEV_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
