@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.56 2002/09/27 15:38:03 provos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.57 2002/12/27 16:07:13 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.56 2002/09/27 15:38:03 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.57 2002/12/27 16:07:13 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -691,6 +691,7 @@ ffs_valloc(v)
 		    fs->fs_fsmnt, ino, ip->i_ffs_blocks);
 		ip->i_ffs_blocks = 0;
 	}
+	ip->i_flag &= ~IN_SPACECOUNTED;
 	ip->i_ffs_flags = 0;
 	/*
 	 * Set up a new generation number for this inode.
