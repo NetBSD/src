@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.92.2.4 2000/09/08 13:42:51 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.92.2.5 2000/10/17 20:11:47 tv Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2446,7 +2446,7 @@ rf_close_component(raidPtr, vp, auto_configured)
 	if (vp != NULL) {
 		if (auto_configured == 1) {
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(vp, FREAD, NOCRED, 0);
+			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
 			vput(vp);
 			
 		} else {				
@@ -2666,7 +2666,7 @@ if (raidautoconfig) {
 		/* don't need this any more.  We'll allocate it again
 		   a little later if we really do... */
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		VOP_CLOSE(vp, FREAD, NOCRED, 0);
+		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
 		vput(vp);
 
 		for (i=0; i < label.d_npartitions; i++) {
@@ -2732,7 +2732,7 @@ if (raidautoconfig) {
 				/* cleanup */
 				free(clabel, M_RAIDFRAME);
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-				VOP_CLOSE(vp, FREAD, NOCRED, 0);
+				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
 				vput(vp);
 			}
 		}
