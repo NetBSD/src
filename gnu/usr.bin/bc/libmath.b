@@ -1,7 +1,7 @@
-/* libmath.b for bc for minix.  */
+/* libmath.b for GNU bc.  */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ define l(x) {
   auto e, f, i, m, n, v, z
 
   /* return something for the special case. */
-  if (x <= 0) return (1 - 10^scale)
+  if (x <= 0) return ((1 - 10^scale)/1)
 
   /* Precondition x to make .5 < x < 2.0. */
   z = scale;

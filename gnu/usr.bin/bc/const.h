@@ -1,7 +1,7 @@
 /* const.h: Constants for bc. */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,14 +29,24 @@
 
 /* Define INT_MAX and LONG_MAX if not defined.  Assuming 32 bits... */
 
-#ifdef NO_LIMITS
+#ifndef INT_MAX
 #define INT_MAX 0x7FFFFFFF
+#endif
+#ifndef LONG_MAX
 #define LONG_MAX 0x7FFFFFFF
 #endif
 
 
 /* Define constants in some reasonable size.  The next 4 constants are
    POSIX constants. */
+
+#ifdef BC_BASE_MAX
+  /* <limits.h> on a POSIX.2 system may have defined these.  Override. */
+# undef BC_BASE_MAX
+# undef BC_SCALE_MAX
+# undef BC_STRING_MAX
+# undef BC_DIM_MAX
+#endif
 
 #define BC_BASE_MAX   INT_MAX
 #define BC_SCALE_MAX  INT_MAX
