@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 2005/01/22 07:44:33 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2005/01/22 07:44:33 tsutsui Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -243,7 +243,7 @@ mach_init(int argc, char *argv[], char *envv[])
 
 	/* clear the BSS segment in kernel code */
 	kernend = (caddr_t)mips_round_page(end);
-	bzero(edata, kernend - edata);
+	memset(edata, 0, kernend - edata);
 
 	environment = &argv[1];
 
