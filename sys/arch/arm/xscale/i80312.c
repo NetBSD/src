@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.4 2001/11/28 22:39:09 thorpej Exp $	*/
+/*	$NetBSD: i80312.c,v 1.5 2001/11/29 08:27:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -56,6 +56,13 @@
  */
 struct bus_space i80312_bs_tag;
 
+/*
+ * There can be only one i80312, so we keep a global pointer to
+ * the softc, so board-specific code can use features of the
+ * i80312 without having to have a handle on the softc itself.
+ */
+struct i80312_softc *i80312_softc;
+
 int	i80312_pcibus_print(void *, const char *);
 
 /*
@@ -82,6 +89,11 @@ i80312_attach(struct i80312_softc *sc)
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, I80312_ATU_BASE,
 	    I80312_ATU_SIZE, &sc->sc_atu_sh))
 		panic("%s: unable to subregion ATU registers\n",
+		    sc->sc_dev.dv_xname);
+
+	if (bus_space_subregion(sc->sc_st, sc->sc_sh, I80312_INTC_BASE,
+	    I80312_INTC_SIZE, &sc->sc_intc_sh))
+		panic("%s: unable to subregion INTC registers\n",
 		    sc->sc_dev.dv_xname);
 
 	/* We expect the Memory Controller to be already sliced off. */
