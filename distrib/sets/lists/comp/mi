@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.231.2.15 2001/04/22 18:19:28 he Exp $
+#	$NetBSD: mi,v 1.231.2.16 2001/04/24 22:40:52 he Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1458,6 +1458,7 @@
 ./usr/share/man/cat2/fchflags.0	comp-syscall-catman
 ./usr/share/man/cat2/fchmod.0	comp-syscall-catman
 ./usr/share/man/cat2/fchown.0	comp-syscall-catman
+./usr/share/man/cat2/fchroot.0	comp-syscall-catman
 ./usr/share/man/cat2/fcntl.0	comp-syscall-catman
 ./usr/share/man/cat2/fdatasync.0	comp-syscall-catman
 ./usr/share/man/cat2/fhopen.0	comp-syscall-catman
@@ -3175,6 +3176,7 @@
 ./usr/share/man/man2/fchflags.2		comp-syscall-man
 ./usr/share/man/man2/fchmod.2		comp-syscall-man
 ./usr/share/man/man2/fchown.2		comp-syscall-man
+./usr/share/man/man2/fchroot.2		comp-syscall-man
 ./usr/share/man/man2/fcntl.2		comp-syscall-man
 ./usr/share/man/man2/fdatasync.2		comp-syscall-man
 ./usr/share/man/man2/fhopen.2		comp-syscall-man
