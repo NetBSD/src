@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuarch.h,v 1.1.2.2 1998/10/30 08:33:37 nisimura Exp $	*/
+/*	$NetBSD: cpuarch.h,v 1.1.2.3 1998/11/19 01:51:59 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -194,6 +194,7 @@
  * R4000 status register bit definitons,
  * where different from r2000/r3000.
  */
+#define	MIPS3_SR_XX		0x80000000
 #define MIPS3_SR_RP		0x08000000
 #define MIPS3_SR_FR_32		0x04000000
 #define MIPS3_SR_RE		0x02000000
@@ -291,7 +292,7 @@
 #define MIPS3_CONFIG_DB		0x00000010	/* Primary D-cache line size */
 #define MIPS3_CONFIG_IB		0x00000020	/* Primary I-cache line size */
 #define MIPS3_CONFIG_CACHE_L1_LSIZE(config, bit) \
-	(((config) & (bit)) ? 0x10 : 0x20)
+	(((config) & (bit)) ? 32 : 16)
 
 #define MIPS3_CONFIG_DC_MASK	0x000001c0	/* Primary D-cache size */
 #define MIPS3_CONFIG_DC_SHIFT	6	
