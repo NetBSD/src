@@ -39,10 +39,11 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$Id: passwd.c,v 1.6 1994/07/27 03:28:23 brezak Exp $";
+static char rcsid[] = "$Id: passwd.c,v 1.7 1995/02/12 17:45:56 phil Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 /*
@@ -67,13 +68,33 @@ main(argc, argv)
 	register int ch;
 	char *username;
 	int status = 0;
-	
+	char *basename;
+
 #if defined(KERBEROS) || defined(KERBEROS5)
 	use_kerberos = 1;
 #endif
 #ifdef	YP
 	use_yp = _yp_check(NULL);
 #endif
+
+	basename = strrchr(argv[0], '/');
+	if (basename == NULL)
+		basename = argv[0];
+	if (strcmp(basename, "yppasswd") == 0) {
+#ifdef YP
+		if (!use_yp) {
+			fprintf(stderr, "yppasswd: YP not in use.\n");
+			exit (1);
+		}
+		use_kerberos = 0;
+		use_yp = 1;
+		force_yp = 1;
+#else
+		fprintf(stderr, "yppasswd: YP not compiled in\n");
+		exit(1);
+#endif
+	}
+
 	
 	while ((ch = getopt(argc, argv, "lky")) != EOF)
 		switch (ch) {
