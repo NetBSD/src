@@ -78,7 +78,7 @@ fi
 if [ -z "$TMPDIR" ]; then
   TMPDIR=/tmp
 else
-  if [ "`echo $TMPDIR | grep '/$'" != "" ]; then
+  if [ "`echo $TMPDIR | grep '/$'`" != "" ]; then
     TMPDIR="`echo $TMPDIR | sed -e 's,/$,,'`"
   fi
 fi
