@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.10 1996/11/02 01:00:14 cgd Exp $	*/
+/*	$NetBSD: gram.y,v 1.11 1996/11/07 22:59:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
-#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
