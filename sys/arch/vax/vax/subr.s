@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.34 2000/01/24 02:40:34 matt Exp $	   */
+/*	$NetBSD: subr.s,v 1.35 2000/03/19 14:56:54 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,6 +34,7 @@
 
 #include "assym.h"
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 #include "opt_compat_ibcs2.h"
 #ifdef COMPAT_IBCS2
 #include <compat/ibcs2/ibcs2_syscall.h>
@@ -259,7 +260,14 @@ idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
 #
 
 JSBENTRY(Swtch)
+#if defined(MULTIPROCESSOR)
+	pushl	r0
+	calls	$0,*_vax_curcpu		# Get ptr to this cpu_info struct
+	clrl	CI_CURPROC(r0)		# Stop process accounting
+	movl	(sp)+,r0
+#else
 	clrl	_curproc		# Stop process accounting
+#endif
 	mtpr	$0x1f,$PR_IPL		# block all interrupts
 	ffs	$0,$32,_whichqs,r3	# Search for bit set
 	beql	idle			# no bit set, go to idle loop
@@ -275,8 +283,16 @@ noque:	.asciz	"swtch"
 1:	bneq	2f			# more processes on queue?
 	bbsc	r3,_whichqs,2f		# no, clear bit in whichqs
 2:	clrl	4(r2)			# clear proc backpointer
-	clrl	_want_resched		# we are now changing process
+#if defined(MULTIPROCESSOR)
+	pushl	r0
+	calls	$0,*_vax_curcpu		# Get ptr to this cpu_info struct
+	movl	r2,CI_CURPROC(r0)	# set new process running
+	clrl	CI_WANT_RESCHED(r0)	# we are now changing process
+	movl	(sp)+,r0
+#else
 	movl	r2,_curproc		# set new process running
+	clrl	_want_resched		# we are now changing process
+#endif
 	cmpl	r0,r2			# Same process?
 	bneq	1f			# No, continue
 	rsb
