@@ -1,4 +1,4 @@
-/*	$NetBSD: skbdkeymap.h,v 1.1 1999/12/08 15:49:18 uch Exp $ */
+/*	$NetBSD: skbdkeymap.h,v 1.2 1999/12/12 17:08:37 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,8 +25,8 @@
  * SUCH DAMAGE.
  *
  */
-#define UNK	-1	/* unknown */
-#define IGN	-2	/* ignore */
+#define UNK	255	/* unknown */
+#define IGN	254	/* ignore */
 
 const u_int8_t default_keymap[] = {
 /*      0    1    2    3    4    5    6    7 */       
@@ -46,6 +46,26 @@ const u_int8_t default_keymap[] = {
 /*13 */	UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 /*14 */	UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 /*15 */	UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK
+};
+
+const u_int8_t tc5165_telios_jp_keymap[] = {
+/*      0    1    2    3    4    5    6    7 */       
+/* 0 */	58,  15,  IGN, 1,   IGN, IGN, IGN, IGN,
+/* 1 */	IGN, IGN, IGN, IGN, 54,  42,  IGN, IGN,
+/* 2 */	31,  18,  4,   IGN, IGN, 32,  45,  59,
+/* 3 */	33,  19,  5,   61,  IGN, 46,  123, 60,
+/* 4 */	35,  21,  8,   64,  IGN, 48,  49,  63,
+/* 5 */	17,  16,  3,   IGN, 2,   30,  44,  41,
+/* 6 */	IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/* 7 */	IGN, IGN, IGN, IGN, IGN, IGN, 56,  IGN,
+/* 8 */	34,  20,  7,   IGN, 6,   47,  57,  62,
+/* 9 */	IGN, IGN, IGN, IGN, IGN, IGN, 29,  IGN,
+/*10 */	27,  125, 13,  75,  80,  40,  115, 68,
+/*11 */	39,  26,  25,  IGN, 12,  52,  53,  67,
+/*12 */	37,  24,  11,  IGN, 10,  38,  51,  66,
+/*13 */	23,  22,  9,   IGN, IGN, 36,  50,  65,
+/*14 */	156, 43,  14,  72,  77,  IGN, IGN, 211,
+/*15 */	IGN, IGN, IGN, IGN, IGN, IGN, 221, IGN
 };
 
 const u_int8_t p7416_compaq_c_jp_keymap[] = {
@@ -98,6 +118,9 @@ const struct skbd_keymap_table {
 
 	{{{PLATID_WILD, PLATID_MACH_VICTOR_INTERLINK}},
 	 m38813c_keymap, KB_JP},
+
+	{{{PLATID_WILD, PLATID_MACH_SHARP_TELIOS}},
+	 tc5165_telios_jp_keymap, KB_JP},
 
 	{{{0, 0}}, NULL, 0}
 };
