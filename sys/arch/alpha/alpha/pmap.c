@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.207 2004/01/13 18:50:40 nathanw Exp $ */
+/* $NetBSD: pmap.c,v 1.208 2004/12/25 06:35:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207 2004/01/13 18:50:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.208 2004/12/25 06:35:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2771,12 +2771,6 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 #ifdef DEBUG				/* These checks are more expensive */
 	if (!pmap_pte_v(pte))
 		panic("pmap_emulate_reference: invalid pte");
-#if 0
-	/*
-	 * Can't do these, because cpu_fork and cpu_swapin call
-	 * pmap_emulate_reference(), and the bits aren't guaranteed,
-	 * for them...
-	 */
 	if (type == ALPHA_MMCSR_FOW) {
 		if (!(*pte & (user ? PG_UWE : PG_UWE | PG_KWE)))
 			panic("pmap_emulate_reference: write but unwritable");
@@ -2788,7 +2782,6 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 		if (!(*pte & (PG_FOR | PG_FOE)))
 			panic("pmap_emulate_reference: !write but not FOR|FOE");
 	}
-#endif
 	/* Other diagnostics? */
 #endif
 	pa = pmap_pte_pa(pte);
