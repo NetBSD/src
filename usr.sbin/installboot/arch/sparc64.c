@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.6 2002/04/12 06:50:41 lukem Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.7 2002/04/17 04:00:44 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.6 2002/04/12 06:50:41 lukem Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.7 2002/04/17 04:00:44 fredette Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -162,7 +162,7 @@ sparc64_setboot(ib_params *params)
 	memset(&bb, 0, SPARC64_BOOT_BLOCK_MAX_SIZE);
 	rv = read(params->s1fd, &bb, sizeof bb);
 	if (rv == -1) {
-		warn("Reading `%s'", params->filesystem);
+		warn("Reading `%s'", params->stage1);
 		goto done;
 	}
 
