@@ -1,4 +1,4 @@
-/*	$NetBSD: ventel.c,v 1.11 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: ventel.c,v 1.12 2004/11/04 07:29:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ventel.c,v 1.11 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: ventel.c,v 1.12 2004/11/04 07:29:09 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -121,7 +121,7 @@ ven_dialer(num, acu)
 		msg = cp;
 		while (*cp) {
 			if (isupper((unsigned char)*cp))
-				*cp = tolower(*cp);
+				*cp = tolower((unsigned char)*cp);
 			cp++;
 		}
 		printf("%s...", msg);
