@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.119 2001/06/07 17:59:47 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.120 2001/07/07 20:09:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -119,6 +119,10 @@ void cpu_spinup __P((struct cpu_softc *));
 struct cpu_info *alloc_cpuinfo_global_va __P((int, vsize_t *));
 struct cpu_info	*alloc_cpuinfo __P((void));
 
+int go_smp_cpus = 0;	/* non-primary cpu's wait for this to go */
+
+/* lock this to send IPI's */
+struct simplelock xpmsg_lock = SIMPLELOCK_INITIALIZER;
 
 struct cpu_info *
 alloc_cpuinfo_global_va(ismaster, sizep)
@@ -206,7 +210,6 @@ alloc_cpuinfo()
 	pmap_update();
 
 	bzero((void *)cpi, sz);
-	cpi->flags = CPUFLG_STARTUP;
 	cpi->eintstack = (void *)((vaddr_t)cpi + sz);
 	cpi->idle_u = (void *)((vaddr_t)cpi + sz - INT_STACK_SIZE - USPACE);
 
@@ -413,7 +416,6 @@ cpu_boot_secondary_processors()
 	if (cpus == NULL)
 		return;
 
-	/* Tell the other CPU's to start up.  */
 	printf("cpu0: booting secondary processors:");
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
@@ -422,10 +424,14 @@ cpu_boot_secondary_processors()
 			continue;
 
 		printf(" cpu%d", cpi->ci_cpuid);
-
-		/* tell it to continue */
-		//cpi->flags &= ~CPUFLG_STARTUP;
+		cpi->flags |= CPUFLG_READY;
 	}
+
+	/* Tell the other CPU's to start up.  */
+	go_smp_cpus = 1;
+
+	/* OK, we're done. */
+	cpuinfo.flags |= CPUFLG_READY;
 	printf("\n");
 }
 #endif /* MULTIPROCESSOR */
@@ -509,6 +515,10 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 	printf("CPU did not spin up\n");
 }
 
+/* 
+ * Calls raise_ipi(), waits for the remote CPU to notice the message, and
+ * unlocks this CPU's message lock, which we expect was locked at entry.
+ */
 void
 raise_ipi_wait_and_unlock(cpi)
 	struct cpu_info *cpi;
@@ -518,13 +528,11 @@ raise_ipi_wait_and_unlock(cpi)
 	raise_ipi(cpi);
 	i = 0;
 	while ((cpi->flags & CPUFLG_GOTMSG) == 0) {
-		if (i++ > 10000) {
+		if (i++ > 500000) {
 			printf("raise_ipi_wait_and_unlock(cpu%d): couldn't ping cpu%d\n",
 			    cpuinfo.ci_cpuid, cpi->ci_cpuid);
 			break;
 		}
-		delay(1);
-		cpuinfo.cache_flush((caddr_t)&cpi->flags, sizeof(cpi->flags));
 	}
 	simple_unlock(&cpi->msg.lock);
 }
@@ -537,10 +545,12 @@ mp_pause_cpus()
 	if (cpus == NULL)
 		return;
 
+	LOCK_XPMSG();
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_READY) == 0)
 			continue;
 
 		simple_lock(&cpi->msg.lock);
@@ -548,6 +558,7 @@ mp_pause_cpus()
 		cpi->flags &= ~CPUFLG_GOTMSG;
 		raise_ipi_wait_and_unlock(cpi);
 	}
+	UNLOCK_XPMSG();
 }
 
 void
@@ -939,11 +950,11 @@ void
 sun4_hotfix(sc)
 	struct cpu_info *sc;
 {
+
 	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0) {
 		kvm_uncache((caddr_t)trapbase, 1);
 		printf(": cache chip bug; trap page uncached");
 	}
-
 }
 
 #if defined(SUN4M)

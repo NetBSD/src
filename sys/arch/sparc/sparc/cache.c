@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.55 2001/06/08 16:25:04 mrg Exp $ */
+/*	$NetBSD: cache.c,v 1.56 2001/07/07 20:09:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -919,6 +919,9 @@ viking_pcache_flush_page(pa, invalidate_only)
  * message. This assumes the allocation of CPU contextses is a global
  * operation (remember that the actual context tables for the CPUs
  * are distinct).
+ *
+ * We don't do cross calls if we're cold or we're accepting them
+ * ourselves (CPUFLG_READY).
  */
 
 void
@@ -928,13 +931,15 @@ smp_vcache_flush_page(va)
 	int n, s;
 
 	cpuinfo.sp_vcache_flush_page(va);
-	if (cold)
+	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
 		return;
+	LOCK_XPMSG();
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_page *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_READY) == 0)
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_page;
 		s = splhigh();
@@ -945,6 +950,7 @@ smp_vcache_flush_page(va)
 		raise_ipi_wait_and_unlock(cpi);
 		splx(s);
 	}
+	UNLOCK_XPMSG();
 }
 
 void
@@ -954,13 +960,15 @@ smp_vcache_flush_segment(vr, vs)
 	int n, s;
 
 	cpuinfo.sp_vcache_flush_segment(vr, vs);
-	if (cold)
+	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
 		return;
+	LOCK_XPMSG();
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_segment *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_READY) == 0)
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_segment;
 		s = splhigh();
@@ -972,6 +980,7 @@ smp_vcache_flush_segment(vr, vs)
 		raise_ipi_wait_and_unlock(cpi);
 		splx(s);
 	}
+	UNLOCK_XPMSG();
 }
 
 void
@@ -981,13 +990,15 @@ smp_vcache_flush_region(vr)
 	int n, s;
 
 	cpuinfo.sp_vcache_flush_region(vr);
-	if (cold)
+	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
 		return;
+	LOCK_XPMSG();
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_region *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_READY) == 0)
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_region;
 		s = splhigh();
@@ -998,6 +1009,7 @@ smp_vcache_flush_region(vr)
 		raise_ipi_wait_and_unlock(cpi);
 		splx(s);
 	}
+	UNLOCK_XPMSG();
 }
 
 void
@@ -1006,13 +1018,15 @@ smp_vcache_flush_context()
 	int n, s;
 
 	cpuinfo.sp_vcache_flush_context();
-	if (cold)
+	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
 		return;
+	LOCK_XPMSG();
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_context *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_READY) == 0)
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_context;
 		s = splhigh();
@@ -1022,6 +1036,7 @@ smp_vcache_flush_context()
 		raise_ipi_wait_and_unlock(cpi);
 		splx(s);
 	}
+	UNLOCK_XPMSG();
 }
 
 void
@@ -1032,13 +1047,15 @@ smp_cache_flush(va, size)
 	int n, s;
 
 	cpuinfo.sp_cache_flush(va, size);
-	if (cold)
+	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
 		return;
+	LOCK_XPMSG();
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_range *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_READY) == 0)
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_range;
 		s = splhigh();
@@ -1050,5 +1067,6 @@ smp_cache_flush(va, size)
 		raise_ipi_wait_and_unlock(cpi);
 		splx(s);
 	}
+	UNLOCK_XPMSG();
 }
 #endif /* MULTIPROCESSOR */
