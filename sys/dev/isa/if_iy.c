@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.27 1998/07/30 21:28:15 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.28 1998/07/31 01:10:13 rvb Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -1174,7 +1174,7 @@ iyioctl(ifp, cmd, data)
 			error = 0;
 		}
 		break;
-#endif	/* XXX???XXX */
+
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->iy_ifmedia, cmd);
