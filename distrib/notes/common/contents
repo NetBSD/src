@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.110 2004/11/01 00:50:46 mbw Exp $
+.\"	$NetBSD: contents,v 1.111 2004/11/07 18:00:44 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,6 +71,18 @@ A gzipped
 .Nx
 kernel containing code for everything supported in this release.  This 
 kernel also supports SMP on systems with more than one CPU.
+.\}
+.
+.if \n[hp300] \{\
+.			It Pa netbsd-RAMDISK.gz
+A gzipped
+.Nx
+kernel containing code for all of the hardware supported in this release
+with an embedded ramdisk-based installer.  This is the same kernel
+and installer that is present on the miniroot filesystem.
+.			It Pa netbsd-RAMDISK.symbols.gz
+Symbols for
+.Pa netbsd-RAMDISK.gz .
 .\}
 .
 .if \n[i386] \{\
@@ -313,6 +325,22 @@ the Traditional method
 .\}
 installation section, below.
 .\}
+.\}
+.
+.if \n[hp300] \{\
+.	(tag HP-IB.geometry
+.	It Pa HP-IB.geometry
+A file containing geometry for some HB-IB disk drives.
+.	It Pa SYS_INST.gz
+A gzipped copy of the SYS_INST miniroot installation program.  This is 
+only necessary if you can't use the RAMDISK based installer.
+.	It Pa SYS_UBOOT.gz
+A gzipped copy of the universal boot block.
+Supports Network, tape and disk booting.
+This is useful if you are installing a diskless
+.Nx*M
+system.
+.	tag)
 .\}
 .
 .if \n[macppc] \{\
@@ -1512,58 +1540,6 @@ This is a necessity for small memory systems.
 .bullet)
 .\}
 .
-.
-.if \n[hp300] \{\
-.Pp
-The following are included in the
-.Pa hp300/installation
-directory:
-.
-.(tag miniroot/
-.It Pa miniroot/
-.	(tag miniroot.fs.gz
-.	It Pa miniroot.fs.gz
-A copy of the miniroot file system.
-.	tag)
-.It Pa misc/
-.	(tag miniroot.fs.gz
-.	It Pa HP-IB.geometry
-A file containing geometry for some HB-IB disk drives.
-.	It Pa SYS_INST.gz
-A gzipped copy of the SYS_INST miniroot installation program.
-.	It Pa SYS_UBOOT.gz
-A gzipped copy of the universal boot block.
-Supports Network, tape and disk booting.
-This is useful if you are installing a diskless
-.Nx*M
-system.
-.	It Pa rbootd.tgz
-Source code for the rbootd program included with
-.Nx .
-It requires that
-the server has a Berkeley Packet Filter (bpf).
-You will need to compile this version of rbootd if
-server system does not have this utility already.
-.	tag)
-.tag)
-.
-The following are included in the
-.Pa hp300/binary/kernel
-directory:
-.
-.(tag netbsd-RAMDISK.symbols.gz
-.It Pa netbsd-GENERIC.gz
-A gzipped
-.Li GENERIC
-kernel.
-.It Pa netbsd-RAMDISK.gz
-A gzipped
-.Li INSTALL
-kernel with embedded ramdisk.
-.It Pa netbsd-RAMDISK.symbols.gz
-Symbols for
-.Pa netbsd-RAMDISK.gz .
-.tag)
 .\}
 .
 .
