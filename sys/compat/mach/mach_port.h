@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.26 2003/11/01 18:41:25 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.27 2003/11/03 20:58:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -297,9 +297,10 @@ struct mach_port {
 /* mp_datatype for struct mach_port */
 #define	MACH_MP_NONE		0x0	/* No data */
 #define MACH_MP_DEVICE_ITERATOR	0x2	/* (struct mach_device_iterator *) */
-#define MACH_MP_IOKIT_DEVCLASS	0x3	/* (struct mach_iokit_devclass **) */
+#define MACH_MP_IOKIT_DEVCLASS	0x3	/* (struct mach_iokit_devclass *) */
 #define MACH_MP_PROC		0x4	/* (struct proc *) */
 #define MACH_MP_NOTIFY_SYNC	0x5	/* int */
+#define MACH_MP_MEMORY_ENTRY	0x6	/* (struct mach_memory_entry *) */
 
 void mach_port_init(void);
 struct mach_port *mach_port_get(void);
