@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: SVR4_MAKEDEV,v 1.7 1999/12/10 06:04:01 itohy Exp $
+#	$NetBSD: SVR4_MAKEDEV,v 1.8 2000/03/03 04:27:17 hubertf Exp $
 #
 # Copyright (c) 1995 Christos Zoulas
 # All rights reserved.
@@ -152,17 +152,17 @@ ticots)
 wabi)
 	rm -f $i
 	case $MACHINE in
-	amiga)
-	atari)
-	hp300)
-	i386)
-	mac68k)
-	mvme68k)
-	next68k)
+	amiga|\
+	atari|\
+	hp300|\
+	i386|\
+	mac68k|\
+	mvme68k|\
+	next68k|\
 	x68k)
 		mknod $i	c 2 2;;	# /dev/null
-	news68k)
-	sparc)
+	news68k|\
+	sparc|\
 	sun3)
 		mknod $i	c 3 2;;	# /dev/null
 	esac
