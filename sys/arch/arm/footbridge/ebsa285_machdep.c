@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.2 2001/06/09 10:44:11 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -298,7 +298,7 @@ struct l1_sec_map {
 	{ DC21285_ARMCSR_VBASE,			DC21285_ARMCSR_BASE,
 	    DC21285_ARMCSR_VSIZE,		0 },
 	/* Map 1MB for fast cache cleaning space */
-	{ DC21285_CACHE_FLUSH_VBASE,		DC28285_SA_CACHE_FLUSH_BASE,
+	{ DC21285_CACHE_FLUSH_VBASE,		DC21285_SA_CACHE_FLUSH_BASE,
 	    DC21285_CACHE_FLUSH_VSIZE,		1 },
 	/* Map 1MB for PCI IO space */
 	{ DC21285_PCI_IO_VBASE,			DC21285_PCI_IO_BASE,
