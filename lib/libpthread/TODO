@@ -7,11 +7,6 @@ Bugs to fix:
   pthread_cond_broadcast() or pthread_exit() about removing an item
   from the sleep queue. The locking protocols there need a little
   adjustment.
-- pthread_sig.c: sigaction() currently hard-codes __sigtramp_sigcontext_1:
-  this is incorrect.  Instead of calling __sigaction_sigtramp() directly,
-  libc should export a __libc_sigaction14() which sigaction() can call.
-  Also, pthread_sig.c should probably be built with __LIBC12_SOURCE__ so
-  that the signal version of sigaction(), et al can be explicit.
 - pthread_sig.c: pthread__signal_tramp() is broken.  It gets a ucontext,
   but then hands off an empty (garbage from stack!) sigcontext to the
   handler.  The ucontext MUST be converted to a sigcontext, the handler

@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.1.2.2 2002/08/01 03:27:54 nathanw Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.1.2.3 2002/10/02 20:16:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,8 +43,10 @@
 
 #include "extern.h"
 
+__weak_alias(__sigaction14, __libc_sigaction14)
+
 int
-__sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
+__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 {
 	extern int __sigtramp_sigcontext_1[];
 
