@@ -1,4 +1,4 @@
-/*	$NetBSD: xlat_mbr_fstype.c,v 1.1 2003/07/07 13:20:17 dsl Exp $	*/
+/*	$NetBSD: xlat_mbr_fstype.c,v 1.2 2003/10/08 04:13:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,30 +37,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: xlat_mbr_fstype.c,v 1.1 2003/07/07 13:20:17 dsl Exp $");
+__KERNEL_RCSID(0,"$NetBSD: xlat_mbr_fstype.c,v 1.2 2003/10/08 04:13:13 lukem Exp $");
 
 
 #include <sys/disklabel.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 int
 xlat_mbr_fstype(int mbr_type)
 {
 	const static struct ptn_types {
-		uint8_t mbr_type;
-		uint8_t netbsd_type;
+		uint8_t	mbr_type;
+		uint8_t	netbsd_type;
 	} ptn_types[] = {
-		{ MBR_PTYPE_APPLEUFS,   FS_APPLEUFS },
-		{ MBR_PTYPE_FAT12,      FS_MSDOS },
-		{ MBR_PTYPE_FAT16B,     FS_MSDOS },
-		{ MBR_PTYPE_FAT16L,     FS_MSDOS },
-		{ MBR_PTYPE_FAT16S,     FS_MSDOS },
-		{ MBR_PTYPE_FAT32,      FS_MSDOS },
-		{ MBR_PTYPE_FAT32L,     FS_MSDOS },
-		{ MBR_PTYPE_LNXEXT2,    FS_EX2FS },
-		{ MBR_PTYPE_LNXSWAP,    FS_SWAP },
-		{ MBR_PTYPE_NETBSD,     FS_BSDFFS },
-		{ MBR_PTYPE_NTFS,       FS_NTFS },
+		{ MBR_PTYPE_386BSD,	FS_BSDFFS },
+		{ MBR_PTYPE_APPLEUFS,	FS_APPLEUFS },
+		{ MBR_PTYPE_FAT12,	FS_MSDOS },
+		{ MBR_PTYPE_FAT16B,	FS_MSDOS },
+		{ MBR_PTYPE_FAT16L,	FS_MSDOS },
+		{ MBR_PTYPE_FAT16S,	FS_MSDOS },
+		{ MBR_PTYPE_FAT32,	FS_MSDOS },
+		{ MBR_PTYPE_FAT32L,	FS_MSDOS },
+		{ MBR_PTYPE_LNXEXT2,	FS_EX2FS },
+		{ MBR_PTYPE_LNXSWAP,	FS_SWAP },
+		{ MBR_PTYPE_NETBSD,	FS_BSDFFS },
+		{ MBR_PTYPE_NTFS,	FS_NTFS },
 		{ 0,			FS_OTHER }
 	}; 
 	const struct ptn_types *pt;
