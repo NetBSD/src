@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.2.2.2 1998/08/13 14:37:53 bouyer Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.2.2.3 1998/10/02 01:35:11 matt Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -41,6 +41,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/malloc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -54,7 +55,7 @@
 #include <dev/ic/wdcvar.h>
 
 struct wdc_ofisa_softc {
-	struct wdc_softc sc_wdc;
+	struct wdc_softc sc_wdcdev;
 	struct  channel_softc wdc_channel;
 	void	*sc_ih;
 };
@@ -90,8 +91,7 @@ wdc_ofisa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct wdc_ofisa_softc *osc = (void *)self;
-        struct wdc_softc *sc = &osc->sc_wdc;
+	struct wdc_ofisa_softc *sc = (void *)self;
 	struct ofisa_attach_args *aa = aux;
 	struct ofisa_reg_desc reg[2];
 	struct ofisa_intr_desc intr;
@@ -127,35 +127,34 @@ wdc_ofisa_attach(parent, self, aux)
 		return;
 	}
 
-	memset(&osc->sc_ad, 0, sizeof osc->sc_ad);
-	osc->wdc_channel.cmd_iot =
+	sc->wdc_channel.cmd_iot =
 	    (reg[0].type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
-	osc->wdc_channel.ctl_iot =
+	sc->wdc_channel.ctl_iot =
 	    (reg[1].type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
-        if (bus_space_map(osc->wdc_channel.cmd_iot, reg[0].addr, 8, 0,
-              &osc->wdc_channel.cmd_ioh) ||
-            bus_space_map(osc->wdc_channel.ctl_iot, reg[1].addr, 1, 0,
-	      &osc->wdc_channel.ctl_ioh)) {
+        if (bus_space_map(sc->wdc_channel.cmd_iot, reg[0].addr, 8, 0,
+              &sc->wdc_channel.cmd_ioh) ||
+            bus_space_map(sc->wdc_channel.ctl_iot, reg[1].addr, 1, 0,
+	      &sc->wdc_channel.ctl_ioh)) {
                 printf(": can't map register spaces\n");
 		return;
         }
 
-	osc->sc_ih = isa_intr_establish(aa->ic, intr.irq, intr.share,
+	sc->sc_ih = isa_intr_establish(aa->ic, intr.irq, intr.share,
 	    IPL_BIO, wdcintr, sc);
 
 	printf("\n");
-	osc->sc_wdcdev.channels = &osc->wdc_channel;
-	osc->sc_wdcdev.nchannels = 1;
-	osc->wdc_channel.channel = 0;
-	osc->wdc_channel.wdc = &osc->sc_wdcdev;
-	osc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
+	sc->sc_wdcdev.channels = &sc->wdc_channel;
+	sc->sc_wdcdev.nchannels = 1;
+	sc->wdc_channel.channel = 0;
+	sc->wdc_channel.wdc = &sc->sc_wdcdev;
+	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
 	    M_DEVBUF, M_NOWAIT);
-	if (osc->wdc_channel.ch_queue == NULL) {
+	if (sc->wdc_channel.ch_queue == NULL) {
 	    printf("%s: can't allocate memory for command queue",
-		osc->sc_wdcdev.sc_dev.dv_xname);
+		sc->sc_wdcdev.sc_dev.dv_xname);
 	    return;
 	}
-	wdcattach(&osc->wdc_channel);
+	wdcattach(&sc->wdc_channel);
 
 #if 0
 	printf("%s: registers: ", sc->sc_dev.dv_xname);
