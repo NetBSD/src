@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.23 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: private.h,v 1.24 2003/12/20 00:12:05 kleink Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -34,7 +34,7 @@
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	privatehid[] = "@(#)private.h	7.52";
+static char	privatehid[] = "@(#)private.h	7.53";
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -300,7 +300,7 @@ char *ctime_r P((time_t const *, char *));
 #endif /* HAVE_INCOMPATIBLE_CTIME_R */
 
 /*
-** UNIX was a registered trademark of UNIX System Laboratories in 1993.
+** UNIX was a registered trademark of The Open Group in 2003.
 */
 
 #endif /* !defined PRIVATE_H */
