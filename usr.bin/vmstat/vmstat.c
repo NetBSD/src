@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.102 2002/08/10 19:08:41 soren Exp $ */
+/* $NetBSD: vmstat.c,v 1.103 2002/09/18 23:24:13 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.102 2002/08/10 19:08:41 soren Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.103 2002/09/18 23:24:13 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,7 +262,7 @@ void	domem(void);
 void	dopool(int);
 void	dopoolcache(struct pool *, int);
 void	dosum(void);
-void	dovmstat(u_int, int);
+void	dovmstat(struct timespec *, int);
 void	kread(int, void *, size_t);
 void	needhdr(int);
 long	getuptime(void);
@@ -287,7 +287,7 @@ int
 main(int argc, char *argv[])
 {
 	int c, todo, verbose;
-	u_int interval;
+	struct timespec interval;
 	int reps;
 	char errbuf[_POSIX2_LINE_MAX];
 	gid_t egid = getegid();
@@ -296,7 +296,9 @@ main(int argc, char *argv[])
 	histname = hashname = NULL;
 	(void)setegid(getgid());
 	memf = nlistf = NULL;
-	interval = reps = todo = verbose = 0;
+	reps = todo = verbose = 0;
+	interval.tv_sec = 0;
+	interval.tv_nsec = 0;
 	while ((c = getopt(argc, argv, "c:efh:HilLM:mN:suUvw:")) != -1) {
 		switch (c) {
 		case 'c':
@@ -345,7 +347,7 @@ main(int argc, char *argv[])
 			verbose++;
 			break;
 		case 'w':
-			interval = atoi(optarg);
+			interval.tv_sec = atol(optarg);
 			break;
 		case '?':
 		default:
@@ -408,17 +410,17 @@ main(int argc, char *argv[])
 
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
-		interval = atoi(*argv);
+		interval.tv_sec = atol(*argv);
 		if (*++argv)
 			reps = atoi(*argv);
 	}
 #endif
 
-	if (interval) {
+	if (interval.tv_sec) {
 		if (!reps)
 			reps = -1;
 	} else if (reps)
-		interval = 1;
+		interval.tv_sec = 1;
 
 
 	/*
@@ -468,10 +470,10 @@ main(int argc, char *argv[])
 
 			if (reps >= 0 && --reps <=0)
 				break;
-			sleep(interval);
+			nanosleep(&interval, NULL);
 		}
 	} else
-		dovmstat(interval, reps);
+		dovmstat(&interval, reps);
 	exit(0);
 }
 
@@ -528,7 +530,7 @@ getuptime(void)
 int	hz, hdrcnt;
 
 void
-dovmstat(u_int interval, int reps)
+dovmstat(struct timespec *interval, int reps)
 {
 	struct vmtotal total;
 	time_t uptime, halfuptime;
@@ -592,13 +594,13 @@ dovmstat(u_int interval, int reps)
 		if (reps >= 0 && --reps <= 0)
 			break;
 		ouvmexp = uvmexp;
-		uptime = interval;
+		uptime = interval->tv_sec;
 		/*
 		 * We round upward to avoid losing low-frequency events
 		 * (i.e., >= 1 per interval but < 1 per second).
 		 */
 		halfuptime = uptime == 1 ? 0 : (uptime + 1) / 2;
-		(void)sleep(interval);
+		nanosleep(interval, NULL);
 	}
 }
 
