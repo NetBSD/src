@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.9 2001/01/04 07:55:32 itojun Exp $
+#	$NetBSD: Makefile.sh3,v 1.10 2001/01/22 08:22:15 tsubai Exp $
 
 # Makefile for NetBSD
 #
@@ -44,7 +44,7 @@ SH3=	$S/arch/sh3
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dsh3
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D${TARGET_MACHINE}
 CWARNFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wpointer-arith -Wno-parentheses
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
