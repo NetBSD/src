@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.101 2004/01/03 01:48:38 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.102 2004/03/10 21:57:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.101 2004/01/03 01:48:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.102 2004/03/10 21:57:31 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -891,7 +891,12 @@ scsipi_interpret_sense(xs)
 			if (sense->add_sense_code == 0x29 &&
 			    sense->add_sense_code_qual == 0x00) {
 				/* device or bus reset */
-				return (ERESTART);
+				if (xs->xs_retries != 0) {
+					xs->xs_retries--;
+					error = ERESTART;
+				} else
+					error = EIO;
+				return (error);
 			}
 			if ((periph->periph_flags & PERIPH_REMOVABLE) != 0)
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
@@ -913,7 +918,11 @@ scsipi_interpret_sense(xs)
 			error = 0;
 			break;
 		case SKEY_ABORTED_COMMAND:
-			error = ERESTART;
+			if (xs->xs_retries != 0) {
+				xs->xs_retries--;
+				error = ERESTART;
+			} else
+				error = EIO;
 			break;
 		case SKEY_VOLUME_OVERFLOW:
 			error = ENOSPC;
