@@ -32,7 +32,7 @@ char copyright[] =
  All rights reserved.\n";
 #endif /* not lint */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/main.c,v 1.5 1993/12/06 19:29:25 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/main.c,v 1.6 1993/12/09 19:06:24 jtc Exp $ */
 
 
 #include "flexdef.h"
@@ -873,7 +873,7 @@ void readin()
 
 	/* Now map the equivalence class for NUL to its expected place. */
 	ecgroup[0] = ecgroup[csize];
-	NUL_ec = abs( ecgroup[0] );
+	NUL_ec = ABS( ecgroup[0] );
 
 	if ( useecs )
 		ccl2ecl();
