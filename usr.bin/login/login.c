@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.35 1998/01/16 00:31:53 hubertf Exp $       */
+/*     $NetBSD: login.c,v 1.36 1998/04/02 10:27:16 kleink Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.35 1998/01/16 00:31:53 hubertf Exp $");
+__RCSID("$NetBSD: login.c,v 1.36 1998/04/02 10:27:16 kleink Exp $");
 #endif /* not lint */
 
 /*
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: login.c,v 1.35 1998/01/16 00:31:53 hubertf Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <ttyent.h>
 #include <tzfile.h>
 #include <unistd.h>
