@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.30 2000/03/14 15:56:59 oster Exp $
+#	$NetBSD: files.x68k,v 1.31 2000/03/27 15:53:04 minoura Exp $
 #
 # new style config file for x68k architecture
 #
@@ -54,10 +54,6 @@ include "arch/m68k/060sp/files.060sp"
 device	xcom: tty
 attach	xcom at mainbus
 file	arch/x68k/dev/com.c		xcom needs-count
-
-device	par
-attach	par at mainbus
-file	arch/x68k/dev/par.c		par needs-flag
 
 # graphic devices
 define	grfb {}
@@ -140,6 +136,10 @@ device	fd: disk
 attach	fd at fdc
 file	arch/x68k/dev/fd.c		fd needs-flag
 major	{fd = 2}
+
+device	par
+attach	par at intio
+file	arch/x68k/dev/par.c		par needs-flag
 
 #
 # SCSI drivers
