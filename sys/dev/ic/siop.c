@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.61 2002/05/16 02:50:53 thorpej Exp $	*/
+/*	$NetBSD: siop.c,v 1.62 2002/05/18 16:09:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.61 2002/05/16 02:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.62 2002/05/18 16:09:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1004,6 +1004,8 @@ siop_scsicmd_end(siop_cmd)
 		xs->error = XS_SELTIMEOUT;
 		break;
 	default:
+		scsipi_printaddr(xs->xs_periph);
+		printf("invalid status code %d\n", xs->status);
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 	if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
