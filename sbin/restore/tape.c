@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.49 2003/08/07 10:04:38 agc Exp $	*/
+/*	$NetBSD: tape.c,v 1.50 2004/07/27 02:17:06 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.49 2003/08/07 10:04:38 agc Exp $");
+__RCSID("$NetBSD: tape.c,v 1.50 2004/07/27 02:17:06 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,10 @@ __RCSID("$NetBSD: tape.c,v 1.49 2003/08/07 10:04:38 agc Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <md5.h>
+#include <rmd160.h>
+#include <sha1.h>
 
 #include "restore.h"
 #include "extern.h"
@@ -88,6 +92,35 @@ static int	pathlen;
 
 int		oldinofmt;	/* old inode format conversion required */
 int		Bcvt;		/* Swap Bytes (for CCI or sun) */
+
+const struct digest_desc *ddesc;
+const struct digest_desc digest_descs[] = {
+	{ "MD5",
+	  (void (*)(void *))MD5Init,
+	  (void (*)(void *, const u_char *, u_int))MD5Update,
+	  (char *(*)(void *, void *))MD5End, },
+	{ "SHA1",
+	  (void (*)(void *))SHA1Init,
+	  (void (*)(void *, const u_char *, u_int))SHA1Update,
+	  (char *(*)(void *, void *))SHA1End, },
+	{ "RMD160",
+	  (void (*)(void *))RMD160Init,
+	  (void (*)(void *, const u_char *, u_int))RMD160Update,
+	  (char *(*)(void *, void *))RMD160End, },
+	{ NULL },
+};
+
+static union digest_context {
+	MD5_CTX dc_md5;
+	SHA1_CTX dc_sha1;
+	RMD160_CTX dc_rmd160;
+} dcontext;
+
+union digest_buffer {
+	char db_md5[32 + 1];
+	char db_sha1[40 + 1];
+	char db_rmd160[40 + 1];
+};
 
 #define	FLUSHTAPEBUF()	blkcnt = ntrec + 1
 
@@ -135,6 +168,19 @@ static void	 xtrmapskip __P((char *, long));
 static void	 xtrskip __P((char *, long));
 static void	 swap_header __P((struct s_spcl *));
 static void	 swap_old_header __P((struct s_ospcl *));
+
+const struct digest_desc *
+digest_lookup(name)
+	const char *name;
+{
+	const struct digest_desc *dd;
+
+	for (dd = digest_descs; dd->dd_name != NULL; dd++)
+		if (strcasecmp(dd->dd_name, name) == 0)
+			return (dd);
+
+	return (NULL);
+}
 
 /*
  * Set up an input source
@@ -548,6 +594,7 @@ int
 extractfile(name)
 	char *name;
 {
+	union digest_buffer dbuffer;
 	int flags;
 	uid_t uid;
 	gid_t gid;
@@ -670,20 +717,28 @@ extractfile(name)
 
 	case IFREG:
 		vprintf(stdout, "extract file %s\n", name);
-		if (Nflag) {
-			skipfile();
-			return (GOOD);
-		}
 		if (uflag)
 			(void) unlink(name);
-		if ((ofile = open(name, O_WRONLY | O_CREAT | O_TRUNC,
+		if (!Nflag && (ofile = open(name, O_WRONLY | O_CREAT | O_TRUNC,
 		    0600)) < 0) {
 			fprintf(stderr, "%s: cannot create file: %s\n",
 			    name, strerror(errno));
 			skipfile();
 			return (FAIL);
 		}
+		if (Dflag)
+			(*ddesc->dd_init)(&dcontext);
 		getfile(xtrfile, xtrskip);
+		if (Dflag) {
+			(*ddesc->dd_end)(&dcontext, &dbuffer);
+			for (ep = lookupname(name); ep != NULL;
+			    ep = ep->e_links)
+				fprintf(stdout, "%s (%s) = %s\n",
+				    ddesc->dd_name, myname(ep),
+				    (char *)&dbuffer);
+		}
+		if (Nflag)
+			return (GOOD);
 		if (setbirth)
 			(void) futimes(ofile, ctimep);
 		(void) futimes(ofile, mtimep);
@@ -809,6 +864,8 @@ xtrfile(buf, size)
 	long	size;
 {
 
+	if (Dflag)
+		(*ddesc->dd_update)(&dcontext, buf, size);
 	if (Nflag)
 		return;
 	if (write(ofile, buf, (int) size) == -1) {
@@ -829,6 +886,10 @@ xtrskip(buf, size)
 	long size;
 {
 
+	if (Dflag)
+		(*ddesc->dd_update)(&dcontext, buf, size);
+	if (Nflag)
+		return;
 	if (lseek(ofile, size, SEEK_CUR) == -1) {
 		fprintf(stderr,
 		    "seek error extracting inode %d, name %s\nlseek: %s\n",
