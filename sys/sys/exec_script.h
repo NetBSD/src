@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.h,v 1.7 1997/01/22 07:09:15 mikel Exp $	*/
+/*	$NetBSD: exec_script.h,v 1.8 2003/04/02 00:58:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,6 +35,9 @@
 
 #define	EXEC_SCRIPT_MAGIC	"#!"
 #define	EXEC_SCRIPT_MAGICLEN	2
+
+/* Extra 2 are for possible space between #! and shell name, and newline.  */
+#define SCRIPT_HDR_SIZE		(EXEC_SCRIPT_MAGICLEN + MAXINTERP + 2)
 
 #ifdef _KERNEL
 
