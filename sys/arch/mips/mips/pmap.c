@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.155 2003/12/30 12:33:16 pk Exp $	*/
+/*	$NetBSD: pmap.c,v 1.156 2005/01/17 04:54:14 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155 2003/12/30 12:33:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156 2005/01/17 04:54:14 atatat Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2139,9 +2139,10 @@ pmap_pte(pmap, va)
  * a cache alias conflict.
  */
 void
-pmap_prefer(foff, vap)
+pmap_prefer(foff, vap, td)
 	vaddr_t foff;
 	vaddr_t *vap;
+	int td;
 {
 	vaddr_t	va;
 	vsize_t d;
@@ -2151,6 +2152,8 @@ pmap_prefer(foff, vap)
 
 		d = foff - va;
 		d &= mips_cache_prefer_mask;
+		if (td && d)
+			d = -((-d) & mips_cache_prefer_mask);
 		*vap = va + d;
 	}
 }
