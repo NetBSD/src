@@ -8,7 +8,6 @@ timedflags=
 
 # set the following to "YES" to turn them on
 rwhod=NO
-rwalld=YES
 nfs_server=NO
 nfs_client=NO
 name_server=NO
