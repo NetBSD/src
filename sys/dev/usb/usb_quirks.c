@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.28 2000/08/24 14:11:09 augustss Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.29 2000/10/22 08:20:10 explorer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ Static struct usbd_quirk_entry {
 	struct usbd_quirks quirks;
 } usb_quirks[] = {
  { USB_VENDOR_KYE, USB_PRODUCT_KYE_NICHE,	    0x100, { UQ_NO_SET_PROTO}},
- { USB_VENDOR_INSIDEOUT,USB_PRODUCT_INSIDEOUT_EDGEPORT4, 
+ { USB_VENDOR_INSIDEOUT, USB_PRODUCT_INSIDEOUT_EDGEPORT4, 
    						    0x094, { UQ_SWAP_UNICODE}},
  { USB_VENDOR_BTC, USB_PRODUCT_BTC_BTC7932,	    0x100, { UQ_NO_STRINGS }},
  { USB_VENDOR_ADS, USB_PRODUCT_ADS_UBS10BT,	    0x002, { UQ_NO_STRINGS }},
@@ -71,6 +71,8 @@ Static struct usbd_quirk_entry {
  { USB_VENDOR_ALCOR2, USB_PRODUCT_ALCOR2_KBD_HUB,   0x001, { UQ_SPUR_BUT_UP }},
  { USB_VENDOR_MCT, USB_PRODUCT_MCT_HUB0100,         0x102, { UQ_BUS_POWERED }},
  { USB_VENDOR_MCT, USB_PRODUCT_MCT_USB232,          0x102, { UQ_BUS_POWERED }},
+ { USB_VENDOR_METRICOM, USB_PRODUCT_METRICOM_RICOCHET_GS,
+ 	0x100, { UQ_ASSUME_CM_OVER_DATA }},
  { 0, 0, 0, { 0 } }
 };
 
