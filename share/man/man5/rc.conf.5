@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.64 2002/07/08 16:15:35 atatat Exp $
+.\"	$NetBSD: rc.conf.5,v 1.65 2002/08/26 17:46:58 abs Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -58,11 +58,12 @@ meaning that
 .Nm
 must contain valid shell commands.
 .Pp
-Listed below are the
+Listed below are the standard
 .Nm
 variables that may be set, the values to which each may be set,
 a brief description of what each variable does, and a reference to
-relevant manual pages.
+relevant manual pages. Third party packages may test for additional
+variables.
 .Pp
 Most variables are one of two types: enabling variables or flags
 variables.
