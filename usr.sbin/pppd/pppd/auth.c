@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.27 2000/09/23 22:39:33 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.27.2.1 2002/07/15 16:12:46 thorpej Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -39,7 +39,7 @@
 #if 0
 #define RCSID	"Id: auth.c,v 1.67 2000/08/01 01:38:29 paulus Exp "
 #else
-__RCSID("$NetBSD: auth.c,v 1.27 2000/09/23 22:39:33 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.27.2.1 2002/07/15 16:12:46 thorpej Exp $");
 #endif
 #endif
 
@@ -707,6 +707,7 @@ np_down(unit, proto)
 {
     if (--num_np_up == 0) {
 	UNTIMEOUT(check_idle, NULL);
+	UNTIMEOUT(connect_time_expired, NULL);
 	new_phase(PHASE_NETWORK);
     }
 }
