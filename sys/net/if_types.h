@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.12 1998/03/01 07:13:41 ross Exp $	*/
+/*	$NetBSD: if_types.h,v 1.13 1999/01/18 06:31:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -51,8 +51,8 @@
 #define	IFT_HDH1822	0x3		/* HDH arpanet imp */
 #define	IFT_X25DDN	0x4		/* x25 to imp */
 #define	IFT_X25		0x5		/* PDN X25 interface (RFC877) */
-#define	IFT_ETHER	0x6		/* Ethernet CSMACD */
-#define	IFT_ISO88023	0x7		/* CMSA CD */
+#define	IFT_ETHER	0x6		/* Ethernet CSMA/CD */
+#define	IFT_ISO88023	0x7		/* CSMA/CD */
 #define	IFT_ISO88024	0x8		/* Token Bus */
 #define	IFT_ISO88025	0x9		/* Token Ring */
 #define	IFT_ISO88026	0xa		/* MAN */
