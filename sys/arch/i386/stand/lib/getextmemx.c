@@ -1,7 +1,7 @@
-/*	$NetBSD: getextmemx.c,v 1.1 1997/08/14 15:22:00 drochner Exp $	*/
+/*	$NetBSD: getextmemx.c,v 1.2 1999/03/08 21:38:28 drochner Exp $	*/
 
 /*
- * Copyright (c) 1997
+ * Copyright (c) 1997, 1999
  *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,35 +32,40 @@
  *
  */
 
-/* Try 2 more fancy BIOS calls to get the size of extended
- memory besides the classical int15/88, take maximum.
- needs lowlevel parts from biosmemx.S and biosmem.S
+/*
+ * Try 2 more fancy BIOS calls to get the size of extended
+ * memory besides the classical int15/88, take maximum.
+ * needs lowlevel parts from biosmemx.S and biosmem.S
  */
 
 #include <lib/libsa/stand.h>
 #include "libi386.h"
 
-extern int getextmem2 __P((int*));
-extern int getmementry __P((int, int*));
+extern int getextmem2 __P((int *));
+extern int getmementry __P((int *, int *));
 
-int getextmemx()
+int
+getextmemx()
 {
 	int buf[5], i;
 	int extmem = getextmem1();
 
-	if(!getextmem2(buf) && buf[0] <= 15 * 1024) {
+	if (!getextmem2(buf) && buf[0] <= 15 * 1024) {
 		int help = buf[0];
-		if(help == 15 * 1024)
+		if (help == 15 * 1024)
 			help += buf[1] * 64;
-		if(extmem < help)
+		if (extmem < help)
 			extmem = help;
 	}
 
-	for(i = 0; (i = getmementry(i, buf)) != 0;) {
-		if((buf[4] == 1 && buf[0] == 0x100000)
-		   && extmem < buf[2] / 1024)
+	i = 0;
+	do {
+		if (getmementry(&i, buf))
+			break;
+		if ((buf[4] == 1 && buf[0] == 0x100000)
+		    && extmem < buf[2] / 1024)
 			extmem = buf[2] / 1024;
-	}
+	} while (i);
 
-	return(extmem);
+	return (extmem);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: biosmemx.S,v 1.1 1997/08/14 15:22:00 drochner Exp $	*/
+/*	$NetBSD: biosmemx.S,v 1.2 1999/03/08 21:38:28 drochner Exp $	*/
 
 /*
- * Copyright (c) 1997
+ * Copyright (c) 1997, 1999
  *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,8 +86,8 @@ ok2:
 	popl	%ebp
 	ret
 
-/* int getmementry(int iterator, buffer[5])
-   return: new iterator, 0=end of list or error
+/* int getmementry(int *iterator, buffer[5])
+   return: 0=ok, else error
    buffer[0]: start of memory chunk
    buffer[2]: length (bytes)
    buffer[4]: type
@@ -101,7 +101,8 @@ ENTRY(getmementry)
 	push	%esi
 	push	%edi
 
-	movl	8(%ebp), %ebx
+	movl	8(%ebp), %eax
+	movl	0(%eax), %ebx
 	movl	$20, %ecx
 	movl	$0x534d4150, %edx	# "SMAP"
 	movl	12(%ebp), %edi
@@ -112,15 +113,15 @@ ENTRY(getmementry)
 	movl	$0xe820, %eax
 	int	$0x15
 
-	jnc	ok
-	data32
-	movl	$0, %ebx
+	setc	%cl
 
-ok:
 	data32
 	call	_C_LABEL(real_to_prot)
 
-	movl	%ebx, %eax
+	movl	8(%ebp), %eax
+	movl	%ebx, 0(%eax)
+	xorl	%eax, %eax
+	movb	%cl, %al
 
 	pop	%edi
 	pop	%esi
