@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.1 1999/11/15 18:42:27 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.2 1999/11/18 12:20:45 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -877,7 +877,7 @@ softdep_initialize()
 
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);
-	max_softdeps = desiredvnodes * 8;
+	max_softdeps = desiredvnodes * 4;
 	pagedep_hashtbl = hashinit(desiredvnodes / 5, M_PAGEDEP, M_WAITOK,
 	    &pagedep_hash);
 	sema_init(&pagedep_in_progress, "pagedep", PRIBIO, 0);
