@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.17 2002/07/11 04:52:50 scottr Exp $
+.\"	$NetBSD: upgrade,v 1.18 2002/07/22 14:02:07 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@ your system by this method, simply select the
 .Sy upgrade
 option once the miniroot has booted.
 The upgrade program with then guide you through the procedure.
-.if r_hp300 \{\
+.if \n[hp300] \{\
 While you can boot the miniroot using the same methods described above for
 a fresh install of
 .Nx*M
@@ -109,7 +109,7 @@ and type
 at the prompt.
 .enum)
 .Pp
-.\} \" ! r_hp300
+.\} \" ! \n[hp300]
 The upgrade program will:
 .(enum
 Enable the network based on your system's current
@@ -168,7 +168,7 @@ kernel may be incompatible with your old binaries.
 Back up your pre-existing kernel and copy the \*V
 kernel into your root partition
 .Pq Pa / .
-.ie r_hp300 \{\
+.ie \n[hp300] \{\
 .It
 Extract and install a new boot block:
 .Pp
@@ -214,7 +214,7 @@ binary set:
 .Pp
 .Dl # Ic "cd /"
 .Dl # Ic "pax -zrvpe -f" Em /path/to/ Ns Ic base.tgz
-.if r_mvme68k \{\
+.if \n[mvme68k] \{\
 .It
 Install a new boot block:
 .Pp
