@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.163 2000/01/24 18:03:19 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.164 2000/03/10 01:13:18 enami Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -50,6 +50,7 @@
 #include "rnd.h"
 
 #include <sys/param.h>
+#include <sys/acct.h>
 #include <sys/filedesc.h>
 #include <sys/file.h>
 #include <sys/errno.h>
@@ -368,6 +369,9 @@ main()
 	/* Initialize kernel profiling. */
 	kmstartup();
 #endif
+
+	/* Initialize system accouting. */
+	acct_init();
 
 	/*
 	 * Initialize signal-related data structures, and signal state
