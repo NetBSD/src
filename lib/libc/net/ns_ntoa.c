@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ntoa.c,v 1.5 1997/07/13 19:57:54 christos Exp $	*/
+/*	$NetBSD: ns_ntoa.c,v 1.6 1997/07/17 18:48:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ns_ntoa.c,v 1.5 1997/07/13 19:57:54 christos Exp $");
+__RCSID("$NetBSD: ns_ntoa.c,v 1.6 1997/07/17 18:48:01 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ ns_ntoa(addr)
 	u_char *uplim = up + 6;
 
 	net.net_e = addr.x_net;
-	sprintf(obuf, "%lx", ntohl(net.long_e));
+	sprintf(obuf, "%x", ntohl(net.long_e));
 	cp = spectHex(obuf);
 	cp2 = cp + 1;
 	while (*up==0 && up < uplim) up++;
