@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.12 1996/10/10 22:46:30 christos Exp $	*/
+/*	$NetBSD: rarp.c,v 1.13 1996/10/13 02:29:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -81,15 +81,15 @@ rarp_getipaddress(sock)
 
 #ifdef RARP_DEBUG
  	if (debug)
-		kprintf("rarp: socket=%d\n", sock);
+		printf("rarp: socket=%d\n", sock);
 #endif
 	if (!(d = socktodesc(sock))) {
-		kprintf("rarp: bad socket. %d\n", sock);
+		printf("rarp: bad socket. %d\n", sock);
 		return (-1);
 	}
 #ifdef RARP_DEBUG
  	if (debug)
-		kprintf("rarp: d=%x\n", (u_int)d);
+		printf("rarp: d=%x\n", (u_int)d);
 #endif
 
 	bzero((char*)&wbuf.data, sizeof(wbuf.data));
@@ -106,7 +106,7 @@ rarp_getipaddress(sock)
 	    rarpsend, &wbuf.data, sizeof(wbuf.data),
 	    rarprecv, &rbuf.data, sizeof(rbuf.data)) < 0)
 	{
-		kprintf("No response for RARP request\n");
+		printf("No response for RARP request\n");
 		return (-1);
 	}
 
@@ -141,7 +141,7 @@ rarpsend(d, pkt, len)
 
 #ifdef RARP_DEBUG
  	if (debug)
-		kprintf("rarpsend: called\n");
+		printf("rarpsend: called\n");
 #endif
 
 	return (sendether(d, pkt, len, bcea, ETHERTYPE_REVARP));
@@ -164,7 +164,7 @@ rarprecv(d, pkt, len, tleft)
 
 #ifdef RARP_DEBUG
  	if (debug)
-		kprintf("rarprecv: ");
+		printf("rarprecv: ");
 #endif
 
 	n = readether(d, pkt, len, tleft, &etype);
@@ -172,7 +172,7 @@ rarprecv(d, pkt, len, tleft)
 	if (n == -1 || n < sizeof(struct ether_arp)) {
 #ifdef RARP_DEBUG
 		if (debug)
-			kprintf("bad len=%d\n", n);
+			printf("bad len=%d\n", n);
 #endif
 		return (-1);
 	}
@@ -180,7 +180,7 @@ rarprecv(d, pkt, len, tleft)
 	if (etype != ETHERTYPE_REVARP) {
 #ifdef RARP_DEBUG
 		if (debug)
-			kprintf("bad type=0x%x\n", etype);
+			printf("bad type=0x%x\n", etype);
 #endif
 		return (-1);
 	}
@@ -193,7 +193,7 @@ rarprecv(d, pkt, len, tleft)
 	{
 #ifdef RARP_DEBUG
 		if (debug)
-			kprintf("bad hrd/pro/hln/pln\n");
+			printf("bad hrd/pro/hln/pln\n");
 #endif
 		return (-1);
 	}
@@ -201,7 +201,7 @@ rarprecv(d, pkt, len, tleft)
 	if (ap->arp_op != htons(ARPOP_REVREPLY)) {
 #ifdef RARP_DEBUG
 		if (debug)
-			kprintf("bad op=0x%x\n", ntohs(ap->arp_op));
+			printf("bad op=0x%x\n", ntohs(ap->arp_op));
 #endif
 		return (-1);
 	}
@@ -210,7 +210,7 @@ rarprecv(d, pkt, len, tleft)
 	if (bcmp(ap->arp_tha, d->myea, 6)) {
 #ifdef RARP_DEBUG
 		if (debug)
-			kprintf("unwanted address\n");
+			printf("unwanted address\n");
 #endif
 		return (-1);
 	}
@@ -218,7 +218,7 @@ rarprecv(d, pkt, len, tleft)
 	/* We have our answer. */
 #ifdef RARP_DEBUG
  	if (debug)
-		kprintf("got it\n");
+		printf("got it\n");
 #endif
 	return (n);
 }
