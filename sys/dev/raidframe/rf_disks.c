@@ -1,4 +1,40 @@
-/*	$NetBSD: rf_disks.c,v 1.5 1999/02/05 00:06:09 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.6 1999/02/24 00:00:03 oster Exp $	*/
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Greg Oster
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,9 +72,6 @@
 #include "rf_utils.h"
 #include "rf_configure.h"
 #include "rf_general.h"
-#if !defined(__NetBSD__)
-#include "rf_camlayer.h"
-#endif
 #include "rf_options.h"
 #include "rf_sys.h"
 
@@ -50,61 +83,53 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 
+/* XXX these should be in a header file somewhere */
 int raidlookup __P((char *, struct proc * p, struct vnode **));
-
+int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
+int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
+void rf_UnconfigureVnodes( RF_Raid_t * );
+int rf_CheckLabels( RF_Raid_t *, RF_Config_t *);
 
 #define DPRINTF6(a,b,c,d,e,f) if (rf_diskDebug) printf(a,b,c,d,e,f)
 #define DPRINTF7(a,b,c,d,e,f,g) if (rf_diskDebug) printf(a,b,c,d,e,f,g)
 
-/****************************************************************************************
+/**************************************************************************
  *
  * initialize the disks comprising the array
  *
- * We want the spare disks to have regular row,col numbers so that we can easily
- * substitue a spare for a failed disk.  But, the driver code assumes throughout
- * that the array contains numRow by numCol _non-spare_ disks, so it's not clear
- * how to fit in the spares.  This is an unfortunate holdover from raidSim.  The
- * quick and dirty fix is to make row zero bigger than the rest, and put all the
- * spares in it.  This probably needs to get changed eventually.
+ * We want the spare disks to have regular row,col numbers so that we can 
+ * easily substitue a spare for a failed disk.  But, the driver code assumes 
+ * throughout that the array contains numRow by numCol _non-spare_ disks, so 
+ * it's not clear how to fit in the spares.  This is an unfortunate holdover
+ * from raidSim.  The quick and dirty fix is to make row zero bigger than the 
+ * rest, and put all the spares in it.  This probably needs to get changed 
+ * eventually.
  *
- ***************************************************************************************/
+ **************************************************************************/
+
 int 
-rf_ConfigureDisks(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureDisks( listp, raidPtr, cfgPtr )
+	RF_ShutdownList_t **listp;
+	RF_Raid_t *raidPtr;
+	RF_Config_t *cfgPtr;
 {
 	RF_RaidDisk_t **disks;
 	RF_SectorCount_t min_numblks = (RF_SectorCount_t) 0x7FFFFFFFFFFFLL;
 	RF_RowCol_t r, c;
-	int     bs, ret;
+	int bs, ret;
 	unsigned i, count, foundone = 0, numFailuresThisRow;
-	RF_DiskOp_t *rdcap_op = NULL, *tur_op = NULL;
-	int     num_rows_done, num_cols_done;
-
-	struct proc *proc = 0;
-#ifndef __NetBSD__
-	ret = rf_SCSI_AllocReadCapacity(&rdcap_op);
-	if (ret)
-		goto fail;
-	ret = rf_SCSI_AllocTUR(&tur_op);
-	if (ret)
-		goto fail;
-#endif				/* !__NetBSD__ */
+	int num_rows_done, num_cols_done;
 
 	num_rows_done = 0;
 	num_cols_done = 0;
 
-
-	RF_CallocAndAdd(disks, raidPtr->numRow, sizeof(RF_RaidDisk_t *), (RF_RaidDisk_t **), raidPtr->cleanupList);
+	RF_CallocAndAdd(disks, raidPtr->numRow, sizeof(RF_RaidDisk_t *), 
+			(RF_RaidDisk_t **), raidPtr->cleanupList);
 	if (disks == NULL) {
 		ret = ENOMEM;
 		goto fail;
 	}
 	raidPtr->Disks = disks;
-
-
-	proc = raidPtr->proc;	/* Blah XXX */
 
 	/* get space for the device-specific stuff... */
 	RF_CallocAndAdd(raidPtr->raid_cinfo, raidPtr->numRow,
@@ -116,7 +141,12 @@ rf_ConfigureDisks(
 	}
 	for (r = 0; r < raidPtr->numRow; r++) {
 		numFailuresThisRow = 0;
-		RF_CallocAndAdd(disks[r], raidPtr->numCol + ((r == 0) ? raidPtr->numSpare : 0), sizeof(RF_RaidDisk_t), (RF_RaidDisk_t *), raidPtr->cleanupList);
+		/* We allocate RF_MAXSPARE on the first row so that we
+		   have room to do hot-swapping of spares */
+		RF_CallocAndAdd(disks[r], raidPtr->numCol 
+				+ ((r == 0) ? RF_MAXSPARE : 0), 
+				sizeof(RF_RaidDisk_t), (RF_RaidDisk_t *), 
+				raidPtr->cleanupList);
 		if (disks[r] == NULL) {
 			ret = ENOMEM;
 			goto fail;
@@ -131,11 +161,19 @@ rf_ConfigureDisks(
 			goto fail;
 		}
 		for (c = 0; c < raidPtr->numCol; c++) {
-			ret = rf_ConfigureDisk(raidPtr, &cfgPtr->devnames[r][c][0],
-			    &disks[r][c], rdcap_op, tur_op,
-			    cfgPtr->devs[r][c], r, c);
+			ret = rf_ConfigureDisk(raidPtr, 
+					       &cfgPtr->devnames[r][c][0],
+					       &disks[r][c], r, c);
 			if (ret)
 				goto fail;
+#ifdef NOT_YET_BOYS_AND_GIRLS
+			if (disks[r][c].status == rf_ds_optimal) {
+				raidread_component_label(
+					 raidPtr->raid_cinfo[r][c].ci_dev,
+					 raidPtr->raid_cinfo[r][c].ci_vp,
+					 &raidPtr->raid_cinfo[r][c].ci_label);
+			}
+#endif
 			if (disks[r][c].status != rf_ds_optimal) {
 				numFailuresThisRow++;
 			} else {
@@ -145,23 +183,19 @@ rf_ConfigureDisks(
 				    r, c, disks[r][c].devname,
 				    (long int) disks[r][c].numBlocks,
 				    disks[r][c].blockSize,
-				    (long int) disks[r][c].numBlocks * disks[r][c].blockSize / 1024 / 1024);
+				    (long int) disks[r][c].numBlocks *
+					 disks[r][c].blockSize / 1024 / 1024);
 			}
 			num_cols_done++;
 		}
 		/* XXX fix for n-fault tolerant */
+		/* XXX this should probably check to see how many failures
+		   we can handle for this configuration! */
 		if (numFailuresThisRow > 0)
 			raidPtr->status[r] = rf_rs_degraded;
 		num_rows_done++;
 	}
-#if defined(__NetBSD__) && defined(_KERNEL)
-	/* we do nothing */
-#else
-	rf_SCSI_FreeDiskOp(rdcap_op, 1);
-	rdcap_op = NULL;
-	rf_SCSI_FreeDiskOp(tur_op, 0);
-	tur_op = NULL;
-#endif
+
 	/* all disks must be the same size & have the same block size, bs must
 	 * be a power of 2 */
 	bs = 0;
@@ -186,6 +220,12 @@ rf_ConfigureDisks(
 		ret = EINVAL;
 		goto fail;
 	}
+
+#if NOT_YET_BOYS_AND_GIRLS
+	if (rf_CheckLabels( raidPtr, cfgPtr )) {
+		printf("There were fatal errors (ignored for now)\n");
+	}
+#endif
 	for (r = 0; r < raidPtr->numRow; r++) {
 		for (c = 0; c < raidPtr->numCol; c++) {
 			if (disks[r][c].status == rf_ds_optimal) {
@@ -210,99 +250,54 @@ rf_ConfigureDisks(
 	return (0);
 
 fail:
+	
+	rf_UnconfigureVnodes( raidPtr );
 
-#if defined(__NetBSD__) && defined(_KERNEL)
-
-	for (r = 0; r < raidPtr->numRow; r++) {
-		for (c = 0; c < raidPtr->numCol; c++) {
-			/* Cleanup.. */
-#ifdef DEBUG
-			printf("Cleaning up row: %d col: %d\n", r, c);
-#endif
-			if (raidPtr->raid_cinfo[r][c].ci_vp) {
-				(void) vn_close(raidPtr->raid_cinfo[r][c].ci_vp,
-				    FREAD | FWRITE, proc->p_ucred, proc);
-			}
-		}
-	}
-	/* Space allocated for raid_vpp will get cleaned up at some other
-	 * point */
-	/* XXX Need more #ifdefs in the above... */
-
-#else
-
-	if (rdcap_op)
-		rf_SCSI_FreeDiskOp(rdcap_op, 1);
-	if (tur_op)
-		rf_SCSI_FreeDiskOp(tur_op, 0);
-
-#endif
 	return (ret);
 }
 
 
-/****************************************************************************************
+/****************************************************************************
  * set up the data structures describing the spare disks in the array
  * recall from the above comment that the spare disk descriptors are stored
  * in row zero, which is specially expanded to hold them.
- ***************************************************************************************/
+ ****************************************************************************/
 int 
-rf_ConfigureSpareDisks(
-    RF_ShutdownList_t ** listp,
-    RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+rf_ConfigureSpareDisks( listp, raidPtr, cfgPtr )
+	RF_ShutdownList_t ** listp;
+	RF_Raid_t * raidPtr;
+	RF_Config_t * cfgPtr;
 {
-	char    buf[256];
-	int     r, c, i, ret;
-	RF_DiskOp_t *rdcap_op = NULL, *tur_op = NULL;
-	unsigned bs;
+	int     i, ret;
+	unsigned int bs;
 	RF_RaidDisk_t *disks;
 	int     num_spares_done;
 
-	struct proc *proc;
-
-#ifndef __NetBSD__
-	ret = rf_SCSI_AllocReadCapacity(&rdcap_op);
-	if (ret)
-		goto fail;
-	ret = rf_SCSI_AllocTUR(&tur_op);
-	if (ret)
-		goto fail;
-#endif				/* !__NetBSD__ */
-
 	num_spares_done = 0;
 
-	proc = raidPtr->proc;
 	/* The space for the spares should have already been allocated by
 	 * ConfigureDisks() */
 
 	disks = &raidPtr->Disks[0][raidPtr->numCol];
 	for (i = 0; i < raidPtr->numSpare; i++) {
 		ret = rf_ConfigureDisk(raidPtr, &cfgPtr->spare_names[i][0],
-		    &disks[i], rdcap_op, tur_op,
-		    cfgPtr->spare_devs[i], 0, raidPtr->numCol + i);
+				       &disks[i], 0, raidPtr->numCol + i);
 		if (ret)
 			goto fail;
 		if (disks[i].status != rf_ds_optimal) {
-			RF_ERRORMSG1("Warning: spare disk %s failed TUR\n", buf);
+			RF_ERRORMSG1("Warning: spare disk %s failed TUR\n", 
+				     &cfgPtr->spare_names[i][0]);
 		} else {
 			disks[i].status = rf_ds_spare;	/* change status to
 							 * spare */
 			DPRINTF6("Spare Disk %d: dev %s numBlocks %ld blockSize %d (%ld MB)\n", i,
 			    disks[i].devname,
 			    (long int) disks[i].numBlocks, disks[i].blockSize,
-			    (long int) disks[i].numBlocks * disks[i].blockSize / 1024 / 1024);
+			    (long int) disks[i].numBlocks * 
+				 disks[i].blockSize / 1024 / 1024);
 		}
 		num_spares_done++;
 	}
-#if defined(__NetBSD__) && (_KERNEL)
-
-#else
-	rf_SCSI_FreeDiskOp(rdcap_op, 1);
-	rdcap_op = NULL;
-	rf_SCSI_FreeDiskOp(tur_op, 0);
-	tur_op = NULL;
-#endif
 
 	/* check sizes and block sizes on spare disks */
 	bs = 1 << raidPtr->logBytesPerSector;
@@ -314,7 +309,8 @@ rf_ConfigureSpareDisks(
 		}
 		if (disks[i].numBlocks < raidPtr->sectorsPerDisk) {
 			RF_ERRORMSG3("Spare disk %s (%d blocks) is too small to serve as a spare (need %ld blocks)\n",
-			    disks[i].devname, disks[i].blockSize, (long int) raidPtr->sectorsPerDisk);
+				     disks[i].devname, disks[i].blockSize, 
+				     (long int) raidPtr->sectorsPerDisk);
 			ret = EINVAL;
 			goto fail;
 		} else
@@ -328,43 +324,20 @@ rf_ConfigureSpareDisks(
 	return (0);
 
 fail:
-#if defined(__NetBSD__) && defined(_KERNEL)
 
 	/* Release the hold on the main components.  We've failed to allocate
-	 * a spare, and since we're failing, we need to free things.. */
+	 * a spare, and since we're failing, we need to free things.. 
+		 
+	 XXX failing to allocate a spare is *not* that big of a deal... 
+	 We *can* survive without it, if need be, esp. if we get hot
+	 adding working.  
 
-	for (r = 0; r < raidPtr->numRow; r++) {
-		for (c = 0; c < raidPtr->numCol; c++) {
-			/* Cleanup.. */
-#ifdef DEBUG
-			printf("Cleaning up row: %d col: %d\n", r, c);
-#endif
-			if (raidPtr->raid_cinfo[r][c].ci_vp) {
-				(void) vn_close(raidPtr->raid_cinfo[r][c].ci_vp,
-				    FREAD | FWRITE, proc->p_ucred, proc);
-			}
-		}
-	}
+	 If we don't fail out here, then we need a way to remove this spare... 
+	 that should be easier to do here than if we are "live"... 
 
-	for (i = 0; i < raidPtr->numSpare; i++) {
-		/* Cleanup.. */
-#ifdef DEBUG
-		printf("Cleaning up spare: %d\n", i);
-#endif
-		if (raidPtr->raid_cinfo[0][raidPtr->numCol + i].ci_vp) {
-			(void) vn_close(raidPtr->raid_cinfo[0][raidPtr->numCol + i].ci_vp,
-			    FREAD | FWRITE, proc->p_ucred, proc);
-		}
-	}
+	 */
 
-#else
-
-	if (rdcap_op)
-		rf_SCSI_FreeDiskOp(rdcap_op, 1);
-	if (tur_op)
-		rf_SCSI_FreeDiskOp(tur_op, 0);
-
-#endif
+	rf_UnconfigureVnodes( raidPtr );
 
 	return (ret);
 }
@@ -373,13 +346,10 @@ fail:
 
 /* configure a single disk in the array */
 int 
-rf_ConfigureDisk(raidPtr, buf, diskPtr, rdcap_op, tur_op, dev, row, col)
-	RF_Raid_t *raidPtr;	/* We need this down here too!! GO */
+rf_ConfigureDisk(raidPtr, buf, diskPtr, row, col)
+	RF_Raid_t *raidPtr;
 	char   *buf;
 	RF_RaidDisk_t *diskPtr;
-	RF_DiskOp_t *rdcap_op;
-	RF_DiskOp_t *tur_op;
-	dev_t   dev;		/* device number used only in kernel */
 	RF_RowCol_t row;
 	RF_RowCol_t col;
 {
@@ -400,41 +370,10 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, rdcap_op, tur_op, dev, row, col)
 	}
 	(void) strcpy(diskPtr->devname, p);
 
-#ifndef __NetBSD__
-	/* get bus, target, lun */
-	retcode = rf_extract_ids(p, &busid, &targid, &lun);
-	if (retcode)
-		return (retcode);
-
-	/* required in kernel, nop at user level */
-	retcode = rf_SCSI_OpenUnit(dev);
-	if (retcode)
-		return (retcode);
-
-	diskPtr->dev = dev;
-	if (rf_SCSI_DoTUR(tur_op, (u_char) busid, (u_char) targid, (u_char) lun, dev)) {
-		RF_ERRORMSG1("Disk %s failed TUR.  Marked as dead.\n", diskPtr->devname);
-		diskPtr->status = rf_ds_failed;
-	} else {
-		diskPtr->status = rf_ds_optimal;
-		retcode = rf_SCSI_DoReadCapacity(raidPtr, rdcap_op, busid, targid, lun, dev,
-		    &diskPtr->numBlocks, &diskPtr->blockSize, diskPtr->devname);
-		if (retcode)
-			return (retcode);
-
-		/* we allow the user to specify that only a fraction of the
-		 * disks should be used this is just for debug:  it speeds up
-		 * the parity scan */
-		diskPtr->numBlocks = diskPtr->numBlocks * rf_sizePercentage / 100;
-	}
-#endif
-
 	proc = raidPtr->proc;	/* XXX Yes, this is not nice.. */
 
 	/* Let's start by claiming the component is fine and well... */
-	/* XXX not the case if the disk is toast.. */
 	diskPtr->status = rf_ds_optimal;
-
 
 	raidPtr->raid_cinfo[row][col].ci_vp = NULL;
 	raidPtr->raid_cinfo[row][col].ci_dev = NULL;
@@ -443,7 +382,7 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, rdcap_op, tur_op, dev, row, col)
 	if (error) {
 		printf("raidlookup on device: %s failed!\n", diskPtr->devname);
 		if (error == ENXIO) {
-			/* XXX the component isn't there... must be dead :-( */
+			/* the component isn't there... must be dead :-( */
 			diskPtr->status = rf_ds_failed;
 		} else {
 			return (error);
@@ -455,28 +394,222 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, rdcap_op, tur_op, dev, row, col)
 			return (error);
 		}
 		error = VOP_IOCTL(vp, DIOCGPART, (caddr_t) & dpart,
-		    FREAD, proc->p_ucred, proc);
+				  FREAD, proc->p_ucred, proc);
 		if (error) {
 			return (error);
 		}
+		
 		diskPtr->blockSize = dpart.disklab->d_secsize;
-
+		
 		diskPtr->numBlocks = dpart.part->p_size - rf_protectedSectors;
-
+		
 		raidPtr->raid_cinfo[row][col].ci_vp = vp;
 		raidPtr->raid_cinfo[row][col].ci_dev = va.va_rdev;
-
-#if 0
-		diskPtr->dev = dev;
-#endif
-
-		diskPtr->dev = va.va_rdev;	/* XXX or the above? */
-
+		
+		diskPtr->dev = va.va_rdev;
+		
 		/* we allow the user to specify that only a fraction of the
 		 * disks should be used this is just for debug:  it speeds up
 		 * the parity scan */
-		diskPtr->numBlocks = diskPtr->numBlocks * rf_sizePercentage / 100;
-
+		diskPtr->numBlocks = diskPtr->numBlocks * 
+			rf_sizePercentage / 100;
 	}
 	return (0);
 }
+
+/* 
+
+   rf_CheckLabels() - check all the component labels for consistency.
+   Return an error if there is anything major amiss.
+
+ */
+
+int 
+rf_CheckLabels( raidPtr, cfgPtr )
+	RF_Raid_t *raidPtr;
+	RF_Config_t *cfgPtr;
+{
+	int r,c;
+	char *dev_name;
+	RF_ComponentLabel_t *ci_label;
+	int version = 0;
+	int serial_number = 0;
+	int mod_counter = 0;
+	int fatal_error = 0;
+	int disk_num = 0;
+
+	for (r = 0; r < raidPtr->numRow; r++) {
+		for (c = 0; c < raidPtr->numCol; c++) {
+			dev_name = &cfgPtr->devnames[r][c][0];
+			ci_label = &raidPtr->raid_cinfo[r][c].ci_label;
+			
+			printf("Component label for %s being configured at row: %d col: %d\n", dev_name, r, c );
+			printf("         Row: %d Column: %d Num Rows: %d Num Columns: %d\n", 			       ci_label->row, ci_label->column, 
+			       ci_label->num_rows, ci_label->num_columns);
+			printf("         Version: %d Serial Number: %d Clean: %d Status: %d\n", ci_label->version, ci_label->serial_number,
+			       ci_label->clean, ci_label->status );
+			
+			if ( r !=0 && c != 0) {
+				if (serial_number != ci_label->serial_number) {
+					printf("%s has a different %s\n", 
+					       dev_name, "serial number!");
+					fatal_error = 1;
+				}
+				if (version != ci_label->version) {
+					printf("%s has a different %s\n",
+					       dev_name, "version!");
+					fatal_error = 1;
+				}
+				if (mod_counter != ci_label->mod_counter) {
+					printf("%s has a different modfication count!\n",dev_name);
+				}
+			} else { 
+				serial_number = ci_label->serial_number;
+				version = ci_label->version;
+				mod_counter = ci_label->mod_counter;
+			}
+							
+			if (r != ci_label->row) {
+				printf("Row out of alignment for: %s\n", 
+				       dev_name); 
+				fatal_error = 1;
+			}
+			if (c != ci_label->column) {
+				printf("Column out of alignment for: %s\n", 
+				       dev_name);
+				fatal_error = 1;
+			}
+			if (raidPtr->numRow != ci_label->num_rows) {
+				printf("Number of rows do not match for: %s\n", 
+				       dev_name);
+				fatal_error = 1;
+			}
+			if (raidPtr->numCol != ci_label->num_columns) {
+				printf("Number of columns do not match for: %s\n",
+				       dev_name);
+				fatal_error = 1;
+			}
+			if (ci_label->clean == 0) {
+				/* it's not clean, but it's not fatal */
+				printf("%s is not clean!\n", dev_name);
+			}
+			disk_num++;
+		}
+	}
+
+	return(fatal_error);	
+}
+
+
+int rf_add_hot_spare(RF_Raid_t *, RF_HotSpare_t *);
+int
+rf_add_hot_spare(raidPtr, sparePtr)
+	RF_Raid_t *raidPtr;
+	RF_HotSpare_t *sparePtr;
+{
+	RF_RaidDisk_t *disks;
+	int ret;
+	unsigned int bs;
+	int spare_number;
+
+	printf("Just in rf_add_hot_spare: %d\n",raidPtr->numSpare);
+	printf("Num col: %d\n",raidPtr->numCol);
+	if (raidPtr->numSpare >= RF_MAXSPARE) {
+		RF_ERRORMSG1("Too many spares: %d\n", raidPtr->numSpare);
+		return(EINVAL);
+	}
+	
+	/* the beginning of the spares... */
+	disks = &raidPtr->Disks[0][raidPtr->numCol];
+
+	spare_number = raidPtr->numSpare;
+
+	ret = rf_ConfigureDisk(raidPtr, sparePtr->spare_name,
+			       &disks[spare_number], 0,
+			       raidPtr->numCol + spare_number);
+
+	if (ret)
+		goto fail;
+	if (disks[spare_number].status != rf_ds_optimal) {
+		RF_ERRORMSG1("Warning: spare disk %s failed TUR\n", 
+			     sparePtr->spare_name);
+		ret=EINVAL;
+		goto fail;
+	} else {
+		disks[spare_number].status = rf_ds_spare;
+		DPRINTF6("Spare Disk %d: dev %s numBlocks %ld blockSize %d (%ld MB)\n", spare_number,
+			 disks[spare_number].devname,
+			 (long int) disks[spare_number].numBlocks, 
+			 disks[spare_number].blockSize,
+			 (long int) disks[spare_number].numBlocks * 
+			 disks[spare_number].blockSize / 1024 / 1024);
+	}
+	
+
+	/* check sizes and block sizes on the spare disk */
+	bs = 1 << raidPtr->logBytesPerSector;
+	if (disks[spare_number].blockSize != bs) {
+		RF_ERRORMSG3("Block size of %d on spare disk %s is not the same as on other disks (%d)\n", disks[spare_number].blockSize, disks[spare_number].devname, bs);
+		ret = EINVAL;
+		goto fail;
+	}
+	if (disks[spare_number].numBlocks < raidPtr->sectorsPerDisk) {
+		RF_ERRORMSG3("Spare disk %s (%d blocks) is too small to serve as a spare (need %ld blocks)\n",
+			     disks[spare_number].devname, 
+			     disks[spare_number].blockSize, 
+			     (long int) raidPtr->sectorsPerDisk);
+		ret = EINVAL;
+		goto fail;
+	} else {
+		if (disks[spare_number].numBlocks > 
+		    raidPtr->sectorsPerDisk) {
+			RF_ERRORMSG2("Warning: truncating spare disk %s to %ld blocks\n", disks[spare_number].devname, 
+				     (long int) raidPtr->sectorsPerDisk);
+			
+			disks[spare_number].numBlocks = raidPtr->sectorsPerDisk;
+		}
+	}
+
+	raidPtr->numSpare++;
+
+	return (0);
+
+fail:
+	return(ret);
+}
+
+int
+rf_remove_hot_spare(raidPtr,sparePtr)
+	RF_Raid_t *raidPtr;
+	RF_HotSpare_t *sparePtr;
+{
+	int spare_number;
+
+
+	if (raidPtr->numSpare==0) {
+		printf("No spares to remove!\n");
+		return(EINVAL);
+	}
+
+	spare_number = sparePtr->spare_number;
+
+	return(EINVAL); /* XXX not implemented yet */
+#if 0
+	if (spare_number < 0 || spare_number > raidPtr->numSpare) {
+		return(EINVAL);
+	}
+
+	/* verify that this spare isn't in use... */
+
+
+
+
+	/* it's gone.. */
+
+	raidPtr->numSpare--;
+
+	return(0);
+#endif
+}
+
+
