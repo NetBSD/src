@@ -1,4 +1,4 @@
-/* $NetBSD: pkcs5_pbkdf2.c,v 1.4 2003/09/25 01:43:12 cb Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.c,v 1.5 2004/03/17 01:29:13 dan Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.4 2003/09/25 01:43:12 cb Exp $");
+__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.5 2004/03/17 01:29:13 dan Exp $");
 #endif
 
 #include <sys/resource.h>
@@ -127,7 +127,7 @@ prf_iterate(u_int8_t *r, const u_int8_t *P, int Plen,
 
 int
 pkcs5_pbkdf2(u_int8_t **r, int dkLen, const u_int8_t *P, int Plen,
-	     const u_int8_t *S, int Slen, int c)
+	     const u_int8_t *S, int Slen, int c, int compat)
 {
 	int	i;
 	int	l;
@@ -150,7 +150,8 @@ pkcs5_pbkdf2(u_int8_t **r, int dkLen, const u_int8_t *P, int Plen,
 
 	/* Step 3 */
 	for (i=0; i < l; i++)
-		prf_iterate(*r + (PRF_BLOCKLEN * i), P, Plen, S, Slen, c, i);
+		prf_iterate(*r + (PRF_BLOCKLEN * i), P, Plen, S, Slen, c, 
+			(compat?i:i+1));
 
 	/* Step 4 and 5
 	 *  by the structure of the code, we do not need to concatenate
@@ -194,7 +195,8 @@ pkcs5_pbkdf2_time(int dkLen, int c)
 	u_int8_t	 S[CAL_SALTLEN];
 
 	getrusage(RUSAGE_SELF, &start);
-	ret = pkcs5_pbkdf2(&r, dkLen, P, sizeof(P), S, sizeof(S), c);
+	/* XXX compat flag at end to be removed when _OLD keygen method is */
+	ret = pkcs5_pbkdf2(&r, dkLen, P, sizeof(P), S, sizeof(S), c, 0);
 	if (ret)
 		return ret;
 	getrusage(RUSAGE_SELF, &end);
