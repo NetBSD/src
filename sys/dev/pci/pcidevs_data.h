@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.13 2004/08/30 09:43:46 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.14 2004/09/18 16:51:17 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.13 2004/08/30 09:43:14 tron Exp 
+ *	NetBSD: pcidevs,v 1.615.2.14 2004/09/18 16:50:30 he Exp 
  */
 
 /*
@@ -6530,6 +6530,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Symbios Logic",
 	    "FC919",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929X,
+	    0,
+	    "Symbios Logic",
+	    "FC929X",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
