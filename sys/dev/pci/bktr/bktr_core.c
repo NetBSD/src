@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.4 2000/05/21 15:43:57 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.5 2000/05/22 01:00:29 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.106 2000/04/16 07:50:08 roger Exp */
 
@@ -907,7 +907,7 @@ video_open( bktr_ptr_t bktr )
 
 	OUTB(bktr, BKTR_ADC, SYNC_LEVEL);
 
-#if BROOKTREE_SYSTEM_DEFAULT == BROOKTREE_PAL
+#if BKTR_SYSTEM_DEFAULT == BROOKTREE_PAL
 	video_format = 0;
 #else
 	video_format = 1;
