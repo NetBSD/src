@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.12 2002/03/11 23:40:23 fvdl Exp $ */
+/* $NetBSD: zlib.h,v 1.13 2002/05/29 18:15:18 christos Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.4, March 11th, 2002
@@ -133,6 +133,7 @@ typedef z_stream FAR *z_streamp;
 #define Z_SYNC_FLUSH    2
 #define Z_FULL_FLUSH    3
 #define Z_FINISH        4
+#define Z_PACKET_FLUSH  5
 /* Allowed flush values; see deflate() below for details */
 
 #define Z_OK            0
@@ -251,6 +252,12 @@ ZEXTERN int ZEXPORT deflate __P((z_streamp strm, int flush));
   with the same value of the flush parameter and more output space (updated
   avail_out), until the flush is complete (deflate returns with non-zero
   avail_out).
+
+    If the parameter flush is set to Z_PACKET_FLUSH, the compression
+  block is terminated, and a zero-length stored block is output,
+  omitting the length bytes (the effect of this is that the 3-bit type
+  code 000 for a stored block is output, and the output is then
+  byte-aligned).  This is designed for use at the end of a PPP packet.
 
     If the parameter flush is set to Z_FINISH, pending input is processed,
   pending output is flushed and deflate returns with Z_STREAM_END if there
@@ -600,6 +607,7 @@ ZEXTERN int ZEXPORT inflateReset __P((z_streamp strm));
    stream state was inconsistent (such as zalloc or state being NULL).
 */
 
+ZEXTERN int ZEXPORT inflateIncomp __P((z_streamp strm));
 
                         /* utility functions */
 
