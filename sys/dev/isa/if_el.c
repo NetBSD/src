@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.32 1995/07/24 04:12:50 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.33 1995/08/05 23:53:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -358,22 +358,26 @@ elstart(ifp)
 		for (;;) {
 			outb(iobase+EL_GPBL, off);
 			outb(iobase+EL_GPBH, off >> 8);
-			if (el_xmit(sc))
+			if (el_xmit(sc)) {
+				ifp->if_oerrors++;
 				break;
+			}
 			/* Check out status. */
 			i = inb(iobase+EL_TXS);
 			dprintf(("tx status=0x%x\n", i));
 			if ((i & EL_TXS_READY) == 0) {
 				dprintf(("el: err txs=%x\n", i));
-				ifp->if_oerrors++;
 				if (i & (EL_TXS_COLL | EL_TXS_COLL16)) {
+					ifp->if_collisions++;
 					if ((i & EL_TXC_DCOLL16) == 0 &&
 					    retries < 15) {
 						retries++;
 						outb(iobase+EL_AC, EL_AC_HOST);
 					}
-				} else
+				} else {
+					ifp->if_oerrors++;
 					break;
+				}
 			} else {
 				ifp->if_opackets++;
 				break;
@@ -391,6 +395,8 @@ elstart(ifp)
 		s = splimp();
 	}
 
+	(void)inb(iobase+EL_AS);
+	outb(iobase+EL_AC, EL_AC_IRQE | EL_AC_RX);
 	ifp->if_flags &= ~IFF_OACTIVE;
 	splx(s);
 }
@@ -407,6 +413,12 @@ el_xmit(sc)
 	int iobase = sc->sc_iobase;
 	int i;
 
+	/*
+	 * XXX
+	 * This busy-waits for the tx completion.  Can we get an interrupt
+	 * instead?
+	 */
+
 	dprintf(("el: xmit..."));
 	outb(iobase+EL_AC, EL_AC_TXFRX);
 	i = 20000;
@@ -414,7 +426,6 @@ el_xmit(sc)
 		i--;
 	if (i == 0) {
 		dprintf(("tx not ready\n"));
-		sc->sc_arpcom.ac_if.if_oerrors++;
 		return -1;
 	}
 	dprintf(("%d cycles.\n", 20000 - i));
@@ -430,13 +441,12 @@ elintr(arg)
 {
 	register struct el_softc *sc = arg;
 	int iobase = sc->sc_iobase;
-	int stat, rxstat, len;
+	int rxstat, len;
 
 	dprintf(("elintr: "));
 
 	/* Check board status. */
-	stat = inb(iobase+EL_AS);
-	if (stat & EL_AS_RXBUSY) {
+	if ((inb(iobase+EL_AS) & EL_AS_RXBUSY) != 0) {
 		(void)inb(iobase+EL_RXC);
 		outb(iobase+EL_AC, EL_AC_IRQE | EL_AC_RX);
 		return 0;
@@ -451,7 +461,6 @@ elintr(arg)
 		if ((rxstat & EL_RXS_NOFLOW) == 0) {
 			dprintf(("overflow.\n"));
 			el_hardreset(sc);
-		reset:
 			/* Put board back into receive mode. */
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC)
 				outb(iobase+EL_RXC, EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB | EL_RXC_DOFLOW | EL_RXC_PROMISC);
@@ -472,10 +481,7 @@ elintr(arg)
 		elread(sc, len);
 
 		/* Is there another packet? */
-		stat = inb(iobase+EL_AS);
-
-		/* If so, do it all again. */
-		if ((stat & EL_AS_RXBUSY) != 0) 
+		if ((inb(iobase+EL_AS) & EL_AS_RXBUSY) != 0)
 			break;
 
 		dprintf(("<rescan> "));
