@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.125 2003/07/02 13:40:52 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.126 2003/07/02 13:43:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.125 2003/07/02 13:40:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.126 2003/07/02 13:43:03 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1609,7 +1609,7 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 	/* Get an empty buffer header, or maybe one with something on it */
 	s = splbio();
 	simple_lock(&bqueue_slock);
-	if ((bp = bufqueues[BQ_EMPTY].tqh_first) != NULL) {
+	if ((bp = TAILQ_FIRST(&bufqueues[BQ_EMPTY])) != NULL) {
 		simple_lock(&bp->b_interlock);
 		bremfree(bp);
 		/* clear out various other fields */

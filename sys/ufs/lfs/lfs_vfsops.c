@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.123 2003/07/02 13:41:38 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.124 2003/07/02 13:43:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.123 2003/07/02 13:41:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.124 2003/07/02 13:43:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -195,10 +195,10 @@ lfs_writerd(void *arg)
 		 * have requested pageouts.
 		 */
 		simple_lock(&mountlist_slock);
-		for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
+		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
 			if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
-				nmp = mp->mnt_list.cqe_next;
+				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
 			}
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
@@ -212,7 +212,7 @@ lfs_writerd(void *arg)
 			}
 
 			simple_lock(&mountlist_slock);
-			nmp = mp->mnt_list.cqe_next;
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			vfs_unbusy(mp);
 		}
 		simple_unlock(&mountlist_slock);

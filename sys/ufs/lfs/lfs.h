@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.65 2003/07/02 13:40:51 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.66 2003/07/02 13:43:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -345,8 +345,8 @@ struct lfid {
 			  !((vp)->v_flag & VONWORKLST))
 
 /* XXX Shouldn't we use v_numoutput instead? */
-#define WRITEINPROG(vp) ((vp)->v_dirtyblkhd.lh_first && !(VTOI(vp)->i_flag & \
-				(IN_MODIFIED | IN_ACCESSED | IN_CLEANING)))
+#define WRITEINPROG(vp) (!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&		\
+		!(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING)))
 
 
 /*

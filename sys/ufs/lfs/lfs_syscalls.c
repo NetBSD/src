@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.93 2003/06/29 22:32:40 fvdl Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.94 2003/07/02 13:43:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.93 2003/06/29 22:32:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.94 2003/07/02 13:43:04 yamt Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -571,8 +571,8 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	/* Free up fakebuffers -- have to take these from the LOCKED list */
  again:
 	s = splbio();
-	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp; bp = nbp) {
-		nbp = bp->b_freelist.tqe_next;
+	for (bp = TAILQ_FIRST(&bufqueues[BQ_LOCKED]); bp; bp = nbp) {
+		nbp = TAILQ_NEXT(bp, b_freelist);
 		if (LFS_IS_MALLOC_BUF(bp)) {
 			if (bp->b_flags & B_BUSY) { /* not bloody likely */
 				bp->b_flags |= B_WANTED;
