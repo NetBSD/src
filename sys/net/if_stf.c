@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.4 2000/06/10 08:02:20 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.5 2000/07/05 17:08:18 thorpej Exp $	*/
 /*	$KAME: if_stf.c,v 1.39 2000/06/07 23:35:18 itojun Exp $	*/
 
 /*
@@ -94,6 +94,8 @@
 #ifdef __FreeBSD__
 #include <sys/kernel.h>
 #endif
+#include <sys/queue.h>
+
 #include <machine/cpu.h>
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -142,9 +144,6 @@
 #endif
 
 #if NSTF > 0
-#if NSTF != 1
-# error only single stf interface allowed
-#endif
 
 #define IN6_IS_ADDR_6TO4(x)	(ntohs((x)->s6_addr16[0]) == 0x2002)
 #define GET_V4(x)	((struct in_addr *)(&(x)->s6_addr16[1]))
@@ -157,10 +156,16 @@ struct stf_softc {
 	} __sc_ro46;
 #define sc_ro	__sc_ro46.__sc_ro4
 	const struct encaptab *encap_cookie;
+	LIST_ENTRY(stf_softc) sc_list;
 };
 
-static struct stf_softc *stf;
-static int nstf;
+LIST_HEAD(, stf_softc) stf_softc_list;
+
+int	stf_clone_create __P((struct if_clone *, int));
+void	stf_clone_destroy __P((struct ifnet *));
+
+struct if_clone stf_cloner =
+    IF_CLONE_INITIALIZER("stf", stf_clone_create, stf_clone_destroy);
 
 #if NGIF > 0
 extern int ip_gif_ttl;	/*XXX*/
@@ -192,63 +197,74 @@ static int stf_ioctl __P((struct ifnet *, int, caddr_t));
 static int stf_ioctl __P((struct ifnet *, u_long, caddr_t));
 #endif
 
+/* ARGSUSED */
 void
-stfattach(dummy)
-#ifdef __FreeBSD__
-	void *dummy;
-#else
-	int dummy;
-#endif
+stfattach(count)
+	int count;
+{
+
+	LIST_INIT(&stf_softc_list);
+	if_clone_attach(&stf_cloner);
+}
+
+int
+stf_clone_create(ifc, unit)
+	struct if_clone *ifc;
+	int unit;
 {
 	struct stf_softc *sc;
-	int i;
-	const struct encaptab *p;
 
-#ifdef __NetBSD__
-	nstf = dummy;
-#else
-	nstf = NSTF;
-#endif
-	stf = malloc(nstf * sizeof(struct stf_softc), M_DEVBUF, M_WAIT);
-	bzero(stf, nstf * sizeof(struct stf_softc));
-	sc = stf;
+	if (LIST_FIRST(&stf_softc_list) != NULL) {
+		/* Only one stf interface is allowed. */
+		return (EEXIST);
+	}
 
-	/* XXX just in case... */
-	for (i = 0; i < nstf; i++) {
-		sc = &stf[i];
-		bzero(sc, sizeof(*sc));
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-		sprintf(sc->sc_if.if_xname, "stf%d", i);
-#else
-		sc->sc_if.if_name = "stf";
-		sc->sc_if.if_unit = i;
-#endif
+	sc = malloc(sizeof(struct stf_softc), M_DEVBUF, M_WAIT);
+	bzero(sc, sizeof(struct stf_softc));
 
-		p = encap_attach_func(AF_INET, IPPROTO_IPV6, stf_encapcheck,
-		    &in_stf_protosw, sc);
-		if (p == NULL) {
-			printf("%s: attach failed\n", if_name(&sc->sc_if));
-			continue;
-		}
-		sc->encap_cookie = p;
+	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
 
-		sc->sc_if.if_mtu    = IPV6_MMTU;
-		sc->sc_if.if_flags  = 0;
-		sc->sc_if.if_ioctl  = stf_ioctl;
-		sc->sc_if.if_output = stf_output;
-		sc->sc_if.if_type   = IFT_STF;
+	sc->encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV6,
+	    stf_encapcheck, &in_stf_protosw, sc);
+	if (sc->encap_cookie == NULL) {
+		printf("%s: unable to attach encap\n", if_name(&sc->sc_if));
+		free(sc, M_DEVBUF);
+		return (EIO);	/* XXX */
+	}
+
+	sc->sc_if.if_mtu    = IPV6_MMTU;
+	sc->sc_if.if_flags  = 0;
+	sc->sc_if.if_ioctl  = stf_ioctl;
+	sc->sc_if.if_output = stf_output;
+	sc->sc_if.if_type   = IFT_STF;
 #if defined(__FreeBSD__) && __FreeBSD__ >= 4
-		sc->sc_if.if_snd.ifq_maxlen = IFQ_MAXLEN;
+	sc->sc_if.if_snd.ifq_maxlen = IFQ_MAXLEN;
 #endif
-		if_attach(&sc->sc_if);
+	if_attach(&sc->sc_if);
 #if NBPFILTER > 0
 #ifdef HAVE_OLD_BPF
-		bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
+	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 #else
-		bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_NULL, sizeof(u_int));
+	bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_NULL, sizeof(u_int));
 #endif
 #endif
-	}
+	LIST_INSERT_HEAD(&stf_softc_list, sc, sc_list);
+	return (0);
+}
+
+void
+stf_clone_destroy(ifp)
+	struct ifnet *ifp;
+{
+	struct stf_softc *sc = (void *) ifp;
+
+	LIST_REMOVE(sc, sc_list);
+	encap_detach(sc->encap_cookie);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	if_detach(ifp);
+	free(sc, M_DEVBUF);
 }
 
 #ifdef __FreeBSD__
