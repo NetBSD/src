@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.157 2005/03/19 17:32:26 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.158 2005/03/19 22:57:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.157 2005/03/19 17:32:26 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.158 2005/03/19 22:57:06 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,8 +391,6 @@ struct afswtch afs[] = {
 
 struct afswtch *afp;	/*the address family being set or asked about*/
 
-struct afswtch *lookup_af(const char *);
-
 int
 main(int argc, char *argv[])
 {
@@ -492,7 +490,7 @@ main(int argc, char *argv[])
 		if (argc > 1)
 			usage();
 		else if (argc == 1) {
-			afp = lookup_af(argv[0]);
+			afp = lookup_af_byname(argv[0]);
 			if (afp == NULL)
 				usage();
 		}
@@ -525,7 +523,7 @@ main(int argc, char *argv[])
 	/* Check for address family. */
 	afp = NULL;
 	if (argc > 0) {
-		afp = lookup_af(argv[0]);
+		afp = lookup_af_byname(argv[0]);
 		if (afp != NULL) {
 			argv++;
 			argc--;
@@ -668,12 +666,23 @@ main(int argc, char *argv[])
 }
 
 struct afswtch *
-lookup_af(const char *cp)
+lookup_af_byname(const char *cp)
 {
 	struct afswtch *a;
 
 	for (a = afs; a->af_name != NULL; a++)
 		if (strcmp(a->af_name, cp) == 0)
+			return (a);
+	return (NULL);
+}
+
+struct afswtch *
+lookup_af_bynum(int afnum)
+{
+	struct afswtch *a;
+
+	for (a = afs; a->af_name != NULL; a++)
+		if (a->af_af == afnum)
 			return (a);
 	return (NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 2005/03/19 17:32:26 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 2005/03/19 22:57:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -46,3 +46,6 @@ extern struct afswtch *afp;
 extern struct ifreq ifr;
 extern int s;
 extern char name[30];
+
+struct afswtch *lookup_af_byname(const char *);
+struct afswtch *lookup_af_bynum(int);
