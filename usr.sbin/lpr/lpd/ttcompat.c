@@ -59,13 +59,13 @@
 
 void
 sttyclearflags(tp, flags)
-struct termios *tp;
-long flags;
+	struct termios *tp;
+	int flags;
 {
-	register long iflag = tp->c_iflag;
-	register long oflag = tp->c_oflag;
-	register long lflag = tp->c_lflag;
-	register long cflag = tp->c_cflag;
+	register tcflag_t iflag = tp->c_iflag;
+	register tcflag_t oflag = tp->c_oflag;
+	register tcflag_t lflag = tp->c_lflag;
+	register tcflag_t cflag = tp->c_cflag;
 
 	if (ISSET(flags, TANDEM))
 		CLR(iflag, IXOFF);
@@ -114,13 +114,13 @@ long flags;
 
 void
 sttysetflags(tp, flags)
-struct termios *tp;
-long flags;
+	struct termios *tp;
+	int flags;
 {
-	register long iflag = tp->c_iflag;
-	register long oflag = tp->c_oflag;
-	register long lflag = tp->c_lflag;
-	register long cflag = tp->c_cflag;
+	register tcflag_t iflag = tp->c_iflag;
+	register tcflag_t oflag = tp->c_oflag;
+	register tcflag_t lflag = tp->c_lflag;
+	register tcflag_t cflag = tp->c_cflag;
 
 	if (ISSET(flags, TANDEM))
 		SET(iflag, IXOFF);
@@ -170,13 +170,13 @@ long flags;
 
 void
 sttyclearlflags(tp, flags)
-struct termios *tp;
-long flags;
+	struct termios *tp;
+	int flags;
 {
-	register long iflag = tp->c_iflag;
-	register long oflag = tp->c_oflag;
-	register long lflag = tp->c_lflag;
-	register long cflag = tp->c_cflag;
+	register tcflag_t iflag = tp->c_iflag;
+	register tcflag_t oflag = tp->c_oflag;
+	register tcflag_t lflag = tp->c_lflag;
+	register tcflag_t cflag = tp->c_cflag;
 
 	/* Nothing we can do with CRTBS. */
 	if (ISSET(flags, PRTERA))
@@ -211,13 +211,13 @@ long flags;
 
 void
 sttysetlflags(tp, flags)
-struct termios *tp;
-long flags;
+	struct termios *tp;
+	int flags;
 {
-	register long iflag = tp->c_iflag;
-	register long oflag = tp->c_oflag;
-	register long lflag = tp->c_lflag;
-	register long cflag = tp->c_cflag;
+	register tcflag_t iflag = tp->c_iflag;
+	register tcflag_t oflag = tp->c_oflag;
+	register tcflag_t lflag = tp->c_lflag;
+	register tcflag_t cflag = tp->c_cflag;
 
 	/* Nothing we can do with CRTBS. */
 	if (ISSET(flags, PRTERA))
