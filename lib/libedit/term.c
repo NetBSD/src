@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.13 1998/01/30 02:27:34 perry Exp $	*/
+/*	$NetBSD: term.c,v 1.14 1998/05/20 01:04:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.13 1998/01/30 02:27:34 perry Exp $");
+__RCSID("$NetBSD: term.c,v 1.14 1998/05/20 01:04:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -782,11 +782,8 @@ term_clear_screen(el)
 
 /* term_beep():
  *	Beep the way the terminal wants us
- *
- * XXX Not protected because it's needed by readline.c, which is not
- * XXX built as OSRCS!  See term.h for the renaming hack.
  */
-/* protected */ void
+protected void
 term_beep(el)
     EditLine *el;
 {
