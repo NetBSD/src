@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.92 2004/06/04 23:41:14 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.93 2004/06/05 05:07:02 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -627,7 +627,7 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 {
 	struct nvlist *nv, *nextnv, *oldnv, *dep;
 	struct attr *a;
-	const char *name, *n;
+	const char *name;
 	char buf[500];
 
 	if (fname != NULL && badfilename(fname)) {
