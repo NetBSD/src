@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.68 1995/09/17 20:54:19 pk Exp $
+#	$NetBSD: files,v 1.69 1995/10/04 23:33:14 pk Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -64,11 +64,6 @@ file dev/ic/pdq.c			pdq
 file dev/ic/pdq_ifsubr.c		pdq
 file dev/mulaw.c			mulaw
 file dev/vnd.c				vnd			needs-flag
-file dev/rcons/raster_op.c		rconsole
-file dev/rcons/raster_text.c		rconsole
-file dev/rcons/rcons_font.c		rconsole
-file dev/rcons/rcons_kern.c		rconsole
-file dev/rcons/rcons_subr.c		rconsole
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660
 file isofs/cd9660/cd9660_node.c		cd9660
