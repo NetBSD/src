@@ -42,7 +42,7 @@
  *	@(#)vmparam.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vmparam.h,v 1.8 93/05/25 09:52:16 torek Exp 
- * $Id: vmparam.h,v 1.2 1993/10/11 02:28:31 deraadt Exp $
+ * $Id: vmparam.h,v 1.3 1994/04/18 07:17:45 deraadt Exp $
  */
 
 /*
@@ -85,6 +85,13 @@
 #define	DMMIN	32			/* smallest swap allocation */
 #define	DMMAX	4096			/* largest potential swap allocation */
 #define	DMTEXT	1024			/* swap allocation for text */
+
+/*
+ * Size of shared memory map
+ */
+#ifndef SHMMAXPGS
+#define SHMMAXPGS	1024
+#endif
 
 /*
  * The time for a process to be blocked before being very swappable.
