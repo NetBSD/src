@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.12 2002/03/07 14:37:03 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.13 2002/03/10 16:48:58 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.12 2002/03/07 14:37:03 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.13 2002/03/10 16:48:58 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -587,6 +587,8 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 
 		p->factor = 1;
 		p->sw_code = NULL;
+		if (p->channels < 2)
+			p->hw_channels = 2;
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_BE:
 			if (p->precision == 16) {
@@ -650,7 +652,6 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			p->factor = 2;
 			p->hw_precision = 16;
 			p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
-			p->hw_channels = 2;
 			break;
 
 		case AUDIO_ENCODING_ALAW:
