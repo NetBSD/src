@@ -1,5 +1,5 @@
-.\"	$NetBSD: faithd.8,v 1.15 2001/06/30 01:01:36 itojun Exp $
-.\"	$KAME: faithd.8,v 1.31 2001/06/30 00:57:01 itojun Exp $
+.\"	$NetBSD: faithd.8,v 1.16 2001/09/05 01:22:24 itojun Exp $
+.\"	$KAME: faithd.8,v 1.32 2001/08/02 02:37:20 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -273,6 +273,9 @@ permit the connection.
 .Pp
 The directives are evaluated in sequence,
 and the first matching entry will be effective.
+If there is no match
+.Pq if we reach the end of the ruleset
+the traffic will be denied.
 .Pp
 With inetd mode,
 traffic may be filtered by using access control functionality in 
