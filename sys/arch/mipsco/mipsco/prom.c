@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.2 2000/08/19 12:13:47 wdk Exp $	*/
+/*	$NetBSD: prom.c,v 1.1 2000/08/19 12:13:47 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,38 +36,45 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 
-#include <mips/asm.h>
-#include <mips/cpuregs.h>
-#include <machine/param.h>
+#include <machine/cpu.h>
+#include <machine/prom.h>
 
-	.set	noreorder
+static struct mips_prom callvec;
+
+struct mips_prom *callv;
+
+typedef void (*funcp_t)();
+
+void
+prom_init()
+{
+	int i;
+	funcp_t *fp;
+
+	fp = (void *)&callvec;
+	for (i=0; i < sizeof(struct mips_prom)/sizeof(funcp_t); i++ ) {
+		fp[i] = (funcp_t)PROM_ENTRY(i);
+	}
+	callv = &callvec;
+}
 
 /*
- * to_monitor(howto) - return to monitor and halt or reboot
- *
- * howto is passed in a0
+ * Read the environment variable 'console' to determine which serial
+ * port will be used for the console.
  */
-LEAF(to_monitor)
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	li	v0, MIPS_SR_BOOT_EXC_VEC	# no interrupt and
-	mtc0	v0, MIPS_COP_0_STATUS_REG	# boot strap exception vector
-	nop
-	nop
-	nop
-	la	v0, 0xbfc00010			# PROM_EXEC
-	j	v0
-	nop
-END(to_monitor)
+int
+prom_getconsole()
+{
+	char *cp;
 
-	.data
-	.globl _C_LABEL(intrcnt)
-	.globl _C_LABEL(eintrcnt)
-	.globl _C_LABEL(intrnames)
-	.globl _C_LABEL(eintrnames)
-_C_LABEL(intrnames):
-_C_LABEL(eintrnames):
-	.align	2
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):
-	.word	0
+	cp = MIPS_PROM(getenv)("console");
+	if (cp == NULL) {
+		MIPS_PROM(printf)("WARNING: defaulting to serial port 1\n");
+		return 1;
+	}
+	return  (*cp == '0') ? 0 : 1;
+}

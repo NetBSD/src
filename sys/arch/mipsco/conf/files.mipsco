@@ -1,4 +1,4 @@
-#	$NetBSD: files.mipsco,v 1.1 2000/08/12 22:58:00 wdk Exp $
+#	$NetBSD: files.mipsco,v 1.2 2000/08/19 12:13:46 wdk Exp $
 
 #  MIPS Computer Corp -specific configuration info
 
@@ -52,6 +52,7 @@ file arch/mipsco/mipsco/mainbus.c
 file arch/mipsco/mipsco/clock.c
 file arch/mipsco/mipsco/bus_space.c
 file arch/mipsco/mipsco/bus_dma.c
+file arch/mipsco/mipsco/prom.c
 file dev/clock_subr.c
 file dev/cons.c
 
