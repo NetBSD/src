@@ -1,7 +1,7 @@
-/*	$NetBSD: am_ops.c,v 1.3 2003/07/15 09:01:15 itojun Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.4 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_ops.c,v 1.17 2002/12/27 22:43:46 ezk Exp
+ * Id: am_ops.c,v 1.20 2004/01/06 03:56:19 ezk Exp
  *
  */
 
@@ -379,6 +379,7 @@ am_ops *
 ops_match(am_opts *fo, char *key, char *g_key, char *path, char *keym, char *map)
 {
   am_ops *rop = 0;
+  char *link_dir;
 
   /*
    * First crack the global opts and the local opts
@@ -452,18 +453,28 @@ ops_match(am_opts *fo, char *key, char *g_key, char *path, char *keym, char *map
   if (!fo->opt_mount_type)
     fo->opt_mount_type = "nfs";
 
+  /* Normalize the sublink and make it absolute */
+  link_dir = fo->opt_sublink;
+  if (link_dir && link_dir[0] && link_dir[0] != '/') {
+    link_dir = str3cat((char *) 0, fo->opt_fs, "/", link_dir);
+    normalize_slash(link_dir);
+    XFREE(fo->opt_sublink);
+    fo->opt_sublink = link_dir;
+  }
+
   /*
    * Check the filesystem is happy
    */
   if (fo->fs_mtab)
     XFREE(fo->fs_mtab);
 
-  if ((fo->fs_mtab = (*rop->fs_match) (fo)))
+  fo->fs_mtab = rop->fs_match(fo);
+  if (fo->fs_mtab)
     return rop;
 
   /*
    * Return error file system
    */
-  fo->fs_mtab = (*amfs_error_ops.fs_match) (fo);
+  fo->fs_mtab = amfs_error_ops.fs_match(fo);
   return &amfs_error_ops;
 }

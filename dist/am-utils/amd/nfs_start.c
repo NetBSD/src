@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_start.c,v 1.4 2003/03/10 00:02:40 christos Exp $	*/
+/*	$NetBSD: nfs_start.c,v 1.5 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_start.c,v 1.18 2002/12/27 22:43:50 ezk Exp
+ * Id: nfs_start.c,v 1.21 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -171,26 +171,17 @@ rpc_pending_now(void)
 {
   struct timeval tvv;
   int nsel;
-#ifdef FD_SET
   fd_set readfds;
 
   FD_ZERO(&readfds);
   FD_SET(fwd_sock, &readfds);
-#else /* not FD_SET */
-  int readfds = (1 << fwd_sock);
-#endif /* not FD_SET */
 
   tvv.tv_sec = tvv.tv_usec = 0;
   nsel = select(FD_SETSIZE, &readfds, (fd_set *) 0, (fd_set *) 0, &tvv);
   if (nsel < 1)
     return (0);
-#ifdef FD_SET
   if (FD_ISSET(fwd_sock, &readfds))
     return (1);
-#else /* not FD_SET */
-  if (readfds & (1 << fwd_sock))
-    return (1);
-#endif /* not FD_SET */
 
   return (0);
 }
@@ -225,14 +216,14 @@ run_rpc(void)
     memmove(&readfds, &svc_fdset, sizeof(svc_fdset));
     FD_SET(fwd_sock, &readfds);
 #else /* not HAVE_SVC_GETREQSET */
-# ifdef FD_SET
     fd_set readfds;
     FD_ZERO(&readfds);
+# ifdef HAVE_FD_SET_FDS_BITS
     readfds.fds_bits[0] = svc_fds;
+# else /* not HAVE_FD_SET_FDS_BITS */
+    readfds = svc_fds;
+# endif  /* not HAVE_FD_SET_FDS_BITS */
     FD_SET(fwd_sock, &readfds);
-# else /* not FD_SET */
-    int readfds = svc_fds | (1 << fwd_sock);
-# endif /* not FD_SET */
 #endif /* not HAVE_SVC_GETREQSET */
 
     checkup();
@@ -252,7 +243,7 @@ run_rpc(void)
     }
     tvv.tv_usec = 0;
 
-    if (amd_state == Finishing && last_used_map < 0) {
+    if (amd_state == Finishing && get_exported_ap(0) == 0) {
       flush_mntfs();
       amd_state = Quit;
       break;
@@ -289,13 +280,8 @@ run_rpc(void)
        * Read all pending NFS responses at once to avoid having responses
        * queue up as a consequence of retransmissions.
        */
-#ifdef FD_SET
       if (FD_ISSET(fwd_sock, &readfds)) {
 	FD_CLR(fwd_sock, &readfds);
-#else /* not FD_SET */
-      if (readfds & (1 << fwd_sock)) {
-	readfds &= ~(1 << fwd_sock);
-#endif /* not FD_SET */
 	--nsel;
 	do {
 	  fwd_reply();
@@ -315,11 +301,11 @@ run_rpc(void)
 #ifdef HAVE_SVC_GETREQSET
 	svc_getreqset(&readfds);
 #else /* not HAVE_SVC_GETREQSET */
-# ifdef FD_SET
+# ifdef HAVE_FD_SET_FDS_BITS
 	svc_getreq(readfds.fds_bits[0]);
-# else /* not FD_SET */
+# else /* not HAVE_FD_SET_FDS_BITS */
 	svc_getreq(readfds);
-# endif /* not FD_SET */
+# endif /* not HAVE_FD_SET_FDS_BITS */
 #endif /* not HAVE_SVC_GETREQSET */
       }
       break;

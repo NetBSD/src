@@ -1,7 +1,7 @@
-/*	$NetBSD: get_args.c,v 1.2 2003/07/15 09:01:15 itojun Exp $	*/
+/*	$NetBSD: get_args.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: get_args.c,v 1.19 2002/12/27 22:43:49 ezk Exp
+ * Id: get_args.c,v 1.23 2004/04/28 04:22:13 ib42 Exp
  *
  */
 
@@ -68,7 +68,7 @@ char *mnttab_file_name = NULL;	/* symbol must be available always */
 char *
 get_version_string(void)
 {
-  static char *vers = NULL;
+  char *vers = NULL;
   char tmpbuf[1024];
   char *wire_buf;
   int wire_buf_len = 0;
@@ -82,7 +82,7 @@ get_version_string(void)
   l = 2048 + wire_buf_len;
   vers = xmalloc(l);
   snprintf(vers, l, "%s\n%s\n%s\n%s\n",
-	  "Copyright (c) 1997-2003 Erez Zadok",
+	  "Copyright (c) 1997-2004 Erez Zadok",
 	  "Copyright (c) 1990 Jan-Simon Pendry",
 	  "Copyright (c) 1990 Imperial College of Science, Technology & Medicine",
 	  "Copyright (c) 1990 The Regents of the University of California.");
@@ -91,8 +91,11 @@ get_version_string(void)
   strlcat(vers, tmpbuf, l);
   snprintf(tmpbuf, sizeof(tmpbuf), "Report bugs to %s.\n", PACKAGE_BUGREPORT);
   strlcat(vers, tmpbuf, l);
-  snprintf(tmpbuf, sizeof(tmpbuf), "Built by %s@%s on date %s.\n",
+  snprintf(tmpbuf, sizeof(tmpbuf), "Configured by %s@%s on date %s.\n",
 	  USER_NAME, HOST_NAME, CONFIG_DATE);
+  strlcat(vers, tmpbuf, l);
+  snprintf(tmpbuf, sizeof(tmpbuf), "Built by %s@%s on date %s.\n",
+	  BUILD_USER, BUILD_HOST, BUILD_DATE);
   strlcat(vers, tmpbuf, l);
   snprintf(tmpbuf, sizeof(tmpbuf), "cpu=%s (%s-endian), arch=%s, karch=%s.\n",
 	  cpu, endian, gopt.arch, gopt.karch);
@@ -284,7 +287,7 @@ get_args(int argc, char *argv[])
     yyin = fp;
     yyparse();
     fclose(fp);
-    if (process_last_regular_map() != 0)
+    if (process_all_regular_maps() != 0)
       exit(1);
   }
 

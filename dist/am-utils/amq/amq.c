@@ -1,7 +1,7 @@
-/*	$NetBSD: amq.c,v 1.6 2003/07/15 09:01:17 itojun Exp $	*/
+/*	$NetBSD: amq.c,v 1.7 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amq.c,v 1.17 2002/12/27 22:43:53 ezk Exp
+ * Id: amq.c,v 1.19 2004/07/23 18:29:22 ezk Exp
  *
  */
 
@@ -49,13 +49,13 @@
 
 #ifndef lint
 char copyright[] = "\
-@(#)Copyright (c) 1997-2003 Erez Zadok\n\
+@(#)Copyright (c) 1997-2004 Erez Zadok\n\
 @(#)Copyright (c) 1990 Jan-Simon Pendry\n\
 @(#)Copyright (c) 1990 Imperial College of Science, Technology & Medicine\n\
 @(#)Copyright (c) 1990 The Regents of the University of California.\n\
 @(#)All rights reserved.\n";
 #if __GNUC__ < 2
-static char rcsid[] = "Id: amq.c,v 1.17 2002/12/27 22:43:53 ezk Exp";
+static char rcsid[] = "Id: amq.c,v 1.19 2004/07/23 18:29:22 ezk Exp";
 #endif /* __GNUC__ < 2 */
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ show_mt(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid, int *pwid)
 static void
 show_mi(amq_mount_info_list *ml, enum show_opt e, int *mwid, int *dwid, int *twid)
 {
-  int i;
+  u_int i;
 
   switch (e) {
 
@@ -554,7 +554,8 @@ Usage: %s [-fmpsvwHTU] [-h hostname] [-l log_file|\"syslog\"]\n\
     char *wd = getcwd(path, MAXPATHLEN+1);
     amq_mount_tree_list *mlp = amqproc_export_1((voidp) 0, clnt);
     amq_mount_tree_p mt;
-    int i, flag;
+    u_int i;
+    int flag;
 
     if (!wd) {
       perror("getcwd");
@@ -678,8 +679,9 @@ Usage: %s [-fmpsvwHTU] [-h hostname] [-l log_file|\"syslog\"]\n\
     if (mlp) {
       enum show_opt e = Calc;
       int mwid = 0, dwid = 0, pwid = 0;
+
       while (e != ShowDone) {
-	int i;
+	u_int i;
 	for (i = 0; i < mlp->amq_mount_tree_list_len; i++) {
 	  show_mt(mlp->amq_mount_tree_list_val[i],
 		  e, &mwid, &dwid, &pwid);

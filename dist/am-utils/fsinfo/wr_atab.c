@@ -1,7 +1,7 @@
-/*	$NetBSD: wr_atab.c,v 1.2 2003/07/15 09:01:18 itojun Exp $	*/
+/*	$NetBSD: wr_atab.c,v 1.3 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: wr_atab.c,v 1.7 2002/12/27 22:44:07 ezk Exp
+ * Id: wr_atab.c,v 1.9 2004/07/23 18:29:22 ezk Exp
  *
  */
 
@@ -55,7 +55,7 @@
  * Write a sequence of automount mount map entries
  */
 static int
-write_amount_info(FILE *af, automount *ap,  int sk)
+write_amount_info(FILE *af, automount *ap,  u_int sk)
 {
   int errors = 0;
 

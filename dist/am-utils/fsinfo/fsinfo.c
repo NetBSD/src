@@ -1,7 +1,7 @@
-/*	$NetBSD: fsinfo.c,v 1.9 2003/07/15 09:01:18 itojun Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.10 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsinfo.c,v 1.10 2002/12/27 22:44:07 ezk Exp
+ * Id: fsinfo.c,v 1.13 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -169,7 +169,9 @@ fsi_get_args(int c, char *v[])
 
   if (c != optind) {
     g_argv = v + optind - 1;
+#ifdef yywrap
     if (yywrap())
+#endif /* yywrap */
       fatal("Cannot read any input files");
   } else {
     usage++;
@@ -185,9 +187,9 @@ Usage: %s [-v] [-a autodir] [-h hostname] [-b bootparams] [-d dumpsets]\n\
   }
 
   if (g_argv[0])
-    logit("g_argv[0] = %s", g_argv[0]);
+    fsi_log("g_argv[0] = %s", g_argv[0]);
   else
-    logit("g_argv[0] = (nil)");
+    fsi_log("g_argv[0] = (nil)");
 }
 
 

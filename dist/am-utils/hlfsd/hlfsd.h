@@ -1,7 +1,7 @@
-/*	$NetBSD: hlfsd.h,v 1.4 2003/03/09 01:38:47 christos Exp $	*/
+/*	$NetBSD: hlfsd.h,v 1.5 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: hlfsd.h,v 1.12 2002/12/27 22:44:08 ezk Exp
+ * Id: hlfsd.h,v 1.15 2004/07/23 18:29:22 ezk Exp
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -143,16 +143,15 @@ extern char *homedir(int, int);
 extern char *mailbox(int, char *);
 extern char *passwdfile;
 extern char *slinkname;
-extern char mboxfile[];
 extern gid_t hlfs_gid;
-extern int cache_interval;
+extern u_int cache_interval;
 extern int noverify;
 extern int serverpid;
 extern int untab_index(char *username);
 extern am_nfs_fh *root_fhp;
 extern am_nfs_fh root;
 extern nfstime startup;
-extern uid2home_t *plt_search(int);
+extern uid2home_t *plt_search(u_int);
 extern username2uid_t *untab;	/* user name table */
 extern void fatal(char *);
 extern void plt_init(void);

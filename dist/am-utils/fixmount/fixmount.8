@@ -1,7 +1,7 @@
-.\"	$NetBSD: fixmount.8,v 1.6 2003/03/09 01:38:45 christos Exp $
+.\"	$NetBSD: fixmount.8,v 1.7 2004/11/27 01:24:35 christos Exp $
 .\"
 .\"
-.\" Copyright (c) 1997-2003 Erez Zadok
+.\" Copyright (c) 1997-2004 Erez Zadok
 .\" Copyright (c) 1990 Jan-Simon Pendry
 .\" Copyright (c) 1990 Imperial College of Science, Technology & Medicine
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 .\"
 .\"	%W% (Berkeley) %G%
 .\"
-.\" Id: fixmount.8,v 1.7 2002/12/27 22:44:05 ezk Exp
+.\" Id: fixmount.8,v 1.11 2004/01/06 03:56:20 ezk Exp
 .\"
 .TH FIXMOUNT 8 "26 Feb 1993"
 .SH NAME
@@ -90,7 +90,7 @@ except that only a notification message is printed for each bogus entry
 found.  The remote mount table is not changed.
 .TP
 .B \-A
-Issues a command to the remote mountd declaring that ALL of its filesystems 
+Issues a command to the remote mountd declaring that ALL of its filesystems
 have been unmounted.  This should be used with caution, as it removes all
 remote mount entries pertaining to the local system, whether or not any
 filesystems are still mounted locally.
@@ -113,19 +113,28 @@ only.
 This option also saves time as comparisons of remotely recorded and local
 hostnames by address are avoided.
 .SH FILES
-.PD 0
 .TP 20
 .B /etc/mtab
 List of current mounts.
 .TP
 .B /etc/rmtab
 Backup file for remote mount entries on NFS server.
-.PD
 .SH "SEE ALSO"
-.\" .BR mtab (5),
-.\" .BR rmtab (5),
-.BR mountd (8),
-.BR showmount (8)
+.BR showmount (8),
+.BR mtab (5),
+.BR rmtab (5),
+.BR mountd (8C).
+.LP
+``am-utils''
+.BR info (1)
+entry.
+.LP
+.I "Linux NFS and Automounter Administration"
+by Erez Zadok, ISBN 0-7821-2739-8, (Sybex, 2001).
+.LP
+.I http://www.am-utils.org
+.LP
+.I "Amd \- The 4.4 BSD Automounter"
 .SH BUGS
 No attempt is made to verify the information in
 .B /etc/mtab
@@ -159,3 +168,12 @@ the remote /etc/rmtab file has to be edited and mountd restarted.
 The RPC timeouts for mountd calls can only be changed by recompiling.
 The defaults are 2 seconds for client handle creation and 5 seconds for
 RPC calls.
+.SH AUTHORS
+Andreas Stolcke <stolcke@icsi.berkeley.edu>.
+.P
+Erez Zadok <ezk@cs.sunysb.edu>, Computer Science Department, Stony Brook
+University, Stony Brook, New York, USA.
+.P
+Other authors and contributors to am-utils are listed in the
+.B AUTHORS
+file distributed with am-utils.
