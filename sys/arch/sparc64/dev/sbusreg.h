@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusreg.h,v 1.3 1998/09/05 23:57:25 eeh Exp $ */
+/*	$NetBSD: sbusreg.h,v 1.4 1999/05/22 20:33:56 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -251,13 +251,16 @@ struct sysioreg {
 #define IOTTE_C		0x0000000000000010LL	/* Accesses to cacheable space */
 #define IOTTE_W		0x0000000000000002LL	/* Writeable */
 
+#define IOTSB_VEND	0xffffe000
+#define IOTSB_VSTART(sz)	(u_int)(IOTSB_VEND << (PGSHIFT + (sz))) 
+
 #define MAKEIOTTE(pa,w,c,s)	(((pa)&IOTTE_PAMASK)|((w)?IOTTE_W:0)|((c)?IOTTE_C:0)|((s)?IOTTE_STREAM:0)|(IOTTE_V|IOTTE_8K))
 #if 0
 /* This version generates a pointer to a int64_t */
-#define IOTSBSLOT(va,sz)	((((((vaddr_t)(va))-(((vaddr_t)0xff800000)<<(sz))))>>(13-3))&(~7))
+#define IOTSBSLOT(va,sz)	((((((vaddr_t)(va))-((vaddr_t)IOTSB_VSTART(sz))))>>(PGSHIFT-3))&(~7))
 #else
 /* Here we just try to create an array index */
-#define IOTSBSLOT(va,sz)	((u_int)((((((vaddr_t)(va))-(((vaddr_t)0xff800000)<<(sz))))>>(13))))
+#define IOTSBSLOT(va,sz)	((u_int)((((((vaddr_t)(va))-((vaddr_t)IOTSB_VSTART(sz))))>>(PGSHIFT))))
 #endif
 
 /*

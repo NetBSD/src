@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.5 1998/09/05 23:57:25 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.6 1999/05/22 20:33:56 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ struct sbus_softc {
 	int		sc_tsbsize;
 	u_int		sc_pagesize;
 	u_int		sc_dvmabase;
-	int		sc_hasiocache;
+	struct extent	*sc_dvmamap;	/* DVMA map for this instance */
 	int		sc_ign;		/* Interrupt group number for this sysio */
 
 	paddr_t		sc_flushpa;	/* used to flush the SBUS */
