@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.50 2001/01/11 19:33:51 jhawk Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.51 2001/01/14 06:54:01 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -225,6 +225,12 @@ static struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	  PCMCIA_CIS_NANOSPEED_PRISM2,
 	  PCMCIA_STR_NANOSPEED_PRISM2,
+	  1 },
+
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_XI300_IEEE,
+	  PCMCIA_CIS_ELSA_XI300_IEEE,
+	  PCMCIA_STR_ELSA_XI300_IEEE,
 	  1 },
 
 	{ 0,
