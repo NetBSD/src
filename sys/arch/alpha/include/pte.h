@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.22 1998/06/11 05:09:47 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.23 1998/07/08 17:19:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,14 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	PG_FRAME	ALPHA_PTE_RAME
 #define	PG_SHIFT	32
 #define	PG_PFNUM(x)	ALPHA_PTE_TO_PFN(x)
+
+/*
+ * These are the PALcode PTE bits that we care about when checking to see
+ * if a PTE has changed in such a way as to require a TBI.  We don't care
+ * about the FOx bits because we always remember the state of those bits and
+ * set them to mirror what the TB has (they are used for mod/ref emulation).
+ */
+#define	PG_PALCODE(x)	((x) & (ALPHA_PTE_PALCODE & ~(PG_FOR|PG_FOW|PG_FOE)))
 
 #if defined(_KERNEL) || defined(__KVM_ALPHA_PRIVATE)
 #define	NPTEPG_SHIFT	(PAGE_SHIFT - PTESHIFT)
