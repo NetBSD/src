@@ -73,3 +73,6 @@ build kernels.
 [amiga]: Fix documentation about CPU support: we don't support 68060, only
 68020, 68030 and 68040.
 
+[kernel/amiga]: Fix a problem with the A2410 driver on fast CPUs and another
+one which caused it to reject the last monitor definition.
+
