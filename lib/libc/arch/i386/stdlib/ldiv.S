@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldiv.S,v 1.3 1994/01/28 20:35:06 jtc Exp $
+ *	$Id: ldiv.S,v 1.4 1994/03/12 01:48:29 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-        .asciz "$Id: ldiv.S,v 1.3 1994/01/28 20:35:06 jtc Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+RCSID("$Id: ldiv.S,v 1.4 1994/03/12 01:48:29 jtc Exp $")
+#endif
 
 ENTRY(ldiv)
         movl    4(%esp),%eax
