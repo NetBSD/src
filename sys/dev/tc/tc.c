@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.15 1996/04/29 16:06:38 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.16 1996/05/17 23:39:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -128,6 +128,9 @@ tcattach(parent, self, aux)
 		 * Set up the device attachment information.
 		 */
 		strncpy(ta.ta_modname, builtin->tcb_modname, TC_ROM_LLEN);
+#ifdef __alpha__ /* XXX */
+		ta.ta_bc = tba->tba_bc;
+#endif
 		ta.ta_modname[TC_ROM_LLEN] = '\0';
 		ta.ta_slot = builtin->tcb_slot;
 		ta.ta_offset = builtin->tcb_offset;
