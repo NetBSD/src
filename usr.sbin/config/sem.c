@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.24 2000/01/23 23:37:42 hubertf Exp $	*/
+/*	$NetBSD: sem.c,v 1.25 2000/01/25 01:16:00 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,7 +179,8 @@ void
 setident(i)
 	const char *i;
 {
-	ident=intern(i);
+
+	ident = intern(i);
 }
 
 /*

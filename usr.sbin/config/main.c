@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.45 2000/01/23 23:37:42 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.46 2000/01/25 01:16:00 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -186,7 +186,7 @@ usage:
 	initintern();
 	initfiles();
 	initsem();
-	ident=NULL;
+	ident = NULL;
 	devbasetab = ht_new();
 	devatab = ht_new();
 	selecttab = ht_new();
