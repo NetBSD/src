@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.3 1999/10/25 13:58:04 kleink Exp $	*/
+/*	$NetBSD: elf.c,v 1.4 2000/12/27 20:29:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se> 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.3 1999/10/25 13:58:04 kleink Exp $");
+__RCSID("$NetBSD: elf.c,v 1.4 2000/12/27 20:29:36 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -211,7 +211,8 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 				    s->addr);
 			data_offset = off;
 			/* later remove size of compressed hole from off */
-			data_hole = (ssize_t)s->addr - off;
+#define ROUND(V, S) (((V) + (S) - 1) & ~((S) - 1))
+			data_hole = (ssize_t)s->addr - ROUND(off, s->align);
 		}
 		off = (ssize_t)s->addr + s->size;
 	}
@@ -222,7 +223,6 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 	free(strtab);
 
 	/* XXX round to pagesize? */
-#define ROUND(V, S) (((V) + (S) - 1) & ~((S) - 1))
 	*modsize = ROUND(off, sysconf(_SC_PAGESIZE));
 
 	/*
