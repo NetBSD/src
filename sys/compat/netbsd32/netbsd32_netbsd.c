@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.39 2000/11/28 13:07:27 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.40 2000/11/30 12:54:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -1737,6 +1737,7 @@ netbsd32_readlink(p, v, retval)
 /* 
  * Need to completly reimplement this syscall due to argument copying.
  */
+/* ARGSUSED */
 int
 netbsd32_execve(p, v, retval)
 	struct proc *p;
@@ -1767,6 +1768,7 @@ netbsd32_execve(p, v, retval)
 	struct vmspace *vm;
 	char **tmpfap;
 	int szsigcode;
+	struct exec_vmcmd *base_vcp = NULL;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TOP_UAP(argp, char *);
@@ -1935,15 +1937,40 @@ netbsd32_execve(p, v, retval)
 		struct exec_vmcmd *vcp;
 
 		vcp = &pack.ep_vmcmds.evs_cmds[i];
+		if (vcp->ev_flags & VMCMD_RELATIVE) {
+#ifdef DIAGNOSTIC
+			if (base_vcp == NULL)
+				panic("execve: relative vmcmd with no base");
+			if (vcp->ev_flags & VMCMD_BASE)
+				panic("execve: illegal base & relative vmcmd");
+#endif
+			vcp->ev_addr += base_vcp->ev_addr;
+		}
 		error = (*vcp->ev_proc)(p, vcp);
+#ifdef DEBUG
+		if (error) {
+			if (i > 0)
+				printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i-1,
+				       vcp[-1].ev_addr, vcp[-1].ev_len,
+				       vcp[-1].ev_offset);
+			printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i,
+			       vcp->ev_addr, vcp->ev_len, vcp->ev_offset);
+		}
+#endif
+		if (vcp->ev_flags & VMCMD_BASE)
+			base_vcp = vcp;
 	}
 
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 
 	/* if an error happened, deallocate and punt */
-	if (error)
+	if (error) {
+#ifdef DEBUG
+		printf("execve: vmcmd %i failed: %d\n", i-1, error);
+#endif
 		goto exec_abort;
+	}
 
 	/* remember information about the process */
 	arginfo.ps_nargvstr = argc;
@@ -1951,8 +1978,12 @@ netbsd32_execve(p, v, retval)
 
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	if (!(*pack.ep_es->es_copyargs)(&pack, &arginfo, stack, argp))
+	if (!(*pack.ep_es->es_copyargs)(&pack, &arginfo, stack, argp)) {
+#ifdef DEBUG
+		printf("execve: copyargs failed\n");
+#endif
 		goto exec_abort;
+	}
 
 	/* fill process ps_strings info */
 	p->p_psstr = (struct ps_strings *)(stack - sizeof(struct ps_strings));
@@ -1962,15 +1993,23 @@ netbsd32_execve(p, v, retval)
 	p->p_psnenv = offsetof(struct ps_strings, ps_nenvstr);
 
 	/* copy out the process's ps_strings structure */
-	if (copyout(&arginfo, (char *)p->p_psstr, sizeof(arginfo)))
+	if (copyout(&arginfo, (char *)p->p_psstr, sizeof(arginfo))) {
+#ifdef DEBUG
+		printf("execve: ps_strings copyout failed\n");
+#endif
 		goto exec_abort;
+	}
 
 	/* copy out the process's signal trapoline code */
 	if (szsigcode) {
 		if (copyout((char *)pack.ep_es->es_emul->e_sigcode,
 		    p->p_sigacts->ps_sigcode = (char *)p->p_psstr - szsigcode,
-		    szsigcode))
+		    szsigcode)) {
+#ifdef DEBUG
+			printf("execve: sig trampoline copyout failed\n");
+#endif
 			goto exec_abort;
+		}
 #ifdef PMAP_NEED_PROCWR
 		/* This is code. Let the pmap do what is needed. */
 		pmap_procwr(p, (vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
@@ -2024,6 +2063,8 @@ netbsd32_execve(p, v, retval)
 		p->p_flag &= ~P_SUGID;
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
+
+	doexechooks(p);
 
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
@@ -2105,7 +2146,7 @@ exec_abort:
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 	exit1(p, W_EXITCODE(0, SIGABRT));
 	exit1(p, -1);
 
