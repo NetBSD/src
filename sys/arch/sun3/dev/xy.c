@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.26 2000/03/23 06:46:17 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.27 2000/04/01 14:41:13 tsutsui Exp $	*/
 
 /*
  *
@@ -1979,7 +1979,7 @@ xyc_tick(arg)
 
 	/* until next time */
 
-	callout_rest(&xycsc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xycsc);
+	callout_reset(&xycsc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xycsc);
 }
 
 /*
