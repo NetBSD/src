@@ -1,4 +1,4 @@
-/*	$NetBSD: ppbreg.h,v 1.2 1996/03/14 02:35:35 cgd Exp $	*/
+/*	$NetBSD: ppbreg.h,v 1.3 2001/07/06 18:07:16 mcr Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -70,3 +70,31 @@
  */
 #define	PPB_INTERRUPT_SWIZZLE(pin, device)				\
 	    ((((pin) + (device) - 1) % 4) + 1)
+
+/*
+ * secondary bus I/O base and limits
+ */
+#define PPB_IOBASE_SHIFT   0
+#define PPB_IOLIMIT_SHIFT  8
+#define PPB_IO_MASK   0xf000
+#define PPB_IO_MIN    4096
+
+/*
+ * secondary bus memory base and limits
+ */
+#define PPB_MEMBASE_SHIFT  0
+#define PPB_MEMLIMIT_SHIFT 16
+#define PPB_MEM_MASK   0xfff00000
+#define PPB_MEM_SHIFT  16
+#define PPB_MEM_MIN    0x00100000
+
+/* 
+ * bridge control register (see table 3.9 of ppb rev. 1.1)
+ */
+#define PPB_BC_PARITYERRORRESPONSE_ENABLE  (1<<0)
+#define PPB_BC_SERR_ENABLE                 (1<<1)
+#define PPB_BC_ISA_ENABLE                  (1<<2)
+#define PPB_BC_VGA_ENABLE                  (1<<3)
+#define PPB_BC_MASTER_ABORT_MODE           (1<<4)
+#define PPB_BC_SECONDARY_RESET             (1<<5)
+
