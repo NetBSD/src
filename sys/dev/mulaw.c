@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.7 1997/07/31 22:33:21 augustss Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.8 1997/08/04 09:29:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -278,10 +278,10 @@ mulaw_to_ulinear16(v, p, cc)
 	u_char *q = p;
 
 	p += cc;
-	q += cc;
+	q += cc * 2;
 	while (--cc >= 0) {
-		*--q = mulawtolin16[*p  ][HI];
 		*--q = mulawtolin16[*--p][LO];
+		*--q = mulawtolin16[*p  ][HI];
 	}
 }
 
@@ -319,10 +319,10 @@ alaw_to_ulinear16(v, p, cc)
 	u_char *q = p;
 
 	p += cc;
-	q += cc;
+	q += cc * 2;
 	while (--cc >= 0) {
-		*--q = alawtolin16[*p  ][HI];
 		*--q = alawtolin16[*--p][LO];
+		*--q = alawtolin16[*p  ][HI];
 	}
 }
 
