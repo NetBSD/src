@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipfilter2netbsd,v 1.9 1997/09/16 02:06:41 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -60,7 +60,36 @@ esac
 echo preparing directory $d
 rm -rf $d
 mkdir -p $d; cd $d
-mkdir -p src/usr.sbin/ipf/ipf src/sys/netinet src/usr.sbin/ipf/ipfstat src/usr.sbin/ipf/ipftest src/usr.sbin/ipf/ipmon src/usr.sbin/ipf/ipnat src/usr.sbin/ipf/ipresend src/usr.sbin/ipf/ipsend src/usr.sbin/ipf/iptest src/sys/lkm/netinet/if_ipl
+mkdir -p src/usr.sbin/ipf/ipf src/sys/netinet src/usr.sbin/ipf/ipfstat src/usr.sbin/ipf/ipftest src/usr.sbin/ipf/ipmon src/usr.sbin/ipf/ipnat src/usr.sbin/ipf/ipresend src/usr.sbin/ipf/ipsend src/usr.sbin/ipf/iptest src/usr.sbin/ipf/rules src/sys/lkm/netinet/if_ipl
+
+### start Makefile ###############################
+cd $d/src/usr.sbin/ipf
+
+echo creating main Makefile
+cat > Makefile<<'__eof_makefile'
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+
+SUBDIR=		ipf ipfstat ipmon ipnat ipftest ipsend iptest
+.if make(install)
+SUBDIR+=	rules
+.endif
+
+.include <bsd.subdir.mk>
+__eof_makefile
+### end Makefile ###############################
+
+### start Makefile.inc ###############################
+cd $d/src/usr.sbin/ipf
+
+echo creating main Makefile.inc
+cat > Makefile.inc<<'__eof_makefile'
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+
+WARNS?=	1
+
+.include "${.CURDIR}/../../Makefile.inc"
+__eof_makefile
+### end Makefile.inc ###############################
 
 ### start ipf ###############################
 cd $r
@@ -76,7 +105,7 @@ mv ipf.1 ipf.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.9 1997/09/16 02:06:41 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
 
 PROG=	ipf
 SRCS=	ipf.c parse.c opt.c
@@ -103,7 +132,7 @@ cd $d/src/usr.sbin/ipf/ipfstat
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.9 1997/09/16 02:06:41 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
 
 PROG=	ipfstat
 SRCS=	kmem.c fils.c opt.c parse.c
@@ -127,12 +156,12 @@ cd $d/src/usr.sbin/ipf/ipftest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.9 1997/09/16 02:06:41 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
 
 PROG=	ipftest
 SRCS=	ipt.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c ip_nat.c ipft_hx.c ip_fil.c fil.c parse.c ip_proxy.c ip_auth.c
 NOMAN=	yes
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../ipf -I${.CURDIR}/../../../sys
+CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../ipf
 
 .PATH: ${.CURDIR}/../ipf ${.CURDIR}/../../../sys/netinet
 .include <bsd.prog.mk>
@@ -152,7 +181,7 @@ cd $d/src/usr.sbin/ipf/ipmon
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.9 1997/09/16 02:06:41 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
 
 PROG=	ipmon
 MAN=	ipmon.8
@@ -177,11 +206,12 @@ mv ipnat.1 ipnat.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.9 1997/09/16 02:06:41 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
 
 PROG=	ipnat
 SRCS=	kmem.c ipnat.c
 MAN=	ipnat.8 ipnat.4 ipnat.5
+MLINKS=	ipnat.5 ipnat.conf.5
 CFLAGS+=-I${.CURDIR}/../ipf -I${.CURDIR}/../ipfstat
 
 .PATH: ${.CURDIR}/../ipf ${.CURDIR}/../ipfstat
@@ -193,18 +223,19 @@ __eof_makefile
 cd $r
 echo ipresend:
 src='ipresend.c resend.c'
+man=ipresend.1
 
-cd ipsend; pax -rvw $src $d/src/usr.sbin/ipf/ipresend
+cd ipsend; pax -rvw $src $man $d/src/usr.sbin/ipf/ipresend
 
 cd $d/src/usr.sbin/ipf/ipresend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.9 1997/09/16 02:06:41 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
 
 PROG=	ipresend
 SRCS=	ipresend.c ip.c resend.c opt.c ipft_ef.c ipft_hx.c ipft_sn.c ipft_td.c ipft_tx.c sbpf.c 44arp.c
-NOMAN=	yes
+MAN=	ipresend.1
 CFLAGS+=-I${.CURDIR}/../ipfstat -I${.CURDIR}/../ipsend -I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf
 
 .PATH: ${.CURDIR}/../ipf ${.CURDIR}/../ipfstat ${.CURDIR}/../ipsend ${.CURDIR}/../ipftest
@@ -215,22 +246,29 @@ __eof_makefile
 ### start of ipsend ##############################
 cd $r
 echo ipsend:
-# XXX Want to also include tcpip.h, but can't right now because
-# XXX the license on that file does not allow redistribution!
-src='44arp.c ip.c ip_compat.h ipsend.c ipsend.h ipsopt.c sbpf.c'
+src='44arp.c ip.c ipsend.c ipsend.h ipsopt.c sbpf.c tcpip.h'
+src2='iplang_l.l iplang_y.y iplang.tst iplang.h'
+man='ipsend.1 ipsend.5'
 
-cd ipsend; pax -rvw $src $d/src/usr.sbin/ipf/ipsend
+cd ipsend; pax -rvw $src $man $d/src/usr.sbin/ipf/ipsend
+cd $r
+cd iplang; pax -rvw $src2 $d/src/usr.sbin/ipf/ipsend
 
 cd $d/src/usr.sbin/ipf/ipsend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.9 1997/09/16 02:06:41 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
 
 PROG=	ipsend
-SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c
-NOMAN=	yes
-CFLAGS+=-I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf
+SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c iplang_l.l iplang_y.y
+CFLAGS+=-I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf -I.
+LDADD=	-ll
+DPADD=	${LIBL}
+
+CLEANFILES+= y.tab.h
+
+MAN=	ipsend.1 ipsend.5
 
 .PATH: ${.CURDIR}/../ipf
 .include <bsd.prog.mk>
@@ -241,18 +279,19 @@ __eof_makefile
 cd $r
 echo iptest:
 src='iptest.c iptests.c sock.c'
+man=iptest.1
 
-cd ipsend; pax -rvw $src $d/src/usr.sbin/ipf/iptest
+cd ipsend; pax -rvw $src $man $d/src/usr.sbin/ipf/iptest
 
 cd $d/src/usr.sbin/ipf/iptest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.9 1997/09/16 02:06:41 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
 
 PROG=	iptest
 SRCS=	iptest.c iptests.c ip.c sbpf.c 44arp.c sock.c
-NOMAN=	yes
+MAN=	iptest.1
 CFLAGS+=-I${.CURDIR}/../ipsend -I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf
 
 .PATH: ${.CURDIR}/../ipf ${.CURDIR}/../ipsend
@@ -260,10 +299,35 @@ CFLAGS+=-I${.CURDIR}/../ipsend -I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf
 __eof_makefile
 ### end of iptest ###############################
 
+### start of rules ##############################
+cd $r
+echo rules:
+
+pax -rvw rules $d/src/usr.sbin/ipf
+
+cd $d/src/usr.sbin/ipf/rules
+
+echo creating Makefile
+cat > Makefile<<'__eof_makefile'
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+
+FILESDIR= /usr/share/samples/ipf
+
+FILES=	example.1 example.2 example.3 example.4 example.5 example.6 example.7 \
+	example.8 example.9 example.10 example.sr firewall ftp-proxy ftppxy \
+	nat-setup nat.eg server tcpstate
+
+all:
+
+.include <bsd.own.mk>
+.include <bsd.files.mk>
+__eof_makefile
+### end of rules ###############################
+
 ### start ipfilter in kernel #######################
 cd $r
 echo kernel modules:
-src='ip_auth.c ip_auth.h ip_fil.c fil.c ip_nat.c ip_frag.c ip_state.c ip_fil.h ip_compat.h ip_frag.h ip_nat.h ip_state.h ip_proxy.c ip_proxy.h ip_ftp_pxy.c'
+src='ip_auth.c ip_auth.h ip_fil.c fil.c ip_nat.c ip_frag.c ip_state.c ip_fil.h ip_compat.h ip_frag.h ip_nat.h ip_state.h ip_proxy.c ip_proxy.h ip_ftp_pxy.c ip_log.c'
 
 pax -rvw $src $d/src/sys/netinet
 ### end ipfilter in kernel #######################
@@ -279,21 +343,22 @@ cd $d/src/sys/lkm/netinet/if_ipl
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.9 1997/09/16 02:06:41 mrg Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
 
 .include "../Makefile.inc"
 
 .PATH: $S/netinet
 
 KMOD=	if_ipl
-SRCS=	ip_fil.c fil.c mln_ipl.c ip_nat.c ip_frag.c ip_state.c ip_proxy.c
+SRCS=	ip_fil.c fil.c mln_ipl.c ip_nat.c ip_frag.c ip_state.c ip_proxy.c \
+	ip_auth.c ip_log.c
 NOMAN=	yes
 
 .include <bsd.kmod.mk>
 __eof_makefile
 ### end ip_fil lkm #######################
 
-find $d -name '*.[ch]' -print | while read c; do
+find $d -name '*.[chly]' -print | while read c; do
 	sed -e 's/"ip_fil.h"/<netinet\/ip_fil.h>/
 		s/"ip_compat.h"/<netinet\/ip_compat.h>/
 		s/"ip_nat.h"/<netinet\/ip_nat.h>/
@@ -301,28 +366,17 @@ find $d -name '*.[ch]' -print | while read c; do
 		s/"ip_state.h"/<netinet\/ip_state.h>/
 		s/"ip_proxy.h"/<netinet\/ip_proxy.h>/
 		s/"ip_auth.h"/<netinet\/ip_auth.h>/
-		s/<sys\/ip_fil.h>/<netinet\/ip_fil.h>/
 		s/\$\(Id.*\)\$/\1/' \
 	< $c > /tmp/ipf2n$$ && mv /tmp/ipf2n$$ $c && echo transformed $c
 	sed 1q < $c | grep '\$NetBSD' || (
 cat <<'__eof_header'
-/*	$NetBSD: ipfilter2netbsd,v 1.9 1997/09/16 02:06:41 mrg Exp $	*/
+/*	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $	*/
 
 __eof_header
 cat $c
-	) > /tmp/ipf3n$$ && cp /tmp/ipf3n$$ $c && echo added RCS tags to $c
+	) > /tmp/ipf3n$$ && mv /tmp/ipf3n$$ $c && echo added RCS tags to $c
 done
 
-echo done
-
-# ipsend.h needs to include it's own private copy of ip_compat.h,
-# which is very different from the copy in sys/netinet.  (sigh.)
-echo "fixing up $d/src/usr.sbin/ipf/ipsend/ipsend.h"
-(
-	cd $d/src/usr.sbin/ipf/ipsend
-	sed -e 's/<netinet\/ip_compat.h>/"ip_compat.h"/' \
-	    < ipsend.h > /tmp/ipf2n$$ && mv /tmp/ipf2n$$ ipsend.h
-)
 echo done
 
 # Clean up any CVS directories that might be around.
@@ -332,4 +386,14 @@ echo "cleaning up CVS residue."
 	find . -type d -name "CVS" -print | xargs rm -r
 )
 echo done
+
+# Fixing file and directory permissions.
+echo "Fixing file/directory permissions."
+(
+	cd $d
+	find . -type f -print | xargs chmod u+rw,go+r
+	find . -type d -print | xargs chmod u+rwx,go+rx
+)
+echo done
+
 exit 0
