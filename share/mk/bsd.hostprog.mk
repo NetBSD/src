@@ -1,7 +1,8 @@
-\#	$NetBSD: bsd.hostprog.mk,v 1.18 2001/11/11 23:19:14 tv Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.19 2001/11/12 22:06:41 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
+.include <bsd.sys.mk>
 
 ##### Basic targets
 .PHONY:		cleanprog 
@@ -106,7 +107,8 @@ cleanprog:
 	    ${HOSTPROG} ${OBJS} ${LOBJS} ${CLEANFILES}
 
 beforedepend:
-CPPFLAGS=	${HOST_CPPFLAGS}
+CFLAGS:=	${HOST_CFLAGS}
+CPPFLAGS:=	${HOST_CPPFLAGS}
 
 .if defined(SRCS)
 afterdepend: .depend
@@ -128,6 +130,5 @@ lint: ${LOBJS}
 .include <bsd.inc.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
-.include <bsd.sys.mk>
 
 ${TARGETS}:	# ensure existence
