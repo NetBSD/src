@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibmnws,v 1.5 2004/03/25 15:26:35 wiz Exp $
+#	$NetBSD: files.ibmnws,v 1.6 2004/04/28 23:51:24 rjs Exp $
 #
 # ibmnws-specific configuration info
 #
@@ -89,6 +89,11 @@ file	arch/powerpc/isa/isadma_machdep.c	isadma
 
 # ISA Plug 'n Play devices
 file	arch/prep/isa/isapnp_machdep.c		isapnp
+
+# Audio controller
+device	paud { }: audiobus, isadma, ad1848, auconv
+attach	paud at isa with paud_isa
+file	arch/prep/isa/paud_isa.c	paud_isa
 
 #
 # clock
