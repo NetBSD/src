@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.9 1998/05/22 09:26:33 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.10 1998/06/04 15:52:48 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,6 +51,8 @@
 #include <machine/ka410.h>
 #include <machine/clock.h>
 #include <machine/vsbus.h>
+
+#include "smg.h"
 
 static	void	ka410_conf __P((struct device*, struct device*, void*));
 static	void	ka410_steal_pages __P((void));
@@ -162,6 +164,14 @@ ka410_steal_pages()
 	if (((int)le_iomem & ~KERNBASE) > 0xffffff)
 		parctl = PARCTL_DMA;
 
+#if NSMG > 0
+	if ((vax_confdata & 0x80) == 0) { /* Video controller present */
+		MAPVIRT(sm_addr, (SMSIZE / NBPG));
+		pmap_map((vm_offset_t)sm_addr, (vm_offset_t)SMADDR,
+		    (vm_offset_t)SMADDR + SMSIZE, VM_PROT_READ|VM_PROT_WRITE);
+		((struct vs_cpu *)VS_REGS)->vc_vdcorg = 0;
+	}
+#endif
 	/*
 	 * Clear restart and boot in progress flags
 	 * in the CPMBX. (ie. clear bits 4 and 5)

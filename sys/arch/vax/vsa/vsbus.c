@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.10 1998/05/21 13:10:59 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.11 1998/06/04 15:51:12 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -142,6 +142,12 @@ vsbus_attach(parent, self, aux)
 	/* Always have serial line */
 	va.va_type = INR_SR;
 	config_found(self, &va, vsbus_print);
+
+	/* If sm_addr is set, a monochrome graphics adapter is found */
+	if (sm_addr) {
+		va.va_type = INR_VF;
+		config_found(self, &va, vsbus_print);
+	}
 }
 
 static	void stray __P((int));

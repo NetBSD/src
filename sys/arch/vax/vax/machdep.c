@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.54 1998/05/08 16:55:17 kleink Exp $	 */
+/* $NetBSD: machdep.c,v 1.55 1998/06/04 15:52:48 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -458,7 +458,11 @@ setstatclockrate(hzrate)
 void
 consinit()
 {
+	extern int smgprobe(void), smgcninit(void);
 	cninit();
+	/* XXX - do this probe after everything else due to wscons trouble */
+	if (smgprobe())
+		smgcninit();
 #ifdef DDB
 /*	db_machine_init(); */
 	ddb_init();
