@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.11 2000/01/21 23:29:03 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.12 2000/02/06 11:14:56 frueauf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -550,7 +550,7 @@ mtstart(arg)
 	void *arg;
 {
 	struct mt_softc *sc = arg;
-	struct buf *bp, *dp;
+	struct buf *bp;
 	short	cmdcount = 1;
 	u_char	cmdbuf[2];
 
@@ -769,7 +769,7 @@ mtintr(arg)
 	void *arg;
 {
 	struct mt_softc *sc = arg;
-	struct buf *bp, *dp;
+	struct buf *bp;
 	int i;
 	u_char cmdbuf[4];
 
