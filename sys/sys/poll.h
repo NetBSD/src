@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.1 1996/09/07 17:42:49 mycroft Exp $	*/
+/*	$NetBSD: poll.h,v 1.2 1996/09/07 21:44:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -55,6 +55,11 @@ struct pollfd {
 #define	POLLERR		0x0008
 #define	POLLHUP		0x0010
 #define	POLLNVAL	0x0020
+
+/*
+ * Infinite timeout value.
+ */
+#define	INFTIM		-1
 
 #ifndef _KERNEL
 
