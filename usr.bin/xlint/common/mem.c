@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 2003/10/16 06:35:26 itojun Exp $	*/
+/*	$NetBSD: mem.c,v 1.5 2003/10/21 23:58:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,9 +33,12 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem.c,v 1.4 2003/10/16 06:35:26 itojun Exp $");
+__RCSID("$NetBSD: mem.c,v 1.5 2003/10/21 23:58:53 christos Exp $");
 #endif
 
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/mman.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -89,4 +92,28 @@ nomem(void)
 {
 
 	errx(1, "virtual memory exhausted");
+}
+
+void *
+xmapalloc(size_t len)
+{
+	static const int prot = PROT_READ | PROT_WRITE;
+	void *p;
+#ifdef MAP_ANON
+	static const int flags = MAP_ANON | MAP_PRIVATE;
+	int fd = -1;
+#else
+	static const int flags = MAP_PRIVATE;
+	int fd = open("/dev/zero", O_RDWR);
+
+	if (fd == -1)
+		err(1, "Cannot open `/dev/zero'");
+#endif
+	p = mmap(NULL, len, prot, flags, fd, (off_t)0);
+	if (p == (void *)-1)
+		err(1, "Cannot map memory for %lu bytes", (unsigned long)len);
+#ifndef MAP_ANON
+	(void)close(fd);
+#endif
+	return p;
 }
