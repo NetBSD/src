@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.1 1995/04/29 20:23:41 briggs Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.2 1995/06/21 02:48:00 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -53,14 +53,20 @@ extern int	grfiv_init __P((struct grf_softc *sc));
 extern int	grfiv_mode __P((struct grf_softc *sc, int cmd, void *arg));
 
 extern int
-grfiv_probe(sc, ignore)
+grfiv_probe(sc, slotinfo)
 	struct grf_softc *sc;
-	nubus_slot *ignore;
+	nubus_slot *slotinfo;
 {
-	extern unsigned long int_video_start;
+	extern unsigned long	int_video_start;
 
 	if (int_video_start == 0) {
 		return 0;
+	}
+	if (slotinfo->slot < 0xe) {
+		if (NUBUS_SLOT_TO_BASE(slotinfo->slot) > int_video_start)
+			return 0;
+		if (NUBUS_SLOT_TO_BASE(slotinfo->slot + 1) <= int_video_start)
+			return 0;
 	}
 	return 1;
 }
