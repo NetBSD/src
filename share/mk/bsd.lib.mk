@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.24 1993/08/15 20:42:41 mycroft Exp $
+#	$Id: bsd.lib.mk,v 1.25 1993/08/15 20:59:36 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -77,6 +77,8 @@ clean:
 	rm -f lib${LIB}.a lib${LIB}_p.a llib-l${LIB}.ln
 .endif
 
+cleandir: clean
+
 afterdepend:
 	@(TMP=/tmp/_depend$$$$; \
 	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po:/' < .depend > $$TMP; \
@@ -120,12 +122,9 @@ afterinstall: realinstall
 realinstall: beforeinstall
 .endif
 
-cleandir: clean
-
 .if !defined(NOMAN)
 .include <bsd.man.mk>
 .endif
 
 .include <bsd.obj.mk>
 .include <bsd.dep.mk>
-.include <bsd.subdir.mk>
