@@ -1,4 +1,4 @@
-/* $NetBSD: setnetbootinfo.c,v 1.5 1997/04/06 08:41:37 cgd Exp $ */
+/* $NetBSD: setnetbootinfo.c,v 1.5.10.1 1997/11/13 21:08:19 mellon Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -48,7 +48,6 @@ char	*netboot, *outfile, *addr, *host;
 
 char	*outfilename;
 
-extern struct ether_addr *ether_aton __P((char *s));		/* XXX */
 extern char *ether_ntoa __P((struct ether_addr *s));		/* XXX */
 struct ether_addr *ether_addr, _ether_addr;
 
@@ -74,7 +73,7 @@ main(argc, argv)
 	char *netbb;
 	int c, fd, i;
 
-	while ((c = getopt(argc, argv, "a:fh:o:uv")) != EOF) {
+	while ((c = getopt(argc, argv, "a:fh:o:uv")) != -1) {
 		switch (c) {
 		case 'a':
 			/* use the argument as an ethernet address */
