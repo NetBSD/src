@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.2 2001/12/29 18:56:52 augustss Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.3 2001/12/29 20:50:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -363,10 +363,8 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
-#ifdef DIAGNOSTIC
-		printf("%s: interrupr status=%d\n", USBDEVNAME(sc->sc_dev),
-		       status);
-#endif
+		DPRINTF(("%s: interrupt status=%d\n", USBDEVNAME(sc->sc_dev),
+			 status));
 		usbd_clear_endpoint_stall_async(sc->sc_intrpipe);
 		return;
 	}
