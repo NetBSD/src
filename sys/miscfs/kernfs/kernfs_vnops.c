@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.87 2003/06/29 18:43:33 thorpej Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.88 2003/06/29 22:31:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.87 2003/06/29 18:43:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.88 2003/06/29 22:31:41 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

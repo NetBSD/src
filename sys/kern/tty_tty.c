@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.20 2003/06/28 14:21:57 darrenr Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.21 2003/06/29 22:31:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.20 2003/06/28 14:21:57 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.21 2003/06/29 22:31:29 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,12 +68,12 @@ const struct cdevsw ctty_cdevsw = {
 
 /*ARGSUSED*/
 int
-cttyopen(dev, flag, mode, l)
+cttyopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
-	struct vnode *ttyvp = cttyvp(l->l_proc);
+	struct vnode *ttyvp = cttyvp(p);
 	int error;
 
 	if (ttyvp == NULL)
@@ -92,7 +92,7 @@ cttyopen(dev, flag, mode, l)
 	  (flag&FREAD ? VREAD : 0) | (flag&FWRITE ? VWRITE : 0), p->p_ucred, p);
 	if (!error)
 #endif /* PARANOID */
-		error = VOP_OPEN(ttyvp, flag, NOCRED, l);
+		error = VOP_OPEN(ttyvp, flag, NOCRED, p);
 	VOP_UNLOCK(ttyvp, 0);
 	return (error);
 }
@@ -104,7 +104,7 @@ cttyread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct vnode *ttyvp = cttyvp(uio->uio_lwp->l_proc);
+	struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)
@@ -122,7 +122,7 @@ cttywrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct vnode *ttyvp = cttyvp(uio->uio_lwp->l_proc);
+	struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)
@@ -135,18 +135,14 @@ cttywrite(dev, uio, flag)
 
 /*ARGSUSED*/
 int
-cttyioctl(dev, cmd, addr, flag, l)
+cttyioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct lwp *l;
-{
 	struct proc *p;
-	struct vnode *ttyvp;
-
-	p = l->l_proc;
-	ttyvp = cttyvp(p);
+{
+	struct vnode *ttyvp = cttyvp(p);
 
 	if (ttyvp == NULL)
 		return (EIO);
@@ -159,25 +155,21 @@ cttyioctl(dev, cmd, addr, flag, l)
 		} else
 			return (EINVAL);
 	}
-	return (VOP_IOCTL(ttyvp, cmd, addr, flag, NOCRED, l));
+	return (VOP_IOCTL(ttyvp, cmd, addr, flag, NOCRED, p));
 }
 
 /*ARGSUSED*/
 int
-cttypoll(dev, events, l)
+cttypoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
-{
 	struct proc *p;
-	struct vnode *ttyvp;
-
-	p = l->l_proc;
-	ttyvp = cttyvp(p);
+{
+	struct vnode *ttyvp = cttyvp(p);
 
 	if (ttyvp == NULL)
-		return (seltrue(dev, events, l));
-	return (VOP_POLL(ttyvp, events, l));
+		return (seltrue(dev, events, p));
+	return (VOP_POLL(ttyvp, events, p));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.144 2003/06/29 10:37:45 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.145 2003/06/29 22:29:01 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -458,14 +458,14 @@ parse_bootargs(args)
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	u_int chosen;
 	char bootargs[256];
@@ -1178,8 +1178,8 @@ stackdump()
 
 
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	return (ENOEXEC);
@@ -1443,7 +1443,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	bus_dma_segment_t segs[MAX_DMA_SEGS];
 	int i, j;
 	size_t len;
-	struct proc *p = uio->uio_lwp->l_proc;
+	struct proc *p = uio->uio_procp;
 	struct pmap *pm;
 
 	/*

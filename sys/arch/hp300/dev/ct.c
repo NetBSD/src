@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.34 2003/06/29 15:58:19 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.35 2003/06/29 22:28:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.34 2003/06/29 15:58:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.35 2003/06/29 22:28:15 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,10 +371,10 @@ ctreset(sc)
 
 /*ARGSUSED*/
 int
-ctopen(dev, flag, type, l)
+ctopen(dev, flag, type, p)
 	dev_t dev;
 	int flag, type;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ct_softc *sc;
 	u_char stat;
@@ -413,17 +413,17 @@ ctopen(dev, flag, type, l)
 	if (cc != sizeof(stat))
 		return(EBUSY);
 
-	sc->sc_tpr = tprintf_open(l->l_proc);
+	sc->sc_tpr = tprintf_open(p);
 	sc->sc_flags |= CTF_OPEN;
 	return(0);
 }
 
 /*ARGSUSED*/
 int
-ctclose(dev, flag, fmt, l)
+ctclose(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ct_softc *sc = ct_cd.cd_devs[UNIT(dev)];
 
@@ -925,12 +925,12 @@ ctwrite(dev, uio, flags)
 
 /*ARGSUSED*/
 int
-ctioctl(dev, cmd, data, flag, l)
+ctioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	int flag;
 	caddr_t data;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct mtop *op;
 	int cnt;

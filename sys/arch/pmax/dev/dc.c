@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.73 2003/06/29 09:56:27 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.74 2003/06/29 22:28:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.73 2003/06/29 09:56:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.74 2003/06/29 22:28:45 fvdl Exp $");
 
 /*
  * devDC7085.c --
@@ -464,10 +464,10 @@ dc_mouse_init(sc, dev)
  * open tty
  */
 int
-dcopen(dev, flag, mode, l)
+dcopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct tty *tp;
 	struct dc_softc *sc;
@@ -535,10 +535,10 @@ dcopen(dev, flag, mode, l)
 
 /*ARGSUSED*/
 int
-dcclose(dev, flag, mode, l)
+dcclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct dc_softc *sc;
 	struct tty *tp;
@@ -599,17 +599,17 @@ dcwrite(dev, uio, flag)
 }
 
 int
-dcpoll(dev, events, l)
+dcpoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct dc_softc *sc;
 	struct tty *tp;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
 	tp = sc->dc_tty[DCLINE(dev)];
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
@@ -626,12 +626,12 @@ dctty(dev)
 
 /*ARGSUSED*/
 int
-dcioctl(dev, cmd, data, flag, l)
+dcioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct dc_softc *sc;
 	struct tty *tp;
@@ -645,11 +645,11 @@ dcioctl(dev, cmd, data, flag, l)
 	sc = dc_cd.cd_devs[unit];
 	tp = sc->dc_tty[line];
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, l);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.17 2003/06/29 18:43:25 thorpej Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.18 2003/06/29 22:31:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.17 2003/06/29 18:43:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.18 2003/06/29 22:31:13 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,8 +268,8 @@ smbfs_inactive(v)
 		struct vnode *a_vp;
 		struct thread *a_td;
 	} */ *ap = v;
-	struct lwp *l = ap->a_l;
-	struct ucred *cred = l->l_proc->p_ucred;
+	struct proc *p = ap->a_p;
+	struct ucred *cred = p->p_ucred;
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
@@ -277,8 +277,8 @@ smbfs_inactive(v)
 
 	SMBVDEBUG("%.*s: %d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
 	if (np->n_opencount) {
-		error = smbfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
-		smb_makescred(&scred, l, cred);
+		error = smbfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+		smb_makescred(&scred, p, cred);
 		error = smbfs_smb_close(np->n_mount->sm_share, np->n_fid, 
 		   &np->n_mtime, &scred);
 		np->n_opencount = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.29 2003/06/28 14:22:22 darrenr Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.30 2003/06/29 22:32:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -90,14 +90,14 @@ struct reg;
 struct fpreg;
 #endif
 
-int	process_doregs __P((struct lwp *, struct lwp *, struct uio *));
-int	process_validregs __P((struct lwp *));
+int	process_doregs __P((struct proc *, struct lwp *, struct uio *));
+int	process_validregs __P((struct proc *));
 
-int	process_dofpregs __P((struct lwp *, struct lwp *, struct uio *));
-int	process_validfpregs __P((struct lwp *));
+int	process_dofpregs __P((struct proc *, struct lwp *, struct uio *));
+int	process_validfpregs __P((struct proc *));
 
-int	process_domem __P((struct lwp *, struct lwp *, struct uio *));
-int	process_checkioperm __P((struct lwp *, struct proc *));
+int	process_domem __P((struct proc *, struct proc *, struct uio *));
+int	process_checkioperm __P((struct proc *, struct proc *));
 
 void	proc_reparent __P((struct proc *child, struct proc *newparent));
 #ifdef PT_GETFPREGS
@@ -116,7 +116,7 @@ int	process_write_regs __P((struct lwp *l, struct reg *regs));
 #endif
 
 #ifdef __HAVE_PROCFS_MACHDEP
-int	ptrace_machdep_dorequest(struct lwp *, struct lwp *, int,
+int	ptrace_machdep_dorequest(struct proc *, struct lwp *, int,
 	    caddr_t, int);
 #endif
 

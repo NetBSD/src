@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.46 2003/06/29 18:43:48 thorpej Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.47 2003/06/29 22:32:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.46 2003/06/29 18:43:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.47 2003/06/29 22:32:47 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ ufs_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -382,7 +382,7 @@ notfound:
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc);
 		if (error)
 			return (error);
 		/*
@@ -473,7 +473,7 @@ found:
 		/*
 		 * Write access to directory required to delete files.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc);
 		if (error)
 			return (error);
 		/*
@@ -526,7 +526,7 @@ found:
 	 * regular file, or empty directory.
 	 */
 	if (nameiop == RENAME && wantparent && (flags & ISLASTCN)) {
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc);
 		if (error)
 			return (error);
 		/*
@@ -730,7 +730,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	struct buf *newdirbp;
 {
 	struct ucred *cr;
-	struct lwp *l;
+	struct proc *p;
 	int newentrysize;
 	struct inode *dp;
 	struct buf *bp;
@@ -747,7 +747,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 
 	error = 0;
 	cr = cnp->cn_cred;
-	l = cnp->cn_lwp;
+	p = cnp->cn_proc;
 
 	dp = VTOI(dvp);
 	newentrysize = DIRSIZ(0, dirp, 0);
@@ -825,7 +825,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 				return (error);
 			if (tvp != NULL)
 				VOP_UNLOCK(tvp, 0);
-			error = VOP_FSYNC(dvp, l->l_proc->p_ucred, FSYNC_WAIT, 0, 0, l);
+			error = VOP_FSYNC(dvp, p->p_ucred, FSYNC_WAIT, 0, 0, p);
 			if (tvp != 0)
 				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
@@ -946,7 +946,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	if (error == 0 && dp->i_endoff && dp->i_endoff < dp->i_size) {
 		if (tvp != NULL)
 			VOP_UNLOCK(tvp, 0);
-		(void) VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, l);
+		(void) VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, p);
 		if (tvp != NULL)
 			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 	}
@@ -1097,7 +1097,7 @@ ufs_dirempty(ip, parentino, cred)
 	for (off = 0; off < ip->i_size;
 	    off += ufs_rw16(dp->d_reclen, needswap)) {
 		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
-		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct lwp *)0);
+		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct proc *)0);
 		/*
 		 * Since we read MINDIRSIZ, residual must
 		 * be 0 unless we're at end of file.
@@ -1148,10 +1148,9 @@ ufs_dirempty(ip, parentino, cred)
  * The target is always vput before returning.
  */
 int
-ufs_checkpath(source, target, cred, l)
+ufs_checkpath(source, target, cred)
 	struct inode *source, *target;
 	struct ucred *cred;
-	struct lwp *l;
 {
 	struct vnode *vp = ITOV(target);
 	int error, rootino, namlen;
@@ -1175,7 +1174,7 @@ ufs_checkpath(source, target, cred, l)
 		}
 		error = vn_rdwr(UIO_READ, vp, (caddr_t)&dirbuf,
 		    sizeof (struct dirtemplate), (off_t)0, UIO_SYSSPACE,
-		    IO_NODELOCKED, cred, NULL, (struct lwp *)0);
+		    IO_NODELOCKED, cred, NULL, (struct proc *)0);
 		if (error != 0)
 			break;
 #if (BYTE_ORDER == LITTLE_ENDIAN)

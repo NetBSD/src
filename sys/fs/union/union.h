@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.6 2003/06/29 18:43:27 thorpej Exp $	*/
+/*	$NetBSD: union.h,v 1.7 2003/06/29 22:31:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -103,26 +103,26 @@ extern int union_allocvp __P((struct vnode **, struct mount *,
 				struct componentname *, struct vnode *,
 				struct vnode *, int));
 extern int union_copyfile __P((struct vnode *, struct vnode *,
-					struct ucred *, struct lwp *));
+					struct ucred *, struct proc *));
 extern int union_copyup __P((struct union_node *, int, struct ucred *,
-				struct lwp *));
+				struct proc *));
 extern void union_diruncache __P((struct union_node *));
 extern int union_dowhiteout __P((struct union_node *, struct ucred *,
-					struct lwp *));
+					struct proc *));
 extern int union_mkshadow __P((struct union_mount *, struct vnode *,
 				struct componentname *, struct vnode **));
 extern int union_mkwhiteout __P((struct union_mount *, struct vnode *,
 				struct componentname *, char *));
 extern int union_vn_create __P((struct vnode **, struct union_node *,
-				struct lwp *));
+				struct proc *));
 extern int union_cn_close __P((struct vnode *, int, struct ucred *,
-				struct lwp *));
+				struct proc *));
 extern void union_removed_upper __P((struct union_node *un));
 extern struct vnode *union_lowervp __P((struct vnode *));
 extern void union_newlower __P((struct union_node *, struct vnode *));
 extern void union_newupper __P((struct union_node *, struct vnode *));
 extern void union_newsize __P((struct vnode *, off_t, off_t));
-int union_readdirhook(struct vnode **, struct file *, struct lwp *);
+int union_readdirhook(struct vnode **, struct file *, struct proc *);
 
 #define	MOUNTTOUNIONMOUNT(mp) ((struct union_mount *)((mp)->mnt_data))
 #define	VTOUNION(vp) ((struct union_node *)(vp)->v_data)

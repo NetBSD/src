@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.27 2003/06/28 14:22:23 darrenr Exp $	*/
+/*	$NetBSD: un.h,v 1.28 2003/06/29 22:32:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -67,8 +67,8 @@ struct unpcb;
 struct socket;
 
 int	unp_attach __P((struct socket *so));
-int	unp_bind __P((struct unpcb *unp, struct mbuf *nam, struct lwp *l));
-int	unp_connect __P((struct socket *so, struct mbuf *nam, struct lwp *l));
+int	unp_bind __P((struct unpcb *unp, struct mbuf *nam, struct proc *p));
+int	unp_connect __P((struct socket *so, struct mbuf *nam, struct proc *p));
 int	unp_connect2 __P((struct socket *so, struct socket *so2));
 void	unp_detach __P((struct unpcb *unp));
 void	unp_discard __P((struct file *fp));

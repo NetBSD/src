@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.50 2003/06/29 09:56:31 darrenr Exp $	*/
+/*	$NetBSD: xd.c,v 1.51 2003/06/29 22:31:00 fvdl Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.50 2003/06/29 09:56:31 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51 2003/06/29 22:31:00 fvdl Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -935,10 +935,10 @@ done:
  * xdclose: close device
  */
 int
-xdclose(dev, flag, fmt, l)
+xdclose(dev, flag, fmt, p)
 	dev_t   dev;
 	int     flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct xd_softc *xd = xd_cd.cd_devs[DISKUNIT(dev)];
 	int     part = DISKPART(dev);
@@ -1001,15 +1001,14 @@ xddump(dev, blkno, va, size)
  * xdioctl: ioctls on XD drives.   based on ioctl's of other netbsd disks.
  */
 int
-xdioctl(dev, command, addr, flag, l)
+xdioctl(dev, command, addr, flag, p)
 	dev_t   dev;
 	u_long  command;
 	caddr_t addr;
 	int     flag;
-	struct lwp *l;
+	struct proc *p;
 
 {
-	struct proc *p = l->l_proc;
 	struct xd_softc *xd;
 	struct xd_iocmd *xio;
 	int     error, s, unit;
@@ -1129,10 +1128,10 @@ xdioctl(dev, command, addr, flag, l)
  */
 
 int
-xdopen(dev, flag, fmt, l)
+xdopen(dev, flag, fmt, p)
 	dev_t   dev;
 	int     flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	int     unit, part;
 	struct xd_softc *xd;

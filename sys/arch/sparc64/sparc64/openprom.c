@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.10 2003/06/29 10:37:46 martin Exp $ */
+/*	$NetBSD: openprom.c,v 1.11 2003/06/29 22:29:02 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,10 +76,10 @@ static int openpromcheckid __P((int, int));
 static int openpromgetstr __P((int, char *, char **));
 
 int
-openpromopen(dev, flags, mode, l)
+openpromopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 #if defined(SUN4)
 	if (cputyp==CPU_SUN4)
@@ -124,12 +124,12 @@ openpromgetstr(len, user, cpp)
 }
 
 int
-openpromioctl(dev, cmd, data, flags, l)
+openpromioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct opiocdesc *op;
 	int node, len, ok, error, s;

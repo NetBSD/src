@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.8 2003/06/28 14:21:31 darrenr Exp $ */
+/* $NetBSD: dksubr.c,v 1.9 2003/06/29 22:29:58 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ dk_sc_init(struct dk_softc *dksc, void *osc, char *xname)
 /* ARGSUSED */
 int
 dk_open(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	   int flags, int fmt, struct lwp *l)
+	   int flags, int fmt, struct proc *p)
 {
 	struct	disklabel *lp = dksc->sc_dkdev.dk_label;
 	int	part = DISKPART(dev);
@@ -138,7 +138,7 @@ done:
 /* ARGSUSED */
 int
 dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	    int flags, int fmt, struct lwp *l)
+	    int flags, int fmt, struct proc *p)
 {
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
@@ -223,7 +223,7 @@ dk_size(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 	part = DISKPART(dev);
 	is_open = dksc->sc_dkdev.dk_openmask & (1 << part);
 
-	if (!is_open && di->di_open(dev, 0, S_IFBLK, curlwp))
+	if (!is_open && di->di_open(dev, 0, S_IFBLK, curproc))
 		return -1;
 
 	lp = dksc->sc_dkdev.dk_label;
@@ -233,7 +233,7 @@ dk_size(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (!is_open && di->di_close(dev, 0, S_IFBLK, curlwp))
+	if (!is_open && di->di_close(dev, 0, S_IFBLK, curproc))
 		return 1;
 
 	return size;
@@ -241,7 +241,7 @@ dk_size(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 
 int
 dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	    u_long cmd, caddr_t data, int flag, struct lwp *l)
+	    u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct	disklabel *lp;
 #ifdef __HAVE_OLD_DISKLABEL
@@ -497,19 +497,17 @@ dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
  * set *vpp to the file's vnode.
  */
 int
-dk_lookup(path, l, vpp)
+dk_lookup(path, p, vpp)
 	char *path;
-	struct lwp *l;
+	struct proc *p;
 	struct vnode **vpp;	/* result */
 {
 	struct nameidata nd;
 	struct vnode *vp;
 	struct vattr va;
-	struct proc *p;
 	int error;
 
-	p = l->l_proc;
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, p);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
 		    ("dk_lookup: vn_open error = %d\n", error));
@@ -519,22 +517,22 @@ dk_lookup(path, l, vpp)
 
 	if (vp->v_usecount > 1) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
 		return (EBUSY);
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
 		    ("dk_lookup: getattr error = %d\n", error));
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
 		return (error);
 	}
 
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
 		return (ENOTBLK);
 	}
 

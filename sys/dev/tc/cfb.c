@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.39 2003/06/29 15:07:09 simonb Exp $ */
+/* $NetBSD: cfb.c,v 1.40 2003/06/29 22:30:51 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.39 2003/06/29 15:07:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.40 2003/06/29 22:30:51 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ static const struct wsscreen_list cfb_screenlist = {
 	sizeof(_cfb_scrlist) / sizeof(struct wsscreen_descr *), _cfb_scrlist
 };
 
-static int	cfbioctl __P((void *, u_long, caddr_t, int, struct lwp *));
+static int	cfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static paddr_t	cfbmmap __P((void *, off_t, int));
 
 static int	cfb_alloc_screen __P((void *, const struct wsscreen_descr *,
@@ -354,12 +354,12 @@ cfb_common_init(ri)
 }
 
 static int
-cfbioctl(v, cmd, data, flag, l)
+cfbioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct cfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;

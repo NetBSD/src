@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.h,v 1.11 2003/06/28 14:21:18 darrenr Exp $	*/
+/*	$NetBSD: ibcs2_exec.h,v 1.12 2003/06/29 22:29:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -55,7 +55,7 @@
 #define IBCS2_CVT_HIGH_SYSCALL(n)	(((n) >> 8) + 200)
 
 struct exec_package;
-int     exec_ibcs2_coff_makecmds __P((struct lwp *, struct exec_package *));
+int     exec_ibcs2_coff_makecmds __P((struct proc *, struct exec_package *));
 
 /*
  * x.out (XENIX)
@@ -180,10 +180,10 @@ extern const struct emul emul_ibcs2;
 
 #define XOUT_HDR_SIZE		(sizeof(struct xexec) + sizeof(struct xext))
 
-int     exec_ibcs2_xout_makecmds __P((struct lwp *, struct exec_package *));
+int     exec_ibcs2_xout_makecmds __P((struct proc *, struct exec_package *));
 
 #ifdef EXEC_ELF32
-int	ibcs2_elf32_probe __P((struct lwp *, struct exec_package *,
+int	ibcs2_elf32_probe __P((struct proc *, struct exec_package *,
 			       void *, char *, vaddr_t *));
 #endif
 

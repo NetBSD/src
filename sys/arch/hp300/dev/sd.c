@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.63 2003/06/29 15:58:20 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.64 2003/06/29 22:28:19 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.63 2003/06/29 15:58:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.64 2003/06/29 22:28:19 fvdl Exp $");
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -510,10 +510,10 @@ sdgetinfo(dev)
 }
 
 int
-sdopen(dev, flags, mode, l)
+sdopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = sdunit(dev);
 	struct sd_softc *sc;
@@ -569,10 +569,10 @@ sdopen(dev, flags, mode, l)
 }
 
 int
-sdclose(dev, flag, mode, l)
+sdclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
@@ -1036,7 +1036,7 @@ sdread(dev, uio, flags)
 	int pid;
 
 	if ((pid = sc->sc_format_pid) >= 0 &&
-	    pid != uio->uio_lwp->l_proc->p_pid)
+	    pid != uio->uio_procp->p_pid)
 		return (EPERM);
 		
 	return (physio(sdstrategy, NULL, dev, B_READ, minphys, uio));
@@ -1053,19 +1053,19 @@ sdwrite(dev, uio, flags)
 	int pid;
 
 	if ((pid = sc->sc_format_pid) >= 0 &&
-	    pid != uio->uio_lwp->l_proc->p_pid)
+	    pid != uio->uio_procp->p_pid)
 		return (EPERM);
 		
 	return (physio(sdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 int
-sdioctl(dev, cmd, data, flag, l)
+sdioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
@@ -1126,13 +1126,13 @@ sdioctl(dev, cmd, data, flag, l)
 
 	case SDIOCSFORMAT:
 		/* take this device into or out of "format" mode */
-		if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
+		if (suser(p->p_ucred, &p->p_acflag))
 			return(EPERM);
 
 		if (*(int *)data) {
 			if (sc->sc_format_pid >= 0)
 				return (EPERM);
-			sc->sc_format_pid = l->l_proc->p_pid;
+			sc->sc_format_pid = p->p_pid;
 		} else
 			sc->sc_format_pid = -1;
 		return (0);
@@ -1147,7 +1147,7 @@ sdioctl(dev, cmd, data, flag, l)
 		 * Save what user gave us as SCSI cdb to use with next
 		 * read or write to the char device.
 		 */
-		if (sc->sc_format_pid != l->l_proc->p_pid)
+		if (sc->sc_format_pid != p->p_pid)
 			return (EPERM);
 		if (legal_cmds[((struct scsi_fmt_cdb *)data)->cdb[0]] == 0)
 			return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_termios.c,v 1.17 2003/06/28 14:21:27 darrenr Exp $	 */
+/*	$NetBSD: svr4_termios.c,v 1.18 2003/06/29 22:29:49 fvdl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_termios.c,v 1.17 2003/06/28 14:21:27 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_termios.c,v 1.18 2003/06/29 22:29:49 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -511,11 +511,12 @@ svr4_term_ioctl(fp, l, retval, fd, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
+	struct proc *p = l->l_proc;
 	struct termios 		bt;
 	struct svr4_termios	st;
 	struct svr4_termio	t;
 	int			error, new;
-	int (*ctl)(struct file *, u_long,  void *, struct lwp *) =
+	int (*ctl)(struct file *, u_long, void *, struct proc *) =
 			fp->f_ops->fo_ioctl;
 
 	*retval = 0;
@@ -523,7 +524,7 @@ svr4_term_ioctl(fp, l, retval, fd, cmd, data)
 	switch (cmd) {
 	case SVR4_TCGETA:
 	case SVR4_TCGETS:
-		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t) &bt, l)) != 0)
+		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t) &bt, p)) != 0)
 			return error;
 
 		memset(&st, 0, sizeof(st));
@@ -550,7 +551,7 @@ svr4_term_ioctl(fp, l, retval, fd, cmd, data)
 	case SVR4_TCSETAF:
 	case SVR4_TCSETSF:
 		/* get full BSD termios so we don't lose information */
-		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t) &bt, l)) != 0)
+		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t) &bt, p)) != 0)
 			return error;
 
 		switch (cmd) {
@@ -601,13 +602,13 @@ svr4_term_ioctl(fp, l, retval, fd, cmd, data)
 		print_svr4_termios(&st);
 #endif /* DEBUG_SVR4 */
 
-		return (*ctl)(fp, cmd, (caddr_t) &bt, l);
+		return (*ctl)(fp, cmd, (caddr_t) &bt, p);
 
 	case SVR4_TIOCGWINSZ:
 		{
 			struct svr4_winsize ws;
 
-			error = (*ctl)(fp, TIOCGWINSZ, (caddr_t) &ws, l);
+			error = (*ctl)(fp, TIOCGWINSZ, (caddr_t) &ws, p);
 			if (error)
 				return error;
 			return copyout(&ws, data, sizeof(ws));
@@ -619,7 +620,7 @@ svr4_term_ioctl(fp, l, retval, fd, cmd, data)
 
 			if ((error = copyin(data, &ws, sizeof(ws))) != 0)
 				return error;
-			return (*ctl)(fp, TIOCSWINSZ, (caddr_t) &ws, l);
+			return (*ctl)(fp, TIOCSWINSZ, (caddr_t) &ws, p);
 		}
 
 	default:

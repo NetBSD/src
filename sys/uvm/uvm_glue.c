@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.65 2003/06/28 14:22:30 darrenr Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.66 2003/06/29 22:32:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.65 2003/06/28 14:22:30 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.66 2003/06/29 22:32:50 fvdl Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -705,16 +705,15 @@ uvm_swapout(l)
  */
 
 int
-uvm_coredump_walkmap(l, vp, cred, func, cookie)
-	struct lwp *l;
+uvm_coredump_walkmap(p, vp, cred, func, cookie)
+	struct proc *p;
 	struct vnode *vp;
 	struct ucred *cred;
-	int (*func)(struct lwp *, struct vnode *, struct ucred *,
+	int (*func)(struct proc *, struct vnode *, struct ucred *,
 	    struct uvm_coredump_state *);
 	void *cookie;
 {
 	struct uvm_coredump_state state;
-	struct proc *p = l->l_proc;
 	struct vmspace *vm = p->p_vmspace;
 	struct vm_map *map = &vm->vm_map;
 	struct vm_map_entry *entry;
@@ -766,7 +765,7 @@ uvm_coredump_walkmap(l, vp, cred, func, cookie)
 			state.flags |= UVM_COREDUMP_NODUMP;
 
 		vm_map_unlock_read(map);
-		error = (*func)(l, vp, cred, &state);
+		error = (*func)(p, vp, cred, &state);
 		if (error)
 			return (error);
 		vm_map_lock_read(map);

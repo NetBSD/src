@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.90 2003/06/28 14:21:09 darrenr Exp $ */
+/*	$NetBSD: trap.c,v 1.91 2003/06/29 22:29:02 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -1939,7 +1939,7 @@ syscall(tf, code, pc)
 		
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(l, code, code, NULL, (register_t *)args.l);
+			ktrsyscall(p, code, code, NULL, (register_t *)args.l);
 #endif
 		if (error)
 			goto bad;
@@ -2012,9 +2012,9 @@ syscall(tf, code, pc)
 			i = callp->sy_narg;
 			for (j = 0; j < i; j++) 
 				temp[j] = args.i[j];
-			ktrsyscall(l, code, code, NULL, (register_t *)temp);
+			ktrsyscall(p, code, code, NULL, (register_t *)temp);
 #else
-			ktrsyscall(l, code, code, NULL, (register_t *)&args.i);
+			ktrsyscall(p, code, code, NULL, (register_t *)&args.i);
 #endif
 		}
 #endif /* KTRACE */
@@ -2132,7 +2132,7 @@ syscall(tf, code, pc)
 	userret(l, pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l, code, error, rval);
+		ktrsysret(p, code, error, rval);
 #endif
 	share_fpu(l, tf);
 #ifdef DEBUG
@@ -2165,7 +2165,7 @@ child_return(arg)
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l,
+		ktrsysret(p,
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 #endif
 }

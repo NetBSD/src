@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.70 2003/06/28 14:21:35 darrenr Exp $ */
+/* $NetBSD: vga.c,v 1.71 2003/06/29 22:30:14 fvdl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.70 2003/06/28 14:21:35 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.71 2003/06/29 22:30:14 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,7 @@ const struct wsscreen_list vga_screenlist = {
 	_vga_scrlist_mono
 };
 
-static int	vga_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	vga_ioctl(void *, u_long, caddr_t, int, struct proc *);
 static paddr_t	vga_mmap(void *, off_t, int);
 static int	vga_alloc_screen(void *, const struct wsscreen_descr *,
 				 void **, int *, int *, long *);
@@ -716,7 +716,7 @@ vga_set_video(struct vga_config *vc, int state)
 }
 
 int
-vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct vga_config *vc = v;
 	const struct vga_funcs *vf = vc->vc_funcs;
@@ -756,7 +756,7 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	if (vf->vf_ioctl == NULL)
 		return (EPASSTHROUGH);
 
-	return ((*vf->vf_ioctl)(v, cmd, data, flag, l));
+	return ((*vf->vf_ioctl)(v, cmd, data, flag, p));
 }
 
 static paddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.124 2003/06/29 18:43:37 thorpej Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.125 2003/06/29 22:32:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.124 2003/06/29 18:43:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125 2003/06/29 22:32:18 fvdl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1825,10 +1825,10 @@ nfs_delayedtruncate(vp)
  */
 
 void
-nfs_cookieheuristic(vp, flagp, l, cred)
+nfs_cookieheuristic(vp, flagp, p, cred)
 	struct vnode *vp;
 	int *flagp;
-	struct lwp *l;
+	struct proc *p;
 	struct ucred *cred;
 {
 	struct uio auio;
@@ -1846,7 +1846,7 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = l;
+	auio.uio_procp = p;
 	auio.uio_resid = NFS_DIRFRAGSIZ;
 	auio.uio_offset = 0;
 
@@ -1871,7 +1871,7 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 			if ((*cop >> 32) != 0 && (*cop & 0xffffffffLL) == 0) {
 				*flagp |= NFSMNT_SWAPCOOKIE;
 				nfs_invaldircache(vp, 0);
-				nfs_vinvalbuf(vp, 0, cred, l, 1);
+				nfs_vinvalbuf(vp, 0, cred, p, 1);
 			}
 			break;
 		}
@@ -1894,7 +1894,7 @@ nfs_cookieheuristic(vp, flagp, l, cred)
  * it is not.
  */
 int
-nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
+nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 	struct nameidata *ndp;
 	fhandle_t *fhp;
 	uint32_t len;
@@ -1903,7 +1903,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	struct mbuf **mdp;
 	caddr_t *dposp;
 	struct vnode **retdirp;
-	struct lwp *l;
+	struct proc *p;
 	int kerbflag, pubflag;
 {
 	int i, rem;
@@ -2037,7 +2037,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 		cnp->cn_flags |= NOCROSSMOUNT;
 	}
 
-	cnp->cn_lwp = l;
+	cnp->cn_proc = p;
 	VREF(dp);
 
     for (;;) {
@@ -2074,7 +2074,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 		}
 		if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
 			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred,
-			    cnp->cn_lwp);
+			    cnp->cn_proc);
 			if (error != 0)
 				break;
 		}
@@ -2089,7 +2089,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
 		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_lwp = (struct lwp *)0;
+		auio.uio_procp = (struct proc *)0;
 		auio.uio_resid = MAXPATHLEN;
 		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
 		if (error) {

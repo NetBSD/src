@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.21 2003/06/29 15:14:11 simonb Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.22 2003/06/29 22:31:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.21 2003/06/29 15:14:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.22 2003/06/29 22:31:16 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.21 2003/06/29 15:14:11 simonb Exp $
  * package.
  */
 int
-exec_ecoff_makecmds(struct lwp *l, struct exec_package *epp)
+exec_ecoff_makecmds(struct proc *p, struct exec_package *epp)
 {
 	int error;
 	struct ecoff_exechdr *execp = epp->ep_hdr;
-	struct proc *p = l->l_proc;
 
 	if (epp->ep_hdrvalid < ECOFF_HDR_SIZE)
 		return ENOEXEC;
@@ -69,7 +68,7 @@ exec_ecoff_makecmds(struct lwp *l, struct exec_package *epp)
 	if (ECOFF_BADMAG(execp))
 		return ENOEXEC;
 
-	error = (*epp->ep_esch->u.ecoff_probe_func)(l, epp);
+	error = (*epp->ep_esch->u.ecoff_probe_func)(p, epp);
 
 	/*
 	 * if there was an error or there are already vmcmds set up,

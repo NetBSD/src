@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.32 2003/06/28 14:20:57 darrenr Exp $ */
+/* $NetBSD: machdep.c,v 1.33 2003/06/29 22:28:28 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2003/06/28 14:20:57 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2003/06/29 22:28:28 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -888,15 +888,15 @@ luna68k_abort(cp)
  * understand and, if so, set up the vmcmds for it.
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
 #ifdef COMPAT_SUNOS
 	extern sunos_exec_aout_makecmds
 	__P((struct proc *, struct exec_package *));
-	if ((error = sunos_exec_aout_makecmds(l->l_proc, epp)) == 0)
+	if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 		return 0;
 #endif
 	return error;
