@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 1997/09/19 13:55:20 leo Exp $	*/
+/*	$NetBSD: param.h,v 1.24 1997/09/20 12:09:32 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,11 +67,6 @@
 
 #define	CLSIZE		1
 #define	CLSIZELOG2	0
-
-#ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
-#endif
-
 
 /*
  * Constants related to network buffer management.
