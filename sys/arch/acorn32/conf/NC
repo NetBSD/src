@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.9 2002/04/10 20:10:08 thorpej Exp $
+#	$NetBSD: NC,v 1.10 2002/04/12 08:10:46 gmcgarry Exp $
 #
 #	NC - with vidcconsole
 #
@@ -101,6 +101,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

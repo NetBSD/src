@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.20 2002/04/10 20:11:44 thorpej Exp $
+# $NetBSD: GENERIC,v 1.21 2002/04/12 08:11:11 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -129,6 +129,7 @@ options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	DDB_KEYCODE=0x40
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.9 2002/04/02 05:30:38 lukem Exp $
+#	$NetBSD: MDINSTALL,v 1.10 2002/04/12 08:10:50 gmcgarry Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -54,6 +54,7 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	NTP		# NTP phase/frequency locked loop
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #

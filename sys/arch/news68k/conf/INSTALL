@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.17 2002/04/02 05:30:46 lukem Exp $
+# 	$NetBSD: INSTALL,v 1.18 2002/04/12 08:11:12 gmcgarry Exp $
 
 #	config for bootable floppy kernel
 #
@@ -26,6 +26,7 @@ options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44 Megabytes
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 #options 	LKM			# loadable kernel modules
 #options 	UCONSOLE		# users can redirect console (unsafe)
+#options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options

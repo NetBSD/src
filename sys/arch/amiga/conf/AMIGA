@@ -1,4 +1,4 @@
-# $NetBSD: AMIGA,v 1.47 2002/03/04 13:24:07 sommerfeld Exp $
+# $NetBSD: AMIGA,v 1.48 2002/04/12 08:10:49 gmcgarry Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.47 $"
+#ident  		"GENERIC-$Revision: 1.48 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -144,6 +144,7 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 options 	NTP		# NTP phase/frequency locked loop
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options

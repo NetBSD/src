@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.4 2002/04/02 05:30:49 lukem Exp $
+#	$NetBSD: INSTALL,v 1.5 2002/04/12 08:11:18 gmcgarry Exp $
 #
 #	Shark installation kernel
 #
@@ -117,6 +117,7 @@ options 	INSECURE		# disable kernel securelevel
 #options 	IRQSTATS	# manage IRQ statistics, XXX temp required
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics, XXX temp required
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

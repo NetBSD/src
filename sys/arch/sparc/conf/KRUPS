@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.5 2002/03/28 19:50:20 uwe Exp $
+# $NetBSD: KRUPS,v 1.6 2002/04/12 08:11:20 gmcgarry Exp $
 # From: NetBSD: GENERIC,v 1.131 2002/02/10 17:37:02 wiz Exp
 #
 # Krups (JavaStation 10, aka JavaStation NC) machine description file
@@ -8,7 +8,7 @@
 
 include 	"arch/sparc/conf/std.sparc"
 
-#ident 		"KRUPS-$Revision: 1.5 $"
+#ident 		"KRUPS-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -65,6 +65,7 @@ options 	KTRACE
 ## Loadable kernel module support; still under development.
 #options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol

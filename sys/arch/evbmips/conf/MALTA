@@ -1,9 +1,9 @@
-#	$NetBSD: MALTA,v 1.5 2002/04/08 14:13:14 simonb Exp $
+#	$NetBSD: MALTA,v 1.6 2002/04/12 08:10:56 gmcgarry Exp $
 
 #include 	"arch/evbmips/conf/std.malta.eb"	# big-endian mode
 include 	"arch/evbmips/conf/std.malta.el"	# little-endian mode
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -33,6 +33,7 @@ options 	NTP		# network time protocol
 options 	DIAGNOSTIC	# extra kernel sanity checking
 options 	DEBUG		# extra kernel debugging support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+#options 	USERCONF	# userconf(4) support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.24 2002/04/02 05:30:50 lukem Exp $
+#	$NetBSD: INSTALL,v 1.25 2002/04/12 08:11:26 gmcgarry Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -95,6 +95,7 @@ options 	COMPAT_15
 
 #options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Kernel(s) to compile

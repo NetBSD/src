@@ -1,7 +1,7 @@
 #
 # kernel config file for system install
 #
-# 	$NetBSD: INSTALL_TX3912,v 1.4 2002/04/02 05:30:42 lukem Exp $
+# 	$NetBSD: INSTALL_TX3912,v 1.5 2002/04/12 08:10:59 gmcgarry Exp $
 #
 
 include		"arch/hpcmips/conf/TX3912"
@@ -14,4 +14,5 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=8192	# size of memory disk, in blocks
 
+#options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
