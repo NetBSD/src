@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.24 2003/07/04 12:54:14 wiz Exp $
+.\"	$NetBSD: pppoe.4,v 1.25 2003/10/02 01:21:16 itojun Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -199,7 +199,7 @@ create
 ! /sbin/ifconfig ne0 up
 ! /sbin/pppoectl -e ne0 $int
 ! /sbin/pppoectl $int myauthproto=pap myauthname=testcaller myauthsecret=donttell
-inet 0.0.0.0 0.0.0.1
+inet 0.0.0.0 0.0.0.1 netmask 0xffffffff
 #! /sbin/route add default -iface 0.0.0.1
 up
 .Ed
@@ -304,3 +304,10 @@ device appeared in
 .Nx 1.6 .
 .Sh BUGS
 This implementation is client side only.
+.Pp
+It is important to specify
+.Dq Li netmask 0xffffffff
+to
+.Xr ifconfig 8 .
+If netmask is unspecified, netmask of 8 will be set when 0.0.0.0 is configured
+to the interface, and it will persist after negotiation.
