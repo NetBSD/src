@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.8 1999/09/08 21:17:52 jsm Exp $	*/
+/*	$NetBSD: monop.h,v 1.9 1999/09/09 17:27:59 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,6 +35,7 @@
  *	@(#)monop.h	8.1 (Berkeley) 5/31/93
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

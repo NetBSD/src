@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.14 1999/09/08 21:45:34 jsm Exp $	*/
+/*	$NetBSD: worm.c,v 1.15 1999/09/09 17:28:00 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.14 1999/09/08 21:45:34 jsm Exp $");
+__RCSID("$NetBSD: worm.c,v 1.15 1999/09/09 17:28:00 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: worm.c,v 1.14 1999/09/08 21:45:34 jsm Exp $");
 
 #include <ctype.h>
 #include <curses.h>
+#include <err.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <termios.h>
@@ -151,12 +152,16 @@ life()
 
 	np = NULL;
 	head = newlink();
+	if (head == NULL)
+		errx(1, "out of memory");
 	head->x = start_len+2;
 	head->y = 12;
 	head->next = NULL;
 	display(head, HEAD);
 	for (i = 0, bp = head; i < start_len; i++, bp = np) {
 		np = newlink();
+		if (np == NULL)
+			errx(1, "out of memory");
 		np->next = bp;
 		bp->prev = np;
 		np->x = bp->x - 1;
@@ -277,6 +282,8 @@ process(ch)
 	}
 	else if(ch != ' ') crash();
 	nh = newlink();
+	if (nh == NULL)
+		errx(1, "out of memory");
 	nh->next = NULL;
 	nh->prev = head;
 	head->next = nh;
