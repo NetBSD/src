@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.236 2003/02/13 09:53:21 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.237 2003/02/14 22:24:58 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -989,6 +989,26 @@ pmap_page_upload()
 
 		start = pmemarr[n].addr;
 		end = start + pmemarr[n].len;
+
+		/*
+		 * If the kernel is not load at address 0, upload the
+		 * initial segment [0, `loadaddr'].
+		 */
+		if (start < PMAP_BOOTSTRAP_VA2PA(KERNBASE)) {
+			/* `bootstrap gap' */
+printf("bootstrap gap: start %lx, end %lx\n", start, end);
+			uvm_page_physload(
+				atop(start),
+				atop(PMAP_BOOTSTRAP_VA2PA(KERNBASE)),
+				atop(start),
+				atop(PMAP_BOOTSTRAP_VA2PA(KERNBASE)),
+				VM_FREELIST_DEFAULT);
+
+			if (vm_first_phys > start)
+				vm_first_phys = start;
+
+			start = PMAP_BOOTSTRAP_VA2PA(KERNBASE);
+		}
 
 		/*
 		 * If this segment contains `avail_start', we must exclude
@@ -2793,21 +2813,6 @@ pmap_bootstrap(nctx, nregion, nsegment)
 {
 	extern char etext[], kernel_data_start[];
 
-#if defined(SUN4M) || defined(SUN4D)
-	if (CPU_HAS_SRMMU) {
-		/*
-		 * Compute `va2pa_offset'.
-		 * Since the kernel is loaded at address 0x4000 within
-		 * the memory bank, we'll use the corresponding VA
-		 * (i.e. `kernel_text') to fetch the physical load
-		 * address, just in case those first 4 pages aren't mapped.
-		 */
-		extern char kernel_text[];
-		int offset = (vaddr_t)kernel_text - (vaddr_t)KERNBASE;
-		va2pa_offset -= (VA2PA(kernel_text) - offset);
-	}
-#endif
-
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
 
@@ -2863,6 +2868,13 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	int lastpage;
 	vaddr_t va;
 	extern char *kernel_top;
+
+	/*
+	 * Compute `va2pa_offset', which is set to KERNBASE initially,
+	 * but must be adjusted if the kernel is not loaded at
+	 * physical address 0.
+	 */
+	va2pa_offset -= (getpte4(KERNBASE) & PG_PFNUM) << PGSHIFT;
 
 	ncontext = nctx;
 
@@ -3237,6 +3249,13 @@ pmap_bootstrap4m(void)
 	extern char *kernel_top;
 	extern char etext[];
 	extern caddr_t reserve_dumppages(caddr_t);
+
+	/*
+	 * Compute `va2pa_offset', which is set to KERNBASE initially,
+	 * but must be adjusted if the kernel is not loaded at
+	 * physical address 0.
+	 */
+	va2pa_offset -= VA2PA((caddr_t)KERNBASE);
 
 	ncontext = cpuinfo.mmu_ncontext;
 
