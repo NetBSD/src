@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.4 2000/10/02 18:43:35 abs Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.5 2000/10/23 09:31:49 fvdl Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -373,6 +373,7 @@ fd*	at fdc? drive ?			# the drives themselves
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
+rtk* 	at pci? dev ? function ? 	# Realtek 8129/8139
 
 # PCMCIA network interfaces
 # need more pcic mem window for awi and cnw
@@ -388,6 +389,12 @@ xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
 sm*	at mhzc?
+
+# CardBus network cards
+ex* 	at cardbus? dev ? function ?	# 3Com 3C575TX
+fxp* 	at cardbus? dev ? function ? 	# Intel i8255x
+rtk* 	at cardbus? dev ? function ? 	# Realtek 8129/8139
+tlp* 	at cardbus? dev ? function ?	# DECchip 21143
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
