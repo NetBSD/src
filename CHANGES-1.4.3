@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.35 2000/07/06 10:47:51 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.36 2000/07/06 10:57:24 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -605,7 +605,7 @@ sys/arch/i386/include/cpu.h			1.57 via patch
   Reinitialize clock after hibernation, something which seems to be
   required on some laptops.  Fixes PR#4808.
 
-sys/dev/pci.c					1.45 via patch
+sys/dev/pci/pci.c				1.45 via patch
 
   If the 'PCI_CONFIG_DUMP' option is defined, print a verbose dump
   of all PCI devices' configuration space.
@@ -761,7 +761,7 @@ lib/libc/string/strcat.3			1.7
 lib/libc/string/strcpy.3			1.8
 lib/libc/shlib_version				patch
 include/string.h				1.19-1.20
-distrib/sets/lists/shl.mi			patch
+distrib/sets/lists/base/shl.mi			patch
 distrib/sets/lists/comp/mi			patch
 
   Add strlcpy() and strlcat() to libc, bump its "teeny" version
