@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.7 1996/02/13 22:08:49 christos Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.8 1996/04/13 01:34:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -211,9 +211,8 @@ clnp_ours(dst)
 	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
-			printf("clnp_ours: ia_sis x%x, dst x%x\n", 
-			       (unsigned int) &ia->ia_addr,
-			       (unsigned int) dst);
+			printf("clnp_ours: ia_sis %p, dst %p\n", 
+			       &ia->ia_addr, dst);
 		}
 #endif
 		/*
@@ -285,8 +284,8 @@ clnp_forward(m, len, dst, oidx, seg_off, inbound_shp)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_FORWARD]) {
-		printf("clnp_forward: %d bytes, to %s, options x%x\n", len,
-		       clnp_iso_addrp(dst), (unsigned int) oidx);
+		printf("clnp_forward: %d bytes, to %s, options %p\n", len,
+		       clnp_iso_addrp(dst), oidx);
 	}
 #endif
 
@@ -495,8 +494,8 @@ clnp_route(dst, ro, flags, first_hop, ifa)
 	  (Bcmp(ro->ro_dst.siso_data, dst->isoa_genaddr, dst->isoa_len)))) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
-			printf("clnp_route: freeing old route: ro->ro_rt 0x%x\n",
-			       (unsigned int) ro->ro_rt);
+			printf("clnp_route: freeing old route: ro->ro_rt %p\n",
+			       ro->ro_rt);
 			printf("clnp_route: old route refcnt: 0x%x\n",
 			       ro->ro_rt->rt_refcnt);
 		}
@@ -668,8 +667,8 @@ clnp_badmtu(ifp, rt, line, file)
 	int             line;	/* where the dirty deed occured */
 	char           *file;	/* where the dirty deed occured */
 {
-	printf("sending on route 0x%x with no mtu, line %d of file %s\n",
-	       (unsigned int) rt, line, file);
+	printf("sending on route %p with no mtu, line %d of file %s\n",
+	       rt, line, file);
 #ifdef ARGO_DEBUG
 	printf("route dst is ");
 	dump_isoaddr((struct sockaddr_iso *) rt_key(rt));
