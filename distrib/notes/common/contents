@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.10 2002/07/09 08:13:39 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.11 2002/07/09 08:51:38 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -413,6 +413,7 @@ everything described below.
 .ie r_acorn26 .setsize 21 50
 .el .ie r_acorn32 .setsize 21 50
 .el .ie r_algor .setsize 22 71
+.el .ie r_alpha .setsize 25 66
 .el .ie r_amiga .setsize 17 41
 .el .ie r_arc .setsize 22 71
 .el .ie r_atari .setsize 17 41
@@ -464,6 +465,7 @@ system call and library manual pages.
 .ie r_acorn26 .setsize 16 57
 .el .ie r_acorn32 .setsize 16 57
 .el .ie r_algor .setsize 17 73
+.el .ie r_alpha .setsize 19 80
 .el .ie r_amiga .setsize 14 52
 .el .ie r_arc .setsize 16 73
 .el .ie r_atari .setsize 14 52
@@ -517,7 +519,7 @@ be used if you are upgrading.
 .It Sy games
 This set includes the games and their manual pages.
 .\" Shareable within MACHINE_ARCH
-.ie r_alpha .setsize ??? ???
+.ie r_alpha .setsize 4 8
 .el .ie r_arm .setsize 3 7
 .el .ie r_i386 .setsize 3 7
 .el .ie r_m68k .setsize 3 7
@@ -546,6 +548,7 @@ that your system may need to boot.
 .\}
 .ie r_acorn26 .setsize 2 3
 .el .ie r_acorn32 .setsize 2 3
+.el .ie r_alpha .setsize 3 7
 .el .ie r_amiga .setsize 2 3
 .el .ie r_arc .setsize 4 8
 .el .ie r_cats .setsize 4 8
@@ -615,7 +618,7 @@ This set includes the (rather large) system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
 .\" MI
-r_x68k .setsize 3 8
+.setsize 3 8
 .
 .It Sy text
 This set includes
@@ -624,7 +627,7 @@ text processing tools, including
 .Xr groff 1 ,
 all related programs, and their manual pages.
 .\" Shareable within MACHINE_ARCH
-.ie r_alpha .setsize ??? ???
+.ie r_alpha .setsize 2 7
 .el .ie r_arm .setsize 2 6
 .el .ie r_i386 .setsize 2 6
 .el .ie r_m68k .setsize 2 6
