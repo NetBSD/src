@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.49 2003/09/23 14:23:53 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.50 2003/10/21 02:48:07 fvdl Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.49 2003/09/23 14:23:53 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.50 2003/10/21 02:48:07 fvdl Exp $");
 #endif
 #endif
 
@@ -618,7 +618,7 @@ pkg_do(char *pkg)
 		TAILQ_INIT(&trypkgs);
 		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
 		if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-			add_to_list_fn, &trypkgs) == NULL) {
+			add_to_list_fn, &trypkgs) == 0) {
 			warnx("package '%s' not installed", pkg);
 			return 1;
 		}
