@@ -1,6 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2000/12/30 15:25:21 sommerfeld Exp $
-
-NOMAN=
+# $NetBSD: Makefile,v 1.8 2001/01/24 23:09:31 jdolecek Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +9,7 @@ WARNS?=  1
 MKLINT= no
 
 PROG= string2key
+MAN=  string2key.8
 
 SRCS= string2key.c
 
