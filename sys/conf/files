@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.373.2.4 2000/08/06 02:12:13 briggs Exp $
+#	$NetBSD: files,v 1.373.2.5 2000/08/11 18:16:46 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -294,6 +294,11 @@ define le32
 file	dev/ic/am7990.c			le24
 file	dev/ic/am79900.c		le32
 file	dev/ic/lance.c			le24 | le32
+
+# DEC DEPCA-family of LANCE Ethernet controllers
+device	depca { }: le24
+file	dev/ic/depca.c			depca
+attach	le at depca with le_depca
 
 # Sun HME Ethernet controllers
 device	hme: arp, ether, ifnet, mii
