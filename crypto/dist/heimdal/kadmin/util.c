@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <parse_units.h>
 
-RCSID("$Id: util.c,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $");
+RCSID("$Id: util.c,v 1.1.1.2 2000/08/02 19:58:52 assar Exp $");
 
 /*
  * util.c - functions for parsing, unparsing, and editing different
@@ -171,7 +171,7 @@ int
 str2time_t (const char *str, time_t *time)
 {
     const char *p;
-    struct tm tm;
+    struct tm tm, tm2;
 
     memset (&tm, 0, sizeof (tm));
 
@@ -186,11 +186,15 @@ str2time_t (const char *str, time_t *time)
 	return -1;
 
     /* Do it on the end of the day */
-    tm.tm_hour = 23;
-    tm.tm_min  = 59;
-    tm.tm_sec  = 59;
+    tm2.tm_hour = 23;
+    tm2.tm_min  = 59;
+    tm2.tm_sec  = 59;
 
-    strptime (p, "%H:%M:%S", &tm);
+    if(strptime (p, "%H:%M:%S", &tm2) != NULL) {
+	tm.tm_hour = tm2.tm_hour;
+	tm.tm_min  = tm2.tm_min;
+	tm.tm_sec  = tm2.tm_sec;
+    }
 
     *time = tm2time (tm, 0);
     return 0;
@@ -252,10 +256,10 @@ edit_timet (const char *prompt, krb5_timestamp *value, int *mask, int bit)
 void
 deltat2str(unsigned t, char *str, size_t len)
 {
-    if(t)
-	unparse_time(t, str, len);
-    else
+    if(t == 0 || t == INT_MAX)
 	snprintf(str, len, "unlimited");
+    else
+	unparse_time(t, str, len);
 }
 
 /*
@@ -529,7 +533,7 @@ hex2n (char c)
     static char hexdigits[] = "0123456789abcdef";
     const char *p;
 
-    p = strchr (hexdigits, tolower(c));
+    p = strchr (hexdigits, tolower((int)c));
     if (p == NULL)
 	return -1;
     else

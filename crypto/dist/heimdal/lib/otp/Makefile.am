@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/06/16 18:32:43 thorpej Exp $
+# $Id: Makefile.am,v 1.1.1.2 2000/08/02 20:00:16 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -12,7 +12,7 @@ otptest_LDADD = libotp.la \
 include_HEADERS = otp.h
 
 lib_LTLIBRARIES = libotp.la
-libotp_la_LDFLAGS = -version-info 1:0:1
+libotp_la_LDFLAGS = -version-info 1:1:1
 
 libotp_la_SOURCES = \
 	otp.c \

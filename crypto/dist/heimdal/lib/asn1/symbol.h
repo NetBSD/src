@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: symbol.h,v 1.1.1.1 2000/06/16 18:32:39 thorpej Exp $ */
+/* $Id: symbol.h,v 1.1.1.2 2000/08/02 19:59:06 assar Exp $ */
 
 #ifndef _SYMBOL_H
 #define _SYMBOL_H

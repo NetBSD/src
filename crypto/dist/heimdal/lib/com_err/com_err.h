@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: com_err.h,v 1.1.1.1 2000/06/16 18:32:20 thorpej Exp $ */
+/* $Id: com_err.h,v 1.1.1.2 2000/08/02 20:00:26 assar Exp $ */
 
 /* MIT compatible com_err library */
 

@@ -33,7 +33,7 @@
 
 #include "gen_locl.h"
 
-RCSID("$Id: gen.c,v 1.1.1.1 2000/06/16 18:32:38 thorpej Exp $");
+RCSID("$Id: gen.c,v 1.1.1.2 2000/08/02 19:59:03 assar Exp $");
 
 FILE *headerfile, *codefile, *logfile;
 
@@ -55,7 +55,7 @@ init_generate (const char *filename, const char *base)
     orig_filename = filename;
     if(base)
 	strcpy(headerbase, base);
-    snprintf(header, sizeof(header), "%s.hx", headerbase);
+    sprintf(header, "%s.h", headerbase);
     headerfile = fopen (header, "w");
     if (headerfile == NULL)
 	err (1, "open %s", header);
@@ -227,7 +227,21 @@ define_type (int level, char *name, Type *t, int typedefp)
 	break;
     case TInteger:
 	space(level);
-	fprintf (headerfile, "int %s;\n", name);
+        if(t->members == NULL) {
+            fprintf (headerfile, "int %s;\n", name);
+        } else {
+            Member *m;
+            int tag = -1;
+            fprintf (headerfile, "enum %s {\n", typedefp ? name : "");
+	    for (m = t->members; m && m->val != tag; m = m->next) {
+                if(tag == -1)
+                    tag = m->val;
+                space (level + 1);
+                fprintf(headerfile, "%s = %d%s\n", m->gen_name, m->val, 
+                        m->next->val == tag ? "" : ",");
+            }
+            fprintf (headerfile, "} %s;\n", name);
+        }
 	break;
     case TUInteger:
 	space(level);

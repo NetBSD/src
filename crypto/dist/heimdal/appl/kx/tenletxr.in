@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: tenletxr.in,v 1.1.1.1 2000/06/16 18:31:44 thorpej Exp $
+# $Id: tenletxr.in,v 1.1.1.2 2000/08/02 19:58:33 assar Exp $
 #
 usage="Usage: $0 [-l username] [-k] [-v] [-h | --help] [--version] host [port]"
 while true

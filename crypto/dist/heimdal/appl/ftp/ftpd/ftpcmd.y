@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.1.1.1 2000/06/16 18:31:50 thorpej Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.1.1.2 2000/08/02 19:58:38 assar Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -43,7 +43,7 @@
 %{
 
 #include "ftpd_locl.h"
-RCSID("$Id: ftpcmd.y,v 1.1.1.1 2000/06/16 18:31:50 thorpej Exp $");
+RCSID("$Id: ftpcmd.y,v 1.1.1.2 2000/08/02 19:58:38 assar Exp $");
 
 off_t	restart_point;
 
@@ -577,7 +577,7 @@ cmd
 		}
 	| SYST CRLF
 		{
-#if defined(unix) || defined(__unix__) || defined(__unix) || defined(_AIX) || defined(_CRAY)
+#if !defined(WIN32) && !defined(__EMX__) && !defined(__OS2__) && !defined(__CYGWIN32__)
 		    reply(215, "UNIX Type: L%d", NBBY);
 #else
 		    reply(215, "UNKNOWN Type: L%d", NBBY);

@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: kadmin_locl.h,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $
+ * $Id: kadmin_locl.h,v 1.1.1.2 2000/08/02 19:58:51 assar Exp $
  */
 
 #ifndef __ADMIN_LOCL_H__
@@ -46,14 +46,21 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
 #endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -163,5 +170,12 @@ handle_v4(krb5_context context, int len, int fd);
 
 void
 random_password(char *pw, size_t len);
+
+/* kadm_conn.c */
+
+sig_atomic_t term_flag, doing_useful_work;
+
+void parse_ports(krb5_context, const char*);
+int start_server(krb5_context);
 
 #endif /* __ADMIN_LOCL_H__ */

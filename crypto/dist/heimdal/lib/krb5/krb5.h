@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: krb5.h,v 1.1.1.1 2000/06/16 18:32:57 thorpej Exp $ */
+/* $Id: krb5.h,v 1.1.1.2 2000/08/02 19:59:31 assar Exp $ */
 
 #ifndef __KRB5_H__
 #define __KRB5_H__
@@ -68,24 +68,7 @@ typedef octet_string krb5_data;
 struct krb5_crypto_data;
 typedef struct krb5_crypto_data *krb5_crypto;
 
-typedef enum krb5_cksumtype { 
-  CKSUMTYPE_NONE		= 0,
-  CKSUMTYPE_CRC32		= 1,
-  CKSUMTYPE_RSA_MD4		= 2,
-  CKSUMTYPE_RSA_MD4_DES		= 3,
-  CKSUMTYPE_DES_MAC		= 4,
-  CKSUMTYPE_DES_MAC_K		= 5,
-  CKSUMTYPE_RSA_MD4_DES_K	= 6,
-  CKSUMTYPE_RSA_MD5		= 7,
-  CKSUMTYPE_RSA_MD5_DES		= 8,
-  CKSUMTYPE_RSA_MD5_DES3	= 9,
-/*  CKSUMTYPE_SHA1		= 10,*/
-  CKSUMTYPE_HMAC_SHA1_DES3	= 12,
-  CKSUMTYPE_SHA1		= 1000, /* correct value? */
-  CKSUMTYPE_HMAC_MD5		= -138, /* unofficial microsoft number */
-  CKSUMTYPE_HMAC_MD5_ENC	= -1138 /* even more unofficial */
-} krb5_cksumtype;
-
+typedef CKSUMTYPE krb5_cksumtype;
 
 typedef enum krb5_enctype { 
   ETYPE_NULL			= 0,
@@ -101,17 +84,13 @@ typedef enum krb5_enctype {
   ETYPE_ARCFOUR_HMAC_MD5	= 23,
   ETYPE_ARCFOUR_HMAC_MD5_56	= 24,
   ETYPE_ENCTYPE_PK_CROSS	= 48,
-  ETYPE_DES_CBC_NONE		= 0x1000,
-  ETYPE_DES3_CBC_NONE		= 0x1001
+  ETYPE_DES_CBC_NONE		= -0x1000,
+  ETYPE_DES3_CBC_NONE		= -0x1001,
+  ETYPE_DES_CFB64_NONE		= -0x1002,
+  ETYPE_DES_PCBC_NONE		= -0x1003
 } krb5_enctype;
 
-typedef enum krb5_preauthtype {
-  KRB5_PADATA_NONE		= 0,
-  KRB5_PADATA_AP_REQ,
-  KRB5_PADATA_TGS_REQ		= 1,
-  KRB5_PADATA_ENC_TIMESTAMP	= 2,
-  KRB5_PADATA_ENC_SECURID
-} krb5_preauthtype;
+typedef PADATA_TYPE krb5_preauthtype;
 
 typedef enum krb5_key_usage {
     KRB5_KU_PA_ENC_TIMESTAMP = 1,
@@ -185,8 +164,8 @@ typedef enum krb5_key_usage {
 } krb5_key_usage;
 
 typedef enum krb5_salttype {
-    KRB5_PW_SALT = pa_pw_salt,
-    KRB5_AFS3_SALT = pa_afs3_salt
+    KRB5_PW_SALT = KRB5_PADATA_PW_SALT,
+    KRB5_AFS3_SALT = KRB5_PADATA_AFS3_SALT
 }krb5_salttype;
 
 typedef struct krb5_salt {
@@ -238,6 +217,11 @@ struct krb5_cc_ops;
 #define KRB5_DEFAULT_CCFILE_ROOT "/tmp/krb5cc_"
 
 #define KRB5_DEFAULT_CCROOT "FILE:" KRB5_DEFAULT_CCFILE_ROOT
+
+#define KRB5_ACCEPT_NULL_ADDRESSES(C) 					 \
+    krb5_config_get_bool_default((C), NULL, TRUE, 			 \
+				 "libdefaults", "accept_null_addresses", \
+				 NULL)
 
 typedef void *krb5_cc_cursor;
 
@@ -389,17 +373,8 @@ typedef struct krb5_context_data {
                                            version */
     int num_kt_types;			/* # of registered keytab types */
     struct krb5_keytab_data *kt_types;  /* registered keytab types */
+    const char *date_fmt;
 } krb5_context_data;
-
-enum {
-  KRB5_NT_UNKNOWN	= 0,
-  KRB5_NT_PRINCIPAL	= 1,
-  KRB5_NT_SRV_INST	= 2,
-  KRB5_NT_SRV_HST	= 3,
-  KRB5_NT_SRV_XHST	= 4,
-  KRB5_NT_UID		= 5
-};
-
 
 typedef struct krb5_ticket {
     EncTicketPart ticket;
@@ -423,7 +398,7 @@ typedef Authenticator krb5_donot_reply;
 typedef struct krb5_storage {
     void *data;
     ssize_t (*fetch)(struct krb5_storage*, void*, size_t);
-    ssize_t (*store)(struct krb5_storage*, void*, size_t);
+    ssize_t (*store)(struct krb5_storage*, const void*, size_t);
     off_t (*seek)(struct krb5_storage*, off_t, int);
     void (*free)(struct krb5_storage*);
     krb5_flags flags;

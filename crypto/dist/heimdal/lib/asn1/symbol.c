@@ -33,7 +33,7 @@
 
 #include "gen_locl.h"
 
-RCSID("$Id: symbol.c,v 1.1.1.1 2000/06/16 18:32:39 thorpej Exp $");
+RCSID("$Id: symbol.c,v 1.1.1.2 2000/08/02 19:59:06 assar Exp $");
 
 static Hashtab *htab;
 

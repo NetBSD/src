@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: display_status.c,v 1.1.1.1 2000/06/16 18:32:45 thorpej Exp $");
+RCSID("$Id: display_status.c,v 1.1.1.2 2000/08/02 19:59:08 assar Exp $");
 
 static char *
 calling_error(OM_uint32 v)
