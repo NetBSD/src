@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.72 1998/06/27 20:56:49 mark Exp $
+#	$NetBSD: bsd.own.mk,v 1.73 1998/07/22 18:21:39 perry Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -104,19 +104,8 @@ OBJECT_FMT?=ELF
 OBJECT_FMT?=a.out
 .endif
 
-# No lint, for now.
-
-# all machines on which we are okay should be added here until we can
-# get rid of the whole "NOLINT by default" thing.
-.if (${MACHINE} == "arm32") || \
-    (${MACHINE} == "i386") || \
-    (${MACHINE} == "sparc")
-NONOLINT=1
-.endif
-
-.if !defined(NONOLINT)
-NOLINT=
-.endif
+# Uncomment to turn off lint library generation.
+#NOLINT=
 
 # Profiling and shared libraries don't work on PowerPC yet.
 .if (${MACHINE_ARCH} == "powerpc")
