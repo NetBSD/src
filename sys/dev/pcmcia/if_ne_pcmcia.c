@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.24 1998/11/16 08:17:01 itohy Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.25 1998/11/17 20:44:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -56,8 +56,10 @@
 #include <dev/ic/rtl80x9reg.h>
 #include <dev/ic/rtl80x9var.h>
 
-int ne_pcmcia_match __P((struct device *, struct cfdata *, void *));
-void ne_pcmcia_attach __P((struct device *, struct device *, void *));
+int	ne_pcmcia_match __P((struct device *, struct cfdata *, void *));
+void	ne_pcmcia_attach __P((struct device *, struct device *, void *));
+int	ne_pcmcia_detach __P((struct device *, int));
+int	ne_pcmcia_activate __P((struct device *, enum devact));
 
 int	ne_pcmcia_enable __P((struct dp8390_softc *));
 void	ne_pcmcia_disable __P((struct dp8390_softc *));
@@ -74,7 +76,8 @@ struct ne_pcmcia_softc {
 };
 
 struct cfattach ne_pcmcia_ca = {
-	sizeof(struct ne_pcmcia_softc), ne_pcmcia_match, ne_pcmcia_attach
+	sizeof(struct ne_pcmcia_softc), ne_pcmcia_match, ne_pcmcia_attach,
+	    ne_pcmcia_detach, ne_pcmcia_activate
 };
 
 struct ne2000dev {
@@ -498,6 +501,59 @@ ne_pcmcia_attach(parent, self, aux)
 	ne2000_attach(nsc, enaddr, media, nmedia, defmedia);
 
 	pcmcia_function_disable(pa->pf);
+}
+
+int
+ne_pcmcia_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+#ifdef notyet
+	struct dp8390_softc *sc = (struct dp8390_softc *)self;
+
+	/*
+	 * Our softc is about to go away, so drop our reference
+	 * to the ifnet.
+	 */
+	if_delref(sc->sc_ec.ec_if);
+	return (0);
+#else
+	return (EBUSY);
+#endif
+}
+
+int
+ne_pcmcia_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)self;
+	struct dp8390_softc *sc = &psc->sc_ne2000.sc_dp8390;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+#ifdef notyet
+		/* First, kill off the interface. */
+		if_detach(sc->sc_ec.ec_if);
+#endif
+
+		/* Now disable the interface.  This releases our interrupt. */
+		dp8390_disable(sc);
+
+		/* Unmap our i/o windows. */
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+
+		/* Free our i/o space. */
+		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+		break;
+	}
+	return (rv);
 }
 
 int

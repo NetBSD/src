@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.17 1998/11/04 00:31:33 fvdl Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.18 1998/11/17 20:44:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,6 +118,8 @@
 
 int	ep_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	ep_pcmcia_attach __P((struct device *, struct device *, void *));
+int	ep_pcmcia_detach __P((struct device *, int));
+int	ep_pcmcia_activate __P((struct device *, enum devact));
 
 int	ep_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
 int	ep_pcmcia_enable __P((struct ep_softc *));
@@ -136,7 +138,8 @@ struct ep_pcmcia_softc {
 };
 
 struct cfattach ep_pcmcia_ca = {
-	sizeof(struct ep_pcmcia_softc), ep_pcmcia_match, ep_pcmcia_attach
+	sizeof(struct ep_pcmcia_softc), ep_pcmcia_match, ep_pcmcia_attach,
+	    ep_pcmcia_detach, ep_pcmcia_activate
 };
 
 struct ep_pcmcia_product {
@@ -358,6 +361,58 @@ ep_pcmcia_attach(parent, self, aux)
 	sc->enabled = 0;
 
 	ep_pcmcia_disable1(sc);
+}
+
+int
+ep_pcmcia_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+#ifdef notyet
+	struct ep_softc *sc = (struct ep_softc *)self;
+
+	/*
+	 * Our softc is about to go away, so drop our reference
+	 * to the ifnet.
+	 */
+	if_delref(sc->sc_ethercom.ec_if);
+	return (0);
+#else
+	return (EBUSY);
+#endif
+}
+
+int
+ep_pcmcia_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *)self;
+	struct ep_softc *sc = &psc->sc_ep;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+#ifdef notyet
+		/* First, kill off the interface. */
+		if_detach(sc->sc_ethercom.ec_if);
+#endif
+
+		/* Now disable the interface.  This releases our interrupt. */
+		epdisable(sc);
+
+		/* Unmap our i/o window. */
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+
+		/* Free our i/o space. */
+		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+		break;
+	}
+	return (rv);
 }
 
 int

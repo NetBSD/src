@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.12 1998/10/08 02:06:13 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.13 1998/11/17 20:44:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,8 @@
 
 int	sm_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	sm_pcmcia_attach __P((struct device *, struct device *, void *));
+int	sm_pcmcia_detach __P((struct device *, int));
+int	sm_pcmcia_activate __P((struct device *, enum devact));
 
 struct sm_pcmcia_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
@@ -98,7 +100,8 @@ struct sm_pcmcia_softc {
 };
 
 struct cfattach sm_pcmcia_ca = {
-	sizeof(struct sm_pcmcia_softc), sm_pcmcia_match, sm_pcmcia_attach
+	sizeof(struct sm_pcmcia_softc), sm_pcmcia_match, sm_pcmcia_attach,
+	    sm_pcmcia_detach, sm_pcmcia_activate
 };
 
 int	sm_pcmcia_enable __P((struct smc91cxx_softc *));
@@ -243,6 +246,58 @@ sm_pcmcia_attach(parent, self, aux)
 	smc91cxx_attach(sc, enaddr);
 
 	pcmcia_function_disable(pa->pf);
+}
+
+int
+sm_pcmcia_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+#ifdef notyet
+	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
+
+	/*
+	 * Our softc is about to go away, so drop our reference
+	 * to the ifnet.
+	 */
+	if_delref(sc->sc_ec.ec_if);
+	return (0);
+#else
+	return (EBUSY);
+#endif
+}
+
+int
+sm_pcmcia_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
+	struct smc91cxx_softc *sc = &psc->sc_smc;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+#ifdef notyet
+		/* First, kill off the interface. */
+		if_detach(sc->sc_ec.ec_if);
+#endif
+
+		/* Now disable the interface.  This releases our interrupt. */
+		smc91cxx_disable(sc);
+
+		/* Unmap our i/o window. */
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+
+		/* Free our i/o space. */
+		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+		break;
+	}
+	return (rv);
 }
 
 int
