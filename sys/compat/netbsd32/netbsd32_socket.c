@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.2 2001/05/30 11:37:28 mrg Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.3 2001/06/25 19:24:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -314,7 +314,7 @@ netbsd32_sendmsg(p, v, retval)
 	msg.msg_flags = 0;
 #endif
 	/* Luckily we can use this directly */
-	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval, 0);
 done:
 	if (iov != aiov)
 		FREE(iov, M_IOV);
@@ -385,5 +385,5 @@ netbsd32_sendto(p, v, retval)
 #endif
 	aiov.iov_base = (char *)(u_long)SCARG(uap, buf);	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, len);
-	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
+	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval, 0));
 }

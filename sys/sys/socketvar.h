@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.46 2001/05/06 19:22:33 manu Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.47 2001/06/25 19:24:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -317,8 +317,8 @@ int	soshutdown(struct socket *so, int how);
 void	sowakeup(struct socket *so, struct sockbuf *sb);
 int	sockargs(struct mbuf **, const void *, int, int);
 
-int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
-int	recvit(struct proc *, int, struct msghdr *, caddr_t, register_t *);
+int	sendit(struct proc *, int, struct msghdr *, int, register_t *, int);
+int	recvit(struct proc *, int, struct msghdr *, caddr_t, register_t *, int);
 
 #endif /* _KERNEL */
 

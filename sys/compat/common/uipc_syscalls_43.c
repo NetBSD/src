@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.11 2000/03/30 11:27:15 augustss Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.12 2001/06/25 19:24:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -166,7 +166,7 @@ compat_43_sys_recv(p, v, retval)
 	aiov.iov_len = SCARG(uap, len);
 	msg.msg_control = 0;
 	msg.msg_flags = SCARG(uap, flags);
-	return (recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval));
+	return (recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval, 0));
 }
 
 int
@@ -227,7 +227,7 @@ compat_43_sys_recvmsg(p, v, retval)
 		goto done;
 	msg.msg_iov = iov;
 	error = recvit(p, SCARG(uap, s), &msg,
-	    (caddr_t)&SCARG(uap, msg)->msg_namelen, retval);
+	    (caddr_t)&SCARG(uap, msg)->msg_namelen, retval, 0);
 
 	if (msg.msg_controllen && error == 0)
 		error = copyout((caddr_t)&msg.msg_controllen,
@@ -261,7 +261,7 @@ compat_43_sys_send(p, v, retval)
 	aiov.iov_len = SCARG(uap, len);
 	msg.msg_control = 0;
 	msg.msg_flags = 0;
-	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
+	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval, 0));
 }
 
 int
@@ -297,7 +297,7 @@ compat_43_sys_sendmsg(p, v, retval)
 		goto done;
 	msg.msg_flags = MSG_COMPAT;
 	msg.msg_iov = iov;
-	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval, 0);
 done:
 	if (iov != aiov)
 		FREE(iov, M_IOV);
