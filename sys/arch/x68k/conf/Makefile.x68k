@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.29 1998/10/15 18:37:17 drochner Exp $
+#	$NetBSD: Makefile.x68k,v 1.30 1999/01/08 19:26:15 augustss Exp $
 
 # Makefile for NetBSD
 #
@@ -51,7 +51,8 @@ CMACHFLAGS=	-m68030
 .else
 CMACHFLAGS=	-m68060
 .endif
-CWARNFLAGS?=	-Werror -Wstrict-prototypes -Wmissing-prototypes
+CWARNFLAGS?=	-Werror -Wstrict-prototypes -Wmissing-prototypes \
+		-Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
