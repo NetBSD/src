@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.15 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.16 2002/01/29 18:53:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -42,7 +42,6 @@
 #include <machine/autoconf.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
-#include <machine/bitdisp.h>
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vrcpudef.h>
@@ -54,19 +53,19 @@
 #include <hpcmips/vr/cmureg.h>
 #include "locators.h"
 
-#define VRIPDEBUG
-#ifdef VRIPDEBUG
-#ifndef VRIPDEBUG_CONF
-#define VRIPDEBUG_CONF 0
-#endif /* VRIPDEBUG_CONF */
-int	vrip_debug = VRIPDEBUG_CONF;
-#define DPRINTF(arg) if (vrip_debug) printf arg;
-#define DBITDISP32(reg) if (vrip_debug) bitdisp32(reg);
-#define DDUMP_LEVEL2MASK(sc,arg) if (vrip_debug) __vrip_dump_level2mask(sc,arg)
+#ifdef VRIP_DEBUG
+#define DPRINTF_ENABLE
+#define DPRINTF_DEBUG	vrip_debug
+#endif
+#define USE_HPC_DPRINTF
+#include <machine/debug.h>
+
+#ifdef VRIP_DEBUG
+#define DBG_BIT_PRINT(reg) if (vrip_debug) dbg_bit_print(reg);
+#define DUMP_LEVEL2MASK(sc,arg) if (vrip_debug) __vrip_dump_level2mask(sc,arg)
 #else
-#define DPRINTF(arg)
-#define DBITDISP32(arg)
-#define DDUMP_LEVEL2MASK(sc,arg)
+#define DBG_BIT_PRINT(arg)
+#define DUMP_LEVEL2MASK(sc,arg)
 #endif
 
 #define MAX_LEVEL1 32
@@ -371,7 +370,8 @@ __vrip_intr_setmask1(vrip_chipset_tag_t vc, vrip_intr_handle_t handle,
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int32_t reg = sc->sc_intrmask;
 
-printf("__vrip_intr_setmask1: SYSINT: %s %d\n", enable ? "enable" : "disable", level1);
+	DPRINTF(("__vrip_intr_setmask1: SYSINT: %s %d\n",
+		 enable ? "enable" : "disable", level1));
 	reg = (bus_space_read_2 (iot, ioh, MSYSINT1_REG_W)&0xffff) |
 	    ((bus_space_read_2 (iot, ioh, MSYSINT2_REG_W)<< 16)&0xffff0000);
 	if (enable)
@@ -382,7 +382,7 @@ printf("__vrip_intr_setmask1: SYSINT: %s %d\n", enable ? "enable" : "disable", l
 	sc->sc_intrmask = reg;
 	bus_space_write_2 (iot, ioh, MSYSINT1_REG_W, reg & 0xffff);
 	bus_space_write_2 (iot, ioh, MSYSINT2_REG_W, (reg >> 16) & 0xffff);
-	DBITDISP32(reg);
+	DBG_BIT_PRINT(reg);
     
 	return;
 }
@@ -396,13 +396,14 @@ __vrip_dump_level2mask(vrip_chipset_tag_t vc, vrip_intr_handle_t handle)
 	u_int32_t reg;
     
 	if (vu->vu_mlreg) {
-		printf ("level1[%d] level2 mask:", vu->vu_intr[0]);
+		DPRINTF(("level1[%d] level2 mask:", vu->vu_intr[0]));
 		reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, vu->vu_mlreg);
 		if (vu->vu_mhreg) { /* GIU [16:31] case only */
-			reg |= (bus_space_read_2(sc->sc_iot, sc->sc_ioh, vu->vu_mhreg) << 16);
-			bitdisp32(reg);
+			reg |= (bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+			    vu->vu_mhreg) << 16);
+			dbg_bit_print(reg);
 		} else
-			bitdisp16(reg);
+			dbg_bit_print(reg);
 	}
 }
 
@@ -420,7 +421,7 @@ __vrip_intr_getstatus2(vrip_chipset_tag_t vc, vrip_intr_handle_t handle,
 	    vu->vu_lreg);
 	reg |= ((bus_space_read_2(sc->sc_iot, sc->sc_ioh, 
 	    vu->vu_hreg) << 16)&0xffff0000);
-/*    bitdisp32(reg);*/
+/*    dbg_bit_print(reg);*/
 	*mask = reg;
 }
 
@@ -435,7 +436,7 @@ __vrip_intr_setmask2(vrip_chipset_tag_t vc, vrip_intr_handle_t handle,
 	u_int16_t reg;
 
 	DPRINTF(("vrip_intr_setmask2:\n"));
-	DDUMP_LEVEL2MASK(vc, handle);
+	DUMP_LEVEL2MASK(vc, handle);
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else
@@ -458,7 +459,7 @@ __vrip_intr_setmask2(vrip_chipset_tag_t vc, vrip_intr_handle_t handle,
 		}
 	}
 #endif /* WINCE_DEFAULT_SETTING */
-	DDUMP_LEVEL2MASK(vc, handle);
+	DUMP_LEVEL2MASK(vc, handle);
 
 	return;
 }
