@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.12 2004/02/13 11:36:18 wiz Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.13 2004/05/12 15:44:28 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.12 2004/02/13 11:36:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.13 2004/05/12 15:44:28 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.12 2004/02/13 11:36:18 wiz Exp $"
 
 #include <sparc/sparc/msiiepreg.h> 
 #include <sparc/sparc/msiiepvar.h>
-
-static int timerok;
 
 static struct intrhand level10;
 static struct intrhand level14;
@@ -131,19 +129,6 @@ statintr_msiiep(void *cap)
 
 	/* read the limit register to clear the interrupt */
 	discard = msiiep->pcic_pclr;
-	if (timerok == 0) {
-		/* Stop the clock */
-#ifdef DIAGNOSTIC
-		printf("note: counter running!\n");
-#endif
-		/*
-		 * Turn interrupting processor counter
-		 * into non-interrupting user timer.
-		 */
-		msiiep->pcic_pc_cfg = 1; /* make it a user timer */
-		msiiep->pcic_pc_ctl = 0; /* stop user timer */
-		return (1);
-	}
 
 	statclock(frame);
 
@@ -245,8 +230,6 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	sched_cookie = softintr_establish(IPL_SCHED, schedintr, NULL);
 	if (sched_cookie == NULL)
 		panic("timerattach: cannot establish schedintr");
-
-	timerok = 1;
 }
 
 CFATTACH_DECL(timer_msiiep, sizeof(struct device), 
