@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.103 2003/08/10 14:51:48 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.104 2003/09/27 10:47:17 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -74,7 +74,6 @@ extern const char * const fstypenames[];
 #define RUN_FATAL	0x0002		/* errors are fatal */
 #define RUN_CHROOT	0x0004		/* chroot to target disk */
 #define RUN_FULLSCREEN	0x0008		/* fullscreen (use with RUN_DISPLAY) */
-#define RUN_SYSTEM	0x0010		/* just use system(3) */
 
 /* Installation sets */
 #define SET_KERNEL	0x000000ffu	/* allow 8 kernels */
@@ -381,7 +380,6 @@ int	check_lfs_progs(void);
 void	customise_sets(void);
 
 /* from target.c */
-int	must_mount_root(void);
 const	char *concat_paths(const char *, const char *);
 char	*target_realpath(const char *, char *);
 const	char *target_expand(const char *);
@@ -396,7 +394,7 @@ void	target_chdir_or_die(const char *);
 int	target_already_root(void);
 FILE	*target_fopen(const char *, const char *);
 int	target_collect_file(int, char **, const char *);
-int	is_active_rootpart(const char *);
+int	is_active_rootpart(const char *, int);
 int	cp_to_target(const char *, const char *);
 void	dup_file_into_target(const char *);
 void	mv_within_target_or_die(const char *, const char *);
