@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.33 2004/10/08 17:19:50 mycroft Exp $	*/
+/*	$NetBSD: atactl.c,v 1.34 2004/10/08 18:53:42 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.33 2004/10/08 17:19:50 mycroft Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.34 2004/10/08 18:53:42 soren Exp $");
 #endif
 
 
@@ -143,7 +143,8 @@ struct command device_commands[] = {
 	{ "standby",	"",			device_idle },
 	{ "sleep",	"",			device_idle },
 	{ "checkpower",	"",			device_checkpower },
-	{ "smart",	"enable|disable|status|error-log|selftest-log", device_smart },
+	{ "smart",	"enable|disable|status|offline #|error-log|selftest-log",
+						device_smart },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -1115,6 +1116,8 @@ device_smart(int argc, char *argv[])
 			print_smart_status(inbuf, inbuf2);
 
 	} else if (strcmp(argv[0], "offline") == 0) {
+		if (argc != 2)
+			usage();
 		if (!is_smart()) {
 			fprintf(stderr, "SMART not supported\n");
 			return;
