@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.3 2000/10/29 14:08:05 lukem Exp $
+.\"	$NetBSD: hardware,v 1.4 2001/01/08 14:37:48 bjh21 Exp $
 .
 .Nx*M
 \*V should support all common Acorn machines fitted with
@@ -16,10 +16,10 @@ Memory
 .bullet)
 .It
 On-board video
+.Pq Em arcvideo
 .It
-Standard keyboard
-.It
-Standard mouse
+Standard keyboard and mouse
+.Pq Em arckbd
 .It
 Expansion Cards (AKA
 .Dq podules ) .
@@ -35,10 +35,13 @@ Atomwide Ethernet III (Ether3,
 .Em "may support the following, but this is mostly untested"
 .It
 On-board IDE controller
+.Pq Em wdc
 .It
 Serial port
+.Pq Em com
 .It
 Parallel port
+.Pq Em lpt
 .bullet)
 .
 .Pp
