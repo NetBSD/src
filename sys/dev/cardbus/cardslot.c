@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.14 2001/03/27 10:34:05 haya Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.15 2001/11/13 12:51:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -31,6 +31,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.15 2001/11/13 12:51:12 lukem Exp $");
 
 #include "opt_cardslot.h"
 

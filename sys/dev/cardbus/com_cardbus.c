@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.5 2000/08/22 11:42:14 joda Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.6 2001/11/13 12:51:12 lukem Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,6 +38,9 @@
    BAR) listed in the CIS, it is assumed to be the one to use. For
    devices with more than one BAR, the list of known devices has to be
    updated below.  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.6 2001/11/13 12:51:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

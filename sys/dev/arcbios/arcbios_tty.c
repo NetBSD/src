@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.2 2001/09/08 01:39:12 rafal Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.3 2001/11/13 12:53:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.3 2001/11/13 12:53:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
