@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.26 1999/05/18 23:18:17 tron Exp $
+# $NetBSD: md.arm32,v 1.27 2000/01/24 07:25:01 mycroft Exp $
 ./dev/mouse
 ./dev/vidc
 ./sbin/ldconfig
@@ -16,6 +16,7 @@
 ./usr/lkm/msdosfs.o
 ./usr/lkm/ntfs.o
 ./usr/lkm/nullfs.o
+./usr/lkm/overlay.o
 ./usr/lkm/portal.o
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o

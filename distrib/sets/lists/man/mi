@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.195 2000/01/23 14:29:16 drochner Exp $
+# $NetBSD: mi,v 1.196 2000/01/24 07:25:05 mycroft Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -1707,6 +1707,7 @@
 ./usr/share/man/man8/mount_msdos.8
 ./usr/share/man/man8/mount_nfs.8
 ./usr/share/man/man8/mount_ntfs.8
+./usr/share/man/man8/mount_null.8
 ./usr/share/man/man8/mount_overlay.8
 ./usr/share/man/man8/mount_portal.8
 ./usr/share/man/man8/mount_procfs.8

@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.7 1999/05/18 23:18:17 tron Exp $
+# $NetBSD: ad.m68k,v 1.8 2000/01/24 07:25:01 mycroft Exp $
 ./sbin/ldconfig
 ./usr/lib/libm68k.so.0.0
 ./usr/libexec/ld.so
@@ -13,6 +13,7 @@
 ./usr/lkm/msdosfs.o
 ./usr/lkm/ntfs.o
 ./usr/lkm/nullfs.o
+./usr/lkm/overlay.o
 ./usr/lkm/portal.o
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o

@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.4 1999/06/23 09:08:11 tsubai Exp $
+# $NetBSD: md.macppc,v 1.5 2000/01/24 07:25:02 mycroft Exp $
 ./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
@@ -10,6 +10,7 @@
 ./usr/lkm/msdosfs.o
 ./usr/lkm/ntfs.o
 ./usr/lkm/nullfs.o
+./usr/lkm/overlay.o
 ./usr/lkm/portal.o
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o

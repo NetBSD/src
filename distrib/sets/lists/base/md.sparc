@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.47 1999/12/17 05:35:52 garbled Exp $
+# $NetBSD: md.sparc,v 1.48 2000/01/24 07:25:02 mycroft Exp $
 ./sbin/edlabel
 ./usr/bin/fdformat
 ./usr/lkm/adosfs.o
@@ -12,6 +12,7 @@
 ./usr/lkm/msdosfs.o
 ./usr/lkm/ntfs.o
 ./usr/lkm/nullfs.o
+./usr/lkm/overlay.o
 ./usr/lkm/portal.o
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
