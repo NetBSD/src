@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.20 1999/04/28 22:47:44 jonathan Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.21 1999/10/11 17:41:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -432,6 +432,7 @@
 				 ELINK_PCI_BNC|ELINK_PCI_AUI| \
 				 ELINK_PCI_100BASE_MII)
 
+#define	ELINK_RUNNER_MII_RESET		0x4000
 #define	ELINK_RUNNER_ENABLE_MII		0x8000
 
 /*
@@ -485,7 +486,13 @@
 /* EEPROM state flags/commands */
 #define EEPROM_BUSY			(1<<15)
 #define EEPROM_TST_MODE			(1<<14)
+
 #define READ_EEPROM			(1<<7)
+
+	/* For the RoadRunner chips... */
+#define	WRITE_EEPROM_RR			0x100
+#define	READ_EEPROM_RR			0x200
+#define	ERASE_EEPROM_RR			0x300
 
 /* window 4, MEDIA_STATUS bits */
 #define SQE_ENABLE			0x08	/* Enables SQE on AUI ports */
