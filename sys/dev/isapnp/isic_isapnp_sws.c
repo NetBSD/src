@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: i4b_sws.c,v 1.1.1.1 2001/01/05 12:50:17 martin Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.1 2001/02/18 09:24:54 martin Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
