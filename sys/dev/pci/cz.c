@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.10 2000/07/28 06:10:54 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.11 2000/11/02 00:01:45 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -776,7 +776,7 @@ cz_intr(void *arg)
 			if (!ISSET(tp->t_state, TS_ISOPEN))
 				break;
 
-			(void) (*linesw[tp->t_line].l_modem)(tp,
+			(void) (*tp->t_linesw->l_modem)(tp,
 			    ISSET(C_RS_DCD, CZTTY_CHAN_READ(sc,
 			    CHNCTL_RS_STATUS)));
 			break;
@@ -814,7 +814,7 @@ cz_intr(void *arg)
 			 * A break is a \000 character with TTY_FE error
 			 * flags set. So TTY_FE by itself works.
 			 */
-			(*linesw[tp->t_line].l_rint)(TTY_FE, tp);
+			(*tp->t_linesw->l_rint)(TTY_FE, tp);
 			ttwakeup(tp);
 			wakeup(tp);
 			break;
@@ -1068,7 +1068,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error)
 		goto bad;
 
@@ -1101,7 +1101,7 @@ czttyclose(dev_t dev, int flags, int mode, struct proc *p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 
-	(*linesw[tp->t_line].l_close)(tp, flags);
+	(*tp->t_linesw->l_close)(tp, flags);
 	ttyclose(tp);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
@@ -1127,7 +1127,7 @@ czttyread(dev_t dev, struct uio *uio, int flags)
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flags));
+	return ((*tp->t_linesw->l_read)(tp, uio, flags));
 }
 
 /*
@@ -1141,7 +1141,7 @@ czttywrite(dev_t dev, struct uio *uio, int flags)
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flags));
+	return ((*tp->t_linesw->l_write)(tp, uio, flags));
 }
 
 /*
@@ -1156,7 +1156,7 @@ czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct tty *tp = sc->sc_tty;
 	int s, error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -1471,7 +1471,7 @@ czttyparam(struct tty *tp, struct termios *t)
 	 * request.
 	 */
 	rs_status = CZTTY_CHAN_READ(sc, CHNCTL_RS_STATUS);
-	(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(rs_status, C_RS_DCD));
+	(void) (*tp->t_linesw->l_modem)(tp, ISSET(rs_status, C_RS_DCD));
 
 	return (0);
 }
@@ -1650,7 +1650,7 @@ cztty_receive(struct cztty_softc *sc, struct tty *tp)
 #ifdef HOSTRAMCODE
 		}
 #endif
-		(*linesw[tp->t_line].l_rint)(ch, tp);
+		(*tp->t_linesw->l_rint)(ch, tp);
 		get = (get + 1) % size;
 		done = 1;
 	}

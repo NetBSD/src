@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.8 2000/07/09 20:57:43 pk Exp $	*/
+/*	$NetBSD: magma.c,v 1.9 2000/11/02 00:01:46 eeh Exp $	*/
 /*
  * magma.c
  *
@@ -730,7 +730,7 @@ magma_soft(arg)
 				log(LOG_WARNING, "%s%x: fifo overflow\n",
 				    mtty->ms_dev.dv_xname, port);
 
-			(*linesw[tp->t_line].l_rint)(data, tp);
+			(*tp->t_linesw->l_rint)(data, tp);
 			serviced = 1;
 		}
 
@@ -742,7 +742,7 @@ magma_soft(arg)
 		if( ISSET(flags, MTTYF_CARRIER_CHANGED) ) {
 			dprintf(("%s%x: cd %s\n", mtty->ms_dev.dv_xname,
 				port, mp->mp_carrier ? "on" : "off"));
-			(*linesw[tp->t_line].l_modem)(tp, mp->mp_carrier);
+			(*tp->t_linesw->l_modem)(tp, mp->mp_carrier);
 			serviced = 1;
 		}
 
@@ -755,7 +755,7 @@ magma_soft(arg)
 		if( ISSET(flags, MTTYF_DONE) ) {
 			ndflush(&tp->t_outq, mp->mp_txp - tp->t_outq.c_cf);
 			CLR(tp->t_state, TS_BUSY);
-			(*linesw[tp->t_line].l_start)(tp);	/* might be some more */
+			(*tp->t_linesw->l_start)(tp);	/* might be some more */
 			serviced = 1;
 		}
 	} /* for(each mtty...) */
@@ -944,7 +944,7 @@ mttyopen(dev, flags, mode, p)
 	if (error != 0)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error != 0)
 		goto bad;
 
@@ -975,7 +975,7 @@ mttyclose(dev, flag, mode, p)
 	struct tty *tp = mp->mp_tty;
 	int s;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
 	s = spltty();
@@ -1015,7 +1015,7 @@ mttyread(dev, uio, flags)
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct tty *tp = mp->mp_tty;
 
-	return( (*linesw[tp->t_line].l_read)(tp, uio, flags) );
+	return( (*tp->t_linesw->l_read)(tp, uio, flags) );
 }
 
 /*
@@ -1031,7 +1031,7 @@ mttywrite(dev, uio, flags)
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct tty *tp = mp->mp_tty;
 
-	return( (*linesw[tp->t_line].l_write)(tp, uio, flags) );
+	return( (*tp->t_linesw->l_write)(tp, uio, flags) );
 }
 
 /*
@@ -1063,7 +1063,7 @@ mttyioctl(dev, cmd, data, flags, p)
 	struct tty *tp = mp->mp_tty;
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flags, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, p);
 	if( error >= 0 ) return(error);
 
 	error = ttioctl(tp, cmd, data, flags, p);
