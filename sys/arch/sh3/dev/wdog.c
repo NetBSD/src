@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.2 2000/02/24 17:10:16 msaitoh Exp $ */
+/* $NetBSD: wdog.c,v 1.3 2000/04/20 14:04:04 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -166,7 +166,6 @@ wdogioctl (dev, cmd, data, flag, p)
 		break;
 	case SIOSTOPWDOG:
 		wdog_wr_csr(SHREG_WTCSR_R & ~WTCSR_TME); /* stop */
-		log(LOG_SYSTEM | LOG_DEBUG, "wdog: maxwdog = %u\n", maxwdog);
 		break;
 	case SIOSETWDOG:
 		request = *(int *)data;
