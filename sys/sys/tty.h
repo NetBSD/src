@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.26 1994/10/30 21:50:02 cgd Exp $	*/
+/*	$NetBSD: tty.h,v 1.27 1994/10/30 22:11:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -210,7 +210,7 @@ int	 unputc __P((struct clist *q));
 
 int	 nullmodem __P((struct tty *tp, int flag));
 int	 tputchar __P((int c, struct tty *tp));
-int	 ttioctl __P((struct tty *tp, u_long com, void *data, int flag,
+int	 ttioctl __P((struct tty *tp, u_long com, caddr_t data, int flag,
 	    struct proc *p));
 int	 ttread __P((struct tty *tp, struct uio *uio, int flag));
 void	 ttrstrt __P((void *tp));
