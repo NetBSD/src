@@ -33,6 +33,10 @@ Boston, MA 02111-1307, USA.  */
 #include <stdlib.h>
 #endif
 
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+
 extern int fflush(FILE*);
 
 #define ROUND(V, A) \
@@ -93,6 +97,9 @@ objc_write_unsigned_char (struct objc_typed_stream* stream,
 static __inline__ int
 __objc_code_char (unsigned char* buf, char val)
 {
+#if defined(HAVE_LIMITS_H) && (CHAR_MIN == 0)
+  return __objc_code_unsigned_char (buf, val);
+#else
   if (val >= 0)
     return __objc_code_unsigned_char (buf, val);
   else
@@ -101,6 +108,7 @@ __objc_code_char (unsigned char* buf, char val)
       buf[1] = -val;
       return 2;
     }
+#endif
 }
 
 int
