@@ -35,8 +35,8 @@
 static char sccsid[] = "@(#)strtouq.c	5.1 (Berkeley) 6/26/92";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
-
 #include <limits.h>
 #include <errno.h>
 #include <ctype.h>
@@ -112,3 +112,4 @@ strtouq(nptr, endptr, base)
 		*endptr = (char *) (any ? s - 1 : nptr);
 	return (acc);
 }
+__weak_reference(_strtouq,strtouq);
