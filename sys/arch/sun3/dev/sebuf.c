@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.3 1997/12/08 19:19:25 gwr Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.4 1998/01/12 20:32:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,11 +85,6 @@ static int  sebuf_print __P((void *, const char *));
 struct cfattach sebuf_ca = {
 	sizeof(struct sebuf_softc), sebuf_match, sebuf_attach
 };
-
-struct cfdriver sebuf_cd = {
-	NULL, "sebuf", DV_DULL
-};
-
 
 static int
 sebuf_match(parent, cf, args)

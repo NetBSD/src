@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.9 1997/10/09 08:37:22 jtc Exp $ */
+/*	$NetBSD: tcx.c,v 1.10 1998/01/12 20:23:57 thorpej Exp $ */
 
 /* 
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -114,9 +114,7 @@ struct cfattach tcx_ca = {
 	sizeof(struct tcx_softc), tcxmatch, tcxattach
 };
 
-struct cfdriver tcx_cd = {
-	NULL, "tcx", DV_DULL
-};
+extern struct cfdriver tcx_cd;
 
 /* frame buffer generic driver */
 static struct fbdriver tcx_fbdriver = {

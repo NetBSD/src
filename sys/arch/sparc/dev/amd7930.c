@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.34 1997/12/06 03:20:56 chuck Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.35 1998/01/12 20:23:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -116,10 +116,6 @@ int	amd7930match __P((struct device *, struct cfdata *, void *));
 
 struct cfattach audioamd_ca = {
 	sizeof(struct amd7930_softc), amd7930match, amd7930attach
-};
-
-struct	cfdriver audioamd_cd = {
-	NULL, "audioamd", DV_DULL
 };
 
 struct audio_device amd7930_device = {

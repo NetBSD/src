@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.40 1997/10/16 10:49:06 mycroft Exp $	*/
+/*	$NetBSD: si.c,v 1.41 1998/01/12 20:23:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -251,17 +251,9 @@ struct cfattach si_ca = {
 	sizeof(struct si_softc), si_match, si_attach
 };
 
-struct cfdriver si_cd = {
-	NULL, "si", DV_DULL
-};
-
 /* The Sun "SCSI Weird" 4/100 obio controller. */
 struct cfattach sw_ca = {
 	sizeof(struct si_softc), si_match, si_attach
-};
-
-struct cfdriver sw_cd = {
-	NULL, "sw", DV_DULL
 };
 
 static int
