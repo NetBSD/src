@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.61 2001/11/07 10:52:08 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.62 2001/12/23 23:08:41 thorpej Exp $	*/
 
 /*
  *
@@ -353,14 +353,9 @@ void		pmap_activate __P((struct proc *));
 void		pmap_bootstrap __P((vaddr_t));
 boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
 void		pmap_deactivate __P((struct proc *));
-static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
 void		pmap_page_remove  __P((struct vm_page *));
-static void	pmap_protect __P((struct pmap *, vaddr_t,
-				vaddr_t, vm_prot_t));
 void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
 boolean_t	pmap_test_attrs __P((struct vm_page *, int));
-static void	pmap_update_pg __P((vaddr_t));
-static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
 void		pmap_write_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
 
@@ -383,9 +378,8 @@ boolean_t			pmap_pageidlezero __P((paddr_t));
  *	if hardware doesn't support one-page flushing)
  */
 
-__inline static void
-pmap_update_pg(va)
-	vaddr_t va;
+__inline static void __attribute__((__unused__))
+pmap_update_pg(vaddr_t va)
 {
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
@@ -399,9 +393,8 @@ pmap_update_pg(va)
  * pmap_update_2pg: flush two pages from the TLB
  */
 
-__inline static void
-pmap_update_2pg(va, vb)
-	vaddr_t va, vb;
+__inline static void __attribute__((__unused__))
+pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
@@ -423,10 +416,8 @@ pmap_update_2pg(va, vb)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void
-pmap_page_protect(pg, prot)
-	struct vm_page *pg;
-	vm_prot_t prot;
+__inline static void __attribute__((__unused__))
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
@@ -445,11 +436,8 @@ pmap_page_protect(pg, prot)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void
-pmap_protect(pmap, sva, eva, prot)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+__inline static void __attribute__((__unused__))
+pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
@@ -471,7 +459,7 @@ pmap_protect(pmap, sva, eva, prot)
 
 #include <lib/libkern/libkern.h>
 
-static __inline pt_entry_t *
+static __inline pt_entry_t * __attribute__((__unused__))
 vtopte(vaddr_t va)
 {
 
@@ -480,7 +468,7 @@ vtopte(vaddr_t va)
 	return (PTE_BASE + i386_btop(va));
 }
 
-static __inline pt_entry_t *
+static __inline pt_entry_t * __attribute__((__unused__))
 kvtopte(vaddr_t va)
 {
 
