@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.395 2002/01/22 08:33:16 junyoung Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.396 2002/01/26 16:31:19 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.392 2002/01/22 08:32:08 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.393 2002/01/26 16:30:00 ichiro Exp 
  */
 
 /*
@@ -5551,13 +5551,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450LYNX,
 	    0,
 	    "Texas Instruments",
-	    "PCI4450 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4450 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410LYNX,
 	    0,
 	    "Texas Instruments",
-	    "PCI4410 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4410 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
@@ -5581,7 +5581,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451LYNX,
 	    0,
 	    "Texas Instruments",
-	    "PCI4451 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
@@ -5665,19 +5665,19 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450YENTA,
 	    0,
 	    "Texas Instruments",
-	    "PCI4450 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller",
+	    "PCI4450 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410YENTA,
 	    0,
 	    "Texas Instruments",
-	    "PCI4410 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller",
+	    "PCI4410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451YENTA,
 	    0,
 	    "Texas Instruments",
-	    "PCI4451 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller",
+	    "PCI4451 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1410,
@@ -6073,7 +6073,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6305,
 	    0,
 	    "VIA Technologies",
-	    "VT6305 OCHI IEEE 1394 Controller",
+	    "VT6305 OHCI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
@@ -6223,7 +6223,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6306,
 	    0,
 	    "VIA Technologies",
-	    "VT3606 OCHI IEEE 1394 Controller",
+	    "VT3606 OHCI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
