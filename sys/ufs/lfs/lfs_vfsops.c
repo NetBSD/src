@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.98 2003/02/25 13:47:44 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.99 2003/02/25 20:35:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.98 2003/02/25 13:47:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.99 2003/02/25 20:35:40 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1875,7 +1875,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	splx(s);
 
 	memset(mbp, 0, sizeof(*bp));
-	simple_lock_init(&mbp->b_interlock);
+	BUF_INIT(mbp);
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
 	    vp, mbp, vp->v_numoutput, bytes);
 	mbp->b_bufsize = npages << PAGE_SHIFT;
@@ -1884,7 +1884,6 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	mbp->b_flags = B_BUSY|B_WRITE|B_AGE|B_CALL;
 	mbp->b_iodone = uvm_aio_biodone;
 	mbp->b_vp = vp;
-	LIST_INIT(&mbp->b_dep);
 
 	bp = NULL;
 	for (offset = startoffset;
@@ -1950,13 +1949,12 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			    vp, bp, vp->v_numoutput, 0);
 			splx(s);
 			memset(bp, 0, sizeof(*bp));
-			simple_lock_init(&bp->b_interlock);
+			BUF_INIT(bp);
 			bp->b_data = (char *)kva +
 			    (vaddr_t)(offset - pg->offset);
 			bp->b_resid = bp->b_bcount = iobytes;
 			bp->b_flags = B_BUSY|B_WRITE|B_CALL;
 			bp->b_iodone = uvm_aio_biodone1;
-			LIST_INIT(&bp->b_dep);
 		}
 
 		/* XXX This is silly ... is this necessary? */

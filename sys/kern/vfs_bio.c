@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.90 2003/02/06 11:46:49 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.91 2003/02/25 20:35:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.90 2003/02/06 11:46:49 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.91 2003/02/25 20:35:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,10 +175,9 @@ bufinit()
 	for (i = 0; i < nbuf; i++) {
 		bp = &buf[i];
 		memset((char *)bp, 0, sizeof(*bp));
-		simple_lock_init(&bp->b_interlock);
+		BUF_INIT(bp);
 		bp->b_dev = NODEV;
 		bp->b_vnbufs.le_next = NOLIST;
-		LIST_INIT(&bp->b_dep);
 		bp->b_data = buffers + i * MAXBSIZE;
 		if (i < residual)
 			bp->b_bufsize = (base + 1) * PAGE_SIZE;
