@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.9 2001/12/25 16:55:50 someya Exp $	*/
+/*	$NetBSD: yds.c,v 1.10 2001/12/30 19:33:15 someya Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.9 2001/12/25 16:55:50 someya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.10 2001/12/30 19:33:15 someya Exp $");
 
 #include "mpu.h"
 
@@ -188,6 +188,9 @@ static int yds_halt __P((struct yds_softc *));
 static u_int32_t yds_get_lpfq __P((u_int));
 static u_int32_t yds_get_lpfk __P((u_int));
 static struct yds_dma *yds_find_dma __P((struct yds_softc *, void *));
+
+static int yds_init __P((struct yds_softc *));
+static void yds_powerhook __P((int, void *));
 
 #ifdef AUDIO_DEBUG
 static void yds_dump_play_slot __P((struct yds_softc *, int));
@@ -427,12 +430,15 @@ yds_allocate_slots(sc)
 	memsize += (N_PLAY_SLOTS+1)*sizeof(u_int32_t);
 
 	p = &sc->sc_ctrldata;
-	i = yds_allocmem(sc, memsize, 16, p);
-	if (i) {
-		printf("%s: couldn't alloc/map DSP DMA buffer, reason %d\n",
-		       sc->sc_dev.dv_xname, i);
-		free(p, M_DEVBUF);
-		return 1;
+	printf("KERNADDR(p) : %p\n", KERNADDR(p));
+	if (KERNADDR(p) == NULL) {
+		i = yds_allocmem(sc, memsize, 16, p);
+		if (i) {
+			printf("%s: couldn't alloc/map DSP DMA buffer, reason %d\n",
+				sc->sc_dev.dv_xname, i);
+			free(p, M_DEVBUF);
+			return 1;
+		}
 	}
 	mp = KERNADDR(p);
 	da = DMAADDR(p);
@@ -638,6 +644,52 @@ yds_configure_legacy (arg)
 #undef FLEXIBLE
 #undef SELECTABLE
 
+static int
+yds_init(sc)
+	struct yds_softc *sc;
+{
+	u_int32_t reg;
+
+	DPRINTF(("yds_init()\n"));
+
+	/* Download microcode */
+	if (yds_download_mcode(sc)) {
+		printf("%s: download microcode failed\n", sc->sc_dev.dv_xname);
+		return 1;
+	}
+
+	/* Allocate DMA buffers */
+	if (yds_allocate_slots(sc)) {
+		printf("%s: could not allocate slots\n", sc->sc_dev.dv_xname);
+		return 1;
+	}
+
+	/* Warm reset */
+	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, YDS_PCI_DSCTRL);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, YDS_PCI_DSCTRL,
+		reg | YDS_DSCTRL_WRST);
+	delay(50000);
+
+	return 0;
+}
+
+static void
+yds_powerhook(why, addr)
+	int why;
+	void *addr;
+{
+	struct yds_softc *sc = addr;
+
+	if (why == PWR_RESUME) {
+		if (yds_init(sc)) {
+			printf("%s: reinitialize failed\n",
+				sc->sc_dev.dv_xname);
+			return;
+		}
+		sc->sc_codec[0].codec_if->vtbl->restore_ports(sc->sc_codec[0].codec_if);
+	}
+}
+
 void
 yds_attach(parent, self, aux)
 	struct device *parent;
@@ -716,21 +768,11 @@ yds_attach(parent, self, aux)
 	for (i = 0x80; i < 0xc0; i += 2)
 		YWRITE2(sc, i, 0);
 
-	/* Download microcode */
-	if (yds_download_mcode(sc)) {
-		printf("%s: download microcode failed\n", sc->sc_dev.dv_xname);
+	/* Initialize the device */
+	if (yds_init(sc)) {
+		printf("%s: initialize failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	/* Allocate DMA buffers */
-	if (yds_allocate_slots(sc)) {
-		printf("%s: could not allocate slots\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/* Warm reset */
-	reg = pci_conf_read(pc, pa->pa_tag, YDS_PCI_DSCTRL);
-	pci_conf_write(pc, pa->pa_tag, YDS_PCI_DSCTRL, reg | YDS_DSCTRL_WRST);
-	delay(50000);
 
 	/*
 	 * Detect primary/secondary AC97
@@ -866,6 +908,8 @@ detected:
 
 	sc->sc_legacy_iot = pa->pa_iot;
 	config_defer((struct device*) sc, yds_configure_legacy);
+
+	powerhook_establish(yds_powerhook, sc);
 }
 
 int
