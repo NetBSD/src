@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.25 2002/11/20 11:05:12 wdk Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.26 2002/11/23 23:47:41 wdk Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.25 2002/11/20 11:05:12 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.26 2002/11/23 23:47:41 wdk Exp $");
 
 #include "opt_cputype.h"
 
@@ -1641,15 +1641,10 @@ upcallret(struct lwp *l)
 void 
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct proc *p = l->l_proc;
-	
 	struct saframe *sf, frame;
 	struct frame *f;
 
-	extern char sigcode[], upcallcode[];
-
 	f = (struct frame *)l->l_md.md_regs;
-
 
 #if 0 /* First 4 args in regs (see below). */
 	frame.sa_type = type;
@@ -1667,8 +1662,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 		/* NOTREACHED */
 	}
 
-	f->f_regs[PC] = ((u_int32_t)p->p_sigctx.ps_sigcode) +
-	    ((u_int32_t)upcallcode - (u_int32_t)sigcode);
+	f->f_regs[PC] = (u_int32_t)upcall;
 	f->f_regs[SP] = (u_int32_t)sf;
 	f->f_regs[A0] = type;
 	f->f_regs[A1] = (u_int32_t)sas;
@@ -1676,7 +1670,6 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	f->f_regs[A3] = ninterrupted;
 	f->f_regs[S8] = 0;
 	f->f_regs[T9] = (u_int32_t)upcall;  /* t9=Upcall function*/
-
 }
 
 
