@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.2 2002/02/26 13:27:50 lukem Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.3 2002/02/26 22:52:10 lukem Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -56,7 +56,7 @@ realall:	netbsd boot
 
 # Let the kernel on the diskette be called "netbsd" although
 # it is compressed.  This is because the boot code will search
-# for "netbsd" first, and calling it "netbsd" instead of "netbsd.gz" 
+# for "netbsd" first, and calling it "netbsd" instead of "netbsd.gz"
 # we avoid scanning all the diskettes before reading the file.
 
 netbsd: ${KERN}
@@ -65,7 +65,7 @@ netbsd: ${KERN}
 
 # This is "cheating", just so that we have the available
 # space at the start of the tar file.  Installboot will overwrite
-# the start of the bootcode with the tail end of the "real", aligned 
+# the start of the bootcode with the tail end of the "real", aligned
 # second-stage boot loader when it is run (which is quite a bit shorter
 # than the entire ${BOOTCODE} file, even when symbols are removed.
 # (the first 15*512 bytes are put into the first 8K filesystem block,
@@ -79,7 +79,7 @@ boot: ${BOOTCODE}
 release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/installation/floppy
 	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
-	
+
 clean cleandir distclean:
 	rm -f *.core ${CLEANFILES} ${IMAGE} ${IMAGE}.tmp
 	rm -rf empty
