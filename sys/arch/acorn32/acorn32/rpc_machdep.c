@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.3 2001/11/09 06:52:25 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.4 2001/11/09 07:21:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -965,14 +965,17 @@ initarm_new_bootloader(bootconf)
 #endif	/* NIPKDB */
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
+#ifdef __ELF__
+	ddb_init(0, NULL, NULL);	/* XXX */
+#else
 	{
 		extern int end;
 		extern int *esym;
 
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
+#endif /* __ELF__ */
 
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -1849,14 +1852,17 @@ initarm_old_bootloader(bootconf)
 #endif	/* NIPKDB */
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
+#ifdef __ELF__
+	ddb_init(0, NULL, NULL);	/* XXX */
+#else
 	{
 		extern int end;
 		extern int *esym;
 
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
+#endif /* __ELF__ */
 
 	if (boothowto & RB_KDB)
 		Debugger();
