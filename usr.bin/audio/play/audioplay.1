@@ -1,6 +1,6 @@
-.\"	$NetBSD: audioplay.1,v 1.7 1999/09/14 05:04:21 mrg Exp $
+.\"	$NetBSD: audioplay.1,v 1.7.8.1 2002/01/29 23:13:01 he Exp $
 .\"
-.\" Copyright (c) 1998-1999 Matthew R. Green
+.\" Copyright (c) 1998-2002 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,9 +26,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 30, 1999
+.Dd January 13, 2002
 .Dt AUDIOPLAY 1
-.Os NetBSD
+.Os
 .Sh NAME
 .Nm audioplay
 .Nd play audio files
@@ -52,8 +52,10 @@
 The
 .Nm
 program copies the named audiofiles, or the standard input if no files are
-named, to the audio device.  The input files must contain a valid audio
-header, and the encoding must be understood by the underlying driver.
+named, to the audio device.  The special name
+.Dq -
+is assumed to mean the standard input.  The input files must contain a valid
+audio header, and the encoding must be understood by the underlying driver.
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width 123456
@@ -132,7 +134,7 @@ and
 when combined with the
 .Fl f
 option, sets the precision to its argument.  This value must be either
-8, 16, 24 or 32.
+4, 8, 16, 24 or 32.
 .It Fl s
 when combined with the
 .Fl f
@@ -149,14 +151,13 @@ the audio device to be used.
 .Sh EXAMPLES
 Play a raw dump taken from an audio CD ROM:
 .Pp
-.Dl "audioplay -f -c 2 -P 16 -s 44100 -e slinear_le filename
+.Dl "audioplay -f -c 2 -P 16 -s 44100 -e slinear_le filename"
 .Pp
 The
 .Xr audioctl 1
 program can be used to show the available supported encodings:
 .Pp
-.Dl "audioctl encodings
-.Pp
+.Dl "audioctl encodings"
 .Sh NOTES
 .Nm
 can be used to play Sun/NeXT audio files, and also RIFF WAVE audio files.
@@ -170,30 +171,41 @@ returned.
 .Pp
 If an invalid parameter is specified, an error is returned.  The set of
 valid values for any audio parameter is specified by the hardware driver.
+.Sh SEE ALSO
+.Xr audioctl 1 ,
+.Xr audiorecord 1 ,
+.Xr aria 4 ,
+.Xr audio 4 ,
+.Xr audioamd 4 ,
+.Xr auich 4 ,
+.Xr autri 4 ,
+.Xr auvia 4 ,
+.Xr clcs 4 ,
+.Xr clct 4 ,
+.Xr cmpci 4 ,
+.Xr eap 4 ,
+.Xr emuxki 4 ,
+.Xr esm 4 ,
+.Xr eso 4 ,
+.Xr ess 4 ,
+.Xr fms 4 ,
+.Xr gus 4 ,
+.Xr guspnp 4 ,
+.Xr neo 4 ,
+.Xr sb 4 ,
+.Xr sv 4 ,
+.Xr wss 4 ,
+.Xr yds 4 ,
+.Xr ym 4
 .Sh HISTORY
 The
 .Nm
 program was first seen in SunOS 5.  The
 .Nx
 .Nm
-was first made available in 
+was first made available in
 .Nx 1.4 .
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
 program was written by Matthew R. Green <mrg@eterna.com.au>.
-.Sh SEE ALSO
-.Xr audioctl 1 ,
-.Xr audiorecord 1 ,
-.Xr audioamd 4 ,
-.Xr aria 4 ,
-.Xr audio 4 ,
-.Xr eap 4 ,
-.Xr eso 4 ,
-.Xr ess 4 ,
-.Xr gus 4 ,
-.Xr guspnp 4 ,
-.Xr sb 4 ,
-.Xr sv 4 ,
-.Xr wss 4 ,
-.Xr ym 4 .
