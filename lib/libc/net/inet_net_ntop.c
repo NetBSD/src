@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_ntop.c,v 1.15 2002/08/16 12:18:06 itojun Exp $	*/
+/*	$NetBSD: inet_net_ntop.c,v 1.16 2002/08/16 12:20:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_ntop.c,v 1.8 2001/09/27 15:08:36 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_ntop.c,v 1.15 2002/08/16 12:18:06 itojun Exp $");
+__RCSID("$NetBSD: inet_net_ntop.c,v 1.16 2002/08/16 12:20:19 itojun Exp $");
 #endif
 #endif
 
@@ -117,7 +117,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	for (b = bits / 8; b > 0; b--) {
 		if (ep - dst <= sizeof "255.")
 			goto emsgsize;
-		advance = snprintf(dst, ep - dst, "%u", *src++);
+		advance = snprintf(dst, (size_t)(ep - dst), "%u", *src++);
 		if (advance <= 0 || advance >= ep - dst)
 			goto emsgsize;
 		dst += advance;
@@ -140,7 +140,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 			*dst++ = '.';
 		}
 		m = ((1 << b) - 1) << (8 - b);
-		advance = snprintf(dst, ep - dst, "%u", *src & m);
+		advance = snprintf(dst, (size_t)(ep - dst), "%u", *src & m);
 		if (advance <= 0 || advance >= ep - dst)
 			goto emsgsize;
 		dst += advance;
@@ -149,7 +149,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	/* Format CIDR /width. */
 	if (ep - dst <= sizeof "/32")
 		goto emsgsize;
-	advance = snprintf(dst, ep - dst, "/%u", bits);
+	advance = snprintf(dst, (size_t)(ep - dst), "/%u", bits);
 	if (advance <= 0 || advance >= ep - dst)
 		goto emsgsize;
 	dst += advance;
@@ -269,15 +269,16 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 
 			if (is_ipv4 && p > 5) {
 				*cp++ = (p == 6) ? ':' : '.';
-				advance = snprintf(cp, ep - cp, "%u", *s++);
+				advance = snprintf(cp, (size_t)(ep - cp),
+				    "%u", *s++);
 				if (advance <= 0 || advance >= ep - cp)
 					goto emsgsize;
 				cp += advance;
 				/* we can potentially drop the last octet */
 				if (p != 7 || bits > 120) {
 					*cp++ = '.';
-					advance = snprintf(cp, ep - cp, "%u",
-					    *s++);
+					advance = snprintf(cp,
+					    (size_t)(ep - cp), "%u", *s++);
 					if (advance <= 0 || advance >= ep - cp)
 						goto emsgsize;
 					cp += advance;
@@ -285,7 +286,7 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 			} else {
 				if (cp != outbuf)
 					*cp++ = ':';
-				advance = snprintf(cp, ep - cp, "%x",
+				advance = snprintf(cp, (size_t)(ep - cp), "%x",
 				    *s * 256 + s[1]);
 				if (advance <= 0 || advance >= ep - cp)
 					goto emsgsize;
