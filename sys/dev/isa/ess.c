@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.62 2004/08/06 15:11:48 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.63 2004/08/07 19:32:56 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.62 2004/08/06 15:11:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.63 2004/08/07 19:32:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,6 +189,7 @@ void	ess_read_multi_mix_reg __P((struct ess_softc *, u_char, u_int8_t *, bus_siz
 static char *essmodel[] = {
 	"unsupported",
 
+	"688",
 	"1688",
 	"1788",
 	"1868",
@@ -648,8 +649,8 @@ ess_identify(sc)
 	reg2 = ess_rdsp(sc);
 	if (((reg2 & 0xf0) != 0x80) ||
 	    ((reg2 & 0x0f) < 8)) {
-		printf("ess: Second ID byte wrong (0x%02x)\n", reg2);
-		return 1;
+		sc->sc_model = ESS_688;
+		return 0;
 	}
 
 	/*
