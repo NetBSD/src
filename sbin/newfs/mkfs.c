@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.42 2000/12/23 12:32:12 enami Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.43 2001/07/26 03:46:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.42 2000/12/23 12:32:12 enami Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.43 2001/07/26 03:46:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -553,7 +553,6 @@ next:
 	sblock.fs_fmod = 0;
 	sblock.fs_clean = FS_ISCLEAN;
 	sblock.fs_ronly = 0;
-	sblock.fs_clean = 1;
 	/*
 	 * Dump out summary information about file system.
 	 */
