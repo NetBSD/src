@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdInterrupt.c,v 1.4 2003/03/05 23:00:57 christos Exp $	*/
+/*	$NetBSD: OsdInterrupt.c,v 1.5 2004/05/01 12:03:27 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.4 2003/03/05 23:00:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.5 2004/05/01 12:03:27 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -72,9 +72,9 @@ struct acpi_interrupt_handler {
 	void *aih_ih;
 };
 
-LIST_HEAD(, acpi_interrupt_handler) acpi_interrupt_list =
+static LIST_HEAD(, acpi_interrupt_handler) acpi_interrupt_list =
     LIST_HEAD_INITIALIZER(&acpi_interrupt_list);
-struct simplelock acpi_interrupt_list_slock = SIMPLELOCK_INITIALIZER;
+static struct simplelock acpi_interrupt_list_slock = SIMPLELOCK_INITIALIZER;
 
 #define	ACPI_INTERRUPT_LIST_LOCK(s)					\
 do {									\

@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.11 2004/04/11 10:36:45 kochi Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.12 2004/05/01 12:05:01 kochi Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.11 2004/04/11 10:36:45 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.12 2004/05/01 12:05:01 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,14 +66,14 @@ static const char * const spic_acpi_ids[] = {
 	NULL
 };
 
-int	spic_acpi_match(struct device *, struct cfdata *, void *);
-void	spic_acpi_attach(struct device *, struct device *, void *);
+static int	spic_acpi_match(struct device *, struct cfdata *, void *);
+static void	spic_acpi_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(spic_acpi, sizeof(struct spic_acpi_softc),
     spic_acpi_match, spic_acpi_attach, NULL, NULL);
 
 
-int
+static int
 spic_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -84,7 +84,7 @@ spic_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 	return (acpi_match_hid(aa->aa_node->ad_devinfo, spic_acpi_ids));
 }
 
-void
+static void
 spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spic_acpi_softc *sc = (void *) self;
