@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35 2003/02/11 17:29:23 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36 2003/02/12 13:15:49 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -169,7 +169,7 @@ canonicalize_bootpath()
 	 * SCSI disks (i.e. "/bandit@.../.../sd@0,0").
 	 */
 	lastp = strrchr(cbootpath, '/');
-	if ((lastp != NULL) {
+	if (lastp != NULL) {
 		lastp++;
 		if (strncmp(lastp, "sd@", 3) == 0 
 		    && strncmp(last, "sd@", 3) == 0)
