@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.3 1996/03/23 06:12:11 scottr Exp $
+#	$NetBSD: SPOT,v 1.4 1996/04/13 19:12:46 scottr Exp $
 #
 # SPOT
 
@@ -6,7 +6,7 @@ include	"std.mac68k"
 
 maxusers	16
 
-makeoptions CC="cc -m68030"
+makeoptions CC="cc -m68030 -m68881"
 options         MAXFDESCS=2048
 
 # Standard system options
