@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.28 1998/12/18 21:14:17 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.29 1998/12/18 21:54:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -117,6 +117,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_ACCTON_EN2212,
       0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
+
+    { PCMCIA_STR_SVEC_COMBOCARD,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_SVEC_COMBOCARD,
+      0, -1, { 0x00, 0xe0, 0x98 } },
 
     /*
      * You have to add new entries which contains
