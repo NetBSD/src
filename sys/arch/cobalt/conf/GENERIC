@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.55 2004/05/01 19:04:00 thorpej Exp $
+# $NetBSD: GENERIC,v 1.56 2004/06/16 15:07:40 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55 $"
+#ident 		"GENERIC-$Revision: 1.56 $"
 
 maxusers	32
 
@@ -302,6 +302,7 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
+pseudo-device	ptm			# pseudo-terminal multiplexor
 #pseudo-device	tb		1		# tablet line discipline
 #pseudo-device	sequencer	1		# MIDI sequencer
 pseudo-device	rnd				# /dev/random & kernel generator

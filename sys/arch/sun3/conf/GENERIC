@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.101 2003/09/22 14:11:29 cl Exp $
+# $NetBSD: GENERIC,v 1.102 2004/06/16 15:07:42 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.101 $"
+#ident 		"GENERIC-$Revision: 1.102 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -252,6 +252,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	cgd		4	# cryptographic disk devices
