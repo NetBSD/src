@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.11 2001/02/17 04:29:59 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.12 2001/02/20 07:58:17 itojun Exp $	*/
 /*	$KAME: if_stf.c,v 1.53 2001/02/16 03:00:30 itojun Exp $	*/
 
 /*
@@ -651,7 +651,7 @@ in_stf_input(m, va_alist)
 		 * try to free it or keep a pointer a to it).
 		 */
 		struct mbuf m0;
-		u_int af = AF_INET6;
+		u_int32_t af = AF_INET6;
 		
 		m0.m_next = m;
 		m0.m_len = 4;
