@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2002/02/24 00:17:42 matt Exp $
+#	$NetBSD: Makefile,v 1.25 2002/02/24 01:04:24 matt Exp $
 
 S=	${.CURDIR}/../../../..
 NOMAN=	# defined
@@ -8,9 +8,8 @@ NOMAN=	# defined
 PROG=	boot
 WARNS?=	1
 DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
-SRCS=	srt0.s boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.s \
-	urem.s udiv.s consio.c consio2.s str.s ${DEVS} findcpu.c \
-	vers.c
+SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
+	consio.c consio2.S str.S ${DEVS} findcpu.c vers.c
 
 CLEANFILES+=${PROG} ${PROG}.mop vers.c
 CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_BOOTP -DSUPPORT_DHCP -D_STANDALONE \
