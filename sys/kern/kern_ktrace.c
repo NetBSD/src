@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.16 1995/03/09 08:55:47 mycroft Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.17 1995/03/26 07:48:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,10 +66,10 @@ ktrgetheader(type)
 	return (kth);
 }
 
-ktrsyscall(vp, code, narg, argsize, args)
+void
+ktrsyscall(vp, code, argsize, args)
 	struct vnode *vp;
 	register_t code;
-	int narg;
 	size_t argsize;
 	register_t args[];
 {
@@ -77,14 +77,15 @@ ktrsyscall(vp, code, narg, argsize, args)
 	struct	ktr_syscall *ktp;
 	register len = sizeof(struct ktr_syscall) + argsize;
 	struct proc *p = curproc;	/* XXX */
-	int 	*argp, i;
+	register_t *argp;
+	int i;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	kth = ktrgetheader(KTR_SYSCALL);
 	MALLOC(ktp, struct ktr_syscall *, len, M_TEMP, M_WAITOK);
 	ktp->ktr_code = code;
-	ktp->ktr_narg = narg;
-	argp = (int *)((char *)ktp + sizeof(struct ktr_syscall));
+	ktp->ktr_argsize = argsize;
+	argp = (register_t *)((char *)ktp + sizeof(struct ktr_syscall));
 	for (i = 0; i < (argsize / sizeof *argp); i++)
 		*argp++ = args[i];
 	kth->ktr_buf = (caddr_t)ktp;
@@ -95,6 +96,7 @@ ktrsyscall(vp, code, narg, argsize, args)
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
+void
 ktrsysret(vp, code, error, retval)
 	struct vnode *vp;
 	register_t code;
@@ -119,6 +121,7 @@ ktrsysret(vp, code, error, retval)
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
+void
 ktrnamei(vp, path)
 	struct vnode *vp;
 	char *path;
@@ -136,6 +139,7 @@ ktrnamei(vp, path)
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
+void
 ktrgenio(vp, fd, rw, iov, len, error)
 	struct vnode *vp;
 	int fd;
@@ -177,6 +181,7 @@ done:
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
+void
 ktrpsig(vp, sig, action, mask, code)
 	struct vnode *vp;
 	int sig;
@@ -201,6 +206,7 @@ ktrpsig(vp, sig, action, mask, code)
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
+void
 ktrcsw(vp, out, user)
 	struct vnode *vp;
 	int out, user;
@@ -227,6 +233,7 @@ ktrcsw(vp, out, user)
  * ktrace system call
  */
 /* ARGSUSED */
+int
 ktrace(curp, uap, retval)
 	struct proc *curp;
 	register struct ktrace_args /* {
