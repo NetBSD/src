@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.437 2001/05/02 21:07:01 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.438 2001/05/03 00:35:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -238,73 +238,6 @@ void	init386 __P((paddr_t));
 void	add_mem_cluster	__P((u_int64_t, u_int64_t, u_int32_t));
 #endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
-struct i386_cache_info {
-	size_t		cai_offset;
-	u_int32_t	cai_desc;
-	const char	*cai_string;
-	u_int		cai_totalsize;
-	u_int		cai_associativity;
-	u_int		cai_linesize;
-};
-
-static const struct i386_cache_info intel_cpuid_cache_info[] = {
-	{ offsetof(struct cpu_info, ci_itlb_info),
-	  0x01,		"4K: 32 entries 4-way",
-	  32,		4,			4 * 1024 },
-	{ offsetof(struct cpu_info, ci_itlb2_info),
-	  0x02,		"4M: 2 entries",
-	  2,		1,			4 * 1024 * 1024 },
-	{ offsetof(struct cpu_info, ci_dtlb_info),
-	  0x03,		"4K: 64 entries 4-way",
-	  64,		4,			4 * 1024 },
-	{ offsetof(struct cpu_info, ci_dtlb2_info),
-	  0x04,		"4M: 8 entries 4-way",
-	  8,		4,			4 * 1024 * 1024 },
-	{ offsetof(struct cpu_info, ci_icache_info),
-	  0x06,		"8K 32b/line 4-way",
-	  8 * 1024,	4,			32 },
-	{ offsetof(struct cpu_info, ci_icache_info),
-	  0x08,		"16K 32b/line 4-way",
-	  16 * 1024,	4,			32 },
-	{ offsetof(struct cpu_info, ci_dcache_info),
-	  0x0a,		"8K 32b/line 2-way",
-	  8 * 1024,	2,			32 },
-	{ offsetof(struct cpu_info, ci_dcache_info),
-	  0x0c,		"16K 32b/line 2/4-way",
-	  16 * 1024,	2,			32 },
-	{ offsetof(struct cpu_info, ci_l2cache_info),
-	  0x40,		"not present",
-	  0,		1,			0 },
-	{ offsetof(struct cpu_info, ci_l2cache_info),
-	  0x41,		"128K 32b/line 4-way",
-	  128 * 1024,	4,			32 },
-	{ offsetof(struct cpu_info, ci_l2cache_info),
-	  0x42,		"256K 32b/line 4-way",
-	  256 * 1024,	4,			32 },
-	{ offsetof(struct cpu_info, ci_l2cache_info),
-	  0x43,		"512K 32b/line 4-way",
-	  512 * 1024,	4,			32 },
-	{ offsetof(struct cpu_info, ci_l2cache_info),
-	  0x44,		"1M 32b/line 4-way",
-	  1 * 1024 * 1024, 4,			32 },
-	{ offsetof(struct cpu_info, ci_l2cache_info),
-	  0x45,		"2M 32b/line 4-way",
-	  2 * 1024 * 1024, 4,			32 },
-	{ offsetof(struct cpu_info, ci_l2cache_info),
-	  0x82,		"256K 32b/line 8-way",
-	  256 * 1024,	8,			32 },
-	{ offsetof(struct cpu_info, ci_l2cache_info),
-	  0x84,		"1M 32b/line 8-way",
-	  1 * 1024 * 1024, 8,			32 },
-	{ offsetof(struct cpu_info, ci_l2cache_info),
-	  0x85,		"2M 32b/line 8-way",
-	  2 * 1024 * 1024, 8,			32 },
-
-	{ 0,
-	  0,		NULL,
-	  0,		1,			0 },
-};
-
 /*
  * Map Brand ID from cpuid instruction to brand name.
  * Source: Intel Processor Identification and the CPUID Instruction, AP-485
@@ -324,6 +257,7 @@ void cyrix6x86_cpu_setup __P((void));
 void winchip_cpu_setup __P((void));
 
 void intel_cpuid_cpu_cacheinfo __P((struct cpu_info *));
+void amd_cpuid_cpu_cacheinfo __P((struct cpu_info *));
 
 static __inline u_char
 cyrix_read_reg(u_char reg)
@@ -352,6 +286,7 @@ cpu_startup()
 	vsize_t size;
 	char buf[160];				/* about 2 line */
 	char pbuf[9];
+	char cbuf[7];
 
 	/*
 	 * Initialize error message buffer (et end of core).
@@ -375,18 +310,77 @@ cpu_startup()
 		printf(", %qd.%02qd MHz", (cpu_tsc_freq + 4999) / 1000000,
 		    ((cpu_tsc_freq + 4999) / 10000) % 100);
 	printf("\n");
-	if (ci->ci_icache_info != NULL || ci->ci_dcache_info != NULL) {
+	if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0 ||
+	    ci->ci_cinfo[CAI_DCACHE].cai_totalsize != 0) {
 		printf("cpu0:");
-		if (ci->ci_icache_info)
-			printf(" I-cache %s", ci->ci_icache_info->cai_string);
-		if (ci->ci_dcache_info)
-			printf("%sD-cache %s",
-			    (ci->ci_icache_info != NULL) ? ", " : " ",
-			    ci->ci_dcache_info->cai_string);
+		if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize) {
+			format_bytes(cbuf, sizeof(cbuf),
+			    ci->ci_cinfo[CAI_ICACHE].cai_totalsize);
+			printf(" I-cache %s %db/line ", cbuf,
+			    ci->ci_cinfo[CAI_ICACHE].cai_linesize);
+			switch (ci->ci_cinfo[CAI_ICACHE].cai_associativity) {
+			case 0:
+				printf("disabled");
+				break;
+			case 1:
+				printf("direct-mapped");
+				break;
+			case ~0:
+				printf("fully associative");
+				break;
+			default:
+				printf("%d-way",
+				    ci->ci_cinfo[CAI_ICACHE].cai_associativity);
+				break;
+			}
+		}
+		if (ci->ci_cinfo[CAI_DCACHE].cai_totalsize) {
+			format_bytes(cbuf, sizeof(cbuf),
+			    ci->ci_cinfo[CAI_DCACHE].cai_totalsize);
+			printf("%sD-cache %s %db/line ",
+			    (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0) ?
+			    ", " : " ",
+			    cbuf, ci->ci_cinfo[CAI_DCACHE].cai_linesize);
+			switch (ci->ci_cinfo[CAI_DCACHE].cai_associativity) {
+			case 0:
+				printf("disabled");
+				break;
+			case 1:
+				printf("direct-mapped");
+				break;
+			case ~0:
+				printf("fully associative");
+				break;
+			default:
+				printf("%d-way",
+				    ci->ci_cinfo[CAI_DCACHE].cai_associativity);
+				break;
+			}
+		}
 		printf("\n");
 	}
-	if (ci->ci_l2cache_info)
-		printf("cpu0: L2 cache %s\n", ci->ci_l2cache_info->cai_string);
+	if (ci->ci_cinfo[CAI_L2CACHE].cai_totalsize) {
+		format_bytes(cbuf, sizeof(cbuf),
+		    ci->ci_cinfo[CAI_L2CACHE].cai_totalsize);
+		printf("cpu0: L2 cache %s %db/line ", cbuf,
+		    ci->ci_cinfo[CAI_L2CACHE].cai_linesize);
+		switch (ci->ci_cinfo[CAI_L2CACHE].cai_associativity) {
+		case 0:
+			printf("disabled");
+			break;
+		case 1:
+			printf("direct-mapped");
+			break;
+		case ~0:
+			printf("fully associative");
+			break;
+		default:
+			printf("%d-way",
+			    ci->ci_cinfo[CAI_L2CACHE].cai_associativity);
+			break;
+		}
+		printf("\n");
+	}
 	if ((cpu_feature & CPUID_MASK1) != 0) {
 		bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
 		    buf, sizeof(buf));
@@ -885,16 +879,73 @@ winchip_cpu_setup()
 }
 
 static const struct i386_cache_info *
-cache_info_lookup(const struct i386_cache_info *cai, u_int8_t desc)
+cache_info_lookup(const struct i386_cache_info *cai, int count, u_int8_t desc)
 {
+	int i;
 
-	for (; cai->cai_string != NULL; cai++) {
-		if (cai->cai_desc == desc)
-			return (cai);
+	for (i = 0; i < count; i++) {
+		if (cai[i].cai_desc == desc)
+			return (&cai[i]);
 	}
 
 	return (NULL);
 }
+
+static const struct i386_cache_info intel_cpuid_cache_info[] = {
+	{ CAI_ITLB,
+	  0x01,
+	  32,		4,			4 * 1024 },
+	{ CAI_ITLB2,
+	  0x02,
+	  2,		1,			4 * 1024 * 1024 },
+	{ CAI_DTLB,
+	  0x03,
+	  64,		4,			4 * 1024 },
+	{ CAI_DTLB2,
+	  0x04,
+	  8,		4,			4 * 1024 * 1024 },
+	{ CAI_ICACHE,
+	  0x06,
+	  8 * 1024,	4,			32 },
+	{ CAI_ICACHE,
+	  0x08,
+	  16 * 1024,	4,			32 },
+	{ CAI_DCACHE,
+	  0x0a,
+	  8 * 1024,	2,			32 },
+	{ CAI_DCACHE,
+	  0x0c,
+	  16 * 1024,	2,			32 },
+	{ CAI_L2CACHE,
+	  0x40,
+	  0,		1,			0 },
+	{ CAI_L2CACHE,
+	  0x41,
+	  128 * 1024,	4,			32 },
+	{ CAI_L2CACHE,
+	  0x42,
+	  256 * 1024,	4,			32 },
+	{ CAI_L2CACHE,
+	  0x43,
+	  512 * 1024,	4,			32 },
+	{ CAI_L2CACHE,
+	  0x44,
+	  1 * 1024 * 1024, 4,			32 },
+	{ CAI_L2CACHE,
+	  0x45,
+	  2 * 1024 * 1024, 4,			32 },
+	{ CAI_L2CACHE,
+	  0x82,
+	  256 * 1024,	8,			32 },
+	{ CAI_L2CACHE,
+	  0x84,
+	  1 * 1024 * 1024, 8,			32 },
+	{ CAI_L2CACHE,
+	  0x85,
+	  2 * 1024 * 1024, 8,			32 },
+};
+static const int intel_cpuid_cache_info_count =
+    sizeof(intel_cpuid_cache_info) / sizeof(intel_cpuid_cache_info[0]);
 
 void
 intel_cpuid_cpu_cacheinfo(struct cpu_info *ci)
@@ -920,17 +971,216 @@ intel_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 					continue;
 				desc = (descs[i] >> (j * 8)) & 0xff;
 				cai = cache_info_lookup(intel_cpuid_cache_info,
-				    desc);
+				    intel_cpuid_cache_info_count, desc);
 				if (cai != NULL) {
-					const struct i386_cache_info **cp;
-					cp = (const struct i386_cache_info **)
-					    (((uint8_t *)ci) + cai->cai_offset);
-					*cp = cai;
+					memcpy(&ci->ci_cinfo[cai->cai_index],
+					    cai,
+					    sizeof(struct i386_cache_info));
 				}
 			}
 		}
 		do_cpuid(2, descs);
 	}
+}
+
+/*
+ * AMD Cache Info:
+ *
+ *	Athlon, Duron:
+ *
+ *		Function 8000.0005 L1 TLB/Cache Information
+ *		EAX -- L1 TLB 2/4MB pages
+ *		EBX -- L1 TLB 4K pages
+ *		ECX -- L1 D-cache
+ *		EDX -- L1 I-cache
+ *
+ *		Function 8000.0006 L2 TLB/Cache Information
+ *		EAX -- L2 TLB 2/4MB pages
+ *		EBX -- L2 TLB 4K pages
+ *		ECX -- L2 Unified cache
+ *		EDX -- reserved
+ *
+ *	K5, K6:
+ *
+ *		Function 8000.0005 L1 TLB/Cache Information
+ *		EAX -- reserved
+ *		EBX -- TLB 4K pages
+ *		ECX -- L1 D-cache
+ *		EDX -- L1 I-cache
+ *
+ *	K6-III:
+ *
+ *		Function 8000.0006 L2 Cache Information
+ *		EAX -- reserved
+ *		EBX -- reserved
+ *		ECX -- L2 Unified cache
+ *		EDX -- reserved
+ */
+
+/* L1 TLB 2/4MB pages */
+#define	AMD_L1_EAX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
+#define	AMD_L1_EAX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
+#define	AMD_L1_EAX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
+#define	AMD_L1_EAX_ITLB_ENTRIES(x)	( (x)        & 0xff)
+
+/* L1 TLB 4K pages */
+#define	AMD_L1_EBX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
+#define	AMD_L1_EBX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
+#define	AMD_L1_EBX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
+#define	AMD_L1_EBX_ITLB_ENTRIES(x)	( (x)        & 0xff)
+
+/* L1 Data Cache */
+#define	AMD_L1_ECX_DC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
+#define	AMD_L1_ECX_DC_ASSOC(x)		 (((x) >> 16) & 0xff)
+#define	AMD_L1_ECX_DC_LPT(x)		 (((x) >> 8)  & 0xff)
+#define	AMD_L1_ECX_DC_LS(x)		 ( (x)        & 0xff)
+
+/* L1 Instruction Cache */
+#define	AMD_L1_EDX_IC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
+#define	AMD_L1_EDX_IC_ASSOC(x)		 (((x) >> 16) & 0xff)
+#define	AMD_L1_EDX_IC_LPT(x)		 (((x) >> 8)  & 0xff)
+#define	AMD_L1_EDX_IC_LS(x)		 ( (x)        & 0xff)
+
+/* Note for L2 TLB -- if the upper 16 bits are 0, it is a unified TLB */
+
+/* L2 TLB 2/4MB pages */
+#define	AMD_L2_EAX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
+#define	AMD_L2_EAX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff)
+#define	AMD_L2_EAX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
+#define	AMD_L2_EAX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
+
+/* L2 TLB 4K pages */
+#define	AMD_L2_EAX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
+#define	AMD_L2_EAX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff) 
+#define	AMD_L2_EAX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
+#define	AMD_L2_EAX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
+
+/* L2 Cache */
+#define	AMD_L2_ECX_C_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
+#define	AMD_L2_ECX_C_ASSOC(x)		 (((x) >> 16) & 0xff)
+#define	AMD_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xff)
+#define	AMD_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
+
+static const struct i386_cache_info amd_cpuid_l2cache_assoc_info[] = {
+	{ 0,
+	  0x00,
+	  0,		0,			0 },
+	{ 0,
+	  0x01,
+	  0,		1,			0 },
+	{ 0,
+	  0x02,
+	  0,		2,			0 },
+	{ 0,
+	  0x04,
+	  0,		4,			0 },
+	{ 0,
+	  0x06,
+	  0,		8,			0 },
+	{ 0,
+	  0x08,
+	  0,		16,			0 },
+	{ 0,
+	  0x0f,
+	  0,		~0,			0 },
+};
+static const int amd_cpuid_l2cache_assoc_info_count =
+    sizeof(amd_cpuid_l2cache_assoc_info) /
+    sizeof(amd_cpuid_l2cache_assoc_info[0]);
+
+void
+amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
+{
+	extern int cpu_id;
+	const struct i386_cache_info *cp;
+	struct i386_cache_info *cai;
+	int family, model;
+	u_int descs[4];
+	u_int lfunc;
+
+	family = (cpu_id >> 8) & 15;
+	if (family < CPU_MINFAMILY)
+		panic("amd_cpuid_cpu_cacheinfo: strange family value");
+	model = CPUID2MODEL(cpu_id);
+
+	/*
+	 * K5 model 0 has none of this info.
+	 */
+	if (family == 5 && model == 0)
+		return;
+
+	/*
+	 * Determine the largest extended function value.
+	 */
+	do_cpuid(0x80000000, descs);
+	lfunc = descs[0];
+
+	/*
+	 * Determine L1 cache/TLB info.
+	 */
+	if (lfunc < 0x80000005) {
+		/* No L1 cache info available. */
+		return;
+	}
+
+	do_cpuid(0x80000005, descs);
+
+	/*
+	 * K6-III and higher have large page TLBs.
+	 */
+	if ((family == 5 && model >= 9) || family >= 6) {
+		cai = &ci->ci_cinfo[CAI_ITLB2];
+		cai->cai_totalsize = AMD_L1_EAX_ITLB_ENTRIES(descs[0]);
+		cai->cai_associativity = AMD_L1_EAX_ITLB_ASSOC(descs[0]);
+		cai->cai_linesize = (4 * 1024 * 1024);
+
+		cai = &ci->ci_cinfo[CAI_DTLB2];
+		cai->cai_totalsize = AMD_L1_EAX_DTLB_ENTRIES(descs[0]);
+		cai->cai_associativity = AMD_L1_EAX_DTLB_ASSOC(descs[0]);
+		cai->cai_linesize = (4 * 1024 * 1024);
+	}
+
+	cai = &ci->ci_cinfo[CAI_ITLB];
+	cai->cai_totalsize = AMD_L1_EBX_ITLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L1_EBX_ITLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_DTLB];
+	cai->cai_totalsize = AMD_L1_EBX_DTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L1_EBX_DTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);       
+
+	cai = &ci->ci_cinfo[CAI_DCACHE];
+	cai->cai_totalsize = AMD_L1_ECX_DC_SIZE(descs[2]);
+	cai->cai_associativity = AMD_L1_ECX_DC_ASSOC(descs[2]);
+	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[2]);
+
+	cai = &ci->ci_cinfo[CAI_ICACHE];
+	cai->cai_totalsize = AMD_L1_EDX_IC_SIZE(descs[3]);
+	cai->cai_associativity = AMD_L1_EDX_IC_ASSOC(descs[3]);
+	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[3]);
+
+	/*
+	 * Determine L2 cache/TLB info.
+	 */
+	if (lfunc < 0x80000006) {
+		/* No L2 cache info available. */
+		return;
+	}
+
+	do_cpuid(0x80000006, descs);
+
+	cai = &ci->ci_cinfo[CAI_L2CACHE];
+	cai->cai_totalsize = AMD_L2_ECX_C_SIZE(descs[2]);
+	cai->cai_associativity = AMD_L2_ECX_C_ASSOC(descs[2]);
+	cai->cai_linesize = AMD_L2_ECX_C_LS(descs[2]);
+
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    amd_cpuid_l2cache_assoc_info_count, cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 }
 
 void

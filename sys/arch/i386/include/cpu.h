@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.69 2001/05/02 21:07:02 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.70 2001/05/03 00:35:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,6 +54,25 @@
 #include <machine/segments.h>
 
 #include <sys/sched.h>
+
+struct i386_cache_info {
+	int		cai_index;
+	u_int32_t	cai_desc;
+	u_int		cai_totalsize;
+	u_int		cai_associativity;
+	u_int		cai_linesize;
+};
+
+#define	CAI_ITLB	0		/* Instruction TLB (4K pages) */
+#define	CAI_ITLB2	1		/* Instruction TLB (2/4M pages) */
+#define	CAI_DTLB	2		/* Data TLB (4K pages) */
+#define	CAI_DTLB2	3		/* Data TLB (2/4M pages) */
+#define	CAI_ICACHE	4		/* Instruction cache */
+#define	CAI_DCACHE	5		/* Data cache */
+#define	CAI_L2CACHE	6		/* Level 2 cache */
+
+#define	CAI_COUNT	7
+
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
@@ -61,13 +80,7 @@ struct cpu_info {
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 
-	const struct i386_cache_info *ci_itlb_info;
-	const struct i386_cache_info *ci_itlb2_info;
-	const struct i386_cache_info *ci_dtlb_info;
-	const struct i386_cache_info *ci_dtlb2_info;
-	const struct i386_cache_info *ci_icache_info;
-	const struct i386_cache_info *ci_dcache_info;
-	const struct i386_cache_info *ci_l2cache_info;
+	struct i386_cache_info ci_cinfo[CAI_COUNT];
 };
 
 #ifdef _KERNEL
