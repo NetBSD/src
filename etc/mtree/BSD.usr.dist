@@ -1,67 +1,13 @@
 #	fs: /usr
 #
 #	@(#)BSD.usr.dist	5.5 (Berkeley) 5/9/91
-#	$Id: BSD.usr.dist,v 1.4 1994/01/28 00:36:09 jtc Exp $
+#	$Id: BSD.usr.dist,v 1.5 1994/01/28 00:44:05 jtc Exp $
 #
 
 .	type=dir
 
 /set gname=bin mode=0755 uname=bin type=file
 bin	type=dir uname=bin gname=bin mode=0755
-..
-contrib	type=dir uname=bin gname=bin mode=0755
-	X	type=dir uname=bin gname=bin mode=0755
-		bin	type=dir uname=bin gname=bin mode=0755
-		..
-		include	type=dir uname=bin gname=bin mode=0755
-		..
-		man	type=dir uname=bin gname=bin mode=0755
-		..
-	..
-	bin	type=dir uname=bin gname=bin mode=0755
-	..	
-	lib	type=dir uname=bin gname=bin mode=0755
-		emacs	type=dir uname=bin gname=bin mode=0755
-			etc	type=dir uname=bin gname=bin mode=0755
-			..	
-			info	type=dir uname=bin gname=bin mode=0755
-			..	
-			lisp	type=dir uname=bin gname=bin mode=0755
-				term	type=dir uname=bin gname=bin mode=0755
-				..	
-			..	
-			lock	type=dir uname=bin gname=bin mode=0777
-			..	
-		..	
-	..	
-	man	type=dir uname=bin gname=bin mode=0755
-		cat1	type=dir uname=bin gname=bin mode=0755
-		..
-		cat2	type=dir uname=bin gname=bin mode=0755
-		..
-		cat3	type=dir uname=bin gname=bin mode=0755
-		..
-		cat4	type=dir uname=bin gname=bin mode=0755
-		..
-		cat5	type=dir uname=bin gname=bin mode=0755
-		..
-		cat6	type=dir uname=bin gname=bin mode=0755
-		..
-		cat7	type=dir uname=bin gname=bin mode=0755
-		..
-		cat8	type=dir uname=bin gname=bin mode=0755
-		..
-	..
-	mh	type=dir uname=bin gname=bin mode=0755
-		bin	type=dir uname=bin gname=bin mode=0755
-		..
-		include	type=dir uname=bin gname=bin mode=0755
-		..
-		lib	type=dir uname=bin gname=bin mode=0755
-		..
-		man	type=dir uname=bin gname=bin mode=0755
-		..
-	..
 ..
 
 /set gname=bin mode=0700 uname=games type=file
@@ -72,25 +18,17 @@ games	type=dir uname=bin mode=0755
 
 /set gname=bin mode=0755 uname=bin type=file
 include	type=dir
-	X	type=dir uname=bin gname=bin mode=0755
+	arpa		type=dir uname=bin gname=bin mode=0755
 	..
-
-/set gname=bin mode=0755 uname=bin type=file
-	X11	type=dir
-		bitmaps	type=dir uname=bin gname=bin mode=0755
-		..
+	net		type=dir uname=bin gname=bin mode=0755
 	..
-	arpa	type=dir uname=bin gname=bin mode=0755
-	..
-	kerberosIV	type=dir uname=bin gname=bin mode=0755
-	..
-	pascal	type=dir uname=bin gname=bin mode=0755
+	netccitt	type=dir uname=bin gname=bin mode=0755
 	..
 	protocols	type=dir uname=bin gname=bin mode=0755
 	..
-	rpc	type=dir uname=bin gname=bin mode=0755
+	rpc		type=dir uname=bin gname=bin mode=0755
 	..
-	xnscourier	type=dir uname=bin gname=bin mode=0755
+	rpcsvc		type=dir uname=bin gname=bin mode=0755
 	..
 ..
 
@@ -102,7 +40,10 @@ lib	type=dir
 libexec	type=dir
 	lpr	type=dir uname=bin gname=bin mode=0755
 	..
+	uucp	type=dir uname=bin gname=bin mode=0755
+	..
 ..
+
 local	type=dir uname=bin gname=bin mode=0755
 	bin	type=dir uname=bin gname=bin  mode=0755
 	..
@@ -143,8 +84,10 @@ local	type=dir uname=bin gname=bin mode=0755
 		..
 	..
 ..
+
 obj	type=dir uname=bin gname=bin mode=0755
 ..
+
 sbin	type=dir uname=bin gname=bin mode=0755
 ..
 
