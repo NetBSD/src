@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiuvar.h,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: vrgiuvar.h,v 1.2 1999/12/23 06:26:10 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -34,16 +34,10 @@
  *
  */
 typedef void *vrgiu_chipset_tag_t;
-typedef u_int32_t vrgiu_gpioreg_t[2];
 
-#define GIUPORT_NOTDEF -1
-enum gpio_name {
-	GIUPORT_COM
-};
 struct vrgiu_function_tag {
-	int (*gf_map) __P((vrgiu_chipset_tag_t, enum gpio_name, int));
-	int (*gf_portread_8) __P((vrgiu_chipset_tag_t, vrgiu_gpioreg_t*));
-	int (*gf_portwrite_8) __P((vrgiu_chipset_tag_t, enum gpio_name, int));
+	int (*gf_portread) __P((vrgiu_chipset_tag_t, int));
+	int (*gf_portwrite) __P((vrgiu_chipset_tag_t, int, int));
 	u_int32_t (*gf_regread_4) __P((vrgiu_chipset_tag_t, bus_addr_t));
 	void (*gf_regwrite_4) __P((vrgiu_chipset_tag_t, bus_addr_t, u_int32_t));
 	void *(*gf_intr_establish) __P((vrgiu_chipset_tag_t, int, int, int, int (*)(void *), void*));

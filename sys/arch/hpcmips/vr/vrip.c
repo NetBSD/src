@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.2 1999/12/04 14:23:36 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.3 1999/12/23 06:26:10 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -47,6 +47,14 @@
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/icureg.h>
 #include "locators.h"
+
+#define VRIPDEBUG
+#ifdef VRIPDEBUG
+int	vrip_debug = 0;
+#define	DPRINTF(arg) if (vrip_debug) printf arg;
+#else
+#define	DPRINTF(arg)
+#endif
 
 int	vripmatch __P((struct device*, struct cfdata*, void*));
 void	vripattach __P((struct device*, struct device*, void*));
@@ -296,7 +304,10 @@ vrip_intr_setmask1(vc, arg, enable)
 	sc->sc_intrmask = reg;
 	bus_space_write_2 (iot, ioh, MSYSINT1_REG_W, reg & 0xffff);
 	bus_space_write_2 (iot, ioh, MSYSINT2_REG_W, (reg >> 16) & 0xffff);
-/*    bitdisp32(reg);    */
+#ifdef VRIPDEBUG
+	if (vrip_debug)
+		bitdisp32(reg);
+#endif /* VRIPDEBUG */
     
 	return;
 }
@@ -349,10 +360,13 @@ vrip_intr_setmask2(vc, arg, mask, onoff)
 	struct vrip_softc *sc = (void*)vc;
 	struct intrhand *ih = arg;
 	u_int16_t reg;
-#if 1
-	printf("vrip_intr_setmask2:\n");
-	vrip_dump_level2mask (vc, arg);
-#endif
+
+#ifdef VRIPDEBUG
+	if (vrip_debug) {
+		printf("vrip_intr_setmask2:\n");
+		vrip_dump_level2mask (vc, arg);
+	}
+#endif /* VRIPDEBUG */
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else
@@ -374,9 +388,11 @@ vrip_intr_setmask2(vc, arg, mask, onoff)
 		}
 	}
 #endif /* WINCE_DEFAULT_SETTING */
-#if 0
-	vrip_dump_level2mask (vc, arg);
-#endif
+#ifdef VRIPDEBUG
+	if (vrip_debug)
+		vrip_dump_level2mask (vc, arg);
+#endif /* VRIPDEBUG */
+
 	return;
 }
 

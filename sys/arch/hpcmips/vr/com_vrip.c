@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.1.1.1 1999/09/16 12:23:31 takemura Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.2 1999/12/23 06:26:10 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -56,6 +56,7 @@
 /* For serial console */
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
+#include <machine/config_hook.h>
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vripvar.h>
@@ -78,6 +79,7 @@ int	com_vrip_debug = 0;
 
 struct com_vrip_softc {
 	struct com_softc	sc_com;
+	int sc_pwctl;
 };
 
 static int com_vrip_probe __P((struct device *, struct cfdata *, void *));
@@ -100,19 +102,23 @@ find_comenableport_from_cfdata(int *port)
 {
 	platid_mask_t mask;
 	struct cfdata *cf;
+	int id;
+
 	printf ("COM enable port: ");
 	for (cf = cfdata; cf->cf_driver; cf++) {
-		if (strcmp(cf->cf_driver->cd_name, "gpbus"))
+		if (strcmp(cf->cf_driver->cd_name, "pwctl"))
 			continue;
-		mask = PLATID_DEREF(cf->cf_loc[GPBUSIFCF_PLATFORM]);
-		if (platid_match(&platid, &mask))
+		mask = PLATID_DEREF(cf->cf_loc[NEWGPBUSIFCF_PLATFORM]);
+		id = cf->cf_loc[NEWGPBUSIFCF_ID];
+		if (platid_match(&platid, &mask) &&
+		    id == CONFIG_HOOK_POWERCONTROL_COM0)
 			goto found;
 	}
 	*port = -1;
 	printf ("not found\n");
 	return 1;
  found:
-	*port = cf->cf_loc[GPBUSIFCF_COMCTRL];
+	*port = cf->cf_loc[NEWGPBUSIFCF_PORT];
 	printf ("#%d\n", *port);
 
 	return *port == GPBUSIFCF_COMCTRL_DEFAULT;
@@ -206,6 +212,8 @@ com_vrip_attach(parent, self, aux)
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
 
+	vsc->sc_pwctl = sc->sc_dev.dv_cfdata->cf_loc[VRIPCF_PWCTL];
+
 	DPRINTF(("==com_vrip_attach"));
 
 	if (bus_space_map(iot, va->va_addr, 1, 0, &ioh)) {
@@ -222,7 +230,12 @@ com_vrip_attach(parent, self, aux)
 	sc->sc_frequency = VRCOM_FREQ;
 	/* Power management */
 	va->va_cf->cf_clock(va->va_cc, CMUMSKSSIU | CMUMSKSIU, 1);
-	va->va_gf->gf_portwrite_8(va->va_gc, GIUPORT_COM, 1);
+	/*
+	va->va_gf->gf_portwrite(va->va_gc, GIUPORT_COM, 1);
+	*/
+	/* XXX, locale 'ID' must be need */
+	config_hook_call(CONFIG_HOOK_POWERCONTROL, vsc->sc_pwctl, (void*)1);
+
 
 	DPRINTF(("Try to attach com.\n"));
 	com_attach_subr(sc);

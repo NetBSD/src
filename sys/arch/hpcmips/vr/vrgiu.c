@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.3 1999/12/04 10:15:34 takemura Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.4 1999/12/23 06:26:10 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -78,15 +78,13 @@ u_int16_t vrgiu_regread __P((vrgiu_chipset_tag_t, bus_addr_t));
 void	vrgiu_regwrite_4 __P((vrgiu_chipset_tag_t, bus_addr_t, u_int32_t));
 void	vrgiu_regwrite __P((vrgiu_chipset_tag_t, bus_addr_t, u_int16_t));
 
-int vrgiu_port_register __P((vrgiu_chipset_tag_t, enum gpio_name, int));
-int vrgiu_port_read __P((vrgiu_chipset_tag_t, vrgiu_gpioreg_t*));
-int vrgiu_port_write __P((vrgiu_chipset_tag_t, enum gpio_name, int));
+int vrgiu_port_read __P((vrgiu_chipset_tag_t, int));
+int vrgiu_port_write __P((vrgiu_chipset_tag_t, int, int));
 
 void *vrgiu_intr_establish __P((vrgiu_chipset_tag_t, int, int, int, int (*)(void *), void*));
 void vrgiu_intr_disestablish __P((vrgiu_chipset_tag_t, void*));
 
 struct vrgiu_function_tag vrgiu_functions = {
-	vrgiu_port_register,
 	vrgiu_port_read,
 	vrgiu_port_write,
 	vrgiu_regread_4,
@@ -156,11 +154,11 @@ vrgiu_attach(parent, self, aux)
 #ifdef VRGIUDEBUG
 	/* Display port status (Input/Output) for debugging */
 	if (vrgiu_debug & DEBUG_IO) {
-		vrgiu_gpioreg_t preg;
+u_int32_t preg[2];
 		printf("I/O setting:                                ");
 		vrgiu_dump_iosetting(sc);
 		printf("\n");
-		vrgiu_port_read(sc, &preg);
+
 		printf("       data:");
 		bitdisp64(preg);
 	}
@@ -168,12 +166,10 @@ vrgiu_attach(parent, self, aux)
 	/* 
 	 *  General purpose bus 
 	 */
-	for (i = 0; i< MAX_GPIO_INOUT; i++)
-		sc->sc_gpio_map[i] = GIUPORT_NOTDEF;
 	gpa.gpa_busname = "gpbus";
 	gpa.gpa_gc = sc;
 	gpa.gpa_gf = &vrgiu_functions;
-	config_found(self, &gpa, vrgiu_print);	
+	while (config_found(self, &gpa, vrgiu_print)) ;
 	/*
 	 * GIU-ISA bridge
 	 */
@@ -286,54 +282,43 @@ vrgiu_regwrite(vc, off, data)
 	struct vrgiu_softc *sc = (void*)vc;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, off, data);
 }
-/*
- * Assign Platform independent port name to GPIO # map.
- */
-int
-vrgiu_port_register(ic, gpio, port)
-	vrgiu_chipset_tag_t ic;
-	enum gpio_name gpio;
-	int port;
-{
-	struct vrgiu_softc *sc = (void*)ic;
-	if (sc->sc_gpio_map[gpio] != GIUPORT_NOTDEF)
-		panic("vrgiu_port_register: already defined port.");
-	sc->sc_gpio_map[gpio] = port;
-	return 0;
-}
+
 /*
  * PORT 
  */
 int
-vrgiu_port_read(vc, reg)
+vrgiu_port_read(vc, port)
 	vrgiu_chipset_tag_t vc;
-	vrgiu_gpioreg_t *reg;
+	int port;
 {
-	(*reg)[0] = vrgiu_regread_4(vc, GIUPIOD_REG);
-	(*reg)[1] = vrgiu_regread_4(vc, GIUPODAT_REG);
-	return 0;
+	struct vrgiu_softc *sc = (void*)vc;
+	int on;
+
+	if (!LEGAL_OUT_PORT(port))
+		panic("vrgiu_port_read: illegal gpio port");
+
+	if (port < 32)
+		on = (vrgiu_regread_4(vc, GIUPIOD_REG) & (1 << port));
+	else
+		on = (vrgiu_regread_4(vc, GIUPODAT_REG) & (1 << (port - 32)));
+
+	return (on ? 1 : 0);
 }
     
 int
-vrgiu_port_write(vc, gpio, onoff)
+vrgiu_port_write(vc, port, onoff)
 	vrgiu_chipset_tag_t vc;
-	enum gpio_name gpio;
+	int port;
 	int onoff;
 {
-	struct vrgiu_softc *sc = (void*)vc;
-	vrgiu_gpioreg_t reg;
-	int port, bank;
+	u_int32_t reg[2];
+	int bank;
 
-	if (!LEGAL_OUT_PORT(gpio))
-		panic("vrgiu_port_write: illegal gpio name");
-	if ((port = sc->sc_gpio_map[gpio]) == GIUPORT_NOTDEF) {
-		printf ("vrgiu_port_write: not defined port name%d\n", gpio);
-		return 0;
-	}
 	if (!LEGAL_OUT_PORT(port))
 		panic("vrgiu_port_write: illegal gpio port");
 
-	vrgiu_port_read(vc, &reg);
+	reg[0] = vrgiu_regread_4(vc, GIUPIOD_REG);
+	reg[1] = vrgiu_regread_4(vc, GIUPODAT_REG);
 	bank = port < 32 ? 0 : 1;
 	if (bank == 1)
 		port -= 32;
