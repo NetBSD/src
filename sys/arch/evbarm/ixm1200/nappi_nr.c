@@ -1,4 +1,4 @@
-/* $NetBSD: nappi_nr.c,v 1.3 2002/10/02 05:10:36 thorpej Exp $ */
+/* $NetBSD: nappi_nr.c,v 1.4 2003/02/17 20:51:53 ichiro Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ nappinr_callout(void *arg)
 	static const int	ptn[] = { 1, 2, 4, 8, 4, 2 };
 	struct nappinr_softc*	sc = arg;
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0, ptn[sc->sc_pos++ % 6]);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0,
+			  ptn[sc->sc_pos++ % 6] | ptn[sc->sc_pos++ % 6]<< 4);
 	callout_reset(&sc->sc_co, hz / 10, nappinr_callout, sc);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: ixp12x0reg.h,v 1.2 2002/12/02 14:08:58 ichiro Exp $ */
+/*	$NetBSD: ixp12x0reg.h,v 1.3 2003/02/17 20:51:52 ichiro Exp $ */
 
 /*
- * Copyright (c) 2002
+ * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
  * All rights reserved.
  *
@@ -69,7 +69,7 @@
  *                  PCI Memory Cycle Access
  *              5400 0000 - 5400 FFFF
  *                  PCI I/O Cycle Access
- *              5300 0000 - 53FF FFFF
+ *              5300 0000 - 53BF FFFF
  *                  PCI Type0 Configuration Cycle Access
  *              5200 0000 - 52FF FFFF
  *                  PCI Type1 Configuration Cycle Access
@@ -84,18 +84,34 @@
 
 /*
  * Virtual memory map for the Intel IXP12X0 integrated devices
+ *
+ * IXP12x0 processors have many device registers at very lower addresses.
+ * To make user process space wider, we map the registers at lower address
+ * to upper address using adress translation of virtual memory system.
+ *
+ * Some device registers are staticaly mapped on upper address region.
+ * because we have to access them before bus_space is initialized.
+ * Most device is dinamicaly mapped by bus_space_map().  In this case,
+ * the actual mapped (virtual) address are not cared by device drivers.
  */
 
 /*
  * FFFF FFFF ---------------------------
  *
- * F002 1000 ---------------------------
- *            PCI Registers Accessible Through  I/O
- *            VA F001 1000 == PA 5400 0000 (64kbyte)
+ * F400 0000 ---------------------------
+ *            PCI Type 0 Configuration Cycle Access
+ *            VA F300 0000 == PA 5300 0000 (16Mbyte)
+ * F300 0000 ---------------------------
+ *            PCI Type 1 Configuration Cycle Access
+ *            VA F200 0000 == PA 5200 0000 (16Mbyte)
+ * F200 0000 ---------------------------
+ *            not used
  * F001 1000 ---------------------------
  *            PCI Registers Accessible Through StrongARM Core
  *            VA F001 0000 == PA 4200 0000 (4kbyte)
  *              F001 0300 - F001 036F  TIMER
+ *              F001 0200 - F001 0293  PCI_FIQ
+ *              F001 0180 - F001 0193  PCI_IRQ
  * F001 0000 ---------------------------
  *            StrongARM System and Peripheral Registers
  *            VA F001 0000 == PA 9000 0000 (64kbyte)
@@ -106,25 +122,21 @@
  *              F000 1800 - F000 1C03  GPIO
  *              F000 1400 - F000 1403  IRQ
  *              F000 1000 - F000 1003  FIQ
- *              F000 0C00 - F000 0C03  PLL_CFG
+ *              F000 0C00 - F000 0C03  PLL_CFG (not used at this addres)
  * F000 0000 ---------------------------
  *            Kernel text and data
  * C000 0000 ---------------------------
  *            L2 tables for user process (XXX should be fixed)
- * 6000 0000 ---------------------------
+ * 8000 0000 ---------------------------
  *            PCI Registers Accessible Through Memory
+ *            VA 6000 0000 == PA 6000 0000 (512Mbyte)
+ * 6000 0000 ---------------------------
+ *            PCI Registers Accessible Through I/O
+ *            VA 5400 0000 == PA 5400 0000 (1Mbyte)
  * 5400 0000 ---------------------------
- *            PCI Type 0 Configuration Cycle Access
- *            VA 5400 0000 == PA 5400 0000
- * 5300 0000 ---------------------------
- *            PCI Type 1 Configuration Cycle Access
- *            VA 5300 0000 == PA 5300 0000
- * 5200 0000 ---------------------------
- *
  * 0000 0000 ---------------------------
  *
  */
-
 
 /* Virtual address for I/O space */
 #define	IXP12X0_IO_VBASE	0xf0000000UL
@@ -145,10 +157,9 @@
 #define	IXP12X0_PCI_SIZE	0x00001000UL	/* 4Kbyte */
 
 /* PCI I/O Space */
-#define	IXP12X0_PCI_IO_VBASE	(IXP12X0_PCI_VBASE + IXP12X0_PCI_SIZE)
-						/* va=0xf0011000 */
-#define	IXP12X0_PCI_IO_HWBASE	0x54000000UL
-#define	IXP12X0_PCI_IO_SIZE	0x00010000UL	/* 64Kbyte */
+#define	IXP12X0_PCI_IO_HWBASE	0x54000000UL	/* VA == PA */
+#define	IXP12X0_PCI_IO_VBASE	IXP12X0_PCI_IO_HWBASE
+#define	IXP12X0_PCI_IO_SIZE	0x00100000UL	/* 1Mbyte */
 
 /* PCI Memory Space */
 #define IXP12X0_PCI_MEM_HWBASE	0x60000000UL	/* VA == PA */
@@ -156,13 +167,13 @@
 #define	IXP12X0_PCI_MEM_SIZE	0x20000000UL
 
 /* PCI Type0/1 Configuration address */
-#define	IXP12X0_PCI_TYPE0_HWBASE	0x53000000UL	/* VA == PA */
-#define	IXP12X0_PCI_TYPE0_VBASE	IXP12X0_PCI_TYPE0_HWBASE
+#define	IXP12X0_PCI_TYPE0_HWBASE	0x53000000UL
+#define	IXP12X0_PCI_TYPE0_VBASE		0xf3000000UL
+#define	IXP12X0_PCI_TYPE0_SIZE		0x01000000UL	/* 16MB */
 
-#define	IXP12X0_PCI_TYPE1_HWBASE	0x52000000UL	/* VA == PA */
-#define	IXP12X0_PCI_TYPE1_VBASE	IXP12X0_PCI_TYPE1_HWBASE
-
-#define	IXP12X0_PCI_TYPEX_SIZE	0x01000000UL	/* 16MB */
+#define	IXP12X0_PCI_TYPE1_HWBASE	0x52000000UL
+#define	IXP12X0_PCI_TYPE1_VBASE		0xf2000000UL
+#define	IXP12X0_PCI_TYPE1_SIZE		0x01000000UL	/* 16MB */
 
 /*
  * SlowPort I/O Register

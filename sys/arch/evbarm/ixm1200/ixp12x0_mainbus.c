@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_mainbus.c,v 1.3 2002/10/02 05:10:35 thorpej Exp $ */
+/*	$NetBSD: ixp12x0_mainbus.c,v 1.4 2003/02/17 20:51:53 ichiro Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -72,7 +72,7 @@ ixp12x0_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	ixp12x0_bs_init(&ixp12x0_bs_tag, sc);
 	sc->sc_iot = &ixp12x0_bs_tag;
-	sc->sc_ioh = IXP12X0_PCI_VBASE;
+	sc->sc_ioh = IXP12X0_IO_VBASE;
 
 	/*
 	 * Initialize the interrupt part of our PCI chipset tag
