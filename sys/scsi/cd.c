@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.31 1994/07/04 20:39:46 chopps Exp $	*/
+/*	$NetBSD: cd.c,v 1.31.2.1 1994/08/04 10:14:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -90,6 +90,7 @@ struct cd_data {
 	struct dkdevice sc_dk;
 
 	struct scsi_link *sc_link;	/* address of scsi low level switch */
+	u_int32 ad_info;	/* info about the adapter */
 	u_int32 cmdscount;	/* cmds allowed outstanding by board */
 	struct cd_parms {
 		u_int32 blksize;
@@ -155,7 +156,16 @@ cdattach(parent, self, aux)
 	dk_establish(&cd->sc_dk, &cd->sc_dev);
 #endif
 
-	sc_link->opennings = cd->cmdscount = CDOUTSTANDING;
+	if (cd->sc_link->adapter->adapter_info) {
+		cd->ad_info = ((*(cd->sc_link->adapter->adapter_info)) (sc_link->adapter_softc));
+		cd->cmdscount = cd->ad_info & AD_INF_MAX_CMDS;
+		if (cd->cmdscount > CDOUTSTANDING)
+			cd->cmdscount = CDOUTSTANDING;
+	} else {
+		cd->ad_info = 1;
+		cd->cmdscount = 1;
+	} 
+	sc_link->opennings = cd->cmdscount;
 
 	/*
 	 * Use the subdriver to request information regarding
