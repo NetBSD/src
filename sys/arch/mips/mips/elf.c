@@ -1,5 +1,7 @@
-/*	$NetBSD: elf.c,v 1.3 1996/06/17 10:51:28 jonathan Exp $	*/
+/*	$NetBSD: elf.c,v 1.4 1996/06/20 07:06:36 jonathan Exp $	*/
 /* from: NetBSD: exec_elf.c,v 1.3 1995/09/16 00:28:08 thorpej Exp 	*/
+
+/*       mips elf shared-library support from Per Fogelstrom's OpenBSD code */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -281,9 +283,22 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 
 	if(ph->p_flags & Elf32_pf_w) {
 		psize = trunc_page(*size);
+
+#ifdef ELF_DEBUG
+/*XXX*/		printf("mi elf: NEW_VNCMD len %x va %x off %x prot %x\n",
+			psize, *addr, offset, *prot);
+#endif	/*ELF_DEBUG*/
+
 		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp, offset, *prot);
 		if(psize != *size) {
+
 			NEW_VMCMD(vcset, vmcmd_map_readvn, *size - psize, *addr + psize, vp, offset + psize, *prot);
+
+#ifdef ELF_DEBUG
+/*XXX*/		printf("mi elf: NEW_VNCMD, size!=psize,  len %x va %x off %x prot %x\n",
+
+			*size - psize, *addr + psize, offset + psize, *prot);
+#endif	/*ELF_DEBUG*/
 		}
 	}
 	else {
@@ -297,6 +312,11 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 	rf = round_page(*addr + *size);
 
 	if (rm != rf) {
+
+#ifdef ELFDEBUG
+/*XXX*/		printf("mi elf: rounding VNCMD len %x va %x off %x prot %x\n",
+			rm - rf, rf, offset, *prot);
+#endif /*ELF_DEBUG*/
 		NEW_VMCMD(vcset, vmcmd_map_zero, rm - rf, rf, NULLVP, 0, *prot);
 		*size = msize;
 	}
@@ -333,7 +353,29 @@ elf_set_segment(epp, vaddr, size, prot)
 	case (VM_PROT_READ | VM_PROT_WRITE):
 	case (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE):
 		if (epp->ep_dsize != ELF32_NO_ADDR)
+		  {
+		  /* the following fix from christos does not work  */
+#if 0
+			long diff;
+			/*
+			 * Support for sbss extra segment, by extending
+			 * the data segment appropriately
+			 */
+/*XXX DEBUG*/	printf("elf_set_segment(): prot %x, bad rw size  %x\n",
+			prot, epp->ep_dsize);
+
+			if (epp->ep_daddr > vaddr)	
+				epp->ep_daddr = vaddr;
+
+			diff = (vaddr + size) - (epp->ep_daddr + epp->ep_dsize);
+			if (diff > 0)
+			    epp->ep_dsize += diff;
+
+			return 0;
+#else
 			return ENOEXEC;
+#endif
+		}
 		epp->ep_daddr = vaddr;
 		epp->ep_dsize = size;
 		break;
@@ -565,8 +607,17 @@ exec_elf_makecmds(p, epp)
 			elf_load_psection(&epp->ep_vmcmds, epp->ep_vp,
 				&ph[i], &addr, &size, &prot);
 			if ((error = elf_set_segment(epp, addr, size,
-						      prot)) != 0)
+						      prot)) != 0) {
+#ifdef ELF_DEBUG
+			/*
+			 * This fails on binaries made by the old
+			 * NetBSD pre-1.1 ELF toolchain, which had
+			 */
+				printf("exec_elf_makecmds: set_segment failed\n");
+#endif /*ELF_DEBUG*/
 				goto bad;
+
+			}
 			break;
 
 		case Elf32_pt_shlib:
