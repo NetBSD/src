@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2000, 2002 Free Software Foundation, Inc.
+# Copyright (C) 1989-2000, 2002, 2003, 2004 Free Software Foundation, Inc.
 #      Written by James Clark (jjc@jclark.com)
 # 
 # This file is part of groff.
@@ -239,7 +239,7 @@ install_dev:
 	    || $(mkinstalldirs) $(fontsubdir)/generate; \
 	fi
 	-test -z "$(DEVFILES)" \
-	  || for f in $(DEVFILES); do \
+	  || for f in ""$(DEVFILES); do \
 	       rm -f $(fontsubdir)/$$f; \
 	       if test -f $$f; then \
 		 $(INSTALL_DATA) $$f $(fontsubdir)/$$f; \
@@ -248,7 +248,7 @@ install_dev:
 	       fi; \
 	     done
 	-test -z "$(DEVSCRIPTS)" \
-	  || for f in $(DEVSCRIPTS); do \
+	  || for f in ""$(DEVSCRIPTS); do \
 	       rm -f $(fontsubdir)/$$f; \
 	       if test -f $$f; then \
 		 $(INSTALL_SCRIPT) $$f $(fontsubdir)/$$f; \
@@ -260,7 +260,7 @@ install_dev:
 .PHONY: uninstall_dev
 uninstall_dev:
 	-test -z "$(DEVFILES)$(DEVSCRIPTS)" \
-	  || for f in $(DEVFILES) $(DEVSCRIPTS); do \
+	  || for f in ""$(DEVFILES) $(DEVSCRIPTS); do \
 	       rm -f $(fontsubdir)/$$f; \
 	     done
 	-test -d $(fontsubdir)/generate && rmdir $(fontsubdir)/generate
