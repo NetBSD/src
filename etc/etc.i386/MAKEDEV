@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.203 2003/07/27 14:18:05 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.204 2003/08/22 05:06:33 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -109,6 +109,7 @@
 #	cir*	Consumer IR
 #	ipl	IP Filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	irframe* IrDA physical frame
 #	random	Random number generator, see rnd(4)
 #	speaker	PC speaker		(XXX - installed)
@@ -197,7 +198,7 @@ all)
 	makedev tty2 tty3 pty0
 	makedev lpa0 lpa1 lpa2
 	makedev lpt0 lpt1 lpt2
-	makedev tun0 tun1 tun2 tun3 ipl pf
+	makedev tun0 tun1 tun2 tun3 ipl pf crypto
 	makedev bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev vnd1
 	makedev raid1 raid2 raid3 raid4 raid5 raid6 raid7
@@ -733,6 +734,12 @@ pf)
 	rm -f pf
 	mknod pf c 108 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 109 0
+	chmod 666 crypto
 	;;
 
 speaker)					# (XXX - installed)

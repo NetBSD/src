@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.58 2003/07/27 14:18:14 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.59 2003/08/22 05:06:44 itojun Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -74,6 +74,7 @@
 #	random	Random number generator
 #	systrace syscall tracer
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -589,6 +590,12 @@ pf)
 	rm -f pf
 	mknod pf c 80 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 81 0
+	chmod 666 crypto
 	;;
 
 local)

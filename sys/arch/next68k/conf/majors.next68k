@@ -1,4 +1,4 @@
-#	$NetBSD: majors.next68k,v 1.6 2003/07/27 14:18:24 itojun Exp $
+#	$NetBSD: majors.next68k,v 1.7 2003/08/22 05:06:54 itojun Exp $
 #
 # Device majors for next68k
 #
@@ -45,3 +45,4 @@ device-major	systrace	char 47			systrace
 device-major	cgd		char 48  block 21	cgd
 device-major	ksyms		char 49			ksyms
 device-major	pf		char 50			pf
+device-major	crypto		char 51			opencrypto

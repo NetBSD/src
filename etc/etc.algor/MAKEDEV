@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.13 2003/07/27 14:17:58 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.14 2003/08/22 05:06:23 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -107,6 +107,7 @@
 #	fd	file descriptors (/dev/fd/*)
 #	ipl	IP Filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	kbd	keyboard (provides events, for X11)
 #	lkm	loadable kernel modules interface
 #	mouse	mouse (provides events, for X11)
@@ -157,7 +158,7 @@ init|all)
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev tun0 tun1 tun2 tun3
 	makedev ttyC0 ttyC1 lkm
-	makedev lpa0 lpt0 audio ipl pf wd0 wd1 fd0 fd1
+	makedev lpa0 lpt0 audio ipl pf crypto wd0 wd1 fd0 fd1
 	makedev audio0 audio1 audio2 audio3
 	makedev random satlink0 speaker mlx0 local
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
@@ -654,6 +655,12 @@ pf)
 	rm -f pf
 	mknod pf c 70 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 71 0
+	chmod 666 crypto
 	;;
 
 satlink*)

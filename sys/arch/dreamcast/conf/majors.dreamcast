@@ -1,4 +1,4 @@
-#	$NetBSD: majors.dreamcast,v 1.6 2003/07/27 14:18:18 itojun Exp $
+#	$NetBSD: majors.dreamcast,v 1.7 2003/08/22 05:06:49 itojun Exp $
 #
 # Device majors for dreamcast
 #
@@ -57,3 +57,4 @@ device-major	mmem		char 62  block 21	mmem
 device-major	mlcd		char 63			mlcd
 device-major	ksyms		char 64			ksyms
 device-major	pf		char 65			pf
+device-major	crypto		char 66			opencrypto

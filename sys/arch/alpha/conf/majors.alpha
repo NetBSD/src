@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.9 2003/07/27 14:18:15 itojun Exp $
+#	$NetBSD: majors.alpha,v 1.10 2003/08/22 05:06:46 itojun Exp $
 #
 # Device majors for alpha
 #
@@ -77,3 +77,4 @@ device-major	ksyms		char 75			ksyms
 device-major	wsfont		char 76			wsfont
 device-major	nsmb		char 77			nsmb
 device-major	pf		char 78			pf
+device-major	crypto		char 79			opencrypto

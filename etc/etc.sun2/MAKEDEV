@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.21 2003/07/27 14:18:13 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.22 2003/08/22 05:06:43 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -69,6 +69,7 @@
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	systrace syscall tracer
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 
 # XXX - Keep /usr/etc so SunOS can find chown
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc
@@ -298,6 +299,12 @@ pf)
 	rm -f pf
 	mknod pf c 93 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 94 0
+	chmod 666 crypto
 	;;
 
 local)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 
-# $NetBSD: MAKEDEV,v 1.7 2003/07/27 14:18:00 itojun Exp $
+# $NetBSD: MAKEDEV,v 1.8 2003/08/22 05:06:27 itojun Exp $
 #
 ###########################################################################
 #
@@ -31,6 +31,7 @@
 #	systrace syscall tracer
 #	tun*	network tunnel driver
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #
 
 dialin=0
@@ -150,6 +151,12 @@ pf)
 	rm -f pf
 	mknod pf c 26 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 27 0
+	chmod 666 crypto
 	;;
 
 lkm)

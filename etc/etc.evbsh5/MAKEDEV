@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.10 2003/07/27 14:18:03 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.11 2003/08/22 05:06:30 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -71,6 +71,7 @@
 #	bpf*	packet filter
 #	ipl	IP Filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	cbq	Alternate Queueing (ALTQ)
 #	random	Random number generator
 #	speaker	PC speaker				(XXX - installed)
@@ -105,7 +106,7 @@ init|all)
 	makedev std fd fd0
 	makedev tty0 tty1 pty0
 	makedev vnd0 vnd1
-	makedev bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl pf
+	makedev bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl pf crypto
 	makedev ccd0 ccd1 ccd2 ccd3 md0 random
 	makedev lkm audio local
 	makedev clockctl
@@ -296,6 +297,12 @@ pf)
 	rm -f pf
 	mknod pf c 10 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 11 0
+	chmod 666 crypto
 	;;
 
 lkm)

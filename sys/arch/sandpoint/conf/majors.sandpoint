@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sandpoint,v 1.5 2003/07/27 14:18:26 itojun Exp $
+#	$NetBSD: majors.sandpoint,v 1.6 2003/08/22 05:06:56 itojun Exp $
 #
 # Device majors for sandpoint
 #
@@ -57,3 +57,4 @@ device-major	systrace	char 59			systrace
 device-major	cgd		char 60  block 19	cgd
 device-major	ksyms		char 61			ksyms
 device-major	pf		char 62			pf
+device-major	crypto		char 63			opencrypto

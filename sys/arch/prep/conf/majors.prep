@@ -1,4 +1,4 @@
-#	$NetBSD: majors.prep,v 1.5 2003/07/27 14:18:26 itojun Exp $
+#	$NetBSD: majors.prep,v 1.6 2003/08/22 05:06:56 itojun Exp $
 #
 # Device majors for prep
 #
@@ -65,3 +65,4 @@ device-major	systrace	char 74			systrace
 device-major	cgd		char 75  block 19	cgd
 device-major	ksyms		char 76			ksyms
 device-major	pf		char 77			pf
+device-major	crypto		char 78			opencrypto

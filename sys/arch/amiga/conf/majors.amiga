@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amiga,v 1.5 2003/07/27 14:18:16 itojun Exp $
+#	$NetBSD: majors.amiga,v 1.6 2003/08/22 05:06:47 itojun Exp $
 #
 # Device majors for amiga
 #
@@ -56,3 +56,4 @@ device-major	systrace	char 56			systrace
 device-major	cgd		char 57  block 18	cgd
 device-major	ksyms		char 58			ksyms
 device-major	pf		char 59			pf
+device-major	crypto		char 60			opencrypto

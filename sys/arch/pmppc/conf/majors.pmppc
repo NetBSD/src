@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pmppc,v 1.6 2003/07/27 14:18:25 itojun Exp $
+#	$NetBSD: majors.pmppc,v 1.7 2003/08/22 05:06:56 itojun Exp $
 #
 # Device majors for pmppc
 #
@@ -54,3 +54,4 @@ device-major	pci		char 60			pci
 device-major	cgd		char 61  block 19	cgd
 device-major	ksyms		char 62			ksyms
 device-major	pf		char 63			pf
+device-major	crypto		char 64			opencrypto

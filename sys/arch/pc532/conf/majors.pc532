@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pc532,v 1.5 2003/07/27 14:18:24 itojun Exp $
+#	$NetBSD: majors.pc532,v 1.6 2003/08/22 05:06:55 itojun Exp $
 #
 # Device majors for pc532
 #
@@ -36,3 +36,4 @@ device-major	systrace	char 33			systrace
 device-major	cgd		char 34  block 14	cgd
 device-major	ksyms		char 35			ksyms
 device-major	pf		char 36			pf
+device-major	crypto		char 37			opencrypto

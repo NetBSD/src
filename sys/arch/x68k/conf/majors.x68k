@@ -1,4 +1,4 @@
-#	$NetBSD: majors.x68k,v 1.6 2003/07/27 14:18:28 itojun Exp $
+#	$NetBSD: majors.x68k,v 1.7 2003/08/22 05:07:00 itojun Exp $
 #
 # Device majors for x68k
 #
@@ -54,3 +54,4 @@ device-major	cgd		char 52  block 17	cgd
 device-major	bmd		char 53  block 18	bmd
 device-major	ksyms		char 54			ksyms
 device-major	pf		char 55			pf
+device-major	crypto		char 56			opencrypto

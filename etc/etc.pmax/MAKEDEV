@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.59 2003/07/27 14:18:10 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.60 2003/08/22 05:06:40 itojun Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -43,6 +43,7 @@
 #	fd	file descriptors (/dev/fd/*)
 #	ipl	IP packet filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	lkm	loadable kernel modules interface    (unsupported in 1.3_ALPHA)
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
@@ -90,7 +91,7 @@ init|all)
 	makedev fb0 fb1 fb2
 	makedev px0 # px1 px2
 	makedev mouse
-	makedev ipl pf random lkm
+	makedev ipl pf crypto random lkm
 	makedev local
 	makedev audio
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
@@ -351,6 +352,12 @@ pf)
 	rm -f pf
 	mknod pf c 106 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 107 0
+	chmod 666 crypto
 	;;
 
 random)

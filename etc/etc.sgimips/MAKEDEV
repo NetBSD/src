@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.33 2003/07/27 14:18:12 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.34 2003/08/22 05:06:42 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -98,6 +98,7 @@
 #	fd	file descriptors (/dev/fd/*)
 #	ipl	IP Filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	pci*	PCI bus access devices, see pcictl(8)
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
@@ -445,6 +446,12 @@ pf)
 	rm -f pf
 	mknod pf c 78 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 79 0
+	chmod 666 crypto
 	;;
 
 random)

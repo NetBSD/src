@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cesfic,v 1.5 2003/07/27 14:18:18 itojun Exp $
+#	$NetBSD: majors.cesfic,v 1.6 2003/08/22 05:06:49 itojun Exp $
 #
 # Device majors for cesfic
 #
@@ -26,3 +26,4 @@ device-major	systrace	char 23			systrace
 device-major	cgd		char 24  block 4	cgd
 device-major	ksyms		char 25			ksyms
 device-major	pf		char 26			pf
+device-major	crypto		char 27			opencrypto

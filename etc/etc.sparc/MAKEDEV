@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.89 2003/07/27 14:18:13 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.90 2003/08/22 05:06:43 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -96,6 +96,7 @@
 #	tun*	network tunnel driver
 #	ipl	IP Filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ses*    SES/SAF-TE SCSI Devices
@@ -155,7 +156,7 @@ init|all)
 	makedev cgtwo0 cgfour0 cgeight0
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev sysmon
-	makedev lkm random local ipl pf cfs0 apm apmctl tctrl0
+	makedev lkm random local ipl pf crypto cfs0 apm apmctl tctrl0
 	makedev isdns
 	makedev pci0
 	makedev clockctl
@@ -513,6 +514,12 @@ pf)
 	rm -f pf
 	mknod pf c 137 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 138 0
+	chmod 666 crypto
 	;;
 
 opty)

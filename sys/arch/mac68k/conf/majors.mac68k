@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mac68k,v 1.5 2003/07/27 14:18:22 itojun Exp $
+#	$NetBSD: majors.mac68k,v 1.6 2003/08/22 05:06:52 itojun Exp $
 #
 # Device majors for mac68k
 #
@@ -50,3 +50,4 @@ device-major	systrace	char 50			systrace
 device-major	cgd		char 51  block 23	cgd
 device-major	ksyms		char 52			ksyms
 device-major	pf		char 53			pf
+device-major	crypto		char 54			opencrypto

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.newsmips,v 1.6 2003/07/27 14:18:24 itojun Exp $
+#	$NetBSD: majors.newsmips,v 1.7 2003/08/22 05:06:54 itojun Exp $
 #
 # Device majors for newsmips
 #
@@ -45,3 +45,4 @@ device-major	systrace	char 76			systrace
 device-major	cgd		char 77  block 33	cgd
 device-major	ksyms		char 78			ksyms
 device-major	pf		char 79			pf
+device-major	crypto		char 80			opencrypto

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.8 2003/07/27 14:18:17 itojun Exp $
+#	$NetBSD: majors.arm32,v 1.9 2003/08/22 05:06:48 itojun Exp $
 #
 # Device majors for arm32
 #
@@ -103,3 +103,4 @@ device-major	apm		char 103		apm
 device-major	sscom		char 104		sscom
 device-major	ksyms		char 105		ksyms
 device-major	pf		char 106		pf
+device-major	crypto		char 107		opencrypto

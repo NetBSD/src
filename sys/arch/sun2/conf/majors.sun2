@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun2,v 1.5 2003/07/27 14:18:28 itojun Exp $
+#	$NetBSD: majors.sun2,v 1.6 2003/08/22 05:06:58 itojun Exp $
 #
 # Device majors for sun2
 #
@@ -56,3 +56,4 @@ device-major	systrace	char 90			systrace
 device-major	cgd		char 91  block 26	cgd
 device-major	ksyms		char 92			ksyms
 device-major	pf		char 93			pf
+device-major	crypto		char 94			opencrypto

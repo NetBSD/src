@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.12 2003/07/27 14:17:57 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.13 2003/08/22 05:06:22 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -84,6 +84,7 @@
 #	bpf*	Berkeley packet filter devices
 #	ipl	IP Filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	random	Random number generator, see rnd(4)
 #	tun*	network tunnel driver
 #	cfs*	Coda file system device
@@ -360,6 +361,12 @@ pf)
 	rm -f pf
 	mknod pf c 31 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 32 0
+	chmod 666 crypto
 	;;
 
 random)

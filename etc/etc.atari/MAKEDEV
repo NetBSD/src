@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.68 2003/07/27 14:18:00 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.69 2003/08/22 05:06:25 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -105,6 +105,7 @@
 #	grf*	Motherboard bitmapped video.
 #	ipl	IP Filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	kbd	Atari keyboard.
 #	lkm	loadable kernel modules interface
 #	random	Random number generator
@@ -154,7 +155,7 @@ init|all)
 	makedev kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
 	makedev vnd3 vnd4 view00 view01 view02 view03 view04 view05
 	makedev pty0
-	makedev vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 ipl pf
+	makedev vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 ipl pf crypto
 	makedev ccd0 ccd1 ccd2 ccd3
 	makedev cgd0 cgd1 cgd2 cgd3
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
@@ -565,6 +566,12 @@ pf)
 	rm -f pf
 	mknod pf c 57 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 58 0
+	chmod 666 crypto
 	;;
 
 random)

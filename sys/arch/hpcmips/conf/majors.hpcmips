@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.9 2003/07/27 14:18:21 itojun Exp $
+#	$NetBSD: majors.hpcmips,v 1.10 2003/08/22 05:06:51 itojun Exp $
 #
 # Device majors for hpcmips
 #
@@ -62,3 +62,4 @@ device-major	ksyms		char 55			ksyms
 device-major	flash		char 100		flash
 device-major	vr4181aiu	char 101		vr4181aiu
 device-major	pf		char 102		pf
+device-major	pf		char 103		pf

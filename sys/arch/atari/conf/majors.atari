@@ -1,4 +1,4 @@
-#	$NetBSD: majors.atari,v 1.6 2003/07/27 14:18:17 itojun Exp $
+#	$NetBSD: majors.atari,v 1.7 2003/08/22 05:06:48 itojun Exp $
 #
 # Device majors for atari
 #
@@ -56,3 +56,4 @@ device-major	cgd		char 54  block 16	cgd
 device-major	wskbd		char 55			wskbd
 device-major	ksyms		char 56			ksyms
 device-major	pf		char 57			pf
+device-major	crypto		char 58			opencrypto
