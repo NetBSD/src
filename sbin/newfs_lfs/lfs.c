@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.32 2003/10/09 14:28:34 yamt Exp $	*/
+/*	$NetBSD: lfs.c,v 1.33 2003/11/10 08:51:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.32 2003/10/09 14:28:34 yamt Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.33 2003/11/10 08:51:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -477,7 +477,7 @@ make_lfs(int fd, uint secsize, struct partition *partp, int minfree,
 
 	/* We need >= 2 superblocks */
 	if(lfsp->lfs_sboffs[1] == 0x0) {
-		fatal("Could not assign a disk adress for the second "
+		fatal("Could not assign a disk address for the second "
 		      "superblock.\nPlease decrease the segment size.\n");
 	}
 

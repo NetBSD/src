@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rhreg.h,v 1.11 2003/02/05 00:02:31 perry Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.12 2003/11/10 08:51:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -152,7 +152,7 @@ struct MonDef {
 
 /* The prototypes for C++, prototypes for C (with explanations) below */
 
-"C" unsigned char * RZ3Init         (volatile void * HardWareAdress, struct MonDef * md);
+"C" unsigned char * RZ3Init         (volatile void * HardWareAddress, struct MonDef * md);
 "C" void            RZ3SetCursorPos (unsigned short pos);
 "C" void            RZ3AlphaErase   (unsigned short xd, unsigned short yd,
                                             unsigned short  w, unsigned short  h );
@@ -174,7 +174,7 @@ struct MonDef {
 /* The prototypes for C */
 /* with a little explanation */
 
-	unsigned char * RZ3Init(volatile void * BoardAdress, struct MonDef * md);
+	unsigned char * RZ3Init(volatile void * BoardAddress, struct MonDef * md);
 
 /*
  * This routine initialises the Retina Z3 hardware, opens a

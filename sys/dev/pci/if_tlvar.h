@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.9 2003/11/02 10:50:40 wiz Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.10 2003/11/10 08:51:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -53,7 +53,7 @@ struct tl_softc {
 	struct ethercom tl_ec;
 	struct callout tl_tick_ch;	/* tick callout */
 	struct callout tl_restart_ch;	/* restart callout */
-	u_int8_t tl_enaddr[ETHER_ADDR_LEN];	/* hardware adress */
+	u_int8_t tl_enaddr[ETHER_ADDR_LEN];	/* hardware address */
 	struct i2c_controller sc_i2c;	/* i2c controller info, for eeprom */
 	mii_data_t tl_mii;		/* mii bus */
 	bus_dma_segment_t ctrl_segs; /* bus-dma memory for control blocks */

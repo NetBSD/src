@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.8 2003/08/18 05:39:52 itojun Exp $	*/
+/*	$NetBSD: device.c,v 1.9 2003/11/10 08:51:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: device.c,v 1.8 2003/08/18 05:39:52 itojun Exp $");
+__RCSID("$NetBSD: device.c,v 1.9 2003/11/10 08:51:52 wiz Exp $");
 #endif
 
 #include "os.h"
@@ -47,7 +47,7 @@ void	deviceOpen __P((char *, u_short, int));
 
 #ifdef	DEV_NEW_CONF
 /*
- * Return ethernet adress for interface
+ * Return ethernet address for interface
  */
 
 void

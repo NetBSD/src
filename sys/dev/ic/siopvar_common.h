@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.25 2003/11/02 11:07:46 wiz Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.26 2003/11/10 08:51:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -146,7 +146,7 @@ struct siop_common_softc {
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	void (*sc_reset) __P((struct siop_common_softc*)); /* reset callback */
 	bus_dmamap_t  sc_scriptdma;	/* DMA map for script */
-	bus_addr_t sc_scriptaddr;	/* on-board ram or physical adress */
+	bus_addr_t sc_scriptaddr;	/* on-board ram or physical address */
 	u_int32_t *sc_script;		/* script location in memory */
 	struct siop_common_target *targets[16]; /* per-target states */
 };
