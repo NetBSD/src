@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.2 2003/02/07 17:46:12 cgd Exp $ */
+/* $NetBSD: autoconf.h,v 1.3 2003/03/22 14:26:43 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 /*
- * Machine-dependent structures of autoconfiguration
+ * Machine-dependent structures for autoconfiguration
  */
 
 /*
