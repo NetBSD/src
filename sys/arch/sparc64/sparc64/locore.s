@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72 2000/07/14 21:04:17 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.73 2000/07/17 14:08:43 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -8167,11 +8167,22 @@ ENTRY(probeget)
 	mov	%o3, %o2
 #endif
 	mov	%o2, %o4
-	! %o0 = asi, %o1 = addr, %o2 = (1,2,4)
+	! %o0 = asi, %o1 = addr, %o4 = (1,2,4)
 	sethi	%hi(CPCB), %o2
 	LDPTR	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfserr;
-	set	_C_LABEL(Lfsbail), %o5
+	set	_C_LABEL(Lfsprobe), %o5
 	STPTR	%o5, [%o2 + PCB_ONFAULT]
+	or	%o0, 9, %o3		! if (PHYS_ASI(asi)) {
+	sub	%o3, 0x1d, %o3
+	brz,a	%o3, 0f
+	 mov	%g0, %o5
+	DLFLUSH(%o0,%o5)		!	flush cache line
+					! }
+0:
+#ifndef _LP64
+	rdpr	%pstate, %g1
+	wrpr	%g1, PSTATE_AM, %pstate
+#endif
 	btst	1, %o4
 	wr	%o1, 0, %asi
 	membar	#Sync
@@ -8196,8 +8207,26 @@ ENTRY(probeget)
 	srlx	%o0, 32, %o0
 #endif
 1:	membar	#Sync
+#ifndef _LP64
+	wrpr	%g1, 0, %pstate
+#endif
+	brz	%o5, 1f			! if (cache flush addr != 0)
+	 nop
+	DLFLUSH2(%o5)			!	flush cache line again
+1:
 	retl				! made it, clear onfault and return
 	 STPTR	%g0, [%o2 + PCB_ONFAULT]
+
+	/*
+	 * Fault handler for probeget
+	 */
+_C_LABEL(Lfsprobe):
+#ifndef _LP64
+	wrpr	%g1, 0, %pstate
+#endif
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	retl				! and return error indicator
+	 mov	-1, %o0
 
 /*
  * probeset(addr, asi, size, val)
