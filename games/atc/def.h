@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.3 1995/03/21 15:03:47 cgd Exp $	*/
+/*	$NetBSD: def.h,v 1.4 1998/09/11 12:53:28 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,9 @@
 
 #define AUTHOR_STR		"ATC - by Ed James"
 
-#define PI			3.14159654
+#ifndef PI
+#define PI			3.14159265358979323846
+#endif
 
 #define LOWFUEL			15
 
