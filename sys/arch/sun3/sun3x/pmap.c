@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 2001/03/15 06:10:52 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 2001/04/21 23:51:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -3634,18 +3634,6 @@ pmap_activate(p)
 void
 pmap_deactivate(p)
 struct proc *p;
-{
-	/* not implemented. */
-}
-
-/* pmap_update
- **
- * Apply any delayed changes scheduled for all pmaps immediately.
- *
- * No delayed operations are currently done in this pmap.
- */
-void
-pmap_update()
 {
 	/* not implemented. */
 }

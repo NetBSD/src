@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2001/03/26 19:56:32 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 2001/04/21 23:51:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -704,15 +704,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	struct pmap *dst_pmap, *src_pmap;
 	vaddr_t dst_addr, src_addr;
 	vsize_t len;
-{
-}
-
-/*
- * Require that all active physical maps contain no
- * incorrect entries NOW.
- */
-void
-pmap_update()
 {
 }
 

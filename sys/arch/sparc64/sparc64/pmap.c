@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 2001/03/15 06:10:50 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93 2001/04/21 23:51:21 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1718,15 +1718,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 		       dst_pmap, src_pmap, (void *)(u_long)dst_addr,
 		       (u_long)len, (void *)(u_long)src_addr);
 #endif
-}
-
-/*
- * Require that all active physical maps contain no
- * incorrect entries NOW.
- */
-void
-pmap_update()
-{
 }
 
 /*
