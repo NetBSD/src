@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)newvers.sh	7.4 (Berkeley) 12/7/90
-#	$Id: newvers.sh,v 1.10 1993/08/26 10:59:16 cgd Exp $
+#	$Id: newvers.sh,v 1.11 1993/12/18 04:21:35 mycroft Exp $
 #
 
 if [ ! -r version ]
@@ -50,6 +50,7 @@ t=`date`
 user=${USER-root}
 host=`hostname`
 dir=`pwd`
+ident=`basename $dir`
 (
-  echo "char version[] = \"${kernvers} ($1) #${v}: ${t}\\n  ${user}@${host}:${dir}\\n\";"
+  echo "char version[] = \"${kernvers} ($ident) #${v}: ${t}\\n  ${user}@${host}:${dir}\\n\";"
 ) > vers.c
