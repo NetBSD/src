@@ -53,7 +53,7 @@ file ddb/db_trap.c		ddb
 file ddb/db_variables.c	 	ddb
 file ddb/db_watch.c		ddb
 file ddb/db_write_cmd.c	 	ddb
-file dev/vn.c			dev
+file dev/vn.c			vn needs-flag
 file isofs/isofs_bmap.c	 	isofs
 file isofs/isofs_lookup.c	isofs
 file isofs/isofs_node.c	 	isofs
