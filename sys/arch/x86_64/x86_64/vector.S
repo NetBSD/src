@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12 2002/07/14 12:20:46 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.13 2002/11/23 15:18:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -216,6 +216,8 @@ calltrap:
 	INTRFASTEXIT
 3:	sti
 	movabsq	$4f,%rdi
+	movl	_C_LABEL(cpl)(%rip),%esi
+	movl	%ebx,%edx
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
 #ifdef DDB
@@ -223,7 +225,7 @@ calltrap:
 #endif /* DDB */
 	movl	%ebx,_C_LABEL(cpl)(%rip)
 	jmp	2b
-4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
+4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 #endif /* DIAGNOSTIC */
 
 IDTVEC(syscall32)
@@ -264,10 +266,6 @@ IDTVEC(syscall)
 	movq	$2,TF_ERR(%rsp)
 	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
 
-#ifdef DIAGNOSTIC
-	movl	_C_LABEL(cpl)(%rip),%ebx
-#endif /* DIAGNOSTIC */
-
 	movq    _C_LABEL(curproc)(%rip),%r15
 	movq	%rsp,P_MD_REGS(%r15)	# save pointer to frame
 	call	*P_MD_SYSCALL(%r15)
@@ -285,7 +283,7 @@ IDTVEC(syscall)
 	sti
 syscall_return:
 #ifdef DIAGNOSTIC
-	cmpl	_C_LABEL(cpl)(%rip),%ebx
+	cmpl	$0,_C_LABEL(cpl)(%rip)
 	jne	3f
 #endif
 	/*
@@ -306,6 +304,10 @@ syscall_return:
 
 #ifdef DIAGNOSTIC
 3:	movabsq	$4f, %rdi
+	movl	TF_RAX(%rsp),%esi
+	movl	TF_RDI(%rsp),%edx
+	movl	%ebx,%ecx
+	movl	_C_LABEL(cpl)(%rip),%r8d
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
 #ifdef DDB
@@ -313,7 +315,7 @@ syscall_return:
 #endif /* DDB */
 	movl	%ebx,_C_LABEL(cpl)(%rip)
 	jmp	1b
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
+4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
 
 
@@ -372,7 +374,7 @@ _C_LABEL(osyscall_return):
 1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
 1:	cmpl	_C_LABEL(cpl)(%rip),%ebx
-	jne 3f
+	jne	3f
 	INTRFASTEXIT
 3:	sti
 	movabsq	$4f, %rdi
