@@ -63,8 +63,6 @@ struct taglist {
 	struct tag *tl_first;
 	struct tag *tl_last;
 };
-#define TAG_END  ((struct tag *) &taglist)
-static struct taglist taglist = { TAG_END, TAG_END };
 struct tag {
 	struct tag *next, *prev; /* List links */
 	char *tag_file;		/* Source file containing the tag */
@@ -73,6 +71,9 @@ struct tag {
 	char tag_endline;	/* True if the pattern includes '$' */
 };
 static struct tag *curtag;
+
+#define TAG_END  ((struct tag *) &taglist)
+static struct taglist taglist = { TAG_END, TAG_END };
 
 #define TAG_INS(tp) \
 	(tp)->next = taglist.tl_first; \
