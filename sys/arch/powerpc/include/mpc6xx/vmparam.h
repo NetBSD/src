@@ -174,7 +174,7 @@
 #endif
 
 #ifndef VM_MAX_KERNEL_BUF
-#define	VM_MAX_KERNEL_BUF	(SEGMENT_LENGTH / 2)
+#define	VM_MAX_KERNEL_BUF	(SEGMENT_LENGTH * 3 / 4)
 #endif
 
 #define	VM_NFREELIST		16	/* 16 distinct memory segments */
