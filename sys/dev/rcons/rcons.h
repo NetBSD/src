@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.9 1999/08/26 20:48:09 thorpej Exp $ */
+/*	$NetBSD: rcons.h,v 1.10 2000/03/20 11:24:46 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,6 +98,7 @@ struct rconsole {
 void rcons_cnputc __P((int));
 void rcons_bell __P((struct rconsole *));
 void rcons_init __P((struct rconsole *, int));
+void rcons_ttyinit __P((struct tty *));
 
 /* rcons_subr.c */
 void rcons_init_ops __P((struct rconsole *rc));
