@@ -1,7 +1,7 @@
-/*	$NetBSD: wd.c,v 1.166.2.1 1998/05/05 09:14:53 mycroft Exp $ */
+/*	$NetBSD: wd.c,v 1.166.2.2 1998/05/08 10:51:43 mycroft Exp $ */
 
 /*
- * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
  *
  * DMA and multi-sector PIO handling are derived from code contributed by
  * Onno van der Linden.
@@ -182,22 +182,15 @@ wdattach(parent, self, aux)
 	}
 	*q++ = '\0';
 
-	printf(": <%s>\n%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
-	    buf, self->dv_xname,
-	    d_link->sc_params.wdp_cylinders *
-	      (d_link->sc_params.wdp_heads * d_link->sc_params.wdp_sectors) /
-		  (1048576 / DEV_BSIZE),
-	    d_link->sc_params.wdp_cylinders,
-	    d_link->sc_params.wdp_heads,
-	    d_link->sc_params.wdp_sectors,
-	    DEV_BSIZE);
+	printf(": <%s>\n", buf);
 
-	if ((d_link->sc_params.wdp_capabilities & WD_CAP_DMA) != 0 &&
+	if ((d_link->sc_params.wdp_capabilities1 & WD_CAP_DMA) != 0 &&
 	    d_link->sc_mode == WDM_DMA) {
 		d_link->sc_mode = WDM_DMA;
-	} else if (d_link->sc_params.wdp_maxmulti > 1) {
+	} else if ((d_link->sc_params.wdp_multi & 0xff) > 1) {
 		d_link->sc_mode = WDM_PIOMULTI;
-		d_link->sc_multiple = min(d_link->sc_params.wdp_maxmulti, 16);
+		d_link->sc_multiple =
+		    min(d_link->sc_params.wdp_multi & 0xff, 16);
 	} else {
 		d_link->sc_mode = WDM_PIOSINGLE;
 		d_link->sc_multiple = 1;
@@ -210,10 +203,37 @@ wdattach(parent, self, aux)
 		printf(" %d-sector %d-bit pio transfers,",
 		    d_link->sc_multiple,
 		    (d_link->sc_flags & WDF_32BIT) == 0 ? 16 : 32);
-	if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA) != 0)
-		printf(" lba addressing\n");
-	else
-		printf(" chs addressing\n");
+
+	/* Prior to ATA-4, LBA was optional. */
+	if ((d_link->sc_params.wdp_capabilities1 & WD_CAP_LBA) != 0)
+		d_link->sc_flags |= WDF_LBA;
+	/* ATA-4 requires LBA. */
+	if (d_link->sc_params.wdp_ataversion != 0xffff &&
+	    d_link->sc_params.wdp_ataversion >= WD_VER_ATA4)
+		d_link->sc_flags |= WDF_LBA;
+
+	if ((d_link->sc_flags & WDF_LBA) != 0) {
+		printf(" lba mode\n");
+		d_link->sc_capacity =
+		    (d_link->sc_params.wdp_capacity[1] << 16) |
+		    d_link->sc_params.wdp_capacity[0];
+		printf("%s: %dMB, %d sec, %d bytes/sec\n",
+		    self->dv_xname,
+		    d_link->sc_capacity / (1048576 / DEV_BSIZE),
+		    d_link->sc_capacity, DEV_BSIZE);
+	} else {
+		printf(" chs mode\n");
+		d_link->sc_capacity =
+		    d_link->sc_params.wdp_cylinders *
+		    d_link->sc_params.wdp_heads *
+		    d_link->sc_params.wdp_sectors;
+		printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+		    self->dv_xname,
+		    d_link->sc_capacity / (1048576 / DEV_BSIZE),
+		    d_link->sc_params.wdp_cylinders,
+		    d_link->sc_params.wdp_heads,
+		    d_link->sc_params.wdp_sectors, DEV_BSIZE);
+	}
 
 #if NRND > 0
 	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname, RND_TYPE_DISK);
@@ -530,7 +550,7 @@ wdgetdefaultlabel(wd, lp)
 	lp->d_type = DTYPE_ST506;
 #endif
 	strncpy(lp->d_packname, d_link->sc_params.wdp_model, 16);
-	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
+	lp->d_secperunit = d_link->sc_capacity;
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
@@ -865,7 +885,7 @@ wddump(dev, blkno, va, size)
 			/* Tranfer is okay now. */
 		}
 
-		if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
+		if ((d_link->sc_flags & WDF_LBA) != 0) {
 			sector = (xlt_blkno >> 0) & 0xff;
 			cylin = (xlt_blkno >> 8) & 0xffff;
 			head = (xlt_blkno >> 24) & 0xf;
