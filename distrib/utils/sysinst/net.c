@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.97 2003/11/04 16:27:22 perry Exp $	*/
+/*	$NetBSD: net.c,v 1.98 2003/11/15 12:53:34 sekiya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -799,7 +799,7 @@ get_via_ftp(void)
 		 * unsafe by a strict reading of RFC 1738).
 		 */
 		if (strcmp("ftp", ftp_user) == 0 && ftp_pass[0] == 0)
-			ret = run_prog(RUN_DISPLAY, NULL,
+			ret = run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
 			    "/usr/bin/ftp -a ftp://%s/%s/%s",
 			    ftp_host,
 			    url_encode(ftp_dir_encoded, ftp_dir,
@@ -807,7 +807,7 @@ get_via_ftp(void)
 					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1),
 			    filename);
 		else {
-			ret = run_prog(RUN_DISPLAY, NULL,
+			ret = run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
 			    "/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
 			    url_encode(ftp_user_encoded, ftp_user,
 					sizeof ftp_user_encoded,

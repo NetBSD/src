@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.113 2003/10/19 20:45:27 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.114 2003/11/15 12:53:34 sekiya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -327,8 +327,7 @@ again:
 	/* Mount it */
 	for (retries = 5;; --retries) {
 		if (run_prog(retries > 0 ? RUN_SILENT : 0, NULL,
-		    "/sbin/mount -rt cd9660 /dev/%s%c /mnt2",
-		    cdrom_dev, 'a' + getrawpartition()) == 0)
+		    "/sbin/mount -rt cd9660 /dev/%s /mnt2", cdrom_dev) == 0)
 			break;
 		if (retries > 0) {
 			sleep(1);
