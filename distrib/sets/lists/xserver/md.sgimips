@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.7 2004/10/07 13:50:18 rtr Exp $
+# $NetBSD: md.sgimips,v 1.8 2004/11/21 00:16:05 rtr Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xprt
@@ -284,7 +284,10 @@
 ./usr/X11R6/lib/modules/libint10.so.0
 ./usr/X11R6/lib/modules/libint10.so.0.0
 ./usr/X11R6/lib/modules/libint10_pic.a
-./usr/X11R6/lib/modules/liblayer.a 
+./usr/X11R6/lib/modules/liblayer.so
+./usr/X11R6/lib/modules/liblayer.so.0
+./usr/X11R6/lib/modules/liblayer.so.0.0
+./usr/X11R6/lib/modules/liblayer_pic.a
 ./usr/X11R6/lib/modules/libmfb.so
 ./usr/X11R6/lib/modules/libmfb.so.0
 ./usr/X11R6/lib/modules/libmfb.so.0.0
@@ -305,7 +308,10 @@
 ./usr/X11R6/lib/modules/libscanpci.so.0
 ./usr/X11R6/lib/modules/libscanpci.so.0.0
 ./usr/X11R6/lib/modules/libscanpci_pic.a
-./usr/X11R6/lib/modules/libshadow.a
+./usr/X11R6/lib/modules/libshadow.so
+./usr/X11R6/lib/modules/libshadow.so.0
+./usr/X11R6/lib/modules/libshadow.so.0.0
+./usr/X11R6/lib/modules/libshadow_pic.a
 ./usr/X11R6/lib/modules/libshadowfb.so
 ./usr/X11R6/lib/modules/libshadowfb.so.0
 ./usr/X11R6/lib/modules/libshadowfb.so.0.0
