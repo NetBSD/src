@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24 2001/10/05 21:53:56 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.25 2001/10/22 15:19:55 mrg Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -108,10 +108,10 @@ endif
 ifdef notyet
 include <dev/ic/am7930reg.h>
 include <dev/ic/am7930var.h>
-endif
 
-include <sparc64/dev/fdreg.h>
-include <sparc64/dev/fdvar.h>
+include <dev/sun/fdreg.h>
+include <dev/sun/fdvar.h>
+endif
 
 # general constants
 define	BSD		BSD
@@ -239,6 +239,7 @@ define	M_NEXT		offsetof(struct mbuf, m_next)
 define	M_DATA		offsetof(struct mbuf, m_data)
 define	M_LEN		offsetof(struct mbuf, m_len)
 
+ifdef notyet
 # floppy trap handler fields
 define	FDC_REG_MSR	offsetof(struct fdcio, fdcio_reg_msr)
 define	FDC_REG_FIFO	offsetof(struct fdcio, fdcio_reg_fifo)
@@ -249,7 +250,6 @@ define	FDC_DATA	offsetof(struct fdcio, fdcio_data)
 define	FDC_TC		offsetof(struct fdcio, fdcio_tc)
 define	FDC_EVCNT	offsetof(struct fdcio, fdcio_intrcnt.ev_count)
 
-ifdef notyet
 # db_regs structure so we can save all registers
 define	DBR_TRAPS	offsetof(struct db_regs, dbr_traps)
 define	DBR_Y		offsetof(struct db_regs, dbr_y)
