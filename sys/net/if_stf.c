@@ -1,5 +1,5 @@
-/*	$NetBSD: if_stf.c,v 1.14 2001/04/29 03:56:06 itojun Exp $	*/
-/*	$KAME: if_stf.c,v 1.58 2001/04/29 03:29:37 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.15 2001/05/10 01:37:42 itojun Exp $	*/
+/*	$KAME: if_stf.c,v 1.60 2001/05/03 14:51:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -459,6 +459,8 @@ stf_output(ifp, m, dst, rt)
 	ip->ip_len = m->m_pkthdr.len;	/*host order*/
 	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &ip->ip_tos, &tos);
+	else
+		ip_ecn_ingress(ECN_NOCARE, &ip->ip_tos, &tos);
 
 	dst4 = (struct sockaddr_in *)&sc->sc_ro.ro_dst;
 	if (dst4->sin_family != AF_INET ||
@@ -654,6 +656,8 @@ in_stf_input(m, va_alist)
 	itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 	if ((ifp->if_flags & IFF_LINK1) != 0)
 		ip_ecn_egress(ECN_ALLOWED, &otos, &itos);
+	else
+		ip_ecn_egress(ECN_NOCARE, &otos, &itos);
 	ip6->ip6_flow &= ~htonl(0xff << 20);
 	ip6->ip6_flow |= htonl((u_int32_t)itos << 20);
 
