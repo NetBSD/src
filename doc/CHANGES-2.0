@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.232 2004/05/29 14:25:23 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.233 2004/05/29 21:27:06 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3234,4 +3234,34 @@ sys/dev/pci/esovar.h				1.5
 	PreAmp register, including a new MONO_IN mixer stage bypass mixer
 	control; inspired by (and fixing) PR kern/18342 from Stephen Ma.
 	[kleink, ticket #400]
+
+sys/netipsec/key.c				1.17
+
+	Thanks to Andrew Brown for the heads-up that fast_ipsec still had
+	key_prefered_oldsa, defaulted to 1 (on): preferring old SAs, based on
+	the ill-concieved Jenkins I-D, is broken by design.  For now, just
+	turn it off, as the simplest way to fix this in the 2.0 branch.
+	[jonathan, ticket #401]
+
+sys/netipsec/key.c				1.18
+
+	Fix bugs in SPD refcounts due to PCBpolicy cache, by backporting the
+	KAME sys/netkey/key.c rev 1.119 ke_sp_unlink()/key_sp_dead() logic.
+	[jonathan, ticket #402]
+
+sys/arch/acorn32/stand/boot32/boot32.c		1.19
+sys/arch/acorn32/stand/boot32/version		1.9
+
+	Adjust the reserved heap space based on memory size. This avoids
+	running out of heap on machines with large amounts of memory.
+	Tested on 33MB RISC OS 4 and 128MB RISC OS 5 machines. Updated
+	version to 3.40.
+	[abs, ticket #404]
+
+sys/dev/pcmcia/if_ne_pcmcia.c			1.113
+
+	My incarnation of the RPTI 400 card tells 0:0:0:0:0:0 when using the
+	ASIC to read the Ethernet address. However, as other OS's drivers
+	suggest, something which looks right is at offset 0x110.
+	[is, ticket #413]
 
