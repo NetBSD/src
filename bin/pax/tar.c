@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.11 1998/08/10 22:35:02 tv Exp $	*/
+/*	$NetBSD: tar.c,v 1.12 1998/10/15 00:07:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.11 1998/08/10 22:35:02 tv Exp $");
+__RCSID("$NetBSD: tar.c,v 1.12 1998/10/15 00:07:34 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -819,7 +819,7 @@ ustar_rd(arcn, buf)
 {
 	HD_USTAR *hd;
 	char *dest;
-	int cnt = 0;
+	int cnt;
 	dev_t devmajor;
 	dev_t devminor;
 
@@ -840,13 +840,13 @@ ustar_rd(arcn, buf)
 	dest = arcn->name;
 	if (*(hd->prefix) != '\0') {
 		cnt = l_strncpy(arcn->name, hd->prefix, sizeof(hd->prefix));
-		dest = arcn->name + arcn->nlen;
+		dest += cnt;
 		*dest++ = '/';
-		cnt++;
 	}
-	arcn->nlen = l_strncpy(dest, hd->name, sizeof(hd->name));
-	arcn->nlen += cnt;
-	arcn->name[arcn->nlen] = '\0';
+	cnt = l_strncpy(dest, hd->name, sizeof(hd->name));
+	dest += cnt;
+	*dest = '\0';
+	arcn->nlen = dest - arcn->name;
 
 	/*
 	 * follow the spec to the letter. we should only have mode bits, strip
