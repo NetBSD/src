@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.3 2003/03/09 18:33:30 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.4 2003/04/29 22:16:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.3 2003/03/09 18:33:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.4 2003/04/29 22:16:38 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.3 2003/03/09 18:33:30 manu 
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+#include <sys/kthread.h>
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_map.h>
+#include <uvm/uvm.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -57,12 +62,17 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.3 2003/03/09 18:33:30 manu 
 #include <compat/darwin/darwin_iohidsystem.h>
 #include <compat/darwin/darwin_iokit.h>
 
+static struct uvm_object *darwin_iohidsystem_shmem = NULL;
+static void darwin_iohidsystem_shmeminit(vaddr_t);
+static void darwin_iohidsystem_thread(void *);
+
 struct mach_iokit_devclass darwin_iohidsystem_devclass = {
 	"<dict ID=\"0\"><key>IOProviderClass</key>"
 	    "<string ID=\"1\">IOHIDSystem</string></dict>",
 	NULL,
 	NULL,
 	darwin_iohidsystem_connect_method_scalari_scalaro,
+	darwin_iohidsystem_connect_map_memory,
 	"IOHIDSystem",
 };
 
@@ -87,4 +97,115 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 
 	*msglen = sizeof(*rep) - ((4096 + rep->rep_outcount) * sizeof(int));
 	return 0;
+}
+
+int
+darwin_iohidsystem_connect_map_memory(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_map_memory_request_t *req = args->smsg;
+	mach_io_connect_map_memory_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct proc *p = args->l->l_proc;
+	struct proc *newpp;
+	int error;
+	size_t memsize;
+	vaddr_t pvaddr;
+	vaddr_t kvaddr;
+
+#ifdef DEBUG_DARWIN
+	printf("darwin_iohidsystem_connect_map_memory()\n");
+#endif
+	memsize = round_page(sizeof(struct darwin_iohidsystem_shmem));
+
+	/* If it has not been used yet, initialize it */
+	if (darwin_iohidsystem_shmem == NULL) {
+		darwin_iohidsystem_shmem = uao_create(memsize, 0);
+
+		error = uvm_map(kernel_map, &kvaddr, memsize, 
+		    darwin_iohidsystem_shmem, 0, PAGE_SIZE,
+		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, 
+		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+		if (error != 0) {
+			uao_detach(darwin_iohidsystem_shmem);
+			darwin_iohidsystem_shmem = NULL;
+			return error;
+		}
+
+		error = uvm_map_pageable(kernel_map, kvaddr, 
+		    kvaddr + memsize, FALSE, 0);
+		if (error != 0) {
+			uao_detach(darwin_iohidsystem_shmem);
+			darwin_iohidsystem_shmem = NULL;
+			return error;
+		}
+
+		darwin_iohidsystem_shmeminit(kvaddr);
+
+		kthread_create1(darwin_iohidsystem_thread, 
+		    (void *)kvaddr, &newpp, "iohidsystem");
+	}
+
+	uao_reference(darwin_iohidsystem_shmem);
+	pvaddr = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, memsize);
+
+	if ((error = uvm_map(&p->p_vmspace->vm_map, &pvaddr, 
+	    memsize, darwin_iohidsystem_shmem, 0, PAGE_SIZE, 
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) != 0)
+		return mach_msg_error(args, error);
+
+#ifdef DEBUG_DARWIN
+	printf("pvaddr = 0x%08lx\n", (long)pvaddr);
+#endif
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_retval = 0;
+	rep->rep_addr = pvaddr;
+	rep->rep_len = sizeof(struct darwin_iohidsystem_shmem);
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+
+	return 0;
+}
+
+static void
+darwin_iohidsystem_thread(shmem)
+	void *shmem;
+{
+#ifdef DEBUG_DARWIN
+	printf("darwin_iohidsystem_thread: start\n");
+#endif
+	/* 
+	 * This will receive wscons events and modify the IOHIDSystem
+	 * shared page. But for now it just sleep forever.
+	 */
+	(void)tsleep(shmem, PZERO | PCATCH, "iohidsystem", 0);
+#ifdef DEBUG_DARWIN
+	printf("darwin_iohidsystem_thread: exit\n");
+#endif
+	return;
+};
+
+static void
+darwin_iohidsystem_shmeminit(kvaddr)
+	vaddr_t kvaddr;
+{
+	struct darwin_iohidsystem_shmem *shmem;
+	struct darwin_iohidsystem_evglobals *evglobals;
+
+	shmem = (struct darwin_iohidsystem_shmem *)kvaddr;
+	shmem->dis_global_offset = 
+	    (size_t)&shmem->dis_evglobals - (size_t)&shmem->dis_global_offset;
+	shmem->dis_private_offset = 
+	    shmem->dis_global_offset + sizeof(*evglobals);
+
+	evglobals = &shmem->dis_evglobals;
+	evglobals->die_struct_size = sizeof(*evglobals);
+
+	return;
 }

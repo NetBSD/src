@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.3 2003/03/09 18:33:29 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.4 2003/04/29 22:16:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.3 2003/03/09 18:33:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.4 2003/04/29 22:16:38 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,6 +84,7 @@ struct mach_iokit_devclass darwin_ioframebuffer_devclass = {
 	    "</dict>",
 	darwin_ioframebuffer_registry_entry_get_property,
 	darwin_ioframebuffer_connect_method_scalari_scalaro,
+	NULL,
 	"IOFramebuffer",
 };
 
