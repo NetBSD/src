@@ -147,7 +147,6 @@ Boston, MA 02111-1307, USA.  */
      %{!shared:			\
        %{!p:			\
 	 %{!pg: -lgcc}}}	\
-     %{shared: -lgcc_pic}	\
      %{p: -lgcc_p}		\
      %{pg: -lgcc_p}}"
 #else
