@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.s,v 1.1 1998/03/22 07:26:32 thorpej Exp $ */
+/* $NetBSD: atomic.s,v 1.2 1998/09/22 05:56:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(4, "$NetBSD: atomic.s,v 1.1 1998/03/22 07:26:32 thorpej Exp $")
+__KERNEL_RCSID(4, "$NetBSD: atomic.s,v 1.2 1998/09/22 05:56:52 thorpej Exp $")
 
 /*
  * Misc. `atomic' operations.
@@ -98,3 +98,34 @@ Laacq_loop:
 Laacq_retry:
 	br	Laacq_loop
 	END(alpha_atomic_setbits_q)
+
+/*
+ * alpha_atomic_testset_q:
+ *
+ *	Atomically test and set a single bit.
+ *
+ * Inputs:
+ *
+ *	a0	Address of quadword in which to perform the t&s.
+ *	a1	Mask of bit (just one!) to test and set.
+ *
+ * Outputs:
+ *
+ *	v0	0 if bit already set, non-0 if bit set successfully.
+ */
+	.text
+LEAF(alpha_atomic_testset_q,2)
+Laatq_loop:
+	ldq_l	t0, 0(a0)
+	and	t0, a1, t3
+	bne	t3, Laatq_already	/* Already set, return(0) */
+	or	t0, a1, v0
+	stq_c	v0, 0(a0)
+	beq	v0, Laatq_retry
+	RET				/* v0 != 0 */
+Laatq_already:
+	mov	zero, v0
+	RET
+Laatq_retry:
+	br	Laatq_loop
+	END(alpha_atomic_testset_q)
