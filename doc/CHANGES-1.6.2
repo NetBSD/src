@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.54 2003/06/19 11:27:02 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.55 2003/06/19 11:41:59 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -685,3 +685,18 @@ sys/dev/pci/pcidevs_data.h			regenerate
 
 	Add new Apple devices.
 	[hamajima, ticket #1323]
+
+sys/arch/macppc/conf/GENERIC			1.140
+sys/arch/macppc/dev/akbd.c			1.26-1.27
+sys/arch/macppc/dev/akbdvar.h			1.6-1.7
+sys/arch/macppc/include/keyboard.h		1.4
+
+	akbd's now have a raw mode, and implement the WSKBDIO_SETMODE ioctl.
+	Adapted from OpenBSD.
+
+	Remove the key repeating feature.
+	It is asking for trouble and is useless for the X server.
+	We can add it back later if need be.
+
+	add (commented out) option WSDISPLAY_COMPAT_RAWKBD
+	[aymeric, ticket #1324]
