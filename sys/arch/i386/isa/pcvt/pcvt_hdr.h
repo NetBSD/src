@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.19 1995/08/30 00:29:34 fvdl Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.20 1995/09/03 01:20:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -1306,7 +1306,6 @@ unsigned scrnsv_timeout		= 0;		/* initially off */
 #if !PCVT_USL_VT_COMPAT
 u_char pcvt_xmode		= 0;		/* display is grafx */
 #endif /* PCVT_USL_VT_COMPAT */
-u_char pcvt_kbd_raw		= 0;		/* keyboard sends scans */
 #endif /* XSERVER */
 
 #if PCVT_BACKUP_FONTS
@@ -1445,7 +1444,6 @@ extern u_char		sgr_tab_imono[];
 #ifdef XSERVER
 extern unsigned		scrnsv_timeout;
 extern u_char		pcvt_xmode;
-extern u_char		pcvt_kbd_raw;
 #endif /* XSERVER */
 
 #if PCVT_BACKUP_FONTS
@@ -1581,6 +1579,7 @@ void	vt_clreol ( struct video_state *svsp );
 void	vt_clreos ( struct video_state *svsp );
 void	vt_clrtab ( struct video_state *svsp );
 int	vt_col ( struct video_state *svsp, int cols );
+void	vt_coldinit ( void );
 void	vt_coldmalloc ( void );
 void	vt_cub ( struct video_state *svsp );
 void	vt_cud ( struct video_state *svsp );
