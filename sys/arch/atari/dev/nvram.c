@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.9 2002/10/02 05:04:26 thorpej Exp $	*/
+/*	$NetBSD: nvram.c,v 1.10 2003/07/15 01:19:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -33,6 +33,9 @@
 /*
  * Nvram driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.10 2003/07/15 01:19:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

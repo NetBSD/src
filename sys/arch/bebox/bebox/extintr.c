@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.18 2003/06/16 20:00:59 thorpej Exp $	*/
+/*	$NetBSD: extintr.c,v 1.19 2003/07/15 01:26:29 lukem Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -40,6 +40,10 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/12/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.19 2003/07/15 01:26:29 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>

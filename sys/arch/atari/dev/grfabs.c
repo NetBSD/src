@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.11 2002/03/04 15:35:57 wiz Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.12 2003/07/15 01:19:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -33,6 +33,10 @@
 /*
  *  atari abstract graphics driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.12 2003/07/15 01:19:49 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/queue.h>

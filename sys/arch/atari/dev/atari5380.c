@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.35 2003/05/03 18:10:45 wiz Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.36 2003/07/15 01:19:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.36 2003/07/15 01:19:47 lukem Exp $");
 
 #include "opt_atariscsi.h"
 

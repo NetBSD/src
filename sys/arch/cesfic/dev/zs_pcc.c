@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.3 2002/10/02 05:06:54 thorpej Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.4 2003/07/15 01:29:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -25,6 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.4 2003/07/15 01:29:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.22 2002/10/23 09:10:52 jdolecek Exp $ */
+/*	$NetBSD: lpt.c,v 1.23 2003/07/15 01:19:51 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -54,6 +54,9 @@
  * ON-LINE 386BSD USER MANUAL BEFORE USE. A BOOK DISCUSSING THE INTERNALS 
  * OF 386BSD ENTITLED "386BSD FROM THE INSIDE OUT" WILL BE AVAILABLE LATE 1992.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.23 2003/07/15 01:19:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

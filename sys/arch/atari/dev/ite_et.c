@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.16 2003/01/01 00:48:34 thorpej Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.17 2003/07/15 01:19:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -29,6 +29,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.17 2003/07/15 01:19:50 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.24 2003/02/04 21:32:03 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.25 2003/07/15 01:19:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,6 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.25 2003/07/15 01:19:51 lukem Exp $");
 
 #include "mouse.h"
 #include "ite.h"
