@@ -66,6 +66,7 @@
 #	speaker	pc speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
 #	audio	audio device
+#	tun*	network tunnel driver
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -295,6 +296,14 @@ bpf*)
 	rm -f bpf$unit
 	mknod bpf$unit c 23 $unit
 	chown root.wheel bpf$unit
+	;;
+
+tun*)
+	unit=`expr $i : 'tun\(.*\)'`
+	rm -f tun$unit
+	mknod tun$unit c 40 $unit
+	chmod 600 tun$unit
+	chown root.wheel tun$unit
 	;;
 
 speaker)					# (XXX - installed)
