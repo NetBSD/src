@@ -1,0 +1,128 @@
+/*	$NetBSD: menus.mbr,v 1.1 2003/05/16 19:15:00 dsl Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* Menu definitions for sysinst. i386 version, machine dependent. */
+
+menu fullpart, title  MSG_Select_your_choice;
+	option MSG_Use_only_part_of_the_disk, exit, action  {usefull = 0;};
+	option MSG_Use_the_entire_disk,       exit, action  {usefull = 1;};
+
+
+menu editparttable, title MSG_Choose_your_partition, exit;
+	display action  { msg_display (MSG_editparttable);
+			  disp_cur_part(&mbr.mbr_parts[0], activepart, -1);
+			};
+	option MSG_Edit_partition_0,  sub menu editpart,
+		action  { editpart = 0; };
+	option MSG_Edit_partition_1,  sub menu editpart,
+		action  { editpart = 1; };
+	option MSG_Edit_partition_2,  sub menu editpart,
+		action  { editpart = 2; };
+	option MSG_Edit_partition_3,  sub menu editpart,
+		action  { editpart = 3; };
+	option MSG_Reselect_size_specification,
+		action  { reask_sizemult(bcylsize); }; 
+
+menu editpart, title MSG_Select_to_change;
+	display action { msg_display (MSG_editpart, editpart);
+			   disp_cur_part(&mbr.mbr_parts[0], editpart, -1);
+			   msg_display_add(MSG_newline);
+			};
+	option MSG_Kind, sub menu chooseid;
+	option MSG_Start_and_size, action { edit_ptn_bounds(); };
+	option MSG_Set_active, action { activepart = editpart; };
+	option MSG_Partition_OK, exit;
+
+menu chooseid, title MSG_Partition_Kind;
+	option MSG_NetBSD,	exit,	action
+	{
+		part[editpart].mbrp_typ = MBR_PTYPE_NETBSD;
+	};
+	option MSG_DOS_LT_32_Meg,	exit,	action
+	{
+		part[editpart].mbrp_typ = MBR_PTYPE_FAT16S;
+	};
+	option MSG_DOS_GT_32_Meg,	exit,	action
+	{
+		part[editpart].mbrp_typ = MBR_PTYPE_FAT16B;
+	};
+	option MSG_unused,	exit,	action
+	{
+		part[editpart].mbrp_typ = 0;
+	};
+	option MSG_dont_change,	exit;
+
+.if BOOTSEL
+menu configbootsel, y=16, title MSG_Change_a_bootmenu_item, exit;
+        display action  { disp_bootsel(); };
+        option MSG_Edit_menu_entry_0,
+		action { edit_bootsel_entry(0); };
+        option MSG_Edit_menu_entry_1,
+		action { edit_bootsel_entry(1); };
+        option MSG_Edit_menu_entry_2,
+		action { edit_bootsel_entry(2); };
+        option MSG_Edit_menu_entry_3,
+		action { edit_bootsel_entry(3); };
+	option MSG_Set_timeout_value,
+		action { edit_bootsel_timeout(); };
+	option MSG_Set_default_option, sub menu defaultbootsel;
+
+menu defaultbootsel, title MSG_Pick_a_default_partition_or_disk_to_boot;
+	option MSG_First_active_partition, exit,
+		action { mbs->mbrb_defkey = SCAN_ENTER; };
+	option MSG_Partition_0, exit,
+		action { edit_bootsel_default_ptn(0); };
+	option MSG_Partition_1, exit,
+		action { edit_bootsel_default_ptn(1); };
+	option MSG_Partition_2, exit,
+		action { edit_bootsel_default_ptn(2); };
+	option MSG_Partition_3, exit,
+		action { edit_bootsel_default_ptn(3); };
+	option MSG_Harddisk_0, exit,
+		action { edit_bootsel_default_disk(0); };
+	option MSG_Harddisk_1, exit,
+		action { edit_bootsel_default_disk(1); };
+	option MSG_Harddisk_2, exit,
+		action { edit_bootsel_default_disk(2); };
+	option MSG_Harddisk_3, exit,
+		action { edit_bootsel_default_disk(3); };
+	option MSG_Harddisk_4, exit,
+		action { edit_bootsel_default_disk(4); };
+	option MSG_Harddisk_5, exit,
+		action { edit_bootsel_default_disk(5); };
+.endif

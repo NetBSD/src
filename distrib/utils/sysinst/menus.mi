@@ -1,0 +1,79 @@
+/*	$NetBSD: menus.mi,v 1.1 2003/05/16 19:15:00 dsl Exp $	*/
+
+/*-
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by David Laight.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Menu system definitions -- machine and language independent
+ *
+ *  This file must be first in the sed command line.
+ *
+ */
+
+{
+#include <stdio.h>
+#include <time.h>
+#include <curses.h>
+#include "defs.h"
+#include "md.h"
+#include "msg_defs.h"
+#include "menu_defs.h"
+
+#define USER_MENU_INIT sysinst_menu_init()
+#define LAST_MSG ((msg)8192)
+static struct menudesc menu_def[];
+
+static int
+sysinst_menu_init(void)
+{
+	int opt;
+	struct menudesc *m;
+
+	for (m = &menu_def[0]; m < &menu_def[DYN_MENU_START]; m++) {
+		if (m->title < LAST_MSG)
+			m->title = msg_string(m->title);
+		for (opt = 0; opt < m->numopts; opt++)
+			if (m->opts[opt].opt_name < LAST_MSG)
+				m->opts[opt].opt_name = msg_string(m->opts[opt].opt_name);
+	}
+	return 0;
+}
+}
+
+default y=12, no exit, scrollable;
+
+allow dynamic menus;
+
