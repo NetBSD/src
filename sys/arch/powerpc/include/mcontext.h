@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.3 2003/01/20 00:53:56 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.4 2003/01/20 05:26:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,49 +91,6 @@ typedef	__greg_t	__gregset_t[_NGREG];
 #define	_REG_CTR	36		/* Count Register */
 #define	_REG_XER	37		/* Integet Exception Reigster */
 #define	_REG_MQ		38		/* MQ Register (POWER only) */
-#if 0
-struct __gregs {
-	__greg_t	__r_r0;		/* GR0-31 */
-	__greg_t	__r_r1;
-	__greg_t	__r_r2;
-	__greg_t	__r_r3;
-	__greg_t	__r_r4;
-	__greg_t	__r_r5;
-	__greg_t	__r_r6;
-	__greg_t	__r_r7;
-	__greg_t	__r_r8;
-	__greg_t	__r_r9;
-	__greg_t	__r_r10;
-	__greg_t	__r_r11;
-	__greg_t	__r_r12;
-	__greg_t	__r_r13;
-	__greg_t	__r_r14;
-	__greg_t	__r_r15;
-	__greg_t	__r_r16;
-	__greg_t	__r_r17;
-	__greg_t	__r_r18;
-	__greg_t	__r_r19;
-	__greg_t	__r_r20;
-	__greg_t	__r_r21;
-	__greg_t	__r_r22;
-	__greg_t	__r_r23;
-	__greg_t	__r_r24;
-	__greg_t	__r_r25;
-	__greg_t	__r_r26;
-	__greg_t	__r_r27;
-	__greg_t	__r_r28;
-	__greg_t	__r_r29;
-	__greg_t	__r_r30;
-	__greg_t	__r_r31;
-	__greg_t	__r_cr;		/* Condition Register */
-	__greg_t	__r_lr;		/* Link Register */
-	__greg_t	__r_pc;		/* PC (copy of SRR0) */
-	__greg_t	__r_msr;	/* MSR (copy of SRR1) */
-	__greg_t	__r_ctr;	/* Count Register */
-	__greg_t	__r_xer;	/* Integer Exception Register */
-	__greg_t	__r_mq;		/* MQ Register (POWER only) */
-};
-#endif
 
 typedef struct {
 	double		__fpu_regs[32];	/* FP0-31 */

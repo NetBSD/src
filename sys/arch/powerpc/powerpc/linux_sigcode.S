@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.3 2003/01/19 00:00:11 matt Exp $ */
+/*	$NetBSD: linux_sigcode.S,v 1.4 2003/01/20 05:26:47 matt Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,7 +43,7 @@
 /*
  * This is copied from sys/compat/linux/arch/powerpc/linux_machdep.h
  */
-#define LINUX__SIGNAL_FRAMESIZE 64
+#define LINUX_SIGNAL_FRAMESIZE 64
 
 #define	SIGCODE_NAME		linux_sigcode
 #define	ESIGCODE_NAME		linux_esigcode
