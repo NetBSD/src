@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.291 2000/12/22 05:21:40 itojun Exp $
+#	$NetBSD: mi,v 1.292 2001/01/03 13:36:08 lukem Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1663,6 +1663,7 @@
 ./usr/share/man/cat2/waitpid.0	comp-syscall-catman
 ./usr/share/man/cat2/write.0	comp-syscall-catman
 ./usr/share/man/cat2/writev.0	comp-syscall-catman
+./usr/share/man/cat3/_DIAGASSERT.0		comp-c-catman
 ./usr/share/man/cat3/BN_CTX_new.0		comp-c-catman
 ./usr/share/man/cat3/BN_CTX_start.0		comp-c-catman
 ./usr/share/man/cat3/BN_add.0		comp-c-catman
@@ -3466,6 +3467,7 @@
 ./usr/share/man/man2/waitpid.2		comp-syscall-man
 ./usr/share/man/man2/write.2		comp-syscall-man
 ./usr/share/man/man2/writev.2		comp-syscall-man
+./usr/share/man/man3/_DIAGASSERT.3		comp-c-man
 ./usr/share/man/man3/BN_CTX_new.3		comp-c-man
 ./usr/share/man/man3/BN_CTX_start.3		comp-c-man
 ./usr/share/man/man3/BN_add.3		comp-c-man
