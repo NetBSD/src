@@ -1,37 +1,31 @@
-#	$NetBSD: Makefile.inc,v 1.3 2002/03/05 21:23:30 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2002/04/12 14:52:57 lukem Exp $
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
 .include <bsd.own.mk>
-.include <bsd.subdir.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-IMAGE?=		boot.fs
-KERNDIR?=	cd ${.CURDIR}/../kernel-ramdisk && ${PRINTOBJDIR}
-KERN?=		${KERNDIR}/netbsd.INSTALL.gz
+# Required variables:
+#	IMAGE
+#	KERNEL
 
 MDEC?=		${DESTDIR}/usr/mdec
 MKBOOTIMAGE?=	${MDEC}/mkbootimage
 BOOTLOADER?=	${MDEC}/boot_com0
-MDSETIMAGE?=	mdsetimage
 
-realall: ${IMAGE}
+${IMAGE}: ${KERNEL}
+	${MKBOOTIMAGE} ${BOOTLOADER} ${.TARGET} ${KERNEL}	# XXXDISTRIB
 
-${IMAGE}: ${KERN}
-	${MKBOOTIMAGE} ${BOOTLOADER} ${.TARGET} ${KERN}
+${IMAGE}.gz: ${IMAGE}
+	gzip -9c ${IMAGE} > ${.TARGET}
 
-.ifndef RELEASEDIR
-release:
-	@echo set RELEASEDIR first!
-	@false
-.else
-release:
+KFILES=	${IMAGE} ${IMAGE}.gz
+
+CLEANFILES+=	${KFILES}
+
+
+realall: ${KFILES}
+
+release: check_RELEASEDIR .WAIT ${KFILES}
 	-mkdir -p ${RELEASEDIR}/installation/floppy
-	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
-	gzip -9c ${IMAGE} > ${RELEASEDIR}/installation/floppy/${IMAGE}.gz
-.endif
+	${RELINSTALL} ${KFILES} ${RELEASEDIR}/installation/floppy
 
-clean cleandir distclean:
-	rm -f *.core ${IMAGE} ${CLEANFILES}
-
-.include <bsd.obj.mk>
+.include <bsd.prog.mk>
