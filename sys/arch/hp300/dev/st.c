@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.9 1994/10/26 07:25:12 cgd Exp $	*/
+/*	$NetBSD: st.c,v 1.10 1995/08/04 08:12:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -860,6 +860,27 @@ stfinish(unit, sc, bp)
 		stustart(unit);
 	else
 		sttab[unit].b_active = 0;
+}
+
+int
+stread(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
+{
+
+	return (physio(ststrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+stwrite(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
+{
+
+	/* XXX: check for hardware write-protect? */
+	return (physio(ststrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 /*ARGSUSED*/

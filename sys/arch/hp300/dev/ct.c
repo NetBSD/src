@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.10 1995/02/23 22:23:40 mycroft Exp $	*/
+/*	$NetBSD: ct.c,v 1.11 1995/08/04 08:13:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -774,6 +774,27 @@ ctdone(unit, bp)
 		return;
 	}
 	ctustart(unit);
+}
+
+int
+ctread(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
+{
+
+	return (physio(ctstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+ctwrite(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
+{
+
+	/* XXX: check for hardware write-protect? */
+	return (physio(ctstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 /*ARGSUSED*/
