@@ -236,6 +236,48 @@ Wipes the window clear from the current \*y to the end of the line.
 Get the red, green and blue values of color
 .Vn color .
 .Ds
+.Fn copywin "const WINDOW *src" "WINDOW *dst" "int sminrow" "int smincol" "int dminrow" "int dmincol" "int dmaxrow" "int dmaxcol" "int overlay"
+.De
+Copies the contents of the window
+.Vn src
+starting at (
+.Vn sminrow ,
+.Vn smincol )
+to the destination window
+.Vn dst
+starting at (
+.Vn dminrow ,
+.Vn dmincol )
+and ending at either the end of the source window or (
+.Vn dmaxrow ,
+.Vn dmaxcol )
+whichever is the lesser.  The parameter
+.Vn overlay
+determines the nature of the copy.  If 
+.Vn overlay
+is TRUE then only the non-space characters from
+.Vn src
+are copied to
+.Vn dst .
+If 
+.Vn overlay
+is FALSE then all characters are copied from
+.Vn src
+to
+.Vn dst.
+.Ds
+.Fn curs_set "int visibility"
+.De
+Sets the visibility of the screen cursor.  The parameter
+.Vn visibility
+can be one of three values, 0 means make the cursor invisible, 1 means
+set the cursor to normal visibility and 2 sets the cursor to high
+visibility.  In all cases the old mode of the cursor is returned if
+the call was successful and
+.b ERR
+is returned if the terminal cannot support the requested visibility
+mode.
+.Ds
 .Fn crmode "" \(dg
 .De
 Identical to
@@ -284,6 +326,25 @@ even though this does invalidate it.
 Therefore,
 subwindows should be deleted before their
 outer windows are.
+.Ds
+.Fn derwin "WINDOW *orig" "int nlines" "int ncols" "int by" "int bx"
+.De
+Performs a function very similar to that of
+.Fn subwin .
+The difference being that with
+.Fn derwin
+the origin of the child window given by (
+.Vn by ,
+.Vn bx )
+is relative to the origin of the parent window
+.Vn orig
+instead of being absolute screen coordinates as they are in
+.Fn subwin .
+.Ds
+.Fn dupwin "WINDOW *win"
+.De
+Creates an exact copy of the window
+.Vn win .
 .Ds
 .Fn echo "" \(dg
 .De
@@ -561,6 +622,17 @@ If
 This flag
 (initially 0)
 retains its value until changed by the user.
+.Ds
+.Fn longname "" \(dg
+.De
+Returns a string containing the verbose description of the terminal.
+.Ds
+.Fn meta "WINDOW *win" "bool bf"
+.De
+Manipulates the meta mode on terminals that support this capability.
+Note that 
+.Vn win
+is always ignored.
 .Ds
 .Fn move "int y" "int x"
 .De
@@ -1037,6 +1109,18 @@ to be put in underscore mode on the terminal
 (if it has that capability).
 This is equivalent to
 .Fn attron "A_UNDERLINE" .
+.Ds
+.Fn ungetch "int c"
+.De
+Places the contents of
+.Vn c
+converted to a character back into the input queue.  Only one
+character of push back before a subsequent call to
+.Fn getch
+or
+.Fn wgetch
+is guaranteed to function correctly.  The results of attempting more
+than one character of push back is undefined.
 .Ds
 .Fn vwprintw "WINDOW *win" "const char *fmt" "va_list ap"
 .De
