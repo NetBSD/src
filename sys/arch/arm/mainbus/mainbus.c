@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.9 2003/07/15 00:24:47 lukem Exp $ */
+/* $NetBSD: mainbus.c,v 1.10 2004/01/03 14:42:12 chris Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2003/07/15 00:24:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2004/01/03 14:42:12 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ mainbussearch(parent, cf, aux)
 			mb.mb_irq = MAINBUSCF_IRQ_DEFAULT;
 		} else {    
 			mb.mb_iobase = cf->cf_loc[MAINBUSCF_BASE];
-#if defined(arm32) /* XXX */
+#if defined(arm32) && !defined(EB7500ATX)
 			mb.mb_iobase += IO_CONF_BASE;
 #endif
 			mb.mb_iosize = 0;
