@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: am_utils.h,v 1.3 1997/09/22 22:11:07 christos Exp $
+ * $Id: am_utils.h,v 1.4 1997/09/26 17:00:40 christos Exp $
  *
  */
 
@@ -317,7 +317,7 @@ struct mntfs {
   int mf_error;			/* Error code from background mount */
   int mf_refc;			/* Number of references to this node */
   int mf_cid;			/* Callout id */
-  void (*mf_prfree) ();		/* Free private space */
+  void (*mf_prfree) (voidp);	/* Free private space */
   voidp mf_private;		/* Private - per-fs data */
 };
 
@@ -404,11 +404,11 @@ struct _am_utils_mntent_dontuse {
   int		mnt_ro;		/* read-only mount option */
 #endif /* HAVE_FIELD_MNTENT_T_MNT_RO */
 #ifdef HAVE_FIELD_MNTENT_T_MNT_TIME
-# ifdef HAVE_FIELD_MNTENT_T_TIME_STRING
+# ifdef HAVE_FIELD_MNTENT_T_MNT_TIME_STRING
   char		*mnt_time;	/* time filesystem was mounted */
-# else /* not HAVE_FIELD_MNTENT_T_TIME_STRING */
+# else /* not HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
   long		mnt_time;	/* time filesystem was mounted */
-# endif /* not HAVE_FIELD_MNTENT_T_TIME_STRING */
+# endif /* not HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
 #endif /* HAVE_FIELD_MNTENT_T_MNT_TIME */
 };
 
@@ -466,7 +466,7 @@ struct fserver {
   u_long fs_version;		/* NFS version of server (2, 3, etc.)*/
   char *fs_proto;		/* NFS protocol of server (tcp, udp, etc.) */
   voidp fs_private;		/* Private data */
-  void (*fs_prfree) ();		/* Free private data */
+  void (*fs_prfree) (voidp);	/* Free private data */
 };
 
 /*
@@ -597,7 +597,7 @@ extern int root_keyiter(void(*)(char *, voidp), voidp);
 extern int softclock(void);
 extern int switch_option(char *);
 extern int switch_to_logfile(char *);
-extern int timeout(u_int, void(*fn)(), voidp);
+extern int timeout(u_int, void (*fn)(voidp), voidp);
 extern int valid_key(char *);
 extern mnt_map *mapc_find(char *, char *, const char *);
 extern mntfs *dup_mntfs(mntfs *);
@@ -618,7 +618,7 @@ extern void flush_mntfs(void);
 extern void flush_nfs_fhandle_cache(fserver *);
 extern void forcibly_timeout_mp(am_node *);
 extern void free_map(am_node *);
-extern void free_mntfs(mntfs *);
+extern void free_mntfs(voidp);
 extern void free_mntlist(mntlist *);
 extern void free_opts(am_opts *);
 extern void free_srvr(fserver *);
@@ -633,7 +633,7 @@ extern void insert_am(am_node *, am_node *);
 extern void make_root_node(void);
 extern void map_flush_srvr(fserver *);
 extern void mapc_add_kv(mnt_map *, char *, char *);
-extern void mapc_free(mnt_map *);
+extern void mapc_free(voidp);
 extern void mapc_reload(void);
 extern void mapc_showtypes(char *buf);
 extern void mk_fattr(am_node *, nfsftype);
@@ -656,9 +656,9 @@ extern void set_amd_program_number(int program);
 extern void show_opts(int ch, struct opt_tab *);
 extern void show_rcs_info(const char *, char *);
 extern void srvrlog(fserver *, char *);
-extern void timeout_mp(void);
+extern void timeout_mp(voidp);
 extern void umount_exported(void);
-extern void unregister_amq();
+extern void unregister_amq(void);
 extern void untimeout(int);
 extern void wakeup(voidp);
 extern void wakeup_srvr(fserver *);

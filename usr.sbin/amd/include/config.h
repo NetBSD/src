@@ -654,7 +654,7 @@
 /* #undef HAVE_FIELD_MNTENT_T_MNT_TIME */
 
 /* does mntent_t have mnt_time field and is of type "char *" ? */
-/* #undef HAVE_FIELD_MNTENT_T_TIME_STRING */
+/* #undef HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
 
 /* does mntent_t have mnt_ro field? */
 /* #undef HAVE_FIELD_MNTENT_T_MNT_RO */
@@ -662,14 +662,26 @@
 /* does cdfs_args_t have norrip field? */
 /* #undef HAVE_FIELD_CDFS_ARGS_T_NORRIP */
 
+/* does cdfs_args_t have ssector field? */
+/* #undef HAVE_FIELD_CDFS_ARGS_T_SSECTOR */
+
+/* does pcfs_args_t have dsttime field? */
+/* #undef HAVE_FIELD_PCFS_ARGS_T_DSTTIME */
+
 /* does pcfs_args_t have fspec field? */
 #define HAVE_FIELD_PCFS_ARGS_T_FSPEC 1
+
+/* does pcfs_args_t have gid field? */
+#define HAVE_FIELD_PCFS_ARGS_T_GID 1
+
+/* does pcfs_args_t have mask field? */
+#define HAVE_FIELD_PCFS_ARGS_T_MASK 1
 
 /* does pcfs_args_t have secondswest field? */
 /* #undef HAVE_FIELD_PCFS_ARGS_T_SECONDSWEST */
 
-/* does pcfs_args_t have dsttime field? */
-/* #undef HAVE_FIELD_PCFS_ARGS_T_DSTTIME */
+/* does pcfs_args_t have uid field? */
+#define HAVE_FIELD_PCFS_ARGS_T_UID 1
 
 /* does ufs_args_t have flags field? */
 /* #undef HAVE_FIELD_UFS_ARGS_T_FLAGS */
@@ -827,7 +839,7 @@
 #define PACKAGE "am-utils"
 
 /* Define version of package (must be defined by configure.in) */
-#define VERSION "6.0a10"
+#define VERSION "6.0a12"
 
 /* Define name of host machine's cpu (eg. sparc) */
 #define HOST_CPU MACHINE
@@ -1324,6 +1336,9 @@
 /* Define if you have the <hsfs/hsfs.h> header file.  */
 /* #undef HAVE_HSFS_HSFS_H */
 
+/* Define if you have the <isofs/cd9660/cd9660_mount.h> header file.  */
+/* #undef HAVE_ISOFS_CD9660_CD9660_MOUNT_H */
+
 /* Define if you have the <jfs/jfsmount.h> header file.  */
 /* #undef HAVE_JFS_JFSMOUNT_H */
 
@@ -1365,6 +1380,9 @@
 
 /* Define if you have the <mount.h> header file.  */
 /* #undef HAVE_MOUNT_H */
+
+/* Define if you have the <msdosfs/msdosfsmount.h> header file.  */
+/* #undef HAVE_MSDOSFS_MSDOSFSMOUNT_H */
 
 /* Define if you have the <ndbm.h> header file.  */
 #define HAVE_NDBM_H 1

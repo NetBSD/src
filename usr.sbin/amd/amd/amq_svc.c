@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq_svc.c,v 1.3 1997/09/22 22:10:09 christos Exp $
+ * $Id: amq_svc.c,v 1.4 1997/09/26 16:59:49 christos Exp $
  *
  */
 
@@ -47,6 +47,9 @@
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amd.h>
+
+/* typedefs */
+typedef char *(*amqsvcproc_t)(voidp, struct svc_req *);
 
 
 void
@@ -59,69 +62,69 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
     amq_string amqproc_mount_1_arg;
   } argument;
   char *result;
-  bool_t(*xdr_argument) (), (*xdr_result) ();
-  char *(*local) ();
+  xdrproc_t xdr_argument, xdr_result;
+  amqsvcproc_t local;
 
   switch (rqstp->rq_proc) {
 
   case AMQPROC_NULL:
-    xdr_argument = xdr_void;
-    xdr_result = xdr_void;
-    local = (char *(*)()) amqproc_null_1_svc;
+    xdr_argument = (xdrproc_t) xdr_void;
+    xdr_result = (xdrproc_t) xdr_void;
+    local = (amqsvcproc_t) amqproc_null_1_svc;
     break;
 
   case AMQPROC_MNTTREE:
-    xdr_argument = xdr_amq_string;
-    xdr_result = xdr_amq_mount_tree_p;
-    local = (char *(*)()) amqproc_mnttree_1_svc;
+    xdr_argument = (xdrproc_t) xdr_amq_string;
+    xdr_result = (xdrproc_t) xdr_amq_mount_tree_p;
+    local = (amqsvcproc_t) amqproc_mnttree_1_svc;
     break;
 
   case AMQPROC_UMNT:
-    xdr_argument = xdr_amq_string;
-    xdr_result = xdr_void;
-    local = (char *(*)()) amqproc_umnt_1_svc;
+    xdr_argument = (xdrproc_t) xdr_amq_string;
+    xdr_result = (xdrproc_t) xdr_void;
+    local = (amqsvcproc_t) amqproc_umnt_1_svc;
     break;
 
   case AMQPROC_STATS:
-    xdr_argument = xdr_void;
-    xdr_result = xdr_amq_mount_stats;
-    local = (char *(*)()) amqproc_stats_1_svc;
+    xdr_argument = (xdrproc_t) xdr_void;
+    xdr_result = (xdrproc_t) xdr_amq_mount_stats;
+    local = (amqsvcproc_t) amqproc_stats_1_svc;
     break;
 
   case AMQPROC_EXPORT:
-    xdr_argument = xdr_void;
-    xdr_result = xdr_amq_mount_tree_list;
-    local = (char *(*)()) amqproc_export_1_svc;
+    xdr_argument = (xdrproc_t) xdr_void;
+    xdr_result = (xdrproc_t) xdr_amq_mount_tree_list;
+    local = (amqsvcproc_t) amqproc_export_1_svc;
     break;
 
   case AMQPROC_SETOPT:
-    xdr_argument = xdr_amq_setopt;
-    xdr_result = xdr_int;
-    local = (char *(*)()) amqproc_setopt_1_svc;
+    xdr_argument = (xdrproc_t) xdr_amq_setopt;
+    xdr_result = (xdrproc_t) xdr_int;
+    local = (amqsvcproc_t) amqproc_setopt_1_svc;
     break;
 
   case AMQPROC_GETMNTFS:
-    xdr_argument = xdr_void;
-    xdr_result = xdr_amq_mount_info_qelem;
-    local = (char *(*)()) amqproc_getmntfs_1_svc;
+    xdr_argument = (xdrproc_t) xdr_void;
+    xdr_result = (xdrproc_t) xdr_amq_mount_info_qelem;
+    local = (amqsvcproc_t) amqproc_getmntfs_1_svc;
     break;
 
   case AMQPROC_MOUNT:
-    xdr_argument = xdr_amq_string;
-    xdr_result = xdr_int;
-    local = (char *(*)()) amqproc_mount_1_svc;
+    xdr_argument = (xdrproc_t) xdr_amq_string;
+    xdr_result = (xdrproc_t) xdr_int;
+    local = (amqsvcproc_t) amqproc_mount_1_svc;
     break;
 
   case AMQPROC_GETVERS:
-    xdr_argument = xdr_void;
-    xdr_result = xdr_amq_string;
-    local = (char *(*)()) amqproc_getvers_1_svc;
+    xdr_argument = (xdrproc_t) xdr_void;
+    xdr_result = (xdrproc_t) xdr_amq_string;
+    local = (amqsvcproc_t) amqproc_getvers_1_svc;
     break;
 
   case AMQPROC_GETPID:
-    xdr_argument = xdr_void;
-    xdr_result = xdr_int;
-    local = (char *(*)()) amqproc_getpid_1_svc;
+    xdr_argument = (xdrproc_t) xdr_void;
+    xdr_result = (xdrproc_t) xdr_int;
+    local = (amqsvcproc_t) amqproc_getpid_1_svc;
     break;
 
   default:

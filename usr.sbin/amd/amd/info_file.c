@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_file.c,v 1.4 1997/07/24 23:16:33 christos Exp $
+ * $Id: info_file.c,v 1.5 1997/09/26 16:59:52 christos Exp $
  *
  */
 
@@ -53,6 +53,12 @@
 #include <amd.h>
 
 #define	MAX_LINE_LEN	2048
+
+/* forward declarations */
+int file_init(mnt_map *m, char *map, time_t *tp);
+int file_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *));
+int file_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp);
+int file_mtime(mnt_map *m, char *map, time_t *tp);
 
 
 static int
@@ -212,7 +218,7 @@ file_init(mnt_map *m, char *map, time_t *tp)
 
 
 int
-file_reload(mnt_map *m, char *map, void (*fn) ())
+file_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *))
 {
   FILE *mapf = file_open(map, (time_t *) 0);
 

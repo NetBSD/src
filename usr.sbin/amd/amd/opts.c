@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: opts.c,v 1.4 1997/07/24 23:17:11 christos Exp $
+ * $Id: opts.c,v 1.5 1997/09/26 17:00:20 christos Exp $
  *
  */
 
@@ -64,7 +64,7 @@
 /*
  * TYPEDEFS:
  */
-typedef int (*IntFuncPtr) ();
+typedef int (*IntFuncPtr) (char *);
 typedef struct opt_apply opt_apply;
 enum vs_opt { SelEQ, SelNE, VarAss };
 
@@ -1049,7 +1049,7 @@ expand_opts(opt_apply *p, int sel_p)
  * Apply a function to a list of options
  */
 static void
-apply_opts(void (*op) (), opt_apply ppp[], int b)
+apply_opts(void (*op) (opt_apply *, int), opt_apply ppp[], int b)
 {
   opt_apply *pp;
 
