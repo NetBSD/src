@@ -1,7 +1,7 @@
-.\"	$NetBSD: amd.8,v 1.6 2003/04/17 21:05:38 wiz Exp $
+.\"	$NetBSD: amd.8,v 1.7 2004/11/27 01:24:35 christos Exp $
 .\"
 .\"
-.\" Copyright (c) 1997-2003 Erez Zadok
+.\" Copyright (c) 1997-2004 Erez Zadok
 .\" Copyright (c) 1989 Jan-Simon Pendry
 .\" Copyright (c) 1989 Imperial College of Science, Technology & Medicine
 .\" Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
 .\"
 .\"	%W% (Berkeley) %G%
 .\"
-.\" Id: amd.8,v 1.8 2002/12/27 22:43:46 ezk Exp
+.\" Id: amd.8,v 1.13 2004/01/06 03:56:19 ezk Exp
 .\"
 .TH AMD 8 "3 November 1989"
 .SH NAME
@@ -319,14 +319,12 @@ Map entries that are tagged with a tag other than
 will not be processed.
 
 .SH FILES
-.PD 0
 .TP 5
 .B /a
 directory under which filesystems are dynamically mounted
 .TP 5
 .B /etc/amd.conf
 default configuration file
-.PD
 .SH CAVEATS
 Some care may be required when creating a mount map.
 .LP
@@ -358,12 +356,21 @@ the features.
 .BR info (1)
 entry.
 .LP
+``am-utils''
+.BR info (1)
+entry.
+.LP
+.I "Linux NFS and Automounter Administration"
+by Erez Zadok, ISBN 0-7821-2739-8, (Sybex, 2001).
+.LP
+.I http://www.am-utils.org
+.LP
 .I "Amd \- The 4.4 BSD Automounter"
 .SH AUTHORS
 Jan-Simon Pendry <jsp@doc.ic.ac.uk>, Department of Computing, Imperial College, London, UK.
 .P
-Erez Zadok <ezk@cs.columbia.edu>, Department of Computer Science, Columbia
-University, New York, USA.
+Erez Zadok <ezk@cs.sunysb.edu>, Computer Science Department, Stony Brook
+University, Stony Brook, New York, USA.
 .P
 Other authors and contributors to am-utils are listed in the
 .B AUTHORS

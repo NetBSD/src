@@ -1,7 +1,7 @@
-/*	$NetBSD: mk-amd-map.c,v 1.2 2003/07/15 09:01:20 itojun Exp $	*/
+/*	$NetBSD: mk-amd-map.c,v 1.3 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mk-amd-map.c,v 1.10 2002/12/27 22:44:12 ezk Exp
+ * Id: mk-amd-map.c,v 1.12 2004/01/06 03:56:20 ezk Exp
  */
 
 /*
@@ -322,7 +322,7 @@ main(int argc, char *argv[])
     }
 #endif /* not HAVE_DB_SUFFIX */
 
-    db = dbm_open(maptmp, O_RDWR|O_CREAT, 0444);
+    db = dbm_open(maptmp, O_RDWR|O_CREAT|O_EXCL, 0444);
     if (!db) {
       fprintf(stderr, "cannot initialize temporary database: %s", maptmp);
       exit(1);

@@ -1,7 +1,7 @@
-/*	$NetBSD: fsi_analyze.c,v 1.4 2003/07/15 09:01:18 itojun Exp $	*/
+/*	$NetBSD: fsi_analyze.c,v 1.5 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsi_analyze.c,v 1.7 2002/12/27 22:44:06 ezk Exp
+ * Id: fsi_analyze.c,v 1.9 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -131,7 +131,7 @@ compute_hostpath(char *hn)
     }
   } while (d);
 
-  logit("hostpath of '%s' is '%s'", hn, path);
+  fsi_log("hostpath of '%s' is '%s'", hn, path);
 
   strlcpy(p, path, strlen(hn) + 1);
   return p;
@@ -146,7 +146,7 @@ find_volname(char *nn)
   char *q;
 
   do {
-    logit("Searching for volname %s", p);
+    fsi_log("Searching for volname %s", p);
     de = dict_locate(dict_of_volnames, p);
     q = strrchr(p, '/');
     if (q)
@@ -162,7 +162,7 @@ static void
 show_required(ioloc *l, int mask, char *info, char *hostname, char *strings[])
 {
   int i;
-  logit("mask left for %s:%s is %#x", hostname, info, mask);
+  fsi_log("mask left for %s:%s is %#x", hostname, info, mask);
 
   for (i = 0; strings[i]; i++)
     if (ISSET(mask, i))
@@ -219,7 +219,7 @@ analyze_dkmount_tree(qelem *q, fsi_mount *parent, disk_fs *dk)
   int errors = 0;
 
   ITER(mp, fsi_mount, q) {
-    logit("Mount %s:", mp->m_name);
+    fsi_log("Mount %s:", mp->m_name);
     if (parent) {
       char n[MAXPATHLEN];
       snprintf(n, sizeof(n), "%s/%s", parent->m_name, mp->m_name);
@@ -227,7 +227,7 @@ analyze_dkmount_tree(qelem *q, fsi_mount *parent, disk_fs *dk)
 	lerror(mp->m_ioloc, "sub-directory %s of %s starts with '/'", mp->m_name, parent->m_name);
       else if (STREQ(mp->m_name, "default"))
 	lwarning(mp->m_ioloc, "sub-directory of %s is named \"default\"", parent->m_name);
-      logit("Changing name %s to %s", mp->m_name, n);
+      fsi_log("Changing name %s to %s", mp->m_name, n);
       XFREE(mp->m_name);
       mp->m_name = strdup(n);
     }
@@ -288,7 +288,7 @@ analyze_dkmounts(disk_fs *dk, qelem *q)
       compute_automount_point(nbuf, dk->d_host, mp2->m_volname);
       XFREE(mp2->m_name);
       mp2->m_name = strdup(nbuf);
-      logit("%s:%s has default mount on %s", dk->d_host->h_hostname, dk->d_dev, mp2->m_name);
+      fsi_log("%s:%s has default mount on %s", dk->d_host->h_hostname, dk->d_dev, mp2->m_name);
     } else {
       lerror(dk->d_ioloc, "no volname given for %s:%s", dk->d_host->h_hostname, dk->d_dev);
       errors++;
@@ -423,24 +423,24 @@ fixup_required_mount_info(fsmount *fp, dict_ent *de)
 	abort();
       fp->f_ref = mp;
       set_fsmount(fp, FM_FROM, mp->m_dk->d_host->h_hostname);
-      logit("set: %s comes from %s", fp->f_volname, fp->f_from);
+      fsi_log("set: %s comes from %s", fp->f_volname, fp->f_from);
     }
   }
 
   if (!ISSET(fp->f_mask, FM_FSTYPE)) {
     set_fsmount(fp, FM_FSTYPE, strdup("nfs"));
-    logit("set: fstype is %s", fp->f_fstype);
+    fsi_log("set: fstype is %s", fp->f_fstype);
   }
 
   if (!ISSET(fp->f_mask, FM_OPTS)) {
     set_fsmount(fp, FM_OPTS, strdup("rw,nosuid,grpid,defaults"));
-    logit("set: opts are %s", fp->f_opts);
+    fsi_log("set: opts are %s", fp->f_opts);
   }
 
   if (!ISSET(fp->f_mask, FM_LOCALNAME)) {
     if (fp->f_ref) {
       set_fsmount(fp, FM_LOCALNAME, strdup(fp->f_volname));
-      logit("set: localname is %s", fp->f_localname);
+      fsi_log("set: localname is %s", fp->f_localname);
     } else {
       lerror(fp->f_ioloc, "cannot determine localname since volname %s is not uniquely defined", fp->f_volname);
     }
@@ -462,7 +462,7 @@ analyze_drives(host *hp)
 
   ITER(dp, disk_fs, q) {
     int req;
-    logit("Disk %s:", dp->d_dev);
+    fsi_log("Disk %s:", dp->d_dev);
     dp->d_host = hp;
     fixup_required_disk_info(dp);
     req = ~dp->d_mask & DF_REQUIRED;
@@ -499,7 +499,7 @@ analyze_mounts(host *hp)
       do {
 	p = 0;
 	de = find_volname(nn);
-	logit("Mount: %s (trying %s)", fp->f_volname, nn);
+	fsi_log("Mount: %s (trying %s)", fp->f_volname, nn);
 
 	if (de) {
 	  found = 1;
@@ -578,7 +578,7 @@ analyze_hosts(qelem *q)
    * Check all drives
    */
   ITER(hp, host, q) {
-    logit("disks on host %s", hp->h_hostname);
+    fsi_log("disks on host %s", hp->h_hostname);
     show_new("ana-host");
     hp->h_hostpath = compute_hostpath(hp->h_hostname);
 
@@ -593,7 +593,7 @@ analyze_hosts(qelem *q)
    * Check static mounts
    */
   ITER(hp, host, q) {
-    logit("mounts on host %s", hp->h_hostname);
+    fsi_log("mounts on host %s", hp->h_hostname);
     show_new("ana-mount");
     if (hp->h_mount)
       analyze_mounts(hp);
@@ -635,21 +635,21 @@ analyze_automount_tree(qelem *q, char *pref, int lvl)
     snprintf(nname, sizeof(nname), "%s/%s", pref, ap->a_name);
     XFREE(ap->a_name);
     ap->a_name = strdup(nname[1] == '/' ? nname + 1 : nname);
-    logit("automount point %s:", ap->a_name);
+    fsi_log("automount point %s:", ap->a_name);
     show_new("ana-automount");
 
     if (ap->a_mount) {
       analyze_automount_tree(ap->a_mount, ap->a_name, lvl + 1);
     } else if (ap->a_hardwiredfs) {
-      logit("\thardwired from %s to %s", ap->a_volname, ap->a_hardwiredfs);
+      fsi_log("\thardwired from %s to %s", ap->a_volname, ap->a_hardwiredfs);
     } else if (ap->a_volname) {
-      logit("\tautomount from %s", ap->a_volname);
+      fsi_log("\tautomount from %s", ap->a_volname);
       analyze_automount(ap);
     } else if (ap->a_symlink) {
-      logit("\tsymlink to %s", ap->a_symlink);
+      fsi_log("\tsymlink to %s", ap->a_symlink);
     } else {
       ap->a_volname = strdup(ap->a_name);
-      logit("\timplicit automount from %s", ap->a_volname);
+      fsi_log("\timplicit automount from %s", ap->a_volname);
       analyze_automount(ap);
     }
   }

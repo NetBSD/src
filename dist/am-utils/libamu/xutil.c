@@ -1,7 +1,7 @@
-/*	$NetBSD: xutil.c,v 1.10 2003/07/15 09:01:20 itojun Exp $	*/
+/*	$NetBSD: xutil.c,v 1.11 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: xutil.c,v 1.29 2002/12/28 22:28:57 ib42 Exp
+ * Id: xutil.c,v 1.32 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -74,8 +74,10 @@ time_t clock_valid = 0;
 time_t xclock_valid = 0;
 
 #ifdef DEBUG_MEM
+# if defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY)
 static int mem_bytes;
 static int orig_mem_bytes;
+# endif /* not defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY) */
 #endif /* DEBUG_MEM */
 
 /* forward definitions */
@@ -242,13 +244,14 @@ void
 dxfree(char *file, int line, voidp ptr)
 {
   if (amuDebug(D_MEM))
-    plog(XLOG_DEBUG, "Free in %s:%d: block %#x", file, line, ptr);
+    plog(XLOG_DEBUG, "Free in %s:%d: block %p", file, line, ptr);
   /* this is the only place that must NOT use XFREE()!!! */
   free(ptr);
   ptr = NULL;			/* paranoid */
 }
 
 
+# if defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY)
 static void
 checkup_mem(void)
 {
@@ -271,6 +274,7 @@ checkup_mem(void)
   }
   malloc_verify();
 }
+# endif /* not defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY) */
 #endif /* DEBUG_MEM */
 
 
@@ -428,7 +432,9 @@ real_plog(int lvl, const char *fmt, va_list vargs)
     return;
 
 #ifdef DEBUG_MEM
+# if defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY)
   checkup_mem();
+# endif /* not defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY) */
 #endif /* DEBUG_MEM */
 
 #ifdef HAVE_VSNPRINTF
@@ -815,7 +821,11 @@ switch_to_logfile(char *logfile, int old_umask)
     (void) fclose(logfp);
   logfp = new_logfp;
 
-  plog(XLOG_INFO, "switched to logfile \"%s\"", logfile);
+  if (logfile)
+    plog(XLOG_INFO, "switched to logfile \"%s\"", logfile);
+  else
+    plog(XLOG_INFO, "no logfile defined; using stderr");
+
   return 0;
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: pawd.c,v 1.2 2003/07/15 09:01:18 itojun Exp $	*/
+/*	$NetBSD: pawd.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: pawd.c,v 1.10 2002/12/27 22:43:54 ezk Exp
+ * Id: pawd.c,v 1.14 2004/08/03 21:28:41 ezk Exp
  *
  */
 
@@ -68,9 +68,14 @@ static int
 find_mt(amq_mount_tree *mt, char *dir)
 {
   while (mt) {
-    if (STREQ(mt->mt_type, "link") ||
+    if (
+	STREQ(mt->mt_type, "host") ||
+	STREQ(mt->mt_type, "link") ||
+	STREQ(mt->mt_type, "linkx") ||
 	STREQ(mt->mt_type, "nfs") ||
-	STREQ(mt->mt_type, "nfsl")) {
+	STREQ(mt->mt_type, "nfsl") ||
+	STREQ(mt->mt_type, "nfsx")
+	) {
       int len = strlen(mt->mt_mountpoint);
       if (NSTREQ(mt->mt_mountpoint, dir, len) &&
 	  ((dir[len] == '\0') || (dir[len] == '/'))) {
@@ -92,7 +97,7 @@ find_mt(amq_mount_tree *mt, char *dir)
 static int
 find_mlp(amq_mount_tree_list *mlp, char *dir)
 {
-  int i;
+  u_int i;
 
   for (i = 0; i < mlp->amq_mount_tree_list_len; i++) {
     if (find_mt(mlp->amq_mount_tree_list_val[i], dir))

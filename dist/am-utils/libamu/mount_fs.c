@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_fs.c,v 1.10 2003/10/21 02:39:44 fvdl Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.11 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mount_fs.c,v 1.31 2003/01/23 21:24:29 ib42 Exp
+ * Id: mount_fs.c,v 1.42 2004/07/23 18:29:22 ezk Exp
  *
  */
 
@@ -122,29 +122,14 @@ int
 compute_mount_flags(mntent_t *mntp)
 {
   struct opt_tab *opt;
-  int flags;
+  int flags = 0;
 
-  /* start: this must come first */
 #ifdef MNT2_GEN_OPT_NEWTYPE
-  flags = MNT2_GEN_OPT_NEWTYPE;
-#else /* not MNT2_GEN_OPT_NEWTYPE */
-  /* Not all machines have MNT2_GEN_OPT_NEWTYPE (HP-UX 9.01) */
-  flags = 0;
-#endif /* not MNT2_GEN_OPT_NEWTYPE */
-
-#if 0 /* redundant? */
-#if defined(MNT2_GEN_OPT_OVERLAY) && defined(MNTTAB_OPT_OVERLAY)
-  /*
-   * Overlay this amd mount (presumably on another amd which died
-   * before and left the machine hung).  This will allow a new amd or
-   * hlfsd to be remounted on top of another one.
-   */
-  if (amu_hasmntopt(mntp, MNTTAB_OPT_OVERLAY)) {
-    flags |= MNT2_GEN_OPT_OVERLAY;
-    plog(XLOG_INFO, "using an overlay mount");
-  }
-#endif /* defined(MNT2_GEN_OVERLAY) && defined(MNTOPT_OVERLAY) */
-#endif
+  flags |= MNT2_GEN_OPT_NEWTYPE;
+#endif /* MNT2_GEN_OPT_NEWTYPE */
+#ifdef MNT2_GEN_OPT_AUTOMOUNTED
+  flags |= MNT2_GEN_OPT_AUTOMOUNTED;
+#endif /* not MNT2_GEN_OPT_AUTOMOUNTED */
 
   /*
    * Crack basic mount options
@@ -175,33 +160,26 @@ compute_automounter_mount_flags(mntent_t *mntp)
 
 
 int
-mount_fs(mntent_t *mnt, int flags, caddr_t mnt_data, int retry, MTYPE_TYPE type, u_long nfs_version, const char *nfs_proto, const char *mnttabname)
-{
-  return mount_fs2(mnt, mnt->mnt_dir, flags, mnt_data, retry, type, nfs_version, nfs_proto, mnttabname);
-}
-
-
-int
-mount_fs2(mntent_t *mnt, char *real_mntdir, int flags, caddr_t mnt_data, int retry, MTYPE_TYPE type, u_long nfs_version, const char *nfs_proto, const char *mnttabname)
+mount_fs(mntent_t *mnt, int flags, caddr_t mnt_data, int retry, MTYPE_TYPE type, u_long nfs_version, const char *nfs_proto, const char *mnttabname, int on_autofs)
 {
   int error = 0;
 #ifdef MOUNT_TABLE_ON_FILE
-# ifdef MNTTAB_OPT_DEV
-  struct stat stb;
-# endif /* MNTTAB_OPT_DEV */
   char *zopts = NULL, *xopts = NULL;
-  size_t l;
-# if defined(MNTTAB_OPT_DEV) || (defined(HAVE_FS_NFS3) && defined(MNTTAB_OPT_VERS)) || defined(MNTTAB_OPT_PROTO)
-  char optsbuf[48];
-# endif /* defined(MNTTAB_OPT_DEV) || (defined(HAVE_FS_NFS3) && defined(MNTTAB_OPT_VERS)) || defined(MNTTAB_OPT_PROTO) */
 #endif /* MOUNT_TABLE_ON_FILE */
-  char *old_mnt_dir;
+  char *mnt_dir = 0;
 
-  old_mnt_dir = mnt->mnt_dir;
-  mnt->mnt_dir = real_mntdir;
+#ifdef NEED_AUTOFS_SPACE_HACK
+  char *old_mnt_dir = 0;
+  /* perform space hack */
+  if (on_autofs) {
+    old_mnt_dir = mnt->mnt_dir;
+    mnt->mnt_dir = mnt_dir = autofs_strdup_space_hack(old_mnt_dir);
+  } else
+#endif /* NEED_AUTOFS_SPACE_HACK */
+    mnt_dir = strdup(mnt->mnt_dir);
 
   dlog("'%s' fstype " MTYPE_PRINTF_TYPE " (%s) flags %#x (%s)",
-       mnt->mnt_dir, type, mnt->mnt_type, flags, mnt->mnt_opts);
+       mnt_dir, type, mnt->mnt_type, flags, mnt->mnt_opts);
 
 again:
   clock_valid = 0;
@@ -209,7 +187,7 @@ again:
   error = MOUNT_TRAP(type, mnt, flags, mnt_data);
 
   if (error < 0) {
-    plog(XLOG_ERROR, "%s: mount: %m", mnt->mnt_dir);
+    plog(XLOG_ERROR, "'%s': mount: %m", mnt_dir);
     /*
      * The following code handles conditions which shouldn't
      * occur.  They are possible either because amd screws up
@@ -217,33 +195,18 @@ again:
      * messed with the mount point.  Both have been known to
      * happen. -- stolcke 2/22/95
      */
-    if (errno == ENOENT) {
-      /*
-       * Occasionally the mount point vanishes, probably
-       * due to some race condition.  Just recreate it
-       * as necessary.
-       */
-      errno = mkdirs(mnt->mnt_dir, 0555);
-      if (errno != 0 && errno != EEXIST)
-	plog(XLOG_ERROR, "'%s': mkdirs: %m", mnt->mnt_dir);
-      else {
-	plog(XLOG_WARNING, "extra mkdirs required for '%s'",
-	     mnt->mnt_dir);
-	error = MOUNT_TRAP(type, mnt, flags, mnt_data);
-      }
-    } else if (errno == EBUSY) {
+    if (errno == EBUSY) {
       /*
        * Also, sometimes unmount isn't called, e.g., because
        * our mountlist is garbled.  This leaves old mount
        * points around which need to be removed before we
        * can mount something new in their place.
        */
-      errno = umount_fs2(old_mnt_dir, mnt->mnt_dir, mnttabname);
+      errno = umount_fs(mnt_dir, mnttabname, on_autofs);
       if (errno != 0)
-	plog(XLOG_ERROR, "'%s': umount: %m", mnt->mnt_dir);
+	plog(XLOG_ERROR, "'%s': umount: %m", mnt_dir);
       else {
-	plog(XLOG_WARNING, "extra umount required for '%s'",
-	     mnt->mnt_dir);
+	plog(XLOG_WARNING, "extra umount required for '%s'", mnt_dir);
 	error = MOUNT_TRAP(type, mnt, flags, mnt_data);
       }
     }
@@ -253,8 +216,16 @@ again:
     sleep(1);
     goto again;
   }
+
+#ifdef NEED_AUTOFS_SPACE_HACK
+  /* Undo space hack */
+  if (on_autofs)
+    mnt->mnt_dir = old_mnt_dir;
+#endif /* NEED_AUTOFS_SPACE_HACK */
+
   if (error < 0) {
-    return errno;
+    error = errno;
+    goto out;
   }
 
 #ifdef MOUNT_TABLE_ON_FILE
@@ -271,19 +242,21 @@ again:
   strlcpy(zopts, xopts, l);
 
 # ifdef MNTTAB_OPT_DEV
-  /* add the extra dev= field to the mount table */
-  if (lstat(mnt->mnt_dir, &stb) == 0) {
-    if (sizeof(stb.st_dev) == 2) /* e.g. SunOS 4.1 */
-      snprintf(optsbuf, sizeof(optsbuf), "%s=%04lx",
-	      MNTTAB_OPT_DEV, (u_long) stb.st_dev & 0xffff);
-    else			/* e.g. System Vr4 */
-      snprintf(optsbuf, sizeof(optsbuf), "%s=%08lx",
-	      MNTTAB_OPT_DEV, (u_long) stb.st_dev);
-    append_opts(zopts, optsbuf, l);
+  {
+    /* add the extra dev= field to the mount table */
+    struct stat stb;
+    if (lstat(mnt_dir, &stb) == 0) {
+      char optsbuf[48];
+      if (sizeof(stb.st_dev) == 2) /* e.g. SunOS 4.1 */
+	snprintf(optsbuf, sizeof(optsbuf), "%s=%04lx",
+		MNTTAB_OPT_DEV, (u_long) stb.st_dev & 0xffff);
+      else			/* e.g. System Vr4 */
+	snprintf(optsbuf, sizeof(optsbuf), "%s=%08lx",
+		MNTTAB_OPT_DEV, (u_long) stb.st_dev);
+      append_opts(zopts, optsbuf);
+    }
   }
 # endif /* MNTTAB_OPT_DEV */
-
-  mnt->mnt_dir = old_mnt_dir;
 
 # if defined(HAVE_FS_NFS3) && defined(MNTTAB_OPT_VERS)
   /*
@@ -292,8 +265,9 @@ again:
    */
    if (nfs_version == NFS_VERSION3 &&
        hasmntval(mnt, MNTTAB_OPT_VERS) != NFS_VERSION3) {
-     snprintf(optsbuf, sizeof(optsbuf), "%s=%d", MNTTAB_OPT_VERS, NFS_VERSION3);
-     append_opts(zopts, optsbuf, l);
+     char optsbuf[48];
+     snprintf(optsbuf, sozeof(optsbuf), "%s=%d", MNTTAB_OPT_VERS, NFS_VERSION3);
+     append_opts(zopts, optsbuf);
    }
 # endif /* defined(HAVE_FS_NFS3) && defined(MNTTAB_OPT_VERS) */
 
@@ -303,8 +277,9 @@ again:
    * unless already specified by user.
    */
   if (nfs_proto && !amu_hasmntopt(mnt, MNTTAB_OPT_PROTO)) {
+    char optsbuf[48];
     snprintf(optsbuf, sizeof(optsbuf), "%s=%s", MNTTAB_OPT_PROTO, nfs_proto);
-    append_opts(zopts, optsbuf, l);
+    append_opts(zopts, optsbuf);
   }
 # endif /* MNTTAB_OPT_PROTO */
 
@@ -345,7 +320,9 @@ again:
 # endif /* MNTTAB_OPT_DEV */
 #endif /* MOUNT_TABLE_ON_FILE */
 
-  return 0;
+ out:
+  free(mnt_dir);
+  return error;
 }
 
 
@@ -367,9 +344,6 @@ void
 compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig *nfsncp, struct sockaddr_in *ip_addr, u_long nfs_version, char *nfs_proto, am_nfs_handle_t *fhp, char *host_name, char *fs_name)
 {
   int acval = 0;
-#ifdef HAVE_FS_NFS3
-  static am_nfs_fh3 fh3;	/* static, b/c gcc on aix corrupts stack */
-#endif /* HAVE_FS_NFS3 */
 
   /* initialize just in case */
   memset((voidp) nap, 0, sizeof(nfs_args_t));
@@ -379,12 +353,6 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
   /************************************************************************/
 #ifdef HAVE_FS_NFS3
   if (nfs_version == NFS_VERSION3) {
-    memset((voidp) &fh3, 0, sizeof(am_nfs_fh3));
-    fh3.fh3_length = fhp->v3.mountres3_u.mountinfo.fhandle.fhandle3_len;
-    memmove(fh3.fh3_u.data,
-	    fhp->v3.mountres3_u.mountinfo.fhandle.fhandle3_val,
-	    fh3.fh3_length);
-
 # if defined(HAVE_NFS_ARGS_T_FHSIZE) || defined(HAVE_NFS_ARGS_T_FH_LEN)
     /*
      * Some systems (Irix/bsdi3) have a separate field in nfs_args for
@@ -392,9 +360,9 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
      * the file handle set in nfs_args be plain bytes, and not
      * include the length field.
      */
-    NFS_FH_DREF(nap->NFS_FH_FIELD, &(fh3.fh3_u.data));
+    NFS_FH_DREF(nap->NFS_FH_FIELD, &fhp->v3.am_fh3_data);
 # else /* not defined(HAVE_NFS_ARGS_T_FHSIZE) || defined(HAVE_NFS_ARGS_T_FH_LEN) */
-    NFS_FH_DREF(nap->NFS_FH_FIELD, &fh3);
+    NFS_FH_DREF(nap->NFS_FH_FIELD, &fhp->v3);
 # endif /* not defined(HAVE_NFS_ARGS_T_FHSIZE) || defined(HAVE_NFS_ARGS_T_FH_LEN) */
 # ifdef MNT2_NFS_OPT_NFSV3
     nap->flags |= MNT2_NFS_OPT_NFSV3;
@@ -404,12 +372,12 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
 # endif /* MNT2_NFS_OPT_VER3 */
   } else
 #endif /* HAVE_FS_NFS3 */
-    NFS_FH_DREF(nap->NFS_FH_FIELD, &(fhp->v2.fhs_fh));
+    NFS_FH_DREF(nap->NFS_FH_FIELD, &fhp->v2);
 
 #ifdef HAVE_NFS_ARGS_T_FHSIZE
 # ifdef HAVE_FS_NFS3
   if (nfs_version == NFS_VERSION3)
-    nap->fhsize = fh3.fh3_length;
+    nap->fhsize = fhp->v3.am_fh3_length;
   else
 # endif /* HAVE_FS_NFS3 */
     nap->fhsize = FHSIZE;
@@ -419,7 +387,7 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
 #ifdef HAVE_NFS_ARGS_T_FH_LEN
 # ifdef HAVE_FS_NFS3
   if (nfs_version == NFS_VERSION3)
-    nap->fh_len = fh3.fh3_length;
+    nap->fh_len = fhp->v3.am_fh3_length;
   else
 # endif /* HAVE_FS_NFS3 */
     nap->fh_len = FHSIZE;
@@ -642,8 +610,10 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
     nap->flags |= MNT2_NFS_OPT_BIODS;
 #endif /* MNT2_NFS_OPT_BIODS */
 
+#ifdef MNT2_NFS_OPT_SOFT
   if (amu_hasmntopt(mntp, MNTTAB_OPT_SOFT) != NULL)
     nap->flags |= MNT2_NFS_OPT_SOFT;
+#endif /* MNT2_NFS_OPT_SOFT */
 
 #ifdef MNT2_NFS_OPT_SPONGY
   if (amu_hasmntopt(mntp, MNTTAB_OPT_SPONGY) != NULL) {
@@ -834,7 +804,7 @@ compute_automounter_nfs_args(nfs_args_t *nap, mntent_t *mntp)
 static char *
 get_hex_string(u_int len, const char *fhdata)
 {
-  int i;
+  u_int i;
   static char buf[128];		/* better not go over it! */
   char str[16];
   short int arr[64];
@@ -844,7 +814,7 @@ get_hex_string(u_int len, const char *fhdata)
   buf[0] = '\0';
   memset(&arr[0], 0, (64 * sizeof(short int)));
   memcpy(&arr[0], &fhdata[0], len);
-  for (i=0; i<len/sizeof(short int); i++) {
+  for (i=0; i<len/sizeof(unsigned short int); i++) {
     snprintf(str, sizeof(str), "%04x", ntohs(arr[i]));
     strlcat(buf, str, sizeof(buf));
   }

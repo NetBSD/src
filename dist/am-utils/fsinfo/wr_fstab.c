@@ -1,7 +1,7 @@
-/*	$NetBSD: wr_fstab.c,v 1.3 2003/03/09 01:38:46 christos Exp $	*/
+/*	$NetBSD: wr_fstab.c,v 1.4 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: wr_fstab.c,v 1.7 2002/12/27 22:44:08 ezk Exp
+ * Id: wr_fstab.c,v 1.9 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -327,7 +327,7 @@ write_fstab(qelem *q)
 	  if (hp->h_disk_fs)
 	    errors += write_dkfstab(ef, hp->h_disk_fs, op->op_fstab);
 	  else
-	    logit("No local disk mounts on %s", hp->h_hostname);
+	    fsi_log("No local disk mounts on %s", hp->h_hostname);
 
 	  if (hp->h_mount)
 	    errors += write_dkrmount(ef, hp->h_mount, hp->h_hostname, op->op_mount);

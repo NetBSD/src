@@ -1,7 +1,7 @@
-/*	$NetBSD: mtab_bsd.c,v 1.2 2004/04/21 01:05:31 christos Exp $	*/
+/*	$NetBSD: mtab_bsd.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mtab_bsd.c,v 1.8 2002/12/27 22:43:57 ezk Exp
+ * Id: mtab_bsd.c,v 1.9 2004/01/06 03:56:20 ezk Exp
  *
  */
 
