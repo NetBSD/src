@@ -314,6 +314,8 @@ typedef struct _dhcp_failover_state {
 	failover_message_t *toack_queue_tail;
 	int pending_acks;		/* Number of messages in the toack
 					   queue. */
+	int pool_count;			/* Number of pools referencing this
+					   failover state object. */
 } dhcp_failover_state_t;
 
 #define DHCP_FAILOVER_VERSION		1

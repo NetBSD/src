@@ -3,7 +3,7 @@
    Tables of information only used by server... */
 
 /*
- * Copyright (c) 1995-2001 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: stables.c,v 1.1.1.1 2001/08/03 11:35:43 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: stables.c,v 1.1.1.2 2002/06/11 12:24:45 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -490,7 +490,7 @@ struct option server_options [256] = {
 	{ "ping-check", "f",			&server_universe, 42 },
 	{ "update-static-leases", "f",		&server_universe, 43 },
 	{ "log-facility", "Nsyslog-facilities.", &server_universe, 44 },
-	{ "#45", "X",			&server_universe, 45 },
+	{ "do-forward-updates", "f",		&server_universe, 45 },
 	{ "#46", "X",			&server_universe, 46 },
 	{ "#47", "X",			&server_universe, 47 },
 	{ "#48", "X",			&server_universe, 48 },
@@ -806,7 +806,7 @@ void initialize_server_option_spaces()
 	agent_universe.store_tag = putUChar;
 	agent_universe.store_length = putUChar;
 	universes [agent_universe.index] = &agent_universe;
-	agent_universe.hash = new_hash (0, 0, 1, MDL);
+	option_new_hash (&agent_universe.hash, 1, MDL);
 	if (!agent_universe.hash)
 		log_fatal ("Can't allocate agent option hash table.");
 	for (i = 0; i < 256; i++) {
@@ -833,7 +833,7 @@ void initialize_server_option_spaces()
 	server_universe.store_length = putUChar;
 	server_universe.index = universe_count++;
 	universes [server_universe.index] = &server_universe;
-	server_universe.hash = new_hash (0, 0, 1, MDL);
+	option_new_hash (&server_universe.hash, 1, MDL);
 	if (!server_universe.hash)
 		log_fatal ("Can't allocate server option hash table.");
 	for (i = 0; i < 256; i++) {
