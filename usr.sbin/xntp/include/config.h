@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.5 1998/03/06 18:17:16 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.6 1998/05/02 15:28:33 christos Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -254,7 +254,7 @@
 /* #undef UDP_BACKWARDS_SETOWN */
 
 /* must we have a CTTY for fsetown? */
-/* #undef USE_FSETOWNCTTY */
+#define USE_FSETOWNCTTY 1
 
 /* can we use SIGIO for tcp and udp IO? */
 #define HAVE_SIGNALED_IO 1
