@@ -1,4 +1,4 @@
-/*	$NetBSD: player.C,v 1.1.1.1 2003/12/26 17:57:03 christos Exp $	 */
+/*	$NetBSD: player.C,v 1.2 2003/12/26 18:03:34 christos Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include "defs.h"
-RCSID("$Id: player.C,v 1.1.1.1 2003/12/26 17:57:03 christos Exp $")
+RCSID("$NetBSD: player.C,v 1.2 2003/12/26 18:03:34 christos Exp $")
 
 #include "board.h"
 #include "player.h"
