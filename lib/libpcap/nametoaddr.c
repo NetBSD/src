@@ -1,4 +1,4 @@
-/*	$NetBSD: nametoaddr.c,v 1.7 1997/10/03 15:53:09 christos Exp $	*/
+/*	$NetBSD: nametoaddr.c,v 1.7.2.1 1997/11/10 22:33:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -30,7 +30,7 @@
 static const char rcsid[] =
     "@(#) Header: nametoaddr.c,v 1.47 97/06/13 13:16:19 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: nametoaddr.c,v 1.7 1997/10/03 15:53:09 christos Exp $");
+__RCSID("$NetBSD: nametoaddr.c,v 1.7.2.1 1997/11/10 22:33:40 thorpej Exp $");
 #endif
 #endif
 
@@ -341,7 +341,7 @@ pcap_ether_hostton(const char *name)
 }
 #else
 
-#ifndef sgi
+#if !defined(sgi) && !defined(__NetBSD__)
 extern int ether_hostton(char *, struct ether_addr *);
 #endif
 
@@ -379,5 +379,16 @@ __pcap_nametodnaddr(const char *name)
 #else
 	bpf_error("decnet name support not included, '%s' cannot be translated\n",
 		name);
+	/* NOTREACHED */
+#ifdef lint
+	/*
+	 * Arguably, lint should assume that functions which don't return
+	 * (i.e. that contain no return statements and whose ends are
+	 * unreachable) actually return a value, so callers won't get
+	 * warnings for using that value (since they won't actually
+	 * be doing so).  However, most lints don't seem to do that...
+	 */
+	return (0);
+#endif
 #endif
 }
