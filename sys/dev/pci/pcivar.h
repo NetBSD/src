@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.61 2004/05/08 23:41:40 christos Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.62 2004/07/29 16:51:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -203,8 +203,6 @@ int pci_get_capability __P((pci_chipset_tag_t, pcitag_t, int,
 /*
  * Helper functions for autoconfiguration.
  */
-int	pci_enumerate_bus_generic(struct pci_softc *,
-	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
 int	pci_probe_device(struct pci_softc *, pcitag_t tag,
 	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
 void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *, size_t));

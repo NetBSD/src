@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.85 2004/05/17 16:57:49 kochi Exp $	*/
+/*	$NetBSD: pci.c,v 1.86 2004/07/29 16:51:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.85 2004/05/17 16:57:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.86 2004/07/29 16:51:01 drochner Exp $");
 
 #include "opt_pci.h"
 
@@ -66,6 +66,13 @@ CFATTACH_DECL(pci, sizeof(struct pci_softc),
 
 int	pciprint __P((void *, const char *));
 int	pcisubmatch __P((struct device *, struct cfdata *, void *));
+
+#ifdef PCI_MACHDEP_ENUMERATE_BUS
+#define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS
+#else
+int pci_enumerate_bus(struct pci_softc *,
+    int (*)(struct pci_attach_args *), struct pci_attach_args *);
+#endif
 
 /*
  * Important note about PCI-ISA bridges:
@@ -414,12 +421,13 @@ pci_find_device(struct pci_attach_args *pa,
 	return (0);
 }
 
+#ifndef PCI_MACHDEP_ENUMERATE_BUS
 /*
  * Generic PCI bus enumeration routine.  Used unless machine-dependent
  * code needs to provide something else.
  */
 int
-pci_enumerate_bus_generic(struct pci_softc *sc,
+pci_enumerate_bus(struct pci_softc *sc,
     int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
@@ -477,6 +485,7 @@ pci_enumerate_bus_generic(struct pci_softc *sc,
 	}
 	return (0);
 }
+#endif /* PCI_MACHDEP_ENUMERATE_BUS */
 
 /*
  * Power Management Capability (Rev 2.2)
