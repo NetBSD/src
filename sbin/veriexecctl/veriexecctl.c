@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.1 2002/11/23 10:52:49 blymn Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.2 2002/12/06 02:26:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,6 +31,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 
 /* globals */
