@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.71 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.72 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -240,3 +240,4 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		mode= entry.  [lukem 20030105].
 	sparc,sparc64: The nell (STP4020) pcmcia bridge driver is now
 		finished.  [martin 20030107]
+	sparc: MULTIPROCESSOR support works.  [pk & mrg 20030111]
