@@ -4,7 +4,7 @@
 .\"	appropriate changes to the script.
 .\"
 .Ss2 "NetBSD Mirror Site List"
-The following sites mirror NetBSD as of August 13, 1999.
+The following sites mirror NetBSD as of August 29, 1999.
 .Pp
 If you wish to become a distribution site for NetBSD, contact
 .Mt mirrors@netbsd.org .
@@ -113,7 +113,7 @@ If you wish to become a distribution site for NetBSD, contact
 .
 .Country "South Africa"
 .mirror "ftp.za.netbsd.org" \
-"UUNET (SA), Cape Town, South Africa" \
+"UUNET (SA), Cape Town" \
 "ftp://ftp.za.netbsd.org/pub/NetBSD/"
 .
 .Country "Sweden"
@@ -140,7 +140,7 @@ If you wish to become a distribution site for NetBSD, contact
 "ftp://ftp.netbsd.org/pub/NetBSD/"
 .mirror "ftp.cs.umn.edu" \
 "University of Minnesota" \
-"ftp://ftp.cs.umn.edu/pub/NetBSD"
+"ftp://ftp.cs.umn.edu/pub/NetBSD/"
 .mirror "ftp.eecs.umich.edu" \
 "University of Michigan, Ann Arbor" \
 "ftp://ftp.eecs.umich.edu/pub/NetBSD/"
@@ -236,6 +236,11 @@ If you wish to become a distribution site for NetBSD, contact
 .mirror "www.at.netbsd.org" \
 "University of Technology, Vienna" \
 "http://www.at.netbsd.org/"
+.
+.Country "Czech Republic"
+.mirror "www.cz.netbsd.org" \
+"instinct.org, Prague" \
+"http://www.cz.netbsd.org/"
 .
 .Country "Finland"
 .mirror "www.fi.netbsd.org" \
