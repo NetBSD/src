@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.76 2002/09/28 20:11:08 dbj Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.77 2002/10/04 18:26:31 elric Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -283,6 +283,7 @@ struct olddisklabel {
 #define	DTYPE_RAID		14		/* RAIDframe */
 #define	DTYPE_LD		15		/* logical disk */
 #define	DTYPE_JFS2		16		/* IBM JFS2 */
+#define DTYPE_CGD		17		/* cryptographic pseudo-disk */
 
 #ifdef DKTYPENAMES
 static const char *const dktypenames[] = {
@@ -303,6 +304,7 @@ static const char *const dktypenames[] = {
 	"RAID",
 	"ld",
 	"jfs",
+	"cgd",
 	NULL
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
