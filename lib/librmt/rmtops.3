@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmtops.3,v 1.4 2001/10/16 05:52:39 gmcgarry Exp $
+.\"	$NetBSD: rmtops.3,v 1.5 2001/10/16 09:26:20 wiz Exp $
 .\"
 .Dd October 16, 2001
 .Os
@@ -100,10 +100,10 @@ which has the following defines in it:
 .Ed
 .Pp
 This allows the programmer to use
-.Xr open 3 ,
-.Xr close 3 ,
-.Xr read 3 ,
-.Xr write 3 ,
+.Xr open 2 ,
+.Xr close 2 ,
+.Xr read 2 ,
+.Xr write 2 ,
 etc. in their normal fashion, with the
 .Nm
 routines taking care of differentiating between local and remote
@@ -141,16 +141,6 @@ on an open remote file (e.g.,
 .Xr rsh 1 ,
 .Xr rmt 8 ,
 and the appropriate system calls in section 2.
-.Sh BUGS
-There is no way to use remote tape drives with
-.Xr stdio 3 ,
-short of recompiling it entirely to use these routines.
-.Pp
-The
-.Xr rmt 8
-protocol is not very capable.  In particular, it relies on TCP/IP
-sockets for error free transmission, and does no data validation of
-its own.
 .\" .Sh CONFIGURATION OPTIONS
 .\" The library may be compiled to allow the use of
 .\" .Bx 4.2 -style
@@ -182,3 +172,13 @@ the appropriate changes for
 Dan Kegel contributed the code to use the
 .Xr rexec 3
 library routine.
+.Sh BUGS
+There is no way to use remote tape drives with
+.Xr stdio 3 ,
+short of recompiling it entirely to use these routines.
+.Pp
+The
+.Xr rmt 8
+protocol is not very capable.  In particular, it relies on TCP/IP
+sockets for error free transmission, and does no data validation of
+its own.
