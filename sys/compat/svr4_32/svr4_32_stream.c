@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stream.c,v 1.1 2001/02/06 16:37:59 eeh Exp $	 */
+/*	$NetBSD: svr4_32_stream.c,v 1.2 2001/02/11 01:10:24 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1518,7 +1518,8 @@ svr4_32_sys_putmsg(p, v, retval)
 		return EBADF;
 
 	if (SCARG(uap, ctl) != NULL) {
-		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)
+		if ((error = copyin((caddr_t)(u_long)SCARG(uap, ctl), 
+				    &ctl, sizeof(ctl))) != 0)
 			return error;
 	}
 	else
@@ -1695,7 +1696,8 @@ svr4_32_sys_getmsg(p, v, retval)
 		return EBADF;
 
 	if (SCARG(uap, ctl) != NULL) {
-		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)
+		if ((error = copyin((caddr_t)(u_long)SCARG(uap, ctl), 
+				    &ctl, sizeof(ctl))) != 0)
 			return error;
 	}
 	else {
@@ -1981,7 +1983,8 @@ svr4_32_sys_getmsg(p, v, retval)
 					     ctl.len)) != 0)
 				return error;
 
-		if ((error = copyout(&ctl, SCARG(uap, ctl), sizeof(ctl))) != 0)
+		if ((error = copyout(&ctl, (caddr_t)(u_long)SCARG(uap, ctl), 
+				     sizeof(ctl))) != 0)
 			return error;
 	}
 
