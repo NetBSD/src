@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.11 2000/01/07 03:47:15 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.12 2000/01/08 22:57:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,6 @@
 #include "rf_dag.h"
 #include "rf_desc.h"
 #include "rf_aselect.h"
-#include "rf_threadid.h"
 #include "rf_general.h"
 #include "rf_states.h"
 #include "rf_dagutils.h"
@@ -90,6 +89,7 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
 	int     suspended = RF_FALSE;
 	int     current_state_index = desc->state;
 	RF_AccessState_t current_state = desc->states[current_state_index];
+	int     unit = desc->raidPtr->raidid;
 
 	do {
 
@@ -135,12 +135,10 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
 		 * renter this function or loop back up, desc should be valid. */
 
 		if (rf_printStatesDebug) {
-			int     tid;
-			rf_get_threadid(tid);
-
-			printf("[%d] State: %-24s StateIndex: %3i desc: 0x%ld %s\n",
-			    tid, StateName(current_state), current_state_index, (long) desc,
-			    suspended ? "callback scheduled" : "looping");
+			printf("raid%d: State: %-24s StateIndex: %3i desc: 0x%ld %s\n",
+			       unit, StateName(current_state), 
+			       current_state_index, (long) desc,
+			       suspended ? "callback scheduled" : "looping");
 		}
 	} while (!suspended && current_state != rf_LastState);
 

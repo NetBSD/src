@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.21 2000/01/07 03:25:34 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.22 2000/01/08 22:57:31 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -91,7 +91,6 @@
 #include "rf_diskqueue.h"
 #include "rf_parityscan.h"
 #include "rf_alloclist.h"
-#include "rf_threadid.h"
 #include "rf_dagutils.h"
 #include "rf_utils.h"
 #include "rf_etimer.h"
@@ -643,7 +642,7 @@ rf_AllocRaidAccDesc(
 	desc->numPending = 0;
 	desc->cleanupList = NULL;
 	rf_MakeAllocList(desc->cleanupList);
-	rf_get_threadid(desc->tid);
+	desc->tid = 0; /* XXX Make this go away */
 	return (desc);
 }
 
@@ -689,7 +688,6 @@ async_flag should be RF_TRUE or RF_FALSE
 bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 */
 {
-	int     tid;
 	RF_RaidAccessDesc_t *desc;
 	caddr_t lbufPtr = bufPtr;
 	struct buf *bp = (struct buf *) bp_in;
@@ -702,13 +700,12 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		return (EINVAL);
 	}
 
-	rf_get_threadid(tid);
 	if (rf_accessDebug) {
 
 		printf("logBytes is: %d %d %d\n", raidPtr->raidid,
 		    raidPtr->logBytesPerSector,
 		    (int) rf_RaidAddressToByte(raidPtr, numBlocks));
-		printf("[%d] %s raidAddr %d (stripeid %d-%d) numBlocks %d (%d bytes) buf 0x%lx\n", tid,
+		printf("raid%d: %s raidAddr %d (stripeid %d-%d) numBlocks %d (%d bytes) buf 0x%lx\n", raidPtr->raidid,
 		    (type == RF_IO_TYPE_READ) ? "READ" : "WRITE", (int) raidAddress,
 		    (int) rf_RaidAddressToStripeID(&raidPtr->Layout, raidAddress),
 		    (int) rf_RaidAddressToStripeID(&raidPtr->Layout, raidAddress + numBlocks - 1),
@@ -772,10 +769,7 @@ rf_FailDisk(
     int fcol,
     int initRecon)
 {
-	int     tid;
-
-	rf_get_threadid(tid);
-	printf("[%d] Failing disk r%d c%d\n", tid, frow, fcol);
+	printf("raid%d: Failing disk r%d c%d\n", raidPtr->raidid, frow, fcol);
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	raidPtr->numFailures++;
 	raidPtr->Disks[frow][fcol].status = rf_ds_failed;
@@ -793,11 +787,9 @@ rf_SignalQuiescenceLock(raidPtr, reconDesc)
 	RF_Raid_t *raidPtr;
 	RF_RaidReconDesc_t *reconDesc;
 {
-	int     tid;
-
 	if (rf_quiesceDebug) {
-		rf_get_threadid(tid);
-		printf("[%d] Signalling quiescence lock\n", tid);
+		printf("raid%d: Signalling quiescence lock\n", 
+		       raidPtr->raidid);
 	}
 	raidPtr->access_suspend_release = 1;
 
