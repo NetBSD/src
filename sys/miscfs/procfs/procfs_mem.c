@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.25 2000/06/28 02:44:07 mrg Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.26 2000/09/26 23:28:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -89,10 +89,8 @@ procfs_domem(curp, p, pfs, uio)
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
 		return(EFAULT);
-	PHOLD(p);
 	p->p_vmspace->vm_refcnt++;  /* XXX */
 	error = uvm_io(&p->p_vmspace->vm_map, uio);
-	PRELE(p);
 	uvmspace_free(p->p_vmspace);
 
 #ifdef PMAP_NEED_PROCWR
