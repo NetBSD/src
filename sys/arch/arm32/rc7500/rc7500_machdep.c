@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.1 1997/10/14 10:51:39 mark Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.2 1997/10/17 00:14:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -61,7 +61,6 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 
 #ifdef SYSVMSG
