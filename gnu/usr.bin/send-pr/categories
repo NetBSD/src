@@ -10,6 +10,7 @@ port-hp300
 port-i386
 port-m68k
 port-mac68k
+port-mips
 port-mvme68k
 port-pc532
 port-pmax
