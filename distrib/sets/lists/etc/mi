@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.141 2004/04/18 04:02:27 dbj Exp $
+# $NetBSD: mi,v 1.142 2004/06/22 18:24:06 itojun Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -85,6 +85,8 @@
 ./etc/obsolete/text				etc-obsolete		obsolete
 ./etc/passwd					etc-sys-etc
 ./etc/passwd.conf				etc-sys-etc
+./etc/pf.conf					etc-net-etc
+./etc/pf.os					etc-net-etc
 ./etc/phones					etc-uucp-etc
 ./etc/postfix/README				etc-postfix-etc
 ./etc/postfix/main.cf				etc-postfix-etc
@@ -127,8 +129,8 @@
 ./etc/rc.d/fsck					etc-sys-rc
 ./etc/rc.d/fsck.sh				etc-obsolete		obsolete
 ./etc/rc.d/gated				etc-obsolete		obsolete
-./etc/rc.d/ifwatchd				etc-net-rc
 ./etc/rc.d/identd				etc-net-rc
+./etc/rc.d/ifwatchd				etc-net-rc
 ./etc/rc.d/inetd				etc-net-rc
 ./etc/rc.d/ipfilter				etc-ipf-rc
 ./etc/rc.d/ipfs					etc-ipf-rc
@@ -227,10 +229,11 @@
 ./etc/skel/.logout				etc-sys-etc
 ./etc/skel/.profile				etc-sys-etc
 ./etc/skeykeys					etc-sys-etc
+./etc/spamd.conf				etc-net-etc
 ./etc/spwd.db					etc-sys-etc
 ./etc/ssh/ssh_config				etc-secsh-etc		crypto
-./etc/ssh/sshd_config				etc-secsh-etc		crypto
 ./etc/ssh/ssh_known_hosts			etc-secsh-etc		crypto
+./etc/ssh/sshd_config				etc-secsh-etc		crypto
 ./etc/sysctl.conf				etc-sys-etc
 ./etc/syslog.conf				etc-sys-etc
 ./etc/ttys					etc-sys-etc
