@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.19 1995/12/13 23:47:40 pk Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.20 1996/02/01 07:28:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -69,8 +69,8 @@ int	tunoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *rt));
 int	tunread __P((dev_t, struct uio *));
 int	tunwrite __P((dev_t, struct uio *));
-int	tuncioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	tunioctl __P((struct ifnet *, u_long, caddr_t));
+int	tunioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	tunnioctl __P((struct ifnet *, u_long, caddr_t));
 int	tunselect __P((dev_t, int));
 void	tunattach __P((int));
 
@@ -91,7 +91,7 @@ tunattach(unused)
 		ifp->if_unit = i;
 		ifp->if_name = "tun";
 		ifp->if_mtu = TUNMTU;
-		ifp->if_ioctl = tunioctl;
+		ifp->if_ioctl = tunnioctl;
 		ifp->if_output = tunoutput;
 		ifp->if_flags = IFF_POINTOPOINT;
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
@@ -219,7 +219,7 @@ tuninit(unit)
  * Process an ioctl request.
  */
 int
-tunioctl(ifp, cmd, data)
+tunnioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long	cmd;
 	caddr_t	data;
@@ -328,7 +328,7 @@ tunoutput(ifp, m0, dst, rt)
  * the cdevsw interface is now pretty minimal.
  */
 int
-tuncioctl(dev, cmd, data, flag, p)
+tunioctl(dev, cmd, data, flag, p)
 	dev_t		dev;
 	u_long		cmd;
 	caddr_t		data;
