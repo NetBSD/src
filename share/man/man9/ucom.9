@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucom.9,v 1.1 2000/04/15 17:20:26 augustss Exp $
+.\"	$NetBSD: ucom.9,v 1.2 2000/04/28 09:37:43 drochner Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -144,66 +144,66 @@ struct ucom_methods {
 .Ed
 
 .Bl -tag -width indent
-.It Dv void (*ucom_get_status) (void *sc, int portno, u_char *lsr, u_char *msr)
+.It Fn "void (*ucom_get_status)" "void *sc, int portno, u_char *lsr, u_char *msr"
 get the status of port
-.Dv portno .
+.Fa portno .
 The status consists of the line status,
-.Dv lsr ,
+.Fa lsr ,
 and the modem status
-.Dv msr .
+.Fa msr .
 The contents of these two bytes is exactly as for a 16550 UART.
-.It void (*ucom_set)(void *sc, int portno, int reg, int onoff)
+.It Fn "void (*ucom_set)" "void *sc, int portno, int reg, int onoff"
 Set (or unset) a particular feature of a port.
-.It int (*ucom_param)(void *sc, int portno, struct termios *t)
+.It Fn "int (*ucom_param)" "void *sc, int portno, struct termios *t"
 Set the speed, number of data bit, stop bits, and parity of a port
 according to the 
 .Xr termios 4
 struct.
-.It int (*ucom_ioctl)(void *sc, int portno, u_long cmd, caddr_t data, int flag, struct proc *p)
+.It Fn "int (*ucom_ioctl)" "void *sc, int portno, u_long cmd, caddr_t data, int flag, struct proc *p"
 implements any non-standard
 .Xr ioctl 4
 that a device needs.
-.It int (*ucom_open)(void *sc, int portno)
+.It Fn "int (*ucom_open)" "void *sc, int portno"
 called just before the
 .Nm
 driver opens the bulk pipes for the port.
-.It void (*ucom_close)(void *sc, int portno)
+.It Fn "void (*ucom_close)" "void *sc, int portno"
 called just after the
 .Nm
 driver closes the bulk pipes for the port.
-.It void (*ucom_read)(void *sc, int portno, u_char **ptr, u_int32_t *count)
+.It Fn "void (*ucom_read)" "void *sc, int portno, u_char **ptr, u_int32_t *count"
 if the data delivered on the bulk pipe is not just the raw input characters
 this routine needs to adjust
-.Dv ptr
+.Fa ptr
 and
-.Dv count
+.Fa count
 so that they tell where to find the given number of raw characters.
-.It void (*ucom_write)(void *sc, int portno, u_char *dst, u_char *src, u_int32_t *count)
+.It Fn "void (*ucom_write)" "void *sc, int portno, u_char *dst, u_char *src, u_int32_t *count"
 if the data written to the bulk pipe is not just the raw characters then
 this routine needs to copy
-.Dv
-count raw characters from
-.Dv src
+.Fa count
+raw characters from
+.Fa src
 into the buffer at
-.Dv dst
+.Fa dst
 and do the appropriate padding.  The
-.Dv count
+.Fa count
 should be updated to the new size.
 The buffer at
-.Dv src
+.Fa src
 is at most
-.Dv ibufsize
+.Va ibufsize
 bytes and the buffer
 at
-.Dv dst
+.Fa dst
 is
-.Dv ibufsizepad
+.Va ibufsizepad
 bytes.
 .El
 .Pp
 Apart from these methods there is a function
 .Bl -tag -width indent 5n
-.It Dv void ucom_status_change(struct ucom_softc *)
+.It Fn "void ucom_status_change" "struct ucom_softc *"
 .El
 .Pp
 which should be called by the driver whenever it notices a status change.
