@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.14 1997/10/14 07:56:49 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.15 1998/02/22 23:39:53 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -268,16 +268,24 @@ arm_fpe_copycontext(c1, c2)
 	arm_fpe_core_loadcontext(c2, &fpcontext);
 }
 
+/*
+ * Warning the arm_fpe_getcontext() and arm_fpe_setcontext() functions
+ * rely on the fact that the fp_context_frame_t type is structurally the
+ * same as struct fpreg and thus can just cast the pointer.
+ * If a change is made to either then a tempoary buffer will be needed
+ * and the structure members copied indiviually.
+ */
+
 void arm_fpe_getcontext(p, fpregs)
 	struct proc *p;
-	fp_reg_t *fpregs;
+	struct fpreg *fpregs;
 {
 	arm_fpe_core_savecontext(FP_CONTEXT(p), (fp_context_frame_t *)fpregs, 0);
 }
 
 void arm_fpe_setcontext(p, fpregs)
 	struct proc *p;
-	fp_reg_t *fpregs;
+	struct fpreg *fpregs;
 {
 	arm_fpe_core_loadcontext(FP_CONTEXT(p), (fp_context_frame_t *)fpregs);
 }
