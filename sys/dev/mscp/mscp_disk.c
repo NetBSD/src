@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.26 2001/01/07 18:09:02 fvdl Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.27 2001/01/08 02:03:47 fvdl Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -375,7 +375,7 @@ raioctl(dev, cmd, data, flag, p)
 	case ODIOCGDINFO:
 		bcopy(lp, &newlabel, sizeof disklabel);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		bcopy(&newlabel, data, sizeof (struct olddisklabel));
 		break;
 #endif
@@ -445,7 +445,7 @@ raioctl(dev, cmd, data, flag, p)
 #ifdef __HAVE_OLD_DISKLABEL
 		if (cmd == ODIOCGDEFLABEL) {
 			if (tp->d_npartitions > OLDMAXPARTITIONS)
-				tp->d_npartitions = OLDMAXPARTITIONS;
+				return ENOTTY;
 			memcpy(data, tp, sizeof (struct olddisklabel));
 		}
 #endif

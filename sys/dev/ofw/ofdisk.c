@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.14 2001/01/07 18:09:02 fvdl Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.15 2001/01/08 02:03:47 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -326,7 +326,7 @@ ofdisk_ioctl(dev, cmd, data, flag, p)
 	case ODIOCGDINFO:
 		newlabel = *of->sc_dk.dk_label;
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		return 0;
 #endif
@@ -380,7 +380,7 @@ ofdisk_ioctl(dev, cmd, data, flag, p)
 	case DIOCGDEFLABEL:
 		ofdisk_getdefaultlabel(of, &newlabel);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		return 0;
 #endif
