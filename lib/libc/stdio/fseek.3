@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.18 2001/09/16 02:08:55 wiz Exp $
+.\"	$NetBSD: fseek.3,v 1.19 2002/02/02 08:56:53 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -131,7 +131,7 @@ except that the error indicator for the stream is also cleared
 (see
 .Xr clearerr 3 ) .
 .Pp
-The
+In this implementation, the
 .Fn fgetpos
 and
 .Fn fsetpos
@@ -147,9 +147,7 @@ and
 ), setting and storing the current value of
 the file offset into or from the object referenced by
 .Fa pos .
-On systems other than
-.Ux ,
-an
+In the other implementation, an
 .Dq Fa fpos_t
 object may be a complex object
 and these routines may be the only way to portably reposition a text stream.
@@ -241,3 +239,9 @@ and
 .Fn ftello
 functions conform to
 .St -xsh5 .
+.Sh BUGS
+The
+.Fn fgetpos
+and
+.Fn fsetpos
+functions don't store/set shift states of the stream in this implementation.
