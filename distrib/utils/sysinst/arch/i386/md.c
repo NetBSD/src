@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 1997/10/17 22:17:56 phil Exp $ */
+/*	$NetBSD: md.c,v 1.4.2.1 1997/10/27 19:36:39 thorpej Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -216,7 +216,7 @@ void md_copy_filesystem (void)
 {
 	/* Copy the instbin(s) to the disk */
 	printf ("%s", msg_string(MSG_dotar));
-	run_prog ("tar --one-file-system -cf - . |"
+	run_prog ("tar --one-file-system -cf - / |"
 		  "(cd /mnt ; tar --unlink -xpf - )");
 	run_prog ("/bin/cp /tmp/.hdprofile /mnt/.profile");
 }
@@ -428,6 +428,7 @@ md_update (void)
 	endwin();
 	md_copy_filesystem ();
 	md_post_newfs();
+	puts (CL);
 	wrefresh(stdscr);
 	return 1;
 }
