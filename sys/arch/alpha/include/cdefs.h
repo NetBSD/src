@@ -1,4 +1,4 @@
-/* $NetBSD: cdefs.h,v 1.9 1997/10/22 05:20:40 thorpej Exp $ */
+/* $NetBSD: cdefs.h,v 1.10 1997/11/04 23:09:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,10 +30,10 @@
 #ifndef _MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
 
-#define	_C_LABEL(x)	_STRING(x)
+#define	_C_LABEL(x)	x
 
 #ifdef __GNUC__
-#define	__RENAME(x)	__asm__(x)
+#define	__RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
 #endif
 
 #ifdef __ELF__
@@ -48,19 +48,19 @@
 
 #ifndef __DO_NOT_DO_WEAK__
 #define	__weak_alias(alias,sym)						\
-    __asm__(".weak " #alias " ; " #alias " = " #sym)
+    __asm__(".weak " #alias " ; " #alias " = " #sym);
 #endif /* !__DO_NOT_DO_WEAK__ */
 #define	__warn_references(sym,msg)					\
-    __asm__(".section .gnu.warning." #sym " ; .ascii \"" msg "\" ; .text")
+    __asm__(".section .gnu.warning." #sym " ; .ascii \"" msg "\" ; .text");
 
 #else /* !__STDC__ */
 
 #ifndef __DO_NOT_DO_WEAK__
 #define	__weak_alias(alias,sym)						\
-    __asm__(".weak alias ; alias = sym")
+    __asm__(".weak alias ; alias = sym");
 #endif /* !__DO_NOT_DO_WEAK__ */
 #define	__warn_references(sym,msg)					\
-    __asm__(".section .gnu.warning.sym ; .ascii msg ; .text")
+    __asm__(".section .gnu.warning.sym ; .ascii msg ; .text");
 
 #endif /* !__STDC__ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.6 1997/10/22 05:21:10 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.7 1997/11/04 23:09:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -30,10 +30,10 @@
 #ifndef _MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
 
-#define	_C_LABEL(x)	_STRING(x)
+#define	_C_LABEL(x)	x
 
 #ifdef __GNUC__
-#define	__RENAME(x)	__asm__(x)
+#define	__RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
 #endif
 
 #define	__indr_references(sym,msg)	/* nothing */
