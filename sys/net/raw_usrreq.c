@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_usrreq.c	7.9 (Berkeley) 6/28/90
- *	$Id: raw_usrreq.c,v 1.5 1994/01/06 14:00:35 deraadt Exp $
+ *	$Id: raw_usrreq.c,v 1.6 1994/01/16 02:22:54 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@
 #include <net/netisr.h>
 #include <net/raw_cb.h>
 
-#include <machine/mtpr.h>
+#include <machine/cpu.h>
 
 /*
  * Initialize raw connection block q.

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_cb.c	7.11 (Berkeley) 6/28/90
- *	$Id: raw_cb.c,v 1.4 1993/12/18 00:41:00 mycroft Exp $
+ *	$Id: raw_cb.c,v 1.5 1994/01/16 02:22:51 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -49,7 +49,7 @@
 
 #include <netinet/in.h>
 
-#include <machine/mtpr.h>
+#include <machine/cpu.h>
 
 /*
  * Routines to manage the raw protocol control blocks. 
