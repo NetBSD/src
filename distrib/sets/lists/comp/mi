@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.596 2003/07/23 20:30:34 itojun Exp $
+#	$NetBSD: mi,v 1.597 2003/07/23 21:57:19 itojun Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -254,7 +254,6 @@
 ./usr/include/kadm5/private.h		comp-krb5-include
 ./usr/include/kerberosIV/kadm.h		comp-krb4-include
 ./usr/include/kerberosIV/kadm_err.h	comp-krb4-include
-./usr/include/kerberosIV/kafs.h		comp-krb4-include
 ./usr/include/kerberosIV/klog.h		comp-krb4-include
 ./usr/include/kerberosIV/krb-archaeology.h	comp-krb4-include
 ./usr/include/kerberosIV/krb-protos.h	comp-krb4-include
@@ -275,6 +274,7 @@
 ./usr/include/krb5/hdb_err.h		comp-krb5-include
 ./usr/include/krb5/heim_err.h		comp-krb5-include
 ./usr/include/krb5/k524_err.h		comp-krb5-include
+./usr/include/krb5/kafs.h		comp-krb5-include
 ./usr/include/krb5/krb5-private.h	comp-krb5-include
 ./usr/include/krb5/krb5-protos.h	comp-krb5-include
 ./usr/include/krb5/krb5.h		comp-krb5-include
