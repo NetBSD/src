@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.204 2003/08/07 16:32:03 agc Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.205 2003/09/11 15:34:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.204 2003/08/07 16:32:03 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.205 2003/09/11 15:34:26 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2585,6 +2585,8 @@ vfs_unmountall(p)
 		printf("WARNING: some file systems would not unmount\n");
 }
 
+extern struct simplelock bqueue_slock; /* XXX */
+
 /*
  * Sync and unmount file systems before shutting down.
  */
@@ -2627,7 +2629,9 @@ vfs_shutdown()
 			    && (bp->b_vp->v_mount->mnt_flag & MNT_SOFTDEP)
 			    && (bp->b_flags & B_DELWRI)) {
 				s = splbio();
+				simple_lock(&bqueue_slock);
 				bremfree(bp);
+				simple_unlock(&bqueue_slock);
 				bp->b_flags |= B_BUSY;
 				splx(s);
 				nbusy++;
