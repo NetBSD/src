@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$Id: Makefile,v 1.1 1997/05/09 14:31:26 mycroft Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/13 11:21:23 lukem Exp $
 
 NOOBJ=
 
