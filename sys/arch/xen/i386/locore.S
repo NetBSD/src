@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2004/04/26 22:05:04 cl Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 2004/09/23 02:24:22 tls Exp $	*/
 /*	NetBSD: locore.S,v 1.26 2004/04/12 13:17:46 yamt Exp 	*/
 
 /*-
@@ -1588,6 +1588,7 @@ idle_zero:
 	pushl	$IPL_NONE
 	call	_C_LABEL(Xspllower)
 	addl	$4,%esp
+	jmp	idle_start
 4:
 	call	_C_LABEL(uvm_pageidlezero)
 	CLI(%eax)
