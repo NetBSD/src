@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.31 2005/02/25 13:46:51 simonb Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.32 2005/02/25 19:16:45 martin Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -18,11 +18,6 @@ maxusers	64
 options 	SUN4U		# sun4u - UltraSPARC
 
 ## System options specific to the sparc machine type
-
-## Use a faster console than the PROM's slow drawing routines.  Not needed
-## for headless (no framebuffer) machines.
-# XXX broken on sparc64
-#options 	RASTERCONSOLE		# fast rasterop console
 
 options 	BLINK			# Blink the system LED
 
