@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.10 2000/10/10 19:58:43 he Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.11 2002/07/26 13:19:53 hannken Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,7 +80,7 @@ struct	rd_softc {
 	struct	rd_ssmcmd sc_ssmc;
 	struct	rd_srcmd sc_src;
 	struct	rd_clearcmd sc_clear;
-	struct	buf_queue sc_tab;
+	struct	bufq_state sc_tab;
 	int	sc_active;
 	int	sc_errcnt;
 	struct	rdstats sc_stats;
