@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.25.4.1 1999/10/19 13:01:30 fvdl Exp $	*/
+/*	$NetBSD: utilities.c,v 1.25.4.2 1999/10/26 23:20:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.25.4.1 1999/10/19 13:01:30 fvdl Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.25.4.2 1999/10/26 23:20:11 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -426,8 +426,12 @@ allocblk(frags)
 			}
 			cg = dtog(sblock, i + j);
 			getblk(&cgblk, cgtod(sblock, cg), sblock->fs_cgsize);
+			memcpy(cgp, cgblk.b_un.b_cg, sblock->fs_cgsize);
+			if ((doswap && !needswap) || (!doswap && needswap))
+				swap_cg(cgblk.b_un.b_cg, cgp);
 			if (!cg_chkmagic(cgp, 0))
-				pfatal("CG %d: BAD MAGIC NUMBER\n", cg);
+				pfatal("CG %d: ALLOCBLK: BAD MAGIC NUMBER\n",
+				    cg);
 			baseblk = dtogd(sblock, i + j);
 			for (k = 0; k < frags; k++) {
 				setbmap(i + j + k);

@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.36.2.1 1999/10/19 13:01:30 fvdl Exp $	*/
+/*	$NetBSD: setup.c,v 1.36.2.2 1999/10/26 23:20:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.36.2.1 1999/10/19 13:01:30 fvdl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.36.2.2 1999/10/26 23:20:11 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -423,6 +423,12 @@ setup(dev)
 	if (inpsort == NULL || inphead == NULL) {
 		printf("cannot alloc %u bytes for inphead\n", 
 		    (unsigned)(numdirs * sizeof(struct inoinfo *)));
+		goto badsblabel;
+	}
+	cgrp = malloc(sblock->fs_cgsize);
+	if (cgrp == NULL) {
+		printf("cannot alloc %u bytes for cylinder group\n",
+		    sblock->fs_cgsize);
 		goto badsblabel;
 	}
 	bufinit();
