@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 2001/07/19 23:40:36 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.50 2001/07/23 03:45:38 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1078,6 +1078,7 @@ static struct {
 	{ "espdma",	BUSCLASS_SBUS },
 	{ "ledma",	BUSCLASS_SBUS },
 	{ "simba",	BUSCLASS_PCI },
+	{ "ppb",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
 	{ "siop",	BUSCLASS_PCI },
 	{ "pci",	BUSCLASS_PCI },
@@ -1099,7 +1100,7 @@ static struct {
 	{ "ptisp",	BUSCLASS_NONE,		"isp" },
 	{ "SUNW,fdtwo",	BUSCLASS_NONE,		"fdc" },
 	{ "pci",	BUSCLASS_MAINBUS,	"psycho" },
-	{ "pci",	BUSCLASS_PCI,		"simba" },
+	{ "pci",	BUSCLASS_PCI,		"ppb" },
 	{ "ide",	BUSCLASS_PCI,		"pciide" },
 	{ "disk",	BUSCLASS_NONE,		"wd" },  /* XXX */
 	{ "network",	BUSCLASS_NONE,		"hme" }, /* XXX */
