@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.9 1995/04/13 06:28:48 cgd Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.10 1995/06/12 00:47:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -35,6 +35,8 @@
  *	@(#)in_pcb.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/queue.h>
+
 /*
  * Common structure pcb for internet protocol implementation.
  * Here are stored pointers to local and foreign host table
@@ -43,13 +45,11 @@
  * control block.
  */
 struct inpcb {
-	struct	  inpcb *inp_next,*inp_prev;
-					/* pointers to other pcb's */
-	struct	  inpcb *inp_head;	/* pointer back to chain of inpcb's
-					   for this protocol */
+	LIST_ENTRY(inpcb) inp_list;
+	struct	  inpcbtable *inp_table;
 	struct	  in_addr inp_faddr;	/* foreign host table entry */
-	u_int16_t inp_fport;		/* foreign port */
 	struct	  in_addr inp_laddr;	/* local host table entry */
+	u_int16_t inp_fport;		/* foreign port */
 	u_int16_t inp_lport;		/* local port */
 	struct	  socket *inp_socket;	/* back pointer to socket */
 	caddr_t	  inp_ppcb;		/* pointer to per-protocol pcb */
@@ -58,6 +58,11 @@ struct inpcb {
 	struct	  ip inp_ip;		/* header prototype; should have more */
 	struct	  mbuf *inp_options;	/* IP options */
 	struct	  ip_moptions *inp_moptions; /* IP multicast options */
+};
+
+struct inpcbtable {
+	LIST_HEAD(inpcbhead, inpcb) inpt_list;
+	u_int16_t inpt_lastport;
 };
 
 /* flags in inp_flags: */
@@ -74,16 +79,19 @@ struct inpcb {
 
 #ifdef _KERNEL
 int	 in_losing __P((struct inpcb *));
-int	 in_pcballoc __P((struct socket *, struct inpcb *));
+int	 in_pcballoc __P((struct socket *, struct inpcbtable *));
 int	 in_pcbbind __P((struct inpcb *, struct mbuf *));
 int	 in_pcbconnect __P((struct inpcb *, struct mbuf *));
 int	 in_pcbdetach __P((struct inpcb *));
 int	 in_pcbdisconnect __P((struct inpcb *));
+void	 in_pcbinit __P((struct inpcbtable *));
 struct inpcb *
-	 in_pcblookup __P((struct inpcb *,
+	 in_pcblookup __P((struct inpcbtable *,
 	    struct in_addr, u_int, struct in_addr, u_int, int));
-int	 in_pcbnotify __P((struct inpcb *, struct sockaddr *,
+int	 in_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
 	    u_int, struct in_addr, u_int, int, void (*)(struct inpcb *, int)));
+int	 in_pcbnotifyall __P((struct inpcbtable *, struct sockaddr *,
+	    int, void (*)(struct inpcb *, int)));
 void	 in_rtchange __P((struct inpcb *, int));
 int	 in_setpeeraddr __P((struct inpcb *, struct mbuf *));
 int	 in_setsockaddr __P((struct inpcb *, struct mbuf *));

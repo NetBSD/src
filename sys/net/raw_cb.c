@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.7 1994/06/29 06:36:37 cgd Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.8 1995/06/12 00:46:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -85,7 +85,7 @@ raw_attach(so, proto)
 	rp->rcb_socket = so;
 	rp->rcb_proto.sp_family = so->so_proto->pr_domain->dom_family;
 	rp->rcb_proto.sp_protocol = proto;
-	insque(rp, &rawcb);
+	LIST_INSERT_HEAD(&rawcb, rp, rcb_list);
 	return (0);
 }
 
@@ -101,7 +101,7 @@ raw_detach(rp)
 
 	so->so_pcb = 0;
 	sofree(so);
-	remque(rp);
+	LIST_REMOVE(rp, rcb_list);
 #ifdef notdef
 	if (rp->rcb_laddr)
 		m_freem(dtom(rp->rcb_laddr));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.20 1995/04/22 13:07:12 cgd Exp $	*/
+/*	$NetBSD: if.c,v 1.21 1995/06/12 00:46:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@ ifinit()
 {
 	register struct ifnet *ifp;
 
-	for (ifp = ifnet; ifp; ifp = ifp->if_next)
+	for (ifp = ifnet.tqh_first; ifp != 0 ; ifp = ifp->if_list.tqe_next)
 		if (ifp->if_snd.ifq_maxlen == 0)
 			ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	if_slowtimo(NULL);
@@ -84,16 +84,14 @@ if_attach(ifp)
 	unsigned socksize, ifasize;
 	int namelen, unitlen, masklen;
 	char workbuf[12], *unitname;
-	register struct ifnet **p = &ifnet;
 	register struct sockaddr_dl *sdl;
 	register struct ifaddr *ifa;
 	static int if_indexlim = 8;
 	extern void link_rtrequest();
 
-	while (*p)
-		p = &((*p)->if_next);
-	*p = ifp;
+	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
 	ifp->if_index = ++if_index;
+	TAILQ_INIT(&ifp->if_addrlist);
 	if (ifnet_addrs == 0 || if_index >= if_indexlim) {
 		unsigned n = (if_indexlim <<= 1) * sizeof(ifa);
 		struct ifaddr **q = (struct ifaddr **)
@@ -120,8 +118,6 @@ if_attach(ifp)
 	socksize = ROUNDUP(socksize);
 	ifasize = sizeof(*ifa) + 2 * socksize;
 	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK);
-	if (ifa == 0)
-		return;
 	bzero((caddr_t)ifa, ifasize);
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	sdl->sdl_len = socksize;
@@ -133,9 +129,8 @@ if_attach(ifp)
 	sdl->sdl_type = ifp->if_type;
 	ifnet_addrs[if_index - 1] = ifa;
 	ifa->ifa_ifp = ifp;
-	ifa->ifa_next = ifp->if_addrlist;
 	ifa->ifa_rtrequest = link_rtrequest;
-	ifp->if_addrlist = ifa;
+	TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
 	ifa->ifa_addr = (struct sockaddr *)sdl;
 	sdl = (struct sockaddr_dl *)(socksize + (caddr_t)sdl);
 	ifa->ifa_netmask = (struct sockaddr *)sdl;
@@ -156,8 +151,8 @@ ifa_ifwithaddr(addr)
 
 #define	equal(a1, a2) \
   (bcmp((caddr_t)(a1), (caddr_t)(a2), ((struct sockaddr *)(a1))->sa_len) == 0)
-	for (ifp = ifnet; ifp; ifp = ifp->if_next)
-	    for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
+	    for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family != addr->sa_family)
 			continue;
 		if (equal(addr, ifa->ifa_addr))
@@ -179,9 +174,9 @@ ifa_ifwithdstaddr(addr)
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
 
-	for (ifp = ifnet; ifp; ifp = ifp->if_next) 
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 	    if (ifp->if_flags & IFF_POINTOPOINT)
-		for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
+		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family)
 				continue;
 			if (equal(addr, ifa->ifa_dstaddr))
@@ -209,8 +204,8 @@ ifa_ifwithnet(addr)
 	    if (sdl->sdl_index && sdl->sdl_index <= if_index)
 		return (ifnet_addrs[sdl->sdl_index - 1]);
 	}
-	for (ifp = ifnet; ifp; ifp = ifp->if_next)
-		for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
+		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 			register char *cp, *cp2, *cp3;
 
 			if (ifa->ifa_addr->sa_family != af ||
@@ -242,10 +237,10 @@ ifa_ifwithaf(af)
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
 
-	for (ifp = ifnet; ifp; ifp = ifp->if_next)
-	    for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-		if (ifa->ifa_addr->sa_family == af)
-			return (ifa);
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
+		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next)
+			if (ifa->ifa_addr->sa_family == af)
+				return (ifa);
 	return ((struct ifaddr *)0);
 }
 
@@ -266,7 +261,7 @@ ifaof_ifpforaddr(addr, ifp)
 
 	if (af >= AF_MAX)
 		return (0);
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
+	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family != af)
 			continue;
 		ifa_maybe = ifa;
@@ -330,7 +325,7 @@ if_down(ifp)
 	register struct ifaddr *ifa;
 
 	ifp->if_flags &= ~IFF_UP;
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	if_qflush(&ifp->if_snd);
 	rt_ifmsg(ifp);
@@ -350,7 +345,7 @@ if_up(ifp)
 	ifp->if_flags |= IFF_UP;
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next)
 		pfctlinput(PRC_IFUP, ifa->ifa_addr);
 #endif
 	rt_ifmsg(ifp);
@@ -387,7 +382,7 @@ if_slowtimo(arg)
 	register struct ifnet *ifp;
 	int s = splimp();
 
-	for (ifp = ifnet; ifp; ifp = ifp->if_next) {
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 		if (ifp->if_timer == 0 || --ifp->if_timer)
 			continue;
 		if (ifp->if_watchdog)
@@ -427,7 +422,7 @@ ifunit(name)
 	for (unit = 0; *cp >= '0' && *cp <= '9'; )
 		unit = unit * 10 + *cp++ - '0';
 	*ep = 0;
-	for (ifp = ifnet; ifp; ifp = ifp->if_next) {
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 		if (bcmp(ifp->if_name, name, len))
 			continue;
 		if (unit == ifp->if_unit)
@@ -578,7 +573,7 @@ ifconf(cmd, data)
 	caddr_t data;
 {
 	register struct ifconf *ifc = (struct ifconf *)data;
-	register struct ifnet *ifp = ifnet;
+	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
 	register char *cp, *ep;
 	struct ifreq ifr, *ifrp;
@@ -586,12 +581,13 @@ ifconf(cmd, data)
 
 	ifrp = ifc->ifc_req;
 	ep = ifr.ifr_name + sizeof (ifr.ifr_name) - 2;
-	for (; space > sizeof (ifr) && ifp; ifp = ifp->if_next) {
+	for (ifp = ifnet.tqh_first;
+	    space > sizeof (ifr) && ifp != 0; ifp = ifp->if_list.tqe_next) {
 		strncpy(ifr.ifr_name, ifp->if_name, sizeof(ifr.ifr_name) - 2);
 		for (cp = ifr.ifr_name; cp < ep && *cp; cp++)
 			continue;
 		*cp++ = '0' + ifp->if_unit; *cp = '\0';
-		if ((ifa = ifp->if_addrlist) == 0) {
+		if ((ifa = ifp->if_addrlist.tqh_first) == 0) {
 			bzero((caddr_t)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 			error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
 			    sizeof(ifr));
@@ -599,7 +595,7 @@ ifconf(cmd, data)
 				break;
 			space -= sizeof (ifr), ifrp++;
 		} else 
-		    for ( ; space > sizeof (ifr) && ifa; ifa = ifa->ifa_next) {
+		    for (; space > sizeof (ifr) && ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 			register struct sockaddr *sa = ifa->ifa_addr;
 #ifdef COMPAT_43
 			if (cmd == OSIOCGIFCONF) {

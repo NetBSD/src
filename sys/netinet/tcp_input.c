@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.17 1995/06/11 21:36:04 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.18 1995/06/12 00:47:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -63,7 +63,7 @@
 
 int	tcprexmtthresh = 3;
 struct	tcpiphdr tcp_saveti;
-struct	inpcb *tcp_last_inpcb = &tcb;
+struct	inpcb *tcp_last_inpcb = 0;
 
 extern u_long sb_max;
 
@@ -321,25 +321,25 @@ tcp_input(m, iphlen)
 	 */
 findpcb:
 	inp = tcp_last_inpcb;
-	if (inp->inp_lport != ti->ti_dport ||
+	if (inp == 0 ||
+	    inp->inp_lport != ti->ti_dport ||
 	    inp->inp_fport != ti->ti_sport ||
 	    inp->inp_faddr.s_addr != ti->ti_src.s_addr ||
 	    inp->inp_laddr.s_addr != ti->ti_dst.s_addr) {
-		inp = in_pcblookup(&tcb, ti->ti_src, ti->ti_sport,
-		    ti->ti_dst, ti->ti_dport, INPLOOKUP_WILDCARD);
-		if (inp)
-			tcp_last_inpcb = inp;
 		++tcpstat.tcps_pcbcachemiss;
+		inp = in_pcblookup(&tcbtable, ti->ti_src, ti->ti_sport,
+		    ti->ti_dst, ti->ti_dport, INPLOOKUP_WILDCARD);
+		/*
+		 * If the state is CLOSED (i.e., TCB does not exist) then
+		 * all data in the incoming segment is discarded.
+		 * If the TCB exists but is in CLOSED state, it is embryonic,
+		 * but should either do a listen or a connect soon.
+		 */
+		if (inp == 0)
+			goto dropwithreset;
+		tcp_last_inpcb = inp;
 	}
 
-	/*
-	 * If the state is CLOSED (i.e., TCB does not exist) then
-	 * all data in the incoming segment is discarded.
-	 * If the TCB exists but is in CLOSED state, it is embryonic,
-	 * but should either do a listen or a connect soon.
-	 */
-	if (inp == 0)
-		goto dropwithreset;
 	tp = intotcpcb(inp);
 	if (tp == 0)
 		goto dropwithreset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.15 1995/06/11 20:39:25 mycroft Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.16 1995/06/12 00:47:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -76,7 +76,7 @@ tcp_init()
 {
 
 	tcp_iss = 1;		/* wrong */
-	tcb.inp_next = tcb.inp_prev = &tcb;
+	in_pcbinit(&tcbtable);
 	if (max_protohdr < sizeof(struct tcpiphdr))
 		max_protohdr = sizeof(struct tcpiphdr);
 	if (max_linkhdr + sizeof(struct tcpiphdr) > MHLEN)
@@ -360,7 +360,7 @@ tcp_close(tp)
 	soisdisconnected(so);
 	/* clobber input pcb cache if we're closing the cached connection */
 	if (inp == tcp_last_inpcb)
-		tcp_last_inpcb = &tcb;
+		tcp_last_inpcb = 0;
 	in_pcbdetach(inp);
 	tcpstat.tcps_closed++;
 	return ((struct tcpcb *)0);
@@ -417,17 +417,21 @@ tcp_ctlinput(cmd, sa, ip)
 	extern u_char inetctlerrmap[];
 	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
 
-	if (cmd == PRC_QUENCH)
-		notify = tcp_quench;
-	else if (!PRC_IS_REDIRECT(cmd) &&
-		 ((unsigned)cmd > PRC_NCMDS || inetctlerrmap[cmd] == 0))
+	if (PRC_IS_REDIRECT(cmd))
+		notify = in_rtchange;
+	else if (cmd == PRC_HOSTDEAD)
+		;
+	else if ((unsigned)cmd >= PRC_NCMDS || inetctlerrmap[cmd] == 0)
 		return;
-	if (ip) {
+	else if (ip) {
+		if (cmd == PRC_QUENCH)
+			notify = tcp_quench;
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		in_pcbnotify(&tcb, sa, th->th_dport, ip->ip_src, th->th_sport,
-			cmd, notify);
-	} else
-		in_pcbnotify(&tcb, sa, 0, zeroin_addr, 0, cmd, notify);
+		in_pcbnotify(&tcbtable, sa, th->th_dport, ip->ip_src,
+		    th->th_sport, cmd, notify);
+		return;
+	}
+	in_pcbnotifyall(&tcbtable, sa, cmd, notify);
 }
 
 /*

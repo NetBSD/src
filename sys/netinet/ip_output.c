@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.25 1995/06/04 05:58:28 mycroft Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.26 1995/06/12 00:47:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -189,7 +189,7 @@ ip_output(m0, opt, ro, flags, imo)
 		if (ip->ip_src.s_addr == INADDR_ANY) {
 			register struct in_ifaddr *ia;
 
-			for (ia = in_ifaddr; ia; ia = ia->ia_next)
+			for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
 				if (ia->ia_ifp == ifp) {
 					ip->ip_src = ia->ia_addr.sin_addr;
 					break;

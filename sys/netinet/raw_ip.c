@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.19 1995/06/04 05:07:11 mycroft Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.20 1995/06/12 00:47:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -54,7 +54,7 @@
 #include <netinet/ip_mroute.h>
 #include <netinet/in_pcb.h>
 
-struct inpcb rawinpcb;
+struct inpcbtable rawcbtable;
 
 /*
  * Nominal space allocated to a raw ip socket.
@@ -73,7 +73,7 @@ void
 rip_init()
 {
 
-	rawinpcb.inp_next = rawinpcb.inp_prev = &rawinpcb;
+	in_pcbinit(&rawcbtable);
 }
 
 struct	sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
@@ -91,7 +91,8 @@ rip_input(m)
 	struct socket *last = 0;
 
 	ripsrc.sin_addr = ip->ip_src;
-	for (inp = rawinpcb.inp_next; inp != &rawinpcb; inp = inp->inp_next) {
+	for (inp = rawcbtable.inpt_list.lh_first; inp != 0;
+	    inp = inp->inp_list.le_next) {
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)
 			continue;
 		if (inp->inp_laddr.s_addr &&
@@ -263,7 +264,7 @@ rip_usrreq(so, req, m, nam, control)
 			break;
 		}
 		if ((error = soreserve(so, rip_sendspace, rip_recvspace)) ||
-		    (error = in_pcballoc(so, &rawinpcb)))
+		    (error = in_pcballoc(so, &rawcbtable)))
 			break;
 		inp = (struct inpcb *)so->so_pcb;
 		inp->inp_ip.ip_p = (long)nam;
@@ -296,7 +297,7 @@ rip_usrreq(so, req, m, nam, control)
 			error = EINVAL;
 			break;
 		}
-		if ((ifnet == 0) ||
+		if ((ifnet.tqh_first == 0) ||
 		    ((addr->sin_family != AF_INET) &&
 		     (addr->sin_family != AF_IMPLINK)) ||
 		    (addr->sin_addr.s_addr &&
@@ -315,7 +316,7 @@ rip_usrreq(so, req, m, nam, control)
 			error = EINVAL;
 			break;
 		}
-		if (ifnet == 0) {
+		if (ifnet.tqh_first == 0) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
