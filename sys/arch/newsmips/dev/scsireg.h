@@ -1,3 +1,5 @@
+/*	$NetBSD: scsireg.h,v 1.2 1998/06/10 16:27:30 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -159,379 +161,16 @@
 #define SCOP_RESET	0xff
 
 
-/*
- *	other definition
- */
-#define	ON	1
-#define	OFF	0
-
-
-/*
- *	scsi internal parameter block
- */
-struct scsi {
-/*00*/	u_char	sc_istatus;
-/*01*/	u_char	sc_tstatus;
-/*02*/	u_char	sc_identify;
-/*03*/	u_char	sc_message;
-/*04*/	u_int	sc_mpages;
-/*08*/	u_int	sc_bytesec;
-/*0c*/	u_char	*sc_cpoint;
-/*10*/	u_int	sc_ctrnscnt;
-/*14*/	struct sc_map *sc_map;
-	union {
-		struct	un_type0 {
-/*18*/			u_int		t0_opcode : 8;
-/*19*/			u_int		t0_lun	  : 3;
-/*19*/			u_int		t0_lad    : 21;
-/*1c*/			u_char		t0_count;
-/*1d*/			u_char		t0_ctrl;
-/*1e*/
-		} un_type0;
-		struct	un_tuio {
-/*18*/			u_char		tu_opcode;
-/*19*/			u_char		tu_lun	  : 3;
-/*19*/			u_char		tu_resved : 3;
-/*19*/			u_char		tu_code	  : 2;
-/*1a*/			u_char		tu_count1;
-/*1b*/			u_char		tu_count2;
-/*1c*/			u_char		tu_count3;
-/*1d*/			u_char		tu_ctrl;
-/*1e*/
-		} un_tuio;
-		struct	un_mtio {
-/*18*/			u_char		mt_opcode;
-/*19*/			u_char		mt_lun	  : 3;
-/*19*/			u_char		mt_resvd  : 2;
-/*19*/			u_char		mt_st	  : 1;
-/*19*/			u_char		mt_code	  : 2;
-/*1a*/			u_char		mt_len1;
-/*1b*/			u_char		mt_len2;
-/*1c*/			u_char		mt_len3;
-/*1d*/			u_char		mt_ctrl;
-/*1e*/
-		} un_mtio;
-		struct	un_type1 {
-/*18*/			u_char		t1_opcode;
-/*19*/			u_char		t1_lun    : 3;
-/*19*/			u_char		t1_rsvd   : 4;
-/*19*/			u_char		t1_relat  : 1;
-/*1a*/			u_short		t1_ladhi;
-/*1c*/			u_short		t1_ladlo;
-/*1e*/			u_char		t1_p1;
-/*1f*/			u_char		t1_p2;
-/*20*/			u_char		t1_p3;
-/*21*/			u_char		t1_ctrl;
-/*22*/
-		} un_type1;
-/*18*/		u_char	un_reserved[12];
-/*24*/
-	} sc_cdb;
-/*24*/	u_char sc_param[20];	
-/*38*/	int	sc_hbinfo;		/* Copy of the hb_ctlr->hm_hbinfo */
-/*3c*/	u_int	sc_ctag;
-/*40*/	u_int	sc_coffset;
-/*44*/	void	*sc_xs;
-/*48*/
-};
-
-
-#define	sc_opcode	sc_cdb.un_type0.t0_opcode
-#define	sc_lun		sc_cdb.un_type0.t0_lun
-#define	sc_lad		sc_cdb.un_type0.t0_lad
-#define	sc_count	sc_cdb.un_type0.t0_count
-#define	sc_nsect	sc_cdb.un_type0.t0_count
-#define	sc_switch	sc_cdb.un_type0.t0_count
-#define	sc_ctrl		sc_cdb.un_type0.t0_ctrl
-
-#define	sc_tucode	sc_cdb.un_tuio.tu_code
-#define	sc_tucount1	sc_cdb.un_tuio.tu_count1
-#define	sc_tucount2	sc_cdb.un_tuio.tu_count2
-#define	sc_tucount3	sc_cdb.un_tuio.tu_count3
-#define	sc_tunsect1	sc_cdb.un_tuio.tu_count1
-#define	sc_tunsect2	sc_cdb.un_tuio.tu_count2
-#define	sc_tunsect3	sc_cdb.un_tuio.tu_count3
-
-#define	sc_mtst		sc_cdb.un_mtio.mt_st
-#define	sc_mtcode	sc_cdb.un_mtio.mt_code
-#define	sc_mtlen1	sc_cdb.un_mtio.mt_len1
-#define	sc_mtlen2	sc_cdb.un_mtio.mt_len2
-#define	sc_mtlen3	sc_cdb.un_mtio.mt_len3
-#define	sc_mtcount1	sc_cdb.un_mtio.mt_len1
-#define	sc_mtcount2	sc_cdb.un_mtio.mt_len2
-#define	sc_mtcount3	sc_cdb.un_mtio.mt_len3
-#define	sc_mtnsect1	sc_cdb.un_mtio.mt_len1
-#define	sc_mtnsect2	sc_cdb.un_mtio.mt_len2
-#define	sc_mtnsect3	sc_cdb.un_mtio.mt_len3
-#define	sc_mtctrl	sc_cdb.un_mtio.mt_ctrl
-#define	sc_mtfxd	sc_mtcode
-#define	sc_mtimm	sc_mtcode
-#define	sc_mtlng	sc_mtcode
-
-#define	sc_ladhi	sc_cdb.un_type1.t1_ladhi
-#define	sc_ladlo	sc_cdb.un_type1.t1_ladlo
-#define	sc_pmi		sc_cdb.un_type1.t1_p3
-
-#define	scop_load(a,b,c,d,e)	scop_stst(a,b,c,d,e)
-
-
-/*
- *	tape unit space operation code definitions
- */
-#define	SCSC_DATA	0
-#define	SCSC_FM		1
-#define	SCSC_SQFM	2
-#define	SCSC_EOD	3
-
-
-/*
- *	scsi map table format
- */
-#ifdef news3400
-#define	NSCMAP	120
-#endif
-
-#ifdef news3800
-#define	NSCMAP	129
-#endif
-
-struct sc_map {
-/*000*/	unsigned	mp_offset;
-/*004*/	unsigned	mp_pages;
-/*008*/	unsigned	mp_addr[NSCMAP];
-};
-
-
-/*
- *	scsi nonextended sense data
- */
-struct sc_nextnd {
-/*00*/	u_int		scn_advalid : 1;
-/*00*/	u_int		scn_ecode   : 7;
-/*01*/	u_int		scn_resvd   : 3;
-/*01*/	u_int		scn_secno   : 21;
-/*04*/
-};
-
-
-/*
- *	scsi extended sense data
- */
-struct sc_extnd {
-/*00*/	u_char		sce_advalid : 1;
-/*00*/	u_char		sce_extend  : 7;
-/*01*/	u_char		sce_segno;
-/*02*/	u_char		sce_fm	    : 1;
-/*02*/	u_char		sce_eom	    : 1;
-/*02*/	u_char		sce_ili	    : 1;
-/*02*/	u_char		sce_resvd   : 1;
-/*02*/	u_char		sce_skey    : 4;
-/*03*/	u_char		sce_infob1;
-/*04*/	u_char		sce_infob2;
-/*05*/	u_char		sce_infob3;
-/*06*/	u_char		sce_infob4;
-/*07*/	u_char		sce_addlen;
-	union {
-		struct un_ehd {
-/*08*/			u_short		ehd_resvd1;
-/*0a*/			u_short		ehd_resvd2;
-/*0c*/			u_char		ehd_ecode;
-/*0d*/			u_char		ehd_resvd3;
-/*0e*/			u_char		ehd_fru;
-/*0f*/			u_char		ehd_fpv	   : 1;
-/*0f*/			u_char		ehd_cd	   : 1;
-/*0f*/			u_char		ehd_resvd4 : 2;
-/*0f*/			u_char		ehd_bpv	   : 1;
-/*0f*/			u_char		ehd_bitpnt : 3;
-/*10*/			u_short		ehd_fldpnt;
-/*12*/
-		} un_ehd;
-		struct un_etu {
-/*08*/			u_char		etu_ecode;
-/*09*/			u_char		etu_nerrhi;
-/*0a*/			u_char		etu_nerrlo;
-/*0b*/
-		} un_etu;
-		struct un_emt {
-/*08*/			u_short		emt_estat;
-/*0a*/			u_char		emt_resvd1;
-/*0b*/			u_char		emt_totlrtry;
-/*0c*/			u_short		emt_resvd2;
-/*0e*/			u_short		emt_resvd3;
-/*10*/			u_char		emt_resvd4;
-/*11*/			u_char		emt_ecode;
-/*12*/
-		} un_emt;
-		struct un_ewo {
-/*08*/			u_char		ewo_resvd1;
-/*09*/			u_char		ewo_resvd2;
-/*0a*/			u_char		ewo_resvd3;
-/*0b*/			u_char		ewo_sadvalid : 1;
-/*0b*/			u_char		ewo_secode   : 7;
-/*0c*/			u_char		ewo_saddr1;
-/*0d*/			u_char		ewo_saddr2;
-/*0e*/			u_char		ewo_saddr3;
-/*0f*/			u_char		ewo_saddr4;
-/*10*/			u_char		ewo_resvd4;
-/*11*/			u_char		ewo_dadvalid : 1;
-/*11*/			u_char		ewo_decode   : 7;
-/*12*/			u_char		ewo_daddr1;
-/*13*/			u_char		ewo_daddr2;
-/*14*/			u_char		ewo_daddr3;
-/*15*/			u_char		ewo_daddr4;
-/*16*/
-		} un_ewo;
-		struct un_eod {
-/*08*/			u_char		eod_resvd1;
-/*09*/			u_char		eod_resvd2;
-/*0a*/			u_char		eod_resvd3;
-/*0b*/			u_char		eod_resvd4;
-/*0c*/			u_char		eod_ecode;
-/*0d*/			u_char		eod_resvd5;
-/*0e*/			u_char		eod_resvd6;
-/*0f*/			u_char		eod_resvd7;
-/*10*/			u_char		eod_resvd8;
-/*11*/			u_char		eod_resvd9;
-/*12*/
-		} un_eod;
-/*08*/		u_char un_data[24];
-/*20*/
-	} sce_add;
-/*20*/
-};
-
-#define	sce_hdecode	sce_add.un_ehd.ehd_ecode
- 
-#define	sce_tuecode	sce_add.un_etu.etu_ecode
-#define	sce_tunerrhi	sce_add.un_etu.etu_nerrhi
-#define	sce_tunerrlo	sce_add.un_etu.etu_nerrlo
-
-#define	sce_mtestat	sce_add.un_emt.emt_estat
-#define	sce_mtecode	sce_add.un_emt.emt_ecode
-
-#define	sce_odecode	sce_add.un_eod.eod_ecode
-
-#define	sce_ascq	sce_add.un_ehd.ehd_resvd3
-#define	sce_sksv	sce_add.un_ehd.ehd_fpv
-#define	sce_actretry	sce_add.un_ehd.ehd_fldpnt
-
-/*
- *	scsi inquiry response data
- */
-struct sc_inq {
-/*00*/	u_char		sci_devtype;
-/*01*/	u_char		sci_qual;
-/*02*/	u_char		sci_version;
-/*03*/	u_char		sci_resvd1;
-/*04*/	u_char		sci_ninfo;
-/*05*/	u_char		sci_drinfo;
-/*06*/	u_char		sci_firmrev;
-/*07*/	u_char		sci_ready;
-/*08*/	u_char		sci_vendid[8];
-/*10*/	u_char		sci_prodid[16];
-/*20*/	u_char		sci_revision[4];
-/*24*/
-};
-
-
-/*
- *	scsi read capacity data
- */
-struct sc_rcap {
-/*00*/	u_int		scr_nblock;
-/*04*/	u_int		scr_blocklen;
-/*08*/
-};
-
-
-/*
- *	scsi mode sense/select data
- */
-struct sc_mdata {
-/*00*/	u_char	scm_len;
-/*01*/	u_char	scm_type;
-/*02*/	u_char	scm_flags1;
-/*03*/	u_char	scm_dlen;
-/*04*/	u_int	scm_dens	: 8;
-/*05*/	u_int	scm_nblock	: 24;
-/*08*/	u_int	scm_resvd1	: 8;
-/*09*/	u_int	scm_bsize	: 24;
-/*0c*/	u_char	scm_flags2;
-/*0d*/	u_char	scm_resvd2;
-/*0e*/	u_char	scm_resvd3;
-/*0f*/	u_char	scm_maxrtry;
-/*10*/
-};
-
-#define	scm_tdens	scm_flags2
-
-
-/*
- *	bits of scm_flags1
- */
-#define	SCM1_WRP	0x80
-#define	SCM1_BUFM	0x10
-#define	SCM1_SPD90	0x02
-
-
-/*
- *	scm_type
- */
-#define	SCMT_DEFAULT	0x0
-#define	SCMT_150_600	0x80
-#define	SCMT_300_450	0x81
-
-
-/*
- *	scm_dens
- */
-#define	SCMD_QIC_24_9	0x0	/* This may be 0x5 */
-#define	SCMD_QIC_11_4	0x4
-#define	SCMD_QIC_11_9	0x84
-#define	SCMD_QIC_120_15	0xf
-#define	SCMD_QIC_150_18	0x10
-
-#define	SCMD_DEFAULT	0x00
-#define	SCMD_800_BPI	0x01
-#define	SCMD_1600_BPI	0x02
-#define	SCMD_6250_BPI	0x03
-#define	SCMD_3200_BPI	0x06
-#define	SCMD_NEWTAPE	0x80
-#define	SCMD_NOTAPE	0xff
-
-
-/*
- *	bits of scm_flags2
- */
-#define	SCM2_DEA	0x04
-#define	SCM2_AUI	0x02
-#define	SCM2_SEC	0x01
-
-
-/*
- *	scsi reassign block perameter list
- */
-struct sc_rab {
-/*00*/	u_short	sca_resved;
-/*02*/	u_short	sca_dllen;
-/*04*/	u_int	sca_dlad[4];
-/*14*/
-};
-
-
 #ifdef CPU_DOUBLE
-
 # ifdef mips
 #  define	ipc_phys(x)	(caddr_t)K0_TT0(x)
 # else
 #  define	ipc_phys(x)	(caddr_t)((int)(x) & ~0x80000000)
 # endif
-
 # ifdef news3800
 #  define	splsc		spl4
 #  define	splscon		spl3
 # endif
-
 #endif /* CPU_DOUBLE */
 
 #ifdef CPU_SINGLE
@@ -549,17 +188,126 @@ struct sc_rab {
 #define	SCSI_INTEN	1
 #define	SCSI_INTDIS	0
 
+
+/*
+ *	other definition
+ */
+#define	ON	1
+#define	OFF	0
+
+
+/*
+ *	scsi map table format
+ */
+#if defined(news3400)
+#define NSCMAP 120
+#endif
+
+#if defined(news3800)
+#define NSCMAP 129
+#endif
+
+struct sc_map {
+	u_int	mp_offset;
+	u_int	mp_pages;
+	u_int	mp_addr[NSCMAP];	/* page number */
+};
+
+struct sc_chan_stat {
+	struct sc_chan_stat *wb_next;	/* wait bus channel queue */
+	struct sc_scb	*scb;		/* scsi struct address */
+	u_int		stcnt;		/* save transfer count */
+	u_char		*spoint;	/* save transfer point */
+	u_int		stag;		/* save tag register */
+	u_int		soffset;	/* save offset register */
+	int		chan_num;	/* channel NO. */
+	u_char		comflg;		/* flag for save comand pointer */
+	u_char		intr_flg;	/* interrupt flag. SCSI_INTEN/INTDIS */
+};
+
+struct sc_scb {
+	TAILQ_ENTRY(sc_scb) chain;
+	struct scsipi_xfer *xs;
+	int	flags;
+
+	struct sc_softc *scb_softc;
+	struct sc_map *sc_map;
+	u_char	*sc_cpoint;		/* pointer to buffer address */
+	u_int	sc_ctrnscnt;		/* transfer count */
+	u_int	sc_ctag;
+	u_int	sc_coffset;
+
+	u_char	istatus;
+	u_char	tstatus;
+	u_char	identify;
+	u_char	message;
+	u_char	msgbuf[20];
+};
+
+#define	NTARGET 8
+
+struct sc_softc {
+	struct device sc_dev;
+	struct scsipi_link sc_link;
+
+	TAILQ_HEAD(scb_list, sc_scb) ready_list, free_list;
+	struct sc_scb sc_scb[3*NTARGET];
+
+	int inuse[NTARGET];
+	struct sc_map sc_map[NTARGET];
+	struct sc_chan_stat chan_stat[NTARGET];	/* SCSI channel status */
+	int sel_stat[NTARGET];			/* target select status */
+
+	int scsi_1185AQ;
+	int pad_start;
+
+	int	wbc;	/* # of channel that is waiting for scsi bus free */	
+	int	wrc;	/* # of channel that is waiting for reselection */	
+	struct sc_chan_stat *ip;
+			/* In progress channel. Same as ISTAT.IP */
+	int	ipc;		/* number of in progress channel. */
+	int	dma_stat;	/* OFF = DMAC is not used */
+#define SC_DMAC_RD	1
+#define SC_DMAC_WR	2
+
+	struct sc_chan_stat *wbq_actf;		/* forword active pointer */
+	struct sc_chan_stat *wbq_actl;		/* last active pointer */
+
+	u_char	*act_cmd_pointer;
+	u_char	*min_point[NTARGET];
+	int pad_cnt[NTARGET];
+	char min_cnt[NTARGET];
+	char sync_tr[NTARGET];			/* sync/async flag */
+	char mout_flag[NTARGET];
+	char perr_flag[NTARGET];
+	int int_stat1;
+	int int_stat2;
+	int min_flag;
+	int lastcmd;
+};
+
+/*
+ * sel_stat values
+ */
+#define	SEL_WAIT	0
+#define	SEL_START	1
+#define	SEL_TIMEOUT	2
+#define	SEL_ARBF	3
+#define	SEL_SUCCESS	4
+#define	SEL_RSLD	5
+#define	SEL_RSL_WAIT	6
+
+/*
+ * mout_flag values
+ */
+#define MOUT_IDENTIFY	1
+#define MOUT_SYNC_TR	2
+
+
 struct scintsw {
 /*00*/	int	(*sci_inthandler)();	/* pointer to interrupt handler */
 /*04*/	int	sci_ctlr;		/* controller number */
 /*08*/
-};
-
-struct sc_data {
-/*00*/	struct scsi	*scd_scaddr;	/* pointer to struct scsi */
-/*04*/	vm_offset_t	scd_vaddr;	/* pointer to buffer address */
-/*08*/	int		scd_count;	/* buffer size */
-/*0c*/
 };
 
 #endif /* !__SCSIREG__ */
