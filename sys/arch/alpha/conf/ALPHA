@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.14 1996/05/20 02:58:53 cgd Exp $
+#	$NetBSD: ALPHA,v 1.14.4.1 1996/05/25 22:06:55 jtc Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -41,8 +41,9 @@ options		NULLFS		# Null file system layer
 options		KERNFS		# Kernel variable file system (/kern)
 options		FDESC		# File descriptor file system (/dev/fd)
 options		PORTAL		# Portal file system
-options		UMAP		# User-mapping file system layer
+options		UMAPFS		# User-mapping file system layer
 options		PROCFS		# Process file system (/proc)
+options		UNION		# union file system
 
 # Networking options
 options		INET		# Internet protocol suite

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.30 1996/05/13 07:13:23 mrg Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.30.4.1 1996/05/25 22:10:14 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -1697,9 +1697,8 @@ union_print(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	printf("\ttag VT_UNION, vp=%x, uppervp=%x, lowervp=%x\n",
-			(unsigned int) vp, (unsigned int) UPPERVP(vp),
-			(unsigned int) LOWERVP(vp));
+	printf("\ttag VT_UNION, vp=%p, uppervp=%p, lowervp=%p\n",
+	    vp, UPPERVP(vp), LOWERVP(vp));
 	if (UPPERVP(vp))
 		vprint("uppervp", UPPERVP(vp));
 	if (LOWERVP(vp))
