@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.10 2002/05/15 17:40:12 thorpej Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.11 2002/05/15 18:37:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -35,7 +35,6 @@
  * We want to contro both device & function probe order.
  */
 #define		__PCI_BUS_DEVORDER
-#undef		__PCI_DEV_FUNCORDER
 
 /*
  * Forward declarations.
@@ -78,9 +77,6 @@ void		pci_attach_hook(struct device *, struct device *,
 				     struct pcibus_attach_args *);
 #ifdef __PCI_BUS_DEVORDER
 int		pci_bus_devorder(pci_chipset_tag_t, int, char *);
-#endif
-#ifdef __PCI_DEV_FUNCORDER
-int		pci_dev_funcorder(pci_chipset_tag_t, int, int, char *);
 #endif
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
