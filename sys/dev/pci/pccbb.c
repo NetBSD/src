@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.13 2000/01/13 09:05:41 joda Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.14 2000/01/17 12:57:27 joda Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -380,7 +380,22 @@ cb_chipset(pci_id, namep, flagp)
 
 
 
+static void
+pccbb_shutdown(void *arg)
+{
+    struct pccbb_softc *sc = arg;
+    pcireg_t command;
 
+    DPRINTF(("%s: shutdown\n", sc->sc_dev.dv_xname));
+    bus_space_write_4(sc->sc_base_memt, sc->sc_base_memh, CB_SOCKET_MASK, 0);
+    
+    command = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
+    
+    command &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+		 PCI_COMMAND_MASTER_ENABLE);
+    pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, command);
+    
+}
 
 void
 pccbbattach(parent, self, aux)
@@ -491,6 +506,8 @@ pccbbattach(parent, self, aux)
 
   /* bus bridge initialisation */
   pccbb_chipinit(sc);
+
+  shutdownhook_establish(pccbb_shutdown, sc);
 
 #if __NetBSD_Version__ > 103060000
   config_defer(self, pccbb_pci_callback);
