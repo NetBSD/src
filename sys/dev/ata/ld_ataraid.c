@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.12 2004/09/17 23:21:53 enami Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.13 2004/10/28 07:07:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.12 2004/09/17 23:21:53 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.13 2004/10/28 07:07:39 yamt Exp $");
 
 #include "rnd.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.12 2004/09/17 23:21:53 enami Exp $"
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.22 2004/09/25 16:27:38 thorpej Exp $	*/
+/*	$NetBSD: rl.c,v 1.23 2004/10/28 07:07:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.22 2004/09/25 16:27:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.23 2004/10/28 07:07:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.22 2004/09/25 16:27:38 thorpej Exp $");
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/stat.h>
 #include <sys/dkio.h>
 #include <sys/fcntl.h>

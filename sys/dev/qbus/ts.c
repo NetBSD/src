@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.11 2003/08/07 16:31:17 agc Exp $ */
+/*	$NetBSD: ts.c,v 1.12 2004/10/28 07:07:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.11 2003/08/07 16:31:17 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.12 2004/10/28 07:07:41 yamt Exp $");
 
 #undef	TSDEBUG
 
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.11 2003/08/07 16:31:17 agc Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/file.h>

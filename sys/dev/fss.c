@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.9 2004/06/20 18:55:58 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.10 2004/10/28 07:07:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.9 2004/06/20 18:55:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.10 2004/10/28 07:07:39 yamt Exp $");
 
 #include "fss.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.9 2004/06/20 18:55:58 hannken Exp $");
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>

@@ -1,8 +1,8 @@
-/*	$NetBSD: bufq_disksort.c,v 1.2 2004/10/28 07:07:46 yamt Exp $	*/
-/*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
+/*	$NetBSD: bufq.h,v 1.1 2004/10/28 07:07:47 yamt Exp $	*/
+/*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
  */
 
 /*
- * Copyright (c) 1982, 1986, 1988, 1993
+ * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
@@ -71,135 +71,76 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_disksubr.c	8.5 (Berkeley) 1/21/94
+ *	@(#)buf.h	8.9 (Berkeley) 3/30/95
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_disksort.c,v 1.2 2004/10/28 07:07:46 yamt Exp $");
+#if !defined(_KERNEL)
+#error not supposed to be exposed to userland.
+#endif
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/bufq.h>
-#include <sys/malloc.h>
+struct buf;
 
 /*
- * Seek sort for disks.
- *
- * There are actually two queues, sorted in ascendening order.  The first
- * queue holds those requests which are positioned after the current block;
- * the second holds requests which came in after their position was passed.
- * Thus we implement a one-way scan, retracting after reaching the end of
- * the drive to the first request on the second queue, at which time it
- * becomes the first queue.
- *
- * A one-way scan is natural because of the way UNIX read-ahead blocks are
- * allocated.
+ * Device driver buffer queue.
  */
-
-struct bufq_disksort {
-	TAILQ_HEAD(, buf) bq_head;	/* actual list of buffers */
+struct bufq_state {
+	void (*bq_put)(struct bufq_state *, struct buf *);
+	struct buf *(*bq_get)(struct bufq_state *, int);
+	void *bq_private;
+	int bq_flags;			/* Flags from bufq_alloc() */
 };
 
-static void
-bufq_disksort_put(struct bufq_state *bufq, struct buf *bp)
+/*
+ * Flags for bufq_alloc.
+ */
+#define BUFQ_SORT_RAWBLOCK	0x0001	/* Sort by b_rawblkno */
+#define BUFQ_SORT_CYLINDER	0x0002	/* Sort by b_cylinder, b_rawblkno */
+
+#define BUFQ_FCFS		0x0010	/* First-come first-serve */
+#define BUFQ_DISKSORT		0x0020	/* Min seek sort */
+#define BUFQ_READ_PRIO		0x0030	/* Min seek and read priority */
+#define BUFQ_PRIOCSCAN		0x0040	/* Per-priority CSCAN */
+
+#define BUFQ_SORT_MASK		0x000f
+#define BUFQ_METHOD_MASK	0x00f0
+
+extern int bufq_disk_default_strat;
+#define	BUFQ_DISK_DEFAULT_STRAT()	bufq_disk_default_strat
+void	bufq_alloc(struct bufq_state *, int);
+void	bufq_free(struct bufq_state *);
+
+#define BUFQ_PUT(bufq, bp) \
+	(*(bufq)->bq_put)((bufq), (bp))	/* Put buffer in queue */
+#define BUFQ_GET(bufq) \
+	(*(bufq)->bq_get)((bufq), 1)	/* Get and remove buffer from queue */
+#define BUFQ_PEEK(bufq) \
+	(*(bufq)->bq_get)((bufq), 0)	/* Get buffer from queue */
+
+void	bufq_fcfs_init(struct bufq_state *);
+void	bufq_disksort_init(struct bufq_state *);
+void	bufq_readprio_init(struct bufq_state *);
+void	bufq_priocscan_init(struct bufq_state *);
+
+static __inline int buf_inorder(const struct buf *, const struct buf *, int)
+    __unused;
+
+#include <sys/null.h> /* for NULL */
+
+/*
+ * Check if two buf's are in ascending order.
+ */
+static __inline int
+buf_inorder(const struct buf *bp, const struct buf *bq, int sortby)
 {
-	struct bufq_disksort *disksort = bufq->bq_private;
-	struct buf *bq, *nbq;
-	int sortby;
 
-	sortby = bufq->bq_flags & BUFQ_SORT_MASK;
+	if (bp == NULL || bq == NULL)
+		return (bq == NULL);
 
-	bq = TAILQ_FIRST(&disksort->bq_head);
-
-	/*
-	 * If the queue is empty it's easy; we just go on the end.
-	 */
-	if (bq == NULL) {
-		TAILQ_INSERT_TAIL(&disksort->bq_head, bp, b_actq);
-		return;
-	}
-
-	/*
-	 * If we lie before the currently active request, then we
-	 * must locate the second request list and add ourselves to it.
-	 */
-	if (buf_inorder(bp, bq, sortby)) {
-		while ((nbq = TAILQ_NEXT(bq, b_actq)) != NULL) {
-			/*
-			 * Check for an ``inversion'' in the normally ascending
-			 * block numbers, indicating the start of the second
-			 * request list.
-			 */
-			if (buf_inorder(nbq, bq, sortby)) {
-				/*
-				 * Search the second request list for the first
-				 * request at a larger block number.  We go
-				 * after that; if there is no such request, we
-				 * go at the end.
-				 */
-				do {
-					if (buf_inorder(bp, nbq, sortby))
-						goto insert;
-					bq = nbq;
-				} while ((nbq =
-				    TAILQ_NEXT(bq, b_actq)) != NULL);
-				goto insert;		/* after last */
-			}
-			bq = nbq;
-		}
-		/*
-		 * No inversions... we will go after the last, and
-		 * be the first request in the second request list.
-		 */
-		goto insert;
-	}
-	/*
-	 * Request is at/after the current request...
-	 * sort in the first request list.
-	 */
-	while ((nbq = TAILQ_NEXT(bq, b_actq)) != NULL) {
-		/*
-		 * We want to go after the current request if there is an
-		 * inversion after it (i.e. it is the end of the first
-		 * request list), or if the next request is a larger cylinder
-		 * than our request.
-		 */
-		if (buf_inorder(nbq, bq, sortby) ||
-		    buf_inorder(bp, nbq, sortby))
-			goto insert;
-		bq = nbq;
-	}
-	/*
-	 * Neither a second list nor a larger request... we go at the end of
-	 * the first list, which is the same as the end of the whole schebang.
-	 */
-insert:	TAILQ_INSERT_AFTER(&disksort->bq_head, bq, bp, b_actq);
-}
-
-static struct buf *
-bufq_disksort_get(struct bufq_state *bufq, int remove)
-{
-	struct bufq_disksort *disksort = bufq->bq_private;
-	struct buf *bp;
-
-	bp = TAILQ_FIRST(&disksort->bq_head);
-
-	if (bp != NULL && remove)
-		TAILQ_REMOVE(&disksort->bq_head, bp, b_actq);
-
-	return (bp);
-}
-
-void
-bufq_disksort_init(struct bufq_state *bufq)
-{
-	struct bufq_disksort *disksort;
-
-	bufq->bq_get = bufq_disksort_get;
-	bufq->bq_put = bufq_disksort_put;
-	MALLOC(bufq->bq_private, struct bufq_disksort *,
-	    sizeof(struct bufq_disksort), M_DEVBUF, M_ZERO);
-	disksort = (struct bufq_disksort *)bufq->bq_private;
-	TAILQ_INIT(&disksort->bq_head);
+	if (sortby == BUFQ_SORT_CYLINDER) {
+		if (bp->b_cylinder != bq->b_cylinder)
+			return bp->b_cylinder < bq->b_cylinder;
+		else
+			return bp->b_rawblkno < bq->b_rawblkno;
+	} else
+		return bp->b_rawblkno < bq->b_rawblkno;
 }

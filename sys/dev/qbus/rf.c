@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.6 2004/10/06 12:12:42 wiz Exp $	*/
+/*	$NetBSD: rf.c,v 1.7 2004/10/28 07:07:41 yamt Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.6 2004/10/06 12:12:42 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.7 2004/10/28 07:07:41 yamt Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.6 2004/10/06 12:12:42 wiz Exp $");
 
 /* physio / buffer handling */
 #include <sys/buf.h>
+#include <sys/bufq.h>
 
 /* tsleep / sleep / wakeup */
 #include <sys/proc.h>

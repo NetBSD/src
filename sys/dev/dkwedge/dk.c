@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.4 2004/10/26 22:50:16 thorpej Exp $	*/
+/*	$NetBSD: dk.c,v 1.5 2004/10/28 07:07:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.4 2004/10/26 22:50:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.5 2004/10/28 07:07:40 yamt Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.4 2004/10/26 22:50:16 thorpej Exp $");
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/fcntl.h>
+#include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
 #include <sys/conf.h>

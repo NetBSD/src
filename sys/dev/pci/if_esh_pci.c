@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.15 2004/08/21 23:48:33 thorpej Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.16 2004/10/28 07:07:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.15 2004/08/21 23:48:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.16 2004/10/28 07:07:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.15 2004/08/21 23:48:33 thorpej Exp 
 #include <sys/select.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

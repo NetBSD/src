@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.20 2004/05/27 23:48:34 thorpej Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.21 2004/10/28 07:07:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.20 2004/05/27 23:48:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.21 2004/10/28 07:07:41 yamt Exp $");
 
 #include "rnd.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.20 2004/05/27 23:48:34 thorpej Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
