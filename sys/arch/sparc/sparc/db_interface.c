@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.45 2002/12/16 16:59:11 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.46 2002/12/19 10:30:39 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -264,17 +264,16 @@ db_resume_others(void)
 static void
 ddb_suspend(struct trapframe *tf)
 {
-	db_regs_t regs;
+	volatile db_regs_t regs;
 
 	regs.db_tf = *tf;
 	regs.db_fr = *(struct frame *)tf->tf_out[6];
 
 	cpuinfo.ci_ddb_regs = &regs;
-	while (cpuinfo.flags & CPUFLG_PAUSED)
-		cache_flush((caddr_t)&cpuinfo.flags, sizeof(cpuinfo.flags));
-	cpuinfo.ci_ddb_regs = 0;
+	while (cpuinfo.flags & CPUFLG_PAUSED) /*void*/;
+	cpuinfo.ci_ddb_regs = NULL;
 }
-#endif
+#endif /* MULTIPROCESSOR */
 
 /*
  *  kdb_trap - field a TRACE or BPT trap
@@ -528,7 +527,7 @@ db_cpu_cmd(addr, have_addr, count, modif)
 		return;
 	}
 	db_printf("using cpu %ld", addr);
-	ddb_regp = ci->ci_ddb_regs;
+	ddb_regp = (void *)ci->ci_ddb_regs;
 }
 
 #endif /* MULTIPROCESSOR */
