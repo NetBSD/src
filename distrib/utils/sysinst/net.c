@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.48 1999/06/20 07:55:00 cgd Exp $	*/
+/*	$NetBSD: net.c,v 1.49 1999/06/22 00:57:06 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -493,7 +493,8 @@ get_via_ftp()
 			/* Error getting the file.  Bad host name ... ? */
 			msg_display(MSG_ftperror_cont);
 			getchar();
-			puts(CL);
+			puts(CL);		/* XXX */
+			wclear(stdscr);
 			wrefresh(stdscr);
 			msg_display(MSG_ftperror);
 			process_menu(MENU_yesno);
@@ -505,7 +506,8 @@ get_via_ftp()
 			list++;
 
 	}
-	puts(CL); /* Just to make sure. */
+	puts(CL);		/* XXX */
+	wclear(stdscr);
 	wrefresh(stdscr);
 #ifndef DEBUG
 	chdir("/");	/* back to current real root */

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.42 1999/06/20 06:08:15 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.43 1999/06/22 00:57:06 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -539,7 +539,8 @@ extract_dist()
 		list++;
 	}
 
-	puts(CL);
+	puts(CL);		/* XXX */
+	wclear(stdscr);
 	wrefresh(stdscr);
 
 	if (tarstats.nerror == 0 && tarstats.nsuccess == tarstats.nselected) {

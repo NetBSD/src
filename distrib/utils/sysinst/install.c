@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.17 1999/06/20 06:08:14 cgd Exp $	*/
+/*	$NetBSD: install.c,v 1.18 1999/06/22 00:57:06 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,7 +117,7 @@ do_install()
 	msg_display(MSG_disksetupdone);
 
 	getchar();
-	puts(CL); /* just to make sure */
+	puts(CL);		/* XXX */
 	wclear(stdscr);
 	wrefresh(stdscr);
 

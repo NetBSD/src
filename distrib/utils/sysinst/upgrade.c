@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.18 1999/06/20 06:08:15 cgd Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.19 1999/06/22 00:57:06 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -97,7 +97,7 @@ do_upgrade()
 	/* Done with disks. Ready to get and unpack tarballs. */
 	msg_display(MSG_disksetupdone);
 	getchar();
-	puts(CL); /* just to make sure */
+	puts(CL);		/* XXX */
 	wclear(stdscr);
 	wrefresh(stdscr);
 
@@ -209,7 +209,8 @@ do_reinstall_sets()
 		return;
 
 	fflush(stdout);
-	puts(CL);
+	puts(CL);		/* XXX */
+	wclear(stdscr);
 	wrefresh(stdscr);
 
 	/* Unpack the distribution. */
