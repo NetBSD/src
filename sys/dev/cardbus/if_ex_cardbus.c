@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.11 2000/02/05 18:11:55 augustss Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.12 2000/03/01 20:50:37 thorpej Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -357,11 +357,12 @@ ex_cardbus_detach(self, arg)
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
 
 		if (psc->sc_cardtype == EX_3C575B) {
-			Cardbus_mapreg_unmap(ct, CARDBUS_MAPREG_TYPE_MEM,
+			Cardbus_mapreg_unmap(ct,
+			    CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
 			    psc->sc_funct, psc->sc_funch, psc->sc_funcsize);
 		}
 
-		Cardbus_mapreg_unmap(ct, CARDBUS_MAPREG_TYPE_IO, sc->sc_iot,
+		Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, sc->sc_iot,
 		    sc->sc_ioh, psc->sc_mapsize);
 	}
 	return (rv);
