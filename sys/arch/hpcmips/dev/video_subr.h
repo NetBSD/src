@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.h,v 1.1 2000/05/08 21:57:56 uch Exp $	*/
+/*	$NetBSD: video_subr.h,v 1.2 2000/05/13 03:12:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,8 +27,8 @@
  */
 
 #define LEGAL_CLUT_INDEX(x)	((x) >= 0 && (x) <= 255)
-#define RGB24(r, g, b)		((((r) << 24) & 0x00ff0000) |		\
-				 (((g) << 16) & 0x0000ff00) |		\
+#define RGB24(r, g, b)		((((r) << 16) & 0x00ff0000) |		\
+				 (((g) << 8) & 0x0000ff00) |		\
 				 (((b)) & 0x000000ff))
 
 int	cmap_work_alloc __P((u_int8_t **, u_int8_t **, u_int8_t **,
