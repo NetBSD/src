@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: rwall.c,v 1.4 1993/08/01 18:08:48 mycroft Exp $";
+static char rcsid[] = "$Id: rwall.c,v 1.5 1993/12/10 19:24:39 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -48,23 +48,27 @@ static char rcsid[] = "$Id: rwall.c,v 1.4 1993/08/01 18:08:48 mycroft Exp $";
  * is entitled "Mechanisms for Broadcast and Selective Broadcast".
  */
 
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/uio.h>
-#include <utmp.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <pwd.h>
+#include <unistd.h>
 #include <paths.h>
 
 #include <rpc/rpc.h>
 #include <rpcsvc/rwall.h>
 
+struct timeval timeout = { 25, 0 };
 int mbufsize;
 char *mbuf;
 
-/* ARGSUSED */
+void makemsg ();
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -96,7 +100,7 @@ main(argc, argv)
 		exit(1);
 	}
 
-	if (clnt_call(cl, WALLPROC_WALL, xdr_wrapstring, &mbuf, xdr_void, &res, NULL) != RPC_SUCCESS) {
+	if (clnt_call(cl, WALLPROC_WALL, xdr_wrapstring, &mbuf, xdr_void, &res, timeout) != RPC_SUCCESS) {
 		/*
 		 * An error occurred while calling the server. 
 		 * Print error message and die.
@@ -108,18 +112,17 @@ main(argc, argv)
 	exit(0);
 }
 
+void
 makemsg(fname)
 	char *fname;
 {
-	register int ch, cnt;
 	struct tm *lt;
 	struct passwd *pw;
 	struct stat sbuf;
-	time_t now, time();
+	time_t now;
 	FILE *fp;
 	int fd;
-	char *p, *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[15];
-	char *getlogin(), *strcpy(), *ttyname();
+	char *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[32];
 
 	(void)strcpy(tmpname, _PATH_TMP);
 	(void)strcat(tmpname, "/wall.XXXXXX");
