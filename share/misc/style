@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.20 2001/10/23 18:51:05 kleink Exp $ */
+/* $NetBSD: style,v 1.20.2.1 2003/06/02 14:56:46 tron Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.20 2001/10/23 18:51:05 kleink Exp $");
+__RCSID("$NetBSD: style,v 1.20.2.1 2003/06/02 14:56:46 tron Exp $");
 #endif /* !__lint */
 
 /*
@@ -331,7 +331,9 @@ function(int a1, int a2, float fl, int a4)
 		err(1, NULL);
 	if ((six = (int *)overflow()) == NULL)
 		errx(1, "Number overflowed.");
-	return (eight);
+
+	/* No parentheses are needed around the return value. */
+	return eight;
 }
 
 /*
