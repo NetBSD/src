@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.7 2001/04/25 17:53:43 bouyer Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.8 2001/04/28 14:48:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -574,7 +574,7 @@ usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 #ifdef USSCANNER_DEBUG
 	if (usscannerdebug > 15)
-		xs->xs_periph->periph_flags |= DEBUGLEVEL;
+		xs->xs_periph->periph_flags |= 1; /* XXX 1 */
 
 	if (sc->sc_state != UAS_SENSECMD) {
 		printf("%s: !UAS_SENSECMD\n", USBDEVNAME(sc->sc_dev));
@@ -620,7 +620,7 @@ usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 #ifdef USSCANNER_DEBUG
 	if (usscannerdebug > 15)
-		xs->xs_periph->periph_flags |= DEBUGLEVEL;
+		xs->xs_periph->periph_flags |= 1;	/* XXX 1 */
 
 	if (sc->sc_state != UAS_CMD) {
 		printf("%s: !UAS_CMD\n", USBDEVNAME(sc->sc_dev));

@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.4 2001/04/25 17:53:42 bouyer Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.5 2001/04/28 14:48:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -552,7 +552,7 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 		return;       
 	}
 
-	DIF(UDMASS_UPPER, periph->periph_dbflags |= DEBUGLEVEL);
+	DIF(UDMASS_UPPER, periph->periph_dbflags |= 1); /* XXX 1 */
 	periph->periph_channel = chan;
 	periph->periph_switch = &atapi_probe_periphsw;
 	periph->periph_target = target;
