@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.3 2001/06/07 23:05:51 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.4 2001/06/08 14:32:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -852,16 +852,19 @@ sq_rxintr(struct sq_softc *sc)
 		if (pktstat & RXSTAT_OFLOW)
 		    printf("%s: receive FIFO overflow\n", sc->sc_dev.dv_xname);
 
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
+				sc->sc_rxmap[i]->dm_mapsize, 
+				BUS_DMASYNC_PREREAD);
 		SQ_INIT_RXDESC(sc, i);
 		continue;
 	    }
 
 	    if (sq_add_rxbuf(sc, i) != 0) {
 		ifp->if_ierrors++;
-		SQ_INIT_RXDESC(sc, i);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
 				sc->sc_rxmap[i]->dm_mapsize, 
 				BUS_DMASYNC_PREREAD);
+		SQ_INIT_RXDESC(sc, i);
 		continue;
 	    }
 
