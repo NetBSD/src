@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_private.h,v 1.3 1996/09/30 23:49:30 cgd Exp $	*/
+/*	$NetBSD: nlist_private.h,v 1.4 1997/03/29 21:02:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,11 +30,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef __alpha__
-#define	NLIST_ECOFF
-#define	NLIST_ELF64
+#if defined(__alpha__)
+#  define	NLIST_ECOFF
+#  define	NLIST_ELF64
+#elif defined(__mips__)
+#  define	NLIST_AOUT
+#  define	NLIST_ECOFF
+#  define	NLIST_ELF32
+#elif defined(__powerpc__)
+#  define	NLIST_AOUT
+#  define	NLIST_ELF32
 #else
-#define	NLIST_AOUT
+#  define	NLIST_AOUT
 /* #define	NLIST_ECOFF */
 /* #define	NLIST_ELF32 */
 /* #define	NLIST_ELF64 */
