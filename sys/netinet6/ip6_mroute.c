@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.28 2002/05/14 02:58:33 matt Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.28.4.1 2002/07/29 15:42:22 lukem Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.28 2002/05/14 02:58:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.28.4.1 2002/07/29 15:42:22 lukem Exp $");
 
 #include "opt_inet.h"
 
@@ -1475,7 +1475,7 @@ phyint_send(ip6, mifp, m)
 	 * Put the packet into the sending queue of the outgoing interface
 	 * if it would fit in the MTU of the interface.
 	 */
-	if (mb_copy->m_pkthdr.len < ifp->if_mtu || ifp->if_mtu < IPV6_MMTU) {
+	if (mb_copy->m_pkthdr.len <= ifp->if_mtu || ifp->if_mtu < IPV6_MMTU) {
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;
