@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.112 1999/02/18 20:39:04 thorpej Exp $
+# $NetBSD: GENERIC,v 1.113 1999/02/22 07:44:50 fvdl Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -179,6 +179,7 @@ ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 #opl*	at	sv?
 
 # MII/PHY support
+exphy*	at	mii? phy ?
 inphy*	at	mii? phy ?
 nsphy*	at	mii? phy ?
 qsphy*	at	mii? phy ? 
