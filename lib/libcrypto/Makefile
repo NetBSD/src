@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2000/06/16 06:16:38 thorpej Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -16,11 +16,15 @@
 #	sjg@quick.com.au
 #
 
+# XXX There's a bit of work to do before we can enable warnings.
+WARNS=0
+
 LIB=	crypto
 CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto
 
-CRYPTODIST=	${.CURDIR}/../../dist
-.include "../../Makefile.openssl"
+CRYPTODIST=	${.CURDIR}/../../crypto/dist
+
+.include "../../crypto/Makefile.openssl"
 .PATH: ${OPENSSLSRC}
 
 .include "srcs.inc"
@@ -52,36 +56,22 @@ INCS+=	opensslv.h pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h
 INCS+=	ripemd.h safestack.h sha.h stack.h tmdiff.h
 INCS+=	txt_db.h x509.h x509_vfy.h x509v3.h
 
-INCSDIR=/usr/include/openssl
-
-.if PATENTEDOPENSSLSRC
-.include "psrcs.inc"
-
+.if !defined(USELESS_CRYPTO)
 INCS+=	rsa.h rc5.h idea.h
 INCS+=	rsaref.h
 
 .PATH: ${OPENSSLSRC}/rsaref
 .endif
 
+INCSDIR=/usr/include/openssl
+
 # this rebuilds the `srcs.inc' and the .inc files it reads.
 # note that we have no idea, rc5 or rsa here so we include
 # them explicitely above if we are using these ciphers.
 
-update_inc: update_non_patent update_patent
-
-update_non_patent:
-	(cd ${.CURDIR}; find ../../dist/openssl/crypto \
+update_inc:
+	(cd ${.CURDIR}; find ${OPENSSLSRC}/crypto \
 	    -name Makefile.ssl | \
-	    perl ../../dist/openssl/extsrcs.pl 2> srcs.inc )
-
-update_patent:
-.if exists(${PATENTEDOPENSSLSRC}/crypto)
-	(cd ${.CURDIR}; find ${PATENTEDOPENSSLSRC}/crypto/rsa \
-	    ${PATENTEDOPENSSLSRC}/crypto/rc5 \
-	    ${PATENTEDOPENSSLSRC}/crypto/idea \
-	    -name Makefile.ssl | \
-	    perl ../../dist/openssl/extsrcs.pl \
-		-D '$${PATENTEDOPENSSLSRC}' 2> psrcs.inc )
-.endif
+	    perl ${OPENSSLSRC}/extsrcs.pl 2> srcs.inc )
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.openssl,v 1.1 2000/06/16 04:16:02 thorpej Exp $
+#	$NetBSD: Makefile.openssl,v 1.2 2000/06/16 06:16:37 thorpej Exp $
 
 .ifndef _MAKEFILE_OPENSSL_INCLUDED
 _MAKEFILE_OPENSSL_INCLUDED=1
@@ -8,7 +8,7 @@ _MAKEFILE_OPENSSL_INCLUDED=1
 OPENSSLSRC=	${CRYPTODIST}/openssl
 CPPFLAGS+= -DOPENSSLDIR=\"/etc/openssl\"
 
-.if !PATENTEDOPENSSLSRC
+.if defined(USELESS_CRYPTO)
 CPPFLAGS+= -DNO_IDEA -DNO_RC5 -DNO_RSA
 .endif
 

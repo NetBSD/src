@@ -1,4 +1,4 @@
-#	$NetBSD: ssl.inc,v 1.1.1.1 2000/06/16 04:54:48 thorpej Exp $
+#	$NetBSD: ssl.inc,v 1.2 2000/06/16 06:16:40 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,7 +9,7 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/ssl
 
-.if exists(${PATENTEDOPENSSLSRC}/crypto)
+.if !defined(USELESS_CRYPTO)
 SRCS+=	s2_meth.c  s2_srvr.c  s2_clnt.c  s2_lib.c  s2_enc.c s2_pkt.c
 .else
 CPPFLAGS+=	-DNO_SSL2
