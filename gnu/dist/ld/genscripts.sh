@@ -39,15 +39,12 @@ if [ "x${LIB_PATH}" = "x" ] ; then
   if [ "x${host}" = "x${target}" ] ; then
     if [ "x${DEFAULT_EMULATION}" = "x${EMULATION_NAME}" ] ; then
       # Native.
-      LIB_PATH=/lib:/usr/lib
+      LIB_PATH=/usr/lib
       if [ -n "${NATIVE_LIB_DIRS}" ]; then
 	LIB_PATH=${LIB_PATH}:${NATIVE_LIB_DIRS}
       fi
       if [ "${libdir}" != /usr/lib ]; then
 	LIB_PATH=${LIB_PATH}:${libdir}
-      fi
-      if [ "${libdir}" != /usr/local/lib ] ; then
-	LIB_PATH=${LIB_PATH}:/usr/local/lib
       fi
     else
       # Native, but not default emulation.
@@ -58,9 +55,6 @@ if [ "x${LIB_PATH}" = "x" ] ; then
     LIB_PATH=
   fi
 fi
-
-# Always search $(tooldir)/lib, aka /usr/local/TARGET/lib.
-LIB_PATH=${LIB_PATH}:${tool_lib}
 
 LIB_SEARCH_DIRS=`echo ${LIB_PATH} | tr ':' ' ' | sed -e 's/\([^ ][^ ]*\)/SEARCH_DIR(\1);/g'`
 
