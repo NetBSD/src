@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vnops.c,v 4.2 1994/01/02 15:28:44 jsp Exp
  *
- *	$Id: procfs_vnops.c,v 1.18 1994/04/12 02:55:53 cgd Exp $
+ *	$Id: procfs_vnops.c,v 1.19 1994/04/15 20:49:29 cgd Exp $
  */
 
 /*
@@ -56,7 +56,7 @@
 #include <sys/resourcevar.h>
 #include <sys/ptrace.h>
 #include <miscfs/procfs/procfs.h>
-#include <vm/vm.h>	/* for page_size */
+#include <vm/vm.h>
 
 #include <machine/reg.h>
 
@@ -312,7 +312,7 @@ procfs_getattr(vp, vap, cred, p)
 	vap->va_mode = pfs->pfs_mode;
 	vap->va_fileid = pfs->pfs_fileno;
 	vap->va_flags = 0;
-	vap->va_blocksize = page_size;
+	vap->va_blocksize = PAGE_SIZE;
 	vap->va_bytes = vap->va_size = 0;
 
 	/*

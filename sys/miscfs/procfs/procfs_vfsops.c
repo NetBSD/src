@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_vfsops.c,v 1.12 1994/04/14 04:06:10 cgd Exp $
+ *	$Id: procfs_vfsops.c,v 1.13 1994/04/15 20:49:27 cgd Exp $
  */
 
 /*
@@ -55,7 +55,7 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <miscfs/procfs/procfs.h>
-#include <vm/vm.h>			/* for page_size */
+#include <vm/vm.h>
 
 /*
  * VFS Operations.
@@ -170,8 +170,8 @@ procfs_statfs(mp, sbp, p)
 #else
 	sbp->f_type = 0;
 #endif
-	sbp->f_fsize = page_size >> 2;
-	sbp->f_bsize = page_size;
+	sbp->f_fsize = PAGE_SIZE >> 2;
+	sbp->f_bsize = PAGE_SIZE;
 	sbp->f_blocks = 1;	/* avoid divide by zero in some df's */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
