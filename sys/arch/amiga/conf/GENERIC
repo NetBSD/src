@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.140 2000/03/23 22:44:42 is Exp $
+#	$NetBSD: GENERIC,v 1.141 2000/04/01 20:21:27 is Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.140 $"
+#ident 		"GENERIC-$Revision: 1.141 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -435,9 +435,11 @@ scsibus*	at drsc0
 sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cds
-ss*	at scsibus? target ? lun ?	# scsi scanner
 ch*	at scsibus? target ? lun ?	# scsi autochangers
+#ifndef INSTALL_CONFIGURATION
+ss*	at scsibus? target ? lun ?	# scsi scanner
 uk*	at scsibus? target ? lun ?	# scsi unknown
+#endif
 
 pseudo-device	loop			# loopback network interface
 pseudo-device	sl		1	# SLIP network interfaces
