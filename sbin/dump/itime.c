@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,31 +32,33 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)itime.c	5.15 (Berkeley) 6/18/92"; */
-static char *rcsid = "$Id: itime.c,v 1.1 1993/12/22 10:24:44 cgd Exp $";
+/*static char sccsid[] = "from: @(#)itime.c	8.1 (Berkeley) 6/5/93";*/
+static char *rcsid = "$Id: itime.c,v 1.2 1994/06/08 18:57:35 mycroft Exp $";
 #endif /* not lint */
 
-#ifdef sunos
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <ufs/fs.h>
-#else
 #include <sys/param.h>
 #include <sys/time.h>
+#ifdef sunos
+#include <sys/vnode.h>
+
+#include <ufs/fsdir.h>
+#include <ufs/inode.h>
+#include <ufs/fs.h>
+#else
+#include <ufs/ufs/dinode.h>
 #endif
-#include <ufs/dinode.h>
-#include <fcntl.h>
+
 #include <protocols/dumprestore.h>
+
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #ifdef __STDC__
-#include <time.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #endif
+
 #include "dump.h"
 
 struct	dumpdates **ddatev = 0;
@@ -64,11 +66,10 @@ int	nddates = 0;
 int	ddates_in = 0;
 struct	dumptime *dthead = 0;
 
-void	readdumptimes();
-int	getrecord();
-int	makedumpdate();
-
-static void dumprecout();
+static	void dumprecout __P((FILE *, struct dumpdates *));
+static	int getrecord __P((FILE *, struct dumpdates *));
+static	int makedumpdate __P((struct dumpdates *, char *));
+static	void readdumptimes __P((FILE *));
 
 void
 initdumptimes()
@@ -102,7 +103,7 @@ initdumptimes()
 	(void) fclose(df);
 }
 
-void
+static void
 readdumptimes(df)
 	FILE *df;
 {
@@ -233,7 +234,8 @@ dumprecout(file, what)
 }
 
 int	recno;
-int
+
+static int
 getrecord(df, ddatep)
 	FILE *df;
 	struct dumpdates *ddatep;
@@ -255,12 +257,12 @@ getrecord(df, ddatep)
 	return(0);
 }
 
-int
+static int
 makedumpdate(ddp, tbuf)
 	struct dumpdates *ddp;
 	char *tbuf;
 {
-	char un_buf[32];
+	char un_buf[128];
 
 	(void) sscanf(tbuf, DUMPINFMT, ddp->dd_name, &ddp->dd_level, un_buf);
 	ddp->dd_ddate = unctime(un_buf);
