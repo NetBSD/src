@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.1 2001/07/14 02:11:00 christos Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.2 2001/07/29 21:26:07 christos Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
 #ifndef	_MACH_EXEC_H_
 #define	_MACH_EXEC_H_
 
-void *exec_mach_copyargs __P((struct exec_package *, struct ps_strings *,
-    void *, void *));
+int exec_mach_copyargs __P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 int exec_mach_probe __P((char **));
 extern const struct emul emul_mach;
 
