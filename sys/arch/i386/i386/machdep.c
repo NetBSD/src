@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.213 1996/10/21 22:24:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -1557,8 +1557,7 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
     bpap, bshp)
 	bus_space_tag_t t;
 	bus_addr_t rstart, rend;
-	bus_size_t size, alignment;
-	bus_addr_t boundary;
+	bus_size_t size, alignment, boundary;
 	int cacheable;
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
