@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.7.4.10 1993/10/26 12:16:07 mycroft Exp $
+ *	$Id: npx.c,v 1.7.4.11 1993/11/08 20:18:55 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -41,6 +41,7 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
 
@@ -421,11 +422,13 @@ npxdna()
 {
 	if (npxtype == NONE)
 		return 0;
+#ifdef DIAGNOSTIC
 	if (npxproc != NULL) {
 		printf("npxdna: npxproc = %lx, curproc = %lx\n",
 		       (u_long) npxproc, (u_long) curproc);
-		panic("npxdna");
+		npxsave(&((struct pcb *)npxproc->p_addr)->pcb_savefpu);
 	}
+#endif
 
 	stop_emulating();
 	/*
