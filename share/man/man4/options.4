@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.168.2.3 2002/07/21 03:46:11 lukem Exp $
+.\"	$NetBSD: options.4,v 1.168.2.4 2002/12/15 11:22:15 jmc Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1018,6 +1018,15 @@ to a value less than
 .Em CHILD_MAX
 is not permitted, as this would result in a violation of the semantics of
 .St -p1003.1-90 .
+.It Cd options NOFILE=integer
+Sets the soft
+.Dv RLIMIT_NOFILE
+resource limit, which specifies the maximum number of open
+file descriptors for each process;
+this value is inherited by its child processes.
+It defaults to
+.Em OPEN_MAX ,
+which is currently defined to be 64.
 .It Cd options DEFCORENAME=string
 Sets the default value of the
 .Em kern.defcorename
