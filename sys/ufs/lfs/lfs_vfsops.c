@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.91 2003/02/17 23:48:21 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.92 2003/02/19 12:01:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.91 2003/02/17 23:48:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.92 2003/02/19 12:01:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1869,6 +1869,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	splx(s);
 
 	memset(mbp, 0, sizeof(*bp));
+	simple_lock_init(&mbp->b_interlock);
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
 	    vp, mbp, vp->v_numoutput, bytes);
 	mbp->b_bufsize = npages << PAGE_SHIFT;
