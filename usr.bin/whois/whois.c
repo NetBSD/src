@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)whois.c	5.11 (Berkeley) 3/2/91";
 #include <netdb.h>
 #include <stdio.h>
 
-#define	NICHOST	"nic.ddn.mil"
+#define	NICHOST	"whois.internic.net"
 
 main(argc, argv)
 	int argc;
