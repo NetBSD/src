@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.26 2002/11/29 08:31:06 grant Exp $	*/
+/*	$NetBSD: extract.c,v 1.27 2003/01/05 21:27:20 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.26 2002/11/29 08:31:06 grant Exp $");
+__RCSID("$NetBSD: extract.c,v 1.27 2003/01/05 21:27:20 agc Exp $");
 #endif
 #endif
 
@@ -145,7 +145,7 @@ extract_plist(char *home, package_t *pkg)
 	/* Open Package Database for writing */
 	if (pkgdb_open(0) == -1) {
 		cleanup(0);
-		err(1, "can't open pkgdb");
+		err(EXIT_FAILURE, "can't open pkgdb");
 	}
 	/* Do it */
 	while (p) {

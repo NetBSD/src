@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.56 2002/10/17 03:31:34 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.57 2003/01/05 21:27:27 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.56 2002/10/17 03:31:34 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.57 2003/01/05 21:27:27 agc Exp $");
 #endif
 #endif
 
@@ -184,7 +184,7 @@ fileURLHost(const char *fname, char *where, int max)
 	assert(max > 0);
 
 	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
-		errx(1, "fileURLhost called with a bad URL: `%s'", fname);
+		errx(EXIT_FAILURE, "fileURLhost called with a bad URL: `%s'", fname);
 	}
 	fname += i;
 	/* Do we have a place to stick our work? */
@@ -209,7 +209,7 @@ fileURLFilename(const char *fname, char *where, int max)
 	assert(max > 0);
 
 	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
-		errx(1, "fileURLFilename called with a bad URL: `%s'", fname);
+		errx(EXIT_FAILURE, "fileURLFilename called with a bad URL: `%s'", fname);
 	}
 	fname += i;
 	/* Do we have a place to stick our work? */
@@ -240,7 +240,7 @@ fileGetURL(const char *spec)
 
 	rp = NULL;
 	if (!IS_URL(spec)) {
-		errx(1, "fileGetURL was called with non-url arg '%s'", spec);
+		errx(EXIT_FAILURE, "fileGetURL was called with non-url arg '%s'", spec);
 	}
 
  	/* Some sanity checks on the URL */
@@ -378,7 +378,7 @@ fileFindByPath(const char *fname)
 		else {
 			char cwdtmp[MAXPATHLEN];
 			if (getcwd(cwdtmp, sizeof(cwdtmp)) == NULL)
-				errx(1, "getcwd");
+				errx(EXIT_FAILURE, "getcwd");
 			snprintf(tmp, sizeof(tmp), "%s/%s/%s", cwdtmp, cp2, fname);
 		}
 		cp = resolvepattern(tmp);

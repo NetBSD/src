@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.38 2002/11/23 22:31:18 jschauma Exp $	*/
+/*	$NetBSD: perform.c,v 1.39 2003/01/05 21:27:24 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.38 2002/11/23 22:31:18 jschauma Exp $");
+__RCSID("$NetBSD: perform.c,v 1.39 2003/01/05 21:27:24 agc Exp $");
 #endif
 #endif
 
@@ -180,7 +180,7 @@ require_delete(char *home, int tryall)
 	/* save cwd */
 	oldcwd = open(".", O_RDONLY, 0);
 	if (oldcwd == -1)
-		err(1, "cannot open \".\"");
+		err(EXIT_FAILURE, "cannot open \".\"");
 
 	(void) snprintf(pkgdir, sizeof(pkgdir), "%s",
 	    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
@@ -672,14 +672,14 @@ pkg_perform(lpkg_head_t *pkghead)
 	/* save cwd */
 	oldcwd = open(".", O_RDONLY, 0);
 	if (oldcwd == -1)
-		err(1, "cannot open \".\"");
+		err(EXIT_FAILURE, "cannot open \".\"");
 
 	while ((lpp = TAILQ_FIRST(pkghead))) {
 		err_cnt += pkg_do(lpp->lp_name);
 		TAILQ_REMOVE(pkghead, lpp, lp_link);
 		free_lpkg(lpp);
 		if (fchdir(oldcwd) == FAIL)
-			err(1, "unable to change to previous directory");
+			err(EXIT_FAILURE, "unable to change to previous directory");
 	}
 	close(oldcwd);
 	return err_cnt;

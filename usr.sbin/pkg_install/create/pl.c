@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.23 2002/10/19 20:33:20 provos Exp $	*/
+/*	$NetBSD: pl.c,v 1.24 2003/01/05 21:27:23 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.23 2002/10/19 20:33:20 provos Exp $");
+__RCSID("$NetBSD: pl.c,v 1.24 2003/01/05 21:27:23 agc Exp $");
 #endif
 #endif
 
@@ -122,7 +122,7 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 	/* Open Package Database for writing */
 	if (update_pkgdb && pkgdb_open(0) == -1) {
 		cleanup(0);
-		err(1, "can't open pkgdb");
+		err(EXIT_FAILURE, "can't open pkgdb");
 	}
 
 	for (dirc = 0, p = pkg->head; p; p = p->next) {
