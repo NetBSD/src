@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.40 1997/11/19 07:00:03 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.41 1997/11/25 20:56:13 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1309,6 +1309,9 @@ itecninit(struct consdev * cp)
 int
 iteon(dev_t dev, int flags)
 {
+	if (!ite_initted)
+		return (-1);
+
 	erasecursor();
 	clear_screen(2);
 	drawcursor();
@@ -1318,6 +1321,9 @@ iteon(dev_t dev, int flags)
 int
 iteoff(dev_t dev, int flags)
 {
+	if (!ite_initted)
+		return (-1);
+
 	erasecursor();
 	clear_screen(2);
 	return 0;
