@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.153 2001/11/13 03:17:12 tv Exp $
+#	$NetBSD: Makefile,v 1.154 2001/11/13 15:56:28 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -83,7 +83,7 @@ _SUBDIR=	tools lib include gnu bin games libexec sbin usr.bin \
 # Weed out directories that don't exist.
 
 .for dir in ${_SUBDIR}
-.if exists(${dir}/Makefile)
+.if exists(${dir}/Makefile) && (${BUILD_${dir}:Uyes} != "no")
 SUBDIR+=	${dir}
 .endif
 .endfor
@@ -155,13 +155,14 @@ do-distrib-dirs:
 .for dir in tools lib/csu lib gnu/lib
 do-${dir:S/\//-/}:
 .for targ in dependall install
-	(cd ${.CURDIR}/${dir} && ${MAKE} ${_J} MKSHARE=no MKLINT=no ${targ})
+	(cd ${.CURDIR}/${dir} && ${MAKE} ${_J} ${targ})
 .endfor
 .endfor
 
 do-build:
-	(cd ${.CURDIR} && ${MAKE} ${_J} dependall)
-	(cd ${.CURDIR} && ${MAKE} ${_J} install)
+.for targ in dependall install
+	(cd ${.CURDIR} && ${MAKE} ${_J} ${targ} BUILD_tools=no BUILD_lib=no)
+.endfor
 
 # Speedup stubs for some subtrees that don't need to run these rules.
 # (Tells <bsd.subdir.mk> not to recurse for them.)
