@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.3 1999/01/16 01:21:01 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.4 1999/01/17 04:49:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -129,14 +129,14 @@ _nsdbtget(name)
 	extern	FILE 	*_nsyyin;
 	extern	int	 _nsyyparse __P((void));
 
-	if (dbt.name == NULL) {		/* construct dummy `files' entry */
+	if (dbt.srclist == NULL) {	/* construct dummy `files' entry */
 		ns_src	src;
 
 		src.name = NSSRC_FILES;
 		src.flags = NS_SUCCESS;
-		dbt.name = name;
 		_nsdbtaddsrc(&dbt, &src);
 	}
+	dbt.name = name;
 
 	if (confmod) {
 		if (stat(_PATH_NS_CONF, &statbuf) == -1)
