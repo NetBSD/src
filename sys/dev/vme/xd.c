@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.7 1998/02/04 00:55:52 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.8 1998/02/04 01:19:23 pk Exp $	*/
 
 /*
  *
@@ -387,7 +387,7 @@ int xdcmatch(parent, cf, aux)
 	vme_addr_t		vaddr;
 
 	mod = VMEMOD_A16 | VMEMOD_S | VMEMOD_D | VMEMOD_D32;
-	vaddr = va->vma_reg[0] + (long)(&((struct xdc *)0)->xdc_csr);
+	vaddr = va->vma_reg[0] + offsetof(struct xdc, xdc_csr);
 	return (vme_bus_probe(ct, bt, va->vma_reg[0], 1, mod, xdc_probe, 0));
 }
 
