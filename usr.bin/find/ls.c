@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: ls.c,v 1.5 1994/03/27 09:01:41 cgd Exp $";
+static char rcsid[] = "$Id: ls.c,v 1.6 1994/12/24 16:30:51 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,10 +84,9 @@ printtime(ftime)
 	time_t ftime;
 {
 	int i;
-	char *longstring, *ctime();
-	time_t time();
+	char *longstring;
 
-	longstring = ctime((long *)&ftime);
+	longstring = ctime(&ftime);
 	for (i = 4; i < 11; ++i)
 		(void)putchar(longstring[i]);
 
