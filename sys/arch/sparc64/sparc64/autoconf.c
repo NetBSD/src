@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.46 2001/05/18 21:53:26 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.47 2001/05/18 23:32:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1042,6 +1042,7 @@ static struct {
 	{ "ledma",	BUSCLASS_SBUS },
 	{ "simba",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
+	{ "siop",	BUSCLASS_PCI },
 	{ "pci",	BUSCLASS_PCI },
 	{ "fdc",	BUSCLASS_FDC },
 };
@@ -1067,6 +1068,8 @@ static struct {
 	{ "network",	BUSCLASS_NONE,		"hme" }, /* XXX */
 	{ "SUNW,fas",	BUSCLASS_NONE,		"esp" },
 	{ "SUNW,hme",	BUSCLASS_NONE,		"hme" },
+	{ "glm",	BUSCLASS_PCI,		"siop" },
+	{ "SUNW,glm",	BUSCLASS_PCI,		"siop" },
 };
 
 static char *
