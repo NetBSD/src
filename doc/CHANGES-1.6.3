@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.32 2004/03/15 05:42:48 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.33 2004/03/15 05:46:12 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -191,3 +191,9 @@ sys/dev/pci/pcidevs_data.h		regen
 	Add support for ICH3, ICH4, ICH5, SiS 7012, nForce MCP, nForce2 MCP-T,
 	and nForce3 MCP-T to auich driver.
 	[kent, ticket #1612]
+
+sys/dev/pci/if_bge.c			1.59
+
+	Set BGE_JUMBO_RXRING_VALID in bge_flags when allocating jumbo ring 
+	buffers so it can be freed later. PR#24686
+	[martin, ticket #1622]
