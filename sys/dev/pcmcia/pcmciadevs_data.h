@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.7 1998/08/15 01:18:06 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.8 1998/08/15 18:56:17 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.6 1998/08/15 01:17:51 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.7 1998/08/15 18:55:25 thorpej Exp 
  */
 
 /*
@@ -180,6 +180,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "NewMedia BASICS Ethernet"	},
 	},
 	{
+	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_DUAL_RS232,
+	    PCMCIA_CIS_SOCKET_DUAL_RS232,
+	    0,
+	    "Socket Communications",
+	    "Socket Communications Dual RS232"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -338,6 +345,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "NewMedia Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SOCKET, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Socket Communications",
 	    NULL,
 	},
 	{
