@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.10 2002/12/24 15:54:26 manu Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.11 2002/12/27 19:57:47 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.10 2002/12/24 15:54:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.11 2002/12/27 19:57:47 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -157,5 +157,8 @@ mach_msg_error(args, error)
 
 	*msglen = sizeof(*rep);
 
+#ifdef DEBUG_MACH
+	printf("failure in kernel handler for msg id %d\n", req->msgh_id);
+#endif
 	return 0;
 }
