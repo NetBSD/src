@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.16 1995/09/28 04:17:24 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.17 1995/10/02 09:41:06 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -420,7 +420,8 @@ pmap_bootstrap(nextpa, firstpa)
 
 	if (mac68k_vidlog)
 		mac68k_vidlog = (u_int32_t)
-				mac68k_ptob(nptpages*NPTEPG - VIDMAPSIZE);
+				mac68k_ptob(nptpages*NPTEPG - VIDMAPSIZE)
+				+ (mac68k_vidphys & PGOFSET);
 
 	/*
 	 * Setup u-area for process 0.
