@@ -1,4 +1,4 @@
-.\"	$NetBSD: screenblank.1,v 1.6 1999/08/16 17:44:43 is Exp $
+.\"	$NetBSD: screenblank.1,v 1.7 1999/08/16 20:10:37 is Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm screenblank
-.Nd screen saver daemon for the Amiga, the Sun 3 and SPARC
+.Nd screen saver daemon for wscons and FBIO machines 
 .Sh SYNOPSIS
 .Nm screenblank
 .Op Fl k | Fl m
@@ -95,6 +95,12 @@ The mouse device.
 The console device.
 .It /dev/fb
 The default framebuffer.
+.It /dev/wskbd0
+The keyboard for wscons machines.
+.It /dev/wsmouse0
+The mouse device for wscons machines.
+.It /dev/ttyE0
+The console device for wscons machines.
 .It /var/run/screenblank.pid
 File containing the pid of
 .Nm screenblank .
