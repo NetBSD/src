@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.8 1998/05/28 08:12:13 sakamoto Exp $
+#	$NetBSD: files.ofppc,v 1.9 1998/05/29 08:38:26 sakamoto Exp $
 #
 # First try for ofppc-specific configuration info
 #
@@ -11,16 +11,13 @@ file	arch/ofppc/ofppc/clock.c
 file	arch/ofppc/ofppc/conf.c
 file	arch/ofppc/ofppc/disksubr.c		disk
 file	arch/ofppc/ofppc/machdep.c
-file	arch/ofppc/ofppc/ofw_machdep.c
-file	arch/ofppc/ofppc/ofwmagic.S
-file	arch/ofppc/ofppc/openfirm.c
-
 file	dev/cons.c
 file	dev/cninit.c
 
-# Firmworks OpenFirmware Bug Workarounds
-file	arch/ofppc/ofppc/ofwreal.S		firmworksbugs
-
+#
+# CPU specific OpenFirmware code
+#
+include "arch/powerpc/conf/files.ofw"
 
 #
 # Generic OpenFirmware device support
