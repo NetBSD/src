@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.33.2.14 2001/05/09 19:42:09 he Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.33.2.15 2001/06/07 16:13:05 he Exp $	*/
 /*	$KAME: icmp6.c,v 1.146 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
@@ -1881,7 +1881,8 @@ icmp6_reflect(m, off)
 	if (m->m_pkthdr.rcvif) {
 		/* XXX: This may not be the outgoing interface */
 		ip6->ip6_hlim = nd_ifinfo[m->m_pkthdr.rcvif->if_index].chlim;
-	}
+	} else
+		ip6->ip6_hlim = ip6_defhlim;
 
 	icmp6->icmp6_cksum = 0;
 	icmp6->icmp6_cksum = in6_cksum(m, IPPROTO_ICMPV6,
