@@ -1,5 +1,13 @@
-# $NetBSD: obsolete.mi,v 1.39 2002/03/24 22:21:03 bjh21 Exp $
+# $NetBSD: obsolete.mi,v 1.40 2002/04/03 15:56:58 wiz Exp $
 /bin/rcorder
+/dev/i4b
+/dev/i4bctl
+/dev/i4brbch0
+/dev/i4brbch1
+/dev/i4btel0
+/dev/i4btel1
+/dev/i4btrc0
+/dev/i4btrc1
 /dev/log
 /etc/disklabels
 /sbin/dumpfs
@@ -15,6 +23,7 @@
 /usr/include/ss
 /usr/lib/libntp.so.0
 /usr/lib/libntp.so.0.0
+/usr/lib/runemodule
 /usr/lib/runemodule/libUTF2.a
 /usr/lib/runemodule/libUTF2.so
 /usr/lib/runemodule/libUTF2.so.3
