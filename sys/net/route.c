@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.36.4.2 2001/11/13 21:17:07 he Exp $	*/
+/*	$NetBSD: route.c,v 1.36.4.3 2002/11/13 00:35:00 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ rtfree(rt)
 			printf("rtfree: %p not freed (neg refs)\n", rt);
 			return;
 		}
-		rt_timer_remove_all(rt);
+		rt_timer_remove_all(rt, 0);
 		ifa = rt->rt_ifa;
 		IFAFREE(ifa);
 		Free(rt_key(rt));
@@ -812,7 +812,7 @@ rt_timer_queue_change(rtq, timeout)
 
 
 void
-rt_timer_queue_destroy(rtq, destroy)
+rt_timer_queue_remove_all(rtq, destroy)
 	struct rttimer_queue *rtq;
 	int destroy;
 {
@@ -825,6 +825,15 @@ rt_timer_queue_destroy(rtq, destroy)
 			RTTIMER_CALLOUT(r);
 		pool_put(&rttimer_pool, r);
 	}
+}
+
+void
+rt_timer_queue_destroy(rtq, destroy)
+	struct rttimer_queue *rtq;
+	int destroy;
+{
+
+	rt_timer_queue_remove_all(rtq, destroy);
 
 	LIST_REMOVE(rtq, rtq_link);
 
@@ -834,14 +843,17 @@ rt_timer_queue_destroy(rtq, destroy)
 }
 
 void     
-rt_timer_remove_all(rt)
+rt_timer_remove_all(rt, destroy)
 	struct rtentry *rt;
+	int destroy;
 {
 	struct rttimer *r;
 
 	while ((r = LIST_FIRST(&rt->rt_timer)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
 		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+		if (destroy)
+			RTTIMER_CALLOUT(r);
 		pool_put(&rttimer_pool, r);
 	}
 }

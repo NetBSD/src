@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.114.4.9 2002/11/10 19:58:05 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.114.4.10 2002/11/13 00:34:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1714,13 +1714,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_MTUDISC:
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_mtudisc);
-		if (ip_mtudisc != 0 && ip_mtudisc_timeout_q == NULL) {
-			ip_mtudisc_timeout_q = 
-			    rt_timer_queue_create(ip_mtudisc_timeout);
-		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
-			rt_timer_queue_destroy(ip_mtudisc_timeout_q, TRUE);
-			ip_mtudisc_timeout_q = NULL;
-		}
+		if (error == 0 && ip_mtudisc == 0)
+			rt_timer_queue_remove_all(ip_mtudisc_timeout_q, TRUE);
 		return error;
 	case IPCTL_ANONPORTMIN:
 		old = anonportmin;
@@ -1751,8 +1746,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_MTUDISCTIMEOUT:
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		   &ip_mtudisc_timeout);
-		if (ip_mtudisc_timeout_q != NULL)
-			rt_timer_queue_change(ip_mtudisc_timeout_q, 
+		if (error == 0)
+			rt_timer_queue_change(ip_mtudisc_timeout_q,
 					      ip_mtudisc_timeout);
 		return (error);
 #ifdef GATEWAY
