@@ -1,4 +1,4 @@
-#	$NetBSD: parselist.awk,v 1.13 2002/09/15 16:15:40 thorpej Exp $
+#	$NetBSD: parselist.awk,v 1.14 2002/09/16 02:13:16 thorpej Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -312,7 +312,7 @@ function copy (src, dest, perm) \
 	if (perm == "")
 		perm = 444;
 	if (mode == "install") {
-		printf("\t\${INSTALL_FILE} -o \${BINOWN} -g \${BINGRP} -m %s %s %s/%s\n",
+		printf("\t${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m %s %s %s/%s\n",
 		    perm, src, ENVIRON["TARGETDIR"], dest)
 	} else if (mode == "mtree") {
 		printf("./%s mode=%s\n", dest, perm);
@@ -326,7 +326,7 @@ function copy (src, dest, perm) \
 function link (src, dest) \
 {
 	if (mode == "install") {
-		printf("\t\${INSTALL_LINK} %s/%s %s/%s\n",
+		printf("\t${INSTALL_LINK} %s/%s %s/%s\n",
 		    ENVIRON["TARGETDIR"], src, ENVIRON["TARGETDIR"], dest)
 	} else if (mode == "mtree") {
 		printf("./%s\n", dest);
@@ -340,7 +340,7 @@ function link (src, dest) \
 function symlink (src, dest) \
 {
 	if (mode == "install") {
-		printf("\t\${INSTALL_SYMLINK} %s/%s %s/%s\n",
+		printf("\t${INSTALL_SYMLINK} %s/%s %s/%s\n",
 		    ENVIRON["TARGETDIR"], src, ENVIRON["TARGETDIR"], dest)
 	} else if (mode == "mtree") {
 		printf("./%s type=link link=%s\n", dest, src);
