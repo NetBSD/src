@@ -1,4 +1,4 @@
-/*	$NetBSD: ln.c,v 1.18 2001/02/19 22:39:39 cgd Exp $	*/
+/* $NetBSD: ln.c,v 1.19 2001/09/16 22:14:40 wiz Exp $ */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.18 2001/02/19 22:39:39 cgd Exp $");
+__RCSID("$NetBSD: ln.c,v 1.19 2001/09/16 22:14:40 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,21 +61,20 @@ int	fflag;				/* Unlink existing files. */
 int	hflag;				/* Check new name for symlink first. */
 int	sflag;				/* Symbolic, not hard, link. */
 					/* System link call. */
-int (*linkf) __P((const char *, const char *));
+int (*linkf)(const char *, const char *);
 
-int	linkit __P((char *, char *, int));
-void	usage __P((void));
-int	main __P((int, char *[]));
+int	linkit(char *, char *, int);
+void	usage(void);
+int	main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb;
 	int ch, exitval;
 	char *sourcedir;
 
+	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, "fhns")) != -1)
 		switch (ch) {
 		case 'f':
@@ -128,9 +127,7 @@ main(argc, argv)
 }
 
 int
-linkit(target, source, isdir)
-	char *target, *source;
-	int isdir;
+linkit(char *target, char *source, int isdir)
 {
 	struct stat sb;
 	char *p, path[MAXPATHLEN];
@@ -170,7 +167,7 @@ linkit(target, source, isdir)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
