@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 1997/09/20 04:23:18 mikel Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 1997/11/09 01:00:51 lukem Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 6/5/90
 
 LIB=resolv
-CFLAGS+=-DDEBUG -DLIBC_SCCS -I${.CURDIR}/../libc/include
+CPPFLAGS+=-DDEBUG -DLIBC_SCCS -I${.CURDIR}/../libc/include
 
 .PATH:	${.CURDIR}/../libc/net
 

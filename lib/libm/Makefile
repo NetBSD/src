@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.36 1997/10/18 05:34:11 mikel Exp $
+#  $NetBSD: Makefile,v 1.36.2.1 1997/11/09 01:00:32 lukem Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -24,20 +24,20 @@
 #				_POSIX_MODE 	-- POSIX/ANSI
 #				_SVID3_MODE 	-- SVID
 #
-# Here is how to set up CFLAGS to create the desired libm at 
+# Here is how to set up CPPFLAGS to create the desired libm at 
 # compile time:
 #
-# 	CFLAGS = -D_IEEE_LIBM		... IEEE libm (recommended)
-#	CFLAGS = -D_SVID3_MODE	... Multi-standard supported
+# 	CPPFLAGS = -D_IEEE_LIBM		... IEEE libm (recommended)
+#	CPPFLAGS = -D_SVID3_MODE	... Multi-standard supported
 #					    libm with SVID as the 
 #					    default standard
-#	CFLAGS = -D_XOPEN_MODE	... Multi-standard supported
+#	CPPFLAGS = -D_XOPEN_MODE	... Multi-standard supported
 #					    libm with XOPEN as the 
 #					    default standard
-#	CFLAGS = -D_POSIX_MODE	... Multi-standard supported
+#	CPPFLAGS = -D_POSIX_MODE	... Multi-standard supported
 #					    libm with POSIX as the 
 #					    default standard
-#	CFLAGS = 			... Multi-standard supported
+#	CPPFLAGS = 			... Multi-standard supported
 #					    libm with IEEE as the 
 #					    default standard
 # 
@@ -76,9 +76,9 @@ ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_sincos.S n_tan.S n_support.S
 .PATH:	${.CURDIR}/noieee_src
 
 .if (${MACHINE_ARCH} != "vax")
-CFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
+CPPFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
 .endif
-CFLAGS+=-DLIBM_SCCS
+CPPFLAGS+=-DLIBM_SCCS
 
 LIB=	m
 COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \

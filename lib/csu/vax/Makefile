@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 1997/05/31 21:21:49 cjs Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 1997/11/09 00:59:41 lukem Exp $
 #	from: @(#)Makefile	5.6 (Berkeley) 5/22/91
 
-CFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/..
+CPPFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/..
 OBJS=		crt0.o gcrt0.o scrt0.o
 CLEANFILES+=	core a.out
 
