@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.2 2000/04/12 21:46:27 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.3 2000/04/14 17:35:14 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -86,6 +86,11 @@ struct __window {		/* Window structure. */
 	attr_t	battr;			/* Background attributes */
 };
 
+struct __winlist {
+	struct __window		*winp;	/* The window. */
+	struct __winlist	*nextp;	/* Next window. */
+};
+
 /* Private functions. */
 #ifdef DEBUG
 void	 __CTRACE __P((const char *, ...));
@@ -123,9 +128,10 @@ int	 __waddch __P((WINDOW *, __LDATA *));
 #define	max(a,b)	(a > b ? a : b)
 
 /* Private externs. */
-extern int	 __echoit;
-extern int	 __endwin;
-extern int	 __pfast;
-extern int	 __rawmode;
-extern int	 __noqch;
-extern attr_t	 __nca;
+extern int		 __echoit;
+extern int		 __endwin;
+extern int		 __pfast;
+extern int		 __rawmode;
+extern int		 __noqch;
+extern attr_t		 __nca;
+extern struct __winlist	*__winlistp;
