@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.194 2004/08/23 13:27:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.195 2004/11/11 11:54:51 yamt Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -16,7 +16,7 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
 	pstat pwd_mkdb powerd quot quotacheck quotaon rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
 	rpc.statd rpcbind rwhod sa screenblank sesd \
-	sliplogin slstats spamdb sntp \
+	sliplogin slstats sntp \
 	spray sunlabel sup sushi syslogd tadpolectl tcpdchk \
 	tcpdmatch tcpdump timed tpctl traceroute trpt trsp unlink \
 	usbdevs user videomode vipw vnconfig wiconfig wlanctl wsconscfg \
@@ -48,6 +48,6 @@ SUBDIR+= racoon
 .endif
 
 # PF
-SUBDIR+=authpf
+SUBDIR+=pf
 
 .include <bsd.subdir.mk>
