@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass5.c	8.2 (Berkeley) 2/2/94";*/
-static char *rcsid = "$Id: pass5.c,v 1.10 1994/12/05 20:16:03 cgd Exp $";
+static char *rcsid = "$Id: pass5.c,v 1.11 1994/12/18 15:55:41 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -104,8 +104,10 @@ pass5()
 	switch ((int)fs->fs_postblformat) {
 
 	case FS_42POSTBLFMT:
-		basesize = (char *)(&ocg->cg_btot[0]) - (char *)(&ocg->cg_unused_1);
-		sumsize = &ocg->cg_iused[0] - (char *)(&ocg->cg_btot[0]);
+		basesize = (char *)(&ocg->cg_btot[0]) -
+		    (char *)(&ocg->cg_firstfield);
+		sumsize = (char *)&ocg->cg_iused[0] -
+		    (char *)(&ocg->cg_btot[0]);
 		mapsize = &ocg->cg_free[howmany(fs->fs_fpg, NBBY)] -
 			(u_char *)&ocg->cg_iused[0];
 		ocg->cg_magic = CG_MAGIC;
@@ -115,7 +117,7 @@ pass5()
 
 	case FS_DYNAMICPOSTBLFMT:
 		newcg->cg_btotoff =
-		     &newcg->cg_space[0] - (u_char *)(&newcg->cg_unused_1);
+		     &newcg->cg_space[0] - (u_char *)(&newcg->cg_firstfield);
 		newcg->cg_boff =
 		    newcg->cg_btotoff + fs->fs_cpg * sizeof(long);
 		newcg->cg_iusedoff = newcg->cg_boff + 
@@ -137,7 +139,8 @@ pass5()
 			    howmany(fs->fs_cpg * fs->fs_spc / NSPB(fs), NBBY);
 		}
 		newcg->cg_magic = CG_MAGIC;
-		basesize = &newcg->cg_space[0] - (u_char *)(&newcg->cg_unused_1);
+		basesize = &newcg->cg_space[0] -
+		    (u_char *)(&newcg->cg_firstfield);
 		sumsize = newcg->cg_iusedoff - newcg->cg_btotoff;
 		mapsize = newcg->cg_nextfreeoff - newcg->cg_iusedoff;
 		break;
