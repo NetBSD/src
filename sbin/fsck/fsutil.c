@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.6 1998/07/26 20:02:36 mycroft Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.7 1998/07/30 17:41:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.6 1998/07/26 20:02:36 mycroft Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.7 1998/07/30 17:41:03 thorpej Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -221,7 +221,7 @@ unrawname(name)
 		return (name);
 	if (dp[1] != 'r')
 		return (name);
-	(void)snprintf(unrawbuf, 32, "%.*s/%s", dp - name, name, dp + 2);
+	(void)snprintf(unrawbuf, 32, "%.*s/%s", (int)(dp - name), name, dp + 2);
 	return (unrawbuf);
 }
 
@@ -234,7 +234,7 @@ rawname(name)
 
 	if ((dp = strrchr(name, '/')) == 0)
 		return (0);
-	(void)snprintf(rawbuf, 32, "%.*s/r%s", dp - name, name, dp + 1);
+	(void)snprintf(rawbuf, 32, "%.*s/r%s", (int)(dp - name), name, dp + 1);
 	return (rawbuf);
 }
 
