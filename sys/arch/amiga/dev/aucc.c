@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.25 2000/03/16 16:37:20 kleink Exp $	*/
+/*	$NetBSD: aucc.c,v 1.26 2000/09/03 02:04:53 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -1286,7 +1286,7 @@ aucc_decode_slinear16sw_1ch(dmap, p, i)
 	int i;
 {
 	u_char *ch0 = dmap[0];
-	u_char *ch3 = dmap[3];
+	u_char *ch3 = dmap[1];	/* XXX should be 3 */
 
 	while (i--) {
 		*ch3++ = *p++ >> 2;
