@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.46 2000/02/12 15:48:34 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -126,11 +126,7 @@ mainbus_match(parent, cf, aux)
 	struct cfdata *cf;
 	void	*aux;
 {
-	if (cf->cf_unit == 0 &&
-	    strcmp(cf->cf_driver->cd_name, "mainbus") == 0)
-		return 1; /* First (and only) mainbus */
-
-	return (0);
+	return 1; /* First (and only) mainbus */
 }
 
 void
