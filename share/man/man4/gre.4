@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.23 2002/06/09 10:44:57 martin Exp $
+.\" $NetBSD: gre.4,v 1.24 2002/06/09 12:19:39 martin Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,6 +121,10 @@ As the linkN flags are not mutually exclusive, modes must be set by applying
 positive and negative flags as e.g.
 .Ic ifconfig
 link0 -link1 -link2
+.Pp
+Side note: the link1 flag is not used to choose encapsulation, but
+to modify the internal route search for the remote
+tunnel endpoint, see the bugs section below.
 .It GREGPROTO :
 Query operation mode.
 .El
@@ -194,18 +198,21 @@ Assuming router A has the (external) IP address A and the internal address
 On router A:
 .Bd -literal
    # ifconfig greN create
-   # grecofnig -i greN -s A -d B
-   # ifconfig greN 192.168.1.1 192.168.2.1
+   # greconfig -i greN -s A -d B
+   # ifconfig greN 192.168.1.1 192.168.2.1 link1
    # route add -net 192.168.2 -netmask 255.255.255.0 192.168.2.1
 .Ed
 .Pp
 On router B:
 .Bd -literal
    # ifconfig greN create
-   # grecofnig -i greN -s B -d A
-   # ifconfig greN 192.168.2.1 192.168.1.1
+   # greconfig -i greN -s B -d A
+   # ifconfig greN 192.168.2.1 192.168.1.1 link1
    # route add -net 192.168.1 -netmask 255.255.255.0 192.168.1.1
 .Ed
+.Pp
+Note that this is a safe situation where the link1 flag (as discussed
+in the bugs section below) may (and probably should) be set.
 .Sh NOTES
 The MTU of 
 .Sy gre Ns Ar X
