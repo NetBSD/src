@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.16 1996/11/13 06:13:39 thorpej Exp $ */
+/*	$NetBSD: memreg.c,v 1.17 1996/11/16 23:00:24 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,7 +129,9 @@ memerr(issync, ser, sva, aer, ava)
 	int issync;
 	u_int ser, sva, aer, ava;
 {
+#if defined(SUN4) || defined(SUN4C)
 	char bits[64];
+#endif
 
 	/* XXX Ugh! Clean up this switch and all the ifdefs! */
 	switch (cputyp) {
