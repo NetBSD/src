@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.71 2001/02/20 01:10:50 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.72 2001/02/23 05:38:27 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -1104,11 +1104,6 @@ isp_fibre_init(isp)
 	 */
 	fcp->isp_fwoptions |= ICBOPT_PDBCHANGE_AE;
 
-	/*
-	 * We don't set ICBOPT_PORTNAME because we want our
-	 * Node Name && Port Names to be distinct.
-	 */
-
 	
 	/*
 	 * Make sure that target role reflects into fwoptions.
@@ -1176,6 +1171,7 @@ isp_fibre_init(isp)
 	nwwn = ISP_NODEWWN(isp);
 	pwwn = ISP_PORTWWN(isp);
 	if (nwwn && pwwn) {
+		icbp->icb_fwoptions |= ICBOPT_BOTH_WWNS;
 		MAKE_NODE_NAME_FROM_WWN(icbp->icb_nodename, nwwn);
 		MAKE_NODE_NAME_FROM_WWN(icbp->icb_portname, pwwn);
 		isp_prt(isp, ISP_LOGDEBUG1,
@@ -1186,7 +1182,7 @@ isp_fibre_init(isp)
 		    ((u_int32_t) (pwwn & 0xffffffff)));
 	} else {
 		isp_prt(isp, ISP_LOGDEBUG1, "Not using any WWNs");
-		fcp->isp_fwoptions &= ~(ICBOPT_USE_PORTNAME|ICBOPT_FULL_LOGIN);
+		icbp->icb_fwoptions &= ~(ICBOPT_BOTH_WWNS|ICBOPT_FULL_LOGIN);
 	}
 	icbp->icb_rqstqlen = RQUEST_QUEUE_LEN(isp);
 	icbp->icb_rsltqlen = RESULT_QUEUE_LEN(isp);
