@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.11 2002/09/24 13:06:07 mycroft Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.12 2002/09/24 14:05:33 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -28,18 +28,18 @@
  */
 
 #include <sys/cdefs.h>
-#include "rtldenv.h"
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <stdarg.h>
 
+#include "rtldenv.h"
+
 #ifdef RTLD_LOADER
 #define SZ_SHORT	0x01
 #define	SZ_INT		0x02
 #define	SZ_LONG		0x04
-#define	SZ_QUAD		0x08
 #define	SZ_UNSIGNED	0x10
 #define	SZ_MASK		0x0f
 
@@ -77,28 +77,21 @@ xvsnprintf(buf, buflen, fmt, ap)
 			case 'l':
 				size = (size&SZ_MASK)|SZ_LONG;
 				fmt++;
-				if (fmt[1] == 'l') {
-			case 'q':
-					size = (size&SZ_MASK)|SZ_QUAD;
-					fmt++;
-				}
 				goto rflag;
 			case 'u':
 				size |= SZ_UNSIGNED;
 				/* FALLTHROUGH */
 			case 'd':{
-				long long sval;
-				unsigned long long uval;
+				long sval;
+				unsigned long uval;
 				char digits[sizeof(int) * 3], *dp = digits;
 #define	SARG() \
 (size & SZ_SHORT ? (short) va_arg(ap, int) : \
 size & SZ_LONG ? va_arg(ap, long) : \
-size & SZ_QUAD ? va_arg(ap, long long) : \
 va_arg(ap, int))
 #define	UARG() \
 (size & SZ_SHORT ? (unsigned short) va_arg(ap, unsigned int) : \
 size & SZ_LONG ? va_arg(ap, unsigned long) : \
-size & SZ_QUAD ? va_arg(ap, unsigned long long) : \
 va_arg(ap, unsigned int))
 #define	ARG()	(size & SZ_UNSIGNED ? UARG() : SARG())
 
