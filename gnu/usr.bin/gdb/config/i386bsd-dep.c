@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)i386bsd-dep.c	6.10 (Berkeley) 6/26/91";*/
-static char rcsid[] = "$Id: i386bsd-dep.c,v 1.4 1993/12/06 09:40:27 cgd Exp $";
+static char rcsid[] = "$Id: i386bsd-dep.c,v 1.5 1993/12/15 00:52:27 mycroft Exp $";
 #endif /* not lint */
 
 /* Low level interface to ptrace, for GDB when running on the Intel 386.
@@ -615,14 +615,14 @@ vtophys(addr)
 	/*
 	 * Read the first-level page table (ptd).
 	 */
-	v = current_ptd + ((unsigned)addr >> PD_SHIFT) * sizeof pte;
+	v = current_ptd + ((unsigned)addr >> PDSHIFT) * sizeof pte;
 	if (physrd(v, (char *)&pte, sizeof pte) || pte.pg_v == 0)
 		return (~0);
 
 	/*
 	 * Read the second-level page table.
 	 */
-	v = i386_ptob(pte.pg_pfnum) + ((addr&PT_MASK) >> PG_SHIFT) * sizeof pte;
+	v = i386_ptob(pte.pg_pfnum) + ((addr&PT_MASK) >> PGSHIFT) * sizeof pte;
 	if (physrd(v, (char *) &pte, sizeof(pte)) || pte.pg_v == 0)
 		return (~0);
 
