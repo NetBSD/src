@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.22 2004/05/18 00:03:56 christos Exp $
+#	$NetBSD: bind2netbsd,v 1.23 2004/11/07 01:26:10 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,19 +42,18 @@
 #	$ cd /some/where/temporary
 #	$ tar xpfz /new/bind/release/tar/file
 #	$ sh /usr/src/dist/bind/bind2netbsd utils-6.x.y `pwd`
-#	$ cd src/dist/am-utils
+#	$ cd src/dist/bind
 #	$ cvs import -m "Import bind 9.3.0beta3" src/dist/bind ISC bind-9-3-0-beta3
 #	$ cd ../../../bind-9.0.3beta3
 #	$ run ./configure
 #	$ run make
-# merge the new files generated with the ones in src/usr.sbin/bind/include
-#	$ cd ..
-#	$ rm -r src bind-9.0.3beta3
-#	$ cd /usr/src/usr.sbin/bind
-#	$ cvs commit -m "Updated autoconf generated files for bind 9.3.0beta3"
-#
+#	- use the binclude4netbsd to create and import the new headers in
+#	  /usr/src/usr.sbin/bind/include
+#	- use the include4netbsd to create and import the new headers in
+#	  /usr/src/include
 #	- check makefiles to see if any extra sources have been added.
 #	- update distrib/sets if necessary.
+#	- to update the libc resolver code use libc4netbsd
 
 if [ $# -ne 2 ]; then echo "bind2netbsd src dest"; exit 1; fi
 
