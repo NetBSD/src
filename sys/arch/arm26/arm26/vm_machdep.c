@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.2 2000/05/13 17:57:14 bjh21 Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.2 2000/05/13 17:57:14 bjh21 Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:00 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -88,7 +88,8 @@ extern vm_map_t phys_map; /* XXX where? */
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
@@ -104,7 +105,8 @@ extern vm_map_t phys_map; /* XXX where? */
  */
 
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct pcb *pcb;
 	struct trapframe *tf;
@@ -138,25 +140,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	pcb->pcb_tf = tf;
 	pcb->pcb_sf = sf;
 	pcb->pcb_onfault = NULL;
-	cpu_set_kpc(p2, child_return, NULL);
-}
-
-/*
- * Change the initial entry point of a process that's been created by
- * cpu_fork() but hasn't run yet.  It will still start up through
- * proc_trampoline, but will call pc instead of child_return().
- */
-void
-cpu_set_kpc(struct proc *p, void (*pc)(void *), void *arg)
-{
-	struct switchframe *sf;
-
-	sf = p->p_addr->u_pcb.pcb_sf;
-#ifdef DIAGNOSTIC
-	if (sf->sf_r14 != ((register_t)proc_trampoline | R15_MODE_SVC))
-		panic("cpu_set_kpc");
-#endif
-	sf->sf_r4 = (register_t)pc;
+	sf->sf_r4 = (register_t)func;
 	sf->sf_r5 = (register_t)arg;
 }
 

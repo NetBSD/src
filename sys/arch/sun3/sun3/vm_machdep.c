@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.57 2000/01/20 22:18:59 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.58 2000/05/28 05:49:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -68,6 +68,9 @@
 extern void proc_do_uret __P((void));
 extern void proc_trampoline __P((void));
 
+/* XXX MAKE THIS LIKE OTHER M68K PORTS! */
+static void cpu_set_kpc __P((struct proc *, void (*)(void *), void *));
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
@@ -79,17 +82,20 @@ extern void proc_trampoline __P((void));
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	register struct pcb *p1pcb = &p1->p_addr->u_pcb;
 	register struct pcb *p2pcb = &p2->p_addr->u_pcb;
@@ -153,7 +159,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	 * onto the stack of p2, very much like signal delivery.
 	 * When p2 runs, it will find itself in child_return().
 	 */
-	cpu_set_kpc(p2, child_return, p2);
+	cpu_set_kpc(p2, func, arg);
 }
 
 /*
@@ -177,7 +183,7 @@ cpu_fork(p1, p2, stack, stacksize)
  * were pushed here and return to where it would have returned
  * before we "pushed" this call.
  */
-void
+static void
 cpu_set_kpc(proc, func, arg)
 	struct proc *proc;
 	void (*func) __P((void *));

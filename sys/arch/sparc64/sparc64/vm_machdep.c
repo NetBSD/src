@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 2000/03/26 20:42:37 kleink Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.27 2000/05/28 05:49:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -219,17 +219,20 @@ char cpu_forkname[] = "cpu_fork()";
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	register struct pcb *opcb = &p1->p_addr->u_pcb;
 	register struct pcb *npcb = &p2->p_addr->u_pcb;
@@ -325,8 +328,8 @@ cpu_fork(p1, p2, stack, stacksize)
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
 	*rp = *(struct rwindow *)((u_long)opcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (long)child_return;	/* Function to call */
-	rp->rw_local[1] = (long)p2;		/* and its argument */
+	rp->rw_local[0] = (long)func;		/* Function to call */
+	rp->rw_local[1] = (long)arg;		/* and its argument */
 
 	npcb->pcb_pc = (long)proc_trampoline - 8;
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
@@ -340,58 +343,6 @@ cpu_fork(p1, p2, stack, stacksize)
 	       (long)(tf2->tf_npc>>32), (long)tf2->tf_npc, 
 	       (long)(tf2->tf_out[6]));
 	Debugger();
-#endif
-}
-
-/*
- * cpu_set_kpc:
- *
- * Arrange for in-kernel execution of a process to continue at the
- * named pc, as if the code at that address were called as a function
- * with the supplied argument.
- *
- * Note that it's assumed that when the named process returns,
- * we immediately return to user mode.
- *
- * (Note that cpu_fork(), above, uses an open-coded version of this.)
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct pcb *pcb;
-	struct rwindow *rp;
-
-#if 0
-	/* Make sure our D$ is not polluted w/bad data */
-	blast_vcache();
-#endif
-
-	pcb = &p->p_addr->u_pcb;
-
-	rp = (struct rwindow *)((u_long)pcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (long)pc;		/* Function to call */
-	rp->rw_local[1] = (long)arg;		/* and its argument */
-
-	/*
-	 * Frob PCB:
-	 *	- arrange to return to proc_trampoline() from cpu_switch()
-	 *	- point it at the stack frame constructed above
-	 *	- make it run in a clear set of register windows
-	 */
-	pcb->pcb_pc = (long)proc_trampoline - 8 ;
-	pcb->pcb_sp = (long)rp - STACK_OFFSET;
-#ifdef NOTDEF_DEBUG
-	/* Let's see if this is ever called */
-	{ int s=splhigh();
-	extern int pmapdebug;
-	pmapdebug = 0;
-	printf("cpu_set_kpc: p=%p pc=%p, sp=%p rsp=%p\n", p, pc, rp, (long)rp->rw_in[6]);
-	splx(s);
-	delay(2000000);
-	}
 #endif
 }
 
