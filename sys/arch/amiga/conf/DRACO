@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.16 1997/09/12 08:13:26 mycroft Exp $
+#	$NetBSD: DRACO,v 1.17 1997/09/27 22:44:35 is Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -131,6 +131,7 @@ mfcs1		at mfc0 unit 1		# MFC serial
 drbbc0		at mainbus0		# DraCo battery backed clock
 drsupio0	at mainbus0		# DraCo superio chip
 com*		at drsupio? port ?	# DraCo serial
+lpt0		at drsupio? port ?	# DraCo parallel
 
 le*		at zbus0		# Lance ethernet.
 ed0		at zbus0		# dp8390 ethernet

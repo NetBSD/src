@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.87 1997/09/19 03:30:41 mhitch Exp $
+#	$NetBSD: GENERIC,v 1.88 1997/09/27 22:44:33 is Exp $
 
 #
 # GENERIC AMIGA
@@ -196,6 +196,7 @@ mfcs1		at mfc0 unit 1		# MFC serial
 drbbc0		at mainbus0		# DraCo battery backed clock
 drsupio0	at mainbus0		# DraCo superio chip
 com*		at drsupio? port ?	# DraCo serial
+lpt0		at drsupio? port ?	# DraCo parallel
 
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
@@ -211,9 +212,11 @@ qn0		at zbus0		# Quicknet
 # Arcnet
 bah*		at zbus0		# C=/Ameristar A2060 / 560
 
+# Greater Valley Product Bus
+gvpbus* 	at zbus0
+
 
 # scsi stuff, all possible
-gvpbus* 	at zbus0
 gtsc0		at gvpbus?		# GVP series II scsi
 ahsc0		at mainbus0		# A3000 scsi
 atzsc0		at zbus0		# A2091 scsi
