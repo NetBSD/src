@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.10 1999/11/16 23:56:42 augustss Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.10.4.1 2001/08/16 17:48:00 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #ifndef _SOUNDCARD_H_
 #define _SOUNDCARD_H_
 
-#define SOUND_VERSION	0x030000
+#define SOUND_VERSION	0x030001
 
 #define	SNDCTL_DSP_RESET		_IO  ('P', 0)
 #define	SNDCTL_DSP_SYNC			_IO  ('P', 1)

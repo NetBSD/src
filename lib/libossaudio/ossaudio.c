@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.10.4.2 2000/08/16 17:07:51 tron Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.10.4.3 2001/08/16 17:47:59 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -333,15 +333,27 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = idat;
 		break;
 	case SNDCTL_DSP_GETOSPACE:
+		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		setblocksize(fd, &tmpinfo);
+		bufinfo.fragsize = tmpinfo.blocksize;
+		bufinfo.fragments = tmpinfo.hiwat -
+			(tmpinfo.play.seek + tmpinfo.blocksize - 1)/tmpinfo.blocksize;
+		bufinfo.fragstotal = tmpinfo.hiwat;
+		bufinfo.bytes = tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.play.seek;
+		*(struct audio_buf_info *)argp = bufinfo;
+		break;
 	case SNDCTL_DSP_GETISPACE:
 		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		setblocksize(fd, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = /* XXX */
-		bufinfo.fragstotal = tmpinfo.play.buffer_size / bufinfo.fragsize;
-		bufinfo.bytes = tmpinfo.play.buffer_size;
+		bufinfo.fragments = tmpinfo.hiwat -
+			(tmpinfo.record.seek + tmpinfo.blocksize - 1)/tmpinfo.blocksize;
+		bufinfo.fragstotal = tmpinfo.hiwat;
+		bufinfo.bytes = tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.record.seek;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_NONBLOCK:
