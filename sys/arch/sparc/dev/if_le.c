@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.35.4.1 1996/07/17 01:46:00 jtc Exp $	*/
+/*	$NetBSD: if_le.c,v 1.35.4.2 1996/12/06 02:08:28 rat Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -89,15 +89,7 @@ myleintr(arg)
 	if (lesc->sc_dma->sc_regs->csr & D_ERR_PEND)
 		return ledmaintr(lesc->sc_dma);
 
-	/*
-	 * XXX There is a bug somewhere in the interrupt code that causes stray
-	 * ethernet interrupts under high network load. This bug has been
-	 * impossible to locate, so until it is found, we just ignore stray
-	 * interrupts, as they do not in fact correspond to dropped packets.
-	 */
-
-	/* return */ am7990_intr(arg);
-	return 1;
+	return (am7990_intr(arg));
 }
 #endif
 
@@ -115,9 +107,21 @@ lewrcsr(sc, port, val)
 	u_int16_t port, val;
 {
 	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+#if defined(SUN4M)
+	volatile u_int16_t discard;
+#endif
 
 	ler1->ler1_rap = port;
 	ler1->ler1_rdp = val;
+#if defined(SUN4M)
+	/* 
+	 * We need to flush the Sbus->Mbus write buffers. This can most
+	 * easily be accomplished by reading back the register that we
+	 * just wrote (thanks to Chris Torek for this solution).
+	 */	   
+	if (CPU_ISSUN4M)
+		discard = ler1->ler1_rdp;
+#endif
 }
 
 hide u_int16_t
