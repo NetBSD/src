@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1 1999/12/09 14:53:17 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 2000/03/04 06:14:47 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,8 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
+#include <sys/proc.h>
 
 #include <machine/cpu.h>
 
@@ -58,16 +60,16 @@
 extern u_int lowram;
 static caddr_t devzeropage;
 
-int	mmopen __P((dev_t, int, int));
-int	mmclose __P((dev_t, int, int));
-int	mmrw __P((dev_t, struct uio *, int));
-int	mmmmap __P((dev_t, int, int));
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -75,9 +77,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
