@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.15 2003/04/03 22:18:23 fvdl Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.16 2003/04/15 14:11:00 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -135,6 +135,8 @@ struct wd_softc {
 	int retries; /* number of xfer retry */
 
 	void *sc_sdhook;		/* our shutdown hook */
+
+	SLIST_HEAD(, disk_badsectors)	sc_bslist;
 
 #if NRND > 0
 	rndsource_element_t	rnd_source;

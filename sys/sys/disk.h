@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.20 2002/11/01 11:32:02 mrg Exp $	*/
+/*	$NetBSD: disk.h,v 1.21 2003/04/15 14:11:00 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -181,6 +181,16 @@ struct dkdriver {
  * disklist_head is defined here so that user-land has access to it.
  */
 TAILQ_HEAD(disklist_head, disk);	/* the disklist is a TAILQ */
+
+/*
+ * Bad sector lists per fixed disk
+ */
+struct disk_badsectors {
+	SLIST_ENTRY(disk_badsectors)	dbs_next;
+	u_int64_t	dbs_min;	/* min. sector number */
+	u_int64_t	dbs_max;	/* max. sector number */
+	struct timeval	dbs_failedat;	/* first failure at */
+};
 
 #ifdef _KERNEL
 extern	int disk_count;			/* number of disks in global disklist */

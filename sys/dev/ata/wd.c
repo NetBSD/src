@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.240 2003/04/03 22:18:23 fvdl Exp $ */
+/*	$NetBSD: wd.c,v 1.241 2003/04/15 14:11:00 darrenr Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.240 2003/04/03 22:18:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.241 2003/04/15 14:11:00 darrenr Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -288,6 +288,7 @@ wdattach(parent, self, aux)
 #else
 	bufq_alloc(&wd->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 #endif
+	SLIST_INIT(&wd->sc_bslist);
 
 	wd->atabus = adev->adev_bustype;
 	wd->openings = adev->adev_openings;
@@ -423,6 +424,13 @@ wddetach(self, flags)
 	struct buf *bp;
 	int s, bmaj, cmaj, i, mn;
 
+	/* Clean out the bad sector list */
+	while (!SLIST_EMPTY(&sc->sc_bslist)) {
+		void *head = SLIST_FIRST(&sc->sc_bslist);
+		SLIST_REMOVE_HEAD(&sc->sc_bslist, dbs_next);
+		free(head, M_TEMP);
+	}
+
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&wd_bdevsw);
 	cmaj = cdevsw_lookup_major(&wd_cdevsw);
@@ -524,6 +532,23 @@ wdstrategy(bp)
 		blkno += lp->d_partitions[WDPART(bp->b_dev)].p_offset;
 
 	bp->b_rawblkno = blkno;
+
+	/*
+	 * If the transfer about to be attempted contains only a block that
+	 * is known to be bad then return an error for the transfer without
+	 * even attempting to start a transfer up under the premis that we
+	 * will just end up doing more retries for a transfer that will end
+	 * up failing again.
+	 * XXX:SMP - mutex required to protect with DIOCBSFLUSH
+	 */
+	if (__predict_false(!SLIST_EMPTY(&wd->sc_bslist))) {
+		struct disk_badsectors *dbs;
+		daddr_t maxblk = blkno + bp->b_bcount;
+
+		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next)
+			if (dbs->dbs_min >= blkno && dbs->dbs_max < maxblk)
+				goto bad;
+	}
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
@@ -744,6 +769,25 @@ retry:		/* Just reset and retry. Can we do more ? */
 			return;
 		}
 		printf("\n");
+
+		/*
+		 * Not all errors indicate a failed block but those that do,
+		 * put the block on the bad-block list for the device.  Only
+		 * do this for reads because the drive should do it for writes,
+		 * itself, according to Manuel.
+		 */
+		if ((b->b_flags & B_READ) &&
+		    ((wd->drvp->ata_vers >= 4 && wd->sc_wdc_bio.r_error & 64) ||
+		     (wd->drvp->ata_vers < 4 && wd->sc_wdc_bio.r_error & 192)) {
+			struct disk_badsectors *dbs;
+
+			dbs = malloc(sizeof *dbs, M_TEMP, M_WAITOK);
+			dbs->dbs_min = bp->b_rawblkno;
+			dbs->dbs_max = dbs->dbs_min + bp->b_bcount - 1;
+			microtime(&dbs->dbs_failedat);
+			SLIST_INSERT_HEAD(&wd->sc_bslist, dbs, dbs_next);
+		}
+
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		break;
@@ -1136,6 +1180,37 @@ wdioctl(dev, xfer, addr, flag, p)
 		bad144intern(wd);
 		return 0;
 #endif
+
+	case DIOCBSLIST :
+	{
+		caddr_t laddr = *(caddr_t *)addr;
+		struct disk_badsectors *dbs;
+		size_t available;
+		u_int32_t count;
+
+		count = 0;
+		copyin(laddr, &available, sizeof(available));
+		laddr += sizeof(count);
+		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next) {
+			if (available < sizeof(dbs))
+				break;
+			available -= sizeof(dbs);
+			copyout(dbs, laddr, sizeof(*dbs));
+			laddr += sizeof(*dbs);
+			count++;
+		}
+		copyout(&count, *(caddr_t *)addr, sizeof(count));
+		return 0;
+	}
+
+	case DIOCBSFLUSH :
+		/* Clean out the bad sector list */
+		while (!SLIST_EMPTY(&wd->sc_bslist)) {
+			void *head = SLIST_FIRST(&wd->sc_bslist);
+			SLIST_REMOVE_HEAD(&wd->sc_bslist, dbs_next);
+			free(head, M_TEMP);
+		}
+		return 0;
 
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
