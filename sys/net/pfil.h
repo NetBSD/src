@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.12 2000/02/22 10:45:47 darrenr Exp $	*/
+/*	$NetBSD: pfil.h,v 1.13 2000/04/19 04:46:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -58,7 +58,8 @@ struct pfil_head {
 	pfil_list_t	ph_in;
 	pfil_list_t	ph_out;
 	int		ph_init;
-} pfil_head_t;
+};
+typedef struct pfil_head pfil_head_t;
 
 struct packet_filter_hook *pfil_hook_get __P((int, struct pfil_head *));
 int	pfil_add_hook __P((int (*func) __P((void *, int,
