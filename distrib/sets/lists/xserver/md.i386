@@ -1,4 +1,5 @@
-# $NetBSD: md.i386,v 1.32 2005/03/24 05:27:18 rtr Exp $
+# $NetBSD: md.i386,v 1.33 2005/03/24 09:16:10 martin Exp $
+./var/db/obsolete/xserver			xbase-sys-root
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xvfb
