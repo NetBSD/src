@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.10 2000/06/06 16:41:33 soren Exp $	*/
+/*	$NetBSD: tropic.c,v 1.11 2000/06/13 20:00:02 soren Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -445,7 +445,7 @@ tr_attach(sc)
 	callout_init(&sc->sc_init_callout);
 	callout_init(&sc->sc_reinit_callout);
 
-	sc->sd_hook = shutdownhook_establish(tr_shutdown, sc);
+	sc->sc_sdhook = shutdownhook_establish(tr_shutdown, sc);
 	return 0;
 }
 
@@ -889,7 +889,7 @@ tr_intr(arg)
 						sc->sc_nbuf =
 						    sc->sc_xmit_buffers;
 #ifdef TROPICDEBUG
-						printf("%s: buffers = %d\n",
+						printf("%s: %d buffers\n",
 						    sc->sc_dev.dv_xname,
 						    sc->sc_xmit_buffers);
 #endif
@@ -1137,7 +1137,7 @@ tr_intr(arg)
 	}
 	/* Is this interrupt caused by an adapter error or access violation? */
 	if (ACA_RDB(sc, ACA_ISRP_e) & (TCR_INT | ERR_INT | ACCESS_INT)) {
-		printf("%s: adapter error, ISRP_e = %x\n",
+		printf("%s: adapter error, ISRP_e = 0x%x\n",
 		    sc->sc_dev.dv_xname, ACA_RDB(sc, ACA_ISRP_e));
 
 		/* Clear these interrupt bits */
@@ -1414,7 +1414,7 @@ struct tr_softc *sc;
 		txbuf = TXB_INW(sc, txbuf, XMIT_NEXTBUF) - XMIT_NEXTBUF;
 		if (TXB_INB(sc, txbuf, XMIT_RETCODE) != 0) {
 			ifp->if_oerrors++;
-			printf("%s: xmit error = %x\n", sc->sc_dev.dv_xname,
+			printf("%s: xmit error = 0x%x\n", sc->sc_dev.dv_xname,
 			    TXB_INB(sc, txbuf, XMIT_RETCODE));
 		}
 		sc->sc_xmit_buffers +=
@@ -1546,6 +1546,8 @@ caddr_t data;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
+		if ((error = tr_enable(sc)) != 0)
+			break;
 
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
@@ -1577,8 +1579,11 @@ caddr_t data;
 		if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == IFF_RUNNING) {
 			tr_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
+			tr_disable(sc);
 		}
 		else if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == IFF_UP) {
+			if ((error = tr_enable(sc)) != 0)
+				break;
 			tr_init(sc);
 			tr_sleep(sc);
 		}
@@ -1738,15 +1743,15 @@ int
 tr_enable(sc)
 	struct tr_softc *sc;
 {       
-	if (sc->enabled == 0 && sc->enable != NULL) {
-		if ((*sc->enable)(sc) != 0) {
+	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
+		if ((*sc->sc_enable)(sc) != 0) {
 			printf("%s: device enable failed\n",
 				sc->sc_dev.dv_xname);
 			return (EIO);
 		} 
 	}
         
-	sc->enabled = 1;
+	sc->sc_enabled = 1;
 	return (0);
 }               
         
@@ -1754,9 +1759,9 @@ void
 tr_disable(sc)
 	struct tr_softc *sc;
 {
-	if (sc->enabled != 0 && sc->disable != NULL) {
-		(*sc->disable)(sc);
-		sc->enabled = 0;
+	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
+		(*sc->sc_disable)(sc);
+		sc->sc_enabled = 0;
 	} 
 }       
 
@@ -1806,7 +1811,7 @@ tr_detach(self, flags)
 	token_ifdetach(ifp);
 	if_detach(ifp);
 
-	shutdownhook_disestablish(sc->sd_hook);
+	shutdownhook_disestablish(sc->sc_sdhook);
 
 	return (0);
 }
