@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 1996/09/30 16:34:39 ws Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 1997/01/31 02:04:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,9 +42,18 @@
 extern int cold;
 
 void configure __P((void));
-void setroot __P((void));
-void swapconf __P((void));
+void findroot __P((void));
 
+struct device *booted_device;	/* boot device */
+int booted_partition;		/* ...and partition on that device */
+
+struct devnametobdevmaj powerpc_nam2blk[] = {
+	{ "ofd",	0 },
+#ifdef notyet
+	{ "md",		XXX },
+#endif
+	{ NULL,		0 },
+};
 
 /*
  * Determine device configuration for a machine.
@@ -59,29 +68,25 @@ configure()
 	 * Setup root device.
 	 * Configure swap area.
 	 */
-	setroot();
+	findroot();
+
+	printf("boot device: %s\n",
+	    booted_device ? booted_device->dv_xname : "<unknown>");
+
+	setroot(booted_device, booted_partition, powerpc_nam2blk);
 	swapconf();
+	dumpconf();
 	cold = 0;
 }
-
-/* Should probably be somewhere else!					XXX */
-extern int (*mountroot) __P((void *));
 
 /*
  * Try to find the device we were booted from to set rootdev.
  */
 void
-setroot()
+findroot()
 {
 	char *cp;
-	
-	if (mountroot) {
-		/*
-		 * rootdev/swdevt/mountroot etc. already setup by config.
-		 */
-		return;
-	}
-	
+
 	/*
 	 * Try to find the device where we were booted from.
 	 */
@@ -95,29 +100,5 @@ setroot()
 			*cp = '/';
 		}
 	}
-	if (cp < bootpath || boothowto & RB_ASKNAME) {
-		/* Insert -a processing here				XXX */
-		panic("Cannot find root device");
-	}
 	dk_cleanup();
-}
-
-/*
- * Configure swap space
- */
-void
-swapconf()
-{
-	struct swdevt *swp;
-	int nblks;
-	
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
-		if (bdevsw[major(swp->sw_dev)].d_psize) {
-			nblks = (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
-			if (nblks != -1
-			    && (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	dumpconf();
 }
