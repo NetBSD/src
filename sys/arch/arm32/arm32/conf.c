@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 1996/11/23 21:15:31 mark Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 1996/12/28 23:18:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -57,8 +57,8 @@ bdev_decl(wd);
 bdev_decl(sw);
 #include "fdc.h"
 bdev_decl(fd);
-#include "rd.h"
-bdev_decl(rd);
+#include "md.h"
+bdev_decl(md);
 #include "sd.h"
 #include "st.h"
 #include "cd.h"
@@ -86,7 +86,7 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 15: */
 	bdev_disk_init(NWDC, wd),	/* 16: Internal IDE disk */
 	bdev_disk_init(NFDC, fd),	/* 17: floppy diskette */
-	bdev_disk_init(NRD, rd),	/* 18: ramdisk */
+	bdev_disk_init(NMD, md),	/* 18: memory disk */
 	bdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	bdev_lkm_dummy(),		/* 20: */
  	bdev_disk_init(NCCD,ccd),	/* 21: concatenated disk driver */
@@ -189,7 +189,7 @@ cdev_decl(com);
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(fd);
-cdev_decl(rd);
+cdev_decl(md);
 #include "bpfilter.h"
 #include "ch.h"
 #include "uk.h"
@@ -233,7 +233,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 15: */
 	cdev_disk_init(NWDC, wd),       /* 16: ST506/ESDI/IDE disk */
 	cdev_disk_init(NFDC, fd),       /* 17: floppy diskette */
-	cdev_disk_init(NRD, rd),        /* 18: ram disk driver */
+	cdev_disk_init(NMD, md),        /* 18: memory disk driver */
 	cdev_disk_init(NVND,vnd),       /* 19: vnode disk driver */
 	cdev_lkm_dummy(),		/* 20: */
  	cdev_disk_init(NCCD,ccd),	/* 21: concatenated disk driver */

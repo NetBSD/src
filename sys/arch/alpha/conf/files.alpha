@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
+#	$NetBSD: files.alpha,v 1.33 1996/12/28 23:10:47 pk Exp $
 #
 # alpha-specific configuration info
 
@@ -40,11 +40,11 @@ major { st = 2 }
 major { cd = 3 }
 major { sd = 8 }
 
-# RAM Disk
-pseudo-device rd
-file	dev/ramdisk.c			rd		needs-flag
-file	arch/alpha/alpha/rd_root.c	ramdisk_hooks
-major { rd = 6 }
+# Memory Disk
+pseudo-device md
+file	dev/md.c			md		needs-flag
+file	arch/alpha/alpha/md_root.c	memory_disk_hooks
+major { md = 6 }
 
 #
 # raster console routines

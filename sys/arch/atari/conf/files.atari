@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.27 1996/12/26 23:25:13 leo Exp $
+#	$NetBSD: files.atari,v 1.28 1996/12/28 23:15:13 pk Exp $
 #
 
 maxpartitions 16
@@ -34,10 +34,10 @@ device lpt
 attach	lpt at mainbus
 file	arch/atari/dev/lpt.c		lpt
 
-#ramdisk
-pseudo-device rd
-file	dev/ramdisk.c			rd needs-count
-file	arch/atari/dev/rd_root.c	ramdisk_hooks
+# memory disk
+pseudo-device md
+file	dev/md.c			md needs-count
+file	arch/atari/dev/md_root.c	memory_disk_hooks
 
 # nvram
 device	nvr

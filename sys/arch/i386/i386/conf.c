@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.82 1996/09/09 15:51:34 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.83 1996/12/28 23:19:27 pk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -58,8 +58,8 @@ bdev_decl(vnd);
 bdev_decl(scd);
 #include "ccd.h"
 bdev_decl(ccd);
-#include "rd.h"
-bdev_decl(rd);
+#include "md.h"
+bdev_decl(md);
 
 struct bdevsw	bdevsw[] =
 {
@@ -80,7 +80,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NVND,vnd),	/* 14: vnode disk driver */
 	bdev_disk_init(NSCD,scd),	/* 15: Sony CD-ROM */
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
-	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
+	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -154,7 +154,7 @@ cdev_decl(ch);
 dev_decl(filedesc,open);
 #include "bpfilter.h"
 cdev_decl(bpf);
-cdev_decl(rd);
+cdev_decl(md);
 #include "spkr.h"
 cdev_decl(spkr);
 #include "mms.h"
@@ -204,7 +204,7 @@ struct cdevsw	cdevsw[] =
 	cdev_apm_init(NAPM,apm),	/* 21: Advancded Power Management */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
-	cdev_disk_init(NRD,rd),		/* 24: ram disk driver */
+	cdev_disk_init(NMD,md),		/* 24: memory disk driver */
 	cdev_notdef(),			/* 25 */
 	cdev_joy_init(NJOY,joy),        /* 26: joystick */
 	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */
