@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.4 2000/02/06 11:21:47 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.5 2000/03/06 22:19:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -765,7 +765,7 @@ parse_init()
 	p_alg_auth = SADB_AALG_NONE;
 	p_mode = IPSEC_MODE_ANY;
 	p_reqid = 0;
-	p_replay = 4;
+	p_replay = 0;
 	p_key_enc_len = p_key_auth_len = 0;
 	p_key_enc = p_key_auth = 0;
 	p_lt_hard = p_lt_soft = 0;
