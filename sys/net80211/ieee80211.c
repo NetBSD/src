@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.8 2003/12/14 09:56:53 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.9 2004/01/13 23:37:29 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.8 2003/09/14 22:32:18 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.8 2003/12/14 09:56:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.9 2004/01/13 23:37:29 dyoung Exp $");
 #endif
 
 /*
@@ -702,7 +702,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	 * Verify at least one channel is present in the available
 	 * channel list before committing to the new mode.
 	 */
-	KASSERT(mode < N(chanflags), ("Unexpected mode %u\n", mode));
+	IASSERT(mode < N(chanflags), ("Unexpected mode %u\n", mode));
 	modeflags = chanflags[mode];
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		c = &ic->ic_channels[i];
@@ -749,7 +749,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 				ic->ic_ibss_chan = &ic->ic_channels[i];
 				break;
 			}
-		KASSERT(ic->ic_ibss_chan != NULL &&
+		IASSERT(ic->ic_ibss_chan != NULL &&
 		    isset(ic->ic_chan_active,
 			ieee80211_chan2ieee(ic, ic->ic_ibss_chan)),
 		    ("Bad IBSS channel %u\n",
