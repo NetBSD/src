@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.30.8.3 1997/05/17 00:06:25 thorpej Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.30.8.4 1997/05/17 17:57:52 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -1258,7 +1258,7 @@ vm_page_free_memory(list)
 	s = splimp();
 	simple_lock(&vm_page_queue_free_lock);
 
-	for (m = list->tqh_first; m != NULL; m = m->pageq.tqe_next) {
+	while ((m = list->tqh_first) != NULL) {
 		TAILQ_REMOVE(list, m, pageq);
 		m->flags = PG_FREE;
 		TAILQ_INSERT_TAIL(&vm_page_queue_free, m, pageq);
