@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.42 2003/08/22 19:08:47 dsl Exp $
+# $NetBSD: maketars,v 1.43 2003/09/30 05:07:40 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -13,16 +13,17 @@
 # In this case, remove "etc" from the list of default sets.
 #
 
-prog=`basename $0`
+prog=${0##*/}
 
 # set defaults
 : ${PAX=pax}
+: ${MKTEMP=mktemp}
 : ${MTREE=mtree}
-make="${MAKE:-make} -j 1 -f `dirname $0`/Makefile"
+make="${MAKE:-make} -j 1 -f $(dirname $0)/Makefile"
 
-machine=`${make} print_machine`
-machine_arch=`${make} print_machine_arch`
-setd=`pwd`
+machine=$(${make} print_machine)
+machine_arch=$(${make} print_machine_arch)
+setd=$(pwd)
 nlists="base comp etc games man misc text"
 xlists="xbase xcomp xcontrib xfont xserver xmisc"
 lists=$nlists
@@ -107,26 +108,7 @@ if [ -z "$dest" ]; then
 fi
 : ${etcdir:=${dest}/etc}
 
-# Make sure we don't loop forever if mkdir will always fail.
-
-if [ ! -d /tmp ]; then
-	echo /tmp is not a directory
-	exit 1
-fi
-
-if [ ! -w /tmp ]; then
-	echo /tmp is not writable
-	exit 1
-fi
-
-SDIR_BASE=/tmp/maketar.$$
-SDIR_SERIAL=0
-
-while true; do
-	SDIR=${SDIR_BASE}.${SDIR_SERIAL}
-	mkdir -m 0700 ${SDIR} && break
-	SDIR_SERIAL=$((${SDIR_SERIAL} + 1))
-done    
+SDIR=$(${MKTEMP} -d /tmp/${prog}.XXXXXX)
 
 es=0
 cleanup()
@@ -161,10 +143,10 @@ for setname in $lists; do
 	if [ -n "$installdir" ]; then
 		echo "Copying set $setname"
 	else
-		[ -n "$metalog" -a $tars/$out -nt "$metalog" ] && {
+		if [ -n "$metalog" -a $tars/$out -nt "$metalog" ]; then
 			echo "$out is up to date"
 			continue
-		}
+		fi
 		echo "Creating $out"
 	fi
 	sh $setd/makeflist -a $machine_arch -m $machine -s $setd $setname \
