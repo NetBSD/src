@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.159 2003/12/14 05:35:06 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.160 2003/12/14 18:51:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.159 2003/12/14 05:35:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.160 2003/12/14 18:51:10 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -164,7 +164,7 @@ static TAILQ_HEAD(, atabus_initq) atabus_initq_head =
     TAILQ_HEAD_INITIALIZER(atabus_initq_head);
 static struct simplelock atabus_interlock = SIMPLELOCK_INITIALIZER;
 
-int __wdcprobe __P((struct channel_softc*, int));
+int wdcprobe1 __P((struct channel_softc*, int));
 static void  __wdcerror	  __P((struct channel_softc*, char *));
 static int   __wdcwait_reset  __P((struct channel_softc *, int, int));
 void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
@@ -329,7 +329,7 @@ atabusconfig(atabus_sc)
 	}
 	need_delref = 1;
 
-	if (__wdcprobe(chp, 0) == 0)
+	if (wdcprobe1(chp, 0) == 0)
 		/* If no drives, abort attach here. */
 		goto out;
 
@@ -604,11 +604,11 @@ int
 wdcprobe(chp)
 	struct channel_softc *chp;
 {
-	return __wdcprobe(chp, 1);
+	return wdcprobe1(chp, 1);
 }
 
 int
-__wdcprobe(chp, poll)
+wdcprobe1(chp, poll)
 	struct channel_softc *chp;
 	int poll;
 {
