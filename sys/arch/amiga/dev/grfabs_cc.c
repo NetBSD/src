@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.17 1997/09/19 03:27:10 mhitch Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.18 1999/03/24 22:24:43 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1877,18 +1877,15 @@ int	AGA_htotal = 0x71;
 int	AGA_hsstrt = 0xc;
 int	AGA_hsstop = 0x16;
 int	AGA_hbstrt = 0x5;
+int	AGA_vtotal = 0x1c1;
 #else 
 int	AGA_htotal = 0x79;
 int	AGA_hsstrt = 0xe;
 int	AGA_hsstop = 0x1c;
 int	AGA_hbstrt = 0x8;
-#endif 
-int	AGA_hbstop = 0x1e;
-#ifdef GRF_AGA_VGA
-int	AGA_vtotal = 0x1c1;
-#else 
 int	AGA_vtotal = 0x1ec;
 #endif 
+int	AGA_hbstop = 0x1e;
 int	AGA_vsstrt = 0x3;
 int	AGA_vsstop = 0x6;
 int	AGA_vbstrt = 0x0;
@@ -3301,19 +3298,26 @@ cc_init_pal_aga()
 	return (paga_this);
 }
 
-/* static, so I can patch and play (VGAOnly is commented-out) */
+/* static, so I can patch and play */
 
-int	pAGA_htotal  = 0x081;	/* 0x079 */
-int	pAGA_hsstrt  = 0x00f;	/* 0x00f */
-int	pAGA_hsstop  = 0x019;	/* 0x019 */
-int	pAGA_hbstrt  = 0x001;	/* 0x001 */
-int	pAGA_hbstop  = 0x021;	/* 0x021 */
-int	pAGA_vtotal  = 0x23d;	/* 0x24d */
-int	pAGA_vsstrt  = 0x001;	/* 0x001 */
-int	pAGA_vsstop  = 0x008;	/* 0x008 */
-int	pAGA_vbstrt  = 0x000;	/* 0x000 */
-int	pAGA_vbstop  = 0x017;	/* 0x019 */
-int	pAGA_hcenter = 0x04f;	/* 0x04b */
+#ifdef GRF_AGA_VGA
+int	pAGA_htotal  = 0x079;
+int	pAGA_vtotal  = 0x24d;
+int	pAGA_vbstop  = 0x019;
+int	pAGA_hcenter = 0x04b;
+#else
+int	pAGA_htotal  = 0x081;
+int	pAGA_vtotal  = 0x23d;
+int	pAGA_vbstop  = 0x017;
+int	pAGA_hcenter = 0x04f;
+#endif
+int	pAGA_hsstrt  = 0x00f;
+int	pAGA_hsstop  = 0x019;
+int	pAGA_hbstrt  = 0x001;
+int	pAGA_hbstop  = 0x021;
+int	pAGA_vsstrt  = 0x001;
+int	pAGA_vsstop  = 0x008;
+int	pAGA_vbstrt  = 0x000;
 
 void
 display_pal_aga_view(v)

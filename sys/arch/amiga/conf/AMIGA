@@ -1,10 +1,10 @@
-# $NetBSD: AMIGA,v 1.11 1999/03/09 15:09:00 is Exp $
+# $NetBSD: AMIGA,v 1.12 1999/03/24 22:26:14 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.118 1999/03/09 12:20:41 is Exp $
+#$ NetBSD: GENERIC,v 1.119 1999/03/24 22:24:42 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
@@ -14,11 +14,11 @@ options 	RTC_OFFSET=0
 #mainboards to support (in addition to Amiga)
 
 options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
-				#MC68060 with an OS ROM up to (at least) 
-				#V40 (OS3.1) and want to boot with the
-				#bootblock.
-				#You do not need this if you have a DraCo,
-				#have no 68060 or NEVER use the bootblock
+				# MC68060 with an OS ROM up to (at least) 
+				# V40 (OS3.1) and want to boot with the
+				# bootblock.
+				# You do not need this if you have a DraCo,
+				# have no 68060 or NEVER use the bootblock
 
 #processors this kernel should support
 
@@ -95,7 +95,7 @@ options 	LKM		# Loadable kernel modules
 options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 options 	UCONSOLE	# anyone can redirect a virtual console
 #options 	INSECURE	# allow, among other insecure stuff, LKM 
-				#loading in multi-user mode.
+				# loading in multi-user mode.
 options 	SCSIVERBOSE	# Verbose SCSI errors
 
 options 	NTP		# NTP phase/frequency locked loop
@@ -113,13 +113,14 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #Amiga specific options
 
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
-				#first bank of RAM. (default: unlimited)
+				# first bank of RAM. (default: unlimited)
 #options	NKPTADD=4	# set this for 4 additional KPT pages
 #options	NKPTADDSHIFT=24	# set this for 1 additional KPT page
-				#per 16 MB (1<<24 bytes) of RAM
-                                
-                                #increase NKPTADD if you get "out of PT pages"
-                                #panics.
+				# per 16 MB (1<<24 bytes) of RAM
+                                # define and decrease this, or define and
+                                # increase NKPTADD if you get "out of PT pages"
+                                # panics.
+
 #ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 #before the 10 secondinterval ends, or that KBDRESET does work at all.
 #options 	KBDRESET	# sync on Ctrl-Amiga-Amiga
@@ -143,12 +144,13 @@ options 	GRF_NTSC	# NTSC
 options 	GRF_PAL		# PAL
 options 	GRF_A2024	# Support for the A2024
 options 	GRF_AGA		# AGA Chip Set
+options 	GRF_AGA_VGA	# AGA VGAONLY timing
 options 	GRF_SUPER72	# AGA Super-72
 
 #options 	KFONT_8X11	# 8x11 font
 
 #This is how you would tell the kernel the A2410 oscillator frequencies:
-#The used frequencies are the defaults, decrease this, or define and  do not need option setting
+#The used frequencies are the defaults, and do not need option setting
 #options 	ULOWELL_OSC1=36000000
 #options 	ULOWELL_OSC2=66667000
 
@@ -213,7 +215,7 @@ hyper*		at zbus?		# zbus HyperCom3 + HyperCom4
 com*		at hyper? port ?	# Hypercom3/4 serial ports
 #lpt*		at hyper? port ?	# not yet: Hypercom3 parallel port
 
-#Amiga Mainboard devices (sans graphics decrease this, or define and  keyboard)
+#Amiga Mainboard devices (sans graphics and keyboard)
 
 ser0		at mainbus0		# Amiga onboard serial
 par0		at mainbus0		# Amiga onboard parallel
@@ -312,7 +314,7 @@ pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 
 #rnd is EXPERIMENTAL at this point.
-#pseudo-device  rnd                     # /dev/random decrease this, or define and  in-kernel generator
+#pseudo-device  rnd                     # /dev/random and in-kernel generator
 #options        RND_COM                 # use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?
