@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.96 1999/09/23 02:21:30 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.97 1999/12/08 16:22:20 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1157,8 +1157,7 @@ after_listen:
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
 			 */
-			m->m_data += toff + off;
-			m->m_len -= (toff + off);
+			m_adj(m, toff + off);
 			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
 			TCP_SETUP_ACK(tp, th);
@@ -1171,11 +1170,9 @@ after_listen:
 	}
 
 	/*
-	 * Drop TCP, IP headers and TCP options.
+	 * Compute mbuf offset to TCP data segment.
 	 */
-	hdroptlen  = toff + off;
-	m->m_data += hdroptlen;
-	m->m_len  -= hdroptlen;
+	hdroptlen = toff + off;
 
 	/*
 	 * Calculate amount of space in receive window,
@@ -1361,7 +1358,7 @@ after_listen:
 			tcpstat.tcps_rcvpartduppack++;
 			tcpstat.tcps_rcvpartdupbyte += todrop;
 		}
-		m_adj(m, todrop);
+		hdroptlen += todrop;	/*drop from head afterwards*/
 		th->th_seq += todrop;
 		tlen -= todrop;
 		if (th->th_urp > todrop)
@@ -1404,15 +1401,6 @@ after_listen:
 				iss = tcp_new_iss(tp, sizeof(struct tcpcb),
 						  tp->snd_nxt);
 				tp = tcp_close(tp);
-				/*
-				 * We have already advanced the mbuf
-				 * pointers past the IP+TCP headers and
-				 * options.  Restore those pointers before
-				 * attempting to use the TCP header again.
-				 */
-				m->m_data -= hdroptlen;
-				m->m_len  += hdroptlen;
-				hdroptlen = 0;
 				goto findpcb;
 			}
 			/*
@@ -1843,7 +1831,7 @@ step6:
 		     && (so->so_options & SO_OOBINLINE) == 0
 #endif
 		     )
-			tcp_pulloutofband(so, th, m);
+			tcp_pulloutofband(so, th, m, hdroptlen);
 	} else
 		/*
 		 * If no out of band data is expected,
@@ -1884,11 +1872,13 @@ dodata:							/* XXX */
 			TCP_SETUP_ACK(tp, th);
 			tp->rcv_nxt += tlen;
 			tiflags = th->th_flags & TH_FIN;
-			tcpstat.tcps_rcvpack++;\
-			tcpstat.tcps_rcvbyte += tlen;\
+			tcpstat.tcps_rcvpack++;
+			tcpstat.tcps_rcvbyte += tlen;
+			m_adj(m, hdroptlen);
 			sbappend(&(so)->so_rcv, m);
 			sorwakeup(so);
 		} else {
+			m_adj(m, hdroptlen);
 			tiflags = tcp_reass(tp, th, m, &tlen);
 			tp->t_flags |= TF_ACKNOW;
 		}
@@ -2005,9 +1995,6 @@ dropwithreset:
 	else if (ip6 && IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
 		goto drop;
 #endif
-	/* recover the header if dropped. */
-	m->m_data -= hdroptlen;
-	m->m_len += hdroptlen;
     {
 	/*
 	 * need to recover version # field, which was overwritten on
@@ -2183,12 +2170,13 @@ tcp_dooptions(tp, cp, cnt, th, oi)
  * sequencing purposes.
  */
 void
-tcp_pulloutofband(so, th, m)
+tcp_pulloutofband(so, th, m, off)
 	struct socket *so;
 	struct tcphdr *th;
 	register struct mbuf *m;
+	int off;
 {
-	int cnt = th->th_urp - 1;
+	int cnt = off + th->th_urp - 1;
 	
 	while (cnt >= 0) {
 		if (m->m_len > cnt) {
@@ -3210,7 +3198,7 @@ syn_cache_respond(sc, m)
 	struct syn_cache *sc;
 	struct mbuf *m;
 {
-	struct route *ro = &sc->sc_route4;
+	struct route *ro;
 	struct rtentry *rt;
 	u_int8_t *optp;
 	int optlen, error;
@@ -3225,10 +3213,12 @@ syn_cache_respond(sc, m)
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
 		hlen = sizeof(struct ip);
+		ro = &sc->sc_route4;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		hlen = sizeof(struct ip6_hdr);
+		ro = (struct route *)&sc->sc_route6;
 		break;
 #endif
 	default:

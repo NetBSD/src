@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.69 1999/11/19 10:41:42 bouyer Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.70 1999/12/08 16:22:20 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -655,7 +655,7 @@ void	 tcp6_notify __P((struct in6pcb *, int));
 u_int	 tcp_optlen __P((struct tcpcb *));
 int	 tcp_output __P((struct tcpcb *));
 void	 tcp_pulloutofband __P((struct socket *,
-	    struct tcphdr *, struct mbuf *));
+	    struct tcphdr *, struct mbuf *, int));
 void	 tcp_quench __P((struct inpcb *, int));
 #if defined(INET6) && !defined(TCP6)
 void	 tcp6_quench __P((struct in6pcb *, int));
