@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.24.8.2 2002/05/29 21:31:51 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.24.8.3 2002/07/03 20:08:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -130,8 +130,7 @@ cachectl1(req, addr, len, p)
 			 */
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				if (pmap_extract(
-				    p->p_vmspace->vm_map.pmap,
+				if (pmap_extract(p->p_vmspace->vm_map.pmap,
 				    addr, &pa) == FALSE)
 					doall = 1;
 			}
