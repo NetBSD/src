@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.3 2002/08/11 22:29:09 fredette Exp $	*/
+/*	$NetBSD: trap.S,v 1.4 2002/08/13 20:29:52 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1253,7 +1253,7 @@ $hash_loop_tlbd_t
 	/*
 	 * Otherwise, just calculate the HPT tag, set the 
 	 * dirty bit on the mapping, and load it into the 
-	 * TLB and HPT.
+	 * HPT and TLB.
 	 */
 $load_tlbd_t
 	VTAG(%r8, %r9, %r16)
@@ -1519,13 +1519,33 @@ LEAF_ENTRY(desidhash_l)
 EXIT(desidhash_l)
 
 
-	.align	32
+/*
+ * This is a handler for interruption 20, "TLB dirty bit trap".  It
+ * is used on the PA7100LC (PCX-L), PA7300LC (PCX-L2), PA8000 (PCX-U),
+ * PA8200 (PCX-W), PA8500 (PCX-W), and PA8600 (PCX-W+).  Only shadowed 
+ * registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = data address space identifier
+ * %r9 = data address offset
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
 $tlbd_l
-	mfctl	cr28, r24
+	/*
+	 * Calculate the offset of the HPT entry into %r24,
+	 * and save it into %cr28 for recovery later, when
+	 * we want to update the HPT.
+	 */
+	HPTENT
+	mtctl	%r24, %cr28
 
 	/*
-	 * Chase the list of entries for this hash bucket until we find
-	 * the correct mapping or NULL.
+	 * Search the list of mappings attached to this
+	 * HPT entry until we find the faulting mapping.
+	 * If we don't find it, trap to C.
 	 */
 	ldw	HPT_ENTRY(r24), r16
 $hash_loop_tlbd_l
@@ -1537,31 +1557,118 @@ $hash_loop_tlbd_l
 	comb,<>,n r8, r17, $hash_loop_tlbd_l
 	ldw	PV_HASH(r16), r16
 
-	/* Set the dirty bit for this physical page. */
+	/*
+	 * We found the faulting mapping.  If it is not
+	 * marked TLB_NO_RW_ALIAS, we have to flush all 
+	 * other mappings of this page.
+	 */
 	ldw	PV_TLBPAGE(r16), r17
 	ldw	PV_TLBPROT(r16), r25
+	bb,>=,n	%r25, TLB_NO_RW_ALIAS_POS, $flush_all_tlbd_l
+
+	/*
+	 * Otherwise, set the dirty bit on the mapping, and 
+	 * load it into the HPT and TLB.
+	 */
 	b	$tlb_inshpt_l
 	depi	1, TLB_DIRTY_POS, 1, r25
 
-	.align	8
+	/*
+	 * This flushes all other mappings of the page.  Since
+	 * the flushing subroutine destroys effectively preserves
+	 * only the address of the writable mapping, we have to
+	 * reload all other registers before we can continue.
+	 */
+$flush_all_tlbd_l
+	bl	$flush_all_tlbd, %r1
+	copy	%r16, %r24
+	copy	%r0, %r1			/* reload %r1, 0 => DTLB */
+	DTLBPRE					/* reload %r8, %r9 */
+	copy	%r24, %r16			/* reload %r16 */
+	mfctl	%cr28, %r24			/* reload %r24 */
+	ldw	PV_TLBPAGE(%r16), %r17		/* reload %r17 */
+	ldw	PV_TLBPROT(%r16), %r25		/* reload %r25 */
+	b	$tlb_inshpt_l
+	depi	1, TLB_DIRTY_POS, 1, %r25	/* set dirty bit */
+
+/*
+ * This is a handler for interruption 6, "Instruction TLB miss fault",
+ * and interruption 16, "Non-access instruction TLB miss fault".  It
+ * is used on the PA7100LC (PCX-L), PA7300LC (PCX-L2), PA8000 (PCX-U),
+ * PA8200 (PCX-W), PA8500 (PCX-W), and PA8600 (PCX-W+).  Only shadowed 
+ * registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = instruction address space identifier
+ * %r9 = instruction address offset
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
 $itlb_l
 	depi	1, TFF_ITLB_POS, 1, r1	/* mark for ITLB insert */
+	/* FALLTHROUGH */
+
+/*
+ * This is a handler for interruption 17, "Non-access data TLB miss 
+ * fault".  It is used on the PA7100LC (PCX-L), PA7300LC (PCX-L2), 
+ * PA8000 (PCX-U), PA8200 (PCX-W), PA8500 (PCX-W), and PA8600 (PCX-W+).
+ * Only shadowed registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = data address space identifier
+ * %r9 = data address offset
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
 $dtlbna_l
+	/*
+	 * Calculate the offset of the HPT entry into %r24,
+	 * and save it into %cr28 for recovery later, when
+	 * we want to update the HPT.
+	 *
+	 * XXX fredette: does the PA7100LC not provide the
+	 * HPT entry in %cr28 for a non-access DTLB miss?
+	 * What about an ITLB miss or non-access ITLB miss?
+	 * Having this here, if unnecessary, hurts the
+	 * performance of all of these faults.
+	 */
 	HPTENT
 	mtctl	r24, cr28
+	/* FALLTHROUGH */
 
+/*
+ * This is a handler for interruption 15, "Data TLB miss fault".
+ * It is used on the PA7100LC (PCX-L), PA7300LC (PCX-L2),
+ * PA8000 (PCX-U), PA8200 (PCX-W), PA8500 (PCX-W), and PA8600 (PCX-W+).
+ * Only shadowed registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = data address space identifier
+ * %r9 = data address offset
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
 $dtlb_l
-	mfctl	cr28, r24
 	/*
-	 * r1 is the trap type
-	 * r8 is the space of the address that had the TLB miss
-	 * r9 is the offset of the address that had the TLB miss
-	 * r24 is the correspondent HPT entry pointer
+	 * On entry, %cr28 contains the address of the 
+	 * relevant HPT entry, courtesy of hpti_g's call 
+	 * to PDC_TLB(8)/PDC_TLB_CONFIG(1) asking for 
+	 * PDC_TLB_CURRPDE.
 	 */
+	mfctl	cr28, r24
 
 	/*
-	 * Chase the list of entries for this hash bucket until we find
-	 * the correct mapping or NULL.
+	 * Search the list of mappings attached to this
+	 * HPT entry until we find the faulting mapping.
+	 * If we don't find it, branch to a subhandler
+	 * that checks for a non-access fault caused by
+	 * an LPA instruction.
 	 */
 	ldw	HPT_ENTRY(r24), r16
 $hash_loop_l
@@ -1573,15 +1680,33 @@ $hash_loop_l
 	comb,<>,n r8, r17, $hash_loop_l
 	ldw	PV_HASH(r16), r16
 
-	/* Now set things up to enter the real mapping that we want */
+	/*
+	 * If this mapping is not marked TLB_REF, and 
+	 * it isn't marked TLB_NO_RW_ALIAS, we have to
+	 * flush any writable mapping for this page.
+	 * Since TLB_REF and TLB_NO_RW_ALIAS are adjacent,
+	 * we can test if they are both clear with one
+	 * extru instruction.
+	 */
 	ldw	PV_TLBPAGE(r16), r17
 	ldw	PV_TLBPROT(r16), r25
+	extru,<> %r25, TLB_NO_RW_ALIAS_POS, 2, %r0
+	b,n	$flush_writable_l
+
+	/* Mark this mapping as referenced. */
 	depi	1, TLB_REF_POS, 1, r25
 
-	/*
-	 * Load the HPT cache with the miss information for the next time.
-	 * The HPT entry address was saved by the HPTENT
-	 */
+/*
+ * Load the HPT entry and TLB with a mapping.  On entry:
+ *
+ * %r1 = C trap number
+ * %r8 = address space identifier
+ * %r9 = address offset
+ * %r16 = mapping
+ * %r17 = TLB page
+ * %r24 = HPT entry
+ * %r25 = TLB protection
+ */
 $tlb_inshpt_l
 	stw	r25, PV_TLBPROT(r16)
 	VTAG(%r8, %r9, %r16)
@@ -1603,6 +1728,56 @@ $tlb_itlb_l
 	nop ! nop
 	rfir
 	nop
+
+/*
+ * Flush any writable mapping in the TLB and cache, in order
+ * to insert a readable mapping.  On entry:
+ *
+ * %r1 = C trap number
+ * %r8 = undefined
+ * %r9 = undefined
+ * %r16 = struct pv_entry * of readable mapping
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
+$flush_writable_l
+	/*
+	 * Branch if this was an ITLB fault.
+	 */
+	bb,<,n	%r1, TFF_ITLB_POS, $flush_writable_itlb_l
+
+	/*
+	 * Flush any writable mapping, then reload registers
+	 * for an HPT and DTLB insertion.
+	 */
+	bl	$flush_writable, %r1
+	copy	%r16, %r24
+	copy	%r0, %r1			/* reload %r0, 0 => DTLB */
+	DTLBPRE					/* reload %r8, %r9 */
+	copy	%r24, %r16			/* reload %r16 */
+	ldw	PV_TLBPAGE(%r16), %r17		/* reload %r17 */
+	ldw	PV_TLBPROT(%r16), %r25		/* reload %r25 */
+	mfctl	%cr28, %r24			/* reload %r24 */
+	b	$tlb_inshpt_l
+	depi	1, TLB_REF_POS, 1, %r25		/* set ref bit */
+
+$flush_writable_itlb_l
+	/*
+	 * Flush any writable mapping, then reload registers
+	 * for an HPT and ITLB insertion.
+	 */
+	bl	$flush_writable, %r1
+	copy	%r16, %r24
+	ldil	L%TFF_ITLB, %r1			/* reload %r0 */
+	ITLBPRE					/* reload %r8, %r9 */
+	copy	%r24, %r16			/* reload %r16 */
+	ldw	PV_TLBPAGE(%r16), %r17		/* reload %r17 */
+	ldw	PV_TLBPROT(%r16), %r25		/* reload %r25 */
+	mfctl	%cr28, %r24			/* reload %r24 */
+	b	$tlb_inshpt_l
+	depi	1, TLB_REF_POS, 1, %r25		/* set ref bit */
+
 #endif /* HP7100LC_CPU */
 
 	.export $tlbiflpa, entry
