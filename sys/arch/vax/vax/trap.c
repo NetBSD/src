@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.12 1995/06/16 15:36:53 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.13 1995/07/05 08:39:48 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -119,10 +119,15 @@ arithflt(frame)
 	vm_prot_t ftype;
 	extern vm_map_t	pte_map;
 	
-	if((frame->psl & PSL_U) == PSL_U)
+	if((frame->psl & PSL_U) == PSL_U) {
 		type|=T_USER;
+		p->p_addr->u_pcb.framep = frame; 
+	}
 
 	type&=~(T_WRITE|T_PTEFETCH);
+
+
+
 if(frame->trap==7) goto fram;
 if(faultdebug)printf("Trap: type %x, code %x, pc %x, psl %x\n",
 		frame->trap, frame->code, frame->pc, frame->psl);
@@ -135,7 +140,7 @@ faulter:
 		if (kdb_trap(frame))
 			return;
 #endif
-		panic("trap");
+		panic("trap: adr %x",frame->code);
 	case T_KSPNOTVAL:
 		goto faulter;
 
@@ -215,9 +220,10 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 			if (rv != KERN_SUCCESS) {
 	
 				sig=SIGSEGV;
+				goto bad;
 			} else trapsig=0;
 /*			return; /* We don't know if it was a trap only for PTE*/
-			break;
+/*			break; */
 		}
 		addr=(frame->code& ~PAGE_MASK);
 		if((frame->pc>(unsigned)0x80000000)&&
@@ -298,6 +304,7 @@ if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
 		trapsig=0;
 		break;
 	}
+bad:
 	if(trapsig) trapsignal(curproc, sig, frame->code);
 uret:
 	userret(curproc, frame->pc, frame->psl);
