@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.3 2002/02/08 05:02:16 lukem Exp $
+#	$NetBSD: list.ramdisk,v 1.4 2002/03/07 01:41:48 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/@MACHINE@/stand
 
@@ -25,3 +25,4 @@ COPY	${CURDIR}/../common/termcap.mini	usr/share/misc/termcap
 
 # and the boot script
 CMD	sed -e "s/@BOOTMODEL@/${BOOTMODEL}/" < ${CURDIR}/../common/dot.profile > .profile
+MTREE	./.profile	type=file uname=root gname=wheel mode=0644

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.8 2002/03/06 13:11:34 lukem Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.9 2002/03/07 01:41:48 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -11,7 +11,7 @@ WARNS=		1
 
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${TOP}/common/list.ramdisk
-MTREECONF=	${DISTRIBDIR}/common/mtree.common ${TOP}/common/mtree.conf
+MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
 IMAGEDEPENDS+= 	${CRUNCHBIN} dot.profile termcap.mini \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
