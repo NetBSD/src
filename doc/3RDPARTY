@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.169 2003/12/13 18:14:59 kochi Exp $
+#	$NetBSD: 3RDPARTY,v 1.170 2003/12/19 15:01:48 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -733,8 +733,8 @@ Responsible:	jtk
 Notes:
 
 Package:	XFree86
-Version:	3.3.6/4.3.0
-Current Vers:	3.3.6/4.3.0
+Version:	3.3.6/4.3.0 (2003-12-19 4.3 branch sources)
+Current Vers:	3.3.6/4.4.0RC1
 Maintainer:	XFree86 consortium
 Archive Site:	ftp://ftp.xfree86.org/pub/XFree86/
 Mailing List:	
@@ -748,7 +748,7 @@ Notes:
  Only X4??src-1 to X4??src-6 were imported. X4??src-7 contains postscript
  files which we don't need in our tree.
  ALL changes must be sent back to the XFree86 repository. Patches should
- be sent to patch@XFree86.org.
+ be sent to patches@XFree86.org.
 
 Package:	zlib
 Version:	1.1.4
