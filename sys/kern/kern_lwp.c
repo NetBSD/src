@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.3 2003/01/28 02:20:35 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.4 2003/01/29 23:27:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -307,10 +307,10 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 	if (t->l_stat != LSSLEEP)
 		return (ENODEV);
 
-	if ((l->l_flag & L_SINTR) == 0)
+	if ((t->l_flag & L_SINTR) == 0)
 		return (EBUSY);
 
-	setrunnable(l);
+	setrunnable(t);
 
 	return 0;
 }
