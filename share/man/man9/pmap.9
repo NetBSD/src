@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.26 2004/04/23 02:58:27 simonb Exp $
+.\"	$NetBSD: pmap.9,v 1.27 2005/01/09 09:53:32 yamt Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 20, 2004
+.Dd January 9, 2005
 .Dt PMAP 9
 .Os
 .Sh NAME
@@ -113,6 +113,8 @@
 .Fn "PMAP_MAP_POOLPAGE" "paddr_t pa"
 .Ft paddr_t
 .Fn "PMAP_UNMAP_POOLPAGE" "vaddr_t va"
+.Ft void
+.Fn "PMAP_PREFER" "vaddr_t hint" "vaddr_t *va"
 .Sh DESCRIPTION
 The
 .Nm
@@ -1049,6 +1051,22 @@ The following is an example of how to define
 .Pp
 This takes the KSEG0 address of a previously-mapped pool page
 and returns the physical address of that page on a MIPS processor.
+.It void Fn "PMAP_PREFER" "vaddr_t hint" "vaddr_t *vap"
+This function is used by
+.Xr uvm_map 9
+to adjust virtual address being allocated in order to avoid
+cache alias problems.
+If necessary, a virtual address pointed by
+.Fa vap
+will be advanced.
+.Fa hint
+is an object offset which will be mapped into the resulted
+virtual address.
+.Pp
+The use of
+.Fn PMAP_PREFER
+is enabled by defining it as a C pre-processor macro in
+.Aq Pa machine/pmap.h .
 .El
 .Sh SEE ALSO
 .Xr uvm 9
