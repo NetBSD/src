@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $ */
+/*	$NetBSD: zs.c,v 1.2 1996/05/12 20:46:33 oki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -298,7 +298,8 @@ zsattach(parent, dev, aux)
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
-	tp->t_hwiflow = zshwiflow;
+	if (unit != ZS_MOUSE)
+		tp->t_hwiflow = zshwiflow;
 	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
 		cs->cs_ttyp = tp = ctp;
 #ifdef KGDB
