@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 1996/10/13 03:06:51 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.22 1996/10/14 18:40:15 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -989,5 +989,5 @@ a2settod(tim)
 	rt->year2   = year2;
 	rt->control2 &= ~A2CONTROL1_HOLD;
 
-  return 1;
+	return 1;
 }
