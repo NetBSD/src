@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.18 2002/09/13 05:45:13 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.19 2002/09/14 23:21:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,6 +62,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 
 #include "rtld.h"
 #include "debug.h"
@@ -137,6 +138,30 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 	__asm __volatile("imb");
 }
 
+/*
+ * It is possible for the compiler to emit relocations for unaligned data.
+ * We handle this situation with these inlines.
+ */
+#define	RELOC_ALIGNED_P(x) \
+	(((uintptr_t)(x) & (sizeof(void *) - 1)) == 0)
+
+static __inline Elf_Addr
+load_ptr(void *where)
+{
+	Elf_Addr res;
+
+	memcpy(&res, where, sizeof(res));
+
+	return (res);
+}
+
+static __inline void
+store_ptr(void *where, Elf_Addr val)
+{
+
+	memcpy(where, &val, sizeof(val));
+}
+
 void
 _rtld_relocate_nonplt_self(dynp, relocbase)
 	Elf_Dyn *dynp;
@@ -196,15 +221,24 @@ _rtld_relocate_nonplt_objects(obj, self)
 
 			tmp = (Elf_Addr)(defobj->relocbase + def->st_value) +
 			    rela->r_addend;
-			if (*where != tmp)
-				*where = tmp;
+			if (__predict_true(RELOC_ALIGNED_P(where))) {
+				if (*where != tmp)
+					*where = tmp;
+			} else {
+				if (load_ptr(where) != tmp)
+					store_ptr(where, tmp);
+			}
 			rdbg(("REFQUAD/GLOB_DAT %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)*where, defobj->path));
+			    obj->path, (void *)tmp, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):
-			*where += (Elf_Addr)obj->relocbase;
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where += (Elf_Addr)obj->relocbase;
+			else
+				store_ptr(where,
+				    load_ptr(where) + (Elf_Addr)obj->relocbase);
 			rdbg(("RELATIVE in %s --> %p", obj->path,
 			    (void *)*where));
 			break;
@@ -230,7 +264,7 @@ _rtld_relocate_nonplt_objects(obj, self)
 			    "addend = %p, contents = %p, symbol = %s",
 			    symnum, (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
-			    (void *)*where,
+			    (void *)load_ptr(where),
 			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations\n",
