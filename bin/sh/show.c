@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.18 1999/10/08 21:10:44 pk Exp $	*/
+/*	$NetBSD: show.c,v 1.19 2002/02/11 18:54:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.18 1999/10/08 21:10:44 pk Exp $");
+__RCSID("$NetBSD: show.c,v 1.19 2002/02/11 18:54:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,8 +201,8 @@ sharg(arg, fp)
 			if (subtype == VSLENGTH)
 				putc('#', fp);
 
-			while (*p != '=')
-				putc(*p++, fp);
+			while (*++p != '=')
+				putc(*p, fp);
 
 			if (subtype & VSNUL)
 				putc(':', fp);
