@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.15 1998/11/16 12:07:43 christos Exp $	*/
+/*	$NetBSD: svc.h,v 1.16 1999/01/31 19:45:25 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -271,7 +271,9 @@ extern int svc_fds;
  * a small program implemented by the svc_rpc implementation itself;
  * also see clnt.h for protocol numbers.
  */
-extern void rpctest_service();				/* XXX relic? */
+__BEGIN_DECLS
+extern void rpctest_service __P((void));
+__END_DECLS
 
 __BEGIN_DECLS
 extern void	svc_getreq	__P((int));
