@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.36 1999/05/14 22:36:50 wrstuden Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.37 1999/07/30 17:44:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.36 1999/05/14 22:36:50 wrstuden Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.37 1999/07/30 17:44:01 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -601,11 +601,12 @@ next:
 	}
 	/*
 	 * Now determine how wide each column will be, and calculate how
-	 * many columns will fit in an 80 char line.
+	 * many columns will fit in a 76 char line. 76 is the width of the
+	 * subwindows in sysinst.
 	 */
 	printcolwidth = count_digits(
 			fsbtodb(&sblock, cgsblock(&sblock, sblock.fs_ncg -1)));
-	nprintcols = 80 / (printcolwidth + 2);
+	nprintcols = 76 / (printcolwidth + 2);
 	/*
 	 * Now build the cylinders group blocks and
 	 * then print out indices of cylinder groups.
