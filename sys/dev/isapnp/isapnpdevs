@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.24 1999/03/29 21:35:19 fvdl Exp $
+$NetBSD: isapnpdevs,v 1.24.2.1 1999/04/16 20:28:15 augustss Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -81,9 +81,11 @@ devlogic	com	USR0004		0	USR Sportster 14.4k
 devlogic	com	USR0006		0	USR Sportster 33.6k
 devlogic	com	USR2070		0	USR Sportster 56k
 devlogic	com	USR3031		0	USR 56k Faxmodem
+devlogic	com	USR9190		0	USR 56k Voice INT
 devlogic	com	ZTIF761		0	Zoom ComStar 33.6
 devlogic	com	CIR3000		0	Cirrus Logic V43 
 devlogic	com	MOT0000		0	Motorola ModemSurfr
+devlogic	com	SMM00C1		0	Leopard 56k PnP
 devcompat	com	PNP0500		0	Generic 8250/16450
 devcompat	com	PNP0501		0	Generic 16550A
 
