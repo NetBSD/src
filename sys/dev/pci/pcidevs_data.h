@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.258 2000/09/04 20:44:37 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.259 2000/09/07 23:26:41 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.254 2000/09/04 20:30:50 soren Exp 
+ *	NetBSD: pcidevs,v 1.255 2000/09/07 23:26:28 soren Exp 
  */
 
 /*
@@ -2496,163 +2496,163 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0440,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "K56flex DSVD LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0441,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0442,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0443,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0444,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0445,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0446,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0447,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0448,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0449,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044A,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044B,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044C,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044D,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044E,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0450,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0451,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0452,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0453,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0454,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0455,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0456,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0457,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0458,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0459,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_045A,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
 	    0,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    "USB Host Controller",
 	},
 	{
@@ -7458,7 +7458,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_LUCENT, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "AT&T Microelectronics",
+	    "Lucent Technologies",
 	    NULL,
 	},
 	{
