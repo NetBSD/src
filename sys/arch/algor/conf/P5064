@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.20 2003/10/08 11:01:38 bouyer Exp $
+#	$NetBSD: P5064,v 1.21 2003/10/08 11:55:43 bouyer Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.20 $"
+#ident 		"P5064-$Revision: 1.21 $"
 
 maxusers 32
 
@@ -144,7 +144,18 @@ siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 #mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 #ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 #ohci*	at	pci? dev ? function ?		# USB Open Host Controller
-pciide*	at	pci? dev ? function ?		# PCI IDE controllers
+pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide* at pci? dev ? function ?		# Acard IDE controllers
+aceride* at pci? dev ? function ?		# Acer Lab IDE controllers
+cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
+cypide* at pci? dev ? function ?		# Cypress IDE controllers
+hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers
+optiide* at pci? dev ? function ?		# Opti IDE controllers
+piixide* at pci? dev ? function ?		# Intel IDE controllers
+pdcide* at pci? dev ? function ?		# Promise IDE controllers
+siside* at pci? dev ? function ?		# SiS IDE controllers
+slide* at pci? dev ? function ?		# Symphony Labs IDE controllers
+viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 #pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 #rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
@@ -266,6 +277,17 @@ sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 
 # ATA bus support
 atabus* at pciide? channel ?
+atabus* at acardide? channel ?
+atabus* at aceride? channel ?
+atabus* at cmdide? channel ?
+atabus* at cypide? channel ?
+atabus* at hptide? channel ?
+atabus* at optiide? channel ?
+atabus* at piixide? channel ?
+atabus* at pdcide? channel ?
+atabus* at siside? channel ?
+atabus* at slide? channel ?
+atabus* at viaide? channel ?
 atabus* at wdc? channel ?
 
 # ST506/ESDI/IDE devices
