@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.58 2002/05/29 07:53:41 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.59 2002/05/29 13:52:56 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.58 2002/05/29 07:53:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.59 2002/05/29 13:52:56 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1345,7 +1345,6 @@ nd6_ioctl(cmd, data, ifp)
 		ndi->ndi.flags = ND_IFINFO(ifp)->flags;
 		ndi->ndi.recalctm = ND_IFINFO(ifp)->recalctm;
 		ndi->ndi.chlim = ND_IFINFO(ifp)->chlim;
-		ndi->ndi.receivedra = ND_IFINFO(ifp)->receivedra;
 		break;
 	case SIOCGIFINFO_IN6:
 		ndi->ndi = *ND_IFINFO(ifp);
