@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.60 1999/11/27 01:03:34 soren Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.61 1999/11/29 02:28:55 jun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.58 1999/11/26 17:16:53 soren Exp 
+ *	NetBSD: pcmciadevs,v 1.60 1999/11/29 02:28:19 jun Exp 
  */
 
 /*-
@@ -358,6 +358,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "TDK Corporation",
 	    "TDK DFL9610 Ethernet & Digital Cellular"	},
+	},
+	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CF010,
+	    PCMCIA_CIS_TDK_LAK_CF010,
+	    0,
+	    "TDK Corporation",
+	    "TDK LAC-CF010"	},
 	},
 	{
 	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE_10,

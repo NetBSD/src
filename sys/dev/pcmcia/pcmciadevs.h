@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.60 1999/11/27 01:03:33 soren Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.61 1999/11/29 02:28:55 jun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.58 1999/11/26 17:16:53 soren Exp 
+ *	NetBSD: pcmciadevs,v 1.60 1999/11/29 02:28:19 jun Exp 
  */
 
 /*-
@@ -248,6 +248,9 @@
 #define	PCMCIA_CIS_TDK_DFL9610	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_TDK_DFL9610	0x0d0a
 #define	PCMCIA_STR_TDK_DFL9610	"TDK DFL9610 Ethernet & Digital Cellular"
+#define	PCMCIA_CIS_TDK_LAK_CF010	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_LAK_CF010	0x0900
+#define	PCMCIA_STR_TDK_LAK_CF010	"TDK LAC-CF010"
 
 /* TDK Vendor ID also used by Xircom! */
 #define	PCMCIA_CIS_TDK_XIR_CE_10	{ NULL, NULL, NULL, NULL }
