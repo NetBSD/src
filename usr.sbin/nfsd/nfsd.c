@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.33 2001/01/11 01:43:10 lukem Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.34 2001/01/11 07:58:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.33 2001/01/11 01:43:10 lukem Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.34 2001/01/11 07:58:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -376,7 +376,7 @@ main(argc, argv)
 #ifdef NFSKERB
 		if (sizeof (struct nfsrpc_fullverf) != RPCX_FULLVERF ||
 		    sizeof (struct nfsrpc_fullblock) != RPCX_FULLBLOCK)
-		    syslog(LOG_ERR, "Yikes NFSKERB structs not packed!");
+			syslog(LOG_ERR, "Yikes NFSKERB structs not packed!");
 		nsd.nsd_authstr = (u_char *)&kt;
 		nsd.nsd_authlen = sizeof (kt);
 		nsd.nsd_verfstr = (u_char *)&kverf;
