@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsipi,v 1.22 2000/01/20 16:07:43 mjacob Exp $
+#	$NetBSD: files.scsipi,v 1.23 2000/02/22 17:43:57 mjacob Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
@@ -48,10 +48,6 @@ file	dev/scsipi/sd.c		       sd | sd_scsibus | sd_atapibus needs-flag
 device	st: tape
 attach	st at scsibus
 file	dev/scsipi/st.c			st			needs-flag
-
-device	ses
-attach	ses at scsibus
-file	dev/scsipi/ses.c		ses			needs-flag
 
 device	ss
 attach	ss at scsibus
