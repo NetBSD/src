@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.3 2003/03/21 23:11:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.3 2003/03/21 23:11:25 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -190,7 +190,7 @@ cd9660_mount(mp, path, data, ndp, p)
 		vfs_showexport(mp, &args.export, &imp->im_export);
 		return copyout(&args, data, sizeof(args));
 	}
-	error = copyin(data, (caddr_t)&args, sizeof (struct iso_args));
+	error = copyin(data, &args, sizeof (struct iso_args));
 	if (error)
 		return (error);
 	
@@ -350,15 +350,14 @@ iso_mountfs(devvp, mp, p, argp)
 	 */
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 
-	error = VOP_IOCTL(devvp, DIOCGDINFO, (caddr_t)&label, FREAD, FSCRED, p);
+	error = VOP_IOCTL(devvp, DIOCGDINFO, &label, FREAD, FSCRED, p);
 	if (!error &&
 	    label.d_partitions[DISKPART(dev)].p_fstype == FS_ISO9660) {
 		/* XXX more sanity checks? */
 		sess = label.d_partitions[DISKPART(dev)].p_cdsession;
 	} else {
 		/* fallback to old method */
-		error = VOP_IOCTL(devvp, CDIOREADMSADDR, (caddr_t)&sess, 0,
-				  FSCRED, p);
+		error = VOP_IOCTL(devvp, CDIOREADMSADDR, &sess, 0, FSCRED, p);
 		if (error)
 			sess = 0;	/* never mind */
 	}
@@ -414,7 +413,7 @@ iso_mountfs(devvp, mp, p, argp)
 	}
 
 	isomp = malloc(sizeof *isomp, M_ISOFSMNT, M_WAITOK);
-	memset((caddr_t)isomp, 0, sizeof *isomp);
+	memset(isomp, 0, sizeof *isomp);
 	if (iso_makemp(isomp, pribp, &ext_attr_length) == -1) {
 		error = EINVAL;
 		goto out;
@@ -521,7 +520,7 @@ out:
 		VOP_UNLOCK(devvp, 0);
 	}
 	if (isomp) {
-		free((caddr_t)isomp, M_ISOFSMNT);
+		free(isomp, M_ISOFSMNT);
 		mp->mnt_data = NULL;
 	}
 	return error;
@@ -576,7 +575,7 @@ cd9660_unmount(mp, mntflags, p)
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
 	vput(isomp->im_devvp);
-	free((caddr_t)isomp, M_ISOFSMNT);
+	free(isomp, M_ISOFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
@@ -792,7 +791,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		return (error);
 	}
 	ip = pool_get(&cd9660_node_pool, PR_WAITOK);
-	memset((caddr_t)ip, 0, sizeof(struct iso_node));
+	memset(ip, 0, sizeof(struct iso_node));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_dev = dev;
