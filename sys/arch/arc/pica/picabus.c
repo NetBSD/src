@@ -1,4 +1,4 @@
-/*	$NetBSD: picabus.c,v 1.10 2000/02/22 11:26:04 soda Exp $	*/
+/*	$NetBSD: picabus.c,v 1.11 2000/03/03 12:50:21 soda Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -44,6 +44,7 @@
 #include <machine/autoconf.h>
 
 #include <arc/pica/pica.h>
+#include <arc/pica/rd94.h>
 #include <arc/arc/arctype.h>
 #include <arc/dev/dma.h>
 
@@ -69,6 +70,8 @@ caddr_t	pica_cvtaddr __P((struct confargs *));
 int	pica_matchname __P((struct confargs *, char *));
 int	pica_iointr __P((unsigned int, struct clockframe *));
 int	pica_clkintr __P((unsigned int, struct clockframe *));
+int	rd94_iointr __P((unsigned int, struct clockframe *));
+int	rd94_clkintr __P((unsigned int, struct clockframe *));
 
 intr_handler_t pica_clock_handler;
 
@@ -98,9 +101,9 @@ struct pica_dev {
 	struct confargs	ps_ca;
 	u_int		ps_mask;
 	intr_handler_t	ps_handler;
-	void 		*ps_base;
+	caddr_t		ps_base;
 };
-#ifdef ACER_PICA_61
+
 struct pica_dev acer_pica_61_cpu[] = {
 	{{ "dallas_rtc",0, 0, },
 	   0,			 pica_intrnull, (void *)PICA_SYS_CLOCK, },
@@ -137,8 +140,8 @@ struct pica_dev mips_magnum_r4000_cpu[] = {
 	   PICA_SYS_LB_IE_FLOPPY,pica_intrnull, (void *)PICA_SYS_FLOPPY, },
 	{{ NULL,	3, NULL, },
 	   0, pica_intrnull, (void *)NULL, },
-	{{ NULL,	4, NULL, },
-	   0, pica_intrnull, (void *)NULL, },
+	{{ "fb",        4, 0, },
+	   PICA_SYS_LB_IE_VIDEO, pica_intrnull, (void *)PICA_V_LOCAL_VIDEO, },
 	{{ "sonic",	5, 0, },
 	   PICA_SYS_LB_IE_SONIC, pica_intrnull, (void *)PICA_SYS_SONIC, },
 	{{ "asc",	6, 0, },
@@ -151,21 +154,43 @@ struct pica_dev mips_magnum_r4000_cpu[] = {
 	   PICA_SYS_LB_IE_COM1,	 pica_intrnull, (void *)PICA_SYS_COM1, },
 	{{ "com",      10, 0, },
 	   PICA_SYS_LB_IE_COM2,	 pica_intrnull, (void *)PICA_SYS_COM2, },
-	{{ "fb",       11, 0, },
-	   0,			 pica_intrnull, (void *)PICA_V_LOCAL_VIDEO, },
 	{{ NULL,       -1, NULL, },
 	   0, NULL, (void *)NULL, },
 };
-#endif
+
+struct pica_dev nec_rd94_cpu[] = {
+	{{ "dallas_rtc",0, 0, },
+	   0,			 pica_intrnull,	(void *)RD94_SYS_CLOCK, },
+	{{ "lpt",	1, 0, },
+	   RD94_SYS_LB_IE_PAR1,  pica_intrnull,	(void *)RD94_SYS_PAR1, },
+	{{ "fdc",	2, 0, },
+	   RD94_SYS_LB_IE_FLOPPY,pica_intrnull,	(void *)RD94_SYS_FLOPPY, },
+	{{ NULL,	3, NULL, },
+	   0, pica_intrnull, (void *)NULL, },
+	{{ "sonic",	4, 0, },
+	   RD94_SYS_LB_IE_SONIC, pica_intrnull,	(void *)RD94_SYS_SONIC, },
+	{{ NULL,	5, NULL, },
+	   0, pica_intrnull, (void *)NULL, },
+	{{ NULL,	6, NULL, },
+	   0, pica_intrnull, (void *)NULL, },
+	{{ "pckbd",	7, 0, },
+	   RD94_SYS_LB_IE_KBD,	 pica_intrnull,	(void *)RD94_SYS_KBD, },
+	{{ "pms",	8, NULL, },
+	   RD94_SYS_LB_IE_MOUSE, pica_intrnull,	(void *)RD94_SYS_KBD, },
+	{{ "com",	9, 0, },
+	   RD94_SYS_LB_IE_COM1,	 pica_intrnull,	(void *)RD94_SYS_COM1, },
+	{{ "com",      10, 0, },
+	   RD94_SYS_LB_IE_COM2,	 pica_intrnull,	(void *)RD94_SYS_COM2, },
+	{{ NULL,       -1, NULL, },
+	   0, NULL, (void *)NULL, },
+};
 
 struct pica_dev *pica_cpu_devs[] = {
         NULL,                   /* Unused */
-#ifdef ACER_PICA_61
         acer_pica_61_cpu,       /* Acer PICA */
 	mips_magnum_r4000_cpu,	/* Mips MAGNUM R4000 */
-#else
 	NULL,
-#endif
+	nec_rd94_cpu,		/* NEC RISCstation 2250, etc. */
 };
 int npica_cpu_devs = sizeof pica_cpu_devs / sizeof pica_cpu_devs[0];
 
@@ -207,7 +232,15 @@ picaattach(parent, self, aux)
 	sc->sc_devs = pica_cpu_devs[cputype];
 
 	/* set up interrupt handlers */
-	set_intr(MIPS_INT_MASK_1, pica_iointr, 2);
+	switch (cputype) {
+	case ACER_PICA_61:
+	case MAGNUM:
+		set_intr(MIPS_INT_MASK_1, pica_iointr, 2);
+		break;
+	case NEC_RD94:
+		set_intr(MIPS_INT_MASK_1, rd94_iointr, 2);
+		break;
+	}
 
 	sc->sc_bus.ab_dv = (struct device *)sc;
 	sc->sc_bus.ab_type = BUS_PICA;
@@ -269,7 +302,15 @@ pica_intr_establish(ca, handler, val)
 	slot = ca->ca_slot;
 	if(slot == 0) {		/* Slot 0 is special, clock */
 		pica_clock_handler = handler;
-		set_intr(MIPS_INT_MASK_4, pica_clkintr, 1);
+		switch (cputype) {
+		case ACER_PICA_61:
+		case MAGNUM:
+			set_intr(MIPS_INT_MASK_4, pica_clkintr, 1);
+			break;
+		case NEC_RD94:
+			set_intr(MIPS_INT_MASK_3, rd94_clkintr, 1);
+			break;
+		}
 	}
 
 	if(int_table[slot].int_mask != 0) {
@@ -281,7 +322,21 @@ pica_intr_establish(ca, handler, val)
 		int_table[slot].int_hand = handler;
 		int_table[slot].param = val;
 	}
-	out16(PICA_SYS_LB_IE, local_int_mask);
+
+	switch (cputype) {
+	case ACER_PICA_61:
+	case MAGNUM:
+		out16(PICA_SYS_LB_IE, local_int_mask);
+		break;
+
+	case NEC_RD94:
+		/* XXX: I don't know why, but firmware does. */
+		if (in32(0xe0000560) != 0)
+			out16(RD94_SYS_LB_IE+2, local_int_mask);
+		else
+			out16(RD94_SYS_LB_IE, local_int_mask);
+		break;
+	}
 }
 
 void
@@ -349,3 +404,37 @@ pica_clkintr(mask, cf)
 	return(~MIPS_INT_MASK_4); /* Keep clock interrupts enabled */
 }
 
+/*
+ *   Handle NEC-RD94 i/o interrupt.
+ */
+int
+rd94_iointr(mask, cf)
+	unsigned mask;
+	struct clockframe *cf;
+{
+	int vector;
+
+	while((vector = inb(RD94_SYS_INTSTAT1) >> 2) != 0) {
+		(*int_table[vector].int_hand)(int_table[vector].param);
+	}
+	return(~0);  /* Dont reenable */
+}
+
+/*
+ * Handle NEC-RD94 interval clock interrupt.
+ */
+int
+rd94_clkintr(mask, cf)
+	unsigned mask;
+	struct clockframe *cf;
+{
+	int temp;
+
+	temp = in32(RD94_SYS_INTSTAT3);
+	(*pica_clock_handler)(cf);
+
+	/* Re-enable clock interrupts */
+	splx(MIPS_INT_MASK_3 | MIPS_SR_INT_IE);
+
+	return(~MIPS_INT_MASK_3); /* Keep clock interrupts enabled */
+}
