@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.32 1994/05/05 07:41:44 mycroft Exp $
+ *      $Id: aha1742.c,v 1.33 1994/07/27 01:50:57 mycroft Exp $
  */
 
 /*
@@ -503,18 +503,15 @@ ahbprobe1(ahb, ia)
 	if (ahb_find(ahb) != 0)
 		return 0;
 
-#ifdef NEWCONFIG
-	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = (1 << ahb->irq);
-	} else {
+	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != (1 << ahb->irq)) {
-			printf("ahb%d: irq mismatch, %x != %x\n",
-				ahb->sc_dev.dv_unit, ia->ia_irq,
-				1 << ahb->irq);
+			printf("ahb%d: irq mismatch; kernel configured %d != board configured %d\n",
+				ahb->sc_dev.dv_unit, ffs(ia->ia_irq) - 1,
+				ahb->irq);
 			return 0;
 		}
-	}
-#endif
+	} else
+		ia->ia_irq = (1 << ahb->irq);
 
 	ia->ia_drq = DRQUNK;
 	ia->ia_msize = 0;
