@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3 2002/06/18 10:32:02 drochner Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.4 2002/10/12 15:43:00 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3 2002/06/18 10:32:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.4 2002/10/12 15:43:00 tshiozak Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -131,12 +131,12 @@ enter_s4_with_bios(void)
 	Arg.Type = ACPI_TYPE_INTEGER;
 	Arg.Integer.Value = ACPI_STATE_S4;
 
-	AcpiEvaluateObject (NULL, "\\_PTS", &ArgList, NULL);
-	AcpiEvaluateObject (NULL, "\\_GTS", &ArgList, NULL);
+	AcpiEvaluateObject(NULL, "\\_PTS", &ArgList, NULL);
+	AcpiEvaluateObject(NULL, "\\_GTS", &ArgList, NULL);
 
 	/* clear wake status */
 
-	AcpiHwRegisterWrite(TRUE, ACPI_BITREG_WAKE_STATUS, 1);
+	AcpiSetRegister(ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_LOCK);
 
 	ef = read_eflags();
 	disable_intr();
@@ -154,9 +154,8 @@ enter_s4_with_bios(void)
 			AcpiOsStall(1000000);
 			AcpiOsWritePort(AcpiGbl_FADT->SmiCmd,
 					AcpiGbl_FADT->S4BiosReq, 8);
-			status = AcpiHwRegisterRead(TRUE,
-						    ACPI_BITREG_WAKE_STATUS,
-						    &ret);
+			status = AcpiGetRegister(ACPI_BITREG_WAKE_STATUS,
+						 &ret, ACPI_MTX_LOCK);
 			if (ACPI_FAILURE(status))
 				break;
 	} while (!ret);
