@@ -1,7 +1,7 @@
-/*	$NetBSD: acpi_lid.c,v 1.6 2002/10/02 16:33:37 thorpej Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.7 2003/04/17 01:34:14 thorpej Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright 2001, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.6 2002/10/02 16:33:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.7 2003/04/17 01:34:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,13 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.6 2002/10/02 16:33:37 thorpej Exp $")
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
+#include <dev/sysmon/sysmonvar.h>
+
 struct acpilid_softc {
 	struct device sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
-	int sc_flags;			/* see below */
+	struct sysmon_pswitch sc_smpsw;	/* our sysmon glue */
 };
-
-#define	ACPILID_F_VERBOSE		0x01	/* verbose events */
 
 int	acpilid_match(struct device *, struct cfdata *, void *);
 void	acpilid_attach(struct device *, struct device *, void *);
@@ -102,6 +102,14 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_node = aa->aa_node;
 
+	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smpsw.smpsw_type = SMPSW_TYPE_LID;
+	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
+		printf("%s: unable to register with sysmon\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpilid_notify_handler, sc);
 	if (rv != AE_OK) {
@@ -109,9 +117,6 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname, rv);
 		return;
 	}
-
-	/* Display the current state when it changes. */
-	sc->sc_flags = ACPILID_F_VERBOSE;
 }
 
 /*
@@ -129,14 +134,8 @@ acpilid_status_changed(void *arg)
 	    &status) != AE_OK)
 		return;
 
-	if (sc->sc_flags & ACPILID_F_VERBOSE)
-		printf("%s: Lid %s\n",
-		    sc->sc_dev.dv_xname,
-		    status == 0 ? "closed " : "open");
-
-	/*
-	 * XXX Perform the appropriate action for the new lid status.
-	 */
+	sysmon_pswitch_event(&sc->sc_smpsw, status == 0 ?
+	    SMPSW_EVENT_PRESSED : SMPSW_EVENT_RELEASED);
 }
 
 /*
