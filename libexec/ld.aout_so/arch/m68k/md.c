@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 1999/01/05 10:02:21 itohy Exp $	*/
+/*	$NetBSD: md.c,v 1.16 1999/04/12 00:52:44 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -278,11 +278,13 @@ md_midcompat(hp)
 	    mid == MID_HPUX ||
 	    mid == MID_HPUX800)
 		return 1;
-#if 0
-	return (((md_swap_long(hp->a_midmag)&0x00ff0000) >> 16) == MID_SUN020);
-#else
-	return 0;
+
+#ifdef MID_SUN020
+	mid = (md_swap_long(hp->a_midmag) & 0x00ff0000) >> 16;
+	if (mid == MID_SUN020)
+	    return 1;
 #endif
+	return 0;
 }
 #endif /* RTLD */
 
