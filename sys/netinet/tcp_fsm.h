@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.8 1998/02/10 01:27:13 perry Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.9 1998/07/03 05:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -62,7 +62,8 @@
 
 #define	TCPS_HAVERCVDSYN(s)	((s) >= TCPS_SYN_RECEIVED)
 #define	TCPS_HAVEESTABLISHED(s)	((s) >= TCPS_ESTABLISHED)
-#define	TCPS_HAVERCVDFIN(s)	((s) >= TCPS_TIME_WAIT)
+#define	TCPS_HAVERCVDFIN(s) \
+    ((s) == TCPS_CLOSE_WAIT || ((s) >= TCPS_CLOSING && (s) != TCPS_FIN_WAIT_2))
 
 #ifdef	TCPOUTFLAGS
 /*
