@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.13 2000/11/09 23:14:21 simonb Exp $	 */
+/*	$NetBSD: paths.c,v 1.14 2000/11/10 18:19:06 simonb Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -216,7 +216,10 @@ _rtld_process_mapping(lib_p, bp, ep, dodebug)
 	memset(hwptr, 0, sizeof(*hwptr));
 	hwptr->name = xstrdup(ptr);
 
-	if ((ptr = strsep(&bp, WS)) == NULL) {
+	while ((ptr = strsep(&bp, WS)) != NULL)
+		if (*ptr != '\0')
+			break;
+	if (ptr == NULL) {
 		xwarnx("missing sysctl variable name");
 		goto cleanup;
 	}
@@ -258,6 +261,11 @@ _rtld_process_mapping(lib_p, bp, ep, dodebug)
 			    hwptr->ctltype[i]));
 
 	for (i = 0; (ptr = strsep(&bp, WS)) != NULL; i++) {
+		if (*ptr == '\0') {
+			/* back up index and continue */
+			i--;
+			continue;
+		}
 		if (i == RTLD_MAX_ENTRY) {
 no_more:
 			xwarnx("maximum library entries exceeded `%s'",
@@ -311,10 +319,7 @@ no_more:
 		goto cleanup;
 	}
 
-
-	hwptr->next = NULL;
-	if (*lib_p != NULL)
-		(*lib_p)->next = hwptr;
+	hwptr->next = *lib_p;
 	*lib_p = hwptr;
 
 	return;
