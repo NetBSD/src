@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.7 2003/02/18 10:18:53 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.8 2003/02/19 12:01:37 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -311,9 +311,9 @@ smb_maperror(int eclass, int eno)
 }
 
 static int
-smb_copy_iconv(struct mbchain *mbp, const caddr_t src, caddr_t dst, int len)
+smb_copy_iconv(struct mbchain *mbp, const caddr_t src, caddr_t dst, size_t len)
 {
-	int outlen = len;
+	size_t outlen = len;
 
 	return iconv_conv((struct iconv_drv*)mbp->mb_udata, (const char **)(&src), &len, &dst, &outlen);
 }

@@ -1,9 +1,9 @@
-/*	$NetBSD: iconv.c,v 1.5 2003/02/16 19:50:49 jdolecek Exp $	*/
+/*	$NetBSD: iconv.c,v 1.6 2003/02/19 12:01:37 martin Exp $	*/
 
 /* Public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.5 2003/02/16 19:50:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.6 2003/02/19 12:01:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,7 +51,8 @@ char *
 iconv_convstr(void *handle, char *dst, const char *src)
 {
 	char *p = dst;
-	int inlen, outlen, error;
+	size_t inlen, outlen;
+	int error;
 
 	if (handle == NULL) {
 		strcpy(dst, src);
@@ -73,7 +74,8 @@ iconv_convmem(void *handle, void *dst, const void *src, int size)
 {
 	const char *s = src;
 	char *d = dst;
-	int inlen, outlen, error;
+	size_t inlen, outlen;
+	int error;
 
 	if (size == 0)
 		return dst;
