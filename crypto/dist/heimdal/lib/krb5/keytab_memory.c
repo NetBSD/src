@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: keytab_memory.c,v 1.1.1.2 2000/08/02 19:59:31 assar Exp $");
+RCSID("$Id: keytab_memory.c,v 1.1.1.3 2001/06/19 22:08:21 assar Exp $");
 
 /* memory operations -------------------------------------------- */
 
@@ -47,8 +47,10 @@ mkt_resolve(krb5_context context, const char *name, krb5_keytab id)
 {
     struct mkt_data *d;
     d = malloc(sizeof(*d));
-    if(d == NULL)
+    if(d == NULL) {
+	krb5_set_error_string (context, "malloc: out of memory");
 	return ENOMEM;
+    }
     d->entries = NULL;
     d->num_entries = 0;
     id->data = d;
@@ -115,8 +117,10 @@ mkt_add_entry(krb5_context context,
     struct mkt_data *d = id->data;
     krb5_keytab_entry *tmp;
     tmp = realloc(d->entries, (d->num_entries + 1) * sizeof(*d->entries));
-    if(tmp == NULL)
+    if(tmp == NULL) {
+	krb5_set_error_string (context, "malloc: out of memory");
 	return ENOMEM;
+    }
     d->entries = tmp;
     return krb5_kt_copy_entry_contents(context, entry, 
 				       &d->entries[d->num_entries++]);

@@ -1,4 +1,4 @@
-dnl $Id: krb-ipv6.m4,v 1.1.1.3 2001/02/11 13:51:51 assar Exp $
+dnl $Id: krb-ipv6.m4,v 1.1.1.4 2001/06/19 22:08:37 assar Exp $
 dnl
 dnl test for IPv6
 dnl
@@ -8,6 +8,7 @@ AC_ARG_WITH(ipv6,
 if test "$withval" = "no"; then
 	ac_cv_lib_ipv6=no
 fi])
+save_CFLAGS="${CFLAGS}"
 AC_CACHE_VAL(ac_cv_lib_ipv6,
 [dnl check for different v6 implementations (by itojun)
 v6type=unknown
@@ -118,5 +119,7 @@ AC_MSG_CHECKING(for IPv6)
 AC_MSG_RESULT($ac_cv_lib_ipv6)
 if test "$ac_cv_lib_ipv6" = yes; then
   AC_DEFINE(HAVE_IPV6, 1, [Define if you have IPv6.])
+else
+  CFLAGS="${save_CFLAGS}"
 fi
 ])
