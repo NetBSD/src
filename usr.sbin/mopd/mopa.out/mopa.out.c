@@ -1,4 +1,4 @@
-/*	$NetBSD: mopa.out.c,v 1.4 1997/04/17 21:09:05 christos Exp $	*/
+/*	$NetBSD: mopa.out.c,v 1.5 1997/10/16 23:25:09 lukem Exp $	*/
 
 /* mopa.out - Convert a Unix format kernel into something that
  * can be transfered via MOP.
@@ -47,14 +47,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: mopa.out.c,v 1.4 1997/04/17 21:09:05 christos Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mopa.out.c,v 1.5 1997/10/16 23:25:09 lukem Exp $");
 #endif
 
 #include "os.h"
-#include "common/common.h"
-#include "common/mopdef.h"
-#include "common/file.h"
+#include "common.h"
+#include "mopdef.h"
+#include "file.h"
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/exec_aout.h>
 #endif
@@ -78,22 +79,21 @@ main (int argc, char **argv)
 	FILE   *out;		/* A FILE because that is easier. */
 	int	i;
 	struct dllist dl;
+
+	extern char *__progname;	/* from crt0.o */
 	
 #ifdef NOAOUT
-	fprintf(stderr, "%s: has no function in OS/BSD\n", argv[0]);
-	return(1);
+	errx(1, "has no function in NetBSD");
 #endif	
 
 	if (argc != 3) {
-		fprintf (stderr, "usage: %s kernel-in sys-out\n", argv[0]);
+		fprintf (stderr, "usage: %s kernel-in sys-out\n", __progname);
 		return (1);
 	}
 	
 	dl.ldfd = open (argv[1], O_RDONLY);
-	if (dl.ldfd == -1) {
-		perror (argv[1]);
-		return (2);
-	}
+	if (dl.ldfd == -1)
+		err(2, "open `%s'", argv[1]);
 	
 	GetFileInfo(dl.ldfd,
 		    &dl.loadaddr,
@@ -103,16 +103,11 @@ main (int argc, char **argv)
 		    &dl.a_data,&dl.a_data_fill,
 		    &dl.a_bss ,&dl.a_bss_fill );
 
-	if (dl.aout == -1) {
-		fprintf(stderr,"s%: not an a.out file\n",argv[1]);
-		return (3);
-        }
+	if (dl.aout == -1)
+		errx(3, "`%s' is not an a.out file", argv[1]);
 
-	if (dl.aout != MID_VAX) {
-		fprintf(stderr,"%s: file is not a VAX image (mid=%d)\n",
-			argv[1],dl.aout);
-		return (4);
-	}
+	if (dl.aout != MID_VAX)
+		errx(4, "`%s' is not a VAX image (mid=%d)", argv[1], dl.aout);
 
 	i = dl.a_text + dl.a_text_fill + dl.a_data + dl.a_data_fill +
 	    dl.a_bss  + dl.a_bss_fill;
@@ -132,24 +127,20 @@ main (int argc, char **argv)
 	mopFilePutLX(header,0xd4+ISD_W_PAGCNT,i,2);/* Imagesize in blks.*/
 	
 	out = fopen (argv[2], "w");
-	if (!out) {
-		perror (argv[2]);
-		return (2);
-	}
+	if (!out)
+		err(2, "writing `%s'", argv[2]);
 	
 	/* Now we do the actual work. Write VAX MOP-image header */
 	
 	fwrite (header, sizeof (header), 1, out);
 
-	fprintf (stderr, "copying %lu", dl.a_text);
-	fprintf (stderr, "+%lu", dl.a_data);
-	fprintf (stderr, "+%lu", dl.a_bss);
-	fprintf (stderr, "->%lu", dl.xferaddr);
-	fprintf (stderr, "\n");
+	fprintf(stderr, "copying %u+%u+%u->%u\n", dl.a_text,
+	    dl.a_data, dl.a_bss, dl.xferaddr);
 	
 	while ((i = mopFileRead(&dl,header)) > 0) {
 		(void)fwrite(header, i, 1, out);
 	}
 	
 	fclose (out);
+	return (0);
 }
