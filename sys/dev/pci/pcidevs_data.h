@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.511 2003/03/03 10:58:45 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.512 2003/03/06 22:10:27 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.510 2003/03/03 10:57:36 soren Exp 
+ *	NetBSD: pcidevs,v 1.511 2003/03/06 22:09:46 bouyer Exp 
  */
 
 /*
@@ -6364,16 +6364,70 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "530 Host to PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_540HB,
+	    0,
+	    "Silicon Integrated System",
+	    "540 Host to PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_550HB,
+	    0,
+	    "Silicon Integrated System",
+	    "550 Host to PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C601,
 	    0,
 	    "Silicon Integrated System",
 	    "85C601",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_620,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 620 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_630,
 	    0,
 	    "Silicon Integrated System",
 	    "SiS 630 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_633,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 633 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_635,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 635 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_640,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 640 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_645,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 645 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_646,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 646 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_648,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 648 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_645,
@@ -6394,10 +6448,34 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SiS 651 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_652,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 652 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_655,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 655 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_658,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 658 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_730,
 	    0,
 	    "Silicon Integrated System",
 	    "SiS 730 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_733,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 733 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_735,
@@ -6406,16 +6484,76 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SiS 735 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_740,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 740 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_745,
 	    0,
 	    "Silicon Integrated System",
 	    "SiS 745 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_746,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 746 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_748,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 748 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_750,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 750 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_751,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 751 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_752,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 752 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_755,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 755 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
 	    0,
 	    "Silicon Integrated System",
 	    "SiS 900 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_961,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 961 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_962,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 962 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_963,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 963 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE,
