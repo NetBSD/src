@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.21 2004/08/14 12:53:35 cube Exp $	*/
+/*	$NetBSD: patch.c,v 1.22 2004/12/09 18:06:10 mycroft Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.21 2004/08/14 12:53:35 cube Exp $");
+__RCSID("$NetBSD: patch.c,v 1.22 2004/12/09 18:06:10 mycroft Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -578,7 +578,7 @@ Options:\n\
        [-r rej-name] [-V {numbered,existing,simple}]\n");
 		    my_exit(1);
 		}
-		opt = *++s;
+		opt = *s ? *++s : '\0';
 	    } while (opt != '\0');
 	}
     }
