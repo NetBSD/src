@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.87 2001/03/15 06:10:55 chs Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.88 2001/04/26 06:07:13 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1280,7 +1280,7 @@ sysctl_msgbuf(vwhere, sizep)
 {
 	char *where = vwhere;
 	size_t len, maxlen = *sizep;
-	long pos;
+	long beg, end;
 	int error;
 
 	/*
@@ -1300,18 +1300,29 @@ sysctl_msgbuf(vwhere, sizep)
 
 	error = 0;
 	maxlen = min(msgbufp->msg_bufs, maxlen);
-	pos = msgbufp->msg_bufx;
+
+	/*
+	 * First, copy from the write pointer to the end of
+	 * message buffer.
+	 */
+	beg = msgbufp->msg_bufx;
+	end = msgbufp->msg_bufs;
 	while (maxlen > 0) {
-		len = pos == 0 ? msgbufp->msg_bufx : msgbufp->msg_bufs - msgbufp->msg_bufx;
-		len = min(len, maxlen);
+		len = min(end - beg, maxlen);
 		if (len == 0)
 			break;
-		error = copyout(&msgbufp->msg_bufc[pos], where, len);
+		error = copyout(&msgbufp->msg_bufc[beg], where, len);
 		if (error)
 			break;
 		where += len;
 		maxlen -= len;
-		pos = 0;
+
+		/*
+		 * ... then, copy from the beginning of message buffer to
+		 * the write pointer.
+		 */
+		beg = 0;
+		end = msgbufp->msg_bufx;
 	}
 	return (error);
 }
