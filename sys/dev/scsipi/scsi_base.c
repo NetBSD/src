@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.50 1997/10/01 01:18:56 enami Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.51 1997/10/01 18:47:01 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -256,7 +256,8 @@ scsi_interpret_sense(xs)
 		}
 
 #ifdef SCSIVERBOSE
-		scsi_print_sense(xs, 0);
+		if ((xs->flags & SCSI_SILENT) == 0)
+			scsi_print_sense(xs, 0);
 #else
 		if (key) {
 			sc_link->sc_print_addr(sc_link);
@@ -584,7 +585,7 @@ scsi_print_sense(xs, verbosity)
 
 	xs->sc_link->sc_print_addr(xs->sc_link);
 	s = (char *) &xs->sense.scsi_sense;
-	printf(" Check Condition on opcode %x\n", xs->cmd->opcode);
+	printf(" Check Condition on opcode 0x%x\n", xs->cmd->opcode);
 
 	/*
 	 * Basics- print out SENSE KEY
