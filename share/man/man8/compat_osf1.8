@@ -1,4 +1,4 @@
-.\" $NetBSD: compat_osf1.8,v 1.7 2002/01/14 07:17:51 ross Exp $
+.\" $NetBSD: compat_osf1.8,v 1.8 2002/01/14 13:50:43 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,6 @@ and if that file does not exist it will then try
 Shared libraries and configuration specific to OSF/1 should be installed
 in the shadow tree.
 .Ss Setting up /emul/osf1
-.Pp
 The simple technique is to install pkgsrc/emulators/osf1_lib. (You may
 also want to install pkgsrc/www/navigator and/or pkgsrc/www/communicator.)
 .Pp
@@ -105,7 +104,6 @@ Or, simply NFS mount the appropriate directories under
 .Xr options 4 ,
 .Xr config 8
 .Sh BUGS
-.Pp
 Your
 .Xr hostname 1
 .Em must
