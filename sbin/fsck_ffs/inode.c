@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inode.c	5.18 (Berkeley) 3/19/91";*/
-static char rcsid[] = "$Id: inode.c,v 1.7 1994/04/25 18:28:25 cgd Exp $";
+static char rcsid[] = "$Id: inode.c,v 1.8 1994/05/02 10:18:23 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,6 +50,7 @@ static char rcsid[] = "$Id: inode.c,v 1.7 1994/04/25 18:28:25 cgd Exp $";
 
 static ino_t startinum;
 
+int
 ckinode(dp, idesc)
 	struct dinode *dp;
 	register struct inodesc *idesc;
@@ -96,6 +97,7 @@ ckinode(dp, idesc)
 	return (KEEPON);
 }
 
+int
 iblock(idesc, ilevel, isize)
 	struct inodesc *idesc;
 	register long ilevel;
@@ -159,6 +161,7 @@ iblock(idesc, ilevel, isize)
  * Check that a block in a legal block number.
  * Return 0 if in range, 1 if out of range.
  */
+int
 chkrange(blk, cnt)
 	daddr_t blk;
 	int cnt;
@@ -248,6 +251,7 @@ getnextinode(inumber)
 	return (dp++);
 }
 
+void
 resetinodebuf()
 {
 
@@ -273,6 +277,7 @@ resetinodebuf()
 		(void)getnextinode(nextino);
 }
 
+void
 freeinodebuf()
 {
 
@@ -288,6 +293,7 @@ freeinodebuf()
  *
  * Enter inodes into the cache.
  */
+void
 cacheino(dp, inumber)
 	register struct dinode *dp;
 	ino_t inumber;
@@ -344,6 +350,7 @@ getinoinfo(inumber)
 /*
  * Clean up all the inode cache structure.
  */
+void
 inocleanup()
 {
 	register struct inoinfo **inpp;
@@ -356,13 +363,15 @@ inocleanup()
 	free((char *)inpsort);
 	inphead = inpsort = NULL;
 }
-	
+
+void
 inodirty()
 {
 	
 	dirty(pbp);
 }
 
+void
 clri(idesc, type, flag)
 	register struct inodesc *idesc;
 	char *type;
@@ -387,6 +396,7 @@ clri(idesc, type, flag)
 	}
 }
 
+int
 findname(idesc)
 	struct inodesc *idesc;
 {
@@ -398,6 +408,7 @@ findname(idesc)
 	return (STOP|FOUND);
 }
 
+int
 findino(idesc)
 	struct inodesc *idesc;
 {
@@ -413,6 +424,7 @@ findino(idesc)
 	return (KEEPON);
 }
 
+void
 pinode(ino)
 	ino_t ino;
 {
@@ -440,6 +452,7 @@ pinode(ino)
 	printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);
 }
 
+void
 blkerror(ino, type, blk)
 	ino_t ino;
 	char *type;
@@ -519,6 +532,7 @@ allocino(request, type)
 /*
  * deallocate an inode
  */
+void
 freeino(ino)
 	ino_t ino;
 {

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)utilities.c	5.30 (Berkeley) 7/26/91";*/
-static char rcsid[] = "$Id: utilities.c,v 1.7 1994/04/25 18:29:08 cgd Exp $";
+static char rcsid[] = "$Id: utilities.c,v 1.8 1994/05/02 10:18:25 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@ static char rcsid[] = "$Id: utilities.c,v 1.7 1994/04/25 18:29:08 cgd Exp $";
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
+int
 ftypeok(dp)
 	struct dinode *dp;
 {
@@ -70,6 +71,7 @@ ftypeok(dp)
 	}
 }
 
+int
 reply(question)
 	char *question;
 {
@@ -105,6 +107,7 @@ reply(question)
 /*
  * Malloc buffers and set up cache.
  */
+void
 bufinit()
 {
 	register struct bufarea *bp;
@@ -189,6 +192,7 @@ getblk(bp, blk, size)
 	}
 }
 
+void
 flush(fd, bp)
 	int fd;
 	register struct bufarea *bp;
@@ -214,6 +218,7 @@ flush(fd, bp)
 	}
 }
 
+void
 rwerror(mesg, blk)
 	char *mesg;
 	daddr_t blk;
@@ -226,6 +231,7 @@ rwerror(mesg, blk)
 		errexit("Program terminated\n");
 }
 
+void
 ckfini()
 {
 	register struct bufarea *bp, *nbp;
@@ -355,6 +361,7 @@ allocblk(frags)
 /*
  * Free a previously allocated block
  */
+void
 freeblk(blkno, frags)
 	daddr_t blkno;
 	long frags;
@@ -369,6 +376,7 @@ freeblk(blkno, frags)
 /*
  * Find a pathname
  */
+void
 getpathname(namebuf, curdir, ino)
 	char *namebuf;
 	ino_t curdir, ino;
