@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.121 2005/01/20 21:59:35 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.122 2005/02/20 20:54:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -174,7 +174,6 @@ pid_t ttysig_forward;
 int layoutkind;
 int sizemult;
 const char *multname; 
-const char *shellpath;
 
 /* loging variables */
 
@@ -196,7 +195,7 @@ int ptstart, ptsize;
 int sectorsize;
 int dlcyl, dlhead, dlsec, dlsize, dlcylsize;
 int current_cylsize;
-int root_limit;
+unsigned int root_limit;		/* BIOS (etc) read limit */
 
 /* Information for the NetBSD disklabel */
 enum DLTR { PART_A, PART_B, PART_C, PART_D, PART_E, PART_F, PART_G, PART_H,

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.20 2005/01/20 21:59:36 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.21 2005/02/20 20:54:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -390,9 +390,9 @@ menu namesrv6, title MSG_Select_IPv6_DNS_server;
 		{ yesno = 0; };
 
 menu rootsh, title MSG_Root_shell;
-	option "/bin/csh", exit, action {shellpath = "/bin/csh";};
-	option "/bin/ksh", exit, action {shellpath = "/bin/ksh";};
-	option "/bin/sh",  exit, action {shellpath = "/bin/sh";}; 
+	option "/bin/sh",  exit, action {*(const char **)arg = "/bin/sh";}; 
+	option "/bin/ksh", exit, action {*(const char **)arg = "/bin/ksh";};
+	option "/bin/csh", exit, action {*(const char **)arg = "/bin/csh";};
 
 menu extract, title MSG_Select_set_extraction_verbosity;
 	display action { menu->cursel = *(int *)arg; };
