@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_exit.3,v 1.2 2003/06/08 06:44:31 thorpej Exp $
+.\" $NetBSD: pthread_exit.3,v 1.3 2003/07/04 10:19:42 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,7 +93,8 @@ An implicit call to
 is made when a thread other than the thread in which
 .Fn main
 was first invoked returns from the start routine that was used to create
-it. The function's return value serves as the thread's exit status.
+it.
+The function's return value serves as the thread's exit status.
 .Pp
 The behavior of
 .Fn pthread_exit
