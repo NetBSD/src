@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.8 1998/03/26 19:49:51 chuck Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.9 1998/04/07 18:32:10 thorpej Exp $	*/
 
 /*
  *
@@ -2803,12 +2803,12 @@ void pmap_collect(pmap)
 struct pmap *pmap;
 
 {
+
   /*
-   * we should free any PTPs we are holding [unless they contain
-   * wired pages].   maybe we should even free our PDP, but that 
-   * will require some code restructuring.
+   * free all of the pt pages by removing the physical mappings
+   * for its entire address space.
    */
-  /* fill in */
+  pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
 }
 
 /*
