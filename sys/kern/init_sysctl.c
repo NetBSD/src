@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.15 2003/12/28 14:39:36 martin Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.16 2003/12/28 22:12:00 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.16 2003/12/28 22:12:00 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
