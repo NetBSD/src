@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.71 1999/05/07 01:30:26 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.72 1999/05/18 01:36:52 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -322,16 +322,16 @@ sw1:
  * Switch to new context.
  */
 	sw	zero, _C_LABEL(want_resched)
-	jal	_C_LABEL(pmap_alloc_tlbpid)	# v0 = TLB PID
+	jal	_C_LABEL(pmap_alloc_asid)	# v0 = new proc's ASID
 	move	s0, a0				# BDSLOT: save p
 	lw	a0, P_ADDR(s0)			# a0 = p_addr
-	lw	a1, P_MD_UPTE+0(s0)		# a1 = first u. pte
-	lw	a2, P_MD_UPTE+4(s0)		# a2 = 2nd u. pte
+	lw	a1, P_MD_UPTE_0(s0)		# a1 = first u. pte
+	lw	a2, P_MD_UPTE_1(s0)		# a2 = 2nd u. pte
 	lw	s1, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_SWITCH_RESUME
 	sw	s0, _C_LABEL(curproc)		# set curproc
 	sw	a0, _C_LABEL(curpcb)		# set curpcb
 	jal	ra, s1				# CPU-specific: resume process
-	move	a3, v0				# BDSLOT: a3 = TLB PID
+	move	a3, v0				# BDSLOT: a3 = ASID
 
 	REG_PROLOGUE
 	REG_L	v0, U_PCB_CONTEXT+SF_REG_ST(a0)

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 1999/03/26 03:40:41 tsubai Exp $
+#	$NetBSD: genassym.cf,v 1.12 1999/05/18 01:36:52 nisimura Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -61,7 +61,8 @@ define  P_PRIORITY		offsetof(struct proc, p_priority)
 define  P_ADDR			offsetof(struct proc, p_addr)
 
 define  P_MD_REGS		offsetof(struct proc, p_md.md_regs)
-define  P_MD_UPTE		offsetof(struct proc, p_md.md_upte)
+define  P_MD_UPTE_0		offsetof(struct proc, p_md.md_upte[0])
+define  P_MD_UPTE_1		offsetof(struct proc, p_md.md_upte[1])
 
 define  U_PCB_FPREGS		offsetof(struct user, u_pcb.pcb_fpregs)
 define  U_PCB_CONTEXT		offsetof(struct user, u_pcb.pcb_context)

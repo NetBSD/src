@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29 1999/03/23 22:04:01 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30 1999/05/18 01:36:51 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -184,7 +184,6 @@ caddr_t	allocsys __P((caddr_t));
 void	dumpsys __P((void));
 int	savectx __P((struct user *));
 void	mips_init_msgbuf __P((void));
-void	mips_init_proc0 __P((caddr_t));
 
 /* locore.S */
 void	savefpregs __P((struct proc *));
