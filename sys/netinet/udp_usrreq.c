@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)udp_usrreq.c	7.20 (Berkeley) 4/20/91
- *	$Id: udp_usrreq.c,v 1.8 1994/01/08 23:19:48 mycroft Exp $
+ *	$Id: udp_usrreq.c,v 1.9 1994/01/08 23:50:47 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -263,7 +263,10 @@ udp_input(m, iphlen)
 #endif
 		*ip = save_ip;
 		ip->ip_len += iphlen;
-		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT);
+	    {
+		register struct in_addr foo = {};
+		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, foo);
+	    }
 		return;
 	}
 

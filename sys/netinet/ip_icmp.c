@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_icmp.c	7.15 (Berkeley) 4/20/91
- *	$Id: ip_icmp.c,v 1.5 1994/01/08 21:21:45 mycroft Exp $
+ *	$Id: ip_icmp.c,v 1.6 1994/01/08 23:50:43 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -69,6 +69,7 @@ extern	struct protosw inetsw[];
  * in response to bad packet ip.
  */
 /*VARARGS3*/
+void
 icmp_error(n, type, code, dest)
 	struct mbuf *n;
 	int type, code;
@@ -162,6 +163,7 @@ struct in_ifaddr *ifptoia();
 /*
  * Process a received ICMP message.
  */
+void
 icmp_input(m, hlen)
 	register struct mbuf *m;
 	int hlen;
@@ -373,6 +375,7 @@ freeit:
 /*
  * Reflect the ip packet back to the source
  */
+void
 icmp_reflect(m)
 	struct mbuf *m;
 {
@@ -490,6 +493,7 @@ ifptoia(ifp)
  * Send an icmp packet back to the ip level,
  * after supplying a checksum.
  */
+void
 icmp_send(m, opts)
 	register struct mbuf *m;
 	struct mbuf *opts;
