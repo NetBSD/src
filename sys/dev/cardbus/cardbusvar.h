@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.12 1999/12/16 21:04:10 abs Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.13 1999/12/17 14:06:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -440,6 +440,3 @@ int cardbus_get_capability __P((cardbus_chipset_tag_t, cardbus_function_tag_t,
 #define cardbus_conf_write(cc, cf, tag, offs, val) ((cf)->cardbus_conf_write)((cc), (tag), (offs), (val))
 
 #endif /* !_DEV_CARDBUS_CARDBUSVAR_H_ */
-
-#endif /* SYS_DEV_CARDBUS_CARDBUSVAR_H */
-
