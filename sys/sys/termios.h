@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)termios.h	7.22 (Berkeley) 5/7/91
- *	$Id: termios.h,v 1.7 1994/03/12 03:14:19 cgd Exp $
+ *	$Id: termios.h,v 1.8 1994/03/18 03:46:31 cgd Exp $
  */
 
 #ifndef _SYS_TERMIOS_H_
@@ -138,7 +138,8 @@
 #define	CRTSCTS		0x00010000	/* RTS/CTS full-duplex flow control */
 #define	CRTS_IFLOW	CRTSCTS		/* XXX compat */
 #define	CCTS_OFLOW	CRTSCTS		/* XXX compat */
-#define	MDMBUF		0x00100000	/* flow control output via Carrier */
+#define	MDMBUF		0x00100000	/* DTR/DCD hardware flow control */
+#define	CHWFLOW		(MDMBUF|CRTSCTS) /* all types of hw flow control */
 #endif
 
 
