@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.39 1997/09/23 22:35:48 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.31.2.7 1997/10/14 01:14:52 thorpej Exp 
  */
 
 /*
@@ -984,6 +984,7 @@
 
 /* Winbond Electronics products */
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
+#define	PCI_PRODUCT_WINBOND_NEXXX	0x0940		/* NEXXX */
 
 /* Zeinet products */
 #define	PCI_PRODUCT_ZEINET_1221	0x0001		/* 1221 */
