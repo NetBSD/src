@@ -172,6 +172,11 @@ disassembler (abfd)
       disassemble = print_insn_sparc;
       break;
 #endif
+#ifdef ARCH_vax
+    case bfd_arch_vax:
+      disassemble = print_insn_vax;
+      break;
+#endif
 #ifdef ARCH_w65
     case bfd_arch_w65:
       disassemble = print_insn_w65;
