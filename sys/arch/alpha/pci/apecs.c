@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.22 1997/04/10 23:12:16 cgd Exp $ */
+/* $NetBSD: apecs.c,v 1.23 1997/09/02 12:40:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.22 1997/04/10 23:12:16 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.23 1997/09/02 12:40:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,8 @@ apecs_init(acp, mallocsafe)
 
 	if (!acp->ac_initted) {
 		/* don't do these twice since they set up extents */
-		acp->ac_iot = apecs_bus_io_init(acp);
-		acp->ac_memt = apecs_bus_mem_init(acp);
+		apecs_bus_io_init(&acp->ac_iot, acp);
+		apecs_bus_mem_init(&acp->ac_memt, acp);
 	}
 	acp->ac_mallocsafe = mallocsafe;
 
