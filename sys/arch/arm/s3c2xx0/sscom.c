@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.1 2002/11/20 17:52:52 bsh Exp $ */
+/*	$NetBSD: sscom.c,v 1.2 2003/03/08 10:59:02 he Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -1821,7 +1821,7 @@ sscom_init(bus_space_tag_t iot, const struct sscom_uart_info *config,
  */
 struct consdev sscomcons = {
 	NULL, NULL, sscomcngetc, sscomcnputc, sscomcnpollc, NULL,
-	NODEV, CN_NORMAL
+	NULL, NULL, NODEV, CN_NORMAL
 };
 
 
