@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.1 1996/01/31 23:25:06 mark Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.2 1996/03/06 23:24:52 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -27,8 +27,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: vidcaudio.c,v 1.1 1996/01/31 23:25:06 mark Exp $
+ */
+
+/*
+ * Yikes just had a look at this and realised that it does not conform
+ * to Kernel Normal Form at all. I have fixed the first few functions
+ * but there are a lot more still to do - mark
  */
 
 /*
@@ -84,252 +88,276 @@
 
 #undef DEBUG
 
-struct vidcaudio_softc;
-
-/* Note to Nut - ideally these should use the __P() macro to match the kernel style guide for prototypes.
- * Another niggle ... the function declartions need modifying to match the kernel style as well.
- * I have notfinished doing it too all my stuff yet... :-(
- */
- 
-int vidcaudio_intr ( void *arg );
-int vidcaudio_dma_program ( vm_offset_t cur, vm_offset_t end,
-			    void (*intr)(), void *arg );
-void vidcaudio_dummy_routine ( void *arg );
-int vidcaudio_stereo ( int channel, int position );
-int vidcaudio_rate ( int rate );
-void vidcaudio_shutdown ( void );
-int vidcaudio_hw_attach ( struct vidcaudio_softc *sc );
-
 struct audio_general {
-    int in_sr;
-    int out_sr;
-    vm_offset_t silence;
-    irqhandler_t ih;
+	int in_sr;
+	int out_sr;
+	vm_offset_t silence;
+	irqhandler_t ih;
 
-    void (*intr) ();
-    void *arg;
+	void (*intr) ();
+	void *arg;
 
-    vm_offset_t next_cur;
-    vm_offset_t next_end;
-    void (*next_intr) ();
-    void *next_arg;
+	vm_offset_t next_cur;
+	vm_offset_t next_end;
+	void (*next_intr) ();
+	void *next_arg;
 
-    int buffer;
-    int in_progress;
+	int buffer;
+	int in_progress;
 
-    int open;
+	int open;
 } ag;
 
-/* ************************************************************************* * 
- | Compatibility with /dev/beep                                              |
- * ************************************************************************* */
-
-void vidcaudio_beep_generate ( void )
-{
-     vidcaudio_dma_program ( ag.silence, ag.silence+sizeof(beep_waveform)-16,
-		    vidcaudio_dummy_routine, NULL );
-}
-
-
-/* ************************************************************************* * 
- | Kernel interface for the autoconfiguration                                |
- * ************************************************************************* */
-
 struct vidcaudio_softc {
-    struct device device;
-    int iobase;
+	struct device device;
+	int iobase;
 
-    int open;
+	int open;
 
-    u_int encoding;
-    int inport;
-    int outport;
+	u_int encoding;
+	int inport;
+	int outport;
 };
 
-int  vidcaudio_probe ( struct device *parent, struct device *match, void *aux );
-void vidcaudio_attach( struct device *parent, struct device *self, void *aux );
-int  vidcaudio_open  ( dev_t dev, int flags );
-void vidcaudio_close ( void *addr );
+int  vidcaudio_probe	__P((struct device *parent, struct device *match, void *aux));
+void vidcaudio_attach	__P((struct device *parent, struct device *self, void *aux));
+int  vidcaudio_open	__P((dev_t dev, int flags));
+void vidcaudio_close	__P((void *addr));
+
+int vidcaudio_intr	__P((void *arg));
+int vidcaudio_dma_program	__P((vm_offset_t cur, vm_offset_t end, void (*intr)(), void *arg));
+void vidcaudio_dummy_routine	__P((void *arg));
+int vidcaudio_stereo	__P((int channel, int position));
+int vidcaudio_rate	__P((int rate));
+void vidcaudio_shutdown	__P((void));
+int vidcaudio_hw_attach	__P((struct vidcaudio_softc *sc));
+
 
 struct cfdriver vidcaudiocd = {
-    NULL, "vidcaudio", vidcaudio_probe, vidcaudio_attach,
-    DV_DULL, sizeof(struct vidcaudio_softc)
+	NULL, "vidcaudio", vidcaudio_probe, vidcaudio_attach,
+	    DV_DULL, sizeof(struct vidcaudio_softc)
 };
 
-int vidcaudio_probe ( struct device *parent, struct device *match, void *aux )
+
+void
+vidcaudio_beep_generate()
 {
-    int id = ReadByte(IOMD_ID0) | ReadByte(IOMD_ID1)>>8;
-
-    switch ( id )
-    {
-        case RPC600_IOMD_ID:
-	    return (1);
-    }
-
-    return (0);
+	vidcaudio_dma_program ( ag.silence, ag.silence+sizeof(beep_waveform)-16,
+	    vidcaudio_dummy_routine, NULL );
 }
 
-void vidcaudio_attach ( struct device *parent, struct device *self, void *aux )
+
+int
+vidcaudio_probe(parent, match, aux)
+	struct device *parent;
+	struct device *match;
+	void *aux;
 {
-    struct mainbus_attach_args *mb = aux;
-    struct vidcaudio_softc *sc = (void *)self;
+	int id;
 
-    sc->iobase = mb->mb_iobase;
+	id = ReadByte(IOMD_ID0) | ReadByte(IOMD_ID1) << 8;
 
-    sc->open = 0;
-    sc->encoding = 0;
-    sc->inport = 0;
-    sc->outport = 0;
-    ag.in_sr = 24*1024;
-    ag.out_sr = 24*1024;
-    ag.in_progress = 0;
+/* So far I only know about this IOMD */
 
-    ag.next_cur = 0;
-    ag.next_end = 0;
-    ag.next_intr = NULL;
-    ag.next_arg = NULL;
+	switch (id) {
+	case RPC600_IOMD_ID:
+		return(1);
+		break;
+	default:
+		printf("vidcaudio: Unknown IOMD id=%04x", id);
+		break;
+	}
 
-    vidcaudio_rate ( 32 );
+	return (0);
+}
 
-    /* Program the silence buffer and reset the DMA channel */
-    ag.silence = kmem_alloc(kernel_map, NBPG);
-    bzero ( (char *)ag.silence, NBPG );
-    bcopy ( (char *)beep_waveform, (char *)ag.silence, sizeof(beep_waveform) );
 
-    ag.buffer = 0;
+void
+vidcaudio_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct mainbus_attach_args *mb = aux;
+	struct vidcaudio_softc *sc = (void *)self;
 
-    /* Install the irq handler for the DMA interrupt */
-    ag.ih.ih_func = vidcaudio_intr;
-    ag.ih.ih_arg = NULL;
-    ag.ih.ih_level = IPL_NONE;
+	sc->iobase = mb->mb_iobase;
 
-    ag.intr = NULL;
-    ag.intr = NULL;
+	sc->open = 0;
+	sc->encoding = 0;
+	sc->inport = 0;
+	sc->outport = 0;
+	ag.in_sr = 24*1024;
+	ag.out_sr = 24*1024;
+	ag.in_progress = 0;
 
-    disable_irq ( IRQ_DMASCH0 );
+	ag.next_cur = 0;
+	ag.next_end = 0;
+	ag.next_intr = NULL;
+	ag.next_arg = NULL;
 
-    if ( irq_claim(IRQ_DMASCH0, &(ag.ih)) == -1 )
-	panic ( "vidcaudio: couldn't claim IRQ_DMASCH0" );
+	vidcaudio_rate(32);
 
-    disable_irq ( IRQ_DMASCH0 );
+/* Program the silence buffer and reset the DMA channel */
 
-    vidcaudio_dma_program ( ag.silence, ag.silence+NBPG-16,
-				vidcaudio_dummy_routine, NULL );
+	ag.silence = kmem_alloc(kernel_map, NBPG);
+	if (ag.silence == NULL)
+		panic("vidcaudio: Cannot allocate memory\n");
 
-    vidcaudio_hw_attach ( sc );
+	bzero((char *)ag.silence, NBPG);
+	bcopy((char *)beep_waveform, (char *)ag.silence, sizeof(beep_waveform));
+
+	ag.buffer = 0;
+
+	/* Install the irq handler for the DMA interrupt */
+	ag.ih.ih_func = vidcaudio_intr;
+	ag.ih.ih_arg = NULL;
+	ag.ih.ih_level = IPL_NONE;
+
+	ag.intr = NULL;
+	ag.nextintr = NULL;
+
+	disable_irq(IRQ_DMASCH0);
+
+	if (irq_claim(IRQ_DMASCH0, &(ag.ih)))
+		panic("vidcaudio: couldn't claim IRQ_DMASCH0");
+
+	disable_irq(IRQ_DMASCH0);
+
+	vidcaudio_dma_program(ag.silence, ag.silence+NBPG-16,
+	    vidcaudio_dummy_routine, NULL);
+
+	vidcaudio_hw_attach(sc);
 
 #ifdef DEBUG
-    printf ( " UNDER DEVELOPMENT (nuts)\n" );
+	printf(" UNDER DEVELOPMENT (nuts)\n");
 #endif
 }
 
-int vidcaudio_open ( dev_t dev, int flags )
+int
+vidcaudio_open(dev, flags)
+	dev_t dev;
+	int flags;
 {
-    struct vidcaudio_softc *sc;
-    int unit = AUDIOUNIT (dev);
-    int s;
+	struct vidcaudio_softc *sc;
+	int unit = AUDIOUNIT (dev);
+	int s;
 
 #ifdef DEBUG
-printf ( "DEBUG: vidcaudio_open called\n" );
+	printf("DEBUG: vidcaudio_open called\n");
 #endif
 
-    if ( unit >= vidcaudiocd.cd_ndevs )
-        return ENODEV;
+	if (unit >= vidcaudiocd.cd_ndevs)
+		return ENODEV;
 
-    sc = vidcaudiocd.cd_devs[unit];
+	sc = vidcaudiocd.cd_devs[unit];
 
-    if (!sc)
-	return ENXIO;
+	if (!sc)
+		return ENXIO;
 
-    s = splhigh ();
+	s = splhigh();
 
-    if ( sc->open!=0 )
-	return EBUSY;
+	if (sc->open != 0) {
+		(void)splx(s);
+		return EBUSY;
+	}
 
-    sc->open=1;
-    ag.open=1;
+	sc->open=1;
+	ag.open=1;
 
-    (void)splx(s);
-    return 0;
+	(void)splx(s);
+	return 0;
 }
  
-void vidcaudio_close ( void *addr )
+void
+vidcaudio_close(addr)
+	void *addr;
 {
-    struct vidcaudio_softc *sc = addr;
+	struct vidcaudio_softc *sc = addr;
 
-    vidcaudio_shutdown ();
+	vidcaudio_shutdown ();
 
 #ifdef DEBUG
-printf ( "DEBUG: vidcaudio_close called\n" );
+	printf("DEBUG: vidcaudio_close called\n");
 #endif
 
-    sc->open = 0;
-    ag.open = 0;
+	sc->open = 0;
+	ag.open = 0;
 }
 
 /* ************************************************************************* * 
  | Interface to the generic audio driver                                     |
  * ************************************************************************* */
 
-int    vidcaudio_set_in_sr       ( void *, u_long );
-u_long vidcaudio_get_in_sr       ( void * );
-int    vidcaudio_set_out_sr      ( void *, u_long );
-u_long vidcaudio_get_out_sr      ( void * );
-int    vidcaudio_query_encoding  ( void *, struct audio_encoding * );
-int    vidcaudio_set_encoding	 ( void *, u_int );
-int    vidcaudio_get_encoding	 ( void * );
-int    vidcaudio_set_precision	 ( void *, u_int );
-int    vidcaudio_getprecision	 ( void * );
-int    vidcaudio_set_channels 	 ( void *, int );
-int    vidcaudio_get_channels	 ( void * );
-int    vidcaudio_round_blocksize ( void *, int );
-int    vidcaudio_set_out_port	 ( void *, int );
-int    vidcaudio_get_out_port	 ( void * );
-int    vidcaudio_set_in_port	 ( void *, int );
-int    vidcaudio_get_in_port  	 ( void * );
-int    vidcaudio_commit_settings ( void * );
-u_int  vidcaudio_get_silence	 ( int );
-void   vidcaudio_sw_encode	 ( int, u_char *, int );
-void   vidcaudio_sw_decode	 ( int, u_char *, int );
-int    vidcaudio_start_output	 ( void *, void *, int, void (*)(), void *);
-int    vidcaudio_start_input	 ( void *, void *, int, void (*)(), void *);
-int    vidcaudio_halt_output	 ( void * );
-int    vidcaudio_halt_input 	 ( void * );
-int    vidcaudio_cont_output	 ( void * );
-int    vidcaudio_cont_input	 ( void * );
-int    vidcaudio_speaker_ctl	 ( void *, int );
-int    vidcaudio_getdev		 ( void *, struct audio_device * );
-int    vidcaudio_setfd	 	 ( void *, int );
-int    vidcaudio_set_port	 ( void *, mixer_ctrl_t * );
-int    vidcaudio_get_port  ( void *, mixer_ctrl_t * );
-int    vidcaudio_query_devinfo	 ( void *, mixer_devinfo_t * );
+int    vidcaudio_set_in_sr       __P((void *, u_long));
+u_long vidcaudio_get_in_sr       __P((void *));
+int    vidcaudio_set_out_sr      __P((void *, u_long));
+u_long vidcaudio_get_out_sr      __P((void *));
+int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
+int    vidcaudio_set_encoding	 __P((void *, u_int));
+int    vidcaudio_get_encoding	 __P((void *));
+int    vidcaudio_set_precision	 __P((void *, u_int));
+int    vidcaudio_getprecision	 __P((void *));
+int    vidcaudio_set_channels 	 __P((void *, int));
+int    vidcaudio_get_channels	 __P((void *));
+int    vidcaudio_round_blocksize __P((void *, int));
+int    vidcaudio_set_out_port	 __P((void *, int));
+int    vidcaudio_get_out_port	 __P((void *));
+int    vidcaudio_set_in_port	 __P((void *, int));
+int    vidcaudio_get_in_port  	 __P((void *));
+int    vidcaudio_commit_settings __P((void *));
+u_int  vidcaudio_get_silence	 __P((int));
+void   vidcaudio_sw_encode	 __P((int, u_char *, int));
+void   vidcaudio_sw_decode	 __P((int, u_char *, int));
+int    vidcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
+int    vidcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
+int    vidcaudio_halt_output	 __P((void *));
+int    vidcaudio_halt_input 	 __P((void *));
+int    vidcaudio_cont_output	 __P((void *));
+int    vidcaudio_cont_input	 __P((void *));
+int    vidcaudio_speaker_ctl	 __P((void *, int));
+int    vidcaudio_getdev		 __P((void *, struct audio_device *));
+int    vidcaudio_setfd	 	 __P((void *, int));
+int    vidcaudio_set_port	 __P((void *, mixer_ctrl_t *));
+int    vidcaudio_get_port	 __P((void *, mixer_ctrl_t *));
+int    vidcaudio_query_devinfo	 __P((void *, mixer_devinfo_t *));
 
 struct audio_device vidcaudio_device = {
-    "VidcAudio 8-bit",
-    "x",
-    "vidcaudio"
+	"VidcAudio 8-bit",
+	"x",
+	"vidcaudio"
 };
 
-int vidcaudio_set_in_sr ( void *addr, u_long sr )
+int
+vidcaudio_set_in_sr(addr, sr)
+	void *addr;
+	u_long sr;
 {
-    ag.in_sr = sr;
-    return 0;
+	ag.in_sr = sr;
+	return 0;
 }
 
-u_long vidcaudio_get_in_sr ( void *addr )
+u_long
+vidcaudio_get_in_sr(addr)
+	void *addr;
 {
-    return ag.in_sr;
+	return ag.in_sr;
 }
 
-int vidcaudio_set_out_sr ( void *addr, u_long sr )
+int
+vidcaudio_set_out_sr(addr, sr)
+	void *addr;
+	u_long sr;
 {
-    ag.out_sr = sr;
-    return 0;
+	ag.out_sr = sr;
+	return 0;
 }
 
-u_long vidcaudio_get_out_sr ( void *addr )
+u_long
+vidcaudio_get_out_sr(addr)
+	void *addr;
 {
-    return ( ag.out_sr );
+	return(ag.out_sr);
 }
 
 int vidcaudio_query_encoding ( void *addr, struct audio_encoding *fp )
