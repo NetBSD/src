@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.7 2000/06/14 22:02:19 veego Exp $
+#	$NetBSD: M403,v 1.8 2000/06/17 07:29:07 soda Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -6,9 +6,6 @@
 include		"arch/arc/conf/std.arc"
 
 maxusers	32		# estimated number of users
-
-# Misc. arc-specific options
-options 	COMCONSOLE
 
 # Standard system options
 
@@ -122,6 +119,8 @@ pica*		at mainbus0	# ACER Pica systems local bus.
 aclock0 	at pica?
 #pc0		at pica?
 #opms0		at pica?
+vga0		at pica?	# Jazz localbus VGA
+pckbc0		at pica?	# PC keyboard controller
 options		COM_FREQ_MAGNUM=8192000	# 8.192 MHz - NEC M403
 com0		at pica?
 com1		at pica?
@@ -133,6 +132,9 @@ fd*		at fdc? drive ?
 
 asc0		at pica?
 scsibus* 	at asc?
+
+#siop0		at pica?
+#scsibus* 	at siop?
 
 #### ISA bus devices
 
@@ -150,6 +152,17 @@ cd*		at scsibus? target ? lun ?
 ch*		at scsibus? target ? lun ?
 ss*		at scsibus? target ? lun ?
 uk*		at scsibus? target ? lun ?
+
+#### Workstation Console attachments
+
+wsdisplay*	at vga?
+#wsdisplay*	at tga?
+pckbd*		at pckbc?	# PC keyboard (kbd port)
+wskbd*		at pckbd?
+pms*		at pckbc?	# PS/2-style mouse (aux port)
+wsmouse*	at pms?
+#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
+#wsmouse*	at pmsi?
 
 #### Pseudo devices
 
@@ -171,6 +184,7 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
