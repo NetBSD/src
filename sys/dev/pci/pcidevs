@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.20 2003/01/28 06:22:37 jmc Exp $
+$NetBSD: pcidevs,v 1.428.2.21 2003/06/02 09:51:02 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1909,6 +1909,7 @@ product SIS 85C601		0x0601	85C601
 product SIS 645			0x0645	SiS 645 Host Bridge
 product SIS 630			0x0630	SiS 630 Host Bridge
 product SIS 650			0x0650	SiS 650 Host Bridge
+product SIS 651			0x0650	SiS 651 Host Bridge
 product SIS 730			0x0730	SiS 730 Host Bridge
 product SIS 735			0x0735	SiS 735 Host Bridge
 product SIS 900			0x0900	SiS 900 10/100 Ethernet
