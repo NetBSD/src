@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/07/24 19:44:49 tv Exp $
+#	$NetBSD: Makefile,v 1.13 2001/09/21 15:38:16 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,9 @@ LIB=		objc
 MKLINT=		no
 
 .if defined(USE_NEW_TOOLCHAIN)
+
+SHLIB_MAJOR=	1
+SHLIB_MINOR=	0
 
 # Machine-independent definitions (include file names).
 .include "${.CURDIR}/defs.mk"
@@ -45,7 +48,8 @@ HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
 .if (${HAVE_GCC28} != "")
 
-MKPIC=no	# XXX hack; shlib_version mismatch
+SHLIB_MAJOR=	0
+SHLIB_MINOR=	0
 
 SRCS=		hash.c sarray.c class.c sendmsg.c init.c archive.c \
 		encoding.c selector.c objects.c misc.c NXConstStr.m \
