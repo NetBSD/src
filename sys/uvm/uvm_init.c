@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.12 2000/03/29 03:43:34 simonb Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.13 2000/06/26 14:21:18 mrg Exp $	*/
 
 /*
  *
@@ -50,8 +50,6 @@
 
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 

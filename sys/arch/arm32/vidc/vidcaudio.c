@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.31 1999/08/17 01:39:09 mark Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.32 2000/06/26 14:20:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -47,7 +47,6 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

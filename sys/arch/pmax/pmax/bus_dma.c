@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.21 2000/06/26 04:55:56 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22 2000/06/26 14:20:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@
 #include <sys/mbuf.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
+#include <uvm/uvm_extern.h>
 
 #define _PMAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>

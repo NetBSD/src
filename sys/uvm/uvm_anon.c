@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.5 2000/01/11 06:57:49 chs Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.6 2000/06/26 14:21:16 mrg Exp $	*/
 
 /*
  *
@@ -46,8 +46,6 @@
 #include <sys/kernel.h>
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.77 2000/06/10 18:27:05 assar Exp $	*/
+/*	$NetBSD: vnode.h,v 1.78 2000/06/26 14:21:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include <sys/queue.h>
 
 /* XXX: clean up includes later */
-#include <vm/pglist.h>		/* XXX */
+#include <uvm/uvm_pglist.h>	/* XXX */
 #include <vm/vm_param.h>	/* XXX */
 #include <sys/lock.h>		/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */

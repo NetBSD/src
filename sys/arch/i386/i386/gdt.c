@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.20 1999/07/25 18:05:31 thorpej Exp $	*/
+/*	$NetBSD: gdt.c,v 1.21 2000/06/26 14:20:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 #include <sys/user.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

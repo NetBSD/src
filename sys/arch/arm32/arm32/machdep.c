@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2000/06/07 04:59:28 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 2000/06/26 14:20:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -67,8 +67,6 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

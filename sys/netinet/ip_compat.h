@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.18 2000/05/03 11:12:05 veego Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.19 2000/06/26 14:21:15 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -474,14 +474,19 @@ extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 #  define	GET_MINOR(x)	minor(x)
 # endif
 # if (BSD >= 199306) || defined(__FreeBSD__)
-#  include <vm/vm.h>
-#  if !defined(__FreeBSD__) || (defined (__FreeBSD__) && __FreeBSD__>=3)
-#   include <vm/vm_extern.h>
-#   include <sys/proc.h>
+#  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105010000)
+#   include <vm/vm.h>
+#   include <uvm/uvm_extern.h>
+#  else
+#   include <vm/vm.h>
+#   if !defined(__FreeBSD__) || (defined (__FreeBSD__) && __FreeBSD__>=3)
+#    include <vm/vm_extern.h>
+#    include <sys/proc.h>
 extern	vm_map_t	kmem_map;
-#  else /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
-#   include <vm/vm_kern.h>
-#  endif /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
+#   else /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
+#    include <vm/vm_kern.h>
+#   endif /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
+#  endif /* __NetBSD_Version__) && (__NetBSD_Version__ >= 105010000) */
 #  ifdef	M_PFIL
 #   define	KMALLOC(a, b)	MALLOC((a), b, sizeof(*(a)), M_PFIL, M_NOWAIT)
 #   define	KMALLOCS(a, b, c)	MALLOC((a), b, (c), M_PFIL, M_NOWAIT)

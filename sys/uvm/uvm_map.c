@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.77 2000/06/13 04:10:47 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.78 2000/06/26 14:21:18 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -86,8 +86,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #define UVM_MAP
 #include <uvm/uvm.h>

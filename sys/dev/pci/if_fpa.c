@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.30 2000/03/30 12:45:34 augustss Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.31 2000/06/26 14:21:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -73,8 +73,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_param.h>
 
 #if defined(__FreeBSD__)
 #include "fpa.h"

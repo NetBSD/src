@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.23 1999/03/25 04:45:57 sommerfe Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.24 2000/06/26 14:21:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -55,8 +55,6 @@
 #include <miscfs/procfs/procfs.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.19 2000/06/12 11:13:14 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.20 2000/06/26 14:21:06 mrg Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,6 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include "opt_cputype.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.6 2000/06/24 09:42:47 mark Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.7 2000/06/26 14:20:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -43,7 +43,6 @@
 #include <machine/bus.h>
 #include <arm32/footbridge/dc21285mem.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 #include <uvm/uvm_extern.h>
 
 /* Proto types for all the bus_space structure functions */

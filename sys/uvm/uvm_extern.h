@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.42 2000/06/08 05:52:34 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.43 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
  *
@@ -260,6 +260,15 @@ struct uvmexp {
 #ifdef _KERNEL
 
 extern struct uvmexp uvmexp;
+
+/*
+ * the various kernel maps, owned by MD code
+ */
+extern vm_map_t	exec_map;
+extern vm_map_t	kernel_map;
+extern vm_map_t	kmem_map;
+extern vm_map_t	mb_map;
+extern vm_map_t	phys_map;
 
 /*
  * macros

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.48 2000/04/10 01:17:41 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.49 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
  *
@@ -49,8 +49,6 @@
 #include <sys/user.h>
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 

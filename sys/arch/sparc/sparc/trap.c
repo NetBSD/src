@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91 2000/05/27 00:40:41 sommerfeld Exp $ */
+/*	$NetBSD: trap.c,v 1.92 2000/06/26 14:20:59 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -70,7 +70,8 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <sparc/sparc/asm.h>
 #include <machine/cpu.h>

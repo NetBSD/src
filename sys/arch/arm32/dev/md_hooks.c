@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.14 1999/03/24 05:50:55 mrg Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.15 2000/06/26 14:20:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -35,8 +35,6 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_map.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

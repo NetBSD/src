@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2000/06/26 04:56:10 simonb Exp $ */
+/*	$NetBSD: machdep.c,v 1.72 2000/06/26 14:21:01 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,8 +107,6 @@
 #include <sys/exec.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>	/* XXX: not _extern ... need vm_map_create */
 

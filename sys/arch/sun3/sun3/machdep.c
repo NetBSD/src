@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 2000/06/05 23:45:01 jhawk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 2000/06/26 14:21:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -73,9 +73,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_map.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */
 
