@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.h,v 1.8 2003/10/03 16:38:44 pooka Exp $ */
+/* $NetBSD: i4b_l2.h,v 1.9 2004/02/13 18:02:05 wiz Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l2.h - ISDN layer 2 (Q.921) definitions
  *	---------------------------------------------
  *
- *	$Id: i4b_l2.h,v 1.8 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_l2.h,v 1.9 2004/02/13 18:02:05 wiz Exp $ 
  *
  * $FreeBSD$
  *
@@ -197,7 +197,7 @@ typedef enum {
 
 /* S frames */
 
-#define S_FRAME_LEN	4	/* lenght of a U-frame */
+#define S_FRAME_LEN	4	/* length of a U-frame */
 #define OFF_SRCR	2	/* 1st byte of control field,	*/
 				/* R-commands and R-responses	*/
 #define OFF_SNR		3	/* 2nd byte of control field, N(R) and PF */
@@ -213,7 +213,7 @@ typedef enum {
 /* U frames */
 
 #define UI_HDR_LEN	3	/* length of UI header in front of L3 frame */
-#define U_FRAME_LEN	3	/* lenght of a U-frame */
+#define U_FRAME_LEN	3	/* length of a U-frame */
 #define UPFBIT		0x10	/* poll/final bit mask */
 #define UPBITSET	UPFBIT
 #define UFBITSET	UPFBIT
