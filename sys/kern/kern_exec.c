@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.148 2001/12/08 00:35:30 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.149 2002/01/11 21:16:27 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.148 2001/12/08 00:35:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.149 2002/01/11 21:16:27 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -339,6 +339,15 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	char			**tmpfap;
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
+
+	/*
+	 * Lock the process and set the P_INEXEC flag to indicate that
+	 * it should be left alone until we're done here.  This is
+	 * necessary to avoid race conditions - e.g. in ptrace() -
+	 * that might allow a local user to illicitly obtain elevated
+	 * privileges.
+	 */
+	p->p_flag |= P_INEXEC;
 
 	cred = p->p_ucred;
 	base_vcp = NULL;
@@ -692,10 +701,11 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 #endif
-
+	p->p_flag &= ~P_INEXEC;
 	return (EJUSTRETURN);
 
  bad:
+	p->p_flag &= ~P_INEXEC;
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 	/* kill any opened file descriptor, if necessary */
