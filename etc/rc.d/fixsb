@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fixsb,v 1.7 2004/04/21 18:06:06 dbj Exp $
+# $NetBSD: fixsb,v 1.8 2004/04/21 18:27:26 dbj Exp $
 #
 
 # PROVIDE: fixsb
@@ -59,52 +59,45 @@ readsbfield()
 # dbj@netbsd.org 2004-04-12T18:15:06-0400
 check_part()
 {
+  verbose -n "Checking $1 ... "
+
   # The following are 'cat -v' representations of the ffs1 magic number:
   fsmagicn="^@^A^YT"  # 0x00011954 FS_UFS1_MAGIC
   fsmagics="T^Y^A^@"  # 0x54190100 FS_UFS1_MAGIC_SWAPPED
 
-  verbose -n "Checking $1 ... "
-
   # First we extract the superblock magic number field.
   # We use cat -v to avoid having binary data in shell strings.
   magic="$( readsbfield "$1" 1372 4 | cat -v)"
-  
-  # First we check if the magic number is valid either swapped or unswapped:
-  if [ "${magic}" = "${fsmagicn}" -o "${magic}" = "${fsmagics}" ]; then
-
-    # Then we read fs_bsize, fs_maxbsize and fs_old_flags fields from the disk:
-    bsize="$( readsbfield "$1" 48 4 | cat -v)"
-    maxbsize="$( readsbfield "$1" 860 4 | cat -v)"
-    oldflags="$( readsbfield "$1" 211 1 | cat -v)"
-
-    # Compare the fs_bsize with fs_maxbsize to see if they are the same
-    if [ "${bsize}" = "${maxbsize}" ]; then
-
-      # Now check to see if the high bit of fs_old_flags is set.
-      case "${oldflags}" in
-
-        # Since the shell variable is the cat -v output, the
-        # high bit is indicated in the variable with the prefix M-
-        M-*)
-        verbose "file system looks ok at fslevel 4."
-        return 4
-        ;;
-
-        # if the high bit of fs_old_flags is not set, then there is a problem
-        *)
-        verbose "file system has botched superblock upgrade."
-        return 0
-        ;;
-      esac
-
-    fi # [ "${bsize}" = "${maxbsize}" ]
-
-  else # ! [ "${magic}" = "${fsmagicn}" -o "${magic}" = "${fsmagics}" ]
+  # Then we check if the magic number is valid either swapped or unswapped:
+  if [ "${magic}" != "${fsmagicn}" -a "${magic}" != "${fsmagics}" ]; then
     verbose "does not appear to be an ffs1 filesystem."
     return 1
-  fi  # ! [ "${magic}" = "${fsmagicn}" -o "${magic}" = "${fsmagics}" ]
-  verbose "file system looks ok at fslevel 3."
-  return 3
+  fi
+
+  # Then we read fs_old_flags fields from disk
+  # And check the value of its high bit.
+  oldflags="$( readsbfield "$1" 211 1 | cat -v)"
+  case "${oldflags}" in
+    # Since the shell variable is the cat -v output, the
+    # high bit is indicated in the variable with the prefix M-
+    M-*)
+    verbose "file system looks ok at fslevel 4."
+    return 4
+    ;;
+  esac
+
+  # Then we read fs_bsize, fs_maxbsize fields from the disk:
+  bsize="$( readsbfield "$1" 48 4 | cat -v)"
+  maxbsize="$( readsbfield "$1" 860 4 | cat -v)"
+
+  # Compare the fs_bsize with fs_maxbsize to see if they are the same
+  if [ "${bsize}" != "${maxbsize}" ]; then
+    verbose "file system looks ok at fslevel 3."
+    return 3
+  fi
+
+  verbose "file system has botched superblock upgrade."
+  return 0
 }
 
 # This extracts raw ufs partitions to be fsck'ed from the file ${fstab}
