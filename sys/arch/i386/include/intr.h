@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.32 2002/11/23 10:37:09 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.33 2002/11/27 00:41:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -262,8 +262,8 @@ int i386_send_ipi(struct cpu_info *, int);
 void i386_broadcast_ipi(int);
 void i386_multicast_ipi(int, int);
 void i386_ipi_handler(void);
-void i386_intlock(void);
-void i386_intunlock(void);
+void i386_intlock(struct intrframe);
+void i386_intunlock(struct intrframe);
 #endif
 
 #endif /* !_LOCORE */
