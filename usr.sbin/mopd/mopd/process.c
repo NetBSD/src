@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.3 1997/04/16 13:31:00 christos Exp $	*/
+/*	$NetBSD: process.c,v 1.4 1997/04/17 21:09:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,10 +30,10 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: process.c,v 1.3 1997/04/16 13:31:00 christos Exp $";
+static char rcsid[] = "$NetBSD: process.c,v 1.4 1997/04/17 21:09:21 christos Exp $";
 #endif
 
-#include "common/os.h"
+#include "os.h"
 #include "common/common.h"
 #include "common/mopdef.h"
 #include "common/nmadef.h"
