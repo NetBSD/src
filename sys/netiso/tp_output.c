@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.19.6.6 2002/07/12 01:40:34 nathanw Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.19.6.7 2002/07/15 20:34:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.19.6.6 2002/07/12 01:40:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.19.6.7 2002/07/15 20:34:54 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -397,7 +397,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 	struct socket  *so;
 	struct mbuf   **mp;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc;		/* XXX */
 	struct tp_pcb  *tpcb = sototpcb(so);
 	int             s = splsoftnet();
 	caddr_t         value;
