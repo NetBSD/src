@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.10 2000/07/30 11:16:54 takemura Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.11 2000/09/10 09:39:57 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.10 2000/07/30 11:16:54 takemura Exp $";
+    "$Id: hpcfb.c,v 1.11 2000/09/10 09:39:57 takemura Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/wscons/wscons_callbacks.h>
 
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
@@ -139,6 +140,8 @@ struct hpcfb_softc {
 	void *sc_accessctx;
 	int nscreens;
 	void			*sc_powerhook;	/* power management hook */
+	struct device *sc_wsdisplay;
+	int sc_screen_resumed;
 };
 /*
  *  function prototypes
@@ -364,7 +367,7 @@ hpcfbattach(parent, self, aux)
 	wa.accessops = &hpcfb_accessops;
 	wa.accesscookie = sc;
 
-	config_found(self, &wa, wsemuldisplaydevprint);
+	sc->sc_wsdisplay = config_found(self, &wa, wsemuldisplaydevprint);
 }
 
 /* Print function (for parent devices). */
@@ -576,11 +579,28 @@ hpcfb_power(why, arg)
 	struct hpcfb_softc *sc = arg;
 
 	switch (why) {
-	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		break;
+	case PWR_SUSPEND:
+		/* XXX, casting to 'struct wsdisplay_softc *' means
+		   that you should not call the method here... */
+		sc->sc_screen_resumed = wsdisplay_getactivescreen(
+			(struct wsdisplay_softc *)sc->sc_wsdisplay);
+		if (wsdisplay_switch(sc->sc_wsdisplay,
+		    WSDISPLAY_NULLSCREEN,
+		    1 /* waitok */) == 0) {
+			wsscreen_switchwait(
+				(struct wsdisplay_softc *)sc->sc_wsdisplay,
+				WSDISPLAY_NULLSCREEN);
+		} else {
+			sc->sc_screen_resumed = WSDISPLAY_NULLSCREEN;
+		}
+		break;
 	case PWR_RESUME:
-		hpcfb_refresh_screen(sc);
+		if (sc->sc_screen_resumed != WSDISPLAY_NULLSCREEN)
+			wsdisplay_switch(sc->sc_wsdisplay,
+			    sc->sc_screen_resumed,
+			    1 /* waitok */);
 		break;
 	}
 }
@@ -705,8 +725,8 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void (*cb) __P((void *, int, int));
 	void *cbarg;
 {
-#ifdef HPCFB_MULTI
 	struct hpcfb_softc *sc = v;
+#ifdef HPCFB_MULTI
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
 #endif /* HPCFB_MULTI */
 
@@ -731,7 +751,9 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 		if (dc->dc_curx > 0 && dc->dc_cury > 0)
 			hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
 	}
-#endif /* HPCFB_MULTI */
+#else /* HPCFB_MULTI */
+	hpcfb_refresh_screen(sc);
+#endif /* !HPCFB_MULTI */
 
 	return (0);
 }

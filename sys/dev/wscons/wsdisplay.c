@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.38 2000/06/26 04:56:32 simonb Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.39 2000/09/10 09:39:57 takemura Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.38 2000/06/26 04:56:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.39 2000/09/10 09:39:57 takemura Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -121,7 +121,7 @@ struct wsdisplay_softc {
 	const struct wsscreen_list *sc_scrdata;
 
 	struct wsscreen *sc_scr[WSDISPLAY_MAXSCREEN];
-	int sc_focusidx;
+	int sc_focusidx;	/* available only if sc_focus isn't null */
 	struct wsscreen *sc_focus;
 
 	int	sc_isconsole;
@@ -1387,7 +1387,7 @@ wsdisplay_switch3(arg, error, waitok)
 	if (error) {
 		/* try to recover, avoid recursion */
 
-		if (sc->sc_oldscreen == -1) {
+		if (sc->sc_oldscreen == WSDISPLAY_NULLSCREEN) {
 			printf("wsdisplay_switch3: giving up\n");
 			sc->sc_focus = 0;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -1398,7 +1398,7 @@ wsdisplay_switch3(arg, error, waitok)
 		}
 
 		sc->sc_screenwanted = sc->sc_oldscreen;
-		sc->sc_oldscreen = -1;
+		sc->sc_oldscreen = WSDISPLAY_NULLSCREEN;
 		return (wsdisplay_switch1(arg, 0, waitok));
 	}
 
@@ -1435,7 +1435,7 @@ wsdisplay_switch2(arg, error, waitok)
 	if (error) {
 		/* try to recover, avoid recursion */
 
-		if (sc->sc_oldscreen == -1) {
+		if (sc->sc_oldscreen == WSDISPLAY_NULLSCREEN) {
 			printf("wsdisplay_switch2: giving up\n");
 			sc->sc_focus = 0;
 			sc->sc_flags &= ~SC_SWITCHPENDING;
@@ -1443,7 +1443,7 @@ wsdisplay_switch2(arg, error, waitok)
 		}
 
 		sc->sc_screenwanted = sc->sc_oldscreen;
-		sc->sc_oldscreen = -1;
+		sc->sc_oldscreen = WSDISPLAY_NULLSCREEN;
 		return (wsdisplay_switch1(arg, 0, waitok));
 	}
 
@@ -1483,6 +1483,14 @@ wsdisplay_switch1(arg, error, waitok)
 	}
 
 	no = sc->sc_screenwanted;
+	if (no == WSDISPLAY_NULLSCREEN) {
+		sc->sc_flags &= ~SC_SWITCHPENDING;
+		if (!error) {
+			sc->sc_focus = 0;
+		}
+		wakeup(sc);
+		return (error);
+	}
 	if (no < 0 || no >= WSDISPLAY_MAXSCREEN)
 		panic("wsdisplay_switch1: invalid screen %d", no);
 	scr = sc->sc_scr[no];
@@ -1518,12 +1526,14 @@ wsdisplay_switch(dev, no, waitok)
 	int s, res = 0;
 	struct wsscreen *scr;
 
-	if (no < 0 || no >= WSDISPLAY_MAXSCREEN || !sc->sc_scr[no])
+	if (no != WSDISPLAY_NULLSCREEN &&
+	    (no < 0 || no >= WSDISPLAY_MAXSCREEN || !sc->sc_scr[no]))
 		return (ENXIO);
 
 	s = spltty();
 
-	if (sc->sc_focus && no == sc->sc_focusidx) {
+	if ((sc->sc_focus && no == sc->sc_focusidx) ||
+	    (sc->sc_focus == NULL && no == WSDISPLAY_NULLSCREEN)) {
 		splx(s);
 		return (0);
 	}
@@ -1540,7 +1550,7 @@ wsdisplay_switch(dev, no, waitok)
 
 	scr = sc->sc_focus;
 	if (!scr) {
-		sc->sc_oldscreen = -1;
+		sc->sc_oldscreen = WSDISPLAY_NULLSCREEN;
 		return (wsdisplay_switch1(sc, 0, waitok));
 	} else
 		sc->sc_oldscreen = sc->sc_focusidx;
@@ -1647,7 +1657,7 @@ wsdisplay_screenstate(sc, idx)
 	struct wsdisplay_softc *sc;
 	int idx;
 {
-	if (idx >= WSDISPLAY_MAXSCREEN)
+	if (idx < 0 || idx >= WSDISPLAY_MAXSCREEN)
 		return (EINVAL);
 	if (!sc->sc_scr[idx])
 		return (ENXIO);
@@ -1658,7 +1668,7 @@ int
 wsdisplay_getactivescreen(sc)
 	struct wsdisplay_softc *sc;
 {
-	return (sc->sc_focusidx);
+	return (sc->sc_focus ? sc->sc_focusidx : WSDISPLAY_NULLSCREEN);
 }
 
 int
@@ -1668,6 +1678,15 @@ wsscreen_switchwait(sc, no)
 {
 	struct wsscreen *scr;
 	int s, res = 0;
+
+	if (no == WSDISPLAY_NULLSCREEN) {
+		s = spltty();
+		while (sc->sc_focus && res == 0) {
+			res = tsleep(sc, PCATCH, "wswait", 0);
+		}
+		splx(s);
+		return (res);
+	}
 
 	if (no < 0 || no >= WSDISPLAY_MAXSCREEN)
 		return (ENXIO);
