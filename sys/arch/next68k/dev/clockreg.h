@@ -1,4 +1,4 @@
-/*      $NetBSD: clockreg.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $        */
+/*      $NetBSD: clockreg.h,v 1.2 2003/01/18 06:09:55 thorpej Exp $        */
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -141,6 +141,6 @@ struct timer_reg {
 };
 
 /* timer register */
-#define TIMER_ENABLE	0x80
-#define TIMER_UPDATE	0x40
-#define TIMER_MAX	0xffff		/* Maximum value of timer */
+#define TIMER_REG_ENABLE	0x80
+#define TIMER_REG_UPDATE	0x40
+#define TIMER_REG_MAX		0xffff		/* Maximum value of timer */
