@@ -1,4 +1,4 @@
-/*	$NetBSD: amu.h,v 1.1.1.3 1998/08/08 22:05:24 christos Exp $	*/
+/*	$NetBSD: amfs_direct.c,v 1.1.1.1 1998/08/08 22:05:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Erez Zadok
@@ -40,41 +40,69 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amu.h,v 1.1 1996/01/13 23:23:39 ezk Exp ezk 
+ * Id: amfs_direct.c,v 1.1 1997-1998/06/30 19:22:30 ezk Exp ezk 
  *
  */
 
-#ifndef _AMU_H
-#define _AMU_H
-
 /*
- * Decide what maximum level of NFS server to try and mount with.
+ * Direct file system
  */
-#ifdef HAVE_FS_NFS3
-# define NFS_VERS_MAX NFS_VERSION3
-#else /* not HAVE_FS_NFS3 */
-# define NFS_VERS_MAX NFS_VERSION
-#endif /* not HAVE_FS_NFS3 */
 
-/* some systems like ncr2 do not define this in <rpcsvc/mount.h> */
-#ifndef MNTPATHLEN
-# define MNTPATHLEN 1024
-#endif /* not MNTPATHLEN */
-#ifndef MNTNAMLEN
-# define MNTNAMLEN 255
-#endif /* not MNTNAMLEN */
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <amd.h>
 
-/*
- * external definitions for building libamu.a
- */
-extern voidp amqproc_null_1(voidp argp, CLIENT *rqstp);
-extern amq_mount_tree_p *amqproc_mnttree_1(amq_string *argp, CLIENT *rqstp);
-extern voidp amqproc_umnt_1(amq_string *argp, CLIENT *rqstp);
-extern amq_mount_stats *amqproc_stats_1(voidp argp, CLIENT *rqstp);
-extern amq_mount_tree_list *amqproc_export_1(voidp argp, CLIENT *rqstp);
-extern int *amqproc_setopt_1(amq_setopt *argp, CLIENT *rqstp);
-extern amq_mount_info_list *amqproc_getmntfs_1(voidp argp, CLIENT *rqstp);
-extern int *amqproc_mount_1(voidp argp, CLIENT *rqstp);
-extern amq_string *amqproc_getvers_1(voidp argp, CLIENT *rqstp);
+/****************************************************************************
+ *** FORWARD DEFINITIONS                                                  ***
+ ****************************************************************************/
+static am_node *amfs_direct_readlink(am_node *mp, int *error_return);
 
-#endif /* not _AMU_H */
+/****************************************************************************
+ *** OPS STRUCTURES                                                       ***
+ ****************************************************************************/
+am_ops amfs_direct_ops =
+{
+  "direct",
+  amfs_auto_match,
+  0,				/* amfs_direct_init */
+  amfs_toplvl_mount,
+  0,
+  amfs_toplvl_umount,
+  0,
+  amfs_error_lookuppn,
+  amfs_error_readdir,
+  amfs_direct_readlink,
+  amfs_toplvl_mounted,
+  0,				/* amfs_auto_umounted */
+  find_amfs_auto_srvr,
+  FS_MKMNT | FS_NOTIMEOUT | FS_BACKGROUND | FS_AMQINFO
+};
+
+
+/****************************************************************************
+ *** FUNCTIONS                                                             ***
+ ****************************************************************************/
+
+static am_node *
+amfs_direct_readlink(am_node *mp, int *error_return)
+{
+  am_node *xp;
+  int rc = 0;
+
+  xp = next_nonerror_node(mp->am_child);
+  if (!xp) {
+    if (!mp->am_mnt->mf_private)
+      amfs_auto_mkcacheref(mp->am_mnt);	/* XXX */
+    xp = amfs_auto_lookuppn(mp, mp->am_path + 1, &rc, VLOOK_CREATE);
+  }
+  if (xp) {
+    new_ttl(xp);		/* (7/12/89) from Rein Tollevik */
+    return xp;
+  }
+  if (amd_state == Finishing)
+    rc = ENOENT;
+  *error_return = rc;
+  return 0;
+}

@@ -1,4 +1,4 @@
-$NetBSD: am-utils.info-3,v 1.1.1.2 1997/10/26 00:03:42 christos Exp $
+$NetBSD: am-utils.info-3,v 1.1.1.3 1998/08/08 22:05:40 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
@@ -7,14 +7,343 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
+File: am-utils.info,  Node: Program Filesystem,  Next: Symbolic Link Filesystem,  Prev: User ID Mapping Filesystem,  Up: Filesystem Types
+
+Program Filesystem (`program')
+==============================
+
+   The "program" (`type:=program') filesystem type allows a program to
+be run whenever a mount or unmount is required.  This allows easy
+addition of support for other filesystem types, such as MIT's Remote
+Virtual Disk (RVD) which has a programmatic interface via the commands
+`rvdmount' and `rvdunmount'.
+
+The following options must be specified:
+
+`mount'
+     the program which will perform the mount.
+
+`unmount'
+     the program which will perform the unmount.
+
+   The exit code from these two programs is interpreted as a Unix error
+code.  As usual, exit code zero indicates success.  To execute the
+program Amd splits the string on whitespace to create an array of
+substrings.  Single quotes `'' can be used to quote whitespace if that
+is required in an argument.  There is no way to escape or change the
+quote character.
+
+   To run the program `rvdmount' with a host name and filesystem as
+arguments would be specified by `mount:="/etc/rvdmount rvdmount fserver
+${path}"'.
+
+   The first element in the array is taken as the pathname of the
+program to execute.  The other members of the array form the argument
+vector to be passed to the program, "including argument zero".  This
+means that the split string must have at least two elements.  The
+program is directly executed by Amd, not via a shell.  This means that
+scripts must begin with a `#!' interpreter specification.
+
+   If a filesystem type is to be heavily used, it may be worthwhile
+adding a new filesystem type into Amd, but for most uses the program
+filesystem should suffice.
+
+   When the program is run, standard input and standard error are
+inherited from the current values used by Amd.  Standard output is a
+duplicate of standard error.  The value specified with the `-l' command
+line option has no effect on standard error.
+
+
+File: am-utils.info,  Node: Symbolic Link Filesystem,  Next: Symbolic Link Filesystem II,  Prev: Program Filesystem,  Up: Filesystem Types
+
+Symbolic Link Filesystem (`link')
+=================================
+
+   Each filesystem type creates a symbolic link to point from the volume
+name to the physical mount point.  The `link' filesystem does the same
+without any other side effects.  This allows any part of the machines
+name space to be accessed via Amd.
+
+   One common use for the symlink filesystem is `/homes' which can be
+made to contain an entry for each user which points to their
+(auto-mounted) home directory.  Although this may seem rather expensive,
+it provides a great deal of administrative flexibility.
+
+The following option must be defined:
+
+`fs'
+     The value of FS option specifies the destination of the link, as
+     modified by the SUBLINK option.  If SUBLINK is non-null, it is
+     appended to `${fs}'`/' and the resulting string is used as the
+     target.
+
+   The `link' filesystem can be thought of as identical to the `ufs'
+filesystem but without actually mounting anything.
+
+   An example entry might be:
+
+     jsp   host==charm;type:=link;fs:=/home/charm;sublink:=jsp
+   which would return a symbolic link pointing to `/home/charm/jsp'.
+
+
+File: am-utils.info,  Node: Symbolic Link Filesystem II,  Next: NFS-Link Filesystem,  Prev: Symbolic Link Filesystem,  Up: Filesystem Types
+
+Symbolic Link Filesystem II (`linkx')
+=====================================
+
+   The "linkx" (`type:=linkx') filesystem type is identical to `link'
+with the exception that the target of the link must exist.  Existence
+is checked with the lstat(2) system call.
+
+   The `linkx' filesystem type is particularly useful for wildcard map
+entries.  In this case, a list of possible targets can be given and Amd
+will choose the first one which exists on the local machine.
+
+
+File: am-utils.info,  Node: NFS-Link Filesystem,  Next: Automount Filesystem,  Prev: Symbolic Link Filesystem II,  Up: Filesystem Types
+
+NFS-Link Filesystem (`nfsl')
+============================
+
+   The "nfsl" (`type:=nfsl') filesystem type is a combination of two
+others: `link' and `nfs'.  If the local host name is equal to the value
+of `${rhost}', or if the target pathname listed in `${fs}' exists,
+`nfsl' will behave exactly as `type:=link', and refer to the target as
+a symbolic link.  If the local host name is not equal to the value of
+`${rhost}', or if the target of the link does not exist, Amd will treat
+it as `type:=nfs', and will mount a remote pathname for it.
+
+   The `nfsl' filesystem type is particularly useful as a shorthand for
+the more cumbersome and yet one of the most popular Amd entries.  For
+example, you can simplify all map entries that look like:
+
+     zing    -fs:=/n/shekel/u/zing \
+             host!=shekel;type:=nfs;rhost:=shekel;rfs:=${fs} \
+             host==shekel;type:=link
+
+   or
+
+     zing    -fs:=/n/shekel/u/zing \
+             exists(${fs});type:=link \
+             !exists(${fs});type:=nfs;rhost:=shekel;rfs:=${fs}
+
+   into a shorter form
+
+     zing    type:=nfsl;fs:=/n/shekel/u/zing;rhost:=shekel;rfs:=${fs}
+
+   Not just does it make the maps smaller and simpler, but it avoids
+possible mistakes that often happen when forgetting to set up the two
+entries (one for `type:=nfs' and the other for `type:=link') necessary
+to perform transparent mounts of existing or remote mounts.
+
+
+File: am-utils.info,  Node: Automount Filesystem,  Next: Direct Automount Filesystem,  Prev: NFS-Link Filesystem,  Up: Filesystem Types
+
+Automount Filesystem (`auto')
+=============================
+
+   The "auto" (`type:=auto') filesystem type creates a new automount
+point below an existing automount point.  Top-level automount points
+appear as system mount points.  An automount mount point can also
+appear as a sub-directory of an existing automount point.  This allows
+some additional structure to be added, for example to mimic the mount
+tree of another machine.
+
+   The following options may be specified:
+
+`cache'
+     specifies whether the data in this mount-map should be cached.
+     The default value is `none', in which case no caching is done in
+     order to conserve memory.  However, better performance and
+     reliability can be obtained by caching some or all of a mount-map.
+
+     If the cache option specifies `all', the entire map is enumerated
+     when the mount point is created.
+
+     If the cache option specifies `inc', caching is done incrementally
+     as and when data is required.  Some map types do not support cache
+     mode `all', in which case `inc' is used whenever `all' is
+     requested.
+
+     Caching can be entirely disabled by using cache mode `none'.
+
+     If the cache option specifies `regexp' then the entire map will be
+     enumerated and each key will be treated as an egrep-style regular
+     expression.  The order in which a cached map is searched does not
+     correspond to the ordering in the source map so the regular
+     expressions should be mutually exclusive to avoid confusion.
+
+     Each mount map type has a default cache type, usually `inc', which
+     can be selected by specifying `mapdefault'.
+
+     The cache mode for a mount map can only be selected on the command
+     line.  Starting Amd with the command:
+
+          amd /homes hesiod.homes -cache:=inc
+
+     will cause `/homes' to be automounted using the "Hesiod" name
+     server with local incremental caching of all successfully resolved
+     names.
+
+     All cached data is forgotten whenever Amd receives a `SIGHUP'
+     signal and, if cache `all' mode was selected, the cache will be
+     reloaded.  This can be used to inform Amd that a map has been
+     updated.  In addition, whenever a cache lookup fails and Amd needs
+     to examine a map, the map's modify time is examined.  If the cache
+     is out of date with respect to the map then it is flushed as if a
+     `SIGHUP' had been received.
+
+     An additional option (`sync') may be specified to force Amd to
+     check the map's modify time whenever a cached entry is being used.
+     For example, an incremental, synchronized cache would be created
+     by the following command:
+
+          amd /homes hesiod.homes -cache:=inc,sync
+
+`fs'
+     specifies the name of the mount map to use for the new mount point.
+
+     Arguably this should have been specified with the `${rfs}' option
+     but we are now stuck with it due to historical accident.
+
+`pref'
+     alters the name that is looked up in the mount map.  If `${pref}',
+     the "prefix", is non-null then it is prepended to the name
+     requested by the kernel "before" the map is searched.
+
+   The server `dylan.doc.ic.ac.uk' has two user disks: `/dev/dsk/2s0'
+and `/dev/dsk/5s0'.  These are accessed as `/home/dylan/dk2' and
+`/home/dylan/dk5' respectively.  Since `/home' is already an automount
+point, this naming is achieved with the following map entries:
+
+     dylan        type:=auto;fs:=${map};pref:=${key}/
+     dylan/dk2    type:=ufs;dev:=/dev/dsk/2s0
+     dylan/dk5    type:=ufs;dev:=/dev/dsk/5s0
+
+
+File: am-utils.info,  Node: Direct Automount Filesystem,  Next: Union Filesystem,  Prev: Automount Filesystem,  Up: Filesystem Types
+
+Direct Automount Filesystem (`direct')
+======================================
+
+   The "direct" (`type:=direct') filesystem is almost identical to the
+automount filesystem.  Instead of appearing to be a directory of mount
+points, it appears as a symbolic link to a mounted filesystem.  The
+mount is done at the time the link is accessed.  *Note Automount
+Filesystem:: for a list of required options.
+
+   Direct automount points are created by specifying the `direct'
+filesystem type on the command line:
+
+     amd ... /usr/man auto.direct -type:=direct
+
+   where `auto.direct' would contain an entry such as:
+
+     usr/man    -type:=nfs;rfs:=/usr/man \
+                rhost:=man-server1  rhost:=man-server2
+
+   In this example, `man-server1' and `man-server2' are file servers
+which export copies of the manual pages.  Note that the key which is
+looked up is the name of the automount point without the leading `/'.
+
+
+File: am-utils.info,  Node: Union Filesystem,  Next: Error Filesystem,  Prev: Direct Automount Filesystem,  Up: Filesystem Types
+
+Union Filesystem (`union')
+==========================
+
+   The "union" (`type:=union') filesystem type allows the contents of
+several directories to be merged and made visible in a single
+directory.  This can be used to overcome one of the major limitations
+of the Unix mount mechanism which only allows complete directories to
+be mounted.
+
+   For example, supposing `/tmp' and `/var/tmp' were to be merged into
+a new directory called `/mtmp', with files in `/var/tmp' taking
+precedence.  The following command could be used to achieve this effect:
+
+     amd ... /mtmp union:/tmp:/var/tmp -type:=union
+
+   Currently, the unioned directories must *not* be automounted.  That
+would cause a deadlock.  This seriously limits the current usefulness of
+this filesystem type and the problem will be addressed in a future
+release of Amd.
+
+   Files created in the union directory are actually created in the last
+named directory.  This is done by creating a wildcard entry which points
+to the correct directory.  The wildcard entry is visible if the union
+directory is listed, so allowing you to see which directory has
+priority.
+
+   The files visible in the union directory are computed at the time
+Amd is started, and are not kept up-to-date with respect to the
+underlying directories.  Similarly, if a link is removed, for example
+with the `rm' command, it will be lost forever.
+
+
+File: am-utils.info,  Node: Error Filesystem,  Next: Top-level Filesystem,  Prev: Union Filesystem,  Up: Filesystem Types
+
+Error Filesystem (`error')
+==========================
+
+   The "error" (`type:=error') filesystem type is used internally as a
+catch-all in the case where none of the other filesystems was selected,
+or some other error occurred.  Lookups and mounts always fail with "No
+such file or directory".  All other operations trivially succeed.
+
+   The error filesystem is not directly accessible.
+
+
+File: am-utils.info,  Node: Top-level Filesystem,  Next: Autofs Filesystem,  Prev: Error Filesystem,  Up: Filesystem Types
+
+Top-level Filesystem (`toplvl')
+===============================
+
+   The "toplvl" (`type:=toplvl') filesystems is derived from the `auto'
+filesystem and is used to mount the top-level automount nodes.
+Requests of this type are automatically generated from the command line
+arguments and can also be passed in by using the `-M' option of the
+"Amq" command.  That option is insecure, and is unavailable unless
+am-utils was configured with `--with-amq-mount'.
+
+
+File: am-utils.info,  Node: Root Filesystem,  Next: Inheritance Filesystem,  Prev: Autofs Filesystem,  Up: Filesystem Types
+
+Root Filesystem (`root')
+========================
+
+   The "root" (`type:=root') filesystem type acts as an internal
+placeholder onto which Amd can pin `toplvl' mounts.  Only one node of
+this type need ever exist and one is created automatically during
+startup.  The effect of having more than one root node is undefined.
+
+   The root filesystem is not directly accessible.
+
+
+File: am-utils.info,  Node: Autofs Filesystem,  Next: Root Filesystem,  Prev: Top-level Filesystem,  Up: Filesystem Types
+
+Autofs Filesystem (`autofs')
+============================
+
+   The "autofs" (`type:=autofs') filesystem uses Sun's kernel-based
+automounter supporting filesystem for Amd's mount points.  Hence it is
+another type of top level filesystem.
+
+   The autofs filesystem is not directly accessible from Amd maps, but
+only from the `amd.conf' file (*note mount_type Parameter::.).
+
+   Note that Autofs support is still very early.  See the distribution
+file `README.autofs' for detail of what works and what does not.
+
+
 File: am-utils.info,  Node: Inheritance Filesystem,  Prev: Root Filesystem,  Up: Filesystem Types
 
-Inheritance Filesystem
-======================
+Inheritance Filesystem (`inherit')
+==================================
 
    The "inheritance" (`type:=inherit') filesystem is not directly
 accessible.  Instead, internal mount nodes of this type are
-automatically generated when Amd is started with the "-r" option.  At
+automatically generated when Amd is started with the `-r' option.  At
 this time the system mount table is scanned to locate any filesystems
 which are already mounted.  If any reference to these filesystems is
 made through Amd then instead of attempting to mount it, Amd simulates
@@ -55,14 +384,14 @@ File Format
 
    The `amd.conf' file consists of sections and parameters.  A section
 begins with the name of the section in square brackets `[]' and
-continues until the next section begins or the end the file is reached.
-Sections contain parameters of the form `name = value'.
+continues until the next section begins or the end of the file is
+reached.  Sections contain parameters of the form `name = value'.
 
    The file is line-based -- that is, each newline-terminated line
 represents either a comment, a section name or a parameter.  No
 line-continuation syntax is available.
 
-   Section, parameter names and their values are case sensitive.
+   Section names, parameter names and their values are case sensitive.
 
    Only the first equals sign in a parameter is significant.  Whitespace
 before or after the first equals sign is discarded.  Leading, trailing
@@ -77,7 +406,7 @@ containing only whitespace.
 
    The values following the equals sign in parameters are all either a
 string (no quotes needed if string does not include spaces) or a
-boolean, which may be given as yes/no.  Case is significant in all
+boolean, which may be given as `yes'/`no'.  Case is significant in all
 values.  Some items such as cache timeouts are numeric.
 
 
@@ -112,10 +441,10 @@ File: am-utils.info,  Node: Common Parameters,  Next: Global Parameters,  Prev: 
 Common Parameters
 =================
 
-   These parameters can be specified either in the global or a map
-specific section.  Entries specified in a map-specific section override
-the default value or one defined in the global section.   If such a
-common parameter is specified only in the global section, it is
+   These parameters can be specified either in the global or a
+map-specific section.  Entries specified in a map-specific section
+override the default value or one defined in the global section.   If
+such a common parameter is specified only in the global section, it is
 applicable to all regular map sections that follow.
 
 * Menu:
@@ -132,14 +461,16 @@ File: am-utils.info,  Node: browsable_dirs Parameter,  Next: map_options Paramet
 browsable_dirs Parameter
 ------------------------
 
-   (type=boolean, default=no).  If `yes', then Amd's top-level mount
+   (type=string, default=`no').  If `yes', then Amd's top-level mount
 points will be browsable to readdir(3) calls.  This means you could run
-for example ls(3) and see what keys are available to mount in that
+for example ls(1) and see what keys are available to mount in that
 directory.  Not all entries are made visible to readdir(3): the
-`/default' entry and all other wildcard entries are not included.  Note
-that if you run a command which will attempt to stat(2) the entries,
-such as often done by `ls -l' or `ls -F', Amd will attempt to mount
-every entry in that map.  This is often called a "mount storm".
+`/defaults' entry, wildcard entries, and those with a `/' in them are
+not included.  If you specify `full' to this option, all but the
+`/defaults' entry will be visible.  Note that if you run a command
+which will attempt to stat(2) the entries, such as often done by `ls
+-l' or `ls -F', Amd will attempt to mount every entry in that map.
+This is often called a "mount storm".
 
 
 File: am-utils.info,  Node: map_options Parameter,  Next: map_type Parameter,  Prev: browsable_dirs Parameter,  Up: Common Parameters
@@ -192,7 +523,7 @@ File: am-utils.info,  Node: mount_type Parameter,  Next: search_path Parameter, 
 mount_type Parameter
 --------------------
 
-   (type=string, default=nfs).  All Amd mount types default to NFS.
+   (type=string, default=`nfs').  All Amd mount types default to NFS.
 That is, Amd is an NFS server on the map mount points, for the local
 host it is running on.  If `autofs' is specified, Amd will be an autofs
 server for those mount points.
@@ -226,6 +557,7 @@ only.
 * debug_options Parameter::
 * dismount_interval Parameter::
 * fully_qualified_hosts Parameter::
+* hesiod_base Parameter::
 * karch Parameter::
 * ldap_base Parameter::
 * ldap_cache_maxmem Parameter::
@@ -240,6 +572,7 @@ only.
 * normalize_hostnames Parameter::
 * os Parameter::
 * osver Parameter::
+* pid_file Parameter::
 * plock Parameter::
 * portmap_program Parameter::
 * print_pid Parameter::
@@ -247,6 +580,7 @@ only.
 * restart_mounts Parameter::
 * selectors_on_default Parameter::
 * show_statfs_entries Parameter::
+* unmount_on_exit Parameter::
 
 
 File: am-utils.info,  Node: arch Parameter,  Next: auto_dir Parameter,  Prev: Global Parameters,  Up: Global Parameters
@@ -263,7 +597,7 @@ File: am-utils.info,  Node: auto_dir Parameter,  Next: cache_duration Parameter,
 auto_dir Parameter
 ------------------
 
-   (type=string, default=/a).  Same as the `-a' option to Amd.  This
+   (type=string, default=`/a').  Same as the `-a' option to Amd.  This
 sets the private directory where Amd will create sub-directories for
 its real mount points.
 
@@ -293,7 +627,7 @@ debug_options Parameter
 
    (type=string, default no debug options).  Same as the `-D' option to
 Amd.  Specify any debugging options for Amd.  Works only if am-utils
-was configured for debugging using the `--enable-debug option'.  The
+was configured for debugging using the `--enable-debug' option.  The
 `mem' option alone can be turned on via `--enable-debug=mem'.
 Otherwise debugging options are ignored.  Options are comma delimited,
 and can be preceded by the string `no' to negate their meaning.  You
@@ -341,19 +675,28 @@ Specify in seconds, the time between attempts to dismount file systems
 that have exceeded their cached times.
 
 
-File: am-utils.info,  Node: fully_qualified_hosts Parameter,  Next: karch Parameter,  Prev: dismount_interval Parameter,  Up: Global Parameters
+File: am-utils.info,  Node: fully_qualified_hosts Parameter,  Next: hesiod_base Parameter,  Prev: dismount_interval Parameter,  Up: Global Parameters
 
 fully_qualified_hosts Parameter
 -------------------------------
 
-   (type=string, default=no).  If `yes', Amd will perform RPC
+   (type=string, default=`no').  If `yes', Amd will perform RPC
 authentication using fully-qualified host names.  This is necessary for
 some systems, and especially when performing cross-domain mounting.  For
 this function to work, the Amd variable `${hostd}' is used, requiring
 that `${domain}' not be null.
 
 
-File: am-utils.info,  Node: karch Parameter,  Next: ldap_base Parameter,  Prev: fully_qualified_hosts Parameter,  Up: Global Parameters
+File: am-utils.info,  Node: hesiod_base Parameter,  Next: karch Parameter,  Prev: fully_qualified_hosts Parameter,  Up: Global Parameters
+
+hesiod_base Parameter
+---------------------
+
+   (type=string, default=`automount').  Specify the base name for
+hesiod maps.
+
+
+File: am-utils.info,  Node: karch Parameter,  Next: ldap_base Parameter,  Prev: hesiod_base Parameter,  Up: Global Parameters
 
 karch Parameter
 ---------------
@@ -372,8 +715,7 @@ File: am-utils.info,  Node: ldap_base Parameter,  Next: ldap_cache_maxmem Parame
 ldap_base Parameter
 -------------------
 
-   (type=string, default=ldap.your.domain:389).  Specify the base name
-for LDAP.
+   (type=string, default not set).  Specify the base name for LDAP.
 
 
 File: am-utils.info,  Node: ldap_cache_maxmem Parameter,  Next: ldap_cache_seconds Parameter,  Prev: ldap_base Parameter,  Up: Global Parameters
@@ -399,8 +741,8 @@ File: am-utils.info,  Node: ldap_hostports Parameter,  Next: local_domain Parame
 ldap_hostports Parameter
 ------------------------
 
-   (type=string, default="ou=Marketing, o=AMD Ltd, c=US").  Specify
-LDAP-specific values such as country and organization.
+   (type=string, default not set).  Specify LDAP-specific values such
+as country and organization.
 
 
 File: am-utils.info,  Node: local_domain Parameter,  Next: log_file Parameter,  Prev: ldap_hostports Parameter,  Up: Global Parameters
@@ -419,11 +761,23 @@ File: am-utils.info,  Node: log_file Parameter,  Next: log_options Parameter,  P
 log_file Parameter
 ------------------
 
-   (type=string, default=stderr).  Same as the `-l' option to Amd.
-Specify a file name to log Amd events to.  If the string `syslog' is
-given, Amd will record its events with the system logger syslogd(8).
-If the string `/dev/stderr' is specified, Amd will send its events to
-the standard error file descriptor.
+   (type=string, default=`stderr').  Same as the `-l' option to Amd.
+Specify a file name to log Amd events to.  If the string `/dev/stderr'
+is specified, Amd will send its events to the standard error file
+descriptor.
+
+   If the string `syslog' is given, Amd will record its events with the
+system logger syslogd(8).  If your system supports syslog facilities,
+then the default facility used is `LOG_DAEMON'.
+
+   When using syslog, if you wish to change the facility, append its
+name to the option name, delimited by a single colon.  For example, if
+it is the string `syslog:local7' then Amd will log messages via
+syslog(3) using the `LOG_LOCAL7' facility.  If the facility name
+specified is not recognized, Amd will default to `LOG_DAEMON'.  Note:
+while you can use any syslog facility available on your system, it is
+generally a bad idea to use those reserved for other services such as
+`kern', `lpr', `cron', etc.
 
 
 File: am-utils.info,  Node: log_options Parameter,  Next: nfs_retransmit_counter Parameter,  Prev: log_file Parameter,  Up: Global Parameters
@@ -505,8 +859,8 @@ File: am-utils.info,  Node: normalize_hostnames Parameter,  Next: os Parameter, 
 normalize_hostnames Parameter
 -----------------------------
 
-   (type=boolean, default=no).  Same as the `-n' option to Amd.  If
-`yes', then the name refereed to by `${rhost}' is normalized relative
+   (type=boolean, default=`no').  Same as the `-n' option to Amd.  If
+`yes', then the name referred to by `${rhost}' is normalized relative
 to the host database before being used.  The effect is to translate
 aliases into "official" names.
 
@@ -516,32 +870,51 @@ File: am-utils.info,  Node: os Parameter,  Next: osver Parameter,  Prev: normali
 os Parameter
 ------------
 
-   (type=string, default to compiled in value).  Same as the `-o'
+   (type=string, default to compiled in value).  Same as the `-O'
 option to Amd.  Allows you to override the compiled-in name of the
 operating system.  Useful when the built-in name is not desired for
-backward compatibility reasons.  For example, if the build in name is
+backward compatibility reasons.  For example, if the built-in name is
 `sunos5', you can override it to `sos5', and use older maps which were
 written with the latter in mind.
 
 
-File: am-utils.info,  Node: osver Parameter,  Next: plock Parameter,  Prev: os Parameter,  Up: Global Parameters
+File: am-utils.info,  Node: osver Parameter,  Next: pid_file Parameter,  Prev: os Parameter,  Up: Global Parameters
 
 osver Parameter
 ---------------
 
-   (type=string, default to compiled in value).  Allows you to override
-the compiled-in operating-system version number.
+   (type=string, default to compiled in value).  Same as the `-o'
+option to Amd.  Allows you to override the compiled-in version number
+of the operating system.  Useful when the built-in version is not
+desired for backward compatibility reasons.  For example, if the build
+in version is `2.5.1', you can override it to `5.5.1', and use older
+maps that were written with the latter in mind.
 
 
-File: am-utils.info,  Node: plock Parameter,  Next: portmap_program Parameter,  Prev: osver Parameter,  Up: Global Parameters
+File: am-utils.info,  Node: pid_file Parameter,  Next: plock Parameter,  Prev: osver Parameter,  Up: Global Parameters
+
+pid_file Parameter
+------------------
+
+   (type=string, default=`/dev/stdout').  Specify a file to store the
+process ID of the running daemon into.  If not specified, Amd will
+print its process id onto the standard output.  Useful for killing Amd
+after it had run.  Note that the PID of a running Amd can also be
+retrieved via Amq (*note Amq -p option::.).
+
+   This file is used only if the `print_pid' option is on (*note
+print_pid Parameter::.).
+
+
+File: am-utils.info,  Node: plock Parameter,  Next: portmap_program Parameter,  Prev: pid_file Parameter,  Up: Global Parameters
 
 plock Parameter
 ---------------
 
-   (type=boolean, default=yes).  Same as the `-S' option to Amd.  If
+   (type=boolean, default=`yes').  Same as the `-S' option to Amd.  If
 `yes', lock the running executable pages of Amd into memory.  To
 improve Amd's performance, systems that support the plock(3) call can
-lock the Amd process into memory.  This way there is less chance it the
+lock the Amd process into memory.  This way there is less chance the
 operating system will schedule, page out, and swap the Amd process as
 needed.  This improves Amd's performance, at the cost of reserving the
 memory used by the Amd process (making it unavailable for other
@@ -569,7 +942,7 @@ File: am-utils.info,  Node: print_pid Parameter,  Next: print_version Parameter,
 print_pid Parameter
 -------------------
 
-   (type=boolean, default=no).  Same as the `-p' option to Amd.  If
+   (type=boolean, default=`no').  Same as the `-p' option to Amd.  If
 `yes', Amd will print its process ID upon starting.
 
 
@@ -578,9 +951,9 @@ File: am-utils.info,  Node: print_version Parameter,  Next: restart_mounts Param
 print_version Parameter
 -----------------------
 
-   (type=boolean, default=no).  Same as the `-v' option to Amd, but the
-version prints and Amd continues to run.  If `yes', Amd will print its
-version information string, which includes some configuration and
+   (type=boolean, default=`no').  Same as the `-v' option to Amd, but
+the version prints and Amd continues to run.  If `yes', Amd will print
+its version information string, which includes some configuration and
 compilation values.
 
 
@@ -589,7 +962,7 @@ File: am-utils.info,  Node: restart_mounts Parameter,  Next: selectors_on_defaul
 restart_mounts Parameter
 ------------------------
 
-   (type=boolean, default=no).  Same as the `-r' option to Amd.  If
+   (type=boolean, default=`no').  Same as the `-r' option to Amd.  If
 `yes' Amd will scan the mount table to determine which file systems are
 currently mounted.  Whenever one of these would have been auto-mounted,
 Amd inherits it.
@@ -600,27 +973,39 @@ File: am-utils.info,  Node: selectors_on_default Parameter,  Next: show_statfs_e
 selectors_on_default Parameter
 ------------------------------
 
-   (type=boolean, default=no).  If `yes', then the /default entry of
-maps will be look for and process any selectors before setting defaults
-for all other keys in that map.  Useful when you want to set different
-options for a complete map based on some parameters.  For example, you
-may want to better the NFS performance over slow slip-based networks as
-follows:
+   (type=boolean, default=`no').  If `yes', then the `/defaults' entry
+of maps will be looked for and any selectors processed before setting
+defaults for all other keys in that map.  Useful when you want to set
+different options for a complete map based on some parameters.  For
+example, you may want to better the NFS performance over slow
+slip-based networks as follows:
 
      /defaults \
          wire==slip-net;opts:=intr,rsize=1024,wsize=1024 \
          wire!=slip-net;opts:=intr,rsize=8192,wsize=8192
 
 
-File: am-utils.info,  Node: show_statfs_entries Parameter,  Prev: selectors_on_default Parameter,  Up: Global Parameters
+File: am-utils.info,  Node: show_statfs_entries Parameter,  Next: unmount_on_exit Parameter,  Prev: selectors_on_default Parameter,  Up: Global Parameters
 
 show_statfs_entries Parameter
 -----------------------------
 
-   (type=boolean), default=no).  If `yes', then all maps which are
+   (type=boolean), default=`no').  If `yes', then all maps which are
 browsable will also show the number of entries (keys) they have when
-`df' runs. (This is accomplished by returning non-zero values to the
+df(1) runs. (This is accomplished by returning non-zero values to the
 statfs(2) system call).
+
+
+File: am-utils.info,  Node: unmount_on_exit Parameter,  Prev: show_statfs_entries Parameter,  Up: Global Parameters
+
+unmount_on_exit Parameter
+-------------------------
+
+   (type=boolean), default=`no').  If `yes', then Amd will attempt to
+unmount all file systems which it knows about.  Normally it leaves all
+(esp. NFS) mounted file systems intact.  Note that Amd does not know
+about file systems mounted before it starts up, unless the
+`restart_mounts' option is used (*note restart_mounts Parameter::.).
 
 
 File: am-utils.info,  Node: Regular Map Parameters,  Next: amd.conf Examples,  Prev: Global Parameters,  Up: Amd Configuration File
@@ -652,8 +1037,8 @@ tag Parameter
 
    (type=string, default no tag).  Each map entry in the configuration
 file can be tagged.  If no tag is specified, that map section will
-always be processed by Amd.  If it is specified, then amd will process
-the map if the `-T' option was given to amd, and the value given to that
+always be processed by Amd.  If it is specified, then Amd will process
+the map if the `-T' option was given to Amd, and the value given to that
 command-line option matches that in the map section.
 
 
@@ -669,7 +1054,9 @@ Science Department of Columbia University.
      [ global ]
      normalize_hostnames =    no
      print_pid =              no
+     #pid_file =              /var/run/amd.pid
      restart_mounts =         yes
+     #unmount_on_exit =       yes
      auto_dir =               /n
      log_file =               /var/log/amd
      log_options =            all
@@ -725,7 +1112,7 @@ Starting Amd
 ============
 
    Amd is best started from `/etc/rc.local' on BSD systems, or from the
-appropriate start-level script in `/etc/init.d' on SVR systems.
+appropriate start-level script in `/etc/init.d' on System V systems.
 
      if [ -f /usr/local/sbin/ctl-amd ]; then
          /usr/local/sbin/ctl-amd start; (echo -n ' amd') > /dev/console
@@ -734,7 +1121,7 @@ appropriate start-level script in `/etc/init.d' on SVR systems.
 The shell script, `ctl-amd' is used to start, stop, or restart Amd.  It
 is a relatively generic script.  All options you want to set should not
 be made in this script, but rather updated in the `amd.conf' file.
-*note Amd Configuration File::..
+*Note Amd Configuration File::.
 
    If you do not wish to use an Amd configuration file, you may start
 Amd manually.  For example, getting the map entries via NIS:
@@ -752,7 +1139,7 @@ Stopping Amd
 `SIGTERM'
      causes the top-level automount points to be unmounted and then Amd
      to exit.  Any automounted filesystems are left mounted.  They can
-     be recovered by restarting Amd with the "-r" command line option.
+     be recovered by restarting Amd with the `-r' command line option.
 
 `SIGINT'
      causes Amd to attempt to unmount any filesystems which it has
@@ -783,8 +1170,9 @@ Amd processes attempt to manage the same mount point, it usually will
 result in a system lockup.
 
    The easiest and safest way to restart Amd, without having to find
-its process ID by hand, sending it the TERM process, waiting for Amd to
-die cleanly, and verifying so, is to use the `ctl-amd' script, as with:
+its process ID by hand, sending it the `SIGTERM' signal, waiting for Amd
+to die cleanly, and verifying so, is to use the `ctl-amd' script, as
+with:
 
      ctl-amd restart
 
@@ -821,6 +1209,8 @@ each mount point.
 * Amq -p option::     Getting Amd's process ID.
 * Amq -P-option::     Contacting alternate Amd processes.
 * Amq -s option::     Obtaining global statistics.
+* Amq -T option::     Use TCP transport.
+* Amq -U-option::     Use UDP transport.
 * Amq -u option::     Forcing volumes to time out.
 * Amq -v option::     Version information.
 * Other Amq options:: Three other special options.
@@ -892,10 +1282,10 @@ output.  For example:
 
 File: am-utils.info,  Node: Amq -f option,  Next: Amq -h option,  Prev: Amq default,  Up: Controlling Amd
 
-Amq -f option
--------------
+Amq `-f' option
+---------------
 
-   The "-f" option causes Amd to flush the internal mount map cache.
+   The `-f' option causes Amd to flush the internal mount map cache.
 This is useful for example in Hesiod maps since Amd will not
 automatically notice when they have been updated.  The map cache can
 also be synchronized with the map source by using the `sync' option
@@ -904,8 +1294,8 @@ also be synchronized with the map source by using the `sync' option
 
 File: am-utils.info,  Node: Amq -l option,  Next: Amq -m option,  Prev: Amq -h option,  Up: Controlling Amd
 
-Amq -l option
--------------
+Amq `-l' option
+---------------
 
    Tell Amd to use log_file as the log file name.  For security
 reasons, this *must* be the same log file which Amd used when started.
@@ -916,21 +1306,21 @@ cron jobs.
 
 File: am-utils.info,  Node: Amq -h option,  Next: Amq -l option,  Prev: Amq -f option,  Up: Controlling Amd
 
-Amq -h option
--------------
+Amq `-h' option
+---------------
 
    By default the local host is used.  In an HP-UX cluster the root
 server is used since that is the only place in the cluster where Amd
-will be running.  To query Amd on another host the "-h" option should
+will be running.  To query Amd on another host the `-h' option should
 be used.
 
 
 File: am-utils.info,  Node: Amq -m option,  Next: Amq -M-option,  Prev: Amq -l option,  Up: Controlling Amd
 
-Amq -m option
--------------
+Amq `-m' option
+---------------
 
-   The "-m" option displays similar information about mounted
+   The `-m' option displays similar information about mounted
 filesystems, rather than automount points.  The output includes the
 following information:
 
@@ -960,535 +1350,4 @@ following information:
 
    When the reference count is zero the filesystem is not mounted but
 the mount point and server information is still being maintained by Amd.
-
-
-File: am-utils.info,  Node: Amq -M-option,  Next: Amq -p option,  Prev: Amq -m option,  Up: Controlling Amd
-
-Amq -M option
--------------
-
-   The "-M" option passes a new map entry to Amd and waits for it to be
-evaluated, possibly causing a mount.  For example, the following
-command would cause `/home/toytown' on host `toytown' to be mounted
-locally on `/mnt/toytown'.
-
-     amq -M '/mnt/toytown type:=nfs;rfs:=/home/toytown;rhost:=toytown;fs:=${key}'
-
-   Amd applies some simple security checks before allowing this
-operation.  The check tests whether the incoming request is from a
-privileged UDP port on the local machine.  "Permission denied" is
-returned if the check fails.
-
-   This option is very insecure as it is vulnerable to attacks such as
-IP Spoofing.  In other words, it is relatively easy for an attacker who
-really wants to, to make your Amd process mount any filesystem from the
-Internet!  Therefore, the *complete* code which supports the "-M"
-option in Amd and Amq is turned off by default.  To turn it on, you
-have to reconfigure am-utils with `configure --enable-amq-mount'.
-Think twice before doing so, and use this option only if you absolutely
-need to.
-
-   A future release of Amd will include code to allow the mount(8)
-command to mount automount points:
-
-     mount -t amd /vol hesiod.vol
-
-   This will then allow Amd to be controlled from the standard system
-filesystem mount list.
-
-
-File: am-utils.info,  Node: Amq -p option,  Next: Amq -P-option,  Prev: Amq -M-option,  Up: Controlling Amd
-
-Amq -p option
--------------
-
-   Return the process ID of the remote or locally running Amd.  Useful
-when you need to send a signal to the local Amd process, and would
-rather not have to search through the process table.  This option is
-used in the `ctl-amd' script.
-
-
-File: am-utils.info,  Node: Amq -P-option,  Next: Amq -s option,  Prev: Amq -p option,  Up: Controlling Amd
-
-Amq -P option
--------------
-
-   Contact an alternate running Amd that had registered itself on a
-different RPC PROGRAM_NUMBER and apply all other operations to that
-instance of the automounter.  This is useful when you run multiple
-copies of Amd, and need to manage each one separately.  If not
-specified, amq will use the default program number for Amd, 300019.
-For security reasons, the only alternate program numbers Amd can use
-range from 300019 to 300029, inclusive.
-
-   For example, to kill an alternate running Amd:
-
-     kill `amq -p -P 300020`
-
-
-File: am-utils.info,  Node: Amq -s option,  Next: Amq -u option,  Prev: Amq -P-option,  Up: Controlling Amd
-
-Amq -s option
--------------
-
-   The "-s" option displays global statistics.  If any other options
-are specified or any filesystems named then this option is ignored.
-For example:
-
-     requests  stale     mount     mount     unmount
-     deferred  fhandles  ok        failed    failed
-     1054      1         487       290       7017
-
-`Deferred requests'
-     are those for which an immediate reply could not be constructed.
-     For example, this would happen if a background mount was required.
-
-`Stale filehandles'
-     counts the number of times the kernel passes a stale filehandle to
-     Amd.  Large numbers indicate problems.
-
-`Mount ok'
-     counts the number of automounts which were successful.
-
-`Mount failed'
-     counts the number of automounts which failed.
-
-`Unmount failed'
-     counts the number of times a filesystem could not be unmounted.
-     Very large numbers here indicate that the time between unmount
-     attempts should be increased.
-
-
-File: am-utils.info,  Node: Amq -u option,  Next: Amq -v option,  Prev: Amq -s option,  Up: Controlling Amd
-
-Amq -u option
--------------
-
-   The "-u" option causes the time-to-live interval of the named mount
-points to be expired, thus causing an unmount attempt.  This is the only
-safe way to unmount an automounted filesystem.  It is not possible to
-unmount a filesystem which has been mounted with the `nounmount' flag.
-
-
-File: am-utils.info,  Node: Amq -v option,  Next: Other Amq options,  Prev: Amq -u option,  Up: Controlling Amd
-
-Amq -v option
--------------
-
-   The "-v" option displays the version of Amd in a similar way to
-Amd's "-v" option.
-
-
-File: am-utils.info,  Node: Other Amq options,  Prev: Amq -v option,  Up: Controlling Amd
-
-Other Amq options
------------------
-
-   Two other operations are implemented.  These modify the state of Amd
-as a whole, rather than any particular filesystem.  The "-x" and "-D"
-options have exactly the same effect as Amd's corresponding command
-line options.
-
-   When Amd receives a "-x" flag it limits the log options being
-modified to those which were not enabled at startup.  This prevents a
-user turning *off* any logging option which was specified at startup,
-though any which have been turned off since then can still be turned
-off.  The "-D" option has a similar behavior.
-
-
-File: am-utils.info,  Node: FSinfo,  Next: Hlfsd,  Prev: Run-time Administration,  Up: Top
-
-FSinfo
-******
-
-   XXX: this chapter should be reviewed by someone knowledgeable with
-fsinfo.
-
-* Menu:
-
-* FSinfo Overview::                 Introduction to FSinfo.
-* Using FSinfo::                    Basic concepts.
-* FSinfo Grammar::                  Language syntax, semantics and examples.
-* FSinfo host definitions::         Defining a new host.
-* FSinfo host attributes::          Definable host attributes.
-* FSinfo filesystems::              Defining locally attached filesystems.
-* FSinfo static mounts::            Defining additional static mounts.
-* FSinfo automount definitions::
-* FSinfo Command Line Options::
-* FSinfo errors::
-
-
-File: am-utils.info,  Node: FSinfo Overview,  Next: Using FSinfo,  Prev: FSinfo,  Up: FSinfo
-
-FSinfo overview
-===============
-
-   FSinfo is a filesystem management tool.  It has been designed to
-work with Amd to help system administrators keep track of the ever
-increasing filesystem namespace under their control.
-
-   The purpose of FSinfo is to generate all the important standard
-filesystem data files from a single set of input data.  Starting with a
-single data source guarantees that all the generated files are
-self-consistent.  One of the possible output data formats is a set of
-Amd maps which can be used amongst the set of hosts described in the
-input data.
-
-   FSinfo implements a declarative language.  This language is
-specifically designed for describing filesystem namespace and physical
-layouts.  The basic declaration defines a mounted filesystem including
-its device name, mount point, and all the volumes and access
-permissions.  FSinfo reads this information and builds an internal map
-of the entire network of hosts.  Using this map, many different data
-formats can be produced including `/etc/fstab', `/etc/exports', Amd
-mount maps and `/etc/bootparams'.
-
-
-File: am-utils.info,  Node: Using FSinfo,  Next: FSinfo Grammar,  Prev: FSinfo Overview,  Up: FSinfo
-
-Using FSinfo
-============
-
-   The basic strategy when using FSinfo is to gather all the
-information about all disks on all machines into one set of
-declarations.  For each machine being managed, the following data is
-required:
-
-   * Hostname
-
-   * List of all filesystems and, optionally, their mount points.
-
-   * Names of volumes stored on each filesystem.
-
-   * NFS export information for each volume.
-
-   * The list of static filesystem mounts.
-
-   The following information can also be entered into the same
-configuration files so that all data can be kept in one place.
-
-   * List of network interfaces
-
-   * IP address of each interface
-
-   * Hardware address of each interface
-
-   * Dumpset to which each filesystem belongs
-
-   * and more ...
-
-   To generate Amd mount maps, the automount tree must also be defined
-(*note FSinfo automount definitions::.).  This will have been designed
-at the time the volume names were allocated.  Some volume names will
-not be automounted, so FSinfo needs an explicit list of which volumes
-should be automounted.
-
-   Hostnames are required at several places in the FSinfo language.  It
-is important to stick to either fully qualified names or unqualified
-names.  Using a mixture of the two will inevitably result in confusion.
-
-   Sometimes volumes need to be referenced which are not defined in the
-set of hosts being managed with FSinfo.  The required action is to add a
-dummy set of definitions for the host and volume names required.  Since
-the files generated for those particular hosts will not be used on them,
-the exact values used is not critical.
-
-
-File: am-utils.info,  Node: FSinfo Grammar,  Next: FSinfo host definitions,  Prev: Using FSinfo,  Up: FSinfo
-
-FSinfo grammar
-==============
-
-   FSinfo has a relatively simple grammar.  Distinct syntactic
-constructs exist for each of the different types of data, though they
-share a common flavor.  Several conventions are used in the grammar
-fragments below.
-
-   The notation, list(xxx), indicates a list of zero or more xxx's.
-The notation, opt(xxx), indicates zero or one xxx.  Items in double
-quotes, eg "host", represent input tokens.  Items in angle brackets, eg
-<HOSTNAME>, represent strings in the input.  Strings need not be in
-double quotes, except to differentiate them from reserved words.
-Quoted strings may include the usual set of C "\" escape sequences with
-one exception: a backslash-newline-whitespace sequence is squashed into
-a single space character.  To defeat this feature, put a further
-backslash at the start of the second line.
-
-   At the outermost level of the grammar, the input consists of a
-sequence of host and automount declarations.  These declarations are
-all parsed before they are analyzed.  This means they can appear in any
-order and cyclic host references are possible.
-
-     fsinfo      : list(fsinfo_attr) ;
-     
-     fsinfo_attr : host | automount ;
-
-* Menu:
-
-* FSinfo host definitions::
-* FSinfo automount definitions::
-
-
-File: am-utils.info,  Node: FSinfo host definitions,  Next: FSinfo host attributes,  Prev: FSinfo Grammar,  Up: FSinfo
-
-FSinfo host definitions
-=======================
-
-   A host declaration consists of three parts: a set of machine
-attribute data, a list of filesystems physically attached to the
-machine, and a list of additional statically mounted filesystems.
-
-     host        : "host" host_data list(filesystem) list(mount) ;
-
-   Each host must be declared in this way exactly once.  Such things as
-the hardware address, the architecture and operating system types and
-the cluster name are all specified within the "host data".
-
-   All the disks the machine has should then be described in the "list
-of filesystems".  When describing disks, you can specify what "volname"
-the disk/partition should have and all such entries are built up into a
-dictionary which can then be used for building the automounter maps.
-
-   The "list of mounts" specifies all the filesystems that should be
-statically mounted on the machine.
-
-* Menu:
-
-* FSinfo host attributes::
-* FSinfo filesystems::
-* FSinfo static mounts::
-
-
-File: am-utils.info,  Node: FSinfo host attributes,  Next: FSinfo filesystems,  Prev: FSinfo host definitions,  Up: FSinfo host definitions
-
-FSinfo host attributes
-======================
-
-   The host data, "host_data", always includes the "hostname".  In
-addition, several other host attributes can be given.
-
-     host_data   : <HOSTNAME>
-                 | "{" list(host_attrs) "}" <HOSTNAME>
-                 ;
-     
-     host_attrs  : host_attr "=" <STRING>
-                 | netif
-                 ;
-     
-     host_attr   : "config"
-                 | "arch"
-                 | "os"
-                 | "cluster"
-                 ;
-
-   The "hostname" is, typically, the fully qualified hostname of the
-machine.
-
-   Examples:
-
-     host dylan.doc.ic.ac.uk
-     
-     host {
-         os = hpux
-         arch = hp300
-     } dougal.doc.ic.ac.uk
-
-   The options that can be given as host attributes are shown below.
-
-* Menu:
-
-* netif Option:         FSinfo host netif:
-* config Option:        FSinfo host config:
-* arch Option:          FSinfo host arch:
-* os Option:            FSinfo host os:
-* cluster Option:       FSinfo host cluster:
-
-
-File: am-utils.info,  Node: FSinfo host netif,  Next: FSinfo host config,  Up: FSinfo host attributes
-
-netif Option
-------------
-
-   This defines the set of network interfaces configured on the machine.
-The interface attributes collected by FSinfo are the IP address, subnet
-mask and hardware address.  Multiple interfaces may be defined for
-hosts with several interfaces by an entry for each interface.  The
-values given are sanity checked, but are currently unused for anything
-else.
-
-     netif       : "netif" <STRING> "{" list(netif_attrs) "}" ;
-     
-     netif_attrs : netif_attr "=" <STRING> ;
-     
-     netif_attr  : "inaddr" | "netmask" | "hwaddr" ;
-
-   Examples:
-
-     netif ie0 {
-         inaddr  = 129.31.81.37
-         netmask = 0xfffffe00
-         hwaddr  = "08:00:20:01:a6:a5"
-     }
-     
-     netif ec0 { }
-
-
-File: am-utils.info,  Node: FSinfo host config,  Next: FSinfo host arch,  Prev: FSinfo host netif,  Up: FSinfo host attributes
-
-config Option
--------------
-
-   This option allows you to specify configuration variables for the
-startup scripts (`rc' scripts).  A simple string should immediately
-follow the keyword.
-
-   Example:
-
-     config "NFS_SERVER=true"
-     config "ZEPHYR=true"
-
-   This option is currently unsupported.
-
-
-File: am-utils.info,  Node: FSinfo host arch,  Next: FSinfo host os,  Prev: FSinfo host config,  Up: FSinfo host attributes
-
-arch Option
------------
-
-   This defines the architecture of the machine.  For example:
-
-     arch = hp300
-
-   This is intended to be of use when building architecture specific
-mountmaps, however, the option is currently unsupported.
-
-
-File: am-utils.info,  Node: FSinfo host os,  Next: FSinfo host cluster,  Prev: FSinfo host arch,  Up: FSinfo host attributes
-
-os Option
----------
-
-   This defines the operating system type of the host.  For example:
-
-     os = hpux
-
-   This information is used when creating the `fstab' files, for
-example in choosing which format to use for the `fstab' entries within
-the file.
-
-
-File: am-utils.info,  Node: FSinfo host cluster,  Prev: FSinfo host os,  Up: FSinfo host attributes
-
-cluster Option
---------------
-
-   This is used for specifying in which cluster the machine belongs.
-For example:
-
-     cluster = "theory"
-
-   The cluster is intended to be used when generating the automount
-maps, although it is currently unsupported.
-
-
-File: am-utils.info,  Node: FSinfo filesystems,  Next: FSinfo static mounts,  Prev: FSinfo host attributes,  Up: FSinfo host definitions
-
-FSinfo filesystems
-==================
-
-   The list of physically attached filesystems follows the machine
-attributes.  These should define all the filesystems available from this
-machine, whether exported or not.  In addition to the device name,
-filesystems have several attributes, such as filesystem type, mount
-options, and `fsck' pass number which are needed to generate `fstab'
-entries.
-
-     filesystem  : "fs" <DEVICE> "{" list(fs_data) "}" ;
-     
-     fs_data     : fs_data_attr "=" <STRING>
-                 | mount
-                 ;
-     
-     fs_data_attr
-                 : "fstype" | "opts" | "passno"
-                 | "freq" | "dumpset" | "log"
-                 ;
-
-   Here, <DEVICE> is the device name of the disk (for example,
-`/dev/dsk/2s0').  The device name is used for building the mount maps
-and for the `fstab' file.  The attributes that can be specified are
-shown in the following section.
-
-   The FSinfo configuration file for `dylan.doc.ic.ac.uk' is listed
-below.
-
-     host dylan.doc.ic.ac.uk
-     
-     fs /dev/dsk/0s0 {
-             fstype = swap
-     }
-     
-     fs /dev/dsk/0s0 {
-             fstype = hfs
-             opts = rw,noquota,grpid
-             passno = 0;
-             freq = 1;
-             mount / { }
-     }
-     
-     fs /dev/dsk/1s0 {
-             fstype = hfs
-             opts = defaults
-             passno = 1;
-             freq = 1;
-             mount /usr {
-                     local {
-                             exportfs "dougal eden dylan zebedee brian"
-                             volname /nfs/hp300/local
-                     }
-             }
-     }
-     
-     fs /dev/dsk/2s0 {
-             fstype = hfs
-             opts = defaults
-             passno = 1;
-             freq = 1;
-             mount default {
-                     exportfs "toytown_clients hangers_on"
-                     volname /home/dylan/dk2
-             }
-     }
-     
-     fs /dev/dsk/3s0 {
-             fstype = hfs
-             opts = defaults
-             passno = 1;
-             freq = 1;
-             mount default {
-                     exportfs "toytown_clients hangers_on"
-                     volname /home/dylan/dk3
-             }
-     }
-     
-     fs /dev/dsk/5s0 {
-             fstype = hfs
-             opts = defaults
-             passno = 1;
-             freq = 1;
-             mount default {
-                     exportfs "toytown_clients hangers_on"
-                     volname /home/dylan/dk5
-             }
-     }
-
-* Menu:
-
-* fstype Option:        FSinfo filesystems fstype:
-* opts Option:          FSinfo filesystems opts:
-* passno Option:        FSinfo filesystems passno:
-* freq Option:          FSinfo filesystems freq:
-* mount Option:         FSinfo filesystems mount:
-* dumpset Option:       FSinfo filesystems dumpset:
-* log Option:           FSinfo filesystems log:
 
