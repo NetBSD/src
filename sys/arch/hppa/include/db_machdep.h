@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.1 2002/06/05 01:04:21 fredette Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:05 scw Exp $	*/
 
 /*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
 
@@ -60,6 +60,7 @@ typedef long kgdb_reg_t;
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_iioq_head)
 
 /* Breakpoint related definitions */
+#define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0x00010000	/* break 0,8 */
 #define	BKPT_SIZE	sizeof(int)
 #define	BKPT_SET(inst)	BKPT_INST

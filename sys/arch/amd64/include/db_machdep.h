@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:04 scw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -56,6 +56,7 @@ extern db_regs_t *ddb_regp;
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_rip)
 #endif
 
+#define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0xcc		/* breakpoint instruction */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
