@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.68 2001/01/15 21:33:52 thorpej Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.69 2001/05/30 11:37:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -79,7 +79,7 @@
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #endif
@@ -93,7 +93,7 @@
  * handled here.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
 #endif
 

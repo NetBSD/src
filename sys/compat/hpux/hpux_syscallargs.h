@@ -1,4 +1,4 @@
-/* $NetBSD: hpux_syscallargs.h,v 1.27 2001/01/27 07:53:28 thorpej Exp $ */
+/* $NetBSD: hpux_syscallargs.h,v 1.28 2001/05/30 11:37:24 mrg Exp $ */
 
 /*
  * System call argument lists.
@@ -8,7 +8,7 @@
  */
 
 #ifndef _HPUX_SYS__SYSCALLARGS_H_
-#define _HPUX_SYS__SYSCALLARGS_H_
+#define	_HPUX_SYS__SYSCALLARGS_H_
 
 #ifdef	syscallarg
 #undef	syscallarg

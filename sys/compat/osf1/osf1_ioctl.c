@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.13 2000/11/29 22:05:37 jdolecek Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.14 2001/05/30 11:37:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -57,7 +57,7 @@
  * rights to redistribute these changes.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
 #include "opt_syscall_debug.h"
 #endif

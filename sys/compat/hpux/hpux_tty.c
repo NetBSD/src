@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.17 2000/11/29 22:05:36 jdolecek Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.18 2001/05/30 11:37:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 /*
  * stty/gtty/termio emulation stuff
  */
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
 #endif
 

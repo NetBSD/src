@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.16 2001/02/05 06:32:55 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.17 2001/05/30 11:37:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
 #endif
 
