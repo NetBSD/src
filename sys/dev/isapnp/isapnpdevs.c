@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.27 1999/03/29 21:36:00 fvdl Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.27.2.1 1999/04/16 20:28:42 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.24 1999/03/29 21:35:19 fvdl Exp 
+ *	NetBSD: isapnpdevs,v 1.24.2.1 1999/04/16 20:28:15 augustss Exp 
  */
 
 /*-
@@ -82,16 +82,18 @@ static const struct isapnp_matchinfo isapnp_com_devlogic[] = {
 	{"USR0006", 0},	/* USR Sportster 33.6k */
 	{"USR2070", 0},	/* USR Sportster 56k */
 	{"USR3031", 0},	/* USR 56k Faxmodem */
+	{"USR9190", 0},	/* USR 56k Voice INT */
 	{"ZTIF761", 0},	/* Zoom ComStar 33.6 */
 	{"CIR3000", 0},	/* Cirrus Logic V43 */
 	{"MOT0000", 0},	/* Motorola ModemSurfr */
+	{"SMM00C1", 0},	/* Leopard 56k PnP */
 };
 static const struct isapnp_matchinfo isapnp_com_devcompat[] = {
 	{"PNP0500", 0},	/* Generic 8250/16450 */
 	{"PNP0501", 0},	/* Generic 16550A */
 };
 const struct isapnp_devinfo isapnp_com_devinfo = {
-	isapnp_com_devlogic, 12,
+	isapnp_com_devlogic, 14,
 	isapnp_com_devcompat, 2,
 };
 
