@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.14 2000/12/30 16:38:22 sommerfeld Exp $	*/
+/*	$NetBSD: job.h,v 1.15 2001/06/01 20:33:37 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -130,6 +130,8 @@ typedef struct Job {
 #define JOB_CONTINUING	0x200	/* We are in the process of resuming this job.
 				 * Used to avoid infinite recursion between
 				 * JobFinish and JobRestart */
+#define JOB_TRACED	0x400	/* we've sent 'set -x' */
+
     union {
 	struct {
 	    int	  	op_inPipe;	/* Input side of pipe associated

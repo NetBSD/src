@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.59 2001/05/12 06:48:49 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.60 2001/06/01 20:33:38 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.59 2001/05/12 06:48:49 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.60 2001/06/01 20:33:38 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.59 2001/05/12 06:48:49 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.60 2001/06/01 20:33:38 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1243,15 +1243,16 @@ VarLoopExpand (word, addSpace, buf, loopp)
 {
     VarLoop_t	*loop = (VarLoop_t *) loopp;
     char *s;
+    int slen;
     
     Var_Set(loop->tvar, word, loop->ctxt);
     s = Var_Subst(NULL, loop->str, loop->ctxt, loop->err);
     if (s != NULL && *s != '\0') {
-	if (addSpace)
+	if (addSpace && *s != '\n')
 	    Buf_AddByte(buf, ' ');
-	Buf_AddBytes(buf, strlen(s), (Byte *)s);
+	Buf_AddBytes(buf, (slen = strlen(s)), (Byte *)s);
+	addSpace = (slen > 0 && s[slen - 1] != '\n');
 	free(s);
-	addSpace = TRUE;
     }
     return addSpace;
 }
