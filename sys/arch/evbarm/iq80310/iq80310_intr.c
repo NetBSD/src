@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.6 2001/12/01 06:15:36 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.7 2002/01/20 03:41:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -143,6 +143,8 @@ iq80310_intstat_read(void)
 	 */
 	return (intstat & iq80310_intrmask);
 }
+
+__inline void irq_setmasks_nointr(void);	/* called from asm */
 
 __inline void
 irq_setmasks_nointr(void)
