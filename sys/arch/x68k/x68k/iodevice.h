@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.3 1997/10/10 21:45:23 oki Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.4 1997/10/11 11:15:00 oki Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -373,5 +373,6 @@ volatile struct IODEVICE *IODEVbase;
  * *and know it* (i.e. everything is really tight certain params won't be 
  * passed in some cases and the devices will deal with it)
  */
+#include <sys/device.h>
 int x68k_config_found __P((struct cfdata *, struct device *,
 			   void *, cfprint_t));
