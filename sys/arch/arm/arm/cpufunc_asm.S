@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.1 2001/05/06 18:01:44 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.2 2001/06/02 19:01:03 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -121,6 +121,19 @@ ENTRY(cpufunc_control)
 	mcrne	15, 0, r2, c1, c0, 0	/* Write new control register */
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
+
+#ifdef CPU_ARM3
+	/* The ARM3 has its control register in a different place. */
+ENTRY(arm3_control)
+	mrc	15, 0, r3, c2, c0, 0	/* Read the control register */
+	bic	r2, r3, r0		/* Clear bits */
+	eor     r2, r2, r1		/* XOR bits */
+
+	teq	r2, r3			/* Only write if there is a change */
+	mcrne	15, 0, r2, c2, c0, 0	/* Write new control register */
+	mov	r0, r3			/* Return old value */
+	mov	pc, lr
+#endif
 
 #ifdef CPU_ARM8
 ENTRY(arm8_clock_config)
@@ -297,6 +310,12 @@ ENTRY(sa110_tlb_flushD_SE)
 /*
  * Cache functions
  */
+
+#if defined(CPU_ARM3)
+ENTRY(arm3_cache_flush)
+	mcr	15, 0, r0, c1, c0, 0
+	mov	pc, lr
+#endif /* CPU_ARM3 */
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
 ENTRY(arm67_cache_flush)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.2 2001/03/06 22:29:13 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.3 2001/06/02 19:01:03 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -183,6 +183,11 @@ u_int	cpufunc_control		__P((u_int clear, u_int bic));
 void	cpufunc_domains		__P((u_int domains));
 u_int	cpufunc_faultstatus	__P((void));
 u_int	cpufunc_faultaddress	__P((void));
+
+#ifdef CPU_ARM3
+u_int	arm3_control		__P((u_int clear, u_int bic));
+void	arm3_cache_flush	__P((void));
+#endif	/* CPU_ARM3 */
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
 void	arm67_setttb		__P((u_int ttb));
