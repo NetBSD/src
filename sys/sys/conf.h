@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.52 1997/10/13 00:48:19 explorer Exp $	*/
+/*	$NetBSD: conf.h,v 1.53 1997/10/16 23:30:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -371,7 +371,7 @@ struct swdevt {
 #ifdef _KERNEL
 extern struct swdevt swdevt[];
 
-int	chrtoblk __P((dev_t));
+dev_t	chrtoblk __P((dev_t));
 int	iskmemdev __P((dev_t));
 int	iszerodev __P((dev_t));
 
