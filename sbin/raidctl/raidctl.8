@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.16 2000/02/26 04:02:03 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.17 2000/02/26 19:43:07 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -914,7 +914,16 @@ up of RAID 1 sets) are
 supported as root devices or auto-configurable devices at this point.
 (Multi-layered RAID devices 
 .Ar are
-supported in general, however.)
+supported in general, however.)  Note that in order to enable component
+auto-detection and auto-configuration of RAID devices, the
+line:
+.Bd -unfilled -offset indent
+options    RAID_AUTOCONFIG
+.Ed
+.Pp
+must be in the kernel configuration file.  See
+.Xr raid 4
+for more details.
 .Pp
 The final operation performed by 
 .Nm
