@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.132 1999/03/23 20:07:39 bad Exp $
+#	$NetBSD: files.i386,v 1.133 1999/06/07 20:31:30 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -56,7 +56,6 @@ file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
-major	{vnd = 14}
 
 #
 # Machine-independent SCSI drivers
@@ -64,7 +63,6 @@ major	{vnd = 14}
 
 include "dev/scsipi/files.scsipi"
 major	{sd = 4}
-major	{st = 5}
 major	{cd = 6}
 
 #
@@ -128,7 +126,6 @@ file	arch/i386/pci/pcib.c		pcib
 include "dev/isa/files.isa"
 major	{mcd = 7}
 #major	{scd = 15}
-major	{wt = 3}
 
 # XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
 # XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.75 1999/05/14 06:42:02 mrg Exp $
+#	$NetBSD: files.sparc,v 1.76 1999/06/07 20:31:34 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -121,7 +121,6 @@ major	{ cd = 18 }
 major	{ fd = 16 }
 major	{ md = 5 }
 major	{ sd = 7 }
-major	{ vnd = 8 }
 major	{ xd = 10 }
 major	{ xy = 3 }
 
