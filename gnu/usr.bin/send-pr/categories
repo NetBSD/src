@@ -1,4 +1,11 @@
 kern
+misc
 lib
 bin
-misc
+port-amiga
+port-sparc
+port-hp300
+port-sun3
+port-mac
+port-i386
+port-m68k
