@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.6.4.1 2001/08/08 16:18:24 nathanw Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.6.4.2 2001/12/30 02:27:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997,98 The NetBSD Foundation, Inc.
@@ -137,6 +137,9 @@
 #define once_t			pthread_once_t
 #define ONCE_INITIALIZER	PTHREAD_ONCE_INIT
 #define thr_once(o,f)		pthread_once(o,f)
+
+#define thr_errno()		pthread__errno()
+
 #else
 
 #define mutex_init(m, a)	
