@@ -1,7 +1,7 @@
-/*	$NetBSD: uhareg.h,v 1.5 1997/09/09 18:56:18 mycroft Exp $	*/
+/*	$NetBSD: uhareg.h,v 1.6 1998/02/17 03:02:56 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -263,17 +263,6 @@ struct uha_mscp {
 #define MSCP_ALLOC	0x01
 #define MSCP_ABORT	0x02
 	int timeout;
-
-	/*
-	 * DMA maps used by the MSCP.  These maps are created
-	 * in uha_init_mscp().
-	 */
-
-	/*
-	 * This DMA map maps an individual MSCP.  This map is
-	 * permanently loaded in uha_init_mscp().
-	 */
-	bus_dmamap_t	dmamap_self;
 
 	/*
 	 * This DMA map maps the buffer involved in the transfer.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.9 1997/08/27 11:24:44 bouyer Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.10 1998/02/17 03:02:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -253,7 +253,7 @@ u24_start_mbox(sc, mscp)
 	}
 
 	bus_space_write_4(iot, ioh, U24_OGMPTR,
-	    mscp->dmamap_self->dm_segs[0].ds_addr);
+	    sc->sc_dmamap_mscp->dm_segs[0].ds_addr + UHA_MSCP_OFF(mscp));
 	if (mscp->flags & MSCP_ABORT)
 		bus_space_write_1(iot, ioh, U24_OGMCMD, 0x80);
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.15 1998/02/04 05:14:02 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.16 1998/02/17 03:02:56 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -129,7 +129,7 @@ integrate int uha_init_mscp __P((struct uha_softc *, struct uha_mscp *));
 struct uha_mscp *uha_get_mscp __P((struct uha_softc *, int));
 void uhaminphys __P((struct buf *));
 int uha_scsi_cmd __P((struct scsipi_xfer *));
-int uha_create_mscps __P((struct uha_softc *, void *, size_t));
+int uha_create_mscps __P((struct uha_softc *, struct uha_mscp *, int));
 void uha_enqueue __P((struct uha_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *uha_dequeue __P((struct uha_softc *));
 
@@ -199,6 +199,8 @@ uha_attach(sc, upd)
 	struct uha_softc *sc;
 	struct uha_probe_data *upd;
 {
+	bus_dma_segment_t seg;
+	int i, error, rseg;
 
 	TAILQ_INIT(&sc->sc_free_mscp);
 	LIST_INIT(&sc->sc_queue);
@@ -216,6 +218,57 @@ uha_attach(sc, upd)
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
 	sc->sc_link.type = BUS_SCSI;
+
+#define	MSCPSIZE	(UHA_MSCP_MAX * sizeof(struct uha_mscp))
+
+	/*
+	 * Allocate the MSCPs.
+	 */
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, MSCPSIZE,
+	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to allocate mscps, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return;
+	}
+	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
+	    MSCPSIZE, (caddr_t *)&sc->sc_mscps,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: unable to map mscps, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return;
+	}
+
+	/*
+	 * Create and load the DMA map used for the mscps.
+	 */
+	if ((error = bus_dmamap_create(sc->sc_dmat, MSCPSIZE,
+	    1, MSCPSIZE, 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
+	    &sc->sc_dmamap_mscp)) != 0) {
+		printf("%s: unable to create mscp DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return;
+	}
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_mscp,
+	    sc->sc_mscps, MSCPSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to load mscp DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return;
+	}
+
+#undef MSCPSIZE
+
+	/*
+	 * Initialize the mscps.
+	 */
+	i = uha_create_mscps(sc, sc->sc_mscps, UHA_MSCP_MAX);
+	if (i == 0) {
+		printf("%s: unable to create mscps\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	} else if (i != UHA_MSCP_MAX) {
+		printf("%s: WARNING: only %d of %d mscps created\n",
+		    sc->sc_dev.dv_xname, i, UHA_MSCP_MAX);
+	}
 
 	/*
 	 * ask the adapter what subunits are present
@@ -266,43 +319,14 @@ uha_init_mscp(sc, mscp)
 	int hashnum, error;
 
 	/*
-	 * XXX Should we put a DIAGNOSTIC check for multiple
-	 * XXX MSCP inits here?
+	 * Create the DMA map for this MSCP.
 	 */
-
-	bzero(mscp, sizeof(struct uha_mscp));
-
-	/*
-	 * Create the DMA maps for this MSCP.
-	 */
-	error = bus_dmamap_create(dmat, sizeof(struct uha_mscp), 1,
-	    sizeof(struct uha_mscp), 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
-	    &mscp->dmamap_self);
-	if (error) {
-		printf("%s: can't create mscp dmamap_self\n",
-		    sc->sc_dev.dv_xname);
-		return (error);
-	}
-
 	error = bus_dmamap_create(dmat, UHA_MAXXFER, UHA_NSEG, UHA_MAXXFER,
 	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW | sc->sc_dmaflags,
 	    &mscp->dmamap_xfer);
 	if (error) {
-		printf("%s: can't create mscp dmamap_xfer\n",
-		    sc->sc_dev.dv_xname);
-		return (error);
-	}
-
-	/*
-	 * Load the permanent DMA maps.
-	 */
-	error = bus_dmamap_load(dmat, mscp->dmamap_self, mscp,
-	    sizeof(struct uha_mscp), NULL, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't load mscp dmamap_self\n",
-		    sc->sc_dev.dv_xname);
-		bus_dmamap_destroy(dmat, mscp->dmamap_self);
-		bus_dmamap_destroy(dmat, mscp->dmamap_xfer);
+		printf("%s: can't create mscp DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
 		return (error);
 	}
 
@@ -310,7 +334,8 @@ uha_init_mscp(sc, mscp)
 	 * put in the phystokv hash table
 	 * Never gets taken out.
 	 */
-	mscp->hashkey = mscp->dmamap_self->dm_segs[0].ds_addr;
+	mscp->hashkey = sc->sc_dmamap_mscp->dm_segs[0].ds_addr +
+	    UHA_MSCP_OFF(mscp);
 	hashnum = MSCP_HASH(mscp->hashkey);
 	mscp->nexthash = sc->sc_mscphash[hashnum];
 	sc->sc_mscphash[hashnum] = mscp;
@@ -322,56 +347,26 @@ uha_init_mscp(sc, mscp)
  * Create a set of MSCPs and add them to the free list.
  */
 int
-uha_create_mscps(sc, mem, size)
+uha_create_mscps(sc, mscpstore, count)
 	struct uha_softc *sc;
-	void *mem;
-	size_t size;
+	struct uha_mscp *mscpstore;
+	int count;
 {
-	bus_dma_segment_t seg;
 	struct uha_mscp *mscp;
-	int rseg, error;
+	int i, error;
 
-	if (sc->sc_nummscps >= UHA_MSCP_MAX)
-		return (0);
-
-	if ((mscp = mem) != NULL)
-		goto have_mem;
-
-	size = NBPG;
-	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't allocate memory for mscps\n",
-		    sc->sc_dev.dv_xname);
-		return (error);
-	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&mscp, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		printf("%s: can't map memory for mscps\n",
-		    sc->sc_dev.dv_xname);
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		return (error);
-	}
-
- have_mem:
-	bzero(mscp, size);
-	while (size > sizeof(struct uha_mscp) &&
-	    sc->sc_nummscps < UHA_MSCP_MAX) {
-		error = uha_init_mscp(sc, mscp);
-		if (error) {
-			printf("%s: can't initialize mscp\n",
-			    sc->sc_dev.dv_xname);
-			return (error);
+	bzero(mscpstore, sizeof(struct uha_mscp) * count);
+	for (i = 0; i < count; i++) {
+		mscp = &mscpstore[i];
+		if ((error = uha_init_mscp(sc, mscp)) != 0) {
+			printf("%s: unable to initialize mscp, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			goto out;
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_mscp, mscp, chain);
-		(caddr_t)mscp += ALIGN(sizeof(struct uha_mscp));
-		size -= ALIGN(sizeof(struct uha_mscp));
-		sc->sc_nummscps++;
 	}
-
-	return (0);
+ out:
+	return (i);
 }
 
 /*
@@ -399,20 +394,6 @@ uha_get_mscp(sc, flags)
 		if (mscp) {
 			TAILQ_REMOVE(&sc->sc_free_mscp, mscp, chain);
 			break;
-		}
-		if (sc->sc_nummscps < UHA_MSCP_MAX) {
-			/*
-			 * uha_create_mscps() might have managed to create
-			 * one before it failed.  If so, don't abort,
-			 * just grab it and continue to hobble along.
-			 */
-			if (uha_create_mscps(sc, NULL, 0) &&
-			    sc->sc_free_mscp.tqh_first == NULL) {
-				printf("%s: can't allocate mscps\n",
-				    sc->sc_dev.dv_xname);
-				goto out;
-			}
-			continue;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
 			goto out;
@@ -459,6 +440,10 @@ uha_done(sc, mscp)
 	struct scsipi_xfer *xs = mscp->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("uha_done\n"));
+
+	bus_dmamap_sync(dmat, sc->sc_dmamap_mscp,
+	    UHA_MSCP_OFF(mscp), sizeof(struct uha_mscp),
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 	/*
 	 * If we were a data transfer, unload the map that described
@@ -641,8 +626,8 @@ uha_scsi_cmd(xs)
 	mscp->target = sc_link->scsipi_scsi.target;
 	mscp->lun = sc_link->scsipi_scsi.lun;
 	mscp->scsi_cmd_length = xs->cmdlen;
-	mscp->sense_ptr = mscp->dmamap_self->dm_segs[0].ds_addr +
-	    offsetof(struct uha_mscp, mscp_sense);
+	mscp->sense_ptr = sc->sc_dmamap_mscp->dm_segs[0].ds_addr +
+	    UHA_MSCP_OFF(mscp) + offsetof(struct uha_mscp, mscp_sense);
 	mscp->req_sense_length = sizeof(mscp->mscp_sense);
 	mscp->host_stat = 0x00;
 	mscp->target_stat = 0x00;
@@ -694,8 +679,8 @@ uha_scsi_cmd(xs)
 			    mscp->dmamap_xfer->dm_segs[seg].ds_len;
 		}
 
-		mscp->data_addr = mscp->dmamap_self->dm_segs[0].ds_addr +
-		    offsetof(struct uha_mscp, uha_dma);
+		mscp->data_addr = sc->sc_dmamap_mscp->dm_segs[0].ds_addr +
+		    UHA_MSCP_OFF(mscp) + offsetof(struct uha_mscp, uha_dma);
 		mscp->data_length = xs->datalen;
 		mscp->sgth = 0x01;
 		mscp->sg_num = seg;
@@ -707,6 +692,10 @@ uha_scsi_cmd(xs)
 	}
 	mscp->link_id = 0;
 	mscp->link_addr = (physaddr)0;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_mscp,
+	    UHA_MSCP_OFF(mscp), sizeof(struct uha_mscp),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	s = splbio();
 	(sc->start_mbox)(sc, mscp);

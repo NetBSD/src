@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.11 1997/10/20 18:43:20 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.12 1998/02/17 03:02:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -289,7 +289,7 @@ u14_start_mbox(sc, mscp)
 	}
 
 	bus_space_write_4(iot, ioh, U14_OGMPTR,
-	    mscp->dmamap_self->dm_segs[0].ds_addr);
+	    sc->sc_dmamap_mscp->dm_segs[0].ds_addr + UHA_MSCP_OFF(mscp));
 	if (mscp->flags & MSCP_ABORT)
 		bus_space_write_1(iot, ioh, U14_LINT, U14_ABORT);
 	else
