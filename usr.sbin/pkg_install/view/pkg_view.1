@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.1.2.2 2003/07/14 13:49:01 jlam Exp $
+.\"	$NetBSD: pkg_view.1,v 1.1.2.3 2003/07/14 22:53:13 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,14 +124,14 @@ This can be used to specify the files in
 .Ar package
 that should ignored when adding or removing the package from
 .Ar view .
-.It Ev PKG_VIEW
-The default view can be specified in the
-.Ev PKG_VIEW
-environment variable.
 .Ev PLIST_IGNORE_FILES
 is a space-separated list of pathnames relative to the
 .Ar package
 directory.
+.It Ev PKG_VIEW
+The default view can be specified in the
+.Ev PKG_VIEW
+environment variable.
 .It Ev PREFIX
 The standard prefix directory,
 .Pa /usr/pkg ,
