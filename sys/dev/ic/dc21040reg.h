@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21040reg.h,v 1.3 1995/06/05 00:49:45 cgd Exp $	*/
+/*	$NetBSD: dc21040reg.h,v 1.4 1995/07/24 05:26:53 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -160,6 +160,7 @@ typedef struct {
 #define	TULIP_STS_RXNOBUF	0x00000080L		/* (RW)  Receive Buffer Unavailable */
 #define	TULIP_STS_RXINTR	0x00000040L		/* (RW)  Receive Interrupt */
 #define	TULIP_STS_TXUNDERFLOW	0x00000020L		/* (RW)  Transmit Underflow */
+#define	TULIP_STS_LINKPASS	0x00000010L		/* (RW)  LinkPass (DC21041) */
 #define	TULIP_STS_TXBABBLE	0x00000008L		/* (RW)  Transmit Jabber Timeout */
 #define	TULIP_STS_TXNOBUF	0x00000004L		/* (RW)  Transmit Buffer Unavailable */
 #define	TULIP_STS_TXSTOPPED	0x00000002L		/* (RW)  Transmit Process Stopped */
@@ -175,6 +176,7 @@ typedef struct {
 #define	TULIP_CMD_STOREFWD	0x00200000L		/* (RW)  Store and Foward (DC21140) */
 #define	TULIP_CMD_NOHEARTBEAT	0x00080000L		/* (RW)  No Heartbeat (DC21140) */
 #define	TULIP_CMD_PORTSELECT	0x00040000L		/* (RW)  Post Select (100Mb) (DC21140) */
+#define	TULIP_CMD_ENHCAPTEFFCT	0x00040000L		/* (RW)  Enhanced Capture Effecty (DC21041) */
 #define	TULIP_CMD_CAPTREFFCT	0x00020000L		/* (RW)  Capture Effect (!802.3) */
 #define	TULIP_CMD_BACKPRESSURE	0x00010000L		/* (RW)  Back Pressure (!802.3) (DC21040) */
 #define	TULIP_CMD_THRESHOLDCTL	0x0000C000L		/* (RW)  Threshold Control */
@@ -185,7 +187,7 @@ typedef struct {
 #define	TULIP_CMD_TXRUN 	0x00002000L		/* (RW)  Start/Stop Transmitter */
 #define	TULIP_CMD_FORCECOLL	0x00001000L		/* (RW)  Force Collisions */
 #define	TULIP_CMD_OPERMODE	0x00000C00L		/* (RW)  Operating Mode */
-#define	TULIP_CMD_FULLDULPEX	0x00000200L		/* (RW)  Full Duplex Mode */
+#define	TULIP_CMD_FULLDUPLEX	0x00000200L		/* (RW)  Full Duplex Mode */
 #define	TULIP_CMD_FLAKYOSCDIS	0x00000100L		/* (RW)  Flakey Oscillator Disable */
 #define	TULIP_CMD_ALLMULTI	0x00000080L		/* (RW)  Pass All Multicasts */
 #define	TULIP_CMD_PROMISCUOUS	0x00000040L		/* (RW)  Promiscuous Mode */
@@ -197,11 +199,25 @@ typedef struct {
 #define	TULIP_CMD_HASHPRFCTFLTR	0x00000001L		/* (R )  Hash/Perfect Receive Filtering */
 
 
+#define TULIP_SIASTS_OTHERRXACTIVITY	0x00000200L
+#define TULIP_SIASTS_RXACTIVITY		0x00000100L
 #define	TULIP_SIASTS_LINKFAIL		0x00000004L
 #define	TULIP_SIACONN_RESET		0x00000000L
 
 #define	TULIP_SIACONN_AUI		0x0000000DL
 #define	TULIP_SIACONN_10BASET		0x00000005L
+
+#define	TULIP_DC21041_SIACONN_10BASET	0x0000EF01L
+#define	TULIP_DC21041_SIATXRX_10BASET	0x0000FF3FL
+#define	TULIP_DC21041_SIAGEN_10BASET	0x00000000L
+
+#define	TULIP_DC21041_SIACONN_AUI	0x0000EF09L
+#define	TULIP_DC21041_SIATXRX_AUI	0x0000F73DL
+#define	TULIP_DC21041_SIAGEN_AUI	0x0000000EL
+
+#define	TULIP_DC21041_SIACONN_BNC	0x0000EF09L
+#define	TULIP_DC21041_SIATXRX_BNC	0x0000F73DL
+#define	TULIP_DC21041_SIAGEN_BNC	0x00000006L
 
 #define	TULIP_BUSMODE_SWRESET		0x00000001L
 #define	TULIP_BUSMODE_DESCSKIPLEN_MASK	0x0000007CL
@@ -219,19 +235,23 @@ typedef struct {
 #define	TULIP_BUSMODE_CACHE_ALIGN16	0x00008000L
 #define	TULIP_BUSMODE_CACHE_ALIGN32	0x0000C000L
 #define	TULIP_BUSMODE_TXPOLL_NEVER	0x00000000L
-#define	TULIP_BUSMODE_TXPOLL_200us	0x00020000L
-#define	TULIP_BUSMODE_TXPOLL_800us	0x00040000L
-#define	TULIP_BUSMODE_TXPOLL_1600us	0x00060000L
-
+#define	TULIP_BUSMODE_TXPOLL_200000ns	0x00020000L
+#define	TULIP_BUSMODE_TXPOLL_800000ns	0x00040000L
+#define	TULIP_BUSMODE_TXPOLL_1600000ns	0x00060000L
+#define	TULIP_BUSMODE_TXPOLL_12800ns	0x00080000L	/* DC21041 only */
+#define	TULIP_BUSMODE_TXPOLL_25600ns	0x000A0000L	/* DC21041 only */
+#define	TULIP_BUSMODE_TXPOLL_51200ns	0x000C0000L	/* DC21041 only */
+#define	TULIP_BUSMODE_TXPOLL_102400ns	0x000E0000L	/* DC21041 only */
+#define	TULIP_BUSMODE_DESC_BIGENDIAN	0x00100000L	/* DC21041 only */
 
 /*
  * These are the defintitions used for the DEC DC21140
  * evaluation board.
  */
-#define	TULIP_GP_EB_PINS	0x0000011F	/* General Purpose Pin directions */
-#define	TULIP_GP_EB_OK10	0x00000080	/* 10 Mb/sec Signal Detect gep<7> */
-#define	TULIP_GP_EB_OK100	0x00000040	/* 100 Mb/sec Signal Detect gep<6> */
-#define	TULIP_GP_EB_INIT	0x0000000B	/* No loopback --- point-to-point */
+#define	TULIP_GP_EB_PINS		0x0000011F	/* General Purpose Pin directions */
+#define	TULIP_GP_EB_OK10		0x00000080	/* 10 Mb/sec Signal Detect gep<7> */
+#define	TULIP_GP_EB_OK100		0x00000040	/* 100 Mb/sec Signal Detect gep<6> */
+#define	TULIP_GP_EB_INIT		0x0000000B	/* No loopback --- point-to-point */
 
 /*
  * There are the definitions used for the DEC DE500-XA
@@ -247,12 +267,27 @@ typedef struct {
  * These are the defintitions used for the Cogent EM100
  * DC21140 board.
  */
-#define	TULIP_GP_EM100_PINS	0x0000013F	/* General Purpose Pin directions */
-#define	TULIP_GP_EM100_INIT	0x00000009	/* No loopback --- point-to-point */
-#define	TULIP_OUI_COGENT_0	0x00
-#define	TULIP_OUI_COGENT_1	0x00
-#define	TULIP_OUI_COGENT_2	0x94
-#define	TULIP_COGENT_EM100_ID	0x12
+#define	TULIP_GP_EM100_PINS		0x0000013F	/* General Purpose Pin directions */
+#define	TULIP_GP_EM100_INIT		0x00000009	/* No loopback --- point-to-point */
+#define	TULIP_OUI_COGENT_0		0x00
+#define	TULIP_OUI_COGENT_1		0x00
+#define	TULIP_OUI_COGENT_2		0x94
+#define	TULIP_COGENT_EM100_ID		0x12
+
+
+/*
+ * These are the defintitions used for the Znyx ZX342
+ * 10/100 board
+ */
+#define	TULIP_GP_ZX34X_PINS		0x0000011F	/* General Purpose Pin directions */
+#define	TULIP_GP_ZX34X_OK10		0x00000080	/* 10 Mb/sec Signal Detect gep<7> */
+#define	TULIP_GP_ZX34X_OK100		0x00000040	/* 100 Mb/sec Signal Detect gep<6> */
+#define	TULIP_GP_ZX34X_INIT		0x00000009	
+#define	TULIP_OUI_ZNYX_0		0x00
+#define	TULIP_OUI_ZNYX_1		0xC0
+#define	TULIP_OUI_ZNYX_2		0x95
+
+
 /*
  * SROM definitions for the DC21140 and DC21041.
  */
