@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_nis.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_nis.c,v 1.4 1996/05/09 22:57:57 christos Exp $
+ *	$Id: info_nis.c,v 1.5 1996/05/21 11:03:14 mrg Exp $
  */
 
 /*
@@ -75,7 +75,7 @@ static	int nis_not_running = 0;
 
 	if (!*default_domain) {
 		nis_not_running = 1;
-		plog(XLOG_WARNING, "NIS domain name is not set.  NIS ignored.");
+		plog(XLOG_INFO, "NIS domain name is not set.  NIS ignored.");
 		return ENOENT;
 	}
 
