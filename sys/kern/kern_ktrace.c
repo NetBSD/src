@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.64 2002/12/17 18:42:54 manu Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.65 2002/12/20 05:06:25 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.64 2002/12/17 18:42:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.65 2002/12/20 05:06:25 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -690,7 +690,7 @@ ktrwrite(p, kth)
 		    fp->f_cred, FOF_UPDATE_OFFSET);
 		tries++;
 		if (error == EWOULDBLOCK) 
-		  	yield();
+		  	preempt(NULL);
 	} while ((error == EWOULDBLOCK) && (tries < 3));
 	FILE_UNUSE(fp, NULL);
 
