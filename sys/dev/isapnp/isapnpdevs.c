@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.13 1998/12/20 18:54:52 christos Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.14 1998/12/21 07:57:17 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.13 1998/12/20 18:54:37 christos Exp 
+ *	NetBSD: isapnpdevs,v 1.14 1998/12/21 07:57:00 christos Exp 
  */
 
 /*-
@@ -81,6 +81,7 @@ static const char *isapnp_com_devlogic[] = {
 	"USR2070",	/* USR Sportster 56k */
 	"ZTIF761",	/* Zoom ComStar 33.6 */
 	"CIR3000",	/* Cirrus Logic V43 */
+	"MOT0000",	/* Motorolla ModemSurfr */
 	NULL
 };
 static const char *isapnp_com_devcompat[] = {
