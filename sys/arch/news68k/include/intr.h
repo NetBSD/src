@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2002/12/20 16:39:11 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2003/08/02 13:04:49 tsutsui Exp $	*/
 
 /*
  *
@@ -47,7 +47,6 @@
  * so has no need to check for any simulated interrupts, etc.
  */
 #define	spl0()		_spl0()
-#define	splx(s)		_spl(s)
 
 #define	spllowersoftclock()	spl2()
 #define	splsoft()	splraise2()
@@ -63,6 +62,13 @@
 #define	splhigh()	spl7()
 #define	splsched()	spl7()
 #define	spllock()	spl7()
+
+static __inline void
+splx(int sr)
+{
+
+	__asm __volatile("movw %0,%%sr" : : "di" (sr));
+}
 
 /*
  * simulated software interrupt register
