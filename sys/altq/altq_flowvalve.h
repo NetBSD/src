@@ -1,3 +1,4 @@
+/*	$NetBSD: altq_flowvalve.h,v 1.2 2000/12/14 08:49:50 thorpej Exp $	*/
 /*	$KAME: altq_flowvalve.h,v 1.4 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*

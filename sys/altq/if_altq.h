@@ -1,3 +1,4 @@
+/*	$NetBSD: if_altq.h,v 1.2 2000/12/14 08:49:51 thorpej Exp $	*/
 /*	$KAME: if_altq.h,v 1.5 2000/12/14 08:12:47 thorpej Exp $	*/
 
 /*
