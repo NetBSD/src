@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.41 2000/03/29 03:43:32 simonb Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.42 2000/05/08 20:03:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -94,13 +94,15 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	 * writing, so we ignore the uio's rw parameter.  Also note that if
 	 * we're doing a read, that's a *write* to user-space.
 	 */
-	if (uio->uio_segflg == UIO_USERSPACE)
-		for (i = 0; i < uio->uio_iovcnt; i++)
+	if (uio->uio_segflg == UIO_USERSPACE) {
+		for (i = 0; i < uio->uio_iovcnt; i++) {
 			/* XXXCDC: map not locked, rethink */
-			if (!uvm_useracc(uio->uio_iov[i].iov_base,
+			if (__predict_false(!uvm_useracc(uio->uio_iov[i].iov_base,
 				     uio->uio_iov[i].iov_len,
-				     (flags == B_READ) ? B_WRITE : B_READ))
+				     (flags == B_READ) ? B_WRITE : B_READ)))
 				return (EFAULT);
+		}
+	}
 
 	/* Make sure we have a buffer, creating one if necessary. */
 	if ((nobuf = (bp == NULL)) != 0) {
@@ -180,9 +182,10 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * restores it.
 			 */
 			PHOLD(p);
-			if (uvm_vslock(p, bp->b_data, todo, (flags & B_READ) ?
+			if (__predict_false(uvm_vslock(p, bp->b_data, todo,
+			    (flags & B_READ) ?
 			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ)
-			    != KERN_SUCCESS) {
+			    != KERN_SUCCESS)) {
 				bp->b_flags |= B_ERROR;
 				bp->b_error = EFAULT;
 				goto after_vsunlock;
@@ -231,9 +234,9 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 */
 			done = bp->b_bcount - bp->b_resid;
 #ifdef DIAGNOSTIC
-			if (done < 0)
+			if (__predict_false(done < 0))
 				panic("done < 0; strategy broken");
-			if (done > todo)
+			if (__predict_false(done > todo))
 				panic("done > todo; strategy broken");
 #endif
 			iovp->iov_len -= done;
@@ -309,7 +312,7 @@ putphysbuf(bp)
 	if (bp->b_vp)
 		brelvp(bp);
 
-	if (bp->b_flags & B_WANTED)
+	if (__predict_false(bp->b_flags & B_WANTED))
 		panic("putphysbuf: private buf B_WANTED");
 	s = splbio();
 	pool_put(&bufpool, bp);
