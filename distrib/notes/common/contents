@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.109 2004/10/16 21:29:03 he Exp $
+.\"	$NetBSD: contents,v 1.110 2004/11/01 00:50:46 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1246,7 +1246,6 @@ This includes Xsun, Xsun24, XsunMono and Xvfb servers with man pages.
 .if \n[sparc64] \{\
 This includes Xsun, Xsun24, XsunMono and Xvfb
 servers with man pages.
-The 64-bit X server current has problems with pixmaps.
 .\}
 .if \n[x68k] \{\
 This includes the X68k and Xprt
