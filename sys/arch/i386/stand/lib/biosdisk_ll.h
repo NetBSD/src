@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.7 2003/04/02 10:39:33 fvdl Exp $	 */
+/*	$NetBSD: biosdisk_ll.h,v 1.8 2003/04/16 12:43:45 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -57,8 +57,10 @@ struct biosdisk_ll {
 #endif
 
 /*
- * Version 1.x drive parameters from int13 extensions. Should be supported
- * by every BIOS that supports the extensions.
+ * Version 1.x drive parameters from int13 extensions
+ * - should be supported by every BIOS that supports the extensions.
+ * Version 3.x parameters allow the drives to be matched properly
+ * - but are much less likely to be supported.
  */
 
 struct biosdisk_ext13info {
@@ -69,6 +71,43 @@ struct biosdisk_ext13info {
 	u_int32_t	sec;		/* # of physical sectors per track */
 	u_int64_t	totsec;		/* total number of sectors */
 	u_int16_t	sbytes;		/* # of bytes per sector */
+#if defined(BIOSDISK_EXT13INFO_V2) || defined(BIOSDISK_EXT13INFO_V3)
+	/* v2.0 extensions */
+	u_int32_t	edd_cfg;	/* EDD configuration parameters */
+#if defined(BIOSDISK_EXT13INFO_V3)
+	/* v3.0 extensions */
+	u_int16_t	devpath_sig;	/* 0xbedd if path info present */
+#define EXT13_DEVPATH_SIGNATURE	0xbedd
+	u_int8_t	devpath_len;	/* length from devpath_sig */
+	u_int8_t	fill21[3];
+	char		host_bus[4];	/* Probably "ISA" or "PCI" */
+	char		iface_type[8];	/* "ATA", "ATAPI", "SCSI" etc */
+	union {
+		u_int8_t	ip_8[8];
+		u_int16_t	ip_16[4];
+		u_int32_t	ip_32[2];
+		u_int64_t	ip_64[1];
+	} interface_path;
+#define	ip_isa_iobase	ip_16[0];	/* iobase for ISA bus */
+#define	ip_pci_bus	ip_8[0];	/* PCI bus number */
+#define	ip_pci_device	ip_8[1];	/* PCI device number */
+#define	ip_pci_function	ip_8[2];	/* PCI function number */
+	union {
+		u_int8_t	dp_8[8];
+		u_int16_t	dp_16[4];
+		u_int32_t	dp_32[2];
+		u_int64_t	dp_64[1];
+	} device_path;
+#define	dp_ata_slave	dp_8[0];
+#define	dp_atapi_slave	dp_8[0];
+#define	dp_atapi_lun	dp_8[1];
+#define	dp_scsi_lun	dp_8[0];
+#define	dp_firewire_guid dp_64[0];
+#define	dp_fibrechnl_wwn dp_64[0];
+	u_int8_t		fill40[1];
+	u_int8_t		checksum;	/* byte sum from dev_path_sig is 0 */
+#endif /* BIOSDISK_EXT13INFO_V3 */
+#endif /* BIOSDISK_EXT13INFO_V2 */
 } __attribute__((packed));
 
 #define EXT13_DMA_TRANS		0x0001	/* transparent DMA boundary errors */
@@ -86,4 +125,4 @@ struct biosdisk_ext13info {
 #define BIOSDISK_SECSIZE 512
 
 int set_geometry __P((struct biosdisk_ll *, struct biosdisk_ext13info *));
-int readsects   __P((struct biosdisk_ll *, int64_t, int, char *, int));
+int readsects   __P((struct biosdisk_ll *, daddr_t, int, char *, int));
