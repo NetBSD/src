@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.9 2001/01/01 21:57:37 jwise Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.10 2001/01/04 01:53:24 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,22 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.9 2001/01/01 21:57:37 jwise Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.10 2001/01/04 01:53:24 jwise Exp $");
 #endif
 #endif /* not lint */
 
 #include "driver.h"
 #include <stdlib.h>
+
+void	moveall(void);
+static int	stillmoving(int);
+static int	is_isolated(struct ship *);
+static int	push(struct ship *, struct ship *);
+static void	step(int, struct ship *, char *);
+void	sendbp(struct ship *, struct ship *, int, int);
+int	is_toughmelee(struct ship *, struct ship *, int, int);
+void	reload(void);
+void	checksails(void);
 
 /* move all comp ships */
 void
@@ -183,7 +193,7 @@ moveall(void)
 	}
 }
 
-int
+static int
 stillmoving(int k)
 {
 	struct ship *sp;
@@ -194,7 +204,7 @@ stillmoving(int k)
 	return 0;
 }
 
-int
+static int
 is_isolated(struct ship *ship)
 {
 	struct ship *sp;
@@ -206,7 +216,7 @@ is_isolated(struct ship *ship)
 	return 1;
 }
 
-int
+static int
 push(struct ship *from, struct ship *to)
 {
 	int bs, sb;
@@ -220,7 +230,7 @@ push(struct ship *from, struct ship *to)
 	return from < to;
 }
 
-void
+static void
 step(int com, struct ship *sp, char *moved)
 {
 	int dist;
