@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.3 2000/07/06 03:10:35 christos Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.4 2000/09/28 09:07:04 kleink Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,6 +39,7 @@
  *
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
