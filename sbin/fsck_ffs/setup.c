@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.36 1999/05/01 20:04:14 is Exp $	*/
+/*	$NetBSD: setup.c,v 1.36.2.1 1999/10/19 13:01:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.36 1999/05/01 20:04:14 is Exp $");
+__RCSID("$NetBSD: setup.c,v 1.36.2.1 1999/10/19 13:01:30 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -356,26 +356,31 @@ setup(dev)
 		    fsbtodb(sblock, sblock->fs_csaddr + j * sblock->fs_frag),
 		    size) != 0 && !asked) {
 			pfatal("BAD SUMMARY INFORMATION");
-			if (reply("CONTINUE") == 0)
+			if (reply("CONTINUE") == 0) {
+				markclean = 0;
 				exit(EEXIT);
+			}
 			asked++;
 		}
 		/*
-		 * The following routines assumes that struct csum is made of
-		 * u_int32_t's
+		 * The following assumes that struct csum is made of
+		 * u_int32_t
 		 */
 		if (doswap) {
 			int k;
 			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
+
 			for (k = 0; k < size / sizeof(u_int32_t); k++)
 				cd[k] = bswap32(cd[k]);
 			bwrite(fswritefd, (char *)sblock->fs_csp[j],
-				fsbtodb(sblock, sblock->fs_csaddr + j * sblock->fs_frag),
-				size);
+			    fsbtodb(sblock,
+				sblock->fs_csaddr + j * sblock->fs_frag),
+			    size);
 		}
 		if (needswap) {
 			int k;
 			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
+
 			for (k = 0; k < size / sizeof(u_int32_t); k++)
 				cd[k] = bswap32(cd[k]);
 		}
@@ -421,6 +426,10 @@ setup(dev)
 		goto badsblabel;
 	}
 	bufinit();
+	if (sblock->fs_flags & FS_DOSOFTDEP)
+		usedsoftdep = 1;
+	else
+		usedsoftdep = 0;
 	return (1);
 
 badsblabel:
