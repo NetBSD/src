@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.5 2002/10/02 16:34:00 thorpej Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.6 2004/09/01 21:26:29 drochner Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.5 2002/10/02 16:34:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.6 2004/09/01 21:26:29 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ cs_isapnp_attach(parent, self, aux)
 		ipa->ipa_nio, ipa->ipa_nmem, ipa->ipa_nmem32, ipa->ipa_ndrq, ipa->ipa_nirq);
 #endif
 	isc->sc_ic = ipa->ipa_ic;
-	isc->sc_drq = ISACF_DRQ_DEFAULT;
+	isc->sc_drq = -1;
 #endif
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ipa->ipa_io[0].h;
