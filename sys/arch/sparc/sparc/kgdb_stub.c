@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.4 1996/03/31 23:38:29 pk Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.5 1996/04/01 17:36:20 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,8 @@
 #include <machine/remote-sl.h>
 #include <machine/trap.h>
 #include <machine/cpu.h>
+#include <machine/autoconf.h>
+#include <machine/bsd_openprom.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/kgdb_proto.h>
@@ -93,6 +95,7 @@ void	setpte4m __P((vm_offset_t, int));
 #endif
 
 void kgdb_copy __P((char *, char *, int));
+void kgdb_zero __P((char *, int));
 static void kgdb_send __P((u_int, u_char *, int));
 static int kgdb_recv __P((u_char *, int *));
 static int computeSignal __P((int));
@@ -116,6 +119,7 @@ kgdb_copy(src, dst, len)
 }
 
 /* ditto for bzero */
+void
 kgdb_zero(ptr, len)
 	register char *ptr;
 	register int len;
@@ -618,8 +622,8 @@ kgdb_acc(addr, len, rw, usertoo)
 #if defined(SUN4M)		/* we just use ptes here...its easier */
 	if (CPU_ISSUN4M) {
 		pte = getpte4m(addr);
-		if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE || rw ==
-		    B_WRITE && (pte & PPROT_WRITE) == 0)
+		if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE || 
+		    (rw == B_WRITE && (pte & PPROT_WRITE) == 0))
 		        return (0);
 	}
 #endif
