@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.13 1994/11/04 00:14:04 mycroft Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.14 1994/11/04 03:07:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,9 +67,8 @@ extern short cfroots[];
 struct matchinfo {
 	cfmatch_t fn;
 	struct	device *parent;
-	void	*match;
-	void	*aux;
-	int	pri;
+	void	*match, *aux;
+	int	indirect, pri;
 };
 
 struct device *config_make_softc __P((struct device *, struct cfdata *));
@@ -85,10 +84,8 @@ mapply(m, cf)
 {
 	register int pri;
 	void *match;
-	int indirect;
 
-	indirect = m->parent && m->parent->dv_cfdata->cf_driver->cd_indirect;
-	if (indirect) {
+	if (m->indirect) {
 		match = config_make_softc(m->parent, cf);
 		cf->cf_driver->cd_devs[cf->cf_unit] = match;
 	} else
@@ -104,16 +101,16 @@ mapply(m, cf)
 		pri = (*cf->cf_driver->cd_match)(m->parent, match, m->aux);
 	}
 
-	if (indirect)
+	if (m->indirect)
 		cf->cf_driver->cd_devs[cf->cf_unit] = NULL;
 
 	if (pri > m->pri) {
-		if (indirect && m->match)
+		if (m->indirect && m->match)
 			free(m->match, M_DEVBUF);
 		m->match = match;
 		m->pri = pri;
 	} else {
-		if (indirect)
+		if (m->indirect)
 			free(match, M_DEVBUF);
 	}
 }
@@ -141,8 +138,9 @@ config_search(fn, parent, aux)
 
 	m.fn = fn;
 	m.parent = parent;
-	m.aux = aux;
 	m.match = NULL;
+	m.aux = aux;
+	m.indirect = parent && parent->dv_cfdata->cf_driver->cd_indirect;
 	m.pri = 0;
 	for (cf = cfdata; cf->cf_driver; cf++) {
 		/*
@@ -174,8 +172,9 @@ config_rootsearch(fn, rootname, aux)
 
 	m.fn = fn;
 	m.parent = ROOT;
-	m.aux = aux;
 	m.match = NULL;
+	m.aux = aux;
+	m.indirect = 0;
 	m.pri = 0;
 	/*
 	 * Look at root entries for matching name.  We do not bother
