@@ -1,11 +1,11 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.25 2003/09/22 14:13:25 cl Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.26 2003/10/08 11:05:52 bouyer Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.11 2002/12/08 21:31:37 leo Exp $
+#		NetBSD: MILAN.in,v 1.12 2003/10/08 11:05:27 bouyer Exp $
 #		NetBSD: GENERIC.in,v 1.33 2003/09/22 14:11:16 cl Exp $
 
 #This configuration file is for a generic Milan
@@ -278,8 +278,7 @@ fdisa0 		at fdcisa0 drive 0
 #The is no way to mix things!
 
 pciide* 	at pci? dev ? function ? flags 0x0000	# 2 PCIIDE channels
-wd* 		at pciide? channel ? drive ? flags 0x0000
-atapibus* 	at pciide? channel ?			# ATAPI bus support
+atabus* 	at pciide? channel ?
 
 #The Milan uses wscons
 #XXX without the __HAVE_NWSCONS option, the keyboard won't work...
@@ -291,5 +290,8 @@ pckbc0 		at isa? 			# PC keyboard controller
 pckbd* 		at pckbc?			# PC keyboard
 wskbd* 		at pckbd? console ?		# wscons keyboard
 
+#ATA devices
+wd*		at atabus? drive ?
+atapibus* 	at atabus?				# ATAPI bus support
 #ATAPI devices
 cd* 		at atapibus? drive ?		# ATAPI CD-ROM drives
