@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 1999/05/23 11:41:39 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 1999/05/30 18:52:51 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -918,7 +918,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 					 1 /* Write */,
 					 1 /* Cacheable */,
 					 1 /* ALIAS -- Disable D$ */, 
-					 1 /* valid */);
+					 1 /* valid */,
+					 0 /* IE */);
 #else
 		tte.data.data = TSB_DATA(0 /* global */, 
 					 TLB_8K,
@@ -927,7 +928,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 					 1 /* Write */,
 					 1 /* Cacheable */,
 					 0 /* No ALIAS */, 
-					 1 /* valid */);
+					 1 /* valid */,
+					 0 /* IE */);
 #endif
 		newp = NULL;
 		while (pseg_set(pmap_kernel(), va, tte.data.data, newp)
@@ -955,7 +957,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 					 0 /* Write */,
 					 1 /* Cacheable */,
 					 0 /* No ALIAS */, 
-					 1 /* valid */);
+					 1 /* valid */,
+					 0 /* IE */);
 		tte.data.data |= TLB_L|TLB_NFO;
 		newp = NULL;
 		while(pseg_set(pmap_kernel(), va, tte.data.data, newp)
@@ -1424,7 +1427,7 @@ pmap_kenter_pa(va, pa, prot)
 	tte.tag.tag = TSB_TAG(0,pm->pm_ctx,va);
 	tte.data.data = TSB_DATA(0, TLB_8K, pa, pm == pmap_kernel(),
 				 (VM_PROT_WRITE & prot),
-				 (!(pa & PMAP_NC)), pa & (PMAP_NVC), 1);
+				 (!(pa & PMAP_NC)), pa & (PMAP_NVC), 1, 0);
 	/* We don't track modification here. */
 	if (VM_PROT_WRITE & prot) tte.data.data |= TLB_REAL_W|TLB_W; /* HWREF -- XXXX */
 	tte.data.data |= TLB_TSB_LOCK;	/* wired */
@@ -1685,13 +1688,13 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 #ifndef HWREF
 	tte.data.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
 				 (VM_PROT_WRITE & prot),
-				 (!(pa & PMAP_NC)),aliased,1);
+				 (!(pa & PMAP_NC)),aliased,1,(pa & PMAP_LITTLE));
 	if (VM_PROT_WRITE & prot) tte.data.data |= TLB_REAL_W; /* HWREF -- XXXX */
 #else
 	/* Force dmmu_write_fault to be executed */
 	tte.data.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
 				 0/*(VM_PROT_WRITE & prot)*/,
-				 (!(pa & PMAP_NC)),aliased,1);
+				 (!(pa & PMAP_NC)),aliased,1,(pa & PMAP_LITTLE));
 	if (VM_PROT_WRITE & prot) tte.data.data |= TLB_REAL_W; /* HWREF -- XXXX */
 #endif
 	if (wired) tte.data.data |= TLB_TSB_LOCK;
