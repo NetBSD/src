@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.13.6.1 2004/05/28 08:47:34 tron Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.13.6.2 2004/05/28 09:02:39 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ __END_DECLS
 #endif
 
 /* 
- * Special handle arguments for dlsym()/dlinfo().
+ * Special handle arguments for dlsym().
  */   
 #define	RTLD_NEXT	((void *) -1)	/* Search subsequent objects. */
 #define	RTLD_DEFAULT	((void *) -2)	/* Use default search algorithm. */
