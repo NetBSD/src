@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.1 2001/06/13 06:02:01 simonb Exp $	*/
+/*	$NetBSD: extintr.c,v 1.2 2001/10/29 01:32:59 simonb Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*
@@ -171,6 +171,8 @@ static int galaxy_intr_map[] = {
 	GALAXY_INTR_MTXD,
 	GALAXY_INTR_MRXD,
 	GALAXY_INTR_ETH,
+	WALNUT_INTR_FPGA,	/* keyboard irq16 */
+	WALNUT_INTR_SMI		/* mouse irq17 */
 };
 #define	GALAXY_INTR_SIZE	(sizeof (galaxy_intr_map) / sizeof (galaxy_intr_map[0]))
 #define HWIRQ_MASK	0xfefe	/* Mask sw interrupts in use */
@@ -178,7 +180,7 @@ static int galaxy_intr_map[] = {
 /* map MSR bit into sw irq#. */
 static int hw2swirq[32] =
 {
-	 1,  2,  3,  4, -1, -1, -1, -1,
+	 1,  2,  3,  4, 17, 16, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1,
 	15, 14, 13, 12, 11, 10,  9, -1,
 	-1, -1, -1, -1, -1,  7,  6,  5
