@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.31 2002/09/13 15:30:36 gehenna Exp $	*/
+/*	$NetBSD: modload.c,v 1.32 2002/09/18 22:59:36 lha Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.31 2002/09/13 15:30:36 gehenna Exp $");
+__RCSID("$NetBSD: modload.c,v 1.32 2002/09/18 22:59:36 lha Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -463,8 +463,8 @@ main(int argc, char **argv)
 		(void)snprintf(type, sizeof(type), "0x%x", sbuf.type);
 		if (sbuf.type == LM_DEV) {
 			char arg3[16], arg4[16];
-			int bmajor = block_major(sbuf.offset);
-			int cmajor = char_major(sbuf.offset);
+			int bmajor = LKM_BLOCK_MAJOR(sbuf.offset);
+			int cmajor = LKM_CHAR_MAJOR(sbuf.offset);
 			(void)snprintf(arg3, sizeof(arg3), "%d", cmajor);
 			(void)snprintf(arg4, sizeof(arg4), "%d", bmajor);
 			execl(post, post, id, type, arg3, arg4, 0);
