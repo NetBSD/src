@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/13 02:55:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2001/01/14 10:34:57 christos Exp $
 
 PROG=	supscan
 SRCS=	supscan.c scan.c
@@ -9,6 +9,7 @@ MKMAN=	no
 DPADD=	${LIBSUP}
 LDADD=	${SUPLIB}
 
-supscan: .NOPATH
 
 .include <bsd.prog.mk>
+
+supscan: .NOPATH
