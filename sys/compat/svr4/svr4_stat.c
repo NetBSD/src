@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.24 1997/10/20 22:05:18 thorpej Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.24.2.1 1997/11/04 22:31:04 mellon Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -697,7 +697,7 @@ svr4_sys_utime(p, v, retval)
 
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&ap, path) = SCARG(uap, path);
-	if (SCARG(uap, ubuf) == NULL) {
+	if (SCARG(uap, ubuf) != NULL) {
 		if ((error = copyin(SCARG(uap, ubuf), &ub, sizeof(ub))) != 0)
 			return error;
 		tbuf[0].tv_sec = ub.actime;
