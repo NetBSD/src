@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.128 1999/06/05 09:43:21 tron Exp $
+$NetBSD: pcidevs,v 1.129 1999/06/05 10:41:37 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -548,6 +548,8 @@ product 3COM 3C980SRV	0x9800	3c980 Server Adapter 10/100 Ethernet
 /* 3Dfx Interactive producs */
 product 3DFX VOODOO	0x0001	Voodoo
 product 3DFX VOODOO2	0x0002	Voodoo2
+product 3DFX BANSHEE	0x0003	Banshee
+product 3DFX VOODOO3	0x0005	Voodoo3
 
 /* 3D Labs products */
 product 3DLABS 300SX	0x0001	GLINT 300SX
@@ -936,6 +938,7 @@ product MATROX MILLENNIUM2	0x051b	MGA Millennium II 2164W
 product MATROX MILLENNIUM2_AGP	0x051f	MGA Millennium II 2164WA-B AG
 product MATROX G200_PCI		0x0520	MGA G200 PCI
 product MATROX G200_AGP		0x0521	MGA G200 AGP
+product MATROX G400_AGP		0x0525	MGA G400 AGP
 product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX G100_PCI		0x1000	MGA G100 PCI
 product MATROX G100_AGP		0x1001	MGA G100 AGP
@@ -999,7 +1002,7 @@ product NUMBER9 I128	0x2309	Imagine-128
 product NUMBER9 I128_2	0x2339	Imagine-128 II
 
 /* Nvidia Corporationn products */
-product	NVIDIA	RIVATNT	0x0020	Riva TNT
+product NVIDIA	RIVATNT	0x0020	Riva TNT
 
 /* Nvidia Corporation & SGS Thomson Microelectric */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
