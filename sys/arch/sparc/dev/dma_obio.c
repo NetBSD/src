@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_obio.c,v 1.1 1998/08/29 20:49:35 pk Exp $ */
+/*	$NetBSD: dma_obio.c,v 1.2 1998/08/29 21:43:46 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,19 +89,17 @@ dmaattach_obio(parent, self, aux)
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	struct lsi64854_softc *sc = (void *)self;
-	bus_space_handle_t bh;
 
 	sc->sc_bustag = oba->oba_bustag;
 	sc->sc_dmatag = oba->oba_dmatag;
 
 	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-			 0, sizeof(struct dma_regs),
+			 0, 4 * sizeof(u_int32_t),
 			 0, 0,
-			 &bh) != 0) {
+			 &sc->sc_regs) != 0) {
 		printf("dmaattach_obio: cannot map registers\n");
 		return;
 	}
-	sc->sc_regs = bh;
 
 	lsi64854_attach(sc);
 }

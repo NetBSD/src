@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.1 1998/08/29 20:32:11 pk Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.2 1998/08/29 21:43:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -359,7 +359,7 @@ leattach_ledma(parent, self, aux)
 
 	/* Establish link to `ledma' device */
 	lesc->sc_dma = lsi;
-	lesc->sc_dma->sc_le = lesc;
+	lesc->sc_dma->sc_client = lesc;
 
 	/* Map device registers */
 	if (bus_space_map2(sa->sa_bustag,

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.1 1998/08/29 20:32:09 pk Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.2 1998/08/29 21:43:00 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -133,7 +133,7 @@ dmaattach_sbus(parent, self, aux)
 	else {
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 				 sa->sa_offset,
-				 sizeof(struct dma_regs),
+				 sa->sa_size,
 				 0, 0, &bh) != 0) {
 			printf("%s: cannot map registers\n", self->dv_xname);
 			return;
@@ -164,11 +164,11 @@ dmaattach_sbus(parent, self, aux)
 		char *cabletype;
 		u_int32_t csr;
 		/*
-		 * Check to see which cable type is currently active and set the
-		 * appropriate bit in the ledma csr so that it gets used. If we
-		 * didn't netboot, the PROM won't have the "cable-selection"
-		 * property; default to TP and then the user can change it via
-		 * a "media" option to ifconfig.
+		 * Check to see which cable type is currently active and
+		 * set the appropriate bit in the ledma csr so that it
+		 * gets used. If we didn't netboot, the PROM won't have
+		 * the "cable-selection" property; default to TP and then
+		 * the user can change it via a "media" option to ifconfig.
 		 */
 		cabletype = getpropstring(node, "cable-selection");
 		csr = L64854_GCSR(sc);
@@ -181,10 +181,10 @@ dmaattach_sbus(parent, self, aux)
 			csr |= E_TP_AUI;
 		}
 		L64854_SCSR(sc, csr);
-		delay(20000);	/* manual says we need 20ms delay */
-		sc->sc_dmadev = DMA_ENET;
+		delay(20000);	/* manual says we need a 20ms delay */
+		sc->sc_channel = L64854_CHANNEL_ENET;
 	} else {
-		sc->sc_dmadev = DMA_SCSI;
+		sc->sc_channel = L64854_CHANNEL_SCSI;
 	}
 
 
@@ -224,7 +224,8 @@ dmabus_intr_establish(t, level, flags, handler, arg)
 {
 	struct lsi64854_softc *sc = t->cookie;
 
-	if (sc->sc_dmadev == DMA_ENET) { /* XXX - for now; do esp later */
+	/* XXX - for now only le; do esp later */
+	if (sc->sc_channel == L64854_CHANNEL_ENET) {
 		sc->sc_intrchain = handler;
 		sc->sc_intrchainarg = arg;
 		handler = lsi64854_enet_intr;
