@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: kiconv.c,v 1.1.1.1 2003/02/16 08:15:08 jdolecek Exp $
+ * from: Id: kiconv.c,v 1.3 2001/08/22 03:31:36 bp Exp 
  */
 
 #include <sys/types.h>
