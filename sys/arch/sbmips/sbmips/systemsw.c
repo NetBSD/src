@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.2 2002/03/06 03:29:16 simonb Exp $ */
+/* $NetBSD: systemsw.c,v 1.3 2002/03/06 07:47:57 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -42,12 +42,13 @@
 #include <machine/systemsw.h>
 
 /* trivial functions for function switch */
-static void	microtime_triv(struct timeval *);
-static void	delay_triv(u_long);
+static void	clock_init_triv(void *);
+static uint32_t	clkread_triv(void);
 static void	cpu_intr_triv(uint32_t, uint32_t, uint32_t, uint32_t);
 static void	cpu_setsoftintr_triv(void);
-static void	clock_init_triv(void *);
+static void	delay_triv(u_long);
 static void	inittodr_triv(void *, time_t);
+static void	microtime_triv(struct timeval *);
 static void	resettodr_triv(void *);
 
 #define	XXXNULL	NULL
@@ -57,6 +58,7 @@ struct systemsw systemsw = {
 	cpu_intr_triv,
 	cpu_setsoftintr_triv,
 	microtime_triv,
+	clkread_triv,
 	delay_triv,
 
 	NULL,			/* clock intr arg */
@@ -85,11 +87,44 @@ system_set_clockfns(void *arg, void (*init)(void *))
 static void
 microtime_triv(struct timeval *tvp)
 {
-	int s = splclock();
+	int s;
+	static struct timeval lasttime;
 
+	s = splclock();
 	*tvp = time;
+
+	if (systemsw.s_clkread)
+		tvp->tv_usec += systemsw.s_clkread();
+
+	if (tvp->tv_usec >= 1000000) {
+		tvp->tv_usec -= 1000000;
+		tvp->tv_sec++;
+	}
+
+	if (tvp->tv_sec == lasttime.tv_sec &&
+	    tvp->tv_usec <= lasttime.tv_usec &&
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
+		tvp->tv_sec++;
+		tvp->tv_usec -= 1000000;
+	}
+	lasttime = *tvp;
+
 	splx(s);
 }
+
+static uint32_t
+clkread_triv(void)
+{
+	uint32_t res, count;
+
+	count = mips3_cp0_count_read();
+
+	asm volatile("multu %1,%2 ; mfhi %0"
+	    : "=r"(res) : "r"(count), "r"(curcpu()->ci_divisor_recip));
+
+	return (res);
+}
+
 
 /* trivial delay() implementation */
 static void
@@ -109,6 +144,7 @@ cpu_intr_triv(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 	panic("cpu_intr_triv");
 }
+
 void
 cpu_setsoftintr_triv(void)
 {
@@ -157,6 +193,14 @@ cpu_initclocks(void)
 
 	if (systemsw.s_statclock_init != NULL)
 		(*systemsw.s_statclock_init)(XXXNULL);
+
+	/*
+	 * ``Disable'' the compare interrupt by setting it to it's largest
+	 * value.  The counter will be reset to 0 every hz.  This is used
+	 * for microtime.
+	 */
+	mips3_cp0_compare_write(~(uint32_t)0);
+	mips3_cp0_count_write(0);
 }
 
 void
