@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32 1995/12/09 04:37:58 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33 1996/02/05 02:12:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -337,8 +337,11 @@ extern vm_map_t phys_map;
  * is a total crock, the multiple mappings of these physical pages should
  * be reflected in the higher-level VM structures to avoid problems.
  */
-vmapbuf(bp)
+/*ARGSUSED*/
+void
+vmapbuf(bp, sz)
 	register struct buf *bp;
+	vm_size_t sz;
 {
 	register int npf;
 	register caddr_t addr;
@@ -383,8 +386,10 @@ vmapbuf(bp)
  * This routine has user context and can sleep
  * (called only by physio).
  */
-vunmapbuf(bp)
+void
+vunmapbuf(bp, sz)
 	register struct buf *bp;
+	vm_size_t sz;
 {
 	register caddr_t addr;
 	vm_offset_t pgva;
