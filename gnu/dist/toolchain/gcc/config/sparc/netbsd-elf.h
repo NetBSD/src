@@ -19,10 +19,8 @@
 #undef INIT_SUBTARGET_OPTABS  
 #define INIT_SUBTARGET_OPTABS  
 
-#undef CPP_PREDEFINES
-#define CPP_PREDEFINES "\
--D__sparc__ -D__sparc -D__NetBSD__ -D__ELF__ \
--Asystem(unix) -Asystem(NetBSD) -Acpu(sparc) -Amachine(sparc)"
+#undef CPP_SUBTARGET_SPEC
+#define CPP_SUBTARGET_SPEC "-D__sparc"
 
 #include <sparc/netbsd-elf-common.h>
 
