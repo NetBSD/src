@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_forward.c,v 1.31 2002/06/08 21:22:33 itojun Exp $	*/
-/*	$KAME: ip6_forward.c,v 1.74 2001/06/12 23:54:55 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.32 2002/09/11 08:15:37 itojun Exp $	*/
+/*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.31 2002/06/08 21:22:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.32 2002/09/11 08:15:37 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -237,8 +237,23 @@ ip6_forward(m, srcrt)
 	}
 
     {
+	struct ipsecrequest *isr = NULL;
 	struct ipsec_output_state state;
 
+	/*
+	 * when the kernel forwards a packet, it is not proper to apply
+	 * IPsec transport mode to the packet is not proper.  this check
+	 * avoid from this.
+	 * at present, if there is even a transport mode SA request in the
+	 * security policy, the kernel does not apply IPsec to the packet.
+	 * this check is not enough because the following case is valid.
+	 *      ipsec esp/tunnel/xxx-xxx/require esp/transport//require;
+	 */
+	for (isr = sp->req; isr; isr = isr->next) {
+		if (isr->saidx.mode == IPSEC_MODE_TRANSPORT)
+			goto skip_ipsec;
+	}
+	
 	/*
 	 * All the extension headers will become inaccessible
 	 * (since they can be encrypted).
