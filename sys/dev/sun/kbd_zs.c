@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.5 2000/03/30 12:45:42 augustss Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.6 2000/05/19 05:26:18 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -156,7 +156,7 @@ kbd_zs_attach(parent, self, aux)
 		cc->cc_iopen = kbd_cc_open;
 		cc->cc_iclose = kbd_cc_close;
 		cc->cc_upstream = NULL;
-		cons_attach_input(cc);
+		cons_attach_input(cc, args->consdev);
 		k->k_cc = cc;
 		k->k_isconsole = 1;
 		printf(" (console input)");

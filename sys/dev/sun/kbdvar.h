@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.5 2000/03/24 11:46:48 hannken Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.6 2000/05/19 05:26:18 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -171,4 +171,4 @@ struct cons_channel {
 };
 
 /* Special hook to attach the keyboard driver to the console */
-void	cons_attach_input __P((struct cons_channel *));
+void	cons_attach_input __P((struct cons_channel *, struct consdev *));

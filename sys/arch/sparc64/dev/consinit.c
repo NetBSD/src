@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.4 2000/04/19 08:15:06 pk Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5 2000/05/19 05:26:17 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -28,12 +28,8 @@
  * SUCH DAMAGE.
  */
 
-/*
- * Default console driver.  Uses the PROM or whatever
- * driver(s) are appropriate.
- */
-
 #include "opt_ddb.h"
+#include "pcons.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +57,11 @@
 #include <sparc64/sparc64/vaddrs.h>
 #include <sparc64/dev/cons.h>
 
-
-
+static void prom_cnprobe __P((struct consdev *));
 static void prom_cninit __P((struct consdev *));
-static int  prom_cngetc __P((dev_t));
+int  prom_cngetc __P((dev_t));
+static void prom_cnputc __P((dev_t, int));
+static void prom_cnpollc __P((dev_t, int));
 static void prom_cnputc __P((dev_t, int));
 
 int stdin = NULL, stdout = NULL;
@@ -75,11 +72,11 @@ int stdin = NULL, stdout = NULL;
  * is called to select a real console.
  */
 struct consdev consdev_prom = {
-	nullcnprobe,
+	prom_cnprobe,
 	prom_cninit,
 	prom_cngetc,
 	prom_cnputc,
-	nullcnpollc,
+	prom_cnpollc,
 	NULL,
 };
 
@@ -91,45 +88,40 @@ struct consdev consdev_prom = {
 struct consdev *cn_tab = &consdev_prom;
 
 void
-nullcnprobe(cn)
-	struct consdev *cn;
+prom_cnprobe(cd)
+	struct consdev *cd;
 {
+#if NPCONS > 0
+	int maj;
+
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == pconsopen)
+			break;
+	cd->cn_dev = makedev(maj, 0);
+	cd->cn_pri = CN_INTERNAL;
+#endif
+}
+
+int
+prom_cngetc(dev)
+	dev_t dev;
+{
+	unsigned char ch = '\0';
+	int l;
+	
+	while ((l = OF_read(stdin, &ch, 1)) != 1)
+		/* void */;
+	if (ch == '\r')
+		ch = '\n';
+	return ch;
 }
 
 static void
 prom_cninit(cn)
 	struct consdev *cn;
 {
-	if (!stdin) {
-		int node = OF_finddevice("/chosen");
-		OF_getprop(node, "stdin",  &stdin, sizeof(stdin));
-	}
-	if (!stdout) {
-		int node = OF_finddevice("/chosen");
-		OF_getprop(node, "stdout",  &stdout, sizeof(stdout));
-	}
-}
-
-/*
- * PROM console input putchar.
- * (dummy - this is output only)
- */
-static int
-prom_cngetc(dev)
-	dev_t dev;
-{
-	char c;
-
-	if (!stdin) {
-		int node = OF_finddevice("/chosen");
-		OF_getprop(node, "stdin",  &stdin, sizeof(stdin));
-	}
-	while (OF_read(stdin, &c, 1) != 1)
-		/*void*/;
-
-	if (c == '\r')
-		c = '\n';
-	return (c);
+	if (!stdin) stdin = OF_stdin();
+	if (!stdout) stdout = OF_stdout();
 }
 
 /*
@@ -143,14 +135,30 @@ prom_cnputc(dev, c)
 	int s;
 	char c0 = (c & 0x7f);
 
-	if (!stdout) {
-		int node = OF_finddevice("/chosen");
-		OF_getprop(node, "stdout",  &stdout, sizeof(stdout));
-	}
-
+#if 0
+	if (!stdout) stdout = OF_stdout();
+#endif
 	s = splhigh();
 	OF_write(stdout, &c0, 1);
 	splx(s);
+}
+
+void
+prom_cnpollc(dev, on)
+	dev_t dev;
+	int on;
+{
+	if (on) {
+                /* Entering debugger. */
+#if NFB > 0
+                fb_unblank();
+#endif  
+	} else {
+                /* Resuming kernel. */
+	}
+#if NPCONS > 0
+	pcons_cnpollc(dev, on);
+#endif  
 }
 
 /*****************************************************************/
@@ -207,6 +215,8 @@ consinit()
 	}
 	printf("console is %s\n", consname);
  
-	/* Defer the rest to the device attach */
+	/* Initialize PROM console */
+	(*cn_tab->cn_probe)(cn_tab);
+	(*cn_tab->cn_init)(cn_tab);
 }
 

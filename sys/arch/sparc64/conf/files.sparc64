@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.28 2000/04/22 17:05:59 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.29 2000/05/19 05:26:17 eeh Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -11,6 +11,10 @@ maxusers 2 8 1024
 define mainbus {}
 device mainbus: pcibus, mainbus
 attach mainbus at root
+
+device pcons
+attach pcons at mainbus
+file	arch/sparc64/dev/pcons.c		pcons needs-flag
 
 include "dev/sbus/files.sbus"
 attach sbus at mainbus
