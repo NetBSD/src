@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.2 1999/10/16 12:27:55 shin Exp $	*/
+/*	$NetBSD: vr.c,v 1.3 1999/10/24 08:37:30 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -51,6 +51,7 @@
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
 #include <hpcmips/vr/vr.h>
+#include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
 #include <hpcmips/hpcmips/machdep.h>	/* XXXjrs replace with vectors */
 #include <machine/bootinfo.h>
@@ -66,6 +67,21 @@
 #ifndef CONSPEED
 #define CONSPEED TTYDEF_SPEED
 #endif
+#endif
+
+#include "fb.h"
+#include "vrkiu.h"
+#if NFB > 0 || NVRKIU > 0
+#include <dev/rcons/raster.h>
+#include <dev/wscons/wsdisplayvar.h>
+#endif
+
+#if NFB > 0
+#include <arch/hpcmips/dev/fbvar.h>
+#endif
+
+#if NFB > 0
+#include <arch/hpcmips/vr/vrkiuvar.h>
 #endif
 
 void	vr_init __P((void));
@@ -162,7 +178,7 @@ vr_bus_reset()
 void
 vr_cons_init()
 {
-#if NCOM > 0
+#if NCOM > 0 || NFB > 0 || NVRKIU > 0
 	extern bus_space_tag_t system_bus_iot;
 	extern bus_space_tag_t mb_bus_space_init __P((void));
 #endif
@@ -181,6 +197,24 @@ vr_cons_init()
 	}
 #endif
 
+#if NFB > 0
+	mb_bus_space_init(); /* At this time, not initialized yet */
+	if(fb_cnattach(system_bus_iot, 0x0c000000, 0, 0)) {
+		printf("%s(%d): can't init fb console", __FILE__, __LINE__);
+	} else {
+		goto find_keyboard;
+	}
+#endif
+
+ find_keyboard:
+#if NVRKIU > 0
+	if (vrkiu_cnattach(system_bus_iot, VRIP_KIU_ADDR)) {
+		printf("%s(%d): can't init vrkiu as console",
+		       __FILE__, __LINE__);
+	} else {
+		return;
+	}
+#endif
 }
 
 void
