@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.51 2000/02/02 11:41:58 itojun Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.52 2000/02/02 13:06:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -72,7 +72,15 @@ struct ne_pcmcia_softc {
 	int sc_nic_io_window;			/* i/o window for NIC */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handle */
+
+	int sc_resource;			/* resrouce alloc'ed */
+#define NE_RES_PCIC	1
+#define NE_RES_IO	2
+#define NE_RES_IOMAP	4
+#define NE_RES_MI	8
 };
+
+static void	ne_pcmcia_unmap __P((struct ne_pcmcia_softc *));
 
 struct cfattach ne_pcmcia_ca = {
 	sizeof(struct ne_pcmcia_softc), ne_pcmcia_match, ne_pcmcia_attach,
@@ -430,6 +438,7 @@ ne_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
+	psc->sc_resource = 0;
 
 #if 0
 	/*
@@ -475,6 +484,7 @@ ne_pcmcia_attach(parent, self, aux)
 		printf(": can't alloc i/o space\n");
 		return;
 	}
+	psc->sc_resource |= NE_RES_IO;
 
 	dsc->sc_regt = psc->sc_pcioh.iot;
 	dsc->sc_regh = psc->sc_pcioh.ioh;
@@ -484,7 +494,7 @@ ne_pcmcia_attach(parent, self, aux)
 	    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
 	    &nsc->sc_asich)) {
 		printf(": can't get subregion for asic\n");
-		return;
+		goto fail;
 	}
 
 	/* Set up power management hooks. */
@@ -495,23 +505,27 @@ ne_pcmcia_attach(parent, self, aux)
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
 		printf(": function enable failed\n");
-		return;
+		goto fail;
 	}
+	psc->sc_resource |= NE_RES_PCIC;
 
 	/* some cards claim to be io16, but they're lying. */
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO8,
 	    NE2000_NIC_OFFSET, NE2000_NIC_NPORTS,
 	    &psc->sc_pcioh, &psc->sc_nic_io_window)) {
 		printf(": can't map NIC i/o space\n");
-		return;
+		goto fail;
 	}
 
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16,
 	    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
 	    &psc->sc_pcioh, &psc->sc_asic_io_window)) {
 		printf(": can't map ASIC i/o space\n");
-		return;
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+		goto fail;
 	}
+
+	psc->sc_resource |= NE_RES_IOMAP;
 
 	printf("\n");
 
@@ -529,7 +543,7 @@ again:
 					printf("%s: can't alloc mem for"
 					    " enet addr\n",
 					    dsc->sc_dev.dv_xname);
-					return;
+					goto fail;
 				}
 				if (pcmcia_mem_map(pa->pf, PCMCIA_MEM_ATTR,
 				    ne_dev->enet_maddr, ETHER_ADDR_LEN * 2,
@@ -537,7 +551,8 @@ again:
 					printf("%s: can't map mem for"
 					    " enet addr\n",
 					    dsc->sc_dev.dv_xname);
-					return;
+					pcmcia_mem_free(pa->pf, &pcmh);
+					goto fail;
 				}
 				for (j = 0; j < ETHER_ADDR_LEN; j++)
 					myea[j] = bus_space_read_1(pcmh.memt,
@@ -552,7 +567,7 @@ again:
 	if (i == NE2000_NDEVS) {
 		printf("%s: can't match ethernet vendor code\n",
 		    dsc->sc_dev.dv_xname);
-		return;
+		goto fail;
 	}
 
 	if ((ne_dev->flags & NE2000DVF_DL10019) != 0) {
@@ -608,8 +623,19 @@ again:
 		(*npp_init_media)(dsc, &media, &nmedia, &defmedia);
 
 	ne2000_attach(nsc, enaddr, media, nmedia, defmedia);
+	psc->sc_resource |= NE_RES_MI;
 
 	pcmcia_function_disable(pa->pf);
+	psc->sc_resource &= ~NE_RES_PCIC;
+	return;
+
+fail:
+	/* ne_pcmcia_unmap() takes care of NE_RES_IO and NE_RES_IOMAP */
+	ne_pcmcia_unmap(psc);
+	if (psc->sc_resource & NE_RES_PCIC) {
+		pcmcia_function_disable(pa->pf);
+		psc->sc_resource &= ~NE_RES_PCIC;
+	}
 }
 
 int
@@ -620,15 +646,13 @@ ne_pcmcia_detach(self, flags)
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)self;
 	int rv;
 
-	rv = ne2000_detach(&psc->sc_ne2000, flags);
-	if (rv == 0) {
-		/* Unmap our i/o windows. */
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
-
-		/* Free our i/o space. */
-		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-	}
+	if ((psc->sc_resource & NE_RES_MI) != 0) {
+		rv = ne2000_detach(&psc->sc_ne2000, flags);
+		psc->sc_resource &= ~NE_RES_MI;
+	} else
+		rv = 0;
+	if (rv == 0)
+		ne_pcmcia_unmap(psc);
 
 	return rv;
 }
@@ -638,6 +662,7 @@ ne_pcmcia_enable(dsc)
 	struct dp8390_softc *dsc;
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
+	int rv;
 
 	/* set up the interrupt */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
@@ -648,7 +673,9 @@ ne_pcmcia_enable(dsc)
 		return (1);
 	}
 
-	return (pcmcia_function_enable(psc->sc_pf));
+	rv = pcmcia_function_enable(psc->sc_pf);
+	psc->sc_resource |= NE_RES_PCIC;
+	return (rv);
 }
 
 void
@@ -658,6 +685,25 @@ ne_pcmcia_disable(dsc)
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
 
 	pcmcia_function_disable(psc->sc_pf);
+	psc->sc_resource &= ~NE_RES_PCIC;
 
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+}
+
+static void
+ne_pcmcia_unmap(psc)
+	struct ne_pcmcia_softc *psc;
+{
+	if ((psc->sc_resource & NE_RES_IOMAP) != 0) {
+		/* Unmap our i/o windows. */
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+	}
+	psc->sc_resource &= ~NE_RES_IOMAP;
+
+	if ((psc->sc_resource & NE_RES_IO) != 0) {
+		/* Free our i/o space. */
+		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+	}
+	psc->sc_resource &= ~NE_RES_IO;
 }
