@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.5 1995/06/25 03:24:12 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.6 1995/06/30 05:25:41 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -676,6 +676,9 @@ mrg_initadbintr()
 	}	
 }
 
+#define IS_ROM_ADDR(addr) (   ((u_int) (addr)) > oldbase         \
+			   && ((u_int) (addr)) < oldbase + ROMLEN)
+
 void
 mrg_fixupROMBase(obase, nbase)
 	caddr_t obase;
@@ -687,18 +690,25 @@ mrg_fixupROMBase(obase, nbase)
 	oldbase = (u_long) obase;
 	newbase = (u_long) nbase;
 	for (i=0 ; i<256 ; i++)
-		if (   mrg_OStraps[i] > obase
-		    && mrg_OStraps[i] < obase + ROMLEN) {
+		if (IS_ROM_ADDR(mrg_OStraps[i])) {
 			temp = (u_int) mrg_OStraps[i];
 			temp = (temp - oldbase) + newbase;
 			mrg_OStraps[i] = (caddr_t) temp;
 		}
 	p = (u_long *) mrg_adbstore;
 	for (i=0 ; i<512/4 ; i++)
-		if (   p[i] > oldbase
-		    && p[i] < oldbase + ROMLEN) {
+		if (IS_ROM_ADDR(p[i]))
 			p[i] = (p[i] - oldbase) + newbase;
-		}
-	jEgret = (void (*)) ((((u_int) jEgret) - oldbase) + newbase);
-	mrg_romadbintr = mrg_romadbintr - oldbase + newbase;
+
+	if (IS_ROM_ADDR(jEgret))
+		jEgret = (void (*)) ((((u_int) jEgret) - oldbase) + newbase);
+
+	if (IS_ROM_ADDR(mrg_romadbintr))
+		mrg_romadbintr = mrg_romadbintr - oldbase + newbase;
+
+	if (IS_ROM_ADDR(mrg_rompmintr))
+		mrg_rompmintr = mrg_rompmintr - oldbase + newbase;
+
+	if (IS_ROM_ADDR(mrg_romident))
+		mrg_romident = mrg_romident - oldbase + newbase;
 }
