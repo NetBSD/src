@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.84 2001/12/31 12:52:50 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.85 2001/12/31 15:54:27 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.84 2001/12/31 12:52:50 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.85 2001/12/31 15:54:27 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -755,7 +755,7 @@ umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
 		return;
 
 	DPRINTF(UDMASS_BBB, ("%s: Clear endpoint 0x%02x stall\n",
-		USBDEVNAME(sc->sc_dev), endpt));
+		USBDEVNAME(sc->sc_dev), sc->sc_epaddr[endpt]));
 
 	usbd_clear_endpoint_toggle(sc->sc_pipe[endpt]);
 
