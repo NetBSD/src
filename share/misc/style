@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.18 2001/02/21 00:04:43 cgd Exp $ */
+/* $NetBSD: style,v 1.19 2001/10/23 18:45:13 kleink Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.18 2001/02/21 00:04:43 cgd Exp $");
+__RCSID("$NetBSD: style,v 1.19 2001/10/23 18:45:13 kleink Exp $");
 #endif /* !__lint */
 
 /*
@@ -343,6 +343,13 @@ static int
 dirinfo(const char *p, struct stat *sb, struct dirent *de, struct statfs *sf,
 	int *rargc, char **rargv[])
 {	/* Insert an empty line if the function has no local variables. */
+
+	/*
+	 * In system libraries, catch obviously invalid function arguments
+	 * using _DIAGASSERT(3).
+	 */
+	_DIAGASSERT(p != NULL);
+	_DIAGASSERT(filedesc != -1);
 
 	if (stat(p, sb) < 0)
 		err(1, "Unable to stat %s", p);
