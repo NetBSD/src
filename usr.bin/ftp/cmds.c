@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.103 2004/06/06 01:37:41 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.104 2004/06/06 13:37:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.103 2004/06/06 01:37:41 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.104 2004/06/06 13:37:16 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -773,7 +773,6 @@ onoff(int bool)
 void
 status(int argc, char *argv[])
 {
-	int i;
 
 	if (argc == 0) {
 		fprintf(ttyout, "usage: %s\n", argv[0]);
@@ -845,6 +844,8 @@ status(int argc, char *argv[])
 #endif	/* !def NO_EDITCOMPLETE */
 	    );
 	if (macnum > 0) {
+		int i;
+
 		fputs("Macros:\n", ttyout);
 		for (i=0; i<macnum; i++) {
 			fprintf(ttyout, "\t%s\n", macros[i].mac_name);
