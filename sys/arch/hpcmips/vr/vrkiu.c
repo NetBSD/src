@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.6 1999/11/22 02:14:30 shin Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.7 1999/11/29 02:20:20 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -252,7 +252,7 @@ static char mobilepro_keytrans[] = {
 /*58*/ IGN, IGN, IGN,  42,  62,  61,  60,  59,  /* - - - shift f4 f3 f2 f1 */
 };
 
-/* FUJITSU INTERTOP CX300 */ 
+/* FUJITSU INTERTOP CX300 */
 static char intertop_keytrans[] = {
   57,  60,   2,  15,  28,  58,  75,  41,
  112,  59,   3,  16, IGN,  30,  56,   1,
@@ -265,7 +265,7 @@ static char intertop_keytrans[] = {
  IGN,  61,   9,  62, IGN,  23,  37,  51,
   69,  40,  10,  27,  64, IGN,  72, IGN,
  IGN, IGN, IGN, IGN,  42, IGN, IGN,  54,
- 157, 221, 123, 121, 184, IGN, IGN, IGN,
+  29, 221, 123, 121, 184, IGN, IGN, IGN,
 };
 /*
 space   a2      1       tab     enter   caps    left    zenkaku
