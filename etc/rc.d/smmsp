@@ -1,9 +1,18 @@
 #!/bin/sh
 #
-# $NetBSD: smmsp,v 1.1 2003/03/24 15:19:28 atatat Exp $
+# $NetBSD: smmsp,v 1.2 2003/04/02 18:00:14 atatat Exp $
 #
 
 # REQUIRE: mail
+
+#	The only function of the smmsp process is to push locally
+#	collected mail (which got stuck in the local client queue)
+#	to a more fully functional smtp relay.  It is not a fully
+#	functional smtp daemon.
+#
+#	It can, however, be used as a completely unprivileged
+#	replacement for hosts that were previously using a "null
+#	client" configuration and a smart relay.
 
 . /etc/rc.subr
 
@@ -16,12 +25,6 @@ start_precmd="smmsp_precmd"
 
 smmsp_precmd()
 {
-	if ! checkyesno sendmail; then
-		warn "sendmail client queue runner not started, sendmail" \
-			"not enabled"
-		return 1
-	fi
-	
 	_suidroot="${sendmail_suidroot:-NO}"
 	if checkyesno _suidroot; then
 		_owner_fmt="%p %Su"
@@ -38,23 +41,23 @@ smmsp_precmd()
 	# check owner and mode of real sendmail binary
 	_owner=$(stat -qf"${_owner_fmt}" /usr/libexec/sendmail/sendmail)
 	if [ "${_owner}" != "${_def_owner}" ]; then
-		warn "${name} not started; binary has wrong owner/mode"
-		return 1
+		warn "${name} /usr/libexec/sendmail/sendmail has " \
+		    "wrong owner/mode"
 	fi
 
 	# check submit.cf existence
 	if checkyesno _suidroot; then
 		if [ -f /etc/mail/submit.cf ]; then
-			warn "${name} is suid root, but submit.cf exists"
-			return 1
+			warn "${name} starting; " \
+			    "sendmail is suid root, but submit.cf exists"
 		else
-			warn "No need for ${name} service when sendmail is" \
-				"suid root; not started"
+			warn "${name} not started; no need for ${name} " \
+			    "service when sendmail is suid root"
 			return 1
 		fi
 	else
 		if [ ! -f /etc/mail/submit.cf ]; then
-			warn "${name} is sgid smmsp, but submit.cf is missing"
+			warn "${name} not started; /etc/mail/submit.cf missing"
 			return 1
 		else
 			_cqueue=$(sed -n 's/^O *QueueDirectory=\(.*\)/\1/p' \
@@ -66,14 +69,16 @@ smmsp_precmd()
 	# check .cf file version
 	_cfversion=$(sed -n 's/^V *\([0-9]*\).*/\1/p' /etc/mail/submit.cf)
 	if [ "${_cfversion}" != "${_def_version}" ]; then
-		warn "${name} not started; /etc/mail/submit.cf has wrong " \
-			"version (have ${_cfversion}, should be ${_def_version})"
+		warn "${name} not started; " \
+		    "/etc/mail/submit.cf has wrong version " \
+		    "(have ${_cfversion}, should be ${_def_version})"
 		return 1
 	fi
 
 	# look at clientmqueue's owner, group, and mode
 	if [ "${_cqueuemode}" != "${_def_cqueuemode}" ]; then
-		warn "sendmail client queue ${_cqueue} has wrong owner/mode"
+		warn "${name} not started;" \
+		    "queue ${_cqueue} has wrong owner/mode"
 		return 1
 	fi
 }
