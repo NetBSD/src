@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mk-amd-map.c,v 1.5 1997/10/17 00:07:55 lukem Exp $
+ * $Id: mk-amd-map.c,v 1.5.2.1 1998/05/05 09:01:38 mycroft Exp $
  */
 
 /*
@@ -218,8 +218,8 @@ main(int argc, char *argv[])
   int rc = 0;
   DBM *mapd = NULL;
   static char maptmp[] = "dbmXXXXXX";
-  char maptpag[16], maptdir[16];
-  char *mappag = (char *) NULL, *mapdir = (char *) NULL;
+  char maptdb[16];
+  char *mapdb = (char *) NULL;
   int len;
   char *sl;
   int printit = 0;
@@ -258,18 +258,16 @@ main(int argc, char *argv[])
 
   if (!printit) {
     len = strlen(map);
-    mappag = (char *) malloc(len + 5);
-    mapdir = (char *) malloc(len + 5);
-    if (!mappag || !mapdir) {
+    mapdb = (char *) malloc(len + 4);
+    if (!mapdb) {
       perror("mk-amd-map: malloc");
       exit(1);
     }
     mktemp(maptmp);
-    sprintf(maptpag, "%s.pag", maptmp);
-    sprintf(maptdir, "%s.dir", maptmp);
-    if (remove_file(maptpag) < 0 || remove_file(maptdir) < 0) {
-      fprintf(stderr, "Can't remove existing temporary files; %s and", maptpag);
-      perror(maptdir);
+    sprintf(maptdb, "%s.db", maptmp);
+    if (remove_file(maptdb) < 0) {
+      fprintf(stderr, "Can't remove existing temporary file ");
+      perror(maptdb);
       exit(1);
     }
   }
@@ -287,6 +285,7 @@ main(int argc, char *argv[])
   if (mapd || printit) {
     int error = read_file(mapf, map, mapd);
     (void) fclose(mapf);
+    dbm_close(mapd);
     if (printit) {
       if (error) {
 	fprintf(stderr, "Error creating ndbm map for %s\n", map);
@@ -298,33 +297,21 @@ main(int argc, char *argv[])
 	fprintf(stderr, "Error reading source file  %s\n", map);
 	rc = 1;
       } else {
-	sprintf(mappag, "%s.pag", map);
-	sprintf(mapdir, "%s.dir", map);
-	if (rename(maptpag, mappag) < 0) {
-	  fprintf(stderr, "Couldn't rename %s to ", maptpag);
-	  perror(mappag);
+	sprintf(mapdb, "%s.db", map);
+	if (unlink(mapdb) == 0)
+	  fprintf(stderr, "WARNING: existing map \"%s.db\" destroyed\n", map);
+	if (rename(maptdb, mapdb) < 0) {
+	  fprintf(stderr, "Couldn't rename %s to ", maptdb);
+	  perror(mapdb);
 	  /* Throw away the temporary map */
-	  unlink(maptpag);
-	  unlink(maptdir);
-	  rc = 1;
-
-	} else if (rename(maptdir, mapdir) < 0) {
-	  fprintf(stderr, "Couldn't rename %s to ", maptdir);
-	  perror(mapdir);
-	  /* Put the .pag file back */
-	  rename(mappag, maptpag);
-	  /* Throw away remaining part of original map */
-	  unlink(mapdir);
-	  fprintf(stderr,
-		  "WARNING: existing map \"%s.{dir,pag}\" destroyed\n",
-		  map);
+	  unlink(maptdb);
 	  rc = 1;
 	}
       }
     }
 
   } else {
-    fprintf(stderr, "Can't open \"%s.{dir,pag}\" for ", map);
+    fprintf(stderr, "Can't open \"%s.db\" for ", map);
     perror("writing");
     rc = 1;
   }
