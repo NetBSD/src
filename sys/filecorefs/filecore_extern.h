@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.3 1998/09/01 04:09:30 thorpej Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.4 1998/09/02 18:02:54 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -70,7 +70,7 @@ struct filecore_mnt {
 #define lblkno(fcp, loc)	((loc) >> (fcp)->log2bsize)
 #define blksize(fcp, ip, lbn)	((fcp)->blksize)
 
-extern struct pool filecode_node_pool;
+extern struct pool filecore_node_pool;
 
 int filecore_mount __P((struct mount *,
 	    const char *, void *, struct nameidata *, struct proc *));
