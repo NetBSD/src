@@ -20,7 +20,7 @@
  *	% cc -N -static -Wl,-T,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.2 1999/02/02 10:00:18 itohy Exp $
+ *	$NetBSD: aout2hux.c,v 1.3 1999/03/16 16:30:21 minoura Exp $
  */
 
 #include <sys/types.h>

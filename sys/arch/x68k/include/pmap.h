@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 1999/02/26 16:07:07 is Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 1999/03/16 16:30:21 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University

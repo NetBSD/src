@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 1999/01/18 07:39:52 itohy Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 1999/03/16 16:30:21 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 1999/02/26 16:07:08 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 1999/03/16 16:30:23 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,11 +47,8 @@
 #include "opt_uvm.h"
 
 #include "ite.h"
-#include "spc.h"
-#include "mha.h"
 #include "fd.h"
 #include "par.h"
-#include "adpcm.h"
 #include "assym.h"
 
 #include <machine/asm.h>
@@ -512,125 +509,21 @@ Lbrkpt3:
 	.globl	_intrhand, _hardclock
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
+	addql	#1,_C_LABEL(intrcnt)+0
 	rte				| XXX mfpcure (x680x0 hardware bug)
-
-_zstrap:
-#include "zsc.h"
-#if NZSC > 0
-	INTERRUPT_SAVEREG
-	movw	sp@(22),sp@-		| push exception vector info
-	movw	sr,d0
-	movw	#PSL_HIGHIPL,sr
-	movw	d0,sp@-
-	jbsr	_C_LABEL(zshard)
-	addql	#4,sp
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+48
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	rte
-
-_kbdtrap:
-	INTERRUPT_SAVEREG
-	jbsr	_kbdintr
-	INTERRUPT_RESTOREREG
-	addql	#1,_C_LABEL(intrcnt)+40
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-/*	jra	rei*/
-	rte
 
 _kbdtimer:
 	rte
 
-_fdctrap:
-#if NFD > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(fdcintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-
-_fdcdmatrap:
-#if NFD > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(fdcdmaintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-
-
-_fdcdmaerrtrap:
-#if NFD > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(fdcdmaerrintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-
-#ifdef SCSIDMA
-_spcdmatrap:
-#if NSPC > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(spcdmaintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-
-
-_spcdmaerrtrap:
-#if NSPC > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(spcdmaerrintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-#endif
-
 _audiotrap:
+#if 0
 #if NADPCM > 0
 	INTERRUPT_SAVEREG
 	jbsr	_audiointr
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+52
+#endif
+	addql	#1,_C_LABEL(intrcnt)+44
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -646,7 +539,7 @@ _partrap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+56
+	addql	#1,_C_LABEL(intrcnt)+48
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -660,44 +553,7 @@ _audioerrtrap:
 	jbsr	_audioerrintr
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-
-_spctrap:
-#if NSPC > 0
-	INTERRUPT_SAVEREG
-	movel	#0,sp@-
-	jbsr	_spcintr		| handle interrupt
-	addql	#4,sp
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+44
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-
-_exspctrap:
-	INTERRUPT_SAVEREG
-#if NMHA > 0
-	movel	#0,sp@-
-	jbsr	_mhaintr		| handle interrupt
-	addql	#4,sp
-#endif
-#if NSPC > 1
-	movel	#1,sp@-
-	jbsr	_spcintr		| handle interrupt
-	addql	#4,sp
-#endif
-	INTERRUPT_RESTOREREG
-	addql	#1,_C_LABEL(intrcnt)+44
+	addql	#1,_C_LABEL(intrcnt)+32
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -712,7 +568,7 @@ _powtrap:
 	jbsr	_C_LABEL(powintr)
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+60
+	addql	#1,_C_LABEL(intrcnt)+52
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -729,7 +585,7 @@ _com0trap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+68
+	addql	#1,_C_LABEL(intrcnt)+56
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -745,7 +601,7 @@ _com1trap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+68
+	addql	#1,_C_LABEL(intrcnt)+56
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -753,16 +609,15 @@ _com1trap:
 #endif
 	jra	rei
 
-_edtrap:
-#include "ed.h"
-#if NED > 0
+_intiotrap:
 	INTERRUPT_SAVEREG
-	movel	#0,sp@-
-	jbsr	_edintr
+#if 0
+	movw	#PSL_HIGHIPL,sr		| XXX
+#endif
+	pea	sp@(16-(FR_HW))		| XXX
+	jbsr	_C_LABEL(intio_intr)
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+64
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -797,7 +652,7 @@ Lnotdma:
 _timertrap:
 	movw	#SPL4,sr		| XXX?
 	moveml	#0xC0C0,sp@-		| save scratch registers
-	addql	#1,_C_LABEL(intrcnt)+28	| count hardclock interrupts
+	addql	#1,_C_LABEL(intrcnt)+36	| count hardclock interrupts
 	lea	sp@(16),a1		| a1 = &clockframe
 	movl	a1,sp@-
 	jbsr	_hardclock		| hardclock(&frame)
@@ -815,7 +670,7 @@ _timertrap:
 	jra	rei			| all done
 
 _lev7intr:
-	addql	#1,_C_LABEL(intrcnt)+36
+	addql	#1,_C_LABEL(intrcnt)+28
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-		| save registers
 	movl	usp,a0			| and save
@@ -1084,6 +939,7 @@ Lstploaddone:
 	RELOC(_mmutype, a0)
 	cmpl	#MMU_68040,a0@		| 68040?
 	jne	Lmotommu2		| no, skip
+#include "opt_jupiter.h"
 #ifdef JUPITER
 	/* JUPITER-X: set system register "SUPER" bit */
 	movl	#0x0200a240,d0		| translate DRAM area transparently
@@ -1977,19 +1833,18 @@ _intrnames:
 	.asciz	"lev4"
 	.asciz	"lev5"
 	.asciz	"lev6"
-	.asciz	"clock"
-	.asciz	"statclock"
 	.asciz	"nmi"
-	.asciz	"kbd"
+	.asciz	"audioerr"
+	.asciz	"clock"
 	.asciz	"scsi"
-	.asciz	"zs"
 	.asciz	"audio"
 	.asciz	"ppi"
 	.asciz	"pow"
-	.asciz	"ed"
 	.asciz	"com"
+	.space	200
 _eintrnames:
 	.even
 _intrcnt:
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	.space	50
 _eintrcnt:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.14 1999/01/18 07:39:52 itohy Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.15 1999/03/16 16:30:23 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -65,6 +65,8 @@ extern int protection_codes[];
 extern int pmap_aliasmask;
 #endif
 
+u_int8_t *intiobase = (u_int8_t *) PHYS_IODEV;
+
 void	pmap_bootstrap __P((paddr_t, paddr_t));
 
 #ifdef MACHINE_NONCONTIG
@@ -77,6 +79,10 @@ static void setmemrange __P((paddr_t));
 int numranges; /* = 0 == don't use the ranges */
 u_long low[8];
 u_long high[8];
+#endif
+
+#ifndef EIOMAPSIZE
+#define EIOMAPSIZE 0
 #endif
 
 /*
@@ -409,6 +415,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	RELOC(IODEVbase, char *) =
 		(char *)m68k_ptob(nptpages*NPTEPG - (IIOMAPSIZE+EIOMAPSIZE));
+	RELOC(intiobase, u_int8_t *) = RELOC(IODEVbase, u_int8_t *); /* XXX */
 	RELOC(intiolimit, char *) =
 		(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
 	/*
