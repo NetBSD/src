@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.6 1997/10/09 12:01:34 lukem Exp $	*/
+/*	$NetBSD: tputs.c,v 1.7 1997/10/13 16:11:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.6 1997/10/09 12:01:34 lukem Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.7 1997/10/13 16:11:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sgtty.h>
 #include <ctype.h>
-#include <curses.h>
+#include <termcap.h>
 #undef ospeed
 
 /*
@@ -67,12 +67,12 @@ char	PC;
  */
 void
 tputs(cp, affcnt, outc)
-	register char *cp;
+	char *cp;
 	int affcnt;
 	void (*outc) __P((int));
 {
-	register int i = 0;
-	register int mspc10;
+	int i = 0;
+	int mspc10;
 
 	if (cp == 0)
 		return;

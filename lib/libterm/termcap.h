@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.h,v 1.2 1997/01/11 06:48:14 lukem Exp $	*/
+/*	$NetBSD: termcap.h,v 1.3 1997/10/13 16:11:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,17 +38,16 @@
  *	@(#)termcap.h	8.1 (Berkeley) 6/4/93
  */
 
-/*
- * termcap.h: I cannot find those in any include files...
- */
-#ifndef _h_termcap
-#define _h_termcap
+#ifndef _TERMCAP_H_
+#define _TERMCAP_H_
 
+__BEGIN_DECLS
 int   tgetent	__P((char *, char *));
 char *tgetstr	__P((char *, char **));
 int   tgetflag	__P((char *));
 int   tgetnum	__P((char *));
 char *tgoto	__P((char *, int, int));
-char *tputs	__P((char *, int, void (*)(int)));
+void  tputs	__P((char *, int, void (*)(int)));
+__END_DECLS
 
-#endif /* _h_termcap */
+#endif /* _TERMCAP_H_ */
