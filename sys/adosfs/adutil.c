@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.15 1996/10/13 02:52:07 christos Exp $	*/
+/*	$NetBSD: adutil.c,v 1.16 1997/06/26 21:36:58 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -110,12 +110,15 @@ adosfs_getblktype(amp, bp)
 	 */
 	if (adoswordn(bp, 0) != BPT_SHORT) {
 #ifdef DIAGNOSTIC
-		printf("adosfs: aget: bad primary type blk %ld\n",
-		    bp->b_blkno / amp->secsperblk);
+		printf("adosfs: aget: bad primary type blk %ld (type = %d)\n",
+		    bp->b_blkno / amp->secsperblk, adoswordn(bp,0));
 #endif
 		return (-1);
 	}
 
+	/*
+	 * Check secondary block type.
+	 */
 	switch (adoswordn(bp, amp->nwords - 1)) {
 	case BST_RDIR:		/* root block */
 		return (AROOT);
@@ -130,6 +133,12 @@ adosfs_getblktype(amp, bp)
 	case BST_SLINK:		/* soft link */
 		return (ASLINK);
 	}
+
+#ifdef DIAGNOSTIC
+	printf("adosfs: aget: bad secondary type blk %ld (type = %d)\n",
+	    bp->b_blkno / amp->secsperblk, adoswordn(bp, amp->nwords - 1));
+#endif
+
 	return (-1);
 }
 
