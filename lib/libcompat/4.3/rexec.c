@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexec.c,v 1.6 1997/10/09 10:21:00 lukem Exp $");
+__RCSID("$NetBSD: rexec.c,v 1.7 1998/03/19 18:06:15 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: rexec.c,v 1.6 1997/10/09 10:21:00 lukem Exp $");
 
 int	rexecoptions;
 
-void	ruserpass __P((const char *, char **, char **));
+int	ruserpass __P((const char *, char **, char **));
 int	rexec __P((char **, int, char *, char *, char *, int *));
 
 int
@@ -75,7 +75,7 @@ rexec(ahost, rport, name, pass, cmd, fd2p)
 		return (-1);
 	}
 	*ahost = hp->h_name;
-	ruserpass(hp->h_name, &name, &pass);
+	(void)ruserpass(hp->h_name, &name, &pass);
 retry:
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s < 0) {

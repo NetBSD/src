@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.1 1998/03/19 17:51:04 tv Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.2 1998/03/19 18:06:15 tv Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.1 1998/03/19 17:51:04 tv Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.2 1998/03/19 18:06:15 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,12 +90,12 @@ static struct toktab {
 	{ NULL,		0 }
 };
 
-int ruserpass __P((const char *, char **, char **, char **));
+int ruserpass __P((const char *, char **, char **));
 
 int
-ruserpass(host, aname, apass, aacct)
+ruserpass(host, aname, apass)
 	const char *host;
-	char **aname, **apass, **aacct;
+	char **aname, **apass;
 {
 	char *hdir, buf[BUFSIZ], *tmp;
 	char myname[MAXHOSTNAMELEN], *mydomain;
@@ -180,11 +180,6 @@ next:
 	warnx("Error: .netrc file is readable by others.");
 	warnx("Remove account or make file unreadable by others.");
 				goto bad;
-			}
-			if (token() && *aacct == NULL) {
-				*aacct = strdup(tokval);
-				if (*aacct == NULL)
-					err(1, "can't strdup *aacct");
 			}
 			break;
 		case MACDEF:
