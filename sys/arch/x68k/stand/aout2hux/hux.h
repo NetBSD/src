@@ -4,7 +4,7 @@
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: hux.h,v 1.1 1998/09/01 19:51:08 itohy Exp $
+ *	$NetBSD: hux.h,v 1.2 1999/02/02 10:00:18 itohy Exp $
  */
 /*
  * Human68k ".x" executable format
@@ -67,4 +67,4 @@ struct relinf_l {
 					 */
 };
 
-#define HUX_MINLREL	0x10000		/* minimam value for long format */
+#define HUX_MINLREL	0x10000		/* minimal value for long format */
