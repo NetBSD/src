@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.3 2000/09/08 10:15:23 tsubai Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.4 2002/02/08 06:12:00 uch Exp $	*/
 
 /*
  * Mach Operating System
@@ -100,5 +100,10 @@ boolean_t inst_trap_return(int);
  */
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
+
+/*
+ * We have machine-dependent commands.
+ */
+#define DB_MACHINE_COMMANDS
 
 #endif	/* _SH3_DB_MACHDEP_H_ */
