@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 1999/11/01 01:35:58 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.21 2000/02/17 03:06:13 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -57,6 +57,15 @@ void ar_close __P((void));
 void ar_drain __P((void));
 int ar_set_wr __P((void));
 int ar_app_ok __P((void));
+#ifdef SYS_NO_RESTART
+int read_with_restart __P((int, void *, int));
+int write_with_restart __P((int, void *, int));
+#else
+#define read_with_restart	read
+#define write_with_restart	write
+#endif
+int xread __P((int, void *, int));
+int xwrite __P((int, void *, int));
 int ar_read __P((char *, int));
 int ar_write __P((char *, int));
 int ar_rdsync __P((void));
