@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.40 2002/10/26 13:50:22 jdolecek Exp $
+#	$NetBSD: files.arc,v 1.41 2002/11/30 19:23:46 tsutsui Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -15,6 +15,7 @@ defflag	opt_platform.h			PLATFORM_ACER_PICA_61
 					PLATFORM_DESKTECH_ARCSTATION_I
 					PLATFORM_DESKTECH_TYNE
 					PLATFORM_MICROSOFT_JAZZ
+					PLATFORM_NEC_J96A
 					PLATFORM_NEC_JC94
 					PLATFORM_NEC_R94
 					PLATFORM_NEC_R96
@@ -26,15 +27,18 @@ file	arch/arc/arc/c_isa.c		platform_desktech_arcstation_i |
 					platform_desktech_tyne
 file	arch/arc/arc/c_jazz_eisa.c	platform_acer_pica_61 |
 					platform_microsoft_jazz |
+					platform_nec_j96a |
 					platform_nec_r94 |
 					platform_nec_r96
 file	arch/arc/arc/c_magnum.c		platform_acer_pica_61 |
 					platform_microsoft_jazz
-file	arch/arc/arc/c_nec_eisa.c	platform_nec_r94 |
+file	arch/arc/arc/c_nec_eisa.c	platform_nec_j96a |
+					platform_nec_r94 |
 					platform_nec_r96
-file	arch/arc/arc/c_nec_jazz.c	platform_nec_r94 |
-					platform_nec_r96 |
+file	arch/arc/arc/c_nec_jazz.c	platform_nec_j96a |
 					platform_nec_jc94 |
+					platform_nec_r94 |
+					platform_nec_r96 |
 					platform_nec_rax94 |
 					platform_nec_rd94
 file	arch/arc/arc/c_nec_pci.c	platform_nec_jc94 |
@@ -45,6 +49,7 @@ file	arch/arc/arc/p_acer_pica_61.c	platform_acer_pica_61
 file	arch/arc/arc/p_dti_arcstation.c	platform_desktech_arcstation_i
 file	arch/arc/arc/p_dti_tyne.c	platform_desktech_tyne
 file	arch/arc/arc/p_ms_jazz.c	platform_microsoft_jazz
+file	arch/arc/arc/p_nec_j96a.c	platform_nec_j96a
 file	arch/arc/arc/p_nec_jc94.c	platform_nec_jc94
 file	arch/arc/arc/p_nec_r94.c	platform_nec_r94
 file	arch/arc/arc/p_nec_r96.c	platform_nec_r96
