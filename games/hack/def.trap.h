@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* def.trap.h - version 1.0.2 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: def.trap.h,v 1.2 1993/08/02 17:16:54 mycroft Exp $
+ */
 
 struct trap {
 	struct trap *ntrap;

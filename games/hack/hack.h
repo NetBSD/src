@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.h - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: hack.h,v 1.2 1993/08/02 17:17:14 mycroft Exp $
+ */
 
 #include "config.h"
 #include <string.h>

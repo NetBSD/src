@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* def.eshk.h - version 1.0.2 : added 'following' */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: def.eshk.h,v 1.2 1993/08/02 17:16:41 mycroft Exp $
+ */
 
 #define	BILLSZ	200
 struct bill_x {

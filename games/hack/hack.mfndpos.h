@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.mfndpos.h - version 1.0.2 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: hack.mfndpos.h,v 1.2 1993/08/02 17:17:20 mycroft Exp $
+ */
 
 #define	ALLOW_TRAPS	0777
 #define	ALLOW_U		01000

@@ -1,5 +1,10 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.o_init.c - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ */
+
+#ifndef lint
+static char rcsid[] = "$Id: hack.o_init.c,v 1.2 1993/08/02 17:17:30 mycroft Exp $";
+#endif /* not lint */
 
 #include	"config.h"		/* for typedefs */
 #include	"def.objects.h"

@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* def.mkroom.h - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: def.mkroom.h,v 1.2 1993/08/02 17:16:46 mycroft Exp $
+ */
 
 struct mkroom {
 	schar lx,hx,ly,hy;	/* usually xchar, but hx may be -1 */
