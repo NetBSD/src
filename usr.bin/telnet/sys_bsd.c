@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.29 2003/08/07 11:16:10 agc Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.30 2004/02/24 15:12:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.29 2003/08/07 11:16:10 agc Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.30 2004/02/24 15:12:53 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -625,7 +625,7 @@ sys_telnet_init(void)
  *	or a block-until-something-happens operation.
  *
  *	The return value is 1 if something happened, 0 if not, < 0 if an
- *	error occured.
+ *	error occurred.
  */
 
 int

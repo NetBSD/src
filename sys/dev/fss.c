@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.6 2004/02/14 00:00:56 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.7 2004/02/24 15:12:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.6 2004/02/14 00:00:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.7 2004/02/24 15:12:51 wiz Exp $");
 
 #include "fss.h"
 
@@ -309,7 +309,7 @@ fss_dump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 }
 
 /*
- * An error occured reading or writing the snapshot or backing store.
+ * An error occurred reading or writing the snapshot or backing store.
  * If it is the first error log to console.
  * The caller holds the simplelock.
  */
