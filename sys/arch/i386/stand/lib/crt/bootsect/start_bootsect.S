@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.19 2003/02/01 14:48:18 dsl Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.20 2003/02/24 23:23:14 dsl Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -462,6 +462,11 @@ bootdataseg = . - gdt
 bootrealseg = . - gdt
 	.word	0xffff, 0
 	.byte	0, 0x9e, 0x00, 0
+
+	/* limits (etc) for data segment in real mode */
+bootrealdata = . - gdt
+	.word	0xffff, 0
+	.byte	0, 0x92, 0x00, 0
 gdtlen = . - gdt
 
 #ifdef __ELF__
@@ -527,13 +532,11 @@ ENTRY(exit16)
 	movw	$efail, %si
 	call	message
 
-#if	1
 	/* call ROM BASIC */
 	int	$0x18
-#else
 	cli
-	hlt
-#endif
+1:	hlt
+	jmp	1b
 efail:	.asciz		"Boot fail\r\n"
 
 CR0_PE		=	0x1
@@ -542,7 +545,7 @@ CR0_PE		=	0x1
  * real_to_prot()
  * 	transfer from real mode to protected mode.
  * NB: Call with the 32bit calll instruction so that a 32 bit
- *     return address is pushed (using a 32bit %esp).
+ *     return address is pushed.
  */
 ENTRY(real_to_prot)
 	.code16
@@ -594,6 +597,16 @@ ENTRY(prot_to_real)
 
 	movl	ourseg, %eax
 	movw	%ax, xreal-2
+
+	/*
+	 * Load the segment registers while still in protected mode.
+	 * Otherwise the control bits don't get changed.
+	 * The correct values are loaded later.
+	 */
+	movw	$bootrealdata, %ax
+	movw	%ax, %ds
+	movw	%ax, %es
+	movw	%ax, %ss
 
 	# Change to use16 mode.
 	ljmp	$bootrealseg, $x16
