@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nice.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: nice.c,v 1.6 1993/11/10 20:01:20 jtc Exp $";
+static char rcsid[] = "$Id: nice.c,v 1.7 1993/11/19 20:07:13 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -47,6 +47,7 @@ static char rcsid[] = "$Id: nice.c,v 1.6 1993/11/10 20:01:20 jtc Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <ctype.h>
 #include <errno.h>
 #include <err.h>
@@ -63,6 +64,8 @@ main(argc, argv)
 {
 	int niceness = DEFNICE;
 	int c;
+
+	setlocale(LC_ALL, "");
 
         /* handle obsolete -number syntax */
         if (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
