@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.22 1996/01/15 01:56:09 thorpej Exp $
+#	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 MANTARGET?=	cat
@@ -33,8 +33,8 @@ MCOMPRESSSUFFIX= .gz
 maninstall:
 .if defined(MANALL)
 	@for page in ${MANALL}; do \
-		dir=${DESTDIR}${MANDIR}`expr $$page : '.*\.cat\([1-9]\)'`; \
-		instpage=$${dir}${MANSUBDIR}/`expr $$page : '\(.*\)\.cat[1-9]'`.0${MCOMPRESSSUFFIX}; \
+		dir=${DESTDIR}${MANDIR}$${page##*.cat}; \
+		instpage=$${dir}${MANSUBDIR}/$${page%.*}.0${MCOMPRESSSUFFIX}; \
 		if [ X"${MCOMPRESS}" = X ]; then \
 			echo ${MINSTALL} $$page $$instpage; \
 			${MINSTALL} $$page $$instpage; \
@@ -52,12 +52,12 @@ maninstall:
 	while test $$# -ge 2; do \
 		name=$$1; \
 		shift; \
-		dir=${DESTDIR}${MANDIR}`expr $$name : '.*\.\(.*\)'`; \
-		l=$${dir}${MANSUBDIR}/`expr $$name : '\(.*\)\..*'`.0${MCOMPRESSSUFFIX}; \
+		dir=${DESTDIR}${MANDIR}$${name##*.}; \
+		l=$${dir}${MANSUBDIR}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
 		name=$$1; \
 		shift; \
-		dir=${DESTDIR}${MANDIR}`expr $$name : '.*\.\(.*\)'`; \
-		t=$${dir}${MANSUBDIR}/`expr $$name : '\(.*\)\..*'`.0${MCOMPRESSSUFFIX}; \
+		dir=${DESTDIR}${MANDIR}$${name##*.}; \
+		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
 		echo $$t -\> $$l; \
 		rm -f $$t; \
 		ln $$l $$t; \
