@@ -1,7 +1,7 @@
-/*	$NetBSD: ebusvar.h,v 1.5 2001/07/20 00:07:13 eeh Exp $	*/
+/*	$NetBSD: ebusvar.h,v 1.6 2001/10/22 08:09:46 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000 Matthew R. Green
+ * Copyright (c) 1999, 2000, 2001 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,28 +51,6 @@ struct ebus_attach_args {
 	int			ea_nvaddrs;
 	int			ea_nintrs;
 };
-
-struct ebus_softc {
-	struct device			sc_dev;
-	struct psycho_softc		*sc_parent;	/* for iommu */
-
-	int				sc_node;
-
-	bus_space_tag_t			sc_memtag;	/* from pci */
-	bus_space_tag_t			sc_iotag;	/* from pci */
-	bus_space_tag_t			sc_childbustag;	/* pass to children */
-	bus_dma_tag_t			sc_dmatag;	/* XXX */
-
-	struct ebus_ranges		*sc_range;
-	struct ebus_interrupt_map	*sc_intmap;
-	struct ebus_interrupt_map_mask	sc_intmapmask;
-
-	int				sc_nrange;	/* counters */
-	int				sc_nintmap;
-};
-
-bus_dma_tag_t ebus_alloc_dma_tag __P((struct ebus_softc *, bus_dma_tag_t));
-bus_space_tag_t ebus_alloc_bus_tag __P((struct ebus_softc *, int));
 
 #define ebus_bus_map(t, bt, a, s, f, v, hp) \
 	bus_space_map2(t, bt, a, s, f, v, hp)
