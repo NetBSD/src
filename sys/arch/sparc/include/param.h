@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 1996/02/01 22:32:31 mycroft Exp $ */
+/*	$NetBSD: param.h,v 1.20 1996/02/16 22:13:34 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -188,6 +188,7 @@ extern void	dvma_free __P((caddr_t, size_t, void *));
 
 #ifdef _KERNEL
 #ifndef _LOCORE
+extern void	delay __P((unsigned int));
 #define	DELAY(n)	delay(n)
 #endif
 #endif
