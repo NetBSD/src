@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.1 2001/09/25 19:49:05 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.2 2001/12/17 22:07:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,45 +43,63 @@
  * Only save the callee-save regs, and set a special flag in uc_flags
  * that says so.
  */
-#define GETC(reg)				; \
-	stq	s0, (UC_REGS + R_S0 * 8)(reg)	; \
-	stq	s1, (UC_REGS + R_S1 * 8)(reg)	; \
-	stq	s2, (UC_REGS + R_S2 * 8)(reg)	; \
-	stq	s3, (UC_REGS + R_S3 * 8)(reg)	; \
-	stq	s4, (UC_REGS + R_S4 * 8)(reg)	; \
-	stq	s5, (UC_REGS + R_S5 * 8)(reg)	; \
-	stq	s6, (UC_REGS + R_S6 * 8)(reg)	; \
-	stq	sp, (UC_REGS + R_SP * 8)(reg)	; \
-	stq	ra, (UC_REGS + R_RA * 8)(reg)	; \
-	stq	ra, (UC_PC)(reg)		; \
-	ldiq	t0, 1				; \
-	sll	t0, _UC_USER_BIT, t0		; \
-	bis	t0, _UC_CPU, t0			; \
+#define GETC(reg)					; \
+	stq	s0, (UC_GREGS + _REG_S0 * 8)(reg)	; \
+	stq	s1, (UC_GREGS + _REG_S1 * 8)(reg)	; \
+	stq	s2, (UC_GREGS + _REG_S2 * 8)(reg)	; \
+	stq	s3, (UC_GREGS + _REG_S3 * 8)(reg)	; \
+	stq	s4, (UC_GREGS + _REG_S4 * 8)(reg)	; \
+	stq	s5, (UC_GREGS + _REG_S5 * 8)(reg)	; \
+	stq	s6, (UC_GREGS + _REG_S6 * 8)(reg)	; \
+	stq	sp, (UC_GREGS + _REG_SP * 8)(reg)	; \
+	stq	ra, (UC_GREGS + _REG_RA * 8)(reg)	; \
+	stq	ra, (UC_GREGS + _REG_PC * 8)(reg)	; \
+	stt	$f2, (UC_FPREGS + 2 * 8)(reg)		; \
+	stt	$f3, (UC_FPREGS + 3 * 8)(reg)		; \
+	stt	$f4, (UC_FPREGS + 4 * 8)(reg)		; \
+	stt	$f5, (UC_FPREGS + 5 * 8)(reg)		; \
+	stt	$f6, (UC_FPREGS + 6 * 8)(reg)		; \
+	stt	$f7, (UC_FPREGS + 7 * 8)(reg)		; \
+	stt	$f8, (UC_FPREGS + 8 * 8)(reg)		; \
+	stt	$f9, (UC_FPREGS + 9 * 8)(reg)		; \
+	ldiq	t0, 8					; \
+	stq	t0, (UC_GREGS + _REG_PS * 8)(reg)	; \
+	ldiq	t0, 1					; \
+	sll	t0, _UC_USER_BIT, t0			; \
+	bis	t0, (_UC_CPU|_UC_FPU), t0		; \
 	stl	t0, (UC_FLAGS)(reg)
 
-#define SETC(reg)				; \
-	ldl	t0, (UC_FLAGS)(reg)		; \
-	ldiq	t1, 1				; \
-	sll	t1, _UC_USER_BIT, t1		; \
-	and	t0, t1, t0			; \
-	beq	t0, 1f				; \
-						; \
-	ldq	s0, (UC_REGS + R_S0 * 8)(reg)	; \
-	ldq	s1, (UC_REGS + R_S1 * 8)(reg)	; \
-	ldq	s2, (UC_REGS + R_S2 * 8)(reg)	; \
-	ldq	s3, (UC_REGS + R_S3 * 8)(reg)	; \
-	ldq	s4, (UC_REGS + R_S4 * 8)(reg)	; \
-	ldq	s5, (UC_REGS + R_S5 * 8)(reg)	; \
-	ldq	s6, (UC_REGS + R_S6 * 8)(reg)	; \
-	ldq	ra, (UC_REGS + R_RA * 8)(reg)	; \
-	ldq	t12, (UC_PC)(reg)		; \
-	ldq	sp, (UC_REGS + R_SP * 8)(reg)	; \
-						; \
-	/* part procedure call, part RET */	; \
-	jmp	zero, (t12)			; \
-	/* NOTREACHED */			; \
-1:	mov	reg, a0				; \
-	CALL(setcontext)			; \
+#define SETC(reg)					; \
+	ldl	t0, (UC_FLAGS)(reg)			; \
+	ldiq	t1, 1					; \
+	sll	t1, _UC_USER_BIT, t1			; \
+	and	t0, t1, t0				; \
+	beq	t0, 1f					; \
+							; \
+	ldq	s0, (UC_GREGS + _REG_S0 * 8)(reg)	; \
+	ldq	s1, (UC_GREGS + _REG_S1 * 8)(reg)	; \
+	ldq	s2, (UC_GREGS + _REG_S2 * 8)(reg)	; \
+	ldq	s3, (UC_GREGS + _REG_S3 * 8)(reg)	; \
+	ldq	s4, (UC_GREGS + _REG_S4 * 8)(reg)	; \
+	ldq	s5, (UC_GREGS + _REG_S5 * 8)(reg)	; \
+	ldq	s6, (UC_GREGS + _REG_S6 * 8)(reg)	; \
+	ldq	ra, (UC_GREGS + _REG_RA * 8)(reg)	; \
+	ldq	t12, (UC_GREGS + _REG_PC * 8)(reg)	; \
+	ldt	$f2, (UC_FPREGS + 2 * 8)(reg)		; \
+	ldt	$f3, (UC_FPREGS + 3 * 8)(reg)		; \
+	ldt	$f4, (UC_FPREGS + 4 * 8)(reg)		; \
+	ldt	$f5, (UC_FPREGS + 5 * 8)(reg)		; \
+	ldt	$f6, (UC_FPREGS + 6 * 8)(reg)		; \
+	ldt	$f7, (UC_FPREGS + 7 * 8)(reg)		; \
+	ldt	$f8, (UC_FPREGS + 8 * 8)(reg)		; \
+	ldt	$f9, (UC_FPREGS + 9 * 8)(reg)		; \
+	ldq	sp, (UC_GREGS + _REG_SP * 8)(reg)	; \
+							; \
+	/* part procedure call, part RET */		; \
+	jmp	zero, (t12)				; \
+	/* NOTREACHED */				; \
+1:	mov	reg, a0					; \
+	CALL(setcontext)				; \
 	/* NOTREACHED */
 
 LEAF(_getcontext_u,1)
