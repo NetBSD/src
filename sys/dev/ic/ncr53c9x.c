@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.30 1998/11/30 07:44:24 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.31 1998/11/30 07:54:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1046,10 +1046,9 @@ gotit:
 		case MSG_CMDCOMPLETE:
 			NCR_MSGS(("cmdcomplete "));
 			if (sc->sc_dleft < 0) {
-				struct scsipi_link *sc_link = ecb->xs->sc_link;
 				scsi_print_addr(ecb->xs->sc_link);
 				printf("got %ld extra bytes\n",
-				    sc->sc_dev.dv_xname, -(long)sc->sc_dleft);
+				       -(long)sc->sc_dleft);
 				sc->sc_dleft = 0;
 			}
 			ecb->dleft = (ecb->flags & ECB_TENTATIVE_DONE)
@@ -1190,9 +1189,9 @@ gotit:
 
 	case NCR_RESELECTED:
 		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
-			scsi_print_addr(ecb->xs->sc_link);
-			printf("reselect without IDENTIFY;"
-			       " sending DEVICE RESET\n");
+			printf("%s: reselect without IDENTIFY;"
+			       " sending DEVICE RESET\n",
+			       sc->sc_dev.dv_xname);
 			goto reset;
 		}
 
@@ -1200,8 +1199,8 @@ gotit:
 		break;
 
 	default:
-		scsi_print_addr(ecb->xs->sc_link);
-		printf("unexpected MESSAGE IN; sending DEVICE RESET\n");
+		printf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
+			sc->sc_dev.dv_xname);
 	reset:
 		ncr53c9x_sched_msgout(SEND_DEV_RESET);
 		break;
