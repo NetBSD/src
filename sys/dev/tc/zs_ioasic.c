@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.1 2000/07/05 02:48:50 nisimura Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.2 2000/07/05 07:50:57 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1 2000/07/05 02:48:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.2 2000/07/05 07:50:57 nisimura Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1 2000/07/05 02:48:50 nisimura Exp $
  */
 
 #include "opt_ddb.h"
-#include "opt_dec_3000_300.h"
-#include "opt_zs_ioasic_dma.h"
 #include "zskbd.h"
 
 #include <sys/param.h>
@@ -117,7 +115,7 @@ int zs_def_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 int zs_major = 15;
 
 /*
- * The Alpha provides a 7.372 MHz clock to the ZS chips.
+ * ZS chips are feeded a 7.372 MHz clock.
  */
 #define	PCLK	(9600 * 768)	/* PCLK pin input clock rate */
 
@@ -198,9 +196,6 @@ struct cfattach zsc_ioasic_ca = {
 /* Interrupt handlers. */
 int	zs_ioasic_hardintr __P((void *));
 void	zs_ioasic_softintr __P((void *));
-
-/* Misc. */
-void	zs_ioasic_enable __P((int));
 
 extern struct cfdriver ioasic_cd;
 extern struct cfdriver zsc_cd;
@@ -289,8 +284,7 @@ zs_ioasic_attach(parent, self, aux)
 		} else {
 			zs_addr = d->iada_addr;
 			zc = zs_ioasic_get_chan_addr(zs_addr, channel);
-			cs->cs_reg_csr  = (volatile u_char *)&zc->zc_csr;
-			cs->cs_reg_data = (volatile u_char *)&zc->zc_data;
+			cs->cs_reg_csr  = (void *)&zc->zc_csr;
 
 			bcopy(zs_ioasic_init_reg, cs->cs_creg, 16);
 			bcopy(zs_ioasic_init_reg, cs->cs_preg, 16);
@@ -376,7 +370,10 @@ zs_ioasic_attach(parent, self, aux)
 	zs_write_reg(zs->zsc_cs[1], 9, zs_ioasic_init_reg[9]);
 
 	/* ioasic interrupt enable */
-	zs_ioasic_enable(1);
+	*(volatile u_int *)(ioasic_base + IOASIC_IMSK) |=
+		    IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0;
+	tc_mb();
+
 	splx(s);
 }
 
@@ -396,33 +393,6 @@ zs_ioasic_print(aux, name)
 	return (UNCONF);
 }
 
-/*
- * Enable the SCC interrupts in the ioasic.
- */
-void
-zs_ioasic_enable(onoff)
-	int onoff;
-{
-
-	if (onoff) {
-		*(volatile u_int *)(ioasic_base + IOASIC_IMSK) |=
-		    IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0;
-#if !defined(DEC_3000_300) && defined(ZS_IOASIC_DMA)
-		*(volatile u_int *)(ioasic_base + IOASIC_CSR) |=
-		    IOASIC_CSR_DMAEN_T1 | IOASIC_CSR_DMAEN_R1 |
-		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2;
-#endif
-	} else {
-		*(volatile u_int *)(ioasic_base + IOASIC_IMSK) &= 
-		    ~(IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0);
-#if !defined(DEC_3000_300) && defined(ZS_IOASIC_DMA)
-		*(volatile u_int *)(ioasic_base + IOASIC_CSR) &=
-		    ~(IOASIC_CSR_DMAEN_T1 | IOASIC_CSR_DMAEN_R1 |
-		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2);
-#endif
-	}
-	tc_mb();
-}
 
 /*
  * Hardware interrupt handler.
@@ -555,17 +525,15 @@ zs_read_reg(cs, reg)
 	struct zs_chanstate *cs;
 	u_char reg;
 {
-	u_char val;
-
-	*((volatile unsigned int *) cs->cs_reg_csr) =
-	    ((volatile unsigned int) reg) << 8;
+        struct zshan *zc = (void *)cs->cs_reg_csr;
+	unsigned val;
+  
+        zc->zc_csr = reg << 8;
 	tc_mb();
 	DELAY(5);
-
-	val = ((*(volatile unsigned int *) cs->cs_reg_csr) >> 8) & 0xff;
+	val = (zc->zc_csr >> 8) & 0xff;
 	tc_mb();
 	DELAY(5);
-
 	return (val);
 }
 
@@ -574,15 +542,13 @@ zs_write_reg(cs, reg, val)
 	struct zs_chanstate *cs;
 	u_char reg, val;
 {
-
-	*((volatile unsigned int *) cs->cs_reg_csr) =
-	    ((volatile unsigned int) reg) << 8;
-	tc_mb();
+        struct zshan *zc = (void *)cs->cs_reg_csr;
+   
+        zc->zc_csr = reg << 8;
+        tc_mb();
 	DELAY(5);
-
-	*((volatile unsigned int *) cs->cs_reg_csr) =
-	    ((volatile unsigned int) val) << 8;
-	tc_mb();
+        zc->zc_csr = val << 8;
+        tc_mb();
 	DELAY(5);
 }
 
@@ -590,9 +556,10 @@ u_char
 zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char val;
+	struct zshan *zc = (void *)cs->cs_reg_csr;
+	unsigned val;
 
-	val = (*((volatile unsigned int *) cs->cs_reg_csr) >> 8) & 0xff;
+	val = (zc->zc_csr >> 8) & 0xff;
 	tc_mb();
 	DELAY(5);
 
@@ -605,8 +572,9 @@ zs_write_csr(cs, val)
 	u_char val;
 {
 
-	*((volatile unsigned int *) cs->cs_reg_csr) =
-	    ((volatile unsigned int) val) << 8;
+	struct zshan *zc = (void *)cs->cs_reg_csr;
+
+	zc->zc_csr = val << 8;
 	tc_mb();
 	DELAY(5);
 }
@@ -615,9 +583,10 @@ u_char
 zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char val;
+	struct zshan *zc = (void *)cs->cs_reg_csr;
+	unsigned val;
 
-	val = (*((volatile unsigned int *) cs->cs_reg_data) >> 8) & 0xff;
+	val = (zc->zc_data) >> 8 & 0xff;
 	tc_mb();
 	DELAY(5);
 
@@ -630,8 +599,9 @@ zs_write_data(cs, val)
 	u_char val;
 {
 
-	*((volatile unsigned int *) cs->cs_reg_data) =
-	    ((volatile unsigned int) val) << 8;
+	struct zshan *zc = (void *)cs->cs_reg_csr;
+
+	zc->zc_data = val << 8;
 	tc_mb();
 	DELAY(5);
 }
