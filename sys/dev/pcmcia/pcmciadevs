@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.23 1998/12/18 21:52:53 thorpej Exp $
+$NetBSD: pcmciadevs,v 1.24 1998/12/18 22:04:48 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ vendor LINKSYS			0x0149	Linksys Corporation
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor DAYNA			0x0194	Dayna Corporation
 vendor IODATA			0x01bf	I-O DATA
+vendir COMPEX			0x8a01	Compex Corporation
 vendor COREGA			0xc00f	Corega K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 
@@ -70,6 +71,9 @@ product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B SCSI Host Adapter
 product 3COM 3C562		0x0562 3Com 3c562 33.6 Modem/10Mbps Ethernet
 product 3COM 3C589		0x0589 3Com 3c589 10Mbps Ethernet
 product 3COM 3C574		0x0574 3Com 3c574-TX 10/100Mbps Ethernet
+
+/* Compex Products */
+product COMPEX LINKPORT_ENET_B	0x0100 Compex Linkport ENET-B Ethernet
 
 /* Dayna Products */
 product DAYNA COMMUNICARD_E_1	0x002d Dayna CommuniCard E
