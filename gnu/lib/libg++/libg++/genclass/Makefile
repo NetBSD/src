@@ -1,18 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 1996/12/20 01:04:20 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1996/12/22 20:46:07 cgd Exp $
 # Makefile for g++ library genclass 
 
-PROG=		genclass
-SRCS=	genclass.sh 
-NOMAN=
-NOLINT=
-STRIP=
+BINDIR?= /usr/bin
 
-SRCDIR=${.CURDIR}
-
-BINDIR ?= /usr/bin
-
-genclass:	genclass.sh
-	cp $(SRCDIR)/genclass.sh genclass
+beforeinstall:
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    ${.CURDIR}/genclass.sh ${DESTDIR}${BINDIR}/genclass
 
 .include <bsd.prog.mk>
-
