@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.16 2003/09/27 00:58:32 matt Exp $	*/
+/*	$NetBSD: signal.h,v 1.17 2004/03/26 21:39:57 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,8 +32,6 @@
  */
 #ifndef	_POWERPC_SIGNAL_H_
 #define	_POWERPC_SIGNAL_H_
-
-#define __HAVE_SIGINFO
 
 #ifndef _LOCORE
 #include <sys/featuretest.h>
