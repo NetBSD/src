@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.66 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.dep.mk,v 1.67 2004/04/18 04:34:27 lukem Exp $
 
 ##### Basic targets
 cleandir:	cleandepend
@@ -52,8 +52,7 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
 	    ${AFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${__acpp_flags} ${AINC} \
-	    ${.IMPSRC}
+	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${__acpp_flags} ${.IMPSRC}
 
 .C.d .cc.d .cpp.d .cxx.d:
 	${_MKTARGET_CREATE}
