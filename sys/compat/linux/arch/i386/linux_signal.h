@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.8 1999/10/04 17:46:37 fvdl Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.9 2000/08/23 16:59:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -116,6 +116,18 @@ struct linux_sigaction {
 struct linux_k_sigaction {
 	struct linux_sigaction sa;
 #define k_sa_restorer	sa.sa_restorer
+};
+
+#define	LINUX_SS_ONSTACK	1
+#define	LINUX_SS_DISABLE	2
+
+#define	LINUX_MINSIGSTKSZ	2048
+#define	LINUX_SIGSTKSZ		8192
+
+struct linux_sigaltstack {
+	void *ss_sp;
+	int ss_flags;
+	size_t ss_size;
 };
 
 #endif /* !_I386_LINUX_SIGNAL_H */
