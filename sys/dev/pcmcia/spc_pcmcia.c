@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.5 2004/08/09 17:00:53 mycroft Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.6 2004/08/10 03:54:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.5 2004/08/09 17:00:53 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.6 2004/08/10 03:54:37 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,15 +61,17 @@ struct spc_pcmcia_softc {
 	struct spc_softc	sc_spc;		/* glue to MI code */
 
 	/* PCMCIA-specific goo. */
-	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
-	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handler */
-	int sc_flags;
-#define SPC_PCMCIA_ATTACH	2		/* attach in progress */
+
+	int sc_state;
+#define SPC_PCMCIA_ATTACH1	1
+#define	SPC_PCMCIA_ATTACH2	2
+#define	SPC_PCMCIA_ATTACHED	3
 };
 
 int	spc_pcmcia_match __P((struct device *, struct cfdata *, void *)); 
+int	spc_pcmcia_validate_config __P((struct pcmcia_config_entry *));
 void	spc_pcmcia_attach __P((struct device *, struct device *, void *));  
 int	spc_pcmcia_detach __P((struct device *, int));
 int	spc_pcmcia_enable __P((struct device *, int));
@@ -132,6 +134,17 @@ spc_pcmcia_match(parent, match, aux)
 	return (0);
 }
 
+int
+spc_pcmcia_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_memspace != 0 ||
+	    cfe->num_iospace != 1)
+		return (EINVAL);
+	return (0);
+}
+
 void
 spc_pcmcia_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -143,68 +156,47 @@ spc_pcmcia_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
 	const struct spc_pcmcia_product *epp;
+	int error;
 
 	aprint_normal("\n");
 	sc->sc_pf = pf;
 
-	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
-		if (cfe->num_memspace != 0 ||
-		    cfe->num_iospace != 1)
-			continue;
-
-		if (pcmcia_io_alloc(pf, cfe->iospace[0].start,
-		    cfe->iospace[0].length, cfe->iospace[0].length,
-		    &sc->sc_pcioh) == 0)
-			break;
+	error = pcmcia_function_configure(pf, spc_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	if (cfe == 0) {
-		aprint_error("%s: can't alloc i/o space\n", self->dv_xname);
-		goto no_config_entry;
-	}
-
-	/* Enable the card. */
-	pcmcia_function_init(pf, cfe);
-
-	/* Map in the I/O space */
-	if (pcmcia_io_map(pf, PCMCIA_WIDTH_AUTO, &sc->sc_pcioh,
-	    &sc->sc_io_window)) {
-		aprint_error("%s: can't map i/o space\n", self->dv_xname);
-		goto iomap_failed;
-	}
+	cfe = pf->cfe;
+	spc->sc_iot = cfe->iospace[0].handle.iot;
+	spc->sc_ioh = cfe->iospace[0].handle.ioh;
 
 	if (spc_pcmcia_enable(self, 1)) {
-		aprint_error("%s: enable failed\n", self->dv_xname);
-		goto enable_failed;
+		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
+		    error);
+		goto fail;
 	}
 
 	epp = spc_pcmcia_lookup(pa);
 	if (epp == NULL)
 		panic("spc_pcmcia_attach: impossible");
 
-	spc->sc_iot = sc->sc_pcioh.iot;
-	spc->sc_ioh = sc->sc_pcioh.ioh;
 	spc->sc_initiator = 7; /* XXX */
 	spc->sc_adapter.adapt_enable = spc_pcmcia_enable;
 
 	/*
 	 *  Initialize nca board itself.
 	 */
-	sc->sc_flags |= SPC_PCMCIA_ATTACH;
+	sc->sc_state = SPC_PCMCIA_ATTACH1;
 	spc_attach(spc);
-	sc->sc_flags &= ~SPC_PCMCIA_ATTACH;
+	if (sc->sc_state == SPC_PCMCIA_ATTACH1)
+		spc_pcmcia_enable(self, 0);
+	sc->sc_state = SPC_PCMCIA_ATTACHED;
 	return;
 
-enable_failed:
-	/* Disable the device. */
-	pcmcia_io_unmap(pf, sc->sc_io_window);
-
-iomap_failed:
-	/* Unmap our I/O space. */
-	pcmcia_io_free(pf, &sc->sc_pcioh);
-
-no_config_entry:
-	sc->sc_io_window = -1;
+fail:
+	pcmcia_function_unconfigure(pf);
 }
 
 int
@@ -215,17 +207,14 @@ spc_pcmcia_detach(self, flags)
 	struct spc_pcmcia_softc *sc = (void *)self;
 	int error;
 
-	if (sc->sc_io_window == -1)
-                /* Nothing to detach. */
-                return (0);
+	if (sc->sc_state != SPC_PCMCIA_ATTACHED)
+		return (0);
 
 	error = spc_detach(self, flags);
 	if (error)
 		return (error);
 
-	/* Unmap our i/o window and i/o space. */
-	pcmcia_io_unmap(sc->sc_pf, sc->sc_io_window);
-	pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+	pcmcia_function_unconfigure(sc->sc_pf);
 
 	return (0);
 }
@@ -235,14 +224,16 @@ spc_pcmcia_enable(arg, onoff)
 	struct device *arg;
 	int onoff;
 {
-	struct spc_pcmcia_softc *sc = (void *) arg;
+	struct spc_pcmcia_softc *sc = (void *)arg;
 
 	if (onoff) {
 		/*
 		 * If attach is in progress, we already have the device
 		 * powered up.
 		 */
-		if ((sc->sc_flags & SPC_PCMCIA_ATTACH) == 0) {
+		if (sc->sc_state == SPC_PCMCIA_ATTACH1) {
+			sc->sc_state = SPC_PCMCIA_ATTACH2;
+		} else {
 			/* Establish the interrupt handler. */
 			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
 			    spc_intr, &sc->sc_spc);
@@ -265,6 +256,7 @@ spc_pcmcia_enable(arg, onoff)
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = 0;
 	}
 
 	return (0);
