@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: less2netbsd,v 1.3 1999/03/24 09:23:52 mrg Exp $
+#	$NetBSD: less2netbsd,v 1.4 2001/07/26 13:47:24 mrg Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -60,7 +60,7 @@ mkdir -p src/usr.bin/less/less src/usr.bin/less/lesskey src/usr.bin/less/lessech
 ### start less ###############################
 cd $r
 echo less:
-src='INSTALL README ch.c cmdbuf.c defines.h filename.c help.c jump.c line.c main.c optfunc.c opttbl.c prompt.c screen.c tags.c acconfig.h charset.c command.c forwback.c ifile.c linenum.c mark.c option.c os.c position.c regexp.c search.c ttyin.c NEWS brac.c cmd.h decode.c edit.c funcs.h input.c less.h lsystem.c option.h output.c position.h regexp.h signal.c version.c less.nro lglob.h'
+src='INSTALL NEWS README acconfig.h brac.c ch.c charset.c cmd.h cmdbuf.c command.c decode.c defines.h edit.c filename.c forwback.c funcs.h help.c ifile.c input.c jump.c less.h less.nro lglob.h line.c linenum.c lsystem.c main.c mark.c optfunc.c option.c option.h opttbl.c os.c output.c pckeys.h position.c position.h prompt.c regexp.c regexp.h screen.c search.c signal.c tags.c ttyin.c version.c'
 
 pax -rvw $src $d/src/usr.bin/less/less
 
@@ -94,7 +94,7 @@ find $d -name '*.[ch]' -print | while read c; do
 	chmod u+w $c
 	sed 1q < $c | grep '\$NetBSD' || (
 cat <<'__eof_header'
-/*	$NetBSD: less2netbsd,v 1.3 1999/03/24 09:23:52 mrg Exp $	*/
+/*	$NetBSD: less2netbsd,v 1.4 2001/07/26 13:47:24 mrg Exp $	*/
 
 __eof_header
 cat $c
