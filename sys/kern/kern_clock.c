@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.33 1996/04/22 01:38:19 christos Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -282,8 +282,9 @@ int	ticks;
 static int psdiv, pscnt;		/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
 int	tickfix, tickfixinterval;	/* used if tick not really integral */
+#ifndef NTP
 static int tickfixcnt;			/* number of ticks since last fix */
-#ifdef NTP
+#else
 int	fixtick;			/* used by NTP for same */
 int	shifthz;
 #endif
