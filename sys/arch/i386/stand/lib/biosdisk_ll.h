@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.2 1997/03/22 01:41:36 thorpej Exp $	 */
+/*	$NetBSD: biosdisk_ll.h,v 1.3 1998/10/15 15:28:22 ws Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -43,7 +43,9 @@
 struct biosdisk_ll {
 	int             dev;		/* BIOS device number */
 	int             spt, spc;	/* geometry */
+	int		flags;		/* see below */
 };
+#define	BIOSDISK_EXT13	1		/* BIOS supports int13 extension */
 
 #define BIOSDISK_SECSIZE 512
 

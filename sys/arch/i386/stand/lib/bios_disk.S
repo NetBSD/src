@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.2 1998/10/15 15:28:22 ws Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -169,5 +169,88 @@ ok:
 	pop	%ecx
 	popl	%ebx
 	pop	%es
+	popl	%ebp
+	ret
+
+/*
+# int13_extension: check for availibility of int13 extensions.
+*/
+
+ENTRY(int13_extension)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	pushl	%esi
+	pushl	%edi
+
+	movb	8(%ebp), %dl		# drive #
+	movw	$0x55aa, %bx
+
+	call	_C_LABEL(prot_to_real)	# enter real mode
+
+	movb	$0x41, %ah		# ask for disk info
+	int	$0x13
+	setc	%dl
+
+	data32
+	CALL	_C_LABEL(real_to_prot)	# switch back
+
+	xorl	%eax, %eax
+	movb	%dl, %al	# return value in %ax
+
+	cmpw	$0xaa55, %bx
+	sete	%dl
+	orb	%dl, %al
+
+	andb	$1, %cl
+	orb	%cl, %al
+
+	popl	%edi
+	popl	%esi
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%ebp
+	ret
+
+/*
+# BIOS call "INT 0x13 Function 0x42" to read sectors from disk into memory
+#	Call with	%ah = 0x42
+#			%ds:%di = parameter block
+#			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
+#	Return:		
+#			%al = 0x0 on success; err code on failure
+*/
+ENTRY(biosextread)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx
+	push	%ecx
+	push	%edx
+	push	%esi
+	push	%edi
+
+	movb	8(%ebp), %dl	# device
+	movl	12(%ebp), %esi	# parameter block
+
+	call	_C_LABEL(prot_to_real)	# enter real mode
+
+	movb	$0x42, %ah	# subfunction
+	int	$0x13
+	setc	%bl
+
+	data32
+	call	_C_LABEL(real_to_prot) # back to protected mode
+
+	xorl	%eax, %eax
+	movb	%bl, %al	# return value in %ax
+
+	pop	%edi
+	pop	%esi
+	pop	%edx
+	pop	%ecx
+	popl	%ebx
 	popl	%ebp
 	ret
