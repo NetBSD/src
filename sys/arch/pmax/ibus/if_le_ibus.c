@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.2 2001/10/01 11:42:18 simonb Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.3 2002/01/08 17:10:28 chs Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -22,6 +22,7 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
