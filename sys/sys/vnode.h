@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.61 1999/07/07 23:30:03 wrstuden Exp $	*/
+/*	$NetBSD: vnode.h,v 1.62 1999/07/15 21:30:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -149,6 +149,7 @@ struct vnode {
 #define	VBWAIT		0x0400	/* waiting for output to complete */
 #define	VALIASED	0x0800	/* vnode has an alias */
 #define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
+#define VLAYER		0x2000	/* vnode is on a layer filesystem */
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
