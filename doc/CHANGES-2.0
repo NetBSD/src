@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.417 2004/08/29 13:19:39 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.418 2004/08/30 08:31:31 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6872,4 +6872,32 @@ etc/MAKEDEV.tmpl				1.25,1.26 via patch
 	traditional pty names. Of course to do this, the shell code is a bit
 	convoluted.
 	[christos, ticket #776]
+
+usr.bin/kdump/kdump.c				1.79
+
+	Prevent kdump from crashing on unknown ktrace record types.
+	[skrll, ticket #789]
+
+distrib/notes/common/donations			1.26
+distrib/notes/common/upgrade			1.23
+distrib/notes/common/xfer			1.48
+
+	Update various parts of the documentation for the upcoming 2.0 release.
+	[hubertf, ticket #790]
+
+distrib/acorn32/mksparkive.sh			1.6
+distrib/acorn32/stand/Makefile			1.19
+
+	Stat is a host tool, so pick it up from the right place.
+	While we're at it, check for some common errors, and make the usage
+	stuff work better.
+	[gavan, ticket #791]
+
+usr.sbin/wiconfig/wiconfig.8			1.28
+usr.sbin/wiconfig/wiconfig.c			1.34
+
+	Document recently-revived -A option, which sets the authentication
+	type. Eventually we want ifconfig to handle this, but we support
+	it here until ifconfig gets updated.
+	[wrstuden, ticket #792]
 
