@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.21 1997/05/07 00:23:46 lukem Exp $
+#	$NetBSD: FALCON,v 1.22 1997/07/30 15:43:25 leo Exp $
 #
 # ATARI-FALCON
 #
@@ -102,6 +102,6 @@ zs0	at mainbus0		# Serial support through 8530
 grfcc1	at grfbus0		# second graphics driver
 ite*	at grfcc1		# second tty
 nvr0	at mainbus0		# nvram driver
-lpt0	at mainbus0		# centronics printer
+lp0	at mainbus0		# centronics printer
 idec0	at mainbus0		# IDE bus
 ide*	at idec? drive ?	# ... and drives

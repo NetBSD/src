@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.9 1997/05/07 00:23:47 lukem Exp $
+#	$NetBSD: HADES,v 1.10 1997/07/30 15:43:27 leo Exp $
 #
 # Medusa-Hades
 #
@@ -100,7 +100,7 @@ hdfd0	at fdc0 unit 0		# builtin Hades-type floppy drive
 hdfd1	at fdc0 unit 1		# 2nd Hades-type floppy drive
 zs0	at mainbus0		# Serial support through 8530
 nvr0	at mainbus0		# nvram driver
-lpt0	at mainbus0		# centronics printer
+lp0	at mainbus0		# centronics printer
 grfet0	at grfbus0		# ET4000 consoles
 ite*	at grfet0
 grfet1	at grfbus0

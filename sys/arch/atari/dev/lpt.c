@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.10 1996/12/26 23:25:15 leo Exp $ */
+/*	$NetBSD: lpt.c,v 1.11 1997/07/30 15:43:37 leo Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -107,10 +107,10 @@ struct lpt_softc {
 #define	NOT_READY()	(MFP->mf_gpip & IO_PBSY)
 
 /* {b,c}devsw[] function prototypes */
-dev_type_open(lptopen);
-dev_type_close(lptclose);
-dev_type_write(lptwrite);
-dev_type_ioctl(lptioctl);
+dev_type_open(lpopen);
+dev_type_close(lpclose);
+dev_type_write(lpwrite);
+dev_type_ioctl(lpioctl);
 
 static void lptwakeup __P((void *arg));
 static int pushbytes __P((struct lpt_softc *));
@@ -122,20 +122,20 @@ int lpthwintr __P((struct lpt_softc *, int));
 /*
  * Autoconfig stuff
  */
-static void lptattach __P((struct device *, struct device *, void *));
-static int  lptmatch __P((struct device *, struct cfdata *, void *));
+static void lpattach __P((struct device *, struct device *, void *));
+static int  lpmatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach lpt_ca = {
-	sizeof(struct lpt_softc), lptmatch, lptattach
+struct cfattach lp_ca = {
+	sizeof(struct lpt_softc), lpmatch, lpattach
 };
 
-struct cfdriver lpt_cd = {
+struct cfdriver lp_cd = {
 	NULL, "lpt", DV_DULL, NULL, 0
 };
 
 /*ARGSUSED*/
 static	int
-lptmatch(pdp, cfp, auxp)
+lpmatch(pdp, cfp, auxp)
 struct	device	*pdp;
 struct	cfdata	*cfp;
 void		*auxp;
@@ -147,7 +147,7 @@ void		*auxp;
 
 /*ARGSUSED*/
 static void
-lptattach(pdp, dp, auxp)
+lpattach(pdp, dp, auxp)
 struct	device *pdp, *dp;
 void	*auxp;
 {
@@ -166,7 +166,7 @@ void	*auxp;
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag, mode, p)
+lpopen(dev, flag, mode, p)
 	dev_t		dev;
 	int		flag, mode;
 	struct proc	*p;
@@ -178,9 +178,9 @@ lptopen(dev, flag, mode, p)
 	int			spin;
 	int			sps;
 
-	if (unit >= lpt_cd.cd_ndevs)
+	if (unit >= lp_cd.cd_ndevs)
 		return ENXIO;
-	sc = lpt_cd.cd_devs[unit];
+	sc = lp_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -244,14 +244,14 @@ lptwakeup(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lptclose(dev, flag, mode, p)
+lpclose(dev, flag, mode, p)
 	dev_t		dev;
 	int		flag;
 	int		mode;
 	struct proc	*p;
 {
 	int		 unit = LPTUNIT(dev);
-	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
+	struct lpt_softc *sc = lp_cd.cd_devs[unit];
 	int		 sps;
 
 	if (sc->sc_count)
@@ -333,12 +333,12 @@ pushbytes(sc)
  * chars moved to the output queue.
  */
 int
-lptwrite(dev, uio, flags)
+lpwrite(dev, uio, flags)
 	dev_t		dev;
 	struct uio	*uio;
 	int		flags;
 {
-	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = lp_cd.cd_devs[LPTUNIT(dev)];
 	size_t n;
 	int error = 0;
 
@@ -413,7 +413,7 @@ int		  sr;
 }
 
 int
-lptioctl(dev, cmd, data, flag, p)
+lpioctl(dev, cmd, data, flag, p)
 	dev_t		dev;
 	u_long		cmd;
 	caddr_t		data;
