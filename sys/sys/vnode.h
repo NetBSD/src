@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.125 2004/08/13 23:15:39 mycroft Exp $	*/
+/*	$NetBSD: vnode.h,v 1.126 2004/09/21 03:10:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -144,6 +144,7 @@ struct vnode {
 	/* VISTTY used when reading dead vnodes */
 #define	VISTTY		0x0008	/* vnode represents a tty */
 #define	VEXECMAP	0x0010	/* vnode has PROT_EXEC mappings */
+#define	VLOCKSWORK	0x0080	/* FS supports locking discipline */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VBWAIT		0x0400	/* waiting for output to complete */

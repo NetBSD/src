@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.233 2004/09/13 19:45:21 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.234 2004/09/21 03:10:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.233 2004/09/13 19:45:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.234 2004/09/21 03:10:35 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1742,7 +1742,7 @@ vclean(vp, flags, p)
 	vp->v_tag = VT_NON;
 	simple_lock(&vp->v_interlock);
 	VN_KNOTE(vp, NOTE_REVOKE);	/* FreeBSD has this in vn_pollgone() */
-	vp->v_flag &= ~VXLOCK;
+	vp->v_flag &= ~(VXLOCK|VLOCKSWORK);
 	if (vp->v_flag & VXWANT) {
 		vp->v_flag &= ~VXWANT;
 		simple_unlock(&vp->v_interlock);
