@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.8 1998/06/06 20:12:28 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.9 1998/06/24 01:04:26 ross Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef	_ALPHA_COMMON_SGMAPVAR_H
+#define	_ALPHA_COMMON_SGMAPVAR_H
 
 #include <sys/extent.h>
 #include <machine/bus.h>
@@ -88,3 +91,5 @@ void	alpha_sgmap_init __P((bus_dma_tag_t, struct alpha_sgmap *,
 int	alpha_sgmap_alloc __P((bus_dmamap_t, bus_size_t,
 	    struct alpha_sgmap *, int));
 void	alpha_sgmap_free __P((bus_dmamap_t, struct alpha_sgmap *));
+
+#endif	/* _ALPHA_COMMON_SGMAPVAR_H */
