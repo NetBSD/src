@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.12 1999/09/04 18:38:28 soren Exp $	*/
+/*	$NetBSD: apmd.c,v 1.13 2000/01/13 16:04:53 jlam Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -315,7 +315,7 @@ main(int argc, char *argv[])
     struct passwd *pw;
     struct group *gr;
 
-    while ((ch = getopt(argc, argv, "qadsf:t:S:m:o:")) != -1)
+    while ((ch = getopt(argc, argv, "qaldsf:t:S:m:o:")) != -1)
 	switch(ch) {
 	case 'q':
 	    speaker_ok = FALSE;
