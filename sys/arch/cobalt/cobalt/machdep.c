@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.4.5 2002/06/24 22:04:25 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.4.6 2002/07/02 20:15:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -211,9 +211,9 @@ mach_init(memsize)
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
-	proc0.p_addr = proc0paddr = (struct user *)v;
-	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
+	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
