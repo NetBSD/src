@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.20 2001/09/03 17:14:49 thorpej Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.21 2002/07/24 23:45:03 mjacob Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -121,16 +121,16 @@ struct scsi_defect_descriptor_bf {
 
 /* Bytes from index format */
 struct scsi_defect_descriptor_bfif {
-	u_int8_t cylinder[2];
+	u_int8_t cylinder[3];
 	u_int8_t head;
-	u_int8_t bytes_from_index[2];
+	u_int8_t bytes_from_index[4];
 };
 
 /* Physical sector format */
 struct scsi_defect_descriptor_psf {
-	u_int8_t cylinder[2];
+	u_int8_t cylinder[3];
 	u_int8_t head;
-	u_int8_t sector[2];
+	u_int8_t sector[4];
 };
 
 /*
