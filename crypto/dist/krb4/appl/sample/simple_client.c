@@ -10,7 +10,7 @@
  */
 
 #include "sample.h"
-RCSID("$Id: simple_client.c,v 1.1.1.2 2000/12/29 01:42:27 assar Exp $");
+RCSID("$Id: simple_client.c,v 1.1.1.3 2001/09/17 12:09:44 assar Exp $");
 
 #define MSG "hi, Jennifer!"		/* message text */
 
@@ -33,6 +33,7 @@ talkto(char *hostname, char *service, int port)
 
   /* for krb_mk_safe/priv */
   struct sockaddr_in c_sock;	/* client address */
+  socklen_t c_sock_len;
   CREDENTIALS c;			/* ticket & session key */
   CREDENTIALS *cred = &c;
 
@@ -52,7 +53,7 @@ talkto(char *hostname, char *service, int port)
   if (port)
     s_sock.sin_port = port;
   else
-    s_sock.sin_port = k_getportbyname (service, "tcp", htons(SAMPLE_PORT));
+    s_sock.sin_port = k_getportbyname (service, "udp", htons(SAMPLE_PORT));
 
   if (gethostname(myhostname, sizeof(myhostname)) < 0) {
     warn("gethostname");
@@ -111,8 +112,8 @@ talkto(char *hostname, char *service, int port)
 
   /* Get my address */
   memset(&c_sock, 0, sizeof(c_sock));
-  i = sizeof(c_sock);
-  if (getsockname(sock, (struct sockaddr *)&c_sock, &i) < 0) {
+  c_sock_len = sizeof(c_sock);
+  if (getsockname(sock, (struct sockaddr *)&c_sock, &c_sock_len) < 0) {
     warn("getsockname");
     return 1;
   }
@@ -159,7 +160,7 @@ static void
 usage (void)
 {
   fprintf (stderr, "Usage: %s [-s service] [-p port] hostname\n",
-	   __progname);
+	   getprogname());
   exit (1);
 }
 
@@ -172,7 +173,7 @@ main(int argc, char **argv)
   struct servent *serv;
   int c;
 
-  set_progname (argv[0]);
+  setprogname (argv[0]);
 
   strlcpy (service, SAMPLE_SERVICE, sizeof(service));
 
@@ -182,7 +183,7 @@ main(int argc, char **argv)
       strlcpy (service, optarg, sizeof(service));
       break;
     case 'p' :
-      serv = getservbyname (optarg, "tcp");
+      serv = getservbyname (optarg, "udp");
       if (serv)
 	port = serv->s_port;
       else

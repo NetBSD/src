@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -36,7 +36,9 @@
 #include <string.h>
 #include <histedit.h>
 
-RCSID("$Id: edit_compat.c,v 1.1.1.2 2000/12/29 01:43:47 assar Exp $");
+#include "edit_compat.h"
+
+RCSID("$Id: edit_compat.c,v 1.1.1.3 2001/09/17 12:10:03 assar Exp $");
 
 void
 rl_reset_terminal(char *p)
@@ -44,7 +46,7 @@ rl_reset_terminal(char *p)
 }
 
 void
-rl_initialize()
+rl_initialize(void)
 {
 }
 

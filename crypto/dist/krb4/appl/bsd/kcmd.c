@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: kcmd.c,v 1.1.1.2 2000/12/29 01:42:20 assar Exp $");
+RCSID("$Id: kcmd.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
 
 #define	START_PORT	5120	 /* arbitrary */
 
@@ -168,7 +168,7 @@ kcmd(int *sock,
 	} else {
 		char num[8];
 		int s2 = getport(&lport), s3;
-		int len = sizeof(from);
+		socklen_t len = sizeof(from);
 
 		if (s2 < 0) {
 			status = -1;
@@ -231,7 +231,7 @@ kcmd(int *sock,
 
 	/* set up the needed stuff for mutual auth, but only if necessary */
 	if (authopts & KOPT_DO_MUTUAL) {
-		int sin_len;
+		socklen_t sin_len;
 		*faddr = sin;
 
 		sin_len = sizeof(struct sockaddr_in);

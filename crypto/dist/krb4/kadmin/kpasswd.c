@@ -25,7 +25,7 @@ or implied warranty.
 
 #include "kadm_locl.h"
 
-RCSID("$Id: kpasswd.c,v 1.1.1.2 2000/12/29 01:43:07 assar Exp $");
+RCSID("$Id: kpasswd.c,v 1.1.1.3 2001/09/17 12:09:52 assar Exp $");
 
 static void
 usage(int value)
@@ -48,7 +48,7 @@ main(int argc, char **argv)
     int c;
     char tktstring[MaxPathLen];
     
-    set_progname (argv[0]);
+    setprogname (argv[0]);
 
     memset (&principal, 0, sizeof(principal));
     memset (&default_principal, 0, sizeof(default_principal));

@@ -53,7 +53,7 @@
 
 #include <config.h>
 
-RCSID("$Id: auth.c,v 1.1.1.2 2000/12/29 01:42:33 assar Exp $");
+RCSID("$Id: auth.c,v 1.1.1.3 2001/09/17 12:09:45 assar Exp $");
 
 #if	defined(AUTHENTICATION)
 #include <stdio.h>
@@ -100,7 +100,7 @@ extern rsaencpwd_printsub();
 #endif
 
 int auth_debug_mode = 0;
-static 	char	*Name = "Noname";
+static 	const	char	*Name = "Noname";
 static	int	Server = 0;
 static	Authenticator	*authenticated = 0;
 static	int	authenticating = 0;
@@ -217,7 +217,7 @@ findauthenticator(int type, int way)
 }
 
 void
-auth_init(char *name, int server)
+auth_init(const char *name, int server)
 {
     Authenticator *ap = authenticators;
 
@@ -646,7 +646,7 @@ auth_gen_printsub(unsigned char *data, int cnt, unsigned char *buf, int buflen)
     buf[buflen-2] = '*';
     buflen -= 2;
     for (; cnt > 0; cnt--, data++) {
-	snprintf(tbuf, sizeof(tbuf), " %d", *data);
+	snprintf((char*)tbuf, sizeof(tbuf), " %d", *data);
 	for (cp = tbuf; *cp && buflen > 0; --buflen)
 	    *buf++ = *cp++;
 	if (buflen <= 0)

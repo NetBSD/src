@@ -30,7 +30,7 @@ or implied warranty.
 
 #include "kadm_locl.h"
 
-RCSID("$Id: admin_server.c,v 1.1.1.2 2000/12/29 01:43:05 assar Exp $");
+RCSID("$Id: admin_server.c,v 1.1.1.3 2001/09/17 12:09:52 assar Exp $");
 
 /* Almost all procs and such need this, so it is global */
 admin_params prm;		/* The command line parameters struct */
@@ -271,7 +271,7 @@ static void
 accept_client (int admin_fd)
 {
     int pipe_fd[2];
-    int addrlen;
+    socklen_t addrlen;
     struct sockaddr_in peer;
     pid_t pid;
     int peer_fd;
@@ -290,7 +290,11 @@ accept_client (int admin_fd)
 	    if (nunauth == 0)
 		return;
 
+#ifdef HAVE_RANDOM
+	    victim = random() % nchildren;
+#else
 	    victim = rand() % nchildren;
+#endif
 	    if (children[victim].authenticated == 0) {
 		kill(children[victim].pid, SIGINT);
 		close(children[victim].pipe_fd);
@@ -527,7 +531,7 @@ main(int argc, char **argv)		/* admin_server main routine */
     int c;
     struct in_addr i_addr;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
 
     umask(077);		/* Create protected files */
 
@@ -537,6 +541,14 @@ main(int argc, char **argv)		/* admin_server main routine */
     prm.inter = 0;
 
     memset(krbrlm, 0, sizeof(krbrlm));
+
+#if defined(HAVE_SRANDOMDEV)
+    srandomdev();
+#elif defined(HAVE_RANDOM)
+    srandom(time(NULL));
+#else
+    srand (time(NULL));
+#endif
 
     while ((c = getopt(argc, argv, "f:hmnd:a:r:i:")) != -1)
 	switch(c) {
