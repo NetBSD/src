@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.27 2001/11/09 09:05:52 lukem Exp $
+.\"	$NetBSD: tunefs.8,v 1.28 2001/11/16 10:25:51 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -139,8 +139,8 @@ been deleted to get under the higher threshold.
 .It Fl n Ar soft_dependency_enabling
 The soft dependency code allows most file system I/O to be done
 asynchronously by reordering dependant writes to ensure that the
-on-disk metadata is self-consistent even when updates are deferred. 
-Additionally, metadata updates are aggregated, reducing the total 
+on-disk metadata is self-consistent even when updates are deferred.
+Additionally, metadata updates are aggregated, reducing the total
 number of writes performed.
 Use of this facility does not require any changes to the file system,
 so it can be enabled or disabled any time that the file system is unmounted.

@@ -6,7 +6,7 @@ server using a local path.  Start off like this:
 	# mkdir /p
 	# mount -t portal `pwd`/cvs.conf /p
 	# chmod +x cvs.sh
-	# 
+	#
 
 The next step is to set up the authentication.  The NetBSD anoncvs
 server uses ssh for authentication, so all you need to do is
@@ -29,7 +29,7 @@ Here's a list of things I've done with this:
 	#	$NetBSD: security,v 1.52 ...
 	% diff -u -< /p/netbsd/basesrc/etc/security,1.52 /etc/security
 	[ diffs elided ]
-	% 
+	%
 
 Notice the use of the - file given to diff and the input redirection
 so that it will read from stdin instead of opening the file itself.
@@ -42,7 +42,7 @@ This gets around the stat() problem.
 	% foreach i (`jot 10 43`)
 	> cp /p/netbsd/basesrc/etc/security,1.$i /tmp
 	> end
-	% 
+	%
 
 Presto!  Versions 1.43 through 1.52 (jot(1) prints 10 numbers
 starting at 43) of /etc/security are copied into your /tmp directory
@@ -53,7 +53,7 @@ You can use tags instead of revision numbers if you like.
 trunk, you can do this:
 
 	# cp /p/netbsd/basesrc/etc/security /etc/security
-	# 
+	#
 
 to upgrade to the latest and greatest version any time you like,
 or you can do this:
@@ -61,7 +61,7 @@ or you can do this:
 	# uname -r
 	1.5.2
 	# cp /p/netbsd/basesrc/etc/security,netbsd-1-5-PATCH002 /etc/security
-	# 
+	#
 
 to get rid of any changes you might have made to /etc/security that
 you no longer want.

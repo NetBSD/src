@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.25 2001/06/05 11:22:44 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.26 2001/11/16 10:25:44 wiz Exp $
 .\"
 .Dd December 19, 2000
 .Dt FDISK 8
@@ -114,7 +114,7 @@ During this, all four partitions will be marked empty.
 .Pp
 The flags
 .Fl a ,
-.Fl i 
+.Fl i
 or
 .Fl u
 are used to indicate that the partition data is to be updated.
@@ -182,7 +182,7 @@ machines.
 Run
 .Nm
 in a non-interactive mode.
-In this mode, you can only change the disk parameters by using the 
+In this mode, you can only change the disk parameters by using the
 .Fl b
 flag.
 This is provided only so scripts or other programs may use
@@ -195,7 +195,7 @@ flag with
 makes it impossible to specify the starting and ending
 .Ar cylinder ,
 .Ar head
-and 
+and
 .Ar sector
 fields.
 They will be automatically computed using the BIOS geometry.
@@ -205,7 +205,7 @@ Explicitly request initialization of the master boot code
 .Nm fdisk /mbr
 does under
 .Tn MSDOS ) ,
-even if the magic number in the first sector is ok. 
+even if the magic number in the first sector is ok.
 The partition table is left alone by this (but see above).
 .It Fl s Ar id/start/size
 Specify the partition
@@ -222,7 +222,7 @@ or
 .Fl 3
 .Pc
 .It Fl S
-When used with no other flags print a series of 
+When used with no other flags print a series of
 .Pa /bin/sh
 commands for setting variables to the partition information.
 This is used by the installation scripts.
