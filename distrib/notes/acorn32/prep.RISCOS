@@ -1,0 +1,559 @@
+	$NetBSD: prep.RISCOS,v 1.1 2001/10/14 14:08:03 bjh21 Exp $
+
+These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
+(RiscPC/A7000/A7000+).
+
+0 Before you start
+
+Read this document and any other accompanying documentation
+completely before continuing.
+
+1 Requirements
+
+1.1 Hardware
+
+Refer to the NetBSD installation notes for a list of supported hardware.
+
+1.2 Software
+
+You will need the following RiscOS software:
+
+	A program that will unpack sparchives. We recommend that you
+	get David Pilling's !SparkPlug. A selfextracting version of this
+	can be found on the Acorn ftp site (ftp://ftp.acorn.co.uk), and
+	also at David Pilling's W3 site
+	(http://www.pilling.demon.co.uk/soft.html).
+
+	A program that can uncompress gzip files:
+
+		SparkFS from David Pilling (commercial) (v1.28 for
+		SA-110).
+
+		!Gzip from HENSA (micros.hensa.ac.uk).
+
+		There is also a command line version of gzip available
+		that Laurent Domisse has patched to work on SA. This is
+		available from:
+        	http://www.users.dircon.co.uk/~arcangel/files/index.html
+
+	A program to report your disk's geometry:
+
+		Not really needed you can simply boot the installation
+		kernel and look for the geometry in the boot messages.
+
+		Sergio Monesi's fsck suite (a good thing to have around
+		anyway). Available from:
+		http://cdc8g5.cdc.polimi.it/~pel0015/fsck.html
+
+		!Zap (The read disk facility). Available from HENSA.
+
+	The partition software/formatter for your desired installation
+	target:
+
+		IDE disks on motherboard interface: !HForm
+		IDE disks on Simtec interface: UNKNOWN
+		IDE disks on ICS interface: UNKNOWN
+		IDE disks on RapIDE interface: UNKNOWN
+		Acorn SCSI cards: ScsiDM
+		Power-tec SCSI cards: !PowerMgr
+		Cumana SCSI-2: !SCSIMgr
+		oak SCSI-1 card: UNKNOWN
+		MCS Connect32 SCSI: UNKNOWN
+		Morley SCSI: UNKNOWN
+
+Additionally you will require the following:
+
+	An installation kernel for your platform:
+
+		RiscPC:	UNKNOWN
+		A7000(+): UNKNOWN
+
+	The Bootloader and RiscOS tools: bootloader.arc (This should
+	be pre-extracted if you're installing from CD-ROM).
+
+	The NetBSD/arm32 distribution sets (Will be on the CD-ROM, or
+	available from your nearest NetBSD ftp site).
+
+	A hardcopy of this document, along with a hardcopy of the
+	NetBSD installation instructions "INSTALL").
+
+2 Preparing your hard disk
+
+Terms:
+
+Device:		The actual physical hard disk
+Partition:	A section of a device.
+File system:	A structured partition that is able to hold files.
+Disc:		A RiscOS file system in a partition. There can be
+		more than one Disc per Device.
+
+You will have to decide which device you wish to install NetBSD on.
+You will also have to decide whether you want to split the device
+between one or more RiscOS discs and NetBSD or dedicate a whole
+device for NetBSD.
+
+In making this decision you should consider the possibility that if
+NetBSD is incorrectly configured on a shared device then your shared
+data is at risk.
+
+It is still recommended that if you decide to dedicate a device to
+NetBSD that you set aside a small RISC OS partition at the beginning
+of the device. This is a useful place to store the RiscOS side of
+NetBSD, and will make the use of UnixFS easier to configure. If you
+do decide to create a minimal RiscOS partition at the beginning of
+the device, a size of 10-20 MB is recommended (some partitioning
+software has problems with partitions smaller than this).
+
+The point is that you will have to repartition your device to make
+room for a separate partition after the RISC OS one for NetBSD. This
+means backing up your device, re-partitioning it and then copying all
+the data back afterwards. We recommend that you only copy the needed
+data back and put off installing the rest until you have NetBSD up
+and running. This way you will save yourself a lot of work if
+something goes wrong and you have to start all over again.
+
+2.1 Sharing your device
+
+2.1.1 Acorn IDE
+
+Use !HForm for this interface. This is a program that is delivered
+with your computer and is located in the Utilities directory on your
+harddisc.
+
+With this software you only have the possibility of using one
+partition for RISC OS, so you have to set the rest aside for NetBSD.
+
+Use this procedure to set up your device:
+
+	Start !HForm by double-clicking on it's icon.
+
+	Choose the "custom" or "other" option when prompted (usually
+	the last).
+
+	Use the default values for the geometry but do not enter the
+	full number of cylinders. Just enter the number you want to
+	use for RISC OS. Make a note of this number.
+
+	Continue to accept the default answers until you're asked
+	whether you want to format or initialise, choose initialise.
+
+	Go to the section about running bb_riscbsd.
+
+2.1.2 Cumana SCSI-2 card
+
+It is recommended that you use a newer version of !SCSIMgr (newer
+than v1.55) since this will be easier to use when you want to leave
+part of the device unused by RISC OS. You should check for the latest
+version of this software at the following URL:
+http://www.cumana.demon.co.uk
+
+You need to create one or more RISC OS partitions, and you do it in
+in the following way:
+	Run !SCSIMgr by double-clicking on it.
+
+	Select the device you wish to repartition.
+
+	Click on the clear icon in the partitions subwindow.
+
+	This will give you a dialogue box where you can specify the
+	size of the RISC OS partitions. Do not select all since you
+	want to use part of it for NetBSD.
+
+	Enter the amount of the device you wish to reserve for
+	RiscOS. This will be the whole device size less the amount
+	you want to reserve for NetBSD. Make a note of this number.
+
+	If you like, split the RISC OS portion of the device into
+	several partition (you should only "see" the RiscOS portion).
+
+	Click on Execute when you are happy with the partions. This
+	will create your partitions, and wipe you device.
+
+	Go to the section about running bb_riscbsd.
+
+2.1.3 Alsystems Power-tec SCSI-2 card
+
+You must use the !PowerMgr program to partition the device.
+
+The RISC OS partitions should be called RiscOs:, and the NetBSD one
+should be called Empty:.
+
+Here is the procedure you should use:
+	Start !PowerMgr by double-clicking on its icon.
+
+	Click on advanced in the main window
+
+	Click on Define/create partitions
+		Click on the device you want to set up for NetBSD
+
+		Set up the RISC OS partitions as RiscOs: and the
+		remaining one as Empty:
+
+		Click on each figure and press RETURN
+
+		Click on partition drive
+
+		Click on yes to warning as you really want to wipe
+		the device
+
+		Click on yes to proceed, this will lead you to the
+		partition init.
+
+	Partition init
+		Set a tick on all RiscOs: partitions, give them a name
+		and set LFAU to auto.
+
+		Unset the tick on your Empty: partition.
+
+		Click on Inititialize selected partitions.
+
+		Click on yes to proceed init as you want to wipe the
+		selected partitions
+
+		Click on yes to proceed to configure
+
+	Configure
+		Here you should set up the RISC OS partitions as you
+		like them. Normally the default will be ok.
+
+		Click on configure. This will configure your computer
+		and give you access to the Discs.
+
+	You *Must Not* run bb_riscbsd
+
+2.1.4 Acorn SCSI card
+
+You can only have one RISC OS partition with this card. The rest has
+to be set aside for NetBSD.
+
+This card does not have a friendly WIMP-based interface on the SCSI
+management program, but the command line version is very good. You
+should run this in a task window (press CTRL-F12):
+	dir <location_of_scsidm>
+
+	scsidm
+
+You will get the following prompt:
+scsidm>
+
+Now you should enter the following commands:
+	probe		(to see which devices are available)
+
+	device <no>	(replace <no> with the no of your device)
+
+	section		(to divide the device between RISC OS and
+			NetBSD)
+		Answer yes to the question:
+			Include RISCiX partitions?
+
+		Enter the size of the RISC OS area in blocks
+		(sectors)
+
+		SCSIDM will round this up to the nearest cylinder
+		boundary.
+
+		Answer yes to the question:
+			Do you really want to section device <no>?
+
+		This will section the device into two partitions.
+
+	quit
+
+	Go to the section on running bb_riscbsd
+
+2.1.5 Other interfaces
+
+It may not be possible to partition devices on other interface. If
+you are using a different interface you have 2 options:
+	Try to work out how to partition devices on it
+
+	Use the entire device for NetBSD
+
+2.2 Using a whole device for NetBSD
+
+As a safety precaution NetBSD/arm32 looks for a filecore bootblock
+at the beginning of any device it labels. If it finds one and it
+looks as though it is in use then NetBSD/arm32 will not touch it.
+
+Because of this, if you've ever used your device for RiscOS, you will
+need to invalidate this bootblock.
+
+To do this you need to:
+	Be absolutely sure you want to do this
+
+	run bb_trash and follow the instructions
+
+Ensure that this device is now not configured for RiscOS.
+
+You are now ready to boot NetBSD and continue the installation.
+
+3 Running bb_riscbsd
+
+When you run this program, you will first be asked whether you are
+installing to an ADFS drive or a SCSI drive. You can just press A or
+S respectively. (The bb_riscbsd program assumes that you are using a
+non-Acorn SCSI card, so if you are using an Acorn card, then you may
+have to edit this program and replace CSI_DiscOp with SCSIFS_DiscOp.)
+
+Then you will be asked which disc you want to install NetBSD on. This
+*must* be the first disc on the device. bb_riscbsd will now
+scrutinize the device and see how it has been laid out.
+
+It will then tell you how much of the device is occupied by RiscOS in
+cylinders, and you will then be asked for the NetBSD starting
+cylinder. Normally you should just enter the number given to you
+since the RISC OS starting cylinder is 0 and therefore the last
+cylinder in use is one less than the figure given. If no figure is
+displayed, then your partitioning software failed to fill in the
+bootblock completely (it doesn't have to do this for you but most do)
+or you selected the wrong device. If you are convinced that this is
+the correct device then you must calculated a cylinder offset using
+the numbers noted down during partitioning (if it is not a whole
+number *always* round up, you might waste a little of the device but
+it'll all be safe).
+
+Make a note of this number.
+
+bb_riscbsd will make a backup of the original bootblock, but it
+can be non-trivial to put it back.
+
+4 Booting
+
+Now that your device is ready for the installation you need to
+unpack the bootloader archive (bootloader.arc, if you're installing
+from CD-ROM then this should be unpacked already), copy it to your
+harddisk and run the bootloader (!BtRiscBSD).
+
+4.1 Configuring !BtRiscBSD before installation
+
+!BtRiscBSD should come configured ready for installation.
+
+4.2 Running !BtRiscBSD
+
+Double click on the !BtRiscBSD icon and then on the iconbar icon to
+open the Configuration window.
+
+Drag the kernel for your platform to the kernel name box and hit boot.
+
+NetBSD should now start to boot, install NetBSD as per the NetBSD
+installation notes.
+
+4.3 Configuring !BtRiscBSD after installation
+
+Run !BtRiscBSD as before and bring up the configuration window.
+
+Set the kernel as UnixFS:$.netbsd and set the native boot option (if
+the boot fails use a copy of the installed kernel (/netbsd) from
+RiscOS.
+
+Set "Root device", "swap device" to the partitions you used for the
+installation.
+
+Set multi user mode.
+
+Ensure the RAMDISK is set to 0.
+
+Click save.
+
+Click Boot.
+
+5 Advanced stuff
+
+5.1 Using UnixFS to copy the sets.
+
+Once the required sets are installed and you can boot from your
+newly installed NetBSD setup, you can use UnixFS to copy the
+remaining sets from RiscOS to NetBSD.
+
+In order to be able to use unixfs to transfer the sets you must have
+a certain setup.
+
+1) You must have the RiscOS disc that corresponds to the NetBSD
+   device configured (eg *con. IDEdiscs 2) even if it has no RiscOS
+   section.
+2) If you have RISC OS 3.5 without the new FileCore, then you must
+   also have the NetBSD file system *completely* below the 511 MB
+   boundary of the device.
+3) You must know the SWI base of the <filesys>_DiscOp SWI. Here
+   <filesys> is SCSIFS, SCSI or ADFS depending upon which controller
+   type you have you NetBSD device on.
+   Some common ones:
+   	Power-tec SCSI-2 card:	&40980
+	RapIDE:			&4BBC0
+
+   There are small obey files for some interfaces supplied with UnixFS.
+4) Have given the directory you want to write into write permission for
+   everyone. This should have been done above. For example to make
+   /usr/distrib world writable type (as root):
+	chmod 1777 /usr/distrib
+
+To mount a Unix partition:
+
+1) Double-click on the unixfs_res module to load it.
+2) Run a unixfs_mount command to mount the partition.
+3) Open the root directory by double-clicking on the openroot file.
+4) Open the distrib directory and just copy the sets to this.
+5) Shut down unixfs by double-clicking on the kill_unixfs file.
+   THIS STEP IS VERY IMPORTANT as it works like dismount on MS-DOS floppies.
+
+The difficult step here is step number 2). If you are using an
+ADFS IDE disc, then you can just double-click on one of the
+following obey files (always choose the RiscOS disc number that
+corresponds to the *first* disc on the NetBSD device):
+- MountHD4a (ADFS::4 drive, not disc, root file system)
+- MountHD4e (ADFS::4 drive, not disc, /usr file system)
+- MountHD5a (ADFS::5 drive, not disc, root file system)
+- MountHD5e (ADFS::5 drive, not disc, /usr file system)
+
+If you are not using an ADFS IDE device, you need to create such
+an obey file yourself. We recommend that you copy one of the
+above and change that. These files normally only contain a
+unixfs_mount command. If you go to the command line (or a task
+window), and you type *help unixfs_mount you will see that the
+unixfs_mount command has a very incomprehensible syntax.
+
+The unixfs_mount command normally only takes one argument. That
+is composed of the following:
+(discop_swibase + (disc << 3) + partition)
+
+To mount the root partition of third Power-tec SCSI-2 disc the
+following commands can be used in task window (press CTRL-F12) to
+find the argument to unixfs_mount:
+        *basic
+        PRINT ~(&40980 + (6 << 3) + 0)
+        QUIT
+
+The PRINT command calculates the value to use and will in this
+context give the value 409B0 which also is in hexadecimal. The
+interesting things above are:
+- &40980        The SWI base for SCSIFS_DiscOp.
+- 6             The disc number in RISC OS.
+- 0             The RiscBSD partition no. with a=0, b=1 etc.
+- ~             Tell the PRINT command to show the result in hexadecimal.
+- <<            Shifts the first number with the second number
+                places left.
+                In this case, it shifts 6 with 3 places to the left.
+- &             Denotes that the number is in hexadecimal.
+- ( and )       Used to group the sub-expressions.
+
+When you have calculated the figure to give to unixfs_mount you
+just change it in the copy of the file you made above and run it by
+double-clicking on it.
+
+When you have mounted the unixfs file system, you can open the
+directory and copy the sets to it.
+Don't forget to copy the file "checksums" too. As its name suggests, it
+contains checksums to check if the files are OK.
+
+When you are finished with the transfer, run the file
+kill_unixfs to dismount the unixfs file system.
+
+Appendix A - Device naming
+
+
+The names of the devices in NetBSD are not at all like the ones
+in RISC OS. We will here try to explain the naming scheme used
+in NetBSD. This is pretty much the same in all UNIXes, but
+there will be some differences. NetBSD is derived from BSD and
+differs from the ones that are derived from System V. Most of
+the dominant operating systems in the UNIX market today are
+based on System V (Sun Solaris, SGI Irix, HP HP-UX 10.xx, Linux
+etc.). Some of them are actually hybrids of both.
+
+The file system in UNIX use the slash character (/) as the
+directory separator. The top (or bottom if you like) directory
+is called the root and is denoted by only the slash (/). All
+absolute filenames are adressed starting with the root, so the
+temporary directory is called /tmp.
+
+The devices in UNIX are addressed as special files in the
+file system, and they all start with /dev, so e.g. the quadrature
+mouse is called /dev/quadmouse.
+
+Also some devices can be adressed in two different ways; as a
+raw (character by character) or block device. This is especially
+true with discs, and they therefore have two different names.
+The raw device is called the same as the block device except
+that it has an 'r' in front of the name. E.g. the first internal
+hard drive is called /dev/wd0 as a block device, but /dev/rwd0
+as a raw device. See also later.
+
+For now, the only needed devices are the storage devices, so we
+will hereby describe the naming convention used for these.
+Please note that when you have different partitions on a device,
+they will get the same number in NetBSD, but different letters,
+whereas in RISC OS they will get different numbers. See the
+examples at the end of this section.
+
+The (block) device names are mostly composed of 4 characters:
+1. The type
+        - w     Winchester drives (i.e. standard ADFS drives)
+        - s     SCSI drives
+        - c     CD-ROM drives
+        - r     RAM drives (obsolete in newer kernels)
+        - m     Memory drives (only in newer kernels)
+        - f     Floppy drives
+2. A 'd' indicating a disc device
+3. The number of the device of that type starting with 0.
+        - For IDE drives, the master will be 0, and the slave 1.
+        - For SCSI drives, the target ID will be used to
+determine the number. They start on 0 and increase with
+each device found. The drive with the lowest target ID will get
+0, the second lowest target ID will get 1 etc.
+Also, if you have different controllers, all devices on controller
+0 (lowest expansion slot) will be added first.
+        - The CD-ROM drives act the same way as SCSI drives.
+        - The floppy drive is numbered as in RISC OS.
+        - At present you can only have one RAM drive, so it is 0.
+4. The name of the partition. There are eight of these (along with
+   common allocations):
+        - a     The root partition
+        - b     The swap partition
+        - c     The whole disc
+        - d     Scratch (what are these?)
+        - e     The first additonal partition.
+                i.e. if you have only /usr, then this will be /usr
+                if you have both /var and /usr this will be /var
+        - f     The section additional partition.
+                i.e. if you have /var and /usr, this will be /usr
+        - g     ????
+        - h     Previously the /usr partition?
+
+If you only have one partition on the drive this can normally be
+accessed with either partition a (root partition) or c (whole
+disc). This has not been verified to work.
+
+A couple of examples of how to map RISC OS names to NetBSD ones
+(the partition names have been left out):
+ADFS::0                         fd0
+ADFS::1                         fd1
+ADFS::4                         wd0
+ADFS::5 (same drive as :4)      wd0
+ADFS::5 (other drive than :4)   wd1
+SCSI::4                         sd0
+SCSI::5 (same drive as :4)      sd0
+SCSI::5 (other drive than :4)   sd1
+
+So, if you have one ADFS IDE drive, and want to install NetBSD
+at the after ADFS::5, you should still use wd0. If on the other
+hand, ADFS::5 is a second drive, then you will have to use wd1.
+
+Appendix B - Acknowledgements
+
+This document was based upon the document
+"Installing RiscBSD 1.2-Release"
+(C) 1996 The RiscBSD Documentation Project
+
+That has the following acknowledgement:
+
+This manual has been written from scratch based on version 1.2
+of the installation manual that Mark Brinicombe wrote.
+
+It was mainly written by Kjetil B. Thomassen
+(mailto:kjetil@thomassen.priv.no) with contributions from:
+Neil Hoggarth (mailto:neil.hoggarth@physiol.ox.ac.uk)
+Markus Baeurle (mailto:emw4maba@gp.fht-esslingen.de)
+Jasper Wallace (mailto:jasper@ivision.co.uk)
+Mark Brinicombe (mailto:amb@physig.ph.kcl.ac.uk)
+Scott Stevens (mailto:s.k.stevens@ic.ac.uk)
+and a lot more people posting to the RiscBSD mailing list.
