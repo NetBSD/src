@@ -1,4 +1,4 @@
-.\"	$NetBSD: itimerfix.9,v 1.1 2001/12/02 02:26:28 gmcgarry Exp $
+.\"	$NetBSD: itimerfix.9,v 1.2 2001/12/02 08:40:27 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-function checks that the value in 
+function checks that the value in
 .Fa tv
 is valid (0 <= tv->tv_sec &&  0 <= tv->tv_usec < 1000000), and that the
 total time represented is at least
@@ -56,7 +56,9 @@ total time represented is at least
 If it is smaller, then it is adjusted to tick.
 .Sh RETURN VALUES
 .Nm
-returns 0 on success or EINVAL if
+returns 0 on success or
+.Er EINVAL
+if
 .Fa tv
 is invalid.
 .Sh SEE ALSO
