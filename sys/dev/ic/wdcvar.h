@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.61 2004/08/04 18:24:11 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.62 2004/08/04 22:44:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ int	wdc_exec_command(struct ata_drive_datas *, struct wdc_command*);
 
 int	wdc_addref(struct wdc_channel *);
 void	wdc_delref(struct wdc_channel *);
-void	wdc_kill_pending(struct wdc_channel *);
+void	wdc_kill_pending(struct ata_drive_datas *);
 
 void	wdc_print_modes (struct wdc_channel *);
 void	wdc_probe_caps(struct ata_drive_datas*);
