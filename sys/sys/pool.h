@@ -1,7 +1,7 @@
-/*	$NetBSD: pool.h,v 1.7 1998/08/28 21:18:38 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.8 1998/09/05 17:30:40 pk Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
