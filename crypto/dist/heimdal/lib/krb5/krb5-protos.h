@@ -1603,7 +1603,7 @@ krb5_error_code
 krb5_init_etype __P((
 	krb5_context context,
 	unsigned *len,
-	int **val,
+	krb5_enctype **val,
 	const krb5_enctype *etypes));
 
 krb5_error_code
@@ -1633,14 +1633,14 @@ krb5_keytype_to_enctypes __P((
 	krb5_context context,
 	krb5_keytype keytype,
 	unsigned *len,
-	int **val));
+	krb5_enctype **val));
 
 krb5_error_code
 krb5_keytype_to_enctypes_default __P((
 	krb5_context context,
 	krb5_keytype keytype,
 	unsigned *len,
-	int **val));
+	krb5_enctype **val));
 
 krb5_error_code
 krb5_keytype_to_string __P((

@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: kerberos5.c,v 1.4 2001/09/17 12:32:36 assar Exp $");
+RCSID("$Id: kerberos5.c,v 1.5 2002/02/10 15:31:18 bjh21 Exp $");
 
 #define MAX_TIME ((time_t)((1U << 31) - 1))
 
@@ -109,7 +109,7 @@ find_keys(hdb_entry *client,
 	  krb5_enctype *cetype,
 	  Key **skey,
 	  krb5_enctype *setype, 
-	  int *etypes,
+	  krb5_enctype *etypes,
 	  unsigned num_etypes)
 {
     krb5_error_code ret;
