@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.85 2003/10/18 15:33:59 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.86 2003/10/18 16:41:19 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -44,9 +44,9 @@ MANCOMPRESS:=	| ${MANCOMPRESS}
 .endif
 
 __installpage: .USE
-# XXX_MKMSG
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
-	    (echo "${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
+	    (${_MKSHMSG} "install  ${.TARGET}"; ${_MKSHCMD}\
+	     echo "${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
 		${SYSPKGDOCTAG} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
 		${SYSPKGDOCTAG} ${.ALLSRC} ${.TARGET})
