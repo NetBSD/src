@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.9,v 1.17 2001/04/29 19:17:22 jhawk Exp $
+.\"	$NetBSD: arp.9,v 1.18 2001/06/21 11:59:00 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,45 +54,45 @@
 .Fn arpintr
 .Sh DESCRIPTION
 The
-.Nm 
+.Nm
 functions provide the interface between the
-.Nm 
+.Nm
 module and the network drivers which need
-.Nm 
+.Nm
 functionality.
-Such drivers must request the 
+Such drivers must request the
 .Ar arp
 attribute in their "files" declaration.
 .Bl -tag -width "arp_ifinit()"
 .It Fn arp_ifinit
-Sets up the 
+Sets up the
 .Nm
-specific fields in 
+specific fields in
 .Fa ifa .
-Additionally, it sends out a gratitious
+Additionally, it sends out a gratuitous
 .Nm
-request on 
+request on
 .Fa ifp ,
 so that other machines are warned that we have a (new) address and
 duplicate addresses can be detected.
 .Pp
-You must call this in your drivers' ioctl function when you get a 
+You must call this in your drivers' ioctl function when you get a
 SIOCSIFADDR request with an AF_INET address family.
 .It Fn arpresolve
 is called by network output functions to resolve an IPv4 address.
-If no 
+If no
 .Fa rt
 is given, a new one is looked up or created.
 If the passed or found
 .Fa rt
 does not contain a valid gateway link level address, a pointer to the packet
-in 
+in
 .Fa m
-is stored in the route entry, possibly replacing older stored packets, and an 
+is stored in the route entry, possibly replacing older stored packets, and an
 .Nm
 request is sent instead.
-When an 
-.Nm 
+When an
+.Nm
 reply is received, the last held packet is send.
 Otherwise, the looked up address is returned and written into the storage
 .Fa desten
@@ -103,22 +103,22 @@ returns 1, if a valid address was stored to
 and the packet can be sent immediately.
 Else a 0 is returned.
 .It Fn arpintr
-When an 
+When an
 .Nm
-packet is received, the network driver (class) input interupt handler queues 
+packet is received, the network driver (class) input interrupt handler queues
 the packet on the arpintrq queue, and requests an
 .Fn arpintr
-soft interupt callback. 
-.Fn arpintr 
-dequeues the packets, performs sanity checks and calls (for IPv4 
-.Nm 
-packes, which are the only ones supported currently) the 
-.Fn in_arpinput 
+soft interrupt callback.
+.Fn arpintr
+dequeues the packets, performs sanity checks and calls (for IPv4
+.Nm
+packets, which are the only ones supported currently) the
+.Fn in_arpinput
 function.
-.Fn in_arpinput 
+.Fn in_arpinput
 either generates a reply to request packets, and adds the sender address
-translation to to the routing table, if a matching route entry is found. 
-If the route entry contained a pointer to a held packet, that packet is 
+translation to to the routing table, if a matching route entry is found.
+If the route entry contained a pointer to a held packet, that packet is
 sent.
 .El
 .Sh SEE ALSO
@@ -141,5 +141,5 @@ and
 .Sh STANDARDS
 RFC 826
 .Sh HISTORY
-Rewritten to support other than Ethernet link level addresses in 
+Rewritten to support other than Ethernet link level addresses in
 .Nx 1.3 .
