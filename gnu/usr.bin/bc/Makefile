@@ -1,7 +1,8 @@
-#	$Id: Makefile,v 1.7 1993/12/03 19:10:08 jtc Exp $
+#	$Id: Makefile,v 1.8 1994/03/11 20:25:06 phil Exp $
 
 PROG=	bc
 CFLAGS+=-D_POSIX_SOURCE -I. -I${.CURDIR}
+LFLAGS+=-I8
 SRCS=	bc.c scan.c util.c main.c number.c storage.c load.c execute.c global.c
 
 LDADD+=	-ll -lgnumalloc
