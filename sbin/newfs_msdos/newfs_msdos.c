@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.11 2003/07/13 07:38:12 itojun Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.12 2003/10/08 03:56:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.11 2003/07/13 07:38:12 itojun Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.12 2003/10/08 03:56:21 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -502,7 +502,7 @@ main(int argc, char *argv[])
     if (!bpb.res)
 	bpb.res = fat == 32 ? MAX(x, MAX(16384 / bpb.bps, 4)) : x;
     else if (bpb.res < x)
-	errx(1, "too few reserved sectors");
+	errx(1, "too few reserved sectors (need %d have %d)", x, bpb.res);
     if (fat != 32 && !bpb.rde)
 	bpb.rde = DEFRDE;
     rds = howmany(bpb.rde, bpb.bps / sizeof(struct de));
