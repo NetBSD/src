@@ -1,4 +1,4 @@
-/* $NetBSD: psm_intelli.c,v 1.1 1998/07/27 22:36:23 drochner Exp $ */
+/* $NetBSD: psm_intelli.c,v 1.2 1998/07/29 20:44:32 augustss Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -320,7 +320,7 @@ int data;
 		changed = (sc->buttons ^ sc->oldbuttons);
 		sc->oldbuttons = sc->buttons;
 
-		if (sc->dx || sc->dy || changed)
+		if (sc->dx || sc->dy || dz || changed)
 			wsmouse_input(sc->sc_wsmousedev,
 				      sc->buttons, sc->dx, sc->dy, dz);
 		break;
