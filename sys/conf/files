@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.659 2004/03/13 22:45:23 bjh21 Exp $
+#	$NetBSD: files,v 1.660 2004/03/14 13:52:12 bjh21 Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -665,9 +665,7 @@ file	dev/ic/com.c			com			needs-flag
 # PC-like keyboard controller
 #
 device	pckbc: pckbport
-define	pckbc_machdep_cnattach
-file	dev/ic/pckbc.c			pckbc | pckbc_machdep_cnattach
-								needs-flag
+file	dev/ic/pckbc.c			pckbc			needs-flag
 
 # Cirrus Logic CD240[01] 4-port Multi-Protocol Communications Controller
 #
