@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.3 2002/05/15 20:58:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -48,8 +48,8 @@ static const char rcsid[] = "Id: inet_ntop.c,v 1.10 2001/01/25 20:21:10 vixie Ex
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
 
-static const char *inet_ntop4 __P((const u_char *src, char *dst, size_t size));
-static const char *inet_ntop6 __P((const u_char *src, char *dst, size_t size));
+static const char *inet_ntop4 __P((const u_char *src, char *dst, socklen_t size));
+static const char *inet_ntop6 __P((const u_char *src, char *dst, socklen_t size));
 
 /* char *
  * inet_ntop(af, src, dst, size)
@@ -64,7 +64,7 @@ inet_ntop(af, src, dst, size)
 	int af;
 	const void *src;
 	char *dst;
-	size_t size;
+	socklen_t size;
 {
 	switch (af) {
 	case AF_INET:
@@ -93,7 +93,7 @@ static const char *
 inet_ntop4(src, dst, size)
 	const u_char *src;
 	char *dst;
-	size_t size;
+	socklen_t size;
 {
 	static const char fmt[] = "%u.%u.%u.%u";
 	char tmp[sizeof "255.255.255.255"];
@@ -116,7 +116,7 @@ static const char *
 inet_ntop6(src, dst, size)
 	const u_char *src;
 	char *dst;
-	size_t size;
+	socklen_t size;
 {
 	/*
 	 * Note that int32_t and int16_t need only be "at least" large enough
