@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.14 2000/03/31 02:54:17 soren Exp $ */
+/* $NetBSD: user.c,v 1.15 2000/03/31 03:11:24 soren Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.14 2000/03/31 02:54:17 soren Exp $");
+__RCSID("$NetBSD: user.c,v 1.15 2000/03/31 03:11:24 soren Exp $");
 #endif
 
 #include <sys/types.h>
@@ -370,15 +370,15 @@ modify_gid(char *group, char *newent)
 		return 0;
 	}
 	groupc = strlen(group);
-	while (fgets(buf, sizeof(buf), from) != (char *) NULL) {
+	while (fgets(buf, sizeof(buf), from) != NULL) {
 		cc = strlen(buf);
-		if ((colon = strchr(buf, ':')) == (char *) NULL) {
+		if ((colon = strchr(buf, ':')) == NULL) {
 			warn("badly formed entry `%s'", buf);
 			continue;
 		}
 		entc = (int)(colon - buf);
 		if (entc == groupc && strncmp(group, buf, (unsigned) entc) == 0) {
-			if (newent == (char *) NULL) {
+			if (newent == NULL) {
 				continue;
 			} else {
 				cc = strlen(newent);
@@ -503,7 +503,7 @@ setdefaults(user_t *up)
 	    fprintf(fp, "skel_dir\t%s\n", up->u_skeldir) <= 0 ||
 	    fprintf(fp, "shell\t\t%s\n", up->u_shell) <= 0 ||
 	    fprintf(fp, "inactive\t%d\n", up->u_inactive) <= 0 ||
-	    fprintf(fp, "expire\t\t%s\n", (up->u_expire == (char *) NULL) ? UNSET_EXPIRY : up->u_expire) <= 0) {
+	    fprintf(fp, "expire\t\t%s\n", (up->u_expire == NULL) ? UNSET_EXPIRY : up->u_expire) <= 0) {
 		warn("can't write to `%s'", CONFFILE);
 		ret = 0;
 	}
@@ -549,7 +549,7 @@ read_defaults(user_t *up)
 		fp = fopen(CONFFILE, "r");
 	}
 	if (fp != (FILE *) NULL) {
-		while ((s = fparseln(fp, &len, &lineno, NULL, 0)) != (char *) NULL) {
+		while ((s = fparseln(fp, &len, &lineno, NULL, 0)) != NULL) {
 			if (strncmp(s, "group", 5) == 0) {
 				for (cp = s + 5 ; *cp && isspace(*cp) ; cp++) {
 				}
@@ -591,7 +591,7 @@ read_defaults(user_t *up)
 					if (up->u_expire) {
 						FREE(up->u_expire);
 					}
-					up->u_expire = (char *) NULL;
+					up->u_expire = NULL;
 				} else {
 					memsave(&up->u_expire, cp, strlen(cp));
 				}
@@ -717,21 +717,21 @@ adduser(char *login, user_t *up)
 		(void) snprintf(home, sizeof(home), "%s/%s", up->u_basedir, login);
 	}
 	expire = 0;
-	if (up->u_expire != (char *) NULL) {
+	if (up->u_expire != NULL) {
 		(void) memset(&tm, 0, sizeof(tm));
-		if (strptime(up->u_expire, "%c", &tm) == (char *) NULL) {
+		if (strptime(up->u_expire, "%c", &tm) == NULL) {
 			warnx("invalid time format `%s'", optarg);
 		} else {
 			expire = mktime(&tm);
 		}
 	}
 	password[PasswordLength] = '\0';
-	if (up->u_password != (char *) NULL &&
+	if (up->u_password != NULL &&
 	    strlen(up->u_password) == PasswordLength) {
 		(void) memcpy(password, up->u_password, PasswordLength);
 	} else {
 		(void) memset(password, '*', PasswordLength);
-		if (up->u_password != (char *) NULL) {
+		if (up->u_password != NULL) {
 			warnx("Password `%s' is invalid: setting it to `%s'",
 				up->u_password, password);
 		}
@@ -853,16 +853,16 @@ moduser(char *login, char *newlogin, user_t *up)
 			(void) strcpy(home, pwp->pw_dir);
 		}
 		expire = 0;
-		if (up->u_expire != (char *) NULL) {
+		if (up->u_expire != NULL) {
 			(void) memset(&tm, 0, sizeof(tm));
-			if (strptime(up->u_expire, "%c", &tm) == (char *) NULL) {
+			if (strptime(up->u_expire, "%c", &tm) == NULL) {
 				warnx("invalid time format `%s'", optarg);
 			} else {
 				expire = mktime(&tm);
 			}
 		}
 		password[PasswordLength] = '\0';
-		if (up->u_password != (char *) NULL &&
+		if (up->u_password != NULL &&
 		    strlen(up->u_password) == PasswordLength) {
 			(void) memcpy(password, up->u_password, PasswordLength);
 		} else {
@@ -876,9 +876,9 @@ moduser(char *login, char *newlogin, user_t *up)
 		}
 	}
 	loginc = strlen(login);
-	while (fgets(buf, sizeof(buf), master) != (char *) NULL) {
+	while (fgets(buf, sizeof(buf), master) != NULL) {
 		cc = strlen(buf);
-		if ((colon = strchr(buf, ':')) == (char *) NULL) {
+		if ((colon = strchr(buf, ':')) == NULL) {
 			warnx("Malformed entry `%s'. Skipping", buf);
 			continue;
 		}
@@ -1090,7 +1090,7 @@ useradd(int argc, char **argv)
 		(void) printf("skel_dir\t%s\n", u.u_skeldir);
 		(void) printf("shell\t\t%s\n", u.u_shell);
 		(void) printf("inactive\t%d\n", u.u_inactive);
-		(void) printf("expire\t\t%s\n", (u.u_expire == (char *) NULL) ? UNSET_EXPIRY : u.u_expire);
+		(void) printf("expire\t\t%s\n", (u.u_expire == NULL) ? UNSET_EXPIRY : u.u_expire);
 #ifdef EXTENSIONS
 		for (i = 0 ; i < u.u_rc ; i++) {
 			(void) printf("range\t\t%d..%d\n", u.u_rv[i].r_from, u.u_rv[i].r_to);
@@ -1345,7 +1345,7 @@ groupdel(int argc, char **argv)
 	if (argc == optind) {
 		usermgmt_usage("groupdel");
 	}
-	if (!modify_gid(argv[optind], (char *) NULL)) {
+	if (!modify_gid(argv[optind], NULL)) {
 		err(EXIT_FAILURE, "can't change %s file", ETCGROUP);
 	}
 	return EXIT_SUCCESS;
@@ -1373,7 +1373,7 @@ groupmod(int argc, char **argv)
 	checkeuid();
 	gid = -1;
 	dupgid = 0;
-	newname = (char *) NULL;
+	newname = NULL;
 	while ((c = getopt(argc, argv, "g:on:" GROUP_MOD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
 		case 'g':
@@ -1398,7 +1398,7 @@ groupmod(int argc, char **argv)
 	if (argc == optind) {
 		usermgmt_usage("groupmod");
 	}
-	if (gid < 0 && newname == (char *) NULL) {
+	if (gid < 0 && newname == NULL) {
 		err(EXIT_FAILURE, "Nothing to change");
 	}
 	if (dupgid && gid < 0) {
@@ -1407,7 +1407,7 @@ groupmod(int argc, char **argv)
 	if ((grp = getgrnam(argv[optind])) == (struct group *) NULL) {
 		err(EXIT_FAILURE, "can't find group `%s' to modify", argv[optind]);
 	}
-	if (newname != (char *) NULL && !valid_group(newname)) {
+	if (newname != NULL && !valid_group(newname)) {
 		warn("warning - invalid group name `%s'", newname);
 	}
 	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:",
@@ -1416,7 +1416,7 @@ groupmod(int argc, char **argv)
 			(gid < 0) ? grp->gr_gid : gid);
 	for (cpp = grp->gr_mem ; *cpp && cc < sizeof(buf) ; cpp++) {
 		cc += snprintf(&buf[cc], sizeof(buf) - cc, "%s%s", *cpp,
-			(cpp[1] == (char *) NULL) ? "" : ",");
+			(cpp[1] == NULL) ? "" : ",");
 	}
 	if (!modify_gid(argv[optind], buf)) {
 		err(EXIT_FAILURE, "can't change %s file", ETCGROUP);
