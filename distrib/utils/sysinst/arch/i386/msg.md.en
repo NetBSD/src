@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.44 2003/11/30 14:36:45 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.45 2004/02/23 03:44:29 jschauma Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -174,4 +174,4 @@ message set_kernel_6
 {Kernel (GENERIC_PS2TINY)}
 
 message set_md_1
-{GNU toochain}		/* for amd64 */
+{GNU toolchain}		/* for amd64 */
