@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.42 2002/11/15 19:58:05 manu Exp $	*/
+/*	$NetBSD: kdump.c,v 1.43 2002/11/27 21:26:57 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.42 2002/11/15 19:58:05 manu Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.43 2002/11/27 21:26:57 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: kdump.c,v 1.42 2002/11/15 19:58:05 manu Exp $");
 
 #include <sys/syscall.h>
 
-int timestamp, decimal, plain, tail, maxdata;
+int timestamp, decimal, plain, tail, maxdata, numeric;
 pid_t do_pid = -1;
 const char *tracefile = NULL;
 struct ktr_header ktr_header;
@@ -122,7 +122,7 @@ main(argc, argv)
 	int trpoints = ALL_POINTS;
 	const char *emul_name = "netbsd";
 
-	while ((ch = getopt(argc, argv, "e:f:dlm:np:RTt:")) != -1)
+	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:")) != -1)
 		switch (ch) {
 		case 'e':
 			emul_name = strdup(optarg); /* it's safer to copy it */
@@ -141,6 +141,9 @@ main(argc, argv)
 			break;
 		case 'm':
 			maxdata = atoi(optarg);
+			break;
+		case 'N':
+			numeric++;
 			break;
 		case 'n':
 			plain++;
@@ -330,8 +333,9 @@ ktrsyscall(ktr)
 	const struct emulation *revelant = current;
 	register_t *ap;
 
-	if ((ktr->ktr_code >= revelant->nsysnames || ktr->ktr_code < 0)
-	    && (mach_traps_dispatch(&ktr->ktr_code, &revelant) == 0))
+	if (((ktr->ktr_code >= revelant->nsysnames || ktr->ktr_code < 0)
+	    && (mach_traps_dispatch(&ktr->ktr_code, &revelant) == 0)) ||
+	    numeric)
 		(void)printf("[%d]", ktr->ktr_code);
 	else
 		(void)printf("%s", revelant->sysnames[ktr->ktr_code]);
