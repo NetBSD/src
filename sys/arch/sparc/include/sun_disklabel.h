@@ -42,7 +42,7 @@
  *	@(#)sun_disklabel.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: sun_disklabel.h,v 1.4 92/06/17 07:04:13 torek Exp
- * $Id: sun_disklabel.h,v 1.1 1994/09/17 23:45:39 deraadt Exp $
+ * $Id: sun_disklabel.h,v 1.2 1994/11/02 04:59:23 deraadt Exp $
  */
 
 /*
@@ -112,5 +112,5 @@ struct sun_disklabel {			/* total size = 512 bytes */
 int	sun_disklabel __P((caddr_t, struct disklabel *)); /* true on success */
 
 /* compatability dk ioctl's */
-int	sun_dkioctl __P((struct dkdevice *, int, caddr_t, int));
+int	sun_dkioctl __P((struct dkdevice *, u_long, caddr_t, int));
 #endif
