@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.6.2.2 2000/12/12 21:27:00 he Exp $
+#	$NetBSD: DEVNAMES,v 1.6.2.3 2001/05/01 11:44:04 he Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -954,6 +954,7 @@ xy			MI
 xy			sun3
 xyc			MI		
 xyc			sun3
+yds			MI
 ym			MI		
 zbus			amiga
 ze			vax
