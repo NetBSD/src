@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.6 1996/09/12 06:05:42 thorpej Exp $	*/
+/*	$NetBSD: genassym.c,v 1.6.2.1 1997/01/18 04:20:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -51,7 +51,6 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
-#include <machine/trap.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/prom.h>
@@ -175,24 +174,7 @@ main()
 	off("V_SWTCH", struct vmmeter, v_swtch);
 	off("V_INTR", struct vmmeter, v_intr);
 
-	/* trap types (should just include trap.h?) */
-	def("T_BUSERR", T_BUSERR);
-	def("T_ADDRERR", T_ADDRERR);
-	def("T_ILLINST", T_ILLINST);
-	def("T_ZERODIV", T_ZERODIV);
-	def("T_CHKINST", T_CHKINST);
-	def("T_TRAPVINST", T_TRAPVINST);
-	def("T_PRIVINST", T_PRIVINST);
-	def("T_TRACE", T_TRACE);
-	def("T_MMUFLT", T_MMUFLT);
-	def("T_SSIR", T_SSIR);
-	def("T_FMTERR", T_FMTERR);
-	def("T_COPERR", T_COPERR);
-	def("T_FPERR", T_FPERR);
-	def("T_ASTFLT", T_ASTFLT);
-	def("T_TRAP15", T_TRAP15);
-	def("T_FPEMULI", T_FPEMULI);
-	def("T_FPEMULD", T_FPEMULD);
+	/* trap types: locore.s includes trap.h */
 
 	/* PSL values (should just include psl.h?) */
 	def("PSL_S", PSL_S);

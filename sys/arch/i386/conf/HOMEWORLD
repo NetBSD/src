@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.8.2.1 1997/01/14 21:25:17 thorpej Exp $
+#	$NetBSD: HOMEWORLD,v 1.8.2.2 1997/01/18 04:14:42 thorpej Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -8,6 +8,7 @@ include "arch/i386/conf/std.i386"
 #options	I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU	# CPU classes; at least one is REQUIRED
 #options	I586_CPU
+#options	I686_CPU
 #options	MATH_EMULATE	# floating point emulation
 #options	VM86		# Virtual 8086 emulation
 
@@ -21,8 +22,7 @@ options		XSERVER,UCONSOLE
 #options	INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users
-options		TIMEZONE=0	# time zone to adjust RTC time by
-options		DST=0		# daylight savings time used by RTC
+options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options	NTP		# NTP phase/frequency locked loop
 
 #options 	DDB		# in-kernel debugger

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.13.2.1 1997/01/18 04:17:08 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -106,8 +106,8 @@ db_regs_t	ddb_regs;		/* register state */
 
 #ifdef _KERNEL
 
-void	kdb_kintr __P((struct mc68020_saved_state *));
-int	kdb_trap __P((int, struct mc68020_saved_state *));
+void	kdb_kintr __P((db_regs_t *));
+int	kdb_trap __P((int, db_regs_t *));
 
 #endif /* _KERNEL */
 

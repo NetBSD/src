@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.24 1996/06/13 21:48:34 cgd Exp $	*/
+/*	$NetBSD: if.h,v 1.24.2.1 1997/01/18 04:32:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -120,6 +120,7 @@ struct ifnet {				/* and the entries */
 	u_short	if_index;		/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_watchdog called */
 	short	if_flags;		/* up/down, broadcast, etc. */
+	short	if__pad1;		/* be nice to m68k ports */
 	struct	if_data if_data;	/* statistics and other data about if */
 /* procedure handles */
 	int	(*if_output)		/* output routine (enqueue) */

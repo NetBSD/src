@@ -1,4 +1,9 @@
-/*	$NetBSD: joy.c,v 1.5 1996/10/13 03:20:00 christos Exp $	*/
+/*	$NetBSD: joy.c,v 1.5.2.1 1997/01/18 04:15:44 thorpej Exp $	*/
+
+/*
+ * XXX This _really_ should be rewritten such that it doesn't
+ * XXX rely in the i386 timer!
+ */
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -37,6 +42,8 @@
 #include <sys/device.h>
 #include <sys/errno.h>
 
+#include <machine/bus.h>
+
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
@@ -45,7 +52,9 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
-#include <i386/isa/timerreg.h>
+
+#include <i386/isa/joyvar.h>
+#include <i386/isa/timerreg.h>		/* XXX XXX XXX */
 
 
 /*
@@ -73,64 +82,26 @@
 #define JOY_TIMEOUT   2000	/* 2 milliseconds */
 #endif
 
-#define JOY_NPORTS    1
-
-struct joy_softc {
-	struct	device sc_dev;
-	int	port;
-	int	x_off[2], y_off[2];
-	int	timeout[2];
-};
-
-int		joyprobe __P((struct device *, void *, void *));
-void		joyattach __P((struct device *, struct device *, void *));
 int		joyopen __P((dev_t, int, int, struct proc *));
 int		joyclose __P((dev_t, int, int, struct proc *));
 static int	get_tick __P((void));
-
-struct cfattach joy_ca = {
-	sizeof(struct joy_softc), joyprobe, joyattach
-};
 
 struct cfdriver joy_cd = {
 	NULL, "joy", DV_DULL
 };
 
 
-int
-joyprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct isa_attach_args *ia = aux;
-#ifdef WANT_JOYSTICK_CONNECTED
-	int iobase = ia->ia_iobase;
-
-	outb(iobase, 0xff);
-	DELAY(10000);		/* 10 ms delay */
-	return (inb(iobase) & 0x0f) != 0x0f;
-#else
-	ia->ia_iosize = JOY_NPORTS;
-	ia->ia_msize = 0;
-	return 1;
-#endif
-}
-
 void
-joyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+joyattach(sc)
+	struct joy_softc *sc;
 {
-	struct joy_softc *sc = (void *) self;
-	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
 
-	sc->port = iobase;
 	sc->timeout[0] = sc->timeout[1] = 0;
-	outb(iobase, 0xff);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0xff);
 	DELAY(10000);		/* 10 ms delay */
-	printf(": joystick%sconnected\n",
-	    (inb(iobase) & 0x0f) == 0x0f ? " not " : " ");
+	printf("%s: joystick%sconnected\n", sc->sc_dev.dv_xname,
+	    (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0) & 0x0f) == 0x0f ?
+	    " not " : " ");
 }
 
 int
@@ -179,17 +150,18 @@ joyread(dev, uio, flag)
 	int unit = JOYUNIT(dev);
 	struct joy_softc *sc = joy_cd.cd_devs[unit];
 	struct joystick c;
-	int port = sc->port;
 	int i, t0, t1;
 	int state = 0, x = 0, y = 0;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	disable_intr();
-	outb(port, 0xff);
+	bus_space_write_1(iot, ioh, 0, 0xff);
 	t0 = get_tick();
 	t1 = t0;
 	i = USEC2TICKS(sc->timeout[JOYPART(dev)]);
 	while (t0 - t1 < i) {
-		state = inb(port);
+		state = bus_space_read_1(iot, ioh, 0);
 		if (JOYPART(dev) == 1)
 			state >>= 2;
 		t1 = get_tick();

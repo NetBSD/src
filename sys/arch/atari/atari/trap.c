@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 1997/01/04 00:10:30 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.23.2.1 1997/01/18 04:10:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -270,7 +270,7 @@ panictrap(type, code, v, fp)
 		goto kgdb_cont;
 #endif
 #ifdef DDB
-	(void)kdb_trap(type, (struct mc68020_saved_state *)fp);
+	(void)kdb_trap(type, (db_regs_t *)fp);
 #endif
 #ifdef KGDB
 kgdb_cont:
@@ -355,7 +355,7 @@ trap(type, code, v, frame)
 
 #ifdef DDB
 	if (type == T_TRACE || type == T_BREAKPOINT) {
-		if (kdb_trap(type, (struct mc68020_saved_state *)&frame))
+		if (kdb_trap(type, (db_regs_t *)&frame))
 			return;
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.20 1996/11/20 00:30:51 jtc Exp $	*/
+/*	$NetBSD: time.h,v 1.20.2.1 1997/01/18 04:33:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -66,17 +66,14 @@ struct timespec {
 	(tv)->tv_usec = (ts)->tv_nsec / 1000;				\
 }
 
+/*
+ * Note: timezone is obsolete. All timezone handling is now in
+ * userland. Its just here for back compatibility.
+ */
 struct timezone {
 	int	tz_minuteswest;	/* minutes west of Greenwich */
 	int	tz_dsttime;	/* type of dst correction */
 };
-#define	DST_NONE	0	/* not on dst */
-#define	DST_USA		1	/* USA style dst */
-#define	DST_AUST	2	/* Australian style dst */
-#define	DST_WET		3	/* Western European dst */
-#define	DST_MET		4	/* Middle European dst */
-#define	DST_EET		5	/* Eastern European dst */
-#define	DST_CAN		6	/* Canada */
 
 /* Operations on timevals. */
 #define	timerclear(tvp)		(tvp)->tv_sec = (tvp)->tv_usec = 0

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.24 1996/09/24 17:45:14 christos Exp $
+#	$NetBSD: files.isa,v 1.24.2.1 1997/01/18 04:30:35 thorpej Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -192,8 +192,10 @@ file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
 device	sb: audio, isadma, sbdsp, mulaw
-attach	sb at isa
 file	dev/isa/sb.c			sb needs-flag
+
+attach	sb at isa with sb_isa
+file	dev/isa/sb_isa.c		sb_isa needs-flag
 
 # ProAudio Spectrum
 device	pas: audio, isadma, sbdsp, mulaw

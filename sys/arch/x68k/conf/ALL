@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.8.2.1 1997/01/14 21:26:40 thorpej Exp $
+#	$NetBSD: ALL,v 1.8.2.2 1997/01/18 04:28:44 thorpej Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -15,9 +15,8 @@ options		M68030
 options		M68040
 options 	M68060
 
-# time zone RTC is expected to be set in; REQUIRED
-options 	TIMEZONE=-540	# Set the timezone that the kernel will use
-options 	DST=0		# Set the timezone that the kernel will use
+# set to indicate RTC is offset from GMT
+options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 
 # estimated number of users
 maxusers	32

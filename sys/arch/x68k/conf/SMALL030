@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-# $Id: SMALL030,v 1.1.1.1.2.1 1997/01/14 21:26:47 thorpej Exp $
+# $Id: SMALL030,v 1.1.1.1.2.2 1997/01/18 04:28:50 thorpej Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -12,8 +12,8 @@ ident		SMALL
 cpu		"M68030"
 #cpu		"M68040"
 
-# time zone RTC is expected to be set in; REQUIRED
-timezone	-9
+# set to indicate RTC is offset from GMT
+options		RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 
 # estimated number of users
 maxusers	8

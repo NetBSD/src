@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.20.2.1 1997/01/14 21:26:03 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.20.2.2 1997/01/18 04:26:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,7 +128,7 @@ readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
  * Ultrix disklabel declarations
  */
  #ifdef COMPAT_ULTRIX
-#include "../../stand/dec_boot.h"
+#include <pmax/stand/dec_boot.h>
 
 extern char *
 compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),

@@ -1,11 +1,11 @@
-#	$NetBSD: EMPTY,v 1.2.2.1 1997/01/14 21:26:42 thorpej Exp $
+#	$NetBSD: EMPTY,v 1.2.2.2 1997/01/18 04:28:45 thorpej Exp $
 
 #
 #	EMPTY
 #
 
 #--- from std.x68k
-#	$NetBSD: EMPTY,v 1.2.2.1 1997/01/14 21:26:42 thorpej Exp $
+#	$NetBSD: EMPTY,v 1.2.2.2 1997/01/18 04:28:45 thorpej Exp $
 #
 # standard x68k information
 #
@@ -45,9 +45,8 @@ maxusers	8
 # different CPU types; you must have at least the correct one; REQUIRED
 options		"M68040"
 
-# time zone RTC is expected to be set in; REQUIRED
-options 	TIMEZONE=-540	# Set the timezone that the kernel will use
-options 	DST=0		# Set the timezone that the kernel will use
+# set to indicate RTC is offset from GMT
+options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 
 # standard options
 options 	SWAPPAGER		# swap pager (anonymous and swap space)

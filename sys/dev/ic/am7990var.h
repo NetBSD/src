@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.8 1996/07/05 23:57:01 abrown Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.8.2.1 1997/01/18 04:30:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -89,6 +89,7 @@ struct am7990_softc {
 	void	*sc_sh;		/* shutdownhook cookie */
 
 	u_int16_t sc_conf3;	/* CSR3 value */
+	u_int16_t sc_pad1;	/* be nice to m68k ports */
 
 	void	*sc_mem;	/* base address of RAM -- CPU's view */
 	u_long	sc_addr;	/* base address of RAM -- LANCE's view */
