@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.5 1999/11/02 22:06:45 jdolecek Exp $	*/
+/*	$NetBSD: vi.c,v 1.6 2001/08/20 12:20:01 wiz Exp $	*/
 
 /*
  *	vi command editing
@@ -2146,7 +2146,7 @@ char_len(c)
 	return len;
 }
 
-/* Similar to x_zotc(emacs.c), but no tab wierdness */
+/* Similar to x_zotc(emacs.c), but no tab weirdness */
 static void
 x_vi_zotc(c)
 	int c;
