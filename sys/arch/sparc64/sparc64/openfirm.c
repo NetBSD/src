@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.17 2004/01/06 09:38:20 petrov Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.18 2004/01/12 21:16:01 petrov Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.17 2004/01/06 09:38:20 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.18 2004/01/12 21:16:01 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -792,22 +792,17 @@ OF_claim(void *virt, u_int size, u_int align)
 		cell_t	size;
 		cell_t	align;
 		cell_t	baseaddr;
-	} args = {
-		(cell_t)"claim",
-		3,
-		1,
-		0,
-		0,
-		0,
-		0
-	};
+	} args;
 
-	args.virt = (cell_t)virt;
+	args.name = ADR2CELL(&"claim");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.virt = ADR2CELL(virt);
 	args.size = size;
 	args.align = align;
 	if (openfirmware(&args) == -1)
 		return (void *)-1;
-	return (void *)args.baseaddr;
+	return (void *)(long)args.baseaddr;
 }
 
 #if defined(_KERNEL_OPT)
