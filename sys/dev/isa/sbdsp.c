@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.91 1999/02/17 02:37:41 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.92 1999/02/17 02:43:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2203,7 +2203,7 @@ sb_malloc(addr, direction, size, pool, flags)
 		drq = sc->sc_drq8;
 	else
 		drq = sc->sc_drq16;
-	return isa_malloc(sc->sc_ic, drq, size, pool, flags);
+	return (isa_malloc(sc->sc_ic, drq, size, pool, flags));
 }
 
 void
@@ -2215,7 +2215,7 @@ sb_free(addr, ptr, pool)
 	isa_free(ptr, pool);
 }
 
-unsigned long
+size_t
 sb_round_buffersize(addr, direction, size)
 	void *addr;
 	int direction;
@@ -2223,7 +2223,7 @@ sb_round_buffersize(addr, direction, size)
 {
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
-	return size;
+	return (size);
 }
 
 int
