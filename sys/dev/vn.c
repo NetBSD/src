@@ -1,4 +1,4 @@
-/*	$NetBSD: vn.c,v 1.14 1994/11/14 06:00:11 christos Exp $	*/
+/*	$NetBSD: vn.c,v 1.15 1994/12/14 19:09:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -397,7 +397,7 @@ vnioctl(dev, cmd, data, flag, p)
 		 * have to worry about them.
 		 */
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vn_file, p);
-		if (error = vn_open(&nd, FREAD|FWRITE, 0, NULL))
+		if (error = vn_open(&nd, FREAD|FWRITE, 0))
 			return(error);
 		if (error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p)) {
 			VOP_UNLOCK(nd.ni_vp);
