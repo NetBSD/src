@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.71 1998/10/05 15:41:19 mark Exp $
+#	$NetBSD: files.arm32,v 1.72 1998/10/06 02:37:59 mark Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -534,6 +534,11 @@ file	arch/arm32/pci/pciide_machdep.c	pciide
 
 # Include USB stuff
 include "dev/usb/files.usb"
+
+# Include WSCONS stuff
+include "dev/wscons/files.wscons"
+
+#include "dev/pckbc/files.pckbc"
 
 #
 # Compatibility modules
