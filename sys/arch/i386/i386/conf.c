@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.61 1995/04/10 00:51:01 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.62 1995/04/10 04:21:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -52,10 +52,8 @@ int	lkmenodev();
 bdev_decl(wd);
 #include "fdc.h"
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
-#define	fdclose	Fdclose	/* conflicts with fdclose() in kern_descrip.c */
 bdev_decl(fd);
 #undef	fdopen
-#undef	fdclose
 #include "wt.h"
 bdev_decl(wt);
 #include "sd.h"
@@ -76,10 +74,8 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(),		/* 1: swap pseudo-device */
 #define	fdopen	Fdopen
-#define	fdclose	Fdclose
 	bdev_disk_init(NFDC,fd),	/* 2: floppy diskette */
 #undef	fdopen
-#undef	fdclose
 	bdev_tape_init(NWT,wt),		/* 3: QIC-02/QIC-36 tape */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
@@ -133,7 +129,9 @@ cdev_decl(ptc);
 cdev_decl(log);
 #include "com.h"
 cdev_decl(com);
+#define	fdopen	Fdopen
 cdev_decl(fd);
+#undef	fdopen
 cdev_decl(wt);
 cdev_decl(scd);
 #include "pc.h"
@@ -146,6 +144,7 @@ cdev_decl(cd);
 cdev_decl(lpt);
 #include "ch.h"
 cdev_decl(ch);
+dev_decl(fd,open);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "speaker.h"
@@ -184,10 +183,8 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 7: /dev/klog */
 	cdev_tty_init(NCOM,com),	/* 8: serial port */
 #define	fdopen	Fdopen
-#define	fdclose	Fdclose
 	cdev_disk_init(NFDC,fd),	/* 9: floppy diskette */
 #undef	fdopen
-#undef	fdclose
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_disk_init(NSCD,scd),	/* 11: Sony CD-ROM */
 	cdev_pc_init(NPC + NVT,pc),	/* 12: PC console */
