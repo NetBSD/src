@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.41 2002/04/29 14:40:23 manu Exp $
+	$NetBSD: syscalls.master,v 1.42 2002/05/04 07:45:05 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -275,7 +275,7 @@
 151	UNIMPL		cachectl
 152	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); } \
 			    fchown
-153	NOARGS		{ int sys_fchmod(int fd, int mode); }
+153	STD		{ int irix_sys_fchmod(int fd, int mode); }
 154	UNIMPL		wait3
 155	UNIMPL		socketpair
 156	STD		{ long irix_sys_systeminfo(int what, char *buf, \
