@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.14 1998/09/14 11:52:21 frueauf Exp $	*/
+/*	$NetBSD: displayq.c,v 1.15 1998/09/14 21:23:07 frueauf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.14 1998/09/14 11:52:21 frueauf Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.15 1998/09/14 21:23:07 frueauf Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,10 +243,11 @@ displayq(format)
 		if (cp - line > sizeof(line) - 1)
 			break;
 		*cp++ = ' ';
-		if (line - cp - 1 >= 0)
-			(void)strncpy(cp, user[i], line - cp - 1);
-		else
+		if (strlen(user[i]) < (sizeof(line) - (cp - line) - 1))
 			(void)strcpy(cp, user[i]);
+		else
+			(void)strncpy(cp, user[i],
+				(sizeof(line) - (cp - line) - 1));
 	}
 	(void)strncat(line, "\n", sizeof(line) - strlen(line) - 1);
 	fd = getport(RM, 0);
