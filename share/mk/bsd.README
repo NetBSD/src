@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.92 2002/01/27 23:33:51 ross Exp $
+#	$NetBSD: bsd.README,v 1.93 2002/03/14 18:26:32 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -698,6 +698,10 @@ USR_OBJMACHINE  If set, and the current directory is a subdirectory of
 		corresponding subdirectory of ${BSDOBJDIR}.${MACHINE};
 		otherwise, create it in the corresponding subdirectory
 		of ${BSDOBJDIR}
+
+BUILDID		If set, the contents of this variable are appended
+		to the object directory name.  If OBJMACHINE is also
+		set, ".${BUILDID}" is added after ".${MACHINE}".
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
