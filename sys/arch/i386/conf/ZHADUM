@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.6 1998/04/16 22:01:43 drochner Exp $
+#	$NetBSD: ZHADUM,v 1.7 1998/06/07 02:34:41 enami Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -11,7 +11,7 @@ maxusers	32		# estimated number of users
 #options 	I386_CPU
 #options 	I486_CPU
 #options 	I586_CPU
-options 	I686_CPU	
+options 	I686_CPU
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
