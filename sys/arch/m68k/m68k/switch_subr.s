@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.1.2.2 2001/11/18 12:57:58 scw Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.1.2.3 2001/11/18 18:03:18 scw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -138,6 +138,7 @@ ASENTRY_NOPROFILE(Idle)
 	jbsr	_C_LABEL(sched_unlock_idle)
 #endif
 	stop	#PSL_LOWIPL
+GLOBAL(_Idle)				/* For sun2/sun3's clock.c ... */
 	movw	#PSL_HIGHIPL,%sr
 #if defined(LOCKDEBUG)
 	/* Acquire sched_lock */
@@ -171,6 +172,39 @@ ENTRY(cpu_switch)
 	movl    _C_LABEL(sched_whichqs),%d0
 	jeq     _ASM_LABEL(Idle)
 Lcpu_switch1:
+#if defined(M68010)
+	/*
+	 * Find the highest-priority queue that isn't empty,
+	 * then take the first proc from that queue.
+	 */
+	clrl	%d0
+	lea	_C_LABEL(sched_whichqs),%a0
+	movl	%a0@,%d1
+Lcpu_switch_chk:
+	btst	%d0,%d1
+	jne	Lcpu_switch_fnd
+	addqb	#1,%d0
+	cmpb	#32,%d0
+	jne	Lcpu_switch_chk
+	jra	_C_LABEL(_Idle)
+Lcpu_switch_fnd:
+	movw	#PSL_HIGHIPL,%sr	| lock out interrupts
+	movl	%a0@,%d1		| and check again...
+	bclr	%d0,%d1
+	jeq	Lcpu_switch1		| proc moved, rescan
+	movl	%d1,%a0@		| update whichqs
+	moveq	#1,%d1			| double check for higher priority
+	lsll	%d0,%d1			| process (which may have snuck in
+	subql	#1,%d1			| while we were finding this one)
+	andl	%a0@,%d1
+	jeq	Lcpu_switch_ok		| no one got in, continue
+	movl	%a0@,%d1
+	bset	%d0,%d1			| otherwise put this one back
+	movl	%d1,%a0@
+	jra	Lcpu_switch1		| and rescan
+Lcpu_switch_ok:
+	movl	%d0,%d1
+#else
 	/*
 	 * Interrupts are blocked, sched_lock is held.  If
 	 * we come here via Idle, %d0 contains the contents
@@ -181,8 +215,8 @@ Lcpu_switch1:
 	andl    %d1,%d0
 	bfffo   %d0{#0:#32},%d1
 	eorib   #31,%d1
-
 	movl    %d1,%d0
+#endif
 	lslb    #3,%d1			| convert queue number to index
 	addl    #_C_LABEL(sched_qs),%d1	| locate queue (q)
 	movl    %d1,%a1
@@ -213,10 +247,15 @@ Lcpu_switch_common:
 	movl	%a0,_C_LABEL(curproc)
 	clrl	_C_LABEL(want_resched)
 
-	cmpl	%a0,%a1			| switching to same lwp?
+	cmpal	%a0,%a1			| switching to same lwp?
 	jeq	Lcpu_switch_same	| yes, skip save and restore
 
+#ifdef M68010
+	movl	%a1,%d0
+	tstl	%d0
+#else
 	tstl	%a1			| Old LWP exited?
+#endif
 	jeq	Lcpu_switch_noctxsave	| Yup. Don't bother saving context
 
 	/*
@@ -284,6 +323,35 @@ Lcpu_switch_noctxsave:
 	movl	%sp@+,%a0
 #endif
 
+#if defined(sun2) || defined(sun3)
+	movl	%a0@(L_PROC),%a2
+	movl	%a2@(P_VMSPACE),%a2	| vm = p->p_vmspace
+#if defined(DIAGNOSTIC) && !defined(sun2)
+	tstl	%a2			| vm == VM_MAP_NULL?
+	jeq	Lcpu_switch_badsw	| panic
+#endif
+#if !defined(_SUN3X_) || defined(PMAP_DEBUG)
+	movl	%a2@(VM_PMAP),%sp@-	| push vm->vm_map.pmap
+	jbsr	_C_LABEL(_pmap_switch)	| _pmap_switch(pmap)
+	addql	#4,%sp
+	movl	_C_LABEL(curpcb),%a1	| restore p_addr
+#else
+	/* Use this inline version on sun3x when not debugging the pmap. */
+	lea	_C_LABEL(kernel_crp),%a3 | our CPU Root Ptr. (CRP)
+	movl	%a2@(VM_PMAP),%a2 	| pmap = vm->vm_map.pmap
+	movl	%a2@(PM_A_PHYS),%d0	| phys = pmap->pm_a_phys
+	cmpl	%a3@(4),%d0		|  == kernel_crp.rp_addr ?
+	jeq	Lsame_mmuctx		| skip loadcrp/flush
+	/* OK, it is a new MMU context.  Load it up. */
+	movl	%d0,%a3@(4)
+	movl	#CACHE_CLR,%d0
+	movc	%d0,%cacr		| invalidate cache(s)
+	pflusha				| flush entire TLB
+	pmove	%a3@,%crp		| load new user root pointer
+Lsame_mmuctx:
+#endif
+| Note: _pmap_switch() will clear the cache if needed.
+#else
 	/*
 	 * Activate process's address space.
 	 * XXX Should remember the last USTP value loaded, and call this
@@ -293,6 +361,7 @@ Lcpu_switch_noctxsave:
 	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(l)
 	addql	#4,%sp
 	movl	_C_LABEL(curpcb),%a1	| restore p_addr
+#endif
 
 	lea     _ASM_LABEL(tmpstk),%sp	| now goto a tmp stack for NMI
 
