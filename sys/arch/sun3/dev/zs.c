@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 1994/12/13 18:35:56 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.16 1994/12/15 04:34:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -78,6 +78,13 @@
 
 #include "zsreg.h"
 #include "zsvar.h"
+
+/*
+ * The default parity REALLY needs to be the same as the PROM uses,
+ * or you can not see messages done with printf during boot-up...
+ */
+#undef	TTYDEF_CFLAG
+#define	TTYDEF_CFLAG	(CREAD | CS8 | HUPCL)
 
 #ifdef KGDB
 #include <machine/remote-sl.h>
@@ -254,7 +261,6 @@ zs_attach(struct device *parent, struct device *self, void *args)
 
 	if(!zs_tty[unit])
 		zs_tty[unit] = ttymalloc();
-	tp = zs_tty[unit];
 	if(!zs_tty[unit+1])
 		zs_tty[unit+1] = ttymalloc();
 
@@ -263,6 +269,7 @@ zs_attach(struct device *parent, struct device *self, void *args)
 	cs[1].cs_next = zslist;
 	zslist = cs;
 
+	tp = zs_tty[unit];
 	cs->cs_unit = unit;
 	cs->cs_zc = &addr->zs_chan[CHAN_A];
 	cs->cs_speed = zs_getspeed(cs->cs_zc);
@@ -279,6 +286,10 @@ zs_attach(struct device *parent, struct device *self, void *args)
 		cs->cs_consio = 1;
 		cs->cs_brkabort = 1;
 		cs->cs_softcar = 1;
+		/* Call zsparam so interrupts get enabled. */
+		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
+		tp->t_cflag = TTYDEF_CFLAG;
+		(void) zsparam(tp, &tp->t_termios);
 	} else {
 		/* Can not run kgdb on the console? */
 #ifdef KGDB
@@ -296,6 +307,7 @@ zs_attach(struct device *parent, struct device *self, void *args)
 		 */
 		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
 		tp->t_cflag = CS8;
+		/* zsparam called by zsiopen */
 		kbd_serial(tp, zsiopen, zsiclose);
 		cs->cs_conk = 1;		/* do L1-A processing */
 	}
@@ -319,6 +331,9 @@ zs_attach(struct device *parent, struct device *self, void *args)
 		cs->cs_consio = 1;
 		cs->cs_brkabort = 1;
 		cs->cs_softcar = 1;
+		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
+		tp->t_cflag = TTYDEF_CFLAG;
+		(void) zsparam(tp, &tp->t_termios);
 	} else {
 		/* Can not run kgdb on the console? */
 #ifdef KGDB
@@ -336,6 +351,7 @@ zs_attach(struct device *parent, struct device *self, void *args)
 		 */
 		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
 		tp->t_cflag = CS8;
+		/* zsparam called by zsiopen */
 		ms_serial(tp, zsiopen, zsiclose);
 	}
 }
@@ -594,27 +610,15 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 	    unit == ZS_KBD || unit == ZS_MOUSE)
 		return (ENXIO);
 	cs = &zi->zi_cs[unit & 1];
-#if 0
-	/* The kd driver avoids the need for this hack. */
-	if (cs->cs_consio)
-		return (ENXIO);		/* ??? */
-#endif
 	tp = cs->cs_ttyp;
 	s = spltty();
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
-		if (tp->t_ispeed == 0) {
-			tp->t_iflag = TTYDEF_IFLAG;
-			tp->t_oflag = TTYDEF_OFLAG;
-#if 0
-			tp->t_cflag = TTYDEF_CFLAG;
-#else
-			/* Make default same as PROM uses. */
-			tp->t_cflag = (CREAD | CS8 | HUPCL);
-#endif
-			tp->t_lflag = TTYDEF_LFLAG;
-			tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
-		}
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_cflag = TTYDEF_CFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
 		(void) zsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
