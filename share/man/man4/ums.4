@@ -1,6 +1,6 @@
-.\" $NetBSD: ums.4,v 1.6 2001/09/11 23:18:55 wiz Exp $
+.\" $NetBSD: ums.4,v 1.7 2001/12/28 17:38:00 augustss Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
 .Nm ums
 .Nd USB mouse support
 .Sh SYNOPSIS
-.Cd "ums*     at uhub?"
+.Cd "ums*     at uhidev? reportid ?"
 .Cd "wsmouse* at ums?"
 .Sh DESCRIPTION
 The
@@ -51,6 +51,7 @@ Access to the mouse is through the
 .Xr wscons 4
 driver.
 .Sh SEE ALSO
+.Xr uhidev 4 ,
 .Xr usb 4 ,
 .Xr wsmouse 4
 .Sh HISTORY
