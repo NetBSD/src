@@ -1,6 +1,8 @@
 #
 # WOOKUMZ (mycroft's hp370 test machine)
 #
+#	$Id: WOOKUMZ,v 1.2 1993/08/07 16:23:47 mycroft Exp $
+#
 machine		"hp300"
 cpu		"HP370"
 ident		WOOKUMZ
