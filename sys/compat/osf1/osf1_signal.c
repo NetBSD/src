@@ -1,4 +1,34 @@
-/*	$NetBSD: osf1_signal.c,v 1.11 1999/04/26 04:29:43 cgd Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.12 1999/04/26 05:35:08 cgd Exp $	*/
+
+/*
+ * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +164,32 @@ bsd_to_osf1_sigset(bss, oss)
 	}
 }
 
+const struct emul_flags_xtab osf1_sigaction_flags_xtab[] = {
+    {	OSF1_SA_ONSTACK,	OSF1_SA_ONSTACK,	SA_ONSTACK	},
+    {	OSF1_SA_RESTART,	OSF1_SA_RESTART,	SA_RESTART	},
+    {	OSF1_SA_NOCLDSTOP,	OSF1_SA_NOCLDSTOP,	SA_NOCLDSTOP	},
+    {	OSF1_SA_NODEFER,	OSF1_SA_NODEFER,	SA_NODEFER	},
+    {	OSF1_SA_RESETHAND,	OSF1_SA_RESETHAND,	SA_RESETHAND	},
+    {	OSF1_SA_NOCLDWAIT,	OSF1_SA_NOCLDWAIT,	SA_NOCLDWAIT	},
+#if 0 /* XXX not yet */
+    {	OSF1_SA_SIGINFO,	OSF1_SA_SIGINFO,	SA_SIGINFO	},
+#endif
+    {	0								},
+};
+
+const struct emul_flags_xtab osf1_sigaction_flags_rxtab[] = {
+    {	SA_ONSTACK,		SA_ONSTACK,		OSF1_SA_ONSTACK	},
+    {	SA_RESTART,		SA_RESTART,		OSF1_SA_RESTART	},
+    {	SA_NOCLDSTOP,		SA_NOCLDSTOP,		OSF1_SA_NOCLDSTOP },
+    {	SA_NODEFER,		SA_NODEFER,		OSF1_SA_NODEFER	},
+    {	SA_RESETHAND,		SA_RESETHAND,		OSF1_SA_RESETHAND },
+    {	SA_NOCLDWAIT,		SA_NOCLDWAIT,		OSF1_SA_NOCLDWAIT },
+#if 0 /* XXX not yet */
+    {	SA_SIGINFO,		SA_SIGINFO,		OSF1_SA_SIGINFO	},
+#endif
+    {	0								},
+};
+
 /*
  * XXX: Only a subset of the flags is currently implemented.
  */
@@ -145,17 +201,11 @@ osf1_to_bsd_sigaction(osa, bsa)
 
 	bsa->sa_handler = osa->sa_handler;
 	osf1_to_bsd_sigset(&osa->sa_mask, &bsa->sa_mask);
-	bsa->sa_flags = 0;
-	if ((osa->sa_flags & OSF1_SA_ONSTACK) != 0)
-		bsa->sa_flags |= SA_ONSTACK;
-	if ((osa->sa_flags & OSF1_SA_RESTART) != 0)
-		bsa->sa_flags |= SA_RESTART;
-	if ((osa->sa_flags & OSF1_SA_RESETHAND) != 0)
-		bsa->sa_flags |= SA_RESETHAND;
-	if ((osa->sa_flags & OSF1_SA_NOCLDSTOP) != 0)
-		bsa->sa_flags |= SA_NOCLDSTOP;
-	if ((osa->sa_flags & OSF1_SA_NODEFER) != 0)
-		bsa->sa_flags |= SA_NODEFER;
+
+        /* translate flags */
+	bsa->sa_flags = emul_flags_translate(osf1_sigaction_flags_xtab,
+            osa->sa_flags, NULL);
+	/* XXX error if we can't translate */
 }
 
 void
@@ -166,18 +216,31 @@ bsd_to_osf1_sigaction(bsa, osa)
 
 	osa->sa_handler = bsa->sa_handler;
 	bsd_to_osf1_sigset(&bsa->sa_mask, &osa->sa_mask);
-	osa->sa_flags = 0;
-	if ((bsa->sa_flags & SA_ONSTACK) != 0)
-		osa->sa_flags |= SA_ONSTACK;
-	if ((bsa->sa_flags & SA_RESTART) != 0)
-		osa->sa_flags |= SA_RESTART;
-	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
-		osa->sa_flags |= SA_NOCLDSTOP;
-	if ((bsa->sa_flags & SA_NODEFER) != 0)
-		osa->sa_flags |= SA_NODEFER;
-	if ((bsa->sa_flags & SA_RESETHAND) != 0)
-		osa->sa_flags |= SA_RESETHAND;
+
+        /* translate flags */
+	osa->sa_flags = emul_flags_translate(osf1_sigaction_flags_rxtab,
+            bsa->sa_flags, NULL);
 }
+
+const struct emul_flags_xtab osf1_sigaltstack_flags_xtab[] = {
+    {	OSF1_SS_ONSTACK,	OSF1_SS_ONSTACK,	SS_ONSTACK	},
+    {	OSF1_SS_DISABLE,	OSF1_SS_DISABLE,	SS_DISABLE	},
+#if 0 /* XXX no equivalents */
+    {	OSF1_SS_NOMASK,		OSF1_SS_NOMASK,		???		},
+    {	OSF1_SS_UCONTEXT,	OSF1_SS_UCONTEXT,	???		},
+#endif
+    {	0								},
+};
+
+const struct emul_flags_xtab osf1_sigaltstack_flags_rxtab[] = {
+    {	SS_ONSTACK,		SS_ONSTACK,		OSF1_SS_ONSTACK	},
+    {	SS_DISABLE,		SS_DISABLE,		OSF1_SS_DISABLE	},
+#if 0 /* XXX no equivalents */
+    {	???,			???,			OSF1_SS_NOMASK	},
+    {	???,			???,			OSF1_SS_UCONTEXT },
+#endif
+    {	0								},
+};
 
 void
 osf1_to_bsd_sigaltstack(oss, bss)
@@ -187,12 +250,11 @@ osf1_to_bsd_sigaltstack(oss, bss)
 
 	bss->ss_sp = oss->ss_sp;
 	bss->ss_size = oss->ss_size;
-	bss->ss_flags = 0;
 
-	if ((oss->ss_flags & OSF1_SS_DISABLE) != 0)
-		bss->ss_flags |= SS_DISABLE;
-	if ((oss->ss_flags & OSF1_SS_ONSTACK) != 0)
-		bss->ss_flags |= SS_ONSTACK;
+        /* translate flags */
+	bss->ss_flags = emul_flags_translate(osf1_sigaltstack_flags_xtab,
+            oss->ss_flags, NULL);
+	/* XXX error if we can't translate */
 }
 
 void
@@ -203,12 +265,10 @@ bsd_to_osf1_sigaltstack(bss, oss)
 
 	oss->ss_sp = bss->ss_sp;
 	oss->ss_size = bss->ss_size;
-	oss->ss_flags = 0;
 
-	if ((bss->ss_flags & SS_DISABLE) != 0)
-		oss->ss_flags |= OSF1_SS_DISABLE;
-	if ((bss->ss_flags & SS_ONSTACK) != 0)
-		oss->ss_flags |= OSF1_SS_ONSTACK;
+        /* translate flags */
+	oss->ss_flags = emul_flags_translate(osf1_sigaltstack_flags_rxtab,
+            bss->ss_flags, NULL);
 }
 
 int
