@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.23 1993/06/02 04:28:07 cgd Exp $
+ *	$Id: machdep.c,v 1.24 1993/06/03 01:31:05 cgd Exp $
  */
 
 #include "param.h"
@@ -101,6 +101,8 @@ extern int forcemaxmem;
 int biosmem;
 
 extern cyloffset;
+
+int cpu_class;
 
 cpu_startup()
 {
@@ -261,18 +263,16 @@ struct cpu_nameclass i386_cpus[] = {
 
 identifycpu()	/* translated from hp300 -- cgd */
 {
-	int class;
-
 	printf("CPU: ");
 	if (cpu >= 0 && cpu < (sizeof i386_cpus/sizeof(struct cpu_nameclass))) {
 		printf("%s", i386_cpus[cpu].cpu_name);
-		class = i386_cpus[cpu].cpu_class;
+		cpu_class = i386_cpus[cpu].cpu_class;
 	} else {
 		printf("unknown cpu type %d\n", cpu);
 		panic("startup: bad cpu id");
 	}
 	printf(" (");
-	switch(class) {
+	switch(cpu_class) {
 	case CPUCLASS_286:
 		printf("286");
 		break;
@@ -295,7 +295,7 @@ identifycpu()	/* translated from hp300 -- cgd */
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
 	 */
-	switch (class) {
+	switch (cpu_class) {
 	case CPUCLASS_286:	/* a 286 should not make it this far, anyway */
 #if !defined(I386_CPU)
 	case CPUCLASS_386:
@@ -1178,4 +1178,33 @@ copystr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
 	}
 	if(lencopied) *lencopied = tally;
 	return(ENAMETOOLONG);
+}
+
+
+/*
+ * the following function checks to see if a given machine
+ * type (a_mid) field is valid for this architecture
+ * a non-zero return value indicates that the machine type is correct.
+ */
+int
+cpu_exec_checkmid(int mid)
+{
+	int rv;
+
+	switch (mid) {
+#ifdef COMPAT_NOMID
+	case MID_ZERO:
+		return 1;
+#endif
+
+	case MID_I386:
+		return 1;
+
+	case MID_I486:
+		return ((cpu_class == CPUCLASS_486) ||
+			(cpu_class == CPUCLASS_586));
+
+	default:
+		return 0;
+	}
 }
