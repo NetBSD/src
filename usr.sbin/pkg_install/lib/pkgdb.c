@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.9 2001/09/16 16:34:45 wiz Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.10 2003/01/05 21:27:33 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.9 2001/09/16 16:34:45 wiz Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.10 2003/01/05 21:27:33 agc Exp $");
 #endif
 
 /*
@@ -59,6 +59,7 @@ int
 pkgdb_open(int ro)
 {
 	BTREEINFO info;
+	char	cachename[FILENAME_MAX];
 
 	pkgdb_iter_flag = 0;	/* used in pkgdb_iter() */
 
@@ -71,7 +72,7 @@ pkgdb_open(int ro)
 	info.compare = NULL;
 	info.prefix = NULL;
 	info.lorder = 0;
-	pkgdbp = (DB *) dbopen(_pkgdb_getPKGDB_FILE(),
+	pkgdbp = (DB *) dbopen(_pkgdb_getPKGDB_FILE(cachename, sizeof(cachename)),
 	    ro ? O_RDONLY : O_RDWR | O_CREAT,
 	    0644, DB_BTREE, (void *) &info);
 	return (pkgdbp == NULL) ? -1 : 0;
@@ -203,25 +204,19 @@ pkgdb_iter(void)
 }
 
 /*
- *  Return filename as string that can be passed to free(3)
+ *  Return name of cache file in the buffer that was passed.
  */
-char   *
-_pkgdb_getPKGDB_FILE(void)
+char *
+_pkgdb_getPKGDB_FILE(char *buf, unsigned size)
 {
-	char   *tmp;
-
-	tmp = malloc(FILENAME_MAX);
-	if (tmp == NULL)
-		errx(1, "_pkgdb_getPKGDB_FILE: out of memory");
-	snprintf(tmp, FILENAME_MAX, "%s/%s", _pkgdb_getPKGDB_DIR(), PKGDB_FILE);
-	return tmp;
+	(void) snprintf(buf, size, "%s/%s", _pkgdb_getPKGDB_DIR(), PKGDB_FILE);
+	return buf;
 }
 
 /*
  *  Return directory where pkgdb is stored
- *  as string that can be passed to free(3)
  */
-char   *
+char *
 _pkgdb_getPKGDB_DIR(void)
 {
 	char   *tmp;
