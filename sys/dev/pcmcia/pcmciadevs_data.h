@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.26 1998/12/18 22:07:00 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.27 1998/12/18 22:07:53 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.24 1998/12/18 22:04:48 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.25 1998/12/18 22:07:39 thorpej Exp 
  */
 
 /*-
@@ -83,7 +83,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
 	    PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
 	    0,
-	    "",
+	    "Compex Corporation",
 	    "Compex Linkport ENET-B Ethernet"	},
 	},
 	{
@@ -455,6 +455,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "I-O DATA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_COMPEX, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Compex Corporation",
 	    NULL,
 	},
 	{
