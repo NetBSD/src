@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121 2003/02/01 21:05:08 erh Exp $	   */
+/*	$NetBSD: pmap.c,v 1.122 2003/02/02 01:50:04 erh Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -160,7 +160,7 @@ calc_kvmsize(vsize_t usrptsize)
 {
 	extern u_int bufcache;
 	vsize_t kvmsize;
-	u_int n, s, bp, bc;
+	u_int n, bp, bc;
 
 	/* All physical memory */
 	kvmsize = avail_end;
