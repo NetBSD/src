@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 2004/04/26 22:05:04 cl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 2004/05/07 15:51:04 cl Exp $	*/
 /*	NetBSD: pmap.c,v 1.172 2004/04/12 13:17:46 yamt Exp 	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2004/04/26 22:05:04 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2004/05/07 15:51:04 cl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2651,7 +2651,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 		 */
 
 		if ((opte & PG_PVLIST) == 0) {
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) && !defined(DOM0OPS)
 			if (PHYS_TO_VM_PAGE(opte & PG_FRAME) != NULL)
 				panic("pmap_remove_ptes: managed page without "
 				      "PG_PVLIST for 0x%lx", startva);
@@ -2741,7 +2741,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	 */
 
 	if ((opte & PG_PVLIST) == 0) {
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) && !defined(DOM0OPS)
 		if (PHYS_TO_VM_PAGE(opte & PG_FRAME) != NULL)
 			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
@@ -3808,6 +3808,9 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 	opte = pte_get_ma(&ptes[x86_btop(va)]);		/* old PTE */
 	XENPRINTK(("npte %p opte %p ptes %p idx %03x\n", 
 		      (void *)npte, (void *)opte, ptes, x86_btop(va)));
+	XENPRINTF(("pmap_enter_ma pa %08lx va %08lx opte %08x npte %08x "
+	    "wired %d count %ld\n", pa, va, opte, npte, wired,
+	    pmap->pm_stats.wired_count));
 
 	/*
 	 * is there currently a valid mapping at our VA and does it
