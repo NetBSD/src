@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.60 1995/03/23 11:43:09 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.61 1995/03/23 11:51:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -1158,21 +1158,9 @@ int
 cdsize(dev)
 	dev_t dev;
 {
-	struct cd_softc *cd;
-	int part;
-	int size;
 
-	if (cdopen(dev, 0, S_IFBLK) != 0)
-		return -1;
-	cd = cdcd.cd_devs[CDUNIT(dev)];
-	part = CDPART(dev);
-	if (cd->sc_dk.dk_label.d_partitions[part].p_fstype != FS_SWAP)
-		size = -1;
-	else
-		size = cd->sc_dk.dk_label.d_partitions[part].p_size;
-	if (cdclose(dev, 0, S_IFBLK) != 0)
-		return -1;
-	return size;
+	/* CD-ROMs are read-only. */
+	return -1;
 }
 
 int
