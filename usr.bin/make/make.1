@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.74 2003/02/25 10:35:47 wiz Exp $
+.\"	$NetBSD: make.1,v 1.75 2003/03/14 05:19:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd maintain program dependencies
 .Sh SYNOPSIS
 .Nm
-.Op Fl BeikNnqrstW
+.Op Fl BeikNnqrstWX
 .Bk -words
 .Op Fl D Ar variable
 .Ek
@@ -233,11 +233,25 @@ the variables will be printed one per line,
 with a blank line for each null or undefined variable.
 .It Fl W
 Treat any warnings during makefile parsing as errors.
+.It Fl X
+Don't export variables passed on the command line to the environment
+individually.
+Variables passed on the command line are still exported
+via the
+.Va MAKEFLAGS
+environment variable.
+This option may be useful on systems which have a small limit on the
+size of command arguments.
 .It Ar variable=value
 Set the value of the variable
 .Ar variable
 to
 .Ar value .
+Normally, all values passed on the command line are also exported to
+sub-makes in the environment.
+The
+.Fl X
+flag disables this behavior.
 .El
 .Pp
 There are seven different types of lines in a makefile: file dependency
