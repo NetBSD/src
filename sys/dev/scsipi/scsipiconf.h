@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.79 2003/09/17 19:14:58 mycroft Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.80 2003/09/18 00:06:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -452,8 +452,6 @@ struct scsipi_periph {
 #define	PQUIRK_NOTUR		0x00001000	/* no TEST UNIT READY */
 #define	PQUIRK_NOSENSE		0x00004000	/* can't REQUEST SENSE */
 #define PQUIRK_ONLYBIG		0x00008000	/* only use SCSI_{R,W}_BIG */
-#define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom
-						   page */
 #define PQUIRK_NOBIGMODESENSE	0x00040000	/* has no big mode-sense op */
 #define PQUIRK_CAP_SYNC		0x00080000	/* SCSI device with ST sync op*/
 #define PQUIRK_CAP_WIDE16	0x00100000	/* SCSI device with ST wide op*/
