@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: defs.h,v 1.6 2002/09/11 06:20:09 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -378,6 +378,7 @@ TAILQ_HEAD(, devm)	alldevms;	/* list of all device-majors */
 int	ndevi;				/* number of devi's (before packing) */
 int	maxbdevm;			/* max number of block major */
 int	maxcdevm;			/* max number of character major */
+int	do_devsw;			/* 0 if pre-devsw config */
 
 TAILQ_HEAD(, files)	allfiles;	/* list of all kernel source files */
 TAILQ_HEAD(, objects)	allobjects;	/* list of all kernel object and
