@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.1 1997/11/08 06:51:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.11.2.2 1998/05/08 05:33:49 mycroft Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
 
 .if (${MACHINE_ARCH} != "alpha")
@@ -10,7 +10,6 @@ LDADD=	-lcurses -ltermlib -lgnumalloc
 HIDEGAME=hidegame
 FILES=gnuchess.book
 FILESDIR=/usr/share/games
-.endif
 
 MAN=	chess.6
 CLEANFILES += chess.6
