@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.1 1998/03/22 15:25:15 drochner Exp $ */
+/* $NetBSD: pckbc.c,v 1.2 1998/04/07 15:57:48 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -109,19 +109,11 @@ struct pckbc_internal {
 	struct pckbc_softc *t_sc; /* back pointer */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int pckbc_match __P((struct device *, void *, void *));
-#else
 int pckbc_match __P((struct device *, struct cfdata *, void *));
-#endif
 void pckbc_attach __P((struct device *, struct device *, void *));
 void pckbc_init_slotdata __P((struct pckbc_slotdata *));
 int pckbc_attach_slot __P((struct pckbc_softc *, pckbc_slot_t));
-#ifdef __BROKEN_INDIRECT_CONFIG
-int pckbc_submatch __P((struct device *, void *, void *));
-#else
 int pckbc_submatch __P((struct device *, struct cfdata *, void *));
-#endif
 int pckbcprint __P((void *, const char *));
 
 struct cfattach pckbc_ca = {
@@ -204,14 +196,14 @@ static int pckbc_poll_data1(iot, ioh_d, ioh_c, slot, checkaux)
 			c = bus_space_read_1(iot, ioh_d, 0);
 			if (checkaux && (stat & 0x20)) { /* aux data */
 				if (slot != PCKBC_AUX_SLOT) {
-#ifdef DIAGNOSTIC
+#ifdef PCKBCDEBUG
 					printf("lost aux 0x%x\n", c);
 #endif
 					continue;
 				}
 			} else {
 				if (slot == PCKBC_AUX_SLOT) {
-#ifdef DIAGNOSTIC
+#ifdef PCKBCDEBUG
 					printf("lost kbd 0x%x\n", c);
 #endif
 					continue;
@@ -297,11 +289,7 @@ pckbc_is_console(iot)
 int
 pckbc_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
@@ -351,16 +339,11 @@ out:
 }
 
 int
-pckbc_submatch(parent, match, aux)
+pckbc_submatch(parent, cf, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
-	struct cfdata *match;
-#endif
+	struct cfdata *cf;
 	void *aux;
 {
-	struct cfdata *cf = match;
 	struct pckbc_attach_args *pa = aux;
 
 	if (cf->cf_loc[PCKBCCF_SLOT] != PCKBCCF_SLOT_DEFAULT &&
@@ -652,13 +635,15 @@ pckbc_poll_cmd1(t, slot, cmd)
 			continue;
 		}
 		if (c == KBC_DEVCMD_RESEND) {
-#ifdef DIAGNOSTIC
-			printf("pckbd_cmd: RESEND\n");
+#ifdef PCKBCDEBUG
+			printf("pckbc_cmd: RESEND\n");
 #endif
 			if (cmd->retries++ < 5)
 				continue;
 			else {
+#ifdef DIAGNOSTIC
 				printf("pckbc: cmd failed\n");
+#endif
 				cmd->status = EIO;
 				return;
 			}
@@ -670,7 +655,7 @@ pckbc_poll_cmd1(t, slot, cmd)
 			cmd->status = EIO;
 			return;
 		}
-#ifdef DIAGNOSTIC
+#ifdef PCKBCDEBUG
 		printf("pckbc_cmd: lost 0x%x\n", c);
 #endif
 	}
@@ -735,11 +720,13 @@ pckbc_cleanqueue(q)
 	struct pckbc_slotdata *q;
 {
 	struct pckbc_devcmd *cmd;
+#ifdef PCKBCDEBUG
 	int i;
+#endif
 
 	while ((cmd = TAILQ_FIRST(&q->cmdqueue))) {
 		TAILQ_REMOVE(&q->cmdqueue, cmd, next);
-#ifdef DIAGNOSTIC
+#ifdef PCKBCDEBUG
 		printf("pckbc_cleanqueue: removing");
 		for (i = 0; i < cmd->cmdlen; i++)
 			printf(" %02x", cmd->cmd[i]);
@@ -1016,7 +1003,7 @@ pckbcintr(vsc)
 
 		if (sc->inputhandler[slot])
 			(*sc->inputhandler[slot])(sc->inputarg[slot], data);
-#ifdef DIAGNOSTIC
+#ifdef PCKBCDEBUG
 		else
 			printf("pckbcintr: slot %d lost %d\n", slot, data);
 #endif
