@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 2000/11/30 21:29:11 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.49 2000/11/30 23:47:45 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,7 +94,7 @@ extern struct emul emul_linux;
 #endif
 
 #ifdef COMPAT_AOUT_M68K
-extern struct emul emul_netbsd_aout_m68k;
+extern struct emul emul_netbsd_aoutm68k;
 #endif
 
 int	writeback __P((struct frame *fp, int docachepush));
@@ -1076,7 +1076,7 @@ syscall(code, frame)
 		 */
 		if (callp == sysent	/* Native */
 #ifdef COMPAT_AOUT_M68K
-		    || (p->p_emul == &emul_netbsd_aout_m68k)	/* m68k a.out */
+		    || (p->p_emul == &emul_netbsd_aoutm68k)	/* m68k a.out */
 #endif
 		    ) {
 			code = fuword(params + _QUAD_LOWWORD * sizeof(int));
