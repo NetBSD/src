@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.8 2003/12/03 13:20:34 scw Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.9 2004/02/13 15:49:02 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.8 2003/12/03 13:20:34 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.9 2004/02/13 15:49:02 scw Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -112,12 +112,23 @@ uint32_t intr_steer;
 
 /*
  * Map a software interrupt queue index
+ *
+ * XXX: !NOTE! :XXX
+ * We 'borrow' bits from the interrupt status register for interrupt sources
+ * which are not used by the current IXP425 port. Should any of the following
+ * interrupt sources be used at some future time, this must be revisited.
+ *
+ *  Bit#31: SW Interrupt 1
+ *  Bit#30: SW Interrupt 0
+ *  Bit#14: Timestamp Timer
+ *  Bit#11: General-purpose Timer 1
+ */
  */
 static const uint32_t si_to_irqbit[SI_NQUEUES] = {
 	IXP425_INT_bit31,		/* SI_SOFT */
 	IXP425_INT_bit30,		/* SI_SOFTCLOCK */
-	IXP425_INT_bit29,		/* SI_SOFTNET */
-	IXP425_INT_bit22,		/* SI_SOFTSERIAL */
+	IXP425_INT_bit14,		/* SI_SOFTNET */
+	IXP425_INT_bit11,		/* SI_SOFTSERIAL */
 };
 
 #define	SI_TO_IRQBIT(si)	(1U << si_to_irqbit[(si)])
