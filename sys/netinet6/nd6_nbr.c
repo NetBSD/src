@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.36 2002/05/29 07:53:42 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.37 2002/06/07 07:35:39 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.36 2002/05/29 07:53:42 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.37 2002/06/07 07:35:39 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -764,7 +764,7 @@ nd6_na_input(m, off, icmp6len)
 			 * Lock to protect the default router list.
 			 * XXX: this might be unnecessary, since this function
 			 * is only called under the network software interrupt
-			 * context.  However, we keep it just for safety.  
+			 * context.  However, we keep it just for safety.
 			 */
 			s = splsoftnet();
 			dr = defrouter_lookup(in6, rt->rt_ifp);
