@@ -1,4 +1,4 @@
-.\"	$NetBSD: factor.6,v 1.6 2001/04/02 22:42:38 wiz Exp $
+.\"	$NetBSD: factor.6,v 1.7 2002/09/26 18:32:01 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,8 +47,7 @@
 .Sh NAME
 .Nm factor ,
 .Nm primes
-.Nd
-factor a number, generate primes
+.Nd factor a number, generate primes
 .Sh SYNOPSIS
 .Nm
 .Op Ar number ...
@@ -58,18 +57,16 @@ factor a number, generate primes
 .Sh DESCRIPTION
 The
 .Nm
-utility will factor integers between -2147483648 and 2147483647 inclusive.
+utility will factor integers between \-2147483648 and 2147483647 inclusive.
 When a number is factored, it is printed, followed by a
-.Dq \: ,
+.Dq \&: ,
 and the list of factors on a single line.
 Factors are listed in ascending order, and are preceded by a space.
-If a factor divides a value more than once, it will be printed
-more than once.
+If a factor divides a value more than once, it will be printed more than once.
 .Pp
 When
 .Nm
-is invoked with one or more arguments,
-each argument will be factored.
+is invoked with one or more arguments, each argument will be factored.
 .Pp
 When
 .Nm

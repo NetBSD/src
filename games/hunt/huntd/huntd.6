@@ -1,4 +1,4 @@
-.\"	$NetBSD: huntd.6,v 1.5 2002/09/26 16:29:26 wiz Exp $
+.\"	$NetBSD: huntd.6,v 1.6 2002/09/26 18:32:02 wiz Exp $
 .\"
 .\"  Hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -38,8 +38,7 @@ option is for running
 forever (server mode).
 This is similar to running it under the control of
 .Xr inetd 8
-(see below),
-but it consumes a process table entry when no one is playing.
+(see below), but it consumes a process table entry when no one is playing.
 .Pp
 The
 .Fl p
@@ -48,7 +47,7 @@ process and thus allows for private games of hunt.
 This option turns off the notification of players on the
 .Em hunt-players
 mailing list.
-.Sh INETD
+.Ss INETD
 To run
 .Nm
 from
@@ -67,7 +66,7 @@ uncomment the following line in
 .Bd -literal -offset indent -compact
 hunt dgram udp wait nobody /usr/games/huntd huntd
 .Ed
-Do not use any of the command line options \(em if you want
+Do not use any of the command line options; if you want
 .Xr inetd 8
 to start up
 .Nm
@@ -100,4 +99,3 @@ on the local machine and tries to rendezvous with it.
 Conrad Huang, Ken Arnold, and Greg Couch;
 .br
 University of California, San Francisco, Computer Graphics Lab
-.\"Sh BUGS
