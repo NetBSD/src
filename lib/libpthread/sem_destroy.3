@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_destroy.3,v 1.1 2003/01/21 02:24:41 christos Exp $
+.\" $NetBSD: sem_destroy.3,v 1.2 2003/01/21 11:47:32 wiz Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -75,7 +75,7 @@ POSIX does not define the behavior of
 .Fn sem_destroy
 if called while there are threads blocked on
 .Fa sem ,
-but this implementation is guaranteed to return -1 and set
+but this implementation is guaranteed to return \-1 and set
 .Va errno
 to
 .Er EBUSY
