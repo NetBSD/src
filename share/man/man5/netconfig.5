@@ -1,0 +1,106 @@
+.\"	$NetBSD: netconfig.5,v 1.1.4.2 2000/06/22 16:17:33 minoura Exp $
+.Dd June 2, 2000
+.Dt NETCONFIG 5
+.Sh NAME
+.Nm netconfig
+.Nd network configuration data base
+.Sh SYNOPSIS
+.Fa /etc/netconfig
+.Sh DESCRIPTION
+The
+.Nm
+file defines a list of ``transport names'', describing their semantics
+and protocol. In NetBSD, this file is only used by the RPC library code.
+Entries consist of the following fields:
+.Pp
+.Bl -tag -width indent
+.It network_id
+The name of the transport described.
+.It semantics
+Describes the semantics of the transport. This can be one of:
+.Bl -tag -width ident
+.It Nm tpi_clts
+Connectionless transport.
+.It Nm tpi_cots
+Connection-oriented transport
+.It Nm tpi_cots_ord
+Connection-oriented, ordered transport.
+.It Nm tpi_raw
+A raw connection.
+.El
+.It flags
+This field is  either blank (``-''), or contains a ``v'', meaning visible
+to the
+.Xr getnetconfig 3
+function.
+.It protofamily
+The protocol family of the transport. This is currently one of:
+.Bl -tag -width indent
+.It Nm inet6
+The IPv6 (
+.Dv PF_INET6 )
+family of protocols.
+.It Nm inet
+The IPv4 (
+.Dv PF_INET )
+family of protocols.
+.It Nm loopback
+The
+.Dv PF_LOCAL
+protocol family.
+.El
+.It protoname
+The name of the protocol used for this transport. Can currently be either
+.Nm udp ,
+.Nm tcp 
+or empty.
+.It device
+This field is always empty in NetBSD.
+.It nametoaddr_libs
+This field is always empty in NetBSD.
+.El
+.Pp
+The order of entries in this file will determine which transport will
+be preferred by the RPC library code, given a match on a specified
+network type. For example, if a sample network config file would
+look like this:
+.Pp
+.Bd -literal
+udp6       tpi_clts      v     inet6    udp     -       -
+tcp6       tpi_cots_ord  v     inet6    tcp     -       -
+udp        tpi_clts      v     inet     udp     -       -
+tcp        tpi_cots_ord  v     inet     tcp     -       -
+rawip      tpi_raw       -     inet      -      -       -
+local      tpi_cots_ord  -     loopback  -      -       -
+.Ed
+.Pp
+then using the network type
+.Nm udp
+in calls to the RPC library function (see
+.Xr rpc 3
+) will make the code first try
+.Nm udp6 ,
+and then
+.Nm udp .
+.Pp
+.Xr getnetconfig 3
+and associated functions will parse this file and return structures of
+the following format:
+.Bd -literal
+struct netconfig {
+    char *nc_netid;              /* Network ID */
+    unsigned long nc_semantics;  /* Semantics (see below) */
+    unsigned long nc_flag;       /* Flags (see below) */
+    char *nc_protofmly;          /* Protocol family */
+    char *nc_proto;              /* Protocol name */
+    char *nc_device;             /* Network device pathname (unused) */
+    unsigned long nc_nlookups;   /* Number of lookup libs (unused) */
+    char **nc_lookups;           /* Names of the libraries (unused) */
+    unsigned long nc_unused[9];  /* reserved */
+};
+.Ed
+.Sh SEE ALSO
+.Xr getnetconfig 3 ,
+.Xr getnetpath 3
+.Sh FILES
+.Nm /etc/netconfig

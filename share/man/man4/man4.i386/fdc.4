@@ -1,4 +1,4 @@
-.\"   $NetBSD: fdc.4,v 1.4 1999/03/16 01:19:21 garbled Exp $
+.\"   $NetBSD: fdc.4,v 1.4.8.1 2000/06/22 16:17:24 minoura Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,8 @@
 .Nd NEC 765 floppy disk controller driver
 .Sh SYNOPSIS
 .Cd "fdc0 at isa? port 0x3f0 irq 6 drq 2"
-.Cd "fd* at fdc? drive ?"
+.Cd "fdc* at pnpbios? index ?"
+.Cd "fd*  at fdc? drive ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -105,7 +106,9 @@ and then call
 followed by a series of calls to
 .Dv FDIOCFORMAT_TRACK .
 .Sh SEE ALSO
-.Xr fdformat 1 .
+.Xr fdformat 1 ,
+.Xr isa 4 ,
+.Xr pnpbios 4 .
 .Sh HISTORY
 The
 .Nm

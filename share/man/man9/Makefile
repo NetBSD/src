@@ -1,15 +1,15 @@
-#       $NetBSD: Makefile,v 1.60 2000/04/15 17:20:26 augustss Exp $
+#       $NetBSD: Makefile,v 1.60.2.1 2000/06/22 16:17:44 minoura Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	access.9 arp.9 audio.9 bus_dma.9 bus_space.9 callout.9 copy.9 \
 	cpu_reboot.9 ctxsw.9 disk.9 disklabel.9 dopowerhooks.9 \
-	doshutdownhooks.9 ethersubr.9 extent.9 fetch.9 fork1.9 \
+	doshutdownhooks.9 ethersubr.9 evcnt.9 extent.9 fetch.9 fork1.9 \
 	humanize_number.9 inittodr.9 intro.9 ioctl.9 kprintf.9 \
 	log.9 malloc.9 mbuf.9 microtime.9 panic.9 pfil.9 physio.9 pool.9 \
 	powerhook_establish.9 psignal.9 ratecheck.9 resettodr.9 rnd.9 \
 	rt_timer.9 shutdownhook_establish.9 \
-	sleep.9 spl.9 store.9 time.9 uiomove.9 ucom.9 usbdi.9 uvm.9 \
+	sleep.9 softintr.9 spl.9 store.9 time.9 uiomove.9 ucom.9 usbdi.9 uvm.9 \
 	wdc.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
@@ -68,6 +68,8 @@ MLINKS+=ethersubr.9 ether_ifattach.9 ethersubr.9 ether_addmulti.9 \
 	ethersubr.9 ETHER_FIRST_MULTI.9 ethersubr.9 ETHER_NEXT_MULTI.9 \
 	ethersubr.9 fddi_ifattach.9 \
 	ethersubr.9 fddi_addmulti.9 ethersubr.9 fddi_delmulti.9
+MLINKS+=evcnt.9 evcnt_attach_dynamic.9 evcnt.9 evcnt_attach_static.9 \
+	evcnt.9 evcnt_detach.9
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
@@ -101,6 +103,8 @@ MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=sleep.9 wakeup.9 sleep.9 tsleep.9
+MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
+	softintr.9 softintr_schedule.9
 MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 	spl.9 splimp.9 spl.9 spllowersoftclock.9 spl.9 splnet.9 \
 	spl.9 splsched.9 spl.9 splserial.9 \

@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.6 2000/03/27 09:36:29 soda Exp $
+.\"	$NetBSD: spl.9,v 1.6.2.1 2000/06/22 16:17:50 minoura Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
 .\" Copyright (c) 1997 Jonathan Stone.
@@ -73,9 +73,9 @@
 .Fn splsoftnet void
 .Ft int
 .Fn splsoftclock void
-.Ft int
+.Ft void
 .Fn spllowersoftclock void
-.Ft int
+.Ft void
 .Fn spl0 void
 .Ft void
 .Fn splx "int s"
@@ -166,6 +166,19 @@ function restores the system priority level to the one encoded in
 which must be a value previously returned by one of the other
 .Nm
 functions.
+.Pp
+Note that the functions which lower the system priority level
+.Po
+.Fn spllowersoftclock ,
+.Fn spl0 ,
+and
+.Fn splx
+.Pc
+do not return a value.  They should only be used
+in places where the system priority level is being decreased
+permanently.  It is inappropriate to attempt to use them where the
+system priority level is being decreased temporarily, and would
+need to be restored to a previous value before continuing.
 .Pp
 .Sh HISTORY
 .Pp

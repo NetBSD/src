@@ -1,10 +1,10 @@
-.\"	$NetBSD: cac.4,v 1.2.2.1 2000/06/22 16:17:04 minoura Exp $
+.\" $NetBSD: xi.4,v 1.2.4.2 2000/06/22 16:17:17 minoura Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Andy Doran.
+.\" by Gregory McGarry.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -34,54 +34,62 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 9, 2000
-.Dt CAC 4
+.Dd June 4, 2000
+.Dt XI 4
 .Os
 .Sh NAME
-.Nm cac
-.Nd
-.Tn Compaq array controller driver
+.Nm xi
+.Nd Xircom CreditCard Ethernet device driver
 .Sh SYNOPSIS
-.Cd "cac* at pci? dev ? function ?"
+.Cd "xi*  at pcmcia? function ?
+.Pp
+Configuration of PHYs may also be necessary.  See
+.Xr mii 4 .
 .Sh DESCRIPTION
 The
 .Nm
-driver provides basic message passing and DMA support for Compaq array
-controllers.  Disk arrays are supported by the 
-.Nm ca
-driver.
-.Sh HARDWARE
-The
-.Nm
-driver provides support for the following controllers:
+driver provides support for the Xircom CreditCard family of PCMCIA
+Ethernet adapters.  Supported cards include:
 .Pp
-.Bl -tag -width -offset indent -compact
-.It Tn Compaq Integrated Array
-.It Tn Compaq SMART-2/E
-.It Tn Compaq SMART-2/P
-.It Tn Compaq SMART-2DH
-.It Tn Compaq SMART-2SL
-.It Tn Compaq Smart Array 221
-.It Tn Compaq Smart Array 3100ES
-.It Tn Compaq Smart Array 3200
-.It Tn Compaq Smart Array 4200
-.It Tn Compaq Smart Array 4250ES
+.Bl -hang -tag -compact -indent
+.It Xircom CreditCard Ethernet II
+.It Xircom CreditCard 10/100 Ethernet
+.It Xircom CreditCard Ethernet + Modem
+.It Xircom CreditCard 10/100 Ethernet + Modem
+.It Intel EtherExpress Pro/100
+.It Compaq Netelligent 10/100
 .El
+.Pp
+Cards which should work, but have not been confirmed include:
+.Pp
+.Bl -hang -tag -compact -indent
+.It Xircom RealPort Ethernet
+.It Xircom RealPort 10/100 Ethernet
+.It Xircom RealPort 10/100 Ethernet + Modem
+.El
+.Pp
+Some Xircom Ethernet products are supported by the
+.Xr tlp 4
+driver.
+.Sh MEDIA SELECTION
+Media selection is done using
+.Xr ifconfig 8
+using the standard
+.Xr ifmedia 4
+mechanism.  Refer to those manual pages for more information.
+.Sh BUGS
+The driver suffers from poor performance.  Even with the 10/100 cards,
+do not expect more than ~450KB/s.  Some 10/100 cards may not autonegotiate
+reliably and require manual media selection.
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr ca 4
-.Sh AUTHOR
-The
-.Nm
-driver was written by Andy Doran
-.Aq ad@netbsd.org .
+.Xr ifconfig 8 ,
+.Xr ifmedia 4 ,
+.Xr mii 4 ,
+.Xr netintro 4 ,
+.Xr pcmcia 4 ,
+.Xr tlp 4
 .Sh HISTORY
 The
-.Nm cac
-driver first appeared in
+.Nm
+device driver appeared in
 .Nx 1.5 .
-.Sh BUGS
-A command pass-through interface and user space control tool are needed.
-.Pp
-ISA and EISA front-ends are needed.
-.Pp

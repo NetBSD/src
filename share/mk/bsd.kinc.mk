@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.13 2000/04/24 14:22:05 simonb Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.13.2.1 2000/06/22 16:17:54 minoura Exp $
 
 # System configuration variables:
 #
@@ -64,8 +64,10 @@ SYMLINKS+=	${KDIR} ${INCSDIR}
 
 # make sure the directory is OK, and install includes.
 
+incinstall:: ${DESTDIR}${INCSDIR}
 .PRECIOUS: ${DESTDIR}${INCSDIR}
 .PHONY: ${DESTDIR}${INCSDIR}
+
 ${DESTDIR}${INCSDIR}:
 	@if [ ! -d ${.TARGET} ] || [ -h ${.TARGET} ] ; then \
 		echo creating ${.TARGET}; \
@@ -74,40 +76,42 @@ ${DESTDIR}${INCSDIR}:
 		    ${.TARGET}; \
 	fi
 
-incinstall:: ${DESTDIR}${INCSDIR}
-
 .if defined(INCS)
-.for I in ${INCS}
-incinstall:: ${DESTDIR}${INCSDIR}/$I
-
-.PRECIOUS: ${DESTDIR}${INCSDIR}/$I
+incinstall:: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
+.PRECIOUS: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${INCSDIR}/$I
+.PHONY: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .endif
-${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
-	@cmp -s ${.CURDIR}/$I ${.TARGET} > /dev/null 2>&1 || \
+
+__incinstall: .USE
+	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (echo "${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c \
-		-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} ${.CURDIR}/$I \
+		-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} \
 		${.TARGET}" && \
 	     ${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${BINOWN} \
-		-g ${BINGRP} -m ${NONBINMODE} ${.CURDIR}/$I ${.TARGET})
+		-g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
+
+.for I in ${INCS}
+${DESTDIR}${INCSDIR}/$I: $I __incinstall
 .endfor
 .endif
 
 .if defined(DEPINCS)
-.for I in ${DEPINCS}
-incinstall:: ${DESTDIR}${INCSDIR}/$I
-
-.PRECIOUS: ${DESTDIR}${INCSDIR}/$I
+incinstall:: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
+.PRECIOUS: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${INCSDIR}/$I
+.PHONY: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .endif
-${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
-	@cmp -s $I ${.TARGET} > /dev/null 2>&1 || \
+
+__depincinstall: .USE
+	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (echo "${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} \
-		-g ${BINGRP} -m ${NONBINMODE} $I ${.TARGET}" && \
+		-g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} $I ${.TARGET})
+		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
+
+.for I in ${DEPINCS}
+${DESTDIR}${INCSDIR}/$I: $I __depincinstall
 .endfor
 .endif
 
