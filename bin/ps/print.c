@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.64 2001/01/15 17:57:14 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.65 2001/01/15 21:02:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.64 2001/01/15 17:57:14 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.65 2001/01/15 21:02:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,8 +156,8 @@ printheader()
 }
 
 /* 
- * Return 1 if the the command name in the argument vector does
- * not match the command name.
+ * Return 1 if the the command name in the argument vector (u-area) does
+ * not match the command name (p_comm)
  */
 static int
 titlecmp(name, argv)
