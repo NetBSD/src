@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.84 1998/11/11 06:34:43 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.85 1998/11/17 01:41:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -162,7 +162,7 @@ int	enoioctl __P((void));
 int	enxio __P((void));
 int	eopnotsupp __P((void));
 
-#ifdef LKM
+#if defined(LKM) || defined(_LKM)
 int	lkmenodev __P((void));
 #endif
 
