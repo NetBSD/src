@@ -5,7 +5,6 @@ define(`confTRUSTED_USERS', mycroft)dnl
 FEATURE(redirect)dnl
 
 define(`MAIL_HUB', `mail.ihack.net.')dnl
-define(`SMART_HOST', `mail.ihack.net.')dnl
 define(`UUCP_RELAY', `life.ai.mit.edu.')dnl
 define(`BITNET_RELAY', `mitvma.mit.edu.')dnl
 
