@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.11 1996/06/30 22:51:11 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $";
+static char rcsid[] = "$NetBSD: traceroute.c,v 1.11 1996/06/30 22:51:11 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -462,7 +462,7 @@ main(argc, argv)
 	if (source) {
 		(void) memset(&from, 0, sizeof(struct sockaddr));
 		from.sin_family = AF_INET;
-		if (inet_aton(source, &from.sin_addr) != 0)
+		if (inet_aton(source, &from.sin_addr) == 0)
 			errx(1, "unknown host %s", source);
 		ip->ip_src = from.sin_addr;
 #ifndef IP_HDRINCL
