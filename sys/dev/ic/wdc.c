@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.123 2003/05/17 21:52:04 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.124 2003/09/17 11:56:19 drochner Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.123 2003/05/17 21:52:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.124 2003/09/17 11:56:19 drochner Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1280,7 +1280,7 @@ wdc_downgrade_mode(drvp)
 		return 0;
 
 	wdc->set_modes(chp);
-	/* reset the channel, which will shedule all drives for setup */
+	/* reset the channel, which will schedule all drives for setup */
 	wdc_reset_channel(drvp);
 	return 1;
 }
