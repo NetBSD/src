@@ -1,4 +1,3 @@
-/*	$NetBSD: cpu.h,v 1.9 2001/09/04 06:19:22 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 2001/09/04 06:23:16 simonb Exp $	*/
 
 #include <mips/cpu.h>
-#include <mips/cpuregs.h>
