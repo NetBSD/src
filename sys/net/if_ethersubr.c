@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.49 1999/09/21 22:18:51 matt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.50 1999/10/12 04:53:45 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -440,6 +440,10 @@ ether_output(ifp, m0, dst, rt0)
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
 
+	/* If no ether type is set, this must be a 802.2 formatted packet.
+	 */
+	if (etype == 0)
+		etype = htons(m->m_pkthdr.len);
 	/*
 	 * Add local net header.  If no space in first mbuf,
 	 * allocate another.
@@ -448,8 +452,6 @@ ether_output(ifp, m0, dst, rt0)
 	if (m == 0)
 		senderr(ENOBUFS);
 	eh = mtod(m, struct ether_header *);
-	if (etype == 0)
-		etype = htons(m->m_pkthdr.len);
 	bcopy((caddr_t)&etype,(caddr_t)&eh->ether_type,
 		sizeof(eh->ether_type));
  	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof (edst));
