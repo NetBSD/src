@@ -1,6 +1,8 @@
+/*	$NetBSD: remcap.c,v 1.4 1994/12/08 09:31:01 jtc Exp $	*/
+
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,10 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)remcap.c	5.5 (Berkeley) 2/2/91";*/
-static char rcsid[] = "$Id: remcap.c,v 1.3 1993/08/01 18:06:37 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)remcap.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: remcap.c,v 1.4 1994/12/08 09:31:01 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -45,6 +49,7 @@ static char rcsid[] = "$Id: remcap.c,v 1.3 1993/08/01 18:06:37 mycroft Exp $";
 #include <fcntl.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include "pathnames.h"
 
 #ifndef BUFSIZ
