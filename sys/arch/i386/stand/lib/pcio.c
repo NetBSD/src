@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.12 2003/02/01 14:48:18 dsl Exp $	 */
+/*	$NetBSD: pcio.c,v 1.13 2003/03/08 21:30:59 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -202,7 +202,9 @@ nocom:
 	btinfo_console.speed = 9600;
 #endif
 #else /* !SUPPORT_SERIAL */
-	strncpy(btinfo_console.devname, "pc", 16);
+	btinfo_console.devname[0] = 'p';
+	btinfo_console.devname[1] = 'c';
+	btinfo_console.devname[2] = 0;
 #endif /* SUPPORT_SERIAL */
 }
 
