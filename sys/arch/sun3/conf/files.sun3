@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.12 1995/10/08 23:38:45 gwr Exp $
+#	$NetBSD: files.sun3,v 1.13 1995/10/10 21:25:29 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -68,29 +68,9 @@ file arch/sun3/dev/vme.c		vmes vmel
 define sunfb {}
 
 #
-# SCSI driver and associated stuff
+# Machine-independent SCSI drivers
 #
-define	scsi {}
-file	scsi/scsi_base.c		scsi
-file	scsi/scsi_ioctl.c		scsi
-file	scsi/scsiconf.c			scsi
-
-device	scsibus at scsi {target = -1, lun = -1}
-
-device	sd at scsibus: disk
-file	scsi/sd.c			sd needs-flag
-
-device	st at scsibus: tape
-file	scsi/st.c			st needs-flag
-
-device	cd at scsibus: disk
-file	scsi/cd.c			cd needs-flag
-
-device	ch at scsibus: disk
-file	scsi/ch.c			ch needs-flag
-
-file	scsi/uk.c			uk needs-flag
-file	scsi/su.c			su needs-flag
+include "../../../scsi/files.scsi"
 
 #
 # On-Board I/O (OBIO)
