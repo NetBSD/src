@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 4/22/94
-#	$Id: Makefile,v 1.7 1994/12/22 11:32:00 cgd Exp $
+#	$Id: Makefile,v 1.8 1995/03/17 05:55:49 jtc Exp $
 
 .include "../config/Makefile.config"
 
@@ -24,6 +24,9 @@ CFLAGS+=-DOS_REP=\"${OS}\"
 CFLAGS+=-DOS_HDR=\"os-${OS}.h\"
 CFLAGS+=${CONFIG}
 CLEANFILES+=vers.${PROG}.c vers.${PROG}.o version.amd
+
+DPADD+=	${LIBCOMPAT}
+LDADD+=	-lcompat
 
 vers.${PROG}.c: ${SRCS:.c=.o}
 	@d=${.CURDIR}/ sh ${.CURDIR}/../config/newvers.sh ${PROG} ${MACHINE} ${OS}
