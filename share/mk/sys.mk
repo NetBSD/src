@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.33 1997/05/31 21:22:02 cjs Exp $
+#	$NetBSD: sys.mk,v 1.33.2.1 1997/11/04 21:59:21 thorpej Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -28,6 +28,11 @@ CXXFLAGS?=	${CFLAGS}
 COMPILE.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
 LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
+OBJC?=		${CC}
+OBJCFLAGS?=	${CFLAGS}
+COMPILE.m?=	${OBJC} ${OBJCFLAGS} ${CPPFLAGS} -c
+LINK.m?=	${OBJC} ${OBJCFLAGS} ${CPPFLAGS} ${LDFLAGS}
+
 CPP?=		cpp
 CPPFLAGS?=	
 
@@ -51,9 +56,13 @@ LD?=		ld
 LDFLAGS?=
 
 LINT?=		lint
-LINTFLAGS?=	-chapbx
+LINTFLAGS?=	-chapbxz
+
+LORDER?=	lorder
 
 MAKE?=		make
+
+NM?=		nm
 
 PC?=		pc
 PFLAGS?=
@@ -61,6 +70,10 @@ COMPILE.p?=	${PC} ${PFLAGS} ${CPPFLAGS} -c
 LINK.p?=	${PC} ${PFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 SHELL?=		sh
+
+SIZE?=		size
+
+TSORT?= 	tsort -q
 
 YACC?=		yacc
 YFLAGS?=	-d
