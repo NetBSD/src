@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.26 1997/05/08 11:40:16 mycroft Exp $
+#	$NetBSD: newvers.sh,v 1.27 1997/05/10 15:40:09 lukem Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -43,9 +43,10 @@ fi
 touch version
 v=`cat version` u=${USER-root} d=`pwd` h=`hostname` t=`date`
 id=`basename ${d}`
+osrelcmd=`dirname $0`/osrelease.sh
 
 ost="NetBSD"
-osr="1.2E"
+osr=`sh $osrelcmd`
 
 echo "char ostype[] = \"${ost}\";" > vers.c
 echo "char osrelease[] = \"${osr}\";" >> vers.c
