@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.52 2002/01/27 23:50:36 simonb Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.53 2002/01/28 01:37:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.52 2002/01/27 23:50:36 simonb Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.53 2002/01/28 01:37:17 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,33 +168,31 @@ int	Aflag, aflag, nflag, wflag;
  */
 #define CTLTYPE_LIMIT	((~0x1) << 31)
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
-static void listall __P((const char *, struct list *));
-static void parse __P((char *, int));
-static void debuginit __P((void));
-static int sysctl_inet __P((char *, char **, int[], int, int *));
+static void listall(const char *, struct list *);
+static void parse(char *, int);
+static void debuginit(void);
+static int sysctl_inet(char *, char **, int[], int, int *);
 #ifdef INET6
-static int sysctl_inet6 __P((char *, char **, int[], int, int *));
+static int sysctl_inet6(char *, char **, int[], int, int *);
 #endif
 #ifdef IPSEC
-static int sysctl_key __P((char *, char **, int[], int, int *));
+static int sysctl_key(char *, char **, int[], int, int *);
 #endif
-static int sysctl_vfs __P((char *, char **, int[], int, int *));
-static int sysctl_vfsgen __P((char *, char **, int[], int, int *));
-static int sysctl_mbuf __P((char *, char **, int[], int, int *));
-static int sysctl_pipe __P((char *, char **, int[], int, int *));
-static int sysctl_proc __P((char *, char **, int[], int, int *));
-static int findname __P((char *, char *, char **, struct list *));
-static void usage __P((void));
+static int sysctl_vfs(char *, char **, int[], int, int *);
+static int sysctl_vfsgen(char *, char **, int[], int, int *);
+static int sysctl_mbuf(char *, char **, int[], int, int *);
+static int sysctl_pipe(char *, char **, int[], int, int *);
+static int sysctl_proc(char *, char **, int[], int, int *);
+static int findname(char *, char *, char **, struct list *);
+static void usage(void);
 
 #define USEAPP(s, a) printf("%s: use '%s' to view this information\n", s, a)
 
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *fn = NULL;
 	int ch, lvl1;
@@ -265,9 +263,7 @@ main(argc, argv)
  * List all variables known to the system.
  */
 static void
-listall(prefix, lp)
-	const char *prefix;
-	struct list *lp;
+listall(const char *prefix, struct list *lp)
 {
 	int lvl2;
 	char *cp, name[BUFSIZ];
@@ -291,9 +287,7 @@ listall(prefix, lp)
  * Set a new value if requested.
  */
 static void
-parse(string, flags)
-	char *string;
-	int flags;
+parse(char *string, int flags)
 {
 	int indx, type, state, len;
 	int special = 0;
@@ -688,7 +682,7 @@ else \
  * Initialize the set of debugging names
  */
 static void
-debuginit()
+debuginit(void)
 {
 	int mib[3], loc, i;
 	size_t size;
@@ -766,12 +760,7 @@ struct list inetvars[] = {
  * handle internet requests
  */
 static int
-sysctl_inet(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_inet(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp;
 	int indx;
@@ -866,12 +855,7 @@ struct list inet6vars[] = {
  * handle internet6 requests
  */
 static int
-sysctl_inet6(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_inet6(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp;
 	int indx;
@@ -913,12 +897,7 @@ struct list keylist = { keynames, KEYCTL_MAXID };
  * handle key requests
  */
 static int
-sysctl_key(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_key(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp;
 	int indx;
@@ -965,12 +944,7 @@ struct list vfsvars[] = {
  * handle vfs requests
  */
 static int
-sysctl_vfs(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_vfs(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp = &vfsvars[mib[1]];
 	int indx;
@@ -999,12 +973,7 @@ struct list vfsgenvars = { vfsgenname, VFSGEN_MAXID };
  * handle vfs.generic requests
  */
 static int
-sysctl_vfsgen(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_vfsgen(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp = &vfsgenvars;
 	int indx;
@@ -1034,12 +1003,7 @@ struct list proclimittypevars = {proclimittypenames,
  * handle kern.proc requests
  */
 static int
-sysctl_proc(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_proc(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	char *cp, name[BUFSIZ];
 	struct list *lp;
@@ -1106,12 +1070,7 @@ struct list mbufvars = { mbufnames, MBUF_MAXID };
  * handle kern.mbuf requests
  */
 static int
-sysctl_mbuf(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_mbuf(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp = &mbufvars;
 	int indx;
@@ -1133,12 +1092,7 @@ struct list pipevars = { pipenames, KERN_PIPE_MAXID };
  * handle kern.pipe requests
  */
 static int
-sysctl_pipe(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_pipe(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp = &pipevars;
 	int indx;
@@ -1158,11 +1112,7 @@ sysctl_pipe(string, bufpp, mib, flags, typep)
  * Scan a list of names searching for a particular name.
  */
 static int
-findname(string, level, bufp, namelist)
-	char *string;
-	char *level;
-	char **bufp;
-	struct list *namelist;
+findname(char *string, char *level, char **bufp, struct list *namelist)
 {
 	char *name;
 	int i;
@@ -1184,7 +1134,7 @@ findname(string, level, bufp, namelist)
 }
 
 static void
-usage()
+usage(void)
 {
 	const char *progname = getprogname();
 
