@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.9 1997/03/16 10:00:45 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.10 1997/04/01 03:12:16 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -312,7 +312,7 @@ hpux_sys_getcontext(p, v, retval)
 {
 	struct hpux_sys_getcontext_args *uap = v;
 	int l, i, error = 0;
-	register int len; 
+	int len; 
 
 	for (i = 0; context_table[i].str != NULL; i++)
 		if (context_table[i].val == fputype)
@@ -344,10 +344,10 @@ hpux_to_bsd_uoff(off, isps, p)
 	int *off, *isps; 
 	struct proc *p;
 {
-	register int *ar0 = p->p_md.md_regs;
+	int *ar0 = p->p_md.md_regs;
 	struct hpux_fp *hp; 
 	struct bsdfp *bp;
-	register u_int raddr;
+	u_int raddr;
 
 	*isps = 0;
 
@@ -457,11 +457,11 @@ hpux_sendsig(catcher, sig, mask, code)
 	int sig, mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct hpuxsigframe *kfp, *fp;
-	register struct frame *frame;
-	register struct sigacts *psp = p->p_sigacts;
-	register short ft;
+	struct proc *p = curproc;
+	struct hpuxsigframe *kfp, *fp;
+	struct frame *frame;
+	struct sigacts *psp = p->p_sigacts;
+	short ft;
 	int oonstack, fsize;
 	extern char sigcode[], esigcode[];
 
@@ -631,9 +631,9 @@ hpux_sys_sigreturn(p, v, retval)
 	struct hpux_sys_sigreturn_args /* {
 		syscallarg(struct hpuxsigcontext *) sigcntxp;
 	} */ *uap = v;
-	register struct hpuxsigcontext *scp;
-	register struct frame *frame;
-	register int rf;
+	struct hpuxsigcontext *scp;
+	struct frame *frame;
+	int rf;
 	struct hpuxsigcontext tsigc;
 	struct hpuxsigstate tstate;
 	int flags;
@@ -716,7 +716,7 @@ hpux_sys_sigreturn(p, v, retval)
 	 * the sigcontext structure.
 	 */
 	if (flags & HSS_RTEFRAME) {
-		register int sz;
+		int sz;
 		
 		/* grab frame type and validate */
 		sz = tstate.hss_frame.f_format;
@@ -759,7 +759,7 @@ hpux_sys_sigreturn(p, v, retval)
  */
 void
 hpux_setregs(p, pack, stack, retval)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 	register_t *retval;

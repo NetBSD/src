@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 1997/03/15 23:30:12 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.16 1997/04/01 03:12:25 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,11 +45,12 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/buf.h>
 #include <sys/systm.h>
-#include <sys/uio.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
 
 #include <machine/cpu.h>
 
@@ -58,6 +59,11 @@
 extern u_int lowram;
 extern char *extiobase;
 static caddr_t devzeropage;
+
+int	mmopen __P((dev_t, int, int));
+int	mmclose __P((dev_t, int, int));
+int	mmrw __P((dev_t, struct uio *, int));
+int	mmmmap __P((dev_t, int, int));
 
 /*ARGSUSED*/
 int
@@ -86,9 +92,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
-	register int c;
-	register struct iovec *iov;
+	vm_offset_t o, v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 	static int physlock;
 

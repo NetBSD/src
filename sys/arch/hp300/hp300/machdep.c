@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 1997/03/27 21:01:29 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 1997/04/01 03:12:22 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,27 +44,27 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/kernel.h>
-#include <sys/map.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/callout.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/mount.h>
-#include <sys/user.h>
+#include <sys/clist.h>
+#include <sys/conf.h>
 #include <sys/exec.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/map.h>
+#include <sys/mbuf.h>
+#include <sys/mount.h>
+#include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/signalvar.h>
+#include <sys/syscallargs.h>
+#include <sys/tty.h>
+#include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
-#include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -75,17 +75,27 @@
 #include <sys/shm.h>
 #endif
 
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 
-#include <dev/cons.h>
-
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
 #include <vm/vm_param.h>
+
+#include <dev/cons.h>
+#include <arch/hp300/dev/hilreg.h>
+#include <arch/hp300/dev/hilioctl.h>
+#include <arch/hp300/dev/hilvar.h>
+#ifdef USELEDS
+#include <arch/hp300/hp300/led.h>
+#endif /* USELEDS */
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "hp300";		/* cpu "architecture" */
@@ -203,9 +213,9 @@ void
 cpu_startup()
 {
 	extern char *etext;
-	register unsigned i;
-	register caddr_t v;
-	int base, residual, sz;
+	unsigned i;
+	caddr_t v;
+	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
 #ifdef DEBUG
@@ -298,7 +308,7 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -350,7 +360,7 @@ cpu_startup()
  */
 caddr_t
 allocsys(v)
-	register caddr_t v;
+	caddr_t v;
 {
 
 #define	valloc(name, type, num)	\
@@ -411,7 +421,7 @@ allocsys(v)
  */
 void
 setregs(p, pack, stack, retval)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 	register_t *retval;
@@ -577,8 +587,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 #ifdef USELEDS
-#include <hp300/hp300/led.h>
-
 int inledcontrol = 0;	/* 1 if we are in ledcontrol already, cheap mutex */
 char *ledaddr;
 
@@ -606,10 +614,10 @@ ledinit()
  */
 void
 ledcontrol(ons, offs, togs)
-	register int ons, offs, togs;
+	int ons, offs, togs;
 {
 	static char currentleds;
-	register char leds;
+	char leds;
 
 	inledcontrol = 1;
 	leds = currentleds;
@@ -665,11 +673,11 @@ sendsig(catcher, sig, mask, code)
 	int sig, mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct sigframe *fp, *kfp;
-	register struct frame *frame;
-	register struct sigacts *psp = p->p_sigacts;
-	register short ft;
+	struct proc *p = curproc;
+	struct sigframe *fp, *kfp;
+	struct frame *frame;
+	struct sigacts *psp = p->p_sigacts;
+	short ft;
 	int oonstack, fsize;
 	extern char sigcode[], esigcode[];
 
@@ -821,9 +829,9 @@ sys_sigreturn(p, v, retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	register struct sigcontext *scp;
-	register struct frame *frame;
-	register int rf;
+	struct sigcontext *scp;
+	struct frame *frame;
+	int rf;
 	struct sigcontext tsigc;
 	struct sigstate tstate;
 	int flags;
@@ -901,7 +909,7 @@ sys_sigreturn(p, v, retval)
 	 * the sigcontext structure.
 	 */
 	if (flags & SS_RTEFRAME) {
-		register int sz;
+		int sz;
 		
 		/* grab frame type and validate */
 		sz = tstate.ss_frame.f_format;
@@ -941,14 +949,17 @@ int	waittime = -1;
 
 void
 cpu_reboot(howto, bootstr)
-	register int howto;
+	int howto;
 	char *bootstr;
 {
 	extern int cold;
 
+#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
+	(void)&howto;
+#endif
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
-		savectx(curproc->p_addr);
+		savectx(&curproc->p_addr->u_pcb);
 
 	/* If system is cold, just halt. */
 	if (cold) {
@@ -1075,7 +1086,7 @@ dumpsys()
 	dump = bdevsw[major(dumpdev)].d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev 0x%x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev 0x%x, offset %ld\n", dumpdev, dumplo);
 
 	printf("dump ");
 	maddr = lowram;
@@ -1159,9 +1170,9 @@ int	*nofault;
 
 int
 badaddr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
 	nofault = (int *) &faultbuf;
@@ -1176,9 +1187,9 @@ badaddr(addr)
 
 int
 badbaddr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
 	nofault = (int *) &faultbuf;
@@ -1346,8 +1357,8 @@ parityerrorfind()
 	static label_t parcatch;
 	static int looking = 0;
 	volatile int pg, o, s;
-	register volatile int *ip;
-	register int i;
+	volatile int *ip;
+	int i;
 	int found;
 
 #ifdef lint
@@ -1401,11 +1412,11 @@ done:
 
 void
 regdump(fp, sbytes)
-	struct frame *fp; /* must not be register */
+	struct frame *fp; /* must not be */
 	int sbytes;
 {
 	static int doingdump = 0;
-	register int i;
+	int i;
 	int s;
 
 	if (doingdump)
@@ -1444,10 +1455,10 @@ regdump(fp, sbytes)
 
 void
 dumpmem(ptr, sz, ustack)
-	register int *ptr;
+	int *ptr;
 	int sz, ustack;
 {
-	register int i, val;
+	int i, val;
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
@@ -1470,11 +1481,11 @@ dumpmem(ptr, sz, ustack)
 
 char *
 hexstr(val, len)
-	register int val;
+	int val;
 	int len;
 {
 	static char nbuf[9];
-	register int x, i;
+	int x, i;
 
 	if (len > 8)
 		return("");
