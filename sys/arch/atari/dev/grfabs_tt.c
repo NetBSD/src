@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.3 1996/04/12 09:05:40 leo Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.4 1996/04/18 08:51:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -72,13 +72,13 @@ struct grfabs_sw tt_vid_sw = {
 };
 
 static dmode_t vid_modes[] = {
-	{ { NULL, NULL }, "sthigh", { 640,  400 },  1, RES_STHIGH, &tt_vid_sw },
-	{ { NULL, NULL }, "tthigh", { 1280, 960 },  1, RES_TTHIGH, &tt_vid_sw },
-	{ { NULL, NULL }, "stmid",  { 640,  200 },  2, RES_STMID , &tt_vid_sw },
-	{ { NULL, NULL }, "stlow",  { 320,  200 },  4, RES_STLOW , &tt_vid_sw },
-	{ { NULL, NULL }, "ttmid",  { 640,  480 },  4, RES_TTMID , &tt_vid_sw },
-	{ { NULL, NULL }, "ttlow",  { 320,  480 },  8, RES_TTLOW , &tt_vid_sw },
-	{ { NULL, NULL }, NULL,  }
+    { { NULL, NULL }, "sthigh", { 640,  400 }, 1, {RES_STHIGH}, &tt_vid_sw },
+    { { NULL, NULL }, "tthigh", { 1280, 960 }, 1, {RES_TTHIGH}, &tt_vid_sw },
+    { { NULL, NULL }, "stmid",  { 640,  200 }, 2, {RES_STMID }, &tt_vid_sw },
+    { { NULL, NULL }, "stlow",  { 320,  200 }, 4, {RES_STLOW }, &tt_vid_sw },
+    { { NULL, NULL }, "ttmid",  { 640,  480 }, 4, {RES_TTMID }, &tt_vid_sw },
+    { { NULL, NULL }, "ttlow",  { 320,  480 }, 8, {RES_TTLOW }, &tt_vid_sw },
+    { { NULL, NULL }, NULL,  }
 };
 
 /*

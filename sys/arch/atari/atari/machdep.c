@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 1996/03/27 10:16:04 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 1996/04/18 08:51:15 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,6 +81,7 @@
 #include <vm/vm_object.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+#include <kern/kern_extern.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
@@ -88,12 +89,14 @@
 #include <machine/iomap.h>
 #include <dev/cons.h>
 
-#include "ether.h"
-#include "ppp.h"
-
+static void bootsync __P((void));
 static void call_sicallbacks __P((void));
+static void dumpmem __P((int *, int, int));
+static char *hexstr __P((int, int));
 static void identifycpu __P((void));
 static void netintr __P((void));
+void	straymfpint __P((int, u_short));
+void	straytrap __P((int, u_short));
 
 extern vm_offset_t avail_end;
 
@@ -331,7 +334,7 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d (%d pages)\n", ptoa(cnt.v_free_count),
+	printf("avail mem = %ld (%ld pages)\n", ptoa(cnt.v_free_count),
 	    ptoa(cnt.v_free_count)/NBPG);
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
@@ -381,9 +384,7 @@ extern char version[];
 static void
 identifycpu()
 {
-	extern char	*fpu_describe();
-	extern int	fpu_probe();
-	       char	*mach, *mmu, *fpu, *cpu;
+       char	*mach, *mmu, *fpu, *cpu;
 
 	if (machineid & ATARI_TT)
 		mach = "Atari TT";
@@ -755,7 +756,7 @@ sys_sigreturn(p, v, retval)
 
 static int waittime = -1;
 
-void
+static void
 bootsync(void)
 {
 	if (waittime < 0) {
@@ -777,7 +778,7 @@ boot(howto)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
-		savectx(curproc->p_addr);
+		savectx(&curproc->p_addr->u_pcb);
 
 	boothowto = howto;
 	if((howto & RB_NOSYNC) == 0)
@@ -852,6 +853,7 @@ dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
+void
 dumpsys()
 {
 	extern	 u_long	boot_ttphysize, boot_ttphystart, boot_stphysize;
@@ -875,7 +877,7 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 #if defined(DDB) || defined(PANICWAIT)
 	printf("Do you want to dump memory? [y]");
@@ -883,7 +885,7 @@ dumpsys()
 	switch (i) {
 		case 'n':
 		case 'N':
-			return(0);
+			return;
 		case '\n':
 			break;
 		default :
@@ -1064,6 +1066,28 @@ badbaddr(addr)
 	return(0);
 }
 
+/*
+ * Network interrupt handling
+ */
+#include "ether.h"
+#include "ppp.h"
+
+#ifdef NPPP
+void	pppintr __P((void));
+#endif
+#ifdef INET
+void	ipintr __P((void));
+#endif
+#if NETHER > 0
+void	arpintr __P((void));
+#endif
+#ifdef NS
+void	nsintr __P((void));
+#endif
+#ifdef ISO
+void	clnlintr __P((void));
+#endif
+
 static void
 netintr()
 {
@@ -1118,7 +1142,6 @@ struct si_callback {
 static struct si_callback *si_callbacks;
 static struct si_callback *si_free;
 #ifdef DIAGNOSTIC
-static int ncb;		/* number of callback blocks allocated */
 static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
@@ -1199,7 +1222,7 @@ static void call_sicallbacks()
 
 	do {
 		s = splhigh ();
-		if (si = si_callbacks)
+		if ((si = si_callbacks) != NULL)
 			si_callbacks = si->next;
 		splx(s);
 
@@ -1219,8 +1242,7 @@ static void call_sicallbacks()
 #ifdef DIAGNOSTIC
 	if (ncbd) {
 #ifdef DEBUG
-		printf("call_sicallback: %d more dynamic structures %d total\n",
-		    ncbd, ncb);
+		printf("call_sicallback: %d more dynamic structures\n", ncbd);
 #endif
 		ncbd = 0;
 	}
@@ -1250,7 +1272,6 @@ regdump(fp, sbytes)
 	static int doingdump = 0;
 	register int i;
 	int s;
-	extern char *hexstr();
 
 	if (doingdump)
 		return;
@@ -1285,12 +1306,12 @@ regdump(fp, sbytes)
 
 #define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
+static void
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
 	int sz, ustack;
 {
 	register int i, val;
-	extern char *hexstr();
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
@@ -1311,7 +1332,7 @@ dumpmem(ptr, sz, ustack)
 	printf("\n");
 }
 
-char *
+static char *
 hexstr(val, len)
 	register int val, len;
 {

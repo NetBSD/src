@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.2 1996/03/17 01:26:54 thorpej Exp $	*/
+/*	$NetBSD: nvram.c,v 1.3 1996/04/18 08:52:08 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,6 +44,7 @@
 #include <sys/uio.h>
 
 #include <machine/iomap.h>
+#include <machine/cpu.h>
 
 #include <atari/dev/clockreg.h>
 #include <atari/dev/nvramvar.h>
@@ -130,6 +131,7 @@ int	byteno;
 
 #if NNVR > 0
 
+int
 nvram_uio(uio)
 struct uio	*uio;
 {
@@ -167,7 +169,7 @@ struct uio	*uio;
 		for (i = 0, p = buf; i < nleft; i++, p++)
 			*p =  mc146818_read(RTC, offset + i);
 	}
-	if (i = uiomove(buf, nleft, uio))
+	if ((i = uiomove(buf, nleft, uio)) != 0)
 		return (i);
 	if (uio->uio_rw == UIO_WRITE) {
 		for (i = 0, p = buf; i < nleft; i++, p++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 1996/04/04 06:25:15 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 1996/04/18 08:51:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -40,7 +40,6 @@
 #include <machine/cpu.h>
 #include <atari/atari/device.h>
 
-void configure __P((void));
 static void setroot __P((void));
 void swapconf __P((void));
 void mbattach __P((struct device *, struct device *, void *));
@@ -168,11 +167,11 @@ swapconf()
 dev_t	bootdev = 0;
 
 static	char devname[][2] = {
-	0,0,
-	0,0,
-	'f','d',	/* 2 = fd */
-	0,0,
-	's','d',	/* 4 = sd -- SCSI system */
+	{ '\0', '\0' },
+	{ '\0', '\0' },
+	{ 'f' , 'd'  },	/* 2 = fd */
+	{ '\0', '\0' },
+	{ 's' , 'd'  },	/* 4 = sd -- SCSI system */
 };
 
 static void
@@ -219,7 +218,7 @@ setroot()
 	 * If dumpdev was the same as the old primary swap
 	 * device, move it to the new primary swap device.
 	 */
-	if (temp == dumpdev)
+	if (swp->sw_dev == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
 #endif
 }

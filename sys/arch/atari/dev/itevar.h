@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.4 1996/03/20 13:11:56 leo Exp $	*/
+/*	$NetBSD: itevar.h,v 1.5 1996/04/18 08:52:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -168,6 +168,8 @@ enum tab_size { TABSIZE = 8 };
 #define attrtest(ip, attr) 0
 #define attrset(ip, attr)
 
+#ifdef _KERNEL
+
 struct proc;
 struct consdev;
 struct termios;
@@ -182,6 +184,17 @@ void	ite_cnfinish __P((struct ite_softc *));
 /* standard ite device entry points. */
 void	iteinit __P((dev_t));
 
+/*
+ * Standard character device functions.
+ */
+dev_type_open(iteopen);
+dev_type_close(iteclose);
+dev_type_read(iteread);
+dev_type_write(itewrite);
+dev_type_ioctl(iteioctl);
+dev_type_tty(itetty);
+dev_type_stop(itestop);
+
 /* ite functions */
 int	ite_on __P((dev_t, int));
 void	ite_off __P((dev_t, int));
@@ -190,5 +203,12 @@ int	ite_param __P((struct tty *, struct termios *));
 void	ite_reset __P((struct ite_softc *));
 int	ite_cnfilter __P((u_int, enum caller));
 void	ite_filter __P((u_int ,enum caller));
+
+/* ite_cc functions */
+int	grfcc_cnprobe __P((void));
+void	grfcc_iteinit __P((struct grf_softc *));
+int	ite_grf_ioctl __P((struct ite_softc *, u_long, caddr_t, int,
+							struct proc *));
+#endif /* _KERNEL */
 
 #endif /* _ITEVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18 1996/03/27 10:08:35 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.19 1996/04/18 08:52:14 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -564,7 +564,7 @@ long sr;
 		}
 		else if(!cb_scheduled) {
 			cb_scheduled++;
-			add_sicallback(zssoft, 0, 0);
+			add_sicallback((si_farg)zssoft, 0, 0);
 		}
 	}
 	return(intflags & 2);

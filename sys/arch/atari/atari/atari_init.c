@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.12 1996/04/12 09:05:14 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.13 1996/04/18 08:51:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -133,7 +133,7 @@ u_int	stphysize;		/* Size of ST-ram	 		*/
 char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 {
 	extern char	end[];
-	extern void	etext();
+	extern void	etext __P((void));
 	extern u_long	protorp[2];
 	u_int		pstart;		/* Next available physical address*/
 	u_int		vstart;		/* Next available virtual address */
@@ -495,7 +495,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	MFP->mf_imra  = MFP->mf_imrb = 0;
 	MFP->mf_aer   = MFP->mf_ddr  = 0;
 	MFP->mf_vr    = 0x40;
-	if(!badbaddr(&MFP2->mf_gpip)) {
+	if(!badbaddr((caddr_t)&MFP2->mf_gpip)) {
 		machineid |= ATARI_TT;
 		MFP2->mf_iera = MFP2->mf_ierb = 0;
 		MFP2->mf_imra = MFP2->mf_imrb = 0;
@@ -542,9 +542,9 @@ cpu_dumpsize()
  * XXX: Assumes that it will all fit in one diskblock.
  */
 int
-cpu_dump(dump, blkno)
+cpu_dump(dump, p_blkno)
 int	(*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-daddr_t	*blkno;
+daddr_t	*p_blkno;
 {
 	int		buf[dbtob(1)/sizeof(int)];
 	int		error;
@@ -564,8 +564,8 @@ daddr_t	*blkno;
 	 * Add the md header
 	 */
 	*chdr_p = cpu_kcore_hdr;
-	error = dump(dumpdev, *blkno, (caddr_t)buf, dbtob(1));
-	*blkno += 1;
+	error = dump(dumpdev, *p_blkno, (caddr_t)buf, dbtob(1));
+	*p_blkno += 1;
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.9 1996/04/12 08:37:03 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.10 1996/04/18 08:52:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -77,7 +77,7 @@ dev_type_select(kbdselect);
 /* Interrupt handler */
 void	kbdintr __P((int));
 
-static void kbdsoft __P((void));
+static void kbdsoft __P((void *, void *));
 static void kbdattach __P((struct device *, struct device *, void *));
 static int  kbdmatch __P((struct device *, void *, void *));
 static int  kbd_write_poll __P((u_char *, int));
@@ -307,7 +307,7 @@ int sr;	/* sr at time of interrupt	*/
 				add_sicallback(kbdsoft, 0, 0);
 		} else {
 			spl1();
-			kbdsoft();
+			kbdsoft(NULL, NULL);
 		}
 	}
 }
@@ -316,7 +316,8 @@ int sr;	/* sr at time of interrupt	*/
  * Keyboard soft interrupt handler
  */
 void
-kbdsoft()
+kbdsoft(junk1, junk2)
+void	*junk1, *junk2;
 {
 	int			s;
 	u_char			code;

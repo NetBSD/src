@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.1 1996/03/27 10:21:05 leo Exp $ */
+/*	$NetBSD: lpt.c,v 1.2 1996/04/18 08:52:07 leo Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -201,8 +201,8 @@ lptopen(dev, flag, mode, p)
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		if (error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen",
-		    STEP) != EWOULDBLOCK) {
+		if ((error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen",
+		     STEP)) != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			return error;
 		}
@@ -325,8 +325,8 @@ pushbytes(sc)
 				(void) lptintr();
 				splx(s);
 			}
-			if (error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
-			    "lptwrite2", 0))
+			if ((error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
+			     "lptwrite2", 0)) != 0)
 				return error;
 		}
 	}
@@ -347,7 +347,7 @@ lptwrite(dev, uio, flags)
 	size_t n;
 	int error = 0;
 
-	while (n = min(LPT_BSIZE, uio->uio_resid)) {
+	while ((n = min(LPT_BSIZE, uio->uio_resid)) > 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
 		sc->sc_count = n;
 		error = pushbytes(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.7 1996/02/22 10:11:34 leo Exp $	*/
+/*	$NetBSD: view.c,v 1.8 1996/04/18 08:52:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -45,6 +45,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/conf.h>
 #include <machine/cpu.h>
 #include <atari/dev/grfabs_reg.h>
 #include <atari/dev/viewioctl.h>
@@ -56,13 +57,6 @@ static void view_remove __P((struct view_softc *));
 static int  view_setsize __P((struct view_softc *, struct view_size *));
 static int  view_get_colormap __P((struct view_softc *, colormap_t *));
 static int  view_set_colormap __P((struct view_softc *, colormap_t *));
-
-void viewclose __P((dev_t, int));
-int viewioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int viewopen __P((dev_t, int));
-int viewmmap __P((dev_t, int, int));
-
-int viewprobe __P((void));
 
 struct view_softc views[NVIEW];
 static int view_inited;
@@ -76,6 +70,8 @@ int view_default_depth  = 1;
 /* 
  *  functions for probeing.
  */
+void	viewattach __P((int));
+
 void
 viewattach(cnt)
 	int cnt;
@@ -281,9 +277,12 @@ colormap_t		*ucm;
  */
 
 /*ARGSUSED*/
-int viewopen(dev, flags)
-dev_t	dev;
-int	flags;
+int
+viewopen(dev, flags, mode, p)
+dev_t		dev;
+int		flags;
+int		mode;
+struct proc	*p;
 {
 	dimen_t			size;
 	struct view_softc	*vu;
@@ -314,21 +313,24 @@ int	flags;
 }
 
 /*ARGSUSED*/
-void
-viewclose (dev, flags)
-	dev_t dev;
-	int flags;
+int
+viewclose (dev, flags, mode, p)
+	dev_t		dev;
+	int 		flags;
+	int		mode;
+	struct proc	*p;
 {
 	struct view_softc *vu;
 
 	vu = &views[minor(dev)];
 
 	if ((vu->flags & VUF_OPEN) == 0)
-		return;
+		return (0); /* XXX not open? */
 	view_remove (vu);
 	grf_free_view (vu->view);
 	vu->flags = 0;
 	vu->view = NULL;
+	return (0);
 }
 
 
@@ -364,7 +366,7 @@ struct proc	*p;
 	case VIOCGBMAP:
 		bm = (bmap_t *)data;
 		bcopy(vu->view->bitmap, bm, sizeof(bmap_t));
-		if ((int)p != -1) {
+		if (p != NOPROC) {
 			bm->plane      = NULL;
 			bm->hw_address = NULL;
 		}
@@ -406,9 +408,10 @@ int	off, prot;
 
 /*ARGSUSED*/
 int
-viewselect(dev, rw)
-dev_t	dev;
-int	rw;
+viewselect(dev, rw, p)
+dev_t		dev;
+int		rw;
+struct proc	*p;
 {
 	if(rw == FREAD)
 		return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.9 1996/03/20 08:17:48 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.10 1996/04/18 08:51:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -82,11 +82,11 @@
 #define ite_reinit(d)
 #endif
 
-int grfopen __P((dev_t, int, int, struct proc *));
-int grfclose __P((dev_t, int));
-int grfioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int grfselect __P((dev_t, int));
-int grfmmap __P((dev_t, int, int));
+dev_type_open(grfopen);
+dev_type_close(grfclose);
+dev_type_ioctl(grfioctl);
+dev_type_select(grfselect);
+dev_type_mmap(grfmmap);
 
 int grfon __P((dev_t));
 int grfoff __P((dev_t));
@@ -155,7 +155,7 @@ void		*match, *auxp;
 			/*
 			 * XXX: console init opens view 0
 			 */
-			if(viewopen(0, 0))
+			if(viewopen(0, 0, 0, NULL))
 				return(0);
 			cfdata_gbus = cfp;
 		}
@@ -183,7 +183,7 @@ void		*auxp;
 			 * Skip opening view[0] when we this is the console.
 			 */
 			if(!did_cons || (i > 0))
-			    if(viewopen(i, 0))
+			    if(viewopen(i, 0, 0, NULL))
 				break;
 			config_found(dp, (void*)&i, grfbusprint);
 		}
@@ -327,9 +327,11 @@ grfopen(dev, flags, devtype, p)
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags)
-	dev_t dev;
-	int flags;
+grfclose(dev, flags, mode, p)
+	dev_t		dev;
+	int		flags;
+	int		mode;
+	struct proc	*p;
 {
 	struct grf_softc *gp;
 
@@ -406,9 +408,10 @@ struct proc	*p;
 
 /*ARGSUSED*/
 int
-grfselect(dev, rw)
-	dev_t dev;
-	int rw;
+grfselect(dev, rw, p)
+	dev_t		dev;
+	int		rw;
+	struct proc	*p;
 {
 	if (rw == FREAD)
 		return(0);
@@ -514,14 +517,14 @@ struct grf_softc *gp;
 
 	gi = &gp->g_display;
 
-	viewioctl(gp->g_viewdev, VIOCGBMAP, &bm, 0, -1);
+	viewioctl(gp->g_viewdev, VIOCGBMAP, (caddr_t)&bm, 0, NOPROC);
   
 	gp->g_data = (caddr_t) 0xDeadBeaf; /* not particularly clean.. */
   
 	gi->gd_fbaddr  = bm.hw_address;
 	gi->gd_fbsize  = bm.depth*bm.bytes_per_row*bm.rows;
 
-	if(viewioctl(gp->g_viewdev, VIOCGSIZE, &vs, 0, -1)) {
+	if(viewioctl(gp->g_viewdev, VIOCGSIZE, (caddr_t)&vs, 0, NOPROC)) {
 		/*
 		 * fill in some default values...
 		 * XXX: Should _never_ happen
@@ -561,10 +564,10 @@ void			*arg;
 			 * Get in sync with view, ite might have changed it.
 			 */
 			grf_viewsync(gp);
-			viewioctl(gp->g_viewdev, VIOCDISPLAY, NULL, 0, -1);
+			viewioctl(gp->g_viewdev, VIOCDISPLAY, NULL, 0, NOPROC);
 			return(0);
 	case GM_GRFOFF:
-			viewioctl(gp->g_viewdev, VIOCREMOVE, NULL, 0, -1);
+			viewioctl(gp->g_viewdev, VIOCREMOVE, NULL, 0, NOPROC);
 			return(0);
 	case GM_GRFCONFIG:
 	default:
