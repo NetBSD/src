@@ -1,4 +1,4 @@
-.\" $NetBSD: hardware,v 1.28 1999/01/13 07:30:02 ross Exp $	
+.\" $NetBSD: hardware,v 1.29 1999/03/28 21:33:38 is Exp $	
 .
 NetBSD/amiga _VER runs on any Amiga that has a 68020 or better CPU with
 some form of MMU, and on 68060 DraCos.
@@ -34,7 +34,7 @@ larger, as your system will be doing much more swapping.
 .Pp
 Supported devices include:
 .Bd -literal -offset indent
-A4000/A1200 IDE controller.
+A4000/A1200 IDE controller, including ATAPI devices.
 SCSI host adapters:
 	33c93 based boards: A2091, A3000 builtin, A3000 builtin 
 	    modified for Apollo accellerator board, and GVP series II.
@@ -44,9 +44,11 @@ SCSI host adapters:
 	    and DraCo builtin.
 	FAS216 based SCSI boards: FastLane Z3, Blizzard I and II,
 	    Blizzard IV, Blizzard 2060, CyberSCSI Mk I and II.
+	53c770 based SCSI baords: Cyberstorm Mk III SCSI, Cyberstorm
+	    PPC SCSI.
 Video controllers:
 	ECS, AGA and A2024 built in on various Amigas.
-	Retina Z2, Retina Z3 and Altais.
+	Retina Z2*****, Retina Z3 and Altais.
 	Cirrus CL GD 54xx based boards:
 	    GVP Spectrum,
 	    Picasso II, II+ and IV,
@@ -55,12 +57,12 @@ Video controllers:
 	    Domino and Domino16M proto,
 	    oMniBus,
 	    Merlin.
-	A2410.
+	A2410*****.
 	Cybervision 64.
 	Cybervision 64/3D.
 
 Audio I/O:
-	Amiga builtin (currently 8bit-mode only)
+	Amiga builtin
 	Melody Mpeg-audio layer 2 board
 	
 Ethernet controllers:
@@ -99,7 +101,7 @@ Real-time clocks:
 .Pp
 If its not on the above lists, there is no support for it in this
 release. Especially (but this is an incomplete list), there are no
-drivers for: Blizzard III SCSI option, Cyberstorm Mk III SCSI option,
+drivers for: Blizzard III SCSI option,
 Ferret SCSI, Oktagon SCSI.
 .Pp
 Footnotes: Known problems with some hardware:
@@ -120,4 +122,6 @@ unchanged, but you might not notice that you didn't write
 anything due to the buffer cache. Also note that HD floppy
 drives only get detected as such if a HD floppy is inserted at
 boot time.
+.It *****
+No X11 server available.
 .El
