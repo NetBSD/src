@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.47 2003/09/23 23:08:54 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.48 2003/09/23 23:10:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.47 2003/09/23 23:08:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.48 2003/09/23 23:10:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -653,6 +653,13 @@ twe_reset(struct twe_softc *sc)
 	 * Pull AENs out of the controller; look for a soft reset AEN.
 	 * Open code this, since we want to detect reset even if the
 	 * queue for management tools is full.
+	 *
+	 * Note that since:
+	 *	- interrupts are blocked
+	 *	- we have reset the controller
+	 *	- acknowledged the pending ATTENTION
+	 * that there is no way a pending asynchronous AEN fetch would
+	 * finish, so clear the flag.
 	 */
 	sc->sc_flags &= ~TWEF_AEN;
 	for (got = 0;;) {
