@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.704 2005/01/08 02:57:08 joff Exp $
+#	$NetBSD: files,v 1.705 2005/01/08 22:27:54 cube Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1070,6 +1070,7 @@ defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
 defpseudo stf:		ifnet
+defpseudo tap {[unit = -1]}:		ifnet, ether, bpf_filter
 
 defpseudo sequencer
 defpseudo clockctl
@@ -1308,6 +1309,7 @@ file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
 file	net/if_strip.c			strip			needs-flag
 file	net/if_tokensubr.c		token			needs-flag
+file	net/if_tap.c			tap
 file	net/if_tun.c			tun			needs-flag
 file	net/if_vlan.c			vlan			needs-flag
 file	net/if_pppoe.c			pppoe			needs-flag
