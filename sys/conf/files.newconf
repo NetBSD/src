@@ -31,6 +31,7 @@ pseudo-device pty: tty
 
 pseudo-device loop: ifnet
 pseudo-device sl: ifnet
+pseudo-device ppp: ifnet
 pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 
@@ -96,7 +97,7 @@ file kern/tty.c
 file kern/tty_compat.c	
 file kern/tty_conf.c		
 file kern/tty_pty.c		pty needs-count
-file kern/tty_ring.c		
+file kern/tty_subr.c		
 file kern/tty_tb.c		tb needs-flag
 file kern/tty_tty.c		
 file kern/uipc_domain.c	
@@ -106,7 +107,7 @@ file kern/uipc_socket.c
 file kern/uipc_socket2.c	
 file kern/uipc_syscalls.c	
 file kern/uipc_usrreq.c	
-file kern/vfs__bio.c		
+file kern/vfs_bio.c		
 file kern/vfs_cache.c	
 file kern/vfs_conf.c		
 file kern/vfs_lookup.c	
@@ -124,13 +125,14 @@ file net/if.c
 file net/if_ethersubr.c	 	ether needs-flag
 file net/if_loop.c		loop needs-count
 file net/if_sl.c		sl needs-count
+file net/if_ppp.c		ppp needs-count
 file net/if_tun.c		tun needs-count
 file net/radix.c		
 file net/raw_cb.c		
 file net/raw_usrreq.c	
 file net/route.c		
 file net/rtsock.c		
-file net/slcompress.c	 	sl 
+file net/slcompress.c	 	sl ppp
 file netccitt/ccitt_proto.c	ccitt
 file netccitt/hd_debug.c	ccitt
 file netccitt/hd_input.c	ccitt
