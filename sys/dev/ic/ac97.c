@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.52.2.1 2004/08/12 20:06:24 jmc Exp $ */
+/*      $NetBSD: ac97.c,v 1.52.2.2 2004/09/10 06:52:02 tron Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.52.2.1 2004/08/12 20:06:24 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.52.2.2 2004/09/10 06:52:02 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,11 +724,26 @@ ac97_restore_shadow(struct ac97_codec_if *self)
 	struct ac97_softc *as;
 	const struct ac97_source_info *si;
 	int idx;
+	uint16_t val;
 
 	as = (struct ac97_softc *) self;
+
+	/* make sure chip is fully operational */
+#define	AC97_POWER_ALL	(AC97_POWER_REF | AC97_POWER_ANL | AC97_POWER_DAC \
+			| AC97_POWER_ADC)
+	for (idx = 500000; idx >= 0; idx--) {
+		ac97_read(as, AC97_REG_POWER, &val);
+		if ((val & AC97_POWER_ALL) == AC97_POWER_ALL)
+		       break;
+		DELAY(1);
+	}
+#undef AC97_POWER_ALL
+
 	for (idx = 0; idx < SOURCE_INFO_SIZE; idx++) {
 		si = &source_info[idx];
-		ac97_write(as, si->reg, as->shadow_reg[si->reg >> 1]);
+		/* don't "restore" to the reset reg! */
+		if (si->reg != AC97_REG_RESET)
+			ac97_write(as, si->reg, as->shadow_reg[si->reg >> 1]);
 	}
 
 	if (as->ext_id & (AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_DRA
@@ -877,9 +892,10 @@ ac97_attach(struct ac97_host_if *host_if)
 	struct ac97_softc *as;
 	struct device *sc_dev;
 	int error, i, j;
-	u_int32_t id;
-	u_int16_t id1, id2;
-	u_int16_t extstat, rate;
+	uint32_t id;
+	uint16_t id1, id2;
+	uint16_t extstat, rate;
+	uint16_t val;
 	mixer_ctrl_t ctl;
 	void (*initfunc)(struct ac97_softc *);
 #define FLAGBUFLEN	140
@@ -907,6 +923,16 @@ ac97_attach(struct ac97_host_if *host_if)
 
 	if (host_if->flags)
 		as->host_flags = host_if->flags(host_if->arg);
+
+#define	AC97_POWER_ALL	(AC97_POWER_REF | AC97_POWER_ANL | AC97_POWER_DAC \
+			| AC97_POWER_ADC)
+	for (i = 500000; i >= 0; i--) {
+		ac97_read(as, AC97_REG_POWER, &val);
+		if ((val & AC97_POWER_ALL) == AC97_POWER_ALL)
+		       break;
+		DELAY(1);
+	}
+#undef AC97_POWER_ALL
 
 	ac97_setup_defaults(as);
 	ac97_read(as, AC97_REG_RESET, &as->caps);
@@ -1016,9 +1042,7 @@ ac97_attach(struct ac97_host_if *host_if)
 
 	ac97_setup_source_info(as);
 
-	DELAY(900 * 1000);
 	memset(&ctl, 0, sizeof(ctl));
-
 	/* disable mutes */
 	for (i = 0; i < 11; i++) {
 		static struct {
