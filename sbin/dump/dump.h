@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dump.h	5.16 (Berkeley) 5/29/91
- *	$Id: dump.h,v 1.5 1993/12/02 02:33:39 mycroft Exp $
+ *	from: @(#)dump.h	5.21 (Berkeley) 7/16/92
+ *	$Id: dump.h,v 1.6 1993/12/22 10:24:39 cgd Exp $
  */
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
@@ -79,71 +79,76 @@ int	notify;		/* notify operator flag */
 int	blockswritten;	/* number of blocks written on current tape */
 int	tapeno;		/* current tape number */
 time_t	tstart_writing;	/* when started writing the first tape block */
-char	*processname;
 struct	fs *sblock;	/* the file system super block */
-char	buf[MAXBSIZE];
+char	sblock_buf[MAXBSIZE];
 long	dev_bsize;	/* block size of underlying disk device */
 int	dev_bshift;	/* log2(dev_bsize) */
 int	tp_bshift;	/* log2(TP_BSIZE) */
 
 /* operator interface functions */
-void	broadcast();
-void	lastdump();
-void	msg();
-void	msgtail();
-int	query();
-void	set_operators();
-void	timeest();
+void	broadcast __P((char *message));
+void	lastdump __P((int arg));	/* int should be char */
+void	msg __P((const char *fmt, ...));
+void	msgtail __P((const char *fmt, ...));
+int	query __P((char *question));
+void	quit __P((const char *fmt, ...));
+void	set_operators __P((void));
+void	timeest __P((void));
+time_t	unctime __P((char *str));
 
 /* mapping rouintes */
-long	blockest();
-int	mapfiles();
-int	mapdirs();
+struct	dinode;
+long	blockest __P((struct dinode *dp));
+int	mapfiles __P((ino_t maxino, long *tapesize));
+int	mapdirs __P((ino_t maxino, long *tapesize));
 
 /* file dumping routines */
-void	dirdump();
-void	blksout();
-void	dumpmap();
-void	writeheader();
-void	bread();
+void	blksout __P((daddr_t *blkp, int frags, ino_t ino));
+void	bread __P((daddr_t blkno, char *buf, int size));	
+void	dumpino __P((struct dinode *dp, ino_t ino));
+void	dumpmap __P((char *map, int type, ino_t ino));
+void	writeheader __P((ino_t ino));
 
 /* tape writing routines */
-int	alloctape();
-void	writerec();
-void	dumpblock();
-void	flushtape();
-void	trewind();
-void	close_rewind();
-void	startnewtape();
+int	alloctape __P((void));
+void	close_rewind __P((void));
+void	dumpblock __P((daddr_t blkno, int size));
+void	flushtape __P((void));
+void	startnewtape __P((int top));
+void	trewind __P((void));
+void	writerec __P((char *dp, int isspcl));
 
-void	dumpabort();
-void	Exit();
-void	getfstab();
-void	quit();
+void	Exit __P((int status));
+void	dumpabort __P((int signo));
+void	getfstab __P((void));
 
-char	*rawname();
-struct dinode *getino();
+char	*rawname __P((char *cp));
+struct	dinode *getino __P((ino_t inum));
 
-void	interrupt();		/* in case operator bangs on console */
+void	interrupt __P((int signo));	/* in case operator bangs on console */
 
 /*
  *	Exit status codes
  */
 #define	X_FINOK		0	/* normal exit */
 #define	X_REWRITE	2	/* restart writing from the check point */
-#define	X_ABORT		3	/* abort all of dump; don't attempt checkpointing*/
+#define	X_ABORT		3	/* abort dump; don't attempt checkpointing */
 
 #define	OPGRENT	"operator"		/* group entry to notify */
 #define DIALUP	"ttyd"			/* prefix for dialups */
 
-struct	fstab	*fstabsearch();	/* search in fs_file and fs_spec */
+struct	fstab *fstabsearch __P((char *key));	/* search fs_file and fs_spec */
+
+#ifndef NAME_MAX
+#define NAME_MAX 255
+#endif
 
 /*
  *	The contents of the file _PATH_DUMPDATES is maintained both on
  *	a linked list, and then (eventually) arrayified.
  */
 struct dumpdates {
-	char	dd_name[MAXNAMLEN+3];
+	char	dd_name[NAME_MAX+3];
 	char	dd_level;
 	time_t	dd_ddate;
 };
@@ -155,26 +160,13 @@ struct	dumptime *dthead;	/* head of the list version */
 int	nddates;		/* number of records (might be zero) */
 int	ddates_in;		/* we have read the increment file */
 struct	dumpdates **ddatev;	/* the arrayfied version */
-void	initdumptimes();
-void	getdumptime();
-void	putdumptime();
+void	initdumptimes __P((void));
+void	getdumptime __P((void));
+void	putdumptime __P((void));
 #define	ITITERATE(i, ddp) \
-	if (nddates) for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
+	for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
 
-/*
- *	We catch these interrupts
- */
-void	sighup();
-void	sigquit();
-void	sigill();
-void	sigtrap();
-void	sigfpe();
-void	sigkill();
-void	sigbus();
-void	sigsegv();
-void	sigsys();
-void	sigalrm();
-void	sigterm();
+void	sig __P((int signo));
 
 /*
  * Compatibility with old systems.
@@ -185,4 +177,18 @@ void	sigterm();
 extern char *index(), *strdup();
 extern char *ctime();
 extern int errno;
+#endif
+
+#ifdef sunos
+extern char *calloc();
+extern char *malloc();
+extern long atol();
+extern char *strcpy();
+extern char *strncpy();
+extern char *strcat();
+extern time_t time();
+extern void endgrent();
+extern void exit();
+extern off_t lseek();
+extern char *strerror();
 #endif
