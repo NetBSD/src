@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.27 1996/03/17 05:58:32 mhitch Exp $	*/
+/*	$NetBSD: fd.c,v 1.28 1996/04/05 05:08:07 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -700,6 +700,7 @@ fdgetdisklabel(sc, dev)
 	lp->d_partitions[part].p_fstype = FS_UNUSED;
 	lp->d_partitions[part].p_fsize = 1024;
 	lp->d_partitions[part].p_frag = 8;
+	lp->d_partitions[part].p_cpg = 2;	/* for adosfs: reserved blks */
 
 	sc->flags |= FDF_HAVELABEL;
 
@@ -741,6 +742,7 @@ nolabel:
 	lp->d_partitions[part].p_fstype = FS_UNUSED;
 	lp->d_partitions[part].p_fsize = 1024;
 	lp->d_partitions[part].p_frag = 8;
+	lp->d_partitions[part].p_cpg = 2;	/* adosfs: reserved blocks */
 	lp->d_npartitions = part + 1;
 	lp->d_magic = lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
