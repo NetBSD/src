@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.220 2001/01/28 04:33:47 jwise Exp $
+# $NetBSD: mi,v 1.221 2001/01/28 07:55:44 jwise Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -713,7 +713,7 @@
 ./usr/sbin/rpc.bootparamd	base-bootserver-bin
 ./usr/sbin/rpc.lockd		base-nfsserver-bin
 ./usr/sbin/rpc.pcnfsd		base-nfsserver-bin
-./usr/sbin/rpc.statd		base-nfsclient-bin
+./usr/sbin/rpc.statd		base-nfsserver-bin
 ./usr/sbin/rpc.yppasswdd	base-nis-bin
 ./usr/sbin/rpcbind		base-netutil-bin
 ./usr/sbin/rtadvd		base-router-bin
