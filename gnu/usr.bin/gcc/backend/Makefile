@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/03/14 03:44:11 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2003/07/28 15:25:04 lukem Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -41,6 +41,6 @@ insn-${f}: genrtl.h gen${f:R}.c obstack.c ${G_md_file} \
 
 insn-attrtab.c: ${G_HOST_RTLANAL:S/^l-//:.o=.c}
 insn-attrtab.c insn-extract.c: insn-config.h
-${OBJS} .depend: insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
+${OBJS} ${DEPENDSRCS}: insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${G_out_file:H}

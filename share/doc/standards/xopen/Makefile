@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/07/10 10:34:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/07/28 15:25:06 lukem Exp $
 
 DOCS=	xcu5
 .for i in ${DOCS}
@@ -37,7 +37,7 @@ echomore!
 	@echo ${.OBJDIR}/${TARG}.more
 
 # make the "afterdepend" rule happy
-.depend:
+${DEPENDSRCS}:
 	@touch $@
 
 .include <bsd.doc.mk>
