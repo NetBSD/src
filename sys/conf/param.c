@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.22 1997/09/20 00:44:06 enami Exp $	*/
+/*	$NetBSD: param.c,v 1.22.2.1 1998/10/24 01:39:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -93,16 +93,7 @@ int	hz = HZ;
 int	tick = 1000000 / HZ;
 int	tickadj = 240000 / (60 * HZ);		/* can adjust 240ms in 60s */
 int	rtc_offset = RTC_OFFSET;
-#ifndef NPROC
-#define	NPROC (20 + 16 * MAXUSERS)
-#endif
 int	maxproc = NPROC;
-#ifndef NTEXT
-#define	NTEXT (80 + NPROC / 8)			/* actually the object cache */
-#endif
-#ifndef NVNODE
-#define	NVNODE (NPROC + NTEXT + 100)
-#endif
 int	desiredvnodes = NVNODE;
 int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
 int	ncallout = 16 + NPROC;
