@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.5 2000/05/08 13:49:46 augustss Exp $
+#	$NetBSD: GENERIC,v 1.6 2000/06/01 14:21:44 soren Exp $
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -37,6 +37,7 @@ options 	COMPAT_43	# compatibility with 4.3BSD binaries
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem
+file-system 	EXT2FS		# second extended file system (linux) 
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem
