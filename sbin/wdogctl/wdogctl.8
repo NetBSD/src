@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdogctl.8,v 1.8 2003/02/25 10:35:12 wiz Exp $
+.\"	$NetBSD: wdogctl.8,v 1.9 2005/01/09 22:51:32 smb Exp $
 .\"
 .\" Copyright (c) 2000 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -50,6 +50,13 @@
 .Op Fl p Ar seconds
 .Ar timer
 .Nm
+.Fl e
+.Op Fl A
+.Op Fl p Ar seconds
+.Ar timer
+.Nm
+.Fl t
+.Nm
 .Fl d
 .Sh DESCRIPTION
 .Nm
@@ -67,8 +74,8 @@ something must refresh the timer to prevent it from expiring.
 .Pp
 The
 .Nx
-kernel provides two basic modes in which watchdog timers may
-operate: kernel tickle mode and user tickle mode.
+kernel provides three basic modes in which watchdog timers may
+operate: kernel tickle mode, user tickle mode, and external tickle mode.
 In kernel tickle mode, a timer in the kernel refreshes the watchdog timer.
 In user tickle mode,
 .Nm
@@ -80,8 +87,15 @@ Note that user tickle mode must be used with caution;
 on a heavily loaded system, the timer may
 expire accidentally, even though user programs may be making
 (very slow) progress.
+A user-mode timer is disarmed (if possible) when the device is closed.
 .Pp
-In both modes, an attempt is made to refresh the watchdog timer
+External-mode watchdogs are similar to user-mode watchdogs, except
+that the tickle must be done explicitly by a separate invocation of
+the program with the
+.Fl t
+option.
+.Pp
+In the first two modes, an attempt is made to refresh the watchdog timer
 in one half the timer's configured period.
 That is, if the watchdog timer has a period of 30 seconds, a refresh attempt
 is made every 15 seconds.
@@ -107,6 +121,10 @@ in kernel tickle mode.
 Arm
 .Ar timer
 in user tickle mode.
+.It Fl e
+Arm
+.Ar timer
+in external tickle mode.
 .It Fl A
 When arming a timer, this flag indicates that an audible alarm is
 to sound when the watchdog timer expires and resets the system.
@@ -124,6 +142,8 @@ Note that not all watchdog timers can be disabled once armed.
 If the selected timer can not be disabled,
 an error message will be displayed and the
 timer will remain armed.
+.It Fl t
+This flag tickles an external mode timer.
 .El
 .Sh FILES
 .Pa /dev/watchdog
