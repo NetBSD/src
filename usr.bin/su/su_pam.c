@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.7 2005/03/30 01:16:22 christos Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.8 2005/04/02 16:12:52 he Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.7 2005/03/30 01:16:22 christos Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.8 2005/04/02 16:12:52 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,11 +101,12 @@ main(int argc, char **argv)
 	const void *newuser;
 	login_cap_t *lc;
 	pam_handle_t *pamh = NULL;
+	char pwbuf[1024];
 #ifdef PAM_DEBUG
 	extern int _openpam_debug;
+
 	_openpam_debug = 1;
 #endif
-	char pwbuf[1024];
 
 	asme = asthem = fastlogin = 0;
 	gohome = 1;
