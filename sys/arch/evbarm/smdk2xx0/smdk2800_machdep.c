@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.7 2003/05/03 18:25:33 thorpej Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.8 2003/05/13 04:53:25 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -608,8 +608,8 @@ initarm(void *arg)
 
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
 	{
-		size_t textsize = (uintptr_t) & etext - KERNEL_TEXT_BASE;
-		size_t totalsize = (uintptr_t) & end - KERNEL_TEXT_BASE;
+		size_t textsize = (uintptr_t)&etext - KERNEL_TEXT_BASE;
+		size_t totalsize = (uintptr_t)&end - KERNEL_TEXT_BASE;
 		u_int logical;
 
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
@@ -710,8 +710,7 @@ initarm(void *arg)
 	 */
 	{
 		physical_freestart = physical_start +
-		    (((((uintptr_t) & end) + PGOFSET) & ~PGOFSET) -
-		    KERNEL_BASE);
+		    (((((uintptr_t)&end) + PGOFSET) & ~PGOFSET) - KERNEL_BASE);
 		physical_freeend = physical_end;
 		free_pages =
 		    (physical_freeend - physical_freestart) / PAGE_SIZE;
