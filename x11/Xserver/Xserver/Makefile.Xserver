@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.18 2005/02/24 14:53:15 christos Exp $
+#	$NetBSD: Makefile.Xserver,v 1.19 2005/03/21 00:49:17 rtr Exp $
 
 .for _SL in	dix os mi printer printer/pcl printer/ps printer/raster \
 		Xext/ext Xext/exts GL/glx GL/GLcore xkb xinput lbx dbe \
@@ -6,6 +6,9 @@
 		cfb cfb16 cfb24 cfb32 fb \
 		hw/xnest hw/vfb fontbase afb \
 		\
+		hw/dmx hw/dmx/dmxinput hw/dmx/dmxconfig \
+		\
+		miext/shadow \
 		dix/xpstubs hw/sun hw/xfree86/xf86 hw/xfree86/xf86_os \
 		hw/xfree86/xf86config hw/xfree86/loader \
 		\
