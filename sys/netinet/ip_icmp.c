@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.45 2000/05/10 03:31:30 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.46 2000/05/22 12:08:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -816,6 +816,8 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &rate_usec);
 		if (error)
 			return (error);
+		if (rate_usec < 0)
+			return (EINVAL);
 		s = splsoftnet();
 		icmperrratelim.tv_sec = rate_usec / 1000000;
 		icmperrratelim.tv_usec = rate_usec % 1000000;
