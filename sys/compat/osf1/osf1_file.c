@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.15 2003/06/28 14:21:24 darrenr Exp $ */
+/* $NetBSD: osf1_file.c,v 1.16 2003/06/29 15:14:18 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.15 2003/06/28 14:21:24 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.16 2003/06/29 15:14:18 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -164,7 +164,7 @@ osf1_sys_lstat(l, v, retval)
 	    SCARG(uap, path), l);
 	if ((error = namei(&nd)))
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -198,7 +198,7 @@ osf1_sys_lstat2(l, v, retval)
 	    SCARG(uap, path), l);
 	if ((error = namei(&nd)))
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -321,7 +321,7 @@ osf1_sys_stat(l, v, retval)
 	    SCARG(uap, path), l);
 	if ((error = namei(&nd)))
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -355,7 +355,7 @@ osf1_sys_stat2(l, v, retval)
 	    SCARG(uap, path), l);
 	if ((error = namei(&nd)))
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);

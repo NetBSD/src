@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.38 2003/06/29 09:24:54 simonb Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.39 2003/06/29 15:14:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,8 +143,8 @@ cpu_exec_ecoff_setregs(l, epp, stack)
  * Do any machine-dependent diddling of the exec package when doing ECOFF.
  */
 int
-cpu_exec_ecoff_probe(p, epp)
-	struct proc *p;
+cpu_exec_ecoff_probe(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 

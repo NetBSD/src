@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.6 2003/06/28 14:21:24 darrenr Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.7 2003/06/29 15:14:18 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.6 2003/06/28 14:21:24 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.7 2003/06/29 15:14:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,10 +55,10 @@ struct osf1_exec_emul_arg {
 	char	loader_name[MAXPATHLEN+1];
 };
 
-static int osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp);
+static int osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp);
 
 int
-osf1_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
+osf1_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 {
         struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	struct osf1_exec_emul_arg *emul_arg;
@@ -95,7 +95,7 @@ osf1_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
 		break;
 
 	case ECOFF_OBJECT_TYPE_CALL_SHARED:
-		error = osf1_exec_ecoff_dynamic(p, epp);
+		error = osf1_exec_ecoff_dynamic(l, epp);
 		break;
 
 	default:
@@ -118,8 +118,8 @@ osf1_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
  * any ELF-like AUX entries used by the dynamic loading scheme.
  */
 int
-osf1_copyargs(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+osf1_copyargs(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -131,7 +131,7 @@ osf1_copyargs(p, pack, arginfo, stackp, argp)
 	size_t len;
 	int error;
 
-	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
+	if ((error = copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		goto out;
 
 	a = ai;
@@ -164,7 +164,7 @@ osf1_copyargs(p, pack, arginfo, stackp, argp)
                         a->a_un.a_val |= OSF1_LDR_EXEC_SETUID_F;
                 if (pack->ep_vap->va_mode & S_ISGID)
                         a->a_un.a_val |= OSF1_LDR_EXEC_SETGID_F;
-	        if (p->p_flag & P_TRACED)
+	        if (l->l_proc->p_flag & P_TRACED)
                         a->a_un.a_val |= OSF1_LDR_EXEC_PTRACE_F;
 		a++;
 	}
@@ -237,7 +237,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 		goto badunlock;
 	}
 
-	if ((error = VOP_ACCESS(ldr_vp, VEXEC, p->p_ucred, p)) != 0)
+	if ((error = VOP_ACCESS(ldr_vp, VEXEC, p->p_ucred, l)) != 0)
 		goto badunlock;
 
         if (ldr_vp->v_mount->mnt_flag & MNT_NOEXEC) {
@@ -259,7 +259,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	 */
         if ((error = vn_rdwr(UIO_READ, ldr_vp, (caddr_t)&ldr_exechdr,
 	    sizeof ldr_exechdr, 0, UIO_SYSSPACE, 0, p->p_ucred,
-	    &resid, p)) != 0)
+	    &resid, l)) != 0)
                 goto bad;
         if (resid != 0) {
                 error = ENOEXEC;
