@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.14 2001/01/20 19:08:24 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -868,7 +868,7 @@ cztty_getttysoftc(dev_t dev)
 
 	for (i = 0, j = 0; i < cz_cd.cd_ndevs; i++) {
 		k = j;
-		cz = cz_cd.cd_devs[i];
+		cz = device_lookup(&cz_cd, i);
 		if (cz == NULL)
 			continue;
 		if (cz->cz_ports == NULL)
@@ -878,9 +878,9 @@ cztty_getttysoftc(dev_t dev)
 			break;
 	}
 
-	if (i >= cz_cd.cd_ndevs) {
+	if (i >= cz_cd.cd_ndevs)
 		return (NULL);
-	} else
+	else
 		return (&cz->cz_ports[u - k]);
 }
 
