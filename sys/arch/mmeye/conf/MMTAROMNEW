@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.5 2000/10/17 10:02:12 msaitoh Exp $
+#	$NetBSD: MMTAROMNEW,v 1.6 2001/07/08 16:32:20 abs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -56,6 +56,7 @@ options 	HZ=10		# clock interrupt generates every 1/10 sec
 # Compatibility options
 options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_43	# and 4.3BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Executable format options
 #options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
@@ -98,9 +99,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.31 2001/06/02 10:48:55 bjh21 Exp $
+#	$NetBSD: RPCINST,v 1.32 2001/07/08 16:32:15 abs Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -74,6 +74,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Compatibility options
 
@@ -84,7 +85,7 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Bootloader options
 options		COMPAT_OLD_BOOTLOADER

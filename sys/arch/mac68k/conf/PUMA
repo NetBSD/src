@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.31 2000/09/24 15:59:34 jdolecek Exp $
+#	$NetBSD: PUMA,v 1.32 2001/07/08 16:32:19 abs Exp $
 #
 # PUMA
 
@@ -38,6 +38,7 @@ options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_SUNOS	# binary compatibility with SunOS 4.x binaries
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
@@ -64,9 +65,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
 options 	NETATALK	# AppleTalk networking protocols
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-options 	TCP_COMPAT_42
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

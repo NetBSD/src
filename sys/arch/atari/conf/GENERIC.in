@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.3 2001/06/11 01:50:53 wiz Exp $
+#	$NetBSD: GENERIC.in,v 1.4 2001/07/08 16:32:15 abs Exp $
 #
 # Generic atari
 #
@@ -12,7 +12,7 @@ include "arch/atari/conf/std.hades"
 include "arch/atari/conf/std.milan"
 #endif
 
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.4 $"
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -78,6 +78,8 @@ options 	PPP_FILTER      # Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS      # pfil(9) packet filter hooks
 options 	IPFILTER_LOG    # ipmon(8) log support
 #options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
+
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 #endif
 
 # File systems
@@ -133,9 +135,9 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options 	COMPAT_SVR4	# Support to run SVR4 executables
-#options 	TCP_COMPAT_42	# Disable UDP checksums (not needed)
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 #options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #endif
 
 #ifndef INSTALL_KERNEL

@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.38 2001/01/02 04:28:37 simonb Exp $
+#	$NetBSD: BASALT,v 1.39 2001/07/08 16:32:17 abs Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 workstation.
 #
@@ -15,19 +15,20 @@ options 	FPSP		# floating point interface for 68040
 maxusers	32
 
 # Standard system options
-options 	COMPAT_43		# compatibility with 4.3BSD interfaces
-options 	COMPAT_44		# compatibility with 4.4BSD binaries
-options 	COMPAT_09		# compatibility with NetBSD 0.9
-options 	COMPAT_10		# compatibility with NetBSD 1.0
-options 	COMPAT_11		# compatibility with NetBSD 1.1
-options 	COMPAT_12		# compatibility with NetBSD 1.2
-options 	COMPAT_13		# compatibility with NetBSD 1.3
-options 	COMPAT_14		# compatibility with NetBSD 1.4
-options 	SYSVSHM			# System V-style shared memory
-options 	SYSVSEM			# System V-style semaphores
-options 	SYSVMSG			# System V-style message queues
-options 	KTRACE			# system call tracing support
-options 	LKM			# loadable kernel modules
+options 	COMPAT_43	# compatibility with 4.3BSD interfaces
+options 	COMPAT_44	# compatibility with 4.4BSD binaries
+options 	COMPAT_09	# compatibility with NetBSD 0.9
+options 	COMPAT_10	# compatibility with NetBSD 1.0
+options 	COMPAT_11	# compatibility with NetBSD 1.1
+options 	COMPAT_12	# compatibility with NetBSD 1.2
+options 	COMPAT_13	# compatibility with NetBSD 1.3
+options 	COMPAT_14	# compatibility with NetBSD 1.4
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options 	SYSVSHM		# System V-style shared memory
+options 	SYSVSEM		# System V-style semaphores
+options 	SYSVMSG		# System V-style message queues
+options 	KTRACE		# system call tracing support
+options 	LKM		# loadable kernel modules
 
 # Filesystems
 file-system	FFS		# fast filesystem
@@ -47,10 +48,10 @@ options 	INET6			# IPv6
 options 	IPSEC			# IP Security
 options 	IPSEC_ESP		# IP Security ESP protocol
 #options 	IPSEC_DEBUG		# IP Security debugging code
-#options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
 options 	GATEWAY			# Packet forwarding + larger mb_map
 options 	NMBCLUSTERS=1024	# Crank this up
 options 	PFIL_HOOKS		# packet filter hooks
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Options for HP hardware
 options 	USELEDS		# make the lights twinkle

@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.32 2001/06/11 01:50:55 wiz Exp $
+# $NetBSD: DISKLESS,v 1.33 2001/07/08 16:32:25 abs Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -47,6 +47,7 @@ maxusers	2
 options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Filesystem options
 #file-system	FFS		# Berkeley Fast Filesystem
@@ -65,12 +66,12 @@ file-system	NFS		# Sun NFS client support
 
 # Networking options
 options 	INET		# IP prototol stack support
-options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Work-around for root on slow servers (insurance...)
 options 	NFS_BOOT_RWSIZE=1024

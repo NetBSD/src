@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.38 2001/06/30 11:00:35 darcy Exp $
+#	$NetBSD: GENERIC,v 1.39 2001/07/08 16:32:22 abs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.38 $"
+#ident 		"GENERIC-$Revision: 1.39 $"
 
 maxusers	32
 
@@ -48,6 +48,7 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX   # Linux binary compatibility (experimental)
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # File systems
 file-system 	FFS		# UFS
@@ -97,9 +98,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires BPF)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	NMBCLUSTERS=1024
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Kernel root file system and dump configuration
 config		netbsd	root on ? type ?

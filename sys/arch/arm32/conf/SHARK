@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.41 2000/11/14 23:42:35 matt Exp $
+#	$NetBSD: SHARK,v 1.42 2001/07/08 16:32:15 abs Exp $
 # From: NetBSD: GENERIC,v 1.72 2000/08/04 02:17:46 hubertf Exp
 #
 #	SHARK
@@ -6,7 +6,7 @@
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident		"GENERIC-$Revision: 1.41 $"
+#ident		"GENERIC-$Revision: 1.42 $"
 
 # estimated number of users
 maxusers	32
@@ -86,6 +86,7 @@ options 	INET6		# IPV6
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	NFS_BOOT_DHCP	# use NetBSD standard DHCP/NFS boot code
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Compatibility options
 
@@ -96,7 +97,7 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Shared memory options
 

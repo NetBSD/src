@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN32,v 1.8 2001/03/02 07:56:26 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN32,v 1.9 2001/07/08 16:32:24 abs Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -137,6 +137,8 @@ options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
 #options 	EXEC_ELF64	# Exec module for sparc64 & SunOS 5.x binaries. -- 64-bit only
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
@@ -164,7 +166,6 @@ options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
@@ -181,6 +182,7 @@ options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 #options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 
 #### Main bus and CPU .. all systems.
