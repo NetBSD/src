@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.13 2002/11/26 08:10:19 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.14 2002/11/28 21:21:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.13 2002/11/26 08:10:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.14 2002/11/28 21:21:33 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,9 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.13 2002/11/26 08:10:19 manu Exp $");
 #include <compat/mach/mach_syscallargs.h>
 
 int
-mach_vm_map(p, msgh)
+mach_vm_map(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_vm_map_request_t req;
 	mach_vm_map_reply_t rep;
@@ -80,7 +82,7 @@ mach_vm_map(p, msgh)
 #if 1
 	/* XXX Darwin fails on mapping a page at address 0 */
 	if (req.req_address == 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, ENOMEM);
+		return MACH_MSG_ERROR(msgh, &req, &rep, ENOMEM, maxlen, dst);
 #endif
 
 	bzero(&rep, sizeof(rep));
@@ -93,7 +95,7 @@ mach_vm_map(p, msgh)
 	SCARG(&cup, pos) = 0;
 	
 	if ((error = sys_mmap(p, &cup, &rep.rep_retval)) != 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, error);
+		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
 
 	rep.rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -102,15 +104,22 @@ mach_vm_map(p, msgh)
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
+
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
 	return 0;
 }
 
 int
-mach_vm_allocate(p, msgh)
+mach_vm_allocate(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_vm_allocate_request_t req;
 	mach_vm_allocate_reply_t rep;
@@ -151,7 +160,7 @@ mach_vm_allocate(p, msgh)
 	SCARG(&cup, pos) = 0;
 
 	if ((error = sys_mmap(p, &cup, &rep.rep_address)) != 0) 
-		return MACH_MSG_ERROR(msgh, &req, &rep, error);
+		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
 	DPRINTF(("vm_allocate: success at %p\n", (void *)rep.rep_address));
 
 out:
@@ -162,14 +171,21 @@ out:
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
+
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
 	return 0;
 }
 int
-mach_vm_deallocate(p, msgh)
+mach_vm_deallocate(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_vm_deallocate_request_t req;
 	mach_vm_deallocate_reply_t rep;
@@ -188,7 +204,7 @@ mach_vm_deallocate(p, msgh)
 	SCARG(&cup, len) = req.req_size;
 
 	if ((error = sys_munmap(p, &cup, &rep.rep_retval)) != 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, error);
+		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
 
 	rep.rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -196,6 +212,11 @@ mach_vm_deallocate(p, msgh)
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
+
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
