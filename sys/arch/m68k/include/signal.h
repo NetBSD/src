@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.7 1998/09/30 21:04:49 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.8 1998/09/30 21:52:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -78,6 +78,8 @@ struct sigcontext {
 };
 
 #if defined(_KERNEL) && defined(__M68K_SIGNAL_PRIVATE)
+#include <m68k/frame.h>
+
 /*
  * Register state saved while kernel delivers a signal.
  */
