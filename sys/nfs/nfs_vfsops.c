@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.18 1994/05/11 22:26:09 mycroft Exp $
+ *	$Id: nfs_vfsops.c,v 1.19 1994/05/13 06:12:51 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -190,7 +190,7 @@ nfs_mountroot()
 		      ireq.ifr_name);
 	bzero((caddr_t) &diskless, sizeof(diskless));
 	strcpy(diskless.myif.ifra_name, ireq.ifr_name);
-	if (revarp_whoami(&myip, ifp))
+	if (revarpwhoami(&myip, ifp))
 		panic("revarp failed");
 	sin = (struct sockaddr_in *) &ireq.ifr_addr;
 	bzero((caddr_t) sin, sizeof(struct sockaddr_in));
