@@ -11,7 +11,7 @@
 #>4	beshort&0xfff0	x			(%d x
 #>5	beshort&0x0fff  x			%d)
 0	belong		0x000001ba		MPEG system stream data
-0	beshort&0xfff0	0xfff0			MPEG audio stream data
+#0	beshort&0xfff0	0xfff0			MPEG audio stream data
 
 # FLI animation format
 4	leshort		0xAF11			FLI file
