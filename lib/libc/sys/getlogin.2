@@ -1,4 +1,4 @@
-.\"	$NetBSD: getlogin.2,v 1.14 2002/08/20 16:30:30 wiz Exp $
+.\"	$NetBSD: getlogin.2,v 1.15 2002/10/01 18:10:44 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -125,7 +125,8 @@ If the name has not been set, it returns
 .Dv NULL .
 If a call to
 .Fn setlogin
-succeeds, a value of 0 is returned.  If
+succeeds, a value of 0 is returned.
+If
 .Fn setlogin
 fails, a value of -1 is returned and an error code is
 placed in the global location
