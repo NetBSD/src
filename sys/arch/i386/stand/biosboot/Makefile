@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2001/03/31 09:45:12 hubertf Exp $
+#	$NetBSD: Makefile,v 1.35 2001/05/02 13:43:11 jdolecek Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -34,11 +34,6 @@ CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_COM0 -DDIRECT_SERIAL
 
 .if (${BASE} == "biosboot_resetvideo")
 CPPFLAGS+= -DRESET_VIDEO
-CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_PC -DDIRECT_SERIAL
-.endif
-
-.if (${BASE} == "biosboot_ps2")
-CPPFLAGS+= -DIBM_L40
 CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_PC -DDIRECT_SERIAL
 .endif
 
