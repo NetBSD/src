@@ -5,6 +5,31 @@
 
 #include <dev/pcmcia/pcmciachip.h>
 
+/*
+ * Contains information about mapped/allocated i/o spaces.
+ */
+struct pcmcia_io_handle {
+    bus_space_tag_t iot;	/* bus space tag (from chipset) */
+    bus_space_handle_t ioh;	/* mapped space handle */
+    bus_addr_t addr;		/* resulting address in bus space */
+    bus_size_t size;		/* size of i/o space */
+    int flags;			/* misc. information */
+};
+
+#define	PCMCIA_IO_ALLOCATED	0x01	/* i/o space was allocated */
+
+/*
+ * Contains information about allocated memory space.
+ */
+struct pcmcia_mem_handle {
+    bus_space_tag_t memt;	/* bus space tag (from chipset) */
+    bus_space_handle_t memh;	/* mapped space handle */
+    bus_addr_t addr;		/* resulting address in bus space */
+    bus_size_t size;		/* size of mem space */
+    pcmcia_mem_handle_t mhandle;/* opaque memory handle */
+    bus_size_t realsize;	/* how much we really allocated */
+};
+
 /* pcmcia itself */
 
 #define PCMCIA_CFE_MWAIT_REQUIRED	0x0001
@@ -55,12 +80,13 @@ struct pcmcia_function {
     /* run-time state */
     struct pcmcia_softc *sc;
     struct pcmcia_config_entry *cfe;
-    bus_space_tag_t ccrt;
-    bus_space_handle_t ccrh;
-    u_long ccr_offset;
-    int ccr_window;
-    pcmcia_mem_handle_t ccr_mhandle;
-    u_long ccr_realsize;
+    struct pcmcia_mem_handle pf_pcmh;
+#define	pf_ccrt		pf_pcmh.memt
+#define	pf_ccrh		pf_pcmh.memh
+#define	pf_ccr_mhandle	pf_pcmh.mhandle
+#define	pf_ccr_realsize	pf_pcmh.realsize
+    bus_addr_t pf_ccr_offset;
+    int pf_ccr_window;
     int (*ih_fct) __P((void *));
     void *ih_arg;
     int ih_ipl;
@@ -98,7 +124,7 @@ struct pcmcia_tuple {
     unsigned int code;
     unsigned int length;
     u_long mult;
-    u_long ptr;
+    bus_addr_t ptr;
     bus_space_tag_t memt;
     bus_space_handle_t memh;
 };
@@ -144,29 +170,24 @@ int pcmcia_enable_function __P((struct pcmcia_function *,
 				struct device *,
 				struct pcmcia_config_entry *));
 
-#define pcmcia_io_alloc(pf, start, size, iotp, iohp) \
+#define pcmcia_io_alloc(pf, start, size, pciop) \
 	(pcmcia_chip_io_alloc((pf)->sc->pct, pf->sc->pch, \
-			      (start), (size), (iotp), (iohp)))
+			      (start), (size), (pciop)))
 
-int pcmcia_io_map __P((struct pcmcia_function *, int, bus_size_t,
-		       bus_space_tag_t, bus_space_handle_t, int *));
+int pcmcia_io_map __P((struct pcmcia_function *, int, bus_addr_t, bus_size_t,
+		       struct pcmcia_io_handle *, int *));
 
-#define pcmcia_mem_alloc(pf, size, memtp, memhp, mhandle, realsize) \
-	(pcmcia_chip_mem_alloc((pf)->sc->pct, (pf)->sc->pch, \
-			       (size), (memtp), (memhp), (mhandle), \
-			       (realsize)))
-#define pcmcia_mem_free(pf, size, memt, memh, mhandle) \
-	(pcmcia_chip_mem_free((pf)->sc->pct, (pf)->sc->pch, \
-			      (size), (memt), (memh), (mhandle)))
-#define pcmcia_mem_map(pf, kind, size, memt, memh, \
-			    card_addr, offsetp, windowp) \
+#define pcmcia_mem_alloc(pf, size, pcmhp) \
+	(pcmcia_chip_mem_alloc((pf)->sc->pct, (pf)->sc->pch, (size), (pcmhp)))
+#define pcmcia_mem_free(pf, pcmhp) \
+	(pcmcia_chip_mem_free((pf)->sc->pct, (pf)->sc->pch, (pcmhp)))
+#define pcmcia_mem_map(pf, kind, card_addr, size, pcmhp, offsetp, windowp) \
 	(pcmcia_chip_mem_map((pf)->sc->pct, (pf)->sc->pch, \
-			     (kind), (size), (memt), (memh), \
-			     (card_addr), (offsetp), (windowp)))
+			     (kind), (card_addr), (size), (pcmhp), \
+			     (offsetp), (windowp)))
 #define pcmcia_mem_unmap(pf, window) \
 	(pcmcia_chip_mem_unmap((pf)->sc->pct, (pf)->sc->pch, (window)))
 
 void *pcmcia_intr_establish __P((struct pcmcia_function *, int, 
 				 int (*)(void *), void *));
 void pcmcia_intr_disestablish __P((struct pcmcia_function *, void *));
-

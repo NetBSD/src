@@ -27,8 +27,17 @@ int ed_pcmcia_match __P((struct device *, struct cfdata *, void *));
 #endif
 void ed_pcmcia_attach __P((struct device *, struct device *, void *));
 
+struct ed_pcmcia_softc {
+	struct ed_softc sc_ed;			/* real "ed" softc */
+
+	/* PCMCIA-specific goo */
+	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o information */
+	int sc_asic_io_window;			/* i/o window for ASIC */
+	int sc_nic_io_window;			/* i/o window for NIC */
+};
+
 struct cfattach ed_pcmcia_ca = {
-    sizeof(struct ed_softc), ed_pcmcia_match, ed_pcmcia_attach
+    sizeof(struct ed_pcmcia_softc), ed_pcmcia_match, ed_pcmcia_attach
 };
 
 struct ne2000dev {
@@ -195,11 +204,14 @@ ed_pcmcia_attach(parent, self, aux)
      struct device *parent, *self;
      void *aux;
 {
-    struct ed_softc *sc = (void *) self;
+    struct ed_pcmcia_softc *psc = (void *) self;
+    struct ed_softc *sc = &psc->sc_ed;
     struct pcmcia_attach_args *pa = aux;
     struct pcmcia_config_entry *cfe;
-    int i;
     struct ne2000dev *ne_dev;
+    struct pcmcia_mem_handle pcmh;
+    bus_addr_t offset;
+    int i, mwindow;
 
     cfe = pa->pf->cfe_head.sqh_first;
 
@@ -220,6 +232,7 @@ ed_pcmcia_attach(parent, self, aux)
 	    return;
 	}
     } else if (cfe->num_iospace == 2) {
+	/* XXX NEED TO FIX MI CODE */
 	/* The EFA Corp card claims io space 0x300-0x30f and
 	   0x310-0x31f.  This is consistent with the separate NIC and
 	   ASIC port spaces, but the MI driver only knows about one
@@ -240,11 +253,14 @@ ed_pcmcia_attach(parent, self, aux)
 
     /* XXX start or 0? */
 
-    if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start, ED_NOVELL_IO_PORTS, 
-			&sc->sc_iot, &sc->sc_ioh)) {
+    if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start, ED_NOVELL_IO_PORTS,
+			&psc->sc_pcioh)) {
 	printf(": can't alloc i/o space\n");
 	return;
     }
+
+    sc->sc_iot = psc->sc_pcioh.iot;
+    sc->sc_ioh = psc->sc_pcioh.ioh;
 
     /* Enable the card. */
     if (pcmcia_enable_function(pa->pf, parent, cfe)) {
@@ -252,22 +268,17 @@ ed_pcmcia_attach(parent, self, aux)
 	return;
     }
 
-    /* XXX arithmetic on ioh is not correct.  I should use
-       a subregion here. */
-
     /* some cards claim to be io16, but they're lying. */
     if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO8,
-		      ED_NOVELL_NIC_PORTS, sc->sc_iot,
-		      sc->sc_ioh + ED_NOVELL_NIC_OFFSET,
-		      &sc->nic_pcmcia_window)) {
+		      ED_NOVELL_NIC_OFFSET, ED_NOVELL_NIC_PORTS,
+		      &psc->sc_pcioh, &psc->sc_nic_io_window)) {
 	printf(": can't map NIC i/o space\n");
 	return;
     }
 
     if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16,
-		      ED_NOVELL_ASIC_PORTS, sc->sc_iot,
-		      sc->sc_ioh + ED_NOVELL_ASIC_OFFSET,
-		      &sc->asic_pcmcia_window)) {
+		      ED_NOVELL_ASIC_OFFSET, ED_NOVELL_ASIC_PORTS,
+		      &psc->sc_pcioh, &psc->sc_asic_io_window)) {
 	printf(": can't map ASIC i/o space\n");
 	return;
     }
@@ -283,34 +294,25 @@ ed_pcmcia_attach(parent, self, aux)
 
     for (i=0; i<(sizeof(ne2000devs)/sizeof(ne2000devs[0])); i++) {
 	if ((ne_dev = ne2000_match(pa->card, pa->pf->number, i))) {
-	    bus_space_tag_t enaddrt;
-	    bus_space_handle_t enaddrh;
-	    u_long offset;
-	    int mhandle, window;
-	    int i;
-
 	    if (ne_dev->enet_maddr >= 0) {
-		    if (pcmcia_mem_alloc(pa->pf, ETHER_ADDR_LEN*2, &enaddrt,
-					 &enaddrh, &mhandle, NULL)) {
+		    if (pcmcia_mem_alloc(pa->pf, ETHER_ADDR_LEN * 2, &pcmh)) {
 			    printf(": allocating mem for enet addr failed\n");
 			    return;
 		    }
 		    if (pcmcia_mem_map(pa->pf, PCMCIA_MEM_ATTR,
-				       ETHER_ADDR_LEN*2,
-				       enaddrt, enaddrh, ne_dev->enet_maddr,
-				       &offset, &window)) {
+				       ne_dev->enet_maddr, ETHER_ADDR_LEN * 2,
+				       &pcmh, &offset, &mwindow)) {
 			    printf(": mapping mem for enet addr failed\n");
 			    return;
 		    }
 
 		    for (i=0; i<ETHER_ADDR_LEN; i++)
-			    sc->sc_enaddr[i] = bus_space_read_1(enaddrt,
-								enaddrh,
+			    sc->sc_enaddr[i] = bus_space_read_1(pcmh.memt,
+								pcmh.memh,
 								offset+i*2);
 
-		    pcmcia_mem_unmap(pa->pf, window);
-		    pcmcia_mem_free(pa->pf, ETHER_ADDR_LEN*2, enaddrt, enaddrh,
-				    mhandle);
+		    pcmcia_mem_unmap(pa->pf, mwindow);
+		    pcmcia_mem_free(pa->pf, &pcmh);
 	    }
 	    if ((sc->sc_enaddr[0] != ne_dev->enet_vendor[0]) ||
 		(sc->sc_enaddr[1] != ne_dev->enet_vendor[1]) ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.6 1997/08/05 00:36:33 matt Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.7 1997/08/10 22:47:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -75,8 +75,16 @@ int com_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void com_pcmcia_attach __P((struct device *, struct device *, void *));
 void com_pcmcia_cleanup __P((void *));
 
+struct com_pcmcia_softc {
+	struct com_softc sc_com;		/* real "com" softc */
+
+	/* PCMCIA-specific goo */
+	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
+	int sc_io_window;			/* our i/o window */
+};
+
 struct cfattach com_pcmcia_ca = {
-	sizeof(struct com_softc), com_pcmcia_match, com_pcmcia_attach
+	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach
 };
 
 int
@@ -121,7 +129,8 @@ com_pcmcia_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct com_softc *sc = (void *) self;
+	struct com_pcmcia_softc *psc = (void *) self;
+	struct com_softc *sc = &psc->sc_com;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	char *model;
@@ -138,13 +147,12 @@ com_pcmcia_attach(parent, self, aux)
 
 		if (cfe->iomask == 3) {
 			if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-					    &sc->sc_iot, &sc->sc_ioh)) {
+			    &psc->sc_pcioh)) {
 				continue;
 			}
 		} else {
 			if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-					    cfe->iospace[0].length,
-				    &sc->sc_iot, &sc->sc_ioh)) {
+			    cfe->iospace[0].length, &psc->sc_pcioh)) {
 				continue;
 			}
 		}
@@ -156,6 +164,9 @@ com_pcmcia_attach(parent, self, aux)
 		printf(": can't allocate i/o space\n");
 		return;
 	}
+
+	sc->sc_iot = psc->sc_pcioh.iot;
+	sc->sc_ioh = psc->sc_pcioh.ioh;
 
 	/* Enable the card. */
 	if (pcmcia_enable_function(pa->pf, parent, cfe))
@@ -172,10 +183,9 @@ com_pcmcia_attach(parent, self, aux)
 
 	/* map in the io space */
 
-	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16)?
-				   PCMCIA_WIDTH_IO16:PCMCIA_WIDTH_IO8),
-			  cfe->iospace[0].length,
-			  sc->sc_iot, sc->sc_ioh, &sc->pcmcia_window)) {
+	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
+	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), 0, psc->sc_pcioh.size,
+	    &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
 		return;
 	}

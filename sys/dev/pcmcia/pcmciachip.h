@@ -3,6 +3,9 @@
 
 #include <machine/bus.h>
 
+struct pcmcia_mem_handle;
+struct pcmcia_io_handle;
+
 /* interfaces for pcmcia to call the chipset */
 
 typedef struct pcmcia_chip_functions *pcmcia_chipset_tag_t;
@@ -16,51 +19,54 @@ typedef int pcmcia_mem_handle_t;
 #define PCMCIA_WIDTH_IO16	2
 
 struct pcmcia_chip_functions {
-    /* XXX alloc/free should probably be somewhere more generic than the
-       pcmcia driver */
+    /* memory space allocation */
     int (*mem_alloc) __P((pcmcia_chipset_handle_t, bus_size_t,
-			  bus_space_tag_t *, bus_space_handle_t *,
-			  pcmcia_mem_handle_t *, bus_size_t *));
-    void (*mem_free) __P((pcmcia_chipset_handle_t, bus_size_t,
-			 bus_space_tag_t, bus_space_handle_t,
-			  pcmcia_mem_handle_t));
-    int (*mem_map) __P((pcmcia_chipset_handle_t, int,
-			bus_size_t, bus_space_tag_t, bus_space_handle_t,
-			u_long, u_long *, int *));
+			  struct pcmcia_mem_handle *));
+    void (*mem_free) __P((pcmcia_chipset_handle_t, 
+			  struct pcmcia_mem_handle *));
+
+    /* memory space window mapping */
+    int (*mem_map) __P((pcmcia_chipset_handle_t, int, bus_addr_t,
+			bus_size_t, struct pcmcia_mem_handle *,
+			bus_addr_t *, int *));
     void (*mem_unmap) __P((pcmcia_chipset_handle_t, int));
 
+    /* I/O space allocation */
     int (*io_alloc) __P((pcmcia_chipset_handle_t, bus_addr_t, bus_size_t,
-			  bus_space_tag_t *, bus_space_handle_t *));
-    void (*io_free) __P((pcmcia_chipset_handle_t, bus_size_t,
-			 bus_space_tag_t, bus_space_handle_t));
-    int (*io_map) __P((pcmcia_chipset_handle_t, int, bus_size_t,
-		       bus_space_tag_t, bus_space_handle_t, int *));
+			 struct pcmcia_io_handle *));
+    void (*io_free) __P((pcmcia_chipset_handle_t,
+			 struct pcmcia_io_handle *));
+
+    /* I/O space window mapping */
+    int (*io_map) __P((pcmcia_chipset_handle_t, int, bus_addr_t,
+		       bus_size_t, struct pcmcia_io_handle *, int *));
     void (*io_unmap) __P((pcmcia_chipset_handle_t, int));
 
+    /* interrupt glue */
     void *(*intr_establish) __P((pcmcia_chipset_handle_t, u_int16_t, int,
 				 int (*)(void *), void *));
     void (*intr_disestablish) __P((pcmcia_chipset_handle_t, void *));
 };
 
-#define pcmcia_chip_mem_alloc(tag, handle, size, memtp, memhp, mhandle, \
-			      realsize) \
-	((*(tag)->mem_alloc)((handle), (size), (memtp), (memhp), (mhandle), \
-			     (realsize)))
-#define pcmcia_chip_mem_free(tag, handle, size, memt, memh, mhandle) \
-	((*(tag)->mem_free)((handle), (size), (memt), (memh), (mhandle)))
-#define pcmcia_chip_mem_map(tag, handle, kind, size, memt, memh, \
-			    card_addr, offsetp, windowp) \
-	((*(tag)->mem_map)((handle), (kind), (size), (memt), (memh), \
-			   (card_addr), (offsetp), (windowp)))
+#define pcmcia_chip_mem_alloc(tag, handle, size, pcmhp) \
+	((*(tag)->mem_alloc)((handle), (size), (pcmhp)))
+#define pcmcia_chip_mem_free(tag, handle, pcmhp) \
+	((*(tag)->mem_free)((handle), (pcmhp)))
+#define pcmcia_chip_mem_map(tag, handle, kind, card_addr, size, pcmhp, \
+			    offsetp, windowp) \
+	((*(tag)->mem_map)((handle), (kind), (card_addr), (size), (pcmhp), \
+			   (offsetp), (windowp)))
 #define pcmcia_chip_mem_unmap(tag, handle, window) \
 	((*(tag)->mem_unmap)((handle), (window)))
 
-#define pcmcia_chip_io_alloc(tag, handle, start, size, iotp, iohp) \
-	((*(tag)->io_alloc)((handle), (start), (size), (iotp), (iohp)))
-#define pcmcia_chip_io_free(tag, handle, size, iot, ioh) \
-	((*(tag)->io_free)((handle), (size), (iot), (ioh)))
-#define pcmcia_chip_io_map(tag, handle, width, size, iot, ioh, windowp) \
-	((*(tag)->io_map)((handle), (width), (size), (iot), (ioh), (windowp)))
+#define pcmcia_chip_io_alloc(tag, handle, start, size, pcihp) \
+	((*(tag)->io_alloc)((handle), (start), (size), (pcihp)))
+#define pcmcia_chip_io_free(tag, handle, pcihp) \
+	((*(tag)->io_free)((handle), (pcihp)))
+#define pcmcia_chip_io_map(tag, handle, width, card_addr, size, pcihp, \
+			   windowp) \
+	((*(tag)->io_map)((handle), (width), (card_addr), (size), (pcihp), \
+			  (windowp)))
 #define pcmcia_chip_io_unmap(tag, handle, window) \
 	((*(tag)->io_unmap)((handle), (window)))
 

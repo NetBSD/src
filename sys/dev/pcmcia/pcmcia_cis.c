@@ -67,8 +67,8 @@ pcmcia_scan_cis(dev, fct, arg)
     struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
     pcmcia_chipset_tag_t pct;
     pcmcia_chipset_handle_t pch;
-    pcmcia_mem_handle_t mhandle;
     int window;
+    struct pcmcia_mem_handle pcmh;
     struct pcmcia_tuple tuple;
     int longlink_present;
     int longlink_common;
@@ -88,8 +88,7 @@ pcmcia_scan_cis(dev, fct, arg)
 
     /* allocate some memory */
 
-    if (pcmcia_chip_mem_alloc(pct, pch, PCMCIA_CIS_SIZE,
-			      &tuple.memt, &tuple.memh, &mhandle, NULL)) {
+    if (pcmcia_chip_mem_alloc(pct, pch, PCMCIA_CIS_SIZE, &pcmh)) {
 #ifdef DIAGNOSTIC
 	printf("%s: can't alloc memory to read attributes\n",
 	       sc->dev.dv_xname);
@@ -97,12 +96,13 @@ pcmcia_scan_cis(dev, fct, arg)
 	return(1);
     }
 
+    tuple.memt = pcmh.memt;
+    tuple.memh = pcmh.memh;
+
     /* initialize state for the primary tuple chain */
-    if (pcmcia_chip_mem_map(pct, pch, PCMCIA_MEM_ATTR, PCMCIA_CIS_SIZE,
-			    tuple.memt, tuple.memh, 0, &tuple.ptr,
-			    &window)) {
-	pcmcia_chip_mem_free(pct, pch, PCMCIA_CIS_SIZE,
-			     tuple.memt, tuple.memh, mhandle);
+    if (pcmcia_chip_mem_map(pct, pch, PCMCIA_MEM_ATTR, 0,
+			    PCMCIA_CIS_SIZE, &pcmh, &tuple.ptr, &window)) {
+	pcmcia_chip_mem_free(pct, pch, &pcmh);
 #ifdef DIAGNOSTIC
 	printf("%s: can't map memory to read attributes\n", sc->dev.dv_xname);
 #endif
@@ -272,10 +272,10 @@ pcmcia_scan_cis(dev, fct, arg)
 	    if (!longlink_common)
 		longlink_addr *= 2;
 
-	    pcmcia_chip_mem_map(pct, pch, (longlink_common?
-					   PCMCIA_MEM_COMMON:PCMCIA_MEM_ATTR),
-				PCMCIA_CIS_SIZE, tuple.memt, tuple.memh,
-				longlink_addr, &tuple.ptr, &window);
+	    pcmcia_chip_mem_map(pct, pch, longlink_common ?
+				PCMCIA_MEM_COMMON : PCMCIA_MEM_ATTR,
+				longlink_addr, PCMCIA_CIS_SIZE,
+				&pcmh, &tuple.ptr, &window);
 
 	    if (!longlink_common)
 		tuple.ptr /= 2;
@@ -290,10 +290,10 @@ pcmcia_scan_cis(dev, fct, arg)
 	    if (!mfc[mfc_index].common)
 		mfc[mfc_index].addr *= 2;
 
-	    pcmcia_chip_mem_map(pct, pch, (mfc[mfc_index].common?
-					   PCMCIA_MEM_COMMON:PCMCIA_MEM_ATTR),
-				PCMCIA_CIS_SIZE, tuple.memt, tuple.memh,
-				mfc[mfc_index].addr, &tuple.ptr, &window);
+	    pcmcia_chip_mem_map(pct, pch, mfc[mfc_index].common ?
+				PCMCIA_MEM_COMMON : PCMCIA_MEM_ATTR,
+				mfc[mfc_index].addr, PCMCIA_CIS_SIZE,
+				&pcmh, &tuple.ptr, &window);
 
 	    if (!mfc[mfc_index].common)
 		tuple.ptr /= 2;
@@ -330,8 +330,7 @@ pcmcia_scan_cis(dev, fct, arg)
 
 done:
     /* Last, free the allocated memory block */
-    pcmcia_chip_mem_free(pct, pch, PCMCIA_CIS_SIZE, tuple.memt, tuple.memh,
-			 mhandle);
+    pcmcia_chip_mem_free(pct, pch, &pcmh);
 
     return(ret);
 }
@@ -366,7 +365,7 @@ pcmcia_print_cis(sc)
     }
     printf("\n");
 
-    printf("%s: Manufacturer code %x, product %x\n",
+    printf("%s: Manufacturer code 0x%x, product 0x%x\n",
 	   sc->dev.dv_xname, card->manufacturer, card->product);
 
     for (pf = card->pf_head.sqh_first; pf; pf = pf->pf_list.sqe_next) {

@@ -19,6 +19,12 @@ int	pcmcia_debug = 0;
 #define DPRINTF(arg)
 #endif
 
+#ifdef PCMCIAVERBOSE
+int	pcmcia_verbose = 1;
+#else
+int	pcmcia_verbose = 0;
+#endif
+
 #ifdef	__BROKEN_INDIRECT_CONFIG
 int pcmcia_match __P((struct device *, void *, void *));
 int pcmcia_submatch __P((struct device *, void *, void *));
@@ -44,7 +50,8 @@ pcmcia_ccr_read(pf, ccr)
      struct pcmcia_function *pf;
      int ccr;
 {
-    return(bus_space_read_1((pf)->ccrt, (pf)->ccrh, (pf)->ccr_offset+(ccr)));
+    return(bus_space_read_1(pf->pf_ccrt, pf->pf_ccrh,
+    			    pf->pf_ccr_offset + ccr));
 }
 
 void
@@ -53,9 +60,9 @@ pcmcia_ccr_write(pf, ccr, val)
      int ccr;
      int val;
 {
-    if (((pf)->ccr_mask) & (1<<(ccr/2))) { 
-	bus_space_write_1((pf)->ccrt, (pf)->ccrh,
-			  (pf)->ccr_offset+(ccr), (val));
+    if ((pf->ccr_mask) & (1 << (ccr / 2))) { 
+	bus_space_write_1(pf->pf_ccrt, pf->pf_ccrh,
+			  pf->pf_ccr_offset + ccr, val);
     }
 }
 
@@ -110,7 +117,8 @@ pcmcia_attach_card(dev, iftype)
     if (!sc->card.pf_head.sqh_first)
 	return(1);
 
-    pcmcia_print_cis(sc);
+    if (pcmcia_verbose)
+	pcmcia_print_cis(sc);
 
     /* set the iftype to memory if this card has only one function,
        and that is memory. */
@@ -148,7 +156,7 @@ pcmcia_attach_card(dev, iftype)
 
 	    DPRINTF(("%s: function %d CCR at %d offset %lx: %x %x %x %x, %x %x %x %x, %x\n",
 		     sc->dev.dv_xname, pf->number,
-		     pf->ccr_window, pf->ccr_offset,
+		     pf->pf_ccr_window, pf->pf_ccr_offset,
 		     pcmcia_ccr_read(pf, 0x00),
 		     pcmcia_ccr_read(pf, 0x02), pcmcia_ccr_read(pf, 0x04),
 		     pcmcia_ccr_read(pf, 0x06), pcmcia_ccr_read(pf, 0x0A),
@@ -199,13 +207,26 @@ pcmcia_print(arg, pnp)
      void *arg;
      const char *pnp;
 {
-    struct pcmcia_attach_args *paa = (struct pcmcia_attach_args *) arg;
+    struct pcmcia_attach_args *pa = (struct pcmcia_attach_args *) arg;
+    struct pcmcia_softc *sc = pa->pf->sc;
+    struct pcmcia_card *card = &sc->card;
+    int i;
 
-    if (pnp)
-	printf("manufacturer code %x, product %x at %s",
-	       paa->manufacturer, paa->product, pnp);
+    if (pnp) {
+	for (i = 0; i < 4; i++) {
+	    if (!card->cis1_info[i])
+		break;
+	    if (i)
+		printf(", ");
+	    printf("%s", card->cis1_info[i]);
+	}
+	if (i)
+		printf(" ");
+	printf("(manufacturer 0x%x, product 0x%x)", card->manufacturer,
+	       card->product);
+    }
 
-    printf(" function %d", paa->pf->number);
+    printf(" function %d", pa->pf->number);
 
     return(UNCONF);
 }
@@ -228,17 +249,18 @@ pcmcia_enable_function(pf, pcmcia, cfe)
 	 tmp;
 	 tmp = tmp->pf_list.sqe_next) {
 	if (tmp->cfe &&
-	    (pf->ccr_base >= (tmp->ccr_base - tmp->ccr_offset)) &&
+	    (pf->ccr_base >= (tmp->ccr_base - tmp->pf_ccr_offset)) &&
 	    ((pf->ccr_base+PCMCIA_CCR_SIZE) <=
-	     (tmp->ccr_base - tmp->ccr_offset + tmp->ccr_realsize))) {
-	    pf->ccrt = tmp->ccrt;
-	    pf->ccrh = tmp->ccrh;
-	    pf->ccr_realsize = tmp->ccr_realsize;
+	     (tmp->ccr_base - tmp->pf_ccr_offset + tmp->pf_ccr_realsize))) {
+	    pf->pf_ccrt = tmp->pf_ccrt;
+	    pf->pf_ccrh = tmp->pf_ccrh;
+	    pf->pf_ccr_realsize = tmp->pf_ccr_realsize;
 
-	    /* pf->ccr_offset =
-	       (tmp->ccr_offset - tmp->ccr_base) + pf->ccr_base; */
-	    pf->ccr_offset = (tmp->ccr_offset + pf->ccr_base) - tmp->ccr_base;
-	    pf->ccr_window = tmp->ccr_window;
+	    /* pf->pf_ccr_offset =
+	       (tmp->pf_ccr_offset - tmp->ccr_base) + pf->ccr_base; */
+	    pf->pf_ccr_offset =
+	        (tmp->pf_ccr_offset + pf->ccr_base) - tmp->ccr_base;
+	    pf->pf_ccr_window = tmp->pf_ccr_window;
 	    /* XXX when shutting down one function, it will be necessary
 	       to make sure this window is no longer in use before
 	       actually unmapping and freeing it */
@@ -247,19 +269,18 @@ pcmcia_enable_function(pf, pcmcia, cfe)
     }
 
     if (tmp == NULL) {
-	if (pcmcia_mem_alloc(pf, PCMCIA_CCR_SIZE, &pf->ccrt, &pf->ccrh, 
-			     &pf->ccr_mhandle, &pf->ccr_realsize))
+	if (pcmcia_mem_alloc(pf, PCMCIA_CCR_SIZE, &pf->pf_pcmh))
 	    return(1);
 
-	if (pcmcia_mem_map(pf, PCMCIA_MEM_ATTR, PCMCIA_CCR_SIZE,
-			   pf->ccrt, pf->ccrh, pf->ccr_base,
-			   &pf->ccr_offset, &pf->ccr_window))
+	if (pcmcia_mem_map(pf, PCMCIA_MEM_ATTR, pf->ccr_base,
+			   PCMCIA_CCR_SIZE, &pf->pf_pcmh,
+			   &pf->pf_ccr_offset, &pf->pf_ccr_window))
 	    return(1);
     }
 
     DPRINTF(("%s: function %d CCR at %d offset %lx: %x %x %x %x, %x %x %x %x, %x\n",
 	     pf->sc->dev.dv_xname, pf->number,
-	     pf->ccr_window, pf->ccr_offset,
+	     pf->pf_ccr_window, pf->pf_ccr_offset,
 	     pcmcia_ccr_read(pf, 0x00),
 	     pcmcia_ccr_read(pf, 0x02), pcmcia_ccr_read(pf, 0x04),
 	     pcmcia_ccr_read(pf, 0x06), pcmcia_ccr_read(pf, 0x0A),
@@ -289,27 +310,30 @@ pcmcia_enable_function(pf, pcmcia, cfe)
 }
 
 int
-pcmcia_io_map(pf, width, size, iot, ioh, windowp)
+pcmcia_io_map(pf, width, offset, size, pcihp, windowp)
      struct pcmcia_function *pf;
      int width;
+     bus_addr_t offset;
      bus_size_t size;
-     bus_space_tag_t iot;
-     bus_space_handle_t ioh;
+     struct pcmcia_io_handle *pcihp;
      int *windowp;
 {
+    bus_addr_t ioaddr;
     int reg;
 
     if (pcmcia_chip_io_map(pf->sc->pct, pf->sc->pch,
-			   width, size, iot, ioh, windowp))
+			   width, offset, size, pcihp, windowp))
 	return(1);
+
+    ioaddr = pcihp->addr + offset;
 
     /* XXX in the multifunction multi-iospace-per-function case, this
        needs to cooperate with io_alloc to make sure that the spaces
        don't overlap, and that the ccr's are set correctly */
 
     if (pcmcia_mfc(pf->sc)) {
-	pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0, ioh & 0xff);
-	pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1, (ioh >> 8) & 0xff);
+	pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0, ioaddr & 0xff);
+	pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1, (ioaddr >> 8) & 0xff);
 	pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, size - 1);
 
 	reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
@@ -503,12 +527,12 @@ int pcmcia_card_intr(arg)
 	printf("%s: intr fct=%d physaddr=%lx cor=%02x csr=%02x pin=%02x",
 	       sc->dev.dv_xname, pf->number,
 	       pmap_extract(pmap_kernel(), (vm_offset_t) pf->ccrh) + pf->ccr_offset,
-	       bus_space_read_1(pf->ccrt, pf->ccrh, 
-				pf->ccr_offset+PCMCIA_CCR_OPTION),
-	       bus_space_read_1(pf->ccrt, pf->ccrh, 
-				pf->ccr_offset+PCMCIA_CCR_STATUS),
-	       bus_space_read_1(pf->ccrt, pf->ccrh, 
-				pf->ccr_offset+PCMCIA_CCR_PIN));
+	       bus_space_read_1(pf->pf_ccrt, pf->pf_ccrh, 
+				pf->pf_ccr_offset+PCMCIA_CCR_OPTION),
+	       bus_space_read_1(pf->pf_ccrt, pf->pf_ccrh, 
+				pf->pf_ccr_offset+PCMCIA_CCR_STATUS),
+	       bus_space_read_1(pf->pf_ccrt, pf->pf_ccrh, 
+				pf->pf_ccr_offset+PCMCIA_CCR_PIN));
 #endif
 	if (pf->ih_fct &&
 	    (pf->ccr_mask & (1<<(PCMCIA_CCR_STATUS/2)))) {

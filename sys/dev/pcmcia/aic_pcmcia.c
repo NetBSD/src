@@ -14,11 +14,11 @@
 #define PCMCIA_PRODUCT_ADAPTEC_APA1460	0x1
 
 struct aic_softc {
-    struct device dev;
+    struct device sc_dev;
 
-    bus_space_tag_t iot;
-    bus_space_handle_t ioh;
-    int pcmcia_window;
+    struct pcmcia_io_handle sc_pcioh;
+#define	sc_iot	sc_pcioh.iot
+#define	sc_ioh	sc_pcioh.ioh
 };
 
 #ifdef __BROKEN_INDIRECT_CONFIG

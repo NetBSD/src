@@ -56,8 +56,16 @@ void ep_pcmcia_attach __P((struct device *, struct device *, void *));
 
 int ep_pcmcia_get_enaddr(struct pcmcia_tuple *, void *);
 
+struct ep_pcmcia_softc {
+	struct ep_softc sc_ep;			/* real "ep" softc */
+
+	/* PCMCIA-specific goo */
+	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
+	int sc_io_window;			/* our i/o window */
+};
+
 struct cfattach ep_pcmcia_ca = {
-    sizeof(struct ep_softc), ep_pcmcia_match, ep_pcmcia_attach
+    sizeof(struct ep_pcmcia_softc), ep_pcmcia_match, ep_pcmcia_attach
 };
 
 int
@@ -90,7 +98,8 @@ ep_pcmcia_attach(parent, self, aux)
      struct device *parent, *self;
      void *aux;
 {
-    struct ep_softc *sc = (void *) self;
+    struct ep_pcmcia_softc *psc = (void *) self;
+    struct ep_softc *sc = &psc->sc_ep;
     struct pcmcia_attach_args *pa = aux;
     struct pcmcia_config_entry *cfe;
     int i;
@@ -127,7 +136,7 @@ ep_pcmcia_attach(parent, self, aux)
     if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
 	for (i = 0x300; i < 0x1000; i += ((i%0x100) == 0x70)?0x90:0x10) {
 	    if (pcmcia_io_alloc(pa->pf, i, cfe->iospace[0].length,
-				&sc->sc_iot, &sc->sc_ioh) == 0)
+				&psc->sc_pcioh) == 0)
 		break;
 	}
 	if (i == 0x1000) {
@@ -136,14 +145,17 @@ ep_pcmcia_attach(parent, self, aux)
 	}
     } else {
 	if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-			    &sc->sc_iot, &sc->sc_ioh))
+			    &psc->sc_pcioh))
 	    printf(": can't allocate i/o space\n");
     }
 
-    if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16)?
-			       PCMCIA_WIDTH_IO16:PCMCIA_WIDTH_IO8),
-		      cfe->iospace[0].length,
-		      sc->sc_iot, sc->sc_ioh, &sc->pcmcia_io_window)) {
+    sc->sc_iot = psc->sc_pcioh.iot;
+    sc->sc_ioh = psc->sc_pcioh.ioh;
+
+    if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
+			       PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8),
+		      0, cfe->iospace[0].length, &psc->sc_pcioh,
+		      &psc->sc_io_window)) {
 	printf(": can't map i/o space\n");
 	return;
     }
