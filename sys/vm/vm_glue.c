@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.43 1994/10/30 19:11:14 cgd Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.44 1995/01/09 01:30:46 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -351,7 +351,6 @@ loop:
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
 		printf("scheduler: running, procp %x pri %d\n", pp, ppri);
-noswap:
 #endif
 	/*
 	 * Nothing to do, back to sleep
