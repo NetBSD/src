@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1996/11/15 18:01:36 gwr Exp $
+#	$NetBSD: Makefile,v 1.14 1996/11/15 19:10:38 gwr Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	route
@@ -7,6 +7,10 @@ SRCS=	route.c show.c keywords.c ccitt_addr.c
 BINOWN=	root
 BINMODE=4555
 
+# The Makefile over in ../../distrib/utils/x_route
+# would like keywords.[ch] to always exist here, so
+# they are now checked in as sources.
+#
 # CFLAGS+=-I.
 # CLEANFILES+= keywords.c keywords.h
 # keywords.c keywords.h : keywords.sh
