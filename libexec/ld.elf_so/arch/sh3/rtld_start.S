@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 2003/06/30 00:50:47 marcus Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4 2004/09/14 21:34:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -92,7 +92,8 @@
 	.globl	_rtld_bind_start
 	.type	_rtld_bind_start,@function
 _rtld_bind_start:		/* r0 = obj, r1 = reloff */
-	mov.l	r3,@-r15	/* save registers */
+	mov.l	r2,@-r15	/* save registers */
+	mov.l	r3,@-r15
 	mov.l	r4,@-r15
 	mov.l	r5,@-r15
 	mov.l	r6,@-r15
@@ -113,8 +114,9 @@ _rtld_bind_start:		/* r0 = obj, r1 = reloff */
 	mov.l	@r15+,r6
 	mov.l	@r15+,r5
 	mov.l	@r15+,r4
-	jmp	@r0
 	mov.l	@r15+,r3
+	jmp	@r0
+	mov.l	@r15+,r2
 	.align	2
 2:	.long	_rtld_bind-4b
 	.size	_rtld_bind_start,.-_rtld_bind_start
