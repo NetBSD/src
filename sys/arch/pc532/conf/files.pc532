@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.23 1996/10/23 07:50:03 matthias Exp $
+#	$NetBSD: files.pc532,v 1.24 1996/11/07 07:32:29 matthias Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -13,9 +13,10 @@ attach	membus at root
 
 major	{vnd = 5}
 
-device  rd: disk
-attach	rd at membus
-file	arch/pc532/dev/rd.c		rd needs-count
+# RAM Disk for install floppy
+pseudo-device rd
+file dev/ramdisk.c			rd needs-flag
+file arch/pc532/dev/rd_root.c		ramdisk_hooks
 major	{rd = 3}
 
 #device timer
@@ -66,10 +67,10 @@ file	arch/pc532/pc532/in_cksum.c	inet
 file	arch/pc532/pc532/intr.c
 file	arch/pc532/pc532/machdep.c
 file	arch/pc532/pc532/mem.c
-#file	arch/pc532/pc532/ns_cksum.c	ns
 file	arch/pc532/pc532/pmap.c
 file	arch/pc532/pc532/process_machdep.c
 file 	arch/pc532/pc532/random.s
 file	arch/pc532/pc532/sys_machdep.c
 file	arch/pc532/pc532/trap.c
 file	arch/pc532/pc532/vm_machdep.c
+file	netns/ns_cksum.c		ns
