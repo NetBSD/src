@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.63 2001/01/22 12:17:43 jdolecek Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.64 2001/01/26 07:59:23 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -204,6 +204,7 @@ lfs_mountroot()
 	simple_unlock(&mountlist_slock);
 	(void)lfs_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
+	inittodr(VFSTOUFS(mp)->um_lfs->lfs_tstamp);
 	return (0);
 }
 
