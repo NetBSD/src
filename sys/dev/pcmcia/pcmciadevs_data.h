@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.105 2000/12/20 05:03:38 sommerfeld Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.106 2000/12/20 06:24:37 haya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.106 2000/12/20 04:32:48 jhawk Exp 
+ *	NetBSD: pcmciadevs,v 1.107 2000/12/20 06:05:13 haya Exp 
  */
 
 /*-
@@ -827,6 +827,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "I-O DATA",
 	    "IO-DATA PCLA/T"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_IODATA_CBIDE2,
+	    PCMCIA_CIS_IODATA_CBIDE2,
+	    0,
+	    "I-O DATA",
+	    "IO-DATA CBIDE2/16-bit mode"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_EPSON_EEN10B,
