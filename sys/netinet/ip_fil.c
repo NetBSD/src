@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.11 1997/04/03 00:57:03 cgd Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.12 1997/04/04 01:53:22 cgd Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_fil.c,v 1.11 1997/04/03 00:57:03 cgd Exp $";
+static	char	rcsid[] = "$Id: ip_fil.c,v 1.12 1997/04/04 01:53:22 cgd Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -18,6 +18,7 @@ static	char	rcsid[] = "$Id: ip_fil.c,v 1.11 1997/04/03 00:57:03 cgd Exp $";
 
 #ifndef	_KERNEL
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #endif
 #include <sys/errno.h>
