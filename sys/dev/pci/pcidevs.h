@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.323 2001/04/13 19:01:28 hubertf Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.324 2001/04/21 13:32:25 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.317 2001/04/13 19:00:31 hubertf Exp 
+ *	NetBSD: pcidevs,v 1.318 2001/04/21 13:28:52 tsutsui Exp 
  */
 
 /*
@@ -630,7 +630,7 @@
 /* Acard products */
 #define	PCI_PRODUCT_ACARD_ATP850U	0x0005		/* ATP850U/UF UDMA IDE Controller */
 #define	PCI_PRODUCT_ACARD_ATP860	0x0006		/* ATP860 UDMA IDE Controller */
-#define	PCI_PRODUCT_ACARD_ATP860R	0x0007		/* ATP860R UDMA IDE Controller */
+#define	PCI_PRODUCT_ACARD_ATP860A	0x0007		/* ATP860-A UDMA IDE Controller */
 #define	PCI_PRODUCT_ACARD_AEC6710	0x8002		/* AEC6710 SCSI */
 #define	PCI_PRODUCT_ACARD_AEC6712UW	0x8010		/* AEC6712UW SCSI */
 #define	PCI_PRODUCT_ACARD_AEC6712U	0x8020		/* AEC6712U SCSI */
