@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.49 1995/06/08 23:51:05 mycroft Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.50 1995/08/13 09:05:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -233,18 +233,22 @@ ptrace(p, uap, retval)
 		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
 			return (EINVAL);
 
+		PHOLD(t);
+
 #ifdef PT_STEP
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
 		 */
 		if (error = process_sstep(t, SCARG(uap, req) == PT_STEP))
-			return (error);
+			goto relebad;
 #endif
 
 		/* If the address paramter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
 			if (error = process_set_pc(t, SCARG(uap, addr)))
-				return (error);
+				goto relebad;
+
+		PRELE(t);
 
 		if (SCARG(uap, req) == PT_DETACH) {
 			/* give process back to original parent or init */
@@ -270,6 +274,10 @@ ptrace(p, uap, retval)
 				psignal(t, SCARG(uap, data));
 		}
 		return (0);
+
+	relebad:
+		PRELE(t);
+		return (error);
 
 	case  PT_KILL:
 		/* just send the process a KILL signal. */
