@@ -27,7 +27,7 @@
  *	q931_util.c - utility functions to print Q.931 traces
  *	-----------------------------------------------------
  *
- *	$Id: q931_util.c,v 1.1.1.1 2001/01/06 13:00:32 martin Exp $ 
+ *	$Id: q931_util.c,v 1.2 2003/04/06 18:20:15 wiz Exp $ 
  *
  * $FreeBSD$
  *
@@ -296,7 +296,7 @@ p_q931bc(char *pbuf, unsigned char *buf)
 					sprintf((pbuf+strlen(pbuf)), "V.110");
 					break;
 				case 0x02:
-					sprintf((pbuf+strlen(pbuf)), "G.711 u-law");
+					sprintf((pbuf+strlen(pbuf)), "G.711 mu-law");
 					break;
 				case 0x03:
 					sprintf((pbuf+strlen(pbuf)), "G.711 A-law");

@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.16 2003/02/01 06:23:37 thorpej Exp $	*/
+/*	$NetBSD: interwave.c,v 1.17 2003/04/06 18:20:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.16 2003/02/01 06:23:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.17 2003/04/06 18:20:13 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -641,7 +641,7 @@ iw_query_encoding(addr, fp)
 	 */
 
 	/*
-	 * except in wavetable synth. there we have only ulaw and 8 and 16
+	 * except in wavetable synth. there we have only mu-law and 8 and 16
 	 * bit linear data
 	 */
 

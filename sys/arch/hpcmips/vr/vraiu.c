@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.3 2002/10/02 05:26:53 thorpej Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.4 2003/04/06 18:20:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -147,8 +147,8 @@ static void vraiu_slinear8_1(struct vraiu_softc *, u_short *, void *, int);
 static void vraiu_slinear8_2(struct vraiu_softc *, u_short *, void *, int);
 static void vraiu_ulinear8_1(struct vraiu_softc *, u_short *, void *, int);
 static void vraiu_ulinear8_2(struct vraiu_softc *, u_short *, void *, int);
-static void vraiu_ulaw_1(struct vraiu_softc *, u_short *, void *, int);
-static void vraiu_ulaw_2(struct vraiu_softc *, u_short *, void *, int);
+static void vraiu_mulaw_1(struct vraiu_softc *, u_short *, void *, int);
+static void vraiu_mulaw_2(struct vraiu_softc *, u_short *, void *, int);
 static void vraiu_slinear16_1(struct vraiu_softc *, u_short *, void *, int);
 static void vraiu_slinear16_2(struct vraiu_softc *, u_short *, void *, int);
 static void vraiu_slinear16sw_1(struct vraiu_softc *, u_short *, void *, int);
@@ -255,7 +255,7 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_channels = 1;
 	sc->sc_precision = 8;
 	sc->sc_encoding = AUDIO_ENCODING_ULAW;
-	sc->sc_decodefunc = vraiu_ulaw_1;
+	sc->sc_decodefunc = vraiu_mulaw_1;
 	DPRINTFN(1, ("vraiu_attach: reset AIU\n"))
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SEQ_REG_W, AIURST);
 	/* attach audio subsystem */
@@ -391,10 +391,10 @@ vraiu_set_params(void *self, int setmode, int usemode,
 		case AUDIO_ENCODING_ULAW:
 			switch (play->channels) {
 			case 1:
-				sc->sc_decodefunc = vraiu_ulaw_1;
+				sc->sc_decodefunc = vraiu_mulaw_1;
 				break;
 			case 2:
-				sc->sc_decodefunc = vraiu_ulaw_2;
+				sc->sc_decodefunc = vraiu_mulaw_2;
 				break;
 			default:
 				DPRINTFN(0, ("vraiu_set_params: channel error"
@@ -704,7 +704,7 @@ vraiu_get_props(void *self)
 	return 0;
 }
 
-unsigned char ulaw_to_lin[] = {
+unsigned char mulaw_to_lin[] = {
 	0x02, 0x06, 0x0a, 0x0e, 0x12, 0x16, 0x1a, 0x1e,
 	0x22, 0x26, 0x2a, 0x2e, 0x32, 0x36, 0x3a, 0x3e,
 	0x41, 0x43, 0x45, 0x47, 0x49, 0x4b, 0x4d, 0x4f,
@@ -824,11 +824,11 @@ vraiu_ulinear8_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 }
 
 static void
-vraiu_ulaw_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
+vraiu_mulaw_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
 	u_char *q = (u_char*)p;
 
-	DPRINTFN(3, ("vraiu_ulaw_1\n"));
+	DPRINTFN(3, ("vraiu_mulaw_1\n"));
 
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE/2) {
@@ -838,17 +838,17 @@ vraiu_ulaw_1(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 	}
 #endif
 	while (n--) {
-		short i = ulaw_to_lin[*q++];
+		short i = mulaw_to_lin[*q++];
 		*dmap++ = i << 2;
 	}
 }
 
 static void
-vraiu_ulaw_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
+vraiu_mulaw_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 {
 	u_char *q = (u_char*)p;
 
-	DPRINTFN(3, ("vraiu_ulaw_2\n"));
+	DPRINTFN(3, ("vraiu_mulaw_2\n"));
 
 #ifdef DIAGNOSTIC
 	if (n > AUDIO_BUF_SIZE) {
@@ -859,8 +859,8 @@ vraiu_ulaw_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 #endif
 	n /= 2;
 	while (n--) {
-		short i = ulaw_to_lin[*q++];
-		short j = ulaw_to_lin[*q++];
+		short i = mulaw_to_lin[*q++];
+		short j = mulaw_to_lin[*q++];
 		*dmap++ = (i + j) << 1;
 	}
 }

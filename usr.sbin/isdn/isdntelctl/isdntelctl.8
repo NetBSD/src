@@ -1,4 +1,4 @@
-.\" $NetBSD: isdntelctl.8,v 1.7 2002/07/29 01:08:29 wiz Exp $
+.\" $NetBSD: isdntelctl.8,v 1.8 2003/04/06 18:20:14 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdntelctl.8,v 1.7 2002/07/29 01:08:29 wiz Exp $
+.\"	$Id: isdntelctl.8,v 1.8 2003/04/06 18:20:14 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -61,9 +61,9 @@ unit number.  The default value is zero to access
 device
 .Pa /dev/isdntel0 .
 .It Fl A
-Do A-law (ISDN line) -\*[Gt] u-law (userland) conversion.
+Do A-law (ISDN line) -\*[Gt] mu-law (userland) conversion.
 .It Fl U
-Do u-law (ISDN line) -\*[Gt] A-law (userland) conversion.
+Do mu-law (ISDN line) -\*[Gt] A-law (userland) conversion.
 .It Fl N
 Set sound conversion to do no format conversion.
 .El
@@ -73,7 +73,7 @@ so the
 .Xr isdntel 4
 driver does the bit-reversion process in any case.
 .Pp
-Additionally, the user can specify to do A-law to u-law, u-law to A-law
+Additionally, the user can specify to do A-law to mu-law, mu-law to A-law
 or no conversion at all in the isdntel driver by using the
 .Nm
 utility.
@@ -92,7 +92,7 @@ displays the currently used sound format for device
 .Xr isdnd.rc 5 ,
 .Xr isdnd 8
 .Sh STANDARDS
-A-Law and u-Law are specified in ITU Recommendation G.711.
+A-law and mu-law are specified in ITU Recommendation G.711.
 .Sh AUTHORS
 The
 .Nm

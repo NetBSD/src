@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.7 2002/10/08 18:01:42 kent Exp $ */
+/*	$NetBSD: repulse.c,v 1.8 2003/04/06 18:20:10 wiz Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.7 2002/10/08 18:01:42 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.8 2003/04/06 18:20:10 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -701,7 +701,7 @@ rep_set_params(void *addr, int setmode, int usemode,
 			else if (p->precision == 16 && p->channels == 2)
 				sc->sc_captfun = rep_read_16_stereo;
 		}
-		/* TBD: ulaw, alaw */
+		/* TBD: mu-law, A-law */
 	}
 	return 0;
 }

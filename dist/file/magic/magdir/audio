@@ -8,14 +8,14 @@
 
 # Sun/NeXT audio data
 0	string		.snd		Sun/NeXT audio data:
->12	belong		1		8-bit ISDN u-law,
+>12	belong		1		8-bit ISDN mu-law,
 >12	belong		2		8-bit linear PCM [REF-PCM],
 >12	belong		3		16-bit linear PCM,
 >12	belong		4		24-bit linear PCM,
 >12	belong		5		32-bit linear PCM,
 >12	belong		6		32-bit IEEE floating point,
 >12	belong		7		64-bit IEEE floating point,
->12	belong		23		8-bit ISDN u-law compressed (CCITT G.721 ADPCM voice data encoding),
+>12	belong		23		8-bit ISDN mu-law compressed (CCITT G.721 ADPCM voice data encoding),
 >12	belong		24		compressed (8-bit G.722 ADPCM)
 >12	belong		25		compressed (3-bit G.723 ADPCM),
 >12	belong		26		compressed (5-bit G.723 ADPCM),
@@ -28,14 +28,14 @@
 # DEC systems (e.g. DECstation 5000) use a variant of the Sun/NeXT format
 # that uses little-endian encoding and has a different magic number
 0	lelong		0x0064732E	DEC audio data:
->12	lelong		1		8-bit ISDN u-law,
+>12	lelong		1		8-bit ISDN mu-law,
 >12	lelong		2		8-bit linear PCM [REF-PCM],
 >12	lelong		3		16-bit linear PCM,
 >12	lelong		4		24-bit linear PCM,
 >12	lelong		5		32-bit linear PCM,
 >12	lelong		6		32-bit IEEE floating point,
 >12	lelong		7		64-bit IEEE floating point,
->12	lelong		23		8-bit ISDN u-law compressed (CCITT G.721 ADPCM voice data encoding),
+>12	lelong		23		8-bit ISDN mu-law compressed (CCITT G.721 ADPCM voice data encoding),
 >20	lelong		1		mono,
 >20	lelong		2		stereo,
 >20	lelong		4		quad,

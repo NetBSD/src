@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.13 2003/02/04 23:26:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.14 2003/04/06 18:20:12 wiz Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -125,7 +125,7 @@ static u_int8_t parm_none[] = { 0 };
 
 /* assign request for the global d-channel instance */
 static u_int8_t parm_global_assign[] = {
-/*	BC	len	cap	rate	a-law	*/
+/*	BC	len	cap	rate	A-law	*/
 	0x04,	0x03,	0x80,	0x90,	0xa3,	/* 64k speech */
 	0x04,	0x02,	0x88,	0x90,		/* 64k data */
 	0x04,	0x03,	0x89,	0x90,	0xa3,	/* restricted digital info */

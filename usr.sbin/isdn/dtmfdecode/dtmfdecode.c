@@ -6,13 +6,13 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $Id: dtmfdecode.c,v 1.1.1.1 2001/01/06 13:00:36 martin Exp $
+ * $Id: dtmfdecode.c,v 1.2 2003/04/06 18:20:14 wiz Exp $
  *
  * $FreeBSD$
  *
  * Extract DTMF signalling from ISDN4BSD A-law coded audio data
  *
- * A-Law to linear conversion from the sox package.
+ * A-law to linear conversion from the sox package.
  *
  */
 
@@ -22,7 +22,7 @@
 /* Integer math scaling factor */
 #define FSC	(1<<12)
 
-/* Alaw parameters */
+/* A-law parameters */
 #define SIGN_BIT        (0x80)          /* Sign bit for a A-law byte. */
 #define QUANT_MASK      (0xf)           /* Quantization field mask. */
 #define SEG_SHIFT       (4)             /* Left shift for segment number. */

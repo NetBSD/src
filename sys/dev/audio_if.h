@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.50 2003/03/31 18:47:59 jdolecek Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.51 2003/04/06 18:20:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -55,7 +55,7 @@ struct audio_softc;
 
 struct audio_params {
 	u_long	sample_rate;			/* sample rate */
-	u_int	encoding;			/* e.g. ulaw, linear, etc */
+	u_int	encoding;			/* e.g. mu-law, linear, etc */
 	u_int	precision;			/* bits/sample */
 	u_int	channels;			/* mono(1), stereo(2) */
 	/* Software en/decode functions, set if SW coding required by HW */
@@ -76,7 +76,7 @@ struct audio_params {
 	u_int	hw_channels;
 };
 
-/* The default audio mode: 8 kHz mono ulaw */
+/* The default audio mode: 8 kHz mono mu-law */
 extern const struct audio_params audio_default;
 
 struct malloc_type;

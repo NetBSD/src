@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.23 2002/10/14 13:43:14 wiz Exp $
+.\"	$NetBSD: audio.9,v 1.24 2003/04/06 18:20:09 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,7 +97,7 @@ struct audio_hw_if {
 
 struct audio_params {
 	u_long	sample_rate;		/* sample rate */
-	u_int	encoding;		/* ulaw, linear, etc */
+	u_int	encoding;		/* mu-law, linear, etc */
 	u_int	precision;		/* bits/sample */
 	u_int	channels;		/* mono(1), stereo(2) */
 	/* Software en/decode functions, set if SW coding required by HW */
@@ -209,7 +209,7 @@ and
 structures contain the encoding parameters that should be set.
 .Pp
 If the hardware requires software assistance with some encoding
-(e.g., it might be lacking mulaw support) it should fill the
+(e.g., it might be lacking mu-law support) it should fill the
 .Va sw_code ,
 .Va factor
 and
@@ -218,8 +218,8 @@ fields of these structures with translation information, and
 set to hw_* fields what format the hardware actually uses.
 For example, if
 .Va play
-requests [8000Hz, mulaw, 8bit, 1ch] and the hardware supports
-not 8bit mulaw but 16bit slinear_le, the driver should set
+requests [8000Hz, mu-law, 8bit, 1ch] and the hardware supports
+not 8bit mu-law but 16bit slinear_le, the driver should set
 .Va mulaw_to_slinear16_le
 to
 .Va sw_code ,

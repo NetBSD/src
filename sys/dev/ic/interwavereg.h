@@ -1,7 +1,7 @@
 #ifndef INTERWAVEREG_H
 #define INTERWAVEREG_H
 
-/*	$NetBSD: interwavereg.h,v 1.4 2001/04/30 01:34:04 lukem Exp $	*/
+/*	$NetBSD: interwavereg.h,v 1.5 2003/04/06 18:20:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -331,8 +331,8 @@
 #define BIT16_BIG         0xC0        /* 16-bit signed, big endian */
 #define IMA_ADPCM         0xA0        /* IMA-compliant ADPCM */
 #define BIT8_ALAW         0x60        /* 8-bit A-law */
-#define BIT16_LITTLE      0x40        /* 16-bit signed, lillte endian */
-#define BIT8_ULAW         0x20        /* 8-bit u-law */
+#define BIT16_LITTLE      0x40        /* 16-bit signed, little endian */
+#define BIT8_ULAW         0x20        /* 8-bit mu-law */
 #define BIT8_LINEAR       0x00        /* 8-bit unsigned */
 #define REC_DFORMAT       0x1C
 #define PLAY_DFORMAT      0x08
