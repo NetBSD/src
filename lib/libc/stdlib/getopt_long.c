@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.7 2000/07/08 14:58:43 sommerfeld Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.8 2000/08/25 17:05:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.7 2000/07/08 14:58:43 sommerfeld Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.8 2000/08/25 17:05:49 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -180,6 +180,14 @@ getopt_internal(nargc, nargv, options)
 	_DIAGASSERT(options != NULL);
 
 	optarg = NULL;
+
+	/*
+	 * XXX Some programs (like rsyncd) expect to be able to
+	 * XXX re-initialize optind to 0 and have getopt_long(3)
+	 * XXX properly function again.  Work around this braindamage.
+	 */
+	if (optind == 0)
+		optind = 1;
 
 	if (optreset)
 		nonopt_start = nonopt_end = -1;
