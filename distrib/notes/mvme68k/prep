@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.11 2001/07/24 18:02:56 nra Exp $
+.\"	$NetBSD: prep,v 1.12 2002/04/05 21:12:21 scw Exp $
 .
 \*M machines usually need little or no preparation before installing
 .Nx ,
@@ -66,9 +66,12 @@ MPU Clock Speed =33Mhz
 167-Bug\*>
 .disp)
 .Pp
-Make sure the RAM size looks ok (if you've got an 8 MB MVME147 or a
-32 MB MVME167 you should
-have the same value as we do). Also make sure the clock is ticking:
+Make sure the RAM size looks ok (if you've got an 8 MB
+.Tn MVME147
+or a 32 MB
+.Tn MVME167
+you should have the same value as we do).
+Also make sure the clock is ticking:
 .Pp
 .Dl 1xx-Bug\*> Ns Ic time
 .Dl Sunday   12/21/31   16:25:14
@@ -101,12 +104,57 @@ Also make sure that your board's ethernet address is initialised to
 the correct value. You'll find the address on a label on the inside of
 the MVME147's front panel, and on the VMEbus P2 connector of the other
 board types.
-On the MVME147, enter the last five digits of the address
+On the
+.Tn MVME147 ,
+enter the last five digits of the address
 using the
 .Ic lsad
 command. On the MVME162/172 and MVME167/177, you should use the
 .Ic cnfg
 command.
+.Pp
+The
+.Nx
+kernel reads the first two long words of the onboard NVRAM to
+determine the starting and ending address of any VMEbus RAM that should be
+used by the system.
+You should verify that this area is set properly for your configuration.
+.Pp
+If you have no VMEbus RAM boards, the values should be set to zero (0).
+.Pp
+For an
+.Tn MVME162 ,
+.Tn MVME167 ,
+.Tn MVME172
+or
+.Tn MVME177
+board, at the 1xx-Bug\*> prompt:
+.Pp
+.Dl 1xx-Bug\*> Ns Ic mm fffc0000 ;l
+.Dl fffc0000: xxxxxxxx? Ns Ic 0
+.Dl fffc0004: xxxxxxxx? Ns Ic 0
+.Dl fffc0008: xxxxxxxx? Ns Ic .
+.Dl 1xx-Bug\*>
+.Pp
+For an
+.Tn MVME147
+board, at the 147Bug prompt:
+.Pp
+.Dl 147Bug\*> Ns Ic mm fffe0764 ;l
+.Dl fffe0764: xxxxxxxx? Ns Ic 0
+.Dl fffe0768: xxxxxxxx? Ns Ic 0
+.Dl fffe076c: xxxxxxxx? Ns Ic .
+.Pp
+If you do have VMEbus RAM available and want
+.Nx
+to use it, the first
+long word should be set to the starting address of this RAM and the
+second long word should be set to the ending address.
+.Pp
+If you have more than one VMEbus RAM board installed, the starting and
+ending addresses must be contiguous from one board to the next.
+Also note that, for various reasons beyond the scope of this document,
+VMEbus RAM should be configured in A32 address space.
 .Pp
 To install successfully to a local SCSI disk, you need to ensure that
 the system is aware of what targets are connected to the SCSI bus. This
