@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.1.2.3 1993/10/15 15:20:49 mycroft Exp $
+ *	$Id: exec_aout.c,v 1.1.2.4 1993/10/16 03:11:56 mycroft Exp $
  */
 
 #include "param.h"
@@ -244,7 +244,7 @@ exec_aout_prep_omagic(p, epp)
 	struct exec_vmcmd *ccmdp;
 	long bsize, baddr;
 
-	epp->ep_taddr = 0;
+	epp->ep_taddr = USRTEXT;
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
