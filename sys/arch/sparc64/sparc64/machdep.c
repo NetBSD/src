@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 1998/09/06 21:53:43 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.11 1998/09/07 23:59:07 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -522,9 +522,10 @@ setregs(p, pack, stack)
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_tstate = tstate;
 	tf->tf_global[1] = (vaddr_t)PS_STRINGS;
+	/* %g4 needs to point to the start of the data segment */
+	tf->tf_global[4] = 0; 
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
-	/* XXXX Needs to support 64-bit frames */
 	stack -= sizeof(struct rwindow);
 	tf->tf_out[6] = stack - STACK_OFFSET;
 	tf->tf_out[7] = NULL;
@@ -741,7 +742,6 @@ sys_sigreturn(p, v, retval)
 	struct sigcontext *scp;
 	struct sigcontext sc;
 	register struct trapframe *tf;
-	struct rwindow *rwstack, *kstack;
 #ifndef TRAPWIN
 	int i;
 #endif
@@ -800,7 +800,6 @@ sys_sigreturn(p, v, retval)
 	tf->tf_global[1] = (int64_t)sc.sc_g1;
 	tf->tf_out[0] = (int64_t)sc.sc_o0;
 	tf->tf_out[6] = (int64_t)sc.sc_sp;
-	rwstack = (struct rwindow32 *)tf->tf_out[6];
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sys_sigreturn: return trapframe pc=%p sp=%p tstate=%llx\n",
@@ -1102,7 +1101,7 @@ stackdump()
 			       fp->fr_pc, fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2],
 			       fp->fr_arg[3], fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6],
 			       fp->fr_fp);
-			fp = (struct frame32*)fp->fr_fp;
+			fp = (struct frame32*)(u_long)(u_short)fp->fr_fp;
 		}
 	}
 }
@@ -1496,7 +1495,6 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int flags;
 {
 	vaddr_t low, high;
-	bus_addr_t dvmaddr;
 	struct pglist *mlist;
 	int error;
 
@@ -1554,8 +1552,6 @@ _bus_dmamem_free(t, segs, nsegs)
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	bus_addr_t addr;
-	bus_size_t len;
 
 	if (nsegs != 1)
 		panic("bus_dmamem_free: nsegs = %d", nsegs);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.3 1998/09/05 23:57:27 eeh Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.4 1998/09/07 23:59:07 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -79,7 +79,7 @@
 #define IMM22(x)	((x) & 0x3fffff)
 #define DISP19(x)	((x) & 0x7ffff)
 #define DISP22(x)	((x) & 0x3fffff)
-#define DISP30(x)	((x) & 0x3fffffff)
+#define DISP30(x)	((x) & 0x3fffffffL)
 
 /* Register Operand Fields */
 #define RS1(x)		(((x) & 0x1f) << 14)
@@ -907,23 +907,23 @@ db_disasm(loc, altfmt)
 			break;
 		case 'l':
 			db_printsym(
-				(db_addr_t)(loc + (4 * ((insn & 0x1fff) |
+				(db_addr_t)(loc + (int)(4 * ((insn & 0x1fff) |
 				((insn >> 20) & 0x3)))),
 				DB_STGY_ANY);
 			break;
 		case 'm':
 			db_printsym(
-				(db_addr_t)(loc + (4 * (insn & 0x3fffff))),
+				(db_addr_t)(loc + (int)(4 * (insn & 0x3fffff))),
 				DB_STGY_ANY);
 			break;
 		case 'u':
 			db_printsym(
-				(db_addr_t)(loc + (4 * (insn & 0x7ffff))),
+				(db_addr_t)(loc + (int)(4 * (insn & 0x7ffff))),
 				DB_STGY_ANY);
 			break;
 		case 'n':
 			db_printsym(
-				(db_addr_t)(loc + (4 * (insn & 0x3fffffff))),
+				(db_addr_t)(loc + (int)(4 * (insn & 0x3fffffff))),
 				DB_STGY_PROC);
 			break;
 		case 's':

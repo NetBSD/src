@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 1998/09/06 21:53:43 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 1998/09/07 23:59:08 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -62,7 +62,6 @@
 #include <machine/kcore.h>
 
 #include "cache.h"
-#include "asm.h"
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -1358,7 +1357,7 @@ pmap_collect(pm)
 		if ((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			m = 0;
 			for (k=0; k<PDSZ; k++) {
-				if ((ptbl = (paddr_t)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
+				if ((ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
 					m++;
 					n = 0;
 					for (j=0; j<PTSZ; j++) {
@@ -3131,7 +3130,7 @@ pmap_count_res(pm)
 	for (i=0; i<STSZ; i++) {
 		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			for (k=0; k<PDSZ; k++) {
-				if (ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED)) {
+				if ((ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
 					for (j=0; j<PTSZ; j++) {
 						int64_t data = ldxa(&ptbl[j], ASI_PHYS_CACHED);
 						if (data&TLB_V)
