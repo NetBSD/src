@@ -1,7 +1,6 @@
+#	$NetBSD: Makefile,v 1.8 1997/10/18 17:31:35 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.7 1997/10/18 04:37:31 lukem Exp $
 
-WARNS?=	0
 PROG=	kgmon
 MAN=	kgmon.8
 DPADD=	${LIBKVM}
