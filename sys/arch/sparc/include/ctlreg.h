@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.22 2000/05/05 11:07:15 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.23 2002/08/24 17:27:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -100,6 +100,8 @@
 #define ASI_BLOCKFILL	0x1f	/* [4m] hypersparc: hardware block fill */
 #define ASI_BYPASS	0x20	/* [4m] sun ref mmu bypass,
 				        ie. direct phys access */
+#define	ASI_CSR		0x2f	/* [4d] cpu-unit CSR space */
+#define	ASI_ECSR	0x2f	/* [4d] cpu-unit ECSR space */
 #define ASI_HICACHECLR	0x31	/* [4m] hypersparc only: I-cache flash clear */
 #define ASI_ICACHECLR	0x36	/* [4m] ms1 only: I-cache flash clear */
 #define ASI_DCACHECLR	0x37	/* [4m] ms1 only: D-cache flash clear */
