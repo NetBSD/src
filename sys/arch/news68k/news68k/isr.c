@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.2 2000/02/21 20:38:50 erh Exp $	*/
+/*	$NetBSD: isr.c,v 1.3 2000/06/29 08:02:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,8 +54,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
