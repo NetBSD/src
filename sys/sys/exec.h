@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.84 2002/03/20 18:00:07 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.85 2002/04/02 20:18:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -200,6 +200,7 @@ int	exec_read_from		__P((struct proc *, struct vnode *, u_long off,
 #ifdef LKM
 int	emul_register		__P((const struct emul *, int));
 int	emul_unregister		__P((const char *));
+const struct emul *emul_search	__P((const char *));
 
 int	exec_add		__P((struct execsw *, const char *));
 int	exec_remove		__P((const struct execsw *));
