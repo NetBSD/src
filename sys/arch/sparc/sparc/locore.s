@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.2 (Berkeley) 8/12/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp 
- * $Id: locore.s,v 1.7 1994/03/16 16:14:44 pk Exp $
+ * $Id: locore.s,v 1.8 1994/03/23 20:40:26 pk Exp $
  */
 
 #define	LOCORE
@@ -2277,6 +2277,13 @@ dostart:
 	 * want to run (0xf8004000).  Until we get everything set,
 	 * we have to be sure to use only pc-relative addressing.
 	 */
+#ifdef DDB
+	/*
+	 * Additionally, the loader passes `_esym' in %o1. A DDB magic
+	 * number is passed in %o2 to allow for bootloaders that know
+	 * nothing about DDB symbol loading conventions.
+	 */
+#endif
 
 	wr	%g0, 0, %wim		! make sure we can set psr
 	mov	%o0, %g7		! save prom vector pointer
@@ -2303,6 +2310,19 @@ dostart:
 	clr	%l0			! lowva
 	set	KERNBASE, %l1		! highva
 	set	_end + (2 << 18), %l2	! last va that must be remapped
+#ifdef DDB
+	set	0x44444230, %l3
+	cmp	%o2, %l3		! chk magic
+	bne	1f
+	tst	%o1			! do we have the symbols?
+	bz	1f
+	 nop
+	sethi	%hi(_esym - KERNBASE), %l3	! store _esym
+	st	%o1, [%l3 + %lo(_esym - KERNBASE)]
+	set	(2 << 18), %l2		! compute new va
+	add	%l2, %o1, %l2
+1:
+#endif
 	set	1 << 18, %l3		! segment size in bytes
 0:
 	lduba	[%l0] ASI_SEGMAP, %l4	! segmap[highva] = segmap[lowva];
@@ -4303,7 +4323,7 @@ ___builtin_saveregs:
 	retl
 	 st	%i5, [%fp + 0x58]	! fr->fr_argd[5]
 
-#ifdef KGDB
+#if defined(KGDB) || defined(DDB)
 /*
  * Write all windows (user or otherwise), except the current one.
  *
@@ -4332,7 +4352,55 @@ ENTRY(write_all_windows)
 	nop
 #endif /* KGDB */
 
+#ifdef DDB
+ENTRY(setjmp)
+	std	%sp, [%o0+0]	! stack pointer & return pc
+	st	%fp, [%o0+8]	! frame pointer
+	retl
+	 clr	%o0
+
+Lpanic_ljmp:
+	.asciz	"longjmp botch"
+	ALIGN
+
+ENTRY(longjmp)
+	addcc	%o1, %g0, %g6	! compute v ? v : 1 in a global register
+	be,a	0f
+	 mov	1, %g6
+0:
+	mov	%o0, %g1	! save a in another global register
+	ld	[%g1+8], %g7	/* get caller's frame */
+1:
+	cmp	%fp, %g7	! compare against desired frame
+	bl,a	1b		! if below,
+	 restore		!    pop frame and loop
+	be,a	2f		! if there,
+	 ldd	[%g1+0], %o2	!    fetch return %sp and pc, and get out
+
+Llongjmpbotch:
+				! otherwise, went too far; bomb out
+	save	%sp, -CCFSZ, %sp	/* preserve current window */
+	sethi	%hi(Lpanic_ljmp), %o0
+	call	_panic
+	or %o0, %lo(Lpanic_ljmp), %o0;
+	unimp	0
+
+2:
+	cmp	%o2, %sp	! %sp must not decrease
+	bge,a	3f
+	 mov	%o2, %sp	! it is OK, put it in place
+	b,a	Llongjmpbotch
+3: 
+	jmp	%o3 + 8		! success, return %g6
+	 mov	%g6, %o0
+#endif /* DDB */
+
 	.data
+#ifdef DDB
+	.globl	_esym
+_esym:
+	.word	0
+#endif
 	.globl	_cold
 _cold:
 	.word	1		! cold start flag
