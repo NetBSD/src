@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.48 2001/03/16 12:44:19 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.49 2001/03/16 12:51:50 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -103,8 +103,13 @@ that the package will build under.  It can be a glob-style wildcard.
 If set, it lists the values of OS triples (OS-version-platform)
 that the package will not build under.  It can be a glob-style wildcard.
 .It MAINTAINER
-The e-mail address of the contact person for this package.  The default
-is packages@NetBSD.ORG.
+The e-mail address of the contact person for this package.  The person
+who feels responsible for this package, and who is most likely to look
+at problems or questions regarding this package which have been
+reported with
+.Xr send-pr 1 .
+The right person to contact before making major changes to the
+package.  The default is packages@NetBSD.ORG.
 .It CATEGORIES
 A list of descriptive categories into which this package falls.
 .It COMMENT
