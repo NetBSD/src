@@ -1,4 +1,4 @@
-/*	$NetBSD: tscroll.c,v 1.8 2000/04/17 12:25:46 blymn Exp $	*/
+/*	$NetBSD: tscroll.c,v 1.9 2000/04/27 00:27:56 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)tscroll.c	8.4 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: tscroll.c,v 1.8 2000/04/17 12:25:46 blymn Exp $");
+__RCSID("$NetBSD: tscroll.c,v 1.9 2000/04/27 00:27:56 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -100,10 +100,19 @@ __parse_cap (cap, va_alist)
 #else
 	va_start(ap);
 #endif
+	n = 0;			/* XXX gcc -Wuninitialized */
+
 	if (cap == NULL)
 		goto err;
 #ifdef DEBUG
-	__CTRACE ("__parse_cap: cap = %s\n", cap);
+	{
+		int	i;
+		
+		__CTRACE("__parse_cap: cap = ");
+		for (i = 0; i < strlen(cap); i++)
+			__CTRACE("%s", unctrl(cap[i]));
+		__CTRACE("\n");
+	}
 #endif
 	have_input = 0;
 	for (dp = result; (c = *cap++) != '\0';) {
