@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.125 1999/02/19 16:15:40 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.126 1999/02/22 02:56:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1126,7 +1126,7 @@ loop:
 		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
 		isa_dmastart(fdc->sc_ic, fdc->sc_drq,
 		    bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		    NULL, read, BUS_DMA_NOWAIT);
+		    NULL, read | DMAMODE_DEMAND, BUS_DMA_NOWAIT);
 #if 0 /* XXX i/o port kludge */
 		bus_space_write_1(iot, ioh, fdctl, type->rate);
 #else
