@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.18 2004/05/10 21:51:50 drochner Exp $	*/
+/*	$NetBSD: signal.h,v 1.19 2004/07/28 11:39:37 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -83,6 +83,8 @@ struct sigcontext {
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 
+#if defined(__M68K_SIGNAL_PRIVATE)
+
 #include <m68k/cpuframe.h>
 
 /*
@@ -98,7 +100,6 @@ struct sigstate {
 #define	SS_FPSTATE	0x02
 #define	SS_USERREGS	0x04
 
-#if defined(__M68K_SIGNAL_PRIVATE)
 
 #ifdef _KERNEL
 #define	_SIGSTATE_EXFRAMESIZE(fmt)	exframesize[(fmt)]
