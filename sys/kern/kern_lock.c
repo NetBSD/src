@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.16 1999/03/25 00:20:35 sommerfe Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.16.2.1 1999/05/04 17:05:42 perry Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -52,7 +52,7 @@
  * Locks provide shared/exclusive sychronization.
  */
 
-#ifdef LOCKDEBUG
+#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 #define COUNT(p, x) if (p) (p)->p_locks += (x)
 #else
 #define COUNT(p, x)
