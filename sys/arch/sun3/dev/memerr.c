@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.1 1996/03/26 14:57:43 gwr Exp $ */
+/*	$NetBSD: memerr.c,v 1.2 1996/04/07 05:47:28 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -158,7 +158,7 @@ memerr_attach(parent, self, args)
 		 * correctable errors and set ME_ECC_CE_ENA
 		 * here so we can log them...
 		 */
-		mer->me_csr = ME_CSR_IENA; /* ME_ECC_CE_ENA ? */
+		mer->me_csr = ME_CSR_IENA; /* | ME_ECC_CE_ENA */
 	}
 }
 
@@ -192,11 +192,17 @@ memerr_interrupt(arg)
 		   (ctx & 7), va, pa);
 	printf(" csr=%b\n", csr, sc->sc_csrbits);
 
+	/*
+	 * If we have parity-checked memory, there is
+	 * not much to be done.  Any error is fatal.
+	 */
 	if (sc->sc_type == ME_PAR) {
-		if ((csr & ME_PAR_EMASK) == 0)
-			goto noerror;
-		/* Parity errors are fatal. */
-		goto die;
+		if (csr & ME_PAR_EMASK) {
+			/* Parity errors are fatal. */
+			goto die;
+		}
+		/* The IPEND bit was set, but no error bits. */
+		goto noerror;
 	}
 
 	/*
@@ -207,12 +213,16 @@ memerr_interrupt(arg)
 		goto die;
 	}
 	if (csr & ME_ECC_UE) {
-		printf(" uncorrectable error\n");
+		printf(" uncorrectable ECC error\n");
 		goto die;
 	}
-	if (csr & ME_ECC_CE)
+	if (csr & ME_ECC_CE) {
+		/* Just log this and continue. */
 		memerr_correctable(sc);
-	goto recover;
+		goto recover;
+	}
+	/* The IPEND bit was set, but no error bits. */
+	goto noerror;
 
 die:
 	panic("all bets are off...");
