@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getpwent.3	6.8 (Berkeley) 4/19/91
-.\"	$Id: getpwent.3,v 1.4 1993/10/25 23:36:54 jtc Exp $
+.\"	$Id: getpwent.3,v 1.5 1994/01/10 23:32:29 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt GETPWENT 3
@@ -131,7 +131,7 @@ closes any open files.
 These routines have been written to ``shadow'' the password file, e.g.
 allow only certain programs to have access to the encrypted password.
 If the process which calls them has an effective uid of 0, the encrypted
-password will be returned, otherwise, the password field of the retuned
+password will be returned, otherwise, the password field of the returned
 structure will point to the string
 .Ql * .
 .Sh RETURN VALUES
