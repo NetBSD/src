@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.7 1998/09/11 13:06:30 hubertf Exp $	*/
+/*	$NetBSD: subs.c,v 1.8 1998/09/13 15:19:35 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.7 1998/09/11 13:06:30 hubertf Exp $");
+__RCSID("$NetBSD: subs.c,v 1.8 1998/09/13 15:19:35 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,13 +71,6 @@ errexit(s)
 	write(2, "\n", 1);
 	perror(s);
 	getout(0);
-}
-
-void
-strset(s1, s2)
-	char   *s1, *s2;
-{
-	while ((*s1++ = *s2++) != '\0');
 }
 
 void
