@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_object.h	7.3 (Berkeley) 4/21/91
+ *	@(#)vm_object.h	8.4 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -69,6 +69,7 @@
 #ifndef	_VM_OBJECT_
 #define	_VM_OBJECT_
 
+#include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 
 /*
@@ -78,10 +79,12 @@
  */
 
 struct vm_object {
-	queue_chain_t		memq;		/* Resident memory */
-	queue_chain_t		object_list;	/* list of all objects */
+	struct pglist		memq;		/* Resident memory */
+	TAILQ_ENTRY(vm_object)	object_list;	/* list of all objects */
+	u_short			flags;		/* see below */
+	u_short			paging_in_progress; /* Paging (in or out) so
+						    don't collapse or destroy */
 	simple_lock_data_t	Lock;		/* Synchronization */
-	int			LockHolder;
 	int			ref_count;	/* How many refs?? */
 	vm_size_t		size;		/* Object size */
 	int			resident_page_count;
@@ -89,34 +92,35 @@ struct vm_object {
 	struct vm_object	*copy;		/* Object that holds copies of
 						   my changed pages */
 	vm_pager_t		pager;		/* Where to get data */
-	boolean_t		pager_ready;	/* Have pager fields been filled? */
 	vm_offset_t		paging_offset;	/* Offset into paging space */
 	struct vm_object	*shadow;	/* My shadow */
 	vm_offset_t		shadow_offset;	/* Offset in shadow */
-	unsigned int
-				paging_in_progress:16,
-						/* Paging (in or out) - don't
-						   collapse or destroy */
-	/* boolean_t */		can_persist:1,	/* allow to persist */
-	/* boolean_t */		internal:1;	/* internally created object */
-	queue_chain_t		cached_list;	/* for persistence */
+	TAILQ_ENTRY(vm_object)	cached_list;	/* for persistence */
 };
+/*
+ * Flags
+ */
+#define OBJ_CANPERSIST	0x0001	/* allow to persist */
+#define OBJ_INTERNAL	0x0002	/* internally created object */
+#define OBJ_ACTIVE	0x0004	/* used to mark active objects */
 
-typedef struct vm_object	*vm_object_t;
+TAILQ_HEAD(vm_object_hash_head, vm_object_hash_entry);
 
 struct vm_object_hash_entry {
-	queue_chain_t		hash_links;	/* hash chain links */
-	vm_object_t		object;		/* object we represent */
+	TAILQ_ENTRY(vm_object_hash_entry)  hash_links;	/* hash chain links */
+	vm_object_t			   object;	/* object represented */
 };
 
 typedef struct vm_object_hash_entry	*vm_object_hash_entry_t;
 
 #ifdef	KERNEL
-queue_head_t	vm_object_cached_list;	/* list of objects persisting */
+TAILQ_HEAD(object_q, vm_object);
+
+struct object_q	vm_object_cached_list;	/* list of objects persisting */
 int		vm_object_cached;	/* size of cached list */
 simple_lock_data_t	vm_cache_lock;	/* lock for object cache */
 
-queue_head_t	vm_object_list;		/* list of allocated objects */
+struct object_q	vm_object_list;		/* list of allocated objects */
 long		vm_object_count;	/* count of all objects */
 simple_lock_data_t	vm_object_list_lock;
 					/* lock for object list and count */
@@ -126,46 +130,44 @@ vm_object_t	kmem_object;
 
 #define	vm_object_cache_lock()		simple_lock(&vm_cache_lock)
 #define	vm_object_cache_unlock()	simple_unlock(&vm_cache_lock)
-#endif	KERNEL
+#endif /* KERNEL */
 
-/*
- *	Declare procedures that operate on VM objects.
- */
-
-void		vm_object_init ();
-void		vm_object_terminate();
-vm_object_t	vm_object_allocate();
-void		vm_object_reference();
-void		vm_object_deallocate();
-void		vm_object_pmap_copy();
-void		vm_object_pmap_remove();
-void		vm_object_page_remove();
-void		vm_object_shadow();
-void		vm_object_copy();
-void		vm_object_collapse();
-vm_object_t	vm_object_lookup();
-void		vm_object_enter();
-void		vm_object_setpager();
-#define		vm_object_cache(pager)		pager_cache(vm_object_lookup(pager),TRUE)
-#define		vm_object_uncache(pager)	pager_cache(vm_object_lookup(pager),FALSE)
-
-void		vm_object_cache_clear();
-void		vm_object_print();
-
-#if	VM_OBJECT_DEBUG
-#define	vm_object_lock_init(object)	{ simple_lock_init(&(object)->Lock); (object)->LockHolder = 0; }
-#define	vm_object_lock(object)		{ simple_lock(&(object)->Lock); (object)->LockHolder = (int) current_thread(); }
-#define	vm_object_unlock(object)	{ (object)->LockHolder = 0; simple_unlock(&(object)->Lock); }
-#define	vm_object_lock_try(object)	(simple_lock_try(&(object)->Lock) ? ( ((object)->LockHolder = (int) current_thread()) , TRUE) : FALSE)
-#define	vm_object_sleep(event, object, interruptible) \
-					{ (object)->LockHolder = 0; thread_sleep((event), &(object)->Lock, (interruptible)); }
-#else	VM_OBJECT_DEBUG
 #define	vm_object_lock_init(object)	simple_lock_init(&(object)->Lock)
 #define	vm_object_lock(object)		simple_lock(&(object)->Lock)
 #define	vm_object_unlock(object)	simple_unlock(&(object)->Lock)
 #define	vm_object_lock_try(object)	simple_lock_try(&(object)->Lock)
 #define	vm_object_sleep(event, object, interruptible) \
-					thread_sleep((event), &(object)->Lock, (interruptible))
-#endif	VM_OBJECT_DEBUG
+			thread_sleep((event), &(object)->Lock, (interruptible))
 
-#endif	_VM_OBJECT_
+#ifdef KERNEL
+vm_object_t	 vm_object_allocate __P((vm_size_t));
+void		 vm_object_cache_clear __P((void));
+void		 vm_object_cache_trim __P((void));
+boolean_t	 vm_object_coalesce __P((vm_object_t, vm_object_t,
+		    vm_offset_t, vm_offset_t, vm_offset_t, vm_size_t));
+void		 vm_object_collapse __P((vm_object_t));
+void		 vm_object_copy __P((vm_object_t, vm_offset_t, vm_size_t,
+		    vm_object_t *, vm_offset_t *, boolean_t *));
+void		 vm_object_deactivate_pages __P((vm_object_t));
+void		 vm_object_deallocate __P((vm_object_t));
+void		 vm_object_enter __P((vm_object_t, vm_pager_t));
+void		 vm_object_init __P((vm_size_t));
+vm_object_t	 vm_object_lookup __P((vm_pager_t));
+boolean_t	 vm_object_page_clean __P((vm_object_t,
+		    vm_offset_t, vm_offset_t, boolean_t, boolean_t));
+void		 vm_object_page_remove __P((vm_object_t,
+		    vm_offset_t, vm_offset_t));
+void		 vm_object_pmap_copy __P((vm_object_t,
+		    vm_offset_t, vm_offset_t));
+void		 vm_object_pmap_remove __P((vm_object_t,
+		    vm_offset_t, vm_offset_t));
+void		 vm_object_print __P((vm_object_t, boolean_t));
+void		 vm_object_reference __P((vm_object_t));
+void		 vm_object_remove __P((vm_pager_t));
+void		 vm_object_setpager __P((vm_object_t,
+		    vm_pager_t, vm_offset_t, boolean_t));
+void		 vm_object_shadow __P((vm_object_t *,
+		    vm_offset_t *, vm_size_t));
+void		 vm_object_terminate __P((vm_object_t));
+#endif
+#endif /* _VM_OBJECT_ */

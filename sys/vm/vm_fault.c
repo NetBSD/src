@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_fault.c	7.6 (Berkeley) 5/7/91
+ *	@(#)vm_fault.c	8.5 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -62,17 +62,16 @@
  * rights to redistribute these changes.
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_fault.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
-
 /*
  *	Page fault handling module.
  */
 
-#include "param.h"
+#include <sys/param.h>
+#include <sys/systm.h>
 
-#include "vm.h"
-#include "vm_page.h"
-#include "vm_pageout.h"
+#include <vm/vm.h>
+#include <vm/vm_page.h>
+#include <vm/vm_pageout.h>
 
 /*
  *	vm_fault:
@@ -92,6 +91,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_fault.c,v 1.1.1.1 1
  *	The map in question must be referenced, and remains so.
  *	Caller may hold no locks.
  */
+int
 vm_fault(map, vaddr, fault_type, change_wiring)
 	vm_map_t	map;
 	vm_offset_t	vaddr;
@@ -114,7 +114,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 	vm_page_t		old_m;
 	vm_object_t		next_object;
 
-	vm_stat.faults++;		/* needs lock XXX */
+	cnt.v_faults++;		/* needs lock XXX */
 /*
  *	Recovery actions
  */
@@ -240,7 +240,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 *	If the page is being brought in,
 			 *	wait for it and then retry.
 			 */
-			if (m->busy) {
+			if (m->flags & PG_BUSY) {
 #ifdef DOTHREADS
 				int	wait_result;
 
@@ -255,43 +255,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 #else
 				PAGE_ASSERT_WAIT(m, !change_wiring);
 				UNLOCK_THINGS;
-thread_wakeup(&vm_pages_needed); /* XXX! */
-				thread_block();
-				vm_object_deallocate(first_object);
-				goto RetryFault;
-#endif
-			}
-
-			if (m->absent)
-				panic("vm_fault: absent");
-
-			/*
-			 *	If the desired access to this page has
-			 *	been locked out, request that it be unlocked.
-			 */
-
-			if (fault_type & m->page_lock) {
-#ifdef DOTHREADS
-				int	wait_result;
-
-				if ((fault_type & m->unlock_request) != fault_type)
-					panic("vm_fault: pager_data_unlock");
-
-				PAGE_ASSERT_WAIT(m, !change_wiring);
-				UNLOCK_THINGS;
-				thread_block();
-				wait_result = current_thread()->wait_result;
-				vm_object_deallocate(first_object);
-				if (wait_result != THREAD_AWAKENED)
-					return(KERN_SUCCESS);
-				goto RetryFault;
-#else
-				if ((fault_type & m->unlock_request) != fault_type)
-					panic("vm_fault: pager_data_unlock");
-
-				PAGE_ASSERT_WAIT(m, !change_wiring);
-				UNLOCK_THINGS;
-thread_wakeup(&vm_pages_needed); /* XXX */
+				cnt.v_intrans++;
 				thread_block();
 				vm_object_deallocate(first_object);
 				goto RetryFault;
@@ -304,27 +268,24 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			 */
 
 			vm_page_lock_queues();
-			if (m->inactive) {
-				queue_remove(&vm_page_queue_inactive, m,
-						vm_page_t, pageq);
-				m->inactive = FALSE;
-				vm_page_inactive_count--;
-				vm_stat.reactivations++;
+			if (m->flags & PG_INACTIVE) {
+				TAILQ_REMOVE(&vm_page_queue_inactive, m, pageq);
+				m->flags &= ~PG_INACTIVE;
+				cnt.v_inactive_count--;
+				cnt.v_reactivated++;
 			} 
 
-			if (m->active) {
-				queue_remove(&vm_page_queue_active, m,
-						vm_page_t, pageq);
-				m->active = FALSE;
-				vm_page_active_count--;
+			if (m->flags & PG_ACTIVE) {
+				TAILQ_REMOVE(&vm_page_queue_active, m, pageq);
+				m->flags &= ~PG_ACTIVE;
+				cnt.v_active_count--;
 			}
 			vm_page_unlock_queues();
 
 			/*
 			 *	Mark page busy for other threads.
 			 */
-			m->busy = TRUE;
-			m->absent = FALSE;
+			m->flags |= PG_BUSY;
 			break;
 		}
 
@@ -346,8 +307,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			}
 		}
 
-		if ((object->pager != NULL) &&
-				(!change_wiring || wired)) {
+		if (object->pager != NULL && (!change_wiring || wired)) {
 			int rv;
 
 			/*
@@ -361,15 +321,20 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			 *	after releasing the lock on the map.
 			 */
 			UNLOCK_MAP;
-
+			cnt.v_pageins++;
 			rv = vm_pager_get(object->pager, m, TRUE);
-			if (rv == VM_PAGER_OK) {
-				/*
-				 *	Found the page.
-				 *	Leave it busy while we play with it.
-				 */
-				vm_object_lock(object);
 
+			/*
+			 *	Reaquire the object lock to preserve our
+			 *	invariant.
+			 */
+			vm_object_lock(object);
+
+			/*
+			 *	Found the page.
+			 *	Leave it busy while we play with it.
+			 */
+			if (rv == VM_PAGER_OK) {
 				/*
 				 *	Relookup in case pager changed page.
 				 *	Pager is responsible for disposition
@@ -377,43 +342,38 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 				 */
 				m = vm_page_lookup(object, offset);
 
-				vm_stat.pageins++;
-				m->fake = FALSE;
+				cnt.v_pgpgin++;
+				m->flags &= ~PG_FAKE;
+				m->flags |= PG_CLEAN;
 				pmap_clear_modify(VM_PAGE_TO_PHYS(m));
 				break;
 			}
 
 			/*
-			 *	Remove the bogus page (which does not
-			 *	exist at this object/offset); before
-			 *	doing so, we must get back our object
-			 *	lock to preserve our invariant.
-			 *
-			 *	Also wake up any other thread that may want
-			 *	to bring in this page.
-			 *
-			 *	If this is the top-level object, we must
-			 *	leave the busy page to prevent another
-			 *	thread from rushing past us, and inserting
-			 *	the page in that object at the same time
-			 *	that we are.
+			 * IO error or page outside the range of the pager:
+			 * cleanup and return an error.
 			 */
-
-			vm_object_lock(object);
-			/*
-			 * Data outside the range of the pager; an error
-			 */
-			if (rv == VM_PAGER_BAD) {
+			if (rv == VM_PAGER_ERROR || rv == VM_PAGER_BAD) {
 				FREE_PAGE(m);
 				UNLOCK_AND_DEALLOCATE;
 				return(KERN_PROTECTION_FAILURE); /* XXX */
 			}
+			/*
+			 * rv == VM_PAGER_FAIL:
+			 *
+			 * Page does not exist at this object/offset.
+			 * Free the bogus page (waking up anyone waiting
+			 * for it) and continue on to the next object.
+			 *
+			 * If this is the top-level object, we must
+			 * leave the busy page to prevent another
+			 * thread from rushing past us, and inserting
+			 * the page in that object at the same time
+			 * that we are.
+			 */
 			if (object != first_object) {
 				FREE_PAGE(m);
-				/*
-				 * XXX - we cannot just fall out at this
-				 * point, m has been freed and is invalid!
-				 */
+				/* note that `m' is not used after this */
 			}
 		}
 
@@ -448,9 +408,8 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			first_m = NULL;
 
 			vm_page_zero_fill(m);
-			vm_stat.zero_fill_count++;
-			m->fake = FALSE;
-			m->absent = FALSE;
+			cnt.v_zfod++;
+			m->flags &= ~PG_FAKE;
 			break;
 		}
 		else {
@@ -463,8 +422,8 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 		}
 	}
 
-	if (m->absent || m->active || m->inactive || !m->busy)
-		panic("vm_fault: absent or active or inactive or not busy after main loop");
+	if ((m->flags & (PG_ACTIVE | PG_INACTIVE | PG_BUSY)) != PG_BUSY)
+		panic("vm_fault: active, inactive or !busy after main loop");
 
 	/*
 	 *	PAGE HAS BEEN FOUND.
@@ -511,8 +470,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			 */
 
 			vm_page_copy(m, first_m);
-			first_m->fake = FALSE;
-			first_m->absent = FALSE;
+			first_m->flags &= ~PG_FAKE;
 
 			/*
 			 *	If another map is truly sharing this
@@ -528,6 +486,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			 */
 
 			vm_page_lock_queues();
+			vm_page_activate(m);
 			vm_page_deactivate(m);
 			pmap_page_protect(VM_PAGE_TO_PHYS(m), VM_PROT_NONE);
 			vm_page_unlock_queues();
@@ -543,7 +502,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			 *	Only use the new page below...
 			 */
 
-			vm_stat.cow_faults++;
+			cnt.v_cow_faults++;
 			m = first_m;
 			object = first_object;
 			offset = first_offset;
@@ -562,12 +521,12 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			object->paging_in_progress++;
 		}
 		else {
-		    	prot &= (~VM_PROT_WRITE);
-			m->copy_on_write = TRUE;
+		    	prot &= ~VM_PROT_WRITE;
+			m->flags |= PG_COPYONWRITE;
 		}
 	}
 
-	if (m->active || m->inactive)
+	if (m->flags & (PG_ACTIVE|PG_INACTIVE))
 		panic("vm_fault: active or inactive before copy object handling");
 
 	/*
@@ -585,7 +544,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 		 */
 		if ((fault_type & VM_PROT_WRITE) == 0) {
 			prot &= ~VM_PROT_WRITE;
-			m->copy_on_write = TRUE;
+			m->flags |= PG_COPYONWRITE;
 		}
 		else {
 			/*
@@ -612,7 +571,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 				- copy_object->shadow_offset;
 			copy_m = vm_page_lookup(copy_object, copy_offset);
 			if (page_exists = (copy_m != NULL)) {
-				if (copy_m->busy) {
+				if (copy_m->flags & PG_BUSY) {
 #ifdef DOTHREADS
 					int	wait_result;
 
@@ -641,7 +600,6 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 					copy_object->ref_count--;
 					vm_object_unlock(copy_object);
 					UNLOCK_THINGS;
-thread_wakeup(&vm_pages_needed); /* XXX */
 					thread_block();
 					vm_object_deallocate(first_object);
 					goto RetryFault;
@@ -729,8 +687,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 				 *	Must copy page into copy-object.
 				 */
 				vm_page_copy(m, copy_m);
-				copy_m->fake = FALSE;
-				copy_m->absent = FALSE;
+				copy_m->flags &= ~PG_FAKE;
 
 				/*
 				 * Things to remember:
@@ -745,7 +702,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 				vm_page_lock_queues();
 				pmap_page_protect(VM_PAGE_TO_PHYS(old_m),
 						  VM_PROT_NONE);
-				copy_m->clean = FALSE;
+				copy_m->flags &= ~PG_CLEAN;
 				vm_page_activate(copy_m);	/* XXX */
 				vm_page_unlock_queues();
 
@@ -760,11 +717,11 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			 */
 			copy_object->ref_count--;
 			vm_object_unlock(copy_object);
-			m->copy_on_write = FALSE;
+			m->flags &= ~PG_COPYONWRITE;
 		}
 	}
 
-	if (m->active || m->inactive)
+	if (m->flags & (PG_ACTIVE | PG_INACTIVE))
 		panic("vm_fault: active or inactive before retrying lookup");
 
 	/*
@@ -829,7 +786,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 		 *	can't mark the page write-enabled after all.
 		 */
 		prot &= retry_prot;
-		if (m->copy_on_write)
+		if (m->flags & PG_COPYONWRITE)
 			prot &= ~VM_PROT_WRITE;
 	}
 
@@ -841,14 +798,14 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 	/* XXX This distorts the meaning of the copy_on_write bit */
 
 	if (prot & VM_PROT_WRITE)
-		m->copy_on_write = FALSE;
+		m->flags &= ~PG_COPYONWRITE;
 
 	/*
 	 *	It's critically important that a wired-down page be faulted
 	 *	only once in each map for which it is wired.
 	 */
 
-	if (m->active || m->inactive)
+	if (m->flags & (PG_ACTIVE | PG_INACTIVE))
 		panic("vm_fault: active or inactive before pmap_enter");
 
 	vm_object_unlock(object);
@@ -861,8 +818,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 	 *	that the page-out daemon won't find us (yet).
 	 */
 
-	pmap_enter(map->pmap, vaddr, VM_PAGE_TO_PHYS(m), 
-			prot & ~(m->page_lock), wired);
+	pmap_enter(map->pmap, vaddr, VM_PAGE_TO_PHYS(m), prot, wired);
 
 	/*
 	 *	If the page is not wired down, then put it where the
@@ -896,13 +852,14 @@ thread_wakeup(&vm_pages_needed); /* XXX */
  *
  *	Wire down a range of virtual addresses in a map.
  */
-void vm_fault_wire(map, start, end)
+int
+vm_fault_wire(map, start, end)
 	vm_map_t	map;
 	vm_offset_t	start, end;
 {
-
 	register vm_offset_t	va;
 	register pmap_t		pmap;
+	int			rv;
 
 	pmap = vm_map_pmap(map);
 
@@ -920,8 +877,14 @@ void vm_fault_wire(map, start, end)
 	 */
 
 	for (va = start; va < end; va += PAGE_SIZE) {
-		(void) vm_fault(map, va, VM_PROT_NONE, TRUE);
+		rv = vm_fault(map, va, VM_PROT_NONE, TRUE);
+		if (rv) {
+			if (va != start)
+				vm_fault_unwire(map, start, va);
+			return(rv);
+		}
 	}
+	return(KERN_SUCCESS);
 }
 
 
@@ -930,7 +893,8 @@ void vm_fault_wire(map, start, end)
  *
  *	Unwire a range of virtual addresses in a map.
  */
-void vm_fault_unwire(map, start, end)
+void
+vm_fault_unwire(map, start, end)
 	vm_map_t	map;
 	vm_offset_t	start, end;
 {
@@ -979,7 +943,8 @@ void vm_fault_unwire(map, start, end)
  *		entry corresponding to a main map entry that is wired down).
  */
 
-void vm_fault_copy_entry(dst_map, src_map, dst_entry, src_entry)
+void
+vm_fault_copy_entry(dst_map, src_map, dst_entry, src_entry)
 	vm_map_t	dst_map;
 	vm_map_t	src_map;
 	vm_map_entry_t	dst_entry;
@@ -997,7 +962,7 @@ void vm_fault_copy_entry(dst_map, src_map, dst_entry, src_entry)
 
 #ifdef	lint
 	src_map++;
-#endif	lint
+#endif
 
 	src_object = src_entry->object.vm_object;
 	src_offset = src_entry->offset;

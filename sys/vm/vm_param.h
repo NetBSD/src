@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_param.h	7.2 (Berkeley) 4/21/91
+ *	@(#)vm_param.h	8.2 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -69,11 +69,7 @@
 #ifndef	_VM_PARAM_
 #define	_VM_PARAM_
 
-#ifdef KERNEL
-#include "machine/vmparam.h"
-#else
 #include <machine/vmparam.h>
-#endif
 
 /*
  * This belongs in types.h, but breaks too many existing programs.
@@ -86,15 +82,33 @@ typedef int	boolean_t;
  *	The machine independent pages are refered to as PAGES.  A page
  *	is some number of hardware pages, depending on the target machine.
  */
+#define	DEFAULT_PAGE_SIZE	4096
 
 /*
  *	All references to the size of a page should be done with PAGE_SIZE
  *	or PAGE_SHIFT.  The fact they are variables is hidden here so that
  *	we can easily make them constant if we so desire.
  */
+#define	PAGE_SIZE	cnt.v_page_size		/* size of page */
+#define	PAGE_MASK	page_mask		/* size of page - 1 */
+#define	PAGE_SHIFT	page_shift		/* bits to shift for pages */
+#ifdef KERNEL
+extern vm_size_t	page_mask;
+extern int		page_shift;
+#endif
 
-#define	PAGE_SIZE	page_size	/* size of page in addressible units */
-#define PAGE_SHIFT	page_shift	/* number of bits to shift for pages */
+/*
+ * CTL_VM identifiers
+ */
+#define	VM_METER	1		/* struct vmmeter */
+#define	VM_LOADAVG	2		/* struct loadavg */
+#define	VM_MAXID	3		/* number of valid vm ids */
+
+#define	CTL_VM_NAMES { \
+	{ 0, 0 }, \
+	{ "vmmeter", CTLTYPE_STRUCT }, \
+	{ "loadavg", CTLTYPE_STRUCT }, \
+}
 
 /* 
  *	Return values from the VM routines.
@@ -109,43 +123,38 @@ typedef int	boolean_t;
 #define	KERN_NOT_RECEIVER	7
 #define	KERN_NO_ACCESS		8
 
-#ifdef	ASSEMBLER
-#else	ASSEMBLER
+#ifndef ASSEMBLER
 /*
  *	Convert addresses to pages and vice versa.
  *	No rounding is used.
  */
-
-#ifdef	KERNEL
-#define	atop(x)		(((unsigned)(x)) >> page_shift)
-#define	ptoa(x)		((vm_offset_t)((x) << page_shift))
-#endif	KERNEL
+#ifdef KERNEL
+#define	atop(x)		(((unsigned long)(x)) >> PAGE_SHIFT)
+#define	ptoa(x)		((vm_offset_t)((x) << PAGE_SHIFT))
 
 /*
- *	Round off or truncate to the nearest page.  These will work
- *	for either addresses or counts.  (i.e. 1 byte rounds to 1 page
- *	bytes.
+ * Round off or truncate to the nearest page.  These will work
+ * for either addresses or counts (i.e., 1 byte rounds to 1 page).
  */
-
-#ifdef	KERNEL
-#define round_page(x)	((vm_offset_t)((((vm_offset_t)(x)) + page_mask) & ~page_mask))
-#define trunc_page(x)	((vm_offset_t)(((vm_offset_t)(x)) & ~page_mask))
-#else	KERNEL
-#define	round_page(x)	((((vm_offset_t)(x) + (vm_page_size - 1)) / vm_page_size) * vm_page_size)
-#define	trunc_page(x)	((((vm_offset_t)(x)) / vm_page_size) * vm_page_size)
-#endif	KERNEL
-
-#ifdef	KERNEL
-extern vm_size_t	page_size;	/* machine independent page size */
-extern vm_size_t	page_mask;	/* page_size - 1; mask for
-						   offset within page */
-extern int		page_shift;	/* shift to use for page size */
+#define	round_page(x) \
+	((vm_offset_t)((((vm_offset_t)(x)) + PAGE_MASK) & ~PAGE_MASK))
+#define	trunc_page(x) \
+	((vm_offset_t)(((vm_offset_t)(x)) & ~PAGE_MASK))
+#define	num_pages(x) \
+	((vm_offset_t)((((vm_offset_t)(x)) + PAGE_MASK) >> PAGE_SHIFT))
 
 extern vm_size_t	mem_size;	/* size of physical memory (bytes) */
 extern vm_offset_t	first_addr;	/* first physical page */
 extern vm_offset_t	last_addr;	/* last physical page */
-#endif	KERNEL
 
-#endif	ASSEMBLER
+#else
+/* out-of-kernel versions of round_page and trunc_page */
+#define	round_page(x) \
+	((((vm_offset_t)(x) + (vm_page_size - 1)) / vm_page_size) * \
+	    vm_page_size)
+#define	trunc_page(x) \
+	((((vm_offset_t)(x)) / vm_page_size) * vm_page_size)
 
-#endif	_VM_PARAM_
+#endif /* KERNEL */
+#endif /* ASSEMBLER */
+#endif /* _VM_PARAM_ */
