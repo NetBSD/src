@@ -1,14 +1,12 @@
-/*	$NetBSD: ip_frag.h,v 1.14.4.1 2001/04/14 20:56:42 he Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.14.4.2 2002/02/09 16:56:27 he Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * Id: ip_frag.h,v 2.4 2000/03/13 22:10:21 darrenr Exp
+ * Id: ip_frag.h,v 2.4.2.6 2002/01/01 15:09:38 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FRAG_H_
@@ -21,6 +19,10 @@ typedef	struct	ipfr	{
 	void	*ipfr_data;
 	struct	in_addr	ipfr_src;
 	struct	in_addr	ipfr_dst;
+	void	*ipfr_ifp;
+	u_32_t	ipfr_optmsk;
+	u_short	ipfr_secmsk;
+	u_short	ipfr_auth;
 	u_short	ipfr_id;
 	u_char	ipfr_p;
 	u_char	ipfr_tos;
@@ -56,14 +58,18 @@ extern	void	ipfr_forget __P((void *));
 extern	void	ipfr_unload __P((void));
 extern	void	ipfr_fragexpire __P((void));
 
-#if     (BSD >= 199306) || SOLARIS || defined(__sgi)
-# if defined(SOLARIS2) && (SOLARIS2 < 7)
+#ifdef _KERNEL
+# if     (BSD >= 199306) || SOLARIS || defined(__sgi)
+#  if defined(SOLARIS2) && (SOLARIS2 < 7)
 extern	void	ipfr_slowtimer __P((void));
-# else
+#  else
 extern	void	ipfr_slowtimer __P((void *));
-# endif
-#else
+#  endif
+# else
 extern	int	ipfr_slowtimer __P((void));
-#endif
+# endif /* (BSD >= 199306) || SOLARIS */
+#else
+extern	void	ipfr_slowtimer __P((void));
+#endif /* _KERNEL */
 
 #endif /* _NETINET_IP_FRAG_H_ */
