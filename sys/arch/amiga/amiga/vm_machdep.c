@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 1995/05/16 20:59:10 chopps Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23 1995/06/26 01:52:53 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,11 +74,13 @@ cpu_fork(p1, p2)
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
 	register struct switchframe *sf;
+	extern struct pcb *curpcb;
 	extern void proc_trampoline(), child_return();
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
 	/* Copy pcb from proc p1 to p2. */
+	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
 
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, pcb, 0);
