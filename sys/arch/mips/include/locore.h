@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.12 1997/06/22 04:30:01 jonathan Exp $	*/
+/*	$NetBSD: locore.h,v 1.13 1998/04/23 10:31:02 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -108,6 +108,9 @@ typedef struct  {
 	void (*mips_switch_exit) __P((struct proc *));
 	void (*cpu_switch_resume) __P((void));
 } mips_locore_jumpvec_t;
+
+/* Override writebuffer-drain method. */
+void mips_set_wbflush __P((void (*) __P((void)) ));
 
 
 /*
