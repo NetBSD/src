@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1996/01/13 22:25:32 leo Exp $
+#	$NetBSD: Makefile,v 1.12 1996/09/30 16:01:18 ws Exp $
 
 LIB=	sa
 
@@ -6,9 +6,12 @@ DIR=${SAREL}${SADIR}
 
 .PATH: ${DIR}
 
-#DEBUGFLAGS= -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID -Wall
+#DEBUGFLAGS= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID -Wall
 #DEBUGFLAGS= -ansi -pedantic -Wall
-CFLAGS+=-DSTANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/../..
+CFLAGS+=-DSTANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I. -I${DIR} -I${DIR}/../..
+#
+# Needed for PowerPC
+CFLAGS+=$(EXTRACFLAGS)
 
 # stand routines
 SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
@@ -27,7 +30,7 @@ SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
 SRCS+=	bootp.c rarp.c bootparam.c
 
 # boot filesystems
-SRCS+=	ufs.c nfs.c
+SRCS+=	ufs.c nfs.c cd9660.c
 
 NOPROFILE=
 NOPIC=
