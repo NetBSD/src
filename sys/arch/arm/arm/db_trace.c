@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.5 2002/03/10 15:47:43 bjh21 Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.6 2002/03/24 15:49:38 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.5 2002/03/10 15:47:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.6 2002/03/24 15:49:38 bjh21 Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -117,7 +117,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				return;
 			}
 			u = p->p_addr;
-#ifdef arm26
+#ifdef acorn26
 			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);
 #else
 			frame = (u_int32_t *)(u->u_pcb.pcb_un.un_32.pcb32_r11);
