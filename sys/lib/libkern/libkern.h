@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.44 2002/10/04 00:50:15 matt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.45 2002/10/04 18:39:52 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -258,6 +258,8 @@ char	*strncpy __P((char *, const char *, size_t));
 int	 strncmp __P((const char *, const char *, size_t));
 char	*strchr __P((const char *, int));
 char	*strrchr __P((const char *, int));
+
+char	*strstr __P((const char *, const char *));
 
 /*
  * ffs is an instruction on vax.
