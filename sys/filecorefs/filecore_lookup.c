@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.5 1999/07/08 01:05:59 wrstuden Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.6 1999/08/04 18:40:47 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -327,12 +327,13 @@ found:
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
-		if (lockparent && (flags & ISLASTCN) &&
-		    (error = vn_lock(pdp, LK_EXCLUSIVE))) {
-			vput(tdp);
-			return (error);
+		if (lockparent && (flags & ISLASTCN)) {
+			if (error = vn_lock(pdp, LK_EXCLUSIVE)) {
+				vput(tdp);
+				return (error);
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
-		cnp->cn_flags &= ~PDIRUNLOCK;
 		*vpp = tdp;
 	} else if (name[0] == '.' && namelen == 1) {
 		VREF(vdp);	/* we want ourself, ie "." */

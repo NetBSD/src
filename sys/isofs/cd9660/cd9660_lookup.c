@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.23 1999/07/13 11:12:05 scw Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.24 1999/08/04 18:40:47 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -444,12 +444,13 @@ found:
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
-		if (lockparent && (flags & ISLASTCN) &&
-		    (error = vn_lock(pdp, LK_EXCLUSIVE))) {
-			vput(tdp);
-			return (error);
+		if (lockparent && (flags & ISLASTCN)) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE))) {
+				vput(tdp);
+				return (error);
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
-		cnp->cn_flags &= ~PDIRUNLOCK;
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
 		brelse(bp);

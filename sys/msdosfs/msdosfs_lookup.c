@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.40 1999/07/08 01:06:02 wrstuden Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.41 1999/08/04 18:40:48 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -588,12 +588,13 @@ foundroot:;
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
-		if (lockparent && (flags & ISLASTCN) &&
-		    (error = vn_lock(pdp, LK_EXCLUSIVE))) {
-			vput(DETOV(tdp));
-			return (error);
+		if (lockparent && (flags & ISLASTCN)) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE))) {
+				vput(DETOV(tdp));
+				return (error);
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
-		cnp->cn_flags &= ~PDIRUNLOCK;
 		*vpp = DETOV(tdp);
 	} else if (dp->de_StartCluster == scn && isadir) {
 		VREF(vdp);	/* we want ourself, ie "." */
