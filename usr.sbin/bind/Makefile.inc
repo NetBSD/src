@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 1998/10/09 19:30:02 tron Exp $
+# $NetBSD: Makefile.inc,v 1.3 1999/01/04 00:04:04 tron Exp $
 
 BIND_DIR=	${.CURDIR}/..
 
@@ -12,4 +12,4 @@ LIB_BIND!=	cd ${BIND_DIR}/lib; \
 		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | \
 		${MAKE} -s -f -
 INCLUDE?=	-I. -I${BIND_DIR}/include
-LIBRARY?=	-L${LIB_BIND}/ -lbind
+LIBRARY?=	-L${LIB_BIND} -lbind
