@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_inch.3,v 1.5 2003/05/25 17:19:42 wiz Exp $
+.\"	$NetBSD: curses_inch.3,v 1.6 2004/01/20 08:27:47 wiz Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd August 12, 2002
+.Dd January 20, 2004
 .Dt CURSES_INCH 3
 .Os
 .Sh NAME
@@ -38,9 +38,13 @@
 .Nm inch ,
 .Nm winch ,
 .Nm inchnstr ,
+.Nm mvinchnstr ,
 .Nm winchnstr ,
+.Nm mvwinchnstr ,
 .Nm inchstr ,
+.Nm mvinchstr ,
 .Nm winchstr ,
+.Nm mvwinchstr ,
 .Nm innstr ,
 .Nm winnstr
 .Nm instr ,
@@ -57,11 +61,19 @@
 .Ft int
 .Fn inchnstr "chtype *chars" "int n"
 .Ft int
+.Fn mvinchnstr "int y" "int x" "chtype *chstr" "int n"
+.Ft int
 .Fn winchnstr "WINDOW *win" "chtype *chars" "int n"
+.Ft int
+.Fn mvwinchnstr "WINDOW *win" "int y" "int x" "chtype *chstr" "int n"
 .Ft int
 .Fn inchstr "chtype *chars"
 .Ft int
+.Fn mvinchstr "int y" "int x" "chtype *chstr"
+.Ft int
 .Fn winchstr "WINDOW *win" "chtype *chars"
+.Ft int
+.Ft mvwinchstr "WINDOW *win" "int y" "int x" "chtype *chstr"
 .Ft int
 .Fn innstr "char *str" "int n"
 .Ft int
@@ -69,7 +81,7 @@
 .Ft int
 .Fn instr "char *str"
 .Ft int
-.Fn winstr "WINDOW *window" "char *str"
+.Fn winstr "WINDOW *win" "char *str"
 .Sh DESCRIPTION
 These functions read the contents of
 .Dv stdscr
@@ -133,6 +145,25 @@ is similar to the
 .Fn inchstr
 function, excepting that the array of characters returned is stripped of all
 the curses attributes making it a plain character string.
+.Pp 
+The 
+.Fn mvinchstr ,
+.Fn mvinchnstr ,
+.Fn mvwinchstr ,
+and 
+.Fn mvwinchnstr
+functions are the same as the
+.Fn inchstr ,
+.Fn inchnstr ,
+.Fn winchstr ,
+and
+.Fn winchstr
+functions, respectively, except that
+.Fn wmove
+is called to move the cursor to the position specified by 
+.Fa y ,
+.Fa x
+before the output is printed on the window.
 .Pp
 The
 .Fn winnstr
