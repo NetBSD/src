@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.16 1999/04/21 19:02:26 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.17 1999/05/09 14:38:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -265,9 +265,6 @@ uhidopen(dev, flag, mode, p)
 	usbd_status r;
 	USB_GET_SC_OPEN(uhid, UHIDUNIT(dev), sc);
 
-	if (!sc)
-		return (ENXIO);
-
 	DPRINTF(("uhidopen: sc=%p, disco=%d\n", sc, sc->sc_disconnected));
 
 	if (sc->sc_disconnected)
@@ -275,16 +272,16 @@ uhidopen(dev, flag, mode, p)
 
 	if (sc->sc_state & UHID_OPEN)
 		return (EBUSY);
+	sc->sc_state |= UHID_OPEN;
 
 #if defined(__NetBSD__)
-	if (clalloc(&sc->sc_q, UHID_BSIZE, 0) == -1)
+	if (clalloc(&sc->sc_q, UHID_BSIZE, 0) == -1) {
+		sc->sc_state &= ~UHID_OPEN;
 		return (ENOMEM);
+	}
 #elif defined(__FreeBSD__)
 	clist_alloc_cblocks(&sc->sc_q, UHID_BSIZE, 0);
 #endif
-
-	sc->sc_state |= UHID_OPEN;
-	sc->sc_state &= ~UHID_IMMED;
 
 	sc->sc_ibuf = malloc(sc->sc_isize, M_USB, M_WAITOK);
 	sc->sc_obuf = malloc(sc->sc_osize, M_USB, M_WAITOK);
@@ -297,9 +294,14 @@ uhidopen(dev, flag, mode, p)
 	if (r != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uhidopen: usbd_open_pipe_intr failed, "
 			 "error=%d\n",r));
+		free(sc->sc_ibuf, M_USB);
+		free(sc->sc_obuf, M_USB);
 		sc->sc_state &= ~UHID_OPEN;
 		return (EIO);
 	}
+
+	sc->sc_state &= ~UHID_IMMED;
+
 	usbd_set_disco(sc->sc_intrpipe, uhid_disco, sc);
 
 	return (0);
@@ -323,8 +325,6 @@ uhidclose(dev, flag, mode, p)
 	usbd_abort_pipe(sc->sc_intrpipe);
 	usbd_close_pipe(sc->sc_intrpipe);
 
-	sc->sc_state &= ~UHID_OPEN;
-
 #if defined(__NetBSD__)
 	clfree(&sc->sc_q);
 #elif defined(__FreeBSD__)
@@ -333,6 +333,8 @@ uhidclose(dev, flag, mode, p)
 
 	free(sc->sc_ibuf, M_USB);
 	free(sc->sc_obuf, M_USB);
+
+	sc->sc_state &= ~UHID_OPEN;
 
 	return (0);
 }
