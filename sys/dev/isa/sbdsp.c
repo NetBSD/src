@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.78 1998/01/30 11:55:36 bouyer Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.79 1998/03/04 19:38:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2174,7 +2174,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = SB_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "AGC");
+		strcpy(dip->label.name, "agc");
 		dip->un.e.num_mem = 2;
 		strcpy(dip->un.e.member[0].label.name, AudioNoff);
 		dip->un.e.member[0].ord = 0;
