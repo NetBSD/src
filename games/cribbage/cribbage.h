@@ -1,4 +1,4 @@
-/*	$NetBSD: cribbage.h,v 1.11 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: cribbage.h,v 1.12 2004/02/08 22:23:50 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -57,7 +57,8 @@ extern	BOOLEAN		playing;		/* currently playing game */
 
 extern  char		explan[];		/* string for explanation */
 
-void	 addmsg(const char *, ...);
+void	 addmsg(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 int	 adjust(const CARD [], CARD);
 int	 anymove(const CARD [], int, int);
 int	 anysumto(const CARD [], int, int, int);
@@ -85,7 +86,8 @@ int	 is_one(CARD, const CARD [], int);
 void	 makeboard(void);
 void	 makedeck(CARD []);
 void	 makeknown(const CARD [], int);
-void	 msg(const char *, ...);
+void	 msg(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 int	 msgcard(CARD, BOOLEAN);
 int	 msgcrd(CARD, BOOLEAN, const char *, BOOLEAN);
 int	 number(int, int, const char *);
