@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.10 1997/09/09 07:31:16 jtc Exp $
+.\"	$NetBSD: sed.1,v 1.11 1997/10/19 23:05:17 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,24 +43,24 @@
 .Nm sed
 .Nd stream editor
 .Sh SYNOPSIS
-.Nm sed
+.Nm
 .Op Fl an
 .Ar command
 .Op Ar file ...
-.Nm sed
+.Nm
 .Op Fl an
 .Op Fl e Ar command
 .Op Fl f Ar command_file
 .Op Ar file ...
 .Sh DESCRIPTION
 The
-.Nm sed
+.Nm
 utility reads the specified files, or the standard input if no files
 are specified, modifying the input as specified by a list of commands.
 The input is then written to the standard output.
 .Pp
 A single command may be specified as the first argument to
-.Nm sed .
+.Nm "" .
 Multiple commands may be specified by using the
 .Fl e
 or
@@ -79,7 +79,7 @@ by default.
 The
 .Fl a
 option causes
-.Nm sed
+.Nm
 to delay opening each file until a command containing the related
 .Dq w
 function is applied to a line of input.
@@ -102,7 +102,7 @@ option suppresses this behavior.
 .El
 .Pp
 The form of a
-.Nm sed
+.Nm
 command is as follows:
 .sp
 .Dl [address[,address]]function[arguments]
@@ -111,7 +111,7 @@ Whitespace may be inserted before the first address and the function
 portions of the command.
 .Pp
 Normally,
-.Nm sed
+.Nm
 cyclically copies a line of input, not including its terminating newline
 character, into a
 .Em "pattern space" ,
@@ -147,7 +147,7 @@ pattern space that matches the second.
 (If the second address is a number less than or equal to the line number
 first selected, only that line is selected.)
 Starting at the first line following the selected range,
-.Nm sed
+.Nm
 starts looking again for the first address.
 .Pp
 Editing commands can be applied to non-selected pattern spaces by use
@@ -158,12 +158,12 @@ of the exclamation character
 function.
 .Sh "Sed Regular Expressions"
 The
-.Nm sed
+.Nm
 regular expressions are basic regular expressions (BRE's, see
 .Xr regex 3
 for more information).
 In addition,
-.Nm sed
+.Nm
 has the following two additions to BRE's:
 .sp
 .Bl -enum -compact
@@ -192,7 +192,7 @@ in the substitute command.
 .El
 .Pp
 One special feature of
-.Nm sed
+.Nm
 regular expressions is that they can default to the last regular
 expression used.
 If a regular expression is empty, i.e. just the delimiter characters
@@ -225,7 +225,7 @@ and
 functions take an optional file parameter, which should be separated
 from the function letter by white space.
 Each file given as an argument to
-.Nm sed
+.Nm
 is created (or its contents truncated) before any input processing begins.
 .Pp
 The
@@ -244,7 +244,7 @@ the function letters by white space characters.
 .Pp
 Two of the functions take a function-list.
 This is a list of
-.Nm sed
+.Nm
 functions separated by newlines, as follows:
 .Bd -literal -offset indent
 { function
@@ -496,7 +496,7 @@ option on the command line.
 .El
 .Pp
 The
-.Nm sed
+.Nm
 utility exits 0 on success and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr awk 1 ,
@@ -506,12 +506,12 @@ utility exits 0 on success and >0 if an error occurs.
 .Xr re_format 7
 .Sh STANDARDS
 The
-.Nm sed
+.Nm
 function is expected to be a superset of the
 .St -p1003.2
 specification.
 .Sh HISTORY
 A
-.Nm sed
+.Nm
 command appeared in
 .At v7 .
