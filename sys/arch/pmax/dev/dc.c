@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.69 2002/03/17 19:40:48 atatat Exp $	*/
+/*	$NetBSD: dc.c,v 1.69.4.1 2002/05/19 07:41:28 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.69 2002/03/17 19:40:48 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.69.4.1 2002/05/19 07:41:28 gehenna Exp $");
 
 /*
  * devDC7085.c --
@@ -77,9 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.69 2002/03/17 19:40:48 atatat Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
+#include <dev/cons.h>
 #include <dev/dec/lk201.h>
 
-#include <machine/conf.h>
 #include <machine/dc7085cons.h>
 #include <machine/locore.h>		/* wbflush() */
 #include <machine/pmioctl.h>
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.69 2002/03/17 19:40:48 atatat Exp $");
 #include <pmax/dev/qvssvar.h>		/* XXX mouseInput() */
 #include <pmax/dev/rconsvar.h>
 
-#include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
 #define DCUNIT(dev) (minor(dev) >> 2)
@@ -98,10 +97,23 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.69 2002/03/17 19:40:48 atatat Exp $");
 /* Autoconfiguration data for config. */
 extern struct cfdriver dc_cd;
 
+dev_type_open(dcopen);
+dev_type_close(dcclose);
+dev_type_read(dcread);
+dev_type_write(dcwrite);
+dev_type_ioctl(dcioctl);
+dev_type_stop(dcstop);
+dev_type_tty(dctty);
+dev_type_poll(dcpoll);
+
+const struct cdevsw dc_cdevsw = {
+	dcopen, dcclose, dcread, dcwrite, dcioctl,
+	dcstop, dctty, dcpoll, nommap, D_TTY
+};
+
 /*
  * Forward declarations
  */
-struct tty	*dctty __P((dev_t  dev));
 static void	 dcstart __P((struct tty *));
 static void	 dcrint __P((struct dc_softc *sc));
 static void	 dcxint __P((struct tty *));
@@ -184,7 +196,8 @@ static struct dc_softc coldcons_softc;
 
 /* Test to see if active serial console on this unit. */
 #define CONSOLE_ON_UNIT(unit) \
-  (major(cn_tab->cn_dev) == DCDEV && SCCUNIT(cn_tab->cn_dev) == (unit))
+  (major(cn_tab->cn_dev) == cdevsw_lookup_major(&dc_cdevsw) && \
+   SCCUNIT(cn_tab->cn_dev) == (unit))
 
 
 
@@ -209,7 +222,7 @@ int line;
 	else
 		line = DCPRINTER_PORT;
 
-	dev = makedev(DCDEV, line);
+	dev = makedev(cdevsw_lookup_major(&dc_cdevsw), line);
 	v = (void *)MIPS_PHYS_TO_KSEG1(addr);
 	sc = &coldcons_softc;
 	sc->dc_pdma[0].p_addr = v;
@@ -235,7 +248,7 @@ paddr_t addr;
 	dev_t dev;
 	struct dc_softc *sc;
 
-	dev = makedev(DCDEV, DCKBD_PORT);
+	dev = makedev(cdevsw_lookup_major(&dc_cdevsw), DCKBD_PORT);
 	v = (void *)MIPS_PHYS_TO_KSEG1(addr);
 	sc = &coldcons_softc;
 	sc->dc_pdma[0].p_addr = v;
@@ -268,15 +281,20 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	dcregs *dcaddr;
 	struct pdma *pdp;
 	struct tty *tp;
-	int line;
+	int line, maj;
+#if NRASTERCONSOLE > 0
+	extern const struct cdevsw rcons_cdevsw;
+#endif
 
 	dcaddr = (dcregs *)addr;
+
+	maj = cdevsw_lookup_major(&dc_cdevsw);
 
 	/*
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
-	if (sc->sc_dv.dv_unit == 0 && major(cn_tab->cn_dev) == DCDEV &&
+	if (sc->sc_dv.dv_unit == 0 && major(cn_tab->cn_dev) == maj &&
 	    cn_tab->cn_pri == CN_REMOTE) {
 		DELAY(10000);
 	}
@@ -294,7 +312,7 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 		tp = sc->dc_tty[line] = ttymalloc();
 		if (line != DCKBD_PORT && line != DCMOUSE_PORT)
 			tty_attach(tp);
-		tp->t_dev = makedev(DCDEV, 4 * sc->sc_dv.dv_unit + line);
+		tp->t_dev = makedev(maj, 4 * sc->sc_dv.dv_unit + line);
 		pdp->p_arg = (int) tp;
 		pdp->p_fcn = dcxint;
 		pdp++;
@@ -327,15 +345,15 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	 * Special handling for consoles.
 	 */
 	if (sc->sc_dv.dv_unit == 0) {
-		if (major(cn_tab->cn_dev) == DCDEV) {
+		if (major(cn_tab->cn_dev) == maj) {
 			/* set params for serial console */
 			dc_tty_init(sc, cn_tab->cn_dev);
 		}
 
 #if NRASTERCONSOLE > 0
-		if (major(cn_tab->cn_dev) == RCONSDEV) {
-			dc_kbd_init(sc, makedev(DCDEV, DCKBD_PORT));
-			dc_mouse_init(sc, makedev(DCDEV, DCMOUSE_PORT));
+		if (cdevsw_lookup(cn_tab->cn_dev) == &rcons_cdevsw) {
+			dc_kbd_init(sc, makedev(maj, DCKBD_PORT));
+			dc_mouse_init(sc, makedev(maj, DCMOUSE_PORT));
 		}
 #endif
 	}

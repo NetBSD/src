@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.28 2002/03/17 19:40:53 atatat Exp $	*/
+/*	$NetBSD: ite.c,v 1.28.4.1 2002/05/19 07:41:22 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -146,8 +146,6 @@ int	next_repeat_timeo  = 3;  /* /100: timeout when repeating for next char */
 
 u_char	cons_tabs[MAX_TABS];
 
-cdev_decl(ite);
-
 void	itestart __P((struct tty *tp));
 
 void iteputchar __P((int c, struct ite_softc *ip));
@@ -161,6 +159,19 @@ struct cfattach ite_ca = {
 };
 
 extern struct cfdriver ite_cd;
+
+dev_type_open(iteopen);
+dev_type_close(iteclose);
+dev_type_read(iteread);
+dev_type_write(itewrite);
+dev_type_ioctl(iteioctl);
+dev_type_tty(itetty);
+dev_type_poll(itepoll);
+
+const struct cdevsw ite_cdevsw = {
+	iteopen, iteclose, iteread, itewrite, iteioctl,
+	nostop, itetty, itepoll, nommap, D_TTY
+};
 
 int
 itematch(pdp, cdp, auxp)
@@ -192,9 +203,7 @@ itematch(pdp, cdp, auxp)
 	 * during early init we do not have a device pointer
 	 * and thus no unit number.
 	 */
-	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == iteopen)
-			break;
+	maj = cdevsw_lookup_major(&ite_cdevsw);
 	gp->g_itedev = makedev(maj, cdp->cf_unit);
 #endif
 	return(1);
@@ -2419,9 +2428,7 @@ itecnprobe(cd)
 	int maj;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == iteopen)
-			break;
+	maj = cdevsw_lookup_major(&ite_cdevsw);
 
 	/* 
 	 * return priority of the best ite (already picked from attach)

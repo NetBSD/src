@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.1 2002/03/22 00:22:44 fredette Exp $	*/
+/*	$NetBSD: kd.c,v 1.1.6.1 2002/05/19 07:41:24 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,7 +60,6 @@
 #include <machine/cpu.h>
 #include <machine/kbd.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #ifdef RASTERCONSOLE
 #include <dev/sun/fbio.h>
@@ -76,7 +75,6 @@
 
 struct	tty *fbconstty = 0;	/* tty structure for frame buffer console */
 
-#define	KDMAJOR 1
 #define PUT_WSIZE	64
 
 struct kd_softc {
@@ -103,6 +101,19 @@ static int  kdcngetc __P((dev_t));
 
 int	cons_ocount;		/* output byte count */
 
+dev_type_open(kdopen);
+dev_type_close(kdclose);
+dev_type_read(kdread);
+dev_type_write(kdwrite);
+dev_type_ioctl(kdioctl);
+dev_type_tty(kdtty);
+dev_type_poll(kdpoll);
+
+const struct cdevsw kd_cdevsw = {
+	kdopen, kdclose, kdread, kdwrite, kdioctl,
+	nostop, kdtty, kdpoll, nommap, D_TTY
+};
+
 /*
  * This is called by kbd_attach() 
  * XXX - Make this a proper child of kbd?
@@ -125,7 +136,7 @@ kd_init(kd)
 	tp = ttymalloc();
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;
-	tp->t_dev = makedev(KDMAJOR, 0);
+	tp->t_dev = makedev(cdevsw_lookup_major(&kd_cdevsw), 0);
 
 	tty_attach(tp);
 	kd->kd_tty = tp;
@@ -559,7 +570,7 @@ cons_attach_input(cc, cn)
 	cn_hw->cn_getc = cn->cn_getc;
 
 	/* Attach us as console. */
-	cn_tab->cn_dev = makedev(KDMAJOR, 0);
+	cn_tab->cn_dev = makedev(cdevsw_lookup_major(&kd_cdevsw), 0);
 	cn_tab->cn_probe = kdcnprobe;
 	cn_tab->cn_init = kdcninit;
 	cn_tab->cn_getc = kdcngetc;
@@ -602,7 +613,7 @@ kdcninit(cn)
 #if 0
 	struct kbd_state *ks = kdcn_state;
 
-	cn->cn_dev = makedev(KDMAJOR, 0);
+	cn->cn_dev = makedev(cdevsw_lookup_major(&kd_cdevsw), 0);
 	cn->cn_pri = CN_INTERNAL;
 
 	/* This prepares kbd_translate() */

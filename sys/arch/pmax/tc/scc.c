@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.71 2002/03/17 19:40:49 atatat Exp $	*/
+/*	$NetBSD: scc.c,v 1.71.4.1 2002/05/19 07:41:27 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.71 2002/03/17 19:40:49 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.71.4.1 2002/05/19 07:41:27 gehenna Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -91,13 +91,12 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.71 2002/03/17 19:40:49 atatat Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 
+#include <dev/cons.h>
 #include <dev/dec/lk201.h>
 #include <dev/ic/z8530reg.h>
 
-#include <machine/conf.h>
 #include <machine/pmioctl.h>		/* XXX for pmEventQueue typedef */
 
-#include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/maxine.h>
 #include <pmax/dev/sccreg.h>
@@ -120,7 +119,8 @@ void	ttrstrt __P((void *));
  */
 
 #define CONSOLE_ON_UNIT(unit) \
-  (major(cn_tab->cn_dev) == SCCDEV && SCCUNIT(cn_tab->cn_dev) == (unit))
+  (major(cn_tab->cn_dev) == cdevsw_lookup_major(&scc_cdevsw) && \
+   SCCUNIT(cn_tab->cn_dev) == (unit))
 
 
 /*
@@ -213,6 +213,20 @@ struct cfattach scc_ca = {
 
 extern struct cfdriver scc_cd;
 
+dev_type_open(sccopen);
+dev_type_close(sccclose);
+dev_type_read(sccread);
+dev_type_write(sccwrite);
+dev_type_ioctl(sccioctl);
+dev_type_stop(sccstop);
+dev_type_tty(scctty);
+dev_type_poll(sccpoll);
+
+const struct cdevsw scc_cdevsw = {
+	sccopen, sccclose, sccread, sccwrite, sccioctl,
+	sccstop, scctty, sccpoll, nommap, D_TTY
+};
+
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
 void	(*sccDivertXInput) __P((int));
 void	(*sccMouseEvent) __P((void *));
@@ -286,7 +300,7 @@ scc_cnattach(base, offset)
 	sccreset(sc);
 
 	cn_tab = &scccons;
-	cn_tab->cn_dev = makedev(SCCDEV, dev);
+	cn_tab->cn_dev = makedev(cdevsw_lookup_major(&scc_cdevsw), dev);
 	cn_tab->cn_pri = CN_NORMAL;
 	sc->scc_softCAR |= 1 << SCCLINE(cn_tab->cn_dev);
 	scc_tty_init(sc, cn_tab->cn_dev);
@@ -300,7 +314,7 @@ scc_lk201_cnattach(base, offset)
 {
 	dev_t dev;
 
-	dev = makedev(SCCDEV, SCCKBD_PORT);
+	dev = makedev(cdevsw_lookup_major(&scc_cdevsw), SCCKBD_PORT);
 	lk_divert(sccGetc, dev);
 
 	cn_tab = &scccons;
@@ -435,10 +449,12 @@ sccattach(parent, self, aux)
 	/* Wire up any childre, like keyboards or mice. */
 #if NRASTERCONSOLE > 0
 	if (systype != DS_MAXINE) {
+		int maj;
+		maj = cdevsw_lookup_major(&scc_cdevsw);
 		if (unit == 1) {
-			scc_kbd_init(sc, makedev(SCCDEV, SCCKBD_PORT));
+			scc_kbd_init(sc, makedev(maj, SCCKBD_PORT));
 		} else if (unit == 0) {
-			scc_mouse_init(sc, makedev(SCCDEV, SCCMOUSE_PORT));
+			scc_mouse_init(sc, makedev(maj, SCCMOUSE_PORT));
 		}
 	}
 #endif /* NRASTERCONSOLE > 0 */
@@ -509,6 +525,9 @@ scc_mouse_init(sc, dev)
 	struct termios cterm;
 	struct tty ctty;
 	int s;
+#if NRASTERCONSOLE > 0
+	extern const struct cdevsw rcons_cdevsw;
+#endif
 
 	s = spltty();
 	ctty.t_dev = dev;
@@ -521,7 +540,7 @@ scc_mouse_init(sc, dev)
 	 * or failing that, a line discipline to do the inkernel DEC
 	 * mouse tracking required by Xservers.
 	 */
-	if (major(cn_tab->cn_dev) != RCONSDEV)
+	if (cdevsw_lookup(cn_tab->cn_dev) != &rcons_cdevsw)
 		goto done;
 
 	DELAY(10000);
@@ -1058,7 +1077,8 @@ scc_rxintr(sc, chan, regs, unit)
 	/*
 	 * Keyboard needs special treatment.
 	 */
-	if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT))) {
+	if (tp == scctty(makedev(cdevsw_lookup_major(&scc_cdevsw),
+				 SCCKBD_PORT))) {
 #if defined(DDB) && defined(LK_DO)
 			if (cc == LK_DO) {
 				spl0();
@@ -1083,7 +1103,8 @@ scc_rxintr(sc, chan, regs, unit)
 	/*
 	 * Now for mousey
 	 */
-	} else if (tp == scctty(makedev(SCCDEV, SCCMOUSE_PORT)) &&
+	} else if (tp == scctty(makedev(cdevsw_lookup_major(&scc_cdevsw),
+				SCCMOUSE_PORT)) &&
 	    sccMouseButtons) {
 #if NRASTERCONSOLE > 0
 		/*XXX*/

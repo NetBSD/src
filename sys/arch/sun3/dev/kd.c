@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.37 2002/03/17 19:40:51 atatat Exp $	*/
+/*	$NetBSD: kd.c,v 1.37.4.1 2002/05/19 07:41:24 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,10 +68,7 @@
 
 extern void fb_unblank __P((void)); /* XXX */
 
-#define	KDMAJOR 1
 #define PUT_WSIZE	64
-
-cdev_decl(kd);	/* open, close, read, write, ioctl, stop, ... */
 
 struct kd_softc {
 	struct	device kd_dev;		/* required first: base device */
@@ -93,6 +90,18 @@ static void kdstart(struct tty *);
 static void kd_init __P((struct kd_softc *));
 static void kd_cons_input __P((int));
 
+dev_type_open(kdopen);
+dev_type_close(kdclose);
+dev_type_read(kdread);
+dev_type_write(kdwrite);
+dev_type_ioctl(kdioctl);
+dev_type_tty(kdtty);
+dev_type_poll(kdpoll);
+
+const struct cdevsw kd_cdevsw = {
+	kdopen, kdclose, kdread, kdwrite, kdioctl,
+	nostop, kdtty, kdpoll, nommap, D_TTY
+};
 
 /*
  * Prepare the console tty; called on first open of /dev/console
@@ -106,7 +115,7 @@ kd_init(kd)
 	tp = ttymalloc();
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;
-	tp->t_dev = makedev(KDMAJOR, 0);
+	tp->t_dev = makedev(cdevsw_lookup_major(&kd_cdevsw), 0);
 
 	tty_attach(tp);
 	kd->kd_tty = tp;
@@ -281,15 +290,6 @@ kdioctl(dev, cmd, data, flag, p)
 
 	return EPASSTHROUGH;
 }
-
-void
-kdstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-
-}
-
 
 static int
 kdparam(tp, t)
@@ -489,7 +489,7 @@ kdcninit(cn)
 {
 	struct kbd_state *ks = &kdcn_state;
 
-	cn->cn_dev = makedev(KDMAJOR, 0);
+	cn->cn_dev = makedev(cdevsw_lookup_major(&kd_cdevsw), 0);
 	cn->cn_pri = CN_INTERNAL;
 
 	/* This prepares kbd_translate() */
