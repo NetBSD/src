@@ -1,4 +1,4 @@
-/*	$NetBSD: getoldopt.c,v 1.15 2002/10/12 15:39:29 christos Exp $	*/
+/*	$NetBSD: getoldopt.c,v 1.16 2002/10/13 00:32:09 mrg Exp $	*/
 
 /*
  * Plug-compatible replacement for getopt() for parsing tar-like
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: getoldopt.c,v 1.15 2002/10/12 15:39:29 christos Exp $");
+__RCSID("$NetBSD: getoldopt.c,v 1.16 2002/10/13 00:32:09 mrg Exp $");
 #endif /* not lint */
 
 #include <getopt.h>
@@ -45,11 +45,6 @@ getoldopt(int argc, char **argv, const char *optstring,
 
 	if (use_getopt) {
 		if (longopts != NULL) {
-			/*
-			 * Setting POSIXLY_CORRECT here, makes getopt_long
-			 * stop argument processing at the first non-option.
-			 */
-			setenv("POSIXLY_CORRECT", "", 0);
 			return getopt_long(argc, argv, optstring,
 			    longopts, idx);
 		} else {
