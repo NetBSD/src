@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.54 2001/08/20 12:00:55 wiz Exp $	*/
+/*	$NetBSD: job.c,v 1.55 2001/10/16 18:06:29 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.54 2001/08/20 12:00:55 wiz Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.55 2001/10/16 18:06:29 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.54 2001/08/20 12:00:55 wiz Exp $");
+__RCSID("$NetBSD: job.c,v 1.55 2001/10/16 18:06:29 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -715,6 +715,7 @@ JobPrintCommand(cmdp, jobp)
     }
     
     if ((cp = Check_Cwd_Cmd(cmd)) != NULL) {
+	    DBPRINTF("test -d %s && ", cp);
 	    DBPRINTF("cd %s; ", cp);
     }		    
     DBPRINTF(cmdTemplate, cmd);
