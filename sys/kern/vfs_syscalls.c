@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.135 1999/05/05 20:01:10 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.136 1999/05/06 17:11:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -111,6 +111,7 @@ const char *mountcompatnames[] = {
 	MOUNT_EXT2FS,	/* 17 */
 	MOUNT_CODA,	/* 18 */
 	MOUNT_FILECORE,	/* 19 */
+	MOUNT_NTFS,	/* 20 */
 };
 const int nmountcompatnames = sizeof(mountcompatnames) /
     sizeof(mountcompatnames[0]);
