@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.43 2003/06/29 22:32:25 fvdl Exp $	*/
+/*	$NetBSD: file.h,v 1.44 2003/07/08 06:31:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -74,22 +74,19 @@ struct file {
 	int		f_usecount;	/* number active users */
 	struct ucred	*f_cred;	/* creds associated with descriptor */
 	struct fileops {
-		int	(*fo_read)	(struct file *fp, off_t *offset,
-					    struct uio *uio,
-					    struct ucred *cred, int flags);
-		int	(*fo_write)	(struct file *fp, off_t *offset,
-					    struct uio *uio,
-					    struct ucred *cred, int flags);
-		int	(*fo_ioctl)	(struct file *fp, u_long com,
-					    void *data, struct proc *p);
-		int	(*fo_fcntl)	(struct file *fp, u_int com,
-					    void *data, struct proc *p);
-		int	(*fo_poll)	(struct file *fp, int events,
-					    struct proc *p);
-		int	(*fo_stat)	(struct file *fp, struct stat *sp,
-					    struct proc *p);
-		int	(*fo_close)	(struct file *fp, struct proc *p);
-		int	(*fo_kqfilter)	(struct file *fp, struct knote *kn);
+		int	(*fo_read)	(struct file *, off_t *, struct uio *,
+					    struct ucred *, int);
+		int	(*fo_write)	(struct file *, off_t *, struct uio *,
+					    struct ucred *, int);
+		int	(*fo_ioctl)	(struct file *, u_long, void *,
+					    struct proc *);
+		int	(*fo_fcntl)	(struct file *, u_int, void *,
+					    struct proc *);
+		int	(*fo_poll)	(struct file *, int, struct proc *);
+		int	(*fo_stat)	(struct file *, struct stat *,
+					    struct proc *);
+		int	(*fo_close)	(struct file *, struct proc *);
+		int	(*fo_kqfilter)	(struct file *, struct knote *);
 	} *f_ops;
 	off_t		f_offset;
 	void		*f_data;	/* descriptor data, e.g. vnode/socket */

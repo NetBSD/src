@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.6 2003/05/11 12:37:20 ragge Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.7 2003/07/08 06:32:15 itojun Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -65,7 +65,7 @@ int ksyms_addsymtab(const char *, void *, vsize_t, char *, vsize_t);
 int ksyms_delsymtab(const char *);
 void ksyms_init(int, void *, void *);
 #ifdef DDB
-int ksyms_sift(char *mod, char *sym, int mode);
+int ksyms_sift(char *, char *, int);
 #endif
 #endif /* _KERNEL */
 #endif /* _SYS_KSYMS_H_ */

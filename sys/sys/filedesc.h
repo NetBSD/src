@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.28 2003/06/29 22:32:25 fvdl Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.29 2003/07/08 06:31:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -111,19 +111,19 @@ struct filedesc0 {
 /*
  * Kernel global variables and routines.
  */
-int	dupfdopen(struct proc *p, int indx, int dfd, int mode, int error);
-int	fdalloc(struct proc *p, int want, int *result);
-void	fdexpand(struct proc *p);
-int	fdavail(struct proc *p, int n);
-int	falloc(struct proc *p, struct file **resultfp, int *resultfd);
+int	dupfdopen(struct proc *, int, int, int, int);
+int	fdalloc(struct proc *, int, int *);
+void	fdexpand(struct proc *);
+int	fdavail(struct proc *, int);
+int	falloc(struct proc *, struct file **, int *);
 void	ffree(struct file *);
-struct filedesc *fdcopy(struct proc *p);
-struct filedesc *fdinit(struct proc *p);
-void	fdshare(struct proc *p1, struct proc *p2);
-void	fdunshare(struct proc *p);
-void	fdinit1(struct filedesc0 *newfdp);
-void	fdclear(struct proc *p);
-void	fdfree(struct proc *p);
+struct filedesc *fdcopy(struct proc *);
+struct filedesc *fdinit(struct proc *);
+void	fdshare(struct proc *, struct proc *);
+void	fdunshare(struct proc *);
+void	fdinit1(struct filedesc0 *);
+void	fdclear(struct proc *);
+void	fdfree(struct proc *);
 void	fdremove(struct filedesc *, int);
 int	fdrelease(struct proc *, int);
 void	fdcloseexec(struct proc *);
