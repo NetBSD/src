@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.13 2003/03/21 21:13:51 dsl Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.14 2003/06/23 13:14:49 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -26,6 +26,9 @@
  *
  * $FreeBSD: src/sys/kern/kern_event.c,v 1.27 2001/07/05 17:10:44 rwatson Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.14 2003/06/23 13:14:49 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
