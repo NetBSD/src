@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.26 2000/01/18 19:48:02 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.27 2000/02/19 09:43:40 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -275,20 +275,6 @@ writedisklabel(dev, strat, lp, osdep)
 done:
 	brelse(bp);
 	return (error);
-}
-
-
-/*
- * was this the boot device ?
- */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	/* see also arch/alpha/alpha/disksubr.c */
-	printf("Warning: boot path unknown\n");
-	return;
 }
 
 /*
