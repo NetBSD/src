@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.4 1997/10/13 00:47:17 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.5 1997/10/13 18:35:15 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Michael Graff <explorer@flame.org>.  This code is derived from the
- * random driver written by Ted Tyso.
+ * random driver written by Ted Ts'o.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -256,7 +256,6 @@ rndread(dev, uio, ioflag)
 			/*
 			 * Data is not available.
 			 */
-
 			if (ioflag & IO_NDELAY) {
 				ret = EWOULDBLOCK;
 				goto out;
