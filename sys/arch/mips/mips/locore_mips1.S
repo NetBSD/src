@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.7 1999/02/28 21:53:00 jonathan Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.8 1999/04/24 08:10:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -251,7 +251,7 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	lw	a2, TF_BASE+TF_REG_A2(sp)
 	lw	a3, TF_BASE+TF_REG_A3(sp)
 	lw	t0, TF_BASE+TF_REG_T0(sp)
-	lw	t1, TF_BASE+TF_REG_T1(sp) 
+	lw	t1, TF_BASE+TF_REG_T1(sp)
 	lw	t2, TF_BASE+TF_REG_T2(sp)
 	lw	t3, TF_BASE+TF_REG_T3(sp)
 	lw	t4, TF_BASE+TF_REG_T4(sp)
@@ -259,11 +259,11 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	lw	t6, TF_BASE+TF_REG_T6(sp)
 	lw	t7, TF_BASE+TF_REG_T7(sp)
 	lw	t8, TF_BASE+TF_REG_T8(sp)
-	lw	t9, TF_BASE+TF_REG_T9(sp)	
+	lw	t9, TF_BASE+TF_REG_T9(sp)
 	lw	ra, TF_BASE+TF_REG_RA(sp)
 	addu	sp, sp, KERNFRAME_SIZ
 	j	k0				# return to interrupted point
-	rfe	
+	rfe
 	.set	at
 END(mips1_KernGenException)
 
@@ -826,7 +826,7 @@ LEAF_NOPROFILE(mips1_TLBMissException)
 	rfe
 
 outofworld:
-	move	a1, sp 
+	move	a1, sp
 	la	sp, start			# set sp to a valid place
 	PANIC("out of universe: ksp was %p")
 	.set	at
@@ -1451,7 +1451,7 @@ LEAF(mips1_FlushICache)
 1:
 #ifdef PMAX_CACHEFLUSH_FORCES_WBFLUSH	/* XXX */
 	/*
-	 * The insn below attempts to wait for the  writebuffer to drain. 
+	 * The insn below attempts to wait for the  writebuffer to drain.
 	 * It does not work on all MIPS hosts or maybe even all DEC machines.
 	 * It assumes that the COP0 usability bit is wired to external
 	 * writebuffer logic. This is not true on some DECstations or on
@@ -1500,7 +1500,7 @@ LEAF(mips1_FlushDCache)
 
 #ifdef PMAX_CACHEFLUSH_FORCES_WBFLUSH	/* XXX */
 	/*
-	 * The insn below attempts to wait for the writebuffer to drain. 
+	 * The insn below attempts to wait for the writebuffer to drain.
 	 * It does not work on all MIPS hosts or maybe even all DEC machines.
 	 * It assumes that the COP0 usability bit is wired to external
 	 * writebuffer logic. This is not true on some DECstations or on
@@ -1568,7 +1568,7 @@ END(mips1_wbflush)
  * Call the service function with one argument, specified by the s0
  * and s1 respectively.  There is no need register save operation.
  */
-LEAF(mips1_proc_trampoline) 
+LEAF(mips1_proc_trampoline)
 	jal	ra, s0
 	move	a0, s1
 	.set	noat
@@ -1664,7 +1664,7 @@ LEAF_NOPROFILE(mips1_cpu_switch_resume)
 	tlbp					# probe for entry
 	mfc0	s0, MIPS_COP_0_TLB_INDEX	# see if we found it
 	nop
-	bltz	s0, 1f	
+	bltz	s0, 1f
 	li	s0, MIPS_KSEG0_START		# found, then
 	mtc0	s0, MIPS_COP_0_TLB_HI
 	mtc0	zero, MIPS_COP_0_TLB_LOW

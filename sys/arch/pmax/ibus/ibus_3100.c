@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_3100.c,v 1.3 1999/03/15 07:43:06 nisimura Exp $	*/
+/*	$NetBSD: ibus_3100.c,v 1.4 1999/04/24 08:01:09 simonb Exp $	*/
 
 
 /*
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_3100.c,v 1.3 1999/03/15 07:43:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3100.c,v 1.4 1999/04/24 08:01:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibus_3100.c,v 1.3 1999/03/15 07:43:06 nisimura Exp $
 #include <pmax/pmax/pmaxtype.h>
 
 
-int	dec_3100_ibusdev_match 
+int	dec_3100_ibusdev_match
 	    __P((struct device *, struct cfdata *, void *));
 void	dec_3100_ibusdev_attach
 	    __P((struct device *, struct device *, void *));

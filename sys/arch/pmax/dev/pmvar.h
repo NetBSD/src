@@ -1,6 +1,6 @@
-/*	$NetBSD: pmvar.h,v 1.3 1998/01/05 07:03:12 perry Exp $	*/
+/*	$NetBSD: pmvar.h,v 1.4 1999/04/24 08:01:05 simonb Exp $	*/
 
-/* 
+/*
  * Initialize a Decstation 3100/2100 baseboard framebuffer,
  * so it can be used as a bitmapped glass-tty console device.
  */

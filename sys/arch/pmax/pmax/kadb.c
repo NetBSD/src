@@ -1,4 +1,4 @@
-/*	$NetBSD: kadb.c,v 1.5 1997/06/22 07:42:39 jonathan Exp $	*/
+/*	$NetBSD: kadb.c,v 1.6 1999/04/24 08:01:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -220,8 +220,8 @@ unsigned kdb_ss_instr;
 void
 kdbsetsstep()
 {
-	register unsigned va;
-	register int *locr0 = kdbpcb.pcb_regs;
+	unsigned va;
+	int *locr0 = kdbpcb.pcb_regs;
 	int i;
 
 	/* compute next address after current location */
@@ -243,7 +243,7 @@ kdbsetsstep()
 	kdb_ss_instr = fuiword(va);
 	i = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
 	if (i < 0) {
-		register struct proc *p = curproc;
+		struct proc *p = curproc;
 		vm_offset_t sa, ea;
 		int rv;
 
@@ -264,7 +264,7 @@ kdbsetsstep()
 void
 kdbclrsstep()
 {
-	register unsigned cr, pc, va;
+	unsigned cr, pc, va;
 	unsigned instr;
 	int i;
 
@@ -298,7 +298,7 @@ kdbclrsstep()
 	/* restore original instruction and clear BP */
 	i = suiword((caddr_t)va, kdb_ss_instr);
 	if (i < 0) {
-		register struct proc *p = curproc;
+		struct proc *p = curproc;
 		vm_offset_t sa, ea;
 		int rv;
 
@@ -760,7 +760,7 @@ kdbmalloc(size)
  */
 kdbprintmachdep(modif)
 {
-	register int i, j;
+	int i, j;
 	extern int tlbhi, tlblo;
 
 	switch (modif) {

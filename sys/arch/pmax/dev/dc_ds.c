@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.8 1998/04/19 10:44:41 jonathan Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.9 1999/04/24 08:01:03 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -89,7 +89,7 @@ dc_ds_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct ibus_attach_args *iba = aux;
+	struct ibus_attach_args *iba = aux;
 	caddr_t dcaddr;
 	struct dc_softc *sc = (void*) self;
 

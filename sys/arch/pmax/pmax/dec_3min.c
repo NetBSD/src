@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.12 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.13 1999/04/24 08:01:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.12 1999/03/25 01:17:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.13 1999/04/24 08:01:11 simonb Exp $");
 
 
 #include <sys/types.h>
@@ -244,12 +244,12 @@ dec_3min_device_register(dev, aux)
 
 void
 dec_3min_enable_intr(slotno, handler, sc, on)
-	register unsigned int slotno;
+	unsigned int slotno;
 	int (*handler) __P((void* softc));
 	void *sc;
 	int on;
 {
-	register unsigned mask;
+	unsigned mask;
 
 	switch (slotno) {
 		/* slots 0-2 don't interrupt through the IOASIC. */
@@ -341,8 +341,8 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 	unsigned statusReg;
 	unsigned causeReg;
 {
-	register u_int intr;
-	register volatile struct chiptime *c =
+	u_int intr;
+	volatile struct chiptime *c =
 	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(KMIN_SYS_CLOCK);
 	volatile u_int * const imaskp =
 		(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK);
@@ -508,10 +508,10 @@ dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
 	volatile struct chiptime *mcclock_addr;
 	int clockmask;
 {
-	register volatile u_int * ioasic_intrmaskp =
+	volatile u_int * ioasic_intrmaskp =
 		(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK);
 
-	register int saved_imask = *ioasic_intrmaskp;
+	int saved_imask = *ioasic_intrmaskp;
 
 	/* Allow only clock interrupts through ioasic. */
 	*ioasic_intrmaskp = KMIN_INTR_CLOCK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.8 1999/03/25 19:55:37 simonb Exp $	*/
+/*	$NetBSD: dec_3100.c,v 1.9 1999/04/24 08:01:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -195,7 +195,7 @@ dec_3100_device_register(dev, aux)
  */
 void
 dec_3100_enable_intr(slotno, handler, sc, on)
-	register unsigned int slotno;
+	unsigned int slotno;
 	int (*handler) __P((void* softc));
 	void *sc;
 	int on;
@@ -221,7 +221,7 @@ dec_3100_intr(mask, pc, statusReg, causeReg)
 	unsigned statusReg;
 	unsigned causeReg;
 {
-	register volatile struct chiptime *c =
+	volatile struct chiptime *c =
 	    (volatile struct chiptime *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	struct clockframe cf;
 	int temp;

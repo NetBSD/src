@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_boot.h,v 1.4 1994/10/26 21:10:51 cgd Exp $	*/
+/*	$NetBSD: dec_boot.h,v 1.5 1999/04/24 08:01:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@ struct Dec_DiskBoot {
 	int	execAddr;		/* Address to start execing. */
 	struct	Dec_BootMap map[61];	/* boot program sections. */
 };
- 
+
 #define DEC_BOOT_MAGIC		0x0002757a
 #define DEC_BOOT_SECTOR		0
 
