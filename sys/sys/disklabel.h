@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.48 1998/10/06 01:17:27 mark Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.49 1998/11/12 15:52:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -242,7 +242,7 @@ static const char *const dktypenames[] = {
 #define	FS_FILECORE	16		/* Acorn Filecore Filing System */
 #define	FS_EX2FS	17		/* Linux Extended 2 file system */
 
-#ifdef	DKTYPENAMES
+#ifdef	FSTYPENAMES
 static const char *const fstypenames[] = {
 	"unused",
 	"swap",
@@ -264,7 +264,10 @@ static const char *const fstypenames[] = {
 	"Linux Ext2",
 	NULL
 };
+#define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
+#endif
 
+#ifdef FSCKNAMES
 /* These are the names MOUNT_XXX from <sys/mount.h> */
 static const char *const fscknames[] = {
 	NULL,		/* unused */
@@ -287,8 +290,8 @@ static const char *const fscknames[] = {
 	"ext2fs",	/* Linux Ext2 */
 	NULL		/* NULL */
 };
+#define FSMAXNAMES	(sizeof(fscknames) / sizeof(fscknames[0]) - 1)
 
-#define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
 #endif
 
 /*
