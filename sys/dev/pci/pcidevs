@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.287 2001/01/09 23:15:39 thorpej Exp $
+$NetBSD: pcidevs,v 1.288 2001/01/09 23:19:03 rh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -526,6 +526,7 @@ vendor CMEDIA		0x13f6	C-Media Electronics Inc
 vendor ASKEY		0x144f	Askey Computer Corp.
 vendor AVERMEDIA	0x1461	Avermedia Technologies
 vendor AIRONET		0x14b9	Aironet Wireless Communications
+vendor COMPAL		0x14c0	COMPAL Electronics, Inc.
 vendor INVERTEX		0x14e1	Invertex
 vendor CONEXANT		0x14f1	Conexant Systems
 vendor DELTA		0x1500	Delta Electronics
@@ -911,6 +912,9 @@ product CMEDIA HSP56		0x0211	HSP56 Audiomodem Riser
 
 /* Cogent Data Technologies products */
 product COGENT EM110TX		0x1400 EX110TX PCI Fast Ethernet Adapter
+
+/* COMPAL products */
+product	COMPAL 38W2		0x0011	COMPAL 38W2 OEM Notebook
 
 /* Compaq products */
 product	COMPAQ PCI_EISA_BRIDGE	0x0001	PCI-EISA Bridge
