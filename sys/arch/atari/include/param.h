@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 1995/04/22 22:20:36 leo Exp $	*/
+/*	$NetBSD: param.h,v 1.6 1995/04/30 14:02:12 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,7 +67,7 @@
 
 #define NBSEG		(cpu040 ? 32*NBPG : 2048*NBPG)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)			/* byte offset into segment */
-#define	SEGSHIFT	(cpu040 ? 18 : 24)		/* LOG2(NBSEG) */
+#define	SEGSHIFT	24		/* LOG2(NBSEG) [68030 value] */
 
 #define	KERNBASE	0x0		/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
