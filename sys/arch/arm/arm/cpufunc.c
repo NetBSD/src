@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.58 2003/04/22 00:24:48 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.59 2003/05/23 00:57:23 ichiro Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -72,7 +72,12 @@
 #include <arm/xscale/i80321var.h>
 #endif
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+#ifdef CPU_XSCALE_IXP425
+#include <arm/xscale/ixp425reg.h>
+#include <arm/xscale/ixp425var.h>
+#endif
+
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_IXP425)
 #include <arm/xscale/xscalereg.h>
 #endif
 
@@ -622,7 +627,7 @@ struct cpu_functions ixp12x0_cpufuncs = {
 #endif	/* CPU_IXP12X0 */
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0)
+    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 struct cpu_functions xscale_cpufuncs = {
 	/* CPU functions */
 	
@@ -677,7 +682,8 @@ struct cpu_functions xscale_cpufuncs = {
 
 	xscale_setup			/* cpu setup		*/
 };
-#endif /* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
+#endif
+/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 || CPU_XSCALE_IXP425 */
 
 /*
  * Global constants also used by locore.s
@@ -689,7 +695,7 @@ u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0)
+    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 static void get_cachetype_cp15 __P((void));
 
 static void
@@ -1044,6 +1050,23 @@ set_cpufuncs()
 		return 0;
 	}
 #endif /* CPU_XSCALE_PXA2X0 */
+#ifdef CPU_XSCALE_IXP425
+	if (cputype == CPU_ID_IXP425_533 || cputype == CPU_ID_IXP425_400 ||
+            cputype == CPU_ID_IXP425_266) {
+		ixp425_icu_init();
+
+		cpufuncs = xscale_cpufuncs;
+#if defined(PERFCTRS)
+		xscale_pmu_init();
+#endif
+
+		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
+		get_cachetype_cp15();
+		pmap_pte_init_xscale();
+
+		return 0;
+	}
+#endif /* CPU_XSCALE_IXP425 */
 	/*
 	 * Bzzzz. And the answer was ...
 	 */
@@ -1415,7 +1438,7 @@ late_abort_fixup(arg)
 	defined(CPU_ARM8) || defined (CPU_ARM9) || defined(CPU_SA110) || \
 	defined(CPU_SA1100) || defined(CPU_SA1110) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-	defined(CPU_XSCALE_PXA2X0)
+	defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 
 #define IGN	0
 #define OR	1
@@ -1896,7 +1919,7 @@ ixp12x0_setup(args)
 #endif /* CPU_IXP12X0 */
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(CPU_XSCALE_PXA2X0)
+    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 struct cpu_option xscale_options[] = {
 #ifdef COMPAT_12
 	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
@@ -1969,4 +1992,4 @@ xscale_setup(args)
 	__asm __volatile("mcr p15, 0, %0, c1, c0, 1"
 		: : "r" (auxctl));
 }
-#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
+#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 || CPU_XSCALE_IXP425 */
