@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.2 1995/02/25 03:01:56 cgd Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.3 1995/04/29 05:26:35 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_prot.c,v 1.2 1995/02/25 03:01:56 cgd Exp $";
+static char *rcsid = "$NetBSD: rpc_prot.c,v 1.3 1995/04/29 05:26:35 cgd Exp $";
 #endif
 
 /*
@@ -105,9 +105,9 @@ xdr_accepted_reply(xdrs, ar)
 		return ((*(ar->ar_results.proc))(xdrs, ar->ar_results.where));
 
 	case PROG_MISMATCH:
-		if (! xdr_u_long(xdrs, &(ar->ar_vers.low)))
+		if (! xdr_u_int32_t(xdrs, &(ar->ar_vers.low)))
 			return (FALSE);
-		return (xdr_u_long(xdrs, &(ar->ar_vers.high)));
+		return (xdr_u_int32_t(xdrs, &(ar->ar_vers.high)));
 	}
 	return (TRUE);  /* TRUE => open ended set of problems */
 }
@@ -127,9 +127,9 @@ xdr_rejected_reply(xdrs, rr)
 	switch (rr->rj_stat) {
 
 	case RPC_MISMATCH:
-		if (! xdr_u_long(xdrs, &(rr->rj_vers.low)))
+		if (! xdr_u_int32_t(xdrs, &(rr->rj_vers.low)))
 			return (FALSE);
-		return (xdr_u_long(xdrs, &(rr->rj_vers.high)));
+		return (xdr_u_int32_t(xdrs, &(rr->rj_vers.high)));
 
 	case AUTH_ERROR:
 		return (xdr_enum(xdrs, (enum_t *)&(rr->rj_why)));
@@ -151,7 +151,7 @@ xdr_replymsg(xdrs, rmsg)
 	register struct rpc_msg *rmsg;
 {
 	if (
-	    xdr_u_long(xdrs, &(rmsg->rm_xid)) && 
+	    xdr_u_int32_t(xdrs, &(rmsg->rm_xid)) && 
 	    xdr_enum(xdrs, (enum_t *)&(rmsg->rm_direction)) &&
 	    (rmsg->rm_direction == REPLY) )
 		return (xdr_union(xdrs, (enum_t *)&(rmsg->rm_reply.rp_stat),
@@ -175,11 +175,11 @@ xdr_callhdr(xdrs, cmsg)
 	cmsg->rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	if (
 	    (xdrs->x_op == XDR_ENCODE) &&
-	    xdr_u_long(xdrs, &(cmsg->rm_xid)) &&
+	    xdr_u_int32_t(xdrs, &(cmsg->rm_xid)) &&
 	    xdr_enum(xdrs, (enum_t *)&(cmsg->rm_direction)) &&
-	    xdr_u_long(xdrs, &(cmsg->rm_call.cb_rpcvers)) &&
-	    xdr_u_long(xdrs, &(cmsg->rm_call.cb_prog)) )
-	    return (xdr_u_long(xdrs, &(cmsg->rm_call.cb_vers)));
+	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_rpcvers)) &&
+	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_prog)) )
+	    return (xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_vers)));
 	return (FALSE);
 }
 
