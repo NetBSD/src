@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.348 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.349 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -84,3 +84,7 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		to override entries in /etc/mtree/special.  [lukem 20040723]
 	spif(4): New driver for Sun SUNW,spif multi-port Sbus cards originally
 		written by Jason L. Wright for OpenBSD.  [mrg 20040724]
+	wscons(4): Add support to change console colors and kernel colors
+		dynamically after boot [jmmv 20040728]
+	wsconsctl(4): Add support to change console colors and kernel colors
+		dynamically after boot [jmmv 20040728]
