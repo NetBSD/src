@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 2000/01/31 22:43:36 mhitch Exp $	*/
+/*	$NetBSD: bus.h,v 1.15 2000/03/04 11:49:18 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -205,7 +205,7 @@ struct amiga_bus_space_methods {
 /* 4: Fake 32-bit macros */
 
 #define bus_space_read_4(t, h, o) \
-	panic("bus_space_read_4 not implemented")
+	(panic("bus_space_read_4 not implemented"), 0)
 
 #define bus_space_write_4(t, h, o, v) \
 	panic("bus_space_write_4 not implemented")
