@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.16 1995/04/27 14:27:11 pk Exp $ */
+/*	$NetBSD: kbd.c,v 1.17 1995/05/02 07:56:42 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -496,6 +496,7 @@ int
 kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int s, error;
+	struct tty *tp;
 
 	if (kbd_softc.k_events.ev_io)
 		return (EBUSY);
@@ -505,12 +506,14 @@ kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 	 * the first time.  Then make sure we know what kind of keyboard
 	 * it is.
 	 */
+	tp = kbd_softc.k_kbd;
 	if (kbd_softc.k_cons == NULL)
-		(*kbd_softc.k_open)(kbd_softc.k_kbd);
+		(*kbd_softc.k_open)(tp);
 	error = 0;
 	s = spltty();
 	if (kbd_softc.k_state.kbd_cur == NULL) {
-		(void) ttyoutput(KBD_CMD_RESET, kbd_softc.k_kbd);
+		(void) ttyoutput(KBD_CMD_RESET, tp);
+		(*tp->t_oproc)(tp);
 		error = tsleep((caddr_t)&kbd_softc.k_state, PZERO | PCATCH,
 		    devopn, hz);
 		if (error == EWOULDBLOCK)	/* no response */
