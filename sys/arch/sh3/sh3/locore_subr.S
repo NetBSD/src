@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.3 2002/02/24 18:19:43 uch Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.4 2002/02/28 01:53:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -282,11 +282,11 @@ ENTRY(idle)
 	jsr	@r0
 	 nop
 #endif
-	__INTR_UNMASK_r0_r1
+	__INTR_UNMASK(r0, r1)
 
 	sleep
 
-	__INTR_MASK_r0_r1
+	__INTR_MASK(r0, r1)
 #if defined(LOCKDEBUG)
 	mov.l	_L.sched_lock, r0
 	jsr	@r0
@@ -387,7 +387,7 @@ switch_search:
 	 */
 
 	/* Lock the scheduler. */
-	__INTR_MASK_r0_r1
+	__INTR_MASK(r0, r1)
 #if defined(LOCKDEBUG)
 	mov.l	_L.sched_lock, r0
 	jsr	@r0
@@ -600,7 +600,7 @@ _L._switch_error:
 	mov.l	r8, @r0
 
 	/* It's okay to take interrupts here. */
-	__INTR_UNMASK_r0_r1
+	__INTR_UNMASK(r0, r1)
 
 	/* Skip context switch if same process. */
 	mov	r12, r0		/* r12 = oldCurproc */
@@ -632,7 +632,7 @@ switch_exited:
 	 */
 
 	/* No interrupts while loading new state. */
-	__INTR_MASK_r0_r1
+	__INTR_MASK(r0, r1)
 	mov	r8, r4		/* r8 = qs[i]->p_forw */
 	mov.l	_L.P_ADDR, r1
 	add	r1, r4
@@ -680,7 +680,7 @@ switch_restored:
 	mov.l	r12, @r0
 
 	/* Interrupts are okay again. */
-	__INTR_UNMASK_r0_r1
+	__INTR_UNMASK(r0, r1)
 
 switch_return:
 	/*
@@ -737,7 +737,7 @@ ENTRY(switch_exit)
 	mov.l	r0, @r1
 
 	/* Restore proc0's context. */
-	__INTR_MASK_r0_r1
+	__INTR_MASK(r0, r1)
 	mov	r9, r0
 	mov.l	_L.P_ADDR, r1
 	add	r1, r0
@@ -766,7 +766,7 @@ ENTRY(switch_exit)
 	mov.l	r10, @r0
 
 	/* Interrupts are okay again. */
-	__INTR_UNMASK_r0_r1
+	__INTR_UNMASK(r0, r1)
 
 	mov	r8, r4
 	mov.l	_L.exit2, r0
@@ -815,7 +815,7 @@ NENTRY(ast)
 	sts.l	pr,	@-r15
 	mov	r4,	r8
 1:
-	__INTR_MASK_r0_r1
+	__INTR_MASK(r0, r1)
 	mov.l	_L.astpending, r0
 	mov.l	@r0,	r0
 	tst	r0,	r0
@@ -831,7 +831,7 @@ NENTRY(ast)
 	 xor	r0,	r0
 	mov.l	_L.astpending, r1
 	mov.l	r0,	@r1		/* clear astpending */
-	__INTR_UNMASK_r0_r1
+	__INTR_UNMASK(r0, r1)
 	mov.l	_L.T_ASTFLT, r1
 	mov.l	r1, @(TF_TRAPNO, r8)	/* trapframe->tf_trapno = T_ASTFLT */
 	mov.l	_L.trap, r0
