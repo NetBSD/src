@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.17 2000/02/14 21:17:04 fvdl Exp $	*/
+/*	$NetBSD: pool.h,v 1.18 2000/12/06 18:20:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -52,9 +52,6 @@
 
 #define PR_HASHTABSIZE		8
 
-struct pool;
-typedef struct pool *pool_handle_t;
-
 #ifdef __POOL_EXPOSE
 struct pool {
 	TAILQ_ENTRY(pool)
@@ -78,8 +75,8 @@ struct pool {
 	unsigned int	pr_nout;	/* # items currently allocated */
 	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
 					   items */
-	void		*(*pr_alloc) __P((unsigned long, int, int));
-	void		(*pr_free) __P((void *, unsigned long, int));
+	void		*(*pr_alloc)(unsigned long, int, int);
+	void		(*pr_free)(void *, unsigned long, int);
 	int		pr_mtype;	/* memory allocator tag */
 	const char	*pr_wchan;	/* tsleep(9) identifier */
 	unsigned int	pr_flags;	/* r/w flags */
@@ -145,49 +142,48 @@ struct pool {
 #endif /* __POOL_EXPOSE */
 
 #ifdef _KERNEL
-pool_handle_t	pool_create __P((size_t, u_int, u_int,
+struct pool	*pool_create(size_t, u_int, u_int,
 				 int, const char *, size_t,
 				 void *(*)__P((unsigned long, int, int)),
 				 void  (*)__P((void *, unsigned long, int)),
-				 int));
-void		pool_init __P((struct pool *, size_t, u_int, u_int,
+				 int);
+void		pool_init(struct pool *, size_t, u_int, u_int,
 				 int, const char *, size_t,
 				 void *(*)__P((unsigned long, int, int)),
 				 void  (*)__P((void *, unsigned long, int)),
-				 int));
-void		pool_destroy __P((pool_handle_t));
+				 int);
+void		pool_destroy(struct pool *);
 
 /*
  * These routines do reentrancy checking.
  */
-void		*_pool_get __P((pool_handle_t, int, const char *, long));
-void		_pool_put __P((pool_handle_t, void *, const char *, long));
-void		_pool_reclaim __P((pool_handle_t, const char *, long));
+void		*_pool_get(struct pool *, int, const char *, long);
+void		_pool_put(struct pool *, void *, const char *, long);
+void		_pool_reclaim(struct pool *, const char *, long);
 #define		pool_get(h, f)	_pool_get((h), (f), __FILE__, __LINE__)
 #define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
 #define		pool_reclaim(h)	_pool_reclaim((h), __FILE__, __LINE__)
 
-int		pool_prime __P((pool_handle_t, int, caddr_t));
-void		pool_setlowat __P((pool_handle_t, int));
-void		pool_sethiwat __P((pool_handle_t, int));
-void		pool_sethardlimit __P((pool_handle_t, int, const char *, int));
-void		pool_reclaim __P((pool_handle_t));
-void		pool_drain __P((void *));
+int		pool_prime(struct pool *, int, caddr_t);
+void		pool_setlowat(struct pool *, int);
+void		pool_sethiwat(struct pool *, int);
+void		pool_sethardlimit(struct pool *, int, const char *, int);
+void		pool_drain(void *);
 
 /*
  * Debugging and diagnostic aides.
  */
-void		pool_print __P((struct pool *, const char *));
-void		pool_printit __P((struct pool *, const char *,
-		    void (*)(const char *, ...)));
-int		pool_chk __P((struct pool *, char *));
+void		pool_print(struct pool *, const char *);
+void		pool_printit(struct pool *, const char *,
+		    void (*)(const char *, ...));
+int		pool_chk(struct pool *, const char *);
 
 /*
  * Alternate pool page allocator, provided for pools that know they
  * will never be accessed in interrupt context.
  */
-void		*pool_page_alloc_nointr __P((unsigned long, int, int));
-void		pool_page_free_nointr __P((void *, unsigned long, int));
+void		*pool_page_alloc_nointr(unsigned long, int, int);
+void		pool_page_free_nointr(void *, unsigned long, int);
 #endif /* _KERNEL */
 
 #endif /* _SYS_POOL_H_ */

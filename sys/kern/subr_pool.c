@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.41 2000/11/19 00:29:51 sommerfeld Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.42 2000/12/06 18:20:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -106,16 +106,13 @@ struct pool_item {
 
 
 
-static struct pool_item_header
-		*pr_find_pagehead __P((struct pool *, caddr_t));
-static void	pr_rmpage __P((struct pool *, struct pool_item_header *));
-static int	pool_catchup __P((struct pool *));
-static void	pool_prime_page __P((struct pool *, caddr_t));
-static void	*pool_page_alloc __P((unsigned long, int, int));
-static void	pool_page_free __P((void *, unsigned long, int));
+static int	pool_catchup(struct pool *);
+static void	pool_prime_page(struct pool *, caddr_t);
+static void	*pool_page_alloc(unsigned long, int, int);
+static void	pool_page_free(void *, unsigned long, int);
 
-static void pool_print1 __P((struct pool *, const char *,
-	void (*)(const char *, ...)));
+static void pool_print1(struct pool *, const char *,
+	void (*)(const char *, ...));
 
 /*
  * Pool log entry. An array of these is allocated in pool_create().
@@ -137,21 +134,8 @@ struct pool_log {
 int pool_logsize = POOL_LOGSIZE;
 
 #ifdef DIAGNOSTIC
-static void	pr_log __P((struct pool *, void *, int, const char *, long));
-static void	pr_printlog __P((struct pool *, struct pool_item *,
-		    void (*)(const char *, ...)));
-static void	pr_enter __P((struct pool *, const char *, long));
-static void	pr_leave __P((struct pool *));
-static void	pr_enter_check __P((struct pool *,
-		    void (*)(const char *, ...)));
-
-static __inline__ void
-pr_log(pp, v, action, file, line)
-	struct pool	*pp;
-	void		*v;
-	int		action;
-	const char	*file;
-	long		line;
+static __inline void
+pr_log(struct pool *pp, void *v, int action, const char *file, long line)
 {
 	int n = pp->pr_curlogentry;
 	struct pool_log *pl;
@@ -174,10 +158,8 @@ pr_log(pp, v, action, file, line)
 }
 
 static void
-pr_printlog(pp, pi, pr)
-	struct pool *pp;
-	struct pool_item *pi;
-	void (*pr) __P((const char *, ...));
+pr_printlog(struct pool *pp, struct pool_item *pi,
+    void (*pr)(const char *, ...))
 {
 	int i = pp->pr_logsize;
 	int n = pp->pr_curlogentry;
@@ -205,11 +187,8 @@ pr_printlog(pp, pi, pr)
 	}
 }
 
-static __inline__ void
-pr_enter(pp, file, line)
-	struct pool *pp;
-	const char *file;
-	long line;
+static __inline void
+pr_enter(struct pool *pp, const char *file, long line)
 {
 
 	if (__predict_false(pp->pr_entered_file != NULL)) {
@@ -224,9 +203,8 @@ pr_enter(pp, file, line)
 	pp->pr_entered_line = line;
 }
 
-static __inline__ void
-pr_leave(pp)
-	struct pool *pp;
+static __inline void
+pr_leave(struct pool *pp)
 {
 
 	if (__predict_false(pp->pr_entered_file == NULL)) {
@@ -238,10 +216,8 @@ pr_leave(pp)
 	pp->pr_entered_line = 0;
 }
 
-static __inline__ void
-pr_enter_check(pp, pr)
-	struct pool *pp;
-	void (*pr) __P((const char *, ...));
+static __inline void
+pr_enter_check(struct pool *pp, void (*pr)(const char *, ...))
 {
 
 	if (pp->pr_entered_file != NULL)
@@ -259,10 +235,8 @@ pr_enter_check(pp, pr)
 /*
  * Return the pool page header based on page address.
  */
-static __inline__ struct pool_item_header *
-pr_find_pagehead(pp, page)
-	struct pool *pp;
-	caddr_t page;
+static __inline struct pool_item_header *
+pr_find_pagehead(struct pool *pp, caddr_t page)
 {
 	struct pool_item_header *ph;
 
@@ -281,10 +255,8 @@ pr_find_pagehead(pp, page)
 /*
  * Remove a page from the pool.
  */
-static __inline__ void
-pr_rmpage(pp, ph)
-	struct pool *pp;
-	struct pool_item_header *ph;
+static __inline void
+pr_rmpage(struct pool *pp, struct pool_item_header *ph)
 {
 
 	/*
@@ -337,16 +309,11 @@ pr_rmpage(pp, ph)
  * Allocate and initialize a pool.
  */
 struct pool *
-pool_create(size, align, ioff, nitems, wchan, pagesz, alloc, release, mtype)
-	size_t	size;
-	u_int	align;
-	u_int	ioff;
-	int	nitems;
-	const char *wchan;
-	size_t	pagesz;
-	void	*(*alloc) __P((unsigned long, int, int));
-	void	(*release) __P((void *, unsigned long, int));
-	int	mtype;
+pool_create(size_t size, u_int align, u_int ioff, int nitems,
+    const char *wchan, size_t pagesz,
+    void *(*alloc)(unsigned long, int, int),
+    void (*release)(void *, unsigned long, int),
+    int mtype)
 {
 	struct pool *pp;
 	int flags;
@@ -376,17 +343,11 @@ pool_create(size, align, ioff, nitems, wchan, pagesz, alloc, release, mtype)
  * static pools that must be initialized before malloc() is available.
  */
 void
-pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
-	struct pool	*pp;
-	size_t		size;
-	u_int		align;
-	u_int		ioff;
-	int		flags;
-	const char	*wchan;
-	size_t		pagesz;
-	void		*(*alloc) __P((unsigned long, int, int));
-	void		(*release) __P((void *, unsigned long, int));
-	int		mtype;
+pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
+    const char *wchan, size_t pagesz,
+    void *(*alloc)(unsigned long, int, int),
+    void (*release)(void *, unsigned long, int),
+    int mtype)
 {
 	int off, slack, i;
 
@@ -536,8 +497,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
  * De-commision a pool resource.
  */
 void
-pool_destroy(pp)
-	struct pool *pp;
+pool_destroy(struct pool *pp)
 {
 	struct pool_item_header *ph;
 
@@ -573,11 +533,7 @@ pool_destroy(pp)
  * Grab an item from the pool; must be called at appropriate spl level
  */
 void *
-_pool_get(pp, flags, file, line)
-	struct pool *pp;
-	int flags;
-	const char *file;
-	long line;
+_pool_get(struct pool *pp, int flags, const char *file, long line)
 {
 	void *v;
 	struct pool_item *pi;
@@ -809,11 +765,7 @@ _pool_get(pp, flags, file, line)
  * Return resource to the pool; must be called at appropriate spl level
  */
 void
-_pool_put(pp, v, file, line)
-	struct pool *pp;
-	void *v;
-	const char *file;
-	long line;
+_pool_put(struct pool *pp, void *v, const char *file, long line)
 {
 	struct pool_item *pi = v;
 	struct pool_item_header *ph;
@@ -952,10 +904,7 @@ _pool_put(pp, v, file, line)
  * Add N items to the pool.
  */
 int
-pool_prime(pp, n, storage)
-	struct pool *pp;
-	int n;
-	caddr_t storage;
+pool_prime(struct pool *pp, int n, caddr_t storage)
 {
 	caddr_t cp;
 	int newnitems, newpages;
@@ -1008,9 +957,7 @@ pool_prime(pp, n, storage)
  * Note, we must be called with the pool descriptor LOCKED.
  */
 static void
-pool_prime_page(pp, storage)
-	struct pool *pp;
-	caddr_t storage;
+pool_prime_page(struct pool *pp, caddr_t storage)
 {
 	struct pool_item *pi;
 	struct pool_item_header *ph;
@@ -1096,8 +1043,7 @@ pool_prime_page(pp, storage)
  * with it locked.
  */
 static int
-pool_catchup(pp)
-	struct pool *pp;
+pool_catchup(struct pool *pp)
 {
 	caddr_t cp;
 	int error = 0;
@@ -1136,9 +1082,7 @@ pool_catchup(pp)
 }
 
 void
-pool_setlowat(pp, n)
-	pool_handle_t	pp;
-	int n;
+pool_setlowat(struct pool *pp, int n)
 {
 	int error;
 
@@ -1163,9 +1107,7 @@ pool_setlowat(pp, n)
 }
 
 void
-pool_sethiwat(pp, n)
-	pool_handle_t	pp;
-	int n;
+pool_sethiwat(struct pool *pp, int n)
 {
 
 	simple_lock(&pp->pr_slock);
@@ -1178,11 +1120,7 @@ pool_sethiwat(pp, n)
 }
 
 void
-pool_sethardlimit(pp, n, warnmess, ratecap)
-	pool_handle_t pp;
-	int n;
-	const char *warnmess;
-	int ratecap;
+pool_sethardlimit(struct pool *pp, int n, const char *warnmess, int ratecap)
 {
 
 	simple_lock(&pp->pr_slock);
@@ -1208,10 +1146,7 @@ pool_sethardlimit(pp, n, warnmess, ratecap)
  * Default page allocator.
  */
 static void *
-pool_page_alloc(sz, flags, mtype)
-	unsigned long sz;
-	int flags;
-	int mtype;
+pool_page_alloc(unsigned long sz, int flags, int mtype)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
@@ -1219,10 +1154,7 @@ pool_page_alloc(sz, flags, mtype)
 }
 
 static void
-pool_page_free(v, sz, mtype)
-	void *v;
-	unsigned long sz;
-	int mtype;
+pool_page_free(void *v, unsigned long sz, int mtype)
 {
 
 	uvm_km_free_poolpage((vaddr_t)v);
@@ -1233,10 +1165,7 @@ pool_page_free(v, sz, mtype)
  * never be accessed in interrupt context.
  */
 void *
-pool_page_alloc_nointr(sz, flags, mtype)
-	unsigned long sz;
-	int flags;
-	int mtype;
+pool_page_alloc_nointr(unsigned long sz, int flags, int mtype)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
@@ -1245,10 +1174,7 @@ pool_page_alloc_nointr(sz, flags, mtype)
 }
 
 void
-pool_page_free_nointr(v, sz, mtype)
-	void *v;
-	unsigned long sz;
-	int mtype;
+pool_page_free_nointr(void *v, unsigned long sz, int mtype)
 {
 
 	uvm_km_free_poolpage1(kernel_map, (vaddr_t)v);
@@ -1259,10 +1185,7 @@ pool_page_free_nointr(v, sz, mtype)
  * Release all complete pages that have not been used recently.
  */
 void
-_pool_reclaim(pp, file, line)
-	pool_handle_t pp;
-	const char *file;
-	long line;
+_pool_reclaim(struct pool *pp, const char *file, long line)
 {
 	struct pool_item_header *ph, *phnext;
 	struct timeval curtime;
@@ -1315,8 +1238,7 @@ _pool_reclaim(pp, file, line)
  * Note, we must never be called from an interrupt context.
  */
 void
-pool_drain(arg)
-	void *arg;
+pool_drain(void *arg)
 {
 	struct pool *pp;
 	int s;
@@ -1342,9 +1264,7 @@ pool_drain(arg)
  * Diagnostic helpers.
  */
 void
-pool_print(pp, modif)
-	struct pool *pp;
-	const char *modif;
+pool_print(struct pool *pp, const char *modif)
 {
 	int s;
 
@@ -1361,10 +1281,7 @@ pool_print(pp, modif)
 }
 
 void
-pool_printit(pp, modif, pr)
-	struct pool *pp;
-	const char *modif;
-	void (*pr) __P((const char *, ...));
+pool_printit(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 {
 	int didlock = 0;
 
@@ -1394,10 +1311,7 @@ pool_printit(pp, modif, pr)
 }
 
 static void
-pool_print1(pp, modif, pr)
-	struct pool *pp;
-	const char *modif;
-	void (*pr) __P((const char *, ...));
+pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 {
 	struct pool_item_header *ph;
 #ifdef DIAGNOSTIC
@@ -1471,9 +1385,7 @@ pool_print1(pp, modif, pr)
 }
 
 int
-pool_chk(pp, label)
-	struct pool *pp;
-	char *label;
+pool_chk(struct pool *pp, const char *label)
 {
 	struct pool_item_header *ph;
 	int r = 0;
