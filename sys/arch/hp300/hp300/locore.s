@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.43 1995/10/08 19:30:51 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.44 1995/10/08 20:19:22 thorpej Exp $	*/
 
 #undef STACKCHECK	/* doesn't work any more */
 
@@ -1170,33 +1170,6 @@ _sigcodetrap:
 	trap	#0			| exit(errno)		(2 bytes)
 	.align	2
 _esigcode:
-
-/*
- * Icode is copied out to process 1 to exec init.
- * If the exec fails, process 1 exits.
- */
-	.globl	_icode,_szicode
-	.text
-_icode:
-	clrl	sp@-
-	pea	pc@((argv-.)-2)
-	pea	pc@((init-.)-2)
-	clrl	sp@-
-	moveq	#SYS_execve,d0
-	trap	#0
-	moveq	#SYS_exit,d0
-	trap	#0
-init:
-	.asciz	"/sbin/init"
-	.even
-argv:
-	.long	init+6-_icode		| argv[0] = "init" ("/sbin/init" + 6)
-	.long	eicode-_icode		| argv[1] follows icode after copyout
-	.long	0
-eicode:
-
-_szicode:
-	.long	_szicode-_icode
 
 /*
  * Primitives
