@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.4 2001/10/03 00:04:53 augustss Exp $	*/
+/*	$NetBSD: esl.c,v 1.5 2001/10/04 23:36:10 hubertf Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -131,7 +131,7 @@ struct audio_hw_if esl_hw_if = {
 	NULL,
 	esl_get_props,
 	esl_trigger_output,
-	NULL
+	NULL,
 	NULL,
 };
 
