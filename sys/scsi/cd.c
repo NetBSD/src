@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: cd.c,v 1.24 1994/04/11 02:23:41 mycroft Exp $
+ *      $Id: cd.c,v 1.25 1994/04/11 03:53:58 mycroft Exp $
  */
 
 /*
@@ -86,15 +86,13 @@ struct cd_data {
 	struct device sc_dev;
 	struct dkdevice sc_dk;
 
-	u_int32 flags;
-#define	CDINIT		0x04	/* device has been init'd */
 	struct scsi_link *sc_link;	/* address of scsi low level switch */
 	u_int32 cmdscount;	/* cmds allowed outstanding by board */
 	struct cd_parms {
 		u_int32 blksize;
 		u_long disksize;	/* total number sectors */
 	} params;
-	u_int32 partflags[MAXPARTITIONS];	/* per partition flags */
+	int partflags[MAXPARTITIONS];	/* per partition flags */
 #define CDOPEN	0x01
 	u_int32 openparts;	/* one bit for each open partition */
 	u_int32 xfer_block_wait;
@@ -167,7 +165,6 @@ cdattach(parent, self, aux)
 		    cd->params.disksize, cd->params.blksize);
 	else
 		printf(": drive empty\n");
-	cd->flags |= CDINIT;
 }
 
 /*
@@ -188,10 +185,7 @@ cdopen(dev)
 	if (unit >= cdcd.cd_ndevs)
 		return ENXIO;
 	cd = cdcd.cd_devs[unit];
-	/*
-	 * Make sure the device has been initialised
-	 */
-	if (!cd || !(cd->flags & CDINIT))
+	if (!cd)
 		return ENXIO;
 
 	sc_link = cd->sc_link;

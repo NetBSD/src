@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: uk.c,v 1.5 1994/03/29 04:29:45 mycroft Exp $
+ *      $Id: uk.c,v 1.6 1994/04/11 03:54:21 mycroft Exp $
  */
 
 /* 
@@ -48,8 +48,6 @@
 struct uk_data {
 	struct device sc_dev;
 
-	u_int32 flags;
-#define UKINIT		0x01
 	struct scsi_link *sc_link;	/* all the inter level info */
 };
 
@@ -93,7 +91,6 @@ ukattach(parent, self, aux)
 	sc_link->dev_unit = uk->sc_dev.dv_unit;
 
 	printf(": unknown device\n");
-	uk->flags |= UKINIT;
 }
 
 /*
@@ -112,10 +109,7 @@ ukopen(dev)
 	if (unit >= ukcd.cd_ndevs)
 		return ENXIO;
 	uk = ukcd.cd_devs[unit];
-	/*
-	 * Make sure the device has been initialised
-	 */
-	if (!uk || !(uk->cflags & UKINIT))
+	if (!uk)
 		return ENXIO;
 		
 	sc_link = uk->sc_link;
