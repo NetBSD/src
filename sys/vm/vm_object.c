@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.47 1997/04/07 01:57:14 mycroft Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.48 1997/04/08 22:35:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -1446,7 +1446,8 @@ vm_object_bypass(object)
 	 *
 	 * Since we're not actually saving any space here, it's not worth
 	 * bothering to slog through the backing object's pager looking for
-	 * pages, or waiting for paging to complete.
+	 * pages, or waiting for paging to complete.  Also, we must not bypass
+	 * an object that's currently being collapsed into.
 	 *
 	 * See comments in vm_object_overlay() regarding simultaneous paging in
 	 * the parent object.
