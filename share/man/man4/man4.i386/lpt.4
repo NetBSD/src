@@ -1,4 +1,4 @@
-.\" $NetBSD: lpt.4,v 1.17 2003/01/05 20:58:42 jmcneill Exp $
+.\" $NetBSD: lpt.4,v 1.18 2003/07/01 10:28:15 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -53,7 +53,7 @@ number select various features of the driver.  If no IRQ is
 specified in the kernel configuration, only the polling device may be used.
 .Pp
 .Bl -column "Minor Bit" "Functionxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -offset indent
-.It Sy Pa "Minor Bit"	Function
+.It Sy "Minor Bit"	Function
 .It 128	Use the interruptless driver. (polling)
 .It  64	Do not initialize the device on the port.
 .It  32	Automatic LF on CR.
