@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.17 1996/05/11 16:11:55 mycroft Exp $
+#	$NetBSD: Makefile.atari,v 1.18 1996/06/18 11:12:32 leo Exp $
 
 # Makefile for NetBSD
 #
@@ -97,7 +97,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} $@; ${STRIP} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD
