@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.54 2004/03/28 09:00:57 martti Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.54.2.1 2004/05/30 11:24:23 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1214,9 +1214,11 @@ extern	u_short	ipf_cksum __P((u_short *, int));
 extern	int	copyinptr __P((void *, void *, size_t));
 extern	int	copyoutptr __P((void *, void *, size_t));
 extern	int	fr_inobj __P((void *, void *, int));
+extern	int	fr_inobjsz __P((void *, void *, int, int));
 extern	int	fr_ioctlswitch __P((int, void *, ioctlcmd_t, int));
 extern	int	fr_ipftune __P((ioctlcmd_t, void *));
 extern	int	fr_outobj __P((void *, void *, int));
+extern	int	fr_outobjsz __P((void *, void *, int, int));
 extern	int	fr_send_reset __P((fr_info_t *));
 extern	int	fr_send_icmp_err __P((int, fr_info_t *, int));
 extern	void	fr_resolvdest __P((struct frdest *, int));
