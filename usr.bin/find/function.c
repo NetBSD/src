@@ -1,6 +1,4 @@
-/*	$NetBSD: function.c,v 1.19 1997/01/30 09:17:27 matthias Exp $	*/
-
-/*	$NetBSD: function.c,v 1.19 1997/01/30 09:17:27 matthias Exp $	*/
+/*	$NetBSD: function.c,v 1.20 1997/02/01 09:51:48 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: function.c,v 1.19 1997/01/30 09:17:27 matthias Exp $";
+static char rcsid[] = "$NetBSD: function.c,v 1.20 1997/02/01 09:51:48 matthias Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
