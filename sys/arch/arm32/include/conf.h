@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.4 1998/08/20 06:28:43 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.5 1998/09/06 02:35:22 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
@@ -110,12 +111,18 @@ cdev_decl(md);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
-#ifdef  SHARK
 /* open, close, read, write, ioctl, tty, mmap */
 #define cdev_pc_init(c,n) { \
-        dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-        dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-        dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
+
+/* open, close, ioctl */
+#define cdev_usb_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }
 
 /* open, close, read, ioctl */
 #define cdev_prof_init(c,n) { \
@@ -123,7 +130,20 @@ cdev_decl(md);
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
-#endif
+
+/* open, close, read, write, ioctl, poll */
+#define cdev_usbdev_init(c,n) { \
+      dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+      dev_init(c,n,write), dev_init(c,n,ioctl), \
+      (dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+      (dev_type_mmap((*))) enodev }
+
+/* open, close, ioctl */
+#define cdev_usb_init(c,n) { \
+      dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+      (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+      (dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+      (dev_type_mmap((*))) enodev }
 
 #define mmread  mmrw
 #define mmwrite mmrw
@@ -140,17 +160,20 @@ cdev_decl(kbd);
 cdev_decl(cpu);
 cdev_decl(iic);
 cdev_decl(rtc);
+cdev_decl(fcom);
+cdev_decl(pc);
 #ifdef	OFW
 cdev_decl(ofcons_);
 cdev_decl(ofd);
 cdev_decl(ofrtc);
 #endif
 cdev_decl(scr);
-#ifdef	SHARK
-cdev_decl(pc);
 cdev_decl(prof);
-#endif
 #define ofromread  ofromrw
 #define ofromwrite ofromrw
 cdev_decl(ofrom);
 cdev_decl(joy);
+cdev_decl(usb);
+cdev_decl(uhid);
+cdev_decl(ugen);
+cdev_decl(ulpt);
