@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.11 2000/10/11 11:46:02 tsutsui Exp $
+.\"	$NetBSD: sysinst,v 1.12 2000/10/29 12:32:23 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -183,28 +183,25 @@ in order to enter
 (the in-kernel debugger), and then use the
 .Ic write
 command to alter the variable values:
-.(disp
-db> write pcic_isa_intr_alloc_mask 0x0a00
-pcic_isa_intr_alloc_mask		0xff5f = 0xa00
-db> write pcic_isa_alloc_iobase 0x330
-pcic_isa_alloc_iobase		0x400 = 0x330
-db> write pcic_isa_alloc_iosize 0x0bf
-pcic_isa_alloc_iosize		0xbff = 0xbf
-db> continue
-.disp)
+.Pp
+.Dl db> Ic "write pcic_isa_intr_alloc_mask 0x0a00"
+.Dl pcic_isa_intr_alloc_mask		0xff5f = 0xa00
+.Dl db> Ic "write pcic_isa_alloc_iobase 0x330"
+.Dl pcic_isa_alloc_iobase		0x400 = 0x330
+.Dl db> Ic "write pcic_isa_alloc_iosize 0x0bf"
+.Dl pcic_isa_alloc_iosize		0xbff = 0xbf
+.Dl db> Ic "continue"
 .Pp
 After installation, this value can be permanently written to the kernel image
 directly with:
 .Pp
-.(disp
-# cp /netbsd /netbsd.bak
-# gdb --write /netbsd
-(gdb) set pcic_isa_intr_alloc_mask=0x0a00
-(gdb) set pcic_isa_alloc_iobase=0x330
-(gdb) set pcic_isa_alloc_iosize=0x0bf
-(gdb) quit
-#
-.disp)
+.Dl # Ic "cp /netbsd /netbsd.bak"
+.Dl # Ic "gdb --write /netbsd"
+.Dl (gdb) Ic "set pcic_isa_intr_alloc_mask=0x0a00"
+.Dl (gdb) Ic "set pcic_isa_alloc_iobase=0x330"
+.Dl (gdb) Ic "set pcic_isa_alloc_iosize=0x0bf"
+.Dl (gdb) Ic "quit"
+.Dl #
 .Pp
 or you could specify these value when configuring your kernel, e.g.:
 .(disp
@@ -239,7 +236,8 @@ installation. Sometimes, questions will be asked and in many cases
 the default answer will be displayed in brackets
 .Pq Dq \&[\ ]
 after the question. If you wish to stop the installation, you may press
-Control-C at any time, but if you do, you'll have to begin the installation
+.Key CONTROL-C
+at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 .It
 .Em Quick install
@@ -295,25 +293,42 @@ the X window system as well, you will need at least
 .It
 Creating the boot floppies.
 You can create the floppies needed for installation
-under DOS or Windows. Supposing your 1.44 MB floppy
+under
+.Tn MS-DOS
+or
+.Tn Windows .
+Supposing your 1.44 MB floppy
 drive is drive A:, and your CD is drive E: do the
-following from an MS-DOS command prompt:
-.D1 Ic "\&e:
-.D1 Ic "\&cd \eNetBSD-\*V\ei386\einstallation\emisc
-.D1 Ic "\&rawrite
+following from an
+.Tn MS-DOS
+command prompt:
+.Pp
+.Dl Ic "e:"
+.Dl Ic "cd \eNetBSD-\*V\ei386\einstallation\emisc"
+.Dl Ic "rawrite"
+.Pp
 When asked for a source filename, answer
-.if r_i386 .D1 Ic \&..\efloppy\eboot1.fs for the first diskette and
-.if r_i386 .D1 Ic \&..\efloppy\eboot2.fs for the second diskette
-.if r_alpha .D1 Em \&(...alpha installation root) Ns Ic \efloppy\edisk1of2
-.if r_news68k .D1 Ic \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
+.Pp
+.if r_i386 \{\
+.Dl Pa \&..\efloppy\eboot1.fs
+for the first diskette and
+.Dl Pa \&..\efloppy\eboot2.fs
+for the second diskette.
+.\}
+.if r_alpha .Dl Em \&(...alpha installation root) Ns Pa \efloppy\edisk1of2
+.if r_news68k .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
+.Pp
 When asked for a destination drive answer
-.D1 Ic a
+.Sq Ic a .
 .It
 To create a bootfloppy under
 .Nx
-or other UNIX-like system, you
-would type something like:
-.D1 Ic "dd if=.../boot1.fs bs=18k of=/dev/rfd0a
+or other
+.Ul
+system, you would type something like:
+.Pp
+.Dl # Ic "dd if=.../boot1.fs bs=18k of=/dev/rfd0a"
+.Pp
 .\} \" \n[alpha]:\n[i386]:\[news68k]
 .It
 The Quick Installation
@@ -332,11 +347,19 @@ boot floppy you just created.
 .ie r_i386 Restart
 .el Boot
 the computer.
-.if r_alpha Type
-.if r_alpha .Dl \&\*>\*>\*> Ic "B DVA0
+.if r_alpha \{\
+Type
+.Pp
+.Dl \&\*>\*>\*> Ic "B DVA0"
+.Pp
+.\}
 .if r_i386 When prompted, insert the second boot floppy.
-.if r_news68k Type
-.if r_news68k .Dl \&NEWS\*> Ic "bo fh
+.if r_news68k \{\
+Type
+.Pp
+.Dl \&NEWS\*> Ic "bo fh"
+.Pp
+.\}
 The main menu will be displayed.
 .\} \" ! r_pmax
 .It
@@ -369,19 +392,19 @@ will now boot. You should log in as
 .Li root ,
 and set a password for that account. You are also
 advised to edit the file
-.Pa /etc/rc.conf No to match your system needs.
+.Pa /etc/rc.conf
+to match your system needs.
 .It
 Your installation is now complete.
 .It
 For configuring the X window system, if installed, see the files in
-.Dl /usr/X11R6/lib/X11/doc .
+.Pa /usr/X11R6/lib/X11/doc .
 Further information can be found on
 .Lk http://www.xfree86.org/
 .bullet)
 .bullet)
 .It
-.Em Booting
-.Nx
+.Em Booting NetBSD
 .
 .
 .ie r_pmax \{\
@@ -461,7 +484,9 @@ Earlier version of
 the
 .Nx
 install floppies mounted the floppy as the system's
-root partition, but the new installation floppies use a
+root partition
+.Pq Pa / ,
+but the new installation floppies use a
 ramdisk file system and are no longer dependent on the floppy
 once it has booted.
 .\}
@@ -527,16 +552,16 @@ if any, and will give you a chance to change them.
 .\}
 .Pp
 Next, depending on whether you are using a
-.Li Pf wd Em x
+.Li wd Ns Ar X
 or
-.Li Pf sd Em x
+.Li sd Ns Ar X
 disk,
 you will either be asked for the type of disk
-.Pq Li Pf wd Em x
+.Pq Li wd Ns Ar X
 you are
 using or you will be asked if you want to specify a fake geometry
 for your SCSI disk
-.Pq Li Pf sd Em x .
+.Pq Li sd Ns Ar X .
 The types of disk are be
 .Tn IDE, ST-506
 or
@@ -552,7 +577,7 @@ that it does, reply affirmatively. Otherwise, the install
 program will automatically reserve space for bad144 tables.
 .\}
 .It
-.Em Partitioning the disk.
+.Em Partitioning the disk
 .(bullet
 Which portion of the disk to use.
 .Pp
@@ -568,12 +593,10 @@ If you want to use the entire disk for
 .Nx ,
 you can skip
 the following section and go to
-.Em Editing the
-.Nx
-.Em disklabel .
+.Em "Editing the NetBSD disklabel" .
 .if r_i386 \{\
 .It
-Editing the Master Boot Record.
+.Em "Editing the Master Boot Record"
 .Pp
 First, you will be prompted to specify the units of size
 that you want to express the sizes of the partitions in.
@@ -610,9 +633,7 @@ disklabel.
 .Pp
 .\}
 .It
-.Em Editing the
-.Nx
-.Em disklabel .
+.Em Editing the NetBSD disklabel
 .Pp
 The partition table of the
 .Nx
@@ -644,61 +665,50 @@ A swap partition has a special type called
 .
 .ie r_i386 \{\
 .
-.
 You can also specify a partition as type
-.Sy msdos .
+.Sy MSDOS .
 This is useful if you share the disk with
 .Tn MS-DOS
-or Windows95;
+or
+.Tn Windows ;
 .Nx
 is able to access the files on these partitions.
-You can use the values from the MBR for the MS-DOS part
-of the disk to specify the partition of type
-.Sy msdos
+You can use the values from the MBR for the
+.Tn MS-DOS
+part of the disk to specify the partition of type
+.Sy MSDOS
 (you don't have to do this now, you can always re-edit
 the disklabel to add this once you have installed
 .Nx ).
 .Pp
-Some partitions in the disklabel have a fixed purpose.
-Partition
-.Sy \&a
-is always the root partition,
-.Sy \&b
-is the swap partition,
-.Sy \&c
-is the entire
-.Nx
-part of the disk, and
-.Sy \&d
-is the whole disk. Partitions
-.Sy \&e-h
-are available
-for other use. Traditionally,
-.Sy \&e
-is the partition mounted on the
-.Pa /usr
-directory, but this is historical practice, not a fixed value.
-.
-.
+.ds usrpart e
 .\}
 .el \{\
-.
-.
-.Pp
-Some partitions in the disklabel have a fixed purpose. Partition
-.Sy a No is always the root partition,
-.Sy b No is the swap partition, and
-.Sy c No is the whole disk. Partitions
-.Sy \&e-h
-are available for other use. Traditionally,
-.Sy \&d
-is the partition mounted on the
-.Pa /usr
-directory, but this is historical practice, not a fixed value.
-.
-.
+.ds usrpart d
 .\}
-.
+Some partitions in the disklabel have a fixed purpose.
+.(tag 6n -offset indent
+.It Li a
+Root partition.
+.Pq Pa / ,
+.It Li b
+Swap partition.
+.It Li c
+.if r_i386 \{\
+The
+.Nx
+portion of the disk.
+.It Li d
+.\}
+The entire disk.
+.It Li \*[usrpart]-h
+Available for other use.
+Traditionally,
+.Li \*[usrpart]
+is the partition mounted on
+.Pa /usr ,
+but this is historical practice and not a fixed value.
+.tag)
 .
 .Pp
 You will then be asked to name your disk's disklabel. The
@@ -713,7 +723,7 @@ need to remember this name.
 .It
 .Em Preparing your hard disk
 .Pp
-.Em You\ are\ now\ at\ the\ point\ of\ no\ return .
+.Em "You are now at the point of no return".
 Nothing has been
 written to your disk yet, but if you confirm that you want to
 install
@@ -724,7 +734,7 @@ sure you want to proceed, enter
 at the prompt.
 .Pp
 The install program will now label your disk and make the file
-systems you specified. The filesystems will be initialized to
+systems you specified. The file systems will be initialized to
 contain
 .Nx
 bootstrapping binaries and configuration files.
@@ -751,26 +761,30 @@ hard drive yet at this point.
 .Note)
 .\}
 .It
-.Em Getting the distribution sets.
+.Em Getting the distribution sets
 .if r_i386 \{\
 .(pcmcia
 .
-Load a kernel tar file (i.e. the kern.tgz set file)
+Load a kernel tar file (i.e. the
+.Pa kern.tgz
+set file)
 on to your hard disk, for example by mounting the
-hard disk first, copying the kern.tgz file from
-floppy and unpacking it. Example:
-.(disp
-mount /dev/wd0a /mnt
-cd /mnt
-\*<repeat following 3 steps until all kern.* files are there\*>
-mount -t msdos /dev/fd0a /mnt2
-cp /mnt2/kern.* .
-umount /mnt2
-
-cat kern.* | tar vxzf -
-.disp)
+hard disk first, copying the
+.Pa kern.tgz
+file from floppy and unpacking it. Example:
 .Pp
-Then halt the machine using the 'halt' command. Power
+.Dl # Ic "mount /dev/wd0a /mnt"
+.Dl # Ic "cd /mnt"
+.Pp
+.D1 Em "repeat the following 3 steps until all kern.* files are there"
+.Dl # Ic "mount -t msdos /dev/fd0a /mnt2"
+.Dl # Ic "cp /mnt2/kern.* ."
+.Dl # Ic "umount /mnt2"
+.Dl # Ic "cat kern.* \&| tar zxpvf -"
+.Pp
+Then halt the machine using the
+.Ic halt
+command. Power
 the machine down, and re-insert all the
 .Tn PCMCIA
 devices.
@@ -781,7 +795,7 @@ you will
 be presented with the main
 .Ic sysinst
 menu. Choose the
-option to re-install sets. Wait for the filesystem
+option to re-install sets. Wait for the file system
 checks that it will do to finish, and then proceed
 as described below.
 .pcmcia)
@@ -815,8 +829,9 @@ the install procedure.
 will do this for you, asking you
 to provide some data, like IP number, hostname, etc. If you
 do not have name service set up for the machine that you
-are installing on, you can just press return in answer
-to these questions, and DNS will not be used.
+are installing on, you can just press
+.Key RETURN
+in answer to these questions, and DNS will not be used.
 .Pp
 You will also be asked to specify the host that you want
 to transfer the sets from, the directory on that host,
@@ -839,8 +854,9 @@ the install procedure.
 will do this for you, asking you
 to provide some data, like IP number, hostname, etc. If you
 do not have name service set up for the machine that you
-are installing on, you can just press return in answer
-to these questions, and DNS will not be used.
+are installing on, you can just press
+.Key RETURN
+in answer to these questions, and DNS will not be used.
 .Pp
 You will also be asked to specify the host that you want
 to transfer the sets from, and the directory on that host
@@ -869,22 +885,23 @@ extraction of the sets.
 .Pp
 Because the installation sets are too big to fit on one floppy,
 the floppies are expected to be filled with the split set
-files. The floppies are expected to be in MS-DOS
+files. The floppies are expected to be in
+.Tn MS-DOS
 format. You will be asked for a directory where the sets
 should be reassembled. Then you will be prompted to insert
 the floppies containing the split sets. This process
 will continue until all the sets have been loaded from floppy.
 .\}
 .It
-.Em Installation from an unmounted filesystem
+.Em Installation from an unmounted file system
 .Pp
-In order to install from a local filesystem, you will
-need to specify the device that the filesystem resides
+In order to install from a local file system, you will
+need to specify the device that the file system resides
 on
 .ie r_pmax .Pq for example Li rz1e
 .el .Pq for example Li wd1e
-the type of the filesystem,
-and the directory on the specified filesystem where the sets are located.
+the type of the file system,
+and the directory on the specified file system where the sets are located.
 .Ic sysinst
 will then check if it
 can indeed access the sets at that location.
@@ -893,7 +910,7 @@ can indeed access the sets at that location.
 .Pp
 This option assumes that you have already done some preparation
 yourself. The sets should be located in a directory on a
-filesystem that is already accessible.
+file system that is already accessible.
 .Ic sysinst
 will ask you
 for the name of this directory.
@@ -908,7 +925,7 @@ sets (a full installation), or only extract sets that
 you have selected. In the latter case you will be shown the
 currently selected sets, and given the opportunity to select
 the sets you want. Some sets always need to be installed
-.Pq Ic kern, base No and Ic etc
+.Pq Sy kern, base No and Sy etc
 they will not be shown in this selection menu.
 .Pp
 Before extraction begins, you can elect to watch the files being
@@ -922,7 +939,7 @@ configured networking, you will be asked if you want to
 use this configuration for normal operation. If so, these
 values will be installed in the network configuration files.
 .It
-.Em Finalizing your installation.
+.Em Finalizing your installation
 .Pp
 Congratulations, you have successfully installed
 .Nx \*V .

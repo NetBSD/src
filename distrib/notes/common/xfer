@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.7 2000/10/11 11:47:46 tsutsui Exp $
+.\"	$NetBSD: xfer,v 1.8 2000/10/29 12:32:24 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,13 +32,12 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .
-.\" ===== MD instructions on setting up boot media
-.\"
+.\" ---------- MD instructions on setting up boot media
 .
 .if r_arm32 \{\
 You will need to have an installation kernel and possibly a boot application.
 See
-.Li arm32/ Ns Ar platform Ns Li /prep
+.Pa arm32/ Ns Ar platform Ns Pa /prep
 for details.
 .Pp
 .\} \" r_arm32
@@ -66,7 +65,9 @@ machines. this install image does not have drivers for PCI, PCMCIA,
 EISA or SCSI (i.e. ISA-only), but can be used on machines with only
 4 MB of RAM.
 .Pp
-If you are using a UN*X-like system to write the floppy images to
+If you are using a
+.Ul
+system to write the floppy images to
 disks, you should use the
 .Xr dd
 command to copy the file system image(s)
@@ -79,9 +80,9 @@ system, and a comprehensive list of the possibilities is beyond the
 scope of this document.
 .Pp
 If you are using
-.Tn DOS
+.Tn MS-DOS
 to write the floppy image(s) to floppy disk, you should use the
-.Li rawrite
+.Ic rawrite
 utility, provided in the
 .Pa i386/utilities
 directory of the
@@ -104,7 +105,9 @@ software to install
 .Nx
 system.
 .Pp
-If you are using a UN*X-like system (such as
+If you are using a
+.Ul
+system (such as
 .Tn NEWS-OS
 or other
 .Nx
@@ -120,10 +123,10 @@ system, and a comprehensive list of the possibilities is beyond the
 scope of this document.
 .Pp
 If you have an i386 machine which runs
-.Tn DOS
+.Tn MS-DOS
 and use them to write the floppy image(s) to floppy disk,
 you can use the
-.Li rawrite
+.Ic rawrite
 utility, provided in the
 .Pa i386/installation/misc
 directory of the
@@ -186,7 +189,9 @@ disk to the target installation system, and then boot the miniroot.
 .\} \" r_pmax
 .
 .if r_vax \{\
-Installing on a "bare" machine requires some bootable
+Installing on a
+.Sq bare
+machine requires some bootable
 device; either a tape or floppy drive or a NFS server together
 with a machine that can act as a MOP loader, such as another
 machine running
@@ -208,7 +213,8 @@ Use
 .Pa loadbsd.x
 utility to boot
 .Nx
-from Human68k
+from
+.Tn Human68k
 .It
 Create a boot floppy which contains the install kernel
 .bullet)
@@ -216,11 +222,11 @@ Create a boot floppy which contains the install kernel
 When you chose the first method, you have to put the install kernel
 .Pa netbsdsi
 (for the standard
-.Dq sysinst
+.Ic sysinst
 installer) or
 .Pa netbsd
 (for the small
-.Dq script
+.Ic script
 installer) and
 .Pa loadbsd.x
 utility.  These files can be found in
@@ -231,20 +237,26 @@ distribution.
 The difference between the two installer is described below.
 .Pp
 To invoke the installer, just type
-.D1 Ic loadbsd.x netbsdsi
+.Pp
+.Dl Ic "loadbsd.x netbsdsi"
+.Pp
 or
-.D1 Ic loadbsd.x netbsd
-from Human68k command line.
+.Pp
+.Dl Ic "loadbsd.x netbsd"
+.Pp
+from the
+.Tn Human68k
+command line.
 .Pp
 When you chose the second method, you have to create the boot floppy
 from the floppy image
 .Pa sysinst.fs
 (for the standard
-.Dq sysinst
+.Ic sysinst
 installer) or
 .Pa boot.fs
 (for the small
-.Dq script
+.Ic script
 installer).
 The image files can be found in
 .Pa installation/floppy
@@ -253,19 +265,24 @@ directory of the
 distribution.
 The difference between the two installer is described below.
 .Pp
-If you are using a UN*X-like system to write the floppy image to
+If you are using a
+.Ul
+system to write the floppy image to
 disks, you should use the
 .Pa dd
 command to copy the file system images (.fs files) directly to the raw
-floppy disks. It is suggested that you read the dd(1) manual page or
+floppy disks. It is suggested that you read the
+.Xr dd 1
+manual page or
 ask your system administrator to determine the correct set of
 arguments to use; it will be slightly different from system to system,
 and a comprehensive list of the possibilities is beyond the scope of
 this document.
 .Pp
-If you are using Human68k to write the floppy images to disks, you
-should use the
-.Pa rawrite
+If you are using
+.Tn Human68k
+to write the floppy images to disks, you should use the
+.Ic rawrite
 utility, provided in the
 .Pa installation/misc
 directory of the
@@ -289,49 +306,46 @@ the drive after the system has booted.
 XXXX
 ..
 .
-.\"
-.\" ===== MI instructions for getting distribution off installation medium
-.\"
+.\" --------- MI instructions for getting distribution off installation medium
+.
 Installation is supported from several media types, including:
 .Pp
 .(bullet -offset indent -compact
 .
 .if r_amiga \{\
-AmigaDOS
+.Tn AmigaDOS
 .It
 .\} \" r_amiga
 .
 CD-ROM
-.It
 .
-.if !\n[news68k]:\n[pmax]:\n[vax]:\n[x68k] \{\
-DOS floppy
+.if !\n[news68k]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k] \{\
 .It
-.\} \" ! \n[news68k]:\n[pmax]:\n[vax]:\n[x68k]
+.Tn MS-DOS No floppy
+.\} \" ! \n[news68k]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k]
 .
+.It
 FTP
-.It
 .
-.if r_x68k \{\
+.if \n[x68k] \{\
+.It
 Magneto-Optical (M-O) or other removable SCSI disk
-.It
-.\} \" r_x68k
+.\} \" \n[x68k]
 .
+.It
 Remote NFS partition
-.if !r_news68k \{\
-.It
-.\} \" ! r_news68k
 .
-.if !r_news68k \{\
+.if !\n[macppc]:\n[news68k] \{\
+.It
 Tape
-.It
-.\} \" ! r_news68k
+.\} \" ! \n[macppc]:\n[news68k]
 .
-.if !r_news68k \{\
+.if !\n[macppc]:\n[news68k] \{\
+.It
 Existing
 .Nx
 partitions, if performing an upgrade
-.\} \" ! r_news68k
+.\} \" ! \n[macppc]:\n[news68k]
 .
 .bullet)
 .Pp
@@ -340,15 +354,18 @@ The steps necessary to prepare the distribution sets for installation
 depend upon which installation medium you choose.
 The steps for the various media are outlined below.
 .
-.(tag DOS\ floppy
+.(tag MS-DOS\ floppy
 .
 .if r_amiga \{\
-.It Em AmigaDOS
+.It Em AmigaDOS partition
 To install
 .Nx
-from an AmigaDOS partition, you need to get the
+from an
+.Tn AmigaDOS
+partition, you need to get the
 .Nx
-distribution sets you wish to install on your system on to an AmigaDOS
+distribution sets you wish to install on your system on to an
+.Tn AmigaDOS
 partition.
 All of the
 .Pa set_name.xx
@@ -372,7 +389,8 @@ supported by
 (refer to the supported hardware list) or an ATAPI cd-rom connected to the
 A1200 or A4000 internal IDE connector.
 If it is a SCSI CD-ROM on a non-supported SCSI bus like Blizzard-3 SCSI
-or Apollo SCSI you must first copy the distribution sets to an AmigaDOS
+or Apollo SCSI you must first copy the distribution sets to an
+.Tn AmigaDOS
 partition as described above.
 .Pp
 If your SCSI CD-ROM is connected to a supported SCSI host adapter,
@@ -384,9 +402,11 @@ Find out where the distribution set files are on the CD-ROM.
 .Pp
 Proceed to the instruction on installation.
 .
-.if !\n[news68k]:\n[pmax]:\n[vax]:\n[x68k] \{\
-.It Em DOS floppy
-Count the number of "set_name.xx" files that make up the
+.if !\n[news68k]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k] \{\
+.It Em MS-DOS floppy
+Count the number of
+.Pa set_name. Ns Ar xx
+files that make up the
 distribution sets you want to install or upgrade.
 .ie r_i386 \{\
 You will need one fifth that number of 1.2 MB floppies, or one sixth that
@@ -399,36 +419,38 @@ You will need one sixth that number of 1.44 MB floppies.
 \} \" ! r_i386
 .Pp
 Format all of the floppies with
-.Tn DOS .
+.Tn MS-DOS .
 Do
 .Em not
 make any of them bootable
-.Tn DOS
+.Tn MS-DOS
 floppies, i.e. don't use
 .Li format /s
 to format them.
 (If the floppies are bootable, then the
-.Tn DOS
+.Tn MS-DOS
 system files that make them bootable will take up some space, and you
 won't be able to fit the distribution set parts on the disks.)
 If you're using floppies that are formatted for
-.Tn DOS
+.Tn MS-DOS
 by their manufacturers, they probably aren't bootable, and you can use
 them out of the box.
 .Pp
-Place all of the "set_name.xx" files on the
-.Tn DOS
+Place all of the
+.Pa "set_name." Ns Ar xx
+files on the
+.Tn MS-DOS
 disks.
 .Pp
 Once you have the files on
-.Tn DOS
+.Tn MS-DOS
 disks, you can proceed to the next step in the installation or upgrade process.
 If you're installing
 .Nx
 from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to the
 section on upgrading.
-.\} \" ! \n[news68k]:\n[pmax]:\n[vax]:\n[x68k]
+.\} \" ! \n[news68k]:\n[macppc]:\n[pmax]:\n[vax]:\n[x68k]
 .
 .It Em FTP
 The preparations for this installation/upgrade method are
@@ -464,32 +486,42 @@ If you're upgrading an existing installation, go directly to
 the section on upgrading.
 .(Note
 This method of installation is recommended only for those already familiar
-with using BSD network configuration and management commands.
+with using
+.Bx
+network configuration and management commands.
 If you aren't, this documentation should help, but is not intended to
 be all-encompassing.
 .Note)
 .
-.if r_x68k \{\
+.if \n[x68k] \{\
 .It Em M-O disk
 To install
 .Nx
 from a device such as a removable SCSI disk or a magneto-optical disk,
 the media
 .Em must
-be of the IBM
+be of the
+.Tn IBM
 .Em Super-floppy
 format.
-The Human68k format is not recognized by this release of the
+The
+.Tn Human68k
+format is not recognized by this release of the
 .Nx*M .
 If you have a
-.Tn DOS
-or MS-Windows
+.Tn MS-DOS
+or
+.Tn Windows
 machine with an M-O drive connected, use it.
-If you don't, and if you have a program to handle IBM format M-O
-for Human68k, copy all the files in the subdirectory
+If you don't, and if you have a program to handle
+.Tn IBM
+format M-O for
+.Tn Human68k ,
+copy all the files in the subdirectory
 .Pa x68k/binaries
-and CHANGE THEIR NAMES TO UPPER CASE.
-.\} \" r_x68k
+and
+.Em "change their names to upper case".
+.\} \" \n[x68k]
 .
 .It Em NFS
 Place the
@@ -526,29 +558,41 @@ If you're upgrading an existing installation, go directly to the
 section on upgrading.
 .(Note
 This method of installation is recommended only for those already
-familiar with using BSD network configuration and management commands.
+familiar with using
+.Bx
+network configuration and management commands.
 If you aren't, this documentation should help, but is not intended to
 be all-encompassing.
 .Note)
 .
-.if !r_news68k \{\
+.if !\n[macppc]:\n[news68k] \{\
 .It Em Tape
 To install
 .Nx
 from a tape, you need to make a tape that
-contains the distribution set files, in "tar" format.
+contains the distribution set files, in
+.Sq tar
+format.
+.if \n[pmax]:\n[vax] \{\
 .(Note
 the tape devices with which
 .Nx*M
-is believed to work is the DEC
+is believed to work is the
+.Tn DEC
 TK-50. This is a very slow device.  Installation via disk or network is
 recommended if at all possible.
 .Note)
+.\} \" \n[pmax]:\n[vax]
 .Pp
-If you're making the tape on a UN*X-like system, the easiest way
+If you're making the tape on a
+.Ul
+system, the easiest way
 to do so is probably something like:
-.D1 Ic tar -cf Ar tape_device dist_directories
-.No where Ar tape_device
+.Pp
+.Dl # Ic "tar -cf Ar tape_device dist_directories"
+.Pp
+where
+.Ar tape_device
 is the name of the tape device that
 describes the tape drive you're using; possibly
 .Pa /dev/rst0 ,
@@ -564,10 +608,10 @@ For instance, to put the
 distributions on tape (in
 order to do the absolute minimum installation to a new disk),
 you would do the following:
-.D1 Ic cd \&.../NetBSD-\*V         # the top of the tree
-.D1 Ic cd \*M/binary
-And then:\ \~
-.D1 Ic tar -cf Ar tape_device misc etc kern
+.Pp
+.Dl # Ic "cd \&.../NetBSD-\*V"
+.Dl # Ic "cd \*M/binary"
+.Dl # Ic "tar -cf Ar tape_device misc etc kern"
 .Pp
 .(Note
 You still need to fill in
@@ -581,9 +625,9 @@ If you're installing
 from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to the section
 on upgrading.
-.\} \" ! r_news68k
+.\} \" ! \n[macppc]:\n[news68k]
 .
-.if !r_news68k \{\
+.if !\n[macppc]:\n[news68k] \{\
 .It Em Upgrade
 If you are upgrading
 .Nx ,
@@ -596,9 +640,15 @@ To do that, you must do the following:
 Place the distribution sets you wish to upgrade somewhere in
 your current file system tree.
 .if !r_pmax \{\
-Please note that the /dev on
-the floppy used for upgrades only knows about wd0, wd1, sd0,
-sd1 and sd2.
+Please note that the
+.Pa /dev
+on the floppy used for upgrades only knows about
+.Li wd0 ,
+.Li wd1 ,
+.Li sd0 ,
+.Li sd1 ,
+and
+.Li sd2 .
 If you have more than two IDE drives or more than three SCSI drives, you
 should take care not to place the sets on the high numbered drives.
 .\} \" ! r_pmax
@@ -621,6 +671,6 @@ that you should review and update by hand.
 .Pp
 Once you have done this, you can proceed to the next step in
 the upgrade process, actually upgrading your system.
-.\} \" ! r_news68k
+.\} \" ! \n[macppc]:\n[news68k]
 .
 .tag)
