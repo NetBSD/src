@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.41 2002/02/03 19:58:15 pk Exp $	*/
+/*	$NetBSD: make.c,v 1.42 2002/02/07 16:48:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.41 2002/02/03 19:58:15 pk Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.42 2002/02/07 16:48:23 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.41 2002/02/03 19:58:15 pk Exp $");
+__RCSID("$NetBSD: make.c,v 1.42 2002/02/07 16:48:23 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -330,7 +330,7 @@ MakeAddChild (gnp, lp)
  *
  * Side Effects:
  *	The path and mtime of the node and the cmtime of the parent are
- *	updated
+ *	updated; the unmade children count of the parent is decremented.
  *-----------------------------------------------------------------------
  */
 static int
@@ -343,7 +343,7 @@ MakeFindChild (gnp, pgnp)
 
     (void) Dir_MTime(gn);
     Make_TimeStamp(pgn, gn);
-    gn->made = UPTODATE;
+    pgn->unmade--;
 
     return (0);
 }
@@ -539,13 +539,15 @@ Make_Recheck (gn)
     if (NoExecute(gn) ||
 	(gn->type & OP_SAVE_CMDS) || mtime == 0) {
 	if (DEBUG(MAKE)) {
-	    printf("update time to now: %s\n", Targ_FmtTime(gn->mtime));
+	    printf(" recheck(%s): update time to now: %s\n",
+		   gn->name, Targ_FmtTime(gn->mtime));
 	}
 	gn->mtime = now;
     }
     else {
 	if (DEBUG(MAKE)) {
-	    printf("current update time: %s\n", Targ_FmtTime(gn->mtime));
+	    printf(" recheck(%s): current update time: %s\n",
+		   gn->name, Targ_FmtTime(gn->mtime));
 	}
     }
 #endif
@@ -608,7 +610,12 @@ Make_Update (cgn)
 	    pgn = (GNode *)Lst_Datum (ln);
 	    if (mtime == 0)
 		pgn->flags |= FORCE;
-	    if (pgn->flags & REMAKE) {
+	    /*
+	     * If the parent has the .MADE attribute, it has already
+	     * been queued on the `toBeMade' list in Make_ExpandUse()
+	     * and its unmade children counter is zero.
+	     */
+	    if (pgn->flags & REMAKE && (pgn->type & OP_MADE) == 0) {
 		pgn->unmade -= 1;
 
 		if ( ! (cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE))) {
@@ -1010,15 +1017,21 @@ Make_ExpandUse (targs)
 	    Var_Set (TARGET, gn->path ? gn->path : gn->name, gn, 0);
 	    Lst_ForEach (gn->children, MakeUnmark, (ClientData)gn);
 	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
+
 	    if ((gn->type & OP_MADE) == 0)
 		Suff_FindDeps (gn);
+	    else {
+		/* Pretend we made all this node's children */
+		Lst_ForEach (gn->children, MakeFindChild, (ClientData)gn);
+		if (gn->unmade != 0)
+			printf("Warning: %s still has %d unmade children\n",
+				gn->name, gn->unmade);
+	    }
 
-	    if (gn->unmade != 0 && (gn->type & OP_MADE) == 0) {
+	    if (gn->unmade != 0) {
 		Lst_ForEach (gn->children, MakeAddChild, (ClientData)examine);
 	    } else {
 		(void)Lst_EnQueue (ntargs, (ClientData)gn);
-		if (gn->type & OP_MADE)
-		    Lst_ForEach (gn->children, MakeFindChild, (ClientData)gn);
 	    }
 	}
     }
