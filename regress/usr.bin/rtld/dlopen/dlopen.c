@@ -1,4 +1,4 @@
-/*	$NetBSD: dlopen.c,v 1.2 2002/02/21 07:38:21 itojun Exp $	*/
+/*	$NetBSD: dlopen.c,v 1.3 2003/08/12 16:15:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ main(int argc, char **argv)
 {
 	void *p;
 
-	p = dlopen(argv[1], DL_LAZY);
+	p = dlopen(argv[1], RTLD_LAZY);
 	if (p)
 		printf("OK\n");
 	else
