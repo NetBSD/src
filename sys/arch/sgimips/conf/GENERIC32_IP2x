@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.6 2003/12/15 12:48:37 sekiya Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.7 2004/01/02 01:39:25 sekiya Exp $
 #
 # Indy
 
@@ -8,7 +8,7 @@ makeoptions	TEXTADDR=0x88069000	# Indy
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.6 $"
+#ident		"GENERIC-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -193,8 +193,12 @@ ioc0		at mainbus0 addr 0x1fbd9800
 # As always, the zs chip is wired funny, so channel 1 is actually the
 # first serial port and channel 0 is the second.
 #
-zsc* 		at hpc0 offset ?
-zstty*		at zsc? channel ?
+zsc0 		at hpc0 offset ?
+zstty*		at zsc0 channel ?
+
+zsc1 		at hpc0 offset ?	# IP20 keyboard/mouse
+#zskbd0		at zs1 channel 0
+#zsms0		at zs1 channel 1
 
 scsibus*	at scsi?		# HPC SCSI
 audio*          at audiobus?
