@@ -51,13 +51,16 @@
 #include "systm.h"
 #include "malloc.h"
 
-#include "../include/cpu.h"
-
+#include "vm/vm.h"
 #include "vm/vm_param.h"
 #include "vm/lock.h"
 #include "vm/vm_statistics.h"
 #include "vm/pmap.h"
 #include "vm/vm_prot.h"
+
+#include "machine/cpu.h"
+
+extern caddr_t vmmap;
 
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
@@ -70,7 +73,6 @@ mmrw(dev, uio, flags)
 	register struct iovec *iov;
 	int error = 0;
 	caddr_t zbuf = NULL;
-	extern u_int lowram;
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -86,7 +88,7 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
-#ifndef DEBUG
+#ifdef notdef
 			/* allow reads only in RAM (except for DEBUG) */
 			if (v >= 0xFFFFFFFC || v < lowram)
 				return (EFAULT);

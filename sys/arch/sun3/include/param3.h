@@ -172,6 +172,7 @@
 #define splhigh()       spl7()
 #define splsched()      spl7()
 
+#define splnone()       spl0()
 /* watch out for side effects */
 #define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
 
