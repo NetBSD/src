@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.97 2002/07/30 07:40:17 soren Exp $	*/
+/*	$NetBSD: mount.h,v 1.98 2002/09/21 18:06:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -228,6 +228,7 @@ struct mount {
 #define	MNT_DELEXPORT	0x00020000	/* delete export host lists */
 #define	MNT_RELOAD	0x00040000	/* reload filesystem data */
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
+#define	MNT_GETARGS	0x00400000	/* retrieve file system specific args */
 
 #define __MNT_EXTERNAL_FLAGS \
 	{ MNT_UPDATE,		1,	"being updated" }, \
@@ -461,6 +462,7 @@ struct nfs_public {
 struct	mount *vfs_getvfs __P((fsid_t *));    /* return vfs given fsid */
 int	vfs_export			    /* process mount export info */
 	  __P((struct mount *, struct netexport *, struct export_args *));
+#define	vfs_showexport(a, b, c)	(void)memset((b), 0, sizeof(*(b)))
 struct	netcred *vfs_export_lookup	    /* lookup host in fs export list */
 	  __P((struct mount *, struct netexport *, struct mbuf *));
 int	vfs_setpublicfs			    /* set publicly exported fs */
