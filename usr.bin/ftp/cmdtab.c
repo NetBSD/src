@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.36 2000/07/18 07:16:53 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.37 2000/07/28 11:45:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.36 2000/07/18 07:16:53 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.37 2000/07/28 11:45:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,6 @@ struct cmd cmdtab[] = {
 	{ "nmap",	nmaphelp,	0, 0, 1, CMPL0		setnmap },
 	{ "ntrans",	ntranshelp,	0, 0, 1, CMPL0		setntrans },
 	{ "open",	connecthelp,	0, 0, 1, CMPL0		setpeer },
-	{ "opts",	optshelp,	0, 1, 1, CMPL0		opts },
 	{ "page",	pagehelp,	1, 1, 1, CMPL(r)	page },
 	{ "passive",	passivehelp,	0, 0, 0, CMPL0		setpassive },
 	{ "pdir",	plshelp,	1, 1, 1, CMPL(r)	ls },
@@ -256,6 +255,7 @@ struct cmd cmdtab[] = {
 	{ "rcvbuf",	xferbufhelp,	0, 0, 0, CMPL0		setxferbuf },
 	{ "recv",	receivehelp,	1, 1, 1, CMPL(rl)	get },
 	{ "reget",	regethelp,	1, 1, 1, CMPL(rl)	reget },
+	{ "remopts",	optshelp,	0, 1, 1, CMPL0		opts },
 	{ "rename",	renamehelp,	0, 1, 1, CMPL(rr)	renamefile },
 	{ "reset",	resethelp,	0, 1, 1, CMPL0		reset },
 	{ "restart",	restarthelp,	1, 1, 1, CMPL0		restart },
