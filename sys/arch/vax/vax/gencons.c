@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.27 2000/07/26 15:16:55 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.28 2000/11/02 00:42:41 eeh Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -107,7 +107,7 @@ gencnopen(dev_t dev, int flag, int mode, struct proc *p)
 	mtpr(GC_RIE, pr_rxcs[unit]); /* Turn on interrupts */
 	mtpr(GC_TIE, pr_txcs[unit]);
 
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	return ((*tp->t_linesw->l_open)(dev, tp));
 }
 
 int
@@ -117,7 +117,7 @@ gencnclose(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (minor(dev) == 0)
 		consopened = 0;
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 	return (0);
 }
@@ -133,7 +133,7 @@ gencnread(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp = gencn_tty[minor(dev)];
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -141,7 +141,7 @@ gencnwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp = gencn_tty[minor(dev)];
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
@@ -150,7 +150,7 @@ gencnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct tty *tp = gencn_tty[minor(dev)];
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -203,11 +203,11 @@ gencnrint(void *arg)
 			return;
 
 		if (j == 2)	/* Second char wasn't 'D' */
-			(*linesw[tp->t_line].l_rint)(27, tp);
+			(*tp->t_linesw->l_rint)(27, tp);
 	}
 #endif
 
-	(*linesw[tp->t_line].l_rint)(i, tp);
+	(*tp->t_linesw->l_rint)(i, tp);
 	return;
 }
 
