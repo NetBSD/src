@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.9 1998/08/02 22:30:53 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.10 1998/10/20 21:28:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -916,7 +916,7 @@ usbd_transfer_cb(reqh)
 		pipe->running = 0;
 	else {
 		SIMPLEQ_REMOVE_HEAD(&pipe->queue, nreqh, next);
-		pipe->curreqh = reqh;
+		pipe->curreqh = nreqh;
 		r = pipe->methods->transfer(nreqh);
 		if (r != USBD_IN_PROGRESS)
 			printf("usbd_transfer_cb: error=%d\n", r);
