@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.6 2000/06/29 08:53:01 mrg Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.7 2001/02/27 18:30:46 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -47,6 +47,8 @@
 #include <machine/pmap.h>
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/iomd/iomd_dma.h>
+
+extern int *iomd_base;
 
 #ifndef CPU_ARM7500
 static struct dma_ctrl ctrl[6];
