@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.377 2003/10/25 19:02:55 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.378 2003/10/25 22:25:55 mycroft Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -38,13 +38,13 @@ TOOLCHAIN_MISSING=	no
 #    ${MACHINE_ARCH} == "sh3eb" ||
 #    ${MACHINE_ARCH} == "vax" ||
 # mostly working,:
-#    ${MACHINE_ARCH} == "mipseb" ||
-#    ${MACHINE_ARCH} == "mipsel" ||
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "hppa" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68k" || \
+    ${MACHINE_ARCH} == "mipseb" || \
+    ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
