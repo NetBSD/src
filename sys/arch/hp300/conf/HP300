@@ -23,7 +23,7 @@ options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 
 # Options for all HP machines
-options		SYSVSHM
+#options		SYSVSHM
 options		COMPAT_HPUX
 
 # Options specific to this host.
