@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_machdep.c,v 1.1.2.1 2005/01/18 15:09:04 bouyer Exp $      */
+/*      $NetBSD: pci_machdep.c,v 1.1.2.2 2005/01/21 10:04:47 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -165,7 +165,6 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	intr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_INTERRUPT_REG);
 	pin = pa->pa_intrpin;
 	pa->pa_intrline = line = PCI_INTERRUPT_LINE(intr);
-	printf("pci_intr_map: pin %d line %d\n", pin, line);
 #if 0 /* XXXX why is it always 0 ? */
 	if (pin == 0) {
 		/* No IRQ used */
@@ -185,7 +184,6 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	ihp->pirq = line;
 	ihp->irq = bind_pirq_to_irq(ihp->pirq);
-	printf("pci_intr_map: irq %d for pirq %d\n", ihp->irq, ihp->pirq);
 	if (ihp->irq == -1)
 		goto bad;
 
