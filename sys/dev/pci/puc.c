@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.17 2003/01/01 00:10:23 thorpej Exp $	*/
+/*	$NetBSD: puc.c,v 1.18 2003/03/19 17:56:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.17 2003/01/01 00:10:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.18 2003/03/19 17:56:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.17 2003/01/01 00:10:23 thorpej Exp $");
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#include "locators.h"
 #include "opt_puccn.h"
 
 struct puc_softc {
