@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/08/22 02:39:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2003/09/05 09:54:30 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -51,7 +51,7 @@ ${G_LIB2ADD:T:S/.asm/.S/}: ${.CURDIR}/Makefile ${G_LIB2ADD}
 CPICFLAGS:=
 .endif
 
-${G_LIB2ADDEH:=.o}:
+${LIB2_EH:.c=.o}:
 	${COMPILE.c} ${CPICFLAGS} -fexceptions -o ${.TARGET} ${.IMPSRC}
 
 ${G_LIB2_DIVMOD_FUNCS:=.o}:
