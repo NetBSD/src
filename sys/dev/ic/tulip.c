@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.108 2002/04/09 05:57:20 chs Exp $	*/
+/*	$NetBSD: tulip.c,v 1.109 2002/04/14 19:10:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.108 2002/04/09 05:57:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.109 2002/04/14 19:10:18 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -4752,8 +4752,8 @@ tlp_2114x_isv_tmsw_init(sc)
 				cp++;
 
 			/* Next is GPIO control/data. */
-			tm->tm_gpctl  = TULIP_ROM_GETW(cp, 0);
-			tm->tm_gpdata = TULIP_ROM_GETW(cp, 2);
+			tm->tm_gpctl  = TULIP_ROM_GETW(cp, 0) << 16;
+			tm->tm_gpdata = TULIP_ROM_GETW(cp, 2) << 16;
 
 			ifmedia_add(&sc->sc_mii.mii_media,
 			    IFM_MAKEWORD(IFM_ETHER, tsti->tsti_subtype,
@@ -4898,8 +4898,8 @@ tlp_2114x_isv_tmsw_init(sc)
 			tlp_srom_media_info(sc, tsti, tm);
 
 			/* Next is GPIO control/data. */
-			tm->tm_gpctl  = TULIP_ROM_GETW(cp, 1);
-			tm->tm_gpdata = TULIP_ROM_GETW(cp, 3);
+			tm->tm_gpctl  = TULIP_ROM_GETW(cp, 1) << 16;
+			tm->tm_gpdata = TULIP_ROM_GETW(cp, 3) << 16;
 
 			/*
 			 * Next is a word containing OPMODE information
