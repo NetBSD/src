@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.14 2001/01/17 19:50:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ boolean_t	db_elf_sym_numargs __P((db_symtab_t *, db_sym_t, int *,
 void		db_elf_forall __P((db_symtab_t *,
 		    db_forall_func_t db_forall_func, void *));
 
-db_symformat_t db_symformat_elf = {
+const db_symformat_t db_symformat_elf = {
 	"ELF",
 	db_elf_sym_init,
 	db_elf_lookup,

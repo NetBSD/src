@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.h,v 1.8 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_variables.h,v 1.9 2001/01/17 19:50:04 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,25 +36,25 @@
  * Debugger variables.
  */
 struct db_variable {
-	char	*name;		/* Name of variable */
+	const char *name;	/* Name of variable */
 	long	*valuep;	/* value of variable */
 				/* function to call when reading/writing */
-	int	(*fcn) __P((struct db_variable *, db_expr_t *, int));
+	int	(*fcn) __P((const struct db_variable *, db_expr_t *, int));
 #define DB_VAR_GET	0
 #define DB_VAR_SET	1
 };
-#define	FCN_NULL ((int (*) __P((struct db_variable *, db_expr_t *, int)))0)
+#define	FCN_NULL ((int (*) __P((const struct db_variable *, db_expr_t *, int)))0)
 
-extern struct db_variable	db_vars[];	/* debugger variables */
-extern struct db_variable	*db_evars;
+extern const struct db_variable	db_vars[];	/* debugger variables */
+extern const struct db_variable	* const db_evars;
 extern struct db_variable	db_regs[];	/* machine registers */
 extern struct db_variable	*db_eregs;
 
-int db_find_variable __P((struct db_variable **));
+int db_find_variable __P((const struct db_variable **));
 int db_get_variable __P((db_expr_t *));
 int db_set_variable __P((db_expr_t));
-void db_read_variable __P((struct db_variable *, db_expr_t *));
-void db_write_variable __P((struct db_variable *, db_expr_t *));
+void db_read_variable __P((const struct db_variable *, db_expr_t *));
+void db_write_variable __P((const struct db_variable *, db_expr_t *));
 void db_set_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 #endif	/* _DB_VARIABLES_H_ */
