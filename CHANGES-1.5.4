@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.79 2002/11/13 00:25:17 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.80 2002/11/13 00:34:58 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1771,7 +1771,9 @@ sys/netinet6/esp_input.c			1.27
 
   Increase correct statistics on ESP packet length check.  Fixes KAME PR#445.
 
-sys/netinet/ip_input.c				1.60 via patch
+sys/net/route.c					1.55 via patch
+sys/net/route.h					1.32
+sys/netinet/ip_input.c				1.163
 
   Always create PMTUD timeout queue, as PMTUD can be turned on via
   sysctl at runtime.  From lha@stacken.kth.se.
