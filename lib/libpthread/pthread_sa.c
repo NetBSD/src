@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.19 2003/10/29 18:53:34 cl Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.20 2003/11/12 22:21:21 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.19 2003/10/29 18:53:34 cl Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.20 2003/11/12 22:21:21 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -89,7 +89,7 @@ void
 pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 {
 	pthread_t t, self, next, intqueue, schedqueue;
-	int flags;
+	int flags, i;
 	siginfo_t *si;
 
 	PTHREADD_ADD(PTHREADD_UPCALLS);
@@ -102,7 +102,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 
 	SDPRINTF(("(up %p) type %d LWP %d ev %d intr %d\n", self, 
 	    type, sas[0]->sa_id, ev ? sas[1]->sa_id : 0, 
-	    intr ? sas[ev+intr]->sa_id : 0));
+	    intr ? sas[1+ev]->sa_id : 0));
 
 	if (type == SA_UPCALL_BLOCKED) {
 		/* Don't handle this SA in the usual processing. */
@@ -189,16 +189,18 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		break;
 	case SA_UPCALL_UNBLOCKED:
 		PTHREADD_ADD(PTHREADD_UP_UNBLOCK);
-		/*
-		 * A signal may have been presented to this thread while
-		 * it was in the kernel.
-		 */
-		t = pthread__sa_id(sas[1]);
-		pthread_spinlock(self, &t->pt_flaglock);
-		flags = t->pt_flags;
-		pthread_spinunlock(self, &t->pt_flaglock);
-		if (flags & PT_FLAG_SIGDEFERRED)
-			pthread__signal_deferred(self, t);
+		for (i = 0; i < ev; i++) {
+			t = pthread__sa_id(sas[1 + i]);
+			/*
+			 * A signal may have been presented to this
+			 * thread while it was in the kernel.
+			 */
+			pthread_spinlock(self, &t->pt_flaglock);
+			flags = t->pt_flags;
+			pthread_spinunlock(self, &t->pt_flaglock);
+			if (flags & PT_FLAG_SIGDEFERRED)
+				pthread__signal_deferred(self, t);
+		}
 		break;
 	case SA_UPCALL_SIGNAL:
 		PTHREADD_ADD(PTHREADD_UP_SIGNAL);
