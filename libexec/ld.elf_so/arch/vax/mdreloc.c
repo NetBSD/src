@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.14 2002/09/26 20:42:12 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.15 2002/09/26 22:26:27 mycroft Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -7,6 +7,7 @@
 #include "rtld.h"
 
 void _rtld_bind_start(void);
+void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
 
 void
@@ -14,6 +15,32 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 {
 	obj->pltgot[1] = (Elf_Addr) obj;
 	obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start;
+}
+
+void
+_rtld_relocate_nonplt_self(dynp, relocbase)
+	Elf_Dyn *dynp;
+	Elf_Addr relocbase;
+{
+	const Elf_Rela *rela = 0, *relalim;
+	Elf_Addr relasz = 0;
+	Elf_Addr *where;
+
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case DT_RELA:
+			rela = (const Elf_Rela *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELASZ:
+			relasz = dynp->d_un.d_val;
+			break;
+		}
+	}
+	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	for (; rela < relalim; rela++) {
+		where = (Elf_Addr *)(relocbase + rela->r_offset);
+		*where = (Elf_Addr)(relocbase + rela->r_addend);
+	}
 }
 
 int
