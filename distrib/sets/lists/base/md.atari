@@ -4,7 +4,6 @@
 ./sbin/edlabel
 ./usr/bin/fdformat
 ./usr/bin/msconfig
-./usr/lib/libstdc++.so.1.0
 ./usr/mdec/bootxx
 ./usr/mdec/fdboot
 ./usr/mdec/installboot
