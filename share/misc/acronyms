@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.31 1999/07/31 21:51:40 thorpej Exp $
+$NetBSD: acronyms,v 1.32 1999/08/02 05:14:08 cjs Exp $
 
 AFAICT	as far as I can tell
 AFAICR	as far as I can recall
@@ -29,6 +29,7 @@ IIRC	if I recall correctly
 IMO	in my opinion
 IMHO	in my humble opinion
 IMNSHO	in my not so humble opinion
+IOW	in other words
 ISTR	I seem to recall
 L8R	later
 LOL	laughing out loud
