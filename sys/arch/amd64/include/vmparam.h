@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2003/08/07 16:26:37 agc Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2003/10/17 20:27:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -96,12 +96,12 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		0
-#define VM_MAXUSER_ADDRESS	0x00007f7fffffc000
+#define VM_MAXUSER_ADDRESS	0x00007f8000000000
 #define VM_MAX_ADDRESS		0x00007fbfdfeff000
 #define VM_MIN_KERNEL_ADDRESS	0xffff800000000000
 #define VM_MAX_KERNEL_ADDRESS	0xffff800100000000
 
-#define VM_MAXUSER_ADDRESS32	0xffffc000
+#define VM_MAXUSER_ADDRESS32	0xfffff000
 
 /*
  * XXXfvdl we have plenty of KVM now, remove this.
