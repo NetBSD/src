@@ -55,22 +55,22 @@
 #define DHCP_MIN_LEN            548
 
 struct dhcp_packet {
-  	u_int8_t  op;		/* Message opcode/type */
-	u_int8_t  htype;	/* Hardware addr type (see net/if_types.h) */
-	u_int8_t  hlen;		/* Hardware addr length */
-	u_int8_t  hops;		/* Number of relay agent hops from client */
-	u_int32_t xid;		/* Transaction ID */
-	u_int16_t secs;		/* Seconds since client started looking */
-	u_int16_t flags;	/* Flag bits */
-	struct in_addr ciaddr;	/* Client IP address (if already in use) */
-	struct in_addr yiaddr;	/* Client IP address */
-	struct in_addr siaddr;	/* IP address of next server to talk to */
-	struct in_addr giaddr;	/* DHCP relay agent IP address */
-	unsigned char chaddr [16];	/* Client hardware address */
-	char sname [DHCP_SNAME_LEN];	/* Server name */
-	char file [DHCP_FILE_LEN];	/* Boot filename */
+  	u_int8_t  op;		/* 0: Message opcode/type */
+	u_int8_t  htype;	/* 1: Hardware addr type (net/if_types.h) */
+	u_int8_t  hlen;		/* 2: Hardware addr length */
+	u_int8_t  hops;		/* 3: Number of relay agent hops from client */
+	u_int32_t xid;		/* 4: Transaction ID */
+	u_int16_t secs;		/* 8: Seconds since client started looking */
+	u_int16_t flags;	/* 10: Flag bits */
+	struct in_addr ciaddr;	/* 12: Client IP address (if already in use) */
+	struct in_addr yiaddr;	/* 16: Client IP address */
+	struct in_addr siaddr;	/* 18: IP address of next server to talk to */
+	struct in_addr giaddr;	/* 20: DHCP relay agent IP address */
+	unsigned char chaddr [16];	/* 24: Client hardware address */
+	char sname [DHCP_SNAME_LEN];	/* 40: Server name */
+	char file [DHCP_FILE_LEN];	/* 104: Boot filename */
 	unsigned char options [DHCP_OPTION_LEN];
-				/* Optional parameters
+				/* 212: Optional parameters
 				   (actual length dependent on MTU). */
 };
 

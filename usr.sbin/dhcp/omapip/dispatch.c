@@ -208,7 +208,7 @@ isc_result_t omapi_wait_for_completion (omapi_object_t *object,
 	
 	status = waiter -> waitstatus;
 	omapi_waiter_dereference (&waiter, MDL);
-	return status;;
+	return status;
 }
 
 isc_result_t omapi_one_dispatch (omapi_object_t *wo,
@@ -310,8 +310,12 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 	   maybe make it go away, and then try again. */
 	if (count < 0) {
 		struct timeval t0;
+		omapi_io_object_t *prev = (omapi_io_object_t *)0;
+		io = (omapi_io_object_t *)0;
+		if (omapi_io_states.next)
+			omapi_io_reference (&io, omapi_io_states.next, MDL);
 
-		for (io = omapi_io_states.next; io; io = io -> next) {	
+		while (io) {
 			omapi_object_t *obj;
 			FD_ZERO (&r);
 			FD_ZERO (&w);
@@ -360,6 +364,20 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 					omapi_value_dereference (&ov, MDL);
 				}
 				status = (*(io -> reaper)) (io -> inner);
+				if (prev) {
+				    omapi_io_dereference (&prev -> next, MDL);
+				    if (io -> next)
+					omapi_io_reference (&prev -> next,
+							    io -> next, MDL);
+				} else {
+				    omapi_io_dereference
+					    (&omapi_io_states.next, MDL);
+				    if (io -> next)
+					omapi_io_reference
+						(&omapi_io_states.next,
+						 io -> next, MDL);
+				}
+				omapi_io_dereference (&io, MDL);
 				goto again;
 			    }
 			}
@@ -372,16 +390,20 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 			if (io -> writefd && io -> inner &&
 			    (desc = (*(io -> writefd)) (io -> inner)) >= 0) {
 				FD_SET (desc, &w);
-#if 0
-				log_error ("write check: %d %lx %lx", max,
-					   (unsigned long)r.fds_bits [0],
-					   (unsigned long)w.fds_bits [0]);
-#endif
 				count = select (desc + 1, &r, &w, &x, &t0);
 				if (count < 0)
 					goto bogon;
 			}
+			if (prev)
+				omapi_io_dereference (&prev, MDL);
+			omapi_io_reference (&prev, io, MDL);
+			omapi_io_dereference (&io, MDL);
+			if (prev -> next)
+			    omapi_io_reference (&io, prev -> next, MDL);
 		}
+		if (prev)
+			omapi_io_dereference (&prev, MDL);
+		
 	}
 
 	for (io = omapi_io_states.next; io; io = io -> next) {
@@ -551,9 +573,32 @@ isc_result_t omapi_waiter_signal_handler (omapi_object_t *h,
 		return ISC_R_SUCCESS;
 	}
 
+	if (!strcmp (name, "disconnect")) {
+		waiter = (omapi_waiter_object_t *)h;
+		waiter -> ready = 1;
+		waiter -> waitstatus = ISC_R_CONNRESET;
+		return ISC_R_SUCCESS;
+	}
+
 	if (h -> inner && h -> inner -> type -> signal_handler)
 		return (*(h -> inner -> type -> signal_handler)) (h -> inner,
 								  name, ap);
 	return ISC_R_NOTFOUND;
 }
 
+isc_result_t omapi_io_state_foreach (isc_result_t (*func) (omapi_object_t *,
+							   void *),
+				     void *p)
+{
+	omapi_io_object_t *io;
+	isc_result_t status;
+
+	for (io = omapi_io_states.next; io; io = io -> next) {
+		if (io -> inner) {
+			status = (*func) (io -> inner, p);
+			if (status != ISC_R_SUCCESS)
+				return status;
+		}
+	}
+	return ISC_R_SUCCESS;
+}

@@ -21,10 +21,14 @@ CATMANPAGES = omapi.cat3
 SEDMANPAGES = omapi.man3
 SRC    = protocol.c buffer.c alloc.c result.c connection.c errwarn.c \
 	 listener.c dispatch.c generic.c support.c handle.c message.c \
-	 convert.c hash.c auth.c inet_addr.c array.c trace.c mrtrace.c
+	 convert.c hash.c auth.c inet_addr.c array.c trace.c mrtrace.c \
+	 toisc.c
+
 OBJ    = protocol.o buffer.o alloc.o result.o connection.o errwarn.o \
 	 listener.o dispatch.o generic.o support.o handle.o message.o \
-	 convert.o hash.o auth.o inet_addr.o array.o trace.o mrtrace.o
+	 convert.o hash.o auth.o inet_addr.o array.o trace.o mrtrace.o \
+	 toisc.o
+
 MAN    = omapi.3
 
 INCLUDES = $(BINDINC) -I$(TOP)/includes
@@ -42,7 +46,8 @@ libomapi.a:	$(OBJ)
 	$(RANLIB) libomapi.a
 
 install: all
-	for dir in $(LIBDIR) $(LIBMANDIR) $(INCDIR)/omapip $(INCDIR)/isc; do \
+	for dir in $(LIBDIR) $(LIBMANDIR) $(INCDIR)/omapip $(INCDIR)/isc-dhcp;\
+	 do \
 	  foo=""; \
 	  for bar in `echo $(DESTDIR)$${dir} |tr / ' '`; do \
 	    foo=$${foo}/$$bar; \
@@ -55,12 +60,14 @@ install: all
 	$(INSTALL) libomapi.a $(DESTDIR)$(LIBDIR)
 	$(CHMOD) 644 $(DESTDIR)$(LIBDIR)/libomapi.a
 	for file in alloc.h buffer.h omapip.h; do \
-	  $(INSTALL) $(TOP)/includes/omapip/$$file $(DESTDIR)$(INCDIR)/omapip; \
+	  $(INSTALL) $(TOP)/includes/omapip/$$file \
+						$(DESTDIR)$(INCDIR)/omapip; \
 	  $(CHMOD) 644 $(DESTDIR)$(INCDIR)/omapip/$$file; \
 	done
 	for file in boolean.h dst.h int.h lang.h list.h result.h types.h; do \
-	  $(INSTALL) $(TOP)/includes/isc/$$file $(DESTDIR)$(INCDIR)/isc; \
-	  $(CHMOD) 644 $(DESTDIR)$(INCDIR)/isc/$$file; \
+	  $(INSTALL) $(TOP)/includes/isc-dhcp/$$file \
+						$(DESTDIR)$(INCDIR)/isc-dhcp; \
+	  $(CHMOD) 644 $(DESTDIR)$(INCDIR)/isc-dhcp/$$file; \
 	done
 	for man in $(MAN); do \
 	  prefix=`echo $$man |sed -e 's/\.[0-9]$$//'`; \

@@ -3,7 +3,7 @@
    Server-specific in-memory database support. */
 
 /*
- * Copyright (c) 1996-2000 Internet Software Consortium.
+ * Copyright (c) 1996-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: mdb.c,v 1.1.1.8 2001/04/06 17:00:38 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: mdb.c,v 1.1.1.9 2001/06/18 18:13:26 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -91,6 +91,16 @@ isc_result_t enter_host (hd, dynamicp, commit)
 			   always have to keep the deletion. */
 			if (!hp -> flags & HOST_DECL_DYNAMIC)
 				hd -> flags |= HOST_DECL_STATIC;
+		}
+
+		/* If we are updating an existing host declaration, we
+		   can just delete it and add it again. */
+		if (hp && hp == hd) {
+			host_dereference (&hp, MDL);
+			delete_host (hd, 0);
+			if (!write_host (hd))
+				return ISC_R_IOERROR;
+			hd -> flags &= ~HOST_DECL_DELETED;
 		}
 
 		/* If there isn't already a host decl matching this
@@ -238,25 +248,35 @@ isc_result_t delete_host (hd, commit)
 	if (hd -> interface.hlen) {
 	    if (host_hw_addr_hash) {
 		if (host_hash_lookup (&hp, host_hw_addr_hash,
-			hd -> interface.hbuf,
-			hd -> interface.hlen, MDL)) {
+				      hd -> interface.hbuf,
+				      hd -> interface.hlen, MDL)) {
 		    if (hp == hd) {
 			host_hash_delete (host_hw_addr_hash,
 					  hd -> interface.hbuf,
 					  hd -> interface.hlen, MDL);
 			hw_head = 1;
 		    } else {
-			for (foo = hp; foo; foo = foo -> n_ipaddr) {
+			np = (struct host_decl *)0;
+			foo = (struct host_decl *)0;
+			host_reference (&foo, hp, MDL);
+			while (foo) {
 			    if (foo == hd)
 				    break;
-			    np = foo;
+			    host_reference (&np, foo, MDL);
+			    host_dereference (&foo, MDL);
+			    if (np -> n_ipaddr)
+				    host_reference (&foo, np -> n_ipaddr, MDL);
 			}
+
 			if (foo) {
 			    host_dereference (&np -> n_ipaddr, MDL);
 			    if (hd -> n_ipaddr)
 				host_reference (&np -> n_ipaddr,
 						hd -> n_ipaddr, MDL);
+			    host_dereference (&foo, MDL);
 			}
+			if (np)
+				host_dereference (&np, MDL);
 		    }
 		    host_dereference (&hp, MDL);
 		}
@@ -276,17 +296,27 @@ isc_result_t delete_host (hd, commit)
 					  hd -> client_identifier.len, MDL);
 			uid_head = 1;
 		    } else {
-			for (foo = hp; foo; foo = foo -> n_ipaddr) {
+			np = (struct host_decl *)0;
+			foo = (struct host_decl *)0;
+			host_reference (&foo, hp, MDL);
+			while (foo) {
 			    if (foo == hd)
-				break;
-			    np = foo;
-			}
-			if (foo) {
+				    break;
+			    host_reference (&np, foo, MDL);
+			    host_dereference (&foo, MDL);
 			    if (np -> n_ipaddr)
-				host_dereference (&np -> n_ipaddr, MDL);
-			    host_reference (&np -> n_ipaddr,
-					    hd -> n_ipaddr, MDL);
+				    host_reference (&foo, np -> n_ipaddr, MDL);
 			}
+
+			if (foo) {
+			    host_dereference (&np -> n_ipaddr, MDL);
+			    if (hd -> n_ipaddr)
+				host_reference (&np -> n_ipaddr,
+						hd -> n_ipaddr, MDL);
+			    host_dereference (&foo, MDL);
+			}
+			if (np)
+				host_dereference (&np, MDL);
 		    }
 		    host_dereference (&hp, MDL);
 		}
@@ -801,6 +831,7 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 	   requested *after* a DHCP lease has been assigned. */
 
 	if (lease -> binding_state != FTS_ABANDONED &&
+	    lease -> next_binding_state != FTS_ABANDONED &&
 	    (comp -> binding_state == FTS_ACTIVE ||
 	     comp -> binding_state == FTS_RESERVED ||
 	     comp -> binding_state == FTS_BOOTP) &&
@@ -988,6 +1019,9 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 	      default:
 		log_error ("Lease with bogus binding state: %d",
 			   comp -> binding_state);
+#if defined (BINDING_STATE_DEBUG)
+		abort ();
+#endif
 		return 0;
 	}
 
@@ -1025,7 +1059,7 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 
 	/* Make the state transition. */
 	if (commit || !pimmediate)
-		process_state_transition (comp);
+		make_binding_state_transition (comp);
 
 	/* Put the lease back on the appropriate queue.    If the lease
 	   is corrupt (as detected by lease_enqueue), don't go any farther. */
@@ -1043,7 +1077,7 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 	   and the expiry code sets the timer if there's anything left
 	   to expire after it's run any outstanding expiry events on
 	   the pool. */
-	if (commit &&
+	if ((commit || !pimmediate) &&
 	    comp -> sort_time != MIN_TIME &&
 	    comp -> sort_time > cur_time &&
 	    (comp -> sort_time < comp -> pool -> next_event_time ||
@@ -1072,7 +1106,7 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 	return 1;
 }
 
-void process_state_transition (struct lease *lease)
+void make_binding_state_transition (struct lease *lease)
 {
 #if defined (FAILOVER_PROTOCOL)
 	dhcp_failover_state_t *peer;
@@ -1098,7 +1132,9 @@ void process_state_transition (struct lease *lease)
 	       lease -> binding_state == FTS_BOOTP ||
 	       lease -> binding_state == FTS_RESERVED) &&
 	      lease -> next_binding_state != FTS_RELEASED))) {
+#if defined (NSUPDATE)
 		ddns_removals (lease);
+#endif
 		if (lease -> on_expiry) {
 			execute_statements ((struct binding_value **)0,
 					    (struct packet *)0, lease,
@@ -1116,6 +1152,9 @@ void process_state_transition (struct lease *lease)
 		if (lease -> on_release)
 			executable_statement_dereference (&lease -> on_release,
 							  MDL);
+		if (lease -> billing_class)
+			unbill_class (lease, lease -> billing_class);
+
 		/* Send the expiry time to the peer. */
 		lease -> tstp = lease -> ends;
 	}
@@ -1135,7 +1174,9 @@ void process_state_transition (struct lease *lease)
 	       lease -> binding_state == FTS_BOOTP ||
 	       lease -> binding_state == FTS_RESERVED) &&
 	      lease -> next_binding_state == FTS_RELEASED))) {
+#if defined (NSUPDATE)
 		ddns_removals (lease);
+#endif
 		if (lease -> on_release) {
 			execute_statements ((struct binding_value **)0,
 					    (struct packet *)0, lease,
@@ -1153,21 +1194,61 @@ void process_state_transition (struct lease *lease)
 			executable_statement_dereference (&lease -> on_expiry,
 							  MDL);
 
+		if (lease -> billing_class)
+			unbill_class (lease, lease -> billing_class);
+
 		/* Send the release time (should be == cur_time) to the
 		   peer. */
 		lease -> tstp = lease -> ends;
 	}
 
+#if defined (DEBUG_LEASE_STATE_TRANSITIONS)
+	log_debug ("lease %s moves from %s to %s",
+		   piaddr (lease -> ip_addr),
+		   binding_state_print (lease -> binding_state),
+		   binding_state_print (lease -> next_binding_state));
+#endif
+
 	lease -> binding_state = lease -> next_binding_state;
-	if (lease -> binding_state == FTS_ACTIVE ||
-	    lease -> binding_state == FTS_BACKUP) {
+	switch (lease -> binding_state) {
+	      case FTS_ACTIVE:
+	      case FTS_BOOTP:
 #if defined (FAILOVER_PROTOCOL)
 		if (lease -> pool && lease -> pool -> failover_peer)
 			lease -> next_binding_state = FTS_EXPIRED;
 		else
 #endif
 			lease -> next_binding_state = FTS_FREE;
+		break;
+
+	      case FTS_EXPIRED:
+	      case FTS_RELEASED:
+	      case FTS_ABANDONED:
+	      case FTS_RESET:
+		lease -> next_binding_state = FTS_FREE;
+		/* If we are not in partner_down, leases don't go from
+		   EXPIRED to FREE on a timeout - only on an update.
+		   If we're in partner_down, they expire at mclt past
+		   the time we entered partner_down. */
+		if (lease -> pool -> failover_peer &&
+		    lease -> pool -> failover_peer -> me.state == partner_down)
+			lease -> tsfp =
+			    (lease -> pool -> failover_peer -> me.stos +
+			     lease -> pool -> failover_peer -> mclt);
+		break;
+
+	      case FTS_FREE:
+	      case FTS_BACKUP:
+	      case FTS_RESERVED:
+		lease -> next_binding_state = lease -> binding_state;
+		break;
 	}
+#if defined (DEBUG_LEASE_STATE_TRANSITIONS)
+	log_debug ("lease %s: next binding state %s",
+		   piaddr (lease -> ip_addr),
+		   binding_state_print (lease -> next_binding_state));
+#endif
+
 }
 
 /* Copy the contents of one lease into another, correctly maintaining
@@ -1191,6 +1272,8 @@ int lease_copy (struct lease **lp,
 	if (lease -> uid == lease -> uid_buf) {
 		lt -> uid = lt -> uid_buf;
 		memcpy (lt -> uid_buf, lease -> uid_buf, sizeof lt -> uid_buf);
+	} else if (!lease -> uid_max) {
+		lt -> uid = (unsigned char *)0;
 	} else {
 		lt -> uid = dmalloc (lt -> uid_max, MDL);
 		if (!lt -> uid) {
@@ -1249,7 +1332,9 @@ void release_lease (lease, packet)
 {
 	/* If there are statements to execute when the lease is
 	   released, execute them. */
+#if defined (NSUPDATE)
 	ddns_removals (lease);
+#endif
 	if (lease -> on_release) {
 		execute_statements ((struct binding_value **)0,
 				    packet, lease, (struct client_state *)0,
@@ -1267,7 +1352,11 @@ void release_lease (lease, packet)
 	if (lease -> on_expiry)
 		executable_statement_dereference (&lease -> on_expiry, MDL);
 
-	if (lease -> ends > cur_time) {
+	if (lease -> binding_state != FTS_FREE &&
+	    lease -> binding_state != FTS_BACKUP &&
+	    lease -> binding_state != FTS_RELEASED &&
+	    lease -> binding_state != FTS_EXPIRED &&
+	    lease -> binding_state != FTS_RESET) {
 		if (lease -> on_commit)
 			executable_statement_dereference (&lease -> on_commit,
 							  MDL);
@@ -1285,8 +1374,6 @@ void release_lease (lease, packet)
 #else
 		lease -> next_binding_state = FTS_FREE;
 #endif
-		if (lease -> billing_class)
-			class_dereference (&lease -> billing_class, MDL);
 		supersede_lease (lease, (struct lease *)0, 1, 1, 1);
 	}
 }
@@ -1303,32 +1390,17 @@ void abandon_lease (lease, message)
 	if (!lease_copy (&lt, lease, MDL))
 		return;
 
-#if 0
-	if (lt -> on_expiry)
-		executable_statement_dereference (&lease -> on_expiry, MDL);
-	if (lt -> on_release)
-		executable_statement_dereference (&lease -> on_release, MDL);
-	if (lt -> on_commit)
-		executable_statement_dereference (&lease -> on_commit, MDL);
-
-	/* Blow away any bindings. */
-	if (lt -> scope)
-		binding_scope_dereference (&lt -> scope, MDL);
-#endif
-
 	lt -> ends = cur_time; /* XXX */
 	lt -> next_binding_state = FTS_ABANDONED;
 
 	log_error ("Abandoning IP address %s: %s",
 	      piaddr (lease -> ip_addr), message);
 	lt -> hardware_addr.hlen = 0;
-	if (lt -> uid != lt -> uid_buf)
+	if (lt -> uid && lt -> uid != lt -> uid_buf)
 		dfree (lt -> uid, MDL);
 	lt -> uid = (unsigned char *)0;
 	lt -> uid_len = 0;
 	lt -> uid_max = 0;
-	if (lt -> billing_class)
-		class_dereference (&lt -> billing_class, MDL);
 	supersede_lease (lease, lt, 1, 1, 1);
 	lease_dereference (&lt, MDL);
 }
@@ -1344,19 +1416,6 @@ void dissociate_lease (lease)
 	if (!lease_copy (&lt, lease, MDL))
 		return;
 
-#if 0
-	if (lt -> on_expiry)
-		executable_statement_dereference (&lease -> on_expiry, MDL);
-	if (lt -> on_release)
-		executable_statement_dereference (&lease -> on_release, MDL);
-	if (lt -> on_commit)
-		executable_statement_dereference (&lease -> on_commit, MDL);
-
-	/* Blow away any bindings. */
-	if (lt -> scope)
-		binding_scope_dereference (&lt -> scope, MDL);
-#endif
-
 #if defined (FAILOVER_PROTOCOL)
 	if (lease -> pool && lease -> pool -> failover_peer) {
 		lt -> next_binding_state = FTS_RESET;
@@ -1368,13 +1427,11 @@ void dissociate_lease (lease)
 #endif
 	lt -> ends = cur_time; /* XXX */
 	lt -> hardware_addr.hlen = 0;
-	if (lt -> uid != lt -> uid_buf)
+	if (lt -> uid && lt -> uid != lt -> uid_buf)
 		dfree (lt -> uid, MDL);
 	lt -> uid = (unsigned char *)0;
 	lt -> uid_len = 0;
 	lt -> uid_max = 0;
-	if (lt -> billing_class)
-		class_dereference (&lt -> billing_class, MDL);
 	supersede_lease (lease, lt, 1, 1, 1);
 	lease_dereference (&lt, MDL);
 }
@@ -1408,7 +1465,22 @@ void pool_timer (vpool)
 		/* If there's nothing on the queue, skip it. */
 		if (!*(lptr [i]))
 			continue;
-		
+
+#if defined (FAILOVER_PROTOCOL)
+		if (pool -> failover_peer &&
+		    pool -> failover_peer -> me.state != partner_down) {
+			/* The secondary can't remove a lease from the
+			   active state except in partner_down. */
+			if (i == ACTIVE_LEASES &&
+			    pool -> failover_peer -> i_am == secondary)
+				continue;
+			/* Leases in an expired state don't move to
+			   free because of a timeout unless we're in
+			   partner_down. */
+			if (i == EXPIRED_LEASES)
+				continue;
+		}
+#endif		
 		lease_reference (&lease, *(lptr [i]), MDL);
 
 		while (lease) {
@@ -1642,7 +1714,7 @@ void hw_hash_delete (lease)
 
 /* Write all interesting leases to permanent storage. */
 
-void write_leases ()
+int write_leases ()
 {
 	struct lease *l;
 	struct shared_network *s;
@@ -1664,7 +1736,8 @@ void write_leases ()
 			if ((gp -> flags & GROUP_OBJECT_DYNAMIC) ||
 			    ((gp -> flags & GROUP_OBJECT_STATIC) &&
 			     (gp -> flags & GROUP_OBJECT_DELETED))) {
-				write_group (gp);
+				if (!write_group (gp))
+					return 0;
 				++num_written;
 			}
 		}
@@ -1681,7 +1754,8 @@ void write_leases ()
 			hp = (struct host_decl *)hb -> value;
 			if (((hp -> flags & HOST_DECL_STATIC) &&
 			     (hp -> flags & HOST_DECL_DELETED))) {
-				write_host (hp);
+				if (!write_host (hp))
+					return 0;
 				++num_written;
 			}
 		}
@@ -1698,8 +1772,8 @@ void write_leases ()
 		     hb; hb = hb -> next) {
 			hp = (struct host_decl *)hb -> value;
 			if ((hp -> flags & HOST_DECL_DYNAMIC)) {
-				write_host (hp);
-				++num_written;
+				if (!write_host (hp))
+					++num_written;
 			}
 		}
 	    }
@@ -1709,7 +1783,8 @@ void write_leases ()
 
 #if defined (FAILOVER_PROTOCOL)
 	/* Write all the failover states. */
-	dhcp_failover_write_all_states ();
+	if (!dhcp_failover_write_all_states ())
+		return 0;
 #endif
 
 	/* Write all the leases. */
@@ -1728,7 +1803,7 @@ void write_leases ()
 			    l -> uid_len ||
 			    (l -> binding_state != FTS_FREE)) {
 			    if (!write_lease (l))
-				log_fatal ("Can't rewrite lease database");
+				    return 0;
 			    num_written++;
 			}
 		    }
@@ -1737,7 +1812,8 @@ void write_leases ()
 	}
 	log_info ("Wrote %d leases to leases file.", num_written);
 	if (!commit_leases ())
-		log_fatal ("Can't commit leases to new database: %m");
+		return 0;
+	return 1;
 }
 
 int lease_enqueue (struct lease *comp)
@@ -1785,6 +1861,9 @@ int lease_enqueue (struct lease *comp)
 	      default:
 		log_error ("Lease with bogus binding state: %d",
 			   comp -> binding_state);
+#if defined (BINDING_STATE_DEBUG)
+		abort ();
+#endif
 		return 0;
 	}
 
@@ -1818,7 +1897,7 @@ int lease_enqueue (struct lease *comp)
 void lease_instantiate (const unsigned char *val, unsigned len,
 			struct lease *lease)
 {
-
+	struct class *class;
 	/* XXX If the lease doesn't have a pool at this point, it's an
 	   XXX orphan, which we *should* keep around until it expires,
 	   XXX but which right now we just forget. */
@@ -1842,6 +1921,22 @@ void lease_instantiate (const unsigned char *val, unsigned len,
 		hw_hash_add (lease);
 	}
 	
+	/* If the lease has a billing class, set up the billing. */
+	if (lease -> billing_class) {
+		class = (struct class *)0;
+		class_reference (&class, lease -> billing_class, MDL);
+		class_dereference (&lease -> billing_class, MDL);
+		/* If the lease is available for allocation, the billing
+		   is invalid, so we don't keep it. */
+		if (lease -> binding_state == FTS_ACTIVE ||
+		    lease -> binding_state == FTS_EXPIRED ||
+		    lease -> binding_state == FTS_RELEASED ||
+		    lease -> binding_state == FTS_RESET ||
+		    lease -> binding_state == FTS_RESERVED ||
+		    lease -> binding_state == FTS_BOOTP)
+			bill_class (lease, class);
+		class_dereference (&class, MDL);
+	}
 	return;
 }
 

@@ -67,7 +67,7 @@ int trace_playback ()
 
 int trace_record ()
 {
-	if (traceoutfile)
+	if (traceoutfile && !tracing_stopped)
 		return 1;
 	return 0;
 }

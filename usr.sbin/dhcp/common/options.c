@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: options.c,v 1.1.1.16 2001/04/02 21:56:57 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: options.c,v 1.1.1.17 2001/06/18 18:13:16 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #define DHCP_OPTION_DATA
@@ -996,6 +996,7 @@ const char *pretty_print_option (option, data, len, emit_commas, emit_quotes)
 			}
 			fmtbuf [l + 1] = 0;
 			break;
+		      case 'd':
 		      case 't':
 			fmtbuf [l] = 't';
 			fmtbuf [l + 1] = 0;

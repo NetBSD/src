@@ -1,6 +1,6 @@
 	    Internet Software Consortium DHCP Distribution
-		   Version 3, Beta 2, Patchlevel 24
-			    April 5, 2001
+		    Version 3, Release Candidate 8
+			     June 4, 2001
 
 			    Release Notes
 
@@ -9,8 +9,8 @@ Consortium DHCP Distribution.
 
 			     NEW FEATURES
 
-Version 3, Beta 2 of the ISC DHCP Distribution includes the following
-features that are new since version 2.0:
+Version 3 of the ISC DHCP Distribution includes the following features
+that are new since version 2.0:
 
      - DHCP Failover Protocol support
      - OMAPI, an API for accessing and modifying the DHCP server and
@@ -25,17 +25,24 @@ features that are new since version 2.0:
      - Many bug fixes, performance enhancements, and minor new DHCP
        protocol features. 
 
-This beta release is quite new, and is running in production at only a
-few sites.   We strongly recommend that you exercise caution in
-installing it.   The 3.0 Beta 2 lease file is not backwards compatible
+This release has been beta tested quite thorougly, and we think it is
+substantially more robust at this time than 2.0pl5.  The release
+candidate is expected to be free of serious bugs, but it's called a
+release candidate because we want people to try it and find any last
+real problems before we call it done.  We do not expect to add
+anything other than documentation and any remaining bug fixes to the
+3.0 release.  
+
+The 3.0 Release Candidate 1 lease file is not backwards compatible
 with the 3.0 Beta 1 lease file, so if you have to go back, you will
 have to convert your lease files back to the 3.0 Beta 1 format - if
-you try to run a 3.0 Beta 1 server on a 3.0 Beta 2 lease file, it will
-cheerfully delete all your leases.   Having said that, of course the
-way that new releases of open source software become stable is by
-people using them, finding the bugs, and reporting the bugs.   So
-while we urge you to exercise caution, we would also appreciate any
-testing or production use you can safely do.
+you try to run a 3.0 Beta 1 server on a 3.0 lease file, it will
+cheerfully delete all your leases.
+
+If you are running 3.0 beta 1 and are doing dynamic DNS updates, the
+lease file is no longer forward-compatible to 3.0 final.   A script
+has been provided to convert 3.0b1 lease files.   This is in
+contrib/3.0b1-lease-convert.
 
 For information on how to install, configure and run this software,
 as well as how to find documentation and report bugs, please consult
@@ -48,6 +55,250 @@ Measurement Systems, Igor Sharfmesser at Kazakh Telecom, and Brian
 Murrell at BC Tel Advanced Communications.  I'd like to express my
 thanks to all of these good people here, both for working on the code
 and for prodding me into improving it.
+
+		Changes since 3.0 Release Candidate 7
+
+- Fix a bug in failover where we weren't sending updates after a
+  transition from communications-interrupted to normal.
+
+- Handle expired/released/reset -> free transition according to the
+  protocol specification (this works - the other way not only wasn't
+  conformant, but also didn't work).
+
+- Add a control object in both client and server that allows either
+  daemon to be shut down cleanly.
+
+- When writing a lease, if we run out of disk space, shut down the
+  output file and insist on writing a new one before proceeding.
+
+- In the server, if the OMAPI listener port is occupied, keep trying
+  to get it, rather than simply giving up and exiting.
+
+- Support fetching variables from leases and also updating and adding
+  variables to leases via OMAPI.
+
+- If two failover peers have wildly different clocks, refuse to start
+  doing failover.
+
+- Fix a bug in the DNS update code that could cause core dumps when
+  running on alpha processors.
+
+- Fixed a bug in ddns updates for static lease entries, thanks to a
+  patch from Andrey M Linkevitch.
+
+- Add support for Darwin/MacOS X
+
+- Install omshell (including new documentation).
+
+- Support DNS updates in the client (this is a very obscure feature
+  that most DHCP client users probably will not be able to use).
+
+- Somewhat cleaner status logging in the client.
+
+- Make OMAPI key naming syntax compatible with the way keys are
+  actually named (key names are domain names).
+
+- Fix a bug in the lease file writer.
+
+- Install DHCP ISC headers in a different place than BIND 9 ISC
+  headers, to avoid causing trouble in BIND 9 builds.
+
+- Don't send updates for attributes on an object when the attributes
+  haven't changed.   Support deleting attributes on remote objects.
+
+- Fix a number of bugs in omshell, and add the unset and refresh
+  statements.
+
+- Handle disconnects in OMAPI a little bit more intelligently (so that
+  the caller gets ECONNRESET instead of EINVAL).
+
+- Fix a bunch of bugs in the handling of clients that have existing
+  leases when the try to renew their leases while failover is
+  operating.
+
+		Changes since 3.0 Release Candidate 6
+
+- Fix a core dump that could happen when processing a DHCPREQUEST from
+  a client that had a host declaration that contained both a
+  fixed-address declaration and a dhcp-client-identifier option
+  declaration, if the client identifier was longer than nine bytes.
+
+- Fix a memory leak that could happen in certain obscure cases when
+  using omapi to manipulate leases.
+
+- Fix some bugs and omissions in omshell.
+
+
+		Changes since 3.0 Release Candidate 5
+
+- Fix a bug in omapi_object_dereference that prevented objects in
+  chains from having their reference counts decreased on dereference.
+
+- Fix a bug in omapi_object_dereference that would prevent object
+  chains from being freed upon removal of the last reference external
+  to the chain.
+
+- Fix a number of other memory leaks in the OMAPI protocol subsystem.
+
+- Add code in the OMAPI protocol handler to trace memory leakage.
+
+- Clean up the memory allocation/reference history printer.
+
+- Support input of dotted quads and colon-seperated hex lists as
+  attribute values in omshell.
+
+- Fix a typo in the linux interface discovery code.
+
+- Conditionalize a piece of trace code that wasn't conditional.
+
+		Changes since 3.0 Release Candidate 4
+
+- Fix a bug that would prevent leases from being abandoned properly on
+  DHCPDECLINE.
+
+- Fix failover peer OMAPI support.
+
+- In failover, correctly handle expiration of leases.   Previously,
+  leases would never be reclaimed because they couldn't make the
+  transition from EXPIRED to FREE.
+
+- Fix some broken failover state transitions.
+
+- Documentation fixes.
+
+- Take out an unnecessary check in DHCP relay agent information option
+  stashing code that was preventing REBINDING clients from rebinding.
+
+- Prevent failover peers from allocating leases in DHCPREQUEST
+  processing if the lease belongs to the other server.
+
+- Record server version in lease file introductory comment.
+
+- Correctly report connection errors in OMAPI and failover.
+
+- Make authentication signature algorithm name comparisons in OMAPI
+  case-insensitive.
+
+- Fix compile problem on SunOS 4.x
+
+- If a signature algorithm is not termined with '.', terminate it so
+  that comparisons between fully-qualified names will work
+  consistently.
+
+- Different SIOCGIFCONF probe code, may "fix" problem on some Linux
+  systems with the probe not working correctly.
+
+- Don't allow user to type omapi key on command line of omshell.
+
+		Changes since 3.0 Release Candidate 3
+
+- Do lease billing on startup in a way that I *think* will finally do
+  the billing correctly - the previous method could overbill as a
+  result of duplicate leases.
+
+- Document OMAPI server objects.
+
+	  Changes since 3.0 Release Candidate 2 Patchlevel 1
+
+- Fix some problems in the DDNS update code.   Thanks to Albert
+  Herranz for figuring out the main problem.
+
+- Fix some reference counting errors on host entries that were causing
+  core dumps.
+
+- Fix a byte-swap bug in the token ring code, thanks to Jochen
+  Friedrich.
+
+- Fix a bug in lease billing, thanks to Jonas Bulow.
+
+		Changes since 3.0 Release Candidate 2
+
+- Change the conditions under which a DHCPRELEASE is actually
+  committed to be consistent with lease binding states rather than
+  using the lease end time.   THis may fix some problems with the
+  billing class code.
+
+- Fix a bug where lease updates would fail on Digital Unix (and maybe
+  others) because malloc was called with a size of zero.
+
+- Fix a core dump that happens when the DHCP server can't create its
+  trace file.
+
+	  Changes since 3.0 Release Candidate 1 Patchlevel 1
+
+- Fix the dhcp_failover_put_message to not attempt to allocate a
+  zero-length buffer.   Some versions of malloc() fail if you try to
+  allocate a zero-length buffer, and this was causing problems on,
+  e.g., Digital Unix.
+
+- Fix a case where the failover code was printing an error message
+  when no error had occurred.
+
+- Fix a problem where when a server went down and back up again, the
+  peer would not see a state transition and so would stay in the
+  non-communicating state.
+
+- Be smart about going into recover_wait.
+
+- Fix a problem in the failover implementation where peers would fail
+  to come into sync if interrupted in the RECOVER state.   This could
+  have been the cause of some problems people have reported recently.
+
+- Fix a problem with billing classes where they would not be unbilled
+  when the client lease expired.
+
+- If select fails, figure out which descriptor is bad, and cut it out
+  of the I/O loop.   This prevents a potentially nasty spin.  I
+  haven't heard any report it in a while, but it came up consistently
+  in testing.
+
+- Fix a bug in the relay agent where if you specified interfaces on
+  the command line, it would fail.
+
+- Fix a couple of small bugs in the omapi connection object (no known
+  user impact).
+
+- Add the missing 3.0 Beta 1 lease conversion script.
+
+- Read dhcp client script hooks if they exist, rather than only if
+  they're executable.
+
+		Changes since 3.0 Release Candidate 1
+
+- Fix a memory smash that happens when fixed-address leases are used.
+  ANY SITE AT WHICH FIXED-ADDRESS STATEMENTS ARE BEING USED SHOULD
+  UPGRADE IMMEDIATELY.   This has been a long-standing bug - thanks to
+  Alvise Nobile for discovering it and helping me to find it!
+
+- Fix a small bug in binary-to-ascii, thanks to H. Peter Anvin of
+  Transmeta.
+
+- There is a known problem with the DHCP server doing failover on
+  Compaq Alpha systems.   This patchlevel is not a release candidate
+  because of this bug.   The bug should be straightforward to fix, so
+  a new release candidate is expected shortly.
+
+- There is a known problem in the DDNS update code that is probably a
+  bug, and is not, as far as we know, fixed in this patchlevel.
+
+		Changes since 3.0 Beta 2 Patchlevel 24
+
+- Went over problematic failover state transitions and made them all
+  work, so that failover should now much less fragile.
+
+- Add some dhcpctl and omapi documentation
+
+- Fix compile errors when compiling with unusual predefines.
+
+- Make Token Ring work on Linux 2.4
+
+- Fix the Digital Unix BPF_WORDALIGN bug.
+
+- Fix some dhcp client documentation errors.
+
+- Update some parts of the README file.
+
+- Support GCC on SCO.
 
 	        Changes since 3.0 Beta 2 Patchlevel 23
 

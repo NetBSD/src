@@ -1,5 +1,7 @@
 #!/bin/sh
 
+#sysname=$1
+
 while [ $# != 0 ]; do
   if [ x$1 = x--with-nsupdate ]; then
     echo "nsupdate is always built now."
@@ -22,8 +24,26 @@ machine=`uname -m`
 
 if [ "$sysname" = "" ]; then
   case $uname in
+    SCO_SV)
+      IFS=":"
+      for foo in $PATH; do
+	if [ x$gcc_path = x ] && [ -x $foo/gcc ]; then
+	  gcc_path=$foo/gcc
+	fi 
+      done
+      IFS=" "
+      if [ x$gcc_path = x ]; then
+        sysname=sco-cc
+        sysname_print=sco
+      else
+        sysname=sco-gcc
+        sysname_print=sco
+      fi
+    ;;
     AIX)
       sysname=aix;;
+    Darwin)
+      sysname=darwin;;
     Rhapsody)
       sysname=rhapsody;;
     ULTRIX)
@@ -163,6 +183,7 @@ if [ "$sysname" = "" ]; then
     echo "   hpux		HP-UX"
     echo "   qnx		QNX 4.2 or higher"
     echo "   NEXTSTEP     NeXTSTEP"
+    echo "   sco	SCO Open Server"
     exit 1;
   fi
 fi

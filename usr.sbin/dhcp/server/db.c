@@ -3,7 +3,7 @@
    Persistent database management routines for DHCPD... */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,17 +43,19 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: db.c,v 1.1.1.13 2001/04/02 21:57:16 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: db.c,v 1.1.1.14 2001/06/18 18:13:23 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #include <ctype.h>
+#include "version.h"
 
 FILE *db_file;
 
 static int counting = 0;
 static int count = 0;
 TIME write_time;
+int lease_file_is_corrupt = 0;
 
 /* Write the specified lease to the current lease database file. */
 
@@ -66,6 +68,12 @@ int write_lease (lease)
 	int i;
 	struct binding *b;
 	char *s;
+
+	/* If the lease file is corrupt, don't try to write any more leases
+	   until we've written a good lease file. */
+	if (lease_file_is_corrupt)
+		if (!new_lease_file ())
+			return 0;
 
 	if (counting)
 		++count;
@@ -292,6 +300,8 @@ int write_lease (lease)
 	if (errors)
 		log_info ("write_lease: unable to write lease %s",
 		      piaddr (lease -> ip_addr));
+	if (errors)
+		lease_file_is_corrupt = 1;
 	return !errors;
 }
 
@@ -301,6 +311,12 @@ int write_host (host)
 	int errors = 0;
 	int i;
 	struct data_string ip_addrs;
+
+	/* If the lease file is corrupt, don't try to write any more leases
+	   until we've written a good lease file. */
+	if (lease_file_is_corrupt)
+		if (!new_lease_file ())
+			return 0;
 
 	if (!db_printable (host -> name))
 		return 0;
@@ -428,9 +444,11 @@ int write_host (host)
 	if (errno) {
 		++errors;
 	}
-	if (errors)
+	if (errors) {
 		log_info ("write_host: unable to write host %s",
 			  host -> name);
+		lease_file_is_corrupt = 1;
+	}
 	return !errors;
 }
 
@@ -439,6 +457,12 @@ int write_group (group)
 {
 	int errors = 0;
 	int i;
+
+	/* If the lease file is corrupt, don't try to write any more leases
+	   until we've written a good lease file. */
+	if (lease_file_is_corrupt)
+		if (!new_lease_file ())
+			return 0;
 
 	if (!db_printable (group -> name))
 		return 0;
@@ -487,9 +511,11 @@ int write_group (group)
 	if (errno) {
 		++errors;
 	}
-	if (errors)
+	if (errors) {
 		log_info ("write_group: unable to write group %s",
 			  group -> name);
+		lease_file_is_corrupt = 1;
+	}
 	return !errors;
 }
 
@@ -498,6 +524,10 @@ int write_failover_state (dhcp_failover_state_t *state)
 {
 	struct tm *t;
 	int errors = 0;
+
+	if (lease_file_is_corrupt)
+		if (!new_lease_file ())
+			return 0;
 
 	errno = 0;
 	fprintf (db_file, "\nfailover peer \"%s\" state {", state -> name);
@@ -534,6 +564,7 @@ int write_failover_state (dhcp_failover_state_t *state)
 	if (errors) {
 		log_info ("write_failover_state: unable to write state %s",
 			  state -> name);
+		lease_file_is_corrupt = 1;
 		return 0;
 	}
 	return 1;
@@ -595,6 +626,10 @@ int write_billing_class (class)
 	int errors = 0;
 	int i;
 
+	if (lease_file_is_corrupt)
+		if (!new_lease_file ())
+			return 0;
+
 	if (!class -> superclass) {
 		errno = 0;
 		fprintf (db_file, "\n  billing class \"%s\";", class -> name);
@@ -636,7 +671,9 @@ int write_billing_class (class)
 			++errors;
 	}
 
-	class -> dirty = 0;
+	class -> dirty = !errors;
+	if (errors)
+		lease_file_is_corrupt = 1;
 	return !errors;
 }
 
@@ -706,7 +743,7 @@ void db_startup (testp)
 	}
 }
 
-void new_lease_file ()
+int new_lease_file ()
 {
 	char newfname [512];
 	char backfname [512];
@@ -716,6 +753,7 @@ void new_lease_file ()
 	/* If we already have an open database, close it. */
 	if (db_file) {
 		fclose (db_file);
+		db_file = (FILE *)0;
 	}
 
 	/* Make a temporary lease file... */
@@ -723,51 +761,84 @@ void new_lease_file ()
 	sprintf (newfname, "%s.%d", path_dhcpd_db, (int)t);
 	db_fd = open (newfname, O_WRONLY | O_TRUNC | O_CREAT, 0664);
 	if (db_fd < 0) {
-		log_fatal ("Can't create new lease file: %m");
+		log_error ("Can't create new lease file: %m");
+		return 0;
 	}
 	if ((db_file = fdopen (db_fd, "w")) == NULL) {
-		log_fatal ("Can't fdopen new lease file!");
+		log_error ("Can't fdopen new lease file!");
+		goto fail;
 	}
 
 	/* Write an introduction so people don't complain about time
 	   being off. */
+	errno = 0;
 	fprintf (db_file, "# All times in this file are in UTC (GMT), not %s",
 		 "your local timezone.   This is\n");
+	if (errno != 0)
+		goto fail;
 	fprintf (db_file, "# not a bug, so please don't ask about it.   %s",
 		 "There is no portable way to\n");
+	if (errno != 0)
+		goto fail;
 	fprintf (db_file, "# store leases in the local timezone, so please %s",
 		 "don't request this as a\n");
+	if (errno != 0)
+		goto fail;
 	fprintf (db_file, "# feature.   If this is inconvenient or %s",
 		 "confusing to you, we sincerely\n");
+	if (errno != 0)
+		goto fail;
 	fprintf (db_file, "# apologize.   Seriously, though - don't ask.\n");
+	if (errno != 0)
+		goto fail;
 	fprintf (db_file, "# The format of this file is documented in the %s",
-		 "dhcpd.leases(5) manual page.\n\n");
+		 "dhcpd.leases(5) manual page.\n");
+	if (errno != 0)
+		goto fail;
+	fprintf (db_file, "# This lease file was written by isc-dhcp-%s\n\n",
+		 DHCP_VERSION);
+	if (errno != 0)
+		goto fail;
 
 	/* Write out all the leases that we know of... */
 	counting = 0;
-	write_leases ();
+	if (!write_leases ())
+		goto fail;
 
 #if defined (TRACING)
 	if (!trace_playback ()) {
 #endif
 	    /* Get the old database out of the way... */
 	    sprintf (backfname, "%s~", path_dhcpd_db);
-	    if (unlink (backfname) < 0 && errno != ENOENT)
-		log_fatal ("Can't remove old lease database backup %s: %m",
+	    if (unlink (backfname) < 0 && errno != ENOENT) {
+		log_error ("Can't remove old lease database backup %s: %m",
 			   backfname);
-	    if (link (path_dhcpd_db, backfname) < 0)
-		log_fatal ("Can't backup lease database %s to %s: %m",
+		goto fail;
+	    }
+	    if (link (path_dhcpd_db, backfname) < 0) {
+		log_error ("Can't backup lease database %s to %s: %m",
 			   path_dhcpd_db, backfname);
+		goto fail;
+	    }
 #if defined (TRACING)
 	}
 #endif
 	
 	/* Move in the new file... */
-	if (rename (newfname, path_dhcpd_db) < 0)
-		log_fatal ("Can't install new lease database %s to %s: %m",
-		       newfname, path_dhcpd_db);
+	if (rename (newfname, path_dhcpd_db) < 0) {
+		log_error ("Can't install new lease database %s to %s: %m",
+			   newfname, path_dhcpd_db);
+		goto fail;
+	}
 
 	counting = 1;
+	lease_file_is_corrupt = 0;
+	return 1;
+
+      fail:
+	unlink (newfname);
+	lease_file_is_corrupt = 1;
+	return 0;
 }
 
 int group_writer (struct group_object *group)
