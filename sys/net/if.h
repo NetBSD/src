@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.47 2000/03/22 11:34:15 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.48 2000/03/29 03:27:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -548,11 +548,11 @@ do {									\
 #endif /* IFAREF_DEBUG */
 
 struct ifnet_head ifnet;
-struct ifnet **ifindex2ifnet;
+extern struct ifnet **ifindex2ifnet;
 #if 0
 struct ifnet loif[];
 #endif
-int if_index;
+extern int if_index;
 
 void	ether_ifattach __P((struct ifnet *, const u_int8_t *));
 void	ether_ifdetach __P((struct ifnet *));
