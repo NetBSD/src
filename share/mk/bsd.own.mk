@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.294.2.3 2002/07/03 12:05:21 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.294.2.4 2002/07/18 04:41:58 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -300,7 +300,6 @@ NOPIC=		# defined
 # The m68000 port is incomplete.
 .if ${MACHINE_ARCH} == "m68000"
 NOPIC=		# defined
-NOPROFILE=	# defined
 .endif
 
 # Location of the file that contains the major and minor numbers of the
