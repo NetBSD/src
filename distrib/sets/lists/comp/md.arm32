@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.42 2001/02/26 00:14:59 reinoud Exp $
+# $NetBSD: md.arm32,v 1.43 2001/03/30 11:29:09 toddpw Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -6,6 +6,7 @@
 ./usr/include/arm/arm32/bus.h		comp-c-include
 ./usr/include/arm/arm32/frame.h		comp-c-include
 ./usr/include/arm/arm32/katelib.h	comp-c-include
+./usr/include/arm/arm32/param.h		comp-c-include
 ./usr/include/arm/arm32/pcb.h		comp-c-include
 ./usr/include/arm/arm32/pmap.h		comp-c-include
 ./usr/include/arm/arm32/psl.h		comp-c-include
@@ -15,6 +16,10 @@
 ./usr/include/arm/asm.h			comp-c-include
 ./usr/include/arm/bswap.h		comp-c-include
 ./usr/include/arm/cdefs.h		comp-c-include
+./usr/include/arm/cpu.h			comp-c-include
+./usr/include/arm/cpufunc.h		comp-c-include
+./usr/include/arm/cpus.h		comp-c-include
+./usr/include/arm/db_machdep.h		comp-c-include
 ./usr/include/arm/disklabel.h		comp-c-include
 ./usr/include/arm/disklabel_acorn.h	comp-c-include
 ./usr/include/arm/elf_machdep.h		comp-c-include
@@ -25,15 +30,27 @@
 ./usr/include/arm/ieee.h		comp-c-include
 ./usr/include/arm/ieeefp.h		comp-c-include
 ./usr/include/arm/int_types.h		comp-c-include
+./usr/include/arm/ipkdb.h		comp-c-include
+./usr/include/arm/isa_machdep.h		comp-c-include
+./usr/include/arm/isapnp_machdep.h	comp-c-include
 ./usr/include/arm/limits.h		comp-c-include
 ./usr/include/arm/lock.h		comp-c-include
 ./usr/include/arm/math.h		comp-c-include
+./usr/include/arm/ofisa_machdep.h	comp-c-include
+./usr/include/arm/ofw.h			comp-c-include
+./usr/include/arm/pci_machdep.h		comp-c-include
+./usr/include/arm/pio.h			comp-c-include
+./usr/include/arm/proc.h		comp-c-include
+./usr/include/arm/profile.h		comp-c-include
+./usr/include/arm/profileio.h		comp-c-include
+./usr/include/arm/pte.h			comp-c-include
 ./usr/include/arm/ptrace.h		comp-c-include
 ./usr/include/arm/reg.h			comp-c-include
 ./usr/include/arm/setjmp.h		comp-c-include
 ./usr/include/arm/signal.h		comp-c-include
 ./usr/include/arm/stdarg.h		comp-c-include
 ./usr/include/arm/trap.h		comp-c-include
+./usr/include/arm/types.h		comp-c-include
 ./usr/include/arm/varargs.h		comp-c-include
 ./usr/include/arm32			comp-c-include
 ./usr/include/arm32/_G_config.h		comp-c-include
