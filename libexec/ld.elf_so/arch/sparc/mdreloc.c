@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.20 2002/09/06 15:17:58 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.21 2002/09/06 15:32:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 #define _RF_B		0x08000000		/* Load address relative */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	( (s) & 0xff)		/* right shift */
-static int reloc_target_flags[] = {
+static const int reloc_target_flags[] = {
 	0,							/* NONE */
 	_RF_S|_RF_A|		_RF_SZ(8)  | _RF_RS(0),		/* RELOC_8 */
 	_RF_S|_RF_A|		_RF_SZ(16) | _RF_RS(0),		/* RELOC_16 */
@@ -135,7 +135,7 @@ static const char *reloc_names[] = {
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
 
-static int reloc_target_bitmask[] = {
+static const int reloc_target_bitmask[] = {
 #define _BM(x)	(~(-(1ULL << (x))))
 	0,				/* NONE */
 	_BM(8), _BM(16), _BM(32),	/* RELOC_8, _16, _32 */
