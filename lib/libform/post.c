@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.6 2001/01/22 01:05:34 blymn Exp $	*/
+/*	$NetBSD: post.c,v 1.7 2001/03/25 12:34:47 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -40,7 +40,7 @@ post_form(FORM *form)
 {
 	int rows, cols, status;
 	
-	if ((form == NULL) || (form->win == NULL))
+	if (form == NULL)
 		return E_BAD_ARGUMENT;
 
 	if (form->posted == 1)
@@ -55,19 +55,11 @@ post_form(FORM *form)
 	if (scale_form(form, &rows, &cols) != E_OK)
 		return E_SYSTEM_ERROR;
 	
-	if ((form->subwin != NULL) && ((rows > getmaxy(form->subwin))
-				       || (cols > getmaxx(form->subwin)))) {
+	if ((form->scrwin != NULL) && ((rows > getmaxy(form->scrwin))
+				       || (cols > getmaxx(form->scrwin)))) {
 		return E_NO_ROOM;
 	}
 
-	if (form->subwin == NULL) {
-		form->subwin_created = 1;
-		form->subwin = derwin(form->win, rows, cols, 0, 0);
-		if (form->subwin == NULL)
-			return E_SYSTEM_ERROR;
-
-	}
-	
 #ifdef DEBUG
 	if (_formi_create_dbg_file() != E_OK)
 		return E_SYSTEM_ERROR;
@@ -115,11 +107,7 @@ unpost_form(FORM *form)
 		form->form_term(form);
 	form->in_init = 0;
 
-	wclear(form->subwin);
-	if (form->subwin_created == 1) {
-		delwin(form->subwin);
-		form->subwin_created = 0;
-	}
+	wclear(form->scrwin);
 
 	form->posted = 0;
 
