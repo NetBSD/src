@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.1 2001/02/11 17:03:04 bjh21 Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.2 2001/02/26 16:35:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -72,7 +72,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.1 2001/02/11 17:03:04 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.2 2001/02/26 16:35:40 bjh21 Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.1 2001/02/11 17:03:04 bjh21 Ex
 #endif
 
 #ifdef ARMFPE
-#include <machine/cpus.h>
 #include <arm32/fpe-arm/armfpe.h>
 #endif	/* ARMFPE */
 
