@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.22 2001/03/05 16:53:13 wiz Exp $
+.\" $NetBSD: pkg_add.1,v 1.23 2001/03/13 18:25:30 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd January 12, 1999
+.Dd March 12, 2001
 .Dt pkg_add 1
 .Os
 .Sh NAME
@@ -40,7 +40,11 @@ command is used to extract packages that have been previously created
 with the
 .Xr pkg_create 1
 command.
-
+Packages are prepared collections of pre-built binaries, documentation,
+configurations, installation instructions and/or other files.
+.Nm
+can recursively install other packages that the current package
+depends on or requires from both local disk and via FTP.
 .Sh WARNING
 .Bf -emphasis
 Since the
