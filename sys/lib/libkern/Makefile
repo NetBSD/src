@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1994/10/26 06:42:11 cgd Exp $
+#	$NetBSD: Makefile,v 1.17 1994/12/07 14:53:53 deraadt Exp $
 
 LIB=	kern
 NOPIC=
@@ -6,9 +6,9 @@ OBJMACHINE=
 CFLAGS= -O3 -I${.CURDIR} -Imachine/.. -I. -I${.CURDIR}/../..
 
 machine-links:
-	-rm -f machine && \
+	-@rm -f machine && \
 	    ln -s ${.CURDIR}/../../arch/${MACHINE}/include machine
-	-rm -f ${MACHINE_ARCH} && \
+	-@rm -f ${MACHINE_ARCH} && \
 	    ln -s ${.CURDIR}/../../arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 
 all:	machine-links
