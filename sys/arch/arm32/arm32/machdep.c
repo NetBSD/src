@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1998/10/05 02:33:46 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 1998/10/06 20:55:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -557,8 +557,6 @@ cpu_startup()
 	 * Configure the hardware
 	 */
 	configure();
-
-	cold = 0;	/* We are warm now ... */
 }
 
 
