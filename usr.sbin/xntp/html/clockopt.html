@@ -1,0 +1,172 @@
+<!-- $NetBSD: clockopt.html,v 1.1 1998/12/30 20:20:33 mcr Exp $ -->
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML Strict//EN">
+<html><head><title>
+Reference Clock Options
+</title></head><body><h3>
+Reference Clock Options
+</h3><hr>
+
+<p><h4>Reference Clock Support</h4>
+
+<p>The NTP Version 3 daemon currently supports several different radio,
+satellite and modem reference clocks plus a special pseudo-clock used
+for backup or when no other clock source is available. Detailed
+descriptions of individual device drivers and options can be found in
+the <a href = "refclock.html"> Reference Clock Drivers </a> page.
+Additional information can be found in the pages referenced there,
+including the <a href="rdebug.html">Debugging Hints for Reference Clock
+Drivers</a> and <a href="howto.html">How To Write a Reference Clock
+Driver</a> pages. In many drivers, support for a PPS signal is available
+as described in <a href="pps.html">Pulse-per-second (PPS) Signal
+Interfacing</a> page. Many drivers support special line
+discipline/streams modules which can significantly improve the accuracy
+using the driver. These are described in the <a href="ldisc.html">Line
+Disciplines and Streams Drivers</a> page.
+
+<p>A reference clock will generally (though not always) be a radio
+timecode receiver which is synchronized to a source of standard time
+such as the services offered by the NRC in Canada and NIST and USNO in
+the U.S. The interface between the computer and the timecode receiver is
+device dependent and will vary, but is often a serial port. A device
+driver specific to each clock must be selected and compiled in the
+distribution; however, most common radio, satellite and modem clocks
+are included by default. Note that an attempt to configure a reference
+clock when the driver has not been included or the hardware port has not
+been appropriately configured results in a scalding remark to the system
+log file, but is otherwise non hazardous.
+
+<p>For the purposes of configuration, <code>xntpd</code> treats
+reference clocks in a manner analogous to normal NTP peers as much as
+possible. Reference clocks are identified by a syntactically correct but
+invalid IP address, in order to distinguish them from normal NTP peers.
+Reference clock addresses are of the form
+<code>127.127.<i>t.u</i></code>, where <code><i>t</i></code> is an
+integer denoting the clock type and <code><i>u</i></code> indicates the
+type-specific unit number.
+
+The <code>server</code> command is used to configure a reference clock,
+where the <code><i>address</i></code> argument in that command is the
+clock address. The <code>key</code>, <code>version</code> and
+<code>ttl</code> options are not used for reference clock support. The
+<code>mode</code> option is added for reference clock support, as
+described below. The <code>prefer</code> option can be useful to
+persuade the server to cherish a reference clock with somewhat more
+enthusiasm than other reference clocks or peers. Further information on
+this option can be found in the <a href = "prefer.html"> Mitigation
+Rules and the <code>prefer</code> Keyword </a> page. The
+<code>minpoll</code> and <code>maxpoll</code> options have meaning only
+for selected clock drivers. See the individual clock driver document
+pages for additional information.
+
+<p>The stratum of a reference clock is by default zero. Since the
+<code>xntpd</code> daemon adds one to the stratum of each peer, a
+primary server ordinarily displays stratum one. In order to provide
+engineered backups, it is often useful to specify the reference clock
+stratum as greater than zero. The <code>stratum</code> option is used
+for this purpose. Also, in cases involving both a reference clock and a
+pulse-per-second (PPS) discipline signal, it is useful to specify the
+reference clock identifier as other than the default, depending on the
+driver. The <code>refid</code> option is used for this purpose. Except
+where noted, these options apply to all clock drivers.
+
+<p><h4>Reference Clock Commands</h4>
+
+<dl>
+
+<dt><code>server 127.127.<i>t.u</i> [ prefer ] [ mode <i>int</i> ]</code>
+<dd>This command can be used to configure reference clocks in special
+ways. The options are interpreted as follows:
+
+<dl>
+
+<dt><code>prefer</code>
+<dd>Marks the reference clock as preferred. All other things being
+equal, this host will be chosen for synchronization among a set of
+correctly operating hosts. See the <a href = "prefer.html"> Mitigation
+Rules and the <code>prefer</code> Keyword </a> page for further
+information.
+
+<p><dt><code>mode <i>int</i></code>
+<dd>Specifies a mode number which is interpreted in a device-specific
+fashion. For instance, it selects a dialing protocol in the ACTS driver
+and a device subtype in the <code>parse</code> drivers.
+
+<p><dt><code>minpoll <i>minpoll</i></code>
+<dd>This option specifies the minimum polling interval for NTP messages,
+in seconds to the power of two. The allowable range is 4 (16 s to 14
+(16384 s) inclusive. The default is 6 (64 s) for all except modem
+reference clocks, where the default is 10 (1024 s).
+
+<p><dt><code>maxpoll <i>maxpoll</i></code>
+<dd>This option specifies the maximum polling interval for NTP messages,
+in seconds to the power of two. The allowable range is 4 (16 s to 14
+(16384 s) inclusive. The default is 6 (64 s) for all except modem
+reference clocks, where the default is 14 (16384 s).
+
+</dl>
+
+<dt><code>fudge 127.127.<i>t.u</i> [ time1 <i>secs</i> ] [ time2
+<i>secs</i> ] [ stratum <i>int</i> ] [ refid <i>string</i> ] [ mode
+<i>int</i> ] [ flag1 0 | 1 ] [ flag2 0 | 1 ] [ flag3 0 | 1] [ flag4 0 |
+1 ]</code>
+<dd>This command can be used to configure reference clocks in special
+ways. It must immediately follow the <code>server</code> command which
+configures the driver. Note that the same capability is possible at run
+time using the <a href = "xntpdc.html"> <code>xntpdc</code></a> program.
+The options are interpreted as follows:
+
+<dl>
+
+<dt><code>time1 <i>secs</i></code>
+<dd>Specifies a constant to be added to the time offset produced by the
+driver, a fixed-point decimal number in seconds. This is used as a
+calibration constant to adjust the nominal time offset of a particular
+clock to agree with an external standard, such as a precision PPS
+signal. It also provides a way to correct a systematic error or bias due
+to serial port latencies, different cable lengths or receiver internal
+delay. The specified offset is in addition to the propagation delay
+provided by other means, such as internal DIPswitches. Where a
+calibration for an individual system and driver is available, an
+approximate correction is noted in the driver documentation pages.
+
+<p><dt><code>time2 <i>secs</i></code>
+<dd>Specifies a fixed-point decimal number in seconds, which is
+interpreted in a driver-dependent way. See the descriptions of specific
+drivers in the <a href="refclock.html">reference clock drivers</a> page.
+
+<p><dt><code>stratum <i>int</i></code>
+<dd>Specifies the stratum number assigned to the driver, an integer
+between 0 and 15. This number overrides the default stratum number
+ordinarily assigned by the driver itself, usually zero.
+
+<p><dt><code>refid <i>string</i></code>
+<dd>Specifies an ASCII string of from one to four characters which
+defines the reference identifier used by the driver. This string
+overrides the default identifier ordinarily assigned by the driver
+itself.
+
+<p><dt><code>mode <i>int</i></code>
+<dd>Specifies a mode number which is interpreted in a device-specific
+fashion. For instance, it selects a dialing protocol in the ACTS driver
+and a device subtype in the <code>parse</code> drivers.
+
+<p><dt><code>flag1</code> <code>flag2</code> <code>flag3</code>
+<code>flag4</code>
+<dd>These four flags are used for customizing the clock driver. The
+interpretation of these values, and whether they are used at all, is a
+function of the particular clock driver. However, by convention, and
+unless indicated otherwise, <code>flag3</code> is used to attach the
+<code>ppsclock</code> streams module to the configured driver, while
+<code>flag4</code> is used to enable recording verbose monitoring data
+to the <code>clockstats</code> file configured with the
+<code>filegen</code> command. Further information on the
+<code>ppsclock</code> streams module can be found in the <a
+href="pps.html">Pulse-per-second (PPS) Signal Interfacing</a> page.
+Further information on the <code>filegen</code> command can be found in
+the <a href="monopt.html"> Monitoring Options </a> page.
+
+</dl>
+
+</dl>
+
+<p><hr><address>David L. Mills (mills@udel.edu)</address></body></html>

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpq.8,v 1.6 1998/04/22 06:24:55 ross Exp $
+.\"	$NetBSD: ntpq.8,v 1.7 1998/12/30 20:23:00 mcr Exp $
 .\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
 .\"
 .Dd April 17, 1997
@@ -44,8 +44,7 @@ uses NTP mode 6 packets to communicate with the NTP
 server, and hence can be used to query any compatable server on the
 network which permits it. Note that since NTP is a UDP protocol this
 communication will be somewhat unreliable, especially over large
-distances in terms of network topology.
-.Nm
+distances in terms of network topology. .Nm
 makes one
 attempt to retransmit requests, and will time requests out if the remote
 host is not heard from within a suitable timeout time.
@@ -116,8 +115,7 @@ of the form
 where the
 .Ar =value
 is ignored, and can be omitted, in
-requests to the server to read variables.
-.Nm
+requests to the server to read variables. .Nm
 maintains an
 internal list in which data to be included in control messages can be
 assembled, and sent using the readlist and writelist commands described
@@ -175,8 +173,7 @@ This command allows the specification of a key number to be used to
 authenticate configuration requests. This must correspond to a key
 number the server has been configured to use for this purpose.
 .It Cd ntpversion Ar 1 | 2 | 3
-Sets the NTP version number which
-.Nm
+Sets the NTP version number which .Nm
 claims in
 packets. Defaults to 3, Note that mode 6 control messages (and modes,
 for that matter) didn't exist in NTP version 1. There appear to be no
@@ -375,5 +372,10 @@ terminating the command. The timeout time is a fixed constant, which
 means you wait a long time for timeouts since it assumes sort of a worst
 case. The program should improve the timeout estimate as it sends
 queries to a particular host, but doesn't.
+.Pp
+.Sh FILES
+.Bl -tag -width /etc/ntp.keys -compact
+.It Pa /usr/share/doc/xntp/index.html
+.It Pa /usr/share/doc/xntp/ntpq.html.
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)

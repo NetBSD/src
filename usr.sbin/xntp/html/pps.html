@@ -1,0 +1,81 @@
+<!-- $NetBSD: pps.html,v 1.1 1998/12/30 20:20:36 mcr Exp $ -->
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML Strict//EN">
+<html><head><title>
+Pulse-per-second (PPS) Signal Interfacing
+</title></head><body><h3>
+Pulse-per-second (PPS) Signal Interfacing
+</h3><hr>
+
+<p>Some radio clocks and related timekeeping gear have a pulse-per-
+second (PPS) signal that can be used to discipline the local clock
+oscillator to a high degree of precision, typically to the order less
+than 50 us in time and 0.1 PPM in frequency. The PPS signal can be
+connected in either of two ways, either via the data leads of a serial
+port or via the modem control leads. Either way requires conversion of
+the PPS signal, usually at TTL levels, to RS232 levels, which can be
+done using a circuit such as described in the <a href = "gadget.html">
+Gadget Box PPS Level Converter and CHU Modem </a> page.
+
+<p>The data leads interface requires regenerating the PPS pulse and
+converting to RS232 signal levels, so that the pulse looks like a
+legitimate ASCII character. The optional <code>tty_clk</code> line
+discipline/streams module inserts a timestamp following this character
+in the input data stream. The driver uses this timestamp to determine
+the time of arrival of the PPS pulse to within 26 us at 38.4 kbps while
+eliminating error due to operating system queues and service times. In
+order to use the kernel PPS signal, the <code>xntp3</code> distribution
+must be compiled with <code>TTYCLK</code> defined.
+
+<p>The modem control leads interface requires converting to RS232 levels
+and connecting to the data carrier detect (DCD) lead of a serial port.
+The optional <code>ppsclock</code> streams module captures a timestamp
+upon transition of the DCD signal. This module can be built from the <a
+href="ftp://ftp.udel.edu/pub/ntp/ppsclock.tar.Z"><code>ppsclock.tar.Z</code>
+distribution. </a> The driver reads the latest timestamp with a
+designated <code>ioctl()</code> system call to determine the time of
+arrival of the PPS pulse to within a few tens of microseconds. In order
+to use the kernel PPS signal, the <code>xntp3</code> distribution must
+be compiled with <code>PPS</code> defined.
+
+<p>Both the <code>tty_clk</code> and <code>ppsclock</code> modules are
+described in the <a href="ldisc.html">Line Disciplines and Streams
+Drivers</a> page. Directions for building the modules themselves are in
+the <code>./kernel</code> directory. Directions on how to configure
+<code>xntpd</code> to operate with these modules is described in <a href
+= "build.html"> Building and Installing the Distribution </a> page.
+
+<p>Both of these mechanisms are supported by the <code>ATOM_PPS</code>
+reference clock driver described in the <a href = "refclock.html">
+Reference Clock Drivers </a> page and its dependencies. This driver is
+ordinarily used in conjunction with another clock driver that supports
+the radio clock that produces the PPS pulse, as described in the <a href
+= "prefer.html"> Mitigation Rules and the <code>prefer</code> Keyword
+</a> page. This driver furnishes the coarse timecode used to
+disambiguate the seconds numbering of the PPS pulse itself. The NTP
+daemon mitigates between the radio clock driver and
+<code>ATOM_PPS</code> driver as described in that page in order to
+provide the most accurate time, while respecting the various types of
+equipment failures that could happen.
+
+<p>For the utmost time quality, a number of Unix system kernel
+modifications can be made as described in the <a href = "kern.html"> A
+Kernel Model for Precision Timekeeping </a> page. Specifically, the
+ppsclock module can be used to interface the PPS signal directly to the
+kernel for use as discipline sources for both time and frequency. These
+sources can be separately enabled and monitored using the
+<code>ntp_adjtime()</code> system call described in that page and the
+<code>./include/sys/timex.h</code> header file in the <code>xntp3</code>
+distribution. In order to use the kernel PPS signal, the
+<code>xntp3</code> distribution must be compiled with
+<code>KERNEL_PLL</code> defined.
+
+<p>In some configurations may have multiple radio clocks, each with PPS
+outputs, as well as a kernel modified to use the PPS signal. In order to
+provide the highest degree of redundancy and survivability, the kernel
+PPS discipline, <code>tty_clk</code> module, <code>ppsclock</code>
+module and kernel modifications may all be in use at the same time, each
+backing up the other. The sometimes complicated mitigation rules are
+described in the Mitigation Rules and the <code>prefer</code> Keyword
+page.
+
+<hr><address>David L. Mills (mills@udel.edu)</address></body></html>

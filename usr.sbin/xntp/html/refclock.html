@@ -1,0 +1,105 @@
+<!-- $NetBSD: refclock.html,v 1.1 1998/12/30 20:20:36 mcr Exp $ -->
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML Strict//EN">
+<html><head><title>
+Reference Clock Drivers
+</title></head><body><h3>
+Reference Clock Drivers
+</h3><hr>
+
+<p><h4>Introduction</h4>
+
+<p>Support for most of the commonly available radio and modem clocks is
+included in the default configuration of the NTP daemon for Unix
+<code>xntpd</code>. Individual clocks can be activated by configuration
+file commands, specifically the <code>server</code> and
+<code>fudge</code> commands described in the <a
+href="xntpd.html"><code>xntpd</code> program manual page</a>. The
+following discussion presents Information on how to select and configure
+the device drivers in a running Unix system.
+
+<p>Radio and modem clocks by convention have addresses in the form
+127.127.<var>t.u</var>, where <var>t</var> is the clock type and
+<var>u</var> is a unit number in the range 0-3 used to distinguish
+multiple instances of clocks of the same type. Most of these clocks
+require support in the form of a serial port or special bus peripheral.
+The particular device is normally specified by adding a soft link
+<code>/dev/device<i>u</i></code> to the particular hardware device
+involved, where <code><i>u</i></code> correspond to the unit number
+above.
+
+<p>Following is a list showing the type and title of each driver
+currently implemented. The compile-time identifier for each is shown in
+parentheses. Click on a selected type for specific description and
+configuration documentation, including the clock address, reference ID,
+driver ID, serial port device name and speed, and features (line
+disciplines, etc.). For those drivers without specific documentation,
+please contact the author listed in the <a
+href="copyright.html">copyright page</a>.
+
+<p><a href="driver1.html">Type 1</a> Local Clock Driver
+(<code>LOCAL_CLOCK</code>)
+<br><a href="driver2.html">Type 2</a> Trak 8820 GPS Receiver
+(<code>TRAK</code>)
+<br><a href="driver3.html">Type 3</a> PSTI/Traconex 1020 WWV/WWVH
+Receiver (<code>PST</code>)
+<br><a href="driver4.html">Type 4</a> Spectracom 8170 and Netclock/2
+WWVB Receivers (<code>WWVB</code>)
+<br><a href="driver5.html">Type 5</a> TrueTime GPS/GOES/OMEGA Receivers
+(<code>TRUETIME</code>)
+<br><a href="driver6.html">Type 6</a> IRIG Audio Decoder (Sun only)
+(<code>IRIG</code>)
+<br><a href="driver7.html">Type 7</a> Scratchbuilt CHU Receiver
+(<code>CHU</code>)
+<br><a href="driver8.html">Type 8</a> Generic Reference Driver
+(<code>PARSE</code>)
+<br><a href="driver9.html">Type 9</a> Magnavox MX4200 GPS Receiver
+(<code>MX4200</code>)
+<br><a href="driver10.html">Type 10</a> Austron 2200A/2201A GPS
+Receivers (<code>AS2201</code>)
+<br><a href="driver11.html">Type 11</a> Arbiter 1088A/B GPS Receiver
+(<code>ARBITER</code>)
+<br><a href="driver12.html">Type 12</a> KSI/Odetics TPRO/S IRIG
+Interface (Sun only) (<code>TPRO</code>)
+<br>Type 13 Leitch CSD 5300 Master Clock Controller
+(<code>LEITCH</code>)
+<br>Type 14 EES M201 MSF Receiver (<code>MSFEES</code>)
+<br><a href="driver5.html">Type 15</a> * TrueTime TM-TMD GPS Receiver
+<br>Type 16 Bancomm GPS/IRIG Receiver (HP only) (<code>BANC</code>)
+<br>Type 17 Datum Precision Time System (<code>DATUM</code>)
+<br><a href="driver18.html">Type 18</a> NIST Modem Time Service
+(<code>ACTS</code>)
+<br><a href="driver19.html">Type 19</a> Heath WWV/WWVH Receiver
+(<code>HEATH</code>)
+<br><a href="driver20.html">Type 20</a> Generic NMEA GPS Receiver (<code>NMEA</code>)
+<br>Type 21 TrueTime GPS-VME Interface (HP only) (<code>GPSVME</code>)
+<br><a href="driver22.html">Type 22</a> PPS Clock Discipline
+(<code>ATOM</code>)
+<br><a href="driver23.html">Type 23</a> PTB Modem Time Service
+(<code>PTBACTS</code>)
+<br><a href="driver24.html">Type 24</a> USNO Modem Time Service
+(<code>USNO</code>)
+<br><a href="driver5.html">Type 25</a> * TrueTime generic receivers
+<br><a href="driver26.html">Type 26</a> Hewlett Packard 58503A GPS
+Receiver (<code>HPGPS</code>)
+<br><a href="driver27.html">Type 27</a> Arcron MSF Receiver
+(<code>ARCRON_MSF</code>)
+<br><a href="driver28.html">Type 28</a> Shared memory driver
+(<code>SHM</code>)
+
+<p>* All TrueTime receivers are now supported by one driver, type 5.
+Types 15 and 25 will be retained only for a limited time and may be
+reassigned in future.
+
+<p>Additional Information
+
+<p><a href = "prefer.html">Mitigation Rules and the <code>prefer</code>
+Keyword</a>
+<br><a href="rdebug.html">Debugging Hints for Reference Clock
+Drivers</a>
+<br><a href="ldisc.html">Line Disciplines and Streams Drivers</a>
+<br><a href="pps.html">Pulse-per-second (PPS) Signal Interfacing</a>
+<br><a href="howto.html">How To Write a Reference Clock Driver</a>
+<br><a href="index.html">The Network Time Protocol (NTP) Distribution
+</a>
+
+<hr><address>David L. Mills (mills@udel.edu)</address></body></html>

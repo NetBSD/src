@@ -1,0 +1,190 @@
+<!-- $NetBSD: confopt.html,v 1.1 1998/12/30 20:20:33 mcr Exp $ -->
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML Strict//EN">
+<html><head><title>
+Configuration Options
+</title></head><body><h3>
+Configuration Options
+</h3><hr>
+
+<p><h4>Configuration Commands</h4>
+
+<dl>
+
+<dt><code>peer <i>address</i> [ key <i>key</i> ] [ version
+<i>version</i> ] [ prefer ]</code> [ minpoll <i>minpoll</i> [ maxpoll
+<i>maxpoll</i> ]
+<br><code>server <i>address</i> [ key <i>key</i> ] [ version
+<i>version</i> ] [ prefer ] [ mode <i>mode</i> ]</code>
+<br><code>broadcast <i>address</i> [ key <i>key</i> ] [ version
+<i>version</i> ] [ ttl <i>ttl</i> ]</code>
+<dd>These three commands specify the time server name or address
+<i>address</i> to be used and the mode in which to operate. The
+<i>address</i> can be either a DNS name or a IP address in dotted-quad
+notation. The <code>peer</code> command specifies that the local server
+is to operate in symmetric active mode with the remote server. In this
+mode, the local server can be synchronized to the remote server and, in
+addition, the remote server can be synchronized by the local server.
+This is useful in a network of servers where, depending on various
+failure scenarios, either the local or remote server may be the better
+source of time.
+
+<p><dd>The <code>server</code> command specifies that the local server
+is to operate in client mode with the specified remote server. In this
+mode, the local server can be synchronized to the remote server, but the
+remote server can never be synchronized to the local server.
+
+<p><dd>The <code>broadcast</code> command specifies that the local
+server is to operate in broadcast mode, where the local server sends
+periodic broadcast messages to a client population at the
+broadcast/multicast <i>address</i> specified. Ordinarily, this
+specification applies only to the local server operating as a sender;
+for operation as a broadcast client, see the
+<code>broadcastclient</code> or <code>multicastclient</code> commands
+below. In this mode, <i>address</i> is usually the broadcast address on
+(one of) the local network(s) or a multicast address assigned to NTP.
+The Numbers Czar has assigned the address 224.0.1.1 to NTP; this is
+presently the only address that should be used. Note that the use of
+multicast features requires a multicast kernel, which is not yet
+ubiquitous in vendor products.
+
+<p><dd>Options
+
+<dl>
+
+<dt><code>key <i>key</i></code>
+<dd>All packets sent to the address are to include authentication fields
+encrypted using the specified <i>key</i> identifier, which is an
+unsigned 32 bit integer. The default is to not include an encryption
+field.
+
+<p><dt><code>version <i>version</i></code>
+<dd>Specifies the version number to be used for outgoing NTP packets.
+Versions 1, 2, and 3 are the choices, with version 3 the default.
+
+<p><dt><code>prefer</code>
+<dd>Marks the server as preferred. All other things being equal, this
+host will be chosen for synchronization among a set of correctly
+operating hosts. See the <a href = "prefer.html"> Mitigation Rules and
+the <code>prefer</code> Keyword </a> page for further information.
+<p><dt><code>ttl <i>ttl</i></code>
+<dd>This option is used only with broadcast mode. It specifies the time-
+to-live <i>ttl</i> to use on multicast packets. Selection of the proper
+value, which defaults to 127, is something of a black art and must be
+coordinated with the network administrator(s).
+
+<p><dt><code>minpoll <i>minpoll</i></code>
+<dd>This option specifies the minimum polling interval for NTP messages,
+in seconds to the power of two. The allowable range is 4 (16 s to 14
+(16384 s) inclusive. The default is 6 (64 s) for all except reference
+clocks.
+
+<p><dt><code>maxpoll <i>maxpoll</i></code>
+<dd>This option specifies the maximum polling interval for NTP messages,
+in seconds to the power of two. The allowable range is 4 (16 s to 14
+(16384 s) inclusive. The default is 10 (1024 s) for all except reference
+clocks.
+
+</dl>
+
+<p><dt><code>broadcastclient [ <i>address</i></code> ]
+<dd>This command directs the local server to listen for broadcast
+messages at the broadcast address <i>address</i> of the local network.
+The default address is the subnet address with the host field bits set
+to ones. Upon hearing a broadcast message for the first time, the local
+server measures the nominal network delay using a brief client/server
+exchange with the remote server, then enters the broadcastclient mode,
+in which it listens for and synchronizes to succeeding broadcast
+messages. Note that, in order to avoid accidental or malicious
+disruption in this mode, both the local and remote servers should
+operate using authentication and the same trusted key and key
+identifier.
+
+<p><dt><code>multicastclient [ <i>address</i> ] [ ... ]</code>
+<dd>This command directs the local server to listen for multicast
+messages at the group <i>address</i>(es) of the global network. The
+default address is that assigned by the Numbers Czar to NTP (224.0.1.1).
+This command operates in the same way as the
+<code>broadcastclient</code> command, but uses IP multicasting. Support
+for this command requires a multicast kernel.
+
+<p><dt><code>driftfile <i>driftfile</i></code>
+<dd>This command specifies the name of the file used to record the
+frequency offset of the local clock oscillator. If the file exists, it
+is read at startup in order to set the initial frequency offset and then
+updated once per hour with the current frequency offset computed by the
+daemon. If the file does not exist or this command is not given, the
+initial frequency offset is assumed zero. In this case, it may take some
+hours for the frequency to stabilize and the residual timing errors to
+subside.
+
+<p><dd>The <code>ntp.drift</code> file format consists of a single line
+containing a single floating point number, which records the frequency
+offset measured in parts-per-million (PPM). That the file is updated
+once per hour by first writing the current drift value into a temporary
+file and then renaming this file to replace the old version. This
+implies that <code>xntpd</code> must have write permission for the
+directory the drift file is located in, and that file system links,
+symbolic or otherwise, should probably be avoided.
+
+<p><dt><code>enable auth | bclient | monitor | pll | pps | stats</code>
+<br><code>disable auth | bclient | monitor | pll | pps | stats</code>
+<dd>Provides a way to enable or disable various server options. Flags
+not mentioned are unaffected. Note that all of these flags can be
+controlled remotely using the <a href =
+"xntpdc.html"><code>xntpdc</code></a> utility program.
+<dl>
+
+<dt><code>auth</code>
+<dd>Enables the server to synchronize with unconfigured peers only if
+the peer has been correctly authenticated using a trusted key and key
+identifier. The default for this flag is enable.
+
+<p><dt><code>bclient</code>
+<dd>Enables the server to listen for a message from a broadcast or
+multicast server, as in the <code>multicastclient</code> command with
+default address. The default for this flag is disable.
+
+<p><dt><code>monitor</code>
+<dd>Enables the monitoring facility. See the <code>xntpdc</code> program
+and the <code>monlist</code> command or further information. The default
+for this flag is enable.
+
+<p><dt><code>pll</code>
+<dd>Enables the server to adjust its local clock by means of NTP. If
+disabled, the local clock free-runs at its intrinsic time and frequency
+offset. This flag is useful in case the local clock is controlled by
+some other device or protocol and NTP is used only to provide
+synchronization to other clients. In this case, the local clock driver
+is used. See the <a href = "refclock.html">Reference Clock Drivers </a>
+page for further information. The default for this flag is enable.
+
+<p><dt><code>pps</code>
+<dd>Enables the pulse-per-second (PPS) signal when frequency and time is
+disciplined by the precision time kernel modifications. See the <a href
+= "kern.html"> A Kernel Model for Precision Timekeeping </a> page for
+further information. The default for this flag is disable.
+
+<p><dt><code>stats</code>
+<dd>Enables the statistics facility. See the <a href="monopt.html">
+Monitoring Options </a>
+page for further information. The default for this flag is enable.
+
+</dl>
+
+<p><dt><code>tick value</code>
+	<dd>If no value for <code>tick</code> can be found from the kernel, use
+	  this value.  This is the "normalized" value; if your system
+	  keeps <code>tick</code> in nanoseconds you must divide your
+	  value by 1000.  The expected range of the value is between 900
+	  and 11,000 (don't use the comma in the config file).
+
+<p><dt><code>tickadj value</code>
+	<dd>If no value for <code>tickadj</code> can be found in the
+	  kernel, use this value.  The value must be "normalized"; if
+	  your system keeps <code>tickadj</code> in nanoseconds you must
+	  divide your value by 1000.  The expected range of the value is
+	  between 1 and 50.
+
+</dl>
+
+<hr><address>David L. Mills (mills@udel.edu)</address></body></html>

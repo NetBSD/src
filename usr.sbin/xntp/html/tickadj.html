@@ -1,0 +1,86 @@
+<!-- $NetBSD: tickadj.html,v 1.1 1998/12/30 20:20:37 mcr Exp $ -->
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML Strict//EN">
+<html><head><title>
+tickadj - set time-related kernel variables
+</title></head><body><h3>
+<code>tickadj</code> - set time-related kernel variables
+</h3><hr>
+
+<p><h4>Synopsis</h4>
+
+<p><code>tickadj [ -Aqs ] [ -a <i>tickadj</i> ] [ -t <i>tick</i>
+]</code>
+
+<p><h4>Description</h4>
+
+<p>The <code>tickadj</code> program reads, and optionally modifies,
+several timekeeping-related variables in the running kernel, via
+<code>/dev/kmem</code>. The particular variables it is concerned with
+are <code>tick</code>, which is the number of microseconds added to the
+system time during a clock interrupt, <code>tickadj</code>, which sets
+the slew rate and resolution used by the <code>adjtime</code> system
+call, and <code>dosynctodr</code>, which indicates to the kernels on
+some machines whether they should internally adjust the system clock to
+keep it in line with time-of-day clock or not.
+
+<p>By default, with no arguments, <code>tickadj</code> reads the
+variables of interest in the kernel and displays them. At the same time,
+it determines an "optimal" value for the value of the
+<code>tickadj</code> variable if the intent is to run the
+<code>xntpd</code> Network Time Protocol (NTP) daemon, and prints this
+as well. Since the operation of <code>tickadj</code> when reading the
+kernel mimics the operation of similar parts of the <code>xntpd</code>
+program fairly closely, this can be useful when debugging problems with
+<code>xntpd</code>.
+
+<p>Note that <code>tickadj</code> should be run with some caution when
+being used for the first time on different types of machines. The
+operations which <code>tickadj</code> tries to perform are not
+guaranteed to work on all Unix machines and may in rare cases cause the
+kernel to crash.
+
+<p><h4>Command Line Options</h4>
+
+<dl>
+
+<dt><code>-a <i>tickadj</i></code>
+<dd>Set the kernel variable <code>tickadj</code> to the value
+<code><i>tickadj</i></code> specified.
+
+<p><dt><code>-A</code>
+<dd>Set the kernel variable <code>tickadj</code> to an internally
+computed "optimal" value.
+
+<p><dt><code>-t <i>tick</i></code>
+<dd>Set the kernel variable <code>tick</code> to the value
+<code><i>tick</i></code> specified.
+
+<p><dt><code>-s</code>
+<dd>Set the kernel variable <code>dosynctodr</code> to zero, which
+disables the hardware time-of-year clock, a prerequisite for running the
+<code>xntpd</code> daemon under SunOS4.
+
+<p><dt><code>-q</code>
+<dd>Normally, <code>tickadj</code> is quite verbose about what it is
+doing. The <code>-q</code> flag tells it to shut up about everything
+except errors.
+
+</dl>
+<p><h4>Files</h4>
+
+<pre>
+<br>/vmunix
+<br>/unix
+<br>/dev/kmem
+</pre>
+
+<p><h4>Bugs</h4>
+
+<p>Fiddling with kernel variables at run time as a part of ordinary
+operations is a hideous practice which is only necessary to make up for
+deficiencies in the implementation of <code>adjtime</code> in many
+kernels and/or brokenness of the system clock in some vendors' kernels.
+It would be much better if the kernels were fixed and the
+<code><code>tickadj</code></code> program went away.
+
+<hr><address>David L. Mills (mills@udel.edu)</address></body></html>

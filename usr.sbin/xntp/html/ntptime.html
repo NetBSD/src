@@ -1,0 +1,60 @@
+<!-- $NetBSD: ntptime.html,v 1.1 1998/12/30 20:20:36 mcr Exp $ -->
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML Strict//EN">
+<html><head><title>
+ntptime - read kernel time variables
+</title></head><body><h3>
+<code>ntptime</code> - read kernel time variables
+</h3><hr>
+
+<p><h4>Synopsis</h4>
+
+<p><code>ntptime [ -chr ] [ -e <i>est_error</i> ] [ -f <i>frequency</i>
+] [ -m <i>max_error</i> ] [ -o <i>offset</i> ] [ -s <i>status</i> ] [ -t
+<i>time_constant</i> ]</code>
+
+<p><h4>Description</h4>
+
+<p>This program is useful only with special kernels described in the <a
+href = "kern.html"> A Kernel Model for Precision Timekeeping </a> page.
+It reads and displays time-related kernel variables using the
+<code>ntp_gettime()</code> system call. A similar display can be
+obtained using the <code>xntpdc</code> program and <code>kerninfo</code>
+command.
+
+<p><h4>Options</h4>
+
+<dl>
+
+<dt><code>-c</code>
+<dd>Display the execution time of <code>ntptime</code> itself.
+
+<p><dt><code>-e <i>est_error</i></code>
+<dd>Specify estimated error, in microseconds.
+
+<p><dt><code>-f <i>frequency</i></code>
+<dd>Specify frequency offset, in parts per million.
+
+<p><dt><code>-h</code>
+<dd>Display times in Unix timeval format. Default is NTP format.
+
+<p><dt><code>-l</code>
+<dd>Specify the leap bits as a code from 0 to 3.
+
+<p><dt><code>-m <i>max_error</i></code>
+<dd>Display help information.
+
+<p><dt><code>-o <i>offset</i></code>
+<dd>Specify clock offset, in microseconds.
+
+<p><dt><code>-r</code>
+<dd>Display Unix and NTP times in raw format.
+
+<p><dt><code>-s <i>status</i></code>
+<dd>Specify clock status. Better know what you are doing.
+
+<p><dt><code>-t <i>time_constant</i></code>
+<dd>Specify time constant, an integer in the range 0-4.
+
+</dl>
+
+<hr><address>David L. Mills (mills@udel.edu)</address></body></html>
