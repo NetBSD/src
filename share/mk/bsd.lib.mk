@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.169 2000/06/19 19:35:05 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.170 2000/06/25 05:07:22 erh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -308,8 +308,8 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: ${SOLIB} ${DPADD} \
 	$(LD) -nostdlib -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    ${SHLIB_LDSTARTFILE} \
 	    --whole-archive ${SOLIB} \
-	    -L${DESTDIR}${LIBDIR} -R${LIBDIR} \
 	    --no-whole-archive ${LDADD} \
+	    -L${DESTDIR}${LIBDIR} -R${LIBDIR} \
 	    ${SHLIB_LDENDFILE}
 .else
 	$(LD) -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
