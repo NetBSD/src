@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.34 2002/10/02 16:02:35 thorpej Exp $	*/
+/*	$NetBSD: ka820.c,v 1.35 2002/10/10 11:45:14 jdolecek Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -567,7 +567,7 @@ ka820_startslave(struct device *dev, struct cpu_info *ci)
 	ka820_txrx(id, "S %x\r", (int)&tramp);	/* Start! */
 	expect = 0;
 	for (i = 0; i < 10000; i++)
-		if ((volatile)ci->ci_flags & CI_RUNNING)
+		if ((volatile int)ci->ci_flags & CI_RUNNING)
 			break;
 	if (i == 10000)
 		printf("%s: (ID %d) failed starting??!!??\n",
