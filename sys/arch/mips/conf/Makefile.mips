@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.23 2001/10/26 06:45:37 jmc Exp $
+#	$NetBSD: Makefile.mips,v 1.24 2001/10/26 08:25:54 shin Exp $
 
 # Makefile for NetBSD
 #
@@ -17,9 +17,9 @@ USETOOLS?=	no
 .include <bsd.own.mk>
 
 .if ${MACHINE_ARCH} == "mipsel"
-ENDIAN="-EL"
+ENDIAN=-EL
 .elif ${MACHINE_ARCH} == "mipseb"
-ENDIAN="-EB"
+ENDIAN=-EB
 .else
 .BEGIN:
 	@echo "MACHINE_ARCH ${MACHINE_ARCH} is invalid"
