@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_emul.c,v 1.12 1997/09/25 02:13:44 thorpej Exp $ */
+/* $NetBSD: wscons_emul.c,v 1.13 1997/10/27 01:37:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: wscons_emul.c,v 1.12 1997/09/25 02:13:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wscons_emul.c,v 1.13 1997/10/27 01:37:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,7 @@ wscons_emul_input_normal(we, c)
 		    we->ac_nrow - scrollskip);
 		(*we->ac_ef->wef_eraserows)(we->ac_efa,
 		    we->ac_nrow - scrollskip, scrollskip);
+		we->ac_crow -= scrollskip - 1;
 		break;
 
 	case ASCII_VT:
@@ -182,6 +183,7 @@ wscons_emul_input_normal(we, c)
 		    we->ac_nrow - scrollskip);
 		(*we->ac_ef->wef_eraserows)(we->ac_efa,
 		    we->ac_nrow - scrollskip, scrollskip);
+		we->ac_crow -= scrollskip - 1;
 		break;
 	}
 
