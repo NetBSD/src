@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.1.2.7 1998/11/16 07:18:54 cgd Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.1.2.8 1998/11/23 07:15:11 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -204,8 +204,8 @@ menu editfsparts, y=12, exit;
 		};
 	option "Changer a", action { editpart = A;}, sub menu edfspart;
 	option "Changer b", action { editpart = B;}, sub menu edfspart;
-	option "NetBSD partition - can't change", action {}; /* XXX: ENGLISH -> FRENCH */
-	option "Whole disk - can't change", action {}; /* XXX: ENGLISH -> FRENCH */
+	option "Partition de NetBSD - Changement impossible", action {};
+	option "Totalité du disque - Changement impossible", action {};
 	option "Changer e", action { editpart = E;}, sub menu edfspart;
 	option "Changer f", action { editpart = F;}, sub menu edfspart;
 	option "Changer g", action { editpart = G;}, sub menu edfspart;
