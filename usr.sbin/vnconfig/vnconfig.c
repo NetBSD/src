@@ -216,14 +216,8 @@ config(vnp)
 	if (flags & VN_CONFIG) {
 		rv = ioctl(fileno(f), VNIOCSET, &vnio);
 		if (rv) {
-			if (errno == EBUSY) {
-				if ((flags & VN_ENABLE) == 0 && verbose)
-					printf("%s: already configured\n",dev);
-				rv = 0;
-			} else {
-				perror("VNIOCSET");
-				flags &= ~VN_ENABLE;
-			}
+			perror("VNIOCSET");
+			flags &= ~VN_ENABLE;
 		} else if (verbose)
 			printf("%s: %d bytes on %s\n",
 			       dev, vnio.vn_size, file);
