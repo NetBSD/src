@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.174 2002/12/31 17:07:36 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.175 2003/01/01 16:17:10 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2466,6 +2466,16 @@ softintr_common:
 	st	%o0, [%l4 + %l5]
 	set	_C_LABEL(sintrhand), %l4! %l4 = sintrhand[intlev];
 	ld	[%l4 + %l5], %l4
+
+#if defined(MULTIPROCESSOR)
+	cmp	%l3, IPL_SCHED
+	bgu	0f
+	 nop
+	call	_C_LABEL(intr_lock_kernel)
+	 nop
+0:
+#endif
+
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
@@ -2484,6 +2494,16 @@ softintr_common:
 3:	tst	%l4			! while ih != NULL
 	bnz	1b
 	 nop
+
+#if defined(MULTIPROCESSOR)
+	cmp	%l3, IPL_SCHED
+	bgu	0f
+	 nop
+	call	_C_LABEL(intr_unlock_kernel)
+	 nop
+0:
+#endif
+
 	mov	%l7, %g1
 	wr	%l6, 0, %y
 	ldd	[%sp + CCFSZ + 24], %g2
@@ -2622,7 +2642,7 @@ sparc_interrupt_common:
 	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
 
-#if defined(MULTIPROCESSOR) && defined(SUN4M) /* XXX */
+#if defined(MULTIPROCESSOR)
 	cmp	%l3, IPL_SCHED
 	bgu	0f
 	 nop
@@ -2664,7 +2684,7 @@ sparc_interrupt_common:
 	 add	%sp, CCFSZ, %o0
 	/* all done: restore registers and go return */
 4:
-#if defined(MULTIPROCESSOR) && defined(SUN4M) /* XXX */
+#if defined(MULTIPROCESSOR)
 	cmp	%l3, IPL_SCHED
 	bgu	0f
 	 nop
