@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.3 2004/06/29 04:42:55 itojun Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.4 2004/07/27 12:22:59 yamt Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.187 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -1484,7 +1484,8 @@ extern struct pf_pool_limit	pf_pool_limits[PF_LIMIT_MAX];
 #ifdef __NetBSD__
 int pfil4_wrapper(void *, struct mbuf **, struct ifnet *, int);
 int pfil6_wrapper(void *, struct mbuf **, struct ifnet *, int);
-int pfil_if_wrapper(void *, struct mbuf **, struct ifnet *, int);
+int pfil_ifnet_wrapper(void *, struct mbuf **, struct ifnet *, int);
+int pfil_ifaddr_wrapper(void *, struct mbuf **, struct ifnet *, int);
 #endif
 #endif /* _KERNEL */
 
