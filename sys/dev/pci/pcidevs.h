@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.244 2000/06/24 12:16:55 joda Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.245 2000/07/03 06:05:44 gmcgarry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.238 2000/06/24 12:16:21 joda Exp 
+ *	NetBSD: pcidevs,v 1.239 2000/07/03 06:01:17 gmcgarry Exp 
  */
 
 /*
@@ -742,6 +742,7 @@
 #define	PCI_PRODUCT_ATI_MACH64_LI	0x4c49		/* Mach64 LI */
 #define	PCI_PRODUCT_ATI_MACH64_LM	0x4c4d		/* Mach64 LM */
 #define	PCI_PRODUCT_ATI_MACH64_LP	0x4c50		/* Mach64 LP */
+#define	PCI_PRODUCT_ATI_MACH64_LR	0x4c52		/* Mach64 LR */
 
 /* Auravision products */
 #define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
@@ -1081,6 +1082,12 @@
 #define	PCI_PRODUCT_INTEL_82443BX	0x7190		/* 82443BX Host Bridge/Controller */
 #define	PCI_PRODUCT_INTEL_82443BX_AGP	0x7191		/* 82443BX AGP Interface */
 #define	PCI_PRODUCT_INTEL_82443BX_NOAGP	0x7192		/* 82443BX Host Bridge/Controller (AGP disabled) */
+#define	PCI_PRODUCT_INTEL_82440MX	0x7194		/* 82440MX Host Bridge/Controller */
+#define	PCI_PRODUCT_INTEL_82440MX_ACA	0x7195		/* 82440MX AC-97 Audio Controller */
+#define	PCI_PRODUCT_INTEL_82440MX_ISA	0x7198		/* 82440MX PCI-to-ISA Bridge */
+#define	PCI_PRODUCT_INTEL_82440MX_IDE	0x7199		/* 82440MX IDE Controller */
+#define	PCI_PRODUCT_INTEL_82440MX_USB	0x719a		/* 82440MX USB Host Controller */
+#define	PCI_PRODUCT_INTEL_82440MX_PMC	0x719b		/* 82440MX Power Management Controller */
 #define	PCI_PRODUCT_INTEL_I740	0x7800		/* i740 Graphics Accelerator */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82454KX/GX PCI Bridge (PB) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
