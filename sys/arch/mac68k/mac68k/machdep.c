@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.260 2001/03/15 06:10:41 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.261 2001/04/18 15:39:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1153,19 +1153,6 @@ getenvvars(flag, buf)
 	HwCfgFlags3 = getenv("HWCFGFLAG3");
  	ADBReInit_JTBL = getenv("ADBREINIT_JTBL");
  	mrg_ADBIntrPtr = (caddr_t)getenv("ADBINTERRUPT");
-}
-
-static char	toupper __P((char));
-
-static char
-toupper(c)
-	char c;
-{
-	if (c >= 'a' && c <= 'z') {
-		return c - 'a' + 'A';
-	} else {
-		return c;
-	}
 }
 
 static long
