@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2000/07/14 22:01:09 matt Exp $
+#	$NetBSD: Makefile,v 1.34 2000/11/10 21:31:30 mycroft Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -31,6 +31,7 @@ CPPFLAGS+= -DDEBUG -DRTLD_LOADER
 CPPFLAGS+= -D_RTLD_SOURCE
 #CPPFLAGS+= -DRTLD_DEBUG
 #CPPFLAGS+= -DRTLD_DEBUG_RELOC
+#DBG=	-g
 
 LDADD+=	-non_shared -L${DESTDIR}/${LIBDIR} -lc_pic
 DPADD+=	${LIBC_PIC}
