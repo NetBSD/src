@@ -1,4 +1,4 @@
-/* $NetBSD: mt.c,v 1.38 2005/02/03 00:03:02 christos Exp $ */
+/* $NetBSD: mt.c,v 1.39 2005/02/03 15:15:48 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.38 2005/02/03 00:03:02 christos Exp $");
+__RCSID("$NetBSD: mt.c,v 1.39 2005/02/03 15:15:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: mt.c,v 1.38 2005/02/03 00:03:02 christos Exp $");
  *   magnetic tape manipulation program
  */
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/stat.h>
@@ -111,13 +112,14 @@ int main(int, char *[]);
 int
 main(int argc, char *argv[])
 {
-	const struct commands *comp = (const struct commands *) NULL;
+	const struct commands *cp, *comp;
 	struct mtget mt_status;
 	struct mtop mt_com;
 	int ch, mtfd, flags;
 	char *p;
 	const char *tape;
 	int count;
+	size_t len;
 
 	setprogname(argv[0]);
 	if ((tape = getenv("TAPE")) == NULL)
@@ -139,13 +141,19 @@ main(int argc, char *argv[])
 	if (argc < 1 || argc > 2)
 		usage();
 
-	p = *argv++;
-	for (comp = com;; comp++) {
-		if (comp->c_name == NULL)
-			errx(1, "%s: unknown command", p);
-		if (strncmp(p, comp->c_name, comp->c_namelen) == 0)
-			break;
+	len = strlen(p = *argv++);
+	for (comp = NULL, cp = com; cp->c_name != NULL; cp++) {
+		size_t clen = MIN(len, cp->c_namelen);
+		if (strncmp(p, cp->c_name, clen) == 0) {
+			if (comp != NULL)
+				errx(1, "%s: Ambiguous command `%s' or `%s'?",
+				    p, cp->c_name, comp->c_name);
+			else
+				comp = cp;
+		}
 	}
+	if (comp == NULL)
+		errx(1, "%s: unknown command", p);
 
 	if (*argv) {
 		count = strtol(*argv, &p, 10);
