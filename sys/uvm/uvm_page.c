@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.90 2003/11/01 15:18:42 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.91 2003/11/03 03:58:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.90 2003/11/01 15:18:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.91 2003/11/03 03:58:28 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -140,6 +140,10 @@ static struct pglist uvm_bootbucket;
 static boolean_t have_recolored_pages /* = FALSE */;
 
 MALLOC_DEFINE(M_VMPAGE, "VM page", "VM page");
+
+#ifdef DEBUG
+vaddr_t uvm_zerocheckkva;
+#endif /* DEBUG */
 
 /*
  * local prototypes
@@ -372,6 +376,13 @@ uvm_page_init(kvm_startp, kvm_endp)
 
 	*kvm_startp = round_page(virtual_space_start);
 	*kvm_endp = trunc_page(virtual_space_end);
+#ifdef DEBUG
+	/*
+	 * steal kva for uvm_pagezerocheck().
+	 */
+	uvm_zerocheckkva = *kvm_startp;
+	*kvm_startp += PAGE_SIZE;
+#endif /* DEBUG */
 
 	/*
 	 * init locks for kernel threads
@@ -1203,6 +1214,38 @@ uvm_pagerealloc(pg, newobj, newoff)
 	}
 }
 
+#ifdef DEBUG
+/*
+ * check if page is zero-filled
+ *
+ *  - called with free page queue lock held.
+ */
+void
+uvm_pagezerocheck(struct vm_page *pg)
+{
+	int *p, *ep;
+
+	KASSERT(uvm_zerocheckkva != 0);
+	LOCK_ASSERT(simple_lock_held(&uvm.fpageqlock));
+
+	/*
+	 * XXX assuming pmap_kenter_pa and pmap_kremove never call
+	 * uvm page allocator.
+	 *
+	 * it might be better to have "cpu-local temporary map" pmap interface.
+	 */
+	pmap_kenter_pa(uvm_zerocheckkva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ);
+	p = (int *)uvm_zerocheckkva;
+	ep = (int *)((char *)p + PAGE_SIZE);
+	while (p < ep) {
+		if (*p != 0)
+			panic("PG_ZERO page isn't zero-filled");
+		p++;
+	}
+	pmap_kremove(uvm_zerocheckkva, PAGE_SIZE);
+}
+#endif /* DEBUG */
+
 /*
  * uvm_pagefree: free page
  *
@@ -1234,7 +1277,7 @@ uvm_pagefree(pg)
 	    pg->uanon == (void *)0xdeadbeef) {
 		panic("uvm_pagefree: freeing free page %p", pg);
 	}
-#endif
+#endif /* DEBUG */
 
 	/*
 	 * if the page is loaned, resolve the loan instead of freeing.
@@ -1321,6 +1364,12 @@ uvm_pagefree(pg)
 #endif
 
 	s = uvm_lock_fpageq();
+
+#ifdef DEBUG
+	if (iszero)
+		uvm_pagezerocheck(pg);
+#endif /* DEBUG */
+
 	TAILQ_INSERT_TAIL(pgfl, pg, pageq);
 	uvmexp.free++;
 	if (iszero)
