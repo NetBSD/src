@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.21 1996/05/07 00:46:41 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.22 1996/10/10 23:56:06 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -273,7 +273,7 @@ ed_zbus_attach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	/* Print additional info when attached. */
-	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	kprintf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -513,7 +513,7 @@ outloop:
 	 * should never happen at this point.
 	 */
 	if (sc->txb_inuse && (sc->xmit_busy == 0)) {
-		printf("%s: packets buffered, but transmitter idle\n",
+		kprintf("%s: packets buffered, but transmitter idle\n",
 		    sc->sc_dev.dv_xname);
 		ed_xmit(sc);
 	}
@@ -632,9 +632,9 @@ loop:
 		len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
 #ifdef DIAGNOSTIC
 		if (len != packet_hdr.count) {
-			printf("%s: length does not match next packet pointer\n",
+			kprintf("%s: length does not match next packet pointer\n",
 			    sc->sc_dev.dv_xname);
-			printf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
+			kprintf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
 			    sc->sc_dev.dv_xname, packet_hdr.count, len,
 			    sc->rec_page_start, sc->next_packet, current,
 			    packet_hdr.next_packet, sc->rec_page_stop);
@@ -803,7 +803,7 @@ edintr(arg)
 				if (isr & ED_ISR_RXE) {
 					++sc->sc_arpcom.ac_if.if_ierrors;
 #ifdef ED_DEBUG
-					printf("%s: receive error %x\n",
+					kprintf("%s: receive error %x\n",
 					    sc->sc_dev.dv_xname,
 					    NIC_GET(sc, ED_P0_RSR));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.13 1996/04/21 21:12:18 veego Exp $	*/
+/*	$NetBSD: par.c,v 1.14 1996/10/10 23:56:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -133,7 +133,7 @@ parattach(pdp, dp, auxp)
 	if ((pardebug & PDB_NOCHECK) == 0)
 #endif
 		par_softcp->sc_flags = PARF_ALIVE;
-	printf("\n");
+	kprintf("\n");
 }
 
 int
@@ -150,9 +150,9 @@ paropen(dev, flags, mode, p)
 		return(ENXIO);
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW) {
-		printf("paropen(%x, %x): flags %x, ",
+		kprintf("paropen(%x, %x): flags %x, ",
 		    dev, flags, sc->sc_flags);
-		printf ("port = $%x\n", ((ciab.pra ^ CIAB_PRA_SEL)
+		kprintf ("port = $%x\n", ((ciab.pra ^ CIAB_PRA_SEL)
 		    & (CIAB_PRA_SEL|CIAB_PRA_BUSY|CIAB_PRA_POUT)));
 	}
 #endif
@@ -189,7 +189,7 @@ parclose(dev, flags, mode, p)
 
 #ifdef DEBUG
   if (pardebug & PDB_FOLLOW)
-    printf("parclose(%x, %x): flags %x\n",
+    kprintf("parclose(%x, %x): flags %x\n",
 	   dev, flags, sc->sc_flags);
 #endif
   sc->sc_flags &= ~(PARF_OPEN|PARF_OREAD|PARF_OWRITE);
@@ -209,7 +209,7 @@ parstart(arg)
 	sc = getparsp(unit);
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parstart(%x)\n", unit);
+		kprintf("parstart(%x)\n", unit);
 #endif
 	sc->sc_flags &= ~PARF_DELAY;
 	wakeup(sc);
@@ -226,7 +226,7 @@ partimo(arg)
 	sc = getparsp(unit);
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("partimo(%x)\n", unit);
+		kprintf("partimo(%x)\n", unit);
 #endif
 	sc->sc_flags &= ~(PARF_UIO|PARF_TIMO);
 	wakeup(sc);
@@ -241,7 +241,7 @@ parread(dev, uio, flags)
 
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parread(%x, %p)\n", dev, uio);
+		kprintf("parread(%x, %p)\n", dev, uio);
 #endif
 	return (parrw(dev, uio));
 }
@@ -256,7 +256,7 @@ parwrite(dev, uio, flags)
 
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parwrite(%x, %p)\n", dev, uio);
+		kprintf("parwrite(%x, %p)\n", dev, uio);
 #endif
 	return (parrw(dev, uio));
 }
@@ -285,7 +285,7 @@ parrw(dev, uio)
 
 #ifdef DEBUG
   if (pardebug & (PDB_FOLLOW|PDB_IO))
-    printf("parrw(%x, %p, %c): burst %d, timo %d, resid %x\n",
+    kprintf("parrw(%x, %p, %c): burst %d, timo %d, resid %x\n",
 	   dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
 	   sc->sc_burst, sc->sc_timo, uio->uio_resid);
 #endif
@@ -321,7 +321,7 @@ again:
 	{
 #ifdef DEBUG
 	  if (pardebug & PDB_IO)
-	    printf("parrw: uiomove/sleep timo, flags %x\n",
+	    kprintf("parrw: uiomove/sleep timo, flags %x\n",
 		   sc->sc_flags);
 #endif
 	  if (sc->sc_flags & PARF_TIMO) 
@@ -353,7 +353,7 @@ again:
 #endif
 #ifdef DEBUG
       if (pardebug & PDB_IO)
-	printf("parrw: %s(%p, %d) -> %d\n",
+	kprintf("parrw: %s(%p, %d) -> %d\n",
 	       uio->uio_rw == UIO_READ ? "recv" : "send", cp, len, cnt);
 #endif
       splx(s);
@@ -381,7 +381,7 @@ again:
 	{
 #ifdef DEBUG
 	  if (pardebug & PDB_IO)
-	    printf("parrw: timeout/done\n");
+	    kprintf("parrw: timeout/done\n");
 #endif
 	  splx(s);
 	  break;
@@ -433,14 +433,14 @@ again:
       uio->uio_resid += (len - cnt);
 #ifdef DEBUG
       if (pardebug & PDB_IO)
-	printf("parrw: short write, adjust by %d\n",
+	kprintf("parrw: short write, adjust by %d\n",
 	       len-cnt);
 #endif
     }
   free(buf, M_DEVBUF);
 #ifdef DEBUG
   if (pardebug & (PDB_FOLLOW|PDB_IO))
-    printf("parrw: return %d, resid %d\n", error, uio->uio_resid);
+    kprintf("parrw: return %d, resid %d\n", error, uio->uio_resid);
 #endif
   return (error);
 }
@@ -528,7 +528,7 @@ parintr(arg)
 
 #ifdef DEBUG
 	if (pardebug & PDB_INTERRUPT)
-		printf("parintr %s\n", mask ? "FLG" : "tout");
+		kprintf("parintr %s\n", mask ? "FLG" : "tout");
 #endif
 	/*
 	 * if invoked from timeout handler, mask will be 0,
@@ -568,7 +568,7 @@ parsendch (ch)
 
 #ifdef DEBUG
       if (pardebug & PDB_INTERRUPT)
-	printf ("parsendch, port = $%x\n",
+	kprintf ("parsendch, port = $%x\n",
 		((ciab.pra ^ CIAB_PRA_SEL)
 		 & (CIAB_PRA_SEL|CIAB_PRA_BUSY|CIAB_PRA_POUT)));
 #endif
@@ -586,7 +586,7 @@ parsendch (ch)
 	{
 #ifdef DEBUG
 	  if (pardebug & PDB_INTERRUPT)
-	    printf ("parsendch interrupted, error = %d\n", error);
+	    kprintf ("parsendch interrupted, error = %d\n", error);
 #endif
 	  if (partimeout_pending)
 	    untimeout(parintr, 0);
@@ -599,7 +599,7 @@ parsendch (ch)
     {
 #ifdef DEBUG
       if (pardebug & PDB_INTERRUPT)
-	printf ("#%d", ch);
+	kprintf ("#%d", ch);
 #endif
       ciaa.prb = ch;
       parsend_pending = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 1996/08/27 21:54:24 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.41 1996/10/10 23:55:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -69,7 +69,7 @@ configure()
 		panic("no mainbus found");
 
 #ifdef DEBUG_KERNEL_START
-	printf("survived autoconf, going to enable interrupts\n");
+	kprintf("survived autoconf, going to enable interrupts\n");
 #endif
 	
 #ifdef DRACO
@@ -85,32 +85,32 @@ configure()
 		custom.intena = INTF_SETCLR | INTF_SOFTINT;
 	}
 #ifdef DEBUG_KERNEL_START
-	printf("survived interrupt enable\n");
+	kprintf("survived interrupt enable\n");
 #endif
 
 #ifdef GENERIC
 	if ((boothowto & RB_ASKNAME) == 0) {
 		setroot();
 #ifdef DEBUG_KERNEL_START
-		printf("survived setroot()\n");
+		kprintf("survived setroot()\n");
 #endif
 	}
 	setconf();
 #ifdef DEBUG_KERNEL_START
-	printf("survived setconf()\n");
+	kprintf("survived setconf()\n");
 #endif
 #else
 	setroot();
 #ifdef DEBUG_KERNEL_START
-	printf("survived setroot()\n");
+	kprintf("survived setroot()\n");
 #endif
 #endif
 #ifdef DEBUG_KERNEL_START
-	printf("survived root device search\n");
+	kprintf("survived root device search\n");
 #endif
 	swapconf();
 #ifdef DEBUG_KERNEL_START
-	printf("survived swap device search\n");
+	kprintf("survived swap device search\n");
 #endif
 	cold = 0;
 }
@@ -235,7 +235,7 @@ mbattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	printf ("\n");
+	kprintf("\n");
 	config_found(dp, "clock", simple_devprint);
 #ifdef DRACO
 	if (is_draco()) {
@@ -273,7 +273,7 @@ mbprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		printf("%s at %s", (char *)auxp, pnp);
+		kprintf("%s at %s", (char *)auxp, pnp);
 	return(UNCONF);
 }
 
@@ -342,9 +342,9 @@ setroot()
 	 */
 	if (rootdev == orootdev)
 		return;
-	printf("changing root device to %c%c%d%c\n",
-		devname[majdev][0], devname[majdev][1],
-		unit, part + 'a');
+	kprintf("changing root device to %c%c%d%c\n",
+	    devname[majdev][0], devname[majdev][1],
+	    unit, part + 'a');
 #ifdef DOSWAP
 	mindev = DISKUNIT(rootdev);
 	for (swp = swdevt; swp->sw_dev; swp++) {
@@ -442,7 +442,7 @@ is_a4000()
 		return (1);
 #ifdef DEBUG
 	if (a4000_flag)
-		printf ("Denise ID = %04x\n", (unsigned short)custom.deniseid);
+		kprintf("Denise ID = %04x\n", (unsigned short)custom.deniseid);
 #endif
 	if (machineid >> 16)
 		return (0);		/* It's not an A4000 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.31 1996/08/27 21:54:55 cgd Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.32 1996/10/10 23:55:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -881,7 +881,7 @@ grfrtattach(pdp, dp, auxp)
 		(void)rt_load_mon(gp, current_mon);
 	}
 	if (dp != NULL)
-		printf("\n");
+		kprintf("\n");
 	/*
 	 * attach grf
 	 */
@@ -894,7 +894,7 @@ grfrtprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		printf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
+		kprintf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
 			pnp);
 	return(UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.10 1996/08/28 18:59:31 cgd Exp $	*/
+/*	$NetBSD: flsc.c,v 1.11 1996/10/10 23:55:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -187,7 +187,7 @@ flscattach(pdp, dp, auxp)
 /* We don't want interrupt until we're initialized! */
 	*rp->hardbits = sc->sc_specific.portbits;
 
-	printf("\n");
+	kprintf("\n");
 
 /* attach all scsi units on us */
 	config_found(dp, &sc->sc_softc.sc_link, scsiprint);

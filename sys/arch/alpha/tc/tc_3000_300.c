@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_300.c,v 1.10 1996/07/14 04:06:27 cgd Exp $	*/
+/*	$NetBSD: tc_3000_300.c,v 1.11 1996/10/10 23:51:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -251,7 +251,7 @@ tc_3000_300_iointr(framep, vec)
 #ifdef DIAGNOSTIC
 #define PRINTINTR(msg, bits)						\
 	if (tcir & bits)						\
-		printf(msg);
+		kprintf(msg);
 		PRINTINTR("BCache tag parity error\n",
 		    TC_3000_300_IR_BCTAGPARITY);
 		PRINTINTR("TC overrun error\n", TC_3000_300_IR_TCOVERRUN);

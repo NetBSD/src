@@ -1,4 +1,4 @@
-/*	$NetBSD: tga.c,v 1.8 1996/08/27 21:54:06 cgd Exp $	*/
+/*	$NetBSD: tga.c,v 1.9 1996/10/10 23:51:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -235,7 +235,7 @@ tgaattach(parent, self, aux)
 		tga_getdevconfig(pa->pa_bc, pa->pa_pc, pa->pa_tag, sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_vaddr == NULL) {
-		printf(": couldn't map memory space; punt!\n");
+		kprintf(": couldn't map memory space; punt!\n");
 		return;
 	}
 
@@ -244,17 +244,17 @@ tgaattach(parent, self, aux)
 	if (sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_intr != NULL) {
 		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 		    pa->pa_intrline, &intrh)) {
-			printf(": couldn't map interrupt");
+			kprintf(": couldn't map interrupt");
 			return;
 		}
 		intrstr = pci_intr_string(pa->pa_pc, intrh);
 		sc->sc_intr = pci_intr_establish(pa->pa_pc, intrh, IPL_TTY,
 		    sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_intr, sc->sc_dc);
 		if (sc->sc_intr == NULL) {
-			printf(": couldn't establish interrupt");
+			kprintf(": couldn't establish interrupt");
 			if (intrstr != NULL)
-				printf("at %s", intrstr);
-			printf("\n");
+				kprintf("at %s", intrstr);
+			kprintf("\n");
 			return;
 		}
 	}
@@ -266,31 +266,31 @@ tgaattach(parent, self, aux)
 	 */
 	(*sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_init)(sc->sc_dc, 1);
 
-	printf(": DC21030 ");
+	kprintf(": DC21030 ");
 	rev = PCI_REVISION(pa->pa_class);
 	switch (rev) {
 	case 1: case 2: case 3:
-		printf("step %c", 'A' + rev - 1);
+		kprintf("step %c", 'A' + rev - 1);
 		break;
 
 	default:
-		printf("unknown stepping (0x%x)", rev);
+		kprintf("unknown stepping (0x%x)", rev);
 		break;
 	}
-	printf(", ");
+	kprintf(", ");
 
 	if (sc->sc_dc->dc_tgaconf == NULL) {
-		printf("unknown board configuration\n");
+		kprintf("unknown board configuration\n");
 		return;
 	}
-	printf("board type %s\n", sc->sc_dc->dc_tgaconf->tgac_name);
-	printf("%s: %d x %d, %dbpp, %s RAMDAC\n", sc->sc_dev.dv_xname,
+	kprintf("board type %s\n", sc->sc_dc->dc_tgaconf->tgac_name);
+	kprintf("%s: %d x %d, %dbpp, %s RAMDAC\n", sc->sc_dev.dv_xname,
 	    sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_tgaconf->tgac_phys_depth,
 	    sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_name);
 
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
+		kprintf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
 		    intrstr);
 
 	waa.waa_isconsole = console;
@@ -314,7 +314,7 @@ tgaprint(aux, pnp)
 {
 
 	if (pnp)
-		printf("wscons at %s", pnp);
+		kprintf("wscons at %s", pnp);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.17 1996/08/28 18:59:36 cgd Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.18 1996/10/10 23:56:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -74,7 +74,7 @@ struct scsi_device ivsc_scsidev = {
 
 #ifdef DEBUG
 extern int sci_debug;
-#define QPRINTF(a) if (sci_debug > 1) printf a
+#define QPRINTF(a) if (sci_debug > 1) kprintf a
 #else
 #define QPRINTF(a)
 #endif
@@ -123,7 +123,7 @@ ivscattach(pdp, dp, auxp)
 	struct sci_softc *sc;
 	struct zbus_args *zap;
 
-	printf("\n");
+	kprintf("\n");
 
 	zap = auxp;
 	
@@ -198,7 +198,7 @@ ivsc_dma_xfer_in (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("ivsc_dma_in2 fail: l%d i%x w%d\n",
+					kprintf("ivsc_dma_in2 fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
@@ -235,7 +235,7 @@ ivsc_dma_xfer_in (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("ivsc_dma_in1 fail: l%d i%x w%d\n",
+					kprintf("ivsc_dma_in1 fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
@@ -285,7 +285,7 @@ ivsc_dma_xfer_out (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("ivsc_dma_out fail: l%d i%x w%d\n",
+					kprintf("ivsc_dma_out fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;

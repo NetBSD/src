@@ -1,4 +1,4 @@
-/*	$NetBSD: sio_pic.c,v 1.11 1996/08/15 22:17:48 cgd Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.12 1996/10/10 23:51:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -123,7 +123,7 @@ sio_setirqstat(irq, enabled, type)
 	int icu, bit;
 
 #if 0
-	printf("sio_setirqstat: irq %d: %s, %s\n", irq,
+	kprintf("sio_setirqstat: irq %d: %s, %s\n", irq,
 	    enabled ? "enabled" : "disabled", isa_intr_typename(type));
 #endif
 
@@ -170,10 +170,10 @@ sio_setirqstat(irq, enabled, type)
 	    (ocw1[1] & ~initial_ocw1[1]) != 0 ||
 	    (elcr[0] & initial_elcr[0]) != initial_elcr[0] ||
 	    (elcr[1] & initial_elcr[1]) != initial_elcr[1]) {
-		printf("sio_sis: initial: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
+		kprintf("sio_sis: initial: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
 		    initial_ocw1[0], initial_ocw1[1],
 		    initial_elcr[0], initial_elcr[1]);
-		printf("         current: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
+		kprintf("         current: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
 		    ocw1[0], ocw1[1], elcr[0], elcr[1]);
 		panic("sio_setirqstat: hosed");
 	}
@@ -207,10 +207,10 @@ sio_intr_setup(bc)
 	initial_elcr[0] = bus_io_read_1(sio_bc, sio_ioh_elcr, 0); /* XXX */
 	initial_elcr[1] = bus_io_read_1(sio_bc, sio_ioh_elcr, 1); /* XXX */
 #if 0
-	printf("initial_ocw1[0] = 0x%x\n", initial_ocw1[0]);
-	printf("initial_ocw1[1] = 0x%x\n", initial_ocw1[1]);
-	printf("initial_elcr[0] = 0x%x\n", initial_elcr[0]);
-	printf("initial_elcr[1] = 0x%x\n", initial_elcr[1]);
+	kprintf("initial_ocw1[0] = 0x%x\n", initial_ocw1[0]);
+	kprintf("initial_ocw1[1] = 0x%x\n", initial_ocw1[1]);
+	kprintf("initial_elcr[0] = 0x%x\n", initial_elcr[0]);
+	kprintf("initial_elcr[1] = 0x%x\n", initial_elcr[1]);
 #endif
 #endif
 
@@ -228,7 +228,7 @@ sio_intr_setup(bc)
 			 * edge-triggered.
 			 */
 			if (INITIALLY_LEVEL_TRIGGERED(i))
-				printf("sio_intr_setup: %d LT!\n", i);
+				kprintf("sio_intr_setup: %d LT!\n", i);
 			sio_setirqstat(i, INITIALLY_ENABLED(i), IST_EDGE);
 			break;
 
@@ -238,9 +238,9 @@ sio_intr_setup(bc)
 			 * enabled (otherwise IRQs 8-15 are ignored).
 			 */
 			if (INITIALLY_LEVEL_TRIGGERED(i))
-				printf("sio_intr_setup: %d LT!\n", i);
+				kprintf("sio_intr_setup: %d LT!\n", i);
 			if (!INITIALLY_ENABLED(i))
-				printf("sio_intr_setup: %d not enabled!\n", i);
+				kprintf("sio_intr_setup: %d not enabled!\n", i);
 			sio_setirqstat(i, 1, IST_EDGE);
 			break;
 
@@ -267,7 +267,7 @@ sio_intr_string(v, irq)
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
 		panic("sio_intr_string: bogus IRQ 0x%x\n", irq);
 
-	sprintf(irqstr, "isa irq %d", irq);
+	ksprintf(irqstr, "isa irq %d", irq);
 	return (irqstr);
 }
 
@@ -298,7 +298,7 @@ sio_intr_establish(v, irq, type, level, ih_fun, ih_arg)
 	case IST_PULSE:
 		if (type != IST_NONE) {
 			if (sio_intrhand[irq] == NULL) {
-				printf("sio_intr_establish: irq %d: warning: using %s on %s\n",
+				kprintf("sio_intr_establish: irq %d: warning: using %s on %s\n",
 				    irq, isa_intr_typename(type),
 				    isa_intr_typename(sio_intrsharetype[irq]));
 				type = sio_intrsharetype[irq];
@@ -341,7 +341,7 @@ sio_intr_disestablish(v, cookie)
 	void *cookie;
 {
 
-	printf("sio_intr_disestablish(%lx)\n", cookie);
+	kprintf("sio_intr_disestablish(%lx)\n", cookie);
 	/* XXX */
 
 	/* XXX NEVER ALLOW AN INITIALLY-ENABLED INTERRUPT TO BE DISABLED */

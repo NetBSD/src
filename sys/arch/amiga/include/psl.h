@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.8 1996/04/21 21:13:22 veego Exp $	*/
+/*	$NetBSD: psl.h,v 1.9 1996/10/10 23:56:47 christos Exp $	*/
 
 #ifndef _MACHINE_PSL_H_
 #define _MACHINE_PSL_H_
@@ -15,7 +15,7 @@
         __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
                 "&=d" (_spl_r) : "di" (s)); \
 	if ((_spl_r&PSL_IPL) > ((s)&PSL_IPL)&&((s)&PSL_IPL)!=PSL_IPL1) \
-		printf ("%s:%d:spl(%d) ==> spl(%d)!!\n",__FILE__,__LINE__, \
+		kprintf ("%s:%d:spl(%d) ==> spl(%d)!!\n",__FILE__,__LINE__, \
 		    ((PSL_IPL&_spl_r)>>8), ((PSL_IPL&(s))>>8)); \
         _spl_r; \
 })

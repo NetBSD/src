@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.13 1996/08/28 18:59:43 cgd Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.14 1996/10/10 23:56:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -73,7 +73,7 @@ struct scsi_device otgsc_scsidev = {
 
 #ifdef DEBUG
 extern int sci_debug;  
-#define QPRINTF(a) if (sci_debug > 1) printf a
+#define QPRINTF(a) if (sci_debug > 1) kprintf a
 #else
 #define QPRINTF(a)
 #endif
@@ -118,7 +118,7 @@ otgscattach(pdp, dp, auxp)
 	struct sci_softc *sc;
 	struct zbus_args *zap;
 
-	printf("\n");
+	kprintf("\n");
 
 	zap = auxp;
 	
@@ -191,7 +191,7 @@ otgsc_dma_xfer_in (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("otgsc_dma_in fail: l%d i%x w%d\n",
+					kprintf("otgsc_dma_in fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
@@ -241,7 +241,7 @@ otgsc_dma_xfer_out (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("otgsc_dma_out fail: l%d i%x w%d\n",
+					kprintf("otgsc_dma_out fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
