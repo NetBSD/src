@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1994/01/14 19:45:51 deraadt Exp $
+#	$Id: Makefile,v 1.4 1994/01/17 15:13:32 deraadt Exp $
 
 CFLAGS+=-DYP
 
@@ -10,9 +10,9 @@ DPADD=	${LIBRPCSVC} ${LIBUTIL}
 LDADD=	-lrpcsvc -lutil
 
 bootparam_prot_svc.c: /usr/include/rpcsvc/bootparam_prot.x
-	rm -f bootparamd_prot.x
+	rm -f bootparam_prot.x
 	ln -s /usr/include/rpcsvc/bootparam_prot.x .
-	rm -f bootparamd_prot.h
+	rm -f bootparam_prot.h
 	ln -s /usr/include/rpcsvc/bootparam_prot.h .
 	rpcgen -m -o $@ bootparam_prot.x
 
