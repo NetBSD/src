@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.16 1995/05/11 21:29:18 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.17 1995/07/04 16:26:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: jobs.c,v 1.16 1995/05/11 21:29:18 christos Exp $";
+static char rcsid[] = "$NetBSD: jobs.c,v 1.17 1995/07/04 16:26:45 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -487,6 +487,10 @@ makejob(node, nprocs)
 			} else {
 				jp = ckmalloc((njobs + 4) * sizeof jobtab[0]);
 				memcpy(jp, jobtab, njobs * sizeof jp[0]);
+				/* Relocate `ps' pointers */
+				for (i = 0; i < njobs; i++)
+					if (jp[i].ps == &jobtab[i].ps0)
+						jp[i].ps = &jp[i].ps0;
 				ckfree(jobtab);
 				jobtab = jp;
 			}
