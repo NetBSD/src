@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2000/12/13 03:04:51 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2001/01/26 17:37:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.35 2000/12/13 03:04:51 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2001/01/26 17:37:16 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,9 +202,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	struct dups *dp;
 	struct zlncnt *zlnp;
 #ifdef LITE2BORKEN
-	int cylno, flags;
-#else
-	int cylno;
+	int flags;
 #endif
 
 	if (preen && child)
@@ -316,14 +314,6 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	if (fsmodified) {
 		(void)time(&sblock->fs_time);
 		sbdirty();
-	}
-	if ((cvtlevel && sblk.b_dirty) || doswap) {
-		/* 
-		 * Write out the duplicate super blocks
-		 */
-		for (cylno = 0; cylno < sblock->fs_ncg; cylno++)
-			bwrite(fswritefd, sblk.b_un.b_buf,
-			    fsbtodb(sblock, cgsblock(sblock, cylno)), SBSIZE);
 	}
 	if (rerun)
 		markclean = 0;
