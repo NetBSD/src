@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.5 2001/01/18 21:03:46 jdolecek Exp $	*/
+/*	$NetBSD: fsort.h,v 1.6 2001/01/19 10:12:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,13 +38,18 @@
  *	@(#)fsort.h	8.1 (Berkeley) 6/6/93
  */
 
-#define POW 20			/* exponent for buffer size */
-#define BUFSIZE (1 << POW)
-#define MAXNUM (BUFSIZE/10)	/* lowish guess at average record size */
-#define BUFFEND (EOF-2)
-#define BUFFSMALL (EOF-3)	/* buffer is too small to hold line */
-#define MAXFCT 1000
-#define DEFLLEN (1 << min(POW-4, 16))
+#define BUFSIZE		(1<<20)
+#define MAXNUM		(BUFSIZE/10)	/* low guess at average record size */
+#define BUFFEND		(EOF-2)
+#define MAXFCT		1000
+#define DEFLLEN		65536
+
+/*
+ * Number of files merge() can merge in one pass.
+ * This should be power of two so that it's possible to use this value
+ * for rouding.
+ */
+#define MERGE_FNUM	16
 
 extern const u_char **keylist;
 extern u_char *buffer, *linebuf;
