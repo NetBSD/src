@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.39 1998/07/10 04:39:03 thorpej Exp $	*/
+/*	$NetBSD: cmds.c,v 1.40 1998/07/26 12:58:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.39 1998/07/10 04:39:03 thorpej Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.40 1998/07/26 12:58:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -968,7 +968,7 @@ setglob(argc, argv)
 }
 
 /*
- * Toggle preserving modification times on retreived files.
+ * Toggle preserving modification times on retrieved files.
  */
 /*VARARGS*/
 void
