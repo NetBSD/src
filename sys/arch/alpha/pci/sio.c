@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.21 1998/01/12 10:21:14 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.22 1998/03/28 06:58:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.21 1998/01/12 10:21:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.22 1998/03/28 06:58:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ struct sio_softc {
 	bus_space_tag_t sc_iot, sc_memt;
 	bus_dma_tag_t	sc_parent_dmat;
 	int		sc_haseisa;
+	int		sc_is82c693;
 };
 
 int	siomatch __P((struct device *, struct cfdata *, void *));
@@ -93,11 +94,21 @@ siomatch(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_SIO)
-		return (0);
+	/*
+	 * The Cypress 82C693 is more-or-less an SIO, but with
+	 * indirect register access.  (XXX for everything, or
+	 * just the ELCR?)
+	 */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CONTAQ &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CONTAQ_82C693 &&
+	    pa->pa_function == 0)
+		return (1);
 
-	return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_SIO)
+		return (1);
+
+	return (0);
 }
 
 int
@@ -108,11 +119,11 @@ pcebmatch(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_PCEB)
-		return (0);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB)
+		return (1);
 
-	return (1);
+	return (0);
 }
 
 void
@@ -131,7 +142,10 @@ sioattach(parent, self, aux)
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_parent_dmat = pa->pa_dmat;
-	sc->sc_haseisa = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
+	sc->sc_haseisa = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
+	sc->sc_is82c693 = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CONTAQ &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CONTAQ_82C693);
 
 #ifdef EVCNT_COUNTERS
 	evcnt_attach(&sc->sc_dv, "intr", &sio_intr_evcnt);
