@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.81 1997/07/11 09:06:59 veego Exp $
+#	$NetBSD: rc,v 1.82 1997/07/11 12:01:06 veego Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -64,7 +64,7 @@ fi
 trap "echo 'Boot interrupted.'; exit 1" 3
 
 umount -a >/dev/null 2>&1
-mount /
+mount -a -t nonfs
 rm -f /fastboot		# XXX (root now writeable)
 
 if [ -f /etc/rc.conf ]; then
@@ -75,13 +75,7 @@ fi
 echo 'setting tty flags'
 ttyflags -a
 
-# /etc/rc.lkm needs /usr/bin/ld to load a lkm
-#  => you can not use lkm's if you have /usr on a nfs partition.
-# This is because of /etc/rc.lkm has to be come before /etc/netstart
-# to load possible network lkm's.
-mount -t nonfs /usr >/dev/null 2>&1
-
-# Load any kernel modules specified in /etc/lkm.conf
+# load any kernel modules specified in /etc/lkm.conf
 if [ "$lkm_init" != NO ] && [ -f /etc/rc.lkm ]; then
 	. /etc/rc.lkm
 fi
@@ -93,9 +87,7 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-# Mount a possible /usr on nfs partition and then mount a possible /var
-# partition.
-mount -t nfs /usr >/dev/null 2>&1
+mount /usr >/dev/null 2>&1
 mount /var >/dev/null 2>&1
 
 # "Critical" file systems are now mounted.  Go ahead and swap
@@ -213,7 +205,7 @@ if [ "$amd_flags" != NO ] && [ -d "$amd_dir" -a -r "$amd_master" ]; then
 fi
 
 echo '.'
-mount -a
+mount -a -t nfs
 
 if [ -f /sbin/ldconfig ]; then
 	echo 'creating runtime link editor directory cache.'
