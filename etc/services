@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.64 2003/04/26 22:07:14 wiz Exp $
+#	$NetBSD: services,v 1.65 2003/06/03 16:59:48 fair Exp $
 #
 # Network services, Internet style
 #
@@ -295,6 +295,7 @@ ircd		6667/tcp		# Often used IRC port (also see 194)
 sstp-2		9801/tcp		# Sakura Script Transfer Protocol-2
 sstp-2		9801/udp		# Sakura Script Transfer Protocol-2
 amanda		10080/udp		# Amanda
+kamanda		10081/udp		# Amanda with Kerberos
 italk		12345/tcp		# Italk Chat System
 italk		12345/udp		# Italk Chat System
 hunt		26740/udp		# multi-player/multi-host maze-wars
