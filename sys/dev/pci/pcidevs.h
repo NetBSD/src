@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.342 2001/06/30 01:04:25 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.343 2001/07/23 20:14:36 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.336 2001/06/30 01:03:59 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.337 2001/07/23 20:13:26 bouyer Exp 
  */
 
 /*
@@ -1739,6 +1739,7 @@
 
 /* Titan Electronics products */
 #define	PCI_PRODUCT_TITAN_PCI800H	0xa003		/* PCI-800H */
+#define	PCI_PRODUCT_TITAN_PCI100H	0xa001		/* PCI-100H */
 
 /* Toshiba America products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x0009		/* R4x00 Host-PCI Bridge */
