@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.21 1996/11/02 18:26:03 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.22 1997/01/11 02:04:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.21 1996/11/02 18:26:03 christos Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.22 1997/01/11 02:04:34 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ pfgets(line, len)
 	char *line;
 	int len;
 {
-	register char *p = line;
+	char *p = line;
 	int nleft = len;
 	int c;
 

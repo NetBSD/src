@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.20 1996/11/02 18:26:04 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.21 1997/01/11 02:04:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: jobs.c,v 1.20 1996/11/02 18:26:04 christos Exp $";
+static char rcsid[] = "$NetBSD: jobs.c,v 1.21 1997/01/11 02:04:36 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -438,7 +438,7 @@ getjob(name)
 	char *name;
 	{
 	int jobno;
-	register struct job *jp;
+	struct job *jp;
 	int pid;
 	int i;
 
@@ -462,7 +462,7 @@ currentjob:
 			goto currentjob;
 #endif
 		} else {
-			register struct job *found = NULL;
+			struct job *found = NULL;
 			for (jp = jobtab, i = njobs ; --i >= 0 ; jp++) {
 				if (jp->used && jp->nprocs > 0
 				 && prefix(name + 1, jp->ps[0].cmd)) {
@@ -685,7 +685,7 @@ forkshell(jp, n, mode)
 
 int
 waitforjob(jp)
-	register struct job *jp;
+	struct job *jp;
 	{
 #if JOBS
 	int mypgrp = getpgrp();
@@ -906,8 +906,8 @@ int job_warning = 0;
 int
 stoppedjobs()
 {
-	register int jobno;
-	register struct job *jp;
+	int jobno;
+	struct job *jp;
 
 	if (job_warning)
 		return (0);
@@ -1079,8 +1079,8 @@ STATIC void
 cmdputs(s)
 	char *s;
 	{
-	register char *p, *q;
-	register char c;
+	char *p, *q;
+	char c;
 	int subtype = 0;
 
 	if (cmdnleft <= 0)

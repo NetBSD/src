@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.16 1996/10/16 14:51:24 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.17 1997/01/11 02:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: output.c,v 1.16 1996/10/16 14:51:24 christos Exp $";
+static char rcsid[] = "$NetBSD: output.c,v 1.17 1997/01/11 02:04:44 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,8 +144,8 @@ out2str(p)
 
 void
 outstr(p, file)
-	register const char *p;
-	register struct output *file;
+	const char *p;
+	struct output *file;
 	{
 	while (*p)
 		outc(*p++, file);
@@ -358,11 +358,11 @@ static const char digit[] = "0123456789ABCDEF";
 
 void
 doformat(dest, f, ap)
-	register struct output *dest;
-	register char *f;		/* format string */
+	struct output *dest;
+	char *f;		/* format string */
 	va_list ap;
 	{
-	register char c;
+	char c;
 	char temp[TEMPSIZE];
 	int flushleft;
 	int sharp;

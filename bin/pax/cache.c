@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
+/*	$NetBSD: cache.c,v 1.5 1997/01/11 02:06:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: cache.c,v 1.5 1997/01/11 02:06:36 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -208,8 +208,8 @@ name_uid(uid, frc)
 	int frc;
 #endif
 {
-	register struct passwd *pw;
-	register UIDC *ptr;
+	struct passwd *pw;
+	UIDC *ptr;
 
 	if ((uidtb == NULL) && (uidtb_start() < 0))
 		return("");
@@ -285,8 +285,8 @@ name_gid(gid, frc)
 	int frc;
 #endif
 {
-	register struct group *gr;
-	register GIDC *ptr;
+	struct group *gr;
+	GIDC *ptr;
 
 	if ((gidtb == NULL) && (gidtb_start() < 0))
 		return("");
@@ -361,9 +361,9 @@ uid_name(name, uid)
 	uid_t *uid;
 #endif
 {
-	register struct passwd *pw;
-	register UIDC *ptr;
-	register int namelen;
+	struct passwd *pw;
+	UIDC *ptr;
+	int namelen;
 
 	/*
 	 * return -1 for mangled names
@@ -431,9 +431,9 @@ gid_name(name, gid)
 	gid_t *gid;
 #endif
 {
-	register struct group *gr;
-	register GIDC *ptr;
-	register int namelen;
+	struct group *gr;
+	GIDC *ptr;
+	int namelen;
 
 	/*
 	 * return -1 for mangled names

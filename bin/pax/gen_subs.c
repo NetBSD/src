@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.6 1997/01/11 02:06:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $";
+static char rcsid[] = "$NetBSD: gen_subs.c,v 1.6 1997/01/11 02:06:40 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,15 +83,15 @@ static char rcsid[] = "$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $";
 
 #if __STDC__
 void
-ls_list(register ARCHD *arcn, time_t now)
+ls_list(ARCHD *arcn, time_t now)
 #else
 void
 ls_list(arcn, now)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 	time_t now;
 #endif
 {
-	register struct stat *sbp;
+	struct stat *sbp;
 	char f_mode[MODELEN];
 	char f_date[DATELEN];
 	char *timefrmt;
@@ -171,11 +171,11 @@ ls_list(arcn, now)
 
 #if __STDC__
 void
-ls_tty(register ARCHD *arcn)
+ls_tty(ARCHD *arcn)
 #else
 void
 ls_tty(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
 	char f_date[DATELEN];
@@ -214,16 +214,16 @@ ls_tty(arcn)
 
 #if __STDC__
 void
-zf_strncpy(register char *dest, register char *src, int len)
+zf_strncpy(char *dest, char *src, int len)
 #else
 void
 zf_strncpy(dest, src, len)
-	register char *dest;
-	register char *src;
+	char *dest;
+	char *src;
 	int len;
 #endif
 {
-	register char *stop;
+	char *stop;
 
 	stop = dest + len;
 	while ((dest < stop) && (*src != '\0'))
@@ -243,17 +243,17 @@ zf_strncpy(dest, src, len)
 
 #if __STDC__
 int
-l_strncpy(register char *dest, register char *src, int len)
+l_strncpy(char *dest, char *src, int len)
 #else
 int
 l_strncpy(dest, src, len)
-	register char *dest;
-	register char *src;
+	char *dest;
+	char *src;
 	int len;
 #endif
 {
-	register char *stop;
-	register char *start;
+	char *stop;
+	char *start;
 
 	stop = dest + len;
 	start = dest;
@@ -276,16 +276,16 @@ l_strncpy(dest, src, len)
 
 #if __STDC__
 u_long
-asc_ul(register char *str, int len, register int base)
+asc_ul(char *str, int len, int base)
 #else
 u_long
 asc_ul(str, len, base)
-	register char *str;
+	char *str;
 	int len;
-	register int base;
+	int base;
 #endif
 {
-	register char *stop;
+	char *stop;
 	u_long tval = 0;
 
 	stop = str + len;
@@ -327,17 +327,17 @@ asc_ul(str, len, base)
 
 #if __STDC__
 int
-ul_asc(u_long val, register char *str, register int len, register int base)
+ul_asc(u_long val, char *str, int len, int base)
 #else
 int
 ul_asc(val, str, len, base)
 	u_long val;
-	register char *str;
-	register int len;
-	register int base;
+	char *str;
+	int len;
+	int base;
 #endif
 {
-	register char *pt;
+	char *pt;
 	u_long digit;
 	
 	/*
@@ -390,16 +390,16 @@ ul_asc(val, str, len, base)
 
 #if __STDC__
 u_quad_t
-asc_uqd(register char *str, int len, register int base)
+asc_uqd(char *str, int len, int base)
 #else
 u_quad_t
 asc_uqd(str, len, base)
-	register char *str;
+	char *str;
 	int len;
-	register int base;
+	int base;
 #endif
 {
-	register char *stop;
+	char *stop;
 	u_quad_t tval = 0;
 
 	stop = str + len;
@@ -441,17 +441,17 @@ asc_uqd(str, len, base)
 
 #if __STDC__
 int
-uqd_asc(u_quad_t val, register char *str, register int len, register int base)
+uqd_asc(u_quad_t val, char *str, int len, int base)
 #else
 int
 uqd_asc(val, str, len, base)
 	u_quad_t val;
-	register char *str;
-	register int len;
-	register int base;
+	char *str;
+	int len;
+	int base;
 #endif
 {
-	register char *pt;
+	char *pt;
 	u_quad_t digit;
 	
 	/*

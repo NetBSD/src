@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.6 1997/01/11 02:06:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $";
+static char rcsid[] = "$NetBSD: ar_io.c,v 1.6 1997/01/11 02:06:32 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -426,7 +426,7 @@ void
 ar_drain()
 #endif
 {
-	register int res;
+	int res;
 	char drbuf[MAXBLK];
 
 	/*
@@ -529,15 +529,15 @@ ar_app_ok()
 
 #if __STDC__
 int
-ar_read(register char *buf, register int cnt)
+ar_read(char *buf, int cnt)
 #else
 int
 ar_read(buf, cnt)
-	register char *buf;
-	register int cnt;
+	char *buf;
+	int cnt;
 #endif
 {
-	register int res = 0;
+	int res = 0;
 
 	/*
 	 * if last i/o was in error, no more reads until reset or new volume
@@ -619,15 +619,15 @@ ar_read(buf, cnt)
 
 #if __STDC__
 int
-ar_write(register char *buf, register int bsz)
+ar_write(char *buf, int bsz)
 #else
 int
 ar_write(buf, bsz)
-	register char *buf;
-	register int bsz;
+	char *buf;
+	int bsz;
 #endif
 {
-	register int res;
+	int res;
 	off_t cpos;
 
 	/*
@@ -910,7 +910,7 @@ ar_rev(sksz)
 {
 	off_t cpos;
         struct mtop mb;
-	register int phyblk; 
+	int phyblk; 
 
 	/*
 	 * make sure we do not have try to reverse on a flawed archive
@@ -1045,9 +1045,9 @@ static int
 get_phys()
 #endif
 {
-	register int padsz = 0;
-	register int res;
-	register int phyblk;
+	int padsz = 0;
+	int res;
+	int phyblk;
 	struct mtop mb;
 	char scbuf[MAXBLK];
 

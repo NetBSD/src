@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.13 1996/10/16 15:16:04 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.14 1997/01/11 02:04:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: redir.c,v 1.13 1996/10/16 15:16:04 christos Exp $";
+static char rcsid[] = "$NetBSD: redir.c,v 1.14 1997/01/11 02:04:46 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -266,7 +266,7 @@ out:
 
 void
 popredir() {
-	register struct redirtab *rp = redirlist;
+	struct redirtab *rp = redirlist;
 	int i;
 
 	for (i = 0 ; i < 10 ; i++) {
@@ -317,7 +317,7 @@ fd0_redirected_p () {
 
 void
 clearredir() {
-	register struct redirtab *rp;
+	struct redirtab *rp;
 	int i;
 
 	for (rp = redirlist ; rp ; rp = rp->next) {

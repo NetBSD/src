@@ -1,4 +1,4 @@
-/*	$NetBSD: mknodes.c,v 1.12 1996/10/16 14:44:28 christos Exp $	*/
+/*	$NetBSD: mknodes.c,v 1.13 1997/01/11 02:04:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mknodes.c,v 1.12 1996/10/16 14:44:28 christos Exp $";
+static char rcsid[] = "$NetBSD: mknodes.c,v 1.13 1997/01/11 02:04:41 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -398,7 +398,7 @@ static int
 nextfield(buf)
 	char *buf;
 {
-	register char *p, *q;
+	char *p, *q;
 
 	p = linep;
 	while (*p == ' ' || *p == '\t')
@@ -423,7 +423,7 @@ skipbl()
 static int
 readline()
 {
-	register char *p;
+	char *p;
 
 	if (fgets(line, 1024, infp) == NULL)
 		return 0;
@@ -472,7 +472,7 @@ static char *
 savestr(s)
 	const char *s;
 {
-	register char *p;
+	char *p;
 
 	if ((p = malloc(strlen(s) + 1)) == NULL)
 		error("Out of space");

@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
+/*	$NetBSD: tables.c,v 1.5 1997/01/11 02:06:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $";
+static char rcsid[] = "$NetBSD: tables.c,v 1.5 1997/01/11 02:06:44 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,16 +140,16 @@ lnk_start()
 
 #if __STDC__
 int
-chk_lnk(register ARCHD *arcn)
+chk_lnk(ARCHD *arcn)
 #else
 int
 chk_lnk(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register HRDLNK *pt;
-	register HRDLNK **ppt;
-	register u_int indx;
+	HRDLNK *pt;
+	HRDLNK **ppt;
+	u_int indx;
 
 	if (ltab == NULL)
 		return(-1);
@@ -232,16 +232,16 @@ chk_lnk(arcn)
 
 #if __STDC__
 void
-purg_lnk(register ARCHD *arcn)
+purg_lnk(ARCHD *arcn)
 #else
 void
 purg_lnk(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register HRDLNK *pt;
-	register HRDLNK **ppt;
-	register u_int indx;
+	HRDLNK *pt;
+	HRDLNK **ppt;
+	u_int indx;
 
 	if (ltab == NULL)
 		return;
@@ -298,9 +298,9 @@ void
 lnk_end()
 #endif
 {
-	register int i;
-	register HRDLNK *pt;
-	register HRDLNK *ppt;
+	int i;
+	HRDLNK *pt;
+	HRDLNK *ppt;
 
 	if (ltab == NULL)
 		return;
@@ -403,16 +403,16 @@ ftime_start()
 
 #if __STDC__
 int
-chk_ftime(register ARCHD *arcn)
+chk_ftime(ARCHD *arcn)
 #else
 int
 chk_ftime(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register FTM *pt;
-	register int namelen;
-	register u_int indx;
+	FTM *pt;
+	int namelen;
+	u_int indx;
 	char ckname[PAXPATHLEN+1];
 
 	/*
@@ -554,17 +554,17 @@ name_start()
 
 #if __STDC__
 int
-add_name(register char *oname, int onamelen, char *nname)
+add_name(char *oname, int onamelen, char *nname)
 #else
 int
 add_name(oname, onamelen, nname)
-	register char *oname;
+	char *oname;
 	int onamelen;
 	char *nname;
 #endif
 {
-	register NAMT *pt;
-	register u_int indx;
+	NAMT *pt;
+	u_int indx;
 
 	if (ntab == NULL) {
 		/*
@@ -630,16 +630,16 @@ add_name(oname, onamelen, nname)
 
 #if __STDC__
 void
-sub_name(register char *oname, int *onamelen)
+sub_name(char *oname, int *onamelen)
 #else
 void
 sub_name(oname, onamelen)
-	register char *oname;
+	char *oname;
 	int *onamelen;
 #endif
 {
-	register NAMT *pt;
-	register u_int indx;
+	NAMT *pt;
+	u_int indx;
 
 	if (ntab == NULL)
 		return;
@@ -747,11 +747,11 @@ dev_start()
 
 #if __STDC__
 int
-add_dev(register ARCHD *arcn)
+add_dev(ARCHD *arcn)
 #else
 int
 add_dev(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
 	if (chk_dev(arcn->sb.st_dev, 1) == NULL)
@@ -782,8 +782,8 @@ chk_dev(dev, add)
 	int add;
 #endif
 {
-	register DEVT *pt;
-	register u_int indx;
+	DEVT *pt;
+	u_int indx;
 
 	if (dtab == NULL)
 		return(NULL);
@@ -839,17 +839,17 @@ chk_dev(dev, add)
 
 #if __STDC__
 int
-map_dev(register ARCHD *arcn, u_long dev_mask, u_long ino_mask)
+map_dev(ARCHD *arcn, u_long dev_mask, u_long ino_mask)
 #else
 int
 map_dev(arcn, dev_mask, ino_mask)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 	u_long dev_mask;
 	u_long ino_mask;
 #endif
 {
-	register DEVT *pt;
-	register DLIST *dpt;
+	DEVT *pt;
+	DLIST *dpt;
 	static dev_t lastdev = 0;	/* next device number to try */
 	int trc_ino = 0;
 	int trc_dev = 0;
@@ -1020,8 +1020,8 @@ void
 atdir_end()
 #endif
 {
-	register ATDIR *pt;
-	register int i;
+	ATDIR *pt;
+	int i;
 
 	if (atab == NULL)
 		return;
@@ -1061,8 +1061,8 @@ add_atdir(fname, dev, ino, mtime, atime)
 	time_t atime;
 #endif
 {
-	register ATDIR *pt;
-	register u_int indx;
+	ATDIR *pt;
+	u_int indx;
 
 	if (atab == NULL)
 		return;
@@ -1132,9 +1132,9 @@ get_atdir(dev, ino, mtime, atime)
 	time_t *atime;
 #endif
 {
-	register ATDIR *pt;
-	register ATDIR **ppt;
-	register u_int indx;
+	ATDIR *pt;
+	ATDIR **ppt;
+	u_int indx;
 
 	if (atab == NULL)
 		return(-1);
@@ -1373,13 +1373,13 @@ st_hash(name, len, tabsz)
 	int tabsz;
 #endif
 {
-	register char *pt;
-	register char *dest;
-	register char *end;
-	register int i;
-	register u_int key = 0;
-	register int steps;
-	register int res;
+	char *pt;
+	char *dest;
+	char *end;
+	int i;
+	u_int key = 0;
+	int steps;
+	int res;
 	u_int val;
 
 	/*

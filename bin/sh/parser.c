@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.31 1996/11/25 20:22:00 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.32 1997/01/11 02:04:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$NetBSD: parser.c,v 1.31 1996/11/25 20:22:00 christos Exp $";
+static char rcsid[] = "$NetBSD: parser.c,v 1.32 1997/01/11 02:04:45 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -727,7 +727,7 @@ readtoken() {
 		 */
 		if (t == TWORD && !quoteflag)
 		{
-			register char * const *pp;
+			char * const *pp;
 
 			for (pp = (char **)parsekwd; *pp; pp++) {
 				if (**pp == *wordtext && equal(*pp, wordtext))
@@ -778,7 +778,7 @@ out:
 
 STATIC int
 xxreadtoken() {
-	register c;
+	int c;
 
 	if (tokpushback) {
 		tokpushback = 0;
@@ -1077,7 +1077,7 @@ checkend: {
 		}
 		if (c == *eofmark) {
 			if (pfgets(line, sizeof line) != NULL) {
-				register char *p, *q;
+				char *p, *q;
 
 				p = line;
 				for (q = eofmark + 1 ; *q && *p == *q ; p++, q++);
@@ -1280,8 +1280,8 @@ parsebackq: {
                 /* We must read until the closing backquote, giving special
                    treatment to some slashes, and then push the string and
                    reread it as input, interpreting it normally.  */
-                register char *out;
-                register c;
+                char *out;
+                int c;
                 int savelen;
                 char *str;
 
@@ -1432,8 +1432,8 @@ STATIC int
 noexpand(text)
 	char *text;
 	{
-	register char *p;
-	register char c;
+	char *p;
+	char c;
 
 	p = text;
 	while ((c = *p++) != '\0') {
@@ -1455,7 +1455,7 @@ int
 goodname(name)
 	char *name;
 	{
-	register char *p;
+	char *p;
 
 	p = name;
 	if (! is_name(*p))

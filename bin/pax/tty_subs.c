@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $	*/
+/*	$NetBSD: tty_subs.c,v 1.6 1997/01/11 02:06:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: tty_subs.c,v 1.6 1997/01/11 02:06:46 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ tty_read(str, len)
 	int len;
 #endif
 {
-	register char *pt;
+	char *pt;
 
 	if ((--len <= 0) || (ttyinf == NULL) || (fgets(str,len,ttyinf) == NULL))
 		return(-1);
