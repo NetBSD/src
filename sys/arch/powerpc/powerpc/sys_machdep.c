@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2 1998/02/25 21:41:57 perry Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3 2000/06/09 14:08:45 kleink Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,6 +32,9 @@
  */
 
 #include <sys/param.h>
+
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 int
 sys_sysarch(p, v, retval)
