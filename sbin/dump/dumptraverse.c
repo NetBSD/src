@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)dumptraverse.c	5.11 (Berkeley) 3/7/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/dump/Attic/dumptraverse.c,v 1.4 1993/04/09 12:29:06 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/dump/Attic/dumptraverse.c,v 1.5 1993/06/13 21:08:27 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -307,6 +307,13 @@ dumpino(dp, ino)
 	if ((mode != IFDIR && mode != IFREG && mode != IFLNK) ||
 	    dp->di_size == 0) {
 		writeheader(ino);
+		return;
+	}
+	if (DFASTLINK(*dp)) {
+		spcl.c_addr[0] = 1;
+		spcl.c_count = 1;
+		writeheader(ino);
+		writerec(dp->di_symlink);
 		return;
 	}
 	if (dp->di_size > NDADDR * sblock->fs_bsize)
