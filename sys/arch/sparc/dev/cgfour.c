@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.11 1996/10/13 02:59:34 christos Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.12 1996/12/10 22:54:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -93,7 +93,7 @@ struct cgfour_softc {
 
 /* autoconfiguration driver */
 static void	cgfourattach __P((struct device *, struct device *, void *));
-static int	cgfourmatch __P((struct device *, void *, void *));
+static int	cgfourmatch __P((struct device *, struct cfdata *, void *));
 #if defined(SUN4)
 static void	cgfourunblank __P((struct device *));
 #endif
@@ -128,11 +128,11 @@ static void cgfour_set_video __P((struct cgfour_softc *, int));
  * Match a cgfour.
  */
 int
-cgfourmatch(parent, vcf, aux)
+cgfourmatch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.30 1996/12/09 17:46:46 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.31 1996/12/10 22:55:04 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ int sw_options = SI_ENABLE_DMA;
 /* How long to wait for DMA before declaring an error. */
 int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 
-static int	si_match __P((struct device *, void *, void *));
+static int	si_match __P((struct device *, struct cfdata *, void *));
 static void	si_attach __P((struct device *, struct device *, void *));
 static int	si_intr __P((void *));
 static void	si_reset_adapter __P((struct ncr5380_softc *));
@@ -261,12 +261,12 @@ struct cfdriver sw_cd = {
 };
 
 static int
-si_match(parent, vcf, args)
+si_match(parent, cf, aux)
 	struct device	*parent;
-	void		*vcf, *args;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata	*cf = vcf;
-	struct confargs *ca = args;
+	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
 	/* Are we looking for the right thing? */

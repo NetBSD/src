@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.5 1996/10/13 03:00:06 christos Exp $ */
+/*	$NetBSD: power.c,v 1.6 1996/12/10 22:55:02 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
 
 #include <sparc/dev/power.h>
 
-static int powermatch __P((struct device *, void *, void *));
+static int powermatch __P((struct device *, struct cfdata *, void *));
 static void powerattach __P((struct device *, struct device *, void *));
 
 struct cfattach power_ca = {
@@ -68,9 +68,10 @@ struct cfdriver power_cd = {
  */
 
 static int
-powermatch(parent, vcf, aux)
+powermatch(parent, cf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	struct cfdata *cf;
+	void *aux;
 {
 	register struct confargs *ca = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63 1996/10/13 03:00:24 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.64 1996/12/10 23:17:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -113,7 +113,7 @@ static	void crazymap __P((char *, int *));
 int	st_crazymap __P((int));
 void	swapconf __P((void));
 void	sync_crash __P((void));
-int	mainbus_match __P((struct device *, void *, void *));
+int	mainbus_match __P((struct device *, struct cfdata *, void *));
 static	void mainbus_attach __P((struct device *, struct device *, void *));
 
 struct	bootpath bootpath[8];
@@ -140,11 +140,11 @@ LIST_HEAD(, mountroot_hook) mrh_list;
  * device names with our internal names.
  */
 int
-matchbyname(parent, vcf, aux)
+matchbyname(parent, cf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
@@ -1082,12 +1082,11 @@ romprop(rp, cp, node)
 }
 
 int
-mainbus_match(parent, self, aux)
+mainbus_match(parent, cf, aux)
 	struct device *parent;
-	void *self;
+	struct cfdata *cf;
 	void *aux;
 {
-	struct cfdata *cf = self;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
