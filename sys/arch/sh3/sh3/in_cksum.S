@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.1 2000/01/14 15:47:42 msaitoh Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.2 2000/02/22 02:17:05 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -139,7 +139,7 @@ mbuf_loop:
 
 	mov	#127,reg_tmp0
 	cmp/hi	reg_tmp0,reg_mlen
-	bf/s	1f
+	bf	1f
 
 do_cksum128:
 	mova	cksum128,reg_tmp0
