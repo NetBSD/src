@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.27 1996/10/13 18:28:49 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.28 1996/10/20 22:39:03 hpeyerl Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -397,8 +397,10 @@ svr4_sys_sysarch(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_sysarch_args *uap = v;
+#ifdef USER_LDT
 	caddr_t sg = stackgap_init(p->p_emul);
 	int error;
+#endif
 	*retval = 0;	/* XXX: What to do */
 
 	switch (SCARG(uap, op)) {
