@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.44 2003/05/14 17:02:59 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.45 2003/05/15 13:46:15 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.44 2003/05/14 17:02:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.45 2003/05/15 13:46:15 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -1671,6 +1671,18 @@ pim6_input(mp, offp, proto)
 		return IPPROTO_DONE;
 	}
 
+	/* PIM version check */
+	if (pim->pim_ver != PIM_VERSION) {
+		++pim6stat.pim6s_rcv_badversion;
+#ifdef MRT6DEBUG
+		log(LOG_ERR,
+		    "pim6_input: incorrect version %d, expecting %d\n",
+		    pim->pim_ver, PIM_VERSION);
+#endif
+		m_freem(m);
+		return (IPPROTO_DONE);
+	}
+
 #define PIM6_CHECKSUM
 #ifdef PIM6_CHECKSUM
 	{
@@ -1697,18 +1709,6 @@ pim6_input(mp, offp, proto)
 		}
 	}
 #endif /* PIM_CHECKSUM */
-
-	/* PIM version check */
-	if (pim->pim_ver != PIM_VERSION) {
-		++pim6stat.pim6s_rcv_badversion;
-#ifdef MRT6DEBUG
-		log(LOG_ERR,
-		    "pim6_input: incorrect version %d, expecting %d\n",
-		    pim->pim_ver, PIM_VERSION);
-#endif
-		m_freem(m);
-		return (IPPROTO_DONE);
-	}
 
 	if (pim->pim_type == PIM_REGISTER) {
 		/*
