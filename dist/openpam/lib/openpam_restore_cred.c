@@ -88,7 +88,7 @@ openpam_restore_cred(pam_handle_t *pamh)
  * The =openpam_restore_cred function restores the credentials saved by
  * =openpam_borrow_cred.
  *
- * >setegid
- * >seteuid
- * >setgroups
+ * >setegid 2
+ * >seteuid 2
+ * >setgroups 2
  */

@@ -115,7 +115,7 @@ openpam_borrow_cred(pam_handle_t *pamh,
  * group access list.  The original credentials can be restored using
  * =openpam_restore_cred.
  *
- * >setegid
- * >seteuid
- * >setgroups
+ * >setegid 2
+ * >seteuid 2
+ * >setgroups 2
  */
