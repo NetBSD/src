@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: syslogd.8,v 1.5 1996/05/06 16:36:44 christos Exp $
+.\"	$NetBSD: syslogd.8,v 1.6 1997/03/08 14:34:56 mouse Exp $
 .\"
 .Dd June 6, 1993
 .Dt SYSLOGD 8
@@ -55,7 +55,7 @@ The options are as follows:
 Enable debugging to the standard output,
 and do not disassociate from the controlling terminal.
 .It Fl f
-Specify the pathname of an alternate configuration file;
+Specify the pathname of an alternative configuration file;
 the default is
 .Pa /etc/syslog.conf .
 .It Fl m
@@ -69,7 +69,7 @@ which syslogd runs is subject to attack over the network and it is desired
 that the machine be protected from attempts to remotely fill logs
 and similar attacks.
 .It Fl p
-Specify the pathname of an alternate log socket;
+Specify the pathname of an alternative log socket;
 the default is
 .Pa /dev/log .
 .El
