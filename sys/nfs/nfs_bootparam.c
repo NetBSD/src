@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.7 1998/03/01 17:37:32 veego Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.8 1998/06/13 04:33:40 tv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -162,15 +162,13 @@ nfs_bootparam(ifp, nd, procp)
 		 * Do RARP for the interface address.
 		 */
 		error = revarpwhoami(&my_ip, ifp);
-		if (!error)
-			goto ok;
-		printf("revarp failed, error=%d\n", error);
+		if (error) {
+			printf("revarp failed, error=%d\n", error);
+			goto out;
+		}
 	}
 #endif
-	if (0) goto ok; /* XXX stupid gcc */
-	goto out;
 
-ok:
 	nd->nd_myip.s_addr = my_ip.s_addr;
 	printf("nfs_boot: client_addr=0x%x\n",
 	       (u_int32_t)ntohl(my_ip.s_addr));
