@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.67 2002/11/02 13:49:15 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.68 2002/11/03 01:54:45 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1313,8 +1313,13 @@ device_register(dev, aux)
 		/* IDE disks. */
 		struct ata_device *adev = aux;
 
-		if (adev->adev_channel == bp->val[1] &&
-		    adev->adev_drv_data->drive == bp->val[0]) {
+		/*
+		 * The PROM gives you names like "disk@1,0", where the first value
+		 * appears to be both the drive & channel combined (channel * 2 +
+		 * drive), and the second value we don't use (what is it anyway?)
+		 */
+		if ((adev->adev_channel * 2) + adev->adev_drv_data->drive ==
+		    bp->val[0]) {
 			nail_bootdev(dev, bp);
 			DPRINTF(ACDB_BOOTDEV, ("\t-- found wd disk %s\n",
 			    dev->dv_xname));
