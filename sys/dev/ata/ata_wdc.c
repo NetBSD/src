@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.17 1999/03/17 10:13:56 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.18 1999/03/25 16:17:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -416,7 +416,11 @@ wdc_ata_bio_intr(chp, xfer)
 	}
 
 	/* Ack interrupt done by wait_for_unbusy */
-	if (wait_for_unbusy(chp, ATA_DELAY) < 0) {
+	if (wait_for_unbusy(chp,
+	    (ata_bio->flags & ATA_POLL) ? ATA_DELAY : 0) < 0) {
+		if ((ata_bio->flags & ATA_POLL) == 0 &&
+		    (xfer->c_flags & C_TIMEOU) == 0)
+			return 0; /* IRQ was not for us */
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
@@ -588,8 +592,10 @@ wdc_ata_ctrl_intr(chp, xfer)
 	struct ata_bio *ata_bio = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	char *errstring = NULL;
+	int delay = (ata_bio->flags & ATA_POLL) ? ATA_DELAY : 0;
+
 	WDCDEBUG_PRINT(("wdc_ata_ctrl_intr: state %d\n", drvp->state),
-	DEBUG_FUNCS);
+	    DEBUG_FUNCS);
 
 again:
 	switch (drvp->state) {
@@ -599,7 +605,7 @@ again:
 
 	case RECAL_WAIT:
 		errstring = "recal";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
@@ -619,7 +625,7 @@ again:
 
 	case PIOMODE_WAIT:
 		errstring = "piomode";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
@@ -639,7 +645,7 @@ again:
 		break;
 	case DMAMODE_WAIT:
 		errstring = "dmamode";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
@@ -659,7 +665,7 @@ again:
 
 	case GEOMETRY_WAIT:
 		errstring = "geometry";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
@@ -676,7 +682,7 @@ again:
 
 	case MULTIMODE_WAIT:
 		errstring = "setmulti";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
@@ -702,7 +708,7 @@ again:
 	return 1;
 
 timeout:
-	if ((xfer->c_flags & C_TIMEOU) == 0 ) {
+	if ((xfer->c_flags & C_TIMEOU) == 0 && delay == 0) {
 		return 0; /* IRQ was not for us */
 	}
 	printf("%s:%d:%d: %s timed out\n",

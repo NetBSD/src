@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.62 1999/03/10 13:11:43 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.63 1999/03/25 16:17:36 bouyer Exp $ */
 
 
 /*
@@ -1085,10 +1085,7 @@ __wdccommand_start(chp, xfer)
 	 * Wait for at last 400ns for status bit to be valid.
 	 */
 	delay(10);
-	if (__wdccommand_intr(chp, xfer) == 0) {
-		wdc_c->flags |= AT_TIMEOU;
-		__wdccommand_done(chp, xfer);
-	}
+	__wdccommand_intr(chp, xfer);
 }
 
 int
@@ -1103,8 +1100,10 @@ __wdccommand_intr(chp, xfer)
 	WDCDEBUG_PRINT(("__wdccommand_intr %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_INTR);
 	if (wdcwait(chp, wdc_c->r_st_pmask, wdc_c->r_st_pmask,
-	    wdc_c->timeout)) {
-		wdc_c->flags |= AT_ERROR;
+	    (wdc_c->flags & AT_POLL) ? wdc_c->timeout : 0)) {
+		if ((xfer->c_flags & C_TIMEOU) == 0)
+			return 0; /* IRQ was not for us */
+		wdc_c->flags |= AT_TIMEOU;
 		__wdccommand_done(chp, xfer);
 		return 1;
 	}
