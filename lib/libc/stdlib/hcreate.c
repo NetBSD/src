@@ -1,4 +1,4 @@
-/* $NetBSD: hcreate.c,v 1.4 2003/07/26 19:24:53 salo Exp $ */
+/* $NetBSD: hcreate.c,v 1.5 2004/04/23 02:48:12 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: hcreate.c,v 1.4 2003/07/26 19:24:53 salo Exp $");
+__RCSID("$NetBSD: hcreate.c,v 1.5 2004/04/23 02:48:12 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(lint)
@@ -97,7 +97,7 @@ hcreate(size_t nel)
 	size_t idx;
 	unsigned int p2;
 
-	/* Make sure this this isn't called when a table already exists. */
+	/* Make sure this isn't called when a table already exists. */
 	_DIAGASSERT(htable == NULL);
 	if (htable != NULL) {
 		errno = EINVAL;
