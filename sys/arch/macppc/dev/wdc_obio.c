@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.31 2003/12/27 13:34:36 mjl Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.32 2003/12/31 02:50:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.31 2003/12/27 13:34:36 mjl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.32 2003/12/31 02:50:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,9 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.31 2003/12/27 13:34:36 mjl Exp $");
 
 struct wdc_obio_softc {
 	struct wdc_softc sc_wdcdev;
-	struct channel_softc *wdc_chanptr;
+	struct channel_softc wdc_chanptr[1];
 	struct channel_softc wdc_channel;
+	struct channel_queue wdc_chqueue;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_dmaconf[2];	/* per target value of CONFIG_REG */
@@ -205,8 +206,8 @@ wdc_obio_attach(parent, self, aux)
 
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
-	sc->wdc_chanptr = chp;
-	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
+	sc->wdc_chanlist[0] = chp;
+	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->sc_wdcdev.dma_arg = sc;
 	sc->sc_wdcdev.dma_init = wdc_obio_dma_init;
@@ -214,13 +215,7 @@ wdc_obio_attach(parent, self, aux)
 	sc->sc_wdcdev.dma_finish = wdc_obio_dma_finish;
 	chp->channel = 0;
 	chp->wdc = &sc->sc_wdcdev;
-	chp->ch_queue = malloc(sizeof(struct channel_queue),
-		M_DEVBUF, M_NOWAIT);
-	if (chp->ch_queue == NULL) {
-		printf("%s: can't allocate memory for command queue",
-		sc->sc_wdcdev.sc_dev.dv_xname);
-		return;
-	}
+	chp->ch_queue = &sc->wdc_chqueue;
 
 #define OHARE_FEATURE_REG	0xf3000038
 
@@ -434,8 +429,6 @@ wdc_obio_detach(self, flags)
 		return error;
 
 	intr_disestablish(sc->sc_ih);
-
-	free(sc->wdc_channel.ch_queue, M_DEVBUF);
 
 	/* Unmap our i/o space. */
 	bus_space_unmap(chp->cmd_iot, chp->cmd_ioh, WDC_REG_NPORTS);
