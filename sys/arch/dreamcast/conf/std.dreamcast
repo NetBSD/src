@@ -1,7 +1,10 @@
-# $NetBSD: std.dreamcast,v 1.1 2000/12/11 18:19:13 marcus Exp $
+# $NetBSD: std.dreamcast,v 1.2 2001/01/03 18:14:47 itojun Exp $
 #
 # standard, required NetBSD/dreamcast 'options'
  
 machine dreamcast sh3
 
 options	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	ENDIAN="-EL"
+makeoptions 	LDSCRIPTBASE="shl.x"	# for little endian

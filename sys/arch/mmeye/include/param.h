@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2000/06/30 17:55:15 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2001/01/03 18:14:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,10 +50,13 @@
 #endif
 #endif
 
-#define	_MACHINE	mmeye
-#define	MACHINE		"mmeye"
+/* will be changed to sh3eb */
 #define	_MACHINE_ARCH	sh3
 #define	MACHINE_ARCH	"sh3"
+
+#define	_MACHINE	mmeye
+#define	MACHINE		"mmeye"
+
 #define	MID_MACHINE	MID_SH3
 
 /*

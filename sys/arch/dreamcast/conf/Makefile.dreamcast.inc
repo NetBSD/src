@@ -1,0 +1,2 @@
+MACHINE=dreamcast
+MACHINE_ARCH=sh3

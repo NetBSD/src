@@ -1,0 +1,7 @@
+MACHINE=mmeye
+MACHINE_ARCH=sh3
+
+TEXTADDR=8c010000 
+.if ${OBJECT_FMT} == "ELF"
+LINKFLAGS=	-N -Ttext ${TEXTADDR} -e start
+.endif
