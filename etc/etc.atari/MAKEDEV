@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.37 1999/10/18 22:41:25 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.38 1999/11/03 14:02:07 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -83,20 +83,21 @@
 #	pty*	set of 16 master and slave pseudo terminals
 #
 # Special purpose devices:
-#	grf*	Motherboard bitmapped video.
-#	kbd	Atari keyboard.
-#	view*	generic interface to graphic displays.
 #	aconf	autoconfig information (not yet)
-#	lkm	loadable kernel modules interface
+#	audio*	audio devices
 #	bpf*	Berkeley Packet Filter
-#	tun*	network tunnel driver
+#	ch	SCSI changer
+#	grf*	Motherboard bitmapped video.
+#	ipl	IP Filter devices
+#	kbd	Atari keyboard.
+#	lkm	loadable kernel modules interface
+#	random	Random number generator
+#	rtc	Atari RealTimeClock
 #	scsibus* SCSI busses, see scsictl(8), scsi(4)
 #	ss*	SCSI scanner
+#	tun*	network tunnel driver
 #	uk*	SCSI unknown
-#	ch	SCSI changer
-#	rtc	Atari RealTimeClock
-#	ipl	IP Filter devices
-#	random	Random number generator
+#	view*	generic interface to graphic displays.
 #
 # Video devices:
 #	etvme	Tseng et-compatible cards on VME
@@ -125,6 +126,7 @@ all)
 	sh $0 ss0 ch0 uk0 uk1 wd0 wd1
 	sh $0 tun0 tun1 lkm ttyA0 ttyA1 ttyB0 lpt0 local
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	sh $0 audio audio0 audio1 audio2 audio3
 	;;
 
 floppy)
@@ -513,6 +515,23 @@ scsibus*)
 	mknod scsibus$unit c 49 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+audio*)
+	unit=${i#audio}
+	audio=audio$unit
+	sound=sound$unit
+	mixer=mixer$unit
+	major=42
+	audioctl=audioctl$unit
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $audio $sound $mixer $audioctl
+	mknod $sound    c $major $(($unit + 0))
+	mknod $audio    c $major $(($unit + 128))
+	mknod $mixer    c $major $(($unit + 16))
+	mknod $audioctl c $major $(($unit + 192))
+	chown root.wheel $audio $sound $mixer $audioctl
+	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
 local)
