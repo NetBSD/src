@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.30 1997/03/12 22:52:19 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.31 1997/03/20 23:26:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -363,7 +363,8 @@ struct module_info module_sun4 = {
 	sun4_vcache_flush_page,
 	sun4_vcache_flush_segment,
 	sun4_vcache_flush_region,
-	sun4_vcache_flush_context
+	sun4_vcache_flush_context,
+	noop_pcache_flush_line
 };
 
 void
@@ -476,7 +477,8 @@ struct module_info module_sun4c = {
 	sun4_vcache_flush_page,
 	sun4_vcache_flush_segment,
 	sun4_vcache_flush_region,
-	sun4_vcache_flush_context
+	sun4_vcache_flush_context,
+	noop_pcache_flush_line
 };
 
 void
@@ -669,7 +671,8 @@ struct module_info module_ms1 = {
 	noop_vcache_flush_page,
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
-	noop_vcache_flush_context
+	noop_vcache_flush_context,
+	noop_pcache_flush_line
 };
 
 void
@@ -700,7 +703,8 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context
+	srmmu_vcache_flush_context,
+	noop_pcache_flush_line
 };
 
 void
@@ -726,7 +730,8 @@ struct module_info module_swift = {		/* UNTESTED */
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context
+	srmmu_vcache_flush_context,
+	noop_pcache_flush_line
 };
 
 void
@@ -758,6 +763,7 @@ struct module_info module_viking = {		/* UNTESTED */
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
+	noop_pcache_flush_line
 };
 
 void
@@ -779,6 +785,7 @@ viking_hotfix(sc)
 		sc->mxcc = 1;
 		sc->flags |= CPUFLG_CACHEPAGETABLES;
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
+		sc->pcache_flush_line = viking_pcache_flush_line;
 	}
 
 	/* XXX! */
@@ -813,7 +820,8 @@ struct module_info module_hypersparc = {		/* UNTESTED */
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context
+	srmmu_vcache_flush_context,
+	noop_pcache_flush_line
 };
 
 void
@@ -845,7 +853,8 @@ struct module_info module_cypress = {		/* UNTESTED */
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context
+	srmmu_vcache_flush_context,
+	cypress_pcache_flush_line
 };
 
 void
@@ -873,7 +882,8 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context
+	srmmu_vcache_flush_context,
+	noop_pcache_flush_line
 };
 
 void
@@ -1032,6 +1042,7 @@ getcpuinfo(sc, node)
 		MPCOPY(vcache_flush_segment);
 		MPCOPY(vcache_flush_region);
 		MPCOPY(vcache_flush_context);
+		MPCOPY(pcache_flush_line);
 #undef MPCOPY
 		return;
 	}
