@@ -1,5 +1,5 @@
-.\" Copyright (c) 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)exec.3	6.4 (Berkeley) 4/19/91
+.\"     @(#)exec.3	8.3 (Berkeley) 1/24/94
 .\"
-.Dd April 19, 1991
+.Dd January 24, 1994
 .Dt EXEC 3
 .Os
 .Sh NAME
@@ -52,7 +52,7 @@
 .Ft int
 .Fn execle "const char *path" "const char *arg" ... "char *const envp[]"
 .Ft int
-.Fn exect "const char *path" "char *const argv[]" 
+.Fn exect "const char *path" "char *const argv[]"  "char *const envp[]"
 .Ft int
 .Fn execv "const char *path" "char *const argv[]"
 .Ft int
@@ -145,7 +145,7 @@ If this variable isn't specified, the default path
 .Dq Ev /bin:/usr/bin:
 is
 used.
-In addtion, certain errors are treated specially.
+In addition, certain errors are treated specially.
 .Pp
 If permission is denied for a file (the attempted
 .Xr execve

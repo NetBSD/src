@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)getcwd.c	5.11 (Berkeley) 2/24/91";
+static char sccsid[] = "@(#)getcwd.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
+
 #include <errno.h>
 #include <dirent.h>
 #include <stdio.h>
@@ -75,12 +76,12 @@ getcwd(pt, size)
 		ptsize = 0;
 		if (!size) {
 			errno = EINVAL;
-			return((char *)NULL);
+			return (NULL);
 		}
 		ept = pt + size;
 	} else {
-		if (!(pt = (char *)malloc(ptsize = 1024 - 4)))
-			return((char *)NULL);
+		if ((pt = malloc(ptsize = 1024 - 4)) == NULL)
+			return (NULL);
 		ept = pt + ptsize;
 	}
 	bpt = ept - 1;
@@ -91,7 +92,7 @@ getcwd(pt, size)
 	 * Should always be enough (it's 340 levels).  If it's not, allocate
 	 * as necessary.  Special * case the first stat, it's ".", not "..".
 	 */
-	if (!(up = (char *)malloc(upsize = 1024 - 4)))
+	if ((up = malloc(upsize = 1024 - 4)) == NULL)
 		goto err;
 	eup = up + MAXPATHLEN;
 	bup = up;
@@ -125,7 +126,7 @@ getcwd(pt, size)
 			 */
 			(void)bcopy(bpt, pt, ept - bpt);
 			free(up);
-			return(pt);
+			return (pt);
 		}
 
 		/*
@@ -134,8 +135,9 @@ getcwd(pt, size)
 		 * possible component name, plus a trailing NULL.
 		 */
 		if (bup + 3  + MAXNAMLEN + 1 >= eup) {
-			if (!(up = (char *)realloc(up, upsize *= 2)))
+			if ((up = realloc(up, upsize *= 2)) == NULL)
 				goto err;
+			bup = up;
 			eup = up + upsize;
 		}
 		*bup++ = '.';
@@ -194,7 +196,7 @@ getcwd(pt, size)
 			}
 			off = bpt - pt;
 			len = ept - bpt;
-			if (!(pt = (char *)realloc(pt, ptsize *= 2)))
+			if ((pt = realloc(pt, ptsize *= 2)) == NULL)
 				goto err;
 			bpt = pt + off;
 			ept = pt + ptsize;
@@ -224,5 +226,5 @@ err:
 	if (ptsize)
 		free(pt);
 	free(up);
-	return((char *)NULL);
+	return (NULL);
 }

@@ -1,5 +1,5 @@
-.\" Copyright (c) 1986, 1991 Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1986, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)ualarm.3	6.5 (Berkeley) 4/19/91
+.\"     @(#)ualarm.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1991
+.Dd April 19, 1994
 .Dt UALARM 3
 .Os BSD 4.3
 .Sh NAME
@@ -70,7 +70,7 @@ microseconds have passed).
 When the signal has successfully been caught,
 .Fn alarm
 returns the amount of time left on the clock.
-The maximum mumber of
+The maximum number of
 .Ar microseconds
 allowed
 is 2147483647.

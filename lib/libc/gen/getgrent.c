@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)getgrent.c	5.9 (Berkeley) 4/1/91";
+static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -155,14 +155,26 @@ grscan(search, gid, name)
 		_gr_group.gr_gid = atoi(cp);
 		if (search && name == NULL && _gr_group.gr_gid != gid)
 			continue;
-		for (m = _gr_group.gr_mem = members;; ++m) {
-			if (m == &members[MAXGRP - 1]) {
-				*m = NULL;
+		cp = NULL;
+		for (m = _gr_group.gr_mem = members;; bp++) {
+			if (m == &members[MAXGRP - 1])
 				break;
+			if (*bp == ',') {
+				if (cp) {
+					*bp = '\0';
+					*m++ = cp;
+					cp = NULL;
+				}
+			} else if (*bp == '\0' || *bp == '\n' || *bp == ' ') {
+				if (cp) {
+					*bp = '\0';
+					*m++ = cp;
 			}
-			if ((*m = strsep(&bp, ", \n")) == NULL)
 				break;
+			} else if (cp == NULL)
+				cp = bp;
 		}
+		*m = NULL;
 		return(1);
 	}
 	/* NOTREACHED */

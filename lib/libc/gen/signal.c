@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1985, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)signal.c	5.5 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)signal.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -55,6 +55,6 @@ signal(s, a)
 	if (!sigismember(&_sigintr, s))
 		sa.sa_flags |= SA_RESTART;
 	if (sigaction(s, &sa, &osa) < 0)
-		return (BADSIG);
+		return (SIG_ERR);
 	return (osa.sa_handler);
 }
