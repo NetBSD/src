@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.4 1997/10/19 14:00:32 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.5 1997/11/02 00:27:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,6 +37,7 @@
 
 #include <net/if_types.h>
 #include <net/if.h>
+#include <net/if_media.h>
 #include <net/if_ether.h>
 
 #include <machine/bus.h>
