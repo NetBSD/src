@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_cpu.h,v 1.3 1998/09/26 03:29:37 nisimura Exp $	*/
+/*	$NetBSD: mips_cpu.h,v 1.4 1998/09/26 08:16:38 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -548,7 +548,7 @@
 #define	MIPS_R4000	0x04	/* MIPS R4000/4400 CPU		ISA III	*/
 #define	MIPS_R3LSI	0x05	/* LSI Logic R3000 derivate	ISA I	*/
 #define	MIPS_R6000A	0x06	/* MIPS R6000A CPU		ISA II	*/
-#define	MIPS_IDT3041	0x07	/* IDT R3041 CPU		ISA I	*/ 
+#define	MIPS_R3IDT	0x07	/* IDT R3041 or RC36100 CPU	ISA I	*/ 
 #define	MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV	*/
 #define	MIPS_R4200	0x0a	/* NEC VR4200 CPU 		ISA III	*/
 #define	MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III	*/
@@ -561,6 +561,7 @@
 #define	MIPS_R5000	0x23	/* MIPS R5000 CPU		ISA IV	*/
 #define	MIPS_RC32364	0x26	/* IDT RC32364 CPU		ISA II	*/
 #define	MIPS_RM5230	0x28	/* QED RM5230 CPU		ISA IV	*/
+#define	MIPS_RC64470	0x30	/* IDT RC64474/RC64475 CPU	ISA III	*/
 #define	MIPS_R3SONY	0x21	/* ? Sony R3000 based CPU	ISA I	*/
 #define	MIPS_R3NKK	0x23	/* ? NKK R3000 based CPU	ISA I	*/
 
