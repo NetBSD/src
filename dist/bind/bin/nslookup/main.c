@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1.8.2 2002/07/01 17:14:42 he Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.8.3 2003/11/27 17:54:38 cyber Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989
@@ -79,7 +79,7 @@ char copyright[] =
 
 #ifndef lint
 static const char sccsid[] = "@(#)main.c	5.42 (Berkeley) 3/3/91";
-static const char rcsid[] = "Id: main.c,v 8.24 2002/05/26 03:12:20 marka Exp";
+static const char rcsid[] = "Id: main.c,v 8.25 2003/01/26 11:38:56 marka Exp";
 #endif /* not lint */
 
 /*
@@ -613,7 +613,7 @@ SetDefaultServer(string, local)
 	UnionFromAddr(&servAddr, defaultPtr->addrList[0]->addrType,
 		      defaultPtr->addrList[0]->addr);
     } else {
-	UnionFromAddr(&servAddr, defaultPtr->addrList[0]->addrType,
+	UnionFromAddr(&servAddr, defaultPtr->servers[0]->addrList[0]->addrType,
 		      defaultPtr->servers[0]->addrList[0]->addr);
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_private.h,v 1.1.1.1.4.2 2002/07/01 17:15:03 he Exp $	*/
+/*	$NetBSD: res_private.h,v 1.1.1.1.4.3 2003/11/27 17:54:39 cyber Exp $	*/
 
 #ifndef res_private_h
 #define res_private_h
@@ -13,7 +13,6 @@ struct __res_state_ext {
 		} addr, mask;
 	} sort_list[MAXRESOLVSORT];
 	char nsuffix[64];
-	char bsuffix[64];
 	char nsuffix2[64];
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.h,v 1.1.1.1.8.3 2002/07/01 17:14:45 he Exp $	*/
+/*	$NetBSD: ctl.h,v 1.1.1.1.8.4 2003/11/27 17:54:38 cyber Exp $	*/
 
 #ifndef ISC_CTL_H
 #define ISC_CTL_H
@@ -21,7 +21,7 @@
  */
 
 /*
- * Id: ctl.h,v 8.11 2001/08/10 02:40:49 marka Exp
+ * Id: ctl.h,v 8.11.10.1 2003/06/02 06:04:03 marka Exp
  */
 
 #include <sys/types.h>
@@ -44,11 +44,11 @@ struct ctl_verb;
 
 enum ctl_severity { ctl_debug, ctl_warning, ctl_error };
 
-typedef void (*ctl_logfunc)(enum ctl_severity, const char *fmt, ...);
+typedef void (*ctl_logfunc)(enum ctl_severity, const char *, ...);
 
 typedef void (*ctl_verbfunc)(struct ctl_sctx *, struct ctl_sess *,
-			     const struct ctl_verb *, const char *rest,
-			     u_int respflags, const void *respctx, void *uctx);
+			     const struct ctl_verb *, const char *,
+			     u_int, const void *, void *);
 
 typedef void (*ctl_srvrdone)(struct ctl_sctx *, struct ctl_sess *, void *);
 
