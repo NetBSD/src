@@ -1,8 +1,5 @@
-.\" Copyright (c) 1991, 1993
+.\" Copyright (c) 1985, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
-.\"
-.\" This code is derived from software contributed to Berkeley by
-.\" the Institute of Electrical and Electronics Engineers, Inc.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -32,57 +29,61 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)tee.1	8.1 (Berkeley) 6/6/93
+.\"     @(#)tcopy.1	8.2 (Berkeley) 4/17/94
 .\"
-.Dd June 6, 1993
-.Dt TEE 1
-.Os
+.Dd April 17, 1994
+.Dt TCOPY 1
+.Os BSD 4.3
 .Sh NAME
-.Nm tee
-.Nd pipe fitting
+.Nm tcopy
+.Nd copy and/or verify mag tapes
 .Sh SYNOPSIS
-.Nm tee
-.Op Fl ai
-.Op Ar file ...
+.Nm tcopy
+.Op Fl cvx
+.Op Fl s Ar maxblk
+.Oo Ar src Op Ar dest
+.Oc
 .Sh DESCRIPTION
-The
-.Nm tee
-utility copies standard input to standard output,
-making a copy in zero or more files.
-The output is unbuffered.
+.Nm Tcopy
+is designed to copy magnetic tapes.  The only assumption made
+about the tape is that there are two tape marks at the end.
+.Nm Tcopy
+with only a source tape
+.Pf ( Ar rmt0
+by default) specified will print
+information about the sizes of records and tape files.  If a destination
+is specified a copy will be made of the source tape.  The blocking on the
+destination tape will be identical to that used on the source tape.  Copying
+a tape will yield the same output as if just printing the sizes.
 .Pp
-The following options are available:
-.Bl -tag -width Ds
-.It Fl a
-Append the output to the files rather than
-overwriting them.
-.It Fl i
-Ignore the
-.Dv SIGINT
-signal.
+Options:
+.Bl -tag -width s_maxblk
+.It Fl c
+Copy
+.Ar src
+to
+.Ar dest
+and then verify that the two tapes are identical.
+.It Fl s Ar maxblk
+Specify a maximum block size,
+.Ar maxblk .
+.It Fl v
+Given the two tapes,
+.ar src
+and
+.Ar dest
+verify that they are identical.
+.It Fl x
+Output all informational messages to the standard error.
+This option is useful when
+.Ar dest
+is
+.Pa /dev/stdout .
 .El
-.Pp
-The following operands are available:
-.Bl -tag -width file
-.It file
-A pathname of an output
-.Ar file .
-.El
-.Pp
+.Sh SEE ALSO
+.Xr mtio 4
+.Sh HISTORY
 The
-.Nm tee
-utility takes the default action for all signals,
-except in the event of the
-.Fl i
-option.
-.Pp
-The
-.Nm tee
-utility exits 0 on success, and >0 if an error occurs.
-.Sh STANDARDS
-The
-.Nm tee
-function is expected to be
-.Tn POSIX
-.St -p1003.2
-compatible.
+.Nm
+command appeared in
+.Bx 4.3 .
