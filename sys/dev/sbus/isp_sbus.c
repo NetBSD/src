@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.44 2001/07/06 16:09:38 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.45 2001/09/01 07:12:25 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -75,6 +75,8 @@
 #include <sys/reboot.h>
 
 static int isp_sbus_intr(void *);
+static int
+isp_sbus_rd_isr(struct ispsoftc *, u_int16_t *, u_int16_t *, u_int16_t *);
 static u_int16_t isp_sbus_rd_reg(struct ispsoftc *, int);
 static void isp_sbus_wr_reg (struct ispsoftc *, int, u_int16_t);
 static int isp_sbus_mbxdma(struct ispsoftc *);
@@ -87,6 +89,7 @@ static void isp_sbus_dmateardown(struct ispsoftc *, XS_T *, u_int16_t);
 #endif
 
 static struct ispmdvec mdvec = {
+	isp_sbus_rd_isr,
 	isp_sbus_rd_reg,
 	isp_sbus_wr_reg,
 	isp_sbus_mbxdma,
@@ -298,14 +301,49 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 static int
 isp_sbus_intr(void *arg)
 {
-	int rv;
-	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *)arg;
+	u_int16_t isr, sema, mbox;
+	struct ispsoftc *isp = arg;
+	struct isp_sbussoftc *sbc = arg;
+
 	bus_dmamap_sync(sbc->sbus_dmatag, sbc->sbus_result_dmamap, 0,
 	    sbc->sbus_result_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
-	sbc->sbus_isp.isp_osinfo.onintstack = 1;
-	rv = isp_intr(arg);
-	sbc->sbus_isp.isp_osinfo.onintstack = 0;
-	return (rv);
+	if (ISP_READ_ISR(isp, &isr, &sema, &mbox)) {
+		sbc->sbus_isp.isp_osinfo.onintstack = 1;
+		isp_intr(isp, isr, sema, mbox);
+		sbc->sbus_isp.isp_osinfo.onintstack = 0;
+		return (1);
+	} else {
+		return (0);
+	}
+}
+
+#define	IspVirt2Off(a, x)	\
+	(((struct isp_sbussoftc *)a)->sbus_poff[((x) & _BLK_REG_MASK) >> \
+	_BLK_REG_SHFT] + ((x) & 0xff))
+
+#define	BXR2(sbc, off)		\
+	bus_space_read_2(sbc->sbus_bustag, sbc->sbus_reg, off)
+
+static int
+isp_sbus_rd_isr(struct ispsoftc *isp, u_int16_t *isrp,
+    u_int16_t *semap, u_int16_t *mbp)
+{
+	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
+	u_int16_t isr, sema;
+
+	isr = BXR2(sbc, IspVirt2Off(isp, BIU_ISR));
+	sema = BXR2(sbc, IspVirt2Off(isp, BIU_SEMA));
+	isp_prt(isp, ISP_LOGDEBUG3, "ISR 0x%x SEMA 0x%x", isr, sema);
+	isr &= INT_PENDING_MASK(isp);
+	sema &= BIU_SEMA_LOCK;
+	if (isr == 0 && sema == 0) {
+		return (0);
+	}
+	*isrp = isr;
+	if ((*semap = sema) != 0) {
+		*mbp = BXR2(sbc, IspVirt2Off(isp, OUTMAILBOX0));
+	}
+	return (1);
 }
 
 static u_int16_t
