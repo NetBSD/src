@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2000/10/18 04:17:34 tv Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2001/02/26 20:53:27 he Exp $
 
 .include <bsd.own.mk>
 
 PROG=	ssh
 
 BINOWN=	root
-BINMODE=4555
+BINMODE=0555
 
-SRCS=	ssh.c log-client.c readconf.c clientloop.c sshconnect.c \
-	sshconnect1.c sshconnect2.c
+SRCS=	ssh.c log-client.c readconf.c clientloop.c \
+	sshconnect.c sshconnect1.c sshconnect2.c
 
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MLINKS=	ssh.1 slogin.1
@@ -16,7 +16,7 @@ MLINKS=	ssh.1 slogin.1
 .if (${MKKERBEROS} != "no")
 # XXX Needs krb5
 #CPPFLAGS+=-DAFS
-#LDADD+=	-lkafs
+#LDADD+=	-lkrb5 -lkafs -lasn1
 #DPADD+=	${LIBKAFS}
 
 CPPFLAGS+=-DKRB4 -I${DESTDIR}/usr/include/kerberosIV
@@ -26,5 +26,5 @@ DPADD+=	${LIBKRB} ${LIBCOM_ERR} ${LIBROKEN}
 
 .include <bsd.prog.mk>
 
-LDADD+=	-lcrypto -lutil -lz
-DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
+LDADD+=	-lutil -lz -lcrypto
+DPADD+=	${LIBUTIL} ${LIBZ} ${LIBCRYPTO}
