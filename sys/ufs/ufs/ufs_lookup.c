@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.53 2003/09/20 21:05:53 jdolecek Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.54 2003/11/08 06:36:13 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.53 2003/09/20 21:05:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.54 2003/11/08 06:36:13 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ ufs_lookup(v)
 	 * profiling time and hence has been removed in the interest
 	 * of simplicity.
 	 */
-	bmask = VFSTOUFS(vdp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
+	bmask = vdp->v_mount->mnt_stat.f_iosize - 1;
 	if (nameiop != LOOKUP || dp->i_diroff == 0 ||
 	    dp->i_diroff >= dp->i_size) {
 		entryoffsetinblock = 0;
@@ -409,7 +409,9 @@ notfound:
 				enduseful = slotoffset + slotsize;
 		}
 		dp->i_endoff = roundup(enduseful, dirblksiz);
+#if 0 /* commented out by dbj. none of the on disk fields changed */
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
+#endif
 		/*
 		 * We return with the directory locked, so that
 		 * the parameters we set up above will still be
@@ -861,6 +863,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	if (dp->i_offset + dp->i_count > dp->i_size) {
 		dp->i_size = dp->i_offset + dp->i_count;
 		DIP_ASSIGN(dp, size, dp->i_size);
+		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	/*
 	 * Get the block containing the space for the new directory entry.
@@ -951,10 +954,10 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	 * lock on the newly entered node.
 	 */
 	if (error == 0 && dp->i_endoff && dp->i_endoff < dp->i_size) {
-		if (tvp != NULL)
+		if (DOINGSOFTDEP(dvp) && (tvp != NULL))
 			VOP_UNLOCK(tvp, 0);
 		(void) VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, p);
-		if (tvp != NULL)
+		if (DOINGSOFTDEP(dvp) && (tvp != NULL))
 			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 	}
 	return (error);
