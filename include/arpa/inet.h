@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.h,v 1.15 2003/05/05 13:56:13 bjh21 Exp $	*/
+/*	$NetBSD: inet.h,v 1.16 2003/06/30 15:14:17 kleink Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -86,8 +86,10 @@ in_addr_t	 inet_network __P((const char *));
 char		*inet_ntoa __P((struct in_addr));
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
     defined(_NETBSD_SOURCE)
-const char	*inet_ntop __P((int, const void *, char *, socklen_t));
-int		 inet_pton __P((int, const char *, void *));
+const char	*inet_ntop __P((int, const void * __restrict ,
+		                char * __restrict , socklen_t));
+int		 inet_pton __P((int, const char * __restrict,
+		                void * __restrict));
 #endif
 #if defined(_NETBSD_SOURCE)
 int		 inet_aton __P((const char *, struct in_addr *));
