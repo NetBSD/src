@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.16 2004/02/15 11:54:17 jdolecek Exp $	*/
+/*	$NetBSD: fields.c,v 1.17 2004/02/15 12:41:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.16 2004/02/15 11:54:17 jdolecek Exp $");
+__RCSID("$NetBSD: fields.c,v 1.17 2004/02/15 12:41:25 jdolecek Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -252,7 +252,7 @@ number(pos, bufend, line, lineend, Rflag)
 {
 	int or_sign, parity = 0;
 	int expincr = 1, exponent = -1;
-	int bite, expsign = 1, sign = 1;
+	int bite, expsign = 1, sign = 1, zeroskip = 0;
 	u_char lastvalue='0', *nonzero=NULL, *tline, *C_TENS;
 	u_char *nweights;
 
@@ -275,7 +275,7 @@ number(pos, bufend, line, lineend, Rflag)
 	}
 	/* eat initial zeroes */
 	for (; *line == '0' && line < lineend; line++)
-		;
+		zeroskip = 1;
 	/* calculate exponents < 0 */
 	if (*line == DECIMAL) {
 		exponent = 1;
@@ -286,8 +286,11 @@ number(pos, bufend, line, lineend, Rflag)
 	}
 	/* next character better be a digit */
 	if (*line < '1' || *line > '9' || line >= lineend) {
-		*pos++ = nweights[127];
-		return (pos);
+		/* only exit if we didn't skip any zero number */
+		if (!zeroskip) {
+			*pos++ = nweights[127];
+			return (pos);
+		}
 	}
 	if (expincr) {
 		for (tline = line-1; *++tline >= '0' && 
@@ -330,7 +333,7 @@ number(pos, bufend, line, lineend, Rflag)
 		} else
 			break;
 	}
-	if (parity && lastvalue != '0') {
+	if ((parity && lastvalue != '0') || !nonzero) {
 		*pos++ = or_sign ? OFF_NTENS[lastvalue] - '0' :
 					OFF_TENS[lastvalue] + '0';
 	} else
