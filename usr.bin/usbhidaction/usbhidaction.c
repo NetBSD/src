@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.8 2002/06/11 06:06:21 itojun Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.9 2003/05/17 01:03:54 itojun Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -251,7 +251,8 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 		}
 		if (p)
 			*p = 0;
-		if (sscanf(buf, "%s %s %[^\n]", name, value, action) != 3) {
+		/* XXX SIZE == 4000 */
+		if (sscanf(buf, "%3999s %3999s %[^\n]", name, value, action) != 3) {
 			if (isdemon) {
 				syslog(LOG_WARNING, "config file `%s', line %d"
 				       ", syntax error: %s", conf, line, buf);

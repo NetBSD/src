@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.15 2001/10/04 16:02:08 oster Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.16 2003/05/17 01:05:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -218,7 +218,7 @@ rf_MakeConfig(configname, cfgPtr)
 	/* the queue specifier line contains two entries: 1st char of first
 	 * word specifies queue to be used 2nd word specifies max num reqs
 	 * that can be outstanding on the disk itself (typically 1) */
-	if (sscanf(buf, "%s %d", buf1, &val) != 2) {
+	if (sscanf(buf, "%255s %d", buf1, &val) != 2) {
 		RF_ERRORMSG1("Can't determine queue type and/or max outstanding reqs from line: %s", buf);
 		RF_ERRORMSG2("Using %s-%d\n", cfgPtr->diskQueueType, cfgPtr->maxOutstandingDiskReqs);
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_ef.c,v 1.7 2002/09/19 08:10:39 martti Exp $	*/
+/*	$NetBSD: ipft_ef.c,v 1.8 2003/05/17 01:11:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -112,9 +112,9 @@ int	cnt, *dir;
 
 	bzero(&pkt, sizeof(pkt));
 
-	if (sscanf(lbuf, "%s %s %s %s %s %s", len, prot, src, dst,
+	if (sscanf(lbuf, "%7s %7s %15s %15s %15s %15s", len, prot, src, dst,
 		   sprt, dprt) != 6)
-		if (sscanf(lbuf, "%s %s %s %s %s %s %s", time,
+		if (sscanf(lbuf, "%7s %7s %7s %15s %15s %15s %15s", time,
 			   len, prot, src, dst, sprt, dprt) != 7)
 			return -1;
 

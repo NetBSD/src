@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rx.c,v 1.6 2002/05/31 09:45:46 itojun Exp $	*/
+/*	$NetBSD: print-rx.c,v 1.7 2003/05/17 01:09:05 itojun Exp $	*/
 
 /*
  * Copyright: (c) 2000 United States Government as represented by the
@@ -40,7 +40,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-rx.c,v 1.29 2002/04/30 06:45:08 guy Exp";
 #else
-__RCSID("$NetBSD: print-rx.c,v 1.6 2002/05/31 09:45:46 itojun Exp $");
+__RCSID("$NetBSD: print-rx.c,v 1.7 2003/05/17 01:09:05 itojun Exp $");
 #endif
 #endif
 
@@ -1100,6 +1100,7 @@ acl_print(u_char *s, int maxsize, u_char *end)
 	int pos, neg, acl;
 	int n, i;
 	char *user;
+	char fmt[1024];
 
 	if ((user = (char *)malloc(maxsize)) == NULL)
 		return;
@@ -1133,7 +1134,8 @@ acl_print(u_char *s, int maxsize, u_char *end)
 		printf("a");
 
 	for (i = 0; i < pos; i++) {
-		if (sscanf((char *) s, "%s %d\n%n", user, &acl, &n) != 2)
+		snprintf(fmt, sizeof(fmt), "%%%ds %%d\n%%n", maxsize - 1);
+		if (sscanf((char *) s, fmt, user, &acl, &n) != 2)
 			goto finish;
 		s += n;
 		printf(" +{");
@@ -1146,7 +1148,8 @@ acl_print(u_char *s, int maxsize, u_char *end)
 	}
 
 	for (i = 0; i < neg; i++) {
-		if (sscanf((char *) s, "%s %d\n%n", user, &acl, &n) != 2)
+		snprintf(fmt, sizeof(fmt), "%%%ds %%d\n%%n", maxsize - 1);
+		if (sscanf((char *) s, fmt, user, &acl, &n) != 2)
 			goto finish;
 		s += n;
 		printf(" -{");
