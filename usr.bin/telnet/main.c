@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2001/01/03 12:41:00 mjl Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2001/03/04 01:51:05 assar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 2001/01/03 12:41:00 mjl Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2001/03/04 01:51:05 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,9 @@ main(argc, argv)
 #endif
 			break;
 		case 'l':
-			autologin = 1;
+			if(autologin == 0) {
+				autologin = -1;
+			}
 			user = optarg;
 			break;
 		case 'n':
@@ -327,6 +329,17 @@ main(argc, argv)
 			/* NOTREACHED */
 		}
 	}
+
+	if (autologin == -1) {		/* esc@magic.fi; force  */
+#if defined(AUTHENTICATION)
+		autologin = 1;
+#endif
+#if defined(ENCRYPTION)
+		encrypt_auto(1);
+		decrypt_auto(1);
+#endif
+	}
+
 	if (autologin == -1)
 		autologin = (rlogin == _POSIX_VDISABLE) ? 0 : 1;
 
