@@ -1,17 +1,19 @@
-.\"	$NetBSD: skey.1,v 1.12 1999/03/22 18:16:43 garbled Exp $
+.\"	$NetBSD: skey.1,v 1.13 2000/07/07 15:18:14 mjl Exp $
 .\"
 .\"	from: @(#)skey.1	1.1 	10/28/93
 .\"
-.Dd 28 October 1993
+.Dd 7 June 2000
 .Dt SKEY 1
 .Os
 .Sh NAME
 .Nm skey
-.Nd interface to the S/Key one time password system
+.Nd respond to an OTP challenge
 .Sh SYNOPSIS
 .Nm
 .Op Fl n Ar count
 .Op Fl p Ar password
+.Op Fl t Ar hash
+.Op Fl x
 .Ar sequence#
 .Op /
 .Ar key
@@ -93,11 +95,19 @@ argument asks for
 password sequences to be printed out ending with the requested
 sequence number.
 .Pp
+The hash algorithm is selected using the
+.Fl t Ar hash
+option, possible choices here are md4, md5 or sha1.
+.Pp
 The
 .Fl p Ar password
 allows the user to specify the
 .Em S/Key
 password on the command line.
+To output the S/Key list in hexadecimal in addition to words,
+use the
+.Fl x
+option.
 .Sh EXAMPLE
 Initialize generation of one time passwords:
 .Bd -literal -offset indent
@@ -141,6 +151,8 @@ flag is given to
 .Xr skeyinit 1 ,
 .Xr login 1 ,
 .Xr ftpd 8
+.Pp
+.Em RFC2289
 .Sh TRADEMARKS AND PATENTS
 .Em S/Key
 is a trademark of
