@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.32 1993/10/17 01:09:01 pk Exp $
+#	$Id: bsd.lib.mk,v 1.33 1993/10/24 00:05:31 pk Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -102,6 +102,7 @@ clean:
 	rm -f ${POBJS} profiled/*.o
 	rm -f ${SOBJS} shared/*.o
 	rm -f lib${LIB}.a lib${LIB}_p.a lib${LIB}_pic.a llib-l${LIB}.ln
+	rm -f lib${LIB}.so.*.*
 .endif
 
 cleandir: clean
@@ -135,6 +136,13 @@ realinstall:
 	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+.endif
+.if !defined(NOPIC) && exists (${.CURDIR}/shlib_version)
+	. ${.CURDIR}/shlib_version; \
+	$(LD) -Bforcearchive -o lib${LIB}.so.$$major.$$minor lib${LIB}_pic.a
+	. ${.CURDIR}/shlib_version; \
+	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	    lib${LIB}.so.$$major.$$minor ${DESTDIR}${LIBDIR}
 .endif
 #	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 #	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
