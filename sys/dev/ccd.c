@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.53 1998/11/13 00:26:19 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.54 1998/11/13 00:31:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -957,6 +957,10 @@ ccdioctl(dev, cmd, data, flag, p)
 
 		if ((error = ccdlock(cs)) != 0)
 			return (error);
+
+		/* Validate the flags. */
+		if ((ccio->ccio_flags & CCDF_USERMASK) != ccio->ccio_flags)
+			return (EINVAL);
 
 		/* Fill in some important bits. */
 		ccd.ccd_unit = unit;
