@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.36 2002/09/04 13:49:20 abs Exp $	*/
+/*	$NetBSD: printjob.c,v 1.37 2002/10/26 01:47:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.36 2002/09/04 13:49:20 abs Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.37 2002/10/26 01:47:52 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,17 +150,24 @@ printjob(void)
 	struct stat stb;
 	struct queue *q, **qp;
 	struct queue **queue;
-	int i, nitems;
+	int i, nitems, fd;
 	off_t pidoff;
 	int errcnt, count = 0;
 
 	init();					/* set up capabilities */
-	(void)write(STDOUT_FILENO, "", 1);			/* ack that daemon is started */
-	(void)close(STDERR_FILENO);			/* set up log file */
-	if (open(LF, O_WRONLY|O_APPEND, 0664) < 0) {
+	(void)write(STDOUT_FILENO, "", 1);	/* ack that daemon is started */
+
+	/* set up log file */
+	if ((fd = open(LF, O_WRONLY|O_APPEND, 0664)) < 0) {
 		syslog(LOG_ERR, "%s: %m", LF);
-		(void)open(_PATH_DEVNULL, O_WRONLY);
+		fd = open(_PATH_DEVNULL, O_WRONLY);
 	}
+	if (fd > 0) {
+		(void) dup2(fd, STDERR_FILENO);
+		(void) close(fd);
+	} else
+		(void)close(STDERR_FILENO);
+
 	setgid(getegid());
 	pid = getpid();				/* for use with lprm */
 	setpgrp(0, pid);
