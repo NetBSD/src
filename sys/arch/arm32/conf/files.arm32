@@ -1,10 +1,16 @@
-#	$NetBSD: files.arm32,v 1.43 1998/06/12 23:21:53 tv Exp $
+#	$NetBSD: files.arm32,v 1.44 1998/07/06 00:41:17 mark Exp $
 #
 # First try for arm-specific configuration info
 #
 
 maxpartitions	8
 maxusers 2 8 64
+
+# Maintain Interrupt statistics
+defopt	IRQSTATS
+
+# X server support in console drivers
+defopt	XSERVER
 
 device	mainbus { [base = -1], [dack = -1], [irq = -1] }
 attach	mainbus at root
