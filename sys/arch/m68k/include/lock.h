@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.3.14.1 2001/11/25 11:45:09 scw Exp $	*/
+/*	$NetBSD: lock.h,v 1.3.14.2 2001/11/25 11:54:19 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
-	volatile int __rv;
+	int __rv;
 
 	__asm __volatile(
 		"	moveq	#1, %1	\n"
