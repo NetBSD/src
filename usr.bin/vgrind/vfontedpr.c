@@ -1,4 +1,4 @@
-/*	$NetBSD: vfontedpr.c,v 1.5 1997/05/17 20:26:47 pk Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.6 1997/10/20 03:01:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: vfontedpr.c,v 1.5 1997/05/17 20:26:47 pk Exp $";
+__RCSID("$NetBSD: vfontedpr.c,v 1.6 1997/10/20 03:01:27 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -127,6 +127,8 @@ char    *l_strbeg;		/* delimiter for string constant */
 char    *l_strend;		/* delimiter for string constant */
 boolean	 l_toplex;		/* procedures only defined at top lex level */
 char	*language = "c";	/* the language indicator */
+
+int	main __P((int, char **));
 
 #define	ps(x)	printf("%s", x)
 
@@ -355,7 +357,7 @@ static void
 putScp(os)
     char *os;
 {
-    register char *s = os;		/* pointer to unmatched string */
+    char *s = os;			/* pointer to unmatched string */
     char dummy[BUFSIZ];			/* dummy to be used by expmatch */
     char *comptr;			/* end of a comment delimiter */
     char *acmptr;			/* end of a comment delimiter */
@@ -592,9 +594,9 @@ tabs(s, os)
 
 static int
 width(s, os)
-	register char *s, *os;
+	char *s, *os;
 {
-	register int i = 0;
+	int i = 0;
 
 	while (s < os) {
 		if (*s == '\t') {
@@ -613,7 +615,7 @@ width(s, os)
 
 static void
 putcp(c)
-	register int c;
+	int c;
 {
 
 	switch(c) {
@@ -694,15 +696,15 @@ isproc(s)
 
 static int
 iskw(s)
-	register char *s;
+	char *s;
 {
-	register char **ss = l_keywds;
-	register int i = 1;
-	register char *cp = s;
+	char **ss = l_keywds;
+	int i = 1;
+	char *cp = s;
 
 	while (++cp, isidchr(*cp))
 		i++;
-	while (cp = *ss++)
+	while ((cp = *ss++) != NULL)
 		if (!STRNCMP(s,cp,i) && !isidchr(cp[i]))
 			return (i);
 	return (0);
