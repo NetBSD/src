@@ -1,3 +1,5 @@
+/*	$Id: operators.h,v 1.2 1993/08/02 17:15:58 mycroft Exp $ */
+
 #define NOT 0
 #define ISBLOCK 1
 #define ISCHAR 2
