@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.8 1999/09/10 08:59:47 itojun Exp $	*/
+/*	$NetBSD: socket.c,v 1.9 2001/11/05 15:05:18 lukem Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -22,7 +22,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: socket.c,v 1.8 1999/09/10 08:59:47 itojun Exp $");
+__RCSID("$NetBSD: socket.c,v 1.9 2001/11/05 15:05:18 lukem Exp $");
 #endif
 #endif
 
@@ -163,7 +163,7 @@ struct host_info *host;
 void    sock_hostname(host)
 struct host_info *host;
 {
-    struct sockaddr *sin = host->sin;
+    struct sockaddr *sinp = host->sin;
     struct hostent *hp;
     int     i;
     int af, alen;
@@ -177,18 +177,18 @@ struct host_info *host;
      * have to special-case 0.0.0.0, in order to avoid false alerts from the
      * host name/address checking code below.
      */
-    if (!sin)
+    if (!sinp)
 	return;
-    switch (af = sin->sa_family) {
+    switch (af = sinp->sa_family) {
     case AF_INET:
-	if (((struct sockaddr_in *)sin)->sin_addr.s_addr == 0)
+	if (((struct sockaddr_in *)sinp)->sin_addr.s_addr == 0)
 	    return;
-	ap = (char *)&((struct sockaddr_in *)sin)->sin_addr;
+	ap = (char *)&((struct sockaddr_in *)sinp)->sin_addr;
 	alen = sizeof(struct in_addr);
 	break;
 #ifdef INET6
     case AF_INET6:
-	ap = (char *)&((struct sockaddr_in6 *)sin)->sin6_addr;
+	ap = (char *)&((struct sockaddr_in6 *)sinp)->sin6_addr;
 	alen = sizeof(struct in6_addr);
 	/* special case on reverse lookup: mapped addr.  I hate it */
 	if (IN6_IS_ADDR_V4MAPPED((struct in6_addr *)ap)) {
@@ -275,13 +275,13 @@ static void sock_sink(fd)
 int     fd;
 {
     char    buf[BUFSIZ];
-    struct sockaddr_storage sin;
-    int     size = sizeof(sin);
+    struct sockaddr_storage sst;
+    int     size = sizeof(sst);
 
     /*
      * Eat up the not-yet received datagram. Some systems insist on a
      * non-zero source address argument in the recvfrom() call below.
      */
 
-    (void) recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *) & sin, &size);
+    (void) recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *) & sst, &size);
 }
