@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.65 2001/07/04 13:58:45 bjh21 Exp $
+#	$NetBSD: DEVNAMES,v 1.66 2001/07/07 15:49:05 tsutsui Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -172,7 +172,6 @@ clock			arm32
 clock			atari
 clock			luna68k
 clock			mvme68k
-clock			news68k
 clock			pc532
 clock			sparc
 clock			sparc64
@@ -646,6 +645,7 @@ mii_bitbang		MI		Attribute
 mii_phy			MI		Attribute
 mk48txx			MI		Attribute
 mkclock			mipsco
+mkclock			news68k
 mkclock			newsmips
 mlhsc			amiga
 mlhsc			amigappc
@@ -978,6 +978,7 @@ tcx			sparc64
 te			vax
 tga			MI		
 ti			MI		
+timer			news68k
 timer			sparc
 timer			sparc64
 tj			vax
