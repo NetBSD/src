@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 1995/06/13 22:06:58 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 1995/06/27 14:42:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -322,23 +322,23 @@ allocsys(v)
 	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-	    if (physmem < btoc(2 * 1024 * 1024))
-		bufpages = (physmem / 10) / CLSIZE;
-	    else
-		bufpages = (physmem / 20) / CLSIZE;
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(swbuf, struct buf, nswbuf);
-	valloc(buf, struct buf, nbuf);
-	return v;
+		if (physmem < (2 * 1024 * 1024 / NBPG))
+			bufpages = (physmem / 10) / CLSIZE;
+		else
+			bufpages = (physmem / 20) / CLSIZE;
+		if (nbuf == 0) {
+			nbuf = bufpages;
+			if (nbuf < 16)
+				nbuf = 16;
+		}
+		if (nswbuf == 0) {
+			nswbuf = (nbuf / 2) &~ 1;	/* force even */
+			if (nswbuf > 256)
+				nswbuf = 256;		/* sanity */
+		}
+		valloc(swbuf, struct buf, nswbuf);
+		valloc(buf, struct buf, nbuf);
+		return v;
 }
 
 /*
