@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.63 1994/04/08 22:03:09 mycroft Exp $
+ *	$Id: locore.s,v 1.64 1994/04/18 01:24:09 mycroft Exp $
  */
 
 /*
@@ -1603,7 +1603,11 @@ swtch_exited:
 	movl	PCB_CR3(%esi),%ecx
 	movl	%ecx,%cr3
 
-#ifdef	USER_LDT
+	/* Restore stack. */
+	movl	PCB_ESP(%esi),%esp
+	movl	PCB_EBP(%esi),%ebp
+
+#ifdef USER_LDT
 	cmpl	$0,PCB_USERLDT(%esi)
 	jnz	1f
 	movl	__default_ldt,%ecx
@@ -1618,9 +1622,7 @@ swtch_exited:
 2:
 #endif
 
-	/* Restore stack and segments. */
-	movl	PCB_ESP(%esi),%esp
-	movl	PCB_EBP(%esi),%ebp
+	/* Restore segments. */
 	movl	PCB_FS(%esi),%ecx
 	movl	%cx,%fs
 	movl	PCB_GS(%esi),%ecx
@@ -1657,6 +1659,9 @@ ENTRY(swtch_exit)
 	movl	$_proc0,%ebx
 
 	incl	_cnt+V_SWTCH
+
+	/* In case we fault... */
+	movl	$0,_curproc
 
 	/* Restore proc0's context. */
 	cli
