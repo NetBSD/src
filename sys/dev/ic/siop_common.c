@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.3 2000/06/12 20:13:41 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.3.2.1 2000/07/24 16:51:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -172,16 +172,22 @@ siop_wdtr_neg(siop_cmd)
 		    SIOP_SCNTL3,
 		    (sc->targets[target]->id >> 24) & 0xff);
 		/* we now need to do sync */
-		siop_target->status = TARST_SYNC_NEG;
-		siop_cmd->siop_table->msg_out[0] = MSG_EXTENDED;
-		siop_cmd->siop_table->msg_out[1] = MSG_EXT_SDTR_LEN;
-		siop_cmd->siop_table->msg_out[2] = MSG_EXT_SDTR;
-		siop_cmd->siop_table->msg_out[3] = sc->minsync;
-		siop_cmd->siop_table->msg_out[4] = sc->maxoff;
-		siop_cmd->siop_table->t_msgout.count =
-		    htole32(MSG_EXT_SDTR_LEN + 2);
-		siop_cmd->siop_table->t_msgout.addr = htole32(siop_cmd->dsa);
-		return SIOP_NEG_MSGOUT;
+		if ((siop_cmd->xs->sc_link->quirks & SDEV_NOSYNC) == 0) {
+			siop_target->status = TARST_SYNC_NEG;
+			siop_cmd->siop_table->msg_out[0] = MSG_EXTENDED;
+			siop_cmd->siop_table->msg_out[1] = MSG_EXT_SDTR_LEN;
+			siop_cmd->siop_table->msg_out[2] = MSG_EXT_SDTR;
+			siop_cmd->siop_table->msg_out[3] = sc->minsync;
+			siop_cmd->siop_table->msg_out[4] = sc->maxoff;
+			siop_cmd->siop_table->t_msgout.count =
+			    htole32(MSG_EXT_SDTR_LEN + 2);
+			siop_cmd->siop_table->t_msgout.addr =
+			    htole32(siop_cmd->dsa);
+			return SIOP_NEG_MSGOUT;
+		} else {
+			siop_target->status = TARST_OK;
+			return SIOP_NEG_ACK;
+		}
 	} else {
 		/* target initiated wide negotiation */
 		if (siop_cmd->siop_table->msg_in[3] >= MSG_EXT_WDTR_BUS_16_BIT
@@ -531,4 +537,17 @@ siop_modechange(sc)
 	printf("%s: timeout waiting for DIFFSENSE to stabilise\n",
 	    sc->sc_dev.dv_xname);
 	return 0;
+}
+
+void
+siop_resetbus(sc)
+	struct siop_softc *sc;
+{
+	int scntl1;
+	scntl1 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1);
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1,
+	    scntl1 | SCNTL1_RST);
+	/* minimum 25 us, more time won't hurt */
+	delay(100);
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1, scntl1);
 }
