@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.27 2003/07/08 07:20:11 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.28 2003/08/07 08:52:33 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -217,6 +217,7 @@ extern u_int32_t ip6_id;		/* fragment identifier */
 extern int	ip6_defhlim;		/* default hop limit */
 extern int	ip6_defmcasthlim;	/* default multicast hop limit */
 extern int	ip6_forwarding;		/* act as router? */
+extern int	ip6_sendredirect;	/* send ICMPv6 redirect? */
 extern int	ip6_forward_srcrt;	/* forward src-routed? */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
