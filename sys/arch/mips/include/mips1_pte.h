@@ -1,4 +1,4 @@
-/*	$NetBSD: mips1_pte.h,v 1.10 1997/06/16 23:41:44 jonathan Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.11 1999/05/27 01:56:32 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@ struct mips1_pte {
 #if BYTE_ORDER == BIG_ENDIAN
 unsigned int	pg_pfnum:20,		/* HW: core page frame number or 0 */
 		pg_n:1,			/* HW: non-cacheable bit */
-		pg_m:1,			/* HW: modified (dirty) bit */
+		pg_m:1,			/* HW: dirty bit */
 		pg_v:1,			/* HW: valid bit */
 		pg_g:1,			/* HW: ignore pid bit */
 		:4,
@@ -66,7 +66,7 @@ unsigned int	pg_prot:2,		/* SW: access control */
 		:4,
 		pg_g:1,			/* HW: ignore pid bit */
 		pg_v:1,			/* HW: valid bit */
-		pg_m:1,			/* HW: modified (dirty) bit */
+		pg_m:1,			/* HW: dirty bit */
 		pg_n:1,			/* HW: non-cacheable bit */
 		pg_pfnum:20;		/* HW: core page frame number or 0 */
 #endif
@@ -80,16 +80,16 @@ unsigned int	pg_prot:2,		/* SW: access control */
 #define	MIPS1_PG_G	0x00000100
 #define	MIPS1_PG_V	0x00000200
 #define	MIPS1_PG_NV	0x00000000
-#define	MIPS1_PG_M	0x00000400
+#define	MIPS1_PG_D	0x00000400
 #define	MIPS1_PG_N	0x00000800
 #define	MIPS1_PG_FRAME	0xfffff000
 #define MIPS1_PG_SHIFT	12
 #define	MIPS1_PG_PFNUM(x) (((x) & MIPS1_PG_FRAME) >> MIPS1_PG_SHIFT)
 
-#define	MIPS1_PG_ROPAGE	MIPS1_PG_V	/* ??? MIPS1_PG_RO */
-#define	MIPS1_PG_RWPAGE	MIPS1_PG_M
+#define	MIPS1_PG_ROPAGE	MIPS1_PG_V
+#define	MIPS1_PG_RWPAGE	MIPS1_PG_D
 #define	MIPS1_PG_CWPAGE	0
-#define	MIPS1_PG_IOPAGE	(MIPS1_PG_M | MIPS1_PG_N)
+#define	MIPS1_PG_IOPAGE	(MIPS1_PG_D | MIPS1_PG_N)
 
 #define	mips1_pfn_to_vad(x)	((x) & MIPS1_PG_FRAME)
 #define	mips1_vad_to_pfn(x)	(x)
