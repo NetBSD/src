@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.5 2000/12/12 05:34:02 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.6 2000/12/13 20:21:10 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -902,6 +902,8 @@ static void an_setdef(sc, areq)
 		sc->an_tx_rate = sp->an_val;
 		break;
 	case AN_RID_WEP_VOLATILE:
+		memcpy(&sc->an_temp_keys, areq, sizeof(sc->an_temp_keys));
+
 		/* Disable the MAC. */
 		an_cmd(sc, AN_CMD_DISABLE, 0);
 		
@@ -981,11 +983,15 @@ static int an_ioctl(ifp, command, data)
 	u_long			command;
 	caddr_t			data;
 {
+	int			i;
 	int			error = 0;
 	struct an_softc		*sc;
 	struct an_req		areq;
 	struct ifreq		*ifr;
-	struct ieee80211_nwid nwid;
+	struct an_ltv_wepkey	*akey;
+	struct ieee80211_nwid	nwid;
+	struct ieee80211_nwkey	*nwkey;
+	struct ieee80211_power	*power;
 
 	sc = ifp->if_softc;
 	ifr = (struct ifreq *)data;
@@ -1071,6 +1077,62 @@ static int an_ioctl(ifp, command, data)
 			    nwid.i_len);
 		}
 		error = copyout(&nwid, ifr->ifr_data, sizeof(nwid));
+		break;
+	case SIOCS80211NWKEY:
+		nwkey = (struct ieee80211_nwkey *)data;
+		sc->an_config.an_authtype &= AN_AUTHTYPE_MASK;
+		if (nwkey->i_wepon)
+			sc->an_config.an_authtype |= (AN_AUTHTYPE_MASK + 1);
+		akey = (struct an_ltv_wepkey *)&areq;
+		memset(akey, 0, sizeof(struct an_ltv_wepkey));
+		akey->an_type = AN_RID_WEP_VOLATILE;
+		akey->an_len = sizeof(struct an_ltv_wepkey);
+		akey->an_key_index = 0;
+		akey->an_mac_addr[0] = 1;	/* default mac */
+		akey->an_key_len = nwkey->i_key[0].i_keylen;
+		if (akey->an_key_len > sizeof(akey->an_key)) {
+			error = EINVAL;
+			break;
+		}
+		if (nwkey->i_key[0].i_keydat != NULL) {
+			if ((error = copyin(nwkey->i_key[0].i_keydat,
+			    akey->an_key, akey->an_key_len)) != 0)
+				break;
+		}
+		memcpy(&sc->an_temp_keys, akey, sizeof(struct an_ltv_wepkey));
+		if (sc->sc_enabled)
+			an_init(ifp);
+		break;
+	case SIOCG80211NWKEY:
+		nwkey = (struct ieee80211_nwkey *)data;
+		nwkey->i_wepon =
+		    sc->an_config.an_authtype & ~AN_AUTHTYPE_MASK ? 1 : 0;
+		nwkey->i_defkid = 1;
+		if (nwkey->i_key[0].i_keydat == NULL)
+			break;
+		/* do not show any keys to non-root user */
+		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+			break;
+		akey = &sc->an_temp_keys;
+		nwkey->i_key[0].i_keylen = akey->an_key_len;
+		for (i = 1; i < IEEE80211_WEP_NKID; i++)
+			nwkey->i_key[i].i_keylen = 0;
+		error = copyout(akey->an_key, nwkey->i_key[0].i_keydat,
+		    akey->an_key_len);
+		break;
+	case SIOCS80211POWER:
+		power = (struct ieee80211_power *)data;
+		sc->an_config.an_psave_mode = power->i_enabled ?
+		    AN_PSAVE_PSP : AN_PSAVE_NONE;
+		sc->an_config.an_listen_interval = power->i_maxsleep;
+		if (sc->sc_enabled)
+			an_init(ifp);
+		break;
+	case SIOCG80211POWER:
+		power = (struct ieee80211_power *)data;
+		power->i_enabled =
+		    sc->an_config.an_psave_mode != AN_PSAVE_NONE ? 1 : 0;
+		power->i_maxsleep = sc->an_config.an_listen_interval;
 		break;
 #ifdef IFM_IEEE80211
 	case SIOCSIFMEDIA:
@@ -1252,6 +1314,13 @@ static int an_init(ifp)
 	if (an_write_record(sc, (struct an_ltv_gen *)&sc->an_config)) {
 		printf("%s: failed to set configuration\n", sc->an_dev.dv_xname);
 		return ENXIO;
+	}
+
+	/* Set the WEP Keys */
+	if ((sc->an_config.an_authtype & ~AN_AUTHTYPE_MASK) != 0) {
+		sc->an_temp_keys.an_len = sizeof(struct an_ltv_wepkey);
+		sc->an_temp_keys.an_type = AN_RID_WEP_VOLATILE;
+		an_write_record(sc, (struct an_ltv_gen *)&sc->an_temp_keys);
 	}
 
 	/* Enable the MAC */
