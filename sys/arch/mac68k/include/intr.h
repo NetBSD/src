@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1997/05/12 07:29:29 scottr Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1997/07/23 06:24:33 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -50,11 +50,22 @@
 
 #define _splraise(s)							\
 ({									\
-	register int _spl_r;						\
+	int _spl_r;							\
 									\
-	__asm __volatile ("clrl %0; movew sr,%0;" : "&=d" (_spl_r) : );	\
-	if ((_spl_r & PSL_IPL) < ((s) & PSL_IPL))			\
-		__asm __volatile ("movew %0,sr;" : : "di" (s));		\
+	__asm __volatile ("						\
+		clrl	d0					;	\
+		movw	sr,d0					;	\
+		movl	d0,%0					;	\
+		andw	#0x700,d0				;	\
+		movw	%1,d1					;	\
+		andw	#0x700,d1				;	\
+		cmpw	d0,d1					;	\
+		jle	1f					;	\
+		movw	%1,sr					;	\
+	    1:"							:	\
+		    "&=d" (_spl_r)				:	\
+		    "di" (s)					:	\
+		    "d0", "d1");					\
 	_spl_r;								\
 })
 
@@ -67,6 +78,11 @@
 #define spl6()  _spl(PSL_S|PSL_IPL6)
 #define spl7()  _spl(PSL_S|PSL_IPL7)
 
+/* These spl calls are _not_ to be used by machine-independent code. */
+#define	spladb()	splhigh()
+#define	splzs()		splserial()
+#define	splsoft()	spl1()
+
 /*
  * These should be used for:
  * 1) ensuring mutual exclusion (why use processor level?)
@@ -76,18 +92,17 @@
  * everything at spl2, and everything but the panic switch and
  * power at spl4.
  */
-#define	splsoftclock()	spl1()	/* disallow softclock */
-#define	splsoftnet()	spl1()	/* disallow network */
-#define	spltty()	spl1()	/* disallow tty (softserial & ADB) */
-#define	splbio()	spl2()	/* disallow block I/O */
-#define	splnet()	spl2()	/* disallow network */
-#define	splimp()	spl2()	/* mutual exclusion for memory allocation */
-#define	splclock()	spl2()	/* disallow clock (and other) interrupts */
-#define	splstatclock()	spl2()	/* ditto */
-#define	splzs()		spl4()	/* disallow serial hw interrupts */
-#define	spladb()	spl7()	/* disallow adb interrupts */
-#define	splhigh()	spl7()	/* disallow everything */
-#define	splsched()	spl7()	/* disallow scheduling */
+#define	splsoftclock()	splsoft()
+#define	splsoftnet()	splsoft()
+#define	spltty()	_splraise(PSL_S|PSL_IPL1)
+#define	splbio()	spl2()
+#define	splnet()	spl2()
+#define	splimp()	spl2()
+#define	splclock()	spl2()
+#define	splstatclock()	spl2()
+#define	splserial()	spl4()
+#define	splsched()	spl7()
+#define	splhigh()	spl7()
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
