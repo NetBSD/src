@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.3.4,v 1.1.2.11 1999/02/01 07:49:16 cgd Exp $
+#	$NetBSD: CHANGES-1.3.4,v 1.1.2.12 1999/02/02 05:21:07 cgd Exp $
 
 Changes from NetBSD 1.3.3 to NetBSD 1.3.4:
 
@@ -194,3 +194,11 @@ sys/dev/ic/z8530tty.c                           patch
 
   Revert pullup of revision 1.53 done for NetBSD 1.3.3.  It caused
   problems for various users of the serial port, e.g. ppp.  (wrstuden)
+
+etc/services					1.27-1.30
+
+  Add services use by various packages.  Fixes PR#5675.  (hwr)
+
+usr.bin/less/less/main.c			1.7
+
+  Use lgetenv() for "LESS" and "MORE" variables.  (simonb)
