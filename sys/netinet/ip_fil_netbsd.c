@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.2 2004/05/30 11:22:07 tron Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.3 2004/05/30 11:22:47 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1458,9 +1458,13 @@ INLINE void fr_checkv4sum(fin)
 fr_info_t *fin;
 {
 #ifdef M_CSUM_TCP_UDP_BAD
-	int manual = 0, pflag, cflags, active;
+	int manual, pflag, cflags, active;
 	mb_t *m;
 
+	if ((fin->fin_flx & FI_NOCKSUM) != 0)
+		return 0;
+
+	manual = 0;
 	m = fin->fin_m;
 	if (m == NULL) {
 		manual = 1;
@@ -1519,9 +1523,13 @@ INLINE void fr_checkv6sum(fin)
 fr_info_t *fin;
 {
 # ifdef M_CSUM_TCP_UDP_BAD
-	int manual = 0, pflag, cflags, active;
+	int manual, pflag, cflags, active;
 	mb_t *m;
 
+	if ((fin->fin_flx & FI_NOCKSUM) != 0)
+		return 0;
+
+	manual = 0;
 	m = fin->fin_m;
 
 	switch (fin->fin_p)
@@ -1556,12 +1564,12 @@ fr_info_t *fin;
 	}
 #  ifdef IPFILTER_CKSUM
 	if (manual != 0)
-		if (fr_checkl6sum(fin) == -1)
+		if (fr_checkl4sum(fin) == -1)
 			fin->fin_flx |= FI_BAD;
 #  endif
 # else
 #  ifdef IPFILTER_CKSUM
-	if (fr_checkl6sum(fin) == -1)
+	if (fr_checkl4sum(fin) == -1)
 		fin->fin_flx |= FI_BAD;
 #  endif
 # endif
