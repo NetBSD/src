@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.29 2005/03/26 19:40:31 christos Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.30 2005/04/01 21:59:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include <machine/stdarg.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.29 2005/03/26 19:40:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.30 2005/04/01 21:59:46 perseant Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -93,23 +93,35 @@ int lfs_bwrite_log(struct buf *bp, char *file, int line)
 	a.a_desc = VDESC(vop_bwrite);
 	a.a_bp = bp;
 
-	if (!(bp->b_flags & (B_DELWRI | B_GATHERED)))
-		LFS_ENTER_LOG("write", file, line, bp->b_lblkno, bp->b_flags);
+	if (!(bp->b_flags & (B_DELWRI | B_GATHERED))) {
+		LFS_ENTER_LOG("write", file, line, bp->b_lblkno, bp->b_flags,
+			curproc->p_pid);
+	}
 	return (VCALL(bp->b_vp, VOFFSET(vop_bwrite), &a));
 }
 
 void lfs_dumplog(void)
 {
 	int i;
+	char *cp;
 
-	for (i = lfs_lognum; i != (lfs_lognum - 1) % LFS_LOGLENGTH; i = (i + 1) % LFS_LOGLENGTH)
+	for (i = lfs_lognum; i != (lfs_lognum - 1) % LFS_LOGLENGTH;
+	     i = (i + 1) % LFS_LOGLENGTH)
 		if (lfs_log[i].file) {
-			printf("lbn %" PRId64 " %s %lx %d %s\n",
+			/* Only print out basename, for readability */
+			cp = lfs_log[i].file;
+			while(*cp)
+				++cp;
+			while(*cp != '/' && cp > lfs_log[i].file)
+				--cp;
+
+			printf("lbn %" PRId64 " %s %lx %d, %d %s\n",
 				lfs_log[i].block,
 				lfs_log[i].op,
 				lfs_log[i].flags,
+				lfs_log[i].pid,
 				lfs_log[i].line,
-				lfs_log[i].file + 56);
+				cp);
 		}
 }
 
