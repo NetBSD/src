@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: nubus.c,v 1.3 1993/12/21 03:18:00 briggs Exp $
+ * $Id: nubus.c,v 1.4 1994/01/30 01:11:36 briggs Exp $
  *
  */
 
@@ -38,11 +38,11 @@
 	MF 8-24-93 first hack at a real nubus driver
 */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "../include/cpu.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <machine/cpu.h>
 
-#include "sys/device.h"
+#include <sys/device.h>
 #include "nubus.h"
 
 
