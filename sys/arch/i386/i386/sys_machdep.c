@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.40 1998/02/10 14:11:12 mrg Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.41 1998/02/25 21:41:56 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -431,7 +431,7 @@ sys_sysarch(p, v, retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
-		syscallarg(char *) parms;
+		syscallarg(void *) parms;
 	} */ *uap = v;
 	int error = 0;
 
