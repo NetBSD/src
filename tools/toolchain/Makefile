@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/11/15 00:17:54 thorpej Exp $
+#	$NetBSD: Makefile,v 1.15 2001/11/15 00:20:26 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC=
 
 ALL_TARGET=	all-binutils all-gas all-ld all-gcc
-INSTALL_TARGET=	install-gcc install-binutils install-gas install-ld install-gcc
+INSTALL_TARGET=	install-binutils install-gas install-ld install-gcc
 
 .if ${MKCROSSGDB:Uno} == "yes"
 ALL_TARGET+=	all-gdb
