@@ -38,9 +38,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rmp_var.h	8.1 (Berkeley) 6/4/93
+ *	from: @(#)rmp_var.h	8.1 (Berkeley) 6/4/93
+ *	     $Id: rmp_var.h,v 1.2 1994/01/11 16:41:52 brezak Exp $
  *
- * Utah $Hdr: rmp_var.h 3.1 92/07/06$
+ * from: Utah Hdr: rmp_var.h 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
 
@@ -127,22 +128,22 @@ typedef char	restofpkt;
  *	COPYWORD(w1,w2)	Copy u_word `w1' to `w2'.
  *	GETWORD(w,i)	Copy u_word `w' into int `i'.
  *	PUTWORD(i,w)	Copy int `i' into u_word `w'.
- *
- * N.B. We do not support little endian alignment-challenged machines.
+ * 
+ * N.B. Endianness is handled by use of ntohl/htonl
  */
-#if defined(vax) || defined(tahoe) || defined(hp300)
+#if defined(vax) || defined(tahoe) || defined(m68k) || defined(i386)
 
 typedef	u_int		u_word;
 
 #define	WORDZE(w)	((w) == 0)
 #define	ZEROWORD(w)	(w) = 0
 #define	COPYWORD(w1,w2)	(w2) = (w1)
-#define	GETWORD(w, i)	(i) = (w)
-#define	PUTWORD(i, w)	(w) = (i)
+#define	GETWORD(w, i)	(i) = ntohl(w)
+#define	PUTWORD(i, w)	(w) = htonl(i)
 
 #else
 
-#define	_WORD_HIGHPART	0	/* XXX: assume Big Endian for now */
+#define	_WORD_HIGHPART	0
 #define	_WORD_LOWPART	1
 
 typedef	struct _uword { u_short val[2]; }	u_word;
@@ -156,10 +157,11 @@ typedef	struct _uword { u_short val[2]; }	u_word;
 	  (w2).val[_WORD_LOWPART] = (w1).val[_WORD_LOWPART]; \
 	}
 #define	GETWORD(w, i) \
-	(i) = (((u_int)(w).val[_WORD_HIGHPART]) << 16) | (w).val[_WORD_LOWPART]
+	(i) = ntohl((((u_int)(w).val[_WORD_HIGHPART]) << 16) | (w).val[_WORD_LOWPART])
 #define	PUTWORD(i, w) \
-	{ (w).val[_WORD_HIGHPART] = (u_short) (((i) >> 16) & 0xffff); \
-	  (w).val[_WORD_LOWPART] = (u_short) (i & 0xffff); \
+	{ int xx = htonl(i); \
+	  (w).val[_WORD_HIGHPART] = (u_short) ((xx >> 16) & 0xffff); \
+	  (w).val[_WORD_LOWPART] = (u_short) (xx & 0xffff); \
 	}
 
 #endif
