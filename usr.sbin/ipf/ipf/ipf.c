@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.7.2.3 1997/11/18 06:10:40 mrg Exp $	*/
+/*	$NetBSD: ipf.c,v 1.7.2.4 1998/07/23 00:14:51 mellon Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -42,7 +42,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 2.0.2.13.2.2 1997/11/06 21:23:36 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipf.c,v 2.0.2.13.2.4 1998/05/23 14:29:44 darrenr Exp ";
 #endif
 
 static	void	frsync __P((void));
@@ -206,12 +206,10 @@ char	*name, *file;
 		exit(1);
 	}
 
-	while (getline(line, sizeof(line)-1, fp)) {
+	while (getline(line, sizeof(line), fp)) {
 		/*
-		 * treat both CR and LF as EOL
+		 * treat CR as EOL.  LF is converted to NUL by getline().
 		 */
-		if ((s = index(line, '\n')))
-			*s = '\0';
 		if ((s = index(line, '\r')))
 			*s = '\0';
 		/*
@@ -224,7 +222,7 @@ char	*name, *file;
 			continue;
 
 		if (opts & OPT_VERBOSE)
-			(void)fprintf(stderr, "[%s]\n",line);
+			(void)fprintf(stderr, "[%s]\n", line);
 
 		fr = parse(line);
 		(void)fflush(stdout);
@@ -255,10 +253,12 @@ char	*name, *file;
 				else {
 #ifdef	USE_QUAD_T
 					printf("hits %qd bytes %qd ",
+						(long long)fr->fr_hits,
+						(long long)fr->fr_bytes);
 #else
 					printf("hits %ld bytes %ld ",
-#endif
 						fr->fr_hits, fr->fr_bytes);
+#endif
 					printfr(fr);
 				}
 			} else if ((opts & OPT_REMOVE) &&
@@ -271,24 +271,34 @@ char	*name, *file;
 			}
 		}
 	}
+	if (ferror(fp) || !feof(fp)) {
+		fprintf(stderr, "%s: %s: file error or line too long\n",
+		    name, file);
+		exit(1);
+	}
 	(void)fclose(fp);
 }
 
 /*
- * Similar to fgets(3) but can handle '\\'
+ * Similar to fgets(3) but can handle '\\' and NL is converted to NUL.
+ * Returns NULL if error occured, EOF encounterd or input line is too long.
  */
 static char *getline(str, size, file)
 register char	*str;
 size_t	size;
 FILE	*file;
 {
-	register char *p;
-	register int len;
+	char *p;
+	int s, len;
 
 	do {
-		for (p = str; ; p += strlen(p) - 1) {
-			if (!fgets(p, size, file))
-				return(NULL);
+		for (p = str, s = size;; p += len, s -= len) {
+			/*
+			 * if an error occured, EOF was encounterd, or there
+			 * was no room to put NUL, return NULL.
+			 */
+			if (fgets(p, s, file) == NULL)
+				return (NULL);
 			len = strlen(p);
 			p[len - 1] = '\0';
 			if (p[len - 1] != '\\')
@@ -296,7 +306,7 @@ FILE	*file;
 			size -= len;
 		}
 	} while (*str == '\0' || *str == '\n');
-	return(str);
+	return (str);
 }
 
 
