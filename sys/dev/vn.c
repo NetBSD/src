@@ -215,12 +215,7 @@ vnstrategy(bp)
 		int off, s, nra;
 
 		nra = 0;
-#if (BSD > 199103)
-#warning if should go away now
 		error = VOP_BMAP(vn->sc_vp, bn / bsize, &vp, &nbn, &nra);
-#else
-		error = VOP_BMAP(vn->sc_vp, bn / bsize, &vp, &nbn);
-#endif
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
 #ifdef DEBUG
@@ -399,17 +394,9 @@ vnioctl(dev, cmd, data, flag, p)
 		 * weed out directories, sockets, etc. so we don't
 		 * have to worry about them.
 		 */
-#if (BSD > 199103)
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vn_file, p);
 		if (error = vn_open(&nd, FREAD|FWRITE, 0))
 			return(error);
-#else
-		nd.ni_nameiop = LOOKUP | FOLLOW;
-		nd.ni_segflg = UIO_USERSPACE;
-		nd.ni_dirp = vio->vn_file;
-		if (error = vn_open(&nd, p, FREAD|FWRITE, 0))
-			return(error);
-#endif
 		if (error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p)) {
 			VOP_UNLOCK(nd.ni_vp);
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
@@ -489,15 +476,9 @@ vnthrottle(vn, vp)
 	struct vnode *vp;
 {
 #ifdef NFSCLIENT
-#if (BSD > 199103)
 	extern int (**nfsv2_vnodeop_p)();
 
 	if (vp->v_op == nfsv2_vnodeop_p)
-#else
- 	extern struct vnodeops nfsv2_vnodeops;
-
-	if (vp->v_op == &nfsv2_vnodeops)
-#endif
 		vn->sc_maxactive = 2;
 	else
 #endif
