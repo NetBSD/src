@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.22 2000/07/08 17:36:01 sommerfeld Exp $	*/
+/*	$NetBSD: syslog.h,v 1.23 2000/08/09 03:23:11 tv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -198,11 +198,11 @@ __END_DECLS
 
 void	logpri __P((int));
 void	log __P((int, const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,2,3)));
+    __attribute__((__format__(__printf__,2,3)));
 void	vlog __P((int, const char *, _BSD_VA_LIST_))
-    __kprintf_attribute__((__format__(__kprintf__,2,0)));
+    __attribute__((__format__(__printf__,2,0)));
 void	addlog __P((const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+    __attribute__((__format__(__printf__,1,2)));
 void	logwakeup __P((void));
 
 #endif /* !_KERNEL */
