@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.1.2.3 2000/02/27 20:26:06 sommerfeld Exp $ */
+/* $NetBSD: i82093var.h,v 1.1.2.4 2000/09/21 13:24:08 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,7 +54,8 @@ struct ioapic_pin
 };
 
 struct ioapic_softc {
-	struct 			device sc_dev;	/* generic device glue */
+	struct device		sc_dev;	/* generic device glue */
+	struct ioapic_softc	*sc_next;
 	int			sc_apicid;
 	int			sc_apic_vers;
 	int			sc_apic_sz;	/* apic size*/
@@ -87,6 +88,7 @@ void apic_intr_disestablish __P((void *));
 
 void ioapic_print_redir (struct ioapic_softc *, char *, int);
 void ioapic_format_redir (char *, char *, int, u_int32_t, u_int32_t);
+struct ioapic_softc *ioapic_find (int);
 
 void ioapic_enable __P((void));
 void lapic_vectorset __P((void)); /* XXX */

@@ -95,7 +95,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mpbios.c,v 1.1.2.7 2000/08/21 02:25:15 sommerfeld Exp $
+ *	$Id: mpbios.c,v 1.1.2.8 2000/09/21 13:24:08 sommerfeld Exp $
  */
 
 /*
@@ -454,7 +454,6 @@ static struct mpbios_baseentry mp_conf[] =
 
 struct mp_bus *mp_busses; 
 struct mp_intr_map *mp_intrs;
-extern struct ioapic_softc *ioapics[]; /* XXX */
 
 struct mp_intr_map *lapic_ints[2]; /* XXX */
 int mp_isa_bus = -1;		/* XXX */
@@ -1023,11 +1022,12 @@ mpbios_int(ent, enttype, mpi)
 	(*mpb->mb_intr_cfg)(entry, &mpi->redir);
 
 	if (enttype == MPS_MCT_IOINT) {
-		/* XXX */
-		if (id == 0xff)
-			panic("can't deal with all-ioapics interrupt yet!");
-
-		sc = ioapics[id]; /* XXX XXX XXX */
+		sc = ioapic_find(id);
+		if (sc == NULL) {
+			printf("mpbios: can't find ioapic %d\n", id);
+			return;
+		}
+		
 		mpi->ioapic = sc;
 		mpi->ioapic_pin = pin;
 
