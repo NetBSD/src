@@ -1,6 +1,7 @@
-/*	$NetBSD: locore.s,v 1.43 2004/03/04 19:53:45 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.44 2004/03/24 02:20:09 dbj Exp $	*/
 
 /*
+ * Copyright (c) 1998 Darrin B. Jewell
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -38,7 +39,6 @@
  */
 
 /*
- * Copyright (c) 1998 Darrin B. Jewell
  * Copyright (c) 1994, 1995 Gordon W. Ross
  * Copyright (c) 1988 University of Utah.
  *

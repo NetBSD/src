@@ -1,6 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.67 2004/02/13 11:36:16 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2004/03/24 02:20:09 dbj Exp $	*/
 
 /*
+ * Copyright (c) 1998 Darrin B. Jewell
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -39,7 +40,6 @@
 
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1998 Darrin B. Jewell
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2004/02/13 11:36:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2004/03/24 02:20:09 dbj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
