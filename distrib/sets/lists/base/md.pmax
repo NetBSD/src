@@ -1,7 +1,7 @@
 ./usr/lib/crtn.o
 ./usr/lib/libc.so
 ./usr/lib/libc.so.12
-./usr/lib/libc.so.12.16
+./usr/lib/libc.so.12.17
 ./usr/lib/libcrypt.so
 ./usr/lib/libcrypt.so.0
 ./usr/lib/libcrypt.so.0.0

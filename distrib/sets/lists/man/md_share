@@ -234,6 +234,8 @@
 ./usr/share/man/cat8/iteconfig.0
 ./usr/share/man/cat8/mac68k/boot.0
 ./usr/share/man/cat8/mvme68k/installboot.0
+./usr/share/man/cat8/pc532/MAKEDEV.0
+./usr/share/man/cat8/pc532/makedev.0
 ./usr/share/man/cat8/pmax/boot.0
 ./usr/share/man/cat8/sparc/MAKEDEV.0
 ./usr/share/man/cat8/sparc/boot.0
