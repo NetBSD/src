@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.16 1998/03/01 02:24:46 fvdl Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.17 1998/07/05 04:37:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,6 +64,8 @@ SOFTWARE.
 /*
  * Iso address family net-layer(s) pcb stuff. NEH 1/29/87
  */
+
+#include "opt_iso.h"
 
 #ifdef ISO
 

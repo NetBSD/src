@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.21 1998/07/05 01:06:49 jonathan Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.22 1998/07/05 04:37:42 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,8 @@
  */
 
 #include "opt_mrouting.h"
-#include "opt_eon.h"
+#include "opt_eon.h"			/* ISO CLNL over IP */
+#include "opt_iso.h"			/* ISO TP tunneled over IP */
 
 #include <sys/param.h>
 #include <sys/socket.h>

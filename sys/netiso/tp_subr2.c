@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.15 1998/07/05 02:12:34 jonathan Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.16 1998/07/05 04:37:44 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,6 +77,7 @@ SOFTWARE.
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
