@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.32 1999/01/27 21:41:31 thorpej Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.33 1999/02/09 19:11:46 perry Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.32 1999/01/27 21:41:31 thorpej Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.33 1999/02/09 19:11:46 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -213,6 +213,7 @@ struct part_type {
 	{0xE4, "SpeedStor 16-bit FAT extended partition < 1024 cyl."},
 	{0xe5, reserved},
 	{0xe6, reserved},
+	{0xeb, "BeOS"},
 	{0xF1, "SpeedStor or Storage Dimensions"},
 	{0xF2, "DOS 3.3+ Secondary"},
 	{0xf3, reserved},
