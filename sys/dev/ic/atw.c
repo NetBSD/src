@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.50 2004/07/15 06:46:08 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.51 2004/07/15 06:48:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.50 2004/07/15 06:46:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.51 2004/07/15 06:48:45 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1098,13 +1098,14 @@ atw_init(struct ifnet *ifp)
 	 */
 	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
 	for (i = 0; i < ATW_NTXDESC; i++) {
+		sc->sc_txdescs[i].at_ctl = 0;
 		/* no transmit chaining */
-		sc->sc_txdescs[i].at_ctl = 0 /* ATW_TXFLAG_TCH */;
+		sc->sc_txdescs[i].at_flags = 0 /* ATW_TXFLAG_TCH */;
 		sc->sc_txdescs[i].at_buf2 =
 		    htole32(ATW_CDTXADDR(sc, ATW_NEXTTX(i)));
 	}
 	/* use ring mode */
-	sc->sc_txdescs[ATW_NTXDESC - 1].at_ctl |= ATW_TXFLAG_TER;
+	sc->sc_txdescs[ATW_NTXDESC - 1].at_flags |= htole32(ATW_TXFLAG_TER);
 	ATW_CDTXSYNC(sc, 0, ATW_NTXDESC,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = ATW_NTXDESC;
