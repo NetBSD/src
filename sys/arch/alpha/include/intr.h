@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.38 2001/01/14 02:00:37 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.39 2001/01/14 23:50:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -212,7 +212,6 @@ extern u_int64_t ssir;
 
 #define	setsoft(x)	atomic_setbits_ulong(&ssir, 1 << (x))
 
-#define	__GENERIC_SOFT_INTERRUPTS
 struct alpha_soft_intrhand {
 	LIST_ENTRY(alpha_soft_intrhand)
 		sih_q;
