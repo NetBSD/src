@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.8 2003/04/01 22:37:26 thorpej Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.9 2003/07/15 00:04:40 lukem Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -44,6 +44,9 @@
  * This bus_space uses KSEG2 mapping, if the physical address is not
  * accessible via KSEG0/KSEG1.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.9 2003/07/15 00:04:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

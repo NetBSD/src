@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.4 2003/05/25 14:00:12 tsutsui Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.5 2003/07/15 00:04:41 lukem Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -45,6 +45,9 @@
 /*
  * for Magnum derived machines like Microsoft-Jazz and PICA-61.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.5 2003/07/15 00:04:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

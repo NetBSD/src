@@ -1,4 +1,4 @@
-/*	$NetBSD: auxiotwo.c,v 1.6 2002/10/02 16:02:09 thorpej Exp $	*/
+/*	$NetBSD: auxiotwo.c,v 1.7 2003/07/15 00:05:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Based on software developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: auxiotwo.c,v 1.7 2003/07/15 00:05:01 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

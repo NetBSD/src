@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.34 2003/06/29 22:28:54 fvdl Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.35 2003/07/15 00:04:52 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -76,6 +76,9 @@
  * XXX Note that the code enabled by this define is currently untested/broken.
  */
 #undef CG14_CG8
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cgfourteen.c,v 1.35 2003/07/15 00:04:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

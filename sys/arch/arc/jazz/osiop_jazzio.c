@@ -1,4 +1,4 @@
-/* $NetBSD: osiop_jazzio.c,v 1.4 2002/12/28 16:25:39 tsutsui Exp $ */
+/* $NetBSD: osiop_jazzio.c,v 1.5 2003/07/15 00:04:50 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osiop_jazzio.c,v 1.5 2003/07/15 00:04:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.36 2003/01/18 06:45:05 thorpej Exp $ */
+/*	$NetBSD: memreg.c,v 1.37 2003/07/15 00:05:07 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,10 @@
  *
  *	@(#)memreg.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.37 2003/07/15 00:05:07 lukem Exp $");
+
 #include "opt_sparc_arch.h"
 
 #include <sys/param.h>

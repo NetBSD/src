@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.16 2003/06/29 22:28:58 fvdl Exp $ */
+/*	$NetBSD: openprom.c,v 1.17 2003/07/15 00:05:07 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,10 @@
  *
  *	@(#)openprom.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.17 2003/07/15 00:05:07 lukem Exp $");
+
 #include "opt_sparc_arch.h"
 
 #include <sys/param.h>

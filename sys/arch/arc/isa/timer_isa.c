@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_isa.c,v 1.5 2003/06/14 02:57:03 tsutsui Exp $	*/
+/*	$NetBSD: timer_isa.c,v 1.6 2003/07/15 00:04:48 lukem Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -43,6 +43,9 @@
  *
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: timer_isa.c,v 1.6 2003/07/15 00:04:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 2003/01/18 06:45:06 thorpej Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.12 2003/07/15 00:05:09 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
  *
  *	@(#)sys_machdep.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.12 2003/07/15 00:05:09 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
