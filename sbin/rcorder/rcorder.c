@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.2 1999/11/19 04:33:56 mrg Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.1 1999/11/23 05:28:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green

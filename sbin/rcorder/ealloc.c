@@ -1,4 +1,4 @@
-/*	$NetBSD: sprite.h,v 1.1.1.1 1999/11/19 04:30:56 mrg Exp $	*/
+/*	$NetBSD: ealloc.c,v 1.1 1999/11/23 05:28:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,78 +36,88 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)sprite.h	8.1 (Berkeley) 6/6/93
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ealloc.c,v 1.1 1999/11/23 05:28:20 mrg Exp $");
+#endif /* not lint */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <err.h>
+
+#include "ealloc.h"
+
+static void enomem __P((void));
 
 /*
- * sprite.h --
- *
- * Common constants and type declarations for Sprite.
+ * enomem --
+ *	die when out of memory.
  */
-
-#ifndef _SPRITE
-#define _SPRITE
-
+static void
+enomem()
+{
+	errx(2, "Cannot allocate memory.");
+}
 
 /*
- * A boolean type is defined as an integer, not an enum. This allows a
- * boolean argument to be an expression that isn't strictly 0 or 1 valued.
+ * emalloc --
+ *	malloc, but die on error.
  */
+void *
+emalloc(len)
+	size_t len;
+{
+	void *p;
 
-typedef int Boolean;
-#ifndef TRUE
-#define TRUE	1
-#endif TRUE
-#ifndef FALSE
-#define FALSE	0
-#endif FALSE
+	if ((p = malloc(len)) == NULL)
+		enomem();
+	return(p);
+}
 
 /*
- * Functions that must return a status can return a ReturnStatus to
- * indicate success or type of failure.
+ * estrdup --
+ *	strdup, but die on error.
  */
+char *
+estrdup(str)
+	const char *str;
+{
+	char *p;
 
-typedef int  ReturnStatus;
+	if ((p = strdup(str)) == NULL)
+		enomem();
+	return(p);
+}
 
 /*
- * The following statuses overlap with the first 2 generic statuses
- * defined in status.h:
- *
- * SUCCESS			There was no error.
- * FAILURE			There was a general error.
+ * erealloc --
+ *	realloc, but die on error.
  */
-
-#define	SUCCESS			0x00000000
-#define	FAILURE			0x00000001
-
+void *
+erealloc(ptr, size)
+	void *ptr;
+	size_t size;
+{
+	if ((ptr = realloc(ptr, size)) == NULL)
+		enomem();
+	return(ptr);
+}
 
 /*
- * A nil pointer must be something that will cause an exception if
- * referenced.  There are two nils: the kernels nil and the nil used
- * by user processes.
+ * ecalloc --
+ *	calloc, but die on error.
  */
+void *
+ecalloc(nmemb, size)
+	size_t nmemb;
+	size_t size;
+{
+	void	*ptr;
 
-#define NIL 		~0
-#define USER_NIL 	0
-#ifndef NULL
-#define NULL	 	0
-#endif NULL
-
-/*
- * An address is just a pointer in C.  It is defined as a character pointer
- * so that address arithmetic will work properly, a byte at a time.
- */
-
-typedef char *Address;
-
-/*
- * ClientData is an uninterpreted word.  It is defined as an int so that
- * kdbx will not interpret client data as a string.  Unlike an "Address",
- * client data will generally not be used in arithmetic.
- * But we don't have kdbx anymore so we define it as void (christos)
- */
-
-typedef void *ClientData;
-
-#endif /* _SPRITE */
+	if ((ptr = calloc(nmemb, size)) == NULL)
+		enomem();
+	return(ptr);
+}
