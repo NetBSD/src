@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.24 1998/04/17 01:19:42 fair Exp $	*/
+/*	$NetBSD: umount.c,v 1.25 1999/08/02 02:40:38 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.24 1998/04/17 01:19:42 fair Exp $");
+__RCSID("$NetBSD: umount.c,v 1.25 1999/08/02 02:40:38 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -288,7 +288,7 @@ umountfs(name, typelist)
 		return (1);
 	}
 
-	if (!strncmp(type, MOUNT_NFS, MFSNAMELEN) &&
+	if (!raw && !strncmp(type, MOUNT_NFS, MFSNAMELEN) &&
 	    (hp != NULL) && !(fflag & MNT_FORCE)) {
 		*delimp = '\0';
 		memset(&saddr, 0, sizeof(saddr));
