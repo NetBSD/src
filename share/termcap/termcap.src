@@ -1014,7 +1014,7 @@ bsdos-bold|IBM PC BSD/386 Console with bold instead of underline:\
 # If you are BSDI, you want the following entries, for the moment.  
 # In release 2.0 they will probably phase out the pc3 and ibmpc3 names
 pc3|IBM PC BSD/386 Console:\
-	:tc=bsdos:
+	:mh@:tc=bsdos:
 ibmpc3|pc3-bold|IBM PC BSD/386 Console with bold instead of underline:\
 	:us=\E[1m:\
 	:tc=bsdos-bold:
