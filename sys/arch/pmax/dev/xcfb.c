@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.32 2000/01/09 03:55:48 simonb Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.33 2000/01/10 03:24:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,31 +90,23 @@ xcfb needs dtop device
 #else
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <sys/errno.h>
-
-#include <vm/vm.h>
-
 #include <sys/device.h>
-#include <dev/tc/tcvar.h>
-#include <machine/autoconf.h>
-#include <mips/cpuregs.h>		/* mips cached->uncached */
+#include <sys/systm.h>
 
+#include <machine/autoconf.h>
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
+#include <pmax/dev/dtopreg.h>
+#include <pmax/dev/fbreg.h>
+#include <pmax/dev/ims332.h>
+#include <pmax/dev/xcfbvar.h>
+
 #include <pmax/pmax/cons.h>
 
-#include <pmax/dev/xcfbvar.h>
-#include <pmax/dev/ims332.h>
-#include <pmax/pmax/maxine.h>
+#include <dev/tc/tcvar.h>
 
-#include <pmax/dev/dtopreg.h>
-
-#include <pmax/dev/fbreg.h>
 
 #define	IMS332_ADDRESS		0xbc140000
 #define	VRAM_OFFSET		0x2000000

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.21 2000/01/09 03:55:57 simonb Exp $ */
+/* $NetBSD: dec_3max.c,v 1.22 2000/01/10 03:24:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,15 +73,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.21 2000/01/09 03:55:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.22 2000/01/10 03:24:37 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
 #include <machine/locore.h>
 #include <machine/sysconf.h>
 
@@ -89,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.21 2000/01/09 03:55:57 simonb Exp $")
 
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/machdep.h>
-
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/memc.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.36 1999/11/16 06:00:13 nisimura Exp $	*/
+/*	$NetBSD: conf.c,v 1.37 2000/01/10 03:24:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,11 +40,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-#include <sys/vnode.h>
 
 
 bdev_decl(sw);

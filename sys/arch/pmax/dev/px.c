@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.25 2000/01/09 03:55:41 simonb Exp $	*/
+/* 	$NetBSD: px.c,v 1.26 2000/01/10 03:24:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.25 2000/01/09 03:55:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.26 2000/01/10 03:24:33 simonb Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -51,44 +51,40 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.25 2000/01/09 03:55:41 simonb Exp $");
  * cards).
  */
 #include <sys/param.h>
-#include <sys/types.h>
-#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/poll.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <sys/vnode.h>
 #include <sys/errno.h>
-#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <vm/vm.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <dev/cons.h>
-#include <dev/tc/tcvar.h>
 #include <dev/ic/bt459reg.h>
+#include <dev/tc/tcvar.h>
 #include <dev/rcons/rcons.h>
-#include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/wsfont/wsfont.h>
 
-#include <mips/cpuregs.h>
 #include <machine/autoconf.h>
 #include <machine/conf.h>
-#include <machine/bus.h>
-#include <machine/cpu.h>
-#include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+#include <machine/pmioctl.h>
 
 #include <pmax/dev/fbreg.h>
 #include <pmax/dev/pxreg.h>
 #include <pmax/dev/pxvar.h>
-#include <pmax/dev/rconsvar.h>
 #include <pmax/dev/qvssvar.h>
+#include <pmax/dev/rconsvar.h>
 
 struct px_softc {
 	struct	device px_dv;

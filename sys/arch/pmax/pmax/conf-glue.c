@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.22 2000/01/09 03:55:55 simonb Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.23 2000/01/10 03:24:36 simonb Exp $	*/
 
 /*
  * conf-glue.c:
@@ -18,10 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/device.h>
-#include <sys/buf.h>
-#include <sys/dkstat.h>
 
 #include <pmax/dev/device.h>
 

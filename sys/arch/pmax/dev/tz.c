@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.25 2000/01/09 03:55:48 simonb Exp $	*/
+/*	$NetBSD: tz.c,v 1.26 2000/01/10 03:24:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,19 +48,16 @@
 #if NTZ > 0
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/buf.h>
-#include <sys/errno.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/file.h>
-#include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/mtio.h>
 #include <sys/proc.h>
-#include <sys/syslog.h>
+#include <sys/systm.h>
 #include <sys/tprintf.h>
-#include <sys/device.h>
 
-#include <sys/conf.h>
 #include <machine/conf.h>
 
 #include <pmax/dev/device.h>
