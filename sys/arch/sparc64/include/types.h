@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20 2002/05/03 00:06:56 eeh Exp $ */
+/*	$NetBSD: types.h,v 1.21 2002/05/03 17:55:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,9 +79,6 @@ typedef unsigned long int	vaddr_t;
 typedef vaddr_t			vsize_t;
 #ifdef SUN4U
 #ifdef __arch64__
-#ifndef _LP64
-#define	_LP64	1	/* Should this be 64? */
-#endif
 typedef unsigned long int	paddr_t;
 #else
 /* LONGLONG */
