@@ -1,5 +1,5 @@
-/*	$NetBSD: qop_cbq.c,v 1.3 2001/08/16 07:48:13 itojun Exp $	*/
-/*	$KAME: qop_cbq.c,v 1.3 2000/10/18 09:15:18 kjc Exp $	*/
+/*	$NetBSD: qop_cbq.c,v 1.4 2001/08/22 08:52:37 itojun Exp $	*/
+/*	$KAME: qop_cbq.c,v 1.5 2001/08/16 10:39:14 kjc Exp $	*/
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.
  *
@@ -134,7 +134,7 @@ cbq_interface_parser(const char *ifname, int argc, char **argv)
 		} else if (EQUAL(*argv, "cbq-prr")) {
 			is_wrr = 0;
 		} else {
-			LOG(LOG_ERR, 0, "Unknown keyword '%s'\n", argv);
+			LOG(LOG_ERR, 0, "Unknown keyword '%s'", argv);
 			return (0);
 		}
 		argc--; argv++;
@@ -193,7 +193,7 @@ cbq_class_parser(const char *ifname, const char *class_name,
 					admission_type = CBQ_QOS_NONE;
 				else {
 					LOG(LOG_ERR, 0,
-					    "unknown admission type - %s, line %d\n",
+					    "unknown admission type - %s, line %d",
 					    *argv, line_no);
 					return (0);
 				}
@@ -218,7 +218,7 @@ cbq_class_parser(const char *ifname, const char *class_name,
 				pbandwidth = strtoul(*argv, NULL, 0);
 			if (pbandwidth > 100) {
 				LOG(LOG_ERR, 0,
-				    "bad pbandwidth %d for %s!\n",
+				    "bad pbandwidth %d for %s!",
 				    pbandwidth, class_name);
 				return (0);
 			}
@@ -254,7 +254,7 @@ cbq_class_parser(const char *ifname, const char *class_name,
 			flags |= CBQCLF_CLEARDSCP;
 		} else {
 			LOG(LOG_ERR, 0,
-			    "Unknown keyword '%s' in %s, line %d\n",
+			    "Unknown keyword '%s' in %s, line %d",
 			    *argv, altqconfigfile, line_no);
 			return (0);
 		}
@@ -264,7 +264,7 @@ cbq_class_parser(const char *ifname, const char *class_name,
 
 	if ((flags & (CBQCLF_RED|CBQCLF_RIO)) == (CBQCLF_RED|CBQCLF_RIO)) {
 		LOG(LOG_ERR, 0,
-		    "both red and rio defined on interface '%s'\n",
+		    "both red and rio defined on interface '%s'",
 		    ifname);
 		return (0);
 	}
@@ -302,7 +302,7 @@ qcmd_cbq_add_if(const char *ifname, u_int bandwidth, int is_wrr, int efficient)
 	
 	error = qop_cbq_add_if(NULL, ifname, bandwidth, is_wrr, efficient);
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: can't add cbq on interface '%s'\n",
+		LOG(LOG_ERR, errno, "%s: can't add cbq on interface '%s'",
 		    qoperror(error), ifname);
 	return (error);
 }
@@ -354,7 +354,7 @@ qcmd_cbq_add_class(const char *ifname, const char *class_name,
 					  admission_type, flags);
 	if (error != 0)
 		LOG(LOG_ERR, errno,
-		    "cbq: %s: can't add class '%s' on interface '%s'\n",
+		    "cbq: %s: can't add class '%s' on interface '%s'",
 		    qoperror(error), class_name, ifname);
 
 	if (ctl_bandwidth != 0) {
@@ -430,7 +430,7 @@ qcmd_cbq_add_ctl_filters(const char *ifname, const char *clname)
 		filter_dontwarn = 0;		/* XXX */
 		if (error) {
 			LOG(LOG_ERR, 0,
-			    "can't add ctl class filter on interface '%s'\n",
+			    "can't add ctl class filter on interface '%s'",
 			    ifname);
 			return (error);
 		}
@@ -446,7 +446,7 @@ qcmd_cbq_add_ctl_filters(const char *ifname, const char *clname)
 					(struct flow_filter *)&sfilt6);
 		if (error) {
 			LOG(LOG_WARNING, 0,
-			    "can't add ctl class IPv6 filter on interface '%s'\n",
+			    "can't add ctl class IPv6 filter on interface '%s'",
 			    ifname);
 			return (error);
 		}
@@ -530,14 +530,14 @@ qop_cbq_add_class(struct classinfo **rp, const char *class_name,
 		    parent_clinfo->bandwidth - parent_clinfo->allocated) {
 #ifdef ALLOW_OVERCOMMIT
 			LOG(LOG_WARNING, 0,
-			    "bandwidth overcommitted %uK requested but only %dK available (%uK already allocated)\n",
+			    "bandwidth overcommitted %uK requested but only %dK available (%uK already allocated)",
 			    bandwidth / 1000,
 			    ((int)parent_clinfo->bandwidth -
 			     parent_clinfo->allocated) / 1000,
 			    parent_clinfo->allocated / 1000);
 #else /* !ALLOW_OVERCOMMIT */
 			LOG(LOG_ERR, 0,
-			    "cbq admission failed! %uK requested but only %uK available (%uK already allocated)\n",
+			    "cbq admission failed! %uK requested but only %uK available (%uK already allocated)",
 			    bandwidth / 1000,
 			    (parent_clinfo->bandwidth -
 			     parent_clinfo->allocated) / 1000,
@@ -609,7 +609,7 @@ qop_cbq_add_class(struct classinfo **rp, const char *class_name,
 	case CBQ_QOS_CNTR_DELAY:
 		if (ifinfo->resv_class != NULL) {
 			LOG(LOG_ERR, 0,
-			    "%s: duplicate resv meta class\n", class_name);
+			    "%s: duplicate resv meta class", class_name);
 			return (QOPERR_CLASS);
 		}
 		ifinfo->resv_class = clinfo;
@@ -731,12 +731,12 @@ qop_cbq_enable_hook(struct ifinfo *ifinfo)
 	
 	cbq_ifinfo = ifinfo->private;
 	if (cbq_ifinfo->root_class == NULL) {
-		LOG(LOG_ERR, 0, "cbq: no root class on interface %s!\n",
+		LOG(LOG_ERR, 0, "cbq: no root class on interface %s!",
 		    ifinfo->ifname);
 		return (QOPERR_CLASS);
 	}
 	if (cbq_ifinfo->default_class == NULL) {
-		LOG(LOG_ERR, 0, "cbq: no default class on interface %s!\n",
+		LOG(LOG_ERR, 0, "cbq: no default class on interface %s!",
 		    ifinfo->ifname);
 		return (QOPERR_CLASS);
 	}
@@ -788,7 +788,7 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 		 * (bandwidth < 6Kbps when max_pkt_size=1500)
 		 */
 		if (bandwidth != 0)
-			LOG(LOG_WARNING, 0, "warning: class is too slow!!\n");
+			LOG(LOG_WARNING, 0, "warning: class is too slow!!");
 		nsPerByte = (double)(INT_MAX / max_pkt_size);
 	}
 #endif
@@ -806,19 +806,19 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 	if (IsDebug(DEBUG_ALTQ)) {
 		int packet_time;
 		LOG(LOG_DEBUG, 0,
-		    "cbq_flowspec: maxburst=%d,minburst=%d,pkt_size=%d\n",
+		    "cbq_flowspec: maxburst=%d,minburst=%d,pkt_size=%d",
 		    maxburst, minburst, av_pkt_size);
 		LOG(LOG_DEBUG, 0,
-		    "  nsPerByte=%.2f ns, link's nsPerByte=%.2f, f=%.3f\n",
+		    "  nsPerByte=%.2f ns, link's nsPerByte=%.2f, f=%.3f",
 		    nsPerByte, cbq_ifinfo->nsPerByte, f);
 		packet_time = av_pkt_size * (int)nsPerByte / 1000;
 		LOG(LOG_DEBUG, 0,
 		    "  packet time=%d [us]\n", packet_time);
 		if (maxburst * packet_time < 20000) {
 			LOG(LOG_WARNING, 0,
-			  "warning: maxburst smaller than timer granularity!\n");
+			  "warning: maxburst smaller than timer granularity!");
 			LOG(LOG_WARNING, 0,
-			    "         maxburst=%d, packet_time=%d [us]\n",
+			    "         maxburst=%d, packet_time=%d [us]",
 			    maxburst, packet_time);
 		}
 	}
@@ -831,14 +831,14 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 	else
 		maxidle = ptime * maxidle_s;
 	if (IsDebug(DEBUG_ALTQ))
-		LOG(LOG_DEBUG, 0, "  maxidle=%.2f us\n", maxidle/1000.0);
+		LOG(LOG_DEBUG, 0, "  maxidle=%.2f us", maxidle/1000.0);
 	if (minburst)
 		offtime = cptime * (1.0 + 1.0/(1.0 - g) * (1.0 - gtom) / gtom);
 	else
 		offtime = cptime;
 	minidle = -((double)max_pkt_size * (double)nsPerByte);
 	if (IsDebug(DEBUG_ALTQ))
-		LOG(LOG_DEBUG, 0, "  offtime=%.2f us minidle=%.2f us\n",
+		LOG(LOG_DEBUG, 0, "  offtime=%.2f us minidle=%.2f us",
 		    offtime/1000.0, minidle/1000.0);
 
 	maxidle = ((maxidle * 8.0) / nsPerByte) * pow(2, RM_FILTER_GAIN);
@@ -861,7 +861,7 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 		maxq = ((double) maxdelay * NS_PER_MS) / (nsPerByte * av_pkt_size);
 		if (maxq < 4) {
 			LOG(LOG_WARNING, 0,
-			    "warning: maxq (%d) is too small. set to %d\n",
+			    "warning: maxq (%d) is too small. set to %d",
 			    (int)maxq, 4);
 			maxq = 4;
 		}
@@ -872,12 +872,12 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 	if (IsDebug(DEBUG_ALTQ)) {
 		if ((u_int)maxq < maxburst)
 			LOG(LOG_WARNING, 0,
-			   "warning: maxq (%d) is smaller than maxburst(%d)\n",
+			   "warning: maxq (%d) is smaller than maxburst(%d)",
 			    (int)maxq, maxburst);
 		else if (maxq > 100.0)
 			LOG(LOG_WARNING, 0,
 			    "warning: maxq %d too large\n", (int)maxq);
-		LOG(LOG_DEBUG, 0, "  maxq=%d\n", (int)maxq);
+		LOG(LOG_DEBUG, 0, "  maxq=%d", (int)maxq);
 	}
 
 	if (parent_class == NULL_CLASS_HANDLE) {
@@ -918,7 +918,7 @@ cbq_attach(struct ifinfo *ifinfo)
 	if (cbq_fd < 0 &&
 	    (cbq_fd = open(CBQ_DEVICE, O_RDWR)) < 0 &&
 	    (cbq_fd = open_module(CBQ_DEVICE, O_RDWR)) < 0) {
-		LOG(LOG_ERR, errno, "CBQ open\n");
+		LOG(LOG_ERR, errno, "CBQ open");
 		return (QOPERR_SYSCALL);
 	}
 
