@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.64 2002/10/22 02:44:34 simonb Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.65 2002/11/07 17:49:08 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.64 2002/10/22 02:44:34 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.65 2002/11/07 17:49:08 thorpej Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -348,6 +348,21 @@ rip_output(m, va_alist)
 			return (EMSGSIZE);
 		}
 		ip = mtod(m, struct ip *);
+
+		/*
+		 * If the mbuf is read-only, we need to allocate
+		 * a new mbuf for the header, since we need to
+		 * modify the header.
+		 */
+		if (M_READONLY(m)) {
+			int hlen = ip->ip_hl << 2;
+
+			m = m_copyup(m, hlen, (max_linkhdr + 3) & ~3);
+			if (m == NULL)
+				return (ENOMEM);	/* XXX */
+			ip = mtod(m, struct ip *);
+		}
+
 		/* XXX userland passes ip_len and ip_off in host order */
 		if (m->m_pkthdr.len != ip->ip_len) {
 			m_freem(m);
