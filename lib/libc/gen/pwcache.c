@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.25.2.1 2004/06/22 07:28:35 tron Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.25.2.2 2004/06/22 21:42:28 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -66,12 +66,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+/*
+ * XXX Undefine the renames of these functions so that we don't
+ * XXX rename the versions found in the host's <pwd.h> by mistake!
+ */
+#undef group_from_gid
+#undef user_from_uid
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.25.2.1 2004/06/22 07:28:35 tron Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.25.2.2 2004/06/22 21:42:28 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,6 +97,12 @@ __RCSID("$NetBSD: pwcache.c,v 1.25.2.1 2004/06/22 07:28:35 tron Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if HAVE_NBTOOL_CONFIG_H
+/* XXX Now, re-apply the renaming that we undid above. */
+#define	group_from_gid	__nbcompat_group_from_gid
+#define	user_from_uid	__nbcompat_user_from_uid
+#endif
 
 #ifdef __weak_alias
 __weak_alias(user_from_uid,_user_from_uid)
@@ -240,16 +256,14 @@ grptb_start(void)
 	return (0);
 }
 
-#if !HAVE_USER_FROM_UID
 /*
  * user_from_uid()
  *	caches the name (if any) for the uid. If noname clear, we always
- *	return the the stored name (if valid or invalid match).
+ *	return the stored name (if valid or invalid match).
  *	We use a simple hash table.
  * Return
  *	Pointer to stored name (or a empty string)
  */
-
 const char *
 user_from_uid(uid_t uid, int noname)
 {
@@ -314,12 +328,11 @@ user_from_uid(uid_t uid, int noname)
 /*
  * group_from_gid()
  *	caches the name (if any) for the gid. If noname clear, we always
- *	return the the stored name (if valid or invalid match).
+ *	return the stored name (if valid or invalid match).
  *	We use a simple hash table.
  * Return
  *	Pointer to stored name (or a empty string)
  */
-
 const char *
 group_from_gid(gid_t gid, int noname)
 {
@@ -380,7 +393,6 @@ group_from_gid(gid_t gid, int noname)
 	}
 	return (ptr->name);
 }
-#endif /* HAVE_USER_FROM_UID */
 
 /*
  * uid_from_user()
@@ -388,7 +400,6 @@ group_from_gid(gid_t gid, int noname)
  * Return
  *	the uid (if any) for a user name, or a -1 if no match can be found
  */
-
 int
 uid_from_user(const char *name, uid_t *uid)
 {
@@ -453,7 +464,6 @@ uid_from_user(const char *name, uid_t *uid)
  * Return
  *	the gid (if any) for a group name, or a -1 if no match can be found
  */
-
 int
 gid_from_group(const char *name, gid_t *gid)
 {
