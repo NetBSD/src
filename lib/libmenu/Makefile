@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1999/11/24 12:17:11 kleink Exp $
+#	$NetBSD: Makefile,v 1.3 1999/11/24 12:20:14 kleink Exp $
 #
 
 CPPFLAGS+=-I${.CURDIR} -D__LIBMENU_EXPOSE_PRIVATES__
