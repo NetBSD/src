@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.2 2001/09/10 12:51:42 fvdl Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.3 2001/09/11 06:51:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -107,7 +107,7 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 /*
  * Find bridge device.
  */
-static int
+int
 agp_i810_bridgematch(struct pci_attach_args *pa)
 {
 	switch (PCI_PRODUCT(pa->pa_id)) {
