@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.13 2000/01/28 15:02:11 takemura Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.14 2000/02/06 06:29:22 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -367,6 +367,7 @@ vrkiu_initkeymap(void)
 #if !defined(PCKBD_LAYOUT)
 			vrkiu_keymapdata.layout = table[i].layout;
 #endif
+			break;
 		}
 	}
 }
