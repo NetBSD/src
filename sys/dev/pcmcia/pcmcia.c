@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.50 2004/08/09 19:09:06 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.51 2004/08/09 19:33:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.50 2004/08/09 19:09:06 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.51 2004/08/09 19:33:07 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -646,7 +646,7 @@ pcmcia_io_map(pf, width, pcihp, windowp)
 	int error;
 
 	if (pf->pf_flags & PFF_ENABLED)
-		printf("pcmcia_io_map: function is enabled!");
+		printf("pcmcia_io_map: function is enabled!\n");
 
 	error = pcmcia_chip_io_map(pf->sc->pct, pf->sc->pch,
 	    width, 0, pcihp->size, pcihp, windowp);
@@ -685,7 +685,7 @@ pcmcia_io_unmap(pf, window)
 {
 
 	if (pf->pf_flags & PFF_ENABLED)
-		printf("pcmcia_io_unmap: function is enabled!");
+		printf("pcmcia_io_unmap: function is enabled!\n");
 
 	if (pcmcia_mfc(pf->sc)) {
 		/*
@@ -709,7 +709,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 	void *ret;
 
 	if (pf->pf_flags & PFF_ENABLED)
-		printf("pcmcia_intr_establish: function is enabled!");
+		printf("pcmcia_intr_establish: function is enabled!\n");
 
 	/* behave differently if this is a multifunction card */
 	if (pcmcia_mfc(pf->sc)) {
@@ -813,7 +813,7 @@ pcmcia_intr_disestablish(pf, ih)
 	void *ih;
 {
 	if (pf->pf_flags & PFF_ENABLED)
-		printf("pcmcia_intr_disestablish: function is enabled!");
+		printf("pcmcia_intr_disestablish: function is enabled!\n");
 
 	/* behave differently if this is a multifunction card */
 	if (pcmcia_mfc(pf->sc)) {
