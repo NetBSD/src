@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_callmsg.c,v 1.16 2000/07/14 08:40:42 fvdl Exp $	*/
+/*	$NetBSD: rpc_callmsg.c,v 1.17 2003/05/29 18:15:25 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_callmsg.c 1.4 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_callmsg.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_callmsg.c,v 1.16 2000/07/14 08:40:42 fvdl Exp $");
+__RCSID("$NetBSD: rpc_callmsg.c,v 1.17 2003/05/29 18:15:25 christos Exp $");
 #endif
 #endif
 
@@ -201,7 +201,7 @@ xdr_callmsg(xdrs, cmsg)
 	}
 	if (
 	    xdr_u_int32_t(xdrs, &(cmsg->rm_xid)) &&
-	    xdr_enum(xdrs, (enum_t *)&(cmsg->rm_direction)) &&
+	    xdr_enum(xdrs, (enum_t *)(void *)&(cmsg->rm_direction)) &&
 	    (cmsg->rm_direction == CALL) &&
 	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_rpcvers)) &&
 	    (cmsg->rm_call.cb_rpcvers == RPC_MSG_VERSION) &&
