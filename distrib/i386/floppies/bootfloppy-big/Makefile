@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/05/05 21:35:51 mycroft Exp $
+#	$NetBSD: Makefile,v 1.8 2000/07/09 12:09:01 fvdl Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -25,6 +25,8 @@ KERN!=	cd $(.CURDIR)/../ramdisk-kernel/; \
 
 DISKTYPE=	floppy288
 DISKSIZE=	5760
+METAFILE!=	printf "USTAR.volsize.%o" ${DISKSIZE}
 BLOCK8K=	359
+PAD=yes
 
 .include "${TOP}/bootfloppy-common/Makefile.inc"
