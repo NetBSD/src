@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.48 2002/03/16 17:03:41 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.49 2002/05/07 14:13:02 isaki Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -414,22 +414,16 @@ kbd)
 	;;
 
 opty)
-	rm -f ttyp[0-9a-f] ptyp[0-9a-f]
-	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	rm -f ttyp[0-3] ptyp[0-3]
+	for j in 0 1 2 3
 	do
 		case $j in
-		[0-9])	jn=$j ;;
-		a)	jn=10 ;;
-		b)	jn=11 ;;
-		c)	jn=12 ;;
-		d)	jn=13 ;;
-		e)	jn=14 ;;
-		f)	jn=15 ;;
+		[0-3])	jn=$j ;;
 		esac
 		mknod ttyp$j c 4 $jn
 		mknod ptyp$j c 5 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
+	chmod 666 ttyp[0-3] ptyp[0-3]
 	;;
 
 		
