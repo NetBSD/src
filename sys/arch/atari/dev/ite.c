@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.30 2000/09/28 07:26:49 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.31 2000/11/02 00:32:52 eeh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -424,7 +424,7 @@ iteopen(dev, mode, devtype, p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open) (dev, tp);
+	error = (*tp->t_linesw->l_open) (dev, tp);
 	if (error)
 		goto bad;
 
@@ -455,7 +455,7 @@ iteclose(dev, flag, mode, p)
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
-	(*linesw[tp->t_line].l_close) (tp, flag);
+	(*tp->t_linesw->l_close) (tp, flag);
 	ttyclose(tp);
 	ite_off(dev, 0);
 	return (0);
@@ -472,7 +472,7 @@ iteread(dev, uio, flag)
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
-	return ((*linesw[tp->t_line].l_read) (tp, uio, flag));
+	return ((*tp->t_linesw->l_read) (tp, uio, flag));
 }
 
 int
@@ -486,7 +486,7 @@ itewrite(dev, uio, flag)
 	tp = getitesp(dev)->tp;
 
 	KDASSERT(tp);
-	return ((*linesw[tp->t_line].l_write) (tp, uio, flag));
+	return ((*tp->t_linesw->l_write) (tp, uio, flag));
 }
 
 void
@@ -525,7 +525,7 @@ iteioctl(dev, cmd, addr, flag, p)
 
 	KDASSERT(tp);
 
-	error = (*linesw[tp->t_line].l_ioctl) (tp, cmd, addr, flag, p);
+	error = (*tp->t_linesw->l_ioctl) (tp, cmd, addr, flag, p);
 	if(error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, addr, flag, p);

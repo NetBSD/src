@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.20 1998/09/01 02:30:29 mhitch Exp $ */
+/*	$NetBSD: mfc.c,v 1.21 2000/11/02 00:28:01 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -552,7 +552,7 @@ done:
 	 * use of the tty with a dialin open waiting.
 	 */
 	tp->t_dev = dev;
-	return((*linesw[tp->t_line].l_open)(dev, tp));
+	return((*tp->t_linesw->l_open)(dev, tp));
 }
 
 /*ARGSUSED*/
@@ -570,7 +570,7 @@ mfcsclose(dev, flag, mode, p)
 	unit = dev & 31;
 
 	tp = sc->sc_tty;
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	sc->sc_duart->ch_cr = 0x70;			/* stop break */
 
 	scc->imask &= ~(0x7 << ((unit & 1) * 4));
@@ -610,7 +610,7 @@ mfcsread(dev, uio, flag)
 	struct tty *tp = sc->sc_tty;
 	if (tp == NULL)
 		return(ENXIO);
-	return((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -624,7 +624,7 @@ mfcswrite(dev, uio, flag)
 
 	if (tp == NULL)
 		return(ENXIO);
-	return((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -652,7 +652,7 @@ mfcsioctl(dev, cmd, data, flag, p)
 	if (!tp)
 		return ENXIO;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return(error);
 
@@ -1009,7 +1009,7 @@ mfcintr(arg)
 			scc->imask &= ~0x01;
 			regs->du_imr = scc->imask;
 			add_sicallback (tp->t_line ?
-			    (sifunc_t)linesw[tp->t_line].l_start
+			    (sifunc_t)tp->t_linesw->l_start
 			    : (sifunc_t)mfcsstart, tp, NULL);
 
 		}
@@ -1024,7 +1024,7 @@ mfcintr(arg)
 			scc->imask &= ~0x10;
 			regs->du_imr = scc->imask;
 			add_sicallback (tp->t_line ?
-			    (sifunc_t)linesw[tp->t_line].l_start
+			    (sifunc_t)tp->t_linesw->l_start
 			    : (sifunc_t)mfcsstart, tp, NULL);
 		}
 		else
@@ -1116,7 +1116,7 @@ mfcseint(unit, stat)
 		log(LOG_WARNING, "%s: fifo overflow\n",
 		    ((struct mfcs_softc *)mfcs_cd.cd_devs[unit])->sc_dev.dv_xname);
 
-	(*linesw[tp->t_line].l_rint)(c, tp);
+	(*tp->t_linesw->l_rint)(c, tp);
 }
 
 /*
@@ -1159,8 +1159,8 @@ mfcsmint(unit)
 	if ((istat & (0x10 << (unit & 1))) && 		/* CD changed */
 	    (SWFLAGS(tp->t_dev) & TIOCFLAG_SOFTCAR) == 0) {
 		if (stat & (0x10 << (unit & 1)))
-			(*linesw[tp->t_line].l_modem)(tp, 1);
-		else if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
+			(*tp->t_linesw->l_modem)(tp, 1);
+		else if ((*tp->t_linesw->l_modem)(tp, 0) == 0) {
 			sc->sc_regs->du_btrst = 0x0a << (unit & 1);
 		}
 	}

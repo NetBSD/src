@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.31 2000/03/29 14:19:23 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.32 2000/11/02 00:32:53 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -408,7 +408,7 @@ struct proc	*p;
 	if (error)
 		goto bad;
 	
-	error = linesw[tp->t_line].l_open(dev, tp);
+	error = tp->t_linesw->l_open(dev, tp);
 	if(error)
 		goto bad;
 	return (0);
@@ -443,7 +443,7 @@ struct proc	*p;
 	cs = &zi->zi_cs[unit & 1];
 	tp = cs->cs_ttyp;
 
-	linesw[tp->t_line].l_close(tp, flags);
+	tp->t_linesw->l_close(tp, flags);
 	ttyclose(tp);
 
 	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
@@ -476,7 +476,7 @@ int		flags;
 	cs   = &zi->zi_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
-	return(linesw[tp->t_line].l_read(tp, uio, flags));
+	return(tp->t_linesw->l_read(tp, uio, flags));
 }
 
 int
@@ -495,7 +495,7 @@ int		flags;
 	cs   = &zi->zi_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
-	return(linesw[tp->t_line].l_write(tp, uio, flags));
+	return(tp->t_linesw->l_write(tp, uio, flags));
 }
 
 struct tty *
@@ -814,7 +814,7 @@ struct proc	*p;
 	register int			error, s;
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
 
-	error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p);
+	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
 	if(error >= 0)
 		return(error);
 	error = ttioctl(tp, cmd, data, flag, p);
