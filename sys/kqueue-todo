@@ -1,10 +1,12 @@
-#	$NetBSD: kqueue-todo,v 1.1.2.10 2001/09/12 19:12:34 thorpej Exp $
+#	$NetBSD: kqueue-todo,v 1.1.2.11 2001/09/12 19:35:05 thorpej Exp $
 
 items todo from bill sommerfeld/thorpej:
 	- multiple entry points
 	- events should remain across fork()
 	- rewrite sowakeup()
 	- high-level docco overview of kqueues [c.f jlemon's various papers]
+	- make sure there are no selwakeup() calls left (they should
+	  all be selnotify() now).
 	- kqfilter entry points for:
 		- smb_trantcp
 		- dev/pci/bktr/bktr_os.c		??? doesn't poll?
