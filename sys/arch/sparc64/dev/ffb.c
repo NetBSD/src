@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.3 2003/07/15 03:36:05 lukem Exp $	*/
+/*	$NetBSD: ffb.c,v 1.4 2004/03/17 13:58:14 pk Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.3 2003/07/15 03:36:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.4 2004/03/17 13:58:14 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,7 +79,6 @@ void	ffb_free_screen(void *, void *);
 int	ffb_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 	    void *);
 paddr_t ffb_mmap(void *, off_t, int);
-static int a2int(char *, int);
 void	ffb_ras_fifo_wait(struct ffb_softc *, int);
 void	ffb_ras_wait(struct ffb_softc *);
 void	ffb_ras_init(struct ffb_softc *);
@@ -108,6 +107,8 @@ ffb_attach(struct ffb_softc *sc)
 	struct wsemuldisplaydev_attach_args waa;
 	char *model;
 	int btype;
+	int maxrow, maxcol;
+	char buf[6+1];
 
 	printf(":");
 
@@ -141,9 +142,15 @@ ffb_attach(struct ffb_softc *sc)
 	sc->sc_rasops.ri_height = sc->sc_height;
 	sc->sc_rasops.ri_hw = sc;
 
-	rasops_init(&sc->sc_rasops,
-	    a2int(PROM_getpropstring(optionsnode, "screen-#rows"), 34),
-	    a2int(PROM_getpropstring(optionsnode, "screen-#columns"), 80));
+	maxcol = (prom_getoption("screen-#columns", buf, sizeof buf) == 0)
+		? strtoul(buf, NULL, 10)
+		: 80;
+
+	maxrow = (prom_getoption("screen-#rows", buf, sizeof buf) != 0)
+		? strtoul(buf, NULL, 10)
+		: 34;
+
+	rasops_init(&sc->sc_rasops, maxrow, maxcol);
 
 	if ((sc->sc_dv.dv_cfdata->cf_flags & FFB_CFFLAG_NOACCEL) == 0) {
 		sc->sc_rasops.ri_hw = sc;
@@ -319,18 +326,6 @@ ffb_mmap(vsc, off, prot)
 	}
 
 	return (-1);
-}
-
-static int
-a2int(char *cp, int deflt)
-{
-	int i = 0;
-
-	if (*cp == '\0')
-		return (deflt);
-	while (*cp != '\0')
-		i = i * 10 + *cp++ - '0';
-	return (i);
 }
 
 void
