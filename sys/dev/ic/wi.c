@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.60 2002/03/31 10:44:44 jdolecek Exp $	*/
+/*	$NetBSD: wi.c,v 1.61 2002/04/01 02:46:47 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.60 2002/03/31 10:44:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.61 2002/04/01 02:46:47 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1250,7 +1250,8 @@ wi_setdef(sc, wreq)
 		sc->wi_ap_density = le16toh(wreq->wi_val[0]);
 		break;
 	case WI_RID_CREATE_IBSS:
-		sc->wi_create_ibss = le16toh(wreq->wi_val[0]);
+		if (sc->sc_firmware_type == WI_LUCENT)
+			sc->wi_create_ibss = le16toh(wreq->wi_val[0]);
 		break;
 	case WI_RID_OWN_CHNL:
 		sc->wi_channel = le16toh(wreq->wi_val[0]);
@@ -1335,7 +1336,8 @@ wi_getdef(sc, wreq)
 		wreq->wi_val[0] = htole16(sc->wi_ap_density);
 		break;
 	case WI_RID_CREATE_IBSS:
-		wreq->wi_val[0] = htole16(sc->wi_create_ibss);
+		if (sc->sc_firmware_type == WI_LUCENT)
+			wreq->wi_val[0] = htole16(sc->wi_create_ibss);
 		break;
 	case WI_RID_OWN_CHNL:
 		wreq->wi_val[0] = htole16(sc->wi_channel);
@@ -1633,7 +1635,8 @@ wi_init(ifp)
 	WI_SETVAL(WI_RID_MAX_DATALEN, sc->wi_max_data_len);
 
 	/* Enable/disable IBSS creation. */
-	WI_SETVAL(WI_RID_CREATE_IBSS, sc->wi_create_ibss);
+	if (sc->sc_firmware_type == WI_LUCENT)
+		WI_SETVAL(WI_RID_CREATE_IBSS, sc->wi_create_ibss);
 
 	/* Set the port type. */
 	WI_SETVAL(WI_RID_PORTTYPE, sc->wi_ptype);
@@ -1983,6 +1986,7 @@ wi_get_id(sc)
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
 	case WI_NIC_EVB3:
+	case WI_NIC_3842:
 		printf("RF:PRISM2 MAC:HFA3842");
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
@@ -1991,6 +1995,7 @@ wi_get_id(sc)
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
 	case WI_NIC_P2_SST:
+	case WI_NIC_EVB2_SST:
 		printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163-SST-flash");
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
@@ -2000,6 +2005,14 @@ wi_get_id(sc)
 		break;
 	case WI_NIC_3874A:
 		printf("RF:PRISM2.5 MAC:ISL3874A(PCI)");
+		sc->sc_firmware_type = WI_INTERSIL;
+		break;
+	case WI_NIC_P3_SST:
+		printf("RF:PRISM3");
+		sc->sc_firmware_type = WI_INTERSIL;
+		break;
+	case WI_NIC_P3_PCI:
+		printf("RF:PRISM3");
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
 	case WI_NIC_LUCENT:
