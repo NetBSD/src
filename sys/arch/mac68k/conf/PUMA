@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.6 1995/11/01 04:52:46 briggs Exp $
+#	$NetBSD: PUMA,v 1.7 1995/11/21 05:00:36 briggs Exp $
 #
 # PUMA
 
@@ -6,8 +6,7 @@ include	"std.mac68k"
 
 maxusers	16
 
-# obsolete timezone spec
-options               TIMEZONE=0, DST=1, MAXFDESCS=2048
+options         MAXFDESCS=2048
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
