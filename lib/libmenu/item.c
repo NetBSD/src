@@ -1,4 +1,4 @@
-/*      $NetBSD: item.c,v 1.2 1999/11/24 12:43:16 kleink Exp $	*/
+/*      $NetBSD: item.c,v 1.3 1999/11/30 15:58:16 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -27,8 +27,8 @@
  */
 
 #include <menu.h>
-#include <strings.h>
-#include <malloc.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* the following is defined in menu.c - it is the default menu struct */
 extern MENU _menui_default_menu;
@@ -272,7 +272,7 @@ new_item(name, description)
                 return NULL;
 
 	  /* copy in the defaults for the item */
-	bcopy(&_menui_default_item, new_one, sizeof(ITEM));
+	(void)memcpy(new_one, &_menui_default_item, sizeof(ITEM));
 	
 	  /* fill in the name structure - first the length and then
 	     allocate room for the string & copy that. */

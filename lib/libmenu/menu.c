@@ -1,4 +1,4 @@
-/*      $NetBSD: menu.c,v 1.2 1999/11/24 12:43:16 kleink Exp $	*/
+/*      $NetBSD: menu.c,v 1.3 1999/11/30 15:58:16 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -26,9 +26,9 @@
  *
  */
 
-#include <menu.h>
 #include <ctype.h>
-#include <strings.h>
+#include <menu.h>
+#include <string.h>
 #include <stdlib.h>
 #include "internals.h"
 
@@ -421,7 +421,7 @@ new_menu(items)
                 return NULL;
 
           /* copy the defaults */
-	bcopy(&_menui_default_menu, the_menu, sizeof(MENU));
+	(void)memcpy(the_menu, &_menui_default_menu, sizeof(MENU));
 
 	  /* set a default window if none already set. */
 	if (the_menu->menu_win == NULL)

@@ -1,4 +1,4 @@
-/*      $NetBSD: userptr.c,v 1.2 1999/11/24 12:43:20 kleink Exp $	*/
+/*      $NetBSD: userptr.c,v 1.3 1999/11/30 15:58:17 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -27,8 +27,8 @@
  */
 
 #include <menu.h>
-#include <malloc.h>
-#include <strings.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* the following is defined in menu.c */
 extern MENU _menui_default_menu;
