@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.55 1997/10/19 07:42:35 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.56 1997/11/12 20:28:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -137,11 +137,14 @@ sbmatch(sc)
 		}
 	}
 
-	/*
-	 * XXX THIS IS WRONG!  My ViBRA16S PnP 
-	 * XXX has 1 drqs, but this resets it to use drq8 everywhere!
-	 * XXX --thorpej@netbsd.org
-	 */
+        if (0 <= sc->sc_drq16 && sc->sc_drq16 <= 3)
+        	/* 
+                 * XXX Some ViBRA16 cards seem to have two 8 bit DMA 
+                 * channels.  I've no clue how to use them, so ignore
+                 * one of them for now.  -- augustss@netbsd.org
+                 */
+        	sc->sc_drq16 = -1;
+
 	if (ISSB16CLASS(sc)) {
 		if (sc->sc_drq16 == -1)
 			sc->sc_drq16 = sc->sc_drq8;
