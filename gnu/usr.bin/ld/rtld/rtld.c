@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.68 1998/10/19 03:09:34 matt Exp $	*/
+/*	$NetBSD: rtld.c,v 1.69 1998/10/23 00:44:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1362,7 +1362,7 @@ binder(jsp)
 	md_fix_jmpslot(jsp, (long)jsp, addr, 0);
 
 #if DEBUG
-xprintf(" BINDER: %s located at = %#x in %s\n", sym, addr, src_map->som_path);
+xprintf(" BINDER: %s located at %d(%p) = %#x in %s\n", sym, index, jsp, addr, src_map->som_path);
 #endif
 	return addr;
 }
