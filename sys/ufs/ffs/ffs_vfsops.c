@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.67.2.4 2001/11/25 19:21:19 he Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.67.2.5 2001/11/25 19:30:44 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -428,7 +428,7 @@ ffs_reload(mountp, cred, p)
 	memcpy(newfs, bp->b_data, fs->fs_sbsize);
 #ifdef FFS_EI
 	if (VFSTOUFS(mountp)->um_flags & UFS_NEEDSWAP) {
-		ffs_sb_swap((struct fs*)bp->b_data, newfs, 0);
+		ffs_sb_swap((struct fs*)bp->b_data, newfs);
 		fs->fs_flags |= FS_SWAPPED;
 	}
 #endif
@@ -620,7 +620,7 @@ ffs_mountfs(devvp, mp, p)
 	memcpy(fs, bp->b_data, sbsize);
 #ifdef FFS_EI
 	if (needswap) {
-		ffs_sb_swap((struct fs*)bp->b_data, fs, 0);
+		ffs_sb_swap((struct fs*)bp->b_data, fs);
 		fs->fs_flags |= FS_SWAPPED;
 	}
 #endif
@@ -1262,7 +1262,7 @@ ffs_sbupdate(mp, waitfor)
 	memcpy(bp->b_data, fs, fs->fs_sbsize);
 #ifdef FFS_EI
 	if (mp->um_flags & UFS_NEEDSWAP)
-		ffs_sb_swap(fs, (struct fs*)bp->b_data, 1);
+		ffs_sb_swap(fs, (struct fs*)bp->b_data);
 #endif
 
 	fs->fs_flags |= saveflag;
