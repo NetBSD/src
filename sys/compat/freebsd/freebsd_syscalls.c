@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscalls.c,v 1.30 1999/08/25 04:48:48 thorpej Exp $	*/
+/*	$NetBSD: freebsd_syscalls.c,v 1.31 2000/04/21 16:18:54 minoura Exp $	*/
 
 /*
  * System call names.
