@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.1 2003/07/25 21:12:49 jonathan Exp $ */
+/*	$NetBSD: xform.c,v 1.2 2003/07/28 19:37:04 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.1 2003/07/25 21:12:49 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.2 2003/07/28 19:37:04 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.1 2003/07/25 21:12:49 jonathan Exp $");
 #include <opencrypto/rijndael.h>
 #include <opencrypto/skipjack.h>
 
-#include <sys/md5k.h>
+#include <sys/md5.h>
 #include <sys/sha1.h>
 
 #include <opencrypto/cryptodev.h>
