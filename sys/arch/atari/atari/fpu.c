@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 1995/08/28 19:31:06 leo Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2 1996/02/09 20:53:59 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -45,8 +45,6 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
-#include <setjmp.h>
-
 extern int fpu_type;
 extern int *nofault;
 
@@ -80,11 +78,11 @@ fpu_probe()
 	 * We, of course, need to have enough room for either.
 	 */
 	int	fpframe[60 / sizeof(int)];
-	jmp_buf	faultbuf;
+	label_t	faultbuf;
 	u_char	b;
 
 	nofault = (int *) &faultbuf;
-	if (setjmp(faultbuf)) {
+	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
 		return(0);
 	}
