@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
+/*	$NetBSD: strfile.c,v 1.5 1996/10/13 00:01:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,11 +46,11 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: strfile.c,v 1.5 1996/10/13 00:01:05 christos Exp $";
 #endif
 #endif /* not lint */
 
-# include	<machine/endian.h>
+# include	<sys/types.h>
 # include	<sys/param.h>
 # include	<stdio.h>
 # include	<string.h>
