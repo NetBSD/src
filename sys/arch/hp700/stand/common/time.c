@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.1 2002/06/06 19:48:13 fredette Exp $	*/
+/*	$NetBSD: time.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
 
 /*	$OpenBSD: time.c,v 1.3 1999/02/13 04:43:18 mickey Exp $	*/
 
@@ -39,10 +39,10 @@
 #include "dev_hppa.h"
 
 time_t
-getsecs()
+getsecs(void)
 {
 	int err;
-	register time_t tt;
+	time_t tt;
 
 	if ((err = (*pdc)(PDC_TOD, PDC_TOD_READ, &pdcbuf)) < 0) {
 		tt = 0;
@@ -60,4 +60,3 @@ getsecs()
 
 	return tt;
 }
-

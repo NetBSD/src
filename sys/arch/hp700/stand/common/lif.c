@@ -1,4 +1,4 @@
-/*	$NetBSD: lif.c,v 1.1 2002/06/06 19:48:13 fredette Exp $	*/
+/*	$NetBSD: lif.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
 
 /*	$OpenBSD: lif.c,v 1.7 2001/06/09 03:54:41 mickey Exp $	*/
 
@@ -53,13 +53,11 @@ struct file {
 };
 
 int
-lif_open (path, f)
-	char *path;
-	struct open_file *f;
+lif_open(char *path, struct open_file *f)
 {
-	register struct file *fp;
-	register struct lifdir *dp;
-	register char *p, *q;
+	struct file *fp;
+	struct lifdir *dp;
+	char *p, *q;
 	struct lif_load load;
 	int err, buf_size, l;
 
@@ -70,14 +68,16 @@ lif_open (path, f)
 
 	fp = alloc(sizeof(*fp));
 	/* XXX we're assuming here that sizeof(fp->f_buf) >= LIF_FILESTART */
-	if ((err = (f->f_dev->dv_strategy)(f->f_devdata, F_READ, 0,
-	    sizeof(fp->f_buf), &fp->f_buf, &buf_size)) ||
-	    buf_size != sizeof(fp->f_buf)) {
+
+	err = (*f->f_dev->dv_strategy)(f->f_devdata, F_READ, 0,
+	    sizeof(fp->f_buf), &fp->f_buf, &buf_size);
+	if (err || buf_size != sizeof(fp->f_buf)) {
 #ifdef LIFDEBUG
 		if (debug)
 			printf("lif_open: unable to read LIF header (%d)\n", err);
 #endif
-	} else if ((fp->f_lp = (struct lifvol *)fp->f_buf)->vol_id == LIF_VOL_ID) {
+	} else if ((fp->f_lp = (struct lifvol *)fp->f_buf)->vol_id ==
+		   LIF_VOL_ID) {
 		f->f_fsdata = fp;
 		fp->f_ld = (struct lifdir *)(fp->f_buf + LIF_DIRSTART);
 		fp->f_seek = 0;
@@ -151,23 +151,18 @@ lif_open (path, f)
 }
 
 int
-lif_close(f)
-	struct open_file *f;
+lif_close(struct open_file *f)
 {
-	free (f->f_fsdata, sizeof(struct file));
+	free(f->f_fsdata, sizeof(struct file));
 	f->f_fsdata = NULL;
 	return 0;
 }
 
 int
-lif_read(f, buf, size, resid)
-	struct open_file *f;
-	void *buf;
-	size_t size;
-	size_t *resid;
+lif_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register char *p;
+	struct file *fp = (struct file *)f->f_fsdata;
+	char *p;
 	char bbuf[DEV_BSIZE];
 	size_t bsize, count = sizeof(bbuf);
 	int err = 0;
@@ -200,22 +195,15 @@ lif_read(f, buf, size, resid)
 }
 
 int
-lif_write(f, buf, size, resid)
-	struct open_file *f;
-	void *buf;
-	size_t size;
-	size_t *resid;
+lif_write(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 	return EOPNOTSUPP;
 }
 
 off_t
-lif_seek(f, offset, where)
-	struct open_file *f;
-	off_t offset;
-	int where;
+lif_seek(struct open_file *f, off_t offset, int where)
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	struct file *fp = (struct file *)f->f_fsdata;
 
 	switch (where) {
 	case SEEK_SET:
@@ -234,11 +222,9 @@ lif_seek(f, offset, where)
 }
 
 int
-lif_stat(f, sb)
-	struct open_file *f;
-	struct stat *sb;
+lif_stat(struct open_file *f, struct stat *sb)
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	struct file *fp = (struct file *)f->f_fsdata;
 
 	sb->st_mode = 0755 | (fp->f_isdir? S_IFDIR: 0);	/* XXX */
 	sb->st_uid = 0;
@@ -248,12 +234,10 @@ lif_stat(f, sb)
 }
 
 int
-lif_readdir(f, name)
-	struct open_file *f;
-	char *name;
+lif_readdir(struct open_file *f, char *name)
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register char *p;
+	struct file *fp = (struct file *)f->f_fsdata;
+	char *p;
 
 	if (name) {
 		while ((fp->f_rd->dir_name[0] == ' ' ||
