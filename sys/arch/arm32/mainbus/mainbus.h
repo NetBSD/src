@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.h,v 1.1 1996/01/31 23:25:01 mark Exp $ */
+/* $NetBSD: mainbus.h,v 1.2 1996/03/18 20:50:05 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * mainbus configuration
  *
  * Created      : 15/12/94
- * Last updated : 03/07/95
- *
- *    $Id: mainbus.h,v 1.1 1996/01/31 23:25:01 mark Exp $
  */
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.3 1996/03/17 01:24:28 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.4 1996/03/18 20:50:00 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * Probing and configuration for the master cpu
  *
  * Created      : 10/10/95
- * Last updated : 10/10/95
- *
- *    $Id: cpu.c,v 1.3 1996/03/17 01:24:28 thorpej Exp $
  */
 
 #include <sys/param.h>

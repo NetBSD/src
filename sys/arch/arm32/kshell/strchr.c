@@ -1,4 +1,4 @@
-/* $NetBSD: strchr.c,v 1.1 1996/01/31 23:24:10 mark Exp $ */
+/* $NetBSD: strchr.c,v 1.2 1996/03/18 20:32:34 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -30,9 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *
- *    $Id: strchr.c,v 1.1 1996/01/31 23:24:10 mark Exp $
  */
 #include <sys/param.h>
 

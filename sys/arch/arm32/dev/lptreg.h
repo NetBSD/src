@@ -1,4 +1,4 @@
-/* $NetBSD: lptreg.h,v 1.1 1996/01/31 23:24:52 mark Exp $ */
+/* $NetBSD: lptreg.h,v 1.2 1996/03/18 20:50:03 mark Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *      @(#)lptreg.h	1.1 (Berkeley) 12/19/90
- *	$Id: lptreg.h,v 1.1 1996/01/31 23:24:52 mark Exp $
  */
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.5 1996/03/17 01:24:19 thorpej Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.6 1996/03/18 19:54:59 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -38,8 +38,6 @@
  * Glue code for calling the ARM FPE core code
  *
  * Created      : 21/12/95
- *
- *    $Id: armfpe_glue.S,v 1.5 1996/03/17 01:24:19 thorpej Exp $
  */
 
 #include "assym.h"

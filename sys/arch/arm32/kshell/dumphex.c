@@ -1,4 +1,4 @@
-/* $NetBSD: dumphex.c,v 1.1 1996/01/31 23:23:51 mark Exp $ */
+/* $NetBSD: dumphex.c,v 1.2 1996/03/18 20:32:31 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,11 +41,6 @@
  * Hex memory dump routines
  *
  * Created      : 17/09/94
- * Last updated : 28/08/95
- *
- * Based on
- *
- *    $Id: dumphex.c,v 1.1 1996/01/31 23:23:51 mark Exp $
  */
 
 #include <sys/types.h>
