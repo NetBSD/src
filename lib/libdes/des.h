@@ -1,3 +1,5 @@
+/*	$NetBSD: des.h,v 1.2 2003/07/23 05:20:20 itojun Exp $	*/
+
 /* crypto/des/des.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -59,16 +61,12 @@
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
 
-#ifdef NO_DES
-#error DES is disabled.
-#endif
-
 #ifdef _KERBEROS_DES_H
 #error <openssl/des.h> replaces <kerberos/des.h>.
 #endif
 
-#include <openssl/opensslconf.h> /* DES_LONG */
-#include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
+#include <sys/types.h>
+#define DES_LONG	u_int32_t
 
 #ifdef  __cplusplus
 extern "C" {
@@ -111,9 +109,9 @@ typedef struct des_ks_struct
 #define des_ede2_ofb64_encrypt(i,o,l,k1,k2,iv,n) \
 	des_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n))
 
-OPENSSL_EXTERN int des_check_key;	/* defaults to false */
-OPENSSL_EXTERN int des_rw_mode;		/* defaults to DES_PCBC_MODE */
-OPENSSL_EXTERN int des_set_weak_key_flag; /* set the weak key flag */
+extern int des_check_key;	/* defaults to false */
+extern int des_rw_mode;		/* defaults to DES_PCBC_MODE */
+extern int des_set_weak_key_flag; /* set the weak key flag */
 
 const char *des_options(void);
 void des_ecb3_encrypt(const_des_cblock *input, des_cblock *output,
@@ -189,9 +187,6 @@ int des_enc_write(int fd,const void *buf,int len,des_key_schedule sched,
 		  des_cblock *iv);
 char *des_fcrypt(const char *buf,const char *salt, char *ret);
 char *des_crypt(const char *buf,const char *salt);
-#if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT) && !defined(_UWIN)
-char *crypt(const char *buf,const char *salt);
-#endif
 void des_ofb_encrypt(const unsigned char *in,unsigned char *out,int numbits,
 		     long length,des_key_schedule schedule,des_cblock *ivec);
 void des_pcbc_encrypt(const unsigned char *input,unsigned char *output,
@@ -206,6 +201,7 @@ int des_read_2passwords(des_cblock *key1,des_cblock *key2,
 			const char *prompt,int verify);
 int des_read_pw_string(char *buf,int length,const char *prompt,int verify);
 void des_set_odd_parity(des_cblock *key);
+void des_fixup_key_parity(des_cblock *key);
 int des_check_key_parity(const_des_cblock *key);
 int des_is_weak_key(const_des_cblock *key);
 /* des_set_key (= set_key = des_key_sched = key_sched) calls
@@ -223,6 +219,13 @@ void des_cfb64_encrypt(const unsigned char *in,unsigned char *out,long length,
 void des_ofb64_encrypt(const unsigned char *in,unsigned char *out,long length,
 		       des_key_schedule schedule,des_cblock *ivec,int *num);
 int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify);
+
+/* The following functions are not in the normal unix build or the
+ * SSLeay build.  When using the SSLeay build, use RAND_seed()
+ * and RAND_bytes() instead. */
+int des_new_random_key(des_cblock *key);
+void des_init_random_number_generator(des_cblock *key);
+void des_set_random_generator_seed(des_cblock *key);
 
 /* The following definitions provide compatibility with the MIT Kerberos
  * library. The des_key_schedule structure is not binary compatible. */
@@ -257,7 +260,6 @@ int des_read_pw(char *buf,char *buff,int size,const char *prompt,int verify);
 #endif
 
 typedef des_key_schedule bit_64;
-#define des_fixup_key_parity des_set_odd_parity
 
 #ifdef  __cplusplus
 }

@@ -59,9 +59,7 @@
 #include <errno.h>
 #include <time.h>
 #include <stdio.h>
-#include "cryptlib.h"
 #include "des_locl.h"
-#include <openssl/rand.h>
 
 /*
  * WARNINGS:
@@ -130,7 +128,8 @@ int des_enc_write(int fd, const void *_buf, int len,
 		{
 		cp=shortbuf;
 		memcpy(shortbuf,buf,len);
-		RAND_pseudo_bytes(shortbuf+len, 8-len);
+		*(u_int32_t *)&shortbuf[0] = arc4random();
+		*(u_int32_t *)&shortbuf[4] = arc4random();
 		rnum=8;
 		}
 	else

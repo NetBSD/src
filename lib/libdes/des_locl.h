@@ -59,39 +59,12 @@
 #ifndef HEADER_DES_LOCL_H
 #define HEADER_DES_LOCL_H
 
-#if defined(WIN32) || defined(WIN16)
-#ifndef MSDOS
-#define MSDOS
-#endif
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <openssl/opensslconf.h>
-
-#ifndef MSDOS
-#if !defined(VMS) || defined(__DECC)
-#ifdef OPENSSL_UNISTD
-# include OPENSSL_UNISTD
-#else
-# include <unistd.h>
-#endif
+#include <unistd.h>
 #include <math.h>
-#endif
-#endif
-#include <openssl/des.h>
-
-#ifdef MSDOS		/* Visual C++ 2.1 (Windows NT/95) */
-#include <stdlib.h>
-#include <errno.h>
-#include <time.h>
-#include <io.h>
-#endif
-
-#if defined(__STDC__) || defined(VMS) || defined(M_XENIX) || defined(MSDOS)
+#include <des.h>
 #include <string.h>
-#endif
 
 #define ITERATIONS 16
 #define HALF_ITERATIONS 8
@@ -155,11 +128,7 @@
 				} \
 			}
 
-#if defined(WIN32) && defined(_MSC_VER)
-#define	ROTATE(a,n)	(_lrotr(a,n))
-#else
 #define	ROTATE(a,n)	(((a)>>(n))+((a)<<(32-(n))))
-#endif
 
 /* Don't worry about the LOAD_DATA() stuff, that is used by
  * fcrypt() to add it's little bit to the front */
@@ -405,7 +374,7 @@
 	PERM_OP(l,r,tt, 4,0x0f0f0f0fL); \
 	}
 
-OPENSSL_EXTERN const DES_LONG des_SPtrans[8][64];
+extern const DES_LONG des_SPtrans[8][64];
 
 void fcrypt_body(DES_LONG *out,des_key_schedule ks,
 	DES_LONG Eswap0, DES_LONG Eswap1);
