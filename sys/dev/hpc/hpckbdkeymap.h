@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.18 2002/12/28 22:50:09 uwe Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.19 2003/04/26 01:06:06 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -524,7 +524,7 @@ const u_int8_t jornada6x0_jp_keytrans[] = {
 /*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 };
 
-/* US (with Fn to the left and no separate keys for brackets */
+/* US/UK - Fn to the left of the space bar and missing few keys */
 const u_int8_t jornada6x0_us_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */
 /* 0 */ 59 , 45 , 31 , 17 , 3  , UNK, 29 , UNK,
@@ -545,7 +545,24 @@ const u_int8_t jornada6x0_us_keytrans[] = {
 /*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 };
 
-/* International (with AltGr to the right and separate keys for brackets */
+/* US (ABA), UK (ABU) */
+static const keysym_t jornada6x0_us_keydesc[] = {
+/*  pos      normal          shifted        altgr	*/
+    KC(2),   KS_1,           KS_exclam,     KS_asciitilde,
+    KC(3),   KS_2,           KS_at,         KS_grave,
+    KC(4),   KS_3,           KS_numbersign, KS_sterling,
+#if 0 /* XXX: no keysym for Euro yet */
+    KC(5),   KS_4,           KS_dollar,     KS_euro,
+#endif
+    KC(25),  KS_p,           KS_P,          KS_braceleft,
+    KC(39),  KS_semicolon,   KS_colon,      KS_bracketleft,
+    KC(40),  KS_apostrophe,  KS_quotedbl,   KS_bracketright,
+    KC(43),  KS_backslash,   KS_bar,        KS_braceright,
+    KC(184), KS_Mode_switch, KS_Multi_key,
+};
+
+
+/* International - AltGr to the right and extra keys in three middle rows */
 const u_int8_t jornada6x0_intl_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */ 59 , 45 , 31 , 17 , 3  , UNK, 29 , UNK,
@@ -564,6 +581,39 @@ const u_int8_t jornada6x0_intl_keytrans[] = {
 /*13 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 /*14 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 /*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+};
+
+/*
+ * XXX: Add AltGr layer for #ABB here?  OTOH, all the keys necessary
+ * for basic actions in DDB or shell are on the primary layer, so it
+ * makes sense to support AltGr via wsconsctl(8) instead, as the same
+ * primary layer is used e.g. in Russian models.  But it does make
+ * sense to define the <AltGr> key itself here, as we base this layout
+ * on KB_US that defines it as the right <Alt>.
+ */
+/* European English (ABB) */
+static const keysym_t jornada6x0_intl_keydesc[] = {
+/*  pos      normal          shifted        altgr	*/
+    KC(184), KS_Mode_switch, KS_Multi_key,
+};
+
+/* German (ABD) */
+static const keysym_t jornada6x0_de_keydesc[] = {
+/*  pos      normal          shifted        altgr	*/
+    KC(2),   KS_1,           KS_exclam,     KS_brokenbar,
+    KC(5),   KS_4,           KS_dollar,     KS_ccedilla,
+    KC(6),   KS_5,           KS_percent,    KS_sterling,
+    KC(7),   KS_6,           KS_ampersand,  KS_notsign,
+#if 0 /* XXX: no keysym for Euro yet */
+    KC(18),  KS_e,           KS_E,          KS_euro,
+#endif
+    KC(27),  KS_plus,        KS_asterisk,   KS_asciitilde, /* NB: not dead */
+    KC(30),  KS_a,           KS_A,          KS_bar,
+    KC(41),  KS_asciicircum, KS_degree,			   /* NB: not dead */
+    KC(43),  KS_numbersign,  KS_apostrophe, KS_dead_diaeresis,
+    KC(44),  KS_y,           KS_Y,          KS_less,
+    KC(45),  KS_x,           KS_X,          KS_greater,
+    KC(46),  KS_c,           KS_C,          KS_cent,
 };
 
 const int jornada6x0_special_keymap[] = {
@@ -753,38 +803,38 @@ const struct hpckbd_keymap_table {
 		jornada6x0_special_keymap,
 		NULLCMDMAP,
 		KB_JP },
-	/* US */
+	/* US (ABA), UK (ABU) */
 	{	&platid_mask_MACH_HP_JORNADA_680,
 		jornada6x0_us_keytrans,
 		jornada6x0_special_keymap,
-		NULLCMDMAP,
+		CMDMAP(jornada6x0_us_keydesc),
 		KB_US },
 	{	&platid_mask_MACH_HP_JORNADA_690,
 		jornada6x0_us_keytrans,
 		jornada6x0_special_keymap,
-		NULLCMDMAP,
+		CMDMAP(jornada6x0_us_keydesc),
 		KB_US },
-	/* Hungarian */
-	{	&platid_mask_MACH_HP_JORNADA_680HU,
+	/* European English (ABB) */
+	{	&platid_mask_MACH_HP_JORNADA_680EU,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
-		NULLCMDMAP,
-		KB_US }, /* XXX should be KB_HU */
-	{	&platid_mask_MACH_HP_JORNADA_690HU,
+		CMDMAP(jornada6x0_intl_keydesc),
+		KB_US },
+	{	&platid_mask_MACH_HP_JORNADA_690EU,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
-		NULLCMDMAP,
-		KB_US }, /* XXX should be KB_HU */
-	/* German */
+		CMDMAP(jornada6x0_intl_keydesc),
+		KB_US },
+	/* German (ABD) */
 	{	&platid_mask_MACH_HP_JORNADA_680DE,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
-		NULLCMDMAP,
+		CMDMAP(jornada6x0_de_keydesc),
 		KB_DE },
 	{	&platid_mask_MACH_HP_JORNADA_690DE,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
-		NULLCMDMAP,
+ 		CMDMAP(jornada6x0_de_keydesc),
 		KB_DE },
 	/*
 	 * HP 620LX
