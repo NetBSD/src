@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12 1997/06/23 06:15:28 jonathan Exp $	*/
+/*	$NetBSD: asm.h,v 1.13 1997/07/20 09:47:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,15 +62,22 @@
 
 /*
  * Define -pg profile entry code.
+ * XXX assume .set noreorder for kernel, .set reorder for user code.
  */
+#define _KERN_MCOUNT \
+	.set noat; \
+	move $1,$31; \
+	jal _mcount; \
+	subu sp,sp,8; \
+	.set at;
+
+
 #ifdef GPROF
-#define	MCOUNT	.set noreorder; \
-		.set noat; \
-		move $1,$31; \
-		jal _mcount; \
-		subu sp,sp,8; \
-		.set reorder; \
-		.set at;
+# if defined(_KERNEL) || defined(_LOCORE)
+#  define MCOUNT _KERN_MCOUNT
+# else
+#  define MCOUNT .set noreorder; _KERN_MCOUNT ;  .set reorder;
+# endif
 #else
 #define	MCOUNT
 #endif
