@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.8 1995/09/23 03:31:51 gwr Exp $	*/
+/*	$NetBSD: net.h,v 1.9 1995/09/23 17:14:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -106,7 +106,7 @@ ssize_t	readudp __P((struct iodesc *, void *, size_t, time_t));
 ssize_t	sendrecv __P((struct iodesc *,
 		      ssize_t (*)(struct iodesc *, void *, size_t),
 			void *, size_t,
-		      ssize_t (*)(struct iodesc *, void *, size_t, time_t),
+		        ssize_t (*)(struct iodesc *, void *, size_t, time_t),
 			void *, size_t));
 
 /* Utilities: */
@@ -114,6 +114,7 @@ char	*ether_sprintf __P((u_char *));
 int	in_cksum __P((void *, int));
 char	*inet_ntoa __P((struct in_addr));
 char	*intoa __P((n_long));		/* similar to inet_ntoa */
+n_long	inet_addr __P((char *));
 
 /* Machine-dependent functions: */
 time_t	getsecs __P((void));
