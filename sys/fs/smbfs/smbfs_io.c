@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.3 2003/02/20 15:35:55 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.4 2003/02/21 20:19:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -84,55 +84,60 @@
 
 extern int smbfs_pbuf_freecnt;
 
-static int smbfs_fastlookup = 1;
-
-#ifndef __NetBSD__
-SYSCTL_DECL(_vfs_smbfs);
-SYSCTL_INT(_vfs_smbfs, OID_AUTO, fastlookup, CTLFLAG_RW, &smbfs_fastlookup, 0, "");
-#endif
-
 #define DE_SIZE	(sizeof(struct dirent))
 
 static int
 smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 {
 	struct dirent de;
-	struct componentname cn;
 	struct smb_cred scred;
 	struct smbfs_fctx *ctx;
-	struct vnode *newvp;
 	struct smbnode *np = VTOSMB(vp);
 	int error/*, *eofflag = ap->a_eofflag*/;
 	long offset, limit;
 
-	np = VTOSMB(vp);
+	KASSERT(vp->v_type == VDIR);
+
+	if (uio->uio_resid < DE_SIZE || uio->uio_offset < 0)
+		return EINVAL;
+
 	SMBVDEBUG("dirname='%.*s'\n", (int) np->n_nmlen, np->n_name);
 	smb_makescred(&scred, uio->uio_procp, cred);
 	offset = uio->uio_offset / DE_SIZE; 	/* offset in the directory */
 	limit = uio->uio_resid / DE_SIZE;
-	if (uio->uio_resid < DE_SIZE || uio->uio_offset < 0)
-		return EINVAL;
-	while (limit && offset < 2) {
-		limit--;
-		bzero((caddr_t)&de, DE_SIZE);
+
+	/* Simulate . */
+	if (offset < 1) {
+		memset(&de, 0, sizeof(de));
+		de.d_fileno = np->n_ino;
 		de.d_reclen = DE_SIZE;
-		de.d_fileno = (offset == 0) ? np->n_ino :
-		    (np->n_parent ? np->n_parent->n_ino : 2);
-		if (de.d_fileno == 0)
-			de.d_fileno = 0x7ffffffd + offset;
-		de.d_namlen = offset + 1;
-		de.d_name[0] = '.';
-		de.d_name[1] = '.';
-		de.d_name[offset + 1] = '\0';
 		de.d_type = DT_DIR;
-		error = uiomove((caddr_t)&de, DE_SIZE, uio);
+		de.d_namlen = 1;
+		strncpy(de.d_name, ".", 2);
+		error = uiomove((caddr_t)&de, sizeof(struct dirent), uio);
 		if (error)
 			return error;
+		limit--;
 		offset++;
-		uio->uio_offset += DE_SIZE;
 	}
+	/* Simulate .. */
+	if (limit > 0 && offset < 2) {
+		memset(&de, 0, sizeof(de));
+		de.d_fileno = (np->n_parent ? np->n_parent->n_ino : 2);
+		de.d_reclen = DE_SIZE;
+		de.d_type = DT_DIR;
+		de.d_namlen = 2;
+		strncpy(de.d_name, "..", 3);
+		error = uiomove((caddr_t)&de, sizeof(struct dirent), uio);
+		if (error)
+			return error;
+		limit--;
+		offset++;
+	}
+
 	if (limit == 0)
-		return 0;
+		return (0);
+
 	if (offset != np->n_dirofs || np->n_dirseq == NULL) {
 		SMBVDEBUG("Reopening search %ld:%ld\n", offset, np->n_dirofs);
 		if (np->n_dirseq) {
@@ -150,45 +155,38 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 		np->n_dirseq = ctx;
 	} else
 		ctx = np->n_dirseq;
+
+	/* skip entries before offset */
 	while (np->n_dirofs < offset) {
 		error = smbfs_findnext(ctx, offset - np->n_dirofs++, &scred);
 		if (error) {
 			smbfs_findclose(np->n_dirseq, &scred);
 			np->n_dirseq = NULL;
-			return error == ENOENT ? 0 : error;
+			return (error == ENOENT) ? 0 : error;
 		}
 	}
-	error = 0;
+
 	for (; limit; limit--, offset++) {
 		error = smbfs_findnext(ctx, limit, &scred);
-		if (error)
+		if (error) {
+			if (error == ENOENT)
+				error = 0;
 			break;
+		}
 		np->n_dirofs++;
-		bzero((caddr_t)&de, DE_SIZE);
+		memset(&de, 0, DE_SIZE);
 		de.d_reclen = DE_SIZE;
 		de.d_fileno = ctx->f_attr.fa_ino;
 		de.d_type = (ctx->f_attr.fa_attr & SMB_FA_DIR) ? DT_DIR : DT_REG;
 		de.d_namlen = ctx->f_nmlen;
-		bcopy(ctx->f_name, de.d_name, de.d_namlen);
+		memcpy(de.d_name, ctx->f_name, de.d_namlen);
 		de.d_name[de.d_namlen] = '\0';
-		if (smbfs_fastlookup) {
-			error = smbfs_nget(vp->v_mount, vp, ctx->f_name,
-			    ctx->f_nmlen, &ctx->f_attr, &newvp);
-			if (!error) {
-				cn.cn_nameptr = de.d_name;
-				cn.cn_namelen = de.d_namlen;
-		    		cache_enter(vp, newvp, &cn);
-				vput(newvp);
-			}
-		}
 		error = uiomove((caddr_t)&de, DE_SIZE, uio);
 		if (error)
 			break;
 	}
-	if (error == ENOENT)
-		error = 0;
-	uio->uio_offset = offset * DE_SIZE;
-	return error;
+
+	return (error);
 }
 
 int
@@ -199,30 +197,22 @@ smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred)
 	struct proc *p;
 	struct vattr vattr;
 	struct smb_cred scred;
-	int error, lks;
+	int error;
 
-	if (vp->v_type != VREG && vp->v_type != VDIR) {
-		SMBFSERR("vn types other than VREG or VDIR are unsupported !\n");
-		return EIO;
-	}
+	KASSERT(vp->v_type == VREG || vp->v_type == VDIR);
+
 	if (uiop->uio_resid == 0)
 		return 0;
 	if (uiop->uio_offset < 0)
 		return EINVAL;
 /*	if (uiop->uio_offset + uiop->uio_resid > smp->nm_maxfilesize)
 		return EFBIG;*/
-	p = uiop->uio_procp;
 	if (vp->v_type == VDIR) {
-		lks = LK_EXCLUSIVE;/*lockstatus(&vp->v_lock, p);*/
-		if (lks == LK_SHARED)
-			vn_lock(vp, LK_UPGRADE | LK_RETRY);
 		error = smbfs_readvdir(vp, uiop, cred);
-		if (lks == LK_SHARED)
-			vn_lock(vp, LK_DOWNGRADE | LK_RETRY);
 		return error;
 	}
 
-/*	biosize = SSTOCN(smp->sm_share)->sc_txmax;*/
+	p = uiop->uio_procp;
 	if (np->n_flag & NMODIFIED) {
 		smbfs_attr_cacheremove(vp);
 		error = VOP_GETATTR(vp, &vattr, cred, p);
@@ -644,36 +634,33 @@ smbfs_vinvalbuf(vp, flags, cred, p, intrflg)
 	int intrflg;
 {
 	struct smbnode *np = VTOSMB(vp);
-	int error = 0, slpflag, slptimeo;
+	int error = 0, slpflag;
 
-	if (vp->v_flag & VXLOCK)
-		return 0;
-	if (intrflg) {
+	if (intrflg)
 		slpflag = PCATCH;
-		slptimeo = 2 * hz;
-	} else {
+	else
 		slpflag = 0;
-		slptimeo = 0;
-	}
+
 	while (np->n_flag & NFLUSHINPROG) {
 		np->n_flag |= NFLUSHWANT;
-		error = tsleep((caddr_t)&np->n_flag, PRIBIO + 2, "smfsvinv", slptimeo);
-		error = smb_proc_intr(p);
-		if (error == EINTR && intrflg)
-			return EINTR;
+		error = tsleep((caddr_t)&np->n_flag,
+			(PRIBIO + 2) | slpflag, "smfsvinv", 0);
+		if (error)
+			return (error);
 	}
 	np->n_flag |= NFLUSHINPROG;
-	error = vinvalbuf(vp, flags, cred, p, slpflag, 0);
-	while (error) {
+	for(;;) {
+		if ((error = vinvalbuf(vp, flags, cred, p, slpflag, 0)) == 0)
+			break;
+
 		if (intrflg && (error == ERESTART || error == EINTR)) {
 			np->n_flag &= ~NFLUSHINPROG;
 			if (np->n_flag & NFLUSHWANT) {
 				np->n_flag &= ~NFLUSHWANT;
 				wakeup((caddr_t)&np->n_flag);
 			}
-			return EINTR;
+			return (error);
 		}
-		error = vinvalbuf(vp, flags, cred, p, slpflag, 0);
 	}
 	np->n_flag &= ~(NMODIFIED | NFLUSHINPROG);
 	if (np->n_flag & NFLUSHWANT) {
