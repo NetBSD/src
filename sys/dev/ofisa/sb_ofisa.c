@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.1 1998/07/01 06:52:12 thorpej Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.2 1998/07/14 01:39:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,6 +101,7 @@ sb_ofisa_attach(parent, self, aux)
 	struct ofisa_intr_desc intr;
 	struct ofisa_dma_desc dma[2];
 	int n, ndrq;
+	char *model;
 
 	/*
 	 * We're living on an OFW.  We have to ask the OFW what our
@@ -183,7 +184,12 @@ sb_ofisa_attach(parent, self, aux)
 		return;
 	}
 
-	/* XXX print `model' property? */
+	n = OF_getproplen(aa->oba.oba_phandle, "model");
+	if (n > 0) {
+		model = alloca(n);
+		if (OF_getprop(aa->oba.oba_phandle, "model", model, n) == n)
+			printf(": %s\n%s", model, sc->sc_dev.dv_xname);
+	}
 
 	sbattach(sc);
 }
