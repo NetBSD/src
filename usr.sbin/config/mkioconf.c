@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.62 2002/09/26 04:07:36 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.63 2002/09/26 21:07:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -373,8 +373,11 @@ struct cfdata cfdata[] = {\n\
 					lastname = nv->nv_name;
 				}
 			}
-		} else if (fputs("root", fp) < 0)
-			return (1);
+		} else {
+			a = NULL;
+			if (fputs("root", fp) < 0)
+				return (1);
+		}
 
 		if (fputs(" */\n", fp) < 0)
 			return (-1);
@@ -404,10 +407,11 @@ struct cfdata cfdata[] = {\n\
 		if (ps != NULL) {
 			if (fprintf(fp, "&pspec%d,\n", ps->p_inst) < 0)
 				return (1);
-		} else if (fputs("NULL,", fp) < 0)
+		} else if (fputs("NULL,\n", fp) < 0)
 			return (1);
 		if (fprintf(fp, "     %scf_locnames},\n",
-			    a->a_locs ? a->a_name : "null") < 0)
+			    (a != NULL && a->a_locs != NULL) ? a->a_name
+							     : "null") < 0)
 			return (1);
 	}
 	return (fputs("    {0}\n};\n", fp) < 0);
