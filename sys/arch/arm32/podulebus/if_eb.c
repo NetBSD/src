@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.5 1996/04/26 22:41:27 mark Exp $ */
+/* $NetBSD: if_eb.c,v 1.6 1996/05/07 00:55:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -145,7 +145,7 @@ static int ebintr __P((void *));
 static int eb_init __P((struct eb_softc *));
 static int eb_ioctl __P((struct ifnet *, u_long, caddr_t));
 static void eb_start __P((struct ifnet *));
-static void eb_watchdog __P((int));
+static void eb_watchdog __P((struct ifnet *));
 static void eb_reinit __P((struct eb_softc *));
 static void eb_chipreset __P((struct eb_softc *));
 static void eb_ramtest __P((struct eb_softc *));
@@ -328,8 +328,8 @@ ebattach(parent, self, aux)
 
 	/* Initialise ifnet structure. */
 
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = eb_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = eb_start;
 	ifp->if_ioctl = eb_ioctl;
 	ifp->if_watchdog = eb_watchdog;
@@ -954,7 +954,7 @@ static void
 eb_start(ifp)
 	struct ifnet *ifp;
 {
-	struct eb_softc *sc = eb_cd.cd_devs[ifp->if_unit];
+	struct eb_softc *sc = ifp->if_softc;
 	int s;
 
 	s = splimp();
@@ -1447,7 +1447,7 @@ eb_ioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct eb_softc *sc = eb_cd.cd_devs[ifp->if_unit];
+	struct eb_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 /*	struct ifreq *ifr = (struct ifreq *)data;*/
 	int s, error = 0;
@@ -1545,10 +1545,10 @@ eb_ioctl(ifp, cmd, data)
  */
 
 static void
-eb_watchdog(unit)
-	int unit;
+eb_watchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct eb_softc *sc = eb_cd.cd_devs[unit];
+	struct eb_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	sc->sc_arpcom.ac_if.if_oerrors++;

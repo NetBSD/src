@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.7 1996/04/21 21:11:40 veego Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.8 1996/05/07 00:46:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
@@ -137,7 +137,7 @@ static u_int16_t	revision;
 
 int	aematch __P((struct device *, void *, void *));
 void	aeattach __P((struct device *, struct device *, void *));
-void	aewatchdog __P((int));
+void	aewatchdog __P((struct ifnet *));
 void	aestop __P((struct ae_softc *));
 void	aememinit __P((struct ae_softc *));
 void	aereset __P((struct ae_softc *));
@@ -237,8 +237,8 @@ aeattach(parent, self, aux)
 
 	splx (s);
 
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = ae_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_ioctl = aeioctl;
 	ifp->if_watchdog = aewatchdog;
 	ifp->if_output = ether_output;
@@ -260,10 +260,10 @@ aeattach(parent, self, aux)
 }
 
 void
-aewatchdog(unit)
-	int unit;
+aewatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct ae_softc *sc = ae_cd.cd_devs[unit];
+	struct ae_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -448,7 +448,7 @@ void
 aestart(ifp)
 	struct ifnet *ifp;
 {
-	register struct ae_softc *sc = ae_cd.cd_devs[ifp->if_unit];
+	register struct ae_softc *sc = ifp->if_softc;
 	register int bix;
 	register struct aetmd *tmd;
 	register struct mbuf *m;
@@ -959,7 +959,7 @@ aeioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ae_softc *sc = ae_cd.cd_devs[ifp->if_unit];
+	struct ae_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
