@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.4 2001/09/18 18:15:52 wiz Exp $	*/
+/*	$NetBSD: iopl.c,v 1.5 2001/11/13 12:24:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  * - Doesn't handle token-ring, but that's not a big deal.
  * - Interrupts run at IPL_BIO.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.5 2001/11/13 12:24:58 lukem Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"

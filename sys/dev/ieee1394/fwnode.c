@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.5 2001/05/14 05:46:41 jmc Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.6 2001/11/13 12:24:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.6 2001/11/13 12:24:11 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

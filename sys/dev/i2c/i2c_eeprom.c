@@ -1,4 +1,4 @@
-/*  $NetBSD: i2c_eeprom.c,v 1.1 1997/10/17 17:21:23 bouyer Exp $   */
+/*  $NetBSD: i2c_eeprom.c,v 1.2 2001/11/13 12:25:27 lukem Exp $   */
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -33,6 +33,9 @@
   * driver for Microchip Technology, 24C01A/02A/04A eeproms 
   * Data Sheet available from www.microchip.com
   */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i2c_eeprom.c,v 1.2 2001/11/13 12:25:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
