@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.432 2002/03/18 08:27:53 tshiozak Exp $
+#	$NetBSD: mi,v 1.433 2002/03/24 18:27:49 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -179,6 +179,9 @@
 ./usr/include/dev/sun				comp-c-include
 ./usr/include/dev/sun/disklabel.h		comp-c-include
 ./usr/include/dev/sun/fbio.h		comp-c-include
+./usr/include/dev/sun/kbd_reg.h		comp-c-include
+./usr/include/dev/sun/kbio.h		comp-c-include
+./usr/include/dev/sun/vuid_event.h	comp-c-include
 ./usr/include/dev/tc			comp-c-include
 ./usr/include/dev/tc/sfbreg.h		comp-c-include
 ./usr/include/dev/tc/sticio.h		comp-c-include
