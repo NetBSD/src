@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.6 1996/02/19 09:05:48 leo Exp $
+#	$NetBSD: FALCON,v 1.7 1996/03/14 21:41:23 leo Exp $
 #
 # ATARI-FALCON
 #
@@ -68,6 +68,7 @@ options		GENERIC			# Mini-root boot support
 #
 options		FALCON_SCSI		# SCSI-support for FACLON only
 options		FALCON_VIDEO		# Graphics support for FALCON
+options		RAMDISK_HOOKS		# Boot RAM-disk
 options		DISKLABEL_NBDA		# NetBSD disklabels (required)
 options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
