@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.22 2000/04/22 21:34:25 thorpej Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.23 2000/08/15 01:01:41 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -127,12 +127,14 @@ static int menucmd (WINDOW *w);
 
 /* menu system processing routines */
 
-static void mbeep (void)
+static void
+mbeep (void)
 {
 	fprintf (stderr,"\a");
 }
 
-static void ins_keyseq (struct keyseq **seq, struct keyseq *ins)
+static void
+ins_keyseq (struct keyseq **seq, struct keyseq *ins)
 {
 	if (*seq == NULL) {
 		ins->next = NULL;
@@ -144,7 +146,8 @@ static void ins_keyseq (struct keyseq **seq, struct keyseq *ins)
 		ins_keyseq (&(*seq)->next, ins);
 }
 
-static void init_keyseq (void)
+static void
+init_keyseq (void)
 {
 	/*
 	 * XXX XXX XXX THIS SHOULD BE NUKED FROM ORBIT!  DO THIS
@@ -167,7 +170,8 @@ static void init_keyseq (void)
 	}
 }
 
-static int mgetch(WINDOW *w)
+static int
+mgetch(WINDOW *w)
 {
 	static char buf[20];
 	static int  num = 0;
@@ -196,7 +200,8 @@ static int mgetch(WINDOW *w)
 	return ret;
 }
 
-static int menucmd (WINDOW *w)
+static int
+menucmd (WINDOW *w)
 {
 	int ch;
 
@@ -234,7 +239,8 @@ static int menucmd (WINDOW *w)
 	}
 }
 
-static void init_menu (struct menudesc *m)
+static void
+init_menu (struct menudesc *m)
 {
 	int wmax;
 	int hadd, wadd, exithadd;
@@ -309,7 +315,8 @@ static void init_menu (struct menudesc *m)
 	} 
 }
 
-static char opt_ch (int op_no)
+static char
+opt_ch (int op_no)
 {
 	char c;
 	if (op_no < 25) {
@@ -320,7 +327,8 @@ static char opt_ch (int op_no)
 	return (char) c;
 }
 
-static void post_menu (struct menudesc *m)
+static void
+post_menu (struct menudesc *m)
 {
 	int i;
 	int hasbox, cury, maxy, selrow, lastopt;
@@ -364,8 +372,10 @@ static void post_menu (struct menudesc *m)
 			selrow = cury;
 		} else
 			mvwaddstr (m->mw, cury, hasbox, " ");
-		(void) sprintf (optstr, "%c: ", opt_ch(i));
-		waddstr (m->mw, optstr);
+		if (! (m->mopt & MC_NOSHORTCUT)) {
+			(void) sprintf (optstr, "%c: ", opt_ch(i));
+			waddstr (m->mw, optstr);
+		}
 		waddstr (m->mw, m->opts[i].opt_name);
 		if (m->cursel == i)
 			wstandend(m->mw);
@@ -379,7 +389,8 @@ static void post_menu (struct menudesc *m)
 			selrow = cury;
 		} else
 			mvwaddstr (m->mw, cury, hasbox, " ");
-		waddstr (m->mw, "x: ");
+		if (! (m->mopt & MC_NOSHORTCUT))
+			waddstr (m->mw, "x: ");
 		waddstr (m->mw, m->exitstr);
 		if (m->cursel >= m->numopts)
 			wstandend(m->mw);
@@ -400,7 +411,8 @@ static void post_menu (struct menudesc *m)
 	wmove(m->mw, selrow, hasbox);
 }
 
-static void process_help (struct menudesc *m, int num)
+static void
+process_help (struct menudesc *m, int num)
 {
 	char *help = m->helpstr;
 	int lineoff = 0;
@@ -479,7 +491,8 @@ static void process_help (struct menudesc *m, int num)
 		(*m->post_act)();
 }
 
-static void process_req (struct menudesc *m, int num, int req)
+static void
+process_req (struct menudesc *m, int num, int req)
 {
 	int ch;
 	int hasexit = (m->mopt & MC_NOEXITOPT ? 0 : 1 );
@@ -528,6 +541,7 @@ static void process_req (struct menudesc *m, int num, int req)
 			mbeep();
 		else {
 			m->topline = MAX(0,m->topline-m->h+1);
+			m->cursel = MAX(0, m->cursel-m->h+1);
 			wclear (m->mw);
 			refresh = 1;
 		}
@@ -540,6 +554,7 @@ static void process_req (struct menudesc *m, int num, int req)
 		else {
 			m->topline = MIN(m->topline+m->h-1,
 					 m->numopts+hasexit-m->h+1);
+			m->cursel = MIN(m->numopts-1, m->cursel+m->h-1);
 			wclear (m->mw);
 			refresh = 1;
 		}
@@ -551,19 +566,21 @@ static void process_req (struct menudesc *m, int num, int req)
 			scroll_sel = 1;
 			refresh = 1;
 		} else {
-			if (ch > 'z')
-				ch = 255;
-			if (ch >= 'a') {
-				if (ch > 'x') ch--;
-				ch = ch - 'a';
-			} else
-				ch = 25 + ch - 'A';
-			if (ch < 0 || ch >= m->numopts)
-				mbeep();
-			else {
-				m->cursel = ch;
-				scroll_sel = 1;
-				refresh = 1;
+			if (! (m->mopt & MC_NOSHORTCUT)) {
+				if (ch > 'z')
+					ch = 255;
+				if (ch >= 'a') {
+					if (ch > 'x') ch--;
+					ch = ch - 'a';
+				} else
+					ch = 25 + ch - 'A';
+				if (ch < 0 || ch >= m->numopts)
+					mbeep();
+				else {
+					m->cursel = ch;
+					scroll_sel = 1;
+					refresh = 1;
+				}
 			}
 		}
 	}
@@ -582,7 +599,8 @@ static void process_req (struct menudesc *m, int num, int req)
 	}
 }
 
-int menu_init (void)
+int
+menu_init (void)
 {
 
 	if (__menu_init)
@@ -613,7 +631,8 @@ int menu_init (void)
 	return (0);
 }
 
-void process_menu (int num)
+void
+process_menu (int num)
 {
 	int sel = 0;
 	int req, done;
@@ -670,7 +689,7 @@ void process_menu (int num)
 				__m_endwin = 1;
 			}
 			if (m->opts[sel].opt_action)
-				done = (*m->opts[sel].opt_action)();
+				done = (*m->opts[sel].opt_action)(m);
 			if (m->opts[sel].opt_menu != -1) {
 				if (m->opts[sel].opt_flags & OPT_SUB)
 					process_menu (m->opts[sel].opt_menu);
@@ -708,7 +727,8 @@ void process_menu (int num)
 /* local prototypes */
 static int double_menus (void);
 
-static int double_menus (void)
+static int
+double_menus (void)
 {
 	menudesc *temp;
 
@@ -727,7 +747,8 @@ static int double_menus (void)
 	return 1;
 }
 
-int new_menu (char * title, menu_ent * opts, int numopts, 
+int
+new_menu (char * title, menu_ent * opts, int numopts, 
         int x, int y, int h, int w, int mopt,
         void (*post_act)(void), void (*exit_act), char * help)
 {
@@ -745,7 +766,7 @@ int new_menu (char * title, menu_ent * opts, int numopts,
 	/* if ix == num_menus ... panic */
 
 	/* Set Entries */
-	menus[ix].title = title;
+	menus[ix].title = title?title:"";
 	menus[ix].opts = opts;
 	menus[ix].numopts = numopts;
 	menus[ix].x = x;
@@ -763,7 +784,8 @@ int new_menu (char * title, menu_ent * opts, int numopts,
 	return ix;
 }
 
-void free_menu (int menu_no)
+void
+free_menu (int menu_no)
 {
 	if (menu_no < num_menus) {
 		menus[menu_no].mopt &= ~MC_VALID;
