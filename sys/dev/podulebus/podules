@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.8 2002/03/29 00:16:51 bjh21 Exp $
+$NetBSD: podules,v 1.9 2002/05/19 22:29:57 bjh21 Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -47,6 +47,7 @@ manufacturer	ATOMWIDE2	0x0017	Atomwide
 manufacturer	LINGENUITY	0x001a	Lingenuity
 manufacturer	IRLAM		0x001f	Irlam Instruments
 manufacturer	OAK		0x0021	Oak Solutions
+manufacturer	BEEBUG		0x0023	BEEBUG (RISC Developments)
 manufacturer	SJ		0x0029	SJ Research
 manufacturer	MORLEY		0x002b	Morley
 manufacturer	HCCS2		0x002d	HCCS
@@ -83,6 +84,7 @@ podule	ACORN		ETHER2		0x0061	ether 2 interface
 podule	ACORN		ETHERI		0x0139	EtherI interface
 
 podule	CCONCEPTS	ROMRAM		0x0005	ROM/RAM podule
+podule	CCONCEPTS	FAXPACK		0x0007	FaxPack modem
 podule	CCONCEPTS	LASERDIRECT	0x0014	laser direct (Canon LBP-4)
 
 podule	ARMADILLO	A448		0x0016	A448 sound sampler
@@ -113,7 +115,10 @@ podule	IRLAM		24I16		0x00e6	24i16 digitiser
 podule	IRLAM		MMETHERV	0x1234	Multi-media/EtherV
 podule	IRLAM		ETHERN		0x5678	EtherN interface
 
+/* XXX ID 0x0058 is used by Oak ClassNet (EtherO) Ethernet cards */
 podule	OAK		SCSI		0x0058	16 bit SCSI interface
+
+podule	BEEBUG		IDE8		0x0097	8 bit IDE
 
 podule	SJ		NEXUS		0x0064	Nexus interface (Podule)
 podule	SJ		NEXUSNS		0x008F	Nexus interface (A3020 netslot)
