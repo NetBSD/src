@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.12.2.3 1999/04/09 04:46:43 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.12.2.4 1999/04/29 05:35:13 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -214,8 +214,6 @@ uvm_pageout()
 		UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
 		    &uvm.pagedaemon_lock, FALSE, "pgdaemon", 0);
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
-
-		simple_unlock(&uvm.pagedaemon_lock);
 
 		/* drain pool resources */
 		pool_drain(0);
