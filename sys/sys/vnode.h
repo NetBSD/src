@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.56.2.1 1998/11/09 06:06:35 chs Exp $	*/
+/*	$NetBSD: vnode.h,v 1.56.2.2 1999/04/30 04:25:28 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -115,7 +115,12 @@ struct vnode {
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct	buflists v_cleanblkhd;		/* clean blocklist head */
 	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
+#ifdef UBC
+#define v_numoutput v_uvm.u_nio
+	long	v_unused3;
+#else
 	long	v_numoutput;			/* num of writes in progress */
+#endif
 	enum	vtype v_type;			/* vnode type */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
