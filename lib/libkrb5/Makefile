@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2001/09/17 12:34:43 assar Exp $
+# $NetBSD: Makefile,v 1.14 2001/09/21 22:59:01 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -11,16 +11,19 @@ MKLINT= no
 
 LIB=	krb5
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+.ifndef USE_NEW_TOOLCHAIN
+COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+COMPILE_ET=	${COMPILEETOBJ}/compile_et
+.endif
 
 krb5_err.c krb5_err.h: krb5_err.et
-	${COMPILEET}/compile_et ${DIST}/heimdal/lib/krb5/krb5_err.et
+	${COMPILE_ET} ${DIST}/heimdal/lib/krb5/krb5_err.et
 
 heim_err.c heim_err.h: heim_err.et
-	${COMPILEET}/compile_et ${DIST}/heimdal/lib/krb5/heim_err.et
+	${COMPILE_ET} ${DIST}/heimdal/lib/krb5/heim_err.et
 
 k524_err.c k524_err.h: k524_err.et
-	${COMPILEET}/compile_et ${DIST}/heimdal/lib/krb5/k524_err.et
+	${COMPILE_ET} ${DIST}/heimdal/lib/krb5/k524_err.et
 
 ERR_FILES= krb5_err.c heim_err.c k524_err.c
 

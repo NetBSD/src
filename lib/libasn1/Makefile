@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2001/06/20 02:01:18 assar Exp $
+# $NetBSD: Makefile,v 1.11 2001/09/21 22:58:59 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -10,10 +10,13 @@ MKLINT= no
 
 LIB=	asn1
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+.ifndef USE_NEW_TOOLCHAIN
+COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+COMPILE_ET=	${COMPILEETOBJ}/compile_et
+.endif
 
 asn1_err.h asn1_err.c: asn1_err.et
-	${COMPILEET}/compile_et ${DIST}/heimdal/lib/asn1/asn1_err.et
+	${COMPILE_ET} ${DIST}/heimdal/lib/asn1/asn1_err.et
 
 DPSRCS=	asn1_err.h
 

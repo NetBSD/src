@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2001/09/17 12:34:42 assar Exp $
+# $NetBSD: Makefile,v 1.11 2001/09/21 22:59:01 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -25,10 +25,13 @@ MKLINT= no
 
 LIB=	krb
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+.ifndef USE_NEW_TOOLCHAIN
+COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+COMPILE_ET=	${COMPILEETOBJ}/compile_et
+.endif
 
 krb_err.c krb_err.h: krb_err.et
-	${COMPILEET}/compile_et ${DIST}/krb4/lib/krb/krb_err.et
+	${COMPILE_ET} ${DIST}/krb4/lib/krb/krb_err.et
 
 ERR_FILES=	krb_err.c
 
