@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.102 1998/07/30 00:00:06 fvdl Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.103 1998/07/31 03:00:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -181,6 +181,9 @@ scsibusattach(parent, self, aux)
 	sb->adapter_link = sc_link_proto;
 	sb->sc_maxtarget = sc_link_proto->scsipi_scsi.max_target;
 	printf(": %d targets\n", sb->sc_maxtarget + 1);
+
+	/* Initialize shared data. */
+	scsipi_init();
 
 	nbytes = sb->sc_maxtarget * sizeof(struct scsipi_link **);
 	sb->sc_link = (struct scsipi_link ***)malloc(nbytes, M_DEVBUF,
