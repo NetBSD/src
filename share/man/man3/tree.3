@@ -1,4 +1,4 @@
-.\"	$NetBSD: tree.3,v 1.2 2003/07/09 14:40:53 wiz Exp $
+.\"	$NetBSD: tree.3,v 1.3 2004/04/14 11:05:19 pooka Exp $
 .\"	$OpenBSD: tree.3,v 1.9 2003/05/20 09:13:38 jmc Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -414,7 +414,7 @@ RB_FOREACH(np, NAME, head)
 .Pp
 The
 .Fn RB_EMPTY
-macro should be used to check whether a splay tree is empty.
+macro should be used to check whether a red-black tree is empty.
 .Sh NOTES
 Trying to free a tree in the following way is a common error:
 .Bd -literal -offset indent
