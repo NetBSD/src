@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.151 2000/04/19 04:26:22 simonb Exp $
+# $NetBSD: rc,v 1.152 2000/04/22 03:01:22 lukem Exp $
 #
 # rc.sh --
 #	Run the scripts in /etc/rc.d with rcorder.
@@ -36,7 +36,7 @@ trap "echo 'Boot interrupted.'; exit 1" 3
 files=`rcorder /etc/rc.d/*`
 
 for i in $files; do
-	rc_fastboot=yes run_rc_script $i start
+	run_rc_script $i start
 done
 
 date
