@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 1995/06/28 04:09:32 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 1995/06/30 05:25:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1060,14 +1060,12 @@ microtime(tvp)
 	splx(s);
 }
 
-straytrap(frame)
-	struct frame frame;
+straytrap(pc, evec)
+	int pc;
+	int evec;
 {
 	printf("unexpected trap; vector offset 0x%x from 0x%x.\n",
-		frame.f_vector, frame.f_pc);
-	regdump(&frame, 128);
-	dumptrace();
-	Debugger();
+		(int) (evec & 0xfff), pc);
 }
 
 int	*nofault;
@@ -1871,8 +1869,8 @@ static romvec_t romvecs[]=
 		(caddr_t)0x4080a3ac,	/* SetADBInfo */
 		(caddr_t)0x4080a752,	/* ADBReInit */
 		(caddr_t)0x4080a3dc,	/* ADBOp */
-		0,			/* PMgrOp */
-		0,	/* ReadXParam */
+		(caddr_t)0x40809ae6,	/* PMgrOp */
+		(caddr_t)0x4080b186,	/* ReadXParam */
 	},
 	/*
 	 * Quadra 840AV (but ADBBase + 130 intr is unknown)
