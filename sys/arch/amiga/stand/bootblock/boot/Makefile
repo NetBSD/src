@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/06/23 20:44:54 is Exp $
+#	$NetBSD: Makefile,v 1.13 1997/07/14 15:03:05 veego Exp $
 
 ### what we need:
 
@@ -14,7 +14,8 @@ DIR_KERN_MD=	${DIR_TOP}/lib/libkern/arch/$(MACHINE_ARCH)
 .SUFFIXES:
 .SUFFIXES: .out .o .po .so .s .S .c .cc .C .f .y .l .ln .m4 .sh
 
-BOOTBLOCKS= xxboot				# XXX fdboot
+FILES= xxboot 				# XXX fdboot
+BINDIR=/usr/mdec
 
 COBJS = configure.o main.o console.o xd.o twiddle.o bzero.o gets.o
 COBJS+=  lseek.o open.o read.o close.o dev.o
@@ -30,7 +31,7 @@ DEFS = -DSTANDALONE -DINSECURE
 
 ### main target: ###
 
-all: ${BOOTBLOCKS}
+all: ${FILES}
 
 ### special  rules for bootblocks ###
 
@@ -80,16 +81,10 @@ fdstart.o: ${.CURDIR}/bbstart.s
 libboot.a: $(OBJS)
 	$(AR) r $@ $> && $(RANLIB) $@
 
-### install what we need: ###
-
-install: all
-	$(INSTALL) $(COPY) -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
-	    $(BOOTBLOCKS) ${DESTDIR}/usr/mdec
-
 .include <bsd.prog.mk>
 
 # make sure these are built:
 
 ${COBJS}: ${TXLT}
-${BOOTBLOCKS}: ${AOUT2BB}
+${FILES}: ${AOUT2BB}
 
