@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.21 1999/03/31 23:23:48 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.22 1999/04/04 17:17:31 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -254,6 +254,11 @@ pr_rmpage(pp, ph)
 	pp->pr_npages--;
 	pp->pr_npagefree++;
 
+	if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
+		LIST_REMOVE(ph, ph_hashlist);
+		pool_put(&phpool, ph);
+	}
+
 	if (pp->pr_curpage == ph) {
 		/*
 		 * Find a new non-empty page header, if any.
@@ -266,11 +271,6 @@ pr_rmpage(pp, ph)
 				break;
 
 		pp->pr_curpage = ph;
-	}
-
-	if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
-		LIST_REMOVE(ph, ph_hashlist);
-		pool_put(&phpool, ph);
 	}
 }
 
