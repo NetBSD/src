@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)syslogd.c	5.45 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: syslogd.c,v 1.3 1995/05/14 04:18:45 cgd Exp $";
+static char rcsid[] = "$Id: syslogd.c,v 1.4 1995/06/11 20:22:58 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -1043,11 +1043,9 @@ cfline(line, f)
 		(void) strcpy(f->f_un.f_forw.f_hname, ++p);
 		hp = gethostbyname(p);
 		if (hp == NULL) {
-			extern int h_errno, h_nerr;
-			extern char **h_errlist;
+			extern int h_errno;
 
-			logerror((u_int)h_errno < h_nerr ?
-			    h_errlist[h_errno] : "Unknown error");
+			logerror(hstrerror(h_errno));
 			break;
 		}
 		bzero((char *) &f->f_un.f_forw.f_addr,
