@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.89 1995/10/15 04:18:27 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.90 1995/10/15 05:58:44 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -652,10 +652,10 @@ child_return(p, frame)
 
 #ifdef COMPAT_LINUX
 	if (p->p_emul == &emul_linux_aout || p->p_emul == &emul_linux_elf) {
-		frame.tf_eax = 0
+		frame.tf_eax = 0;
 		frame.tf_edx = 0;
 	} else
-#else
+#endif
 	{
 		frame.tf_eax = p->p_pid;
 		frame.tf_edx = 1;
