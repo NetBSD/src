@@ -1,4 +1,5 @@
-/* BSD $Id: prom.c,v 1.1 1995/02/13 23:08:11 cgd Exp $ */
+/*	$NetBSD: prom.c,v 1.2 1995/02/16 02:32:56 cgd Exp $	*/
+
 /*  
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University

@@ -1,4 +1,4 @@
-#	@(#)Makefile	8.2 (Berkeley) 2/16/94
+#	$NetBSD: Makefile,v 1.2 1995/02/16 02:33:03 cgd Exp $
 
 LIB=	sa
 SRCS=	alloc.c bzero.c close.c dev.c devopen.c disklabel.c getfile.c \
