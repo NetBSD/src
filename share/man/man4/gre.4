@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.15 2001/09/11 00:08:27 wiz Exp $
+.\" $NetBSD: gre.4,v 1.16 2001/09/19 01:03:44 wiz Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,7 +120,6 @@ ones defined with
 .Ic ifconfig
 for the interface (as if IP is encapsulated), but need not be, as e.g. when
 encapsulating AppleTalk.
-.Pp
 .Sh EXAMPLES
 Configuration example:
 .Bd -literal
@@ -128,17 +127,17 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
           \\                                          |
            \\                                        /
              +------Host B----------Host C----------+
-
 .Ed
-   On host A (NetBSD):
-
+On host A
+.Ns ( Nx ) :
+.Bd -literal
    # route add default B
    # ifconfig greN  A D netmask 0xffffffff linkX up
    # greconfig -i greN -s A -d D
    # route add E D
-
-   On Host D (Cisco):
-
+.Ed
+On Host D (Cisco):
+.Bd -literal
    Interface TunnelX
     ip unnumbered D   ! e.g. address from Ethernet interface
     tunnel source D   ! e.g. address from Ethernet interface
@@ -146,22 +145,27 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
    ip route C <some interface and mask>
    ip route A mask C
    ip route X mask tunnelX
-
-   OR
-
-   On Host D (NetBSD):
-
+.Ed
+OR
+On Host D
+.Ns ( Nx ) :
+.Bd -literal
    # route add default C
    # ifconfig greN D A
+.Ed
 .Pp
 If all goes well, you should see packets flowing ;-)
 .Pp
 If you want to reach Host A over the tunnel (from the Cisco D), then
 you have to have an alias on Host A for e.g. the Ethernet interface like:
+.Bd -literal
      ifconfig <etherif> alias Y
- and on the cisco
+.Ed
+and on the cisco
+.Bd -literal
      ip route Y mask tunnelX
-.Sh NOTE
+.Ed
+.Sh NOTES
 For correct operation, the
 .Nm
 device needs a route to the destination, that is less specific than the
@@ -171,12 +175,13 @@ does not run over the tunnel, as this would be a loop ..)
 .Pp
 In order to
 .Ic ifconfig
-to actually mark the interface as up, the keyword ``up'' must be given
-last on its command line.
+to actually mark the interface as up, the keyword
+.Dq up
+must be given last on its command line.
 .Pp
 The kernel must be set to forward datagrams by either option
-``GATEWAY'' in the kernel config file or by issuing the appropriate
-option to
+.Dq GATEWAY
+in the kernel config file or by issuing the appropriate option to
 .Xr sysctl 8 .
 .Sh SEE ALSO
 .Xr atalk 4 ,
@@ -192,6 +197,8 @@ option to
 A description of GRE encapsulation can be found in RFC 1701, RFC 1702.
 .Pp
 A description of MOBILE encapsulation can be found in RFC 2004.
+.Sh AUTHORS
+.An Heiko W.Rupp Aq hwr@pilhuhn.de
 .Sh BUGS
 The compute_route() code in if_gre.c toggles the last bit of the
 IP-address to provoke the search for a less specific route than the
@@ -211,6 +218,3 @@ Traceroute does not work yet over the tunnel :(
 .Pp
 BPF does probably not yet work (it might, but last time I looked,
 it bombed, so I #if 0'd it out).
-.Pp
-.Sh AUTHORS
-Heiko W.Rupp <hwr@pilhuhn.de>
