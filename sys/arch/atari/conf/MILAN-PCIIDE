@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.22 2002/12/28 22:13:23 leo Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.23 2003/02/02 18:26:24 thomas Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
