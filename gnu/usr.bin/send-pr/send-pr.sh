@@ -82,9 +82,9 @@ else
   fi
 fi
 
-TEMP=`mktemp -t p`
-BAD=`mktemp -t pbad`
-REF=`mktemp -t pf`
+TEMP=`mktemp -t p` || exit 1
+BAD=`mktemp -t pbad` || exit 1
+REF=`mktemp -t pf` || exit 1
 
 # find a user name
 if [ "$LOGNAME" = "" ]; then
