@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.11 2001/04/05 12:18:09 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.12 2001/04/14 21:20:27 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -292,3 +292,11 @@ usr.sbin/xntp/xntpd/ntp_control.c		patch
 
   Fix a DoS attack (and possibly, but not confirmed, a root exploit)
   in ntpd.
+
+sys/netinet/ip_frag.c				1.23 via patch
+sys/netinet/ip_frag.h				1.16
+sys/netinet/ip_nat.c				1.39
+sys/netinet/ip_nat.h				1.23 via patch
+sys/netinet/ip_state.c				1.30 via patch
+
+  Fix bug related to fragment cache handling.
