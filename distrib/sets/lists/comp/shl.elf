@@ -1,7 +1,5 @@
-# $NetBSD: shl.elf,v 1.27 2002/03/17 22:14:08 tshiozak Exp $
-./usr/lib/crtbegin.o		comp-c-lib
+# $NetBSD: shl.elf,v 1.28 2002/03/26 22:58:18 fredette Exp $
 ./usr/lib/crtbeginS.o		comp-c-lib
-./usr/lib/crtend.o		comp-c-lib
 ./usr/lib/crtendS.o		comp-c-lib
 ./usr/lib/libasn1.so		comp-c-lib
 ./usr/lib/libbz2.so		comp-c-lib
