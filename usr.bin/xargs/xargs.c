@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)xargs.c	5.11 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: xargs.c,v 1.5 1993/08/27 22:31:12 jtc Exp $";
+static char rcsid[] = "$Id: xargs.c,v 1.6 1993/12/31 19:33:53 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,6 +53,7 @@ static char rcsid[] = "$Id: xargs.c,v 1.5 1993/08/27 22:31:12 jtc Exp $";
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <locale.h>
 #include "pathnames.h"
 
 int exit_status = 0;
@@ -71,6 +72,8 @@ main(argc, argv)
 	register char *p, *bbp, *ebp, **bxp, **exp, **xp;
 	int cnt, indouble, insingle, nargs, nflag, nline, xflag;
 	char **av, *argp;
+
+	setlocale(LC_ALL, "");
 
 	/*
 	 * POSIX.2 limits the exec line length to ARG_MAX - 2K.  Running that
