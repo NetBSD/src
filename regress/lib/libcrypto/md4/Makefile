@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/04/12 07:49:32 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/31 15:57:52 tv Exp $
 
 PROG=	md4test
 NOMAN=	yes
@@ -8,7 +8,7 @@ DPADD+=	${LIBCRYPTO}
 
 regress:	${PROG}
 	@echo "==> running ${PROG}"
-	@${.OBJDIR}/${PROG}
+	@./${PROG}
 
 .include <bsd.prog.mk>
 

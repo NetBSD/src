@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2000/12/08 19:22:51 drochner Exp $
+# $NetBSD: Makefile,v 1.2 2001/10/31 15:57:56 tv Exp $
 
 MKMAN=  no
 
@@ -8,7 +8,7 @@ TESTLIBDIR!=	cd ${.CURDIR}/../testlib; make print-objdir
 
 regress:
 	if [ -f ${TESTLIBDIR}/testlib.so ]; then \
-		${.OBJDIR}/dlopen ${TESTLIBDIR}/testlib.so >dlopen.out; \
+		./${PROG} ${TESTLIBDIR}/testlib.so >dlopen.out; \
 		tail +4 ${.CURDIR}/dlopen.exp | diff - dlopen.out; \
 	fi
 
