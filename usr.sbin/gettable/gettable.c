@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)gettable.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: gettable.c,v 1.4 1993/08/01 17:59:44 mycroft Exp $";
+static char rcsid[] = "$Id: gettable.c,v 1.5 1994/12/23 16:46:17 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ static char rcsid[] = "$Id: gettable.c,v 1.4 1993/08/01 17:59:44 mycroft Exp $";
 #include <netinet/in.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <netdb.h>
 
 #define	OUTFILE		"hosts.txt"	/* default output file */

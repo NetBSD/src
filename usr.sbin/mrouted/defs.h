@@ -8,7 +8,7 @@
  *
  *
  * From: Id: defs.h,v 1.4 1993/06/24 05:11:16 deering Exp
- *      $Id: defs.h,v 1.2 1994/05/08 15:08:52 brezak Exp $
+ *      $Id: defs.h,v 1.3 1994/12/23 16:50:27 cgd Exp $
  */
 
 
@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <syslog.h>
 #include <signal.h>
+#include <string.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
