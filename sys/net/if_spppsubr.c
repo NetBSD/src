@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.10 2000/05/16 05:45:27 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.11 2000/07/02 17:38:09 sommerfeld Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -57,6 +57,7 @@
 #include <net/netisr.h>
 #include <net/if_types.h>
 #include <net/route.h>
+#include <net/ppp_defs.h>
 
 #include <machine/stdarg.h>
 
@@ -126,19 +127,6 @@
 
 #define IFF_PASSIVE	IFF_LINK0	/* wait passively for connection */
 #define IFF_AUTO	IFF_LINK1	/* auto-dial on output */
-
-#define PPP_ALLSTATIONS 0xff		/* All-Stations broadcast address */
-#define PPP_UI		0x03		/* Unnumbered Information */
-#define PPP_IP		0x0021		/* Internet Protocol */
-#define PPP_ISO		0x0023		/* ISO OSI Protocol */
-#define PPP_XNS		0x0025		/* Xerox NS Protocol */
-#define PPP_IPX		0x002b		/* Novell IPX Protocol */
-#define PPP_IPV6	0x0057		/* Internet Protocol version 6 */
-#define PPP_LCP		0xc021		/* Link Control Protocol */
-#define PPP_PAP		0xc023		/* Password Authentication Protocol */
-#define PPP_CHAP	0xc223		/* Challenge-Handshake Auth Protocol */
-#define PPP_IPCP	0x8021		/* Internet Protocol Control Protocol */
-#define PPP_IPV6CP	0x8057		/* IPv6 Control Protocol */
 
 #define CONF_REQ	1		/* PPP configure request */
 #define CONF_ACK	2		/* PPP configure acknowledge */
