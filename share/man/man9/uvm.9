@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.48 2003/11/03 01:28:01 yamt Exp $
+.\"	$NetBSD: uvm.9,v 1.49 2003/11/03 08:07:36 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -711,8 +711,12 @@ at a new offset
 frees the physical page
 .Fa pg .
 If the content of the page is known to be zero-filled,
-caller should set PG_ZERO in pg->flags so that the page allocator will use
-the page to serve future UVM_PGA_ZERO requests efficiently.
+caller should set
+.Dv PG_ZERO
+in pg-\*[Gt]flags so that the page allocator will use
+the page to serve future
+.Dv UVM_PGA_ZERO
+requests efficiently.
 .Pp
 .Fn uvm_pglistalloc
 allocates a list of pages for size
@@ -749,8 +753,12 @@ list; the caller has to provide storage only, the list is initialized by
 frees the list of pages pointed to by
 .Fa list .
 If the content of the page is known to be zero-filled,
-caller should set PG_ZERO in pg->flags so that the page allocator will use
-the page to serve future UVM_PGA_ZERO requests efficiently.
+caller should set
+.Dv PG_ZERO
+in pg-\*[Gt]flags so that the page allocator will use
+the page to serve future
+.Dv UVM_PGA_ZERO
+requests efficiently.
 .Pp
 .Fn uvm_page_physload
 loads physical memory segments into VM space on the specified
