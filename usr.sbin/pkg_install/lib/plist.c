@@ -1,10 +1,10 @@
-/* $NetBSD: plist.c,v 1.3 1997/10/16 00:32:28 hubertf Exp $ */
+/* $NetBSD: plist.c,v 1.4 1997/10/16 00:50:46 hubertf Exp $ */
 
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: plist.c,v 1.3 1997/10/16 00:32:28 hubertf Exp $";
+static const char *rcsid = "$NetBSD: plist.c,v 1.4 1997/10/16 00:50:46 hubertf Exp $";
 #endif
 #endif
 
@@ -360,10 +360,16 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
     PackingList p;
     char *Where = ".", *last_file = "";
     Boolean fail = SUCCESS;
-    char tmp[FILENAME_MAX];
+    Boolean preserve;
+    char tmp[FILENAME_MAX], *name = NULL;
 
+    preserve = find_plist_option(pkg, "preserve") ? TRUE : FALSE;
     for (p = pkg->head; p; p = p->next) {
 	switch (p->type)  {
+	case PLIST_NAME:
+	    name = p->name;
+	    break;
+
 	case PLIST_IGNORE:
 	    p = p->next;
 	    break;
@@ -385,6 +391,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 	    break;
 
 	case PLIST_FILE:
+	    last_file = p->name;
 	    sprintf(tmp, "%s/%s", Where, p->name);
 	    if (isdir(tmp)) {
 		warnx("attempting to delete directory `%s' as a file\n"
@@ -409,13 +416,22 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 		}
 		if (Verbose)
 		    printf("Delete file %s\n", tmp);
-
-		if (!Fake && delete_hierarchy(tmp, ign_err, nukedirs)) {
-		    warn("preserve: unable to completely remove file '%s'", tmp);
+		if (!Fake) {
+		    if (delete_hierarchy(tmp, ign_err, nukedirs))
 		    fail = FAIL;
+		    if (preserve && name) {
+			char tmp2[FILENAME_MAX];
+			    
+			if (make_preserve_name(tmp2, FILENAME_MAX, name, tmp)) {
+			    if (fexists(tmp2)) {
+				if (rename(tmp2, tmp))
+				   warn("preserve: unable to restore %s as %s",
+					tmp2, tmp);
+			    }
+			}
+		    }
 		}
 	    }
-	    last_file = p->name;
 	    break;
 
 	case PLIST_DIR_RM:
