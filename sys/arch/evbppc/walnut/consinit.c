@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.5 2003/07/25 13:56:11 scw Exp $	*/
+/*	$NetBSD: consinit.c,v 1.6 2003/10/10 07:04:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5 2003/07/25 13:56:11 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6 2003/10/10 07:04:14 simonb Exp $");
 
 #include "opt_kgdb.h"
 
@@ -114,7 +114,7 @@ consinit(void)
 	/* We *know* the com-console attaches to opb */
 	tag = opb_get_bus_space_tag();
 
-	if (comcnattach(tag, CONADDR, CONSPEED, COM_FREQ*6,
+	if (comcnattach(tag, CONADDR, CONSPEED, COM_FREQ * 6,
 	    COM_TYPE_NORMAL, comcnmode))
 		panic("can't init serial console @%x", CONADDR);
 	else
