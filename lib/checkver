@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: checkver,v 1.7 1999/06/24 14:39:48 christos Exp $
+#	$NetBSD: checkver,v 1.8 1999/07/02 15:12:15 simonb Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,7 +61,7 @@
 # -v: Specify the filename of the shlib_version file.  Defaults
 #     to "./shlib_version".
 #
-# This script produces no output if all library version are not 
+# This script produces no output if all library version are not
 # large than the source version.  If an installed library with a
 # version greater than the source is found, checkver prints a
 # header and a list of the names of the offending installed libraries.
@@ -218,7 +218,7 @@ fi
 	fi
 	echo $instlib > /dev/stderr
 	error=1
-    fi 
+    fi
  done
 
 exit $error

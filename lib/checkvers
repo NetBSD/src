@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$NetBSD: checkvers,v 1.3 1999/01/27 05:50:29 erh Exp $
+#	$NetBSD: checkvers,v 1.4 1999/07/02 15:12:15 simonb Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,7 +46,7 @@
 # As with checkver, a list of directories of installed libraries
 # may be specified.  This will replace the default of "/usr/lib"
 # and search there instead.
-# 
+#
 # A library name may also be specified.  However, this script
 # will not work correctly if it finds shlib_version files
 # corresponding to a different library.
