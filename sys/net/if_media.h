@@ -1,7 +1,7 @@
-/*	$NetBSD: if_media.h,v 1.23 2000/03/06 20:50:29 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.24 2001/05/31 16:30:04 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -179,6 +179,8 @@ int	ifmedia_baudrate __P((int));
 #define	IFM_1000_CX	15		/* 1000baseCX - 150ohm STP */
 #define	IFM_1000_TX	16		/* 1000baseTX - 4 pair cat 5 */
 #define	IFM_HPNA_1	17		/* HomePNA 1.0 (1Mb/s) */
+
+#define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseTX) */
 
 /*
  * Token ring
@@ -399,6 +401,8 @@ struct ifmedia_description {
 	{ IFM_LOOP,			"loopback" },			\
 	{ IFM_LOOP,			"hw-loopback"},			\
 	{ IFM_LOOP,			"loop" },			\
+									\
+	{ IFM_ETHER|IFM_ETH_MASTER,	"master" },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_ETR,	"EarlyTokenRelease" },		\
 	{ IFM_TOKEN|IFM_TOK_ETR,	"ETR" },			\
