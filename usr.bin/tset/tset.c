@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.9 1999/12/20 14:36:11 kleink Exp $	*/
+/*	$NetBSD: tset.c,v 1.10 2000/05/31 05:50:06 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: tset.c,v 1.9 1999/12/20 14:36:11 kleink Exp $");
+__RCSID("$NetBSD: tset.c,v 1.10 2000/05/31 05:50:06 blymn Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,7 +80,8 @@ main(argc, argv)
 #ifdef TIOCGWINSZ
 	struct winsize win;
 #endif
-	int ch, noinit, noset, quiet, Sflag, sflag, showterm, usingupper;
+	int ch, extended, noinit, noset, quiet, Sflag, sflag, showterm;
+	int usingupper;
 	char savech, *p, *t, *tcapbuf;
 	const char *ttype;
 
@@ -101,8 +102,8 @@ main(argc, argv)
 	}
 
 	obsolete(argv);
-	noinit = noset = quiet = Sflag = sflag = showterm = 0;
-	while ((ch = getopt(argc, argv, "-a:d:e:Ii:k:m:np:QSrs")) != -1) {
+	noinit = noset = quiet = Sflag = sflag = showterm = extended = 0;
+	while ((ch = getopt(argc, argv, "-a:d:e:EIi:k:m:np:QSrs")) != -1) {
 		switch (ch) {
 		case '-':		/* display term only */
 			noset = 1;
@@ -117,6 +118,9 @@ main(argc, argv)
 			erasechar = optarg[0] == '^' && optarg[1] != '\0' ?
 			    optarg[1] == '?' ? '\177' : CTRL(optarg[1]) :
 			    optarg[0];
+			break;
+		case 'E':
+			extended = 1;
 			break;
 		case 'I':		/* no initialization strings */
 			noinit = 1;
@@ -162,7 +166,7 @@ main(argc, argv)
 	if (argc > 1)
 		usage();
 
-	ttype = get_termcap_entry(*argv, &tcapbuf);
+	ttype = get_termcap_entry(*argv, &tcapbuf, extended);
 
 	if (!noset) {
 		columns = tgetnum("co");
