@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.69 2000/07/08 01:55:24 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.70 2000/07/23 22:54:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.69 2000/07/08 01:55:24 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.70 2000/07/23 22:54:51 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,7 +289,7 @@ const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
 
 /* Reserve some descriptors, 3 stdio + at least: 1 log, 1 conf. file */
 #define FD_MARGIN	(8)
-typeof(((struct rlimit *)0)->rlim_cur)	rlim_ofile_cur = OPEN_MAX;
+rlim_t		rlim_ofile_cur = OPEN_MAX;
 
 #ifdef RLIMIT_NOFILE
 struct rlimit	rlim_ofile;
