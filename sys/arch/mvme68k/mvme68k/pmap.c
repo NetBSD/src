@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 2001/07/30 21:32:49 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.68 2001/08/05 09:45:39 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2039,10 +2039,15 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		pmap->pm_stats.wired_count--;
 	pmap->pm_stats.resident_count--;
 
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+#endif
 	if ((flags & PRM_CFLUSH)) {
 		DCFP(pa);
 		ICPP(pa);
 	}
+#endif
 
 	/*
 	 * Invalidate the PTE after saving the reference modify info.
