@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.135 2003/02/16 17:35:14 augustss Exp $
+# $NetBSD: GENERIC,v 1.136 2003/02/27 19:22:41 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.135 $"
+#ident 		"GENERIC-$Revision: 1.136 $"
 
 maxusers	16
 
@@ -623,3 +623,4 @@ pseudo-device	vlan
 
 ## Simple inter-network traffic bridging
 pseudo-device	bridge
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

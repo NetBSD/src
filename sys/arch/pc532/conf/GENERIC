@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.31 2002/10/14 18:39:36 elric Exp $
+# $NetBSD: GENERIC,v 1.32 2003/02/27 19:22:45 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.31 $"
+#ident 		"GENERIC-$Revision: 1.32 $"
 
 maxusers	8			# estimated number of users
 
@@ -102,6 +102,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	ccd		4	# Concatenated Disk Driver
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	rnd			# kernel random number generator

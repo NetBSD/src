@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.22 2002/11/22 12:21:05 wiz Exp $
+# $NetBSD: GENERIC,v 1.23 2003/02/27 19:22:47 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -239,6 +239,7 @@ pcons0	at mainbus0			# PROM console
 pseudo-device	loop		1	# network loopback
 #pseudo-device	bpfilter	8	# packet filter
 #pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	sl		2	# CSLIP
 #pseudo-device	ppp		2	# PPP
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
