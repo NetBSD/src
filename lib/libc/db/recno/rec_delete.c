@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_delete.c,v 1.12 2001/11/04 13:57:29 lukem Exp $	*/
+/*	$NetBSD: rec_delete.c,v 1.13 2003/08/07 16:42:44 agc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_delete.c	8.7 (Berkeley) 7/14/94";
 #else
-__RCSID("$NetBSD: rec_delete.c,v 1.12 2001/11/04 13:57:29 lukem Exp $");
+__RCSID("$NetBSD: rec_delete.c,v 1.13 2003/08/07 16:42:44 agc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

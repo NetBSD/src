@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.16 2002/11/11 01:17:20 thorpej Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.17 2003/08/07 16:42:41 agc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_open.c,v 1.16 2002/11/11 01:17:20 thorpej Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.17 2003/08/07 16:42:41 agc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
