@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 1999/09/10 07:31:18 ross Exp $
+# $NetBSD: Makefile,v 1.5 2000/07/21 21:25:19 jdolecek Exp $
 
 PROG = ustarboot
 
@@ -13,7 +13,7 @@ CPPFLAGS += ${UNIFIED_CPPFLAGS} \
 		  -D"blkdevioctl(x,y,z)=EINVAL" \
 		-DLIBSA_SINGLE_FILESYSTEM=ustarfs
 
-CLEANFILES+= vers.c vers.o ${PROG}.sym
+CLEANFILES+= ${PROG}.sym
 
 ${PROG}: ${PROG}.sym
 	@echo creating ${PROG} from ${PROG}.sym...
@@ -27,8 +27,6 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=yes
 .include "../Makefile.bootprogs"
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version
-	${COMPILE.c} vers.c
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
+	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 	${SIZE} ${PROG}.sym
