@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.5 1999/04/10 14:00:38 drochner Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.6 2000/06/25 13:26:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -48,11 +48,8 @@
 #include <miscfs/procfs/procfs.h>
 
 #include <vm/vm.h>
-#include <vm/vm_prot.h>
 #include <sys/lock.h>
 #include <vm/pmap.h>
-#include <vm/vm_map.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 
