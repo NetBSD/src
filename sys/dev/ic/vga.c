@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.5 1998/06/12 18:41:01 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.6 1998/06/20 21:55:06 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -87,7 +87,7 @@ static int	vga_alloc_attr __P((void *, int, int, int, long *));
 
 const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_cursor,
-	pcdisplay_putstr,
+	pcdisplay_putchar,
 	pcdisplay_copycols,
 	pcdisplay_erasecols,
 	pcdisplay_copyrows,
@@ -98,7 +98,7 @@ const struct wsdisplay_emulops vga_emulops = {
 /*
  * translate WS(=ANSI) color codes to standard pc ones
  */
-static char fgansitopc[] = {
+static unsigned char fgansitopc[] = {
 #ifdef __alpha__
 	/*
 	 * XXX DEC HAS SWITCHED THE CODES FOR BLUE AND RED!!!

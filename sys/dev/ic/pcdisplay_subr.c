@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.3 1998/06/17 20:48:02 drochner Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.4 1998/06/20 21:55:05 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -68,33 +68,53 @@ pcdisplay_cursor(id, on, row, col)
 	}
 }
 
+static u_char iso2ibm437[] =
+{
+           0,     0,     0,     0,     0,     0,     0,     0,
+           0,     0,     0,     0,     0,     0,     0,     0,
+           0,     0,     0,     0,     0,     0,     0,     0,
+           0,     0,     0,     0,     0,     0,     0,     0,
+        0xff,  0xad,  0x9b,  0x9c,     0,  0x9d,     0,  0x40,
+        0x6f,  0x63,  0x61,  0xae,     0,     0,     0,     0,
+        0xf8,  0xf1,  0xfd,  0x33,     0,  0xe6,     0,  0xfa,
+           0,  0x31,  0x6f,  0xaf,  0xac,  0xab,     0,  0xa8,
+        0x41,  0x41,  0x41,  0x41,  0x8e,  0x8f,  0x92,  0x80,
+        0x45,  0x90,  0x45,  0x45,  0x49,  0x49,  0x49,  0x49,
+        0x81,  0xa5,  0x4f,  0x4f,  0x4f,  0x4f,  0x99,  0x4f,
+        0x4f,  0x55,  0x55,  0x55,  0x9a,  0x59,     0,  0xe1,
+        0x85,  0xa0,  0x83,  0x61,  0x84,  0x86,  0x91,  0x87,
+        0x8a,  0x82,  0x88,  0x89,  0x8d,  0xa1,  0x8c,  0x8b,
+           0,  0xa4,  0x95,  0xa2,  0x93,  0x6f,  0x94,  0x6f,
+        0x6f,  0x97,  0xa3,  0x96,  0x81,  0x98,     0,     0
+};
+
 void
-pcdisplay_putstr(id, row, col, cp, len, attr)
+pcdisplay_putchar(id, row, col, c, attr)
 	void *id;
 	int row, col;
-	char *cp;
-	int len;
+	u_int c;
 	long attr;
 {
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
 	bus_space_handle_t memh = scr->hdl->ph_memh;
-	int i, off;
+	u_char dc;
+	int off;
+
+	if (c < 128)
+		dc = c;
+	else if (c < 256)
+		dc = iso2ibm437[c - 128];
+	else
+		return;
 
 	off = row * scr->type->ncols + col;
 
-	if (scr->active) {
-		off *= 2;
-
-		for (i = 0; i < len; i++, cp++, off += 2)
-			bus_space_write_2(memt, memh, off,
-					  (attr << 8) | (u_char)*cp);
-	} else {
-		u_int16_t *m = &scr->mem[off];
-
-		for (i = 0; i < len; i++, cp++)
-			*m++ = (u_char)*cp | (attr << 8);
-	}
+	if (scr->active)
+		bus_space_write_2(memt, memh, off * 2,
+				  dc | (attr << 8));
+	else
+		scr->mem[off] = dc | (attr << 8);
 }
 
 void
