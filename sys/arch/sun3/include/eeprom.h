@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.10 1996/11/20 18:57:09 gwr Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.11 1996/12/17 21:11:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -179,6 +179,9 @@ struct eeprom {
 #ifdef	_KERNEL
 /* Value of eeConsole (for convenience of drivers). */
 extern int ee_console;
+
 /* Function to get other bytes. */
-extern int ee_get_byte(int off, int canwait);
+extern int ee_get_byte __P((int off, int canwait));
+extern int eeprom_uio __P((struct uio *uio));
+
 #endif	/* _KERNEL */

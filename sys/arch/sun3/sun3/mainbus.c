@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 1996/11/20 18:57:34 gwr Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 1996/12/17 21:11:35 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <machine/autoconf.h>
 
-static int 	main_match __P((struct device *, void *, void *));
+static int 	main_match __P((struct device *, struct cfdata *, void *));
 static void	main_attach __P((struct device *, struct device *, void *));
 
 struct cfattach mainbus_ca = {
@@ -57,9 +57,10 @@ struct cfdriver mainbus_cd = {
  * Probe for the mainbus; always succeeds.
  */
 static int
-main_match(parent, match, aux)
+main_match(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 
 	return 1;
@@ -85,7 +86,6 @@ main_attach(parent, self, args)
 	void *args;
 {
 	struct confargs ca;
-	struct cfdata *new_match;
 	int i;
 
 	printf("\n");
