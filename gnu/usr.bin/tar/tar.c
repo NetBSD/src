@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tar.c,v 1.12 2000/06/26 08:25:34 kleink Exp $";
+static char rcsid[] = "$NetBSD: tar.c,v 1.13 2000/07/05 11:57:57 ad Exp $";
 #endif /* not lint */
 
 /*
@@ -170,6 +170,8 @@ struct option long_options[] =
   {"compress", 0, 0, 'Z'},
   {"uncompress", 0, 0, 'Z'},
   {"block-compress", 0, &f_compress_block, 1},
+  {"bzip2", 0, 0, 'y'},
+  {"unbzip2", 0, 0, 'y'},
   {"gzip", 0, 0, 'z'},
   {"ungzip", 0, 0, 'z'},
   {"use-compress-program", 1, 0, 18},
@@ -314,7 +316,7 @@ options (argc, argv)
 
   /* Parse options */
   while ((c = getoldopt (argc, argv,
-	       "-01234567Ab:BcC:df:F:g:GhikK:lL:mMN:oOpPrRsStT:uvV:wWxX:zZ",
+	       "-01234567Ab:BcC:df:F:g:GhikK:lL:mMN:oOpPrRsStT:uvV:wWxX:yzZ",
 			 long_options, &ind)) != EOF)
     {
       switch (c)
@@ -629,6 +631,15 @@ options (argc, argv)
 	  add_exclude_file (optarg);
 	  break;
 
+	case 'y':
+	  if (f_compressprog)
+	    {
+	      msg ("Only one compression option permitted\n");
+	      exit (EX_ARGSBAD);
+	    }
+	  f_compressprog = "bzip2";
+	  break;
+
 	case 'z':
 	  if (f_compressprog)
 	    {
@@ -671,7 +682,7 @@ options (argc, argv)
   if (f_compress_block && !f_compressprog)
     {
       msg ("You must use a compression option (--gzip, --compress\n\
-or --use-compress-program) with --block-compress.\n");
+--bzip2 or --use-compress-program) with --block-compress.\n");
       exit (EX_ARGSBAD);
     }
 }
@@ -761,6 +772,8 @@ Other options:\n\
 -W, --verify		attempt to verify the archive after writing it\n\
 --exclude FILE		exclude file FILE\n\
 -X, --exclude-from FILE	exclude files listed in FILE\n\
+-y, --bzip2,\n\
+    --unbzip2		filter the archive through bzip2\n\
 -Z, --compress,\n\
     --uncompress      	filter the archive through compress\n\
 -z, --gzip,\n\
