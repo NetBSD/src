@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.37 1999/11/01 22:22:33 is Exp $	*/
+/*	$NetBSD: sbic.c,v 1.38 2000/01/18 19:33:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -84,7 +84,6 @@
 #define	SBIC_DATA_WAIT	50000	/* wait per data in/out step */
 #define	SBIC_INIT_WAIT	50000	/* wait per step (both) during init */
 
-#define	b_cylin		b_resid
 #define SBIC_WAIT(regs, until, timeo) sbicwait(regs, until, timeo, __LINE__)
 
 int  sbicicmd __P((struct sbic_softc *, int, int, void *, int, void *, int));
