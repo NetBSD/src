@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	8.3 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: savecore.c,v 1.15 1994/09/17 00:23:00 mycroft Exp $";
+static char *rcsid = "$Id: savecore.c,v 1.16 1994/09/18 03:40:44 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -319,6 +319,8 @@ dump_exists()
 
 char buf[1024 * 1024];
 
+FILE *zopen __P((char *, char *, int));
+
 void
 save_core()
 {
@@ -375,7 +377,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	Lseek(ifd, (off_t)dumplo, L_SET);
 
 	/* Copy the core file. */
-	dumpsize *= NBPG;
+	dumpsize *= getpagesize();
 	syslog(LOG_NOTICE, "writing %score to %s",
 	    compress ? "compressed " : "", path);
 	for (; dumpsize > 0; dumpsize -= nr) {
