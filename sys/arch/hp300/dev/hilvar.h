@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.11 1995/12/11 19:41:47 thorpej Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.12 1997/03/31 07:34:22 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,3 +117,13 @@ struct hil_softc {
 #define KBD_RAW		0x01		/* keyboard is raw */
 #define KBD_AR1		0x02		/* keyboard auto-repeat rate 1 */
 #define KBD_AR2		0x04		/* keyboard auto-repeat rate 2 */
+
+#ifdef _KERNEL
+void	kbdbell __P((int));
+void	kbdenable __P((int));
+void	kbddisable __P((int));
+int	kbdgetc __P((int *));
+void	kbdcninit __P((void));
+
+int	kbdnmi __P((int));
+#endif /* _KERNEL */

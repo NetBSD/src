@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.11 1997/01/30 09:14:16 thorpej Exp $	*/
+/*	$NetBSD: ppi.c,v 1.12 1997/03/31 07:37:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -42,11 +42,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
-#include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
 
 #include <hp300/dev/hpibvar.h>
 
@@ -164,7 +165,7 @@ ppiopen(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	register int unit = UNIT(dev);
+	int unit = UNIT(dev);
 	struct ppi_softc *sc;
 
 	if (unit >= ppi_cd.cd_ndevs ||
@@ -193,7 +194,7 @@ ppiclose(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	register int unit = UNIT(dev);
+	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
 
 #ifdef DEBUG
@@ -264,12 +265,12 @@ ppiwrite(dev, uio, flags)
 int
 ppirw(dev, uio)
 	dev_t dev;
-	register struct uio *uio;
+	struct uio *uio;
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
-	register int s, len, cnt;
-	register char *cp;
+	int s, len, cnt;
+	char *cp;
 	int error = 0, gotdata = 0;
 	int buflen, ctlr, slave;
 	char *buf;
@@ -293,6 +294,7 @@ ppirw(dev, uio)
 		sc->sc_flags |= PPIF_TIMO;
 		timeout(ppitimo, sc, sc->sc_timo);
 	}
+	len = cnt = 0;
 	while (uio->uio_resid > 0) {
 		len = min(buflen, uio->uio_resid);
 		cp = buf;
@@ -372,7 +374,7 @@ again:
 		if (sc->sc_delay > 0) {
 			sc->sc_flags |= PPIF_DELAY;
 			timeout(ppistart, sc, sc->sc_delay);
-			error = tsleep(sc, PCATCH|PZERO+1, "hpib", 0);
+			error = tsleep(sc, (PCATCH|PZERO) + 1, "hpib", 0);
 			if (error) {
 				splx(s);
 				break;
@@ -463,7 +465,7 @@ ppihztoms(h)
 	int h;
 {
 	extern int hz;
-	register int m = h;
+	int m = h;
 
 	if (m > 0)
 		m = m * 1000 / hz;
@@ -475,7 +477,7 @@ ppimstohz(m)
 	int m;
 {
 	extern int hz;
-	register int h = m;
+	int h = m;
 
 	if (h > 0) {
 		h = h * hz / 1000;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.10 1997/01/30 09:18:50 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.11 1997/03/31 07:34:18 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -84,6 +84,10 @@ void	topcat_intio_attach __P((struct device *, struct device *, void *));
 
 int	topcat_dio_match __P((struct device *, struct cfdata *, void *));
 void	topcat_dio_attach __P((struct device *, struct device *, void *));
+
+int	topcat_console_scan __P((int, caddr_t, void *));
+void	topcatcnprobe __P((struct consdev *cp));
+void	topcatcninit __P((struct consdev *cp));
 
 struct cfattach topcat_intio_ca = {
 	sizeof(struct grfdev_softc), topcat_intio_match, topcat_intio_attach
@@ -276,7 +280,7 @@ tc_init(gp, scode, addr)
 	int scode;
 	caddr_t addr;
 {
-	register struct tcboxfb *tp = (struct tcboxfb *) addr;
+	struct tcboxfb *tp = (struct tcboxfb *) addr;
 	struct grfinfo *gi = &gp->g_display;
 	volatile u_char *fbp;
 	u_char save;
@@ -302,7 +306,7 @@ tc_init(gp, scode, addr)
 			 * For DIO II space the fbaddr just computed is the
 			 * offset from the select code base (regaddr) of the
 			 * framebuffer.  Hence it is also implicitly the
-			 * size of the register set.
+			 * size of the set.
 			 */
 			gi->gd_regsize = (int) gi->gd_fbaddr;
 			gi->gd_fbaddr += (int) gi->gd_regaddr;
@@ -601,10 +605,10 @@ topcat_scroll(ip, sy, sx, count, dir)
         struct ite_data *ip;
         int sy, count, dir, sx;
 {
-	register int dy;
-	register int dx = sx;
-	register int height = 1;
-	register int width = ip->cols;
+	int dy;
+	int dx = sx;
+	int height = 1;
+	int width = ip->cols;
 
 	if (dir == SCROLL_UP) {
 		dy = sy - count;
@@ -636,7 +640,7 @@ topcat_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	struct ite_data *ip;
 	int sy, sx, dy, dx, h, w, func;
 {
-  	register struct tcboxfb *rp = REGBASE;
+  	struct tcboxfb *rp = REGBASE;
 	
 	if (h == 0 || w == 0)
 		return;
