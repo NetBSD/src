@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.99 1998/01/31 10:32:49 ross Exp $ */
+/* $NetBSD: machdep.c,v 1.100 1998/02/10 03:52:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 1998/01/31 10:32:49 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 1998/02/10 03:52:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,9 +182,9 @@ struct bootinfo bootinfo;
 
 struct platform platform;
 
-u_int32_t vm_mbuf_size = (NMBCLUSTERS*MCLBYTES);
-u_int32_t vm_kmem_size = (NKMEMCLUSTERS*CLBYTES);
-u_int32_t vm_phys_size = (USRIOSIZE*CLBYTES);
+u_int32_t vm_mbuf_size = _VM_MBUF_SIZE;
+u_int32_t vm_kmem_size = _VM_KMEM_SIZE;
+u_int32_t vm_phys_size = _VM_PHYS_SIZE;
 
 #ifdef DDB
 /* start and end of kernel symbol table */
