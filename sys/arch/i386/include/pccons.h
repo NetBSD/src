@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.h,v 1.6 1997/08/23 14:10:15 drochner Exp $	*/
+/*	$NetBSD: pccons.h,v 1.7 1998/03/22 17:49:00 drochner Exp $	*/
 
 /*
  * pccons.h -- pccons ioctl definitions
@@ -16,6 +16,13 @@
 
 #ifdef _KERNEL
 int pccnattach __P((void));
+
+#include "pckbc.h"
+#if (NPCKBC > 0)
+#include <dev/isa/pckbcvar.h>
+int pcconskbd_cnattach __P((pckbc_tag_t, pckbc_slot_t));
 #endif
+
+#endif /* _KERNEL */
 
 #endif /* _PCCONS_H_ */
