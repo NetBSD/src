@@ -1,4 +1,4 @@
-/* $Id: iwm_mod.c,v 1.1 1999/03/26 22:25:40 scottr Exp $ */
+/*	$NetBSD: iwm_mod.c,v 1.2 1999/03/27 05:48:53 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
