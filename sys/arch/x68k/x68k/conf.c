@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26.2.3 2002/06/23 17:43:24 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.26.2.4 2002/06/24 07:05:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -84,14 +84,6 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRAID,raid),	/* 16: RAIDframe disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
-
-/* open, close, read, write, ioctl, tty, poll, kqfilter */
-/* XXXLUKEM: implement stop, and this can be cdev__tty_init */
-#define cdev_ite_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
-	dev_init(c,n,tty), dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
-	dev_init(c,n,kqfilter), D_TTY }
 
 /* open, close, write, ioctl */
 #define	cdev_par_init(c,n)	cdev__ocwi_init(c,n)
@@ -191,7 +183,7 @@ struct cdevsw	cdevsw[] =
 	cdev_grf_init(NGRF,grf),	/* 10: frame buffer */
 	cdev_par_init(NPAR,par),	/* 11: parallel interface */
 	cdev_tty_init(NZSTTY,zs),	/* 12: zs serial */
-	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
+	cdev_tty_init(NITE,ite),	/* 13: console terminal emulator */
 #if NKBD > 0
 	cdev__ocrwip_init(1,kbd),	/* 14: /dev/kbd */
 #else
