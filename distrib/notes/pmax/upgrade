@@ -1,5 +1,6 @@
 It may be possible to easily upgrade your existing NetBSD/pmax system
 using the upgrade program in the miniroot.
+
 	NOTE: this has not been tested and should be done with caution,
 	after backing up your system.
 
@@ -69,7 +70,7 @@ manually.  To do this, follow the following procedure:
 	  the `base' binary set:
 
 		cd /
-		tar --unlink -zxvpf /path/to/base11.tar.gz
+		tar --unlink -zxvpf /path/to/base12.tar.gz
 
 	  NOTE: the `--unlink' option is _very_ important!
 
