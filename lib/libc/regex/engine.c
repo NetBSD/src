@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.15 2003/08/07 16:43:19 agc Exp $	*/
+/*	$NetBSD: engine.c,v 1.16 2004/03/12 22:34:09 enami Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -622,22 +622,23 @@ sopno lev;			/* PLUS nesting level */
 				return(NULL);
 			break;
 		case OBOW:
-			if (( (sp == m->beginp && !(m->eflags&REG_NOTBOL)) ||
-					(sp < m->endp && *(sp-1) == '\n' &&
-						(m->g->cflags&REG_NEWLINE)) ||
-					(sp > m->beginp &&
-							!ISWORD(*(sp-1))) ) &&
-					(sp < m->endp && ISWORD(*sp)) )
+			if (((sp == m->beginp && !(m->eflags&REG_NOTBOL)) ||
+			    (sp < m->endp && *(sp - 1) == '\n' &&
+			    (m->g->cflags&REG_NEWLINE)) ||
+			    (sp > m->beginp &&
+			    !ISWORD(*(unsigned char *)(sp - 1)))) &&
+			    (sp < m->endp && ISWORD(*(unsigned char *)sp)))
 				{ /* yes */ }
 			else
 				return(NULL);
 			break;
 		case OEOW:
-			if (( (sp == m->endp && !(m->eflags&REG_NOTEOL)) ||
-					(sp < m->endp && *sp == '\n' &&
-						(m->g->cflags&REG_NEWLINE)) ||
-					(sp < m->endp && !ISWORD(*sp)) ) &&
-					(sp > m->beginp && ISWORD(*(sp-1))) )
+			if (((sp == m->endp && !(m->eflags&REG_NOTEOL)) ||
+			    (sp < m->endp && *sp == '\n' &&
+			    (m->g->cflags&REG_NEWLINE)) ||
+			    (sp < m->endp && !ISWORD(*(unsigned char *)sp))) &&
+			    (sp > m->beginp &&
+			    ISWORD(*(unsigned char *)(sp - 1))))
 				{ /* yes */ }
 			else
 				return(NULL);
@@ -778,7 +779,7 @@ sopno stopst;
 	states fresh = m->fresh;
 	states tmp = m->tmp;
 	char *p = start;
-	int c = (start == m->beginp) ? OUT : *(start-1);
+	int c = (start == m->beginp) ? OUT : *(unsigned char *)(start - 1);
 	int lastc;	/* previous c */
 	int flagch;
 	int i;
@@ -797,7 +798,7 @@ sopno stopst;
 	for (;;) {
 		/* next character */
 		lastc = c;
-		c = (p == m->endp) ? OUT : *p;
+		c = (p == m->endp) ? OUT : *(unsigned char *)p;
 		if (EQ(st, fresh))
 			coldp = p;
 
@@ -873,7 +874,7 @@ sopno stopst;
 	states empty = m->empty;
 	states tmp = m->tmp;
 	char *p = start;
-	int c = (start == m->beginp) ? OUT : *(start-1);
+	int c = (start == m->beginp) ? OUT : *(unsigned char *)(start - 1);
 	int lastc;	/* previous c */
 	int flagch;
 	int i;
@@ -892,7 +893,7 @@ sopno stopst;
 	for (;;) {
 		/* next character */
 		lastc = c;
-		c = (p == m->endp) ? OUT : *p;
+		c = (p == m->endp) ? OUT : *(unsigned char *)p;
 
 		/* is there an EOL and/or BOL between lastc and c? */
 		flagch = '\0';
