@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.95 1998/09/13 22:28:16 pk Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.96 1998/09/14 21:05:46 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1289,7 +1289,7 @@ sunos_sys_sigvec(p, v, retval)
 
 	if (SCARG(uap, osv)) {
 		compat_43_sigaction_to_sigvec(&osa, &osv);
-		error = copyout(SCARG(uap, osv), &osv, sizeof(osv));
+		error = copyout(&osv, SCARG(uap, osv), sizeof(osv));
 		if (error != 0)
 			return (error);
 	}
