@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.c,v 1.4 1997/09/20 12:13:01 drochner Exp $	*/
+/*	$NetBSD: 3c509.c,v 1.5 1998/05/14 18:15:02 drochner Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -33,7 +33,9 @@ Author: Martin Renters.
 #include <lib/libkern/libkern.h>
 
 #include <libi386.h>
+#ifdef _STANDALONE
 #include <bootinfo.h>
+#endif
 
 #include "etherdrv.h"
 #include "3c509.h"
@@ -59,7 +61,13 @@ static struct mtabentry {
     {1, IS_AUI, "AUI"},
 };
 
+#ifdef _STANDALONE
 static struct btinfo_netif bi_netif;
+#endif
+
+#ifndef _STANDALONE
+extern int mapio __P((void));
+#endif
 
 /**************************************************************************
 ETH_PROBE - Look for an adapter
@@ -75,6 +83,13 @@ char *myadr;
 /*	int ep_current_tag = EP_LAST_TAG + 1; */
 	short *p;
 	struct mtabentry *m;
+
+#ifndef _STANDALONE
+	if (mapio()) {
+		printf("no IO access\n");
+		return (0);
+	}
+#endif
 
 	/*********************************************************
 			Search for 3Com 509 card
@@ -162,11 +177,13 @@ ok:
 
 	epreset();
 
+#ifdef _STANDALONE
 	strncpy(bi_netif.ifname, "ep", sizeof(bi_netif.ifname));
 	bi_netif.bus = BI_BUS_ISA;
 	bi_netif.addr.iobase = eth_base;
 
 	BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
+#endif
 
 	return(1);
 }
