@@ -1,4 +1,4 @@
-/* $NetBSD: intrcnt.h,v 1.11 1998/04/15 00:47:33 mjacob Exp $ */
+/* $NetBSD: intrcnt.h,v 1.12 1998/04/29 00:34:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -140,8 +140,8 @@
 		ASCIZ "kn300 irq 4";					\
 		ASCIZ "kn300 irq 5";					\
 		ASCIZ "kn300 irq 6";					\
-		ASCIZ "kn300 irq 7";					\
-/* 0x70 */	ASCIZ "kn300 irq 8";					\
+/* 0x70 */	ASCIZ "kn300 irq 7";					\
+		ASCIZ "kn300 irq 8";					\
 		ASCIZ "kn300 irq 9";					\
 		ASCIZ "kn300 irq 10";					\
 		ASCIZ "kn300 irq 11";					\
@@ -151,7 +151,39 @@
 		ASCIZ "kn300 irq 15";					\
 		ASCIZ "kn300 ncr810";					\
 		ASCIZ "kn300 i2c ctrl";					\
-		ASCIZ "kn300 i2c bus";
+		ASCIZ "kn300 i2c bus";					\
+		ASCIZ "eb64+ irq 0";					\
+		ASCIZ "eb64+ irq 1";					\
+		ASCIZ "eb64+ irq 2";					\
+		ASCIZ "eb64+ irq 3";					\
+/* 0x80 */	ASCIZ "eb64+ irq 4";					\
+		ASCIZ "eb64+ irq 5";					\
+		ASCIZ "eb64+ irq 6";					\
+		ASCIZ "eb64+ irq 7";					\
+		ASCIZ "eb64+ irq 8";					\
+		ASCIZ "eb64+ irq 9";					\
+		ASCIZ "eb64+ irq 10";					\
+		ASCIZ "eb64+ irq 11";					\
+		ASCIZ "eb64+ irq 12";					\
+		ASCIZ "eb64+ irq 13";					\
+		ASCIZ "eb64+ irq 14";					\
+		ASCIZ "eb64+ irq 15";					\
+		ASCIZ "eb64+ irq 16";					\
+		ASCIZ "eb64+ irq 17";					\
+		ASCIZ "eb64+ irq 18";					\
+		ASCIZ "eb64+ irq 19";					\
+/* 0x90 */	ASCIZ "eb64+ irq 20";					\
+		ASCIZ "eb64+ irq 21";					\
+		ASCIZ "eb64+ irq 22";					\
+		ASCIZ "eb64+ irq 23";					\
+		ASCIZ "eb64+ irq 24";					\
+		ASCIZ "eb64+ irq 25";					\
+		ASCIZ "eb64+ irq 26";					\
+		ASCIZ "eb64+ irq 27";					\
+		ASCIZ "eb64+ irq 28";					\
+		ASCIZ "eb64+ irq 29";					\
+		ASCIZ "eb64+ irq 30";					\
+		ASCIZ "eb64+ irq 31";
 
 #define INTRCNT_DEFINITION						\
 /* 0x00 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
@@ -161,7 +193,9 @@
 /* 0x40 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x50 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x60 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x70 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+/* 0x70 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x80 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x90 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
 #define	INTRCNT_CLOCK		0
 #define	INTRCNT_ISA_IRQ		(INTRCNT_CLOCK + 1)
@@ -187,7 +221,8 @@
 #	define	INTRCNT_KN300_I2C_CTRL	INTRCNT_KN300_IRQ + 17
 #	define	INTRCNT_KN300_I2C_BUS	INTRCNT_KN300_IRQ + 18
 #define	INTRCNT_KN300_LEN	19
-
+#define	INTRCNT_EB64PLUS_IRQ	(INTRCNT_KN300_IRQ + INTRCNT_KN300_LEN)
+#define	INTRCNT_EB64PLUS_IRQ_LEN 32
 #ifndef _LOCORE
 extern volatile long intrcnt[];
 #endif
