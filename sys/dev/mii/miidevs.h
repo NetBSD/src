@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.18 2001/05/15 23:18:16 matt Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.19 2001/05/17 17:39:30 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.18 2001/05/15 23:17:48 matt Exp 
+ *	NetBSD: miidevs,v 1.19 2001/05/17 17:39:00 drochner Exp 
  */
 
 /*-
@@ -69,7 +69,7 @@
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
-#define	MII_OUI_PMCSIERRA	0x0009c0	/* PMC-Sierra */
+#define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
@@ -98,6 +98,7 @@
 
 /* Don't know what's going on here. */
 #define	MII_OUI_xxDAVICOM	0x000602	/* Davicom Semiconductor */
+#define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
 
 /* Contrived vendor for dcphy */
 #define	MII_OUI_xxDEC	0x040440	/* Digital Clone */
@@ -171,9 +172,9 @@
 #define	MII_MODEL_xxNATSEMI_DP83861	0x0006
 #define	MII_STR_xxNATSEMI_DP83861	"DP83861 1000baseTX PHY"
 
-/* Quality Semiconductor PHYs */
-#define	MII_MODEL_PMCSIERRA_PM8351	0x0000
-#define	MII_STR_PMCSIERRA_PM8351	"PM8351 OctalPHY Gigabit interface"
+/* PMC Sierra PHYs */
+#define	MII_MODEL_xxPMCSIERRA_PM8351	0x0000
+#define	MII_STR_xxPMCSIERRA_PM8351	"PM8351 OctalPHY Gigabit interface"
 
 /* Quality Semiconductor PHYs */
 #define	MII_MODEL_xxQUALSEMI_QS6612	0x0000
