@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.13 2003/10/27 22:29:59 lukem Exp $ */
+/* $NetBSD: i386.c,v 1.14 2004/03/13 22:51:50 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.13 2003/10/27 22:29:59 lukem Exp $");
+__RCSID("$NetBSD: i386.c,v 1.14 2004/03/13 22:51:50 dsl Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -220,6 +220,8 @@ i386_setboot(ib_params *params)
 		MD5Final(bp->bp_password, &md5ctx);
 		bp->bp_flags |= htole32(X86_BP_FLAGS_PASSWORD);
 	}
+	if (params->flags & IB_KEYMAP)
+		strlcpy(bp->bp_keymap, params->keymap, sizeof bp->bp_keymap);
 
 	if (params->flags & IB_NOWRITE) {
 		retval = 1;
