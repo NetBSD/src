@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.28 1996/10/14 03:04:32 mhitch Exp $	*/
+/*	$NetBSD: genassym.c,v 1.29 1996/12/17 07:32:55 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -132,6 +132,10 @@ main()
 	printf("#define\tDC_CLEAR %d\n", DC_CLEAR);
 	printf("#define\tCACHE40_ON %d\n", CACHE40_ON);
 	printf("#define\tCACHE40_OFF %d\n", CACHE40_OFF);
+	printf("#define\tCACHE60_ON %d\n", CACHE60_ON);
+	printf("#define\tCACHE60_OFF %d\n", CACHE60_OFF);
+	printf("#define\tIC60_CUBC %d\n", IC60_CUBC);
+	printf("#define\tIC60_CABC %d\n", IC60_CABC);
 	printf("#define\tPG_V %d\n", PG_V);
 	printf("#define\tPG_NV %d\n", PG_NV);
 	printf("#define\tPG_RO %d\n", PG_RO);
