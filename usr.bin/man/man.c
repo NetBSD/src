@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.27 2002/03/14 05:24:14 groo Exp $	*/
+/*	$NetBSD: man.c,v 1.28 2002/06/11 04:39:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.27 2002/03/14 05:24:14 groo Exp $");
+__RCSID("$NetBSD: man.c,v 1.28 2002/06/11 04:39:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,8 +180,7 @@ main(argc, argv)
 	}
 
 	/* create an empty _default list if the config file didn't have one */
-	if ((defp = getlist("_default")) == NULL)
-		defp = addlist("_default");
+	defp = getlist("_default", 1);
 
 	/* if -M wasn't specified, check for MANPATH */
 	if (p_path == NULL)
@@ -193,12 +192,12 @@ main(argc, argv)
 	 * relative) paths in the man.conf file.
 	 */
 	if ((argc > 1 || sectionname != NULL) &&
-	    (section = getlist(sectionname ? sectionname : *argv)) != NULL) {
+	    (section = getlist(sectionname ? sectionname : *argv, 0)) != NULL) {
 		if (sectionname == NULL) {
 			argv++;
 			argc--;
 		}
-		abs_section = (TAILQ_FIRST(&section->list) != NULL &&
+		abs_section = (! TAILQ_EMPTY(&section->list) &&
 		    *(TAILQ_FIRST(&section->list)->s) == '/');
 	} else {
 		section = NULL;
@@ -206,9 +205,7 @@ main(argc, argv)
 	}
 
 	/* get subdir list */
-	subp = getlist("_subdir");
-	if (!subp)
-		subp = addlist("_subdir");
+	subp = getlist("_subdir", 1);
 
 	/*
 	 * now that we have all the inputs we must generate a search path.
@@ -243,13 +240,11 @@ main(argc, argv)
 	 * for backward compat, we do not append subp if abs_section
 	 * and the path does not end in "/".
 	 */
-	newpathp = addlist("_new_path");
+	newpathp = getlist("_new_path", 1);
 	if (p_path) {
 		/* use p_path */
 		for (; (p = strtok(p_path, ":")) != NULL; p_path = NULL) {
-			for ( e_subp = TAILQ_FIRST(&subp->list) ;
-			      e_subp != NULL ;
-			      e_subp = TAILQ_NEXT(e_subp, q)) {
+			TAILQ_FOREACH(e_subp, &subp->list, q) {
 				snprintf(buf, sizeof(buf), "%s/%s{/%s,}",
 					 p, e_subp->s, machine);
 				addentry(newpathp, buf, 0);
@@ -257,9 +252,7 @@ main(argc, argv)
 		}
 	} else {
 		/* use defp rather than p_path */
-		for (e_defp = TAILQ_FIRST(&defp->list) ;
-		     e_defp != NULL ;
-		     e_defp = TAILQ_NEXT(e_defp, q)) {
+		TAILQ_FOREACH(e_defp, &defp->list, q) {
 
 			/* handle trailing "/" magic here ... */
 		  	if (abs_section &&
@@ -271,9 +264,7 @@ main(argc, argv)
 				continue;
 			}
 
-			for ( e_subp = TAILQ_FIRST(&subp->list) ;
-			      e_subp != NULL ;
-			      e_subp = TAILQ_NEXT(e_subp, q)) {
+			TAILQ_FOREACH(e_subp, &subp->list, q) {
 				snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 					 e_defp->s, (abs_section) ? "" : "/",
 					 e_subp->s, machine);
@@ -292,9 +283,7 @@ main(argc, argv)
 
 	if (p_add) {
 		for (p = strtok(p_add, ":") ; p ; p = strtok(NULL, ":")) {
-			for ( e_subp = TAILQ_FIRST(&subp->list) ;
-			      e_subp != NULL ;
-			      e_subp = TAILQ_NEXT(e_subp, q)) {
+			TAILQ_FOREACH(e_subp, &subp->list, q) {
 				snprintf(buf, sizeof(buf), "%s/%s{/%s,}",
 					 p, e_subp->s, machine);
 				addentry(newpathp, buf, 1);
@@ -427,8 +416,7 @@ manual(page, tag, pg, pathsearch)
 	*eptr = '\0';
 
 	/* For each element in the list... */
-	e_tag = tag == NULL ? NULL : tag->list.tqh_first;
-	for (; e_tag != NULL; e_tag = e_tag->q.tqe_next) {
+	TAILQ_FOREACH(e_tag, &tag->list, q) {
 		(void)snprintf(buf, sizeof(buf), "%s/%s.*", e_tag->s, escpage);
 		if ((error = glob(buf,
 		    GLOB_APPEND | GLOB_BRACE | GLOB_NOSORT, NULL, pg)) != 0) {
@@ -468,10 +456,9 @@ manual(page, tag, pg, pathsearch)
 			if (!fnmatch(buf, pg->gl_pathv[cnt], 0))
 				goto next;
 
-			e_sufp = (sufp = getlist("_suffix")) == NULL ?
-			    NULL : sufp->list.tqh_first;
-			for (found = 0;
-			    e_sufp != NULL; e_sufp = e_sufp->q.tqe_next) {
+			sufp = getlist("_suffix", 1);
+			found = 0;
+			TAILQ_FOREACH(e_sufp, &sufp->list, q) {
 				(void)snprintf(buf,
 				     sizeof(buf), "*/%s%s", escpage,
 				     e_sufp->s);
@@ -484,12 +471,13 @@ manual(page, tag, pg, pathsearch)
 				goto next;
 
 			/* Try the _build key words next. */
-			e_sufp = (sufp = getlist("_build")) == NULL ?
-			    NULL : sufp->list.tqh_first;
-			for (found = 0;
-			    e_sufp != NULL; e_sufp = e_sufp->q.tqe_next) {
+			sufp = getlist("_build", 1);
+			found = 0;
+			TAILQ_FOREACH(e_sufp, &sufp->list, q) {
 				for (p = e_sufp->s;
-				    *p != '\0' && !isspace((unsigned char)*p); ++p);
+				    *p != '\0' && !isspace((unsigned char)*p);
+				    ++p)
+					continue;
 				if (*p == '\0')
 					continue;
 				*p = '\0';
@@ -527,8 +515,7 @@ next:				anyfound = 1;
 
 	/* If not found, enter onto the missing list. */
 	if (!anyfound) {
-		if ((missp = getlist("_missing")) == NULL)
-			missp = addlist("_missing");
+		missp = getlist("_missing", 1);
 		if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 		    (ep->s = strdup(page)) == NULL) {
 			warn("malloc");
@@ -590,8 +577,7 @@ build_page(fmt, pathp)
 
 
 	/* Add a remove-when-done list. */
-	if ((intmpp = getlist("_intmp")) == NULL)
-		intmpp = addlist("_intmp");
+	intmpp = getlist("_intmp", 1);
 
 	/* Move to the printf(3) format string. */
 	for (; *fmt && isspace((unsigned char)*fmt); ++fmt)
@@ -792,18 +778,23 @@ cleanup()
 	int rval;
 
 	rval = 0;
-	ep = (missp = getlist("_missing")) == NULL ?
-	    NULL : missp->list.tqh_first;
-	if (ep != NULL)
-		for (; ep != NULL; ep = ep->q.tqe_next) {
+		/*
+		 * get missing list, but don't create missing _missing,
+		 * as we don't want to try & allocate memory in getlist()
+		 */
+	if ((missp = getlist("_missing", 0)) != NULL)
+		TAILQ_FOREACH(ep, &missp->list, q) {
 			warnx("no entry for %s in the manual.", ep->s);
 			rval = 1;
 		}
 
-	ep = (intmpp = getlist("_intmp")) == NULL ?
-	    NULL : intmpp->list.tqh_first;
-	for (; ep != NULL; ep = ep->q.tqe_next)
-		(void)unlink(ep->s);
+		/*
+		 * get tempfile list, but don't create missing _intmp,
+		 * as we don't want to try & allocate memory in getlist()
+		 */
+	if ((intmpp = getlist("_intmp", 0)) != NULL)
+		TAILQ_FOREACH(ep, &intmpp->list, q)
+			(void)unlink(ep->s);
 	return (rval);
 }
 

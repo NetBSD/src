@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.16 2001/05/20 22:05:30 uwe Exp $       */
+/*      $NetBSD: catman.c,v 1.17 2002/06/11 04:39:53 lukem Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,16 +166,15 @@ setdefentries(m_path, m_add, sections)
 	}
 
 	/* If there's no _default list, create an empty one. */
-	if ((defp = getlist("_default")) == NULL)
-		defp = addlist("_default");
+	defp = getlist("_default", 1);
 
-	subp = getlist("_subdir");
+	subp = getlist("_subdir", 1);
 
 	/*
 	 * 0: If one or more sections was specified, rewrite _subdir list.
 	 */
 	if (sections != NULL) {
-		sectnewp = addlist("_section_new");
+		sectnewp = getlist("_section_new", 1);
 		for(p=sections; *p;) {
 			i = snprintf(buf, sizeof(buf), "man%c", *p++);
 			for(; *p && !isdigit(*p) && i<sizeof(buf)-1; i++)
@@ -194,15 +193,14 @@ setdefentries(m_path, m_add, sections)
 	if (m_path == NULL)
 		m_path = getenv("MANPATH");
 	if (m_path != NULL) {
-		while ((e_defp = defp->list.tqh_first) != NULL) {
+		while ((e_defp = TAILQ_FIRST(&defp->list)) != NULL) {
 			free(e_defp->s);
 			TAILQ_REMOVE(&defp->list, e_defp, q);
 		}
 		for (p = strtok(m_path, ":");
 		    p != NULL; p = strtok(NULL, ":")) {
 			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
-			e_subp = subp == NULL ?  NULL : subp->list.tqh_first;
-			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
+			TAILQ_FOREACH(e_subp, &subp->list, q) {
 				if(!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
@@ -217,15 +215,13 @@ setdefentries(m_path, m_add, sections)
 	 *    the _default list to include the _subdir list and the machine.
 	 */
 	if (m_path == NULL) {
-		defp = getlist("_default");
-		defnewp = addlist("_default_new1");
-		e_defp =
-		    defp->list.tqh_first == NULL ? NULL : defp->list.tqh_first;
-		for (; e_defp; e_defp = e_defp->q.tqe_next) {
+		defp = getlist("_default", 1);
+		defnewp = getlist("_default_new1", 1);
+
+		TAILQ_FOREACH(e_defp, &defp->list, q) {
 			slashp =
 			    e_defp->s[strlen(e_defp->s) - 1] == '/' ? "" : "/";
-			e_subp = subp == NULL ? NULL : subp->list.tqh_first;
-			for (; e_subp; e_subp = e_subp->q.tqe_next) {
+			TAILQ_FOREACH(e_subp, &subp->list, q) {
 				if(!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
@@ -244,8 +240,7 @@ setdefentries(m_path, m_add, sections)
 	if (m_add != NULL)
 		for (p = strtok(m_add, ":"); p != NULL; p = strtok(NULL, ":")) {
 			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
-			e_subp = subp == NULL ? NULL : subp->list.tqh_first;
-			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
+			TAILQ_FOREACH(e_subp, &subp->list, q) {
 				if(!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
@@ -271,18 +266,18 @@ uniquepath(void)
 	struct stat st1;
 	struct stat st2;
 	struct stat st3;
-	int i,j,len,lnk;
+	int i,j,len,lnk, gflags;
 	char path[PATH_MAX], *p;
 
 
-	e_defp = defp->list.tqh_first;
-	glob(e_defp->s, GLOB_BRACE | GLOB_NOSORT, NULL, &manpaths);
-	for(e_defp = e_defp->q.tqe_next; e_defp; e_defp = e_defp->q.tqe_next) {
-		glob(e_defp->s, GLOB_BRACE | GLOB_NOSORT | GLOB_APPEND, NULL,
-				&manpaths);
+	gflags = 0;
+	TAILQ_FOREACH(e_defp, &defp->list, q) {
+		glob(e_defp->s, GLOB_BRACE | GLOB_NOSORT | gflags, NULL,
+		    &manpaths);
+		gflags = GLOB_APPEND;
 	}
 
-	defnewp = addlist("_default_new2");
+	defnewp = getlist("_default_new2", 1);
 
 	for(i=0; i<manpaths.gl_pathc; i++) {
 		lnk = 0;
@@ -329,8 +324,7 @@ catman(void)
 	const char *mandir;
 	char catdir[PATH_MAX], *cp;
 
-	for(e_path = defp->list.tqh_first; e_path;
-				e_path = e_path->q.tqe_next) {
+	TAILQ_FOREACH(e_path, &defp->list, q) {
 		mandir = e_path->s;
 		strcpy(catdir, mandir);
 		if(!(cp = strstr(catdir, "man/man")))
@@ -391,32 +385,25 @@ scanmandir(catdir, mandir)
 		snprintf(catpage, sizeof(catpage), "%s/%s", catdir, dp->d_name);
 
 		e_build = NULL;
-		buildp = getlist("_build");
-		if(buildp) {
-			for(e_build = buildp->list.tqh_first; e_build;
-					e_build = e_build->q.tqe_next) {
-				splitentry(e_build->s, buildsuff, buildcmd);
-				snprintf(match, sizeof(match), "*%s",
-							buildsuff);
-				if(!fnmatch(match, manpage, 0))
-					break;
-			}
+		buildp = getlist("_build", 1);
+		TAILQ_FOREACH(e_build, &buildp->list, q) {
+			splitentry(e_build->s, buildsuff, buildcmd);
+			snprintf(match, sizeof(match), "*%s",
+						buildsuff);
+			if(!fnmatch(match, manpage, 0))
+				break;
 		}
 
 		if(e_build == NULL)
 			continue;
 
 		e_crunch = NULL;
-		crunchp = getlist("_crunch");
-		if (crunchp) {
-			for(e_crunch = crunchp->list.tqh_first; e_crunch;
-					e_crunch=e_crunch->q.tqe_next) {
-				splitentry(e_crunch->s, crunchsuff, crunchcmd);
-				snprintf(match, sizeof(match), "*%s",
-							crunchsuff);
-				if(!fnmatch(match, manpage, 0))
-					break;
-			}
+		crunchp = getlist("_crunch", 1);
+		TAILQ_FOREACH(e_crunch, &crunchp->list, q) {
+			splitentry(e_crunch->s, crunchsuff, crunchcmd);
+			snprintf(match, sizeof(match), "*%s", crunchsuff);
+			if(!fnmatch(match, manpage, 0))
+				break;
 		}
 
 		if (lstat(manpage, &manstat) <0) {
@@ -550,14 +537,14 @@ setcatsuffix(catpage, suffix, crunchsuff)
 	const char	*crunchsuff;
 {
 	TAG *tp;
-	ENTRY *ep;
 	char *p;
 
 	for(p = catpage + strlen(catpage); p!=catpage; p--)
 		if(!fnmatch(suffix, p, 0)) {
-			if((tp = getlist("_suffix"))) {
-				ep = tp->list.tqh_first;
-				sprintf(p, "%s%s", ep->s, crunchsuff);
+			tp = getlist("_suffix", 1);
+			if (! TAILQ_EMPTY(&tp->list)) {
+				sprintf(p, "%s%s",
+				    TAILQ_FIRST(&tp->list)->s, crunchsuff);
 			} else {
 				sprintf(p, ".0%s", crunchsuff);
 			}
@@ -597,11 +584,10 @@ makewhatis(void)
 	ENTRY *e_whatdb;
 	char sysbuf[1024];
 
-	whatdbp = getlist("_whatdb");
-	for(e_whatdb = whatdbp->list.tqh_first; e_whatdb;
-			e_whatdb = e_whatdb->q.tqe_next) {
+	whatdbp = getlist("_whatdb", 1);
+	TAILQ_FOREACH(e_whatdb, &whatdbp->list, q) {
 		snprintf(sysbuf, sizeof(sysbuf), "%s %s",
-				_PATH_WHATIS, dirname(e_whatdb->s));
+		    _PATH_WHATIS, dirname(e_whatdb->s));
 		if (f_noprint == 0)
 			printf("%s\n", sysbuf);
 		if (f_noaction == 0)
