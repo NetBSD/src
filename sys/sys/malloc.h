@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.67 2001/10/04 19:00:44 eeh Exp $	*/
+/*	$NetBSD: malloc.h,v 1.68 2001/11/17 03:50:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,6 +50,7 @@
  */
 #define	M_WAITOK	0x0000
 #define	M_NOWAIT	0x0001
+#define	M_ZERO		0x0002	/* zero the allocation */
 
 /*
  * Types of memory to be allocated
