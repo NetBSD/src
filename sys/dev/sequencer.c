@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.6 1998/08/13 12:40:20 augustss Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.7 1998/08/13 15:50:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ static int seq_sleep(int *, char *);
 static void seq_wakeup(int *);
 
 struct midi_softc;
-int midiout __P((struct midi_dev *, u_char *, u_int, int));
+int midiseq_out __P((struct midi_dev *, u_char *, u_int, int));
 struct midi_dev *midiseq_open __P((int, int));
 void midiseq_close __P((struct midi_dev *));
 void midiseq_reset __P((struct midi_dev *));
@@ -262,7 +262,7 @@ seq_drain(sc)
 	seq_startoutput(sc);
 	error = 0;
 	while(!SEQ_QEMPTY(&sc->outq) && !error)
-		error = seq_sleep_timo(&sc->wchan, "seq_dr", 30*hz);
+		error = seq_sleep_timo(&sc->wchan, "seq_dr", 60*hz);
 	return (error);
 }
 
@@ -312,8 +312,10 @@ sequencerclose(dev, flags, ifmt, p)
 
 	seq_drain(sc);
 	s = splaudio();
-	if (sc->timeout)
+	if (sc->timeout) {
 		untimeout(seq_timeout, sc);
+		sc->timeout = 0;
+	}
 	splx(s);
 
 	for (n = 0; n < sc->nmidi; n++)
@@ -833,13 +835,13 @@ seq_do_sysex(sc, b)
 
 	if (!sc->doingsysex) {
 		c = MIDI_SYSEX_START;
-		midiout(md, &c, 1, 0);
+		midiseq_out(md, &c, 1, 0);
 		sc->doingsysex = 1;
 	}
 
 	for (i = 0; i < 6 && buf[i] != 0xff; i++)
 		;
-	midiout(md, buf, i, 0);
+	midiseq_out(md, buf, i, 0);
 	if (i < 6 || (i > 0 && buf[i-1] == MIDI_SYSEX_END))
 		sc->doingsysex = 0;
 	return (0);
@@ -1121,7 +1123,7 @@ midiseq_reset(md)
 }
 
 int
-midiout(md, buf, cc, chk)
+midiseq_out(md, buf, cc, chk)
 	struct midi_dev *md;
 	u_char *buf;
 	u_int cc;
@@ -1130,7 +1132,7 @@ midiout(md, buf, cc, chk)
 	struct uio uio;
 	struct iovec iovec;
 
-	DPRINTFN(5, ("midiout: m=%p, unit=%d, buf[0]=0x%02x, cc=%d\n",
+	DPRINTFN(5, ("midiseq_out: m=%p, unit=%d, buf[0]=0x%02x, cc=%d\n",
 		     md->msc, md->unit, buf[0], cc));
 #if 1
 	/* The MIDI "status" byte does not have to be repeated. */
@@ -1168,7 +1170,7 @@ midiseq_noteon(md, chan, note, vel)
 	buf[0] = MIDI_NOTEON | chan;
 	buf[1] = note;
 	buf[2] = vel;
-	return midiout(md, buf, 3, 1);
+	return midiseq_out(md, buf, 3, 1);
 }
 
 int
@@ -1186,7 +1188,7 @@ midiseq_noteoff(md, chan, note, vel)
 	buf[0] = MIDI_NOTEOFF | chan;
 	buf[1] = note;
 	buf[2] = vel;
-	return midiout(md, buf, 3, 1);
+	return midiseq_out(md, buf, 3, 1);
 }
 
 int
@@ -1204,7 +1206,7 @@ midiseq_keypressure(md, chan, note, vel)
 	buf[0] = MIDI_KEY_PRESSURE | chan;
 	buf[1] = note;
 	buf[2] = vel;
-	return midiout(md, buf, 3, 1);
+	return midiseq_out(md, buf, 3, 1);
 }
 
 int
@@ -1219,7 +1221,7 @@ midiseq_pgmchange(md, chan, parm)
 		return EINVAL;
 	buf[0] = MIDI_PGM_CHANGE | chan;
 	buf[1] = parm;
-	return midiout(md, buf, 2, 1);
+	return midiseq_out(md, buf, 2, 1);
 }
 
 int
@@ -1235,7 +1237,7 @@ midiseq_ctlchange(md, chan, parm, w14)
 	buf[0] = MIDI_CTL_CHANGE | chan;
 	buf[1] = parm;
 	buf[2] = w14 & 0x7f;
-	return midiout(md, buf, 3, 1);
+	return midiseq_out(md, buf, 3, 1);
 }
 
 int
@@ -1250,7 +1252,7 @@ midiseq_pitchbend(md, chan, parm)
 	buf[0] = MIDI_PITCH_BEND | chan;
 	buf[1] = parm & 0x7f;
 	buf[2] = (parm >> 7) & 0x7f;
-	return midiout(md, buf, 3, 1);
+	return midiseq_out(md, buf, 3, 1);
 }
 
 int
@@ -1279,7 +1281,7 @@ midiseq_loadpatch(md, sysex, uio)
 		return error;
 	if (c != MIDI_SYSEX_START)		/* must start like this */
 		return EINVAL;
-	error = midiout(md, &c, 1, 0);
+	error = midiseq_out(md, &c, 1, 0);
 	if (error)
 		return error;
 	--sysex->len;
@@ -1292,7 +1294,7 @@ midiseq_loadpatch(md, sysex, uio)
 			break;
 		for(i = 0; i < cc && !MIDI_IS_STATUS(buf[i]); i++)
 			;
-		error = midiout(md, buf, i, 0);
+		error = midiseq_out(md, buf, i, 0);
 		if (error)
 			break;
 		sysex->len -= i;
@@ -1304,7 +1306,7 @@ midiseq_loadpatch(md, sysex, uio)
 	 */
 	uio->uio_resid = 0;
 	c = MIDI_SYSEX_END;
-	return midiout(md, &c, 1, 0);
+	return midiseq_out(md, &c, 1, 0);
 }
 
 int
@@ -1314,7 +1316,7 @@ midiseq_putc(md, data)
 {
 	u_char c = data;
 	DPRINTFN(4,("midiseq_putc: 0x%02x\n", data));
-	return midiout(md, &c, 1, 0);
+	return midiseq_out(md, &c, 1, 0);
 }
 
 
