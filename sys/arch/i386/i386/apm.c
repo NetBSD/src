@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.3 1996/09/07 12:40:29 mycroft Exp $ */
+/*	$NetBSD: apm.c,v 1.4 1996/09/08 15:43:41 jtk Exp $ */
 
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
@@ -559,8 +559,8 @@ struct apm_softc *self;
 	
 	if (apm_v11_enabled &&
 	    (error = APMCALL(APM_DRIVER_VERSION, &regs)) == 0) {
-		apm_majver = APM_CONN_MAJOR(&regs);
-		apm_minver = APM_CONN_MINOR(&regs);
+		apm_majver = 1;
+		apm_minver = 1;
 	} else {
 		apm_majver = 1;
 		apm_minver = 0;
@@ -613,6 +613,8 @@ void *xxx;
 
 static int bogusbios;
 
+#define I386_FLAGBITS "\020\017NT\014OVFL\0130UP\012IEN\011TF\010NF\007ZF\005AF\003PF\001CY"
+
 int
 apmprobe(parent, match, aux)
 	struct device *parent;
@@ -620,14 +622,67 @@ apmprobe(parent, match, aux)
 {
 	struct apm_attach_args *aaa = aux;
 	extern int biosbasemem;
+	struct apmregs regs;
+	u_char signature[] = { 'P', 'M' };
 
 	if (apminited)
 		return 0;
-	if ((apminfo.apm_detail & APM_32BIT_SUPPORTED) &&
-	    strcmp(aaa->aaa_busname, "apm") == 0) {
-		apminfo.apm_code32_seg_base <<= 4;
-		apminfo.apm_code16_seg_base <<= 4;
-		apminfo.apm_data_seg_base <<= 4;
+	if (strcmp(aaa->aaa_busname, "apm") == 0) {
+		regs.ax = APM_BIOS_FN(APM_INSTALLATION_CHECK);
+		regs.bx = APM_DEV_APM_BIOS;
+		regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
+		bioscall(APM_SYSTEM_BIOS, &regs);
+		DPRINTF(("apm: bioscall return: %x %x %x %x %b %x %x\n",
+			 regs.ax, regs.bx, regs.cx, regs.dx,
+			 regs.flags, I386_FLAGBITS, regs.si, regs.di));
+
+		if (regs.flags & PSL_C) {
+			DPRINTF(("apm: carry set means no APM bios\n"));
+			return 0;	/* no carry -> not installed */
+		}
+
+		if (regs.bx != APM_INSTALL_SIGNATURE) {
+			DPRINTF(("apm: PM signature not found\n"));
+			return 0;
+		}
+		if ((regs.cx & APM_32BIT_SUPPORT) == 0) {
+			DPRINTF(("apm: no 32bit support\n"));
+			return 0;
+		}
+
+		apminfo.apm_detail = (u_int)regs.ax | ((u_int)regs.cx << 16);
+
+		/*
+		 * call a disconnect in case it was already connected
+		 * by some previous code.
+		 */
+		regs.ax = APM_BIOS_FN(APM_DISCONNECT);
+		regs.bx = APM_DEV_APM_BIOS;
+		regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
+		bioscall(APM_SYSTEM_BIOS, &regs);
+		DPRINTF(("apm: bioscall return: %x %x %x %x %b %x %x\n",
+			 regs.ax, regs.bx, regs.cx, regs.dx,
+			 regs.flags, I386_FLAGBITS, regs.si, regs.di));
+
+		/*
+		 * And connect to it.
+		 */
+		regs.ax = APM_BIOS_FN(APM_32BIT_CONNECT);
+		regs.bx = APM_DEV_APM_BIOS;
+		regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
+		bioscall(APM_SYSTEM_BIOS, &regs);
+		DPRINTF(("apm: bioscall return: %x %x %x %x %b %x %x\n",
+			 regs.ax, regs.bx, regs.cx, regs.dx,
+			 regs.flags, I386_FLAGBITS, regs.si, regs.di));
+
+		apminfo.apm_code32_seg_base = regs.ax << 4;
+		apminfo.apm_entrypt = regs.bx;
+		apminfo.apm_code16_seg_base = regs.cx << 4;
+		apminfo.apm_data_seg_base = regs.dx << 4;
+		apminfo.apm_code32_seg_len = regs.si << 4;
+		apminfo.apm_data_seg_len = regs.di << 4;
+
+
 #ifdef APM_FORCE_64KSEG
 		apminfo.apm_code32_seg_len = 65536;
 		apminfo.apm_data_seg_len = 65536;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.149 1996/08/30 02:37:14 jtk Exp $	*/
+/*	$NetBSD: locore.s,v 1.150 1996/09/08 15:43:38 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -144,16 +144,6 @@
 	.globl	_cpu,_cpu_vendor,_cold,_esym,_boothowto,_bootdev,_atdevbase
 	.globl	_cyloffset,_proc0paddr,_curpcb,_PTDpaddr,_biosbasemem
 	.globl	_biosextmem,_dynamic_gdt
-#if NAPM > 0
-#include <machine/apmvar.h>
-	.globl	_apminfo
-	.globl	_apm_current_gdt_pdesc	/* current GDT pseudo desc. */
-	.globl	_bootstrap_gdt
-_apm_current_gdt_pdesc:	
-	.word	0, 0, 0
-_bootstrap_gdt:	
-	.space APM_SIZEOF_GDTE * APM_BOOTSTRAP_GDT_NUM
-#endif
 _cpu:		.long	0	# are we 386, 386sx, or 486
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
 _cold:		.long	1	# cold till we are not
@@ -164,7 +154,7 @@ _proc0paddr:	.long	0
 _PTDpaddr:	.long	0	# paddr of PTD, for libkvm
 _biosbasemem:	.long	0	# base memory reported by BIOS
 _biosextmem:	.long	0	# extended memory reported by BIOS
-
+	
 	.space 512
 tmpstk:
 
@@ -195,102 +185,6 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	%eax,RELOC(_biosextmem)
 	movl	24(%esp),%eax
 	movl	%eax,RELOC(_biosbasemem)
-
-#if NAPM > 0
-
-	/*
-	 * Setup APM BIOS:
-	 *
-	 * APM BIOS initialization should be done from real mode or V86 mode.
-	 *
-	 * (by HOSOKAWA, Tatsumi <hosokawa@mt.cs.keio.ac.jp>)
-	 */
-
-	/*
-	 * Cleanup %fs and %gs:
-	 *
-	 * Some BIOS bootstrap routine store junk value into %fs
-	 * and %gs.
-	 */
-
-	xorl	%eax, %eax
-	movw	%ax, %fs
-	movw	%ax, %gs
-
-	/* get GDT base */
-	sgdt	RELOC(_apm_current_gdt_pdesc)
-
-	/* copy GDT to _bootstrap_gdt */
-	xorl	%ecx, %ecx
-	movw	RELOC(_apm_current_gdt_pdesc), %cx
-	movl	RELOC(_apm_current_gdt_pdesc)+2, %esi
-	lea	RELOC(_bootstrap_gdt), %edi
-	cld
-	rep
-	movsb
-
-	/* setup GDT pseudo descriptor */
-	movw	$(APM_SIZEOF_GDTE*APM_BOOTSTRAP_GDT_NUM), %ax
-	movw	%ax, RELOC(_apm_current_gdt_pdesc)
-	leal	RELOC(_bootstrap_gdt), %eax
-	movl	%eax, RELOC(_apm_current_gdt_pdesc)+2
-
-	/* load new GDTR */
-	lgdt	RELOC(_apm_current_gdt_pdesc)
-
-	/* 
-	 * Copy APM initializer under 1MB boundary:
-	 *
-	 * APM initializer program must switch the CPU to real mode.
-	 * But NetBSD kernel runs above 1MB boundary. So we must 
-	 * copy the initializer code to conventional memory.
-	 */
-	movl	RELOC(_apm_init_image_size), %ecx	/* size */
-	lea	RELOC(_apm_init_image), %esi		/* source */
-	movl	$ APM_OURADDR, %edi			/* destination */
-	cld
-	rep
-	movsb
-
-	/* setup GDT for APM initializer */
-	lea	RELOC(_bootstrap_gdt), %ecx
-	movl	$(APM_OURADDR), %eax	/* use %ax for 15..0 */
-	movl	%eax, %ebx
-	shrl	$16, %ebx		/* use %bl for 23..16 */
-					/* use %bh for 31..24 */
-#define APM_SETUP_GDT(index, attrib) \
-	movl	$(index), %si ; \
-	lea	0(%ecx,%esi,8), %edx ; \
-	movw	$0xffff, (%edx) ; \
-	movw	%ax, 2(%edx) ; \
-	movb	%bl, 4(%edx) ; \
-	movw	$(attrib), 5(%edx) ; \
-	movb	%bh, 7(%edx)
-
-	APM_SETUP_GDT(APM_INIT_CS_INDEX  , APM_CS32_ATTRIB)
-	APM_SETUP_GDT(APM_INIT_DS_INDEX  , APM_DS32_ATTRIB)
-	APM_SETUP_GDT(APM_INIT_CS16_INDEX, APM_CS16_ATTRIB)
-
-	/*
-	 * Call the initializer:
-	 *
-	 * direct intersegment call to conventional memory code
-	 */
-	.byte	0x9a		/* actually, lcall $APM_INIT_CS_SEL, $0 */
-	.long	0
-	.word	APM_INIT_CS_SEL
-
-	movw	%ax,RELOC(_apminfo+APM_DETAIL)
-	movw	%di,RELOC(_apminfo+APM_DETAIL)+2
-	movl	%ebx,RELOC(_apminfo+APM_ENTRY)
-	movw	%cx,RELOC(_apminfo+APM_CODE16)
-	shrl	$16, %ecx
-	movw	%cx,RELOC(_apminfo+APM_CODE32)
-	movw	%dx,RELOC(_apminfo+APM_DATA)
-	movw	%si,RELOC(_apminfo+APM_CODE32_LEN)
-	shrl	$16, %esi
-	movw	%si,RELOC(_apminfo+APM_DATA_LEN)
-#endif /* APM */
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
@@ -454,7 +348,12 @@ try586:	/* Use the `cpuid' instruction. */
 #define	PROC0PDIR	((0)              * NBPG)
 #define	PROC0STACK	((1)              * NBPG)
 #define	SYSMAP		((1+UPAGES)       * NBPG)
-#define	TABLESIZE	((1+UPAGES+NKPDE) * NBPG)
+#if NAPM > 0
+#define	NKPDE_SPACE	(NKPDE+1)
+#else
+#define	NKPDE_SPACE	NKPDE
+#endif
+#define	TABLESIZE	((1+UPAGES+NKPDE_SPACE) * NBPG)
 
 	/* Clear the BSS. */
 	movl	$RELOC(_edata),%edi
@@ -549,6 +448,16 @@ try586:	/* Use the `cpuid' instruction. */
 	leal	(PROC0PDIR+KPTDI*4)(%esi),%ebx		# offset of pde for kernel
 	fillkpt
 
+#if NAPM > 0
+	/* set up special identity mapping page table to get to
+	   page 1 for BIOS trampoline.  store it in PTD 1 to start, though.... */
+	
+	/* use remaining page table page at %eax */
+	movl	$1,%ecx				# only add mapping for one PTDE
+	leal	(PROC0PDIR+1*4)(%esi),%ebx	# PTD entry address
+	fillkpt
+#endif
+	
 	/* Install a PDE recursively mapping page directory as a page table! */
 	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
 	movl	%eax,(PROC0PDIR+PTDPTDI*4)(%esi)	# which is where PTmap maps!
@@ -569,7 +478,14 @@ try586:	/* Use the `cpuid' instruction. */
 
 begin:
 	/* Now running relocated at KERNBASE.  Remove double mapping. */
+#if NAPM > 0
+	/* move page table pointer for bios trampoline to final resting place */
+	movl	(PROC0PDIR+1*4)(%esi),%edx
+	movl	%edx,(PROC0PDIR+0*4)(%esi)
+	movl	$0,(PROC0PDIR+1*4)(%esi)
+#else
 	movl	$0,(PROC0PDIR+0*4)(%esi)
+#endif
 
 	/* Relocate atdevbase. */
 	leal	(TABLESIZE+KERNBASE)(%esi),%edx
@@ -2201,6 +2117,7 @@ ENTRY(bzero)
 	ret
 	
 #if NAPM > 0
+#include <machine/apmvar.h>
 /*
  * int apmcall(int function, struct apmregs *regs):
  * 	call the APM protected mode bios function FUNCTION for BIOS selection
@@ -2208,7 +2125,9 @@ ENTRY(bzero)
  *	Fills in *regs with registers as returned by APM.
  *	returns nonzero if error returned by APM.
  */
+	.data
 apmstatus:	.long 0
+	.text
 ENTRY(apmcall)
 	pushl	%ebp
 	movl	%esp,%ebp
@@ -2262,15 +2181,44 @@ ENTRY(apmcall)
 	popl	%ebp
 	ret
 		
-_apm_init_image:
-	.globl	_apm_init_image
+_biostramp_image:
+	.globl	_biostramp_image
 
 8:
-#include "lib/apm_init/apm_init.inc"
+#include "lib/apm_init/biostramp.inc"
 9:
 
-_apm_init_image_size:
-	.globl	_apm_init_image_size
+_biostramp_image_size:
+	.globl	_biostramp_image_size
 	.long	9b - 8b
 
+/*
+ * void bioscall(int function, struct apmregs *regs):
+ * 	call the BIOS interrupt "function" from real mode with
+ *	registers as specified in "regs"
+ *
+ *	Fills in *regs with registers as returned by BIOS.
+ */
+ENTRY(bioscall)
+	pushl	%ebp
+	movl	%esp,%ebp		/* set up frame ptr */
+	
+	movl	%cr3,%eax		/* save PTDB register */
+	pushl	%eax
+	
+	movl	_PTDpaddr,%eax		/* install proc0 PTD */
+	movl	%eax,%cr3
+
+	movl $(APM_BIOSTRAMP),%eax	/* address of trampoline area */
+	pushl 12(%ebp)
+	pushl 8(%ebp)
+	call %eax			/* machdep.c initializes it */
+	addl $8,%esp			/* clear args from stack */
+		
+	popl %eax
+	movl %eax,%cr3			/* restore PTDB register */
+	
+	leave
+	ret
+	
 #endif /* APM */

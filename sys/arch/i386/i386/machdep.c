@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.206 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.207 1996/09/08 15:43:40 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -106,6 +106,12 @@
 #include <machine/vm86.h>
 #endif
 
+#include "apm.h"
+
+#if NAPM > 0
+#include <machine/apmvar.h>
+#endif
+
 #include "isa.h"
 #include "npx.h"
 #if NNPX > 0
@@ -181,6 +187,10 @@ cpu_startup()
 	vm_size_t size;
 	struct pcb *pcb;
 	int x;
+#if NAPM > 0
+	extern int biostramp_image_size;
+	extern u_char biostramp_image[];
+#endif
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -279,6 +289,26 @@ cpu_startup()
 	 */
 	bufinit();
 
+#if NAPM > 0
+	/*
+	 * this should be caught at kernel build time, but put it here
+	 * in case someone tries to fake it out...
+	 */
+#ifdef DIAGNOSTIC
+	if (biostramp_image_size > NBPG)
+	    panic("biostramp_image_size too big: %x vs. %x\n",
+		  biostramp_image_size, NBPG);
+#endif
+	pmap_enter(pmap_kernel(),
+		   (vm_offset_t)APM_BIOSTRAMP, /* virtual */
+		   (vm_offset_t)APM_BIOSTRAMP, /* physical */
+		   VM_PROT_ALL,		/* protection */
+		   TRUE);		/* wired down */
+	bcopy(biostramp_image, (caddr_t)APM_BIOSTRAMP, biostramp_image_size);
+#ifdef DEBUG
+	printf("biostramp installed @ %x\n", APM_BIOSTRAMP);
+#endif
+#endif
 	/*
 	 * Configure the system.
 	 */
@@ -1101,6 +1131,9 @@ init386(first_avail)
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
+	/* bios trampoline GDT entries */
+	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0, 0);
+	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0, 0);
 
 	/* make ldt gates and memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
@@ -1158,8 +1191,12 @@ init386(first_avail)
 	biosbasemem &= -(NBPG / 1024);
 	biosextmem &= -(NBPG / 1024);
 
+#if NAPM > 0
+	avail_start = 2*NBPG;	/* save us a page! */
+#else
 	avail_start = NBPG;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
+#endif
 	avail_end = biosextmem ? IOM_END + biosextmem * 1024
 	    : biosbasemem * 1024;
 

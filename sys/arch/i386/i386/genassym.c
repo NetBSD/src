@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.51 1996/08/25 23:39:41 jtk Exp $	*/
+/*	$NetBSD: genassym.c,v 1.52 1996/09/08 15:43:37 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -175,6 +175,9 @@ main()
 	off("APMREG_BX", struct apmregs, bx);
 	off("APMREG_CX", struct apmregs, cx);
 	off("APMREG_DX", struct apmregs, dx);
+	off("APMREG_SI", struct apmregs, si);
+	off("APMREG_DI", struct apmregs, di);
+	off("APMREG_FLAGS", struct apmregs, flags);
 #endif
 
 	exit(0);
