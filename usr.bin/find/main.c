@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2000/08/04 09:01:05 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2002/09/27 15:56:27 provos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.17 2000/08/04 09:01:05 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2002/09/27 15:56:27 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: main.c,v 1.17 2000/08/04 09:01:05 enami Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
+#include <signal.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,11 +80,17 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	struct sigaction sa;
 	char **p, **start;
 	int ch;
 
 	(void)time(&now);	/* initialize the time-of-day */
 	(void)setlocale(LC_ALL, "");
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = show_path;
+	sigaction(SIGINFO, &sa, NULL);
 
 	/* array to hold dir list.  at most (argc - 1) elements. */
 	p = start = alloca(argc * sizeof (char *));

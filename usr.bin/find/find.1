@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.34 2002/09/16 19:24:59 thorpej Exp $
+.\"	$NetBSD: find.1,v 1.35 2002/09/27 15:56:26 provos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -193,6 +193,8 @@ information and the time
 was started, rounded up to the next full 24\-hour period, is
 .Ar n
 24\-hour periods.
+.It Ic -empty
+True if the current file or directory is empty.
 .It Ic -exec Ar utility Op argument ... ;
 True if the program named
 .Ar utility
@@ -205,6 +207,16 @@ arguments it is replaced by the pathname of the current file.
 will be executed from the directory from which
 .Nm
 was executed.
+.It Ic -execdir Ar utility Op argument ... ; 
+The
+.Ic \&-execdir
+primary is identical to the
+.Ic -exec
+primary with the exception that
+.Ar Utility
+will be executed from the directory that holds
+the current file.  The filename substituted for
+the string ``{}'' is not qualified.
 .It Xo
 .Ic -flags
 .Op Fl
@@ -280,6 +292,12 @@ will be displayed instead of the size in bytes.
 If the file is a symbolic link, the pathname of the linked\-to file will be
 displayed preceded by ``\-\*[Gt]''.
 The format is identical to that produced by ``ls \-dgils''.
+.It Ic -maxdepth Ar n
+True if the current search depth is less than or equal to what is specified in
+.Ar n .
+.It Ic -mindepth Ar n
+True if the current search depth is at least what is specified in
+.Ar n .
 .It Ic -mmin Ar n
 True if the difference between the file last modification time and the time
 .Nm
@@ -536,12 +554,15 @@ The options and the
 .Ic -anewer ,
 .Ic -cmin ,
 .Ic -cnewer ,
+.Ic -empty ,
 .Ic -follow ,
 .Ic -fstype ,
 .Ic -inum ,
 .Ic -iregex ,
 .Ic -links ,
 .Ic -ls ,
+.Ic -maxdepth ,
+.Ic -mindepth ,
 .Ic -mmin ,
 .Ic -path ,
 .Ic -print0

@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.14 2000/03/16 18:44:29 enami Exp $	*/
+/*	$NetBSD: find.c,v 1.15 2002/09/27 15:56:26 provos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.14 2000/03/16 18:44:29 enami Exp $");
+__RCSID("$NetBSD: find.c,v 1.15 2002/09/27 15:56:26 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,6 +157,7 @@ ftscompare(e1, e2)
 }
 
 FTS *tree;			/* pointer to top of FTS hierarchy */
+FTSENT *entry;			/* shared with SIGINFO handler */
 
 /*
  * find_execute --
@@ -168,7 +169,6 @@ find_execute(plan, paths)
 	PLAN *plan;		/* search plan */
 	char **paths;		/* array of pathnames to traverse */
 {
-	register FTSENT *entry;
 	PLAN *p;
 	int rval;
 
