@@ -1,5 +1,5 @@
-#	$NetBSD: bsd.subdir.mk,v 1.13 1997/03/24 21:54:22 christos Exp $
-#	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
+#	$NetBSD: bsd.subdir.mk,v 1.14 1997/03/29 08:02:56 mikel Exp $
+#	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>
 
