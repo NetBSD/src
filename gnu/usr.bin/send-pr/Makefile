@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1996/10/09 01:03:08 jtc Exp $
+#	$NetBSD: Makefile,v 1.18 1996/10/18 03:08:31 thorpej Exp $
 
 #
 # Makefile for building a standalone send-pr.
@@ -91,11 +91,11 @@ send-pr.1:	send-pr.man Makefile
 	mv -f $@-t $@
 
 beforeinstall:
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} send-pr \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} send-pr \
 		${DESTDIR}${BINDIR}
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} install-sid \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} install-sid \
 		${DESTDIR}${BINDIR}
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/categories \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/categories \
 		${DESTDIR}${LIBDIR}/gnats/${GNATS_SITE}
 
 .include <bsd.prog.mk>
