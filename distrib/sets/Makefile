@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2003/12/22 04:56:53 jmc Exp $
+#	$NetBSD: Makefile,v 1.36 2003/12/26 06:20:40 jmc Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -79,6 +79,8 @@ maketarsetup: .PHONY
 	mkdir -p ${RELEASEDIR}/${MACHINE}/binary/sets
 	for i in BSDSUM CKSUM MD5 SYSVSUM; do \
 		rm -f ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tmp; done
+	-[ "${MAKETARSETS}" ] && for i in ${MAKETARSETS}; do \
+		rm -f ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tgz; done
 	
 .for tar in ${MAKETARSETS}
 ${RELEASEDIR}/${MACHINE}/binary/sets/${tar}.tgz:
