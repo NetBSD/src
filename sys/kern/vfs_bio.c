@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.70 2000/11/08 14:28:13 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.71 2000/11/14 22:22:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -58,6 +58,8 @@
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -170,9 +172,9 @@ bufinit()
 		LIST_INIT(&bp->b_dep);
 		bp->b_data = buffers + i * MAXBSIZE;
 		if (i < residual)
-			bp->b_bufsize = (base + 1) * NBPG;
+			bp->b_bufsize = (base + 1) * PAGE_SIZE;
 		else
-			bp->b_bufsize = base * NBPG;
+			bp->b_bufsize = base * PAGE_SIZE;
 		bp->b_flags = B_INVAL;
 		dp = bp->b_bufsize ? &bufqueues[BQ_AGE] : &bufqueues[BQ_EMPTY];
 		binsheadfree(bp, dp);
@@ -996,23 +998,25 @@ vfs_bufstats()
 	int s, i, j, count;
 	struct buf *bp;
 	struct bqueues *dp;
-	int counts[MAXBSIZE/NBPG+1];
+	int *counts;
 	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE", "EMPTY" };
+
+	counts = alloca((MAXBSIZE / PAGE_SIZE) + 1);
 
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;
-		for (j = 0; j <= MAXBSIZE/NBPG; j++)
+		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
 			counts[j] = 0;
 		s = splbio();
 		for (bp = dp->tqh_first; bp; bp = bp->b_freelist.tqe_next) {
-			counts[bp->b_bufsize/NBPG]++;
+			counts[bp->b_bufsize/PAGE_SIZE]++;
 			count++;
 		}
 		splx(s);
 		printf("%s: total-%d", bname[i], count);
-		for (j = 0; j <= MAXBSIZE/NBPG; j++)
+		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
 			if (counts[j] != 0)
-				printf(", %d-%d", j * NBPG, counts[j]);
+				printf(", %d-%d", j * PAGE_SIZE, counts[j]);
 		printf("\n");
 	}
 }
