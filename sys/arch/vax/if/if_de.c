@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.14 1996/02/02 18:59:16 mycroft Exp $	*/
+/*	$NetBSD: if_de.c,v 1.15 1996/02/11 13:47:55 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -367,7 +367,6 @@ destart(ifp)
 	struct ifnet *ifp;
 {
         int len;
-	int unit = ifp->if_unit;
 	register struct de_softc *ds = decd.cd_devs[ifp->if_unit];
 	volatile struct dedevice *addr = ds->ds_vaddr;
 	register struct de_ring *rp;
@@ -551,8 +550,6 @@ deread(ds, ifrw, len)
 {
 	struct ether_header *eh;
     	struct mbuf *m;
-	int s;
-	register struct ifqueue *inq;
 
 	/*
 	 * Deal with trailer protocol: if type is trailer type
@@ -698,9 +695,9 @@ dematch(parent, match, aux)
 	     (addr->pcsr1 & PCSR1_STMASK) == STAT_RESET;
 	     ++i)
 		DELAY(50000);
-	if ((addr->pcsr0 & PCSR0_FATI) != 0 ||
-	    (addr->pcsr1 & PCSR1_STMASK) != STAT_READY &&
-		(addr->pcsr1 & PCSR1_STMASK) != STAT_RUN)
+	if (((addr->pcsr0 & PCSR0_FATI) != 0) ||
+	    (((addr->pcsr1 & PCSR1_STMASK) != STAT_READY) &&
+		((addr->pcsr1 & PCSR1_STMASK) != STAT_RUN)))
 		return(0);
 
 	addr->pcsr0 = 0;

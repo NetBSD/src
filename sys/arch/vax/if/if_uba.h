@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.h,v 1.3 1995/05/11 16:53:12 jtc Exp $	*/
+/*	$NetBSD: if_uba.h,v 1.4 1996/02/11 13:48:03 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -133,4 +133,10 @@ struct ifuba {
 #define	if_wubaput(ifu, m) \
 		if_ubaput(&(ifu)->ifu_info, &(ifu)->ifu_xmt, m)
 struct	mbuf *if_ubaget();
+
+int	if_ubaminit __P((struct ifubinfo *, int, int, int,
+	    struct ifrw *, int, struct ifxmt *, int));
+int	if_ubaput __P((struct ifubinfo *, struct ifxmt *, struct mbuf *));
+
+
 #endif
