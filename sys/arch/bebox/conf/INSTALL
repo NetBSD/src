@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.26 2003/10/18 08:30:12 lukem Exp $
+#	$NetBSD: INSTALL,v 1.26.2.1 2004/07/15 20:16:56 he Exp $
 #
 # First try for BEBOX config file
 #
@@ -32,6 +32,7 @@ options 		MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 #options 	KTRACE
 options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
