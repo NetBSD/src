@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2002/12/19 06:21:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 2002/12/19 12:33:10 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -56,7 +56,7 @@ maketars: check_DESTDIR check_RELEASEDIR
 	${MAKE} checkflist
 .endif
 	${SETSENV} sh ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
-	    ${UNPRIVED:D-M ${METALOG} -N ${NETBSDSRCDIR}/etc} \
+	    ${UNPRIVED:D-M ${METALOG}} -N ${NETBSDSRCDIR}/etc \
 	    -t ${RELEASEDIR}/binary/sets ${MAKETARSETS}
 
 .PRECIOUS: makesums
@@ -70,7 +70,7 @@ installsets: check_DESTDIR
 	@false
 .endif
 	${SETSENV} sh ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
-	    ${UNPRIVED:D-M ${METALOG} -N ${NETBSDSRCDIR}/etc} \
+	    ${UNPRIVED:D-M ${METALOG}} -N ${NETBSDSRCDIR}/etc \
 	    -i ${INSTALLDIR} ${INSTALLSETS}
 
 #
