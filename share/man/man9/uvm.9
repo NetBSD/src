@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.31 2002/02/13 08:18:53 ross Exp $
+.\"	$NetBSD: uvm.9,v 1.32 2002/02/21 21:52:27 reinoud Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -556,7 +556,7 @@ is non-zero, entries in the map may be paged out.
 .Ft void
 .Fn uvm_pglistfree "struct pglist *list"
 .Ft void
-.Fn uvm_page_physload "vaddr_t start" "vaddr_t end" "vaddr_t avail_start" "vaddr_t avail_end"
+.Fn uvm_page_physload "vaddr_t start" "vaddr_t end" "vaddr_t avail_start" "vaddr_t avail_end" "int free_list"
 .nr nS 0
 .Pp
 .Fn uvm_pagealloc
@@ -630,9 +630,10 @@ frees the list of pages pointed to by
 .Fa list .
 .Pp
 .Fn uvm_page_physload
-loads physical memory segments into VM space.  It must be called at system
-boot time to setup physical memory management pages.  The arguments describe
-the
+loads physical memory segments into VM space on the specified
+.Fa free_list .
+It must be called at system boot time to setup physical memory
+management pages.  The arguments describe the
 .Fa start
 and
 .Fa end
