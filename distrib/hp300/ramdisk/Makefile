@@ -1,10 +1,10 @@
-#       $NetBSD: Makefile,v 1.2 2002/02/13 05:13:24 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.3 2002/02/13 05:31:18 gmcgarry Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	1440k
+IMAGESIZE=	2000k
 IMAGEDEPENDS=	${DESTDIR}/usr/mdec/uboot.lif
 USE_SYSINST=	yes
 
