@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grf_cc_h_mode.c,v 1.2 1994/01/29 07:00:20 chopps Exp $
+ *	$Id: grf_cc_h_mode.c,v 1.3 1994/01/30 08:25:05 chopps Exp $
  */
 
 #if defined (GRF_NTSC)
@@ -67,7 +67,7 @@ cc_init_ntsc_hires (void)
 	this->nominal_size.width = 640;
 	this->nominal_size.height = 200;
 	this_data->max_size.width = 724;
-	this_data->max_size.height = 241;
+	this_data->max_size.height = 242;
 	this_data->min_size.width = 320;
 	this_data->min_size.height = 100;
 	this_data->min_depth = 1;
@@ -95,7 +95,7 @@ cc_init_ntsc_hires (void)
 	bcopy (std_copper_list, this_data->frames[F_STORE_LONG], std_copper_list_size);
 	bcopy (std_copper_list, this_data->frames[F_LONG], std_copper_list_size);
 	
-	this_data->bplcon0 = 0x8200;		  /* hires, color composite enable, lace. */
+	this_data->bplcon0 = 0x8200|USE_CON3;	  /* hires, color composite enable, lace. */
 	this_data->std_start_x = STANDARD_VIEW_X;
 	this_data->std_start_y = STANDARD_VIEW_Y;
 	this_data->vbl_handler = (vbl_handler_func *) hires_mode_vbl_handler;
