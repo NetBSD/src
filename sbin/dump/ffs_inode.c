@@ -1,8 +1,8 @@
-/*      $NetBSD: ffs_inode.c,v 1.8 2001/11/01 08:03:03 lukem Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.9 2001/12/22 08:05:24 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
- *      The Regents of the University of California.  All rights reserved.
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -36,15 +36,11 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
-        The Regents of the University of California.  All rights reserved.\n");
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
-#else
-__RCSID("$NetBSD: ffs_inode.c,v 1.8 2001/11/01 08:03:03 lukem Exp $");
-#endif
+__RCSID("$NetBSD: ffs_inode.c,v 1.9 2001/12/22 08:05:24 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.31 2001/12/14 14:43:34 bouyer Exp $	*/
+/*	$NetBSD: tape.c,v 1.32 2001/12/22 08:05:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.31 2001/12/14 14:43:34 bouyer Exp $");
+__RCSID("$NetBSD: tape.c,v 1.32 2001/12/22 08:05:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -669,7 +669,7 @@ restore_check_point:
 		 * use the name before the comma first, and save
 		 * the remaining names for subsequent volumes.
 		 */
-		tapeno++;               /* current tape sequence */
+		tapeno++;			/* current tape sequence */
 		if (nexttape || strchr(tape, ',')) {
 			if (nexttape && *nexttape)
 				tape = nexttape;
@@ -785,7 +785,7 @@ enslave(void)
 		slaves[i].sent = 0;
 		if (slaves[i].pid == 0) { 	    /* Slave starts up here */
 			for (j = 0; j <= i; j++)
-			        (void) close(slaves[j].fd);
+				(void) close(slaves[j].fd);
 			signal(SIGINT, SIG_IGN);    /* Master handles this */
 			signal(SIGINFO, SIG_IGN);
 			doslave(cmd[0], i);
@@ -795,8 +795,8 @@ enslave(void)
 	
 	for (i = 0; i < SLAVES; i++)
 		(void) atomic_write(slaves[i].fd, 
-			      (char *) &slaves[(i + 1) % SLAVES].pid, 
-		              sizeof slaves[0].pid);
+				(char *) &slaves[(i + 1) % SLAVES].pid, 
+				sizeof slaves[0].pid);
 		
 	master = 0; 
 }
@@ -891,8 +891,9 @@ doslave(int cmd, int slave_number)
 
 #ifdef WRITEDEBUG
 		if (size != writesize) 
-		 fprintf(stderr, "slave %d only wrote %d out of %d bytes and gave up.\n",
-		     slave_number, size, writesize);
+			fprintf(stderr,
+		    "slave %d only wrote %d out of %d bytes and gave up.\n",
+			    slave_number, size, writesize);
 #endif
 
 		if (eot_count > 0)
