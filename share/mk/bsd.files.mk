@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.11 2000/06/06 05:40:47 mycroft Exp $
+#	$NetBSD: bsd.files.mk,v 1.12 2000/06/06 09:22:01 mycroft Exp $
 
 # This file can be included multiple times.  It clears the definition of
 # FILES at the end so that this is possible.
@@ -13,10 +13,10 @@ FILESGRP?=${BINGRP}
 FILESMODE?=${NONBINMODE}
 
 filesinstall:: ${FILES:@F@${DESTDIR}${FILESDIR_${F}:U${FILESDIR}}/${FILESNAME_${F}:U${FILESNAME:U${F:T}}}@}
+.PRECIOUS: ${FILES:@F@${DESTDIR}${FILESDIR_${F}:U${FILESDIR}}/${FILESNAME_${F}:U${FILESNAME:U${F:T}}}@}
 .if !defined(UPDATE)
 .PHONY: ${FILES:@F@${DESTDIR}${FILESDIR_${F}:U${FILESDIR}}/${FILESNAME_${F}:U${FILESNAME:U${F:T}}}@}
 .endif
-.PRECIOUS: ${FILES:@F@${DESTDIR}${FILESDIR_${F}:U${FILESDIR}}/${FILESNAME_${F}:U${FILESNAME:U${F:T}}}@}
 
 .for F in ${FILES}
 .if !defined(BUILD) && !make(all) && !make(${F})
