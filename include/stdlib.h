@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.4 1993/08/01 18:45:16 mycroft Exp $
+ *	$Id: stdlib.h,v 1.5 1993/10/07 19:55:05 brezak Exp $
  */
 
 #ifndef _STDLIB_H_
@@ -95,6 +95,17 @@ size_t	 mbstowcs __P((wchar_t *, const char *, size_t));
 int	 wctomb __P((char *, wchar_t));
 int	 mbtowc __P((wchar_t *, const char *, size_t));
 size_t	 wcstombs __P((char *, const wchar_t *, size_t));
+
+/* don't ask me where to put these -- MB XXX */
+double		drand48	__P((void));
+double		erand48	__P((unsigned short[3]));
+long		lrand48	__P((void));
+long		nrand48	__P((unsigned short[3]));
+long		mrand48	__P((void));
+long		jrand48	__P((unsigned short[3]));
+void		srand48	__P((long));
+unsigned short *seed48	__P((unsigned short[3]));
+void		lcong48	__P((unsigned short[7]));
 
 #ifndef _ANSI_SOURCE
 void	 cfree __P((void *));
