@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.104 2003/04/27 06:47:45 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.105 2003/05/02 01:47:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.104 2003/04/27 06:47:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.105 2003/05/02 01:47:39 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1347,6 +1347,9 @@ lfs_getpages(void *v)
  * either all are dirty or all are clean.  If any of the pages
  * we've seen so far are dirty, put the vnode on the paging chain,
  * and mark it IN_PAGING.
+ *
+ * If checkfirst != 0, don't check all the pages but return at the
+ * first dirty page.
  */
 static int
 check_dirty(struct lfs *fs, struct vnode *vp,
@@ -1737,7 +1740,7 @@ lfs_putpages(void *v)
 		 */
 	    again:
 		check_dirty(fs, vp, startoffset, endoffset, blkeof,
-			    ap->a_flags, 1);
+			    ap->a_flags, 0);
 
 		if ((error = genfs_putpages(v)) == EDEADLK) {
 #ifdef DEBUG_LFS
@@ -1818,7 +1821,7 @@ lfs_putpages(void *v)
 	 */
     again2:
 	simple_lock(&vp->v_interlock);
-	check_dirty(fs, vp, startoffset, endoffset, blkeof, ap->a_flags, 1);
+	check_dirty(fs, vp, startoffset, endoffset, blkeof, ap->a_flags, 0);
 
 	if ((error = genfs_putpages(v)) == EDEADLK) {
 #ifdef DEBUG_LFS
