@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.54 2000/05/27 00:40:29 sommerfeld Exp $ */
+/* $NetBSD: trap.c,v 1.55 2000/05/31 05:14:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54 2000/05/27 00:40:29 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2000/05/31 05:14:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,11 @@ userret(p, pc, oticks)
 	u_int64_t pc;
 	u_quad_t oticks;
 {
+	struct cpu_info *ci = curcpu();
 	int sig;
+
+	KDASSERT(p->p_cpu != NULL);
+	KDASSERT(p->p_cpu == ci);
 
 	/* Do any deferred user pmap operations. */
 	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
@@ -191,11 +195,17 @@ userret(p, pc, oticks)
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
-	if (want_resched) {
+	if (ci->ci_want_resched) {
 		/*
 		 * We are being preempted.
 		 */
 		preempt(NULL);
+
+		ci = curcpu();		/* It may have changed! */
+
+		KDASSERT(p->p_cpu != NULL);
+		KDASSERT(p->p_cpu == ci);
+
 		PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
@@ -210,7 +220,7 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	ci->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 static void
@@ -410,6 +420,13 @@ trap(a0, a1, a2, entry, framep)
 			alpha_pal_wrfen(1);
 			if (fpcurproc)
 				savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
+			/*
+			 * XXXSMP
+			 * Need to find out where this process's FP
+			 * state actually is and possible cause it
+			 * to be saved there first (via an IPI)
+			 * before we can retore it here.
+			 */
 			fpcurproc = p;
 			restorefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
 			alpha_pal_wrfen(0);
@@ -764,7 +781,7 @@ ast(framep)
 
 	uvmexp.softs++;
 
-	astpending = 0;
+	curcpu()->ci_astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
