@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.5 1995/08/18 10:09:57 pk Exp $ */
+/*	$NetBSD: espvar.h,v 1.6 1995/10/24 16:03:57 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -71,10 +71,14 @@ struct ecb {
 	TAILQ_ENTRY(ecb) chain;
 	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
 	int		flags;	/* Status */
-#define ECB_FREE	0x00
-#define ECB_ACTIVE	0x01
-#define ECB_DONE	0x04
+#define ECB_QNONE	0
+#define ECB_QFREE	1
+#define ECB_QREADY	2
+#define ECB_QNEXUS	3
+#define ECB_QBITS	0x07
 #define ECB_CHKSENSE	0x08
+#define ECB_ABORTED	0x10
+#define ECB_SETQ(e, q)	do (e)->flags = ((e)->flags&~ECB_QBITS)|(q); while(0)
 	struct scsi_generic cmd;  /* SCSI command block */
 	int	 clen;
 	char	*daddr;		/* Saved data pointer */
@@ -213,6 +217,7 @@ struct esp_softc {
 #define ESP_BUSFREE_OK	0x04	/* Bus free phase is OK. */
 #define ESP_SYNCHNEGO	0x08	/* Synch negotiation in progress. */
 #define ESP_BLOCKED	0x10	/* Don't schedule new scsi bus operations */
+#define ESP_ABORTING	0x20	/* Bailing out */
 
 /* values for sc_msgout */
 #define SEND_DEV_RESET		0x01
@@ -293,9 +298,9 @@ struct esp_softc {
 #define PSEUDO_PHASE		0x100	/* "pseudo" bit */
 
 #if ESP_DEBUG > 1
-#define	ESPCMD(sc, cmd)		printf("cmd:0x%02x ", sc->sc_reg[ESP_CMD] = cmd)
+#define	ESPCMD(sc, cmd)		printf("<cmd:0x%x>", (unsigned)(sc->sc_reg[ESP_CMD] = (unsigned)cmd))
 #else
-#define	ESPCMD(sc, cmd)		sc->sc_reg[ESP_CMD] = cmd
+#define	ESPCMD(sc, cmd)		sc->sc_reg[ESP_CMD] = (unsigned)cmd
 #endif
 
 #define SAME_ESP(sc, bp, ca) \
