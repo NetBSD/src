@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.22.2.2 1999/10/19 23:20:54 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.22.2.3 1999/10/20 20:40:52 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -488,29 +488,30 @@ uha_scsipi_request(chan, req, arg)
 			if (flags & SCSI_DATA_UIO) {
 				error = bus_dmamap_load_uio(dmat,
 				    mscp->dmamap_xfer, (struct uio *)xs->data,
-				    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				    BUS_DMA_WAITOK);
+				    BUS_DMA_NOWAIT);
 			} else
 #endif /*TFS */
 			{
 				error = bus_dmamap_load(dmat,
 				    mscp->dmamap_xfer, xs->data, xs->datalen,
-				    NULL, (flags & XS_CTL_NOSLEEP) ?
-				    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+				    NULL, BUS_DMA_NOWAIT);
 			}
 
-			if (error) {
-				if (error == EFBIG) {
-					printf("%s: uha_scsi_cmd, more than %d"
-					    " dma segments\n",
-					    sc->sc_dev.dv_xname, UHA_NSEG);
-				} else {
-					printf("%s: uha_scsi_cmd, error %d "
-					    "loading dma map\n",
-					    sc->sc_dev.dv_xname, error);
-				}
-				uha_free_mscp(sc, mscp);
+			switch (error) {
+			case 0:
+				break;
+
+			case ENOMEM:
+			case EAGAIN:
+				xs->error = XS_RESOURCE_SHORTAGE;
+				goto out_bad;
+
+			default:
 				xs->error = XS_DRIVER_STUFFUP;
+				printf("%s: error %d loading DMA map\n",
+				    sc->sc_dev.dv_xname, error);
+ out_bad:
+				uha_free_mscp(sc, mscp);
 				scsipi_done(xs);
 				return;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.37.2.2 1999/10/19 23:15:30 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37.2.3 1999/10/20 20:40:51 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -2491,21 +2491,23 @@ ahc_scsipi_request(chan, req, arg)
 
 			error = bus_dmamap_load(ahc->sc_dt, scb->dmamap_xfer,
 				    xs->data, xs->datalen, NULL,
-				    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				    BUS_DMA_WAITOK);
-			if (error) {
-				if (error == EFBIG) {
-					printf("%s: ahc_scsi_cmd: more "
-					    "than %d DMA segs\n",
-					    ahc_name(ahc), AHC_NSEG);
-				} else {
-					printf("%s: ahc_scsi_cmd: error %d "
-					    "loading dma map\n",
-					    ahc_name(ahc), error);
-				}
-				SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
-				ahc_free_scb(ahc, scb);
+				    BUS_DMA_NOWAIT);
+			switch (error) {
+			case 0:
+				break;
+
+			case ENOMEM:
+			case EAGAIN:
+				xs->error = XS_RESOURCE_SHORTAGE;
+				goto out_bad;
+
+			default:
 				xs->error = XS_DRIVER_STUFFUP;
+				SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
+				printf("%s: error %d loading DMA map\n",
+				    ahc_name(ahc), error);
+ out_bad:
+				ahc_free_scb(ahc, scb);
 				scsipi_done(xs);
 				return;
 			}

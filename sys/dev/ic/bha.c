@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.33.2.3 1999/10/19 22:48:31 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.33.2.4 1999/10/20 20:40:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -344,29 +344,30 @@ bha_scsipi_request(chan, req, arg)
 			if (flags & XS_CTL_DATA_UIO) {
 				error = bus_dmamap_load_uio(dmat,
 				    ccb->dmamap_xfer, (struct uio *)xs->data,
-				    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				    BUS_DMA_WAITOK);
+				    BUS_DMA_NOWAIT);
 			} else
 #endif /* TFS */
 			{
 				error = bus_dmamap_load(dmat,
 				    ccb->dmamap_xfer, xs->data, xs->datalen,
-				    NULL, (flags & XS_CTL_NOSLEEP) ?
-				    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+				    NULL, BUS_DMA_NOWAIT);
 			}
 
-			if (error) {
-				if (error == EFBIG) {
-					printf("%s: bha_scsipi_request, more "
-					    "than %d dma segments\n",
-					    sc->sc_dev.dv_xname, BHA_NSEG);
-				} else {
-					printf("%s: bha_scsipi_request, "
-					    "error %d loading dma map\n",
-					    sc->sc_dev.dv_xname, error);
-				}
-				bha_free_ccb(sc, ccb);
+			switch (error) {
+			case 0:
+				break;
+
+			case ENOMEM:
+			case EAGAIN:
+				xs->error = XS_RESOURCE_SHORTAGE;
+				goto out_bad;
+
+			default:
 				xs->error = XS_DRIVER_STUFFUP;
+				printf("%s: error %d loading DMA map\n",
+				    sc->sc_dev.dv_xname, error);
+ out_bad:
+				bha_free_ccb(sc, ccb);
 				scsipi_done(xs);
 				return;
 			}
