@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.7 1994/12/20 17:32:40 mycroft Exp $
+#	$Id: Makefile,v 1.8 1994/12/22 10:46:08 cgd Exp $
 
 PROG=	mount_msdos
 SRCS=	mount_msdos.c getmntopts.c
-MAN8=	mount_msdos.0
+MAN=	mount_msdos.8
 
 MOUNT=	${.CURDIR}/../mount
 CFLAGS+= -I${MOUNT}

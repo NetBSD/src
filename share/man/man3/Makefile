@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 1994/11/30 15:24:27 jtc Exp $
+#	$NetBSD: Makefile,v 1.8 1994/12/22 10:48:16 cgd Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
-MAN3=	assert.0 bitstring.0 end.0 intro.0 queue.0 stdarg.0
+MAN=	assert.3 bitstring.3 end.3 intro.3 queue.3 stdarg.3
 MLINKS+=end.3 edata.3 end.3 etext.3
 MLINKS+=queue.3 list_entry.3 queue.3 list_head.3 queue.3 list_init.3
 MLINKS+=queue.3 list_insert_after.3 queue.3 list_insert_before.3
