@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.19 2004/03/27 12:09:28 simonb Exp $	*/
+/*	$NetBSD: fmt.c,v 1.20 2004/03/27 12:44:08 simonb Exp $	*/
 
 #include <kvm.h>
 #include <stdio.h>
@@ -42,7 +42,7 @@ fmt_puts(char *s, int *leftp)
 		} else
 			*leftp -= len;
 	}
-	printf("%s", v);
+	(void)printf("%s", v);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.37 2004/03/27 11:48:31 simonb Exp $	*/
+/*	$NetBSD: keyword.c,v 1.38 2004/03/27 12:44:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.37 2004/03/27 11:48:31 simonb Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.38 2004/03/27 12:44:08 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,10 +212,10 @@ showkey(void)
 			i = len;
 			sep = "\n";
 		}
-		(void) printf("%s%s", sep, p);
+		(void)printf("%s%s", sep, p);
 		sep = " ";
 	}
-	(void) printf("\n");
+	(void)printf("\n");
 }
 
 static void
