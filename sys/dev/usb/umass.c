@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.41 2000/08/17 23:16:16 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.42 2000/09/23 21:03:00 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -165,7 +165,7 @@
 #define UDMASS_XFER	0x40000000	/* all transfers */
 #define UDMASS_CMD	0x80000000
 
-int umassdebug = 0; //UDMASS_ALL;
+int umassdebug = 0;
 #else
 #define DIF(m, x)	/* nop */
 #define DPRINTF(m, x)	/* nop */
@@ -455,6 +455,10 @@ struct umass_softc {
 
 	u_int8_t		maxlun;			/* max lun supported */
 
+#ifdef UMASS_DEBUG
+	struct timeval tv;
+#endif
+
 #if defined(__FreeBSD__)
 	/* SCSI/CAM specific variables */
 	struct scsi_sense	cam_scsi_sense;
@@ -724,6 +728,17 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 	id = usbd_get_interface_descriptor(iface);
 	if (id == NULL || id->bInterfaceClass != UICLASS_MASS)
 		return (UMATCH_NONE);
+
+	if (UGETW(dd->idVendor) == USB_VENDOR_SONY
+	    && id->bInterfaceSubClass == 0xff) {
+		/* 
+		 * Sony DSC devices set the sub class to 0xff
+		 * instead of 1 (RBC). Fix that here.
+		 */
+		id->bInterfaceSubClass = UISUBCLASS_RBC;
+		/* They also should be able to do higher speed. */
+		sc->transfer_speed = 500;
+	}
 
 	sc->subclass = id->bInterfaceSubClass;
 	sc->protocol = id->bInterfaceProtocol;
@@ -1187,7 +1202,7 @@ USB_DETACH(umass)
 		usbd_abort_pipe(sc->intrin_pipe);
 
 #if 0
-	/* Do we really need referebce counting?  Perhaps in ioctl() */
+	/* Do we really need reference counting?  Perhaps in ioctl() */
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away. */
@@ -3091,14 +3106,18 @@ umass_scsipi_cmd(struct scsipi_xfer *xs)
 	struct scsipi_generic *cmd, trcmd;
 	int cmdlen;
 	int dir;
+#ifdef UMASS_DEBUG
+	microtime(&sc->tv);
+#endif
 
 	DIF(UDMASS_UPPER, sc_link->flags |= DEBUGLEVEL);
 
-	DPRINTF(UDMASS_CMD, ("%s: umass_scsi_cmd:  %d:%d xs=%p cmd=0x%02x "
-	    "(quirks=0x%x, poll=%d)\n", USBDEVNAME(sc->sc_dev),
+	DPRINTF(UDMASS_CMD, ("%s: umass_scsi_cmd: at %lu.%06lu: %d:%d "
+	    "xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
+	    USBDEVNAME(sc->sc_dev), sc->tv.tv_sec, sc->tv.tv_usec,
 	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun,
-	    xs, xs->cmd->opcode, sc_link->quirks, 
-	    xs->xs_control & XS_CTL_POLL));
+	    xs, xs->cmd->opcode, xs->datalen,
+	    sc_link->quirks, xs->xs_control & XS_CTL_POLL));
 #if defined(USB_DEBUG) && defined(SCSIDEBUG)
 	if (umassdebug & UDMASS_SCSI)
 		show_scsipi_xs(xs);
@@ -3268,9 +3287,15 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	struct scsipi_link *sc_link = xs->sc_link;
 	int cmdlen;
 	int s;
+#ifdef UMASS_DEBUG
+	struct timeval tv;
+	u_int delta;
+	microtime(&tv);
+	delta = (tv.tv_sec - sc->tv.tv_sec) * 1000000 + tv.tv_usec - sc->tv.tv_usec;
+#endif
 
-	DPRINTF(UDMASS_CMD,("umass_scsipi_cb: xs=%p residue=%d status=%d\n",
-		xs, residue, status));
+	DPRINTF(UDMASS_CMD,("umass_scsipi_cb: at %lu.%06lu, delta=%u: xs=%p residue=%d"
+	    " status=%d\n", tv.tv_sec, tv.tv_usec, delta, xs, residue, status));
 
 	xs->resid = residue;
 
@@ -3308,9 +3333,10 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 
 	xs->xs_status |= XS_STS_DONE;
 
-	DPRINTF(UDMASS_CMD,("umass_scsipi_cb: return xs->error=%d, "
-		"xs->xs_status=0x%x xs->resid=%d\n", xs->error, xs->xs_status,
-		xs->resid));
+	DPRINTF(UDMASS_CMD,("umass_scsipi_cb: at %lu.%06lu: return xs->error="
+            "%d, xs->xs_status=0x%x xs->resid=%d\n",
+	     tv.tv_sec, tv.tv_usec,
+	     xs->error, xs->xs_status, xs->resid));
 
 	s = splbio();
 	scsipi_done(xs);
