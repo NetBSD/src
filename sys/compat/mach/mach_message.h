@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.21 2003/12/08 12:02:24 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.22 2003/12/08 19:27:38 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ typedef unsigned int mach_msg_descriptor_type_t;
 #define MACH_MSG_OOL_VOLATILE_DESCRIPTOR  	3
 
 #define MACH_MAX_MSG_LEN 65536
+
 typedef	struct {
 	mach_msg_bits_t	msgh_bits;
 	mach_msg_size_t	msgh_size;
@@ -220,7 +221,7 @@ struct mach_complex_msg {
 	union {
 		mach_msg_type_descriptor_t mcm_desc[1];
 		mach_msg_port_descriptor_t mcm_port_desc[1];
-		mach_msg_ool_ports_descriptor_t mcm_ool_port_desc[1];
+		mach_msg_ool_ports_descriptor_t mcm_ool_ports_desc[1];
 		mach_msg_ool_descriptor_t mcm_ool_desc[1];
 	}; 
 };
@@ -256,6 +257,13 @@ struct mach_message {
 	struct lwp *mm_l;		/* The thread that sent it */
 };
 
+/* Flags for mach_ool_copy{in|out} */
+#define MACH_OOL_NONE	0x0
+#define MACH_OOL_FREE	0x1	/* Free kernel buffer after copyout */
+#define MACH_OOL_TRACE	0x2	/* ktrace OOL data */
+
+inline int mach_ool_copyin(struct proc *, const void *, void **, size_t, int);
+inline int mach_ool_copyout(struct proc *, void *, void **, size_t, int);
 void mach_message_init(void);
 struct mach_message *mach_message_get(mach_msg_header_t *, 
     size_t, struct mach_port *, struct lwp *);
