@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.20 1997/03/31 07:32:16 scottr Exp $	*/
+/*	$NetBSD: ct.c,v 1.21 1997/04/02 22:37:23 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -648,7 +648,7 @@ cteof(sc, bp)
 	blks = sc->sc_stat.c_blk - sc->sc_blkno - 1;
 #ifdef DEBUG
 	if (ctdebug & CDB_FILES)
-		printf("cteof: bc %d oblk %d nblk %d read %d, resid %d\n",
+		printf("cteof: bc %ld oblk %d nblk %ld read %ld, resid %ld\n",
 		       bp->b_bcount, sc->sc_blkno, sc->sc_stat.c_blk,
 		       blks, bp->b_bcount - CTKTOB(blks));
 #endif
@@ -744,7 +744,7 @@ ctintr(arg)
 		hpibrecv(ctlr, slave, C_QSTAT, &stat, 1);
 #ifdef DEBUG
 		if (ctdebug & CDB_FILES)
-			printf("ctintr: return stat 0x%x, A%x F%x blk %d\n",
+			printf("ctintr: return stat 0x%x, A%x F%x blk %ld\n",
 			       stat, sc->sc_stat.c_aef,
 			       sc->sc_stat.c_fef, sc->sc_stat.c_blk);
 #endif

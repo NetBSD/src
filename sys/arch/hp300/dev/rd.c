@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.28 1997/03/31 07:40:00 scottr Exp $	*/
+/*	$NetBSD: rd.c,v 1.29 1997/04/02 22:37:35 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -72,37 +72,6 @@
 #include <vm/lock.h>
 #include <vm/vm_prot.h>
 #include <vm/pmap.h>
-
-int	rdmatch __P((struct device *, struct cfdata *, void *));
-void	rdattach __P((struct device *, struct device *, void *));
-
-struct cfattach rd_ca = {
-	sizeof(struct rd_softc), rdmatch, rdattach
-};
-
-struct cfdriver rd_cd = {
-	NULL, "rd", DV_DISK
-};
-
-int	rdident __P((struct device *, struct rd_softc *,
-	    struct hpibbus_attach_args *));
-void	rdreset __P((struct rd_softc *));
-void	rdustart __P((struct rd_softc *));
-int	rdgetinfo __P((dev_t));
-void	rdrestart __P((void *));
-struct buf *rdfinish __P((struct rd_softc *, struct buf *));
-
-void	rdrestart __P((void *));
-void	rdustart __P((struct rd_softc *));
-struct buf *rdfinish __P((struct rd_softc *, struct buf *));
-void	rdstart __P((void *));
-void	rdgo __P((void *));
-void	rdintr __P((void *));
-int	rdstatus __P((struct rd_softc *));
-int	rderror __P((int));
-
-bdev_decl(rd);
-cdev_decl(rd);
 
 int	rderrthresh = RDRETRY-1;	/* when to start reporting errors */
 
@@ -246,6 +215,40 @@ struct rdidentinfo rdidentinfo[] = {
 	  NRD2203ATRK,	1449,	1309896 }
 };
 int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
+
+bdev_decl(rd);
+cdev_decl(rd);
+
+int	rdident __P((struct device *, struct rd_softc *,
+	    struct hpibbus_attach_args *));
+void	rdreset __P((struct rd_softc *));
+void	rdustart __P((struct rd_softc *));
+int	rdgetinfo __P((dev_t));
+void	rdrestart __P((void *));
+struct buf *rdfinish __P((struct rd_softc *, struct buf *));
+
+void	rdrestart __P((void *));
+void	rdustart __P((struct rd_softc *));
+struct buf *rdfinish __P((struct rd_softc *, struct buf *));
+void	rdstart __P((void *));
+void	rdgo __P((void *));
+void	rdintr __P((void *));
+int	rdstatus __P((struct rd_softc *));
+int	rderror __P((int));
+#ifdef DEBUG
+void	rdprinterr __P((char *, short, char **));
+#endif
+
+int	rdmatch __P((struct device *, struct cfdata *, void *));
+void	rdattach __P((struct device *, struct device *, void *));
+
+struct cfattach rd_ca = {
+	sizeof(struct rd_softc), rdmatch, rdattach
+};
+
+struct cfdriver rd_cd = {
+	NULL, "rd", DV_DISK
+};
 
 int
 rdmatch(parent, match, aux)
@@ -627,7 +630,7 @@ rdstrategy(bp)
 
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
-		printf("rdstrategy(%x): dev %x, bn %x, bcount %x, %c\n",
+		printf("rdstrategy(%p): dev %x, bn %x, bcount %lx, %c\n",
 		       bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
@@ -744,7 +747,7 @@ rdstart(arg)
 again:
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
-		printf("rdstart(%s): bp %x, %c\n", sc->sc_dev.dv_xname, bp,
+		printf("rdstart(%s): bp %p, %c\n", rs->sc_dev.dv_xname, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
 	part = rdpart(bp->b_dev);
@@ -760,7 +763,7 @@ again:
 	rs->sc_ioc.c_cmd = bp->b_flags & B_READ ? C_READ : C_WRITE;
 #ifdef DEBUG
 	if (rddebug & RDB_IO)
-		printf("rdstart: hpibsend(%x, %x, %x, %x, %x)\n",
+		printf("rdstart: hpibsend(%x, %x, %x, %p, %x)\n",
 		       ctlr, slave, C_CMD,
 		       &rs->sc_ioc.c_unit, sizeof(rs->sc_ioc)-2);
 #endif
@@ -786,7 +789,7 @@ again:
 	 */
 #ifdef DEBUG
 	if (rddebug & RDB_ERROR)
-		printf("%s: rdstart: cmd %x adr %d blk %d len %d ecnt %d\n",
+		printf("%s: rdstart: cmd %x adr %lx blk %d len %d ecnt %ld\n",
 		       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 		       bp->b_blkno, rs->sc_resid, rs->sc_tab.b_errcnt);
 	rs->sc_stats.rdretries++;
@@ -848,7 +851,7 @@ rdintr(arg)
 
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
-		printf("rdintr(%d): bp %x, %c, flags %x\n", unit, bp,
+		printf("rdintr(%d): bp %p, %c, flags %x\n", unit, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W', rs->sc_flags);
 	if (bp == NULL) {
 		printf("%s: bp == NULL\n", rs->sc_dev.dv_xname);
@@ -1176,17 +1179,18 @@ rdsize(dev)
 }
 
 #ifdef DEBUG
+void
 rdprinterr(str, err, tab)
 	char *str;
 	short err;
-	char *tab[];
+	char **tab;
 {
 	int i;
 	int printed;
 
 	if (err == 0)
 		return;
-	printf("    %s error field:", str, err);
+	printf("    %s error %d field:", str, err);
 	printed = 0;
 	for (i = 0; i < 16; i++)
 		if (err & (0x8000 >> i))

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.24 1997/03/31 07:34:12 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.25 1997/04/02 22:37:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -626,7 +626,7 @@ grfmap(dev, addrp, p)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
-		printf("grfmap(%d): addr %x\n", p->p_pid, *addrp);
+		printf("grfmap(%d): addr %p\n", p->p_pid, *addrp);
 #endif
 	len = gp->g_display.gd_regsize + gp->g_display.gd_fbsize;
 	flags = MAP_SHARED;
@@ -658,7 +658,7 @@ grfunmap(dev, addr, p)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
-		printf("grfunmap(%d): dev %x addr %x\n", p->p_pid, dev, addr);
+		printf("grfunmap(%d): dev %x addr %p\n", p->p_pid, dev, addr);
 #endif
 	if (addr == 0)
 		return(EINVAL);		/* XXX: how do we deal with this? */
@@ -677,7 +677,7 @@ iommap(dev, addrp)
 
 #ifdef DEBUG
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iommap(%d): addr %x\n", curproc->p_pid, *addrp);
+		printf("iommap(%d): addr %p\n", curproc->p_pid, *addrp);
 #endif
 	return(EINVAL);
 }
@@ -691,7 +691,7 @@ iounmmap(dev, addr)
 	int unit = minor(dev);
 
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iounmmap(%d): id %d addr %x\n",
+		printf("iounmmap(%d): id %d addr %p\n",
 		       curproc->p_pid, unit, addr);
 #endif
 	return(0);
@@ -781,7 +781,7 @@ grflckmmap(dev, addrp)
 	struct proc *p = curproc;		/* XXX */
 
 	if (grfdebug & (GDB_MMAP|GDB_LOCK))
-		printf("grflckmmap(%d): addr %x\n",
+		printf("grflckmmap(%d): addr %p\n",
 		       p->p_pid, *addrp);
 #endif
 	return(EINVAL);
@@ -796,7 +796,7 @@ grflckunmmap(dev, addr)
 	int unit = minor(dev);
 
 	if (grfdebug & (GDB_MMAP|GDB_LOCK))
-		printf("grflckunmmap(%d): id %d addr %x\n",
+		printf("grflckunmmap(%d): id %d addr %p\n",
 		       curproc->p_pid, unit, addr);
 #endif
 	return(EINVAL);

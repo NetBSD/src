@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.8 1997/03/31 07:32:14 scottr Exp $	*/
+/*	$NetBSD: ac.c,v 1.9 1997/04/02 22:37:21 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -281,7 +281,7 @@ accommand(dev, command, bufp, buflen)
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("accommand(dev=%x, cmd=%x, buf=%x, buflen=%x)\n",
+		printf("accommand(dev=%x, cmd=%x, buf=%p, buflen=%x)\n",
 		       dev, command, bufp, buflen);
 #endif
 	if (sc->sc_flags & ACF_ACTIVE)
@@ -345,7 +345,7 @@ acstart(arg)
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("acstart(unit=%x)\n", unit);
+		printf("acstart(unit=%x)\n", sc->sc_dev.dv_unit);
 #endif
 	if (scsiustart(sc->sc_dev.dv_parent->dv_unit))
 		acgo(arg);
@@ -361,7 +361,7 @@ acgo(arg)
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("acgo(unit=%x): ", unit);
+		printf("acgo(unit=%x): ", sc->sc_dev.dv_unit);
 #endif
 	stat = scsigo(sc->sc_dev.dv_parent->dv_unit, sc->sc_target,
 	    sc->sc_lun, bp, sc->sc_cmd, 0);
@@ -464,7 +464,7 @@ acconvert(sbuf, dbuf, ne)
 	sbuf += sizeof *hdr;
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("element status: first=%d, num=%d, len=%d\n",
+		printf("element status: first=%d, num=%d, len=%ld\n",
 		       hdr->ac_felt, hdr->ac_nelt, hdr->ac_bcount);
 	if (hdr->ac_nelt != ne) {
 		printf("acconvert: # of elements, %d != %d\n",

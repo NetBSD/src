@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.14 1997/04/01 03:10:57 scottr Exp $	*/
+/*	$NetBSD: dma.c,v 1.15 1997/04/02 22:37:27 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -341,7 +341,7 @@ dmago(unit, addr, count, flags)
 #endif
 #ifdef DEBUG
 	if (dmadebug & DDB_FOLLOW)
-		printf("dmago(%d, %x, %x, %x)\n",
+		printf("dmago(%d, %p, %x, %x)\n",
 		       unit, addr, count, flags);
 	if (flags & DMAGO_LWORD)
 		dmalword[unit]++;
@@ -447,12 +447,12 @@ dmago(unit, addr, count, flags)
 	}
 #ifdef DEBUG
 	if (dmadebug & DDB_IO) {
-		if ((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD) ||
-		    (dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD)) {
+		if (((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD)) ||
+		    ((dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD))) {
 			printf("dmago: cmd %x, flags %x\n",
 			       dc->dm_cmd, dc->dm_flags);
 			for (seg = 0; seg <= dc->dm_last; seg++)
-				printf("  %d: %d@%x\n", seg,
+				printf("  %d: %d@%p\n", seg,
 				    dc->dm_chain[seg].dc_count,
 				    dc->dm_chain[seg].dc_addr);
 		}
@@ -526,8 +526,8 @@ dmaintr(arg)
 		found++;
 #ifdef DEBUG
 		if (dmadebug & DDB_IO) {
-			if ((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD) ||
-			    (dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD))
+			if (((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD)) ||
+			    ((dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD)))
 			  printf("dmaintr: flags %x unit %d stat %x next %d\n",
 			   dc->dm_flags, i, stat, dc->dm_cur + 1);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.21 1997/03/31 07:40:08 scottr Exp $	*/
+/*	$NetBSD: st.c,v 1.22 1997/04/02 22:37:38 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -173,6 +173,12 @@ int	stwrite __P((dev_t, struct uio *, int));
 
 void	ststrategy __P((struct buf *));
 int	stdump __P((dev_t));
+
+#ifdef DEBUG
+void	dumpxsense __P((struct st_xsense *));
+void	prtmodsel __P((struct mode_select_data *, int));
+void	prtmodstat __P((struct mode_sense *));
+#endif /* DEBUG */
 
 static void	stfinish __P((struct st_softc *, struct buf *));
 static void	sterror __P((struct st_softc *, int));
@@ -753,7 +759,7 @@ stgo(arg)
 	if (bp->b_bcount & 1) {
 #ifdef DEBUG
 		if (st_debug & ST_ODDIO)
-			printf("%s: stgo: odd count %d using manual transfer\n",
+			printf("%s: stgo: odd count %ld using manual transfer\n",
 			       sc->sc_dev.dv_xname, bp->b_bcount);
 #endif
 		stat = scsi_tt_oddio(sc->sc_dev.dv_parent->dv_unit,
@@ -1006,7 +1012,7 @@ stintr(arg, stat)
 				 */
 #ifdef DEBUG
 				if (st_debug & ST_ODDIO)
-					printf("%s: stintr odd count %d, do BSR then oddio\n",
+					printf("%s: stintr odd count %ld, do BSR then oddio\n",
 					       sc->sc_dev.dv_xname,
 					       bp->b_bcount - bp->b_resid);
 #endif
@@ -1048,7 +1054,7 @@ stintr(arg, stat)
 	}
 #ifdef DEBUG
 	if ((st_debug & ST_BRESID) && bp->b_resid != 0)
-		printf("b_resid %d b_flags 0x%x b_error 0x%x\n", 
+		printf("b_resid %ld b_flags 0x%lx b_error 0x%x\n", 
 		       bp->b_resid, bp->b_flags, bp->b_error);
 #endif
 	/* asked for more filemarks then on tape */
@@ -1342,7 +1348,6 @@ prtkey(sc)
 }
 
 #ifdef DEBUG
-
 void
 dumpxsense(sensebuf)
 	struct st_xsense *sensebuf;

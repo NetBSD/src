@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.30 1997/03/31 07:40:05 scottr Exp $	*/
+/*	$NetBSD: sd.c,v 1.31 1997/04/02 22:37:36 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -597,7 +597,7 @@ sdlblkstrat(bp, bsize)
 	addr = bp->b_un.b_addr;
 #ifdef DEBUG
 	if (sddebug & SDB_PARTIAL)
-		printf("sdlblkstrat: bp %x flags %x bn %x resid %x addr %x\n",
+		printf("sdlblkstrat: bp %p flags %lx bn %x resid %x addr %p\n",
 		       bp, bp->b_flags, bn, resid, addr);
 #endif
 
@@ -614,7 +614,7 @@ sdlblkstrat(bp, bsize)
 			cbp->b_bcount = bsize;
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
-				printf(" readahead: bn %x cnt %x off %x addr %x\n",
+				printf(" readahead: bn %x cnt %x off %x addr %p\n",
 				       cbp->b_blkno, count, boff, addr);
 #endif
 			sdstrategy(cbp);
@@ -631,7 +631,7 @@ sdlblkstrat(bp, bsize)
 			bcopy(addr, &cbuf[boff], count);
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
-				printf(" writeback: bn %x cnt %x off %x addr %x\n",
+				printf(" writeback: bn %x cnt %x off %x addr %p\n",
 				       cbp->b_blkno, count, boff, addr);
 #endif
 		} else {
@@ -641,7 +641,7 @@ sdlblkstrat(bp, bsize)
 			cbp->b_bcount = count;
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
-				printf(" fulltrans: bn %x cnt %x addr %x\n",
+				printf(" fulltrans: bn %x cnt %x addr %p\n",
 				       cbp->b_blkno, count, addr);
 #endif
 		}
@@ -659,7 +659,7 @@ done:
 		addr += count;
 #ifdef DEBUG
 		if (sddebug & SDB_PARTIAL)
-			printf(" done: bn %x resid %x addr %x\n",
+			printf(" done: bn %x resid %x addr %p\n",
 			       bn, resid, addr);
 #endif
 	}
@@ -910,7 +910,7 @@ sdgo(arg)
 		pad = (bp->b_bcount & (sc->sc_blksize - 1)) != 0;
 #ifdef DEBUG
 		if (pad)
-			printf("%s: partial block xfer -- %x bytes\n",
+			printf("%s: partial block xfer -- %lx bytes\n",
 			       sc->sc_dev.dv_xname, bp->b_bcount);
 #endif
 		sc->sc_stats.sdtransfers++;
@@ -928,7 +928,7 @@ sdgo(arg)
 	}
 #ifdef DEBUG
 	if (sddebug & SDB_ERROR)
-		printf("%s: sdstart: %s adr %d blk %d len %d ecnt %d\n",
+		printf("%s: sdstart: %s adr %p blk %ld len %ld ecnt %ld\n",
 		       sc->sc_dev.dv_xname,
 		       bp->b_flags & B_READ? "read" : "write",
 		       bp->b_un.b_addr, bp->b_cylin, bp->b_bcount,
@@ -966,7 +966,7 @@ sdintr(arg, stat)
 			if (cond < 0 && sc->sc_tab.b_errcnt++ < SDRETRY) {
 #ifdef DEBUG
 				if (sddebug & SDB_ERROR)
-					printf("%s: retry #%d\n",
+					printf("%s: retry #%ld\n",
 					    sc->sc_dev.dv_xname,
 					    sc->sc_tab.b_errcnt);
 #endif

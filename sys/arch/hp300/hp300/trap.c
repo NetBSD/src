@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 1997/04/01 03:12:31 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.50 1997/04/02 22:41:41 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,8 @@
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
+
+#include <dev/cons.h>
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
@@ -601,7 +603,7 @@ trap(type, code, v, frame)
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 #endif
 		/*
@@ -947,7 +949,7 @@ dumpwb(num, s, a, d)
 	if (pa == 0)
 		printf("<invalid address>");
 	else
-		printf("%x, current value %x", pa, fuword((caddr_t)a));
+		printf("%lx, current value %lx", pa, fuword((caddr_t)a));
 	printf("\n");
 }
 #endif
