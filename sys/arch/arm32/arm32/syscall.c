@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.3 1996/02/23 18:50:56 mark Exp $ */
+/* $NetBSD: syscall.c,v 1.4 1996/03/08 21:08:39 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,9 +41,6 @@
  * High level syscall handling
  *
  * Created      : 09/11/94
- * Last updated : 28/08/95
- *
- *    $Id: syscall.c,v 1.3 1996/02/23 18:50:56 mark Exp $
  */
 
 #include <sys/param.h>
@@ -79,15 +76,18 @@
 
 #include "hydrabus.h"
 
+/*
+ * CONTINUE_AFTER_SYSCALL_BUG is used to determine whether the kernel
+ * should continue running following a swi instruction in SVC mode.
+ * This was used for debugging.
+ */ 
+
 #define CONTINUE_AFTER_SYSCALL_BUG              
 
 extern int pmap_debug_level;
-extern u_int *cursor_data;
 extern u_int kmodule_size;
 extern u_int kmodule_base;
 extern char *kstack;
-int syscallcode;
-trapframe_t syscallframe;
 u_int arm700bugcount = 0;
 extern int vnodeconsolebug;
 extern int usertraceback;
@@ -133,22 +133,6 @@ syscall(frame, code)
 	cnt.v_syscall++;
         
 #ifdef DIAGNOSTIC
-
-/*
- * Brick wall time ... If the trap frame is not at the top of the stack then
- * we have reached "syscall in kernel mode" time.
- * This test is scheduled for deletion.
- */
-
-	if ((u_int)frame != 0xefbfffb8) {
-		u_int s;
-
-		s = splhigh();
-		printf("nkt: trapframe=%08x code = %d curproc=%08x\n",
-		    (u_int)frame, code, (u_int)curproc);
-		(void)splx(s);
-	}
-
 	if ((frame->tf_spsr & PSR_MODE) != PSR_USR32_MODE) {
 		u_int s;
 		
@@ -187,21 +171,6 @@ syscall(frame, code)
  */
 
 	if ((ReadWord(frame->tf_pc - 4) & 0x0f000000) != 0x0f000000) {
-		u_int s;
-
-#if 0
-/* Report the condition */
-
-		s = splhigh();
-		printf("address=%08x [%08x] - not a swi\n", frame->tf_pc - 4, ReadWord(frame->tf_pc - 4));
-
-/* Up the debug level in case of page fault - bug occurs on page boundry */
-
-		pmap_debug_level = 2;
-		disassemble(frame->tf_pc - 4);
-		pmap_debug_level = -4;
-		(void)splx(s);
-#endif		
 		frame->tf_pc -= 4;
 		++arm700bugcount;
 
@@ -214,9 +183,6 @@ syscall(frame, code)
 	}
 
 #ifdef DIAGNOSTIC
-	syscallcode = code;
-	syscallframe = *frame;
-
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
 		splhigh();
 
@@ -254,14 +220,6 @@ syscall(frame, code)
 	callp = p->p_emul->e_sysent;
 
 	switch (code) {
-	case 0x1000:
-	case 0x1001:
-	case 0x1005:
-	case 0x1006:
-		printf("This call has been revoked (%04x) - Do not use\n", code); 
-		SYSCALL_SPECIAL_RETURN;
-		break;
-	
 	case 0x1002:
 		printf((char *)frame->tf_r0, frame->tf_r1, frame->tf_r2, frame->tf_r3);
 		SYSCALL_SPECIAL_RETURN;
@@ -272,34 +230,23 @@ syscall(frame, code)
 		SYSCALL_SPECIAL_RETURN;
 		break;
 
-	case 0x1004:
+/*	case 0x1004:
 		if (frame->tf_r0 != 0)
 			panic((char *)frame->tf_r0, frame->tf_r1, frame->tf_r2,
 			    frame->tf_r3);
 		panic("SYSCALL 0x1004 panic\n");
-		break;
+		break;*/
 
-	case 0x1007:
+/*	case 0x1007:
 		pmap_debug(frame->tf_r0);
 		SYSCALL_SPECIAL_RETURN;
-		break;
+		break;*/
 
 	case 0x1008:
 		switch (frame->tf_r0) {
 		case 0 :
 			debug_show_all_procs(frame->tf_r1, frame->tf_r2);
 			break;
-		case 1 :
-			debug_show_fs(frame->tf_r1, frame->tf_r2);
-			break;
-		case 2 :
-			debug_show_callout(frame->tf_r1, frame->tf_r2);
-			break;
-#ifdef KSHELL
-		case 3 :
-			shell_vmmap(frame->tf_r1, frame->tf_r2);
-			break;
-#endif
 #ifdef FPE
 		case 4 :
 			fpe_dump_prof();
@@ -326,18 +273,15 @@ syscall(frame, code)
 		case 11:
 			frame->tf_r0 = ReadShort(frame->tf_r1);
 			break;
-		case 12:
+/*		case 12:
 			shell_kstack(frame->tf_r1, frame->tf_r2);
-			break;
-		case 15:
-			bcopy((char *)frame->tf_r1, (char *)cursor_data, frame->tf_r2);
-			break;
+			break;*/
 		case 16:
 			pmap_pagedir_dump();
 			break;
-		case 32:
+/*		case 32:
 			frame->tf_r0 = pmap_next_phys_page(frame->tf_r1);
-			break;
+			break;*/
 		default:
 			printf("Unknown SYS_special call (%d)\n", frame->tf_r0);
 			break;
@@ -350,7 +294,7 @@ syscall(frame, code)
 		frame->tf_r0 = pmap_page_attributes(frame->tf_r0);
 		SYSCALL_SPECIAL_RETURN;
 		break;
-
+/*
 	case 0x1010:
 		frame->tf_r0 = kmodule_base;
 		SYSCALL_SPECIAL_RETURN;
@@ -382,6 +326,7 @@ syscall(frame, code)
 		}
 		SYSCALL_SPECIAL_RETURN;
 		break;
+*/
 #if NHYDRABUS > 0
 	case 0x1014:
 		frame->tf_r0 = hydrascratch.physical;
@@ -470,11 +415,6 @@ syscall(frame, code)
 		SYSCALL_SPECIAL_RETURN;
 		break;
 #endif
-	case 0x1029:
-		check_stacks(pfind(frame->tf_r0));
-		SYSCALL_SPECIAL_RETURN;
-		break;
-
 	case 0x102a:
 		usertraceback = frame->tf_r0;
 		SYSCALL_SPECIAL_RETURN;
