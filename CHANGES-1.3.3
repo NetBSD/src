@@ -245,12 +245,13 @@ distrib/x68k/floppies/ramdisk/ramdiskbin.conf	1.2
 distrib/x68k/floppies/ramdisk/upgrade.tmpl	1.2 (patch)
 
   Fix various bugs in x68k installation script and distribution
-  floppy build process.
+  floppy build process.  (minoura)
 
 sys/arch/pmax/dev/tz.c				1.16-1.18
 
-  Suport TZ30 by recognizing it and setting the TK50 flag, and
-  support a WangTek QIC-150 model by setting the Viper 150 flag.
+  Suport TZ30 by recognizing it and setting the TK50 flag,
+  and support a WangTek QIC-150 model by setting the Viper
+  150 flag.  (jonathan)
 
 sys/vm/vm_map.h					1.21 (patch)
 sys/conf/param.c				1.25
@@ -263,4 +264,9 @@ sys/sys/param.h					1.53
 gnu/usr.bin/gcc/arch/mips/netbsd.h		1.8
 
   Add -D__ELF__ to CPP predefines for mips, which indirectly
-  causes PR#3539 to be fixed.
+  causes PR#3539 to be fixed.  (jonathan)
+
+sys/arch/pmax/pmax/conf.c			patch
+
+  Add two missing NODEV entries (93 and 94) in the pmax
+  chrtoblktbl.  (jonathan)
