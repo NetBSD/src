@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.31 2003/04/28 23:16:27 bjh21 Exp $	*/
+/*	$NetBSD: errno.h,v 1.32 2003/05/27 22:37:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -196,8 +196,9 @@
 #define ENODATA		89		/* No message available */
 #define ENOSR		90		/* No STREAM resources */
 #define ENOSTR		91		/* Not a STREAM */
+#define ETIME		92		/* STREAM ioctl timeout */
 
-#define	ELAST		91		/* Must equal largest errno */
+#define	ELAST		92		/* Must equal largest errno */
 
 #ifdef _KERNEL
 /* pseudo-errors returned inside kernel to modify return to process */
