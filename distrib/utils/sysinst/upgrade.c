@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.43 2003/11/30 14:36:44 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.44 2003/12/28 05:30:47 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -153,9 +153,9 @@ save_etc(void)
 	printf("Copying essential files back into new /etc...");
 #endif
 	/* essential stuff */
-	cp_within_target("/etc.old/ld.so.cache", "/etc/");
-	cp_within_target("/etc.old/ld.so.conf", "/etc/");
-	cp_within_target("/etc.old/resolv.conf", "/etc/");
+	cp_within_target("/etc.old/ld.so.cache", "/etc/", 1);
+	cp_within_target("/etc.old/ld.so.conf", "/etc/", 0);
+	cp_within_target("/etc.old/resolv.conf", "/etc/", 1);
 
 	/* 
 	 * do NOT create fstab so that restarting an incomplete
@@ -164,19 +164,19 @@ save_etc(void)
 	 */
 
 	/* general config */
-	cp_within_target("/etc.old/rc", "/etc/");
-	cp_within_target("/etc.old/rc.conf", "/etc/");
-	cp_within_target("/etc.old/rc.local", "/etc/");
+	cp_within_target("/etc.old/rc", "/etc/", 0);
+	cp_within_target("/etc.old/rc.conf", "/etc/", 0);
+	cp_within_target("/etc.old/rc.local", "/etc/", 0);
 
 	/* network config */
-	cp_within_target("/etc.old/ifconfig.*", "/etc/");
+	cp_within_target("/etc.old/ifconfig.*", "/etc/", 0);
 	/* these should become parts of rc.conf */
-	cp_within_target("/etc.old/myname", "/etc/");
-	cp_within_target("/etc.old/mygate", "/etc/");
-	cp_within_target("/etc.old/defaultdomain", "/etc/");
+	cp_within_target("/etc.old/myname", "/etc/", 1);
+	cp_within_target("/etc.old/mygate", "/etc/", 1);
+	cp_within_target("/etc.old/defaultdomain", "/etc/", 1);
 
 	/* old-style network config */
-	cp_within_target("/etc.old/hostname.*", "/etc/");
+	cp_within_target("/etc.old/hostname.*", "/etc/", 1);
 
 	return 0;
 }
@@ -241,7 +241,7 @@ merge_etc(void)
 	etc_saved = 0;
 
 	/* just move back fstab, so we can boot cleanly.  */
-	cp_within_target("/etc.old/fstab", "/etc/");
+	cp_within_target("/etc.old/fstab", "/etc/", 0);
 
 	return 0;	
 }
