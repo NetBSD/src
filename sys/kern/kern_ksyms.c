@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.8 2003/05/07 21:28:16 ragge Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.9 2003/05/11 08:23:23 jdolecek Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -115,7 +115,7 @@ int		db_symtabsize = SYMTAB_SPACE;
  */
 struct symtab {
 	CIRCLEQ_ENTRY(symtab) sd_queue;
-	char *sd_name;		/* Name of this table */
+	const char *sd_name;	/* Name of this table */
 	Elf_Sym *sd_symstart;	/* Address of symbol table */
 	caddr_t sd_strstart;	/* Adderss of corresponding string table */
 	int sd_symsize;		/* Size in bytes of symbol table */
@@ -300,7 +300,7 @@ ksymsattach(int arg)
  * This is intended for use when the kernel loader enters the table.
  */
 static void
-addsymtab(char *name, Elf_Ehdr *ehdr, struct symtab *tab)
+addsymtab(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 {
 	caddr_t start = (caddr_t)ehdr;
 	caddr_t send;
@@ -487,7 +487,7 @@ ksyms_init(int symsize, void *start, void *end)
  * Returns 0 if success or ENOENT if no such entry.
  */
 int
-ksyms_getval(char *mod, char *sym, unsigned long *val, int type)
+ksyms_getval(const char *mod, char *sym, unsigned long *val, int type)
 {
 	struct symtab *st;
 	Elf_Sym *es;
@@ -523,12 +523,13 @@ ksyms_getval(char *mod, char *sym, unsigned long *val, int type)
  * Returns 0 if success or ENOENT if no such entry.
  */
 int
-ksyms_getname(char **mod, char **sym, vaddr_t v, int f)
+ksyms_getname(const char **mod, char **sym, vaddr_t v, int f)
 {
 	struct symtab *st;
 	Elf_Sym *les, *es = NULL;
 	vaddr_t laddr = 0;
-	char *lmod, *stable;
+	const char *lmod;
+	char *stable;
 	int type, i, sz;
 
 	if (ksymsinited == 0)
@@ -638,14 +639,14 @@ addsym(Elf_Sym *sym, char *name)
  * Returns 0 if success and EEXIST if the module name is in use.
  */
 int
-ksyms_addsymtab(char *mod, void *symstart, vsize_t symsize,
+ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
     char *strstart, vsize_t strsize)
 {
 	Elf_Sym *sym = symstart;
 	struct symtab *st;
 	long rval;
 	int i;
-	char *str;
+	char *str, *name;
 
 #ifdef KSYMS_DEBUG
 	if (ksyms_debug & FOLLOW_CALLS)
@@ -704,8 +705,9 @@ ksyms_addsymtab(char *mod, void *symstart, vsize_t symsize,
 	memcpy(str, symnames, curnamep);
 
 	st = malloc(sizeof(struct symtab), M_DEVBUF, M_WAITOK);
-	st->sd_name = malloc(strlen(mod)+1, M_DEVBUF, M_WAITOK);
-	strcpy(st->sd_name, mod);
+	name = malloc(strlen(mod)+1, M_DEVBUF, M_WAITOK);
+	strcpy(name, mod);
+	st->sd_name = name;
 	st->sd_symnmoff = malloc(sizeof(int)*cursyms, M_DEVBUF, M_WAITOK);
 	memcpy(st->sd_symnmoff, symnmoff, sizeof(int)*cursyms);
 	st->sd_symstart = sym;
@@ -730,7 +732,7 @@ ksyms_addsymtab(char *mod, void *symstart, vsize_t symsize,
  * Returns 0 if success, EBUSY if device open and ENOENT if no such name.
  */
 int
-ksyms_delsymtab(char *mod)
+ksyms_delsymtab(const char *mod)
 {
 	struct symtab *st;
 	int found = 0;
@@ -756,7 +758,8 @@ ksyms_delsymtab(char *mod)
 	free(st->sd_symstart, M_DEVBUF);
 	free(st->sd_strstart, M_DEVBUF);
 	free(st->sd_symnmoff, M_DEVBUF);
-	free(st->sd_name, M_DEVBUF);
+	/* LINTED - const castaway */
+	free((void *)st->sd_name, M_DEVBUF);
 	free(st, M_DEVBUF);
 #if NKSYMS
 	ksyms_sizes_calc();
