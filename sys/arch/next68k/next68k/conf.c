@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1998/11/13 04:47:07 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 1999/01/02 13:14:18 dbj Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -136,6 +136,13 @@ cdev_decl(zs);
 cdev_decl(zsc);
 cdev_decl(scsibus);
 
+#include "wsdisplay.h"
+cdev_decl(wsdisplay);
+#include "wskbd.h"
+cdev_decl(wskbd);
+#include "wsmouse.h"
+cdev_decl(wsmouse);
+
 dev_decl(filedesc,open);
 
 struct cdevsw	cdevsw[] =
@@ -181,6 +188,11 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND, rnd),	/* 38: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 39: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 40: RAIDframe disk driver */
+        cdev_wsdisplay_init(NWSDISPLAY,
+                            wsdisplay), /* 41: frame buffers, etc. */
+        cdev_mouse_init(NWSKBD, wskbd), /* 42: keyboards */
+        cdev_mouse_init(NWSMOUSE,
+                        wsmouse),       /* 43: mice */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
