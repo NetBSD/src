@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.91.2.1 2001/07/10 13:28:45 lukem Exp $	*/
+/*	$NetBSD: vnode.h,v 1.91.2.2 2001/09/08 00:40:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -323,6 +323,8 @@ vref(struct vnode *vp)
 #endif /* DIAGNOSTIC */
 
 #define	NULLVP	((struct vnode *)NULL)
+
+#define	VN_KNOTE(vp, b)		KNOTE(&vp->v_klist, (b))
 
 /*
  * Global vnode data.

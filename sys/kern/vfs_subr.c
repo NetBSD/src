@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.155.2.2 2001/08/25 06:16:49 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.155.2.3 2001/09/08 00:40:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1471,8 +1471,6 @@ loop:
 		return (EBUSY);
 	return (0);
 }
-
-#define	VN_KNOTE(vp, b)		KNOTE((struct klist *)&vp->v_klist, (b))
 
 /*
  * Disassociate the underlying file system from a vnode.

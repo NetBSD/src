@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.31.4.2 2001/08/03 04:14:10 lukem Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.31.4.3 2001/09/08 00:40:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,8 +34,6 @@
  *
  *	@(#)ufs_readwrite.c	8.11 (Berkeley) 5/8/95
  */
-
-#define	VN_KNOTE(vp, b)		KNOTE((struct klist *)&vp->v_klist, (b))
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
