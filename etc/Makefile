@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.239 2002/12/23 06:52:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.240 2003/01/03 14:27:54 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -312,8 +312,10 @@ iso-image_md_post: check_DESTDIR check_RELEASEDIR .WAIT iso-image_mi
 #	nothing here -- look in the machine-dependent Makefile.inc
 
 snap_pre: check_DESTDIR check_RELEASEDIR
+.ifndef UPDATE
 # Could be a mount point, ignore the errors
 	-/bin/rm -rf ${RELEASEDIR}
+.endif
 	${INSTALL} -d -m 755 ${RELEASEDIR}
 .for dir in ${INSTALLATION_DIRS}
 	${INSTALL} -d -m 755 ${RELEASEDIR}/${dir}
