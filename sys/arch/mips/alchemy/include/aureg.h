@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.4 2003/11/08 05:49:08 simonb Exp $ */
+/* $NetBSD: aureg.h,v 1.5 2004/11/11 10:11:40 soren Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -183,6 +183,29 @@
 /**********************   USB Device registers   ************************/
 /************************************************************************/
 #define	USBD_BASE		0x10200000
+
+#define USBD_EP0RD		0x00		/* Read from endpoint 0 */
+#define USBD_EP0WR		0x04		/* Write to endpoint 0 */
+#define USBD_EP1WR		0x08		/* Write to endpoint 1 */
+#define USBD_EP2WR		0x0c		/* Write to endpoint 2 */
+#define USBD_EP3RD		0x10		/* Read from endpoint 3 */
+#define USBD_EP4RD		0x14		/* Read from endpoint 4 */
+#define USBD_INTEN		0x18		/* Interrupt Enable Register */
+#define USBD_INTSTAT		0x1c		/* Interrupt Status Register */
+#define USBD_CONFIG		0x20		/* Write Configuration Register */
+#define USBD_EP0CS		0x24		/* Endpoint 0 control and status */
+#define USBD_EP1CS		0x28		/* Endpoint 1 control and status */
+#define USBD_EP2CS		0x2c		/* Endpoint 2 control and status */
+#define USBD_EP3CS		0x30		/* Endpoint 3 control and status */
+#define USBD_EP4CS		0x34		/* Endpoint 4 control and status */
+#define USBD_FRAMENUM		0x38		/* Current frame number */
+#define USBD_EP0RDSTAT		0x40		/* EP0 Read FIFO Status */
+#define USBD_EP0WRSTAT		0x44		/* EP0 Write FIFO Status */
+#define USBD_EP1WRSTAT		0x48		/* EP1 Write FIFO Status */
+#define USBD_EP2WRSTAT		0x4c		/* EP2 Write FIFO Status */
+#define USBD_EP3RDSTAT		0x50		/* EP3 Read FIFO Status */
+#define USBD_EP4RDSTAT		0x54		/* EP4 Read FIFO Status */
+#define USBD_ENABLE		0x58		/* USB Device Controller Enable */
 
 /************************************************************************/
 /*************************   IRDA registers   ***************************/
