@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.8 2000/07/13 11:19:54 ad Exp $	*/
+/*	$NetBSD: atactl.c,v 1.9 2000/07/13 11:24:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ print_bitinfo(f, bits, binfo)
 
 	for (; binfo->bitmask != NULL; binfo++)
 		if (bits & binfo->bitmask)
-			printf("%s", binfo->string);
+			printf(f, binfo->string);
 }
 
 /*
