@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2001/07/12 23:13:15 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.104 2001/07/24 16:50:41 wiz Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -207,7 +207,7 @@ typedef struct pv_entry {
  * vm_page, but that's a long story....)
  * 
  * This architecture has nice, fast traps with lots of space for software bits
- * in the TTE.  To accellerate ref/mod counts we make use of these features.
+ * in the TTE.  To accelerate ref/mod counts we make use of these features.
  *
  * When we map a page initially, we place a TTE in the page table.  It's 
  * inserted with the TLB_W and TLB_ACCESS bits cleared.  If a page is really
