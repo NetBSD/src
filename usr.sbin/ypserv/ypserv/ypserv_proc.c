@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.2 1996/08/15 21:47:53 chuck Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.3 1996/11/27 09:16:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -174,7 +174,7 @@ ypproc_match_2_svc(argp, rqstp)
 	res = ypdb_get_record(k->domain, k->map, k->keydat, FALSE);
 
 #ifdef DEBUG
-	yplog("  match2_status: %s", yperr_string(ypprot_err(res.stat)));
+	yplog("  match2_status: %s", yperr_string(ypprot_err(res.status)));
 #endif
 
 	return ((void *)&res);
@@ -202,7 +202,7 @@ ypproc_first_2_svc(argp, rqstp)
 	res = ypdb_get_first(k->domain, k->map, FALSE);
 
 #ifdef DEBUG
-	yplog("  first2_status: %s", yperr_string(ypprot_err(res.stat)));
+	yplog("  first2_status: %s", yperr_string(ypprot_err(res.status)));
 #endif
 
 	return ((void *)&res);
@@ -232,7 +232,7 @@ ypproc_next_2_svc(argp, rqstp)
 
 
 #ifdef DEBUG
-	yplog("  next2_status: %s", yperr_string(ypprot_err(res.stat)));
+	yplog("  next2_status: %s", yperr_string(ypprot_err(res.status)));
 #endif
 
 	return ((void *)&res);
@@ -385,7 +385,7 @@ ypproc_master_2_svc(argp, rqstp)
 	res = ypdb_get_master(k->domain, k->map);
 
 #ifdef DEBUG
-	yplog("  master2_status: %s", yperr_string(ypprot_err(res.stat)));
+	yplog("  master2_status: %s", yperr_string(ypprot_err(res.status)));
 #endif
 
 	/*
@@ -427,7 +427,7 @@ ypproc_order_2_svc(argp, rqstp)
 	res = ypdb_get_order(k->domain, k->map);
 
 #ifdef DEBUG
-	yplog("  order2_status: %s", yperr_string(ypprot_err(res.stat)));
+	yplog("  order2_status: %s", yperr_string(ypprot_err(res.status)));
 #endif
 
 	return ((void *)&res);
@@ -517,7 +517,7 @@ ypproc_maplist_2_svc(argp, rqstp)
 	res.status = status;
 	
 #ifdef DEBUG
-	yplog("  maplist_status: %s", yperr_string(ypprot_err(res.stat)));
+	yplog("  maplist_status: %s", yperr_string(ypprot_err(res.status)));
 #endif
 
 	return ((void *)&res);
