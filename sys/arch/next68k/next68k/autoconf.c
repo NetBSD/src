@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1998/11/10 22:45:44 dbj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 1999/01/31 06:59:30 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -97,6 +97,7 @@ struct cfdriver mainbus_cd = {
 
 static	char *mainbusdevs[] = {
         "intio",
+        "nextdisplay",
 	NULL
 };
 
