@@ -34,21 +34,21 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.h	8.1 (Berkeley) 5/31/93
- *	$Id: trap.h,v 1.6 1994/06/11 16:12:38 mycroft Exp $
+ *	$Id: trap.h,v 1.7 1994/12/23 13:24:45 cgd Exp $
  */
 
 extern int pendingsigs;
 
 #ifdef __STDC__
 void clear_traps(void);
-int setsignal(int);
+long setsignal(int);
 void ignoresig(int);
 void dotrap(void);
 void setinteractive(int);
 void exitshell(int);
 #else
 void clear_traps();
-int setsignal();
+long setsignal();
 void ignoresig();
 void dotrap();
 void setinteractive();

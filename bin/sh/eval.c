@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)eval.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: eval.c,v 1.17 1994/12/05 19:07:37 cgd Exp $";
+static char *rcsid = "$Id: eval.c,v 1.18 1994/12/23 13:24:39 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -208,7 +208,7 @@ evaltree(n, flags)
 #ifndef NO_HISTORY
 	displayhist = 1;	/* show history substitutions done with fc */
 #endif
-	TRACE(("evaltree(0x%x: %d) called\n", (int)n, n->type));
+	TRACE(("evaltree(0x%lx: %d) called\n", (long)n, n->type));
 	switch (n->type) {
 	case NSEMI:
 		evaltree(n->nbinary.ch1, 0);
@@ -479,7 +479,7 @@ evalpipe(n)
 	int prevfd;
 	int pip[2];
 
-	TRACE(("evalpipe(0x%x) called\n", (int)n));
+	TRACE(("evalpipe(0x%lx) called\n", (long)n));
 	pipelen = 0;
 	for (lp = n->npipe.cmdlist ; lp ; lp = lp->next)
 		pipelen++;
@@ -613,7 +613,7 @@ evalcommand(cmd, flags, backcmd)
 	char *lastarg;
 
 	/* First expand the arguments. */
-	TRACE(("evalcommand(0x%x, %d) called\n", (int)cmd, flags));
+	TRACE(("evalcommand(0x%lx, %d) called\n", (long)cmd, flags));
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
 	varlist.lastp = &varlist.list;
