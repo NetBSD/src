@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.65 2003/11/08 07:13:57 jdolecek Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.66 2003/11/15 01:19:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.65 2003/11/08 07:13:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.66 2003/11/15 01:19:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,8 @@ ffs_fsync(v)
 	splx(s);
 
 	return (VOP_UPDATE(vp, NULL, NULL,
-	    (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
+	    ((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
+	    ? UPDATE_WAIT : 0));
 }
 
 /*

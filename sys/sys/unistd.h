@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.29 2003/08/07 16:34:21 agc Exp $	*/
+/*	$NetBSD: unistd.h,v 1.30 2003/11/15 01:19:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -112,6 +112,17 @@
 #define	L_SET		SEEK_SET
 #define	L_INCR		SEEK_CUR
 #define	L_XTND		SEEK_END
+
+/*
+ * fsync_range values.
+ *
+ * Note the following flag values were chosen to not overlap
+ * values for SEEK_XXX flags.  While not currently implemented,
+ * it is possible to extend this call to respect SEEK_CUR and
+ * SEEK_END offset addressing modes.
+ */
+#define	FDATASYNC	0x0010	/* sync data and minimal metadata */
+#define	FFILESYNC	0x0020	/* sync data and metadata */
 #endif
 
 /* configurable pathname variables */
