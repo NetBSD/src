@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.13 1994/01/05 16:02:36 mycroft Exp $
+ *	$Id: param.h,v 1.14 1994/02/22 17:16:41 hpeyerl Exp $
  */
 
 /*
@@ -102,6 +102,14 @@
 #ifndef NKMEMCLUSTERS
 #define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
 #endif
+
+/*
+ * The disklabel is in block 0 or 1, possibly offset from the beginning
+ * to leave room for a bootstrap, etc.
+ */
+
+#define LABELSECTOR	1			/* sector containing label */
+#define LABELOFFSET	0			/* offset of label in sector */
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
 #define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
