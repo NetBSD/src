@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.18 2003/12/10 11:46:33 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.19 2004/12/04 16:10:25 peter Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.18 2003/12/10 11:46:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.19 2004/12/04 16:10:25 peter Exp $");
 
 #include "opt_inet.h"
 
@@ -96,9 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.18 2003/12/10 11:46:33 itojun Exp $");
 #endif
 
 #include <net/net_osdep.h>
-
-#include "loop.h"
-extern struct ifnet loif[NLOOP];
 
 /*
  * Return an IPv6 address, which is the most appropriate for a given
@@ -195,9 +192,8 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	if (IN6_IS_ADDR_MULTICAST(dst)) {
 		struct ifnet *ifp = mopts ? mopts->im6o_multicast_ifp : NULL;
 
-		if (ifp == NULL && IN6_IS_ADDR_MC_NODELOCAL(dst)) {
-			ifp = &loif[0];
-		}
+		if (ifp == NULL && IN6_IS_ADDR_MC_NODELOCAL(dst))
+			ifp = lo0ifp;
 
 		if (ifp) {
 			ia6 = in6_ifawithscope(ifp, dst);

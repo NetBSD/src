@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.85 2004/07/14 03:06:08 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.86 2004/12/04 16:10:25 peter Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.85 2004/07/14 03:06:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.86 2004/12/04 16:10:25 peter Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -98,8 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.85 2004/07/14 03:06:08 itojun Exp $
 #include <netkey/key.h>
 #endif /* IPSEC */
 
-#include "loop.h"
-
 #include <net/net_osdep.h>
 
 #ifdef PFIL_HOOKS
@@ -123,8 +121,6 @@ static int ip6_insertfraghdr __P((struct mbuf *, struct mbuf *, int,
 	struct ip6_frag **));
 static int ip6_insert_jumboopt __P((struct ip6_exthdrs *, u_int32_t));
 static int ip6_splithdr __P((struct mbuf *, struct ip6_exthdrs *));
-
-extern struct ifnet loif[NLOOP];
 
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6
@@ -624,9 +620,8 @@ skip_ipsec2:;
 				/* XXX correct ifp? */
 				in6_ifstat_inc(ifp, ifs6_out_discard);
 				goto bad;
-			} else {
-				ifp = &loif[0];
-			}
+			} else
+				ifp = lo0ifp;
 		}
 
 		if (opt && opt->ip6po_hlim != -1)
@@ -1912,7 +1907,7 @@ ip6_setmoptions(optname, im6op, m)
 			 *   XXX: is it a good approach?
 			 */
 			if (IN6_IS_ADDR_MC_NODELOCAL(&mreq->ipv6mr_multiaddr)) {
-				ifp = &loif[0];
+				ifp = lo0ifp;
 			} else {
 				ro.ro_rt = NULL;
 				dst = (struct sockaddr_in6 *)&ro.ro_dst;
@@ -2309,7 +2304,7 @@ ip6_setpktoptions(control, opt, priv)
  * Routine called from ip6_output() to loop back a copy of an IP6 multicast
  * packet to the input queue of a specified interface.  Note that this
  * calls the output routine of the loopback "driver", but with an interface
- * pointer that might NOT be &loif -- easier than replicating that code here.
+ * pointer that might NOT be lo0ifp -- easier than replicating that code here.
  */
 void
 ip6_mloopback(ifp, m, dst)

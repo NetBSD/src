@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.8 2003/05/14 22:45:02 itojun Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.9 2004/12/04 16:10:25 peter Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -195,8 +195,8 @@
  * - struct ifnet for loopback interface
  *	BSDI3: struct ifnet loif;
  *	BSDI4: struct ifnet *loifp;
- *	NetBSD, OpenBSD 2.8, FreeBSD2: struct ifnet loif[NLOOP];
- *	OpenBSD 2.9: struct ifnet *lo0ifp;
+ *	NetBSD 2.0, OpenBSD 2.8, FreeBSD2: struct ifnet loif[NLOOP];
+ *	NetBSD 3.0, OpenBSD 2.9: struct ifnet *lo0ifp;
  *
  *	odd thing is that many of them refers loif as ifnet *loif,
  *	not loif[NLOOP], from outside of if_loop.c.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.45 2004/04/21 18:40:41 itojun Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.46 2004/12/04 16:10:25 peter Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.45 2004/04/21 18:40:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.46 2004/12/04 16:10:25 peter Exp $");
 
 #include "opt_eon.h"
 
@@ -108,10 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.45 2004/04/21 18:40:41 itojun Exp $");
 #include <netiso/eonvar.h>
 
 #include <machine/stdarg.h>
-
-#include "loop.h"
-
-extern struct ifnet loif[NLOOP];
 
 extern struct timeval time;
 
@@ -294,7 +290,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 
 	case RTM_ADD:
 	case RTM_RESOLVE:
-		rt->rt_rmx.rmx_mtu = loif[0].if_mtu;	/* unless better below */
+		rt->rt_rmx.rmx_mtu = lo0ifp->if_mtu;	/* unless better below */
 		R_Malloc(el, struct eon_llinfo *, sizeof(*el));
 		rt->rt_llinfo = (caddr_t) el;
 		if (el == 0)

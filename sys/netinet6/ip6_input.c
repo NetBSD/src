@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.76 2004/11/28 02:37:38 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.77 2004/12/04 16:10:25 peter Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.76 2004/11/28 02:37:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.77 2004/12/04 16:10:25 peter Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -112,8 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.76 2004/11/28 02:37:38 christos Exp 
 
 #include <netinet6/ip6protosw.h>
 
-/* we need it for NLOOP. */
-#include "loop.h"
 #include "faith.h"
 #include "gif.h"
 
@@ -130,7 +128,6 @@ static int ip6qmaxlen = IFQ_MAXLEN;
 struct in6_ifaddr *in6_ifaddr;
 struct ifqueue ip6intrq;
 
-extern struct ifnet loif[NLOOP];
 int ip6_forward_srcrt;			/* XXX */
 int ip6_sourcecheck;			/* XXX */
 int ip6_sourcecheck_interval;		/* XXX */
@@ -247,7 +244,7 @@ ip6_input(m)
 #define M2MMAX	(sizeof(ip6stat.ip6s_m2m)/sizeof(ip6stat.ip6s_m2m[0]))
 		if (m->m_next) {
 			if (m->m_flags & M_LOOP) {
-				ip6stat.ip6s_m2m[loif[0].if_index]++; /* XXX */
+				ip6stat.ip6s_m2m[lo0ifp->if_index]++; /* XXX */
 			} else if (m->m_pkthdr.rcvif->if_index < M2MMAX)
 				ip6stat.ip6s_m2m[m->m_pkthdr.rcvif->if_index]++;
 			else

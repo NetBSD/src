@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.96 2004/04/21 04:17:28 matt Exp $	*/
+/*	$NetBSD: if.h,v 1.97 2004/12/04 16:10:25 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -733,9 +733,7 @@ MALLOC_DECLARE(M_IFMADDR);
 
 extern struct ifnet_head ifnet;
 extern struct ifnet **ifindex2ifnet;
-#if 0
-struct ifnet loif[];
-#endif
+extern struct ifnet *lo0ifp;
 extern size_t if_indexlim;
 
 char	*ether_sprintf __P((const u_char *));

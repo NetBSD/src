@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.136 2004/10/06 05:42:24 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.137 2004/12/04 16:10:25 peter Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.136 2004/10/06 05:42:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.137 2004/12/04 16:10:25 peter Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1832,7 +1832,7 @@ ip_freemoptions(imo)
  * Routine called from ip_output() to loop back a copy of an IP multicast
  * packet to the input queue of a specified interface.  Note that this
  * calls the output routine of the loopback "driver", but with an interface
- * pointer that might NOT be &loif -- easier than replicating that code here.
+ * pointer that might NOT be lo0ifp -- easier than replicating that code here.
  */
 static void
 ip_mloopback(ifp, m, dst)
