@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.4 1993/05/20 23:14:55 deraadt Exp $
+ *	$Id: disklabel.h,v 1.5 1993/05/22 09:00:32 deraadt Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -315,6 +315,7 @@ struct dos_partition {
 	unsigned long	dp_size;	/* partition size in sectors */
 } dos_partitions[NDOSPART];
 
+#include <sys/dkbad.h>
 struct cpu_disklabel {
 	struct dos_partition dosparts[NDOSPART];
 	struct dkbad bad;
