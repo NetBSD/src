@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $	*/
+/*	$NetBSD: lprm.c,v 1.10 1999/12/07 14:54:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $");
+__RCSID("$NetBSD: lprm.c,v 1.10 1999/12/07 14:54:48 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $");
 
 #include <sys/param.h>
 
+#include <err.h>
 #include <syslog.h>
 #include <dirent.h>
 #include <pwd.h>
@@ -117,6 +118,19 @@ main(argc, argv)
 					argc--;
 					printer = *++argv;
 				}
+				break;
+			case 'w':
+				if (arg[2])
+					wait_time = atoi(&arg[2]);
+				else if (argc > 1) {
+					argc--;
+					wait_time = atoi(*++argv);
+				}
+				if (wait_time < 0)
+					errx(1, "wait time must be postive: %s",
+					    optarg);
+				if (wait_time < 30)
+				    warnx("warning: wait time less than 30 seconds");
 				break;
 			case '\0':
 				if (!users) {
