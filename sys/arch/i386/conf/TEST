@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.18 1993/11/08 20:10:32 mycroft Exp $
+#	$Id: TEST,v 1.19 1993/11/14 14:45:16 cgd Exp $
 #
 
 # standard options
@@ -20,6 +20,8 @@ options		DIAGNOSTIC		# internal consistency checking
 
 options		KTRACE			# system call tracing, a la ktrace(1)
 options		FIFO			# fifos; recommended
+options		SYSVMSG			# System V message queues
+options		SYSVSEM			# System V semaphores
 #options	SYSVSHM			# System V shared memory; broken
 #options	"SHMMAXPGS=1024"
 options		LKM			# loadable kernel modules
