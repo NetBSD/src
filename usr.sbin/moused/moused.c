@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.13 2004/04/23 02:58:30 simonb Exp $ */
+/* $NetBSD: moused.c,v 1.14 2004/10/30 08:54:51 dsl Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.13 2004/04/23 02:58:30 simonb Exp $");
+__RCSID("$NetBSD: moused.c,v 1.14 2004/10/30 08:54:51 dsl Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -670,7 +670,7 @@ main(int argc, char *argv[])
 		rodent.zmap[1] = i + 1;
 		debug("optind: %d, optarg: '%s'", optind, optarg);
 		for (j = 1; j < 4; ++j) {
-		    if ((optind >= argc) || !isdigit(*argv[optind]))
+		    if ((optind >= argc) || !isdigit((unsigned char)*argv[optind]))
 			break;
 		    i = atoi(argv[optind]);
 		    if ((i <= 0) || (i > MOUSE_MAXBUTTON - 1)) {
@@ -2022,7 +2022,7 @@ static int p2l[MOUSE_MAXBUTTON] = {
 static char *
 skipspace(char *s)
 {
-    while(isspace(*s))
+    while(isspace((unsigned char)*s))
 	++s;
     return s;
 }
@@ -2037,7 +2037,7 @@ r_installmap(char *arg)
     while (*arg) {
 	arg = skipspace(arg);
 	s = arg;
-	while (isdigit(*arg))
+	while (isdigit((unsigned char)*arg))
 	    ++arg;
 	arg = skipspace(arg);
 	if ((arg <= s) || (*arg != '='))
@@ -2046,9 +2046,9 @@ r_installmap(char *arg)
 
 	arg = skipspace(++arg);
 	s = arg;
-	while (isdigit(*arg))
+	while (isdigit((unsigned char)*arg))
 	    ++arg;
-	if ((arg <= s) || (!isspace(*arg) && (*arg != '\0')))
+	if ((arg <= s) || (!isspace((unsigned char)*arg) && (*arg != '\0')))
 	    return FALSE;
 	pbutton = atoi(s);
 
