@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.52.2.3 1997/09/22 06:32:30 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.52.2.4 1997/09/29 07:20:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -279,41 +279,40 @@ cache_print(sc)
 	struct cpu_softc *sc;
 {
 	struct cacheinfo *ci = &sc->cacheinfo;
-	char *sep;
 
 	printf("%s:", sc->dv.dv_xname);
 
-	sep = " ";
 	if (ci->c_split) {
-		printf("%s", (ci->c_physical ? " physical" : ""));
+		char *sep = "";
+
+		printf("%s", (ci->c_physical ? " physical" : " "));
 		if (ci->ic_totalsize > 0) {
 			printf("%s%dK instruction (%d b/l)", sep,
-			       ci->ic_totalsize/1024, ci->ic_linesize);
+			    ci->ic_totalsize/1024, ci->ic_linesize);
 			sep = ", ";
 		}
 		if (ci->dc_totalsize > 0) {
 			printf("%s%dK data (%d b/l)", sep,
-			       ci->dc_totalsize/1024, ci->dc_linesize);
-			sep = ", ";
+			    ci->dc_totalsize/1024, ci->dc_linesize);
 		}
-		printf(" ");
 	} else if (ci->c_physical) {
 		/* combined, physical */
-		printf(" physical %dK combined cache (%d bytes/line) ",
-		       ci->c_totalsize/1024, ci->c_linesize);
+		printf(" physical %dK combined cache (%d bytes/line)",
+		    ci->c_totalsize/1024, ci->c_linesize);
 	} else {
 		/* combined, virtual */
-		printf(" %dK byte write-%s, %d bytes/line, %cw flush ",
-		       ci->c_totalsize/1024,
-		       (ci->c_vactype == VAC_WRITETHROUGH) ? "through" : "back",
-		       ci->c_linesize,
-		       ci->c_hwflush ? 'h' : 's');
+		printf(" %dK byte write-%s, %d bytes/line, %cw flush",
+		    ci->c_totalsize/1024,
+		    (ci->c_vactype == VAC_WRITETHROUGH) ? "through" : "back",
+		    ci->c_linesize,
+		    ci->c_hwflush ? 'h' : 's');
 	}
 
 	if (ci->ec_totalsize > 0) {
 		printf(", %dK external (%d b/l)",
-		       ci->ec_totalsize/1024, ci->ec_linesize);
+		    ci->ec_totalsize/1024, ci->ec_linesize);
 	}
+	printf(": ");
 }
 
 

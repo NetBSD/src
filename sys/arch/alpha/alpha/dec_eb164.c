@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.14.4.3 1997/09/22 06:30:03 thorpej Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.14.4.4 1997/09/29 07:19:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -26,10 +26,13 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+/*
+ * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center
+ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.14.4.3 1997/09/22 06:30:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.14.4.4 1997/09/29 07:19:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,19 +62,20 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.14.4.3 1997/09/22 06:30:03 thorpej E
 #endif
 static int comcnrate = CONSPEED;
 
-const char *
-dec_eb164_model_name()
-{
-
-	switch (hwrpb->rpb_variation & SV_ST_MASK) {
-	default:
-		printf("unknown system variation %lx\n",
-		    hwrpb->rpb_variation & SV_ST_MASK);
-		return NULL;
-	}
-}
+void dec_eb164_init __P((void));
+static void dec_eb164_cons_init __P((void));
+static void dec_eb164_device_register __P((struct device *, void *));
 
 void
+dec_eb164_init()
+{
+	platform.family = platform.model = "EB164";
+	platform.iobus = "cia";
+	platform.cons_init = dec_eb164_cons_init;
+	platform.device_register = dec_eb164_device_register;
+}
+
+static void
 dec_eb164_cons_init()
 {
 	struct ctb *ctb;
@@ -123,14 +127,7 @@ dec_eb164_cons_init()
 	}
 }
 
-const char *
-dec_eb164_iobus_name()
-{
-
-	return ("cia");
-}
-
-void
+static void
 dec_eb164_device_register(dev, aux)
 	struct device *dev;
 	void *aux;

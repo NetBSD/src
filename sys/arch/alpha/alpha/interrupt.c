@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.18.2.3 1997/09/16 03:48:02 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.18.2.4 1997/09/29 07:19:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,10 +26,13 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+/*
+ * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center
+ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18.2.3 1997/09/16 03:48:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18.2.4 1997/09/29 07:19:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,32 +42,16 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18.2.3 1997/09/16 03:48:02 thorpej E
 #include <machine/autoconf.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
+#include <machine/cpuconf.h>
 
 #ifdef EVCNT_COUNTERS
 #include <sys/device.h>
+struct evcnt clock_intr_evcnt;	/* event counter for clock intrs. */
 #else
 #include <machine/intrcnt.h>
 #endif
 
-struct logout {
-#define	LOGOUT_RETRY	0x1000000000000000	/* Retry bit. */
-#define	LOGOUT_LENGTH	0xffff			/* Length mask. */
-	u_int64_t q1;				/* Retry and length */
-	/* Unspecified. */
-};
-
-static void	machine_check __P((struct trapframe *, unsigned long,
-		    unsigned long));
-static void	nullintr __P((void *, unsigned long));
-static void	real_clockintr __P((void *, unsigned long));
-
-static void	(*iointr) __P((void *, unsigned long)) = nullintr;
-static void	(*clockintr) __P((void *, unsigned long)) = nullintr;
-static volatile int mc_expected, mc_received;
-
-#ifdef EVCNT_COUNTERS
-struct evcnt	clock_intr_evcnt;	/* event counter for clock intrs. */
-#endif
+volatile int mc_expected, mc_received;
 
 void
 interrupt(a0, a1, a2, framep)
@@ -72,79 +59,70 @@ interrupt(a0, a1, a2, framep)
 	struct trapframe *framep;
 {
 
-	if (a0 == 1) {			/* clock interrupt */
+	switch (a0) {
+	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
+		printf("interprocessor interrupt!\n");
+		break;
+		
+	case ALPHA_INTR_CLOCK:	/* clock interrupt */
 		cnt.v_intr++;
-		(*clockintr)(framep, a1);
-	} else if (a0 == 3) {		/* I/O device interrupt */
-		cnt.v_intr++;
-		(*iointr)(framep, a1);
-	} else if (a0 == 2) {		/* Machine Check or Correctable Error */
-		machine_check(framep, a1, a2);
-	} else if (a0 == 5) {		/* Passive Release (?) interrupt XXX */
-		cnt.v_intr++;
-		printf("passive release(?) interrupt vec 0x%lx (ignoring)\n",
-		    a1);
-	} else {
-		/*
-		 * Not expected or handled:
-		 *	0	Interprocessor interrupt
-		 *	4	Performance counter
-		 */
-		panic("unexpected interrupt: type 0x%lx, vec 0x%lx\n", a0, a1);
-	}
-}
-
-static void
-nullintr(framep, vec)
-	void *framep;
-	unsigned long vec;
-{
-}
-
-static void
-real_clockintr(framep, vec)
-	void *framep;
-	unsigned long vec;
-{
-
 #ifdef EVCNT_COUNTERS
-	clock_intr_evcnt.ev_count++;
+		clock_intr_evcnt.ev_count++;
 #else
-	intrcnt[INTRCNT_CLOCK]++;
+		intrcnt[INTRCNT_CLOCK]++;
 #endif
-	hardclock(framep);
-}
+		if (platform.clockintr)
+			(*platform.clockintr)(framep);
+		break;
 
-void
-set_clockintr()
-{
+	case  ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
+		a0 = alpha_pal_rdmces();
+		if (platform.mcheck_handler)
+			(*platform.mcheck_handler)(a0, framep, a1, a2);
+		else
+			machine_check(a0, framep, a1, a2);
+		break;
 
-	if (clockintr != nullintr)
-		panic("set clockintr twice");
+	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
+		cnt.v_intr++;
+		if (platform.iointr)
+			(*platform.iointr)(framep, a1);
+		break;
 
-	clockintr = real_clockintr;
+	case ALPHA_INTR_PERF:	/* interprocessor interrupt */
+		printf("performance interrupt!\n");
+		break;
+
+	case ALPHA_INTR_PASSIVE:
+#if	0
+		printf("passive release interrupt vec 0x%lx (ignoring)\n", a1);
+#endif
+		break;
+
+	default:
+		panic("unexpected interrupt: type 0x%lx vec 0x%lx a2 0x%lx\n",
+		    a0, a1, a2);
+		/* NOTREACHED */
+	}
 }
 
 void
 set_iointr(niointr)
 	void (*niointr) __P((void *, unsigned long));
 {
-
-	if (iointr != nullintr)
+	if (platform.iointr)
 		panic("set iointr twice");
-
-	iointr = niointr;
+	platform.iointr = niointr;
 }
 
-static void
-machine_check(framep, vector, param)
+
+void
+machine_check(mces, framep, vector, param)
+	unsigned long mces;
 	struct trapframe *framep;
 	unsigned long vector, param;
 {
-	unsigned long mces;
 	const char *type;
-
-	mces = alpha_pal_rdmces();
 
 	/* Make sure it's an error we know about. */
 	if ((mces & (ALPHA_MCES_MIP|ALPHA_MCES_SCE|ALPHA_MCES_PCE)) == 0) {
@@ -201,6 +179,15 @@ badaddr(addr, size)
 	void *addr;
 	size_t size;
 {
+	return(badaddr_read(addr, size, NULL));
+}
+
+int
+badaddr_read(addr, size, rptr)
+	void *addr;
+	size_t size;
+	void *rptr;
+{
 	long rcpt;
 
 	/* Get rid of any stale machine checks that have been waiting.  */
@@ -240,6 +227,25 @@ badaddr(addr, size)
 	/* disallow further machine checks */
 	mc_expected = 0;
 
+	if (rptr) {
+		switch (size) {
+		case sizeof (u_int8_t):
+			*(volatile u_int8_t *)rptr = rcpt;
+			break;
+
+		case sizeof (u_int16_t):
+			*(volatile u_int16_t *)rptr = rcpt;
+			break;
+
+		case sizeof (u_int32_t):
+			*(volatile u_int32_t *)rptr = rcpt;
+			break;
+
+		case sizeof (u_int64_t):
+			*(volatile u_int64_t *)rptr = rcpt;
+			break;
+		}
+	}
 	/* Return non-zero (i.e. true) if it's a bad address. */
 	return (mc_received);
 }

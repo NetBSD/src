@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.19.4.2 1997/09/04 00:54:00 thorpej Exp $ */
+/* $NetBSD: tga.c,v 1.19.4.3 1997/09/29 07:19:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.19.4.2 1997/09/04 00:54:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.19.4.3 1997/09/29 07:19:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ struct wscons_emulfuncs tga_emulfuncs = {
 	rcons_erasecols,
 	rcons_copyrows,
 	rcons_eraserows,
+	10,				/* skip 10 rows per scroll */
 };
 
 int	tgaioctl __P((void *, u_long, caddr_t, int, struct proc *));

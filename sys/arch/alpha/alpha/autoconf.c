@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.25.4.2 1997/09/16 03:47:59 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.25.4.3 1997/09/29 07:19:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.4.2 1997/09/16 03:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.4.3 1997/09/29 07:19:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,15 +208,12 @@ device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	extern const struct cpusw *cpu_fn_switch;
-
 	if (bootdev_data == NULL) {
 		/*
 		 * There is no hope.
 		 */
-
 		return;
 	}
-
-	(*cpu_fn_switch->device_register)(dev, aux);
+	if (platform.device_register)
+		(*platform.device_register)(dev, aux);
 }

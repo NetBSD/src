@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.21.4.1 1997/09/04 00:52:45 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.21.4.2 1997/09/29 07:19:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.4.1 1997/09/04 00:52:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.4.2 1997/09/29 07:19:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,6 @@ mbattach(parent, self, aux)
 	struct pcs *pcsp;
 	int i, cpuattachcnt;
 	extern int ncpus;
-	extern const struct cpusw *cpu_fn_switch;
 
 	printf("\n");
 
@@ -126,11 +125,8 @@ mbattach(parent, self, aux)
 		printf("WARNING: %d cpus in machine, %d attached\n",
 			ncpus, cpuattachcnt);
 
-	if ((*cpu_fn_switch->iobus_name)() != NULL) {
-		char iobus_name[16];
-
-		strncpy(iobus_name, (*cpu_fn_switch->iobus_name)(), 16);
-		nca.ca_name = iobus_name;
+	if (platform.iobus != NULL) {
+		nca.ca_name = (char *) platform.iobus;
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;

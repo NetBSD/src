@@ -1,5 +1,6 @@
-/*	$NetBSD: cpuconf.h,v 1.5.2.2 1997/09/04 00:53:08 thorpej Exp $	*/
-
+/*	$NetBSD: cpuconf.h,v 1.5.2.3 1997/09/29 07:19:48 thorpej Exp $	*/
+#ifndef	_ALPHA_CPUCONF_H
+#define	_ALPHA_CPUCONF_H
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
@@ -29,54 +30,65 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-struct cpusw {
-	const char	*family, *option;
-	int		present;
-	const char	*(*model_name) __P((void));
-	void		(*cons_init) __P((void));
-	const char	*(*iobus_name) __P((void));
-	void		(*device_register) __P((struct device *dev,
-			    void *aux));
-};
-
-#define	CONCAT(a,b)		__CONCAT(a,b)
-
-#define	cpu_fn_name(p,f)	CONCAT(CONCAT(p,_),f)
-
-#define	cpu_decl(p)							\
-	extern const char	*cpu_fn_name(p,model_name) __P((void));	\
-	extern void		cpu_fn_name(p,cons_init) __P((void));	\
-	extern const char	*cpu_fn_name(p,iobus_name) __P((void));	\
-	extern void		cpu_fn_name(p,device_register)		\
-				    __P((struct device *, void*));
-
-#define	cpu_unknown()	{ NULL, NULL, 0, }
-#define cpu_notdef(f)	{ f, NULL, 0 }
-
-#define	cpu_option_string(o)	__STRING(o)
-#define	cpu_option_present(o)	(CONCAT(N,o) > NULL)
-#define	cpu_function_init(o,p,f)					\
-	    (cpu_option_present(o) ? cpu_fn_name(p,f) : 0)
-#define	cpu_init(f,o,p)							\
-	{								\
-		f, cpu_option_string(o) , cpu_option_present(o),	\
-		cpu_function_init(o,p,model_name),			\
-		cpu_function_init(o,p,cons_init),			\
-		cpu_function_init(o,p,iobus_name),			\
-		cpu_function_init(o,p,device_register),			\
-	}
-
+/*
+ * Additional reworking by Matthew Jacob for NASA/Ames Research Center.
+ * Copyright (c) 1997
+ */
 #ifdef _KERNEL
-extern const struct cpusw cpusw[];
-extern const int ncpusw;
+/*
+ * Platform Specific Information and Function Hooks.
+ *
+ * The tags family and model information are strings describing the platform.
+ * 
+ * The tag iobus describes the primary iobus for the platform- primarily
+ * to give a hint as to where to start configuring. The likely choices
+ * are one of tcasic, lca, apecs, cia, or tlsb.
+ *
+ */
 
-cpu_decl(dec_2100_a50);
-cpu_decl(dec_3000_300);
-cpu_decl(dec_3000_500);
-cpu_decl(dec_axppci_33);
-cpu_decl(dec_eb164);
-cpu_decl(dec_eb64plus);
-cpu_decl(dec_kn20aa);
-cpu_decl(dec_kn8ae);
+extern struct platform {
+	/*
+	 * Platform Information.
+	 */
+	const char	*family;	/* Family Name */
+	const char	*model;		/* Model (variant) Name */
+	const char	*iobus;		/* Primary iobus name */
+
+	/*
+	 * Platform Specific Function Hooks
+	 *	cons_init 	-	console initialization
+	 *	device_register	-	boot configuration aid
+	 *	iointr		-	I/O interrupt handler
+	 *	clockintr	-	Clock Interrupt Handler
+	 *	mcheck_handler	-	Platform Specific Machine Check Handler
+	 */
+	void	(*cons_init) __P((void));
+	void	(*device_register) __P((struct device *, void *));
+	void	(*iointr) __P((void *, unsigned long));
+	void	(*clockintr) __P((void *));
+	void	(*mcheck_handler) __P((unsigned long, struct trapframe *,
+		unsigned long, unsigned long));
+} platform;
+
+/*
+ * There is an array of functions to initialize the platform structure.
+ *
+ * It's responsible for filling in the family, model_name and iobus
+ * tags. It may optionally fill in the cons_init, device_register and
+ * mcheck_handler tags.
+ *
+ * The iointr tag is filled in by set_iointr (in interrupt.c).
+ * The clockintr tag is filled in by cpu_initclocks (in clock.c).
+ *
+ * nocpu is function to call when you can't figure what platform you're on.
+ * There's no return from this function.
+ */
+
+extern void (*cpuinit[]) __P((void));
+extern int ncpuinit;
+extern void nocpu __P((void));
+
+#define	unknown_cpu(x)	(!((x) >= 0 && (x) < (int) ncpuinit))
+
 #endif /* _KERNEL */
+#endif /* !_ALPHA_CPUCONF_H */

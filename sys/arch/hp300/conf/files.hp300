@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.28.4.1 1997/09/29 07:20:04 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -209,6 +209,7 @@ file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/vm_machdep.c
 file	arch/hp300/hp300/disksubr.c
 file	arch/hp300/dev/dma.c
+file	arch/hp300/dev/md_root.c		memory_disk_hooks
 
 file	arch/m68k/m68k/sig_machdep.c
 

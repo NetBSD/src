@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.15.4.2 1997/09/04 00:52:26 thorpej Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.15.4.3 1997/09/29 07:19:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,10 +26,13 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+/*
+ * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center
+ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.15.4.2 1997/09/04 00:52:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.15.4.3 1997/09/29 07:19:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,62 +50,67 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.15.4.2 1997/09/04 00:52:26 thorpe
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-const char *
-dec_3000_500_model_name()
-{
+void dec_3000_500_init __P((void));
+static void dec_3000_500_device_register __P((struct device *, void *));
 
+void
+dec_3000_500_init()
+{
+	const char *sp = "DEC 3000/400 (\"Sandpiper\")";
+	const char *sf = "DEC 3000/500 (\"Flamingo\")";
+
+	platform.family = "DEC 3000/500 (\"Flamingo\")";
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
 	case SV_ST_SANDPIPER:
-systype_sandpiper:
-		return "DEC 3000/400 (\"Sandpiper\")";
+		platform.model = sp;
+		break;
 
 	case SV_ST_FLAMINGO:
-systype_flamingo:
-		return "DEC 3000/500 (\"Flamingo\")";
+		platform.model = sf;
+		break;
 
 	case SV_ST_HOTPINK:
-		return "DEC 3000/500X (\"Hot Pink\")";
+		platform.model = "DEC 3000/500X (\"Hot Pink\")";
+		break;
 
 	case SV_ST_FLAMINGOPLUS:
 	case SV_ST_ULTRA:
-		return "DEC 3000/800 (\"Flamingo+\")";
+		platform.model = "DEC 3000/800 (\"Flamingo+\")";
+		break;
 
 	case SV_ST_SANDPLUS:
-		return "DEC 3000/600 (\"Sandpiper+\")";
+		platform.model = "DEC 3000/600 (\"Sandpiper+\")";
+		break;
 
 	case SV_ST_SANDPIPER45:
-		return "DEC 3000/700 (\"Sandpiper45\")";
+		platform.model = "DEC 3000/700 (\"Sandpiper45\")";
+		break;
 
 	case SV_ST_FLAMINGO45:
-		return "DEC 3000/900 (\"Flamingo45\")";
+		platform.model = "DEC 3000/900 (\"Flamingo45\")";
+		break;
 
 	case SV_ST_RESERVED: /* this is how things used to be done */
 		if (hwrpb->rpb_variation & SV_GRAPHICS)
-			goto systype_flamingo;
+			platform.model = sf;
 		else
-			goto systype_sandpiper;
-
+			platform.model = sp;
+		break;
 	default:
-		printf("unknown system variation %lx\n",
+	{
+		/* string is 24 bytes plus 64 bit hex number (16 byte) */
+		static char s[42];
+		sprintf(s, "unknown model variation %lx",
 		    hwrpb->rpb_variation & SV_ST_MASK);
-		return NULL;
+		platform.model = (const char *) s;
+		break;
 	}
+	}
+	platform.iobus = "tcasic";
+	platform.device_register = dec_3000_500_device_register;
 }
 
-void
-dec_3000_500_cons_init()
-{
-
-}
-
-const char *
-dec_3000_500_iobus_name()
-{
-
-	return ("tcasic");
-}
-
-void
+static void
 dec_3000_500_device_register(dev, aux)
 	struct device *dev;
 	void *aux;

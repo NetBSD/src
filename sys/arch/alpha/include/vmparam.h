@@ -1,5 +1,6 @@
-/* $NetBSD: vmparam.h,v 1.5 1997/06/12 15:09:23 mrg Exp $ */
-
+/* $NetBSD: vmparam.h,v 1.5.4.1 1997/09/29 07:19:50 thorpej Exp $ */
+#ifndef	_ALPHA_VMPARAM_H
+#define	_ALPHA_VMPARAM_H
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -135,9 +136,17 @@
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)ALPHA_K1SEG_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
+#ifndef	_KERNEL
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+#else
+extern u_int32_t vm_mbuf_size, vm_kmem_size, vm_phys_size;
+#define VM_MBUF_SIZE		vm_mbuf_size
+#define VM_KMEM_SIZE		vm_kmem_size
+#define VM_PHYS_SIZE		vm_phys_size
+#endif
 
 /* some Alpha-specific constants */
 #define	VPTBASE		((vm_offset_t)0xfffffffc00000000) /* Virt. pg table */
+#endif	/* !_ALPHA_VMPARAM_H */

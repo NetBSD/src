@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.27 1997/07/23 21:26:51 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.27.2.1 1997/09/29 07:21:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -221,6 +221,7 @@ tcp_newtcpcb(inp)
 	bzero((caddr_t)tp, sizeof(struct tcpcb));
 	LIST_INIT(&tp->segq);
 	tp->t_maxseg = tcp_mssdflt;
+	tp->t_ourmss = tcp_mssdflt;
 
 	tp->t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 	tp->t_inpcb = inp;
@@ -456,4 +457,178 @@ tcp_quench(inp, errno)
 
 	if (tp)
 		tp->snd_cwnd = tp->t_maxseg;
+}
+
+/*
+ * Compute the MSS to advertise to the peer.  Called only during
+ * the 3-way handshake.  If we are the server (peer initiated
+ * connection), we are called with the TCPCB for the listen
+ * socket.  If we are the client (we initiated connection), we
+ * are called witht he TCPCB for the actual connection.
+ */
+int
+tcp_mss_to_advertise(tp)
+	const struct tcpcb *tp;
+{
+	extern u_long in_maxmtu;
+	struct inpcb *inp;
+	struct socket *so;
+	int mss;
+
+	inp = tp->t_inpcb;
+	so = inp->inp_socket;
+
+	/*
+	 * In order to avoid defeating path MTU discovery on the peer,
+	 * we advertise the max MTU of all attached networks as our MSS,
+	 * per RFC 1191, section 3.1.
+	 *
+	 * XXX Should we allow room for the timestamp option if
+	 * XXX rfc1323 is enabled?
+	 */
+	mss = in_maxmtu - sizeof(struct tcpiphdr);
+
+	return (mss);
+}
+
+/*
+ * Set connection variables based on the peer's advertised MSS.
+ * We are passed the TCPCB for the actual connection.  If we
+ * are the server, we are called by the compressed state engine
+ * when the 3-way handshake is complete.  If we are the client,
+ * we are called when we recieve the SYN,ACK from the server.
+ *
+ * NOTE: Our advertised MSS value must be initialized in the TCPCB
+ * before this routine is called!
+ */
+void
+tcp_mss_from_peer(tp, offer)
+	struct tcpcb *tp;
+	int offer;
+{
+	struct inpcb *inp = tp->t_inpcb;
+	struct socket *so = inp->inp_socket;
+#if defined(RTV_SPIPE) || defined(RTV_SSTHRESH)
+	struct rtentry *rt = in_pcbrtentry(inp);
+#endif
+	u_long bufsize;
+	int mss;
+
+	/*
+	 * Assume our MSS is the MSS of the peer, unless they sent us
+	 * an offer.  Do not accept offers less than 32 bytes.
+	 */
+	mss = tp->t_ourmss;
+	if (offer)
+		mss = offer;
+	mss = max(mss, 32);		/* sanity */
+
+	/*
+	 * If there's a pipesize, change the socket buffer to that size.
+	 * Make the socket buffer an integral number of MSS units.  If
+	 * the MSS is larger than the socket buffer, artificially decrease
+	 * the MSS.
+	 */
+#ifdef RTV_SPIPE
+	if (rt != NULL && rt->rt_rmx.rmx_sendpipe != 0)
+		bufsize = rt->rt_rmx.rmx_sendpipe;
+	else
+#endif
+		bufsize = so->so_snd.sb_hiwat;
+	if (bufsize < mss)
+		mss = bufsize;
+	else {
+		bufsize = roundup(bufsize, mss);
+		if (bufsize > sb_max)
+			bufsize = sb_max;
+		(void) sbreserve(&so->so_snd, bufsize);
+	}
+	tp->t_maxseg = mss;
+
+	/* Initialize the initial congestion window. */
+	tp->snd_cwnd = mss;
+
+#ifdef RTV_SSTHRESH
+	if (rt != NULL && rt->rt_rmx.rmx_ssthresh) {
+		/*
+		 * There's some sort of gateway or interface buffer
+		 * limit on the path.  Use this to set the slow
+		 * start threshold, but set the threshold to no less
+		 * than 2 * MSS.
+		 */
+		tp->snd_ssthresh = max(2 * mss, rt->rt_rmx.rmx_ssthresh);
+	}
+#endif
+}
+
+/*
+ * Processing necessary when a TCP connection is established.
+ */
+void
+tcp_established(tp)
+	struct tcpcb *tp;
+{
+	struct inpcb *inp = tp->t_inpcb;
+	struct socket *so = inp->inp_socket;
+#ifdef RTV_RPIPE
+	struct rtentry *rt = in_pcbrtentry(inp);
+#endif
+	u_long bufsize;
+
+	tp->t_state = TCPS_ESTABLISHED;
+	tp->t_timer[TCPT_KEEP] = tcp_keepidle;
+
+#ifdef RTV_RPIPE
+	if (rt != NULL && rt->rt_rmx.rmx_recvpipe != 0)
+		bufsize = rt->rt_rmx.rmx_recvpipe;
+	else
+#endif
+		bufsize = so->so_rcv.sb_hiwat;
+	if (bufsize > tp->t_ourmss) {
+		bufsize = roundup(bufsize, tp->t_ourmss);
+		if (bufsize > sb_max)
+			bufsize = sb_max;
+		(void) sbreserve(&so->so_rcv, bufsize);
+	}
+}
+
+/*
+ * Check if there's an initial rtt or rttvar.  Convert from the
+ * route-table units to scaled multiples of the slow timeout timer.
+ * Called only during the 3-way handshake.
+ */
+void
+tcp_rmx_rtt(tp)
+	struct tcpcb *tp;
+{
+#ifdef RTV_RTT
+	struct rtentry *rt;
+	int rtt;
+
+	if ((rt = in_pcbrtentry(tp->t_inpcb)) == NULL)
+		return;
+
+	if (tp->t_srtt == 0 && (rtt = rt->rt_rmx.rmx_rtt)) {
+		/*
+		 * XXX The lock bit for MTU indicates that the value
+		 * is also a minimum value; this is subject to time.
+		 */
+		if (rt->rt_rmx.rmx_locks & RTV_RTT)
+			tp->t_rttmin = rtt / (RTM_RTTUNIT / PR_SLOWHZ);
+		tp->t_srtt = rtt /
+		    ((RTM_RTTUNIT / PR_SLOWHZ) >> (TCP_RTT_SHIFT + 2));
+		if (rt->rt_rmx.rmx_rttvar) {
+			tp->t_rttvar = rt->rt_rmx.rmx_rttvar /
+			    ((RTM_RTTUNIT / PR_SLOWHZ) >>
+				(TCP_RTTVAR_SHIFT + 2));
+		} else {
+			/* Default variation is +- 1 rtt */
+			tp->t_rttvar =
+			    tp->t_srtt >> (TCP_RTT_SHIFT - TCP_RTTVAR_SHIFT);
+		}
+		TCPT_RANGESET(tp->t_rxtcur,
+		    ((tp->t_srtt >> 2) + tp->t_rttvar) >> (1 + 2),
+		    tp->t_rttmin, TCPTV_REXMTMAX);
+	}
+#endif
 }

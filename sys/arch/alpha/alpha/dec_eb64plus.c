@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb64plus.c,v 1.3.4.3 1997/09/22 06:30:04 thorpej Exp $ */
+/* $NetBSD: dec_eb64plus.c,v 1.3.4.4 1997/09/29 07:19:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -26,10 +26,13 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+/*
+ * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center
+ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.3.4.3 1997/09/22 06:30:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.3.4.4 1997/09/29 07:19:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,19 +62,34 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.3.4.3 1997/09/22 06:30:04 thorpej
 #endif
 static int comcnrate = CONSPEED;
 
-const char *
-dec_eb64plus_model_name()
-{
-
-	switch (hwrpb->rpb_variation & SV_ST_MASK) {
-	default:
-		printf("unknown system variation %lx\n",
-		    hwrpb->rpb_variation & SV_ST_MASK);
-		return NULL;
-	}
-}
+void dec_eb64plus_init __P((void));
+static void dec_eb64plus_cons_init __P((void));
+static void dec_eb64plus_device_register __P((struct device *, void *));
 
 void
+dec_eb64plus_init()
+{
+	platform.family = "EB64+";
+	switch (hwrpb->rpb_variation & SV_ST_MASK) {
+	case 0:
+		platform.model = platform.family;
+		break;
+	default:
+	{
+		/* string is 24 bytes plus 64 bit hex number (16 byte) */
+		static char s[42];
+		sprintf(s, "unknown model variation %lx",
+			hwrpb->rpb_variation & SV_ST_MASK);
+		platform.model = (const char *) s;
+		break;
+	}
+	}
+	platform.iobus = "apecs";
+	platform.cons_init = dec_eb64plus_cons_init;
+	platform.device_register = dec_eb64plus_device_register;
+}
+
+static void
 dec_eb64plus_cons_init()
 {
 	struct ctb *ctb;
@@ -123,14 +141,7 @@ dec_eb64plus_cons_init()
 	}
 }
 
-const char *
-dec_eb64plus_iobus_name()
-{
-
-	return ("apecs");
-}
-
-void
+static void
 dec_eb64plus_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
