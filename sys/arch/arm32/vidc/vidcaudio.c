@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.38 2001/07/10 20:10:48 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.39 2001/07/28 18:12:45 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -507,7 +507,7 @@ vidcaudio_stereo(channel, position)
 	return 0;
 }
 
-#define PHYS(x, y) pmap_extract(kernel_pmap, ((x)&PG_FRAME), (paddr_t *)(y))
+#define PHYS(x, y) pmap_extract(pmap_kernel(), ((x)&PG_FRAME), (paddr_t *)(y))
 
 /*
  * Program the next buffer to be used
