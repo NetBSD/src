@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.35 2000/05/19 18:54:30 thorpej Exp $	*/
+/*	$NetBSD: uda.c,v 1.36 2000/06/04 06:17:05 matt Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -65,6 +65,7 @@
  */
 struct	uda_softc {
 	struct	device sc_dev;	/* Autoconfig info */
+	struct	evcnt sc_intrcnt; /* Interrupt counting */
 	struct	uba_unit sc_unit; /* Struct common for UBA to communicate */
 	struct	buf_queue sc_bufq;	/* bufs awaiting for resources */
 	struct	mscp_pack *sc_uuda;	/* Unibus address of uda struct */
@@ -82,8 +83,8 @@ struct	uda_softc {
 
 static	int	udamatch __P((struct device *, struct cfdata *, void *));
 static	void	udaattach __P((struct device *, struct device *, void *));
-static	void	reset(struct device *);
-static	void	intr __P((void *));
+static	void	udareset(struct device *);
+static	void	udaintr __P((void *));
 int	udaready __P((struct uba_unit *));
 void	udactlrdone __P((struct device *));
 int	udaprint __P((void *, const char *));
@@ -193,8 +194,10 @@ udaattach(parent, self, aux)
 
 	uh->uh_lastiv -= 4;	/* remove dynamic interrupt vector */
 
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, intr, sc);
-	uba_reset_establish(reset, &sc->sc_dev);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
+		udaintr, sc, &sc->sc_intrcnt);
+	uba_reset_establish(udareset, &sc->sc_dev);
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_iph = ua->ua_ioh;
@@ -410,7 +413,7 @@ udasaerror(usc, doreset)
  * interrupts, and process responses.
  */
 static void
-intr(arg)
+udaintr(arg)
 	void *arg;
 {
 	struct uda_softc *sc = arg;
@@ -446,7 +449,7 @@ intr(arg)
  * on that Unibus, and requeue outstanding I/O.
  */
 static void
-reset(struct device *dev)
+udareset(struct device *dev)
 {
 	struct uda_softc *sc = (void *)dev;
 	/*
