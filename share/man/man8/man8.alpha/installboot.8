@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.8,v 1.9 1999/04/05 03:24:35 cgd Exp $
+.\" $NetBSD: installboot.8,v 1.10 1999/04/05 22:12:03 cgd Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
 .\"
@@ -114,7 +114,7 @@ to the disk containing the file system which holds the secondary
 bootstrap program.  In some cases this can be a file, e.g. if
 .Nm
 is being used to install the primary bootstrap program into a
-file containing a ISO-9660 CD-ROM image.
+file containing a ISO 9660 CD-ROM image.
 .It Ar bootstrap
 The primary bootstrap program to install.  (This argument
 may not be specified if the
@@ -130,7 +130,7 @@ utility exits 0 on success, and >0 if an error occurs.
 .It Pa /usr/mdec/bootxx_cd9660
 primary bootstrap for
 .Dq cd9660
-(ISO-9660) file system
+(ISO 9660) file system
 .It Pa /usr/mdec/bootxx_ffs
 primary bootstrap for
 .Dq ffs
@@ -150,7 +150,7 @@ Remove the primary bootstrap from disk sd1.
 .Pp
 .Dl installboot /tmp/cd-image /usr/mdec/bootxx_cd9660
 .Pp
-Install the ISO-9660 primary bootstrap in the file
+Install the ISO 9660 primary bootstrap in the file
 .Pa /tmp/cd-image .
 .Sh SEE ALSO
 .Xr mkbootimage 8
@@ -187,7 +187,7 @@ of disks.  Similarly, the secondary bootstrap program can only
 load kernels from file systems starting at the beginning of disks.
 .Pp
 The size of primary bootstrap programs is restricted to 7.5KB, even
-though some file systems (e.g. ISO-9660) are able to accomodate larger
+though some file systems (e.g. ISO 9660) are able to accomodate larger
 ones.
 .Pp
 There are not currently primary bootstraps to support all file systems
