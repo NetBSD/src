@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.59 2003/12/31 18:49:00 bjh21 Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.60 2004/12/12 20:42:53 abs Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -56,7 +56,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.59 2003/12/31 18:49:00 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.60 2004/12/12 20:42:53 abs Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -901,7 +901,7 @@ initarm(void *cookie)
 	 * handler. Until then we will use a handler that just panics but
 	 * tells us why.
 	 * Initialisation of the vectors will just panic on a data abort.
-	 * This just fills in a slighly better one.
+	 * This just fills in a slightly better one.
 	 */
 #ifdef VERBOSE_INIT_ARM
 	printf("vectors ");

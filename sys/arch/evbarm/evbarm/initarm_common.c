@@ -1,4 +1,4 @@
-/*	$NetBSD: initarm_common.c,v 1.2 2003/07/15 00:24:58 lukem Exp $	*/
+/*	$NetBSD: initarm_common.c,v 1.3 2004/12/12 20:42:53 abs Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.2 2003/07/15 00:24:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.3 2004/12/12 20:42:53 abs Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -461,7 +461,7 @@ initarm_common(const struct initarm_config *ic)
 	 * Until then we will use a handler that just panics but tells us
 	 * why.
 	 * Initialisation of the vectors will just panic on a data abort.
-	 * This just fills in a slighly better one.
+	 * This just fills in a slightly better one.
 	 */
 #ifdef VERBOSE_INIT_ARM
 	printf("vectors ");

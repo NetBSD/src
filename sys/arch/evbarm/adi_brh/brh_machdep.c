@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.19 2004/02/13 11:36:11 wiz Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.20 2004/12/12 20:42:53 abs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.19 2004/02/13 11:36:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.20 2004/12/12 20:42:53 abs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -769,7 +769,7 @@ initarm(void *arg)
 	 * Until then we will use a handler that just panics but tells us
 	 * why.
 	 * Initialisation of the vectors will just panic on a data abort.
-	 * This just fills in a slighly better one.
+	 * This just fills in a slightly better one.
 	 */
 #ifdef VERBOSE_INIT_ARM
 	printf("vectors ");
