@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3x,v 1.5 1997/02/11 00:59:56 gwr Exp $
+#	$NetBSD: Makefile.sun3x,v 1.6 1997/02/11 19:00:21 gwr Exp $
 
 # Makefile for NetBSD
 #
@@ -113,11 +113,10 @@ SYSTEM_LD_TAIL+=; \
 		${STRIP} ${STRIPFLAGS} $@
 .else
 LINKFLAGS+=	-S
-.endif
-
 # XXX - temporary:
 SYSTEM_LD_TAIL+=; \
 		dbsym $@
+.endif
 
 # LOAD+
 
