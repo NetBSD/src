@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.99 2003/05/07 16:18:53 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.100 2003/05/15 14:34:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.99 2003/05/07 16:18:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.100 2003/05/15 14:34:06 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1000,20 +1000,29 @@ again:
 	for (i = 0; i < npages; i++) {
 		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
 		KASSERT((pgs[i]->flags & PG_BUSY) || pgs[i]->uobject != uobj);
-		if ((pgs[i]->flags & PG_NEEDCOMMIT) == 0) {
-			needcommit = FALSE;
-		}
-		if ((pgs[i]->flags & (PG_RELEASED|PG_PAGEOUT)) ||
-		    pgs[i]->uobject != uobj ||
-		    pgs[i]->offset != uiop->uio_offset + (i << PAGE_SHIFT)) {
+		if (pgs[i]->uobject == uobj &&
+		    pgs[i]->offset == uiop->uio_offset + (i << PAGE_SHIFT)) {
+			/*
+			 * this page belongs to our object.
+			 */
+			simple_lock(&uobj->vmobjlock);
+			if (pgs[i]->flags & (PG_RELEASED|PG_PAGEOUT))
+				iomode = NFSV3WRITE_FILESYNC;
+			if ((pgs[i]->flags & PG_NEEDCOMMIT) == 0)
+				needcommit = FALSE;
+			simple_unlock(&uobj->vmobjlock);
+		} else {
 			iomode = NFSV3WRITE_FILESYNC;
+			needcommit = FALSE;
 		}
 	}
 	if (!needcommit && iomode == NFSV3WRITE_UNSTABLE) {
+		simple_lock(&uobj->vmobjlock);
 		for (i = 0; i < npages; i++) {
 			pgs[i]->flags |= PG_NEEDCOMMIT | PG_RDONLY;
 			pmap_page_protect(pgs[i], VM_PROT_READ);
 		}
+		simple_unlock(&uobj->vmobjlock);
 	}
 
 	/*
