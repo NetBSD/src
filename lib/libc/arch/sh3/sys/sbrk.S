@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.1 2000/01/05 14:07:41 msaitoh Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.2 2000/03/27 16:27:16 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.1 2000/01/05 14:07:41 msaitoh Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.2 2000/03/27 16:27:16 msaitoh Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -63,9 +63,8 @@ ENTRY(sbrk)
 	mov.l	Lcurbrk, r1
 	mov.l	@r1, r0
 	add	r0, r2
-	mov.l	r2, @r1
 	rts
-	nop
+	mov.l	r2, @r1
 err:
 	mov.l	Lcerror, r1
 	jmp	@r1
