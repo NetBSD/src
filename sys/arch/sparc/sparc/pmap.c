@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 1995/07/05 16:35:42 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.47 1995/07/05 18:52:32 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,7 +267,6 @@ struct regmap	kernel_regmap_store[NKREG];	/* the kernel's regmap */
 struct segmap	kernel_segmap_store[NKREG*NSEGRG];/* the kernel's segmaps */
 
 #define	MA_SIZE	32		/* size of memory descriptor arrays */
-#ifdef MACHINE_NONCONTIG
 struct	memarr pmemarr[MA_SIZE];/* physical memory regions */
 int	npmemarr;		/* number of entries in pmemarr */
 int	cpmemarr;		/* pmap_next_page() state */
@@ -277,16 +276,6 @@ int	cpmemarr;		/* pmap_next_page() state */
 					   next free physical page */
 /*static*/ vm_offset_t	virtual_avail;	/* first free virtual page number */
 /*static*/ vm_offset_t	virtual_end;	/* last free virtual page number */
-#else
-/*
- * The following four global variables are set in pmap_bootstrap
- * for the vm code to find.  This is Wrong.
- */
-vm_offset_t	avail_start;	/* first free physical page number */
-vm_offset_t	avail_end;	/* last free physical page number */
-vm_offset_t	virtual_avail;	/* first free virtual page number */
-vm_offset_t	virtual_end;	/* last free virtual page number */
-#endif
 
 int mmu_has_hole;
 
@@ -344,50 +333,8 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 
 /*----------------------------------------------------------------*/
 
-#ifndef MACHINE_NONCONTIG
-/*
- * Translations from dense (contiguous) pseudo physical addresses
- * (fed to the VM code, to keep it happy) to sparse (real, hardware)
- * physical addresses.  We call the former `software' page frame
- * numbers and the latter `hardware' page frame numbers.  The
- * translation is done on a `per bank' basis.
- *
- * The HWTOSW and SWTOHW macros handle the actual translation.
- * They are defined as no-ops on Sun-4s.
- *
- * SHOULD DO atop AND ptoa DIRECTLY IN THESE MACROS SINCE ALL CALLERS
- * ALWAYS NEED THAT ANYWAY ... CAN JUST PRECOOK THE TABLES	(TODO)
- *
- * Since we cannot use the memory allocated to the ROM monitor, and
- * this happens to be just under 64K, I have chosen a bank size of
- * 64K.  This is necessary since all banks must be completely full.
- * I have also chosen a physical memory limit of 128 MB.  The 4c is
- * architecturally limited to 256 MB, but 128 MB is more than will
- * fit on present hardware.
- *
- * XXX	FIX THIS: just make all of each bank available and then
- *	take out the pages reserved to the monitor!!
- */
-#define MAXMEM 	(128 * 1024 * 1024)	/* no more than 128 MB phys mem */
-#define NPGBANK	16			/* 2^4 pages per bank (64K / bank) */
-#define	BSHIFT	4			/* log2(NPGBANK) */
-#define BOFFSET	(NPGBANK - 1)
-/*
- * One would expect this to use NBPG instead of 4096. But That is no
- * longer a constant. As an added benefit it allows Sun4 machines to
- * have 2x as much physical memory.
- */
-#define BTSIZE 	(MAXMEM / (1 << SUN4CM_PGSHIFT) / NPGBANK)
-
-int	pmap_dtos[BTSIZE];		/* dense to sparse */
-int	pmap_stod[BTSIZE];		/* sparse to dense */
-
-#define	HWTOSW(pg) (pmap_stod[(pg) >> BSHIFT] | ((pg) & BOFFSET))
-#define	SWTOHW(pg) (pmap_dtos[(pg) >> BSHIFT] | ((pg) & BOFFSET))
-#else /* MACHINE_NONCONTIG */
 #define	HWTOSW(pg) (pg)
 #define	SWTOHW(pg) (pg)
-#endif /* MACHINE_NONCONTIG */
 
 #ifdef MMU_3L
 #define CTX_USABLE(pm,rp)	((pm)->pm_ctx && \
@@ -442,95 +389,6 @@ sortm(mp, n)
 		mpj->len = len;
 	}
 }
-
-#ifndef MACHINE_NONCONTIG
-
-#ifdef DEBUG
-struct	memarr pmap_ama[MA_SIZE];
-int	pmap_nama;
-#define ama pmap_ama
-#endif
-
-/*
- * init_translations sets up pmap_dtos[] and pmap_stod[], and
- * returns the number of usable physical pages.
- */
-int
-init_translations()
-{
-	register struct memarr *mp;
-	register int n, nmem;
-	register u_int vbank = 0, pbank, v, a;
-	register u_int pages = 0, lost = 0;
-#ifndef DEBUG
-	struct memarr ama[MA_SIZE];	/* available memory array */
-#endif
-
-	nmem = makememarr(ama, MA_SIZE, MEMARR_AVAILPHYS);
-
-	/*
-	 * Open Boot supposedly guarantees at least 3 MB free mem at 0;
-	 * this is where the kernel has been loaded (we certainly hope the
-	 * kernel is <= 3 MB).  We need the memory array to be sorted, and
-	 * to start at 0, so that `software page 0' and `hardware page 0'
-	 * are the same (otherwise the VM reserves the wrong pages for the
-	 * kernel).
-	 */
-	sortm(ama, nmem);
-	if (ama[0].addr != 0) {
-		/* cannot panic here; there's no real kernel yet. */
-		printf("init_translations: no kernel memory?!\n");
-		callrom();
-	}
-#ifdef DEBUG
-	pmap_nama = nmem;
-#endif
-	for (mp = ama; --nmem >= 0; mp++) {
-		a = mp->addr >> PGSHIFT;
-		v = mp->len >> PGSHIFT;
-		if ((n = a & BOFFSET) != 0) {
-			/* round up to next bank */
-			n = NPGBANK - n;
-			if (v < n) {	/* not a whole bank: skip it */
-				lost += v;
-				continue;
-			}
-			lost += n;	/* lose n pages from front */
-			a += n;
-			v -= n;
-		}
-		n = v >> BSHIFT;	/* calculate number of banks */
-		pbank = a >> BSHIFT;	/* and the bank itself */
-		if (pbank + n >= BTSIZE)
-			n = BTSIZE - pbank;
-		pages += n;		/* off by a factor of 2^BSHIFT */
-		lost += v - (n << BSHIFT);
-		while (--n >= 0) {
-			pmap_dtos[vbank] = pbank << BSHIFT;
-			pmap_stod[pbank] = vbank << BSHIFT;
-			pbank++;
-			vbank++;
-		}
-	}
-	/* adjust page count */
-	pages <<= BSHIFT;
-#ifdef DEBUG
-	printf("note: lost %d pages in translation\n", lost);
-#endif
-	return (pages);
-}
-
-int
-pmap_pa_exists(pa)
-	vm_offset_t pa;
-{
-	/* Holes covered by HWTOSW() translations. */
-	if (pa < vm_first_phys + vm_num_phys) /* XXX - too restrictive ? */
-		return 1;
-	return 0;
-}
-
-#else /* MACHINE_NONCONTIG */
 
 /*
  * For our convenience, vm_page.c implements:
@@ -655,7 +513,6 @@ pmap_pa_exists(pa)
 
 	return 0;
 }
-#endif /* MACHINE_NONCONTIG */
 
 /* update pv_flags given a valid pte */
 #define	MR(pte) (((pte) >> PG_M_SHIFT) & (PV_MOD | PV_REF))
@@ -1829,9 +1686,6 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	avail_start = (int)p - KERNBASE;
 
-#ifndef MACHINE_NONCONTIG
-	avail_end = init_translations() << PGSHIFT;
-#else
 	/*
 	 * Grab physical memory list, so pmap_next_page() can do its bit.
 	 */
@@ -1845,7 +1699,6 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	avail_next = avail_start;
 	for (physmem = 0, mp = pmemarr, j = npmemarr; --j >= 0; mp++)
 		physmem += btoc(mp->len);
-#endif
 
 	i = (int)p;
 	vpage[0] = p, p += NBPG;
@@ -1853,14 +1706,12 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	vmmap = p, p += NBPG;
 	p = reserve_dumppages(p);
 
-#ifdef MACHINE_NONCONTIG
 	/*
 	 * Allocate virtual memory for pv_table[], which will be mapped
 	 * sparsely in pmap_init().
 	 */
 	pv_table = (struct pvlist *)p;
 	p += round_page(sizeof(struct pvlist) * atop(avail_end - avail_start));
-#endif
 
 	virtual_avail = (vm_offset_t)p;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -2037,57 +1888,6 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	}
 }
 
-#ifndef MACHINE_NONCONTIG
-/*
- * Bootstrap memory allocator. This function allows for early dynamic
- * memory allocation until the virtual memory system has been bootstrapped.
- * After that point, either kmem_alloc or malloc should be used. This
- * function works by stealing pages from the (to be) managed page pool,
- * stealing virtual address space, then mapping the pages and zeroing them.
- *
- * It should be used from pmap_bootstrap till vm_page_startup, afterwards
- * it cannot be used, and will generate a panic if tried. Note that this
- * memory will never be freed, and in essence it is wired down.
- */
-void *
-pmap_bootstrap_alloc(size)
-	int size;
-{
-	register void *mem;
-
-	size = round_page(size);
-	mem = (void *)virtual_avail;
-	virtual_avail = pmap_map(virtual_avail, avail_start,
-	    avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
-	avail_start += size;
-	bzero((void *)mem, size);
-	return (mem);
-}
-
-/*
- * Initialize the pmap module.
- */
-void
-pmap_init(phys_start, phys_end)
-	register vm_offset_t phys_start, phys_end;
-{
-	register vm_size_t s;
-
-	if (PAGE_SIZE != NBPG)
-		panic("pmap_init: CLSIZE!=1");
-	/*
-	 * Allocate and clear memory for the pv_table.
-	 */
-	s = sizeof(struct pvlist) * atop(phys_end - phys_start);
-	s = round_page(s);
-	pv_table = (struct pvlist *)kmem_alloc(kernel_map, s);
-	bzero((caddr_t)pv_table, s);
-	vm_first_phys = phys_start;
-	vm_num_phys = phys_end - phys_start;
-}
-
-#else /* MACHINE_NONCONTIG */
-
 void
 pmap_init()
 {
@@ -2164,7 +1964,6 @@ pass2:
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
 }
-#endif /* MACHINE_NONCONTIG */
 
 
 /*
