@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.83 2004/08/10 22:49:12 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.84 2004/08/10 23:34:32 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.83 2004/08/10 22:49:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.84 2004/08/10 23:34:32 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,16 +64,11 @@ struct wdc_pcmcia_softc {
 	struct wdc_channel *wdc_chanlist[1];
 	struct wdc_channel wdc_channel;
 	struct ata_queue wdc_chqueue;
-	struct pcmcia_io_handle sc_pioh;
-	struct pcmcia_io_handle sc_auxpioh;
-	struct pcmcia_mem_handle sc_pmemh;
-	struct pcmcia_mem_handle sc_auxpmemh;
-	void *sc_ih;
 
 	struct pcmcia_function *sc_pf;
+	void *sc_ih;
+
 	int sc_state;
-#define WDC_PCMCIA_ATTACH1	1
-#define WDC_PCMCIA_ATTACH2	2
 #define WDC_PCMCIA_ATTACHED	3
 };
 
@@ -213,42 +208,36 @@ wdc_pcmcia_attach(parent, self, aux)
 	cfe = pa->pf->cfe;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	if (cfe->iftype == PCMCIA_IFTYPE_MEMORY) {
-		sc->sc_pmemh.memt = cfe->memspace[0].handle.memt;
-		sc->sc_pmemh.memh = cfe->memspace[0].handle.memh;
+		sc->wdc_channel.cmd_iot = cfe->memspace[0].handle.memt;
+		sc->wdc_channel.cmd_baseioh = cfe->memspace[0].handle.memh;
 		offset = cfe->memspace[0].offset;
 
-		sc->sc_auxpmemh.memt = sc->sc_pmemh.memt;
-		if (bus_space_subregion(sc->sc_pmemh.memt,
-		    sc->sc_pmemh.memh, WDC_PCMCIA_AUXREG_OFFSET + offset,
-		    WDC_PCMCIA_AUXREG_NPORTS, &sc->sc_auxpmemh.memh))
+		sc->wdc_channel.ctl_iot = cfe->memspace[0].handle.memt;
+		if (bus_space_subregion(cfe->memspace[0].handle.memt,
+		    cfe->memspace[0].handle.memh,
+		    WDC_PCMCIA_AUXREG_OFFSET + offset, WDC_PCMCIA_AUXREG_NPORTS,
+		    &sc->wdc_channel.ctl_ioh))
 			goto fail;
 		
 		aprint_normal("%s: memory mapped mode\n", self->dv_xname);
-		sc->wdc_channel.cmd_iot = sc->sc_pmemh.memt;
-		sc->wdc_channel.cmd_baseioh = sc->sc_pmemh.memh;
-		sc->wdc_channel.ctl_iot = sc->sc_auxpmemh.memt;
-		sc->wdc_channel.ctl_ioh = sc->sc_auxpmemh.memh;
 	} else {
-		sc->sc_pioh.iot = cfe->iospace[0].handle.iot;
-		sc->sc_pioh.ioh = cfe->iospace[0].handle.ioh;
+		sc->wdc_channel.cmd_iot = cfe->iospace[0].handle.iot;
+		sc->wdc_channel.cmd_baseioh = cfe->iospace[0].handle.ioh;
 		offset = 0;
 
 		if (cfe->num_iospace == 1) {
-			sc->sc_auxpioh.iot = sc->sc_pioh.iot;
-			if (bus_space_subregion(sc->sc_pioh.iot,
-			    sc->sc_pioh.ioh, WDC_PCMCIA_AUXREG_OFFSET,
-			    WDC_PCMCIA_AUXREG_NPORTS, &sc->sc_auxpioh.ioh))
+			sc->wdc_channel.ctl_iot = cfe->iospace[0].handle.iot;
+			if (bus_space_subregion(cfe->iospace[0].handle.iot,
+			    cfe->iospace[0].handle.ioh,
+			    WDC_PCMCIA_AUXREG_OFFSET, WDC_PCMCIA_AUXREG_NPORTS,
+			    &sc->wdc_channel.ctl_ioh))
 				goto fail;
 		} else {
-			sc->sc_auxpioh.iot = cfe->iospace[1].handle.iot;
-			sc->sc_auxpioh.ioh = cfe->iospace[1].handle.ioh;
+			sc->wdc_channel.ctl_iot = cfe->iospace[1].handle.iot;
+			sc->wdc_channel.ctl_ioh = cfe->iospace[1].handle.ioh;
 		}
 
 		aprint_normal("%s: i/o mapped mode\n", self->dv_xname);
-		sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
-		sc->wdc_channel.cmd_baseioh = sc->sc_pioh.ioh;
-		sc->wdc_channel.ctl_iot = sc->sc_auxpioh.iot;
-		sc->wdc_channel.ctl_ioh = sc->sc_auxpioh.ioh;
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
 	}
 
