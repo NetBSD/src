@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)radix.c	7.9 (Berkeley) 2/4/91
- *	$Id: radix.c,v 1.3.2.1 1993/11/14 20:20:17 mycroft Exp $
+ *	$Id: radix.c,v 1.3.2.2 1993/11/14 20:40:20 mycroft Exp $
  */
 
 /*
@@ -40,8 +40,8 @@
 #ifndef RNF_NORMAL
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/radix.h>
 #include <sys/malloc.h>
+#include <net/radix.h>
 #define	M_DONTWAIT M_NOWAIT
 #endif
 struct radix_node_head *mask_rnhead;
