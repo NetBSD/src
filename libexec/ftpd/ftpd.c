@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.54 1998/07/27 01:51:23 mycroft Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.55 1998/07/27 01:55:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.54 1998/07/27 01:51:23 mycroft Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.55 1998/07/27 01:55:23 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1491,7 +1491,7 @@ delete(name)
 
 void
 cwd(path)
-	char *path;
+	const char *path;
 {
 
 	if (chdir(path) < 0)
@@ -1749,7 +1749,7 @@ gunique(local)
 void
 perror_reply(code, string)
 	int code;
-	char *string;
+	const char *string;
 {
 
 	reply(code, "%s: %s.", string, strerror(errno));

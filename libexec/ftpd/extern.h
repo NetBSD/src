@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1998/07/27 01:51:23 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 1998/07/27 01:55:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 void	blkfree __P((char **));
 char   *conffilename __P((const char *));
 char  **copyblk __P((char **));
-void	cwd __P((char *));
+void	cwd __P((const char *));
 void	delete __P((char *));
 char   *do_conversion __P((const char *));
 void	dologout __P((int));
@@ -53,7 +53,7 @@ void	nack __P((char *));
 void	parse_conf __P((char *));
 void	pass __P((char *));
 void	passive __P((void));
-void	perror_reply __P((int, char *));
+void	perror_reply __P((int, const char *));
 void	pwd __P((void));
 void	removedir __P((char *));
 void	renamecmd __P((char *, char *));
