@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.27 2002/10/23 01:34:58 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.28 2002/12/21 16:12:15 kristerw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -430,8 +430,6 @@ void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 
 int	wm_match(struct device *, struct cfdata *, void *);
 void	wm_attach(struct device *, struct device *, void *);
-
-int	wm_copy_small = 0;
 
 CFATTACH_DECL(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, NULL, NULL);
