@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.148 2001/12/07 11:26:30 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.149 2002/01/12 20:30:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.148 2001/12/07 11:26:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.149 2002/01/12 20:30:11 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -2007,7 +2007,8 @@ st_interpret_sense(xs)
 	if (sense->error_code & SSD_ERRCODE_VALID)
 		info = _4btol(sense->info);
 	else
-		info = xs->datalen;	/* bad choice if fixed blocks */
+		info = (st->flags & ST_FIXEDBLOCKS) ?
+		    xs->datalen / st->blksize : xs->datalen;
 	key = sense->flags & SSD_KEY;
 	st->mt_erreg = key;
 	st->asc = sense->add_sense_code;
