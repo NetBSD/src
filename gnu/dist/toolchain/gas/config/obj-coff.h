@@ -122,7 +122,7 @@
 #define TARGET_FORMAT "pe-shl"
 #else
 #define TARGET_FORMAT					\
-  (shl							\
+  (!target_big_endian					\
    ? (sh_small ? "coff-shl-small" : "coff-shl")		\
    : (sh_small ? "coff-sh-small" : "coff-sh"))
 #endif
