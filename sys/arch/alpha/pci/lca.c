@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.26 1998/01/12 10:21:13 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.27 1998/01/17 03:39:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.26 1998/01/12 10:21:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.27 1998/01/17 03:39:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,8 @@ lcaattach(parent, self, aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = &lcp->lc_iot;
 	pba.pba_memt = &lcp->lc_memt;
-	pba.pba_dmat = &lcp->lc_dmat_direct;
+	pba.pba_dmat =
+	    alphabus_dma_get_tag(&lcp->lc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
