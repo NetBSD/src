@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.6 2002/09/29 23:23:56 wiz Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.7 2003/07/16 08:22:01 itojun Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -182,7 +182,7 @@ pr_init(sys, pr, sp)
 	 * Just do the mkdir call and ignore EEXIST.
 	 * Mode of client directory should be 777.
 	 */
-	(void) sprintf(pathname, "%s/%s", sp_name, sys);
+	(void) snprintf(pathname, sizeof(pathname), "%s/%s", sp_name, sys);
 	oldmask = umask(0);
 	rc = mkdir(pathname, dir_mode);	/* DON'T ignore this return code */
 	umask(oldmask);
@@ -193,7 +193,7 @@ pr_init(sys, pr, sp)
 	if (stat(pathname, &statbuf) || !S_ISDIR(statbuf.st_mode)) {
 		/* No spool directory... */
 badspool:
-		(void) sprintf(tempstr,
+		(void) snprintf(tempstr, sizeof(tempstr),
 		    "rpc.pcnfsd: unable to set up spool directory %s\n",
 		    pathname);
 		msg_out(tempstr);
@@ -236,7 +236,7 @@ pr_start2(system, pr, user, fname, opts, id)
 	    suspicious(fname))
 		return (PS_RES_FAIL);
 
-	(void) sprintf(pathname, "%s/%s/%s", sp_name,
+	(void) snprintf(pathname, sizeof(pathname), "%s/%s/%s", sp_name,
 	    system,
 	    fname);
 
@@ -251,7 +251,7 @@ pr_start2(system, pr, user, fname, opts, id)
                 **-----------------------------------------------------------------
 	        */
 
-		(void) strcat(pathname, ".spl");
+		(void) strlcat(pathname, ".spl", sizeof(pathname));
 		if (stat(pathname, &statbuf)) {
 			/*
 	                **----------------------------------------------------------------
@@ -288,8 +288,8 @@ pr_start2(system, pr, user, fname, opts, id)
         ** actual work.
         **-------------------------------------------------------------
         */
-	(void) strcpy(new_pathname, pathname);
-	(void) strcat(new_pathname, ".spl");
+	(void) strlcpy(new_pathname, pathname, sizeof(new_pathname));
+	(void) strlcat(new_pathname, ".spl", sizeof(new_pathname));
 
 	/*
         **-------------------------------------------------------------
@@ -299,10 +299,10 @@ pr_start2(system, pr, user, fname, opts, id)
 
 
 	if (!stat(new_pathname, &statbuf)) {
-		(void) strcpy(new_pathname, pathname);	/* rebuild a new name */
-		(void) sprintf(snum, "%d", rand());	/* get some number */
-		(void) strncat(new_pathname, snum, 3);
-		(void) strcat(new_pathname, ".spl");	/* new spool file */
+		(void) strlcpy(new_pathname, pathname, sizeof(new_pathname)); /* rebuild a new name */
+		(void) snprintf(snum, sizeof(snum), "%d", rand()); /* get some number */
+		(void) strlcat(new_pathname, snum, 4);
+		(void) strlcat(new_pathname, ".spl", sizeof(new_pathname)); /* new spool file */
 	}
 	if (rename(pathname, new_pathname)) {
 		/*
@@ -310,7 +310,8 @@ pr_start2(system, pr, user, fname, opts, id)
 	        ** Should never happen.
                 **---------------------------------------------------------------
                 */
-		(void) sprintf(tempstr, "rpc.pcnfsd: spool file rename (%s->%s) failed.\n",
+		(void) snprintf(tempstr, sizeof(tempstr),
+		    "rpc.pcnfsd: spool file rename (%s->%s) failed.\n",
 		    pathname, new_pathname);
 		msg_out(tempstr);
 		return (PS_RES_FAIL);
@@ -326,7 +327,7 @@ pr_start2(system, pr, user, fname, opts, id)
 				 * CA-96.08 */
 		(void) run_ps630(new_pathname, opts);
 #else
-		(void) sprintf(tempstr,
+		(void) snprintf(tempstr, sizeof(tempstr),
 		    "rpc.pcnfsd: ps630 filter disabled for %s\n", pathname);
 		msg_out(tempstr);
 		return (PS_RES_FAIL);
@@ -342,11 +343,11 @@ pr_start2(system, pr, user, fname, opts, id)
 			 * Use the copy option so we can remove the orignal
 			 * spooled nfs file from the spool directory.
 			 */
-		sprintf(cmdbuf, "/usr/bin/lp -c -d%s %s",
+		snprintf(cmdbuf, sizeof(cmdbuf), "/usr/bin/lp -c -d%s %s",
 		    pr, new_pathname);
 #else				/* SVR4 */
 		/* BSD way: lpr */
-		sprintf(cmdbuf, "%s/lpr -P%s %s",
+		snprintf(cmdbuf, sizeof(cmdbuf), "%s/lpr -P%s %s",
 		    LPRDIR, pr, new_pathname);
 #endif				/* SVR4 */
 		xcmd = cmdbuf;
@@ -362,7 +363,8 @@ pr_start2(system, pr, user, fname, opts, id)
 			resbuf[i - 1] = '\0';	/* trim NL */
 		if (!strncmp(resbuf, "request id is ", 14))
 			/* New - just the first word is needed */
-			strcpy(req_id, strtok(&resbuf[14], delims));
+			strlcpy(req_id, strtok(&resbuf[14], delims),
+			    sizeof(req_id));
 		else
 			if (strembedded("disabled", resbuf))
 				failed = 1;
@@ -541,7 +543,7 @@ build_pr_list()
 	FILE   *p;
 	char   *cp;
 
-	sprintf(buff, "%s/lpc status", LPCDIR);
+	snprintf(buff, sizeof(buff), "%s/lpc status", LPCDIR);
 	p = popen(buff, "r");
 	if (p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen lpc stat");
@@ -673,7 +675,7 @@ build_pr_queue(pn, user, just_mine, p_qlen, p_qshown)
 	if (pn == NULL || !valid_pr(pn) || suspicious(pn))
 		return (PI_RES_NO_SUCH_PRINTER);
 
-	sprintf(buff, "/usr/bin/lpstat %s", pn);
+	snprintf(buff, sizeof(buff), "/usr/bin/lpstat %s", pn);
 	p = su_popen(user, buff, MAXTIME_FOR_QUEUE);
 	if (p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen() lpstat queue query");
@@ -757,7 +759,7 @@ build_pr_queue(pn, user, just_mine, p_qlen, p_qshown)
 	if (pn == NULL || suspicious(pn))
 		return (PI_RES_NO_SUCH_PRINTER);
 
-	sprintf(buff, "%s/lpq -P%s", LPRDIR, pn);
+	snprintf(buff, sizeof(buff), "%s/lpq -P%s", LPRDIR, pn);
 
 	p = su_popen(user, buff, MAXTIME_FOR_QUEUE);
 	if (p == NULL) {
@@ -928,7 +930,7 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 		return (PI_RES_NO_SUCH_PRINTER);
 	n = strlen(pn);
 
-	sprintf(cmd, "/usr/bin/lpstat -a %s -p %s", pn, pn);
+	snprintf(cmd, sizeof(cmd), "/usr/bin/lpstat -a %s -p %s", pn, pn);
 
 	p = popen(cmd, "r");
 	if (p == NULL) {
@@ -947,10 +949,10 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 			if (!strstr(buff, "disabled"))
 				*printing = TRUE;
 			if (strstr(buff, "printing"))
-				strcpy(status, "printing");
+				strlcpy(status, "printing", sizeof9status));
 			else
 				if (strstr(buff, "idle"))
-					strcpy(status, "idle");
+					strlcpy(status, "idle", sizeof(status));
 			continue;
 		}
 		if (!strncmp(buff, "UX:", 3)) {
@@ -996,10 +998,10 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 	if (pn == NULL || suspicious(pn))
 		return (PI_RES_NO_SUCH_PRINTER);
 
-	sprintf(pname, "%s:", pn);
+	snprintf(pname, sizeof(pname), "%s:", pn);
 	n = strlen(pname);
 
-	sprintf(cmd, "%s/lpc status %s", LPCDIR, pn);
+	snprintf(cmd, sizeof(cmd), "%s/lpc status %s", LPCDIR, pn);
 	p = popen(cmd, "r");
 	if (p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen() lp status");
@@ -1056,7 +1058,7 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 			    strstr(buff2, "error") != NULL)
 				*needs_operator = TRUE;
 			if (*needs_operator || strstr(buff2, "waiting") != NULL)
-				strcpy(status, cp);
+				strlcpy(status, cp, sizeof(status));
 		}
 		stat = PI_RES_OK;
 		break;
@@ -1118,7 +1120,7 @@ pr_cancel(pr, user, id)
 	if (suspicious(id))
 		return (PC_RES_NO_SUCH_JOB);
 
-	sprintf(cmdbuf, "/usr/bin/cancel %s", id);
+	snprintf(cmdbuf, sizeof(cmdbuf), "/usr/bin/cancel %s", id);
 	if ((fd = su_popen(user, cmdbuf, MAXTIME_FOR_CANCEL)) == NULL) {
 		msg_out("rpc.pcnfsd: su_popen failed");
 		return (PC_RES_FAIL);
@@ -1167,7 +1169,7 @@ pr_cancel(pr, user, id)
 	if (suspicious(id))
 		return (PC_RES_NO_SUCH_JOB);
 
-	sprintf(cmdbuf, "%s/lprm -P%s %s", LPRDIR, pr, id);
+	snprintf(cmdbuf, sizeof(cmdbuf), "%s/lprm -P%s %s", LPRDIR, pr, id);
 	if ((fd = su_popen(user, cmdbuf, MAXTIME_FOR_CANCEL)) == NULL) {
 		msg_out("rpc.pcnfsd: su_popen failed");
 		return (PC_RES_FAIL);
@@ -1247,6 +1249,8 @@ add_printer_alias(printer, alias_for, command)
 	char   *alias_for;
 	char   *command;
 {
+	size_t l;
+
 	if (num_aliases < NPRINTERDEFS) {
 		alias[num_aliases].a_printer = strdup(printer);
 		alias[num_aliases].a_alias_for =
@@ -1254,9 +1258,10 @@ add_printer_alias(printer, alias_for, command)
 		if (strstr(command, "$FILE"))
 			alias[num_aliases].a_command = strdup(command);
 		else {
-			alias[num_aliases].a_command = (char *) grab(strlen(command) + 8);
-			strcpy(alias[num_aliases].a_command, command);
-			strcat(alias[num_aliases].a_command, " $FILE");
+			l = strlen(command) + 8;
+			alias[num_aliases].a_command = (char *) grab(l);
+			strlcpy(alias[num_aliases].a_command, command, l);
+			strlcat(alias[num_aliases].a_command, " $FILE", l);
 		}
 		num_aliases++;
 	}
@@ -1320,10 +1325,10 @@ substitute(string, token, data)
 
 	while ((c = strstr(string, token)) != NULL) {
 		*c = '\0';
-		strcpy(temp, string);
-		strcat(temp, data);
+		strlcpy(temp, string, sizeof(temp));
+		strlcat(temp, data, sizeof(temp));
 		c += strlen(token);
-		strcat(temp, c);
+		strlcat(temp, c, sizeof(temp));
 		strcpy(string, temp);
 	}
 }
@@ -1339,7 +1344,8 @@ expand_alias(printer, file, user, host)
 	int     i;
 	for (i = 0; i < num_aliases; i++) {
 		if (!strcmp(printer, alias[i].a_printer)) {
-			strcpy(expansion, alias[i].a_command);
+			strlcpy(expansion, alias[i].a_command,
+			    sizeof(expansion));
 			substitute(expansion, "$FILE", file);
 			substitute(expansion, "$USER", user);
 			substitute(expansion, "$HOST", host);
