@@ -1,4 +1,4 @@
-/*	$NetBSD: sigtypes.h,v 1.4 2003/08/07 16:34:14 agc Exp $	*/
+/*	$NetBSD: sigtypes.h,v 1.5 2003/10/13 18:50:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -38,6 +38,10 @@
 
 #ifndef	_SYS_SIGTYPES_H_
 #define	_SYS_SIGTYPES_H_
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd32.h"
+#endif
 
 /*
  * This header file defines various signal-related types.  We also keep
@@ -140,5 +144,18 @@ typedef struct
 #endif /* _XOPEN_SOURCE_EXTENDED || XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 
 #endif	/* _POSIX_C_SOURCE || _XOPEN_SOURCE || ... */
+
+#if defined(COMPAT_NETBSD32) && defined(_KERNEL)
+
+struct __sigaltstack32 {
+	uint32_t	ss_sp;
+	uint32_t	ss_size;
+	int32_t		ss_flags;
+};
+ 
+typedef struct __sigaltstack32 stack32_t;
+
+#endif /* COMPAT_NETBSD32 && _KERNEL */
+
 
 #endif	/* !_SYS_SIGTYPES_H_ */
