@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_driver.3,v 1.1 2001/07/08 12:10:28 blymn Exp $
+.\"	$NetBSD: form_driver.3,v 1.2 2002/01/15 02:50:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -31,7 +31,7 @@
 .\"
 .Dd January, 2001
 .Dt FORMS 3
-.Os 
+.Os
 .Sh NAME
 .Nm form_driver
 .Nd form library
@@ -44,7 +44,7 @@
 .Sh DESCRIPTION
 The
 .Fn form_driver
-is the heart of the forms library, it takes commands in the 
+is the heart of the forms library, it takes commands in the
 .Fa request
 parameter that is either a request to the driver to perform some
 action or is a character to be inserted into the current field.  The
@@ -53,7 +53,7 @@ it into the current field.  This may or may not succeed depending on
 the state of the current field.  If the character passed is not
 printable then the driver attempts to process it as a driver request.
 If the character passed is not a valid request then the driver will
-return an unknown command error. 
+return an unknown command error.
 .Sh PARAMETERS
 The forms driver recognises the following requests:
 .Pp

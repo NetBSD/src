@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_fieldtype.3,v 1.1 2001/07/08 12:10:29 blymn Exp $
+.\"	$NetBSD: form_fieldtype.3,v 1.2 2002/01/15 02:50:18 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -31,7 +31,7 @@
 .\"
 .Dd January, 2001
 .Dt FORMS 3
-.Os 
+.Os
 .Sh NAME
 .Nm free_fieldtype ,
 .Nm link_fieldtype ,
@@ -77,20 +77,20 @@ A new field type can be created by calling
 which requires pointers to two functions which perform validation, the
 .Fa field_check
 function must validate the field contents and return TRUE if they are
-acceptable and FALSE if they are not.  The 
+acceptable and FALSE if they are not.  The
 .Fa char_check
 validates the character input into the field, this function will be
 called for each character entered, if the character can be entered
 into the field then
-.Fa char_check 
-must return TRUE.  Neither 
+.Fa char_check
+must return TRUE.  Neither
 .Fa field_check
 nor
 .Fa char_check
 may be NULL.  The functions for handling the field type arguments can
 be defined by using the
 .Fn set_fieldtype_arg
-function, the 
+function, the
 .Fa make_args
 function is used to create new arguments for the fieldtype, the
 .Fa copy_args

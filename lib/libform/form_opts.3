@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_opts.3,v 1.1 2001/07/08 12:10:29 blymn Exp $
+.\"	$NetBSD: form_opts.3,v 1.2 2002/01/15 02:50:18 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -31,7 +31,7 @@
 .\"
 .Dd January, 2001
 .Dt FORMS 3
-.Os 
+.Os
 .Sh NAME
 .Nm form_opts ,
 .Nm form_opts_off ,
@@ -51,13 +51,13 @@
 .Ft int
 .Fn set_form_opts "FORM *form, Form_Options options"
 .Sh DESCRIPTION
-The function 
+The function
 .Fn form_opts
-returns the current options that are set on the given form.  The 
+returns the current options that are set on the given form.  The
 .Fn form_opts_off
 will turn off the form options given in
 .Fa options
-for the form, similarly, 
+for the form, similarly,
 .Fn form_opts_on
 will turn on the options specified in
 .Fa options
