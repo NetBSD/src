@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1 1999/09/13 10:31:33 itojun Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2 1999/09/14 10:22:37 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -45,8 +45,6 @@
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
 
-#include "opt_pmap_new.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -76,8 +74,10 @@ void	setredzone __P((u_short *, caddr_t));
  * the frame pointers on the stack after copying.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -110,6 +110,13 @@ cpu_fork(p1, p2)
 	 */
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->kr15 - 1;
 	*tf = *p1->p_md.md_regs;
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->tf_r15 = (u_int)stack + stacksize;
+
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_ppl = 0;
 	sf->sf_r12 = (int)child_return;
@@ -280,7 +287,6 @@ extern vm_map_t phys_map;
  * (a name with only slightly more meaning than "kernel_map")
  */
 
-#if defined(PMAP_NEW)
 void
 vmapbuf(bp, len)
 	struct buf *bp;
@@ -309,8 +315,8 @@ vmapbuf(bp, len)
 	 * mapping is removed).
 	 */
 	while (len) {
-		fpa = pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
-				   faddr);
+		pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
+			     faddr, &fpa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
 			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		faddr += PAGE_SIZE;
@@ -318,35 +324,6 @@ vmapbuf(bp, len)
 		len -= PAGE_SIZE;
 	}
 }
-#else /* PMAP_NEW */
-void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
-{
-	vaddr_t faddr, taddr, off;
-	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
-
-	if ((bp->b_flags & B_PHYS) == 0)
-		panic("vmapbuf");
-	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vaddr_t)bp->b_data - faddr;
-	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
-	bp->b_data = (caddr_t)(taddr + off);
-	/*
-	 * The region is locked, so we expect that pmap_pte() will return
-	 * non-NULL.
-	 */
-	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
-	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
-	do {
-		*tpte++ = *fpte++;
-		len -= PAGE_SIZE;
-	} while (len);
-}
-#endif
 
 /*
  * Free the io map PTEs associated with this IO operation.
