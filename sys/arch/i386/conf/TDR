@@ -10,6 +10,7 @@ options		INET,NFS,GATEWAY
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 #options	SCSI
+options 	DDB
 
 config		vmunix	root on wd0 swap on wd0
 
@@ -57,7 +58,6 @@ pseudo-device	loop
 pseudo-device	ether
 #pseudo-device	sl	2
 pseudo-device	log
-pseudo-device   ddb
 pseudo-device	pty	8
 pseudo-device	bpfilter 16
 
