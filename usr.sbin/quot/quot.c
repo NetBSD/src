@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.11 1997/10/17 12:36:36 lukem Exp $	*/
+/*	$NetBSD: quot.c,v 1.12 1997/10/18 11:11:18 lukem Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.11 1997/10/17 12:36:36 lukem Exp $");
+__RCSID("$NetBSD: quot.c,v 1.12 1997/10/18 11:11:18 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: quot.c,v 1.11 1997/10/17 12:36:36 lukem Exp $");
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -114,18 +115,14 @@ get_inode(fd, super, ino)
 	
 	if (!ip || ino < last || ino >= last + INOCNT(super)) {
 		if (!ip
-		    && !(ip = (struct dinode *)malloc(INOSZ(super)))) {
-			perror("allocate inodes");
-			exit(1);
-		}
+		    && !(ip = (struct dinode *)malloc(INOSZ(super))))
+			errx(1, "allocate inodes");
 		last = (ino / INOCNT(super)) * INOCNT(super);
 		if (lseek(fd,
 		    (off_t)ino_to_fsba(super, last) << super->fs_fshift,
 		    0) < 0 ||
-		    read(fd, ip, INOSZ(super)) != INOSZ(super)) {
-			perror("read inodes");
-			exit(1);
-		}
+		    read(fd, ip, INOSZ(super)) != INOSZ(super))
+			errx(1, "read inodes");
 	}
 	
 	return ip + ino % INOCNT(super);
@@ -142,7 +139,7 @@ virtualblocks(super, ip)
 	struct fs *super;
 	struct dinode *ip;
 {
-	register off_t nblk, sz;
+	off_t nblk, sz;
 	
 	sz = ip->di_size;
 #ifdef	COMPAT
@@ -204,16 +201,14 @@ static int nusers;
 static void
 inituser()
 {
-	register i;
-	register struct user *usr;
+	int i;
+	struct user *usr;
 	
 	if (!nusers) {
 		nusers = 8;
 		if (!(users =
-		    (struct user *)calloc(nusers, sizeof(struct user)))) {
-			perror("allocate users");
-			exit(1);
-		}
+		    (struct user *)calloc(nusers, sizeof(struct user))))
+			errx(1, "allocate users");
 	} else {
 		for (usr = users, i = nusers; --i >= 0; usr++) {
 			usr->space = usr->spc30 = usr->spc60 = usr->spc90 = 0;
@@ -225,16 +220,14 @@ inituser()
 static void
 usrrehash()
 {
-	register i;
-	register struct user *usr, *usrn;
+	int i;
+	struct user *usr, *usrn;
 	struct user *svusr;
 	
 	svusr = users;
 	nusers <<= 1;
-	if (!(users = (struct user *)calloc(nusers, sizeof(struct user)))) {
-		perror("allocate users");
-		exit(1);
-	}
+	if (!(users = (struct user *)calloc(nusers, sizeof(struct user))))
+		errx(1, "allocate users");
 	for (usr = svusr, i = nusers >> 1; --i >= 0; usr++) {
 		for (usrn = users + (usr->uid&(nusers - 1));
 		     usrn->name;
@@ -250,8 +243,8 @@ static struct user *
 user(uid)
 	uid_t uid;
 {
-	register struct user *usr;
-	register i;
+	struct user *usr;
+	int i;
 	struct passwd *pwd;
 	
 	while (1) {
@@ -272,10 +265,8 @@ user(uid)
 					    != NULL)
 						strcpy(usr->name, pwd->pw_name);
 				}
-				if (!usr->name) {
-					perror("allocate users");
-					exit(1);
-				}
+				if (!usr->name)
+					errx(1, "allocate users");
 				return usr;
 			} else if (usr->uid == uid)
 				return usr;
@@ -304,7 +295,7 @@ uses(uid, blks, act)
 	time_t act;
 {
 	static time_t today;
-	register struct user *usr;
+	struct user *usr;
 	
 	if (!today)
 		time(&today);
@@ -336,8 +327,8 @@ struct fsizes {
 static void
 initfsizes()
 {
-	register struct fsizes *fp;
-	register i;
+	struct fsizes *fp;
+	int i;
 	
 	for (fp = fsizes; fp; fp = fp->fsz_next) {
 		for (i = FSZCNT; --i >= 0;) {
@@ -357,14 +348,12 @@ dofsizes(fd, super, name)
 	struct dinode *ip;
 	daddr_t sz, ksz;
 	struct fsizes *fp, **fsp;
-	register i;
+	int i;
 	
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 #ifdef	COMPAT
-	if (!(fsizes = (struct fsizes *)malloc(sizeof(struct fsizes)))) {
-		perror("alloc fsize structure");
-		exit(1);
-	}
+	if (!(fsizes = (struct fsizes *)malloc(sizeof(struct fsizes))))
+		errx(1, "alloc fsize structure");
 #endif	/* COMPAT */
 	for (inode = 0; inode < maxino; inode++) {
 		errno = 0;
@@ -395,10 +384,8 @@ dofsizes(fd, super, name)
 			}
 			if (!fp || ksz < fp->fsz_first) {
 				if (!(fp = (struct fsizes *)
-				      malloc(sizeof(struct fsizes)))) {
-					perror("alloc fsize structure");
-					exit(1);
-				}
+				      malloc(sizeof(struct fsizes))))
+					errx(1, "alloc fsize structure");
 				fp->fsz_next = *fsp;
 				*fsp = fp;
 				fp->fsz_first = (ksz / FSZCNT) * FSZCNT;
@@ -411,10 +398,8 @@ dofsizes(fd, super, name)
 			fp->fsz_count[ksz % FSZCNT]++;
 			fp->fsz_sz[ksz % FSZCNT] += sz;
 #endif	/* COMPAT */
-		} else if (errno) {
-			perror(name);
-			exit(1);
-		}
+		} else if (errno)
+			errx(1, "%s", name);
 	}
 	sz = 0;
 	for (fp = fsizes; fp; fp = fp->fsz_next) {
@@ -437,7 +422,7 @@ douser(fd, super, name)
 	ino_t inode, maxino;
 	struct user *usr, *usrs;
 	struct dinode *ip;
-	register n;
+	int n;
 	
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 	for (inode = 0; inode < maxino; inode++) {
@@ -446,16 +431,12 @@ douser(fd, super, name)
 		    && !isfree(ip))
 			uses(ip->di_uid, estimate ? virtualblocks(super, ip) :
 			    actualblocks(super, ip), ip->di_atime);
-		else if (errno) {
-			perror(name);
-			exit(1);
-		}
+		else if (errno)
+			errx(1, "%s", name);
 	}
-	if (!(usrs = (struct user *)malloc(nusers * sizeof(struct user)))) {
-		perror("allocate users");
-		exit(1);
-	}
-	bcopy(users, usrs, nusers * sizeof(struct user));
+	if (!(usrs = (struct user *)malloc(nusers * sizeof(struct user))))
+		errx(1, "allocate users");
+	memmove(usrs, users, nusers * sizeof(struct user));
 	sortusers(usrs);
 	for (usr = usrs, n = nusers; --n >= 0 && usr->count; usr++) {
 		printf("%5ld", (long)SIZE(usr->space));
@@ -491,7 +472,7 @@ donames(fd, super, name)
 	while (scanf("%d", &inode) == 1) {
 		if (inode < 0 || inode > maxino) {
 #ifndef	COMPAT
-			fprintf(stderr, "invalid inode %d\n", inode);
+			warnx("invalid inode %d", inode);
 #endif
 			return;
 		}
@@ -513,10 +494,8 @@ donames(fd, super, name)
 			putchar('\n');
 			inode1 = inode;
 		} else {
-			if (errno) {
-				perror(name);
-				exit(1);
-			}
+			if (errno)
+				errx(1, "%s", name);
 			/* skip this line */
 			while ((c = getchar()) != EOF && c != '\n');
 		}
@@ -578,14 +557,14 @@ quot(name, mp)
 	if ((fd = open(name, 0)) < 0
 	    || lseek(fd, SBOFF, 0) != SBOFF
 	    || read(fd, superblock, SBSIZE) != SBSIZE) {
-		perror(name);
+		warnx("%s", name);
 		close(fd);
 		return;
 	}
 	if (((struct fs *)superblock)->fs_magic != FS_MAGIC
 	    || ((struct fs *)superblock)->fs_bsize > MAXBSIZE
 	    || ((struct fs *)superblock)->fs_bsize < sizeof(struct fs)) {
-		fprintf(stderr, "%s: not a BSD filesystem\n", name);
+		warnx("%s: not a BSD filesystem", name);
 		close(fd);
 		return;
 	}
