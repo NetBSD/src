@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.2.2.2 1997/11/05 19:10:15 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.2.2.3 1998/10/29 02:40:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -419,6 +419,7 @@ ec_attach(parent, self, aux)
 	sc->ring_copy = ec_ring_copy;
 	sc->write_mbuf = ec_write_mbuf;
 	sc->read_hdr = ec_read_hdr;
+	sc->init_card = ec_init_card;
 
 	sc->sc_mediachange = ec_mediachange;
 	sc->sc_mediastatus = ec_mediastatus;
