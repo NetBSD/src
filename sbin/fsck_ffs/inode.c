@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.45 2004/01/03 17:56:21 dbj Exp $	*/
+/*	$NetBSD: inode.c,v 1.45.2.1 2004/04/28 06:01:40 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.45 2004/01/03 17:56:21 dbj Exp $");
+__RCSID("$NetBSD: inode.c,v 1.45.2.1 2004/04/28 06:01:40 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -283,7 +283,8 @@ chkrange(blk, cnt)
 {
 	int c;
 
-	if ((unsigned)(blk + cnt) > maxfsblock)
+	if (cnt <= 0 || blk <= 0 || blk > maxfsblock ||
+	    cnt - 1 > maxfsblock - blk)
 		return (1);
 	if (cnt > sblock->fs_frag ||
 	    fragnum(sblock, blk) + cnt > sblock->fs_frag) {
