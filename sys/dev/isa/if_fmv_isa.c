@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv.c,v 1.32 2002/10/02 03:10:47 thorpej Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.1 2002/10/05 15:16:12 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,13 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.32 2002/10/02 03:10:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.1 2002/10/05 15:16:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/socket.h>
-#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -49,35 +47,33 @@ __KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.32 2002/10/02 03:10:47 thorpej Exp $");
 
 #include <dev/ic/mb86960reg.h>
 #include <dev/ic/mb86960var.h>
+#include <dev/ic/fmvreg.h>
+#include <dev/ic/fmvvar.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/if_fmvreg.h>
 
-int	fmv_match __P((struct device *, struct cfdata *, void *));
-void	fmv_attach __P((struct device *, struct device *, void *));
+int	fmv_isa_match __P((struct device *, struct cfdata *, void *));
+void	fmv_isa_attach __P((struct device *, struct device *, void *));
 
-struct fmv_softc {
+struct fmv_isa_softc {
 	struct	mb86960_softc sc_mb86960;	/* real "mb86960" softc */
 
 	/* ISA-specific goo. */
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-CFATTACH_DECL(fmv, sizeof(struct fmv_softc),
-    fmv_match, fmv_attach, NULL, NULL);
+CFATTACH_DECL(fmv_isa, sizeof(struct fmv_isa_softc),
+    fmv_isa_match, fmv_isa_attach, NULL, NULL);
 
 struct fe_simple_probe_struct {
-	u_char port;	/* Offset from the base I/O address. */
-	u_char mask;	/* Bits to be checked. */
-	u_char bits;	/* Values to be compared against. */
+	u_int8_t port;	/* Offset from the base I/O address. */
+	u_int8_t mask;	/* Bits to be checked. */
+	u_int8_t bits;	/* Values to be compared against. */
 };
 
 static __inline__ int fe_simple_probe __P((bus_space_tag_t, 
     bus_space_handle_t, struct fe_simple_probe_struct const *));
-static int fmv_find __P((bus_space_tag_t, bus_space_handle_t, int *,
-    int *));
-static int fmv_detect __P((bus_space_tag_t, bus_space_handle_t,
-    u_int8_t enaddr[ETHER_ADDR_LEN]));
+static int fmv_find __P((bus_space_tag_t, bus_space_handle_t, int *, int *));
 
 static int const fmv_iomap[8] = {
 	0x220, 0x240, 0x260, 0x280, 0x2A0, 0x2C0, 0x300, 0x340
@@ -93,7 +89,7 @@ static int const fmv_iomap[8] = {
  * Determine if the device is present.
  */
 int
-fmv_match(parent, match, aux)
+fmv_isa_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -124,7 +120,8 @@ fmv_match(parent, match, aux)
 			break;
 	if (i == NFMV_IOMAP) {
 #ifdef FMV_DEBUG
-		printf("fmv_match: unknown iobase 0x%x\n", ia->ia_iobase);
+		printf("fmv_match: unknown iobase 0x%x\n",
+		    ia->ia_io[0].ir_addr);
 #endif
 		return (0);
 	}
@@ -232,9 +229,9 @@ fmv_find(iot, ioh, iobase, irq)
 		{ FE_DLCR4, 0x08, 0x00 },
 	    /*	{ FE_DLCR5, 0x80, 0x00 },	Doesn't work. */
 
-		{ FE_FMV0, FE_FMV0_MAGIC_MASK,  FE_FMV0_MAGIC_VALUE },
-		{ FE_FMV1, FE_FMV1_CARDID_MASK, FE_FMV1_CARDID_ID   },
-		{ FE_FMV3, FE_FMV3_EXTRA_MASK,  FE_FMV3_EXTRA_VALUE },
+		{ FE_FMV0, FE_FMV0_MAGIC_MASK, FE_FMV0_MAGIC_VALUE },
+		{ FE_FMV1, FE_FMV1_MAGIC_MASK, FE_FMV1_MAGIC_VALUE },
+		{ FE_FMV3, FE_FMV3_EXTRA_MASK, FE_FMV3_EXTRA_VALUE },
 #if 1
 	/*
 	 * Test *vendor* part of the station address for Fujitsu.
@@ -276,56 +273,16 @@ fmv_find(iot, ioh, iobase, irq)
 	return (1);
 }
 
-/*
- * Determine type and ethernet address.
- */
-static int
-fmv_detect(iot, ioh, enaddr)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t enaddr[ETHER_ADDR_LEN];
-{
-
-	/* Get our station address from EEPROM. */
-	bus_space_read_region_1(iot, ioh, FE_FMV4, enaddr, ETHER_ADDR_LEN);
-
-	/* Make sure we got a valid station address. */
-	if ((enaddr[0] & 0x03) != 0x00 ||
-	    (enaddr[0] == 0x00 && enaddr[1] == 0x00 && enaddr[2] == 0x00)) {
-#ifdef FMV_DEBUG
-		printf("fmv_detect: invalid ethernet address\n");
-#endif
-		return (0);
-	}
-
-	/* Determine the card type. */
-	switch (bus_space_read_1(iot, ioh, FE_FMV0) & FE_FMV0_MODEL) {
-	case FE_FMV0_MODEL_FMV181:
-		return (FE_TYPE_FMV181);
-	case FE_FMV0_MODEL_FMV182:
-		return (FE_TYPE_FMV182);
-	}
-
-#ifdef FMV_DEBUG
-	printf("fmv_detect: unknown card\n");
-#endif
-	/* Unknown card type: maybe a new model, but... */
-	return (0);
-}
-
 void
-fmv_attach(parent, self, aux)
+fmv_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct fmv_softc *isc = (struct fmv_softc *)self;
+	struct fmv_isa_softc *isc = (struct fmv_isa_softc *)self;
 	struct mb86960_softc *sc = &isc->sc_mb86960;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	u_int8_t myea[ETHER_ADDR_LEN];
-	const char *typestr;
-	int type;
 
 	printf("\n");
 
@@ -338,49 +295,7 @@ fmv_attach(parent, self, aux)
 	sc->sc_bst = iot;
 	sc->sc_bsh = ioh;
 
-	/* Determine the card type. */
-	type = fmv_detect(iot, ioh, myea);
-	switch (type) {
-	case FE_TYPE_FMV181:
-		typestr = "FMV-181";
-		break;
-	case FE_TYPE_FMV182:
-		typestr = "FMV-182";
-		break;
-	default:
-	  	/* Unknown card type: maybe a new model, but... */
-		printf("%s: where did the card go?!\n", sc->sc_dev.dv_xname);
-		panic("unknown card");
-	}
-
-	printf("%s: %s Ethernet\n", sc->sc_dev.dv_xname, typestr);
-
-	/* This interface is always enabled. */
-	sc->sc_flags |= FE_FLAGS_ENABLED;
-
-	/*
-	 * Minimum initialization of the hardware.
-	 * We write into registers; hope I/O ports have no
-	 * overlap with other boards.
-	 */
-
-	/* Initialize ASIC. */
-	bus_space_write_1(iot, ioh, FE_FMV3, 0);
-	bus_space_write_1(iot, ioh, FE_FMV10, 0);
-
-	/* Wait for a while.  I'm not sure this is necessary.  FIXME */
-	delay(200);
-
-	/*
-	 * Do generic MB86960 attach.
-	 */
-	mb86960_attach(sc, MB86960_TYPE_86965, myea);
-
-	/* Is this really needs to be done here? XXX */
-	/* Turn the "master interrupt control" flag of ASIC on. */
-	bus_space_write_1(iot, ioh, FE_FMV3, FE_FMV3_ENABLE_FLAG);
-
-	mb86960_config(sc, NULL, 0, 0);
+	fmv_attach(sc);
 
 	/* Establish the interrupt handler. */
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
