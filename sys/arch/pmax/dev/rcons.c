@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.50.4.2 2001/10/10 11:56:26 fvdl Exp $	*/
+/*	$NetBSD: rcons.c,v 1.50.4.3 2001/10/13 17:42:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -146,6 +146,7 @@ rcons_connect (info)
 		info->fi_driver->fbd_putcmap(info, rasops_cmap, 0, 256);
 
 	fbconstty = &rcons_tty [0];
+	fbconstty->t_dev = makedev(85, 0);	/* /dev/console */
 	fbconstty->t_ispeed = fbconstty->t_ospeed = TTYDEF_SPEED;
 	fbconstty->t_param = (int (*)(struct tty *, struct termios *))nullop;
 
@@ -184,6 +185,7 @@ rcons_connect_native (ops, cookie, width, height, cols, rows)
 	/*XXX*/ cn_in_dev = cn_tab->cn_dev; /*XXX*/ /* FIXME */
 
 	fbconstty = &rcons_tty [0];
+	fbconstty->t_dev = makedev(85, 0);	/* /dev/console */
 	fbconstty->t_ispeed = fbconstty->t_ospeed = TTYDEF_SPEED;
 	fbconstty->t_param = (int (*)(struct tty *, struct termios *))nullop;
 
@@ -308,7 +310,6 @@ rconsopen(devvp, flag, mode, p)
 		 * Leave baud rate alone!
 		 */
 		ttychars(tp);
-		tp->t_devvp = devvp;
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
@@ -398,7 +399,7 @@ rconsioctl(devvp, cmd, data, flag, p)
 	tp = &rcons_tty [0];
 	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) >= 0)
 		return (error);
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = ttioctl(tp, devvp, cmd, data, flag, p)) >= 0)
 		return (error);
 	return (ENOTTY);
 }

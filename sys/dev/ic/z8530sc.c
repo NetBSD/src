@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.15.4.1 2001/10/11 12:33:57 fvdl Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.15.4.2 2001/10/13 17:42:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -255,7 +255,7 @@ zsc_intr_hard(arg)
 		if (rr3 & ZSRR3_IP_A_RX)
 			(*cs->cs_ops->zsop_rxint)(cs);
 		if (rr3 & ZSRR3_IP_A_STAT)
-			(*cs->cs_ops->zsop_stint)(cs, 0, NODEV);
+			(*cs->cs_ops->zsop_stint)(cs, 0);
 		if (rr3 & ZSRR3_IP_A_TX)
 			(*cs->cs_ops->zsop_txint)(cs);
 	}
@@ -267,7 +267,7 @@ zsc_intr_hard(arg)
 		if (rr3 & ZSRR3_IP_B_RX)
 			(*cs->cs_ops->zsop_rxint)(cs);
 		if (rr3 & ZSRR3_IP_B_STAT)
-			(*cs->cs_ops->zsop_stint)(cs, 0, NODEV);
+			(*cs->cs_ops->zsop_stint)(cs, 0);
 		if (rr3 & ZSRR3_IP_B_TX)
 			(*cs->cs_ops->zsop_txint)(cs);
 	}
@@ -311,7 +311,7 @@ zsc_intr_soft(arg)
  */
 
 static void zsnull_rxint   __P((struct zs_chanstate *));
-static void zsnull_stint   __P((struct zs_chanstate *, int, dev_t));
+static void zsnull_stint   __P((struct zs_chanstate *, int));
 static void zsnull_txint   __P((struct zs_chanstate *));
 static void zsnull_softint __P((struct zs_chanstate *));
 
@@ -324,10 +324,9 @@ zsnull_rxint(cs)
 }
 
 static void
-zsnull_stint(cs, force, dev)
+zsnull_stint(cs, force)
 	struct zs_chanstate *cs;
 	int force;
-	dev_t dev;
 {
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.22.4.1 2001/10/10 11:56:58 fvdl Exp $	*/
+/*	$NetBSD: qd.c,v 1.22.4.2 2001/10/13 17:42:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -859,7 +859,7 @@ qdopen(devvp, flag, mode, p)
 		tp = qd_tty[minor_dev];
 		/* tp->t_addr = ui->ui_addr; */
 		tp->t_oproc = qdstart;
-		tp->t_devvp = devvp;
+		tp->t_dev = dev;
 		if ((tp->t_state & TS_ISOPEN) == 0) {
 			ttychars(tp);
 			tp->t_ispeed = B9600;
@@ -1503,7 +1503,7 @@ qdioctl(devvp, cmd, datap, flags, p)
 			if (error >= 0) {
 				return(error);
 			}
-			error = ttioctl(tp, cmd, datap, flags, p);
+			error = ttioctl(tp, devvp, cmd, datap, flags, p);
 			if (error >= 0) {
 				return(error);
 			}
@@ -1721,7 +1721,7 @@ void qdstart(tp)
 	int which_unit, unit, c;
 	int s;
 
-	unit = minor(vdev_rdev(tp->t_devvp));
+	unit = minor(tp->t_dev);
 	which_unit = (unit >> 2) & 0x3;
 	unit &= 0x03;
 

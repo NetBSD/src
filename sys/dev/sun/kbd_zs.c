@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.7.4.2 2001/10/11 12:33:58 fvdl Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.7.4.3 2001/10/13 17:42:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,7 +83,7 @@
  ****************************************************************/
 
 static void kbd_zs_rxint __P((struct zs_chanstate *));
-static void kbd_zs_stint __P((struct zs_chanstate *, int, dev_t));
+static void kbd_zs_stint __P((struct zs_chanstate *, int));
 static void kbd_zs_txint __P((struct zs_chanstate *));
 static void kbd_zs_softint __P((struct zs_chanstate *));
 
@@ -295,10 +295,9 @@ kbd_zs_txint(cs)
 
 
 static void
-kbd_zs_stint(cs, force, dev)
+kbd_zs_stint(cs, force)
 	struct zs_chanstate *cs;
 	int force;
-	dev_t dev;
 {
 	struct kbd_softc *k;
 	int rr0;

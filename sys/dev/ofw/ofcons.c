@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.14.2.1 2001/10/10 11:56:56 fvdl Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.14.2.2 2001/10/13 17:42:47 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -124,7 +124,7 @@ ofcons_open(devvp, flag, mode, p)
 		sc->of_tty = tp = ttymalloc();
 	tp->t_oproc = ofcons_start;
 	tp->t_param = ofcons_param;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 
 	vdev_setprivdata(devvp, sc);
 
@@ -214,7 +214,7 @@ ofcons_ioctl(devvp, cmd, data, flag, p)
 	
 	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
 		return error;
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = ttioctl(tp, devvp, cmd, data, flag, p)) >= 0)
 		return error;
 	return ENOTTY;
 }

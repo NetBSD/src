@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.17.2.1 2001/10/10 11:56:53 fvdl Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.17.2.2 2001/10/13 17:42:46 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -529,7 +529,7 @@ clmpccopen(devvp, flag, mode, p)
 
 		ttychars(tp);
 
-		tp->t_devvp = devvp;
+		tp->t_dev = dev;
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
@@ -708,7 +708,7 @@ clmpccioctl(devvp, cmd, data, flag, p)
 	if (error >= 0)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 
@@ -858,7 +858,7 @@ clmpcc_param(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	dev_t dev = vdev_rdev(tp->t_devvp);
+	dev_t dev = tp->t_dev;
 	struct clmpcc_softc *sc =
 	    device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];
@@ -1051,7 +1051,7 @@ static void
 clmpcc_start(tp)
 	struct tty *tp;
 {
-	dev_t dev = vdev_rdev(tp->t_devvp);
+	dev_t dev = tp->t_dev;
 	struct clmpcc_softc *sc =
 	    device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];
@@ -1100,7 +1100,7 @@ clmpccstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	dev_t dev = vdev_rdev(tp->t_devvp);
+	dev_t dev = tp->t_dev;
 	struct clmpcc_softc *sc =
 	    device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];

@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.44.4.1 2001/10/10 11:56:04 fvdl Exp $	*/
+/*	$NetBSD: dca.c,v 1.44.4.2 2001/10/13 17:42:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -347,7 +347,7 @@ dcaopen(devvp, flag, mode, p)
 		tp = sc->sc_tty;
 	tp->t_oproc = dcastart;
 	tp->t_param = dcaparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
@@ -698,7 +698,7 @@ dcaioctl(devvp, cmd, data, flag, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -784,7 +784,7 @@ dcaparam(tp, t)
 	int ospeed = ttspeedtab(t->c_ospeed, dcaspeedtab);
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = dca_cd.cd_devs[DCAUNIT(tp->t_dev)];
 	dca = sc->sc_dca;
  
 	/* check requested parameters */
@@ -861,7 +861,7 @@ dcastart(tp)
 	struct dca_softc *sc;
 	struct dcadevice *dca;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = dca_cd.cd_devs[DCAUNIT(tp->t_dev)];
 	dca = sc->sc_dca;
  
 	s = spltty();

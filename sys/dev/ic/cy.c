@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.23.4.2 2001/09/26 15:28:12 fvdl Exp $	*/
+/*	$NetBSD: cy.c,v 1.23.4.3 2001/10/13 17:42:47 fvdl Exp $	*/
 
 /*
  * cy.c
@@ -292,7 +292,7 @@ cyopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	tp = cy->cy_tty;
 	tp->t_oproc = cystart;
 	tp->t_param = cyparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = rdev;
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		ttychars(tp);
@@ -387,7 +387,7 @@ cyopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	}
 	splx(s);
 
-	return (*tp->t_linesw->l_open) (devvp, tp);
+	return (*tp->t_linesw->l_open)(devvp, tp);
 }
 
 /*
@@ -511,7 +511,7 @@ cyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 	if (error >= 0)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 
@@ -584,7 +584,7 @@ cystart(struct tty *tp)
 	struct cy_port *cy;
 	int s;
 
-	cy = CY_PORT(vdev_rdev(tp->t_devvp));
+	cy = CY_PORT(tp->t_dev);
 	sc = cy->cy_softc;
 
 	s = spltty();
@@ -621,7 +621,7 @@ cystop(struct tty *tp, int flag)
 	struct cy_port *cy;
 	int s;
 
-	cy = vdev_privdata(tp->t_devvp);
+	cy = CY_PORT(tp->t_dev);
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY)) {
@@ -648,7 +648,7 @@ cyparam(struct tty *tp, struct termios *t)
 	struct cy_port *cy;
 	int ibpr, obpr, i_clk_opt, o_clk_opt, s, opt;
 
-	cy = CY_PORT(vdev_rdev(tp->t_devvp));
+	cy = CY_PORT(tp->t_dev);
 	sc = CY_BOARD(cy);
 
 	if (t->c_ospeed != 0 && cy_speed(t->c_ospeed, &o_clk_opt, &obpr, cy->cy_clock) < 0)
@@ -1005,7 +1005,7 @@ cy_poll(void *arg)
 				    "(card %d, port %d, carrier %d)\n",
 				    card, port, carrier);
 #endif
-				if (CY_DIALOUT(vdev_rdev(tp->t_devvp)) == 0 &&
+				if (CY_DIALOUT(tp->t_dev) == 0 &&
 				    !(*tp->t_linesw->l_modem)(tp, carrier))
 					cy_modem_control(sc, cy,
 					    TIOCM_DTR, DMBIC);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.12 2000/11/08 22:51:01 eeh Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.12.6.1 2001/10/13 17:42:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -49,6 +49,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/ioctl_compat.h>
+#include <sys/vnode.h>
 
 /*
  * XXX libcompat files should be included with config attributes
@@ -95,8 +96,9 @@ void ttcompatsetlflags __P((struct tty *, struct termios *));
 
 /*ARGSUSED*/
 int
-ttcompat(tp, com, data, flag, p)
+ttcompat(tp, devvp, com, data, flag, p)
 	struct tty *tp;
+	struct vnode *devvp;
 	u_long com;
 	caddr_t data;
 	int flag;
@@ -142,7 +144,7 @@ ttcompat(tp, com, data, flag, p)
 		term.c_cc[VKILL] = sg->sg_kill;
 		tp->t_flags = (ttcompatgetflags(tp)&0xffff0000) | (sg->sg_flags&0xffff);
 		ttcompatsetflags(tp, &term);
-		return (ttioctl(tp, com == TIOCSETP ? TIOCSETAF : TIOCSETA,
+		return (ttioctl(tp, devvp, com == TIOCSETP ? TIOCSETAF : TIOCSETA,
 			(caddr_t)&term, flag, p));
 	}
 
@@ -216,7 +218,7 @@ ttcompat(tp, com, data, flag, p)
 			break;
 		}
 		ttcompatsetlflags(tp, &term);
-		return (ttioctl(tp, TIOCSETA, (caddr_t)&term, flag, p));
+		return (ttioctl(tp, devvp, TIOCSETA, (caddr_t)&term, flag, p));
 	}
 	case TIOCLGET:
 		*(int *)data = ttcompatgetflags(tp)>>16;
@@ -231,14 +233,14 @@ ttcompat(tp, com, data, flag, p)
 	case OTIOCSETD: {
 		int ldisczero = 0;
 
-		return (ttioctl(tp, TIOCSETD,
+		return (ttioctl(tp, devvp, TIOCSETD,
 			*(int *)data == 2 ? (caddr_t)&ldisczero : data, flag,
 			p));
 	    }
 
 	case OTIOCCONS:
 		*(int *)data = 1;
-		return (ttioctl(tp, TIOCCONS, data, flag, p));
+		return (ttioctl(tp, devvp, TIOCCONS, data, flag, p));
 
 	case TIOCHPCL:
 		SET(tp->t_cflag, HUPCL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.10.4.2 2001/10/10 11:57:00 fvdl Exp $	*/
+/*	$NetBSD: magma.c,v 1.10.4.3 2001/10/13 17:42:49 fvdl Exp $	*/
 /*
  * magma.c
  *
@@ -887,7 +887,7 @@ mttyopen(devvp, flags, mode, p)
 
 	mp = &ms->ms_port[port];
 	tp = mp->mp_tty;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
@@ -1092,7 +1092,7 @@ mttyioctl(devvp, cmd, data, flags, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, p);
 	if( error >= 0 ) return(error);
 
-	error = ttioctl(tp, cmd, data, flags, p);
+	error = ttioctl(tp, devvp, cmd, data, flags, p);
 	if( error >= 0 ) return(error);
 
 	error = 0;
@@ -1160,8 +1160,8 @@ mttystop(tp, flags)
 	struct tty *tp;
 	int flags;
 {
-	dev_t dev = vdev_rdev(tp->t_devvp);
-	struct mtty_softc *ms = vdev_privdata(tp->t_devvp);
+	dev_t dev = tp->t_dev;
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	int s;
 
@@ -1188,8 +1188,8 @@ void
 mtty_start(tp)
 	struct tty *tp;
 {
-	dev_t dev = vdev_rdev(tp->t_devvp);
-	struct mtty_softc *ms = vdev_privdata(tp->t_devvp);
+	dev_t dev = tp->t_dev;
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	int s;
 
@@ -1306,8 +1306,8 @@ mtty_param(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	dev_t dev = vdev_rdev(tp->t_devvp);
-	struct mtty_softc *ms = vdev_privdata(tp->t_devvp);
+	dev_t dev = tp->t_dev;
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
 	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 	struct cd1400 *cd = mp->mp_cd1400;
 	int rbpr, tbpr, rcor, tcor;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.56.4.2 2001/09/26 15:28:22 fvdl Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.56.4.3 2001/10/13 17:42:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -430,7 +430,8 @@ ptsstart(tp)
 {
 	struct pt_softc *pti;
 
-	pti = vdev_privdata(tp->t_devvp);
+	pti = pt_softc[minor(tp->t_dev)];
+
 
 	if (ISSET(tp->t_state, TS_TTSTOP))
 		return;
@@ -449,7 +450,7 @@ ptsstop(tp, flush)
 	struct pt_softc *pti;
 	int flag;
 
-	pti = vdev_privdata(tp->t_devvp);
+	pti = pt_softc[minor(tp->t_dev)];
 
 	/* note: FLUSHREAD and FLUSHWRITE already ok */
 	if (flush == 0) {
@@ -474,7 +475,7 @@ ptcwakeup(tp, flag)
 {
 	struct pt_softc *pti;
 
-	pti = vdev_privdata(tp->t_devvp);
+	pti = pt_softc[minor(tp->t_dev)];
 
 	if (flag & FREAD) {
 		selwakeup(&pti->pt_selr);
@@ -880,7 +881,7 @@ ptyioctl(devvp, cmd, data, flag, p)
 		}
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error < 0)
-		 error = ttioctl(tp, cmd, data, flag, p);
+		 error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error < 0) {
 		if (pti->pt_flags & PF_UCNTL &&
 		    (cmd & ~0xff) == UIOCCMD(0)) {

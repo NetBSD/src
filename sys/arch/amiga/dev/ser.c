@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.57.4.1 2001/10/10 11:55:51 fvdl Exp $	*/
+/*	$NetBSD: ser.c,v 1.57.4.2 2001/10/13 17:42:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -97,7 +97,7 @@ void	ser_shutdown __P((struct ser_softc *));
 int	serparam __P((struct tty *, struct termios *)); 
 void	serintr __P((void));
 int	serhwiflow __P((struct tty *, int));
-int	sermctl __P((struct vnode *, int, int));
+int	sermctl __P((dev_t, int, int));
 void	ser_fastint __P((void));
 void	sereint __P((int));
 static	void ser_putchar __P((struct tty *, u_short));
@@ -309,7 +309,7 @@ seropen(devvp, flag, mode, p)
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_devvp = devvp;
+		tp->t_dev = dev;
 
 		s2 = splser();
 		/*
@@ -341,7 +341,7 @@ seropen(devvp, flag, mode, p)
 		ttsetwater(tp);
 
 		s2 = splser();
-		(void)sermctl(devvp, TIOCM_DTR, DMSET);
+		(void)sermctl(dev, TIOCM_DTR, DMSET);
 		/* clear input ring */
 		sbrpt = sbwpt = serbuf;
 		sbcnt = 0;
@@ -423,7 +423,7 @@ ser_shutdown(sc)
 	 * If HUPCL is not set, leave DTR unchanged.
 	 */
 	if (tp->t_cflag & HUPCL) {
-		(void)sermctl(tp->t_devvp, TIOCM_DTR, DMBIC);
+		(void)sermctl(tp->t_dev, TIOCM_DTR, DMBIC);
 		/*
 		 * Idea from dev/ic/com.c: 
 		 * sleep a bit so that other side will notice, even if we
@@ -698,16 +698,19 @@ serioctl(devvp, cmd, data, flag, p)
 {
 	register struct tty *tp;
 	register int error;
+	dev_t dev'
 
 	tp = ser_tty;
 	if (!tp)
 		return ENXIO;
 
+	dev = vdev_rdev(devvp);
+
 	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return(error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return(error);
 
@@ -721,27 +724,27 @@ serioctl(devvp, cmd, data, flag, p)
 		break;
 
 	case TIOCSDTR:
-		(void) sermctl(devvp, TIOCM_DTR, DMBIS);
+		(void) sermctl(dev, TIOCM_DTR, DMBIS);
 		break;
 
 	case TIOCCDTR:
-		(void) sermctl(devvp, TIOCM_DTR, DMBIC);
+		(void) sermctl(dev, TIOCM_DTR, DMBIC);
 		break;
 
 	case TIOCMSET:
-		(void) sermctl(devvp, *(int *) data, DMSET);
+		(void) sermctl(dev, *(int *) data, DMSET);
 		break;
 
 	case TIOCMBIS:
-		(void) sermctl(devvp, *(int *) data, DMBIS);
+		(void) sermctl(dev, *(int *) data, DMBIS);
 		break;
 
 	case TIOCMBIC:
-		(void) sermctl(devvp, *(int *) data, DMBIC);
+		(void) sermctl(dev, *(int *) data, DMBIC);
 		break;
 
 	case TIOCMGET:
-		*(int *)data = sermctl(devvp, 0, DMGET);
+		*(int *)data = sermctl(dev, 0, DMGET);
 		break;
 	case TIOCGFLAGS:
 		*(int *)data = serswflags;
@@ -812,13 +815,13 @@ serparam(tp, t)
 	last_ciab_pra = ciab.pra;
 
 	if (t->c_ospeed == 0)
-		(void)sermctl(tp->t_devvp, 0, DMSET);	/* hang up line */
+		(void)sermctl(tp->t_dev, 0, DMSET);	/* hang up line */
 	else {
 		/* 
 		 * (re)enable DTR
 		 * and set baud rate. (8 bit mode)
 		 */
-		(void)sermctl(tp->t_devvp, TIOCM_DTR, DMSET);
+		(void)sermctl(tp->t_dev, TIOCM_DTR, DMSET);
 		custom.serper = (0 << 15) | ospeed;
 	}
 	(void)tp->t_linesw->l_modem(tp, ISDCD(last_ciab_pra));
@@ -929,7 +932,7 @@ serstart(tp)
 		return;
 
 #ifdef DIAGNOSTIC
-	unit = SERUNIT(vdev_rdev(tp->t_devvp));
+	unit = SERUNIT(tp->t_dev);
 	if (unit)
 		panic("serstart: unit is %d\n", unit);
 #endif
@@ -1002,8 +1005,8 @@ serstop(tp, flag)
 }
 
 int
-sermctl(devvp, bits, how)
-	struct vnode *devvp;
+sermctl(dev, bits, how)
+	dev_t dev;
 	int bits, how;
 {
 	int s;

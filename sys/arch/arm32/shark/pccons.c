@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.16.4.2 2001/10/10 11:55:57 fvdl Exp $       */
+/*      $NetBSD: pccons.c,v 1.16.4.3 2001/10/13 17:42:35 fvdl Exp $       */
 
 /*
  * Copyright 1997
@@ -1136,7 +1136,7 @@ pcopen(struct vnode *devvp,
     */
     tp->t_oproc = pcstart;
     tp->t_param = pcparam;
-    tp->t_devvp   = devvp;
+    tp->t_dev   = dev;
     
     if ((tp->t_state & TS_ISOPEN) == 0) 
     {
@@ -1583,7 +1583,7 @@ pcioctl(struct vnode *devvp,
         /* Try the common tty ioctl routine to see if it recognises the
         ** request.  
         */
-        error = ttioctl(tp, cmd, data, flag, p);
+        error = ttioctl(tp, devvp, cmd, data, flag, p);
         if (error < 0)
         {
             /* Ok must be something specific to our device, 
@@ -1833,7 +1833,7 @@ pcstart(struct tty *tp)
     u_char buf[PCBURST];
     struct pc_softc *sc;
 
-    sc = vdev_privdata(tp->t_devvp);
+    sc = pc_cd.cd_devs[PCUNIT(tp->t_dev)];
     
     s = spltty();
     if (!(tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)))

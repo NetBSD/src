@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.24.4.1 2001/10/10 11:56:58 fvdl Exp $	*/
+/*	$NetBSD: dhu.c,v 1.24.4.2 2001/10/13 17:42:48 fvdl Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -392,7 +392,7 @@ dhuopen(devvp, flag, mode, p)
 	tp->t_oproc   = dhustart;
 	tp->t_param   = dhuparam;
 	tp->t_hwiflow = dhuiflow;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
@@ -525,7 +525,7 @@ dhuioctl(devvp, cmd, data, flag, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -590,7 +590,7 @@ dhustop(tp, flag)
 	int s;
 	dev_t dev;
 
-	dev = vdev_rdev(tp->t_devvp);
+	dev = tp->t_dev;
 
 	s = spltty();
 
@@ -641,7 +641,7 @@ dhustart(tp)
 	if (cc == 0) 
 		goto out;
 
-	dev = vdev_rdev(tp->t_devvp);
+	dev = tp->t_dev;
 	tp->t_state |= TS_BUSY;
 
 	sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
@@ -690,14 +690,15 @@ dhuparam(tp, t)
 	int ispeed = ttspeedtab(t->c_ispeed, dhuspeedtab);
 	int ospeed = ttspeedtab(t->c_ospeed, dhuspeedtab);
 	unsigned lpr, lnctrl;
-	int line;
+	int line, unit;
 	int s;
 	dev_t dev;
 
-	dev = vdev_rdev(tp->t_devvp);
+	dev = tp->t_dev;
+	unit = DHU_M2U(minor(tp->t_dev));
 	line = DHU_LINE(minor(dev));
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = dhu_cd.cd_devs[unit];
 
 	/* check requested parameters */
         if (ospeed < 0 || ispeed < 0)
@@ -781,10 +782,10 @@ dhuiflow(tp, flag)
 	dev_t dev;
 	int line;
 
-	dev = vdev_rdev(tp->t_devvp);
+	dev = tp->t_dev;
 	line = DHU_LINE(minor(dev));
 	if (tp->t_cflag & CRTSCTS) {
-		sc = vdev_privdata(tp->t_devvp);
+		sc = dhu_cd.cd_devs[DHU_M2U(minor(tp->t_dev))];
 		(void) dhumctl(sc, line, DML_RTS, ((flag)? DMBIC: DMBIS));
 		return (1);
 	}

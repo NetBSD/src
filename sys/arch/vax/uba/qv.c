@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.6 2001/07/22 13:34:08 wiz Exp $	*/
+/*	$NetBSD: qv.c,v 1.6.2.1 2001/10/13 17:42:43 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -409,7 +409,7 @@ qvopen(dev, flag)
 	 * mouse channel. For the mouse we init the ring ptr's.
 	 */
 	if( QVCHAN(unit) != QVMOUSECHAN )
-		return ((*tp->t_linesw->l_open)(dev, tp));
+		return ((*tp->t_linesw->l_open)(devvp, tp));
 	else {
 		mouseon = 1;
 		/* set up event queue for later */
@@ -706,7 +706,7 @@ qvioctl(dev, cmd, data, flag)
 		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag);
 		if (error >= 0)
 			return (error);
-		error = ttioctl(tp, cmd, data, flag);
+		error = ttioctl(tp, devvp, cmd, data, flag);
 		if (error >= 0) {
 			return (error);
 		}

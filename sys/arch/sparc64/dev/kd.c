@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.16.4.3 2001/10/11 00:01:54 fvdl Exp $	*/
+/*	$NetBSD: kd.c,v 1.16.4.4 2001/10/13 17:42:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ kd_init(kd, devvp)
 	tp = ttymalloc();
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = vdev_rdev(devvp);
 
 	tty_attach(tp);
 	kd->kd_tty = tp;
@@ -320,7 +320,7 @@ kdioctl(devvp, cmd, data, flag, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 

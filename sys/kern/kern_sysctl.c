@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.93.2.2 2001/10/01 12:46:53 fvdl Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.93.2.3 2001/10/13 17:42:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1365,7 +1365,7 @@ again:
 			    p->p_session->s_ttyp == NULL) {
 				if ((dev_t)arg != KERN_PROC_TTY_NODEV)
 					continue;
-			} else if (p->p_session->s_ttyp->t_devvp->v_rdev !=
+			} else if (p->p_session->s_ttyp->t_dev !=
 			    (dev_t)arg)
 				continue;
 			break;
@@ -1488,7 +1488,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	ep->e_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) &&
 	     (tp = ep->e_sess->s_ttyp)) {
-		ep->e_tdev = tp->t_devvp->v_rdev;
+		ep->e_tdev = tp->t_dev;
 		ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
 		ep->e_tsess = tp->t_session;
 	} else
@@ -1553,7 +1553,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 	ki->p_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
-		ki->p_tdev = tp->t_devvp->v_rdev;
+		ki->p_tdev = tp->t_dev;
 		ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
 		ki->p_tsess = PTRTOINT64(tp->t_session);
 	} else {

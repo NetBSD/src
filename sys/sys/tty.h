@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.52.4.2 2001/09/18 19:14:00 fvdl Exp $	*/
+/*	$NetBSD: tty.h,v 1.52.4.3 2001/10/13 17:42:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -48,6 +48,8 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 
+struct vnode;
+
 /*
  * Clists are actually ring buffers. The c_cc, c_cf, c_cl fields have
  * exactly the same behaviour as in true clists.
@@ -84,7 +86,7 @@ struct tty {
 	struct	callout t_rstrt_ch;	/* for delayed output start */
 	long	t_outcc;		/* Output queue statistics. */
 	struct	linesw *t_linesw;	/* Interface to device drivers. */
-	struct	vnode *t_devvp;		/* Device. */
+	dev_t	t_dev;			/* Device. */
 	int	t_state;		/* Device and driver (TS*) state. */
 	int	t_wopen;		/* Processes waiting for open. */
 	int	t_flags;		/* Tty flags. */
@@ -193,6 +195,9 @@ TAILQ_HEAD(ttylist_head, tty);		/* the ttylist is a TAILQ */
 
 #ifdef _KERNEL
 
+extern struct tty *constty;
+extern struct vnode *consvp;
+
 extern	int tty_count;			/* number of ttys in global ttylist */
 extern	struct ttychars ttydefaults;
 
@@ -212,8 +217,8 @@ int	 unputc __P((struct clist *q));
 
 int	 nullmodem __P((struct tty *tp, int flag));
 int	 tputchar __P((int c, struct tty *tp));
-int	 ttioctl __P((struct tty *tp, u_long com, caddr_t data, int flag,
-	    struct proc *p));
+int	 ttioctl __P((struct tty *tp, struct vnode *, u_long com,
+		      caddr_t data, int flag, struct proc *p));
 int	 ttread __P((struct tty *tp, struct uio *uio, int flag));
 void	 ttrstrt __P((void *tp));
 int	 ttpoll __P((struct tty *tp, int events, struct proc *p));
@@ -270,7 +275,8 @@ int do_cttyopen(struct vnode *devvp, int flag, int mode, struct proc *p,
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
     defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || defined(LKM)
 # define COMPAT_OLDTTY
-int 	ttcompat __P((struct tty *, u_long, caddr_t, int, struct proc *));
+int 	ttcompat __P((struct tty *, struct vnode *, u_long, caddr_t, int,
+		      struct proc *));
 #endif
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.10.4.1 2001/10/10 11:56:17 fvdl Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.10.4.2 2001/10/13 17:42:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -299,6 +299,7 @@ zstty_attach(parent, self, aux)
 		printf("\n");
 
 	tp = ttymalloc();
+	tp->t_dev = dev;
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	tp->t_hwiflow = zshwiflow;
@@ -321,6 +322,8 @@ zstty_attach(parent, self, aux)
 	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
 		/* Call zsparam similar to open. */
 		struct termios t;
+
+		tp->t_dev = dev;
 
 		/* Setup the "new" parameters in t. */
 		t.c_ispeed = 0;
@@ -462,7 +465,7 @@ zsopen(devvp, flags, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_devvp = devvp;
+		tp->t_dev = dev;
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
@@ -652,7 +655,7 @@ zsioctl(devvp, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -721,7 +724,7 @@ static void
 zsstart(tp)
 	struct tty *tp;
 {
-	struct zstty_softc *zst = vdev_privdata(tp->t_devvp);
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
@@ -790,7 +793,7 @@ zsstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct zstty_softc *zst = vdev_privdata(tp->t_devvp);
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	int s;
 
 	s = splzs();
@@ -814,7 +817,7 @@ zsparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct zstty_softc *zst = vdev_privdata(tp->t_devvp);
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	struct zs_chanstate *cs = zst->zst_cs;
 	int ospeed, cflag;
 	u_char tmp3, tmp4, tmp5, tmp15;
@@ -1092,7 +1095,7 @@ zshwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct zstty_softc *zst = vdev_privdata(tp->t_devvp);
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
