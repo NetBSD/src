@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 1995/12/28 19:16:48 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 1996/02/27 00:13:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -58,6 +58,8 @@
 
 #include <machine/pte.h>
 
+#include <dev/eisa/eisavar.h>
+
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
@@ -70,11 +72,16 @@ extern int	cold;		/* cold start flag initialized in locore.s */
  */
 configure()
 {
+	struct eisabus_attach_args eba;
 
 	startrtclock();
 
+	/* Similar things for ISA and PCI will happen in the future. */
 	config_rootfound("isa", NULL);
-	config_rootfound("eisa", NULL);
+#if NEISA > 0
+	eba.eba_busname = "eisa";
+	config_rootfound("eisa", &eba);
+#endif
 	config_rootfound("pci", NULL);
 
 	printf("biomask %x netmask %x ttymask %x\n",
