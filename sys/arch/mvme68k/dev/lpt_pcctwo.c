@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcctwo.c,v 1.4 2000/09/06 19:51:43 scw Exp $ */
+/*	$NetBSD: lpt_pcctwo.c,v 1.5 2001/05/31 18:46:07 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -142,10 +142,15 @@ lpt_pcctwo_attach(parent, self, args)
 	 */
 	lpt_attach_subr(sc);
 
+	/* Register the event counter */
+	evcnt_attach_dynamic(&sc->sc_evcnt, EVCNT_TYPE_INTR,
+	    pcctwointr_evcnt(sc->sc_ipl), "printer", sc->sc_dev.dv_xname);
+
 	/*
 	 * Hook into the printer interrupt
 	 */
-	pcctwointr_establish(PCCTWOV_PRT_ACK, lpt_pcctwo_intr, sc->sc_ipl, sc);
+	pcctwointr_establish(PCCTWOV_PRT_ACK, lpt_pcctwo_intr, sc->sc_ipl, sc,
+	    &sc->sc_evcnt);
 }
 
 /*

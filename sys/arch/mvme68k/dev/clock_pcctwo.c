@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.5 2001/04/14 13:53:06 scw Exp $ */
+/*	$NetBSD: clock_pcctwo.c,v 1.6 2001/05/31 18:46:07 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -134,11 +134,17 @@ clock_pcctwo_attach(parent, self, aux)
 	sc->sc_clock_lvl = (pa->pa_ipl & PCCTWO_ICR_LEVEL_MASK) |
 	    PCCTWO_ICR_ICLR | PCCTWO_ICR_IEN;
 
+	/* Register the event counters */
+	evcnt_attach_dynamic(&clock_profcnt, EVCNT_TYPE_INTR,
+	    pcctwointr_evcnt(pa->pa_ipl), "clock", "profint");
+	evcnt_attach_dynamic(&clock_statcnt, EVCNT_TYPE_INTR,
+	    pcctwointr_evcnt(pa->pa_ipl), "clock", "statint");
+
 	/* Attach the interrupt handlers. */
 	pcctwointr_establish(PCCTWOV_TIMER1, clock_pcctwo_profintr,
-	    pa->pa_ipl, NULL);
+	    pa->pa_ipl, NULL, &clock_profcnt);
 	pcctwointr_establish(PCCTWOV_TIMER2, clock_pcctwo_statintr,
-	    pa->pa_ipl, NULL);
+	    pa->pa_ipl, NULL, &clock_statcnt);
 }
 
 void
@@ -218,10 +224,8 @@ clock_pcctwo_profintr(frame)
 	    clock_pcctwo_sc->sc_clock_lvl);
 	__asm __volatile("movw %0,%%sr" : : "di" (s));
 
-	for (cr = PCCTWO_TT_CTRL_OVF(cr); cr; cr--) {
+	for (cr = PCCTWO_TT_CTRL_OVF(cr); cr; cr--)
 		hardclock(frame);
-		clock_profcnt.ev_count++;
-	}
 
 	return (1);
 }
@@ -246,7 +250,6 @@ clock_pcctwo_statintr(frame)
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_ICSR,
 	    clock_pcctwo_sc->sc_clock_lvl);
 
-	clock_statcnt.ev_count++;
 	return (1);
 }
 

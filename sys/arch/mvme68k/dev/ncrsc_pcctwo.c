@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.10 2001/05/03 19:03:53 scw Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.11 2001/05/31 18:46:08 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,8 +68,13 @@
 int ncrsc_pcctwo_match __P((struct device *, struct cfdata *, void *));
 void ncrsc_pcctwo_attach __P((struct device *, struct device *, void *));
 
+struct ncrsc_softc {
+	struct osiop_softc	sc_osiop;
+	struct evcnt		sc_evcnt;
+};
+
 struct cfattach ncrsc_pcctwo_ca = {
-	sizeof(struct osiop_softc), ncrsc_pcctwo_match, ncrsc_pcctwo_attach
+	sizeof(struct ncrsc_softc), ncrsc_pcctwo_match, ncrsc_pcctwo_attach
 };
 
 static int ncrsc_pcctwo_intr __P((void *));
@@ -103,11 +108,11 @@ ncrsc_pcctwo_attach(parent, self, args)
 	void *args;
 {
 	struct pcctwo_attach_args *pa;
-	struct osiop_softc *sc;
+	struct ncrsc_softc *sc;
 	int clk, ctest7;
 
 	pa = (struct pcctwo_attach_args *) args;
-	sc = (struct osiop_softc *) self;
+	sc = (struct ncrsc_softc *) self;
 
 	/*
 	 * On the '17x the siop's clock is the same as the cpu clock.
@@ -123,28 +128,33 @@ ncrsc_pcctwo_attach(parent, self, args)
 		ctest7 = OSIOP_CTEST7_SC0;
 	}
 
-	sc->sc_bst = pa->pa_bust;
-	sc->sc_dmat = pa->pa_dmat;
-	(void) bus_space_map(sc->sc_bst, pa->pa_offset, OSIOP_NREGS,
-	    0, &sc->sc_reg);
+	sc->sc_osiop.sc_bst = pa->pa_bust;
+	sc->sc_osiop.sc_dmat = pa->pa_dmat;
+	(void) bus_space_map(sc->sc_osiop.sc_bst, pa->pa_offset, OSIOP_NREGS,
+	    0, &sc->sc_osiop.sc_reg);
 
-	sc->sc_clock_freq = clk;
-	sc->sc_ctest7 = ctest7 | OSIOP_CTEST7_TT1;
-	sc->sc_dcntl = OSIOP_DCNTL_EA;
-	sc->sc_id = 7;	/* XXX: Could use NVRAM setting */
+	sc->sc_osiop.sc_clock_freq = clk;
+	sc->sc_osiop.sc_ctest7 = ctest7 | OSIOP_CTEST7_TT1;
+	sc->sc_osiop.sc_dcntl = OSIOP_DCNTL_EA;
+	sc->sc_osiop.sc_id = 7;	/* XXX: Could use NVRAM setting */
 
 	/* Attach main MI driver */
-	osiop_attach(sc);
+	osiop_attach(&sc->sc_osiop);
+
+	/* Register the event counter */
+	evcnt_attach_dynamic(&sc->sc_evcnt, EVCNT_TYPE_INTR,
+	    pcctwointr_evcnt(pa->pa_ipl), "disk", sc->sc_osiop.sc_dev.dv_xname);
 
 	/* Hook the chip's interrupt */
-	pcctwointr_establish(PCCTWOV_SCSI, ncrsc_pcctwo_intr, pa->pa_ipl, sc);
+	pcctwointr_establish(PCCTWOV_SCSI, ncrsc_pcctwo_intr, pa->pa_ipl, sc,
+	    &sc->sc_evcnt);
 }
 
 static int
 ncrsc_pcctwo_intr(arg)
 	void *arg;
 {
-	struct osiop_softc *sc = (struct osiop_softc *) arg;
+	struct ncrsc_softc *sc = (struct ncrsc_softc *) arg;
 	u_char istat;
 
 	/*
@@ -154,27 +164,27 @@ ncrsc_pcctwo_intr(arg)
 	istat = pcc2_reg_read(sys_pcctwo, PCC2REG_SCSI_ERR_STATUS);
 	if ((istat & PCCTWO_ERR_SR_MASK) != 0) {
 		printf("%s: Local bus error: 0x%02x\n",
-		    sc->sc_dev.dv_xname, istat);
+		    sc->sc_osiop.sc_dev.dv_xname, istat);
 		istat |= PCCTWO_ERR_SR_SCLR;
 		pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ERR_STATUS, istat);
 	}
 
 	/* This is potentially nasty, since the IRQ is level triggered... */
-	if (sc->sc_flags & OSIOP_INTSOFF)
+	if (sc->sc_osiop.sc_flags & OSIOP_INTSOFF)
 		return (0);
 
-	istat = osiop_read_1(sc, OSIOP_ISTAT);
+	istat = osiop_read_1(&sc->sc_osiop, OSIOP_ISTAT);
 
 	if ((istat & (OSIOP_ISTAT_SIP | OSIOP_ISTAT_DIP)) == 0)
 		return (0);
 
 	/* Save interrupt details for the back-end interrupt handler */
-	sc->sc_sstat0 = osiop_read_1(sc, OSIOP_SSTAT0);
-	sc->sc_istat = istat;
-	sc->sc_dstat = osiop_read_1(sc, OSIOP_DSTAT);
+	sc->sc_osiop.sc_sstat0 = osiop_read_1(&sc->sc_osiop, OSIOP_SSTAT0);
+	sc->sc_osiop.sc_istat = istat;
+	sc->sc_osiop.sc_dstat = osiop_read_1(&sc->sc_osiop, OSIOP_DSTAT);
 
 	/* Deal with the interrupt */
-	osiop_intr(sc);
+	osiop_intr(&sc->sc_osiop);
 
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.20 2000/07/21 08:08:38 scw Exp $	*/
+/*	$NetBSD: isr.c,v 1.21 2001/05/31 18:46:09 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,13 +55,26 @@
 
 isr_autovec_list_t isr_autovec[NISRAUTOVEC];
 struct	isr_vectored isr_vectored[NISRVECTORED];
+static const char irqgroupname[] = "hard irqs";
+struct	evcnt mvme68k_irq_evcnt[] = {
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "spur"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "lev1"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "lev2"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "lev3"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "lev4"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "lev5"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "lev6"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "nmi")
+};
 
-extern	int intrcnt[];		/* from locore.s */
 extern	void (*vectab[]) __P((void));
 extern	void badtrap __P((void));
 extern	void intrhand_vectored __P((void));
 
 extern	int getsr __P((void));	/* in locore.s */
+
+static	int spurintr __P((void *));
+
 
 void
 isrinit()
@@ -72,9 +85,16 @@ isrinit()
 	ssir = 1;
 
 	/* Initialize the autovector lists. */
-	for (i = 0; i < NISRAUTOVEC; ++i) {
+	for (i = 0; i < NISRAUTOVEC; ++i)
 		LIST_INIT(&isr_autovec[i]);
-	}
+
+	/* Initialise the interrupt event counts */
+	for (i = 0; i < (sizeof(mvme68k_irq_evcnt) / sizeof(struct evcnt)); i++)
+		evcnt_attach_static(&mvme68k_irq_evcnt[i]);
+
+	/* Arrange to trap Spurious and NMI auto-vectored Interrupts */
+	isrlink_autovec(spurintr, NULL, 0, 0, NULL);
+	isrlink_autovec(nmihand, NULL, 7, 0, NULL);
 }
 
 /*
@@ -82,11 +102,12 @@ isrinit()
  * Called by driver attach functions.
  */
 void
-isrlink_autovec(func, arg, ipl, priority)
+isrlink_autovec(func, arg, ipl, priority, evcnt)
 	int (*func) __P((void *));
 	void *arg;
 	int ipl;
 	int priority;
+	struct evcnt *evcnt;
 {
 	struct isr_autovec *newisr, *curisr;
 	isr_autovec_list_t *list;
@@ -104,6 +125,7 @@ isrlink_autovec(func, arg, ipl, priority)
 	newisr->isr_arg = arg;
 	newisr->isr_ipl = ipl;
 	newisr->isr_priority = priority;
+	newisr->isr_evcnt = evcnt;
 
 	/*
 	 * Some devices are particularly sensitive to interrupt
@@ -157,10 +179,11 @@ isrlink_autovec(func, arg, ipl, priority)
  * Called by bus interrupt establish functions.
  */
 void
-isrlink_vectored(func, arg, ipl, vec)
+isrlink_vectored(func, arg, ipl, vec, evcnt)
 	int (*func) __P((void *));
 	void *arg;
 	int ipl, vec;
+	struct evcnt *evcnt;
 {
 	struct isr_vectored *isr;
 
@@ -178,6 +201,7 @@ isrlink_vectored(func, arg, ipl, vec)
 	isr->isr_func = func;
 	isr->isr_arg = arg;
 	isr->isr_ipl = ipl;
+	isr->isr_evcnt = evcnt;
 
 	/* Hook into the vector table. */
 	vectab[vec] = intrhand_vectored;
@@ -206,12 +230,14 @@ isrunlink_vectored(vec)
  * assembly language autovectored interrupt routine.
  */
 void
-isrdispatch_autovec(evec)
+isrdispatch_autovec(evec, frame)
 	int evec;		/* format | vector offset */
+	void *frame;
 {
 	struct isr_autovec *isr;
 	isr_autovec_list_t *list;
 	int handled, ipl, vec;
+	void *arg;
 	static int straycount, unexpected;
 
 	vec = (evec & 0xfff) >> 2;
@@ -219,7 +245,7 @@ isrdispatch_autovec(evec)
 		panic("isrdispatch_autovec: bad vec 0x%x\n", vec);
 	ipl = vec - ISRAUTOVEC;
 
-	intrcnt[ipl]++;
+	mvme68k_irq_evcnt[ipl].ev_count++;
 	uvmexp.intrs++;
 
 	list = &isr_autovec[ipl];
@@ -231,8 +257,15 @@ isrdispatch_autovec(evec)
 	}
 
 	/* Give all the handlers a chance. */
-	for (isr = list->lh_first ; isr != NULL; isr = isr->isr_link.le_next)
-		handled |= (*isr->isr_func)(isr->isr_arg);
+	handled = 0;
+	for (isr = list->lh_first ; isr != NULL; isr = isr->isr_link.le_next) {
+		arg = isr->isr_arg ? isr->isr_arg : frame;
+		if ((*isr->isr_func)(arg) != 0) {
+			if (isr->isr_evcnt)
+				isr->isr_evcnt->ev_count++;
+			handled++;
+		}
+	}
 
 	if (handled)
 		straycount = 0;
@@ -257,7 +290,7 @@ isrdispatch_vectored(pc, evec, frame)
 	vec = (evec & 0xfff) >> 2;
 	ipl = (getsr() >> 8) & 7;
 
-	intrcnt[ipl]++;
+	mvme68k_irq_evcnt[ipl].ev_count++;
 	uvmexp.intrs++;
 
 	if ((vec < ISRVECTORED) || (vec >= (ISRVECTORED + NISRVECTORED)))
@@ -275,6 +308,9 @@ isrdispatch_vectored(pc, evec, frame)
 	 */
 	if ((*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame) == 0)
 		printf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
+	else
+	if (isr->isr_evcnt)
+		isr->isr_evcnt->ev_count++;
 }
 
 /*
@@ -305,4 +341,12 @@ netintr()
 #undef DONETISR
 
 	splx(s);
+}
+
+/* ARGSUSED */
+static int
+spurintr(void *arg)
+{
+
+	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.6 2000/11/24 09:36:40 scw Exp $ */
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.7 2001/05/31 18:46:07 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -132,15 +132,17 @@ clmpcc_pcctwo_attach(parent, self, aux)
 	sc->sc_rpilr = 0x03;
 	sc->sc_tpilr = 0x02;
 	sc->sc_mpilr = 0x01;
+	sc->sc_evcnt = pcctwointr_evcnt(level);
 
 	/* Do common parts of CD2401 configuration. */
 	clmpcc_attach(sc);
 
 	/* Hook the interrupts */
-	pcctwointr_establish(PCCTWOV_SCC_RX, clmpcc_rxintr, level, sc);
-	pcctwointr_establish(PCCTWOV_SCC_RX_EXCEP, clmpcc_rxintr, level, sc);
-	pcctwointr_establish(PCCTWOV_SCC_TX, clmpcc_txintr, level, sc);
-	pcctwointr_establish(PCCTWOV_SCC_MODEM, clmpcc_mdintr, level, sc);
+	pcctwointr_establish(PCCTWOV_SCC_RX, clmpcc_rxintr, level, sc, NULL);
+	pcctwointr_establish(PCCTWOV_SCC_RX_EXCEP, clmpcc_rxintr, level, sc,
+	    NULL);
+	pcctwointr_establish(PCCTWOV_SCC_TX, clmpcc_txintr, level, sc, NULL);
+	pcctwointr_establish(PCCTWOV_SCC_MODEM, clmpcc_mdintr, level, sc, NULL);
 }
 
 void
