@@ -1,5 +1,5 @@
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
-# $Id: files.sparc.newconf,v 1.10 1994/03/03 13:17:17 deraadt Exp $
+# $Id: files.sparc.newconf,v 1.11 1994/03/17 09:24:58 pk Exp $
 # sparc-specific configuration info
 
 maxusers 2 8 64
@@ -114,3 +114,7 @@ file	compat/sunos/sun_ioctl.c	compat_sunos
 file	compat/sunos/sun_exec.c		compat_sunos
 
 file	kludge_for_in_proto.c		hy needs-flag
+
+file	arch/sparc/sparc/db_interface.c	ddb
+file	arch/sparc/sparc/db_trace.c	ddb
+file	arch/sparc/sparc/db_disasm.c	ddb
