@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.1 1998/08/14 03:26:13 mark Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.2 1998/08/14 18:04:05 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -71,7 +71,8 @@ void
 filecore_init()
 {
 
-	filecorehashtbl = hashinit(desiredvnodes, M_FILECOREMNT, M_WAITOK, &filecorehash);
+	filecorehashtbl = hashinit(desiredvnodes, M_FILECOREMNT, M_WAITOK,
+	    &filecorehash);
 	simple_lock_init(&filecore_ihash_slock);
 }
 
@@ -129,9 +130,9 @@ filecore_ihashins(ip)
  */
 void
 filecore_ihashrem(ip)
-	register struct filecore_node *ip;
+	struct filecore_node *ip;
 {
-	register struct filecore_node *iq;
+	struct filecore_node *iq;
 
 	simple_lock(&filecore_ihash_slock);
 	if ((iq = ip->i_next) != NULL)
@@ -158,7 +159,7 @@ filecore_inactive(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct proc *p = ap->a_p;
-	register struct filecore_node *ip = VTOI(vp);
+	struct filecore_node *ip = VTOI(vp);
 	int error = 0;
 	
 	if (prtactive && vp->v_usecount != 0)
@@ -186,8 +187,8 @@ filecore_reclaim(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct filecore_node *ip = VTOI(vp);
+	struct vnode *vp = ap->a_vp;
+	struct filecore_node *ip = VTOI(vp);
 	
 	if (prtactive && vp->v_usecount != 0)
 		vprint("filecore_reclaim: pushing active", vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.1 1998/08/14 03:26:12 mark Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.2 1998/08/14 18:04:05 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -94,11 +94,11 @@ filecore_lookup(v)
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	register struct vnode *vdp;	/* vnode for directory being searched */
-	register struct filecore_node *dp;	/* inode for directory being searched */
-	register struct filecore_mnt *fcmp;	/* file system that directory is in */
+	struct vnode *vdp;		/* vnode for directory being searched */
+	struct filecore_node *dp;	/* inode for directory being searched */
+	struct filecore_mnt *fcmp;	/* file system that directory is in */
 	struct buf *bp;			/* a buffer of directory entries */
-	register struct filecore_direntry *de;
+	struct filecore_direntry *de;
 	int numdirpasses;		/* strategy for directory search */
 	struct vnode *pdp;		/* saved dp during symlink work */
 	struct vnode *tdp;		/* returned by filecore_vget_internal */
@@ -214,23 +214,26 @@ filecore_lookup(v)
 	}
 	endsearch = FILECORE_MAXDIRENTS;
 
-	if ((flags & ISDOTDOT) || (name[0]=='.' && namelen==1))
+	if ((flags & ISDOTDOT) || (name[0] == '.' && namelen == 1))
 		goto found;
 
 	error = filecore_dbread(dp, &bp);
-	if (error) return error;
+	if (error)
+		return error;
 
-	de = fcdirentry(bp->b_data,i);
+	de = fcdirentry(bp->b_data, i);
 	
 searchloop:
-	while (de->name[0]!=0 && i<endsearch) {
+	while (de->name[0] != 0 && i < endsearch) {
 		/*
 		 * Check for a name match.
 		 */
-		res = filecore_fncmp(de->name,name,namelen);
+		res = filecore_fncmp(de->name, name, namelen);
 
-		if (res==0) goto found;
-		if (res<0) goto notfound;
+		if (res == 0)
+			goto found;
+		if (res < 0)
+			goto notfound;
 
 		i++;
 		de++;
@@ -244,13 +247,13 @@ notfound:
 	if (numdirpasses == 2) {
 		numdirpasses--;
 		i = 0;
-		de = fcdirentry(bp->b_data,i);
+		de = fcdirentry(bp->b_data, i);
 		endsearch = dp->i_diroff;
 		goto searchloop;
 	}
 	if (bp != NULL) {
 #ifdef FILECORE_DEBUG_BR
-			printf("brelse(%p) lo1\n",bp);
+			printf("brelse(%p) lo1\n", bp);
 #endif
 		brelse(bp);
 	}
@@ -314,16 +317,16 @@ found:
 			return (error);
 		}
 		*vpp = tdp;
-	} else if (name[0]=='.' && namelen==1) {
+	} else if (name[0] == '.' && namelen == 1) {
 		VREF(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 #ifdef FILECORE_DEBUG_BR
-			printf("brelse(%p) lo4\n",bp);
+			printf("brelse(%p) lo4\n", bp);
 #endif
 		brelse(bp);
 		error = VFS_VGET(vdp->v_mount, dp->i_dirent.addr |
-				 (i<<FILECORE_INO_INDEX), &tdp);
+		    (i << FILECORE_INO_INDEX), &tdp);
 		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN))
