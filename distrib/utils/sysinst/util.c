@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.73 2002/07/29 03:05:17 grant Exp $	*/
+/*	$NetBSD: util.c,v 1.74 2002/10/05 02:41:54 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -936,7 +936,7 @@ static void
 timezone_sig(int sig)
 {
 	set_timezone_select(NULL);
-	alarm(1);
+	alarm(60);
 }
 
 /*
