@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: MAKEDEV2manpage.pl,v 1.4 2000/06/11 10:02:58 veego Exp $
+#	$NetBSD: MAKEDEV2manpage.pl,v 1.5 2001/04/16 08:08:19 wiz Exp $
 #
 # Copyright (c) 1999
 #	Hubert Feyrer <hubertf@netbsd.org>.  All rights reserved.
@@ -37,10 +37,12 @@
 ###########################################################################
 #
 # Convert src/etc/etc.${ARCH}/MAKEDEV and
-# src/share/man/man8/man8.${ARCH}/MAKEDEV.8.template to  
+# src/share/man/man8/MAKEDEV.8.template to  
 # src/share/man/man8/man8.${ARCH}/MAKEDEV.8, replacing
 #  - @@@SPECIAL@@@ with all targets in the first section (all, std, ...)
 #  - @@@DEVICES@@@ with the remaining targets
+#  - @@@DATE@@@ with the date from the previous version, if found
+#  - @@@ARCH@@@ with the architecture name
 #
 
 $_lastline = "";
@@ -157,7 +159,7 @@ sub do_devices
                   $l .= "$page(4)";
               }
 
-              while ($l =~ s/\s*(\w+)\((\d)\)(.*)/\n.Xr \1 \2 \3/g){;}
+              while ($l =~ s/\s*(\w+)\((\d)\)(.*)/\n.Xr \1 \2 \3/g){$l =~ s/[ \t]+$//g;}
 
 	      print MANPAGE ". It Ar $target\n";
 	      print MANPAGE "$l\n";
@@ -177,14 +179,14 @@ sub doarch
 
     return "no MAKEDEV file found"
 	if ! -f "../../../etc/etc.${arch}/MAKEDEV";
-    return "no man8.${arch}/MAKEDEV.8.template"
-	if ! -f "man8.${arch}/MAKEDEV.8.template";
+    return "no MAKEDEV.8.template"
+	if ! -f "MAKEDEV.8.template";
 
     rename("man8.${arch}/MAKEDEV.8", "man8.${arch}/MAKEDEV.8.old");
 
     # find out current RCS ID
     $RCSID="\$NetBSD\$";
-    open(OLD, "man8.${arch}/MAKEDEV.8.old") or die;
+    open(OLD, "man8.${arch}/MAKEDEV.8.old");
     while(<OLD>) {
         if (/(\$NetBSD.*\$)/) {
             $RCSID = "$1";
@@ -196,22 +198,38 @@ sub doarch
     print MANPAGE ".\\\" *** ------------------------------------------------------------------\n";
     print MANPAGE ".\\\" *** This file was generated automatically\n";
     print MANPAGE ".\\\" *** from src/etc/etc.${arch}/MAKEDEV and\n";
-    print MANPAGE ".\\\" *** src/share/man/man8/man8.${arch}/MAKEDEV.8.template\n";
-    print MANPAGE ".\\\" *** \n";
+    print MANPAGE ".\\\" *** src/share/man/man8/MAKEDEV.8.template\n";
+    print MANPAGE ".\\\" ***\n";
     print MANPAGE ".\\\" *** DO NOT EDIT - any changes will be lost!!!\n";
     print MANPAGE ".\\\" *** ------------------------------------------------------------------\n";
     print MANPAGE ".\\\"\n";
 
     open(MAKEDEV, "../../../etc/etc.${arch}/MAKEDEV") or die;
     
-    open(TEMPLATE, "man8.${arch}/MAKEDEV.8.template")	or die;
+    open(TEMPLATE, "MAKEDEV.8.template")	or die;
     while(<TEMPLATE>) {
-	if (/^\@\@\@.*\@\@\@$/) {
-	    print MANPAGE ".\\\" $_";
+	if (/\@\@\@.*\@\@\@/) {
 	    if (/^\@\@\@SPECIAL\@\@\@$/) {
+	    	print MANPAGE ".\\\" $_";
 		do_special();
 	    } elsif (/^\@\@\@DEVICES\@\@\@$/) {
+	    	print MANPAGE ".\\\" $_";
 		do_devices();
+	    } elsif (/\@\@\@ARCH\@\@\@/) {
+		s/\@\@\@ARCH\@\@\@/${arch}/g;
+		print MANPAGE "$_";
+	    } elsif (/\@\@\@DATE\@\@\@/) {
+		my $mydate;
+		$mydate=`grep ^.Dd man8.${arch}/MAKEDEV.8.old 2>/dev/null`;
+		if ($mydate) {
+		    print MANPAGE $mydate;
+		} else {
+		    print MANPAGE "$_";
+		    print "Date not found in previous version, or previous".
+			  " version not found.\nPlease replace".
+			  " \@\@\@DATE\@\@\@ in man8.${arch}/MAKEDEV.8 with".
+			  " a real date.\n";
+		}
 	    }
 	} elsif (/(\$NetBSD.*\$)/) {
 	    $id=$1;
