@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.10 1999/09/20 02:35:44 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.11 1999/12/10 17:56:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1227,6 +1227,7 @@ nd6_ioctl(cmd, data, ifp)
 		  s = splsoftnet();
 		  if ((rt = nd6_lookup(&nbi->addr, 0, ifp)) == NULL) {
 			  error = EINVAL;
+			  splx(s);
 			  break;
 		  }
 		  ln = (struct llinfo_nd6 *)rt->rt_llinfo;
