@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.21 1998/02/16 03:59:57 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.22 1998/07/08 00:39:02 mjacob Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,11 +131,12 @@ struct proc;
 struct reg;
 struct rpb;
 struct trapframe;
+struct mchkinfo;
 
 extern int cold;
 extern struct proc *fpcurproc;
 extern struct rpb *hwrpb;
-extern volatile int mc_expected, mc_received;
+extern struct mchkinfo *mchkinfo;
 
 void	XentArith __P((u_int64_t, u_int64_t, u_int64_t));	/* MAGIC */
 void	XentIF __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
