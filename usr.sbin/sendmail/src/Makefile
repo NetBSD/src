@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/7/93
-#	$Id: Makefile,v 1.8 1993/08/14 16:44:03 mycroft Exp $
+#	$Id: Makefile,v 1.9 1993/09/05 22:05:07 mycroft Exp $
 
 PROG=	sendmail
 
@@ -11,7 +11,7 @@ PROG=	sendmail
 # databases are read, but the new format will be used on any rebuilds.  On
 # really gnarly systems, you can set this to null; it will crawl like a high
 # spiral snail, but it will work.
-DBMDEF=	-DNEWDB -DNDBM
+DBMDEF=	-DNEWDB
 
 CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO
 
