@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.58 2000/02/26 17:35:42 oster Exp $
+#	$NetBSD: GENERIC,v 1.59 2000/02/29 06:32:30 simonb Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.58 $"
+#ident 		"GENERIC-$Revision: 1.59 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -212,6 +212,6 @@ pseudo-device	tb	1
 pseudo-device	vnd	4
 pseudo-device	ccd	4
 #pseudo-device	raid	4		# RAIDframe disk driver
-#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator

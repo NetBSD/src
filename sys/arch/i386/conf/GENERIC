@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.304 2000/02/27 16:51:39 augustss Exp $
+#	$NetBSD: GENERIC,v 1.305 2000/02/29 06:32:25 simonb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.304 $"
+#ident 		"GENERIC-$Revision: 1.305 $"
 
 maxusers	32		# estimated number of users
 
@@ -765,7 +765,7 @@ include	"arch/i386/conf/GENERIC.local"
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
-#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 

@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.64 2000/02/26 17:35:42 oster Exp $
+# $NetBSD: GENERIC,v 1.65 2000/02/29 06:32:30 simonb Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
 
 include "arch/sun3/conf/std.sun3"
 
-#ident 		"GENERIC-$Revision: 1.64 $"
+#ident 		"GENERIC-$Revision: 1.65 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -230,4 +230,4 @@ pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
-#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.52 2000/02/26 17:35:37 oster Exp $
+#	$NetBSD: GENERIC,v 1.53 2000/02/29 06:32:24 simonb Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -6,7 +6,7 @@
 # Include attributes common to all hp300s
 include "arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.52 $"
+#ident 		"GENERIC-$Revision: 1.53 $"
 
 # Support for various CPU types
 options 	HP320
@@ -196,7 +196,7 @@ pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
-#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	loop			# loopback network interface
 pseudo-device	ipfilter 		# IP Filter package
 #pseudo-device	gre		2	# generic L3 over IP tunnel
