@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.2.2 2002/03/11 17:08:35 thorpej Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.2.3 2002/03/12 00:07:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.2 2002/03/11 17:08:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.3 2002/03/12 00:07:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -260,4 +260,20 @@ mutex_owner(kmutex_t *mtx)
 	 * Only adaptive mutexes are owned by threads.
 	 */
 	return (MUTEX_ADAPTIVE_P(mtx) ? MUTEX_OWNER(mtx) : NULL);
+}
+
+/*
+ * mutex_owned:
+ *
+ *	Return whether or not the current thread owns the mutex.
+ */
+int
+mutex_owned(kmutex_t *mtx)
+{
+
+	/* XXX What do we want to do about spin mutexes? */
+	if (MUTEX_SPIN_P(mtx))
+		panic("mutex_owned: spin mutex");
+
+	return (MUTEX_OWNER(mtx) == curproc);
 }
