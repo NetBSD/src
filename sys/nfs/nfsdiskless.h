@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.10 1996/10/20 13:13:28 fvdl Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.11 1997/05/27 23:37:43 gwr Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -50,18 +50,17 @@
  * client/server byte ordering differences.
  */
 struct nfs_dlmount {
-        struct nfs_args ndm_args;
+	struct nfs_args ndm_args;
 	struct sockaddr ndm_saddr;  		/* Address of file server */
-	char		ndm_host[MNAMELEN]; 	/* Host name for mount pt */
+	char		ndm_host[MNAMELEN]; 	/* server:pathname */
 	u_char		ndm_fh[NFSX_V3FHMAX]; 	/* The file's file handle */
 };
 struct nfs_diskless {
-	struct sockaddr_in nd_boot;	/* Address of boot server */
+	struct sockaddr_in nd_boot; 	/* Address of boot server */
 	struct nfs_dlmount nd_root; 	/* Mount info for root */
 	struct nfs_dlmount nd_swap; 	/* Mount info for swap */
 };
 
 int nfs_boot_init __P((struct nfs_diskless *nd, struct proc *procp));
-void nfs_boot_getfh __P((struct sockaddr_in *bpsin, char *key,
-		struct nfs_dlmount *ndmntp));
+int nfs_boot_getfh __P((struct nfs_dlmount *ndm));
 
