@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.2 1998/02/13 04:19:35 enami Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.3 1998/02/13 08:28:57 enami Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -28,9 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _DEV_SCSIPI_SDVAR_H_
-#define _DEV_SCSIPI_SDVAR_H_
 
 /*
  * Originally written by Julian Elischer (julian@dialix.oz.au)
@@ -91,5 +88,3 @@ struct sd_ops {
 
 void sdattach __P((struct device *, struct sd_softc *, struct scsipi_link *,
     const struct sd_ops *));
-
-#endif /* _DEV_SCSIPI_SDVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_cd.h,v 1.11 1998/02/13 04:19:19 enami Exp $	*/
+/*	$NetBSD: scsi_cd.h,v 1.12 1998/02/13 08:28:30 enami Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -16,9 +16,6 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
-
-#ifndef _DEV_SCSIPI_SCSI_CD_H_
-#define _DEV_SCSIPI_SCSI_CD_H_
 
 /*
  * SCSI specific command format
@@ -88,5 +85,3 @@ struct scsi_cd_mode_data {
 #define AUDIOPAGESIZE \
 	(sizeof(struct scsi_mode_header) + sizeof(struct scsi_blk_desc) \
 	    + sizeof(struct cd_audio_page))
-
-#endif /* _DEV_SCSIPI_SCSI_CD_H_ */

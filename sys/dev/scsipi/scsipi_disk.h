@@ -1,11 +1,8 @@
-/*	$NetBSD: scsipi_disk.h,v 1.4 1998/02/13 04:19:32 enami Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.5 1998/02/13 08:28:55 enami Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
  */
-
-#ifndef _DEV_SCSIPI_SCSIPI_DISK_H_
-#define _DEV_SCSIPI_SCSIPI_DISK_H_
 
 /*
  * Some lines of this file come from a file of the name "scsi.h"
@@ -96,5 +93,3 @@ struct scsipi_read_cap_data {
 	u_int8_t addr[4];
 	u_int8_t length[4];
 };
-
-#endif /* _DEV_SCSIPI_SCSIPI_DISK_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.5 1998/02/13 04:19:16 enami Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.6 1998/02/13 08:28:23 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -28,9 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _DEV_SCSIPI_ATAPICONF_H_
-#define _DEV_SCSIPI_ATAPICONF_H_
 
 #include <dev/scsipi/scsipiconf.h>
 
@@ -140,5 +137,3 @@ int	atapi_mode_select __P((struct scsipi_link *,
 	    struct atapi_mode_header *, int, int, int, int));
 int	atapi_mode_sense __P((struct scsipi_link *, int,
 	    struct atapi_mode_header *, int, int, int, int));
-
-#endif /* _DEV_SCSIPI_ATAPICONF_H_ */

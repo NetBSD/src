@@ -1,11 +1,8 @@
-/*	$NetBSD: scsi_all.h,v 1.13 1998/02/13 04:19:18 enami Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.14 1998/02/13 08:28:28 enami Exp $	*/
 
 /*
  * SCSI-specific insterface description.
  */
-
-#ifndef _DEV_SCSIPI_SCSI_ALL_H_
-#define _DEV_SCSIPI_SCSI_ALL_H_
 
 /*
  * Largely written by Julian Elischer (julian@tfs.com)
@@ -176,5 +173,3 @@ struct scsi_mode_header_big {
 #define	SCSI_BUSY	0x08
 #define	SCSI_INTERM	0x10
 #define	SCSI_QUEUE_FULL	0x28
-
-#endif /* _DEV_SCSIPI_SCSI_ALL_H_ */
