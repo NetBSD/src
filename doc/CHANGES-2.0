@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.225 2004/05/25 04:14:23 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.226 2004/05/26 19:55:46 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2814,11 +2814,11 @@ distrib/utils/sysinst/util.c			1.118
 	Delete code that has been under '#if 0' for a while.
 	[dsl, ticket #358]
 
-src/distrib/utils/sysinst/defs.h		1.112
-src/distrib/utils/sysinst/install.c		1.39
-src/distrib/utils/sysinst/main.c		1.43
-src/distrib/utils/sysinst/upgrade.c		1.45
-src/distrib/utils/sysinst/util.c		1.119
+distrib/utils/sysinst/defs.h			1.112
+distrib/utils/sysinst/install.c			1.39
+distrib/utils/sysinst/main.c			1.43
+distrib/utils/sysinst/upgrade.c			1.45
+distrib/utils/sysinst/util.c			1.119
 
 	Remove code to do with etc.old, instead install etc.tgz
 	into /.sysinst and use /etc/postinstall to merge.
