@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.23 2000/07/07 11:54:57 itojun Exp $	*/
+/*	$NetBSD: chmod.c,v 1.24 2000/09/06 13:37:14 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.23 2000/07/07 11:54:57 itojun Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.24 2000/09/06 13:37:14 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,6 @@ main(argc, argv)
 	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
 	char *mode;
 	int (*change_mode) __P((const char *, mode_t));
-
-	set = NULL;	/* XXX gcc -Wuninitialized */
 
 	(void)setlocale(LC_ALL, "");
 
