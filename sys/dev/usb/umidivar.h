@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.6 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.7 2003/12/05 06:05:53 gson Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -103,7 +103,7 @@ struct umidi_endpoint {
 	int			addr;
 	usbd_pipe_handle	pipe;
 	usbd_xfer_handle	xfer;
-	char			*buffer;
+	unsigned char		*buffer;
 	int			num_open;
 	int			num_jacks;
 	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
