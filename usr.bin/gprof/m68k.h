@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hp300.h	5.1 (Berkeley) 4/18/91
- *	$Id: m68k.h,v 1.1 1993/12/06 05:28:43 cgd Exp $
+ *	from: @(#)hp300.h	8.1 (Berkeley) 6/6/93
+ *	$Id: m68k.h,v 1.2 1994/05/17 03:36:12 cgd Exp $
  */
 
     /*

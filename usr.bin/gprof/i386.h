@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)i386.h	5.1 (Berkeley) 4/18/91
- *	$Id: i386.h,v 1.2 1993/08/01 18:15:17 mycroft Exp $
+ *	from: @(#)i386.h	8.1 (Berkeley) 6/6/93
+ *	$Id: i386.h,v 1.3 1994/05/17 03:36:07 cgd Exp $
  */
 
     /*
