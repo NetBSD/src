@@ -1,4 +1,4 @@
-/* $NetBSD: cosc.c,v 1.1 1996/10/15 00:08:43 mark Exp $ */
+/* $NetBSD: cosc.c,v 1.2 1996/10/29 23:53:00 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -15,6 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Mark Brinicombe
+ *      for the NetBSD Project.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,6 +36,9 @@
 
 /*
  * Driver for the MCS Connect 32 SCSI 2 card with AM53C94 SCSI controller.
+ *
+ * Thanks to Mike <mcsmike@knipp.de> at MCS for loaning a card.
+ * Thanks to Andreas Gandor <andi@knipp.de> for some technical information
  */
 
 #include <sys/param.h>
