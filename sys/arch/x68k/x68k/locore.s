@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.11 1997/01/18 11:16:57 oki Exp $	*/
+/*	$NetBSD: locore.s,v 1.12 1997/01/18 13:19:57 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -999,11 +999,7 @@ start:
 	movc	cacr,d0			| read it back
 	tstl	d0			| zero?
 	jeq	Lnot68030		| yes, we have 68020/68040/68060
-	RELOC(_mmutype, a0)		| no, we have 68030
-	movl	#MMU_68030,a0@		| set to reflect 68030 PMMU
-	RELOC(_cputype, a0)
-	movl	#CPU_68030,a0@		| and 68030 CPU
-	jra	Lstart1
+	jra	Lstart1			| no, we have 68030
 Lnot68030:
 	bset	#31,d0			| data cache enable bit
 	movc	d0,cacr			|   only exists on 68040/68060
@@ -1032,6 +1028,8 @@ Lis68040:
 Lis68020:
 	RELOC(_mmutype, a0)
 	movl	#MMU_68851,a0@		| we have PMMU
+	RELOC(_cputype, a0)
+	movl	#CPU_68020,a0@		| and a 68020 CPU
 
 Lstart1:
 /* initialize source/destination control registers for movs */
@@ -1107,8 +1105,8 @@ Lstploaddone:
 	movw	#0x000f,a0@
 	cmpw	#0x000f,a1@		| JUPITER-X?
 	jne	Ljupiter		| yes, set SUPER bit
-	movw	#0x0000,a0@
-	cmpw	#0x0000,a1@		| be sure JUPITER-X?
+	clrw	a0@
+	tstw	a1@			| be sure JUPITER-X?
 	jeq	Ljupiterdone		| no, skip
 Ljupiter:
 	movl	#0x0100a240,d0		| to access system register
@@ -1255,15 +1253,14 @@ _esigcode:
 ENTRY(copypage)
 	movl	sp@(4),a0		| source address
 	movl	sp@(8),a1		| destination address
-	movl	#NBPG/32,d0		| number of 32 byte chunks
+	movw	#NBPG/32-1,d0		| number of 32 byte chunks
 #if defined(M68040) || defined(M68060)
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lmlloop			| no, use movl
 Lm16loop:
 	.long	0xf6209000		| move16 a0@+,a1@+
 	.long	0xf6209000		| move16 a0@+,a1@+
-	subql	#1,d0
-	jne	Lm16loop
+	dbra	d0,Lm16loop
 	rts
 #endif
 Lmlloop:
@@ -1275,8 +1272,7 @@ Lmlloop:
 	movl	a0@+,a1@+
 	movl	a0@+,a1@+
 	movl	a0@+,a1@+
-	subql	#1,d0
-	jne	Lmlloop
+	dbra	d0,Lmlloop
 	rts
 
 /*
@@ -2106,7 +2102,7 @@ Ldoreboot:
 #if defined(M68040) || defined(M68060)
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	LmotommuF		| no, skip
-	movl	#0,d0
+	moveq	#0,d0
 	movc	d0,cacr			| caches off
 	.long	0x4e7b0003		| movc d0,tc
 	moval	0x00ff0004:l,a0
@@ -2129,9 +2125,9 @@ _machineid:
 _mmutype:
 	.long	MMU_68030	| default to 030 internal MMU
 _cputype:
-	.long	CPU_68020	| default to 68020 CPU
+	.long	CPU_68030	| default to 68030 CPU
 _fputype:
-	.long	0
+	.long	FPU_NONE
 _ectype:
 	.long	EC_NONE		| external cache type, default to none
 _protorp:
