@@ -1,7 +1,8 @@
-/*	$NetBSD: flscvar.h,v 1.2 1996/04/21 21:11:06 veego Exp $	*/
+/*	$NetBSD: flscvar.h,v 1.3 1997/10/04 04:01:33 mhitch Exp $	*/
 
 /*
- * Copyright (c) 1995 Daniel Widenfalk
+ * Copyright (c) 1997 Michael L. Hitch.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,10 +14,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Daniel Widenfalk
- *      for the NetBSD Project.
+ *	This product includes software developed for the NetBSD Project
+ *	by Michael L. Hitch.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,26 +30,51 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _FLSCVAR_H_
-#define _FLSCVAR_H_
 
-#ifndef _SFASVAR_H_
-#include <amiga/dev/sfasvar.h>
-#endif
+struct flsc_softc {
+	struct ncr53c9x_softc	sc_ncr53c9x;	/* glue to MI code */
 
-#ifndef _FLSCREG_H_
-#include <amiga/dev/flscvar.h>
-#endif
+	struct	isr		 sc_isr;	/* Interrupt chain struct */
 
-struct flsc_specific {
-	u_char	 hardbits;
-	u_char	 portbits;
+	volatile u_char *sc_reg;		/* the registers */
+	volatile u_char *sc_dmabase;
+
+	int		sc_active;		/* Pseudo-DMA state vars */
+	int		sc_piomode;
+	int		sc_datain;
+	int		sc_tc;
+	size_t		sc_dmasize;
+	size_t		sc_dmatrans;
+	char		**sc_dmaaddr;
+	size_t		*sc_pdmalen;
+	vm_offset_t	sc_pa;
+
+	u_char		sc_pad1[18];		/* XXX */
+	u_char		sc_alignbuf[256];
+	u_char		sc_pad2[16];
+	u_char		sc_hardbits;
+	u_char		sc_portbits;
+	u_char		sc_csr;
+	u_char		sc_xfr_align;
+
 };
 
-struct	flsc_softc {
-	struct sfas_softc	sc_softc;
-	flsc_regmap_t		sc_regmap;
-	struct flsc_specific	sc_specific;
-};
+#define FLSC_HB_DISABLED	0x01
+#define FLSC_HB_BUSID6		0x02
+#define FLSC_HB_SEAGATE		0x04
+#define FLSC_HB_SLOW		0x08
+#define FLSC_HB_SYNCHRON	0x10
+#define FLSC_HB_CREQ		0x20
+#define FLSC_HB_IACT		0x40
+#define FLSC_HB_MINT		0x80
 
-#endif /* _FLSCVAR_H_ */
+#define FLSC_PB_ESI		0x01
+#define FLSC_PB_EDI		0x02
+#define FLSC_PB_ENABLE_DMA	0x04
+#define FLSC_PB_DISABLE_DMA	0x00	/* Symmetric reasons */
+#define FLSC_PB_DMA_WRITE	0x08
+#define FLSC_PB_DMA_READ	0x00	/* Symmetric reasons */
+#define FLSC_PB_LED		0x10
+
+#define FLSC_PB_INT_BITS (FLSC_PB_ESI | FLSC_PB_EDI)
+#define FLSC_PB_DMA_BITS (FLSC_PB_ENABLE_DMA | FLSC_PB_DMA_WRITE)

@@ -1,8 +1,7 @@
-/*	$NetBSD: bztzsc.c,v 1.5 1997/10/04 04:01:21 mhitch Exp $	*/
+/*	$NetBSD: cbiisc.c,v 1.1 1997/10/04 04:01:26 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
- * Copyright (c) 1996 Ignatios Souvatzis
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -16,8 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product contains software written by Ignatios Souvatzis and
- *	Michael L. Hitch for the NetBSD project.
+ *	This product contains software written by Michael L. Hitch for
+ *	the NetBSD project.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -34,11 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- */
-
-/*
- * Initial amiga Blizzard 2060 driver by Ingatios Souvatzis.  Conversion to
- * 53c9x MI driver by Michael L. Hitch (mhitch@montana.edu).
  */
 
 #include <sys/types.h>
@@ -65,29 +59,29 @@
 #include <dev/ic/ncr53c9xvar.h>
 
 #include <amiga/amiga/isr.h>
-#include <amiga/dev/bztzscvar.h>
+#include <amiga/dev/cbiiscvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void	bztzscattach	__P((struct device *, struct device *, void *));
-int	bztzscmatch	__P((struct device *, struct cfdata *, void *));
+void	cbiiscattach	__P((struct device *, struct device *, void *));
+int	cbiiscmatch	__P((struct device *, struct cfdata *, void *));
 
 /* Linkup to the rest of the kernel */
-struct cfattach bztzsc_ca = {
-	sizeof(struct bztzsc_softc), bztzscmatch, bztzscattach
+struct cfattach cbiisc_ca = {
+	sizeof(struct cbiisc_softc), cbiiscmatch, cbiiscattach
 };
 
-struct cfdriver bztzsc_cd = {
-	NULL, "bztzsc", DV_DULL
+struct cfdriver cbiisc_cd = {
+	NULL, "cbiisc", DV_DULL
 };
 
-struct scsipi_adapter bztzsc_switch = {
+struct scsipi_adapter cbiisc_switch = {
 	ncr53c9x_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
 };
 
-struct scsipi_device bztzsc_dev = {
+struct scsipi_device cbiisc_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -97,38 +91,38 @@ struct scsipi_device bztzsc_dev = {
 /*
  * Functions and the switch for the MI code.
  */
-u_char	bztzsc_read_reg __P((struct ncr53c9x_softc *, int));
-void	bztzsc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	bztzsc_dma_isintr __P((struct ncr53c9x_softc *));
-void	bztzsc_dma_reset __P((struct ncr53c9x_softc *));
-int	bztzsc_dma_intr __P((struct ncr53c9x_softc *));
-int	bztzsc_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
+u_char	cbiisc_read_reg __P((struct ncr53c9x_softc *, int));
+void	cbiisc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
+int	cbiisc_dma_isintr __P((struct ncr53c9x_softc *));
+void	cbiisc_dma_reset __P((struct ncr53c9x_softc *));
+int	cbiisc_dma_intr __P((struct ncr53c9x_softc *));
+int	cbiisc_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
 	    size_t *, int, size_t *));
-void	bztzsc_dma_go __P((struct ncr53c9x_softc *));
-void	bztzsc_dma_stop __P((struct ncr53c9x_softc *));
-int	bztzsc_dma_isactive __P((struct ncr53c9x_softc *));
+void	cbiisc_dma_go __P((struct ncr53c9x_softc *));
+void	cbiisc_dma_stop __P((struct ncr53c9x_softc *));
+int	cbiisc_dma_isactive __P((struct ncr53c9x_softc *));
 
-struct ncr53c9x_glue bztzsc_glue = {
-	bztzsc_read_reg,
-	bztzsc_write_reg,
-	bztzsc_dma_isintr,
-	bztzsc_dma_reset,
-	bztzsc_dma_intr,
-	bztzsc_dma_setup,
-	bztzsc_dma_go,
-	bztzsc_dma_stop,
-	bztzsc_dma_isactive,
+struct ncr53c9x_glue cbiisc_glue = {
+	cbiisc_read_reg,
+	cbiisc_write_reg,
+	cbiisc_dma_isintr,
+	cbiisc_dma_reset,
+	cbiisc_dma_intr,
+	cbiisc_dma_setup,
+	cbiisc_dma_go,
+	cbiisc_dma_stop,
+	cbiisc_dma_isactive,
 	0,
 };
 
 /* Maximum DMA transfer length to reduce impact on high-speed serial input */
-u_long bztzsc_max_dma = 1024;
+u_long cbiisc_max_dma = 1024;
 extern int ser_open_speed;
 
-u_long bztzsc_cnt_pio = 0;	/* number of PIO transfers */
-u_long bztzsc_cnt_dma = 0;	/* number of DMA transfers */
-u_long bztzsc_cnt_dma2 = 0;	/* number of DMA transfers broken up */
-u_long bztzsc_cnt_dma3 = 0;	/* number of pages combined */
+u_long cbiisc_cnt_pio = 0;	/* number of PIO transfers */
+u_long cbiisc_cnt_dma = 0;	/* number of DMA transfers */
+u_long cbiisc_cnt_dma2 = 0;	/* number of DMA transfers broken up */
+u_long cbiisc_cnt_dma3 = 0;	/* number of pages combined */
 
 #ifdef DEBUG
 struct {
@@ -136,17 +130,17 @@ struct {
 	u_char status;
 	u_char xx;
 	u_char yy;
-} bztzsc_trace[128];
-int bztzsc_trace_ptr = 0;
-int bztzsc_trace_enable = 1;
-void bztzsc_dump __P((void));
+} cbiisc_trace[128];
+int cbiisc_trace_ptr = 0;
+int cbiisc_trace_enable = 1;
+void cbiisc_dump __P((void));
 #endif
 
 /*
- * if we are a Phase5 Blizzard 2060 SCSI
+ * if we are a Phase5 CyberSCSI II
  */
 int
-bztzscmatch(parent, cf, aux)
+cbiiscmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -155,9 +149,9 @@ bztzscmatch(parent, cf, aux)
 	volatile u_char *regs;
 
 	zap = aux;
-	if (zap->manid != 0x2140 && zap->prodid != 24)
+	if (zap->manid != 0x2140 && zap->prodid != 25)
 		return(0);
-	regs = &((volatile u_char *)zap->va)[0x1ff00];
+	regs = &((volatile u_char *)zap->va)[0x1ff03];
 	if (badaddr((caddr_t)regs))
 		return(0);
 	regs[NCR_CFG1 * 4] = 0;
@@ -172,12 +166,12 @@ bztzscmatch(parent, cf, aux)
  * Attach this instance, and then all the sub-devices
  */
 void
-bztzscattach(parent, self, aux)
+cbiiscattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct bztzsc_softc *bsc = (void *)self;
-	struct ncr53c9x_softc *sc = &bsc->sc_ncr53c9x;
+	struct cbiisc_softc *csc = (void *)self;
+	struct ncr53c9x_softc *sc = &csc->sc_ncr53c9x;
 	struct zbus_args  *zap;
 	extern u_long scsi_nosync;
 	extern int shift_nosync;
@@ -186,18 +180,18 @@ bztzscattach(parent, self, aux)
 	/*
 	 * Set up the glue for MI code early; we use some of it here.
 	 */
-	sc->sc_glue = &bztzsc_glue;
+	sc->sc_glue = &cbiisc_glue;
 
 	/*
 	 * Save the regs
 	 */
 	zap = aux;
-	bsc->sc_reg = &((volatile u_char *)zap->va)[0x1ff00];
-	bsc->sc_dmabase = &bsc->sc_reg[0xf0];
+	csc->sc_reg = &((volatile u_char *)zap->va)[0x1ff03];
+	csc->sc_dmabase = &csc->sc_reg[0x80];
 
 	sc->sc_freq = 40;		/* Clocked at 40Mhz */
 
-	printf(": address %p", bsc->sc_reg);
+	printf(": address %p", csc->sc_reg);
 
 	sc->sc_id = 7;
 
@@ -243,20 +237,18 @@ bztzscattach(parent, self, aux)
 	/* Really no limit, but since we want to fit into the TCR... */
 	sc->sc_maxxfer = 64 * 1024;
 
-	bsc->sc_reg[0xe0] = BZTZSC_PB_LED;	/* Turn LED off */
-
 	/*
 	 * Configure interrupts.
 	 */
-	bsc->sc_isr.isr_intr = (int (*)(void *))ncr53c9x_intr;
-	bsc->sc_isr.isr_arg  = sc;
-	bsc->sc_isr.isr_ipl  = 2;
-	add_isr(&bsc->sc_isr);
+	csc->sc_isr.isr_intr = (int (*)(void *))ncr53c9x_intr;
+	csc->sc_isr.isr_arg  = sc;
+	csc->sc_isr.isr_ipl  = 2;
+	add_isr(&csc->sc_isr);
 
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	ncr53c9x_attach(sc, &bztzsc_switch, &bztzsc_dev);
+	ncr53c9x_attach(sc, &cbiisc_switch, &cbiisc_dev);
 }
 
 /*
@@ -264,120 +256,120 @@ bztzscattach(parent, self, aux)
  */
 
 u_char
-bztzsc_read_reg(sc, reg)
+cbiisc_read_reg(sc, reg)
 	struct ncr53c9x_softc *sc;
 	int reg;
 {
-	struct bztzsc_softc *bsc = (struct bztzsc_softc *)sc;
+	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 
-	return bsc->sc_reg[reg * 4];
+	return csc->sc_reg[reg * 4];
 }
 
 void
-bztzsc_write_reg(sc, reg, val)
+cbiisc_write_reg(sc, reg, val)
 	struct ncr53c9x_softc *sc;
 	int reg;
 	u_char val;
 {
-	struct bztzsc_softc *bsc = (struct bztzsc_softc *)sc;
+	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 	u_char v = val;
 
-	bsc->sc_reg[reg * 4] = v;
+	csc->sc_reg[reg * 4] = v;
 #ifdef DEBUG
-if (bztzsc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL*/ &&
-  reg == NCR_CMD/* && bsc->sc_active*/) {
-  bztzsc_trace[(bztzsc_trace_ptr - 1) & 127].yy = v;
+if (cbiisc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL*/ &&
+  reg == NCR_CMD/* && csc->sc_active*/) {
+  cbiisc_trace[(cbiisc_trace_ptr - 1) & 127].yy = v;
 /*  printf(" cmd %x", v);*/
 }
 #endif
 }
 
 int
-bztzsc_dma_isintr(sc)
+cbiisc_dma_isintr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct bztzsc_softc *bsc = (struct bztzsc_softc *)sc;
+	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 
-	if ((bsc->sc_reg[NCR_STAT * 4] & NCRSTAT_INT) == 0)
+	if ((csc->sc_reg[NCR_STAT * 4] & NCRSTAT_INT) == 0)
 		return 0;
 
 	if (sc->sc_state == NCR_CONNECTED)
-		bsc->sc_reg[0xe0] = 0;			/* Turn LED on */
+		csc->sc_reg[0x40] = CBIISC_PB_LED;
 	else
-		bsc->sc_reg[0xe0] = BZTZSC_PB_LED;	/* Turn LED off */
+		csc->sc_reg[0x40] = 0;
 
 #ifdef DEBUG
-if (/*sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL &&*/ bztzsc_trace_enable) {
-  bztzsc_trace[bztzsc_trace_ptr].status = bsc->sc_reg[NCR_STAT * 4];
-  bztzsc_trace[bztzsc_trace_ptr].xx = bsc->sc_reg[NCR_CMD * 4];
-  bztzsc_trace[bztzsc_trace_ptr].yy = bsc->sc_active;
-  bztzsc_trace_ptr = (bztzsc_trace_ptr + 1) & 127;
+if (/*sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL &&*/ cbiisc_trace_enable) {
+  cbiisc_trace[cbiisc_trace_ptr].status = csc->sc_reg[NCR_STAT * 4];
+  cbiisc_trace[cbiisc_trace_ptr].xx = csc->sc_reg[NCR_CMD * 4];
+  cbiisc_trace[cbiisc_trace_ptr].yy = csc->sc_active;
+  cbiisc_trace_ptr = (cbiisc_trace_ptr + 1) & 127;
 }
 #endif
 	return 1;
 }
 
 void
-bztzsc_dma_reset(sc)
+cbiisc_dma_reset(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct bztzsc_softc *bsc = (struct bztzsc_softc *)sc;
+	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 
-	bsc->sc_active = 0;
+	csc->sc_active = 0;
 }
 
 int
-bztzsc_dma_intr(sc)
+cbiisc_dma_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	register struct bztzsc_softc *bsc = (struct bztzsc_softc *)sc;
+	register struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 	register int	cnt;
 
-	NCR_DMA(("bztzsc_dma_intr: cnt %d int %x stat %x fifo %d ",
-	    bsc->sc_dmasize, sc->sc_espintr, sc->sc_espstat,
-	    bsc->sc_reg[NCR_FFLAG * 4] & NCRFIFO_FF));
-	if (bsc->sc_active == 0) {
-		printf("bztzsc_intr--inactive DMA\n");
+	NCR_DMA(("cbiisc_dma_intr: cnt %d int %x stat %x fifo %d ",
+	    csc->sc_dmasize, sc->sc_espintr, sc->sc_espstat,
+	    csc->sc_reg[NCR_FFLAG * 4] & NCRFIFO_FF));
+	if (csc->sc_active == 0) {
+		printf("cbiisc_intr--inactive DMA\n");
 		return -1;
 	}
 
 	/* update sc_dmaaddr and sc_pdmalen */
-	cnt = bsc->sc_reg[NCR_TCL * 4];
-	cnt += bsc->sc_reg[NCR_TCM * 4] << 8;
-	cnt += bsc->sc_reg[NCR_TCH * 4] << 16;
-	if (!bsc->sc_datain) {
-		cnt += bsc->sc_reg[NCR_FFLAG * 4] & NCRFIFO_FF;
-		bsc->sc_reg[NCR_CMD * 4] = NCRCMD_FLUSH;
+	cnt = csc->sc_reg[NCR_TCL * 4];
+	cnt += csc->sc_reg[NCR_TCM * 4] << 8;
+	cnt += csc->sc_reg[NCR_TCH * 4] << 16;
+	if (!csc->sc_datain) {
+		cnt += csc->sc_reg[NCR_FFLAG * 4] & NCRFIFO_FF;
+		csc->sc_reg[NCR_CMD * 4] = NCRCMD_FLUSH;
 	}
-	cnt = bsc->sc_dmasize - cnt;	/* number of bytes transferred */
+	cnt = csc->sc_dmasize - cnt;	/* number of bytes transferred */
 	NCR_DMA(("DMA xferred %d\n", cnt));
-	if (bsc->sc_xfr_align) {
-		bcopy(bsc->sc_alignbuf, *bsc->sc_dmaaddr, cnt);
-		bsc->sc_xfr_align = 0;
+	if (csc->sc_xfr_align) {
+		bcopy(csc->sc_alignbuf, *csc->sc_dmaaddr, cnt);
+		csc->sc_xfr_align = 0;
 	}
-	*bsc->sc_dmaaddr += cnt;
-	*bsc->sc_pdmalen -= cnt;
-	bsc->sc_active = 0;
+	*csc->sc_dmaaddr += cnt;
+	*csc->sc_pdmalen -= cnt;
+	csc->sc_active = 0;
 	return 0;
 }
 
 int
-bztzsc_dma_setup(sc, addr, len, datain, dmasize)
+cbiisc_dma_setup(sc, addr, len, datain, dmasize)
 	struct ncr53c9x_softc *sc;
 	caddr_t *addr;
 	size_t *len;
 	int datain;
 	size_t *dmasize;
 {
-	struct bztzsc_softc *bsc = (struct bztzsc_softc *)sc;
+	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 	vm_offset_t pa;
 	u_char *ptr;
 	size_t xfer;
 
-	bsc->sc_dmaaddr = addr;
-	bsc->sc_pdmalen = len;
-	bsc->sc_datain = datain;
-	bsc->sc_dmasize = *dmasize;
+	csc->sc_dmaaddr = addr;
+	csc->sc_pdmalen = len;
+	csc->sc_datain = datain;
+	csc->sc_dmasize = *dmasize;
 	/*
 	 * DMA can be nasty for high-speed serial input, so limit the
 	 * size of this DMA operation if the serial port is running at
@@ -385,111 +377,112 @@ bztzsc_dma_setup(sc, addr, len, datain, dmasize)
 	 * based on cpu type and speed?).
 	 * XXX - add serial speed check XXX
 	 */
-	if (ser_open_speed > 19200 && bztzsc_max_dma != 0 &&
-	    bsc->sc_dmasize > bztzsc_max_dma)
-		bsc->sc_dmasize = bztzsc_max_dma;
+	if (ser_open_speed > 19200 && cbiisc_max_dma != 0 &&
+	    csc->sc_dmasize > cbiisc_max_dma)
+		csc->sc_dmasize = cbiisc_max_dma;
 	ptr = *addr;			/* Kernel virtual address */
 	pa = kvtop(ptr);		/* Physical address of DMA */
-	xfer = min(bsc->sc_dmasize, NBPG - (pa & (NBPG - 1)));
-	bsc->sc_xfr_align = 0;
+	xfer = min(csc->sc_dmasize, NBPG - (pa & (NBPG - 1)));
+	csc->sc_xfr_align = 0;
 	/*
 	 * If output and unaligned, stuff odd byte into FIFO
 	 */
 	if (datain == 0 && (int)ptr & 1) {
-		NCR_DMA(("bztzsc_dma_setup: align byte written to fifo\n"));
+		NCR_DMA(("cbiisc_dma_setup: align byte written to fifo\n"));
 		pa++;
 		xfer--;			/* XXXX CHECK THIS !!!! XXXX */
-		bsc->sc_reg[NCR_FIFO * 4] = *ptr++;
+		csc->sc_reg[NCR_FIFO * 4] = *ptr++;
 	}
 	/*
 	 * If unaligned address, read unaligned bytes into alignment buffer
 	 */
 	else if ((int)ptr & 1) {
-		pa = kvtop((caddr_t)&bsc->sc_alignbuf);
-		xfer = bsc->sc_dmasize = min(xfer, sizeof (bsc->sc_alignbuf));
-		NCR_DMA(("bztzsc_dma_setup: align read by %d bytes\n", xfer));
-		bsc->sc_xfr_align = 1;
+		pa = kvtop((caddr_t)&csc->sc_alignbuf);
+		xfer = csc->sc_dmasize = min(xfer, sizeof (csc->sc_alignbuf));
+		NCR_DMA(("cbiisc_dma_setup: align read by %d bytes\n", xfer));
+		csc->sc_xfr_align = 1;
 	}
-++bztzsc_cnt_dma;		/* number of DMA operations */
+++cbiisc_cnt_dma;		/* number of DMA operations */
 
-	while (xfer < bsc->sc_dmasize) {
+	while (xfer < csc->sc_dmasize) {
 		if ((pa + xfer) != kvtop(*addr + xfer))
 			break;
-		if ((bsc->sc_dmasize - xfer) < NBPG)
-			xfer = bsc->sc_dmasize;
+		if ((csc->sc_dmasize - xfer) < NBPG)
+			xfer = csc->sc_dmasize;
 		else
 			xfer += NBPG;
-++bztzsc_cnt_dma3;
+++cbiisc_cnt_dma3;
 	}
 if (xfer != *len)
-  ++bztzsc_cnt_dma2;
+  ++cbiisc_cnt_dma2;
 
-	bsc->sc_dmasize = xfer;
-	*dmasize = bsc->sc_dmasize;
-	bsc->sc_pa = pa;
+	csc->sc_dmasize = xfer;
+	*dmasize = csc->sc_dmasize;
+	csc->sc_pa = pa;
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
-		if (bsc->sc_xfr_align) {
-			dma_cachectl(bsc->sc_alignbuf,
-			    sizeof(bsc->sc_alignbuf));
+		if (csc->sc_xfr_align) {
+			dma_cachectl(csc->sc_alignbuf,
+			    sizeof(csc->sc_alignbuf));
 		}
 		else
-			dma_cachectl(*bsc->sc_dmaaddr, bsc->sc_dmasize);
+			dma_cachectl(*csc->sc_dmaaddr, csc->sc_dmasize);
 	}
 #endif
 
-	pa >>= 1;
-	if (!bsc->sc_datain)
-		pa |= 0x80000000;
-	bsc->sc_dmabase[12] = (u_int8_t)(pa);
-	bsc->sc_dmabase[8] = (u_int8_t)(pa >> 8);
-	bsc->sc_dmabase[4] = (u_int8_t)(pa >> 16);
-	bsc->sc_dmabase[0] = (u_int8_t)(pa >> 24);
-	bsc->sc_active = 1;
+	if (csc->sc_datain)
+		pa &= ~1;
+	else
+		pa |= 1;
+	csc->sc_dmabase[0] = (u_int8_t)(pa >> 24);
+	csc->sc_dmabase[4] = (u_int8_t)(pa >> 16);
+	csc->sc_dmabase[8] = (u_int8_t)(pa >> 8);
+	csc->sc_dmabase[12] = (u_int8_t)(pa);
+	csc->sc_active = 1;
 	return 0;
 }
 
 void
-bztzsc_dma_go(sc)
+cbiisc_dma_go(sc)
 	struct ncr53c9x_softc *sc;
 {
 }
 
 void
-bztzsc_dma_stop(sc)
+cbiisc_dma_stop(sc)
 	struct ncr53c9x_softc *sc;
 {
 }
 
 int
-bztzsc_dma_isactive(sc)
+cbiisc_dma_isactive(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct bztzsc_softc *bsc = (struct bztzsc_softc *)sc;
+	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
 
-	return bsc->sc_active;
+	return csc->sc_active;
 }
 
 #ifdef DEBUG
 void
-bztzsc_dump()
+cbiisc_dump()
 {
 	int i;
 
-	i = bztzsc_trace_ptr;
-	printf("bztzsc_trace dump: ptr %x\n", bztzsc_trace_ptr);
+	i = cbiisc_trace_ptr;
+	printf("cbiisc_trace dump: ptr %x\n", cbiisc_trace_ptr);
 	do {
-		if (bztzsc_trace[i].hardbits == 0) {
+		if (cbiisc_trace[i].hardbits == 0) {
 			i = (i + 1) & 127;
 			continue;
 		}
-		printf("%02x%02x%02x%02x(", bztzsc_trace[i].hardbits,
-		    bztzsc_trace[i].status, bztzsc_trace[i].xx, bztzsc_trace[i].yy);
-		if (bztzsc_trace[i].status & NCRSTAT_INT)
+		printf("%02x%02x%02x%02x(", cbiisc_trace[i].hardbits,
+		    cbiisc_trace[i].status, cbiisc_trace[i].xx, cbiisc_trace[i].yy);
+		if (cbiisc_trace[i].status & NCRSTAT_INT)
 			printf("NCRINT/");
-		if (bztzsc_trace[i].status & NCRSTAT_TC)
+		if (cbiisc_trace[i].status & NCRSTAT_TC)
 			printf("NCRTC/");
-		switch(bztzsc_trace[i].status & NCRSTAT_PHASE) {
+		switch(cbiisc_trace[i].status & NCRSTAT_PHASE) {
 		case 0:
 			printf("dataout"); break;
 		case 1:
@@ -503,11 +496,11 @@ bztzsc_dump()
 		case 7:
 			printf("msgin"); break;
 		default:
-			printf("phase%d?", bztzsc_trace[i].status & NCRSTAT_PHASE);
+			printf("phase%d?", cbiisc_trace[i].status & NCRSTAT_PHASE);
 		}
 		printf(") ");
 		i = (i + 1) & 127;
-	} while (i != bztzsc_trace_ptr);
+	} while (i != cbiisc_trace_ptr);
 	printf("\n");
 }
 #endif

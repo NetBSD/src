@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.64 1997/09/28 20:50:00 is Exp $
+#	$NetBSD: files.amiga,v 1.65 1997/10/04 04:02:03 mhitch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -272,23 +272,31 @@ attach	aftsc at mainbus
 file	arch/amiga/dev/afsc.c		afsc | aftsc needs-flag
 
 # Emulex ESP216 & FAS216 controllers
-define	sfas
-file	arch/amiga/dev/sfas.c		sfas
 
 # FastlaneZ3
-device	flsc: scsi, sfas
+device	flsc: scsi, ncr53c9x
 attach	flsc at zbus
 file	arch/amiga/dev/flsc.c		flsc needs-flag
 
-# Blizzard1230-I,II
-device	bzsc: scsi, sfas
+# Blizzard12x0-I,II and IV
+device	bzsc: scsi, ncr53c9x
 attach	bzsc at zbus
 file	arch/amiga/dev/bzsc.c		bzsc needs-flag
 
 # Blizzard2060 scsi
-device	bztzsc: scsi, sfas
+device	bztzsc: scsi, ncr53c9x
 attach	bztzsc at zbus
 file	arch/amiga/dev/bztzsc.c		bztzsc needs-flag
+
+# CyberSCSI [I] scsi
+device	cbsc: scsi, ncr53c9x
+attach	cbsc at zbus
+file	arch/amiga/dev/cbsc.c		cbsc needs-flag
+
+# CyberSCSI MKII scsi
+device	cbiisc: scsi, ncr53c9x
+attach	cbiisc at zbus
+file	arch/amiga/dev/cbiisc.c		cbiisc needs-flag
 
 # EMPLANT
 device	empsc: scsi, sci

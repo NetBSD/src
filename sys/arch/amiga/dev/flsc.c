@@ -1,6 +1,7 @@
-/*	$NetBSD: flsc.c,v 1.15 1997/08/27 11:23:08 bouyer Exp $	*/
+/*	$NetBSD: flsc.c,v 1.16 1997/10/04 04:01:31 mhitch Exp $	*/
 
 /*
+ * Copyright (c) 1997 Michael L. Hitch
  * Copyright (c) 1995 Daniel Widenfalk
  * Copyright (c) 1994 Christian E. Hopps
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -16,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	This product includes software developed by Daniel Widenfalk
+ *	and Michael L. Hitch.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,82 +34,117 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)dma.c
  */
 
+/*
+ * Initial amiga Fastlane driver by Daniel Widenfalk.  Conversion to
+ * 53c9x MI driver by Michael L. Hitch (mhitch@montana.edu).
+ */
+
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/queue.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <machine/pmap.h>
-#include <amiga/amiga/custom.h>
-#include <amiga/amiga/cc.h>
-#include <amiga/amiga/device.h>
+#include <dev/scsipi/scsi_message.h>
+
+#include <machine/cpu.h>
+#include <machine/param.h>
+
+#include <dev/ic/ncr53c9xreg.h>
+#include <dev/ic/ncr53c9xvar.h>
+
 #include <amiga/amiga/isr.h>
-#include <amiga/dev/sfasreg.h>
-#include <amiga/dev/sfasvar.h>
-#include <amiga/dev/zbusvar.h>
-#include <amiga/dev/flscreg.h>
 #include <amiga/dev/flscvar.h>
+#include <amiga/dev/zbusvar.h>
 
-void flscattach __P((struct device *, struct device *, void *));
-int  flscmatch  __P((struct device *, struct cfdata *, void *));
+void	flscattach	__P((struct device *, struct device *, void *));
+int	flscmatch	__P((struct device *, struct cfdata *, void *));
 
-struct scsipi_adapter flsc_scsiswitch = {
-	sfas_scsicmd,
-	sfas_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
-};
-
-struct scsipi_device flsc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
-
+/* Linkup to the rest of the kernel */
 struct cfattach flsc_ca = {
 	sizeof(struct flsc_softc), flscmatch, flscattach
 };
 
 struct cfdriver flsc_cd = {
-	NULL, "flsc", DV_DULL, NULL, 0
+	NULL, "flsc", DV_DULL
 };
 
-int flsc_intr		 __P((void *));
-void flsc_set_dma_adr	 __P((struct sfas_softc *sc, vm_offset_t ptr));
-void flsc_set_dma_tc	 __P((struct sfas_softc *sc, unsigned int len));
-void flsc_set_dma_mode	 __P((struct sfas_softc *sc, int mode));
-int flsc_setup_dma	 __P((struct sfas_softc *sc, vm_offset_t ptr, int len,
-			      int mode));
-int flsc_build_dma_chain __P((struct sfas_softc *sc,
-			      struct sfas_dma_chain *chain, void *p, int l));
-int flsc_need_bump	 __P((struct sfas_softc *sc, vm_offset_t ptr, int len));
-void flsc_led		 __P((struct sfas_softc *sc, int mode));
+struct scsipi_adapter flsc_switch = {
+	ncr53c9x_scsi_cmd,
+	minphys,		/* no max at this level; handled by DMA code */
+	NULL,
+	NULL,
+};
+
+struct scsipi_device flsc_dev = {
+	NULL,			/* Use default error handler */
+	NULL,			/* have a queue, served by this */
+	NULL,			/* have no async handler */
+	NULL,			/* Use default 'done' routine */
+};
+
+/*
+ * Functions and the switch for the MI code.
+ */
+u_char	flsc_read_reg __P((struct ncr53c9x_softc *, int));
+void	flsc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
+int	flsc_dma_isintr __P((struct ncr53c9x_softc *));
+void	flsc_dma_reset __P((struct ncr53c9x_softc *));
+int	flsc_dma_intr __P((struct ncr53c9x_softc *));
+int	flsc_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
+	    size_t *, int, size_t *));
+void	flsc_dma_go __P((struct ncr53c9x_softc *));
+void	flsc_dma_stop __P((struct ncr53c9x_softc *));
+int	flsc_dma_isactive __P((struct ncr53c9x_softc *));
+void	flsc_clear_latched_intr __P((struct ncr53c9x_softc *));
+
+struct ncr53c9x_glue flsc_glue = {
+	flsc_read_reg,
+	flsc_write_reg,
+	flsc_dma_isintr,
+	flsc_dma_reset,
+	flsc_dma_intr,
+	flsc_dma_setup,
+	flsc_dma_go,
+	flsc_dma_stop,
+	flsc_dma_isactive,
+	flsc_clear_latched_intr,
+};
+
+/* Maximum DMA transfer length to reduce impact on high-speed serial input */
+u_long flsc_max_dma = 1024;
+extern int ser_open_speed;
+
+extern int ncr53c9x_debug;
+extern u_long scsi_nosync;
+extern int shift_nosync;
 
 /*
  * if we are an Advanced Systems & Software FastlaneZ3
  */
 int
-flscmatch(pdp, cfp, auxp)
-	struct device	*pdp;
-	struct cfdata	*cfp;
-	void		*auxp;
+flscmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct zbus_args *zap;
 
 	if (!is_a4000() && !is_a3000())
 		return(0);
 
-	zap = auxp;
+	zap = aux;
 	if (zap->manid == 0x2140 && zap->prodid == 11
 	    && iszthreepa(zap->pa))
 		return(1);
@@ -116,334 +152,536 @@ flscmatch(pdp, cfp, auxp)
 	return(0);
 }
 
+/*
+ * Attach this instance, and then all the sub-devices
+ */
 void
-flscattach(pdp, dp, auxp)
-	struct device	*pdp;
-	struct device	*dp;
-	void		*auxp;
+flscattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct flsc_softc *sc;
+	struct flsc_softc *fsc = (void *)self;
+	struct ncr53c9x_softc *sc = &fsc->sc_ncr53c9x;
 	struct zbus_args  *zap;
-	flsc_regmap_p	   rp;
-	vu_char		  *fas;
 
-	zap = auxp;
-	fas = &((vu_char *)zap->va)[0x1000001];
+	/*
+	 * Set up the glue for MI code early; we use some of it here.
+	 */
+	sc->sc_glue = &flsc_glue;
 
-	sc = (struct flsc_softc *)dp;
-	rp = &sc->sc_regmap;
+	/*
+	 * Save the regs
+	 */
+	zap = aux;
+	fsc->sc_dmabase = (volatile u_char *)zap->va;
+	fsc->sc_reg = &((volatile u_char *)zap->va)[0x1000001];
 
-	rp->FAS216.sfas_tc_low	= &fas[0x00];
-	rp->FAS216.sfas_tc_mid	= &fas[0x04];
-	rp->FAS216.sfas_fifo	= &fas[0x08];
-	rp->FAS216.sfas_command	= &fas[0x0C];
-	rp->FAS216.sfas_dest_id	= &fas[0x10];
-	rp->FAS216.sfas_timeout	= &fas[0x14];
-	rp->FAS216.sfas_syncper	= &fas[0x18];
-	rp->FAS216.sfas_syncoff	= &fas[0x1C];
-	rp->FAS216.sfas_config1	= &fas[0x20];
-	rp->FAS216.sfas_clkconv	= &fas[0x24];
-	rp->FAS216.sfas_test	= &fas[0x28];
-	rp->FAS216.sfas_config2	= &fas[0x2C];
-	rp->FAS216.sfas_config3	= &fas[0x30];
-	rp->FAS216.sfas_tc_high	= &fas[0x38];
-	rp->FAS216.sfas_fifo_bot = &fas[0x3C];
-	rp->hardbits		= &fas[0x40];
-	rp->clear		= &fas[0x80];
-	rp->dmabase		= zap->va;
+	sc->sc_freq = 40;		/* Clocked at 40Mhz */
 
-	sc->sc_softc.sc_fas	= (sfas_regmap_p)rp;
-	sc->sc_softc.sc_spec	= &sc->sc_specific;
+	printf(": address %p", fsc->sc_reg);
 
-	sc->sc_softc.sc_led	= flsc_led;
+	sc->sc_id = 7;
 
-	sc->sc_softc.sc_setup_dma	= flsc_setup_dma;
-	sc->sc_softc.sc_build_dma_chain = flsc_build_dma_chain;
-	sc->sc_softc.sc_need_bump	= flsc_need_bump;
+	/*
+	 * It is necessary to try to load the 2nd config register here,
+	 * to find out what rev the flsc chip is, else the flsc_reset
+	 * will not set up the defaults correctly.
+	 */
+	sc->sc_cfg1 = sc->sc_id | NCRCFG1_PARENB;
+	sc->sc_cfg2 = NCRCFG2_SCSI2 | NCRCFG2_FE;
+	sc->sc_cfg3 = 0x08 /*FCLK*/ | NCRESPCFG3_FSCSI | NCRESPCFG3_CDB;
+	sc->sc_rev = NCR_VARIANT_FAS216;
 
-	sc->sc_softc.sc_clock_freq   = 40;   /* FastlaneZ3 runs at 40MHz */
-	sc->sc_softc.sc_timeout      = 250;  /* Set default timeout to 250ms */
-	sc->sc_softc.sc_config_flags = 0;    /* No config flags yet */
-	sc->sc_softc.sc_host_id      = 7;    /* Should check the jumpers */
+	/*
+	 * This is the value used to start sync negotiations
+	 * Note that the NCR register "SYNCTP" is programmed
+	 * in "clocks per byte", and has a minimum value of 4.
+	 * The SCSI period used in negotiation is one-fourth
+	 * of the time (in nanoseconds) needed to transfer one byte.
+	 * Since the chip's clock is given in MHz, we have the following
+	 * formula: 4 * period = (1000 / freq) * 4
+	 */
+	sc->sc_minsync = 1000 / sc->sc_freq;
 
-	sc->sc_specific.portbits = 0xA0 | FLSC_PB_EDI | FLSC_PB_ESI;
-	sc->sc_specific.hardbits = *rp->hardbits;
+	if (((scsi_nosync >> shift_nosync) & 0xff00) == 0xff00)
+		sc->sc_minsync = 0;
 
-	sc->sc_softc.sc_bump_sz = NBPG;
-	sc->sc_softc.sc_bump_pa = 0x0;
+	/* Really no limit, but since we want to fit into the TCR... */
+	sc->sc_maxxfer = 64 * 1024;
 
-	sfasinitialize((struct sfas_softc *)sc);
+	fsc->sc_portbits = 0xa0 | FLSC_PB_EDI | FLSC_PB_ESI;
+	fsc->sc_hardbits = fsc->sc_reg[0x40];
 
-	sc->sc_softc.sc_link.scsipi_scsi.channel	    = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_softc.sc_link.adapter_softc  = sc;
-	sc->sc_softc.sc_link.scsipi_scsi.adapter_target = sc->sc_softc.sc_host_id;
-	sc->sc_softc.sc_link.adapter	    = &flsc_scsiswitch;
-	sc->sc_softc.sc_link.device	    = &flsc_scsidev;
-	sc->sc_softc.sc_link.openings	    = 1;
-	sc->sc_softc.sc_link.scsipi_scsi.max_target     = 7;
-	sc->sc_softc.sc_link.type = BUS_SCSI;
+	sc->sc_dev.dv_cfdata->cf_flags |= (scsi_nosync >> shift_nosync) & 0xffff;
+	shift_nosync += 16;
+	ncr53c9x_debug |= (scsi_nosync >> shift_nosync) & 0xffff;
+	shift_nosync += 16;
 
-	sc->sc_softc.sc_isr.isr_intr = flsc_intr;
-	sc->sc_softc.sc_isr.isr_arg  = &sc->sc_softc;
-	sc->sc_softc.sc_isr.isr_ipl  = 2;
-	add_isr(&sc->sc_softc.sc_isr);
+	/*
+	 * Configure interrupts.
+	 */
+	fsc->sc_isr.isr_intr = (int (*)(void *))ncr53c9x_intr;
+	fsc->sc_isr.isr_arg  = sc;
+	fsc->sc_isr.isr_ipl  = 2;
+	add_isr(&fsc->sc_isr);
 
-/* We don't want interrupt until we're initialized! */
-	*rp->hardbits = sc->sc_specific.portbits;
+	fsc->sc_reg[0x40] = fsc->sc_portbits;
 
-	printf("\n");
-
-/* attach all scsi units on us */
-	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
+	/*
+	 * Now try to attach all the sub-devices
+	 */
+	ncr53c9x_attach(sc, &flsc_switch, &flsc_dev);
 }
 
-int
-flsc_intr(arg)
-	void *arg;
+/*
+ * Glue functions.
+ */
+
+u_char
+flsc_read_reg(sc, reg)
+	struct ncr53c9x_softc *sc;
+	int reg;
 {
-	struct sfas_softc *dev = arg;
-	flsc_regmap_p	      rp;
-	struct flsc_specific *flspec;
-	int		      quickints;
-	u_char		      hb;
+	struct flsc_softc *fsc = (struct flsc_softc *)sc;
 
-	flspec = dev->sc_spec;
-	rp = (flsc_regmap_p)dev->sc_fas;
-	hb = *rp->hardbits;
+	return fsc->sc_reg[reg * 4];
+}
 
-	if (hb & FLSC_HB_IACT)
-		return(0);
+void
+flsc_write_reg(sc, reg, val)
+	struct ncr53c9x_softc *sc;
+	int reg;
+	u_char val;
+{
+	struct flsc_softc *fsc = (struct flsc_softc *)sc;
+	struct ncr53c9x_tinfo *ti;
+	u_char v = val;
 
-	flspec->hardbits = hb;
-	if ((hb & FLSC_HB_CREQ) &&
-	    !(hb & FLSC_HB_MINT) &&
-	    (*rp->FAS216.sfas_status & SFAS_STAT_INTERRUPT_PENDING)) {
-		quickints = 16;
-		do {
-			dev->sc_status = *rp->FAS216.sfas_status;
-			dev->sc_interrupt = *rp->FAS216.sfas_interrupt;
-	  
-			if (dev->sc_interrupt & SFAS_INT_RESELECTED) {
-				dev->sc_resel[0] = *rp->FAS216.sfas_fifo;
-				dev->sc_resel[1] = *rp->FAS216.sfas_fifo;
+	if (fsc->sc_piomode && reg == NCR_CMD &&
+	    v == (NCRCMD_TRANS|NCRCMD_DMA)) {
+		v = NCRCMD_TRANS;
+	}
+	/*
+	 * Can't do synchronous transfers in SCSI_POLL mode:
+	 * If starting SCSI_POLL command, clear defer sync negotiation
+	 * by clearing the T_NEGOTIATE flag.  If starting SCSI_POLL and
+	 * the device is currently running synchronous, force another
+	 * T_NEGOTIATE with 0 offset.
+	 */
+	if (reg == NCR_SELID) {
+		ti = &sc->sc_tinfo[
+		    sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+		if (sc->sc_nexus->xs->flags & SCSI_POLL) {
+			if (ti->flags & T_SYNCMODE) {
+				ti->flags ^= T_SYNCMODE | T_NEGOTIATE;
+			} else if (ti->flags & T_NEGOTIATE) {
+				ti->flags ^= T_NEGOTIATE | T_SYNCHOFF;
+				/* save T_NEGOTIATE in private flags? */
 			}
-			sfasintr(dev);
-
-		} while((*rp->FAS216.sfas_status & SFAS_STAT_INTERRUPT_PENDING)
-			&& --quickints);
+		} else {
+			/*
+			 * If we haven't attempted sync negotiation yet,
+			 * do it now.
+			 */
+			if ((ti->flags & (T_SYNCMODE | T_SYNCHOFF)) ==
+			    T_SYNCHOFF &&
+			    sc->sc_minsync != 0)	/* XXX */
+				ti->flags ^= T_NEGOTIATE | T_SYNCHOFF;
+		}
 	}
-
-	/* Reset fastlane interrupt bits */
-	*rp->hardbits = flspec->portbits & ~FLSC_PB_INT_BITS;
-	*rp->hardbits = flspec->portbits;
-
-	return(1);
-}
-
-/* Load transfer adress into dma register */
-void
-flsc_set_dma_adr(sc, ptr)
-	struct sfas_softc *sc;
-	vm_offset_t	  ptr;
-{
-	flsc_regmap_p	rp;
-	unsigned int   *p;
-	unsigned int	d;
-
-	rp = (flsc_regmap_p)sc->sc_fas;
-
-	d = (unsigned int)ptr;
-	p = (unsigned int *)((d & 0xFFFFFF) + (int)rp->dmabase);
-
-	*rp->clear=0;
-	*p = d;
-}
-
-/* Set DMA transfer counter */
-void
-flsc_set_dma_tc(sc, len)
-	struct sfas_softc *sc;
-	unsigned int	  len;
-{
-	*sc->sc_fas->sfas_tc_low  = len; len >>= 8;
-	*sc->sc_fas->sfas_tc_mid  = len; len >>= 8;
-	*sc->sc_fas->sfas_tc_high = len;
-}
-
-/* Set DMA mode */
-void
-flsc_set_dma_mode(sc, mode)
-	struct sfas_softc *sc;
-	int		  mode;
-{
-	struct flsc_specific *spec;
-
-	spec = sc->sc_spec;
-
-	spec->portbits = (spec->portbits & ~FLSC_PB_DMA_BITS) | mode;
-	*((flsc_regmap_p)sc->sc_fas)->hardbits = spec->portbits;
-}
-
-/* Initialize DMA for transfer */
-int
-flsc_setup_dma(sc, ptr, len, mode)
-	struct sfas_softc *sc;
-	vm_offset_t	  ptr;
-	int		  len;
-	int		  mode;
-{
-	int	retval;
-
-	retval = 0;
-
-	switch(mode) {
-	case SFAS_DMA_READ:
-	case SFAS_DMA_WRITE:
-		flsc_set_dma_adr(sc, ptr);
-		if (mode == SFAS_DMA_READ)
-		  flsc_set_dma_mode(sc,FLSC_PB_ENABLE_DMA | FLSC_PB_DMA_READ);
-		else
-		  flsc_set_dma_mode(sc,FLSC_PB_ENABLE_DMA | FLSC_PB_DMA_WRITE);
-
-		flsc_set_dma_tc(sc, len);
-		break;
-
-	case SFAS_DMA_CLEAR:
-	default:
-		flsc_set_dma_mode(sc, FLSC_PB_DISABLE_DMA);
-		flsc_set_dma_adr(sc, 0);
-
-		retval = (*sc->sc_fas->sfas_tc_high << 16) |
-			 (*sc->sc_fas->sfas_tc_mid  <<  8) |
-			  *sc->sc_fas->sfas_tc_low;
-
-		flsc_set_dma_tc(sc, 0);
-		break;
+	if (reg == NCR_CMD && v == NCRCMD_SETATN  &&
+	    sc->sc_flags & NCR_SYNCHNEGO &&
+	     sc->sc_nexus->xs->flags & SCSI_POLL) {
+		ti = &sc->sc_tinfo[
+		    sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+		ti->offset = 0;
 	}
-
-	return(retval);
+	fsc->sc_reg[reg * 4] = v;
 }
 
-/* Check if address and len is ok for DMA transfer */
 int
-flsc_need_bump(sc, ptr, len)
-	struct sfas_softc *sc;
-	vm_offset_t	  ptr;
-	int		  len;
+flsc_dma_isintr(sc)
+	struct ncr53c9x_softc *sc;
 {
-	int	p;
+	struct flsc_softc *fsc = (struct flsc_softc *)sc;
+	unsigned hardbits;
 
-	if (((int)ptr & 0x03) || (len & 0x03)) {
-		if (len < 256) 
-			p = len;
-		else
-			p = 256;
-	} else 
-		p = 0;
+	hardbits = fsc->sc_reg[0x40];
+	if (hardbits & FLSC_HB_IACT)
+		return (fsc->sc_csr = 0);
 
-	return(p);
+	if (sc->sc_state == NCR_CONNECTED || sc->sc_state == NCR_SELECTING)
+		fsc->sc_portbits |= FLSC_PB_LED;
+	else
+		fsc->sc_portbits &= ~FLSC_PB_LED;
+
+	if ((hardbits & FLSC_HB_CREQ) && !(hardbits & FLSC_HB_MINT) &&
+	    fsc->sc_reg[NCR_STAT * 4] & NCRSTAT_INT) {
+		return 1;
+	}
+	/* Do I still need this? */
+	if (fsc->sc_piomode && fsc->sc_reg[NCR_STAT * 4] & NCRSTAT_INT &&
+	    !(hardbits & FLSC_HB_MINT))
+		return 1;
+
+	fsc->sc_reg[0x40] = fsc->sc_portbits & ~FLSC_PB_INT_BITS;
+	fsc->sc_reg[0x40] = fsc->sc_portbits;
+	return 0;
 }
 
-/* Interrupt driven routines */
-int
-flsc_build_dma_chain(sc, chain, p, l)
-	struct sfas_softc	*sc;
-	struct sfas_dma_chain	*chain;
-	void			*p;
-	int			 l;
+void
+flsc_clear_latched_intr(sc)
+	struct ncr53c9x_softc *sc;
 {
-	vm_offset_t  pa, lastpa;
-	char	    *ptr;
-	int	     len, prelen, max_t, n;
+	struct flsc_softc *fsc = (struct flsc_softc *)sc;
 
-	if (l == 0)
-		return(0);
+	fsc->sc_reg[0x40] = fsc->sc_portbits & ~FLSC_PB_INT_BITS;
+	fsc->sc_reg[0x40] = fsc->sc_portbits;
+}
 
-#define set_link(n, p, l, f)\
-do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
+void
+flsc_dma_reset(sc)
+	struct ncr53c9x_softc *sc;
+{
+	struct flsc_softc *fsc = (struct flsc_softc *)sc;
+struct ncr53c9x_tinfo *ti;
 
-	n = 0;
-
-	if (l < 512)
-		set_link(n, (vm_offset_t)p, l, SFAS_CHAIN_BUMP);
-	else if ((p >= (void *)0xFF000000)
-#if defined(M68040) || defined(M68060)
-		 && ((mmutype == MMU_68040) && (p >= (void *)0xFFFC0000))
+if (sc->sc_nexus)
+  ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+else
+  ti = &sc->sc_tinfo[1];	/* XXX */
+if (fsc->sc_active) {
+  printf("dmaaddr %p dmasize %d stat %x flags %x off %d per %d ff %x",
+     *fsc->sc_dmaaddr, fsc->sc_dmasize, fsc->sc_reg[NCR_STAT * 4],
+     ti->flags, ti->offset, ti->period, fsc->sc_reg[NCR_FFLAG * 4]);
+  printf(" intr %x\n", fsc->sc_reg[NCR_INTR * 4]);
+#ifdef DDB
+  Debugger();
 #endif
-		 ) {
-		while(l != 0) {
-			len = ((l > sc->sc_bump_sz) ? sc->sc_bump_sz : l);
-	  
-			set_link(n, (vm_offset_t)p, len, SFAS_CHAIN_BUMP);
-	  
-			p += len;
-			l -= len;
-		}
-	} else {
-		ptr = p;
-		len = l;
-
-		pa = kvtop(ptr);
-		prelen = ((int)ptr & 0x03);
-
-		if (prelen) {
-			prelen = 4-prelen;
-			set_link(n, (vm_offset_t)ptr, prelen, SFAS_CHAIN_BUMP);
-			ptr += prelen;
-			len -= prelen;
-		}
-
-		lastpa = 0;
-		while(len > 3) {
-			pa = kvtop(ptr);
-			max_t = NBPG - (pa & PGOFSET);
-			if (max_t > len)
-			  max_t = len;
-
-			max_t &= ~3;
-
-			if (lastpa == pa)
-				sc->sc_chain[n-1].len += max_t;
-			else
-				set_link(n, pa, max_t, SFAS_CHAIN_DMA);
-	  
-			lastpa = pa+max_t;
-	  
-			ptr += max_t;
-			len -= max_t;
-		}
-      
-		if (len)
-			set_link(n, (vm_offset_t)ptr, len, SFAS_CHAIN_BUMP);
-	}
-
-	return(n);
+}
+	fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
+	fsc->sc_reg[0x40] = fsc->sc_portbits;
+	fsc->sc_reg[0x80] = 0;
+	*((u_long *)fsc->sc_dmabase) = 0;
+	fsc->sc_active = 0;
+	fsc->sc_piomode = 0;
 }
 
-/* Turn on/off led */
-void
-flsc_led(sc, mode)
-	struct sfas_softc *sc;
-	int		  mode;
+int
+flsc_dma_intr(sc)
+	struct ncr53c9x_softc *sc;
 {
-	struct flsc_specific   *spec;
-	flsc_regmap_p		rp;
+	register struct flsc_softc *fsc = (struct flsc_softc *)sc;
+	register u_char	*p;
+	volatile u_char *cmdreg, *intrreg, *statreg, *fiforeg;
+	register u_int	flscphase, flscstat, flscintr;
+	register int	cnt;
 
-	spec = sc->sc_spec;
-	rp = (flsc_regmap_p)sc->sc_fas;
-
-	if (mode) {
-		sc->sc_led_status++;
-
-		spec->portbits |= FLSC_PB_LED;
-		*rp->hardbits = spec->portbits;
-	} else {
-		if (sc->sc_led_status)
-			sc->sc_led_status--;
-
-		if (!sc->sc_led_status) {
-			spec->portbits &= ~FLSC_PB_LED;
-			*rp->hardbits = spec->portbits;
-		}
+	NCR_DMA(("flsc_dma_intr: pio %d cnt %d int %x stat %x fifo %d ",
+	    fsc->sc_piomode, fsc->sc_dmasize, sc->sc_espintr, sc->sc_espstat,
+	    fsc->sc_reg[NCR_FFLAG * 4] & NCRFIFO_FF));
+	if (!(fsc->sc_reg[0x40] & FLSC_HB_CREQ))
+		printf("flsc_dma_intr: csr %x stat %x intr %x\n", fsc->sc_csr,
+		    sc->sc_espstat, sc->sc_espintr);
+	if (fsc->sc_active == 0) {
+		printf("flsc_intr--inactive DMA\n");
+		return -1;
 	}
+
+/* if DMA transfer, update sc_dmaaddr and sc_pdmalen, else PIO xfer */
+	if (fsc->sc_piomode == 0) {
+		fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
+		fsc->sc_reg[0x40] = fsc->sc_portbits;
+		fsc->sc_reg[0x80] = 0;
+		*((u_long *)fsc->sc_dmabase) = 0;
+		cnt = fsc->sc_reg[NCR_TCL * 4];
+		cnt += fsc->sc_reg[NCR_TCM * 4] << 8;
+		cnt += fsc->sc_reg[NCR_TCH * 4] << 16;
+		if (!fsc->sc_datain) {
+			cnt += fsc->sc_reg[NCR_FFLAG * 4] & NCRFIFO_FF;
+			fsc->sc_reg[NCR_CMD * 4] = NCRCMD_FLUSH;
+		}
+		cnt = fsc->sc_dmasize - cnt;	/* number of bytes transferred */
+		NCR_DMA(("DMA xferred %d\n", cnt));
+		if (fsc->sc_xfr_align) {
+			int i;
+			for (i = 0; i < cnt; ++i)
+				(*fsc->sc_dmaaddr)[i] = fsc->sc_alignbuf[i];
+			fsc->sc_xfr_align = 0;
+		}
+		*fsc->sc_dmaaddr += cnt;
+		*fsc->sc_pdmalen -= cnt;
+		fsc->sc_active = 0;
+		return 0;
+	}
+
+	if ((sc->sc_espintr & NCRINTR_BS) == 0) {
+		fsc->sc_active = 0;
+		fsc->sc_piomode = 0;
+		NCR_DMA(("no NCRINTR_BS\n"));
+		return 0;
+	}
+
+	cnt = fsc->sc_dmasize;
+#if 0
+	if (cnt == 0) {
+		printf("data interrupt, but no count left.");
+	}
+#endif
+
+	p = *fsc->sc_dmaaddr;
+	flscphase = sc->sc_phase;
+	flscstat = (u_int) sc->sc_espstat;
+	flscintr = (u_int) sc->sc_espintr;
+	cmdreg = fsc->sc_reg + NCR_CMD * 4;
+	fiforeg = fsc->sc_reg + NCR_FIFO * 4;
+	statreg = fsc->sc_reg + NCR_STAT * 4;
+	intrreg = fsc->sc_reg + NCR_INTR * 4;
+	NCR_DMA(("PIO %d datain %d phase %d stat %x intr %x\n",
+	    cnt, fsc->sc_datain, flscphase, flscstat, flscintr));
+	do {
+		if (fsc->sc_datain) {
+			*p++ = *fiforeg;
+			cnt--;
+			if (flscphase == DATA_IN_PHASE) {
+				*cmdreg = NCRCMD_TRANS;
+			} else {
+				fsc->sc_active = 0;
+			}
+	 	} else {
+NCR_DMA(("flsc_dma_intr: PIO out- phase %d cnt %d active %d\n", flscphase, cnt,
+    fsc->sc_active));
+			if (   (flscphase == DATA_OUT_PHASE)
+			    || (flscphase == MESSAGE_OUT_PHASE)) {
+				int n;
+				n = 16 - (fsc->sc_reg[NCR_FFLAG * 4] & NCRFIFO_FF);
+				if (n > cnt)
+					n = cnt;
+				cnt -= n;
+				while (n-- > 0)
+					*fiforeg = *p++;
+				*cmdreg = NCRCMD_TRANS;
+			} else {
+				fsc->sc_active = 0;
+			}
+		}
+
+		if (fsc->sc_active && cnt) {
+			while (!(*statreg & 0x80));
+			flscstat = *statreg;
+			flscintr = *intrreg;
+			flscphase = (flscintr & NCRINTR_DIS)
+				    ? /* Disconnected */ BUSFREE_PHASE
+				    : flscstat & PHASE_MASK;
+		}
+	} while (cnt && fsc->sc_active && (flscintr & NCRINTR_BS));
+#if 1
+if (fsc->sc_dmasize < 8 && cnt)
+  printf("flsc_dma_intr: short transfer: dmasize %d cnt %d\n",
+    fsc->sc_dmasize, cnt);
+#endif
+	NCR_DMA(("flsc_dma_intr: PIO transfer [%d], %d->%d phase %d stat %x intr %x\n",
+	    *fsc->sc_pdmalen, fsc->sc_dmasize, cnt, flscphase, flscstat, flscintr));
+	sc->sc_phase = flscphase;
+	sc->sc_espstat = (u_char) flscstat;
+	sc->sc_espintr = (u_char) flscintr;
+	*fsc->sc_dmaaddr = p;
+	*fsc->sc_pdmalen -= fsc->sc_dmasize - cnt;
+	fsc->sc_dmasize = cnt;
+
+	if (*fsc->sc_pdmalen == 0) {
+		sc->sc_espstat |= NCRSTAT_TC;
+		fsc->sc_piomode = 0;
+	}
+	return 0;
+}
+
+int
+flsc_dma_setup(sc, addr, len, datain, dmasize)
+	struct ncr53c9x_softc *sc;
+	caddr_t *addr;
+	size_t *len;
+	int datain;
+	size_t *dmasize;
+{
+	struct flsc_softc *fsc = (struct flsc_softc *)sc;
+	vm_offset_t pa;
+	u_char *ptr;
+	size_t xfer;
+
+	fsc->sc_dmaaddr = addr;
+	fsc->sc_pdmalen = len;
+	fsc->sc_datain = datain;
+	fsc->sc_dmasize = *dmasize;
+	if (sc->sc_nexus->xs->flags & SCSI_POLL) {
+		/* polling mode, use PIO */
+		*dmasize = fsc->sc_dmasize;
+		NCR_DMA(("pfsc_dma_setup: PIO %p/%d [%d]\n", *addr,
+		    fsc->sc_dmasize, *len));
+		fsc->sc_piomode = 1;
+		if (datain == 0) {
+			int n;
+			n = fsc->sc_dmasize;
+			if (n > 16)
+				n = 16;
+			while (n-- > 0) {
+				fsc->sc_reg[NCR_FIFO * 4] = **fsc->sc_dmaaddr;
+				(*fsc->sc_pdmalen)--;
+				(*fsc->sc_dmaaddr)++;
+				--fsc->sc_dmasize;
+			}
+		}
+		return 0;
+	}
+	/*
+	 * DMA can be nasty for high-speed serial input, so limit the
+	 * size of this DMA operation if the serial port is running at
+	 * a high speed (higher than 19200 for now - should be adjusted
+	 * based on cpu type and speed?).
+	 * XXX - add serial speed check XXX
+	 */
+	if (ser_open_speed > 19200 && flsc_max_dma != 0 &&
+	    fsc->sc_dmasize > flsc_max_dma)
+		fsc->sc_dmasize = flsc_max_dma;
+	ptr = *addr;			/* Kernel virtual address */
+	pa = kvtop(ptr);		/* Physical address of DMA */
+	xfer = min(fsc->sc_dmasize, NBPG - (pa & (NBPG - 1)));
+	fsc->sc_xfr_align = 0;
+	fsc->sc_piomode = 0;
+	fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
+	fsc->sc_reg[0x40] = fsc->sc_portbits;
+	fsc->sc_reg[0x80] = 0;
+	*((u_long *)fsc->sc_dmabase) = 0;
+
+	/*
+	 * If output and length < 16, copy to fifo
+	 */
+	if (datain == 0 && fsc->sc_dmasize < 16) {
+		int n;
+		for (n = 0; n < fsc->sc_dmasize; ++n)
+			fsc->sc_reg[NCR_FIFO * 4] = *ptr++;
+		NCR_DMA(("flsc_dma_setup: %d bytes written to fifo\n", n));
+		fsc->sc_piomode = 1;
+		fsc->sc_active = 1;
+		*fsc->sc_pdmalen -= fsc->sc_dmasize;
+		*fsc->sc_dmaaddr += fsc->sc_dmasize;
+		*dmasize = fsc->sc_dmasize;
+		fsc->sc_dmasize = 0;
+		return 0;		/* All done */
+	}
+	/*
+	 * If output and unaligned, copy unaligned data to fifo
+	 */
+	else if (datain == 0 && (int)ptr & 3) {
+		int n = 4 - ((int)ptr & 3);
+		NCR_DMA(("flsc_dma_setup: align %d bytes written to fifo\n", n));
+		pa += n;
+		xfer -= n;
+		while (n--)
+			fsc->sc_reg[NCR_FIFO * 4] = *ptr++;
+	}
+	/*
+	 * If unaligned address, read unaligned bytes into alignment buffer
+	 */
+	else if ((int)ptr & 3 || xfer & 3) {
+		pa = kvtop((caddr_t)&fsc->sc_alignbuf);
+		xfer = fsc->sc_dmasize = min(xfer, sizeof (fsc->sc_alignbuf));
+		NCR_DMA(("flsc_dma_setup: align read by %d bytes\n", xfer));
+		fsc->sc_xfr_align = 1;
+	}
+	/*
+	 * If length smaller than longword, read into alignment buffer
+	 * XXX doesn't work for 1 or 2 bytes !!!!
+	 */
+	else if (fsc->sc_dmasize < 4) {
+		NCR_DMA(("flsc_dma_setup: read remaining %d bytes\n",
+		    fsc->sc_dmasize));
+		pa = kvtop((caddr_t)&fsc->sc_alignbuf);
+		fsc->sc_xfr_align = 1;
+	}
+	/*
+	 * Finally, limit transfer length to multiple of 4 bytes.
+	 */
+	else {
+		fsc->sc_dmasize &= -4;
+		xfer &= -4;
+	}
+
+	while (xfer < fsc->sc_dmasize) {
+		if ((pa + xfer) != kvtop(*addr + xfer))
+			break;
+		if ((fsc->sc_dmasize - xfer) < NBPG)
+			xfer = fsc->sc_dmasize;
+		else
+			xfer += NBPG;
+	}
+
+	fsc->sc_dmasize = xfer;
+	*dmasize = fsc->sc_dmasize;
+	fsc->sc_pa = pa;
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		if (fsc->sc_xfr_align) {
+			int n;
+			for (n = 0; n < sizeof (fsc->sc_alignbuf); ++n)
+				fsc->sc_alignbuf[n] = n | 0x80;
+			dma_cachectl(fsc->sc_alignbuf,
+			    sizeof(fsc->sc_alignbuf));
+		}
+		else
+			dma_cachectl(*fsc->sc_dmaaddr, fsc->sc_dmasize);
+	}
+#endif
+	fsc->sc_reg[0x80] = 0;
+	*((u_long *)(fsc->sc_dmabase + (pa & 0x00fffffc))) = pa;
+	fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
+	fsc->sc_portbits |= FLSC_PB_ENABLE_DMA |
+	    (fsc->sc_datain ? FLSC_PB_DMA_READ : FLSC_PB_DMA_WRITE);
+	fsc->sc_reg[0x40] = fsc->sc_portbits;
+	NCR_DMA(("flsc_dma_setup: DMA %p->%lx/%d [%d]\n",
+	    ptr, pa, fsc->sc_dmasize, *len));
+	fsc->sc_active = 1;
+	return 0;
+}
+
+void
+flsc_dma_go(sc)
+	struct ncr53c9x_softc *sc;
+{
+	struct flsc_softc *fsc = (struct flsc_softc *)sc;
+
+	NCR_DMA(("flsc_dma_go: datain %d size %d\n", fsc->sc_datain,
+	    fsc->sc_dmasize));
+	if (sc->sc_nexus->xs->flags & SCSI_POLL) {
+		fsc->sc_active = 1;
+		return;
+	} else if (fsc->sc_piomode == 0) {
+		fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
+		fsc->sc_portbits |= FLSC_PB_ENABLE_DMA |
+		    (fsc->sc_datain ? FLSC_PB_DMA_READ : FLSC_PB_DMA_WRITE);
+		fsc->sc_reg[0x40] = fsc->sc_portbits;
+	}
+}
+
+void
+flsc_dma_stop(sc)
+	struct ncr53c9x_softc *sc;
+{
+	struct flsc_softc *fsc = (struct flsc_softc *)sc;
+
+	fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
+	fsc->sc_reg[0x40] = fsc->sc_portbits;
+
+	fsc->sc_reg[0x80] = 0;
+	*((u_long *)fsc->sc_dmabase) = 0;
+	fsc->sc_piomode = 0;
+}
+
+int
+flsc_dma_isactive(sc)
+	struct ncr53c9x_softc *sc;
+{
+	struct flsc_softc *fsc = (struct flsc_softc *)sc;
+
+	return fsc->sc_active;
 }
