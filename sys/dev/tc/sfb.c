@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.35.4.2 2001/08/16 16:52:40 tv Exp $ */
+/* $NetBSD: sfb.c,v 1.35.4.3 2002/09/04 04:09:08 itojun Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.35.4.2 2001/08/16 16:52:40 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.35.4.3 2002/09/04 04:09:08 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -706,7 +706,7 @@ get_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
+	if (index >= CMAP_SIZE || count) > CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_WRITE) ||

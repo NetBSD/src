@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.7 1999/03/25 23:20:00 is Exp $	*/
+/*	$NetBSD: grf_cv3d.c,v 1.7.18.1 2002/09/04 04:09:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -985,7 +985,7 @@ cv3d_getcmap(gfp, cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return (0);
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	/* first read colors out of the chip, then copyout to userspace */

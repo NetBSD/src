@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.14.4.1 2000/08/30 03:59:20 sommerfeld Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.14.4.2 2002/09/04 04:09:08 itojun Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -86,6 +86,11 @@ cvt_statfs(sp, buf, len)
 {
 	struct ibcs2_statfs ssfs;
 
+	if (len < 0)
+		return EINVAL;
+	if (len > sizeof(ssfs))
+		len = sizeof(ssfs);
+
 	memset(&ssfs, 0, sizeof ssfs);
 	ssfs.f_fstyp = 0;
 	ssfs.f_bsize = sp->f_bsize;
@@ -107,6 +112,11 @@ cvt_statvfs(sp, buf, len)
 {
 	struct ibcs2_statvfs ssvfs;
 
+	if (len < 0)
+		return (EINVAL);
+	if (len > sizeof(ssvfs))
+		len = sizeof(ssvfs);
+
 	memset(&ssvfs, 0, sizeof ssvfs);
 	ssvfs.f_frsize = ssvfs.f_bsize = sp->f_bsize;
 	ssvfs.f_blocks = sp->f_blocks;
@@ -121,7 +131,7 @@ cvt_statvfs(sp, buf, len)
 	ssvfs.f_namemax = PATH_MAX;
 	ssvfs.f_fstr[0] = 0;
 	return copyout((caddr_t)&ssvfs, buf, len);
-}	
+}
 
 int
 ibcs2_sys_statfs(p, v, retval)
