@@ -73,6 +73,8 @@ username()
 {
 	char *np;
 
+	if ((np = getenv("LOGNAME")) != NOSTR)
+		return np;
 	if ((np = getenv("USER")) != NOSTR)
 		return np;
 	return getname(getuid());
