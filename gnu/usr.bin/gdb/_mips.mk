@@ -1,4 +1,4 @@
-# $NetBSD: _mips.mk,v 1.5 1997/10/20 05:36:10 jonathan Exp $
+# $NetBSD: _mips.mk,v 1.6 1997/10/20 16:05:29 gwr Exp $
 
 # From gdb/config/mips/nbsd.mh
 NM_FILE= config/mips/nm-nbsd.h
@@ -7,6 +7,3 @@ NDEP_FILES= mipsnbsd-nat.c
 # From gdb/config/mips/nbsd.mt
 TM_FILE= config/mips/tm-nbsd.h
 TDEP_FILES= mips-tdep.c solib.c
-
-# Use userspace single-step emulation instead of ptrace(PT_STEP).
-DEFS+= -DNO_SINGLE_STEP
