@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.79 2003/09/22 14:12:30 cl Exp $
+# $NetBSD: DRACO,v 1.80 2003/09/22 18:29:06 jandberg Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.14 2003/09/22 14:11:15 cl Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.15 2003/09/22 18:23:01 jandberg Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.79 $"
+#ident 		"GENERIC-$Revision: 1.80 $"
 
 
 maxusers	8
@@ -252,6 +252,9 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 #wskbd0		at kbd0 console ?
 
 
+
+
+#wsmouse*	at ms?
 
 #
 # DraCo Mainboard devices (sans keyboard)
