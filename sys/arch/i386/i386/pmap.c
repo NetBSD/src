@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.8 2000/08/07 01:08:45 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.9 2000/08/18 03:22:48 sommerfeld Exp $	*/
 
 /*
  *
@@ -701,6 +701,7 @@ pmap_kenter_pa(va, pa, prot)
 	if (pmap_valid_entry(opte)) {
 		pmap_update_pg(va);
 #ifdef MULTIPROCESSOR
+		/* XXX only strictly needed if opte ">" pte */
 		pmap_tlb_shootdown(pmap_kernel(), va, opte);
 #endif
 	}
@@ -786,6 +787,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 		if (pmap_valid_entry(opte)) {
 			pmap_update_pg(tva);
 #ifdef MULTIPROCESSOR
+			/* XXX only strictly needed if opte ">" pte */
 			pmap_tlb_shootdown(pmap_kernel(), va, opte);
 #endif
 		}
@@ -3953,12 +3955,14 @@ pmap_tlb_sendipi(void)
 	}
 }
 
+#if 0
 static __inline void
 pmap_tlb_ipispin(void)
 {
 	int i, cpu_id = cpu_number();
 	struct cpu_info *me = cpu_info[cpu_id], *them;
 	int spincount;
+	int s;
 	
 	for(spincount = 0; spincount<100; spincount++) {
 		int count = 0;
@@ -3972,11 +3976,13 @@ pmap_tlb_ipispin(void)
 			them = cpu_info[i];
 			pq = &pmap_tlb_shootdown_q[i];
 
+			s = splipi();
 			simple_lock(&pq->pq_slock);
 			flushg = pq->pq_flushg;
 			flushu = pq->pq_flushu;
 			cnt = pq->pq_count;
-			simple_unlock(&pq->pq_slock);			
+			simple_unlock(&pq->pq_slock);
+			splx(s);
 
 			printf("%s: waiting for %s fg %d fu %d fi %d\n",
 			    me->ci_dev.dv_xname, them->ci_dev.dv_xname,
@@ -3993,6 +3999,7 @@ pmap_tlb_ipispin(void)
 	printf("escaped after %d spins\n", spincount);
 	
 }
+#endif
 
 #endif
 
@@ -4004,7 +4011,7 @@ pmap_tlb_shootnow ()
 	pmap_tlb_sendipi();	/* kick other cpu's */
 	s = splimp();		/* or "splipi"? */
 #endif
-	pmap_do_tlb_shootdown(); /* do *our* work. */
+	pmap_do_tlb_shootdown(0); /* do *our* work. */
 #ifdef MULTIPROCESSOR
 	splx(s);
 	/* XXX should wait until ipi bit is cleared by other cpu.. */
@@ -4033,7 +4040,7 @@ pmap_tlb_dshootdown(pmap, va, pte)
 
 	cpu_id = cpu_number();	
 	/* XXX i386 case? */
-	s = splimp();
+	s = splipi();
 #if 0
 	printf("dshootdown %lx\n", va);
 #endif
@@ -4053,7 +4060,7 @@ pmap_tlb_dshootdown(pmap, va, pte)
 			/*
 			 * Couldn't allocate a job entry.
 			 * Kill it now for this cpu; otherwise, tell 
-			 * other cpu to kill everything..
+			 * other cpus to kill everything..
 			 */
 			if (i == cpu_id) {
 				pmap_update_pg(va); /* XXX overkill? */
@@ -4136,7 +4143,7 @@ void pmap_do_tlbflush()
  *	Process pending TLB shootdown operations for this processor.
  */
 void
-pmap_do_tlb_shootdown()
+pmap_do_tlb_shootdown(struct cpu_info *ci)
 {
 	u_long cpu_id = cpu_number();
 #if 0
@@ -4150,7 +4157,7 @@ pmap_do_tlb_shootdown()
 #endif
 	
 
-	s = splimp();
+	s = splipi();
 
 #if 0
 	printf("%s: tlbf %d:%d:%d\n",
@@ -4278,3 +4285,4 @@ pmap_tlb_shootdown(pmap, va, pte)
 	pmap_tlb_shootnow();
 }
 #endif /* MULTIPROCESSOR */
+
