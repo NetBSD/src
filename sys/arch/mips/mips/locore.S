@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 1995/09/21 23:28:31 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.16 1995/09/28 20:02:50 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2689,6 +2689,7 @@ NON_LEAF(MachFPInterrupt, STAND_FRAME_SIZE, ra)
  */
 	srl	a3, a0, MACH_OPCODE_SHIFT
 	beq	a3, MACH_OPCODE_C1, 4f		# this should never fail
+	nop
 /*
  * Send a floating point exception signal to the current process.
  */
