@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.18 1996/02/03 23:17:53 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.19 1996/02/19 02:51:03 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -98,6 +98,7 @@
 #endif
 
 #undef 	REAL_DMA		/* Use DMA if sensible			*/
+#define scsi_ipending()		(GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET)
 #define fair_to_keep_dma()	1
 #define claimed_dma()		1
 #define reconsider_dma()
