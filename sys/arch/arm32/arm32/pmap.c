@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 1998/08/29 03:14:14 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 1998/09/03 03:31:53 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -1943,7 +1943,7 @@ pmap_remove_all(pa)
 	pv = ph = &pv_table[pind];
 #endif
 
-	cpu_cache_purgeID();
+	pmap_clean_page(pv);
 
 	s = splimp();
 
