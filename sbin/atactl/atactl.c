@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.17 2002/08/06 01:16:56 soren Exp $	*/
+/*	$NetBSD: atactl.c,v 1.18 2002/08/15 18:57:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -389,7 +389,7 @@ is_smart(int silent)
 				status = "status unknown";
 				retval = 2;
 			} else {
-				if (inqbuf->atap_cmd_set2 & ATA_CMD2_SMART) {
+				if (inqbuf->atap_cmd1_en & WDC_CMD1_SMART) {
 					status = "enabled";
 					retval = 1;
 				} else {
