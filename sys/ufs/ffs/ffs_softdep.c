@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.2 2000/06/22 16:13:41 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.3 2000/06/27 16:46:54 pk Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,16 +32,6 @@
  * from: @(#)ffs_softdep.c 9.56 (McKusick) 1/17/00
  */
 
-/*
- * For now we want the safety net that the DIAGNOSTIC and DEBUG flags provide.
- */
-#ifndef DIAGNOSTIC
-#define DIAGNOSTIC
-#endif
-#ifndef DEBUG
-#define DEBUG
-#endif
-
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/callout.h>
@@ -62,6 +52,16 @@
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
+
+/*
+ * For now we want the safety net that the DIAGNOSTIC and DEBUG flags provide.
+ */
+#ifndef DIAGNOSTIC
+#define DIAGNOSTIC
+#endif
+#ifndef DEBUG
+#define DEBUG
+#endif
 
 /*
  * These definitions need to be adapted to the system to which
