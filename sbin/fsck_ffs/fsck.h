@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.22 2001/01/09 05:51:14 mycroft Exp $	*/
+/*	$NetBSD: fsck.h,v 1.23 2001/01/26 17:37:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -79,6 +79,7 @@ struct bufarea {
 #define	MINBUFS		5	/* minimum number of buffers required */
 struct bufarea bufhead;		/* head of list of other blks in filesys */
 struct bufarea sblk;		/* file system superblock */
+struct bufarea asblk;		/* file system superblock */
 struct bufarea cgblk;		/* cylinder group blocks */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
@@ -90,6 +91,7 @@ struct bufarea *pbp;		/* current inode block */
 	(bp)->b_flags = 0;
 
 struct fs *sblock;
+struct fs *altsblock;
 struct cg *cgrp;
 #define	sbdirty() \
 	do { \
