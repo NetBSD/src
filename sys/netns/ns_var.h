@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_var.h,v 1.4 1996/05/22 13:56:24 mycroft Exp $	*/
+/*	$NetBSD: ns_var.h,v 1.3 1996/03/27 14:44:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -43,8 +43,7 @@ struct in_addr;
 struct sockaddr;
 
 /* ns.c */
-int ns_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
-		    struct proc *));
+int ns_control __P((struct socket *, u_long, caddr_t, struct ifnet *));
 void ns_ifscrub __P((struct ifnet *, struct ns_ifaddr *));
 int ns_ifinit __P((struct ifnet *, struct ns_ifaddr *, struct sockaddr_ns *,
 		   int));
@@ -86,7 +85,7 @@ int ns_output __P((struct mbuf *, ...));
 
 /* ns_pcb.c */
 int ns_pcballoc __P((struct socket *, struct nspcb *));
-int ns_pcbbind __P((struct nspcb *, struct mbuf *, struct proc *));
+int ns_pcbbind __P((struct nspcb *, struct mbuf *));
 int ns_pcbconnect __P((struct nspcb *, struct mbuf *));
 void ns_pcbdisconnect __P((struct nspcb *));
 void ns_pcbdetach __P((struct nspcb *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.12 1996/05/22 13:55:00 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -175,8 +175,7 @@ sonewconn1(head, connstatus)
 	(void) soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat);
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH,
-	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
-	    (struct proc *)0)) {
+	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0)) {
 		(void) soqremque(so, soqueue);
 		(void) free((caddr_t)so, M_SOCKET);
 		return ((struct socket *)0);

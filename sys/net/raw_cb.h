@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.10 1996/05/22 13:55:13 mycroft Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.9 1996/02/13 22:00:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -65,6 +65,6 @@ void	 raw_disconnect __P((struct rawcb *));
 void	 raw_init __P((void));
 void	 raw_input __P((struct mbuf *, ...));
 int	 raw_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
+	    int, struct mbuf *, struct mbuf *, struct mbuf *));
 
 #endif /* _KERNEL */

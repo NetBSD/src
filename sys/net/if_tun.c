@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.25 1996/05/22 13:42:57 mycroft Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -217,7 +217,7 @@ tuninit(tp)
 int
 tun_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-	u_long cmd;
+	u_long	cmd;
 	caddr_t	data;
 {
 	int		error = 0, s;
@@ -542,7 +542,7 @@ tunselect(dev, rw, p)
 			    ifp->if_snd.ifq_len);
 			return 1;
 		}
-		selrecord(p, &tp->tun_rsel);
+		selrecord(curproc, &tp->tun_rsel);
 		break;
 	case FWRITE:
 		splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.18 1996/05/23 18:45:14 mycroft Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -265,15 +265,16 @@ portal_connect(so, so2)
 	if (so->so_type != so2->so_type)
 		return (EPROTOTYPE);
 
-	if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
-	    (so3 = sonewconn(so2, 0)) == 0)
+	if ((so2->so_options & SO_ACCEPTCONN) == 0)
+		return (ECONNREFUSED);
+
+	if ((so3 = sonewconn(so2, 0)) == 0)
 		return (ECONNREFUSED);
 
 	unp2 = sotounpcb(so2);
 	unp3 = sotounpcb(so3);
 	if (unp2->unp_addr)
-		unp3->unp_addr = mtod(m_copy(dtom(unp2->unp_addr), 0,
-		    (int)M_COPYALL), struct sockaddr_un *);
+		unp3->unp_addr = m_copy(unp2->unp_addr, 0, (int)M_COPYALL);
 
 	so2 = so3;
 

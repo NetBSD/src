@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.20 1996/05/23 18:30:57 mycroft Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -79,11 +79,10 @@ static void	rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
 
 /*ARGSUSED*/
 int
-route_usrreq(so, req, m, nam, control, p)
+route_usrreq(so, req, m, nam, control)
 	register struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
 {
 	register int error = 0;
 	register struct rawcb *rp = sotorawcb(so);
@@ -106,7 +105,7 @@ route_usrreq(so, req, m, nam, control, p)
 		route_cb.any_count--;
 	}
 	s = splsoftnet();
-	error = raw_usrreq(so, req, m, nam, control, p);
+	error = raw_usrreq(so, req, m, nam, control);
 	rp = sotorawcb(so);
 	if (req == PRU_ATTACH && rp) {
 		int af = rp->rcb_proto.sp_protocol;
@@ -121,9 +120,8 @@ route_usrreq(so, req, m, nam, control, p)
 			route_cb.ns_count++;
 		else if (af == AF_ISO)
 			route_cb.iso_count++;
+		rp->rcb_faddr = &route_src;
 		route_cb.any_count++;
-		rp->rcb_laddr = &route_src;
-		rp->rcb_faddr = &route_dst;
 		soisconnected(so);
 		so->so_options |= SO_USELOOPBACK;
 	}

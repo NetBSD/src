@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_master.c,v 1.3 1996/05/23 13:49:01 christos Exp $	 */
+/*	$NetBSD: yp_master.c,v 1.2 1996/05/18 19:01:24 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_master.c,v 1.3 1996/05/23 13:49:01 christos Exp $";
+static char rcsid[] = "$NetBSD: yp_master.c,v 1.2 1996/05/18 19:01:24 jtc Exp $";
 #endif
 
 #include <string.h>
@@ -41,7 +41,6 @@ static char rcsid[] = "$NetBSD: yp_master.c,v 1.3 1996/05/23 13:49:01 christos E
 #include <rpcsvc/ypclnt.h>
 
 extern struct timeval _yplib_timeout;
-extern int _yplib_nerrs;
 
 int
 yp_master(indomain, inmap, outname)
@@ -52,7 +51,7 @@ yp_master(indomain, inmap, outname)
 	struct dom_binding *ysd;
 	struct ypresp_master yprm;
 	struct ypreq_nokey yprnk;
-	int r, nerrs = 0;
+	int             r;
 
 	if (indomain == NULL || *indomain == '\0'
 	    || strlen(indomain) > YPMAXDOMAIN)
@@ -76,10 +75,7 @@ again:
 		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_master, &yprm, 
 		      _yplib_timeout);
 	if (r != RPC_SUCCESS) {
-		if (++nerrs == _yplib_nerrs) {
-			clnt_perror(ysd->dom_client, "yp_master: clnt_call");
-			nerrs = 0;
-		}
+		clnt_perror(ysd->dom_client, "yp_master: clnt_call");
 		ysd->dom_vers = -1;
 		goto again;
 	}

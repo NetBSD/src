@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.1 1996/05/05 12:17:21 oki Exp $	*/
+/*	$NetBSD: genassym.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

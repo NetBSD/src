@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.28 1996/05/22 13:41:54 mycroft Exp $	*/
+/*	$NetBSD: bpf.c,v 1.27 1996/05/07 05:26:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -126,6 +126,7 @@ static int	bpf_movein __P((struct uio *, int,
 			        struct mbuf **, struct sockaddr *));
 static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
 static void	bpf_detachd __P((struct bpf_d *));
+static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
 #if BSD >= 199103
 int		bpfselect __P((dev_t, int, struct proc *));

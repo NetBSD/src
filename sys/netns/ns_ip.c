@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.17 1996/05/22 13:56:22 mycroft Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.16 1996/05/09 22:29:40 scottr Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -389,10 +389,10 @@ nsip_route(m)
 	sprintf(ifr.ifr_name, "nsip%d", nsipif_unit - 1);
 	ifr.ifr_dstaddr = *snstosa(ns_dst);
 	(void)ns_control((struct socket *)0, SIOCSIFDSTADDR, (caddr_t)&ifr,
-	    (struct ifnet *)ifn);
+			(struct ifnet *)ifn);
 	satons_addr(ifr.ifr_addr).x_host = ns_thishost;
 	return (ns_control((struct socket *)0, SIOCSIFADDR, (caddr_t)&ifr,
-	    (struct ifnet *)ifn));
+			(struct ifnet *)ifn));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.14 1996/05/22 13:56:00 mycroft Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.13 1996/05/07 02:45:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -74,7 +74,6 @@ SOFTWARE.
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -516,14 +515,12 @@ snpac_fixdstandmask(nsellength)
  * NOTES:
  */
 int
-snpac_ioctl(so, cmd, data, p)
+snpac_ioctl(so, cmd, data)
 	struct socket  *so;
-	u_long cmd;	/* ioctl to process */
-	caddr_t data;	/* data for the cmd */
-	struct proc *p;
+	u_long          cmd;	/* ioctl to process */
+	caddr_t         data;	/* data for the cmd */
 {
 	register struct systype_req *rq = (struct systype_req *) data;
-	int error;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_IOCTL]) {
@@ -536,7 +533,7 @@ snpac_ioctl(so, cmd, data, p)
 #endif
 
 	if (cmd == SIOCSSTYPE) {
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if ((so->so_state & SS_PRIV) == 0)
 			return (EPERM);
 		if ((rq->sr_type & (SNPA_ES | SNPA_IS)) == (SNPA_ES | SNPA_IS))
 			return (EINVAL);

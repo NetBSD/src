@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.23 1996/05/23 17:07:03 mycroft Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -59,91 +59,35 @@
  *	rethink name space problems
  *	need a proper out-of-band
  */
-struct	sockaddr_un sun_noname = { sizeof(sun_noname), AF_UNIX };
+struct	sockaddr sun_noname = { sizeof(sun_noname), AF_UNIX };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
-
-int
-unp_output(m, control, unp)
-	struct mbuf *m, *control;
-	struct unpcb *unp;
-{
-	struct socket *so2;
-	struct sockaddr_un *sun;
-
-	so2 = unp->unp_conn->unp_socket;
-	if (unp->unp_addr)
-		sun = unp->unp_addr;
-	else
-		sun = &sun_noname;
-	if (sbappendaddr(&so2->so_rcv, (struct sockaddr *)sun, m,
-	    control) == 0) {
-		m_freem(control);
-		m_freem(m);
-		return (EINVAL);
-	} else {
-		sorwakeup(so2);
-		return (0);
-	}
-}
-
-void
-unp_setsockaddr(unp, nam)
-	register struct unpcb *unp;
-	struct mbuf *nam;
-{
-	struct sockaddr_un *sun;
-
-	if (unp->unp_addr)
-		sun = unp->unp_addr;
-	else
-		sun = &sun_noname;
-	nam->m_len = sun->sun_len;
-	bcopy(sun, mtod(nam, caddr_t), (size_t)nam->m_len);
-}
-
-void
-unp_setpeeraddr(unp, nam)
-	register struct unpcb *unp;
-	struct mbuf *nam;
-{
-	struct sockaddr_un *sun;
-
-	if (unp->unp_conn && unp->unp_conn->unp_addr)
-		sun = unp->unp_conn->unp_addr;
-	else
-		sun = &sun_noname;
-	nam->m_len = sun->sun_len;
-	bcopy(sun, mtod(nam, caddr_t), (size_t)nam->m_len);
-}
 
 /*ARGSUSED*/
 int
-uipc_usrreq(so, req, m, nam, control, p)
+uipc_usrreq(so, req, m, nam, control)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
 {
 	struct unpcb *unp = sotounpcb(so);
 	register struct socket *so2;
 	register int error = 0;
+	struct proc *p = curproc;	/* XXX */
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
-
-#ifdef DIAGNOSTIC
-	if (req != PRU_SEND && req != PRU_SENDOOB && control)
-		panic("uipc_usrreq: unexpected control mbuf");
-#endif
+	if (req != PRU_SEND && control && control->m_len) {
+		error = EOPNOTSUPP;
+		goto release;
+	}
 	if (unp == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
 	}
-
 	switch (req) {
 
 	case PRU_ATTACH:
-		if (unp != 0) {
+		if (unp) {
 			error = EISCONN;
 			break;
 		}
@@ -176,7 +120,19 @@ uipc_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_ACCEPT:
-		unp_setpeeraddr(unp, nam);
+		/*
+		 * Pass back name of connected socket,
+		 * if it was bound and we are still connected
+		 * (our peer may have closed already!).
+		 */
+		if (unp->unp_conn && unp->unp_conn->unp_addr) {
+			nam->m_len = unp->unp_conn->unp_addr->m_len;
+			bcopy(mtod(unp->unp_conn->unp_addr, caddr_t),
+			    mtod(nam, caddr_t), (unsigned)nam->m_len);
+		} else {
+			nam->m_len = sizeof(sun_noname);
+			*(mtod(nam, struct sockaddr *)) = sun_noname;
+		}
 		break;
 
 	case PRU_SHUTDOWN:
@@ -221,25 +177,33 @@ uipc_usrreq(so, req, m, nam, control, p)
 		switch (so->so_type) {
 
 		case SOCK_DGRAM: {
+			struct sockaddr *from;
+
 			if (nam) {
-				if ((so->so_state & SS_ISCONNECTED) != 0) {
+				if (unp->unp_conn) {
 					error = EISCONN;
-					goto die;
-				}
-				error = unp_connect(so, nam, p);
-				if (error) {
-				die:
-					m_freem(control);
-					m_freem(m);
 					break;
 				}
+				error = unp_connect(so, nam, p);
+				if (error)
+					break;
 			} else {
-				if ((so->so_state & SS_ISCONNECTED) == 0) {
+				if (unp->unp_conn == 0) {
 					error = ENOTCONN;
-					goto die;
+					break;
 				}
 			}
-			error = unp_output(m, control, unp);
+			so2 = unp->unp_conn->unp_socket;
+			if (unp->unp_addr)
+				from = mtod(unp->unp_addr, struct sockaddr *);
+			else
+				from = &sun_noname;
+			if (sbappendaddr(&so2->so_rcv, from, m, control)) {
+				sorwakeup(so2);
+				m = 0;
+				control = 0;
+			} else
+				error = ENOBUFS;
 			if (nam)
 				unp_disconnect(unp);
 			break;
@@ -248,6 +212,10 @@ uipc_usrreq(so, req, m, nam, control, p)
 		case SOCK_STREAM:
 #define	rcv (&so2->so_rcv)
 #define	snd (&so->so_snd)
+			if (so->so_state & SS_CANTSENDMORE) {
+				error = EPIPE;
+				break;
+			}
 			if (unp->unp_conn == 0)
 				panic("uipc 3");
 			so2 = unp->unp_conn->unp_socket;
@@ -257,8 +225,8 @@ uipc_usrreq(so, req, m, nam, control, p)
 			 * Wake up readers.
 			 */
 			if (control) {
-				if (sbappendcontrol(rcv, m, control) == 0)
-					m_freem(control);
+				if (sbappendcontrol(rcv, m, control))
+					control = 0;
 			} else
 				sbappend(rcv, m);
 			snd->sb_mbmax -=
@@ -267,6 +235,7 @@ uipc_usrreq(so, req, m, nam, control, p)
 			snd->sb_hiwat -= rcv->sb_cc - unp->unp_conn->unp_cc;
 			unp->unp_conn->unp_cc = rcv->sb_cc;
 			sorwakeup(so2);
+			m = 0;
 #undef snd
 #undef rcv
 			break;
@@ -293,28 +262,41 @@ uipc_usrreq(so, req, m, nam, control, p)
 		return (0);
 
 	case PRU_RCVOOB:
-		error = EOPNOTSUPP;
-		break;
+		return (EOPNOTSUPP);
 
 	case PRU_SENDOOB:
-		m_freem(control);
-		m_freem(m);
 		error = EOPNOTSUPP;
 		break;
 
 	case PRU_SOCKADDR:
-		unp_setsockaddr(unp, nam);
+		if (unp->unp_addr) {
+			nam->m_len = unp->unp_addr->m_len;
+			bcopy(mtod(unp->unp_addr, caddr_t),
+			    mtod(nam, caddr_t), (unsigned)nam->m_len);
+		} else
+			nam->m_len = 0;
 		break;
 
 	case PRU_PEERADDR:
-		unp_setpeeraddr(unp, nam);
+		if (unp->unp_conn && unp->unp_conn->unp_addr) {
+			nam->m_len = unp->unp_conn->unp_addr->m_len;
+			bcopy(mtod(unp->unp_conn->unp_addr, caddr_t),
+			    mtod(nam, caddr_t), (unsigned)nam->m_len);
+		} else
+			nam->m_len = 0;
+		break;
+
+	case PRU_SLOWTIMO:
 		break;
 
 	default:
 		panic("piusrreq");
 	}
-
 release:
+	if (control)
+		m_freem(control);
+	if (m)
+		m_freem(m);
 	return (error);
 }
 
@@ -383,8 +365,7 @@ unp_detach(unp)
 		unp_drop(unp->unp_refs, ECONNRESET);
 	soisdisconnected(unp->unp_socket);
 	unp->unp_socket->so_pcb = 0;
-	if (unp->unp_addr)
-		m_freem(dtom(unp->unp_addr));
+	m_freem(unp->unp_addr);
 	if (unp_rights) {
 		/*
 		 * Normally the receive buffer is flushed later,
@@ -406,17 +387,17 @@ unp_bind(unp, nam, p)
 	struct mbuf *nam;
 	struct proc *p;
 {
-	struct sockaddr_un *sun = mtod(nam, struct sockaddr_un *);
+	struct sockaddr_un *soun = mtod(nam, struct sockaddr_un *);
 	register struct vnode *vp;
 	struct vattr vattr;
 	int error;
 	struct nameidata nd;
 
-	if (unp->unp_vnode != 0)
-		return (EINVAL);
 	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT, UIO_SYSSPACE,
-	    sun->sun_path, p);
-	if (nam->m_data + nam->m_len == &nam->m_dat[MLEN]) {	/* XXX */
+	    soun->sun_path, p);
+	if (unp->unp_vnode != NULL)
+		return (EINVAL);
+	if (nam->m_len == MLEN) {
 		if (*(mtod(nam, caddr_t) + nam->m_len - 1) != 0)
 			return (EINVAL);
 	} else
@@ -444,8 +425,7 @@ unp_bind(unp, nam, p)
 	vp = nd.ni_vp;
 	vp->v_socket = unp->unp_socket;
 	unp->unp_vnode = vp;
-	unp->unp_addr =
-	    mtod(m_copy(nam, 0, (int)M_COPYALL), struct sockaddr_un *);
+	unp->unp_addr = m_copy(nam, 0, (int)M_COPYALL);
 	VOP_UNLOCK(vp);
 	return (0);
 }
@@ -456,17 +436,17 @@ unp_connect(so, nam, p)
 	struct mbuf *nam;
 	struct proc *p;
 {
-	register struct sockaddr_un *sun = mtod(nam, struct sockaddr_un *);
+	register struct sockaddr_un *soun = mtod(nam, struct sockaddr_un *);
 	register struct vnode *vp;
 	register struct socket *so2, *so3;
 	struct unpcb *unp2, *unp3;
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, sun->sun_path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, soun->sun_path, p);
 	if (nam->m_data + nam->m_len == &nam->m_dat[MLEN]) {	/* XXX */
 		if (*(mtod(nam, caddr_t) + nam->m_len - 1) != 0)
-			return (EINVAL);
+			return (EMSGSIZE);
 	} else
 		*(mtod(nam, caddr_t) + nam->m_len) = 0;
 	if ((error = namei(&nd)) != 0)
@@ -496,8 +476,8 @@ unp_connect(so, nam, p)
 		unp2 = sotounpcb(so2);
 		unp3 = sotounpcb(so3);
 		if (unp2->unp_addr)
-			unp3->unp_addr = mtod(m_copy(dtom(unp2->unp_addr), 0,
-			    (int)M_COPYALL), struct sockaddr_un *);
+			unp3->unp_addr =
+				  m_copy(unp2->unp_addr, 0, (int)M_COPYALL);
 		so2 = so3;
 	}
 	error = unp_connect2(so, so2);
@@ -607,8 +587,7 @@ unp_drop(unp, errno)
 	if (so->so_head) {
 		so->so_pcb = 0;
 		sofree(so);
-		if (unp->unp_addr)
-			m_freem(dtom(unp->unp_addr));
+		m_freem(unp->unp_addr);
 		free(unp, M_PCB);
 	}
 }
