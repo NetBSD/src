@@ -1,4 +1,4 @@
-$NetBSD: diodevs,v 1.5 2002/04/17 20:50:45 gmcgarry Exp $
+$NetBSD: diodevs,v 1.6 2003/05/25 04:56:36 tsutsui Exp $
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,10 +56,10 @@ device FHPIB		0x08	1	98625A/98625B HP-IB
 device NHPIB		0x80	1	98624A HP-IB
 device IHPIB		0x00	1	internal HP-IB
 
-device SCSI0		0x07	1	98625A SCSI
-device SCSI1		0x27	1	98625A SCSI
-device SCSI2		0x47	1	98625A SCSI
-device SCSI3		0x67	1	98625A SCSI
+device SCSI0		0x07	1	98265A SCSI
+device SCSI1		0x27	1	98265A SCSI
+device SCSI2		0x47	1	98265A SCSI
+device SCSI3		0x67	1	98265A SCSI
 
 /* Framebuffer devices; same primary ID, different secondary IDs. */
 
