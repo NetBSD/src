@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.1.1.1 2004/05/17 23:45:06 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.2 2004/05/18 00:15:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -58,6 +58,7 @@ hpux_ncpus(void) {
 
 #if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_SYSCTLBYNAME)
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/sysctl.h>
 
 static int
