@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.75 2000/10/11 16:52:34 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.76 2000/12/12 17:48:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1174,6 +1174,7 @@ ifioctl(so, cmd, data, p)
 	case SIOCSDRVSPEC:  
 	case SIOCS80211NWID:
 	case SIOCS80211NWKEY:
+	case SIOCS80211POWER:
 		/* XXX:  need to pass proc pointer through to driver... */
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
