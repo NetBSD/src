@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2003/12/08 07:32:19 matt Exp $
+#	$NetBSD: Makefile,v 1.6 2003/12/09 04:54:54 matt Exp $
 
 S=	${.CURDIR}/../../../..
+
+.include <bsd.own.mk>
 
 .PATH:	${.CURDIR}/../xxboot
 
