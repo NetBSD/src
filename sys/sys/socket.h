@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.43.6.2 1999/07/06 11:03:07 itojun Exp $	*/
+/*	$NetBSD: socket.h,v 1.43.6.3 1999/11/30 13:36:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -400,7 +400,7 @@ struct cmsghdr {
  * This is different from ALIGN() defined in ARCH/include/param.h.
  * XXX think again carefully about architecture dependencies.
  */
-#define CMSG_ALIGN(n)		(((n) + 3) & ~3)
+#define CMSG_ALIGN(n)	(((n) + sizeof(long) - 1) & ~(sizeof(long) - 1))
 
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\

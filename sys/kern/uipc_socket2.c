@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.28.6.1 1999/06/28 06:36:53 itojun Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.28.6.2 1999/11/30 13:34:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.100.6.2 1999/07/06 11:02:39 itojun Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.100.6.3 1999/11/30 13:34:53 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.

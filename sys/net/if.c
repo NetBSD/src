@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.48.6.1 1999/06/28 06:36:55 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.48.6.2 1999/11/30 13:34:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,8 @@
  *
  *	@(#)if.c	8.5 (Berkeley) 1/9/95
  */
+
+#include "opt_inet.h"
 
 #include "opt_compat_linux.h"
 #include "opt_compat_svr4.h"
@@ -598,7 +600,7 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSIFMTU:
-	{
+	    {
 		u_long oldmtu = ifp->if_mtu;
 
 		error = suser(p->p_ucred, &p->p_acflag);
@@ -617,7 +619,7 @@ ifioctl(so, cmd, data, p)
 #endif 
 		}
 		break;
-	}
+	    }
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:

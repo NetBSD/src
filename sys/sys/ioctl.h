@@ -1,3 +1,5 @@
+/*	$NetBSD: ioctl.h,v 1.24.6.1 1999/11/30 13:36:17 itojun Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -59,17 +61,18 @@ struct ttysize {
 
 #include <sys/ioccom.h>
 
+#include <sys/dkio.h>
 #include <sys/filio.h>
 #include <sys/sockio.h>
 
-#ifndef KERNEL
+#ifndef _KERNEL
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	ioctl __P((int, unsigned long, ...));
 __END_DECLS
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 #endif /* !_SYS_IOCTL_H_ */
 
 /*
@@ -77,8 +80,18 @@ __END_DECLS
  * Compatability with old terminal driver
  *
  * Source level -> #define USE_OLD_TTY
- * Kernel level -> options COMPAT_43 or COMPAT_SUNOS
+ * Kernel level -> options COMPAT_43 or COMPAT_SUNOS or ...
  */
-#if defined(USE_OLD_TTY) || defined(COMPAT_43) || defined(COMPAT_SUNOS)
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_freebsd.h"
+#include "opt_compat_sunos.h"
+#include "opt_compat_svr4.h"
+#include "opt_compat_43.h"
+#include "opt_compat_osf1.h"
+#endif
+
+#if defined(USE_OLD_TTY) || defined(COMPAT_43) || defined(COMPAT_SUNOS) || \
+    defined(COMPAT_SVR4) || defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1)
 #include <sys/ioctl_compat.h>
 #endif

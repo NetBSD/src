@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.82.2.2.4.2 1999/07/06 11:02:46 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.82.2.2.4.3 1999/11/30 13:35:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -103,6 +103,7 @@
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
+#include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>
@@ -140,10 +141,6 @@
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
-#include <netinet6/ah.h>
-#ifdef IPSEC_ESP
-#include <netinet6/esp.h>
-#endif
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif
@@ -195,6 +192,10 @@ int	ipprintfs = 0;
 #endif
 
 struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
+
+#ifdef ALTQ
+int (*altq_input) __P((struct mbuf *, int)) = NULL;
+#endif
 
 extern	struct domain inetdomain;
 extern	struct protosw inetsw[];
@@ -405,6 +406,11 @@ ip_input(struct mbuf *m)
 		goto bad;
 	}
 
+#ifdef ALTQ
+	if (altq_input != NULL && (*altq_input)(m, AF_INET) == 0)
+		/* packet is dropped by traffic conditioner */
+		return;
+#endif
 	/*
 	 * Convert fields to host representation.
 	 */
@@ -439,11 +445,16 @@ ip_input(struct mbuf *m)
 			m_adj(m, len - m->m_pkthdr.len);
 	}
 
+#ifdef IPSEC
+	/* ipflow (IP fast fowarding) is not compatible with IPsec. */
+	m->m_flags &= ~M_CANFASTFWD;
+#else
 	/*
 	 * Assume that we can create a fast-forward IP flow entry
 	 * based on this packet.
 	 */
 	m->m_flags |= M_CANFASTFWD;
+#endif
 
 #ifdef PFIL_HOOKS
 	/*
@@ -1425,14 +1436,17 @@ ip_forward(m, srcrt)
 			struct route *ro;
 
 			sp = ipsec4_getpolicybyaddr(mcopy,
-						    IP_FORWARDING,
-						    &ipsecerror);
+			                            IPSEC_DIR_OUTBOUND,
+			                            IP_FORWARDING,
+			                            &ipsecerror);
 
 			if (sp == NULL)
 				destifp = ipforward_rt.ro_rt->rt_ifp;
 			else {
 				/* count IPsec header size */
-				ipsechdr = ipsec4_hdrsiz(mcopy, NULL);
+				ipsechdr = ipsec4_hdrsiz(mcopy,
+				                         IPSEC_DIR_OUTBOUND,
+				                         NULL);
 
 				/*
 				 * find the correct route for outer IPv4
@@ -1445,8 +1459,9 @@ ip_forward(m, srcrt)
 				/*XXX*/
 				destifp = NULL;
 				if (sp->req != NULL
-				 && sp->req->sa != NULL) {
-					ro = &sp->req->sa->saidx->sa_route;
+				 && sp->req->sav != NULL
+				 && sp->req->sav->sah != NULL) {
+					ro = &sp->req->sav->sah->sa_route;
 					if (ro->ro_rt && ro->ro_rt->rt_ifp) {
 						dummyifp.if_mtu =
 						    ro->ro_rt->rt_ifp->if_mtu;

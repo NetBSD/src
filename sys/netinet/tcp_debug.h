@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.h,v 1.6.12.1 1999/06/28 06:37:01 itojun Exp $	*/
+/*	$NetBSD: tcp_debug.h,v 1.6.12.2 1999/11/30 13:35:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,6 +37,10 @@
 
 #ifndef _NETINET_TCP_DEBUG_H_
 #define _NETINET_TCP_DEBUG_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_inet.h"
+#endif
 
 struct	tcp_debug {
 	n_time	td_time;

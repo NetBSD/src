@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.35.6.1 1999/06/28 06:36:55 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.35.6.2 1999/11/30 13:34:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,9 @@
 #define _NET_IF_H_
 
 #include <sys/queue.h>
+#if 1 /* ALTQ */
+#include <net/if_altq.h>
+#endif
 
 /*
  * Structures defining a network interface, providing a packet
@@ -149,6 +152,17 @@ struct ifnet {				/* and the entries */
 	} if_snd;			/* output queue */
 	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 	u_int8_t *if_broadcastaddr;	/* linklevel broadcast bytestring */
+#if 1 /* ALTQ */
+	/* alternate queueing related stuff */
+	int	if_altqtype;		/* queueing scheme id */
+	int	if_altqflags;		/* altq flags (e.g. ready, in-use) */
+	void	*if_altqp;		/* queue state */
+	int	(*if_altqenqueue)
+		__P((struct ifnet *, struct mbuf *, struct pr_hdr *, int));
+	struct mbuf *(*if_altqdequeue)
+		__P((struct ifnet *, int));
+	void	*if_altqcdnr;		/* input traffic conditioner */
+#endif /* ALTQ */
 	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
 };
 #define	if_mtu		if_data.ifi_mtu
@@ -263,7 +277,7 @@ struct ifaddr {
 /*
  * The prefix structure contains information about one prefix
  * of an interface.  They are maintained by the different address families,
- * are allocated and attached when an prefix or an address is set, 
+ * are allocated and attached when an prefix or an address is set,
  * and are linked together so all prfefixes for an interface can be located.
  */
 struct ifprefix {
@@ -271,6 +285,7 @@ struct ifprefix {
 	struct	ifnet *ifpr_ifp;	/* back-pointer to interface */
 	struct ifprefix *ifpr_next;
 	u_char	ifpr_plen;		/* prefix length in bits */
+	u_char	ifpr_type;		/* protocol dependent prefix type */
 };
 
 /*

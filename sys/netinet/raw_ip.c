@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.42.6.2 1999/07/06 11:02:47 itojun Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.42.6.3 1999/11/30 13:35:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,6 +64,7 @@
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
  */
 
+#include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>
@@ -456,7 +457,11 @@ rip_usrreq(so, req, m, nam, control, p)
 		inp = sotoinpcb(so);
 		inp->inp_ip.ip_p = (long)nam;
 #ifdef IPSEC
-		error = ipsec_init_policy(&inp->inp_sp);
+		error = ipsec_init_policy(so, &inp->inp_sp);
+		if (error != 0) {
+			in_pcbdetach(inp);
+			break;
+		}
 #endif /*IPSEC*/
 		break;
 

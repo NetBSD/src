@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.15.12.2 1999/07/06 11:02:51 itojun Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.15.12.3 1999/11/30 13:35:43 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993

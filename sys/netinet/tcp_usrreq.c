@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.39.10.2 1999/07/06 11:02:50 itojun Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.39.10.3 1999/11/30 13:35:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,6 +102,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,14 +730,20 @@ tcp_attach(so)
 		return EAFNOSUPPORT;
 	}
 #ifdef IPSEC
-	if (inp && (error = ipsec_init_policy(&inp->inp_sp)) != 0) {
-		in_pcbdetach(inp);
-		return (error);
+	if (inp) {
+		error = ipsec_init_policy(so, &inp->inp_sp);
+		if (error != 0) {
+			in_pcbdetach(inp);
+			return (error);
+		}
 	}
 #ifdef INET6
-	else if (in6p && (error = ipsec_init_policy(&in6p->in6p_sp)) != 0) {
-		in6_pcbdetach(in6p);
-		return (error);
+	else if (in6p) {
+		error = ipsec_init_policy(so, &in6p->in6p_sp);
+		if (error != 0) {
+			in6_pcbdetach(in6p);
+			return (error);
+		}
 	}
 #endif
 #endif /*IPSEC*/
@@ -746,6 +753,8 @@ tcp_attach(so)
 	else if (in6p)
 		tp = tcp_newtcpcb(family, (void *)in6p);
 #endif
+	else
+		tp = NULL;
 
 	if (tp == 0) {
 		int nofd = so->so_state & SS_NOFDREF;	/* XXX */
