@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.1 1994/08/02 20:20:40 ragge Exp $
+ *	$Id: param.h,v 1.2 1994/08/16 23:41:54 ragge Exp $
  */
 
 #ifndef PARAM_H
@@ -75,8 +75,8 @@
 #define BLKDEV_IOSIZE 2048
 #define	MAXPHYS	      (63 * 1024)     /* max raw I/O transfer size */
 
-#define	CLSIZELOG2    2
-#define	CLSIZE	      (1 << CLSIZELOG2)
+#define	CLSIZELOG2    1
+#define	CLSIZE	      2
 
 /* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE	4		/* initial stack size/NBPG */
@@ -122,12 +122,12 @@
  * Some macros for units conversion
  */
 
-/* Core clicks (4096 bytes) to segments and vice versa */
+/* Core clicks (512 bytes) to segments and vice versa */
 
 #define	ctos(x)	(x)
 #define	stoc(x)	(x)
 
-/* Core clicks (4096 bytes) to disk blocks */
+/* Core clicks (512 bytes) to disk blocks */
 
 #define	ctod(x)	((x)<<(PGSHIFT-DEV_BSHIFT))
 #define	dtoc(x)	((x)>>(PGSHIFT-DEV_BSHIFT))

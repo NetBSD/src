@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.1 1994/08/02 20:20:44 ragge Exp $
+ *	$Id: pmap.h,v 1.2 1994/08/16 23:41:56 ragge Exp $
  */
 
 
@@ -99,7 +99,7 @@ extern pmap_t		kernel_pmap;
 
 typedef struct pv_entry {
   struct pv_entry	*pv_next;	/* next pv_entry */
-  struct pmap	        *pv_pmap;	/* if not NULL, pmap where mapping lies */
+  struct pmap	        *pv_pmap;/* if not NULL, pmap where mapping lies */
   vm_offset_t	         pv_va;		/* virtual address for mapping */
   int		         pv_flags;	/* flags */
 } *pv_entry_t;
@@ -108,7 +108,8 @@ typedef struct pv_entry {
 #define PV_PTPAGE	0x02	        /* entry maps a page table page */
 
 #ifdef	KERNEL
-pv_entry_t	pv_table;		/* array of entries, one per page */
+pv_entry_t	pv_table;		/* array of entries, 
+					   one per LOGICAL page */
 
 #define pa_index(pa)	                atop(pa)
 #define pa_to_pvh(pa)	                (&pv_table[atop(pa)])
