@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.20 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: intr.c,v 1.21 2005/03/05 17:34:06 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2005/03/05 17:34:06 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2005/01/15 16:00:59 chs Exp $");
 static int intr_noint(void *);
 void netintr(void);
 
-static int ((*intr_func[NISR]) __P((void *))) = {
+static int ((*intr_func[NISR])(void *)) = {
 	intr_noint,
 	intr_noint,
 	intr_noint,
