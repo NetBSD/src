@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)umount.c	8.3 (Berkeley) 2/20/94";*/
-static char *rcsid = "$Id: umount.c,v 1.11 1995/01/30 17:03:15 mycroft Exp $";
+static char *rcsid = "$Id: umount.c,v 1.12 1995/01/30 17:20:06 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,13 +64,13 @@ static char *rcsid = "$Id: umount.c,v 1.11 1995/01/30 17:03:15 mycroft Exp $";
 
 typedef enum { MNTON, MNTFROM } mntwhat;
 
-int	fake, fflag, vflag;
-char	**typelist;
+int	fake, fflag, verbose;
+char	**typelist = NULL;
 char	*nfshost;
 
 char	*getmntname __P((char *, mntwhat, char *));
 void	 maketypelist __P((char *));
-int	 selected __P((char *));
+int	 selected __P((const char *));
 int	 namematch __P((struct hostent *));
 int	 umountall __P((void));
 int	 umountfs __P((char *));
@@ -104,10 +104,12 @@ main(argc, argv)
 			nfshost = optarg;
 			break;
 		case 't':
+			if (typelist != NULL)
+				errx(1, "only one -t option may be specified.");
 			maketypelist(optarg);
 			break;
 		case 'v':
-			vflag = 1;
+			verbose = 1;
 			break;
 		default:
 			usage();
@@ -234,7 +236,7 @@ umountfs(name)
 			return (1);
 	}
 
-	if (vflag)
+	if (verbose)
 		(void)printf("%s: unmount from %s\n", name, mntpt);
 	if (fake)
 		return (0);
@@ -308,7 +310,7 @@ static enum { IN_LIST, NOT_IN_LIST } which;
 
 int
 selected(type)
-	char *type;
+	const char *type;
 {
 	char **av;
 
