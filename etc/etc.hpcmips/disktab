@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.4 2002/05/07 09:27:20 jdolecek Exp $
+#	$NetBSD: disktab,v 1.5 2002/05/07 11:29:38 simonb Exp $
 #
 #	from: @(#)disktab	8.1 (Berkeley) 6/9/93
 #
@@ -36,4 +36,4 @@
 # the `h' partition. The strategy here is that `a' always
 # has the same amount for all disks (currently 65536 sectors or 32megs).
 # The `b' partition is approx 48 megs while `c' is always the entire disk.
-# The  sum of `d', `e', and `f' is equal to `g' which is everything else.
+# The sum of `d', `e', and `f' is equal to `g' which is everything else.

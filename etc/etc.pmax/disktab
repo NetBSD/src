@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.11 2002/05/07 09:27:21 jdolecek Exp $
+#	$NetBSD: disktab,v 1.12 2002/05/07 11:29:39 simonb Exp $
 #
 #	from: @(#)disktab	8.1 (Berkeley) 6/9/93
 #
@@ -36,7 +36,7 @@
 # the `h' partition. The strategy here is that `a' always
 # has the same amount for all disks (currently 65536 sectors or 32megs).
 # The `b' partition is approx 48 megs while `c' is always the entire disk.
-# The  sum of `d', `e', and `f' is equal to `g' which is everything else.
+# The sum of `d', `e', and `f' is equal to `g' which is everything else.
 
 rz22|RZ22|DEC RZ22 Winchester:\
 	:dt=SCSI:ty=winchester:ns#33:nt#4:nc#776:\
@@ -177,7 +177,7 @@ rz57|RZ57|DEC RZ57 Winchester:\
 #   (this information can be obtained by use of the DEVGETGEOM ioctl). 
 #
 #   The NetBSD :su#: entry is derived from the 'c' partition size.
-#    
+#
 
 rz58|RZ58|DEC RZ58 Winchester:\
 	:ty=winchester:ns#85:nt#15:nc#2112:\
@@ -224,13 +224,13 @@ fu2263sa|FU2263SA|Fujitsu 2263SA:\
 
 # A Fujitsu fu2524fa full-height drive using ZBR.
 fu2624fa|FU2624FA|Fujitsu 2624FA:\
-        :dt=SCSI:ty=winchester:ns#63:nt#11:nc#1429:\
-        :su#1015812:\
-        :pa#65536:oa#0:ba#4096:fa#512:ta=4.2bsd:\
-        :pb#98304:ob#65536:bb#8192:fb#1024:tb=swap:\
-        :pc#1015812:oc#0::bc#8192:fc#1024:\
-        :pd#10240:od#163840:bd#4096:fd#512:\
-        :pe#409600:oe#174080:be#8192:fe#1024:\
-        :pf#432132:of#583680:bf#8192:ff#1024:\
-        :pg#851972:og#163840:bg#8192:fg#1024:\
-        :ph#0:oh#0:bh#8192:fh#1024:
+	:dt=SCSI:ty=winchester:ns#63:nt#11:nc#1429:\
+	:su#1015812:\
+	:pa#65536:oa#0:ba#4096:fa#512:ta=4.2bsd:\
+	:pb#98304:ob#65536:bb#8192:fb#1024:tb=swap:\
+	:pc#1015812:oc#0::bc#8192:fc#1024:\
+	:pd#10240:od#163840:bd#4096:fd#512:\
+	:pe#409600:oe#174080:be#8192:fe#1024:\
+	:pf#432132:of#583680:bf#8192:ff#1024:\
+	:pg#851972:og#163840:bg#8192:fg#1024:\
+	:ph#0:oh#0:bh#8192:fh#1024:

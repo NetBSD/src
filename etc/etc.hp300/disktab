@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.5 2002/04/09 14:11:26 tron Exp $
+#	$NetBSD: disktab,v 1.6 2002/05/07 11:29:38 simonb Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -42,7 +42,7 @@
 
 # pseudo-geometry taken from rd7945
 miniroot:\
-        :ty=winchester:ns#16:nt#7:nc#968:\
+	:ty=winchester:ns#16:nt#7:nc#968:\
 	:pa#10240:ba#8192:fa#1024:
 
 rd7945|rd7946|rd7945A|rd7946A|HP7945A|HP7946A:\
