@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.11 2003/07/15 03:36:10 lukem Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.12 2003/09/26 18:10:01 christos Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.11 2003/07/15 03:36:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.12 2003/09/26 18:10:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -161,7 +161,7 @@ sunos32_setregs(l, pack, stack)
 void
 sunos32_sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;	/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.35 2003/07/15 03:36:09 lukem Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.36 2003/09/26 18:10:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.35 2003/07/15 03:36:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.36 2003/09/26 18:10:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -167,7 +167,7 @@ extern int sigdebug;
 void
 netbsd32_sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	register struct lwp *l = curlwp;

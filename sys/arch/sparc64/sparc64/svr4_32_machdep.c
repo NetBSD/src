@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.14 2003/08/10 15:17:55 martin Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.15 2003/09/26 18:10:01 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.14 2003/08/10 15:17:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.15 2003/09/26 18:10:01 christos Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -469,7 +469,7 @@ svr4_32_getsiginfo(si, sig, code, addr)
 void
 svr4_32_sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	register struct lwp *l = curlwp;
