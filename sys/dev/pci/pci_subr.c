@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.36 2000/06/28 16:08:49 mrg Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.37 2000/08/03 19:58:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -52,7 +52,7 @@
 
 static void pci_conf_print_common __P((pci_chipset_tag_t, pcitag_t,
     const pcireg_t *regs));
-static void pci_conf_print_bar __P((pci_chipset_tag_t, pcitag_t, 
+static int pci_conf_print_bar __P((pci_chipset_tag_t, pcitag_t, 
     const pcireg_t *regs, int, const char *));
 static void pci_conf_print_regs __P((const pcireg_t *regs, int first,
     int pastlast));
@@ -528,7 +528,7 @@ pci_conf_print_common(pc, tag, regs)
 	printf("    Cache Line Size: 0x%02x\n", PCI_CACHELINE(rval));
 }
 
-static void
+static int
 pci_conf_print_bar(pc, tag, regs, reg, name)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
@@ -536,8 +536,11 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 	int reg;
 	const char *name;
 {
-	int s;
+	int s, width;
 	pcireg_t mask, rval;
+	pcireg_t mask64h, rval64h;
+	
+	width = 4;
 
 	/*
 	 * Section 6.2.5.1, `Address Maps', tells us that:
@@ -564,6 +567,14 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 		pci_conf_write(pc, tag, reg, 0xffffffff);
 		mask = pci_conf_read(pc, tag, reg);
 		pci_conf_write(pc, tag, reg, rval);
+		if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM &&
+		    PCI_MAPREG_MEM_TYPE(rval) == PCI_MAPREG_MEM_TYPE_64BIT) {
+			rval64h = regs[o2i(reg + 4)];
+			pci_conf_write(pc, tag, reg + 4, 0xffffffff);
+			mask64h = pci_conf_read(pc, tag, reg + 4);
+			pci_conf_write(pc, tag, reg + 4, rval64h);
+			width = 8;
+		}
 		splx(s);
 	} else
 		mask = 0;
@@ -574,8 +585,8 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 	printf("\n      ");
 	if (rval == 0) {
 		printf("not implemented(?)\n");
-		return;
-	}
+		return width;
+	} 
 	printf("type: ");
 	if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
 		const char *type, *prefetch;
@@ -599,15 +610,31 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 		else
 			prefetch = "non";
 		printf("%s %sprefetchable memory\n", type, prefetch);
-		printf("      base: 0x%08x, size: 0x%08x\n",
-		    PCI_MAPREG_MEM_ADDR(rval),
-		    PCI_MAPREG_MEM_SIZE(mask));
+		switch (PCI_MAPREG_MEM_TYPE(rval)) {
+		case PCI_MAPREG_MEM_TYPE_64BIT:
+			printf("      base: 0x%016llx, size: 0x%016llx\n",
+			    PCI_MAPREG_MEM64_ADDR(
+				((((long long) rval64h) << 32) | rval)),
+			    PCI_MAPREG_MEM64_SIZE(
+				((((long long) mask64h) << 32) | mask)));
+			break;
+		case PCI_MAPREG_MEM_TYPE_32BIT:
+		case PCI_MAPREG_MEM_TYPE_32BIT_1M:
+		default:
+			printf("      base: 0x%08x, size: 0x%08x\n",
+			    PCI_MAPREG_MEM_ADDR(rval),
+			    PCI_MAPREG_MEM_SIZE(mask));
+			break;
+		}
+
 	} else {
 		printf("i/o\n");
 		printf("      base: 0x%08x, size: 0x%08x\n",
 		    PCI_MAPREG_IO_ADDR(rval),
 		    PCI_MAPREG_IO_SIZE(mask));
 	}
+
+	return width;
 }
 
 static void
@@ -641,11 +668,11 @@ pci_conf_print_type0(pc, tag, regs)
 	pcitag_t tag;
 	const pcireg_t *regs;
 {
-	int off;
+	int off, width;
 	pcireg_t rval;
 
-	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += 4)
-		pci_conf_print_bar(pc, tag, regs, off, NULL);
+	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += width)
+		width = pci_conf_print_bar(pc, tag, regs, off, NULL);
 
 	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
 
@@ -735,7 +762,7 @@ pci_conf_print_type1(pc, tag, regs)
 	pcitag_t tag;
 	const pcireg_t *regs;
 {
-	int off;
+	int off, width;
 	pcireg_t rval;
 
 	/*
@@ -747,8 +774,8 @@ pci_conf_print_type1(pc, tag, regs)
 	 * respect to various standards. (XXX)
 	 */
 
-	for (off = 0x10; off < 0x18; off += 4)
-		pci_conf_print_bar(pc, tag, regs, off, NULL);
+	for (off = 0x10; off < 0x18; off += width)
+		width = pci_conf_print_bar(pc, tag, regs, off, NULL);
 
 	printf("    Primary bus number: 0x%02x\n",
 	    (regs[o2i(0x18)] >> 0) & 0xff);
