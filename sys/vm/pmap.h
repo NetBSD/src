@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 1998/08/13 02:11:04 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.28 1999/01/16 20:00:28 chuck Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -149,11 +149,7 @@ paddr_t		pmap_extract __P((pmap_t, vaddr_t));
 void		 pmap_growkernel __P((vaddr_t));
 #endif
 
-#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-void		 pmap_init __P((paddr_t, paddr_t));
-#else
 void		 pmap_init __P((void));
-#endif
 
 #if defined(PMAP_NEW)
 void		 pmap_kenter_pa __P((vaddr_t, paddr_t, vm_prot_t));
@@ -169,12 +165,6 @@ boolean_t	 pmap_is_referenced __P((struct vm_page *));
 boolean_t	 pmap_is_modified __P((paddr_t pa));
 boolean_t	 pmap_is_referenced __P((paddr_t pa));
 #endif	/* PMAP_NEW */
-
-#if !defined(MACHINE_NEW_NONCONTIG)
-#ifndef pmap_page_index
-int		 pmap_page_index __P((paddr_t));
-#endif
-#endif /* ! MACHINE_NEW_NONCONTIG */
 
 #if defined(PMAP_NEW)
 void		 pmap_page_protect __P((struct vm_page *, vm_prot_t));
@@ -194,17 +184,11 @@ void		 pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
 void		 pmap_update __P((void));
 void		 pmap_zero_page __P((paddr_t));
 
-#ifdef MACHINE_NONCONTIG
-u_int		 pmap_free_pages __P((void));
-boolean_t	 pmap_next_page __P((paddr_t *));
-#endif
-#if defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG)
 #if defined(PMAP_STEAL_MEMORY)
 vaddr_t	 pmap_steal_memory __P((vsize_t, paddr_t *,
 		    paddr_t *));
 #else
 void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
-#endif
 #endif
 __END_DECLS
 #endif	/* kernel*/

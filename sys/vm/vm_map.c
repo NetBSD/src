@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.41 1998/11/29 06:15:58 cgd Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.42 1999/01/16 20:00:28 chuck Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -141,16 +141,10 @@
  *	maps and requires map entries.
  */
 
-#if defined(MACHINE_NEW_NONCONTIG)
 u_int8_t	kentry_data_store[MAX_KMAP*sizeof(struct vm_map) +
 			MAX_KMAPENT*sizeof(struct vm_map_entry)];
 vaddr_t	kentry_data = (vaddr_t) kentry_data_store;
 vsize_t	kentry_data_size = sizeof(kentry_data_store);
-#else
-/* NUKE NUKE NUKE */
-vaddr_t	kentry_data;
-vsize_t	kentry_data_size;
-#endif
 vm_map_entry_t	kentry_free;
 vm_map_t	kmap_free;
 
