@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.14 1997/07/04 21:02:02 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.15 1997/09/14 07:43:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.14 1997/07/04 21:02:02 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.15 1997/09/14 07:43:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,7 +221,7 @@ histcmd(argc, argv)
 
 	optreset = 1; optind = 1; /* initialize getopt */
 	while (not_fcnumber(argv[optind]) &&
-	      (ch = getopt(argc, argv, ":e:lnrs")) != EOF)
+	      (ch = getopt(argc, argv, ":e:lnrs")) != -1)
 		switch ((char)ch) {
 		case 'e':
 			editor = optarg;
