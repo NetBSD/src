@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.3.10.2 1999/02/02 23:45:52 minoura Exp $	*/
+/*	$NetBSD: opm.c,v 1.3.10.3 1999/02/13 17:52:53 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -102,7 +102,9 @@ opm_attach(parent, self, aux)
 #endif
 
 	sc->sc_bst = ia->ia_bst;
-	r = bus_space_map (sc->sc_bst, ia->ia_addr, ia->ia_size, 0,
+	r = bus_space_map (sc->sc_bst,
+			   ia->ia_addr, ia->ia_size,
+			   BUS_SPACE_MAP_SHIFTED,
 			   &sc->sc_bht);
 #ifdef DIAGNOSTIC
 	if (r)
