@@ -454,35 +454,18 @@ ahbprobe1(struct isa_device *dev)
 int
 ahb_attach(struct isa_device *dev)
 {
-	int unit = dev->id_unit;
-	extern struct isa_device isa_biotab_dktp[];
-	struct isa_device *dvp;
+	static int firsttime;
+	int masunit = dev->id_masunit;
+	short id = dev->id_unit;
 
-	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
-		if (dvp->id_driver != &ahbdriver)
-			continue;
-		if (dvp->id_masunit != dev->id_unit)
-			continue;
-		if (dvp->id_physid == -1)
-			continue;
-		scsi_attach(dev->id_unit, ahb_data[unit].our_id, &ahb_switch,
-			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
-	}
-	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
-		if (dvp->id_driver != &ahbdriver)
-			continue;
-		if (dvp->id_masunit != dev->id_unit)
-			continue;
-		if (dvp->id_physid != -1)
-			continue;
-		scsi_attach(dev->id_unit, ahb_data[unit].our_id, &ahb_switch,
-			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
-	}
-	scsi_warn(dev->id_unit, ahb_data[unit].our_id, &ahb_switch);
+	scsi_attach(masunit, ahb_data[masunit].our_id, &ahb_switch,
+		&dev->id_physid, &id, dev->id_flags);
 
 	/* only one for all boards */
-	if(!unit)
+	if(firsttime==0 && masunit==0) {
+		firsttime==1;
 		ahb_timeout(0);
+	}
 	return 0;
 }
 

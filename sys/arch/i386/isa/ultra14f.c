@@ -66,11 +66,11 @@
 
 /**/
 
-#ifdef  DDB 
-int     Debugger();
-#else   DDB
-#define Debugger() panic("should call debugger here")
-#endif  /* DDB */
+#ifdef	DDB
+int	Debugger();
+#else	DDB
+#define	Debugger() panic("should call debugger here")
+#endif	/* DDB */
 
 #ifdef  MACH
 int     Debugger();
@@ -443,35 +443,20 @@ struct isa_dev *dev;
 uha_attach(dev)
 struct  isa_dev *dev;
 {
-	int unit = dev->id_unit;
-	extern struct isa_device isa_biotab_dktp[];
-	struct isa_device *dvp;
+	static int firsttime;
+	int masunit = dev->id_masunit;
+	int id = dev->id_unit;
 
-	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
-		if (dvp->id_driver != &uhadriver)
-			continue;
-		if (dvp->id_masunit != dev->id_unit)
-			continue;
-		if (dvp->id_physid == -1)
-			continue;
-		scsi_attach(dev->id_unit, uha_data[unit].our_id, &uha_switch,
-			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
-	}
-	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
-		if (dvp->id_driver != &uhadriver)
-			continue;
-		if (dvp->id_masunit != dev->id_unit)
-			continue;
-		if (dvp->id_physid != -1)
-			continue;
-		scsi_attach(dev->id_unit, uha_data[unit].our_id, &uha_switch,
-			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
-	}
-	scsi_warn(dev->id_unit, uha_data[unit].our_id, &uha_switch);
+	scsi_attach(masunit, uha_data[masunit].our_id, &uha_switch,
+		&dev->id_physid, &id, dev->id_flags);
+
+	/*scsi_warn(dev->id_unit, uha_data[unit].our_id, &uha_switch);*/
 
 	/* only one for all boards */
-	if(!unit)
+	if(firsttime==0 && masunit==0) {
+		firsttime = 1;
 		uha_timeout(0);
+	}
 	return;
 }
 

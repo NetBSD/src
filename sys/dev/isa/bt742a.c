@@ -24,7 +24,10 @@
 /*
  * HISTORY
  * $Log: bt742a.c,v $
- * Revision 1.3  1993/04/12 08:17:28  deraadt
+ * Revision 1.4  1993/04/15 07:57:54  deraadt
+ * ioconf changes, see previous cvs's that dumped core
+ *
+ * Revision 1.3  1993/04/12  08:17:28  deraadt
  * new scsi subsystem.
  * changes also in config/mkioconf.c & sys/scsi/*
  *
@@ -649,35 +652,20 @@ struct isa_dev *dev;
 btattach(dev)
 struct	isa_dev	*dev;
 {
-	int unit = dev->id_unit;
-	extern struct isa_device isa_biotab_dktp[];
-	struct isa_device *dvp;
+	static int firsttime;
+	int masunit = dev->id_masunit;
+	int id = dev->id_unit;
 
-	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
-		if (dvp->id_driver != &btdriver)
-			continue;
-		if (dvp->id_masunit != dev->id_unit)
-			continue;
-		if (dvp->id_physid == -1)
-			continue;
-		scsi_attach(dev->id_unit, bt_scsi_dev[unit], &bt_switch,
-			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
-	}
-	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
-		if (dvp->id_driver != &btdriver)
-			continue;
-		if (dvp->id_masunit != dev->id_unit)
-			continue;
-		if (dvp->id_physid != -1)
-			continue;
-		scsi_attach(dev->id_unit, bt_scsi_dev[unit], &bt_switch,
-			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
-	}
-	scsi_warn(dev->id_unit, bt_scsi_dev[unit], &bt_switch);
+	scsi_attach(masunit, bt_scsi_dev[masunit], &bt_switch,
+		&dev->id_physid, &id, dev->id_flags);
+
+	/*scsi_warn(dev->id_unit, bt_scsi_dev[unit], &bt_switch);*/
 
 	/* only one for all boards */
-	if(!unit)
+	if(firsttime==0 && masunit==0) {
+		firsttime = 1;
 		bt_timeout(0);
+	}
 	return;
 }
 

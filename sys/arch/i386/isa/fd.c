@@ -128,6 +128,8 @@ fdprobe(struct isa_device *dev)
 	}
 	out_fdc(0xDF);
 	out_fdc(2);
+
+	fd_dmachan = dev->id_drq;
 	return 8;
 }
 
@@ -136,64 +138,51 @@ fdprobe(struct isa_device *dev)
  */
 fdattach(struct isa_device *dev)
 {
-	unsigned fdt, unit, fddrive, fdunit;
-	extern struct isa_device isa_biotab_dktp[];
-	struct isa_device *fdutab;
 	unsigned st0, cyl;
-
-	fd_dmachan = dev->id_drq;
+	unsigned fdt;
 
 	fdt = rtcin(RTC_FDISKETTE);
-	unit = dev->id_unit;
-	if (unit >= NFDC)
+	if (dev->id_masunit >= NFDC)
 		return;
 
-	for (fdutab = isa_biotab_dktp; fdutab->id_driver != 0; fdutab++) {
-		if (fdutab->id_driver != &fdcdriver)
-			continue;
-		if (fdutab->id_masunit != dev->id_unit)
-			continue;
-		fdunit = fdutab->id_unit;
-		if (fdunit >= NFD)
-			continue;
-		fddrive = fdutab->id_physid;
-		if (fddrive == 1)
-			fdt <<= 4;
+	if (dev->id_unit >= NFD)
+		return;
+
+	if (dev->id_physid == 1)
+		fdt <<= 4;
 	
-		/* is there a unit? */
-		if ((fdt & 0xf0) == RTCFDT_NONE) {
-			/*printf("fd%d: <no drive> on fdc%d slave %d\n", fddrive,
-				dev->id_unit, fdunit);*/
-			continue;
-		}
-
-		fd_turnon(fddrive);
-		DELAY(10000);
-		out_fdc(NE7CMD_RECAL);	/* Recalibrate Function */
-		out_fdc(fddrive);
-		DELAY(30000);
-		out_fdc(NE7CMD_SENSEI);	/* anything responding */
-		st0 = in_fdc();
-		cyl = in_fdc();
-		if (st0 & 0xd0)
-			continue;
-
-		if ((fdt & 0xf0) == RTCFDT_12M) {
-			printf("fd%d at fdc%d slave %d: <1.2M>\n", fddrive,
-				dev->id_unit, fdunit);
-			fd_unit[fdunit].type = 2;
-		
-		}
-		if ((fdt & 0xf0) == RTCFDT_144M) {
-			printf("fd%d at fdc%d slave %d: <1.44M>\n", fddrive,
-				dev->id_unit, fdunit);
-			fd_unit[fdunit].type = 1;
-		}
-
-		outb(fdc+fdctl,0);	/* Set transfer to 500kbps */
-
-		fd_turnoff(fddrive);
+	/* is there a unit? */
+	if ((fdt & 0xf0) == RTCFDT_NONE) {
+		/*printf("fd%d at fdc%d slave %d: <no drive>\n",
+			dev->id_unit, dev->id_masunit, dev->id_physid);*/
+		return 0;
 	}
+
+	fd_turnon(dev->id_physid);
+	DELAY(10000);
+	out_fdc(NE7CMD_RECAL);	/* Recalibrate Function */
+	out_fdc(dev->id_physid);
+	DELAY(30000);
+	out_fdc(NE7CMD_SENSEI);	/* anything responding */
+	st0 = in_fdc();
+	cyl = in_fdc();
+	if (st0 & 0xd0)
+		return 0;
+
+	if ((fdt & 0xf0) == RTCFDT_12M) {
+		printf("fd%d at fdc%d slave %d: <1.2M>\n", dev->id_unit,
+			dev->id_masunit, dev->id_physid);
+		fd_unit[dev->id_unit].type = 2;
+	}
+
+	if ((fdt & 0xf0) == RTCFDT_144M) {
+		printf("fd%d at fdc%d slave %d: <1.44M>\n", dev->id_unit,
+			dev->id_masunit, dev->id_physid);
+		fd_unit[dev->id_unit].type = 1;
+	}
+
+	outb(fdc+fdctl,0);	/* Set transfer to 500kbps */
+	fd_turnoff(dev->id_physid);
 }
 
 int
