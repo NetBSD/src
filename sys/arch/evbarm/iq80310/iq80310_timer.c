@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.3 2001/11/08 02:12:05 thorpej Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.4 2001/11/23 19:36:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
 #include <sys/time.h>
 
 #include <machine/bus.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 
 #include <evbarm/iq80310/iq80310reg.h>
 #include <evbarm/iq80310/iq80310var.h>
