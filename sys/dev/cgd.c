@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.14 2004/01/25 18:06:48 hannken Exp $ */
+/* $NetBSD: cgd.c,v 1.15 2004/03/18 10:42:08 dan Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.14 2004/01/25 18:06:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.15 2004/03/18 10:42:08 dan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -484,6 +484,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct proc *p)
 	struct	 cgd_ioctl *ci = data;
 	struct	 vnode *vp;
 	int	 ret;
+	int	 keybytes;			/* key length in bytes */
 	char	*cp;
 	char	 inbuf[MAX_KEYSIZE];
 
@@ -514,12 +515,13 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct proc *p)
 		goto bail;
 	}
 
-	if (ci->ci_keylen > MAX_KEYSIZE) {
+	keybytes = ci->ci_keylen / 8 + 1;
+	if (keybytes > MAX_KEYSIZE) {
 		ret = EINVAL;
 		goto bail;
 	}
 	memset(inbuf, 0x0, sizeof(inbuf));
-	ret = copyin(ci->ci_key, inbuf, ci->ci_keylen);
+	ret = copyin(ci->ci_key, inbuf, keybytes);
 	if (ret)
 		goto bail;
 
