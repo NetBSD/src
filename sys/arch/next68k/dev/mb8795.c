@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.23 2001/05/13 16:55:38 chs Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.24 2001/06/16 09:18:46 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -145,11 +145,6 @@ mb8795_config(sc)
   /* Attach the interface. */
   if_attach(ifp);
   ether_ifattach(ifp, sc->sc_enaddr);
-
-	/* decrease the mtu on this interface to deal with
-	 * alignment problems
-	 */
-	ifp->if_mtu -= 16;
 
   sc->sc_sh = shutdownhook_establish(mb8795_shutdown, sc);
   if (sc->sc_sh == NULL)
@@ -781,12 +776,6 @@ mb8795_start(ifp)
 		/* Fix runt packets,  @@@ memory overrun */
 		if (buflen < ETHERMIN+sizeof(struct ether_header)) {
 			buflen = ETHERMIN+sizeof(struct ether_header);
-		}
-
-		buflen += 15;
-		REALIGN_DMABUF(buf,buflen);
-		if (buflen > 1520) {
-			panic("%s: packet too long\n",sc->sc_dev.dv_xname);
 		}
 
 		{

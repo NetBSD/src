@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.28 2001/05/13 16:55:38 chs Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.29 2001/06/16 09:18:46 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -291,7 +291,7 @@ next_dma_rotate(nd)
 		nd->_nd_idx_cont = 0;
 	}
 
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) && 0
 	if (nd->_nd_map_cont) {
 		if (!DMA_BEGINALIGNED(nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr)) {
 			next_dma_print(nd);
@@ -325,6 +325,7 @@ next_dma_setup_cont_regs(nd)
 
 		if (nd->nd_intr == NEXT_I_ENETX_DMA) {
 			dd_stop |= 0x80000000;		/* Ethernet transmit needs secret magic */
+			dd_stop += 15;
 		}
 	} else {
 		dd_start = 0xdeadbeef;
@@ -370,6 +371,7 @@ next_dma_setup_curr_regs(nd)
 
 		if (nd->nd_intr == NEXT_I_ENETX_DMA) {
 			dd_limit |= 0x80000000; /* Ethernet transmit needs secret magic */
+			dd_limit += 15;
 		}
 	} else {
 		dd_next = 0xdeadbeef;
@@ -641,6 +643,7 @@ nextdma_intr(arg)
 
 			if (nd->nd_intr == NEXT_I_ENETX_DMA) {
 				slimit &= ~0x80000000;
+				slimit -= 15;
 			}
 
 #ifdef DIAGNOSTIC
