@@ -170,7 +170,7 @@ check)
 	}
 
 	find `ls -d $queue_directory/* | \
-	    egrep '/(incoming|active|defer|deferred|bounce|hold|corrupt|public|private|flush)$'` \
+	    egrep '/(incoming|active|defer|deferred|bounce|hold|trace|corrupt|public|private|flush)$'` \
 	    ! \( -type p -o -type s \) ! -user $mail_owner \
 		-exec $WARN not owned by $mail_owner: {} \;
 
@@ -233,9 +233,24 @@ check)
 	exit 0
 	;;
 
+set-permissions|upgrade-configuration)
+	$config_directory/post-install create-missing "$@"
+	;;
+
+post-install)
+	# Currently not part of the public interface.
+	shift
+	$config_directory/post-install "$@"
+	;;
+
+/*)
+	# Currently not part of the public interface.
+	"$@"
+	;;
+
 *)
 
-	$FATAL "usage: postfix start (or stop, reload, abort, flush, or check)"
+	$FATAL "usage: postfix start (or stop, reload, abort, flush, check, set-permissions, upgrade-configuration)"
 	exit 1
 	;;
 

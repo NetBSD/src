@@ -6,13 +6,14 @@
 /* SYNOPSIS
 /*	#include <clean_env.h>
 /*
-/*	void	clean_env(export_list)
-/*	const char **export_list;
+/*	void	clean_env(preserve_list)
+/*	const char **preserve_list;
 /* DESCRIPTION
 /*	clean_env() reduces the process environment to the bare minimum.
 /*	The function takes a null-terminated list of arguments.
 /*	Each argument specifies the name of an environment variable
-/*	that should be preserved.
+/*	that should be preserved, or specifies a name=value that should
+/*	be entered into the new environment.
 /* DIAGNOSTICS
 /*	Fatal error: out of memory.
 /* SEE ALSO
@@ -33,6 +34,7 @@
 #include <sys_defs.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 /* Utility library. */
 
@@ -43,21 +45,26 @@
 
 /* clean_env - clean up the environment */
 
-void    clean_env(char **export_list)
+void    clean_env(char **preserve_list)
 {
     extern char **environ;
     ARGV   *save_list;
     char   *value;
     char  **cpp;
+    char   *eq;
 
     /*
-     * Preserve selected environment variables.
+     * Preserve or specify selected environment variables.
      */
+#define STRING_AND_LENGTH(x, y) (x), (y)
+
     save_list = argv_alloc(10);
-    for (cpp = export_list; *cpp; cpp++)
-	if ((value = safe_getenv(*cpp)) != 0)
+    for (cpp = preserve_list; *cpp; cpp++)
+	if ((eq = strchr(*cpp, '=')) != 0)
+	    argv_addn(save_list, STRING_AND_LENGTH(*cpp, eq - *cpp),
+		      STRING_AND_LENGTH(eq + 1, strlen(eq + 1)), (char *) 0);
+	else if ((value = safe_getenv(*cpp)) != 0)
 	    argv_add(save_list, *cpp, value, (char *) 0);
-    argv_terminate(save_list);
 
     /*
      * Truncate the process environment, if available. On some systems
@@ -71,7 +78,7 @@ void    clean_env(char **export_list)
      */
     for (cpp = save_list->argv; *cpp; cpp += 2)
 	if (setenv(cpp[0], cpp[1], 1))
-	    msg_fatal("setenv: %m");
+	    msg_fatal("setenv(%s, %s): %m", cpp[0], cpp[1]);
 
     /*
      * Cleanup.

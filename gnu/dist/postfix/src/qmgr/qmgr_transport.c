@@ -64,6 +64,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Scheduler enhancements:
+/*	Patrik Rak
+/*	Modra 6
+/*	155 00, Prague, Czech Republic
 /*--*/
 
 /* System library. */
@@ -233,7 +238,7 @@ QMGR_TRANSPORT *qmgr_transport_select(void)
     /*
      * If we find a suitable transport, rotate the list of transports to
      * effectuate round-robin selection. See similar selection code in
-     * qmgr_queue_select().
+     * qmgr_peer_select().
      */
 #define STAY_AWAY (QMGR_TRANSPORT_STAT_BUSY | QMGR_TRANSPORT_STAT_DEAD)
 
@@ -242,7 +247,7 @@ QMGR_TRANSPORT *qmgr_transport_select(void)
 	    continue;
 	for (queue = xport->queue_list.next; queue; queue = queue->peers.next) {
 	    if (queue->window > queue->busy_refcount && queue->todo.next != 0) {
-		QMGR_LIST_ROTATE(qmgr_transport_list, xport);
+		QMGR_LIST_ROTATE(qmgr_transport_list, xport, peers);
 		if (msg_verbose)
 		    msg_info("qmgr_transport_select: %s", xport->name);
 		return (xport);
@@ -319,10 +324,10 @@ QMGR_TRANSPORT *qmgr_transport_create(const char *name)
      * Use global configuration settings or transport-specific settings.
      */
     transport->dest_concurrency_limit =
-	get_mail_conf_int2(name, "_destination_concurrency_limit",
+	get_mail_conf_int2(name, _DEST_CON_LIMIT,
 			   var_dest_con_limit, 0, 0);
     transport->recipient_limit =
-	get_mail_conf_int2(name, "_destination_recipient_limit",
+	get_mail_conf_int2(name, _DEST_RCPT_LIMIT,
 			   var_dest_rcpt_limit, 0, 0);
 
     if (transport->dest_concurrency_limit == 0
@@ -331,13 +336,36 @@ QMGR_TRANSPORT *qmgr_transport_create(const char *name)
     else
 	transport->init_dest_concurrency = transport->dest_concurrency_limit;
 
+    transport->slot_cost = get_mail_conf_int2(name, _DELIVERY_SLOT_COST,
+					      var_delivery_slot_cost, 0, 0);
+    transport->slot_loan = get_mail_conf_int2(name, _DELIVERY_SLOT_LOAN,
+					      var_delivery_slot_loan, 0, 0);
+    transport->slot_loan_factor =
+	100 - get_mail_conf_int2(name, _DELIVERY_SLOT_DISCOUNT,
+				 var_delivery_slot_discount, 0, 100);
+    transport->min_slots = get_mail_conf_int2(name, _MIN_DELIVERY_SLOTS,
+					      var_min_delivery_slots, 0, 0);
+    transport->rcpt_unused = get_mail_conf_int2(name, _XPORT_RCPT_LIMIT,
+						var_xport_rcpt_limit, 0, 0);
+    transport->rcpt_per_stack = get_mail_conf_int2(name, _STACK_RCPT_LIMIT,
+						var_stack_rcpt_limit, 0, 0);
+
     transport->queue_byname = htable_create(0);
     QMGR_LIST_INIT(transport->queue_list);
+    transport->job_byname = htable_create(0);
+    QMGR_LIST_INIT(transport->job_list);
+    QMGR_LIST_INIT(transport->job_bytime);
+    transport->job_current = 0;
+    transport->job_next_unread = 0;
+    transport->candidate_cache = 0;
+    transport->candidate_cache_current = 0;
+    transport->candidate_cache_time = (time_t) 0;
+    transport->blocker_tag = 1;
     transport->reason = 0;
     if (qmgr_transport_byname == 0)
 	qmgr_transport_byname = htable_create(10);
     htable_enter(qmgr_transport_byname, name, (char *) transport);
-    QMGR_LIST_APPEND(qmgr_transport_list, transport);
+    QMGR_LIST_PREPEND(qmgr_transport_list, transport, peers);
     if (msg_verbose)
 	msg_info("qmgr_transport_create: %s concurrency %d recipients %d",
 		 transport->name, transport->dest_concurrency_limit,

@@ -10,3 +10,13 @@ endif
 /(1)(2)(3)(5)/	($1)($2)($3)($4)($5)
 /(1)(2)(3)(4)/	($1)($2)($3)($4)
 /(1)(2)(3)/	($1)($2)($3)
+# trailing whitespace below
+if /bar/ 	
+if !/xyzzy/
+/(elbereth)/	($1)
+!/(bogus)/	($1)
+!/find/		Don't have a liquor license
+endif
+endif	 
+# trailing whitespace above
+!

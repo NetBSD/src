@@ -87,6 +87,7 @@
 #include <bounce.h>
 #include <mypwd.h>
 #include <canon_addr.h>
+#include <sent.h>
 
 /* Application-specific. */
 
@@ -162,7 +163,8 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	return (NO);
     if (state.level > 100) {
 	msg_warn("possible alias database loop for %s", name);
-	*statusp = bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+	*statusp = bounce_append(BOUNCE_FLAGS(state.request),
+				 BOUNCE_ATTR(state.msg_attr),
 			       "possible alias database loop for %s", name);
 	return (YES);
     }
@@ -192,6 +194,16 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 		msg_info("%s: %s: %s = %s", myname, *cpp, name, alias_result);
 
 	    /*
+	     * Don't expand a verify-only request.
+	     */
+	    if (state.request->flags & DEL_REQ_FLAG_VERIFY) {
+		*statusp = sent(BOUNCE_FLAGS(state.request),
+				SENT_ATTR(state.msg_attr),
+				"aliased to %s", alias_result);
+		return (YES);
+	    }
+
+	    /*
 	     * DELIVERY POLICY
 	     * 
 	     * Update the expansion type attribute, so we can decide if
@@ -213,7 +225,7 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	    } else {
 		if ((alias_pwd = mypwuid(alias_uid)) == 0) {
 		    msg_warn("cannot find alias database owner for %s", *cpp);
-		    *statusp = defer_append(BOUNCE_FLAG_KEEP,
+		    *statusp = defer_append(BOUNCE_FLAGS(state.request),
 					    BOUNCE_ATTR(state.msg_attr),
 					"cannot find alias database owner");
 		    return (YES);
@@ -237,7 +249,7 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 
 	    expansion = mystrdup(alias_result);
 	    if (OWNER_ASSIGN(owner) != 0
-	    && (owner_rhs = maps_find(alias_maps, owner, DICT_FLAG_NONE)) != 0) {
+		&& (owner_rhs = maps_find(alias_maps, owner, DICT_FLAG_NONE)) != 0) {
 		canon_owner = canon_addr_internal(vstring_alloc(10),
 				     var_exp_own_alias ? owner_rhs : owner);
 		SET_OWNER_ATTR(state.msg_attr, STR(canon_owner), state.level);
@@ -260,16 +272,23 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	    alias_count = 0;
 	    *statusp =
 		(dict_errno ?
-		 defer_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+		 defer_append(BOUNCE_FLAGS(state.request),
+			      BOUNCE_ATTR(state.msg_attr),
 			      "alias database unavailable") :
 	    deliver_token_string(state, usr_attr, expansion, &alias_count));
 #if 0
 	    if (var_ownreq_special
-		&& strncmp("owner-", state.msg_attr.sender, 6) != 0 
+		&& strncmp("owner-", state.msg_attr.sender, 6) != 0
 		&& alias_count > 10)
 		msg_warn("mailing list \"%s\" needs an \"owner-%s\" alias",
 			 name, name);
 #endif
+	    if (alias_count < 1) {
+		msg_warn("no recipient in alias lookup result for %s", name);
+		*statusp = defer_append(BOUNCE_FLAGS(state.request),
+					BOUNCE_ATTR(state.msg_attr),
+					"alias database unavailable");
+	    }
 	    myfree(expansion);
 	    if (owner)
 		myfree(owner);
@@ -285,7 +304,7 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	 * further delivery for the current top-level recipient.
 	 */
 	if (dict_errno != 0) {
-	    *statusp = defer_append(BOUNCE_FLAG_KEEP,
+	    *statusp = defer_append(BOUNCE_FLAGS(state.request),
 				    BOUNCE_ATTR(state.msg_attr),
 				    "alias database unavailable");
 	    return (YES);

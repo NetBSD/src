@@ -1,0 +1,150 @@
+#++
+# NAME
+#	mysql_table 5
+# SUMMARY
+#	Postfix MySQL client configuration
+# SYNOPSIS
+#	\fBpostmap -q "\fIstring\fB" mysql:/etc/postfix/filename\fR
+#
+#	\fBpostmap -q - mysql:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+# DESCRIPTION
+#	The Postfix mail system uses optional tables for address
+#	rewriting or mail routing. These tables are usually in
+#	\fBdbm\fR or \fBdb\fR format.
+#
+#	Alternatively, lookup tables can be specified as MySQL databases.
+#	In order to use MySQL lookups, define a MySQL source as a lookup
+#	table in main.cf, for example:
+# .ti +4
+#	alias_maps = mysql:/etc/mysql-aliases.cf
+#
+#	The file /etc/postfix/mysql-aliases.cf has the same format as
+#	the Postfix main.cf file, and can specify the parameters
+#	described below.
+# ALTERNATIVE CONFIGURATION
+# .ad
+# .fi
+#	For compatibility with other Postfix lookup tables, MySQL
+#	parameters can also be defined in main.cf.  In order to do that,
+#	specify as MySQL source a name that doesn't begin with a slash
+#	or a dot.  The MySQL parameters will then be accessible as the
+#	name you've given the source in its definition, an underscore,
+#	and the name of the parameter.	For example, if the map is
+#	specified as "mysql:\fImysqlname\fR", the parameter "hosts"
+#	below would be defined in main.cf as "\fImysqlname\fR_hosts".
+#
+#	Note: with this form, the passwords for the MySQL sources are
+#	written in main.cf, which is normally world-readable.  Support
+#	for this form will be removed in a future Postfix version.
+# LIST MEMBERSHIP
+# .ad
+# .fi
+#	When using SQL to store lists such as $mynetworks,
+#	$mydestination, $relay_domains, $local_recipient_maps,
+#	etc., it is important to understand that the table must
+#	store each list member as a separate key. The table lookup
+#	verifies the *existence* of the key. See "Postfix lists
+#	versus tables" in the DATABASE_README document for a
+#	discussion.
+#
+#	Do NOT create tables that return the full list of domains
+#	in $mydestination or $relay_domains etc., or IP addresses
+#	in $mynetworks.
+#
+#	DO create tables with each matching item as a key and with
+#	an arbitrary value. With SQL databases it is not uncommon to
+#	return the key itself or a constant value.
+# MYSQL PARAMETERS
+# .ad
+# .fi
+# .IP "\fBhosts\fR"
+#	The hosts that Postfix will try to connect to and query from.
+#	Specify \fIunix:\fR for UNIX domain sockets, \fIinet:\fR for TCP
+#	connections (default).  Example:
+# .ti +4
+#	hosts = host1.some.domain host2.some.domain
+# .ti +4
+#	hosts = unix:/file/name
+#
+#	The hosts are tried in random order, with all connections over
+#	UNIX domain sockets being tried before those over TCP.	The
+#	connections are automatically closed after being idle for about
+#	1 minute, and are re-opened as necessary. Postfix versions 2.0
+#	and earlier do not randomize the host order.
+#
+#	NOTE: if you specify localhost as a hostname (even if you
+#	prefix it with \fIinet:\fR), MySQL will connect to the default
+#	UNIX domain socket.  In order to instruct MySQL to connect to
+#	localhost over TCP you have to specify
+# .ti +4
+#	hosts = 127.0.0.1
+# .IP "\fBuser, password\fR"
+#	The user name and password to log into the mysql server.
+#	Example:
+# .in +4
+#	user = someone
+# .br
+#	password = some_password
+# .in -4
+# .IP "\fBdbname\fR"
+#	The database name on the servers. Example:
+# .ti +4
+#	dbname = customer_database
+# .PP
+#	The following parameters are used to fill in a SELECT
+#	query template of the form:
+# .ti +4
+#	select [\fBselect_field\fR] from [\fBtable\fR] where 
+# .ti +8
+#	[\fBwhere_field\fR] = '$lookup' [\fBadditional_conditions\fR]
+#
+#	$lookup contains the search string, and is escaped so if
+#	it contains single quotes or other odd characters, it will
+#	not cause a parse error, or worse, a security problem.
+# .IP "\fBselect_field\fR"
+#	The SQL "select" parameter. Example:
+# .ti +4
+#	select_field = forw_addr
+# .IP "\fBtable\fR"
+#	The SQL "select .. from" table name. Example:
+# .ti +4
+#	table = mxaliases
+# .IP "\fBwhere_field\fR
+#	The SQL "select .. where" parameter. Example:
+# .ti +4
+#	where_field = alias
+# .IP "\fBadditional_conditions\fR
+#	Additional conditions to the SQL query. Example:
+# .ti +4
+#	additional_conditions = and status = 'paid'
+# SEE ALSO
+#	postmap(1), Postfix lookup table maintenance
+#	postconf(5), configuration parameters
+#	ldap_table(5), LDAP lookup tables
+#	pgsql_table(5), PostgreSQL lookup tables
+# README FILES
+# .ad
+# .fi
+#	Use "\fBpostconf readme_directory\fR" or
+#	"\fBpostconf html_directory\fR" to locate this information.
+# .na
+# .nf
+#	DATABASE_README, Postfix lookup table overview
+#	MYSQL_README, Postfix MYSQL client guide
+# LICENSE
+# .ad
+# .fi
+#	The Secure Mailer license must be distributed with this software.
+# HISTORY
+#	MySQL support was introduced with Postfix version 1.0.
+# AUTHOR(S)
+#	Original implementation by:
+#	Scott Cotton, Joshua Marcus
+#	IC Group, Inc.
+#
+#	Further enhancements by:
+#	Liviu Daia
+#	Institute of Mathematics of the Romanian Academy
+#	P.O. BOX 1-764
+#	RO-014700 Bucharest, ROMANIA
+#--

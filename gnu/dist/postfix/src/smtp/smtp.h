@@ -55,20 +55,54 @@ typedef struct SMTP_STATE {
     off_t   size_limit;			/* server limit or unknown */
     int     space_left;			/* output length control */
     struct MIME_STATE *mime_state;	/* mime state machine */
+
+    /*
+     * Flags and counters to control the handling of mail delivery errors.
+     * There is some redundancy for sanity checking. At the end of an SMTP
+     * session all recipients should be marked one way or the other.
+     */
+    int     final_server;		/* final mail server */
+    int     rcpt_left;			/* recipients left over */
+    int     rcpt_drop;			/* recipients marked as drop */
+    int     rcpt_keep;			/* recipients marked as keep */
 } SMTP_STATE;
 
-#define SMTP_FEATURE_ESMTP	(1<<0)
-#define SMTP_FEATURE_8BITMIME	(1<<1)
-#define SMTP_FEATURE_PIPELINING	(1<<2)
-#define SMTP_FEATURE_SIZE	(1<<3)
-#define SMTP_FEATURE_STARTTLS	(1<<4)
-#define SMTP_FEATURE_AUTH	(1<<5)
-#define SMTP_FEATURE_MAYBEPIX	(1<<6)	/* PIX smtp fixup mode */
+ /*
+  * Server features.
+  */
+#define SMTP_FEATURE_ESMTP		(1<<0)
+#define SMTP_FEATURE_8BITMIME		(1<<1)
+#define SMTP_FEATURE_PIPELINING		(1<<2)
+#define SMTP_FEATURE_SIZE		(1<<3)
+#define SMTP_FEATURE_STARTTLS		(1<<4)
+#define SMTP_FEATURE_AUTH		(1<<5)
+#define SMTP_FEATURE_MAYBEPIX		(1<<6)	/* PIX smtp fixup mode */
+#define SMTP_FEATURE_XFORWARD_NAME	(1<<7)
+#define SMTP_FEATURE_XFORWARD_ADDR	(1<<8)
+#define SMTP_FEATURE_XFORWARD_PROTO	(1<<9)
+#define SMTP_FEATURE_XFORWARD_HELO	(1<<10)
+
+ /*
+  * Misc flags.
+  */
+#define SMTP_MISC_FLAG_LOOP_DETECT	(1<<0)
+
+#define SMTP_MISC_FLAG_DEFAULT		SMTP_MISC_FLAG_LOOP_DETECT
 
  /*
   * smtp.c
   */
 extern int smtp_errno;			/* XXX can we get rid of this? */
+
+#define SMTP_ERR_NONE	0		/* no error */
+#define SMTP_ERR_FAIL	1		/* permanent error */
+#define SMTP_ERR_RETRY	2		/* temporary error */
+#define SMTP_ERR_LOOP	3		/* mailer loop */
+
+extern int smtp_host_lookup_mask;	/* host lookup methods to use */
+
+#define SMTP_HOST_FLAG_DNS	(1<<0)
+#define SMTP_HOST_FLAG_NATIVE	(1<<1)
 
  /*
   * smtp_session.c
@@ -87,14 +121,12 @@ extern void smtp_session_free(SMTP_SESSION *);
  /*
   * smtp_connect.c
   */
-extern SMTP_SESSION *smtp_connect(char *, VSTRING *);
-extern SMTP_SESSION *smtp_connect_host(char *, unsigned, VSTRING *);
-extern SMTP_SESSION *smtp_connect_domain(char *, unsigned, VSTRING *, int *);
+extern int smtp_connect(SMTP_STATE *);
 
  /*
   * smtp_proto.c
   */
-extern int smtp_helo(SMTP_STATE *);
+extern int smtp_helo(SMTP_STATE *, int);
 extern int smtp_xfer(SMTP_STATE *);
 extern void smtp_quit(SMTP_STATE *);
 
@@ -111,6 +143,47 @@ extern void PRINTFLIKE(2, 3) smtp_chat_cmd(SMTP_STATE *, char *,...);
 extern SMTP_RESP *smtp_chat_resp(SMTP_STATE *);
 extern void smtp_chat_reset(SMTP_STATE *);
 extern void smtp_chat_notify(SMTP_STATE *);
+
+ /*
+  * These operations implement a redundant mark-and-sweep algorithm that
+  * explicitly accounts for the fate of every recipient. The interface is
+  * documented in smtp_rcpt.c, which also implements the sweeping. The
+  * smtp_trouble.c module does most of the marking after failure.
+  * 
+  * When a delivery fails or succeeds, take one of the following actions:
+  * 
+  * - Mark the recipient as KEEP (deliver to alternate MTA) and do not update
+  * the delivery request status.
+  * 
+  * - Mark the recipient as DROP (remove from delivery request), log whether
+  * delivery succeeded or failed, delete the recipient from the queue file
+  * and/or update defer or bounce logfiles, and update the delivery request
+  * status.
+  * 
+  * At the end of a delivery attempt, all recipients must be marked one way or
+  * the other. Failure to do so will trigger a panic.
+  */
+#define SMTP_RCPT_STATE_KEEP	1	/* send to backup host */
+#define SMTP_RCPT_STATE_DROP	2	/* remove from request */
+#define SMTP_RCPT_INIT(state) do { \
+	    (state)->rcpt_drop = (state)->rcpt_keep = 0; \
+	    (state)->rcpt_left = state->request->rcpt_list.len; \
+	} while (0)
+
+#define SMTP_RCPT_DROP(state, rcpt) do { \
+	    (rcpt)->status = SMTP_RCPT_STATE_DROP; (state)->rcpt_drop++; \
+	} while (0)
+
+#define SMTP_RCPT_KEEP(state, rcpt) do { \
+	    (rcpt)->status = SMTP_RCPT_STATE_KEEP; (state)->rcpt_keep++; \
+	} while (0)
+
+#define SMTP_RCPT_ISMARKED(rcpt) ((rcpt)->status != 0)
+
+#define SMTP_RCPT_LEFT(state) (state)->rcpt_left
+
+extern void smtp_rcpt_cleanup(SMTP_STATE *);
+extern void smtp_rcpt_done(SMTP_STATE *, const char *, RECIPIENT *);
 
  /*
   * smtp_trouble.c
@@ -132,14 +205,6 @@ extern VSTRING *smtp_unalias_addr(VSTRING *, const char *);
   */
 extern SMTP_STATE *smtp_state_alloc(void);
 extern void smtp_state_free(SMTP_STATE *);
-
- /*
-  * Status codes. Errors must have negative codes so that they do not
-  * interfere with useful counts of work done.
-  */
-#define SMTP_OK			0	/* so far, so good */
-#define SMTP_RETRY		(-1)	/* transient error */
-#define SMTP_FAIL		(-2)	/* hard error */
 
 /* LICENSE
 /* .ad

@@ -7,9 +7,6 @@ OBJS	= lmtp.o lmtp_connect.o lmtp_proto.o lmtp_chat.o lmtp_session.o \
 	lmtp_sasl_proto.o
 HDRS	= lmtp.h
 TESTSRC	= 
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG=
@@ -78,6 +75,7 @@ lmtp.o: ../../include/mail_params.h
 lmtp.o: ../../include/mail_conf.h
 lmtp.o: ../../include/debug_peer.h
 lmtp.o: ../../include/mail_error.h
+lmtp.o: ../../include/flush_clnt.h
 lmtp.o: ../../include/mail_server.h
 lmtp.o: lmtp.h
 lmtp.o: lmtp_sasl.h
@@ -149,6 +147,7 @@ lmtp_proto.o: ../../include/vstream.h
 lmtp_proto.o: ../../include/vstring_vstream.h
 lmtp_proto.o: ../../include/stringops.h
 lmtp_proto.o: ../../include/mymalloc.h
+lmtp_proto.o: ../../include/name_code.h
 lmtp_proto.o: ../../include/mail_params.h
 lmtp_proto.o: ../../include/smtp_stream.h
 lmtp_proto.o: ../../include/mail_queue.h

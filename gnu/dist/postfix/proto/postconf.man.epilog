@@ -1,0 +1,15 @@
+.SH SEE ALSO
+.na
+.nf
+postconf(1) postfix configuration maintenance
+.SH LICENSE
+.ad
+.fi
+The Secure Mailer license must be distributed with this software.
+.SH AUTHOR(S)
+.na
+.nf
+Wietse Venema
+IBM T.J. Watson Research
+P.O. Box 704
+Yorktown Heights, NY 10598, USA

@@ -54,7 +54,7 @@ const char *mail_task(const char *argv0)
 
     if (canon_name == 0)
 	canon_name = vstring_alloc(10);
-    if ((slash = strrchr(argv0, '/')) != 0)
+    if ((slash = strrchr(argv0, '/')) != 0 && slash[1])
 	argv0 = slash + 1;
     if ((tag = safe_getenv(CONF_ENV_LOGTAG)) == 0)
 	tag = DEF_SYSLOG_NAME;

@@ -1,57 +1,65 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - postalias(1) </title>
+</head> <body> <pre>
 POSTALIAS(1)                                         POSTALIAS(1)
 
 <b>NAME</b>
        postalias - Postfix alias database maintenance
 
 <b>SYNOPSIS</b>
-       <b>postalias</b> [<b>-Nfinorvw</b>] [<b>-c</b> <i>config_dir</i>] [<b>-d</b> <i>key</i>] [<b>-q</b> <i>key</i>]
-       [<i>file_type</i>:]<i>file_name</i> ...
+       <b>postalias</b> [<b>-Nfinoprvw</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-d</b> <i>key</i>] [<b>-q</b> <i>key</i>]
+               [<i>file</i><b>_</b><i>type</i>:]<i>file</i><b>_</b><i>name</i> ...
 
 <b>DESCRIPTION</b>
        The <b>postalias</b> command creates or queries one or more Post-
        fix alias databases, or updates an existing one. The input
        and output file formats are expected to be compatible with
-       Sendmail  version  8,  and are expected to be suitable for
+       Sendmail version 8, and are expected to  be  suitable  for
        the use as NIS alias maps.
 
        If the result files do not exist they will be created with
-       the  same  group  and other read permissions as the source
+       the same group and other read permissions  as  the  source
        file.
 
        While a database update is in progress, signal delivery is
-       postponed,  and  an exclusive, advisory, lock is placed on
-       the entire database, in order to avoid surprises in  spec-
+       postponed, and an exclusive, advisory, lock is  placed  on
+       the  entire database, in order to avoid surprises in spec-
        tator programs.
+
+       The format of Postfix alias input files  is  described  in
+       <a href="aliases.5.html"><b>aliases</b>(5)</a>.
 
        Options:
 
-       <b>-N</b>     Include  the terminating null character that termi-
-              nates lookup keys and values. By  default,  Postfix
-              does whatever is the default for the host operating
-              system.
-
-       <b>-c</b> <i>config_dir</i>
-              Read the <b>main.cf</b> configuration file  in  the  named
+       <b>-c</b> <i>config</i><b>_</b><i>dir</i>
+              Read  the  <b>main.cf</b>  configuration file in the named
               directory  instead  of  the  default  configuration
               directory.
 
-       <b>-d</b> <i>key</i> Search the specified maps for <i>key</i>  and  remove  one
-              entry  per  map.   The exit status is zero when the
+       <b>-d</b> <i>key</i> Search  the  specified  maps for <i>key</i> and remove one
+              entry per map.  The exit status is  zero  when  the
               requested information was found.
 
               If a key value of <b>-</b> is specified, the program reads
               key values from the standard input stream. The exit
-              status is zero when at least one of  the  requested
+              status  is  zero when at least one of the requested
               keys was found.
 
        <b>-f</b>     Do not fold the lookup key to lower case while cre-
               ating or querying a map.
 
-       <b>-i</b>     Incremental mode. Read entries from standard  input
+       <b>-i</b>     Incremental  mode. Read entries from standard input
               and  do  not  truncate  an  existing  database.  By
-              default, <b>postalias</b> creates a new database from  the
-              entries in <i>file_name</i>.
+              default,  <b>postalias</b> creates a new database from the
+              entries in <i>file</i><b>_</b><i>name</i>.
+
+       <b>-N</b>     Include the terminating null character that  termi-
+              nates  lookup  keys and values. By default, Postfix
+              does whatever is the default for the host operating
+              system.
 
        <b>-n</b>     Don't  include  the terminating null character that
               terminates lookup  keys  and  values.  By  default,
@@ -63,97 +71,134 @@ POSTALIAS(1)                                         POSTALIAS(1)
               root privileges and runs as the source  file  owner
               instead.
 
-       <b>-q</b> <i>key</i> Search  the  specified  maps  for <i>key</i> and write the
-              first value found to the  standard  output  stream.
+       <b>-p</b>     Do not inherit the file access permissions from the
+              input file when creating a new file.  Instead, cre-
+              ate  a  new  file  with  default access permissions
+              (mode 0644).
+
+       <b>-q</b> <i>key</i> Search the specified maps for  <i>key</i>  and  write  the
+              first  value  found  to the standard output stream.
               The exit status is zero when the requested informa-
               tion was found.
 
               If a key value of <b>-</b> is specified, the program reads
-              key  values  from  the  standard  input  stream and
-              writes one line of <i>key:</i> <i>value</i> output for  each  key
-              that  was  found.  The  exit status is zero when at
+              key values  from  the  standard  input  stream  and
+              writes  one  line of <i>key: value</i> output for each key
+              that was found. The exit status  is  zero  when  at
               least one of the requested keys was found.
 
-       <b>-r</b>     When updating a table, do not warn about  duplicate
+       <b>-r</b>     When  updating a table, do not warn about duplicate
               entries; silently replace them.
 
        <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
-              tiple <b>-v</b> options  make  the  software  increasingly
+              tiple  <b>-v</b>  options  make  the software increasingly
               verbose.
 
-       <b>-w</b>     When  updating a table, do not warn about duplicate
+       <b>-w</b>     When updating a table, do not warn about  duplicate
               entries; silently ignore them.
 
        Arguments:
 
-       <i>file_type</i>
-              The type of database to be produced.
+       <i>file</i><b>_</b><i>type</i>
+              The  database type. To find out what types are sup-
+              ported, use the "<b>postconf -m" command.</b>
+
+              <b>The postalias</b> command can query any supported  file
+              type,  but  it  can  create only the following file
+              types:
 
               <b>btree</b>  The  output   is   a   btree   file,   named
-                     <i>file_name</i><b>.db</b>.   This  is  available  only on
+                     <i>file</i><b>_</b><i>name</i><b>.db</b>.   This  is  available  only on
                      systems with support for <b>db</b> databases.
 
               <b>dbm</b>    The output  consists  of  two  files,  named
-                     <i>file_name</i><b>.pag</b>  and  <i>file_name</i><b>.dir</b>.   This is
+                     <i>file</i><b>_</b><i>name</i><b>.pag</b>  and  <i>file</i><b>_</b><i>name</i><b>.dir</b>.   This is
                      available only on systems with  support  for
                      <b>dbm</b> databases.
 
               <b>hash</b>   The   output   is   a   hashed  file,  named
-                     <i>file_name</i><b>.db</b>.  This  is  available  only  on
+                     <i>file</i><b>_</b><i>name</i><b>.db</b>.  This  is  available  only  on
                      systems with support for <b>db</b> databases.
 
-              Use  the command <b>postconf</b> <b>-m</b> to find out what types
+              Use  the command <b>postconf -m</b> to find out what types
               of database your Postfix installation can  support.
 
-              When  no  <i>file_type</i> is specified, the software uses
+              When  no  <i>file</i><b>_</b><i>type</i> is specified, the software uses
               the    database    type    specified    via     the
-              <b>default</b><i>_</i><b>database</b><i>_</i><b>type</b> configuration parameter.  The
+              <b><a href="postconf.5.html#default_database_type">default_database_type</a></b> configuration parameter.  The
               default value for this  parameter  depends  on  the
               host environment.
 
-       <i>file_name</i>
+       <i>file</i><b>_</b><i>name</i>
               The  name  of  the  alias database source file when
               creating a database.
 
 <b>DIAGNOSTICS</b>
-       Problems are logged to the standard error stream. No  out-
-       put means no problems were detected. Duplicate entries are
-       skipped and are flagged with a warning.
+       Problems are logged to the standard error  stream  and  to
+       <b>syslogd</b>(8).    No  output  means  that  no  problems  were
+       detected. Duplicate entries are skipped  and  are  flagged
+       with a warning.
 
        <b>postalias</b> terminates with zero exit status in case of suc-
-       cess (including successful <b>postalias</b> <b>-q</b> lookup) and termi-
+       cess (including successful <b>postalias -q</b> lookup) and termi-
        nates with non-zero exit status in case of failure.
 
 <b>ENVIRONMENT</b>
-       <b>MAIL</b><i>_</i><b>CONFIG</b>
+       <b>MAIL_CONFIG</b>
               Directory with Postfix configuration files.
 
-       <b>MAIL</b><i>_</i><b>VERBOSE</b>
+       <b>MAIL_VERBOSE</b>
               Enable verbose logging for debugging purposes.
 
-<b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The following <b>main.cf</b> parameters are  especially  relevant
-       to  this  program. See the Postfix <b>main.cf</b> file for syntax
-       details and for default values.
+<b>CONFIGURATION PARAMETERS</b>
+       The  following  <b>main.cf</b> parameters are especially relevant
+       to this program.
 
-       <b>default</b><i>_</i><b>database</b><i>_</i><b>type</b>
-              Default database type. On many  UNIX  systems,  the
-              default type is either <b>dbm</b> or <b>hash</b>.
+       The text below provides  only  a  parameter  summary.  See
+       <a href="postconf.5.html">postconf(5)</a> for more details including examples.
 
-       <b>berkeley</b><i>_</i><b>db</b><i>_</i><b>create</b><i>_</i><b>buffer</b><i>_</i><b>size</b>
-              Amount  of buffer memory to be used when creating a
-              Berkeley DB <b>hash</b> or <b>btree</b> lookup table.
+       <b><a href="postconf.5.html#alias_database">alias_database</a> (see 'postconf -d' output)</b>
+              The  alias databases for <a href="local.8.html">local(8)</a> delivery that are
+              updated with "<b>newaliases</b>" or with "<b>sendmail -bi</b>".
 
-       <b>berkeley</b><i>_</i><b>db</b><i>_</i><b>read</b><i>_</i><b>buffer</b><i>_</i><b>size</b>
-              Amount of buffer memory to be used when  reading  a
-              Berkeley DB <b>hash</b> or <b>btree</b> lookup table.
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The default location of  the  Postfix  main.cf  and
+              master.cf configuration files.
+
+       <b><a href="postconf.5.html#berkeley_db_create_buffer_size">berkeley_db_create_buffer_size</a> (16777216)</b>
+              The  per-table  I/O  buffer  size for programs that
+              create Berkeley DB hash or btree tables.
+
+       <b><a href="postconf.5.html#berkeley_db_read_buffer_size">berkeley_db_read_buffer_size</a> (131072)</b>
+              The per-table I/O buffer  size  for  programs  that
+              read Berkeley DB hash or btree tables.
+
+       <b><a href="postconf.5.html#default_database_type">default_database_type</a> (see 'postconf -d' output)</b>
+              The default database type for use in <a href="newaliases.1.html">newaliases(1)</a>,
+              <a href="postalias.1.html">postalias(1)</a> and <a href="postmap.1.html">postmap(1)</a> commands.
+
+       <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
+              The syslog facility of Postfix logging.
+
+       <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
+              The mail system name that is prepended to the  pro-
+              cess  name  in  syslog  records,  so  that  "smtpd"
+              becomes, for example, "postfix/smtpd".
 
 <b>STANDARDS</b>
        <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
 
-<b>SEE</b> <b>ALSO</b>
-       <a href="aliases.5.html">aliases(5)</a> format of alias database input file.
-       <a href="sendmail.1.html">sendmail(1)</a> mail posting and compatibility interface.
+<b>SEE ALSO</b>
+       <a href="aliases.5.html">aliases(5)</a>, format of alias database input file.
+       <a href="local.8.html">local(8)</a>, Postfix local delivery agent.
+       <a href="postconf.1.html">postconf(1)</a>, supported database types
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="postmap.1.html">postmap(1)</a>, create/update/query lookup tables
+       <a href="newaliases.1.html">newaliases(1)</a>, Sendmail compatibility interface.
+       syslogd(8), system logging
+
+<b>README FILES</b>
+       <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
 <b>LICENSE</b>
        The  Secure  Mailer  license must be distributed with this

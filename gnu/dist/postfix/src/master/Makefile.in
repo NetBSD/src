@@ -1,6 +1,6 @@
 SHELL	= /bin/sh
 SRCS	= master.c master_conf.c master_ent.c master_sig.c master_avail.c \
-	master_spawn.c master_service.c master_status.o master_listen.c \
+	master_spawn.c master_service.c master_status.c master_listen.c \
 	master_proto.c single_server.c multi_server.c master_vars.c \
 	master_wakeup.c master_flow.c mail_flow.c
 OBJS	= master.o master_conf.o master_ent.o master_sig.o master_avail.o \
@@ -10,9 +10,6 @@ LIB_OBJ	= single_server.o multi_server.o trigger_server.o master_proto.o \
 	mail_flow.o
 HDRS	= mail_server.h master_proto.h mail_flow.h
 INT_HDR	= master.h
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 LIB	= libmaster.a
