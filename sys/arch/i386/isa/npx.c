@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.104 2004/05/13 12:13:20 yamt Exp $	*/
+/*	$NetBSD: npx.c,v 1.105 2004/06/23 12:24:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.104 2004/05/13 12:13:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.105 2004/06/23 12:24:01 yamt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -137,7 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.104 2004/05/13 12:13:20 yamt Exp $");
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
-int npxdna(struct cpu_info *);
 static int	npxdna_notset(struct cpu_info *);
 static int	npxdna_s87(struct cpu_info *);
 #ifdef I686_CPU
