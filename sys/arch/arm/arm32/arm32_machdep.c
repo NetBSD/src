@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.3 2001/08/11 13:00:48 chris Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.4 2001/09/09 10:33:43 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -449,12 +449,14 @@ cpu_startup()
 
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_flags = 0;
-	curpcb->pcb_und_sp = (u_int)proc0.p_addr + USPACE_UNDEF_STACK_TOP;
-	curpcb->pcb_sp = (u_int)proc0.p_addr + USPACE_SVC_STACK_TOP;
+	curpcb->pcb_un.un_32.pcb32_und_sp = (u_int)proc0.p_addr +
+	    USPACE_UNDEF_STACK_TOP;
+	curpcb->pcb_un.un_32.pcb32_sp = (u_int)proc0.p_addr +
+	    USPACE_SVC_STACK_TOP;
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)(pmap_kernel())->pm_pdir,
 	    (paddr_t *)&curpcb->pcb_pagedir);
 
-        curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_sp - 1;
+        curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
 }
 
 /*
