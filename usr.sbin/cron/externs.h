@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.2 1997/03/13 06:19:18 mikel Exp $	*/
+/*	$NetBSD: externs.h,v 1.3 1998/07/26 13:27:34 mycroft Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,6 @@
 # define DIR_T	struct dirent
 # define WAIT_T	int
 # define WAIT_IS_INT 1
-extern char *tzname[2];
 # define TZONE(tm) tzname[(tm).tm_isdst]
 #endif
 
