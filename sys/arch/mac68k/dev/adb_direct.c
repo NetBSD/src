@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.30 1999/11/07 00:16:39 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.31 1999/11/07 05:50:26 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1571,9 +1571,7 @@ send_adb_iop(int cmd, u_char * buffer, void *compRout, void *data)
 	buff[1] = buffer[0];
 	buff[2] = cmd;
 	cnt = (int) buff[1];
-	for (i=0; i<cnt ; i++) {
-		buff[i+3] = buffer[i+1];
-	}
+	memcpy(buff + 3, buffer + 1, cnt);
 	return iop_send_msg(ISM_IOP, IOP_CHAN_ADB, buff, cnt+3,
 			    adb_iop_recv, NULL);
 }
