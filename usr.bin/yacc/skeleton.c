@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.21 2001/02/04 17:45:06 christos Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.22 2002/01/30 20:37:59 tv Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,11 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: skeleton.c,v 1.21 2001/02/04 17:45:06 christos Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.22 2002/01/30 20:37:59 tv Exp $");
 #endif /* 0 */
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ const char * const banner[] =
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
     "#if defined(__NetBSD__) && defined(__IDSTRING)",
-    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.21 2001/02/04 17:45:06 christos Exp $\");",
+    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.22 2002/01/30 20:37:59 tv Exp $\");",
     "#endif /* __NetBSD__ && __IDSTRING */",
     "#endif /* 0 */",
     "#endif /* lint */",
@@ -138,7 +138,7 @@ const char * const body[] =
 {
     "/* allocate initial stack or double stack size, up to YYMAXDEPTH */",
     "static int yygrowstack __P((void));",
-    "static int yygrowstack()",
+    "static int yygrowstack __P((void))",
     "{",
     "    int newsize, i;",
     "    short *newss;",
@@ -169,7 +169,7 @@ const char * const body[] =
     "#define YYACCEPT goto yyaccept",
     "#define YYERROR goto yyerrlab",
     "int",
-    "yyparse()",
+    "yyparse __P((void))",
     "{",
     "    int yym, yyn, yystate;",
     "#if YYDEBUG",
