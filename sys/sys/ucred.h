@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.16 2003/03/05 18:39:17 dsl Exp $	*/
+/*	$NetBSD: ucred.h,v 1.17 2003/05/16 13:55:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -85,6 +85,7 @@ void		crfree(struct ucred *);
 struct ucred	*crget(void);
 int		suser(const struct ucred *, u_short *);
 void		crcvt(struct ucred *, const struct uucred *);
+int		crcmp(const struct ucred *, const struct uucred *);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */
