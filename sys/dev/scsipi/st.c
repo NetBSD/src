@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.53 1995/08/12 22:58:04 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.54 1995/10/13 20:01:08 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -122,6 +122,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		0, 0, QIC_150,				/* minor 8-11 */
 		0, 0, QIC_120				/* minor 12-15 */
 	}},
+	{T_SEQUENTIAL, T_REMOV,
+	 "TANDBERG", " TDC 3800       ", "",     0, 0, {
+		ST_Q_FORCE_BLKSIZE, 512, 0,		/* minor 0-3 */
+		0, 0, QIC_525,				/* minor 4-7 */
+		0, 0, QIC_150,				/* minor 8-11 */
+		0, 0, QIC_120				/* minor 12-15 */
+	}},
 	/*
 	 * At least -005 and -007 need this.  I'll assume they all do unless I
 	 * hear otherwise.  - mycroft, 31MAR1994
@@ -157,6 +164,20 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		0, 0, QIC_150,				/* minor 4-7 */
 		0, 0, QIC_120,				/* minor 8-11 */
 		0, 0, QIC_24				/* minor 12-15 */
+	}},
+	{T_SEQUENTIAL, T_REMOV,
+	 "WANGTEK ", "5099ES SCSI", "",          0, 0, {
+		ST_Q_FORCE_BLKSIZE, 512, 0,		/* minor 0-3 */
+		0, 0, QIC_11,				/* minor 4-7 */
+		0, 0, QIC_24,				/* minor 8-11 */
+		0, 0, QIC_24,				/* minor 12-15 */
+	}},
+	{T_SEQUENTIAL, T_REMOV,
+	 "WANGTEK ", "5150ES SCSI", "",          0, 0, {
+		ST_Q_FORCE_BLKSIZE, 512, 0,		/* minor 0-3 */
+		0, 0, QIC_24,				/* minor 4-7 */
+		0, 0, QIC_120,				/* minor 8-11 */
+		0, 0, QIC_150				/* minor 12-15 */
 	}},
 	{T_SEQUENTIAL, T_REMOV,
 	 "WANGTEK ", "5525ES SCSI REV7", "",     0, 0, {
