@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 2003/09/03 19:29:12 dsl Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2003/09/11 12:19:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -47,6 +47,7 @@ extern int	cpgflg;		/* cylinders/cylinder group flag was given */
 extern int	minfree;	/* free space threshold */
 extern int	opt;		/* optimization preference (space or time) */
 extern int	density;	/* number of bytes per inode */
+extern int	num_inodes;	/* number of inodes (overrides density) */
 extern int	maxcontig;	/* max contiguous blocks to allocate */
 extern int	maxbpg;		/* maximum blocks per file in a cyl group */
 extern int	maxblkspercg;
