@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.9 1995/04/13 20:49:02 mycroft Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.10 1995/04/22 19:48:56 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -50,13 +50,19 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/exec.h>
+#include <machine/svr4_machdep.h>
 
 #include <compat/svr4/svr4_util.h>
+#include <compat/svr4/svr4_syscall.h>
 #include <compat/svr4/svr4_exec.h>
 
 #define SVR4_ALIGN(a, b) ((a) & ~((b) - 1))
 #define SVR4_PAGESIZE 4096
-#define SVR4_AUX_ARGSIZ (sizeof(AuxInfo) * 8)
+#ifdef SVR4_COMPAT_SOLARIS2
+# define SVR4_AUX_ARGSIZ (sizeof(AuxInfo) * 12 / sizeof(char *))
+#else
+# define SVR4_AUX_ARGSIZ (sizeof(AuxInfo) * 8 / sizeof(char *))
+#endif
 
 /*
  * I know this is horrible, but I cannot load the interpreter after
@@ -74,8 +80,8 @@ struct svr4_args {
 	u_long	arg_phnum;	/* Number of program headers */
 };
 
-static void svr4_setup_args __P((int, struct proc *, struct exec_package *,
-			         void *));
+static void *svr4_copyargs __P((struct exec_package *, struct ps_strings *,
+			       void *, void *));
 static int svr4_check_header __P((Elf32_Ehdr *, int));
 static void svr4_load_psection	__P((struct exec_package *, struct vnode *,
 		                     Elf32_Phdr *, u_long *, u_long *, int *));
@@ -85,6 +91,24 @@ static int svr4_read_from __P((struct vnode *, u_long, struct proc *, caddr_t,
 static int svr4_load_interp __P((struct proc *, char *, struct exec_package *,
 				 struct svr4_args *, u_long * last));
 
+extern int svr4_error[];
+extern struct sysent svr4_sysent[];
+extern char *svr4_syscallnames[];
+
+struct emul emul_svr4 = {
+	"svr4",
+	svr4_error,
+	svr4_sendsig,
+	SVR4_SYS_syscall,
+	SVR4_SYS_MAXSYSCALL,
+	svr4_sysent,
+	svr4_syscallnames,
+	SVR4_AUX_ARGSIZ,
+	svr4_copyargs,
+	setregs,
+	svr4_sigcode,
+	svr4_esigcode,
+};
 
 #ifdef DEBUG_EXEC_SVR4
 static void
@@ -130,32 +154,60 @@ print_Phdr(p)
 #endif
 
 
-/*
- * svr4_setup_args():
- *
- * Push extra arguments on the stack needed by dynamically linked binaries
- */
-static void
-svr4_setup_args(cmd, pp, ep, sp)
-	int			 cmd;
-	struct proc		*pp;
-	struct exec_package	*ep;
-	void			*sp;
+static void *
+svr4_copyargs(pack, arginfo, stack, argp)
+	struct exec_package *pack;
+	struct ps_strings *arginfo;
+	void *stack;
+	void *argp;
 {
-	AuxInfo *a = sp;
-	struct svr4_args *ap = (struct svr4_args *) ep->ep_setup_arg;
+	char **cpp = stack;
+	char *dp, *sp;
+	size_t len;
+	void *nullp = NULL;
+	int argc = arginfo->ps_nargvstr;
+	int envc = arginfo->ps_nenvstr;
+	AuxInfo *a;
+	struct svr4_args *ap = (struct svr4_args *) pack->ep_emul_arg;
 
-	if (cmd == EXEC_SETUP_CLEANUP) {
-		if (ap != NULL)
-			free((char *) ap, M_TEMP);
-		return;
-	}
-	if (cmd != EXEC_SETUP_ADDARGS)
-		return;
+	if (copyout(&argc, cpp++, sizeof(argc)))
+		return NULL;
 
-	DPRINTF(("phaddr=0x%x, phsize=%d, phnum=%d, interp=0x%x, entry=0x%x\n",
+	dp = (char *) (cpp + argc + envc + 2 + pack->ep_emul->e_arglen);
+	sp = argp;
+
+	/* XXX don't copy them out, remap them! */
+	arginfo->ps_argvstr = dp; /* remember location of argv for later */
+
+	for (; --argc >= 0; sp += len, dp += len)
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, dp, ARG_MAX, &len))
+			return NULL;
+
+	if (copyout(&nullp, cpp++, sizeof(nullp)))
+		return NULL;
+
+	arginfo->ps_envstr = dp; /* remember location of envp for later */
+
+	for (; --envc >= 0; sp += len, dp += len)
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, dp, ARG_MAX, &len))
+			return NULL;
+
+	if (copyout(&nullp, cpp++, sizeof(nullp)))
+		return NULL;
+
+	/*
+	 * Push extra arguments on the stack needed by dynamically
+	 * linked binaries
+	 */
+	a = (AuxInfo *) cpp;
+	ap = (struct svr4_args *) pack->ep_emul_arg;
+
+	DPRINTF(("phaddr=0x%x, phsize=%d, phnum=%d, interp=0x%x, ",
 		 ap->arg_phaddr, ap->arg_phentsize, ap->arg_phnum,
-		 ap->arg_interp, ap->arg_entry));
+		 ap->arg_interp));
+	DPRINTF((" entry=0x%x\n", ap->arg_entry));
 
 	a->au_id = AUX_phdr;
 	a->au_v = ap->arg_phaddr;
@@ -187,6 +239,27 @@ svr4_setup_args(cmd, pp, ep, sp)
 
 	a->au_id = AUX_null;
 	a->au_v = 0;
+	a++;
+
+#ifdef SVR4_COMPAT_SOLARIS2
+	a->au_id = AUX_sun_uid;
+	a->au_v = p->p_ucred->cr_uid;
+	a++;
+
+	a->au_id = AUX_sun_ruid;
+	a->au_v = p->p_cred->ruid;
+	a++;
+
+	a->au_id = AUX_sun_gid;
+	a->au_v = p->p_ucred->cr_groups[0];
+	a++;
+
+	a->au_id = AUX_sun_rgid;
+	a->au_v = p->p_cred->rgid;
+	a++;
+#endif
+	free((char *) ap, M_TEMP);
+	return a;
 }
 
 
@@ -542,7 +615,6 @@ exec_svr4_elf_makecmds(p, epp)
 				    (caddr_t) ph, phsize)) != 0)
 		goto bad;
 
-	epp->ep_emul = EMUL_SVR4;
 	epp->ep_tsize = ~0;
 	epp->ep_dsize = ~0;
 
@@ -627,9 +699,7 @@ exec_svr4_elf_makecmds(p, epp)
 		ap->arg_phnum = eh->e_phnum;
 		ap->arg_entry = eh->e_entry;
 
-		epp->ep_setup = svr4_setup_args;
-		epp->ep_setup_arg = ap;
-		epp->ep_setup_arglen = SVR4_AUX_ARGSIZ / sizeof(char *);
+		epp->ep_emul_arg = ap;
 	} else
 		epp->ep_entry = eh->e_entry;
 
@@ -640,6 +710,8 @@ exec_svr4_elf_makecmds(p, epp)
 
 	DPRINTF(("Elf entry@ 0x%x\n", epp->ep_entry));
 	epp->ep_vp->v_flag |= VTEXT;
+
+	epp->ep_emul = &emul_svr4;
 
 	return exec_aout_setup_stack(p, epp);
 

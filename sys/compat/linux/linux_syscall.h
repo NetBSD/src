@@ -108,3 +108,4 @@
 #define	LINUX_SYS_linux_getpgid	132
 #define	LINUX_SYS_fchdir	133
 #define	LINUX_SYS_linux_llseek	140
+#define	LINUX_SYS_MAXSYSCALL	141

@@ -401,4 +401,3 @@ struct sysent linux_sysent[] = {
 	    linux_llseek },			/* 140 = linux_llseek */
 };
 
-int	nlinux_sysent= sizeof(linux_sysent) / sizeof(linux_sysent[0]);

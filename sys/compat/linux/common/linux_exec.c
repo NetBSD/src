@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.3 1995/04/07 22:23:22 fvdl Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.4 1995/04/22 19:48:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -56,11 +56,92 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/exec.h>
+#include <machine/linux_machdep.h>
 
 #include <compat/linux/linux_types.h>
+#include <compat/linux/linux_syscall.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_exec.h>
+
+static void *linux_copyargs __P((struct exec_package *, struct ps_strings *,
+				void *, void *));
+
+#define	LINUX_AUX_ARGSIZ	2
+
+extern int linux_error[];
+extern struct sysent linux_sysent[];
+extern char *linux_syscallnames[];
+
+struct emul emul_linux = {
+	"linux",
+	linux_error,
+	linux_sendsig,
+	LINUX_SYS_syscall,
+	LINUX_SYS_MAXSYSCALL,
+	linux_sysent,
+	linux_syscallnames,
+	LINUX_AUX_ARGSIZ,
+	linux_copyargs,
+	setregs,
+	linux_sigcode,
+	linux_esigcode,
+};
+
+
+static void *
+linux_copyargs(pack, arginfo, stack, argp)
+	struct exec_package *pack;
+	struct ps_strings *arginfo;
+	void *stack;
+	void *argp;
+{
+	char **cpp = stack;
+	char **stk = stack;
+	char *dp, *sp;
+	size_t len;
+	void *nullp = NULL;
+	int argc = arginfo->ps_nargvstr;
+	int envc = arginfo->ps_nenvstr;
+
+	if (copyout(&argc, cpp++, sizeof(argc)))
+		return NULL;
+
+	/* leave room for envp and argv */
+	cpp += 2;
+	if (copyout(&cpp, &stk[1], sizeof (cpp)))
+		return NULL;
+
+	dp = (char *) (cpp + argc + envc + 2);
+	sp = argp;
+
+	/* XXX don't copy them out, remap them! */
+	arginfo->ps_argvstr = dp; /* remember location of argv for later */
+
+	for (; --argc >= 0; sp += len, dp += len)
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, dp, ARG_MAX, &len))
+			return NULL;
+
+	if (copyout(&nullp, cpp++, sizeof(nullp)))
+		return NULL;
+
+	if (copyout(&cpp, &stk[2], sizeof (cpp)))
+		return NULL;
+
+	arginfo->ps_envstr = dp; /* remember location of envp for later */
+
+	for (; --envc >= 0; sp += len, dp += len)
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, dp, ARG_MAX, &len))
+			return NULL;
+
+	if (copyout(&nullp, cpp++, sizeof(nullp)))
+		return NULL;
+
+	return cpp;
+}
+
 
 int
 exec_linux_aout_makecmds(p, epp)
@@ -92,11 +173,8 @@ exec_linux_aout_makecmds(p, epp)
 		error = exec_linux_aout_prep_omagic(p, epp);
 		break;
 	}
-	if (error == 0) {
-		epp->ep_sigcode = linux_sigcode;
-		epp->ep_esigcode = linux_esigcode;
-		epp->ep_emul = EMUL_LINUX;
-	}
+	if (error == 0)
+		epp->ep_emul = &emul_linux;
 	return error;
 }
 
