@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.34 2003/08/20 14:11:17 christos Exp $
+.\"	$NetBSD: su.1,v 1.35 2003/08/23 22:31:24 wiz Exp $
 .\"
-.Dd April 27, 2003
+.Dd August 20, 2003
 .Dt SU 1
 .Os
 .Sh NAME
@@ -198,30 +198,29 @@ prompt is set to
 .Dq Sy \&#
 to remind one of its awesome power.
 .Sh COMPILATION OPTIONS
-.Pp
 Several compilation time options are available that alter the program's
 behavior.
 These options are:
 .Bl -tag -width "SU_INDIRECT_GROUP"
 .It SU_GROUP
 If defined, it changes the default group that is allowed to become
-.Dq root ,
+.Dq root
 from
 .Dq wheel
 to the specified string.
 .It SU_ROOTAUTH
 If defined, it specifies a group whose members are allowed to become
-.Dq root ,
+.Dq root
 by supplying their own password instead of the
 .Dq root
 one.
 .It SU_INDIRECT_GROOP
 If defined, the
 .Ar SU_GROUP
-and 
+and
 .Ar SU_ROOTAUTH
 groups are treated as indirect groups.
-The group members of those two groups, are treated as groups themselves.
+The group members of those two groups are treated as groups themselves.
 .Sh EXIT STATUS
 .Nm
 returns the exit status of the executed subshell, or 1 if any error
