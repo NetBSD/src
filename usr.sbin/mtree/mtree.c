@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.11 1998/10/10 07:50:28 mrg Exp $	*/
+/*	$NetBSD: mtree.c,v 1.12 1998/12/03 23:33:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.11 1998/10/10 07:50:28 mrg Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.12 1998/12/03 23:33:10 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,7 @@ main(argc, argv)
 	if (dir && chdir(dir))
 		mtree_err("%s: %s", dir, strerror(errno));
 
-	if ((cflag || sflag) && !getwd(fullpath))
+	if ((cflag || sflag) && !getcwd(fullpath, MAXPATHLEN))
 		mtree_err("%s", fullpath);
 
 	if (cflag) {
