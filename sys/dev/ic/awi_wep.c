@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wep.c,v 1.3 2000/07/21 04:48:56 onoe Exp $	*/
+/*	$NetBSD: awi_wep.c,v 1.4 2000/08/14 11:28:03 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -326,7 +326,6 @@ awi_wep_encrypt(sc, m0, txflag)
 	if (txflag) {
 		n->m_pkthdr.len += len;
 	} else {
-		wh = mtod(n, struct ieee80211_frame *);
 		n->m_pkthdr.len -= len;
 		left -= len;
 	}
@@ -428,14 +427,15 @@ awi_wep_encrypt(sc, m0, txflag)
 		    sizeof(crcbuf));
 	} else {
 		n->m_len = noff;
-		noff = 0;
-		for (; noff < sizeof(crcbuf); noff += len, m = m->m_next) {
-			if (m->m_len < moff + len)
+		for (noff = 0; noff < sizeof(crcbuf); noff += len) {
+			len = sizeof(crcbuf) - noff;
+			if (len > m->m_len - moff)
 				len = m->m_len - moff;
-			if (len == 0)
-				continue;
-			awa->awa_decrypt(ctx, crcbuf + noff,
-			    mtod(m, caddr_t) + moff, len);
+			if (len > 0)
+				awa->awa_decrypt(ctx, crcbuf + noff,
+				    mtod(m, caddr_t) + moff, len);
+			m = m->m_next;
+			moff = 0;
 		}
 		if (crc != LE_READ_4(crcbuf))
 			goto fail;
