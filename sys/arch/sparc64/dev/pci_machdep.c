@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.17 2001/01/14 09:43:33 martin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.18 2001/01/19 21:25:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -226,7 +226,7 @@ pci_attach_hook(parent, self, pba)
 
 		/* enable mem & dma if not already */
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
-			PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE);
+			PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE|PCI_COMMAND_IO_ENABLE);
 
 
 		/* clean up */
