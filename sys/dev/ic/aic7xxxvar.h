@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.41 2003/09/02 21:02:58 fvdl Exp $
+ * $Id: aic7xxxvar.h,v 1.42 2003/10/08 17:38:31 fvdl Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -223,8 +223,9 @@ struct seeprom_descriptor;
 
 /*
  * The maximum transfer per S/G segment.
+ * Limited by MAXPHYS or a 24-bit counter.
  */
-#define AHC_MAXTRANSFER_SIZE	 0x00ffffff	/* limited by 24bit counter */
+#define AHC_MAXTRANSFER_SIZE	 MIN(MAXPHYS,0x00ffffff)
 
 /*
  * The maximum amount of SCB storage in hardware on a controller.
