@@ -33,7 +33,7 @@
  *	@(#)if_le.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: if_le.c,v 1.23 93/04/21 02:39:38 torek Exp 
- * $Id: if_le.c,v 1.2 1993/10/11 02:45:52 deraadt Exp $
+ * $Id: if_le.c,v 1.3 1993/11/05 10:51:50 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -253,7 +253,6 @@ if (!ISQUADALIGN(a))
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = "le";
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_init = leinit;
 	ifp->if_ioctl = leioctl;
 	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
