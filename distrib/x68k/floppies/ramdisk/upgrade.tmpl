@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: upgrade.tmpl,v 1.6 1999/04/15 15:21:41 minoura Exp $
+#	$NetBSD: upgrade.tmpl,v 1.7 1999/04/19 22:44:37 minoura Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -41,7 +41,7 @@
 DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
-UARGS="-c 2"
+UARGS="-T ffs:-c=2"
 
 FSTAB=${FSTABDIR}/fstab
 
@@ -144,37 +144,38 @@ case "$resp" in
 		;;
 esac
 
+echo	""
+echo	"You may have to increase the virtual memory by activating"
+echo	"the swap device if your machine has only 4MB memory installed, or,"
+echo	"if one or more of your NetBSD disk partitions are very large."
+echo	""
 if [ `cat /kern/physmem` -le 1024 ]; then # less than 4megs
-	echo	""
-	echo	"You have to increase the virtual memory by activating"
-	echo	"the swap device especially if you are going to retrieve"
-	echo	"the distribution sets via network."
-	echo	""
-	echo -n	"Enable swapping? (yes/no)"
-	getresp "y"
-	case $resp in
-		n*)
-			echo	""
-			echo	"Good, swapping is not enabled."
-			;;
-		*)
-			echo	""
-			echo	"Here we go..."
-			swapctl -a /dev/${drivename}b
-			;;
-	esac
-	echo	""
-	echo	"Note that you have to use the SMALL kernel named"
-	echo	"netbsd.SMALL in x68k/binary/kernel/ directory instead of"
-	echo	"the standard kernel which is included the kern.tgz."
-	echo	""
+    defresp=y
+else
+    defresp=n
 fi
+
+echo -n	"Add ${drivename}b as swap device? [${defresp}]"
+
+getresp $defresp
+case $resp in
+    n*)
+	echo	""
+	echo	"Swapping is not enabled."
+	;;
+    *)
+	echo	""
+	echo	"Good.  Configuring the swap device..."
+	swapctl -a /dev/${drivename}b
+	;;
+esac
 
 if [ $upgradefs = YES ]; then
 	echo	""
 	echo	"your file systems will be upgraded while they are checked"
 fi
 
+echo	"Do not be alarmed by the message \"fsck: Cannot open \`/etc/fstab'\"."
 echo	"checking the file system on ${drivename}a..."
 	
 fsck -f -p $upgrargs /dev/r${drivename}a
@@ -212,7 +213,8 @@ echo	" Done."
 
 echo	""
 echo    "Re-mounting root partition read-only..."
-umount /mnt && mount -r /dev/${drivename}a /mnt
+sync
+mount -u -r /dev/${drivename}a /mnt
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: RE-MOUNT FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
@@ -277,6 +279,14 @@ echo	"Right now, your hard disk is mounted on /mnt.  You should consult"
 echo	"the installation notes to determine how to load and install the new"
 echo	"NetBSD distribution sets, and how to clean up after the upgrade"
 echo	"software, when you are done."
+
+if [ `cat /kern/physmem` -le 1024 ]; then # less than 4megs
+    echo	""
+    echo	"Note that you have to use the SMALL kernel named"
+    echo	"netbsd.SMALL in x68k/binary/kernel/ directory instead of"
+    echo	"the standard kernel which is included the kern.tgz."
+fi
+
 echo	""
 echo	"GOOD LUCK!"
 echo	""
