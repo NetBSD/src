@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffervar.h,v 1.1 1996/12/06 21:52:01 pk Exp $ */
+/*	$NetBSD: lebuffervar.h,v 1.2 1997/03/10 22:56:54 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Paul Kranenburg.  All rights reserved.
@@ -36,4 +36,5 @@ struct lebuf_softc {
 	int	sc_burst;		/* DVMA burst size in effect */
 	caddr_t	sc_buffer;		/* VA of the buffer we provide */
 	int	sc_bufsiz;		/* Size of buffer */
+	int	attached;		/* 1: in use by `le' device */
 };
