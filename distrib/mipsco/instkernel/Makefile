@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/11/04 06:18:26 wdk Exp $
+#	$NetBSD: Makefile,v 1.6 2002/02/09 13:56:51 lukem Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
@@ -73,14 +73,13 @@ release: .USE
 .else
 release: ${IMAGE}.gz
 	-mkdir -p ${DISKBINDIR} ${KERNBINDIR}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${NONBINMODE} ${IMAGE}.gz ${DISKBINDIR}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${BINMODE} netbsd.gz ${KERNBINDIR}/install.gz
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE} \
+		${IMAGE}.gz ${DISKBINDIR}
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE} \
+		netbsd.gz ${KERNBINDIR}/install.gz
 .if defined(ECOFF_KERNEL)
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${BINMODE} netbsd.ecoff.gz \
-		${KERNBINDIR}/install.ecoff.gz
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE} \
+		netbsd.ecoff.gz ${KERNBINDIR}/install.ecoff.gz
 .endif # ECOFF_KERNEL
 .endif # RELEASEDIR
 
