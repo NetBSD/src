@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.43 1997/06/22 06:36:30 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.44 1997/06/24 04:23:32 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -998,6 +998,12 @@ x68k
 
 # ./usr/share/man/cat5
 cat5
+
+# ./usr/share/man/cat5/i386
+i386
+# ./usr/share/man/cat5/i386
+..
+
 # ./usr/share/man/cat5
 ..
 
@@ -1272,6 +1278,12 @@ x68k
 
 # ./usr/share/man/man5
 man5
+
+# ./usr/share/man/man5/i386
+i386
+# ./usr/share/man/man5/i386
+..
+
 # ./usr/share/man/man5
 ..
 
