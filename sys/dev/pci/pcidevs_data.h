@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.308 2001/03/02 17:33:00 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.309 2001/03/04 21:28:07 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3710,6 +3710,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Netgear",
 	    "GA620 1000baseT Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,
+	    0,
+	    "Netmos",
+	    "Dual UART and 1284 Printer port",
 	},
 	{
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
@@ -8863,6 +8869,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ATRONICS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Atronics",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_NETMOS, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Netmos",
 	    NULL,
 	},
 	{
