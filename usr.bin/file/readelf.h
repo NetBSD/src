@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.h,v 1.7 2002/03/30 17:54:51 bjh21 Exp $	*/
+/*	$NetBSD: readelf.h,v 1.8 2002/04/09 15:10:18 bjh21 Exp $	*/
 
 /*
  * readelf.h 
@@ -194,6 +194,8 @@ typedef struct {
 /* NetBSD executables (name = "NetBSD") */
 #define NT_NETBSD_VERSION	1
 #define NT_NETBSD_EMULATION	2
+#define NT_FREEBSD_VERSION	1
+#define NT_OPENBSD_VERSION	1
 /* GNU executables (name = "GNU") */
 #define NT_GNU_VERSION		1
 
