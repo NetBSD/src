@@ -1110,6 +1110,7 @@ _remque(element)
  * On the i386, old (386bsd) ZMAGIC binaries and BSDI QMAGIC binaries
  * if COMPAT_NOMID is given as a kernel option.
  */
+int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
