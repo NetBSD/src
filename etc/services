@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.41 2000/08/08 03:10:50 thorpej Exp $
+#	$NetBSD: services,v 1.42 2000/08/11 23:25:34 phil Exp $
 #
 # Network services, Internet style
 #
@@ -248,3 +248,18 @@ rtmp		1/ddp			# Routing Table Maintenance Protocol
 nbp		2/ddp			# Name Binding Protocol
 echo		4/ddp			# AppleTalk Echo Protocol
 zip		6/ddp			# Zone Information Protocol
+
+# Iana registered Coda filesystem port numbers
+rpc2portmap     369/tcp    
+rpc2portmap     369/udp    		# Coda portmapper
+codaauth2       370/tcp    
+codaauth2       370/udp    		# Coda authentication server
+
+venus           2430/tcp   		# codacon port
+venus           2430/udp   		# Venus callback/wbc interface 
+venus-se        2431/tcp   		# tcp side effects
+venus-se        2431/udp   		# udp sftp side effect
+codasrv         2432/tcp   		# not used
+codasrv         2432/udp   		# server port
+codasrv-se      2433/tcp   		# tcp side effects
+codasrv-se      2433/udp   		# udp sftp side effect
