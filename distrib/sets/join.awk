@@ -1,4 +1,4 @@
-#	$NetBSD: join.awk,v 1.1 2002/04/13 12:47:10 lukem Exp $
+#	$NetBSD: join.awk,v 1.2 2002/05/19 13:32:44 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,12 +42,17 @@
 BEGIN \
 {
 	if (ARGC != 3) {
-		printf("Usage: join file1 file2\n") >"/dev/stderr";
-		exit 1;
+		printf("Usage: join file1 file2\n") >"/dev/stderr"
+		exit 1
 	}
 	while ( (getline < ARGV[1]) > 0)
-		words[$1]++;
-	delete ARGV[1];
+		words[$1] = $0
+	delete ARGV[1]
 }
 
-$1 in words { print; }
+$1 in words \
+{
+	f1=$1
+	$1=""
+	print words[f1] $0
+}
