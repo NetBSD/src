@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.6 2000/11/24 09:36:40 scw Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.7 2001/05/31 18:46:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,6 +79,11 @@ vme_am_t	_mvmebus_am_cap[] = {
 	MVMEBUS_AM_CAP_DATA   | MVMEBUS_AM_CAP_SUPER,
 	MVMEBUS_AM_CAP_PROG   | MVMEBUS_AM_CAP_SUPER,
 	MVMEBUS_AM_CAP_BLK    | MVMEBUS_AM_CAP_SUPER
+};
+
+const char *mvmebus_irq_name[] = {
+	"vmeirq0", "vmeirq1", "vmeirq2", "vmeirq3",
+	"vmeirq4", "vmeirq5", "vmeirq6", "vmeirq7"
 };
 
 extern phys_ram_seg_t mem_clusters[0];
@@ -391,9 +396,9 @@ mvmebus_intr_evcnt(vsc, handle)
 	void *vsc;
 	vme_intr_handle_t handle;
 {
+	struct mvmebus_softc *sc = vsc;
 
-	/* XXX for now, no evcnt parent reported */
-	return NULL;
+	return (&sc->sc_evcnt[(((int) handle) >> 8) - 1]);
 }
 
 void *
@@ -429,7 +434,7 @@ mvmebus_intr_establish(vsc, handle, prior, func, arg)
 	first = (sc->sc_irqref[level]++ == 0);
 
 	(*sc->sc_intr_establish)(sc->sc_chip, prior, level, vector, first,
-	    func, arg);
+	    func, arg, &sc->sc_evcnt[level - 1]);
 
 	return ((void *) handle);
 }
@@ -468,7 +473,8 @@ mvmebus_intr_disestablish(vsc, handle)
 
 	last = (sc->sc_irqref[level]-- == 0);
 
-	(*sc->sc_intr_disestablish)(sc->sc_chip, level, vector, last);
+	(*sc->sc_intr_disestablish)(sc->sc_chip, level, vector, last,
+	    &sc->sc_evcnt[level - 1]);
 }
 
 #ifdef DIAGNOSTIC
