@@ -1,4 +1,3 @@
-define(`confAUTO_REBUILD', True)dnl
 define(`confMIME_FORMAT_ERRORS', False)dnl
 
 FEATURE(redirect)dnl
