@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.143 2001/09/10 21:23:55 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.144 2001/09/13 22:09:15 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -129,6 +129,7 @@
 #	wsfont*	console font control
 #	wsmux*	wscons event multiplexor
 #	agp*	AGP GARt devices
+#	pci*	PCI bus access devices
 #
 
 dialin=0
@@ -176,6 +177,7 @@ all)
 	sh $0 bktr
 	sh $0 ttyCZ0 ttyCY0
 	sh $0 agp0
+	sh $0 pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	sh $0 altq
 	sh $0 ed0 ed1
 	;;
@@ -820,6 +822,14 @@ agp*)
 	if [ "$unit" = "0" ]; then ln -sf agp$unit agpgart; fi
 	chmod 644 agp$unit
 	;;
+
+pci*)
+	unit=${i#pci};
+	rm -f pci$unit
+	mknod pci$unit c 83 $unit
+	chmod 644 pci$unit
+	;;
+
 altq)
 	mkdir -p altq
 	chmod 755 altq
