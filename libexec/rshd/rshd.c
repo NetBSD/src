@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.33 2004/11/16 06:04:13 itojun Exp $	*/
+/*	$NetBSD: rshd.c,v 1.34 2005/02/20 05:45:55 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.33 2004/11/16 06:04:13 itojun Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.34 2005/02/20 05:45:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,23 +106,48 @@ __RCSID("$NetBSD: rshd.c,v 1.33 2004/11/16 06:04:13 itojun Exp $");
 #include <login_cap.h>
 #endif
 
+#ifdef USE_PAM
+#include <security/pam_appl.h>
+#include <security/openpam.h>
+#include <sys/wait.h>
+
+static struct pam_conv pamc = { openpam_nullconv, NULL };
+static pam_handle_t *pamh;
+static int pam_err;
+
+#define PAM_END { \
+	if ((pam_err = pam_setcred(pamh, PAM_DELETE_CRED)) != PAM_SUCCESS) \
+		syslog(LOG_ERR|LOG_AUTH, "pam_setcred(): %s", \
+		    pam_strerror(pamh, pam_err)); \
+	if ((pam_err = pam_close_session(pamh,0)) != PAM_SUCCESS) \
+		syslog(LOG_ERR|LOG_AUTH, "pam_close_session(): %s", \
+		    pam_strerror(pamh, pam_err)); \
+	if ((pam_err = pam_end(pamh, pam_err)) != PAM_SUCCESS) \
+		syslog(LOG_ERR|LOG_AUTH, "pam_end(): %s", \
+		    pam_strerror(pamh, pam_err)); \
+}
+#else
+#define PAM_END
+#endif
+
 int	keepalive = 1;
 int	check_all;
 int	log_success;		/* If TRUE, log all successful accesses */
 int	sent_null;
 
-void	 doit __P((struct sockaddr *));
-void	 error __P((const char *, ...))
-     __attribute__((__format__(__printf__, 1, 2)));
-void	 getstr __P((char *, int, char *));
-int	 local_domain __P((char *));
-char	*topdomain __P((char *));
-void	 usage __P((void));
-int	main __P((int, char *[]));
+void	 doit(struct sockaddr *);
+void	 rshd_errx(int, const char *, ...)
+     __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
+void	 getstr(char *, int, char *);
+int	 local_domain(char *);
+char	*topdomain(char *);
+void	 usage(void);
+int	 main(int, char *[]);
 
 #define	OPTIONS	"alnL"
 extern int __check_rhosts_file;
 extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c. */
+static const char incorrect[] = "Login incorrect.";
 
 int
 main(int argc, char *argv[])
@@ -228,7 +253,7 @@ doit(struct sockaddr *fromp)
 	struct pollfd set[2];
 	int cc, pv[2], pid, s = -1;	/* XXX gcc */
 	int one = 1;
-	char *hostname, *errorstr, *errorhost = NULL;	/* XXX gcc */
+	char *hostname, *errorhost = NULL;	/* XXX gcc */
 	const char *cp;
 	char sig, buf[BUFSIZ];
 	char cmdbuf[NCARGS+1], locuser[16], remuser[16];
@@ -236,6 +261,7 @@ doit(struct sockaddr *fromp)
 	char hostnamebuf[2 * MAXHOSTNAMELEN + 1];
 #ifdef  LOGIN_CAP
 	login_cap_t *lc;
+	char *sh;
 #endif
 	char naddr[NI_MAXHOST];
 	char saddr[NI_MAXHOST];
@@ -246,6 +272,7 @@ doit(struct sockaddr *fromp)
 	struct addrinfo hints, *res, *res0;
 	int gaierror;
 	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
+	const char *errormsg = NULL, *errorstr = NULL;
 
 	(void) signal(SIGINT, SIG_DFL);
 	(void) signal(SIGQUIT, SIG_DFL);
@@ -356,7 +383,6 @@ doit(struct sockaddr *fromp)
 	dup2(f, 1);
 	dup2(f, 2);
 #endif
-	errorstr = NULL;
 	if (getnameinfo(fromp, fromp->sa_len, saddr, sizeof(saddr),
 			NULL, 0, NI_NAMEREQD) == 0) {
 		/*
@@ -420,9 +446,41 @@ doit(struct sockaddr *fromp)
 		errorhost = hostname = hostnamebuf;
 	}
 
+	(void)alarm(60);
 	getstr(remuser, sizeof(remuser), "remuser");
 	getstr(locuser, sizeof(locuser), "locuser");
 	getstr(cmdbuf, sizeof(cmdbuf), "command");
+	(void)alarm(0);
+
+#ifdef USE_PAM
+	pam_err = pam_start("rsh", locuser, &pamc, &pamh);
+	if (pam_err != PAM_SUCCESS) {
+		syslog(LOG_ERR|LOG_AUTH, "pam_start(): %s",
+		    pam_strerror(pamh, pam_err));
+		rshd_errx(1, incorrect);
+	}
+
+	if ((pam_err = pam_set_item(pamh, PAM_RUSER, remuser)) != PAM_SUCCESS ||
+	    (pam_err = pam_set_item(pamh, PAM_RHOST, hostname) != PAM_SUCCESS)){
+		syslog(LOG_ERR|LOG_AUTH, "pam_set_item(): %s",
+		    pam_strerror(pamh, pam_err));
+		rshd_errx(1, incorrect);
+	}
+
+	pam_err = pam_authenticate(pamh, 0);
+	if (pam_err == PAM_SUCCESS) {
+		if ((pam_err = pam_get_user(pamh, &cp, NULL)) == PAM_SUCCESS) {
+			strlcpy(locuser, cp, sizeof(locuser));
+			/* XXX truncation! */
+ 		}
+		pam_err = pam_acct_mgmt(pamh, 0);
+	}
+	if (pam_err != PAM_SUCCESS) {
+		errorstr = incorrect;
+		errormsg = pam_strerror(pamh, pam_err);
+		goto badlogin;
+ 	}
+#endif /* USE_PAM */
 	setpwent();
 	pwd = getpwnam(locuser);
 	if (pwd == NULL) {
@@ -430,74 +488,49 @@ doit(struct sockaddr *fromp)
 		    "%s@%s as %s: unknown login. cmd='%.80s'",
 		    remuser, hostname, locuser, cmdbuf);
 		if (errorstr == NULL)
-			errorstr = "Permission denied.\n";
-		goto fail;
+			errorstr = "Permission denied.";
+		rshd_errx(1, errorstr, errorhost);
 	}
 #ifdef LOGIN_CAP
 	lc = login_getclass(pwd ? pwd->pw_class : NULL);
 #endif	
 
 	if (chdir(pwd->pw_dir) < 0) {
+		if (chdir("/") < 0
 #ifdef LOGIN_CAP
-		if (chdir("/") < 0 ||
-		    login_getcapbool(lc, "requirehome", pwd->pw_uid ? 1 : 0)) {
+		    || login_getcapbool(lc, "requirehome", pwd->pw_uid ? 1 : 0)
+#endif
+		) {
 			syslog(LOG_INFO|LOG_AUTH,
 			    "%s@%s as %s: no home directory. cmd='%.80s'",
 			    remuser, hostname, locuser, cmdbuf);
-			error("No remote home directory.\n");
-			exit(0);
+			rshd_errx(0, "No remote home directory.");
 		}
-#else
-		(void) chdir("/");
-#ifdef notdef
-		syslog(LOG_INFO|LOG_AUTH,
-		    "%s@%s as %s: no home directory. cmd='%.80s'",
-		    remuser, hostname, locuser, cmdbuf);
-		error("No remote directory.\n");
-		exit(1);
-#endif /* notdef */
-#endif /* LOGIN_CAP */
 	}
 
-
+#ifndef USE_PAM
 	if (errorstr ||
 	    (pwd->pw_passwd != 0 && *pwd->pw_passwd != '\0' &&
 		iruserok_sa(fromp, fromp->sa_len, pwd->pw_uid == 0, remuser,
 			locuser) < 0)) {
-		if (__rcmd_errstr)
-			syslog(LOG_INFO|LOG_AUTH,
-			    "%s@%s as %s: permission denied (%s). cmd='%.80s'",
-			    remuser, hostname, locuser, __rcmd_errstr,
-			    cmdbuf);
-		else
-			syslog(LOG_INFO|LOG_AUTH,
-			    "%s@%s as %s: permission denied. cmd='%.80s'",
-			    remuser, hostname, locuser, cmdbuf);
-fail:
+		errormsg = __rcmd_errstr ? __rcmd_errstr : "unknown error";
 		if (errorstr == NULL)
-			errorstr = "Permission denied.\n";
-		error(errorstr, errorhost);
-		exit(1);
+			errorstr = "Permission denied.";
 	}
+#endif
 
-	if (pwd->pw_uid && !access(_PATH_NOLOGIN, F_OK)) {
-		error("Logins currently disabled.\n");
-		exit(1);
-	}
+	if (pwd->pw_uid && !access(_PATH_NOLOGIN, F_OK))
+		rshd_errx(1, "Logins currently disabled.");
 
 	(void) write(STDERR_FILENO, "\0", 1);
 	sent_null = 1;
 
 	if (port) {
-		if (pipe(pv) < 0) {
-			error("Can't make pipe.\n");
-			exit(1);
-		}
+		if (pipe(pv) < 0)
+			rshd_errx(1, "Can't make pipe. (%s)", strerror(errno));
 		pid = fork();
-		if (pid == -1)  {
-			error("Can't fork; try again.\n");
-			exit(1);
-		}
+		if (pid == -1)
+			rshd_errx(1, "Can't fork. (%s)", strerror(errno));
 		if (pid) {
 			{
 				(void) close(0);
@@ -537,6 +570,7 @@ fail:
 				}
 
 			} while ((set[0].revents | set[1].revents) & POLLIN);
+			PAM_END
 			exit(0);
 		}
 		(void) close(s);
@@ -544,21 +578,49 @@ fail:
 		dup2(pv[1], 2);
 		close(pv[1]);
 	}
-	setsid();
+#ifdef USE_PAM
+	else {
+		pid = fork();
+		if (pid == -1)
+			rshd_errx(1, "Can't fork. (%s)", strerror(errno));
+		if (pid) {
+			/* Parent. */
+			while (wait(NULL) > 0 || errno == EINTR)
+				continue;
+			PAM_END
+			exit(0);
+ 		}
+	}
+#endif
 
 	if (*pwd->pw_shell == '\0')
 		pwd->pw_shell = _PATH_BSHELL;
+#ifdef F_CLOSEM
+	(void)fcntl(3, F_CLOSEM, 0);
+#else
+	for (fd = getdtablesize(); fd > 2; fd--)
+		(void)close(fd);
+#endif
+	if (setsid() == -1)
+		syslog(LOG_ERR, "setsid() failed: %m");
+#ifdef USE_PAM
+	if (setlogin(pwd->pw_name) < 0)
+		syslog(LOG_ERR, "setlogin() failed: %m");
+
+	(void)pam_setenv(pamh, "HOME", pwd->pw_dir, 1);
+	(void)pam_setenv(pamh, "SHELL", pwd->pw_shell, 1);
+	(void)pam_setenv(pamh, "USER", pwd->pw_name, 1);
+	(void)pam_setenv(pamh, "PATH", _PATH_DEFPATH, 1);
+	environ = pam_getenvlist(pamh);
+	(void)pam_end(pamh, pam_err);
+#endif
 #ifdef LOGIN_CAP
-	{
-	char *sh;
-	
-	if((sh = login_getcapstr(lc, "shell", NULL, NULL))) {
+	if ((sh = login_getcapstr(lc, "shell", NULL, NULL))) {
 		if(!(sh = strdup(sh))) {
                 	syslog(LOG_ERR, "Cannot alloc mem");
                 	exit(1);
 		}
 		pwd->pw_shell = sh;
-	}
 	}
 #endif
 	environ = envinit;
@@ -567,30 +629,58 @@ fail:
 	strlcat(shell, pwd->pw_shell, sizeof(shell));
 	strlcat(username, pwd->pw_name, sizeof(username));
 #ifdef LOGIN_CAP
-	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL) != 0) {
+	/*
+	 * PAM modules might add supplementary groups in
+	 * pam_setcred(), so initialize them first.
+	 * But we need to open the session as root.
+	 */
+	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETGROUP) != 0) {
 		syslog(LOG_ERR, "setusercontext: %m");
 		exit(1);
-		}
-	login_close(lc);
+	}
 #else
-	(void) setgid((gid_t)pwd->pw_gid);
 	initgroups(pwd->pw_name, pwd->pw_gid);
-	(void) setuid((uid_t)pwd->pw_uid);
 #endif
 
-	endpwent();
-	if (log_success || pwd->pw_uid == 0) {
-		syslog(LOG_INFO|LOG_AUTH, "%s@%s as %s: cmd='%.80s'",
-		    remuser, hostname, locuser, cmdbuf);
+#ifdef USE_PAM
+	if ((pam_err = pam_open_session(pamh, 0)) != PAM_SUCCESS) {
+		syslog(LOG_ERR, "pam_open_session: %s",
+		    pam_strerror(pamh, pam_err));
+	} else if ((pam_err = pam_setcred(pamh, PAM_ESTABLISH_CRED))
+	    != PAM_SUCCESS) {
+		syslog(LOG_ERR, "pam_setcred: %s", pam_strerror(pamh, pam_err));
 	}
+#endif
+
 	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)
 		cp++;
 	else
 		cp = pwd->pw_shell;
+
+#ifdef LOGIN_CAP
+	if (setusercontext(lc, pwd, pwd->pw_uid,
+		LOGIN_SETALL & ~LOGIN_SETGROUP) < 0) {
+		syslog(LOG_ERR, "setusercontext(): %m");
+		exit(1);
+	}
+	login_close(lc);
+#else
+	(void)setgid((gid_t)pwd->pw_gid);
+	(void)setuid((uid_t)pwd->pw_uid);
+#endif
+	endpwent();
+	if (log_success || pwd->pw_uid == 0) {
+		syslog(LOG_INFO|LOG_AUTH, "%s@%s as %s: cmd='%.80s'",
+		    remuser, hostname, locuser, cmdbuf);
+	}
 	execl(pwd->pw_shell, cp, "-c", cmdbuf, NULL);
-	perror(pwd->pw_shell);
-	exit(1);
+	rshd_errx(1, "%s: %s", pwd->pw_shell, strerror(errno));
+badlogin:
+	syslog(LOG_INFO|LOG_AUTH,
+	    "%s@%s as %s: permission denied (%s). cmd='%.80s'",
+	    remuser, hostname, locuser, errormsg, cmdbuf);
+	rshd_errx(1, errorstr, errorhost);
 }
 
 /*
@@ -601,10 +691,11 @@ fail:
 
 #include <stdarg.h>
 
-void error(const char *fmt, ...)
+void
+rshd_errx(int error, const char *fmt, ...)
 {
 	va_list ap;
-	int len;
+	int len, rv;
 	char *bp, buf[BUFSIZ];
 	va_start(ap, fmt);
 	bp = buf;
@@ -613,9 +704,11 @@ void error(const char *fmt, ...)
 		len = 1;
 	} else
 		len = 0;
-	(void)vsnprintf(bp, sizeof(buf) - 1, fmt, ap);
-	(void)write(STDERR_FILENO, buf, len + strlen(bp));
+	rv = vsnprintf(bp, sizeof(buf) - 2, fmt, ap);
+	bp[rv++] = '\n';
+	(void)write(STDERR_FILENO, buf, len + rv);
 	va_end(ap);
+	exit(error);
 }
 
 void
@@ -627,10 +720,8 @@ getstr(char *buf, int cnt, char *err)
 		if (read(STDIN_FILENO, &c, 1) != 1)
 			exit(1);
 		*buf++ = c;
-		if (--cnt == 0) {
-			error("%s too long\n", err);
-			exit(1);
-		}
+		if (--cnt == 0)
+			rshd_errx(1, "%s too long", err);
 	} while (c != 0);
 }
 
