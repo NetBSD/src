@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.114 2004/05/20 22:59:02 jonathan Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.115 2004/12/15 04:25:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.114 2004/05/20 22:59:02 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.115 2004/12/15 04:25:19 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1099,12 +1099,18 @@ send:
 
 	/*
 	 * Set ourselves up to be checksummed just before the packet
-	 * hits the wire.
+	 * hits the wire.  Maybe skip checksums on loopback interfaces.
 	 */
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
+		if (__predict_true(ro->ro_rt == NULL ||
+				   !(ro->ro_rt->rt_ifp->if_flags &
+				     IFF_LOOPBACK) ||
+				   tcp_do_loopback_cksum))
+			m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
+		else
+			m->m_pkthdr.csum_flags = 0;
 		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
 		if (len + optlen) {
 			/* Fixup the pseudo-header checksum. */
@@ -1126,7 +1132,13 @@ send:
 		m->m_pkthdr.len = sizeof(struct ip6_hdr)
 			+ sizeof(struct tcphdr) + optlen + len;
 #ifdef notyet
-		m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
+		if (__predict_true(ro->ro_rt == NULL ||
+				   !(ro->ro_rt->rt_ifp->if_flags &
+				     IFF_LOOPBACK) ||
+				   tcp_do_loopback_cksum))
+			m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
+		else
+			m->m_pkthdr.csum_flags = 0;
 		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
 #endif
 		if (len + optlen) {
@@ -1136,8 +1148,12 @@ send:
 			    htons((u_int16_t) (len + optlen)));
 		}
 #ifndef notyet
-		th->th_sum = in6_cksum(m, 0, sizeof(struct ip6_hdr),
-		    sizeof(struct tcphdr) + optlen + len);
+		if (__predict_true(ro->ro_rt == NULL ||
+				   !(ro->ro_rt->rt_ifp->if_flags &
+				     IFF_LOOPBACK) ||
+				   tcp_do_loopback_cksum))
+			th->th_sum = in6_cksum(m, 0, sizeof(struct ip6_hdr),
+			    sizeof(struct tcphdr) + optlen + len);
 #endif
 		break;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.113 2004/09/15 09:21:22 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.114 2004/12/15 04:25:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -622,7 +622,8 @@ struct	tcpstat {
 #define	TCPCTL_INIT_WIN_LOCAL	26	/* initial window for local nets */
 #define	TCPCTL_IDENT		27	/* rfc 931 identd */
 #define	TCPCTL_ACKDROPRATELIMIT	28	/* SYN/RST -> ACK rate limit */
-#define	TCPCTL_MAXID		29
+#define	TCPCTL_LOOPBACKCKSUM	29	/* do TCP checksum on loopback */
+#define	TCPCTL_MAXID		30
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -654,6 +655,7 @@ struct	tcpstat {
 	{ "init_win_local", CTLTYPE_INT }, \
 	{ "ident", CTLTYPE_STRUCT }, \
 	{ "ackdropppslimit", CTLTYPE_INT }, \
+	{ "do_loopback_cksum", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -676,6 +678,7 @@ extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_log_refused;	/* log refused connections */
+extern	int tcp_do_loopback_cksum;/* do TCP checksum on loopback? */
 
 extern	int tcp_rst_ppslim;
 extern	int tcp_ackdrop_ppslim;
