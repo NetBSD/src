@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.44 2004/02/28 02:58:35 dbj Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.45 2004/02/28 20:30:58 dbj Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.44 2004/02/28 02:58:35 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.45 2004/02/28 20:30:58 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,8 +245,8 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 	/*
 	 * A bit of a hack. Since %ebp may be used in the stub code,
 	 * walk the stack looking for a valid interrupt frame. Such
-	 * a frame can be recognized by always having err 0 and
-	 * trapno T_ASTFLT.
+	 * a frame can be recognized by always having
+	 * err 0 or IREENT_MAGIC and trapno T_ASTFLT.
 	 */
 	if (db_frame_info(*nextframe, (db_addr_t)*ip, NULL, NULL, &traptype,
 	    NULL) != (db_sym_t)0
@@ -255,7 +255,7 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 			ifp = (struct intrframe *)(argp + i);
 			err = db_get_value((int)&ifp->__if_err, 4, FALSE);
 			trapno = db_get_value((int)&ifp->__if_trapno, 4, FALSE);
-			if (err == 0 && trapno == T_ASTFLT) {
+			if ((err == 0 || err == IREENT_MAGIC) && trapno == T_ASTFLT) {
 				*nextframe = (int *)ifp - 1;
 				break;
 			}
@@ -264,9 +264,6 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 			(*pr)("DDB lost frame for ");
 			db_printsym(*ip, DB_STGY_ANY, pr);
 			(*pr)(", trying %p\n",argp);
-			/* I observe that the frame can be often found here, although
-			 * it has an err value of 0x18041969 instead of 0
-			 * I don't know why.  -- dbj */
 			*nextframe = argp;
 		}
 	}
