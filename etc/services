@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.28 1998/06/29 05:24:51 tron Exp $
+#	$NetBSD: services,v 1.29 1999/01/05 14:35:19 hwr Exp $
 #
 # Network services, Internet style
 #
@@ -119,6 +119,8 @@ ulistserv	372/tcp				# UNIX Listserv
 ulistserv	372/udp
 nip		376/tcp				# Amiga Envoy Net Inquiry Prot.
 nip		376/udp				# Amiga Envoy Net Inquiry Prot.
+ldap	389/tcp				# Lightweight Directory Access Protocol
+ldap	389/udp				# Lightweight Directory Access Protocol
 
 #
 # UNIX specific services
