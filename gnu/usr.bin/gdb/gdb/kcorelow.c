@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: kcorelow.c,v 1.1 1994/05/17 19:34:51 pk Exp $
+	$Id: kcorelow.c,v 1.2 1994/05/18 12:42:15 pk Exp $
 */
 
 #ifdef KERNEL_DEBUG
@@ -48,9 +48,16 @@ kcore_close PARAMS ((int));
 static void
 get_kcore_registers PARAMS ((int));
 
+static int
+xfer_mem PARAMS ((CORE_ADDR, char *, int, int, struct target_ops *));
+
+static int
+xfer_umem PARAMS ((CORE_ADDR, char *, int, int));
+
 static char		*core_file;
 static kvm_t		*core_kd;
 static struct proc	*cur_proc;
+static CORE_ADDR	kernel_start;
 
 /*
  * Read the "thing" at kernel address 'addr' into the space pointed to
@@ -95,7 +102,7 @@ set_proc_context(paddr)
 {
 	struct proc p;
 
-	if (paddr < bfd_get_start_address (exec_bfd)) /* XXX */
+	if (paddr < kernel_start)
 		return (1);
 
 	cur_proc = (struct proc *)paddr;
@@ -171,6 +178,8 @@ kcore_open (filename, from_tty)
 	core_file = filename;
 	unpush_target (&kcore_ops);
 	ontop = !push_target (&kcore_ops);
+
+	kernel_start = bfd_get_start_address (exec_bfd); /* XXX */
 
 	/* print out the panic string if there is one */
 	if (kvread(ksym_lookup("panicstr"), &addr) == 0 &&
@@ -263,9 +272,31 @@ xfer_kmem (memaddr, myaddr, len, write, target)
 {
 	int n;
 
+	if (memaddr < kernel_start)
+		return xfer_umem(memaddr, myaddr, len, write);
+
 	n = write ?
 		kvm_write(core_kd, memaddr, myaddr, len) :
 		kvm_read(core_kd, memaddr, myaddr, len) ;
+
+	if (n < 0)
+		return 0;
+	return n;
+}
+
+static int
+xfer_umem (memaddr, myaddr, len, write)
+	CORE_ADDR memaddr;
+	char *myaddr;
+	int len;
+	int write; /* ignored */
+{
+	int n;
+	struct proc proc;
+
+	if (kvread(cur_proc, &proc))
+		error("cannot read proc at %#x", cur_proc);
+	n = kvm_uread(core_kd, &proc, memaddr, myaddr, len) ;
 
 	if (n < 0)
 		return 0;
