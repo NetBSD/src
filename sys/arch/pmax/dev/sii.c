@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.23 1997/05/29 19:26:06 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.24 1997/06/15 17:59:04 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,6 +60,8 @@
 #endif
 
 #include <machine/autoconf.h>
+
+#include <machine/locore.h>	/* XXX wbflush() */
 
 /* old 4.4bsd/pmax scsi drivers */
 #include <pmax/dev/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.6 1996/10/13 13:13:51 jonathan Exp $	*/
+/*	$NetBSD: bt478.c,v 1.7 1997/06/15 17:58:58 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -71,6 +71,8 @@
 #include <pmax/dev/bt478.h>
 #include <pmax/dev/bt478var.h>
 #include <pmax/pmax/kn01.h>
+
+#include <machine/locore.h>	/* XXX wbflush() */
 
 /*
  * Forward references.

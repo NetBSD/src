@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.23 1997/04/19 08:25:31 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.24 1997/06/15 17:59:01 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -99,6 +99,8 @@
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 #include <pmax/dev/cfbvar.h>		/* XXX dev/tc ? */ 
+
+#include <machine/locore.h>	/* XXX wbflush() */
 
 #include <pmax/pmax/pmaxtype.h>
 

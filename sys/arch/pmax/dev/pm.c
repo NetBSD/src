@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.19 1996/10/13 03:39:35 christos Exp $	*/
+/*	$NetBSD: pm.c,v 1.20 1997/06/15 17:59:03 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,6 +81,8 @@
 
 #include <pmax/dev/pmreg.h>
 #include <pmax/dev/bt478var.h>
+
+#include <machine/locore.h>	/* XXX wbflush() */
 
 /*
  * These need to be mapped into user space.
