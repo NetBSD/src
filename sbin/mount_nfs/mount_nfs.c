@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.27 2000/06/26 21:53:34 bjh21 Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.28 2000/07/16 14:06:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.27 2000/06/26 21:53:34 bjh21 Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.28 2000/07/16 14:06:08 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -760,11 +760,11 @@ tryagain:
 			}
 			sleep(60);
 		}
-	    }
-	    if (nfhret.stat == 0)
-		break;
-	    ai = ai->ai_next;
 	}
+	if (nfhret.stat == 0)
+		break;
+	ai = ai->ai_next;
+    }
 	freeaddrinfo(ai_nfs);
 	if (nfhret.stat) {
 		if (opflags & ISBGRND)
