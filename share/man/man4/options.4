@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.83 1999/07/03 01:45:56 itojun Exp $
+.\"	$NetBSD: options.4,v 1.84 1999/07/30 00:49:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -135,6 +135,14 @@ which does not include the
 .Fa se_path
 member of
 .Va struct swapent .
+.It Cd options COMPAT_14
+Enable binary compatibility with
+.Nx 1.4 .
+This allows some old
+.Xr ioctl 2
+on
+.Xr wscons 4
+to be performed.
 .It Cd options COMPAT_43
 Enables compatibility with
 .Bx 4.3 .
