@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2002/10/08 15:20:50 lukem Exp $
+# $NetBSD: Makefile,v 1.14 2002/10/21 05:08:23 lukem Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -219,7 +219,7 @@ MKISOFS_ARGS.${image}+=	-b ${BOOTFILE.i386} -c boot.catalog
 .if !empty(ports:Mmacppc)
 MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
 	--macbin -map ${.CURDIR}/hfsmap.lst \
-	-boot-hfs-file ${.CURDIR}/macppc_installboot/macppcboot.raw
+	-boot-hfs-file ${MACPPC_IBOOTDIR}/macppcboot.raw
 .elif defined(USE_APPLE_ISO) || !empty(ports:Mmac68k)
 MKISOFS_ARGS.${image}+=	-apple --macbin -map ${.CURDIR}/hfsmap.lst
 .endif
