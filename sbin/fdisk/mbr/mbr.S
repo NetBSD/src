@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.1 1998/10/15 15:22:14 ws Exp $	*/
+/*	$NetBSD: mbr.S,v 1.2 1999/01/28 14:14:04 ws Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -81,6 +81,7 @@ ENTRY(start)
 	jnz	2f
 	test	%esi, %esi
 	jnz	invpart
+	data32
 	movl	%edi, %esi
 2:
 	add	$0x10, %edi
@@ -102,6 +103,8 @@ invpart:
  * First determine whether we have int13-extensions.
  */
 boot:
+	movb	$0x80, %dl	% initialize drive (not done by some BIOSs)
+	data32
 	push	%esi
 	push	%edx
 	data32
@@ -109,6 +112,7 @@ boot:
 	movb	$0x41, %ah
 	int	$0x13
 	pop	%edx
+	data32
 	pop	%esi
 	jc	noext
 	data32
@@ -151,7 +155,9 @@ out:
 	jz	1f
 	movb	$0xe, %ah
 	movb	$7, %bl
+	push	%esi
 	int	$0x10
+	pop	%esi
 	jmp	out
 1:
 	sti
@@ -174,7 +180,9 @@ noext:
 	movl	$0x201, %eax
 	push	%edi
 	push	%edx
+	push	%ecx
 	int	$0x13
+	pop	%ecx
 	pop	%edx
 	pop	%edi
 	jnc	ok
