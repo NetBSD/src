@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.7.6.3 2001/11/15 06:39:21 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.7.6.4 2001/11/17 09:00:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.3 2001/11/15 06:39:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.4 2001/11/17 09:00:32 thorpej Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -90,15 +90,6 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
-
-	if (p->p_flag & P_SA) {
-		if (code)
-			sa_upcall(l, SA_UPCALL_SIGNAL, l, NULL, sig, code,
-			    NULL);
-		else
-			sa_upcall(l, SA_UPCALL_SIGNAL, NULL, l, sig, 0, NULL);
-		return;
-	}
 
 	tf = process_frame(l);
 
