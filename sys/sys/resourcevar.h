@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *    The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)resourcevar.h	7.1 (Berkeley) 5/9/91
- *	$Id: resourcevar.h,v 1.5 1994/05/05 05:40:15 cgd Exp $
+ *	from: @(#)resourcevar.h		8.3 (Berkeley) 2/22/94
+ *	$Id: resourcevar.h,v 1.6 1994/05/05 09:35:34 deraadt Exp $
  */
 
 #ifndef _SYS_RESOURCEVAR_H_
@@ -74,14 +74,20 @@ void addupc __P((int, struct uprof *, int));	/* process profiling */
  */
 struct plimit {
 	struct	rlimit pl_rlimit[RLIM_NLIMITS];
-	int	p_lflags;		/* below */
+#define	PL_SHAREMOD	0x01		/* modifications are shared */
+	int	p_lflags;
 	int	p_refcnt;		/* number of references */
 };
 
-/* pl_lflags: */
-#define	PL_SHAREMOD	0x01		/* modifications are shared */
+/* add user profiling from AST */
+#define ADDUPROF(p)							\
+	addupc_task(p,							\
+	    (p)->p_stats->p_prof.pr_addr, (p)->p_stats->p_prof.pr_ticks)
 
-/* make copy of plimit structure */
-struct	plimit *limcopy __P((struct plimit *lim));
-
+#ifdef KERNEL
+void	 addupc_intr __P((struct proc *p, u_long pc, u_int ticks));
+void	 addupc_task __P((struct proc *p, u_long pc, u_int ticks));
+struct plimit
+	*limcopy __P((struct plimit *lim));
+#endif
 #endif /* !_SYS_RESOURCEVAR_H_ */
