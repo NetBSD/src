@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.18 1997/06/29 01:52:43 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.19 1997/06/29 03:57:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -495,6 +495,15 @@ findpcb:
 	}
 
 after_listen:
+#ifdef DIAGNOSTIC
+	/*
+	 * Should not happen now that all embryonic connections
+	 * are handed with compressed state.
+	 */
+	if (tp->t_state == TCPS_LISTEN)
+		panic("tcp_input: TCPS_LISTEN");
+#endif
+
 	/*
 	 * Segment received on connection.
 	 * Reset idle time and keep-alive timer.
@@ -504,10 +513,9 @@ after_listen:
 		tp->t_timer[TCPT_KEEP] = tcp_keepidle;
 
 	/*
-	 * Process options if not in LISTEN state,
-	 * else do it below (after getting remote address).
+	 * Process options.
 	 */
-	if (optp && tp->t_state != TCPS_LISTEN)
+	if (optp)
 		tcp_dooptions(tp, optp, optlen, ti, &opti);
 
 	/* 
@@ -633,11 +641,6 @@ after_listen:
 	}
 
 	switch (tp->t_state) {
-#ifdef DIAGNOSTIC
-	case TCPS_LISTEN:
-		panic("tcp_input: TCPS_LISTEN");
-		/* NOTREACHED */
-#endif
 
 	/*
 	 * If the state is SYN_SENT:
