@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.9 2000/12/13 23:29:07 simonb Exp $	*/
+/*	$NetBSD: cerror.S,v 1.9.2.1 2002/01/02 05:42:27 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,17 +40,37 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
-	ASMSTR("$NetBSD: cerror.S,v 1.9 2000/12/13 23:29:07 simonb Exp $")
+	ASMSTR("$NetBSD: cerror.S,v 1.9.2.1 2002/01/02 05:42:27 wdk Exp $")
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef _REENTRANT
+	.globl	_C_LABEL(__errno)
+NESTED_NOPROFILE(__cerror, CALLFRAME_SIZ, ra)
+	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
+	PIC_PROLOGUE(__cerror, t9)
+	subu	sp, sp, CALLFRAME_SIZ
+	sw	ra, CALLFRAME_RA(sp)
+	sw	v0, CALLFRAME_SIZ(sp)	# stash away errno value
+
+	la	t9, _C_LABEL(__errno)	# locate address of errno
+	jalr	t9
+	nop
+
+	lw	t0, CALLFRAME_SIZ(sp)	# restore errno value
+	lw	ra, CALLFRAME_RA(sp)
+	sw	t0, 0(v0)		# update errno value
+	li	v0, -1
+	addiu	sp, sp, CALLFRAME_SIZ
+	j	ra
+	move	v1, v0			# -BDSlot
+END(__cerror)
+#else		
 	.globl	_C_LABEL(errno)
 LEAF_NOPROFILE(__cerror)
-	.set	noreorder
-#ifdef ABICALLS
-	.cpload t9
-#endif
+	PIC_PROLOGUE(__cerror, t9)
 	sw	v0, _C_LABEL(errno)
 	li	v0, -1
 	j	ra
-	li	v1, -1
+	move	v1, v0
 END(__cerror)
+#endif /* _REENTRANT */
