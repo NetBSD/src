@@ -1,4 +1,4 @@
-/*	$NetBSD: n_jn.c,v 1.4 1999/07/02 15:37:37 simonb Exp $	*/
+/*	$NetBSD: n_jn.c,v 1.4.10.1 2002/06/18 13:39:59 lukem Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -105,14 +105,14 @@ static char sccsid[] = "@(#)jn.c	8.2 (Berkeley) 11/30/93";
 #define infnan(x) (0.0)
 #endif
 
-static double
+static const double
 invsqrtpi= 5.641895835477562869480794515607725858441e-0001,
 two  = 2.0,
 zero = 0.0,
 one  = 1.0;
 
-double jn(n,x)
-	int n; double x;
+double
+jn(int n, double x)
 {
 	int i, sgn;
 	double a, b, temp;
@@ -257,8 +257,9 @@ double jn(n,x)
 	}
 	return ((sgn == 1) ? -b : b);
 }
-double yn(n,x)
-	int n; double x;
+
+double
+yn(int n, double x)
 {
 	int i, sign;
 	double a, b, temp;
