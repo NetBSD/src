@@ -1,4 +1,4 @@
-/* $NetBSD: setnetbootinfo.c,v 1.9 1998/12/03 04:16:18 ross Exp $ */
+/* $NetBSD: setnetbootinfo.c,v 1.10 1999/04/05 02:55:38 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -44,6 +44,9 @@
 
 #include "stand/common/bbinfo.h"
 
+static void usage(void);
+int main(int argc, char *argv[]);
+
 int	verbose, force, unset;
 char	*netboot, *outfile, *addr, *host;
 
@@ -53,7 +56,7 @@ extern char *ether_ntoa __P((struct ether_addr *s));		/* XXX */
 struct ether_addr *ether_addr, _ether_addr;
 
 static void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage:\n");
