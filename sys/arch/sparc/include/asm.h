@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 1997/07/16 15:16:43 christos Exp $ */
+/*	$NetBSD: asm.h,v 1.6 1998/07/01 02:35:24 tv Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -44,10 +44,14 @@
 #ifndef _ASM_H_
 #define _ASM_H_
 
+#ifdef __ELF__
+#define	_C_LABEL(name)		name
+#else
 #ifdef __STDC__
 #define _C_LABEL(name)		_ ## name
 #else
 #define _C_LABEL(name)		_/**/name
+#endif
 #endif
 #define	_ASM_LABEL(name)	name
 
