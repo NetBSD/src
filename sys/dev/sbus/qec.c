@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.29 2004/06/27 18:28:26 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.30 2004/06/28 10:30:48 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.29 2004/06/27 18:28:26 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.30 2004/06/28 10:30:48 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,13 @@ static int	qecmatch	__P((struct device *, struct cfdata *, void *));
 static void	qecattach	__P((struct device *, struct device *, void *));
 void		qec_init	__P((struct qec_softc *));
 
+static int qec_bus_map __P((
+		bus_space_tag_t,
+		bus_addr_t,		/*coded slot+offset*/
+		bus_size_t,		/*size*/
+		int,			/*flags*/
+		vaddr_t,		/*preferred virtual address */
+		bus_space_handle_t *));
 static void *qec_intr_establish __P((
 		bus_space_tag_t,
 		int,			/*bus interrupt priority*/
@@ -181,6 +188,7 @@ qecattach(parent, self, aux)
 	memcpy(sbt, sc->sc_bustag, sizeof(*sbt));
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
+	sbt->sparc_bus_map = qec_bus_map;
 	sbt->sparc_intr_establish = qec_intr_establish;
 	sbt->ranges = NULL;
 	sbt->nranges = 0;
@@ -221,6 +229,24 @@ qecattach(parent, self, aux)
 		(void)config_found(&sc->sc_dev, (void *)&sa, qecprint);
 		sbus_destroy_attach_args(&sa);
 	}
+}
+
+int
+qec_bus_map(t, ba, size, flags, va, hp)
+	bus_space_tag_t t;
+	bus_addr_t ba;
+	bus_size_t size;
+	int	flags;
+	vaddr_t va;	/* Ignored */
+	bus_space_handle_t *hp;
+{
+	int error;
+
+	if ((error = bus_space_translate_address_generic(
+				t->ranges, t->nranges, &ba)) != 0)
+		return (error);
+
+	return (bus_space_map(t->parent, ba, size, flags, hp));
 }
 
 void *
