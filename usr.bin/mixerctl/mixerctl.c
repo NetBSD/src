@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.4 1997/05/23 17:55:29 augustss Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.5 1997/08/24 23:20:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -120,6 +120,7 @@ prfield(struct field *p, char *sep, int prvalset)
 			       m->un.value.level[1]);
 		break;
 	default:
+		printf("\n");
 		errx(1, "Invalid format.");
 	}
 }
@@ -252,11 +253,7 @@ main(int argc, char **argv)
 	}
 
 	for(i = 0; i < ndev; i++) {
-		if (infos[i].mixer_class >= 0 && infos[i].mixer_class < ndev)
-			rfields[i].name = catstr(infos[infos[i].mixer_class].label.name, 
-						 infos[i].label.name);
-		else
-			rfields[i].name = infos[i].label.name;
+		rfields[i].name = infos[i].label.name;
 		rfields[i].valp = &values[i];
 		rfields[i].infp = &infos[i];
 	}
@@ -287,6 +284,12 @@ main(int argc, char **argv)
 				j++;
 			}
 		}
+	}
+
+	for(i = 0; i < j; i++) {
+		if (infos[i].mixer_class >= 0 && infos[i].mixer_class < ndev)
+			fields[i].name = catstr(infos[fields[i].infp->mixer_class].label.name, 
+						fields[i].name);
 	}
 
 	if (argc == 0 && aflag && !wflag) {
