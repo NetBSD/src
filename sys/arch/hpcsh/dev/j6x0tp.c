@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.4 2003/11/05 00:28:34 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.5 2004/05/28 17:52:07 tsarna Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.4 2003/11/05 00:28:34 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.5 2004/05/28 17:52:07 tsarna Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.4 2003/11/05 00:28:34 uwe Exp $");
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wsksymdef.h>
-#include <dev/hpc/tpcalibvar.h>
+#include <dev/hpc/hpctpanelvar.h>
 
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
@@ -685,19 +685,7 @@ j6x0tp_wsmouse_ioctl(void *self, u_long cmd, caddr_t data, int flag,
 {
 	struct j6x0tp_softc *sc = (struct j6x0tp_softc *)self;
 
-	switch (cmd) {
-	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
-		return (0);
-
-	case WSMOUSEIO_SCALIBCOORDS:
-	case WSMOUSEIO_GCALIBCOORDS:
-	case WSMOUSEIO_GETID:
-		return (tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p));
-
-	default:
-		return (EPASSTHROUGH);
-	}
+	return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 }
 
 
