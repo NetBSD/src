@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Adam Glass
+ * Copyright (c) 1993, 1994 Adam Glass
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.19 1994/03/01 08:23:13 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.20 1994/04/24 20:10:24 glass Exp $
  */
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -107,11 +107,15 @@ vm_offset_t avail_start, avail_end;
 #define PMAP_LOCK() s = splpmap()
 #define PMAP_UNLOCK() splx(s)
 
-#define dequeue_first(val, type, queue) { \
-	val = (type) queue_first(queue); \
-	    dequeue_head(queue); \
-}
+#define TAILQ_EMPTY(headp) \
+        !((headp)->tqh_first)
 
+#define TAILQ_REMOVE_FIRST(result, headp, entries) \
+{ \
+	result = (headp)->tqh_first; \
+	if (result) TAILQ_REMOVE(headp, result, entries); \
+	}
+	
 /*
  * locking issues:
  *
@@ -179,16 +183,16 @@ static unsigned int protection_converter[8];
 #define pmap_pte_prot(x) protection_converter[x]
 
 /* pmeg structures, queues, and macros */
-queue_head_t pmeg_free_queue;
-queue_head_t pmeg_inactive_queue;
-queue_head_t pmeg_active_queue;
+TAILQ_HEAD(pmeg_tailq, pmeg_state);
+struct pmeg_tailq pmeg_free_queue, pmeg_inactive_queue, pmeg_active_queue;
+
 #define pmeg_p(x) &pmeg_array[x]
 #define is_pmeg_wired(pmegp) (pmegp->pmeg_wired_count)
 static struct pmeg_state pmeg_array[NPMEG];
 
 /* context structures, and queues */
-queue_head_t context_free_queue;
-queue_head_t context_active_queue;
+TAILQ_HEAD(context_tailq, context_state);
+struct context_tailq context_free_queue, context_active_queue;
 
 static struct context_state context_array[NCONTEXT];
 
@@ -352,17 +356,17 @@ void context_allocate(pmap)
 #endif
     if (pmap->pm_context)
 	panic("pmap: pmap already has context allocated to it");
-    if (queue_empty(&context_free_queue)) { /* steal one from active*/
-	if (queue_empty(&context_active_queue))
+    if (TAILQ_EMPTY(&context_free_queue)) { /* steal one from active*/
+	if (TAILQ_EMPTY(&context_active_queue))
 	    panic("pmap: no contexts to be found");
-	context_free(((context_t) queue_first(&context_active_queue))->context_upmap);
+	context_free((&context_active_queue)->tqh_first->context_upmap);
 #ifdef CONTEXT_DEBUG    
     printf("context_allocate: pmap %x, stealing context %x num %d\n",
 	   pmap, context, context->context_num);
 #endif
     }
-    dequeue_first(context, context_t, &context_free_queue);
-    enqueue_tail(&context_active_queue,context);
+    TAILQ_REMOVE_FIRST(context, &context_free_queue, context_link);
+    TAILQ_INSERT_TAIL(&context_active_queue, context, context_link);
     if (context->context_upmap != NULL)
 	panic("pmap: context in use???");
     pmap->pm_context = context;
@@ -400,8 +404,9 @@ void context_free(pmap)		/* :) */
     }
     set_context(saved_context);
     context->context_upmap = NULL;
-    remqueue(&context_active_queue, context);
-    enqueue_tail(&context_free_queue, context);	/* active? XXX */
+    TAILQ_REMOVE(&context_active_queue, context, context_link);
+    TAILQ_INSERT_TAIL(&context_free_queue, context,
+		      context_link);/* active??? XXX */
     pmap->pm_context = NULL;
 #ifdef CONTEXT_DEBUG
     printf("context_free: pmap %x context removed\n", pmap);
@@ -413,13 +418,14 @@ void context_init()
 {
     int i;
 
-    queue_init(&context_free_queue);
-    queue_init(&context_active_queue);
+    TAILQ_INIT(&context_free_queue);
+    TAILQ_INIT(&context_active_queue);
 
     for (i=0; i <NCONTEXT; i++) {
 	context_array[i].context_num = i;
 	context_array[i].context_upmap = NULL;
-	enqueue_tail(&context_free_queue, (queue_entry_t) &context_array[i]);
+	TAILQ_INSERT_TAIL(&context_free_queue, &context_array[i],
+			  context_link);
 #ifdef CONTEXT_DEBUG
 	printf("context_init: context num %d is %x\n", i, &context_array[i]);
 #endif
@@ -440,7 +446,8 @@ void pmeg_steal(pmeg_num)
 	mon_panic("pmeg_steal: pmeg is already owned\n");
     pmegp->pmeg_owner = NULL;
     pmegp->pmeg_reserved++;	/* keep count, just in case */
-    remqueue(&pmeg_free_queue, pmegp);
+    TAILQ_REMOVE(&pmeg_free_queue, pmegp, pmeg_link);
+    pmegp->pmeg_qstate = PMEGQ_NONE;
 }
 
 void pmeg_clean(pmegp)
@@ -464,17 +471,20 @@ void pmeg_clean_free()
     pmeg_t pmegp, pmegp_first;
     int loop = 0;
 
-    if (queue_empty(&pmeg_free_queue))
+    if (TAILQ_EMPTY(&pmeg_free_queue))
 	panic("pmap: no free pmegs available to clean");
 
     pmegp_first = NULL;
-    dequeue_first(pmegp, pmeg_t, &pmeg_free_queue);
+    TAILQ_REMOVE_FIRST(pmegp, &pmeg_free_queue, pmeg_link);
+    pmegp->pmeg_qstate = PMEGQ_NONE;
     while (pmegp != pmegp_first) {
 	pmeg_clean(pmegp);
 	if (pmegp_first == NULL)
 	    pmegp_first = pmegp;
-	enqueue_tail(&pmeg_free_queue, pmegp);
-	dequeue_first(pmegp, pmeg_t, &pmeg_free_queue);
+	TAILQ_INSERT_TAIL(&pmeg_free_queue, pmegp, pmeg_link);
+	pmegp->pmeg_qstate = PMEGQ_FREE;
+	TAILQ_REMOVE_FIRST(pmegp, &pmeg_free_queue, pmeg_link);
+	pmegp->pmeg_qstate = PMEGQ_NONE;
     }
 }
 void pmeg_flush(pmegp)
@@ -511,18 +521,24 @@ pmeg_t pmeg_allocate_invalid(pmap, va)
 {
     pmeg_t pmegp;    
 
-    if (!queue_empty(&pmeg_free_queue)) 
-	dequeue_first(pmegp, pmeg_t, &pmeg_free_queue)
-    else if (!queue_empty(&pmeg_inactive_queue)) {
-	dequeue_first(pmegp, pmeg_t, &pmeg_inactive_queue);
+    if (!TAILQ_EMPTY(&pmeg_free_queue)) {
+	    TAILQ_REMOVE_FIRST(pmegp, &pmeg_free_queue, pmeg_link);
+	    pmegp->pmeg_qstate = PMEGQ_NONE;
+    }
+    else if (!TAILQ_EMPTY(&pmeg_inactive_queue)) {
+	TAILQ_REMOVE_FIRST(pmegp, &pmeg_inactive_queue, pmeg_link);
+	pmegp->pmeg_qstate = PMEGQ_NONE;
 	pmeg_flush(pmegp);
     }
-    else if (!queue_empty(&pmeg_active_queue)) {
-	dequeue_first(pmegp, pmeg_t, &pmeg_active_queue);
+    else if (!TAILQ_EMPTY(&pmeg_active_queue)) {
+	TAILQ_REMOVE_FIRST(pmegp, &pmeg_active_queue, pmeg_link);
+	pmegp->pmeg_qstate = PMEGQ_NONE;
 	while (pmegp->pmeg_owner == kernel_pmap) {
-	    enqueue_tail(&pmeg_active_queue, pmegp);
-	    dequeue_first(pmegp, pmeg_t, &pmeg_active_queue);
-	}
+	    TAILQ_INSERT_TAIL(&pmeg_active_queue, pmegp, pmeg_link);
+	    pmegp->pmeg_qstate = PMEGQ_ACTIVE;
+	    TAILQ_REMOVE_FIRST(pmegp, &pmeg_active_queue, pmeg_link);
+	    pmegp->pmeg_qstate = PMEGQ_NONE;
+        }
 	pmap_remove_range(pmegp->pmeg_owner, pmegp->pmeg_va,
 			  pmegp->pmeg_va+NBSG);
     } else
@@ -535,7 +551,8 @@ pmeg_t pmeg_allocate_invalid(pmap, va)
     pmegp->pmeg_wired_count = 0;
     pmegp->pmeg_reserved  = 0;
     pmegp->pmeg_vpages  = 0;
-    enqueue_tail(&pmeg_active_queue, pmegp);
+    TAILQ_INSERT_TAIL(&pmeg_active_queue, pmegp, pmeg_link);
+    pmegp->pmeg_qstate = PMEGQ_ACTIVE;
     if (pmap != kernel_pmap)
 	pmap->pm_segmap[VA_SEGNUM(va)] = pmegp->pmeg_index;
     return pmegp;
@@ -544,8 +561,10 @@ pmeg_t pmeg_allocate_invalid(pmap, va)
 void pmeg_release(pmegp)
      pmeg_t pmegp;
 {
-    remqueue(&pmeg_active_queue, pmegp);
-    enqueue_tail(&pmeg_inactive_queue, pmegp);
+    TAILQ_REMOVE(&pmeg_active_queue, pmegp, pmeg_link);
+    pmegp->pmeg_qstate = PMEGQ_NONE;
+    TAILQ_INSERT_TAIL(&pmeg_inactive_queue, pmegp, pmeg_link);
+    pmegp->pmeg_qstate = PMEGQ_INACTIVE;
 }
 
 void pmeg_release_empty(pmegp, segnum, update)
@@ -553,11 +572,22 @@ void pmeg_release_empty(pmegp, segnum, update)
      int segnum;
      int update;
 {
-    remqueue(&pmeg_active_queue, pmegp); /*   XXX bug here  */
-    remqueue(&pmeg_inactive_queue, pmegp); /* XXX */
-    enqueue_tail(&pmeg_free_queue, pmegp);
-    if (update && (pmegp->pmeg_owner != kernel_pmap))
-	pmegp->pmeg_owner->pm_segmap[segnum] = SEGINV;
+	switch (pmegp->pmeg_qstate) {
+	case PMEGQ_ACTIVE:
+		TAILQ_REMOVE(&pmeg_active_queue, pmegp, pmeg_link);
+		break;
+	case PMEGQ_INACTIVE:
+		TAILQ_REMOVE(&pmeg_inactive_queue, pmegp, pmeg_link); /* XXX */
+		break;
+	defualt:
+		panic("pmeg_release_empty: releasing free or bad pmeg");
+		break;
+	}
+	pmegp->pmeg_qstate = PMEGQ_NONE;
+	TAILQ_INSERT_TAIL(&pmeg_free_queue, pmegp, pmeg_link);
+	pmegp->pmeg_qstate = PMEGQ_FREE;
+	if (update && (pmegp->pmeg_owner != kernel_pmap))
+		pmegp->pmeg_owner->pm_segmap[segnum] = SEGINV;
 }
 
 pmeg_t pmeg_cache(pmap, va, update)
@@ -583,8 +613,10 @@ pmeg_t pmeg_cache(pmap, va, update)
 	    pmap->pm_segmap[seg] = SEGINV;
 	return PMEG_NULL; /* cache lookup failed */
     }
-    remqueue(&pmeg_inactive_queue, pmegp);
-    enqueue_tail(&pmeg_active_queue, pmegp);
+    TAILQ_REMOVE(&pmeg_inactive_queue, pmegp, pmeg_link);
+    pmegp->pmeg_qstate = PMEGQ_NONE;
+    TAILQ_INSERT_TAIL(&pmeg_active_queue, pmegp, pmeg_link);
+    pmegp->pmeg_qstate = PMEGQ_ACTIVE;
     return pmegp;
 }
 
@@ -605,14 +637,16 @@ void pmeg_init()
 
     /* clear pmeg array, put it all on the free pmeq queue */
 
-    queue_init(&pmeg_free_queue);
-    queue_init(&pmeg_inactive_queue);    
-    queue_init(&pmeg_active_queue);    
+    TAILQ_INIT(&pmeg_free_queue);
+    TAILQ_INIT(&pmeg_inactive_queue);    
+    TAILQ_INIT(&pmeg_active_queue);    
 
     bzero(pmeg_array, NPMEG*sizeof(struct pmeg_state));
     for (x =0 ; x<NPMEG; x++) {
-	enqueue_tail(&pmeg_free_queue,(queue_entry_t) &pmeg_array[x]);
-	pmeg_array[x].pmeg_index = x;
+	    TAILQ_INSERT_TAIL(&pmeg_free_queue, &pmeg_array[x],
+			      pmeg_link);
+	    pmeg_array[x].pmeg_qstate = PMEGQ_FREE;
+	    pmeg_array[x].pmeg_index = x;
     }
 }
 
@@ -1139,7 +1173,8 @@ void pmap_remove_range_mmu(pmap, sva, eva)
     }
     if (pmegp->pmeg_vpages <= 0) {
 	if (is_pmeg_wired(pmegp))
-	    printf("pmap: removing wired pmeg\n");
+	    printf("pmap: removing wired pmeg sva %x eva%x\n",
+		   sva, eva);
 	pmeg_release_empty(pmegp, VA_SEGNUM(sva), PM_UPDATE_CACHE);
 	if (kernel_pmap == pmap) {
 	    for (i=0; i < NCONTEXT; i++) { /* map out of all segments */
@@ -1178,7 +1213,8 @@ void pmap_remove_range_contextless(pmap, sva, eva,pmegp)
     }
     if (pmegp->pmeg_vpages <= 0) {
 	if (is_pmeg_wired(pmegp))
-	    printf("pmap: removing wired pmeg\n");
+	    printf("pmap: removing wired pmeg sva %x eva %x\n",
+		   sva, eva);
 	pmeg_release_empty(pmegp,VA_SEGNUM(sva), PM_UPDATE_CACHE);
     }
     else pmeg_release(pmegp);
@@ -1261,6 +1297,7 @@ void pmap_remove(pmap, sva, eva)
     }
     PMAP_UNLOCK();
 }
+
 void pmap_enter_kernel(va, pa, prot, wired, pte_proto, mem_type)
      vm_offset_t va;
      vm_offset_t pa;
@@ -1553,8 +1590,7 @@ void pmap_deactivate(pmap, pcbp)
 #ifdef PMAP_DEBUG
     printf("pmap_deactivate(%x, %x)\n", pmap, pcbp);
 #endif
-    enqueue_tail(&context_active_queue,
-		 (queue_entry_t) pmap->pm_context);
+    TAILQ_INSERT_TAIL(&context_active_queue, pmap->pm_context, context_link);
 }
 
 /*
