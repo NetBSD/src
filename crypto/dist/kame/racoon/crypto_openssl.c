@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.55 2001/07/11 13:22:03 sakane Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.56 2001/08/05 18:48:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1340,11 +1340,13 @@ eay_hmacsha1_final(c)
 	caddr_t c;
 {
 	vchar_t *res;
+	unsigned int l;
 
 	if ((res = vmalloc(SHA_DIGEST_LENGTH)) == 0)
 		return NULL;
 
-	HMAC_Final((HMAC_CTX *)c, res->v, &res->l);
+	HMAC_Final((HMAC_CTX *)c, res->v, &l);
+	res->l = l;
 	(void)racoon_free(c);
 
 	if (SHA_DIGEST_LENGTH != res->l) {
@@ -1398,11 +1400,13 @@ eay_hmacmd5_final(c)
 	caddr_t c;
 {
 	vchar_t *res;
+	unsigned int l;
 
 	if ((res = vmalloc(MD5_DIGEST_LENGTH)) == 0)
 		return NULL;
 
-	HMAC_Final((HMAC_CTX *)c, res->v, &res->l);
+	HMAC_Final((HMAC_CTX *)c, res->v, &l);
+	res->l = l;
 	(void)racoon_free(c);
 
 	if (MD5_DIGEST_LENGTH != res->l) {
