@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.5 1996/12/07 22:31:25 mycroft Exp $	*/
+/*	$NetBSD: common.h,v 1.6 1998/05/12 21:25:18 pk Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -49,8 +49,8 @@
 #define MAP_ANON	0
 #endif
 
-#include <link.h>
 #include <dlfcn.h>
+#include <link.h>
 
 extern struct _dynamic	_DYNAMIC;
 static void		__load_rtld __P((struct _dynamic *));
