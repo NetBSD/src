@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2003/04/18 01:31:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.55 2003/04/19 23:06:34 christos Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -11,7 +11,7 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	endian.h envsys.h errno.h event.h exec.h exec_aout.h \
 	exec_coff.h exec_ecoff.h exec_elf.h exec_script.h extent.h \
 	fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h \
-	gmon.h hash.h \
+	float_ieee.h gmon.h hash.h \
 	inttypes.h ioccom.h ioctl.h ioctl_compat.h ipc.h \
 	kcore.h kernel.h kgdb.h ksem.h ktrace.h \
 	lkm.h localedef.h lock.h lockf.h lwp.h \
