@@ -1,0 +1,82 @@
+# $Id: README,v 1.1 1994/07/13 20:45:31 gwr Exp $
+
+NOTE: THESE INSTRUCTIONS MAY CHANGE WITH EACH SNAPSHOT.
+
+How to set up your NFS server so your Sun3 can boot NetBSD from it:
+
+1.  Get the Ethernet address of the client.  (It is printed on
+    the console when you power-up the machine.)  Add an entry to
+    the /etc/ethers file so rarpd(8) will know about the client.
+
+2.  Assign an IP address for the machine.  Add it to /etc/hosts
+    (or the DNS or YP database on the server)
+
+3.  Find a copy of the SunOS diskless boot program and copy it into
+    your /tftpboot directory; then make a link...
+	cd /tftpboot
+	cp -p /usr/kvm/stand/boot.sun3 .
+	ln -s boot.sun3 C0E914C3.SUN3
+    where the link basename is the client IP address in hex.
+
+4.  Add the client to your bootparams database.  In /etc/bootparams:
+	client	root=server:/export/client/root \
+		swap=server:/export/client/swap
+
+5.  Create the directory hierarchies on your NFS server.  First, put
+    the *.tar.gz files someplace where they can be read.  Then:
+
+	# Once per server:
+	cd /export
+	mkdir netbsd.sun3
+	cd    netbsd.sun3
+	TARDIR=/somewhere	# (where to find *.tar.gz)
+	sh install.sh		# (unpacks *.tar.gz here)
+
+	# Once per client:
+	cd /export
+	mkdir client client/root
+	dd if=/dev/zero of=client/swap bs=8k count=1024
+	cd client/root
+	mkdir bin sbin
+	(cd ../../netbsd.sun3 ; tar cf - dev etc var) | tar xvf -
+	(cd ../../netbsd.sun3/bin  ; ln * /export/client/root/bin)
+	(cd ../../netbsd.sun3/sbin ; ln * /export/client/root/sbin)
+	(cd dev ; sh MAKEDEV)
+	cp -p ../../netbsd.sun3/netbsd.dl60 netbsd
+	ln -s netbsd vmunix
+
+6.  Customize the following files in /export/client/root:
+	cp etc/fstab.nfs etc/fstab
+	cp /etc/hosts etc/hosts
+	echo client > etc/myname
+	echo "inet client" > etc/hostname.le0
+
+7.  Export the above.  On sunos, /etc/exports needs:
+	/export/netbsd.sun3/usr -ro
+	/export/client -rw=client,root=client
+
+Booting a Sun3/60 client:
+
+Tell the PROM to boot from Ethernet, i.e.
+
+	> b le()
+
+To make the above permanent do:
+Under SunOS: "eeprom bootdev=le(0,0,0)"
+In the PROM: "q???" (see PROM manual)
+
+The kernel is currently "hot-wired" to do a breakpoint into DDB
+and force a single-user shell.  To continue from DDB do:
+
+db> cont
+
+Then, to go multi user, do:
+
+	# mount -u /
+	# exit
+
+Please let me know of any errors in these instructions.
+Good luck!
+
+<gwr@mc.com>
+
