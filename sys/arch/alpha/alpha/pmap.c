@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.82 1999/02/25 03:43:14 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.83 1999/03/04 06:47:21 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 1999/02/25 03:43:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 1999/03/04 06:47:21 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -566,7 +566,7 @@ do {									\
 		 */							\
 		if ((pmap)->pm_asn[(cpu_id)] != PMAP_ASN_RESERVED) {	\
 			printf("kernel_lev1map with non-reserved ASN "	\
-			    "(line %ld)\n", __LINE__);			\
+			    "(line %d)\n", __LINE__);			\
 			panic("PMAP_ACTIVATE_ASN_SANITY");		\
 		}							\
 	} else {							\
@@ -576,7 +576,7 @@ do {									\
 			 * ASN generation number isn't valid!		\
 			 */						\
 			printf("pmap asngen %lu, current %lu "		\
-			    "(line %ld)\n",				\
+			    "(line %d)\n",				\
 			    (pmap)->pm_asngen[(cpu_id)], 		\
 			    pmap_asn_generation[(cpu_id)],		\
 			    __LINE__);					\
@@ -587,7 +587,7 @@ do {									\
 			 * DANGER WILL ROBINSON!  We're going to	\
 			 * pollute the VPT TLB entries!			\
 			 */						\
-			printf("Using reserved ASN! (line %ld)\n",	\
+			printf("Using reserved ASN! (line %d)\n",	\
 			    __LINE__);					\
 			panic("PMAP_ACTIVATE_ASN_SANITY");		\
 		}							\
@@ -689,13 +689,13 @@ do {									\
 	l1pte_ = pmap_l1pte(pmap_kernel(), va);				\
 	if (pmap_pte_v(l1pte_) == 0) {					\
 		printf("kernel level 1 PTE not valid, va 0x%lx "	\
-		    "(line %ld)\n", (va), __LINE__);			\
+		    "(line %d)\n", (va), __LINE__);			\
 		panic("PMAP_KERNEL_PTE");				\
 	}								\
 	l2pte_ = pmap_l2pte(pmap_kernel(), va, l1pte_);			\
 	if (pmap_pte_v(l2pte_) == 0) {					\
 		printf("kernel level 2 PTE not valid, va 0x%lx "	\
-		    "(line %ld)\n", (va), __LINE__);			\
+		    "(line %d)\n", (va), __LINE__);			\
 		panic("PMAP_KERNEL_PTE");				\
 	}								\
 	pmap_l3pte(pmap_kernel(), va, l2pte_);				\
@@ -3820,7 +3820,7 @@ pmap_asn_alloc(pmap, cpu_id)
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN)
 			printf("pmap_asn_alloc: no ASNs, using asngen %lu\n",
-			    pmap->pm_asngen);
+			    pmap->pm_asngen[cpu_id]);
 #endif
 		return;
 	}
@@ -3880,7 +3880,7 @@ pmap_asn_alloc(pmap, cpu_id)
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN)
 			printf("pmap_asn_alloc: generation bumped to %lu\n",
-			    pmap_asn_generation);
+			    pmap_asn_generation[cpu_id]);
 #endif
 	}
 
