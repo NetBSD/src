@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.37 1998/09/18 18:35:17 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.38 1998/10/01 15:58:53 erh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -114,6 +114,10 @@
 #include "opt_compat_sunos.h"
 #endif
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_linux.h"
+#endif
+
 #define	SIG_DFL		((void (*) __P((int)))  0)
 #define	SIG_IGN		((void (*) __P((int)))  1)
 #define	SIG_ERR		((void (*) __P((int))) -1)
@@ -203,7 +207,10 @@ struct	sigaction {
 #define SA_RESTART	0x0002	/* restart system on signal return */
 #define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
 #define SA_NODEFER	0x0010	/* don't mask the signal we're delivering */
-#if defined(_KERNEL) || defined(_LKM)
+#if (defined(_KERNEL) || defined(_LKM))
+#define SA_SIGINFO	0x0040
+#endif /* (_KERNEL || _LKM) && COMPAT_LINUX */
+#if (defined(_KERNEL) || defined(_LKM))
 #define	SA_USERTRAMP	0x0100	/* do not bounce off kernel's sigtramp */
 #endif /* (_KERNEL || _LKM) && COMPAT_SUNOS */
 #endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
@@ -211,7 +218,7 @@ struct	sigaction {
 #define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */
 #define SA_NOCLDWAIT	0x0020	/* do not generate zombies on unwaited child */
 #ifdef _KERNEL
-#define	SA_ALLBITS	0x013f
+#define	SA_ALLBITS	0x017f
 #endif
 
 /*
