@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.4 1998/09/13 15:14:40 christos Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.5 1998/10/23 00:33:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -119,6 +119,9 @@ struct ext2fs_dinode {
 #define EXT2_IMMUTABLE	0x00000010	/* Immutable file */
 #define EXT2_APPEND		0x00000020	/* writes to file may only append */
 #define EXT2_NODUMP		0x00000040	/* do not dump file */
+
+/* Size of on-disk inode. */
+#define	EXT2_DINODE_SIZE	(sizeof(struct ext2fs_dinode))	/* 128 */
 
 /*
  * The e2di_blocks fields may be overlaid with other information for
