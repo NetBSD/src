@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2002/08/26 10:35:40 scw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3 2002/09/04 14:39:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -298,7 +298,7 @@ _bus_space_unmap(void *cookie, bus_space_handle_t bush, bus_size_t size)
 		return;
 	}
 
-	pmap_kremove(va, size);
+	uvm_km_free(kernel_map, va, size);
 }
 
 /*ARGSUSED*/
