@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.9 2001/05/11 06:04:49 jmc Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.10 2001/07/02 02:36:48 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 #define	OHCI_REG_PhysicalRequestFilterHiSet	0x110
 #define	OHCI_REG_PhysicalRequestFilterHiClear	0x114
 #define	OHCI_REG_PhysicalRequestFilterLoSet	0x118
-#define	OHCI_REG_PhysicalRequestFilterLoCLear	0x11c
+#define	OHCI_REG_PhysicalRequestFilterLoClear	0x11c
 #define	OHCI_REG_PhysicalUpperBound		0x120
 #define	OHCI_REG_reserved_124			0x124
 #define	OHCI_REG_reserved_128			0x128
