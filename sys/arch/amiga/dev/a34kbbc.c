@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.7 2000/01/06 10:53:34 is Exp $	*/
+/*	$NetBSD: a34kbbc.c,v 1.8 2000/03/15 20:40:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,11 +73,14 @@ a34kbbc_match(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
+	static int a34kbbc_matched = 0;
+
 	if (!matchname("a34kbbc", auxp))
 		return(0);
 
-	if (cfp->cf_unit)
-		return(0);	/* only one of us please */
+	/* Allow only once instance. */
+	if (a34kbbc_matched)
+		return(0);
 
 	if (!(is_a3000() || is_a4000()))
 		return(0);
@@ -86,6 +89,7 @@ a34kbbc_match(pdp, cfp, auxp)
 	if (a34kugettod(0) == 0)
 		return(0);
 
+	a34kbbc_matched = 1;
 	return(1);
 }
 
