@@ -1,4 +1,4 @@
-/* $NetBSD: tga_bt485.c,v 1.1 1998/04/15 20:16:32 drochner Exp $ */
+/* $NetBSD: tga_bt485.c,v 1.2 1998/08/18 08:07:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -75,6 +75,8 @@ const struct tga_ramdac_conf tga_ramdac_bt485 = {
 	tga_bt485_set_curpos,
 	tga_bt485_get_curpos,
 	tga_bt485_get_curmax,
+	NULL,			/* set_curcmap; not needed */
+	NULL,			/* get_curcmap; not needed */
 };
 
 /*
