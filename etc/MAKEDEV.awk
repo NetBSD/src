@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.10 2003/12/08 23:49:25 dmcmahill Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.11 2003/12/19 06:04:16 lukem Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,18 +46,19 @@
 BEGIN {
 	# top of source tree, used to find major number list in kernel
 	# sources
-	top = ETCDIR "/../sys/"
+	machine = ENVIRON["MACHINE"]
+	maarch = ENVIRON["MACHINE_ARCH"]
+	srcdir = ENVIRON["NETBSDSRCDIR"]
+	if (!machine || !maarch || !srcdir) {
+		print "ERROR: 'MACHINE', 'MACHINE_ARCH' and 'NETBSDSRCDIR' must be set in environment" > "/dev/stderr"
+		exit 1
+	}
+	top = srcdir "/sys/"
 	if (system("test -d '" top "'") != 0) {
 		print "ERROR: can't find top of kernel source tree ('" top "' not a directory)" > "/dev/stderr"
 		exit 1
 	}
 
-	machine = ENVIRON["MACHINE"]
-	maarch = ENVIRON["MACHINE_ARCH"]
-	if (!machine || !maarch) {
-		print "ERROR: 'MACHINE' and 'MACHINE_ARCH' must be set in environment" > "/dev/stderr"
-		exit 1
-	}
 
 	# file with major definitions
 	majors[0] = "conf/majors"
@@ -79,7 +80,6 @@ BEGIN {
 			print "ERROR: can't find majors file '" file "'" > "/dev/stderr"
 			exit 1
 		}
-			
 		while (getline < file) {
 			if ($1 == "device-major") {
 				if ($3 == "char") {
@@ -94,7 +94,7 @@ BEGIN {
 	}
 
 	# read MD config file for MD device targets
-	cfgfile = ETCDIR "/etc." machine "/MAKEDEV.conf"
+	cfgfile = srcdir "/etc/etc." machine "/MAKEDEV.conf"
 	if (system("test -f '" cfgfile "'") != 0) {
 		print "ERROR: no platform MAKEDEV.conf - '" cfgfile "' doesn't exist" > "/dev/stderr"
 		exit 1
@@ -161,6 +161,34 @@ BEGIN {
 	}
 	RAWDISK_NAME = sprintf("%c", 97 + RAWDISK_OFF)		# a+offset
 
+	# read etc/master.passwd for user name->UID mapping
+	idfile = srcdir "/etc/master.passwd"
+	if (system("test -f '" idfile "'") != 0) {
+		print "ERROR: can't find password file '" idfile "'" > "/dev/stderr"
+		exit 1
+	}
+	oldFS=FS
+	FS=":"
+	while (getline < idfile) {
+		uid[$1] = $3
+	}
+	close(idfile)
+	FS=oldFS
+
+	# read etc/group for group name->GID mapping
+	idfile = srcdir "/etc/group"
+	if (system("test -f '" idfile "'") != 0) {
+		print "ERROR: can't find group file '" idfile "'" > "/dev/stderr"
+		exit 1
+	}
+	oldFS=FS
+	FS=":"
+	while (getline < idfile) {
+		gid[$1] = $3
+	}
+	close(idfile)
+	FS=oldFS
+
 	# initially no substitutions
 	devsubst = 0
 	deventry = ""
@@ -191,13 +219,21 @@ BEGIN {
 		next;
 }
 
-# special cases aside, handle normal line 
+# special cases aside, handle normal line
 {
 	sub(/^%MD_DEVICES%/, MDDEV)
 	sub(/%MKDISK%/, MKDISK)
 	sub(/%DISKMINOROFFSET%/, DISKMINOROFFSET)
 	sub(/%RAWDISK_OFF%/, RAWDISK_OFF)
 	sub(/%RAWDISK_NAME%/, RAWDISK_NAME)
+	for (u in uid)
+		gsub("%uid_" u "%", uid[u])
+	for (g in gid)
+		gsub("%gid_" g "%", gid[g])
+	if ($0 ~ /%[gu]id_[a-z]*%/) {
+		print "ERROR unmatched gid or uid in `" $0 "'"> "/dev/stderr"
+		exit 1
+	}
 
 	# if device substitutions are not active, do nothing more
 	if (!devsubst) {
@@ -218,7 +254,7 @@ BEGIN {
 		for (b in blk)
 			gsub("%" b "_blk%", blk[b], deventry)
 
-		if (deventry !~ /%[a-z]*_chr%/ && deventry !~ /%[a-z]*_blk%/)
+		if (deventry !~ /%[a-z]*_(chr|blk)%/)
 			print deventry
 	}
 	deventry = $0
