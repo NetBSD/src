@@ -1,4 +1,4 @@
-/* $Id: pccreg.h,v 1.1.1.1 1995/07/25 23:12:08 chuck Exp $ */
+/* $Id: pccreg.h,v 1.2 1996/04/18 18:07:08 chuck Exp $ */
 
 /*
  *
@@ -106,6 +106,7 @@ extern struct pcc *sys_pcc;
  * enable interrupt
  */
 
+#define PCC_ICLEAR  0x80
 #define PCC_IENABLE 0x08
 
 /*
