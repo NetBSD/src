@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.146 2004/04/03 16:29:06 sato Exp $
+# $NetBSD: GENERIC,v 1.147 2004/04/15 14:58:30 tv Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,10 +24,11 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.146 $"
+#ident 		"GENERIC-$Revision: 1.147 $"
 
 maxusers	16
 
+makeoptions	CPUFLAGS="-mips2"	# CPU codegen options
 options 	VR4102			# NEC VR4102
 options 	VR4111			# NEC VR4111
 options 	VR4121			# NEC VR4121
