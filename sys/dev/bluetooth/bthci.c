@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: bthci.c,v 1.3 2002/09/12 06:42:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #include <dev/bluetooth/bluetooth.h>
 #include <dev/bluetooth/bthcivar.h>
 
-#ifdef IRFRAME_DEBUG
+#ifdef BTHCI_DEBUG
 #define DPRINTF(x)	if (bthcidebug) printf x
 #define Static
 int bthcidebug = 0;
@@ -90,7 +90,7 @@ const struct cdevsw bthci_cdevsw = {
 	nostop, notty, bthcipoll, nommap,
 };
 
-#define IRFRAMEUNIT(dev) (minor(dev))
+#define BTHCIUNIT(dev) (minor(dev))
 
 int
 bthci_match(struct device *parent, struct cfdata *match, void *aux)
@@ -145,7 +145,7 @@ bthci_detach(struct device *self, int flags)
 	/* XXX needs reference count */
 
 	/* locate the major number */
-	maj = cdevsw_lookup(&bthciopen);
+	maj = cdevsw_lookup_major(&bthci_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
@@ -160,7 +160,7 @@ bthciopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct bthci_softc *sc;
 	int error;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
@@ -182,7 +182,7 @@ bthciclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct bthci_softc *sc;
 	int error;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	sc->sc_open = 0;
@@ -199,7 +199,7 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 {
 	struct bthci_softc *sc;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
@@ -219,7 +219,7 @@ bthciwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct bthci_softc *sc;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
@@ -243,7 +243,7 @@ bthciioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	void *vaddr = addr;
 	int error;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
@@ -284,7 +284,7 @@ bthcipoll(dev_t dev, int events, struct proc *p)
 {
 	struct bthci_softc *sc;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
