@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.8 1997/07/05 05:38:20 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.9 1997/07/06 05:14:08 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995-1996 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_nat.c,v 1.8 1997/07/05 05:38:20 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_nat.c,v 1.9 1997/07/06 05:14:08 thorpej Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -181,6 +181,8 @@ int mode;
 #if defined(_KERNEL) && !SOLARIS
 	int s;
 #endif
+
+	nat = NULL;	/* XXX gcc -Wuninitialized */
 
 	/*
 	 * For add/delete, look to see if the NAT entry is already present
