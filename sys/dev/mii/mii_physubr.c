@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.38 2004/04/10 02:32:10 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.39 2004/04/10 18:54:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.38 2004/04/10 02:32:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.39 2004/04/10 18:54:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -611,6 +611,9 @@ u_int
 gmii_phy_getflowcontrol(struct mii_softc *sc)
 {
 	u_int anar, anlpar;
+
+	if ((sc->mii_flags & MIIF_DOPAUSE) == 0)
+		return (0);
 
 	anar = PHY_READ(sc, MII_ANAR);
 	anlpar = PHY_READ(sc, MII_ANLPAR);
