@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: param.h,v 1.7 2005/01/23 17:27:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -136,8 +136,7 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-/* XXX - Does this really belong here? -gwr */
-#include <machine/psl.h>
+#include <machine/intr.h>
 
 extern void _delay(unsigned);
 #define delay(us)	_delay((us)<<8)
