@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.47 2001/01/21 02:39:53 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.48 2001/01/21 19:00:06 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -177,6 +177,21 @@ usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 usbd_status usbd_reload_device_desc(usbd_device_handle);
 
 int usbd_ratecheck(struct timeval *last);
+
+/*
+ * The usb_task structs form a queue of things to run in the USB event
+ * thread.  Normally this is just device discovery when a connect/disconnect
+ * has been detected.  But it may also be used by drivers that need to
+ * perform (short) tasks that must have a process context.
+ */
+struct usb_task {
+	SIMPLEQ_ENTRY(usb_task) next;
+	void (*fun)(void *);
+	void *arg;
+	char onqueue;
+};
+
+void usb_add_task(usbd_device_handle dev, struct usb_task *task);
 
 /* NetBSD attachment information */
 
