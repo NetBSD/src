@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.6 2002/03/23 01:28:10 thorpej Exp $	*/
+/*	$NetBSD: display.c,v 1.7 2002/06/13 23:28:57 wiz Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -31,11 +31,7 @@
 #include "os.h"
 #include <ctype.h>
 #include <time.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "screen.h"		/* interface to screen package */
 #include "layout.h"		/* defines for screen position layout */
@@ -844,27 +840,12 @@ int t;
 
 /*VARARGS2*/
 void
-#ifdef __STDC__
 new_message(int type, const char *msgfmt, ...)
-#else
-new_message(va_alist)
-    va_dcl
-
-#endif
 {
     register int i;
     va_list ap;
-#ifndef __STDC__
-    int type;
-    const char *msgfmt;
-
-    va_start(ap);
-    type = va_arg(ap, int);
-    msgfmt = va_arg(ap, const char *);
-#else
 
     va_start(ap, msgfmt);
-#endif
 
     /* first, format the message */
     (void) vsnprintf(next_msg, sizeof(next_msg), msgfmt, ap);
