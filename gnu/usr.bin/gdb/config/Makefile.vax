@@ -1,7 +1,0 @@
-#	from: @(#)Makefile.vax	6.1 (Berkeley) 3/11/91
-#	$Id: Makefile.vax,v 1.2 1993/08/01 05:42:15 mycroft Exp $
-
-CONFIGSRCS=	default-dep.c vax-pinsn.c
-
-param.h:
-	ln -s $(.CURDIR)/config/m-vax.h param.h
