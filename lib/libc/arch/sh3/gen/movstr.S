@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr.S,v 1.3 2001/05/11 19:58:07 msaitoh Exp $	*/
+/*	$NetBSD: movstr.S,v 1.4 2003/09/22 02:35:46 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <machine/asm.h>
 
-ENTRY(__movstr)
+NENTRY(__movstr)
 	mov	#16, r0
 	cmp/gt	r0, r6
 	bf	loop2
@@ -86,4 +86,4 @@ loop2:
 	bf	1b
 
 	rts
-	nop
+	 nop
