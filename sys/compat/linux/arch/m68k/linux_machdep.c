@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.18 2003/08/02 19:21:50 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.19 2003/09/22 14:36:43 cl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.18 2003/08/02 19:21:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.19 2003/09/22 14:36:43 cl Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -451,30 +451,17 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
  * Send an interrupt to Linux process.
  */
 void
-linux_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+linux_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 {
+	/* u_long code = ksi->ksi_trap; */
+	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	struct frame *frame;
-	caddr_t usp;		/* user stack for signal context */
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	int onstack;
+	/* user stack for signal context */
+	caddr_t usp = getframe(l, sig, &onstack);
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-
-	frame = (struct frame *)l->l_md.md_regs;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack = (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-		  (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Determine user stack for the signal handler context. */
-	if (onstack)
-		usp = (caddr_t)p->p_sigctx.ps_sigstk.ss_sp
-				+ p->p_sigctx.ps_sigstk.ss_size;
-	else
-		usp = (caddr_t)frame->f_regs[SP];
 
 	/* Setup the signal frame (and part of the trapframe). */
 	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO)
