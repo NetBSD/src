@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.48 1999/07/02 08:07:41 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.49 1999/07/03 05:44:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.48 1999/07/02 08:07:41 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.49 1999/07/03 05:44:11 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,9 +138,10 @@ hookup(host, port)
 	char *port;
 {
 	int s, len, tos, error;
-	struct addrinfo hints, *res;
+	struct addrinfo hints, *res, *res0;
 	static char hostnamebuf[MAXHOSTNAMELEN];
 	char hbuf[MAXHOSTNAMELEN];
+	char *cause = "unknown";
 	
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
 	memset(&hints, 0, sizeof(hints));
@@ -148,60 +149,74 @@ hookup(host, port)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
-	error = getaddrinfo(host, port, &hints, &res);
+	error = getaddrinfo(host, port, &hints, &res0);
 	if (error) {
 		warn(gai_strerror(error));
 		code = -1;
 		return (0);
 	}
 
-	if (res->ai_canonname)
-		strncpy(hostnamebuf, res->ai_canonname, sizeof(hostnamebuf));
+	if (res0->ai_canonname)
+		strncpy(hostnamebuf, res0->ai_canonname, sizeof(hostnamebuf));
 	else
 		strncpy(hostnamebuf, host, sizeof(hostnamebuf));
 	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 	hostname = hostnamebuf;
 	
-	s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	if (s < 0) {
-		warn("socket");
-		code = -1;
-		return (0);
-	}
-	while (xconnect(s, res->ai_addr, res->ai_addrlen) < 0) {
-		if (errno == EINTR)
-			continue;
-		if (res->ai_next) {
-			getnameinfo(res->ai_addr, res->ai_addrlen,
-				hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
-			warn("connect to address %s", hbuf);
-		}
-		res = res->ai_next;
-		if (res) {
+	s = -1;
+	for (res = res0; res; res = res->ai_next) {
+#if 0	/*old behavior*/
+		if (res != res0)	/* not on the first address */
+#else
+		if (res0->ai_next)	/* if we have multiple possibilities */
+#endif
+		{
 			getnameinfo(res->ai_addr, res->ai_addrlen,
 				hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
 			fprintf(ttyout, "Trying %s...\n", hbuf);
-			s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-			if (s < 0) {
-				warn("socket");
-				code = -1;
-				return (0);
-			}
+		}
+		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (s < 0) {
+			cause = "socket";
 			continue;
 		}
-		warn("connect");
+		while ((error = xconnect(s, res->ai_addr, res->ai_addrlen)) < 0
+				&& errno == EINTR) {
+			;
+		}
+		if (error) {
+			/* this "if" clause is to prevent print warning twice */
+			if (res->ai_next) {
+				getnameinfo(res->ai_addr, res->ai_addrlen,
+					hbuf, sizeof(hbuf), NULL, 0,
+					NI_NUMERICHOST);
+				warn("connect to address %s", hbuf);
+			}
+			cause = "connect";
+			close(s);
+			s = -1;
+			continue;
+		}
+
+		/* finally we got one */
+		break;
+	}
+	if (s < 0) {
+		warn(cause);
 		code = -1;
-		goto bad;
+		return 0;
 	}
 	memcpy(&hisctladdr, res->ai_addr, res->ai_addrlen);
 	len = res->ai_addrlen;
+	freeaddrinfo(res0);
+	res0 = res = NULL;
 	if (getsockname(s, (struct sockaddr *)&myctladdr, &len) < 0) {
 		warn("getsockname");
 		code = -1;
 		goto bad;
 	}
 #if defined(IPPROTO_IP) && defined(IP_TOS)
-	if (res->ai_family == AF_INET) {
+	if (hisctladdr.su_family == AF_INET) {
 		tos = IPTOS_LOWDELAY;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
 			       sizeof(int)) < 0)
