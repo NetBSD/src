@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.91 2004/03/07 23:17:44 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.92 2004/03/09 02:15:33 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.91 2004/03/07 23:17:44 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.92 2004/03/09 02:15:33 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -177,17 +177,12 @@ rf_BootRaidframe()
 static void 
 rf_UnconfigureArray()
 {
-	int     rc;
 
 	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	if (--configureCount == 0) {	/* if no active configurations, shut
 					 * everything down */
 		isconfigged = 0;
-
-		rc = rf_ShutdownList(&globalShutdown);
-		if (rc) {
-			RF_ERRORMSG1("RAIDFRAME: unable to do global shutdown, rc=%d\n", rc);
-		}
+		rf_ShutdownList(&globalShutdown);
 
 		/*
 	         * We must wait until now, because the AllocList module
