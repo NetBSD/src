@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.39 2000/03/28 18:45:20 kleink Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.40 2000/03/30 12:31:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -301,7 +301,7 @@ sys_mmap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_mmap_args /* {
+	struct sys_mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
@@ -317,8 +317,8 @@ sys_mmap(p, v, retval)
 	vm_prot_t prot, maxprot;
 	int flags, fd;
 	vaddr_t vm_min_address = VM_MIN_ADDRESS;
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct vnode *vp;
 	caddr_t handle;
 	int error;
@@ -649,11 +649,11 @@ sys___msync13(p, v, retval)
 
 int
 sys_munmap(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_munmap_args /* {
+	struct sys_munmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
@@ -791,7 +791,7 @@ sys_minherit(p, v, retval)
 	} */ *uap = v;
 	vaddr_t addr;
 	vsize_t size, pageoff;
-	register vm_inherit_t inherit;
+	vm_inherit_t inherit;
 	
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
