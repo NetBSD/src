@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.3.4.2 2000/11/13 16:45:59 tv Exp $	*/
+/*	$NetBSD: resolv.h,v 1.3.4.3 2001/01/28 15:52:53 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -52,7 +52,7 @@
 
 /*
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	Id: resolv.h,v 8.29 1999/10/07 08:24:14 vixie Exp
+ *	Id: resolv.h,v 8.32 2000/12/23 08:14:49 vixie Exp
  */
 
 #ifndef _RESOLV_H_
@@ -147,6 +147,7 @@ struct res_sym {
 #define	RES_MAXRETRANS		30	/* only for resolv.conf/RES_OPTIONS */
 #define	RES_MAXRETRY		5	/* only for resolv.conf/RES_OPTIONS */
 #define	RES_DFLRETRY		2	/* Default #/tries. */
+#define	RES_MAXTIME		65535	/* Infinity, in milliseconds. */
 
 struct __res_state {
 	int	retrans;	 	/* retransmition time interval */
@@ -170,9 +171,17 @@ struct __res_state {
 	res_send_qhook qhook;		/* query hook */
 	res_send_rhook rhook;		/* response hook */
 	int	res_h_errno;		/* last one set for this context */
-	int	_sock;			/* PRIVATE: for res_send i/o */
+	int	_vcsock;		/* PRIVATE: for res_send VC i/o */
 	u_int	_flags;			/* PRIVATE: see below */
-	char	pad[52];		/* On an i386 this means 512b total. */
+	union {
+		char	pad[52];	/* On an i386 this means 512b total. */
+		struct {
+			u_int16_t		nscount;
+			u_int16_t		nstimes[MAXNS];	/* ms. */
+			int			nssocks[MAXNS];
+			struct sockaddr_in	nsaddrs[MAXNS];
+		} _ext;
+	} _u;
 };
 
 typedef struct __res_state *res_state;
@@ -206,6 +215,7 @@ typedef struct __res_state *res_state;
 #define RES_ROTATE	0x00004000	/* rotate ns list after each query */
 #define	RES_NOCHECKNAME	0x00008000	/* do not check names for sanity. */
 #define	RES_KEEPTSIG	0x00010000	/* do not strip TSIG records */
+#define	RES_BLAST	0x00020000	/* blast all recursive servers */
 
 #define RES_DEFAULT	(RES_RECURSE | RES_DEFNAMES | RES_DNSRCH)
 
@@ -320,7 +330,7 @@ extern const struct res_sym __p_rcode_syms[];
 #define res_nclose		__res_nclose
 #define res_ninit		__res_ninit
 #define res_nmkquery		__res_nmkquery
-#define res_npquery		__res_npquery
+#define res_pquery		__res_pquery
 #define res_nquery		__res_nquery
 #define res_nquerydomain	__res_nquerydomain
 #define res_nsearch		__res_nsearch
@@ -375,7 +385,7 @@ int		res_ninit __P((res_state));
 int		res_nisourserver __P((const res_state,
 				      const struct sockaddr_in *));
 void		fp_resstat __P((const res_state, FILE *));
-void		res_npquery __P((const res_state, const u_char *, int, FILE *));
+void		res_pquery __P((const res_state, const u_char *, int, FILE *));
 const char *	res_hostalias __P((const res_state, const char *,
 				   char *, size_t));
 int		res_nquery __P((res_state,
