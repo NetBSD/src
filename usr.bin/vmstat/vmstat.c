@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.124 2004/11/05 19:56:34 dsl Exp $ */
+/* $NetBSD: vmstat.c,v 1.125 2004/12/20 08:20:50 dsainty Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.124 2004/11/05 19:56:34 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.125 2004/12/20 08:20:50 dsainty Exp $");
 #endif
 #endif /* not lint */
 
@@ -1036,7 +1036,7 @@ dopool(int verbose)
 	for (first = 1; addr != NULL; addr = TAILQ_NEXT(pp, pr_poollist) ) {
 		deref_kptr(addr, pp, sizeof(*pp), "pool chain trashed");
 		deref_kptr(pp->pr_alloc, &pa, sizeof(pa),
-		    "pool allocatior trashed");
+		    "pool allocator trashed");
 		deref_kptr(pp->pr_wchan, name, sizeof(name),
 		    "pool wait channel trashed");
 		name[sizeof(name)-1] = '\0';
