@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: asc.4,v 1.4 2001/04/11 19:23:00 wiz Exp $
+.\"	$NetBSD: asc.4,v 1.5 2001/07/08 17:22:54 wiz Exp $
 .\"
 .Dd April 23, 2000
 .Dt ASC 4 vax
@@ -45,7 +45,7 @@ VAXstation 4000 SCSI controller
 .Sh DESCRIPTION
 The
 .Nm
-driver provies support for the
+driver provides support for the
 .Tn NCR
 53c94-based SCSI host adapter
 on the VAXstation 4000 series, and for the PMAZ-AA and related
@@ -62,11 +62,11 @@ for use in
 files:
 .Pp
 .Bl -tag -compact -width "bits 8-15:"
-.It bits 0-7:
+.It bits 0-7 :
 disable disconnect/reselect for the corresponding
 .Tn SCSI
 target
-.It bits 8-15:
+.It bits 8-15 :
 disable synchronous negotiation for
 .Tn SCSI
 target
