@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.19 2004/05/23 16:53:22 christos Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.20 2004/05/24 16:16:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.19 2004/05/23 16:53:22 christos Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.20 2004/05/24 16:16:26 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -244,10 +244,8 @@ _nsdbtput(dbt)
 
 		new = (ns_dbt *)realloc(_nsmap,
 		    (_nsmapsize + NSELEMSPERCHUNK) * sizeof(ns_dbt));
-		if (new == NULL) {
-			NSUNLOCK();
+		if (new == NULL)
 			return (-1);
-		}
 		_nsmap = new;
 	}
 	memmove(&_nsmap[_nsmapsize++], dbt, sizeof(ns_dbt));
