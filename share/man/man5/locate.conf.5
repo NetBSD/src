@@ -1,4 +1,4 @@
-.\"	$NetBSD: locate.conf.5,v 1.4 2004/04/19 01:10:48 lukem Exp $
+.\"	$NetBSD: locate.conf.5,v 1.5 2004/04/19 10:00:16 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,12 +80,12 @@ The matched files or directories themselves are stored to the database.
 .Pp
 Default: Not specified.
 .It Sy ignorefs Ar type ...
-Ignore filesystem by type,
+Ignore file system by type,
 adding
 .Ar type
 to the default list.
 When building the database,
-do not descend into filesystems which are of the specified
+do not descend into file systems which are of the specified
 .Ar type .
 The mount points are not stored to the database.
 If a
@@ -93,27 +93,26 @@ If a
 is prepended to
 .Ar type ,
 the meaning is negated,
-that is, ignore filesystems which do not have the type.
+that is, ignore file systems which do not have the type.
 As a special case, if
 .Dq none
 is specified for
 .Ar type ,
 the
 .Sy ignorefs
-list is cleared and all filesystems are traversed.
+list is cleared and all file systems are traversed.
 .Pp
 .Ar type
 is used as an argument to
 .Xr find 1
-.Ic -fstype .
+.Fl fstype .
 The
 .Xr sysctl 8
-command can be used to find out the types of filesystems
+command can be used to find out the types of file systems
 that are available on the system:
 .Bd -literal -offset indent
 sysctl vfs.generic.fstypes
 .Ed
-.Pp
 .Pp
 Default: !local cd9660 fdesc kernfs procfs
 .It Sy searchpath Ar directory ...
