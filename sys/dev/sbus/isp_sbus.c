@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.17 1999/12/04 02:56:30 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.18 1999/12/20 00:49:58 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -195,6 +195,7 @@ isp_sbus_attach(parent, self, aux)
 	sbc->sbus_poff[RISC_BLOCK >> _BLK_REG_SHFT] = SBUS_RISC_REGS_OFF;
 	sbc->sbus_poff[DMA_BLOCK >> _BLK_REG_SHFT] = DMA_REGS_OFF;
 
+	isp->isp_confopts = self->dv_cfdata->cf_flags;
 	ISP_LOCK(isp);
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
