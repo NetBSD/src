@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2000/08/03 04:09:30 assar Exp $
+#	$NetBSD: Makefile,v 1.27 2000/08/03 22:47:39 assar Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 .include <bsd.own.mk>
@@ -23,7 +23,9 @@ CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION
 CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
 CPPFLAGS+=-DKRB5
 
-LDADD+=	-lkrb5 -lkrb -lcrypto -lasn1 -lcom_err -lvers -lroken
+VERS!=	cd ${.CURDIR}/../../lib/libvers && make print-objdir
+
+LDADD+=	-lkrb5 -lkrb -lcrypto -lasn1 -lcom_err -L${VERS} -lvers -lroken
 DPADD+=	${LIBKRB5} ${LIBKRB} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN}
 .endif
 
