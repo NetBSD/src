@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.15.2.4 2004/09/21 13:20:50 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.15.2.5 2004/11/18 21:20:22 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15.2.4 2004/09/21 13:20:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15.2.5 2004/11/18 21:20:22 skrll Exp $");
 
 #include "opt_altivec.h"
 
@@ -180,7 +180,7 @@ process_machdep_write_vecregs(struct lwp *l, struct vreg *vregs)
 }
 
 int
-ptrace_machdep_dorequest(struct proc *p, struct lwp *l,
+ptrace_machdep_dorequest(struct lwp *l, struct lwp *lt,
 	int req, caddr_t addr, int data)
 {
 	struct uio uio;
@@ -193,7 +193,7 @@ ptrace_machdep_dorequest(struct proc *p, struct lwp *l,
 
 	case PT_GETVECREGS:
 		/* write = 0 done above. */
-		if (!process_machdep_validvecregs(l->l_proc))
+		if (!process_machdep_validvecregs(lt->l_proc))
 			return (EINVAL);
 		iov.iov_base = addr;
 		iov.iov_len = sizeof(struct vreg);
@@ -204,7 +204,7 @@ ptrace_machdep_dorequest(struct proc *p, struct lwp *l,
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_lwp = l;
-		return process_machdep_dovecregs(p, l, &uio);
+		return process_machdep_dovecregs(l, lt, &uio);
 	}
 
 #ifdef DIAGNOSTIC
@@ -219,14 +219,14 @@ ptrace_machdep_dorequest(struct proc *p, struct lwp *l,
  */
 
 int
-process_machdep_dovecregs(struct proc *curp, struct lwp *l, struct uio *uio)
+process_machdep_dovecregs(struct lwp *curl, struct lwp *l, struct uio *uio)
 {
 	struct vreg r;
 	int error;
 	char *kv;
 	int kl;
 
-	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
+	if ((error = process_checkioperm(curl, l->l_proc)) != 0)
 		return (error);
 
 	kl = sizeof(r);
