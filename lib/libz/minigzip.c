@@ -1,4 +1,4 @@
-/* $NetBSD: minigzip.c,v 1.9 1999/07/03 12:30:57 simonb Exp $ */
+/* $NetBSD: minigzip.c,v 1.10 2001/01/08 14:48:21 itojun Exp $ */
 
 /* minigzip.c -- simulate gzip using the zlib compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
@@ -27,7 +27,7 @@
 #  include <string.h>
 #  include <stdlib.h>
 #else
-   extern void exit  OF((int));
+   extern void exit  __P((int));
 #endif
 
 #ifdef USE_MMAP
@@ -58,7 +58,7 @@
 #endif
 
 #ifndef WIN32 /* unlink already in stdio.h for WIN32 */
-  extern int unlink OF((const char *));
+  extern int unlink __P((const char *));
 #endif
 
 #ifndef GZ_SUFFIX
@@ -78,15 +78,15 @@
 
 char *prog;
 
-void error            OF((const char *msg));
-void gz_compress      OF((FILE   *in, gzFile out));
+void error            __P((const char *msg));
+void gz_compress      __P((FILE   *in, gzFile out));
 #ifdef USE_MMAP
-int  gz_compress_mmap OF((FILE   *in, gzFile out));
+int  gz_compress_mmap __P((FILE   *in, gzFile out));
 #endif
-void gz_uncompress    OF((gzFile in, FILE   *out));
-void file_compress    OF((char  *file, char *mode));
-void file_uncompress  OF((char  *file));
-int  main             OF((int argc, char *argv[]));
+void gz_uncompress    __P((gzFile in, FILE   *out));
+void file_compress    __P((char  *file, char *mode));
+void file_uncompress  __P((char  *file));
+int  main             __P((int argc, char *argv[]));
 
 /* ===========================================================================
  * Display error message and exit

@@ -1,4 +1,4 @@
-/* $NetBSD: trees.c,v 1.6 1999/07/03 12:30:57 simonb Exp $ */
+/* $NetBSD: trees.c,v 1.7 2001/01/08 14:48:22 itojun Exp $ */
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-1998 Jean-loup Gailly
@@ -141,28 +141,28 @@ local static_tree_desc  static_bl_desc =
  * Local (static) routines in this file.
  */
 
-local void tr_static_init OF((void));
-local void init_block     OF((deflate_state *s));
-local void pqdownheap     OF((deflate_state *s, ct_data *tree, int k));
-local void gen_bitlen     OF((deflate_state *s, tree_desc *desc));
-local void gen_codes      OF((ct_data *tree, int max_code, ushf *bl_count));
-local void build_tree     OF((deflate_state *s, tree_desc *desc));
-local void scan_tree      OF((deflate_state *s, ct_data *tree, int max_code));
-local void send_tree      OF((deflate_state *s, ct_data *tree, int max_code));
-local int  build_bl_tree  OF((deflate_state *s));
-local void send_all_trees OF((deflate_state *s, int lcodes, int dcodes,
+local void tr_static_init __P((void));
+local void init_block     __P((deflate_state *s));
+local void pqdownheap     __P((deflate_state *s, ct_data *tree, int k));
+local void gen_bitlen     __P((deflate_state *s, tree_desc *desc));
+local void gen_codes      __P((ct_data *tree, int max_code, ushf *bl_count));
+local void build_tree     __P((deflate_state *s, tree_desc *desc));
+local void scan_tree      __P((deflate_state *s, ct_data *tree, int max_code));
+local void send_tree      __P((deflate_state *s, ct_data *tree, int max_code));
+local int  build_bl_tree  __P((deflate_state *s));
+local void send_all_trees __P((deflate_state *s, int lcodes, int dcodes,
                               int blcodes));
-local void compress_block OF((deflate_state *s, ct_data *ltree,
+local void compress_block __P((deflate_state *s, ct_data *ltree,
                               ct_data *dtree));
-local void set_data_type  OF((deflate_state *s));
-local unsigned bi_reverse OF((unsigned value, int length));
-local void bi_windup      OF((deflate_state *s));
-local void bi_flush       OF((deflate_state *s));
-local void copy_block     OF((deflate_state *s, charf *buf, unsigned len,
+local void set_data_type  __P((deflate_state *s));
+local unsigned bi_reverse __P((unsigned value, int length));
+local void bi_windup      __P((deflate_state *s));
+local void bi_flush       __P((deflate_state *s));
+local void copy_block     __P((deflate_state *s, charf *buf, unsigned len,
                               int header));
 
 #ifdef GEN_TREES_H
-local void gen_trees_header OF((void));
+local void gen_trees_header __P((void));
 #endif
 
 #ifndef DEBUG
@@ -189,7 +189,7 @@ local void gen_trees_header OF((void));
  * IN assertion: length <= 16 and value fits in length bits.
  */
 #ifdef DEBUG
-local void send_bits      OF((deflate_state *s, int value, int length));
+local void send_bits      __P((deflate_state *s, int value, int length));
 
 local void send_bits(s, value, length)
     deflate_state *s;

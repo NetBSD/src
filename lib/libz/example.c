@@ -1,4 +1,4 @@
-/* $NetBSD: example.c,v 1.7 1999/07/03 12:30:53 simonb Exp $ */
+/* $NetBSD: example.c,v 1.8 2001/01/08 14:48:20 itojun Exp $ */
 
 /* example.c -- usage example of the zlib compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
@@ -14,7 +14,7 @@
 #  include <string.h>
 #  include <stdlib.h>
 #else
-   extern void exit  OF((int));
+   extern void exit  __P((int));
 #endif
 
 #if defined(VMS) || defined(RISCOS)
@@ -38,24 +38,24 @@ const char hello[] = "hello, hello!";
 const char dictionary[] = "hello";
 uLong dictId; /* Adler32 value of the dictionary */
 
-void test_compress      OF((Byte *compr, uLong comprLen,
+void test_compress      __P((Byte *compr, uLong comprLen,
 		            Byte *uncompr, uLong uncomprLen));
-void test_gzio          OF((const char *out, const char *in, 
+void test_gzio          __P((const char *out, const char *in, 
 		            Byte *uncompr, int uncomprLen));
-void test_deflate       OF((Byte *compr, uLong comprLen));
-void test_inflate       OF((Byte *compr, uLong comprLen,
+void test_deflate       __P((Byte *compr, uLong comprLen));
+void test_inflate       __P((Byte *compr, uLong comprLen,
 		            Byte *uncompr, uLong uncomprLen));
-void test_large_deflate OF((Byte *compr, uLong comprLen,
+void test_large_deflate __P((Byte *compr, uLong comprLen,
 		            Byte *uncompr, uLong uncomprLen));
-void test_large_inflate OF((Byte *compr, uLong comprLen,
+void test_large_inflate __P((Byte *compr, uLong comprLen,
 		            Byte *uncompr, uLong uncomprLen));
-void test_flush         OF((Byte *compr, uLong *comprLen));
-void test_sync          OF((Byte *compr, uLong comprLen,
+void test_flush         __P((Byte *compr, uLong *comprLen));
+void test_sync          __P((Byte *compr, uLong comprLen,
 		            Byte *uncompr, uLong uncomprLen));
-void test_dict_deflate  OF((Byte *compr, uLong comprLen));
-void test_dict_inflate  OF((Byte *compr, uLong comprLen,
+void test_dict_deflate  __P((Byte *compr, uLong comprLen));
+void test_dict_inflate  __P((Byte *compr, uLong comprLen,
 		            Byte *uncompr, uLong uncomprLen));
-int  main               OF((int argc, char *argv[]));
+int  main               __P((int argc, char *argv[]));
 
 /* ===========================================================================
  * Test compress() and uncompress()

@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.h,v 1.6 1999/07/03 12:30:53 simonb Exp $	*/
+/*	$NetBSD: deflate.h,v 1.7 2001/01/08 14:48:19 itojun Exp $	*/
 
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-1998 Jean-loup Gailly
@@ -268,12 +268,12 @@ typedef struct internal_state {
  */
 
         /* in trees.c */
-void _tr_init         OF((deflate_state *s));
-int  _tr_tally        OF((deflate_state *s, unsigned dist, unsigned lc));
-void _tr_flush_block  OF((deflate_state *s, charf *buf, ulg stored_len,
+void _tr_init         __P((deflate_state *s));
+int  _tr_tally        __P((deflate_state *s, unsigned dist, unsigned lc));
+void _tr_flush_block  __P((deflate_state *s, charf *buf, ulg stored_len,
 			  int eof));
-void _tr_align        OF((deflate_state *s));
-void _tr_stored_block OF((deflate_state *s, charf *buf, ulg stored_len,
+void _tr_align        __P((deflate_state *s));
+void _tr_stored_block __P((deflate_state *s, charf *buf, ulg stored_len,
                           int eof));
 
 #define d_code(dist) \

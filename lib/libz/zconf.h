@@ -1,4 +1,4 @@
-/* $NetBSD: zconf.h,v 1.8 1999/10/26 03:42:58 itojun Exp $ */
+/* $NetBSD: zconf.h,v 1.9 2001/01/08 14:48:22 itojun Exp $ */
 
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
@@ -137,12 +137,14 @@
 
                         /* Type declarations */
 
+#ifndef __NetBSD__
 #ifndef OF /* function prototypes */
 #  ifdef STDC
 #    define OF(args)  args
 #  else
 #    define OF(args)  ()
 #  endif
+#endif
 #endif
 
 /* The following definitions for FAR are needed only for MSDOS mixed

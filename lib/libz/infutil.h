@@ -1,4 +1,4 @@
-/* $NetBSD: infutil.h,v 1.5 1999/07/03 12:30:57 simonb Exp $ */
+/* $NetBSD: infutil.h,v 1.6 2001/01/08 14:48:21 itojun Exp $ */
 
 /* infutil.h -- types and macros common to blocks and codes
  * Copyright (C) 1995-1998 Mark Adler
@@ -90,7 +90,7 @@ struct inflate_blocks_state {
 extern uInt inflate_mask[17];
 
 /* copy as much as possible from the sliding window to the output area */
-extern int inflate_flush OF((
+extern int inflate_flush __P((
     inflate_blocks_statef *,
     z_streamp ,
     int));
