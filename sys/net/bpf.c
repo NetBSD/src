@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.70 2002/09/19 00:34:00 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.71 2002/09/19 01:16:58 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.70 2002/09/19 00:34:00 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.71 2002/09/19 01:16:58 darrenr Exp $");
 
 #include "bpfilter.h"
 
@@ -1136,6 +1136,11 @@ bpf_mtap(arg, m)
 		pktlen = 0;
 		for (m0 = m; m0 != 0; m0 = m0->m_next)
 			pktlen += m0->m_len;
+	}
+
+	if (pktlen == m->m_len) {
+		bpf_tap(arg, mtod(m, u_char *), pktlen);
+		return;
 	}
 
 	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
