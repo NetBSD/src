@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.31 2001/06/02 16:17:07 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.32 2001/06/03 03:55:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,8 @@
  * National Semiconductor DP83820 10/100/1000 PCI Ethernet
  * controllers.
  *    
- * Originally written by Jason R. Thorpe for Network Computer, Inc.
+ * Originally written to support the SiS 900 by Jason R. Thorpe for
+ * Network Computer, Inc.
  *
  * TODO:
  *
