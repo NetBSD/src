@@ -1,8 +1,9 @@
 #!/bin/sh -
 #
-#	$NetBSD: rebuild_all,v 1.4 1996/04/12 20:27:44 cgd Exp $
+#	$NetBSD: rebuild_all,v 1.5 1996/06/15 03:45:05 cgd Exp $
 
-cflist=`cd ../conf ; find . -type f | grep -v '[a-z]' | sed -e 's,^\./,,'`
+cflist=`cd ../conf ; find . -type f ! -name "*[a-z.]*" ! -name ".*" | \
+    sed -e 's,^\./,,'`
 
 docmd()
 {
