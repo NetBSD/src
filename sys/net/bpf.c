@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.17 1995/02/23 07:19:49 glass Exp $	*/
+/*	$NetBSD: bpf.c,v 1.18 1995/03/22 16:08:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -271,8 +271,11 @@ bpf_detachd(d)
 	 * If so, turn it off.
 	 */
 	if (d->bd_promisc) {
+		int error;
+
 		d->bd_promisc = 0;
-		if (ifpromisc(bp->bif_ifp, 0))
+		error = ifpromisc(bp->bif_ifp, 0);
+		if (error && error != EINVAL)
 			/*
 			 * Something is really wrong if we were able to put
 			 * the driver into promiscuous mode, but can't
@@ -1266,14 +1269,14 @@ ifpromisc(ifp, pswitch)
 	int pswitch;
 {
 	struct ifreq ifr;
-	/*
-	 * If the device is not configured up, we cannot put it in
-	 * promiscuous mode.
-	 */
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return (ENETDOWN);
 
 	if (pswitch) {
+		/*
+		 * If the device is not configured up, we cannot put it in
+		 * promiscuous mode.
+		 */
+		if ((ifp->if_flags & IFF_UP) == 0)
+			return (ENETDOWN);
 		if (ifp->if_pcount++ != 0)
 			return (0);
 		ifp->if_flags |= IFF_PROMISC;
@@ -1281,6 +1284,14 @@ ifpromisc(ifp, pswitch)
 		if (--ifp->if_pcount > 0)
 			return (0);
 		ifp->if_flags &= ~IFF_PROMISC;
+		/*
+		 * If the device is not configured up, we should not need to
+		 * turn off promiscuous mode (device should have turned it
+		 * off when interface went down; and will look at IFF_PROMISC
+		 * again next time interface comes up).
+		 */
+		if ((ifp->if_flags & IFF_UP) == 0)
+			return (0);
 	}
 	ifr.ifr_flags = ifp->if_flags;
 	return ((*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr));
