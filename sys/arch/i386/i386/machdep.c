@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.5 1997/12/08 05:10:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262.2.6 1998/01/29 11:51:58 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1402,6 +1402,7 @@ setregs(p, pack, stack)
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
+	pcb->pcb_savefpu.sv_env.en_cw = __NetBSD_NPXCW__;
 
 	tf = p->p_md.md_regs;
 	__asm("movl %w0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
