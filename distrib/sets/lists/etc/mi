@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.81 2001/04/05 23:56:43 thorpej Exp $
+# $NetBSD: mi,v 1.82 2001/04/10 05:14:35 enami Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -14,7 +14,6 @@
 ./etc/defaults/rc.conf			etc-sys-defaults
 ./etc/defaults/security.conf		etc-sys-defaults
 ./etc/defaults/weekly.conf		etc-sys-defaults
-./etc/dhclient-script			etc-dhclient-etc
 ./etc/disktab				etc-sysutil-etc
 ./etc/dm.conf				etc-games-etc
 ./etc/dumpdates				etc-sysutil-etc
