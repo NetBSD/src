@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.63 2001/12/20 20:10:38 soren Exp $	*/
+/*	$NetBSD: ping.c,v 1.64 2002/05/31 01:10:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.63 2001/12/20 20:10:38 soren Exp $");
+__RCSID("$NetBSD: ping.c,v 1.64 2002/05/31 01:10:53 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -1252,7 +1252,7 @@ summary(int header)
 		(void)printf("+%d duplicates, ", nrepeats);
 	if (ntransmitted) {
 		if (nreceived > ntransmitted)
-			(void)printf("-- somebody's printing up packets!");
+			(void)printf("-- somebody's duplicating packets!");
 		else
 			(void)printf("%.1f%% packet loss",
 				     (((ntransmitted-nreceived)*100.0) /
