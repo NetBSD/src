@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.23 2000/04/14 05:52:56 simonb Exp $	*/
+/*	$NetBSD: cat.c,v 1.24 2000/07/31 02:49:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.23 2000/04/14 05:52:56 simonb Exp $");
+__RCSID("$NetBSD: cat.c,v 1.24 2000/07/31 02:49:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,8 @@ cook_args(argv)
 		if (*argv) {
 			if (!strcmp(*argv, "-"))
 				fp = stdin;
-			else if ((fp = fopen(*argv, "rf")) == NULL) {
+			else if ((fp = fopen(*argv,
+			    fflag ? "rf" : "r")) == NULL) {
 				warn("%s", *argv);
 				rval = 1;
 				++argv;
