@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.40 2000/07/03 01:45:51 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.41 2000/07/04 22:30:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -685,7 +685,7 @@ restart:
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
 		if (bp->b_flags & B_DELWRI)
-			fs->lfs_avail += bp->b_bcount;
+			fs->lfs_avail += btodb(bp->b_bcount);
 		if (bp->b_flags & B_LOCKED) {
 			bp->b_flags &= ~B_LOCKED;
 			--locked_queue_count;
@@ -710,7 +710,7 @@ restart:
 		}
 		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
 		if (bp->b_flags & B_DELWRI)
-			fs->lfs_avail += bp->b_bcount;
+			fs->lfs_avail += btodb(bp->b_bcount);
 		if (bp->b_flags & B_LOCKED) {
 			bp->b_flags &= ~B_LOCKED;
 			--locked_queue_count;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.45 2000/07/03 18:22:10 fvdl Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.46 2000/07/04 22:30:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -778,7 +778,9 @@ sys_lfs_segclean(p, v, retval)
 		return (EBUSY);
 	}
 	
-	fs->lfs_avail += fsbtodb(fs, fs->lfs_ssize) - 1;
+	fs->lfs_avail += fsbtodb(fs, fs->lfs_ssize);
+	if (sup->su_flags & SEGUSE_SUPERBLOCK)
+		fs->lfs_avail -= btodb(LFS_SBPAD);
 	fs->lfs_bfree += (sup->su_nsums * LFS_SUMMARY_SIZE / DEV_BSIZE) +
 		sup->su_ninos * btodb(fs->lfs_bsize);
 	fs->lfs_dmeta -= sup->su_nsums + fsbtodb(fs, sup->su_ninos);
@@ -886,7 +888,8 @@ lfs_fasthashget(dev, ino, need_unlock, vpp)
 	 */
 	if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
 		if ((*vpp)->v_flag & VXLOCK) {
-			printf("lfs_fastvget: vnode VXLOCKed for ino %d\n",ino);
+			printf("lfs_fastvget: vnode VXLOCKed for ino %d\n",
+			       ino);
 			clean_vnlocked++;
 #ifdef LFS_EAGAIN_FAIL
 			return EAGAIN;
@@ -900,7 +903,7 @@ lfs_fasthashget(dev, ino, need_unlock, vpp)
 		if (VOP_ISLOCKED(*vpp)) {
 #ifdef DEBUG_LFS
 			printf("lfs_fastvget: ino %d inlocked by pid %d\n",
-			    ip->i_number, (*vpp)->v_lock.lk_lockholder);
+			       ip->i_number, (*vpp)->v_lock.lk_lockholder);
 #endif
 			clean_inlocked++;
 #ifdef LFS_EAGAIN_FAIL
