@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.78 2003/03/27 17:47:45 jdolecek Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.79 2003/05/16 13:55:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.78 2003/03/27 17:47:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.79 2003/05/16 13:55:18 christos Exp $");
 
 #include "opt_compat_43.h"
 
@@ -636,6 +636,18 @@ crfree(struct ucred *cr)
 
 	if (--cr->cr_ref == 0)
 		FREE((caddr_t)cr, M_CRED);
+}
+
+/*
+ * Compare cred structures and return 0 if they match
+ */
+int
+crcmp(const struct ucred *cr1, const struct uucred *cr2)
+{
+	return cr1->cr_uid != cr2->cr_uid ||
+	    cr1->cr_gid != cr2->cr_gid ||
+	    cr1->cr_ngroups != (uint32_t)cr2->cr_ngroups ||
+	    memcmp(cr1->cr_groups, cr2->cr_groups, cr1->cr_ngroups);
 }
 
 /*
