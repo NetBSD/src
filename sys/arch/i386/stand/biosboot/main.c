@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1997/06/13 13:22:08 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1997/07/02 04:07:43 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -192,7 +192,7 @@ bootit(filename, howto, tell)
 		print_bootsel(filename, howto);
 
 	if (exec_netbsd(filename, 0, howto, 0, consdev) < 0)
-		printf("boot: %s\n", strerror(errno));
+		printf("boot: %s: %s\n", filename, strerror(errno));
 	else
 		printf("boot returned\n");
 }
