@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 1996/06/11 03:11:06 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 1996/06/21 06:11:02 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2167,8 +2167,7 @@ setmachdep()
 	 * used later when we re-map the vectors from MacOS Address
 	 * Space to NetBSD Address Space.
 	 */
-	if ((mac68k_machine.serial_console & 0x03) == 0)
-		mrg_MacOSROMVectors = cpui->rom_vectors;
+	mrg_MacOSROMVectors = cpui->rom_vectors;
 
 	/*
 	 * Set up any machine specific stuff that we have to before

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.20 1996/05/08 13:36:41 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.21 1996/06/21 06:10:56 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -32,11 +32,15 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+
 #include <machine/adbsys.h>
+#include <machine/cpu.h>
 #include <machine/viareg.h>
 
 #include "adbvar.h"
 #include "../mac68k/macrom.h"
+
+extern	struct mac68k_machine_S mac68k_machine;
 
 /* from adb.c */
 void    adb_processevent(adb_event_t * event);
@@ -175,6 +179,11 @@ adb_init()
 	int adbindex, adbaddr;
 	int error;
 	char buffer[9];
+
+	if ((mac68k_machine.serial_console & 0x03)) {
+		printf("adb: using serial console\n");
+		return;
+	}
 
 	if (!mrg_romready()) {
 		printf("adb: no ROM ADB driver in this kernel for this machine\n");
