@@ -30,10 +30,10 @@
  *
  *---------------------------------------------------------------------------
  *
- *	isa_isic.c - ISA bus frontend for i4b_isic driver
+ *	isic_isa.c - ISA bus frontend for i4b_isic driver
  *	--------------------------------------------------
  *
- *	$Id: isa_isic.c,v 1.2 2001/01/09 00:46:01 martin Exp $ 
+ *	$Id: i4b_isic_isa.c,v 1.1 2001/02/17 15:38:09 martin Exp $ 
  *
  *      last edit-date: [Tue Jan  9 01:43:45 2001]
  *
@@ -89,20 +89,20 @@
 
 /* local functions */
 #ifdef __BROKEN_INDIRECT_CONFIG
-static int isa_isic_probe __P((struct device *, void *, void *));
+static int isic_isa_probe __P((struct device *, void *, void *));
 #else
-static int isa_isic_probe __P((struct device *, struct cfdata *, void *));
+static int isic_isa_probe __P((struct device *, struct cfdata *, void *));
 #endif
 
-static void isa_isic_attach __P((struct device *, struct device *, void *));
+static void isic_isa_attach __P((struct device *, struct device *, void *));
 static int setup_io_map __P((int flags, bus_space_tag_t iot,
 	bus_space_tag_t memt, bus_size_t iobase, bus_size_t maddr,
 	int *num_mappings, struct isic_io_map *maps, int *iosize, 
 	int *msize));
 static void args_unmap __P((int *num_mappings, struct isic_io_map *maps));
 
-struct cfattach isa_isic_ca = {
-	sizeof(struct l1_softc), isa_isic_probe, isa_isic_attach
+struct cfattach isic_isa_ca = {
+	sizeof(struct l1_softc), isic_isa_probe, isic_isa_attach
 };
 
 #define	ISIC_FMT	"%s: "
@@ -114,9 +114,9 @@ struct cfattach isa_isic_ca = {
  */
 static int
 #ifdef __BROKEN_INDIRECT_CONFIG
-isa_isic_probe(parent, match, aux)
+isic_isa_probe(parent, match, aux)
 #else
-isa_isic_probe(parent, cf, aux)
+isic_isa_probe(parent, cf, aux)
 #endif
 	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
@@ -136,7 +136,7 @@ isa_isic_probe(parent, cf, aux)
 	int ret = 0;
 
 #if 0
-	printf("isic%d: enter isa_isic_probe\n", cf->cf_unit);
+	printf("isic%d: enter isic_isa_probe\n", cf->cf_unit);
 #endif
 
 	/* check irq */
@@ -341,7 +341,7 @@ done:
 	args_unmap(&args.ia_num_mappings, &args.ia_maps[0]);
 
 #if 0
-	printf("isic%d: exit isa_isic_probe, return = %d\n", cf->cf_unit, ret);
+	printf("isic%d: exit isic_isa_probe, return = %d\n", cf->cf_unit, ret);
 #endif
 
 	return ret;
@@ -792,7 +792,7 @@ isicattach(int flags, struct l1_softc *sc)
  * Attach the card
  */
 static void
-isa_isic_attach(parent, self, aux)
+isic_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
