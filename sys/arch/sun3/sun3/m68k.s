@@ -75,17 +75,45 @@ ENTRY(set_control_word)
  *
  * [I don't think the ENTRY() macro will do the right thing with this -- glass]
  */
-	.globl	_getsp
+	.globl	_getsp; .align 2
 _getsp:
 	movl	sp,d0			| get current SP
 	addql	#4,d0			| compensate for return address
 	rts
 
 	.globl	_getsfc, _getdfc
+.align 2
 _getsfc:
 	movc	sfc,d0
 	rts
+.align 2
 _getdfc:
 	movc	dfc,d0
 	rts
 
+
+/*
+ * non-local gotos
+ */
+ENTRY(setjmp)
+	movl	sp@(4),a0	| savearea pointer
+	moveml	#0xFCFC,a0@	| save d2-d7/a2-a7
+	movl	sp@,a0@(48)	| and return address
+	moveq	#0,d0		| return 0
+	rts
+
+ENTRY(qsetjmp)
+	movl	sp@(4),a0	| savearea pointer
+	lea	a0@(40),a0	| skip regs we do not save
+	movl	a6,a0@+		| save FP
+	movl	sp,a0@+		| save SP
+	movl	sp@,a0@		| and return address
+	moveq	#0,d0		| return 0
+	rts
+
+ENTRY(longjmp)
+	movl	sp@(4),a0
+	moveml	a0@+,#0xFCFC
+	movl	a0@,sp@
+	moveq	#1,d0
+	rts

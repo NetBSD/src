@@ -55,6 +55,7 @@
 #endif
 #define	_ASM_FUNC(x)	x
 
+#define ALIGN_TEXT .align 2
 #ifdef GPROF
 # define _BEGIN_ENTRY	
 # define _END_ENTRY	link a6,#0; jbsr mcount; unlk a6 ; 
@@ -65,7 +66,7 @@
 # define _ENTER_FUNC(x) ;
 #endif
 
-#define _ENTRY(x)	.globl x; x:
+#define _ENTRY(x)	.globl x; ALIGN_TEXT; x:
 
 #define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _END_ENTRY
 #define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(z)); _END_ENTRY \

@@ -26,9 +26,15 @@
 /*
  * HISTORY
  * $Log: db_trace.c,v $
- * Revision 1.1  1993/08/08 12:22:09  glass
- * lots of changes, too many printfs
+ * Revision 1.2  1993/08/10 08:42:55  glass
+ * fixed problem that caused two consecutive segments to be using the same
+ * pmeg unknowingly.  still too many printfs, not sure how many are actualy
+ * in the machine dependent code.  reaches cpu_startup() where it stops
+ * deliberately. next project: autoconfig(), maybe kgdb
  *
+ * Revision 1.1  93/08/08  12:22:09  glass
+ * lots of changes, too many printfs
+ * 
  * Revision 2.5  91/10/09  16:17:23  af
  * 	Added parens in initializers for db_regs.
  * 	[91/10/07            af]
@@ -76,7 +82,7 @@
 
 #include <machine/setjmp.h>
 #define jmp_buf_t jmp_buf
-extern jmp_buf_t *db_recover;
+jmp_buf_t *db_recover;
 
 /*
  * Register list
@@ -284,7 +290,7 @@ findentry( sp )
 	jmp_buf_t	db_jmpbuf;
 	jmp_buf_t	*savejmp = db_recover;
 
-	if (_setjmp(db_recover = &db_jmpbuf)) {
+	if (setjmp(db_recover = &db_jmpbuf)) {
 		/* oops -- we touched something we ought not to have */
 		/* cannot trace caller of "start" */
 		sp->k_entry = MAXINT;

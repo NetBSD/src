@@ -8,15 +8,15 @@ _intrcnt:
 
 .text
 
-#define INTERRUPT_HANDLE(interrupt num) \
-	addql #1,_intrcnt+interrupt_num	\
-	movw	sr,sp@-			| push current SR value \
-	clrw	sp@-			|    padded to longword \
-	jbsr	_intrhand		| handle interrupt 	\
-	addql	#4,sp			| pop SR
-	moveml	sp@+,#0x0303					\
-	addql	#2,sp						\
-	addql #1, _cnt+V_INTR					\
+#define INTERRUPT_HANDLE(interrupt_num) \
+	addql #1,_intrcnt+interrupt_num	;\
+	movw	sr,sp@-		;	/* push current SR value */\
+	clrw	sp@-		;	/*    padded to longword */\
+	jbsr	_intrhand	;	/* handle interrupt 	 */\
+	addql	#4,sp		;	/* pop SR		 */\
+	moveml	sp@+,#0x0303	;				 \
+	addql	#2,sp		;				\
+	addql #1, _cnt+V_INTR	;				\
 	jra rei
 
 .globl _level1intr, _level2intr, _level3intr, _level4intr

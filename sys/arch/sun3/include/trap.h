@@ -60,6 +60,8 @@
 #define T_COPERR	12
 #define T_ASTFLT	13
 #define T_TRAP15	15
+#define T_BRKPT         T_TRAP15
+#define T_WATCHPOINT    16
 
 #define	T_USER		0x80		/* user-mode flag or'ed with type */
 

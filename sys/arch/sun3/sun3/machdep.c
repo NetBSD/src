@@ -28,7 +28,9 @@
 #include "machine/pte.h"
 
 #include "machine/mon.h" 
+#include "machine/isr.h"
 #include "net/netisr.h"
+
 
 char kstack[NBPG];		/* totally bogus */
 
@@ -721,6 +723,7 @@ netintr()
 intrhand(sr)
 	int sr;
 {
+#if 0
     register struct isr *isr;
     register int found = 0;
     register int ipl;
@@ -753,4 +756,6 @@ intrhand(sr)
 	printf("intrhand: unexpected sr 0x%x\n", sr);
 	break;
     }
+#endif
 }
+

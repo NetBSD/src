@@ -26,9 +26,15 @@
 /*
  * HISTORY
  * $Log: db_machdep.h,v $
- * Revision 1.1  1993/08/08 12:18:27  glass
- * various changes
+ * Revision 1.2  1993/08/10 08:42:37  glass
+ * fixed problem that caused two consecutive segments to be using the same
+ * pmeg unknowingly.  still too many printfs, not sure how many are actualy
+ * in the machine dependent code.  reaches cpu_startup() where it stops
+ * deliberately. next project: autoconfig(), maybe kgdb
  *
+ * Revision 1.1  93/08/08  12:18:27  glass
+ * various changes
+ * 
  * Revision 2.5  91/07/31  18:12:56  dbg
  * 	Changed register save area name.
  * 	[91/07/12            dbg]
@@ -101,6 +107,7 @@ db_regs_t	ddb_regs;		/* register state */
 
 #define	FIXUP_PC_AFTER_BREAK	ddb_regs.pc -= 2;
 
+#define SR_T1 0x8000
 #define	db_clear_single_step(regs)	((regs)->sr &= ~SR_T1)
 #define	db_set_single_step(regs)	((regs)->sr |=  SR_T1)
 
