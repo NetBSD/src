@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2002/11/23 09:25:55 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2002/12/06 10:07:10 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -262,7 +262,7 @@ cpu_startup(void)
 	 * Now allocate buffers proper.
 	 */
 	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (void *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != 0)
