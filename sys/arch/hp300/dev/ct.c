@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.9 1994/10/26 07:23:28 cgd Exp $	*/
+/*	$NetBSD: ct.c,v 1.10 1995/02/23 22:23:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -65,7 +65,7 @@
 #define EOFS	128
 
 int	ctinit(), ctstart(), ctgo(), ctintr();
-void	ctstrategy();
+void	ctstrategy(), ctdone();
 struct	driver ctdriver = {
 	ctinit, "ct", ctstart, ctgo, ctintr,
 };
@@ -507,21 +507,7 @@ mustio:
 #endif
 			}
 			bp->b_resid = bp->b_bcount;
-			iodone(bp);
-			hpibfree(&sc->sc_dq);
-			if (dp = bp->b_actf)
-				dp->b_actb = bp->b_actb;
-			else
-				cttab[unit].b_actb = bp->b_actb;
-			*bp->b_actb = dp;
-			if ((bp = dp) == NULL) {
-				cttab[unit].b_active = 0;
-				return;
-			}
-			sc->sc_addr = bp->b_un.b_addr;
-			sc->sc_resid = bp->b_bcount;
-			if (hpibreq(&sc->sc_dq))
-				goto again;
+			ctdone(unit, bp);
 			return;
 		}			
 		sc->sc_flags |= CTF_IO;
@@ -765,12 +751,23 @@ done:
 	if (ctdebug & CDB_FILES)
 		printf("ctintr: after flags %x\n", sc->sc_flags);
 #endif
+	ctdone(unit, bp);
+}
+
+void
+ctdone(unit, bp)
+	int unit;
+	register struct buf *bp;
+{
+	register struct ct_softc *sc = &ct_softc[unit];
+	register struct buf *dp;
+
 	if (dp = bp->b_actf)
 		dp->b_actb = bp->b_actb;
 	else
 		cttab[unit].b_actb = bp->b_actb;
 	*bp->b_actb = dp;
-	iodone(bp);
+	biodone(bp);
 	hpibfree(&sc->sc_dq);
 	if (cttab[unit].b_actf == NULL) {
 		cttab[unit].b_active = 0;
