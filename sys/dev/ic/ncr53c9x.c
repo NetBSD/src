@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.105 2003/02/04 20:05:12 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.106 2003/04/16 18:53:50 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.105 2003/02/04 20:05:12 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.106 2003/04/16 18:53:50 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1795,8 +1795,10 @@ gotit:
 				break;
 
 			case MSG_EXT_WDTR:
+#ifdef NCR53C9X_DEBUG
 				printf("%s: wide mode %d\n",
 				       sc->sc_dev.dv_xname, sc->sc_imess[3]);
+#endif
 				if (sc->sc_imess[3] == 1) {
 					ti->cfg3 |= NCRFASCFG3_EWIDE;
 					ncr53c9x_setsync(sc, ti);
