@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.30 2003/08/25 19:03:41 uwe Exp $	*/
+/*	$NetBSD: kd.c,v 1.31 2004/03/17 14:03:22 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.30 2003/08/25 19:03:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.31 2004/03/17 14:03:22 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -126,8 +126,7 @@ kd_init(kd)
 	struct kd_softc *kd;
 {
 	struct tty *tp;
-	int i;
-	char *prop;
+	char prop[6+1];
 	
 	kd = &kd_softc; 	/* XXX */
 
@@ -152,20 +151,12 @@ kd_init(kd)
 	}
 
 	if (kd->rows == 0 &&
-	    (prop = PROM_getpropstring(optionsnode, "screen-#rows"))) {
-		i = 0;
-		while (*prop != '\0')
-			i = i * 10 + *prop++ - '0';
-		kd->rows = (unsigned short)i;
-	}
+	    prom_getoption("screen-#rows", prop, sizeof prop) == 0)
+		kd->rows = strtoul(prop, NULL, 10);
+
 	if (kd->cols == 0 &&
-	    (prop = PROM_getpropstring(optionsnode, "screen-#columns"))) {
-		i = 0;
-		while (*prop != '\0')
-			i = i * 10 + *prop++ - '0';
-		kd->cols = (unsigned short)i;
-	}
-	return;
+	    prom_getoption("screen-#columns", prop, sizeof prop) == 0)
+		kd->cols = strtoul(prop, NULL, 10);
 }
 
 struct tty *
