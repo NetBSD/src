@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_lfs.8,v 1.16 2001/11/16 12:05:00 wiz Exp $
+.\"	$NetBSD: newfs_lfs.8,v 1.17 2002/01/21 18:24:06 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,7 +62,8 @@ The following options define the general layout policies.
 .Bl -tag -width Fl
 .It Fl A
 Attempt to compute the appropriate segment size using the formula
-\fB4 * bandwidth * access time\fR.  The disk is tested for twenty seconds
+.Em 4 * bandwidth * access time .
+The disk is tested for twenty seconds
 to discover its bandwidth and seek time.
 .It Fl B Ar logical-segment-size
 The logical segment size of the file system in bytes.  If not specified,
