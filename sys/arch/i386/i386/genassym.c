@@ -78,9 +78,7 @@ main()
 	def("P_STAT", &p->p_stat);
 	def("P_WCHAN", &p->p_wchan);
 
-	def("V_TRAP", &vm->v_trap);
 	def("V_INTR", &vm->v_intr);
-	def("V_SYSCALL", &vm->v_syscall);
 	def("V_SWTCH", &vm->v_swtch);
 
 	def("PCB_CR3", &pcb->pcb_tss.tss_cr3);
@@ -109,7 +107,6 @@ main()
 	def("PR_SCALE", &uprof->pr_scale);
 
 	def("UPAGES", UPAGES);
-	def("HIGHPAGES", HIGHPAGES);
 	def("PGSHIFT", PGSHIFT);
 	def("PDSHIFT", PDSHIFT);
 
