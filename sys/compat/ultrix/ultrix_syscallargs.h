@@ -134,6 +134,13 @@ struct ultrix_sys_uname_args {
 	syscallarg(struct ultrix_utsname *) name;
 };
 
+struct ultrix_sys_shmsys_args {
+	syscallarg(u_int) shmop;
+	syscallarg(u_int) a2;
+	syscallarg(u_int) a3;
+	syscallarg(u_int) a4;
+};
+
 struct ultrix_sys_ustat_args {
 	syscallarg(int) dev;
 	syscallarg(struct ultrix_ustat *) buf;
@@ -307,6 +314,7 @@ int	compat_09_sys_setdomainname	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_quotactl	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_exportfs	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_uname	__P((struct proc *, void *, register_t *));
+int	ultrix_sys_shmsys	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_ustat	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_getmnt	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_sigpending	__P((struct proc *, void *, register_t *));
