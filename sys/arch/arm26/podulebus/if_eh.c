@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.3 2000/12/17 22:29:26 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.4 2000/12/18 00:46:47 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.3 2000/12/17 22:29:26 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.4 2000/12/18 00:46:47 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -130,6 +130,8 @@ static void eh_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 static int eh_match(struct device *, struct cfdata *, void *);
 static void eh_attach(struct device *, struct device *, void *);
 
+static int ether_sscanf(char *, u_int8_t *);
+
 struct cfattach eh_ca = {
 	sizeof(struct eh_softc), eh_match, eh_attach
 };
@@ -150,9 +152,6 @@ eh_match(struct device *parent, struct cfdata *cf, void *aux)
 	}
 	return 0;
 }
-
-static const u_int8_t demo_addr_100[] = { 0x00, 0xc0, 0x32, 0x00, 0x84, 0x57 };
-static const u_int8_t demo_addr_200[] = { 0x00, 0xc0, 0x32, 0x00, 0x17, 0xbf };
 
 /* XXX 10baseFL on E513 */
 static int media_only2[] = { IFM_ETHER | IFM_10_2 };
@@ -177,6 +176,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	int *media;
 	int mediaset, nmedia;
 	int i;
+	char eatext[18];
 
 	/* Canonicalise card type. */
 	switch (pa->pa_product) {
@@ -270,17 +270,27 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	nmedia = media_switch[mediaset].nmedia;
 	printf("\n");
 
-	/* XXX XXX XXX Ethernet address */
-	switch (sc->sc_type) {
-	case PODULE_ICUBED_ETHERLAN100:
-		memcpy(dsc->sc_enaddr, demo_addr_100, ETHER_ADDR_LEN);
-		break;
-	case PODULE_ICUBED_ETHERLAN200:
-		memcpy(dsc->sc_enaddr, demo_addr_200, ETHER_ADDR_LEN);
-		break;
+	/*
+	 * XXX This is really, really evil.
+	 * Unfortunately, the right way to do it seems to involve using
+	 * the RISC OS loader, since some of the layout of the ROM seems
+	 * to be encoded in it.  Fun.
+	 */
+#define GIVEUP (0x200 - 18)
+	for (i = 0; i < GIVEUP; i++)
+		if (bus_space_read_1(pa->pa_sync_t, pa->pa_sync_h, i) == '(') {
+			bus_space_read_region_1(pa->pa_sync_t, pa->pa_sync_h,
+			    i+1, (u_int8_t *)eatext, 17);
+			eatext[17] = '\0';
+			if (ether_sscanf(eatext, dsc->sc_enaddr))
+				break;
+		}
+	if (i == GIVEUP) {
+		printf("%s: Ethernet address not found in ROM\n",
+		    self->dv_xname);
+		return;
 	}
-	printf("%s: rigged demo mode\n", self->dv_xname);
-	
+
 	dp8390_config(dsc, media, nmedia, media[0]);
 	dp8390_stop(dsc);
 
@@ -312,6 +322,19 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 		       self->dv_xname, irq_string(sc->sc_ih));
 	sc->sc_ctrl |= EH_CTRL_IE;
 	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
+}
+
+static int
+ether_sscanf(char *ptr, u_int8_t *ea)
+{
+	int i;
+
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		ea[i] = strtoul(ptr, &ptr, 16);
+		if (*ptr++ != (i == ETHER_ADDR_LEN - 1 ? '\0' : ':'))
+			return 0;
+	}
+	return 1;
 }
 
 static void
