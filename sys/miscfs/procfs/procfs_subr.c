@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.18 1997/05/05 07:35:13 mycroft Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.19 1997/06/25 11:32:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -219,6 +219,23 @@ procfs_rw(v)
 	p = PFIND(pfs->pfs_pid);
 	if (p == 0)
 		return (EINVAL);
+
+	switch (pfs->pfs_type) {
+	case Pregs:
+	case Pfpregs:
+	case Pmem:
+		/*
+		 * Do not allow init to be modified while in secure mode; it
+		 * could be duped into changing the security level.
+		 */
+		if (uio->uio_rw == UIO_WRITE &&
+		    p == initproc && securelevel > -1)
+			return (EPERM);
+		break;
+
+	default:
+		break;
+	}
 
 	switch (pfs->pfs_type) {
 	case Pnote:
