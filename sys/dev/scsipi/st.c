@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.78 1997/10/09 00:43:26 mjacob Exp $	*/
+/*	$NetBSD: st.c,v 1.79 1997/10/09 00:53:28 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1883,9 +1883,10 @@ st_rdpos(st, hard, blkptr)
 	if (hard)
 		cmd.byte1 = 1;
 
-	error = st->sc_link->scsipi_cmd(st->sc_link,
+	error = (*st->sc_link->scsipi_cmd)(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&posdata,
-	    sizeof(posdata), ST_RETRIES, 30000, NULL, SCSI_SILENT|SCSI_DATA_IN);
+	    sizeof(posdata), ST_RETRIES, 30000, NULL,
+	    SCSI_SILENT | SCSI_DATA_IN);
 
 	if (error == 0) {
 #if	0
@@ -1896,9 +1897,8 @@ st_rdpos(st, hard, blkptr)
 #endif
 		if (posdata[0] & 0x4)	/* Block Position Unknown */
 			error = EINVAL;
-		else {
+		else
 			*blkptr = _4btol(&posdata[4]);
-		}
 	}
 	return (error);
 }
