@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.199 2004/03/11 11:42:04 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.199 2004/03/11 11:42:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -555,8 +555,7 @@ copyfault:
 		cr2 = rcr2();
 		KERNEL_PROC_LOCK(l);
 		if (l->l_flag & L_SA) {
-			KDASSERT(p != NULL && p->p_sa != NULL);
-			p->p_sa->sa_vp_faultaddr = (vaddr_t)cr2;
+			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
 	faultcommon:
