@@ -9,7 +9,7 @@
 @chapter Internal Architecture of the Compiler
 
 This is meant to describe the C++ front-end for gcc in detail.
-Questions and comments to Mike Stump @code{<mrs@@cygnus.com>}.
+Questions and comments to Benjamin Kosnik @code{<bkoz@@cygnus.com>}.
 
 @menu
 * Limitations of g++::          
@@ -830,7 +830,7 @@ get_binfo (VF_BASETYPE_VALUE (vfield), t, 0)
 @end example
 
 @noindent
-will return the binfo for the the given vfield.
+will return the binfo for the given vfield.
 
 May or may not be set at @code{modify_vtable_entries} time.  Set at
 @code{finish_base_struct} time.
@@ -842,7 +842,7 @@ What things can this be used on:
 
 @item VF_DERIVED_VALUE
 Identifies the type of the most derived class of the vfield, excluding
-the the class this vfield is for.
+the class this vfield is for.
 
 Set at @code{finish_base_struct} time.
 
@@ -1425,7 +1425,7 @@ Major disadvantages when enabling exceptions are:
 @itemize @bullet
 @item
 Code that uses caller saved registers, can't, when flow can be
-transfered into that code from an exception handler.  In high performace
+transferred into that code from an exception handler.  In high performance
 code this should not usually be true, so the effects should be minimal.
 
 @end itemize
@@ -1476,9 +1476,9 @@ required to call them in pairs.  When marking the end of a region, an
 argument can be passed to indicate the handler for the marked region.
 This can be passed in many ways, currently a tree is used.  Another
 possibility would be insns for the handler, or a label that denotes a
-handler.  I have a feeling insns might be the the best way to pass it.
+handler.  I have a feeling insns might be the best way to pass it.
 Semantics are, if an exception is thrown inside the region, control is
-transfered unconditionally to the handler.  If control passes through
+transferred unconditionally to the handler.  If control passes through
 the handler, then the backend is to rethrow the exception, in the
 context of the end of the original region.  The handler is protected by
 the conventional mechanisms; it is the frontend's responsibility to
@@ -1578,6 +1578,11 @@ we are concerned here about a lower-level interface primarily
 intended for methods written in Java, but that can also be used for C++
 (and less easily C).
 
+Note that on systems that follow BSD tradition, a C identifier @code{var}
+would get "mangled" into the assembler name @samp{_var}.  On such
+systems, all other mangled names are also prefixed by a @samp{_}
+which is not shown in the following examples.
+
 @subsection Method name mangling
 
 C++ mangles a method by emitting the function name, followed by @code{__},
@@ -1646,6 +1651,7 @@ entire mangled method name is followed by a @samp{U}.
 For example, the method @code{X\u0319::M\u002B(int)} is encoded as
 @samp{M_002b__U6X_0319iU}.
 
+
 @subsection Pointer and reference types
 
 A C++ pointer type is mangled as @samp{P} followed by the
@@ -1657,6 +1663,39 @@ mangling of the type referenced.
 A Java object reference type is equivalent
 to a C++ pointer parameter, so we mangle such an parameter type
 as @samp{P} followed by the mangling of the class name.
+
+@subsection Squangled type compression
+
+Squangling (enabled with the @samp{-fsquangle} option), utilizes 
+the @samp{B} code to indicate reuse of a previously
+seen type within an indentifier. Types are recognized in a left to
+right manner and given increasing values, which are
+appended to the code in the standard manner. Ie, multiple digit numbers
+are delimited by @samp{_} characters. A type is considered to be any 
+non primitive type, regardless of whether its a parameter, template
+parameter, or entire template. Certain codes are considered modifiers
+of a type, and are not included as part of the type. These are the
+@samp{C}, @samp{V}, @samp{P}, @samp{A}, @samp{R}, and @samp{U} codes, 
+denoting constant, volatile, pointer, array, reference, and unsigned. 
+These codes may precede a @samp{B} type in order to make the required 
+modifications to the type.
+
+For example:
+@example
+template <class T> class class1 @{ @};
+
+template <class T> class class2 @{ @};
+
+class class3 @{ @};
+
+int f(class2<class1<class3> > a ,int b, const class1<class3>&c, class3 *d) @{ @}
+
+    B0 -> class2<class1<class3>
+    B1 -> class1<class3>
+    B2 -> class3
+@end example
+Produces the mangled name @samp{f__FGt6class21Zt6class11Z6class3iRCB1PB2}.
+The int parameter is a basic type, and does not receive a B encoding...
 
 @subsection Qualified names
 
@@ -1674,6 +1713,40 @@ Then follows each part of the qualified name, as described above.
 For example @code{Foo::\u0319::Bar} is encoded as
 @samp{Q33FooU5_03193Bar}.
 
+Squangling utilizes the the letter @samp{K} to indicate a 
+remembered portion of a qualified name. As qualified names are processed
+for an identifier, the names are numbered and remembered in a 
+manner similar to the @samp{B} type compression code. 
+Names are recognized left to right, and given increasing values, which are
+appended to the code in the standard manner. ie, multiple digit numbers
+are delimited by @samp{_} characters.
+
+For example 
+@example
+class Andrew 
+@{
+  class WasHere 
+  @{
+      class AndHereToo 
+      @{
+      @};
+  @};
+@};
+
+f(Andrew&r1, Andrew::WasHere& r2, Andrew::WasHere::AndHereToo& r3) @{ @}
+
+   K0 ->  Andrew
+   K1 ->  Andrew::WasHere
+   K2 ->  Andrew::WasHere::AndHereToo
+@end example
+Function @samp{f()} would be mangled as : 
+@samp{f__FR6AndrewRQ2K07WasHereRQ2K110AndHereToo}
+
+There are some occasions when either a @samp{B} or @samp{K} code could
+be chosen, preference is always given to the @samp{B} code. Ie, the example
+in the section on @samp{B} mangling could have used a @samp{K} code 
+instead of @samp{B2}.
+
 @subsection Templates
 
 A class template instantiation is encoded as the letter @samp{t},
@@ -1684,14 +1757,14 @@ as a @samp{Z} followed by the encoding of the type.
 
 A function template specialization (either an instantiation or an
 explicit specialization) is encoded by an @samp{H} followed by the
-encoding of the template parameters, as described above, followed by 
-an @samp{_}, the encoding of the argument types template function (not the
-specialization), another @samp{_}, and the return type.  (Like the
-argument types, the return type is the return type of the function
+encoding of the template parameters, as described above, followed by an
+@samp{_}, the encoding of the argument types to the template function
+(not the specialization), another @samp{_}, and the return type.  (Like
+the argument types, the return type is the return type of the function
 template, not the specialization.)  Template parameters in the argument
 and return types are encoded by an @samp{X} for type parameters, or a
-@samp{Y} for constant parameters, and an index indicating their position
-in the template parameter list declaration.
+@samp{Y} for constant parameters, an index indicating their position
+in the template parameter list declaration, and their template depth.
 
 @subsection Arrays
 
@@ -1706,6 +1779,28 @@ as if it were the C++ type @code{JArray<T>}.
 For example @code{java.lang.String[]} is encoded as
 @samp{Pt6JArray1ZPQ34java4lang6String}.
 
+@subsection Static fields
+
+Both C++ and Java classes can have static fields.
+These are allocated statically, and are shared among all instances.
+
+The mangling starts with a prefix (@samp{_} in most systems), which is
+followed by the mangling
+of the class name, followed by the "joiner" and finally the field name.
+The joiner (see @code{JOINER} in @code{cp-tree.h}) is a special
+separator character.  For historical reasons (and idiosyncracies
+of assembler syntax) it can @samp{$} or @samp{.} (or even
+@samp{_} on a few systems).  If the joiner is @samp{_} then the prefix
+is @samp{__static_} instead of just @samp{_}.
+
+For example @code{Foo::Bar::var} (or @code{Foo.Bar.var} in Java syntax)
+would be encoded as @samp{_Q23Foo3Bar$var} or @samp{_Q23Foo3Bar.var}
+(or rarely @samp{__static_Q23Foo3Bar_var}).
+
+If the name of a static variable needs Unicode escapes,
+the Unicode indicator @samp{U} comes before the "joiner".
+This @code{\u1234Foo::var\u3445} becomes @code{_U8_1234FooU.var_3445}.
+
 @subsection Table of demangling code characters
 
 The following special characters are used in mangling:
@@ -1717,6 +1812,9 @@ Indicates a C++ array type.
 @item b
 Encodes the C++ @code{bool} type,
 and the Java @code{boolean} type.
+
+@item B
+Used for squangling. Similar in concept to the 'T' non-squangled code.
 
 @item c
 Encodes the C++ @code{char} type, and the Java @code{byte} type.
@@ -1732,6 +1830,9 @@ Encodes the C++ and Java @code{double} types.
 @item e
 Indicates extra unknown arguments @code{...}.
 
+@item E
+Indicates the opening parenthesis of an expression.
+
 @item f
 Encodes the C++ and Java @code{float} types.
 
@@ -1746,6 +1847,9 @@ Encodes the C++ and Java @code{int} types.
 
 @item J
 Indicates a complex type.
+
+@item K
+Used by squangling to compress qualified names.
 
 @item l
 Encodes the C++ @code{long} type.
@@ -1792,6 +1896,9 @@ A modified for a @code{const} type or method.
 
 @item w
 Encodes the C++ @code{wchar_t} type, and the Java @code{char} types.
+
+@item W
+Indicates the closing parenthesis of an expression.
 
 @item x
 Encodes the GNU C++ @code{long long} type, and the Java @code{long} type.

@@ -1,5 +1,5 @@
 /* Output routines for GCC for Hitachi Super-H.
-   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -34,6 +34,8 @@ Boston, MA 02111-1307, USA.  */
 #include "hard-reg-set.h"
 #include "output.h"
 #include "insn-attr.h"
+
+int code_for_indirect_jump_scratch = CODE_FOR_indirect_jump_scratch;
 
 #define MSW (TARGET_LITTLE_ENDIAN ? 1 : 0)
 #define LSW (TARGET_LITTLE_ENDIAN ? 0 : 1)
@@ -84,6 +86,8 @@ enum processor_type sh_cpu;
 rtx sh_compare_op0;
 rtx sh_compare_op1;
 
+enum machine_mode sh_addr_diff_vec_mode;
+
 /* Provides the class number of the smallest class containing
    reg number.  */
 
@@ -114,6 +118,8 @@ enum reg_class reg_class_from_letter[] =
   /* u */ NO_REGS, /* v */ NO_REGS, /* w */ FP0_REGS, /* x */ MAC_REGS,
   /* y */ FPUL_REGS, /* z */ R0_REGS
 };
+
+static void split_branches PROTO ((rtx));
 
 /* Print the operand address in x to the stream.  */
 
@@ -170,6 +176,7 @@ print_operand_address (stream, x)
    according to modifier code.
 
    '.'  print a .s if insn needs delay slot
+   ','  print LOCAL_LABEL_PREFIX
    '@'  print trap, rte or rts depending upon pragma interruptness
    '#'  output a nop if there is nothing to put in the delay slot
    'O'  print a constant without the #
@@ -188,7 +195,10 @@ print_operand (stream, x, code)
     case '.':
       if (final_sequence
 	  && ! INSN_ANNULLED_BRANCH_P (XVECEXP (final_sequence, 0, 0)))
-	fprintf (stream, ".s");
+	fprintf (stream, ASSEMBLER_DIALECT ? "/s" : ".s");
+      break;
+    case ',':
+      fprintf (stream, "%s", LOCAL_LABEL_PREFIX);
       break;
     case '@':
       if (trap_exit)
@@ -389,13 +399,12 @@ prepare_scc_operands (code)
     mode = GET_MODE (sh_compare_op1);
 
   sh_compare_op0 = force_reg (mode, sh_compare_op0);
-  if (code != EQ && code != NE
-      && (sh_compare_op1 != const0_rtx
-	  || code == GTU  || code == GEU || code == LTU || code == LEU))
+  if ((code != EQ && code != NE
+       && (sh_compare_op1 != const0_rtx
+	   || code == GTU  || code == GEU || code == LTU || code == LEU))
+      || TARGET_SH3E && GET_MODE_CLASS (mode) == MODE_FLOAT)
     sh_compare_op1 = force_reg (mode, sh_compare_op1);
 
-  /* ??? This should be `mode' not `SImode' in the compare, but that would
-     require fixing the branch patterns too.  */
   emit_insn (gen_rtx (SET, VOIDmode, t_reg,
 		      gen_rtx (code, SImode, sh_compare_op0,
 			       sh_compare_op1)));
@@ -410,20 +419,31 @@ from_compare (operands, code)
      rtx *operands;
      int code;
 {
-  if (code != EQ && code != NE)
+  enum machine_mode mode = GET_MODE (sh_compare_op0);
+  rtx insn;
+  if (mode == VOIDmode)
+    mode = GET_MODE (sh_compare_op1);
+  if (code != EQ
+      || mode == DImode
+      || (TARGET_SH3E && GET_MODE_CLASS (mode) == MODE_FLOAT))
     {
-      enum machine_mode mode = GET_MODE (sh_compare_op0);
-      if (mode == VOIDmode)
-	mode = GET_MODE (sh_compare_op1);
-
       /* Force args into regs, since we can't use constants here.  */
       sh_compare_op0 = force_reg (mode, sh_compare_op0);
       if (sh_compare_op1 != const0_rtx
-	  || code == GTU  || code == GEU || code == LTU || code == LEU)
+	  || code == GTU  || code == GEU
+	  || (TARGET_SH3E && GET_MODE_CLASS (mode) == MODE_FLOAT))
 	sh_compare_op1 = force_reg (mode, sh_compare_op1);
     }
-  operands[1] = sh_compare_op0;
-  operands[2] = sh_compare_op1;
+  if (TARGET_SH3E && GET_MODE_CLASS (mode) == MODE_FLOAT && code == GE)
+    {
+      from_compare (operands, GT);
+      insn = gen_ieee_ccmpeqsf_t (sh_compare_op0, sh_compare_op1);
+    }
+  else
+    insn = gen_rtx (SET, VOIDmode,
+		    gen_rtx (REG, SImode, 18),
+		    gen_rtx (code, SImode, sh_compare_op0, sh_compare_op1));
+  emit_insn (insn);
 }
 
 /* Functions to output assembly code.  */
@@ -520,33 +540,55 @@ print_slot (insn)
   INSN_DELETED_P (XVECEXP (insn, 0, 1)) = 1;
 }
 
-/* We can't tell if we need a register as a scratch for the jump
-   until after branch shortening, and then it's too late to allocate a
-   register the 'proper' way.  These instruction sequences are rare
-   anyway, so to avoid always using a reg up from our limited set, we'll
-   grab one when we need one on output.  */
-
-/* ??? Should fix compiler so that using a clobber scratch in jump
-   instructions works, and then this will be unnecessary.  */
-
 char *
 output_far_jump (insn, op)
      rtx insn;
      rtx op;
 {
-  rtx thislab = gen_label_rtx ();
+  struct { rtx lab, reg, op; } this;
+  char *jump;
+  int far;
+  int offset = branch_dest (insn) - insn_addresses[INSN_UID (insn)];
 
-  /* Output the delay slot insn first if any.  */
-  if (dbr_sequence_length ())
-    print_slot (final_sequence);
+  this.lab = gen_label_rtx ();
 
-  output_asm_insn ("mov.l	r13,@-r15", 0);
-  output_asm_insn ("mov.l	%O0,r13", &thislab);
-  output_asm_insn ("jmp	@r13", 0);
-  output_asm_insn ("mov.l	@r15+,r13", 0);
-  output_asm_insn (".align	2", 0);
-  ASM_OUTPUT_INTERNAL_LABEL (asm_out_file, "L", CODE_LABEL_NUMBER (thislab));
-  output_asm_insn (".long	%O0", &op);
+  if (offset >= -32764 && offset - get_attr_length (insn) <= 32766)
+    {
+      far = 0;
+      jump = "mov.w	%O0,%1;braf	%1";
+    }
+  else
+    {
+      far = 1;
+      jump = "mov.l	%O0,%1;jmp	@%1";
+    }
+  /* If we have a scratch register available, use it.  */
+  if (GET_CODE (PREV_INSN (insn)) == INSN
+      && INSN_CODE (PREV_INSN (insn)) == CODE_FOR_indirect_jump_scratch)
+    {
+      this.reg = SET_DEST (PATTERN (PREV_INSN (insn)));
+      output_asm_insn (jump, &this.lab);
+      if (dbr_sequence_length ())
+	print_slot (final_sequence);
+      else
+	output_asm_insn ("nop", 0);
+    }
+  else
+    {
+      /* Output the delay slot insn first if any.  */
+      if (dbr_sequence_length ())
+	print_slot (final_sequence);
+
+      this.reg = gen_rtx (REG, SImode, 13);
+      output_asm_insn ("mov.l	r13,@-r15", 0);
+      output_asm_insn (jump, &this.lab);
+      output_asm_insn ("mov.l	@r15+,r13", 0);
+    }
+  if (far)
+    output_asm_insn (".align	2", 0);
+  ASM_OUTPUT_INTERNAL_LABEL (asm_out_file, "L", CODE_LABEL_NUMBER (this.lab));
+  this.op = op;
+  output_asm_insn (far ? ".long	%O2" : ".word %O2-%O0", &this.lab);
   return "";
 }
 
@@ -563,97 +605,96 @@ output_branch (logic, insn, operands)
      rtx insn;
      rtx *operands;
 {
-  int label = lf++;
-  int length = get_attr_length (insn);
-  int adjusted_length;
-
-  /* Undo the effects of ADJUST_INSN_LENGTH, so that we get the real
-     length.  If NEXT_INSN (PREV_INSN (insn)) != insn, then the insn
-     is inside a sequence, and ADJUST_INSN_LENGTH was not called on
-     it.  */
-  if (PREV_INSN (insn) == NULL
-      || NEXT_INSN (PREV_INSN (insn)) == insn)
+  switch (get_attr_length (insn))
     {
-      adjusted_length = length;
-      ADJUST_INSN_LENGTH (insn, adjusted_length);
-      length -= (adjusted_length - length);
-    }
-
-  switch (length)
-    {
-    case 2:
-      /* A branch with an unfilled delay slot.  */
-    case 4:
-      /* Simple branch in range -252..+258 bytes */
-      return logic ? "bt%.	%l0" : "bf%.	%l0";
-
     case 6:
-      /* A branch with an unfilled delay slot.  */
-    case 8:
-      /* Branch in range -4092..+4098 bytes.  */
-      {
-	/* The call to print_slot will clobber the operands.  */
-	rtx op0 = operands[0];
+      /* This can happen if filling the delay slot has caused a forward
+	 branch to exceed its range (we could reverse it, but only
+	 when we know we won't overextend other branches; this should
+	 best be handled by relaxation).
+	 It can also happen when other condbranches hoist delay slot insn
+	 from their destination, thus leading to code size increase.
+	 But the branch will still be in the range -4092..+4098 bytes.  */
 
-	/* If the instruction in the delay slot is annulled (true), then
-	   there is no delay slot where we can put it now.  The only safe
-	   place for it is after the label.  */
-
-	if (final_sequence)
-	  {
-	    fprintf (asm_out_file, "\tb%c%s\tLF%d\n", logic ? 'f' : 't',
-		     INSN_ANNULLED_BRANCH_P (XVECEXP (final_sequence, 0, 0))
-		     ? "" : ".s", label);
-	    if (! INSN_ANNULLED_BRANCH_P (XVECEXP (final_sequence, 0, 0)))
+      if (! TARGET_RELAX)
+	{
+	  int label = lf++;
+	  /* The call to print_slot will clobber the operands.  */
+	  rtx op0 = operands[0];
+    
+	  /* If the instruction in the delay slot is annulled (true), then
+	     there is no delay slot where we can put it now.  The only safe
+	     place for it is after the label.  final will do that by default.  */
+    
+	  if (final_sequence
+	      && ! INSN_ANNULLED_BRANCH_P (XVECEXP (final_sequence, 0, 0)))
+	    {
+	      asm_fprintf (asm_out_file, "\tb%s%ss\t%LLF%d\n", logic ? "f" : "t",
+	                   ASSEMBLER_DIALECT ? "/" : ".", label);
 	      print_slot (final_sequence);
-	  }
-	else
-	  fprintf (asm_out_file, "\tb%c\tLF%d\n", logic ? 'f' : 't', label);
-
-	output_asm_insn ("bra	%l0", &op0);
-	fprintf (asm_out_file, "\tnop\n");
-	fprintf (asm_out_file, "LF%d:\n", label);
-
-	if (final_sequence
-	    && INSN_ANNULLED_BRANCH_P (XVECEXP (final_sequence, 0, 0)))
-	  print_slot (final_sequence);
-      }
-      return "";
-
-    case 16:
-      /* A branch with an unfilled delay slot.  */
-    case 18:
-      /* Branches a long way away.  */
-      {
-	/* The call to print_slot will clobber the operands.  */
-	rtx op0 = operands[0];
-
-	/* If the instruction in the delay slot is annulled (true), then
-	   there is no delay slot where we can put it now.  The only safe
-	   place for it is after the label.  */
-
-	if (final_sequence)
-	  {
-	    fprintf (asm_out_file, "\tb%c%s\tLF%d\n", logic ? 'f' : 't',
-		     INSN_ANNULLED_BRANCH_P (XVECEXP (final_sequence, 0, 0))
-		     ? "" : ".s", label);
-	    if (! INSN_ANNULLED_BRANCH_P (XVECEXP (final_sequence, 0, 0)))
-	      print_slot (final_sequence);
-	  }
-	else
-	  fprintf (asm_out_file, "\tb%c\tLF%d\n", logic ? 'f' : 't', label);
-
-	output_far_jump (insn, op0);
-	fprintf (asm_out_file, "LF%d:\n", label);
-
-	if (final_sequence
-	    && INSN_ANNULLED_BRANCH_P (XVECEXP (final_sequence, 0, 0)))
-	  print_slot (final_sequence);
-      }
-      return "";
+	    }
+	  else
+	    asm_fprintf (asm_out_file, "\tb%s\t%LLF%d\n", logic ? "f" : "t", label);
+    
+	  output_asm_insn ("bra\t%l0", &op0);
+	  fprintf (asm_out_file, "\tnop\n");
+	  ASM_OUTPUT_INTERNAL_LABEL(asm_out_file, "LF", label);
+    
+	  return "";
+	}
+      /* When relaxing, handle this like a short branch.  The linker
+	 will fix it up if it still doesn't fit after relaxation.  */
+    case 2:
+      return logic ? "bt%.\t%l0" : "bf%.\t%l0";
+    default:
+      abort ();
     }
+}
 
-  abort ();
+char *
+output_branchy_insn (code, template, insn, operands)
+     char *template;
+     enum rtx_code code;
+     rtx insn;
+     rtx *operands;
+{
+  rtx next_insn = NEXT_INSN (insn);
+  int label_nr;
+
+  if (next_insn && GET_CODE (next_insn) == JUMP_INSN && condjump_p (next_insn))
+    {
+      rtx src = SET_SRC (PATTERN (next_insn));
+      if (GET_CODE (src) == IF_THEN_ELSE && GET_CODE (XEXP (src, 0)) != code)
+	{
+	  /* Following branch not taken */
+	  operands[9] = gen_label_rtx ();
+	  emit_label_after (operands[9], next_insn);
+	  return template;
+	}
+      else
+	{
+	  int offset = (branch_dest (next_insn)
+			- insn_addresses[INSN_UID (next_insn)] + 4);
+	  if (offset >= -252 && offset <= 258)
+	    {
+	      if (GET_CODE (src) == IF_THEN_ELSE)
+		/* branch_true */
+		src = XEXP (src, 1);
+	      operands[9] = src;
+	      return template;
+	    }
+	}
+    }
+  operands[9] = gen_label_rtx ();
+  emit_label_after (operands[9], insn);
+  return template;
+}
+
+char *
+output_ieee_ccmpeq (insn, operands)
+     rtx insn, operands;
+{
+  output_branchy_insn (NE, "bt\t%l9\\;fcmp/eq\t%1,%0", insn, operands);
 }
 
 /* Output to FILE the start of the assembler file.  */
@@ -751,20 +792,15 @@ shiftcosts (x)
 
   /* If shift by a non constant, then this will be expensive.  */
   if (GET_CODE (XEXP (x, 1)) != CONST_INT)
-    {
-      if (TARGET_SH3)
-	return 2;
-      /* If not an sh3 then we don't even have an instruction for it.  */
-      return 20;
-    }
+    return SH_DYNAMIC_SHIFT_COST;
 
   /* Otherwise, return the true cost in instructions.  */
   if (GET_CODE (x) == ASHIFTRT)
     {
       int cost = ashiftrt_insns[value];
       /* If SH3, then we put the constant in a reg and use shad.  */
-      if (TARGET_SH3 && cost > 3)
-	cost = 3;
+      if (cost > 1 + SH_DYNAMIC_SHIFT_COST)
+	cost = 1 + SH_DYNAMIC_SHIFT_COST;
       return cost;
     }
   else
@@ -880,14 +916,22 @@ gen_ashift_hi (type, n, reg)
   switch (type)
     {
     case ASHIFTRT:
-      emit_insn (gen_ashrhi3_k (reg, reg, GEN_INT (n)));
-      break;
     case LSHIFTRT:
-      if (n == 1)
-	emit_insn (gen_lshrhi3_m (reg, reg, GEN_INT (n)));
-      else
-	emit_insn (gen_lshrhi3_k (reg, reg, GEN_INT (n)));
-      break;
+      /* We don't have HImode right shift operations because using the
+	 ordinary 32 bit shift instructions for that doesn't generate proper
+	 zero/sign extension.
+	 gen_ashift_hi is only called in contexts where we know that the
+	 sign extension works out correctly.  */
+      {
+	int word = 0;
+	if (GET_CODE (reg) == SUBREG)
+	  {
+	    word = SUBREG_WORD (reg);
+	    reg = SUBREG_REG (reg);
+	  }
+	gen_ashift (type, n, gen_rtx_SUBREG (SImode, reg, word));
+	break;
+      }
     case ASHIFT:
       emit_insn (gen_ashlhi3_k (reg, reg, GEN_INT (n)));
       break;
@@ -999,9 +1043,11 @@ expand_ashiftrt (operands)
 	  emit_insn (gen_ashrsi3_d (operands[0], operands[1], count));
 	  return 1;
 	}
-      else if (ashiftrt_insns[INTVAL (operands[2])] > 3)
+      else if (ashiftrt_insns[INTVAL (operands[2]) & 31]
+	       > 1 + SH_DYNAMIC_SHIFT_COST)
 	{
-	  rtx count = force_reg (SImode, GEN_INT (- INTVAL (operands[2])));
+	  rtx count
+	    = force_reg (SImode, GEN_INT (- (INTVAL (operands[2]) & 31)));
 	  emit_insn (gen_ashrsi3_d (operands[0], operands[1], count));
 	  return 1;
 	}
@@ -1009,7 +1055,7 @@ expand_ashiftrt (operands)
   if (GET_CODE (operands[2]) != CONST_INT)
     return 0;
 
-  value = INTVAL (operands[2]);
+  value = INTVAL (operands[2]) & 31;
 
   if (value == 31)
     {
@@ -1048,6 +1094,12 @@ expand_ashiftrt (operands)
   emit_insn (gen_ashrsi3_n (GEN_INT (value), wrk));
   emit_move_insn (operands[0], gen_rtx (REG, SImode, 4));
   return 1;
+}
+
+int sh_dynamicalize_shift_p (count)
+     rtx count;
+{
+  return shift_insns[INTVAL (count)] > 1 + SH_DYNAMIC_SHIFT_COST;
 }
 
 /* Try to find a good way to implement the combiner pattern
@@ -1248,7 +1300,7 @@ gen_shl_and (dest, left_rtx, mask_rtx, source)
 
 	if (first < 0)
 	  {
-	    emit_insn ((mask << right) == 0xff
+	    emit_insn ((mask << right) <= 0xff
 		       ? gen_zero_extendqisi2(dest,
 					      gen_lowpart (QImode, source))
 		       : gen_zero_extendhisi2(dest,
@@ -1271,7 +1323,7 @@ gen_shl_and (dest, left_rtx, mask_rtx, source)
 	    mask <<= first;
 	  }
 	if (first >= 0)
-	  emit_insn (mask == 0xff
+	  emit_insn (mask <= 0xff
 		     ? gen_zero_extendqisi2(dest, gen_lowpart (QImode, dest))
 		     : gen_zero_extendhisi2(dest, gen_lowpart (HImode, dest)));
 	if (total_shift > 0)
@@ -1283,13 +1335,13 @@ gen_shl_and (dest, left_rtx, mask_rtx, source)
       }
     case 4:
       shift_gen_fun = gen_shifty_op;
-    case 2:
     case 3:
       /* If the topmost bit that matters is set, set the topmost bits
 	 that don't matter.  This way, we might be able to get a shorter
 	 signed constant.  */
       if (mask & ((HOST_WIDE_INT)1 << 31 - total_shift))
 	mask |= (HOST_WIDE_INT)~0 << (31 - total_shift);
+    case 2:
       /* Don't expand fine-grained when combining, because that will
          make the pattern fail.  */
       if (rtx_equal_function_value_matters
@@ -1297,6 +1349,10 @@ gen_shl_and (dest, left_rtx, mask_rtx, source)
 	{
 	  rtx operands[3];
   
+	  /* Cases 3 and 4 should be handled by this split
+	     only while combining  */
+	  if (kind > 2)
+	    abort ();
 	  if (right)
 	    {
 	      emit_insn (gen_lshrsi3 (dest, source, GEN_INT (right)));
@@ -1434,7 +1490,7 @@ shl_sext_kind (left_rtx, size_rtx, costp)
   if (TARGET_SH3)
     {
       /* Try to use a dynamic shift.  */
-      cost = shift_insns[32 - insize] + 3;
+      cost = shift_insns[32 - insize] + 1 + SH_DYNAMIC_SHIFT_COST;
       if (cost < best_cost)
 	{
 	  kind = 0;
@@ -1735,7 +1791,8 @@ dump_table (scan)
 	      scan = emit_label_after (gen_label_rtx (), scan);
 	      scan = emit_insn_after (gen_align_4 (), scan);
 	    }
-	  scan = emit_label_after (p->label, scan);
+	  if (p->label)
+	    scan = emit_label_after (p->label, scan);
 	  scan = emit_insn_after (gen_consttable_4 (p->value), scan);
 	  break;
 	case DFmode:
@@ -1746,7 +1803,8 @@ dump_table (scan)
 	      scan = emit_label_after (gen_label_rtx (), scan);
 	      scan = emit_insn_after (gen_align_4 (), scan);
 	    }
-	  scan = emit_label_after (p->label, scan);
+	  if (p->label)
+	    scan = emit_label_after (p->label, scan);
 	  scan = emit_insn_after (gen_consttable_8 (p->value), scan);
 	  break;
 	default:
@@ -1792,7 +1850,8 @@ broken_move (insn)
 	     order bits end up as.  */
 	  && GET_MODE (SET_DEST (pat)) != QImode
 	  && CONSTANT_P (SET_SRC (pat))
-	  && ! (GET_CODE (SET_SRC (pat)) == CONST_DOUBLE
+	  && ! (TARGET_SH3E
+		&& GET_CODE (SET_SRC (pat)) == CONST_DOUBLE
 		&& (fp_zero_operand (SET_SRC (pat))
 		    || fp_one_operand (SET_SRC (pat)))
 		&& GET_CODE (SET_DEST (pat)) == REG
@@ -1806,28 +1865,33 @@ broken_move (insn)
   return 0;
 }
 
+static int
+mova_p (insn)
+     rtx insn;
+{
+  return (GET_CODE (insn) == INSN
+	  && GET_CODE (PATTERN (insn)) == SET
+	  && GET_CODE (SET_SRC (PATTERN (insn))) == UNSPEC
+	  && XINT (SET_SRC (PATTERN (insn)), 1) == 1);
+}
+
 /* Find the last barrier from insn FROM which is close enough to hold the
    constant pool.  If we can't find one, then create one near the end of
    the range.  */
 
-/* ??? It would be good to put constant pool tables between a case jump and
-   the jump table.  This fails for two reasons.  First, there is no
-   barrier after the case jump.  This is a bug in the casesi pattern.
-   Second, inserting the table here may break the mova instruction that
-   loads the jump table address, by moving the jump table too far away.
-   We fix that problem by never outputting the constant pool between a mova
-   and its label.  */
-
 static rtx
-find_barrier (from)
-     rtx from;
+find_barrier (num_mova, mova, from)
+     int num_mova;
+     rtx mova, from;
 {
   int count_si = 0;
   int count_hi = 0;
   int found_hi = 0;
   int found_si = 0;
-  rtx found_barrier = 0;
-  rtx found_mova = 0;
+  int hi_align = 2;
+  int si_align = 2;
+  int leading_mova = num_mova;
+  rtx barrier_before_mova, found_barrier = 0, good_barrier = 0;
   int si_limit;
   int hi_limit;
 
@@ -1843,97 +1907,160 @@ find_barrier (from)
      before the table, subtract 2 for the instruction that fills the jump
      delay slot.  This gives 1018.  */
 
-  /* If not optimizing, then it is possible that the jump instruction we add
-     won't be shortened, and thus will have a length of 14 instead of 2.
-     We must adjust the limits downwards to account for this, giving a limit
-     of 1008 for SImode and 500 for HImode.  */
+  /* The branch will always be shortened now that the reference address for
+     forward branches is the successor address, thus we need no longer make
+     adjustments to the [sh]i_limit for -O0.  */
 
-  if (optimize)
-    {
-      si_limit = 1018;
-      hi_limit = 510;
-    }
-  else
-    {
-      si_limit = 1008;
-      hi_limit = 500;
-    }
-
-  /* If not optimizing for space, then the constant pool will be
-     aligned to a 4 to 16 byte boundary.  We must make room for that
-     alignment that by reducing the limits.
-     ??? It would be better to not align the constant pool, but
-     ASM_OUTPUT_ALIGN_CODE does not make any provision for basing the
-     alignment on the instruction.  */
-
-  if (! TARGET_SMALLCODE)
-    {
-      if (TARGET_SH3 || TARGET_SH3E)
-	{
-	  si_limit -= 14;
-	  hi_limit -= 14;
-	}
-      else
-	{
-	  si_limit -= 2;
-	  hi_limit -= 2;
-	}
-    }
+  si_limit = 1018;
+  hi_limit = 510;
 
   while (from && count_si < si_limit && count_hi < hi_limit)
     {
       int inc = get_attr_length (from);
+      int new_align = 1;
+
+      if (GET_CODE (from) == CODE_LABEL)
+	{
+	  if (optimize)
+	    new_align = 1 << label_to_alignment (from);
+	  else if (GET_CODE (prev_nonnote_insn (from)) == BARRIER)
+	    new_align = 1 << barrier_align (from);
+	  else
+	    new_align = 1;
+	  inc = 0;
+	}
 
       if (GET_CODE (from) == BARRIER)
-	found_barrier = from;
+	{
+
+	  found_barrier = from;
+
+	  /* If we are at the end of the function, or in front of an alignment
+	     instruction, we need not insert an extra alignment.  We prefer
+	     this kind of barrier.  */
+	  if (barrier_align (from) > 2)
+	    good_barrier = from;
+	}
 
       if (broken_move (from))
 	{
-	  rtx pat = PATTERN (from);
-	  rtx src = SET_SRC (pat);
-	  rtx dst = SET_DEST (pat);
-	  enum machine_mode mode = GET_MODE (dst);
+	  rtx pat, src, dst;
+	  enum machine_mode mode;
+
+	  pat = PATTERN (from);
+	  if (GET_CODE (pat) == PARALLEL)
+	    pat = XVECEXP (pat, 0, 0);
+	  src = SET_SRC (pat);
+	  dst = SET_DEST (pat);
+	  mode = GET_MODE (dst);
 
 	  /* We must explicitly check the mode, because sometimes the
 	     front end will generate code to load unsigned constants into
 	     HImode targets without properly sign extending them.  */
 	  if (mode == HImode || (mode == SImode && hi_const (src)))
 	    {
-	      found_hi = 1;
+	      found_hi += 2;
 	      /* We put the short constants before the long constants, so
 		 we must count the length of short constants in the range
 		 for the long constants.  */
 	      /* ??? This isn't optimal, but is easy to do.  */
-	      if (found_si)
-		count_si += 2;
+	      si_limit -= 2;
 	    }
 	  else
-	    found_si = 1;
+	    {
+	      while (si_align > 2 && found_si + si_align - 2 > count_si)
+		si_align >>= 1;
+	      if (found_si > count_si)
+		count_si = found_si;
+	      found_si += GET_MODE_SIZE (mode);
+	      if (num_mova)
+		si_limit -= GET_MODE_SIZE (mode);
+	    }
 	}
 
-      if (GET_CODE (from) == INSN
-	  && GET_CODE (PATTERN (from)) == SET
-	  && GET_CODE (SET_SRC (PATTERN (from))) == UNSPEC
-	  && XINT (SET_SRC (PATTERN (from)), 1) == 1)
-	found_mova = from;
+      if (mova_p (from))
+	{
+	  if (! num_mova++)
+	    {
+	      leading_mova = 0;
+	      mova = from;
+	      barrier_before_mova = good_barrier ? good_barrier : found_barrier;
+	    }
+	  if (found_si > count_si)
+	    count_si = found_si;
+	}
       else if (GET_CODE (from) == JUMP_INSN
 	       && (GET_CODE (PATTERN (from)) == ADDR_VEC
 		   || GET_CODE (PATTERN (from)) == ADDR_DIFF_VEC))
-	found_mova = 0;
+	{
+	  if (num_mova)
+	    num_mova--;
+	  if (barrier_align (next_real_insn (from)) == CACHE_LOG)
+	    {
+	      /* We have just passed the barrier in front of the
+		 ADDR_DIFF_VEC, which is stored in found_barrier.  Since
+		 the ADDR_DIFF_VEC is accessed as data, just like our pool
+		 constants, this is a good opportunity to accommodate what
+		 we have gathered so far.
+		 If we waited any longer, we could end up at a barrier in
+		 front of code, which gives worse cache usage for separated
+		 instruction / data caches.  */
+	      good_barrier = found_barrier;
+	      break;
+	    }
+	  else
+	    {
+	      rtx body = PATTERN (from);
+	      inc = XVECLEN (body, 1) * GET_MODE_SIZE (GET_MODE (body));
+	    }
+	}
 
       if (found_si)
-	count_si += inc;
+	{
+	  if (new_align > si_align)
+	    {
+	      si_limit -= count_si - 1 & new_align - si_align;
+	      si_align = new_align;
+	    }
+	  count_si = count_si + new_align - 1 & -new_align;
+	  count_si += inc;
+	}
       if (found_hi)
-	count_hi += inc;
+	{
+	  if (new_align > hi_align)
+	    {
+	      hi_limit -= count_hi - 1 & new_align - hi_align;
+	      hi_align = new_align;
+	    }
+	  count_hi = count_hi + new_align - 1 & -new_align;
+	  count_hi += inc;
+	}
       from = NEXT_INSN (from);
     }
 
-  /* Insert the constant pool table before the mova instruction, to prevent
-     the mova label reference from going out of range.  */
-  if (found_mova)
-    from = found_mova;
+  if (num_mova)
+    if (leading_mova)
+      {
+	/* Try as we might, the leading mova is out of range.  Change
+	   it into a load (which will become a pcload) and retry.  */
+	SET_SRC (PATTERN (mova)) = XVECEXP (SET_SRC (PATTERN (mova)), 0, 0);
+	INSN_CODE (mova) = -1;
+        return find_barrier (0, 0, mova);
+      }
+    else
+      {
+	/* Insert the constant pool table before the mova instruction,
+	   to prevent the mova label reference from going out of range.  */
+	from = mova;
+	good_barrier = found_barrier = barrier_before_mova;
+      }
 
-  if (! found_barrier)
+  if (found_barrier)
+    {
+      if (good_barrier && next_real_insn (found_barrier))
+	found_barrier = good_barrier;
+    }
+  else
     {
       /* We didn't find a barrier in time to dump our stuff,
 	 so we'll make one.  */
@@ -1970,7 +2097,7 @@ find_barrier (from)
    positively find the register that is used to call the sfunc, and this
    register is not used anywhere else in this instruction - except as the
    destination of a set, return this register; else, return 0.  */
-static rtx
+rtx
 sfunc_uses_reg (insn)
      rtx insn;
 {
@@ -1986,7 +2113,7 @@ sfunc_uses_reg (insn)
   for (reg_part = 0, i = XVECLEN (pattern, 0) - 1; i >= 1; i--)
     {
       part = XVECEXP (pattern, 0, i);
-      if (GET_CODE (part) == USE)
+      if (GET_CODE (part) == USE && GET_MODE (XEXP (part, 0)) == SImode)
 	reg_part = part;
     }
   if (! reg_part)
@@ -2092,6 +2219,369 @@ noncall_uses_reg (reg, insn, set)
   return 0;
 }
 
+/* Given a X, a pattern of an insn or a part of it, return a mask of used
+   general registers.  Bits 0..15 mean that the respective registers
+   are used as inputs in the instruction.  Bits 16..31 mean that the
+   registers 0..15, respectively, are used as outputs, or are clobbered.
+   IS_DEST should be set to 16 if X is the destination of a SET, else to 0.  */
+int
+regs_used (x, is_dest)
+     rtx x; int is_dest;
+{
+  enum rtx_code code;
+  char *fmt;
+  int i, used = 0;
+
+  if (! x)
+    return used;
+  code = GET_CODE (x);
+  switch (code)
+    {
+    case REG:
+      if (REGNO (x) < 16)
+	return (((1 << HARD_REGNO_NREGS (0, GET_MODE (x))) - 1)
+		<< (REGNO (x) + is_dest));
+      return 0;
+    case SUBREG:
+      {
+	rtx y = SUBREG_REG (x);
+     
+	if (GET_CODE (y) != REG)
+	  break;
+	if (REGNO (y) < 16)
+	  return (((1 << HARD_REGNO_NREGS (0, GET_MODE (x))) - 1)
+		  << (REGNO (y) + SUBREG_WORD (x) + is_dest));
+	return 0;
+      }
+    case SET:
+      return regs_used (SET_SRC (x), 0) | regs_used (SET_DEST (x), 16);
+    case RETURN:
+      /* If there was a return value, it must have been indicated with USE.  */
+      return 0x00ffff00;
+    case CLOBBER:
+      is_dest = 1;
+      break;
+    case MEM:
+      is_dest = 0;
+      break;
+    case CALL:
+      used |= 0x00ff00f0;
+      break;
+    }
+
+  fmt = GET_RTX_FORMAT (code);
+
+  for (i = GET_RTX_LENGTH (code) - 1; i >= 0; i--)
+    {
+      if (fmt[i] == 'E')
+	{
+	  register int j;
+	  for (j = XVECLEN (x, i) - 1; j >= 0; j--)
+	    used |= regs_used (XVECEXP (x, i, j), is_dest);
+	}
+      else if (fmt[i] == 'e')
+	used |= regs_used (XEXP (x, i), is_dest);
+    }
+  return used;
+}
+
+/* Create an instruction that prevents redirection of a conditional branch
+   to the destination of the JUMP with address ADDR.
+   If the branch needs to be implemented as an indirect jump, try to find
+   a scratch register for it.
+   If NEED_BLOCK is 0, don't do anything unless we need a scratch register.
+   If any preceding insn that doesn't fit into a delay slot is good enough,
+   pass 1.  Pass 2 if a definite blocking insn is needed.
+   -1 is used internally to avoid deep recursion.
+   If a blocking instruction is made or recognized, return it.  */
+   
+static rtx
+gen_block_redirect (jump, addr, need_block)
+     rtx jump;
+     int addr, need_block;
+{
+  int dead = 0;
+  rtx prev = prev_nonnote_insn (jump);
+  rtx dest;
+
+  /* First, check if we already have an instruction that satisfies our need.  */
+  if (prev && GET_CODE (prev) == INSN && ! INSN_DELETED_P (prev))
+    {
+      if (INSN_CODE (prev) == CODE_FOR_indirect_jump_scratch)
+	return prev;
+      if (GET_CODE (PATTERN (prev)) == USE
+	  || GET_CODE (PATTERN (prev)) == CLOBBER
+	  || get_attr_in_delay_slot (prev) == IN_DELAY_SLOT_YES)
+	prev = jump;
+      else if ((need_block &= ~1) < 0)
+	return prev;
+      else if (recog_memoized (prev) == CODE_FOR_block_branch_redirect)
+	need_block = 0;
+    }
+  /* We can't use JUMP_LABEL here because it might be undefined
+     when not optimizing.  */
+  dest = XEXP (SET_SRC (PATTERN (jump)), 0);
+  /* If the branch is out of range, try to find a scratch register for it.  */
+  if (optimize
+      && (insn_addresses[INSN_UID (dest)] - addr + 4092U > 4092 + 4098))
+    {
+      rtx scan;
+      /* Don't look for the stack pointer as a scratch register,
+	 it would cause trouble if an interrupt occurred.  */
+      unsigned try = 0x7fff, used;
+      int jump_left = flag_expensive_optimizations + 1;
+    
+      /* It is likely that the most recent eligible instruction is wanted for
+	 the delay slot.  Therefore, find out which registers it uses, and
+	 try to avoid using them.  */
+	 
+      for (scan = jump; scan = PREV_INSN (scan); )
+	{
+	  enum rtx_code code;
+
+	  if (INSN_DELETED_P (scan))
+	    continue;
+	  code = GET_CODE (scan);
+	  if (code == CODE_LABEL || code == JUMP_INSN)
+	    break;
+	  if (code == INSN
+	      && GET_CODE (PATTERN (scan)) != USE
+	      && GET_CODE (PATTERN (scan)) != CLOBBER
+	      && get_attr_in_delay_slot (scan) == IN_DELAY_SLOT_YES)
+	    {
+	      try &= ~regs_used (PATTERN (scan), 0);
+	      break;
+	    }
+	}
+      for (used = dead = 0, scan = JUMP_LABEL (jump); scan = NEXT_INSN (scan); )
+	{
+	  enum rtx_code code;
+
+	  if (INSN_DELETED_P (scan))
+	    continue;
+	  code = GET_CODE (scan);
+	  if (GET_RTX_CLASS (code) == 'i')
+	    {
+	      used |= regs_used (PATTERN (scan), 0);
+	      if (code == CALL_INSN)
+		used |= regs_used (CALL_INSN_FUNCTION_USAGE (scan), 0);
+	      dead |= (used >> 16) & ~used;
+	      if (dead & try)
+		{
+		  dead &= try;
+		  break;
+		}
+	      if (code == JUMP_INSN)
+		if (jump_left-- && simplejump_p (scan))
+		  scan = JUMP_LABEL (scan);
+		else
+		  break;
+	    }
+	}
+      /* Mask out the stack pointer again, in case it was
+	 the only 'free' register we have found.  */
+      dead &= 0x7fff;
+    }
+  /* If the immediate destination is still in range, check for possible
+     threading with a jump beyond the delay slot insn.
+     Don't check if we are called recursively; the jump has been or will be
+     checked in a different invocation then.  */
+	
+  else if (optimize && need_block >= 0)
+    {
+      rtx next = next_active_insn (next_active_insn (dest));
+      if (next && GET_CODE (next) == JUMP_INSN
+	  && GET_CODE (PATTERN (next)) == SET
+	  && recog_memoized (next) == CODE_FOR_jump)
+	{
+	  dest = JUMP_LABEL (next);
+	  if (dest
+	      && insn_addresses[INSN_UID (dest)] - addr + 4092U > 4092 + 4098)
+	    gen_block_redirect (next, insn_addresses[INSN_UID (next)], -1);
+	}
+    }
+
+  if (dead)
+    {
+      rtx reg = gen_rtx (REG, SImode, exact_log2 (dead & -dead));
+
+      /* It would be nice if we could convert the jump into an indirect
+	 jump / far branch right now, and thus exposing all constituent
+	 instructions to further optimization.  However, reorg uses
+	 simplejump_p to determine if there is an unconditional jump where
+	 it should try to schedule instructions from the target of the
+	 branch; simplejump_p fails for indirect jumps even if they have
+	 a JUMP_LABEL.  */
+      rtx insn = emit_insn_before (gen_indirect_jump_scratch
+				   (reg, GEN_INT (INSN_UID (JUMP_LABEL (jump))))
+				   , jump);
+      INSN_CODE (insn) = CODE_FOR_indirect_jump_scratch;
+      return insn;
+    }
+  else if (need_block)
+    /* We can't use JUMP_LABEL here because it might be undefined
+       when not optimizing.  */
+    return emit_insn_before (gen_block_branch_redirect
+		      (GEN_INT (INSN_UID (XEXP (SET_SRC (PATTERN (jump)), 0))))
+		      , jump);
+  return prev;
+}
+
+#define CONDJUMP_MIN -252
+#define CONDJUMP_MAX 262
+struct far_branch
+{
+  /* A label (to be placed) in front of the jump
+     that jumps to our ultimate destination.  */
+  rtx near_label;
+  /* Where we are going to insert it if we cannot move the jump any farther,
+     or the jump itself if we have picked up an existing jump.  */
+  rtx insert_place;
+  /* The ultimate destination.  */
+  rtx far_label;
+  struct far_branch *prev;
+  /* If the branch has already been created, its address;
+     else the address of its first prospective user.  */
+  int address;
+};
+
+enum mdep_reorg_phase_e mdep_reorg_phase;
+void
+gen_far_branch (bp)
+     struct far_branch *bp;
+{
+  rtx insn = bp->insert_place;
+  rtx jump;
+  rtx label = gen_label_rtx ();
+
+  emit_label_after (label, insn);
+  if (bp->far_label)
+    {
+      jump = emit_jump_insn_after (gen_jump (bp->far_label), insn);
+      LABEL_NUSES (bp->far_label)++;
+    }
+  else
+    jump = emit_jump_insn_after (gen_return (), insn);
+  emit_label_after (bp->near_label, insn);
+  JUMP_LABEL (jump) = bp->far_label;
+  if (! invert_jump (insn, label))
+    abort ();
+  /* Prevent reorg from undoing our splits.  */
+  gen_block_redirect (jump, bp->address += 2, 2);
+}
+
+/* Fix up ADDR_DIFF_VECs.  */
+void
+fixup_addr_diff_vecs (first)
+     rtx first;
+{
+  rtx insn;
+
+  for (insn = first; insn; insn = NEXT_INSN (insn))
+    {
+      rtx vec_lab, pat, prev, prevpat, x;
+
+      if (GET_CODE (insn) != JUMP_INSN
+	  || GET_CODE (PATTERN (insn)) != ADDR_DIFF_VEC)
+	continue;
+      pat = PATTERN (insn);
+      vec_lab = XEXP (XEXP (pat, 0), 0);
+
+      /* Search the matching casesi_jump_2.  */
+      for (prev = vec_lab; ; prev = PREV_INSN (prev))
+	{
+	  if (GET_CODE (prev) != JUMP_INSN)
+	    continue;
+	  prevpat = PATTERN (prev);
+	  if (GET_CODE (prevpat) != PARALLEL || XVECLEN (prevpat, 0) != 2)
+	    continue;
+	  x = XVECEXP (prevpat, 0, 1);
+	  if (GET_CODE (x) != USE)
+	    continue;
+	  x = XEXP (x, 0);
+	  if (GET_CODE (x) == LABEL_REF && XEXP (x, 0) == vec_lab)
+	    break;
+	}
+      /* Fix up the ADDR_DIF_VEC to be relative
+	 to the reference address of the braf.  */
+      XEXP (XEXP (pat, 0), 0)
+	= XEXP (XEXP (SET_SRC (XVECEXP (prevpat, 0, 0)), 1), 0);
+    }
+}
+
+/* BARRIER_OR_LABEL is either a BARRIER or a CODE_LABEL immediately following
+   a barrier.  Return the base 2 logarithm of the desired alignment.  */
+int
+barrier_align (barrier_or_label)
+     rtx barrier_or_label;
+{
+  rtx next = next_real_insn (barrier_or_label), pat, prev;
+  int slot, credit;
+ 
+  if (! next)
+    return 0;
+
+  pat = PATTERN (next);
+
+  if (GET_CODE (pat) == ADDR_DIFF_VEC)
+    return 2;
+
+  if (GET_CODE (pat) == UNSPEC_VOLATILE && XINT (pat, 1) == 1)
+    /* This is a barrier in front of a constant table.  */
+    return 0;
+
+  prev = prev_real_insn (barrier_or_label);
+  if (GET_CODE (PATTERN (prev)) == ADDR_DIFF_VEC)
+    {
+      pat = PATTERN (prev);
+      /* If this is a very small table, we want to keep the alignment after
+	 the table to the minimum for proper code alignment.  */
+      return ((TARGET_SMALLCODE
+	       || (XVECLEN (pat, 1) * GET_MODE_SIZE (GET_MODE (pat))
+		   <= 1 << (CACHE_LOG - 2)))
+	      ? 1 : CACHE_LOG);
+    }
+
+  if (TARGET_SMALLCODE)
+    return 0;
+
+  if (! TARGET_SH3 || ! optimize)
+    return CACHE_LOG;
+
+  /* Check if there is an immediately preceding branch to the insn beyond
+     the barrier.  We must weight the cost of discarding useful information
+     from the current cache line when executing this branch and there is
+     an alignment, against that of fetching unneeded insn in front of the
+     branch target when there is no alignment.  */
+
+  /* PREV is presumed to be the JUMP_INSN for the barrier under
+     investigation.  Skip to the insn before it.  */
+  prev = prev_real_insn (prev);
+
+  for (slot = 2, credit = 1 << (CACHE_LOG - 2) + 2;
+       credit >= 0 && prev && GET_CODE (prev) == INSN;
+       prev = prev_real_insn (prev))
+    {
+      if (GET_CODE (PATTERN (prev)) == USE
+          || GET_CODE (PATTERN (prev)) == CLOBBER)
+        continue;
+      if (GET_CODE (PATTERN (prev)) == SEQUENCE)
+	prev = XVECEXP (PATTERN (prev), 0, 1);
+      if (slot &&
+          get_attr_in_delay_slot (prev) == IN_DELAY_SLOT_YES)
+        slot = 0;
+      credit -= get_attr_length (prev);
+    }
+  if (prev
+      && GET_CODE (prev) == JUMP_INSN
+      && JUMP_LABEL (prev)
+      && next_real_insn (JUMP_LABEL (prev)) == next_real_insn (barrier_or_label)
+      && (credit - slot >= (GET_CODE (SET_SRC (PATTERN (prev))) == PC ? 2 : 0)))
+    return 0;
+
+  return CACHE_LOG;
+}
+
 /* Exported to toplev.c.
 
    Do a final pass over the function, just before delayed branch
@@ -2101,7 +2591,10 @@ void
 machine_dependent_reorg (first)
      rtx first;
 {
-  rtx insn;
+  rtx insn, mova;
+  int num_mova;
+  rtx r0_rtx = gen_rtx (REG, Pmode, 0);
+  rtx r0_inc_rtx = gen_rtx (POST_INC, Pmode, r0_rtx);
 
   /* If relaxing, generate pseudo-ops to associate function calls with
      the symbols they call.  It does no harm to not generate these
@@ -2109,6 +2602,7 @@ machine_dependent_reorg (first)
      linker to potentially relax the jsr to a bsr, and eliminate the
      register load and, possibly, the constant pool entry.  */
 
+  mdep_reorg_phase = SH_INSERT_USES_LABELS;
   if (TARGET_RELAX)
     {
       /* Remove all REG_LABEL notes.  We want to use them for our own
@@ -2330,21 +2824,73 @@ machine_dependent_reorg (first)
 	}
     }
 
+  if (TARGET_SH2)
+    fixup_addr_diff_vecs (first);
+
+  if (optimize)
+    {
+      mdep_reorg_phase = SH_SHORTEN_BRANCHES0;
+      shorten_branches (first);
+    }
   /* Scan the function looking for move instructions which have to be
      changed to pc-relative loads and insert the literal tables.  */
 
-  for (insn = first; insn; insn = NEXT_INSN (insn))
+  mdep_reorg_phase = SH_FIXUP_PCLOAD;
+  for (insn = first, num_mova = 0; insn; insn = NEXT_INSN (insn))
     {
+      if (mova_p (insn))
+	{
+	  if (! num_mova++)
+	    mova = insn;
+	}
+      else if (GET_CODE (insn) == JUMP_INSN
+	       && GET_CODE (PATTERN (insn)) == ADDR_DIFF_VEC
+	       && num_mova)
+	{
+	  rtx scan;
+	  int total;
+
+	  num_mova--;
+
+	  /* Some code might have been inserted between the mova and
+	     its ADDR_DIFF_VEC.  Check if the mova is still in range.  */
+	  for (scan = mova, total = 0; scan != insn; scan = NEXT_INSN (scan))
+	    total += get_attr_length (scan);
+
+	  /* range of mova is 1020, add 4 because pc counts from address of
+	     second instruction after this one, subtract 2 in case pc is 2
+	     byte aligned.  Possible alignment needed for the ADDR_DIFF_VEC
+	     cancels out with alignment effects of the mova itself.  */
+	  if (total > 1022)
+	    {
+	      /* Change the mova into a load, and restart scanning
+		 there.  broken_move will then return true for mova.  */
+	      SET_SRC (PATTERN (mova))
+		= XVECEXP (SET_SRC (PATTERN (mova)), 0, 0);
+	      INSN_CODE (mova) = -1;
+	      insn = mova;
+	    }
+	}
       if (broken_move (insn))
 	{
 	  rtx scan;
 	  /* Scan ahead looking for a barrier to stick the constant table
 	     behind.  */
-	  rtx barrier = find_barrier (insn);
+	  rtx barrier = find_barrier (num_mova, mova, insn);
+	  rtx last_float_move, last_float = 0, *last_float_addr;
 
+	  if (num_mova && ! mova_p (mova))
+	    {
+	      /* find_barrier had to change the first mova into a
+		 pcload; thus, we have to start with this new pcload.  */
+	      insn = mova;
+	      num_mova = 0;
+	    }
 	  /* Now find all the moves between the points and modify them.  */
 	  for (scan = insn; scan != barrier; scan = NEXT_INSN (scan))
 	    {
+	      if (GET_CODE (scan) == CODE_LABEL)
+		last_float = 0;
 	      if (broken_move (scan))
 		{
 		  rtx *patp = &PATTERN (scan), pat = *patp;
@@ -2373,17 +2919,306 @@ machine_dependent_reorg (first)
 		      dst = gen_rtx (REG, HImode, REGNO (dst) + offset);
 		    }
 
-		  lab = add_constant (src, mode);
-		  newsrc = gen_rtx (MEM, mode,
-				    gen_rtx (LABEL_REF, VOIDmode, lab));
+		  if (GET_CODE (dst) == REG
+		      && ((REGNO (dst) >= FIRST_FP_REG
+			   && REGNO (dst) <= LAST_FP_REG)
+			  || REGNO (dst) == FPUL_REG))
+		    {
+		      if (last_float
+			  && reg_set_between_p (r0_rtx, last_float_move, scan))
+			last_float = 0;
+		      lab = add_constant (src, mode, last_float);
+		      if (lab)
+			emit_insn_before (gen_mova (lab), scan);
+		      else
+			*last_float_addr = r0_inc_rtx;
+		      last_float_move = scan;
+		      last_float = src;
+		      newsrc = gen_rtx (MEM, mode,
+					(REGNO (dst) == FPUL_REG
+					 ? r0_inc_rtx
+					 : r0_rtx));
+		      last_float_addr = &XEXP (newsrc, 0);
+		    }
+		  else
+		    {
+		      lab = add_constant (src, mode, 0);
+		      newsrc = gen_rtx (MEM, mode,
+					gen_rtx (LABEL_REF, VOIDmode, lab));
+		    }
 		  RTX_UNCHANGING_P (newsrc) = 1;
 		  *patp = gen_rtx (SET, VOIDmode, dst, newsrc);
 		  INSN_CODE (scan) = -1;
 		}
 	    }
 	  dump_table (barrier);
+	  insn = barrier;
 	}
     }
+
+  mdep_reorg_phase = SH_SHORTEN_BRANCHES1;
+  insn_addresses = 0;
+  split_branches (first);
+
+  /* The INSN_REFERENCES_ARE_DELAYED in sh.h is problematic because it
+     also has an effect on the register that holds the addres of the sfunc.
+     Insert an extra dummy insn in front of each sfunc that pretends to
+     use this register.  */
+  if (flag_delayed_branch)
+    {
+      for (insn = first; insn; insn = NEXT_INSN (insn))
+	{
+	  rtx reg = sfunc_uses_reg (insn);
+
+	  if (! reg)
+	    continue;
+	  emit_insn_before (gen_use_sfunc_addr (reg), insn);
+	}
+    }
+  mdep_reorg_phase = SH_AFTER_MDEP_REORG;
+}
+
+int
+get_dest_uid (label, max_uid)
+     rtx label;
+     int max_uid;
+{
+  rtx dest = next_real_insn (label);
+  int dest_uid;
+  if (! dest)
+    /* This can happen for an undefined label.  */
+    return 0;
+  dest_uid = INSN_UID (dest);
+  /* If this is a newly created branch redirection blocking instruction,
+     we cannot index the branch_uid or insn_addresses arrays with its
+     uid.  But then, we won't need to, because the actual destination is
+     the following branch.  */
+  while (dest_uid >= max_uid)
+    {
+      dest = NEXT_INSN (dest);
+      dest_uid = INSN_UID (dest);
+    }
+  if (GET_CODE (dest) == JUMP_INSN && GET_CODE (PATTERN (dest)) == RETURN)
+    return 0;
+  return dest_uid;
+}
+
+/* Split condbranches that are out of range.  Also add clobbers for
+   scratch registers that are needed in far jumps.
+   We do this before delay slot scheduling, so that it can take our
+   newly created instructions into account.  It also allows us to
+   find branches with common targets more easily.  */
+
+static void
+split_branches (first)
+     rtx first;
+{
+  rtx insn;
+  struct far_branch **uid_branch, *far_branch_list = 0;
+  int max_uid = get_max_uid ();
+
+  /* Find out which branches are out of range.  */
+  shorten_branches (first);
+
+  uid_branch = (struct far_branch **) alloca (max_uid * sizeof *uid_branch);
+  bzero ((char *) uid_branch, max_uid * sizeof *uid_branch);
+
+  for (insn = first; insn; insn = NEXT_INSN (insn))
+    if (GET_RTX_CLASS (GET_CODE (insn)) != 'i')
+      continue;
+    else if (INSN_DELETED_P (insn))
+      {
+	/* Shorten_branches would split this instruction again,
+	   so transform it into a note.  */
+	PUT_CODE (insn, NOTE);
+	NOTE_LINE_NUMBER (insn) = NOTE_INSN_DELETED;
+	NOTE_SOURCE_FILE (insn) = 0;
+      }
+    else if (GET_CODE (insn) == JUMP_INSN
+	     /* Don't mess with ADDR_DIFF_VEC */
+	     && (GET_CODE (PATTERN (insn)) == SET
+		 || GET_CODE (PATTERN (insn)) == RETURN))
+      {
+	enum attr_type type = get_attr_type (insn);
+	if (type == TYPE_CBRANCH)
+	  {
+	    rtx next, beyond;
+    
+	    if (get_attr_length (insn) > 4)
+	      {
+		rtx src = SET_SRC (PATTERN (insn));
+		rtx cond = XEXP (src, 0);
+		rtx olabel = XEXP (XEXP (src, 1), 0);
+		rtx jump;
+		int addr = insn_addresses[INSN_UID (insn)];
+		rtx label = 0;
+		int dest_uid = get_dest_uid (olabel, max_uid);
+		struct far_branch *bp = uid_branch[dest_uid];
+    
+		/* redirect_jump needs a valid JUMP_LABEL, and it might delete
+		   the label if the LABEL_NUSES count drops to zero.  There is
+		   always a jump_optimize pass that sets these values, but it
+		   proceeds to delete unreferenced code, and then if not
+		   optimizing, to un-delete the deleted instructions, thus
+		   leaving labels with too low uses counts.  */
+		if (! optimize)
+		  {
+		    JUMP_LABEL (insn) = olabel;
+		    LABEL_NUSES (olabel)++;
+		  }
+		if (! bp)
+		  {
+		    bp = (struct far_branch *) alloca (sizeof *bp);
+		    uid_branch[dest_uid] = bp;
+		    bp->prev = far_branch_list;
+		    far_branch_list = bp;
+		    bp->far_label
+		      = XEXP (XEXP (SET_SRC (PATTERN (insn)), 1), 0);
+		    LABEL_NUSES (bp->far_label)++;
+		  }
+		else
+		  {
+		    label = bp->near_label;
+		    if (! label && bp->address - addr >= CONDJUMP_MIN)
+		      {
+			rtx block = bp->insert_place;
+
+			if (GET_CODE (PATTERN (block)) == RETURN)
+			  block = PREV_INSN (block);
+			else
+			  block = gen_block_redirect (block,
+						      bp->address, 2);
+			label = emit_label_after (gen_label_rtx (),
+						  PREV_INSN (block));
+			bp->near_label = label;
+		      }
+		    else if (label && ! NEXT_INSN (label))
+		      if (addr + 2 - bp->address <= CONDJUMP_MAX)
+			bp->insert_place = insn;
+		      else
+			gen_far_branch (bp);
+		  }
+		if (! label
+		    || NEXT_INSN (label) && bp->address - addr < CONDJUMP_MIN)
+		  {
+		    bp->near_label = label = gen_label_rtx ();
+		    bp->insert_place = insn;
+		    bp->address = addr;
+		  }
+		if (! redirect_jump (insn, label))
+		  abort ();
+	      }
+	    else
+	      {
+		/* get_attr_length (insn) == 2 */
+		/* Check if we have a pattern where reorg wants to redirect
+		   the branch to a label from an unconditional branch that
+		   is too far away.  */
+		/* We can't use JUMP_LABEL here because it might be undefined
+		   when not optimizing.  */
+		/* A syntax error might cause beyond to be NULL_RTX.  */
+		beyond
+		  = next_active_insn (XEXP (XEXP (SET_SRC (PATTERN (insn)), 1),
+					    0));
+	
+		if (beyond
+		    && (GET_CODE (beyond) == JUMP_INSN
+			|| (GET_CODE (beyond = next_active_insn (beyond))
+			    == JUMP_INSN))
+		    && GET_CODE (PATTERN (beyond)) == SET
+		    && recog_memoized (beyond) == CODE_FOR_jump
+		    && ((insn_addresses[INSN_UID (XEXP (SET_SRC (PATTERN (beyond)), 0))]
+			 - insn_addresses[INSN_UID (insn)] + 252U)
+			> 252 + 258 + 2))
+		  gen_block_redirect (beyond,
+				      insn_addresses[INSN_UID (beyond)], 1);
+	      }
+    
+	    next = next_active_insn (insn);
+
+	    if ((GET_CODE (next) == JUMP_INSN
+		 || GET_CODE (next = next_active_insn (next)) == JUMP_INSN)
+		&& GET_CODE (PATTERN (next)) == SET
+		&& recog_memoized (next) == CODE_FOR_jump
+		&& ((insn_addresses[INSN_UID (XEXP (SET_SRC (PATTERN (next)), 0))]
+		     - insn_addresses[INSN_UID (insn)] + 252U)
+		    > 252 + 258 + 2))
+	      gen_block_redirect (next, insn_addresses[INSN_UID (next)], 1);
+	  }
+	else if (type == TYPE_JUMP || type == TYPE_RETURN)
+	  {
+	    int addr = insn_addresses[INSN_UID (insn)];
+	    rtx far_label = 0;
+	    int dest_uid = 0;
+	    struct far_branch *bp;
+
+	    if (type == TYPE_JUMP)
+	      {
+		far_label = XEXP (SET_SRC (PATTERN (insn)), 0);
+		dest_uid = get_dest_uid (far_label, max_uid);
+		if (! dest_uid)
+		  {
+		    /* Parse errors can lead to labels outside
+		      the insn stream.  */
+		    if (! NEXT_INSN (far_label))
+		      continue;
+
+		    if (! optimize)
+		      {
+			JUMP_LABEL (insn) = far_label;
+			LABEL_NUSES (far_label)++;
+		      }
+		    redirect_jump (insn, NULL_RTX);
+		    far_label = 0;
+		  }
+	      }
+	    bp = uid_branch[dest_uid];
+	    if (! bp)
+	      {
+		bp = (struct far_branch *) alloca (sizeof *bp);
+		uid_branch[dest_uid] = bp;
+		bp->prev = far_branch_list;
+		far_branch_list = bp;
+		bp->near_label = 0;
+		bp->far_label = far_label;
+		if (far_label)
+		  LABEL_NUSES (far_label)++;
+	      }
+	    else if (bp->near_label && ! NEXT_INSN (bp->near_label))
+	      if (addr - bp->address <= CONDJUMP_MAX)
+		emit_label_after (bp->near_label, PREV_INSN (insn));
+	      else
+		{
+		  gen_far_branch (bp);
+		  bp->near_label = 0;
+		}
+	    else
+	      bp->near_label = 0;
+	    bp->address = addr;
+	    bp->insert_place = insn;
+	    if (! far_label)
+	      emit_insn_before (gen_block_branch_redirect (const0_rtx), insn);
+	    else
+	      gen_block_redirect (insn, addr, bp->near_label ? 2 : 0);
+	  }
+      }
+  /* Generate all pending far branches,
+     and free our references to the far labels.  */
+  while (far_branch_list)
+    {
+      if (far_branch_list->near_label
+	  && ! NEXT_INSN (far_branch_list->near_label))
+	gen_far_branch (far_branch_list);
+      if (optimize
+	  && far_branch_list->far_label
+	  && ! --LABEL_NUSES (far_branch_list->far_label))
+	delete_insn (far_branch_list->far_label);
+      far_branch_list = far_branch_list->prev;
+    }
+
+  /* Instruction length information is no longer valid due to the new
+     instructions that have been generated.  */
+  init_insn_lengths ();
 }
 
 /* Dump out instruction addresses, which is useful for debugging the
@@ -2425,8 +3260,8 @@ final_prescan_insn (insn, opvec, noperands)
 	      || (GET_CODE (pattern) == SET
 		  && (GET_CODE (SET_SRC (pattern)) == CALL
 		      || get_attr_type (insn) == TYPE_SFUNC)))
-	    fprintf (asm_out_file, "\t.uses L%d\n",
-		     CODE_LABEL_NUMBER (XEXP (note, 0)));
+	    asm_fprintf (asm_out_file, "\t.uses %LL%d\n",
+			 CODE_LABEL_NUMBER (XEXP (note, 0)));
 	  else if (GET_CODE (pattern) == SET)
 	    ASM_OUTPUT_INTERNAL_LABEL (asm_out_file, "L",
 				       CODE_LABEL_NUMBER (XEXP (note, 0)));
@@ -2437,7 +3272,7 @@ final_prescan_insn (insn, opvec, noperands)
 }
 
 /* Dump out any constants accumulated in the final pass.  These will
-   will only be labels.  */
+   only be labels.  */
 
 char *
 output_jump_label_table ()
@@ -2545,10 +3380,11 @@ push (rn)
   rtx x;
   if ((rn >= FIRST_FP_REG && rn <= LAST_FP_REG)
       || rn == FPUL_REG)
-    x = emit_insn (gen_push_e (gen_rtx (REG, SFmode, rn)));
+    x = gen_push_e (gen_rtx (REG, SFmode, rn));
   else
-    x = emit_insn (gen_push (gen_rtx (REG, SImode, rn)));
+    x = gen_push (gen_rtx (REG, SImode, rn));
 
+  x = emit_insn (x);
   REG_NOTES (x) = gen_rtx (EXPR_LIST, REG_INC,
 			   gen_rtx(REG, SImode, STACK_POINTER_REGNUM), 0);
 }
@@ -2562,16 +3398,16 @@ pop (rn)
   rtx x;
   if ((rn >= FIRST_FP_REG && rn <= LAST_FP_REG)
       || rn == FPUL_REG)
-    x = emit_insn (gen_pop_e (gen_rtx (REG, SFmode, rn)));
+    x = gen_pop_e (gen_rtx (REG, SFmode, rn));
   else
-    x = emit_insn (gen_pop (gen_rtx (REG, SImode, rn)));
+    x = gen_pop (gen_rtx (REG, SImode, rn));
     
+  x = emit_insn (x);
   REG_NOTES (x) = gen_rtx (EXPR_LIST, REG_INC,
 			   gen_rtx(REG, SImode, STACK_POINTER_REGNUM), 0);
 }
 
-/* Generate code to push the regs specified in the mask, and return
-   the number of bytes the insns take.  */
+/* Generate code to push the regs specified in the mask.  */
 
 static void
 push_regs (mask, mask2)
@@ -2579,16 +3415,21 @@ push_regs (mask, mask2)
 {
   int i;
 
+  /* Push PR last; this gives better latencies after the prologue, and
+     candidates for the return delay slot when there are no general
+     registers pushed.  */
   for (i = 0; i < 32; i++)
-    if (mask & (1 << i))
+    if (mask & (1 << i) && i != PR_REG)
       push (i);
   for (i = 32; i < FIRST_PSEUDO_REGISTER; i++)
     if (mask2 & (1 << (i - 32)))
       push (i);
+  if (mask & (1 << PR_REG))
+    push (PR_REG);
 }
 
 /* Work out the registers which need to be saved, both as a mask and a
-   count.
+   count of saved words.
 
    If doing a pragma interrupt function, then push all regs used by the
    function, and if we call another function (we can tell by looking at PR),
@@ -2601,40 +3442,28 @@ calc_live_regs (count_ptr, live_regs_mask2)
 {
   int reg;
   int live_regs_mask = 0;
-  int count = 0;
+  int count;
 
   *live_regs_mask2 = 0;
-  for (reg = 0; reg < FIRST_PSEUDO_REGISTER; reg++)
+  for (count = 0, reg = FIRST_PSEUDO_REGISTER - 1; reg >= 0; reg--)
     {
-      if (pragma_interrupt && ! pragma_trapa)
+      if ((pragma_interrupt && ! pragma_trapa)
+	  ? (/* Need to save all the regs ever live.  */
+	     (regs_ever_live[reg]
+	      || (call_used_regs[reg]
+		  && (! fixed_regs[reg] || reg == MACH_REG || reg == MACL_REG)
+		  && regs_ever_live[PR_REG]))
+	     && reg != STACK_POINTER_REGNUM && reg != ARG_POINTER_REGNUM
+	     && reg != RETURN_ADDRESS_POINTER_REGNUM
+	     && reg != T_REG && reg != GBR_REG)
+	  : (/* Only push those regs which are used and need to be saved.  */
+	     regs_ever_live[reg] && ! call_used_regs[reg]))
 	{
-	  /* Need to save all the regs ever live.  */
-	  if ((regs_ever_live[reg]
-	       || (call_used_regs[reg]
-		   && (! fixed_regs[reg] || reg == MACH_REG || reg == MACL_REG)
-		   && regs_ever_live[PR_REG]))
-	      && reg != STACK_POINTER_REGNUM && reg != ARG_POINTER_REGNUM
-	      && reg != RETURN_ADDRESS_POINTER_REGNUM
-	      && reg != T_REG && reg != GBR_REG)
-	    {
-	      if (reg >= 32)
-		*live_regs_mask2 |= 1 << (reg - 32);
-	      else
-		live_regs_mask |= 1 << reg;
-	      count++;
-	    }
-	}
-      else
-	{
-	  /* Only push those regs which are used and need to be saved.  */
-	  if (regs_ever_live[reg] && ! call_used_regs[reg])
-	    {
-	      if (reg >= 32)
-		*live_regs_mask2 |= 1 << (reg - 32);
-	      else
-		live_regs_mask |= (1 << reg);
-	      count++;
-	    }
+	  if (reg >= 32)
+	    *live_regs_mask2 |= 1 << (reg - 32);
+	  else
+	    live_regs_mask |= 1 << reg;
+	  count++;
 	}
     }
 
@@ -2650,7 +3479,7 @@ sh_expand_prologue ()
   int live_regs_mask;
   int d, i;
   int live_regs_mask2;
-  live_regs_mask = calc_live_regs (&d, &live_regs_mask2);
+  int double_align = 0;
 
   /* We have pretend args if we had an object sent partially in registers
      and partially on the stack, e.g. a large structure.  */
@@ -2667,28 +3496,33 @@ sh_expand_prologue ()
 
       /* This is not used by the SH3E calling convention  */
       if (!TARGET_SH3E)
-        {
+	{
 	  /* Push arg regs as if they'd been provided by caller in stack.  */
 	  for (i = 0; i < NPARM_REGS(SImode); i++)
 	    {
 	      int rn = NPARM_REGS(SImode) + FIRST_PARM_REG - i - 1;
-	      if (i > (NPARM_REGS(SImode) 
-		       - current_function_args_info.arg_count[(int) SH_ARG_INT]
-		       - current_function_varargs))
+	      if (i >= (NPARM_REGS(SImode) 
+			- current_function_args_info.arg_count[(int) SH_ARG_INT]
+			))
 		break;
 	      push (rn);
 	      extra_push += 4;
 	    }
-        }
+	}
     }
 
   /* If we're supposed to switch stacks at function entry, do so now.  */
   if (sp_switch)
     emit_insn (gen_sp_switch_1 ());
 
+  live_regs_mask = calc_live_regs (&d, &live_regs_mask2);
   push_regs (live_regs_mask, live_regs_mask2);
 
-  output_stack_adjust (-get_frame_size (), stack_pointer_rtx, 3);
+  if (TARGET_ALIGN_DOUBLE && d & 1)
+    double_align = 4;
+
+  output_stack_adjust (-get_frame_size () - double_align,
+		       stack_pointer_rtx, 3);
 
   if (frame_pointer_needed)
     emit_insn (gen_movsi (frame_pointer_rtx, stack_pointer_rtx));
@@ -2701,11 +3535,16 @@ sh_expand_epilogue ()
   int d, i;
 
   int live_regs_mask2;
+  int frame_size = get_frame_size ();
+
   live_regs_mask = calc_live_regs (&d, &live_regs_mask2);
+
+  if (TARGET_ALIGN_DOUBLE && d & 1)
+    frame_size += 4;
 
   if (frame_pointer_needed)
     {
-      output_stack_adjust (get_frame_size (), frame_pointer_rtx, 7);
+      output_stack_adjust (frame_size, frame_pointer_rtx, 7);
 
       /* We must avoid moving the stack pointer adjustment past code
 	 which reads from the local frame, else an interrupt could
@@ -2714,22 +3553,25 @@ sh_expand_epilogue ()
       emit_insn (gen_blockage ());
       emit_insn (gen_movsi (stack_pointer_rtx, frame_pointer_rtx));
     }
-  else if (get_frame_size ())
+  else if (frame_size)
     {
       /* We must avoid moving the stack pointer adjustment past code
 	 which reads from the local frame, else an interrupt could
 	 occur after the SP adjustment and clobber data in the local
 	 frame.  */
       emit_insn (gen_blockage ());
-      output_stack_adjust (get_frame_size (), stack_pointer_rtx, 7);
+      output_stack_adjust (frame_size, stack_pointer_rtx, 7);
     }
 
   /* Pop all the registers.  */
 
+  live_regs_mask = calc_live_regs (&d, &live_regs_mask2);
+  if (live_regs_mask & (1 << PR_REG))
+    pop (PR_REG);
   for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
     {
       int j = (FIRST_PSEUDO_REGISTER - 1) - i;
-      if (j < 32 && (live_regs_mask & (1 << j)))
+      if (j < 32 && (live_regs_mask & (1 << j)) && j != PR_REG)
 	pop (j);
       else if (j >= 32 && (live_regs_mask2 & (1 << (j - 32))))
 	pop (j);
@@ -2794,17 +3636,19 @@ sh_builtin_saveregs (arglist)
      named args need not be saved.
      We explicitly build a pointer to the buffer because it halves the insn
      count when not optimizing (otherwise the pointer is built for each reg
-     saved).  */
+     saved).
+     We emit the moves in reverse order so that we can use predecrement.  */
 
   fpregs = gen_reg_rtx (Pmode);
   emit_move_insn (fpregs, XEXP (regbuf, 0));
-  for (regno = first_floatreg; regno < NPARM_REGS (SFmode); regno ++)
-    emit_move_insn (gen_rtx (MEM, SFmode,
-			     plus_constant (fpregs,
-					    GET_MODE_SIZE (SFmode)
-					    * (regno - first_floatreg))),
-		    gen_rtx (REG, SFmode,
-			     BASE_ARG_REG (SFmode) + regno));
+  emit_insn (gen_addsi3 (fpregs, fpregs,
+			 GEN_INT (n_floatregs * UNITS_PER_WORD)));
+    for (regno = NPARM_REGS (SFmode) - 1; regno >= first_floatreg; regno--)
+      {
+	emit_insn (gen_addsi3 (fpregs, fpregs, GEN_INT (- UNITS_PER_WORD)));
+	emit_move_insn (gen_rtx (MEM, SFmode, fpregs),
+			gen_rtx (REG, SFmode, BASE_ARG_REG (SFmode) + regno));
+      }
 
   /* Return the address of the regbuf.  */
   return XEXP (regbuf, 0);
@@ -2821,9 +3665,11 @@ initial_elimination_offset (from, to)
   int regs_saved;
   int total_saved_regs_space;
   int total_auto_space = get_frame_size ();
+  int save_flags = target_flags;
 
   int live_regs_mask, live_regs_mask2;
   live_regs_mask = calc_live_regs (&regs_saved, &live_regs_mask2);
+  target_flags = save_flags;
 
   total_saved_regs_space = (regs_saved) * 4;
 
@@ -2840,13 +3686,10 @@ initial_elimination_offset (from, to)
   if (from == RETURN_ADDRESS_POINTER_REGNUM
       && (to == FRAME_POINTER_REGNUM || to == STACK_POINTER_REGNUM))
     {
-      int i, n = 0;
-      for (i = PR_REG+1; i < 32; i++)
+      int i, n = total_saved_regs_space;
+      for (i = PR_REG-1; i >= 0; i--)
 	if (live_regs_mask & (1 << i))
-	  n += 4;
-      for (i = 32; i < FIRST_PSEUDO_REGISTER; i++)
-	if (live_regs_mask2 & (1 << (i - 32)))
-	  n += 4;
+	  n -= 4;
       return n + total_auto_space;
     }
 
@@ -2888,7 +3731,7 @@ handle_pragma (file, t)
    sp_switch -- specifies an alternate stack for an interrupt handler
    to run on.
 
-   trap_exit -- use a trapa to exit an interrupt function intead of
+   trap_exit -- use a trapa to exit an interrupt function instead of
    an rte instruction.  */
 
 int
@@ -3120,6 +3963,45 @@ fp_one_operand (op)
 
   REAL_VALUE_FROM_CONST_DOUBLE (r, op);
   return REAL_VALUES_EQUAL (r, dconst1);
+}
+
+int
+braf_label_ref_operand(op, mode)
+     rtx op;
+     enum machine_mode mode;
+{
+  rtx prev;
+
+  if (GET_CODE (op) != LABEL_REF)
+    return 0;
+  prev = prev_real_insn (XEXP (op, 0));
+  if (GET_CODE (prev) != JUMP_INSN)
+    return 0;
+  prev = PATTERN (prev);
+  if (GET_CODE (prev) != PARALLEL || XVECLEN (prev, 0) != 2)
+    return 0;
+  prev = XVECEXP (prev, 0, 0);
+  if (GET_CODE (prev) != SET)
+    return 0;
+  prev = SET_SRC (prev);
+  if (GET_CODE (prev) != PLUS || XEXP (prev, 1) != op)
+    return 0;
+}
+
+/* Return the destination address of a branch.  */
+   
+int
+branch_dest (branch)
+     rtx branch;
+{
+  rtx dest = SET_SRC (PATTERN (branch));
+  int dest_uid;
+
+  if (GET_CODE (dest) == IF_THEN_ELSE)
+    dest = XEXP (dest, 1);
+  dest = XEXP (dest, 0);
+  dest_uid = INSN_UID (dest);
+  return insn_addresses[dest_uid];
 }
 
 /* Return non-zero if REG is not used after INSN.

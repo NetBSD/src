@@ -1,5 +1,4 @@
-/* Definitions for rtems targetting a PowerPC using elf.
-
+/* Definitions for rtems targeting a PowerPC using elf.
    Copyright (C) 1996, 1997 Free Software Foundation, Inc.
    Contributed by Joel Sherrill (joel@OARcorp.com).
 
@@ -28,4 +27,12 @@ Boston, MA 02111-1307, USA.  */
 #define CPP_PREDEFINES "-DPPC -Drtems -D__rtems__ \
    -Asystem(rtems) -Acpu(powerpc) -Amachine(powerpc)"
 
-/* end of powerpc-rtems.h */
+/* Generate calls to memcpy, memcmp and memset.  */
+#ifndef TARGET_MEM_FUNCTIONS
+#define TARGET_MEM_FUNCTIONS
+#endif
+
+#undef STARTFILE_DEFAULT_SPEC
+#define STARTFILE_DEFAULT_SPEC "crt0.o%s"
+
+/* end of rs6000/rtems.h */

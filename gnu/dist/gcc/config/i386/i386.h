@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler for Intel X86
    (386, 486, Pentium).
-   Copyright (C) 1988, 92, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1988, 92, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -165,9 +165,7 @@ extern int target_flags;
 #define TARGET_USE_Q_REG (ix86_cpu == PROCESSOR_PENTIUM \
 			  || ix86_cpu == PROCESSOR_PENTIUMPRO)
 #define TARGET_USE_ANY_REG (ix86_cpu == PROCESSOR_I486)
-/* This is temporary for the release only.  Folks are working on a fix,
-   but the fix will likely not be suitable for the first egcs release.  */
-#define TARGET_CMOVE (0)                                         
+#define TARGET_CMOVE (ix86_arch == PROCESSOR_PENTIUMPRO)
 #define TARGET_DEEP_BRANCH_PREDICTION (ix86_cpu == PROCESSOR_PENTIUMPRO)
 #define TARGET_STACK_PROBE (target_flags & MASK_STACK_PROBE)
 
@@ -209,6 +207,8 @@ extern int target_flags;
   { "no-debug-arg",		-MASK_DEBUG_ARG },			\
   { "stack-arg-probe",		 MASK_STACK_PROBE },			\
   { "no-stack-arg-probe",	-MASK_STACK_PROBE },			\
+  { "windows",			0 },					\
+  { "dll",			0 },					\
   SUBTARGET_SWITCHES							\
   { "", MASK_SCHEDULE_PROLOGUE | TARGET_DEFAULT}}
 
@@ -287,7 +287,7 @@ extern int ix86_arch;
 #define SUBTARGET_OPTIONS
 
 /* Define this to change the optimizations performed by default.  */
-#define OPTIMIZATION_OPTIONS(LEVEL) optimization_options(LEVEL)
+#define OPTIMIZATION_OPTIONS(LEVEL,SIZE) optimization_options(LEVEL,SIZE)
 
 /* Specs for the compiler proper */
 
@@ -304,36 +304,37 @@ extern int ix86_arch;
 %{mpentiumpro:-mcpu=pentiumpro}}"
 #endif
 
-#ifndef CPP_CPU_SPEC
-#ifdef __STDC__
+#define CPP_486_SPEC "%{!ansi:-Di486} -D__i486 -D__i486__"
+#define CPP_586_SPEC "%{!ansi:-Di586 -Dpentium} \
+	-D__i586 -D__i586__ -D__pentium -D__pentium__"
+#define CPP_686_SPEC "%{!ansi:-Di686 -Dpentiumpro} \
+	-D__i686 -D__i686__ -D__pentiumpro -D__pentiumpro__"
+
+#ifndef CPP_CPU_DEFAULT_SPEC
 #if TARGET_CPU_DEFAULT == 1
-#define CPP_CPU_DEFAULT "-Di486"
+#define CPP_CPU_DEFAULT_SPEC "%(cpp_486)"
 #else
 #if TARGET_CPU_DEFAULT == 2
-#define CPP_CPU_DEFAULT "-Di586"
+#define CPP_CPU_DEFAULT_SPEC "%(cpp_586)"
 #else
 #if TARGET_CPU_DEFAULT == 3
-#define CPP_CPU_DEFAULT "-Di686"
+#define CPP_CPU_DEFAULT_SPEC "%(cpp_686)"
 #else
-#define CPP_CPU_DEFAULT ""
+#define CPP_CPU_DEFAULT_SPEC ""
 #endif
 #endif
-#endif /* TARGET_CPU_DEFAULT */
+#endif
+#endif /* CPP_CPU_DEFAULT_SPEC */
 
+#ifndef CPP_CPU_SPEC
 #define CPP_CPU_SPEC "\
--Di386 " CPP_CPU_DEFAULT " -Asystem(unix) -Acpu(i386) -Amachine(i386) \
-%{mcpu=i486:-Di486} %{m486:-Di486} \
-%{mpentium:-Dpentium -Di586} %{mcpu=pentium:-Dpentium -Di586} \
-%{mpentiumpro:-Dpentiumpro -Di686} %{mcpu=pentiumpro:-Dpentiumpro -Di686}"
-
-#else
-#define CPP_CPU_SPEC "\
--Di386 -Asystem(unix) -Acpu(i386) -Amachine(i386) \
-%{mcpu=i486:-Di486} %{m486:-Di486} \
-%{mpentium:-Dpentium -Di586} %{mcpu=pentium:-Dpentium -Di586} \
-%{mpentiumpro:-Dpentiumpro -Di686} %{mcpu=pentiumpro:-Dpentiumpro -Di686}"
-#endif /* __STDC__ */
-#endif /* CPP_CPU_SPEC */
+-Asystem(unix) -Acpu(i386) -Amachine(i386) \
+%{!ansi:-Di386} -D__i386 -D__i386__ \
+%{mcpu=i486:%(cpp_486)} %{m486:%(cpp_486)} \
+%{mpentium:%(cpp_586)} %{mcpu=pentium:%(cpp_586)} \
+%{mpentiumpro:%(cpp_686)} %{mcpu=pentiumpro:%(cpp_686)} \
+%{!mcpu*:%{!m486:%{!mpentium*:%(cpp_cpu_default)}}}"
+#endif
 
 #ifndef CC1_SPEC
 #define CC1_SPEC "%(cc1_spec) "
@@ -354,6 +355,10 @@ extern int ix86_arch;
 #endif
 
 #define EXTRA_SPECS							\
+  { "cpp_486", CPP_486_SPEC},						\
+  { "cpp_586", CPP_586_SPEC},						\
+  { "cpp_686", CPP_686_SPEC},						\
+  { "cpp_cpu_default",	CPP_CPU_DEFAULT_SPEC },				\
   { "cpp_cpu",	CPP_CPU_SPEC },						\
   { "cc1_cpu",  CC1_CPU_SPEC },						\
   SUBTARGET_EXTRA_SPECS
@@ -424,8 +429,78 @@ extern int ix86_arch;
    aligned on 64 bit boundaries. */
 #define BIGGEST_ALIGNMENT (TARGET_ALIGN_DOUBLE ? 64 : 32)
 
-/* align DFmode constants and nonaggregates */
-#define ALIGN_DFmode (!TARGET_386)
+/* If defined, a C expression to compute the alignment given to a
+   constant that is being placed in memory.  CONSTANT is the constant
+   and ALIGN is the alignment that the object would ordinarily have.
+   The value of this macro is used instead of that alignment to align
+   the object.
+
+   If this macro is not defined, then ALIGN is used.
+
+   The typical use of this macro is to increase alignment for string
+   constants to be word aligned so that `strcpy' calls that copy
+   constants can be done inline.  */
+
+#define CONSTANT_ALIGNMENT(EXP, ALIGN)					\
+  (TREE_CODE (EXP) == REAL_CST						\
+    ? ((TYPE_MODE (TREE_TYPE (EXP)) == DFmode && (ALIGN) < 64)		\
+	? 64								\
+   	: (TYPE_MODE (TREE_TYPE (EXP)) == XFmode && (ALIGN) < 128)	\
+	? 128								\
+	: (ALIGN))							\
+    : TREE_CODE (EXP) == STRING_CST					\
+    ? ((TREE_STRING_LENGTH (EXP) >= 31 && (ALIGN) < 256)		\
+	? 256								\
+	: (ALIGN))							\
+    : (ALIGN))
+
+/* If defined, a C expression to compute the alignment for a static
+   variable.  TYPE is the data type, and ALIGN is the alignment that
+   the object would ordinarily have.  The value of this macro is used
+   instead of that alignment to align the object.
+
+   If this macro is not defined, then ALIGN is used.
+
+   One use of this macro is to increase alignment of medium-size
+   data to make it all fit in fewer cache lines.  Another is to
+   cause character arrays to be word-aligned so that `strcpy' calls
+   that copy constants to character arrays can be done inline.  */
+
+#define DATA_ALIGNMENT(TYPE, ALIGN)					\
+  ((AGGREGATE_TYPE_P (TYPE)						\
+    && TYPE_SIZE (TYPE)							\
+    && TREE_CODE (TYPE_SIZE (TYPE)) == INTEGER_CST			\
+    && (TREE_INT_CST_LOW (TYPE_SIZE (TYPE)) >= 256			\
+	|| TREE_INT_CST_HIGH (TYPE_SIZE (TYPE))) && (ALIGN) < 256)	\
+    ? 256								\
+    : TREE_CODE (TYPE) == ARRAY_TYPE					\
+    ? ((TYPE_MODE (TREE_TYPE (TYPE)) == DFmode && (ALIGN) < 64)	\
+	? 64								\
+   	: (TYPE_MODE (TREE_TYPE (TYPE)) == XFmode && (ALIGN) < 128)	\
+	? 128								\
+	: (ALIGN))							\
+    : TREE_CODE (TYPE) == COMPLEX_TYPE					\
+    ? ((TYPE_MODE (TYPE) == DCmode && (ALIGN) < 64)			\
+	? 64								\
+   	: (TYPE_MODE (TYPE) == XCmode && (ALIGN) < 128)			\
+	? 128								\
+	: (ALIGN))							\
+    : ((TREE_CODE (TYPE) == RECORD_TYPE					\
+	|| TREE_CODE (TYPE) == UNION_TYPE				\
+	|| TREE_CODE (TYPE) == QUAL_UNION_TYPE)				\
+	&& TYPE_FIELDS (TYPE))						\
+    ? ((DECL_MODE (TYPE_FIELDS (TYPE)) == DFmode && (ALIGN) < 64)	\
+	? 64								\
+	: (DECL_MODE (TYPE_FIELDS (TYPE)) == XFmode && (ALIGN) < 128)	\
+	? 128								\
+	: (ALIGN))							\
+    : TREE_CODE (TYPE) == REAL_TYPE					\
+    ? ((TYPE_MODE (TYPE) == DFmode && (ALIGN) < 64)			\
+	? 64								\
+   	: (TYPE_MODE (TYPE) == XFmode && (ALIGN) < 128)			\
+	? 128								\
+	: (ALIGN))							\
+    : (ALIGN))
 
 /* Set this non-zero if move instructions will actually fail to work
    when given unaligned data.  */
@@ -436,22 +511,18 @@ extern int ix86_arch;
 /* Required on the 386 since it doesn't have bitfield insns.  */
 #define PCC_BITFIELD_TYPE_MATTERS 1
 
-/* An integer expression for the size in bits of the largest integer
-   machine mode that should actually be used.  All integer machine modes of
-   this size or smaller can be used for structures and unions with the
-   appropriate sizes.  */
-#define MAX_FIXED_MODE_SIZE 32
-
 /* Maximum power of 2 that code can be aligned to.  */
 #define MAX_CODE_ALIGN	6			/* 64 byte alignment */
 
 /* Align loop starts for optimal branching.  */
-#define ASM_OUTPUT_LOOP_ALIGN(FILE) ASM_OUTPUT_ALIGN (FILE, i386_align_loops)
+#define LOOP_ALIGN(LABEL) (i386_align_loops)
+#define LOOP_ALIGN_MAX_SKIP (i386_align_loops_string ? 0 : 7)
 
 /* This is how to align an instruction for optimal branching.
    On i486 we'll get better performance by aligning on a
    cache line (i.e. 16 byte) boundary.  */
-#define ASM_OUTPUT_ALIGN_CODE(FILE) ASM_OUTPUT_ALIGN ((FILE), i386_align_jumps)
+#define LABEL_ALIGN_AFTER_BARRIER(LABEL) (i386_align_jumps)
+#define LABEL_ALIGN_AFTER_BARRIER_MAX_SKIP (i386_align_jumps_string ? 0 : 7)
 
 
 /* Standard register usage.  */
@@ -578,8 +649,7 @@ extern int ix86_arch;
    for cross-compiler testing.  */
 
 #define HARD_REGNO_MODE_OK(REGNO, MODE) \
-  ((REGNO) < 2 ? 1						\
-   : (REGNO) < 4 ? 1						\
+  ((REGNO) < 4 ? 1						\
    : FP_REGNO_P (REGNO)						\
    ? (((int) GET_MODE_CLASS (MODE) == (int) MODE_FLOAT		\
        || (int) GET_MODE_CLASS (MODE) == (int) MODE_COMPLEX_FLOAT)	\
@@ -592,7 +662,10 @@ extern int ix86_arch;
    If HARD_REGNO_MODE_OK could produce different values for MODE1 and MODE2,
    for any hard reg, then this must be 0 for correct output.  */
 
-#define MODES_TIEABLE_P(MODE1, MODE2) ((MODE1) == (MODE2))
+#define MODES_TIEABLE_P(MODE1, MODE2)				\
+  ((MODE1) == (MODE2)						\
+   || ((MODE1) == SImode && (MODE2) == HImode			\
+       || (MODE1) == HImode && (MODE2) == SImode))
 
 /* Specify the registers used for certain standard purposes.
    The values of these macros are register numbers.  */
@@ -721,16 +794,16 @@ enum reg_class
    of length N_REG_CLASSES.  */
 
 #define REG_CLASS_CONTENTS \
-{      0,							\
-     0x1,    0x2,  0x4,	 0x8,	/* AREG, DREG, CREG, BREG */	\
-     0x3,			/* AD_REGS */			\
-     0xf,			/* Q_REGS */			\
-    0x10,   0x20,		/* SIREG, DIREG */		\
- 0x7f,				/* INDEX_REGS */		\
- 0x100ff,			/* GENERAL_REGS */		\
-  0x0100, 0x0200,		/* FP_TOP_REG, FP_SECOND_REG */	\
-  0xff00,			/* FLOAT_REGS */		\
- 0x1ffff }
+{      {0},							\
+     {0x1},    {0x2},  {0x4},	 {0x8},	/* AREG, DREG, CREG, BREG */	\
+     {0x3},			/* AD_REGS */			\
+     {0xf},			/* Q_REGS */			\
+    {0x10},   {0x20},		/* SIREG, DIREG */		\
+ {0x7f},				/* INDEX_REGS */		\
+ {0x100ff},			/* GENERAL_REGS */		\
+  {0x0100}, {0x0200},		/* FP_TOP_REG, FP_SECOND_REG */	\
+  {0xff00},			/* FLOAT_REGS */		\
+ {0x1ffff}}
 
 /* The same information, inverted:
    Return the class number of the smallest class containing
@@ -823,10 +896,19 @@ enum reg_class
 /* Similar, but for floating constants, and defining letters G and H.
    Here VALUE is the CONST_DOUBLE rtx itself.  We allow constants even if
    TARGET_387 isn't set, because the stack register converter may need to
-   load 0.0 into the function value register. */
+   load 0.0 into the function value register.
+
+   We disallow these constants when -fomit-frame-pointer and compiling
+   PIC code since reload might need to force the constant to memory.
+   Forcing the constant to memory changes the elimination offsets after
+   the point where they must stay constant.
+
+   However, we must allow them after reload as completed as reg-stack.c
+   will create insns which use these constants.  */
 
 #define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C)  \
-  ((C) == 'G' ? standard_80387_constant_p (VALUE) : 0)
+  (((reload_completed || !flag_pic || !flag_omit_frame_pointer) && (C) == 'G') \
+   ? standard_80387_constant_p (VALUE) : 0)
 
 /* Place additional restrictions on the register class to use when it
    is necessary to be able to hold a value of mode MODE in a reload
@@ -951,14 +1033,14 @@ enum reg_class
    If the precise function being called is known, FUNC is its FUNCTION_DECL;
    otherwise, FUNC is 0.  */
 #define FUNCTION_VALUE(VALTYPE, FUNC)  \
-   gen_rtx (REG, TYPE_MODE (VALTYPE), \
+   gen_rtx_REG (TYPE_MODE (VALTYPE), \
 	    VALUE_REGNO (TYPE_MODE (VALTYPE)))
 
 /* Define how to find the value returned by a library function
    assuming the value has mode MODE.  */
 
 #define LIBCALL_VALUE(MODE) \
-  gen_rtx (REG, MODE, VALUE_REGNO (MODE))
+  gen_rtx_REG (MODE, VALUE_REGNO (MODE))
 
 /* Define the size of the result block used for communication between
    untyped_call and untyped_return.  The block contains a DImode value
@@ -1151,9 +1233,9 @@ do									\
 									\
     ASM_GENERATE_INTERNAL_LABEL (block_table, "LPBX", 0);		\
 									\
-    xops[1] = gen_rtx (SYMBOL_REF, VOIDmode, block_table);		\
+    xops[1] = gen_rtx_SYMBOL_REF (VOIDmode, block_table);		\
     xops[5] = stack_pointer_rtx;					\
-    xops[7] = gen_rtx (REG, Pmode, 0);	/* eax */			\
+    xops[7] = gen_rtx_REG (Pmode, 0);	/* eax */			\
 									\
     CONSTANT_POOL_ADDRESS_P (xops[1]) = TRUE;				\
 									\
@@ -1163,7 +1245,7 @@ do									\
       case 2:								\
 									\
         xops[2] = GEN_INT ((BLOCK_OR_LABEL));				\
-        xops[3] = gen_rtx (MEM, Pmode, gen_rtx (SYMBOL_REF, VOIDmode, "__bb_init_trace_func")); \
+        xops[3] = gen_rtx_MEM (Pmode, gen_rtx_SYMBOL_REF (VOIDmode, "__bb_init_trace_func")); \
         xops[6] = GEN_INT (8);						\
     									\
         output_asm_insn (AS1(push%L2,%2), xops);			\
@@ -1185,9 +1267,9 @@ do									\
         ASM_GENERATE_INTERNAL_LABEL (false_label, "LPBZ", num_func);	\
     									\
         xops[0] = const0_rtx;						\
-        xops[2] = gen_rtx (MEM, Pmode, gen_rtx (SYMBOL_REF, VOIDmode, false_label)); \
-        xops[3] = gen_rtx (MEM, Pmode, gen_rtx (SYMBOL_REF, VOIDmode, "__bb_init_func")); \
-        xops[4] = gen_rtx (MEM, Pmode, xops[1]);			\
+        xops[2] = gen_rtx_MEM (Pmode, gen_rtx_SYMBOL_REF (VOIDmode, false_label)); \
+        xops[3] = gen_rtx_MEM (Pmode, gen_rtx_SYMBOL_REF (VOIDmode, "__bb_init_func")); \
+        xops[4] = gen_rtx_MEM (Pmode, xops[1]);			\
         xops[6] = GEN_INT (4);						\
     									\
         CONSTANT_POOL_ADDRESS_P (xops[2]) = TRUE;			\
@@ -1293,13 +1375,13 @@ do									\
 									\
         ASM_GENERATE_INTERNAL_LABEL (block_table, "LPBX", 0);		\
 									\
-	xops[1] = gen_rtx (SYMBOL_REF, VOIDmode, block_table);		\
+	xops[1] = gen_rtx_SYMBOL_REF (VOIDmode, block_table);		\
         xops[2] = GEN_INT ((BLOCKNO));					\
-        xops[3] = gen_rtx (MEM, Pmode, gen_rtx (SYMBOL_REF, VOIDmode, "__bb_trace_func")); \
-        xops[4] = gen_rtx (SYMBOL_REF, VOIDmode, "__bb");		\
+        xops[3] = gen_rtx_MEM (Pmode, gen_rtx_SYMBOL_REF (VOIDmode, "__bb_trace_func")); \
+        xops[4] = gen_rtx_SYMBOL_REF (VOIDmode, "__bb");		\
 	xops[5] = plus_constant (xops[4], 4);				\
-	xops[0] = gen_rtx (MEM, SImode, xops[4]);			\
-	xops[6] = gen_rtx (MEM, SImode, xops[5]);			\
+	xops[0] = gen_rtx_MEM (SImode, xops[4]);			\
+	xops[6] = gen_rtx_MEM (SImode, xops[5]);			\
 									\
 	CONSTANT_POOL_ADDRESS_P (xops[1]) = TRUE;			\
 									\
@@ -1307,7 +1389,7 @@ do									\
         output_asm_insn (AS2(mov%L0,%2,%0), xops);			\
 	if (flag_pic)							\
 	  {								\
-            xops[7] = gen_rtx (REG, Pmode, 0);	/* eax */		\
+            xops[7] = gen_rtx_REG (Pmode, 0);	/* eax */		\
             output_asm_insn (AS1(push%L7,%7), xops);			\
             output_asm_insn (AS2(lea%L7,%a1,%7), xops);			\
             output_asm_insn (AS2(mov%L6,%7,%6), xops);			\
@@ -1323,16 +1405,16 @@ do									\
       default:								\
 									\
         ASM_GENERATE_INTERNAL_LABEL (counts, "LPBX", 2);		\
-        cnt_rtx = gen_rtx (SYMBOL_REF, VOIDmode, counts);		\
+        cnt_rtx = gen_rtx_SYMBOL_REF (VOIDmode, counts);		\
         SYMBOL_REF_FLAG (cnt_rtx) = TRUE;				\
 									\
         if (BLOCKNO)							\
           cnt_rtx = plus_constant (cnt_rtx, (BLOCKNO)*4);		\
 									\
         if (flag_pic)							\
-          cnt_rtx = gen_rtx (PLUS, Pmode, pic_offset_table_rtx, cnt_rtx);	\
+          cnt_rtx = gen_rtx_PLUS (Pmode, pic_offset_table_rtx, cnt_rtx);	\
 									\
-        xops[0] = gen_rtx (MEM, SImode, cnt_rtx);			\
+        xops[0] = gen_rtx_MEM (SImode, cnt_rtx);			\
         output_asm_insn (AS1(inc%L0,%0), xops);				\
 									\
         break;								\
@@ -1368,7 +1450,7 @@ do									\
   {									\
     rtx xops[1];							\
 									\
-    xops[0] = gen_rtx (MEM, Pmode, gen_rtx (SYMBOL_REF, VOIDmode, "__bb_trace_ret")); \
+    xops[0] = gen_rtx_MEM (Pmode, gen_rtx_SYMBOL_REF (VOIDmode, "__bb_trace_ret")); \
 									\
     output_asm_insn (AS1(call,%P0), xops);				\
 									\
@@ -1476,8 +1558,8 @@ do {						\
 
 #define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)			\
 {									\
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 1)), CXT); \
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 6)), FNADDR); \
+  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 1)), CXT); \
+  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 6)), FNADDR); \
 }
 
 /* Definitions for register eliminations.
@@ -1670,7 +1752,6 @@ do {						\
 
 #define LEGITIMIZE_ADDRESS(X, OLDX, MODE, WIN)				\
 {									\
-  rtx orig_x = (X);							\
   (X) = legitimize_address (X, OLDX, MODE);				\
   if (memory_address_p (MODE, X))					\
     goto WIN;								\
@@ -1716,7 +1797,7 @@ do									\
 	if (TARGET_DEBUG_ADDR						\
 	    && TREE_CODE_CLASS (TREE_CODE (DECL)) == 'd')		\
 	  {								\
-	    fprintf (stderr, "Encode %s, public = %s\n",		\
+	    fprintf (stderr, "Encode %s, public = %d\n",		\
 		     IDENTIFIER_POINTER (DECL_NAME (DECL)),		\
 		     TREE_PUBLIC (DECL));				\
 	  }								\
@@ -1791,10 +1872,11 @@ while (0)
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE Pmode
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-/* #define CASE_VECTOR_PC_RELATIVE */
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+/* #define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Specify the tree operation to be used to convert reals to integers.
    This should be changed to take advantage of fist --wfs ??
@@ -1870,6 +1952,7 @@ while (0)
 
 #define CONST_COSTS(RTX,CODE,OUTER_CODE) \
   case CONST_INT:						\
+    return (unsigned) INTVAL (RTX) < 256 ? 0 : 1;		\
   case CONST:							\
   case LABEL_REF:						\
   case SYMBOL_REF:						\
@@ -1924,10 +2007,11 @@ while (0)
     if (GET_MODE (XEXP (X, 0)) == DImode)				\
       {									\
 	if (GET_CODE (XEXP (X, 1)) == CONST_INT)			\
-	  if (INTVAL (XEXP (X, 1)) > 32)					\
-	    return COSTS_N_INSNS(ix86_cost->shift_const + 2);		\
-	  else								\
+	  {								\
+	    if (INTVAL (XEXP (X, 1)) > 32)				\
+	      return COSTS_N_INSNS(ix86_cost->shift_const + 2);		\
 	    return COSTS_N_INSNS(ix86_cost->shift_const * 2);		\
+	  }								\
 	return ((GET_CODE (XEXP (X, 1)) == AND				\
 		 ? COSTS_N_INSNS(ix86_cost->shift_var * 2)		\
 		 : COSTS_N_INSNS(ix86_cost->shift_var * 6 + 2))		\
@@ -2078,7 +2162,7 @@ while (0)
    between two registers, you should define this macro to express the
    relative cost.  */
 
-/* #define MEMORY_MOVE_COST(M) 2  */
+/* #define MEMORY_MOVE_COST(M,C,I) 2  */
 
 /* A C expression for the cost of a branch instruction.  A value of 1
    is the default; other values are interpreted relative to that.  */
@@ -2332,10 +2416,10 @@ extern struct rtx_def *(*i386_compare_gen)(), *(*i386_compare_gen_eq)();
 /* Table of additional register names to use in user input.  */
 
 #define ADDITIONAL_REGISTER_NAMES \
-{ "eax", 0, "edx", 1, "ecx", 2, "ebx", 3,	\
-  "esi", 4, "edi", 5, "ebp", 6, "esp", 7,	\
-  "al", 0, "dl", 1, "cl", 2, "bl", 3,		\
-  "ah", 0, "dh", 1, "ch", 2, "bh", 3 }
+{ { "eax", 0 }, { "edx", 1 }, { "ecx", 2 }, { "ebx", 3 },	\
+  { "esi", 4 }, { "edi", 5 }, { "ebp", 6 }, { "esp", 7 },	\
+  { "al", 0 }, { "dl", 1 }, { "cl", 2 }, { "bl", 3 },		\
+  { "ah", 0 }, { "dh", 1 }, { "ch", 2 }, { "bh", 3 } }
 
 /* Note we are omitting these since currently I don't know how
 to get gcc to use these, since they want the same but different
@@ -2371,13 +2455,13 @@ number as al, and ax.
 
 /* Before the prologue, RA is at 0(%esp).  */
 #define INCOMING_RETURN_ADDR_RTX \
-  gen_rtx (MEM, VOIDmode, gen_rtx (REG, VOIDmode, STACK_POINTER_REGNUM))
+  gen_rtx_MEM (VOIDmode, gen_rtx_REG (VOIDmode, STACK_POINTER_REGNUM))
 
 /* After the prologue, RA is at -4(AP) in the current frame.  */
 #define RETURN_ADDR_RTX(COUNT, FRAME)					\
   ((COUNT) == 0								\
-   ? gen_rtx (MEM, Pmode, gen_rtx (PLUS, Pmode, arg_pointer_rtx, GEN_INT(-4)))\
-   : gen_rtx (MEM, Pmode, gen_rtx (PLUS, Pmode, (FRAME), GEN_INT(4))))
+   ? gen_rtx_MEM (Pmode, gen_rtx_PLUS (Pmode, arg_pointer_rtx, GEN_INT(-4)))\
+   : gen_rtx_MEM (Pmode, gen_rtx_PLUS (Pmode, (FRAME), GEN_INT(4))))
 
 /* PC is dbx register 8; let's use that column for RA. */
 #define DWARF_FRAME_RETURN_COLUMN 	8
@@ -2396,10 +2480,7 @@ number as al, and ax.
 #define ASM_OUTPUT_DOUBLE(FILE,VALUE)					\
 do { long l[2];								\
      REAL_VALUE_TO_TARGET_DOUBLE (VALUE, l);				\
-     if (sizeof (int) == sizeof (long))					\
-       fprintf (FILE, "%s 0x%x,0x%x\n", ASM_LONG, l[0], l[1]);		\
-     else								\
-       fprintf (FILE, "%s 0x%lx,0x%lx\n", ASM_LONG, l[0], l[1]);	\
+     fprintf (FILE, "%s 0x%lx,0x%lx\n", ASM_LONG, l[0], l[1]);		\
    } while (0)
 
 /* This is how to output a `long double' extended real constant. */
@@ -2408,10 +2489,7 @@ do { long l[2];								\
 #define ASM_OUTPUT_LONG_DOUBLE(FILE,VALUE)  		\
 do { long l[3];						\
      REAL_VALUE_TO_TARGET_LONG_DOUBLE (VALUE, l);	\
-     if (sizeof (int) == sizeof (long))			\
-       fprintf (FILE, "%s 0x%x,0x%x,0x%x\n", ASM_LONG, l[0], l[1], l[2]); \
-     else						\
-       fprintf (FILE, "%s 0x%lx,0x%lx,0x%lx\n", ASM_LONG, l[0], l[1], l[2]); \
+     fprintf (FILE, "%s 0x%lx,0x%lx,0x%lx\n", ASM_LONG, l[0], l[1], l[2]); \
    } while (0)
 
 /* This is how to output an assembler line defining a `float' constant.  */
@@ -2419,10 +2497,7 @@ do { long l[3];						\
 #define ASM_OUTPUT_FLOAT(FILE,VALUE)			\
 do { long l;						\
      REAL_VALUE_TO_TARGET_SINGLE (VALUE, l);		\
-     if (sizeof (int) == sizeof (long))			\
-       fprintf ((FILE), "%s 0x%x\n", ASM_LONG, l);	\
-     else						\
-       fprintf ((FILE), "%s 0x%lx\n", ASM_LONG, l);	\
+     fprintf ((FILE), "%s 0x%lx\n", ASM_LONG, l);	\
    } while (0)
 
 /* Store in OUTPUT a string (made with alloca) containing
@@ -2493,7 +2568,7 @@ do { long l;						\
    forward reference the differences.  
  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL) \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
   fprintf (FILE, "\t.word %s%d-%s%d\n",LPREFIX, VALUE,LPREFIX, REL)
 
 /* Define the parentheses used to group arithmetic operations
@@ -2522,9 +2597,13 @@ do { long l;						\
    R -- print the prefix for register names.
    z -- print the opcode suffix for the size of the current operand.
    * -- print a star (in certain assembler syntax)
-   w -- print the operand as if it's a "word" (HImode) even if it isn't.
-   b -- print the operand as if it's a byte (QImode) even if it isn't.
-   c -- don't print special prefixes before constant operands.  */
+   P -- if PIC, print an @PLT suffix.
+   X -- don't print any sort of PIC '@' suffix for a symbol.
+   J -- print jump insn for arithmetic_comparison_operator.
+   s -- ??? something to do with double shifts.  not actually used, afaik.
+   C -- print a conditional move suffix corresponding to the op code.
+   c -- likewise, but reverse the condition.
+   F,f -- likewise, but for floating-point.  */
 
 #define PRINT_OPERAND_PUNCT_VALID_P(CODE)				\
   ((CODE) == '*')
@@ -2629,9 +2708,8 @@ extern char *qi_high_reg_name[];
    we can use for operand syntax in the extended asm */
 
 #define ASM_OPERAND_LETTER '#'
-
 #define RET return ""
-#define AT_SP(mode) (gen_rtx (MEM, (mode), stack_pointer_rtx))
+#define AT_SP(mode) (gen_rtx_MEM ((mode), stack_pointer_rtx))
 
 /* Helper macros to expand a binary/unary operator if needed */
 #define IX86_EXPAND_BINARY_OPERATOR(OP, MODE, OPERANDS)			\
@@ -2712,6 +2790,9 @@ extern int is_fp_dest ();
 extern int is_fp_store ();
 extern int agi_dependent ();
 extern int reg_mentioned_in_mem ();
+extern char *output_int_conditional_move ();
+extern char *output_fp_conditional_move ();
+extern int ix86_can_use_return_insn_p ();
 
 #ifdef NOTYET
 extern struct rtx_def *copy_all_rtx ();

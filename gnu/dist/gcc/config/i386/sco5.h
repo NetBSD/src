@@ -243,7 +243,7 @@ do {									\
 } while (0)
 
 #undef ASM_OUTPUT_ADDR_DIFF_ELT
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL) \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
 do {									\
   if (TARGET_ELF)							\
     fprintf (FILE, "%s _GLOBAL_OFFSET_TABLE_+[.-%s%d]\n", ASM_LONG, LPREFIX, VALUE); \
@@ -289,8 +289,8 @@ do {									\
    NAME whose size is SIZE bytes and alignment is ALIGN bytes.
    Try to use asm_output_aligned_bss to implement this macro.  */
 
-#define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) 		\
-  asm_output_aligned_bss (FILE, DECL, NAME, SIZE, ALIGN)
+#define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
+asm_output_aligned_bss (FILE, DECL, NAME, SIZE, ALIGN)
 
 #undef ESCAPES
 #define ESCAPES \
@@ -313,7 +313,7 @@ do {									\
       register unsigned char *_limited_str = (unsigned char *) (STR);	\
       register unsigned ch;						\
       fprintf ((FILE), "%s\t\"", STRING_ASM_OP);			\
-      for (; ch = *_limited_str; _limited_str++)			\
+      for (; (ch = *_limited_str); _limited_str++)			\
         {								\
 	  register int escape;						\
 	  switch (escape = ESCAPES[ch])					\
@@ -428,65 +428,6 @@ do {									\
   } while (0)
 
 
-#undef ASM_OUTPUT_DOUBLE
-#define ASM_OUTPUT_DOUBLE(FILE,VALUE)					\
-do {									\
-  long value[2];							\
-  REAL_VALUE_TO_TARGET_DOUBLE ((VALUE), value);				\
-  if (TARGET_ELF) {							\
-     if (sizeof (int) == sizeof (long))					\
-       {								\
-         fprintf((FILE), "%s\t0x%x\n", ASM_LONG, value[0]);		\
-         fprintf((FILE), "%s\t0x%x\n", ASM_LONG, value[1]);		\
-       }								\
-     else								\
-       {								\
-         fprintf((FILE), "%s\t0x%lx\n", ASM_LONG, value[0]);		\
-         fprintf((FILE), "%s\t0x%lx\n", ASM_LONG, value[1]);		\
-       }								\
-  } else {								\
-     if (sizeof (int) == sizeof (long))					\
-       fprintf (FILE, "%s 0x%x,0x%x\n", ASM_LONG, value[0], value[1]);	\
-     else								\
-       fprintf (FILE, "%s 0x%lx,0x%lx\n", ASM_LONG,value[0],value[1]);}	\
-} while (0)
-
-#undef ASM_OUTPUT_FLOAT
-#define ASM_OUTPUT_FLOAT(FILE,VALUE)					\
-do {									\
-  long value;								\
-  REAL_VALUE_TO_TARGET_SINGLE ((VALUE), value);				\
-  if (sizeof (int) == sizeof (long))					\
-     fprintf((FILE), "%s\t0x%x\n", ASM_LONG, value);			\
-  else									\
-     fprintf((FILE), "%s\t0x%lx\n", ASM_LONG, value);			\
-} while (0)
-
-#undef ASM_OUTPUT_LONG_DOUBLE
-#define ASM_OUTPUT_LONG_DOUBLE(FILE,VALUE)				\
-do {									\
-  long l[3];								\
-  REAL_VALUE_TO_TARGET_LONG_DOUBLE ((VALUE), l);			\
-  if (TARGET_ELF) {							\
-     if (sizeof (int) == sizeof (long))					\
-       {								\
-         fprintf((FILE), "%s\t0x%x\n", ASM_LONG, l[0]);			\
-         fprintf((FILE), "%s\t0x%x\n", ASM_LONG, l[1]);			\
-         fprintf((FILE), "%s\t0x%x\n", ASM_LONG, l[2]);			\
-       }								\
-     else								\
-       {								\
-         fprintf((FILE), "%s\t0x%lx\n", ASM_LONG, l[0]);		\
-         fprintf((FILE), "%s\t0x%lx\n", ASM_LONG, l[1]);		\
-         fprintf((FILE), "%s\t0x%lx\n", ASM_LONG, l[2]);		\
-       }								\
-  } else {								\
-     if (sizeof (int) == sizeof (long))					\
-       fprintf (FILE, "%s 0x%x,0x%x,0x%x\n", ASM_LONG, l[0], l[1], l[2]); \
-     else								\
-       fprintf (FILE, "%s 0x%lx,0x%lx,0x%lx\n", ASM_LONG,l[0],l[1],l[2]);} \
-} while (0)
-
 #undef ASM_OUTPUT_IDENT
 #define ASM_OUTPUT_IDENT(FILE, NAME) \
   fprintf (FILE, "%s\t\"%s\"\n", IDENT_ASM_OP, NAME);
@@ -508,19 +449,56 @@ do {									\
 #undef USER_LABEL_PREFIX
 #define USER_LABEL_PREFIX ""
 
+/* 
+ * Compensate for the difference between ELF and COFF assembler syntax.
+ * Otherwise, this is cribbed from ../svr4.h.
+ * We rename 'gcc_except_table' to the shorter name in preparation
+ * for the day when we're ready to do DWARF2 eh unwinding under COFF 
+ */
 #undef ASM_OUTPUT_SECTION_NAME
 #define ASM_OUTPUT_SECTION_NAME(FILE, DECL, NAME, RELOC) \
 do {									\
-  char *snam = NAME ;							\
-  if (strcmp(NAME, ".gcc_except_table") == 0) snam = ".gccexc" ;	\
-  if (TARGET_ELF)							\
-    fprintf (FILE, ".section\t%s,\"%s\",@progbits\n", NAME, 		\
-	   (DECL) && TREE_CODE (DECL) == FUNCTION_DECL ? "ax" : 	\
-	   (DECL) && DECL_READONLY_SECTION (DECL, RELOC) ? "a" : "aw");	\
-  else									\
-    fprintf (FILE, ".section\t%s,\"%s\"\n", snam,			\
-	(DECL) && TREE_CODE (DECL) == FUNCTION_DECL ? "x" : 		\
-	(DECL) && DECL_READONLY_SECTION (DECL, RELOC) ? "a" : "w");	\
+  static struct section_info                                            \
+    {                                                                   \
+      struct section_info *next;                                        \
+      char *name;                                                       \
+      enum sect_enum {SECT_RW, SECT_RO, SECT_EXEC} type;                \
+    } *sections;                                                        \
+  struct section_info *s;                                               \
+  char *mode;                                                           \
+  enum sect_enum type;                                                  \
+  char *sname = NAME ;							\
+  if (strcmp(NAME, ".gcc_except_table") == 0) sname = ".gccexc" ;	\
+                                                                        \
+  for (s = sections; s; s = s->next)                                    \
+    if (!strcmp (NAME, s->name))                                        \
+      break;                                                            \
+                                                                        \
+  if (DECL && TREE_CODE (DECL) == FUNCTION_DECL)                        \
+    type = SECT_EXEC, mode = (TARGET_ELF) ? "ax" : "x" ;                \
+  else if (DECL && DECL_READONLY_SECTION (DECL, RELOC))                 \
+    type = SECT_RO, mode = "a";                                         \
+  else                                                                  \
+    type = SECT_RW, mode = (TARGET_ELF) ? "aw" : "w" ;                  \
+                                                                        \
+  if (s == 0)                                                           \
+    {                                                                   \
+      s = (struct section_info *) xmalloc (sizeof (struct section_info));  \
+      s->name = xmalloc ((strlen (NAME) + 1) * sizeof (*NAME));         \
+      strcpy (s->name, NAME);                                           \
+      s->type = type;                                                   \
+      s->next = sections;                                               \
+      sections = s;                                                     \
+      fprintf (FILE, ".section\t%s,\"%s\"%s\n", sname, mode,		\
+		(TARGET_ELF) ? ",@progbits" : "" );    			\
+    }                                                                   \
+  else                                                                  \
+    {                                                                   \
+      if (DECL && s->type != type)                                      \
+        error_with_decl (DECL, "%s causes a section type conflict");    \
+                                                                        \
+      fprintf (FILE, ".section\t%s\n", sname);                          \
+    }                                                                   \
 } while (0)
 
 #undef ASM_OUTPUT_SKIP
@@ -675,7 +653,7 @@ dtors_section ()							\
    (current_function_calls_setjmp || current_function_calls_longjmp))
 
 #undef JUMP_TABLES_IN_TEXT_SECTION
-#define JUMP_TABLES_IN_TEXT_SECTION 1
+#define JUMP_TABLES_IN_TEXT_SECTION (TARGET_ELF && flag_pic)
 
 #undef LOCAL_LABEL_PREFIX
 #define LOCAL_LABEL_PREFIX						\
@@ -694,7 +672,7 @@ dtors_section ()							\
 #undef NO_IMPLICIT_EXTERN_C
 #define NO_IMPLICIT_EXTERN_C 1
 
-/* JKJ FIXME - examine the rammifications of RETURN_IN_MEMORY and
+/* JKJ FIXME - examine the ramifications of RETURN_IN_MEMORY and
    RETURN_POPS_ARGS */
 
 #undef RETURN_POPS_ARGS
@@ -799,19 +777,29 @@ dtors_section ()							\
 
    SCO also allows you to compile, link and generate either ELF or COFF
    binaries. With gcc, unlike the SCO compiler, the default is ELF.
-   Specify -mcoff to gcc to produce elf binaries. -fpic will get the
+   Specify -mcoff to gcc to produce COFF binaries. -fpic will get the
    assembler and linker to produce PIC code.
 */
 
 /* Set up assembler flags for PIC and ELF compilations */
 #undef ASM_SPEC
+
+#if USE_GAS
+  /* Leave ASM_SPEC undefined so we pick up the master copy from gcc.c 
+   * Undef MD_EXEC_PREFIX becuase we don't know where GAS is, but it's not
+   * likely in /usr/ccs/bin/ 
+   */
+#undef MD_EXEC_PREFIX 
+#else
+
 #define ASM_SPEC \
- "-b %{!mcoff:elf}%{mcoff:coff \
-   %{static:%e-static not valid with -mcoff} \
-   %{shared:%e-shared not valid with -mcoff} \
-   %{symbolic:%e-symbolic not valid with -mcoff}} \
-  %{Ym,*} %{Yd,*} %{Wa,*:%*} \
-  %{!mcoff:-E%{Xa:a}%{!Xa:%{Xc:c}%{!Xc:%{Xk:k}%{!Xk:%{Xt:t}%{!Xt:a}}}},%{ansi:ansi}%{!ansi:%{posix:posix}%{!posix:%{Xpg4:xpg4}%{!Xpg4:%{Xpg4plus:XPG4PLUS}%{!Xpg4plus:%{Xods30:ods30}%{!Xods30:XPG4PLUS}}}}},ELF %{Qn:} %{!Qy:-Qn}}"
+   "-b %{!mcoff:elf}%{mcoff:coff \
+     %{static:%e-static not valid with -mcoff} \
+     %{shared:%e-shared not valid with -mcoff} \
+     %{symbolic:%e-symbolic not valid with -mcoff}} \
+    %{Ym,*} %{Yd,*} %{Wa,*:%*} \
+    %{!mcoff:-E%{Xa:a}%{!Xa:%{Xc:c}%{!Xc:%{Xk:k}%{!Xk:%{Xt:t}%{!Xt:a}}}},%{ansi:ansi}%{!ansi:%{posix:posix}%{!posix:%{Xpg4:xpg4}%{!Xpg4:%{Xpg4plus:XPG4PLUS}%{!Xpg4plus:%{Xods30:ods30}%{!Xods30:XPG4PLUS}}}}},ELF %{Qn:} %{!Qy:-Qn}}"
+#endif
 
 /* Use crt1.o as a startup file and crtn.o as a closing file.  */
 
@@ -839,12 +827,12 @@ dtors_section ()							\
 
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES \
- "-Di386 -Asystem(svr3)"
+ "-Asystem(svr3)"
 
 /* You are in a maze of GCC specs ... all alike */
 
 #undef CPP_SPEC
-#define CPP_SPEC "%(cpp_cpu) %[cpp_cpu] \
+#define CPP_SPEC "%(cpp_cpu) \
   %{fpic:%{mcoff:%e-fpic is not valid with -mcoff}} \
   %{fPIC:%{mcoff:%e-fPIC is not valid with -mcoff}} \
   -D__i386 -D__unix -D_SCO_DS=1 -D_M_I386 -D_M_XENIX -D_M_UNIX \

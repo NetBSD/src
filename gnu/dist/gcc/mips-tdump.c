@@ -1,5 +1,5 @@
 /* Read and manage MIPS symbol tables from object modules.
-   Copyright (C) 1991, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1991, 1994, 1995, 1997 Free Software Foundation, Inc.
    Contributed by hartzell@boulder.colorado.edu,
    Rewritten by meissner@osf.org.
 
@@ -20,13 +20,8 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/file.h>
-#include <time.h>
-#include <fcntl.h>
-#include <errno.h>
 #include "config.h"
+#include "system.h"
 
 #ifdef index
 #undef index
@@ -86,7 +81,7 @@ typedef char *CPTR_T;
 #define ptrdiff_t	int
 
 
-/* Redefinition of of storage classes as an enumeration for better
+/* Redefinition of storage classes as an enumeration for better
    debugging.  */
 
 #ifndef stStaParam
@@ -942,7 +937,7 @@ print_symbol (sym_ptr, number, strbase, aux_base, ifd, fdp)
 	else
 	  {
 	    used_ptr[index] = 1;
-	    printf ("      First symbol: %ld\n", aux_base[index].isym);
+	    printf ("      First symbol: %ld\n", (long) aux_base[index].isym);
 	  }
 
 	if (want_scope)
@@ -967,7 +962,7 @@ print_symbol (sym_ptr, number, strbase, aux_base, ifd, fdp)
 	  {
 	    used_ptr[index] = used_ptr[index+1] = 1;
 	    printf ("      End+1 symbol: %-7ld   Type:  %s\n",
-		    aux_base[index].isym,
+		    (long) aux_base[index].isym,
 		    type_to_string (aux_base, index+1, fdp));
 	  }
 	else			/* global symbol */

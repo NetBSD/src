@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.
-   Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Contributed by O.M.Kellogg, DASA (oliver.kellogg@space.otn.dasa.de)
 
 This file is part of GNU CC.
@@ -835,10 +835,11 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE QImode
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
    Do not define this if the table should contain absolute addresses. */
-/* #define CASE_VECTOR_PC_RELATIVE */
+/* #define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR FIX_ROUND_EXPR
@@ -909,7 +910,7 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
 
 #define REGISTER_MOVE_COST(FROM,TO)	2
 
-#define MEMORY_MOVE_COST(M)		4
+#define MEMORY_MOVE_COST(M,C,I)		4
 
 /* Tell final.c how to eliminate redundant test instructions.  */
 
@@ -1264,7 +1265,7 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
 	fprintf (FILE, "\tdata\tL%d-L%d ;addr_diff_elt\n", VALUE,REL)
 
 /* This is how to output an assembler line

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for the HP Spectrum.
-   Copyright (C) 1992, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com) of Cygnus Support
    and Tim Moore (moore@defmacro.cs.utah.edu) of the Center for
    Software Science at the University of Utah.
@@ -77,7 +77,7 @@ extern int target_flags;
    this option will fail miserably if the executable is dynamically linked
    or uses nested functions!
 
-   This is also used to trigger agressive unscaled index addressing.  */
+   This is also used to trigger aggressive unscaled index addressing.  */
 #define TARGET_NO_SPACE_REGS (target_flags & 4)
 
 /* Allow unconditional jumps in the delay slots of call instructions.  */
@@ -118,7 +118,7 @@ extern int target_flags;
 #define TARGET_FAST_INDIRECT_CALLS (target_flags & 1024)
 
 /* Generate code with big switch statements to avoid out of range branches
-   occuring within the switch table.  */
+   occurring within the switch table.  */
 #define TARGET_BIG_SWITCH (target_flags & 2048)
 
 /* Macro to define tables used to set the flags.
@@ -241,9 +241,12 @@ extern int target_flags;
 #if ((TARGET_DEFAULT | TARGET_CPU_DEFAULT) & 1) == 0
 #define CPP_SPEC "%{msnake:-D__hp9000s700 -D_PA_RISC1_1}\
  %{mpa-risc-1-1:-D__hp9000s700 -D_PA_RISC1_1}\
- %{!ansi: -D_HPUX_SOURCE -D_HIUX_SOURCE}"
+ %{!ansi: -D_HPUX_SOURCE -D_HIUX_SOURCE}\
+ %{threads:-D_REENTRANT -D_DCE_THREADS}"
 #else
-#define CPP_SPEC "%{!mpa-risc-1-0:%{!mnosnake:%{!msoft-float:-D__hp9000s700 -D_PA_RISC1_1}}} %{!ansi: -D_HPUX_SOURCE -D_HIUX_SOURCE}"
+#define CPP_SPEC "%{!mpa-risc-1-0:%{!mnosnake:%{!msoft-float:-D__hp9000s700 -D_PA_RISC1_1}}} \
+ %{!ansi: -D_HPUX_SOURCE -D_HIUX_SOURCE}\
+ %{threads:-D_REENTRANT -D_DCE_THREADS}"
 #endif
 
 /* Defines for a K&R CC */
@@ -270,6 +273,17 @@ extern int target_flags;
 /* Machine dependent reorg pass.  */
 #define MACHINE_DEPENDENT_REORG(X) pa_reorg(X)
 
+/* Prototype function used in MACHINE_DEPENDENT_REORG macro. */
+void pa_reorg ();
+
+/* Prototype function used in various macros. */
+int symbolic_operand ();
+
+/* Used in insn-*.c. */
+int following_call ();
+int function_label_operand ();
+int lhs_lshift_cint_operand ();
+
 /* Names to predefine in the preprocessor for this target machine.  */
 
 #define CPP_PREDEFINES "-Dhppa -Dhp9000s800 -D__hp9000s800 -Dhp9k8 -Dunix -Dhp9000 -Dhp800 -Dspectrum -DREVARGV -Asystem(unix) -Asystem(bsd) -Acpu(hppa) -Amachine(hppa)"
@@ -281,7 +295,7 @@ extern int target_flags;
    or "static    /usr/lib/X11R5/libX11.sl". 
 
    HPUX 10.20 also has lines like "static branch prediction ..."
-   so we filter that out explcitly.
+   so we filter that out explicitly.
 
    We also try to bound our search for libraries with marker
    lines.  What a pain.  */
@@ -752,6 +766,9 @@ enum reg_class { NO_REGS, R1_REGS, GENERAL_REGS, FP_REGS, GENERAL_OR_FP_REGS,
    : (C) == 'P' ? and_mask_p (VALUE)				\
    : 0)
 
+/* Prototype function used in macro CONST_OK_FOR_LETTER_P. */
+int zdepi_cint_p ();
+
 /* Similar, but for floating or large integer constants, and defining letters
    G and H.   Here VALUE is the CONST_DOUBLE rtx itself.
 
@@ -786,7 +803,7 @@ enum reg_class { NO_REGS, R1_REGS, GENERAL_REGS, FP_REGS, GENERAL_OR_FP_REGS,
 
 /* Return the stack location to use for secondary memory needed reloads.  */
 #define SECONDARY_MEMORY_NEEDED_RTX(MODE) \
-  gen_rtx (MEM, MODE, gen_rtx (PLUS, Pmode, stack_pointer_rtx, GEN_INT (-16)))
+  gen_rtx_MEM (MODE, gen_rtx_PLUS (Pmode, stack_pointer_rtx, GEN_INT (-16)))
 
 /* Return the maximum number of consecutive registers
    needed to represent mode MODE in a register of class CLASS.  */
@@ -892,18 +909,18 @@ enum reg_class { NO_REGS, R1_REGS, GENERAL_REGS, FP_REGS, GENERAL_OR_FP_REGS,
 
 
 #define FUNCTION_VALUE(VALTYPE, FUNC)  \
-  gen_rtx (REG, TYPE_MODE (VALTYPE), ((! TARGET_SOFT_FLOAT		     \
-				       && (TYPE_MODE (VALTYPE) == SFmode ||  \
-					   TYPE_MODE (VALTYPE) == DFmode)) ? \
-				      32 : 28))
+  gen_rtx_REG (TYPE_MODE (VALTYPE), ((! TARGET_SOFT_FLOAT		     \
+				      && (TYPE_MODE (VALTYPE) == SFmode ||  \
+					  TYPE_MODE (VALTYPE) == DFmode)) ? \
+				     32 : 28))
 
 /* Define how to find the value returned by a library function
    assuming the value has mode MODE.  */
 
 #define LIBCALL_VALUE(MODE)	\
-  gen_rtx (REG, MODE,							\
-	   (! TARGET_SOFT_FLOAT						\
-	    && ((MODE) == SFmode || (MODE) == DFmode) ? 32 : 28))
+  gen_rtx_REG (MODE,							\
+	       (! TARGET_SOFT_FLOAT					\
+	        && ((MODE) == SFmode || (MODE) == DFmode) ? 32 : 28))
 
 /* 1 if N is a possible register number for a function value
    as seen by the caller.  */
@@ -1027,7 +1044,7 @@ struct hppa_args {int words, nargs_prototype, indirect; };
    ? (!TARGET_PORTABLE_RUNTIME || (TYPE) == 0				\
       || !FLOAT_MODE_P (MODE) || TARGET_SOFT_FLOAT			\
       || (CUM).nargs_prototype > 0)					\
-      ? gen_rtx (REG, (MODE),						\
+      ? gen_rtx_REG ((MODE),						\
 		 (FUNCTION_ARG_SIZE ((MODE), (TYPE)) > 1		\
 		  ? (((!(CUM).indirect 					\
 		       || TARGET_PORTABLE_RUNTIME)			\
@@ -1044,17 +1061,17 @@ struct hppa_args {int words, nargs_prototype, indirect; };
 							      (TYPE))))))\
    /* We are calling a non-prototyped function with floating point	\
       arguments using the portable conventions.  */			\
-   : gen_rtx (PARALLEL, (MODE),						\
+   : gen_rtx_PARALLEL ((MODE),						\
 	      gen_rtvec							\
 	      (2,							\
-	       gen_rtx (EXPR_LIST, VOIDmode,				\
-			gen_rtx (REG, (MODE),				\
+	       gen_rtx_EXPR_LIST (VOIDmode,				\
+			gen_rtx_REG ((MODE),				\
 				 (FUNCTION_ARG_SIZE ((MODE), (TYPE)) > 1 \
 				  ? ((CUM).words ? 38 : 34)		\
 				  : (32 + 2 * (CUM).words))),		\
 			const0_rtx),					\
-	       gen_rtx (EXPR_LIST, VOIDmode,				\
-			gen_rtx (REG, (MODE),				\
+	       gen_rtx_EXPR_LIST (VOIDmode,				\
+			gen_rtx_REG ((MODE),				\
 				 (FUNCTION_ARG_SIZE ((MODE), (TYPE)) > 1 \
 				  ? ((CUM).words ? 23 : 25)		\
 				  : (27 - (CUM).words -			\
@@ -1109,17 +1126,20 @@ extern enum cmp_type hppa_branch_type;
 #endif
 
 #define ASM_OUTPUT_MI_THUNK(FILE, THUNK_FNDECL, DELTA, FUNCTION) \
-{ char *my_name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (THUNK_FNDECL)); \
-  char *target_name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (FUNCTION)); \
+{ char *target_name = XSTR (XEXP (DECL_RTL (FUNCTION), 0), 0); \
+  STRIP_NAME_ENCODING (target_name, target_name); \
   output_function_prologue (FILE, 0); \
   if (VAL_14_BITS_P (DELTA)) \
     fprintf (FILE, "\tb %s\n\tldo %d(%%r26),%%r26\n", target_name, DELTA); \
   else \
-    fprintf (FILE, "\taddil L%%%d,%r26\n\tb %s\n\tldo R%%%d(%%r1),%%r26\n", \
+    fprintf (FILE, "\taddil L%%%d,%%r26\n\tb %s\n\tldo R%%%d(%%r1),%%r26\n", \
 	     DELTA, target_name, DELTA); \
   fprintf (FILE, "\n\t.EXIT\n\t.PROCEND\n"); \
 }
 
+/* NAME refers to the function's name.  If we are placing each function into
+   its own section, we need to switch to the section for this function.  Note
+   that the section name will have a "." prefix.  */
 #define ASM_OUTPUT_FUNCTION_PREFIX(FILE, NAME) \
   {									\
     char *name;								\
@@ -1128,7 +1148,7 @@ extern enum cmp_type hppa_branch_type;
       fputs ("\t.NSUBSPA $CODE$,QUAD=0,ALIGN=8,ACCESS=44,CODE_ONLY\n", FILE); \
     else if (! TARGET_PORTABLE_RUNTIME && TARGET_GAS)			\
       fprintf (FILE,							\
-	       "\t.SUBSPA %s\n", name);				\
+	       "\t.SUBSPA .%s\n", name);				\
   }
     
 #define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL) \
@@ -1324,9 +1344,9 @@ extern union tree_node *current_function_decl;
   rtx start_addr, end_addr;						\
 									\
   start_addr = memory_address (Pmode, plus_constant ((TRAMP), 36));	\
-  emit_move_insn (gen_rtx (MEM, Pmode, start_addr), (FNADDR));		\
+  emit_move_insn (gen_rtx_MEM (Pmode, start_addr), (FNADDR));		\
   start_addr = memory_address (Pmode, plus_constant ((TRAMP), 40));	\
-  emit_move_insn (gen_rtx (MEM, Pmode, start_addr), (CXT));		\
+  emit_move_insn (gen_rtx_MEM (Pmode, start_addr), (CXT));		\
   /* fdc and fic only use registers for the address to flush,		\
      they do not accept integer displacements.  */ 			\
   start_addr = force_reg (SImode, (TRAMP));				\
@@ -1372,7 +1392,7 @@ extern struct rtx_def *hppa_builtin_saveregs ();
 /* Now macros that check whether X is a register and also,
    strictly, whether it is in a specified class.
 
-   These macros are specific to the the HP-PA, and may be used only
+   These macros are specific to the HP-PA, and may be used only
    in code for printing assembler insns and in conditions for
    define_optimization.  */
 
@@ -1533,7 +1553,7 @@ extern struct rtx_def *hppa_builtin_saveregs ();
     goto ADDR;						\
   else if (GET_CODE (X) == PLUS)			\
     {							\
-      rtx base = 0, index;				\
+      rtx base = 0, index = 0;				\
       if (flag_pic && XEXP (X, 0) == pic_offset_table_rtx)\
 	{						\
 	  if (GET_CODE (XEXP (X, 1)) == REG		\
@@ -1595,6 +1615,70 @@ extern struct rtx_def *hppa_builtin_saveregs ();
 	   && GET_CODE (XEXP (X, 1)) == UNSPEC)		\
     goto ADDR;						\
 }
+
+/* Look for machine dependent ways to make the invalid address AD a
+   valid address.
+
+   For the PA, transform:
+
+        memory(X + <large int>)
+
+   into:
+
+        if (<large int> & mask) >= 16
+          Y = (<large int> & ~mask) + mask + 1  Round up.
+        else
+          Y = (<large int> & ~mask)             Round down.
+        Z = X + Y
+        memory (Z + (<large int> - Y));
+
+   This makes reload inheritance and reload_cse work better since Z
+   can be reused.
+
+   There may be more opportunities to improve code with this hook.  */
+#define LEGITIMIZE_RELOAD_ADDRESS(AD, MODE, OPNUM, TYPE, IND, WIN) 	\
+do { 									\
+  int offset, newoffset, mask;						\
+  rtx new, temp = NULL_RTX;						\
+  mask = GET_MODE_CLASS (MODE) == MODE_FLOAT ? 0x1f : 0x3fff;		\
+									\
+  if (optimize								\
+      && GET_CODE (AD) == PLUS)						\
+    temp = simplify_binary_operation (PLUS, Pmode,			\
+				      XEXP (AD, 0), XEXP (AD, 1));	\
+									\
+  new = temp ? temp : AD;						\
+									\
+  if (optimize								\
+      && GET_CODE (new) == PLUS						\
+      && GET_CODE (XEXP (new, 0)) == REG				\
+      && GET_CODE (XEXP (new, 1)) == CONST_INT)				\
+    {									\
+      offset = INTVAL (XEXP ((new), 1));				\
+									\
+      /* Choose rounding direction.  Round up if we are >= halfway.  */	\
+      if ((offset & mask) >= ((mask + 1) / 2))				\
+	newoffset = (offset & ~mask) + mask + 1;			\
+      else								\
+	newoffset = offset & ~mask;					\
+									\
+      if (newoffset != 0						\
+	  && VAL_14_BITS_P (newoffset))					\
+	{								\
+									\
+	  temp = gen_rtx_PLUS (Pmode, XEXP (new, 0),			\
+			       GEN_INT (newoffset));			\
+	  AD = gen_rtx_PLUS (Pmode, temp, GEN_INT (offset - newoffset));\
+	  push_reload (XEXP (AD, 0), 0, &XEXP (AD, 0), 0,		\
+			     BASE_REG_CLASS, Pmode, VOIDmode, 0, 0,	\
+			     (OPNUM), (TYPE));				\
+	  goto WIN;							\
+	}								\
+    }									\
+} while (0)
+
+
+
 
 /* Try machine-dependent ways of modifying an illegitimate address
    to be legitimate.  If we find one, return the new, valid address.
@@ -1649,7 +1733,7 @@ extern struct rtx_def *hppa_legitimize_address ();
        && TREE_READONLY (DECL) && ! TREE_SIDE_EFFECTS (DECL)		\
        && (! DECL_INITIAL (DECL) || ! reloc_needed (DECL_INITIAL (DECL))) \
        && !flag_pic)							\
-   || (*tree_code_type[(int) TREE_CODE (DECL)] == 'c'			\
+   || (TREE_CODE_CLASS (TREE_CODE (DECL)) == 'c'			\
        && !(TREE_CODE (DECL) == STRING_CST && flag_writable_strings)))
 
 #define FUNCTION_NAME_P(NAME) \
@@ -1745,8 +1829,14 @@ while (0)
 /* Nonzero if access to memory by bytes is slow and undesirable.  */
 #define SLOW_BYTE_ACCESS 1
 
-/* Do not break .stabs pseudos into continuations.  */
-#define DBX_CONTIN_LENGTH 4000
+/* Do not break .stabs pseudos into continuations.
+
+   This used to be zero (no max length), but big enums and such can
+   cause huge strings which killed gas.
+
+   We also have to avoid lossage in dbxout.c -- it does not compute the
+   string size accurately, so we are real conservative here.  */
+#define DBX_CONTIN_LENGTH 3000
 
 /* Value is 1 if truncating an integer of INPREC bits to OUTPREC bits
    is done just by pretending it is already truncated.  */
@@ -1806,20 +1896,20 @@ while (0)
    return it with a return statement.  Otherwise, break from the switch.  */
 
 #define CONST_COSTS(RTX,CODE,OUTER_CODE) \
-  case CONST_INT:						\
-    if (INTVAL (RTX) == 0) return 0;				\
-    if (INT_14_BITS (RTX)) return 1;				\
-  case HIGH:							\
-    return 2;							\
-  case CONST:							\
-  case LABEL_REF:						\
-  case SYMBOL_REF:						\
-    return 4;							\
-  case CONST_DOUBLE:						\
-    if (RTX == CONST0_RTX (DFmode) || RTX == CONST0_RTX (SFmode)\
-	&& OUTER_CODE != SET)					\
-      return 0;							\
-    else							\
+  case CONST_INT:							\
+    if (INTVAL (RTX) == 0) return 0;					\
+    if (INT_14_BITS (RTX)) return 1;					\
+  case HIGH:								\
+    return 2;								\
+  case CONST:								\
+  case LABEL_REF:							\
+  case SYMBOL_REF:							\
+    return 4;								\
+  case CONST_DOUBLE:							\
+    if ((RTX == CONST0_RTX (DFmode) || RTX == CONST0_RTX (SFmode))	\
+	&& OUTER_CODE != SET)						\
+      return 0;								\
+    else								\
       return 8;
 
 #define ADDRESS_COST(RTX) \
@@ -1905,9 +1995,6 @@ while (0)
    just call `pa_adjust_insn_length' to do the real work.  */
 #define ADJUST_INSN_LENGTH(INSN, LENGTH)	\
   LENGTH += pa_adjust_insn_length (INSN, LENGTH);
-
-/* Enable a bug fix.  (This is for extra caution.)  */
-#define SHORTEN_WITH_ADJUST_INSN_LENGTH
 
 /* Millicode insns are actually function calls with some special
    constraints on arguments and register usage.
@@ -2240,7 +2327,7 @@ DTORS_SECTION_FUNCTION
     fprintf (FILE, "\tb L$%04d\n\tnop\n", VALUE)
 
 /* Jump tables are executable code and live in the TEXT section on the PA.  */
-#define JUMP_TABLES_IN_TEXT_SECTION
+#define JUMP_TABLES_IN_TEXT_SECTION 1
 
 /* This is how to output an element of a case-vector that is relative.
    This must be defined correctly as it is used when generating PIC code.
@@ -2249,7 +2336,7 @@ DTORS_SECTION_FUNCTION
    on the PA since ASM_OUTPUT_ADDR_VEC_ELT uses pc-relative jump instructions
    rather than a table of absolute addresses.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
   if (TARGET_BIG_SWITCH)					\
     fprintf (FILE, "\tstw %%r1,-16(%%r30)\n\tldw T'L$%04d(%%r19),%%r1\n\tbv 0(%%r1)\n\tldw -16(%%r30),%%r1\n", VALUE);				\
   else								\
@@ -2393,10 +2480,63 @@ extern char *output_div_insn ();
 extern char *output_mod_insn ();
 extern char *singlemove_string ();
 extern void output_arg_descriptor ();
+extern void output_deferred_plabels ();
+extern void override_options ();
+extern void output_ascii ();
+extern void output_function_prologue ();
+extern void output_function_epilogue ();
 extern void output_global_address ();
+extern void print_operand ();
 extern struct rtx_def *legitimize_pic_address ();
 extern struct rtx_def *gen_cmp_fp ();
 extern void hppa_encode_label ();
+extern int arith11_operand ();
+extern int symbolic_expression_p ();
+extern int reloc_needed ();
+extern int compute_frame_size ();
+extern int hppa_address_cost ();
+extern int and_mask_p ();
+extern int symbolic_memory_operand ();
+extern int pa_adjust_cost ();
+extern int pa_adjust_insn_length ();
+extern int int11_operand ();
+extern int reg_or_cint_move_operand ();
+extern int arith5_operand ();
+extern int uint5_operand ();
+extern int pic_label_operand ();
+extern int plus_xor_ior_operator ();
+extern int basereg_operand ();
+extern int shadd_operand ();
+extern int arith_operand ();
+extern int read_only_operand ();
+extern int move_operand ();
+extern int and_operand ();
+extern int ior_operand ();
+extern int arith32_operand ();
+extern int uint32_operand ();
+extern int reg_or_nonsymb_mem_operand ();
+extern int reg_or_0_operand ();
+extern int reg_or_0_or_nonsymb_mem_operand ();
+extern int pre_cint_operand ();
+extern int post_cint_operand ();
+extern int div_operand ();
+extern int int5_operand ();
+extern int movb_comparison_operator ();
+extern int ireg_or_int5_operand ();
+extern int fmpyaddoperands ();
+extern int fmpysuboperands ();
+extern int call_operand_address ();
+extern int cint_ok_for_move ();
+extern int ior_operand ();
+extern void emit_bcond_fp ();
+extern int emit_move_sequence ();
+extern int emit_hpdiv_const ();
+extern void hppa_expand_prologue ();
+extern void hppa_expand_epilogue ();
+extern int hppa_can_use_return_insn_p ();
+extern int is_function_label_plus_const ();
+extern int jump_in_call_delay ();
+extern enum reg_class secondary_reload_class ();
 
 /* Declare functions defined in pa.c and used in templates.  */
 

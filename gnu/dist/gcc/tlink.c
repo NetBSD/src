@@ -1,8 +1,7 @@
-/* CYGNUS LOCAL: whole file jason */
 /* Scan linker error messages for missing template instantiations and provide
    them.
 
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1998 Free Software Foundation, Inc.
    Contributed by Jason Merrill (jason@cygnus.com).
 
 This file is part of GNU CC.
@@ -21,11 +20,11 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-#include <stdio.h>
-#include <ctype.h>
 #include "config.h"
+#include "system.h"
 #include "hash.h"
 #include "demangle.h"
+#include "toplev.h"
 
 #define MAX_ITERATIONS 17
 
@@ -34,8 +33,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define obstack_chunk_free free
 
 extern char * xmalloc PARAMS((unsigned));
-extern void free ();
-extern char * getenv ();
 
 /* Defined in collect2.c.  */
 extern int vflag, debug;
@@ -287,10 +284,10 @@ static char *
 frob_extension (s, ext)
      char *s, *ext;
 {
-  char *p = (char *) rindex (s, '/');
+  char *p = rindex (s, '/');
   if (! p)
     p = s;
-  p = (char *) rindex (p, '.');
+  p = rindex (p, '.');
   if (! p)
     p = s + strlen (s);
 
@@ -533,13 +530,13 @@ scan_linker_output (fname)
       symbol *sym;
       int end;
       
-      while (*p && isspace (*p))
+      while (*p && ISSPACE (*p))
 	++p;
 
       if (! *p)
 	continue;
 
-      for (q = p; *q && ! isspace (*q); ++q)
+      for (q = p; *q && ! ISSPACE (*q); ++q)
 	;
 
       /* Try the first word on the line.  */
@@ -556,7 +553,7 @@ scan_linker_output (fname)
 	/* Try a mangled name in `quotes'.  */
 	{
 	  demangled *dem = 0;
-	  p = (char *) index (q+1, '`');
+	  p = index (q+1, '`');
 	  q = 0;
 
 #define MUL "multiple definition of "
@@ -567,7 +564,7 @@ scan_linker_output (fname)
 	      char *beg = p - sizeof (MUL) + 1;
 	      *p = 0;
 	      if (!strcmp (beg, MUL) || !strcmp (beg, UND))
-		p++, q = (char *) index (p, '\'');
+		p++, q = index (p, '\'');
 	    }
 	  if (q)
 	    *q = 0, dem = demangled_hash_lookup (p, false);
@@ -576,7 +573,10 @@ scan_linker_output (fname)
 	}
 
       if (sym && sym->tweaked)
-	return 0;
+	{
+	  fclose (stream);
+	  return 0;
+	}
       if (sym && !sym->tweaking)
 	{
 	  if (tlink_verbose >= 2)
@@ -589,6 +589,7 @@ scan_linker_output (fname)
       obstack_free (&temporary_obstack, temporary_firstobj);
     }
 
+  fclose (stream);
   return (file_stack != NULL);
 }
 

@@ -1,6 +1,6 @@
 /* bad.def -- Public #include File (module.h template V1.0)
    Copyright (C) 1995-1997 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -549,16 +549,18 @@ FFEBAD_MSGS1 (FFEBAD_ARRAY_AS_SFARG, FATAL,
 "Array supplied at %1 for dummy argument `%A' in statement function reference at %0")
 FFEBAD_MSGS1 (FFEBAD_FORMAT_UNSUPPORTED, FATAL,
 "Unsupported FORMAT specifier at %0")
-FFEBAD_MSGS2 (FFEBAD_OPEN_UNSUPPORTED, WARN,
+FFEBAD_MSGS1 (FFEBAD_FORMAT_VARIABLE, FATAL,
+"Variable-expression FORMAT specifier at %0 -- unsupported")
+FFEBAD_MSGS2 (FFEBAD_OPEN_UNSUPPORTED, FATAL,
 "Unsupported OPEN control item at %0 -- ACTION=, ASSOCIATEVARIABLE=, BLOCKSIZE=, BUFFERCOUNT=, CARRIAGECONTROL=, DEFAULTFILE=, DELIM=, DISPOSE=, EXTENDSIZE=, INITIALSIZE=, KEY=, MAXREC=, NOSPANBLOCKS, ORGANIZATION=, PAD=, POSITION=, READONLY=, RECORDTYPE=, SHARED=, and USEROPEN= are not supported",
 "Unsupported OPEN control item at %0")
-FFEBAD_MSGS2 (FFEBAD_INQUIRE_UNSUPPORTED, WARN,
+FFEBAD_MSGS2 (FFEBAD_INQUIRE_UNSUPPORTED, FATAL,
 "Unsupported INQUIRE control item at %0 -- ACTION=, CARRIAGECONTROL=, DEFAULTFILE=, DELIM=, KEYED=, ORGANIZATION=, PAD=, POSITION=, READ=, READWRITE=, RECORDTYPE=, and WRITE= are not supported",
 "Unsupported INQUIRE control item at %0")
-FFEBAD_MSGS2 (FFEBAD_READ_UNSUPPORTED, WARN,
+FFEBAD_MSGS2 (FFEBAD_READ_UNSUPPORTED, FATAL,
 "Unsupported READ control item at %0 -- ADVANCE=, EOR=, KEYEQ=, KEYGE=, KEYGT=, KEYID=, NULLS=, and SIZE= are not supported",
 "Unsupported READ control item at %0")
-FFEBAD_MSGS2 (FFEBAD_WRITE_UNSUPPORTED, WARN,
+FFEBAD_MSGS2 (FFEBAD_WRITE_UNSUPPORTED, FATAL,
 "Unsupported WRITE control item at %0 -- ADVANCE= and EOR= are not supported",
 "Unsupported WRITE control item at %0")
 FFEBAD_MSGS1 (FFEBAD_VXT_UNSUPPORTED, FATAL,
@@ -654,23 +656,23 @@ FFEBAD_MSGS1 (FFEBAD_NESTED_PERCENT, WARN,
 FFEBAD_MSGS2 (FFEBAD_ACTUALARG, WARN,
 "Invalid actual argument at %0 -- replace hollerith constants with %%REF('string') and typeless constants with INTEGER constant equivalents, or use -fugly-args or -fugly",
 "Invalid actual argument at %0")
-FFEBAD_MSGS2 (FFEBAD_QUAD_UNSUPPORTED, WARN,
+FFEBAD_MSGS2 (FFEBAD_QUAD_UNSUPPORTED, FATAL,
 "Quadruple-precision floating-point unsupported -- treating constant at %0 as double-precision",
 "Quadruple-precision floating-point unsupported")
 FFEBAD_MSGS2 (FFEBAD_TOO_BIG_INIT, WARN,
 "Initialization of large (%B-unit) aggregate area `%A' at %0 currently very slow and takes lots of memory during g77 compile -- to be improved in 0.6",
 "This could take a while (initializing `%A' at %0)...")
-FFEBAD_MSGS1 (FFEBAD_BLOCKDATA_STMT, WARN,
+FFEBAD_MSGS1 (FFEBAD_BLOCKDATA_STMT, FATAL,
 "Statement at %0 invalid in BLOCK DATA program unit at %1")
-FFEBAD_MSGS1 (FFEBAD_TRUNCATING_CHARACTER, WARN,
+FFEBAD_MSGS1 (FFEBAD_TRUNCATING_CHARACTER, FATAL,
 "Truncating characters on right side of character constant at %0")
-FFEBAD_MSGS1 (FFEBAD_TRUNCATING_HOLLERITH, WARN,
+FFEBAD_MSGS1 (FFEBAD_TRUNCATING_HOLLERITH, FATAL,
 "Truncating characters on right side of hollerith constant at %0")
-FFEBAD_MSGS1 (FFEBAD_TRUNCATING_NUMERIC, WARN,
+FFEBAD_MSGS1 (FFEBAD_TRUNCATING_NUMERIC, FATAL,
 "Truncating non-zero data on left side of numeric constant at %0")
-FFEBAD_MSGS1 (FFEBAD_TRUNCATING_TYPELESS, WARN,
+FFEBAD_MSGS1 (FFEBAD_TRUNCATING_TYPELESS, FATAL,
 "Truncating non-zero data on left side of typeless constant at %0")
-FFEBAD_MSGS1 (FFEBAD_TYPELESS_OVERFLOW, WARN,
+FFEBAD_MSGS1 (FFEBAD_TYPELESS_OVERFLOW, FATAL,
 "Typeless constant at %0 too large")
 FFEBAD_MSGS1 (FFEBAD_AMPERSAND, WARN,
 "First-column ampersand continuation at %0")
@@ -696,6 +698,8 @@ FFEBAD_MSGS1 (FFEBAD_FILEWIDE_ARG_W, WARN,
 "Argument #%B of `%A' is %C at %0 but is %D at %1 [info -f g77 M GLOBALS]")
 FFEBAD_MSGS1 (FFEBAD_ARRAY_LARGE, FATAL,
 "Array `%A' at %0 is too large to handle")
+FFEBAD_MSGS1 (FFEBAD_SFUNC_UNUSED, WARN,
+"Statement function `%A' defined at %0 is not used")
 
 #undef INFORM
 #undef TRIVIAL

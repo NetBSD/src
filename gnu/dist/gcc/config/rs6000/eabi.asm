@@ -1,7 +1,7 @@
 /*
  * special support for eabi
  *
- *   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+ *   Copyright (C) 1995, 1996, 1998 Free Software Foundation, Inc.
  *   Written By Michael Meissner
  * 
  * This file is free software; you can redistribute it and/or modify it
@@ -152,6 +152,7 @@ FUNC_START(__eabi)
 	subf.	12,12,11			/* calculate difference */
 	lwzx	9,10,12				/* done flag */
 	cmplwi	2,9,0				/* init flag != 0? */
+	mtlr	0				/* restore in case branch was taken */
 	bnelr	2				/* return now, if we've been called already */
 	stwx	1,10,12				/* store a non-zero value in the done flag */
 	beq+	0,.Lsdata			/* skip if we don't need to relocate */
@@ -182,13 +183,13 @@ FUNC_START(__eabi)
 	lwz	4,.Lexcepte(11)			/* exception table pointers end */
 	bl	FUNC_NAME(__eabi_convert)	/* convert exceptions */
 
-/* Fixup the the addresses in the GOT below _GLOBAL_OFFSET_TABLE_-4 */
+/* Fixup the addresses in the GOT below _GLOBAL_OFFSET_TABLE_-4 */
 
 	lwz	3,.Lgots(11)			/* GOT table pointers start */
 	lwz	4,.Lgotm1(11)			/* GOT table pointers below _GLOBAL_OFFSET_TABLE-4 */
 	bl	FUNC_NAME(__eabi_convert)	/* convert lower GOT */
 
-/* Fixup the the addresses in the GOT above _GLOBAL_OFFSET_TABLE_+12 */
+/* Fixup the addresses in the GOT above _GLOBAL_OFFSET_TABLE_+12 */
 
 	lwz	3,.Lgotm2(11)			/* GOT table pointers above _GLOBAL_OFFSET_TABLE+12 */
 	lwz	4,.Lgote(11)			/* GOT table pointers end */

@@ -1,6 +1,6 @@
 /* com-rt.def -- Public #include File (module.h template V1.0)
    Copyright (C) 1995-1997 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -143,6 +143,7 @@ DEFGFRT (FFECOM_gfrtDASIN, "d_asin", FFECOM_rttypeDOUBLE_, "&d", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtDATAN, "d_atan", FFECOM_rttypeDOUBLE_, "&d", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtDATAN2, "d_atn2", FFECOM_rttypeDOUBLE_, "&d", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtDATE, "G77_date_0", FFECOM_rttypeVOID_, "&a", FALSE, FALSE)
+DEFGFRT (FFECOM_gfrtDATE_AND_TIME, "G77_date_and_time_0", FFECOM_rttypeVOID_, "&a&a&a&i", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtL_BESJ0, "j0", FFECOM_rttypeDOUBLE_, "d", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtL_BESJ1, "j1", FFECOM_rttypeDOUBLE_, "d", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtL_BESJN, "jn", FFECOM_rttypeDOUBLE_, "id", FALSE, FALSE)
@@ -225,7 +226,7 @@ DEFGFRT (FFECOM_gfrtRENAME, "G77_rename_0", FFECOM_rttypeINTEGER_, "&a&a", FALSE
 DEFGFRT (FFECOM_gfrtSECNDS, "G77_secnds_0", FFECOM_rttypeREAL_F2C_, "&f", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtSECOND, "G77_second_0", FFECOM_rttypeREAL_F2C_, 0, FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtSIGN, "r_sign", FFECOM_rttypeREAL_F2C_, "&f&f", FALSE, FALSE)
-DEFGFRT (FFECOM_gfrtL_SIGNAL, "G77_signal_0", FFECOM_rttypeFTNINT_, "&i0", FALSE, FALSE)
+DEFGFRT (FFECOM_gfrtL_SIGNAL, "G77_signal_0", FFECOM_rttypeVOIDSTAR_, "&i0", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtSIN, "r_sin", FFECOM_rttypeREAL_F2C_, "&f", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtSINH, "r_sinh", FFECOM_rttypeREAL_F2C_, "&f", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtSLEEP, "G77_sleep_0", FFECOM_rttypeVOID_, "&i", FALSE, FALSE)
@@ -234,7 +235,7 @@ DEFGFRT (FFECOM_gfrtSRAND, "G77_srand_0", FFECOM_rttypeVOID_, "&i", FALSE, FALSE
 DEFGFRT (FFECOM_gfrtSTAT, "G77_stat_0", FFECOM_rttypeINTEGER_, "&a&i", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtSYMLNK, "G77_symlnk_0", FFECOM_rttypeINTEGER_, "&a&a", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtSYSTEM, "G77_system_0", FFECOM_rttypeINTEGER_, "&a", FALSE, FALSE)
-DEFGFRT (FFECOM_gfrtSYSTEM_CLOCK, "system_clock_", FFECOM_rttypeVOID_, "&i&i&i", FALSE, FALSE)
+DEFGFRT (FFECOM_gfrtSYSTEM_CLOCK, "G77_system_clock_0", FFECOM_rttypeVOID_, "&i&i&i", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtTAN, "r_tan", FFECOM_rttypeREAL_F2C_, "&f", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtTANH, "r_tanh", FFECOM_rttypeREAL_F2C_, "&f", FALSE, FALSE)
 DEFGFRT (FFECOM_gfrtTIME, "G77_time_0", FFECOM_rttypeLONGINT_, 0, FALSE, FALSE)

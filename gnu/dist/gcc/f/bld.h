@@ -1,6 +1,6 @@
 /* bld.h -- Public #include File (module.h template V1.0)
    Copyright (C) 1995, 1996 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -418,18 +418,21 @@ struct _ffebld_
 	  {
 	    ffebldConstant expr;
 	    ffebld orig;	/* Original expression, or NULL if none. */
+	    ffetargetAlign pad;	/* Initial padding (for DATA, etc.). */
 	  }
 	conter;
 	struct
 	  {
 	    ffebldConstantArray array;
 	    ffetargetOffset size;
+	    ffetargetAlign pad;	/* Initial padding (for DATA, etc.). */
 	  }
 	arrter;
 	struct
 	  {
 	    ffebldConstantArray array;
 	    ffebit bits;
+	    ffetargetAlign pad;	/* Initial padding (for DATA, etc.). */
 	  }
 	accter;
 	struct
@@ -477,7 +480,9 @@ extern struct _ffebld_pool_stack_ ffebld_pool_stack_;
 /* Declare functions with prototypes. */
 
 int ffebld_constant_cmp (ffebldConstant c1, ffebldConstant c2);
+#if FFECOM_targetCURRENT == FFECOM_targetFFE
 void ffebld_constant_dump (ffebldConstant c);
+#endif
 bool ffebld_constant_is_magical (ffebldConstant c);
 bool ffebld_constant_is_zero (ffebldConstant c);
 #if FFETARGET_okCHARACTER1
@@ -680,8 +685,10 @@ ffebldConstant ffebld_constant_new_typeless_ov (ffelexToken t);
 ffebldConstant ffebld_constant_new_typeless_val (ffebldConst type,
 						 ffetargetTypeless val);
 ffebldConstant ffebld_constant_negated (ffebldConstant c);
+#if FFECOM_targetCURRENT == FFECOM_targetFFE
 void ffebld_constantarray_dump (ffebldConstantArray array, ffeinfoBasictype bt,
 		     ffeinfoKindtype kt, ffetargetOffset size, ffebit bits);
+#endif
 ffebldConstantUnion ffebld_constantarray_get (ffebldConstantArray array,
 	   ffeinfoBasictype bt, ffeinfoKindtype kt, ffetargetOffset offset);
 void ffebld_constantarray_kill (ffebldConstantArray array, ffeinfoBasictype bt,
@@ -698,10 +705,12 @@ void ffebld_constantarray_preparray (void **aptr, void **cptr, size_t *size,
 				 ffeinfoBasictype cbt, ffeinfoKindtype ckt);
 void ffebld_constantarray_put (ffebldConstantArray array, ffeinfoBasictype bt,
   ffeinfoKindtype kt, ffetargetOffset offset, ffebldConstantUnion constant);
+#if FFECOM_targetCURRENT == FFECOM_targetFFE
 void ffebld_constantunion_dump (ffebldConstantUnion u, ffeinfoBasictype bt,
 				ffeinfoKindtype kt);
 void ffebld_dump (ffebld b);
 void ffebld_dump_prefix (FILE *out, ffeinfoBasictype bt, ffeinfoKindtype kt);
+#endif
 void ffebld_init_0 (void);
 void ffebld_init_1 (void);
 void ffebld_init_2 (void);
@@ -726,13 +735,17 @@ ffetargetCharacterSize ffebld_size_max (ffebld b);
 
 #define ffebld_accter(b) ((b)->u.accter.array)
 #define ffebld_accter_bits(b) ((b)->u.accter.bits)
+#define ffebld_accter_pad(b) ((b)->u.accter.pad)
 #define ffebld_accter_set_bits(b,bt) ((b)->u.accter.bits = (bt))
+#define ffebld_accter_set_pad(b,p) ((b)->u.accter.pad = (p))
 #define ffebld_accter_size(b) ffebit_size((b)->u.accter.bits)
 #define ffebld_append_item(b,i) (**(b) = ffebld_new_item((i),NULL),	      \
 				 *(b) = &((**(b))->u.item.trail))
 #define ffebld_arity(b) ffebld_arity_op(ffebld_op(b))
 #define ffebld_arity_op(o) (ffebld_arity_op_[o])
 #define ffebld_arrter(b) ((b)->u.arrter.array)
+#define ffebld_arrter_pad(b) ((b)->u.arrter.pad)
+#define ffebld_arrter_set_pad(b,p) ((b)->u.arrter.pad = (p))
 #define ffebld_arrter_set_size(b,s) ((b)->u.arrter.size = (s))
 #define ffebld_arrter_size(b) ((b)->u.arrter.size)
 #if FFEBLD_whereconstCURRENT_ == FFEBLD_whereconstPROGUNIT_
@@ -821,7 +834,9 @@ ffetargetCharacterSize ffebld_size_max (ffebld b);
 #define ffebld_constant_union(c) ((c)->u)
 #define ffebld_conter(b) ((b)->u.conter.expr)
 #define ffebld_conter_orig(b) ((b)->u.conter.orig)
+#define ffebld_conter_pad(b) ((b)->u.conter.pad)
 #define ffebld_conter_set_orig(b,o) ((b)->u.conter.orig = (o))
+#define ffebld_conter_set_pad(b,p) ((b)->u.conter.pad = (p))
 #define ffebld_copy(b) (b)	/* ~~~Someday really make a copy. */
 #define ffebld_cu_ptr_typeless(u) &(u).typeless
 #define ffebld_cu_ptr_hollerith(u) &(u).hollerith

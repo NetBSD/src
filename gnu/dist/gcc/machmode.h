@@ -53,10 +53,14 @@ Boston, MA 02111-1307, USA.  */
 /* Provide a default way to print an address in hex via printf.  */
 
 #ifndef HOST_PTR_PRINTF
-#define HOST_PTR_PRINTF \
-  (sizeof (int) == sizeof (char *) ? "%x" \
-   : sizeof (long) == sizeof (char *) ? "%lx" : "%llx")
-#endif
+# ifdef HAVE_PRINTF_PTR
+#  define HOST_PTR_PRINTF "%p"
+# else
+#  define HOST_PTR_PRINTF \
+    (sizeof (int) == sizeof (char *) ? "%x" \
+     : sizeof (long) == sizeof (char *) ? "%lx" : "%llx")
+# endif
+#endif /* ! HOST_PTR_PRINTF */
 
 /* Provide defaults for the way to print a HOST_WIDE_INT
    in various manners.  */
@@ -162,6 +166,11 @@ extern enum mode_class mode_class[];
 /* Nonzero if MODE is a floating-point mode.  */
 #define FLOAT_MODE_P(MODE)		\
   (GET_MODE_CLASS (MODE) == MODE_FLOAT	\
+   || GET_MODE_CLASS (MODE) == MODE_COMPLEX_FLOAT)
+
+/* Nonzero if MODE is a complex mode.  */
+#define COMPLEX_MODE_P(MODE)			\
+  (GET_MODE_CLASS (MODE) == MODE_COMPLEX_INT	\
    || GET_MODE_CLASS (MODE) == MODE_COMPLEX_FLOAT)
 
 /* Get the size in bytes of an object of mode MODE.  */

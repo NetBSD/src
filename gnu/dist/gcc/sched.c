@@ -1,5 +1,5 @@
 /* Instruction scheduling pass.
-   Copyright (C) 1992, 93-96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93-97, 1998 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com)
    Enhanced by, and currently maintained by, Jim Wilson (wilson@cygnus.com)
 
@@ -117,8 +117,8 @@ Boston, MA 02111-1307, USA.  */
    other NOTE insns are grouped in their same relative order at the
    beginning of basic blocks that have been scheduled.  */
 
-#include <stdio.h>
 #include "config.h"
+#include "system.h"
 #include "rtl.h"
 #include "basic-block.h"
 #include "regs.h"
@@ -179,7 +179,7 @@ static unsigned int *insn_blockage;
 #define UNIT_BLOCKED(B) ((B) >> (2 * BLOCKAGE_BITS))
 #define BLOCKAGE_RANGE(B) \
   (((((B) >> BLOCKAGE_BITS) & BLOCKAGE_MASK) << (HOST_BITS_PER_INT / 2)) \
-   | (B) & BLOCKAGE_MASK)
+   | ((B) & BLOCKAGE_MASK))
 
 /* Encodings of the `<name>_unit_blockage_range' function.  */
 #define MIN_BLOCKAGE_COST(R) ((R) >> (HOST_BITS_PER_INT / 2))
@@ -264,7 +264,7 @@ static rtx dead_notes;
    The transition (R->S) is implemented in the scheduling loop in
    `schedule_block' when the best insn to schedule is chosen.
    The transition (R->Q) is implemented in `schedule_select' when an
-   insn is found to to have a function unit conflict with the already
+   insn is found to have a function unit conflict with the already
    committed insns.
    The transitions (P->R and P->Q) are implemented in `schedule_insn' as
    insns move from the ready list to the scheduled list.
@@ -319,10 +319,10 @@ static void sched_analyze_2		PROTO((rtx, rtx));
 static void sched_analyze_insn		PROTO((rtx, rtx, rtx));
 static int sched_analyze		PROTO((rtx, rtx));
 static void sched_note_set		PROTO((int, rtx, int));
-static int rank_for_schedule		PROTO((rtx *, rtx *));
+static int rank_for_schedule		PROTO((const GENERIC_PTR, const GENERIC_PTR));
 static void swap_sort			PROTO((rtx *, int));
 static void queue_insn			PROTO((rtx, int));
-static int birthing_insn		PROTO((rtx));
+static int birthing_insn_p		PROTO((rtx));
 static void adjust_priority		PROTO((rtx));
 static int schedule_insn		PROTO((rtx, rtx *, int, int));
 static int schedule_select		PROTO((rtx *, int, int, FILE *));
@@ -431,17 +431,19 @@ remove_dependence (insn, elem)
   rtx prev, link;
   int found = 0;
 
-  for (prev = 0, link = LOG_LINKS (insn); link;
-       prev = link, link = XEXP (link, 1))
+  for (prev = 0, link = LOG_LINKS (insn); link; link = XEXP (link, 1))
     {
       if (XEXP (link, 0) == elem)
 	{
+	  RTX_INTEGRATED_P (link) = 1;
 	  if (prev)
 	    XEXP (prev, 1) = XEXP (link, 1);
 	  else
 	    LOG_LINKS (insn) = XEXP (link, 1);
 	  found = 1;
 	}
+      else
+	prev = link;
     }
 
   if (! found)
@@ -745,9 +747,9 @@ actual_hazard (unit, insn, clock, cost)
       int instance = unit;
       int best_cost = actual_hazard_this_instance (unit, instance, insn,
 						   clock, cost);
+#if MAX_MULTIPLICITY > 1
       int this_cost;
 
-#if MAX_MULTIPLICITY > 1
       if (best_cost > cost)
 	{
 	  for (i = function_units[unit].multiplicity - 1; i > 0; i--)
@@ -918,6 +920,11 @@ priority (insn)
       for (prev = LOG_LINKS (insn); prev; prev = XEXP (prev, 1))
 	{
 	  rtx x = XEXP (prev, 0);
+
+	  /* If this was a duplicate of a dependence we already deleted,
+	     ignore it.  */
+	  if (RTX_INTEGRATED_P (prev))
+	    continue;
 
 	  /* A dependence pointing to a note or deleted insn is always
 	     obsolete, because sched_analyze_insn will have created any
@@ -1326,8 +1333,8 @@ sched_analyze_2 (x, insn)
 	    while (--i >= 0)
 	      {
 		reg_last_uses[regno + i]
-		  = gen_rtx (INSN_LIST, VOIDmode,
-			     insn, reg_last_uses[regno + i]);
+		  = gen_rtx_INSN_LIST (VOIDmode,
+				       insn, reg_last_uses[regno + i]);
 		if (reg_last_sets[regno + i])
 		  add_dependence (insn, reg_last_sets[regno + i], 0);
 		if ((call_used_regs[regno + i] || global_regs[regno + i])
@@ -1339,7 +1346,7 @@ sched_analyze_2 (x, insn)
 	else
 	  {
 	    reg_last_uses[regno]
-	      = gen_rtx (INSN_LIST, VOIDmode, insn, reg_last_uses[regno]);
+	      = gen_rtx_INSN_LIST (VOIDmode, insn, reg_last_uses[regno]);
 	    if (reg_last_sets[regno])
 	      add_dependence (insn, reg_last_sets[regno], 0);
 
@@ -1462,6 +1469,9 @@ sched_analyze_2 (x, insn)
       sched_analyze_2 (XEXP (x, 0), insn);
       sched_analyze_1 (x, insn);
       return;
+      
+    default:
+      break;
     }
 
   /* Other cases: walk the insn.  */
@@ -1673,14 +1683,14 @@ sched_analyze (head, tail)
 
 	      /* Add a pair of fake REG_NOTEs which we will later
 		 convert back into a NOTE_INSN_SETJMP note.  See
-		 reemit_notes for why we use a pair of of NOTEs.  */
+		 reemit_notes for why we use a pair of NOTEs.  */
 
-	      REG_NOTES (insn) = gen_rtx (EXPR_LIST, REG_DEAD,
-					  GEN_INT (0),
-					  REG_NOTES (insn));
-	      REG_NOTES (insn) = gen_rtx (EXPR_LIST, REG_DEAD,
-					  GEN_INT (NOTE_INSN_SETJMP),
-					  REG_NOTES (insn));
+	      REG_NOTES (insn) = gen_rtx_EXPR_LIST (REG_DEAD,
+						    GEN_INT (0),
+						    REG_NOTES (insn));
+	      REG_NOTES (insn) = gen_rtx_EXPR_LIST (REG_DEAD,
+						    GEN_INT (NOTE_INSN_SETJMP),
+						    REG_NOTES (insn));
 	    }
 	  else
 	    {
@@ -1727,13 +1737,17 @@ sched_analyze (head, tail)
 		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_LOOP_END
 		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_EH_REGION_BEG
 		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_EH_REGION_END
+		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_RANGE_START
+		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_RANGE_END
 		   || (NOTE_LINE_NUMBER (insn) == NOTE_INSN_SETJMP
 		       && GET_CODE (PREV_INSN (insn)) != CALL_INSN)))
 	{
-	  loop_notes = gen_rtx (EXPR_LIST, REG_DEAD,
-				GEN_INT (NOTE_BLOCK_NUMBER (insn)), loop_notes);
-	  loop_notes = gen_rtx (EXPR_LIST, REG_DEAD,
-				GEN_INT (NOTE_LINE_NUMBER (insn)), loop_notes);
+	  loop_notes = gen_rtx_EXPR_LIST (REG_DEAD,
+					  GEN_INT (NOTE_BLOCK_NUMBER (insn)),
+					  loop_notes);
+	  loop_notes = gen_rtx_EXPR_LIST (REG_DEAD,
+					  GEN_INT (NOTE_LINE_NUMBER (insn)),
+					  loop_notes);
 	  CONST_CALL_P (loop_notes) = CONST_CALL_P (insn);
 	}
 
@@ -1845,16 +1859,17 @@ sched_note_set (b, x, death)
 
 static int
 rank_for_schedule (x, y)
-     rtx *x, *y;
+     const GENERIC_PTR x;
+     const GENERIC_PTR y;
 {
-  rtx tmp = *y;
-  rtx tmp2 = *x;
+  rtx tmp = *(rtx *)y;
+  rtx tmp2 = *(rtx *)x;
   rtx link;
   int tmp_class, tmp2_class;
   int value;
 
   /* Choose the instruction with the highest priority, if different.  */
-  if (value = INSN_PRIORITY (tmp) - INSN_PRIORITY (tmp2))
+  if ((value = INSN_PRIORITY (tmp) - INSN_PRIORITY (tmp2)))
     return value;
 
   if (last_scheduled_insn)
@@ -1880,7 +1895,7 @@ rank_for_schedule (x, y)
       else
 	tmp2_class = 2;
 
-      if (value = tmp_class - tmp2_class)
+      if ((value = tmp_class - tmp2_class))
 	return value;
     }
 
@@ -2226,7 +2241,7 @@ create_reg_dead_note (reg, insn)
 	{
 	  rtx temp_reg, temp_link;
 
-	  temp_reg = gen_rtx (REG, word_mode, 0);
+	  temp_reg = gen_rtx_REG (word_mode, 0);
 	  temp_link = rtx_alloc (EXPR_LIST);
 	  PUT_REG_NOTE_KIND (temp_link, REG_DEAD);
 	  XEXP (temp_link, 0) = temp_reg;
@@ -2330,12 +2345,7 @@ attach_deaths (x, insn, set_p)
 #endif
 		&& regno != STACK_POINTER_REGNUM)
 	      {
-		/* ??? It is perhaps a dead_or_set_p bug that it does
-		   not check for REG_UNUSED notes itself.  This is necessary
-		   for the case where the SET_DEST is a subreg of regno, as
-		   dead_or_set_p handles subregs specially.  */
-		if (! all_needed && ! dead_or_set_p (insn, x)
-		    && ! find_reg_note (insn, REG_UNUSED, x))
+		if (! all_needed && ! dead_or_set_p (insn, x))
 		  {
 		    /* Check for the case where the register dying partially
 		       overlaps the register set by this insn.  */
@@ -2362,9 +2372,8 @@ attach_deaths (x, insn, set_p)
 			     i >= 0; i--)
 			  if (! REGNO_REG_SET_P (old_live_regs, regno + i)
 			      && ! dead_or_set_regno_p (insn, regno + i))
-			    create_reg_dead_note (gen_rtx (REG,
-							   reg_raw_mode[regno + i],
-							   regno + i),
+			    create_reg_dead_note (gen_rtx_REG (reg_raw_mode[regno + i],
+							       regno + i),
 						  insn);
 		      }
 		  }
@@ -2394,17 +2403,20 @@ attach_deaths (x, insn, set_p)
       return;
 
     case SUBREG:
+      attach_deaths (SUBREG_REG (x), insn,
+		     set_p && ((GET_MODE_SIZE (GET_MODE (SUBREG_REG (x)))
+			       <= UNITS_PER_WORD)
+			       || (GET_MODE_SIZE (GET_MODE (SUBREG_REG (x)))
+				   == GET_MODE_SIZE (GET_MODE ((x))))));
+      return;
+
     case STRICT_LOW_PART:
-      /* These two cases preserve the value of SET_P, so handle them
-	 separately.  */
-      attach_deaths (XEXP (x, 0), insn, set_p);
+      attach_deaths (XEXP (x, 0), insn, 0);
       return;
 
     case ZERO_EXTRACT:
     case SIGN_EXTRACT:
-      /* This case preserves the value of SET_P for the first operand, but
-	 clears it for the other two.  */
-      attach_deaths (XEXP (x, 0), insn, set_p);
+      attach_deaths (XEXP (x, 0), insn, 0);
       attach_deaths (XEXP (x, 1), insn, 0);
       attach_deaths (XEXP (x, 2), insn, 0);
       return;
@@ -2506,6 +2518,8 @@ unlink_notes (insn, tail)
       else if (NOTE_LINE_NUMBER (insn) != NOTE_INSN_SETJMP
 	       && NOTE_LINE_NUMBER (insn) != NOTE_INSN_LOOP_BEG
 	       && NOTE_LINE_NUMBER (insn) != NOTE_INSN_LOOP_END
+	       && NOTE_LINE_NUMBER (insn) != NOTE_INSN_RANGE_START
+	       && NOTE_LINE_NUMBER (insn) != NOTE_INSN_RANGE_END
 	       && NOTE_LINE_NUMBER (insn) != NOTE_INSN_EH_REGION_BEG
 	       && NOTE_LINE_NUMBER (insn) != NOTE_INSN_EH_REGION_END)
 	{
@@ -2652,6 +2666,14 @@ schedule_block (b, file)
   reg_pending_sets_all = 0;
   clear_units ();
 
+#if 0
+  /* We used to have code to avoid getting parameters moved from hard
+     argument registers into pseudos.
+
+     However, it was removed when it proved to be of marginal benefit and
+     caused problems because of different notions of what the "head" insn
+     was.  */
+
   /* Remove certain insns at the beginning from scheduling,
      by advancing HEAD.  */
 
@@ -2682,6 +2704,7 @@ schedule_block (b, file)
 	  head = NEXT_INSN (head);
 	}
     }
+#endif
 
   /* Don't include any notes or labels at the beginning of the
      basic block, or notes at the ends of basic blocks.  */
@@ -3170,7 +3193,7 @@ schedule_block (b, file)
 	  register int stalls;
 
 	  for (stalls = 1; stalls < INSN_QUEUE_SIZE; stalls++)
-	    if (insn = insn_queue[NEXT_Q_AFTER (q_ptr, stalls)])
+	    if ((insn = insn_queue[NEXT_Q_AFTER (q_ptr, stalls)]))
 	      {
 		for (; insn; insn = NEXT_INSN (insn))
 		  {
@@ -3554,12 +3577,12 @@ regno_use_in (regno, x)
     {
       if (fmt[i] == 'e')
 	{
-	  if (tem = regno_use_in (regno, XEXP (x, i)))
+	  if ((tem = regno_use_in (regno, XEXP (x, i))))
 	    return tem;
 	}
       else if (fmt[i] == 'E')
 	for (j = XVECLEN (x, i) - 1; j >= 0; j--)
-	  if (tem = regno_use_in (regno , XVECEXP (x, i, j)))
+	  if ((tem = regno_use_in (regno , XVECEXP (x, i, j))))
 	    return tem;
     }
 
@@ -3636,6 +3659,13 @@ new_insn_dead_notes (pat, insn, last, orig_insn)
 
   if (GET_CODE (dest) == REG)
     {
+      /* If the original insn already used this register, we may not add new
+         notes for it.  One example for a split that needs this test is
+	 when a multi-word memory access with register-indirect addressing
+	 is split into multiple memory accesses with auto-increment and
+	 one adjusting add instruction for the address register.  */
+      if (reg_referenced_p (dest, PATTERN (orig_insn)))
+	return;
       for (tem = last; tem != insn; tem = PREV_INSN (tem))
 	{
 	  if (GET_RTX_CLASS (GET_CODE (tem)) == 'i'
@@ -3840,6 +3870,14 @@ update_flow_info (notes, first, last, orig_insn)
 	  break;
 
 	case REG_WAS_0:
+	  /* If the insn that set the register to 0 was deleted, this
+	     note cannot be relied on any longer.  The destination might
+	     even have been moved to memory.
+             This was observed for SH4 with execute/920501-6.c compilation,
+	     -O2 -fomit-frame-pointer -finline-functions .  */
+	  if (GET_CODE (XEXP (note, 0)) == NOTE
+	      || INSN_DELETED_P (XEXP (note, 0)))
+	    break;
 	  /* This note applies to the dest of the original insn.  Find the
 	     first new insn that now has the same dest, and move the note
 	     there.  */
@@ -3985,8 +4023,9 @@ update_flow_info (notes, first, last, orig_insn)
 	  for (insn = first; insn != NEXT_INSN (last); insn = NEXT_INSN (insn))
 	    if (GET_RTX_CLASS (GET_CODE (insn)) == 'i'
 		&& reg_mentioned_p (XEXP (note, 0), PATTERN (insn)))
-	      REG_NOTES (insn) = gen_rtx (EXPR_LIST, REG_LABEL,
-					  XEXP (note, 0), REG_NOTES (insn));
+	      REG_NOTES (insn) = gen_rtx_EXPR_LIST (REG_LABEL,
+						    XEXP (note, 0),
+						    REG_NOTES (insn));
 	  break;
 
 	case REG_CC_SETTER:
@@ -4115,15 +4154,8 @@ update_flow_info (notes, first, last, orig_insn)
 
       for (insn = first; ; insn = NEXT_INSN (insn))
 	{
-	  rtx pat;
-	  int i;
-
-	  /* I'm not sure if this can happen, but let's be safe.  */
-	  if (GET_RTX_CLASS (GET_CODE (insn)) != 'i')
-	    continue;
-
-	  pat = PATTERN (insn);
-	  i = GET_CODE (pat) == PARALLEL ? XVECLEN (pat, 0) : 0;
+	  rtx pat = PATTERN (insn);
+	  int i = GET_CODE (pat) == PARALLEL ? XVECLEN (pat, 0) : 0;
 	  set = pat;
 	  for (;;)
 	    {
@@ -4233,7 +4265,6 @@ schedule_insns (dump_file)
 {
   int max_uid = MAX_INSNS_PER_SPLIT * (get_max_uid () + 1);
   int b;
-  int i;
   rtx insn;
 
   /* Taking care of this degenerate case makes the rest of
@@ -4243,8 +4274,8 @@ schedule_insns (dump_file)
 
   /* Create an insn here so that we can hang dependencies off of it later.  */
   sched_before_next_call
-    = gen_rtx (INSN, VOIDmode, 0, NULL_RTX, NULL_RTX,
-	       NULL_RTX, 0, NULL_RTX, NULL_RTX);
+    = gen_rtx_INSN (VOIDmode, 0, NULL_RTX, NULL_RTX,
+		    NULL_RTX, 0, NULL_RTX, NULL_RTX);
 
   /* Initialize the unused_*_lists.  We can't use the ones left over from
      the previous function, because gcc has freed that memory.  We can use
@@ -4262,14 +4293,18 @@ schedule_insns (dump_file)
      remember how far we can cut back the stack on exit.  */
 
   /* Allocate data for this pass.  See comments, above,
-     for what these vectors do.  */
-  insn_luid = (int *) alloca (max_uid * sizeof (int));
-  insn_priority = (int *) alloca (max_uid * sizeof (int));
-  insn_tick = (int *) alloca (max_uid * sizeof (int));
-  insn_costs = (short *) alloca (max_uid * sizeof (short));
-  insn_units = (short *) alloca (max_uid * sizeof (short));
-  insn_blockage = (unsigned int *) alloca (max_uid * sizeof (unsigned int));
-  insn_ref_count = (int *) alloca (max_uid * sizeof (int));
+     for what these vectors do.
+
+     We use xmalloc instead of alloca, because max_uid can be very large
+     when there is a lot of function inlining.  If we used alloca, we could
+     exceed stack limits on some hosts for some inputs.  */
+  insn_luid = (int *) xmalloc (max_uid * sizeof (int));
+  insn_priority = (int *) xmalloc (max_uid * sizeof (int));
+  insn_tick = (int *) xmalloc (max_uid * sizeof (int));
+  insn_costs = (short *) xmalloc (max_uid * sizeof (short));
+  insn_units = (short *) xmalloc (max_uid * sizeof (short));
+  insn_blockage = (unsigned int *) xmalloc (max_uid * sizeof (unsigned int));
+  insn_ref_count = (int *) xmalloc (max_uid * sizeof (int));
 
   if (reload_completed == 0)
     {
@@ -4293,7 +4328,7 @@ schedule_insns (dump_file)
     {
       rtx line;
 
-      line_note = (rtx *) alloca (max_uid * sizeof (rtx));
+      line_note = (rtx *) xmalloc (max_uid * sizeof (rtx));
       bzero ((char *) line_note, max_uid * sizeof (rtx));
       line_note_head = (rtx *) alloca (n_basic_blocks * sizeof (rtx));
       bzero ((char *) line_note_head, n_basic_blocks * sizeof (rtx));
@@ -4529,6 +4564,17 @@ schedule_insns (dump_file)
 	      REG_N_CALLS_CROSSED (regno) = sched_reg_n_calls_crossed[regno];
 	  }
     }
+
+  free (insn_luid);
+  free (insn_priority);
+  free (insn_tick);
+  free (insn_costs);
+  free (insn_units);
+  free (insn_blockage);
+  free (insn_ref_count);
+
+  if (write_symbols != NO_DEBUG)
+    free (line_note);
 
   if (reload_completed == 0)
     {

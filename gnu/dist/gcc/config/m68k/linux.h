@@ -1,4 +1,5 @@
-/* Definitions for Motorola 68k running Linux with ELF format.
+/* Definitions for Motorola 68k running Linux-based GNU systems with
+   ELF format.
    Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
@@ -30,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include <linux.h>		/* some common stuff */
 
 #undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (68k Linux/ELF)");
+#define TARGET_VERSION fprintf (stderr, " (68k GNU/Linux with ELF)");
 
 /* 68020 with 68881 */
 #define TARGET_DEFAULT (MASK_BITFIELD|MASK_68881|MASK_68020)
@@ -135,7 +136,7 @@ Boston, MA 02111-1307, USA.  */
   "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*} \
 %{m68040} %{m68060:-m68040}"
 
-/* Provide a LINK_SPEC appropriate for Linux.  Here we provide support
+/* Provide a LINK_SPEC appropriate for GNU/Linux.  Here we provide support
    for the special GCC options -static and -shared, which allow us to
    link things in one of these three modes by applying the appropriate
    combinations of options at link-time.  We like to support here for
@@ -269,10 +270,10 @@ Boston, MA 02111-1307, USA.  */
 #undef FUNCTION_VALUE
 #define FUNCTION_VALUE(VALTYPE, FUNC)					\
   (TREE_CODE (VALTYPE) == REAL_TYPE && TARGET_68881			\
-   ? gen_rtx (REG, TYPE_MODE (VALTYPE), 16)				\
+   ? gen_rtx_REG (TYPE_MODE (VALTYPE), 16)				\
    : (POINTER_TYPE_P (VALTYPE)						\
-      ? gen_rtx (REG, TYPE_MODE (VALTYPE), 8)				\
-      : gen_rtx (REG, TYPE_MODE (VALTYPE), 0)))
+      ? gen_rtx_REG (TYPE_MODE (VALTYPE), 8)				\
+      : gen_rtx_REG (TYPE_MODE (VALTYPE), 0)))
 
 /* For compatibility with the large body of existing code which does
    not always properly declare external functions returning pointer
@@ -298,8 +299,8 @@ do {									\
 #define LIBCALL_VALUE(MODE)						\
   ((((MODE) == SFmode || (MODE) == DFmode || (MODE) == XFmode)		\
     && TARGET_68881)							\
-   ? gen_rtx (REG, (MODE), 16)						\
-   : gen_rtx (REG, (MODE), 0))
+   ? gen_rtx_REG (MODE, 16)						\
+   : gen_rtx_REG (MODE, 0))
 
 /* In m68k svr4, a symbol_ref rtx can be a valid PIC operand if it is
    an operand of a function call. */
@@ -329,7 +330,7 @@ do {									\
 
 #undef FINALIZE_TRAMPOLINE
 #define FINALIZE_TRAMPOLINE(TRAMP)					\
-  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__clear_cache"),	\
+  emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "__clear_cache"),	\
 		     0, VOIDmode, 2, TRAMP, Pmode,			\
 		     plus_constant (TRAMP, TRAMPOLINE_SIZE), Pmode);
 
@@ -374,15 +375,13 @@ do {									\
   if (flag_pic)								\
     {									\
       fprintf (FILE, "\tbra.l ");					\
-      assemble_name							\
-	(FILE, IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (FUNCTION)));	\
+      assemble_name (FILE, XSTR (XEXP (DECL_RTL (FUNCTION), 0), 0));	\
       fprintf (FILE, "@PLTPC\n");					\
     }									\
   else									\
     {									\
       fprintf (FILE, "\tjmp ");						\
-      assemble_name							\
-	(FILE, IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (FUNCTION)));	\
+      assemble_name (FILE, XSTR (XEXP (DECL_RTL (FUNCTION), 0), 0));	\
       fprintf (FILE, "\n");						\
     }									\
 } while (0)

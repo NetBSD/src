@@ -1,5 +1,5 @@
-/* Definitions of target machine for GNU compiler, for the ARC cpu.
-   Copyright (C) 1994, 1995, 1997 Free Software Foundation, Inc.
+/* Definitions of target machine for GNU compiler, Argonaut ARC cpu.
+   Copyright (C) 1994, 1995, 1997, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -27,7 +27,7 @@ Boston, MA 02111-1307, USA.  */
    - print active compiler options in assembler output
 */
 
-/* FIXME: Create elf.h and have svr4.h include it.  */
+/* ??? Create elf.h and have svr4.h include it.  */
 #include "svr4.h"
 
 #undef ASM_SPEC
@@ -589,7 +589,7 @@ extern enum reg_class arc_regno_reg_class[];
    If you don't define this macro, the default is to return the value
    of FRAMEADDR--that is, the stack frame address is also the address
    of the stack word that points to the previous frame.  */
-/* FIXME: unfinished */
+/* ??? unfinished */
 /*define DYNAMIC_CHAIN_ADDRESS (FRAMEADDR)*/
 
 /* A C expression whose value is RTL representing the value of the
@@ -989,7 +989,7 @@ do { \
 
 /* local to this file */
 #define RTX_OK_FOR_INDEX_P(X) \
-(0 && /*FIXME*/ REG_P (X) && REG_OK_FOR_INDEX_P (X))
+(0 && /*???*/ REG_P (X) && REG_OK_FOR_INDEX_P (X))
 
 /* local to this file */
 /* ??? Loads can handle any constant, stores can only handle small ones.  */
@@ -1060,7 +1060,7 @@ arc_select_cc_mode (OP, X, Y)
 
 /* Return non-zero if SELECT_CC_MODE will never return MODE for a
    floating point inequality comparison.  */
-#define REVERSIBLE_CC_MODE(MODE) 1 /*FIXME*/
+#define REVERSIBLE_CC_MODE(MODE) 1 /*???*/
 
 /* Costs.  */
 
@@ -1102,7 +1102,7 @@ arc_select_cc_mode (OP, X, Y)
 /* Compute the cost of moving data between registers and memory.  */
 /* Memory is 3 times as expensive as registers.
    ??? Is that the right way to look at it?  */
-#define MEMORY_MOVE_COST(MODE) \
+#define MEMORY_MOVE_COST(MODE,CLASS,IN) \
 (GET_MODE_SIZE (MODE) <= UNITS_PER_WORD ? 6 : 12)
 
 /* The cost of a branch insn.  */
@@ -1492,7 +1492,7 @@ do {							\
 } while (0)
 
 /* This is how to output an element of a case-vector that is relative.  */
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL) \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
 do {							\
   char label[30];					\
   ASM_GENERATE_INTERNAL_LABEL (label, "L", VALUE);	\
@@ -1504,12 +1504,11 @@ do {							\
   fprintf (FILE, ")\n");				\
 } while (0)
 
-/* A C expression to output text to align the location counter in the way
-   that is desirable at the beginning of a loop.  */
+/* The desired alignment for the location counter at the beginning
+   of a loop.  */
 /* On the ARC, align loops to 32 byte boundaries (cache line size)
    if -malign-loops.  */
-#define ASM_OUTPUT_LOOP_ALIGN(FILE) \
-do { if (TARGET_ALIGN_LOOPS) ASM_OUTPUT_SKIP (FILE, 5); } while (0)
+#define LOOP_ALIGN(LABEL) (TARGET_ALIGN_LOOPS ? 5 : 0)
 
 /* This is how to output an assembler line
    that says to advance the location counter
@@ -1539,13 +1538,14 @@ do { if ((LOG) != 0) fprintf (FILE, "\t.align %d\n", 1 << (LOG)); } while (0)
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE Pmode
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
 /* It's not clear what PIC will look like or whether we want to use -fpic
    for the embedded form currently being talked about.  For now require -fpic
    to get pc relative switch tables.  */
-/*#define CASE_VECTOR_PC_RELATIVE*/
+/*#define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Define if operations between registers always perform the operation
    on the full register even if a narrower mode is specified.  */
@@ -1583,7 +1583,7 @@ do { if ((LOG) != 0) fprintf (FILE, "\t.align %d\n", 1 << (LOG)); } while (0)
    After generation of rtl, the compiler makes no further distinction
    between pointers and any other objects of this machine mode.  */
 /* ??? The arc doesn't have full 32 bit pointers, but making this PSImode has
-   it's own problems (you have to add extendpsisi2 and trucnsipsi2 but how does
+   its own problems (you have to add extendpsisi2 and trucnsipsi2 but how does
    one do it without getting excess code?).  Try to avoid it.  */
 #define Pmode SImode
 

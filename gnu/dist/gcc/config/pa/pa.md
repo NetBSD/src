@@ -1,5 +1,5 @@
 ;;- Machine description for HP PA-RISC architecture for GNU C compiler
-;;   Copyright (C) 1992, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+;;   Copyright (C) 1992, 93-97, 1998 Free Software Foundation, Inc.
 ;;   Contributed by the Center for Software Science at the University
 ;;   of Utah.
 
@@ -808,7 +808,7 @@
 
   /* operands[1] is currently the result of compare_from_rtx.  We want to
      emit a compare of the original operands.  */
-  operands[1] = gen_rtx (code, SImode, hppa_compare_op0, hppa_compare_op1);
+  operands[1] = gen_rtx_fmt_ee (code, SImode, hppa_compare_op0, hppa_compare_op1);
   operands[4] = hppa_compare_op0;
   operands[5] = hppa_compare_op1;
 }")
@@ -1316,7 +1316,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx (SET, VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
   DONE;
 }")
 
@@ -1331,7 +1331,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx (SET, VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
   DONE;
 }")
 
@@ -2058,18 +2058,20 @@
 ;; that anything generated as this insn will be recognized as one
 ;; and that it will not successfully combine with anything.
 (define_expand "movstrsi"
-  [(parallel [(set (mem:BLK (match_operand:BLK 0 "" ""))
-		   (mem:BLK (match_operand:BLK 1 "" "")))
-	      (clobber (match_dup 0))
-	      (clobber (match_dup 1))
+  [(parallel [(set (match_operand:BLK 0 "" "")
+		   (match_operand:BLK 1 "" ""))
+	      (clobber (match_dup 7))
+	      (clobber (match_dup 8))
 	      (clobber (match_dup 4))
 	      (clobber (match_dup 5))
+	      (clobber (match_dup 6))
 	      (use (match_operand:SI 2 "arith_operand" ""))
 	      (use (match_operand:SI 3 "const_int_operand" ""))])]
   ""
   "
 {
   int size, align;
+
   /* HP provides very fast block move library routine for the PA;
      this routine includes:
 
@@ -2102,22 +2104,25 @@
 
   /* If size/alignment > 8 (eg size is large in respect to alignment),
      then use the library routines.  */
-  if (size/align > 16)
+  if (size / align > 16)
     FAIL;
 
   /* This does happen, but not often enough to worry much about.  */
-  if (size/align < MOVE_RATIO)
+  if (size / align < MOVE_RATIO)
     FAIL;
   
   /* Fall through means we're going to use our block move pattern.  */
-  operands[0] = copy_to_mode_reg (SImode, XEXP (operands[0], 0));
-  operands[1] = copy_to_mode_reg (SImode, XEXP (operands[1], 0));
+  operands[0]
+    = change_address (operands[0], VOIDmode,
+		      copy_to_mode_reg (SImode, XEXP (operands[0], 0)));
+  operands[1]
+    = change_address (operands[1], VOIDmode,
+		      copy_to_mode_reg (SImode, XEXP (operands[1], 0)));
   operands[4] = gen_reg_rtx (SImode);
   operands[5] = gen_reg_rtx (SImode);
-  emit_insn (gen_movstrsi_internal (operands[0], operands[1], operands[4],
-				     operands[5], operands[2], operands[3],
-				     gen_reg_rtx (SImode)));
-  DONE;
+  operands[6] = gen_reg_rtx (SImode);
+  operands[7] = XEXP (operands[0], 0);
+  operands[8] = XEXP (operands[1], 0);
 }")
 
 ;; The operand constraints are written like this to support both compile-time
@@ -2185,7 +2190,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx (SET, VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
   DONE;
 }")
 
@@ -2200,7 +2205,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx (SET, VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
   DONE;
 }")
 
@@ -2336,7 +2341,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx (SET, VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
   DONE;
 }")
 
@@ -2351,7 +2356,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx (SET, VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
   DONE;
 }")
 
@@ -2490,7 +2495,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx (SET, VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
   DONE;
 }")
 
@@ -2505,7 +2510,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx (SET, VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
   DONE;
 }")
 
@@ -2932,7 +2937,7 @@
     }
   else if (cint_ok_for_move (-intval))
     {
-      emit_insn (gen_rtx (SET, VOIDmode, operands[4], GEN_INT (-intval)));
+      emit_insn (gen_rtx_SET (VOIDmode, operands[4], GEN_INT (-intval)));
       emit_insn (gen_subsi3 (operands[0], operands[1], operands[4]));
       DONE;
     }
@@ -3014,9 +3019,9 @@
       operands[1] = force_reg (SImode, operands[1]);
       operands[2] = force_reg (SImode, operands[2]);
       emit_insn (gen_umulsidi3 (scratch, operands[1], operands[2]));
-      emit_insn (gen_rtx (SET, VOIDmode,
-			  operands[0],
-			  gen_rtx (SUBREG, SImode, scratch, 1)));
+      emit_insn (gen_rtx_SET (VOIDmode,
+			      operands[0],
+			      gen_rtx_SUBREG (SImode, scratch, 1)));
       DONE;
     }
   operands[3] = gen_reg_rtx (SImode);
@@ -3366,7 +3371,8 @@
   ""
   "
 {
-  if (! (ior_operand (operands[2]) || register_operand (operands[2])))
+  if (! (ior_operand (operands[2], SImode)
+         || register_operand (operands[2], SImode)))
     operands[2] = force_reg (SImode, operands[2]);
 }")
 
@@ -4023,7 +4029,7 @@
   if (TARGET_BIG_SWITCH)
     {
       rtx temp = gen_reg_rtx (SImode);
-      emit_move_insn (temp, gen_rtx (PLUS, SImode, operands[0], operands[0]));
+      emit_move_insn (temp, gen_rtx_PLUS (SImode, operands[0], operands[0]));
       operands[0] = temp;
     }
   emit_jump_insn (gen_casesi0 (operands[0], operands[3]));
@@ -4032,7 +4038,8 @@
 
 (define_insn "casesi0"
   [(set (pc) (plus:SI
-	       (mem:SI (plus:SI (pc) (match_operand 0 "register_operand" "r")))
+	       (mem:SI (plus:SI (pc)
+				(match_operand:SI 0 "register_operand" "r")))
 	       (label_ref (match_operand 1 "" ""))))]
   ""
   "blr %0,0\;nop"
@@ -4067,7 +4074,7 @@
     call_insn = emit_call_insn (gen_call_internal_symref (op, operands[1]));
   else
     {
-      rtx tmpreg = gen_rtx (REG, SImode, 22);
+      rtx tmpreg = gen_rtx_REG (SImode, 22);
       emit_move_insn (tmpreg, force_reg (SImode, op));
       call_insn = emit_call_insn (gen_call_internal_reg (operands[1]));
     }
@@ -4082,8 +4089,8 @@
          This will set regs_ever_live for the callee saved register we
 	 stored the PIC register in.  */
       emit_move_insn (pic_offset_table_rtx,
-		      gen_rtx (REG, SImode, PIC_OFFSET_TABLE_REGNUM_SAVED));
-      emit_insn (gen_rtx (USE, VOIDmode, pic_offset_table_rtx));
+		      gen_rtx_REG (SImode, PIC_OFFSET_TABLE_REGNUM_SAVED));
+      emit_insn (gen_rtx_USE (VOIDmode, pic_offset_table_rtx));
 
       /* Gross.  We have to keep the scheduler from moving the restore
 	 of the PIC register away from the call.  SCHED_GROUP_P is
@@ -4107,7 +4114,7 @@
   "*
 {
   output_arg_descriptor (insn);
-  return output_call (insn, operands[0], gen_rtx (REG, SImode, 2));
+  return output_call (insn, operands[0], gen_rtx_REG (SImode, 2));
 }"
   [(set_attr "type" "call")
    (set (attr "length")
@@ -4224,7 +4231,7 @@
 								operands[2]));
   else
     {
-      rtx tmpreg = gen_rtx (REG, SImode, 22);
+      rtx tmpreg = gen_rtx_REG (SImode, 22);
       emit_move_insn (tmpreg, force_reg (SImode, op));
       call_insn = emit_call_insn (gen_call_value_internal_reg (operands[0],
 							       operands[2]));
@@ -4239,8 +4246,8 @@
          This will set regs_ever_live for the callee saved register we
 	 stored the PIC register in.  */
       emit_move_insn (pic_offset_table_rtx,
-		      gen_rtx (REG, SImode, PIC_OFFSET_TABLE_REGNUM_SAVED));
-      emit_insn (gen_rtx (USE, VOIDmode, pic_offset_table_rtx));
+		      gen_rtx_REG (SImode, PIC_OFFSET_TABLE_REGNUM_SAVED));
+      emit_insn (gen_rtx_USE (VOIDmode, pic_offset_table_rtx));
 
       /* Gross.  We have to keep the scheduler from moving the restore
 	 of the PIC register away from the call.  SCHED_GROUP_P is
@@ -4266,7 +4273,7 @@
   "*
 {
   output_arg_descriptor (insn);
-  return output_call (insn, operands[1], gen_rtx (REG, SImode, 2));
+  return output_call (insn, operands[1], gen_rtx_REG (SImode, 2));
 }"
   [(set_attr "type" "call")
    (set (attr "length")
@@ -4489,7 +4496,7 @@
 			 (match_operand:SI 2 "uint5_operand" ""))
 	(match_operand:SI 3 "const_int_operand" ""))]
   "(INTVAL (operands[3]) & 0x10) != 0 &&
-   (~INTVAL (operands[3]) & (1L << INTVAL (operands[1])) - 1 & ~0xf) == 0"
+   (~INTVAL (operands[3]) & ((1L << INTVAL (operands[1])) - 1) & ~0xf) == 0"
   "*
 {
   operands[3] = GEN_INT ((INTVAL (operands[3]) & 0xf) - 0x10);
@@ -4501,7 +4508,7 @@
 ;; This insn is used for some loop tests, typically loops reversed when
 ;; strength reduction is used.  It is actually created when the instruction
 ;; combination phase combines the special loop test.  Since this insn
-;; is both a jump insn and has an output, it must deal with it's own
+;; is both a jump insn and has an output, it must deal with its own
 ;; reloads, hence the `m' constraints.  The `!' constraints direct reload
 ;; to not choose the register alternatives in the event a reload is needed.
 (define_insn "decrement_and_branch_until_zero"
@@ -4659,7 +4666,7 @@
    (set (match_operand:SI 0 "register_operand" "=r")
 	(plus:SI (match_operand:SI 1 "register_operand" "r")
 		 (match_operand:SI 2 "ireg_or_int5_operand" "rL")))]
-  "reload_completed && operands[0] == operands[1] || operands[0] == operands[2]"
+  "(reload_completed && operands[0] == operands[1]) || operands[0] == operands[2]"
   "*
 {
   return output_parallel_addb (operands, get_attr_length (insn));
@@ -4850,7 +4857,6 @@
       == REGNO_REG_CLASS (REGNO (operands[2]))"
   "*
 {
-  enum machine_mode mode = GET_MODE (operands[0]);
   rtx xoperands[2];
 
   if (FP_REG_P (operands[1]))
@@ -4890,7 +4896,6 @@
       == REGNO_REG_CLASS (REGNO (operands[2]))"
   "*
 {
-  enum machine_mode mode = GET_MODE (operands[0]);
   rtx xoperands[2];
 
   if (FP_REG_P (operands[0]))
@@ -5077,7 +5082,7 @@
   /* Must import the magic millicode routine.  */
   output_asm_insn (\".IMPORT $$sh_func_adrs,MILLICODE\", NULL);
 
-  /* This is absolutely fucking amazing.
+  /* This is absolutely amazing.
 
      First, copy our input parameter into %r29 just in case we don't
      need to call $$sh_func_adrs.  */
@@ -5107,8 +5112,7 @@
 
   /* Else call $$sh_func_adrs to extract the function's real add24.  */
   return output_millicode_call (insn,
-				gen_rtx (SYMBOL_REF, SImode,
-					 \"$$sh_func_adrs\"));
+				gen_rtx_SYMBOL_REF (SImode, \"$$sh_func_adrs\"));
 }"
   [(set_attr "type" "multi")
    (set (attr "length")
@@ -5133,7 +5137,7 @@
                      (const_int 0)))
             (const_int 32)
 
-;; PORTABLE_RUTNIME
+;; PORTABLE_RUNTIME
 	    (ne (symbol_ref "TARGET_PORTABLE_RUNTIME")
 		(const_int 0))
 	    (const_int 40)]
@@ -5154,9 +5158,8 @@
   /* Load the PIC register from the stack slot (in our caller's
      frame).  */
   emit_move_insn (pic_offset_table_rtx,
-		  gen_rtx (MEM, SImode,
-			   plus_constant (stack_pointer_rtx, -32)));
-  emit_insn (gen_rtx (USE, VOIDmode, pic_offset_table_rtx));
+		  gen_rtx_MEM (SImode, plus_constant (stack_pointer_rtx, -32)));
+  emit_insn (gen_rtx_USE (VOIDmode, pic_offset_table_rtx));
   emit_insn (gen_blockage ());
   DONE;
 }")

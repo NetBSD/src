@@ -1,6 +1,6 @@
 /* proj.c file for GNU Fortran
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -20,7 +20,6 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.	 */
 
 #include "proj.h"
-#include <ctype.h>
 #include "glimits.j"
 
 #ifndef HAVE_STRTOUL
@@ -33,7 +32,7 @@ strtoul (const char *nptr, char **endptr, int base)
   assert (base == 10);
   assert (endptr == NULL);
 
-  while (isdigit (*nptr))
+  while (ISDIGIT (*nptr))
     {
       number = old_number * 10 + (*(nptr++) - '0');
       if ((number <= old_number) && (old_number != 0))

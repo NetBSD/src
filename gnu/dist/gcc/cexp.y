@@ -1,5 +1,5 @@
 /* Parse C expressions for CCCP.
-   Copyright (C) 1987, 1992, 1994, 1995, 1996, 1997 Free Software Foundation.
+   Copyright (C) 1987, 1992, 94 - 97, 1998 Free Software Foundation.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -26,37 +26,25 @@ Boston, MA 02111-1307, USA.
    
 %{
 #include "config.h"
+#ifdef __STDC__
+# include <stdarg.h>
+#else
+# include <varargs.h>
+#endif
+
+#define PRINTF_PROTO(ARGS, m, n) PVPROTO (ARGS) ATTRIBUTE_PRINTF(m, n)
+
+#define PRINTF_PROTO_1(ARGS) PRINTF_PROTO(ARGS, 1, 2)
+
+#include "system.h"
 #include <setjmp.h>
 /* #define YYDEBUG 1 */
-
-/* The following symbols should be autoconfigured:
-	HAVE_STDLIB_H
-	STDC_HEADERS
-   In the mean time, we'll get by with approximations based
-   on existing GCC configuration symbols.  */
-
-#ifdef POSIX
-# ifndef HAVE_STDLIB_H
-# define HAVE_STDLIB_H 1
-# endif
-# ifndef STDC_HEADERS
-# define STDC_HEADERS 1
-# endif
-#endif /* defined (POSIX) */
-
-#if STDC_HEADERS
-# include <string.h>
-#endif
-
-#if HAVE_STDLIB_H || defined (MULTIBYTE_CHARS)
-# include <stdlib.h>
-#endif
 
 #ifdef MULTIBYTE_CHARS
 #include <locale.h>
 #endif
 
-#include <stdio.h>
+#include "gansidecl.h"
 
 typedef unsigned char U_CHAR;
 
@@ -68,80 +56,47 @@ struct arglist {
   int argno;
 };
 
-/* Define a generic NULL if one hasn't already been defined.  */
-
-#ifndef NULL
-#define NULL 0
-#endif
-
-#ifndef GENERIC_PTR
-#if defined (USE_PROTOTYPES) ? USE_PROTOTYPES : defined (__STDC__)
-#define GENERIC_PTR void *
-#else
-#define GENERIC_PTR char *
-#endif
-#endif
-
-#ifndef NULL_PTR
-#define NULL_PTR ((GENERIC_PTR) 0)
-#endif
-
 /* Find the largest host integer type and set its size and type.
-   Don't blindly use `long'; on some crazy hosts it is shorter than `int'.  */
+   Watch out: on some crazy hosts `long' is shorter than `int'.  */
 
-#ifndef HOST_BITS_PER_WIDE_INT
-
-#if HOST_BITS_PER_LONG > HOST_BITS_PER_INT
-#define HOST_BITS_PER_WIDE_INT HOST_BITS_PER_LONG
-#define HOST_WIDE_INT long
-#else
-#define HOST_BITS_PER_WIDE_INT HOST_BITS_PER_INT
-#define HOST_WIDE_INT int
-#endif
-
-#endif
-
-#if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
-# define __attribute__(x)
-#endif
-
-#ifndef PROTO
-# if defined (USE_PROTOTYPES) ? USE_PROTOTYPES : defined (__STDC__)
-#  define PROTO(ARGS) ARGS
+#ifndef HOST_WIDE_INT
+# if HAVE_INTTYPES_H
+#  include <inttypes.h>
+#  define HOST_WIDE_INT intmax_t
+#  define unsigned_HOST_WIDE_INT uintmax_t
 # else
-#  define PROTO(ARGS) ()
+#  if (HOST_BITS_PER_LONG <= HOST_BITS_PER_INT && HOST_BITS_PER_LONGLONG <= HOST_BITS_PER_INT)
+#   define HOST_WIDE_INT int
+#  else
+#  if (HOST_BITS_PER_LONGLONG <= HOST_BITS_PER_LONG || ! (defined LONG_LONG_MAX || defined LLONG_MAX))
+#   define HOST_WIDE_INT long
+#  else
+#   define HOST_WIDE_INT long long
+#  endif
+#  endif
 # endif
 #endif
 
-#if defined (__STDC__) && defined (HAVE_VPRINTF)
-# include <stdarg.h>
-# define VA_START(va_list, var) va_start (va_list, var)
-# define PRINTF_ALIST(msg) char *msg, ...
-# define PRINTF_DCL(msg)
-# define PRINTF_PROTO(ARGS, m, n) PROTO (ARGS) __attribute__ ((format (__printf__, m, n)))
-#else
-# include <varargs.h>
-# define VA_START(va_list, var) va_start (va_list)
-# define PRINTF_ALIST(msg) msg, va_alist
-# define PRINTF_DCL(msg) char *msg; va_dcl
-# define PRINTF_PROTO(ARGS, m, n) () __attribute__ ((format (__printf__, m, n)))
-# define vfprintf(file, msg, args) \
-    { \
-      char *a0 = va_arg(args, char *); \
-      char *a1 = va_arg(args, char *); \
-      char *a2 = va_arg(args, char *); \
-      char *a3 = va_arg(args, char *); \
-      fprintf (file, msg, a0, a1, a2, a3); \
-    }
+#ifndef unsigned_HOST_WIDE_INT
+#define unsigned_HOST_WIDE_INT unsigned HOST_WIDE_INT
 #endif
 
-#define PRINTF_PROTO_1(ARGS) PRINTF_PROTO(ARGS, 1, 2)
+#ifndef CHAR_BIT
+#define CHAR_BIT 8
+#endif
 
-HOST_WIDE_INT parse_c_expression PROTO((char *));
+#ifndef HOST_BITS_PER_WIDE_INT
+#define HOST_BITS_PER_WIDE_INT (CHAR_BIT * sizeof (HOST_WIDE_INT))
+#endif
+
+HOST_WIDE_INT parse_c_expression PROTO((char *, int));
 
 static int yylex PROTO((void));
 static void yyerror PROTO((char *)) __attribute__ ((noreturn));
 static HOST_WIDE_INT expression_value;
+#ifdef TEST_EXP_READER
+static int expression_signedp;
+#endif
 
 static jmp_buf parse_return_error;
 
@@ -151,6 +106,9 @@ static int keyword_parsing = 0;
 /* Nonzero means do not evaluate this expression.
    This is a count, since unevaluated expressions can nest.  */
 static int skip_evaluation;
+
+/* Nonzero means warn if undefined identifiers are evaluated.  */
+static int warn_undef;
 
 /* some external tables of character types */
 extern unsigned char is_idstart[], is_idchar[], is_space[];
@@ -163,9 +121,6 @@ extern int traditional;
 
 /* Flag for -lang-c89.  */
 extern int c89;
-
-/* Flag for -Wundef.  */
-extern int warn_undef;
 
 #ifndef CHAR_TYPE_SIZE
 #define CHAR_TYPE_SIZE BITS_PER_UNIT
@@ -199,17 +154,13 @@ extern int warn_undef;
 #define MAX_WCHAR_TYPE_SIZE WCHAR_TYPE_SIZE
 #endif
 
-#if MAX_CHAR_TYPE_SIZE < HOST_BITS_PER_WIDE_INT
-#define MAX_CHAR_TYPE_MASK (~ (~ (HOST_WIDE_INT) 0 << MAX_CHAR_TYPE_SIZE))
-#else
-#define MAX_CHAR_TYPE_MASK (~ (HOST_WIDE_INT) 0)
-#endif
+#define MAX_CHAR_TYPE_MASK (MAX_CHAR_TYPE_SIZE < HOST_BITS_PER_WIDE_INT \
+			    ? (~ (~ (HOST_WIDE_INT) 0 << MAX_CHAR_TYPE_SIZE)) \
+			    : ~ (HOST_WIDE_INT) 0)
 
-#if MAX_WCHAR_TYPE_SIZE < HOST_BITS_PER_WIDE_INT
-#define MAX_WCHAR_TYPE_MASK (~ (~ (HOST_WIDE_INT) 0 << MAX_WCHAR_TYPE_SIZE))
-#else
-#define MAX_WCHAR_TYPE_MASK (~ (HOST_WIDE_INT) 0)
-#endif
+#define MAX_WCHAR_TYPE_MASK (MAX_WCHAR_TYPE_SIZE < HOST_BITS_PER_WIDE_INT \
+			     ? ~ (~ (HOST_WIDE_INT) 0 << MAX_WCHAR_TYPE_SIZE) \
+			     : ~ (HOST_WIDE_INT) 0)
 
 /* Suppose A1 + B1 = SUM1, using 2's complement arithmetic ignoring overflow.
    Suppose A, B and SUM have the same respective signs as A1, B1, and SUM1.
@@ -232,8 +183,8 @@ void pedwarn PRINTF_PROTO_1((char *, ...));
 void warning PRINTF_PROTO_1((char *, ...));
 
 static int parse_number PROTO((int));
-static HOST_WIDE_INT left_shift PROTO((struct constant *, unsigned HOST_WIDE_INT));
-static HOST_WIDE_INT right_shift PROTO((struct constant *, unsigned HOST_WIDE_INT));
+static HOST_WIDE_INT left_shift PROTO((struct constant *, unsigned_HOST_WIDE_INT));
+static HOST_WIDE_INT right_shift PROTO((struct constant *, unsigned_HOST_WIDE_INT));
 static void integer_overflow PROTO((void));
 
 /* `signedp' values */
@@ -272,7 +223,12 @@ static void integer_overflow PROTO((void));
 %%
 
 start   :	exp1
-		{ expression_value = $1.value; }
+		{
+		  expression_value = $1.value;
+#ifdef TEST_EXP_READER
+		  expression_signedp = $1.signedp;
+#endif
+		}
 	;
 
 /* Expressions, including the comma operator.  */
@@ -324,7 +280,7 @@ exp	:	exp '*' exp
 				integer_overflow ();
 			    }
 			  else
-			    $$.value = ((unsigned HOST_WIDE_INT) $1.value
+			    $$.value = ((unsigned_HOST_WIDE_INT) $1.value
 					* $3.value); }
 	|	exp '/' exp
 			{ if ($3.value == 0)
@@ -341,7 +297,7 @@ exp	:	exp '*' exp
 				integer_overflow ();
 			    }
 			  else
-			    $$.value = ((unsigned HOST_WIDE_INT) $1.value
+			    $$.value = ((unsigned_HOST_WIDE_INT) $1.value
 					/ $3.value); }
 	|	exp '%' exp
 			{ if ($3.value == 0)
@@ -354,7 +310,7 @@ exp	:	exp '*' exp
 			  if ($$.signedp)
 			    $$.value = $1.value % $3.value;
 			  else
-			    $$.value = ((unsigned HOST_WIDE_INT) $1.value
+			    $$.value = ((unsigned_HOST_WIDE_INT) $1.value
 					% $3.value); }
 	|	exp '+' exp
 			{ $$.value = $1.value + $3.value;
@@ -391,28 +347,28 @@ exp	:	exp '*' exp
 			  if ($1.signedp & $3.signedp)
 			    $$.value = $1.value <= $3.value;
 			  else
-			    $$.value = ((unsigned HOST_WIDE_INT) $1.value
+			    $$.value = ((unsigned_HOST_WIDE_INT) $1.value
 					<= $3.value); }
 	|	exp GEQ exp
 			{ $$.signedp = SIGNED;
 			  if ($1.signedp & $3.signedp)
 			    $$.value = $1.value >= $3.value;
 			  else
-			    $$.value = ((unsigned HOST_WIDE_INT) $1.value
+			    $$.value = ((unsigned_HOST_WIDE_INT) $1.value
 					>= $3.value); }
 	|	exp '<' exp
 			{ $$.signedp = SIGNED;
 			  if ($1.signedp & $3.signedp)
 			    $$.value = $1.value < $3.value;
 			  else
-			    $$.value = ((unsigned HOST_WIDE_INT) $1.value
+			    $$.value = ((unsigned_HOST_WIDE_INT) $1.value
 					< $3.value); }
 	|	exp '>' exp
 			{ $$.signedp = SIGNED;
 			  if ($1.signedp & $3.signedp)
 			    $$.value = $1.value > $3.value;
 			  else
-			    $$.value = ((unsigned HOST_WIDE_INT) $1.value
+			    $$.value = ((unsigned_HOST_WIDE_INT) $1.value
 					> $3.value); }
 	|	exp '&' exp
 			{ $$.value = $1.value & $3.value;
@@ -495,7 +451,7 @@ parse_number (olen)
 {
   register char *p = lexptr;
   register int c;
-  register unsigned HOST_WIDE_INT n = 0, nd, max_over_base;
+  register unsigned_HOST_WIDE_INT n = 0, nd, max_over_base;
   register int base = 10;
   register int len = olen;
   register int overflow = 0;
@@ -513,7 +469,7 @@ parse_number (olen)
     }
   }
 
-  max_over_base = (unsigned HOST_WIDE_INT) -1 / base;
+  max_over_base = (unsigned_HOST_WIDE_INT) -1 / base;
 
   for (; len > 0; len--) {
     c = *p++;
@@ -684,7 +640,7 @@ yylex ()
        It is mostly copied from c-lex.c.  */
     {
       register HOST_WIDE_INT result = 0;
-      register num_chars = 0;
+      register int num_chars = 0;
       unsigned width = MAX_CHAR_TYPE_SIZE;
       int max_chars;
       char *token_buffer;
@@ -751,11 +707,11 @@ yylex ()
 		      sizeof ("__CHAR_UNSIGNED__") - 1, -1)
 	      || ((result >> (num_bits - 1)) & 1) == 0)
 	    yylval.integer.value
-	      = result & (~ (unsigned HOST_WIDE_INT) 0
+	      = result & (~ (unsigned_HOST_WIDE_INT) 0
 			  >> (HOST_BITS_PER_WIDE_INT - num_bits));
 	  else
 	    yylval.integer.value
-	      = result | ~(~ (unsigned HOST_WIDE_INT) 0
+	      = result | ~(~ (unsigned_HOST_WIDE_INT) 0
 			   >> (HOST_BITS_PER_WIDE_INT - num_bits));
 	}
       else
@@ -962,7 +918,7 @@ parse_escape (string_ptr, result_mask)
       }
     case 'x':
       {
-	register unsigned HOST_WIDE_INT i = 0, overflow = 0;
+	register unsigned_HOST_WIDE_INT i = 0, overflow = 0;
 	register int digits_found = 0, digit;
 	for (;;)
 	  {
@@ -1015,7 +971,7 @@ integer_overflow ()
 static HOST_WIDE_INT
 left_shift (a, b)
      struct constant *a;
-     unsigned HOST_WIDE_INT b;
+     unsigned_HOST_WIDE_INT b;
 {
    /* It's unclear from the C standard whether shifts can overflow.
       The following code ignores overflow; perhaps a C standard
@@ -1023,36 +979,39 @@ left_shift (a, b)
   if (b >= HOST_BITS_PER_WIDE_INT)
     return 0;
   else
-    return (unsigned HOST_WIDE_INT) a->value << b;
+    return (unsigned_HOST_WIDE_INT) a->value << b;
 }
 
 static HOST_WIDE_INT
 right_shift (a, b)
      struct constant *a;
-     unsigned HOST_WIDE_INT b;
+     unsigned_HOST_WIDE_INT b;
 {
   if (b >= HOST_BITS_PER_WIDE_INT)
     return a->signedp ? a->value >> (HOST_BITS_PER_WIDE_INT - 1) : 0;
   else if (a->signedp)
     return a->value >> b;
   else
-    return (unsigned HOST_WIDE_INT) a->value >> b;
+    return (unsigned_HOST_WIDE_INT) a->value >> b;
 }
 
 /* This page contains the entry point to this file.  */
 
 /* Parse STRING as an expression, and complain if this fails
-   to use up all of the contents of STRING.  */
-/* STRING may contain '\0' bytes; it is terminated by the first '\n'
-   outside a string constant, so that we can diagnose '\0' properly.  */
-/* We do not support C comments.  They should be removed before
+   to use up all of the contents of STRING.
+   STRING may contain '\0' bytes; it is terminated by the first '\n'
+   outside a string constant, so that we can diagnose '\0' properly.
+   If WARN_UNDEFINED is nonzero, warn if undefined identifiers are evaluated.
+   We do not support C comments.  They should be removed before
    this function is called.  */
 
 HOST_WIDE_INT
-parse_c_expression (string)
+parse_c_expression (string, warn_undefined)
      char *string;
+     int warn_undefined;
 {
   lexptr = string;
+  warn_undef = warn_undefined;
 
   /* if there is some sort of scanning error, just return 0 and assume
      the parsing routine has printed an error message somewhere.
@@ -1080,6 +1039,7 @@ int traditional;
 
 int main PROTO((int, char **));
 static void initialize_random_junk PROTO((void));
+static void print_unsigned_host_wide_int PROTO((unsigned_HOST_WIDE_INT));
 
 /* Main program for testing purposes.  */
 int
@@ -1089,6 +1049,7 @@ main (argc, argv)
 {
   int n, c;
   char buf[1024];
+  unsigned_HOST_WIDE_INT u;
 
   pedantic = 1 < argc;
   traditional = 2 < argc;
@@ -1104,10 +1065,33 @@ main (argc, argv)
       n++;
     if (c == EOF)
       break;
-    printf ("parser returned %ld\n", (long) parse_c_expression (buf));
+    parse_c_expression (buf, 1);
+    printf ("parser returned ");
+    u = (unsigned_HOST_WIDE_INT) expression_value;
+    if (expression_value < 0 && expression_signedp) {
+      u = -u;
+      printf ("-");
+    }
+    if (u == 0)
+      printf ("0");
+    else
+      print_unsigned_host_wide_int (u);
+    if (! expression_signedp)
+      printf("u");
+    printf ("\n");
   }
 
   return 0;
+}
+
+static void
+print_unsigned_host_wide_int (u)
+     unsigned_HOST_WIDE_INT u;
+{
+  if (u) {
+    print_unsigned_host_wide_int (u / 10);
+    putchar ('0' + (int) (u % 10));
+  }
 }
 
 /* table to tell if char can be part of a C identifier. */
@@ -1153,12 +1137,19 @@ initialize_random_junk ()
 }
 
 void
-error (PRINTF_ALIST (msg))
-     PRINTF_DCL (msg)
+error VPROTO ((char * msg, ...))
 {
+#ifndef __STDC__
+  char * msg;
+#endif
   va_list args;
 
   VA_START (args, msg);
+ 
+#ifndef __STDC__
+  msg = va_arg (args, char *);
+#endif
+ 
   fprintf (stderr, "error: ");
   vfprintf (stderr, msg, args);
   fprintf (stderr, "\n");
@@ -1166,12 +1157,19 @@ error (PRINTF_ALIST (msg))
 }
 
 void
-pedwarn (PRINTF_ALIST (msg))
-     PRINTF_DCL (msg)
+pedwarn VPROTO ((char * msg, ...))
 {
+#ifndef __STDC__
+  char * msg;
+#endif
   va_list args;
 
   VA_START (args, msg);
+ 
+#ifndef __STDC__
+  msg = va_arg (args, char *);
+#endif
+ 
   fprintf (stderr, "pedwarn: ");
   vfprintf (stderr, msg, args);
   fprintf (stderr, "\n");
@@ -1179,12 +1177,19 @@ pedwarn (PRINTF_ALIST (msg))
 }
 
 void
-warning (PRINTF_ALIST (msg))
-     PRINTF_DCL (msg)
+warning VPROTO ((char * msg, ...))
 {
+#ifndef __STDC__
+  char * msg;
+#endif
   va_list args;
 
   VA_START (args, msg);
+ 
+#ifndef __STDC__
+  msg = va_arg (args, char *);
+#endif
+ 
   fprintf (stderr, "warning: ");
   vfprintf (stderr, msg, args);
   fprintf (stderr, "\n");

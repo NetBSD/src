@@ -25,4 +25,7 @@ Boston, MA 02111-1307, USA.  */
 #define CPP_PREDEFINES "-Dhppa -DPWB -Acpu(hppa) -Amachine(hppa) \
    -Drtems -D__rtems__ -Asystem(rtems)"
 
-/* end of pa/rtems.h */
+/* Generate calls to memcpy, memcmp and memset.  */
+#ifndef TARGET_MEM_FUNCTIONS
+#define TARGET_MEM_FUNCTIONS
+#endif

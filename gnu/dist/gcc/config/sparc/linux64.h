@@ -1,5 +1,5 @@
-/* Definitions for 64-bit SPARC running Linux with ELF
-   Copyright 1996, 1997 Free Software Foundation, Inc.
+/* Definitions for 64-bit SPARC running Linux-based GNU systems with ELF.
+   Copyright 1996, 1997, 1998 Free Software Foundation, Inc.
    Contributed by David S. Miller (davem@caip.rutgers.edu)
 
 This file is part of GNU CC.
@@ -48,8 +48,8 @@ Boston, MA 02111-1307, USA.  */
 #undef ASM_CPU_DEFAULT_SPEC
 #define ASM_CPU_DEFAULT_SPEC "-Av9a"
 
-/* Provide a STARTFILE_SPEC appropriate for Linux.  Here we add
-   the Linux magical crtbegin.o file (see crtstuff.c) which
+/* Provide a STARTFILE_SPEC appropriate for GNU/Linux.  Here we add
+   the GNU/Linux magical crtbegin.o file (see crtstuff.c) which
    provides part of the support for getting C++ file-scope static
    object constructed before entering `main'. */
    
@@ -59,18 +59,18 @@ Boston, MA 02111-1307, USA.  */
      %{pg:gcrt1.o%s} %{!pg:%{p:gcrt1.o%s} %{!p:crt1.o%s}}}\
    crti.o%s %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
 
-/* Provide a ENDFILE_SPEC appropriate for Linux.  Here we tack on
-   the Linux magical crtend.o file (see crtstuff.c) which
+/* Provide a ENDFILE_SPEC appropriate for GNU/Linux.  Here we tack on
+   the GNU/Linux magical crtend.o file (see crtstuff.c) which
    provides part of the support for getting C++ file-scope static
    object constructed before entering `main', followed by a normal
-   Linux "finalizer" file, `crtn.o'.  */
+   GNU/Linux "finalizer" file, `crtn.o'.  */
 
 #undef  ENDFILE_SPEC
 #define ENDFILE_SPEC \
   "%{!shared:crtend.o%s} %{shared:crtendS.o%s} crtn.o%s"
 
 #undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (sparc64 Linux/ELF)");
+#define TARGET_VERSION fprintf (stderr, " (sparc64 GNU/Linux with ELF)");
 
 /* A 64 bit v9 compiler with stack-bias,
    in a Medium/Anywhere code model environment.  */
@@ -84,12 +84,6 @@ Boston, MA 02111-1307, USA.  */
 #undef SPARC_DEFAULT_CMODEL
 #define SPARC_DEFAULT_CMODEL CM_MEDANY
 
-#undef SIZE_TYPE
-#define SIZE_TYPE "long long unsigned int"
- 
-#undef PTRDIFF_TYPE
-#define PTRDIFF_TYPE "long long int"
-  
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "long int"
    
@@ -116,7 +110,7 @@ Boston, MA 02111-1307, USA.  */
    %{!shared: %{mieee-fp:-lieee} %{pthread:-lpthread} \
      %{profile:-lc_p} %{!profile: -lc}}"
 
-/* Provide a LINK_SPEC appropriate for Linux.  Here we provide support
+/* Provide a LINK_SPEC appropriate for GNU/Linux.  Here we provide support
    for the special GCC options -static and -shared, which allow us to
    link things in one of these three modes by applying the appropriate
    combinations of options at link-time. We like to support here for
@@ -230,3 +224,22 @@ do {									\
    RELATIVE relocations.  */
 
 /* #define DWARF_OFFSET_SIZE PTR_SIZE */
+
+/* Override MACHINE_STATE_{SAVE,RESTORE} because we have special
+   traps available which can get and set the condition codes
+   reliably.  */
+#undef MACHINE_STATE_SAVE
+#define MACHINE_STATE_SAVE(ID)				\
+  unsigned long int ms_flags, ms_saveret;		\
+  asm volatile("ta	0x20\n\t"			\
+	       "mov	%%g1, %0\n\t"			\
+	       "mov	%%g2, %1\n\t"			\
+	       : "=r" (ms_flags), "=r" (ms_saveret));
+
+#undef MACHINE_STATE_RESTORE
+#define MACHINE_STATE_RESTORE(ID)			\
+  asm volatile("mov	%0, %%g1\n\t"			\
+	       "mov	%1, %%g2\n\t"			\
+	       "ta	0x21\n\t"			\
+	       : /* no outputs */			\
+	       : "r" (ms_flags), "r" (ms_saveret));

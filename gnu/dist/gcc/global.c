@@ -19,15 +19,18 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 
-#include <stdio.h>
 #include "config.h"
+#include "system.h"
+
+#include "machmode.h"
+#include "hard-reg-set.h"
 #include "rtl.h"
 #include "flags.h"
 #include "basic-block.h"
-#include "hard-reg-set.h"
 #include "regs.h"
 #include "insn-config.h"
 #include "output.h"
+#include "toplev.h"
 
 /* This pass of the compiler performs global register allocation.
    It assigns hard register numbers to all the pseudo registers
@@ -288,7 +291,7 @@ global_alloc (file)
 #endif
        || FRAME_POINTER_REQUIRED);
 
-  register int i;
+  register size_t i;
   rtx x;
 
   max_allocno = 0;
@@ -565,12 +568,12 @@ global_alloc (file)
 	       for this pseudo-reg.  If that fails, try any reg.  */
 	    if (N_REG_CLASSES > 1)
 	      {
-		find_reg (allocno_order[i], HARD_CONST (0), 0, 0, 0);
+		find_reg (allocno_order[i], 0, 0, 0, 0);
 		if (reg_renumber[allocno_reg[allocno_order[i]]] >= 0)
 		  continue;
 	      }
 	    if (reg_alternate_class (allocno_reg[allocno_order[i]]) != NO_REGS)
-	      find_reg (allocno_order[i], HARD_CONST (0), 1, 0, 0);
+	      find_reg (allocno_order[i], 0, 1, 0, 0);
 	  }
     }
 
@@ -670,6 +673,15 @@ global_conflicts ()
 	   allocno now live, and with each hard reg now live.  */
 
 	record_conflicts (block_start_allocnos, ax);
+
+#ifdef STACK_REGS
+	/* Pseudos can't go in stack regs at the start of a basic block
+	   that can be reached through a computed goto, since reg-stack
+	   can't handle computed gotos.  */
+	if (basic_block_computed_jump_target[b])
+	  for (ax = FIRST_STACK_REG; ax <= LAST_STACK_REG; ax++)
+	    record_one_conflict (ax);
+#endif
       }
 
       insn = basic_block_head[b];

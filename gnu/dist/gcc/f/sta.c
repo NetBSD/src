@@ -1,6 +1,6 @@
 /* sta.c -- Implementation File (module.c template V1.0)
    Copyright (C) 1995-1997 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -644,6 +644,7 @@ ffesta_second_ (ffelexToken t)
       break;
 
     case FFESTR_firstCASE:
+    case FFESTR_firstCASEDEFAULT:
       ffesta_add_possible_exec_ ((ffelexHandler) ffestb_R810);
       break;
 
@@ -1451,7 +1452,9 @@ ffesta_eof ()
   if (ffe_is_ffedebug ())
     {
       ffestorag_report ();
+#if FFECOM_targetCURRENT == FFECOM_targetFFE
       ffesymbol_report_all ();
+#endif
     }
 }
 
@@ -1792,9 +1795,11 @@ ffesta_ffebad_2t (ffebad errnum, ffelexToken t1, ffelexToken t2)
     }
 }
 
-/* ffesta_set_outpooldisp -- Set disposition of statement output pool
-
-   ffesta_set_outpooldisp(FFESTA_pooldispPRESERVE);  */
+ffestaPooldisp
+ffesta_outpooldisp ()
+{
+  return ffesta_outpooldisp_;
+}
 
 void
 ffesta_set_outpooldisp (ffestaPooldisp d)
@@ -1934,7 +1939,7 @@ ffesta_zero (ffelexToken t)
      isn't enough, because then typing "GOTO" instead of "BLAH" above
      doesn't work -- the statement is confirmed (we know the user
      attempted a GOTO) but ffestc hasn't seen it.  So, instead, just
-     always tell ffestc to do "any" statement it needs to to reset.  */
+     always tell ffestc to do "any" statement it needs to reset.  */
 
   if (!ffesta_is_inhibited_
       && ffesta_seen_first_exec)
@@ -1985,7 +1990,9 @@ ffesta_zero (ffelexToken t)
   if (ffe_is_ffedebug ())
     {
       ffestorag_report ();
+#if FFECOM_targetCURRENT == FFECOM_targetFFE
       ffesymbol_report_all ();
+#endif
     }
 
   ffelex_set_names (TRUE);

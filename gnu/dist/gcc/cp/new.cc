@@ -28,4 +28,15 @@
 #pragma implementation "new"
 #include "new"
 
-const nothrow_t nothrow = { };
+const std::nothrow_t std::nothrow = { };
+
+using std::new_handler;
+new_handler __new_handler;
+
+new_handler
+set_new_handler (new_handler handler)
+{
+  new_handler prev_handler = __new_handler;
+  __new_handler = handler;
+  return prev_handler;
+}

@@ -1,5 +1,5 @@
 /* Parse C expressions for CCCP.
-   Copyright (C) 1987, 1992, 1994, 1995, 1997 Free Software Foundation.
+   Copyright (C) 1987, 1992, 1994, 1995, 1997, 1998 Free Software Foundation.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -25,17 +25,16 @@ Written by Per Bothner 1994.  */
 /* Parse a C expression from text in a string  */
    
 #include "config.h"
+#include "system.h"
+#include "gansidecl.h"
 #include "cpplib.h"
 
 extern char *xmalloc PARAMS ((unsigned));
-extern char *xrealloc PARAMS ((char *, unsigned));
+extern char *xrealloc PARAMS ((void *, unsigned));
 
 #ifdef MULTIBYTE_CHARS
-#include <stdlib.h>
 #include <locale.h>
 #endif
-
-#include <stdio.h>
 
 /* This is used for communicating lists of keywords with cccp.c.  */
 struct arglist {
@@ -44,26 +43,6 @@ struct arglist {
   int length;
   int argno;
 };
-
-/* Define a generic NULL if one hasn't already been defined.  */
-
-#ifndef NULL
-#define NULL 0
-#endif
-
-#ifndef GENERIC_PTR
-#if defined (USE_PROTOTYPES) ? USE_PROTOTYPES : defined (__STDC__)
-#define GENERIC_PTR void *
-#else
-#define GENERIC_PTR char *
-#endif
-#endif
-
-#ifndef NULL_PTR
-#define NULL_PTR ((GENERIC_PTR) 0)
-#endif
-
-extern char *xmalloc ();
 
 #ifndef CHAR_TYPE_SIZE
 #define CHAR_TYPE_SIZE BITS_PER_UNIT
@@ -101,9 +80,9 @@ extern char *xmalloc ();
    number with SUM's sign, where A, B, and SUM are all C integers.  */
 #define possible_sum_sign(a, b, sum) ((((a) ^ (b)) | ~ ((a) ^ (sum))) < 0)
 
-static void integer_overflow ();
-static long left_shift ();
-static long right_shift ();
+static void integer_overflow PARAMS ((cpp_reader *));
+static long left_shift PARAMS ((cpp_reader *, long, int, unsigned long));
+static long right_shift PARAMS ((cpp_reader *, long, int, unsigned long));
 
 #define ERROR 299
 #define OROR 300
@@ -126,16 +105,34 @@ static long right_shift ();
 #define SKIP_OPERAND 8
 /*#define UNSIGNEDP 16*/
 
-#ifndef HOST_BITS_PER_WIDE_INT
+/* Find the largest host integer type and set its size and type.
+   Watch out: on some crazy hosts `long' is shorter than `int'.  */
 
-#if HOST_BITS_PER_LONG > HOST_BITS_PER_INT
-#define HOST_BITS_PER_WIDE_INT HOST_BITS_PER_LONG
-#define HOST_WIDE_INT long
-#else
-#define HOST_BITS_PER_WIDE_INT HOST_BITS_PER_INT
-#define HOST_WIDE_INT int
+#ifndef HOST_WIDE_INT
+# if HAVE_INTTYPES_H
+#  include <inttypes.h>
+#  define HOST_WIDE_INT intmax_t
+# else
+#  if (HOST_BITS_PER_LONG <= HOST_BITS_PER_INT \
+       && HOST_BITS_PER_LONGLONG <= HOST_BITS_PER_INT)
+#   define HOST_WIDE_INT int
+#  else
+#  if (HOST_BITS_PER_LONGLONG <= HOST_BITS_PER_LONG \
+       || ! (defined LONG_LONG_MAX || defined LLONG_MAX))
+#   define HOST_WIDE_INT long
+#  else
+#   define HOST_WIDE_INT long long
+#  endif
+#  endif
+# endif
 #endif
 
+#ifndef CHAR_BIT
+#define CHAR_BIT 8
+#endif
+
+#ifndef HOST_BITS_PER_WIDE_INT
+#define HOST_BITS_PER_WIDE_INT (CHAR_BIT * sizeof (HOST_WIDE_INT))
 #endif
 
 struct operation {
@@ -226,7 +223,7 @@ parse_number (pfile, start, olen)
     if (largest_digit < digit)
       largest_digit = digit;
     nd = n * base + digit;
-    overflow |= ULONG_MAX_over_base < n | nd < n;
+    overflow |= ULONG_MAX_over_base < n || nd < n;
     n = nd;
   }
 
@@ -283,7 +280,6 @@ cpp_lex (pfile, skip_evaluation)
      int skip_evaluation;
 {
   register int c;
-  register int namelen;
   register struct token *toktab;
   enum cpp_token token;
   struct operation op;
@@ -337,7 +333,7 @@ cpp_lex (pfile, skip_evaluation)
 	 It is mostly copied from c-lex.c.  */
       {
         register int result = 0;
-	register num_chars = 0;
+	register int num_chars = 0;
 	unsigned width = MAX_CHAR_TYPE_SIZE;
 	int wide_flag = 0;
 	int max_chars;
@@ -367,7 +363,7 @@ cpp_lex (pfile, skip_evaluation)
 	  {
 	    if (c == '\\')
 	      {
-		c = cpp_parse_escape (pfile, &ptr);
+		c = cpp_parse_escape (pfile, (char **) &ptr);
 		if (width < HOST_BITS_PER_INT
 		  && (unsigned) c >= (1 << width))
 		    cpp_pedwarn (pfile,
@@ -406,7 +402,7 @@ cpp_lex (pfile, skip_evaluation)
 	  {
 	    int num_bits = num_chars * width;
 
-	    if (cpp_lookup (pfile, "__CHAR_UNSIGNED__",
+	    if (cpp_lookup (pfile, (U_CHAR *)"__CHAR_UNSIGNED__",
 			    sizeof ("__CHAR_UNSIGNED__")-1, -1)
 		|| ((result >> (num_bits - 1)) & 1) == 0)
 		op.value
@@ -621,7 +617,7 @@ left_shift (pfile, a, unsignedp, b)
 
 static long
 right_shift (pfile, a, unsignedp, b)
-     cpp_reader *pfile;
+     cpp_reader *pfile ATTRIBUTE_UNUSED;
      long a;
      int unsignedp;
      unsigned long b;

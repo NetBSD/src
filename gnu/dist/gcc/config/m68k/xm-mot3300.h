@@ -1,6 +1,6 @@
 /* Configuration for GNU C-compiler for Motorola 68000 family.
    SysV68 Motorola 3300 Delta Series
-   Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -22,20 +22,8 @@ Boston, MA 02111-1307, USA.  */
 
 #define USG 1
 
-#include "m68k/xm-m68k.h"
-
-#define bcopy(a,b,c) memcpy (b,a,c)
-#define bzero(a,b) memset (a,0,b)
-#define bcmp(a,b,c) memcmp (a,b,c)
-
-#define rindex strrchr
-#define index strchr
-
-#define NO_SYS_SIGLIST
-
 /* do not use alloca from -lPW with cc, because function epilogues use %sp */
 #ifndef __GNUC__
-#define USE_C_ALLOCA
 #ifdef __STDC__
 extern void *alloca ();
 #else
@@ -47,3 +35,7 @@ extern char *alloca ();
 
 #define __PTR_TO_INT(P) ((int)(P))
 #define __INT_TO_PTR(P) ((char *)(P))
+
+/* We need POSIX/XOPEN symbols; otherwise make check will fail.  */
+#define ADD_MISSING_POSIX 1
+#define ADD_MISSING_XOPEN 1

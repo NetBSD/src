@@ -1,5 +1,5 @@
 /* Build expressions with type checking for C compiler.
-   Copyright (C) 1987, 88, 91-6, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 91-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -29,18 +29,18 @@ Boston, MA 02111-1307, USA.  */
    like a strange sort of assignment).  */
 
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 #include "tree.h"
 #include "c-tree.h"
 #include "flags.h"
 #include "output.h"
+#include "rtl.h"
+#include "expr.h"
+#include "toplev.h"
 
 /* Nonzero if we've already printed a "missing braces around initializer"
    message within this initializer.  */
 static int missing_braces_mentioned;
-
-extern char *index ();
-extern char *rindex ();
 
 static tree qualify_type		PROTO((tree, tree));
 static int comp_target_types		PROTO((tree, tree));
@@ -71,6 +71,8 @@ static tree digest_init			PROTO((tree, tree, int, int));
 static void check_init_type_bitfields	PROTO((tree));
 static void output_init_element		PROTO((tree, tree, tree, int));
 static void output_pending_init_elements PROTO((int));
+static void add_pending_init		PROTO((tree, tree));
+static int pending_init_member		PROTO((tree));
 
 /* Do `exp = require_complete_type (exp);' to make sure exp
    does not have an incomplete type.  (That includes void types.)  */
@@ -192,8 +194,8 @@ common_type (t1, t2)
   if (t2 == error_mark_node)
     return t1;
 
-  /* Merge the attributes */
-  attributes = merge_attributes (TYPE_ATTRIBUTES (t1), TYPE_ATTRIBUTES (t2));
+  /* Merge the attributes.  */
+  attributes = merge_machine_type_attributes (t1, t2);
 
   /* Treat an enum type as the unsigned integer type of the same width.  */
 
@@ -260,6 +262,12 @@ common_type (t1, t2)
 	     t1 = long_integer_type_node;
 	  return build_type_attribute_variant (t1, attributes);
 	}
+
+      /* Likewise, prefer long double to double even if same size.  */
+      if (TYPE_MAIN_VARIANT (t1) == long_double_type_node
+	  || TYPE_MAIN_VARIANT (t2) == long_double_type_node)
+	return build_type_attribute_variant (long_double_type_node,
+					     attributes);
 
       /* Otherwise prefer the unsigned one.  */
 
@@ -418,7 +426,8 @@ comptypes (type1, type2)
 
   /* Suppress errors caused by previously reported errors.  */
 
-  if (t1 == t2 || TREE_CODE (t1) == ERROR_MARK || TREE_CODE (t2) == ERROR_MARK)
+  if (t1 == t2 || !t1 || !t2
+      || TREE_CODE (t1) == ERROR_MARK || TREE_CODE (t2) == ERROR_MARK)
     return 1;
 
   /* Treat an enum type as the integer type of the same width and 
@@ -445,7 +454,7 @@ comptypes (type1, type2)
 
   /* Allow for two different type nodes which have essentially the same
      definition.  Note that we already checked for equality of the type
-     type qualifiers (just above).  */
+     qualifiers (just above).  */
 
   if (TYPE_MAIN_VARIANT (t1) == TYPE_MAIN_VARIANT (t2))
     return 1;
@@ -507,6 +516,9 @@ comptypes (type1, type2)
       if (maybe_objc_comptypes (t1, t2, 0) == 1)
 	val = 1;
       break;
+
+    default:
+      break;
     }
   return attrval == 2 && val == 1 ? 2 : val;
 }
@@ -521,7 +533,7 @@ comp_target_types (ttl, ttr)
   int val;
 
   /* Give maybe_objc_comptypes a crack at letting these types through.  */
-  if (val = maybe_objc_comptypes (ttl, ttr, 1) >= 0)
+  if ((val = maybe_objc_comptypes (ttl, ttr, 1)) >= 0)
     return val;
 
   val = comptypes (TYPE_MAIN_VARIANT (TREE_TYPE (ttl)),
@@ -776,7 +788,7 @@ signed_or_unsigned_type (unsignedp, type)
      int unsignedp;
      tree type;
 {
-  if (! INTEGRAL_TYPE_P (type)
+  if ((! INTEGRAL_TYPE_P (type) && ! POINTER_TYPE_P (type))
       || TREE_UNSIGNED (type) == unsignedp)
     return type;
   if (TYPE_PRECISION (type) == TYPE_PRECISION (signed_char_type_node))
@@ -825,6 +837,7 @@ c_sizeof (type)
   /* Convert in case a char is more than one unit.  */
   t = size_binop (CEIL_DIV_EXPR, TYPE_SIZE (type), 
 		  size_int (TYPE_PRECISION (char_type_node)));
+  t = convert (sizetype, t);
   /* size_binop does not put the constant in range, so do it now.  */
   if (TREE_CODE (t) == INTEGER_CST && force_fit_type (t, 0))
     TREE_CONSTANT_OVERFLOW (t) = TREE_OVERFLOW (t) = 1;
@@ -848,6 +861,7 @@ c_sizeof_nowarn (type)
   /* Convert in case a char is more than one unit.  */
   t = size_binop (CEIL_DIV_EXPR, TYPE_SIZE (type), 
 		  size_int (TYPE_PRECISION (char_type_node)));
+  t = convert (sizetype, t);
   force_fit_type (t, 0);
   return t;
 }
@@ -876,6 +890,7 @@ c_size_in_bytes (type)
   /* Convert in case a char is more than one unit.  */
   t = size_binop (CEIL_DIV_EXPR, TYPE_SIZE (type), 
 		     size_int (BITS_PER_UNIT));
+  t = convert (sizetype, t);
   force_fit_type (t, 0);
   return t;
 }
@@ -1008,13 +1023,14 @@ default_conversion (exp)
       type = type_for_size (MAX (TYPE_PRECISION (type),
 				 TYPE_PRECISION (integer_type_node)),
 			    ((flag_traditional
-			      || TYPE_PRECISION (type) >= TYPE_PRECISION (integer_type_node))
+			      || (TYPE_PRECISION (type)
+				  >= TYPE_PRECISION (integer_type_node)))
 			     && TREE_UNSIGNED (type)));
       return convert (type, exp);
     }
 
   if (TREE_CODE (exp) == COMPONENT_REF
-      && DECL_BIT_FIELD (TREE_OPERAND (exp, 1)))
+      && DECL_C_BIT_FIELD (TREE_OPERAND (exp, 1)))
     {
       tree width = DECL_SIZE (TREE_OPERAND (exp, 1));
       HOST_WIDE_INT low = TREE_INT_CST_LOW (width);
@@ -1242,6 +1258,9 @@ build_component_ref (datum, component)
 	(TREE_OPERAND (datum, 0),
 	 build_component_ref (TREE_OPERAND (datum, 1), component),
 	 build_component_ref (TREE_OPERAND (datum, 2), component));
+
+    default:
+      break;
     }
 
   /* See if there is a field or component with name COMPONENT.  */
@@ -1573,6 +1592,8 @@ build_function_call (function, params)
 	if (coerced_params == 0)
 	  return integer_zero_node;
 	return build_unary_op (ABS_EXPR, TREE_VALUE (coerced_params), 0);
+      default:
+	break;
       }
 
   {
@@ -2332,6 +2353,9 @@ build_binary_op (code, orig_op0, orig_op1, convert_p)
 	  if (! flag_traditional)
 	    pedwarn ("comparison between pointer and integer");
 	}
+      break;
+      
+    default:
       break;
     }
 
@@ -3112,6 +3136,9 @@ build_unary_op (code, xarg, noconvert)
 	  TREE_CONSTANT (addr) = 1;
 	return addr;
       }
+
+    default:
+      break;
     }
 
   if (!errstring)
@@ -3180,17 +3207,16 @@ lvalue_p (ref)
     case PARM_DECL:
     case RESULT_DECL:
     case ERROR_MARK:
-      if (TREE_CODE (TREE_TYPE (ref)) != FUNCTION_TYPE
-	  && TREE_CODE (TREE_TYPE (ref)) != METHOD_TYPE)
-	return 1;
-      break;
+      return (TREE_CODE (TREE_TYPE (ref)) != FUNCTION_TYPE
+	      && TREE_CODE (TREE_TYPE (ref)) != METHOD_TYPE);
 
     case BIND_EXPR:
     case RTL_EXPR:
-      if (TREE_CODE (TREE_TYPE (ref)) == ARRAY_TYPE)
-	return 1;
+      return TREE_CODE (TREE_TYPE (ref)) == ARRAY_TYPE;
+
+    default:
+      return 0;
     }
-  return 0;
 }
 
 /* Return nonzero if REF is an lvalue valid for this language;
@@ -3222,7 +3248,12 @@ unary_complex_lvalue (code, arg)
   if (TREE_CODE (arg) == COMPOUND_EXPR)
     {
       tree real_result = build_unary_op (code, TREE_OPERAND (arg, 1), 0);
-      pedantic_lvalue_warning (COMPOUND_EXPR);
+
+      /* If this returns a function type, it isn't really being used as
+	 an lvalue, so don't issue a warning about it.  */
+      if (TREE_CODE (TREE_TYPE (arg)) != FUNCTION_TYPE)
+	pedantic_lvalue_warning (COMPOUND_EXPR);
+
       return build (COMPOUND_EXPR, TREE_TYPE (real_result),
 		    TREE_OPERAND (arg, 0), real_result);
     }
@@ -3231,6 +3262,9 @@ unary_complex_lvalue (code, arg)
   if (TREE_CODE (arg) == COND_EXPR)
     {
       pedantic_lvalue_warning (COND_EXPR);
+      if (TREE_CODE (TREE_TYPE (arg)) != FUNCTION_TYPE)
+	pedantic_lvalue_warning (COMPOUND_EXPR);
+
       return (build_conditional_expr
 	      (TREE_OPERAND (arg, 0),
 	       build_unary_op (code, TREE_OPERAND (arg, 1), 0),
@@ -3737,11 +3771,18 @@ build_c_cast (type, expr)
 	  && TREE_CODE (type) == POINTER_TYPE
 	  && TREE_CODE (otype) == POINTER_TYPE)
 	{
-	  if (TYPE_VOLATILE (TREE_TYPE (otype))
-	      && ! TYPE_VOLATILE (TREE_TYPE (type)))
+	  /* Go to the innermost object being pointed to.  */
+	  tree in_type = type;
+	  tree in_otype = otype;
+
+	  while (TREE_CODE (in_type) == POINTER_TYPE)
+	    in_type = TREE_TYPE (in_type);
+	  while (TREE_CODE (in_otype) == POINTER_TYPE)
+	    in_otype = TREE_TYPE (in_otype);
+	    
+	  if (TYPE_VOLATILE (in_otype) && ! TYPE_VOLATILE (in_type))
 	    pedwarn ("cast discards `volatile' from pointer target type");
-	  if (TYPE_READONLY (TREE_TYPE (otype))
-	      && ! TYPE_READONLY (TREE_TYPE (type)))
+	  if (TYPE_READONLY (in_otype) && ! TYPE_READONLY (in_type))
 	    pedwarn ("cast discards `const' from pointer target type");
 	}
 
@@ -3872,6 +3913,8 @@ build_modify_expr (lhs, modifycode, rhs)
 		      /* But cast it to void to avoid an "unused" error.  */
 		      convert (void_type_node, rhs), cond);
       }
+    default:
+      break;
     }
 
   /* If a binary op has been requested, combine the old LHS value with the RHS
@@ -3913,6 +3956,9 @@ build_modify_expr (lhs, modifycode, rhs)
 	pedantic_lvalue_warning (CONVERT_EXPR);
 	return convert (TREE_TYPE (lhs), result);
       }
+      
+    default:
+      break;
     }
 
   /* Now we have handled acceptable kinds of LHS that are not truly lvalues.
@@ -4426,9 +4472,10 @@ initializer_constant_valid_p (value, endtype)
 	  return null_pointer_node;
 	return 0;
       }
-    }
 
-  return 0;
+    default:
+      return 0;
+    }
 }
 
 /* If VALUE is a compound expr all of whose expressions are constant, then
@@ -4649,7 +4696,7 @@ print_spelling (buffer)
       {
 	if (p->kind == SPELLING_MEMBER)
 	  *d++ = '.';
-	for (s = p->u.s; *d = *s++; d++)
+	for (s = p->u.s; (*d = *s++); d++)
 	  ;
       }
   *d++ = '\0';
@@ -5043,20 +5090,29 @@ static int constructor_erroneous;
 /* 1 if have called defer_addressed_constants.  */
 static int constructor_subconstants_deferred;
 
-/* List of pending elements at this constructor level.
+/* Structure for managing pending initializer elements, organized as an
+   AVL tree.  */
+
+struct init_node
+{
+  struct init_node *left, *right;
+  struct init_node *parent;
+  int balance;
+  tree purpose;
+  tree value;
+};
+
+/* Tree of pending elements at this constructor level.
    These are elements encountered out of order
    which belong at places we haven't reached yet in actually
    writing the output.  */
-static tree constructor_pending_elts;
+static struct init_node *constructor_pending_elts;
 
 /* The SPELLING_DEPTH of this constructor.  */
 static int constructor_depth;
 
 /* 0 if implicitly pushing constructor levels is allowed.  */
 int constructor_no_implicit = 0; /* 0 for C; 1 for some other languages.  */
-
-/* 1 if this constructor level was entered implicitly.  */
-static int constructor_implicit;
 
 static int require_constant_value;
 static int require_constant_elements;
@@ -5076,9 +5132,6 @@ static char *constructor_asmspec;
 /* Nonzero if this is an initializer for a top-level decl.  */
 static int constructor_top_level;
 
-/* When we finish reading a constructor expression
-   (constructor_decl is 0), the CONSTRUCTOR goes here.  */
-static tree constructor_result;
 
 /* This stack has a level for each implicit or explicit level of
    structuring in the initializer, including the outermost one.  It
@@ -5097,7 +5150,7 @@ struct constructor_stack
   tree bit_index;
   tree elements;
   int offset;
-  tree pending_elts;
+  struct init_node *pending_elts;
   int depth;
   /* If nonzero, this value should replace the entire
      constructor at this level.  */
@@ -5301,6 +5354,7 @@ really_start_incremental_init (type)
 	constructor_fields = TREE_CHAIN (constructor_fields);
       constructor_unfilled_fields = constructor_fields;
       constructor_bit_index = copy_node (integer_zero_node);
+      TREE_TYPE (constructor_bit_index) = sbitsizetype;
     }
   else if (TREE_CODE (constructor_type) == ARRAY_TYPE)
     {
@@ -5380,13 +5434,17 @@ push_init_level (implicit)
       if (! tree_int_cst_equal (constructor_bit_index,
 				DECL_FIELD_BITPOS (constructor_fields)))
 	{
-	  int next = (TREE_INT_CST_LOW
-		      (DECL_FIELD_BITPOS (constructor_fields))
-		      / BITS_PER_UNIT);
-	  int here = (TREE_INT_CST_LOW (constructor_bit_index)
-		      / BITS_PER_UNIT);
+	  /* By using unsigned arithmetic, the result will be correct even
+	     in case of overflows, if BITS_PER_UNIT is a power of two.  */
+	  unsigned next = (TREE_INT_CST_LOW
+			   (DECL_FIELD_BITPOS (constructor_fields))
+			   / (unsigned)BITS_PER_UNIT);
+	  unsigned here = (TREE_INT_CST_LOW (constructor_bit_index)
+			   / (unsigned)BITS_PER_UNIT);
 
-	  assemble_zeros (next - here);
+	  assemble_zeros ((next - here)
+			  * (unsigned)BITS_PER_UNIT
+			  / (unsigned)BITS_PER_UNIT);
 	}
       /* Indicate that we have now filled the structure up to the current
 	 field.  */
@@ -5478,6 +5536,7 @@ push_init_level (implicit)
 	constructor_fields = TREE_CHAIN (constructor_fields);
       constructor_unfilled_fields = constructor_fields;
       constructor_bit_index = copy_node (integer_zero_node);
+      TREE_TYPE (constructor_bit_index) = sbitsizetype;
     }
   else if (TREE_CODE (constructor_type) == ARRAY_TYPE)
     {
@@ -5559,6 +5618,17 @@ pop_init_level (implicit)
 
   if (constructor_type != 0)
     size = int_size_in_bytes (constructor_type);
+
+  /* Warn when some struct elements are implicitly initialized to zero.  */
+  if (extra_warnings
+      && constructor_type
+      && TREE_CODE (constructor_type) == RECORD_TYPE
+      && constructor_unfilled_fields)
+    {
+      push_member_name (constructor_unfilled_fields);
+      warning_init ("missing initializer%s", " for `%s'", NULL);
+      RESTORE_SPELLING_DEPTH (constructor_depth);
+    }
 
   /* Now output all pending elements.  */
   output_pending_init_elements (1);
@@ -5834,6 +5904,251 @@ set_init_label (fieldname)
     }
 }
 
+/* Add a new initializer to the tree of pending initializers.  PURPOSE
+   indentifies the initializer, either array index or field in a structure. 
+   VALUE is the value of that index or field.  */
+
+static void
+add_pending_init (purpose, value)
+     tree purpose, value;
+{
+  struct init_node *p, **q, *r;
+
+  q = &constructor_pending_elts;
+  p = 0;
+
+  if (TREE_CODE (constructor_type) == ARRAY_TYPE)
+    {
+      while (*q != 0)
+	{
+	  p = *q;
+	  if (tree_int_cst_lt (purpose, p->purpose))
+	    q = &p->left;
+	  else if (tree_int_cst_lt (p->purpose, purpose))
+	    q = &p->right;
+	  else
+	    abort ();
+	}
+    }
+  else
+    {
+      while (*q != NULL)
+	{
+	  p = *q;
+	  if (tree_int_cst_lt (DECL_FIELD_BITPOS (purpose),
+			       DECL_FIELD_BITPOS (p->purpose)))
+	    q = &p->left;
+	  else if (tree_int_cst_lt (DECL_FIELD_BITPOS (p->purpose),
+				    DECL_FIELD_BITPOS (purpose)))
+	    q = &p->right;
+	  else
+	    abort ();
+	}
+    }
+
+  r = (struct init_node *) oballoc (sizeof (struct init_node));
+  r->purpose = purpose;
+  r->value = value;
+
+  *q = r;
+  r->parent = p;
+  r->left = 0;
+  r->right = 0;
+  r->balance = 0;
+
+  while (p)
+    {
+      struct init_node *s;
+
+      if (r == p->left)
+	{
+	  if (p->balance == 0)
+	    p->balance = -1;
+	  else if (p->balance < 0)
+	    {
+	      if (r->balance < 0)
+		{
+		  /* L rotation. */
+		  p->left = r->right;
+		  if (p->left)
+		    p->left->parent = p;
+		  r->right = p;
+
+		  p->balance = 0;
+		  r->balance = 0;
+
+		  s = p->parent;
+		  p->parent = r;
+		  r->parent = s;
+		  if (s)
+		    {
+		      if (s->left == p)
+			s->left = r;
+		      else
+			s->right = r;
+		    }
+		  else
+		    constructor_pending_elts = r;
+		}
+	      else
+		{
+		  /* LR rotation. */
+		  struct init_node *t = r->right;
+
+		  r->right = t->left;
+		  if (r->right)
+		    r->right->parent = r;
+		  t->left = r;
+
+		  p->left = t->right;
+		  if (p->left)
+		    p->left->parent = p;
+		  t->right = p;
+
+		  p->balance = t->balance < 0;
+		  r->balance = -(t->balance > 0);
+		  t->balance = 0;
+
+		  s = p->parent;
+		  p->parent = t;
+		  r->parent = t;
+		  t->parent = s;
+		  if (s)
+		    {
+		      if (s->left == p)
+			s->left = t;
+		      else
+			s->right = t;
+		    }
+		  else
+		    constructor_pending_elts = t;
+		}
+	      break;
+	    }
+	  else
+	    {
+	      /* p->balance == +1; growth of left side balances the node.  */
+	      p->balance = 0;
+	      break;
+	    }
+	}
+      else /* r == p->right */
+	{
+	  if (p->balance == 0)
+	    /* Growth propagation from right side.  */
+	    p->balance++;
+	  else if (p->balance > 0)
+	    {
+	      if (r->balance > 0)
+		{
+		  /* R rotation. */
+		  p->right = r->left;
+		  if (p->right)
+		    p->right->parent = p;
+		  r->left = p;
+
+		  p->balance = 0;
+		  r->balance = 0;
+
+		  s = p->parent;
+		  p->parent = r;
+		  r->parent = s;
+		  if (s)
+		    {
+		      if (s->left == p)
+			s->left = r;
+		      else
+			s->right = r;
+		    }
+		  else
+		    constructor_pending_elts = r;
+		}
+	      else /* r->balance == -1 */
+		{
+		  /* RL rotation */
+		  struct init_node *t = r->left;
+
+		  r->left = t->right;
+		  if (r->left)
+		    r->left->parent = r;
+		  t->right = r;
+
+		  p->right = t->left;
+		  if (p->right)
+		    p->right->parent = p;
+		  t->left = p;
+
+		  r->balance = (t->balance < 0);
+		  p->balance = -(t->balance > 0);
+		  t->balance = 0;
+
+		  s = p->parent;
+		  p->parent = t;
+		  r->parent = t;
+		  t->parent = s;
+		  if (s)
+		    {
+		      if (s->left == p)
+			s->left = t;
+		      else
+			s->right = t;
+		    }
+		  else
+		    constructor_pending_elts = t;
+		}
+	      break;
+	    }
+	  else
+	    {
+	      /* p->balance == -1; growth of right side balances the node. */
+	      p->balance = 0;
+	      break;
+	    }
+	}
+
+      r = p;
+      p = p->parent;
+    }
+}
+
+/* Return nonzero if FIELD is equal to the index of a pending initializer.  */
+
+static int
+pending_init_member (field)
+     tree field;
+{
+  struct init_node *p;
+
+  p = constructor_pending_elts;
+  if (TREE_CODE (constructor_type) == ARRAY_TYPE)
+    {
+      while (p)
+	{
+	  if (tree_int_cst_equal (field, p->purpose))
+	    return 1;
+	  else if (tree_int_cst_lt (field, p->purpose))
+	    p = p->left;
+	  else
+	    p = p->right;
+	}
+    }
+  else
+    {
+      while (p)
+	{
+	  if (field == p->purpose)
+	    return 1;
+	  else if (tree_int_cst_lt (DECL_FIELD_BITPOS (field),
+				    DECL_FIELD_BITPOS (p->purpose)))
+	    p = p->left;
+	  else
+	    p = p->right;
+	}
+    }
+
+  return 0;
+}
+
 /* "Output" the next constructor element.
    At top level, really output it to assembler code now.
    Otherwise, collect it in a list from which we will make a CONSTRUCTOR.
@@ -5892,25 +6207,10 @@ output_init_element (value, type, field, pending)
   if (pending)
     {
       if (TREE_CODE (constructor_type) == RECORD_TYPE
-	  || TREE_CODE (constructor_type) == UNION_TYPE)
+	  || TREE_CODE (constructor_type) == UNION_TYPE
+	  || TREE_CODE (constructor_type) == ARRAY_TYPE)
 	{
-	  if (purpose_member (field, constructor_pending_elts))
-	    {
-	      error_init ("duplicate initializer%s", " for `%s'", NULL);
-	      duplicate = 1;
-	    }
-	}
-      if (TREE_CODE (constructor_type) == ARRAY_TYPE)
-	{
-	  tree tail;
-	  for (tail = constructor_pending_elts; tail;
-	       tail = TREE_CHAIN (tail))
-	    if (TREE_PURPOSE (tail) != 0
-		&& TREE_CODE (TREE_PURPOSE (tail)) == INTEGER_CST
-		&& tree_int_cst_equal (TREE_PURPOSE (tail), constructor_index))
-	      break;
-
-	  if (tail != 0)
+	  if (pending_init_member (field))
 	    {
 	      error_init ("duplicate initializer%s", " for `%s'", NULL);
 	      duplicate = 1;
@@ -5926,11 +6226,9 @@ output_init_element (value, type, field, pending)
       if (! duplicate)
 	/* The copy_node is needed in case field is actually
 	   constructor_index, which is modified in place.  */
-	constructor_pending_elts
-	  = tree_cons (copy_node (field),
-		       digest_init (type, value, require_constant_value, 
-				    require_constant_elements),
-		       constructor_pending_elts);
+	add_pending_init (copy_node (field),
+			  digest_init (type, value, require_constant_value, 
+				       require_constant_elements));
     }
   else if (TREE_CODE (constructor_type) == RECORD_TYPE
 	   && field != constructor_unfilled_fields)
@@ -5939,11 +6237,9 @@ output_init_element (value, type, field, pending)
 	 no matter which field is specified, it can be initialized
 	 right away since it starts at the beginning of the union.  */
       if (!duplicate)
-	constructor_pending_elts
-	  = tree_cons (field,
-		       digest_init (type, value, require_constant_value, 
-				    require_constant_elements),
-		       constructor_pending_elts);
+	add_pending_init (field,
+			  digest_init (type, value, require_constant_value, 
+				       require_constant_elements));
     }
   else
     {
@@ -5972,12 +6268,19 @@ output_init_element (value, type, field, pending)
 		  if (! tree_int_cst_equal (constructor_bit_index,
 					    DECL_FIELD_BITPOS (field)))
 		    {
-		      int next = (TREE_INT_CST_LOW (DECL_FIELD_BITPOS (field))
-				  / BITS_PER_UNIT);
-		      int here = (TREE_INT_CST_LOW (constructor_bit_index)
-				  / BITS_PER_UNIT);
+		      /* By using unsigned arithmetic, the result will be
+			 correct even in case of overflows, if BITS_PER_UNIT
+			 is a power of two.  */
+		      unsigned next = (TREE_INT_CST_LOW
+				       (DECL_FIELD_BITPOS (field))
+				       / (unsigned)BITS_PER_UNIT);
+		      unsigned here = (TREE_INT_CST_LOW
+				       (constructor_bit_index)
+				       / (unsigned)BITS_PER_UNIT);
 
-		      assemble_zeros (next - here);
+		      assemble_zeros ((next - here)
+				      * (unsigned)BITS_PER_UNIT
+				      / (unsigned)BITS_PER_UNIT);
 		    }
 		}
 	      output_constant (digest_init (type, value,
@@ -6036,56 +6339,109 @@ static void
 output_pending_init_elements (all)
      int all;
 {
-  tree tail;
+  struct init_node *elt = constructor_pending_elts;
   tree next;
 
  retry:
 
-  /* Look thru the whole pending list.
+  /* Look thru the whole pending tree.
      If we find an element that should be output now,
      output it.  Otherwise, set NEXT to the element
      that comes first among those still pending.  */
      
   next = 0;
-  for (tail = constructor_pending_elts; tail;
-       tail = TREE_CHAIN (tail))
+  while (elt)
     {
       if (TREE_CODE (constructor_type) == ARRAY_TYPE)
 	{
-	  if (tree_int_cst_equal (TREE_PURPOSE (tail),
+	  if (tree_int_cst_equal (elt->purpose,
 				  constructor_unfilled_index))
+	    output_init_element (elt->value,
+				 TREE_TYPE (constructor_type),
+				 constructor_unfilled_index, 0);
+	  else if (tree_int_cst_lt (constructor_unfilled_index,
+				    elt->purpose))
 	    {
-	      output_init_element (TREE_VALUE (tail),
-				   TREE_TYPE (constructor_type),
-				   constructor_unfilled_index, 0);
-	      goto retry;
+	      /* Advance to the next smaller node.  */
+	      if (elt->left)
+		elt = elt->left;
+	      else
+		{
+		  /* We have reached the smallest node bigger than the
+		     current unfilled index.  Fill the space first.  */
+		  next = elt->purpose;
+		  break;
+		}
 	    }
-	  else if (tree_int_cst_lt (TREE_PURPOSE (tail),
-				    constructor_unfilled_index))
-	    ;
-	  else if (next == 0
-		   || tree_int_cst_lt (TREE_PURPOSE (tail), next))
-	    next = TREE_PURPOSE (tail);
+	  else
+	    {
+	      /* Advance to the next bigger node.  */
+	      if (elt->right)
+		elt = elt->right;
+	      else
+		{
+		  /* We have reached the biggest node in a subtree.  Find
+		     the parent of it, which is the next bigger node.  */
+		  while (elt->parent && elt->parent->right == elt)
+		    elt = elt->parent;
+		  elt = elt->parent;
+		  if (elt && tree_int_cst_lt (constructor_unfilled_index,
+					      elt->purpose))
+		    {
+		      next = elt->purpose;
+		      break;
+		    }
+		}
+	    }
 	}
       else if (TREE_CODE (constructor_type) == RECORD_TYPE
 	       || TREE_CODE (constructor_type) == UNION_TYPE)
 	{
-	  if (TREE_PURPOSE (tail) == constructor_unfilled_fields)
+	  /* If the current record is complete we are done.  */
+	  if (constructor_unfilled_fields == 0)
+	    break;
+	  if (elt->purpose == constructor_unfilled_fields)
 	    {
-	      output_init_element (TREE_VALUE (tail),
+	      output_init_element (elt->value,
 				   TREE_TYPE (constructor_unfilled_fields),
 				   constructor_unfilled_fields,
 				   0);
-	      goto retry;
 	    }
-	  else if (constructor_unfilled_fields == 0
-		   || tree_int_cst_lt (DECL_FIELD_BITPOS (TREE_PURPOSE (tail)),
-				       DECL_FIELD_BITPOS (constructor_unfilled_fields)))
-	    ;
-	  else if (next == 0
-		   || tree_int_cst_lt (DECL_FIELD_BITPOS (TREE_PURPOSE (tail)),
-				       DECL_FIELD_BITPOS (next)))
-	    next = TREE_PURPOSE (tail);
+	  else if (tree_int_cst_lt (DECL_FIELD_BITPOS (constructor_unfilled_fields),
+				    DECL_FIELD_BITPOS (elt->purpose)))
+	    {
+	      /* Advance to the next smaller node.  */
+	      if (elt->left)
+		elt = elt->left;
+	      else
+		{
+		  /* We have reached the smallest node bigger than the
+		     current unfilled field.  Fill the space first.  */
+		  next = elt->purpose;
+		  break;
+		}
+	    }
+	  else
+	    {
+	      /* Advance to the next bigger node.  */
+	      if (elt->right)
+		elt = elt->right;
+	      else
+		{
+		  /* We have reached the biggest node in a subtree.  Find
+		     the parent of it, which is the next bigger node.  */
+		  while (elt->parent && elt->parent->right == elt)
+		    elt = elt->parent;
+		  elt = elt->parent;
+		  if (elt
+		      && tree_int_cst_lt (DECL_FIELD_BITPOS (constructor_unfilled_fields),
+					  DECL_FIELD_BITPOS (elt->purpose)))
+		    {
+		      next = elt->purpose;
+		      break;
+		    }
+		}
+	    }
 	}
     }
 
@@ -6103,6 +6459,7 @@ output_pending_init_elements (all)
       if (TREE_CODE (constructor_type) == RECORD_TYPE
 	  || TREE_CODE (constructor_type) == UNION_TYPE)
 	{
+	  tree tail;
 	  /* Find the last field written out, if any.  */
 	  for (tail = TYPE_FIELDS (constructor_type); tail;
 	       tail = TREE_CHAIN (tail))
@@ -6168,6 +6525,8 @@ output_pending_init_elements (all)
 	}
     }
 
+  /* ELT now points to the node in the pending tree with the next
+     initializer to output.  */
   goto retry;
 }
 
@@ -6514,7 +6873,7 @@ c_expand_asm_operands (string, outputs, inputs, clobbers, vol, filename, line)
       if (o[i] != TREE_VALUE (tail))
 	{
 	  expand_expr (build_modify_expr (o[i], NOP_EXPR, TREE_VALUE (tail)),
-		       0, VOIDmode, 0);
+		       NULL_RTX, VOIDmode, EXPAND_NORMAL);
 	  free_temp_slots ();
 	}
       /* Detect modification of read-only values.
@@ -6616,6 +6975,9 @@ c_expand_return (retval)
 		  && ! TREE_STATIC (inner)
 		  && DECL_CONTEXT (inner) == current_function_decl)
 		warning ("function returns address of local variable");
+	      break;
+
+	    default:
 	      break;
 	    }
 

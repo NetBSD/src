@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for the pdp-11
-   Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1998 Free Software Foundation, Inc.
    Contributed by Michael K. Gschwind (mike@vlsivie.tuwien.ac.at).
 
 This file is part of GNU CC.
@@ -863,7 +863,7 @@ extern int current_function_pretend_args_size;
 
 /* Go to LABEL if ADDR (a legitimate address expression)
    has an effect that depends on the machine mode it is used for.
-   On the the pdp this is for predec/postinc */
+   On the pdp this is for predec/postinc */
 
 #define GO_IF_MODE_DEPENDENT_ADDRESS(ADDR,LABEL)	\
  { if (GET_CODE (ADDR) == POST_INC || GET_CODE (ADDR) == PRE_DEC)	\
@@ -879,10 +879,11 @@ extern int current_function_pretend_args_size;
    `tablejump' insn.  */
 #define CASE_TAKES_INDEX_RAW
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-/* #define CASE_VECTOR_PC_RELATIVE */
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+/* #define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR FIX_ROUND_EXPR
@@ -1261,9 +1262,9 @@ JMP	FUNCTION	0x0058  0x0000 <- FUNCTION
   if (TARGET_SPLIT)			\
     abort();				\
 					\
-  ASM_OUTPUT_INT (FILE, gen_rtx(CONST_INT, VOIDmode, 0x9400+STATIC_CHAIN_REGNUM)); \
+  ASM_OUTPUT_INT (FILE, GEN_INT (0x9400+STATIC_CHAIN_REGNUM)); \
   ASM_OUTPUT_INT (FILE, const0_rtx);				\
-  ASM_OUTPUT_INT (FILE, gen_rtx(CONST_INT, VOIDmode, 0x0058));	\
+  ASM_OUTPUT_INT (FILE, GEN_INT(0x0058));			\
   ASM_OUTPUT_INT (FILE, const0_rtx);				\
 }
 
@@ -1294,11 +1295,12 @@ JMP	FUNCTION	0x0058  0x0000 <- FUNCTION
    LEVEL is the optimization level specified; 2 if -O2 is
    specified, 1 if -O is specified, and 0 if neither is specified.  */
 
-#define OPTIMIZATION_OPTIONS(LEVEL)					\
+#define OPTIMIZATION_OPTIONS(LEVEL,SIZE)				\
 {									\
   if (LEVEL >= 3)							\
     {									\
-      flag_inline_functions		= 1;				\
+      if (! SIZE)							\
+        flag_inline_functions		= 1;				\
       flag_omit_frame_pointer		= 1;				\
       /* flag_unroll_loops			= 1; */			\
     }									\

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for Intel 80960
-   Copyright (C) 1992, 1993, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1995, 1996, 1998 Free Software Foundation, Inc.
    Contributed by Steven McGeady, Intel Corp.
    Additional Work by Glenn Colon-Bonet, Jonathan Shapiro, Andy Wilson
    Converted to GCC 2.0 by Jim Wilson and Michael Tiemann, Cygnus Support.
@@ -81,7 +81,7 @@ Boston, MA 02111-1307, USA.  */
 #define LINK_SPEC \
 	"%{mka:-AKA}%{mkb:-AKB}%{msa:-ASA}%{msb:-ASB}\
 	%{mmc:-AMC}%{mca:-ACA}%{mcc:-ACC}%{mcf:-ACF}\
-	%{mja:-AJX}%{mjd:-AJX}%{mjf:-AJX}%{mrp:-AJX}\
+        %{mja:-AJX}%{mjd:-AJX}%{mjf:-AJX}%{mrp:-AJX}\
 	%{mbout:-Fbout}%{mcoff:-Fcoff}\
 	%{mlink-relax:-relax}"
 
@@ -94,7 +94,7 @@ Boston, MA 02111-1307, USA.  */
 #define CAN_DEBUG_WITHOUT_FP
 
 /* Do leaf procedure and tail call optimizations for -O2 and higher.  */
-#define OPTIMIZATION_OPTIONS(LEVEL)		\
+#define OPTIMIZATION_OPTIONS(LEVEL,SIZE)	\
 {						\
   if ((LEVEL) >= 2)				\
     {						\
@@ -506,9 +506,8 @@ extern int target_flags;
 /* Value is 1 if hard register REGNO can hold a value of machine-mode MODE.
    On 80960, the cpu registers can hold any mode but the float registers
    can only hold SFmode, DFmode, or XFmode.  */
-extern unsigned int hard_regno_mode_ok[FIRST_PSEUDO_REGISTER];
-#define HARD_REGNO_MODE_OK(REGNO, MODE) \
-  ((hard_regno_mode_ok[REGNO] & (1 << (int) (MODE))) != 0)
+extern int hard_regno_mode_ok ();
+#define HARD_REGNO_MODE_OK(REGNO, MODE) hard_regno_mode_ok ((REGNO), (MODE))
 
 /* Value is 1 if it is a good idea to tie two pseudo registers
    when one has mode MODE1 and one has mode MODE2.
@@ -1076,10 +1075,11 @@ extern struct rtx_def *legitimize_address ();
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE SImode
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-/* #define CASE_VECTOR_PC_RELATIVE */
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+/* #define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR FIX_ROUND_EXPR
@@ -1347,7 +1347,7 @@ extern struct rtx_def *gen_compare_reg ();
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
   fprintf (FILE, "\t.word L%d-L%d\n", VALUE, REL)
 
 /* This is how to output an assembler line that says to advance the
@@ -1406,8 +1406,7 @@ extern struct rtx_def *gen_compare_reg ();
 
 /* Align code to 8 byte boundary if TARGET_CODE_ALIGN is true.  */
 
-#define	ASM_OUTPUT_ALIGN_CODE(FILE)		\
-{ if (TARGET_CODE_ALIGN) fputs("\t.align 3\n",FILE); }
+#define	LABEL_ALIGN_AFTER_BARRIER(LABEL) (TARGET_CODE_ALIGN ? 3 : 0)
 
 /* Store in OUTPUT a string (made with alloca) containing
    an assembler-name for a local static variable named NAME.
@@ -1473,11 +1472,11 @@ extern struct rtx_def *gen_compare_reg ();
 
 #define TRAMPOLINE_TEMPLATE(FILE)					\
 {									\
-  ASM_OUTPUT_INT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x8C203000));	\
-  ASM_OUTPUT_INT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x00000000));	\
-  ASM_OUTPUT_INT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x8C183000));	\
-  ASM_OUTPUT_INT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x00000000));	\
-  ASM_OUTPUT_INT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x84212000));	\
+  ASM_OUTPUT_INT (FILE, GEN_INT (0x8C203000));	\
+  ASM_OUTPUT_INT (FILE, GEN_INT (0x00000000));	\
+  ASM_OUTPUT_INT (FILE, GEN_INT (0x8C183000));	\
+  ASM_OUTPUT_INT (FILE, GEN_INT (0x00000000));	\
+  ASM_OUTPUT_INT (FILE, GEN_INT (0x84212000));	\
 }
 
 /* Length in units of the trampoline for entering a nested function.  */
@@ -1495,6 +1494,13 @@ extern struct rtx_def *gen_compare_reg ();
   emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 12)),	\
 		  CXT);							\
 }
+
+/* Generate RTL to flush the register windows so as to make arbitrary frames
+   available.  */
+#define SETUP_FRAME_ADDRESSES()		\
+  emit_insn (gen_flush_register_windows ())
+
+#define BUILTIN_SETJMP_FRAME_VALUE hard_frame_pointer_rtx
 
 #if 0
 /* Promote char and short arguments to ints, when want compatibility with
@@ -1568,7 +1574,6 @@ do {									\
       fprintf (FILE, "\taddo r5,g0,g0\n");				\
     }									\
   fprintf (FILE, "\tbx ");						\
-  assemble_name								\
-    (FILE, IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (FUNCTION)));	\
+  assemble_name (FILE, XSTR (XEXP (DECL_RTL (FUNCTION), 0), 0));	\
   fprintf (FILE, "\n");							\
 } while (0);

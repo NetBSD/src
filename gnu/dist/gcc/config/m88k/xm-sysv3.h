@@ -1,6 +1,6 @@
 /* Configuration for GNU C-compiler.
    Motorola m88100 running the AT&T/Unisoft/Motorola V.3 reference port.
-   Copyright (C) 1990 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -19,8 +19,6 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include "m88k/xm-m88k.h"
-
 #define R_OK 4
 #define W_OK 2
 #define X_OK 1
@@ -28,3 +26,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* for the emacs version of alloca */
 #define STACK_DIRECTION -1
+
+/* We need POSIX/XOPEN symbols; otherwise make check will fail.  */
+#define ADD_MISSING_POSIX 1
+#define ADD_MISSING_XOPEN 1

@@ -1,5 +1,5 @@
 /* Subroutines for assembler code output on the DSP1610.
-   Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1997 Free Software Foundation, Inc.
    Contributed by Michael Collison (collison@world.std.com).
 
 This file is part of GNU CC.
@@ -20,8 +20,8 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Some output-actions in dsp1600.md need these.  */
-#include <stdio.h>
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -1531,8 +1531,6 @@ override_options ()
     }
 }
 
-enum rtx_code save_next_cc_user_code;
-
 enum rtx_code
 next_cc_user_code (insn)
 rtx insn;
@@ -1549,6 +1547,22 @@ rtx insn;
     return GET_CODE (SET_SRC (PATTERN (insn)));
   else
     abort ();
+}
+
+int
+next_cc_user_unsigned (insn)
+     rtx insn;
+{
+  switch (next_cc_user_code (insn))
+    {
+    case GTU:
+    case GEU:
+    case LTU:
+    case LEU:
+      return 1;
+    default:
+      return 0;
+    }
 }
 
 void
@@ -1624,12 +1638,13 @@ int letter;
         output_address( XEXP(op,0) );
     else if( code == CONST_INT )
     { 
+	HOST_WIDE_INT val = INTVAL (op);
         if( letter == 'H' )
-            fprintf( file, "0x%x", (INTVAL(op) & 0xffff) );
+            fprintf( file, HOST_WIDE_INT_PRINT_HEX, val & 0xffff);
 	else if (letter == 'h')
-            fprintf( file, "%d", INTVAL (op) );
+            fprintf( file, HOST_WIDE_INT_PRINT_DEC, val);
         else if( letter == 'U' )
-            fprintf( file, "0x%x", ((INTVAL(op) & 0xffff0000) >> 16) & 0xffff );
+            fprintf( file, HOST_WIDE_INT_PRINT_HEX, (val >> 16) & 0xffff);
         else
            output_addr_const( file, op );
     }
@@ -1705,7 +1720,7 @@ rtx *operands;
   REAL_VALUE_FROM_CONST_DOUBLE (d, src);
   REAL_VALUE_TO_TARGET_SINGLE (d, value);
   
-  operands[1] = gen_rtx (CONST_INT, VOIDmode, value);
+  operands[1] = GEN_INT (value);
   output_asm_insn ("%u0=%U1\n\t%w0=%H1", operands);
 #else
   fatal ("inline float constants not supported on this host");
@@ -1783,7 +1798,7 @@ enum machine_mode mode;
 	    emit_insn (gen_rtx (SET, VOIDmode, operands[0],
 				gen_rtx (shift_op, mode, 
 					 first_shift_emitted ? operands[0] : operands[1],
-					 gen_rtx (CONST_INT, VOIDmode, 16))));
+					 GEN_INT (16))));
 	  first_shift_emitted = 1;
 	}
       else if (shift_amount/8)
@@ -1794,7 +1809,7 @@ enum machine_mode mode;
 	    emit_insn (gen_rtx (SET, VOIDmode, operands[0],
 				gen_rtx (shift_op, mode, 
 					 first_shift_emitted ? operands[0] : operands[1],
-					 gen_rtx (CONST_INT, VOIDmode, 8))));
+					 GEN_INT (8))));
 	  first_shift_emitted = 1;
 	}
       else if (shift_amount/4)
@@ -1805,7 +1820,7 @@ enum machine_mode mode;
 	    emit_insn (gen_rtx (SET, VOIDmode, operands[0],
 				gen_rtx (shift_op, mode, 
 					 first_shift_emitted ? operands[0] : operands[1],
-					 gen_rtx (CONST_INT, VOIDmode, 4))));
+					 GEN_INT (4))));
 	  first_shift_emitted = 1;
 	}
       else if (shift_amount/1)
@@ -1816,7 +1831,7 @@ enum machine_mode mode;
 	    emit_insn (gen_rtx (SET, VOIDmode, operands[0],
 				gen_rtx (shift_op, mode, 
 					 first_shift_emitted ? operands[0] : operands[1],
-					 gen_rtx (CONST_INT, VOIDmode, 1))));
+					 GEN_INT (1))));
 	  first_shift_emitted = 1;
 	}
     }

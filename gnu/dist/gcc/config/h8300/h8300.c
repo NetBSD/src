@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for Hitachi H8/300.
-   Copyright (C) 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain (sac@cygnus.com),
    Jim Wilson (wilson@cygnus.com), and Doug Evans (dje@cygnus.com).
 
@@ -20,8 +20,8 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include <stdio.h>
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -52,7 +52,7 @@ int cpu_type;
    (either via #pragma or an attribute specification).  */
 int interrupt_handler;
 
-/* True if the current fucntion is an OS Task
+/* True if the current function is an OS Task
    (via an attribute specification).  */
 int os_task;
 
@@ -1024,7 +1024,6 @@ const_costs (r, c)
    'E' like s but negative.
    'F' like t but negative.
    'G' constant just the negative
-   'L' fake label, changed after used twice.
    'M' turn a 'M' constant into its negative mod 2.
    'P' if operand is incing/decing sp, print .w, otherwise .b.
    'R' print operand as a byte:8 address if appropriate, else fall back to
@@ -1098,9 +1097,6 @@ print_operand (file, x, code)
      rtx x;
      int code;
 {
-  /* This is used to general unique labels for the 'L' code.  */
-  static int lab = 1000;
-
   /* This is used for communication between the 'P' and 'U' codes.  */
   static char *last_p;
 
@@ -1148,12 +1144,6 @@ print_operand (file, x, code)
       if (GET_CODE (x) != CONST_INT)
 	abort ();
       fprintf (file, "#%d", 0xff & (-INTVAL (x)));
-      break;
-    case 'L':
-      /* 'L' must always be used twice in a single pattern.  It generates
-	 the same label twice, and then will generate a unique label the
-	 next time it is used.  */
-      asm_fprintf (file, "tl%d", (lab++) / 2);
       break;
     case 'M':
       /* For 3/-3 and 4/-4, the other 2 is handled separately.  */
@@ -1291,6 +1281,15 @@ print_operand (file, x, code)
 	case CONST_INT:
 	  fprintf (file, "#%d", ((INTVAL (x) >> 16) & 0xffff));
 	  break;
+	case CONST_DOUBLE:
+	  {
+	    long val;
+	    REAL_VALUE_TYPE rv;
+	    REAL_VALUE_FROM_CONST_DOUBLE (rv, x);
+	    REAL_VALUE_TO_TARGET_SINGLE (rv, val);
+	    fprintf (file, "#%d", ((val >> 16) & 0xffff));
+	    break;
+	  }
 	default:
 	  abort ();
 	  break;
@@ -1312,6 +1311,15 @@ print_operand (file, x, code)
 	case CONST_INT:
 	  fprintf (file, "#%d", INTVAL (x) & 0xffff);
 	  break;
+	case CONST_DOUBLE:
+	  {
+	    long val;
+	    REAL_VALUE_TYPE rv;
+	    REAL_VALUE_FROM_CONST_DOUBLE (rv, x);
+	    REAL_VALUE_TO_TARGET_SINGLE (rv, val);
+	    fprintf (file, "#%d", (val & 0xffff));
+	    break;
+	  }
 	default:
 	  abort ();
 	}
@@ -1427,6 +1435,15 @@ print_operand (file, x, code)
 	  fprintf (file, "#");
 	  print_operand_address (file, x);
 	  break;
+	case CONST_DOUBLE:
+	  {
+	    long val;
+	    REAL_VALUE_TYPE rv;
+	    REAL_VALUE_FROM_CONST_DOUBLE (rv, x);
+	    REAL_VALUE_TO_TARGET_SINGLE (rv, val);
+	    fprintf (file, "#%d", val);
+	    break;
+	  }
 	}
     }
 }
@@ -1720,7 +1737,7 @@ bit_operator (x, mode)
    28-30* - ASHIFT | LSHIFTRT: rotate top byte, mask, move byte into place,
                                zero others
             ASHIFTRT: loop
-   31     - ASHIFT | LSHIFTRT: rotate top byte, mask, byte byte into place,
+   31     - ASHIFT | LSHIFTRT: rotate top byte, mask, move byte into place,
                                zero others
             ASHIFTRT: shll top byte, subx, copy to other bytes
 
@@ -2338,7 +2355,7 @@ get_shift_alg (cpu, shift_type, mode, count, assembler_p,
 	  switch (shift_type)
 	    {
 	    case SHIFT_ASHIFT:
-	      *assembler_p = "mov.b\t%y0,%z0n\tmov.b\t%x0,%y0\n\tmov.b\t%w0,%x0\n\tsub.b\t%w0,%w0";
+	      *assembler_p = "mov.b\t%y0,%z0\n\tmov.b\t%x0,%y0\n\tmov.b\t%w0,%x0\n\tsub.b\t%w0,%w0";
 	      *cc_valid_p = 0;
 	      return SHIFT_SPECIAL;
 	    case SHIFT_LSHIFTRT:
@@ -2347,6 +2364,24 @@ get_shift_alg (cpu, shift_type, mode, count, assembler_p,
 	      return SHIFT_SPECIAL;
 	    case SHIFT_ASHIFTRT:
 	      *assembler_p = "mov.b\t%x0,%w0\n\tmov.b\t%y0,%x0\n\tmov.b\t%z0,%y0\n\tshll\t%z0\n\tsubx\t%z0,%z0";
+	      *cc_valid_p = 0;
+	      return SHIFT_SPECIAL;
+	    }
+	}
+      else if (count == 8 && !TARGET_H8300)
+	{
+	  switch (shift_type)
+	    {
+	    case SHIFT_ASHIFT:
+	      *assembler_p = "mov.w\t%e0,%f4\n\tmov.b\t%s4,%t4\n\tmov.b\t%t0,%s4\n\tmov.b\t%s0,%t0\n\tsub.b\t%s0,%s0\n\tmov.w\t%f4,%e0";
+	      *cc_valid_p = 0;
+	      return SHIFT_SPECIAL;
+	    case SHIFT_LSHIFTRT:
+	      *assembler_p = "mov.w\t%e0,%f4\n\tmov.b\t%t0,%s0\n\tmov.b\t%s4,%t0\n\tmov.b\t%t4,%s4\n\textu.w\t%f4\n\tmov.w\t%f4,%e0";
+	      *cc_valid_p = 0;
+	      return SHIFT_SPECIAL;
+	    case SHIFT_ASHIFTRT:
+	      *assembler_p = "mov.w\t%e0,%f4\n\tmov.b\t%t0,%s0\n\tmov.b\t%s4,%t0\n\tmov.b\t%t4,%s4\n\texts.w\t%f4\n\tmov.w\t%f4,%e0";
 	      *cc_valid_p = 0;
 	      return SHIFT_SPECIAL;
 	    }
@@ -2458,6 +2493,24 @@ get_shift_alg (cpu, shift_type, mode, count, assembler_p,
 	      return SHIFT_SPECIAL;
 	    case SHIFT_ASHIFTRT:
 	      *assembler_p = "mov.w\t%e0,%f0\n\texts.l\t%S0\n\tshar.l\t#2,%S0\n\tshar.l\t#2,%S0";
+	      *cc_valid_p = 0;
+	      return SHIFT_SPECIAL;
+	    }
+	}
+      else if (count == 24 && !TARGET_H8300)
+	{
+	  switch (shift_type)
+	    {
+	    case SHIFT_ASHIFT:
+	      *assembler_p = "mov.b\t%s0,%t0\n\tsub.b\t%s0,%s0\n\tmov.w\t%f0,%e0\n\tsub.w\t%f0,%f0";
+	      *cc_valid_p = 0;
+	      return SHIFT_SPECIAL;
+	    case SHIFT_LSHIFTRT:
+	      *assembler_p = "mov.w\t%e0,%f0\n\tmov.b\t%t0,%s0\n\textu.w\t%f0\n\textu.l\t%S0";
+	      *cc_valid_p = 0;
+	      return SHIFT_SPECIAL;
+	    case SHIFT_ASHIFTRT:
+	      *assembler_p = "mov.w\t%e0,%f0\n\tmov.b\t%t0,%s0\n\texts.w\t%f0\n\texts.l\t%S0";
 	      *cc_valid_p = 0;
 	      return SHIFT_SPECIAL;
 	    }
@@ -2974,7 +3027,7 @@ output_simode_bld (bild, log2, operands)
   return "";
 }
 
-/* Given INSN and it's current length LENGTH, return the adjustment
+/* Given INSN and its current length LENGTH, return the adjustment
    (in bytes) to correctly compute INSN's length.
 
    We use this to get the lengths of various memory references correct.  */

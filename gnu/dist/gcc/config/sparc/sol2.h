@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for SPARC running Solaris 2
-   Copyright 1992, 1995, 1996 Free Software Foundation, Inc.
+   Copyright 1992, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Contributed by Ron Guilmette (rfg@netcom.com).
    Additional changes by David V. Henkel-Wallace (gumby@cygnus.com).
 
@@ -30,6 +30,8 @@ Boston, MA 02111-1307, USA.  */
 
 #undef CPP_SUBTARGET_SPEC
 #define CPP_SUBTARGET_SPEC "\
+%{pthreads:-D_REENTRANT -D_PTHREADS} \
+%{!pthreads:%{threads:-D_REENTRANT -D_SOLARIS_THREADS}} \
 %{compat-bsd:-iwithprefixbefore ucbinclude -I/usr/ucbinclude} \
 "
 
@@ -105,7 +107,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef  ASM_GENERATE_INTERNAL_LABEL
 #define ASM_GENERATE_INTERNAL_LABEL(LABEL,PREFIX,NUM)	\
-  sprintf (LABEL, "*.L%s%d", PREFIX, NUM)
+  sprintf ((LABEL), "*.L%s%ld", (PREFIX), (long)(NUM))
 
 
 /* We don't use the standard svr4 STARTFILE_SPEC because it's wrong for us.
@@ -131,7 +133,12 @@ Boston, MA 02111-1307, USA.  */
 
 #undef LIB_SPEC
 #define LIB_SPEC \
-  "%{compat-bsd:-lucb -lsocket -lnsl -lelf -laio} %{!shared:%{!symbolic:-lc}}"
+  "%{compat-bsd:-lucb -lsocket -lnsl -lelf -laio} \
+   %{!shared:\
+     %{!symbolic:\
+       %{pthreads:-lpthread} \
+       %{!pthreads:%{threads:-lthread}} \
+       -lc}}"
 
 #undef  ENDFILE_SPEC
 #define ENDFILE_SPEC "crtend.o%s crtn.o%s"
@@ -142,8 +149,8 @@ Boston, MA 02111-1307, USA.  */
   "%{h*} %{v:-V} \
    %{b} %{Wl,*:%*} \
    %{static:-dn -Bstatic} \
-   %{shared:-G -dy %{!mimpure-text:-z text} %{!h*:%{o*:-h %*}}} \
-   %{symbolic:-Bsymbolic -G -dy -z text %{!h*:%{o*:-h %*}}} \
+   %{shared:-G -dy %{!mimpure-text:-z text}} \
+   %{symbolic:-Bsymbolic -G -dy -z text} \
    %{G:-G} \
    %{YP,*} \
    %{R*} \
@@ -174,3 +181,52 @@ Boston, MA 02111-1307, USA.  */
 /* Define for support of TFmode long double and REAL_ARITHMETIC.
    Sparc ABI says that long double is 4 words.  */
 #define LONG_DOUBLE_TYPE_SIZE 128
+
+/* But indicate that it isn't supported by the hardware.  */
+#define WIDEST_HARDWARE_FP_SIZE 64
+
+#define STDC_0_IN_SYSTEM_HEADERS
+
+#define MULDI3_LIBCALL "__mul64"
+#define DIVDI3_LIBCALL "__div64"
+#define UDIVDI3_LIBCALL "__udiv64"
+#define MODDI3_LIBCALL "__rem64"
+#define UMODDI3_LIBCALL "__urem64"
+
+#undef INIT_SUBTARGET_OPTABS
+#define INIT_SUBTARGET_OPTABS	\
+  fixsfdi_libfunc = gen_rtx_SYMBOL_REF (Pmode, "__ftoll");	\
+  fixunssfdi_libfunc = gen_rtx_SYMBOL_REF (Pmode, "__ftoull");	\
+  fixdfdi_libfunc = gen_rtx_SYMBOL_REF (Pmode, "__dtoll");	\
+  fixunsdfdi_libfunc = gen_rtx_SYMBOL_REF (Pmode, "__dtoull")
+
+/* No weird SPARC variants on Solaris */
+#undef TARGET_LIVE_G0
+#define TARGET_LIVE_G0	0
+#undef TARGET_BROKEN_SAVERESTORE
+#define TARGET_BROKEN_SAVERESTORE 0
+
+/* Solaris allows 64 bit out and global registers in 32 bit mode.
+   sparc_override_options will disable V8+ if not generating V9 code.  */
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT (MASK_APP_REGS + MASK_EPILOGUE + MASK_FPU + MASK_V8PLUS)
+
+/* Override MACHINE_STATE_{SAVE,RESTORE} because we have special
+   traps available which can get and set the condition codes
+   reliably.  */
+#undef MACHINE_STATE_SAVE
+#define MACHINE_STATE_SAVE(ID)				\
+  unsigned long int ms_flags, ms_saveret;		\
+  asm volatile("ta	0x20\n\t"			\
+	       "mov	%%g1, %0\n\t"			\
+	       "mov	%%g2, %1\n\t"			\
+	       : "=r" (ms_flags), "=r" (ms_saveret));
+
+#undef MACHINE_STATE_RESTORE
+#define MACHINE_STATE_RESTORE(ID)			\
+  asm volatile("mov	%0, %%g1\n\t"			\
+	       "mov	%1, %%g2\n\t"			\
+	       "ta	0x21\n\t"			\
+	       : /* no outputs */			\
+	       : "r" (ms_flags), "r" (ms_saveret));
+

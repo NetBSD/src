@@ -22,7 +22,7 @@ Boston, MA 02111-1307, USA.  */
 /* This file performs stupid register allocation, which is used
    when cc1 gets the -noreg switch (which is when cc does not get -O).
 
-   Stupid register allocation goes in place of the the flow_analysis,
+   Stupid register allocation goes in place of the flow_analysis,
    local_alloc and global_alloc passes.  combine_instructions cannot
    be done with stupid allocation because the data flow info that it needs
    is not computed here.
@@ -42,12 +42,14 @@ Boston, MA 02111-1307, USA.  */
    pseudo reg is computed.  Then the pseudo regs are ordered by priority
    and assigned hard regs in priority order.  */
 
-#include <stdio.h>
 #include "config.h"
+#include "system.h"
+
 #include "rtl.h"
 #include "hard-reg-set.h"
 #include "regs.h"
 #include "flags.h"
+#include "toplev.h"
 
 /* Vector mapping INSN_UIDs to suids.
    The suids are like uids but increase monotonically always.
@@ -128,6 +130,8 @@ stupid_life_analysis (f, nregs, file)
   register int i;
   register rtx last, insn;
   int max_uid, max_suid;
+
+  current_function_has_computed_jump = 0;
 
   bzero (regs_ever_live, sizeof regs_ever_live);
 
@@ -264,6 +268,8 @@ stupid_life_analysis (f, nregs, file)
 	     be live if it's also used to pass arguments.  */
 	  stupid_mark_refs (CALL_INSN_FUNCTION_USAGE (insn), insn);
 	}
+      if (GET_CODE (insn) == JUMP_INSN && computed_jump_p (insn))
+	current_function_has_computed_jump = 1;
     }
 
   /* Now decide the order in which to allocate the pseudo registers.  */
@@ -282,8 +288,11 @@ stupid_life_analysis (f, nregs, file)
       register int r = reg_order[i];
 
       /* Some regnos disappear from the rtl.  Ignore them to avoid crash. 
-	 Also don't allocate registers that cross a setjmp.  */
-      if (regno_reg_rtx[r] == 0 || regs_crosses_setjmp[r])
+	 Also don't allocate registers that cross a setjmp, or live across
+	 a call if this function receives a nonlocal goto.  */
+      if (regno_reg_rtx[r] == 0 || regs_crosses_setjmp[r]
+	  || (REG_N_CALLS_CROSSED (r) > 0 
+	      && current_function_has_nonlocal_label))
 	continue;
 
       /* Now find the best hard-register class for this pseudo register */
@@ -390,6 +399,12 @@ stupid_find_reg (call_preserved, class, mode,
   for (ins = born_insn; ins < dead_insn; ins++)
     IOR_HARD_REG_SET (used, after_insn_hard_regs[ins]);
 
+#ifdef STACK_REGS
+  if (current_function_has_computed_jump)
+    for (i = FIRST_STACK_REG; i <= LAST_STACK_REG; i++)
+      SET_HARD_REG_BIT (used, i);
+#endif
+  
   IOR_COMPL_HARD_REG_SET (used, reg_class_contents[(int) class]);
 
 #ifdef CLASS_CANNOT_CHANGE_SIZE
@@ -538,8 +553,9 @@ stupid_mark_refs (x, insn)
 		  && REGNO_LAST_UID (regno) == INSN_UID (insn)
 		  && (code == CLOBBER || ! reg_mentioned_p (SET_DEST (x),
 							    SET_SRC (x))))
-		REG_NOTES (insn) = gen_rtx (EXPR_LIST, REG_UNUSED,
-					    SET_DEST (x), REG_NOTES (insn));
+		REG_NOTES (insn) = gen_rtx_EXPR_LIST (REG_UNUSED,
+						      SET_DEST (x),
+						      REG_NOTES (insn));
 	    }
 	}
 

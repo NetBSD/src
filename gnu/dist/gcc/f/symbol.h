@@ -1,6 +1,6 @@
 /* Interface definitions for Fortran symbol manager
    Copyright (C) 1995, 1996 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -180,7 +180,9 @@ ffesymbol ffesymbol_declare_subrunit (ffelexToken t);
 void ffesymbol_drive (ffesymbol (*fn) ());
 void ffesymbol_drive_sfnames (ffesymbol (*fn) ());
 #define ffesymbol_dummyargs(s) ((s)->dummy_args)
+#if FFECOM_targetCURRENT == FFECOM_targetFFE
 void ffesymbol_dump (ffesymbol s);
+#endif
 void ffesymbol_error (ffesymbol s, ffelexToken t);
 #define ffesymbol_equiv(s) ((s)->equiv)
 #define ffesymbol_explicitwhere(s) ((s)->explicit_where)
@@ -219,8 +221,10 @@ ffesymbol ffesymbol_lookup_local (ffelexToken t);
 #define ffesymbol_ptr_to_namelist(s) (&(s)->namelist)
 #define ffesymbol_rank(s) ffeinfo_rank((s)->info)
 void ffesymbol_reference (ffesymbol s, ffelexToken t, bool explicit);
+#if FFECOM_targetCURRENT == FFECOM_targetFFE
 ffesymbol ffesymbol_report (ffesymbol s);
 void ffesymbol_report_all (void);
+#endif
 void ffesymbol_resolve_intrin (ffesymbol s);
 void ffesymbol_retract (bool retract);
 bool ffesymbol_retractable (void);

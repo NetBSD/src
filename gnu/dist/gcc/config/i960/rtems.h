@@ -1,6 +1,5 @@
-/* Definitions for rtems targetting an Intel i960.
-
-   Copyright (C) 1996 Free Software Foundation, Inc.
+/* Definitions for rtems targeting an Intel i960.
+   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
    Contributed by Joel Sherrill (joel@OARcorp.com).
 
 This file is part of GNU CC.
@@ -28,4 +27,7 @@ Boston, MA 02111-1307, USA.  */
 #define CPP_PREDEFINES "-Di960 -Di80960 -DI960 -DI80960 -Drtems -D__rtems__ \
    -Asystem(rtems) -Acpu(i960) -Amachine(i960)"
 
-/* end of i960/rtems.h */
+/* Generate calls to memcpy, memcmp and memset.  */
+#ifndef TARGET_MEM_FUNCTIONS
+#define TARGET_MEM_FUNCTIONS
+#endif

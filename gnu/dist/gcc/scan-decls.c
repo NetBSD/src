@@ -1,5 +1,5 @@
 /* scan-decls.c - Extracts declarations from cpp output.
-   Copyright (C) 1993, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1995, 1997, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -17,10 +17,11 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Written by Per Bothner <bothner@cygnus.com>, July 1993.  */
 
-#include <stdio.h>
-#include <ctype.h>
 #include "hconfig.h"
+#include "system.h"
+#include "gansidecl.h"
 #include "cpplib.h"
+#include "scan.h"
 
 int brace_nesting = 0;
 
@@ -81,7 +82,7 @@ scan_decls (pfile, argc, argv)
      char **argv;
 {
   int saw_extern, saw_inline;
-  int old_written;
+  int start_written;
   /* If declarator_start is non-zero, it marks the start of the current
      declarator.  If it is zero, we are either still parsing the
      decl-specs, or prev_id_start marks the start of the declarator.  */
@@ -91,6 +92,7 @@ scan_decls (pfile, argc, argv)
 
  new_statement:
   CPP_SET_WRITTEN (pfile, 0);
+  start_written = 0;
   token = cpp_get_token (pfile);
 
  handle_statement:
@@ -122,9 +124,6 @@ scan_decls (pfile, argc, argv)
   declarator_start = 0;
   for (;;)
     {
-      int start_written = CPP_WRITTEN (pfile);
-      token = cpp_get_token (pfile);
-    handle_token:
       switch (token)
 	{
 	case CPP_LPAREN:
@@ -225,7 +224,7 @@ scan_decls (pfile, argc, argv)
 		    }
 		}
 	      else
-		goto handle_token;
+		continue;
 	      break;
 	    }
 	  /* This may be the name of a variable or function.  */
@@ -234,7 +233,7 @@ scan_decls (pfile, argc, argv)
 	  break;
 
 	case CPP_EOF:
-	  return;  /* ??? FIXME */
+	  return 0;
 
 	case CPP_LBRACE:  case CPP_RBRACE:  case CPP_DIRECTIVE:
 	  goto new_statement;  /* handle_statement? */
@@ -248,5 +247,8 @@ scan_decls (pfile, argc, argv)
 	 default:
 	  prev_id_start = 0;
 	}
+
+      start_written = CPP_WRITTEN (pfile);
+      token = cpp_get_token (pfile);
     }
 }

@@ -1,6 +1,6 @@
 /* Operating system specific defines to be used when targeting GCC for some
    generic System V Release 4 system.
-   Copyright (C) 1991, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1991, 94-97, 1998 Free Software Foundation, Inc.
    Contributed by Ron Guilmette (rfg@monkeys.com).
 
 This file is part of GNU CC.
@@ -141,7 +141,7 @@ Boston, MA 02111-1307, USA.
    support here for as many of the other svr4 linker options as seems
    reasonable, given that some of them conflict with options for other
    svr4 tools (e.g. the assembler).  In particular, we do support the
-   -h*, -z*, -V, -b, -t, -Qy, -Qn, and -YP* options here, and the -e*,
+   -z*, -V, -b, -t, -Qy, -Qn, and -YP* options here, and the -e*,
    -l*, -o*, -r, -s, -u*, and -L* options are directly supported
    by gcc.c itself.  We don't directly support the -m (generate load
    map) option because that conflicts with the -m (run m4) option of
@@ -162,8 +162,8 @@ Boston, MA 02111-1307, USA.
 #define LINK_SPEC "%{h*} %{v:-V} \
 		   %{b} %{Wl,*:%*} \
 		   %{static:-dn -Bstatic} \
-		   %{shared:-G -dy -z text %{!h*:%{o*:-h %*}}} \
-		   %{symbolic:-Bsymbolic -G -dy -z text %{!h*:%{o*:-h %*}}} \
+		   %{shared:-G -dy -z text} \
+		   %{symbolic:-Bsymbolic -G -dy -z text} \
 		   %{G:-G} \
 		   %{YP,*} \
 		   %{Qy:} %{!Qn:-Qy}"
@@ -171,8 +171,8 @@ Boston, MA 02111-1307, USA.
 #define LINK_SPEC "%{h*} %{v:-V} \
 		   %{b} %{Wl,*:%*} \
 		   %{static:-dn -Bstatic} \
-		   %{shared:-G -dy -z text %{!h*:%{o*:-h %*}}} \
-		   %{symbolic:-Bsymbolic -G -dy -z text %{!h*:%{o*:-h %*}}} \
+		   %{shared:-G -dy -z text} \
+		   %{symbolic:-Bsymbolic -G -dy -z text} \
 		   %{G:-G} \
 		   %{YP,*} \
 		   %{!YP,*:%{p:-Y P,/usr/ccs/lib/libp:/usr/lib/libp:/usr/ccs/lib:/usr/lib} \
@@ -414,7 +414,7 @@ do {									\
 #undef ASM_GENERATE_INTERNAL_LABEL
 #define ASM_GENERATE_INTERNAL_LABEL(LABEL, PREFIX, NUM)			\
 do {									\
-  sprintf (LABEL, "*.%s%d", PREFIX, NUM);				\
+  sprintf (LABEL, "*.%s%d", PREFIX, (unsigned) (NUM));			\
 } while (0)
 
 /* Output the label which precedes a jumptable.  Note that for all svr4
@@ -792,7 +792,10 @@ do {								\
 	size_directive_output = 1;					\
 	fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
 	assemble_name (FILE, NAME);					\
-	fprintf (FILE, ",%d\n",  int_size_in_bytes (TREE_TYPE (DECL)));	\
+	putc (',', FILE);						\
+	fprintf (FILE, HOST_WIDE_INT_PRINT_DEC,				\
+		 int_size_in_bytes (TREE_TYPE (DECL)));			\
+	fputc ('\n', FILE);						\
       }									\
     ASM_OUTPUT_LABEL(FILE, NAME);					\
   } while (0)
@@ -814,7 +817,10 @@ do {									 \
 	 size_directive_output = 1;					 \
 	 fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);			 \
 	 assemble_name (FILE, name);					 \
-	 fprintf (FILE, ",%d\n",  int_size_in_bytes (TREE_TYPE (DECL))); \
+	 putc (',', FILE);						 \
+	 fprintf (FILE, HOST_WIDE_INT_PRINT_DEC,			 \
+		  int_size_in_bytes (TREE_TYPE (DECL))); 		 \
+	fputc ('\n', FILE);						 \
        }								 \
    } while (0)
 
@@ -892,7 +898,7 @@ do {									 \
       register unsigned char *_limited_str = (unsigned char *) (STR);	\
       register unsigned ch;						\
       fprintf ((FILE), "\t%s\t\"", STRING_ASM_OP);			\
-      for (; ch = *_limited_str; _limited_str++)			\
+      for (; (ch = *_limited_str); _limited_str++)			\
         {								\
 	  register int escape;						\
 	  switch (escape = ESCAPES[ch])					\

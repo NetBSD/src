@@ -351,7 +351,7 @@ enum reg_class {
 
 #define REG_CLASS_CONTENTS  			\
 {      0,		/* No regs      */	\
-   0x0ff,		/* GENERAL_REGS */    	\
+   0x2ff,		/* GENERAL_REGS */    	\
    0x100,		/* MAC_REGS */    	\
    0x3ff,		/* ALL_REGS 	*/	\
 }
@@ -780,7 +780,9 @@ struct rtx_def *function_arg();
 #define REG_OK_FOR_INDEX_P(X) 0
 /* Nonzero if X is a hard reg that can be used as a base reg
    or if it is a pseudo reg.  */
-#define REG_OK_FOR_BASE_P(X) 1
+/* Don't use REGNO_OK_FOR_BASE_P here because it uses reg_renumber.  */
+#define REG_OK_FOR_BASE_P(X) \
+	(REGNO (X) >= FIRST_PSEUDO_REGISTER || REGNO (X) != 8)
 #define REG_OK_FOR_INDEX_P_STRICT(X) REGNO_OK_FOR_INDEX_P (REGNO (X))
 #define REG_OK_FOR_BASE_P_STRICT(X) REGNO_OK_FOR_BASE_P (REGNO (X))
 #define STRICT 0
@@ -862,9 +864,7 @@ struct rtx_def *function_arg();
    has an effect that depends on the machine mode it is used for.
 
    On the H8/300, the predecrement and postincrement address depend thus
-   (the amount of decrement or increment being the length of the operand)
-   and all indexed address depend thus (because the index scale factor
-   is the length of the operand).  */
+   (the amount of decrement or increment being the length of the operand).  */
 
 #define GO_IF_MODE_DEPENDENT_ADDRESS(ADDR,LABEL) \
   if (GET_CODE (ADDR) == POST_INC || GET_CODE (ADDR) == PRE_DEC) goto LABEL;
@@ -873,10 +873,11 @@ struct rtx_def *function_arg();
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE Pmode
 
-/* Define this if the case instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-/*#define CASE_VECTOR_PC_RELATIVE*/
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+/*#define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Define this if the case instruction drops through after the table
    when the index is out of range.  Don't define it if the case insn
@@ -956,9 +957,8 @@ h8300_valid_machine_decl_attribute (DECL, ATTRIBUTES, IDENTIFIER, ARGS)
    of a switch statement.  If the code is computed here,
    return it with a return statement.  Otherwise, break from the switch.  */
 
-#define CONST_COSTS(RTX,CODE,OUTER_CODE) \
-  default: { int _zxy= const_costs(RTX, CODE);	\
-	     if(_zxy) return _zxy; break;}
+#define DEFAULT_RTX_COSTS(RTX,CODE,OUTER_CODE) \
+  return (const_costs (RTX, CODE));
 
 #define BRANCH_COST 0
 
@@ -986,7 +986,7 @@ h8300_valid_machine_decl_attribute (DECL, ATTRIBUTES, IDENTIFIER, ARGS)
 /* Tell final.c how to eliminate redundant test instructions.  */
 
 /* Here we define machine-dependent flags and fields in cc_status
-   (see `conditions.h').  No extra ones are needed for the vax.  */
+   (see `conditions.h').  No extra ones are needed for the h8300.  */
 
 /* Store in cc_status the expressions
    that the condition codes will describe
@@ -1146,7 +1146,9 @@ readonly_data() 						\
 #define REGISTER_NAMES \
 { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "sp", "mac", "ap"}
 
-#define ADDITIONAL_REGISTER_NAMES { { "r7", 7 } }
+#define ADDITIONAL_REGISTER_NAMES \
+{ {"er0", 0}, {"er1", 1}, {"er2", 2}, {"er3", 3}, {"er4", 4}, \
+  {"er5", 5}, {"er6", 6}, {"er7", 7}, {"r7", 7} }
 
 /* How to renumber registers for dbx and gdb.
    H8/300 needs no change in the numeration.  */
@@ -1200,7 +1202,10 @@ readonly_data() 						\
 #define USER_LABEL_PREFIX "_"
 
 /* This is how to output an internal numbered label where
-   PREFIX is the class of label and NUM is the number within the class.  */
+   PREFIX is the class of label and NUM is the number within the class.
+
+   N.B.: The h8300.md branch_true and branch_false patterns also know
+   how to generate internal labels.  */
 
 #define ASM_OUTPUT_INTERNAL_LABEL(FILE, PREFIX, NUM)	\
   fprintf (FILE, ".%s%d:\n", PREFIX, NUM)
@@ -1272,7 +1277,7 @@ do { char dstr[30];					\
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL) \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
   fprintf (FILE, "\t%s .L%d-.L%d\n", ASM_WORD_OP, VALUE, REL)
 
 /* This is how to output an assembler line
@@ -1347,7 +1352,7 @@ do { char dstr[30];					\
 #define PRINT_OPERAND(FILE, X, CODE)  print_operand(FILE,X,CODE)
 
 /* Print a memory operand whose address is X, on file FILE.
-   This uses a function in output-vax.c.  */
+   This uses a function in h8300.c.  */
 
 #define PRINT_OPERAND_ADDRESS(FILE, ADDR) print_operand_address (FILE, ADDR)
 

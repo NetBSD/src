@@ -618,11 +618,11 @@ struct cumulative_args { int ints, floats; };
      or #BOTTOM_OF_STATIC,r29,r29  */
 #define TRAMPOLINE_TEMPLATE(FILE)					\
 {									\
-  ASM_OUTPUT_INT (FILE, gen_rtx (CONST_INT, VOIDmode, 0xec1f0000));	\
-  ASM_OUTPUT_INT (FILE, gen_rtx (CONST_INT, VOIDmode, 0xe7ff0000));	\
-  ASM_OUTPUT_INT (FILE, gen_rtx (CONST_INT, VOIDmode, 0xec1d0000));	\
-  ASM_OUTPUT_INT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x4000f800));	\
-  ASM_OUTPUT_INT (FILE, gen_rtx (CONST_INT, VOIDmode, 0xe7bd0000));	\
+  ASM_OUTPUT_INT (FILE, GEN_INT (0xec1f0000));	\
+  ASM_OUTPUT_INT (FILE, GEN_INT (0xe7ff0000));	\
+  ASM_OUTPUT_INT (FILE, GEN_INT (0xec1d0000));	\
+  ASM_OUTPUT_INT (FILE, GEN_INT (0x4000f800));	\
+  ASM_OUTPUT_INT (FILE, GEN_INT (0xe7bd0000));	\
 }
 
 /* Length in units of the trampoline for entering a nested function.  */
@@ -842,10 +842,11 @@ struct cumulative_args { int ints, floats; };
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE SImode
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-/* #define CASE_VECTOR_PC_RELATIVE */
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+/* #define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR FIX_ROUND_EXPR
@@ -1145,7 +1146,7 @@ do { ASM_OUTPUT_ALIGN ((FILE), 2);					\
    (The i860 does not use such vectors,
    but we must define this macro anyway.)  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
   fprintf (FILE, "\t.word .L%d-.L%d\n", VALUE, REL)
 
 /* This is how to output an assembler line
@@ -1208,7 +1209,7 @@ do { ASM_OUTPUT_ALIGN ((FILE), 2);					\
 
    On the i860, the following target-specific special codes are recognized:
 
-	`r'	The operand can be anything, but if is is an immediate zero
+	`r'	The operand can be anything, but if it is an immediate zero
 		value (either integer or floating point) then it will be
 		represented as `r0' or as `f0' (respectively).
 

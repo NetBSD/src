@@ -1,7 +1,7 @@
 /* Part of CPP library.  (Macro hash table support.)
    Copyright (C) 1986, 87, 89, 92-95, 1996 Free Software Foundation, Inc.
    Written by Per Bothner, 1994.
-   Based on CCCP program by by Paul Rubin, June 1986
+   Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
 
 This program is free software; you can redistribute it and/or modify it
@@ -22,9 +22,11 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  You are forbidden to forbid anyone else to use, share and improve
  what you give them.   Help stamp out software-hoarding!  */
 
+#include "config.h"
+#include "system.h"
+#include "gansidecl.h"
 #include "cpplib.h"
 #include "cpphash.h"
-#include "gansidecl.h"
 
 extern char *xmalloc PARAMS ((unsigned));
 
@@ -45,7 +47,7 @@ hashf (name, len, hashsize)
   return MAKE_POS (r) % hashsize;
 }
 
-/* Find the most recent hash node for name name (ending with first
+/* Find the most recent hash node for name "name" (ending with first
    non-identifier char) installed by install
 
    If LEN is >= 0, it is the length of the name.
@@ -56,7 +58,7 @@ hashf (name, len, hashsize)
 
 HASHNODE *
 cpp_lookup (pfile, name, len, hash)
-     cpp_reader *pfile;
+     cpp_reader *pfile ATTRIBUTE_UNUSED;
      const U_CHAR *name;
      int len;
      int hash;
@@ -191,7 +193,7 @@ install (name, len, type, ivalue, value, hash)
 
 void
 cpp_hash_cleanup (pfile)
-     cpp_reader *pfile;
+     cpp_reader *pfile ATTRIBUTE_UNUSED;
 {
   register int i;
   for (i = HASHSIZE; --i >= 0; )

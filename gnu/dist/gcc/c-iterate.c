@@ -1,5 +1,5 @@
 /* Build expressions with type checking for C compiler.
-   Copyright (C) 1987, 88, 89, 92, 93, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 89, 92, 93, 96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -24,12 +24,14 @@ Boston, MA 02111-1307, USA.  */
    both their declarations and the expansion of statements using them.  */
 
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 #include "tree.h"
 #include "c-tree.h"
 #include "flags.h"
 #include "obstack.h"
 #include "rtl.h"
+#include "toplev.h"
+#include "expr.h"
 
 /*
 		KEEPING TRACK OF EXPANSIONS
@@ -255,6 +257,8 @@ collect_iterators (exp, list)
 		break;
 	      case RTL_EXPR:
 		return list;
+	      default:
+		break;
 	      }
 		
 	    for (i = 0; i < num_args; i++)
@@ -284,7 +288,8 @@ iterator_loop_prologue (idecl, start_note, end_note)
 
   /* Force the save_expr in DECL_INITIAL to be calculated
      if it hasn't been calculated yet.  */
-  expand_expr (DECL_INITIAL (idecl), const0_rtx, VOIDmode, 0);
+  expand_expr (DECL_INITIAL (idecl), const0_rtx, VOIDmode,
+	       EXPAND_NORMAL);
 
   if (DECL_RTL (idecl) == 0)
     expand_decl (idecl);
@@ -295,7 +300,7 @@ iterator_loop_prologue (idecl, start_note, end_note)
   /* Initialize counter.  */
   expr = build (MODIFY_EXPR, TREE_TYPE (idecl), idecl, integer_zero_node);
   TREE_SIDE_EFFECTS (expr) = 1;
-  expand_expr (expr, const0_rtx, VOIDmode, 0);
+  expand_expr (expr, const0_rtx, VOIDmode, EXPAND_NORMAL);
 
   expand_start_loop_continue_elsewhere (1);
 
@@ -336,7 +341,7 @@ iterator_loop_epilogue (idecl, start_note, end_note)
   incr = build_binary_op (PLUS_EXPR, idecl, integer_one_node, 0);
   incr = build (MODIFY_EXPR, TREE_TYPE (idecl), idecl, incr);
   TREE_SIDE_EFFECTS (incr) = 1;
-  expand_expr (incr, const0_rtx, VOIDmode, 0);
+  expand_expr (incr, const0_rtx, VOIDmode, EXPAND_NORMAL);
   test = build_binary_op (LT_EXPR, idecl, DECL_INITIAL (idecl), 0);
   expand_exit_loop_if_false (0, test);
   expand_end_loop ();

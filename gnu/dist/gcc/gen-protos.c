@@ -1,5 +1,5 @@
 /* gen-protos.c - massages a list of prototypes, for use by fixproto.
-   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94-96, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -15,9 +15,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#include <stdio.h>
-#include <ctype.h>
 #include "hconfig.h"
+#include "system.h"
+#include "gansidecl.h"
 #include "scan.h"
 #include "cpplib.h"
 #include "cpphash.h"
@@ -29,9 +29,9 @@ char *progname;
 int hash_tab[HASH_SIZE];
 int next_index;
 
-static int
+int
 hashf (name, len, hashsize)
-     register U_CHAR *name;
+     register const U_CHAR *name;
      register int len;
      int hashsize;
 {
@@ -110,7 +110,7 @@ parse_fn_proto (start, end, fn)
   ptr--;
   while (*ptr == ' ' || *ptr == '\t') ptr--;
 
-  if (!isalnum (*ptr))
+  if (!ISALNUM (*ptr))
     {
       if (verbose)
 	fprintf (stderr, "%s: Can't handle this complex prototype: %s\n",
@@ -119,7 +119,7 @@ parse_fn_proto (start, end, fn)
     }
   name_end = ptr+1;
 
-  while (isalnum (*ptr) || *ptr == '_') --ptr;
+  while (ISALNUM (*ptr) || *ptr == '_') --ptr;
   name_start = ptr+1;
   while (*ptr == ' ' || *ptr == '\t') ptr--;
   ptr[1] = 0;
@@ -147,7 +147,6 @@ main (argc, argv)
   FILE *outf = stdout;
   int i;
   sstring linebuf;
-  char **optr;
   struct fn_decl fn_decl;
 
   i = strlen (argv[0]);

@@ -149,6 +149,7 @@ struct lang_type
 extern tree lookup_interface			PROTO((tree));
 extern tree is_class_name			PROTO((tree));
 extern void maybe_objc_check_decl		PROTO((tree));
+extern void finish_file				PROTO((void));
 extern int maybe_objc_comptypes                 PROTO((tree, tree, int));
 extern tree maybe_building_objc_message_expr    PROTO((void));
 extern tree maybe_objc_method_name		PROTO((tree));
@@ -162,12 +163,15 @@ extern void gen_aux_info_record                 PROTO((tree, int, int, int));
 extern void declare_function_name               PROTO((void));
 extern void decl_attributes                     PROTO((tree, tree, tree));
 extern void init_function_format_info		PROTO((void));
-extern void record_function_format		PROTO((tree, tree, int, int, int));
 extern void check_function_format		PROTO((tree, tree, tree));
+extern int c_get_alias_set                      PROTO((tree));
 /* Print an error message for invalid operands to arith operation CODE.
    NOP_EXPR is used as a special case (see truthvalue_conversion).  */
 extern void binary_op_error                     PROTO((enum tree_code));
 extern void c_expand_expr_stmt                  PROTO((tree));
+extern void c_expand_start_cond                 PROTO((tree, int, int));
+extern void c_expand_start_else                 PROTO((void));
+extern void c_expand_end_cond                   PROTO((void));
 /* Validate the expression after `case' and apply default promotions.  */
 extern tree check_case_value                    PROTO((tree));
 /* Concatenate a list of STRING_CST nodes into one STRING_CST.  */
@@ -177,7 +181,14 @@ extern tree convert_and_check			PROTO((tree, tree));
 extern void overflow_warning			PROTO((tree));
 extern void unsigned_conversion_warning		PROTO((tree, tree));
 /* Read the rest of the current #-directive line.  */
-extern char *get_directive_line                 STDIO_PROTO((FILE *));
+#if USE_CPPLIB
+extern char *get_directive_line                 PROTO((void));
+#define GET_DIRECTIVE_LINE() get_directive_line ()
+#else
+extern char *get_directive_line                 PROTO((FILE *));
+#define GET_DIRECTIVE_LINE() get_directive_line (finput)
+#endif
+
 /* Subroutine of build_binary_op, used for comparison operations.
    See if the operands have both been converted from subword integer types
    and, if so, perhaps change them both back to their original type.  */
@@ -202,6 +213,7 @@ extern tree double_ftype_double;
 extern tree double_ftype_double_double;
 extern tree double_type_node;
 extern tree float_type_node;
+extern tree intTI_type_node;
 extern tree intDI_type_node;
 extern tree intHI_type_node;
 extern tree intQI_type_node;
@@ -231,6 +243,7 @@ extern tree signed_wchar_type_node;
 extern tree string_ftype_ptr_ptr;
 extern tree string_type_node;
 extern tree unsigned_char_type_node;
+extern tree unsigned_intTI_type_node;
 extern tree unsigned_intDI_type_node;
 extern tree unsigned_intHI_type_node;
 extern tree unsigned_intQI_type_node;
@@ -251,7 +264,7 @@ extern tree build_enumerator                    PROTO((tree, tree));
 extern tree builtin_function                    PROTO((char *, tree, enum built_in_function function_, char *));
 /* Add qualifiers to a type, in the fashion for C.  */
 extern tree c_build_type_variant                PROTO((tree, int, int));
-extern int  c_decode_option                     PROTO((char *));
+extern int  c_decode_option                     PROTO((int, char **));
 extern void c_mark_varargs                      PROTO((void));
 extern tree check_identifier                    PROTO((tree, tree));
 extern void clear_parm_order                    PROTO((void));
@@ -288,12 +301,9 @@ extern void pending_xref_error                  PROTO((void));
 extern void pop_c_function_context              PROTO((void));
 extern void pop_label_level                     PROTO((void));
 extern tree poplevel                            PROTO((int, int, int));
-extern void print_lang_decl                     STDIO_PROTO((FILE *, tree,
-							     int));
-extern void print_lang_identifier               STDIO_PROTO((FILE *, tree,
-							     int));
-extern void print_lang_type                     STDIO_PROTO((FILE *, tree,
-							     int));
+extern void print_lang_decl                     PROTO((FILE *, tree, int));
+extern void print_lang_identifier               PROTO((FILE *, tree, int));
+extern void print_lang_type                     PROTO((FILE *, tree, int));
 extern void push_c_function_context             PROTO((void));
 extern void push_label_level                    PROTO((void));
 extern void push_parm_decl                      PROTO((tree));
@@ -368,6 +378,7 @@ extern void c_expand_return			PROTO((tree));
 extern tree c_expand_start_case                 PROTO((tree));
 
 /* in c-iterate.c */
+extern void init_iterators			PROTO((void));
 extern void iterator_expand			PROTO((tree));
 extern void iterator_for_loop_start		PROTO((tree));
 extern void iterator_for_loop_end		PROTO((tree));
@@ -494,10 +505,9 @@ extern int warn_missing_braces;
 
 extern int warn_sign_compare;
 
-/* Nonzero means this is a function to call to perform comptypes
-   on two record types.  */
+/* Warn about multicharacter constants.  */
 
-extern int (*comptypes_record_hook) ();
+extern int warn_multichar;
 
 /* Nonzero means we are reading code that came from a system header file.  */
 
@@ -506,5 +516,8 @@ extern int system_header_p;
 /* Nonzero enables objc features.  */
 
 extern int doing_objc_thang;
+
+/* In c-decl.c */
+extern void finish_incomplete_decl PROTO((tree));
 
 #endif /* not _C_TREE_H */

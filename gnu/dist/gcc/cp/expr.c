@@ -21,15 +21,18 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 #include "rtl.h"
 #include "tree.h"
 #include "flags.h"
 #include "expr.h"
 #include "cp-tree.h"
+#include "toplev.h"
 
+#if 0
 static tree extract_aggr_init PROTO((tree, tree));
 static tree extract_scalar_init PROTO((tree, tree));
+#endif
 static rtx cplus_expand_expr PROTO((tree, rtx, enum machine_mode,
 				    enum expand_modifier));
 
@@ -59,7 +62,7 @@ cplus_expand_expr (exp, target, tmode, modifier)
 
   switch (code)
     {
-    case NEW_EXPR:
+    case AGGR_INIT_EXPR:
       {
 	/* Something needs to be initialized, but we didn't know
 	   where that thing was when building the tree.  For example,
@@ -76,8 +79,6 @@ cplus_expand_expr (exp, target, tmode, modifier)
 	tree func = TREE_OPERAND (exp, 0);
 	tree args = TREE_OPERAND (exp, 1);
 	tree type = TREE_TYPE (exp), slot;
-	tree fn_type = TREE_TYPE (TREE_TYPE (func));
-	tree return_type = TREE_TYPE (fn_type);
 	tree call_exp;
 	rtx call_target, return_target;
 	int pcc_struct_return = 0;
@@ -86,14 +87,8 @@ cplus_expand_expr (exp, target, tmode, modifier)
 	   `target' represents.  SLOT holds the slot for TARGET.  */
 	slot = TREE_OPERAND (exp, 2);
 
-	if (target == 0)
-	  {
-	    /* Should always be called with a target in BLKmode case.  */
-	    my_friendly_assert (mode != BLKmode, 205);
-	    my_friendly_assert (DECL_RTL (slot) != 0, 206);
-
-	    target = gen_reg_rtx (mode);
-	  }
+	/* Should always be called with a target.  */
+	my_friendly_assert (target != NULL_RTX, 205);
 
 	/* The target the initializer will initialize (CALL_TARGET)
 	   must now be directed to initialize the target we are
@@ -118,103 +113,52 @@ cplus_expand_expr (exp, target, tmode, modifier)
 	      TREE_VALUE (args) = build1 (ADDR_EXPR, type, slot);
 	    call_target = 0;
 	  }
-	else if (TREE_CODE (return_type) == REFERENCE_TYPE)
-	  {
-	    type = return_type;
-	    call_target = 0;
-	  }
 	else
 	  {
-#ifdef PCC_STATIC_STRUCT_RETURN
-	    pcc_struct_return = 1;
-	    call_target = 0;
-#else
 	    call_target = target;
-#endif
-	  }
-	if (call_target)
-	  {
-	    /* Make this a valid memory address now.  The code below assumes
-	       that it can compare rtx and make assumptions based on the
-	       result.  The assumptions are true only if the address was
-	       valid to begin with.  */
-	    call_target = validize_mem (call_target);
-
-	    /* If this is a reference to a symbol, expand_inline_function
-	       will do this transformation and return a different target
-	       than the one we gave it, though functionally equivalent.  Do
-	       the transformation here to avoid confusion.  */
-	    if (! cse_not_expected && GET_CODE (call_target) == MEM
-		&& GET_CODE (XEXP (call_target, 0)) == SYMBOL_REF)
+#ifdef PCC_STATIC_STRUCT_RETURN
+	    if (aggregate_value_p (type))
 	      {
-		call_target = gen_rtx
-		  (MEM, mode, memory_address (mode, XEXP (call_target, 0)));
-		MEM_IN_STRUCT_P (call_target) = 1;
+		pcc_struct_return = 1;
+		call_target = 0;
 	      }
+#endif
 	  }
 
 	call_exp = build (CALL_EXPR, type, func, args, NULL_TREE);
 	TREE_SIDE_EFFECTS (call_exp) = 1;
 	return_target = expand_call (call_exp, call_target, ignore);
-	if (call_target == 0)
+
+	if (call_target)
+	  /* Trust that the right thing has been done; it's too hard to
+	     verify.  */
+	  return return_target;
+
+	/* If we're suffering under the ancient PCC_STATIC_STRUCT_RETURN
+	   calling convention, we need to copy the return value out of
+	   the static return buffer into slot.  */
+	if (pcc_struct_return)
 	  {
-	    if (pcc_struct_return)
-	      {
-		extern int flag_access_control;
-		int old_ac = flag_access_control;
+	    extern int flag_access_control;
+	    int old_ac = flag_access_control;
 
-		tree init = build_decl (VAR_DECL, 0, type);
-		TREE_ADDRESSABLE (init) = 1;
-		DECL_RTL (init) = return_target;
+	    tree init = build_decl (VAR_DECL, NULL_TREE,
+				    build_reference_type (type));
+	    DECL_RTL (init) = XEXP (return_target, 0);
+	    init = convert_from_reference (init);
 
-		flag_access_control = 0;
-		expand_aggr_init (slot, init, 0, LOOKUP_ONLYCONVERTING);
-		flag_access_control = old_ac;
-
-		if (TYPE_NEEDS_DESTRUCTOR (type))
-		  {
-		    init = build_decl (VAR_DECL, 0,
-				       build_reference_type (type));
-		    DECL_RTL (init) = XEXP (return_target, 0);
-
-		    init = maybe_build_cleanup (convert_from_reference (init));
-		    if (init != NULL_TREE)
-		      expand_expr (init, const0_rtx, VOIDmode, 0);
-		  }
-		call_target = return_target = DECL_RTL (slot);
-	      }
-	    else
-	      call_target = return_target;
-	  }
-
-	if (call_target != return_target)
-	  {
-	    my_friendly_assert (TYPE_HAS_TRIVIAL_INIT_REF (type), 317);
-	    if (GET_MODE (return_target) == BLKmode)
-	      emit_block_move (call_target, return_target, expr_size (exp),
-			       TYPE_ALIGN (type) / BITS_PER_UNIT);
-	    else
-	      emit_move_insn (call_target, return_target);
-	  }
-
-	if (TREE_CODE (return_type) == REFERENCE_TYPE)
-	  {
-	    tree init;
-
-	    if (GET_CODE (call_target) == REG
-		&& REGNO (call_target) < FIRST_PSEUDO_REGISTER)
-	      my_friendly_abort (39);
-
-	    type = TREE_TYPE (exp);
-
-	    init = build (RTL_EXPR, return_type, 0, call_target);
-	    /* We got back a reference to the type we want.  Now initialize
-	       target with that.  */
+	    flag_access_control = 0;
 	    expand_aggr_init (slot, init, 0, LOOKUP_ONLYCONVERTING);
+	    flag_access_control = old_ac;
+
+	    if (TYPE_NEEDS_DESTRUCTOR (type))
+	      {
+		init = maybe_build_cleanup (init);
+		if (init != NULL_TREE)
+		  expand_expr (init, const0_rtx, VOIDmode, 0);
+	      }
 	  }
 
-	if (DECL_RTL (slot) != target)
-	  emit_move_insn (DECL_RTL (slot), target);
 	return DECL_RTL (slot);
       }
 
@@ -247,6 +191,9 @@ cplus_expand_expr (exp, target, tmode, modifier)
 	  build_binary_op (MINUS_EXPR, TREE_OPERAND (exp, 2),
 			   integer_one_node, 1),
 	  TREE_OPERAND (exp, 1), 0), target, tmode, modifier);
+
+    case NEW_EXPR:
+      return expand_expr (build_new_1 (exp), target, tmode, modifier);
 
     default:
       break;
@@ -292,6 +239,7 @@ fixup_result_decl (decl, result)
     }
 }
 
+#if 0
 /* Expand this initialization inline and see if it's simple enough that
    it can be done at compile-time.  */
 
@@ -352,6 +300,7 @@ extract_scalar_init (decl, init)
 
   return t; 
 }
+#endif
 
 int
 extract_init (decl, init)

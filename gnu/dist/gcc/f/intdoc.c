@@ -1,6 +1,6 @@
 /* intdoc.c
    Copyright (C) 1997 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -20,16 +20,14 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
 /* From f/proj.h, which uses #error -- not all C compilers
-   support that, and we want _this_ program to be compilable
+   support that, and we want *this* program to be compilable
    by pretty much any C compiler.  */
-
-#include "assert.j"		/* Use gcc's assert.h. */
-#include <stdio.h>
+#include "hconfig.j"
+#include "system.j"
+#include "assert.j"
+#if HAVE_STDDEF_H
 #include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#define FFEINTRIN_DOC 1
-#include "intrin.h"
+#endif
 
 typedef enum
   {
@@ -43,6 +41,10 @@ typedef enum
   } bool;
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+
+/* Pull in the intrinsics info, but only the doc parts.  */
+#define FFEINTRIN_DOC 1
+#include "intrin.h"
 
 char *family_name (ffeintrinFamily family);
 static void dumpif (ffeintrinFamily fam);
@@ -494,7 +496,7 @@ external procedure.\n\
       if ((argi[0] == '*')
 	  || (argi[0] == 'n')
 	  || (argi[0] == '+')
-      || (argi[0] == 'p'))
+	  || (argi[0] == 'p'))
 	printf ("-1, @var{%s}-2, @dots{}, @var{%s}-n",
 		argc, argc);
     }
@@ -559,7 +561,7 @@ this intrinsic is valid only when used as the argument to\n\
 	}
 #if 0
       else if ((c[0] == 'I')
-	       && (c[1] == 'p'))
+	       && (c[1] == '7'))
 	printf (", the exact type being wide enough to hold a pointer\n\
 on the target system (typically @code{INTEGER(KIND=1)} or @code{INTEGER(KIND=4)}).\n\n");
 #endif
@@ -728,10 +730,6 @@ types of all the arguments.\n\n");
 	    case 'A':
 	      printf ("@code{INTEGER} with same @samp{KIND=} value as for @var{%s}",
 		      argument_name_string (imp, 0));
-	      break;
-
-	    case 'p':
-	      printf ("@code{INTEGER} wide enough to hold a pointer");
 	      break;
 
 	    default:
@@ -1209,10 +1207,6 @@ print_type_string (char *c)
 	  printf ("@code{INTEGER(KIND=%d)}", (kind - '0'));
 	  break;
 
-	case 'p':
-	  printf ("@code{INTEGER(KIND=0)}");
-	  break;
-
 	default:
 	  assert ("Ia" == NULL);
 	  break;
@@ -1336,7 +1330,7 @@ print_type_string (char *c)
       break;
 
     default:
-      assert ("arg type?" == NULL);
+      assert ("type?" == NULL);
       break;
     }
 }

@@ -1,5 +1,5 @@
 /* Definitions for code generation pass of GNU compiler.
-   Copyright (C) 1987, 91-96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -30,7 +30,8 @@ Boston, MA 02111-1307, USA.  */
 /* The variable for which an increment is queued.  */
 #define QUEUED_VAR(P) XEXP (P, 0)
 /* If the increment has been emitted, this is the insn
-   that does the increment.  It is zero before the increment is emitted.  */
+   that does the increment.  It is zero before the increment is emitted.
+   If more than one insn is emitted, this is the first insn.  */
 #define QUEUED_INSN(P) XEXP (P, 1)
 /* If a pre-increment copy has been generated, this is the copy
    (it is a temporary reg).  Zero if no copy made yet.  */
@@ -131,6 +132,10 @@ extern int pending_stack_adjust;
    until no longer needed.  CLEANUP_POINT_EXPRs define the lifetime
    of TARGET_EXPRs.  */
 extern int target_temp_slot_level;
+
+/* Current level for normal temporaries.  */
+
+extern int temp_slot_level;
 
 #ifdef TREE_CODE /* Don't lose if tree.h not included.  */
 /* Structure to record the size of a sequence of arguments
@@ -138,7 +143,7 @@ extern int target_temp_slot_level;
 
 struct args_size
 {
-  int constant;
+  HOST_WIDE_INT constant;
   tree var;
 };
 #endif
@@ -200,6 +205,11 @@ enum direction {none, upward, downward};  /* Value has this type.  */
 #define FUNCTION_ARG_BOUNDARY(MODE, TYPE)	PARM_BOUNDARY
 #endif
 
+/* Provide a default value for STRICT_ARGUMENT_NAMING.  */
+#ifndef STRICT_ARGUMENT_NAMING
+#define STRICT_ARGUMENT_NAMING 0
+#endif
+
 /* Nonzero if we do not know how to pass TYPE solely in registers.
    We cannot do so in the following cases:
 
@@ -216,6 +226,7 @@ enum direction {none, upward, downward};  /* Value has this type.  */
    So a value padded in memory at the upper end can't go in a register.
    For a little-endian machine, the reverse is true.  */
 
+#ifndef MUST_PASS_IN_STACK
 #define MUST_PASS_IN_STACK(MODE,TYPE)			\
   ((TYPE) != 0						\
    && (TREE_CODE (TYPE_SIZE (TYPE)) != INTEGER_CST	\
@@ -226,12 +237,27 @@ enum direction {none, upward, downward};  /* Value has this type.  */
 			  % (PARM_BOUNDARY / BITS_PER_UNIT))) \
 	   && (FUNCTION_ARG_PADDING (MODE, TYPE)	\
 	       == (BYTES_BIG_ENDIAN ? upward : downward)))))
+#endif
 
 /* Nonzero if type TYPE should be returned in memory.
    Most machines can use the following default definition.  */
 
 #ifndef RETURN_IN_MEMORY
 #define RETURN_IN_MEMORY(TYPE) (TYPE_MODE (TYPE) == BLKmode)
+#endif
+
+/* Supply a default definition of STACK_SAVEAREA_MODE for emit_stack_save.
+   Normally move_insn, so Pmode stack pointer.  */
+
+#ifndef STACK_SAVEAREA_MODE
+#define STACK_SAVEAREA_MODE(LEVEL) Pmode
+#endif
+
+/* Supply a default definition of STACK_SIZE_MODE for
+   allocate_dynamic_stack_space.  Normally PLUS/MINUS, so word_mode.  */
+
+#ifndef STACK_SIZE_MODE
+#define STACK_SIZE_MODE word_mode
 #endif
 
 /* Provide default values for the macros controlling stack checking.  */
@@ -505,6 +531,7 @@ extern rtx chkr_check_addr_libfunc;
 extern rtx chkr_set_right_libfunc;
 extern rtx chkr_copy_bitmap_libfunc;
 extern rtx chkr_check_exec_libfunc;
+extern rtx chkr_check_str_libfunc;
 
 typedef rtx (*rtxfun) PROTO ((rtx));
 
@@ -520,7 +547,7 @@ extern rtxfun bcc_gen_fctn[NUM_RTX_CODE];
 extern enum insn_code setcc_gen_code[NUM_RTX_CODE];
 
 #ifdef HAVE_conditional_move
-/* Indexed by the the machine mode, gives the insn code to make a conditional
+/* Indexed by the machine mode, gives the insn code to make a conditional
    move insn.  */
 
 extern enum insn_code movcc_gen_code[NUM_MACHINE_MODES];
@@ -652,6 +679,9 @@ extern rtx emit_store_flag_force PROTO((rtx, enum rtx_code, rtx, rtx,
 
 /* Given a JUMP_INSN, return a description of the test being made.  */
 extern rtx get_condition PROTO((rtx, rtx *));
+
+/* Generate a conditional trap instruction.  */
+extern rtx gen_cond_trap PROTO((enum rtx_code, rtx, rtx, rtx));
 
 /* Functions from expr.c:  */
 
@@ -680,7 +710,7 @@ extern rtx convert_to_mode PROTO((enum machine_mode, rtx, int));
 extern rtx convert_modes PROTO((enum machine_mode, enum machine_mode, rtx, int));
 
 /* Emit code to move a block Y to a block X.  */
-extern void emit_block_move PROTO((rtx, rtx, rtx, int));
+extern rtx emit_block_move PROTO((rtx, rtx, rtx, int));
 
 /* Copy all or part of a value X into registers starting at REGNO.
    The number of registers to be filled is NREGS.  */
@@ -692,10 +722,10 @@ extern void move_block_from_reg PROTO((int, rtx, int, int));
 
 /* Load a BLKmode value into non-consecutive registers represented by a
    PARALLEL.  */
-extern void emit_group_load PROTO((rtx, rtx));
+extern void emit_group_load PROTO((rtx, rtx, int, int));
 /* Store a BLKmode value from non-consecutive registers represented by a
    PARALLEL.  */
-extern void emit_group_store PROTO((rtx, rtx));
+extern void emit_group_store PROTO((rtx, rtx, int, int));
 
 /* Mark REG as holding a parameter for the next CALL_INSN.  */
 extern void use_reg PROTO((rtx *, rtx));
@@ -708,7 +738,7 @@ extern void use_group_regs PROTO((rtx *, rtx));
 /* Write zeros through the storage of OBJECT.
    If OBJECT has BLKmode, SIZE is its length in bytes and ALIGN is its
    alignment.  */
-extern void clear_storage PROTO((rtx, rtx, int));
+extern rtx clear_storage PROTO((rtx, rtx, int));
 
 /* Emit insns to set X from Y.  */
 extern rtx emit_move_insn PROTO((rtx, rtx));
@@ -726,7 +756,7 @@ extern rtx gen_push_operand PROTO((void));
 #ifdef TREE_CODE
 /* Generate code to push something onto the stack, given its mode and type.  */
 extern void emit_push_insn PROTO((rtx, enum machine_mode, tree, rtx, int,
-				  int, rtx, int, rtx, rtx));
+				  int, rtx, int, rtx, rtx, int));
 
 /* Emit library call.  */
 extern void emit_library_call PVPROTO((rtx orgfun, int no_queue,
@@ -749,7 +779,7 @@ extern rtx store_expr PROTO((tree, rtx, int));
    Useful after calling expand_expr with 1 as sum_ok.  */
 extern rtx force_operand PROTO((rtx, rtx));
 
-extern rtx expand_builtin_setjmp PROTO((rtx, rtx));
+extern rtx expand_builtin_setjmp PROTO((rtx, rtx, rtx, rtx));
 
 #ifdef TREE_CODE
 /* Generate code for computing expression EXP.
@@ -918,8 +948,6 @@ extern rtx hard_libcall_value PROTO((enum machine_mode));
    of STACK_BOUNDARY / BITS_PER_UNIT.  */
 extern rtx round_push PROTO((rtx));
 
-extern void emit_block_move PROTO((rtx, rtx, rtx, int));
-
 extern rtx store_bit_field PROTO((rtx, int, int, enum machine_mode, rtx, int, int));
 extern rtx extract_bit_field PROTO((rtx, int, int, int, rtx, enum machine_mode, enum machine_mode, int, int));
 extern rtx expand_mult PROTO((enum machine_mode, rtx, rtx, rtx, int));
@@ -935,19 +963,13 @@ extern rtx (*lang_expand_expr) PROTO ((union tree_node *, rtx,
 				       enum machine_mode,
 				       enum expand_modifier modifier));
 
-#ifdef TREE_CODE
-/* Build bytecode call descriptor for function SUBR. */
-extern rtx bc_build_calldesc PROTO((tree));
-
-/* Emit a type code to be used by the runtime support in handling
-   parameter passing.   The type code consists of the machine mode
-   plus the minimal alignment shifted left 8 bits.  */
-extern tree bc_runtime_type_code PROTO((tree));
-#endif
-
 extern void init_all_optabs			PROTO ((void));
 extern void init_mov_optab			PROTO ((void));
-extern void bc_adjust_stack			PROTO ((int));
-extern void bc_load_localaddr			PROTO ((rtx));
+extern void do_jump_by_parts_equality_rtx	PROTO((rtx, rtx, rtx));
 extern void do_jump_by_parts_greater_rtx	PROTO ((enum machine_mode, int,
 							rtx, rtx, rtx, rtx));
+
+#ifdef TREE_CODE   /* Don't lose if tree.h not included.  */
+extern void mark_seen_cases			PROTO ((tree, unsigned char *,
+							long, int));
+#endif

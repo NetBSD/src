@@ -1,5 +1,5 @@
 /* Compilation switch flag definitions for GNU CC.
-   Copyright (C) 1987, 88, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -53,6 +53,10 @@ extern int use_gnu_debug_info_extensions;
 
 extern int optimize;
 
+/* Nonzero means optimize for size.  -Os.  */
+
+extern int optimize_size;
+
 /* Nonzero means do stupid register allocation.  -noreg.
    Currently, this is 1 if `optimize' is 0.  */
 
@@ -82,6 +86,14 @@ extern int warn_inline;
 /* Nonzero to warn about variables used before they are initialized.  */
 
 extern int warn_uninitialized;
+
+/* Zero if unknown pragmas are ignored
+   One if the compiler should warn about an unknown pragma not in
+   a system include file.
+   Greater than one if the compiler should warn for all unknown
+   pragmas.  */
+
+extern int warn_unknown_pragmas;
 
 /* Nonzero means warn about all declarations which shadow others.   */
 
@@ -327,18 +339,12 @@ extern int flag_schedule_insns_after_reload;
    flag_schedule_speculative_load means allow speculative motion of some
    load insns.
    flag_schedule_speculative_load_dangerous allows speculative motion of more
-   load insns.
-   flag_schedule_reverse_before_reload means try to reverse original order
-   of insns (S).
-   flag_schedule_reverse_after_reload means try to reverse original order
-   of insns (R).  */
+   load insns.  */
 
 extern int flag_schedule_interblock;
 extern int flag_schedule_speculative;
 extern int flag_schedule_speculative_load;
 extern int flag_schedule_speculative_load_dangerous;
-extern int flag_schedule_reverse_before_reload;
-extern int flag_schedule_reverse_after_reload;
 
 /* flag_on_branch_count_reg means try to replace add-1,compare,branch tupple
    by a cheaper branch, on a count register. */
@@ -371,6 +377,11 @@ extern int flag_pic;
 
 extern int flag_exceptions;
 
+/* Nonzero means use the new model for exception handling. Replaces 
+   -DNEW_EH_MODEL as a compile option. */
+
+extern int flag_new_exceptions;
+
 /* Nonzero means don't place uninitialized global data in common storage
    by default.  */
 
@@ -391,7 +402,7 @@ extern int flag_function_sections;
    the generated assembly code (to make it more readable).  This option
    is generally only of use to those who actually need to read the
    generated assembly code (perhaps while debugging the compiler itself).
-   -fverbose-asm is the default.  -fno-verbose-asm causes the extra information
+   -fno-verbose-asm, the default, causes the extra information
    to not be added and is useful when comparing two assembler files.  */
 
 extern int flag_verbose_asm;
@@ -412,10 +423,6 @@ extern int flag_gnu_linker;
 /* Tag all structures with __attribute__(packed) */
 extern int flag_pack_struct;
 
-/* 1 if alias checking is enabled: symbols do not alias each other
-   and parameters do not alias the current stack frame.  */
-extern int flag_alias_check;
-
 /* This flag is only tested if alias checking is enabled.
    0 if pointer arguments may alias each other.  True in C.
    1 if pointer arguments may not alias each other but may alias
@@ -425,9 +432,18 @@ extern int flag_alias_check;
    The value is ignored if flag_alias_check is 0.  */
 extern int flag_argument_noalias;
 
+/* Nonzero if we should do (language-dependent) alias analysis.
+   Typically, this analysis will assume that expressions of certain
+   types do not alias expressions of certain other types.  Only used
+   if alias analysis (in general) is enabled.  */
+extern int flag_strict_aliasing;
+
 /* Emit code to check for stack overflow; also may cause large objects
    to be allocated dynamically.  */
 extern int flag_stack_check;
+
+/* Do the full regmove optimization pass.  */
+extern int flag_regmove;
 
 /* Other basic status info about current function.  */
 
@@ -452,6 +468,13 @@ extern int current_function_has_nonlocal_label;
 
 extern int current_function_has_nonlocal_goto;
 
+/* Nonzero if this function has a computed goto.
+
+   It is computed during find_basic_blocks or during stupid life
+   analysis.  */
+
+extern int current_function_has_computed_jump;
+
 /* Nonzero if GCC must add code to check memory access (used by Checker).  */
 
 extern int flag_check_memory_usage;
@@ -463,3 +486,7 @@ extern int flag_prefix_function_name;
 /* Nonzero if the current function is a thunk, so we should try to cut
    corners where we can.  */
 extern int current_function_is_thunk;
+
+/* Value of the -G xx switch, and whether it was passed or not.  */
+extern int g_switch_value;
+extern int g_switch_set;

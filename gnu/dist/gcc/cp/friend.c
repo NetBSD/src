@@ -19,36 +19,18 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 #include "tree.h"
 #include "rtl.h"
 #include "cp-tree.h"
 #include "flags.h"
 #include "output.h"
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
+#include "toplev.h"
 
 static void add_friend PROTO((tree, tree));
 static void add_friends PROTO((tree, tree, tree));
 
-/* Friend data structures:
-
-   Lists of friend functions come from TYPE_DECL nodes.  Since all
-   aggregate types are automatically typedef'd, these nodes are guaranteed
-   to exist.
-
-   The TREE_PURPOSE of a friend list is the name of the friend,
-   and its TREE_VALUE is another list.
-
-   For each element of that list, either the TREE_VALUE or the TREE_PURPOSE
-   will be filled in, but not both.  The TREE_VALUE of that list is an
-   individual function which is a friend.  The TREE_PURPOSE of that list
-   indicates a type in which all functions by that name are friends.
-
-   Lists of friend classes come from _TYPE nodes.  Love that consistency
-   thang.  */
+/* Friend data structures are described in cp-tree.h.  */
 
 int
 is_friend (type, supplicant)
@@ -56,6 +38,7 @@ is_friend (type, supplicant)
 {
   int declp;
   register tree list;
+  tree context;
 
   if (supplicant == NULL_TREE || type == NULL_TREE)
     return 0;
@@ -81,8 +64,25 @@ is_friend (type, supplicant)
 	      tree friends = TREE_VALUE (list);
 	      for (; friends ; friends = TREE_CHAIN (friends))
 		{
-		  if (ctype == TREE_PURPOSE (friends))
+		  if (comptypes (ctype, TREE_PURPOSE (friends), 1))
 		    return 1;
+
+		  if (TREE_VALUE (friends) == NULL_TREE)
+		    continue;
+
+		  if (TREE_CODE (TREE_VALUE (friends)) == TEMPLATE_DECL)
+		    {
+		      if (is_specialization_of (supplicant, 
+						TREE_VALUE (friends)))
+			return 1;
+
+		      continue;
+		    }
+
+		  /* FIXME: The use of comptypes here is bogus, since
+		     two specializations of a template with non-type
+		     parameters may have the same type, but be
+		     different.  */
 		  if (comptypes (TREE_TYPE (supplicant),
 				 TREE_TYPE (TREE_VALUE (friends)), 1))
 		    return 1;
@@ -99,30 +99,30 @@ is_friend (type, supplicant)
       
       list = CLASSTYPE_FRIEND_CLASSES (TREE_TYPE (TYPE_MAIN_DECL (type)));
       for (; list ; list = TREE_CHAIN (list))
-	if (supplicant == TREE_VALUE (list))
-	  return 1;
+	{
+	  tree t = TREE_VALUE (list);
+
+	  if (TREE_CODE (t) == TEMPLATE_DECL ? 
+	      is_specialization_of (TYPE_MAIN_DECL (supplicant), t) :
+	      comptypes (supplicant, t, 1))
+	    return 1;
+	}
     }      
 
-  {
-    tree context;
+  if (declp && DECL_FUNCTION_MEMBER_P (supplicant))
+    context = DECL_CLASS_CONTEXT (supplicant);
+  else if (! declp)
+    /* Local classes have the same access as the enclosing function.  */
+    context = hack_decl_function_context (TYPE_MAIN_DECL (supplicant));
+  else
+    context = NULL_TREE;
 
-    if (! declp)
-      {
-	/* Are we a nested or local class?  If so, we aren't friends
-           with the CONTEXT.  */
-	if (IS_AGGR_TYPE (supplicant))
-	  context = NULL_TREE;
-	else
-	  context = DECL_CONTEXT (TYPE_MAIN_DECL (supplicant));
-      }
-    else if (DECL_FUNCTION_MEMBER_P (supplicant))
-      context = DECL_CLASS_CONTEXT (supplicant);
-    else
-      context = NULL_TREE;
+  /* A namespace is not friend to anybody. */
+  if (context && TREE_CODE (context) == NAMESPACE_DECL)
+    context = NULL_TREE;
 
-    if (context)
-      return is_friend (type, context);
-  }
+  if (context)
+    return is_friend (type, context);
 
   return 0;
 }
@@ -195,14 +195,16 @@ add_friends (type, name, friend_type)
 	  while (friends && TREE_PURPOSE (friends) != friend_type)
 	    friends = TREE_CHAIN (friends);
 	  if (friends)
-	    if (friend_type)
-	      warning ("method `%s::%s' is already a friend of class",
-		       TYPE_NAME_STRING (friend_type),
-		       IDENTIFIER_POINTER (name));
-	    else
-	      warning ("function `%s' is already a friend of class `%s'",
-		       IDENTIFIER_POINTER (name),
-		       IDENTIFIER_POINTER (DECL_NAME (typedecl)));
+	    {
+	      if (friend_type)
+		warning ("method `%s::%s' is already a friend of class",
+			 TYPE_NAME_STRING (friend_type),
+			 IDENTIFIER_POINTER (name));
+	      else
+		warning ("function `%s' is already a friend of class `%s'",
+			 IDENTIFIER_POINTER (name),
+			 IDENTIFIER_POINTER (DECL_NAME (typedecl)));
+	    }
 	  else
 	    TREE_VALUE (list) = tree_cons (friend_type, NULL_TREE,
 					   TREE_VALUE (list));
@@ -238,6 +240,7 @@ make_friend_class (type, friend_type)
      tree type, friend_type;
 {
   tree classes;
+  int is_template_friend;
 
   if (IS_SIGNATURE (type))
     {
@@ -250,22 +253,35 @@ make_friend_class (type, friend_type)
 	     IDENTIFIER_POINTER (TYPE_IDENTIFIER (friend_type)));
       return;
     }
-  if (type == friend_type)
+  if (processing_template_decl > template_class_depth (type))
+    /* If the TYPE is a template then it makes sense for it to be
+       friends with itself; this means that each instantiation is
+       friends with all other instantiations.  */
+    is_template_friend = 1;
+  else if (comptypes (type, friend_type, 1))
     {
       pedwarn ("class `%s' is implicitly friends with itself",
 	       TYPE_NAME_STRING (type));
       return;
     }
+  else
+    is_template_friend = 0;
 
-  GNU_xref_hier (TYPE_NAME_STRING (type),
-		 TYPE_NAME_STRING (friend_type), 0, 0, 1);
+  GNU_xref_hier (type, friend_type, 0, 0, 1);
+
+  if (is_template_friend)
+    friend_type = CLASSTYPE_TI_TEMPLATE (friend_type);
 
   classes = CLASSTYPE_FRIEND_CLASSES (type);
-  while (classes && TREE_VALUE (classes) != friend_type)
+  while (classes 
+	 /* Stop if we find the same type on the list.  */
+	 && !(TREE_CODE (TREE_VALUE (classes)) == TEMPLATE_DECL ?
+	      friend_type == TREE_VALUE (classes) :
+	      comptypes (TREE_VALUE (classes), friend_type, 1)))
     classes = TREE_CHAIN (classes);
-  if (classes)
-    warning ("class `%s' is already friends with class `%s'",
-	     TYPE_NAME_STRING (TREE_VALUE (classes)), TYPE_NAME_STRING (type));
+  if (classes) 
+    cp_warning ("`%T' is already a friend of `%T'",
+		TREE_VALUE (classes), type);
   else
     {
       CLASSTYPE_FRIEND_CLASSES (type)
@@ -300,8 +316,23 @@ do_friend (ctype, declarator, decl, parmdecls, flags, quals, funcdef_flag)
      tree quals;
      int funcdef_flag;
 {
+  int is_friend_template = 0;
+
   /* Every decl that gets here is a friend of something.  */
   DECL_FRIEND_P (decl) = 1;
+
+  if (TREE_CODE (declarator) == TEMPLATE_ID_EXPR)
+    {
+      declarator = TREE_OPERAND (declarator, 0);
+      if (TREE_CODE (declarator) == LOOKUP_EXPR)
+	declarator = TREE_OPERAND (declarator, 0);
+      if (is_overloaded_fn (declarator))
+	declarator = DECL_NAME (get_first_fn (declarator));
+    }
+
+  if (TREE_CODE (decl) == FUNCTION_DECL)
+    is_friend_template = processing_template_decl >
+      template_class_depth (current_class_type);
 
   if (ctype)
     {
@@ -317,18 +348,24 @@ do_friend (ctype, declarator, decl, parmdecls, flags, quals, funcdef_flag)
 
 	  /* This will set up DECL_ARGUMENTS for us.  */
 	  grokclassfn (ctype, cname, decl, flags, quals);
-	  if (TYPE_SIZE (ctype) != 0)
+
+	  if (is_friend_template)
+	    decl = DECL_TI_TEMPLATE (push_template_decl (decl));
+
+	  if (TYPE_SIZE (ctype) != 0 && template_class_depth (ctype) == 0)
 	    decl = check_classfn (ctype, decl);
 
+	  /* TYPE_BEING_DEFINED is a hack for nested classes having
+             member functions of the enclosing class as friends. Will
+             go away as parsing of classes gets rewritten. */
 	  if (TREE_TYPE (decl) != error_mark_node)
 	    {
-	      if (TYPE_SIZE (ctype))
+	      if (TYPE_BEING_DEFINED (ctype) ||
+		  TYPE_SIZE (ctype) || template_class_depth (ctype) > 0)
 		add_friend (current_class_type, decl);
 	      else
-		{
-		  cp_error ("member `%D' declared as friend before type `%T' defined",
-			    decl, ctype);
-		}
+		cp_error ("member `%D' declared as friend before type `%T' defined",
+			  decl, ctype);
 	    }
 	}
       else
@@ -342,16 +379,13 @@ do_friend (ctype, declarator, decl, parmdecls, flags, quals, funcdef_flag)
 	  if (fields)
 	    add_friends (current_class_type, declarator, ctype);
 	  else
-	    error ("method `%s' is not a member of class `%s'",
-		   IDENTIFIER_POINTER (declarator),
-		   IDENTIFIER_POINTER (cname));
+	    cp_error ("method `%D' is not a member of class `%T'",
+		      declarator, ctype);
 	  decl = void_type_node;
 	}
     }
   else if (TREE_CODE (decl) == FUNCTION_DECL
-	   && ((IDENTIFIER_LENGTH (declarator) == 4
-		&& IDENTIFIER_POINTER (declarator)[0] == 'm'
-		&& ! strcmp (IDENTIFIER_POINTER (declarator), "main"))
+	   && (MAIN_NAME_P (declarator)
 	       || (IDENTIFIER_LENGTH (declarator) > 10
 		   && IDENTIFIER_POINTER (declarator)[0] == '_'
 		   && IDENTIFIER_POINTER (declarator)[1] == '_'
@@ -384,27 +418,39 @@ do_friend (ctype, declarator, decl, parmdecls, flags, quals, funcdef_flag)
 	{
 	  /* We can call pushdecl here, because the TREE_CHAIN of this
 	     FUNCTION_DECL is not needed for other purposes.  Don't do this
-	     for a template instantiation. */
-	  decl = pushdecl (decl);
+	     for a template instantiation.  */
+	  if (!is_friend_template)
+	    {  
+	      /* However, we don't call pushdecl() for a friend
+		 function of a template class, since in general,
+		 such a declaration depends on template
+		 parameters.  Instead, we call pushdecl when the
+		 class is instantiated.  */
+	      if (template_class_depth (current_class_type) == 0)
+		decl = pushdecl (decl);
+	    }
+	  else 
+	    decl = push_template_decl (decl); 
 
-	  if (! funcdef_flag && ! flag_guiding_decls
+	  if (! funcdef_flag && ! flag_guiding_decls && ! is_friend_template
 	      && current_template_parms && uses_template_parms (decl))
 	    {
 	      static int explained;
 	      cp_warning ("friend declaration `%#D'", decl);
-	      warning ("  will not be treated as a template instantiation");
+	      warning ("  declares a non-template function");
 	      if (! explained)
 		{
-		  warning ("  unless you compile with -fguiding-decls");
-		  warning ("  or add <> after the function name");
+		  warning ("  (if this is not what you intended, make sure");
+		  warning ("  the function template has already been declared,");
+		  warning ("  and add <> after the function name here)");
 		  explained = 1;
 		}
 	    }
 	}
 
       make_decl_rtl (decl, NULL_PTR, 1);
-      add_friend (current_class_type, decl);
-
+      add_friend (current_class_type, 
+		  is_friend_template ? DECL_TI_TEMPLATE (decl) : decl);
       DECL_FRIEND_P (decl) = 1;
     }
   else
@@ -414,8 +460,7 @@ do_friend (ctype, declarator, decl, parmdecls, flags, quals, funcdef_flag)
       tree decl = lookup_name_nonclass (declarator);
       if (decl == NULL_TREE)
 	{
-	  warning ("implicitly declaring `%s' as struct",
-		   IDENTIFIER_POINTER (declarator));
+	  cp_warning ("implicitly declaring `%T' as struct", declarator);
 	  decl = xref_tag (record_type_node, declarator, NULL_TREE, 1);
 	  decl = TYPE_MAIN_DECL (decl);
 	}
@@ -424,9 +469,8 @@ do_friend (ctype, declarator, decl, parmdecls, flags, quals, funcdef_flag)
 	 but not if those functions are really class names.  */
       if (TREE_CODE (decl) == TREE_LIST && TREE_TYPE (TREE_PURPOSE (decl)))
 	{
-	  warning ("`friend %s' archaic, use `friend class %s' instead",
-		   IDENTIFIER_POINTER (declarator),
-		   IDENTIFIER_POINTER (declarator));
+	  cp_warning ("`friend %T' archaic, use `friend class %T' instead",
+		      declarator, declarator);
 	  decl = TREE_TYPE (TREE_PURPOSE (decl));
 	}
 

@@ -1,5 +1,5 @@
 /* Code for handling XREF output from GNU C++.
-   Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93-97, 1998 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GNU CC.
@@ -21,29 +21,13 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include "config.h"
+#include "system.h"
 #include "tree.h"
-#include <stdio.h>
 #include "cp-tree.h"
 #include "input.h"
-
-#include <ctype.h>
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+#include "toplev.h"
 
 extern char *getpwd PROTO((void));
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-extern char *index ();
-extern char *rindex ();
-#endif
 
 /* The character(s) used to join a directory specification (obtained with
    getwd or equivalent) with a non-absolute file name.  */
@@ -302,8 +286,10 @@ GNU_xref_end_scope (id,inid,prm,keep)
   else if (keep == 2 || inid != 0) stype = "INTERN";
   else stype = "EXTERN";
 
-  fprintf (xref_file,"SCP %s %d %d %d %d %s\n",
-	   filename (xf), xs->start, lineno,xs->lid, inid, stype);
+  fprintf (xref_file, "SCP %s %d %d %d ",
+	   filename (xf), xs->start, lineno,xs->lid);
+  fprintf (xref_file, HOST_WIDE_INT_PRINT_DEC, inid);
+  fprintf (xref_file, " %s\n", stype);
 
   if (lxs == NULL) cur_scope = xs->outer;
   else lxs->outer = xs->outer;
@@ -336,7 +322,7 @@ GNU_xref_decl (fndecl,decl)
    tree decl;
 {
   XREF_FILE xf,xf1;
-  char *cls;
+  char *cls = 0;
   char *name;
   char buf[10240];
   int uselin;
@@ -555,6 +541,19 @@ gen_assign(xf, name)
     fprintf(xref_file, "ASG %s %d %s\n", filename(xf), lineno, s);
 }
 
+static char*
+classname (cls)
+     tree cls;
+{
+  if (cls && TREE_CODE_CLASS (TREE_CODE (cls)) == 't')
+    cls = TYPE_NAME (cls);
+  if (cls && TREE_CODE_CLASS (TREE_CODE (cls)) == 'd')
+    cls = DECL_NAME (cls);
+  if (cls && TREE_CODE (cls) == IDENTIFIER_NODE)
+    return IDENTIFIER_POINTER (cls);
+  return "?";
+}
+
 /* Output cross-reference info about a class hierarchy.
    CLS is the class type of interest.  BASE is a baseclass
    for CLS.  PUB and VIRT give the access info about
@@ -565,8 +564,8 @@ gen_assign(xf, name)
 
 void
 GNU_xref_hier(cls, base, pub, virt, frnd)
-   char *cls;
-   char *base;
+   tree cls;
+   tree base;
    int pub;
    int virt;
    int frnd;
@@ -578,7 +577,8 @@ GNU_xref_hier(cls, base, pub, virt, frnd)
   if (xf == NULL) return;
 
   fprintf(xref_file, "HIE %s %d %s %s %d %d %d\n",
-	  filename(xf), lineno, cls, base, pub, virt, frnd);
+	  filename(xf), lineno, classname (cls), classname (base), 
+	  pub, virt, frnd);
 }
 
 /* Output cross-reference info about class members.  CLS
@@ -617,7 +617,7 @@ GNU_xref_member(cls, fld)
     pure = 1;
 
   d = IDENTIFIER_POINTER(cls);
-  sprintf(buf, "%d%s", strlen(d), d);
+  sprintf(buf, "%d%s", (int) strlen(d), d);
 #ifdef XREF_SHORT_MEMBER_NAMES
   i = strlen(buf);
 #endif
@@ -731,7 +731,7 @@ simplify_type(typ)
   int lvl, i;
 
   i = strlen(typ);
-  while (i > 0 && isspace(typ[i-1])) typ[--i] = 0;
+  while (i > 0 && ISSPACE(typ[i-1])) typ[--i] = 0;
 
   if (i > 7 && STREQL(&typ[i-5], "const"))
     {
@@ -813,14 +813,14 @@ open_xref_file(file)
 #ifdef XREF_FILE_NAME
   XREF_FILE_NAME (xref_name, file);
 #else
-  s = (char *) rindex (file, '/');
+  s = rindex (file, '/');
   if (s == NULL)
     sprintf (xref_name, ".%s.gxref", file);
   else
     {
       ++s;
       strcpy (xref_name, file);
-      t = (char *) rindex (xref_name, '/');
+      t = rindex (xref_name, '/');
       ++t;
       *t++ = '.';
       strcpy (t, s);

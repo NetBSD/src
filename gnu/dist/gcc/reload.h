@@ -1,5 +1,5 @@
 /* Communication between reload.c and reload1.c.
-   Copyright (C) 1987, 91, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91-95, 97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -34,6 +34,17 @@ Boston, MA 02111-1307, USA.  */
 #define HAVE_SECONDARY_RELOADS
 #endif
 
+/* If MEMORY_MOVE_COST isn't defined, give it a default here.  */
+#ifndef MEMORY_MOVE_COST
+#ifdef HAVE_SECONDARY_RELOADS
+#define MEMORY_MOVE_COST(MODE,CLASS,IN) \
+  (4 + memory_move_secondary_cost ((MODE), (CLASS), (IN)))
+#else
+#define MEMORY_MOVE_COST(MODE,CLASS,IN) 4
+#endif
+#endif
+extern int memory_move_secondary_cost PROTO ((enum machine_mode, enum reg_class, int));
+
 /* See reload.c and reload1.c for comments on these variables.  */
 
 /* Maximum number of reloads we can need.  */
@@ -48,6 +59,7 @@ extern enum reg_class reload_reg_class[MAX_RELOADS];
 extern enum machine_mode reload_inmode[MAX_RELOADS];
 extern enum machine_mode reload_outmode[MAX_RELOADS];
 extern char reload_optional[MAX_RELOADS];
+extern char reload_nongroup[MAX_RELOADS];
 extern int reload_inc[MAX_RELOADS];
 extern int reload_opnum[MAX_RELOADS];
 extern int reload_secondary_p[MAX_RELOADS];
@@ -145,10 +157,8 @@ extern void clear_secondary_mem PROTO((void));
    reload TO.  */
 extern void transfer_replacements PROTO((int, int));
 
-/* Return 1 if ADDR is a valid memory address for mode MODE,
-   and check that each pseudo reg has the proper kind of
-   hard reg.  */
-extern int strict_memory_address_p PROTO((enum machine_mode, rtx));
+/* Remove all replacements in reload FROM.  */
+extern void remove_replacements PROTO((int));
 
 /* Like rtx_equal_p except that it allows a REG and a SUBREG to match
    if they are the same hard reg, and has special hacks for
@@ -181,6 +191,9 @@ extern void subst_reloads PROTO((void));
    the RTL.  */
 extern void copy_replacements PROTO((rtx, rtx));
 
+/* Change any replacements being done to *X to be done to *Y */
+extern void move_replacements PROTO((rtx *x, rtx *y));
+
 /* If LOC was scheduled to be replaced by something, return the replacement.
    Otherwise, return *LOC.  */
 extern rtx find_replacement PROTO((rtx *));
@@ -205,14 +218,17 @@ extern rtx find_equiv_reg PROTO((rtx, rtx, enum reg_class, int, short *,
 /* Return 1 if register REGNO is the subject of a clobber in insn INSN.  */
 extern int regno_clobbered_p PROTO((int, rtx));
 
-
 /* Functions in reload1.c:  */
+
+extern int reloads_conflict		PROTO ((int, int));
+
+int count_occurrences            PROTO((rtx, rtx));
 
 /* Initialize the reload pass once per compilation.  */
 extern void init_reload PROTO((void));
 
 /* The reload pass itself.  */
-extern int reload STDIO_PROTO((rtx, int, FILE *));
+extern int reload PROTO((rtx, int, FILE *));
 
 /* Mark the slots in regs_ever_live for the hard regs
    used by pseudo-reg number REGNO.  */
@@ -220,7 +236,7 @@ extern void mark_home_live PROTO((int));
 
 /* Scan X and replace any eliminable registers (such as fp) with a
    replacement (such as sp), plus an offset.  */
-extern rtx eliminate_regs PROTO((rtx, enum machine_mode, rtx, int));
+extern rtx eliminate_regs PROTO((rtx, enum machine_mode, rtx));
 
 /* Emit code to perform a reload from IN (which may be a reload register) to
    OUT (which may also be a reload register).  IN or OUT is from operand

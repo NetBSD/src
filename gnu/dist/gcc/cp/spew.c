@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.  */
    when compiling parse.c and spew.c.  */
 
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 #include "input.h"
 #include "tree.h"
 #include "lex.h"
@@ -49,6 +49,14 @@ static int do_aggr PROTO((void));
 static int probe_obstack PROTO((struct obstack *, tree, unsigned int));
 static void scan_tokens PROTO((int));
 
+#ifdef SPEW_DEBUG
+static int num_tokens PROTO((void));
+static struct token *nth_token PROTO((int));
+static void add_token PROTO((struct token *));
+static void consume_token PROTO((void));
+static int debug_yychar PROTO((int));
+#endif
+
 /* From lex.c: */
 /* the declaration found for the last IDENTIFIER token read in.
    yylex must look this up to detect typedefs, which get token type TYPENAME,
@@ -69,7 +77,7 @@ static unsigned int yylex_ctr = 0;
 static int debug_yychar ();
 #endif
 
-/* Initialize token_obstack. Called once, from init_lex.  */
+/* Initialize token_obstack. Called once, from init_parse.  */
 
 void
 init_spew ()
@@ -189,6 +197,8 @@ scan_tokens (n)
     }
 }
 
+/* Like _obstack_allocated_p, but stop after checking NLEVELS chunks.  */
+
 static int
 probe_obstack (h, obj, nlevels)
      struct obstack *h;
@@ -235,6 +245,7 @@ yylex ()
 {
   struct token tmp_token;
   tree trrr;
+  int old_looking_for_typename = 0;
 
  retry:
 #ifdef SPEW_DEBUG
@@ -296,8 +307,11 @@ yylex ()
     case IDENTIFIER:
       scan_tokens (1);
       if (nth_token (1)->yychar == SCOPE)
-	/* Don't interfere with the setting from an 'aggr' prefix.  */
-	looking_for_typename++;
+	{
+	  /* Don't interfere with the setting from an 'aggr' prefix.  */
+	  old_looking_for_typename = looking_for_typename;
+	  looking_for_typename = 1;
+	}
       else if (nth_token (1)->yychar == '<')
 	looking_for_template = 1;
 
@@ -310,28 +324,27 @@ yylex ()
 	    {
 	    case TYPENAME:
 	    case SELFNAME:
+	    case NSNAME:
+	    case PTYPENAME:
 	      lastiddecl = trrr;
-	      if (got_scope)
+
+	      /* If this got special lookup, remember it.  In these cases,
+	         we don't have to worry about being a declarator-id. */
+	      if (got_scope || got_object)
 		tmp_token.yylval.ttype = trrr;
 	      break;
+
 	    case PFUNCNAME:
 	    case IDENTIFIER:
 	      lastiddecl = trrr;
 	      break;
-	    case PTYPENAME:
-	      lastiddecl = NULL_TREE;
-	      break;
-	    case NSNAME:
-	      lastiddecl = trrr;
-	      if (got_scope)
-		tmp_token.yylval.ttype = trrr;
-	      break;
+
 	    default:
 	      my_friendly_abort (101);
 	    }
 	}
       else
-	lastiddecl = trrr;
+	lastiddecl = NULL_TREE;
       got_scope = NULL_TREE;
       /* and fall through to...  */
     case IDENTIFIER_DEFN:
@@ -340,8 +353,9 @@ yylex ()
     case PTYPENAME:
     case PTYPENAME_DEFN:
       consume_token ();
-      if (looking_for_typename > 0)
-	looking_for_typename--;
+      /* If we see a SCOPE next, restore the old value.
+	 Otherwise, we got what we want. */
+      looking_for_typename = old_looking_for_typename;
       looking_for_template = 0;
       break;
 
@@ -362,13 +376,17 @@ yylex ()
       /* fall through to output...  */
     case ENUM:
       /* Set this again, in case we are rescanning.  */
-      looking_for_typename = 1;
+      looking_for_typename = 2;
       /* fall through...  */
     default:
       consume_token ();
     }
 
-  got_object = NULL_TREE;
+  /* class member lookup only applies to the first token after the object
+     expression, except for explicit destructor calls.  */
+  if (tmp_token.yychar != '~')
+    got_object = NULL_TREE;
+
   yylval = tmp_token.yylval;
   yychar = tmp_token.yychar;
   end_of_file = tmp_token.end_of_file;
@@ -376,9 +394,6 @@ yylex ()
   if (spew_debug)
     debug_yychar (yychar);
 #endif
-
-  if (yychar == PFUNCNAME)
-    yylval.ttype = do_identifier (yylval.ttype, 1);
 
   return yychar;
 }

@@ -1,7 +1,7 @@
 /* This is a software floating point library which can be used instead of
    the floating point routines in libgcc1.c for targets without hardware
    floating point. 
- Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+ Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
 
 This file is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -42,6 +42,55 @@ Boston, MA 02111-1307, USA.  */
 
 /* The intended way to use this file is to make two copies, add `#define FLOAT'
    to one copy, then compile both copies and add them to libgcc.a.  */
+
+/* Defining FINE_GRAINED_LIBRARIES allows one to select which routines
+   from this file are compiled via additional -D options.
+
+   This avoids the need to pull in the entire fp emulation library
+   when only a small number of functions are needed.
+
+   If FINE_GRAINED_LIBRARIES is not defined, then compile every 
+   suitable routine.  */
+#ifndef FINE_GRAINED_LIBRARIES
+#define L_pack_df
+#define L_unpack_df
+#define L_pack_sf
+#define L_unpack_sf
+#define L_addsub_sf
+#define L_addsub_df
+#define L_mul_sf
+#define L_mul_df
+#define L_div_sf
+#define L_div_df
+#define L_fpcmp_parts_sf
+#define L_fpcmp_parts_df
+#define L_compare_sf
+#define L_compare_df
+#define L_eq_sf
+#define L_eq_df
+#define L_ne_sf
+#define L_ne_df
+#define L_gt_sf
+#define L_gt_df
+#define L_ge_sf
+#define L_ge_df
+#define L_lt_sf
+#define L_lt_df
+#define L_le_sf
+#define L_le_df
+#define L_si_to_sf
+#define L_si_to_df
+#define L_sf_to_si
+#define L_df_to_si
+#define L_f_to_usi
+#define L_df_to_usi
+#define L_negate_sf
+#define L_negate_df
+#define L_make_sf
+#define L_make_df
+#define L_sf_to_df
+#define L_df_to_sf
+#endif
 
 /* The following macros can be defined to change the behaviour of this file:
    FLOAT: Implement a `float', aka SFmode, fp library.  If this is not
@@ -101,6 +150,9 @@ __negtf2 (){ abort(); }
 __netf2 (){ abort(); }
 __subtf3 (){ abort(); }
 __trunctfdf2 (){ abort(); }
+__gexf2 (){ abort(); }
+__fixxfsi (){ abort(); }
+__floatsixf (){ abort(); }
 #else	/* !EXTENDED_FLOAT_STUBS, rest of file */
 
 
@@ -141,8 +193,9 @@ typedef unsigned int UDItype __attribute__ ((mode (DI)));
 #	define FRAC_NBITS 32
 #	define FRACHIGH  0x80000000L
 #	define FRACHIGH2 0xc0000000L
-#	define pack_d pack_f
-#	define unpack_d unpack_f
+#	define pack_d __pack_f
+#	define unpack_d __unpack_f
+#	define __fpcmp_parts __fpcmp_parts_f
 	typedef USItype fractype;
 	typedef UHItype halffractype;
 	typedef SFtype FLO_type;
@@ -163,6 +216,9 @@ typedef unsigned int UDItype __attribute__ ((mode (DI)));
 #	define FRAC_NBITS 64
 #	define FRACHIGH  0x8000000000000000LL
 #	define FRACHIGH2 0xc000000000000000LL
+#	define pack_d __pack_d
+#	define unpack_d __unpack_d
+#	define __fpcmp_parts __fpcmp_parts_d
 	typedef UDItype fractype;
 	typedef USItype halffractype;
 	typedef DFtype FLO_type;
@@ -233,7 +289,9 @@ typedef unsigned int UDItype __attribute__ ((mode (DI)));
 #endif
 
 
+#ifndef INLINE
 #define INLINE __inline__
+#endif
 
 /* Preserve the sticky-bit when shifting fractions to the right.  */
 #define LSHIFT(a) { a = (a & 1) | (a >> 1); }
@@ -241,7 +299,7 @@ typedef unsigned int UDItype __attribute__ ((mode (DI)));
 /* numeric parameters */
 /* F_D_BITOFF is the number of bits offset between the MSB of the mantissa
    of a float and of a double. Assumes there are only two float types.
-   (double::FRAC_BITS+double::NGARGS-(float::FRAC_BITS-float::NGARDS))
+   (double::FRAC_BITS+double::NGARDS-(float::FRAC_BITS-float::NGARDS))
  */
 #define F_D_BITOFF (52+8-(23+7))
 
@@ -370,7 +428,10 @@ flip_sign ( fp_number_type *  x)
   x->sign = !x->sign;
 }
 
-static FLO_type
+extern FLO_type pack_d ( fp_number_type * );
+
+#if defined(L_pack_df) || defined(L_pack_sf)
+FLO_type
 pack_d ( fp_number_type *  src)
 {
   FLO_union_type dst;
@@ -456,7 +517,7 @@ pack_d ( fp_number_type *  src)
     }
 
   /* We previously used bitfields to store the number, but this doesn't
-     handle little/big endian systems conviently, so use shifts and
+     handle little/big endian systems conveniently, so use shifts and
      masks */
 #ifdef FLOAT_BIT_ORDER_MISMATCH
   dst.bits.fraction = fraction;
@@ -478,12 +539,16 @@ pack_d ( fp_number_type *  src)
 
   return dst.value;
 }
+#endif
 
-static void
+extern void unpack_d (FLO_union_type *, fp_number_type *);
+
+#if defined(L_unpack_df) || defined(L_unpack_sf)
+void
 unpack_d (FLO_union_type * src, fp_number_type * dst)
 {
   /* We previously used bitfields to store the number, but this doesn't
-     handle little/big endian systems conviently, so use shifts and
+     handle little/big endian systems conveniently, so use shifts and
      masks */
   fractype fraction;
   int exp;
@@ -566,7 +631,9 @@ unpack_d (FLO_union_type * src, fp_number_type * dst)
       dst->fraction.ll = (fraction << NGARDS) | IMPLICIT_1;
     }
 }
+#endif
 
+#if defined(L_addsub_sf) || defined(L_addsub_df)
 static fp_number_type *
 _fpadd_parts (fp_number_type * a,
 	      fp_number_type * b,
@@ -601,6 +668,12 @@ _fpadd_parts (fp_number_type * a,
     }
   if (iszero (b))
     {
+      if (iszero (a))
+	{
+	  *tmp = *a;
+	  tmp->sign = a->sign & b->sign;
+	  return tmp;
+	}
       return a;
     }
   if (iszero (a))
@@ -734,8 +807,10 @@ sub (FLO_type arg_a, FLO_type arg_b)
 
   return pack_d (res);
 }
+#endif
 
-static fp_number_type *
+#if defined(L_mul_sf) || defined(L_mul_df)
+static INLINE fp_number_type *
 _fpmul_parts ( fp_number_type *  a,
 	       fp_number_type *  b,
 	       fp_number_type * tmp)
@@ -783,13 +858,13 @@ _fpmul_parts ( fp_number_type *  a,
   /* Calculate the mantissa by multiplying both 64bit numbers to get a
      128 bit number */
   {
-    fractype x = a->fraction.ll;
-    fractype ylow = b->fraction.ll;
-    fractype yhigh = 0;
-    int bit;
-
 #if defined(NO_DI_MODE)
     {
+      fractype x = a->fraction.ll;
+      fractype ylow = b->fraction.ll;
+      fractype yhigh = 0;
+      int bit;
+
       /* ??? This does multiplies one bit at a time.  Optimize.  */
       for (bit = 0; bit < FRAC_NBITS; bit++)
 	{
@@ -920,20 +995,18 @@ multiply (FLO_type arg_a, FLO_type arg_b)
 
   return pack_d (res);
 }
+#endif
 
-static fp_number_type *
+#if defined(L_div_sf) || defined(L_div_df)
+static INLINE fp_number_type *
 _fpdiv_parts (fp_number_type * a,
 	      fp_number_type * b,
 	      fp_number_type * tmp)
 {
-  fractype low = 0;
-  fractype high = 0;
-  fractype r0, r1, y0, y1, bit;
-  fractype q;
+  fractype bit;
   fractype numerator;
   fractype denominator;
   fractype quotient;
-  fractype remainder;
 
   if (isnan (a))
     {
@@ -962,15 +1035,12 @@ _fpdiv_parts (fp_number_type * a,
   if (iszero (b))
     {
       a->class = CLASS_INFINITY;
-      return b;
+      return a;
     }
 
   /* Calculate the mantissa by multiplying both 64bit numbers to get a
      128 bit number */
   {
-    int carry;
-    intfrac d0, d1;		/* weren't unsigned before ??? */
-
     /* quotient =
        ( numerator / denominator) * 2^(numerator exponent -  denominator exponent)
      */
@@ -1033,15 +1103,19 @@ divide (FLO_type arg_a, FLO_type arg_b)
 
   return pack_d (res);
 }
+#endif
 
+int __fpcmp_parts (fp_number_type * a, fp_number_type *b);
+
+#if defined(L_fpcmp_parts_sf) || defined(L_fpcmp_parts_df)
 /* according to the demo, fpcmp returns a comparison with 0... thus
    a<b -> -1
    a==b -> 0
    a>b -> +1
  */
 
-static int
-_fpcmp_parts (fp_number_type * a, fp_number_type * b)
+int
+__fpcmp_parts (fp_number_type * a, fp_number_type * b)
 {
 #if 0
   /* either nan -> unordered. Must be checked outside of this routine. */
@@ -1116,7 +1190,9 @@ _fpcmp_parts (fp_number_type * a, fp_number_type * b)
   /* after all that, they're equal. */
   return 0;
 }
+#endif
 
+#if defined(L_compare_sf) || defined(L_compare_df)
 CMPtype
 compare (FLO_type arg_a, FLO_type arg_b)
 {
@@ -1126,13 +1202,15 @@ compare (FLO_type arg_a, FLO_type arg_b)
   unpack_d ((FLO_union_type *) & arg_a, &a);
   unpack_d ((FLO_union_type *) & arg_b, &b);
 
-  return _fpcmp_parts (&a, &b);
+  return __fpcmp_parts (&a, &b);
 }
+#endif
 
 #ifndef US_SOFTWARE_GOFAST
 
 /* These should be optimized for their specific tasks someday.  */
 
+#if defined(L_eq_sf) || defined(L_eq_df)
 CMPtype
 _eq_f2 (FLO_type arg_a, FLO_type arg_b)
 {
@@ -1145,9 +1223,11 @@ _eq_f2 (FLO_type arg_a, FLO_type arg_b)
   if (isnan (&a) || isnan (&b))
     return 1;			/* false, truth == 0 */
 
-  return _fpcmp_parts (&a, &b) ;
+  return __fpcmp_parts (&a, &b) ;
 }
+#endif
 
+#if defined(L_ne_sf) || defined(L_ne_df)
 CMPtype
 _ne_f2 (FLO_type arg_a, FLO_type arg_b)
 {
@@ -1160,9 +1240,11 @@ _ne_f2 (FLO_type arg_a, FLO_type arg_b)
   if (isnan (&a) || isnan (&b))
     return 1;			/* true, truth != 0 */
 
-  return  _fpcmp_parts (&a, &b) ;
+  return  __fpcmp_parts (&a, &b) ;
 }
+#endif
 
+#if defined(L_gt_sf) || defined(L_gt_df)
 CMPtype
 _gt_f2 (FLO_type arg_a, FLO_type arg_b)
 {
@@ -1175,9 +1257,11 @@ _gt_f2 (FLO_type arg_a, FLO_type arg_b)
   if (isnan (&a) || isnan (&b))
     return -1;			/* false, truth > 0 */
 
-  return _fpcmp_parts (&a, &b);
+  return __fpcmp_parts (&a, &b);
 }
+#endif
 
+#if defined(L_ge_sf) || defined(L_ge_df)
 CMPtype
 _ge_f2 (FLO_type arg_a, FLO_type arg_b)
 {
@@ -1189,9 +1273,11 @@ _ge_f2 (FLO_type arg_a, FLO_type arg_b)
 
   if (isnan (&a) || isnan (&b))
     return -1;			/* false, truth >= 0 */
-  return _fpcmp_parts (&a, &b) ;
+  return __fpcmp_parts (&a, &b) ;
 }
+#endif
 
+#if defined(L_lt_sf) || defined(L_lt_df)
 CMPtype
 _lt_f2 (FLO_type arg_a, FLO_type arg_b)
 {
@@ -1204,9 +1290,11 @@ _lt_f2 (FLO_type arg_a, FLO_type arg_b)
   if (isnan (&a) || isnan (&b))
     return 1;			/* false, truth < 0 */
 
-  return _fpcmp_parts (&a, &b);
+  return __fpcmp_parts (&a, &b);
 }
+#endif
 
+#if defined(L_le_sf) || defined(L_le_df)
 CMPtype
 _le_f2 (FLO_type arg_a, FLO_type arg_b)
 {
@@ -1219,11 +1307,13 @@ _le_f2 (FLO_type arg_a, FLO_type arg_b)
   if (isnan (&a) || isnan (&b))
     return 1;			/* false, truth <= 0 */
 
-  return _fpcmp_parts (&a, &b) ;
+  return __fpcmp_parts (&a, &b) ;
 }
+#endif
 
 #endif /* ! US_SOFTWARE_GOFAST */
 
+#if defined(L_si_to_sf) || defined(L_si_to_df)
 FLO_type
 si_to_float (SItype arg_a)
 {
@@ -1259,7 +1349,9 @@ si_to_float (SItype arg_a)
     }
   return pack_d (&in);
 }
+#endif
 
+#if defined(L_sf_to_si) || defined(L_df_to_si)
 SItype
 float_to_si (FLO_type arg_a)
 {
@@ -1282,7 +1374,9 @@ float_to_si (FLO_type arg_a)
   tmp = a.fraction.ll >> ((FRACBITS + NGARDS) - a.normal_exp);
   return a.sign ? (-tmp) : (tmp);
 }
+#endif
 
+#if defined(L_sf_to_usi) || defined(L_df_to_usi)
 #ifdef US_SOFTWARE_GOFAST
 /* While libgcc2.c defines its own __fixunssfsi and __fixunsdfsi routines,
    we also define them for GOFAST because the ones in libgcc2.c have the
@@ -1317,7 +1411,9 @@ float_to_usi (FLO_type arg_a)
     return a.fraction.ll >> ((FRACBITS + NGARDS) - a.normal_exp);
 }
 #endif
+#endif
 
+#if defined(L_negate_sf) || defined(L_negate_df)
 FLO_type
 negate (FLO_type arg_a)
 {
@@ -1327,9 +1423,11 @@ negate (FLO_type arg_a)
   flip_sign (&a);
   return pack_d (&a);
 }
+#endif
 
 #ifdef FLOAT
 
+#if defined(L_make_sf)
 SFtype
 __make_fp(fp_class_type class,
 	     unsigned int sign,
@@ -1344,6 +1442,7 @@ __make_fp(fp_class_type class,
   in.fraction.ll = frac;
   return pack_d (&in);
 }
+#endif
 
 #ifndef FLOAT_ONLY
 
@@ -1354,6 +1453,7 @@ __make_fp(fp_class_type class,
 
 extern DFtype __make_dp (fp_class_type, unsigned int, int, UDItype frac);
 
+#if defined(L_sf_to_df)
 DFtype
 sf_to_df (SFtype arg_a)
 {
@@ -1363,6 +1463,7 @@ sf_to_df (SFtype arg_a)
   return __make_dp (in.class, in.sign, in.normal_exp,
 		    ((UDItype) in.fraction.ll) << F_D_BITOFF);
 }
+#endif
 
 #endif
 #endif
@@ -1371,6 +1472,7 @@ sf_to_df (SFtype arg_a)
 
 extern SFtype __make_fp (fp_class_type, unsigned int, int, USItype);
 
+#if defined(L_make_df)
 DFtype
 __make_dp (fp_class_type class, unsigned int sign, int exp, UDItype frac)
 {
@@ -1382,7 +1484,9 @@ __make_dp (fp_class_type class, unsigned int sign, int exp, UDItype frac)
   in.fraction.ll = frac;
   return pack_d (&in);
 }
+#endif
 
+#if defined(L_df_to_sf)
 SFtype
 df_to_sf (DFtype arg_a)
 {
@@ -1400,6 +1504,7 @@ df_to_sf (DFtype arg_a)
 
   return __make_fp (in.class, in.sign, in.normal_exp, sffrac);
 }
+#endif
 
 #endif
 #endif /* !EXTENDED_FLOAT_STUBS */

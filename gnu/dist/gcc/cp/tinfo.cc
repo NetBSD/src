@@ -33,7 +33,7 @@
 // that uses virtual functions and -frtti but does not actually use RTTI
 // functionality.
 
-type_info::
+std::type_info::
 ~type_info ()
 { }
 
@@ -43,7 +43,7 @@ __rtti_class (void *addr, const char *name,
 { new (addr) __class_type_info (name, bl, bn); }
 
 extern "C" void
-__rtti_si (void *addr, const char *n, const type_info *ti)
+__rtti_si (void *addr, const char *n, const std::type_info *ti)
 {
   new (addr) __si_type_info
     (n, static_cast <const __user_type_info &> (*ti));
@@ -77,7 +77,7 @@ dcast (const type_info& desired, int is_public, void *objptr,
     return objptr;
 
   void *match_found = 0;
-  for (int i = 0; i < n_bases; i++)
+  for (size_t i = 0; i < n_bases; i++)
     {
       if (is_public && base_list[i].access != PUBLIC)
 	continue;

@@ -1,5 +1,5 @@
 /* Target definitions for GNU compiler for PowerPC running System V.4
-   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GNU CC.
@@ -91,6 +91,8 @@ extern enum rs6000_sdata_type rs6000_sdata;
   { "sdata",		 0 },						\
   { "no-sdata",		 0 },						\
   { "sim",		 0 },						\
+  { "ads",		 0 },						\
+  { "yellowknife",	 0 },						\
   { "mvme",		 0 },						\
   { "emb",		 0 },						\
   { "solaris-cclib",	 0 },						\
@@ -264,7 +266,17 @@ do {									\
 /* Default ABI to compile code for */
 #define DEFAULT_ABI rs6000_current_abi
 
-#include "rs6000/powerpc.h"
+#define CPP_DEFAULT_SPEC "-D_ARCH_PPC"
+
+#define ASM_DEFAULT_SPEC "-mppc"
+
+#include "rs6000/rs6000.h"
+
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS)
+
+#undef PROCESSOR_DEFAULT
+#define PROCESSOR_DEFAULT PROCESSOR_PPC601
 
 /* System V.4 uses register 13 as a pointer to the small data area,
    so it is not available to the normal user.  */
@@ -326,6 +338,15 @@ do {									\
    ELF assemblers.  */
 
 #undef ASM_OUTPUT_EXTERNAL
+
+/* Put jump tables in read-only memory, rather than in .text.  */
+#undef JUMP_TABLES_IN_TEXT_SECTION
+#define JUMP_TABLES_IN_TEXT_SECTION 0
+
+/* Disable AIX-ism that disables turning -B into -L if the argument specifies a
+   relative file name.  This breaks setting GCC_EXEC_PREFIX to D:\path under
+   Windows.  */
+#undef RELATIVE_PREFIX_NOT_LINKDIR
 
 /* Undefine some things which are defined by the generic svr4.h.  */
 
@@ -399,21 +420,21 @@ do {									\
 /* Use ELF style section commands.  */
 
 #undef TEXT_SECTION_ASM_OP
-#define TEXT_SECTION_ASM_OP	"\t.section \".text\""
+#define TEXT_SECTION_ASM_OP	"\t.section\t\".text\""
 
 #undef DATA_SECTION_ASM_OP
-#define DATA_SECTION_ASM_OP	"\t.section \".data\""
+#define DATA_SECTION_ASM_OP	"\t.section\t\".data\""
 
 #undef BSS_SECTION_ASM_OP
-#define BSS_SECTION_ASM_OP	"\t.section \".bss\""
+#define BSS_SECTION_ASM_OP	"\t.section\t\".bss\""
 
 #undef INIT_SECTION_ASM_OP
-#define INIT_SECTION_ASM_OP "\t.section \".init\",\"ax\""
+#define INIT_SECTION_ASM_OP "\t.section\t\".init\",\"ax\""
 
 #undef FINI_SECTION_ASM_OP
-#define FINI_SECTION_ASM_OP "\t.section \".fini\",\"ax\""
+#define FINI_SECTION_ASM_OP "\t.section\t\".fini\",\"ax\""
 
-#define TOC_SECTION_ASM_OP "\t.section \".got\",\"aw\""
+#define TOC_SECTION_ASM_OP "\t.section\t\".got\",\"aw\""
 
 /* Put PC relative got entries in .got2 */
 #define MINIMAL_TOC_SECTION_ASM_OP \
@@ -425,10 +446,10 @@ do {									\
   ((TARGET_RELOCATABLE || flag_pic) ? "\t.section\t\".data\"\t# .rodata" : "\t.section\t\".rodata\"")
 
 
-#define SDATA_SECTION_ASM_OP "\t.section \".sdata\",\"aw\""
-#define SDATA2_SECTION_ASM_OP "\t.section \".sdata2\",\"a\""
+#define SDATA_SECTION_ASM_OP "\t.section\t\".sdata\",\"aw\""
+#define SDATA2_SECTION_ASM_OP "\t.section\t\".sdata2\",\"a\""
 #define SBSS_SECTION_ASM_OP \
-  ((DEFAULT_ABI == ABI_SOLARIS) ? "\t.section \".sbss\",\"aw\"" : "\t.section \".sbss\",\"aw\",@nobits")
+  ((DEFAULT_ABI == ABI_SOLARIS) ? "\t.section\t\".sbss\",\"aw\"" : "\t.section\t\".sbss\",\"aw\",@nobits")
 
 
 /* Besides the usual ELF sections, we need a toc section.  */
@@ -579,7 +600,7 @@ extern void rs6000_select_rtx_section (), rs6000_select_section ();
    we can't check that since not every file that uses
    GO_IF_LEGITIMATE_ADDRESS_P includes real.h.
 
-   Unlike AIX, we don't key off of -mmininal-toc, but instead do not
+   Unlike AIX, we don't key off of -mminimal-toc, but instead do not
    allow floating point constants in the TOC if -mrelocatable.  */
 
 #undef	ASM_OUTPUT_SPECIAL_POOL_ENTRY_P
@@ -708,7 +729,7 @@ do {									\
     }									\
 } while (0)
 
-/* Describe how to emit unitialized external linkage items  */
+/* Describe how to emit uninitialized external linkage items  */
 #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN)		\
 do {									\
   ASM_GLOBALIZE_LABEL (FILE, NAME);					\
@@ -761,7 +782,7 @@ do {									\
       fprintf (FILE, "\t.long (");					\
       output_addr_const (FILE, (VALUE));				\
       fprintf (FILE, ")@fixup\n");					\
-      fprintf (FILE, "\t.section \".fixup\",\"aw\"\n");			\
+      fprintf (FILE, "\t.section\t\".fixup\",\"aw\"\n");			\
       ASM_OUTPUT_ALIGN (FILE, 2);					\
       fprintf (FILE, "\t.long\t%s\n", p);				\
       fprintf (FILE, "\t.previous\n");					\
@@ -882,14 +903,14 @@ do {									\
       s->type = type;							\
       s->next = sections;						\
       sections = s;							\
-      fprintf (FILE, ".section\t%s,\"%s\"\n", NAME, mode);		\
+      fprintf (FILE, "\t.section\t\"%s\",\"%s\"\n", NAME, mode);	\
     }									\
   else									\
     {									\
       if (DECL && s->type != type)					\
 	error_with_decl (DECL, "%s causes a section type conflict");	\
 									\
-      fprintf (FILE, ".section\t%s\n", NAME);				\
+      fprintf (FILE, "\t.section\t\"%s\"\n", NAME);			\
     }									\
 } while (0)
 
@@ -995,11 +1016,13 @@ do {									\
 /* Default starting address if specified */
 #ifndef LINK_START_SPEC
 #define LINK_START_SPEC "\
+%{mads: %(link_start_ads) } \
+%{myellowknife: %(link_start_yellowknife) } \
 %{mmvme: %(link_start_mvme) } \
 %{msim: %(link_start_sim) } \
 %{mcall-linux: %(link_start_linux) } \
 %{mcall-solaris: %(link_start_solaris) } \
-%{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(link_start_default) }}}}"
+%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(link_start_default) }}}}}}"
 #endif
 
 #ifndef	LINK_START_DEFAULT_SPEC
@@ -1023,13 +1046,13 @@ do {									\
 
 #undef  LINK_SHLIB_SPEC
 #ifndef NO_SHARED_LIB_SUPPORT
-/* Shared libaries are default.  */
+/* Shared libraries are default.  */
 #define LINK_SHLIB_SPEC "\
 %{!static: %(link_path) %{!R*:%{L*:-R %*}}} \
 %{mshlib: } \
 %{static:-dn -Bstatic} \
-%{shared:-G -dy -z text %{!h*:%{o*:-h %*}}} \
-%{symbolic:-Bsymbolic -G -dy -z text %{!h*:%{o*:-h %*}}}"
+%{shared:-G -dy -z text} \
+%{symbolic:-Bsymbolic -G -dy -z text}"
 
 #else
 /* Shared libraries are not default.  */
@@ -1037,8 +1060,8 @@ do {									\
 %{mshlib: %(link_path) } \
 %{!mshlib: %{!shared: %{!symbolic: -dn -Bstatic}}} \
 %{static: } \
-%{shared:-G -dy -z text %{!h*:%{o*:-h %*}} %(link_path) } \
-%{symbolic:-Bsymbolic -G -dy -z text %{!h*:%{o*:-h %*}} %(link_path) }"
+%{shared:-G -dy -z text %(link_path) } \
+%{symbolic:-Bsymbolic -G -dy -z text %(link_path) }"
 #endif
 
 /* Override the default target of the linker.  */
@@ -1050,11 +1073,13 @@ do {									\
 /* Any specific OS flags */
 #ifndef LINK_OS_SPEC
 #define LINK_OS_SPEC "\
+%{mads: %(link_os_ads) } \
+%{myellowknife: %(link_os_yellowknife) } \
 %{mmvme: %(link_os_mvme) } \
 %{msim: %(link_os_sim) } \
 %{mcall-linux: %(link_os_linux) } \
 %{mcall-solaris: %(link_os_solaris) } \
-%{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(link_os_default) }}}}"
+%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(link_os_default) }}}}}}"
 #endif
 
 #ifndef	LINK_OS_DEFAULT_SPEC
@@ -1105,11 +1130,13 @@ do {									\
 
 #undef CPP_SPEC
 #define CPP_SPEC "%{posix: -D_POSIX_SOURCE} %(cpp_sysv) %(cpp_endian) %(cpp_cpu) \
+%{mads: %(cpp_os_ads) } \
+%{myellowknife: %(cpp_os_yellowknife) } \
 %{mmvme: %(cpp_os_mvme) } \
 %{msim: %(cpp_os_sim) } \
 %{mcall-linux: %(cpp_os_linux) } \
 %{mcall-solaris: %(cpp_os_solaris) } \
-%{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(cpp_os_default) }}}}"
+%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(cpp_os_default) }}}}}}"
 
 #ifndef CPP_OS_DEFAULT_SPEC
 #define CPP_OS_DEFAULT_SPEC ""
@@ -1117,22 +1144,26 @@ do {									\
 
 #undef  STARTFILE_SPEC
 #define	STARTFILE_SPEC "\
+%{mads: %(startfile_ads) } \
+%{myellowknife: %(startfile_yellowknife) } \
 %{mmvme: %(startfile_mvme) } \
 %{msim: %(startfile_sim) } \
 %{mcall-linux: %(startfile_linux) } \
 %{mcall-solaris: %(startfile_solaris) } \
-%{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(startfile_default) }}}}"
+%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(startfile_default) }}}}}}"
 
 #undef	STARTFILE_DEFAULT_SPEC
 #define	STARTFILE_DEFAULT_SPEC ""
 
 #undef	LIB_SPEC
 #define	LIB_SPEC "\
+%{mads: %(lib_ads) } \
+%{myellowknife: %(lib_yellowknife) } \
 %{mmvme: %(lib_mvme) } \
 %{msim: %(lib_sim) } \
 %{mcall-linux: %(lib_linux) } \
 %{mcall-solaris: %(lib_solaris) } \
-%{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(lib_default) }}}}"
+%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(lib_default) }}}}}}"
 
 #undef	LIBGCC_SPEC
 #define	LIBGCC_SPEC "libgcc.a%s"
@@ -1143,22 +1174,74 @@ do {									\
 
 #undef	ENDFILE_SPEC
 #define	ENDFILE_SPEC "\
+%{mads: ecrtn.o%s} \
+%{myellowknife: ecrtn.o%s} \
 %{mmvme: ecrtn.o%s} \
 %{msim: ecrtn.o%s} \
 %{mcall-linux: %(endfile_linux) } \
 %{mcall-solaris: scrtn.o%s} \
-%{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(endfile_default) }}}}"
+%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(endfile_default) }}}}}}"
 
 #undef	ENDFILE_DEFAULT_SPEC
 #define	ENDFILE_DEFAULT_SPEC ""
 
+/* Motorola ADS support.  */
+#ifndef	LIB_ADS_SPEC
+#define LIB_ADS_SPEC "--start-group -lads -lc --end-group"
+#endif
+
+#ifndef	STARTFILE_ADS_SPEC
+#define	STARTFILE_ADS_SPEC "ecrti.o%s crt0.o%s"
+#endif
+
+#ifndef	ENDFILE_ADS_SPEC
+#define	ENDFILE_ADS_SPEC "ecrtn.o%s"
+#endif
+
+#ifndef LINK_START_ADS_SPEC
+#define LINK_START_ADS_SPEC "-T ads.ld%s"
+#endif
+
+#ifndef LINK_OS_ADS_SPEC
+#define LINK_OS_ADS_SPEC ""
+#endif
+
+#ifndef CPP_OS_ADS_SPEC
+#define CPP_OS_ADS_SPEC ""
+#endif
+
+/* Motorola Yellowknife support.  */
+#ifndef	LIB_YELLOWKNIFE_SPEC
+#define LIB_YELLOWKNIFE_SPEC "--start-group -lyk -lc --end-group"
+#endif
+
+#ifndef	STARTFILE_YELLOWKNIFE_SPEC
+#define	STARTFILE_YELLOWKNIFE_SPEC "ecrti.o%s crt0.o%s"
+#endif
+
+#ifndef	ENDFILE_YELLOWKNIFE_SPEC
+#define	ENDFILE_YELLOWKNIFE_SPEC "ecrtn.o%s"
+#endif
+
+#ifndef LINK_START_YELLOWKNIFE_SPEC
+#define LINK_START_YELLOWKNIFE_SPEC "-T yellowknife.ld%s"
+#endif
+
+#ifndef LINK_OS_YELLOWKNIFE_SPEC
+#define LINK_OS_YELLOWKNIFE_SPEC ""
+#endif
+
+#ifndef CPP_OS_YELLOWKNIFE_SPEC
+#define CPP_OS_YELLOWKNIFE_SPEC ""
+#endif
+
 /* Motorola MVME support.  */
 #ifndef	LIB_MVME_SPEC
-#define LIB_MVME_SPEC "-( -lmvme -lc -)"
+#define LIB_MVME_SPEC "--start-group -lmvme -lc --end-group"
 #endif
 
 #ifndef	STARTFILE_MVME_SPEC
-#define	STARTFILE_MVME_SPEC "ecrti.o%s mvme-crt0.o%s"
+#define	STARTFILE_MVME_SPEC "ecrti.o%s crt0.o%s"
 #endif
 
 #ifndef	ENDFILE_MVME_SPEC
@@ -1166,7 +1249,7 @@ do {									\
 #endif
 
 #ifndef LINK_START_MVME_SPEC
-#define LINK_START_MVME_SPEC ""
+#define LINK_START_MVME_SPEC "%{!Wl,-T*: %{!T*: -Ttext 0x40000}}"
 #endif
 
 #ifndef LINK_OS_MVME_SPEC
@@ -1179,7 +1262,7 @@ do {									\
 
 /* PowerPC simulator based on netbsd system calls support.  */
 #ifndef	LIB_SIM_SPEC
-#define LIB_SIM_SPEC "-( -lsim -lc -)"
+#define LIB_SIM_SPEC "--start-group -lsim -lc --end-group"
 #endif
 
 #ifndef	STARTFILE_SIM_SPEC
@@ -1202,9 +1285,9 @@ do {									\
 #define CPP_OS_SIM_SPEC ""
 #endif
 
-/* Linux support.  */
+/* GNU/Linux support.  */
 #ifndef	LIB_LINUX_SPEC
-#define LIB_LINUX_SPEC "%{mnewlib: -( -llinux -lc -) } %{!mnewlib: -lc }"
+#define LIB_LINUX_SPEC "%{mnewlib: --start-group -llinux -lc --end-group } %{!mnewlib: -lc }"
 #endif
 
 #ifndef	STARTFILE_LINUX_SPEC
@@ -1252,7 +1335,7 @@ do {									\
 
 #ifndef	LIB_SOLARIS_SPEC
 #define LIB_SOLARIS_SPEC "\
-%{mnewlib: -( -lsolaris -lc -) } \
+%{mnewlib: --start-group -lsolaris -lc --end-group } \
 %{!mnewlib: \
     %{ansi:values-Xc.o%s} \
     %{!ansi: \
@@ -1296,16 +1379,22 @@ do {									\
 /* Define any extra SPECS that the compiler needs to generate.  */
 #undef	SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS						\
+  { "lib_ads",			LIB_ADS_SPEC },				\
+  { "lib_yellowknife",		LIB_YELLOWKNIFE_SPEC },			\
   { "lib_mvme",			LIB_MVME_SPEC },			\
   { "lib_sim",			LIB_SIM_SPEC },				\
   { "lib_linux",		LIB_LINUX_SPEC },			\
   { "lib_solaris",		LIB_SOLARIS_SPEC },			\
   { "lib_default",		LIB_DEFAULT_SPEC },			\
+  { "startfile_ads",		STARTFILE_ADS_SPEC },			\
+  { "startfile_yellowknife",	STARTFILE_YELLOWKNIFE_SPEC },		\
   { "startfile_mvme",		STARTFILE_MVME_SPEC },			\
   { "startfile_sim",		STARTFILE_SIM_SPEC },			\
   { "startfile_linux",		STARTFILE_LINUX_SPEC },			\
   { "startfile_solaris",	STARTFILE_SOLARIS_SPEC },		\
   { "startfile_default",	STARTFILE_DEFAULT_SPEC },		\
+  { "endfile_ads",		ENDFILE_ADS_SPEC },			\
+  { "endfile_yellowknife",	ENDFILE_YELLOWKNIFE_SPEC },		\
   { "endfile_mvme",		ENDFILE_MVME_SPEC },			\
   { "endfile_sim",		ENDFILE_SIM_SPEC },			\
   { "endfile_linux",		ENDFILE_LINUX_SPEC },			\
@@ -1315,12 +1404,16 @@ do {									\
   { "link_shlib",		LINK_SHLIB_SPEC },			\
   { "link_target",		LINK_TARGET_SPEC },			\
   { "link_start",		LINK_START_SPEC },			\
+  { "link_start_ads",		LINK_START_ADS_SPEC },			\
+  { "link_start_yellowknife",	LINK_START_YELLOWKNIFE_SPEC },		\
   { "link_start_mvme",		LINK_START_MVME_SPEC },			\
   { "link_start_sim",		LINK_START_SIM_SPEC },			\
   { "link_start_linux",		LINK_START_LINUX_SPEC },		\
   { "link_start_solaris",	LINK_START_SOLARIS_SPEC },		\
   { "link_start_default",	LINK_START_DEFAULT_SPEC },		\
   { "link_os",			LINK_OS_SPEC },				\
+  { "link_os_ads",		LINK_OS_ADS_SPEC },			\
+  { "link_os_yellowknife",	LINK_OS_YELLOWKNIFE_SPEC },		\
   { "link_os_mvme",		LINK_OS_MVME_SPEC },			\
   { "link_os_sim",		LINK_OS_SIM_SPEC },			\
   { "link_os_linux",		LINK_OS_LINUX_SPEC },			\
@@ -1329,6 +1422,8 @@ do {									\
   { "cpp_endian_big",		CPP_ENDIAN_BIG_SPEC },			\
   { "cpp_endian_little",	CPP_ENDIAN_LITTLE_SPEC },		\
   { "cpp_endian_solaris",	CPP_ENDIAN_SOLARIS_SPEC },		\
+  { "cpp_os_ads",		CPP_OS_ADS_SPEC },			\
+  { "cpp_os_yellowknife",	CPP_OS_YELLOWKNIFE_SPEC },		\
   { "cpp_os_mvme",		CPP_OS_MVME_SPEC },			\
   { "cpp_os_sim",		CPP_OS_SIM_SPEC },			\
   { "cpp_os_linux",		CPP_OS_LINUX_SPEC },			\

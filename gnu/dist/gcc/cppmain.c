@@ -1,5 +1,5 @@
 /* CPP main program, using CPP Library.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1997 Free Software Foundation, Inc.
    Written by Per Bothner, 1994-95.
 
 This program is free software; you can redistribute it and/or modify it
@@ -20,14 +20,17 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  You are forbidden to forbid anyone else to use, share and improve
  what you give them.   Help stamp out software-hoarding!  */
 
-#include "cpplib.h"
-#include <stdio.h>
-
 #ifndef EMACS
 #include "config.h"
-#endif /* not EMACS */
+#include "system.h"
+#include "gansidecl.h"
+#else
+#include <stdio.h>
 
 extern char *getenv ();
+#endif /* not EMACS */
+
+#include "cpplib.h"
 
 char *progname;
 
@@ -37,6 +40,13 @@ cpp_options options;
 #ifdef abort
 /* More 'friendly' abort that prints the line and file.
    config.h can #define abort fancy_abort if you like that sort of thing.  */
+void
+fatal (s)
+     char *s;
+{
+  fputs (s, stderr);
+  exit (FATAL_EXIT_CODE);
+}
 
 void
 fancy_abort ()
@@ -52,7 +62,6 @@ main (argc, argv)
      char **argv;
 {
   char *p;
-  int i;
   int argi = 1;  /* Next argument to handle.  */
   struct cpp_options *opts = &options;
 

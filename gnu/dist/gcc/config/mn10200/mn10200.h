@@ -1,5 +1,4 @@
-/* Definitions of target machine for GNU compiler. 
-   Matsushita MN10200 series
+/* Definitions of target machine for GNU compiler. Matsushita MN10200 series
    Copyright (C) 1997 Free Software Foundation, Inc.
    Contributed by Jeff Law (law@cygnus.com).
 
@@ -878,8 +877,8 @@ do { char dstr[30];					\
    uninitialized but not common symbol.
    Try to use asm_output_bss to implement this macro.  */
 
-#define ASM_OUTPUT_BSS(FILE, DECL, NAME, SIZE, ROUNDED) \
-  asm_output_bss ((FILE), (DECL), (NAME), (SIZE), (ROUNDED))
+#define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
+  asm_output_aligned_bss ((FILE), (DECL), (NAME), (SIZE), (ALIGN))
 
 /* This is how to output the definition of a user-level label named NAME,
    such as the label on a static function or variable NAME.  */
@@ -947,14 +946,14 @@ do { char dstr[30];					\
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL) \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
   fprintf (FILE, "\t%s .L%d-.L%d\n", ".long", VALUE, REL)
 
 #define ASM_OUTPUT_ALIGN(FILE,LOG)	\
   if ((LOG) != 0)			\
     fprintf (FILE, "\t.align %d\n", (LOG))
 
-/* We don't have to worry about dbx compatability for the mn10200.  */
+/* We don't have to worry about dbx compatibility for the mn10200.  */
 #define DEFAULT_GDB_EXTENSIONS 1
 
 /* Use stabs debugging info by default.  */

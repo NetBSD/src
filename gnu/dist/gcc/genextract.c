@@ -1,5 +1,5 @@
 /* Generate code from machine description to extract operands from insn as rtl.
-   Copyright (C) 1987, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91, 92, 93, 97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -19,8 +19,13 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 
-#include <stdio.h>
 #include "hconfig.h"
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+#include "system.h"
 #include "rtl.h"
 #include "obstack.h"
 #include "insn-config.h"
@@ -30,9 +35,6 @@ struct obstack *rtl_obstack = &obstack;
 
 #define obstack_chunk_alloc xmalloc
 #define obstack_chunk_free free
-
-extern void free ();
-extern rtx read_rtx ();
 
 /* Names for patterns.  Need to allow linking with print-rtl.  */
 char **insn_name_ptr;
@@ -98,14 +100,15 @@ static int dupnums[MAX_DUP_OPERANDS];
 
 static struct code_ptr *peepholes;
 
-static void walk_rtx ();
-static void print_path ();
-char *xmalloc ();
-char *xrealloc ();
-static void fatal ();
-static char *copystr ();
+static void gen_insn PROTO ((rtx));
+static void walk_rtx PROTO ((rtx, char *));
+static void print_path PROTO ((char *));
+char *xmalloc PROTO ((unsigned));
+char *xrealloc PROTO ((char *, unsigned));
+static void fatal PVPROTO ((char *, ...)) ATTRIBUTE_PRINTF_1;
+static char *copystr PROTO ((char *));
 static void mybzero ();
-void fancy_abort ();
+void fancy_abort PROTO ((void));
 
 static void
 gen_insn (insn)
@@ -196,7 +199,6 @@ walk_rtx (x, path)
   register int i;
   register int len;
   register char *fmt;
-  register struct code_ptr *link;
   int depth = strlen (path);
   char *newpath;
 
@@ -275,6 +277,9 @@ walk_rtx (x, path)
     case ADDRESS:
       walk_rtx (XEXP (x, 0), path);
       return;
+
+    default:
+      break;
     }
 
   newpath = (char *) alloca (depth + 2);
@@ -312,6 +317,14 @@ print_path (path)
 {
   register int len = strlen (path);
   register int i;
+
+  if (len == 0)
+    {
+      /* Don't emit "pat", since we may try to take the address of it,
+	 which isn't what is intended.  */
+      printf("PATTERN (insn)");
+      return;
+    }
 
   /* We first write out the operations (XEXP or XVECEXP) in reverse
      order, then write "insn", then the indices in forward order.  */
@@ -362,11 +375,22 @@ xrealloc (ptr, size)
 }
 
 static void
-fatal (s, a1, a2)
-     char *s;
+fatal VPROTO ((char *format, ...))
 {
+#ifndef __STDC__
+  char *format;
+#endif
+  va_list ap;
+
+  VA_START (ap, format);
+
+#ifndef __STDC__
+  format = va_arg (ap, char *);
+#endif
+
   fprintf (stderr, "genextract: ");
-  fprintf (stderr, s, a1, a2);
+  vfprintf (stderr, format, ap);
+  va_end (ap);
   fprintf (stderr, "\n");
   exit (FATAL_EXIT_CODE);
 }
@@ -438,11 +462,12 @@ main (argc, argv)
 from the machine description file `md'.  */\n\n");
 
   printf ("#include \"config.h\"\n");
+  printf ("#include \"system.h\"\n");
   printf ("#include \"rtl.h\"\n\n");
 
   /* This variable exists only so it can be the "location"
      of any missing operand whose numbers are skipped by a given pattern.  */
-  printf ("static rtx junk;\n");
+  printf ("static rtx junk ATTRIBUTE_UNUSED;\n");
 
   printf ("extern rtx recog_operand[];\n");
   printf ("extern rtx *recog_operand_loc[];\n");
@@ -455,7 +480,7 @@ from the machine description file `md'.  */\n\n");
   printf ("  register rtx *ro = recog_operand;\n");
   printf ("  register rtx **ro_loc = recog_operand_loc;\n");
   printf ("  rtx pat = PATTERN (insn);\n");
-  printf ("  int i;\n\n");
+  printf ("  int i ATTRIBUTE_UNUSED;\n\n");
   printf ("  switch (INSN_CODE (insn))\n");
   printf ("    {\n");
   printf ("    case -1:\n");
@@ -503,7 +528,7 @@ from the machine description file `md'.  */\n\n");
       /* The vector in the insn says how many operands it has.
 	 And all it contains are operands.  In fact, the vector was
 	 created just for the sake of this function.  */
-      printf ("      for (i = XVECLEN (pat, 0); i >= 0; i--)\n");
+      printf ("      for (i = XVECLEN (pat, 0) - 1; i >= 0; i--)\n");
       printf ("          ro[i] = XVECEXP (pat, 0, i);\n");
       printf ("      break;\n\n");
     }

@@ -1,6 +1,6 @@
 /* stb.c -- Implementation File (module.c template V1.0)
    Copyright (C) 1995, 1996 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -88,7 +88,6 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 /* Include files. */
 
 #include "proj.h"
-#include <ctype.h>
 #include "stb.h"
 #include "bad.h"
 #include "expr.h"
@@ -1916,7 +1915,7 @@ ffestb_do (ffelexToken t)
 	  goto bad_1;		/* :::::::::::::::::::: */
 
 	case FFELEX_typeOPEN_PAREN:	/* Must be "DO" label "WHILE". */
-	  if (!isdigit (*p))
+	  if (! ISDIGIT (*p))
 	    goto bad_i;		/* :::::::::::::::::::: */
 	  ffesta_tokens[1] = ffelex_token_number_from_names (ffesta_tokens[0],
 							     i);
@@ -1939,7 +1938,7 @@ ffestb_do (ffelexToken t)
 	      ffesta_tokens[1] = NULL;
 	      return (ffelexHandler) ffestb_do2_;
 	    }
-	  if (!isdigit (*p))
+	  if (! ISDIGIT (*p))
 	    goto bad_i;		/* :::::::::::::::::::: */
 	  ffesta_tokens[1] = ffelex_token_number_from_names (ffesta_tokens[0],
 							     i);
@@ -1950,7 +1949,7 @@ ffestb_do (ffelexToken t)
 	  return (ffelexHandler) ffestb_do2_;
 
 	case FFELEX_typeEQUALS:
-	  if (isdigit (*p))
+	  if (ISDIGIT (*p))
 	    {
 	      ffesta_tokens[1]
 		= ffelex_token_number_from_names (ffesta_tokens[0], i);
@@ -1972,7 +1971,7 @@ ffestb_do (ffelexToken t)
 	case FFELEX_typeEOS:
 	case FFELEX_typeSEMICOLON:
 	  ffesta_confirmed ();
-	  if (isdigit (*p))
+	  if (ISDIGIT (*p))
 	    {
 	      ffesta_tokens[1]
 		= ffelex_token_number_from_names (ffesta_tokens[0], i);
@@ -3369,7 +3368,7 @@ ffestb_goto (ffelexToken t)
       if (ffelex_token_length (ffesta_tokens[0]) != FFESTR_firstlGOTO)
 	{
 	  p = ffelex_token_text (ffesta_tokens[0]) + (i = FFESTR_firstlGOTO);
-	  if (isdigit (*p))
+	  if (ISDIGIT (*p))
 	    {
 	      nt = ffelex_token_number_from_names (ffesta_tokens[0], i);
 	      p += ffelex_token_length (nt);
@@ -3773,10 +3772,12 @@ ffestb_halt1_ (ffelexToken ft, ffebld expr, ffelexToken t)
     case FFELEX_typeSEMICOLON:
       ffesta_confirmed ();
       if (!ffesta_is_inhibited ())
-	if (ffesta_first_kw == FFESTR_firstSTOP)
-	  ffestc_R842 (expr, ft);
-	else
-	  ffestc_R843 (expr, ft);
+	{
+	  if (ffesta_first_kw == FFESTR_firstSTOP)
+	    ffestc_R842 (expr, ft);
+	  else
+	    ffestc_R843 (expr, ft);
+	}
       return (ffelexHandler) ffesta_zero (t);
 
     default:
@@ -6689,7 +6690,7 @@ ffestb_R838 (ffelexToken t)
 	case FFELEX_typePERCENT:
 	case FFELEX_typeOPEN_PAREN:
 	  p = ffelex_token_text (ffesta_tokens[0]) + (i = FFESTR_firstlASSIGN);
-	  if (!isdigit (*p))
+	  if (! ISDIGIT (*p))
 	    goto bad_i;		/* :::::::::::::::::::: */
 	  ffesta_tokens[1]
 	    = ffelex_token_number_from_names (ffesta_tokens[0], i);
@@ -9212,14 +9213,14 @@ ffestb_R10014_ (ffelexToken t)
 	}
       if (ffestb_local_.format.sign)
 	{
-	  for (i = 0; i < ffelex_token_length (t); ++i)
+	  for (i = ffelex_token_length (t) + 1; i > 0; --i)
 	    ffestb_local_.format.pre.u.signed_val *= 10;
 	  ffestb_local_.format.pre.u.signed_val += strtoul (ffelex_token_text (t),
 							    NULL, 10);
 	}
       else
 	{
-	  for (i = 0; i < ffelex_token_length (t); ++i)
+	  for (i = ffelex_token_length (t) + 1; i > 0; --i)
 	    ffestb_local_.format.pre.u.unsigned_val *= 10;
 	  ffestb_local_.format.pre.u.unsigned_val += strtoul (ffelex_token_text (t),
 							      NULL, 10);
@@ -9686,7 +9687,7 @@ ffestb_R10014_ (ffelexToken t)
       p = ffelex_token_text (t) + i;
       if (*p == '\0')
 	return (ffelexHandler) ffestb_R10015_;
-      if (!isdigit (*p))
+      if (! ISDIGIT (*p))
 	{
 	  if (ffestb_local_.format.current == FFESTP_formattypeH)
 	    p = strpbrk (p, "0123456789");
@@ -9764,7 +9765,7 @@ ffestb_R10014_ (ffelexToken t)
       p = ffelex_token_text (t) + i;
       if (*p == '\0')
 	return (ffelexHandler) ffestb_R10015_;
-      if (!isdigit (*p))
+      if (! ISDIGIT (*p))
 	{
 	  ffestb_local_.format.current = FFESTP_formattypeNone;
 	  p = strpbrk (p, "0123456789");
@@ -10044,7 +10045,7 @@ ffestb_R10015_ (ffelexToken t)
       p = ffelex_token_text (t) + i;
       if (*p == '\0')
 	return (ffelexHandler) ffestb_R10015_;
-      if (!isdigit (*p))
+      if (! ISDIGIT (*p))
 	{
 	  ffestb_local_.format.current = FFESTP_formattypeNone;
 	  p = strpbrk (p, "0123456789");
@@ -10103,7 +10104,7 @@ ffestb_R10016_ (ffelexToken t)
 	  ffebad_finish ();
 	  return (ffelexHandler) ffestb_R10016_;
 	}
-      for (i = 0; i < ffelex_token_length (t); ++i)
+      for (i = ffelex_token_length (t) + 1; i > 0; --i)
 	ffestb_local_.format.post.u.unsigned_val *= 10;
       ffestb_local_.format.post.u.unsigned_val += strtoul (ffelex_token_text (t),
 							   NULL, 10);
@@ -10203,7 +10204,7 @@ ffestb_R10018_ (ffelexToken t)
 	  ffebad_finish ();
 	  return (ffelexHandler) ffestb_R10018_;
 	}
-      for (i = 0; i < ffelex_token_length (t); ++i)
+      for (i = ffelex_token_length (t) + 1; i > 0; --i)
 	ffestb_local_.format.dot.u.unsigned_val *= 10;
       ffestb_local_.format.dot.u.unsigned_val += strtoul (ffelex_token_text (t),
 							  NULL, 10);
@@ -10218,7 +10219,7 @@ ffestb_R10018_ (ffelexToken t)
       if (*++p == '\0')
 	return (ffelexHandler) ffestb_R10019_;	/* Go get NUMBER. */
       i = 1;
-      if (!isdigit (*p))
+      if (! ISDIGIT (*p))
 	{
 	  ffesta_ffebad_1p (FFEBAD_FORMAT_TEXT_IN_NUMBER, t, 1, NULL);
 	  return (ffelexHandler) ffestb_R10018_;
@@ -10330,7 +10331,7 @@ ffestb_R100110_ (ffelexToken t)
 	  ffebad_finish ();
 	  return (ffelexHandler) ffestb_R100110_;
 	}
-      for (i = 0; i < ffelex_token_length (t); ++i)
+      for (i = ffelex_token_length (t) + 1; i > 0; --i)
 	ffestb_local_.format.exp.u.unsigned_val *= 10;
       ffestb_local_.format.exp.u.unsigned_val += strtoul (ffelex_token_text (t),
 							  NULL, 10);
@@ -10587,7 +10588,7 @@ ffestb_R100110_ (ffelexToken t)
 	  return (ffelexHandler) ffestb_R100111_ (t);
 
 	default:
-	  assert (FALSE);
+	  assert ("bad format item" == NULL);
 	  err = FFEBAD_FORMAT_BAD_H_SPEC;
 	  pre = disallowed;
 	  post = disallowed;
@@ -11901,7 +11902,7 @@ ffestb_R12026_ (ffelexToken t)
 	    default:
 	      for (p = ffelex_token_text (ffesta_tokens[2]); *p != '\0'; ++p)
 		{
-		  if (!isalpha (*p))
+		  if (! ISALPHA (*p))
 		    {
 		      ffelex_token_kill (ffesta_tokens[1]);
 		      ffelex_token_kill (ffesta_tokens[2]);
@@ -12008,7 +12009,7 @@ ffestb_S3P4 (ffelexToken t)
 		    ffeexpr_rhs (ffesta_output_pool, FFEEXPR_contextINCLUDE,
 				 (ffeexprCallback) ffestb_S3P41_)))
 	  (t);
-      if (!isdigit (*p))
+      if (! ISDIGIT (*p))
 	goto bad_i;		/* :::::::::::::::::::: */
       nt = ffelex_token_number_from_names (ffesta_tokens[0], i);
       p += ffelex_token_length (nt);
@@ -12441,7 +12442,7 @@ ffestb_V025 (ffelexToken t)
 	  break;
 	}
       p = ffelex_token_text (ffesta_tokens[0]) + (i = FFESTR_firstlDEFINEFILE);
-      if (isdigit (*p))
+      if (ISDIGIT (*p))
 	nt = ffelex_token_number_from_names (ffesta_tokens[0], i);
       else if (ffesrc_is_name_init (*p))
 	nt = ffelex_token_name_from_names (ffesta_tokens[0], i, 0);
@@ -15553,11 +15554,13 @@ ffestb_R90910_ (ffelexToken ft, ffebld expr, ffelexToken t)
     case FFELEX_typeCOMMA:
     case FFELEX_typeCLOSE_PAREN:
       if (expr == NULL)
-	if (ffestb_local_.read.context == FFEEXPR_contextFILEFORMAT)
-	  ffestp_file.read.read_spec[ffestb_local_.read.ix]
-	    .value_is_label = TRUE;
-	else
-	  break;
+	{
+	  if (ffestb_local_.read.context == FFEEXPR_contextFILEFORMAT)
+	    ffestp_file.read.read_spec[ffestb_local_.read.ix]
+	      .value_is_label = TRUE;
+	  else
+	    break;
+	}
       ffestp_file.read.read_spec[ffestb_local_.read.ix].value_present
 	= TRUE;
       ffestp_file.read.read_spec[ffestb_local_.read.ix].value
@@ -16169,11 +16172,13 @@ ffestb_R9109_ (ffelexToken ft, ffebld expr, ffelexToken t)
     case FFELEX_typeCOMMA:
     case FFELEX_typeCLOSE_PAREN:
       if (expr == NULL)
-	if (ffestb_local_.write.context == FFEEXPR_contextFILEFORMAT)
-	  ffestp_file.write.write_spec[ffestb_local_.write.ix]
-	    .value_is_label = TRUE;
-	else
-	  break;
+	{
+	  if (ffestb_local_.write.context == FFEEXPR_contextFILEFORMAT)
+	    ffestp_file.write.write_spec[ffestb_local_.write.ix]
+	      .value_is_label = TRUE;
+	  else
+	    break;
+	}
       ffestp_file.write.write_spec[ffestb_local_.write.ix].value_present
 	= TRUE;
       ffestp_file.write.write_spec[ffestb_local_.write.ix].value
@@ -17974,7 +17979,7 @@ ffestb_V020 (ffelexToken t)
 	  break;
 	}
       p = ffelex_token_text (ffesta_tokens[0]) + (i = FFESTR_firstlTYPE);
-      if (isdigit (*p))
+      if (ISDIGIT (*p))
 	ffesta_confirmed ();	/* Else might be '90 TYPE statement. */
       for (ix = 0; ix < FFESTP_typeix; ++ix)
 	ffestp_file.type.type_spec[ix].kw_or_val_present = FALSE;
