@@ -1,5 +1,5 @@
-.\"	$NetBSD: mbr.8,v 1.8 2002/07/09 22:51:13 wiz Exp $
-.Dd April 13, 1999
+.\"	$NetBSD: mbr.8,v 1.9 2003/05/01 08:40:17 dsl Exp $
+.Dd April 30, 2003
 .Dt MBR 8
 .Os
 .Sh NAME
@@ -21,7 +21,7 @@ that partition, and executing the code in it, as is done for the
 MBR itself.
 .Pp
 .Nx
-supplies its two versions of the bootcode in an MBR:
+supplies three versions of the MBR bootcode:
 .Bl -tag -width Er
 .It Sy Normal boot code
 This version has the same functionality as that supplied by DOS/Windows and
@@ -35,40 +35,43 @@ the user with a simple menu, allowing a choice between partitions to
 boot from, and hard disks to boot from.
 The choices and default settings can be configured through
 .Xr fdisk 8 .
+.It Sy Extended Bootselector
+The Extended Bootselecting MBR additionally allows
+.Nx
+to be loaded from an Extended partition.
+It only supports systems whose BIOS supports the extensions to
+boot partitions beyond the 8 Gigabyte boundary.
 .El
 .Pp
-The rest of this manual page will discuss the bootselecting version of
+The rest of this manual page will discuss the bootselecting versions of
 the MBR.
 The configurable items of the bootselector are:
 .Bl -tag -width Er
 .It timeout
 The number of seconds that the bootcode will wait for the user to
 press a key, selecting a menu item.
-Must be in the range 0-3600.
+Must be in the range 0-3600, or -1 when it will wait forever.
 .It default
 The default partition or disk to boot from, should the timeout
 expire.
-.It active
-Activate/deactivate the bootselector.
-When deactivated, the bootcode will pick the first active partition,
-as usual.
 .El
 .Pp
-When active, the bootselector will let the user select the partition
+The bootselector will output a menu of the
+.Em bootmenu
+names for each partition (as configured by
+.Sx fdisk 8 ) .
+The user can then select the partition
 or drive to boot from via the keyboard.
+.Pp
+The numeric keys
+.Sy 1
+upwards will initiate a startup from the corresponding partition.
 .Pp
 Function keys
 .Sy F1
 through
-.Sy F4
-will initiate a startup from partitions 1 through 4 in the partition
-table, if the corresponding entries in the bootselector menu are active.
-.Pp
-Function keys
-.Sy F5
-through
-.Sy F10
-will boot from harddisks 0 through 5 (BIOS numbers 0x80 through 0x85).
+.Sy F8
+will boot from harddisks 0 through 7 (BIOS numbers 0x80 through 0x87).
 Booting from a drive is simply done by reading the MBR of that
 drive and executing it, so the bootcode present in the MBR of the
 chosen drive determines which partition (if any) will be booted in
@@ -79,33 +82,40 @@ The
 key will cause the bootcode to find the active partition, and boot from it.
 If no key is pressed, the (configurable) default selection is picked.
 .Sh DIAGNOSTICS
-The following error numbers may be printed in case of an error condition,
-(after which the user must restart the system):
-.Bl -tag -width Er
-.It 1
-Invalid partition table.
+The following error are detected:
+.Bl -column Code "No active partition" 
+.It Em Code Ta Em "Text message" Ta Em Explanation
+.It 1 Ta "No active partition" Ta
 The MBR has a partition table without an active partition.
-.It 2
-Read error.
+.It 2 Ta "Disk read error" Ta
 There was an error reading the bootsector for the partition or
 drive selected.
-.It 3
-No operating system.
-The bootsector was loaded successfully, but it was not valid (i.e.
-the magic number check failed).
+.It 3 Ta "No operating system" Ta
+The bootsector was loaded successfully, but it was not valid (ie
+the magic number check failed, or it contained no code).
+.It L Ta "Invalid CHS read" Ta
+The boot partition cannot be read using a CHS read and the system BIOS
+doesn't support LBA reads.
+.It ? Ta "" Ta
+Unknown key.
 .El
+.Pp
+The standard boot code will output the text message and stop.
+It may be necessary to reset to the system to continue.
+.Pp
+The bootselect code will output 'Error <code>' and await further input.
 .Sh SEE ALSO
+.Xr boot 8 ,
 .Xr fdisk 8 ,
+.Xr disklabel 8 ,
+.Xr installboot 8 ,
 .Xr mbrlabel 8
 .Sh BUGS
 The bootselect code has constraints because of the limited amount of
 space available.
 The only way to be absolutely sure that a bootselector will always
 fit on the disk when a partition table is used, is to make it small
-enough to fit into the first sector (512 bytes, 446 not counting
-the partition table itself).
+enough to fit into the first sector (512 bytes, 404 excluding
+the partition table and bootselect menu).
 .Pp
-The error messages are short.
-.Pp
-The code will give up if an error occurs, it should allow the user
-to, for example, specify another partition/disk instead.
+The error messages are necessarily terse.
