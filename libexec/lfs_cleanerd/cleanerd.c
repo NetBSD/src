@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.20 2000/07/03 01:49:16 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.21 2000/07/04 22:36:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.20 2000/07/03 01:49:16 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.21 2000/07/04 22:36:17 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -324,7 +324,7 @@ clean_loop(fsp, nsegs, options)
 	 * number of free blocks.
 	 */
 	db_per_seg = fsbtodb(lfsp, lfsp->lfs_ssize);
-	max_free_segs = lfsp->lfs_bfree / db_per_seg + lfsp->lfs_minfreeseg;
+	max_free_segs = fsp->fi_cip->bfree / db_per_seg + lfsp->lfs_minfreeseg;
 	
 	/* 
 	 * We will clean if there are not enough free blocks or total clean
@@ -333,15 +333,15 @@ clean_loop(fsp, nsegs, options)
 	now = time((time_t *)NULL);
 
         if(debug > 1) {
-            syslog(LOG_DEBUG, "db_per_seg = %lu bfree = %u avail = %d ",
-                   db_per_seg, lfsp->lfs_bfree,
-                   lfsp->lfs_avail);
-	    syslog(LOG_DEBUG, "clean segs = %d, max_free_segs = %ld",
-		   fsp->fi_cip->clean, max_free_segs);
+		syslog(LOG_DEBUG, "db_per_seg = %lu bfree = %u avail = %d ",
+		       db_per_seg, fsp->fi_cip->bfree,
+		       fsp->fi_cip->avail);
+		syslog(LOG_DEBUG, "clean segs = %d, max_free_segs = %ld",
+		       fsp->fi_cip->clean, max_free_segs);
         }
 
-	if ((lfsp->lfs_bfree - lfsp->lfs_avail > db_per_seg &&
-	     lfsp->lfs_avail < (long)db_per_seg) ||
+	if ((fsp->fi_cip->bfree - fsp->fi_cip->avail > db_per_seg &&
+	     fsp->fi_cip->avail < (long)db_per_seg) ||
 	    (fsp->fi_cip->clean < max_free_segs &&
 	     (fsp->fi_cip->clean <= lfsp->lfs_minfreeseg ||
 	      fsp->fi_cip->clean < max_free_segs * BUSY_LIM)))
@@ -350,7 +350,7 @@ clean_loop(fsp, nsegs, options)
 			syslog(LOG_DEBUG, "Cleaner Running  at %s "
 			       "(%d of %lu segments available, avail = %d)",
 			       ctime(&now), fsp->fi_cip->clean, max_free_segs,
-			       lfsp->lfs_avail);
+			       fsp->fi_cip->avail);
 		clean_fs(fsp, cost_benefit, nsegs, options);
 		if(do_quit) {
 			if(debug)
