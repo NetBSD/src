@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)morg.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: morg.c,v 1.2 1993/08/01 18:53:34 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)morg.c	5.4 (Berkeley) 3/25/93";*/
+static char rcsid[] = "$Id: morg.c,v 1.3 1993/08/07 08:28:05 mycroft Exp $";
 #endif /* not lint */
 
 # include	"monop.ext"
@@ -49,17 +49,16 @@ static char	*names[MAX_PRP+2],
 			"where",	/*  2 */
 			"own holdings",	/*  3 */
 			"holdings",	/*  4 */
-			"shell",	/*  5 */
-			"mortgage",	/*  6 */
-			"unmortgage",	/*  7 */
-			"buy",		/*  8 */
-			"sell",		/*  9 */
-			"card",		/* 10 */
-			"pay",		/* 11 */
-			"trade",	/* 12 */
-			"resign",	/* 13 */
-			"save game",	/* 14 */
-			"restore game",	/* 15 */
+			"mortgage",	/*  5 */
+			"unmortgage",	/*  6 */
+			"buy",		/*  7 */
+			"sell",		/*  8 */
+			"card",		/*  9 */
+			"pay",		/* 10 */
+			"trade",	/* 11 */
+			"resign",	/* 12 */
+			"save game",	/* 13 */
+			"restore game",	/* 14 */
 			0
 		};
 

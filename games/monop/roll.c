@@ -32,17 +32,35 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)roll.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: roll.c,v 1.3 1993/08/01 18:53:31 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)roll.c	5.6 (Berkeley) 9/29/92";*/
+static char rcsid[] = "$Id: roll.c,v 1.4 1993/08/07 08:28:06 mycroft Exp $";
 #endif /* not lint */
+
+#include <stdlib.h>
 
 /*
  *	This routine rolls ndie nside-sided dice.
  */
 
-#include <stdlib.h>
+# define	reg	register
 
-#define	reg	register
+# if defined(pdp11)
+# define	MAXRAND	32767L
+
+roll(ndie, nsides)
+int	ndie, nsides; {
+
+	reg long	tot;
+	reg unsigned	n, r;
+
+	tot = 0;
+	n = ndie;
+	while (n--)
+		tot += rand();
+	return (int) ((tot * (long) nsides) / ((long) MAXRAND + 1)) + ndie;
+}
+
+# else
 
 roll(ndie, nsides)
 reg int	ndie, nsides; {
@@ -56,3 +74,4 @@ reg int	ndie, nsides; {
 		tot += (r = rand()) * (num_sides / RAND_MAX) + 1;
 	return tot;
 }
+# endif
