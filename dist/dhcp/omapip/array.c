@@ -50,7 +50,6 @@ isc_result_t omapi_array_allocate (omapi_array_t **array,
 				   omapi_array_deref_t deref,
 				   const char *file, int line)
 {
-	isc_result_t status;
 	omapi_array_t *aptr;
 
 	if (!array || *array)
@@ -67,7 +66,6 @@ isc_result_t omapi_array_allocate (omapi_array_t **array,
 isc_result_t omapi_array_free (omapi_array_t **array,
 			       const char *file, int line)
 {
-	isc_result_t status;
 	omapi_array_t *aptr;
 	int i;
 

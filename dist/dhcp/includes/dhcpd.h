@@ -2007,6 +2007,14 @@ int icmp_readsocket PROTO ((omapi_object_t *));
 int icmp_echorequest PROTO ((struct iaddr *));
 isc_result_t icmp_echoreply PROTO ((omapi_object_t *));
 
+/* fddi.c */
+#if defined (PACKET_ASSEMBLY) || defined (PACKET_DECODING)
+void assemble_fddi_header (struct interface_info *,
+	unsigned char *, unsigned *, struct hardware *);
+ssize_t decode_fddi_header (struct interface_info *,
+     unsigned char *, unsigned, struct hardware *);
+#endif /* PACKET_ASSEMBLY || PACKET_DECODING */
+
 /* dns.c */
 #if defined (NSUPDATE)
 isc_result_t find_tsig_key (ns_tsig_key **, const char *, struct dns_zone *);
