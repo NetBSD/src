@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.8 2001/11/13 13:14:43 lukem Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.9 2003/10/25 18:35:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.8 2001/11/13 13:14:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.9 2003/10/25 18:35:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,6 +209,9 @@ rtl80x9_media_init(sc)
 			defmedia = IFM_ETHER|IFM_10_T;
 			printf("10baseT\n");
 		}
+		break;
+	default:
+		defmedia = 0;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.4 2003/10/16 10:04:14 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.5 2003/10/25 18:35:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.4 2003/10/16 10:04:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.5 2003/10/25 18:35:42 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -3362,7 +3362,7 @@ atw_start(ifp)
 	struct atw_txdesc *txd;
 	int do_encrypt, rate;
 	bus_dmamap_t dmamap;
-	int ctl, error, firsttx, nexttx, lasttx, first, ofree, seg;
+	int ctl, error, firsttx, nexttx, lasttx = -1, first, ofree, seg;
 
 	DPRINTF2(sc, ("%s: atw_start: sc_flags 0x%08x, if_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags, ifp->if_flags));
@@ -3644,6 +3644,7 @@ atw_start(ifp)
 			lasttx = nexttx;
 		}
 
+		KASSERT(lasttx != -1);
 		/* Set `first segment' and `last segment' appropriately. */
 		sc->sc_txdescs[sc->sc_txnext].at_flags |=
 		    htole32(ATW_TXFLAG_FS);

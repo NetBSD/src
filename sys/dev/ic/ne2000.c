@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.39 2003/10/22 00:12:36 christos Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.40 2003/10/25 18:35:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.39 2003/10/22 00:12:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.40 2003/10/25 18:35:43 christos Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -180,6 +180,9 @@ ne2000_attach(nsc, myea)
 	case NE2000_TYPE_DL10019:
 	case NE2000_TYPE_DL10022:
 		memsize = 8192 * 3;
+		break;
+	default:
+		memsize = 0;
 		break;
 	}
 
