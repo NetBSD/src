@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.166 2004/03/24 18:11:09 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.167 2004/03/25 18:36:49 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.166 2004/03/24 18:11:09 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.167 2004/03/25 18:36:49 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -122,7 +122,14 @@ static struct sysctlnode sysctl_root = {
 	    CTLFLAG_ROOT|CTLFLAG_READWRITE|
 	    CTLTYPE_NODE,
 	.sysctl_num = 0,
-	.sysctl_size = sizeof(struct sysctlnode),
+	/*
+	 * XXX once all ports are on gcc3, we can get rid of this
+	 * ugliness and simply make it into
+	 *
+	 *	.sysctl_size = sizeof(struct sysctlnode),
+	 */
+	._sysctl_size = { .__sysc_ustr = { .__sysc_sdatum =
+		sizeof(struct sysctlnode), }, },
 	.sysctl_name = "(root)",
 };
 
