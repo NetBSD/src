@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.59 1996/06/13 19:12:25 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.60 1996/09/28 15:45:41 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -654,8 +654,7 @@ _fake_lev6intr:
 
 	CIABADDR(a0)
 	movb	a0@(CIAICR),d0		| read irc register (clears ints!)
-	tstb	d0			| check if CIAB was source
-	jeq	Lchkexter		| no, go through isr chain
+	jge	Lchkexter		| CIAB IR not set, go through isr chain
 	INTREQWADDR(a0)
 #ifndef LEV6_DEFER
 	movew	#INTF_EXTER,a0@		| clear EXTER interrupt in intreq
