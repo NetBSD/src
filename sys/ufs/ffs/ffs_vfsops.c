@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.57 2000/02/14 22:00:23 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.58 2000/03/16 10:37:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -284,11 +284,16 @@ ffs_mount(mp, path, data, ndp, p)
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
 		error = ffs_mountfs(devvp, mp, p);
-		if (!error && (mp->mnt_flag & (MNT_SOFTDEP | MNT_ASYNC)) ==
-		    (MNT_SOFTDEP | MNT_ASYNC)) {
-			printf("%s fs uses soft updates, ignoring async mode\n",
-			    fs->fs_fsmnt);
-			mp->mnt_flag &= ~MNT_ASYNC;
+		if (!error) {
+			ump = VFSTOUFS(mp);
+			fs = ump->um_fs;
+			if ((mp->mnt_flag & (MNT_SOFTDEP | MNT_ASYNC)) ==
+			    (MNT_SOFTDEP | MNT_ASYNC)) {
+				printf("%s fs uses soft updates, "
+				       "ignoring async mode\n",
+				    fs->fs_fsmnt);
+				mp->mnt_flag &= ~MNT_ASYNC;
+			}
 		}
 	}
 	else {
@@ -301,8 +306,6 @@ ffs_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (error);
 	}
-	ump = VFSTOUFS(mp);
-	fs = ump->um_fs;
 	(void) copyinstr(path, fs->fs_fsmnt, sizeof(fs->fs_fsmnt) - 1, &size);
 	memset(fs->fs_fsmnt + size, 0, sizeof(fs->fs_fsmnt) - size);
 	memcpy(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN);
