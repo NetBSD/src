@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37 1999/05/14 02:12:00 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.38 1999/05/26 22:07:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37 1999/05/14 02:12:00 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38 1999/05/26 22:07:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,10 +299,9 @@ pagemove(from, to, size)
 extern vm_map_t phys_map;
 
 /*
- * Map an IO request into kernel virtual address space.
- *
- * Called by physio() in kern/kern_physio.c for raw device I/O
- * between user address and device driver bypassing filesystem cache.
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().   
  */
 void
 vmapbuf(bp, len)
