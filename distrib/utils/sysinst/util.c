@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.17 1997/11/05 23:32:54 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.18 1997/11/06 09:02:37 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -415,12 +415,12 @@ struct check_table { const char *testarg; const char *path;} checks[] = {
  */
 static int check_for(const char *type, const char *pathname)
 {
-	int result; 
+	int found; 
 
-	result = (target_test(type, pathname) == 0);
-	if (result != 0) 
+	found = (target_test(type, pathname) == 0);
+	if (found == 0) 
 		msg_display(MSG_rootmissing, pathname);
-	return result;
+	return found;
 }
 
 int
