@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.c,v 1.5 2000/07/05 11:03:22 ad Exp $	*/
+/*	$NetBSD: ip6.c,v 1.6 2000/07/13 11:07:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip6.c,v 1.5 2000/07/05 11:03:22 ad Exp $");
+__RCSID("$NetBSD: ip6.c,v 1.6 2000/07/13 11:07:34 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -133,9 +133,6 @@ labelip6(void)
 	RHD(10,	"  can't be fragmented");
 
 	RHD(12,	"violated scope rules");
-	RHD(13,	"call to m_pulldown");
-	RHD(14,	"mbuf allocation in m_pulldown");
-	RHD(15,	"mbuf copy in m_pulldown");
 }
 	
 void
@@ -190,9 +187,6 @@ showip6(void)
 	SHOW(ip6s_cantfrag, 10, 35);
 
 	SHOW(ip6s_badscope, 12, 35);
-	SHOW(ip6s_pulldown, 13, 35);
-	SHOW(ip6s_pulldown_alloc, 14, 35);
-	SHOW(ip6s_pulldown_copy, 15, 35);
 }
 
 int
@@ -246,9 +240,6 @@ fetchip6(void)
 	ADJINETCTR(curstat, oldstat, newstat, ip6s_ofragments);
 	ADJINETCTR(curstat, oldstat, newstat, ip6s_cantfrag);
 	ADJINETCTR(curstat, oldstat, newstat, ip6s_badscope);
-	ADJINETCTR(curstat, oldstat, newstat, ip6s_pulldown);
-	ADJINETCTR(curstat, oldstat, newstat, ip6s_pulldown_alloc);
-	ADJINETCTR(curstat, oldstat, newstat, ip6s_pulldown_copy);
 
 	if (update == UPDATE_TIME)
 		memcpy(&oldstat, &newstat, sizeof(oldstat));
