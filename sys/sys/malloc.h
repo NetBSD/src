@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.37 1998/04/30 00:36:34 matt Exp $	*/
+/*	$NetBSD: malloc.h,v 1.38 1998/04/30 06:26:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -225,7 +225,7 @@
 	"UVM aobj",	/* 83 M_UVMAOBJ */ \
 	"temp",		/* 84 M_TEMP */ \
 	"DMA map",	/* 85 M_DMAMAP */ \
-	"IP flow,	/* 86 M_IPFLOW*/ \
+	"IP flow",	/* 86 M_IPFLOW */ \
 	NULL,		/* 87 */ \
 }
 
