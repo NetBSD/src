@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.1 2000/05/02 06:35:14 augustss Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.2 2000/05/08 02:44:32 mycroft Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -142,8 +142,10 @@ struct cfattach audioamd_sbus_ca = {
 
 u_int8_t	audioamd_codec_iread __P((struct am7930_softc *, int));
 u_int16_t	audioamd_codec_iread16 __P((struct am7930_softc *, int));
+u_int8_t	audioamd_codec_dread __P((struct audioamd_softc *, int));
 void	audioamd_codec_iwrite __P((struct am7930_softc *, int, u_int8_t));
 void	audioamd_codec_iwrite16 __P((struct am7930_softc *, int, u_int16_t));
+void	audioamd_codec_dwrite __P((struct audioamd_softc *, int, u_int8_t));
 void	audioamd_onopen __P((struct am7930_softc *sc));
 void	audioamd_onclose __P((struct am7930_softc *sc));
 
@@ -166,6 +168,7 @@ int	audioamd_start_output __P((void *, void *, int, void (*)(void *),
 				  void *));
 int	audioamd_start_input __P((void *, void *, int, void (*)(void *),
 				 void *));
+int	audioamd_getdev __P((void *, struct audio_device *));
 
 struct audio_hw_if sa_hw_if = {
 	am7930_open,
@@ -240,7 +243,7 @@ audioamd_mainbus_attach(parent, self, aux)
 			ma->ma_bustag,
 			ma->ma_iospace,
 			ma->ma_paddr,
-			sizeof(struct am7930),
+			AM7930_DREG_SIZE,
 			BUS_SPACE_MAP_LINEAR,
 			0,
 			&bh) != 0) {
@@ -267,7 +270,7 @@ audioamd_sbus_attach(parent, self, aux)
 			sa->sa_bustag,
 			sa->sa_slot,
 			sa->sa_offset,
-			sizeof(struct am7930),
+			AM7930_DREG_SIZE,
 			0, 0,
 			&bh) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
@@ -288,9 +291,9 @@ audioamd_attach(sc, pri)
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
-	sc->sc_glue = &audioamd_glue;
+	sc->sc_am7930.sc_glue = &audioamd_glue;
 
-	am7930_init(sc, AUDIOAMD_POLL_MODE);
+	am7930_init(&sc->sc_am7930, AUDIOAMD_POLL_MODE);
 
 #ifndef AUDIO_C_HANDLER
 	auiop = &sc->sc_au;
@@ -305,9 +308,9 @@ audioamd_attach(sc, pri)
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 am7930swintr, sc);
 
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach(&sc->sc_am7930.sc_dev, "intr", &sc->sc_intrcnt);
 
-	audio_attach_mi(&sa_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&sa_hw_if, sc, &sc->sc_am7930.sc_dev);
 }
 
 
@@ -315,7 +318,7 @@ void
 audioamd_onopen(sc)
 	struct am7930_softc *sc;
 {
-	struct audioamd_softc *mdsc = (struct audioamd *)sc;
+	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
 
 	/* reset pdma state */
 	mdsc->sc_rintr = 0;
@@ -338,7 +341,7 @@ audioamd_onclose(sc)
 }
 
 int
-audioamd_output(addr, p, cc, intr, arg)
+audioamd_start_output(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
@@ -349,10 +352,10 @@ audioamd_output(addr, p, cc, intr, arg)
 
 	DPRINTFN(1, ("sa_start_output: cc=%d %p (%p)\n", cc, intr, arg));
 
-	if (!sc->sc_locked) {
-		audioamd_codec_iwrite(sc,
+	if (!sc->sc_am7930.sc_locked) {
+		audioamd_codec_iwrite(&sc->sc_am7930,
 			AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
-		sc->sc_locked = 1;
+		sc->sc_am7930.sc_locked = 1;
 		DPRINTF(("sa_start_output: started intrs.\n"));
 	}
 	sc->sc_pintr = intr;
@@ -363,7 +366,7 @@ audioamd_output(addr, p, cc, intr, arg)
 }
 
 int
-am7930_start_input(addr, p, cc, intr, arg)
+audioamd_start_input(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
@@ -374,10 +377,10 @@ am7930_start_input(addr, p, cc, intr, arg)
 
 	DPRINTFN(1, ("sa_start_input: cc=%d %p (%p)\n", cc, intr, arg));
 
-	if (!sc->sc_locked) {
-		audioamd_codec_iwrite(sc,
+	if (!sc->sc_am7930.sc_locked) {
+		audioamd_codec_iwrite(&sc->sc_am7930,
 			AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
-		sc->sc_locked = 1;
+		sc->sc_am7930.sc_locked = 1;
 		DPRINTF(("sa_start_input: started intrs.\n"));
 	}
 	sc->sc_rintr = intr;
@@ -470,10 +473,11 @@ audioamd_codec_iwrite(sc, reg, val)
 	int reg;
 	u_int8_t val;
 {
-	audioamd_codec_dwrite(sc, AM7930_DREG_CR, reg);
-	audioamd_codec_dwrite(sc, AM7930_DREG_DR, val);
-}
+	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
 
+	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
+	audioamd_codec_dwrite(mdsc, AM7930_DREG_DR, val);
+}
 
 void
 audioamd_codec_iwrite16(sc, reg, val)
@@ -481,9 +485,11 @@ audioamd_codec_iwrite16(sc, reg, val)
 	int reg;
 	u_int16_t val;
 {
-	audioamd_codec_dwrite(sc, AM7930_DREG_CR, reg);
-	audioamd_codec_dwrite(sc, AM7930_DREG_DR, val);
-	audioamd_codec_dwrite(sc, AM7930_DREG_DR, val>>8);
+	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
+
+	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
+	audioamd_codec_dwrite(mdsc, AM7930_DREG_DR, val);
+	audioamd_codec_dwrite(mdsc, AM7930_DREG_DR, val>>8);
 }
 
 
@@ -493,29 +499,53 @@ audioamd_codec_iread(sc, reg)
 	struct am7930_softc *sc;
 	int reg;
 {
-	audioamd_codec_dwrite(sc, AM7930_DREG_CR, reg);
-	return audioamd_codec_dread(sc, AM7930_DREG_DR);
+	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
+
+	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
+	return (audioamd_codec_dread(mdsc, AM7930_DREG_DR));
+}
+
+u_int16_t
+audioamd_codec_iread16(sc, reg)
+	struct am7930_softc *sc;
+	int reg;
+{
+	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
+	u_int8_t lo, hi;
+
+	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
+	lo = audioamd_codec_dread(mdsc, AM7930_DREG_DR);
+	hi = audioamd_codec_dread(mdsc, AM7930_DREG_DR);
+	return ((hi << 8) | lo);
+}
+
+/* direct read */
+u_int8_t
+audioamd_codec_dread(sc, reg)
+	struct audioamd_softc *sc;
+	int reg;
+{
+	return (bus_space_read_1(sc->sc_bt, sc->sc_bh, reg));
 }
 
 /* direct write */
 void
 audioamd_codec_dwrite(sc, reg, val)
-	struct am7930_softc *sc;
+	struct audioamd_softc *sc;
 	int reg;
 	u_int8_t val;
 {
-	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
-	bus_space_write_1(mdsc->sc_bt, mdsc->sc_bh, reg, val);
+	bus_space_write_1(sc->sc_bt, sc->sc_bh, reg, val);
 }
 
-/* direct read */
-u_int8_t
-bba_codec_dread(sc, reg)
-	struct am7930_softc *sc;
-	int reg;
+int
+audioamd_getdev(addr, retp)
+	void *addr;
+	struct audio_device *retp;
 {
-	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
-	return bus_space_read_1(mdsc->sc_bt, mdsc->sc_bh, reg);
+
+	*retp = audioamd_device;
+	return (0);
 }
 
 #endif /* NAUDIO > 0 */
