@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.23 1999/03/30 16:11:43 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.23.2.1 1999/04/13 21:33:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ int	 lfs_writevnodes __P((struct lfs *fs, struct mount *mp,
 
 int	lfs_allclean_wakeup;		/* Cleaner wakeup address. */
 int	lfs_writeindir = 1;             /* whether to flush indir on non-ckp */
-int	lfs_clean_vnhead = 1;		/* Allow freeing to head of vn list */
+int	lfs_clean_vnhead = 0;		/* Allow freeing to head of vn list */
 
 /* Statistics Counters */
 int lfs_dostats = 1;
@@ -634,6 +634,7 @@ lfs_writeinode(fs, sp, ip)
 	int error, i, ndx;
 	int redo_ifile = 0;
 	struct timespec ts;
+	int gotblk=0;
 	
 	if (!(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE | IN_CLEANING)))
 		return(0);
@@ -649,8 +650,9 @@ lfs_writeinode(fs, sp, ip)
 		daddr = fs->lfs_offset;
 		fs->lfs_offset += fsbtodb(fs, 1);
 		sp->ibp = *sp->cbpp++ =
-			lfs_newbuf(VTOI(fs->lfs_ivnode)->i_devvp, daddr,
-				   fs->lfs_bsize);
+			getblk(VTOI(fs->lfs_ivnode)->i_devvp, daddr, fs->lfs_bsize, 0, 0);
+		gotblk++;
+
 		/* Zero out inode numbers */
 		for (i = 0; i < INOPB(fs); ++i)
 			((struct dinode *)sp->ibp->b_data)[i].di_inumber = 0;
@@ -679,6 +681,10 @@ lfs_writeinode(fs, sp, ip)
 	bp = sp->ibp;
 	((struct dinode *)bp->b_data)[sp->ninodes % INOPB(fs)] =
 		ip->i_din.ffs_din;
+	if(gotblk) {
+		bp->b_flags |= B_LOCKED;
+		brelse(bp);
+	}
 	
 	/* Increment inode count in segment summary block. */
 	++((SEGSUM *)(sp->segsum))->ss_ninos;
@@ -1071,6 +1077,7 @@ lfs_writeseg(fs, sp)
 	struct vnode *devvp;
 	char *p;
 	struct vnode *vn;
+	struct inode *ip;
 #if defined(DEBUG) && defined(LFS_PROPELLER)
 	static int propeller;
 	char propstring[4] = "-\\|/";
@@ -1252,9 +1259,35 @@ lfs_writeseg(fs, sp)
 				bp->b_flags &= ~B_NEEDCOMMIT;
 				wakeup(bp);
 			}
+
+			bpp++;
+
+			/*
+			 * If this is the last block for this vnode, but
+			 * there are other blocks on its dirty list,
+			 * set IN_MODIFIED/IN_CLEANING depending on what
+			 * sort of block.  Only do this for our mount point,
+			 * not for, e.g., inode blocks that are attached to
+			 * the devvp.
+			 */
+			if(i>1 && vn && *bpp && (*bpp)->b_vp != vn
+			   && (*bpp)->b_vp && (bp=vn->v_dirtyblkhd.lh_first)!=NULL &&
+			   vn->v_mount == fs->lfs_ivnode->v_mount)
+			{
+				ip = VTOI(vn);
+#ifdef DEBUG_LFS
+				printf("lfs_writeseg: marking ino %d\n",ip->i_number);
+#endif
+		       		if(!(ip->i_flag & (IN_CLEANING|IN_MODIFIED))) {
+					fs->lfs_uinodes++;
+					if(bp->b_flags & B_CALL)
+						ip->i_flag |= IN_CLEANING;
+					else
+						ip->i_flag |= IN_MODIFIED;
+				}
+			}
 			/* if(vn->v_dirtyblkhd.lh_first == NULL) */
 				wakeup(vn);
-			bpp++;
 		}
 		++cbp->b_vp->v_numoutput;
 		splx(s);
@@ -1536,7 +1569,10 @@ lfs_vunref(vp)
 		simple_unlock(&vp->v_interlock);
 		return;
 	}
-
+#ifdef DIAGNOSTIC
+	if(VOP_ISLOCKED(vp))
+		panic("lfs_vunref: vnode locked");
+#endif
 	/*
 	 * insert at tail of LRU list
 	 */
@@ -1569,6 +1605,10 @@ lfs_vunref_head(vp)
 		simple_unlock(&vp->v_interlock);
 		return;
 	}
+#ifdef DIAGNOSTIC
+	if(VOP_ISLOCKED(vp))
+		panic("lfs_vunref_head: vnode locked");
+#endif
 	/*
 	 * insert at head of LRU list
 	 */
