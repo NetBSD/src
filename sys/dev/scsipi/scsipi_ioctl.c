@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.12 1994/12/01 12:04:45 mycroft Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.13 1994/12/01 12:12:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -113,8 +113,9 @@ scsi_user_done(xs)
 	struct scsi_xfer *xs;
 {
 	struct buf *bp;
-	scsireq_t *screq;
 	struct scsi_ioctl *si;
+	scsireq_t *screq;
+	struct scsi_link *sc_link;
 
 	bp = xs->bp;
 	if (!bp) {	/* ALL user requests must have a buf */
@@ -129,37 +130,38 @@ scsi_user_done(xs)
 		return;
 	}
 	screq = &si->si_screq;
-
+	sc_link = si->si_sc_link;
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("user-done\n"));
+
 	screq->retsts = 0;
 	screq->status = xs->status;
 	switch (xs->error) {
 	case XS_NOERROR:
-		SC_DEBUG(xs->sc_link, SDEV_DB3, ("no error\n"));
+		SC_DEBUG(sc_link, SDEV_DB3, ("no error\n"));
 		screq->datalen_used = xs->datalen - xs->resid; /* probably rubbish */
 		screq->retsts = SCCMD_OK;
 		break;
 	case XS_SENSE:
-		SC_DEBUG(xs->sc_link, SDEV_DB3, ("have sense\n"));
+		SC_DEBUG(sc_link, SDEV_DB3, ("have sense\n"));
 		screq->senselen_used = min(sizeof(xs->sense), SENSEBUFLEN);
 		bcopy(&xs->sense, screq->sense, screq->senselen);
 		screq->retsts = SCCMD_SENSE;
 		break;
 	case XS_DRIVER_STUFFUP:
-		sc_print_addr(xs->sc_link);
+		sc_print_addr(sc_link);
 		printf("host adapter code inconsistency\n");
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
 	case XS_TIMEOUT:
-		SC_DEBUG(xs->sc_link, SDEV_DB3, ("timeout\n"));
+		SC_DEBUG(sc_link, SDEV_DB3, ("timeout\n"));
 		screq->retsts = SCCMD_TIMEOUT;
 		break;
 	case XS_BUSY:
-		SC_DEBUG(xs->sc_link, SDEV_DB3, ("busy\n"));
+		SC_DEBUG(sc_link, SDEV_DB3, ("busy\n"));
 		screq->retsts = SCCMD_BUSY;
 		break;
 	default:
-		sc_print_addr(xs->sc_link);
+		sc_print_addr(sc_link);
 		printf("unknown error category from host adapter code\n");
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
@@ -187,10 +189,10 @@ void
 scsistrategy(bp)
 	struct buf *bp;
 {
-	int error;
 	struct scsi_ioctl *si;
 	scsireq_t *screq;
 	struct scsi_link *sc_link;
+	int error;
 	int flags = 0;
 	int s;
 
@@ -201,13 +203,7 @@ scsistrategy(bp)
 		goto bad;
 	}
 	screq = &si->si_screq;
-
 	sc_link = si->si_sc_link;
-	if (!sc_link) {
-		printf("user_strat: No link pointer\n");
-		error = EINVAL;
-		goto bad;
-	}
 	SC_DEBUG(sc_link, SDEV_DB2, ("user_strategy\n"));
 
 	/*
