@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.75 2003/02/26 06:31:16 matt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.76 2003/04/19 20:58:36 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.75 2003/02/26 06:31:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.76 2003/04/19 20:58:36 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -159,6 +159,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.75 2003/02/26 06:31:16 matt Exp $")
  * TCP protocol interface to socket abstraction.
  */
 extern	char *tcpstates[];
+
+static int tcp_sysctl_ident(void *, size_t *, void *, size_t);
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
@@ -947,6 +949,9 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	if (namelen != 1)
 		return (ENOTDIR);
 
+	if (name[0] == TCPCTL_IDENT)
+		return tcp_sysctl_ident(oldp, oldlenp, newp, newlen);
+
 	if (name[0] < sizeof(tcp_ctlvars)/sizeof(tcp_ctlvars[0])
 	    && tcp_ctlvars[name[0]].valid) {
 		if (tcp_ctlvars[name[0]].rdonly) {
@@ -975,4 +980,42 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	}
 
 	return (ENOPROTOOPT);
+}
+
+
+static int 
+tcp_sysctl_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	struct sysctl_tcp_ident_args args;
+	struct socket *sockp;
+	struct inpcb *inb;
+	uid_t uid;
+	int error;
+
+	if (newlen != sizeof(args))
+		return EINVAL;
+	if (!newp)
+		return EFAULT;
+	if (*oldlenp != sizeof(uid_t))
+		return ENOMEM;
+	if (!oldp || *oldlenp != sizeof(uid_t))
+		return ENOMEM;
+	if ((error = copyin(newp, &args, newlen)) != 0)
+		return error;
+	
+	inb = in_pcblookup_connect(&tcbtable, args.raddr, args.rport,
+	    args.laddr, args.lport);
+	if (inb) {
+		sockp = inb->inp_socket;
+		if (sockp)
+			uid = sockp->so_uid;
+		else
+			return ESRCH;
+	} else
+		return ESRCH;
+
+	if ((error = copyout(&uid, oldp, sizeof(uid))) != 0)
+		return error;
+
+	return 0;
 }
