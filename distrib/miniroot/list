@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 1999/11/23 23:16:04 simonb Exp $
+#	$NetBSD: list,v 1.14 2000/06/07 20:32:06 thorpej Exp $
 
 SRCDIRS distrib/utils usr.bin bin sbin usr.sbin gnu/usr.bin
 
@@ -61,6 +61,7 @@ COPY	${DESTDIR}/etc/group		etc/group
 COPY	${DESTDIR}/etc/master.passwd	etc/master.passwd
 COPY	${DESTDIR}/etc/passwd		etc/passwd
 COPY	${DESTDIR}/etc/protocols	etc/protocols
+COPY	${DESTDIR}/etc/netconfig	etc/netconfig
 COPY	${DESTDIR}/etc/services		etc/services
 
 # and the installation scripts
