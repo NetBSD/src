@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.11 1996/03/18 22:33:07 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.10 1996/03/18 21:11:10 leo Exp $
 
 LIB=	kvm
 CFLAGS+=-DLIBC_SCCS

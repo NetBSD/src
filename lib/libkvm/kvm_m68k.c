@@ -1,3 +1,5 @@
+/*	$NetBSD: kvm_m68k.c,v 1.7 1996/03/18 22:33:41 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1989, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,8 +38,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_m68k.c,v 1.6 1996/03/16 10:23:51 leo Exp $";
+#if 0
+static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
+#else
+static char *rcsid = "$NetBSD: kvm_m68k.c,v 1.7 1996/03/18 22:33:41 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*

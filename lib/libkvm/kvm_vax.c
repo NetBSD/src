@@ -1,4 +1,5 @@
-/*	$NetBSD: kvm_vax.c,v 1.2 1995/04/25 15:41:11 ragge Exp $ */
+/*	$NetBSD: kvm_vax.c,v 1.3 1996/03/18 22:34:06 thorpej Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1989, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,8 +38,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
+#else
+static char *rcsid = "$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
+
 /*
  * MIPS machine dependent routines for kvm.  Hopefully, the forthcoming 
  * vm code will one day obsolete this module.
