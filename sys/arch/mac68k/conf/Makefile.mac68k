@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.25 1995/10/10 03:47:59 briggs Exp $
+#	$NetBSD: Makefile.mac68k,v 1.26 1995/11/01 04:53:34 briggs Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -35,7 +35,7 @@ MAC68K=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -DREFBIT -Dmac68k
-CFLAGS=	-O -Werror -fno-builtin ${COPTS}
+CFLAGS=	-O -Werror ${COPTS}
 
 ### Find out what to use for libkern.
 .include "$S/lib/libkern/Makefile.inc"
