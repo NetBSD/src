@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.33 1995/03/26 20:23:59 jtc Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.34 1995/08/17 16:26:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -190,6 +190,8 @@ struct disklabel {
 #define	DTYPE_HPIB		7		/* CS/80 on HP-IB */
 #define	DTYPE_HPFL		8		/* HP Fiber-link */
 #define	DTYPE_FLOPPY		10		/* floppy */
+#define	DTYPE_CCD		11		/* concatenated disk device */
+#define	DTYPE_VND		12		/* vnode pseudo-disk */
 
 #ifdef DKTYPENAMES
 static char *dktypenames[] = {
@@ -204,6 +206,8 @@ static char *dktypenames[] = {
 	"HP-FL",
 	"type 9",
 	"floppy",
+	"ccd",
+	"vnd",
 	NULL
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
