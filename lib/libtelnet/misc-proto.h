@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)misc-proto.h	8.1 (Berkeley) 6/4/93
- *	$Id: misc-proto.h,v 1.4 1995/06/05 19:47:02 pk Exp $
+ *	$NetBSD: misc-proto.h,v 1.5 1996/02/24 01:15:23 jtk Exp $
  */
 
 /*

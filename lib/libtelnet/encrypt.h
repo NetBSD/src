@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)encrypt.h	8.1 (Berkeley) 6/4/93
- *	$Id: encrypt.h,v 1.3 1994/02/25 02:52:58 cgd Exp $
+ *	$NetBSD: encrypt.h,v 1.4 1996/02/24 01:15:20 jtk Exp $
  */
 
 /*
