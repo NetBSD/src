@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.37 2001/09/15 16:13:03 chs Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.38 2001/11/06 07:15:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -779,11 +779,10 @@ ntfs_statfs(
 	struct proc *p)
 {
 	struct ntfsmount *ntmp = VFSTONTFS(mp);
-	u_int64_t mftsize,mftallocated;
+	u_int64_t mftallocated;
 
 	dprintf(("ntfs_statfs():\n"));
 
-	mftsize = VTOF(ntmp->ntm_sysvn[NTFS_MFTINO])->f_size;
 	mftallocated = VTOF(ntmp->ntm_sysvn[NTFS_MFTINO])->f_allocated;
 
 #if defined(__FreeBSD__)
