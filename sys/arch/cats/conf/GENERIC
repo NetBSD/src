@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.21 2002/03/10 19:56:40 lukem Exp $
+# $NetBSD: GENERIC,v 1.22 2002/04/02 05:30:39 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -122,7 +122,7 @@ options 	SYSVSHM		# System V-like memory sharing
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options

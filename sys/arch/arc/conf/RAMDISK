@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.26 2002/03/10 19:56:38 lukem Exp $
+#	$NetBSD: RAMDISK,v 1.27 2002/04/02 05:30:38 lukem Exp $
 #	$OpenBSD: RAMDISK,v 1.9 1999/08/29 12:14:03 niklas Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
@@ -24,7 +24,7 @@ options 	PLATFORM_SNI_RM200PCI
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=8192	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=8192	# size of memory disk, in blocks
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
