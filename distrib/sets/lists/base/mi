@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.461 2004/01/13 06:17:56 lukem Exp $
+# $NetBSD: mi,v 1.462 2004/01/13 06:27:16 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -669,6 +669,10 @@
 ./usr/include/fs				base-c-usr
 ./usr/include/fs/smbfs				base-c-usr
 ./usr/include/g++				base-cxx-usr
+./usr/include/g++/backward			base-cxx-usr
+./usr/include/g++/bits				base-cxx-usr
+./usr/include/g++/ext				base-cxx-usr
+./usr/include/g++/std				base-cxx-usr
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
 ./usr/include/kadm5				base-c-usr
