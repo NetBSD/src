@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.15 2002/11/26 18:51:16 thorpej Exp $
+#	$NetBSD: Makefile.news68k,v 1.16 2004/06/04 04:45:50 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -89,3 +89,8 @@ machdep.o mainbus.o trap.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

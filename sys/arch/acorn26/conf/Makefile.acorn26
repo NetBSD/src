@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn26,v 1.3 2002/10/05 17:16:33 chs Exp $
+#	$NetBSD: Makefile.acorn26,v 1.4 2004/06/04 04:45:49 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -90,3 +90,8 @@ LINKFORMAT=	-N
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND
