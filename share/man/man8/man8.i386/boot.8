@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.25 2002/03/19 05:22:33 gmcgarry Exp $
+.\"	$NetBSD: boot.8,v 1.26 2002/08/16 08:54:18 jdolecek Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,14 +68,13 @@ Once running, a banner similar to the following will appear:
 \*[Gt]\*[Gt] NetBSD BIOS Boot, revision 2.2
 \*[Gt]\*[Gt] (user@buildhost, builddate)
 \*[Gt]\*[Gt] Memory: 637/15360 k
-Use hd1a:netbsd to boot sd0 when wd0 is also installed
 Press return to boot now, any other key for boot menu
-booting wd0a:netbsd - starting in 5
+booting hd0a:netbsd - starting in 5
 .Ed
 .Pp
 After a countdown, the system image listed will be loaded. (In the
 above example, it will be
-.Dq Li wd0a:netbsd
+.Dq Li hd0a:netbsd
 which is the file
 .Nm netbsd
 on partition
@@ -121,14 +120,11 @@ The following list of supported devices may vary from installation to
 installation:
 .Pp
 .Bl -hang -compact
-.It sd
-SCSI disks on a controller recognized by the BIOS. The
-unit number is the BIOS device number.
-.It wd
-ST506, IDE, ESDI, RLL disks on a WD100[2367] or
-lookalike controller(s), as numbered by the BIOS.
 .It hd
-Hard disks as numbered by the BIOS.
+Hard disks as numbered by the BIOS. This includes
+ST506, IDE, ESDI, RLL disks on a WD100[2367] or
+lookalike controller(s), and SCSI disks
+on SCSI controllers recognized by the BIOS.
 .It fd
 Floppy drives as numbered by the BIOS.
 .El
@@ -241,13 +237,13 @@ interface, which is used by ports other than
 Hard disks are always accessed by BIOS functions. Unit numbers are
 BIOS device numbers which might differ from numbering in the
 .Nx
-kernel or physical parameters (eg SCSI slave numbers). The distinction
-between
+kernel or physical parameters (eg SCSI slave numbers). There isn't
+any distinction between
 .Dq sd
 and
 .Dq wd
-devices at the bootloader level is meaningless and exists for
-historical reasons. (This is less a bug of the bootloader code than
+devices at the bootloader level.
+(This is less a bug of the bootloader code than
 a shortcoming of the PC architecture.)
 The default disk device's name printed in the starting message
 is derived from the
