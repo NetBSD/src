@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.23 2003/02/19 12:55:58 simonb Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.24 2003/02/28 05:48:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.23 2003/02/19 12:55:58 simonb Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.24 2003/02/28 05:48:58 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -831,7 +831,7 @@ info(const char *arg)
 		printf("%5d  ", toc_buffer[i].track);
 		print_track(toc_buffer + i);
 	}
-	printf("    -  ", toc_buffer[n].track);	/* Lead-out area */
+	printf("    -  ");	/* Lead-out area */
 	print_track(toc_buffer + n);
 	return (0);
 }
