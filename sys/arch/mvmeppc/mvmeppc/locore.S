@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4 2003/04/27 10:42:51 ragge Exp $	*/
+/*	$NetBSD: locore.S,v 1.5 2003/07/28 09:23:54 scw Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -128,8 +128,6 @@ __start:
 	lis	%r3,__start@ha
 	addi	%r3,%r3,__start@l
 
-	li	%r5,0
-	li	%r6,0
 	bl	_C_LABEL(initppc)
 
 /* enable internal i/d-cache */
