@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.157 2001/10/13 08:25:57 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.158 2001/12/04 00:05:05 darrenr Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,6 +49,7 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

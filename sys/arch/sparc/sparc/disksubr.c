@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.30 2000/11/20 08:24:21 chs Exp $ */
+/*	$NetBSD: disksubr.c,v 1.31 2001/12/04 00:05:06 darrenr Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -30,6 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.23 2001/11/13 03:04:50 uwe Exp $ */
+/*	$NetBSD: cache.h,v 1.24 2001/12/04 00:05:06 darrenr Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -45,6 +45,10 @@
 
 #ifndef SPARC_CACHE_H
 #define SPARC_CACHE_H
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 /*
  * Sun-4 and Sun-4c virtual address cache.
