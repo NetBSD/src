@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.10 2001/11/13 06:17:47 lukem Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.10.10.1 2003/06/25 22:15:04 grant Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.10 2001/11/13 06:17:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.10.10.1 2003/06/25 22:15:04 grant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,7 +384,7 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 
 	    case A2('&', 'u'): /* DECRQUPSS request user preferred
 				  supplemental set */
-		wsdisplay_emulinput(edp->emulcookie, "\033P0!u%5\033\\", 9);
+		wsdisplay_emulinput(edp->cbcookie, "\033P0!u%5\033\\", 9);
 		break;
 
 	    case '@': /* ICH insert character VT300 only */
