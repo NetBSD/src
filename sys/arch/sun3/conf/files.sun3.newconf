@@ -1,4 +1,4 @@
-# $Id: files.sun3.newconf,v 1.12 1994/05/10 05:22:43 gwr Exp $
+# $Id: files.sun3.newconf,v 1.13 1994/05/27 15:02:02 gwr Exp $
 # sun3-specific configuration info
 
 maxusers 2 8 64
@@ -82,6 +82,7 @@ file arch/sun3/dev/obmem.c		obmem
 
 #
 #
+file arch/m68k/m68k/copy.s
 file arch/sun3/sun3/autoconf.c
 file arch/sun3/sun3/conf.c		
 file arch/sun3/sun3/control.c	
