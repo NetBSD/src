@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.75 2002/06/17 06:27:26 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.76 2002/06/17 16:21:05 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -116,6 +116,7 @@
 #	ch*	SCSI media changer
 #	audio*	one unit of the audio device. On Amiga machines,
 #		Unit 0 is custom chip audio, if configured
+#	systrace syscall tracer
 #
 
 # for new-style serial interfaces:
@@ -161,6 +162,7 @@ all)
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev isdns
 	makedev clockctl
+	makedev systrace
 	;;
 
 floppy)
@@ -653,6 +655,12 @@ clockctl)
 	mknod clockctl c 55 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 56 0
+	chmod 644 systrace
 	;;
 
 local)

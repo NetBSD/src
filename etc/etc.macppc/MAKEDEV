@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.60 2002/03/30 07:40:37 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.61 2002/06/17 16:21:09 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -105,6 +105,7 @@
 #	wsmux*	wscons event multiplexor
 #	pci*	PCI bus access devices
 #	sysmon	System Monitoring hardware
+#	systrace syscall tracer
 #
 
 dialin=0
@@ -145,6 +146,7 @@ all)
 	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	makedev clockctl
 	makedev sysmon
+	makedev systrace
 	;;
 
 audio)
@@ -735,6 +737,12 @@ sysmon)
 	rm -f watchdog
 	mknod watchdog c $major 1
 	chmod 644 watchdog
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 63 0
+	chmod 644 systrace
 	;;
 
 local)

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.48 2002/03/13 01:27:03 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.49 2002/06/17 16:21:15 christos Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -69,6 +69,7 @@
 #	uk*	unknown SCSI device
 #	ch*	SCSI media changer
 #	random	Random number generator
+#	systrace syscall tracer
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -99,6 +100,7 @@ all)
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev clockctl
+	makedev systrace
 	;;
 
 std)
@@ -569,6 +571,12 @@ clockctl)
 	mknod clockctl c 75 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 76 0
+	chmod 644 systrace
 	;;
 
 local)

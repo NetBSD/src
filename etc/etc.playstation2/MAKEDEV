@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.13 2002/05/25 09:25:25 hamajima Exp $
+#	$NetBSD: MAKEDEV,v 1.14 2002/06/17 16:21:12 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -61,6 +61,7 @@
 #	ipl	ip filter
 #	random	Random number generator
 #	tun*	network tunnel driver
+#	systrace syscall tracer
 #
 
 dialin=0
@@ -98,6 +99,7 @@ all)
 	makedev md0
 	makedev usbs
 	makedev clockctl
+	makedev systrace
 	;;
 
 std)
@@ -422,6 +424,12 @@ clockctl)
 	mknod clockctl c 38 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 39 0
+	chmod 644 systrace
 	;;
 
 *)

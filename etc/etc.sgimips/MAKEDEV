@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.21 2002/03/16 17:03:36 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.22 2002/06/17 16:21:13 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -99,6 +99,7 @@
 #	uk*	unknown SCSI device
 #	wsfont* console font control
 #	wsmux*  wscons event multiplexor
+#	systrace syscall tracer
 
 dialin=0
 dialout=524288
@@ -136,6 +137,7 @@ all)
 	makedev random local isdns
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev clockctl
+	makedev systrace
 	;;
 
 minimal)
@@ -487,6 +489,12 @@ clockctl)
 	mknod clockctl c 60 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 63 0
+	chmod 644 systrace
 	;;
 
 local)

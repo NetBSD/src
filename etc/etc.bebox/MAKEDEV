@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.31 2002/04/18 15:44:21 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.32 2002/06/17 16:21:05 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -102,6 +102,7 @@
 #	ch*	SCSI media changer
 #	cfs*	Coda file system device
 #	wsmux*	wscons event multiplexor
+#	systrace syscall tracer
 #
 
 dialin=0
@@ -142,6 +143,7 @@ all)
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev isdns
 	makedev clockctl
+	makedev systrace
 	;;
 
 floppy)
@@ -599,6 +601,12 @@ clockctl)
 	mknod clockctl c 58 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 59 0
+	chmod 644 systrace
 	;;
 
 local)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.56 2002/06/12 19:36:31 leo Exp $
+#	$NetBSD: MAKEDEV,v 1.57 2002/06/17 16:21:05 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -110,6 +110,7 @@
 #	uk*	unknown SCSI device
 #	ch*	SCSI media changer
 #	view*	generic interface to graphic displays.
+#	systrace syscall tracer
 #
 # Video devices:
 #	etvme	Tseng et-compatible cards on VME
@@ -158,6 +159,7 @@ all)
 	makedev isdns
 	makedev clockctl
 	makedev wscons
+	makedev systrace
 	;;
 
 floppy)
@@ -620,6 +622,12 @@ clockctl)
 	mknod clockctl c 52 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 53 0
+	chmod 644 systrace
 	;;
 
 local)

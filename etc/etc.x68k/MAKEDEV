@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.51 2002/06/15 11:16:45 isaki Exp $
+#	$NetBSD: MAKEDEV,v 1.52 2002/06/17 16:21:15 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -105,6 +105,7 @@
 #	uk*	unknown SCSI device
 #	ss*	SCSI scanner
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
+#	systrace syscall tracer
 #
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
@@ -141,6 +142,7 @@ all)
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev isdns
 	makedev clockctl
+	makedev systrace
 	;;
 
 floppy)
@@ -583,6 +585,12 @@ clockctl)
 	mknod clockctl c 48 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 49 0
+	chmod 644 systrace
 	;;
 
 local)

@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.60 2002/04/27 19:29:08 shiba Exp $
+#	$NetBSD: MAKEDEV,v 1.61 2002/06/17 16:21:09 christos Exp $
 #
 ###########################################################################
 #
@@ -82,6 +82,7 @@
 #	adb	Apple Desktop Bus
 #	asc*	Apple Sound Chip
 #	cfs*	Venus cache driver, for Coda
+#	systrace syscall tracer
 #
 
 dialin=0
@@ -118,6 +119,7 @@ all)
 	makedev tun0 tun1 tun2 tun3 asc0 lkm ipl local
 	makedev scsibus0 scsibus1 scsibus2 scsibus3 cfs0
 	makedev clockctl
+	makedev systrace
 	;;
 
 std)
@@ -428,6 +430,11 @@ clockctl)
 	chmod 660 clockctl
 	;;
 
+systrace)
+	rm -f systrace
+	mknod systrace c 50 0
+	chmod 644 systrace
+	;;
 local)
 	umask 0
 	sh $0.local all

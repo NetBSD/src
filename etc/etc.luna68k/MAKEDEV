@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.16 2002/03/13 01:26:58 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.17 2002/06/17 16:21:08 christos Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -34,6 +34,7 @@
 #	uk*	unknown SCSI device
 #	wskbd0	Workstation console ("wscons") keyboard
 #	wsmouse0  Workstation console ("wscons") mouse
+#	systrace syscall tracer
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -61,6 +62,7 @@ all)
 	sh -$- $0 wskbd wsmouse ttyE0 ttyEcfg
 	sh -$- $0 scsibus0
 	sh -$- $0 clockctl
+	sh -$- $0 systrace
 	;;
 std)
 	rm -f console drum mem kmem null zero io klog
@@ -305,6 +307,12 @@ clockctl)
 	mknod clockctl c 35 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 36 0
+	chmod 644 systrace
 	;;
 
 local)

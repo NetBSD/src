@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.1 2002/04/10 14:21:46 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.2 2002/06/17 16:21:13 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -105,6 +105,7 @@
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
 #	uk*	unknown SCSI device
+#	systrace syscall tracer
 
 dialin=0
 dialout=524288
@@ -136,6 +137,7 @@ all)
 	sh $0 pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	sh $0 altq
 	sh $0 clockctl
+	sh $0 systrace
 	;;
 
 minimal)
@@ -608,6 +610,12 @@ clockctl)
 	mknod clockctl c 69 0
 	chown root.ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 70 0
+	chmod 644 systrace
 	;;
 
 local)
