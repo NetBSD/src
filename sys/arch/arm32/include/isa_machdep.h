@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.5 1999/03/19 05:01:52 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.6 2000/02/07 22:07:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
 	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))
 #define	isa_dmacascade(ic, c)						\
 	_isa_dmacascade(&(ic)->ic_dmastate, (c))
+#define	isa_dmamaxsize(ic, c)						\
+	_isa_dmamaxsize(&(ic)->ic_dmastate, (c))
 #define	isa_dmamap_create(ic, c, s, f)					\
 	_isa_dmamap_create(&(ic)->ic_dmastate, (c), (s), (f))
 #define	isa_dmamap_destroy(ic, c)					\
