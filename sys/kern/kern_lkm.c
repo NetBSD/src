@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.26 1995/10/10 00:23:20 thorpej Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.27 1996/02/04 02:15:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -44,7 +44,6 @@
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
@@ -53,12 +52,16 @@
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
+
+#include <kern/kern_conf.h>
+
 #include <sys/lkm.h>
 #include <sys/syscall.h>
 
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/vm_kern.h>
+
 
 #define PAGESIZE 1024		/* kmem_alloc() allocation quantum */
 
@@ -80,6 +83,18 @@ static int	lkm_state = LKMS_IDLE;
 
 static struct lkm_table	lkmods[MAXLKMS];	/* table of loaded modules */
 static struct lkm_table	*curp;			/* global for in-progress ops */
+
+static void lkmunreserve __P((void));
+static int _lkm_syscall __P((struct lkm_table *, int));
+static int _lkm_vfs __P((struct lkm_table *, int));
+static int _lkm_dev __P((struct lkm_table *, int));
+#ifdef STREAMS
+static int _lkm_strmod __P((struct lkm_table *, int));
+#endif
+static int _lkm_exec __P((struct lkm_table *, int));
+
+int lkmexists __P((struct lkm_table *));
+int lkmdispatch __P((struct lkm_table *, int));
 
 /*ARGSUSED*/
 int
@@ -107,7 +122,8 @@ lkmopen(dev, flag, devtype, p)
 		 * Sleep pending unlock; we use tsleep() to allow
 		 * an alarm out of the open.
 		 */
-		if (error = tsleep((caddr_t)&lkm_v, TTIPRI|PCATCH, "lkmopn", 0))
+		error = tsleep((caddr_t)&lkm_v, TTIPRI|PCATCH, "lkmopn", 0);
+		if (error)
 			return (error);	/* leave LKM_WANT set -- no problem */
 	}
 	lkm_v |= LKM_ALLOC;
@@ -120,7 +136,7 @@ lkmopen(dev, flag, devtype, p)
  * a coerced close of the lkm device (close on premature exit of modload)
  * or explicitly by modload as a result of a link failure.
  */
-static int
+static void
 lkmunreserve()
 {
 
@@ -171,19 +187,19 @@ lkmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-lkmioctl(dev, cmd, data, flag)
+lkmioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
-	int err = 0;
+	int error = 0;
 	int i;
 	struct lmc_resrv *resrvp;
 	struct lmc_loadbuf *loadbufp;
 	struct lmc_unload *unloadp;
 	struct lmc_stat	 *statp;
-	int (*funcp)();
 	char istr[MAXLKMNAME];
 
 	switch(cmd) {
@@ -203,7 +219,7 @@ lkmioctl(dev, cmd, data, flag)
 			if (!lkmods[i].used)
 				break;
 		if (i == MAXLKMS) {
-			err = ENOMEM;		/* no slots available */
+			error = ENOMEM;		/* no slots available */
 			break;
 		}
 		curp = &lkmods[i];
@@ -243,12 +259,14 @@ lkmioctl(dev, cmd, data, flag)
 		    || i < 0
 		    || i > MODIOBUF
 		    || i > curp->size - curp->offset) {
-			err = ENOMEM;
+			error = ENOMEM;
 			break;
 		}
 
 		/* copy in buffer full of data */
-		if (err = copyin((caddr_t)loadbufp->data, (caddr_t)curp->area + curp->offset, i))
+		error = copyin(loadbufp->data, 
+			       (caddr_t)curp->area + curp->offset, i);
+		if (error)
 			break;
 
 		if ((curp->offset + i) < curp->size) {
@@ -302,10 +320,12 @@ lkmioctl(dev, cmd, data, flag)
 			return ENXIO;
 		}
 
-		curp->entry = (int (*)()) (*((long *) (data)));
+		curp->entry = (int (*) __P((struct lkm_table *, int, int)))
+				(*((long *) (data)));
 
 		/* call entry(load)... (assigns "private" portion) */
-		if (err = (*(curp->entry))(curp, LKM_E_LOAD, LKM_VERSION)) {
+		error = (*(curp->entry))(curp, LKM_E_LOAD, LKM_VERSION);
+		if (error) {
 			/*
 			 * Module may refuse loading or may have a
 			 * version mismatch...
@@ -337,8 +357,9 @@ lkmioctl(dev, cmd, data, flag)
 			 * Copy name and lookup id from all loaded
 			 * modules.  May fail.
 			 */
-		 	if (err = copyinstr(unloadp->name, istr, MAXLKMNAME-1,
-			    (size_t *)0))
+		 	error = copyinstr(unloadp->name, istr, MAXLKMNAME-1,
+					  NULL);
+			if (error)
 				break;
 
 			/*
@@ -357,20 +378,20 @@ lkmioctl(dev, cmd, data, flag)
 		 * Range check the value; on failure, return EINVAL
 		 */
 		if (i < 0 || i >= MAXLKMS) {
-			err = EINVAL;
+			error = EINVAL;
 			break;
 		}
 
 		curp = &lkmods[i];
 
 		if (!curp->used) {
-			err = ENOENT;
+			error = ENOENT;
 			break;
 		}
 
 		/* call entry(unload) */
 		if ((*(curp->entry))(curp, LKM_E_UNLOAD, LKM_VERSION)) {
-			err = EBUSY;
+			error = EBUSY;
 			break;
 		}
 
@@ -402,7 +423,7 @@ lkmioctl(dev, cmd, data, flag)
 			}
 
 			if (i == MAXLKMS) {		/* Not found */
-				err = ENOENT;
+				error = ENOENT;
 				break;
 			}
 		}
@@ -411,14 +432,14 @@ lkmioctl(dev, cmd, data, flag)
 		 * Range check the value; on failure, return EINVAL
 		 */
 		if (i < 0 || i >= MAXLKMS) {
-			err = EINVAL;
+			error = EINVAL;
 			break;
 		}
 
 		curp = &lkmods[i];
 
 		if (!curp->used) {			/* Not found */
-			err = ENOENT;
+			error = ENOENT;
 			break;
 		}
 
@@ -440,11 +461,11 @@ lkmioctl(dev, cmd, data, flag)
 		break;
 
 	default:		/* bad ioctl()... */
-		err = ENOTTY;
+		error = ENOTTY;
 		break;
 	}
 
-	return (err);
+	return (error);
 }
 
 /*
@@ -528,7 +549,7 @@ _lkm_syscall(lkmtp, cmd)
 {
 	struct lkm_syscall *args = lkmtp->private.lkm_syscall;
 	int i;
-	int err = 0;
+	int error = 0;
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -545,12 +566,12 @@ _lkm_syscall(lkmtp, cmd)
 					break;		/* found it! */
 			/* out of allocable slots? */
 			if (i == SYS_MAXSYSCALL) {
-				err = ENFILE;
+				error = ENFILE;
 				break;
 			}
 		} else {				/* assign */
 			if (i < 0 || i >= SYS_MAXSYSCALL) {
-				err = EINVAL;
+				error = EINVAL;
 				break;
 			}
 		}
@@ -579,7 +600,7 @@ _lkm_syscall(lkmtp, cmd)
 		break;
 	}
 
-	return (err);
+	return (error);
 }
 
 /*
@@ -593,7 +614,7 @@ _lkm_vfs(lkmtp, cmd)
 {
 	struct lkm_vfs *args = lkmtp->private.lkm_vfs;
 	int i;
-	int err = 0;
+	int error = 0;
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -613,7 +634,7 @@ _lkm_vfs(lkmtp, cmd)
 			if (vfssw[i] == (struct vfsops *)0)
 				break;
 		if (i == -1) {		/* or if none, punt */
-			err = EINVAL;
+			error = EINVAL;
 			break;
 		}
 
@@ -647,7 +668,7 @@ _lkm_vfs(lkmtp, cmd)
 		break;
 	}
 
-	return (err);
+	return (error);
 }
 
 /*
@@ -661,7 +682,7 @@ _lkm_dev(lkmtp, cmd)
 {
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
 	int i;
-	int err = 0;
+	int error = 0;
 	extern int nblkdev, nchrdev;	/* from conf.c */
 
 	switch(cmd) {
@@ -681,12 +702,12 @@ _lkm_dev(lkmtp, cmd)
 						break;		/* found it! */
 				/* out of allocable slots? */
 				if (i == nblkdev) {
-					err = ENFILE;
+					error = ENFILE;
 					break;
 				}
 			} else {				/* assign */
 				if (i < 0 || i >= nblkdev) {
-					err = EINVAL;
+					error = EINVAL;
 					break;
 				}
 			}
@@ -711,12 +732,12 @@ _lkm_dev(lkmtp, cmd)
 						break;		/* found it! */
 				/* out of allocable slots? */
 				if (i == nchrdev) {
-					err = ENFILE;
+					error = ENFILE;
 					break;
 				}
 			} else {				/* assign */
 				if (i < 0 || i >= nchrdev) {
-					err = EINVAL;
+					error = EINVAL;
 					break;
 				}
 			}
@@ -733,7 +754,7 @@ _lkm_dev(lkmtp, cmd)
 			break;
 
 		default:
-			err = ENODEV;
+			error = ENODEV;
 			break;
 		}
 		break;
@@ -754,7 +775,7 @@ _lkm_dev(lkmtp, cmd)
 			break;
 
 		default:
-			err = ENODEV;
+			error = ENODEV;
 			break;
 		}
 		break;
@@ -763,7 +784,7 @@ _lkm_dev(lkmtp, cmd)
 		break;
 	}
 
-	return (err);
+	return (error);
 }
 
 #ifdef STREAMS
@@ -778,7 +799,7 @@ _lkm_strmod(lkmtp, cmd)
 {
 	struct lkm_strmod *args = lkmtp->private.lkm_strmod;
 	int i;
-	int err = 0;
+	int error = 0;
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -794,7 +815,7 @@ _lkm_strmod(lkmtp, cmd)
 		break;
 	}
 
-	return (err);
+	return (error);
 }
 #endif	/* STREAMS */
 
@@ -809,7 +830,7 @@ _lkm_exec(lkmtp, cmd)
 {
 	struct lkm_exec *args = lkmtp->private.lkm_exec;
 	int i;
-	int err = 0;
+	int error = 0;
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -826,12 +847,12 @@ _lkm_exec(lkmtp, cmd)
 					break;		/* found it! */
 			/* out of allocable slots? */
 			if (i == nexecs) {
-				err = ENFILE;
+				error = ENFILE;
 				break;
 			}
 		} else {				/* assign */
 			if (i < 0 || i >= nexecs) {
-				err = EINVAL;
+				error = EINVAL;
 				break;
 			}
 		}
@@ -866,7 +887,7 @@ _lkm_exec(lkmtp, cmd)
 		break;
 	}
 
-	return (err);
+	return (error);
 }
 
 /*
@@ -880,19 +901,19 @@ lkmdispatch(lkmtp, cmd)
 	struct lkm_table *lkmtp;	
 	int cmd;
 {
-	int err = 0;		/* default = success */
+	int error = 0;		/* default = success */
 
 	switch(lkmtp->private.lkm_any->lkm_type) {
 	case LM_SYSCALL:
-		err = _lkm_syscall(lkmtp, cmd);
+		error = _lkm_syscall(lkmtp, cmd);
 		break;
 
 	case LM_VFS:
-		err = _lkm_vfs(lkmtp, cmd);
+		error = _lkm_vfs(lkmtp, cmd);
 		break;
 
 	case LM_DEV:
-		err = _lkm_dev(lkmtp, cmd);
+		error = _lkm_dev(lkmtp, cmd);
 		break;
 
 #ifdef STREAMS
@@ -905,16 +926,16 @@ lkmdispatch(lkmtp, cmd)
 #endif	/* STREAMS */
 
 	case LM_EXEC:
-		err = _lkm_exec(lkmtp, cmd);
+		error = _lkm_exec(lkmtp, cmd);
 		break;
 
 	case LM_MISC:	/* ignore content -- no "misc-specific" procedure */
 		break;
 
 	default:
-		err = ENXIO;	/* unknown type */
+		error = ENXIO;	/* unknown type */
 		break;
 	}
 
-	return (err);
+	return (error);
 }

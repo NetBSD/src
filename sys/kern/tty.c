@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.64 1996/01/10 20:52:27 pk Exp $	*/
+/*	$NetBSD: tty.c,v 1.65 1996/02/04 02:17:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -55,14 +55,18 @@
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/signalvar.h>
+#include <sys/resourcevar.h>
 
 #include <vm/vm.h>
 
-static int	proc_compare __P((struct proc *p1, struct proc *p2));
-static int	ttnread __P((struct tty *));
-static void	ttyblock __P((struct tty *tp));
-static void	ttyecho __P((int, struct tty *tp));
-static void	ttyrubo __P((struct tty *, int));
+#include <kern/kern_extern.h>
+
+static int ttnread __P((struct tty *));
+static void ttyblock __P((struct tty *));
+static void ttyecho __P((int, struct tty *));
+static void ttyrubo __P((struct tty *, int));
+static int proc_compare __P((struct proc *, struct proc *));
 
 /* Symbolic sleep message strings. */
 char ttclos[]	= "ttycls";
@@ -149,7 +153,7 @@ char const char_type[] = {
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
+#define	CLR(t, f)	(t) &= ~((unsigned)(f))
 #define	ISSET(t, f)	((t) & (f))
 
 /*
@@ -208,7 +212,7 @@ ttyclose(tp)
 /* Is 'c' a line delimiter ("break" character)? */
 #define	TTBREAKC(c)							\
 	((c) == '\n' || ((c) == cc[VEOF] ||				\
-	(c) == cc[VEOL] || (c) == cc[VEOL2]) && (c) != _POSIX_VDISABLE)
+	(c) == cc[VEOL] || (((c) == cc[VEOL2]) && (c) != _POSIX_VDISABLE)))
 
 
 /*
@@ -221,7 +225,7 @@ ttyinput(c, tp)
 {
 	register int iflag, lflag;
 	register u_char *cc;
-	int i, err;
+	int i, error;
 
 	/*
 	 * If input is pending take it first.
@@ -244,9 +248,9 @@ ttyinput(c, tp)
 	/* Handle exceptional conditions (break, parity, framing). */
 	cc = tp->t_cc;
 	iflag = tp->t_iflag;
-	if (err = (ISSET(c, TTY_ERRORMASK))) {
+	if ((error = (ISSET(c, TTY_ERRORMASK))) != 0) {
 		CLR(c, TTY_ERRORMASK);
-		if (ISSET(err, TTY_FE) && !c) {	/* Break. */
+		if (ISSET(error, TTY_FE) && !c) {	/* Break. */
 			if (ISSET(iflag, IGNBRK))
 				goto endcase;
 			else if (ISSET(iflag, BRKINT) &&
@@ -255,8 +259,8 @@ ttyinput(c, tp)
 				c = cc[VINTR];
 			else if (ISSET(iflag, PARMRK))
 				goto parmrk;
-		} else if (ISSET(err, TTY_PE) &&
-		    ISSET(iflag, INPCK) || ISSET(err, TTY_FE)) {
+		} else if ((ISSET(error, TTY_PE) &&
+			    ISSET(iflag, INPCK)) || ISSET(error, TTY_FE)) {
 			if (ISSET(iflag, IGNPAR))
 				goto endcase;
 			else if (ISSET(iflag, PARMRK)) {
@@ -659,8 +663,9 @@ ttioctl(tp, cmd, data, flag, p)
 		    (p->p_sigignore & sigmask(SIGTTOU)) == 0 &&
 		    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
 			pgsignal(p->p_pgrp, SIGTTOU, 1);
-			if (error = ttysleep(tp,
-			    &lbolt, TTOPRI | PCATCH, ttybg, 0))
+			error = ttysleep(tp,
+					 &lbolt, TTOPRI | PCATCH, ttybg, 0);
+			if (error)
 				return (error);
 		}
 		break;
@@ -702,7 +707,7 @@ ttioctl(tp, cmd, data, flag, p)
 			    (TS_CARR_ON | TS_ISOPEN))
 				return (EBUSY);
 #ifndef	UCONSOLE
-			if (error = suser(p->p_ucred, &p->p_acflag))
+			if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 				return (error);
 #endif
 			constty = tp;
@@ -710,7 +715,7 @@ ttioctl(tp, cmd, data, flag, p)
 			constty = NULL;
 		break;
 	case TIOCDRAIN:			/* wait till output drained */
-		if (error = ttywait(tp))
+		if ((error = ttywait(tp)) != 0)
 			return (error);
 		break;
 	case TIOCGETA: {		/* get termios struct */
@@ -752,7 +757,7 @@ ttioctl(tp, cmd, data, flag, p)
 
 		s = spltty();
 		if (cmd == TIOCSETAW || cmd == TIOCSETAF) {
-			if (error = ttywait(tp)) {
+			if ((error = ttywait(tp)) != 0) {
 				splx(s);
 				return (error);
 			}
@@ -862,8 +867,8 @@ ttioctl(tp, cmd, data, flag, p)
 	case TIOCSCTTY:			/* become controlling tty */
 		/* Session ctty vnode pointer set in vnode layer. */
 		if (!SESS_LEADER(p) ||
-		    (p->p_session->s_ttyvp || tp->t_session) &&
-		    (tp->t_session != p->p_session))
+		    ((p->p_session->s_ttyvp || tp->t_session) &&
+		     (tp->t_session != p->p_session)))
 			return (EPERM);
 		tp->t_session = p->p_session;
 		tp->t_pgrp = p->p_pgrp;
@@ -916,8 +921,8 @@ ttselect(device, rw, p)
 	switch (rw) {
 	case FREAD:
 		nread = ttnread(tp);
-		if (nread > 0 || !ISSET(tp->t_cflag, CLOCAL) &&
-		    !ISSET(tp->t_state, TS_CARR_ON))
+		if (nread > 0 || (!ISSET(tp->t_cflag, CLOCAL) &&
+				  !ISSET(tp->t_state, TS_CARR_ON)))
 			goto win;
 		selrecord(p, &tp->t_rsel);
 		break;
@@ -966,8 +971,8 @@ ttywait(tp)
 	    && tp->t_oproc) {
 		(*tp->t_oproc)(tp);
 		SET(tp->t_state, TS_ASLEEP);
-		if (error = ttysleep(tp,
-		    &tp->t_outq, TTOPRI | PCATCH, ttyout, 0))
+		error = ttysleep(tp, &tp->t_outq, TTOPRI | PCATCH, ttyout, 0);
+		if (error)
 			break;
 	}
 	splx(s);
@@ -1046,9 +1051,9 @@ ttyblock(tp)
 	 * Block further input iff: current input > threshold
 	 * AND input is available to user program.
 	 */
-	if (total >= TTYHOG / 2 &&
-	    !ISSET(tp->t_state, TS_TBLOCK) &&
-	    !ISSET(tp->t_lflag, ICANON) || tp->t_canq.c_cc > 0) {
+	if ((total >= TTYHOG / 2 &&
+	     !ISSET(tp->t_state, TS_TBLOCK) &&
+	     !ISSET(tp->t_lflag, ICANON)) || tp->t_canq.c_cc > 0) {
 		if (ISSET(tp->t_iflag, IXOFF) &&
 		    tp->t_cc[VSTOP] != _POSIX_VDISABLE &&
 		    putc(tp->t_cc[VSTOP], &tp->t_outq) == 0) {
@@ -1212,7 +1217,7 @@ ttread(tp, uio, flag)
 	register struct proc *p = curproc;
 	int s, first, error = 0;
 	struct timeval stime;
-	int has_stime = 0, last_cc;
+	int has_stime = 0, last_cc = 0;
 	long slp = 0;
 
 loop:	lflag = tp->t_lflag;
@@ -1233,7 +1238,8 @@ loop:	lflag = tp->t_lflag;
 		    p->p_flag & P_PPWAIT || p->p_pgrp->pg_jobc == 0)
 			return (EIO);
 		pgsignal(p->p_pgrp, SIGTTIN, 1);
-		if (error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg, 0))
+		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg, 0);
+		if (error)
 			return (error);
 		goto loop;
 	}
@@ -1342,8 +1348,9 @@ read:
 		if (CCEQ(cc[VDSUSP], c) && ISSET(lflag, ISIG)) {
 			pgsignal(tp->t_pgrp, SIGTSTP, 1);
 			if (first) {
-				if (error = ttysleep(tp,
-				    &lbolt, TTIPRI | PCATCH, ttybg, 0))
+				error = ttysleep(tp, &lbolt,
+						 TTIPRI | PCATCH, ttybg, 0);
+				if (error)
 					break;
 				goto loop;
 			}
@@ -1433,7 +1440,7 @@ ttwrite(tp, uio, flag)
 	register struct uio *uio;
 	int flag;
 {
-	register u_char *cp;
+	register u_char *cp = NULL;
 	register int cc, ce;
 	register struct proc *p;
 	int i, hiwat, cnt, error, s;
@@ -1475,7 +1482,8 @@ loop:
 	    (p->p_sigmask & sigmask(SIGTTOU)) == 0 &&
 	     p->p_pgrp->pg_jobc) {
 		pgsignal(p->p_pgrp, SIGTTOU, 1);
-		if (error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg, 0))
+		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg, 0);
+		if (error)
 			goto out;
 		goto loop;
 	}
@@ -1768,8 +1776,8 @@ ttyecho(c, tp)
 	    (!ISSET(tp->t_lflag, ECHONL) || c != '\n')) ||
 	    ISSET(tp->t_lflag, EXTPROC))
 		return;
-	if (ISSET(tp->t_lflag, ECHOCTL) &&
-	    (ISSET(c, TTY_CHARMASK) <= 037 && c != '\t' && c != '\n' ||
+	if (((ISSET(tp->t_lflag, ECHOCTL) &&
+	     (ISSET(c, TTY_CHARMASK) <= 037 && c != '\t' && c != '\n')) ||
 	    ISSET(c, TTY_CHARMASK) == 0177)) {
 		(void)ttyoutput('^', tp);
 		CLR(c, ~TTY_CHARMASK);
@@ -2016,7 +2024,7 @@ ttysleep(tp, chan, pri, wmesg, timo)
 	short gen;
 
 	gen = tp->t_gen;
-	if (error = tsleep(chan, pri, wmesg, timo))
+	if ((error = tsleep(chan, pri, wmesg, timo)) != 0)
 		return (error);
 	return (tp->t_gen == gen ? 0 : ERESTART);
 }

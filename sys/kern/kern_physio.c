@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.25 1995/10/10 02:51:45 mycroft Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.26 1996/02/04 02:15:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -46,6 +46,8 @@
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
+
+#include <vm/vm.h>
 
 /*
  * The routines implemented in this file are described in:
@@ -96,7 +98,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			return (EFAULT);
 
 	/* Make sure we have a buffer, creating one if necessary. */
-	if (nobuf = (bp == NULL))
+	if ((nobuf = (bp == NULL)) != 0)
 		bp = getphysbuf();
 
 	/* [raise the processor priority level to splbio;] */
