@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.67 2004/06/28 21:07:48 bouyer Exp $
+#	$NetBSD: GENERIC_TINY,v 1.68 2004/07/06 22:53:36 mycroft Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -24,9 +24,6 @@ options 	MATH_EMULATE	# floating point emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 # insert delay no-ops in interrupts; recommended on very old machines
 options 	PIC_DELAY
-
-# Misc. i386-specific options
-#options 	XSERVER		# X server support in console drivers
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.

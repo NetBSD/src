@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.618 2004/07/05 22:30:38 abs Exp $
+# $NetBSD: GENERIC,v 1.619 2004/07/06 22:53:36 mycroft Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.618 $"
+#ident 		"GENERIC-$Revision: 1.619 $"
 
 maxusers	32		# estimated number of users
 
@@ -437,9 +437,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
-# pccons-specific options:
-#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
-#options 	XSERVER		# X server support
 
 
 # wscons

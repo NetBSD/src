@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.48 2004/06/14 01:28:00 lukem Exp $
+#	$NetBSD: SWINGER,v 1.49 2004/07/06 22:53:37 mycroft Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.48 $"
+#ident 		"SWINGER-$Revision: 1.49 $"
 
 maxusers	64		# estimated number of users
 
@@ -25,10 +25,6 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
-
-# Misc. i386-specific options
-options 	XSERVER		# X server support in console drivers
-#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
