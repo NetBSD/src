@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.9 1995/03/21 01:30:09 cgd Exp $	*/
+/*	$NetBSD: fsck.h,v 1.10 1995/04/12 21:24:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -177,6 +177,7 @@ int	newinofmt;		/* filesystem has new inode format */
 char	preen;			/* just fix normal inconsistencies */
 char	hotroot;		/* checking root device */
 char	havesb;			/* superblock has been read */
+char	skipclean;		/* skip clean file systems if preening */
 int	fsmodified;		/* 1 => write done to file system */
 int	fsreadfd;		/* file descriptor for reading file system */
 int	fswritefd;		/* file descriptor for writing file system */

@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: utilities.c,v 1.13 1995/03/18 14:56:02 cgd Exp $";
+static char rcsid[] = "$NetBSD: utilities.c,v 1.14 1995/04/12 21:24:13 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,8 @@ rwerror(mesg, blk)
 }
 
 void
-ckfini()
+ckfini(markclean)
+	int markclean;
 {
 	register struct bufarea *bp, *nbp;
 	int cnt = 0;
@@ -266,6 +267,20 @@ ckfini()
 	if (bufhead.b_size != cnt)
 		errexit("Panic: lost %d buffers\n", bufhead.b_size - cnt);
 	pbp = pdirbp = (struct bufarea *)0;
+	if (markclean && (sblock.fs_clean & FS_ISCLEAN) == 0) {
+		/*
+		 * Mark the file system as clean, and sync the superblock.
+		 */
+		if (preen)
+			pwarn("MARKING FILE SYSTEM CLEAN\n");
+		else if (!reply("MARK FILE SYSTEM CLEAN"))
+			markclean = 0;
+		if (markclean) {
+			sblock.fs_clean = FS_ISCLEAN;
+			sbdirty();
+			flush(fswritefd, &sblk);
+		}
+	}
 	if (debug)
 		printf("cache missed %ld of %ld (%d%%)\n", diskreads,
 		    totalreads, (int)(diskreads * 100 / totalreads));
@@ -455,7 +470,7 @@ void
 catch()
 {
 	if (!doinglevel2)
-		ckfini();
+		ckfini(0);
 	exit(12);
 }
 
