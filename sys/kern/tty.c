@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.70 1996/05/30 23:32:33 mrg Exp $	*/
+/*	$NetBSD: tty.c,v 1.71 1996/05/30 23:43:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -2033,6 +2033,7 @@ ttysleep(tp, chan, pri, wmesg, timo)
 void
 tty_init()
 {
+
 	TAILQ_INIT(&ttylist);
 	tty_count = 0;
 }
@@ -2044,6 +2045,7 @@ void
 tty_attach(tp)
 	struct tty *tp;
 {
+
 	TAILQ_INSERT_TAIL(&ttylist, tp, tty_link);
 	++tty_count;
 }
@@ -2055,6 +2057,7 @@ void
 tty_detach(tp)
 	struct tty *tp;
 {
+
 	--tty_count;
 #ifdef DIAGNOSTIC
 	if (tty_count < 0)
@@ -2086,8 +2089,9 @@ ttymalloc()
  */
 void
 ttyfree(tp)
-struct tty *tp;
+	struct tty *tp;
 {
+
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
