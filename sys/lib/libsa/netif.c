@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.9 1997/06/26 19:11:44 drochner Exp $	*/
+/*	$NetBSD: netif.c,v 1.10 1997/09/06 13:57:14 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -248,7 +248,7 @@ netif_get(desc, pkt, len, timo)
 #ifdef NETIF_DEBUG
 	if (netif_debug)
 		printf("%s%d: netif_get returning %d\n", drv->netif_bname,
-		    nif->nif_unit, rv);
+		    nif->nif_unit, (int)rv);
 #endif
 	return rv;
 }
@@ -278,7 +278,7 @@ netif_put(desc, pkt, len)
 #ifdef NETIF_DEBUG
 	if (netif_debug)
 		printf("%s%d: netif_put returning %d\n", drv->netif_bname,
-		    nif->nif_unit, rv);
+		    nif->nif_unit, (int)rv);
 #endif
 	return rv;
 }
