@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.96 1998/08/09 20:28:07 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.97 1998/08/10 01:13:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2306,7 +2306,7 @@ audiosetinfo(sc, ai)
 {
 	struct audio_prinfo *r = &ai->record, *p = &ai->play;
 	int cleared;
-	int s, setmode;
+	int s, setmode, modechange;
 	int error;
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_params pp, rp;
@@ -2375,7 +2375,7 @@ audiosetinfo(sc, ai)
 	if (nr) {
 		if (!cleared)
 			audio_clear(sc);
-		cleared = 1;
+		modechange = cleared = 1;
 		rp.sw_code = 0;
 		rp.factor = 1;
 		setmode |= AUMODE_RECORD;
@@ -2383,7 +2383,7 @@ audiosetinfo(sc, ai)
 	if (np) {
 		if (!cleared)
 			audio_clear(sc);
-		cleared = 1;
+		modechange = cleared = 1;
 		pp.sw_code = 0;
 		pp.factor = 1;
 		setmode |= AUMODE_PLAY;
@@ -2392,7 +2392,7 @@ audiosetinfo(sc, ai)
 	if (ai->mode != ~0) {
 		if (!cleared)
 			audio_clear(sc);
-		cleared = 1;
+		modechange = cleared = 1;
 		sc->sc_mode = ai->mode;
 		if (sc->sc_mode & AUMODE_PLAY_ALL)
 			sc->sc_mode |= AUMODE_PLAY;
@@ -2401,7 +2401,7 @@ audiosetinfo(sc, ai)
 			sc->sc_mode &= ~AUMODE_RECORD;
 	}
 
-	if (setmode) {
+	if (modechange) {
 		int indep = hw->get_props(sc->hw_hdl) & AUDIO_PROP_INDEPENDENT;
 		if (!indep) {
 			if (setmode == AUMODE_RECORD)
