@@ -1,3 +1,5 @@
+/*	$NetBSD: mtrace.c,v 1.4 1995/10/04 03:47:57 thorpej Exp $	*/
+
 /*
  * mtrace.c
  *
@@ -46,8 +48,6 @@
  * In particular, parts of the prototype version of this program may
  * have been derived from mrouted programs sources covered by the
  * license in the accompanying file named "LICENSE".
- *
- * $Id: mtrace.c,v 1.3 1995/06/02 01:02:12 thorpej Exp $
  */
 
 #include <sys/filio.h>
