@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.6 2000/06/26 14:21:01 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.7 2000/06/29 07:37:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -42,8 +42,6 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/map.h>
-
-#include <vm/vm.h>
 
 #include <machine/frame.h>
 #include <machine/reg.h>

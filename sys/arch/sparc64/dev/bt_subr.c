@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.4 1999/03/24 05:51:12 mrg Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.5 2000/06/29 07:37:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -49,7 +49,7 @@
 #include <sys/buf.h>
 #include <sys/errno.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/fbio.h>
 

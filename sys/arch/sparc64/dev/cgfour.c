@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.6 2000/06/26 04:56:08 simonb Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.7 2000/06/29 07:37:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -67,8 +67,6 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-
-#include <vm/vm.h>
 
 #include <machine/fbio.h>
 #include <machine/autoconf.h>
