@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.17 1995/12/24 02:31:38 mycroft Exp $	*/
+/*	$NetBSD: isavar.h,v 1.18 1996/02/28 01:43:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Chris G. Demetriou
@@ -41,6 +41,13 @@
  */
 
 #include <sys/queue.h>
+
+/*
+ * ISA bus attach arguments
+ */
+struct isabus_attach_args {
+	char		*iba_busname;		/* XXX should be common */
+};
 
 /*
  * ISA driver attach arguments
