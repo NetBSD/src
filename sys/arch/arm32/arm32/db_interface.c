@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.9 1996/08/29 22:23:45 mark Exp $ */
+/* $NetBSD: db_interface.c,v 1.10 1996/10/11 00:06:36 christos Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -149,7 +149,7 @@ kdb_kbd_trap(tf)
 	struct trapframe *tf;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
-		printf("\n\nkernel: keyboard interrupt\n");
+		kprintf("\n\nkernel: keyboard interrupt\n");
 		kdb_trap(-1, tf);
 	}
 }
@@ -277,7 +277,7 @@ db_machine_init()
  */
 
 	if (kernexec->a_syms == 0) {
-		printf("[No symbol table]\n");
+		kprintf("[No symbol table]\n");
 	} else {
 		esym = (int)&end + kernexec->a_syms + sizeof(int);
 		len = *((u_int *)esym);

@@ -1,4 +1,4 @@
-/* $NetBSD: kshell_dumphex.c,v 1.2 1996/03/18 20:32:31 mark Exp $ */
+/* $NetBSD: kshell_dumphex.c,v 1.3 1996/10/11 00:07:06 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -58,32 +58,32 @@ dumpb(addr, count)
 	int loop;
 
 	for (; count > 0; count -= 16) {
-		printf("%08x: ", (int)addr);
+		kprintf("%08x: ", (int)addr);
 
 		for (loop = 0; loop < 16; ++loop) {
 			byte = addr[loop];
-			printf("%02x ", byte);
+			kprintf("%02x ", byte);
 		}
 
-		printf(" ");
+		kprintf(" ");
 
 		for (loop = 0; loop < 16; ++loop) {
 			byte = addr[loop];
 			if (byte < 0x20)
-				printf("\x1b[31m%c\x1b[0m", byte + '@');
+				kprintf("\x1b[31m%c\x1b[0m", byte + '@');
 			else if (byte == 0x7f)
-				printf("\x1b[31m?\x1b[0m");
+				kprintf("\x1b[31m?\x1b[0m");
 			else if (byte < 0x80)
-				printf("%c", byte);
+				kprintf("%c", byte);
 			else if (byte < 0xa0)
-				printf("\x1b[32m%c\x1b[0m", byte - '@');
+				kprintf("\x1b[32m%c\x1b[0m", byte - '@');
 			else if (byte == 0xff)
-				printf("\x1b[32m?\x1b[0m");
+				kprintf("\x1b[32m?\x1b[0m");
 			else
-				printf("%c", byte & 0x7f);
+				kprintf("%c", byte & 0x7f);
 		}
 
-		printf("\r\n");
+		kprintf("\r\n");
 		addr += 16;
 	}
 }
@@ -100,32 +100,32 @@ dumpw(addr, count)
 	int loop;
 
 	for (; count > 0; count -= 32) {
-		printf("%08x: ", (int)addr);
+		kprintf("%08x: ", (int)addr);
 
 		for (loop = 0; loop < 8; ++loop) {
 			byte = ((u_int *)addr)[loop];
-			printf("%08x ", byte);
+			kprintf("%08x ", byte);
 		}
 
-		printf(" ");
+		kprintf(" ");
 
 		for (loop = 0; loop < 32; ++loop) {
 			byte = addr[loop];
 			if (byte < 0x20)
-				printf("\x1b[31m%c\x1b[0m", byte + '@');
+				kprintf("\x1b[31m%c\x1b[0m", byte + '@');
 			else if (byte == 0x7f)
-				printf("\x1b[31m?\x1b[0m");
+				kprintf("\x1b[31m?\x1b[0m");
 			else if (byte < 0x80)
-				printf("%c", byte);
+				kprintf("%c", byte);
 			else if (byte < 0xa0)
-				printf("\x1b[32m%c\x1b[0m", byte - '@');
+				kprintf("\x1b[32m%c\x1b[0m", byte - '@');
 			else if (byte == 0xff)
-				printf("\x1b[32m?\x1b[0m");
+				kprintf("\x1b[32m?\x1b[0m");
 			else
-				printf("%c", byte & 0x7f);
+				kprintf("%c", byte & 0x7f);
 		}
 
-		printf("\r\n");
+		kprintf("\r\n");
 		addr += 32;
 	}
 }

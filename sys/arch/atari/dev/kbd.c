@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.10 1996/04/18 08:52:06 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.11 1996/10/11 00:09:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -136,7 +136,7 @@ void	*auxp;
 	 * Now send the reset string, and read+ignore it's response
 	 */
 	if (!kbd_write_poll(kbd_rst, 2))
-		printf("kbd: error cannot reset keyboard\n");
+		kprintf("kbd: error cannot reset keyboard\n");
 	for (timeout = 1000; timeout > 0; timeout--) {
 		if (KBD->ac_cs & (A_IRQ|A_RXRDY)) {
 			timeout = KBD->ac_da;
@@ -149,7 +149,7 @@ void	*auxp;
 	 */
 	kbd_write_poll(kbd_icmd, sizeof(kbd_icmd));
 
-	printf("\n");
+	kprintf("\n");
 }
 
 /* definitions for atari keyboard encoding. */
@@ -564,7 +564,7 @@ u_char		 msg_start;
 			kp->k_pkg_size = 2;
 			break;
 		default:
-			printf("kbd: Unknown packet 0x%x\n", msg_start);
+			kprintf("kbd: Unknown packet 0x%x\n", msg_start);
 			break;
 	}
 }

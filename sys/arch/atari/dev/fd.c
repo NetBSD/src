@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.21 1996/08/27 21:55:42 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.22 1996/10/11 00:09:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -261,7 +261,7 @@ void		*auxp;
 	int		i, nfound, first_found;
 
 	nfound = first_found = 0;
-	printf("\n");
+	kprintf("\n");
 	fddeselect();
 	for(i = 0; i < NR_DRIVES; i++) {
 
@@ -339,7 +339,7 @@ void		*auxp;
 
 	sc = (struct fd_softc *)dp;
 
-	printf("\n");
+	kprintf("\n");
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -405,7 +405,7 @@ struct proc	*proc;
 	int		sps;
 
 #ifdef FLP_DEBUG
-	printf("Fdopen dev=0x%x\n", dev);
+	kprintf("Fdopen dev=0x%x\n", dev);
 #endif
 
 	if(DISKPART(dev) >= NR_TYPES)
@@ -421,7 +421,7 @@ struct proc	*proc;
 	if(!nopens) {
 
 #ifdef FLP_DEBUG
-		printf("Fdopen device not yet open\n");
+		kprintf("Fdopen device not yet open\n");
 #endif
 		nopens++;
 		write_fdreg(FDC_CS, IRUPT);
@@ -490,7 +490,7 @@ struct proc	*proc;
 	}
 	fdgetdisklabel(sc, dev);
 #ifdef FLP_DEBUG
-	printf("Fdopen open succeeded on type %d\n", sc->part);
+	kprintf("Fdopen open succeeded on type %d\n", sc->part);
 #endif
 	return (0);
 }
@@ -509,7 +509,7 @@ struct proc	*proc;
 	nopens--;
 
 #ifdef FLP_DEBUG
-	printf("Closed floppy device -- nopens: %d\n", nopens);
+	kprintf("Closed floppy device -- nopens: %d\n", nopens);
 #endif
 	return(0);
 }
@@ -525,7 +525,7 @@ struct buf	*bp;
 	sc = getsoftc(fd_cd, DISKUNIT(bp->b_dev));
 
 #ifdef FLP_DEBUG
-	printf("fdstrategy: 0x%x\n", bp);
+	kprintf("fdstrategy: 0x%x\n", bp);
 #endif
 
 	/*
@@ -613,7 +613,7 @@ fdstatus(sc)
 struct fd_softc	*sc;
 {
 #ifdef FLP_DEBUG
-	printf("fdstatus\n");
+	kprintf("fdstatus\n");
 #endif
 	sc->errcnt = 0;
 	fd_state   = FLP_STAT;
@@ -678,7 +678,7 @@ register struct fd_softc	*sc;
 		splx(sps);
 
 #ifdef FLP_DEBUG
-		printf("fddone: unit: %d, buf: %x, resid: %d\n",sc->unit,bp,
+		kprintf("fddone: unit: %d, buf: %x, resid: %d\n",sc->unit,bp,
 								sc->io_bytes);
 #endif
 		bp->b_resid = sc->io_bytes;
@@ -705,14 +705,14 @@ register struct fd_softc	*sc;
 		if(i == sc->unit) {
 			timeout((FPV)fdmotoroff, (void*)sc, FLP_MONDELAY);
 #ifdef FLP_DEBUG
-			printf("fddone: Nothing to do\n");
+			kprintf("fddone: Nothing to do\n");
 #endif
 			return;	/* No work */
 		}
 	}
 	fd_state = FLP_IDLE;
 #ifdef FLP_DEBUG
-	printf("fddone: Staring job on unit %d\n", sc1->unit);
+	kprintf("fddone: Staring job on unit %d\n", sc1->unit);
 #endif
 	st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc1, &lock_stat, 0);
 }
@@ -723,7 +723,7 @@ int	drive, head, dense;
 {
 	int	i, spinning;
 #ifdef FLP_DEBUG
-	printf("fdselect: drive=%d, head=%d, dense=%d\n", drive, head, dense);
+	kprintf("fdselect: drive=%d, head=%d, dense=%d\n", drive, head, dense);
 #endif
 	i = ((drive == 1) ? PA_FLOP1 : PA_FLOP0) | head;
 	spinning = motoron;
@@ -788,7 +788,7 @@ struct fd_softc	*sc;
 		head   = track % sc->nheads;
 		track  = track / sc->nheads;
 #ifdef FLP_DEBUG
-		printf("fd_xfer: sector:%d,head:%d,track:%d\n", sc->sector,head,
+		kprintf("fd_xfer: sector:%d,head:%d,track:%d\n", sc->sector,head,
 								track);
 #endif
 		break;
@@ -825,7 +825,7 @@ struct fd_softc	*sc;
 		timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
 
 #ifdef FLP_DEBUG
-		printf("fd_xfer:Recalibrating drive %d\n", sc->unit);
+		kprintf("fd_xfer:Recalibrating drive %d\n", sc->unit);
 #endif
 		return;
 	}
@@ -843,7 +843,7 @@ struct fd_softc	*sc;
 		timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
 		fd_cmd = SEEK;
 #ifdef FLP_DEBUG
-		printf("fd_xfer:Seek to track %d on drive %d\n",track,sc->unit);
+		kprintf("fd_xfer:Seek to track %d on drive %d\n",track,sc->unit);
 #endif
 		return;
 	}
@@ -869,7 +869,7 @@ struct fd_softc	*sc;
 	st_dmaaddr_set((caddr_t)phys_addr);	/* DMA address setup */
 
 #ifdef FLP_DEBUG
-	printf("fd_xfer:Start io (io_addr:%x)\n", kvtop(sc->io_data));
+	kprintf("fd_xfer:Start io (io_addr:%x)\n", kvtop(sc->io_data));
 #endif
 
 	if(sc->io_dir == B_READ) {
@@ -903,7 +903,7 @@ struct fd_softc	*sc;
 	struct	buf	*bp;
 
 #ifdef FLP_DEBUG
-	printf("fdcint: unit = %d\n", sc->unit);
+	kprintf("fdcint: unit = %d\n", sc->unit);
 #endif
 
 	/*
@@ -926,7 +926,7 @@ struct fd_softc	*sc;
 			 * idle-state.
 			 */
 			if(fd_error != NULL) {
-				printf("Floppy error: %s\n", fd_error);
+				kprintf("Floppy error: %s\n", fd_error);
 				fd_error = NULL;
 			}
 
@@ -998,7 +998,7 @@ register struct fd_softc	*sc;
 	register int	status;
 
 #ifdef FLP_DEBUG
-	printf("fd_xfer_ok: cmd: 0x%x, state: 0x%x\n", fd_cmd, fd_state);
+	kprintf("fd_xfer_ok: cmd: 0x%x, state: 0x%x\n", fd_cmd, fd_state);
 #endif
 	switch(fd_cmd) {
 		case IRUPT:
@@ -1102,7 +1102,7 @@ struct fd_softc	*sc;
 	sps = splbio();
 
 #if FLP_DEBUG
-	printf("fdmotoroff, state = 0x%x\n", fd_state);
+	kprintf("fdmotoroff, state = 0x%x\n", fd_state);
 #endif
 
 	switch(fd_state) {
@@ -1158,13 +1158,13 @@ struct buf	*bp;
 	tsz  = sc->nsectors * sc->nheads * SECTOR_SIZE;
 
 #ifdef FLP_DEBUG
-	printf("fdminphys: before %d", bp->b_bcount);
+	kprintf("fdminphys: before %d", bp->b_bcount);
 #endif
 
 	bp->b_bcount = min(bp->b_bcount, tsz - toff);
 
 #ifdef FLP_DEBUG
-	printf(" after %d\n", bp->b_bcount);
+	kprintf(" after %d\n", bp->b_bcount);
 #endif
 
 	minphys(bp);
@@ -1253,7 +1253,7 @@ dev_t			dev;
 		return(0);
 
 #ifdef FLP_DEBUG
-	printf("fdgetdisklabel()\n");
+	kprintf("fdgetdisklabel()\n");
 #endif
 
 	part = DISKPART(dev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.26 1996/10/06 01:42:45 mycroft Exp $	*/
+/*	$NetBSD: dca.c,v 1.27 1996/10/11 00:11:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -213,14 +213,14 @@ dcaattach(hd)
 	if (sc->sc_flags & DCA_ISCONSOLE) {
 		dcaconsinit = 0;
 		sc->sc_flags |= DCA_SOFTCAR;
-		printf(": console, ");
+		kprintf(": console, ");
 	} else
-		printf(": ");
+		kprintf(": ");
 
 	if (sc->sc_flags & DCA_HASFIFO)
-		printf("working fifo\n");
+		kprintf("working fifo\n");
 	else
-		printf("no fifo\n");
+		kprintf("no fifo\n");
 
 #ifdef KGDB
 	if (kgdb_dev == makedev(dcamajor, unit)) {
@@ -234,10 +234,10 @@ dcaattach(hd)
 				 * Print prefix of device name,
 				 * let kgdb_connect print the rest.
 				 */
-				printf("%s: ", sc->sc_hd->hp_xname);
+				kprintf("%s: ", sc->sc_hd->hp_xname);
 				kgdb_connect(1);
 			} else
-				printf("%s: kgdb enabled\n",
+				kprintf("%s: kgdb enabled\n",
 				    sc->sc_hd->hp_xname);
 		}
 	}

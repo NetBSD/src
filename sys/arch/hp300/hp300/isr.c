@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.1 1996/02/14 02:56:48 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.2 1996/10/11 00:11:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -166,7 +166,7 @@ isrdispatch(evec)
 
 	list = &isr_list[ipl];
 	if (list->lh_first == NULL) {
-		printf("intrhand: ipl %d unexpected\n", ipl);
+		kprintf("intrhand: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
 			panic("isrdispatch: too many unexpected interrupts");
 		return;
@@ -181,7 +181,7 @@ isrdispatch(evec)
 	else if (++straycount > 50)
 		panic("isrdispatch: too many stray interrupts");
 	else
-		printf("isrdispatch: stray level %d interrupt\n", ipl);
+		kprintf("isrdispatch: stray level %d interrupt\n", ipl);
 }
 
 /*

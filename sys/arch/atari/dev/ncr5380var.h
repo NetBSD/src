@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.2 1996/05/15 09:21:54 leo Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.3 1996/10/11 00:09:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -40,12 +40,12 @@
 #	define	static
 #endif
 #ifdef DBG_SEL
-#	define	DBG_SELPRINT(a,b)	printf(a,b)
+#	define	DBG_SELPRINT(a,b)	kprintf(a,b)
 #else
 #	define DBG_SELPRINT(a,b)
 #endif
 #ifdef DBG_PIO
-#	define DBG_PIOPRINT(a,b,c) 	printf(a,b,c)
+#	define DBG_PIOPRINT(a,b,c) 	kprintf(a,b,c)
 #else
 #	define DBG_PIOPRINT(a,b,c)
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.8 1996/06/12 20:59:10 mark Exp $ */
+/* $NetBSD: if_ie.c,v 1.9 1996/10/11 00:07:40 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -265,7 +265,7 @@ ie_ack(sc, mask)
 	}
 
 	if ( i<=0 )
-		printf ( "ie: command timed out\n" );
+		kprintf ( "ie: command timed out\n" );
 	ie_cli(sc);
 }
 
@@ -356,7 +356,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 
 	/* Verify the podulebus probe incase RiscOS lied */
         if ( ReadByte ( sc->sc_rom + (3<<2) ) != 0x03 ) {
-		printf(": Ether1 ROM probablly broken.  ECID corrupt\n");
+		kprintf(": Ether1 ROM probablly broken.  ECID corrupt\n");
 		sc->sc_flags |= IE_BROKEN;
 		return;
 	}
@@ -403,7 +403,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 
 	/* If the busy didn't go low, the i82586 is broken or too slow */
         if ( i<=0 ) {
-		printf ( ": ether1 chipset didn't respond\n" );
+		kprintf ( ": ether1 chipset didn't respond\n" );
 		sc->sc_flags |= IE_BROKEN;
 		return;
 	}
@@ -417,7 +417,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 
 	/* If we didn't see the interrupt then the IRQ line is broken */
 	if ( i<=0 ) {
-		printf ( ": interrupt from chipset didn't reach host\n" );
+		kprintf ( ": interrupt from chipset didn't reach host\n" );
 		sc->sc_flags |= IE_BROKEN;
 		return;
 	}
@@ -439,14 +439,14 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 #ifndef IGNORE_ETHER1_IDROM_CHECKSUM
 	if ( crc32(idrom,28) != *(u_long *)(idrom+28) )
 	{
-	    printf ( "ie: ether1 idrom failed checksum %08x!=%08x\n",
+	    kprintf ( "ie: ether1 idrom failed checksum %08x!=%08x\n",
 					crc32(idrom,28), *(u_long *)(idrom+28));
             for ( i=0; i<32; i+=8 ) {
-	        printf ( "IDROM: %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	        kprintf ( "IDROM: %02x %02x %02x %02x %02x %02x %02x %02x\n",
 		    idrom[0+i], idrom[1+i], idrom[2+i], idrom[3+i], 
 		    idrom[4+i], idrom[5+i], idrom[6+i], idrom[7+i] );
 	    }
-	    printf ( "ie: I'll ignore this fact for now!\n" );
+	    kprintf ( "ie: I'll ignore this fact for now!\n" );
 	}
 #endif
 
@@ -470,12 +470,12 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	/* "Hmm," said nuts, "what if the attach fails" */
     
 	/* Write some pretty things on the annoucement line */
-	printf ( " %s using %dk card ram",
+	kprintf ( " %s using %dk card ram",
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
 	    ((NRXBUF*IE_RXBUF_SIZE)+(NTXBUF*IE_TXBUF_SIZE))/1024 );
 
 #if NBPFILTER > 0
-	printf ( " BPF" );
+	kprintf ( " BPF" );
 	bpfattach ( &ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
@@ -488,14 +488,14 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 
 	if (irq_claim(IRQ_PODULE, &sc->sc_ih)) {
 		sc->sc_irqmode = 0;
-		printf(" POLLED");
+		kprintf(" POLLED");
 		panic("Cannot install IRQ handler\n");
 	} else {
 		sc->sc_irqmode = 1;
-		printf(" IRQ");
+		kprintf(" IRQ");
 	}
 
-	printf("\n");
+	kprintf("\n");
 }
   
                   
@@ -694,10 +694,10 @@ iereset(sc)
 	ie2host(sc, IE_IBASE + IE_SCB_OFF, &scb, sizeof scb);
 
 	if (command_and_wait(sc, IE_RU_ABORT|IE_CU_ABORT, 0, 0, 0, 0, 0))
-	        printf("ie0: abort commands timed out\n");
+	        kprintf("ie0: abort commands timed out\n");
 
 	if (command_and_wait(sc, IE_RU_DISABLE|IE_CU_STOP, 0, 0, 0, 0, 0))
-	        printf("ie0: abort commands timed out\n");
+	        kprintf("ie0: abort commands timed out\n");
 
 	ieinit(sc);
 
@@ -765,27 +765,27 @@ struct ie_softc *sc;
 
     if ( result & 0x10000 )
     {
-	printf ( "ie: TDR command failed\n" );
+	kprintf ( "ie: TDR command failed\n" );
     }
     else if ( result & IE_TDR_XCVR )
     {
-	printf ( "ie: tranceiver problem. Is it plugged in?\n" );
+	kprintf ( "ie: tranceiver problem. Is it plugged in?\n" );
     }
     else if ( result & IE_TDR_OPEN )
     {
 	if ((result & IE_TDR_TIME)>0)
-	    printf ( "ie: TDR detected an open %d clocks away.\n",
+	    kprintf ( "ie: TDR detected an open %d clocks away.\n",
 			result & IE_TDR_TIME );
     }
     else if ( result & IE_TDR_SHORT )
     {
 	if ((result & IE_TDR_TIME)>0)
-	    printf ( "ie: TDR detected a short %d clock away.\n",
+	    kprintf ( "ie: TDR detected a short %d clock away.\n",
 			result & IE_TDR_TIME );
     }
     else
     {
-	printf ( "ie: TDR returned unknown status %x\n", result );
+	kprintf ( "ie: TDR returned unknown status %x\n", result );
     }
 }
 
@@ -904,13 +904,13 @@ ieinit(sc)
     if ( command_and_wait(sc, IE_CU_START, &scb, &cmd, ptr, sizeof cmd,
 	IE_STAT_COMPL) )
     {
-	printf ( "%s: command failed: timeout\n", sc->sc_dev.dv_xname );
+	kprintf ( "%s: command failed: timeout\n", sc->sc_dev.dv_xname );
 	return 0;
     }
 
     if ( !(cmd.com.ie_cmd_status & IE_STAT_OK) )
     {
-	printf ( "%s: command failed: !IE_STAT_OK\n", sc->sc_dev.dv_xname );
+	kprintf ( "%s: command failed: !IE_STAT_OK\n", sc->sc_dev.dv_xname );
 	return 0;
     }
 
@@ -926,13 +926,13 @@ ieinit(sc)
     if ( command_and_wait(sc, IE_CU_START, &scb, &iasetup_cmd, ptr, sizeof cmd,
 	IE_STAT_COMPL) )
     {
-	printf ( "%s: iasetup failed : timeout\n", sc->sc_dev.dv_xname );
+	kprintf ( "%s: iasetup failed : timeout\n", sc->sc_dev.dv_xname );
 	return 0;
     }
 
     if ( !(cmd.com.ie_cmd_status & IE_STAT_OK) )
     {
-	printf ( "%s: iasetup failed : !IE_STAT_OK\n", sc->sc_dev.dv_xname );
+	kprintf ( "%s: iasetup failed : !IE_STAT_OK\n", sc->sc_dev.dv_xname );
 	return 0;
     }
 
@@ -991,7 +991,7 @@ iestop(sc)
     ie2host ( sc, IE_IBASE + IE_SCB_OFF, &scb, sizeof scb );
 
     if ( command_and_wait(sc, IE_RU_DISABLE, &scb, 0, 0, 0, 0) )
-        printf ( "ie0: abort commands timed out\n" );
+        kprintf ( "ie0: abort commands timed out\n" );
 
     (void)splx(s);
     return(0);
@@ -1128,7 +1128,7 @@ ieget(struct ie_softc *sc, struct ether_header *ehp, int *to_bpf )
 
     if ( totlen > ETHER_MAX_LEN )
     {
-	printf ( "ie: Gosh that packet was s-o-o-o big.\n" );
+	kprintf ( "ie: Gosh that packet was s-o-o-o big.\n" );
 	return 0;
     }
 
@@ -1308,7 +1308,7 @@ ie_read_frame(sc, num)
     }
 
 /*
-    printf ( "%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
+    kprintf ( "%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
 		ether_sprintf(eh.ether_shost), (u_int)eh.ether_type );
 */
 
@@ -1337,7 +1337,7 @@ ierint(sc)
 
 	if ( (saftey_catch++)>100 )
 	{
-	    printf ( "ie: ierint saftey catch tripped\n" );
+	    kprintf ( "ie: ierint saftey catch tripped\n" );
 	    iereset(sc);
 	    return;
 	}
@@ -1347,7 +1347,7 @@ ierint(sc)
 
 	if ((status&IE_FD_COMPLETE)&&(status&IE_FD_OK)) {
 	    if ( !--times_thru ) {
-		printf ( "IERINT: Uh oh. Nuts, look at this bit!!!\n" );
+		kprintf ( "IERINT: Uh oh. Nuts, look at this bit!!!\n" );
     		ie2host ( sc, IE_IBASE + IE_SCB_OFF, &scb, sizeof scb );
 		sc->sc_arpcom.ac_if.if_ierrors += scb.ie_err_crc +
 						  scb.ie_err_align +
@@ -1415,7 +1415,7 @@ loop:
 	ietint(sc);
 
     if (status & IE_ST_RNR) {
-	printf ( "ie: receiver not ready\n" );
+	kprintf ( "ie: receiver not ready\n" );
 	sc->sc_arpcom.ac_if.if_ierrors++;
 	iereset(sc);
     }
@@ -1435,12 +1435,12 @@ loop:
     /* This is prehaps a little over cautious */
     if ( saftey_catch++ > 10 )
     {
-	printf ( "ie: Interrupt couldn't be cleared\n" );
+	kprintf ( "ie: Interrupt couldn't be cleared\n" );
 	delay ( 1000 );
 	ie_cli(sc);
 	if ( saftey_net++ > 50 )
 	{
-	    printf ( "ie: saftey net catches driver, shutting down\n" );
+	    kprintf ( "ie: saftey net catches driver, shutting down\n" );
 	    disable_irq ( IRQ_PODULE );
 	}
 	in_intr = 0;
@@ -1503,7 +1503,7 @@ iestart(ifp)
 	for (;;) {
 		if ( (saftey_catch++)>100 )
 		{
-		    printf ( "ie: iestart saftey catch tripped\n" );
+		    kprintf ( "ie: iestart saftey catch tripped\n" );
 		    iereset(sc);
 		    return;
 		}
@@ -1571,7 +1571,7 @@ ietint(sc)
 	sc->xmit_cmds[sc->xctail], status );
 
     if (!(status&IE_STAT_COMPL) || (status & IE_STAT_BUSY) )
-	printf ( "ietint: command still busy!\n" );
+	kprintf ( "ietint: command still busy!\n" );
     
     if ( status & IE_STAT_OK ) {
 	ifp->if_opackets++;
@@ -1579,17 +1579,17 @@ ietint(sc)
     } else {
 	ifp->if_oerrors++;	
 	if ( status & IE_STAT_ABORT )
-	    printf ( "ie: send aborted\n" );
+	    kprintf ( "ie: send aborted\n" );
 	if ( status & IE_XS_LATECOLL )
-	    printf ( "ie: late collision\n" );
+	    kprintf ( "ie: late collision\n" );
 	if ( status & IE_XS_NOCARRIER )
-	    printf ( "ie: no carrier\n" );
+	    kprintf ( "ie: no carrier\n" );
 	if ( status & IE_XS_LOSTCTS )
-	    printf ( "ie: lost CTS\n" );
+	    kprintf ( "ie: lost CTS\n" );
 	if ( status & IE_XS_UNDERRUN )
-	    printf ( "ie: DMA underrun\n" );
+	    kprintf ( "ie: DMA underrun\n" );
 	if ( status & IE_XS_EXCMAX )
-	    printf ( "ie: too many collisions\n" );
+	    kprintf ( "ie: too many collisions\n" );
 	ifp->if_collisions+=16;
     }
     /* Done with the buffer */
