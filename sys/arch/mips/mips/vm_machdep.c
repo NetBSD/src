@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 1999/03/24 05:51:05 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.35 1999/04/24 08:10:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34 1999/03/24 05:51:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.35 1999/04/24 08:10:42 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ cpu_fork(p1, p2)
 	if (CPUISMIPS3)
 		mips3_HitFlushDCache((vaddr_t)p2->p_addr, USPACE);
 #endif
-	
+
 	if (p1 == fpcurproc)
 		savefpregs(p1);
 
@@ -197,7 +197,7 @@ cpu_exit(p)
 
 /*
  * Dump the machine specific segment at the start of a core dump.
- */     
+ */
 int
 cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;

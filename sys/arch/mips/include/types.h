@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.19 1999/01/31 00:55:41 castor Exp $	*/
+/*	$NetBSD: types.h,v 1.20 1999/04/24 08:10:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,10 +44,10 @@
 #include <sys/cdefs.h>
 
 /*
- * Note that mips_reg_t is distinct from the register_t defined 
+ * Note that mips_reg_t is distinct from the register_t defined
  * in <types.h> to allow these structures to be as hidden from
  * the rest of the operating system as possible.
- * 
+ *
  */
 
 #if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_ABI_LP32

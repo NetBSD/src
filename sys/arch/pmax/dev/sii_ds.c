@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.7 1999/03/22 13:08:51 mrg Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.8 1999/04/24 08:01:08 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -75,7 +75,7 @@ sii_ds_match(parent, match, aux)
 	void *aux;
 {
 	struct ibus_attach_args *ia = aux;
-	register void * siiaddr;
+	void * siiaddr;
 
 	if (strcmp(ia->ia_name, "sii") != 0)
 		return (0);
@@ -91,8 +91,8 @@ sii_ds_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct ibus_attach_args *ia = aux;
-	register struct siisoftc *sc = (struct siisoftc *) self;
+	struct ibus_attach_args *ia = aux;
+	struct siisoftc *sc = (struct siisoftc *) self;
 
 	sc->sc_regs = (SIIRegs *)MIPS_PHYS_TO_KSEG1(ia->ia_addr);
 
@@ -111,7 +111,7 @@ sii_ds_attach(parent, self, aux)
 		sc->sii_copytobuf = kn230_copytobuf;
 		sc->sii_copyfrombuf = kn230_copyfrombuf;
 	}
-	
+
 	siiattach(sc);
 
 	/* tie pseudo-slot to device */
@@ -135,9 +135,9 @@ kn230_copytobuf(src, dst, len)
 	volatile u_short *dst;
 	int len;
 {
-	register u_int *wsrc = (u_int *)src;
+	u_int *wsrc = (u_int *)src;
 	volatile register u_int *wdst = (volatile u_int *)dst;
-	register int i, n;
+	int i, n;
 
 #if defined(DIAGNOSTIC) || defined(DEBUG)
 	if ((u_int)(src) & 0x3) {
@@ -150,14 +150,14 @@ kn230_copytobuf(src, dst, len)
 
 	/* DMA buffer is allocated in 32-bit words, so just copy words. */
 	n = len / 4;
-	if (len & 0x3) 
+	if (len & 0x3)
 		n++;
 	for (i = 0; i < n; i++) {
 		*wdst = *wsrc;
 		wsrc++;
 		wdst+= 2;
 	}
-	
+
 	wbflush();		/* XXX not necessary? */
 }
 
@@ -167,14 +167,14 @@ kn230_copytobuf(src, dst, len)
  * currently safe on sii driver, but API and casts should be changed.
  */
 void
-kn230_copyfrombuf(src, dst, len)  
+kn230_copyfrombuf(src, dst, len)
 	volatile u_short *src;
 	char *dst;		/* XXX assume 32-bit aligned? */
 	int len;
 {
 	volatile register u_int *wsrc = (volatile u_int *)src;
-	register u_int *wdst = (u_int *)dst;
-	register int i, n;
+	u_int *wdst = (u_int *)dst;
+	int i, n;
 
 #if defined(DIAGNOSTIC) || defined(DEBUG)
 	if ((u_int)(src) & 0x3) {
@@ -194,7 +194,7 @@ kn230_copyfrombuf(src, dst, len)
 	}
 
 	if (len & 0x3) {
-		register u_int lastword = *wsrc;
+		u_int lastword = *wsrc;
 
 		if (len & 0x2)
 		    *((u_short*)(wdst)) = (u_short) (lastword);
@@ -226,7 +226,7 @@ kn01_copytobuf(src, dst, len)
 }
 
 void
-kn01_copyfrombuf(src, dst, len)  
+kn01_copyfrombuf(src, dst, len)
 	volatile u_short *src;
 	char *dst;		/* XXX assume 32-bit aligned? */
 	int len;

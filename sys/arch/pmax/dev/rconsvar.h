@@ -1,4 +1,4 @@
-/* $NetBSD: rconsvar.h,v 1.3 1999/04/13 18:53:30 ad Exp $ */
+/* $NetBSD: rconsvar.h,v 1.4 1999/04/24 08:01:06 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -41,7 +41,7 @@ struct consdev;
 struct fbinfo;
 
 extern void rcons_connect __P((struct fbinfo *));
-extern void rcons_connect_native __P ((struct wsdisplay_emulops *, void *, 
+extern void rcons_connect_native __P ((struct wsdisplay_emulops *, void *,
     int, int, int, int));
 
 extern void rcons_indev __P((struct consdev *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibusvar.h,v 1.5 1999/03/15 07:52:05 nisimura Exp $	*/
+/*	$NetBSD: ibusvar.h,v 1.6 1999/04/24 08:01:09 simonb Exp $	*/
 
 #ifndef __IBUSVAR_H
 #define __IBUSVAR_H
@@ -14,7 +14,7 @@ typedef int (ibus_intr_establish_t) __P((void * cookie, int level,
 typedef int (ibus_intr_disestablish_t)  __P((struct ibus_attach_args *));
 
 
-/* 
+/*
  * Arguments used to attach an ibus "device" to its parent
  */
 struct ibus_dev_attach_args {
@@ -40,7 +40,7 @@ struct ibus_attach_args {
 
 /*
  * interrupt establish functions.
- * These call up to system-specific code to 
+ * These call up to system-specific code to
  * recompute spl levels.
  */
 void	ibus_intr_establish __P((void * cookie, int level,

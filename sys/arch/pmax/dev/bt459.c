@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.16 1999/04/12 20:38:19 pk Exp $	*/
+/*	$NetBSD: bt459.c,v 1.17 1999/04/24 08:01:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  *	Copyright (C) 1989 Digital Equipment Corporation.
  *	Permission to use, copy, modify, and distribute this software and
  *	its documentation for any purpose and without fee is hereby granted,
- *	provided that the above copyright notice appears in all copies.  
+ *	provided that the above copyright notice appears in all copies.
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.16 1999/04/12 20:38:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.17 1999/04/24 08:01:01 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ int
 bt459init(fi)
 	struct fbinfo *fi;
 {
-	register bt459_regmap_t *regs = (bt459_regmap_t *)(fi -> fi_vdac);
+	bt459_regmap_t *regs = (bt459_regmap_t *)(fi -> fi_vdac);
 	u_char foo;
 
 	foo = bt459_read_reg (regs, BT459_REG_ID);
@@ -213,7 +213,7 @@ static u_char	cursor_RGB[6];	/* cursor color 2 & 3 */
  */
 static __inline void
 bt459_cursor_on(btregs)
-	register bt459_regmap_t *btregs;
+	bt459_regmap_t *btregs;
 {
 	/*
 	 * no blinking, 1bit cross hair, XOR reg&crosshair,
@@ -229,7 +229,7 @@ bt459_cursor_on(btregs)
  */
 static __inline void
 bt459_cursor_off(btregs)
-	register bt459_regmap_t *btregs;
+	bt459_regmap_t *btregs;
 {
 	bt459_write_reg(btregs, BT459_REG_CCR, 0x00);
 }
@@ -245,8 +245,8 @@ bt459LoadCursor(fi, cursor)
 	struct fbinfo *fi;
 	u_short *cursor;
 {
-	register int i, j, k, pos;
-	register u_short ap, bp, out;
+	int i, j, k, pos;
+	u_short ap, bp, out;
 
 	/*
 	 * Fill in the cursor sprite using the A and B planes, as provided
@@ -299,11 +299,11 @@ bt459LoadCursor(fi, cursor)
 static void
 bt459_set_cursor_ram(fi, pos, val)
 	int pos;
-	register u_char val;
+	u_char val;
 	struct fbinfo *fi;
 {
-	register bt459_regmap_t *regs;
-	register int cnt;
+	bt459_regmap_t *regs;
+	int cnt;
 	u_char nval;
 	regs = (bt459_regmap_t *)(fi -> fi_vdac);
 
@@ -321,7 +321,7 @@ bt459RestoreCursorColor(fi)
 	struct fbinfo *fi;
 {
 	bt459_regmap_t *regs;
-	register int i;
+	int i;
 
 	regs = (bt459_regmap_t *)(fi -> fi_vdac);
 
@@ -344,7 +344,7 @@ bt459CursorColor(fi, color)
 	unsigned int color[];
 	struct fbinfo *fi;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < 6; i++)
 		cursor_RGB[i] = (u_char)(color[i] >> 8);
@@ -357,7 +357,7 @@ bt459CursorColor(fi, color)
 void
 bt459PosCursor(fi, x, y)
 	struct fbinfo *fi;
-	register int x, y;
+	int x, y;
 {
 	bt459_regmap_t *regs;
 	struct fbuaccess *fbu = fi->fi_fbu;
@@ -394,7 +394,7 @@ bt459PosCursor(fi, x, y)
 		x += 219;	/* correct for a cfb */
 		y += 34;
 	}
-	
+
 	bt459_select_reg(regs, BT459_REG_CXLO);
 	regs->addr_reg = x;
 	wbflush();
@@ -407,7 +407,7 @@ bt459PosCursor(fi, x, y)
 }
 
 /* Initialize the colormap to the default state, which is that entry
-   zero is black and all other entries are full white. 
+   zero is black and all other entries are full white.
    The hardware cursor is turned off.  */
 
 void
@@ -415,7 +415,7 @@ bt459InitColorMap(fi)
 	struct fbinfo *fi;
 {
 	bt459_regmap_t *regs;
-	register int i;
+	int i;
 	regs = (bt459_regmap_t *)(fi -> fi_vdac);
 
 	bt459_select_reg(regs, 0);

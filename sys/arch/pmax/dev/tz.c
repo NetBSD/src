@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.18 1998/10/22 23:01:45 jonathan Exp $	*/
+/*	$NetBSD: tz.c,v 1.19 1999/04/24 08:01:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,10 +126,10 @@ tzprobe(xxxsd)
 	void *xxxsd;
 {
 
-	register struct pmax_scsi_device *sd = xxxsd;
+	struct pmax_scsi_device *sd = xxxsd;
 
-	register struct tz_softc *sc = &tz_softc[sd->sd_unit];
-	register int i;
+	struct tz_softc *sc = &tz_softc[sd->sd_unit];
+	int i;
 	ScsiInquiryData inqbuf;
 
 	if (sd->sd_unit >= NTZ)
@@ -269,8 +269,8 @@ tzcommand(dev, command, code, count, data)
 	int count;
 	caddr_t data;
 {
-	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
-	register ScsiGroup0Cmd *c;
+	struct tz_softc *sc = &tz_softc[tzunit(dev)];
+	ScsiGroup0Cmd *c;
 	int s, error;
 
 	s = splbio();
@@ -327,9 +327,9 @@ void
 tzstart(unit)
 	int unit;
 {
-	register struct tz_softc *sc = &tz_softc[unit];
-	register struct buf *bp = sc->sc_tab.b_actf;
-	register int n;
+	struct tz_softc *sc = &tz_softc[unit];
+	struct buf *bp = sc->sc_tab.b_actf;
+	int n;
 
 	sc->sc_cmd.buf = bp->b_un.b_addr;
 	sc->sc_cmd.buflen = bp->b_bcount;
@@ -387,9 +387,9 @@ tzdone(unit, error, resid, status)
 	int resid;		/* amount not transfered */
 	int status;		/* SCSI status byte */
 {
-	register struct tz_softc *sc = &tz_softc[unit];
-	register struct buf *bp = sc->sc_tab.b_actf;
-	register struct buf *dp;
+	struct tz_softc *sc = &tz_softc[unit];
+	struct buf *bp = sc->sc_tab.b_actf;
+	struct buf *dp;
 	extern int cold;
 
 	if (bp == NULL) {
@@ -546,8 +546,8 @@ tzopen(dev, flags, type, p)
 	int flags, type;
 	struct proc *p;
 {
-	register int unit = tzunit(dev);
-	register struct tz_softc *sc = &tz_softc[unit];
+	int unit = tzunit(dev);
+	struct tz_softc *sc = &tz_softc[unit];
 	int error;
 
 	if (unit >= NTZ || sc->sc_sd == NULL)
@@ -700,9 +700,9 @@ tzclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
-	
+
 {
-	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
+	struct tz_softc *sc = &tz_softc[tzunit(dev)];
 	int error = 0;
 
 	if (!(sc->sc_flags & TZF_OPEN))
@@ -741,7 +741,7 @@ tzread(dev, uio, iomode)
 {
 #if 0
 	/*XXX*/ /* check for hardware write-protect? */
-	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
+	struct tz_softc *sc = &tz_softc[tzunit(dev)];
 
 	if (sc->sc_type == SCSI_ROM_TYPE)
 		return (EROFS);
@@ -761,7 +761,7 @@ tzwrite(dev, uio, iomode)
 	int iomode;
 {
 #if 0
-	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
+	struct tz_softc *sc = &tz_softc[tzunit(dev)];
 
 	if (sc->sc_format_pid && sc->sc_format_pid != curproc->p_pid)
 		return (EPERM);
@@ -779,7 +779,7 @@ tzioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
+	struct tz_softc *sc = &tz_softc[tzunit(dev)];
 	struct mtop *mtop;
 	struct mtget *mtget;
 	int code, count;
@@ -849,12 +849,12 @@ tzioctl(dev, cmd, data, flag, p)
 
 void
 tzstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register int unit = tzunit(bp->b_dev);
-	register struct tz_softc *sc = &tz_softc[unit];
-	register struct buf *dp;
-	register int s;
+	int unit = tzunit(bp->b_dev);
+	struct tz_softc *sc = &tz_softc[unit];
+	struct buf *dp;
+	int s;
 
 	if (sc->sc_flags & TZF_SEENEOF) {
 		bp->b_resid = bp->b_bcount;

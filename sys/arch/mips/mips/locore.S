@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.69 1999/04/15 15:30:46 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.70 1999/04/24 08:10:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -470,7 +470,7 @@ END(_remque)
 /*
  * int copystr(void *kfaddr, void *kdaddr, size_t maxlen, size_t *lencopied)
  * Copy a NIL-terminated string, at most maxlen characters long.  Return the
- * number of characters copied (including the NIL) in *lencopied.  If the 
+ * number of characters copied (including the NIL) in *lencopied.  If the
  * string is too long, return ENAMETOOLONG; else return 0.
  */
 LEAF(copystr)
@@ -482,12 +482,12 @@ LEAF(copystr)
 	sb	v0, 0(a1)			# each byte until NIL
 	addu	a0, a0, 1
 	bne	a2, zero, 1b			# less than maxlen
-	addu	a1, a1, 1  
+	addu	a1, a1, 1
 	li	v0, ENAMETOOLONG		# run out of space
 2:
 	beq	a3, zero, 3f			# return num. of copied bytes
 	subu	a2, t0, a2			# if the 4th arg was non-NULL
-	sw	a2, 0(a3) 
+	sw	a2, 0(a3)
 3:
 	j	ra				# v0 is 0 or ENAMETOOLONG
 	nop
@@ -500,7 +500,7 @@ END(copystr)
  * the NIL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
  * else return 0 or EFAULT.
  */
-LEAF(copyinstr) 
+LEAF(copyinstr)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(copystrerr)
 	blt	a0, zero, _C_LABEL(copystrerr)
@@ -912,7 +912,7 @@ END(mips_read_causereg)
 
 /*
  * void switchfpregs(struct proc *old, struct proc *new)
- * 
+ *
  * Save the current floating point coprocessor state, then restore
  * the state of next coprocessor owner process.
  */
@@ -1217,7 +1217,7 @@ END(MachFPInterrupt)
 
 
 /*
- * stacktrace() -- print a stack backtrace to the console. 
+ * stacktrace() -- print a stack backtrace to the console.
  *	implicitly accesses caller's a0-a3.
  */
 NESTED(stacktrace, CALLFRAME_SIZ+20, ra)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_mcclock.c,v 1.6 1999/04/07 23:04:34 simonb Exp $	*/
+/*	$NetBSD: mips_mcclock.c,v 1.7 1999/04/24 08:10:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.6 1999/04/07 23:04:34 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.7 1999/04/24 08:10:41 simonb Exp $");
 
 
 #include <sys/types.h>
@@ -76,8 +76,8 @@ mips_mc_cpuspeed(mcclock_addr, clockmask, tickpollfn)
 	int (*tickpollfn) __P((volatile struct chiptime *mcclock_addr,
 			     int clockmask));
 {
-	register int s;
-	register int iters = 0;
+	int s;
+	int iters = 0;
 	int saved_rega, saved_regb;
 
 
@@ -139,8 +139,8 @@ mips_mcclock_tickloop(mcclock_addr, clockmask)
 	volatile struct  chiptime *mcclock_addr;
 	int clockmask;
 {
-	register int iters = 0;
-	register volatile int junk;
+	int iters = 0;
+	volatile int junk;
 
 	/* clear any old pending interrupts */
 	junk = mcclock_addr->regc;
@@ -171,7 +171,7 @@ mips_mcclock_tickloop(mcclock_addr, clockmask)
 	/* Ack the  interrupt from the just-gone-off tick */
 	junk = mcclock_addr->regc;
 
-	return (iters); 
+	return (iters);
 }
 
 
@@ -184,7 +184,7 @@ mc_cpuspeed(mcclock_addr, clockmask)
 	volatile struct  chiptime *mcclock_addr;
     	int clockmask;
 {
-	return mips_mc_cpuspeed(mcclock_addr, clockmask, 
+	return mips_mc_cpuspeed(mcclock_addr, clockmask,
 	           mips_mcclock_tickloop);
 }
 
@@ -202,7 +202,7 @@ mc_cpuspeed(mcclock_addr, clockmask)
 unsigned
 mips_mcclock_to_mhz(unsigned iters)
 {
-	register unsigned mhz = 0;
+	unsigned mhz = 0;
 
 	/* XXX KN01? */
 
@@ -280,6 +280,6 @@ mips_mcclock_to_mhz(unsigned iters)
 		}
 	}
 #endif	/* MIPS1 */
-	
+
 	return (mhz);
 }

@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap.h,v 1.25 1999/02/26 19:03:39 is Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 1999/04/24 08:10:36 simonb Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1987 Carnegie-Mellon University
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@
  * The user address space is mapped using a two level structure where
  * virtual address bits 30..22 are used to index into a segment table which
  * points to a page worth of PTEs (4096 page can hold 1024 PTEs).
- * Bits 21..12 are then used to index a PTE which describes a page within 
+ * Bits 21..12 are then used to index a PTE which describes a page within
  * a segment.
  *
  * The wired entries in the TLB will contain the following:
@@ -144,7 +144,7 @@ void	pmap_prefer __P((vaddr_t, vaddr_t *));
 #define	PMAP_UNMAP_POOLPAGE(va)	MIPS_KSEG0_TO_PHYS((va))
 
 /*
- * Kernel cache operations for the user-space API 
+ * Kernel cache operations for the user-space API
  */
 int mips_user_cacheflush __P((struct proc *p, vaddr_t va, int nbytes,
 	int whichcache));

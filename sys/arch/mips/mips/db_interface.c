@@ -1,27 +1,27 @@
-/*	$NetBSD: db_interface.c,v 1.14 1999/03/23 22:15:36 simonb Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.15 1999/04/24 08:10:39 simonb Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
@@ -205,7 +205,7 @@ db_read_bytes(addr, size, data)
 
 	if (size) {
 		unsigned tmp;
-		register char *dst = (char*)data;
+		char *dst = (char*)data;
 
 		tmp = kdbpeek(addr);
 		while (size--) {
@@ -241,7 +241,7 @@ db_write_bytes(addr, size, data)
 		kdbpoke(addr++, *(int*)data), addr += 4, size -= 4;
 	if (size) {
 		unsigned tmp = kdbpeek(addr), tmp1 = 0;
-		register char *src = (char*)data;
+		char *src = (char*)data;
 
 		tmp >>= (size << 3);
 		tmp <<= (size << 3);
@@ -312,7 +312,7 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 				(tlb.tlb_lo0 & MIPS3_PG_M) ? 'M' : ' ',
 				(tlb.tlb_lo0 & MIPS3_PG_G) ? 'G' : ' ',
 				(tlb.tlb_lo0 >> 3) & 7);
-			db_printf("Lo1=0x%08x %c%c atr %x sz=%x\n", 
+			db_printf("Lo1=0x%08x %c%c atr %x sz=%x\n",
 				(unsigned)pfn_to_vad(tlb.tlb_lo1),
 				(tlb.tlb_lo1 & MIPS3_PG_M) ? 'M' : ' ',
 				(tlb.tlb_lo1 & MIPS3_PG_G) ? 'G' : ' ',

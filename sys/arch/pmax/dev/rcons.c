@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.23 1999/04/22 00:33:30 ad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.24 1999/04/24 08:01:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -117,21 +117,21 @@ rcons_connect (info)
 {
 	static struct rasops_info ri;
 	int cookie;
-	
+
 	/* TC mfb has special needs; 8-bits per pel, but monochrome */
 	if (info->fi_type.fb_boardtype == PMAX_FBTYPE_MFB) {
 		ri.ri_depth = 8;
 		ri.ri_forcemono = 1;
 	} else
 		ri.ri_depth = info->fi_type.fb_depth;
-	
+
 	ri.ri_width = info->fi_type.fb_width;
 	ri.ri_height = info->fi_type.fb_height;
 	ri.ri_stride = info->fi_linebytes;
 	ri.ri_bits = (u_char *)info->fi_pixels;
 
 	wsfont_init();
-	
+
 	/* Choose 'Gallant' font if this is an 8-bit display */
 	if (ri.ri_depth == 8 && (cookie = wsfont_find("Gallant", 0, 0, 0)) >= 0)
 		wsfont_lock(cookie, &ri.ri_font, WSFONT_LITTLE, WSFONT_LITTLE);
@@ -200,7 +200,7 @@ rcons_connect_native (ops, cookie, width, height, cols, rows)
 }
 #endif
 
-/* 
+/*
  * Hack around the rcons putchar interface not taking a dev_t.
  */
 void
@@ -224,12 +224,12 @@ void
 rcons_indev(cn)
 	struct consdev *cn;
 {
- 	register int s;
+ 	int s;
 
 	s = spltty();
 
 	/* Send any subsequent console calls to this cn_tab to rcons. */
-	cn->cn_dev = makedev (RCONSDEV, 0);	
+	cn->cn_dev = makedev (RCONSDEV, 0);
 
 	/* fixup for signature mismatch. */
 	cn->cn_putc = rcons_vputc;
@@ -247,7 +247,7 @@ void
 rasterconsoleattach (n)
 	int n;
 {
-	register struct tty *tp = &rcons_tty [0];
+	struct tty *tp = &rcons_tty [0];
 
 #ifdef notyet
 	int status;
@@ -280,7 +280,7 @@ rasterconsoleattach (n)
 	 * console device at rcons.
 	 */
 #endif
-	
+
 }
 
 /* ARGSUSED */
@@ -290,7 +290,7 @@ rconsopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp = &rcons_tty [0];
+	struct tty *tp = &rcons_tty [0];
  	/*static int firstopen = 1;*/
 	int status;
 
@@ -320,7 +320,7 @@ rconsclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp = &rcons_tty [0];
+	struct tty *tp = &rcons_tty [0];
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
@@ -335,7 +335,7 @@ rconsread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = &rcons_tty [0];
+	struct tty *tp = &rcons_tty [0];
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -347,7 +347,7 @@ rconswrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp;
+	struct tty *tp;
 
 	tp = &rcons_tty [0];
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -369,7 +369,7 @@ rconsioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct tty *tp;
+	struct tty *tp;
 	int error;
 
 	tp = &rcons_tty [0];
@@ -426,7 +426,7 @@ rconsstart(tp)
 	struct tty *tp;
 {
 	struct clist *cl;
-	register int s;
+	int s;
 
 	s = spltty();
 	if (tp->t_state & (TS_BUSY|TS_TTSTOP|TS_TIMEOUT))
@@ -467,7 +467,7 @@ rcons_later(tpaddr)
 	void *tpaddr;
 {
 	struct tty *tp = tpaddr;
-	register int s;
+	int s;
 
 #if 0
 	/*XXX*/printf("rcons_later\n");

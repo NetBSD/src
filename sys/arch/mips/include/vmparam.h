@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 1999/03/26 00:15:05 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15 1999/04/24 08:10:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -114,10 +114,10 @@
  * so we loan each swapped in process memory worth 100$, or just admit
  * that we don't consider it worthwhile and swap it out to disk which costs
  * $30/mb or about $0.75.
- * Update: memory prices have changed recently (9/96). At the current    
+ * Update: memory prices have changed recently (9/96). At the current
  * value of $6 per megabyte, we lend each swapped in process memory worth
  * $0.15, or just admit that we don't consider it worthwhile and swap it out
- * to disk which costs $0.20/MB, or just under half a cent. 
+ * to disk which costs $0.20/MB, or just under half a cent.
  */
 #define	SAFERSS		4		/* nominal ``small'' resident set size
 					   protected against replacement */

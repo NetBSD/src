@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.50 1999/04/20 06:42:54 mrg Exp $	*/
+/*	$NetBSD: scc.c,v 1.51 1999/04/24 08:01:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.50 1999/04/20 06:42:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.51 1999/04/24 08:01:13 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -365,7 +365,7 @@ sccmatch(parent, cf, aux)
 	if ((strncmp(d->iada_modname, "z8530   ", TC_ROM_LLEN) != 0) &&
 	    (strncmp(d->iada_modname, "scc", TC_ROM_LLEN)!= 0))
 	    return (0);
-	    
+
 	/*
 	 * Check user-specified offset against the ioasic offset.
 	 * Allow it to be wildcarded.
@@ -637,10 +637,10 @@ done:
  */
 static void
 sccreset(sc)
-	register struct scc_softc *sc;
+	struct scc_softc *sc;
 {
-	register scc_regmap_t *regs;
-	register u_char val;
+	scc_regmap_t *regs;
+	u_char val;
 
 	regs = (scc_regmap_t *)sc->scc_pdma[0].p_addr;
 	/*
@@ -709,9 +709,9 @@ sccopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct scc_softc *sc;
-	register struct tty *tp;
-	register int unit, line;
+	struct scc_softc *sc;
+	struct tty *tp;
+	int unit, line;
 	int s, error = 0;
 
 	unit = SCCUNIT(dev);
@@ -791,9 +791,9 @@ sccclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct scc_softc *sc = scc_cd.cd_devs[SCCUNIT(dev)];
-	register struct tty *tp;
-	register int line;
+	struct scc_softc *sc = scc_cd.cd_devs[SCCUNIT(dev)];
+	struct tty *tp;
+	int line;
 
 	line = SCCLINE(dev);
 	tp = sc->scc_tty[line];
@@ -814,8 +814,8 @@ sccread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct scc_softc *sc;
-	register struct tty *tp;
+	struct scc_softc *sc;
+	struct tty *tp;
 
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];		/* XXX*/
 	tp = sc->scc_tty[SCCLINE(dev)];
@@ -828,8 +828,8 @@ sccwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct scc_softc *sc;
-	register struct tty *tp;
+	struct scc_softc *sc;
+	struct tty *tp;
 
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
 	tp = sc->scc_tty[SCCLINE(dev)];
@@ -840,9 +840,9 @@ struct tty *
 scctty(dev)
 	dev_t dev;
 {
-	register struct scc_softc *sc;
-	register struct tty *tp;
-	register int unit = SCCUNIT(dev);
+	struct scc_softc *sc;
+	struct tty *tp;
+	int unit = SCCUNIT(dev);
 
 	if ((unit >= scc_cd.cd_ndevs) || (sc = scc_cd.cd_devs[unit]) == 0)
 		return (0);
@@ -859,8 +859,8 @@ sccioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct scc_softc *sc;
-	register struct tty *tp;
+	struct scc_softc *sc;
+	struct tty *tp;
 	int error, line;
 
 	line = SCCLINE(dev);
@@ -922,10 +922,10 @@ sccioctl(dev, cmd, data, flag, p)
  */
 int
 sccparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
-	register struct scc_softc *sc;
+	struct scc_softc *sc;
 
 	/* Extract the softc and call cold_sccparam to do all the work. */
 	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
@@ -938,14 +938,14 @@ sccparam(tp, t)
  */
 static int
 cold_sccparam(tp, t, sc)
-	register struct tty *tp;
-	register struct termios *t;
-	register struct scc_softc *sc;
+	struct tty *tp;
+	struct termios *t;
+	struct scc_softc *sc;
 {
-	register scc_regmap_t *regs;
-	register int line;
-	register u_char value, wvalue;
-	register int cflag = t->c_cflag;
+	scc_regmap_t *regs;
+	int line;
+	u_char value, wvalue;
+	int cflag = t->c_cflag;
 	int ospeed;
 
 	/* Check arguments */
@@ -1082,7 +1082,7 @@ cold_sccparam(tp, t, sc)
 
 
 /*
- * transmission done interrupts 
+ * transmission done interrupts
  */
 static void
 scc_txintr(sc, chan, regs)
@@ -1090,9 +1090,9 @@ scc_txintr(sc, chan, regs)
 	int chan;
 	scc_regmap_t *regs;
 {
-	register struct tty *tp = sc->scc_tty[chan];
-	register struct pdma *dp = &sc->scc_pdma[chan];
-	register int cc;
+	struct tty *tp = sc->scc_tty[chan];
+	struct pdma *dp = &sc->scc_pdma[chan];
+	int cc;
 
 	tp = sc->scc_tty[chan];
 	dp = &sc->scc_pdma[chan];
@@ -1127,8 +1127,8 @@ scc_txintr(sc, chan, regs)
 	}
 }
 
-/* 
- * receive interrupts 
+/*
+ * receive interrupts
  */
 static void
 scc_rxintr(sc, chan, regs, unit)
@@ -1137,7 +1137,7 @@ scc_rxintr(sc, chan, regs, unit)
 	scc_regmap_t *regs;
 	int unit;
 {
-	register struct tty *tp = sc->scc_tty[chan];
+	struct tty *tp = sc->scc_tty[chan];
 	int cc, rr1 = 0, rr2 = 0;	/* XXX */
 #ifdef HAVE_RCONS
 	char *cp;
@@ -1175,7 +1175,7 @@ scc_rxintr(sc, chan, regs, unit)
 #ifdef HAVE_RCONS
 		if ((cp = kbdMapChar(cc)) == NULL)
 			return;
-		
+
 		while (*cp)
 			rcons_input(0, *cp++);
 #endif
@@ -1230,17 +1230,17 @@ int
 sccintr(xxxsc)
 	void *xxxsc;
 {
-	register struct scc_softc *sc = (struct scc_softc *)xxxsc;
-	register int unit = (long)sc->sc_dv.dv_unit;
-	register scc_regmap_t *regs;
-	register int rr3;
+	struct scc_softc *sc = (struct scc_softc *)xxxsc;
+	int unit = (long)sc->sc_dv.dv_unit;
+	scc_regmap_t *regs;
+	int rr3;
 
 	regs = (scc_regmap_t *)sc->scc_pdma[0].p_addr;
 	unit <<= 1;
 
 	/* Note: only channel A has an RR3 */
 	SCC_READ_REG(regs, SCC_CHANNEL_A, ZSRR_IPEND, rr3);
-	
+
 	/*
 	 * Clear interrupt first to avoid a race condition.
 	 * If a new interrupt condition happens while we are
@@ -1291,12 +1291,12 @@ sccintr(xxxsc)
 
 void
 sccstart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct pdma *dp;
-	register scc_regmap_t *regs;
-	register struct scc_softc *sc;
-	register int cc, chan;
+	struct pdma *dp;
+	scc_regmap_t *regs;
+	struct scc_softc *sc;
+	int cc, chan;
 	u_char temp;
 	int s, sendone;
 
@@ -1355,12 +1355,12 @@ out:
 /*ARGSUSED*/
 void
 sccstop(tp, flag)
-	register struct tty *tp;
+	struct tty *tp;
 	int flag;
 {
-	register struct pdma *dp;
-	register struct scc_softc *sc;
-	register int s;
+	struct pdma *dp;
+	struct scc_softc *sc;
+	int s;
 
 	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
 	dp = &sc->scc_pdma[SCCLINE(tp->t_dev)];
@@ -1378,10 +1378,10 @@ sccmctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
 {
-	register struct scc_softc *sc;
-	register scc_regmap_t *regs;
-	register int line, mbits;
-	register u_char value;
+	struct scc_softc *sc;
+	scc_regmap_t *regs;
+	int line, mbits;
+	u_char value;
 	int s;
 
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];
@@ -1441,11 +1441,11 @@ static void
 scc_modem_intr(dev)
 	dev_t dev;
 {
-	register scc_regmap_t *regs;
-	register struct scc_softc *sc;
-	register struct tty *tp;
-	register int car, chan;
-	register u_char value;
+	scc_regmap_t *regs;
+	struct scc_softc *sc;
+	struct tty *tp;
+	int car, chan;
+	u_char value;
 	int s;
 
 	chan = SCCLINE(dev);
@@ -1502,16 +1502,16 @@ int
 sccGetc(dev)
 	dev_t dev;
 {
-	register scc_regmap_t *regs;
-	register int c, line;
-	register u_char value;
+	scc_regmap_t *regs;
+	int c, line;
+	u_char value;
 	int s;
 
 	line = SCCLINE(dev);
 	if (cold && scc_cons_addr) {
 		regs = scc_cons_addr;
 	} else {
-		register struct scc_softc *sc;
+		struct scc_softc *sc;
 		sc = scc_cd.cd_devs[SCCUNIT(dev)];
 		regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 	}
@@ -1553,9 +1553,9 @@ sccPutc(dev, c)
 	dev_t dev;
 	int c;
 {
-	register scc_regmap_t *regs;
-	register int line;
-	register u_char value;
+	scc_regmap_t *regs;
+	int line;
+	u_char value;
 	int s;
 
 #ifdef pmax
@@ -1567,7 +1567,7 @@ sccPutc(dev, c)
 	if (cold && scc_cons_addr) {
 		regs = scc_cons_addr;
 	} else {
-		register struct scc_softc *sc;
+		struct scc_softc *sc;
 		sc = scc_cd.cd_devs[SCCUNIT(dev)];
 		regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 	}

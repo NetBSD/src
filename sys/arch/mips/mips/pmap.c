@@ -1,8 +1,8 @@
-/*	$NetBSD: pmap.c,v 1.56 1999/04/12 17:59:29 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 1999/04/24 08:10:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
- * All rights reserved. 
+ * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
@@ -10,7 +10,7 @@
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
- * are met:      
+ * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -23,7 +23,7 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 1999/04/12 17:59:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 1999/04/24 08:10:41 simonb Exp $");
 
 /*
  *	Manages physical address maps.
@@ -231,7 +231,7 @@ void pmap_release __P((pmap_t));
 #if defined(MIPS3_L2CACHE_ABSENT)
 static void mips_flushcache_allpvh __P((paddr_t));
 
-/* 
+/*
  * Flush virtual addresses associated with a given physical address
  */
 static void
@@ -317,7 +317,7 @@ pmap_bootstrap()
 #ifdef MIPS3
 	/*
 	 * The R4?00 stores only one copy of the Global bit in the
-	 * translation lookaside buffer for each 2 page entry. 
+	 * translation lookaside buffer for each 2 page entry.
 	 * Thus invalid entrys must have the Global bit set so
 	 * when Entry LO and Entry HI G bits are anded together
 	 * they will produce a global bit to store in the tlb.
@@ -1205,7 +1205,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		pte = kvtopte(va);
 
 		/*
-		 * XXX more thought... what does ROPAGE mean here? 
+		 * XXX more thought... what does ROPAGE mean here?
 		 * is it correc to set all the ROPAGE bits for mips3,
 		 * but just the valid (and not read-only) bit on mips1?
 		 */
@@ -1500,14 +1500,14 @@ pmap_zero_page(phys)
 	if (! (phys < MIPS_MAX_MEM_ADDR))
 		printf("pmap_zero_page(%lx) nonphys\n", phys);
 #endif
-	
+
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	if (CPUISMIPS3 && !mips_L2CachePresent) {
 		/*XXX FIXME Not very sophisticated */
-		/* XXX Is this really necessary?  Can't we assure that 
+		/* XXX Is this really necessary?  Can't we assure that
 		 * pages to be zeroed are already flushed?
 		 */
-		mips_flushcache_allpvh(phys); 
+		mips_flushcache_allpvh(phys);
 	}
 #endif
 	p = (int *)MIPS_PHYS_TO_KSEG0(phys);
@@ -1536,7 +1536,7 @@ pmap_zero_page(phys)
 		p += 16;
 	} while (p != end);
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
-	/* 
+	/*
 	 * If  we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
 	 * writeback of the destination out of the L1  cache.  If we don't,
@@ -1575,7 +1575,7 @@ pmap_copy_page(src, dst)
 #endif
 
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
-	/* 
+	/*
 	 * If  we have a virtually-indexed, physically-tagged cache,
 	 * and no L2 cache to warn of aliased mappings,  we must force an
 	 * write-back of all L1 cache lines of the source physical address,
@@ -1584,13 +1584,13 @@ pmap_copy_page(src, dst)
 	 * footprint instead of the fresh (but dirty) data in a WB cache.
 	 * XXX invalidate any cached lines of the destination PA
 	 *     here also?
-	 * 
+	 *
 	 * It would be better to probably map the destination as a
 	 * write-through no allocate to reduce cache thrash.
 	 */
 	if (CPUISMIPS3 && !mips_L2CachePresent) {
 		/*XXX FIXME Not very sophisticated */
-		mips_flushcache_allpvh(src); 
+		mips_flushcache_allpvh(src);
 /*		mips_flushcache_allpvh(dst); */
 	}
 #endif
@@ -1638,7 +1638,7 @@ pmap_copy_page(src, dst)
 		d += 16;
 	} while (s != end);
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
-	/* 
+	/*
 	 * If  we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
 	 * writeback of the destination out of the L1  cache.  If we don't,

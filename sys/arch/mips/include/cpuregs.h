@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.19 1999/01/23 06:13:30 nisimura Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.20 1999/04/24 08:10:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -295,7 +295,7 @@
 	(((config) & (bit)) ? 32 : 16)
 
 #define MIPS3_CONFIG_DC_MASK	0x000001c0	/* Primary D-cache size */
-#define MIPS3_CONFIG_DC_SHIFT	6	
+#define MIPS3_CONFIG_DC_SHIFT	6
 #define MIPS3_CONFIG_IC_MASK	0x00000e00	/* Primary I-cache size */
 #define MIPS3_CONFIG_IC_SHIFT	9
 #define MIPS3_CONFIG_CACHE_SIZE(config, mask, shift) \
@@ -548,7 +548,7 @@
 
 /*
  * r3000: shift count to put the index in the right spot.
- * (zero on r4000?) 
+ * (zero on r4000?)
  */
 #define MIPS1_TLB_INDEX_SHIFT		8
 
@@ -572,7 +572,7 @@
 
 /*
  * backwards compatibility with existing locore and compile-time
- * mips1/mips3 binding. 
+ * mips1/mips3 binding.
  *
  * XXX INT_MASK and HARD_INT_MASK are here only because we dont
  * support the mips3 on-chip timer which is tied to INT_5.
@@ -615,7 +615,7 @@
 #define	MIPS_R4000	0x04	/* MIPS R4000/4400 CPU		ISA III	*/
 #define	MIPS_R3LSI	0x05	/* LSI Logic R3000 derivate	ISA I	*/
 #define	MIPS_R6000A	0x06	/* MIPS R6000A CPU		ISA II	*/
-#define	MIPS_R3IDT	0x07	/* IDT R3041 or RC36100 CPU	ISA I	*/ 
+#define	MIPS_R3IDT	0x07	/* IDT R3041 or RC36100 CPU	ISA I	*/
 #define	MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV	*/
 #define	MIPS_R4200	0x0a	/* NEC VR4200 CPU		ISA III	*/
 #define	MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III	*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.107 1999/03/24 05:51:05 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.108 1999/04/24 08:10:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107 1999/03/24 05:51:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 1999/04/24 08:10:42 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -486,7 +486,7 @@ trap(status, cause, vaddr, opc, frame)
 		pte->pt_entry = entry;
 		vaddr = (vaddr & ~PGOFSET) |
 			(pmap->pm_tlbpid << MIPS_TLB_PID_SHIFT);
-		MachTLBUpdate(vaddr, entry);  
+		MachTLBUpdate(vaddr, entry);
 		pa = pfn_to_vad(entry);
 		if (!IS_VM_PHYSADDR(pa)) {
 			printf("utlbmod: va %x pa %lx\n", vaddr, pa);
@@ -522,7 +522,7 @@ trap(status, cause, vaddr, opc, frame)
 	pagefault: ;
 	    {
 		vaddr_t va;
-		struct vmspace *vm; 
+		struct vmspace *vm;
 		vm_map_t map;
 		int rv;
 
@@ -550,7 +550,7 @@ trap(status, cause, vaddr, opc, frame)
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			}
-			else if (rv == KERN_PROTECTION_FAILURE) 
+			else if (rv == KERN_PROTECTION_FAILURE)
 				rv = KERN_INVALID_ADDRESS;
 		}
 		if (rv == KERN_SUCCESS) {
@@ -559,7 +559,7 @@ trap(status, cause, vaddr, opc, frame)
 			}
 			return; /* GEN */
 		}
-		if ((type & T_USER) == 0) 
+		if ((type & T_USER) == 0)
 			goto copyfault;
 		if (rv == KERN_RESOURCE_SHORTAGE) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
@@ -572,12 +572,12 @@ trap(status, cause, vaddr, opc, frame)
 				SIGBUS : SIGSEGV;
 		}
 		ucode = vaddr;
-		break; /* SIGNAL */  
+		break; /* SIGNAL */
 	    }
 	kernelfault: ;
 	    {
 		vaddr_t va;
-		int rv; 
+		int rv;
 
 		va = trunc_page(vaddr);
 		rv = uvm_fault(kernel_map, va, 0, ftype);
@@ -611,7 +611,7 @@ trap(status, cause, vaddr, opc, frame)
 #endif
 	case T_BREAK+T_USER:
 	    {
-		unsigned va, instr; 
+		unsigned va, instr;
 		int rv;
 
 		/* compute address of break instruction */
@@ -624,7 +624,7 @@ trap(status, cause, vaddr, opc, frame)
 #endif
 
 		if (p->p_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
-			sig = SIGTRAP; 
+			sig = SIGTRAP;
 			break;
 		}
 		/*
@@ -669,12 +669,12 @@ trap(status, cause, vaddr, opc, frame)
 		return; /* GEN */
 	case T_FPE+T_USER:
 		/* dealfpu(status, cause, opc); */
-		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);  
+		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
 		userret(p, opc, sticks);
-		return; /* GEN */ 
+		return; /* GEN */
 	case T_OVFLOW+T_USER:
 		sig = SIGFPE;
-		break; /* SIGNAL */ 
+		break; /* SIGNAL */
 	}
 	((struct frame *)p->p_md.md_regs)->f_regs[CAUSE] = cause;
 	((struct frame *)p->p_md.md_regs)->f_regs[BADVADDR] = vaddr;
@@ -682,7 +682,7 @@ trap(status, cause, vaddr, opc, frame)
 	if ((type & T_USER) == 0)
 		panic("trapsignal");
 	userret(p, opc, sticks);
-	return; 
+	return;
 }
 
 #include <net/netisr.h>
@@ -751,7 +751,7 @@ interrupt(status, cause, pc)
 	/* simulated interrupt */
 	if ((mask & MIPS_SOFT_INT_MASK_1)
 		    || ((netisr|softisr) && (status & MIPS_SOFT_INT_MASK_1))) {
-		register int isr, sisr;
+		int isr, sisr;
 		isr = netisr; netisr = 0;
 		sisr = softisr; softisr = 0;
 		clearsoftnet();
@@ -814,28 +814,28 @@ ast(pc)
 }
 
 /* XXX XXX XXX */
-#define	set_cp0sr(x)		\
-{				\
-	register int _r = (x);	\
-	__asm __volatile("	\
-		.set noreorder	; \
-		mtc0	%0, $12	; \
-		nop;nop;nop;nop	; \
-		.set reorder"	\
-		: : "r"(_r));	\
+#define	set_cp0sr(x)			\
+{					\
+	int _r = (x);			\
+	__asm __volatile("		\
+		.set noreorder	;	\
+		mtc0	%0, $12	;	\
+		nop;nop;nop;nop	;	\
+		.set reorder"		\
+		: : "r"(_r));		\
 }
 
-#define	get_fpcsr()		\
-({				\
-	register int _r;	\
-	__asm __volatile("	\
-		.set noreorder	; \
-		cfc1	%0, $31	; \
-		cfc1	%0, $31	; \
-		nop		; \
-		.set reorder"	\
-		: "=r"(_r));	\
-	_r;			\
+#define	get_fpcsr()			\
+({					\
+	int _r;				\
+	__asm __volatile("		\
+		.set noreorder	;	\
+		cfc1	%0, $31	;	\
+		cfc1	%0, $31	;	\
+		nop		;	\
+		.set reorder"		\
+		: "=r"(_r));		\
+	_r;				\
 })
 
 #define	clr_fpcsr()		\
@@ -947,7 +947,7 @@ MachEmulateBranch(f, instpc, fpuCSR, allowNonBranch)
 
 	case OP_J:
 	case OP_JAL:
-		nextpc = (inst.JType.target << 2) | 
+		nextpc = (inst.JType.target << 2) |
 			((unsigned)instpc & 0xF0000000);
 		break;
 
@@ -1019,7 +1019,7 @@ mips_singlestep(p)
 {
 	struct frame *f = (struct frame *)p->p_md.md_regs;
 	vaddr_t pc, va;
-	int rv; 
+	int rv;
 
 	if (p->p_md.md_ss_addr) {
 		printf("SS %s (%d): breakpoint already set at %x\n",
@@ -1263,9 +1263,9 @@ specialframe: */
 			goto mips3_eret;
 	} while (instr != MIPS_JR_RA && instr != MIPS_JR_K0);
 	/* skip back over branch & delay slot */
-	va += sizeof(int);	
+	va += sizeof(int);
 mips3_eret:
-	va += sizeof(int);	
+	va += sizeof(int);
 	/* skip over nulls which might separate .o files */
 	while ((instr = kdbpeek(va)) == 0)
 		va += sizeof(int);
@@ -1361,7 +1361,7 @@ mips3_eret:
 			if (!foundframesize) {
 				stksize = - ((short)i.IType.imm);
 				foundframesize = 1;
-			}				
+			}
 		}
 	}
 done:

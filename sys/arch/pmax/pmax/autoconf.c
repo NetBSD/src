@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 1998/11/17 22:41:06 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 1999/04/24 08:01:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 1998/11/17 22:41:06 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 1999/04/24 08:01:10 simonb Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -214,7 +214,7 @@ findroot(devpp, partp)
  */
 void
 makebootdev(cp)
-	register char *cp;
+	char *cp;
 {
 	int majdev, unit, part, ctrl;
 

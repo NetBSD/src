@@ -1,27 +1,27 @@
-/*	$NetBSD: db_trace.c,v 1.7 1999/03/23 22:15:36 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.8 1999/04/24 08:10:39 simonb Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1993-1987 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
@@ -61,7 +61,7 @@ extern	db_sym_t localsym __P((db_sym_t sym, boolean_t isreg, int *lex_level));
  */
 struct mips_saved_state *db_cur_exc_frame = 0;
 
-/* 
+/*
  *  forward declarations
  */
 int print_exception_frame __P((register struct mips_saved_state *fp,
@@ -77,7 +77,7 @@ extern void stacktrace_subr __P((int a0, int a1, int a2, int a3,
  */
 void db_mips_stack_trace __P((int count, vaddr_t stackp,
     vaddr_t the_pc, vaddr_t the_ra, int flags, vaddr_t kstackp));
-int	db_mips_variable_func __P((struct db_variable *vp, db_expr_t *valuep, 
+int	db_mips_variable_func __P((struct db_variable *vp, db_expr_t *valuep,
     int db_var_fun));
 
 #define DB_SETF_REGS db_mips_variable_func
@@ -132,7 +132,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	char		*modif;
 {
 #ifndef DDB_TRACE
-	stacktrace_subr(ddb_regs.f_regs[A0], ddb_regs.f_regs[A1], 
+	stacktrace_subr(ddb_regs.f_regs[A0], ddb_regs.f_regs[A1],
 			ddb_regs.f_regs[A2], ddb_regs.f_regs[A3],
 			ddb_regs.f_regs[PC],
 			ddb_regs.f_regs[SP],
@@ -216,7 +216,7 @@ db_mips_stack_trace(count, stackp, the_pc, the_ra, flags, kstackp)
 }
 
 
-int 
+int
 db_mips_variable_func (struct db_variable *vp,
 	db_expr_t *valuep,
 	int db_var_fcn)

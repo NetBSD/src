@@ -1,4 +1,4 @@
-/* $NetBSD: lk201.c,v 1.13 1999/04/13 03:19:28 ad Exp $ */
+/* $NetBSD: lk201.c,v 1.14 1999/04/24 08:01:04 simonb Exp $ */
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -163,25 +163,25 @@ static unsigned char shiftedAscii[] = {
 /* fc */ KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,	KBD_NOKEY,
 };
 
-/* 
+/*
  * Keyboard initialization string.
  */
 static u_char kbdInitString[] = {
 	LK_LED_ENABLE, LED_ALL,		/* show we are resetting keyboard */
 	LK_DEFAULTS,
-	LK_CMD_MODE(LK_AUTODOWN, 1), 
-	LK_CMD_MODE(LK_AUTODOWN, 2), 
-	LK_CMD_MODE(LK_AUTODOWN, 3), 
+	LK_CMD_MODE(LK_AUTODOWN, 1),
+	LK_CMD_MODE(LK_AUTODOWN, 2),
+	LK_CMD_MODE(LK_AUTODOWN, 3),
 	LK_CMD_MODE(LK_DOWN, 4),	/* could also be LK_AUTODOWN */
-	LK_CMD_MODE(LK_UPDOWN, 5),   
-	LK_CMD_MODE(LK_UPDOWN, 6),   
-	LK_CMD_MODE(LK_AUTODOWN, 7), 
-	LK_CMD_MODE(LK_AUTODOWN, 8), 
-	LK_CMD_MODE(LK_AUTODOWN, 9), 
-	LK_CMD_MODE(LK_AUTODOWN, 10), 
-	LK_CMD_MODE(LK_AUTODOWN, 11), 
-	LK_CMD_MODE(LK_AUTODOWN, 12), 
-	LK_CMD_MODE(LK_DOWN, 13), 
+	LK_CMD_MODE(LK_UPDOWN, 5),
+	LK_CMD_MODE(LK_UPDOWN, 6),
+	LK_CMD_MODE(LK_AUTODOWN, 7),
+	LK_CMD_MODE(LK_AUTODOWN, 8),
+	LK_CMD_MODE(LK_AUTODOWN, 9),
+	LK_CMD_MODE(LK_AUTODOWN, 10),
+	LK_CMD_MODE(LK_AUTODOWN, 11),
+	LK_CMD_MODE(LK_AUTODOWN, 12),
+	LK_CMD_MODE(LK_DOWN, 13),
 	LK_CMD_MODE(LK_AUTODOWN, 14),
 	LK_AR_ENABLE,			/* we want autorepeat by default */
 #ifdef LK_KEY_CLICK
@@ -201,7 +201,7 @@ static struct toString {
 	int	ts_keycode;
 	char	*ts_string;
 } toString[] = {			/* termcap name */
-	{ KBD_UP,	"\033[A" },	/* ku */	
+	{ KBD_UP,	"\033[A" },	/* ku */
 	{ KBD_DOWN,	"\033[B" },	/* kd */
 	{ KBD_RIGHT,	"\033[C" },	/* kr */
 	{ KBD_LEFT,	"\033[D" },	/* kl */
@@ -224,7 +224,7 @@ KBDReset(kbddev, putc)
 	dev_t kbddev;
 	void (*putc) __P((dev_t, int));
 {
-	register int i;
+	int i;
 	static int inKBDReset;
 
 	if (inKBDReset)
@@ -276,8 +276,8 @@ kbdMapChar(cc)
 	static u_char capsLock;
 	static char buf[8];
 	static char *lastStr;
-	char *cp = NULL;	
-	
+	char *cp = NULL;
+
 	switch (cc) {
 	case KEY_REPEAT:
 		cp = lastStr;
@@ -287,7 +287,7 @@ kbdMapChar(cc)
 		shiftDown = 0;
 		ctrlDown = 0;
 		return (NULL);
-		
+
 	case KEY_CAPSLOCK:
 		capsLock ^= 1;
 #if 0
@@ -297,11 +297,11 @@ kbdMapChar(cc)
 			(*raw_kbd_putc)(lk_out_dev, LK_LED_ENABLE);
 		else
 			(*raw_kbd_putc)(lk_out_dev, LK_LED_DISABLE);
-		
+
 		(*raw_kbd_putc)(lk_out_dev, LED_1);
 #endif
 		return (NULL);
-			
+
 	case KEY_SHIFT:
 	case KEY_R_SHIFT:
 		shiftDown ^= 1;
@@ -319,7 +319,7 @@ kbdMapChar(cc)
 			"lk201: keyboard error, code=%x\n", cc);
 		return (NULL);
 	}
-	
+
 	if (shiftDown)
 		cc = shiftedAscii[cc];
 	else
@@ -330,22 +330,22 @@ kbdMapChar(cc)
 		cc = KBD_RET;
 	else if (cc >= KBD_NOKEY) {
 		int i;
-		
+
 		/* XXX slow, although keyboard interrupts aren't frequent */
-		
+
 		/* Check for keys that have multi-character codes */
 		for (i = 0; i < NUM_TOSTRING; i++)
 			if (toString[i].ts_keycode == cc) {
 				cp = toString[i].ts_string;
 				break;
 			}
-		
+
 		/* Handle function keys specially */
 		if (cp == NULL) {
 			if (cc < KBD_F1 || cc > KBD_F20)
 				return NULL;
-		
-			/* 
+
+			/*
 			 * All the function keys (KBD_*) are contigious,
 			 * except for the 'Help' and 'Do' keys, which we
 			 * return as F15 and F16 since that's what they
@@ -363,7 +363,7 @@ kbdMapChar(cc)
 				buf[3] = '4';
 				buf[4] = '0' + (cc - KBD_F17);
 			}
-		
+
 			buf[0] = '\033';
 			buf[1] = '[';
 			buf[2] = '2';
@@ -382,7 +382,7 @@ kbdMapChar(cc)
 		else if (cc == ' ' || cc == '@')
 			cc = '\0';
 	}
-	
+
 	if (cp == NULL) {
 		buf[0] = cc;
 		buf[1] = '\0';
@@ -420,7 +420,7 @@ int
 LKgetc(dev)
 	dev_t dev;	/* ignored */
 {
-	register int c;
+	int c;
 	static char *cp;
 
 #if 0
@@ -442,7 +442,7 @@ LKgetc(dev)
 				cp = NULL;
 			break;
 		}
-		
+
 		/* c = (*cn_tab.cn_kbdgetc)(cn_tab.cn_dev); */
 		c = (*raw_kbd_getc) (lk_in_dev);
 #if 0

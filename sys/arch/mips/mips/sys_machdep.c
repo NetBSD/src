@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.15 1999/01/19 18:18:42 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16 1999/04/24 08:10:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,7 +137,7 @@ sys_sysarch(p, v, retval)
 		error =  mips_user_cacheflush(p, cfua.va, cfua.nbytes,
 		     cfua.whichcache);
 		break;
-	}		
+	}
 	case MIPS_CACHECTL: {
 		struct mips_cachectl_args ccua;
 
@@ -145,7 +145,7 @@ sys_sysarch(p, v, retval)
 		if (error != 0) return (error);
 		error = mips_user_cachectl(p, ccua.va, ccua.nbytes, ccua.ctl);
 		break;
-	}		
+	}
 	default:
 		error = ENOSYS;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.27 1999/01/29 05:37:45 simonb Exp $	*/
+/*	$NetBSD: promio.c,v 1.28 1999/04/24 08:01:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.27 1999/01/29 05:37:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.28 1999/04/24 08:01:05 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -93,7 +93,7 @@ romgetc(dev)
 static void
 romputc (dev, c)
 	dev_t dev;
-	register int c;
+	int c;
 {
 	int s;
 	s = splhigh();
@@ -108,7 +108,7 @@ romputc (dev, c)
 static void
 rompollc (dev, c)
 	dev_t dev;
-	register int c;
+	int c;
 {
 	return;
 }
@@ -126,7 +126,7 @@ prom_findcons(kbdslot, crtslot, prom_using_screen)
 	int *crtslot;
 	int *prom_using_screen;
 {
-	register char *oscon = 0;	/* PROM osconsole string */
+	char *oscon = 0;	/* PROM osconsole string */
 
 	/*
 	 * Get and parse the "osconsole" environment variable.

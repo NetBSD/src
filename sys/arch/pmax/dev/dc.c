@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.47 1999/03/22 03:25:29 ad Exp $	*/
+/*	$NetBSD: dc.c,v 1.48 1999/04/24 08:01:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.47 1999/03/22 03:25:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.48 1999/04/24 08:01:03 simonb Exp $");
 
 /*
  * devDC7085.c --
@@ -219,7 +219,7 @@ static struct consdev dccons = {
 void
 dc_consinit(dev, dcaddr)
 	dev_t dev;
-	register dcregs *dcaddr;
+	dcregs *dcaddr;
 {
 	struct dc_softc *sc;
 
@@ -253,15 +253,15 @@ dc_consinit(dev, dcaddr)
 int
 dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	   console_line)
-	register struct dc_softc *sc;
+	struct dc_softc *sc;
 	void *addr;
 	int dtr_mask, rtscts_mask, speed, console_line;
 {
-	register dcregs *dcaddr;
-	register struct pdma *pdp;
-	register struct tty *tp;
-	register int line;
-	
+	dcregs *dcaddr;
+	struct pdma *pdp;
+	struct tty *tp;
+	int line;
+
 	dcaddr = (dcregs *)addr;
 
 	/*
@@ -329,7 +329,7 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
  */
 void
 dc_reset(dcaddr)
-	register dcregs *dcaddr;
+	dcregs *dcaddr;
 {
 	/* Reset CSR and wait until cleared. */
 	dcaddr->dc_csr = CSR_CLR;
@@ -405,7 +405,7 @@ dc_mouse_init(sc, dev)
 	(void) cold_dcparam(&ctty, &cterm, sc);
 
 
-#if	NRASTERCONSOLE > 0 
+#if	NRASTERCONSOLE > 0
 	/*
 	 * This is a hack.  As Ted Lemon observed, we want bstreams,
 	 * or failing that, a line discipline to do the inkernel DEC
@@ -429,9 +429,9 @@ dcopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp;
-	register struct dc_softc *sc;
-	register int unit, line;
+	struct tty *tp;
+	struct dc_softc *sc;
+	int unit, line;
 	int s, error = 0;
 	unit = DCUNIT(dev);
 	line = DCLINE(dev);
@@ -440,7 +440,7 @@ dcopen(dev, flag, mode, p)
 
 	sc = dc_cd.cd_devs[unit];
 	if (sc->dc_pdma[line].p_addr == (void *)0)
-		return (ENXIO);	  
+		return (ENXIO);
 
 	tp = sc->dc_tty[line];
 	if (tp == NULL) {
@@ -501,9 +501,9 @@ dcclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct dc_softc *sc;
-	register struct tty *tp;
-	register int line, bit;
+	struct dc_softc *sc;
+	struct tty *tp;
+	int line, bit;
 	int s;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
@@ -529,8 +529,8 @@ dcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct dc_softc *sc;
-	register struct tty *tp;
+	struct dc_softc *sc;
+	struct tty *tp;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
 	tp = sc->dc_tty[DCLINE(dev)];
@@ -551,8 +551,8 @@ dcwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct dc_softc *sc;
-	register struct tty *tp;
+	struct dc_softc *sc;
+	struct tty *tp;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
 	tp = sc->dc_tty[DCLINE(dev)];
@@ -563,8 +563,8 @@ struct tty *
 dctty(dev)
         dev_t dev;
 {
-	register struct dc_softc *sc;
-	register struct tty *tp;
+	struct dc_softc *sc;
+	struct tty *tp;
 
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
 	tp = sc->dc_tty[DCLINE(dev)];
@@ -580,10 +580,10 @@ dcioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct dc_softc *sc;
-	register struct tty *tp;
-	register int unit;
-	register int line;
+	struct dc_softc *sc;
+	struct tty *tp;
+	int unit;
+	int line;
 	int error;
 
 
@@ -647,11 +647,11 @@ dcioctl(dev, cmd, data, flag, p)
 
 int
 dcparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
-	register struct dc_softc *sc;
-	register dcregs *dcaddr;
+	struct dc_softc *sc;
+	dcregs *dcaddr;
 
 
 	/*
@@ -669,15 +669,15 @@ dcparam(tp, t)
  */
 int
 cold_dcparam(tp, t, sc)
-	register struct tty *tp;
-	register struct termios *t;
-	register struct dc_softc *sc;
+	struct tty *tp;
+	struct termios *t;
+	struct dc_softc *sc;
 {
-	register dcregs *dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
+	dcregs *dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
   	int overload_exta_38400 =  0;
 
-	register int lpr;
-	register int cflag = t->c_cflag;
+	int lpr;
+	int cflag = t->c_cflag;
 	int unit = minor(tp->t_dev);
 	int ospeed = ttspeedtab(t->c_ospeed, dcspeedtab);
 	int s;
@@ -727,9 +727,9 @@ int
 dcintr(xxxunit)
 	void *xxxunit;
 {
-	register struct dc_softc *sc = xxxunit;
-	register dcregs *dcaddr;
-	register unsigned csr;
+	struct dc_softc *sc = xxxunit;
+	dcregs *dcaddr;
+	unsigned csr;
 
 	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
 	while ((csr = dcaddr->dc_csr) & (CSR_RDONE | CSR_TRDY)) {
@@ -744,13 +744,13 @@ dcintr(xxxunit)
 
 void
 dcrint(sc)
-	register struct dc_softc * sc;
+	struct dc_softc * sc;
 {
-	register dcregs *dcaddr;
-	register struct tty *tp;
-	register int c, cc;
+	dcregs *dcaddr;
+	struct tty *tp;
+	int c, cc;
 	int overrun = 0;
-	register struct tty **dc_tty;
+	struct tty **dc_tty;
 	char *cp;
 
 	dc_tty = ((struct dc_softc*)dc_cd.cd_devs[0])->dc_tty;	/* XXX */
@@ -791,7 +791,7 @@ dcrint(sc)
 #endif
 			return;
 		} else if (tp == dc_tty[DCMOUSE_PORT] && dcMouseButtons) {
-#if NRASTERCONSOLE > 0	
+#if NRASTERCONSOLE > 0
 			mouseInput(cc);
 #endif
 			return;
@@ -827,11 +827,11 @@ dcrint(sc)
 
 void
 dcxint(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct dc_softc *sc;
-	register struct pdma *dp;
-	register dcregs *dcaddr;
+	struct dc_softc *sc;
+	struct pdma *dp;
+	dcregs *dcaddr;
 	int line, linemask;
 
 	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];	/* XXX */
@@ -858,7 +858,7 @@ dcxint(tp)
 			stop:
 				tp->t_state &= ~TS_BUSY;
 				tp->t_state |= TS_TTSTOP;
-				ndflush(&tp->t_outq, dp->p_mem - 
+				ndflush(&tp->t_outq, dp->p_mem -
 						(caddr_t)tp->t_outq.c_cf);
 				dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 				dcaddr->dc_tcr &= ~(1 << line);
@@ -896,12 +896,12 @@ dcxint(tp)
 
 void
 dcstart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct dc_softc *sc;
-	register struct pdma *dp;
-	register dcregs *dcaddr;
-	register int cc;
+	struct dc_softc *sc;
+	struct pdma *dp;
+	dcregs *dcaddr;
+	int cc;
 	int line, s;
 
 	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
@@ -939,11 +939,11 @@ out:
 /*ARGSUSED*/
 void
 dcstop(tp, flag)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct dc_softc *sc;
-	register struct pdma *dp;
-	register int s;
+	struct dc_softc *sc;
+	struct pdma *dp;
+	int s;
 
 	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
 	dp = &sc->dc_pdma[DCLINE(tp->t_dev)];
@@ -961,11 +961,11 @@ dcmctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
 {
-	register struct dc_softc *sc;
-	register dcregs *dcaddr;
-	register int line, mbits;
+	struct dc_softc *sc;
+	dcregs *dcaddr;
+	int line, mbits;
 	int b, s;
-	register int tcr, msr;
+	int tcr, msr;
 
 	line = DCLINE(dev);
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
@@ -1089,10 +1089,10 @@ void
 dcscan(arg)
 	void *arg;
 {
-	register struct dc_softc *sc = dc_cd.cd_devs[0]; /* XXX */
-	register dcregs *dcaddr;
-	register struct tty *tp;
-	register int unit, limit, dtr, dsr;
+	struct dc_softc *sc = dc_cd.cd_devs[0]; /* XXX */
+	dcregs *dcaddr;
+	struct tty *tp;
+	int unit, limit, dtr, dsr;
 	int s;
 
 	/* only channel 2 has modem control on a DECstation 2100/3100 */
@@ -1162,9 +1162,9 @@ int
 dcGetc(dev)
 	dev_t dev;
 {
-	register dcregs *dcaddr;
-	register int c;
-	register int line;
+	dcregs *dcaddr;
+	int c;
+	int line;
 	int s;
 
 	line = DCLINE(dev);
@@ -1198,9 +1198,9 @@ dcPutc(dev, c)
 	dev_t dev;
 	int c;
 {
-	register dcregs *dcaddr;
-	register u_short tcr;
-	register int timeout;
+	dcregs *dcaddr;
+	u_short tcr;
+	int timeout;
 	int s, out_line, activeline;
 	int brk;
 

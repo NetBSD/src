@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.14 1999/01/22 14:14:32 mycroft Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.15 1999/04/24 08:10:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -59,6 +59,6 @@ typedef _BSD_VA_LIST_	va_list;
 		(abort(), 0)))[-1]
 #endif
 
-#define	va_end(ap)	
+#define	va_end(ap)
 
 #endif /* !_MIPS_STDARG_H_ */

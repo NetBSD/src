@@ -1,6 +1,6 @@
-/*	$NetBSD: fb_usrreq.c,v 1.14 1999/04/13 03:22:00 ad Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.15 1999/04/24 08:01:04 simonb Exp $	*/
 
-/* 
+/*
  * XXX this should be stored in 'fbinfo', but that might just break the
  * staticly linked Xserver.
  */
@@ -13,7 +13,7 @@ fbopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct fbinfo *fi;
+	struct fbinfo *fi;
 
 #ifdef fpinitialized
 	if (!fp->initialized)
@@ -31,7 +31,7 @@ fbopen(dev, flag, mode, p)
 
 	if (fi->fi_type.fb_depth == 8)
 		fi->fi_driver->fbd_getcmap(fi, saved_cmap[minor(dev)], 0, 256);
-	
+
 	(*fi->fi_driver->fbd_initcmap)(fi);
 
 	/*
@@ -50,8 +50,8 @@ fbclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct fbinfo *fi;
-	register struct pmax_fbtty *fbtty;
+	struct fbinfo *fi;
+	struct pmax_fbtty *fbtty;
 
 	if (minor(dev) >= fbcd.cd_ndevs ||
 	    (fi = fbcd.cd_devs[minor(dev)]) == NULL)
@@ -62,12 +62,12 @@ fbclose(dev, flag, mode, p)
 
 	fbtty = fi->fi_glasstty;
 	fi->fi_open = 0;
-	
+
 	if (fi->fi_type.fb_depth == 8)
 		fi->fi_driver->fbd_putcmap(fi, saved_cmap[minor(dev)], 0, 256);
 	else
 		fi->fi_driver->fbd_initcmap(fi);
-	
+
 	genDeconfigMouse();
 	fbScreenInit(fi);
 
@@ -85,8 +85,8 @@ fbioctl(dev, cmd, data, flag, p)
 	caddr_t data;
 	struct proc *p;
 {
-	register struct fbinfo *fi;
-	register struct pmax_fbtty *fbtty;
+	struct fbinfo *fi;
+	struct pmax_fbtty *fbtty;
 	char cmap_buf [3];
 
 	if (minor(dev) >= fbcd.cd_ndevs ||
@@ -256,7 +256,7 @@ fbmmap(dev, off, prot)
 	int off, prot;
 {
 	int len;
-	register struct fbinfo *fi;
+	struct fbinfo *fi;
 
 	if (off < 0)
 		return (-1);

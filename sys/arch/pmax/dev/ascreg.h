@@ -1,4 +1,4 @@
-/*	$NetBSD: ascreg.h,v 1.8 1999/04/12 20:38:19 pk Exp $	*/
+/*	$NetBSD: ascreg.h,v 1.9 1999/04/24 08:01:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,28 +38,28 @@
  *	@(#)ascreg.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
@@ -70,14 +70,14 @@
  * Revision 2.4  91/02/05  17:44:59  mrt
  * 	Added author notices
  * 	[91/02/04  11:18:32  mrt]
- * 
+ *
  * 	Changed to use new Mach copyright
  * 	[91/02/02  12:17:11  mrt]
- * 
+ *
  * Revision 2.3  90/12/05  23:34:46  af
  * 	Documented max DMA xfer size.
  * 	[90/12/03  23:39:36  af]
- * 
+ *
  * Revision 2.1.1.1  90/11/01  03:38:54  af
  * 	Created, from the DEC specs:
  * 	"PMAZ-AA TURBOchannel SCSI Module Functional Specification"

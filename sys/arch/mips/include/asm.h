@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.21 1999/04/01 09:02:53 soda Exp $	*/
+/*	$NetBSD: asm.h,v 1.22 1999/04/24 08:10:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -245,7 +245,7 @@ _C_LABEL(x):
 #define NON_LEAF(x, fsize, retpc)	NESTED(x, fsize, retpc)
 #define NNON_LEAF(x, fsize, retpc)	NESTED_NOPROFILE(x, fsize, retpc)
 
-/* 
+/*
  *  standard callframe {
  *  	register_t cf_args[4];		arg0 - arg3
  *  	register_t cf_sp;		frame pointer
@@ -257,11 +257,11 @@ _C_LABEL(x):
 #define	CALLFRAME_RA	(4 * 5)
 
 /*
- * While it would be nice to be compatible with the SGI 
+ * While it would be nice to be compatible with the SGI
  * REG_L and REG_S macros, because they do not take parameters, it
  * is impossible to use them with the _MIPS_SIM_ABIX32 model.
  *
- * These macros hide the use of mips3 instructions from the 
+ * These macros hide the use of mips3 instructions from the
  * assembler to prevent the assembler from generating 64-bit style
  * ABI calls.
  */
@@ -270,7 +270,7 @@ _C_LABEL(x):
 #define	REG_L	lw
 #define REG_S	sw
 #define	REG_LI	li
-#define	REG_PROLOGUE	.set push 
+#define	REG_PROLOGUE	.set push
 #define	REG_EPILOGUE	.set pop
 #define SZREG	4
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.22 1999/04/13 18:50:52 ad Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.23 1999/04/24 08:01:14 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.22 1999/04/13 18:50:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.23 1999/04/24 08:01:14 simonb Exp $");
 
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.22 1999/04/13 18:50:52 ad Exp $");
 
 /*
  * Which TC framebuffers were drivers configured for?
- * Used for configuring a console device. 
+ * Used for configuring a console device.
  */
 #include "cfb.h"
 #include "mfb.h"
@@ -104,7 +104,7 @@ const struct tcfbsw tcfbsw[] = {
   tcfbsw_entry("PMAG-E  ", px_init),	/* ??? */
   tcfbsw_entry("PMAG-EA ", px_init),
   tcfbsw_entry("PMAG-F  ", px_init),	/* ??? */
-  tcfbsw_entry("PMAG-FA ", px_init),	
+  tcfbsw_entry("PMAG-FA ", px_init),
 #endif
 };
 const int ntcfbsw = sizeof(tcfbsw) / sizeof(tcfbsw[0]);
@@ -117,7 +117,7 @@ extern int tc_findconsole __P((int prom_slot));
 
 
 /*
- * Local forward declarations 
+ * Local forward declarations
  */
 extern struct tcbus_attach_args *  cpu_tcdesc __P ((int systype));
 
@@ -139,7 +139,7 @@ bus_dma_tag_t tc_ds_get_dma_tag __P((int));
 /* XXX*/
 typedef int (*tc_handler_t) __P((void *intr_arg));
 extern void (*tc_enable_interrupt)  __P ((u_int slotno, tc_handler_t,
-				     void *intr_arg, int on)); 
+				     void *intr_arg, int on));
 
 /*
  * Map from  systype code to a  tcbus_attach_args struct.
@@ -297,7 +297,7 @@ tc_ds_get_dma_tag(slot)
  * the preferred slot and then scanning all slots. Configure the first
  * supported framebuffer device found, if any, as the console, and
  * return 1 if found.
- * XXX knows about internals of TurboChannel bus autoconfig descriptor, 
+ * XXX knows about internals of TurboChannel bus autoconfig descriptor,
  * which needs to be fixed badly.
  */
 int
@@ -354,10 +354,10 @@ tc_consprobeslot(tc_slotaddr)
 
 	/*
 	 * We found an device in the given slot. Now see if it's a
-	 * framebuffer for which we have a driver. 
+	 * framebuffer for which we have a driver.
 	 */
 	for (i = 0; i < ntcfbsw; i++) {
-		if (tcfbsw[i].fbsw_initfn == 0) 
+		if (tcfbsw[i].fbsw_initfn == 0)
 			break;
 		if (strcmp(name, tcfbsw[i].fbsw_name) == 0) {
 			if (tcfbsw[i].fbsw_initfn(NULL, slotaddr, 0, 1))

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.36 1999/04/12 20:38:19 pk Exp $	*/
+/*	$NetBSD: mfb.c,v 1.37 1999/04/24 08:01:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,28 +38,28 @@
  *	@(#)mfb.c	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
@@ -71,7 +71,7 @@
  *	Copyright (C) 1989 Digital Equipment Corporation.
  *	Permission to use, copy, modify, and distribute this software and
  *	its documentation for any purpose and without fee is hereby granted,
- *	provided that the above copyright notice appears in all copies.  
+ *	provided that the above copyright notice appears in all copies.
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.36 1999/04/12 20:38:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.37 1999/04/24 08:01:05 simonb Exp $");
 
 #include "fb.h"
 #include "mfb.h"
@@ -269,7 +269,7 @@ mfbinit(fi, mfbaddr, unit, silent)
 	int silent;
 {
 
-	register int isconsole = 0;
+	int isconsole = 0;
 
 	/*
 	 * If this device is being intialized as the console, malloc()
@@ -370,7 +370,7 @@ static u_char	cursor_RGB[6];	/* cursor color 2 & 3 */
 
 static __inline void
 bt431_cursor_on(fi)
-	register struct fbinfo *fi;
+	struct fbinfo *fi;
 {
 	mfbRestoreCursorColor(fi);
 }
@@ -378,7 +378,7 @@ bt431_cursor_on(fi)
 
 static __inline void
 bt431_cursor_off(fi)
-	register struct fbinfo *fi;
+	struct fbinfo *fi;
 {
 	u_char cursor_save [6];
 
@@ -408,9 +408,9 @@ mfbLoadCursor(fi, cursor)
 	struct fbinfo *fi;
 	u_short *cursor;
 {
-	register int i, j, k, pos;
-	register u_short ap, bp, out;
-	register bt431_regmap_t *regs;
+	int i, j, k, pos;
+	u_short ap, bp, out;
+	bt431_regmap_t *regs;
 
 	regs = (bt431_regmap_t *)(fi -> fi_base);
 
@@ -490,7 +490,7 @@ mfbCursorColor(fi, color)
 	struct fbinfo *fi;
 	unsigned int color[];
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < 6; i++)
 		cursor_RGB[i] = (u_char)(color[i] >> 8);
@@ -503,7 +503,7 @@ mfbCursorColor(fi, color)
 void
 mfbPosCursor(fi, x, y)
 	struct fbinfo *fi;
-	register int x, y;
+	int x, y;
 {
 	bt431_regmap_t *regs = (bt431_regmap_t *)(fi -> fi_base);
 
@@ -556,7 +556,7 @@ mfbPosCursor(fi, x, y)
  * During the first console initialization, and when the framebuffer
  * device is open, entry zero is full white and all other entries are
  * black.
- * The hardware cursor is turned off.  
+ * The hardware cursor is turned off.
  */
 static void
 mfbInitColorMapBlack(fi, blackpix)
@@ -564,7 +564,7 @@ mfbInitColorMapBlack(fi, blackpix)
 	int blackpix;
 {
 	u_char rgb [3];
-	register int i;
+	int i;
 
 	if (blackpix)
 		rgb [0] = rgb [1] = rgb [2] = 0xff;
@@ -640,7 +640,7 @@ mfbLoadColorMap(fi, bits, index, count)
 	 * the black-and-white mfb.
 	 * If the framebuffer is blanked, no changes are written to the
 	 * hardware at this time.
-	 */ 
+	 */
 	for (i = 0; i < (count * 3); i++) {
 		cmap[i] = cmap_bits[i];
 		if (! fi->fi_blanked) {
@@ -689,7 +689,7 @@ static int
 bt455_video_on(fi)
 	struct fbinfo *fi;
 {
-	register int i;
+	int i;
 	bt455_regmap_t *regs = (bt455_regmap_t *)(fi -> fi_vdac);
 	u_char *cmap;
 
@@ -729,7 +729,7 @@ static int
 bt455_video_off(fi)
 	struct fbinfo *fi;
 {
-	register int i;
+	int i;
 	bt455_regmap_t *regs = (bt455_regmap_t *)(fi -> fi_vdac);
 	u_char *cmap;
 
@@ -765,7 +765,7 @@ bt431_select_reg(regs, regno)
 	tc_wmb();
 }
 
-static void 
+static void
 bt431_write_reg(regs, regno, val)
 	bt431_regmap_t *regs;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.34 1998/10/10 00:28:32 thorpej Exp $	*/
+/*	$NetBSD: sii.c,v 1.35 1999/04/24 08:01:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ struct scsipi_device sii_dev = {
  *		cntr		- variable for number of tries
  */
 #define	SII_WAIT_UNTIL(var, reg, expr, spincount, cntr) {	\
-		register u_int tmp = reg;			\
+		u_int tmp = reg;				\
 		for (cntr = 0; cntr < spincount; cntr++) {	\
 			while (tmp != (var = reg))		\
 				tmp = var;			\
@@ -156,7 +156,7 @@ u_char	sii_buf[256];	/* used for extended messages */
 
 
 /*
- * Define a safe address in the SCSI buffer for doing status & message DMA 
+ * Define a safe address in the SCSI buffer for doing status & message DMA
  * XXX why not add another field to softc?
  */
 #define SII_BUF_ADDR(sc)	((sc)->sc_buf + SII_MAX_DMA_XFER_LENGTH * 14)
@@ -194,9 +194,9 @@ struct	pmax_driver siidriver = {
  */
 void
 siiattach(sc)
-	register struct siisoftc *sc;
+	struct siisoftc *sc;
 {
-	register int i;
+	int i;
 
 	sc->sc_target = -1;	/* no command active */
 
@@ -217,7 +217,7 @@ siiattach(sc)
 
 	sii_Reset(sc, RESET);
 #ifdef USE_NEW_SCSI
-	/* XXX probe SCSI bus and attach slave devices */ 
+	/* XXX probe SCSI bus and attach slave devices */
 #endif
 }
 
@@ -230,10 +230,10 @@ siiattach(sc)
  */
 void
 siistart(scsicmd)
-	register ScsiCmd *scsicmd;	/* command to start */
+	ScsiCmd *scsicmd;	/* command to start */
 {
-	register struct pmax_scsi_device *sdp = scsicmd->sd;
-	register struct siisoftc *sc = sii_cd.cd_devs[sdp->sd_ctlr];
+	struct pmax_scsi_device *sdp = scsicmd->sd;
+	struct siisoftc *sc = sii_cd.cd_devs[sdp->sd_ctlr];
 	int s;
 
 	s = splbio();
@@ -262,7 +262,7 @@ int
 siiintr(xxxsc)
 	void *xxxsc;
 {
-	register struct siisoftc *sc = xxxsc;
+	struct siisoftc *sc = xxxsc;
 	u_int dstat;
 
 	/*
@@ -284,10 +284,10 @@ siiintr(xxxsc)
  */
 static void
 sii_Reset(sc, reset)
-	register struct siisoftc* sc;
+	struct siisoftc* sc;
 	int reset;				/* TRUE => reset SCSI bus */
 {
-	register SIIRegs *regs = sc->sc_regs;
+	SIIRegs *regs = sc->sc_regs;
 
 #ifdef DEBUG
 	if (sii_debug > 1)
@@ -315,7 +315,7 @@ sii_Reset(sc, reset)
 	regs->dmctrl = 0;
 
 	if (reset) {
-		register int i;
+		int i;
 
 		/*
 		 * Assert SCSI bus reset for at least 25 Usec to clear the
@@ -352,13 +352,13 @@ sii_Reset(sc, reset)
  */
 static void
 sii_StartCmd(sc, target)
-	register struct siisoftc *sc;	/* which SII to use */
-	register int target;		/* which command to start */
+	struct siisoftc *sc;	/* which SII to use */
+	int target;		/* which command to start */
 {
-	register SIIRegs *regs;	
-	register ScsiCmd *scsicmd;
-	register State *state;
-	register u_int status;
+	SIIRegs *regs;
+	ScsiCmd *scsicmd;
+	State *state;
+	u_int status;
 	int error, retval;
 
 	/* if another command is currently in progress, just wait */
@@ -562,12 +562,12 @@ sii_StartCmd(sc, target)
  */
 static void
 sii_DoIntr(sc, dstat)
-	register struct siisoftc *sc;
-	register u_int dstat;
+	struct siisoftc *sc;
+	u_int dstat;
 {
-	register SIIRegs *regs = sc->sc_regs;
-	register State *state;
-	register u_int cstat;
+	SIIRegs *regs = sc->sc_regs;
+	State *state;
+	u_int cstat;
 	int i, msg;
 	u_int comm;
 
@@ -1439,12 +1439,12 @@ abort:
 
 static void
 sii_StateChg(sc, cstat)
-	register struct siisoftc *sc;
-	register u_int cstat;
+	struct siisoftc *sc;
+	u_int cstat;
 {
-	register SIIRegs *regs = sc->sc_regs;
-	register State *state;
-	register int i;
+	SIIRegs *regs = sc->sc_regs;
+	State *state;
+	int i;
 
 #ifdef DEBUG
 	if (sii_debug > 4)
@@ -1546,13 +1546,13 @@ sii_StateChg(sc, cstat)
  */
 static int
 sii_GetByte(regs, phase, ack)
-	register SIIRegs *regs;
+	SIIRegs *regs;
 	int phase, ack;
 {
-	register u_int dstat;
-	register u_int state;
-	register int i;
-	register int data;
+	u_int dstat;
+	u_int state;
+	int i;
+	int data;
 
 	dstat = regs->dstat;
 	state = regs->cstat & SII_STATE_MSK;
@@ -1611,11 +1611,11 @@ sii_GetByte(regs, phase, ack)
  */
 static void
 sii_DoSync(regs, state)
-	register SIIRegs *regs;
-	register State *state;
+	SIIRegs *regs;
+	State *state;
 {
-	register u_int dstat, comm;
-	register int i, j;
+	u_int dstat, comm;
+	int i, j;
 	u_int len;
 
 #ifdef DEBUG
@@ -1720,7 +1720,7 @@ sii_DoSync(regs, state)
  */
 static void
 sii_StartDMA(regs, phase, dmaAddr, size)
-	register SIIRegs *regs;	/* which SII to use */
+	SIIRegs *regs;	/* which SII to use */
 	int phase;		/* phase to send/receive data */
 	u_short *dmaAddr;	/* DMA buffer address */
 	int size;		/* # of bytes to transfer */
@@ -1756,12 +1756,12 @@ sii_StartDMA(regs, phase, dmaAddr, size)
  */
 static void
 sii_CmdDone(sc, target, error)
-	register struct siisoftc *sc;	/* which SII to use */
+	struct siisoftc *sc;	/* which SII to use */
 	int target;			/* which device is done */
 	int error;			/* error code if any errors */
 {
-	register ScsiCmd *scsicmd;
-	register int i;
+	ScsiCmd *scsicmd;
+	int i;
 
 	scsicmd = sc->sc_cmd[target];
 #ifdef DIAGNOSTIC
@@ -1794,7 +1794,7 @@ sii_CmdDone(sc, target, error)
 void
 sii_DumpLog()
 {
-	register struct sii_log *lp;
+	struct sii_log *lp;
 
 	printf("sii: cmd %x bn %d cnt %d\n", sii_debug_cmd, sii_debug_bn,
 		sii_debug_sz);

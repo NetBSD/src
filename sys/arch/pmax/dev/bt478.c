@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.9 1997/06/22 07:42:25 jonathan Exp $	*/
+/*	$NetBSD: bt478.c,v 1.10 1999/04/24 08:01:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)bt478.c	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  *  devGraphics.c --
  *
  *     	This file contains machine-dependent routines for the graphics device.
@@ -46,7 +46,7 @@
  *	Copyright (C) 1989 Digital Equipment Corporation.
  *	Permission to use, copy, modify, and distribute this software and
  *	its documentation for any purpose and without fee is hereby granted,
- *	provided that the above copyright notice appears in all copies.  
+ *	provided that the above copyright notice appears in all copies.
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
@@ -94,7 +94,7 @@ int
 bt478init(fi)
 	struct fbinfo *fi;
 {
-	register VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
+	VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
 
 	/*
 	 *
@@ -132,12 +132,12 @@ void
 bt478RestoreCursorColor(fi)
 	struct fbinfo *fi;
 {
-	register VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
-	register int i;
+	VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
+	int i;
 
 	vdac->overWA = 0x04;
 	wbflush();
-	for (i = 0; i < 3; i++) {  
+	for (i = 0; i < 3; i++) {
 		vdac->over = bg_RGB[i];
 		wbflush();
 	}
@@ -166,7 +166,7 @@ bt478CursorColor (fi, color)
 	struct fbinfo *fi;
 	unsigned int color[];
 {
-	register int i, j;
+	int i, j;
 
 	for (i = 0; i < 3; i++)
 		bg_RGB[i] = (u_char)(color[i] >> 8);
@@ -184,8 +184,8 @@ void
 bt478BlankCursor(fi)
 	struct fbinfo *fi;
 {
-	register VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
-	register int i;
+	VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
+	int i;
 
 	vdac->overWA = 0x0c;
 	wbflush();
@@ -202,8 +202,8 @@ void
 bt478InitColorMap (fi)
 	struct fbinfo *fi;
 {
-	register VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
-	register int i;
+	VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
+	int i;
 
 	*(volatile char *)MIPS_PHYS_TO_KSEG1
 		(KN01_PHYS_COLMASK_START) = 0xff;	/* XXX */
@@ -263,7 +263,7 @@ bt478LoadColorMap(fi, bits, index, count)
 	caddr_t bits;
 	int index, count;
 {
-	register VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
+	VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
 	u_char *cmap_bits;
 	u_char *cmap;
 	int i;

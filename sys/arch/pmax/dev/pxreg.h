@@ -1,4 +1,4 @@
-/* $NetBSD: pxreg.h,v 1.2 1999/04/13 00:40:07 ad Exp $ */
+/* $NetBSD: pxreg.h,v 1.3 1999/04/24 08:01:06 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -67,7 +67,7 @@
 #define STAMP_CMD_WRITESPANS    (0x0007)
 #define STAMP_CMD_VIDEO         (0x0008)
 
-/* RGB format */ 
+/* RGB format */
 #define STAMP_RGB_NONE          (0x0000)
 #define STAMP_RGB_CONST         (0x0010)
 #define STAMP_RGB_FLAT          (0x0020)
@@ -157,7 +157,7 @@
 #define STAMP_WIDTH	(pxi->pxi_stampw)
 #define STAMP_HEIGHT	(pxi->pxi_stamph)
 #endif
- 
+
 #define XMASKADDR(__sx, __a)	(((__a)-((__sx) % STAMP_WIDTH)) & 0xF)
 #define YMASKADDR(__sy, __b)	(((__b)-((__sy) % STAMP_HEIGHT)) & 0xF)
 #define XYMASKADDR(_x,_y,_a,_b)	(XMASKADDR(_x,_a) << 16 | YMASKADDR(_y,_b))
@@ -202,7 +202,7 @@
 #define PXG_HOST_INTR_OFFSET	__PXS(0x280000)	/* N10 host interrupt */
 #define PXG_COPROC_INTR_OFFSET	__PXS(0x2c0000)	/* N10 coprocessor interrupt */
 #define PXG_VDAC_OFFSET		__PXS(0x300000)	/* VDAC registers (bt459) */
-#define PXG_VDAC_RESET_OFFSET	__PXS(0x340000)	/* VDAC reset register */	
+#define PXG_VDAC_RESET_OFFSET	__PXS(0x340000)	/* VDAC reset register */
 #define PXG_ROM_OFFSET		__PXS(0x380000)	/* ROM code */
 #define PXG_N10_START_OFFSET	__PXS(0x380000)	/* N10 start register */
 #define PXG_N10_RESET_OFFSET	__PXS(0x3c0000)	/* N10 reset (stop?) register */
@@ -281,8 +281,8 @@ struct stic_regs {
 
 /*
  * Bit definitions for stic_regs.int.
- * Three four-bit wide fields, for error (E), vertical-blank (V), and 
- * packetbuf-done (P) intererupts, respectively. 
+ * Three four-bit wide fields, for error (E), vertical-blank (V), and
+ * packetbuf-done (P) intererupts, respectively.
  * The low-order three bits of each field are enable, requested,
  * and acknowledge bits. The top bit of each field is unused.
  */
@@ -306,16 +306,16 @@ struct stic_regs {
 #define STIC_INT_WE	(STIC_INT_E_WE | STIC_INT_V_WE | STIC_INT_P_WE)
 #define STIC_INT_CLR	(STIC_INT_E_EN | STIC_INT_V_EN | STIC_INT_P_EN)
 
-/* 
+/*
  * Convert a system physical address to STIC poll offset. Polling the
  * offset returned will initiate DMA at the provided address. For the
  * PMAG-{CA,C}, the STIC only sees 23-bits (8MB) of address space. Also,
  * bits 21-22 in physical address space map to bits 27-28 in the STIC's
  * warped view of the world. This is also true for bits 15-20, which map
  * to bits 18-23. Bits 0 and 1 are meaningless, because everything is
- * word aligned. 
+ * word aligned.
  *
- * The final shift-right-by-9 is to map the address to poll register 
+ * The final shift-right-by-9 is to map the address to poll register
  * offset. These begin at px_softc.poll (which should obviously be added
  * to the return value of this function to get a vaild poll address).
  *
@@ -351,7 +351,7 @@ px_sys2dma(addr)
 /*
  * This is simply a wrapper for the above that returns a proper VA to
  * poll when given a px_softc.
- */ 
+ */
 static __inline__ volatile int32_t *
 px_poll_addr(slotbase, addr)
 	caddr_t slotbase;

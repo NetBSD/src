@@ -1,4 +1,4 @@
-/*	$NetBSD: pmioctl.h,v 1.4 1994/10/26 21:09:51 cgd Exp $	*/
+/*	$NetBSD: pmioctl.h,v 1.5 1999/04/24 08:01:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,13 +45,13 @@
  *
  *			All Rights Reserved
  *
- * Permission to use, copy, modify, and distribute this software and its 
- * documentation for any purpose and without fee is hereby granted, 
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appear in all copies and that
- * both that copyright notice and this permission notice appear in 
+ * both that copyright notice and this permission notice appear in
  * supporting documentation, and that the name of Digital not be
  * used in advertising or publicity pertaining to distribution of the
- * software without specific, written prior permission.  
+ * software without specific, written prior permission.
  *
  * Digitial disclaims all warranties with regard to this software, including
  * all implied warranties of merchantability and fitness.  In no event shall
@@ -175,7 +175,7 @@ typedef struct pm_info {
 	pmCursor mouse;			/* atomic read/write		*/
 	pmBox	mbox;			/* atomic read/write		*/
 	short	mthreshold;		/* mouse motion parameter	*/
-	short	mscale;			/* mouse scale factor (if 
+	short	mscale;			/* mouse scale factor (if
 					   negative, then do square).	*/
 	short	min_cur_x;		/* min cursor x position	*/
 	short	min_cur_y;		/* min cursor y position	*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.136 1999/04/21 02:03:24 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.137 1999/04/24 08:01:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 1999/04/21 02:03:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 1999/04/24 08:01:12 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -762,7 +762,7 @@ prom_halt(howto, bootstr)
 
 void
 cpu_reboot(howto, bootstr)
-	/*register*/ int howto;
+	int howto;
 	char *bootstr;
 {
 	extern int cold;
@@ -861,13 +861,13 @@ clkread()
 {
 
 #ifdef DEC_3MAXPLUS
-	register u_long usec, cycles;	/* really 32 bits? */
+	u_long usec, cycles;	/* really 32 bits? */
 #endif
 
 #if defined(DEC_3MIN)
 	if (systype == DS_3MIN && CPUISMIPS3) {
 		extern u_int32_t mips3_cycle_count __P((void));
-		register u_int32_t mips3_cycles =
+		u_int32_t mips3_cycles =
 		    mips3_cycle_count() - (u_int32_t)latched_cycle_cnt;
 		/* XXX divides take 78 cycles: approximate with * 41/2048  */
 #if 0
@@ -942,7 +942,7 @@ microset()
  */
 void
 microtime(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	int s = splclock();
 	static struct timeval lasttime;
@@ -968,7 +968,7 @@ microtime(tvp)
 int
 initcpu()
 {
-	register volatile struct chiptime *c;
+	volatile struct chiptime *c;
 	int i = 0;
 
 	/*

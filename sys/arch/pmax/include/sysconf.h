@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.2 1998/03/26 06:27:57 thorpej Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.3 1999/04/24 08:01:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -50,7 +50,7 @@
  * Platform Specific Information and Function Hooks.
  *
  * The tags family and model information are strings describing the platform.
- * 
+ *
  * The tag iobus describes the primary iobus for the platform- primarily
  * to give a hint as to where to start configuring. The likely choices
  * are one of tcasic, lca, apecs, cia, or tlsb.

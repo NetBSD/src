@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-aout.h,v 1.3 1998/01/05 07:03:00 perry Exp $	*/
+/*	$NetBSD: bsd-aout.h,v 1.4 1999/04/24 08:10:33 simonb Exp $	*/
 
 /* bsd-aout.h
 
@@ -18,7 +18,7 @@ struct bsd_aouthdr {
   u_short a_magic;        /* magic number */
   u_short a_mid;          /* machine ID */
 #endif
- 
+
   u_long  a_text;         /* text segment size */
   u_long  a_data;         /* initialized data size */
   u_long  a_bss;          /* uninitialized data size */
