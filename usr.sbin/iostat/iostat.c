@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)iostat.c	5.9 (Berkeley) 6/27/91";*/
-static char rcsid[] = "$Id: iostat.c,v 1.4 1993/12/06 09:25:14 cgd Exp $";
+static char rcsid[] = "$Id: iostat.c,v 1.5 1994/03/16 01:35:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -95,8 +95,8 @@ struct nlist nl[] = {
 #define X_UBDINIT	(X_END+2)
 #endif
 #ifdef i386
-#define	X_ISA_BIO	(X_END+1)
-	{ "_isa_subdev" },
+#define	X_ISADEVTAB	(X_END+1)
+	{ "_isa_devtab" },
 #endif
 	{ NULL },
 };
