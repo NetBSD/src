@@ -61,7 +61,7 @@
 #endif
 
 
-#include "openssl/e_os.h" /* OPENSSL_EXTERN */
+#include "e_os.h" /* OPENSSL_EXTERN */
 
 #undef c2l
 #define c2l(c,l)	(l =((CAST_LONG)(*((c)++)))    , \

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.13 2002/04/24 08:18:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2002/08/31 10:46:44 itojun Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.13 2002/04/24 08:18:54 lukem Exp $
+#	$Id: Makefile,v 1.14 2002/08/31 10:46:44 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -36,7 +36,7 @@ SRCS+=	verify.c asn1pars.c req.c dgst.c dh.c dhparam.c enc.c passwd.c gendh.c er
 	s_time.c $(A_SRC) $(S_SRC) $(RAND_SRC) version.c sess_id.c \
 	ciphers.c nseq.c pkcs12.c pkcs8.c spkac.c smime.c rand.c
 
-CPPFLAGS+= -DMONOLITH -DUSE_SSL
+CPPFLAGS+= -DMONOLITH -DUSE_SSL -I${OPENSSLSRC}
 
 # with normal OpenSSL, NO_{RC5,IDEA} changes ABI due to change in struct/union.
 # we nuked all of them in our header files and it is now safe.

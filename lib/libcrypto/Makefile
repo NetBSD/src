@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2002/08/19 13:35:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.25 2002/08/31 10:46:41 itojun Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -22,7 +22,7 @@
 WARNS=0
 
 LIB=	crypto
-CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto
+CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC}
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
 
@@ -59,7 +59,7 @@ CLEANFILES+= buildinf.h
 # This list is built from the contents of the include/openssl
 # directory in the OpenSSL source distribution.
 INCS+=	asn1.h asn1_mac.h bio.h blowfish.h bn.h buffer.h cast.h comp.h
-INCS+=	conf.h conf_api.h crypto.h des.h dh.h dsa.h dso.h e_os.h e_os2.h
+INCS+=	conf.h conf_api.h crypto.h des.h dh.h dsa.h dso.h e_os2.h
 INCS+=	ebcdic.h err.h evp.h hmac.h lhash.h md2.h md4.h
 INCS+=	md5.h mdc2.h obj_mac.h objects.h opensslconf.h opensslv.h pem.h
 INCS+=	pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h ripemd.h
