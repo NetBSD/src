@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.15 1995/03/29 07:28:51 briggs Exp $
+#	$NetBSD: Makefile.mac68k,v 1.16 1995/05/31 00:09:55 briggs Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -134,7 +134,7 @@ assym.s: Makefile
 assym.s: genassym
 	./genassym >assym.s
 
-genassym:
+genassym: ${MAC68K}/mac68k/genassym.c
 	${LOCAL_CC} ${INCLUDES} ${IDENT} -D_KERNEL ${PARAM} -o genassym \
 	    ${MAC68K}/mac68k/genassym.c
 
