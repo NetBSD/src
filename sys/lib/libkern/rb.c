@@ -1,3 +1,5 @@
+/* $NetBSD: rb.c,v 1.2 2002/10/08 11:58:54 simonb Exp $ */
+
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
