@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.32 1997/10/10 05:55:01 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.32.2.1 1997/11/18 07:28:04 mellon Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -214,8 +214,8 @@ void
 decode_5380_intr(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	u_int8_t csr = *ncr_sc->sci_csr;
-	u_int8_t bus_csr = *ncr_sc->sci_bus_csr;
+	u_char csr = *ncr_sc->sci_csr;
+	u_char bus_csr = *ncr_sc->sci_bus_csr;
 
 	if (((csr & ~(SCI_CSR_PHASE_MATCH | SCI_CSR_ATN)) == SCI_CSR_INT) &&
 	    ((bus_csr & ~(SCI_BUS_MSG | SCI_BUS_CD | SCI_BUS_IO | SCI_BUS_DBP)) == SCI_BUS_SEL)) {
@@ -250,153 +250,150 @@ decode_5380_intr(ncr_sc)
  ***/
 
 int
-sbc_pdma_in(ncr_sc, phase, datalen, data)
+sbc_pdma_out(ncr_sc, phase, count, data)
 	struct ncr5380_softc *ncr_sc;
 	int phase;
-	int datalen;
+	int count;
 	u_char *data;
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
-	volatile u_int32_t *long_data = (u_int32_t *)sc->sc_drq_addr;
-	volatile u_int8_t *byte_data = (u_int8_t *)sc->sc_nodrq_addr;
-	int resid, s;
+	volatile long *long_data = (long *)sc->sc_drq_addr;
+	volatile u_char *byte_data = (u_char *)sc->sc_nodrq_addr;
+	int s, len;
 
-	if (datalen < ncr_sc->sc_min_dma_len ||
-	    (sc->sc_options & SBC_PDMA) == 0)
-		return ncr5380_pio_in(ncr_sc, phase, datalen, data);
-
-	s = splbio();
-	if (sbc_wait_busy(ncr_sc)) {
-		splx(s);
-		return 0;
-	}
-
-	*ncr_sc->sci_mode |= SCI_MODE_DMA;
-	*ncr_sc->sci_irecv = 0;
-
-#define R4	*((u_int32_t *)data)++ = *long_data
-#define R1	*((u_int8_t *)data)++ = *byte_data
-	for (resid = datalen; resid >= 128; resid -= 128) {
-		if (sbc_ready(ncr_sc))
-			goto interrupt;
-		R4; R4; R4; R4; R4; R4; R4; R4;
-		R4; R4; R4; R4; R4; R4; R4; R4;
-		R4; R4; R4; R4; R4; R4; R4; R4;
-		R4; R4; R4; R4; R4; R4; R4; R4;		/* 128 */
-	}
-	while (resid) {
-		if (sbc_ready(ncr_sc))
-			goto interrupt;
-		R1;
-		resid--;
-	}
-#undef R4
-#undef R1
-
-interrupt:
-	SCI_CLR_INTR(ncr_sc);
-	*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
-	*ncr_sc->sci_icmd = 0;
-	splx(s);
-	return (datalen - resid);
-}
-
-int
-sbc_pdma_out(ncr_sc, phase, datalen, data)
-	struct ncr5380_softc *ncr_sc;
-	int phase;
-	int datalen;
-	u_char *data;
-{
-	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
-	volatile u_int32_t *long_data = (u_int32_t *)sc->sc_drq_addr;
-	volatile u_int8_t *byte_data = (u_int8_t *)sc->sc_nodrq_addr;
-	label_t faultbuf;
-	int resid, s;
-	u_int8_t icmd;
-
-#if 1
-	/* Work around lame gcc initialization bug */
-	(void)&data;
-#endif
-
-	if (datalen < ncr_sc->sc_min_dma_len ||
-	    (sc->sc_options & SBC_PDMA) == 0)
-		return ncr5380_pio_out(ncr_sc, phase, datalen, data);
+	if (count < ncr_sc->sc_min_dma_len || (sc->sc_options & SBC_PDMA) == 0)
+		return ncr5380_pio_out(ncr_sc, phase, count, data);
 
 	s = splbio();
-	if (sbc_wait_busy(ncr_sc)) {
-		splx(s);
-		return 0;
-	}
+	len = count = min(count, MAX_DMA_LEN);
+	if (sbc_wait_busy(ncr_sc) == 0) {
+		*ncr_sc->sci_mode |= SCI_MODE_DMA;
+		*ncr_sc->sci_icmd |= SCI_ICMD_DATA;
+		*ncr_sc->sci_dma_send = 0;
 
-	icmd = *(ncr_sc->sci_icmd) & SCI_ICMD_RMASK;
-	*ncr_sc->sci_icmd = icmd | SCI_ICMD_DATA;
-	*ncr_sc->sci_mode |= SCI_MODE_DMA;
-	*ncr_sc->sci_dma_send = 0;
-
-	/*
-	 * Setup for a possible bus error caused by SCSI controller
-	 * switching out of DATA OUT before we're done with the
-	 * current transfer.  (See comment before sbc_drq_intr().)
-	 */
-	nofault = &faultbuf;
-
-	if (setjmp(nofault)) {
-		printf("buf = 0x%lx, fault = 0x%lx\n",
-		    (u_long)sc->sc_drq_addr, (u_long)m68k_fault_addr);
-		panic("Unexpected bus error in sbc_pdma_out()");
-	}
-
-#define W1	*byte_data = *((u_int8_t *)data)++
-#define W4	*long_data = *((u_int32_t *)data)++
-	for (resid = datalen; resid >= 64; resid -= 64) {
-		if (sbc_ready(ncr_sc))
-			goto interrupt;
-		W1;
-		if (sbc_ready(ncr_sc))
-			goto interrupt;
-		W1;
-		if (sbc_ready(ncr_sc))
-			goto interrupt;
-		W1;
-		if (sbc_ready(ncr_sc))
-			goto interrupt;
-		W1;
-		if (sbc_ready(ncr_sc))
-			goto interrupt;
-		W4; W4; W4; W4;
-		W4; W4; W4; W4;
-		W4; W4; W4; W4;
-		W4; W4; W4;
-	}
-	while (resid) {
-		if (sbc_ready(ncr_sc))
-			goto interrupt;
-		W1;
-		resid--;
-	}
+#define W1	*byte_data = *data++
+#define W4	*long_data = *((long*)data)++
+		while (len >= 64) {
+			if (sbc_ready(ncr_sc))
+				goto interrupt;
+			W1;
+			if (sbc_ready(ncr_sc))
+				goto interrupt;
+			W1;
+			if (sbc_ready(ncr_sc))
+				goto interrupt;
+			W1;
+			if (sbc_ready(ncr_sc))
+				goto interrupt;
+			W1;
+			if (sbc_ready(ncr_sc))
+				goto interrupt;
+			W4; W4; W4; W4;
+			W4; W4; W4; W4;
+			W4; W4; W4; W4;
+			W4; W4; W4;
+			len -= 64;
+		}
+		while (len) {
+			if (sbc_ready(ncr_sc))
+				goto interrupt;
+			W1;
+			len--;
+		}
 #undef  W1
 #undef  W4
-	if (sbc_wait_dreq(ncr_sc))
-		printf("%s: timeout waiting for DREQ.\n",
-		    ncr_sc->sc_dev.dv_xname);
+		if (sbc_wait_dreq(ncr_sc))
+			printf("%s: timeout waiting for DREQ.\n",
+			    ncr_sc->sc_dev.dv_xname);
 
-	*byte_data = 0;
+		*byte_data = 0;
+
+		SCI_CLR_INTR(ncr_sc);
+		*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
+		*ncr_sc->sci_icmd = 0;
+	}
 	goto done;
 
 interrupt:
+#ifdef DEBUG
+	if (sbc_debug & SBC_DB_INTR)
+		printf("%s: pdma_out: timeout len=%d count=%d (disconnect?)\n",
+		    ncr_sc->sc_dev.dv_xname, len, count);
+#endif
 	if ((*ncr_sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0) {
-		*ncr_sc->sci_icmd = icmd & ~SCI_ICMD_DATA;
-		--resid;
+		*ncr_sc->sci_icmd &= ~SCI_ICMD_DATA;
+		--len;
 	}
 
-done:
 	SCI_CLR_INTR(ncr_sc);
 	*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
-	*ncr_sc->sci_icmd = icmd;
+	*ncr_sc->sci_icmd = 0;
+
+done:
 	splx(s);
-	return (datalen - resid);
+	return count - len;
+}
+
+int
+sbc_pdma_in(ncr_sc, phase, count, data)
+	struct ncr5380_softc *ncr_sc;
+	int phase;
+	int count;
+	u_char *data;
+{
+	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
+	volatile u_int32_t *long_data = (u_int32_t *)sc->sc_drq_addr;
+	volatile u_int8_t *byte_data = (u_int8_t *)sc->sc_nodrq_addr;
+	int len, s;
+
+	if (count < ncr_sc->sc_min_dma_len || (sc->sc_options & SBC_PDMA) == 0)
+		return ncr5380_pio_in(ncr_sc, phase, count, data);
+
+	s = splbio();
+	len = count = min(count, MAX_DMA_LEN);
+	if (sbc_wait_busy(ncr_sc) == 0) {
+		*ncr_sc->sci_mode |= SCI_MODE_DMA;
+		*ncr_sc->sci_icmd |= SCI_ICMD_DATA;
+		*ncr_sc->sci_irecv = 0;
+
+#define R4	*((long *)data)++ = *long_data
+#define R1	*data++ = *byte_data
+		while (len >= 128) {
+			if (sbc_ready(ncr_sc))
+				goto interrupt;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;		/* 128 */
+			len -= 128;
+		}
+		while (len) {
+			if (sbc_ready(ncr_sc))
+				goto interrupt;
+			R1;
+			len--;
+		}
+#undef R4
+#undef R1
+		SCI_CLR_INTR(ncr_sc);
+		*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
+		*ncr_sc->sci_icmd = 0;
+	}
+	goto done;
+
+interrupt:
+#ifdef DEBUG
+	if (sbc_debug & SBC_DB_INTR)
+		printf("%s: pdma_in: timeout len=%d count=%d (disconnect?)\n",
+		    ncr_sc->sc_dev.dv_xname, len, count);
+#endif
+	SCI_CLR_INTR(ncr_sc);
+	*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
+	*ncr_sc->sci_icmd = 0;
+
+done:
+	splx(s);
+	return count - len;
 }
 
 
@@ -457,7 +454,7 @@ sbc_drq_intr(p)
 	 */
 	nofault = &faultbuf;
 
-	if (setjmp((label_t *)nofault)) {
+	if (setjmp(nofault)) {
 		nofault = (label_t *)0;
 		if ((dh->dh_flags & SBC_DH_DONE) == 0) {
 			count = ((  (u_long)m68k_fault_addr
