@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.2 1997/01/31 21:38:16 pk Exp $
+#	$NetBSD: genassym.sh,v 1.3 1997/01/31 21:56:28 pk Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -65,19 +65,18 @@ function defend()
 BEGIN {
 	printf("#ifndef _KERNEL\n#define _KERNEL\n#endif\n");
 	printf("#define	offsetof(type, member) ((size_t)(&((type *)0)->member))\n");
-	matched = 0;
 	defining = 0;
 }
 
-/^[ \t]*#.*/ {
-	# Just ignore comments
-	matched = 1;
+/^[ \t]*#.*/ || /^[ \t]*$/ {
+	# Just ignore comments and empty lines
+	next;
 }
 
 /^include[ \t]/ {
 	defend();
 	printf("#%s\n", $0);
-	matched = 1;
+	next;
 }
 
 /^if[ \t]/ ||
@@ -87,7 +86,7 @@ BEGIN {
 /^elif[ \t]/ ||
 /^endif/ {
 	printf("#%s\n", $0);
-	matched = 1;
+	next;
 }
 
 /^define[ \t]/ {
@@ -98,22 +97,18 @@ BEGIN {
 		printf("printf(\"#define " $2 " %%ld\\n\", (long)" value ");\n");
 	else
 		printf("__asm(\"XYZZY %s %%0\" : : \"n\" (%s));\n", $2, value);
-	matched = 1;
+	next;
 }
 
 /^quote[ \t]/ {
 	gsub("^quote[ \t]+", "");
 	print;
-	matched = 1;
+	next;
 }
 
 {
-	if (matched || NF == 0)
-		matched = 0;
-	else {
-		printf("syntax error in line %d\n", FNR) >"/dev/stderr";
-		exit(1);
-	}
+	printf("syntax error in line %d\n", FNR) >"/dev/stderr";
+	exit(1);
 }
 END {
 	defend();
