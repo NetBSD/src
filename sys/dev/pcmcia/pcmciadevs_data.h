@@ -1,11 +1,12 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.109 2001/01/16 15:57:54 nonaka Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.110 2001/01/20 01:58:12 imp Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.110 2001/01/16 15:56:48 nonaka Exp 
+ *	NetBSD: pcmciadevs,v 1.111 2001/01/20 01:56:16 imp Exp 
  */
+/*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -197,6 +198,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Motorola Corporation",
 	    "Motorola Personal Messenger 100C CDPD Modem"	},
+	},
+	{
+	    PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE2,
+	    PCMCIA_CIS_KINGSTON_KNE2,
+	    0,
+	    "Kingston",
+	    "Kingston KNE-PC2 Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA501,
@@ -598,6 +606,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Allied Telesis LA-PCM"	},
 	},
 	{
+	    PCMCIA_VENDOR_RATOC, PCMCIA_PRODUCT_RATOC_REX_R280,
+	    PCMCIA_CIS_RATOC_REX_R280,
+	    0,
+	    "RATOC System Inc.",
+	    "RATOC REX-R280"	},
+	},
+	{
 	    PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	    PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
 	    0,
@@ -827,6 +842,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "SVEC/Hawking Technology",
 	    "SVEC PN650TX 10/100 Dual Speed Fast Ethernet PC Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_NAKAGAWAMETAL_LNT10TN,
+	    PCMCIA_CIS_NAKAGAWAMETAL_LNT10TN,
+	    0,
+	    "NAKAGAWA METAL",
+	    "NAKAGAWA METAL LNT-10TN NE2000 Compatible Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_AMBICOM_AMB8002T,
@@ -1088,6 +1110,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_KINGSTON, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Kingston",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_DAYNA, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1302,6 +1331,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "SVEC/Hawking Technology",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_NAKAGAWAMETAL, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "NAKAGAWA METAL",
 	    NULL,
 	},
 	{
