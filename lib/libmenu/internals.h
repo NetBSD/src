@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.h,v 1.6 2000/04/20 12:17:57 blymn Exp $	*/
+/*	$NetBSD: internals.h,v 1.7 2000/07/11 06:07:26 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -44,7 +44,7 @@
 void _menui_draw_item(MENU *menu, int item);
 int _menui_draw_menu(MENU *menu);
 int _menui_goto_item(MENU *menu, ITEM *item, int new_top_row);
-int _menui_match_pattern(MENU *menu, char c, int direction ,
+int _menui_match_pattern(MENU *menu, int c, int direction ,
 			 int *item_matched);
 int _menui_match_items(MENU *menu, int direction, int *item_matched);
 void _menui_max_item_size(MENU *menu);

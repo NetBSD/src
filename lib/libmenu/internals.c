@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.6 2000/04/20 12:17:57 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.7 2000/07/11 06:07:26 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -331,7 +331,7 @@ _menui_match_items(MENU *menu, int direction, int *item_matched)
  * index of the item that matched the pattern.
  */
 int
-_menui_match_pattern(MENU *menu, char c, int direction, int *item_matched)
+_menui_match_pattern(MENU *menu, int c, int direction, int *item_matched)
 {
 	if (menu == NULL)
 		return E_BAD_ARGUMENT;

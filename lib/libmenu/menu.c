@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.8 2000/05/07 12:14:44 blymn Exp $	*/
+/*	$NetBSD: menu.c,v 1.9 2000/07/11 06:07:27 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -365,7 +365,7 @@ set_menu_pattern(MENU *param_menu, char *pat)
 	
 	  /* check pattern is all printable characters */
 	while (*p)
-		if (!isprint(*p++)) return E_BAD_ARGUMENT;
+		if (!isprint((unsigned char) *p++)) return E_BAD_ARGUMENT;
 	
         if ((menu->pattern = (char *) realloc(menu->pattern,
                                      sizeof(char) * strlen(pat))) == NULL)
