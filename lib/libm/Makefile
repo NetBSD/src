@@ -1,5 +1,6 @@
+#  $NetBSD: Makefile,v 1.27 1995/10/10 23:43:31 ragge Exp $
+#
 #  @(#)Makefile 5.1beta 93/09/24 
-#  $Id: Makefile,v 1.26 1995/05/03 20:42:23 jtc Exp $
 # 
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -57,13 +58,19 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_log.S e_log10.S \
 	    e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S s_ceil.S \
 	    s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S s_log1p.S \
 	    s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
+.elif (${MACHINE_ARCH} == "vax")
+.PATH:	${.CURDIR}/arch/vax
+NOIEEE_ARCH=n_infnan.S n_argred.S n_sqrt.S
+ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_sincos.S n_tan.S n_support.S 
 .endif
 
 .PATH:	${.CURDIR}/man
 .PATH:	${.CURDIR}/src
+.PATH:	${.CURDIR}/noieee_src
 
-
+.if (${MACHINE_ARCH} != "vax")
 CFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
+.endif
 
 LIB=	m
 COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
@@ -94,11 +101,22 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	w_pow.c w_powf.c w_remainder.c w_remainderf.c w_scalb.c w_scalbf.c \
 	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c
 
+# math routines for non-IEEE architectures.
+NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
+	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_floor.c n_fmod.c n_gamma.c \
+	n_lgamma.c n_j0.c n_j1.c n_jn.c n_log.c n_log10.c n_log1p.c \
+	n_log__L.c n_pow.c n_sinh.c n_tanh.c n_atan2.c n_cabs.c n_cbrt.c \
+	n_sqrt.c n_sincos.c n_tan.c n_argred.c n_support.c n_infnan.c
+        
+
 # NetBSD's C library supplies these functions:
 #COMMON_SRCS+=	s_fabs.c s_frexp.c s_isinf.c s_isnan.c s_ldexp.c s_modf.c
 
-
-SRCS=${COMMON_SRCS}
+.if (${MACHINE_ARCH} == "vax")
+SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}
+.else
+SRCS=	${COMMON_SRCS}
+.endif
 
 # Substitute common sources with any arch specific sources 
 .for i in ${ARCH_SRCS}
