@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/02/09 00:25:05 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -8,6 +8,7 @@ LIB=	pcidata
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/scanpci
 SRCS=	xf86PciData.c xf86PciIds.h
+DPSRCS+=xf86PciIds.h
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
