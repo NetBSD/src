@@ -42,7 +42,7 @@
  *	@(#)cache.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: cache.c,v 1.10 93/07/18 06:23:51 torek Exp  (LBL)
- * $Id: cache.c,v 1.1 1993/10/02 10:24:05 deraadt Exp $
+ * $Id: cache.c,v 1.2 1993/11/24 02:31:32 deraadt Exp $
  */
 
 /*
@@ -70,17 +70,17 @@ struct cachestats cachestats;
 void
 cache_enable()
 {
-	register u_int i, lim, ls;
+	register u_int i, lim, ls, ts;
 
-	i = AC_CACHETAGS;
-	lim = i + cacheinfo.c_totalsize;
 	ls = cacheinfo.c_linesize;
-	for (; i < lim; i += ls)
+	ts = cacheinfo.c_totalsize;
+	for (i = AC_CACHETAGS, lim = i + ts; i < lim; i += ls)
 		sta(i, ASI_CONTROL, 0);
 
 	stba(AC_SYSENABLE, ASI_CONTROL,
 	    lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_CACHE);
 	cacheinfo.c_enabled = 1;
+
 	printf("cache enabled\n");
 }
 
