@@ -1,4 +1,4 @@
-/*	$NetBSD: catclose.c,v 1.10 1998/11/15 17:42:36 christos Exp $	*/
+/*	$NetBSD: catclose.c,v 1.11 1999/08/17 04:00:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,10 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <nl_types.h>
+
+#ifdef __weak_alias
+__weak_alias(catclose, _catclose)
+#endif
 
 int
 _catclose(catd)

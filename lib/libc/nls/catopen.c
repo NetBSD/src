@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.14 1998/11/15 17:42:36 christos Exp $	*/
+/*	$NetBSD: catopen.c,v 1.15 1999/08/17 04:00:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,6 +52,10 @@
 
 #define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L"
 #define NLS_DEFAULT_LANG "C"
+
+#ifdef __weak_alias
+__weak_alias(catopen, _catopen)
+#endif
 
 static nl_catd load_msgcat __P((const char *));
 
