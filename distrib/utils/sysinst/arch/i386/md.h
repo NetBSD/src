@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.33 2002/05/29 20:36:41 tv Exp $	*/
+/*	$NetBSD: md.h,v 1.34 2003/04/06 16:12:40 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,25 +70,25 @@
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern-GENERIC",		1, "aj", "Kernel        : "},
-    {"kern-GENERIC_TINY",	0, "aj", "Kernel        : "},
-    {"kern-GENERIC_LAPTOP",	0, "aj", "Kernel        : "},
-    {"kern-GENERIC_DIAGNOSTIC",	0, "aj", "Kernel        : "},
-    {"kern-GENERIC_PS2TINY",	0, "aj", "Kernel        : "},
-    {"base",			1, "cr", "Base          : "},
-    {"etc",			1, "aa", "System (/etc) : "},
-    {"comp",			1, "ca", "Compiler      : "},
-    {"games",			1, "am", "Games         : "},
-    {"man",			1, "ax", "Manuals       : "},
-    {"misc",			1, "aj", "Miscellaneous : "},
-    {"text",			1, "af", "Text tools    : "},
-    {"xbase",			1, "al", "X11 clients   : "},
-    {"xfont",			1, "az", "X11 fonts     : "},
-    {"xserver",			1, "ck", "X11 servers   : "},
-    {"xcontrib",		1, "aa", "X11 contrib   : "},
-    {"xcomp",			1, "ah", "X programming : "},
-    {"xmisc",			1, "aa", "X11 Misc.     : "},
-    {NULL, 0, NULL, NULL }
+    {"kern-GENERIC",		1, "Kernel        : "},
+    {"kern-GENERIC_TINY",	0, "Kernel        : "},
+    {"kern-GENERIC_LAPTOP",	0, "Kernel        : "},
+    {"kern-GENERIC_DIAGNOSTIC",	0, "Kernel        : "},
+    {"kern-GENERIC_PS2TINY",	0, "Kernel        : "},
+    {"base",			1, "Base          : "},
+    {"etc",			1, "System (/etc) : "},
+    {"comp",			1, "Compiler      : "},
+    {"games",			1, "Games         : "},
+    {"man",			1, "Manuals       : "},
+    {"misc",			1, "Miscellaneous : "},
+    {"text",			1, "Text tools    : "},
+    {"xbase",			1, "X11 clients   : "},
+    {"xfont",			1, "X11 fonts     : "},
+    {"xserver",			1, "X11 servers   : "},
+    {"xcontrib",		1, "X11 contrib   : "},
+    {"xcomp",			1, "X programming : "},
+    {"xmisc",			1, "X11 Misc.     : "},
+    { NULL,		0, NULL }
 }
 #endif
 ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 2002/06/19 11:44:26 leo Exp $	*/
+/*	$NetBSD: md.h,v 1.5 2003/04/06 16:12:38 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -74,26 +74,26 @@
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern-BOOT",	 1, "ag", "TT030/Falcon kernel : "},
-    {"kern-HADES",	 1, "ag", "Hades kernel        : "},
-    {"kern-MILAN-ISAIDE",1, "ag", "Milan ISAIDE kernel : "},
-    {"kern-MILAN-PCIIDE",1, "ag", "Milan PCIIDE kernel : "},
-    {"base",		 1, "bw", "Base                : "},
-    {"etc",		 1, "aa", "System (/etc)       : "},
-    {"comp",		 1, "bl", "Compiler            : "},
-    {"games",		 1, "am", "Games               : "},
-    {"man",		 1, "ar", "Manuals             : "},
-    {"misc",		 1, "aj", "Miscellaneous       : "},
-    {"text",		 1, "af", "Text tools          : "},
+    {"kern-BOOT",	 1, "TT030/Falcon kernel : "},
+    {"kern-HADES",	 1, "Hades kernel        : "},
+    {"kern-MILAN-ISAIDE",1, "Milan ISAIDE kernel : "},
+    {"kern-MILAN-PCIIDE",1, "Milan PCIIDE kernel : "},
+    {"base",		 1, "Base                : "},
+    {"etc",		 1, "System (/etc)       : "},
+    {"comp",		 1, "Compiler            : "},
+    {"games",		 1, "Games               : "},
+    {"man",		 1, "Manuals             : "},
+    {"misc",		 1, "Miscellaneous       : "},
+    {"text",		 1, "Text tools          : "},
 
     /* XXX no X11 on floppies, what sets are they?*/
-    {"xbase",		 1, "al", "X11 clients         : "},
-    {"xfont",		 1, "az", "X11 fonts           : "},
-    {"xserver",		 1, "cr", "X11 servers         : "},
-    {"xcontrib",	 1, "aa", "X11 contrib         : "},
-    {"xcomp",		 1, "ah", "X programming       : "},
-    {"xmisc",		 1, NULL, "X11 Misc.           : "},
-    {NULL, 0, NULL, NULL }
+    {"xbase",		 1, "X11 clients         : "},
+    {"xfont",		 1, "X11 fonts           : "},
+    {"xserver",		 1, "X11 servers         : "},
+    {"xcontrib",	 1, "X11 contrib         : "},
+    {"xcomp",		 1, "X programming       : "},
+    {"xmisc",		 1, "X11 Misc.           : "},
+    { NULL,		 0, NULL }
 }
 #endif
 ;

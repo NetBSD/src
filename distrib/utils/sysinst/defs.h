@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.75 2003/01/12 21:49:50 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.76 2003/04/06 16:12:36 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -88,7 +88,6 @@ extern const char * const fstypenames[];
 typedef struct distinfo {
 	char *name;
 	int   getit;
-	char *fdlast;
 	char *desc;
 } distinfo;
 
