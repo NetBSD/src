@@ -1,3 +1,4 @@
+./sbin/binpatch
 ./usr/lib/libc.so.12.4
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
@@ -15,6 +16,10 @@
 ./usr/lib/libtermlib.so.0.0
 ./usr/lib/libutil.so.3.1
 ./usr/libexec/ld.so
+./usr/share/keymaps/amiga/din
+./usr/share/keymaps/amiga/sw
+./usr/share/keymaps/amiga/us
 ./usr/sbin/grfconfig
 ./usr/sbin/iteconfig
+./usr/sbin/loadkmap
 ./usr/sbin/videomode
