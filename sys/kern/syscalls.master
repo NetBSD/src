@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.107 2001/01/08 18:25:35 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.108 2001/01/27 07:47:26 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -9,6 +9,9 @@
 ;	number	system call number, must be in order
 ;	type	one of STD, OBSOL, UNIMPL, NODEF, NOARGS, or one of
 ;		the compatibility options defined in syscalls.conf.
+;
+; An optional field, MPSAFE, after the type field, indicates that
+; the system call is MP-safe.
 ;
 ; types:
 ;	STD	always included
@@ -86,9 +89,9 @@
 19	COMPAT_43	{ long sys_lseek(int fd, long offset, int whence); } \
 			    olseek
 #ifdef COMPAT_43
-20	STD		{ pid_t sys_getpid_with_ppid(void); } getpid
+20	STD 		{ pid_t sys_getpid_with_ppid(void); } getpid
 #else
-20	STD		{ pid_t sys_getpid(void); }
+20	STD MPSAFE	{ pid_t sys_getpid(void); }
 #endif
 21	STD		{ int sys_mount(const char *type, const char *path, \
 			    int flags, void *data); }
