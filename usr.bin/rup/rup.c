@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rup.c,v 1.6 1993/09/23 18:37:28 jtc Exp $";
+static char rcsid[] = "$Id: rup.c,v 1.7 1993/11/10 03:52:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -49,16 +49,20 @@ static char rcsid[] = "$Id: rup.c,v 1.6 1993/09/23 18:37:28 jtc Exp $";
 #undef FSCALE
 #include <rpcsvc/rstat.h>
 
-#define HOST_WIDTH 15
+#define HOST_WIDTH 24
 
 char *argv0;
+
+int printtime;			/* print the remote host(s)'s time */
 
 struct host_list {
 	struct host_list *next;
 	struct in_addr addr;
 } *hosts;
 
-int search_host(struct in_addr addr)
+int
+search_host(addr)
+	struct in_addr addr;
 {
 	struct host_list *hp;
 	
@@ -72,7 +76,9 @@ int search_host(struct in_addr addr)
 	return(0);
 }
 
-void remember_host(struct in_addr addr)
+void
+remember_host(addr)
+	struct in_addr addr;
 {
 	struct host_list *hp;
 
@@ -85,7 +91,9 @@ void remember_host(struct in_addr addr)
 	hosts = hp;
 }
 
-rstat_reply(char *replyp, struct sockaddr_in *raddrp)
+rstat_reply(replyp, raddrp)
+	char *replyp;
+	struct sockaddr_in *raddrp;
 {
 	struct tm *tmp_time;
 	struct tm host_time;
@@ -106,7 +114,7 @@ rstat_reply(char *replyp, struct sockaddr_in *raddrp)
 	else
 		host = inet_ntoa(raddrp->sin_addr);
 
-	printf("%-*s\t", HOST_WIDTH, host);
+	printf("%-*.*s", HOST_WIDTH, HOST_WIDTH, host);
 
 	tmp_time = localtime((time_t *)&host_stat->curtime.tv_sec);
 	host_time = *tmp_time;
@@ -131,12 +139,13 @@ rstat_reply(char *replyp, struct sockaddr_in *raddrp)
 		else
 			hours_buf[0] = '\0';
 
-	printf(" %2d:%02d%cm  up %9.9s%9.9s load average: %.2f %.2f %.2f\n",
-		host_time.tm_hour % 12,
-		host_time.tm_min,
-		(host_time.tm_hour >= 12) ? 'p' : 'a',
-		days_buf,
-		hours_buf,
+	if (printtime)
+		printf(" %2d:%02d%cm", host_time.tm_hour % 12,
+			host_time.tm_min,
+			(host_time.tm_hour >= 12) ? 'p' : 'a');
+
+	printf(" up %9.9s%9.9s load average: %.2f %.2f %.2f\n",
+		days_buf, hours_buf,
 		(double)host_stat->avenrun[0]/FSCALE,
 		(double)host_stat->avenrun[1]/FSCALE,
 		(double)host_stat->avenrun[2]/FSCALE);
@@ -145,7 +154,8 @@ rstat_reply(char *replyp, struct sockaddr_in *raddrp)
 	return(0);
 }
 
-onehost(char *host)
+onehost(host)
+	char *host;
 {
 	CLIENT *rstat_clnt;
 	statstime host_stat;
@@ -195,7 +205,9 @@ usage()
 	exit(1);
 }
 
-main(int argc, char *argv[])
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
 	int ch;
 	extern int optind;
@@ -205,8 +217,11 @@ main(int argc, char *argv[])
 	else
 		argv0++;
     
-	while ((ch = getopt(argc, argv, "?")) != -1)
+	while ((ch = getopt(argc, argv, "?t")) != -1)
 		switch (ch) {
+		case 't':
+			printtime++;
+			break;
 		default:
 			usage();
 			/*NOTREACHED*/
