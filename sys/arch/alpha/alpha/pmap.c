@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.171 2001/04/24 20:53:43 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.172 2001/04/29 06:54:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171 2001/04/24 20:53:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.172 2001/04/29 06:54:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2427,6 +2427,33 @@ pmap_copy_page(paddr_t src, paddr_t dst)
         s = (caddr_t)ALPHA_PHYS_TO_K0SEG(src);
         d = (caddr_t)ALPHA_PHYS_TO_K0SEG(dst);
 	memcpy(d, s, PAGE_SIZE);
+}
+
+/*
+ * pmap_pageidlezero:		[ INTERFACE ]
+ *
+ *	Page zero'er for the idle loop.  Returns TRUE if the
+ *	page was zero'd, FLASE if we aborted for some reason.
+ */
+boolean_t
+pmap_pageidlezero(paddr_t pa)
+{
+	u_long *ptr;
+	int i, cnt = PAGE_SIZE / sizeof(u_long);
+
+	for (i = 0, ptr = (u_long *) ALPHA_PHYS_TO_K0SEG(pa); i < cnt; i++) {
+		if (sched_whichqs != 0) {
+			/*
+			 * A process has become ready.  Abort now,
+			 * so we don't keep it waiting while we
+			 * finish zeroing the page.
+			 */
+			return (FALSE);
+		}
+		*ptr++ = 0;
+	}
+
+	return (TRUE);
 }
 
 /*

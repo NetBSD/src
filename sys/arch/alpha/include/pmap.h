@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.44 2001/04/24 20:14:45 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.45 2001/04/29 06:54:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -229,6 +229,9 @@ extern	pt_entry_t *VPT;		/* Virtual Page Table */
  */
 #define	PMAP_MAP_POOLPAGE(pa)		ALPHA_PHYS_TO_K0SEG((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)		ALPHA_K0SEG_TO_PHYS((va))
+
+boolean_t			pmap_pageidlezero(paddr_t);
+#define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 paddr_t vtophys(vaddr_t);
 
