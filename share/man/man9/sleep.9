@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.4 1997/02/06 05:05:21 mikel Exp $
+.\"	$NetBSD: sleep.9,v 1.5 1997/09/21 14:35:00 is Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -148,7 +148,7 @@ wait for the next opportunity.
 returns 0 if it returns as a result of a
 .Fn wakeup .
 If a
-.Fn tlseep
+.Fn tsleep
 returns as a result of a signal, the return value is
 .Er ERESTART
 if the signal has the
