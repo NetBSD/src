@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.237 2001/12/16 20:31:09 scw Exp $
+#	$NetBSD: bsd.own.mk,v 1.238 2001/12/20 18:29:47 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -15,7 +15,8 @@ NEED_OWN_INSTALL_TARGET?=	yes
 .if defined(USE_NEW_TOOLCHAIN) && ${USE_NEW_TOOLCHAIN} == "no"
 .undef USE_NEW_TOOLCHAIN
 .else
-.if ${MACHINE_ARCH} == "arm" || \
+.if ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
