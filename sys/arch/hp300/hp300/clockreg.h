@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.6 2001/10/11 15:02:07 tsutsui Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.7 2001/11/17 23:51:03 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 /*
- * HP300 "real time clock" (MC6840) registers
+ * MC6840 PTM registers
  */
 
 struct clkreg {

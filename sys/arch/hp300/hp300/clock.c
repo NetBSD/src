@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 2001/11/10 19:43:48 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.24 2001/11/17 23:51:03 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,26 +53,25 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/tty.h>
-
-#include <dev/clock_subr.h>
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
 
-#include <hp300/dev/hilreg.h>
-#include <hp300/dev/hilioctl.h>
-#include <hp300/dev/hilvar.h>
+#include <dev/clock_subr.h>
+
 #include <hp300/hp300/clockreg.h>
+#include <arch/hp300/hp300/clockvar.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>
 #endif
 
-int    clkstd[1];
+void	statintr __P((struct clockframe *));
 
+static todr_chip_handle_t todr_handle;
+
+int    clkstd[1];
 static int clkint;		/* clock interval, as loaded */
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -88,17 +87,20 @@ static int profmin;		/* profclock interval - variance/2 */
 static int timer3min;		/* current, from above choices */
 static int statprev;		/* previous value in stat timer */
 
-void	statintr __P((struct clockframe *));
+void
+clockattach(todr_chip_handle_t handle)
+{
+	if (todr_handle != NULL)
+		panic("clockattach: multiple clocks");
 
-static todr_chip_handle_t todr_handle;
+	todr_handle = handle;
 
-void bbc_init __P((void));
-int bbc_settime __P((todr_chip_handle_t, struct timeval *));
-int bbc_gettime __P((todr_chip_handle_t, struct timeval *));
-int bbc_getcal __P((todr_chip_handle_t, int *));
-int bbc_setcal __P((todr_chip_handle_t, int));
-static u_int8_t read_bbc_reg __P((struct hil_dev *, int));
-static u_int8_t write_bbc_reg __P((struct hil_dev *, int, u_int));
+#ifdef EVCNT_COUNTERS
+	evcnt_attach_dynamic(&clock_intr_evcnt, EVCNT_TYPE_INTR, NULL,
+	    dev->dv_xname, "intr");
+#endif
+}
+
 
 /*
  * Machine-dependent clock routines.
@@ -203,8 +205,8 @@ cpu_initclocks()
 	volatile struct clkreg *clk;
 	int intvl, statint, profint, minint;
 
-	/* XXX TOD clock should be attached as a normal device */
-	bbc_init();
+	if (todr_handle == NULL)
+		panic("cpu_initclocks: no clock attached");
 
 	clkstd[0] = IIOV(0x5F8000);		/* XXX grot */
 	clk = (volatile struct clkreg *)clkstd[0];
@@ -409,184 +411,9 @@ inittodr(base)
 void
 resettodr()
 {
-
 	if (time.tv_sec == 0)
 		return;
 
 	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
 		printf("resettodr: cannot set time in time-of-day clock\n");
-}
-
-/*
- * functions for HP300 battery-backed clock
- */
-#define BBC_SET_REG 	0xe0
-#define BBC_WRITE_REG	0xc2
-#define BBC_READ_REG	0xc3
-#define NUM_BBC_REGS	13
-#define BBC_BASE_YEAR	1900
-
-#define BBC_REG5_HOUR	0x3
-#define BBC_REG5_PM	0x4
-#define BBC_REG5_24HR	0x8
-
-void
-bbc_init(void)
-{
-	struct hil_dev *bbcaddr;
-
-	bbcaddr = BBCADDR; /* XXX */
-	if (badbaddr((caddr_t)&bbcaddr->hil_stat)) {
-		printf("WARNING: no battery clock\n");
-		bbcaddr = NULL;
-	}
-	todr_handle = malloc(sizeof(struct todr_chip_handle),
-	    M_DEVBUF, M_NOWAIT);
-
-	todr_handle->cookie = bbcaddr;
-	todr_handle->todr_gettime = bbc_gettime;
-	todr_handle->todr_settime = bbc_settime;
-	todr_handle->todr_getcal = bbc_getcal;
-	todr_handle->todr_setcal = bbc_setcal;
-	todr_handle->todr_setwen = NULL;
-}
-
-int
-bbc_gettime(handle, tv)
-	todr_chip_handle_t handle;
-	struct timeval *tv;
-{
-	int i, read_okay, year;
-	struct clock_ymdhms dt;
-	struct hil_dev *bbcaddr = handle->cookie;
-	u_int8_t bbc_registers[NUM_BBC_REGS];
-
-	/* read bbc registers */
-	read_okay = 0;
-	while (!read_okay) {
-		read_okay = 1;
-		for (i = 0; i < NUM_BBC_REGS; i++)
-			bbc_registers[i] = read_bbc_reg(bbcaddr, i);
-		for (i = 0; i < NUM_BBC_REGS; i++)
-			if (bbc_registers[i] != read_bbc_reg(bbcaddr, i))
-				read_okay = 0;
-	}
-
-#define	bbc_to_decimal(a,b) 	(bbc_registers[a] * 10 + bbc_registers[b])
-
-	dt.dt_sec  = bbc_to_decimal(1, 0);
-	dt.dt_min  = bbc_to_decimal(3, 2);
-	dt.dt_hour = (bbc_registers[5] & BBC_REG5_HOUR) * 10 + bbc_registers[4];
-	dt.dt_day  = bbc_to_decimal(8, 7);
-	dt.dt_mon  = bbc_to_decimal(10, 9);
-
-	year = bbc_to_decimal(12, 11) + BBC_BASE_YEAR;
-	if (year < POSIX_BASE_YEAR)
-		year += 100;
-	dt.dt_year = year;
-
-#undef	bbc_to_decimal
-
-	/* simple sanity checks */
-	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
-	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
-		return (1);
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
-	return (0);
-}
-
-int
-bbc_settime(handle, tv)
-	todr_chip_handle_t handle;
-	struct timeval *tv;
-{
-	int i, year;
-	struct clock_ymdhms dt;
-	struct hil_dev *bbcaddr = handle->cookie;
-	u_int8_t bbc_registers[NUM_BBC_REGS];
-
-	/* Note: we ignore `tv_usec' */
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
-	year = dt.dt_year - BBC_BASE_YEAR;
-	if (year > 99)
-		year -= 100;
-
-#define	decimal_to_bbc(a,b,n)		\
-	bbc_registers[a] = (n) % 10;	\
-	bbc_registers[b] = (n) / 10;
-
-	decimal_to_bbc(0, 1, dt.dt_sec);
-	decimal_to_bbc(2, 3, dt.dt_min);
-	decimal_to_bbc(7, 8, dt.dt_day);
-	decimal_to_bbc(9, 10, dt.dt_mon);
-	decimal_to_bbc(11, 12, year);
-
-	bbc_registers[4] = dt.dt_hour % 10;
-	bbc_registers[5] = ((dt.dt_hour / 10) & BBC_REG5_HOUR) | BBC_REG5_24HR;
-
-	bbc_registers[6] = 0;
-
-#undef	decimal_to_bbc
-
-	/* write bbc registers */
-	write_bbc_reg(bbcaddr, 15, 13);	/* reset prescaler */
-	for (i = 0; i < NUM_BBC_REGS; i++)
-		if (bbc_registers[i] !=
-		    write_bbc_reg(bbcaddr, i, bbc_registers[i]))
-			return (1);
-	return (0);
-}
-
-int
-bbc_getcal(handle, vp)
-	todr_chip_handle_t handle;
-	int *vp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-bbc_setcal(handle, v)
-	todr_chip_handle_t handle;
-	int v;
-{
-
-	return (EOPNOTSUPP);
-}
-
-
-static u_int8_t
-read_bbc_reg(bbcaddr, reg)
-	struct hil_dev *bbcaddr;
-	int reg;
-{
-	u_int8_t data = reg;
-
-	if (bbcaddr) {
-		send_hil_cmd(bbcaddr, BBC_SET_REG, &data, 1, NULL);
-		send_hil_cmd(bbcaddr, BBC_READ_REG, NULL, 0, &data);
-	}
-	return (data);
-}
-
-static u_int8_t
-write_bbc_reg(bbcaddr, reg, data)
-	struct hil_dev *bbcaddr;
-	int reg;
-	u_int data;
-{
-	u_int8_t tmp;
-
-	tmp = (data << HIL_SSHIFT) | reg;
-
-	if (bbcaddr) {
-		send_hil_cmd(bbcaddr, BBC_SET_REG, &tmp, 1, NULL);
-		send_hil_cmd(bbcaddr, BBC_WRITE_REG, NULL, 0, NULL);
-		send_hil_cmd(bbcaddr, BBC_READ_REG, NULL, 0, &tmp);
-	}
-	return (tmp);
 }
