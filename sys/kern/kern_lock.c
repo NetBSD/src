@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.39 2000/08/17 04:18:21 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.40 2000/08/17 14:36:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -137,6 +137,20 @@ do {									\
 #define COUNT(lkp, p, cpu_id, x)
 #endif /* LOCKDEBUG || DIAGNOSTIC */ /* } */
 
+#define	INTERLOCK_ACQUIRE(lkp, s)					\
+do {									\
+	if ((lkp)->lk_flags & LK_SPIN)					\
+		s = splhigh();						\
+	simple_lock(&(lkp)->lk_interlock);				\
+} while (0)
+
+#define	INTERLOCK_RELEASE(lkp, s)					\
+do {									\
+	simple_unlock(&(lkp)->lk_interlock);				\
+	if ((lkp)->lk_flags & LK_SPIN)					\
+		splx(s);						\
+} while (0)
+
 /*
  * Acquire a resource.
  */
@@ -149,13 +163,13 @@ do {									\
 		for (interlocked = 1;;) {				\
 			if (wanted) {					\
 				if (interlocked) {			\
-					simple_unlock(&(lkp)->lk_interlock); \
+					INTERLOCK_RELEASE((lkp), s);	\
 					interlocked = 0;		\
 				}					\
 			} else if (interlocked) {			\
 				break;					\
 			} else {					\
-				simple_lock(&(lkp)->lk_interlock);	\
+				INTERLOCK_ACQUIRE((lkp), s);		\
 				interlocked = 1;			\
 			}						\
 		}							\
@@ -299,14 +313,14 @@ lockinit(struct lock *lkp, int prio, const char *wmesg, int timo, int flags)
 int
 lockstatus(struct lock *lkp)
 {
-	int lock_type = 0;
+	int s, lock_type = 0;
 
-	simple_lock(&lkp->lk_interlock);
+	INTERLOCK_ACQUIRE(lkp, s);
 	if (lkp->lk_exclusivecount != 0)
 		lock_type = LK_EXCLUSIVE;
 	else if (lkp->lk_sharecount != 0)
 		lock_type = LK_SHARED;
-	simple_unlock(&lkp->lk_interlock);
+	INTERLOCK_RELEASE(lkp, s);
 	return (lock_type);
 }
 
@@ -367,10 +381,11 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	cpuid_t cpu_id;
 	struct proc *p = curproc;
 	int lock_shutdown_noblock = 0;
+	int s;
 
 	error = 0;
 
-	simple_lock(&lkp->lk_interlock);
+	INTERLOCK_ACQUIRE(lkp, s);
 	if (flags & LK_INTERLOCK)
 		simple_unlock(interlkp);
 	extflags = (flags | lkp->lk_flags) & LK_EXTFLG_MASK;
@@ -666,7 +681,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		break;
 
 	default:
-		simple_unlock(&lkp->lk_interlock);
+		INTERLOCK_RELEASE(lkp, s);
 		panic("lockmgr: unknown locktype request %d",
 		    flags & LK_TYPE_MASK);
 		/* NOTREACHED */
@@ -685,7 +700,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	if (error && lock_shutdown_noblock)
 		panic("lockmgr: deadlock (see previous panic)");
 	
-	simple_unlock(&lkp->lk_interlock);
+	INTERLOCK_RELEASE(lkp, s);
 	return (error);
 }
 
