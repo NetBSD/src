@@ -1,5 +1,5 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.1 2002/07/15 16:27:17 ichiro Exp $ */
-#define POLLING_COM
+/*	$NetBSD: ixp12x0_com.c,v 1.2 2002/07/20 03:09:03 ichiro Exp $ */
+#undef POLLING_COM
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -99,8 +99,7 @@
 #include <sys/uio.h>
 #include <sys/vnode.h>
 
-#include <dev/cons.h>
-
+#include <machine/intr.h>
 #include <machine/bus.h>
 
 #include <arm/ixp12x0/ixp12x0_comreg.h>
@@ -110,8 +109,10 @@
 
 #include <arm/ixp12x0/ixpsipvar.h> 
 
+#include <dev/cons.h>
 #include "ixpcom.h"
 
+#if 0
 #ifdef POLLING_COM
 #undef CR_RIE
 #define CR_RIE 0
@@ -123,22 +124,17 @@
 #undef CR_XIE
 #define CR_XIE 0
 #endif
-
+#endif
 
 cdev_decl(ixpcom);
-
-static int	ixpcom_match(struct device *, struct cfdata *, void *);
-static void	ixpcom_attach(struct device *, struct device *, void *);
-static int	ixpcom_detach(struct device *, int);
-static int	ixpcom_activate(struct device *, enum devact);
 
 static int	ixpcomparam(struct tty *, struct termios *);
 static void	ixpcomstart(struct tty *);
 static int	ixpcomhwiflow(struct tty *, int);
 
-static void	ixpcom_attach_subr(struct ixpcom_softc *);
-
 static u_int	cflag2cr(tcflag_t);
+static void	ixpcom_iflush(struct ixpcom_softc *);
+static void	ixpcom_set_cr(struct ixpcom_softc *);
 
 int             ixpcomcngetc(dev_t);
 void            ixpcomcnputc(dev_t, int);
@@ -151,8 +147,6 @@ inline static void	ixpcom_rxsoft(struct ixpcom_softc *, struct tty *);
 void            ixpcomcnprobe(struct consdev *);
 void            ixpcomcninit(struct consdev *);
 
-static int	ixpcomintr(void* arg);
-
 u_int32_t	ixpcom_cr = 0;		/* tell cr to *_intr.c */
 u_int32_t	ixpcom_imask = 0;	/* intrrupt mask from *_intr.c */
 
@@ -163,11 +157,8 @@ static bus_addr_t ixpcomconsaddr = IXPCOM_UART_BASE; /* XXX initial value */
 static int ixpcomconsattached;
 static int ixpcomconsrate;
 static tcflag_t ixpcomconscflag;
+static struct cnm_state ixpcom_cnm_state;
 
-struct cfattach ixpcom_ca = {
-	sizeof(struct ixpcom_softc), ixpcom_match, ixpcom_attach,
-	ixpcom_detach, ixpcom_activate
-};
 extern struct cfdriver ixpcom_cd;
 
 struct consdev ixpcomcons = {
@@ -197,45 +188,7 @@ struct consdev ixpcomcons = {
 #define CLR(t, f)	(t) &= ~(f)
 #define ISSET(t, f)	((t) & (f))
 
-static int
-ixpcom_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	return (1);
-}
-
-void
-ixpcom_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	struct ixpcom_softc *sc = (struct ixpcom_softc *)self;
-	struct ixpsip_attach_args *sa = aux;
-
-	printf("\n");
-
-        sc->sc_iot = sa->sa_iot;
-        sc->sc_baseaddr = sa->sa_addr;
-
-	if(bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
-			&sc->sc_ioh)) {
-		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
-		return;
-        }
-
-	printf("%s: IXP12x0 UART\n", sc->sc_dev.dv_xname);
-
-	ixpcom_attach_subr(sc);
-
-#ifdef POLLING_COM
-	{ void* d; d = d = ixpcomintr; }
-#else
-	ixp12x0_intr_establish(IXP12X0_INTR_UART, IPL_SERIAL, ixpcomintr, sc);
-#endif
-}
+#define CFLAGS2CR_MASK	(CR_PE | CR_OES | CR_SBS | CR_DSS | CR_BRD)
 
 void
 ixpcom_attach_subr(sc)
@@ -247,7 +200,7 @@ ixpcom_attach_subr(sc)
 
 	if (iot == ixpcomconstag && iobase == ixpcomconsaddr) {
 		ixpcomconsattached = 1;
-		sc->sc_speed = IXPCOMSPEED(ixpcomconsrate);
+		sc->sc_speed = IXPCOMSPEED2BRD(ixpcomconsrate);
 
 		/* Make sure the console is always "hardwired". */
 		delay(10000);	/* wait for output to finish */
@@ -311,75 +264,94 @@ ixpcom_attach_subr(sc)
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);
 }
 
-int
-ixpcom_detach(self, flags)
-	struct device *self;
-	int flags;
-{
-	struct ixpcom_softc *sc = (struct ixpcom_softc *)self;
-	int maj, mn;
-
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == ixpcomopen)
-			break;
-
-	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
-	vdevgone(maj, mn, mn, VCHR);
-
-	mn |= COMDIALOUT_MASK;
-	vdevgone(maj, mn, mn, VCHR);
-
-	/* Free the receive buffer. */
-	free(sc->sc_rbuf, M_DEVBUF);
-
-	/* Detach and free the tty. */
-	tty_detach(sc->sc_tty);
-	ttyfree(sc->sc_tty);
-
-#if NRND > 0 && defined(RND_COM)
-	/* Unhook the entropy source. */
-	rnd_detach_source(&sc->rnd_source);
-#endif
-
-	return (0);
-}
-
-int
-ixpcom_activate(self, act)
-	struct device *self;
-	enum devact act;
-{
-	struct ixpcom_softc *sc = (struct ixpcom_softc *)self;
-	int s, rv = 0;
-
-	s = splserial();
-	COM_LOCK(sc);
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-	case DVACT_DEACTIVATE:
-		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB))
-			rv = EBUSY;
-		break;
-	}
-
-	COM_UNLOCK(sc); 
-	splx(s);
-	return (rv);
-}
-
-int
+static int
 ixpcomparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
+	struct ixpcom_softc *sc
+		= device_lookup(&ixpcom_cd, COMUNIT(tp->t_dev));
+	u_int32_t cr;
+	int s;
+
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
+
+	cr = IXPCOMSPEED2BRD(t->c_ospeed);
+
+	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
+		return (EINVAL);
+
+	/*
+	 * For the console, always force CLOCAL and !HUPCL, so that the port
+	 * is always active.
+	 */
+	if (ISSET(sc->sc_swflags, TIOCFLAG_SOFTCAR) ||
+	    ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+		SET(t->c_cflag, CLOCAL);
+		CLR(t->c_cflag, HUPCL);
+	}
+
+	/*
+	 * If there were no changes, don't do anything.  This avoids dropping
+	 * input and improves performance when all we did was frob things like
+	 * VMIN and VTIME.
+	 */
+	if (tp->t_ospeed == t->c_ospeed &&
+	    tp->t_cflag == t->c_cflag)
+		return (0);
+
+	cr |= cflag2cr(t->c_cflag);
+
+	s = splserial();
+	COM_LOCK(sc);	
+	
+	ixpcom_cr = (ixpcom_cr & ~CFLAGS2CR_MASK) | cr;
+
+	/*
+	 * ixpcom don't have any hardware flow control.
+	 * we skip it.
+	 */
+
+	/* And copy to tty. */
+	tp->t_ispeed = 0;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = t->c_cflag;
+
+	if (!sc->sc_heldchange) {
+		if (sc->sc_tx_busy) {
+			sc->sc_heldtbc = sc->sc_tbc;
+			sc->sc_tbc = 0;
+			sc->sc_heldchange = 1;
+		} else
+			ixpcom_set_cr(sc);
+	}
+
+	COM_UNLOCK(sc);
+	splx(s);
+
+	/*
+	 * Update the tty layer's idea of the carrier bit.
+	 * We tell tty the carrier is always on.
+	 */
+	(void) (*tp->t_linesw->l_modem)(tp, 1);
+
+#ifdef COM_DEBUG
+	if (com_debug)
+		comstatus(sc, "comparam ");
+#endif
+
+	if (!ISSET(t->c_cflag, CHWFLOW)) {
+		if (sc->sc_tx_stopped) {
+			sc->sc_tx_stopped = 0;
+			ixpcomstart(tp);
+		}
+	}
+
 	return (0);
 }
 
-int
+static int
 ixpcomhwiflow(tp, block)
 	struct tty *tp;
 	int block;
@@ -387,11 +359,131 @@ ixpcomhwiflow(tp, block)
 	return (0);
 }
 
-void
+static void
+ixpcom_filltx(sc)
+	struct ixpcom_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int n;
+
+	n = 0;
+        while (bus_space_read_4(iot, ioh, IXPCOM_SR) & SR_TXR) {
+		if (n >= sc->sc_tbc)
+			break;
+		bus_space_write_4(iot, ioh, IXPCOM_DR,
+				  0xff & *(sc->sc_tba + n));
+		n++;
+        }
+        sc->sc_tbc -= n;
+        sc->sc_tba += n;
+}
+
+static void
 ixpcomstart(tp)
 	struct tty *tp;
 {
+	struct ixpcom_softc *sc
+		= device_lookup(&ixpcom_cd, COMUNIT(tp->t_dev));
+	int s;
+
+	if (COM_ISALIVE(sc) == 0)
+		return;
+
+	s = spltty();
+	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
+		goto out;
+	if (sc->sc_tx_stopped)
+		goto out;
+
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
+		if (ISSET(tp->t_state, TS_ASLEEP)) {
+			CLR(tp->t_state, TS_ASLEEP);
+			wakeup(&tp->t_outq);
+		}
+		selwakeup(&tp->t_wsel);
+		if (tp->t_outq.c_cc == 0)
+			goto out;
+	}
+
+	/* Grab the first contiguous region of buffer space. */
+	{
+		u_char *tba;
+		int tbc;
+
+		tba = tp->t_outq.c_cf;
+		tbc = ndqb(&tp->t_outq, 0);
+
+		(void)splserial();
+		COM_LOCK(sc);
+
+		sc->sc_tba = tba;
+		sc->sc_tbc = tbc;
+	}
+
+	SET(tp->t_state, TS_BUSY);
+	sc->sc_tx_busy = 1;
+
+	/* Enable transmit completion interrupts if necessary. */
+	if (!ISSET(sc->sc_xie, CR_XIE)) {
+		SET(sc->sc_xie, CR_XIE);
+		ixpcom_set_cr(sc);
+	}
+
+	/* Output the first chunk of the contiguous buffer. */
+	ixpcom_filltx(sc);
+
+	COM_UNLOCK(sc);
+out:
+	splx(s);
 	return;
+}
+
+static void
+ixpcom_break(sc, onoff)
+	struct ixpcom_softc *sc;
+	int onoff;
+{
+	if (onoff)
+		SET(ixpcom_cr, CR_BRK);
+	else
+		CLR(ixpcom_cr, CR_BRK);
+	if (!sc->sc_heldchange) {
+		if (sc->sc_tx_busy) {
+			sc->sc_heldtbc = sc->sc_tbc;
+			sc->sc_tbc = 0;
+			sc->sc_heldchange = 1;
+		} else
+			ixpcom_set_cr(sc);
+	}
+}
+
+static void
+ixpcom_shutdown(sc)
+	struct ixpcom_softc *sc;
+{
+	int s;
+
+	s = splserial();
+	COM_LOCK(sc);	
+
+	/* Clear any break condition set with TIOCSBRK. */
+	ixpcom_break(sc, 0);
+
+	/* Turn off interrupts. */
+	sc->sc_rie = sc->sc_xie = 0;
+	ixpcom_set_cr(sc);
+
+	if (sc->disable) {
+#ifdef DIAGNOSTIC
+		if (!sc->enabled)
+			panic("ixpcom_shutdown: not enabled?");
+#endif
+		(*sc->disable)(sc);
+		sc->enabled = 0;
+	}
+	COM_UNLOCK(sc);
+	splx(s);
 }
 
 int
@@ -400,8 +492,270 @@ ixpcomopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	struct ixpcom_softc *sc;
+	struct tty *tp;
+	int s, s2;
+	int error;
+
+	sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
+		sc->sc_rbuf == NULL)
+		return (ENXIO);
+
+	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+		return (ENXIO);
+
+#ifdef KGDB
+	/*
+	 * If this is the kgdb port, no other use is permitted.
+	 */
+	if (ISSET(sc->sc_hwflags, COM_HW_KGDB))
+		return (EBUSY);
+#endif
+
+	tp = sc->sc_tty;
+
+	if (ISSET(tp->t_state, TS_ISOPEN) &&
+	    ISSET(tp->t_state, TS_XCLUDE) &&
+		p->p_ucred->cr_uid != 0)
+		return (EBUSY);
+
+	s = spltty();
+
+	/*
+	 * Do the following iff this is a first open.
+	 */
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
+		struct termios t;
+
+		tp->t_dev = dev;
+
+		s2 = splserial();
+		COM_LOCK(sc);
+
+		if (sc->enable) {
+			if ((*sc->enable)(sc)) {
+				COM_UNLOCK(sc);
+				splx(s2);
+				splx(s);
+				printf("%s: device enable failed\n",
+				       sc->sc_dev.dv_xname);
+				return (EIO);
+			}
+			sc->enabled = 1;
+#if 0
+/* XXXXXXXXXXXXXXX */
+			com_config(sc);
+#endif
+		}
+
+		/* Turn on interrupts. */
+		SET(sc->sc_rie, CR_RIE);
+		ixpcom_set_cr(sc);
+
+#if 0
+		/* Fetch the current modem control status, needed later. */
+		sc->sc_msr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_msr);
+
+		/* Clear PPS capture state on first open. */
+		sc->sc_ppsmask = 0;
+		sc->ppsparam.mode = 0;
+#endif
+
+		COM_UNLOCK(sc);
+		splx(s2);
+
+		/*
+		 * Initialize the termios status to the defaults.  Add in the
+		 * sticky bits from TIOCSFLAGS.
+		 */
+		t.c_ispeed = 0;
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+			t.c_ospeed = ixpcomconsrate;
+			t.c_cflag = ixpcomconscflag;
+		} else {
+			t.c_ospeed = TTYDEF_SPEED;
+			t.c_cflag = TTYDEF_CFLAG;
+		}
+		if (ISSET(sc->sc_swflags, TIOCFLAG_CLOCAL))
+			SET(t.c_cflag, CLOCAL);
+		if (ISSET(sc->sc_swflags, TIOCFLAG_CRTSCTS))
+			SET(t.c_cflag, CRTSCTS);
+		if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
+			SET(t.c_cflag, MDMBUF);
+		/* Make sure ixpcomparam() will do something. */
+		tp->t_ospeed = 0;
+		(void) ixpcomparam(tp, &t);
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+		ttychars(tp);
+		ttsetwater(tp);
+
+		s2 = splserial();
+		COM_LOCK(sc);
+
+		/* Clear the input ring, and unblock. */
+		sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
+		sc->sc_rbavail = IXPCOM_RING_SIZE;
+		ixpcom_iflush(sc);
+		CLR(sc->sc_rx_flags, RX_ANY_BLOCK);
+
+#ifdef COM_DEBUG
+		if (ixpcom_debug)
+			comstatus(sc, "ixpcomopen  ");
+#endif
+
+		COM_UNLOCK(sc);
+		splx(s2);
+	}
+	
+	splx(s);
+
+	error = ttyopen(tp, COMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
+	if (error)
+		goto bad;
+
+	error = (*tp->t_linesw->l_open)(dev, tp);
+	if (error)
+		goto bad;
+
+	return (0);
+
+bad:
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
+		/*
+		 * We failed to open the device, and nobody else had it opened.
+		 * Clean up the state as appropriate.
+		 */
+		ixpcom_shutdown(sc);
+	}
+
+	return (error);
+}
+
+int
+ixpcomclose(dev, flag, mode, p)
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
+{
+	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
+
+	/* XXX This is for cons.c. */
+	if (!ISSET(tp->t_state, TS_ISOPEN))
+		return (0);
+
+	(*tp->t_linesw->l_close)(tp, flag);
+	ttyclose(tp);
+
+	if (COM_ISALIVE(sc) == 0)
+		return (0);
+
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
+		/*
+		 * Although we got a last close, the device may still be in
+		 * use; e.g. if this was the dialout node, and there are still
+		 * processes waiting for carrier on the non-dialout node.
+		 */
+		ixpcom_shutdown(sc);
+	}
+
 	return (0);
 }
+
+int
+ixpcomread(dev, uio, flag)
+	dev_t dev;
+	struct uio *uio;
+	int flag;
+{
+	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
+
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
+ 
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
+}
+
+int
+ixpcomwrite(dev, uio, flag)
+	dev_t dev;
+	struct uio *uio;
+	int flag;
+{
+	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
+
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
+ 
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+ixpcompoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
+
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
+}
+
+struct tty *
+ixpcomtty(dev)
+	dev_t dev;
+{
+	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
+
+	return (tp);
+}
+
+int
+ixpcomioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+        return (0);
+}
+
+/*
+ * Stop output on a line.
+ */
+void
+ixpcomstop(tp, flag)
+	struct tty *tp;
+	int flag;
+{
+	struct ixpcom_softc *sc
+		= device_lookup(&ixpcom_cd, COMUNIT(tp->t_dev));
+	int s;
+
+	s = splserial();
+	COM_LOCK(sc);
+	if (ISSET(tp->t_state, TS_BUSY)) {
+		/* Stop transmitting at the next chunk. */
+		sc->sc_tbc = 0;
+		sc->sc_heldtbc = 0;
+		if (!ISSET(tp->t_state, TS_TTSTOP))
+			SET(tp->t_state, TS_FLUSH);
+	}
+	COM_UNLOCK(sc);	
+	splx(s);
+}
+
 static u_int
 cflag2cr(cflag)
 	tcflag_t cflag;
@@ -417,14 +771,45 @@ cflag2cr(cflag)
 }
 
 static void
-ixpcom_loadchannelregs(sc)
+ixpcom_iflush(sc)
+	struct ixpcom_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+#ifdef DIAGNOSTIC
+	int reg;
+#endif
+	int timo;
+
+#ifdef DIAGNOSTIC
+	reg = 0xffff;
+#endif
+	timo = 50000;
+	/* flush any pending I/O */
+	while (ISSET(bus_space_read_4(iot, ioh, IXPCOM_SR), SR_RXR)
+	       && --timo)
+#ifdef DIAGNOSTIC
+		reg =
+#else
+			(void)
+#endif
+			bus_space_read_4(iot, ioh, IXPCOM_DR);
+#ifdef DIAGNOSTIC
+	if (!timo)
+		printf("%s: com_iflush timeout %02x\n", sc->sc_dev.dv_xname,
+		       reg);
+#endif
+}
+
+static void
+ixpcom_set_cr(sc)
 	struct ixpcom_softc *sc;
 {
 	/* XXX */
 	ixpcom_cr &= ~(CR_RIE | CR_XIE);
 	ixpcom_cr |= sc->sc_rie | sc->sc_xie;
-	ixpcom_cr &= ixpcom_imask;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCOM_CR, ixpcom_cr);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCOM_CR,
+			  ixpcom_cr & ~ixpcom_imask);
 }
 
 /* Initialization for serial console */
@@ -442,7 +827,7 @@ ixpcominit(iot, iobase, baud, cflag, iohp)
 		printf("register map failed\n");
 
 	cr = cflag2cr(cflag);
-	cr |= (IXPCOMSPEED(baud) << 16);
+	cr |= IXPCOMSPEED2BRD(baud);
 #if 0
 	cr |= (CR_UE | CR_RIE | CR_XIE);
 #endif
@@ -467,6 +852,22 @@ ixpcomcnattach(iot, iobase, rate, cflag)
 	if ((res = ixpcominit(iot, iobase, rate, cflag, &ixpcomconsioh)))
 		return (res);
 	cn_tab = &ixpcomcons;
+	cn_init_magic(&ixpcom_cnm_state);
+	/*
+	 * XXX
+	 *
+	 * ixpcom cannot detect a break.  It can only detect framing
+	 * errors.  And, a sequence of "framing error, framing error"
+	 * meens a break.  So I made this hack:
+	 *
+	 * 1. Set default magic is a sequence of "BREAK, BREAK".
+	 * 2. Tell cn_check_magic() a "framing error" as BREAK.
+	 *
+	 * see ixpcom_intr() too.
+	 *
+	 */
+	/* default magic is a couple of BREAK. */
+	cn_set_magic("\047\001\047\001");
 
 	ixpcomconstag = iot;
 	ixpcomconsaddr = iobase;
@@ -476,11 +877,12 @@ ixpcomcnattach(iot, iobase, rate, cflag)
 	return (0);
 }
 
-#if 0
 void
 ixpcomcninit(cp)
 	struct consdev *cp;
 {
+	printf("ixpcomcninit called\n");
+#if 0
 	if (cp == NULL) {
 		/* XXX cp == NULL means that MMU is disabled. */
 		ixpcomconsioh = IXPCOM_UART_BASE;
@@ -488,7 +890,7 @@ ixpcomcninit(cp)
 		cn_tab = &ixpcomcons;
 
 		IXPREG(IXPCOM_UART_BASE + IXPCOM_CR)
-			= (IXPCOMSPEED(38400) << 16)
+			= IXPCOMSPEED2BRD(DEFAULT_COMSPEED)
 			| DSS_8BIT
 			| (CR_UE | CR_RIE | CR_XIE);
 		return;
@@ -499,8 +901,8 @@ ixpcomcninit(cp)
 		panic("can't init serial console @%x", CONADDR);
 	cn_tab = &ixpcomcons;
 	ixpcomconstag = &ixpcom_bs_tag;
-}
 #endif
+}
 
 void
 ixpcomcnprobe(cp)
@@ -530,6 +932,16 @@ ixpcomcnputc(dev, c)
 		;
 
 	bus_space_write_4(ixpcomconstag, ixpcomconsioh, IXPCOM_DR, c);
+
+#ifdef DEBUG
+	if (c == '\r') {
+		while(!(bus_space_read_4(ixpcomconstag, ixpcomconsioh,
+					 IXPCOM_SR)
+			& SR_TXE))
+			;
+	}
+#endif
+
 	splx(s);
 }
 
@@ -557,6 +969,12 @@ ixpcom_txsoft(sc, tp)
 	struct ixpcom_softc *sc;
 	struct tty *tp;
 {
+	CLR(tp->t_state, TS_BUSY);
+	if (ISSET(tp->t_state, TS_FLUSH))
+		CLR(tp->t_state, TS_FLUSH);
+        else
+		ndflush(&tp->t_outq, (int)(sc->sc_tba - tp->t_outq.c_cf));
+	(*tp->t_linesw->l_start)(tp);
 }
 
 inline static void
@@ -644,7 +1062,7 @@ ixpcom_rxsoft(sc, tp)
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				SET(sc->sc_rie, CR_RIE);
-				ixpcom_loadchannelregs(sc);
+				ixpcom_set_cr(sc);
 			}
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_BLOCKED);
@@ -676,7 +1094,7 @@ ixpcomsoft(void* arg)
 	}
 }
 
-static int
+int
 ixpcomintr(void* arg)
 {
 	struct ixpcom_softc *sc = arg;
@@ -703,23 +1121,23 @@ ixpcomintr(void* arg)
 	if (!ISSET(sr, SR_TXR | SR_RXR))
 		return (0);
 
-#if 0
 	/*
-	 * IPX12x0 doesn't have a "Receiver End of Break Status" bit
-	 * in status registar.  Currentry I have no idea to determine
-	 * whether break signal is received.
+	 * XXX
+	 *
+	 * ixpcom cannot detect a break.  It can only detect framing
+	 * errors.  And, a sequence of "framing error, framing error"
+	 * meens a break.  So I made this hack:
+	 *
+	 * 1. Set default magic is a sequence of "BREAK, BREAK".
+	 * 2. Tell cn_check_magic() a "framing error" as BREAK.
+	 *
+	 * see ixpcomcnattach() too.
+	 *
 	 */
-	if (XXX) {
-		bus_space_write_4(iot, ioh, SACOM_SR0, SR0_REB);
-#if defined(DDB) || defined(KGDB)
-#ifndef DDB_BREAK_CHAR
-		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-			console_debugger();
-		}
-#endif
-#endif /* DDB || KGDB */
+	if (ISSET(sr, SR_FRE)) {
+		cn_check_magic(sc->sc_tty->t_dev,
+			       CNC_BREAK, ixpcom_cnm_state);
 	}
-#endif
 
 	end = sc->sc_ebuf;
 	put = sc->sc_rbput;
@@ -731,18 +1149,15 @@ ixpcomintr(void* arg)
 				if (!ISSET(sr, SR_RXR))
 					break;
 				c = bus_space_read_4(iot, ioh, IXPCOM_DR);
+				if (ISSET(c, DR_FRE)) {
+					cn_check_magic(sc->sc_tty->t_dev,
+						       CNC_BREAK,
+						       ixpcom_cnm_state);
+				}
 				put[0] = c & 0xff;
 				put[1] = (c >> 8) & 0xff;
-#if defined(DDB) && defined(DDB_BREAK_CHAR)
-				if (put[0] == DDB_BREAK_CHAR &&
-				    ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-					console_debugger();
-
-					sr = bus_space_read_4(iot, ioh,
-							      IXPCOM_SR);
-					continue;
-				}
-#endif
+				cn_check_magic(sc->sc_tty->t_dev,
+					       put[0], ixpcom_cnm_state);
 				put += 2;
 				if (put >= end)
 					put = sc->sc_rbuf;
@@ -762,7 +1177,12 @@ ixpcomintr(void* arg)
 			if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
 				sc->sc_rx_ready = 1;
 
-			/* XXX do RX hardware flow control */
+			/*
+			 * See if we are in danger of overflowing a buffer. If
+			 * so, use hardware flow control to ease the pressure.
+			 */
+
+			/* but ixpcom cannot. X-( */
 
 			/*
 			 * If we're out of space, disable receive interrupts
@@ -771,14 +1191,14 @@ ixpcomintr(void* arg)
 			if (!cc) {
 				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				CLR(sc->sc_rie, CR_RIE);
-				ixpcom_loadchannelregs(sc);
+				ixpcom_set_cr(sc);
 			}
 		} else {
 #ifdef DIAGNOSTIC
 			panic("ixpcomintr: we shouldn't reach here\n");
 #endif
 			CLR(sc->sc_rie, CR_RIE);
-			ixpcom_loadchannelregs(sc);
+			ixpcom_set_cr(sc);
 		}
 	}
 
@@ -787,17 +1207,14 @@ ixpcomintr(void* arg)
 	 * transmitted as well. Schedule tx done event if no data left
 	 * and tty was marked busy.
 	 */
-#if 0
 	sr = bus_space_read_4(iot, ioh, IXPCOM_SR);
 	if (ISSET(sr, SR_TXR)) {
 		/*
 		 * If we've delayed a parameter change, do it now, and restart
 		 * output.
-		 * XXX sacom_loadchanelregs() waits TX completion,
-		 * XXX resulting in ~0.1s hang (300bps, 4 bytes) in worst case
 		 */
 		if (sc->sc_heldchange) {
-			ixpcom_loadparams(sc);
+			ixpcom_set_cr(sc);
 			sc->sc_heldchange = 0;
 			sc->sc_tbc = sc->sc_heldtbc;
 			sc->sc_heldtbc = 0;
@@ -805,13 +1222,12 @@ ixpcomintr(void* arg)
 
 		/* Output the next chunk of the contiguous buffer, if any. */
 		if (sc->sc_tbc > 0) {
-			sacom_filltx(sc);
+			ixpcom_filltx(sc);
 		} else {
 			/* Disable transmit completion interrupts if necessary. */
-			if (ISSET(sc->sc_cr3, CR3_XIE)) {
-				CLR(sc->sc_cr3, CR3_XIE);
-				bus_space_write_4(iot, ioh, SACOM_CR3,
-						  sc->sc_cr3);
+			if (ISSET(sc->sc_xie, CR_XIE)) {
+				CLR(sc->sc_xie, CR_XIE);
+				ixpcom_set_cr(sc);
 			}
 			if (sc->sc_tx_busy) {
 				sc->sc_tx_busy = 0;
@@ -819,7 +1235,6 @@ ixpcomintr(void* arg)
 			}
 		}
 	}
-#endif
 	COM_UNLOCK(sc);
 
 	/* Wake up the poller. */
@@ -834,3 +1249,4 @@ ixpcomintr(void* arg)
 #endif
 	return (1);
 }
+
