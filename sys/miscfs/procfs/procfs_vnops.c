@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vnops.c,v 4.2 1994/01/02 15:28:44 jsp Exp
  *
- *	$Id: procfs_vnops.c,v 1.14 1994/01/28 07:03:41 cgd Exp $
+ *	$Id: procfs_vnops.c,v 1.15 1994/02/14 19:07:27 ws Exp $
  */
 
 /*
@@ -684,6 +684,14 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 			if (dt->d_pfstype == Proot)
 				pid = 0;
 			dp->d_fileno = PROCFS_FILENO(pid, dt->d_pfstype);
+
+			if (dt->d_pfstype == Pfile) {
+				struct proc *procp = PFIND(pid);
+
+				if (!procp || !procfs_findtextvp(procp))
+					dp->d_fileno = 0;
+			}
+
 			dp->d_namlen = dt->d_namlen;
 			bcopy(dt->d_name, dp->d_name, sizeof(dt->d_name)-1);
 			error = uiomove((caddr_t) dp, UIO_MX, uio);
