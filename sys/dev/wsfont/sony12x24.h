@@ -1,4 +1,4 @@
-/*	$NetBSD: sony12x24.h,v 1.1 2000/11/21 11:44:45 tsutsui Exp $	*/
+/*	$NetBSD: sony12x24.h,v 1.2 2001/02/02 05:59:53 marcus Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,8 +46,8 @@ extern u_char sony12x24_data[];
 struct wsdisplay_font sony12x24 = {
 	"sony12x24",			/* typeface name */
 	' ',				/* firstchar */
-	'~' - ' ' + 1,			/* numchars */
-	WSDISPLAY_FONTENC_ISO,		/* encoding */
+	0xff - ' ' + 1,			/* numchars */
+	WSDISPLAY_FONTENC_SONY,		/* encoding */
 	12,				/* width */
 	24,				/* height */
 	2,				/* stride */
@@ -3362,7 +3362,6 @@ static u_char sony12x24_data[] = {
 	0x00, 0x00,	/* ............ */
 	0x00, 0x00,	/* ............ */
 
-#if 0
 	/* 0x7F */
 	0x00, 0x00,	/* ............ */
 	0x00, 0x00,	/* ............ */
@@ -6716,5 +6715,4 @@ static u_char sony12x24_data[] = {
 	0x10, 0x00,	/* ...*........ */
 	0x00, 0x00,	/* ............ */
 	0x00, 0x00,	/* ............ */
-#endif
 };
