@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.14 1995/06/19 22:49:20 jtc Exp $";
+static char rcsid[] = "$Id: main.c,v 1.15 1995/08/13 04:08:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,6 +48,7 @@ static char rcsid[] = "$Id: main.c,v 1.14 1995/06/19 22:49:20 jtc Exp $";
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
+#include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <time.h>
@@ -163,7 +164,7 @@ main(argc, argv)
 	extern char **environ;
 	char *tname;
 	long allflags;
-	int repcnt = 0;
+	int repcnt = 0, failopenlogged = 0;
 	struct rlimit limit;
 
 	signal(SIGINT, SIG_IGN);
@@ -207,9 +208,11 @@ main(argc, argv)
 		 */
 		sleep(2);
 		while ((i = open(ttyn, O_RDWR)) == -1) {
-			if (repcnt % 10 == 0) {
+			if ((repcnt % 10 == 0) &&
+			    (errno != ENXIO || !failopenlogged)) {
 				syslog(LOG_ERR, "%s: %m", ttyn);
 				closelog();
+				failopenlogged = 1;
 			}
 			repcnt++;
 			sleep(60);
