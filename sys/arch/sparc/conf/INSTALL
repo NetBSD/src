@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.8 1999/06/06 13:16:06 mrg Exp $
+#	$NetBSD: INSTALL,v 1.9 1999/06/26 18:47:15 mrg Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -20,6 +20,7 @@ options 	MINIROOTSIZE=3312	# 1.44M * 1.15.  this must match
 pseudo-device	md		1	# memory disk device (ramdisk)
 
 ## System kernel configuration.  See options(4) for more detail.
+
 
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
@@ -197,8 +198,8 @@ sbus0	at iommu0				# sun4m
 vme0	at iommu0				# sun4m
 
 ## SBus expander box
-#xbox*	at sbus? slot ? offset ?
-#sbus*	at xbox?
+xbox*	at sbus? slot ? offset ?
+sbus*	at xbox?
 
 ## SBus to PCMCIA bridge
 # Currently enabling nell* with audioamd* causes panic at attach
@@ -459,7 +460,7 @@ pseudo-device	loop
 pseudo-device	sl		2
 
 ## PPP, the successor to SLIP.  See pppd(8).
-#pseudo-device	ppp		2
+pseudo-device	ppp		2
 
 ## Starmode Radio IP, a special hardware network device.
 #pseudo-device	strip		1
