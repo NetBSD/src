@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.16 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.17 2003/12/29 04:39:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.16 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.17 2003/12/29 04:39:29 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -64,7 +64,6 @@ rf_MakeReconControl(reconDesc, fcol, scol)
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 	int     retcode;
 #endif
-	int rc;
 	RF_RowCol_t i;
 
 	lp = raidPtr->Layout.map;
@@ -121,28 +120,15 @@ rf_MakeReconControl(reconDesc, fcol, scol)
 	}
 
 	/* initialize the event queue */
-	rc = rf_mutex_init(&reconCtrlPtr->eq_mutex);
-	if (rc) {
-		/* XXX deallocate, cleanup */
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		return (NULL);
-	}
-	rc = rf_cond_init(&reconCtrlPtr->eq_cond);
-	if (rc) {
-		/* XXX deallocate, cleanup */
-		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
-		return (NULL);
-	}
+	simple_lock_init(&reconCtrlPtr->eq_mutex);
+
+	reconCtrlPtr->eq_cond = 0;
 	reconCtrlPtr->eventQueue = NULL;
 	reconCtrlPtr->eq_count = 0;
 
 	/* make the floating recon buffers and append them to the free list */
-	rc = rf_mutex_init(&reconCtrlPtr->rb_mutex);
-	if (rc) {
-		/* XXX deallocate, cleanup */
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		return (NULL);
-	}
+	simple_lock_init(&reconCtrlPtr->rb_mutex);
+
 	reconCtrlPtr->fullBufferList = NULL;
 	reconCtrlPtr->floatingRbufs = NULL;
 	reconCtrlPtr->committedRbufs = NULL;
@@ -182,7 +168,6 @@ rf_FreeReconControl(raidPtr)
 	}
 	rf_mutex_destroy(&reconCtrlPtr->rb_mutex);
 	rf_mutex_destroy(&reconCtrlPtr->eq_mutex);
-	rf_cond_destroy(&reconCtrlPtr->eq_cond);
 	rf_FreeReconMap(reconCtrlPtr->reconMap);
 	rf_FreeParityStripeStatusTable(raidPtr, reconCtrlPtr->pssTable);
 	RF_Free(reconCtrlPtr->perDiskInfo, 
