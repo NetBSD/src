@@ -29,6 +29,16 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h"
+
 /* NOTE: We don't bother with any of the deferred_store nonsense; it
    makes things a lot more complicated than they need to be.  */
 
@@ -67,7 +77,7 @@ fetch_inferior_registers (int regno)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &regs, TIDGET (inferior_ptid)) == -1)
         perror_with_name ("Couldn't get registers");
 
       sparcnbsd_supply_reg32 ((char *) &regs, regno);
@@ -80,7 +90,7 @@ fetch_inferior_registers (int regno)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
         perror_with_name ("Couldn't get floating point registers");
 
       sparcnbsd_supply_fpreg32 ((char *) &fpregs, regno);
@@ -102,13 +112,13 @@ store_inferior_registers (int regno)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name ("Couldn't get registers");
 
       sparcnbsd_fill_reg32 ((char *) &regs, regno);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &regs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name ("Couldn't write registers");
 
       /* Deal with the stack regs.  */
@@ -139,13 +149,13 @@ store_inferior_registers (int regno)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name ("Couldn't get floating point registers");
 
       sparcnbsd_fill_fpreg32 ((char *) &fpregs, regno);
       
       if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_ARG3_TYPE) &fpregs, 0) == -1)
+		  (PTRACE_ARG3_TYPE) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name ("Couldn't write floating point registers");
 
       if (regno != -1)
@@ -154,30 +164,26 @@ store_inferior_registers (int regno)
 }
 
 void
-nbsd_reg_to_internal (rgs)
-	char *rgs;
+supply_gregset (gregset_t *gregsetp)
 {
-  sparcnbsd_supply_reg32(rgs, -1);
+  sparcnbsd_supply_reg32((char *)gregsetp, -1);
 }
 
 void
-nbsd_fpreg_to_internal (frgs)
-	char *frgs;
+fill_gregset (gregset_t *gregsetp, int regno)
 {
-  sparcnbsd_supply_fpreg32(frgs, -1);
+  sparcnbsd_fill_reg32((char *)gregsetp, regno);
 }
 
 void
-nbsd_internal_to_reg (regs)
-	char *regs;
+supply_fpregset (fpregset_t *fpregsetp)
 {
-  sparcnbsd_fill_reg32(regs, -1);
+  sparcnbsd_supply_fpreg32((char *)fpregsetp, -1);
 }
 
 void
-nbsd_internal_to_fpreg (fpregs)
-	char *fpregs;
+fill_fpregset (fpregset_t *fpregsetp, int regno)
 {
-  sparcnbsd_fill_fpreg32(fpregs, -1);
+  sparcnbsd_fill_fpreg32((char *)fpregsetp, regno);
 }
 
