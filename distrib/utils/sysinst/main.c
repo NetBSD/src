@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42.2.1 2004/05/22 16:23:58 he Exp $	*/
+/*	$NetBSD: main.c,v 1.42.2.2 2004/06/07 10:20:32 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,7 +61,6 @@ static void usage(void);
 static void miscsighandler(int);
 static void ttysighandler(int);
 static void cleanup(void);
-static void set_defaults(void);
 static void process_f_flag(char *);
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
@@ -111,8 +110,6 @@ main(int argc, char **argv)
 		default:
 			usage();
 		}
-
-	set_defaults();
 
 	md_init();
 
@@ -364,32 +361,6 @@ cleanup(void)
 		fprintf(stderr, "\n\nsysinst terminated.\n");
 }
 
-static void
-set_defaults(void)
-{
-
-	/*
-	 * Set defaults for ftp_dir & cdrom_dir, by appending ftp_prefix.
-	 * This occurs even when the settings are read in from
-	 * "-f definition-file".
-	 *
-	 * Default values (can be changed in definition-file):
-	 *	ftp_dir			SYSINST_FTP_DIR
-	 *	SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" + REL + "/" MACH
-	 *			
-	 *	cdrom_dir		SYSINST_CDROM_DIR
-	 #	SYSINST_CDROM_DIR	"/" + MACH
-	 *
-	 *	ftp_prefix		"/binary/sets"
-	 */
-	
-		/* ftp_dir += ftp_prefix */
-	strlcat(ftp_dir, ftp_prefix, STRSIZE);
-
-		/* cdrom_dir += ftp_prefix */
-	strlcat(cdrom_dir, ftp_prefix, STRSIZE);
-}
-
 
 /* Stuff for processing the -f file argument. */
 
@@ -401,14 +372,13 @@ static char *dist_dir_ptr = dist_dir;
 static char *ext_dir_ptr = ext_dir;
 static char *ftp_host_ptr = ftp_host;
 static char *ftp_dir_ptr = ftp_dir;
-static char *ftp_prefix_ptr = ftp_prefix;
+static char *set_dir_ptr = set_dir;
 static char *ftp_user_ptr = ftp_user;
 static char *ftp_pass_ptr = ftp_pass;
 static char *ftp_proxy_ptr = ftp_proxy;
 static char *nfs_host_ptr = nfs_host;
 static char *nfs_dir_ptr = nfs_dir;
 static char *cdrom_dev_ptr = cdrom_dev;
-static char *cdrom_dir_ptr = cdrom_dir;
 static char *localfs_dev_ptr = localfs_dev;
 static char *localfs_fs_ptr = localfs_fs;
 static char *localfs_dir_ptr = localfs_dir;
@@ -423,8 +393,7 @@ struct lookfor fflagopts[] = {
 	{"ext dir", "ext dir = %s", "a $0", &ext_dir_ptr, 1, STRSIZE, NULL},
 	{"ftp host", "ftp host = %s", "a $0", &ftp_host_ptr, 1, STRSIZE, NULL},
 	{"ftp dir", "ftp dir = %s", "a $0", &ftp_dir_ptr, 1, STRSIZE, NULL},
-	{"ftp prefix", "ftp prefix = %s", "a $0", &ftp_prefix_ptr, 1,
-		STRSIZE, NULL},
+	{"ftp prefix", "set dir = %s", "a $0", &set_dir_ptr, 1, STRSIZE, NULL},
 	{"ftp user", "ftp user = %s", "a $0", &ftp_user_ptr, 1, STRSIZE, NULL},
 	{"ftp pass", "ftp pass = %s", "a $0", &ftp_pass_ptr, 1, STRSIZE, NULL},
 	{"ftp proxy", "ftp proxy = %s", "a $0", &ftp_proxy_ptr, 1, STRSIZE,
@@ -432,7 +401,6 @@ struct lookfor fflagopts[] = {
 	{"nfs host", "nfs host = %s", "a $0", &nfs_host_ptr, 1, STRSIZE, NULL},
 	{"nfs dir", "ftp dir = %s", "a $0", &nfs_dir_ptr, 1, STRSIZE, NULL},
 	{"cd dev", "cd dev = %s", "a $0", &cdrom_dev_ptr, 1, STRSIZE, NULL},
-	{"cd dir", "cd dir = %s", "a $0", &cdrom_dir_ptr, 1, STRSIZE, NULL},
 	{"local dev", "local dev = %s", "a $0", &localfs_dev_ptr, 1, STRSIZE,
 		NULL},
 	{"local fs", "local fs = %s", "a $0", &localfs_fs_ptr, 1, STRSIZE,
