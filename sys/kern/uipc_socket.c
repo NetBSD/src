@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.30 1998/01/05 09:12:29 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.31 1998/01/07 23:47:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -79,6 +79,8 @@ socreate(dom, aso, type, proto)
 		return (EPROTOTYPE);
 	MALLOC(so, struct socket *, sizeof(*so), M_SOCKET, M_WAIT);
 	bzero((caddr_t)so, sizeof(*so));
+	TAILQ_INIT(&so->so_q0);
+	TAILQ_INIT(&so->so_q);
 	so->so_type = type;
 	so->so_proto = prp;
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
@@ -127,7 +129,7 @@ solisten(so, backlog)
 		splx(s);
 		return (error);
 	}
-	if (so->so_q == 0)
+	if (so->so_q.tqh_first == NULL)
 		so->so_options |= SO_ACCEPTCONN;
 	if (backlog < 0)
 		backlog = 0;
@@ -166,10 +168,10 @@ soclose(so)
 	int error = 0;
 
 	if (so->so_options & SO_ACCEPTCONN) {
-		while (so->so_q0)
-			(void) soabort(so->so_q0);
-		while (so->so_q)
-			(void) soabort(so->so_q);
+		while (so->so_q0.tqh_first)
+			(void) soabort(so->so_q0.tqh_first);
+		while (so->so_q.tqh_first)
+			(void) soabort(so->so_q.tqh_first);
 	}
 	if (so->so_pcb == 0)
 		goto discard;
