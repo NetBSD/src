@@ -389,21 +389,21 @@ pch(c)
 apr(ps, fmt, ap)
 	struct point *ps;
 	char *fmt;
-	_VA_LIST_ ap;
+	va_list ap;
 {
 	struct point p;
 
 	p.line = ps->line+1; p.col = ps->col+1;
 	move(&p);
-	(void)vsprintf(str, fmt, ap);
+	(void)vsprintf(str, fmt, &ap);
 	pstring(str);
 }
 
 pr(fmt, ap)
 	char *fmt;
-	_VA_LIST_ ap;
+	va_list ap;
 {
-	(void)vsprintf(str, fmt, ap);
+	(void)vsprintf(str, fmt, &ap);
 	pstring(str);
 }
 
