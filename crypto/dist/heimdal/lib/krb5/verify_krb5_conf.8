@@ -1,5 +1,5 @@
 .\" $Heimdal: verify_krb5_conf.8,v 1.7 2002/08/20 17:07:28 joda Exp $
-.\" $NetBSD: verify_krb5_conf.8,v 1.6 2002/09/12 13:19:19 joda Exp $
+.\" $NetBSD: verify_krb5_conf.8,v 1.7 2003/01/02 12:58:56 wiz Exp $
 .\"
 .Dd August 30, 2001
 .Dt VERIFY_KRB5_CONF 8
@@ -20,6 +20,14 @@ and parses it, thereby verifying that the syntax is not correctly wrong.
 If the file is syntactically correct,
 .Nm
 tries to verify that the contents of the file is of relevant nature.
+.Sh ENVIRONMENT
+.Ev KRB5_CONFIG
+points to the configuration file to read.
+.Sh FILES
+.Bl -tag -width /etc/krb5.conf -compact
+.It Pa /etc/krb5.conf
+Kerberos 5 configuration file
+.El
 .Sh DIAGNOSTICS
 Possible output from
 .Nm
@@ -42,14 +50,6 @@ is confused.
 .It <path>: unknown entry
 Means that <string> is not known by
 .Nm "" .
-.El
-.Sh ENVIRONMENT
-.Ev KRB5_CONFIG
-points to the configuration file to read.
-.Sh FILES
-.Bl -tag -width /etc/krb5.conf -compact
-.It Pa /etc/krb5.conf
-Kerberos 5 configuration file
 .El
 .Sh SEE ALSO
 .Xr krb5.conf 5
