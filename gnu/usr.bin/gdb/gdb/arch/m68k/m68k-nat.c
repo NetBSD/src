@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: m68k-nat.c,v 1.9 1995/04/18 21:34:16 gwr Exp $
+	$Id: m68k-nat.c,v 1.10 1995/09/16 19:45:03 leo Exp $
 */
 
 #include <sys/types.h>
@@ -105,38 +105,38 @@ struct pcb *pcb;
 
 	/* D0,D1 */
 	ip = &tmp;
-	supply_register(0, ip);
-	supply_register(1, ip);
+	supply_register(0, (char *)ip);
+	supply_register(1, (char *)ip);
 	/* D2-D7 */
 	ip = &pcb->pcb_regs[0];
 	for (i = 2; i < 8; i++, ip++)
-		supply_register(i, ip);
+		supply_register(i, (char *)ip);
 
 	/* A0,A1 */
 	ip = &tmp;
-	supply_register(8, ip);
-	supply_register(9, ip);
+	supply_register(8, (char *)ip);
+	supply_register(9, (char *)ip);
 	/* A2-A7 */
 	ip = &pcb->pcb_regs[6];
-	for (i = 10; i < 16; i++, ip++)
-		supply_register(i, ip);
+	for (i = 10; i < 16; i++, (char *)ip++)
+		supply_register(i, (char *)ip);
 
 	/* PC (use return address) */
 	tmp = pcb->pcb_regs[10] + 4;
-	if (target_read_memory(tmp, &tmp, sizeof(tmp), 0))
-		supply_register(PC_REGNUM, &tmp);
+	if (!target_read_memory(tmp, &tmp, sizeof(tmp), 0))
+		supply_register(PC_REGNUM, (char *)&tmp);
 
-	supply_register(PS_REGNUM, &pcb->pcb_ps);
+	supply_register(PS_REGNUM, (char *)&pcb->pcb_ps);
 
 	/* FP0-FP7 */
 	ip = &pcb->pcb_fpregs.fpf_regs[0];
 	for (i = 0; i < 8; ++i, ip+=3)
-		supply_register(FP0_REGNUM+i, ip);
+		supply_register(FP0_REGNUM+i, (char *)ip);
 
 	/* FPCR, FPSR, FPIAR */
-	supply_register(FPC_REGNUM, ip++);
-	supply_register(FPS_REGNUM, ip++);
-	supply_register(FPI_REGNUM, ip++);
+	supply_register(FPC_REGNUM, (char *)ip++);
+	supply_register(FPS_REGNUM, (char *)ip++);
+	supply_register(FPI_REGNUM, (char *)ip++);
 
 	return;
 }
