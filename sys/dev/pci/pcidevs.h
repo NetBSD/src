@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.31 1997/07/19 09:54:09 cgd Exp 
+ *	NetBSD: pcidevs,v 1.32 1997/08/03 23:40:27 fvdl Exp 
  */
 
 /*
@@ -914,12 +914,14 @@
 #define	PCI_PRODUCT_V3_V96DPC	0xC960		/* V96DPC i960 (Dual) Host-PCI Bridge */
 
 /* VIA Technologies products */
-#define	PCI_PRODUCT_VIATECH_VT82C505	0x0505		/* VT82C505 (\"Pluto\") */
+#define	PCI_PRODUCT_VIATECH_VT82C505	0x0505		/* VT82C505 (Pluto) */
 #define	PCI_PRODUCT_VIATECH_VT82C561	0x0561		/* VT82C561 */
 #define	PCI_PRODUCT_VIATECH_VT82C576	0x0576		/* VT82C576 3V */
-#define	PCI_PRODUCT_VIATECH_VT82C570M	0x1000		/* VT82C570M (\"Apollo\") Host-PCI Bridge */
-#define	PCI_PRODUCT_VIATECH_VT82C570MV	0x1006		/* VT82C570M (\"Apollo\") PCI-ISA Bridge */
+#define	PCI_PRODUCT_VIATECH_VT82C586	0x0586		/* VT82C586 (Apollo VP) PCI-ISA Bridge */
+#define	PCI_PRODUCT_VIATECH_VT82C570M	0x1000		/* VT82C570M (Apollo) Host-PCI Bridge */
+#define	PCI_PRODUCT_VIATECH_VT82C570MV	0x1006		/* VT82C570M (Apollo) PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C416MV	0x1571		/* VT82C416MV */
+#define	PCI_PRODUCT_VIATECH_VT82C595	0x1595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
 
 /* Vortex Computer Systems products */
 #define	PCI_PRODUCT_VORTEX_GDT_6000B	0x0001		/* GDT 6000b */
