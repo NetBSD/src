@@ -7,7 +7,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ld.c	6.10 (Berkeley) 5/22/91";*/
-static char rcsid[] = "$Id: ld.c,v 1.4 1993/08/01 18:46:55 mycroft Exp $";
+static char rcsid[] = "$Id: ld.c,v 1.5 1993/09/05 18:19:31 mycroft Exp $";
 #endif /* not lint */
 
 /* Linker `ld' for GNU
@@ -2433,7 +2433,8 @@ digest_symbols ()
 		    }
 		  set_vectors[setv_fill_count++] = p->n_value;
 		}
-	      else if ((type & N_EXT) && type != (N_UNDF | N_EXT))
+	      else if ((type & N_EXT) && type != (N_UNDF | N_EXT) &&
+		       type != (N_FN | N_EXT))
 		{
 		  /* non-common definition */
 		  if (defs++ && sp->value != p->n_value)
