@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.26 2002/03/01 15:42:10 pk Exp $
+#	$NetBSD: bsd.info.mk,v 1.27 2002/10/22 18:48:27 perry Exp $
 
 .include <bsd.init.mk>
 
@@ -41,7 +41,7 @@ __infoinstall: .USE
 	    -o ${INFOOWN_${.ALLSRC:T}:U${INFOOWN}} \
 	    -g ${INFOGRP_${.ALLSRC:T}:U${INFOGRP}} \
 	    -m ${INFOMODE_${.ALLSRC:T}:U${INFOMODE}} \
-	    ${.ALLSRC} ${.TARGET}
+	    ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 	@[ -f ${INFODIRFILE} ] &&					\
 	while ! ln ${INFODIRFILE} ${INFODIRFILE}.lock 2> /dev/null;	\
 		do sleep 1; done;					\

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.23 2002/08/24 13:12:38 lukem Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.24 2002/10/22 18:48:27 perry Exp $
 
 # System configuration variables:
 #
@@ -66,16 +66,17 @@ ${DESTDIR}${INCSDIR}:
 	@if [ ! -d ${.TARGET} ] || [ -h ${.TARGET} ] ; then \
 		echo creating ${.TARGET}; \
 		/bin/rm -rf ${.TARGET}; \
-		${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} -m 755 ${.TARGET}; \
+		${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} -m 755 \
+			${SYSPKGTAG} ${.TARGET}; \
 	fi
 
 # -c is forced on here, in order to preserve modtimes for "make depend"
 __incinstall: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (echo "${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET}" && \
+		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
+		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET})
 
 .for F in ${INCS:O:u} ${DEPINCS:O:u}
 _F:=		${DESTDIR}${INCSDIR}/${F}		# installed path
@@ -107,7 +108,7 @@ incinstall::
 			fi; \
 		fi; \
 		echo "$$t -> $$l"; \
-		${INSTALL_SYMLINK} $$l $$t; \
+		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
 	 done; )
 .endif
 
