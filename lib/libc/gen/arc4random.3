@@ -1,4 +1,4 @@
-.\"	$NetBSD: arc4random.3,v 1.1 2002/05/24 04:01:44 itojun Exp $
+.\"	$NetBSD: arc4random.3,v 1.2 2002/05/24 04:54:14 itojun Exp $
 .\" $OpenBSD: arc4random.3,v 1.17 2000/12/21 14:07:41 aaron Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -77,7 +77,7 @@ and
 The
 .Fn arc4random_stir
 function reads data from
-.Pa /dev/arandom
+.Pa /dev/urandom
 and uses it to permute the S-Boxes via
 .Fn arc4random_addrandom .
 .Pp
