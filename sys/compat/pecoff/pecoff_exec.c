@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.12 2001/11/13 02:09:17 lukem Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.13 2001/11/27 17:59:49 oki Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.12 2001/11/13 02:09:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.13 2001/11/27 17:59:49 oki Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -268,8 +268,8 @@ pecoff_load_file(p, epp, path, vcset, entry, argp)
 		if ((sh[i].s_flags & COFF_STYP_TEXT) &&
 		    (sh[i].s_flags & COFF_STYP_EXEC) == 0)
 			continue;
-		if ((sh[i].s_flags & (COFF_STYP_TEXT|
-				      COFF_STYP_DATA|COFF_STYP_BSS)) == 0)
+		if ((sh[i].s_flags & (COFF_STYP_TEXT|COFF_STYP_DATA|
+				      COFF_STYP_BSS|COFF_STYP_READ)) == 0)
 			continue;
 		sh[i].s_vaddr += wp->w_base; /* RVA --> VA */
 		pecoff_load_section(vcset, vp, &sh[i], &addr, &size, &prot);
@@ -489,30 +489,20 @@ exec_pecoff_prep_zmagic(p, epp, fp, ap, peofs)
 	 */
 	for (i = 0; i < fp->f_nscns; i++) {
 		int prot = /*0*/VM_PROT_WRITE;
+		long s_flags = sh[i].s_flags;
 
-		if (sh[i].s_flags & COFF_STYP_DISCARD)
+		if ((s_flags & COFF_STYP_DISCARD) != 0)
 			continue;
 		sh[i].s_vaddr += wp->w_base; /* RVA --> VA */
 
-		if ((sh[i].s_flags & COFF_STYP_TEXT) != 0) {
+		if ((s_flags & COFF_STYP_TEXT) != 0) {
 			/* set up command for text segment */
 /*			DPRINTF(("COFF text addr %lx size %ld offset %ld\n",
 				 sh[i].s_vaddr, sh[i].s_size, sh[i].s_scnptr));
 */			pecoff_load_section(&epp->ep_vmcmds, epp->ep_vp,
 					   &sh[i], &epp->ep_taddr,
 					   &epp->ep_tsize, &prot);
-		}
-		if ((sh[i].s_flags & COFF_STYP_DATA) != 0) {
-			/* set up command for data segment */
-/*			DPRINTF(("COFF data addr %lx size %ld offset %ld\n",
-			sh[i].s_vaddr, sh[i].s_size, sh[i].s_scnptr));*/
-			pecoff_load_section(&epp->ep_vmcmds, epp->ep_vp,
-					   &sh[i], &daddr, &dsize, &prot);
-			epp->ep_daddr = min(epp->ep_daddr, daddr);
-			dsize = daddr + dsize - epp->ep_daddr;
-			epp->ep_dsize = max(epp->ep_dsize, dsize);
-		}
-		if ((sh[i].s_flags & COFF_STYP_BSS) != 0) {
+		} else if ((s_flags & COFF_STYP_BSS) != 0) {
 			/* set up command for bss segment */
 			baddr = sh[i].s_vaddr;
 			bsize = sh[i].s_paddr;
@@ -522,6 +512,15 @@ exec_pecoff_prep_zmagic(p, epp, fp, ap, peofs)
 			epp->ep_daddr = min(epp->ep_daddr, baddr);
 			bsize = baddr + bsize - epp->ep_daddr;
 			epp->ep_dsize = max(epp->ep_dsize, bsize);
+		} else if ((s_flags & (COFF_STYP_DATA|COFF_STYP_READ)) != 0) {
+			/* set up command for data segment */
+/*			DPRINTF(("COFF data addr %lx size %ld offset %ld\n",
+			sh[i].s_vaddr, sh[i].s_size, sh[i].s_scnptr));*/
+			pecoff_load_section(&epp->ep_vmcmds, epp->ep_vp,
+					   &sh[i], &daddr, &dsize, &prot);
+			epp->ep_daddr = min(epp->ep_daddr, daddr);
+			dsize = daddr + dsize - epp->ep_daddr;
+			epp->ep_dsize = max(epp->ep_dsize, dsize);
 		}
 	}
 	/* set up ep_emul_arg */
