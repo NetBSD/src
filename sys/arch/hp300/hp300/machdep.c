@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155 2002/03/06 13:10:20 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.156 2002/03/15 05:55:38 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2002/03/15 05:55:38 gmcgarry Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -103,11 +106,11 @@
 
 #include "opt_useleds.h"
 
-#include <arch/hp300/dev/hilreg.h>
-#include <arch/hp300/dev/hilioctl.h>
-#include <arch/hp300/dev/hilvar.h>
+#include <hp300/dev/hilreg.h>
+#include <hp300/dev/hilioctl.h>
+#include <hp300/dev/hilvar.h>
 #ifdef USELEDS
-#include <arch/hp300/hp300/leds.h>
+#include <hp300/hp300/leds.h>
 #endif
 
 /* the following is used externally (sysctl_hw) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.49 2002/02/23 21:54:31 gmcgarry Exp $	*/
+/*	$NetBSD: dcm.c,v 1.50 2002/03/15 05:55:35 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -87,6 +87,9 @@
 /*
  *  98642/MUX
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.50 2002/03/15 05:55:35 gmcgarry Exp $");                                                  
 
 #include "opt_kgdb.h"
 
