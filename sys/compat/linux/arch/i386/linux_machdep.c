@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.76.2.2 2002/05/30 14:45:02 gehenna Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.76.2.3 2002/07/15 10:34:54 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.76.2.2 2002/05/30 14:45:02 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.76.2.3 2002/07/15 10:34:54 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -184,8 +184,7 @@ linux_setregs(p, epp, stack)
  */
 
 void
-linux_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+linux_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -194,6 +193,7 @@ linux_sendsig(catcher, sig, mask, code)
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = p->p_md.md_regs;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.20 2001/11/13 13:14:43 lukem Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.20.8.1 2002/07/15 10:35:19 gehenna Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.20 2001/11/13 13:14:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.20.8.1 2002/07/15 10:35:19 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,8 +37,11 @@ __KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.20 2001/11/13 13:14:43 lukem Ex
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
+#include <dev/wscons/wsconsio.h>
 
 #include <dev/wscons/wsdisplayvar.h>
+
+#include "opt_wsdisplay_compat.h" /* for WSDISPLAY_CHARFUNCS */
 
 void
 pcdisplay_cursor_init(scr, existing)
@@ -61,8 +64,8 @@ pcdisplay_cursor_init(scr, existing)
 		 */
 		memt = scr->hdl->ph_memt;
 		memh = scr->hdl->ph_memh;
-		off = (scr->vc_crow * scr->type->ncols + scr->vc_ccol) * 2 +
-		    scr->dispoffset;
+		off = (scr->cursorrow * scr->type->ncols + scr->cursorcol) * 2
+		    + scr->dispoffset;
 
 		scr->cursortmp = bus_space_read_2(memt, memh, off);
 		bus_space_write_2(memt, memh, off, scr->cursortmp ^ 0x7700);
@@ -97,7 +100,7 @@ pcdisplay_cursor(id, on, row, col)
 
 	/* Remove old cursor image */
 	if (scr->cursoron) {
-		off = scr->vc_crow * scr->type->ncols + scr->vc_ccol;
+		off = scr->cursorrow * scr->type->ncols + scr->cursorcol;
 		if (scr->active)
 			bus_space_write_2(memt, memh, scr->dispoffset + off * 2,
 			    scr->cursortmp);
@@ -105,13 +108,13 @@ pcdisplay_cursor(id, on, row, col)
 			scr->mem[off] = scr->cursortmp;
 	}
 		
-	scr->vc_crow = row;
-	scr->vc_ccol = col;
+	scr->cursorrow = row;
+	scr->cursorcol = col;
 
 	if ((scr->cursoron = on) == 0)
 		return;
 
-	off = (scr->vc_crow * scr->type->ncols + scr->vc_ccol);
+	off = (scr->cursorrow * scr->type->ncols + scr->cursorcol);
 	if (scr->active) {
 		off = off * 2 + scr->dispoffset;
 		scr->cursortmp = bus_space_read_2(memt, memh, off);
@@ -124,8 +127,8 @@ pcdisplay_cursor(id, on, row, col)
 	struct pcdisplayscreen *scr = id;
 	int pos;
 
-	scr->vc_crow = row;
-	scr->vc_ccol = col;
+	scr->cursorrow = row;
+	scr->cursorcol = col;
 	scr->cursoron = on;
 
 	if (scr->active) {
@@ -272,3 +275,70 @@ pcdisplay_eraserows(id, startrow, nrows, fillattr)
 		for (i = 0; i < count; i++)
 			scr->mem[off + i] = val;
 }
+
+#ifdef WSDISPLAY_CHARFUNCS
+int
+pcdisplay_getwschar(id, wschar)
+	void *id;
+	struct wsdisplay_char *wschar;
+{
+	struct pcdisplayscreen *scr = id;
+	bus_space_tag_t memt = scr->hdl->ph_memt;
+	bus_space_handle_t memh = scr->hdl->ph_memh;
+	int off;
+	uint16_t chardata;
+	uint8_t attrbyte;
+
+	off = wschar->row * scr->type->ncols + wschar->col;
+	if (off >= scr->type->ncols * scr->type->nrows)
+		return -1;
+
+	if (scr->active)
+		chardata = bus_space_read_2(memt, memh,
+					    scr->dispoffset + off * 2);
+	else
+		chardata = scr->mem[off];
+
+	wschar->letter = (chardata & 0x00FF);
+	wschar->flags = 0;
+	attrbyte = (chardata & 0xFF00) >> 8;
+	if ((attrbyte & 0x08)) wschar->flags |= WSDISPLAY_CHAR_BRIGHT;
+	if ((attrbyte & 0x80)) wschar->flags |= WSDISPLAY_CHAR_BLINK;
+	wschar->foreground = attrbyte & 0x07;
+	wschar->background = (attrbyte >> 4) & 0x07;
+
+	return 0;
+}
+
+int
+pcdisplay_putwschar(id, wschar)
+	void *id;
+	struct wsdisplay_char *wschar;
+{
+	struct pcdisplayscreen *scr = id;
+	bus_space_tag_t memt = scr->hdl->ph_memt;
+	bus_space_handle_t memh = scr->hdl->ph_memh;
+	int off;
+	uint16_t chardata;
+	uint8_t attrbyte;
+
+	off = wschar->row * scr->type->ncols + wschar->col;
+	if (off >= (scr->type->ncols * scr->type->nrows))
+		return -1;
+
+	attrbyte = wschar->background & 0x07;
+	if (wschar->flags & WSDISPLAY_CHAR_BLINK) attrbyte |= 0x08;
+	attrbyte <<= 4;
+	attrbyte |= wschar->foreground & 0x07;
+	if (wschar->flags & WSDISPLAY_CHAR_BRIGHT) attrbyte |= 0x08;
+	chardata = (attrbyte << 8) | wschar->letter;
+
+	if (scr->active)
+		bus_space_write_2(memt, memh, scr->dispoffset + off * 2,
+		                  chardata);
+	else
+		scr->mem[off] = chardata;
+
+	return 0;
+}
+#endif /* WSDISPLAY_CHARFUNCS */

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.527.2.3 2002/06/20 16:31:16 gehenna Exp $
+#	$NetBSD: files,v 1.527.2.4 2002/07/15 10:35:06 gehenna Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -139,6 +139,7 @@ defparam opt_kgdb.h		KGDB_DEV KGDB_DEVNAME
 				KGDB_DEVADDR KGDB_DEVRATE KGDB_DEVMODE
 defflag				LOCKDEBUG
 defflag				SYSCALL_DEBUG
+defflag	opt_kstack.h		KSTACK_CHECK_MAGIC
 
 # memory (ram) disk options
 #
@@ -764,6 +765,8 @@ file	dev/ic/pcdisplay_subr.c	pcdisplayops
 file	dev/ic/pcdisplay_chars.c	pcdisplayops
 # VGA graphics
 #
+defparam opt_vga.h		VGA_CONSOLE_SCREENTYPE
+defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL
 device	vga: wsemuldisplaydev, pcdisplayops
 file	dev/ic/vga.c			vga			needs-flag
 file	dev/ic/vga_subr.c		vga
@@ -920,6 +923,10 @@ defpseudo isdn:		isdndev, tty
 defpseudo irip:		isdndev, ifnet
 defpseudo ippp:		isdndev, sppp, ifnet
 
+# KTTCP network throughput testing pseudo-device
+defpseudo kttcp
+file	dev/kttcp.c			kttcp		needs-flag
+
 #
 # File systems
 #
@@ -1018,7 +1025,7 @@ file	kern/kern_exit.c
 file	kern/kern_fork.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c
-file	kern/kern_systrace.c
+file	kern/kern_systrace.c		systrace
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_malloc.c
@@ -1157,7 +1164,6 @@ file	netccitt/pk_timer.c		ccitt
 file	netccitt/pk_usrreq.c		ccitt
 file	netinet/fil.c			ipfilter
 file	netinet/if_arp.c		arp | netatalk		needs-flag
-file	netinet/if_ieee1394arp.c	arp & ieee1394 & inet
 file	netinet/if_atm.c		atm
 file	netinet/igmp.c			inet
 file	netinet/in.c			inet

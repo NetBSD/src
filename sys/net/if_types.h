@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.19.8.1 2002/05/30 13:52:26 gehenna Exp $	*/
+/*	$NetBSD: if_types.h,v 1.19.8.2 2002/07/15 10:36:51 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -259,10 +259,10 @@
 #define IFT_VOICEEMFGD		   0xd3 /* voice E&M Feature Group D */
 #define IFT_VOICEFGDEANA	   0xd4 /* voice FGD Exchange Access North American */
 #define IFT_VOICEDID		   0xd5 /* voice Direct Inward Dialing */
+#define IFT_STF			   0xd7	/* 6to4 interface */
 
 /* not based on IANA assignments - how should we treat these? */
 #define IFT_GIF		0xf0
 #define IFT_PVC		0xf1
 #define IFT_FAITH	0xf2
-#define IFT_STF		0xf3
 #endif /* _NET_IF_TYPES_H_ */

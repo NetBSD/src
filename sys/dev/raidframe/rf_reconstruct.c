@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.33 2002/01/09 03:10:19 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.33.8.1 2002/07/15 10:35:52 gehenna Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.33 2002/01/09 03:10:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.33.8.1 2002/07/15 10:35:52 gehenna Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -305,8 +305,6 @@ rf_ReconstructFailedDisk(raidPtr, row, col)
 		rc = EIO;
 	}
 	RF_SIGNAL_COND(raidPtr->waitForReconCond);
-	wakeup(&raidPtr->waitForReconCond);	/* XXX Methinks this will be
-						 * needed at some point... GO */
 	return (rc);
 }
 

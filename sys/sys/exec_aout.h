@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.27 2001/08/16 05:06:35 matt Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.27.12.1 2002/07/15 10:37:13 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -85,6 +85,8 @@ struct exec {
 #define	MID_SPARC64	151	/* LP64 sparc */
 #define	MID_X86_64	152	/* AMD x86-64 */
 #define	MID_M88K	153	/* m88k BSD core dumps */
+#define	MID_SH5_32	154	/* ILP32 SH5 */
+#define	MID_SH5_64	155	/* LP64 SH5 */
 #define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
 #define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
 #define	MID_HPUX800     0x20B   /* hp800 HP-UX binary */

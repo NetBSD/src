@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.9 2001/12/31 12:15:21 augustss Exp $	*/
+/*	$NetBSD: uirda.c,v 1.9.12.1 2002/07/15 10:36:08 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.9 2001/12/31 12:15:21 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.9.12.1 2002/07/15 10:36:08 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ int uirda_get_turnarounds(void *h, int *times);
 int uirda_poll(void *h, int events, usb_proc_ptr p);
 
 struct irframe_methods uirda_methods = {
-	uirda_open, uirda_close, uirda_read, uirda_write, uirda_poll, 
+	uirda_open, uirda_close, uirda_read, uirda_write, uirda_poll,
 	uirda_set_params, uirda_get_speeds, uirda_get_turnarounds
 };
 
@@ -246,7 +246,7 @@ usbd_status uirda_start_read(struct uirda_softc *sc);
 
 usb_descriptor_t *usb_find_desc(usbd_device_handle dev, int type);
 
-/* 
+/*
  * These devices don't quite follow the spec.  Speed changing is broken
  * and they don't handle windows.
  * But we change speed in a safe way, and don't use windows now.
@@ -444,7 +444,7 @@ uirda_open(void *h, int flag, int mode, usb_proc_ptr p)
 	int error;
 	usbd_status err;
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_rd_addr, 0, &sc->sc_rd_pipe);
 	if (err) {
@@ -511,7 +511,7 @@ uirda_close(void *h, int flag, int mode, usb_proc_ptr p)
 {
 	struct uirda_softc *sc = h;
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_rd_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_rd_pipe);
@@ -546,7 +546,7 @@ uirda_read(void *h, struct uio *uio, int flag)
 	int error;
 	u_int n;
 
-	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -573,10 +573,10 @@ uirda_read(void *h, struct uio *uio, int flag)
 			}
 		}
 		splx(s);
-		
+
 		lockmgr(&sc->sc_rd_buf_lk, LK_EXCLUSIVE, NULL);
 		n = sc->sc_rd_count - UIRDA_INPUT_HEADER_SIZE;
-		DPRINTFN(1,("%s: sc=%p n=%u, hdr=0x%02x\n", __FUNCTION__,
+		DPRINTFN(1,("%s: sc=%p n=%u, hdr=0x%02x\n", __func__,
 			    sc, n, sc->sc_rd_buf[0]));
 		if (n > uio->uio_resid)
 			error = EINVAL;
@@ -585,7 +585,7 @@ uirda_read(void *h, struct uio *uio, int flag)
 					n, uio);
 		sc->sc_rd_count = 0;
 		lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
-		
+
 		err = uirda_start_read(sc);
 		/* XXX check err */
 
@@ -607,7 +607,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 	u_int32_t n;
 	int error = 0;
 
-	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -649,7 +649,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
-	DPRINTFN(1,("%s: sc=%p done\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p done\n", __func__, sc));
 	return (error);
 }
 
@@ -660,17 +660,17 @@ uirda_poll(void *h, int events, usb_proc_ptr p)
 	int revents = 0;
 	int s;
 
-	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 
 	s = splusb();
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_rd_count != 0) {
-			DPRINTFN(2,("%s: have data\n", __FUNCTION__));
+			DPRINTFN(2,("%s: have data\n", __func__));
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
-			DPRINTFN(2,("%s: recording select\n", __FUNCTION__));
+			DPRINTFN(2,("%s: recording select\n", __func__));
 			selrecord(p, &sc->sc_rd_sel);
 		}
 	}
@@ -689,7 +689,7 @@ uirda_set_params(void *h, struct irda_params *p)
 	u_int32_t n;
 	u_int mask;
 
-	DPRINTF(("%s: sc=%p, speed=%d ebofs=%d maxsize=%d\n", __FUNCTION__,
+	DPRINTF(("%s: sc=%p, speed=%d ebofs=%d maxsize=%d\n", __func__,
 		 sc, p->speed, p->ebofs, p->maxsize));
 
 	if (sc->sc_dying)
@@ -711,7 +711,7 @@ uirda_set_params(void *h, struct irda_params *p)
 	found1:
 		DPRINTF(("uirda_set_params: ebofs hdr=0x%02x\n", hdr));
 		;
-				
+
 	}
 	if (hdr != 0 || p->speed != sc->sc_params.speed) {
 		/* find speed */
@@ -734,7 +734,7 @@ uirda_set_params(void *h, struct irda_params *p)
 			return (EINVAL);
 		sc->sc_params.maxsize = p->maxsize;
 #if 0
-		DPRINTF(("%s: new buffers, old size=%d\n", __FUNCTION__,
+		DPRINTF(("%s: new buffers, old size=%d\n", __func__,
 			 sc->sc_params.maxsize));
 		if (p->maxsize > 10000 || p < 0) /* XXX */
 			return (EINVAL);
@@ -765,13 +765,13 @@ uirda_set_params(void *h, struct irda_params *p)
 #endif
 	}
 	if (hdr != 0 && hdr != sc->sc_wr_hdr) {
-		/* 
+		/*
 		 * A change has occurred, transmit a 0 length frame with
 		 * the new settings.  The 0 length frame is not sent to the
 		 * device.
 		 */
 		DPRINTF(("%s: sc=%p setting header 0x%02x\n",
-			 __FUNCTION__, sc, hdr));
+			 __func__, sc, hdr));
 		sc->sc_wr_hdr = hdr;
 		lockmgr(&sc->sc_wr_buf_lk, LK_EXCLUSIVE, NULL);
 		sc->sc_wr_buf[0] = hdr;
@@ -799,7 +799,7 @@ uirda_get_speeds(void *h, int *speeds)
 	u_int isp;
 	u_int usp;
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -826,7 +826,7 @@ uirda_get_turnarounds(void *h, int *turnarounds)
 	u_int ita;
 	u_int uta;
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -852,7 +852,7 @@ uirda_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct uirda_softc *sc = priv;
 	u_int32_t size;
 
-	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 
 	if (status == USBD_CANCELLED) /* this is normal */
 		return;
@@ -862,7 +862,7 @@ uirda_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	} else {
 		usbd_get_xfer_status(xfer, NULL, NULL, &size, NULL);
 	}
-	DPRINTFN(1,("%s: sc=%p size=%u, err=%d\n", __FUNCTION__, sc, size,
+	DPRINTFN(1,("%s: sc=%p size=%u, err=%d\n", __func__, sc, size,
 		    sc->sc_rd_err));
 	sc->sc_rd_count = size;
 	wakeup(&sc->sc_rd_count); /* XXX should use flag */
@@ -874,7 +874,7 @@ uirda_start_read(struct uirda_softc *sc)
 {
 	usbd_status err;
 
-	DPRINTFN(1,("%s: sc=%p, size=%d\n", __FUNCTION__, sc,
+	DPRINTFN(1,("%s: sc=%p, size=%d\n", __func__, sc,
 		    sc->sc_params.maxsize + UIRDA_INPUT_HEADER_SIZE));
 
 	if (sc->sc_dying)

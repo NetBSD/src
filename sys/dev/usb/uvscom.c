@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.5 2002/03/27 19:51:39 augustss Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.5.4.1 2002/07/15 10:36:23 gehenna Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -282,7 +282,7 @@ USB_ATTACH(uvscom)
 
 	DPRINTF(("uvscom attach: sc = %p\n", sc));
 
-	/* initialize endpoints */ 
+	/* initialize endpoints */
 	uca.bulkin = uca.bulkout = -1;
 	sc->sc_intr_number = -1;
 	sc->sc_intr_pipe = NULL;
@@ -307,7 +307,7 @@ USB_ATTACH(uvscom)
 	}
 
 	/* get the common interface */
-	err = usbd_device2interface_handle(dev, UVSCOM_IFACE_INDEX, 
+	err = usbd_device2interface_handle(dev, UVSCOM_IFACE_INDEX,
 					   &sc->sc_iface);
 	if (err) {
 		printf("%s: failed to get interface, err=%s\n",
@@ -339,7 +339,7 @@ USB_ATTACH(uvscom)
 			   UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
 			sc->sc_intr_number = ed->bEndpointAddress;
 			sc->sc_isize = UGETW(ed->wMaxPacketSize);
-		} 
+		}
 	}
 
 	if (uca.bulkin == -1) {
@@ -459,9 +459,9 @@ uvscom_readstat(struct uvscom_softc *sc)
 	req.bRequest = UVSCOM_READ_STATUS;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
-	USETW(req.wLength, 2); 
+	USETW(req.wLength, 2);
 
-	err = usbd_do_request(sc->sc_udev, &req, &r); 
+	err = usbd_do_request(sc->sc_udev, &req, &r);
 	if (err) {
 		printf("%s: uvscom_readstat: %s\n",
 		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
@@ -486,9 +486,9 @@ uvscom_shutdown(struct uvscom_softc *sc)
 	req.bRequest = UVSCOM_SHUTDOWN;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
-	USETW(req.wLength, 0); 
+	USETW(req.wLength, 0);
 
-	err = usbd_do_request(sc->sc_udev, &req, NULL); 
+	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err) {
 		printf("%s: uvscom_shutdown: %s\n",
 		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
@@ -527,9 +527,9 @@ uvscom_set_line(struct uvscom_softc *sc, uint16_t line)
 	req.bRequest = UVSCOM_LINE_CTL;
 	USETW(req.wValue, line);
 	USETW(req.wIndex, 0);
-	USETW(req.wLength, 0); 
+	USETW(req.wLength, 0);
 
-	err = usbd_do_request(sc->sc_udev, &req, NULL); 
+	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err) {
 		printf("%s: uvscom_set_line: %s\n",
 		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
@@ -695,7 +695,7 @@ uvscom_param(void *addr, int portno, struct termios *t)
 	default:
 		return (EIO);
 	}
-		
+
 	if (ISSET(t->c_cflag, CSTOPB))
 		SET(ls, UVSCOM_STOP_BIT_2);
 	else
@@ -745,7 +745,7 @@ uvscom_open(void *addr, int portno)
 	struct uvscom_softc *sc = addr;
 	int err;
 	int i;
-	
+
 	if (sc->sc_dying)
 		return (EIO);
 
@@ -809,7 +809,7 @@ uvscom_open(void *addr, int portno)
 }
 
 Static void
-uvscom_close(void *addr, int portno) 
+uvscom_close(void *addr, int portno)
 {
 	struct uvscom_softc *sc = addr;
 	int err;
