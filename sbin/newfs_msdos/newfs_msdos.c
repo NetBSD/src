@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.14.2.1 2004/09/23 02:43:34 jmc Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.14.2.2 2004/09/23 02:44:44 jmc Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.14.2.1 2004/09/23 02:43:34 jmc Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.14.2.2 2004/09/23 02:44:44 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -656,7 +656,7 @@ main(int argc, char *argv[])
 			 ((u_int)tm->tm_hour << 8 |
 			  (u_int)tm->tm_min));
 		mk4(bsx->volid, x);
-		mklabel(bsx->label, opt_L ? opt_L : "NO NAME");
+		mklabel(bsx->label, opt_L ? opt_L : "NO_NAME");
 		snprintf(buf, sizeof(buf), "FAT%u", fat);
 		setstr(bsx->type, buf, sizeof(bsx->type));
 		if (!opt_B) {
