@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.141 2000/08/13 22:43:42 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.142 2000/08/15 05:21:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2000/08/13 22:43:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2000/08/15 05:21:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -625,6 +625,14 @@ do {									\
 } while (0)
 
 /*
+ * PMAP_SET_NEEDISYNC:
+ *
+ *	Mark that a user pmap needs an I-stream synch on its
+ *	way back out to userspace.
+ */
+#define	PMAP_SET_NEEDISYNC(pmap)	(pmap)->pm_needisync = ~0UL
+
+/*
  * PMAP_SYNC_ISTREAM:
  *
  *	Synchronize the I-stream for the specified pmap.  For user
@@ -640,13 +648,12 @@ do {									\
 
 #define	PMAP_SYNC_ISTREAM_USER(pmap)					\
 do {									\
-	(pmap)->pm_needisync = ~0UL;					\
-	alpha_mb();	/* XXX alpha_wmb()? */				\
 	alpha_multicast_ipi((pmap)->pm_cpus, ALPHA_IPI_AST);		\
+	/* for curcpu, will happen in userret() */			\
 } while (0)
 #else
 #define	PMAP_SYNC_ISTREAM_KERNEL()	alpha_pal_imb()
-#define	PMAP_SYNC_ISTREAM_USER(pmap)	(pmap)->pm_needisync = ~0UL
+#define	PMAP_SYNC_ISTREAM_USER(pmap)	/* will happen in userret() */
 #endif /* MULTIPROCESSOR */
 
 #define	PMAP_SYNC_ISTREAM(pmap)						\
@@ -742,15 +749,7 @@ do {									\
  *
  *	Set a PTE to a specified value.
  */
-#if defined(MULTIPROCESSOR)
-#define	PMAP_SET_PTE(ptep, val)						\
-do {									\
-	*(ptep) = (val);						\
-	alpha_mb();	/* XXX alpha_wmb()? */				\
-} while (0)
-#else
 #define	PMAP_SET_PTE(ptep, val)	*(ptep) = (val)
-#endif
 
 /*
  * PMAP_STAT_{INCR,DECR}:
@@ -1639,7 +1638,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	paddr_t opa;
 	boolean_t tflush = TRUE;
 	boolean_t hadasm = FALSE;	/* XXX gcc -Wuninitialized */
-	boolean_t needisync;
+	boolean_t needisync = FALSE;
+	boolean_t setisync = FALSE;
 	boolean_t isactive;
 	boolean_t wired;
 	long cpu_id = cpu_number();
@@ -1655,9 +1655,22 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	managed = PAGE_IS_MANAGED(pa);
 	isactive = PMAP_ISACTIVE(pmap, cpu_id);
-	needisync = ((prot & VM_PROT_EXECUTE) != 0) &&
-	    (pmap->pm_cpus != 0 || pmap == pmap_kernel());
 	wired = (flags & PMAP_WIRED) != 0;
+
+	/*
+	 * Determine what we need to do about the I-stream.  If
+	 * VM_PROT_EXECUTE is set, we mark a user pmap as needing
+	 * an I-sync on the way back out to userspace.  We always
+	 * need an immediate I-sync for the kernel pmap.
+	 */
+	if (prot & VM_PROT_EXECUTE) {
+		if (pmap == pmap_kernel())
+			needisync = TRUE;
+		else {
+			setisync = TRUE;
+			needisync = (pmap->pm_cpus != 0);
+		}
+	}
 
 	PMAP_MAP_TO_HEAD_LOCK();
 	PMAP_LOCK(pmap);
@@ -1772,7 +1785,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * No need to synchronize the I-stream, either, for basically
 		 * the same reason.
 		 */
-		needisync = FALSE;
+		setisync = needisync = FALSE;
 
 		if (pmap != pmap_kernel()) {
 			/*
@@ -1917,6 +1930,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap_tlb_shootdown(pmap, va, hadasm ? PG_ASM : 0);
 #endif
 	}
+	if (setisync)
+		PMAP_SET_NEEDISYNC(pmap);
 	if (needisync)
 		PMAP_SYNC_ISTREAM(pmap);
 
@@ -1976,6 +1991,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	 * Set the new PTE.
 	 */
 	PMAP_SET_PTE(pte, npte);
+#if defined(MULTIPROCESSOR)
+	alpha_mb();		/* XXX alpha_wmb()? */
+#endif
 
 	/*
 	 * Invalidate the TLB entry for this VA and any appropriate
@@ -2053,6 +2071,9 @@ pmap_kremove(vaddr_t va, vsize_t size)
 
 			/* Zap the mapping. */
 			PMAP_SET_PTE(pte, PG_NV);
+#if defined(MULTIPROCESSOR)
+			alpha_mb();		/* XXX alpha_wmb()? */
+#endif
 			PMAP_INVALIDATE_TLB(pmap, va, TRUE, TRUE, cpu_id);
 #if defined(MULTIPROCESSOR) && 0
 			pmap_tlb_shootdown(pmap, va, PG_ASM);
@@ -2356,10 +2377,6 @@ pmap_zero_page(paddr_t phys)
 		: "0" (p0), "1" (p1)
 		: "memory");
 	} while (p0 < pend);
-#if defined(MULTIPROCESSOR)
-	/* Ensure the other CPUs see the correct data. */
-	alpha_mb();		/* XXX alpha_wmb()? */
-#endif
 }
 
 /*
@@ -2383,10 +2400,6 @@ pmap_copy_page(paddr_t src, paddr_t dst)
         s = (caddr_t)ALPHA_PHYS_TO_K0SEG(src);
         d = (caddr_t)ALPHA_PHYS_TO_K0SEG(dst);
 	memcpy(d, s, PAGE_SIZE);
-#if defined(MULTIPROCESSOR)
-	/* Ensure the other CPUs see the correct data. */
-	alpha_mb();		/* XXX alpha_wmb()? */
-#endif
 }
 
 /*
@@ -2592,8 +2605,8 @@ alpha_protection_init(void)
  *	from beneath it.  We assume that the pmap itself is already
  *	locked; dolock applies only to the PV list.
  *
- *	Returns TRUE or FALSE, indicating if the I-stream needs to
- *	be synchronized.
+ *	Returns TRUE or FALSE, indicating if an I-stream sync needs
+ *	to be initiated (for this CPU or for other CPUs).
  */
 boolean_t
 pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
@@ -2603,7 +2616,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	boolean_t onpv;
 	boolean_t hadasm;
 	boolean_t isactive;
-	boolean_t needisync;
+	boolean_t needisync = FALSE;
 	struct pv_entry **pvp;
 	pt_entry_t **ptp;
 
@@ -2640,8 +2653,21 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	onpv = (pmap_pte_pv(pte) != 0);
 	hadasm = (pmap_pte_asm(pte) != 0);
 	isactive = PMAP_ISACTIVE(pmap, cpu_id);
-	needisync = (pmap_pte_exec(pte) != 0) &&
-	    (pmap->pm_cpus != 0 || pmap == pmap_kernel());
+
+	/*
+	 * Determine what we need to do about the I-stream.  If
+	 * PG_EXEC was set, we mark a user pmap as needing an
+	 * I-sync on the way out to userspace.  We always need
+	 * an immediate I-sync for the kernel pmap.
+	 */
+	if (pmap_pte_exec(pte)) {
+		if (pmap == pmap_kernel())
+			needisync = TRUE;
+		else {
+			PMAP_SET_NEEDISYNC(pmap);
+			needisync = (pmap->pm_cpus != 0);
+		}
+	}
 
 	/*
 	 * Update statistics
@@ -2751,16 +2777,25 @@ pmap_changebit(paddr_t pa, u_long set, u_long mask, long cpu_id)
 		if (*pte != npte) {
 			hadasm = (pmap_pte_asm(pte) != 0);
 			isactive = PMAP_ISACTIVE(pv->pv_pmap, cpu_id);
-			needisync = (pmap_pte_exec(pte) != 0) &&
-			    (pv->pv_pmap->pm_cpus != 0 ||
-			     pv->pv_pmap == pmap_kernel());
-			PMAP_SET_PTE(pte, npte);
-			if (needisync) {
+			/*
+			 * Determine what we need to do about the I-stream.
+			 * If PG_EXEC was set, we mark a user pmap as needing
+			 * an I-sync on the way out to userspace.  We always
+			 * need an immediate I-sync for the kernel pmap.
+			 */
+			needisync = FALSE;
+			if (pmap_pte_exec(pte)) {
 				if (pv->pv_pmap == pmap_kernel())
-					needkisync |= TRUE;
-				else
-					PMAP_SYNC_ISTREAM_USER(pv->pv_pmap);
+					needkisync = TRUE;
+				else {
+					PMAP_SET_NEEDISYNC(pv->pv_pmap);
+					if (pv->pv_pmap->pm_cpus != 0)
+						needisync = TRUE;
+				}
 			}
+			PMAP_SET_PTE(pte, npte);
+			if (needisync)
+				PMAP_SYNC_ISTREAM_USER(pv->pv_pmap);
 			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive,
 			    cpu_id);
 #if defined(MULTIPROCESSOR) && 0
@@ -3111,11 +3146,6 @@ pmap_pv_alloc(void)
 				if (pvpmap == pmap_kernel())
 					continue;
 
-				/*
-				 * XXX We know we're not going to try and
-				 * XXX lock the kernel pmap, so we don't
-				 * XXX have to block interrupts here.
-				 */
 				if (simple_lock_try(&pvpmap->pm_slock) == 0)
 					continue;
 
@@ -3135,7 +3165,7 @@ pmap_pv_alloc(void)
 				 */
 				if (pmap_remove_mapping(pvpmap, pv->pv_va,
 				    pte, FALSE, cpu_id, &prmt))
-					alpha_pal_imb();	/* XXXSMP */
+					PMAP_SYNC_ISTREAM(pvpmap);
 
 				/* Unlock everything and return. */
 				simple_unlock(&pvpmap->pm_slock);
@@ -3627,14 +3657,10 @@ pmap_ptpage_steal(pmap_t pmap, int usage, paddr_t *pap)
 			}
 		}
 
-		PMAP_UNLOCK(spmap);
+		if (needisync)
+			PMAP_SYNC_ISTREAM(pmap);
 
-		if (needisync) {		/* XXXSMP */
-			alpha_pal_imb();
-#if defined(MULTIPROCESSOR) && 0
-			alpha_broadcast_ipi(ALPHA_IPI_IMB);
-#endif
-		}
+		PMAP_UNLOCK(spmap);
 
 #ifdef DIAGNOSTIC
 		if (prmt.prmt_ptp == NULL)
