@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.105 2003/09/29 20:04:25 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.106 2003/10/25 18:28:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.105 2003/09/29 20:04:25 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.106 2003/10/25 18:28:31 christos Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1642,6 +1642,11 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					break;
 				case IDB_VALUE_PHASE:
 					status = STATUS_WIRE_FAILED;
+					break;
+				default:
+					printf("%s: bad status\n",
+					    USBDEVNAME(sc->sc_dev));
+					status = -1;
 					break;
 				}
 
