@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.6 1994/06/13 05:28:41 chopps Exp $
+ *	$Id: md.c,v 1.7 1995/01/17 06:44:39 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -53,13 +53,13 @@ unsigned char		*addr;
 	switch (RELOC_TARGET_SIZE(rp)) {
 	case 0:
 		return get_byte(addr);
-		break;
 	case 1:
 		return get_short(addr);
-		break;
 	case 2:
 		return get_long(addr);
-		break;
+	default:
+		errx(1, "Unsupported relocation size: %x",
+		     RELOC_TARGET_SIZE(rp));
 	}
 }
 
@@ -71,6 +71,7 @@ md_relocate(rp, relocation, addr, relocatable_output)
 struct relocation_info	*rp;
 long			relocation;
 unsigned char		*addr;
+int			relocatable_output;
 {
 	switch (RELOC_TARGET_SIZE(rp)) {
 	case 0:
@@ -312,14 +313,14 @@ int n;
 	for (; n; n--, r++) {
 		r->r_address = md_swap_long(r->r_address);
 		bits = ((int *)r)[1];
-		r->r_symbolnum = md_swap_long(bits) & 0xffffff;
+		r->r_symbolnum = md_swap_long(bits) & 0x00ffffff;
 		bits = ((unsigned char *)r)[7];
-		r->r_pcrel = ((bits >> 7) & 1);
-		r->r_length = ((bits >> 5) & 3);
-		r->r_extern = ((bits >> 4) & 1);
-		r->r_baserel = ((bits >> 3) & 1);
-		r->r_jmptable = ((bits >> 2) & 1);
-		r->r_relative = ((bits >> 1) & 1);
+		r->r_pcrel = (bits >> 7) & 1;
+		r->r_length = (bits >> 5) & 3;
+		r->r_extern = (bits >> 4) & 1;
+		r->r_baserel = (bits >> 3) & 1;
+		r->r_jmptable = (bits >> 2) & 1;
+		r->r_relative = (bits >> 1) & 1;
 #ifdef N_SIZE
 		r->r_copy = (bits & 1);
 #endif
@@ -335,13 +336,13 @@ int n;
 
 	for (; n; n--, r++) {
 		r->r_address = md_swap_long(r->r_address);
-		((int *)r)[1] = md_swap_long(r->r_symbolnum & 0xffffff00);
-		bits = ((r->r_pcrel << 7) & 0x80);
-		bits |= ((r->r_length << 5) & 0x60);
-		bits |= ((r->r_extern << 4) & 0x10);
-		bits |= ((r->r_baserel << 3) & 8);
-		bits |= ((r->r_jmptable << 2) & 4);
-		bits |= ((r->r_relative << 1) & 2);
+		((int *)r)[1] = md_swap_long(r->r_symbolnum) & 0xffffff00;
+		bits = (r->r_pcrel & 1) << 7;
+		bits |= (r->r_length & 3) << 5;
+		bits |= (r->r_extern & 1) << 4;
+		bits |= (r->r_baserel & 1) << 3;
+		bits |= (r->r_jmptable & 1) << 2;
+		bits |= (r->r_relative & 1) << 1;
 #ifdef N_SIZE
 		bits |= (r->r_copy & 1);
 #endif
