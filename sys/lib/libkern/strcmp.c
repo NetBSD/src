@@ -1,5 +1,3 @@
-/*	$NetBSD: strcmp.c,v 1.2 1994/10/26 06:42:45 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,10 +35,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
-static char *sccsid = "@(#)strcmp.c	5.5 (Berkeley) 1/26/91";
-#endif
-static char *rcsid = "$NetBSD: strcmp.c,v 1.2 1994/10/26 06:42:45 cgd Exp $";
+/*static char *sccsid = "from: @(#)strcmp.c	5.5 (Berkeley) 1/26/91";*/
+static char *rcsid = "$Id: strcmp.c,v 1.3 1995/01/06 00:16:53 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
