@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.32 2001/05/08 10:15:15 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.33 2001/07/03 08:06:20 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.76 2001/04/29 13:45:09 itojun Exp $	*/
 
 /*
@@ -601,6 +601,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 				    (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
+		in6_pcbpurgeif0(&rawin6pcb, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
 		in6_pcbpurgeif(&rawin6pcb, (struct ifnet *)control);
 		return (0);
