@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.15 1994/12/15 18:58:11 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.16 1994/12/15 19:06:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -365,9 +365,9 @@ union_create(ap)
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_dvp);
-	struct vnode *dvp = un->un_uppervp;
+	struct vnode *dvp;
 
-	if (dvp != NULLVP) {
+	if ((dvp = un->un_uppervp) != NULLVP) {
 		int error;
 		struct vnode *vp;
 		struct mount *mp;
@@ -477,10 +477,7 @@ union_open(ap)
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_vp);
-	struct vnode *vp = un->un_uppervp;
-	int mode = ap->a_mode;
-	struct ucred *cred = ap->a_cred;
-	struct proc *p = ap->a_p;
+	struct vnode *vp;
 	int error;
 
 	/*
@@ -494,8 +491,8 @@ union_open(ap)
 		 */
 		vp = un->un_lowervp;
 		if ((ap->a_mode & FWRITE) && (vp->v_type == VREG)) {
-			if (error = union_copyup(un, (mode & O_TRUNC) == 0,
-			    ap->a_cred, ap->a_p))
+			if (error = union_copyup(un,
+			    (ap->a_mode & O_TRUNC) == 0, ap->a_cred, ap->a_p))
 				return (error);
 			vp = un->un_uppervp;
 			ap->a_vp = vp;
@@ -622,8 +619,7 @@ union_getattr(ap)
 
 	vap = ap->a_vap;
 
-	vp = un->un_uppervp;
-	if (vp != NULLVP) {
+	if ((vp = un->un_uppervp) != NULLVP) {
 		/*
 		 * It's not clear whether VOP_GETATTR is to be
 		 * called with the vnode locked or not.  stat() calls
@@ -864,8 +860,8 @@ union_fsync(ap)
 			VOP_LOCK(targetvp);
 		else
 			FIXUP(VTOUNION(ap->a_vp));
-		error = VOP_FSYNC(targetvp, ap->a_cred,
-					ap->a_waitfor, ap->a_p);
+		ap->a_vp = targetvp;
+		error = VCALL(targetvp, VOFFSET(vop_fsync), ap);
 		if (dolock)
 			VOP_UNLOCK(targetvp);
 	}
