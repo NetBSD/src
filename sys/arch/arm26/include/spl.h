@@ -1,4 +1,4 @@
-/* $NetBSD: spl.h,v 1.1 2000/05/09 21:56:00 bjh21 Exp $ */
+/* $NetBSD: spl.h,v 1.2 2000/06/08 10:49:19 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -73,19 +73,19 @@
 
 #ifdef _KERNEL
 #ifndef ASSEMBLER
-extern int raisespl __P((int));
-extern int lowerspl __P((int));
-extern int splx __P((int));
+extern int raisespl(int);
+extern int lowerspl(int);
+extern int splx(int);
 
-void setsoftnet	__P((void));
-void setsoftast	__P((void));
-void setsoftclock __P((void));
-void setsoftintr __P((u_int intrmask));
+void setsoftnet(void);
+void setsoftast(void);
+void setsoftclock(void);
+void setsoftintr(u_int intrmask);
 
 extern int current_spl_level; /* XXX tautological name */
 
-void need_resched __P((void));
-void need_proftick __P((struct proc *));
+void need_resched(void);
+void need_proftick(struct proc *);
 
 #endif /* ASSEMBLER */
 #endif /* _KERNEL */
