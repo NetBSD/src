@@ -224,7 +224,7 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 			outBuffer += 16;
 		}
 		padLen = 16 - (inputOctets - 16*numBlocks);
-		if (padLen > 0 && padLen <= 16)
+		if (padLen <= 0 || padLen > 16)
 			panic("rijndael_padEncrypt(ECB)");
 		bcopy(input, block, 16 - padLen);
 		for (cp = block + 16 - padLen; cp < block + 16; cp++)
@@ -244,14 +244,8 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 			input += 16;
 			outBuffer += 16;
 		}
-#if 0	/*XXX i'm not sure that is correct. sakane@kame.net */
 		padLen = 16 - (inputOctets - 16*numBlocks);
-#else
-		padLen = 16 - inputOctets % 16;
-		if (padLen == 16)
-			padLen = 0;
-#endif
-		if (padLen > 0 && padLen <= 16)
+		if (padLen <= 0 || padLen > 16)
 			panic("rijndael_padEncrypt(CBC)");
 		for (i = 0; i < 16 - padLen; i++) {
 			block[i] = input[i] ^ iv[i];
