@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 1997/02/03 17:32:57 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.131 1997/02/10 22:06:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -168,6 +168,10 @@ extern u_long videorowbytes;	/* Used in kernel for video. */
 u_int32_t mac68k_vidlog;	/* logical addr */
 u_int32_t mac68k_vidphys;	/* physical addr */
 u_int32_t mac68k_vidlen;	/* mem length */
+
+/* Callback and cookie to run bell */
+int	(*mac68k_bell_callback) __P((void *, int, int, int));
+caddr_t	mac68k_bell_cookie;
 
 vm_map_t buffer_map;
 
@@ -2859,6 +2863,30 @@ printstar(void)
 				movl sp@+,a1;
 				movl sp@+,a0");
 }
+
+void
+mac68k_set_bell_callback(callback, cookie)
+	int (*callback) __P((void *, int, int, int));
+	void *cookie;
+{
+	mac68k_bell_callback = callback;
+	mac68k_bell_cookie = (caddr_t) cookie;
+}
+
+int
+mac68k_ring_bell(freq, length, volume)
+	int freq, length, volume;
+{
+	if (mac68k_bell_callback)
+		return ((*mac68k_bell_callback)(mac68k_bell_cookie,
+		    freq, length, volume));
+	else
+		return (ENXIO);
+}
+
+/*
+ * bus.h implementation
+ */
 
 int
 bus_space_map(t, bpa, size, cacheable, bshp)
