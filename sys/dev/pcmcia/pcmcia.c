@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.48 2004/08/09 18:30:51 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.49 2004/08/09 19:08:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.48 2004/08/09 18:30:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.49 2004/08/09 19:08:19 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -643,11 +643,16 @@ pcmcia_io_map(pf, width, pcihp, windowp)
 	struct pcmcia_io_handle *pcihp;
 	int *windowp;
 {
+	int error;
 	int reg;
 
-	if (pcmcia_chip_io_map(pf->sc->pct, pf->sc->pch,
-	    width, 0, pcihp->size, pcihp, windowp))
-		return (1);
+	if (pf->pf_flags & PFF_ENABLED)
+		printf("pcmcia_io_map: function is enabled!");
+
+	error = pcmcia_chip_io_map(pf->sc->pct, pf->sc->pch,
+	    width, 0, pcihp->size, pcihp, windowp);
+	if (error)
+		return (error);
 
 	/*
 	 * XXX in the multifunction multi-iospace-per-function case, this
@@ -669,18 +674,6 @@ pcmcia_io_map(pf, width, pcihp, windowp)
 printf("win %d = addr %lx size %lx iomask %lx\n", win, (long)pcihp->addr, (long)pcihp->size, (long)iomask);
 		pf->pf_mfc_iobase[win] = pcihp->addr;
 		pf->pf_mfc_iomask = iomask;
-
-		if (pf->pf_flags & PFF_ENABLED) {
-			pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0 + 2 * win,
-					 (pcihp->addr >> 0) & 0xff);
-			pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1 + 2 * win,
-					 (pcihp->addr >> 8) & 0xff);
-			pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, iomask);
-
-			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
-			reg |= PCMCIA_CCR_OPTION_ADDR_DECODE;
-			pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
-		}
 	}
 
 	return (0);
@@ -691,6 +684,9 @@ pcmcia_io_unmap(pf, window)
 	struct pcmcia_function *pf;
 	int window;
 {
+
+	if (pf->pf_flags & PFF_ENABLED)
+		printf("pcmcia_io_unmap: function is enabled!");
 
 	if (pcmcia_mfc(pf->sc)) {
 		/*
@@ -713,10 +709,12 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 {
 	void *ret;
 
-	/* behave differently if this is a multifunction card */
+	if (pf->pf_flags & PFF_ENABLED)
+		printf("pcmcia_intr_establish: function is enabled!");
 
+	/* behave differently if this is a multifunction card */
 	if (pcmcia_mfc(pf->sc)) {
-		int s, ihcnt, hiipl, reg;
+		int s, ihcnt, hiipl;
 		struct pcmcia_function *pf2;
 
 		/*
@@ -802,13 +800,6 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 		}
 
 		ret = pf->sc->ih;
-
-		if (ret != NULL &&
-		    (pf->pf_flags & PFF_ENABLED) != 0) {
-			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
-			reg |= PCMCIA_CCR_OPTION_IREQ_ENABLE;
-			pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
-		}
 	} else {
 		ret = pcmcia_chip_intr_establish(pf->sc->pct, pf->sc->pch,
 		    pf, ipl, ih_fct, ih_arg);
@@ -822,8 +813,10 @@ pcmcia_intr_disestablish(pf, ih)
 	struct pcmcia_function *pf;
 	void *ih;
 {
-	/* behave differently if this is a multifunction card */
+	if (pf->pf_flags & PFF_ENABLED)
+		printf("pcmcia_intr_disestablish: function is enabled!");
 
+	/* behave differently if this is a multifunction card */
 	if (pcmcia_mfc(pf->sc)) {
 		int s, ihcnt, hiipl;
 		struct pcmcia_function *pf2;
@@ -864,20 +857,12 @@ pcmcia_intr_disestablish(pf, ih)
 		 */
 
 		if (ihcnt == 0) {
-			int reg;
-
 #ifdef DIAGNOSTIC
 			if (pf->sc->ih == NULL)
 				panic("disestablishing last function, but card has no ih");
 #endif
 			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
 			    pf->sc->ih);
-
-			if (pf->pf_flags & PFF_ENABLED) {
-				reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
-				reg &= ~PCMCIA_CCR_OPTION_IREQ_ENABLE;
-				pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
-			}
 
 			pf->ih_fct = NULL;
 			pf->ih_arg = NULL;
