@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.11 1995/05/11 22:55:12 chopps Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.12 1995/06/27 13:13:38 chopps Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -322,7 +322,7 @@ ed_init(sc)
 	u_long mcaf[2];
 
 	/* Address not known. */
-	if (ifp->if_addrlist == 0)
+	if (ifp->if_addrlist.tqh_first == 0)
 		return;
 
 	/*

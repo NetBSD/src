@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.12 1995/04/13 11:59:21 chopps Exp $	*/
+/*	$NetBSD: if_le.c,v 1.13 1995/06/27 13:13:42 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -364,7 +364,7 @@ leinit(unit)
 	int s;
 
 	/* not yet, if address still unknown */
-	if (ifp->if_addrlist == (struct ifaddr *)0)
+	if (ifp->if_addrlist.tqh_first == 0)
 		return;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.4 1995/04/14 17:29:50 chopps Exp $	*/
+/*	$NetBSD: if_es.c,v 1.5 1995/06/27 13:13:41 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -207,7 +207,7 @@ esinit(sc)
 	union smcregs *smc = sc->sc_base;
 	int s;
 
-	if (ifp->if_addrlist == 0)
+	if (ifp->if_addrlist.tqh_first == 0)
 		return;
 
 	s = splimp();
