@@ -21,20 +21,15 @@
 #ifndef TM_NBSD_H
 #define TM_NBSD_H
 
-#include <sys/param.h>
-#include <machine/vmparam.h>
+#include "solib.h"
 
 /* Define BPT_VECTOR if it is different than the default.
    This is the vector number used by traps to indicate a breakpoint. */
 #define BPT_VECTOR		0xf
 #define REMOTE_BPT_VECTOR	0xf
 
-/* Address of end of stack space.  */
-#define STACK_END_ADDR USRSTACK
-
-/* For NetBSD, sigtramp is 32 bytes before STACK_END_ADDR.  */
-#define SIGTRAMP_START(pc) (STACK_END_ADDR - 32)
-#define SIGTRAMP_END(pc) (STACK_END_ADDR)
+extern int nbsd_in_sigtramp(CORE_ADDR);
+#define IN_SIGTRAMP(pc, name) nbsd_in_sigtramp (pc)
 
 #include "m68k/tm-m68k.h"
 
