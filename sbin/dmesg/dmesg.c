@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.15 1997/09/20 09:48:35 enami Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.16 1998/07/05 08:56:54 mrg Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.15 1997/09/20 09:48:35 enami Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.16 1998/07/05 08:56:54 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,7 @@ main(argc, argv)
 	/* Read in message buffer header and data, and do sanity checks. */
 	if ((kd = kvm_open(nlistf, memf, NULL, O_RDONLY, "dmesg")) == NULL)
 		exit (1);
+	setgid(getgid());	/* do now anyway */
 	if (kvm_nlist(kd, nl) == -1)
 		errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 	if (nl[X_MSGBUF].n_type == 0)
