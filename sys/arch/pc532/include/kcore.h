@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.2 1997/03/15 18:10:21 is Exp $	*/
+/*	$NetBSD: kcore.h,v 1.3 1998/09/02 19:17:22 matthias Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -34,7 +34,7 @@
 #define _PC532_KCORE_H_
 
 typedef struct cpu_kcore_hdr {
-	vm_offset_t	ptd;		/* Phys address of PTD */
+	paddr_t	ptd;			/* Phys address of PTD */
         phys_ram_seg_t  core_seg;	/* Core addrs; only one seg */
 } cpu_kcore_hdr_t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 1998/08/24 22:52:23 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 1998/09/02 19:17:16 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -185,7 +185,8 @@ int	maxphysmem = 0;
 int	physmem;
 int	boothowto;
 
-vm_offset_t msgbuf_vaddr, msgbuf_paddr;
+vaddr_t msgbuf_vaddr;
+paddr_t msgbuf_paddr;
 
 #if defined(UVM)
 vm_map_t exec_map = NULL;
@@ -196,18 +197,18 @@ vm_map_t buffer_map;
 #endif
 
 extern	char etext[], end[];
-extern	vm_offset_t avail_start, avail_end;
+extern	paddr_t avail_start, avail_end;
 extern	int nkpde;
 extern	int ieee_handler_disable;
 
-static vm_offset_t alloc_pages __P((int));
+static paddr_t	alloc_pages __P((int));
 static caddr_t 	allocsys __P((caddr_t));
 static int	cpu_dump __P((void));
 static int	cpu_dumpsize __P((void));
 static void	cpu_reset __P((void));
 static void	dumpsys __P((void));
 void		init532 __P((void));
-static void	map __P((pd_entry_t *, vm_offset_t, vm_offset_t, int, int));
+static void	map __P((pd_entry_t *, vaddr_t, paddr_t, int, int));
 
 /*
  * Machine-dependent startup code
@@ -220,8 +221,8 @@ cpu_startup()
 	caddr_t v;
 	int sz;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -234,11 +235,11 @@ cpu_startup()
 	/* msgbuf_paddr was init'd in pmap */
 #if defined(PMAP_NEW)
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa((vm_offset_t)msgbuf_vaddr + i * NBPG,
+		pmap_kenter_pa(msgbuf_vaddr + i * NBPG,
 		    msgbuf_paddr + i * NBPG, VM_PROT_ALL);
 #else
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbuf_vaddr + i * NBPG,
+		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
 		    msgbuf_paddr + i * NBPG, VM_PROT_ALL, TRUE);
 #endif
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
@@ -267,17 +268,17 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 #if defined(UVM)
-	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate VM for buffers");
-	minaddr = (vm_offset_t)buffers;
+	minaddr = (vaddr_t)buffers;
 #else
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
 				   &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	minaddr = (vaddr_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 #endif
@@ -289,8 +290,8 @@ cpu_startup()
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
 #if defined(UVM)
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
 		/*
@@ -299,7 +300,7 @@ cpu_startup()
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -317,8 +318,8 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 #else
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -327,7 +328,7 @@ cpu_startup()
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -361,10 +362,10 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE);
 #endif
 
@@ -869,11 +870,11 @@ bad:
  * Dump the kernel's image to the swap partition.
  */
 #define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
-static vm_offset_t dumpspace;
+static vaddr_t dumpspace;
 
-vm_offset_t
+vaddr_t
 reserve_dumppages(p)
-	vm_offset_t p;
+	vaddr_t p;
 {
 
 	dumpspace = p;
@@ -1008,11 +1009,11 @@ setregs(p, pack, stack)
 /*
  * Allocate memory pages.
  */
-static vm_offset_t
+static paddr_t
 alloc_pages(pages)
 	int pages;
 {
-	vm_offset_t p = avail_start;
+	paddr_t p = avail_start;
 	avail_start += pages * NBPG;
 	bzero((caddr_t) p, pages * NBPG);
 	return(p);
@@ -1026,7 +1027,8 @@ alloc_pages(pages)
 static void
 map(pd, virtual, physical, protection, size)
 	pd_entry_t *pd;
-	vm_offset_t virtual, physical;
+	vaddr_t virtual;
+	paddr_t physical;
 	int protection, size;
 {
 	u_int ix1 = pdei(virtual);
@@ -1038,7 +1040,7 @@ map(pd, virtual, physical, protection, size)
 			pt = (pt_entry_t *) alloc_pages(1);
 			pd[ix1] = (pd_entry_t) pt | PG_V | PG_KW;
 		}
-		if (physical != (vm_offset_t) -1) {
+		if (physical != (paddr_t) -1) {
 			pt[ix2] = (pt_entry_t) (physical | protection | PG_V);
 			physical += NBPG;
 			size -= NBPG;
@@ -1082,8 +1084,10 @@ map(pd, virtual, physical, protection, size)
  * The last action is to switch stacks and call main.
  */
 
-#define kppa(x)	(ns532_round_page(x) & 0xffffff)
-#define kvpa(x) (ns532_round_page(x))
+#define	VA(x)	((vaddr_t)(x))
+#define PA(x)	((paddr_t)(x))
+#define kppa(x)	PA(ns532_round_page(x) & 0xffffff)
+#define kvpa(x) VA(ns532_round_page(x))
 
 void
 init532()
@@ -1161,38 +1165,38 @@ init532()
 #endif
 
 	/* Map interrupt stack. */
-	map(pd, 0xffc00000, alloc_pages(1), PG_KW, 0x001000);
+	map(pd, VA(0xffc00000), alloc_pages(1), PG_KW, 0x001000);
 
 	/* Map Duarts and Parity. */
-	map(pd, 0xffc80000, 0x28000000, PG_KW | PG_N, 0x001000);
+	map(pd, VA(0xffc80000), PA(0x28000000), PG_KW | PG_N, 0x001000);
 
 	/* Map SCSI Polled (Reduced space). */
-	map(pd, 0xffd00000, 0x30000000, PG_KW | PG_N, 0x100000);
+	map(pd, VA(0xffd00000), PA(0x30000000), PG_KW | PG_N, 0x100000);
 
 	/* Map SCSI DMA (Reduced space). */
-	map(pd, 0xffe00000, 0x38000000, PG_KW | PG_N, 0x0ff000);
+	map(pd, VA(0xffe00000), PA(0x38000000), PG_KW | PG_N, 0x0ff000);
 
 	/* Map SCSI DMA (With A22 "EOP"). */
-	map(pd, 0xffeff000, 0x38400000, PG_KW | PG_N, 0x001000);
+	map(pd, VA(0xffeff000), PA(0x38400000), PG_KW | PG_N, 0x001000);
 
 	/* Map EPROM (for realtime clock). */
-	map(pd, 0xfff00000, 0x10000000, PG_KW | PG_N, 0x040000);
+	map(pd, VA(0xfff00000), PA(0x10000000), PG_KW | PG_N, 0x040000);
 
 	/* Map the ICU. */
-	map(pd, 0xfffff000, 0xfffff000, PG_KW | PG_N, 0x001000);
+	map(pd, VA(0xfffff000), PA(0xfffff000), PG_KW | PG_N, 0x001000);
 
 	/* Map UAREA for proc0. */
 	proc0paddr = (struct user *)alloc_pages(UPAGES);
 	proc0paddr->u_pcb.pcb_ptb = (int) pd;
-	proc0paddr = (struct user *) ((vm_offset_t)proc0paddr + KERNBASE);
+	proc0paddr = (struct user *) ((vaddr_t)proc0paddr + KERNBASE);
 	proc0.p_addr = proc0paddr;
 
 	/* Allocate second level page tables for kernel virtual address space */
-	map(pd, VM_MIN_KERNEL_ADDRESS, (vm_offset_t)-1, 0, nkpde << PDSHIFT);
+	map(pd, VM_MIN_KERNEL_ADDRESS, PA(-1), 0, nkpde << PDSHIFT);
 	/* Map monitor scratch area R/W. */
-	map(pd, KERNBASE,        0x00000000, PG_KW, 0x2000);
+	map(pd, KERNBASE,        PA(0x00000000), PG_KW, 0x2000);
 	/* Map kernel text R/O. */
-	map(pd, KERNBASE+0x2000, 0x00002000, PG_KR, kppa(etext) - 0x2000);
+	map(pd, KERNBASE+0x2000, PA(0x00002000), PG_KR, kppa(etext) - 0x2000);
 	/* Map kernel data+bss R/W. */
 	map(pd, kvpa(etext), kppa(etext), PG_KW, avail_start - kppa(etext));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.h,v 1.3 1997/04/01 16:35:19 matthias Exp $	*/
+/*	$NetBSD: ieee_handler.h,v 1.4 1998/09/02 19:17:12 matthias Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -49,11 +49,11 @@ typedef struct {
   struct ns532_fp_state *fps;
 } state;
 
-#define LREGBASE(s) ((vm_offset_t) (s)->fps)
+#define LREGBASE(s) ((vaddr_t) (s)->fps)
 #define LREGOFFSET(n) offsetof(struct ns532_fp_state, regs.l.l ## n)
-#define FREGBASE(s) ((vm_offset_t) (s)->fps)
+#define FREGBASE(s) ((vaddr_t) (s)->fps)
 #define FREGOFFSET(n) offsetof(struct ns532_fp_state, regs.f.f ## n)
-#define REGBASE(s) ((vm_offset_t) (s)->regs)
+#define REGBASE(s) ((vaddr_t) (s)->regs)
 #define REGOFFSET(n) offsetof(struct ns532_saved_state, r ## n)
 
 #define FSR fps->fsr
@@ -71,11 +71,11 @@ typedef struct {
 
 typedef struct proc state;
 
-#define LREGBASE(s) ((vm_offset_t) (s)->p_addr->u_pcb.pcb_freg)
+#define LREGBASE(s) ((vaddr_t) (s)->p_addr->u_pcb.pcb_freg)
 #define LREGOFFSET(n) (n * sizeof(double))
-#define FREGBASE(s) ((vm_offset_t) (s)->p_addr->u_pcb.pcb_freg)
+#define FREGBASE(s) ((vaddr_t) (s)->p_addr->u_pcb.pcb_freg)
 #define FREGOFFSET(n) ((n & ~1) * sizeof(double) + (n & 1) * sizeof(float))
-#define REGBASE(s) ((vm_offset_t) (s)->p_md.md_regs)
+#define REGBASE(s) ((vaddr_t) (s)->p_md.md_regs)
 #define REGOFFSET(n) offsetof(struct reg, r_r ## n)
 
 #define FSR p_addr->u_pcb.pcb_fsr
@@ -111,11 +111,11 @@ struct ns532_combined_state {
 typedef struct ns532_combined_state state;
 
 #define LREG(REG) fs.regs.l.l ## REG
-#define LREGBASE(s) ((vm_offset_t) &(s)->fs)
+#define LREGBASE(s) ((vaddr_t) &(s)->fs)
 #define LREGOFFSET(n) offsetof(struct fstate, regs.l.l ## n)
-#define FREGBASE(s) ((vm_offset_t) &(s)->fs)
+#define FREGBASE(s) ((vaddr_t) &(s)->fs)
 #define FREGOFFSET(n) offsetof(struct fstate, regs.f.f ## n)
-#define REGBASE(s) ((vm_offset_t) (s)->scp)
+#define REGBASE(s) ((vaddr_t) (s)->scp)
 #define REGOFFSET(n) offsetof(struct sigcontext, sc_reg[n])
 #define FSR fs.fsr
 #define FP scp->sc_fp

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.52 1998/07/04 22:18:35 jonathan Exp $	*/
+/*	$NetBSD: locore.s,v 1.53 1998/09/02 19:17:15 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -103,8 +103,9 @@ ASENTRY(start)
 	addr	_C_LABEL(edata)(pc),r1
 	subd	r1,r0			/* compute _end - _edata */
 	movd	r0,tos			/* push length */
+	movqd	0,tos			/* push zero */
 	addr	r1,tos			/* push address */
-	bsr	_C_LABEL(bzero)		/* zero the bss segment */
+	bsr	_C_LABEL(memset)		/* zero the bss segment */
 
 	/*
 	 * The boot program provides us a magic in r3,
@@ -426,8 +427,8 @@ KENTRY(copystr, 16)
  * called by uiomove(), which may be in the path of servicing a non-fatal
  * page fault.
  *
- * We can't use bcopy because the state of the stack at fault time must
- * be known. So we duplicate the bcopy code here. Sigh.
+ * We can't use memcpy because the state of the stack at fault time must
+ * be known. So we duplicate the memcpy code here. Sigh.
  */
 
 KENTRY(kcopyret, 12)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 1998/07/04 22:18:36 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.32 1998/09/02 19:17:21 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -100,7 +100,7 @@ static __inline void userret __P((struct proc *, int, u_quad_t));
  */
 static __inline void
 userret(p, pc, oticks)
-	register struct proc *p;
+	struct proc *p;
 	int pc;
 	u_quad_t oticks;
 {
@@ -180,7 +180,7 @@ void
 trap(frame)
 	struct trapframe frame;
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	int type = frame.tf_trapno;
 	u_quad_t sticks;
 	struct pcb *pcb = NULL;
@@ -374,15 +374,15 @@ trap(frame)
 		/* FALLTHROUGH */
 
 	case T_ABT | T_USER: {		/* page fault */
-		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
+		vaddr_t va;
+		struct vmspace *vm = p->p_vmspace;
+		vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
 		unsigned nss;
 
-		va = trunc_page((vm_offset_t)frame.tf_tear);
+		va = trunc_page((vaddr_t)frame.tf_tear);
 		/*
 		 * It is only a kernel address space fault iff:
 		 *	1. (type & T_USER) == 0  and
@@ -535,9 +535,9 @@ void
 syscall(frame)
 	struct syscframe frame;
 {
-	register caddr_t params;
-	register struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	struct sysent *callp;
+	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
 	register_t code, args[8], rval[2];
