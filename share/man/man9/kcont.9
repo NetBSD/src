@@ -1,4 +1,4 @@
-.\" 	$NetBSD: kcont.9,v 1.3 2004/03/23 06:02:48 snj Exp $
+.\" 	$NetBSD: kcont.9,v 1.4 2004/03/23 11:46:59 wiz Exp $
 .\"
 .\" The author of this man page is Jonathan Stone (jonathan@dsg.stanford.edu)
 .\"
@@ -22,8 +22,8 @@
 .Os
 .Sh NAME
 .Nm kcont
-.Nd a continuation-passing framework for deferring execution and for
-notification of asynchronous events.
+.Nd continuation-passing framework for deferring execution and for
+notification of asynchronous events
 .Sh SYNOPSIS
 .In sys/kcont.h
 .\"
@@ -105,7 +105,6 @@ events, such as I/O completion.
 The traditional Unix methods for asynchronous notification are
 .Xr ltsleep 9 ,
 .Xr tsleep 9 ,
-.Xr sleep 9 ,
 and
 .Xr wakeup 9 ,
 which assume the operation or I/O request are being issued from process
@@ -119,7 +118,7 @@ When the I/O operation completes, the I/O subsystem issues a
 call on the address of the I/O buffer.
 The process is then awakened, rescheduled, and continues execution
 from the
-.Fn sleep
+.Fn tsleep
 function call, eventually returning to the function which requested I/O.
 .Sh CONTINUATIONS
 In contrast,
@@ -154,22 +153,30 @@ creator) on completion of an asynchronous operation.
 .Sh DATA TYPES
 .Ss Deferral Priorities
 Arguments shown above with the name
-.Sq desired_ipl
+.Ar desired_ipl
 are drawn from the following namespace:
-.Bl -tag -offset indent -width KC_IPL_DEFER_SOFTSERIAL
-.It KCL_IPL_IMMEDIATE
+.Bl -tag -offset indent -width KC_IPL_DEFER_SOFTSERIALXX
+.It Dv KCL_IPL_IMMEDIATE
 Execute the continuation as soon as possible, without regard to current IPL.
-.It KCL_IPL_DEFER_SOFTSERIAL
-Execute the continuation once IPL falls to IPL_SOFTSERIAL or below.
-.It KCL_IPL_DEFER_SOFTCLOC
-Execute the continuation once IPL falls to IPL_SOFTCLOCK or below.
-.It KCL_IPL_DEFER_SOFTNET
-Execute the continuation once IPL falls to IPL_SOFTNET or below.
-.It KCL_IPL_DEFER_PROCESS
+.It Dv KCL_IPL_DEFER_SOFTSERIAL
+Execute the continuation once IPL falls to
+.Dv IPL_SOFTSERIAL
+or below.
+.It Dv KCL_IPL_DEFER_SOFTCLOCK
+Execute the continuation once IPL falls to
+.Dv IPL_SOFTCLOCK
+or below.
+.It Dv KCL_IPL_DEFER_SOFTNET
+Execute the continuation once IPL falls to
+.Dv IPL_SOFTNET
+or below.
+.It Dv KCL_IPL_DEFER_PROCESS
 Defer execution of the continuation to process context.
 .El
 .Sh NOTES
-The "desired IPL" argument should be interpreted as an upper-bound:
+The
+.Dq desired IPL
+argument should be interpreted as an upper-bound:
 the continuation will not be executed before interrupt priority drops
 to, or below, the requested level.
 In particular, the current implementation uses
@@ -179,8 +186,10 @@ On
 .Nx
 ports which lack generic software callouts, all
 .Nm
-continuations will always be deferred all the way to the context,
-of a "helper" kernel thread.
+continuations will always be deferred all the way to the context
+of a
+.Dq helper
+kernel thread.
 .Sh SEE ALSO
 .Xr kthread 9 ,
 .Xr spl 9 ,
@@ -189,7 +198,8 @@ of a "helper" kernel thread.
 .Sh AUTHORS
 The
 .Nm
-interface was designed and implemented by Jonathan Stone.
+interface was designed and implemented by
+.An Jonathan Stone .
 Additional input on the
 .Nm
 design was provided by Jason Thorpe and Nathan Williams.
