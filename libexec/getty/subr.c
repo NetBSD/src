@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.10 1994/08/17 20:28:00 pk Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.11 1994/08/24 07:54:51 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -578,49 +578,6 @@ edithost(pat)
 	else
 		*res = '\0';
 	editedhost[sizeof editedhost - 1] = '\0';
-}
-
-struct speedtab {
-	int	speed;
-	int	uxname;
-} speedtab[] = {
-	{ 50,	  B50 },
-	{ 75,	  B75 },
-	{ 110,	 B110 },
-	{ 134,	 B134 },
-	{ 150,	 B150 },
-	{ 200,	 B200 },
-	{ 300,	 B300 },
-	{ 600,	 B600 },
-	{ 1200,	B1200 },
-	{ 1800,	B1800 },
-	{ 2400,	B2400 },
-	{ 4800,	B4800 },
-	{ 9600,	B9600 },
-	{ 19200, EXTA },
-	{ 19,	 EXTA },	/* for people who say 19.2K */
-	{ 38400, EXTB },
-	{ 38,	 EXTB },
-	{ 7200,	 EXTB },	/* alternative */
-	{ 57600, B57600},
-	{ 115200, B115200},
-	{ 0 }
-};
-
-int
-speed(val)
-	int val;
-{
-	register struct speedtab *sp;
-
-	if (val <= 15)
-		return (val);
-
-	for (sp = speedtab; sp->speed; sp++)
-		if (sp->speed == val)
-			return (sp->uxname);
-	
-	return (B300);		/* default in impossible cases */
 }
 
 void
