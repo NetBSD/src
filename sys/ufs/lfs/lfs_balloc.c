@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.12.4.1 1999/06/21 01:31:08 thorpej Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.12.4.2 1999/07/04 01:54:05 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,7 +94,6 @@
 #include <ufs/lfs/lfs_extern.h>
 
 #include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
 
 int lfs_fragextend __P((struct vnode *, int, int, ufs_daddr_t, struct buf **));
@@ -137,7 +136,9 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 	 * to rewrite it.
 	 */
 	
-	*bpp = NULL;
+	if (bpp != NULL) {
+		*bpp = NULL;
+	}
 	error = ufs_bmaparray(vp, lbn, &daddr, &indirs[0], &num, NULL );
 	if (error)
 		return (error);
@@ -193,9 +194,12 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 		nsize = fragroundup(fs, offset + iosize);
 		frags = numfrags(fs, nsize);
 		bb = fragstodb(fs, frags);
-		if (lblktosize(fs, lbn) >= ip->i_ffs_size)
+		if (lblktosize(fs, lbn) >= ip->i_ffs_size) {
 			/* Brand new block or fragment */
-			*bpp = bp = getblk(vp, lbn, nsize, 0, 0);
+			if (bpp != NULL) {
+				*bpp = bp = getblk(vp, lbn, nsize, 0, 0);
+			}
+		}
 		else {
 			if (nsize <= osize) {
 				/* No need to extend */
@@ -208,7 +212,9 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 				     lfs_fragextend(vp, osize, nsize, lbn, &bp)))
 					return(error);
 			}
-			*bpp = bp;
+			if (bpp != NULL) {
+				*bpp = bp;
+			}
 		}
 	} else {
 		/*
@@ -217,7 +223,9 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 		 * block in the file.
 		 */
 		frags = dbtofrags(fs, bb);
-		*bpp = bp = getblk(vp, lbn, blksize(fs, ip, lbn), 0, 0);
+		if (bpp != NULL) {
+			*bpp = bp = getblk(vp, lbn, blksize(fs, ip, lbn), 0, 0);
+		}
 	}
 	
 	/* 
