@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.33 1997/11/05 21:29:36 cgd Exp $	*/
+/*	$NetBSD: ping.c,v 1.34 1997/11/30 22:33:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.33 1997/11/05 21:29:36 cgd Exp $");
+__RCSID("$NetBSD: ping.c,v 1.34 1997/11/30 22:33:30 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -685,8 +685,16 @@ pinger(void)
 			err(1, "Can't turn off special IP header");
 		if (sendto(s, (char *) &opack_icmp, PHDR_LEN, MSG_DONTROUTE,
 			   (struct sockaddr *)&loc_addr,
-			   sizeof(struct sockaddr_in)) < 0)
-			err(1, "failed to clear cached route");
+			   sizeof(struct sockaddr_in)) < 0) {
+			/*
+			 * XXX: we only report this as a warning in verbose
+			 * mode because people get confused when they see
+			 * this error when they are running in single user
+			 * mode and they have not configured lo0
+			 */
+			if (pingflags & F_VERBOSE)
+				warn("failed to clear cached route");
+		}
 		sw = 1;
 		if (setsockopt(s,IPPROTO_IP,IP_HDRINCL,
 			       (char *)&sw, sizeof(sw)) < 0)
