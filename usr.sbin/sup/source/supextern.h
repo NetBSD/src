@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.14 2000/12/30 21:36:23 martin Exp $	*/
+/*	$NetBSD: supextern.h,v 1.15 2001/09/11 03:33:52 itojun Exp $	*/
 
 struct stat;
 
@@ -82,7 +82,7 @@ void getscanlists __P((void));
 void cdprefix __P((char *));
 
 /* scm.c */
-int servicesetup __P((char *));
+int servicesetup __P((char *, int));
 int service __P((void));
 int serviceprep __P((void));
 int servicekill __P((void));
