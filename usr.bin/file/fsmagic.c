@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.13 1999/11/01 17:39:26 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.14 2000/05/14 22:53:38 christos Exp $	*/
 
 /*
  * fsmagic - magic based on filesystem info - directory, special files, etc.
@@ -28,9 +28,6 @@
  */
 
 #include "file.h"
-#ifdef __CYGWIN__
-#include <errno.h>
-#endif
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -61,9 +58,9 @@
 #include <sys/cdefs.h>
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: fsmagic.c,v 1.27 1998/06/27 13:23:39 christos Exp ")
+FILE_RCSID("@(#)Id: fsmagic.c,v 1.31 2000/04/11 02:32:35 christos Exp ")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.13 1999/11/01 17:39:26 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.14 2000/05/14 22:53:38 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -93,15 +90,23 @@ struct stat *sb;
 		return 1;
 	}
 
+	if (iflag) {
+		if ((sb->st_mode & S_IFMT) != S_IFREG) {
+			ckfputs("application/x-not-regular-file", stdout);
+			return 1;
+		}
+	}
+	else {
 #ifdef S_ISUID
-	if (sb->st_mode & S_ISUID) ckfputs("setuid ", stdout);
+		if (sb->st_mode & S_ISUID) ckfputs("setuid ", stdout);
 #endif
 #ifdef S_ISGID
-	if (sb->st_mode & S_ISGID) ckfputs("setgid ", stdout);
+		if (sb->st_mode & S_ISGID) ckfputs("setgid ", stdout);
 #endif
 #ifdef S_ISVTX
-	if (sb->st_mode & S_ISVTX) ckfputs("sticky ", stdout);
+		if (sb->st_mode & S_ISVTX) ckfputs("sticky ", stdout);
 #endif
+	}
 	
 	switch (sb->st_mode & S_IFMT) {
 	case S_IFDIR:
@@ -246,7 +251,7 @@ struct stat *sb;
 	 * when we read the file.)
 	 */
 	if (!sflag && sb->st_size == 0) {
-		ckfputs("empty", stdout);
+		ckfputs(iflag ? "application/x-empty" : "empty", stdout);
 		return 1;
 	}
 	return 0;

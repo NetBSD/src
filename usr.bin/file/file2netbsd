@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: file2netbsd,v 1.3 1999/11/01 17:39:26 christos Exp $
+#	$NetBSD: file2netbsd,v 1.4 2000/05/14 22:53:38 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for file into
 #	a NetBSD source tree.
@@ -18,14 +18,14 @@
 #  Written by Christos Zoulas July 17, 1997 for file-3.26
 #
 
-$version = "3.28";
+$version = "3.31";
 
 # definitions ...
 
 @subdirs = ("usr.bin/file", "usr.bin/file/magdir");
 
 
-@filef = ("LEGAL.NOTICE", "MAINT", 
+@filef = ("LEGAL.NOTICE", "MAINT", "magic.mime",
 	  "README", "apprentice.c", "ascmagic.c",
 	  "compress.c", "file.c", "file.h", "fsmagic.c",
 	  "internat.c", "is_tar.c", "names.h", "patchlevel.h",
@@ -198,29 +198,6 @@ while ($line = <DATA>) {
 	    if ($first) {
 		die "Data file must start with a %% file!";
 	    }
-	    if ($cmd[2] eq "amd") {
-		&dumpsrcs (@amdf, @amdef);
-	    } elsif ($cmd[2] eq "amq") {
-		&dumpsrcs (@amqf, @amqef);
-	    } elsif ($cmd[2] eq "pawd") {
-		&dumpsrcs (@pawdf, @pawdef);
-	    } elsif ($cmd[2] eq "hlfsd") {
-		&dumpsrcs (@hlfsdf, @hlfsdef);
-	    } elsif ($cmd[2] eq "fixmount") {
-		&dumpsrcs (@fixmountf, @fixmountef);
-	    } elsif ($cmd[2] eq "fsinfo") {
-		&dumpsrcs (@fsinfof, @fsinfoef);
-	    } elsif ($cmd[2] eq "libamu") {
-		&dumpsrcs (@libamuf, @libamuef);
-	    } elsif ($cmd[2] eq "mk-amd-map") {
-		&dumpsrcs (@mkamdmapf, @mkamdmapef);
-	    } elsif ($cmd[2] eq "wire-test") {
-		&dumpsrcs (@wiretestf, @wiretestef);
-	    } elsif ($cmd[2] eq "doc") {
-		&dumpsrcs (@docf, @docef);
-	    } else {
-		die "Unknown SRCS command";
-	    }
 	} elsif ($cmd[1] eq "NetBSD") {
 	    if ($first) {
 		die "Data section must start with a %% file!";
@@ -259,8 +236,8 @@ __END__
 .include <bsd.own.mk>
 
 MFILESDIR=	/usr/share/misc
-MFILES=		magic
-MAGIC=		${MFILESDIR}/${MFILES}
+MFILES=		magic magic.mime
+MAGIC=		${MFILESDIR}/magic
 .if ${MKSHARE} != "no"
 FILESDIR=	${MFILESDIR}
 FILES=		${MFILES}
@@ -318,12 +295,6 @@ magic:
 /* Define if you have the ANSI C header files.  */
 #define STDC_HEADERS 1
 
-/* Autoheader needs me */
-#define PACKAGE "file"
-
-/* Autoheader needs me */
-#define VERSION "3.28"
-
 /* Define if builtin ELF support is enabled.  */
 #define BUILTIN_ELF 1
 
@@ -364,5 +335,15 @@ magic:
 /* Define if you have the strtoul function.  */
 #define HAVE_STRTOUL 1
 
+/* Define if you have the <locale.h> header file.  */
+#define HAVE_LOCALE_H 1
+
 /* Define if you have the <unistd.h> header file.  */
 #define HAVE_UNISTD_H 1
+
+/* Name of package */
+#define PACKAGE "file"
+
+/* Version number of package */
+#define VERSION "3.31"
+

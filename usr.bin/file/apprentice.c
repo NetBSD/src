@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.18 1999/12/31 13:07:59 tron Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.19 2000/05/14 22:53:37 christos Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -37,9 +37,9 @@
 #include <sys/cdefs.h>
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: apprentice.c,v 1.28 1998/09/12 13:17:52 christos Exp ")
+FILE_RCSID("@(#)Id: apprentice.c,v 1.32 2000/04/23 04:32:19 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.18 1999/12/31 13:07:59 tron Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.19 2000/05/14 22:53:37 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -47,6 +47,13 @@ __RCSID("$NetBSD: apprentice.c,v 1.18 1999/12/31 13:07:59 tron Exp $");
 		      isspace((unsigned char) *l))  ++l;}
 #define LOWCASE(l) (isupper((unsigned char) (l)) ? \
 			tolower((unsigned char) (l)) : (l))
+
+
+#ifdef __EMX__
+  char PATHSEP=';';
+#else
+  char PATHSEP=':';
+#endif
 
 
 static int getvalue	__P((struct magic *, char **));
@@ -80,7 +87,7 @@ int check;			/* non-zero? checking-only run. */
 	fn = strcpy(mfn, fn);
   
 	while (fn) {
-		p = strchr(fn, ':');
+		p = strchr(fn, PATHSEP);
 		if (p)
 			*p++ = '\0';
 		file_err = apprentice_1(fn, check);
@@ -195,6 +202,8 @@ int *ndx, check;
 						  sizeof(struct magic) * 
 						  maxmagic * 2)) == NULL) {
 		(void) fprintf(stderr, "%s: Out of memory.\n", progname);
+		if (magic)
+			free(magic);
 		if (check)
 			return -1;
 		else
@@ -344,6 +353,28 @@ int *ndx, check;
 		++l;
 		m->mask = signextend(m, strtoul(l, &l, 0));
 		eatsize(&l);
+	} else if (STRING == m->type) {
+		m->mask = 0L;
+		if (*l == '/') { 
+			while (!isspace(*++l)) {
+				switch (*l) {
+				case CHAR_IGNORE_LOWERCASE:
+					m->mask |= STRING_IGNORE_LOWERCASE;
+					break;
+				case CHAR_COMPACT_BLANK:
+					m->mask |= STRING_COMPACT_BLANK;
+					break;
+				case CHAR_COMPACT_OPTIONAL_BLANK:
+					m->mask |=
+					    STRING_COMPACT_OPTIONAL_BLANK;
+					break;
+				default:
+					magwarn("string extension %c invalid",
+					    *l);
+					return -1;
+				}
+			}
+		}
 	} else
 		m->mask = ~0L;
 	EATAB;
