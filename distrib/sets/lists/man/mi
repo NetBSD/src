@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.173 1999/11/19 04:36:33 mrg Exp $
+# $NetBSD: mi,v 1.174 1999/11/23 06:10:41 mrg Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -229,7 +229,6 @@
 ./usr/share/man/cat1/pwd.0
 ./usr/share/man/cat1/quota.0
 ./usr/share/man/cat1/rcmd.0
-./usr/share/man/cat1/rcorder.0
 ./usr/share/man/cat1/rcp.0
 ./usr/share/man/cat1/rcs.0
 ./usr/share/man/cat1/rcsclean.0
@@ -803,6 +802,7 @@
 ./usr/share/man/cat8/rarpd.0
 ./usr/share/man/cat8/rbootd.0
 ./usr/share/man/cat8/rc.0
+./usr/share/man/cat8/rcorder.0
 ./usr/share/man/cat8/rdate.0
 ./usr/share/man/cat8/rdisc.0
 ./usr/share/man/cat8/rdump.0
@@ -1123,7 +1123,6 @@
 ./usr/share/man/man1/pwd.1
 ./usr/share/man/man1/quota.1
 ./usr/share/man/man1/rcmd.1
-./usr/share/man/man1/rcorder.1
 ./usr/share/man/man1/rcp.1
 ./usr/share/man/man1/rcs.1
 ./usr/share/man/man1/rcsclean.1
@@ -1697,6 +1696,7 @@
 ./usr/share/man/man8/rarpd.8
 ./usr/share/man/man8/rbootd.8
 ./usr/share/man/man8/rc.8
+./usr/share/man/man8/rcorder.8
 ./usr/share/man/man8/rdate.8
 ./usr/share/man/man8/rdisc.8
 ./usr/share/man/man8/rdump.8
