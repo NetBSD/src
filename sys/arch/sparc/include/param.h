@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 1994/11/20 20:53:19 deraadt Exp $ */
+/*	$NetBSD: param.h,v 1.11 1995/02/01 12:37:46 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -171,6 +171,7 @@ extern int nbpg, pgofset, pgshift;
 
 #ifdef KERNEL
 extern int cputyp;
+extern int cpumod;
 #endif
 /*
  * Values for the cputyp variable.
@@ -178,3 +179,10 @@ extern int cputyp;
 #define CPU_SUN4	0
 #define CPU_SUN4C	1
 #define CPU_SUN4M	2
+/*
+ * Values for cpumod (cpu model) variable.  XXX currently valid only for sun4
+ */
+#define SUN4_100	0x22
+#define SUN4_200	0x21
+#define SUN4_300	0x23
+#define SUN4_400	0x24

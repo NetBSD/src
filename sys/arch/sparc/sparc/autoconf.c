@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1994/12/16 19:02:16 deraadt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.21 1995/02/01 12:37:50 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,6 +77,9 @@ int	cold;		/* if 1, still working on cold-start */
 int	dkn;		/* number of iostat dk numbers assigned so far */
 int	fbnode;		/* node ID of ROM's console frame buffer */
 int	optionsnode;	/* node ID of ROM's options */
+int	cpumod;		/* CPU model,
+			 * XXX currently valid only if cputyp == CPU_SUN4
+			 */
 
 extern	struct promvec *promvec;
 
@@ -205,7 +208,7 @@ bootstrap()
 		if (oldpvec->romvecVersion >= 2)
 			*oldpvec->vector_cmd = oldmon_w_cmd;
 		getidprom(&idprom, sizeof(idprom));
-		switch (idprom.id_machine) {
+		switch (cpumod = idprom.id_machine) {
 		case SUN4_100:
 			nmmu = 256;
 			ncontext = 8;
@@ -503,22 +506,28 @@ romprop(rp, cp, node)
 	register int node;
 {
 	register int len;
-	union { char regbuf[128]; int ireg[3]; } u;
+	union { char regbuf[128]; struct rom_reg rr[RA_MAXREG]; } u;
 	static const char pl[] = "property length";
 
+	bzero(u.regbuf, sizeof u);
 	len = getprop(node, "reg", (void *)u.regbuf, sizeof u.regbuf);
-	if (len < 12) {
-		printf("%s \"reg\" %s = %d (need 12)\n", cp, pl, len);
+	if (len < sizeof(struct rom_reg)) {
+		printf("%s \"reg\" %s = %d (need >= %d)\n",
+			cp, pl, len, sizeof(struct rom_reg));
 		return (0);
 	}
-	if (len > 12)
-		printf("warning: %s \"reg\" %s %d > 12, excess ignored\n",
-		    cp, pl, len);
+	if (len > RA_MAXREG * sizeof(struct rom_reg))
+		printf("warning: %s \"reg\" %s %d > %d, excess ignored\n",
+		    cp, pl, len, RA_MAXREG * sizeof(struct rom_reg));
 	rp->ra_node = node;
 	rp->ra_name = cp;
-	rp->ra_iospace = u.ireg[0];
-	rp->ra_paddr = (caddr_t)u.ireg[1];
-	rp->ra_len = u.ireg[2];
+	rp->ra_nreg = len / sizeof(struct rom_reg);
+/*	bcopy(u.rr, rp->ra_reg, rp->ra_nreg * sizeof(struct rom_reg));*/
+	{ int i;
+	for (i = 0; i < rp->ra_nreg; i++)
+		rp->ra_reg[i] = u.rr[i];
+	}
+
 	rp->ra_vaddr = (caddr_t)getpropint(node, "address", 0);
 	len = getprop(node, "intr", (void *)&rp->ra_intr, sizeof rp->ra_intr);
 	if (len == -1)
@@ -602,6 +611,7 @@ mainbus_attach(parent, dev, aux)
 	oca.ca_ra.ra_node = node;
 	oca.ca_ra.ra_name = cp = "cpu";
 	oca.ca_ra.ra_paddr = 0;
+	oca.ca_ra.ra_nreg = 0;
 	config_found(dev, (void *)&oca, mbprint);
 
 	/*
@@ -610,7 +620,7 @@ mainbus_attach(parent, dev, aux)
 	 * EEPROM contains the Ethernet address for the LANCE chip.
 	 * If the device cannot be located or configured, panic.
 	 */
-	if (cputyp==CPU_SUN4) {
+	if (cputyp == CPU_SUN4) {
 
 		/* Start at the beginning of the bootpath */
 		oca.ca_ra.ra_bp = bootpath;
