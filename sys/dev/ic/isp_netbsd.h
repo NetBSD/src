@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.33 2000/12/23 01:37:58 wiz Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.34 2001/01/05 07:02:00 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -209,6 +209,9 @@ struct isposinfo {
 #define	XS_INITERR(xs)		(xs)->error = 0, XS_CMD_S_CLEAR(xs)
 
 #define	XS_SAVE_SENSE(xs, sp)				\
+	if (xs->error == XS_NOERROR) {			\
+		xs->error = XS_SENSE;			\
+	}						\
 	bcopy(sp->req_sense_data, &(xs)->sense,		\
 	    imin(XS_SNSLEN(xs), sp->req_sense_len))
 
@@ -376,7 +379,11 @@ isp_wait_complete(isp)
 {
 	if (isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints) {
 		int usecs = 0;
-		while (usecs < 2 * 1000000) {
+		/*
+		 * For sanity's sake, we don't delay longer
+		 * than 5 seconds for polled commands.
+		 */
+		while (usecs < 5 * 1000000) {
 			(void) isp_intr(isp);
 			if (isp->isp_mboxbsy == 0) {
 				break;
@@ -385,17 +392,19 @@ isp_wait_complete(isp)
 			usecs += 500;
 		}
 		if (isp->isp_mboxbsy != 0) {
-			isp_prt(isp, ISP_LOGWARN, "Mailbox Cmd (poll) Timeout");
+			isp_prt(isp, ISP_LOGWARN,
+			    "Polled Mailbox Command (0x%x) Timeout",
+			    isp->isp_mboxtmp[0]);
 		}
 	} else {
 		int rv = 0;
                 isp->isp_osinfo.mboxwaiting = 1;
                 while (isp->isp_osinfo.mboxwaiting && rv == 0) {
-			static struct timeval twosec = { 2, 0 };
+			static const struct timeval dtime = { 90, 0 };
 			int timo;
 			struct timeval tv;
 			microtime(&tv);
-			timeradd(&tv, &twosec, &tv);
+			timeradd(&tv, &dtime, &tv);
 			if ((timo = hzto(&tv)) == 0) {
 				timo = 1;
 			}
@@ -405,7 +414,9 @@ isp_wait_complete(isp)
 		if (rv == EWOULDBLOCK) {
 			isp->isp_mboxbsy = 0;
 			isp->isp_osinfo.mboxwaiting = 0;
-			isp_prt(isp, ISP_LOGWARN, "Mailbox Cmd (intr) Timeout");
+			isp_prt(isp, ISP_LOGWARN,
+			    "Interrupting Mailbox Command (0x%x) Timeout",
+			    isp->isp_mboxtmp[0]);
 		}
 	}
 }
