@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.292 2001/01/22 13:57:54 mjl Exp $
+$NetBSD: pcidevs,v 1.293 2001/01/22 14:15:24 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1694,6 +1694,7 @@ product UMC UM8891N	0xe891	UM8891N
 product ULSI US201	0x0201	US201
 
 /* US Robotics products */
+product USR 3C2884A	0x1007	56K Voice Internal PCI Modem (WinModem)
 product USR 3CP5609	0x1008	3CP5609 PCI 16550 Modem
 
 /* V3 Semiconductor products */
