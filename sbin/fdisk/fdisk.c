@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.29 1998/10/02 17:23:22 ws Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.30 1998/10/15 15:23:23 ws Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.29 1998/10/02 17:23:22 ws Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.30 1998/10/15 15:23:23 ws Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,6 +72,10 @@ struct mboot {
 };
 struct mboot mboot;
 
+#ifdef	__i386__
+#define	DEFAULT_BOOTCODE	"/usr/mdec/mbr"
+#endif
+
 #define ACTIVE 0x80
 #define BOOT_MAGIC 0xAA55
 
@@ -95,39 +99,9 @@ int s_flag;		/* set id,offset,size */
 int b_flag;		/* Set cyl, heads, secs (as c/h/s) */
 int b_cyl, b_head, b_sec;  /* b_flag values. */
 
-unsigned char bootcode[] = {
-0x33, 0xc0, 0xfa, 0x8e, 0xd0, 0xbc, 0x00, 0x7c, 0x8e, 0xc0, 0x8e, 0xd8, 0xfb, 0x8b, 0xf4, 0xbf,
-0x00, 0x06, 0xb9, 0x00, 0x02, 0xfc, 0xf3, 0xa4, 0xea, 0x1d, 0x06, 0x00, 0x00, 0xb0, 0x04, 0xbe,
-0xbe, 0x07, 0x80, 0x3c, 0x80, 0x74, 0x0c, 0x83, 0xc6, 0x10, 0xfe, 0xc8, 0x75, 0xf4, 0xbe, 0xbd,
-0x06, 0xeb, 0x43, 0x8b, 0xfe, 0x8b, 0x14, 0x8b, 0x4c, 0x02, 0x83, 0xc6, 0x10, 0xfe, 0xc8, 0x74,
-0x0a, 0x80, 0x3c, 0x80, 0x75, 0xf4, 0xbe, 0xbd, 0x06, 0xeb, 0x2b, 0xbd, 0x05, 0x00, 0xbb, 0x00,
-0x7c, 0xb8, 0x01, 0x02, 0xcd, 0x13, 0x73, 0x0c, 0x33, 0xc0, 0xcd, 0x13, 0x4d, 0x75, 0xef, 0xbe,
-0x9e, 0x06, 0xeb, 0x12, 0x81, 0x3e, 0xfe, 0x7d, 0x55, 0xaa, 0x75, 0x07, 0x8b, 0xf7, 0xea, 0x00,
-0x7c, 0x00, 0x00, 0xbe, 0x85, 0x06, 0x2e, 0xac, 0x0a, 0xc0, 0x74, 0x06, 0xb4, 0x0e, 0xcd, 0x10,
-0xeb, 0xf4, 0xfb, 0xeb, 0xfe,
-'M', 'i', 's', 's', 'i', 'n', 'g', ' ',
-	'o', 'p', 'e', 'r', 'a', 't', 'i', 'n', 'g', ' ', 's', 'y', 's', 't', 'e', 'm', 0,
-'E', 'r', 'r', 'o', 'r', ' ', 'l', 'o', 'a', 'd', 'i', 'n', 'g', ' ',
-	'o', 'p', 'e', 'r', 'a', 't', 'i', 'n', 'g', ' ', 's', 'y', 's', 't', 'e', 'm', 0,
-'I', 'n', 'v', 'a', 'l', 'i', 'd', ' ',
-	'p', 'a', 'r', 't', 'i', 't', 'i', 'o', 'n', ' ', 't', 'a', 'b', 'l', 'e', 0,
-'A', 'u', 't', 'h', 'o', 'r', ' ', '-', ' ',
-	'S', 'i', 'e', 'g', 'm', 'a', 'r', ' ', 'S', 'c', 'h', 'm', 'i', 'd', 't', 0,0,0,
+unsigned char bootcode[8192];	/* maximum size of bootcode */
+int bootsize;		/* actual size of bootcode */
 
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
-};
 
 static char reserved[] = "reserved";
 
@@ -251,6 +225,7 @@ struct part_type {
 void	usage __P((void));
 void	print_s0 __P((int));
 void	print_part __P((int));
+void	read_boot __P((char *));
 void	init_sector0 __P((int, int));
 void	intuit_translated_geometry __P((void));
 int	try_heads __P((quad_t, quad_t, quad_t, quad_t, quad_t, quad_t, quad_t,
@@ -293,7 +268,7 @@ main(argc, argv)
 
 	a_flag = i_flag = u_flag = sh_flag = f_flag = s_flag = b_flag = 0;
 	csysid = cstart = csize = 0;
-	while ((ch = getopt(argc, argv, "0123Safius:b:")) != -1)
+	while ((ch = getopt(argc, argv, "0123Safius:b:c:")) != -1)
 		switch (ch) {
 		case '0':
 			partition = 0;
@@ -343,6 +318,9 @@ main(argc, argv)
 			}
 			if (b_cyl > MAXCYL)
 				b_cyl = MAXCYL;
+			break;
+		case 'c':
+			read_boot(optarg);
 			break;
 		default:
 			usage();
@@ -416,7 +394,7 @@ main(argc, argv)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: fdisk [-aiufS] [-0|-1|-2|-3] "
+	(void)fprintf(stderr, "usage: fdisk [-aiufSc] [-0|-1|-2|-3] "
 		      "[device]\n");
 	exit(1);
 }
@@ -533,12 +511,46 @@ print_part(part)
 }
 
 void
+read_boot(name)
+	char *name;
+{
+	int fd;
+	struct stat st;
+
+	if ((fd = open(name, O_RDONLY)) < 0)
+		err(1, "%s", name);
+	if (fstat(fd, &st) == -1)
+		err(1, "%s", name);
+	if (st.st_size > sizeof(bootcode))
+		errx(1, "%s: bootcode too large", name);
+	bootsize = st.st_size;
+	if (bootsize < 0x200)
+		errx(1, "%s: bootcode too small", name);
+	if (read(fd, bootcode, bootsize) != bootsize)
+		err(1, "%s", name);
+	close(fd);
+
+	/*
+	 * Do some sanity checking here
+	 */
+	if (getshort(bootcode + 0x1fe) != BOOT_MAGIC)
+		errx(1, "%s: invalid magic", name);
+	bootsize = (bootsize + 0x1ff) / 0x200;
+	bootsize *= 0x200;
+}
+
+void
 init_sector0(start, dopart)
 	int start, dopart;
 {
 	int i;
 
-	memcpy(mboot.bootinst, bootcode, sizeof(bootcode));
+#ifdef	DEFAULT_BOOTCODE
+	if (!bootsize)
+		read_boot(DEFAULT_BOOTCODE);
+#endif
+
+	memcpy(mboot.bootinst, bootcode, sizeof(mboot.bootinst));
 	putshort(&mboot.signature, BOOT_MAGIC);
 	
 	if (dopart)
@@ -960,7 +972,7 @@ read_s0()
 int
 write_s0()
 {
-	int flag;
+	int flag, i;
 
 	/*
 	 * write enable label sector before write (if necessary),
@@ -975,6 +987,11 @@ write_s0()
 		warn("can't write fdisk partition table");
 		return -1;
 	}
+	for (i = bootsize; (i -= 0x200) > 0;)
+		if (write_disk(i / 0x200, bootcode + i) == -1) {
+			warn("can't write bootcode");
+			return -1;
+		}
 	flag = 0;
 	if (ioctl(fd, DIOCWLABEL, &flag) < 0)
 		warn("DIOCWLABEL");
