@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.52 2002/10/18 01:54:15 grant Exp $
+# 	$NetBSD: GENERIC32,v 1.53 2002/10/18 01:59:27 grant Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.52 $"
+#ident 		"GENERIC-$Revision: 1.53 $"
 
 maxusers	64
 
@@ -420,14 +420,14 @@ ex*	at pci? dev ? function ?	# 3Com 90x[B] UT
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet UT
 esh*	at pci? dev ? function ?	# Essential HIPPI card UT
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B UT
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet UT
 # XXX uses vtophys()
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
-rtk*	at pci? dev ? function ?	# Realtek 8129/8139 UT
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet UT
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
@@ -477,7 +477,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
 uscanner* at uhub? port ?				# USB scanners
-uyap* at uhub? port ?					# Y@P firmware loader
+uyap*	at uhub? port ?					# Y@P firmware loader
 ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # PCI IEEE1394 controllers
@@ -486,7 +486,7 @@ fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 fw*	at fwbus?			# IP over 1394
 
 # IEEE1394 nodes
-#fwnode* at fwbus? oui ? devhi ? devlo ?
+#fwnode*at fwbus? oui ? devhi ? devlo ?
 #scsibus* at fwnode?
 
 ## Loopback network interface; required
