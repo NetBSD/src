@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.8 1997/10/03 19:55:47 christos Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.9 1997/10/03 20:38:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-tcp.c,v 1.55 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.8 1997/10/03 19:55:47 christos Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.9 1997/10/03 20:38:03 christos Exp $");
 #endif
 #endif
 
@@ -134,7 +134,6 @@ tcp_print(register const u_char *bp, register u_int length,
 	win = ntohs(tp->th_win);
 	urp = ntohs(tp->th_urp);
 	hlen = tp->th_off * 4;
-	length -= hlen;
 
 	/*
 	 * If data present and NFS port used, assume NFS.
@@ -142,15 +141,16 @@ tcp_print(register const u_char *bp, register u_int length,
 	 * to NFS print routines.
 	 */
 	if (!qflag) {
+		u_int len = length - hlen;
 		if ((u_char *)tp + 4 + sizeof(struct rpc_msg) <= snapend &&
 		    dport == NFS_PORT) {
-			nfsreq_print((u_char *)tp + hlen + 4, length,
+			nfsreq_print((u_char *)tp + hlen + 4, len,
 				     (u_char *)ip);
 			return;
 		}
 		else if ((u_char *)tp + 4 + sizeof(struct rpc_msg) <= snapend &&
 		    sport == NFS_PORT) {
-			nfsreply_print((u_char *)tp + hlen + 4, length,
+			nfsreply_print((u_char *)tp + hlen + 4, len,
 				       (u_char *)ip);
 			return;
 		}
@@ -162,7 +162,7 @@ tcp_print(register const u_char *bp, register u_int length,
 		ipaddr_string(&ip->ip_dst), tcpport_string(dport));
 
 	if (qflag) {
-		(void)printf("tcp %d", length);
+		(void)printf("tcp %d", length - hlen);
 		return;
 	}
 	if ((flags = tp->th_flags) & (TH_SYN|TH_FIN|TH_RST|TH_PUSH)) {
@@ -225,7 +225,6 @@ tcp_print(register const u_char *bp, register u_int length,
 				seq -= th->seq, ack -= th->ack;
 		}
 	}
-	hlen = tp->th_off * 4;
 	if (hlen > length) {
 		(void)printf(" [bad hdr length]");
 		return;
