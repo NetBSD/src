@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.12 2002/11/20 07:17:11 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.13 2002/11/28 21:21:32 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.12 2002/11/20 07:17:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.13 2002/11/28 21:21:32 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -54,9 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.12 2002/11/20 07:17:11 manu Exp $");
 #include <compat/mach/mach_errno.h>
 
 int 
-mach_host_info(p, msgh)
+mach_host_info(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_host_info_request_t req;
 	mach_host_info_reply_t rep;
@@ -135,6 +137,11 @@ mach_host_info(p, msgh)
 		break;
 	}
 
+	if (msglen > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
+
 	if ((error = copyout(&rep, msgh, msglen)) != 0)
 		return error;
 
@@ -143,9 +150,11 @@ mach_host_info(p, msgh)
 
 
 int 
-mach_host_page_size(p, msgh)
+mach_host_page_size(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_host_page_size_request_t req;
 	mach_host_page_size_reply_t rep;
@@ -166,15 +175,22 @@ mach_host_page_size(p, msgh)
 	rep.rep_page_size = PAGE_SIZE;
 	rep.rep_trailer.msgh_trailer_size = 8;
 	
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
+
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
 	return 0;
 }
 
 int
-mach_host_get_clock_service(p, msgh)
+mach_host_get_clock_service(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_host_get_clock_service_request_t req;
 	mach_host_get_clock_service_reply_t rep;
@@ -197,6 +213,11 @@ mach_host_get_clock_service(p, msgh)
 	rep.rep_clock_serv.name = 0x60b; /* XXX */
 	rep.rep_clock_serv.disposition = 0x11; /* XXX */
 	rep.rep_trailer.msgh_trailer_size = 8;
+
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.2 2002/11/19 19:54:07 christos Exp $ */
+/*	$NetBSD: mach_port.h,v 1.3 2002/11/28 21:21:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -87,8 +87,11 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_insert_right_reply_t;  
 
-int mach_port_deallocate __P((struct proc *, mach_msg_header_t *));
-int mach_port_allocate __P((struct proc *, mach_msg_header_t *));
-int mach_port_insert_right __P((struct proc *, mach_msg_header_t *));
+int mach_port_deallocate(struct proc *, mach_msg_header_t *, 
+    size_t,  mach_msg_header_t *);
+int mach_port_allocate(struct proc *, mach_msg_header_t *,
+    size_t,  mach_msg_header_t *);
+int mach_port_insert_right(struct proc *, mach_msg_header_t *,
+    size_t,  mach_msg_header_t *);
 
 #endif /* _MACH_PORT_H_ */

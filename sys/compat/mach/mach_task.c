@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.6 2002/11/26 08:10:17 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.7 2002/11/28 21:21:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.6 2002/11/26 08:10:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.7 2002/11/28 21:21:33 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,9 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.6 2002/11/26 08:10:17 manu Exp $");
 
 
 int 
-mach_task_get_special_port(p, msgh)
+mach_task_get_special_port(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_task_get_special_port_request_t req;
 	mach_task_get_special_port_reply_t rep;
@@ -81,15 +83,22 @@ mach_task_get_special_port(p, msgh)
 	rep.rep_special_port.disposition = 0x11; /* XXX why? */
 	rep.rep_trailer.msgh_trailer_size = 8;
 
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
+
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
 	return 0;
 }
 
 int 
-mach_ports_lookup(p, msgh)
+mach_ports_lookup(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_ports_lookup_request_t req;
 	mach_ports_lookup_reply_t rep;
@@ -106,9 +115,9 @@ mach_ports_lookup(p, msgh)
 	evc.ev_len = PAGE_SIZE;
 	evc.ev_prot = UVM_PROT_RW;
 	evc.ev_proc = *vmcmd_map_zero;
-
+ 
 	if ((error = (*evc.ev_proc)(p, &evc)) != 0)
-		return MACH_MSG_ERROR(msgh, &req, &rep, error);
+		return MACH_MSG_ERROR(msgh, &req, &rep, error, maxlen, dst);
 
 	bzero(&rep, sizeof(rep));
 
@@ -126,6 +135,11 @@ mach_ports_lookup(p, msgh)
 	rep.rep_init_port_set.type = 2; /* XXX why? */
 	rep.rep_init_port_set_count = 3; /* XXX why? */
 	rep.rep_trailer.msgh_trailer_size = 8;
+
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
