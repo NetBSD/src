@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_ecn.c,v 1.2.2.3 1999/08/02 22:34:58 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.
@@ -26,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ip_ecn.c,v 1.2.2.2 1999/07/01 23:47:01 thorpej Exp $
+ * KAME Id: ip_ecn.c,v 1.1.4.2 1999/07/30 10:20:02 itojun Exp
  */
 /*
  * ECN consideration on tunnel ingress/egress operation.
@@ -53,7 +55,6 @@
 #ifndef INET
 #include <netinet/in.h>
 #endif
-#include <netinet6/in6_systm.h>
 #include <netinet/ip6.h>
 #endif
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: in_gif.c,v 1.2.2.3 1999/08/02 22:34:57 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -36,6 +38,7 @@
 #endif
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 #endif
 
 #include <sys/param.h>
@@ -77,9 +80,9 @@
 #endif
 
 #if NGIF > 0
-int gif_ttl = GIF_TTL;
+int ip_gif_ttl = GIF_TTL;
 #else
-int gif_ttl = 0;
+int ip_gif_ttl = 0;
 #endif
 
 int
@@ -169,7 +172,7 @@ in_gif_output(ifp, family, m, rt)
 	}
 	iphdr.ip_p = proto;
 	/* version will be set in ip_output() */
-	iphdr.ip_ttl = gif_ttl;
+	iphdr.ip_ttl = ip_gif_ttl;
 	iphdr.ip_len = m->m_pkthdr.len + sizeof(struct ip);
 	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &iphdr.ip_tos, &tos);

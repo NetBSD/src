@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.42.4.1 1999/07/01 23:47:01 thorpej Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.42.4.2 1999/08/02 22:34:58 thorpej Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -13,6 +13,8 @@
  *
  * MROUTING Revision: 1.2
  */
+
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

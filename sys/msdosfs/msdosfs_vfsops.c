@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.61.4.1 1999/08/01 05:17:46 chs Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.61.4.2 1999/08/02 22:31:34 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -186,8 +186,10 @@ msdosfs_mountroot()
 	if (bdevvp(rootdev, &rootvp))
 		panic("msdosfs_mountroot: can't setup rootvp");
 
-	if ((error = vfs_rootmountalloc(MOUNT_MSDOS, "root_device", &mp)))
+	if ((error = vfs_rootmountalloc(MOUNT_MSDOS, "root_device", &mp))) {
+		vrele(rootvp);
 		return (error);
+	}
 
 	args.flags = 0;
 	args.uid = 0;
@@ -198,6 +200,7 @@ msdosfs_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
+		vrele(rootvp);
 		return (error);
 	}
 
@@ -205,6 +208,7 @@ msdosfs_mountroot()
 		(void)msdosfs_unmount(mp, 0, p);
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
+		vrele(rootvp);
 		return (error);
 	}
 

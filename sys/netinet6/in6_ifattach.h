@@ -1,3 +1,5 @@
+/*	$NetBSD: in6_ifattach.h,v 1.2.2.3 1999/08/02 22:36:04 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: ipcomp_output.c,v 1.2.2.3 1999/08/02 22:36:06 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.
@@ -61,7 +63,6 @@
 #include <netinet/ip_ecn.h>
 
 #ifdef INET6
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>
@@ -70,9 +71,7 @@
 #endif
 #include <netinet6/ipcomp.h>
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <netinet6/ipsec.h>
-#endif
 #include <netkey/key.h>
 #include <netkey/keydb.h>
 #include <netkey/key_debug.h>

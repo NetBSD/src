@@ -1,3 +1,5 @@
+/*	$NetBSD: nd6_nbr.c,v 1.2.2.3 1999/08/02 22:36:07 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -29,6 +31,9 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>
@@ -278,7 +283,7 @@ nd6_ns_input(m, off, icmp6len)
 		return;
 	}
 
-	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_NEIGHBOR_SOLICIT);
+	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_NEIGHBOR_SOLICIT, 0);
 
 	nd6_na_output(ifp, &saddr6, &taddr6,
 		      ((anycast || proxy || !tlladdr) ? 0 : ND_NA_FLAG_OVERRIDE)
@@ -678,7 +683,7 @@ nd6_na_input(m, off, icmp6len)
 			int s;
 
 			in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
-			s = splnet();
+			s = splsoftnet();
 			dr = defrouter_lookup(in6, rt->rt_ifp);
 			if (dr)
 				defrtrlist_del(dr);
@@ -912,8 +917,9 @@ nd6_dad_start(ifa, tick)
 	bzero(dp, sizeof(*dp));
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
-	printf("performing DAD for %s(%s)\n",
-		ip6_sprintf(&ia->ia_addr.sin6_addr), ifa->ifa_ifp->if_xname);
+	/* XXXJRT This is probably a purely debugging message. */
+	printf("%s: starting DAD for %s\n", ifa->ifa_ifp->if_xname,
+	    ip6_sprintf(&ia->ia_addr.sin6_addr));
 
 	/*
 	 * Send NS packet for DAD, ip6_dad_count times.
@@ -959,7 +965,7 @@ nd6_dad_timer(ifa)
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
 
-	s = splnet();	/*XXX*/
+	s = splsoftnet();	/*XXX*/
 
 	/* Sanity check */
 	if (ia == NULL) {
@@ -1057,9 +1063,11 @@ nd6_dad_timer(ifa)
 			 */
 			ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 
-			printf("DAD success for %s(%s)\n",
-				ip6_sprintf(&ia->ia_addr.sin6_addr),
-				ifa->ifa_ifp->if_xname);
+			/* XXXJRT This is probably a purely debugging message */
+			printf("%s: DAD complete for %s - no duplicates "
+			    "found\n", ifa->ifa_ifp->if_xname,
+			    ip6_sprintf(&ia->ia_addr.sin6_addr));
+
 			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 			free(dp, M_IP6NDP);
 			dp = NULL;
@@ -1084,10 +1092,10 @@ nd6_dad_duplicated(ifa)
 		return;
 	}
 
-	log(LOG_ERR, "DAD detected duplicate IP6 address %s(%s): "
-		"got %d NS and %d NA\n", ip6_sprintf(&ia->ia_addr.sin6_addr),
-		ifa->ifa_ifp->if_xname,
-		dp->dad_ns_icount, dp->dad_na_icount);
+	log(LOG_ERR, "%s: DAD detected duplicate IPv6 address %s: %d NS, "
+	    "%d NA\n", ifa->ifa_ifp->if_xname,
+	    ip6_sprintf(&ia->ia_addr.sin6_addr),
+	    dp->dad_ns_icount, dp->dad_na_icount);
 
 	ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 	ia->ia6_flags |= IN6_IFF_DUPLICATED;
@@ -1099,9 +1107,11 @@ nd6_dad_duplicated(ifa)
 #endif
 		);
 
-	printf("DAD failed for %s(%s): manual operation required\n",
-		ip6_sprintf(&ia->ia_addr.sin6_addr),
-		ifa->ifa_ifp->if_xname);
+	/* XXXJRT This is probably a purely debugging message. */
+	printf("%s: DAD complete for %s - duplicate found\n",
+	    ifa->ifa_ifp->if_xname, ip6_sprintf(&ia->ia_addr.sin6_addr));
+	printf("%s: manual intervention required\n", ifa->ifa_ifp->if_xname);
+
 	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 	free(dp, M_IP6NDP);
 	dp = NULL;

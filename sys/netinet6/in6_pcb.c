@@ -1,3 +1,5 @@
+/*	$NetBSD: in6_pcb.c,v 1.2.2.3 1999/08/02 22:36:04 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -62,6 +64,10 @@
  *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
  */
 
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -91,6 +97,7 @@
 #ifdef __NetBSD__
 extern struct ifnet loif[NLOOP];
 #endif
+#include "faith.h"
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -115,7 +122,14 @@ in6_pcballoc(so, head)
 	in6p->in6p_socket = so;
 	in6p->in6p_hops = -1;	/* use kernel default */
 	in6p->in6p_icmp6filt = NULL;
+#if 0
 	insque(in6p, head);
+#else
+	in6p->in6p_next = head->in6p_next;
+	head->in6p_next = in6p;
+	in6p->in6p_prev = head;
+	in6p->in6p_next->in6p_prev = in6p;
+#endif
 	so->so_pcb = (caddr_t)in6p;
 	return(0);
 }
@@ -260,6 +274,7 @@ in6_pcbbind(in6p, nam)
 		else if (head->in6p_lport > IPV6PORT_ANONMAX)
 			head->in6p_lport = IPV6PORT_ANONMIN;
 		last_port = head->in6p_lport;
+		goto startover;	/*to randomize*/
 		for (;;) {
 			lport = htons(head->in6p_lport);
 			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)) {
@@ -276,6 +291,7 @@ in6_pcbbind(in6p, nam)
 			}
 			if (t == 0)
 				break;
+startover:
 			if (head->in6p_lport >= IPV6PORT_ANONMAX)
 				head->in6p_lport = IPV6PORT_ANONMIN;
 			else
@@ -649,7 +665,13 @@ in6_pcbdetach(in6p)
 	if (in6p->in6p_route.ro_rt)
 		rtfree(in6p->in6p_route.ro_rt);
 	ip6_freemoptions(in6p->in6p_moptions);
+#if 0
 	remque(in6p);
+#else
+	in6p->in6p_next->in6p_prev = in6p->in6p_prev;
+	in6p->in6p_prev->in6p_next = in6p->in6p_next;
+	in6p->in6p_prev = NULL;
+#endif
 	FREE(in6p, M_PCB);
 }
 
@@ -706,7 +728,7 @@ in6_setpeeraddr(in6p, nam)
  * Call the protocol specific routine (if any) to report
  * any errors for each matching socket.
  *
- * Must be called at splnet.
+ * Must be called at splsoftnet.
  */
 int
 in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
@@ -888,15 +910,20 @@ in6_pcbrtentry(in6p)
 }
 
 struct in6pcb *
-in6_pcblookup_connect(head, faddr6, fport_arg, laddr6, lport_arg)
+in6_pcblookup_connect(head, faddr6, fport_arg, laddr6, lport_arg, faith)
 	struct in6pcb *head;
 	struct in6_addr *faddr6, *laddr6;
 	u_int fport_arg, lport_arg;
+	int faith;
 {
 	struct in6pcb *in6p;
 	u_short	fport = fport_arg, lport = lport_arg;
 
 	for (in6p = head->in6p_next; in6p != head; in6p = in6p->in6p_next) {
+#if defined(NFAITH) && NFAITH > 0
+		if (faith && (in6p->in6p_flags & IN6P_FAITH) == 0)
+			continue;
+#endif
 		/* find exact match on both source and dest */
 		if (in6p->in6p_fport != fport)
 			continue;
@@ -916,10 +943,11 @@ in6_pcblookup_connect(head, faddr6, fport_arg, laddr6, lport_arg)
 }
 
 struct in6pcb *
-in6_pcblookup_bind(head, laddr6, lport_arg)
+in6_pcblookup_bind(head, laddr6, lport_arg, faith)
 	struct in6pcb *head;
 	struct in6_addr *laddr6;
 	u_int lport_arg;
+	int faith;
 {
 	struct in6pcb *in6p, *match;
 	u_short	lport = lport_arg;
@@ -930,6 +958,10 @@ in6_pcblookup_bind(head, laddr6, lport_arg)
 	 	 * find destination match.  exact match is preferred
 		 * against wildcard match.
 		 */
+#if defined(NFAITH) && NFAITH > 0
+		if (faith && (in6p->in6p_flags & IN6P_FAITH) == 0)
+			continue;
+#endif
 		if (in6p->in6p_fport != 0)
 			continue;
 		if (in6p->in6p_lport != lport)

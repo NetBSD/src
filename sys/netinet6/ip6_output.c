@@ -1,3 +1,5 @@
+/*	$NetBSD: ip6_output.c,v 1.2.2.3 1999/08/02 22:36:05 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -67,6 +69,9 @@
 #endif
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>
@@ -84,7 +89,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #include <netinet6/icmp6.h>
 #if !defined(__FreeBSD__) || __FreeBSD__ < 3
@@ -518,10 +522,18 @@ skip_ipsec2:;
 		 * ifp must point it.
 		 */
 		if (ro->ro_rt == 0) {
+#ifdef __NetBSD__
+			/*
+			 * NetBSD always clones routes, if parent is
+			 * PRF_CLONING.
+			 */
+			rtalloc((struct route *)ro);
+#else
 			if (ro == &ip6route)	/* xxx kazu */
 				rtalloc((struct route *)ro);
 			else
 				rtcalloc((struct route *)ro);
+#endif
 		}
 		if (ro->ro_rt == 0) {
 			ip6stat.ip6s_noroute++;
@@ -748,7 +760,7 @@ skip_ipsec2:;
 	if (exthdrs.ip6e_hbh) {
 		struct ip6_hbh *hbh = mtod(exthdrs.ip6e_hbh,
 					   struct ip6_hbh *);
-		long dummy1;	/* XXX unused */
+		u_int32_t dummy1; /* XXX unused */
 		u_int32_t dummy2; /* XXX unused */
 
 		/*
@@ -813,7 +825,7 @@ skip_ipsec2:;
 	} else {
 		struct mbuf **mnext, *m_frgpart;
 		struct ip6_frag *ip6f;
-		u_long id = htonl(ip6_id++);
+		u_int32_t id = htonl(ip6_id++);
 		u_char nextproto;
 
 		/*

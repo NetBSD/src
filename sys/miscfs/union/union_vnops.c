@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.44 1999/03/25 13:05:42 bouyer Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.44.4.1 1999/08/02 22:30:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -285,6 +285,11 @@ union_lookup(v)
 	}
 #endif
 
+	if ((cnp->cn_flags & ISLASTCN) &&
+	    (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return (EROFS);
+
 	cnp->cn_flags |= LOCKPARENT;
 
 	upperdvp = dun->un_uppervp;
@@ -421,6 +426,19 @@ union_lookup(v)
 		cnp->cn_flags &= ~LOCKPARENT;
 
 	/*
+	 * EJUSTRETURN is used by underlying filesystems to indicate that
+	 * a directory modification op was started successfully.
+	 * This will only happen in the upper layer, since
+	 * the lower layer only does LOOKUPs.
+	 * If this union is mounted read-only, bounce it now.
+	 */
+
+	if ((uerror == EJUSTRETURN) && (cnp->cn_flags & ISLASTCN) &&
+	    (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    ((cnp->cn_nameiop == CREATE) || (cnp->cn_nameiop == RENAME)))
+		uerror = EROFS;
+	
+	/*
 	 * at this point, we have uerror and lerror indicating
 	 * possible errors with the lookups in the upper and lower
 	 * layers.  additionally, uppervp and lowervp are (locked)
@@ -446,6 +464,7 @@ union_lookup(v)
 
 	*ap->a_vpp = NULLVP;
 
+	
 	/* case 1. */
 	if ((uerror != 0) && (lerror != 0)) {
 		return (uerror);
@@ -718,10 +737,35 @@ union_access(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct union_node *un = VTOUNION(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct union_node *un = VTOUNION(vp);
 	int error = EACCES;
-	struct vnode *vp;
-	struct union_mount *um = MOUNTTOUNIONMOUNT(ap->a_vp->v_mount);
+	struct union_mount *um = MOUNTTOUNIONMOUNT(vp->v_mount);
+
+	/*
+	 * Disallow write attempts on read-only file systems;
+	 * unless the file is a socket, fifo, or a block or
+	 * character device resident on the file system.
+	 */
+	if (ap->a_mode & VWRITE) {
+		switch (vp->v_type) {
+		case VDIR:
+		case VLNK:
+		case VREG:
+			if (vp->v_mount->mnt_flag & MNT_RDONLY)
+				return (EROFS);
+			break;
+		case VBAD:
+		case VBLK:
+		case VCHR:
+		case VSOCK:
+		case VFIFO:
+		case VNON:
+		default:
+			break;
+		}
+	}
+	
 
 	if ((vp = un->un_uppervp) != NULLVP) {
 		FIXUP(un);
@@ -775,6 +819,11 @@ union_getattr(v)
 	 * The only way to do that is to call getattr on both layers
 	 * and fix up the link count.  The link count will not necessarily
 	 * be accurate but will be large enough to defeat the tree walkers.
+	 *
+	 * To make life more interesting, some filesystems don't keep
+	 * track of link counts in the expected way, and return a
+	 * link count of `1' for those directories; if either of the
+	 * component directories returns a link count of `1', we return a 1.
 	 */
 
 	vap = ap->a_vap;
@@ -802,7 +851,8 @@ union_getattr(v)
 		vp = un->un_lowervp;
 	} else if (vp->v_type == VDIR) {
 		vp = un->un_lowervp;
-		vap = &va;
+		if (vp != NULLVP)
+			vap = &va;
 	} else {
 		vp = NULLVP;
 	}
@@ -814,9 +864,22 @@ union_getattr(v)
 		union_newsize(ap->a_vp, VNOVAL, vap->va_size);
 	}
 
-	if ((vap != ap->a_vap) && (vap->va_type == VDIR))
-		ap->a_vap->va_nlink += vap->va_nlink;
-
+	if ((vap != ap->a_vap) && (vap->va_type == VDIR)) {
+		/*
+		 * Link count manipulation:
+		 *	- If both return "2", return 2 (no subdirs)
+		 *	- If one or the other return "1", return "1" (ENOCLUE)
+		 */
+		if ((ap->a_vap->va_nlink == 2) &&
+		    (vap->va_nlink == 2))
+			;
+		else if (ap->a_vap->va_nlink != 1) {
+			if (vap->va_nlink == 1)
+				ap->a_vap->va_nlink = 1;
+			else
+				ap->a_vap->va_nlink += vap->va_nlink;
+		}
+	}
 	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];
 	return (0);
 }
@@ -831,9 +894,37 @@ union_setattr(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct union_node *un = VTOUNION(ap->a_vp);
+	struct vattr *vap = ap->a_vap;
+	struct vnode *vp = ap->a_vp;
+	struct union_node *un = VTOUNION(vp);
 	int error;
 
+  	if ((vap->va_flags != VNOVAL || vap->va_uid != (uid_t)VNOVAL ||
+	    vap->va_gid != (gid_t)VNOVAL || vap->va_atime.tv_sec != VNOVAL ||
+	    vap->va_mtime.tv_sec != VNOVAL || vap->va_mode != (mode_t)VNOVAL) &&
+	    (vp->v_mount->mnt_flag & MNT_RDONLY))
+		return (EROFS);
+	if (vap->va_size != VNOVAL) {
+ 		switch (vp->v_type) {
+ 		case VDIR:
+ 			return (EISDIR);
+ 		case VCHR:
+ 		case VBLK:
+ 		case VSOCK:
+ 		case VFIFO:
+			break;
+		case VREG:
+		case VLNK:
+ 		default:
+			/*
+			 * Disallow write attempts if the filesystem is
+			 * mounted read-only.
+			 */
+			if (vp->v_mount->mnt_flag & MNT_RDONLY)
+				return (EROFS);
+		}
+	}
+	
 	/*
 	 * Handle case of truncating lower object to zero size,
 	 * by creating a zero length upper object.  This is to
@@ -842,7 +933,7 @@ union_setattr(v)
 	if ((un->un_uppervp == NULLVP) &&
 	    /* assert(un->un_lowervp != NULLVP) */
 	    (un->un_lowervp->v_type == VREG)) {
-		error = union_copyup(un, (ap->a_vap->va_size != 0),
+		error = union_copyup(un, (vap->va_size != 0),
 						ap->a_cred, ap->a_p);
 		if (error)
 			return (error);
@@ -854,10 +945,10 @@ union_setattr(v)
 	 */
 	if (un->un_uppervp != NULLVP) {
 		FIXUP(un);
-		error = VOP_SETATTR(un->un_uppervp, ap->a_vap,
+		error = VOP_SETATTR(un->un_uppervp, vap,
 					ap->a_cred, ap->a_p);
-		if ((error == 0) && (ap->a_vap->va_size != VNOVAL))
-			union_newsize(ap->a_vp, ap->a_vap->va_size, VNOVAL);
+		if ((error == 0) && (vap->va_size != VNOVAL))
+			union_newsize(ap->a_vp, vap->va_size, VNOVAL);
 	} else {
 		error = EROFS;
 	}
@@ -1595,7 +1686,9 @@ union_lock(v)
 	int flags = ap->a_flags;
 	struct union_node *un;
 	int error;
-
+#ifdef DIAGNOSTIC
+	int drain = 0;
+#endif
 
 	genfs_nolock(ap);
 	/*
@@ -1609,6 +1702,31 @@ union_lock(v)
 	 */
 	flags &= ~LK_INTERLOCK;
 
+	un = VTOUNION(vp);
+#ifdef DIAGNOSTIC
+	if (un->un_flags & (UN_DRAINING|UN_DRAINED)) {
+		if (un->un_flags & UN_DRAINED)
+			panic("union: %p: warning: locking decommissioned lock\n", vp);
+		if ((flags & LK_TYPE_MASK) != LK_RELEASE)
+			panic("union: %p: non-release on draining lock: %d\n",
+			    vp, flags & LK_TYPE_MASK);
+		un->un_flags &= ~UN_DRAINING;
+		if ((flags & LK_REENABLE) == 0)
+			un->un_flags |= UN_DRAINED;
+	}
+#endif
+	
+	/*
+	 * Don't pass DRAIN through to sub-vnode lock; keep track of
+	 * DRAIN state at this level, and just get an exclusive lock
+	 * on the underlying vnode.
+	 */
+	if ((flags & LK_TYPE_MASK) == LK_DRAIN) {
+#ifdef DIAGNOSTIC
+		drain = 1;
+#endif
+		flags = LK_EXCLUSIVE | (flags & ~LK_TYPE_MASK);
+	}
 start:
 	un = VTOUNION(vp);
 
@@ -1633,6 +1751,7 @@ start:
 #endif
 	}
 
+	/* XXX ignores LK_NOWAIT */
 	if (un->un_flags & UN_LOCKED) {
 #ifdef DIAGNOSTIC
 		if (curproc && un->un_pid == curproc->p_pid &&
@@ -1649,6 +1768,8 @@ start:
 		un->un_pid = curproc->p_pid;
 	else
 		un->un_pid = -1;
+	if (drain)
+		un->un_flags |= UN_DRAINING;
 #endif
 
 	un->un_flags |= UN_LOCKED;
@@ -1682,6 +1803,8 @@ union_unlock(v)
 	if (curproc && un->un_pid != curproc->p_pid &&
 			curproc->p_pid > -1 && un->un_pid > -1)
 		panic("union: unlocking other process's union node");
+	if (un->un_flags & UN_DRAINED)
+		panic("union: %p: warning: unlocking decommissioned lock\n", ap->a_vp);			
 #endif
 
 	un->un_flags &= ~UN_LOCKED;
@@ -1698,6 +1821,10 @@ union_unlock(v)
 
 #ifdef DIAGNOSTIC
 	un->un_pid = 0;
+	if (un->un_flags & UN_DRAINING) {
+		un->un_flags |= UN_DRAINED;
+		un->un_flags &= ~UN_DRAINING;
+	}
 #endif
 	genfs_nounlock(ap);
 

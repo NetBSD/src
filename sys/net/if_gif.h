@@ -34,6 +34,10 @@
 #ifndef _NET_IF_GIF_H_
 #define _NET_IF_GIF_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_inet.h"
+#endif
+
 #include <netinet/in.h>
 /* xxx sigh, why route have struct route instead of pointer? */
 

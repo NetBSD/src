@@ -1,3 +1,5 @@
+/*	$NetBSD: in_gif.h,v 1.2.2.3 1999/08/02 22:34:57 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -32,7 +34,7 @@
 
 #define GIF_TTL		30
 
-extern int gif_ttl;
+extern int ip_gif_ttl;
 
 void in_gif_input __P((struct mbuf *, ...));
 int in_gif_output __P((struct ifnet *, int, struct mbuf *, struct rtentry *));

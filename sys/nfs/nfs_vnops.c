@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.100.4.4 1999/07/11 05:43:58 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.100.4.5 1999/08/02 22:38:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -723,7 +723,7 @@ nfs_lookup(v)
 	struct componentname *cnp = ap->a_cnp;
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
-	int flags = cnp->cn_flags;
+	int flags;
 	struct vnode *newvp;
 	u_int32_t *tl;
 	caddr_t cp;
@@ -736,6 +736,8 @@ nfs_lookup(v)
 	struct nfsnode *np;
 	int lockparent, wantparent, error = 0, attrflag, fhsize;
 	int v3 = NFS_ISV3(dvp);
+	cnp->cn_flags &= ~PDIRUNLOCK;
+	flags = cnp->cn_flags;
 
 	*vpp = NULLVP;
 	if ((flags & ISLASTCN) && (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -780,6 +782,8 @@ nfs_lookup(v)
 				if (cnp->cn_nameiop != LOOKUP &&
 				    (flags & ISLASTCN))
 					cnp->cn_flags |= SAVENAME;
+				if (!lockparent || !(flags & ISLASTCN))
+					cnp->cn_flags |= PDIRUNLOCK;
 				return (0);
 			   }
 			   cache_purge(newvp);
@@ -828,6 +832,8 @@ dorpc:
 		*vpp = newvp;
 		m_freem(mrep);
 		cnp->cn_flags |= SAVENAME;
+		if (!lockparent || !(flags & ISLASTCN))
+			cnp->cn_flags |= PDIRUNLOCK;
 		return (0);
 	}
 
@@ -875,6 +881,9 @@ dorpc:
 		}
 		if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 			cnp->cn_flags |= SAVENAME;
+	} else {
+		if (!lockparent || !(flags & ISLASTCN))
+			cnp->cn_flags |= PDIRUNLOCK;
 	}
 	return (error);
 }
@@ -1267,7 +1276,7 @@ nfs_create(v)
 	struct nfsnode *np = (struct nfsnode *)0;
 	struct vnode *newvp = (struct vnode *)0;
 	caddr_t bpos, dpos, cp2;
-	int error = 0, wccflag = NFSV3_WCCRATTR, gotvp = 0, fmode = 0;
+	int error, wccflag = NFSV3_WCCRATTR, gotvp = 0, fmode = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	int v3 = NFS_ISV3(dvp);
 
@@ -1282,6 +1291,7 @@ nfs_create(v)
 		fmode |= O_EXCL;
 #endif
 again:
+	error = 0;
 	nfsstats.rpccnt[NFSPROC_CREATE]++;
 	nfsm_reqhead(dvp, NFSPROC_CREATE, NFSX_FH(v3) + 2 * NFSX_UNSIGNED +
 		nfsm_rndup(cnp->cn_namelen) + NFSX_SATTR(v3));

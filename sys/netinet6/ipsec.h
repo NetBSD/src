@@ -1,3 +1,5 @@
+/*	$NetBSD: ipsec.h,v 1.2.2.3 1999/08/02 22:36:06 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -33,6 +35,12 @@
 
 #ifndef _NETINET6_IPSEC_H_
 #define _NETINET6_IPSEC_H_
+
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_inet.h"
+#endif
+#endif
 
 #include <netkey/keyv2.h>
 #include <netkey/keydb.h>
@@ -266,7 +274,11 @@ extern int ipsec4_in_reject __P((struct mbuf *, struct inpcb *));
 
 #ifdef INET6
 extern int ipsec6_in_reject_so __P((struct mbuf *, struct socket *));
+#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+extern int ipsec6_in_reject __P((struct mbuf *, struct inpcb *));
+#else
 extern int ipsec6_in_reject __P((struct mbuf *, struct in6pcb *));
+#endif
 #endif /*INET6*/
 
 struct secas;

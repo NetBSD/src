@@ -1,3 +1,5 @@
+/*	$NetBSD: key_debug.h,v 1.2.2.3 1999/08/02 22:37:56 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -27,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: key_debug.h,v 1.2.2.2 1999/07/01 23:48:42 thorpej Exp $ */
+/* KAME Id: key_debug.h,v 1.1.6.2.6.1 1999/05/17 17:03:16 itojun Exp */
 
 #ifndef _NETKEY_KEY_DEBUG_H_
 #define _NETKEY_KEY_DEBUG_H_
