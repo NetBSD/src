@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.c	7.17 (Berkeley) 4/20/91
- *	$Id: in.c,v 1.9 1994/02/02 05:59:13 hpeyerl Exp $
+ *	$Id: in.c,v 1.10 1994/02/10 17:25:16 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -42,7 +42,6 @@
 
 #include <net/if.h>
 #include <net/route.h>
-#include <net/af.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
