@@ -1,4 +1,4 @@
-/*      $NetBSD: handlers.h,v 1.5 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: handlers.h,v 1.6 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,12 +38,12 @@
 #ifndef _HANDLERS_H_
 #define _HANDLERS_H_
 
-int handle_exec(char *path);
-int handle_help(char *path);
-int handle_func(char *path);
-int handle_script(char *path);
-int handle_endpoint(char *path);
-int simple_lang_handler(char *path, char *file, int(* handler)(char *));
+int handle_exec(char *);
+int handle_help(char *);
+int handle_func(char *);
+int handle_script(char *);
+int handle_endpoint(char *);
+int simple_lang_handler(char *, char *, int(*)(char *));
 void nohelp(void);
 
 #define INDEXFILE	"index"

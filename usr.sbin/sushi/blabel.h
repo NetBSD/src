@@ -1,4 +1,4 @@
-/*      $NetBSD: blabel.h,v 1.2 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: blabel.h,v 1.3 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,8 @@
 #ifndef _BLABEL_H_
 #define _BLABEL_H_
 
-void bottom_help(int type);
-void bind_menu(CDKSCROLL *scroll, char* basedir);
-void do_scrdump(EObjectType cdktype, void *object, void *clientdata, chtype key);
+void bottom_help(int);
+void bind_menu(CDKSCROLL *, char *);
+void do_scrdump(EObjectType, void *, void *, chtype);
+
 #endif	/* _BLABEL_H_ */

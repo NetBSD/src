@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.h,v 1.4 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: functions.h,v 1.5 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,9 +43,9 @@ typedef struct {
 	char	**(*function)(char *);
 } func_record;
 
-char **testf(char *junk);
-char **script_do(char *what);
-char **log_do(char *what);
+char **testf(char *);
+char **script_do(char *);
+char **log_do(char *);
 char **ftp_pkglist(char *);
 char **ftp_pkgcats(char *);
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: run.c,v 1.11 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: run.c,v 1.12 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,23 +37,23 @@
 
 /* XXX write return codes ignored. XXX */
 
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+
+#include <curses.h>
+#include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <curses.h>
 #include <termios.h>
+#include <unistd.h>
 #include <util.h>
-#include <err.h>
-#include <poll.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <sys/param.h>
 
 #include "sushi.h"
 #include "run.h"
@@ -71,19 +71,14 @@ extern nl_catd catalog;
 /*
  * local prototypes 
  */
-int launch_subwin(WINDOW *actionwin, char **args, struct winsize win, int display);
-static int handleoflow(WINDOW *actionwin, int x, int y, int xcor, int ycor);
+static int launch_subwin(WINDOW *, char **, struct winsize, int);
+static int handleoflow(WINDOW *, int, int, int, int);
 
 #define BUFSIZE 4096
 
 
 static int
-handleoflow(actionwin, x, y, xcor, ycor)
-	WINDOW *actionwin;
-	int x;
-	int y;
-	int xcor;
-	int ycor;
+handleoflow(WINDOW *actionwin, int x, int y, int xcor, int ycor)
 {
 	if (ycor + 1 >= getmaxy(actionwin)) {
 		if (x == 999) {
@@ -99,19 +94,14 @@ handleoflow(actionwin, x, y, xcor, ycor)
 		wmove(actionwin, getmaxy(actionwin) - 1, 0);
 	} else
 		wmove(actionwin, ycor + 1, 0);
-	return x;
+	return (x);
 }
 
 /*
  * launch a program inside a subwindow, and report it's return status when done
  */
-
-int
-launch_subwin(actionwin, args, win, display)
-	WINDOW *actionwin;
-	char **args;
-	struct winsize win;
-	int display;
+static int
+launch_subwin(WINDOW *actionwin, char **args, struct winsize win, int display)
 {
 	int xcor,ycor;
 	int j, x;
@@ -163,7 +153,7 @@ launch_subwin(actionwin, args, win, display)
 	ttysig_ignore = 1;
 #endif
 
-	switch(child=fork()) {
+	switch (child = fork()) {
 	case -1:
 #if 0
 		ttysig_ignore = 0;
@@ -186,8 +176,8 @@ launch_subwin(actionwin, args, win, display)
 			_exit(EXIT_SUCCESS);
 		} /* subchild, child forks */
 		(void)close(master);
-		close(dataflow[1]);
-		close(dataflow[0]);
+		(void)close(dataflow[1]);
+		(void)close(dataflow[0]);
 		login_tty(slave);
 		if (logging) {
 			fprintf(logfile, "%s: %s\n",
@@ -227,14 +217,14 @@ launch_subwin(actionwin, args, win, display)
 	set[1].events = POLLIN;
 
 	cols = 0;
-	for (selectfailed = 0,multiloop=0;;) {
+	for (selectfailed = 0, multiloop = 0;;) {
 again:
 		if (multiloop > 10)
 			goto loop; /* XXX */
 		if (selectfailed) {
 			char *msg = catgets(catalog, 1, 7,
 			    "select failed but no child died");
-			if(logging)
+			if (logging)
 				(void)fprintf(logfile, msg);
 			bailout(msg);
 		}
@@ -255,7 +245,7 @@ again:
 					set[1].revents = 0;
 #endif
 				if (n > 0) {
-					multiloop=0;
+					multiloop = 0;
 					(void)write(master, ibuf, (size_t)n);
 				}
 			}
@@ -266,9 +256,9 @@ again:
 					set[0].revents = 0;
 #endif
 				if (n > 0) {
-					multiloop=0;
+					multiloop = 0;
 					if (display) {
-						for (j=0; j < n; j++) {
+						for (j = 0; j < n; j++) {
 							cols++;
 							if (cols == getmaxx(actionwin)
 							    && ibuf[j] != '\n') {
@@ -292,9 +282,9 @@ again:
 								getyx(actionwin, ycor, xcor);
 								if (xcor <= 0)
 									break;
-									wmove(actionwin, ycor, xcor - 1);
-									break;
-								default:
+								wmove(actionwin, ycor, xcor - 1);
+								break;
+							default:
 								waddch(actionwin, ibuf[j]);
 								break;
 							}
@@ -303,7 +293,7 @@ again:
 						}
 						wrefresh(actionwin);
 					}
-					if(logging)
+					if (logging)
 						fflush(logfile);
 				}
 			}
@@ -331,30 +321,29 @@ loop:
 	savelines[x+1] = NULL;
 
 	if (WIFEXITED(status))
-		return(WEXITSTATUS(status));
+		return (WEXITSTATUS(status));
 	else if (WIFSIGNALED(status))
-		return(WTERMSIG(status));
+		return (WTERMSIG(status));
 	else
-		return(0);
+		return (0);
 }
 
 /*
  * generic program runner.  display can be set to
  * 1 if you wish the output to be displayed.
  */
-
 int
 run_prog(int display, char **args)
 {
 	struct winsize win;
-	int ret, i, done, numlines, x, y, curline;
+	int ret, n, i, done, numlines, x, y, curline;
 	WINDOW *actionwin, *statuswin, *boxwin;
 	char *command;
 	char buf2[MAXBUF];
 
 	command = buf2;
 	snprintf(buf2, sizeof(buf2), "%s ", args[0]);
-	for (i=1; args[i] != NULL; i++) {
+	for (i = 1; args[i] != NULL; i++) {
 		strlcat(buf2, args[i], sizeof(buf2));
 		strlcat(buf2, " ", sizeof(buf2));
 	}
@@ -368,7 +357,7 @@ run_prog(int display, char **args)
 
 	if (!display) {
 		ret = launch_subwin(NULL, args, win, 0);
-		return(ret);
+		return (ret);
 	}
 	wclear(stdscr);
 	clearok(stdscr, 1);
@@ -423,11 +412,8 @@ run_prog(int display, char **args)
 	wrefresh(statuswin);
 
 	wmove(boxwin, 0, 0);
-	{
-		int n;
-		for (n = 0; n < win.ws_col; n++)
-			waddch(boxwin, ACS_HLINE);
-	}
+	for (n = 0; n < win.ws_col; n++)
+		waddch(boxwin, ACS_HLINE);
 	wrefresh(boxwin);
 
 	wrefresh(actionwin);
@@ -448,10 +434,11 @@ run_prog(int display, char **args)
 	noecho();
 	keypad(stdscr, TRUE);
 	done = 0;
-	for (numlines = 0; savelines[numlines] != NULL; numlines++);
+	for (numlines = 0; savelines[numlines] != NULL; numlines++)
+		continue;
 	for (x = 0; x < win.ws_row; x++) {
 		if (numlines == 999) {
-			for (y=1; y < 1000; y++)
+			for (y = 1; y < 1000; y++)
 				savelines[y-1] = savelines[y];
 		} else
 			savelines[numlines] = malloc(win.ws_col);
@@ -459,9 +446,9 @@ run_prog(int display, char **args)
 		numlines++;
 	}
 	savelines[numlines] = NULL;
-	numlines --;
+	numlines--;
 	curline = numlines - win.ws_row+1;
-	mvwprintw(statuswin, 0, win.ws_col-10, "%4d/%4d", curline, numlines);
+	mvwprintw(statuswin, 0, win.ws_col - 10, "%4d/%4d", curline, numlines);
 	wrefresh(statuswin);
 	while (!done) {
 		i = getch();
@@ -472,7 +459,7 @@ run_prog(int display, char **args)
 			break;
 		case KEY_HOME:
 			wclear(actionwin);
-			for (x = 0; x < win.ws_row-1; x++)
+			for (x = 0; x < win.ws_row - 1; x++)
 				if (savelines[x] != NULL)
 					mvwaddstr(actionwin, x, 0,
 					    savelines[x]);
@@ -484,10 +471,10 @@ run_prog(int display, char **args)
 			break;
 		case KEY_END:
 			wclear(actionwin);
-			curline = numlines - win.ws_row+1;
-			for (x = numlines; x > numlines-win.ws_row; x--)
+			curline = numlines - win.ws_row + 1;
+			for (x = numlines; x > numlines - win.ws_row; x--)
 				if (savelines[x] != NULL)
-					mvwaddstr(actionwin, x-curline,
+					mvwaddstr(actionwin, x - curline,
 					    0, savelines[x]);
 			mvwprintw(statuswin, 0, win.ws_col-10, "%4d",
 			    curline);
@@ -499,11 +486,11 @@ run_prog(int display, char **args)
 				break;
 			wclear(actionwin);
 			curline--;
-			for (x = 0; x < win.ws_row-1; x++, curline++)
+			for (x = 0; x < win.ws_row - 1; x++, curline++)
 				if (savelines[curline] != NULL)
 					mvwaddstr(actionwin, x, 0,
 					    savelines[curline]);
-			curline -= win.ws_row-1;
+			curline -= win.ws_row - 1;
 			mvwprintw(statuswin, 0, win.ws_col-10, "%4d", curline);
 			wrefresh(statuswin);
 			wrefresh(actionwin);
@@ -513,7 +500,7 @@ run_prog(int display, char **args)
 				break;
 			wclear(actionwin);
 			curline++;
-			for (x = curline; x < curline+win.ws_row; x++)
+			for (x = curline; x < curline + win.ws_row; x++)
 				if (savelines[x] != NULL)
 					mvwaddstr(actionwin, x-curline, 0,
 					    savelines[x]);
@@ -524,7 +511,7 @@ run_prog(int display, char **args)
 		case KEY_PPAGE:
 			if (curline - win.ws_row < 0) {
 				wclear(actionwin);
-				for (x = 0; x < win.ws_row-1; x++)
+				for (x = 0; x < win.ws_row - 1; x++)
 					if (savelines[x] != NULL)
 						mvwaddstr(actionwin, x, 0,
 						    savelines[x]);
@@ -535,12 +522,12 @@ run_prog(int display, char **args)
 				wrefresh(actionwin);
 			} else {
 				wclear(actionwin);
-				curline -= win.ws_row-1;
+				curline -= win.ws_row - 1;
 				for (x = 0; x < win.ws_row-1; x++, curline++)
 					if (savelines[x] != NULL)
 						mvwaddstr(actionwin, x, 0,
 						    savelines[curline]);
-				curline -= win.ws_row-1;
+				curline -= win.ws_row - 1;
 				mvwprintw(statuswin, 0, win.ws_col-10, "%4d",
 				    curline);
 				wrefresh(statuswin);
@@ -550,9 +537,9 @@ run_prog(int display, char **args)
 		case KEY_NPAGE:
 			if (curline + win.ws_row == numlines) {
 				;
-			} else if (curline + win.ws_row*2-2 > numlines) {
+			} else if (curline + win.ws_row * 2 - 2 > numlines) {
 				wclear(actionwin);
-				curline = numlines - win.ws_row+1;
+				curline = numlines - win.ws_row + 1;
 				for (x = numlines; x > numlines-win.ws_row; x--)
 					if (savelines[x] != NULL)
 						mvwaddstr(actionwin, x-curline,
@@ -563,7 +550,7 @@ run_prog(int display, char **args)
 				wrefresh(actionwin);
 			} else {
 				wclear(actionwin);
-				for (x = 0; x < win.ws_row-1; x++, curline++)
+				for (x = 0; x < win.ws_row - 1; x++, curline++)
 					if (savelines[x] != NULL) {
 						mvwaddstr(actionwin, x, 0,
 						 savelines[curline+win.ws_row]);
@@ -589,5 +576,5 @@ run_prog(int display, char **args)
 	clearok(stdscr, 1);
 	refresh();
 
-	return(ret);
+	return (ret);
 }

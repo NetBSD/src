@@ -1,4 +1,4 @@
-/*      $NetBSD: blabel.c,v 1.10 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: blabel.c,v 1.11 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  */
 
 #include <sys/ioctl.h>
+
 #include <limits.h>
 #include <curses.h>
 #include <cdk/cdk.h>
@@ -56,12 +57,13 @@ extern int logging;
 
 WINDOW *labelwin;
 
-#define BLABEL_WIDTH 13
-#define BLABEL_SIZE 12
+#define BLABEL_WIDTH	13
+#define BLABEL_SIZE	12
 
-/* if type=1, only show basic.
-   2 = show additional for form manipulation
-*/
+/*
+ * if type = 1, only show basic form.
+ * if type = 2, show additional for form manipulation.
+ */
 void
 bottom_help(int type)
 {
@@ -82,37 +84,37 @@ bottom_help(int type)
 	label[11]= catgets(catalog, 2, 14, "Log:");
 
 	/* check for key overrides from the config file */
-	for (i=0; i < 10; i++)
+	for (i = 0; i < 10; i++)
 		if (keybinding[i] != 0)
 			label[i] = strdup(keylabel[i]);
 
-	labelwin = subwin(stdscr, 2, ws.ws_col, ws.ws_row-2, 0);
+	labelwin = subwin(stdscr, 2, ws.ws_col, ws.ws_row - 2, 0);
 	if (labelwin == NULL)
 		bailout("%s", catgets(catalog, 1, 23,
 		    "failed to allocate bottomhelp window"));
 	wattron(labelwin, A_BOLD);
 
-	for (i=0,j=0; i < BLABEL_SIZE; i+=2, j+=BLABEL_WIDTH)
+	for (i = 0, j = 0; i < BLABEL_SIZE; i += 2, j += BLABEL_WIDTH)
 		if (i < 3 || i > 6 || type == 2) {
 			mvwaddstr(labelwin, 0, j, label[i]);
 		}
-	for (i=1,j=0; i < BLABEL_SIZE; i+=2, j+=BLABEL_WIDTH)
+	for (i = 1, j = 0; i < BLABEL_SIZE; i += 2, j += BLABEL_WIDTH)
 		if (i < 3 || i > 6 || type == 2) {
 			mvwaddstr(labelwin, 1, j, label[i]);
 		}
 
 	if (scripting)
-		mvwaddstr(labelwin, 0, ws.ws_col-4,
+		mvwaddstr(labelwin, 0, ws.ws_col - 4,
 		    catgets(catalog, 2, 15, "ON "));
 	else
-		mvwaddstr(labelwin, 0, ws.ws_col-4,
+		mvwaddstr(labelwin, 0, ws.ws_col - 4,
 		    catgets(catalog, 2, 16, "OFF"));
 
 	if (logging)
-		mvwaddstr(labelwin, 1, ws.ws_col-4,
+		mvwaddstr(labelwin, 1, ws.ws_col - 4,
 		    catgets(catalog, 2, 15, "ON "));
 	else
-		mvwaddstr(labelwin, 1, ws.ws_col-4,
+		mvwaddstr(labelwin, 1, ws.ws_col - 4,
 		    catgets(catalog, 2, 16, "OFF"));
 
 	wrefresh(labelwin);
@@ -188,14 +190,14 @@ do_scrdump(EObjectType cdktype, void *object, void *clientdata, chtype key)
 	if (dumpimg == NULL)
 		bailout("malloc: %s", strerror(errno));
 
-	for (y=0; y < ws.ws_row; y++)
-		for (x=0; x < ws.ws_col; x++)
+	for (y = 0; y < ws.ws_row; y++)
+		for (x = 0; x < ws.ws_col; x++)
 			dumpimg[ws.ws_col*y+x] =
 			    mvwinch(curscr, y, x) & A_CHARTEXT;
 
 	file = fopen(DUMPFILE, "w");
-	for (y=0; y < ws.ws_row; y++) {
-		for (x=0; x < ws.ws_col; x++)
+	for (y = 0; y < ws.ws_row; y++) {
+		for (x = 0; x < ws.ws_col; x++)
 			fprintf(file, "%c", dumpimg[ws.ws_col*y+x]);
 		fprintf(file, "\n");
 	}
@@ -207,7 +209,7 @@ do_scrdump(EObjectType cdktype, void *object, void *clientdata, chtype key)
 static void
 do_shell(EObjectType cdktype, void *object, void *clientdata, chtype key)
 {
-	eraseCDKScreen (cdkscreen);
+	eraseCDKScreen(cdkscreen);
 	wclear(stdscr);
 	wrefresh(stdscr);
 	savetty();
@@ -220,41 +222,41 @@ do_shell(EObjectType cdktype, void *object, void *clientdata, chtype key)
 	wclear(stdscr);
 	wrefresh(stdscr);
 	bottom_help(1);
-	eraseCDKScreen (cdkscreen);
-	refreshCDKScreen (cdkscreen);
+	eraseCDKScreen(cdkscreen);
+	refreshCDKScreen(cdkscreen);
 }
 
 void
-bind_menu(CDKSCROLL *scroll, char *basedir)
+bind_menu(CDKSCROLL *scrollp, char *basedir)
 {
 	if (keybinding[0] != 0)
-		bindCDKObject(vSCROLL, scroll, keybinding[0],
+		bindCDKObject(vSCROLL, scrollp, keybinding[0],
 		    wrap_help, basedir);
 	else
-		bindCDKObject(vSCROLL, scroll, KEY_F1, wrap_help, basedir);
+		bindCDKObject(vSCROLL, scrollp, KEY_F1, wrap_help, basedir);
 
 	if (keybinding[1] != 0)
-		bindCDKObject(vSCROLL, scroll, keybinding[1], do_refresh, NULL);
+		bindCDKObject(vSCROLL, scrollp, keybinding[1], do_refresh, NULL);
 	else
-		bindCDKObject(vSCROLL, scroll, KEY_F2, do_refresh, NULL);
+		bindCDKObject(vSCROLL, scrollp, KEY_F2, do_refresh, NULL);
 
 	if (keybinding[2] != 0)
-		bindCDKObject(vSCROLL, scroll, keybinding[2], do_cancel, NULL);
+		bindCDKObject(vSCROLL, scrollp, keybinding[2], do_cancel, NULL);
 	else
-		bindCDKObject(vSCROLL, scroll, KEY_F3, do_cancel, NULL);
+		bindCDKObject(vSCROLL, scrollp, KEY_F3, do_cancel, NULL);
 
 	if (keybinding[7] != 0)
-		bindCDKObject(vSCROLL, scroll, keybinding[7], do_scrdump, NULL);
+		bindCDKObject(vSCROLL, scrollp, keybinding[7], do_scrdump, NULL);
 	else
-		bindCDKObject(vSCROLL, scroll, KEY_F8, do_scrdump, NULL);
+		bindCDKObject(vSCROLL, scrollp, KEY_F8, do_scrdump, NULL);
 
 	if (keybinding[8] != 0)
-		bindCDKObject(vSCROLL, scroll, keybinding[8], do_shell, NULL);
+		bindCDKObject(vSCROLL, scrollp, keybinding[8], do_shell, NULL);
 	else
-		bindCDKObject(vSCROLL, scroll, KEY_F9, do_shell, NULL);
+		bindCDKObject(vSCROLL, scrollp, KEY_F9, do_shell, NULL);
 
 	if (keybinding[9] != 0)
-		bindCDKObject(vSCROLL, scroll, keybinding[9], do_exit, NULL);
+		bindCDKObject(vSCROLL, scrollp, keybinding[9], do_exit, NULL);
 	else
-		bindCDKObject(vSCROLL, scroll, KEY_F10, do_exit, NULL);
+		bindCDKObject(vSCROLL, scrollp, KEY_F10, do_exit, NULL);
 }

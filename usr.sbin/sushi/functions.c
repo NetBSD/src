@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.c,v 1.9 2004/04/23 02:58:30 simonb Exp $       */
+/*      $NetBSD: functions.c,v 1.10 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,13 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/utsname.h>
+
 #include <err.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/utsname.h>
 
 #include "sushi.h"
 #include "functions.h"
@@ -58,12 +59,12 @@ extern FILE *script;
 extern int errno;
 extern nl_catd catalog;
 
-char *ftp_base(int truename);
+char *ftp_base(int);
 void cleanup(void);
 
 /* Required by libinstall */
 void	cleanup(void){ ; }
-int	ftp_cmd(const char *cmd, const char *expectstr);
+int	ftp_cmd(const char *, const char *);
 void	ftp_stop(void);
 
 func_record func_map[] = 
@@ -108,7 +109,7 @@ log_do(char *what)
 		fflush(logfile);
 		fclose(logfile);
 	}
-	return(NULL); /* XXX */
+	return (NULL); /* XXX */
 }
 
 /*ARGSUSED*/
@@ -147,7 +148,7 @@ script_do(char *what)
 		fflush(script);
 		fclose(script);
 	}
-	return(NULL); /* XXX */
+	return (NULL); /* XXX */
 }
 
 /*
@@ -166,9 +167,9 @@ ftp_pkglist(char *subdir)
 	FILE *f;
 	int nlines;
 
-	extern int ftp_start(char *url);	/* pkg_install/lib stuff */
+	extern int ftp_start(char *);		/* pkg_install/lib stuff */
 	extern int Verbose;			/* pkg_install/lib stuff */
-	Verbose=0; /* debugging */
+	Verbose = 0; /* debugging */
 
 	/* ftp(1) must have a trailing '/' for directories */
 	snprintf(url, sizeof(url), "%s/%s/", ftp_base(0), subdir);
@@ -184,7 +185,7 @@ ftp_pkglist(char *subdir)
 	 * Generate tmp file
 	 */
 	strlcpy(tmpname, TMPFILE_NAME, sizeof(tmpname));
-	tfd=mkstemp(tmpname);
+	tfd = mkstemp(tmpname);
 	if (tfd == -1)
 		bailout("mkstemp: %s", strerror(errno));
 
@@ -193,8 +194,7 @@ ftp_pkglist(char *subdir)
 	/*
 	 * Setup & run the command for ftp(1)
 	 */
-	(void) snprintf(buf, sizeof(buf), "nlist *.tgz %s\n",
-	    tmpname);
+	(void)snprintf(buf, sizeof(buf), "nlist *.tgz %s\n", tmpname);
 	rc = ftp_cmd(buf, "\n(550|226).*\n"); /* catch errors */
 	if (rc != 226) {
 		unlink(tmpname);	/* remove clutter */
@@ -202,12 +202,12 @@ ftp_pkglist(char *subdir)
 	}
 
 	f = fopen(tmpname, "r");
-	if (!f)
+	if (f == NULL)
 		bailout("fopen: %s", strerror(errno));
 
 	/* Read through file once to find out how many lines it has */
-	nlines=0;
-	while(fgets(buf, sizeof(buf), f))
+	nlines = 0;
+	while (fgets(buf, sizeof(buf), f) != NULL)
 		nlines++;
 	rewind(f);
 
@@ -217,23 +217,23 @@ ftp_pkglist(char *subdir)
 
 	/* alloc space for each line now */
 	nlines = 0;
-	while(fgets(buf, sizeof(buf), f)) {
+	while (fgets(buf, sizeof(buf), f) != NULL) {
 		list[nlines] = strdup(buf);
 		/* XXX 5 to get .tgz */
 		list[nlines][strlen(list[nlines])-5] = '\0';
 		nlines++;
 	}
 	list[nlines] = NULL;
-	
+
 	fclose(f);
 	unlink(tmpname);
-	
+
 	/*
 	 * Stop FTP coprocess
 	 */
 	ftp_stop();
 
-	return list;
+	return (list);
 }
 
 /*
@@ -253,9 +253,9 @@ ftp_pkgcats(char *subdir)
 	FILE *f;
 	int nlines;
 
-	extern int ftp_start(char *url);	/* pkg_install/lib stuff */
+	extern int ftp_start(char *);		/* pkg_install/lib stuff */
 	extern int Verbose;			/* pkg_install/lib stuff */
-	Verbose=0; /* debugging */
+	Verbose = 0; /* debugging */
 
 	/* ftp(1) must have a trailing '/' for directories */
 	snprintf(url, sizeof(url), "%s/", ftp_base(0));
@@ -271,7 +271,7 @@ ftp_pkgcats(char *subdir)
 	 * Generate tmp file
 	 */
 	strlcpy(tmpname, TMPFILE_NAME, sizeof(tmpname));
-	tfd=mkstemp(tmpname);
+	tfd = mkstemp(tmpname);
 	if (tfd == -1)
 		bailout("mkstemp: %s", strerror(errno));
 
@@ -280,8 +280,7 @@ ftp_pkgcats(char *subdir)
 	/*
 	 * Setup & run the command for ftp(1)
 	 */
-	(void) snprintf(buf, sizeof(buf), "ls -1F %s\n",
-	    tmpname);
+	(void)snprintf(buf, sizeof(buf), "ls -1F %s\n", tmpname);
 	rc = ftp_cmd(buf, "\n(550|226).*\n"); /* catch errors */
 	if (rc != 226) {
 		unlink(tmpname);	/* remove clutter */
@@ -289,12 +288,12 @@ ftp_pkgcats(char *subdir)
 	}
 
 	f = fopen(tmpname, "r");
-	if (!f)
+	if (f == NULL)
 		bailout("fopen: %s", strerror(errno));
 
 	/* Read through file once to find out how many lines it has */
-	nlines=0;
-	while(fgets(buf, sizeof(buf), f))
+	nlines = 0;
+	while (fgets(buf, sizeof(buf), f) != NULL)
 		nlines++;
 	rewind(f);
 
@@ -304,7 +303,7 @@ ftp_pkgcats(char *subdir)
 
 	/* alloc space for each line now */
 	nlines = 0;
-	while(fgets(buf, sizeof(buf), f)) {
+	while (fgets(buf, sizeof(buf), f) != NULL) {
 		list[nlines] = strdup(buf);
 		/* XXX jdolecek: is this right? strdup() and conditional
 		 * nlines++?
@@ -315,16 +314,16 @@ ftp_pkgcats(char *subdir)
 		}
 	}
 	list[nlines] = NULL;
-	
+
 	fclose(f);
 	unlink(tmpname);
-	
+
 	/*
 	 * Stop FTP coprocess
 	 */
 	ftp_stop();
 
-	return list;
+	return (list);
 }
 
 /*
@@ -350,7 +349,7 @@ ftp_base(int truename)
 	founddot = 0;
 	pkg_path = getenv("PKG_PATH");
 	if (pkg_path)
-		return strdup(pkg_path);
+		return (strdup(pkg_path));
 
 	strlcpy(buf, NETBSD_PKG_BASE, sizeof(buf));
 
@@ -359,7 +358,7 @@ ftp_base(int truename)
 		bailout("uname: %s", strerror(errno));
 
 	strlcat(buf, "/", sizeof(buf));
-	if (!truename)
+	if (!truename) {
 		for (i = 0; i < _SYS_NMLN; i++) {
 			if ((un.release[i] == '_') ||
 			   (un.release[i] >= 'A' && un.release[i] <= 'Z'))
@@ -373,9 +372,10 @@ ftp_base(int truename)
 			if (un.release[i] == '\0')
 				break;
 		}
+	}
 	strlcat(buf, un.release, sizeof(buf));
 	strlcat(buf, "/", sizeof(buf));
 	strlcat(buf, un.machine, sizeof(buf));	/* sysctl hw.machine_arch? */
 
-	return buf;
+	return (buf);
 }

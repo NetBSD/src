@@ -1,4 +1,4 @@
-/*      $NetBSD: formtree.h,v 1.7 2005/01/11 23:11:05 peter Exp $       */
+/*      $NetBSD: formtree.h,v 1.8 2005/01/12 17:38:40 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,17 +75,17 @@ typedef struct formentry {
 extern struct cqForm *cqFormHeadp;
 
 #define MAX_FIELD	512
-#define QUIT	(REQ_MAX_COMMAND+1)
-#define BAIL	(QUIT+1)
-#define GENLIST	(BAIL+1)
-#define SHOWHELP (GENLIST+1)
-#define DUMPSCREEN (SHOWHELP+1)
-#define REFRESH	(DUMPSCREEN+1)
-#define SHELL (REFRESH+1)
-#define RESET (SHELL+1)
-#define EDIT (RESET+1)
-#define COMMAND (EDIT+1)
-#define FASTBAIL (COMMAND+1)
+#define QUIT		(REQ_MAX_COMMAND+1)
+#define BAIL		(QUIT+1)
+#define GENLIST		(BAIL+1)
+#define SHOWHELP	(GENLIST+1)
+#define DUMPSCREEN	(SHOWHELP+1)
+#define REFRESH		(DUMPSCREEN+1)
+#define SHELL		(REFRESH+1)
+#define RESET		(SHELL+1)
+#define EDIT		(RESET+1)
+#define COMMAND		(EDIT+1)
+#define FASTBAIL	(COMMAND+1)
 
 int handle_preform(char *, char *);
 int handle_form(char *, char *, char **);
