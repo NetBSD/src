@@ -1,13 +1,13 @@
-.\"	$NetBSD: whatis,v 1.4 2000/10/14 22:27:43 lukem Exp $
+.\"	$NetBSD: whatis,v 1.5 2000/10/15 12:33:03 shin Exp $
 .
-This is the first major release of
+This is the first official release of
 .Nx*M .
 .Pp
 .Nx*M
 brings the
 NetBSD operating system to
 MIPS based Windows CE PDA machines.  Currently, the
-Vr4102, Vr4111, Vr4121, Vr4181, TX3912, and TX3922 processors are supported.
+Vr4102, Vr4111, Vr4121, TX3912, and TX3922 processors are supported.
 .Pp
 The port name
 .Dq hpcmips
