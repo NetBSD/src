@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.70 2005/02/28 16:20:59 jonathan Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.71 2005/03/02 10:20:18 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,12 +30,14 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe and Kevin M. Lahey of the Numerical Aerospace Simulation
  * Facility, NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -98,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.70 2005/02/28 16:20:59 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.71 2005/03/02 10:20:18 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
