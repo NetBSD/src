@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.349 2003/07/28 05:54:18 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.350 2003/07/28 07:03:43 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -509,7 +509,7 @@ dependall:	.NOTMAIN realdepend .MAKE
 
 #
 # Define MKxxx variables (which are either yes or no) for users
-# to set in /etc/mk.conf and override on the make commandline.
+# to set in /etc/mk.conf and override in the make environment.
 # These should be tested with `== "no"' or `!= "no"'.
 # The NOxxx variables should only be set by Makefiles.
 #
@@ -546,8 +546,8 @@ MK${var}?=	yes
 #
 # MK* options which default to "no".
 #
-.for var in CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 MANZ OBJDIRS SOFTFLOAT \
-	UNPRIVED UPDATE
+.for var in CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 CXXSUPCXX \
+	MANZ OBJDIRS SOFTFLOAT UNPRIVED UPDATE
 MK${var}?=	no
 .endfor
 
