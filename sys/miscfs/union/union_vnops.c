@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.19 1994/12/29 22:48:20 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.20 1995/05/30 08:51:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -1353,12 +1353,14 @@ start:
 	if (un->un_uppervp != NULLVP) {
 		if (((un->un_flags & UN_ULOCK) == 0) &&
 		    (vp->v_usecount != 0)) {
-			un->un_flags |= UN_ULOCK;
 			VOP_LOCK(un->un_uppervp);
+			un->un_flags |= UN_ULOCK;
 		}
 #ifdef DIAGNOSTIC
-		if (un->un_flags & UN_KLOCK)
+		if (un->un_flags & UN_KLOCK) {
+			vprintf("dangling upper lock", vp);
 			panic("union: dangling upper lock");
+		}
 #endif
 	}
 
@@ -1453,6 +1455,10 @@ union_print(ap)
 
 	printf("\ttag VT_UNION, vp=%x, uppervp=%x, lowervp=%x\n",
 			vp, UPPERVP(vp), LOWERVP(vp));
+	if (UPPERVP(vp))
+		vprintf("uppervp", UPPERVP(vp));
+	if (LOWERVP(vp))
+		vprintf("lowervp", LOWERVP(vp));
 	return (0);
 }
 
