@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1996/05/05 12:17:21 oki Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 1996/05/12 20:50:11 oki Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -258,6 +258,7 @@ dev_t	swapdev = makedev(3, 0);
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -268,6 +269,7 @@ iskmemdev(dev)
 /*
  * Returns true if dev is /dev/zero.
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {
