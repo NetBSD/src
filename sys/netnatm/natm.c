@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.1 1996/07/04 03:20:11 chuck Exp $	*/
+/*	$NetBSD: natm.c,v 1.2 1996/08/27 21:45:21 thorpej Exp $	*/
 
 /*
  *
@@ -397,7 +397,7 @@ m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
     natm_sookcnt++;
     natm_sookbytes += m->m_pkthdr.len;
 #endif
-    sbappend(&so->so_rcv, m);
+    sbappendrecord(&so->so_rcv, m);
     sorwakeup(so);
   } else {
 #ifdef NATM_STAT
