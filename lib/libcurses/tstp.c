@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.15 2000/04/12 21:36:36 jdc Exp $	*/
+/*	$NetBSD: tstp.c,v 1.16 2000/04/15 13:17:05 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.15 2000/04/12 21:36:36 jdc Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.16 2000/04/15 13:17:05 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,8 +55,7 @@ __RCSID("$NetBSD: tstp.c,v 1.15 2000/04/12 21:36:36 jdc Exp $");
  *	Handle stop signals.
  */
 void
-__stop_signal_handler(/*ARGSUSED*/signo)
-	int	signo;
+__stop_signal_handler(/*ARGSUSED*/int signo)
 {
 	sigset_t oset, set;
 
@@ -99,7 +98,7 @@ __P((int)) = SIG_DFL;
  * Set the TSTP handler.
  */
 void
-__set_stophandler()
+__set_stophandler(void)
 {
 	otstpfn = signal(SIGTSTP, __stop_signal_handler);
 }
@@ -108,7 +107,7 @@ __set_stophandler()
  * Restore the TSTP handler.
  */
 void
-__restore_stophandler()
+__restore_stophandler(void)
 {
 	(void) signal(SIGTSTP, otstpfn);
 }
@@ -120,7 +119,7 @@ __restore_stophandler()
 static struct termios save_termios;
 
 int
-__stopwin()
+__stopwin(void)
 {
 	/* Get the current terminal state (which the user may have changed). */
 	(void) tcgetattr(STDIN_FILENO, &save_termios);
@@ -185,7 +184,7 @@ __stopwin()
 
 
 void
-__restartwin()
+__restartwin(void)
 {
 	/* Reset the curses SIGTSTP signal handler. */
 	__set_stophandler();
@@ -208,13 +207,13 @@ __restartwin()
 }
 
 int
-def_prog_mode()
+def_prog_mode(void)
 {
 	return (tcgetattr(STDIN_FILENO, &save_termios) ? ERR : OK);
 }
 
 int
-reset_prog_mode()
+reset_prog_mode(void)
 {
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save_termios) ? ERR : OK);

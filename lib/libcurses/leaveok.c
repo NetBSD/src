@@ -1,4 +1,4 @@
-/*	$NetBSD: leaveok.c,v 1.2 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: leaveok.c,v 1.3 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,9 +44,7 @@
  *	Turn on and off leave cursor after refresh for the given window.
  */
 int
-leaveok(win, bf)
-	WINDOW	*win;
-	bool	 bf;
+leaveok(WINDOW *win, bool bf)
 {
 	if (bf)
 		win->flags |= __LEAVEOK;

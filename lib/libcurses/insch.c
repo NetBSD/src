@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.12 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: insch.c,v 1.13 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.12 2000/04/11 13:57:09 blymn Exp $");
+__RCSID("$NetBSD: insch.c,v 1.13 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,14 +47,49 @@ __RCSID("$NetBSD: insch.c,v 1.12 2000/04/11 13:57:09 blymn Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * insch --
+ *	Do an insert-char on the line, leaving (cury, curx) unchanged.
+ */
+int
+insch(chtype ch)
+{
+	return winsch(stdscr, ch);
+}
+
+/*
+ * mvinsch --
+ *      Do an insert-char on the line at (y, x).
+ */
+int
+mvinsch(int y, int x, chtype ch)
+{
+	return mvwinsch(stdscr, y, x, ch);
+}
+
+/*
+ * mvwinsch --
+ *      Do an insert-char on the line at (y, x) in the given window.
+ */
+int
+mvwinsch(WINDOW *win, int y, int x, chtype ch)
+{
+	if (wmove(win, y, x) == ERR)
+		return ERR;
+	
+	return winsch(stdscr, ch);
+}
+
+#endif
+
 /*
  * winsch --
  *	Do an insert-char on the line, leaving (cury, curx) unchanged.
  */
 int
-winsch(win, ch)
-	WINDOW	*win;
-	chtype	 ch;
+winsch(WINDOW *win, chtype ch)
 {
 
 	__LDATA	*end, *temp1, *temp2;

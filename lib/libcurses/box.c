@@ -1,4 +1,4 @@
-/*	$NetBSD: box.c,v 1.11 2000/04/11 13:57:08 blymn Exp $	*/
+/*	$NetBSD: box.c,v 1.12 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)box.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: box.c,v 1.11 2000/04/11 13:57:08 blymn Exp $");
+__RCSID("$NetBSD: box.c,v 1.12 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,9 +50,7 @@ __RCSID("$NetBSD: box.c,v 1.11 2000/04/11 13:57:08 blymn Exp $");
  *	delimiting char, and "hor", as the horizontal one.  Uses wborder().
  */
 int
-box(win, vert, hor)
-	WINDOW	*win;
-	chtype	 vert, hor;
+box(WINDOW *win, chtype vert, chtype hor)
 {
 	return (wborder (win, vert, vert, hor, hor, 0, 0, 0, 0));
 }

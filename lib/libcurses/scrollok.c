@@ -1,4 +1,4 @@
-/*	$NetBSD: scrollok.c,v 1.2 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: scrollok.c,v 1.3 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,9 +44,7 @@
  *	Turn on and off scrolling for the given window.
  */
 int
-scrollok(win, bf)
-	WINDOW	*win;
-	bool	 bf;
+scrollok(WINDOW *win, bool bf)
 {
 	if (bf)
 		win->flags |= __SCROLLOK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getyx.c,v 1.1 2000/04/12 21:50:24 jdc Exp $	*/
+/*	$NetBSD: getyx.c,v 1.2 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,8 +46,7 @@
  *	Get current y position on window.
  */
 int
-getcury(win)
-	WINDOW	*win;
+getcury(WINDOW *win)
 {
 	return(win->cury);
 }
@@ -57,8 +56,7 @@ getcury(win)
  *	Get current x position on window.
  */
 int
-getcurx(win)
-	WINDOW	*win;
+getcurx(WINDOW *win)
 {
 	return(win->curx);
 }
@@ -68,8 +66,7 @@ getcurx(win)
  *	Get begin y position on window.
  */
 int
-getbegy(win)
-	WINDOW	*win;
+getbegy(WINDOW *win)
 {
 	return(win->begy);
 }
@@ -79,8 +76,7 @@ getbegy(win)
  *	Get begin x position on window.
  */
 int
-getbegx(win)
-	WINDOW	*win;
+getbegx(WINDOW *win)
 {
 	return(win->begx);
 }
@@ -90,8 +86,7 @@ getbegx(win)
  *	Get maximum y position on window.
  */
 int
-getmaxy(win)
-	WINDOW	*win;
+getmaxy(WINDOW *win)
 {
 	return(win->maxy);
 }
@@ -101,8 +96,7 @@ getmaxy(win)
  *	Get maximum x position on window.
  */
 int
-getmaxx(win)
-	WINDOW	*win;
+getmaxx(WINDOW *win)
 {
 	return(win->maxx);
 }

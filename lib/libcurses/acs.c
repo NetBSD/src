@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.5 2000/04/12 21:33:35 jdc Exp $	*/
+/*	$NetBSD: acs.c,v 1.6 2000/04/15 13:17:02 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ chtype _acs_char[NUM_ACS];
  *	character pairs - ACS definition then terminal representation.
  */
 void
-__init_acs()
+__init_acs(void)
 {
 	int		count;
 	char		*aofac;	/* Address of 'ac' */
