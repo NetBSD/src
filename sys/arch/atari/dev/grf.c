@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.8 1996/03/17 01:26:47 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.9 1996/03/20 08:17:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -116,7 +116,7 @@ struct cfattach grfbus_ca = {
 };
 
 struct cfdriver grfbus_cd = {
-	NULL, "grfbus", DV_DULL, sizeof(struct device)
+	NULL, "grfbus", DV_DULL
 };
 
 struct cfattach grf_ca = {
@@ -124,7 +124,7 @@ struct cfattach grf_ca = {
 };
 
 struct cfdriver grf_cd = {
-	NULL, "grf", DV_DULL, NULL, 0
+	NULL, "grf", DV_DULL
 };
 
 /*
