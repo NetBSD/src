@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.10 2000/03/23 01:04:11 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.11 2000/03/24 08:24:29 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.10 2000/03/23 01:04:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.11 2000/03/24 08:24:29 nisimura Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -197,7 +197,7 @@ struct cfattach zsc_ioasic_ca = {
 
 /* Interrupt handlers. */
 int	zs_ioasic_hardintr __P((void *));
-void	zs_ioasic_softintr __P((void *));
+void	zs_ioasic_softintr __P((void));
 
 /* Misc. */
 void	zs_ioasic_enable __P((int));
@@ -205,6 +205,7 @@ void	zs_ioasic_enable __P((int));
 volatile int zs_ioasic_soft_scheduled;
 
 extern struct cfdriver ioasic_cd;
+extern struct cfdriver zsc_cd;
 
 /*
  * Is the zs chip present?
