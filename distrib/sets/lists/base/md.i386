@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.66 2000/06/07 01:31:37 thorpej Exp $
+# $NetBSD: md.i386,v 1.67 2000/06/13 00:54:21 wiz Exp $
 ./dev/audio
 ./dev/audioctl
 ./dev/bktr
@@ -8,8 +8,6 @@
 ./dev/vbi
 ./sbin/fdisk
 ./usr/bin/fdformat
-./usr/bin/fontedit
-./usr/bin/vttest
 ./usr/lib/libi386.so
 ./usr/lib/libi386.so.0
 ./usr/lib/libi386.so.0.2
@@ -43,13 +41,3 @@
 ./usr/sbin/apmd
 ./usr/sbin/bad144
 ./usr/sbin/zzz
-./usr/share/pcvt
-./usr/share/pcvt/fonts
-./usr/share/pcvt/fonts/vt220h.808
-./usr/share/pcvt/fonts/vt220h.810
-./usr/share/pcvt/fonts/vt220h.814
-./usr/share/pcvt/fonts/vt220h.816
-./usr/share/pcvt/fonts/vt220l.808
-./usr/share/pcvt/fonts/vt220l.810
-./usr/share/pcvt/fonts/vt220l.814
-./usr/share/pcvt/fonts/vt220l.816
