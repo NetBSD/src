@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.199 2002/03/04 02:30:27 simonb Exp $	*/
+/*	$NetBSD: init_main.c,v 1.200 2002/05/27 13:46:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199 2002/03/04 02:30:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.200 2002/05/27 13:46:45 itojun Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -374,6 +374,7 @@ main(void)
 	s = splnet();
 	ifinit();
 	domaininit();
+	if_attachdomain();
 	splx(s);
 
 #ifdef GPROF
