@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.7,v 1.7 2004/07/01 10:38:28 kleink Exp $
+.\"	$NetBSD: signal.7,v 1.8 2005/01/14 22:33:15 jmmv Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,12 +86,14 @@ call (formerly
 .El
 .Pp
 A function that is async-signal-safe is either reentrant or
-non-interruptible by signals, this means that they can be used in
+non-interruptible by signals.
+This means that they can be used in
 signal handlers
 and in the child of threaded programs after doing
 .Xr fork 2 .
 .Pp
-The following functions are async-signal-safe, any function not listed
+The following functions are async-signal-safe.
+Any function not listed
 below is unsafe to use in signal handlers.
 .Pp
 .Xr _Exit 2 ,
