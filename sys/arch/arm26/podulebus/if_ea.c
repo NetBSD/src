@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.10 2000/08/12 11:56:46 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.11 2000/08/12 12:15:59 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -52,7 +52,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.10 2000/08/12 11:56:46 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.11 2000/08/12 12:15:59 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -233,7 +233,6 @@ int
 eaprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
-	u_int iobase;
 	
 	/* Look for a network slot interface */
 
@@ -243,13 +242,6 @@ eaprobe(struct device *parent, struct cfdata *cf, void *aux)
 			    PODULE_ACORN_ETHER3XXX, -1) == 0)
 	    && (matchpodule(pa, MANUFACTURER_ANT, PODULE_ANT_ETHER3, -1) == 0))
 		return(0);
-
-	iobase = pa->pa_memc_h + EA_8005_BASE;
-
-	/* Reset it  - Why here ? */
-
-	WriteShort(iobase + EA_8005_CONFIG2, EA_CFG2_RESET);
-	delay(100);
 
 	return(1);
 }
