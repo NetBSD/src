@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.33 1994/02/06 10:04:53 mycroft Exp $
+ *	$Id: wd.c,v 1.34 1994/02/06 17:46:06 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -1648,14 +1648,16 @@ wddisksort(struct buf *dp, struct buf *bp)
 	 * we become the only thing.
 	 */
 	ap = dp->b_actf;
-	if(ap == NULL) {
-		dp->b_actf = bp;
-		dp->b_actl = bp;
+	if (ap == NULL) {
+		dp->b_actb = &dp->b_actf;	/* XXX */
 		bp->b_actf = NULL;
+		bp->b_actb = dp->b_actb;
+		*dp->b_actb = bp;
+		dp->b_actb = &bp->b_actf;
 		return;
 	}
-	while( ap->b_flags & B_XXX) {
-		if( ap->b_actf == 0 || (ap->b_actf->b_flags & B_XXX) == 0)
+	while (ap->b_flags & B_XXX) {
+		if (ap->b_actf == 0 || (ap->b_actf->b_flags & B_XXX) == 0)
 			break;
 		ap = ap->b_actf;
 	}
@@ -1715,10 +1717,12 @@ wddisksort(struct buf *dp, struct buf *bp)
 	 * which is the same as the end of the whole schebang.
 	 */
 insert:
-	bp->b_actf = ap->b_actf;
+	if (bp->b_actf = ap->b_actf)
+		bp->b_actf->b_actb = &bp->b_actf;
+	else
+		dp->b_actb = &bp->b_actf;
 	ap->b_actf = bp;
-	if (ap == dp->b_actl)
-		dp->b_actl = bp;
+	bp->b_actb = &ap->b_actf;
 }
 
 static int
