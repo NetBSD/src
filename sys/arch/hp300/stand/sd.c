@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.7 1994/10/26 07:28:00 cgd Exp $	*/
+/*	$NetBSD: sd.c,v 1.8 1995/09/23 17:19:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -129,7 +129,8 @@ sdgetinfo(ss)
 	register struct sdminilabel *pi = &ss->sc_pinfo;
 	register struct disklabel *lp = &sdlabel;
 	char *msg, *getdisklabel();
-	int sdstrategy(), i, err;
+	int sdstrategy(), err;
+	size_t i;
 
 	bzero((caddr_t)lp, sizeof *lp);
 	lp->d_secsize = (DEV_BSIZE << ss->sc_blkshift);
@@ -196,14 +197,30 @@ sdopen(f, ctlr, unit, part)
 	return (0);
 }
 
-sdstrategy(ss, func, dblk, size, buf, rsize)
+sdclose(f)
+	struct open_file *f;
+{
+	struct sd_softc *ss = f->f_devdata;
+
+	/*
+	 * Mark the disk `not alive' so that the disklabel
+	 * will be re-loaded at next open.
+	 */
+	bzero(ss, sizeof(sd_softc));
+	f->f_devdata = NULL;
+
+	return (0);
+}
+
+sdstrategy(ss, func, dblk, size, v_buf, rsize)
 	register struct sd_softc *ss;
 	int func;
 	daddr_t dblk;
-	u_int size;
-	char *buf;
-	u_int *rsize;
+	size_t size;
+	void *v_buf;
+	size_t *rsize;
 {
+	char *buf = v_buf;
 	register int ctlr = ss->sc_ctlr;
 	register int unit = ss->sc_unit;
 	daddr_t blk = (dblk + ss->sc_pinfo.offset[ss->sc_part])>> ss->sc_blkshift;
