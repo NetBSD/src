@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.18 2001/09/15 20:36:31 chs Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.19 2001/09/15 22:44:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,8 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <miscfs/genfs/genfs_node.h>
-
 /*
  * Arguments to mount amigados filesystems.
  */
@@ -45,6 +43,8 @@ struct adosfs_args {
 };
 
 #ifdef _KERNEL
+#include <miscfs/genfs/genfs_node.h>
+
 /*
  * Amigados datestamp. (from 1/1/1978 00:00:00 local)
  */
