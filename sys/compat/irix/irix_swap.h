@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.h,v 1.2 2002/03/18 20:34:54 manu Exp $ */
+/*	$NetBSD: irix_swap.h,v 1.3 2002/03/28 13:14:42 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
 
 #ifndef _IRIX_SWAPCTL_H_
 #define _IRIX_SWAPCTL_H_
+
+/* swap block size for swapctl(2), from swapctl(2) man page */
+#define IRIX_SWAP_BLKSZ 512
 
 /* From IRIX's <sys/swap.h> */
 #define IRIX_SC_ADD		1
@@ -94,5 +97,6 @@ struct irix_xswapres {
 	irix_off_t sr_vlength;
 	signed char sr_pri;
 };
+
 
 #endif /* _IRIX_SWAPCTL_H_ */
