@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.27.2.1 1999/10/18 05:05:41 cgd Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.27.2.2 2000/01/08 18:43:28 he Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1049,11 +1049,8 @@ bad:
 	/*
 	 * failure: close device if necessary and return error.
 	 */
-	if (vp != rootvp) {
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (vp != rootvp)
 		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
-		VOP_UNLOCK(vp, 0);
-	}
 	return (error);
 }
 
@@ -1102,11 +1099,8 @@ swap_off(p, sdp)
 	extent_destroy(sdp->swd_ex);
 	free(name, M_VMSWAP);
 	free((caddr_t)sdp->swd_ex, M_VMSWAP);
-	if (sdp->swp_vp != rootvp) {
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (sdp->swp_vp != rootvp)
 		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
-		VOP_UNLOCK(vp, 0);
-	}
 	if (sdp->swd_vp)
 		vrele(sdp->swd_vp);
 	free((caddr_t)sdp, M_VMSWAP);
