@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.32 2003/04/26 11:05:10 ragge Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.33 2003/05/03 00:39:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -389,7 +389,9 @@ initarm(void *arg)
 	extern int etext asm ("_etext");
 	extern int end asm ("_end");
 	pv_addr_t kernel_l1pt;
+#ifndef ARM32_PMAP_NEW
 	pv_addr_t kernel_ptpt;
+#endif
 	paddr_t memstart;
 	psize_t memsize;
 #if NPLCOM > 0 && defined(PLCONSOLE)
@@ -538,10 +540,15 @@ initarm(void *arg)
 		    && kernel_l1pt.pv_pa == 0) {
 			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
 		} else {
+#ifdef ARM32_PMAP_NEW
+			valloc_pages(kernel_pt_table[loop1],
+			    L2_TABLE_SIZE / PAGE_SIZE);
+#else
 			alloc_pages(kernel_pt_table[loop1].pv_pa,
 			    L2_TABLE_SIZE / PAGE_SIZE);
 			kernel_pt_table[loop1].pv_va =
 			    kernel_pt_table[loop1].pv_pa;
+#endif
 			++loop1;
 		}
 	}
@@ -557,8 +564,10 @@ initarm(void *arg)
 	 */
 	alloc_pages(systempage.pv_pa, 1);
 
+#ifndef ARM32_PMAP_NEW
 	/* Allocate a page for the page table to map kernel page tables. */
 	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / PAGE_SIZE);
+#endif
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -604,7 +613,9 @@ initarm(void *arg)
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+#ifndef ARM32_PMAP_NEW
 	pmap_link_l2pt(l1pagetable, PTE_BASE, &kernel_ptpt);
+#endif
 
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
@@ -647,9 +658,21 @@ initarm(void *arg)
 	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
 	    UPAGES * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
+#ifndef ARM32_PMAP_NEW
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
 	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#else
+	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
 
+	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
+		pmap_map_chunk(l1pagetable, kernel_pt_table[loop].pv_va,
+		    kernel_pt_table[loop].pv_va, L2_TABLE_SIZE,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+	}
+#endif
+
+#ifndef ARM32_PMAP_NEW
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
@@ -679,6 +702,7 @@ initarm(void *arg)
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#endif
 
 	/* Map the vector page. */
 #if 1
@@ -734,8 +758,21 @@ initarm(void *arg)
 	       physical_freestart, free_pages, free_pages);
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
+#ifdef ARM32_PMAP_NEW
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
+#endif
 	setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
+#ifdef ARM32_PMAP_NEW
+	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
+
+	/*
+	 * Moved from cpu_startup() as data_abort_handler() references
+	 * this during uvm init
+	 */
+	proc0paddr = (struct user *)kernelstack.pv_va;
+	lwp0.l_addr = proc0paddr;
+#endif
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done!\n");
@@ -805,7 +842,11 @@ initarm(void *arg)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
+#ifdef ARM32_PMAP_NEW
+	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va);
+#else
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
+#endif
 
 	/* Setup the IRQ system */
 	printf("irq ");
