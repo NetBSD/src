@@ -1,4 +1,4 @@
-/*	$NetBSD: tod.c,v 1.1 2001/04/06 15:05:57 fredette Exp $	*/
+/*	$NetBSD: tod.c,v 1.2 2001/06/11 21:33:47 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -65,20 +65,30 @@
 #include <sun2/sun2/machdep.h>
 #include <sun2/sun2/tod.h>
 
+#include <dev/vme/vmereg.h>
+#include <dev/vme/vmevar.h>
+
 #include <dev/clock_subr.h>
 #include <dev/ic/mm58167var.h>
 
 static todr_chip_handle_t todr_handle;
 
-static int  tod_match __P((struct device *, struct cfdata *, void *args));
-static void tod_attach __P((struct device *, struct device *, void *));
+static int  tod_obio_match __P((struct device *, struct cfdata *, void *args));
+static void tod_obio_attach __P((struct device *, struct device *, void *));
+static int  tod_vme_match __P((struct device *, struct cfdata *, void *args));
+static void tod_vme_attach __P((struct device *, struct device *, void *));
+static void tod_attach __P((struct mm58167_softc *));
 
-struct cfattach tod_ca = {
-	sizeof(struct mm58167_softc), tod_match, tod_attach
+struct cfattach tod_obio_ca = {
+	sizeof(struct mm58167_softc), tod_obio_match, tod_obio_attach
+};
+
+struct cfattach tod_vme_ca = {
+	sizeof(struct mm58167_softc), tod_vme_match, tod_vme_attach
 };
 
 static int
-tod_match(parent, cf, args)
+tod_obio_match(parent, cf, args)
     struct device *parent;
 	struct cfdata *cf;
     void *args;
@@ -101,7 +111,7 @@ tod_match(parent, cf, args)
 }
 
 static void
-tod_attach(parent, self, args)
+tod_obio_attach(parent, self, args)
 	struct device *parent;
 	struct device *self;
 	void *args;
@@ -113,20 +123,76 @@ tod_attach(parent, self, args)
 
 	/* Map the device. */
 	sc->mm58167_regt = ca->ca_bustag;
-	if (bus_space_map(ca->ca_bustag, ca->ca_paddr, sizeof(struct mm58167regs), 0, &sc->mm58167_regh))
-		panic("tod_attach: can't map");
+	if (bus_space_map(ca->ca_bustag, ca->ca_paddr, MM58167REG_BANK_SZ, 0, &sc->mm58167_regh))
+		panic("tod_obio_attach: can't map");
+
+	tod_attach(sc);
+}
+
+static int
+tod_vme_match(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct vme_attach_args	*va = aux;
+	vme_chipset_tag_t	ct = va->va_vct;
+	vme_am_t		mod; 
+	vme_addr_t		vme_addr;
+
+	/* Make sure there is something there... */
+	mod = VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA;
+	vme_addr = va->r[0].offset;
+
+	if (vme_probe(ct, vme_addr, 1, mod, VME_D8, NULL, 0) != 0)
+		return (0);
+
+	return (1);
+}
+
+static void
+tod_vme_attach(parent, self, aux)
+	struct device	*parent, *self;
+	void		*aux;
+{
+	struct mm58167_softc *sc;
+	struct vme_attach_args	*va = aux;
+	vme_chipset_tag_t	ct = va->va_vct;
+	bus_space_tag_t		bt;
+	bus_space_handle_t	bh;
+	vme_am_t		mod;
+	vme_mapresc_t resc;
+
+	sc = (struct mm58167_softc *) self;
+
+	mod = VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA;
+
+	if (vme_space_map(ct, va->r[0].offset, MM58167REG_BANK_SZ,
+			  mod, VME_D8, 0, &bt, &bh, &resc) != 0)
+		panic("tod_vme_attach: can't map");
+
+	sc->mm58167_regt = bt;
+	sc->mm58167_regh = bh;
+
+	tod_attach(sc);
+}
+
+static void
+tod_attach(sc)
+	struct mm58167_softc *sc;
+{
 
 	/* Call the IC attach code. */
-	sc->mm58167_msec_xxx = offsetof(struct mm58167regs, mm58167_msec_xxx);
-	sc->mm58167_csec = offsetof(struct mm58167regs, mm58167_csec);
-	sc->mm58167_sec = offsetof(struct mm58167regs, mm58167_sec);
-	sc->mm58167_min = offsetof(struct mm58167regs, mm58167_min);
-	sc->mm58167_hour = offsetof(struct mm58167regs, mm58167_hour);
-	sc->mm58167_wday = offsetof(struct mm58167regs, mm58167_wday);
-	sc->mm58167_day = offsetof(struct mm58167regs, mm58167_day);
-	sc->mm58167_mon = offsetof(struct mm58167regs, mm58167_mon);
-	sc->mm58167_status = offsetof(struct mm58167regs, mm58167_status);
-	sc->mm58167_go = offsetof(struct mm58167regs, mm58167_go);
+	sc->mm58167_msec_xxx = MM58167REG_MSEC_XXX;
+	sc->mm58167_csec = MM58167REG_CSEC;
+	sc->mm58167_sec = MM58167REG_SEC;
+	sc->mm58167_min = MM58167REG_MIN;
+	sc->mm58167_hour = MM58167REG_HOUR;
+	sc->mm58167_wday = MM58167REG_WDAY;
+	sc->mm58167_day = MM58167REG_DAY;
+	sc->mm58167_mon = MM58167REG_MON;
+	sc->mm58167_status = MM58167REG_STATUS;
+	sc->mm58167_go = MM58167REG_GO;
 	if ((todr_handle = mm58167_attach(sc)) == NULL)
 		panic("tod_attach: can't attach ic");
 
