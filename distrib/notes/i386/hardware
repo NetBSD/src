@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.94 2001/07/30 13:46:03 jdolecek Exp $
+.\"	$NetBSD: hardware,v 1.95 2001/09/17 19:39:43 jdolecek Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -159,6 +159,8 @@ BOCA 6-port (ioat) serial cards [*]
 .It
 .Tn IBM
 PC-RT 4-port serial cards [*]
+.It
+TCOM TC-400 (4-port), TC-800 (8-port) serial cards [*]
 .It
 Single-port Hayes ESP serial cards [*]
 .It
