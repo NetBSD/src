@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.22 2003/02/04 22:38:17 perry Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.23 2003/05/06 10:46:43 jmmv Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -168,7 +168,7 @@ Copy files from an svr4 system:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@svr4) cd /usr/ucblib
-.br 
+.br
 .It (me@svr4) tar -cf -\ . | \e
 .in +5
 .It rsh netbsd 'cd /emul/svr4/usr/ucblib \*[Am]\*[Am] tar -xpf -'
