@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.24 1999/02/18 05:46:38 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.25 1999/02/18 07:59:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -248,8 +248,8 @@ struct eap_dma {
 	size_t size;
 	struct eap_dma *next;
 };
-#define DMAADDR(map) ((map)->segs[0].ds_addr)
-#define KERNADDR(map) ((void *)((map)->addr))
+#define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
+#define KERNADDR(p) ((void *)((p)->addr))
 
 struct eap_softc {
 	struct device sc_dev;		/* base device */
