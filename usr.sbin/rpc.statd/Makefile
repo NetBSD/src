@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/07/25 06:29:47 cgd Exp $
+#	$NetBSD: Makefile,v 1.10 2002/01/31 15:21:09 tv Exp $
 
 PROG=	rpc.statd
 SRCS=	sm_inter_svc.c statd.c stat_proc.c
@@ -11,6 +11,8 @@ DPADD=	${LIBRPCSVC} ${LIBUTIL}
 LDADD=	-lrpcsvc -lutil
 
 CLEANFILES+= sm_inter_svc.c sm_inter.x sm_inter.h test
+
+.include <bsd.prog.mk>
 
 sm_inter.x: ${DESTDIR}/usr/include/rpcsvc/sm_inter.x
 	rm -f ${.TARGET}
@@ -25,5 +27,3 @@ sm_inter_svc.c: sm_inter.x sm_inter.h
 
 test: ${.CURDIR}/test.c
 	cc -o test ${.CURDIR}/test.c -lrpcsvc
-
-.include <bsd.prog.mk>
