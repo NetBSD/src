@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.8 2002/05/20 13:41:42 lukem Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.9 2002/05/21 00:19:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -261,9 +261,9 @@ struct apple_part_map_entry {
  */
 
 #define	NEWS_BOOT_BLOCK_LABELOFFSET	64 /* XXX from <machine/disklabel.h> */
-#define	NEWS_BOOT_BLOCK_OFFSET		512
+#define	NEWS_BOOT_BLOCK_OFFSET		0
 #define	NEWS_BOOT_BLOCK_BLOCKSIZE	512
-#define	NEWS_BOOT_BLOCK_MAX_SIZE	(512 * (1 + 15))
+#define	NEWS_BOOT_BLOCK_MAX_SIZE	(512 * 16)
 
 	/* Magic string -- 32 bytes long (including the NUL) */
 #define	NEWS68K_BBINFO_MAGIC		"NetBSD/news68k bootxx  20020518"
