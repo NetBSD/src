@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.70 2000/12/17 15:52:43 jdolecek Exp $
+# 	$NetBSD: Makefile.sparc,v 1.71 2001/01/22 12:59:29 pk Exp $
 
 # Makefile for NetBSD
 #
@@ -50,6 +50,9 @@ CWARNFLAGS+=	-Wno-uninitialized
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
+# work around GCC (egcs-2.91.66) bug which is liable
+# to use FPU registers as temporaries:
+CFLAGS+=	-mno-fpu
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Ttext F0004000 -e start
 .if ${OBJECT_FMT} != "ELF"
