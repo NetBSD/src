@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_intr.h,v 1.4 2003/09/21 19:32:39 matt Exp $	*/
+/*	$NetBSD: i80321_intr.h,v 1.5 2004/01/12 10:25:06 scw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -72,6 +72,9 @@ i80321_splx(int new)
 	extern void i80321_do_pending(void);
 	int oldirqstate, hwpend;
 
+	/* Don't let the compiler re-order this code with preceding code */
+	__insn_barrier();
+
 	current_spl_level = new;
 
 	hwpend = (i80321_ipending & ICU_INT_HWMASK) & ~new;
@@ -95,6 +98,9 @@ i80321_splraise(int ipl)
 
 	old = current_spl_level;
 	current_spl_level |= i80321_imask[ipl];
+
+	/* Don't let the compiler re-order this code with subsequent code */
+	__insn_barrier();
 
 	return (old);
 }
