@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.5 2001/01/31 00:14:29 thorpej Exp $
+#	$NetBSD: files.dreamcast,v 1.6 2001/01/31 18:39:46 thorpej Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -6,6 +6,11 @@
 include "arch/dreamcast/conf/files.shbus"
 
 include "dev/wscons/files.wscons"
+#include "dev/rasops/files.rasops"
+#include "dev/wsfont/files.wsfont"
+
+include "dev/i2o/files.i2o"
+include "dev/pci/files.pci"
 
 file	arch/dreamcast/dreamcast/conf.c
 file	arch/dreamcast/dreamcast/machdep.c
@@ -20,19 +25,29 @@ defopt	opt_initbsc.h	BSC_BCR1_VAL BSC_BCR2_VAL BSC_WCR1_VAL BSC_WCR2_VAL
 
 device maple { [port = -1], [subunit = -1] }
 attach maple at shb
-file	arch/dreamcast/dev/maple/maple.c	maple
+file	arch/dreamcast/dev/maple/maple.c		maple
 
 device	mkbd: wskbddev
 attach	mkbd at maple
-file	arch/dreamcast/dev/maple/mkbd.c		mkbd needs-flag
+file	arch/dreamcast/dev/maple/mkbd.c			mkbd	needs-flag
 
-
+#device  pvr: wsemuldisplaydev, rasops16
 device  pvr: wsemuldisplaydev, wsrasteremulops
 attach  pvr at shb
-file    arch/dreamcast/dev/pvr.c  pvr needs-flag
+file    arch/dreamcast/dev/pvr.c			pvr	needs-flag
 
 device	gdrom: disk
 attach	gdrom at shb
-file	arch/dreamcast/dev/gdrom.c gdrom needs-flag
+file	arch/dreamcast/dev/gdrom.c			gdrom	needs-flag
 major	{gdrom = 19}
 
+device	g2bus { }
+attach	g2bus at shb
+file	arch/dreamcast/dev/g2/g2bus.c			g2bus
+file	arch/dreamcast/dev/g2/g2bus_bus_mem.c		g2bus
+
+device	gapspci: pcibus
+attach	gapspci at g2bus
+file	arch/dreamcast/dev/g2/gapspci.c			gapspci
+file	arch/dreamcast/dev/g2/gapspci_dma.c		gapspci
+file	arch/dreamcast/dev/g2/gapspci_pci.c		gapspci
