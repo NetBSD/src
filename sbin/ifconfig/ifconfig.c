@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.121 2001/11/02 05:57:38 lukem Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.122 2002/04/25 09:39:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.121 2001/11/02 05:57:38 lukem Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.122 2002/04/25 09:39:17 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,10 +125,11 @@ __RCSID("$NetBSD: ifconfig.c,v 1.121 2001/11/02 05:57:38 lukem Exp $");
 
 struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq __attribute__((aligned(4)));
+struct	in_aliasreq	in_addreq;
 #ifdef INET6
 struct	in6_ifreq	ifr6;
 struct	in6_ifreq	in6_ridreq;
-struct	in6_aliasreq	in6_addreq __attribute__((aligned(4)));
+struct	in6_aliasreq	in6_addreq;
 #endif
 struct	iso_ifreq	iso_ridreq;
 struct	iso_aliasreq	iso_addreq;
@@ -372,7 +373,7 @@ struct afswtch {
 } afs[] = {
 #define C(x) ((caddr_t) &x)
 	{ "inet", AF_INET, in_status, in_getaddr, in_getprefix,
-	     SIOCDIFADDR, SIOCAIFADDR, SIOCGIFADDR, C(ridreq), C(addreq) },
+	     SIOCDIFADDR, SIOCAIFADDR, SIOCGIFADDR, C(ridreq), C(in_addreq) },
 #ifdef INET6
 	{ "inet6", AF_INET6, in6_status, in6_getaddr, in6_getprefix,
 	     SIOCDIFADDR_IN6, SIOCAIFADDR_IN6,
@@ -2074,29 +2075,30 @@ in_alias(creq)
 	if (memcmp(&ifr.ifr_addr, &creq->ifr_addr,
 		   sizeof(creq->ifr_addr)) == 0)
 		alias = 0;
-	(void) memset(&addreq, 0, sizeof(addreq));
-	(void) strncpy(addreq.ifra_name, name, sizeof(addreq.ifra_name));
-	addreq.ifra_addr = creq->ifr_addr;
-	if (ioctl(s, SIOCGIFALIAS, (caddr_t)&addreq) == -1) {
+	(void) memset(&in_addreq, 0, sizeof(in_addreq));
+	(void) strncpy(in_addreq.ifra_name, name, sizeof(in_addreq.ifra_name));
+	memcpy(&in_addreq.ifra_addr, &creq->ifr_addr,
+	    sizeof(in_addreq.ifra_addr));
+	if (ioctl(s, SIOCGIFALIAS, (caddr_t)&in_addreq) == -1) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			return;
 		} else
 			warn("SIOCGIFALIAS");
 	}
 
-	iasin = (struct sockaddr_in *)&addreq.ifra_addr;
+	iasin = &in_addreq.ifra_addr;
 	printf("\tinet %s%s", alias ? "alias " : "", inet_ntoa(iasin->sin_addr));
 
 	if (flags & IFF_POINTOPOINT) {
-		iasin = (struct sockaddr_in *)&addreq.ifra_dstaddr;
+		iasin = &in_addreq.ifra_dstaddr;
 		printf(" -> %s", inet_ntoa(iasin->sin_addr));
 	}
 
-	iasin = (struct sockaddr_in *)&addreq.ifra_mask;
+	iasin = &in_addreq.ifra_mask;
 	printf(" netmask 0x%x", ntohl(iasin->sin_addr.s_addr));
 
 	if (flags & IFF_BROADCAST) {
-		iasin = (struct sockaddr_in *)&addreq.ifra_broadaddr;
+		iasin = &in_addreq.ifra_broadaddr;
 		printf(" broadcast %s", inet_ntoa(iasin->sin_addr));
 	}
 	printf("\n");
@@ -2449,8 +2451,8 @@ iso_status(force)
 
 #define SIN(x) ((struct sockaddr_in *) &(x))
 struct sockaddr_in *sintab[] = {
-SIN(ridreq.ifr_addr), SIN(addreq.ifra_addr),
-SIN(addreq.ifra_mask), SIN(addreq.ifra_broadaddr)};
+SIN(ridreq.ifr_addr), SIN(in_addreq.ifra_addr),
+SIN(in_addreq.ifra_mask), SIN(in_addreq.ifra_broadaddr)};
 
 void
 in_getaddr(str, which)
