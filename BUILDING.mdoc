@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.9 2001/11/12 23:16:18 tv Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.10 2001/11/14 22:29:23 tv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -262,6 +262,21 @@ Indicates whether system documentation destined for
 .Sy /usr/share/doc
 will be installed during a build.
 .DFLTy
+.
+.It Sy MKHOSTOBJ
+.YorN
+If set to
+.Dq yes ,
+then for programs intended to be run on the compile host,
+the name, release, and architecture of the host operating system
+will be suffixed to the name of the object directory created by
+.Dq make obj .
+(This allows multiple host systems to compile NetBSD for a single target.)
+If set to
+.Dq no ,
+then programs built to be run on the compile host will use the same
+object directory names as programs built to be run on the target.
+.DFLTn
 .
 .It Sy MKINFO
 .YorN
