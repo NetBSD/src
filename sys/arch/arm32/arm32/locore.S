@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26 1998/06/17 20:14:07 mark Exp $	*/
+/*	$NetBSD: locore.S,v 1.27 1998/06/24 19:22:48 mark Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -166,6 +166,9 @@ Lfiqmsg:
 	.asciz	"fiq"
 	.align	0
 
+#ifndef OFW
+	/* OFW based systems will used OF_boot() */
+	
 Lcpufuncs:	
 	.word	_cpufuncs
 
@@ -193,6 +196,7 @@ Lboot_cache_purged:
 	mcr     15, 0, r0, c1, c0, 0
 	mcr     15, 0, r0, c8, c7, 0
 	mov     pc, r4
+#endif
 
 	/*
 	 * _cpu_reset_address contains the address to branch to, to complete
