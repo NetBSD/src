@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.33 1998/10/05 16:03:04 mark Exp $	*/
+/*	$NetBSD: conf.c,v 1.34 1998/10/06 02:41:22 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -179,6 +179,9 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ugen.h"
 #include "ulpt.h"
 #include "vcoda.h"			/* coda file system */
+#include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
 
 /* Character devices */
 
@@ -260,9 +263,9 @@ struct cdevsw cdevsw[] = {
 	cdev_midi_init(NMIDI,midi),	/* 57: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 58: sequencer I/O */
 	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 59: coda file system psdev */
-	cdev_lkm_dummy(),		/* 60: reserved for wsdisplay */
-	cdev_lkm_dummy(),		/* 61: reserved for wskbd */
-	cdev_lkm_dummy(),		/* 62: reserved for wsmouse */
+	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay), /* 60: frame buffers, etc. */
+	cdev_mouse_init(NWSKBD, wskbd), /* 61: keyboards */
+	cdev_mouse_init(NWSMOUSE, wsmouse), /* 62: mice */
 	cdev_lkm_dummy(),		/* 63: reserved */
 	cdev_usb_init(NUSB,usb),        /* 64: USB controller */
 	cdev_usbdev_init(NUHID,uhid),   /* 65: USB generic HID */
