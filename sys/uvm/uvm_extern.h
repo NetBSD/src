@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.2 1998/02/06 22:31:43 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.3 1998/02/07 02:24:02 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -156,7 +156,10 @@ struct uvmexp {
 	int free;       /* number of free pages */
 	int active;     /* number of active pages */
 	int inactive;   /* number of pages that we free'd but may want back */
+	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
+	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
+	int reserve_kernel; /* number of pages reserved for kernel */
 
                 /* pageout params */
         int freemin;    /* min number of free pages */
@@ -167,7 +170,7 @@ struct uvmexp {
 		/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
 	int swpages;	/* number of PAGE_SIZE'ed swap pages */
-	int swpginuse;	/* swap pages in use */
+	int swpginuse;	/* number of swap pages in use */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
 	int nanon;	/* number total of anon's in system */
 	int nfreeanon;	/* number of free anon's */
@@ -293,6 +296,8 @@ int			uvm_map __P((vm_map_t, vm_offset_t *, vm_size_t,
 				struct uvm_object *, vm_offset_t, uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vm_offset_t, 
 				vm_offset_t, boolean_t));
+boolean_t		uvm_map_checkprot __P((vm_map_t, vm_offset_t,
+				vm_offset_t, vm_prot_t));
 #if defined(DDB)
 void			uvm_map_print __P((vm_map_t, boolean_t));
 void			uvm_map_printit __P((vm_map_t, boolean_t,
