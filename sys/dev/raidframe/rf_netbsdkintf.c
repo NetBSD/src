@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.100 2000/11/20 08:24:24 chs Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.101 2000/12/05 01:35:56 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -423,6 +423,7 @@ rf_buildroothack(arg)
 	int rootID;
 	int num_root;
 
+	rootID = 0;
 	num_root = 0;
 	cset = config_sets;
 	while(cset != NULL ) {
@@ -2946,6 +2947,7 @@ rf_have_enough_components(cset)
 	/* Determine what the mod_counter is supposed to be for this set. */
 
 	mod_counter_found = 0;
+	mod_counter = 0;
 	ac = cset->ac;
 	while(ac!=NULL) {
 		if (mod_counter_found==0) {
