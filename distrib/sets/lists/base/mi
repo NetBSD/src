@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.491 2004/06/25 16:34:45 itojun Exp $
+# $NetBSD: mi,v 1.492 2004/07/12 23:56:57 wiz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1930,6 +1930,9 @@
 ./usr/share/locale/lt_LT.ISO8859-13/LC_CTYPE	base-locale-lt		nls
 ./usr/share/locale/lt_LT.ISO8859-4		base-locale-lt
 ./usr/share/locale/lt_LT.ISO8859-4/LC_CTYPE	base-locale-lt		nls
+./usr/share/locale/nb				base-locale-nb
+./usr/share/locale/nb/LC_MESSAGES		base-locale-nb
+./usr/share/locale/nb/LC_MESSAGES/texinfo.mo	base-texinfo_locale-nb	nls
 ./usr/share/locale/nl				base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES		base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES/grep.mo	base-locale-nl		nls
@@ -1958,6 +1961,7 @@
 ./usr/share/locale/pl/LC_MESSAGES		base-locale-pl
 ./usr/share/locale/pl/LC_MESSAGES/grep.mo	base-locale-pl		nls
 ./usr/share/locale/pl/LC_MESSAGES/tar.mo	base-obsolete		obsolete
+./usr/share/locale/pl/LC_MESSAGES/texinfo.mo	base-texinfo_locale-pl	nls
 ./usr/share/locale/pl_PL.ISO8859-2		base-locale-pl
 ./usr/share/locale/pl_PL.ISO8859-2/LC_CTYPE	base-locale-pl		nls
 ./usr/share/locale/pt				base-locale-pt

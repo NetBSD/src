@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.19 2004/01/30 08:44:11 lukem Exp $
+# $NetBSD: mi,v 1.20 2004/07/12 23:56:57 wiz Exp $
 ./etc/mtree/set.text				text-sys-root
 ./usr/bin/addftinfo				text-groff-bin
 ./usr/bin/checknr				text-groff-bin
@@ -484,6 +484,7 @@
 ./usr/share/misc/eqnchar			text-groff-share	share
 ./usr/share/misc/man.template			text-groff-share	share
 ./usr/share/misc/mdoc.template			text-groff-share	share
+./usr/share/misc/texinfo.cat			text-texinfo-share	share
 ./usr/share/misc/texinfo.dtd			text-texinfo-share	share
 ./usr/share/misc/texinfo.tex			text-texinfo-share	share
 ./usr/share/misc/texinfo.xsl			text-texinfo-share	share
