@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.2 1995/04/30 12:00:31 leo Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.3 1996/07/04 07:25:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,17 +51,21 @@
  * simulated software interrupt register
  */
 
-extern unsigned char ssir;
+extern volatile unsigned char ssir;
 
 #define SIR_NET		0x1	/* call netintr()		*/
 #define SIR_CLOCK	0x2	/* call softclock()		*/
 #define	SIR_CBACK	0x4	/* walk the sicallback-chain	*/
 
-#define siroff(x)	ssir &= ~(x)
+#define siroff(x)	\
+	{ asm volatile ("andb %0,%1" : : "di" ((u_char)~(x)), "g" (ssir)); }
 
-#define setsoftnet()	(ssir |= SIR_NET)
-#define setsoftclock()	(ssir |= SIR_CLOCK)
-#define setsoftcback()	(ssir |= SIR_CBACK)
+#define setsoftnet()	\
+	asm volatile ("orb %0,%1" : : "di" ((u_char)SIR_NET), "g" (ssir))
+#define setsoftclock()	\
+	asm volatile ("orb %0,%1" : : "di" ((u_char)SIR_CLOCK), "g" (ssir))
+#define setsoftcback()	\
+	asm volatile ("orb %0,%1" : : "di" ((u_char)SIR_CBACK), "g" (ssir))
 
 #endif /* _KERNEL */
 
