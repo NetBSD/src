@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/25 16:32:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2003/08/04 06:58:20 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,7 @@ CPPFLAGS+=	-I${BACKENDOBJ}
 
 LINKS+=		${BINDIR}/g++ ${BINDIR}/c++
 
-NOMAN=1
-#MAN=		g++.1
-#MLINKS=		g++.1 c++.1
+NOMAN=		# defined
 
 .include "../Makefile.frontend"
 
