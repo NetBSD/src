@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 2003/04/16 15:01:00 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5 2003/04/30 19:05:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -101,9 +101,7 @@ readdisklabel(dev, strat, lp, osdep)
 	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
-	int cyl, netbsdpartoff, i;
-
-/*	printf("Reading disclabel for %04x\n", dev);*/
+	int cyl, netbsdpartoff, i, found = 0;
 
 	/* minimal requirements for archtypal disk label */
 
@@ -159,8 +157,6 @@ readdisklabel(dev, strat, lp, osdep)
 
 	/* next, dig out disk label */
 
-/*	printf("Reading disklabel addr=%08x\n", netbsdpartoff * DEV_BSIZE);*/
-  
 	bp->b_blkno = netbsdpartoff + LABELSECTOR;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
@@ -177,19 +173,19 @@ readdisklabel(dev, strat, lp, osdep)
 	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			if (msg == NULL)
-				msg = "no disk label";
+			continue;
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
 			   dkcksum(dlp) != 0)
 			msg = "disk label corrupted";
 		else {
 			*lp = *dlp;
 			msg = NULL;
+			found = 1;
 			break;
 		}
 	}
 
-	if (msg)
+	if (msg != NULL || found == 0)
 		goto done;
 
 	/* obtain bad sector table if requested and present */
