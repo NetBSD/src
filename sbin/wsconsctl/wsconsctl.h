@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.h,v 1.2 2001/02/04 21:16:59 christos Exp $ */
+/*	$NetBSD: wsconsctl.h,v 1.3 2002/04/07 10:40:04 hannken Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ struct field {
 	char *name;
 	void *valp;
 #define FMT_UINT	1		/* unsigned integer */
+#define FMT_STRING	2		/* zero terminated string */
 #define FMT_KBDTYPE	101		/* keyboard type */
 #define FMT_MSTYPE	102		/* mouse type */
 #define FMT_DPYTYPE	103		/* display type */

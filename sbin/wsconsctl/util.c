@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.13 2002/02/24 02:01:41 ad Exp $ */
+/*	$NetBSD: util.c,v 1.14 2002/04/07 10:40:04 hannken Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -221,6 +221,9 @@ pr_field(f, sep)
 	case FMT_UINT:
 		printf("%u", *((u_int *) f->valp));
 		break;
+	case FMT_STRING:
+		printf("\"%s\"", *((char **) f->valp));
+		break;
 	case FMT_KBDTYPE:
 		p = int2name(*((u_int *) f->valp), 1,
 			     kbtype_tab, TABLEN(kbtype_tab));
@@ -280,6 +283,10 @@ rd_field(f, val, merge)
 			*((u_int *) f->valp) += u;
 		else
 			*((u_int *) f->valp) = u;
+		break;
+	case FMT_STRING:
+		if ((*((char **) f->valp) = strdup(val)) == NULL)
+			err(1, "strdup");
 		break;
 	case FMT_KBDENC:
 		p = strchr(val, '.');
