@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.44 2000/02/16 10:48:13 tsutsui Exp $
+.\" $NetBSD: main,v 1.45 2000/02/22 13:06:48 dent Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -911,6 +911,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Matthias Scheler Ta Mt tron@NetBSD.ORG
 .It Ta Karl Schilke (rAT) Ta Mt rat@NetBSD.ORG
 .It Ta Konrad Schroder Ta Mt perseant@NetBSD.ORG
+.It Ta Reed Shadgett Ta Mt dent@NetBSD.ORG
 .It Ta Tim Shepard Ta Mt shep@NetBSD.ORG
 .It Ta Takao Shinohara Ta Mt shin@NetBSD.ORG
 .It Ta Chuck Silvers Ta Mt chs@NetBSD.ORG
