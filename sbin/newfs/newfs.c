@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.23 1997/01/30 09:56:41 tls Exp $	*/
+/*	$NetBSD: newfs.c,v 1.24 1997/06/30 08:09:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: newfs.c,v 1.23 1997/01/30 09:56:41 tls Exp $";
+static char rcsid[] = "$NetBSD: newfs.c,v 1.24 1997/06/30 08:09:22 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -558,11 +558,11 @@ char lmsg[] = "%s: can't read disk label";
 struct disklabel *
 getdisklabel(s, fd)
 	char *s;
-	int fd;
+	volatile int fd;
 {
 	static struct disklabel lab;
 
-	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
+	if (ioctl(fd, DIOCGDINFO, &lab) < 0) {
 #ifdef COMPAT
 		if (disktype) {
 			struct disklabel *lp, *getdiskbyname();
@@ -582,7 +582,7 @@ getdisklabel(s, fd)
 
 rewritelabel(s, fd, lp)
 	char *s;
-	int fd;
+	volatile int fd;
 	register struct disklabel *lp;
 {
 #ifdef COMPAT
