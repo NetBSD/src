@@ -1,8 +1,10 @@
+	$NetBSD: install,v 1.4.2.1 1998/02/07 06:26:25 mellon Exp $
+
 (IF you already have NetBSD/pc532 installed and you only want to update
 your system, see the next section.)
 
 To install NetBSD/pc532, there are several things you need to know.
-First, NetBSD "autoconfigs" the scsi devices. inst-12.fs has only
+First, NetBSD "autoconfigs" the scsi devices. floppy-144.fs has only
 support for disks configured into the kernel. Starting the search at
 SCSI address 0, lun 0 and increasing, the first disk found will be sd0
 regardless of the address, the second will be sd1. KLONDIKE for example
@@ -15,7 +17,7 @@ has the following devices installed:
 	cd0 -> ID 3 LUN 0: Toshiba XM-4101TA CD-ROM drive
 	st0 -> ID 4 LUN 0: Tandberg TDC3600 QIC tape drive
 
-Only sd0-sd3 are supported by the inst-12.fs kernel.
+Only sd0-sd3 are supported by the floppy-144.fs kernel.
 
 Next you need to know what the install script wants to do.  This install
 is script on the ram disk root that can do most of the work of configuring
@@ -41,15 +43,15 @@ your disk.
 The Install Procedure:
 
   a) Adjust your console device settings.
-	The inst-12.fs kernel will come up with 9600 baud, 7 bits,
+	The floppy-144.fs kernel will come up with 9600 baud, 7 bits,
 	even parity and one stop bit. Adjust your terminal to match
 	these settings. The monitor's baud rate can be changed with
 	"baud d'9600".
 
-  b) Get inst-12.fs and boot the kernel.
+  b) Get floppy-144.fs and boot the kernel.
 
 	From Floppy: (and using the autoboot monitor)
-	If you have a 1.44 meg SCSI floppy drive, you can put inst-12.fs
+	If you have a 1.44 meg SCSI floppy drive, you can put floppy-144.fs
 	onto a 3.5" floppy disk. Insert the disk into your floppy
 	drive and use the monitor's boot command to boot the default
 	image from the floppy. The image booted will ask you for a
@@ -58,11 +60,11 @@ The Install Procedure:
 	Replace X with your drive number. For KLONDIKE X would be "2".
 
 	Tape:
-	You will need to load a copy of inst-12.fs into RAM.
-		- load the inst-12.fs at 0x288000
-		- run at 0x3E8820
+	You will need to load a copy of floppy-144.fs into RAM.
+		- load the floppy-144.fs at 0x260000
+		- run at 0x3EB020
 	The boot program will ask you now for a kernel to load. Answer
-		rd0a:/netbsd
+		md0a:/netbsd.gz
 
 	Serial line:
 	Provided with the distribution is source for program called 
@@ -71,8 +73,16 @@ The Install Procedure:
 	output to standard output a byte sequence used by the pc532
 	ROM monitor to download a binary file into RAM.  Using this
 	program on a computer connected to the pc532, one can
-	load a copy of inst-12.fs into RAM at 0x288000.  The boot
+	load a copy of floppy-144.fs into RAM at 0x260000.  The boot
 	sequence is now the same as with tape.
+
+  c) The floppy-144.fs will run the new sysinst utility as the standard
+     setup.  It assumes a VT100 compatible terminal.  If you don't want
+     to try using sysinst or you dont' have a VT100, type f followed by
+     the return.  Then following these instructions for installation.
+     If you want to use sysinst, read the i386 INSTALL instructions to
+     learn about sysinst.  Note: sysinst does not support SLIP or PPP
+     connections.
 
   c) Choose a disk geometry.  For me, the reported geometry left
 	some sectors "unallocated".  That is, the autoconfig message
@@ -81,7 +91,7 @@ The Install Procedure:
 	2053880 sectors.
 
 	To help in this process, there is a program "factor" that is
-	on the inst-12.fs.  The usage is "factor number" and it lists
+	on the floppy-144.fs.  The usage is "factor number" and it lists
 	the prime factors of number.
 	For example, with the 2053880 sector disk I got:
 
@@ -116,7 +126,7 @@ The Install Procedure:
 	partitions, it will ask for a mount point.  The mount point will
 	be "relative to /" and should not include the leading "/".  Also,
 	IF you do not want the partition to have newfs run on it (that is
-	it might be the last one and have a copy of inst-12.fs) enter "NO"
+	it might be the last one and have a copy of floppy-144.fs) enter "NO"
 	to the mount point and it will not run newfs on the partition.
 	It will enter the partition into the disklabel.
 
@@ -151,9 +161,9 @@ The Install Procedure:
 	c) tape
 
 	d) cd-rom (If you have a CD with NetBSD/532, which most likely
-	   won't happen for a while after 1.2 release.)
+	   won't happen for a while after _VER release.)
 	   -- mount -rt cd9660 /dev/cd0a /mnt
-	   Get the tar.gz files from the cd-rom
+	   Get the .tgz files from the cd-rom
 
 	e) Use the ROM compatable "download" program.  The program
 	   download is included in the initial installation and
@@ -162,38 +172,37 @@ The Install Procedure:
 	   correct, the file is retained.  If the CRC is not 
 	   correct, the file is deleted.
 
-	f) some other method? (Let me know about it.)
-
-  h) Load the tar.gz files.  Choose a place to put them.  I would make
+  h) Load the .tgz files.  Choose a place to put them.  I would make
 	a directory /gz.files and put them there.  If you are "short
 	on space," you might want to load them and extract them one
 	at a time.  A minimum installation is "base" and "etc".  It
-	takes about 32 Megs installed + 15 Megs for the base.tar.gz.
+	takes about 32 Megs installed + 20 Megs for the base.tgz.
 
-  i) Extract the tar files in /.  For example, if your *.tar.gz were
-	in a directory /gz.files, to extract base.tar.gz you would:
+  i) Extract the tar files in /.  For example, if your *.tgz were
+	in a directory /gz.files, to extract base.tgz you would:
 
 	- cd / 
-	- tar -xpzf /gz.files/base.tar.gz --unlink
+	- tar -xpzf /gz.files/base.tgz --unlink
 
 	Add v to the flags if you want a verbose extract.
 	The --unlink is to make sure that the install versions
 	of sh, init, ... are replaced by their proper versons
-	in base.tar.gz.  I think it is wise to include the --unlink
+	in base.tgz.  I think it is wise to include the --unlink
 	for other things.
 
-  j) Extract at least "base" and "etc" for a new installation.  For
-	"update" extracts, don't extract "etc" directly unless you 
-	have saved your current /etc tree.  For "full" installations,
-	extract all files.
+  j) Extract at least "base", "etc" and "kern" for a new installation.
+	For "update" extracts, move /etc to /etc.old and then extract
+	"etc".  You should extract "etc" for upgrades.  For "full" 
+	installations, 	extract all files.
 
   k) Edit the information in /etc
 
+	- rc.conf - Many of the following things can be configured here
 	- hosts   -  host name and address information
 	- myname  -  your host name
 	- mygate  -  hostname of gateway (assuming you have one)
 	- resolv.conf - which nameserver to use
-	- hostname.{sl0,ppp0,plip0} - interface hostname
+	- ifconfig.{sl0,ppp0,plip0} - interface hostname
 	- netstart - configures the network and says if sendmail should
 			be started
 	- ttys    -  make sure the console entry has the correct speed
