@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.9 2000/04/24 13:23:59 itojun Exp $
+.\"	$NetBSD: gif.4,v 1.9.4.1 2000/06/30 18:33:38 thorpej Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -52,8 +52,9 @@ To use
 administrator needs to configure protocol and addresses used for the outer
 header.
 This can be done by using
-.Xr gifconfig 8 ,
-or
+.Xr ifconfig 8
+.Sq tunnel
+subcommand, or
 .Dv SIOCSIFPHYADDR
 ioctl.
 Also, administrator needs to configure protocol and addresses used for the
@@ -86,7 +87,7 @@ This can be configured by
 Usually,
 .Nm
 implements bidirectional tunnel.
-.Xr gifconfig 8
+.Xr ifconfig 8
 should configure a tunnel ingress point
 .Pq this node
 and an egress point
@@ -98,7 +99,7 @@ interface will tunnel to only a single tunnel endpoint,
 and accept from only a single tunnel endpoint.
 Source and destination address for outer IP header is always the
 ingress and the egress point configued by
-.Xr gifconfig 8 .
+.Xr ifconfig 8 .
 .Pp
 With
 .Dv IFF_LINK0
@@ -215,7 +216,7 @@ is far less secure than bidirectional mode.
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr inet6 4 ,
-.Xr gifconfig 8
+.Xr ifconfig 8
 .Rs
 .%A	R. Gilligan
 .%A	E. Nordmark
@@ -259,3 +260,8 @@ and your node will generate packets with a spoofed source address.
 .Pp
 If the outer protocol is IPv6, path MTU discovery for encapsulated packet
 may affect communication over the interface.
+.Pp
+.Xr gif 4
+is an
+.Dv IFF_POINTOPOINT
+device, however, it supports NBMA behavior in multi-destination mode.
