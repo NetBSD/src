@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt.c,v 1.3 2000/12/03 13:01:37 ad Exp $	*/
+/*	$NetBSD: md5crypt.c,v 1.4 2001/09/10 12:33:25 ad Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: md5crypt.c,v 1.3 2000/12/03 13:01:37 ad Exp $");
+__RCSID("$NetBSD: md5crypt.c,v 1.4 2001/09/10 12:33:25 ad Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -107,7 +107,7 @@ __md5crypt(const char *pw, const char *salt)
 
 	/* Now make the output string */
 	memcpy(passwd, MD5_MAGIC, MD5_MAGIC_LEN);
-	strncpy(passwd + MD5_MAGIC_LEN, sp, sl);
+	strlcpy(passwd + MD5_MAGIC_LEN, sp, sl + 1);
 	strcat(passwd, "$");
 
 	MD5Final(final, &ctx);
