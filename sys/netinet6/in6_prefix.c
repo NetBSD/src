@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_prefix.c,v 1.13 2000/12/28 21:23:00 itojun Exp $	*/
+/*	$NetBSD: in6_prefix.c,v 1.14 2001/02/10 04:14:27 itojun Exp $	*/
 /*	$KAME: in6_prefix.c,v 1.29 2000/06/07 05:59:38 itojun Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ search_ifidwithprefix(struct rr_prefix *rpp, struct in6_addr *ifid)
 }
 
 static int
-assigne_ra_entry(struct rr_prefix *rpp, int iilen, struct in6_ifaddr *ia)
+assign_ra_entry(struct rr_prefix *rpp, int iilen, struct in6_ifaddr *ia)
 {
 	int error = 0;
 	struct rp_addr *rap;
@@ -515,7 +515,7 @@ in6_prefix_add_ifid(int iilen, struct in6_ifaddr *ia)
 		} else if (rap->ra_addr != ia) {
 			/* There may be some inconsistencies between addrs. */
 			log(LOG_ERR, "ip6_prefix.c: addr %s/%d matched prefix"
-			    "has already another ia %p(%s) on its ifid list\n",
+			    " already has another ia %p(%s) on its ifid list\n",
 			    ip6_sprintf(IA6_IN6(ia)), plen,
 			    rap->ra_addr,
 			    ip6_sprintf(IA6_IN6(rap->ra_addr)));
@@ -524,7 +524,7 @@ in6_prefix_add_ifid(int iilen, struct in6_ifaddr *ia)
 		ia->ia6_ifpr = ifpr;
 		return 0;
 	}
-	error = assigne_ra_entry(ifpr2rp(ifpr), iilen, ia);
+	error = assign_ra_entry(ifpr2rp(ifpr), iilen, ia);
 	if (error == 0)
 		ia->ia6_ifpr = ifpr;
 	return (error);
@@ -1015,7 +1015,7 @@ link_stray_ia6s(struct rr_prefix *rpp)
 				    rpp->rp_plen);
 			continue;
 		}
-		if ((error = assigne_ra_entry(rpp,
+		if ((error = assign_ra_entry(rpp,
 					      (sizeof(rap->ra_ifid) << 3) -
 					      rpp->rp_plen,
 					      (struct in6_ifaddr *)ifa)) != 0)

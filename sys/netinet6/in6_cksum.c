@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.9 2000/09/09 16:15:47 itojun Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.10 2001/02/10 04:14:27 itojun Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
@@ -92,13 +92,13 @@
 
 int
 in6_cksum(m, nxt, off, len)
-	register struct mbuf *m;
+	struct mbuf *m;
 	u_int8_t nxt;
 	u_int32_t off, len;
 {
-	register u_int16_t *w;
-	register int sum = 0;
-	register int mlen = 0;
+	u_int16_t *w;
+	int sum = 0;
+	int mlen = 0;
 	int byte_swapped = 0;
 #if 0
 	int srcifid = 0, dstifid = 0;
