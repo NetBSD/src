@@ -1,4 +1,4 @@
-/*	$NetBSD: ibusvar.h,v 1.1 1998/04/19 02:52:45 jonathan Exp $	*/
+/*	$NetBSD: ibusvar.h,v 1.2 1998/08/29 16:15:11 mrg Exp $	*/
 
 #ifndef __IBUSVAR_H
 #define __IBUSVAR_H
@@ -11,9 +11,9 @@ void config_ibus __P((struct device *mb, void *,
  * function types for interrupt establish/diestablish
  */
 struct ibus_attach_args;
-typedef (ibus_intr_establish_t) __P((void * cookie, int level,
+typedef int (ibus_intr_establish_t) __P((void * cookie, int level,
 			int (*handler) __P((intr_arg_t)), intr_arg_t arg));
-typedef (ibus_intr_disestablish_t)  __P((struct ibus_attach_args *));
+typedef int (ibus_intr_disestablish_t)  __P((struct ibus_attach_args *));
 
 
 /* 
