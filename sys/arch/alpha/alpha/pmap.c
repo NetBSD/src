@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.165 2001/04/22 23:19:31 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.166 2001/04/22 23:42:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.165 2001/04/22 23:19:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2001/04/22 23:42:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2078,36 +2078,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 }
 
 /*
- * pmap_kenter_pgs:		[ INTERFACE ]
- *
- *	Enter a va -> pa mapping for the array of vm_page's into the
- *	kernel pmap without any physical->virtual tracking, starting
- *	at address va, for npgs pages.
- *
- *	Note: no locking is necessary in this function.
- */
-void
-pmap_kenter_pgs(vaddr_t va, vm_page_t *pgs, int npgs)
-{
-	int i;
-
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_kenter_pgs(%lx, %p, %d)\n",
-		    va, pgs, npgs);
-#endif
-
-	for (i = 0; i < npgs; i++)
-		pmap_kenter_pa(va + (PAGE_SIZE * i),
-		    VM_PAGE_TO_PHYS(pgs[i]),
-		    VM_PROT_READ|VM_PROT_WRITE);
-}
-
-/*
  * pmap_kremove:		[ INTERFACE ]
  *
- *	Remove a mapping entered with pmap_kenter_pa() or pmap_kenter_pgs()
- *	starting at va, for size bytes (assumed to be page rounded).
+ *	Remove a mapping entered with pmap_kenter_pa() starting at va,
+ *	for size bytes (assumed to be page rounded).
  */
 void
 pmap_kremove(vaddr_t va, vsize_t size)
