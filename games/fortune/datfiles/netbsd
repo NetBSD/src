@@ -1,10 +1,11 @@
-
-%____ __   _  ____ __ __ ___  ___   ___
 ___ /  | / /__  _/ /_  /   |/ __\ / _ |
 __ /   |/ // _\/_  _/ / ' / \_ \ / /  /
 _ / /|   // __/ / /_ / , | __/ // / ,/
  /_/ |__/_\__/__\__//___/__\__//___'
 		-- Greywolf
+%
+#netbsd - where monks recite their internal dialogue while debugging.
+		-- Bernhard Riedel
 %
 - What's up?
 - All the NetBSD servers, of course..
@@ -48,6 +49,13 @@ http://www.imrryr.org/NetBSD/logo
 I didn't get where I am today without using NetBSD
 		-- Dave Tyson
 %
+I held off from Uni until NetBSD came out.
+I decided, ``if there's no NetBSD then I'll just flip burgers''
+		-- Roland Dowdeswell
+%
+If it isn't possible with NetBSD, it isn't worth doing.
+		-- Petter "Nosfisk" Lindquist
+%
 My other computer runs NetBSD
 		-- Allen Briggs
 %
@@ -84,11 +92,17 @@ NetBSD - hackers tested, mom approved
 NetBSD - here today and in the middle of 2038 tomorrow.
 		-- Julian Assange
 %
+NetBSD - love all, serve all.
+		-- Silke Mueller
+%
 NetBSD - Mach 3 stealthOS, undetectable by media radar.
 		-- Julian Assange
 %
 NetBSD - more is more.
 		-- Julian Assange
+%
+NetBSD - no propaganda in the default system, in more than 10 years!
+		-- Jaromir Dolecek
 %
 NetBSD:  No Windows or Gates, but lots of doors, portals and tunnels.
 		-- Greywolf
@@ -530,20 +544,3 @@ Young or old; cutting edge or yesterday's NeWS, NetBSD is the UNIX for you.
 It can be a hulking monster in your basement, or fit in the palm
 of your hand.
 		-- Richard Rauch
-%
-#netbsd - where monks recite their internal dialogue while debugging.
-		-- Bernhard Riedel
-%
-I held off from Uni until NetBSD came out.
-I decided, ``if there's no NetBSD then I'll just flip burgers''
-		-- Roland Dowdeswell
-%
-NetBSD - love all, serve all.
-		-- Silke Mueller
-%
-If it isn't possible with NetBSD, it isn't worth doing.
-		-- Petter "Nosfisk" Lindquist
-%
-NetBSD - no propaganda in the default system, in more than 10 years!
-		-- Jaromir Dolecek
-%
