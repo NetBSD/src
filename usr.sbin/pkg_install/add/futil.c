@@ -1,11 +1,11 @@
-/*	$NetBSD: futil.c,v 1.8.12.1 2003/07/13 09:45:20 jlam Exp $	*/
+/*	$NetBSD: futil.c,v 1.8.12.2 2003/08/26 22:32:12 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: futil.c,v 1.7 1997/10/08 07:45:39 charnier Exp";
 #else
-__RCSID("$NetBSD: futil.c,v 1.8.12.1 2003/07/13 09:45:20 jlam Exp $");
+__RCSID("$NetBSD: futil.c,v 1.8.12.2 2003/08/26 22:32:12 jlam Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ make_hierarchy(char *dir)
 			if (!(isdir(dir) || islinktodir(dir)))
 				return FAIL;
 		} else {
-			if (vsystem("mkdir %s", dir))
+			if (fexec("mkdir", dir, NULL))
 				return FAIL;
 			apply_perms(NULL, dir);
 		}
@@ -80,19 +80,25 @@ apply_perms(char *dir, char *arg)
 		cd_to = dir;
 
 	if (Mode)
-		if (vsystem("cd %s && %s -R %s %s", cd_to, CHMOD_CMD, Mode, arg))
-			warnx("couldn't change modes of '%s' to '%s'", arg, Mode);
-	if (Owner && Group) {
-		if (vsystem("cd %s && %s -R %s.%s %s", cd_to, CHOWN_CMD, Owner, Group, arg))
+		if (fcexec(cd_to, CHMOD_CMD, "-R", Mode, arg, NULL))
+			warnx("couldn't change modes of '%s' to '%s'", arg,
+			    Mode);
+	if (Owner != NULL && Group != NULL) {
+		if (vsystem("cd %s && %s -R %s.%s %s", cd_to, CHOWN_CMD, Owner,
+		    Group, arg))
 			warnx("couldn't change owner/group of '%s' to '%s.%s'",
 			    arg, Owner, Group);
 		return;
 	}
-	if (Owner) {
-		if (vsystem("cd %s && %s -R %s %s", cd_to, CHOWN_CMD, Owner, arg))
-			warnx("couldn't change owner of '%s' to '%s'", arg, Owner);
+	if (Owner != NULL) {
+		if (fcexec(cd_to, CHOWN_CMD, "-R", Owner, arg, NULL))
+			warnx("couldn't change owner of '%s' to '%s'", arg,
+			    Owner);
 		return;
-	} else if (Group)
-		if (vsystem("cd %s && %s -R %s %s", cd_to, CHGRP_CMD, Group, arg))
-			warnx("couldn't change group of '%s' to '%s'", arg, Group);
+	}
+	if (Group != NULL) {
+		if (fcexec(cd_to, CHGRP_CMD, "-R", Group, arg, NULL))
+			warnx("couldn't change group of '%s' to '%s'", arg,
+			    Group);
+	}
 }

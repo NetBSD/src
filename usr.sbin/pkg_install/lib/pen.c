@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.22.2.2 2003/07/23 20:48:02 jlam Exp $	*/
+/*	$NetBSD: pen.c,v 1.22.2.3 2003/08/26 22:32:14 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.22.2.2 2003/07/23 20:48:02 jlam Exp $");
+__RCSID("$NetBSD: pen.c,v 1.22.2.3 2003/08/26 22:32:14 jlam Exp $");
 #endif
 #endif
 
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: pen.c,v 1.22.2.2 2003/07/23 20:48:02 jlam Exp $");
 /* For keeping track of where we are */
 static char Current[FILENAME_MAX];
 static char Previous[FILENAME_MAX];
-static int CurrentSet;		/* rm -rf Current only if it's really set! */
+static int CurrentSet;		/* rm -fr Current only if it's really set! */
                                 /* CurrentSet is set to 0 before strcpy()s
 				 * to prevent rm'ing of a partial string
 				 * when interrupted by ^C */
@@ -182,10 +182,10 @@ leave_playpen(char *save)
 		errx(2, "can't chdir back to '%s'", Previous);
 	} else if (CurrentSet && Current[0] && strcmp(Current, Previous)) {
 		if (strcmp(Current, "/") == 0) {
-			fprintf(stderr, "PANIC: About to rm -rf / (not doing so, aborting)\n");
+			fprintf(stderr, "PANIC: About to rm -fr / (not doing so, aborting)\n");
 			abort();
 		}
-		if (vsystem("rm -rf %s", Current))
+		if (fexec("rm", "-fr", Current, NULL))
 			warnx("couldn't remove temporary dir '%s'", Current);
 		strlcpy(Current, Previous, sizeof(Current));
 	}
