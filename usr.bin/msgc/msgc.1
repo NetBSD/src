@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgc.1,v 1.5 1999/07/04 07:40:51 cgd Exp $
+.\"	$NetBSD: msgc.1,v 1.6 1999/07/04 10:13:12 cgd Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -62,8 +62,6 @@ msgc
 .Ft void 
 .Fn msg_display_add "int msg_no" ...
 .Ft int  
-.Fn msg_vprintf  "int auto_fill" "char *fmt" "va_list ap"
-.Ft int  
 .Fn msg_printf  "char *fmt" ...
 .Ft int  
 .Fn msg_printf_add  "char *fmt" ...
@@ -72,15 +70,9 @@ msgc
 .Ft void 
 .Fn msg_prompt  "int msg_no" "char *def" "char *val" "int max_chars" ...
 .Ft void 
-.Fn msg_prompt_str  "char *msg" "char *def" "char *val" "int max_chars" ...
-.Ft void 
-.Fn msg_prompt_addstr  "char *msg" "char *def" "char *val" "int max_chars" ...
-.Ft void 
 .Fn msg_echo  "void"
 .Ft void 
 .Fn msg_noecho  "void"
-.Ft void 
-.Fn msg_table "int msg_no" ...
 .Ft void 
 .Fn msg_table_add "int msg_no" ...
 .Sh DESCRIPTION
