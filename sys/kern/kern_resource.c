@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.41 1997/10/09 01:07:46 enami Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.42 1997/10/15 17:04:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -207,29 +207,30 @@ sys_setrlimit(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_setrlimit_args /* {
-		syscallarg(u_int) which;
+		syscallarg(int) which;
 		syscallarg(const struct rlimit *) rlp;
 	} */ *uap = v;
+	int which = SCARG(uap, which);
 	struct rlimit alim;
 	int error;
 
 	error = copyin(SCARG(uap, rlp), &alim, sizeof (struct rlimit));
 	if (error)
 		return (error);
-	return (dosetrlimit(p, SCARG(uap, which), &alim));
+	return (dosetrlimit(p, which, &alim));
 }
 
 int
 dosetrlimit(p, which, limp)
 	struct proc *p;
-	u_int which;
+	int which;
 	struct rlimit *limp;
 {
 	register struct rlimit *alimp;
 	extern unsigned maxdmap, maxsmap;
 	int error;
 
-	if (which >= RLIM_NLIMITS)
+	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
 
 	if (limp->rlim_cur < 0 || limp->rlim_max < 0)
@@ -321,13 +322,14 @@ sys_getrlimit(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_getrlimit_args /* {
-		syscallarg(u_int) which;
+		syscallarg(int) which;
 		syscallarg(struct rlimit *) rlp;
 	} */ *uap = v;
+	int which = SCARG(uap, which);
 
-	if (SCARG(uap, which) >= RLIM_NLIMITS)
+	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
-	return (copyout(&p->p_rlimit[SCARG(uap, which)], SCARG(uap, rlp),
+	return (copyout(&p->p_rlimit[which], SCARG(uap, rlp),
 	    sizeof (struct rlimit)));
 }
 
