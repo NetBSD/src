@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/01/09 03:13:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2001/01/27 07:35:32 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,6 @@ SUBDIR+=doc
 .endif
 
 
-VER= 8.2.2-P7
+VER= 8.2.3
 
 .include <bsd.subdir.mk>
