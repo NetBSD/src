@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.9 1998/09/14 05:49:21 scottr Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.10 1998/09/16 05:35:50 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -417,19 +417,30 @@ retry:
 #endif
 	switch (scsipi_command_direct(xs)) {
 	case SUCCESSFULLY_QUEUED:
+		s = splbio();
+		if (xs->flags & ITSDONE) {
+			/*
+			 * The request has already completed, probably due
+			 * to an interrupt arriving between the time the
+			 * request was scheduled and when we arrived at this
+			 * point.
+			 */
+			splx(s);
+			return (0);
+		}
 		if ((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP) {
 			/*
 			 * The request will complete asynchronously.  In this
 			 * case, we need scsipi_done() to free the scsipi_xfer.
 			 */
 			xs->flags |= SCSI_ASYNCREQ;
+			splx(s);
 			return (EJUSTRETURN);
 		}
 #ifdef DIAGNOSTIC
 		if (xs->flags & SCSI_NOSLEEP)
 			panic("scsipi_execute_xs: NOSLEEP and POLL");
 #endif
-		s = splbio();
 		while ((xs->flags & ITSDONE) == 0)
 			tsleep(xs, PRIBIO + 1, "scsipi_cmd", 0);
 		splx(s);
