@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.34 2001/01/24 01:38:53 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.35 2001/01/24 03:50:20 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.34 2001/01/24 01:38:53 sato Exp $";
+    "$Id: hpcfb.c,v 1.35 2001/01/24 03:50:20 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,6 @@ struct hpcfb_devconfig {
 	int	dc_memsize;
 #endif /* HPCFB_MULTI */
 	u_char *dc_fbaddr;
-	int	dc_mapping;
 };
 
 #define HPCFB_MAX_SCREEN 5
@@ -167,6 +166,7 @@ struct hpcfb_softc {
 	struct device *sc_wsdisplay;
 	int sc_screen_resumed;
 	int sc_polling;
+	int sc_mapping;
 	struct proc *sc_thread;
 	struct lock sc_lock;
 	void *sc_wantedscreen;
@@ -342,6 +342,7 @@ hpcfbattach(parent, self, aux)
 		sc->sc_dc->dc_sc = sc;
 	}
 	sc->sc_polling = 0; /* XXX */
+	sc->sc_mapping = 0; /* XXX */
 	callout_init(&sc->sc_switch_callout);
 	hpcfb_stdscreen.nrows = sc->sc_dc->dc_rows;
         hpcfb_stdscreen.ncols = sc->sc_dc->dc_cols;
@@ -421,7 +422,7 @@ hpcfb_thread(arg)
 	for (;;) {
 		/* HPCFB_LOCK(sc); */
 		sc->sc_dc->dc_state |= HPCFB_DC_SCRTHREAD;	
-		if (!sc->sc_dc->dc_mapping) /* draw only EMUL mode */
+		if (!sc->sc_mapping) /* draw only EMUL mode */
 			hpcfb_update(sc->sc_dc);
 		sc->sc_dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
 		/* APM_UNLOCK(sc); */
@@ -512,7 +513,6 @@ hpcfb_init(fbconf, dc)
 	dc->dc_rows = dc->dc_rinfo.ri_rows;
 	dc->dc_cols = dc->dc_rinfo.ri_cols;
 	dc->dc_state |= HPCFB_DC_CURRENT;
-	dc->dc_mapping = 0;
 #ifdef HPCFB_JUMP
 	dc->dc_max_row = 0;
 	dc->dc_min_row = dc->dc_rows;
@@ -620,8 +620,9 @@ hpcfb_ioctl(v, cmd, data, flag, p)
 	
 	case WSDISPLAYIO_SMODE:
 		if (*(int *)data == WSDISPLAYIO_MODE_EMUL){ 
-			if (dc->dc_mapping){
-				dc->dc_mapping = 0;
+printf("EMUL %x\n", (int)dc);
+			if (sc->sc_mapping){
+				sc->sc_mapping = 0;
 				if (dc->dc_state&HPCFB_DC_DRAWING)
 					dc->dc_state &= ~HPCFB_DC_ABORT;
 #if HPCFB_FORCE_REDRAW
@@ -631,11 +632,12 @@ hpcfb_ioctl(v, cmd, data, flag, p)
 #endif
 			}
 		} else {
-			if (!dc->dc_mapping) {
-				dc->dc_mapping = 1;
+printf("MAPPED %x\n", (int)dc);
+			if (!sc->sc_mapping) {
+				sc->sc_mapping = 1;
 				dc->dc_state |= HPCFB_DC_ABORT;
 			}
-			dc->dc_mapping = 1;
+			sc->sc_mapping = 1;
 		}
 		if (sc && sc->sc_accessops->iodone)
 			(*sc->sc_accessops->iodone)(sc->sc_accessctx);
@@ -857,6 +859,7 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 #ifdef HPCFB_MULTI
 	odc = sc->sc_dc;
 
+printf("switch request %x %x\n", (int)odc, (int)dc);
 	if (dc == NULL || odc == dc) {
 		hpcfb_refresh_screen(sc);
 		return 0;
@@ -891,6 +894,7 @@ hpcfb_doswitch(sc)
 	odc = sc->sc_dc;
 	dc = sc->sc_wantedscreen;
 
+printf("doswitch %x %x\n",(int)odc, (int)dc);
 	if (!dc) {
 		(*sc->sc_switchcb)(sc->sc_switchcbarg, EIO, 0);
 		return;
@@ -1330,7 +1334,7 @@ hpcfb_redraw(cookie, row, num, all)
 #endif /* HPCFB_JUMP */
 	if (dc->dc_sc != NULL
 	    && !dc->dc_sc->sc_polling
-	    && dc->dc_mapping)
+	    && dc->dc_sc->sc_mapping)
 		return;
 
 	dc->dc_state &= ~HPCFB_DC_ABORT;
@@ -1411,7 +1415,7 @@ hpcfb_do_scroll(v)
 		dc->dc_state |= HPCFB_DC_SCRDELAY;
 	else if (dc->dc_sc != NULL && dc->dc_sc->sc_thread)
 		wakeup(dc->dc_sc);
-	else if (dc->dc_sc != NULL && !dc->dc_mapping) {
+	else if (dc->dc_sc != NULL && !dc->dc_sc->sc_mapping) {
 		/* draw only EMUL mode */
 		hpcfb_update(v);
 	}
