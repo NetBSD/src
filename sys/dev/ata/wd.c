@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.273 2004/01/10 14:39:50 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.274 2004/02/28 06:28:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,13 +66,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.273 2004/01/10 14:39:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274 2004/02/28 06:28:47 yamt Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
 #endif /* WDCDEBUG */
 
-#include "opt_bufq.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -278,11 +277,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	lockinit(&wd->sc_lock, PRIBIO | PCATCH, "wdlock", 0, 0);
 
 	callout_init(&wd->sc_restart_ch);
-#ifdef NEW_BUFQ_STRATEGY
-	bufq_alloc(&wd->sc_q, BUFQ_READ_PRIO|BUFQ_SORT_RAWBLOCK);
-#else
-	bufq_alloc(&wd->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
-#endif
+	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
 	SLIST_INIT(&wd->sc_bslist);
 
 	wd->atabus = adev->adev_bustype;

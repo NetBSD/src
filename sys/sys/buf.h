@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.71 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: buf.h,v 1.72 2004/02/28 06:28:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -117,6 +117,8 @@ struct bufq_state {
 
 #ifdef _KERNEL
 
+extern int bufq_disk_default_strat;
+#define	BUFQ_DISK_DEFAULT_STRAT()	bufq_disk_default_strat
 void	bufq_alloc(struct bufq_state *, int);
 void	bufq_free(struct bufq_state *);
 

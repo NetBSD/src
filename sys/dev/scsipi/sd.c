@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.214 2003/12/23 13:12:25 pk Exp $	*/
+/*	$NetBSD: sd.c,v 1.215 2004/02/28 06:28:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,10 +54,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.214 2003/12/23 13:12:25 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.215 2004/02/28 06:28:48 yamt Exp $");
 
 #include "opt_scsi.h"
-#include "opt_bufq.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -229,11 +228,8 @@ sdattach(parent, self, aux)
 	    periph->periph_version == 0)
 		sd->flags |= SDF_ANCIENT;
 
-#ifdef NEW_BUFQ_STRATEGY
-	bufq_alloc(&sd->buf_queue, BUFQ_READ_PRIO|BUFQ_SORT_RAWBLOCK);
-#else
-	bufq_alloc(&sd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
-#endif
+	bufq_alloc(&sd->buf_queue,
+	    BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
 
 	/*
 	 * Store information needed to contact our base driver
