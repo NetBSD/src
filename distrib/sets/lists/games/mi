@@ -269,4 +269,3 @@
 ./var/games/snake.log
 ./var/games/snakerawscores
 ./var/games/tetris.scores
-./var/games/save
