@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2002/03/31 16:07:56 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2002/05/02 15:09:50 lukem Exp $
 #
 #	etc.x68k/Makefile.inc -- x68k-specific etc Makefile targets
 #
@@ -7,10 +7,9 @@ KERNEL_SETS=		GENERIC
 
 BUILD_KERNELS=		INSTALL
 
-LOCALTIME=	Japan
+INSTALLATION_DIRS+=	installation/floppy
 
-INSTALLATION_DIRS+=	installation/floppy	\
-			installation/misc
+LOCALTIME=		Japan
 
 snap_md_post:
 .ifndef UPDATE

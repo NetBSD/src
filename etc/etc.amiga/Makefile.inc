@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2002/03/31 16:07:54 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2002/05/02 15:09:42 lukem Exp $
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
@@ -7,7 +7,7 @@ KERNEL_SETS=		GENERIC
 
 EXTRA_KERNELS=		INSTALL
 
-INSTALLATION_DIRS+=	installation/miniroot \
+INSTALLATION_DIRS+=	installation/miniroot	\
 			installation/misc
   
 snap_md_post:

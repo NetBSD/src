@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/02/03 11:23:45 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2002/05/02 15:09:46 lukem Exp $
 
 KERNEL_SETS=		GENERIC
 
 BUILD_KERNELS=		INSTALL
+
+INSTALLATION_DIRS+=	installation/floppy
 
 snap_md_post:
 .ifndef UPDATE

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2002/03/31 16:07:56 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2002/05/02 15:09:48 lukem Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -9,11 +9,12 @@ KERNEL_SETS=		GENERIC GENERIC_SCSI3 GENERIC_SUN4U
 
 BUILD_KERNELS=		INSTALL
 
-# Add sparc installation directories
-MD_INSTALLATION_DIRS= \
-	installation/miniroot installation/netboot installation/bootfs \
-	installation/tape installation/floppy
-INSTALLATION_DIRS+=$(MD_INSTALLATION_DIRS) 
+MD_INSTALLATION_DIRS=	installation/miniroot	\
+			installation/netboot	\
+			installation/bootfs	\
+			installation/tape	\
+			installation/floppy
+INSTALLATION_DIRS+=	${MD_INSTALLATION_DIRS}
 
 snap_pre_md:
 .ifndef UPDATE

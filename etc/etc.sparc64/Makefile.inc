@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2002/03/31 16:07:56 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2002/05/02 15:09:48 lukem Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -9,12 +9,13 @@ TOP= $(.CURDIR)/..
 MK32BITLIBS?=no
 
 KERNEL_SETS=		GENERIC
+
 BUILD_KERNELS+=		INSTALL
 
-# Add sparc64 installation directories
-MD_INSTALLATION_DIRS= \
-	installation/miniroot installation/netboot installation/misc
-INSTALLATION_DIRS+=$(MD_INSTALLATION_DIRS) 
+MD_INSTALLATION_DIRS=	installation/miniroot	\
+			installation/netboot	\
+			installation/misc
+INSTALLATION_DIRS+=	${MD_INSTALLATION_DIRS}
 
 # Used by 32 bit lib/csu, lib, gnu/lib & libexec/ld.elf_so
 LIBDIR=/usr/lib/sparcv7

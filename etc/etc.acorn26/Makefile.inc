@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/04/19 00:05:25 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/05/02 15:09:41 lukem Exp $
 #
 #	etc.acorn26/Makefile.inc -- acorn26-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC FOURMEG
+
 BUILD_KERNELS=		INSTALL
 
 INSTALLATION_DIRS+=	installation/misc

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2002/03/31 16:07:55 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2002/05/02 15:09:44 lukem Exp $
 #
 #	mac68k-specific release building goo
 #
@@ -7,7 +7,8 @@ KERNEL_SETS=		GENERIC GENERICSBC
 
 BUILD_KERNELS=		INSTALL INSTALLSBC
 
-INSTALLATION_DIRS+=	installation/instkernel
+INSTALLATION_DIRS+=	installation/miniroot	\
+			installation/instkernel
 
 snap_md_post:
 .ifndef UPDATE

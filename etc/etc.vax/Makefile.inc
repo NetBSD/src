@@ -1,13 +1,14 @@
-#	$NetBSD: Makefile.inc,v 1.13 2002/04/09 18:06:45 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2002/05/02 15:09:49 lukem Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
 
-KERNEL_SETS=	GENERIC
-BUILD_KERNELS=	INSTALL
+KERNEL_SETS=		GENERIC
 
-INSTALLATION_DIRS+=	installation \
-			installation/bootfs \
+BUILD_KERNELS=		INSTALL
+
+INSTALLATION_DIRS+=	installation/bootfs	\
+			installation/miniroot	\
 			installation/netboot
 
 snap_md_post:
