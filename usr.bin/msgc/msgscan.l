@@ -1,4 +1,4 @@
-/*	$NetBSD: msgscan.l,v 1.3 2003/06/23 13:05:50 agc Exp $	*/
+/*	$NetBSD: msgscan.l,v 1.4 2003/07/17 08:33:05 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,8 +41,8 @@
 
 #include <sys/cdefs.h>
 
-#ifndef lint
-__RCSID("$NetBSD: msgscan.l,v 1.3 2003/06/23 13:05:50 agc Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: msgscan.l,v 1.4 2003/07/17 08:33:05 lukem Exp $");
 #endif
 
 
