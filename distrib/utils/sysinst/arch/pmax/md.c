@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.16 1997/12/04 11:28:22 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.17 1998/02/20 01:53:59 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,14 +38,14 @@
 
 /* md.c -- pmax machine specific routines */
 
+#include <sys/types.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
 #include <stdio.h>
 #include <curses.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <util.h>
-#include <sys/types.h>
-#include <sys/disklabel.h>
-#include <sys/ioctl.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -66,14 +66,16 @@ void get_labelname(void)
 	
 
 /*
- * symbolic names for disk partitions
+ * Symbolic names for disk partitions.
  */
 #define PART_ROOT A
 #define PART_RAW  C
 #define PART_USR  D
 
-int	md_get_info (void)
-{	struct disklabel disklabel;
+int
+md_get_info (void)
+{
+	struct disklabel disklabel;
 	int fd;
 	char devname[100];
 
@@ -128,14 +130,36 @@ void	md_pre_disklabel (void)
  * hook called after writing  disklabel to new target disk.
  */
 void	md_post_disklabel (void)
-
 {
 }
 
 /*
+ * MD hook called after upgrade() or install() has finished setting
+ * up the target disk but immediately before the user is given the
+ * ``disks are now set up'' message, so that if power fails, they can
+ * continue installation by booting the target disk and doing an
+ * `upgrade'.
+ *
+ * On pmax, we take this opportuinty to update the bootblocks.
+ */
+void	md_post_newfs (void)
+{
+	/* XXX boot blocks ... */
+	if (target_already_root()) {
+		/* /usr is empty and we must already have bootblocks?*/
+		return;
+	}
+	
+	printf (msg_string(MSG_dobootblks), diskdev);
+	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
+			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
+}
+
+
+/*
  * md back-end code for menu-driven  BSD disklabel editor.
  */
-int md_make_bsd_partitions (void)
+int	md_make_bsd_partitions (void)
 {
 	FILE *f;
 	int i;
@@ -421,41 +445,15 @@ void	md_copy_filesystem (void)
 }
 
 
-/*
- * MD hook called after upgrade() or install() hasve finished the 
- * setting up the target disk but immediately before the user is
- * given thte ``disks are now set up'' message, that if power fails,
- * they can continue installation by  booting the target  disk and
- * doing an `upgrade'.
- *
- * On pmax, this is a convenient place to write up-to-date bootblocks 
- * to the target root filesystem.
- */
-void	md_post_newfs (void)
-{
-	/* XXX boot blocks ... */
-	if (target_already_root()) {
-		/* /usr is empty and we must already have bootblocks?*/
-		return;
-	}
-	
-	printf (msg_string(MSG_dobootblks), diskdev);
-	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
-			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
-}
-
-
 
 /* Upgrade support */
 int
 md_update(void)
 {
-	/* stolen from i386 -- untested */
 	endwin();
 	md_copy_filesystem ();
 	md_post_newfs();
 	puts (CL);
 	wrefresh(stdscr);
-
 	return 1;
 }
