@@ -1,4 +1,4 @@
-/*	$NetBSD: internet.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: internet.c,v 1.3 2003/12/04 17:17:36 drochner Exp $	*/
 
 /*  Copyright (C) 1996 N.M. Maclaren
     Copyright (C) 1996 The University of Cambridge
@@ -73,8 +73,6 @@ number. */
     int family, rval;
     struct addrinfo hints;
     struct addrinfo *res;
-    struct sockaddr_in *sin;
-    struct sockaddr_in6 *sin6;
 
     res = NULL;
     memset(address, 0, sizeof(struct sockaddr_storage));
