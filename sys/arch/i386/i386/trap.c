@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.84 1995/06/11 20:24:42 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.85 1995/10/10 01:26:46 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -502,6 +502,9 @@ syscall(frame)
 #ifdef COMPAT_LINUX
 	extern struct emul emul_linux_aout, emul_linux_elf;
 #endif
+#ifdef COMPAT_FREEBSD
+	extern struct emul emul_freebsd;
+#endif
 
 	cnt.v_syscall++;
 	if (ISPL(frame.tf_cs) != SEL_UPL)
@@ -541,7 +544,12 @@ syscall(frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
+#ifdef COMPAT_FREEBSD
+		/* FreeBSD has a same function in SYS___syscall */
+		if (callp != sysent && p->p_emul != &emul_freebsd)
+#else
 		if (callp != sysent)
+#endif
 			break;
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);

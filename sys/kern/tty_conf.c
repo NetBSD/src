@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.15 1994/10/30 21:48:00 cgd Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.16 1995/10/10 01:27:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -97,7 +97,7 @@ struct	linesw linesw[] =
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },	/* 1- defunct */
 
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
 	{ ttyopen, ttylclose, ttread, ttwrite, nullioctl,
 	  ttyinput, ttstart, ttymodem },		/* 2- old NTTYDISC */
 #else

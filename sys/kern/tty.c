@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.62 1995/09/22 00:11:35 cgd Exp $	*/
+/*	$NetBSD: tty.c,v 1.63 1995/10/10 01:26:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -167,7 +167,8 @@ ttyopen(device, tp)
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		SET(tp->t_state, TS_ISOPEN);
 		bzero(&tp->t_winsize, sizeof(tp->t_winsize));
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
+    defined(COMPAT_FREEBSD)
 		tp->t_flags = 0;
 #endif
 	}
@@ -642,7 +643,8 @@ ttioctl(tp, cmd, data, flag, p)
 	case  TIOCSTAT:
 	case  TIOCSTI:
 	case  TIOCSWINSZ:
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
+    defined(COMPAT_FREEBSD)
 	case  TIOCLBIC:
 	case  TIOCLBIS:
 	case  TIOCLSET:
@@ -889,7 +891,8 @@ ttioctl(tp, cmd, data, flag, p)
 		}
 		break;
 	default:
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
+    defined(COMPAT_FREEBSD)
 		return (ttcompat(tp, cmd, data, flag, p));
 #else
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.41 1995/10/07 06:29:00 mycroft Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.42 1995/10/10 01:27:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,7 +102,8 @@ sys_sstk(p, v, retval)
 	return (EOPNOTSUPP);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_OSF1)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_OSF1) || \
+    defined(COMPAT_FREEBSD)
 /* ARGSUSED */
 int
 compat_43_sys_getpagesize(p, v, retval)
@@ -114,9 +115,9 @@ compat_43_sys_getpagesize(p, v, retval)
 	*retval = PAGE_SIZE;
 	return (0);
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_OSF1 */
+#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_OSF1 || COMPAT_FREEBSD */
 
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
 int
 compat_43_sys_mmap(p, v, retval)
 	struct proc *p;

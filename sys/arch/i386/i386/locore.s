@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.136 1995/10/07 06:25:37 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.137 1995/10/10 01:26:38 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -51,6 +51,9 @@
 #endif
 #ifdef COMPAT_LINUX
 #include <compat/linux/linux_syscall.h>
+#endif
+#ifdef COMPAT_FREEBSD
+#include <compat/freebsd/freebsd_syscall.h>
 #endif
 
 #include <machine/cputypes.h>
@@ -594,6 +597,26 @@ ENTRY(linux_sigcode)
 	int	$0x80			# exit if sigreturn fails
 	.globl	_linux_esigcode
 _linux_esigcode:
+#endif
+
+/*****************************************************************************/
+
+#ifdef COMPAT_FREEBSD
+/*
+ * Signal trampoline; copied to top of user stack.
+ */
+ENTRY(freebsd_sigcode)
+	call	FREEBSD_SIGF_HANDLER(%esp)
+	leal	FREEBSD_SIGF_SC(%esp),%eax # scp (the call may have clobbered
+					# the copy at SIGF_SCP(%esp))
+	pushl	%eax
+	pushl	%eax			# junk to fake return address
+	movl	$FREEBSD_SYS_freebsd_sigreturn,%eax
+	int	$0x80	 		# enter kernel with args on stack
+	movl	$FREEBSD_SYS_exit,%eax
+	int	$0x80			# exit if sigreturn fails
+	.globl	_freebsd_esigcode
+_freebsd_esigcode:
 #endif
 
 /*****************************************************************************/

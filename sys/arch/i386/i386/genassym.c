@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.43 1995/05/07 02:59:30 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.44 1995/10/10 01:26:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -60,6 +60,10 @@
 #include <machine/linux_machdep.h>
 #endif
 
+#ifdef COMPAT_FREEBSD
+#include <machine/freebsd_machdep.h>
+#endif
+
 #include "isa.h"
 #if NISA > 0
 #include <i386/isa/isa_machdep.h>
@@ -84,6 +88,10 @@ main()
 #ifdef COMPAT_LINUX
 	struct linux_sigframe *linux_sigf = 0;
 	struct linux_sigcontext *linux_sc = 0;
+#endif
+#ifdef COMPAT_FREEBSD
+	struct freebsd_sigframe *freebsd_sigf = 0;
+	struct freebsd_sigcontext *freebsd_sc = 0;
 #endif
 
 #define	def(N,V)	printf("#define\t%s %d\n", N, V)
@@ -143,6 +151,11 @@ main()
 	def("LINUX_SC_FS", &linux_sc->sc_fs);
 	def("LINUX_SC_GS", &linux_sc->sc_gs);
 	def("LINUX_SC_EFLAGS", &linux_sc->sc_eflags);
+#endif
+
+#ifdef COMPAT_FREEBSD
+	def("FREEBSD_SIGF_HANDLER", &freebsd_sigf->sf_handler);
+	def("FREEBSD_SIGF_SC", &freebsd_sigf->sf_sc);
 #endif
 
 #if NISA > 0

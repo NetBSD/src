@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.29 1995/04/19 22:33:56 mycroft Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.30 1995/10/10 01:27:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -616,7 +616,7 @@ ptyioctl(dev, cmd, data, flag, p)
 			ttyflush(tp, FREAD|FWRITE);
 			return (0);
 
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
 		case TIOCSETP:		
 		case TIOCSETN:
 #endif
@@ -660,11 +660,11 @@ ptyioctl(dev, cmd, data, flag, p)
 		case TIOCSETA:
 		case TIOCSETAW:
 		case TIOCSETAF:
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
 		case TIOCSETP:
 		case TIOCSETN:
 #endif
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_FREEBSD)
 		case TIOCSETC:
 		case TIOCSLTC:
 		case TIOCLBIS:
