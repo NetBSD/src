@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.39 2003/02/25 10:34:40 wiz Exp $
+.\"	$NetBSD: pax.1,v 1.40 2003/03/31 20:10:08 christos Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 .Nd read and write file archives and copy directory hierarchies
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdnvzO
+.Op Fl cdjnvzO
 .Bk -words
 .Op Fl E Ar limit
 .Ek
@@ -80,7 +80,7 @@
 .Op Ar pattern ...\&
 .Nm
 .Fl r
-.Op Fl cdiknuvzADOYZ
+.Op Fl cdijknuvzADOYZ
 .Bk -words
 .Op Fl E Ar limit
 .Ek
@@ -123,7 +123,7 @@
 .Op Ar pattern ...\&
 .Nm
 .Fl w
-.Op Fl dituvzAHLMOPX
+.Op Fl dijtuvzAHLMOPX
 .Bk -words
 .Op Fl b Ar blocksize
 .Ek
@@ -171,7 +171,7 @@
 .Nm
 .Fl r
 .Fl w
-.Op Fl diklntuvzADHLMOPXYZ
+.Op Fl dijklntuvzADHLMOPXYZ
 .Bk -words
 .Op Fl N Ar dbdir
 .Ek
@@ -508,6 +508,10 @@ will immediately exit with a non-zero exit status if
 is encountered when reading a response or if
 .Pa /dev/tty
 cannot be opened for reading and writing.
+.It Fl j
+Use
+.Xr bzip2 1
+for compression when reading or writing archive files.
 .It Fl k
 Do not overwrite existing files.
 .It Fl l
