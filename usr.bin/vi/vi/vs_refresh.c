@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.11 2002/04/09 01:47:37 thorpej Exp $	*/
+/*	$NetBSD: vs_refresh.c,v 1.12 2005/03/06 03:39:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)vs_refresh.c	10.44 (Berkeley) 10/13/96";
 #else
-__RCSID("$NetBSD: vs_refresh.c,v 1.11 2002/04/09 01:47:37 thorpej Exp $");
+__RCSID("$NetBSD: vs_refresh.c,v 1.12 2005/03/06 03:39:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -699,6 +699,8 @@ done_cursor:
 		abort();
 #else
 	if (vip->sc_smap == NULL) {
+		if (F_ISSET(sp, SC_SCR_REFORMAT))
+			return 0;
 		F_SET(sp, SC_SCR_REFORMAT);
 		return (vs_paint(sp, flags));
 	}
