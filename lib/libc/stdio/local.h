@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.15 2003/03/07 07:11:38 tshiozak Exp $	*/
+/*	$NetBSD: local.h,v 1.16 2003/07/18 21:50:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -102,3 +102,5 @@ extern wint_t	__fputwc_unlock __P((wchar_t, FILE *));
 	(fp)->_lb._base = NULL; \
 }
 
+extern void __flockfile_internal __P((FILE *, int));
+extern void __funlockfile_internal __P((FILE *, int));
