@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.25 2000/03/26 22:38:29 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.26 2000/03/27 03:25:17 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -84,9 +84,11 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 
-/* XXX these should be in a header file somewhere */
-int rf_CheckLabels( RF_Raid_t *, RF_Config_t *);
 static int rf_AllocDiskStructures(RF_Raid_t *, RF_Config_t *);
+static void rf_print_label_status( RF_Raid_t *, int, int, char *, 
+				  RF_ComponentLabel_t *);
+static int rf_check_label_vitals( RF_Raid_t *, int, int, char *, 
+				  RF_ComponentLabel_t *, int, int );
 
 #define DPRINTF6(a,b,c,d,e,f) if (rf_diskDebug) printf(a,b,c,d,e,f)
 #define DPRINTF7(a,b,c,d,e,f,g) if (rf_diskDebug) printf(a,b,c,d,e,f,g)
@@ -621,9 +623,6 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, row, col)
 	return (0);
 }
 
-static void rf_print_label_status( RF_Raid_t *, int, int, char *, 
-				  RF_ComponentLabel_t *);
-
 static void
 rf_print_label_status( raidPtr, row, column, dev_name, ci_label )
 	RF_Raid_t *raidPtr;
@@ -645,8 +644,6 @@ rf_print_label_status( raidPtr, row, column, dev_name, ci_label )
 	       ci_label->clean ? "Yes" : "No", ci_label->status );
 }
 
-static int rf_check_label_vitals( RF_Raid_t *, int, int, char *, 
-				  RF_ComponentLabel_t *, int, int );
 static int rf_check_label_vitals( raidPtr, row, column, dev_name, ci_label,
 				  serial_number, mod_counter )
 	RF_Raid_t *raidPtr;
