@@ -1,8 +1,13 @@
-.\"	$NetBSD: hardware,v 1.34.4.3 2000/11/01 03:44:36 tv Exp $
+.\"	$NetBSD: hardware,v 1.34.4.4 2000/12/15 04:53:55 he Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
 some form of MMU, and on 68060 DraCos.
+.Pp
+.Nx
+does not, and will never, run on run on
+A1000, A500, A600, A1200, A2000, A4000/EC030, CDTV and CD32
+systems that are not enhanced by a CPU board.
 .Pp
 For 68020 and 68030 systems, a FPU is recommended but not required for the
 system utilities.
