@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.49 2002/11/06 02:31:34 enami Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.50 2003/04/03 22:20:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.49 2002/11/06 02:31:34 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.50 2003/04/03 22:20:24 fvdl Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -816,4 +816,40 @@ bufq_free(struct bufq_state *bufq)
 	FREE(bufq->bq_private, M_DEVBUF);
 	bufq->bq_get = NULL;
 	bufq->bq_put = NULL;
+}
+
+/*
+ * Bounds checking against the media size, used for the raw partition.
+ * The sector size passed in should currently always be DEV_BSIZE,
+ * and the media size the size of the device in DEV_BSIZE sectors.
+ */
+int
+bounds_check_with_mediasize(struct buf *bp, int secsize, u_int64_t mediasize)
+{
+	int sz;
+
+	sz = howmany(bp->b_bcount, secsize);
+
+	if (bp->b_blkno + sz > mediasize) {
+		sz = mediasize - bp->b_blkno;
+		if (sz == 0) {
+			/* If exactly at end of disk, return EOF. */
+			bp->b_resid = bp->b_bcount;
+			goto done;
+		}
+		if (sz < 0) {
+			/* If past end of disk, return EINVAL. */
+			bp->b_error = EINVAL;
+			goto bad;
+		}
+		/* Otherwise, truncate request. */
+		bp->b_bcount = sz << DEV_BSHIFT;
+	}
+
+	return 1;
+
+bad:
+	bp->b_flags |= B_ERROR;
+done:
+	return 0;
 }
