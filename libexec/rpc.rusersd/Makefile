@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.12 1996/08/30 20:19:41 thorpej Exp $
+#	$NetBSD: Makefile,v 1.13 1997/03/24 22:18:36 christos Exp $
 
 PROG =	rpc.rusersd
 SRCS =	rusersd.c rusers_proc.c
 MAN =	rpc.rusersd.8
 MLINKS=	rpc.rusersd.8 rusersd.8
 
-DPADD=	${LIBRPCSVC}
-LDADD=	-lrpcsvc
+DPADD+=	${LIBRPCSVC}
+LDADD+=	-lrpcsvc
 
 .if exists(/usr/X11)
 XINCDIR=	/usr/X11/include
