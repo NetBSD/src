@@ -1,4 +1,4 @@
-/* $NetBSD: pppoectl.c,v 1.6 2002/03/02 16:27:02 martin Exp $ */
+/* $NetBSD: pppoectl.c,v 1.7 2002/06/21 07:48:53 itojun Exp $ */
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -408,7 +408,7 @@ usage(void)
 	    "           to specify (optional) data for PPPoE sessions\n"
 	    "       %s -d ifname\n"
 	    "           to dump the current PPPoE session state\n"
-	    "       %s -n (1|2)\n"
+	    "       %s -n (1|2) ifname\n"
 	    "           to print DNS addresses retrieved via query-dns\n"
 	    , prog, prog, prog, prog, prog, prog);
 	exit(EX_USAGE);
