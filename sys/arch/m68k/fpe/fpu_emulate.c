@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.14 1996/12/18 05:44:31 scottr Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.15 1997/07/17 06:27:08 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -40,6 +40,10 @@
 #include <sys/signal.h>
 #include <sys/systm.h>
 #include <machine/frame.h>
+
+#if defined(DDB) && defined(DEBUG)
+# include <m68k/db_machdep.h>
+#endif
 
 #include "fpu_emulate.h"
 
@@ -249,7 +253,7 @@ fpu_emulate(frame, fpf)
     else {
 	printf(" fpu_emulate: sig=%d, opcode=%x, word1=%x\n",
 	       sig, insn.is_opcode, insn.is_word1);
-	kdb_trap(-1, frame);
+	kdb_trap(-1, (db_regs_t *)&frame);
     }
 #endif
     if (frame->f_format == 4)
