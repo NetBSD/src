@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.23 2000/04/21 02:39:55 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.24 2000/04/21 02:45:01 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2310,7 +2310,7 @@ LEAF_NOPROFILE(mips3_TBIS)
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# save current ASID
-	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgmask
+	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
 	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	and	a0, a0, v0			# make sure valid entryHi
 	dmtc0	a0, MIPS_COP_0_TLB_HI		# look for the vaddr & ASID
@@ -2355,7 +2355,7 @@ LEAF_NOPROFILE(mips3_TBIAP)
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	move	t2, a0
 	li	v0, MIPS_KSEG0_START		# invalid address
-	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgmask
+	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
 
 	# do {} while (t1 < t2)
 1:
@@ -2384,7 +2384,7 @@ LEAF_NOPROFILE(mips3_TBIAP)
 	bne	t1, t2, 1b
 	nop
 
-	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgmask
+	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	nop
 	nop
 	j	ra				# new ASID will be set soon
@@ -2403,7 +2403,7 @@ LEAF_NOPROFILE(mips3_TBIA)
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# save current ASID
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	li	v0, MIPS_KSEG0_START		# invalid address
-	mfc0	t2, MIPS_COP_0_TLB_PG_MASK	# save current pgmask
+	mfc0	t2, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
 
 	dmtc0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	dmtc0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
@@ -2423,11 +2423,11 @@ LEAF_NOPROFILE(mips3_TBIA)
 	nop
 
 	dmtc0	t0, MIPS_COP_0_TLB_HI		# restore ASID
-	mtc0	t2, MIPS_COP_0_TLB_PG_MASK	# restore pgmask
+	mtc0	t2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	nop
 	nop
 	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# resiter status register
+	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	END(mips3_TBIA)
 
 LEAF(mips3_Set64bit)
