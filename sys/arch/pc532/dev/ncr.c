@@ -59,6 +59,21 @@ static int ncr_match __P((struct device *, void *, void *));
 #define	NCR5380		((volatile u_char *) 0xffd00000)
 #define MIN_PHYS	0x10000
 
+/*
+ * Bit allocation in config's sc_flags field.
+ *
+ * bit     0: disable disconnect/reconnect
+ * bit     1: disable use of interrupts
+ * bits 8-15: disable parity (per target)
+ */
+#define NCR_DISABLE_RESELECT	1
+#define NCR_DISABLE_INTERRUPTS	2
+
+/*
+ * Make the default options patchable with gdb.
+ */
+int ncr_default_options = 0;
+
 struct scsi_adapter ncr_switch = {
 	ncr5380_scsi_cmd,	/* scsi_cmd()				*/
 	ncr_minphys,		/* scsi_minphys()			*/
@@ -99,11 +114,15 @@ ncr_attach(parent, self, aux)
 	void		*aux;
 {
 	struct ncr5380_softc *sc = (struct ncr5380_softc *) self;
+	int flags;
 
 	/*
 	 * For now we only support the DP8490.
 	 */
 	scsi_select_ctlr(DP8490);
+
+	/* Pull in config flags. */ 
+	flags = sc->sc_dev.dv_cfdata->cf_flags | ncr_default_options;
 
 	/*
 	 * Fill in the prototype scsi_link.
@@ -134,9 +153,13 @@ ncr_attach(parent, self, aux)
 	sc->sc_pio_out	= ncr_pdma_out;
 
 	/*
-	 * Allow disconnect/reconnect.
+	 * Copy options from cf_flags to sc_flags and sc_parity_disable.
 	 */
-	sc->sc_flags = NCR5380_PERMIT_RESELECT;
+	sc->sc_flags = ((flags & NCR_DISABLE_RESELECT) ?
+				0 : NCR5380_PERMIT_RESELECT) |
+		       ((flags & NCR_DISABLE_INTERRUPTS) ?
+				NCR5380_FORCE_POLLING : 0);
+	sc->sc_parity_disable = flags >> 8;
 
 	intr_establish(IR_SCSI1, ncr_intr, (void *)sc, sc->sc_dev.dv_xname,
 		IPL_BIO, RISING_EDGE);
