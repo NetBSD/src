@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.6.2.1 1997/10/30 07:17:44 mrg Exp $	*/
+/*	$NetBSD: sock.c,v 1.6.2.2 1998/07/23 01:46:14 mellon Exp $	*/
 
 /*
  * sock.c (C) 1995-1997 Darren Reed
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sock.c,v 2.0.2.9 1997/09/28 07:13:37 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: sock.c,v 2.0.2.9.2.1 1997/11/28 03:36:01 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <unistd.h>
@@ -255,7 +255,7 @@ static struct kinfo_proc *getproc()
 	mib[2] = KERN_PROC_PID;
 	mib[3] = pid;
 
-	n = 1;
+	n = sizeof(kp);
 	if (sysctl(mib, 4, &kp, &n, NULL, 0) == -1)
 	    {
 		perror("sysctl");
