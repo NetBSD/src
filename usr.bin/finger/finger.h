@@ -1,8 +1,8 @@
-/*	$NetBSD: finger.h,v 1.5 1997/01/09 20:19:21 tls Exp $	*/
+/*	$NetBSD: finger.h,v 1.6 1997/10/19 08:13:35 mrg Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Tony Nardo of the Johns Hopkins University/Applied Physics Lab.
@@ -35,12 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)finger.h	5.5 (Berkeley) 6/1/90
- *	$NetBSD: finger.h,v 1.5 1997/01/09 20:19:21 tls Exp $
+ *	from: @(#)finger.h	8.1 (Berkeley) 6/6/93
  */
-
-#include <pwd.h>
-#include <utmp.h>
 
 #define _PATH_MAILSPOOL "/var/mail"
 
@@ -50,8 +46,6 @@
  */
 
 typedef struct person {
-	struct person *next;		/* link to next person */
-	struct person *hlink;		/* link to next person in hash bucket */
 	uid_t uid;			/* user id */
 	char *dir;			/* user's home directory */
 	char *homephone;		/* pointer to home phone no. */
@@ -62,13 +56,13 @@ typedef struct person {
 	char *shell;			/* user's shell */
 	time_t mailread;		/* last time mail was read */
 	time_t mailrecv;		/* last time mail was read */
-	struct where *whead, *wtail;	/* list of where he is or has been */
+	struct where *whead, *wtail;	/* list of where user is or has been */
 } PERSON;
 
 enum status { LASTLOG, LOGGEDIN };
 
 typedef struct where {
-	struct where *next;		/* next place he is or has been */
+	struct where *next;		/* next place user is or has been */
 	enum status info;		/* type/status of request */
 	short writable;			/* tty is writable */
 	time_t loginat;			/* time of (last) login */
@@ -77,12 +71,4 @@ typedef struct where {
 	char host[UT_HOSTSIZE+1];	/* null terminated remote host name */
 } WHERE;
 
-#define	HBITS	8			/* number of bits in hash code */
-#define	HSIZE	(1 << 8)		/* hash table size */
-#define	HMASK	(HSIZE - 1)		/* hash code mask */
-
-PERSON *htab[HSIZE];			/* the buckets */
-PERSON *phead, *ptail;			/* the linked list of all people */
-
-PERSON *enter_person(), *find_person(), *palloc();
-WHERE *walloc();
+#include "extern.h"
