@@ -615,6 +615,15 @@ getline (istream&, basic_string <charT, traits, Allocator>&, charT delim = '\n')
 
 } // extern "C++"
 
+#ifdef __GNUG__
+#define __INST char
+#include <std/bastring_inst.h>
+#undef __INST
+#define __INST wchar_t
+#include <std/bastring_inst.h>
+#undef __INST
+#endif
+
 #include <std/bastring.cc>
 
 #endif

@@ -691,6 +691,12 @@ __STL_END_NAMESPACE
 
 #undef __PRIVATE
 
+#ifdef __GNUG__
+// instantiated in stlinst.cc
+extern template __malloc_alloc_template<0>;
+extern template __default_alloc_template<__NODE_ALLOCATOR_THREADS, 0>;
+#endif
+
 #endif /* __SGI_STL_INTERNAL_ALLOC_H */
 
 // Local Variables:

@@ -397,4 +397,16 @@ template <class _FLT> ostream& operator << (ostream&, const complex<_FLT>&);
 #include <std/dcomplex.h>
 #include <std/ldcomplex.h>
 
+#ifdef __GNUG__
+#define __INST float
+#include <std/complext_inst.h>
+#undef __INST
+#define __INST double
+#include <std/complext_inst.h>
+#undef __INST
+#define __INST long double
+#include <std/complext_inst.h>
+#undef __INST
+#endif
+
 #endif
