@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc.h,v 1.4 1995/12/19 23:07:11 cgd Exp $	*/
+/*	$NetBSD: krpc.h,v 1.5 1996/10/20 13:13:22 fvdl Exp $	*/
 
 #include <sys/cdefs.h>
 
@@ -7,7 +7,7 @@ int krpc_call __P((struct sockaddr_in *sin,
 	struct mbuf **data, struct mbuf **from));
 
 int krpc_portmap __P((struct sockaddr_in *sin,
-	u_int prog, u_int vers, u_int16_t *portp));
+	u_int prog, u_int vers, u_int proto, u_int16_t *portp));
 
 struct mbuf *xdr_string_encode __P((char *str, int len));
 struct mbuf *xdr_string_decode __P((struct mbuf *m, char *str, int *len_p));
