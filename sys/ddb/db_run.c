@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.12 1997/09/10 19:37:31 pk Exp $	*/
+/*	$NetBSD: db_run.c,v 1.13 1997/12/10 23:09:31 pk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -59,6 +59,11 @@ boolean_t	db_sstep_print;
 int		db_loop_count;
 int		db_call_depth;
 
+#ifdef	SOFTWARE_SSTEP
+db_breakpoint_t	db_not_taken_bkpt = 0;
+db_breakpoint_t	db_taken_bkpt = 0;
+#endif
+
 boolean_t
 db_stop_at_pc(regs, is_breakpoint)
 	db_regs_t *regs;
@@ -67,10 +72,22 @@ db_stop_at_pc(regs, is_breakpoint)
 	register db_addr_t	pc;
 	register db_breakpoint_t bkpt;
 
+	pc = PC_REGS(regs);
+
+#ifdef	SOFTWARE_SSTEP
+	/*
+	 * If we stopped at one of the single-step breakpoints,
+	 * say it's not really a breakpoint so that
+	 * we don't skip over the real instruction.
+	 */
+	if ((db_taken_bkpt != NULL && db_taken_bkpt->address == pc) ||
+	    (db_not_taken_bkpt != NULL && db_not_taken_bkpt->address == pc))
+		*is_breakpoint = FALSE;
+#endif
+
 	db_clear_single_step(regs);
 	db_clear_breakpoints();
 	db_clear_watchpoints();
-	pc = PC_REGS(regs);
 
 #ifdef	FIXUP_PC_AFTER_BREAK
 	if (*is_breakpoint) {
@@ -255,14 +272,12 @@ db_single_step(regs)
  *	we allocate a breakpoint and save it here.
  *	These breakpoints are deleted on return.
  */			
-db_breakpoint_t	db_not_taken_bkpt = 0;
-db_breakpoint_t	db_taken_bkpt = 0;
 
 void
 db_set_single_step(regs)
 	register db_regs_t *regs;
 {
-	db_addr_t pc = PC_REGS(regs), brpc;
+	db_addr_t pc = PC_REGS(regs), brpc = pc;
 	boolean_t unconditional;
 	unsigned int inst;
 
@@ -299,8 +314,14 @@ db_set_single_step(regs)
 	 *	(Consider, for instance, that the next sequential
 	 *	instruction is the start of a routine needed by the
 	 *	debugger.)
+	 *
+	 *	Also, don't set both the taken and not-taken breakpoints
+	 *	in the same place even if the MD code would otherwise
+	 *	have us do so.
 	 */
-	if (unconditional == FALSE && db_find_breakpoint_here(pc) == 0)
+	if (unconditional == FALSE &&
+	    db_find_breakpoint_here(pc) == 0 &&
+	    pc != brpc)
 		db_not_taken_bkpt = db_set_temp_breakpoint(pc);
 	else
 		db_not_taken_bkpt = 0;
