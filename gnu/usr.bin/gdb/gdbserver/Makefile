@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2001/12/19 23:54:32 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/19 03:09:37 lukem Exp $
+
+.include <bsd.own.mk>
+
+TOP=		${NETBSDSRCDIR}/gnu
+DIST=		${TOP}/dist/toolchain
 
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}/gdbserver.mk"
-
-TOP=		${.CURDIR}/../../..
-DIST=		${TOP}/dist/toolchain
 
 PROG=		gdbserver
 

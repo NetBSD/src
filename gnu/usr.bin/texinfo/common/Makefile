@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.7 2001/12/12 01:49:06 tv Exp $
+#	$NetBSD: Makefile,v 1.8 2002/09/19 03:09:43 lukem Exp $
+
+NOLINKLIB=	# defined
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 LIB=		common
 SRCS+=		substring.c xexit.c xmalloc.c xstrdup.c
 
 CPPFLAGS+=	-DGNULOCALEDIR=\"/usr/share/locale\" \
 		-DLOCALE_ALIAS_PATH=\"/usr/share/locale:.\"
-
-NOLINT=		# defined
-NOPROFILE=	# defined
-NOPIC=		# defined
-NOLINKLIB=	# defined
 
 .include <bsd.lib.mk>
 

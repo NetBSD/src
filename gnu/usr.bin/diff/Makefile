@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 2000/11/08 00:08:30 wiz Exp $
+#	$NetBSD: Makefile,v 1.16 2002/09/19 03:09:35 lukem Exp $
+
+.include <bsd.own.mk>
 
 PROG=		diff
 SRCS=		diff.c analyze.c cmpbuf.c io.c context.c ed.c normal.c util.c \
@@ -9,7 +11,7 @@ CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR} -I${DIST}/diffutils \
 
 TEXINFO=	diff.texi
 
-DIST=		${.CURDIR}/../../dist
+DIST=		${NETBSDSRCDIR}/gnu/dist
 .PATH: ${DIST}/diffutils
 
 .include <bsd.info.mk>

@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.24 2001/01/11 01:48:00 phil Exp $
+#	$NetBSD: Makefile,v 1.25 2002/09/19 03:09:33 lukem Exp $
+
+.include <bsd.own.mk>
+
+DIST=		${NETBSDSRCDIR}/gnu/dist
 
 PROG=		bc
 SRCS=		bc.y execute.c global.c load.c main.c \
@@ -11,7 +15,6 @@ YHEADER=1
 
 TEXINFO=	bc.texi
 
-DIST=		${.CURDIR}/../../dist
 .PATH: ${DIST}/bc/bc ${DIST}/bc/lib ${DIST}/bc/doc
 
 .include <bsd.prog.mk>

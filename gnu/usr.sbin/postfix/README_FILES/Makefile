@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2002/02/02 23:21:46 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/19 03:09:44 lukem Exp $
+
+.include <bsd.own.mk>
 
 BINDIR=	${PFIX_EXAMPLEDIR}
 
-DIST=	${.CURDIR}/../../../dist/postfix/README_FILES
+DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/README_FILES
 .PATH:	${DIST}
 
 FILES=	DEBUG_README ETRN_README FILTER_README LMTP_README \
