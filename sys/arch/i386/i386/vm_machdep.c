@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.31 1994/08/15 15:17:07 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.32 1994/08/15 15:19:55 mycroft Exp $
  */
 
 /*
@@ -93,9 +93,9 @@ cpu_fork(p1, p2)
 	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
 	for (i = 0; i < UPAGES; i++)
 		pmap_enter(&p2->p_vmspace->vm_pmap,
-		    (vm_offset_t)(kstack + i * NBPG),
+		    (vm_offset_t)kstack + i * NBPG,
 		    pmap_extract(kernel_pmap,
-		        (vm_offset_t)(((int)p2->p_addr) + i * NBPG)),
+		        (vm_offset_t)p2->p_addr + i * NBPG),
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
 
 	pmap_activate(&p2->p_vmspace->vm_pmap, &up->u_pcb);
