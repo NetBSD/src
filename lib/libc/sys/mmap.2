@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.9 1997/10/16 23:21:52 christos Exp $
+.\"	$NetBSD: mmap.2,v 1.10 1997/12/15 04:00:08 mrg Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,6 +95,11 @@ The
 parameter specifies the type of the mapped object, mapping options and
 whether modifications made to the mapped copy of the page are private
 to the process or are to be shared with other references.
+Note that either
+.Dv MAP_SHARED
+or
+.Dv MAP_PRIVATE
+must be specified.
 Sharing, mapping type and options are specified in the
 .Fa flags
 argument by
@@ -110,8 +115,7 @@ regions is used only for
 naming, and may be specified as \-1 if no name is associated with the
 region.
 .It Dv MAP_FILE
-Mapped from a regular file or character-special device memory.  (This is
-the default mapping type, and need not be specified.)
+Mapped from a regular file or character-special device memory.
 .It Dv MAP_FIXED
 Do not permit the system to select a different address than the one
 specified.
