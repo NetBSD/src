@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.127 1999/09/27 00:14:52 perry Exp $
+# $NetBSD: mi,v 1.128 1999/09/29 15:46:15 jdolecek Exp $
 .
 ./altroot
 ./bin
@@ -427,6 +427,7 @@
 ./usr/include/netnatm
 ./usr/include/netns
 ./usr/include/nfs
+./usr/include/ntfs
 ./usr/include/objc
 ./usr/include/openssl
 ./usr/include/protocols
