@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_types.h,v 1.4 1994/11/18 02:54:27 christos Exp $	 */
+/*	$NetBSD: svr4_types.h,v 1.5 1995/08/14 00:51:13 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -54,6 +54,9 @@ typedef long	svr4_clock_t;
 
 typedef struct timespec svr4_timestruc_t;
 
+typedef struct {
+        u_long bits[4];
+} svr4_sigset_t;
 typedef void    (*svr4_sig_t) (int);
 
 #endif /* !_SVR4_TYPES_H_ */
