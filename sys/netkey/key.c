@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.69 2002/06/12 03:46:16 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.70 2002/06/12 17:56:46 itojun Exp $	*/
 /*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.69 2002/06/12 03:46:16 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.70 2002/06/12 17:56:46 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -124,7 +124,6 @@ u_int32_t key_debug_level = 0;
 static u_int key_spi_trycnt = 1000;
 static u_int32_t key_spi_minval = 0x100;
 static u_int32_t key_spi_maxval = 0x0fffffff;	/* XXX */
-static u_int32_t policy_id = 0;
 static u_int key_int_random = 60;	/*interval to initialize randseed,1(m)*/
 static u_int key_larval_lifetime = 30;	/* interval to expire acquiring, 30(s)*/
 static int key_blockacq_count = 10;	/* counter for blocking SADB_ACQUIRE.*/
@@ -133,7 +132,8 @@ static int key_blockacq_lifetime = 20;	/* lifetime for blocking SADB_ACQUIRE.*/
 static u_int32_t acq_seq = 0;
 static int key_tick_init_random = 0;
 
-static LIST_HEAD(_sptree, secpolicy) sptree[IPSEC_DIR_MAX];	/* SPD */
+TAILQ_HEAD(_sptailq, secpolicy) sptailq;		/* SPD table + pcb */
+static LIST_HEAD(_sptree, secpolicy) sptree[IPSEC_DIR_MAX];	/* SPD table */
 static LIST_HEAD(_sahtree, secashead) sahtree;			/* SAD */
 static LIST_HEAD(_regtree, secreg) regtree[SADB_SATYPE_MAX + 1];
 							/* registed list */
@@ -312,7 +312,6 @@ static struct mbuf *key_gather_mbuf __P((struct mbuf *,
 	const struct sadb_msghdr *, int, int, ...));
 static int key_spdadd __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
-static u_int32_t key_getnewspid __P((void));
 static int key_spddelete __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
 static int key_spddelete2 __P((struct socket *, struct mbuf *,
@@ -955,18 +954,7 @@ key_getspbyid(id)
 {
 	struct secpolicy *sp;
 
-	LIST_FOREACH(sp, &sptree[IPSEC_DIR_INBOUND], chain) {
-		if (sp->state == IPSEC_SPSTATE_DEAD)
-			continue;
-		if (sp->id == id) {
-			sp->refcnt++;
-			return sp;
-		}
-	}
-
-	LIST_FOREACH(sp, &sptree[IPSEC_DIR_OUTBOUND], chain) {
-		if (sp->state == IPSEC_SPSTATE_DEAD)
-			continue;
+	TAILQ_FOREACH(sp, &sptailq, tailq) {
 		if (sp->id == id) {
 			sp->refcnt++;
 			return sp;
@@ -1503,11 +1491,6 @@ key_spdadd(so, m, mhp)
 		return key_senderror(so, m, error);
 	}
 
-	if ((newsp->id = key_getnewspid()) == 0) {
-		keydb_delsecpolicy(newsp);
-		return key_senderror(so, m, ENOBUFS);
-	}
-
 	error = keydb_setsecpolicyindex(newsp, &spidx);
 	if (error) {
 		keydb_delsecpolicy(newsp);
@@ -1610,37 +1593,6 @@ key_spdadd(so, m, mhp)
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
-}
-
-/*
- * get new policy id.
- * OUT:
- *	0:	failure.
- *	others: success.
- */
-static u_int32_t
-key_getnewspid()
-{
-	u_int32_t newid = 0;
-	int count = key_spi_trycnt;	/* XXX */
-	struct secpolicy *sp;
-
-	/* when requesting to allocate spi ranged */
-	while (count--) {
-		newid = (policy_id = (policy_id == ~0 ? 1 : policy_id + 1));
-
-		if ((sp = key_getspbyid(newid)) == NULL)
-			break;
-
-		key_freesp(sp);
-	}
-
-	if (count == 0 || newid == 0) {
-		ipseclog((LOG_DEBUG, "key_getnewspid: to allocate policy id is failed.\n"));
-		return 0;
-	}
-
-	return newid;
 }
 
 /*
@@ -2083,6 +2035,9 @@ key_setdumpsp(sp, type, seq, pid)
 {
 	struct mbuf *result = NULL, *m;
 
+	if (!sp->spidx)
+		panic("policy-on-pcb to key_setdumpsp");
+
 	m = key_setsadbmsg(type, 0, SADB_SATYPE_UNSPEC, seq, pid, sp->refcnt);
 	if (!m)
 		goto fail;
@@ -2192,6 +2147,9 @@ key_spdexpire(sp)
 	int len;
 	int error = -1;
 	struct sadb_lifetime *lt;
+
+	if (!sp->spidx)
+		panic("policy-on-pcb to key_spdexpire");
 
 	/* XXX: Why do we lock ? */
 #ifdef __NetBSD__
@@ -7028,16 +6986,22 @@ key_init()
 #endif
 	LIST_INIT(&spacqtree);
 
+	TAILQ_INIT(&sptailq);
+
 	/* system default */
 #ifdef INET
-	ip4_def_policy.policy = IPSEC_POLICY_NONE;
-	ip4_def_policy.refcnt++;	/*never reclaim this*/
-	ip4_def_policy.readonly = 1;
+	ip4_def_policy = key_newsp();
+	if (!ip4_def_policy)
+		panic("could not initialize IPv4 default security policy");
+	ip4_def_policy->policy = IPSEC_POLICY_NONE;
+	ip4_def_policy->readonly = 1;
 #endif
 #ifdef INET6
-	ip6_def_policy.policy = IPSEC_POLICY_NONE;
-	ip6_def_policy.refcnt++;	/*never reclaim this*/
-	ip6_def_policy.readonly = 1;
+	ip6_def_policy = key_newsp();
+	if (!ip6_def_policy)
+		panic("could not initialize IPv6 default security policy");
+	ip6_def_policy->policy = IPSEC_POLICY_NONE;
+	ip6_def_policy->readonly = 1;
 #endif
 
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, (void *)0);
