@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mec.c,v 1.4 2000/11/15 01:02:14 thorpej Exp $	*/
+/*	$NetBSD: if_mec.c,v 1.5 2000/11/18 19:32:34 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -91,7 +91,7 @@ struct mec_softc {
 
 	struct ethercom sc_ethercom;
 
-	unsigned char sc_enaddr[6];
+	unsigned char sc_enaddr[ETHER_ADDR_LEN];
 
 	void *sc_sdhook;
 
@@ -106,9 +106,9 @@ struct mec_softc {
 static int	mec_match(struct device *, struct cfdata *, void *);
 static void	mec_attach(struct device *, struct device *, void *);
 #if 0
-static void	epic_start(struct ifnet *);
-static void	epic_watchdog(struct ifnet *);
-static int	epic_ioctl(struct ifnet *, u_long, caddr_t);
+static void	mec_start(struct ifnet *);
+static void	mec_watchdog(struct ifnet *);
+static int	mec_ioctl(struct ifnet *, u_long, caddr_t);
 #endif
 static int	mec_mii_readreg(struct device *, int, int);
 static void	mec_mii_writereg(struct device *, int, int, int);
@@ -153,8 +153,8 @@ mec_attach(parent, self, aux)
 	 * The firmware has left us the station address.
 	 */
 	address = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_STATION);
-	for (i = 0; i < 6; i++) {
-		sc->sc_enaddr[5 - i] = address & 0xff;
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		sc->sc_enaddr[ETHER_ADDR_LEN - 1 - i] = address & 0xff;
 		address >>= 8;
 	}
 
