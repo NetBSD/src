@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.74 2000/11/15 00:11:03 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.75 2000/12/15 02:22:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.74 2000/11/15 00:11:03 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.75 2000/12/15 02:22:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -679,6 +679,7 @@ cmdscanner(void)
 			continue;
 		}
 		confirmrest = 0;
+		margv[0] = c->c_name;
 		(*c->c_handler)(margc, margv);
 		if (bell && c->c_bell)
 			(void)putc('\007', ttyout);
@@ -944,7 +945,7 @@ help(int argc, char *argv[])
 			    cmd, arg);
 		else {
 			if (isusage) {
-				nargv[0] = arg;
+				nargv[0] = c->c_name;
 				(*c->c_handler)(0, nargv);
 			} else
 				fprintf(ttyout, "%-*s\t%s\n", HELPINDENT,
