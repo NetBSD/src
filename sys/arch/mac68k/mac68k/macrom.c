@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.37 1997/08/11 22:53:48 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.37.4.1 1998/11/23 05:55:40 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -369,7 +369,7 @@ void
 mrg_lvl1dtpanic()		/* Lvl1DT stopper */
 {
 	printf("Agh!  I was called from Lvl1DT!!!\n");
-#if DDB
+#ifdef DDB
 	Debugger();
 #endif
 }
