@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.152.2.12 1998/09/20 16:37:22 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.152.2.13 1998/10/02 19:51:48 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -36,8 +36,8 @@ options 	XSERVER		# X server support in console drivers
 # values.  Note that the BIOS may *correctly* report less than 640k of base
 # memory if the extended BIOS data area is located at the top of base memory
 # (as is the case on most recent systems).
-#options 	REALBASEMEM=639	# size of base memory (kB)
-#options 	REALEXTMEM=15360	# size of extended memory (kB)
+#options 	REALBASEMEM=639		# size of base memory (in KB)
+#options 	REALEXTMEM=15360	# size of extended memory (in KB)
 
 # Standard system options
 
@@ -250,7 +250,8 @@ lpt2	at isa? port 0x3bc
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
-adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], ULTRA SCSI
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
@@ -283,6 +284,7 @@ wds1	at isa? port 0x358 irq 11 drq 5
 
 # SCSI bus support
 scsibus* at adv?
+scsibus* at adw?
 scsibus* at aha?
 scsibus* at ahb?
 scsibus* at ahc?
