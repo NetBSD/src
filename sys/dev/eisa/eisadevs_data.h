@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.2 1996/03/17 00:13:56 cgd Exp 
+ *	NetBSD: eisadevs,v 1.3 1996/03/17 00:18:46 cgd Exp 
  */
 
 /*
