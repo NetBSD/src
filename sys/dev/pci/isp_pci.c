@@ -1,4 +1,3 @@
-/* $NetBSD: isp_pci.c,v 1.30 1998/09/17 23:10:20 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -200,11 +199,6 @@ isp_pci_attach(parent, self, aux)
 			pcs->pci_sh = ioh;
 		}
 
-#if	0
-		printf("%s: PCIREGS cmd=%x bhlc=%x\n", isp->isp_name,
-		 pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG),
-		 pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG));
-#endif
 		isp->isp_type = ISP_HA_FC_2100;
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
@@ -220,25 +214,6 @@ isp_pci_attach(parent, self, aux)
 			PCI_COMMAND_INVALIDATE_ENABLE;
 		pci_conf_write(pa->pa_pc, pa->pa_tag,
 			PCI_COMMAND_STATUS_REG, data);
-		/*
-		 * Wierd- we need to clear the lsb in offset 0x30 to take the
-		 * chip out of reset state.
-		 */
-		data = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x30);
-		data &= ~1;
-		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x30, data);
-#if	0
-		/*
-		 * XXX: Need to get the actual revision number of the 2100 FB
-		 */
-		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
-		data &= ~0xffff;
-		data |= 0xf801;
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, data);
-		printf("%s: setting latency to %x and cache line size to %x\n",
-			isp->isp_name, (data >> 8) & 0xff,
-			data & 0xff);
-#endif
 	} else {
 		return;
 	}
