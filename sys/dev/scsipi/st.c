@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.125 2000/08/16 19:22:25 matt Exp $ */
+/*	$NetBSD: st.c,v 1.126 2000/11/02 00:52:15 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -327,7 +327,7 @@ struct st_softc {
 	u_int8_t asc;		/* last asc code seen                */
 	u_int8_t ascq;		/* last asc code seen                */
 /*--------------------device/scsi parameters---------------------------------*/
-	struct scsipi_link *sc_link;	/* our link to the adpter etc.       */
+	struct scsipi_link *sc_link;	/* our link to the adapter etc.      */
 /*--------------------parameters reported by the device ---------------------*/
 	int blkmin;		/* min blk size                       */
 	int blkmax;		/* max blk size                       */
@@ -569,6 +569,7 @@ st_loadquirks(st)
 			mode2->density = mode->density;
 			st->modeflags[i] |= DENSITY_SET_BY_QUIRK;
 		}
+		mode2->quirks |= mode->quirks;
 		mode++;
 		mode2++;
 	}
@@ -2539,8 +2540,17 @@ st_touch_tape(st)
 			readsize = 1;
 			st->flags &= ~ST_FIXEDBLOCKS;
 		}
-		if ((error = st_mode_select(st, 0)) != 0)
-			goto bad;
+		if ((error = st_mode_select(st, 0)) != 0) {
+			/*
+			 * The device did not agree with the proposed
+			 * block size. If we exhausted our options,
+			 * return failure, else try another.
+			 */
+			if (readsize == 1)
+				goto bad;
+			st->blksize -= 512;
+			continue;
+		}
 		st_read(st, buf, readsize, XS_CTL_SILENT);	/* XXX */
 		if ((error = st_rewind(st, 0, 0)) != 0) {
 bad:			free(buf, M_TEMP);
