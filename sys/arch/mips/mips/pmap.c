@@ -1,4 +1,41 @@
-/*	$NetBSD: pmap.c,v 1.34 1998/02/01 01:55:15 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 1998/02/25 23:26:41 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved. 
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center and by Chris G. Demetriou.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:      
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *      
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /* 
  * Copyright (c) 1992, 1993
@@ -41,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 1998/02/01 01:55:15 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 1998/02/25 23:26:41 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -88,24 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 1998/02/01 01:55:15 jonathan Exp $");
 #include <mips/locore.h>
 #include <mips/pte.h>
 #include <machine/cpu.h>
-
-/*
- * For each vm_page_t, there is a list of all currently valid virtual
- * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
- * XXX really should do this as a part of the higher level code.
- */
-typedef struct pv_entry {
-	struct pv_entry	*pv_next;	/* next pv_entry */
-	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
-	int		pv_flags;	/* Some flags for the mapping */
-} *pv_entry_t;
-#define	PV_UNCACHED	0x0001		/* Page is mapped unchached */
-
-pv_entry_t	pv_table;	/* array of entries, one per page */
-
-#define pa_index(pa)		atop((pa) - first_phys_addr)
-#define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 
 #ifdef DEBUG
 struct {
@@ -157,16 +176,43 @@ vm_offset_t	avail_end;	/* PA of last available physical page */
 vm_size_t	mem_size;	/* memory size in bytes */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
+
 int		mipspagesperpage;	/* PAGE_SIZE / NBPG */
+
 #ifdef ATTR
 char		*pmap_attributes;	/* reference and modify bits */
 #endif
+struct pv_entry	*pv_table;
+int		 pv_table_npages;
+
 struct segtab	*free_segtab;		/* free list kept locally */
 u_int		tlbpid_gen = 1;		/* TLB PID generation count */
 int		tlbpid_cnt = 2;		/* next available TLB PID */
 pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
 
+boolean_t	pmap_initialized = FALSE;
+
+#define	PAGE_IS_MANAGED(pa)	(pmap_initialized == TRUE &&		\
+				 vm_physseg_find(atop(pa), NULL) != -1)
+
+#define	pa_to_pvh(pa)							\
+({									\
+	int bank_, pg_;							\
+									\
+	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
+	&vm_physmem[bank_].pmseg.pvent[pg_];				\
+})
+
+#ifdef ATTR
+#define	pa_to_attribute(pa)						\
+({									\
+	int bank_, pg_;							\
+									\
+	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
+	&vm_physmem[bank_].pmseg.attrs[pg_]; 				\
+})
+#endif
 
 /* Forward function declarations */
 int	pmap_remove_pv __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa));
@@ -189,18 +235,17 @@ int pmap_is_page_ro __P((pmap_t, vm_offset_t, int));
  *	firstaddr is the first unused kseg0 address (not page aligned).
  */
 void
-pmap_bootstrap(firstaddr)
-	vm_offset_t firstaddr;
+pmap_bootstrap()
 {
-	register int i;
 #ifdef MIPS3
 	register pt_entry_t *spte;
 #endif
-	vm_offset_t start = firstaddr;
-	extern int maxmem, physmem;
+	extern int physmem;
 
+	/* XXX change vallocs to direct calls to pmap_steal_meory (later) */
 #define	valloc(name, type, num) \
-	    (name) = (type *)firstaddr; firstaddr = (vm_offset_t)((name)+(num))
+	(name) = (type *)pmap_steal_memory(sizeof (type) * (num), NULL, NULL)
+
 	/*
 	 * Allocate a PTE table for the kernel.
 	 * The '1024' comes from PAGER_MAP_SIZE in vm_pager_init().
@@ -213,34 +258,38 @@ pmap_bootstrap(firstaddr)
 	Sysmapsize += shminfo.shmall;
 #endif
 	valloc(Sysmap, pt_entry_t, Sysmapsize);
-#ifdef ATTR
-	valloc(pmap_attributes, char, physmem);
-#endif
+
 	/*
-	 * Allocate memory for pv_table.
+	 * Allocate memory for page attributes and pv_table heads.
 	 * This will allocate more entries than we really need.
 	 * We could do this in pmap_init when we know the actual
 	 * phys_start and phys_end but its better to use kseg0 addresses
 	 * rather than kernel virtual addresses mapped through the TLB.
 	 */
-	i = maxmem - mips_btop(MIPS_KSEG0_TO_PHYS(firstaddr));
-	valloc(pv_table, struct pv_entry, i);
+	pv_table_npages = physmem;
+#ifdef ATTR
+	valloc(pmap_attributes, char, pv_table_npages);
+#endif
+	valloc(pv_table, struct pv_entry, pv_table_npages);
 
 	/*
-	 * Clear allocated memory.
+	 * Initialize `FYI' variables.  Note we're relying on
+	 * the fact that BSEARCH sorts the vm_physmem[] array
+	 * for us.
 	 */
-	firstaddr = mips_round_page(firstaddr);
-	bzero((caddr_t)start, firstaddr - start);
-
-	avail_start = MIPS_KSEG0_TO_PHYS(firstaddr);
-	avail_end = mips_ptob(maxmem);
-	mem_size = avail_end - avail_start;
-
+	avail_start = ptoa(vm_physmem[0].start);
+	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
 	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
+
+	mem_size = avail_end - avail_start;
+
 	/* XXX need to decide how to set cnt.v_page_size */
 	mipspagesperpage = 1;
 
+	/*
+	 * Initialize the kernel pmap.
+	 */
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
 
@@ -252,39 +301,94 @@ pmap_bootstrap(firstaddr)
 	 * when Entry LO and Entry HI G bits are anded together
 	 * they will produce a global bit to store in the tlb.
 	 */
-	if (CPUISMIPS3)
-		for(i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
+	if (CPUISMIPS3) {
+		int i;
+
+		for (i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
 			spte->pt_entry = MIPS3_PG_G;
+	}
 #endif
 }
 
 /*
- * Bootstrap memory allocator. This function allows for early dynamic
- * memory allocation until the virtual memory system has been bootstrapped.
- * After that point, either kmem_alloc or malloc should be used. This
- * function works by stealing pages from the (to be) managed page pool,
- * stealing virtual address space, then mapping the pages and zeroing them.
+ * Bootstrap memory allocator (alternative to vm_bootstrap_steal_memory()).
+ * This function allows for early dynamic memory allocation until the virtual
+ * memory system has been bootstrapped.  After that point, either kmem_alloc
+ * or malloc should be used.  This function works by stealing pages from the
+ * (to be) managed page pool, then implicitly mapping the pages (by using
+ * their k0seg addresses) and zeroing them.
  *
- * It should be used from pmap_bootstrap till vm_page_startup, afterwards
- * it cannot be used, and will generate a panic if tried. Note that this
- * memory will never be freed, and in essence it is wired down.
+ * It may be used once the physical memory segments have been pre-loaded
+ * into the vm_physmem[] array.  Early memory allocation MUST use this
+ * interface!  This cannot be used after vm_page_startup(), and will
+ * generate a panic if tried.
+ *
+ * Note that this memory will never be freed, and in essence it is wired
+ * down.
  */
-void *
-pmap_bootstrap_alloc(size)
-	int size;
+vm_offset_t
+pmap_steal_memory(size, vstartp, vendp)
+	vm_size_t size;
+	vm_offset_t *vstartp, *vendp;
 {
-	vm_offset_t val;
-	extern boolean_t vm_page_startup_initialized;
+	int bank, npgs, x;
+	vm_offset_t pa, va;
 
-	if (vm_page_startup_initialized)
-		panic("pmap_bootstrap_alloc: called after startup initialized");
-
-	val = MIPS_PHYS_TO_KSEG0(avail_start);
 	size = round_page(size);
-	avail_start += size;
+	npgs = atop(size);
 
-	bzero((caddr_t)val, size);
-	return ((void *)val);
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		if (vm_physmem[bank].pgs)
+			panic("pmap_steal_memory: called _after_ bootstrap");
+
+		if (vm_physmem[bank].avail_start != vm_physmem[bank].start ||
+		    vm_physmem[bank].avail_start >= vm_physmem[bank].avail_end)
+			continue;
+
+		if ((vm_physmem[bank].avail_end - vm_physmem[bank].avail_start)
+		    < npgs)
+			continue;
+
+		/*
+		 * There are enough pages here; steal them!
+		 */
+		pa = ptoa(vm_physmem[bank].avail_start);
+		vm_physmem[bank].avail_start += npgs;
+		vm_physmem[bank].start += npgs;
+
+		/*
+		 * Have we used up this segment?
+		 */
+		if (vm_physmem[bank].avail_start == vm_physmem[bank].end) {
+			if (vm_nphysseg == 1)
+				panic("pmap_steal_memory: out of memory!");
+
+			/* Remove this segment from the list. */
+			vm_nphysseg--;
+			for (x = bank; x < vm_nphysseg; x++) {
+				/* structure copy */
+				vm_physmem[x] = vm_physmem[x + 1];
+			}
+		}
+
+		/*
+		 * Fill these in for the caller; we don't modify them,
+		 * but thge upper layers still want to know.
+		 */
+		if (vstartp)
+			*vstartp = round_page(virtual_avail);
+		if (vendp)
+			*vendp = trunc_page(virtual_end);
+
+		va = MIPS_PHYS_TO_KSEG0(pa);
+		bzero((caddr_t)va, size);
+		return (va);
+	}
+
+	/*
+	 * If we got here, there was no memory left.
+	 */
+	panic("pmap_steal_memory: no memory to steal");
 }
 
 /*
@@ -293,14 +397,45 @@ pmap_bootstrap_alloc(size)
  *	system needs to map virtual memory.
  */
 void
-pmap_init(phys_start, phys_end)
-	vm_offset_t phys_start, phys_end;
+pmap_init()
 {
+	vm_size_t	s;
+	int		bank;
+	pv_entry_t	pv;
+#ifdef ATTR
+	char		*attr;
+#endif
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_INIT))
-		printf("pmap_init(%lx, %lx)\n", phys_start, phys_end);
+		printf("pmap_init()\n");
 #endif
+
+	/*
+	 * Memory for the pv entry heads and page attributes has
+	 * already been allocated.  Initialize the physical memory
+	 * segments.
+	 */
+	pv = pv_table;
+#ifdef ATTR
+	attr = pmap_attributes;
+#endif
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		s = vm_physmem[bank].end - vm_physmem[bank].start;
+		vm_physmem[bank].pmseg.pvent = pv;
+#ifdef ATTR
+		vm_physmem[bank].pmseg.attrs = attr;
+#endif
+		pv += s;
+#ifdef ATTR
+		attr += s;
+#endif
+	}
+
+	/*
+	 * Now it is safe to enable pv entry recording.
+	 */
+	pmap_initialized = TRUE;
 }
 
 /*
@@ -578,7 +713,7 @@ pmap_remove(pmap, sva, eva)
 #endif /* mips3 */
 			}
 #ifdef ATTR
-			pmap_attributes[atop(pfn_to_vad(entry))] = 0;
+			*pa_to_attribute(pfn_to_vad(entry)) = 0;
 #endif
 
 
@@ -634,7 +769,7 @@ pmap_remove(pmap, sva, eva)
 #endif /* mips3 */
 			}
 #ifdef ATTR
-			pmap_attributes[atop(pfn_to_vad(entry))] = 0;
+			*pa_to_attribute(pfn_to_vad(entry)) = 0;
 #endif
 			pte->pt_entry = mips_pg_nv_bit();
 			/*
@@ -670,7 +805,7 @@ pmap_page_protect(pa, prot)
 	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
 		printf("pmap_page_protect(%lx, %x)\n", pa, prot);
 #endif
-	if (!IS_VM_PHYSADDR(pa))
+	if (!PAGE_IS_MANAGED(pa))
 		return;
 
 	switch (prot) {
@@ -844,7 +979,7 @@ pmap_page_cache(pa,mode)
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
 		printf("pmap_page_uncache(%lx)\n", pa);
 #endif
-	if (!IS_VM_PHYSADDR(pa))
+	if (!PAGE_IS_MANAGED(pa))
 		return;
 
 	newmode = mode & PV_UNCACHED ? MIPS3_PG_UNCACHED : MIPS3_PG_CACHED;
@@ -941,7 +1076,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		panic("pmap_enter: prot");
 #endif
 
-	if (IS_VM_PHYSADDR(pa)) {
+	if (PAGE_IS_MANAGED(pa)) {
 		if (!(prot & VM_PROT_WRITE))
 			npte = mips_pg_ropage_bit();
 		else {
@@ -955,8 +1090,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 				mem->flags &= ~PG_CLEAN;
 			} else
 #ifdef ATTR
-				if ((pmap_attributes[atop(pa)] &
-				    PMAP_ATTR_MOD) || !(mem->flags & PG_CLEAN))
+				if ((*pa_to_attribute(pa) & PMAP_ATTR_MOD) ||
+				    !(mem->flags & PG_CLEAN))
 #else
 				if (!(mem->flags & PG_CLEAN))
 #endif
@@ -1482,7 +1617,7 @@ pmap_clear_modify(pa)
 		printf("pmap_clear_modify(%lx)\n", pa);
 #endif
 #ifdef ATTR
-	pmap_attributes[atop(pa)] &= ~PMAP_ATTR_MOD;
+	*pa_to_attribute(pa) &= ~PMAP_ATTR_MOD;
 #endif
 }
 
@@ -1501,7 +1636,7 @@ pmap_clear_reference(pa)
 		printf("pmap_clear_reference(%lx)\n", pa);
 #endif
 #ifdef ATTR
-	pmap_attributes[atop(pa)] &= ~PMAP_ATTR_REF;
+	*pa_to_attribute(pa) &= ~PMAP_ATTR_REF;
 #endif
 }
 
@@ -1516,7 +1651,7 @@ pmap_is_referenced(pa)
 	vm_offset_t pa;
 {
 #ifdef ATTR
-	return (pmap_attributes[atop(pa)] & PMAP_ATTR_REF);
+	return (*pa_to_attribute(pa) & PMAP_ATTR_REF);
 #else
 	return (FALSE);
 #endif
@@ -1533,7 +1668,7 @@ pmap_is_modified(pa)
 	vm_offset_t pa;
 {
 #ifdef ATTR
-	return (pmap_attributes[atop(pa)] & PMAP_ATTR_MOD);
+	return (*pa_to_attribute(pa)  & PMAP_ATTR_MOD);
 #else
 	return (FALSE);
 #endif
@@ -1747,7 +1882,7 @@ pmap_remove_pv(pmap, va, pa)
 	 * Remove page from the PV table (raise IPL since we
 	 * may be called at interrupt time).
 	 */
-	if (!IS_VM_PHYSADDR(pa))
+	if (!PAGE_IS_MANAGED(pa))
 		return(TRUE);
 	pv = pa_to_pvh(pa);
 	s = splimp();

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 1998/01/03 01:13:07 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 1998/02/25 23:26:41 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -88,6 +88,19 @@ typedef struct pmap {
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
 } *pmap_t;
 
+/*
+ * For each vm_page_t, there is a list of all currently valid virtual
+ * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
+ * XXX really should do this as a part of the higher level code.
+ */
+typedef struct pv_entry {
+	struct pv_entry	*pv_next;	/* next pv_entry */
+	struct pmap	*pv_pmap;	/* pmap where mapping lies */
+	vm_offset_t	pv_va;		/* virtual address for mapping */
+	int		pv_flags;	/* some flags for the mapping */
+} *pv_entry_t;
+
+#define	PV_UNCACHED	0x0001		/* page is mapped uncached */
 
 /*
  * Defines for pmap_attributes[phys_mach_page];
@@ -107,10 +120,8 @@ struct pmap kernel_pmap_store;
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
- *	firstaddr is the first unused kseg0 address (not page aligned).
  */
-void	pmap_bootstrap __P((vm_offset_t firstaddr));
-
+void	pmap_bootstrap __P((void));
 
 /*
  * pmap_prefer()  helps reduce virtual-coherency exceptions in
@@ -121,12 +132,15 @@ void	pmap_bootstrap __P((vm_offset_t firstaddr));
 void	pmap_prefer __P((vm_offset_t, vm_offset_t *));
 #endif /* MIPS3 */
 
+#define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
+
 /*
  * Kernel cache operations for the user-space API 
  */
-int mips_user_cacheflush __P((struct proc *p, vm_offset_t va, int nbytes, int whichcache));
-int mips_user_cachectl   __P((struct proc *p, vm_offset_t va, int nbytes, int ctl));
+int mips_user_cacheflush __P((struct proc *p, vm_offset_t va, int nbytes,
+	int whichcache));
+int mips_user_cachectl   __P((struct proc *p, vm_offset_t va, int nbytes,
+	int ctl));
 
 #endif	/* _KERNEL */
-
 #endif	/* _PMAP_MACHINE_ */
