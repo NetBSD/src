@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.14 1999/11/09 21:56:54 kleink Exp $
+# $NetBSD: ad.mips,v 1.15 1999/12/23 10:22:59 kleink Exp $
 ./usr/bin/elf2aout
 ./usr/bin/elf2ecoff
 ./usr/include/mips
@@ -22,6 +22,7 @@
 ./usr/include/mips/kdbparam.h
 ./usr/include/mips/limits.h
 ./usr/include/mips/locore.h
+./usr/include/mips/math.h
 ./usr/include/mips/mips1_pte.h
 ./usr/include/mips/mips3_pte.h
 ./usr/include/mips/mips_opcode.h
