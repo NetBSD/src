@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.31 2002/01/15 17:00:53 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.32 2002/01/31 00:03:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -79,8 +79,8 @@ main(argc, argv)
 	int	ch;
 	int	iflag = 0;
 	int	verbose = 0;
-	const char *device = 0;
-	const char *ctldev = 0;
+	const char *device = NULL;
+	const char *ctldev = NULL;
 
 	while ((ch = getopt(argc, argv, "b:C:c:d:e:fhip:P:qs:Vv:")) != -1) {
 		switch (ch) {
@@ -162,19 +162,17 @@ main(argc, argv)
 
 	if (device == NULL && (device = getenv("AUDIODEVICE")) == NULL &&
 	    (device = getenv("AUDIODEV")) == NULL) /* Sun compatibility */
-		device = _PATH_AUDIO;
+		device = _PATH_SOUND;
 	if (ctldev == NULL && (ctldev = getenv("AUDIOCTLDEVICE")) == NULL)
 		ctldev = _PATH_AUDIOCTL;
 
 	audiofd = open(device, O_WRONLY);
-#ifdef _PATH_OAUDIO
-	/* Allow the non-unit device to be used. */
-	if (audiofd < 0 && device == _PATH_AUDIO) {
-		device = _PATH_OAUDIO;
-		ctldev = _PATH_OAUDIOCTL;
+	if (audiofd < 0 && device == _PATH_SOUND) {
+		device = _PATH_SOUND0;
+		ctldev = _PATH_AUDIOCTL0;
 		audiofd = open(device, O_WRONLY);
 	}
-#endif
+
 	if (audiofd < 0)
 		err(1, "failed to open %s", device);
 	ctlfd = open(ctldev, O_RDWR);

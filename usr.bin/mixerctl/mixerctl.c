@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.16 2002/01/27 10:09:55 jdolecek Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.17 2002/01/31 00:03:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,8 +45,7 @@
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
 
-#define MIXER "/dev/mixer0"
-#define OLD_MIXER "/dev/mixer"
+#include <paths.h>
 
 FILE *out = stdout;
 int vflag = 0;
@@ -319,8 +318,8 @@ main(int argc, char **argv)
 	int ndev;
 
 	file = getenv("MIXERDEVICE");
-	if (file == 0)
-		file = MIXER;
+	if (file == NULL)
+		file = _PATH_MIXER;
 
 	prog = *argv;
 
@@ -355,13 +354,12 @@ main(int argc, char **argv)
 	argv += optind;
     
 	fd = open(file, O_RDWR);
-#ifdef OLD_MIXER
-        /* Allow the non-unit device to be used. */
-        if (fd < 0 && file == MIXER) {
-        	file = OLD_MIXER;
+        /* Try with mixer0. */
+        if (fd < 0 && file == _PATH_MIXER) {
+        	file = _PATH_MIXER0;
                 fd = open(file, O_RDWR);
         }
-#endif
+
 	if (fd < 0)
 		err(1, "%s", file);
 
