@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.1 1999/11/23 05:28:22 mrg Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.2 2000/04/26 05:12:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -264,10 +264,46 @@ add_provide(fnode, s)
 		head->fnode = NULL;
 		head->last = head->next = NULL;
 		Hash_SetValue(entry, head);
-	} else if (new == 0) {
-		warnx("file `%s' provides `%s'.", fnode->filename, s);
-		warnx("\tpreviously seen in `%s'.", head->next->fnode->filename);
 	}
+#if 0
+	/*
+	 * Don't warn about this.  We want to be able to support
+	 * scripts that do two complex things:
+	 *
+	 *	- Two independent scripts which both provide the
+	 *	  same thing.  Both scripts must be executed in
+	 *	  any order to meet the barrier.  An example:
+	 *
+	 *		Script 1:
+	 *
+	 *			PROVIDE: mail
+	 *			REQUIRE: LOGIN
+	 *
+	 *		Script 2:
+	 *
+	 *			PROVIDE: mail
+	 *			REQUIRE: LOGIN
+	 *
+	 * 	- Two interdependent scripts which both provide the
+	 *	  same thing.  Both scripts must be executed in
+	 *	  graph order to meet the barrier.  An example:
+	 *
+	 *		Script 1:
+	 *
+	 *			PROVIDE: nameservice dnscache
+	 *			REQUIRE: SERVERS
+	 *
+	 *		Script 2:
+	 *
+	 *			PROVIDE: nameservice nscd
+	 *			REQUIRE: dnscache
+	 */
+	else if (new == 0) {
+		warnx("file `%s' provides `%s'.", fnode->filename, s);
+		warnx("\tpreviously seen in `%s'.",
+		    head->next->fnode->filename);
+	}
+#endif
 
 	pnode = emalloc(sizeof(*pnode));
 	pnode->head = RESET;
