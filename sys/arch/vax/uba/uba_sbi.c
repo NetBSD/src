@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.13 2002/06/04 19:04:32 ragge Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.14 2002/06/06 11:40:53 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -212,8 +212,11 @@ uba_dw780int(void *arg)
 
 	br = mfpr(PR_IPL);
 	vec = ur->uba_brrvr[br - 0x14];
-	if (vec <= 0)
-		ubaerror(&vc->uv_sc, &br, (int *)&vec);
+	if (vec <= 0) {
+		ubaerror(&vc->uv_sc, &br, &vec);
+		if (vec == 0)
+			return;
+	}
 
 	if (cold && scb_vec[(vc->uh_ibase + vec)/4].hoppaddr == scb_stray) {
 		scb_fake(vec + vc->uh_ibase, br);
@@ -256,7 +259,6 @@ int	ubaerrcnt;
  * on the stack, and value-result (through some trickery).
  * In particular, the uvec argument is used for further
  * uba processing so the result aspect of it is very important.
- * It must not be declared register.
  */
 /*ARGSUSED*/
 void
@@ -264,7 +266,7 @@ ubaerror(struct uba_softc *uh, int *ipl, int *uvec)
 {
 	struct uba_vsoftc *vc = (void *)uh;
 	struct	uba_regs *uba = vc->uv_uba;
-	register int sr, s;
+	int sr, s;
 	char sbuf[256], sbuf2[256];
 
 	if (*uvec == 0) {
