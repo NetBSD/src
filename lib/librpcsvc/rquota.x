@@ -5,11 +5,11 @@
 
 #ifndef RPC_HDR
 %#include <sys/cdefs.h>
-%#ifndef lint
+%#ifndef __lint__
 %/*static char sccsid[] = "from: @(#)rquota.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rquota.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: rquota.x,v 1.5 2003/02/14 14:55:58 bouyer Exp $");
-%#endif /* not lint */
+%__RCSID("$NetBSD: rquota.x,v 1.6 2004/07/01 22:52:34 kleink Exp $");
+%#endif /* not __lint__ */
 #endif
 
 const RQ_PATHLEN = 1024;
