@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.39 1995/01/29 07:37:37 cgd Exp $
+#	$NetBSD: files.i386.newconf,v 1.40 1995/02/21 21:49:10 brezak Exp $
 #
 # new style config file for i386 architecture
 #
@@ -54,12 +54,6 @@ device	su at scsibus: disk
 file	scsi/su.c			su needs-flag
 device	uk at scsibus: disk
 file	scsi/uk.c			uk needs-flag
-
-#
-# Generic audio driver
-#
-define	audio
-file	arch/i386/isa/bsd_audio.c	audio needs-flag
 
 #
 # Bus types
@@ -164,8 +158,23 @@ file	dev/isa/if_ix.c			ix
 device	le at isa: ether, ifnet, dma
 file	dev/isa/if_le.c			le
 
-device	sb at isa: audio
+define	sbdsp
+file	arch/i386/isa/sbdsp.c		sbdsp
+device	sb at isa: audio, sbdsp
 file	arch/i386/isa/sb.c		sb needs-flag
+device	pas at isa: audio, sbdsp
+file	arch/i386/isa/pas.c		pas needs-flag
+
+define	ad1848
+file	arch/i386/isa/ad1848.c		ad1848
+device	pss at isa {[port = -1], [size = 0],
+		     [iomem = -1], [iosiz = 0],
+		     [irq = -1], [drq = -1]}
+device	sp at pss: audio, ad1848
+file	arch/i386/isa/pss.c		pss needs-flag
+device	wss at isa: audio, ad1848
+file	arch/i386/isa/wss.c		wss needs-flag
+
 device	spkr at isa: tty
 file	arch/i386/isa/spkr.c		speaker needs-flag
 
