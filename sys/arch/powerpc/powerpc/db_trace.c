@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 2001/06/13 06:01:50 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.11 2001/06/15 08:09:33 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -102,12 +102,14 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	char *modif;
 	void (*pr) __P((const char *, ...));
 {
-	db_addr_t frame, lr, caller;
+	db_addr_t frame, lr, caller, *args;
+	db_addr_t fakeframe[2];
 	db_expr_t diff;
 	db_sym_t sym;
 	char *symname;
 	boolean_t kernel_only = TRUE;
 	boolean_t trace_thread = FALSE;
+	extern int trapexit[];
 	boolean_t full = FALSE;
 
 	{
@@ -125,60 +127,109 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	}
 
 	frame = (db_addr_t)ddb_regs.r[1];
-	while ((frame = *(db_addr_t *)frame) && count--) {
-		db_addr_t *args = (db_addr_t *)(frame + 8);
+	for (;;) {
+		if (kernel_only && frame < VM_MIN_KERNEL_ADDRESS)
+			break;
+		if (!kernel_only && frame < NBPG)
+			break;
+ 
+		frame = *(db_addr_t *)frame;
+	    next_frame:
+		args = (db_addr_t *)(frame + 8);
+		if (kernel_only && frame < VM_MIN_KERNEL_ADDRESS)
+			break;
+		if (!kernel_only && frame < NBPG)
+			break;
+	        if (count-- == 0)
+			break;
 
 		lr = *(db_addr_t *)(frame + 4) - 4;
-		if ((lr & 3) || (lr < 0x10000)) {
+		if ((lr & 3) || (lr < 0x100)) {
 			(*pr)("saved LR(0x%x) is invalid.", lr);
 			break;
 		}
 		if ((caller = (db_addr_t)vtophys(lr)) == 0)
 			caller = lr;
 
-		if (full)
-			/* Print all the args stored in that stackframe. */
-			printf("(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx) %lx ",
-				args[0], args[1], args[2], args[3],
-				args[4], args[5], args[6], args[7], frame);
+		if (frame != (db_addr_t) fakeframe) {
+			printf("0x%08lx: ", frame);
+		} else {
+			printf("  <????>  : ");
+		}
+		if (caller + 4 == (db_addr_t) &trapexit) {
+			const char *trapstr;
+			struct trapframe *tf = (struct trapframe *) (frame+8);
+			(*pr)("%s ", tf->srr1 & PSL_PR ? "user" : "kernel");
+			switch (tf->exc) {
+			case EXC_DSI:
+				(*pr)("DSI %s trap @ %#x by ",
+				    tf->dsisr & DSISR_STORE ? "write" : "read",
+				    tf->dar);
+				goto print_trap;
+			case EXC_ISI: trapstr = "ISI"; break;
+			case EXC_PGM: trapstr = "PGM"; break;
+			case EXC_SC: trapstr = "SC"; break;
+			case EXC_EXI: trapstr = "EXI"; break;
+			case EXC_MCHK: trapstr = "MCHK"; break;
+			case EXC_VEC: trapstr = "VEC"; break;
+			case EXC_FPU: trapstr = "FPU"; break;
+			case EXC_FPA: trapstr = "FPA"; break;
+			case EXC_DECR: trapstr = "DECR"; break;
+			case EXC_ALI: trapstr = "ALI"; break;
+			case EXC_BPT: trapstr = "BPT"; break;
+			case EXC_TRC: trapstr = "TRC"; break;
+			case EXC_PERF: trapstr = "PERF"; break;
+			case EXC_SMI: trapstr = "SMI"; break;
+			case EXC_RST: trapstr = "RST"; break;
+			default: trapstr = NULL; break;
+			}
+			if (trapstr != NULL) {
+				(*pr)("%s trap by ", trapstr);
+			} else {
+				(*pr)("trap %#x by ", tf->exc);
+			}
+		   print_trap:	
+			lr = (db_addr_t) tf->srr0;
+			if ((caller = (db_addr_t)vtophys(lr)) == 0)
+				caller = lr;
+			diff = 0;
+			symname = NULL;
+			sym = db_search_symbol(caller, DB_STGY_ANY, &diff);
+			db_symbol_values(sym, &symname, 0);
+			if (symname == NULL || !strcmp(symname, "end")) {
+				(*pr)("%p: srr1=%#x\n", caller, tf->srr1);
+			} else {
+				(*pr)("%s+%x: srr1=%#x\n", symname, diff,
+				    tf->srr1);
+			}
+			printf("%-10s  r1=%#x cr=%#x xer=%#x ctr=%#x",
+			    "", tf->fixreg[1], tf->cr, tf->xer, tf->ctr);
+			if (tf->exc == EXC_DSI)
+				printf(" dsisr=%#x", tf->dsisr);
+#ifdef PPC_IBM4XX
+			printf(" dear=%#x esr=%#x pid=%#x",
+			    tf->dear, tf->esr, tf->pid):
+#endif
+			printf("\n");
+			fakeframe[0] = (db_addr_t) tf->fixreg[1];
+			fakeframe[1] = (db_addr_t) tf->lr;
+			frame = (db_addr_t) fakeframe;
+			goto next_frame;
+		}
 
 		diff = 0;
 		symname = NULL;
 		sym = db_search_symbol(caller, DB_STGY_ANY, &diff);
 		db_symbol_values(sym, &symname, 0);
-		if (symname == NULL)
-			(*pr)("at %p\n", caller);
+		if (symname == NULL || !strcmp(symname, "end"))
+			(*pr)("at %p", caller);
 		else
-			(*pr)("at %s+%x\n", symname, diff);
-		if (symname && (!strcmp(symname, "trap") ||
-			!strcmp(symname, "pmap_tlbmiss"))) {
-			/*
-			 * XXX - Incorrect offset for the trapframe.
-			 *       We get garbage some/most times.
-			 */
-			struct trapframe *tf = (struct trapframe *)(frame - 16);
-
-			printf("trap ------------------\n");
-			printf("\tr1   = %x\n", tf->fixreg[1]);
-			printf("\tcr   = %x\n", tf->cr);
-			printf("\txer  = %x\n", tf->xer);
-			printf("\tctr  = %x\n", tf->ctr);
-			printf("\tsrr0 = %x\n", tf->srr0);
-			printf("\tsrr1 = %x\n", tf->srr1);
-			printf("\texc  = %x\n", tf->exc);
-#ifdef PPC_IBM4XX
-			printf("\tdear = %x\n", tf->dear);
-			printf("\tesr  = %x\n", tf->esr);
-			printf("\tpid  = %x\n", tf->pid);
-#endif
-			/*
-			 * Switch to the trapframe's stack if it's in the
-			 * kernel. 
-			 */
-			if ((tf->srr1 & PSL_PR) == 0)
-				frame = tf->fixreg[1];
-			else
-				return;
-		}
+			(*pr)("at %s+%x", symname, diff);
+		if (full)
+			/* Print all the args stored in that stackframe. */
+			printf("(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)",
+				args[0], args[1], args[2], args[3],
+				args[4], args[5], args[6], args[7]);
+		printf("\n");
 	}
 }
