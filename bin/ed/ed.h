@@ -200,6 +200,7 @@ if ((i) > (n)) { \
 int append __P((long, int));
 int cbcdec __P((char *, FILE *));
 int cbcenc __P((char *, int, FILE *));
+char *ckfn __P((char *));
 int ckglob __P((void));
 int ckrange __P((long, long));
 int desflush __P((FILE *));
