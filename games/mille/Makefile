@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 1997/05/29 00:40:03 mellon Exp $
+#	$NetBSD: Makefile,v 1.8 1998/02/04 10:19:34 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	mille
 SRCS=	comp.c end.c extern.c init.c mille.c misc.c move.c print.c \
 	roll.c save.c types.c varpush.c
-DPADD=	${LIBCURSES} ${LIBTERMCAP} ${LIBCOMPAT}
-LDADD=	-lcurses -ltermcap -lcompat
+DPADD=	${LIBCURSES} ${LIBTERMCAP}
+LDADD=	-lcurses -ltermcap
 MAN=	mille.6
 HIDEGAME=hidegame
 
