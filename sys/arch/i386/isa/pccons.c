@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.51 1994/03/02 00:57:35 mycroft Exp $
+ *	$Id: pccons.c,v 1.52 1994/03/02 04:38:26 mycroft Exp $
  */
 
 /*
@@ -68,7 +68,6 @@
 #include <i386/isa/isa_device.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/isa.h>
-#include <i386/isa/ic/i8042.h>
 #include <i386/isa/kbdreg.h>
 
 #define	XFREE86_BUG_COMPAT
@@ -334,8 +333,14 @@ pcprobe(dev)
 		printf("pcprobe: reset error 2\n");
 		goto lose;
 	}
-	if (!kbd_cmd(KBC_ENABLE, 1)) {
+	/* XXX We need the old XT scancodes. */
+	if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(0, 1)) {
 		printf("pcprobe: reset error 3\n");
+		goto lose;
+	}
+	/* Just to be safe. */
+	if (!kbd_cmd(KBC_ENABLE, 1)) {
+		printf("pcprobe: reset error 4\n");
 		goto lose;
 	}
 
