@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.14 1999/01/09 03:16:17 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.15 1999/01/29 11:36:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -430,7 +430,7 @@ again:
 		WDCDEBUG_PRINT(("PHASE_DATAOUT\n"), DEBUG_INTR);
 		if ((sc_xfer->flags & SCSI_DATA_OUT) == 0 ||
 		    (xfer->c_flags & C_DMA) != 0) {
-			printf("wdc_atapi_intr: bad data phase DATAOUT");
+			printf("wdc_atapi_intr: bad data phase DATAOUT\n");
 			if (xfer->c_flags & C_DMA) {
 				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 				    chp->channel, xfer->drive, dma_flags);
@@ -509,7 +509,7 @@ again:
 		if (((sc_xfer->flags & SCSI_DATA_IN) == 0 &&
 		    (xfer->c_flags & C_SENSE) == 0) || 
 		    (xfer->c_flags & C_DMA) != 0) {
-			printf("wdc_atapi_intr: bad data phase DATAIN");
+			printf("wdc_atapi_intr: bad data phase DATAIN\n");
 			if (xfer->c_flags & C_DMA) {
 				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 				    chp->channel, xfer->drive, dma_flags);
