@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.73 2002/02/02 06:04:46 gehenna Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.74 2002/03/17 18:02:52 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.73 2002/02/02 06:04:46 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.74 2002/03/17 18:02:52 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1100,7 +1100,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
-	memcpy(mtod(c->aue_mbuf, char*), c->aue_buf, total_len);
+	memcpy(mtod(c->aue_mbuf, char *), c->aue_buf, total_len);
 
 	if (total_len <= 4 + ETHER_CRC_LEN) {
 		ifp->if_ierrors++;
