@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.65.2.7 2002/08/13 02:20:12 nathanw Exp $	*/
+/*	$NetBSD: if.h,v 1.65.2.8 2002/08/27 23:47:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -728,7 +728,7 @@ extern struct ifnet **ifindex2ifnet;
 #if 0
 struct ifnet loif[];
 #endif
-extern int if_index;
+extern u_int if_index;
 
 char	*ether_sprintf __P((const u_char *));
 

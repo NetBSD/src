@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.21.2.8 2002/06/20 03:46:13 nathanw Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.21.2.9 2002/08/27 23:46:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.21.2.8 2002/06/20 03:46:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.21.2.9 2002/08/27 23:46:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,44 @@ struct cis_state {
 
 int	pcmcia_parse_cis_tuple __P((struct pcmcia_tuple *, void *));
 static int decode_funce __P((struct pcmcia_tuple *, struct pcmcia_function *));
+static void create_pf __P((struct cis_state *));
 
+
+static void
+create_pf(struct cis_state *state)
+{
+	state->pf = malloc(sizeof(*state->pf), M_DEVBUF, M_NOWAIT|M_ZERO);
+	state->pf->number = state->count++;
+	state->pf->last_config_index = -1;
+	SIMPLEQ_INIT(&state->pf->cfe_head);
+	SIMPLEQ_INSERT_TAIL(&state->card->pf_head, state->pf, pf_list);
+}
+
+void
+pcmcia_free_pf(struct pcmcia_function_head *pfhead)
+{
+	struct pcmcia_function *pf, *opf = NULL;
+	struct pcmcia_config_entry *cfe, *ocfe = NULL;
+
+	SIMPLEQ_FOREACH(pf, pfhead, pf_list) {
+		SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
+			if (ocfe)
+				free(ocfe, M_DEVBUF);
+			ocfe = cfe;
+		}
+		if (ocfe) {
+			free(ocfe, M_DEVBUF);
+			ocfe = NULL;
+		}
+		if (opf)
+			free(opf, M_DEVBUF);
+		opf = pf;
+	}
+	if (opf)
+		free(opf, M_DEVBUF);
+
+	SIMPLEQ_INIT(pfhead);
+}
 
 void
 pcmcia_read_cis(sc)
@@ -690,17 +727,11 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		 * rather not change it.
 		 */
 		if (state->gotmfc == 1) {
-			struct pcmcia_function *pf;
-
-			SIMPLEQ_FOREACH(pf, &state->card->pf_head, pf_list) {
-				free(pf, M_DEVBUF);
-			}
-
-			SIMPLEQ_INIT(&state->card->pf_head);
-
-			state->count = 0;
 			state->gotmfc = 2;
+			state->count = 0;
 			state->pf = NULL;
+
+			pcmcia_free_pf(&state->card->pf_head);
 		}
 		break;
 	case PCMCIA_CISTPL_LONGLINK_MFC:
@@ -710,7 +741,11 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		 * functions declared before the MFC link can be cleaned
 		 * up.
 		 */
-		state->gotmfc = 1;
+		if (state->gotmfc == 0) {
+			state->gotmfc = 1;
+		} else {
+			DPRINTF(("got LONGLINK_MFC again!"));
+		}
 		break;
 #ifdef PCMCIACISDEBUG
 	case PCMCIA_CISTPL_DEVICE:
@@ -849,16 +884,8 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				state->pf = NULL;
 			}
 		}
-		if (state->pf == NULL) {
-			state->pf = malloc(sizeof(*state->pf), M_DEVBUF,
-			    M_NOWAIT|M_ZERO);
-			state->pf->number = state->count++;
-			state->pf->last_config_index = -1;
-			SIMPLEQ_INIT(&state->pf->cfe_head);
-
-			SIMPLEQ_INSERT_TAIL(&state->card->pf_head, state->pf,
-			    pf_list);
-		}
+		if (state->pf == NULL)
+			create_pf(state);
 		state->pf->function = pcmcia_tuple_read_1(tuple, 0);
 
 		DPRINTF(("CISTPL_FUNCID\n"));
@@ -897,15 +924,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				break;
 			}
 			if (state->pf == NULL) {
-				state->pf = malloc(sizeof(*state->pf),
-				    M_DEVBUF, M_NOWAIT|M_ZERO);
-				state->pf->number = state->count++;
-				state->pf->last_config_index = -1;
-				SIMPLEQ_INIT(&state->pf->cfe_head);
-
-				SIMPLEQ_INSERT_TAIL(&state->card->pf_head,
-				    state->pf, pf_list);
-
+				create_pf(state);
 				state->pf->function = PCMCIA_FUNCTION_UNSPEC;
 			}
 			state->pf->last_config_index =

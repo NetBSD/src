@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.19.2.6 2002/08/01 02:46:46 nathanw Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.19.2.7 2002/08/27 23:47:57 nathanw Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.19.2.6 2002/08/01 02:46:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.19.2.7 2002/08/27 23:47:57 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -170,7 +170,7 @@ in_gif_output(ifp, family, m)
 	iphdr.ip_p = proto;
 	/* version will be set in ip_output() */
 	iphdr.ip_ttl = ip_gif_ttl;
-	iphdr.ip_len = m->m_pkthdr.len + sizeof(struct ip);
+	iphdr.ip_len = htons(m->m_pkthdr.len + sizeof(struct ip));
 	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &iphdr.ip_tos, &tos);
 	else

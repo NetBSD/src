@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.16.2.6 2002/06/20 03:49:07 nathanw Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.16.2.7 2002/08/27 23:48:09 nathanw Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.16.2.6 2002/06/20 03:49:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.16.2.7 2002/08/27 23:48:09 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.16.2.6 2002/06/20 03:49:07 nathanw E
 
 #include <net/net_osdep.h>
 
-#define IPLEN_FLIPPED
+/*#define IPLEN_FLIPPED*/
 
 #define ESPMAXLEN \
 	(sizeof(struct esp) < sizeof(struct newesp) \
@@ -216,6 +216,10 @@ esp4_input(m, va_alist)
 	if (!sumalgo)
 		goto noreplaycheck;
 	siz = (((*sumalgo->sumsiz)(sav) + 3) & ~(4 - 1));
+	if (m->m_pkthdr.len < off + ESPMAXLEN + siz) {
+		ipsecstat.in_inval++;
+		goto bad;
+	}
 	if (AH_MAXSUMSIZE < siz) {
 		ipseclog((LOG_DEBUG,
 		    "internal error: AH_MAXSUMSIZE must be larger than %lu\n",
@@ -630,6 +634,10 @@ esp6_input(mp, offp, proto)
 	if (!sumalgo)
 		goto noreplaycheck;
 	siz = (((*sumalgo->sumsiz)(sav) + 3) & ~(4 - 1));
+	if (m->m_pkthdr.len < off + ESPMAXLEN + siz) {
+		ipsecstat.in_inval++;
+		goto bad;
+	}
 	if (AH_MAXSUMSIZE < siz) {
 		ipseclog((LOG_DEBUG,
 		    "internal error: AH_MAXSUMSIZE must be larger than %lu\n",

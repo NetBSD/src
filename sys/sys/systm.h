@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125.2.15 2002/08/13 02:20:26 nathanw Exp $	*/
+/*	$NetBSD: systm.h,v 1.125.2.16 2002/08/27 23:48:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -179,7 +179,7 @@ enum hashtype {
 	HASH_TAILQ
 };
 
-void	*hashinit __P((int, enum hashtype, int, int, u_long *));
+void	*hashinit __P((u_int, enum hashtype, int, int, u_long *));
 void	hashdone __P((void *, int));
 int	seltrue __P((dev_t, int, struct proc *));
 int	sys_nosys __P((struct lwp *, void *, register_t *));
@@ -322,7 +322,7 @@ void	doexithooks __P((struct proc *));
 int	trace_enter __P((struct lwp *, register_t, void *, register_t []));
 void	trace_exit __P((struct lwp *, register_t, void *, register_t [], int));
 
-int	uiomove __P((void *, int, struct uio *));
+int	uiomove __P((void *, size_t, struct uio *));
 
 #ifdef _KERNEL
 caddr_t	allocsys __P((caddr_t, caddr_t (*)(caddr_t)));

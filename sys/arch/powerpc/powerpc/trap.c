@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.14 2002/08/06 22:47:12 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.15 2002/08/27 23:45:20 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -257,10 +257,10 @@ trap(struct trapframe *frame)
 		if (fix_unaligned(l, frame) != 0) {
 			ci->ci_ev_ali_fatal.ev_count++;
 			if (cpu_printfataltraps) {
-				printf("trap: pid %d (%s) lid %d: user ALI "
-				    "trap @ %#x (SSR1=%#x)\n",
-				    p->p_pid, p->p_comm, l->l_lid, frame->srr0,
-				    frame->srr1);
+				printf("trap: pid %d.%d (%s): user ALI @ %#x "
+				    "by %#x (DSISR %#x)\n",
+				    p->p_pid, l->l_lid, p->p_comm,
+				    frame->dar, frame->srr0, frame->dsisr);
 			}
 			trapsignal(l, SIGBUS, EXC_ALI);
 		} else

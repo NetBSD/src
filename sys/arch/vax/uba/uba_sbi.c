@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.12.8.3 2002/08/01 02:43:58 nathanw Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.12.8.4 2002/08/27 23:46:03 nathanw Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -147,6 +147,7 @@ dw780_attach(struct device *parent, struct device *self, void *aux)
 	sc->uv_sc.uh_errchk = dw780_errchk;
 	sc->uv_sc.uh_iot = &vax_mem_bus_space;
 	sc->uv_sc.uh_dmat = &sc->uv_dmat;
+	sc->uv_sc.uh_nr = ubaddr;
 	sc->uv_uba = (void *)sa->sa_ioh;
 	sc->uh_ibase = VAX_NBPG + ubaddr * VAX_NBPG;
 	sc->uv_sc.uh_type = UBA_UBA;

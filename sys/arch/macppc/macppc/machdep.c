@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104.4.10 2002/08/06 22:47:07 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104.4.11 2002/08/27 23:44:46 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -465,7 +465,9 @@ lcsplx(ipl)
 void
 cninit()
 {
+#if (NITE > 0 || NZSTTY > 0)
 	struct consdev *cp;
+#endif /* (NITE > 0 || NZSTTY > 0) */
 	int stdout, node;
 	char type[16];
 

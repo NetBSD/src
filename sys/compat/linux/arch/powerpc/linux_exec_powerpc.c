@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.2.4.5 2002/07/12 01:40:01 nathanw Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.2.4.6 2002/08/27 23:46:20 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.2.4.5 2002/07/12 01:40:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.2.4.6 2002/08/27 23:46:20 nathanw Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -77,7 +77,8 @@ extern int linux_sp_wrap_entry;
  * Alpha and PowerPC specific linux copyargs function.
  */
 int
-ELFNAME2(linux,copyargs)(pack, arginfo, stackp, argp)
+ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -86,7 +87,6 @@ ELFNAME2(linux,copyargs)(pack, arginfo, stackp, argp)
 	size_t len;
 	LinuxAuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
-	struct proc *p = curproc;
 #ifdef LINUX_SP_WRAP
 	LinuxAuxInfo *prog_entry = NULL;
 	char	linux_sp_wrap_code[LINUX_SP_WRAP];
@@ -103,7 +103,7 @@ ELFNAME2(linux,copyargs)(pack, arginfo, stackp, argp)
 	*stackp = (char *)(((unsigned long)*stackp - 1) & ~LINUX_SHIFT);
 #endif
 
-	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
+	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 #ifdef LINUX_SHIFT

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.4.2.5 2002/08/13 02:19:13 nathanw Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.4.2.6 2002/08/27 23:46:15 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -51,13 +51,6 @@
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>
 
-/* IRIX share group structure */
-struct irix_share_group {
-	LIST_HEAD(isg_head, irix_emuldata) isg_head;	/* list head */
-	struct lock isg_lock;				/* list lock */ 
-	int isg_refcount;
-};
-
 /* IRIX specific per-process data, zero'ed on allocation */
 struct irix_emuldata {
 #define ied_startcopy ied_sigtramp
@@ -88,8 +81,8 @@ int irix_check_exec __P((struct proc *p));
 #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
     sizeof(Aux32Info), sizeof (Elf32_Addr))
 
-int irix_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
+int irix_elf32_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *));
 
 int irix_elf32_probe_o32 __P((struct proc *, struct exec_package *, void *,  
     char *, vaddr_t *));
@@ -102,8 +95,8 @@ int irix_elf32_probe_n32 __P((struct proc *, struct exec_package *, void *,
 /* #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
     sizeof(Aux64Info), sizeof (Elf64_Addr))  */
 
-int irix_elf64_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
+int irix_elf64_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *));
 
 int irix_elf64_probe __P((struct proc *, struct exec_package *, void *,  
     char *, vaddr_t *));

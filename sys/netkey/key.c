@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.43.2.13 2002/08/01 02:46:54 nathanw Exp $	*/
+/*	$NetBSD: key.c,v 1.43.2.14 2002/08/27 23:48:17 nathanw Exp $	*/
 /*	$KAME: key.c,v 1.249 2002/06/14 14:46:22 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.43.2.13 2002/08/01 02:46:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.43.2.14 2002/08/27 23:48:17 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1722,8 +1722,7 @@ key_spddelete2(so, m, mhp)
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
 		ipseclog((LOG_DEBUG, "key_spddelete2: invalid message is passed.\n"));
-		key_senderror(so, m, EINVAL);
-		return 0;
+		return key_senderror(so, m, EINVAL);
 	}
 
 	id = ((struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY])->sadb_x_policy_id;
@@ -1731,7 +1730,7 @@ key_spddelete2(so, m, mhp)
 	/* Is there SP in SPD ? */
 	if ((sp = key_getspbyid(id)) == NULL) {
 		ipseclog((LOG_DEBUG, "key_spddelete2: no SP found id:%u.\n", id));
-		key_senderror(so, m, EINVAL);
+		return key_senderror(so, m, EINVAL);
 	}
 
 	key_sp_dead(sp);
@@ -5272,9 +5271,9 @@ key_getcomb_setlifetime(comb)
 	comb->sadb_comb_soft_bytes = 0;
 	comb->sadb_comb_hard_bytes = 0;
 	comb->sadb_comb_hard_addtime = 86400;	/* 1 day */
-	comb->sadb_comb_soft_addtime = comb->sadb_comb_soft_addtime * 80 / 100;
+	comb->sadb_comb_soft_addtime = comb->sadb_comb_hard_addtime * 80 / 100;
 	comb->sadb_comb_soft_usetime = 28800;	/* 8 hours */
-	comb->sadb_comb_hard_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
+	comb->sadb_comb_soft_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
 }
 
 #ifdef IPSEC_ESP

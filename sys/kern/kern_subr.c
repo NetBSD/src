@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75.2.13 2002/08/01 03:24:47 nathanw Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75.2.14 2002/08/27 23:47:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.13 2002/08/01 03:24:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.14 2002/08/27 23:47:27 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -142,7 +142,7 @@ static void hook_proc_run __P((hook_list_t *, struct proc *));
 int
 uiomove(buf, n, uio)
 	void *buf;
-	int n;
+	size_t n;
 	struct uio *uio;
 {
 	struct iovec *iov;
@@ -202,6 +202,7 @@ uiomove(buf, n, uio)
 		uio->uio_resid -= cnt;
 		uio->uio_offset += cnt;
 		cp += cnt;
+		KDASSERT(cnt <= n);
 		n -= cnt;
 	}
 	return (error);
@@ -320,18 +321,18 @@ copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
  */
 void *
 hashinit(elements, htype, mtype, mflags, hashmask)
-	int elements;
+	u_int elements;
 	enum hashtype htype;
 	int mtype, mflags;
 	u_long *hashmask;
 {
-	long hashsize;
+	u_long hashsize, i;
 	LIST_HEAD(, generic) *hashtbl_list;
 	TAILQ_HEAD(, generic) *hashtbl_tailq;
-	int i, esize;
+	size_t esize;
 	void *p;
 
-	if (elements <= 0)
+	if (elements == 0)
 		panic("hashinit: bad cnt");
 	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
 		continue;
@@ -349,7 +350,7 @@ hashinit(elements, htype, mtype, mflags, hashmask)
 #endif
 	}
 
-	if ((p = malloc((u_long)hashsize * esize, mtype, mflags)) == NULL)
+	if ((p = malloc(hashsize * esize, mtype, mflags)) == NULL)
 		return (NULL);
 
 	switch (htype) {
@@ -408,11 +409,13 @@ hook_disestablish(list, vhook)
 #ifdef DIAGNOSTIC
 	struct hook_desc *hd;
 
-	for (hd = list->lh_first; hd != NULL; hd = hd->hk_list.le_next)
+	LIST_FOREACH(hd, list, hk_list) {
                 if (hd == vhook)
 			break;
+	}
+
 	if (hd == NULL)
-		panic("hook_disestablish: hook not established");
+		panic("hook_disestablish: hook %p not established", vhook);
 #endif
 	LIST_REMOVE((struct hook_desc *)vhook, hk_list);
 	free(vhook, M_DEVBUF);
@@ -533,8 +536,7 @@ domountroothook()
 {
 	struct hook_desc *hd;
 
-	for (hd = mountroothook_list.lh_first; hd != NULL;
-	    hd = hd->hk_list.le_next) {
+	LIST_FOREACH(hd, &mountroothook_list, hk_list) {
 		if (hd->hk_arg == (void *)root_device) {
 			(*hd->hk_fn)(hd->hk_arg);
 			return;
@@ -641,7 +643,7 @@ powerhook_disestablish(vhook)
 	CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list)
                 if (dp == vhook)
 			goto found;
-	panic("powerhook_disestablish: hook not established");
+	panic("powerhook_disestablish: hook %p not established", vhook);
  found:
 #endif
 
@@ -738,11 +740,11 @@ setroot(bootdv, bootpartition)
 	if (vops != NULL && vops->vfs_mountroot == mountroot &&
 	    rootspec == NULL &&
 	    (bootdv == NULL || bootdv->dv_class != DV_IFNET)) {
-		for (ifp = ifnet.tqh_first; ifp != NULL;
-		    ifp = ifp->if_list.tqe_next)
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
 			if ((ifp->if_flags &
 			     (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
 				break;
+		}
 		if (ifp == NULL) {
 			/*
 			 * Can't find a suitable interface; ask the
@@ -1099,8 +1101,7 @@ getdisk(str, len, defpart, devp, isdump)
 				printf(" %s[a-%c]", raidrootdev[j].dv_xname,
 				    'a' + MAXPARTITIONS - 1);
 #endif
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (dv->dv_class == DV_DISK)
 				printf(" %s[a-%c]", dv->dv_xname,
 				    'a' + MAXPARTITIONS - 1);
@@ -1201,9 +1202,9 @@ humanize_number(buf, len, bytes, suffix, divisor)
 		/* prefixes are: (none), Kilo, Mega, Giga, Tera, Peta, Exa */
 	static const char prefixes[] = " KMGTPE";
 
-	int		i, r;
+	int		r;
 	u_int64_t	max;
-	size_t		suffixlen;
+	size_t		i, suffixlen;
 
 	if (buf == NULL || suffix == NULL)
 		return (-1);

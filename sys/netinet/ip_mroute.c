@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.52.2.6 2002/08/01 02:46:48 nathanw Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.52.2.7 2002/08/27 23:48:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.52.2.6 2002/08/01 02:46:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.52.2.7 2002/08/27 23:48:01 nathanw Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1444,7 +1444,8 @@ phyint_send(ip, vifp, m)
 	if (vifp->v_rate_limit <= 0)
 		tbf_send_packet(vifp, mb_copy);
 	else
-		tbf_control(vifp, mb_copy, mtod(mb_copy, struct ip *), ip->ip_len);
+		tbf_control(vifp, mb_copy, mtod(mb_copy, struct ip *),
+		    ntohs(ip->ip_len));
 }
 
 static void
@@ -1455,7 +1456,7 @@ encap_send(ip, vifp, m)
 {
 	struct mbuf *mb_copy;
 	struct ip *ip_copy;
-	int i, len = ip->ip_len + sizeof(multicast_encap_iphdr);
+	int i, len = ntohs(ip->ip_len) + sizeof(multicast_encap_iphdr);
 
 	/*
 	 * copy the old packet & pullup it's IP header into the
@@ -1486,7 +1487,7 @@ encap_send(ip, vifp, m)
 	ip_copy = mtod(mb_copy, struct ip *);
 	*ip_copy = multicast_encap_iphdr;
 	ip_copy->ip_id = htons(ip_id++);
-	ip_copy->ip_len = len;
+	ip_copy->ip_len = htons(len);
 	ip_copy->ip_src = vifp->v_lcl_addr;
 	ip_copy->ip_dst = vifp->v_rmt_addr;
 
@@ -1495,8 +1496,6 @@ encap_send(ip, vifp, m)
 	 */
 	ip = (struct ip *)((caddr_t)ip_copy + sizeof(multicast_encap_iphdr));
 	--ip->ip_ttl;
-	HTONS(ip->ip_len);
-	HTONS(ip->ip_off);
 	ip->ip_sum = 0;
 	mb_copy->m_data += sizeof(multicast_encap_iphdr);
 	ip->ip_sum = in_cksum(mb_copy, ip->ip_hl << 2);
@@ -1505,7 +1504,7 @@ encap_send(ip, vifp, m)
 	if (vifp->v_rate_limit <= 0)
 		tbf_send_packet(vifp, mb_copy);
 	else
-		tbf_control(vifp, mb_copy, ip, ip_copy->ip_len);
+		tbf_control(vifp, mb_copy, ip, ntohs(ip_copy->ip_len));
 }
 
 /*
@@ -1695,7 +1694,7 @@ tbf_process_q(vifp)
 	for (m = vifp->tbf_q;
 	    m != 0;
 	    m = vifp->tbf_q) {
-		len = mtod(m, struct ip *)->ip_len;
+		len = ntohs(mtod(m, struct ip *)->ip_len);
 
 		/* determine if the packet can be sent */
 		if (len <= vifp->tbf_n_tok) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.32.2.2 2002/08/13 00:59:52 nathanw Exp $	*/
+/*	$NetBSD: res_query.c,v 1.32.2.3 2002/08/27 23:49:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.32.2.2 2002/08/13 00:59:52 nathanw Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.32.2.3 2002/08/27 23:49:37 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -362,7 +362,7 @@ res_querydomain(name, domain, class, type, answer, anslen)
 		 * copy without '.' if present.
 		 */
 		n = strlen(name);
-		if (n >= MAXDNAME) {
+		if (n + 1 > sizeof(nbuf)) {
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
@@ -374,11 +374,11 @@ res_querydomain(name, domain, class, type, answer, anslen)
 	} else {
 		n = strlen(name);
 		d = strlen(domain);
-		if (n + d + 1 >= MAXDNAME) {
+		if (n + 1 + d + 1 > sizeof(nbuf)) {
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
-		sprintf(nbuf, "%s.%s", name, domain);
+		snprintf(nbuf, sizeof(nbuf), "%s.%s", name, domain);
 	}
 	return (res_query(longname, class, type, answer, anslen));
 }

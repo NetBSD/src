@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.32.2.4 2002/08/01 02:46:54 nathanw Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.32.2.5 2002/08/27 23:48:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -71,7 +71,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.32.2.4 2002/08/01 02:46:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.32.2.5 2002/08/27 23:48:16 nathanw Exp $");
 
 #include "opt_eon.h"
 
@@ -425,15 +425,22 @@ einval:
 send:
 	/* put an eon_hdr in the buffer, prepended by an ip header */
 	datalen = m->m_pkthdr.len + EONIPLEN;
-	MGETHDR(mh, M_DONTWAIT, MT_HEADER);
-	if (mh == (struct mbuf *) 0)
+	if (datalen > IP_MAXPACKET) {
+		error = EMSGSIZE;
 		goto flush;
+	}
+	MGETHDR(mh, M_DONTWAIT, MT_HEADER);
+	if (mh == (struct mbuf *) 0) {
+		error = ENOBUFS;
+		goto flush;
+	}
 	mh->m_next = m;
 	m = mh;
 	MH_ALIGN(m, sizeof(struct eon_iphdr));
 	m->m_len = sizeof(struct eon_iphdr);
-	ifp->if_obytes +=
-		(ei->ei_ip.ip_len = (u_short) (m->m_pkthdr.len = datalen));
+	m->m_pkthdr.len = datalen;
+	ei->ei_ip.ip_len = htons(datalen);
+	ifp->if_obytes += datalen;
 	*mtod(m, struct eon_iphdr *) = *ei;
 
 #ifdef ARGO_DEBUG

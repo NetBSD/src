@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3.8.8 2002/07/12 01:39:26 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.8.9 2002/08/27 23:44:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -251,9 +251,8 @@ void
 cpu_startup()
 {
 	extern char *etext;
-	unsigned i;
 	caddr_t v;
-	int base, residual;
+	int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 #ifdef DEBUG
@@ -346,7 +345,7 @@ cpu_startup()
 	pmapdebug = opmapdebug;
 #endif
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
+	printf("using %u buffers containing %d bytes of memory\n",
 		nbuf, bufpages * NBPG);
 
 	/*

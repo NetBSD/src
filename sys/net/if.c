@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86.2.13 2002/08/01 02:46:36 nathanw Exp $	*/
+/*	$NetBSD: if.c,v 1.86.2.14 2002/08/27 23:47:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.13 2002/08/01 02:46:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.14 2002/08/27 23:47:49 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -250,7 +250,7 @@ if_nulldrain(ifp)
 	/* Nothing. */
 }
 
-int if_index = 1;
+u_int if_index = 1;
 struct ifnet_head ifnet;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
@@ -797,7 +797,7 @@ if_clone_lookup(name, unitp)
 {
 	struct if_clone *ifc;
 	const char *cp;
-	int i;
+	size_t i;
 
 	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL;) {
 		for (cp = name, i = 0; i < ifc->ifc_namelen; i++, cp++) {

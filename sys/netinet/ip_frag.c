@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.21.4.7 2002/06/20 03:48:41 nathanw Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.21.4.8 2002/08/27 23:47:58 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -93,7 +93,7 @@ extern struct timeout ipfr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.21.4.7 2002/06/20 03:48:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.21.4.8 2002/08/27 23:47:58 nathanw Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.21 2002/04/10 04:56:10 darrenr Exp";
@@ -217,7 +217,7 @@ ipfr_t *table[];
 	/*
 	 * Compute the offset of the expected start of the next packet.
 	 */
-	off = ip->ip_off & IP_OFFMASK;
+	off = ntohs(ip->ip_off) & IP_OFFMASK;
 	if (!off)
 		fra->ipfr_seen0 = 1;
 	fra->ipfr_off = off + (fin->fin_dlen >> 3);
@@ -351,7 +351,7 @@ ipfr_t *table[];
 			 * last (in order), shrink expiration time.
 			 */
 			if (off == f->ipfr_off) {
-				if (!(ip->ip_off & IP_MF))
+				if (!(ip->ip_off & htons(IP_MF)))
 					f->ipfr_ttl = 1;
 				else
 					f->ipfr_off = atoff;

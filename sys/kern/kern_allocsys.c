@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.14.2.3 2001/11/14 19:16:33 nathanw Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.14.2.4 2002/08/27 23:47:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.14.2.3 2001/11/14 19:16:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.14.2.4 2002/08/27 23:47:22 nathanw Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_callout.h"
@@ -111,10 +111,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.14.2.3 2001/11/14 19:16:33 natha
 # define BUFCACHE 0
 #endif
 
-int	nbuf = NBUF;
-int	nswbuf = 0;
-int	bufpages = BUFPAGES;	/* optional hardwired count */
-int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
+u_int	nbuf = NBUF;
+u_int	nswbuf = 0;
+u_int	bufpages = BUFPAGES;	/* optional hardwired count */
+u_int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
 
 /*
  * Allocate space for system data structures.  We are given
@@ -171,7 +171,6 @@ allocsys(caddr_t v, caddr_t (*mdcallback)(caddr_t))
 				panic("bufcache is out of range (%d)\n",
 				    bufcache);
 			bufpages = physmem / 100 * bufcache;
-
 		} else {
 			if (physmem < btoc(2 * 1024 * 1024))
 				bufpages = physmem / 10;
@@ -206,7 +205,7 @@ allocsys(caddr_t v, caddr_t (*mdcallback)(caddr_t))
 	 * XXX stopgap measure to prevent wasting too much KVM on
 	 * the sparsely filled buffer cache.
 	 */
-	if (nbuf * MAXBSIZE > VM_MAX_KERNEL_BUF)
+	if (nbuf > VM_MAX_KERNEL_BUF / MAXBSIZE)
 		nbuf = VM_MAX_KERNEL_BUF / MAXBSIZE;
 #endif
 

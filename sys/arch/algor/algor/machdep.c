@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13.4.4 2002/08/13 01:02:38 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.4.5 2002/08/27 23:44:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -590,10 +590,9 @@ void
 cpu_startup(void)
 {
 	vsize_t size;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-	u_int i;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -698,7 +697,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disklabels.

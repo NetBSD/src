@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.25.4.4 2002/08/01 02:46:46 nathanw Exp $	*/
+/*	$NetBSD: igmp.c,v 1.25.4.5 2002/08/27 23:47:57 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.25.4.4 2002/08/01 02:46:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.25.4.5 2002/08/27 23:47:57 nathanw Exp $");
 
 #include "opt_mrouting.h"
 
@@ -148,6 +148,7 @@ igmp_input(m, va_alist)
 	struct in_ifaddr *ia;
 	int timer;
 	va_list ap;
+	u_int16_t ip_len;
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
@@ -160,7 +161,8 @@ igmp_input(m, va_alist)
 	 * Validate lengths
 	 */
 	minlen = iphlen + IGMP_MINLEN;
-	if (ip->ip_len < minlen) {
+	ip_len = ntohs(ip->ip_len);
+	if (ip_len < minlen) {
 		++igmpstat.igps_rcv_tooshort;
 		m_freem(m);
 		return;
@@ -181,7 +183,7 @@ igmp_input(m, va_alist)
 	m->m_len -= iphlen;
 	igmp = mtod(m, struct igmp *);
 	/* No need to assert alignment here. */
-	if (in_cksum(m, ip->ip_len - iphlen)) {
+	if (in_cksum(m, ip_len - iphlen)) {
 		++igmpstat.igps_rcv_badsum;
 		m_freem(m);
 		return;
@@ -526,8 +528,8 @@ igmp_sendpkt(inm, type)
 
 	ip = mtod(m, struct ip *);
 	ip->ip_tos = 0;
-	ip->ip_len = sizeof(struct ip) + IGMP_MINLEN;
-	ip->ip_off = 0;
+	ip->ip_len = htons(sizeof(struct ip) + IGMP_MINLEN);
+	ip->ip_off = htons(0);
 	ip->ip_p = IPPROTO_IGMP;
 	ip->ip_src = zeroin_addr;
 	ip->ip_dst = inm->inm_addr;

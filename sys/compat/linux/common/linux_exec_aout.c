@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.44.2.3 2002/05/29 21:32:37 nathanw Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.44.2.4 2002/08/27 23:46:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.44.2.3 2002/05/29 21:32:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.44.2.4 2002/08/27 23:46:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.44.2.3 2002/05/29 21:32:37 nat
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
 
-int linux_aout_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
+int linux_aout_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *));
 
 static int exec_linux_aout_prep_zmagic __P((struct proc *,
     struct exec_package *));
@@ -83,7 +83,8 @@ static int exec_linux_aout_prep_qmagic __P((struct proc *,
     struct exec_package *));
 
 int
-linux_aout_copyargs(pack, arginfo, stackp, argp)
+linux_aout_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;

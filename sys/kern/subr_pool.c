@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.50.2.9 2002/08/01 02:46:24 nathanw Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.50.2.10 2002/08/27 23:47:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.50.2.9 2002/08/01 02:46:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.50.2.10 2002/08/27 23:47:30 nathanw Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -94,7 +94,7 @@ struct pool_item_header {
 	TAILQ_HEAD(,pool_item)	ph_itemlist;	/* chunk list for this page */
 	LIST_ENTRY(pool_item_header)
 				ph_hashlist;	/* Off-page page headers */
-	int			ph_nmissing;	/* # of chunks in use */
+	unsigned int		ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
 	struct timeval		ph_time;	/* last referenced */
 };
@@ -916,6 +916,7 @@ pool_do_put(struct pool *pp, void *v)
 #endif
 
 	TAILQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
+	KDASSERT(ph->ph_nmissing != 0);
 	ph->ph_nmissing--;
 	pp->pr_nput++;
 	pp->pr_nitems++;

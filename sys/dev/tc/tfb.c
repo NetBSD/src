@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.29.2.5 2002/08/01 02:45:51 nathanw Exp $ */
+/* $NetBSD: tfb.c,v 1.29.2.6 2002/08/27 23:47:09 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.29.2.5 2002/08/01 02:45:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.29.2.6 2002/08/27 23:47:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -752,7 +752,7 @@ get_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_WRITE) ||
@@ -774,7 +774,7 @@ set_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_READ) ||

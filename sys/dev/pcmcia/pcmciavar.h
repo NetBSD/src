@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.14.2.2 2002/06/20 03:46:18 nathanw Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.14.2.3 2002/08/27 23:46:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -155,6 +155,8 @@ struct pcmcia_function {
 /* pf_flags */
 #define	PFF_ENABLED	0x0001		/* function is enabled */
 
+SIMPLEQ_HEAD(pcmcia_function_head, pcmcia_function);
+
 struct pcmcia_card {
 	int		cis1_major;
 	int		cis1_minor;
@@ -172,7 +174,7 @@ struct pcmcia_card {
 #define	PCMCIA_PRODUCT_INVALID		-1
 	u_int16_t	error;
 #define	PCMCIA_CIS_INVALID		{ NULL, NULL, NULL, NULL }
-	SIMPLEQ_HEAD(, pcmcia_function) pf_head;
+	struct pcmcia_function_head	pf_head;
 };
 
 struct pcmcia_softc {
@@ -296,6 +298,8 @@ void	pcmcia_function_disable __P((struct pcmcia_function *));
 int	pcmcia_io_map __P((struct pcmcia_function *, int, bus_addr_t,
 	    bus_size_t, struct pcmcia_io_handle *, int *));
 void	pcmcia_io_unmap __P((struct pcmcia_function *, int));
+
+void	pcmcia_free_pf __P((struct pcmcia_function_head *));
 
 #define pcmcia_mem_alloc(pf, size, pcmhp)				\
 	(pcmcia_chip_mem_alloc((pf)->sc->pct, (pf)->sc->pch, (size), (pcmhp)))

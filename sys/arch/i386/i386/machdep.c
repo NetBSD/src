@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.26 2002/08/14 18:29:35 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.27 2002/08/27 23:44:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.26 2002/08/14 18:29:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.27 2002/08/27 23:44:35 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -573,7 +573,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free - bufpages));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	i386_bus_space_mallocok();
@@ -614,7 +614,7 @@ i386_proc0_tss_ldt_init()
 void
 i386_bufinit()
 {
-	int i, base, residual;
+	u_int i, base, residual;
 
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;

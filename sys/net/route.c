@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.43.2.5 2002/06/20 03:48:22 nathanw Exp $	*/
+/*	$NetBSD: route.c,v 1.43.2.6 2002/08/27 23:47:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.43.2.5 2002/06/20 03:48:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.43.2.6 2002/08/27 23:47:54 nathanw Exp $");
 
 #include "opt_ns.h"
 
@@ -711,7 +711,7 @@ rt_setgate(rt0, dst, gate)
 	struct sockaddr *dst, *gate;
 {
 	caddr_t new, old;
-	int dlen = ROUNDUP(dst->sa_len), glen = ROUNDUP(gate->sa_len);
+	u_int dlen = ROUNDUP(dst->sa_len), glen = ROUNDUP(gate->sa_len);
 	struct rtentry *rt = rt0;
 
 	if (rt->rt_gateway == 0 || glen > ROUNDUP(rt->rt_gateway->sa_len)) {

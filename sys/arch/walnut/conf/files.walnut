@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.2.8.5 2002/08/13 02:19:03 nathanw Exp $
+#	$NetBSD: files.walnut,v 1.2.8.6 2002/08/27 23:46:06 nathanw Exp $
 #
 # walnut-specific configuration info
 
@@ -7,7 +7,7 @@ maxpartitions 16
 
 maxusers 2 8 64
 
-include "arch/powerpc/fpu/files.fpu"
+include "arch/powerpc/conf/files.ibm4xx"
 
 file	arch/walnut/walnut/autoconf.c
 file	arch/walnut/walnut/bus_dma.c
@@ -44,36 +44,6 @@ include "dev/wscons/files.wscons"
 # Raster operations
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
-
-# Processor Local Bus
-define	plb {}
-device	plb : plb
-attach	plb at root
-file	arch/powerpc/ibm4xx/dev/plb.c		plb
-
-# On-chip Peripheral Bus
-define	opb {[addr=-1], [irq=-1]}
-device	opb : plb
-attach	opb at plb
-file	arch/powerpc/ibm4xx/dev/opb.c		opb
-
-device	cpu {}
-attach	cpu at plb
-file	arch/powerpc/ibm4xx/cpu.c
-
-# On-chip com device(s)
-attach	com at opb with com_opb
-file	arch/powerpc/ibm4xx/dev/com_opb.c	com_opb
-
-# On-chip ethernet device(s)
-device	emac: ether, ifnet, arp, mii
-attach	emac at opb
-file	arch/powerpc/ibm4xx/dev/if_emac.c	emac
-
-# Watchdog timer
-device	wdog: sysmon_wdog
-attach	wdog at opb
-file	arch/powerpc/ibm4xx/dev/wdog.c		wdog
 
 # PCI bus support
 include	"dev/pci/files.pci"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5.4.2 2002/04/17 00:02:46 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.5.4.3 2002/08/27 23:44:27 nathanw Exp $
 
 BINDIR=		/usr/mdec
 BINMODE=	${NONBINMODE}
@@ -25,5 +25,8 @@ afterinstall:
 		rm -f ${.TARGET};			\
 		false;					\
 	 fi
+
+${PROG}:
+	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS}
 
 .include "../LOADADDR"

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.30.2.2 2002/08/01 03:28:14 nathanw Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.30.2.3 2002/08/27 23:49:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.30.2.2 2002/08/01 03:28:14 nathanw Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.30.2.3 2002/08/27 23:49:36 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1011,7 +1011,7 @@ __sym_ntos(syms, number, success)
 		}
 	}
 
-	sprintf (unname, "%d", number);
+	snprintf(unname, sizeof(unname), "%d", number);
 	if (success)
 		*success = 0;
 	return (unname);
@@ -1036,7 +1036,7 @@ __sym_ntop(syms, number, success)
 			return (syms->humanname);
 		}
 	}
-	sprintf(unname, "%d", number);
+	snprintf(unname, sizeof(unname), "%d", number);
 	if (success)
 		*success = 0;
 	return (unname);
@@ -1179,7 +1179,7 @@ precsize_ntoa(prec)
 
 	val = mantissa * poweroften[exponent];
 
-	(void) sprintf(retbuf, "%ld.%.2ld", val/100, val%100);
+	(void) snprintf(retbuf, sizeof(retbuf), "%ld.%.2ld", val/100, val%100);
 	return (retbuf);
 }
 
@@ -1478,7 +1478,7 @@ loc_ntoa(binary, ascii)
 	versionval = *cp++;
 
 	if (versionval) {
-		sprintf(ascii, "; error: unknown LOC RR version");
+		snprintf(ascii, 255, "; error: unknown LOC RR version"); /*XXX*/
 		return (ascii);
 	}
 
@@ -1540,7 +1540,8 @@ loc_ntoa(binary, ascii)
 	if ((vpstr = strdup(precsize_ntoa((u_int32_t)vpval))) == NULL)
 		vpstr = error;
 
-	sprintf(ascii,
+	/* XXX */
+	snprintf(ascii, 255,
 	      "%d %.2d %.2d.%.3d %c %d %.2d %.2d.%.3d %c %d.%.2dm %sm %sm %sm",
 		latdeg, latmin, latsec, latsecfrac, northsouth,
 		longdeg, longmin, longsec, longsecfrac, eastwest,
@@ -1595,14 +1596,14 @@ char *
 __p_secstodate (secs)
 	unsigned long secs;
 {
-	static char output[15];		/* YYYYMMDDHHMMSS and null */
+	static char output[15];		/* YYYYMMDDHHMMSS and \0 */
 	time_t clk = secs;
 	struct tm tim;
 	
 	(void)gmtime_r(&clk, &tim);
 	tim.tm_year += 1900;
 	tim.tm_mon += 1;
-	sprintf(output, "%04d%02d%02d%02d%02d%02d",
+	snprintf(output, sizeof(output), "%04d%02d%02d%02d%02d%02d",
 		tim.tm_year, tim.tm_mon, tim.tm_mday,
 		tim.tm_hour, tim.tm_min, tim.tm_sec);
 	return (output);

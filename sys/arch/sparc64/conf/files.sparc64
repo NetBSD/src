@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.53.2.5 2002/06/20 03:41:19 nathanw Exp $
+#	$NetBSD: files.sparc64,v 1.53.2.6 2002/08/27 23:45:49 nathanw Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -116,8 +116,9 @@ file	arch/sparc64/dev/zs.c			zs needs-flag
 file	dev/ic/z8530sc.c			zs
 
 # siemens SAB82532; found on U5/U10/... for tty ports.
-#device sab {channel = -1}
-#attach sab at ebus
+device sab {channel = -1}
+attach sab at ebus
+file	arch/sparc64/dev/sab.c			sab | sabtty needs-flag
 #file	arch/sparc64/dev/sab_ebus.c		sab
 #file	dev/ic/sab82532.c			sab
 
@@ -131,9 +132,10 @@ attach zstty at zs
 file dev/ic/z8530tty.c			zstty needs-flag
 file arch/sparc/dev/zs_kgdb.c		kgdb
 
-#device sabtty: tty
-#attach sabtty at sab
-#file dev/ic/sabtty.c			sabtty needs-flag
+define sabtty {}
+device sabtty: tty
+attach sabtty at sab
+# file arch/sparc64/dev/sabtty.c	sabtty needs-flag
 
 device kbd
 attach kbd at zs with kbd_zs

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.164.2.10 2002/07/12 01:40:24 nathanw Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.164.2.11 2002/08/27 23:47:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.164.2.10 2002/07/12 01:40:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.164.2.11 2002/08/27 23:47:40 nathanw Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2515,7 +2515,7 @@ change_owner(vp, uid, gid, p, posix_semantics)
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 		goto out;
 
-#define CHANGED(x) ((x) != -1)
+#define CHANGED(x) ((int)(x) != -1)
 	newmode = vattr.va_mode;
 	if (posix_semantics) {
 		/*
@@ -2542,8 +2542,8 @@ change_owner(vp, uid, gid, p, posix_semantics)
 		newmode = VNOVAL;
 	
 	VATTR_NULL(&vattr);
-	vattr.va_uid = CHANGED(uid) ? uid : VNOVAL;
-	vattr.va_gid = CHANGED(gid) ? gid : VNOVAL;
+	vattr.va_uid = CHANGED(uid) ? uid : (uid_t)VNOVAL;
+	vattr.va_gid = CHANGED(gid) ? gid : (gid_t)VNOVAL;
 	vattr.va_mode = newmode;
 	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 #undef CHANGED

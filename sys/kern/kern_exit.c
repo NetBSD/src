@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.19 2002/08/13 02:20:05 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.20 2002/08/27 23:47:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.19 2002/08/13 02:20:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.20 2002/08/27 23:47:23 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -254,6 +254,12 @@ exit1(struct lwp *l, int rv)
 	systrace_sys_exit(p);
 #endif
 	/*
+	 * If emulation has process exit hook, call it now.
+	 */
+	if (p->p_emul->e_proc_exit)
+		(*p->p_emul->e_proc_exit)(p);
+
+	/*
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
 	 */
 	p->p_stat = SDEAD;
@@ -356,12 +362,6 @@ exit1(struct lwp *l, int rv)
 	 * Release the process's signal state.
 	 */
 	sigactsfree(p);
-
-	/*
-	 * If emulation has process exit hook, call it now.
-	 */
-	if (p->p_emul->e_proc_exit)
-		(*p->p_emul->e_proc_exit)(p);
 
 	/*
 	 * Clear curlwp after we've done all operations

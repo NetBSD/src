@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4.6.6 2002/08/13 02:19:07 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.6.7 2002/08/27 23:46:13 nathanw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -106,6 +106,11 @@
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+#endif
+
+#include "com.h"
+#if NCOM > 0
+#include <dev/ic/comreg.h>	/* For COM_FREQ */
 #endif
 
 /*
@@ -330,7 +335,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 		ipkdb_connect(0);
 #endif
 	fake_mapiodev = 0;
-	printf("Done with initppc()\n");
 }
 
 static void
@@ -363,10 +367,9 @@ char msgbuf[MSGBUFSIZE];
 void
 cpu_startup(void)
 {
-	int sz, i;
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
-	int base, residual;
+	u_int sz, i, base, residual;
 	char pbuf[9];
 
 	lwp0.l_addr = proc0paddr;
@@ -400,7 +403,7 @@ cpu_startup(void)
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (int)allocsys(NULL, NULL);
+	sz = (u_int)allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
 	if (allocsys(v, NULL) - v != sz)
@@ -467,7 +470,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up the buffers.
@@ -492,7 +495,14 @@ cpu_startup(void)
 	if (board_info_set("processor-frequency", &board_data.processor_speed, 
 		sizeof(&board_data.processor_speed), PROP_CONST, 0))
 		panic("setting processor-frequency");
-
+#if NCOM > 0
+	{
+		unsigned int comfreq = COM_FREQ * 6;
+		if (board_info_set("com-opb-frequency", &comfreq,
+			sizeof(&comfreq), 0, 0))
+			panic("setting com-opb-frequency");
+	}
+#endif
 }
 
 
@@ -526,7 +536,6 @@ softnet(void)
 
 }
 
-#include "com.h"
 /*
  * Soft tty interrupts.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19.4.5 2002/08/01 02:43:46 nathanw Exp $ */
+/*	$NetBSD: conf.c,v 1.19.4.6 2002/08/27 23:45:54 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,6 +85,7 @@
 #define NSUNMS 0
 #endif
 #include "zstty.h"
+#include "sab.h"
 #include "pcons.h"
 #include "com.h"
 #include "bpp.h"
@@ -235,7 +236,7 @@ struct cdevsw	cdevsw[] =
 	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 74: isdn raw b-channel access */
 	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 75: isdn trace device */
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 76: isdn phone device */
-	cdev_notdef(),			/* 77 */
+	cdev_tty_init(NSABTTY,sab),	/* 77: sab82532 serial ports */
 	cdev_notdef(),			/* 78 */
 	cdev_notdef(),			/* 79 */
 	cdev_notdef(),			/* 80 */

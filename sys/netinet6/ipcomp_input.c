@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.16.2.2 2001/11/14 19:18:11 nathanw Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.16.2.3 2002/08/27 23:48:11 nathanw Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.16.2.2 2001/11/14 19:18:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.16.2.3 2002/08/27 23:48:11 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.16.2.2 2001/11/14 19:18:11 nathan
 
 #include <net/net_osdep.h>
 
-#define IPLEN_FLIPPED
+/*#define IPLEN_FLIPPED*/
 
 #ifdef INET
 void

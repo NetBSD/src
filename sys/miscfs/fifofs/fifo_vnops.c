@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.30.2.4 2002/08/01 02:46:30 nathanw Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.30.2.5 2002/08/27 23:47:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.30.2.4 2002/08/01 02:46:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.30.2.5 2002/08/27 23:47:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,8 @@ fifo_read(void *v)
 	} */ *ap = v;
 	struct uio	*uio;
 	struct socket	*rso;
-	int		error, startresid;
+	int		error;
+	size_t		startresid;
 
 	uio = ap->a_uio;
 	rso = ap->a_vp->v_fifoinfo->fi_readsock;
