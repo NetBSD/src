@@ -1,4 +1,4 @@
-/*	$NetBSD: ds-asic-conf.c,v 1.1 1995/08/07 07:07:45 jonathan Exp $	*/
+/*	$NetBSD: ds-asic-conf.c,v 1.2 1995/08/09 01:21:43 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Jonathan Stone
@@ -82,7 +82,7 @@ struct asic_slot kn02_asic_slots[] = {
 	{ { "dc",	   0, 7, (u_int) (4 * 0x80000), },
 	    KN03_INTR_SCC_0, asic_intrnull, (void *) 7, },
 	
-	{ { "dallas_rtc",  0, (u_int) (5 * 0x80000), },
+	{ { "dallas_rtc",  0, 0, (u_int) (5 * 0x80000), },
 	    0, 		    asic_intrnull, (void *) 16 /*XXX*/, },
 
 	{ { NULL, 0, 0 },  0, NULL, NULL }
