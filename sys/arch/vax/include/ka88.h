@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.h,v 1.1 2000/07/26 11:47:20 ragge Exp $	*/
+/*	$NetBSD: ka88.h,v 1.2 2002/12/01 21:21:45 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -34,6 +34,8 @@
  * KA88 system defines, gotten from the
  * VAX 8530/8550/8700/8800 System Maintenance Guide.
  */
+#ifndef _VAX_KA88_H_
+#define _VAX_KA88_H_
 
 /* Console communication ID fields */
 #define KA88_CSA1	0x0100		/* first floppy */
@@ -127,3 +129,5 @@ struct nmi_attach_args {
 #ifdef _KERNEL
 int ka88_confdata;
 #endif
+
+#endif /* _VAX_KA88_H_ */
