@@ -10,7 +10,7 @@
 
 #define ALL 0xFF
     
-char *interrupt_reg = NULL;
+unsigned char *interrupt_reg = NULL;
 vm_offset_t eeprom_va = NULL;
 vm_offset_t memerr_va = NULL;
 
@@ -85,7 +85,7 @@ void obio_internal_configure()
 	if (!va)
 	   mon_panic("obio_internal_configure: short pages for internal devs");
 	*oip->obio_internal_va = va;
-	pte_proto = PG_VALID|PG_SYSTEM|PG_NC|PG_OBIO;
+	pte_proto = PG_VALID|PG_SYSTEM|PG_NC|MAKE_PGTYPE(PG_OBIO);
 	if (oip->obio_rw)
 	    pte_proto |= PG_WRITE;
 	obio_pa = oip->obio_addr;
@@ -110,7 +110,7 @@ caddr_t obio_alloc(obio_addr, obio_size, obio_flags)
 	va = (vm_offset_t) obio_vm_alloc(npages);
     if (!va) 
 	panic("obio_alloc: unable to allocate va for obio mapping");
-    pte_proto = PG_VALID|PG_SYSTEM|PG_OBIO;
+    pte_proto = PG_VALID|PG_SYSTEM|MAKE_PGTYPE(PG_OBIO);
     if ((obio_flags & OBIO_CACHE) == 0)
 	pte_proto |= PG_NC;
     if (obio_flags & OBIO_WRITE)
@@ -121,4 +121,4 @@ caddr_t obio_alloc(obio_addr, obio_size, obio_flags)
 	set_pte(obio_va, pte_proto | PA_PGNUM(obio_pa));
     return (caddr_t) va;
 }
-     
+

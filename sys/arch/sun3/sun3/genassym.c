@@ -49,6 +49,7 @@
 #include "machine/psl.h"
 #include "machine/pte.h"
 #include "machine/control.h"
+#include "machine/mon.h"
 #include "machine/param.h"
 #include "machine/memmap.h"
 #include "machine/cpu.h"
@@ -75,12 +76,17 @@ main()
     printf("#define\tCONTEXT_REG %d\n", CONTEXT_REG);
     printf("#define\tCONTEXT_NUM %d\n", CONTEXT_NUM);
     printf("#define\tSEGMAP_BASE %d\n", SEGMAP_BASE);
+    printf("#define\tNBPG %d\n",        NBPG);
     printf("#define\tNBSG %d\n",        NBSG);
 
 				/* sun3 memory map */
     printf("#define\tMAINMEM_MONMAP %d\n",    MAINMEM_MONMAP);
+    printf("#define\tMONSHORTSEG %d\n",       MONSHORTSEG);
 				/* kernel-isms */
     printf("#define\tKERNBASE %d\n",    KERNBASE);
+    printf("#define\tUPAGES %d\n",      UPAGES);
+    printf("#define\tUPAGE_ADDR %d\n",      MONSHORTSEG);
+    printf("#define\tKSTACK_ADDR %d\n",     MONSHORTSEG);
 				/* errno-isms */
     printf("#define\tEFAULT %d\n",        EFAULT);
     printf("#define\tENAMETOOLONG %d\n",  ENAMETOOLONG);
@@ -108,7 +114,6 @@ main()
     printf("#define\tPCB_USTP %d\n", &pcb->pcb_ustp);
     printf("#define\tPCB_USP %d\n", &pcb->pcb_usp);
     printf("#define\tPCB_REGS %d\n", pcb->pcb_regs);
-    printf("#define\tPCB_CMAP2 %d\n", &pcb->pcb_cmap2);
     printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
     printf("#define\tPCB_FPCTX %d\n", &pcb->pcb_fpregs);
     printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));

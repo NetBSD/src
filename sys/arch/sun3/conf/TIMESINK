@@ -5,6 +5,7 @@
 include "std.sun3"
 
 options		"SUN3_50"
+options		"SUN3_60"
 
 makeoptions	DEBUG = "-g"
 maxusers	4

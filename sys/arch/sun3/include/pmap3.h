@@ -41,7 +41,7 @@ struct pmeg_state {
 typedef struct pmeg_state *pmeg_t;
 
 #define PMAP_ACTIVATE(pmap, pcbp, iscurproc) \
-      pmap_activate(pmap, pcbp, iscurproc);
+      pmap_activate(pmap, pcbp)
 #define PMAP_DEACTIVATE(pmap, pcbp) \
       pmap_deactivate(pmap, pcbp)
 

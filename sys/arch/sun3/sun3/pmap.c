@@ -72,8 +72,13 @@ vm_offset_t avail_start, avail_end;
 
 #define splpmap splbio
 
+#ifdef CONFUSED
 #define PMAP_LOCK() s = splpmap()
 #define PMAP_UNLOCK() splx(s)
+#else
+#define PMAP_LOCK()		/* pmap lock */
+#define PMAP_UNLOCK()		/* pmap unlock */
+#endif
 
 #define dequeue_first(val, type, queue) { \
 	val = (type) queue_first(queue); \
@@ -225,7 +230,7 @@ boolean_t pmap_is_modified __P((vm_offset_t pa));
 void pmap_clear_reference __P((vm_offset_t pa));
 boolean_t pmap_is_referenced __P((vm_offset_t pa));
 
-void pmap_activate __P((pmap_t pmap, struct pcb *pcbp, int is_curproc));
+void pmap_activate __P((pmap_t pmap, struct pcb *pcbp));
 void pmap_deactivate __P((pmap_t pmap, struct pcb *pcbp));
 
 void pmap_change_wiring __P((pmap_t pmap, vm_offset_t va, boolean_t wired));
@@ -1187,7 +1192,7 @@ void pmap_enter_kernel(va, pa, prot, wired, pte_proto, mem_type)
      */
     if (va < VM_MIN_KERNEL_ADDRESS)
 	printf("pmap: kernel trying to allocate virtual space below itself\n");
-    s = splpmap();
+    PMAP_LOCK();
     sme = get_segmap(va);
     /* XXXX -- lots of non-defined routines, need to see if pmap has a
      * context
@@ -1238,7 +1243,7 @@ add_pte:	/* can be destructive */
     }
     pmegp->pmeg_vpages++;	/* assumes pmap_enter can never insert
 				 a non-valid page*/
-    splx(s);
+    PMAP_UNLOCK();
 }
 
 
@@ -1265,7 +1270,7 @@ void pmap_enter_user(pmap, va, pa, prot, wired, pte_proto, mem_type)
     if (wired)
 	printf("pmap_enter_user: attempt to wire user page, ignored\n");
     pte_proto |= MAKE_PGTYPE(PG_MMEM); /* unnecessary */
-    s = splpmap();
+    PMAP_LOCK();
     saved_context = get_context();
     if (!pmap->pm_context)
 	panic("pmap: pmap_enter_user() on pmap without a context");
@@ -1303,7 +1308,7 @@ add_pte:
 	set_pte(va, pte_proto);
     pmegp->pmeg_vpages++;	/* assumes pmap_enter can never insert
 				   a non-valid page */
-    splx(s);
+    PMAP_UNLOCK();
 }
 /* 
  *	Insert the given physical page (p) at
@@ -1396,14 +1401,12 @@ pmap_is_referenced(pa)
 }
 
 
-void pmap_activate(pmap, pcbp, is_curproc)
+void pmap_activate(pmap, pcbp)
      pmap_t pmap;
      struct pcb *pcbp;
-     int is_curproc;
 {
     int s;
 
-    if (is_curproc) return;
     PMAP_LOCK();
     if (pmap->pm_context) {
 	set_context(pmap->pm_context->context_num);
