@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.h,v 1.13 2003/04/28 23:16:16 bjh21 Exp $	*/
+/*	$NetBSD: inet.h,v 1.14 2003/04/29 11:58:15 bjh21 Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -60,27 +60,22 @@
 #ifndef _ARPA_INET_H_
 #define	_ARPA_INET_H_
 
-#include <sys/featuretest.h>
-
 /* External definitions for functions in inet(3) */
 
-#include <sys/param.h>
-#if (!defined(BSD)) || (BSD < 199306)
-# include <sys/bitypes.h>
-#else
-# include <sys/types.h>
-#endif
+#include <sys/ansi.h>
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
+#include <sys/types.h>
+
 #include <netinet/in.h>
 
-#include <sys/ansi.h>
-
-#if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
+    defined(_NETBSD_SOURCE)
 #ifndef socklen_t
 typedef __socklen_t	socklen_t;
 #define socklen_t	__socklen_t
 #endif
-#endif /* (_XOPEN_SOURCE 0) >= 500 || _NETBSD_SOURCE*/
+#endif /* _POSIX_C_SOURCE >= 200112 || XOPEN_SOURCE >= 520 || _NETBSD_SOURCE */
 
 __BEGIN_DECLS
 unsigned long	 inet_addr __P((const char *));
@@ -89,7 +84,8 @@ struct in_addr	 inet_makeaddr __P((u_long , u_long));
 unsigned long	 inet_netof __P((struct in_addr));
 unsigned long	 inet_network __P((const char *));
 char		*inet_ntoa __P((struct in_addr));
-#if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
+    defined(_NETBSD_SOURCE)
 const char	*inet_ntop __P((int, const void *, char *, socklen_t));
 int		 inet_pton __P((int, const char *, void *));
 #endif
