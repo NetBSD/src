@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.59 2001/10/03 09:40:12 chs Exp $ */
+/*	$NetBSD: iommu.c,v 1.60 2001/10/27 17:44:18 darrenr Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -82,7 +82,9 @@ int	iommu_print __P((void *, const char *));
 void	iommu_attach __P((struct device *, struct device *, void *));
 int	iommu_match __P((struct device *, struct cfdata *, void *));
 
+#if defined(SUN4M)
 static void iommu_copy_prom_entries __P((struct iommu_softc *));
+#endif
 
 struct cfattach iommu_ca = {
 	sizeof(struct iommu_softc), iommu_match, iommu_attach
@@ -354,6 +356,7 @@ iommu_attach(parent, self, aux)
 #endif
 }
 
+#if defined(SUN4M)
 static void
 iommu_copy_prom_entries(sc)
 	struct iommu_softc *sc;
@@ -410,6 +413,7 @@ iommu_copy_prom_entries(sc)
 		sta(SRMMU_PCR, ASI_SRMMU, mmupcr_save);
 	}
 }
+#endif
 
 void
 iommu_enter(dva, pa)
