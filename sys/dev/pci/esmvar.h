@@ -1,6 +1,9 @@
-/*	$NetBSD: esmvar.h,v 1.5 2001/12/31 22:06:47 thorpej Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.6 2002/12/30 05:23:27 fredette Exp $	*/
 
 /*-
+ * Copyright (c) 2002, 2003 Matt Fredette
+ * All rights reserved.
+ *
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
  * All rights reserved.
  *
@@ -60,6 +63,64 @@
 #define MAESTRO_MINFREQ	24
 #define MAESTRO_MAXFREQ	48000
 
+/*
+ * This driver allocates a contiguous 256KB region of memory.
+ * The Maestro's DMA interface, called the WaveCache, is weak
+ * (or at least incorrectly documented), and forces us to keep
+ * things very simple.  This region is very carefully divided up 
+ * into 64KB quarters, making 64KB a fundamental constant for
+ * this implementation - and this is as large as we can allow 
+ * the upper-layer playback and record buffers to become.
+ */
+#define	MAESTRO_QUARTER_SZ	(64 * 1024)
+
+/*
+ * The first quarter of memory is used while recording.  The 
+ * first 512 bytes of it is reserved as a scratch area for the
+ * APUs that want to write (uninteresting, to us) FIFO status
+ * information.  After some guard space, another 512 bytes is
+ * reserved for the APUs doing mixing.  The remainder of this
+ * quarter of memory is wasted.
+ */
+#define	MAESTRO_FIFO_OFF	(MAESTRO_QUARTER_SZ * 0)
+#define	MAESTRO_FIFO_SZ		(512)
+#define	MAESTRO_MIXBUF_OFF	(MAESTRO_FIFO_OFF + 4096)
+#define	MAESTRO_MIXBUF_SZ	(512)
+
+/*
+ * The second quarter of memory is the playback buffer.
+ */
+#define	MAESTRO_PLAYBUF_OFF	(MAESTRO_QUARTER_SZ * 1)
+#define	MAESTRO_PLAYBUF_SZ	MAESTRO_QUARTER_SZ
+
+/*
+ * The third quarter of memory is the mono record buffer.  
+ * This is the only record buffer that the upper layer knows.
+ * When recording in stereo, our driver combines (in software)
+ * separately recorded left and right buffers here.
+ */
+#define	MAESTRO_RECBUF_OFF	(MAESTRO_QUARTER_SZ * 2)
+#define	MAESTRO_RECBUF_SZ	MAESTRO_QUARTER_SZ
+
+/*
+ * The fourth quarter of memory is the stereo record buffer.
+ * When recording in stereo, the left and right channels are
+ * recorded separately into the two halves of this buffer.
+ */
+#define	MAESTRO_RECBUF_L_OFF	(MAESTRO_QUARTER_SZ * 3)
+#define	MAESTRO_RECBUF_L_SZ	(MAESTRO_QUARTER_SZ / 2)
+#define	MAESTRO_RECBUF_R_OFF	(MAESTRO_RECBUF_L_OFF + MAESTRO_RECBUF_L_SZ)
+#define	MAESTRO_RECBUF_R_SZ	(MAESTRO_QUARTER_SZ / 2)
+
+/*
+ * The size and alignment of the entire region.  We keep
+ * the region aligned to a 128KB boundary, since this should
+ * force A16..A0 on all chip-generated addresses to correspond
+ * exactly to APU register contents.
+ */
+#define	MAESTRO_DMA_SZ		(MAESTRO_QUARTER_SZ * 4)
+#define	MAESTRO_DMA_ALIGN	(128 * 1024)
+
 struct esm_dma {
 	bus_dmamap_t		map;
 	caddr_t			addr;
@@ -74,9 +135,13 @@ struct esm_dma {
 
 struct esm_chinfo {
 	u_int32_t		base;		/* DMA base */
+	caddr_t			buffer;		/* upper layer buffer */
+	u_int32_t		offset;		/* offset into buffer */
 	u_int32_t		blocksize;	/* block size in bytes */
+	u_int32_t		bufsize;	/* buffer size in bytes */
 	unsigned		num;		/* logical channel number */
 	u_int16_t		aputype;	/* APU channel type */
+	u_int16_t		apubase;	/* first sample number */
 	u_int16_t		apublk;		/* blk size in samples per ch */
 	u_int16_t		apubuf;		/* buf size in samples per ch */
 	u_int16_t		nextirq;	/* pos to trigger next IRQ at */
@@ -101,7 +166,8 @@ struct esm_softc {
 	struct ac97_host_if	host_if;
 	enum ac97_host_flags	codec_flags;
 
-	struct esm_dma		*sc_dmas;
+	struct esm_dma		sc_dma;
+	int			rings_alloced;
 
 	int			pactive, ractive;
 	struct esm_chinfo	pch;
@@ -141,6 +207,7 @@ void	esm_init(struct esm_softc *);
 void	esm_initcodec(struct esm_softc *);
 
 int	esm_init_output(void *, void *, int);
+int	esm_init_input(void *, void *, int);
 int	esm_trigger_output(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
 int	esm_trigger_input(void *, void *, void *, int, void (*)(void *),
