@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.5 2000/10/04 00:45:45 lukem Exp $	
+.\"	$NetBSD: xfer,v 1.6 2000/10/10 12:26:27 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,79 +31,526 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
+.
+.\" ===== MD instructions on setting up boot media
+.\"
+.
+.if r_arm32 \{\
+You will need to have an installation kernel and possibly a boot application.
+See
+.Li arm32/ Ns Ar platform Ns Li /prep
+for details.
+.Pp
+.\} \" r_arm32
+.
+.if r_i386 \{\
+If you are not booting off a CD-ROM, you will need to have some floppy
+disks to boot off;
+either two 1.44 MB floppies or one 1.2 MB floppy.
+You must the boot floppy images
+.Pa ( boot1.fs
+and
+.Pa boot2.fs
+for 1.44 MB floppies,
+.Pa boot-tiny.fs
+for 1.2 MB floppies) onto these disks, which contain
+software to install or upgrade your
+.Nx
+system.
+.Pp
+Note that the
+.Pa boot-tiny.fs
+image is tailored for
+.Dq small
+machines. this install image does not have drivers for PCI, PCMCIA,
+EISA or SCSI (i.e. ISA-only), but can be used on machines with only
+4 MB of RAM.
+.Pp
+If you are using a UN*X-like system to write the floppy images to
+disks, you should use the
+.Xr dd
+command to copy the file system image(s)
+(.fs file) directly to the raw floppy disk.
+It is suggested that you read the
+.Xr dd 1
+manual page or ask your system administrator to determine the correct
+set of arguments to use; it will be slightly different from system to
+system, and a comprehensive list of the possibilities is beyond the
+scope of this document.
+.Pp
+If you are using
+.Tn DOS
+to write the floppy image(s) to floppy disk, you should use the
+.Li rawrite
+utility, provided in the
+.Pa i386/utilities
+directory of the
+.Nx
+distribution.
+It will write a file system image (.fs file) to a floppy disk.
+.Pp
+.\} \" r_i386
+.
+.if r_news68k \{\
+.(Note
+.Nx*M
+\*V does not support any framebuffers (yet) so
+you have to use serial console on installation procedure.
+.Note)
+.Pp
+You will need to have a 1.44 MB floppy disk to boot off.
+You must put the boot floppy image onto this disk, which contains
+software to install
+.Nx
+system.
+.Pp
+If you are using a UN*X-like system (such as
+.Tn NEWS-OS
+or other
+.Nx
+machines) to write the floppy images to disks, you should use the
+.Xr dd 1
+command to copy the file system image(s)
+(.fs file) directly to the raw floppy disk.
+It is suggested that you read the
+.Xr dd 1
+manual page or ask your system administrator to determine the correct
+set of arguments to use; it will be slightly different from system to
+system, and a comprehensive list of the possibilities is beyond the
+scope of this document.
+.Pp
+If you have an i386 machine which runs
+.Tn DOS
+and use them to write the floppy image(s) to floppy disk,
+you can use the
+.Li rawrite
+utility, provided in the
+.Pa i386/utilities
+directory of the
+.Nx
+distribution.
+It will write a file system image (.fs file) to a floppy disk.
+.Pp
+Though
+.Nx*M
+uses the floppy disk to boot for the initial
+installation, the
+.Nx*M
+kernel does not support the
+floppy device.
+Some other machines or systems are still required to write floppy images
+even after
+.Nx*M
+has been installed.
+.Pp
+SCSI devices on NWS-12x0 machines are not supported (yet), so they
+can only run
+.Nx*M
+diskless.
+No file transfer is needed, and all you have to do is to prepare files on
+the server.
+More information about diskless setting can be found at
+.Lk http://www.netbsd.org/Documentation/network/netboot/
+.Pp
+The
+.Tn NEWS
+PROM also supports tape boot and network boot, but
+.Nx*M
+does not support them currently.
+.Pp
+After the boot floppy is prepared, just type
+.Ic "bo fh"
+on the PROM prompt to boot it.
+.Pp
+.\} \" r_news68k
+.
+.if r_pmax \{\
+First-time installation on a bare machine is not supported, because most
+DECstations do not have any suitable load device.
+Some versions of the DECstation PROM are buggy and will not boot via
+.Tn TFTP
+and bootp; other versions are buggy and do not boot via
+.Tn MOP .
+.Pp
+The only DECstation with a floppy-disk drive is the Personal DECstation,
+and that device is not supported as a boot device.
+.Pp
+The recommended installation procedure is to boot an install kernel
+via
+.Tn TFTP ,
+or to use a
+.Dq helper
+system to write a miniroot diskimage onto a disk, move that
+disk to the target installation system, and then boot the miniroot.
+.Pp
+.\} \" r_pmax
+.
+.if r_vax \{\
+Installing on a "bare" machine requires some bootable
+device; either a tape or floppy drive or a NFS server together
+with a machine that can act as a MOP loader, such as another
+machine running
+.Nx .
+.Nx*M
+can use both BOOTP/DHCP and
+BOOTPARAMS for netboot installations.
+.Pp
+.\} \" r_vax
+.
+.if r_x68k \{\
+You will have to prepare the installer.
+There are two ways to invoke the
+.Nx
+installer;
+.Pp
+.(bullet -compact -offset indent
+Use
+.Pa loadbsd.x
+utility to boot
+.Nx
+from Human68k
+.It
+Create a boot floppy which contains the install kernel
+.bullet)
+.Pp
+When you chose the first method, you have to put the install kernel
+.Pa netbsdsi
+(for the standard
+.Dq sysinst
+installer) or
+.Pa netbsd
+(for the small
+.Dq script
+installer) and
+.Pa loadbsd.x
+utility.  These files can be found in
+.Pa installation/misc
+directory of the
+.Nx
+distribution.
+The difference between the two installer is described below.
+.Pp
+To invoke the installer, just type
+.D1 Ic loadbsd.x netbsdsi
+or
+.D1 Ic loadbsd.x netbsd
+from Human68k command line.
+.Pp
+When you chose the second method, you have to create the boot floppy
+from the floppy image
+.Pa sysinst.fs
+(for the standard
+.Dq sysinst
+installer) or
+.Pa boot.fs
+(for the small
+.Dq script
+installer).
+The image files can be found in
+.Pa installation/floppy
+directory of the
+.Nx
+distribution.
+The difference between the two installer is described below.
+.Pp
+If you are using a UN*X-like system to write the floppy image to
+disks, you should use the
+.Pa dd
+command to copy the file system images (.fs files) directly to the raw
+floppy disks. It is suggested that you read the dd(1) manual page or
+ask your system administrator to determine the correct set of
+arguments to use; it will be slightly different from system to system,
+and a comprehensive list of the possibilities is beyond the scope of
+this document.
+.Pp
+If you are using Human68k to write the floppy images to disks, you
+should use the
+.Pa rawrite
+utility, provided in the
+.Pa installation/misc
+directory of the
+.Nx
+distribution. It will write the file system
+images (.fs files) to disks.
+.Pp
+To use the boot floppy, insert the floppy to your floppy drive 0,
+and reboot your computer with OPT.1 key pressed.
+.Pp
+.\} \" r_x68k
+.
+.ig
+XXXX
+Note that if you are installing or upgrading from a writable media,
+the media can be write-protected if you wish.
+These systems mount a root image from inside the kernel, and will not
+need to write to the media.
+If you booted from a floppy, the floppy disk may be removed from
+the drive after the system has booted.
+XXXX
+..
+.
+.\"
+.\" ===== MI instructions for getting distribution off installation medium
+.\"
 Installation is supported from several media types, including:
 .Pp
-.Bl -bullet -compact
+.(bullet -offset indent -compact
+.
+.if r_amiga \{\
+AmigaDOS
 .It
-CDROM
+.\} \" r_amiga
+.
+CD-ROM
 .It
-DOS Floppy
+.
+.if !\n[news68k]:\n[pmax]:\n[vax]:\n[x68k] \{\
+DOS floppy
 .It
+.\} \" ! \n[news68k]:\n[pmax]:\n[vax]:\n[x68k]
+.
+FTP
+.It
+.
+.if r_x68k \{\
+Magneto-Optical (M-O) or other removable SCSI disk
+.It
+.\} \" r_x68k
+.
+Remote NFS partition
+.if !r_news68k \{\
+.It
+.\} \" ! r_news68k
+.
+.if !r_news68k \{\
 Tape
 .It
-Remote NFS partition
-.It
-FTP
-.El
-.if r_arm32 \{\
-.	Pp
-No matter which installation medium you choose, you'll need to have an
-installation kernel and possibly a boot application, see
-.	Li arm32/ Ns Ar platform Ns Li /prep
-for details.
-.\}
+.\} \" ! r_news68k
+.
+.if !r_news68k \{\
+Existing
+.Nx
+partitions, if performing an upgrade
+.\} \" ! r_news68k
+.
+.bullet)
 .Pp
-Note that, if you are installing or upgrading from a writable media,
-the media can be write-protected if you wish. These systems mount a
-root image from inside the kernel, and will not need to write to the
-media.
+.
+The steps necessary to prepare the distribution sets for installation
+depend upon which installation medium you choose.
+The steps for the various media are outlined below.
+.
+.(tag DOS\ floppy
+.
+.if r_amiga \{\
+.It Em AmigaDOS
+To install
+.Nx
+from an AmigaDOS partition, you need to get the
+.Nx
+distribution sets you wish to install on your system on to an AmigaDOS
+partition.
+All of the
+.Pa set_name.xx
+pieces can be placed in a single directory instead of separate ones for each
+distribution set.
+This will also simplify the installation work later on.
 .Pp
-The distribution sets for
-installation or upgrade depend on which installation medium you
-choose.  The steps for the various media are outlined below.
-.Bl -bullet
-.It
-To install or upgrade NetBSD using CDROM, you need to do the
-following:
+Note where you place the files as you will need this later.
 .Pp
-Find out where the distribution set files are on the CDROM.
+Once you have done this, you can proceed to the next
+step in the installation process, preparing your hard disk.
+.\} \" r_amiga
+.
+.It Em CD-ROM
+.if r_amiga \{\
+To install
+.Nx
+from a CD-ROM drive, make sure it is a SCSI CD-ROM on a SCSI bus currently
+supported by
+.Nx
+(refer to the supported hardware list) or an ATAPI cd-rom connected to the
+A1200 or A4000 internal IDE connector.
+If it is a SCSI CD-ROM on a non-supported SCSI bus like Blizzard-3 SCSI
+or Apollo SCSI you must first copy the distribution sets to an AmigaDOS
+partition as described above.
+.Pp
+If your SCSI CD-ROM is connected to a supported SCSI host adapter,
+or it is an ATAPI cd-rom connected to the A1200/A4000 internal IDE
+connector, simply put the CD into the drive before installation.
+.Pp
+.\} \" r_amiga
+Find out where the distribution set files are on the CD-ROM.
 .Pp
 Proceed to the instruction on installation.
-.It
-To install or upgrade NetBSD using DOS floppies, you need to do the
-following:
-.Pp
+.
+.if !\n[news68k]:\n[pmax]:\n[vax]:\n[x68k] \{\
+.It Em DOS floppy
 Count the number of "set_name.xx" files that make up the
-distribution sets you want to install or upgrade.  You will
-need that number of 1.44M floppies.
+distribution sets you want to install or upgrade.
+.ie r_i386 \{\
+You will need one fifth that number of 1.2 MB floppies, or one sixth that
+number of 1.44 MB floppies.
+You should only use one size of floppy for the install or upgrade
+procedure; you can't use some 1.2 MB floppies and some 1.44 MB floppies.
+.\} \" r_i386
+.el \{\
+You will need one sixth that number of 1.44 MB floppies.
+\} \" ! r_i386
 .Pp
-Format all of the floppies with DOS.  DO NOT make any of them
-bootable DOS floppies.  (If the floppies are bootable, then
-the DOS system files that make them bootable will take up
-some space, and you won't be able to fit the distribution set
-parts on the disks.) If you're using floppies that are
-formatted for DOS by their manufacturers, they probably
-aren't bootable, and you can use them out of the box.
+Format all of the floppies with
+.Tn DOS .
+Do
+.Em not
+make any of them bootable
+.Tn DOS
+floppies, i.e. don't use
+.Li format /s
+to format them.
+(If the floppies are bootable, then the
+.Tn DOS
+system files that make them bootable will take up some space, and you
+won't be able to fit the distribution set parts on the disks.)
+If you're using floppies that are formatted for
+.Tn DOS
+by their manufacturers, they probably aren't bootable, and you can use
+them out of the box.
 .Pp
-Place all of the "set_name.xx" files on the DOS disks.
+Place all of the "set_name.xx" files on the
+.Tn DOS
+disks.
 .Pp
-Once you have the files on DOS disks, you can proceed to the
-next step in the installation or upgrade process.  If you're
-installing NetBSD from scratch, go to the section on preparing
-your hard disk, below.  If you're upgrading an existing
-installation, go directly to the section on upgrading.
-.It
-To install or upgrade NetBSD using a tape, you need to do the
-following:
+Once you have the files on
+.Tn DOS
+disks, you can proceed to the next step in the installation or upgrade process.
+If you're installing
+.Nx
+from scratch, go to the section on preparing your hard disk, below.
+If you're upgrading an existing installation, go directly to the
+section on upgrading.
+.\} \" ! \n[news68k]:\n[pmax]:\n[vax]:\n[x68k]
+.
+.It Em FTP
+The preparations for this installation/upgrade method are
+easy; all you need to do is make sure that there's an FTP
+site from which you can retrieve the
+.Nx
+distribution when you're about to
+install or upgrade.
+You need to know the numeric IP address of that site, and,
+if it's not on a network directly connected to the machine
+on which you're installing or upgrading
+.Nx ,
+you need to know the numeric IP address of the router closest
+to the
+.Nx
+machine.
+Finally, you need to know the numeric IP address of the
+.Nx
+machine itself.
+If you don't have access to a functioning nameserver during
+installation, the IP address of
+.Sy ftp.netbsd.org
+is
+.Li 204.152.184.75
+(as of October, 2000).
 .Pp
-To install NetBSD from a tape, you need to make a tape that
-contains the distribution set files, in "tar" format.  If
-you're making the tape on a UN*X-like system, the easiest way
+Once you have this information, you can proceed to the next
+step in the installation or upgrade process.
+If you're installing
+.Nx
+from scratch, go to the section on preparing your hard disk, below.
+If you're upgrading an existing installation, go directly to
+the section on upgrading.
+.(Note
+This method of installation is recommended only for those already familiar
+with using BSD network configuration and management commands.
+If you aren't, this documentation should help, but is not intended to
+be all-encompassing.
+.Note)
+.
+.if r_x68k \{\
+.It Em M-O disk
+To install
+.Nx
+from a device such as a removable SCSI disk or a magneto-optical disk,
+the media
+.Em must
+be of the IBM
+.Em Super-floppy
+format.
+The Human68k format is not recognized by this release of the
+.Nx*M .
+If you have a
+.Tn DOS
+or MS-Windows
+machine with an M-O drive connected, use it.
+If you don't, and if you have a program to handle IBM format M-O
+for Human68k, copy all the files in the subdirectory
+.Pa x68k/binaries
+and CHANGE THEIR NAMES TO UPPER CASE.
+.\} \" r_x68k
+.
+.It Em NFS
+Place the
+.Nx
+distribution sets you wish to install into a
+directory on an NFS server, and make that directory mountable
+by the machine on which you are installing or upgrading
+.Nx .
+This will probably require modifying the
+.Pa /etc/exports
+file on of the NFS server and resetting its mount daemon (mountd).
+(Both of these actions will probably require superuser
+privileges on the server.)
+.Pp
+You need to know the numeric IP address of the NFS server,
+and, if the server is not on a network directly connected to
+the machine on which you're installing or upgrading
+.Nx ,
+you need to know the numeric IP address of the router closest
+to the
+.Nx
+machine.
+Finally, you need to know the numeric IP address of the
+.Nx
+machine itself.
+.Pp
+Once the NFS server is set up properly and you have the
+information mentioned above, you can proceed to the next step
+in the installation or upgrade process.
+If you're installing
+.Nx
+from scratch, go to the section on preparing your hard disk, below.
+If you're upgrading an existing installation, go directly to the
+section on upgrading.
+.(Note
+This method of installation is recommended only for those already
+familiar with using BSD network configuration and management commands.
+If you aren't, this documentation should help, but is not intended to
+be all-encompassing.
+.Note)
+.
+.if !r_news68k \{\
+.It Em Tape
+To install
+.Nx
+from a tape, you need to make a tape that
+contains the distribution set files, in "tar" format.
+.(Note
+the tape devices with which
+.Nx*M
+is believed to work is the DEC
+TK-50. This is a very slow device.  Installation via disk or network is
+recommended if at all possible.
+.Note)
+.Pp
+If you're making the tape on a UN*X-like system, the easiest way
 to do so is probably something like:
-.Li tar cf Ar tape_device dist_directories
+.D1 Ic tar -cf Ar tape_device dist_directories
 .No where Ar tape_device
 is the name of the tape device that
-describes the tape drive you're using (possibly
+describes the tape drive you're using; possibly
 .Pa /dev/rst0 ,
 or something similar, but it will vary from system to system.
 (If you can't figure it out, ask your system administrator.)
@@ -111,109 +558,69 @@ In the above example,
 .Ar dist_directories
 are the
 distribution sets' directories, for the distribution sets you
-wish to place on the tape.  For instance, to put the
+wish to place on the tape.
+For instance, to put the
 .Sy misc, base, No and Sy etc
 distributions on tape (in
 order to do the absolute minimum installation to a new disk),
 you would do the following:
-.D1 Ic "cd \&.../NetBSD-\*V         # the top of the tree
-.D1 Ic "cd \*[MACHINE]/binary
+.D1 Ic cd \&.../NetBSD-\*V         # the top of the tree
+.D1 Ic cd \*M/binary
 And then:\ \~
-.D1 tar \&cf Ar tape_device Ic misc etc kern
+.D1 Ic tar -cf Ar tape_device misc etc kern
 .Pp
 .(Note
-You still need to fill in 
+You still need to fill in
 .Ar tape_device No in the example.
 .Note)
 .Pp
 Once you have the files on the tape, you can proceed to the
-next step in the installation or upgrade process.  If you're
-installing NetBSD from scratch, go to the section on preparing
-your hard disk, below.  If you're upgrading an existing
-installation, go directly to the section on upgrading.
-.It
-To install or upgrade NetBSD using a remote partition, mounted via
-NFS, you must do the following:
-.(Note
-This method of installation is recommended only for
-those already familiar with using BSD network
-configuration and management commands.  If you aren't,
-this documentation should help, but is not intended to
-be all-encompassing.
-.Note)
-.Pp
-Place the NetBSD distribution sets you wish to install into a
-directory on an NFS server, and make that directory mountable
-by the machine on which you are installing or upgrading NetBSD.
-This will probably require modifying the /etc/exports file on
-of the NFS server and resetting its mount daemon (mountd).
-(Both of these actions will probably require superuser
-privileges on the server.)
-.Pp
-You need to know the numeric IP address of the NFS server,
-and, if the server is not on a network directly connected to
-the machine on which you're installing or upgrading NetBSD,
-you need to know the numeric IP address of the router closest
-to the NetBSD machine.  Finally, you need to know the numeric
-IP address of the NetBSD machine itself.
-.Pp
-Once the NFS server is set up properly and you have the
-information mentioned above, you can proceed to the next step
-in the installation or upgrade process.  If you're installing
-NetBSD from scratch, go to the section on preparing your hard
-disk, below.  If you're upgrading an existing installation, go
-directly to the section on upgrading.
-.It
-To install or upgrade NetBSD by using FTP to get the installation
-sets, you must do the following:
-.Pp
-.(Note
-This method of installation is recommended only for
-those already familiar with using BSD network
-configuration and management commands.  If you aren't,
-this documentation should help, but is not intended to
-be all-encompassing.
-.Note)
-.Pp
-The preparations for this installation/upgrade method are
-easy; all you make sure that there's some FTP site from which
-you can retrieve the NetBSD distribution when you're about to
-install or upgrade.  You need to know the numeric IP address
-of that site, and, if it's not on a network directly connected
-to the machine on which you're installing or upgrading NetBSD,
-you need to know the numeric IP address of the router closest
-to the NetBSD machine.  Finally, you need to know the numeric
-IP address of the NetBSD machine itself.
-.Pp
-Once you have this information, you can proceed to the next
-step in the installation or upgrade process.  If you're
-installing NetBSD from scratch, go to the section on
-preparing your hard disk, below.  If you're upgrading an
-existing installation, go directly to the section on
-upgrading.
-.It
-If you are upgrading NetBSD, you also have the option of installing
-NetBSD by putting the new distribution sets somewhere in your existing
-file system, and using them from there.  To do that, you must do the
-following:
+next step in the installation or upgrade process.
+If you're installing
+.Nx
+from scratch, go to the section on preparing your hard disk, below.
+If you're upgrading an existing installation, go directly to the section
+on upgrading.
+.\} \" ! r_news68k
+.
+.if !r_news68k \{\
+.It Em Upgrade
+If you are upgrading
+.Nx ,
+you also have the option of installing
+.Nx
+by putting the new distribution sets somewhere in your existing
+file system, and using them from there.
+To do that, you must do the following:
 .Pp
 Place the distribution sets you wish to upgrade somewhere in
 your current file system tree.
 .if !r_pmax \{\
 Please note that the /dev on
 the floppy used for upgrades only knows about wd0, wd1, sd0,
-sd1 and sd2. If you have more than two IDE drives or more than
-three SCSI drives, you should take care not to place the sets
-on the high numbered drives.
-.\}
+sd1 and sd2.
+If you have more than two IDE drives or more than three SCSI drives, you
+should take care not to place the sets on the high numbered drives.
+.\} \" ! r_pmax
 .Pp
-At a bare minimum, you must upgrade the "base" binary
-distribution, and so must put the "base" set somewhere in
-your file system.  If you wish, you can do the other sets, as
-well, but you should NOT upgrade the "etc" distribution; the
-"etc" distribution contains system configuration files that
-you should review and update by hand.
+At a bare minimum, you must upgrade the
+.Sy base
+and
+.Sy kern
+binary distributions, and so must put the
+.Sy base
+and
+.Sy kern
+sets somewhere in your file system.
+If you wish, you can do the other sets, as well, but you should
+.Em not
+upgrade the
+.Sy etc
+distribution; it contains contains system configuration files
+that you should review and update by hand.
 .Pp
 Once you have done this, you can proceed to the next step in
 the upgrade process, actually upgrading your system.
-.El
+.\} \" ! r_news68k
+.
+.tag)
