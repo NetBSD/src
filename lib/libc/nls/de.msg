@@ -228,3 +228,5 @@ $ SIGUSR1
 30 Benutzerdefiniertes Signal 1
 $ SIGUSR2
 31 Benutzerdefiniertes Signal 2
+$ SIGPWR
+32 Stromeinschaltung/ausfall
