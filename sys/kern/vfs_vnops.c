@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.34 1999/03/25 00:20:35 sommerfe Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.35 1999/03/30 00:16:44 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -416,7 +416,7 @@ vn_stat(vp, sb, p)
 {
 	struct vattr va;
 	int error;
-	u_short mode;
+	mode_t mode;
 
 	error = VOP_GETATTR(vp, &va, p->p_ucred, p);
 	if (error)
