@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.106 2003/10/22 02:45:57 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.107 2004/04/18 21:00:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -270,9 +270,9 @@ struct tcpcb {
 /*
  * TCP reassembly queue locks.
  */
-static __inline int tcp_reass_lock_try __P((struct tcpcb *))
+static __inline int tcp_reass_lock_try (struct tcpcb *)
 	__attribute__((__unused__));
-static __inline void tcp_reass_unlock __P((struct tcpcb *))
+static __inline void tcp_reass_unlock (struct tcpcb *)
 	__attribute__((__unused__));
 
 static __inline int
@@ -701,85 +701,85 @@ extern	struct mowner tcp_mowner;
 #define	TCP_HDR_ALIGNED_P(th)	((((vaddr_t) (th)) & 3) == 0)
 #endif
 
-int	 tcp_attach __P((struct socket *));
-void	 tcp_canceltimers __P((struct tcpcb *));
-int	 tcp_timers_invoking __P((struct tcpcb*));
+int	 tcp_attach (struct socket *);
+void	 tcp_canceltimers (struct tcpcb *);
+int	 tcp_timers_invoking (struct tcpcb*);
 struct tcpcb *
-	 tcp_close __P((struct tcpcb *));
-int	 tcp_isdead __P((struct tcpcb *));
+	 tcp_close (struct tcpcb *);
+int	 tcp_isdead (struct tcpcb *);
 #ifdef INET6
-void	 tcp6_ctlinput __P((int, struct sockaddr *, void *));
+void	 tcp6_ctlinput (int, struct sockaddr *, void *);
 #endif
-void	 *tcp_ctlinput __P((int, struct sockaddr *, void *));
-int	 tcp_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
+void	 *tcp_ctlinput (int, struct sockaddr *, void *);
+int	 tcp_ctloutput (int, struct socket *, int, int, struct mbuf **);
 struct tcpcb *
-	 tcp_disconnect __P((struct tcpcb *));
+	 tcp_disconnect (struct tcpcb *);
 struct tcpcb *
-	 tcp_drop __P((struct tcpcb *, int));
-void	 tcp_dooptions __P((struct tcpcb *,
-	    u_char *, int, struct tcphdr *, struct tcp_opt_info *));
-void	 tcp_drain __P((void));
-void	 tcp_established __P((struct tcpcb *));
-void	 tcp_init __P((void));
+	 tcp_drop (struct tcpcb *, int);
+void	 tcp_dooptions (struct tcpcb *,
+	    u_char *, int, struct tcphdr *, struct tcp_opt_info *);
+void	 tcp_drain (void);
+void	 tcp_established (struct tcpcb *);
+void	 tcp_init (void);
 #ifdef INET6
-int	 tcp6_input __P((struct mbuf **, int *, int));
+int	 tcp6_input (struct mbuf **, int *, int);
 #endif
-void	 tcp_input __P((struct mbuf *, ...));
-u_long	 tcp_mss_to_advertise __P((const struct ifnet *, int));
-void	 tcp_mss_from_peer __P((struct tcpcb *, int));
-void	 tcp_tcpcb_template __P((void));
+void	 tcp_input (struct mbuf *, ...);
+u_long	 tcp_mss_to_advertise (const struct ifnet *, int);
+void	 tcp_mss_from_peer (struct tcpcb *, int);
+void	 tcp_tcpcb_template (void);
 struct tcpcb *
-	 tcp_newtcpcb __P((int, void *));
-void	 tcp_notify __P((struct inpcb *, int));
+	 tcp_newtcpcb (int, void *);
+void	 tcp_notify (struct inpcb *, int);
 #ifdef INET6
-void	 tcp6_notify __P((struct in6pcb *, int));
+void	 tcp6_notify (struct in6pcb *, int);
 #endif
-u_int	 tcp_optlen __P((struct tcpcb *));
-int	 tcp_output __P((struct tcpcb *));
-void	 tcp_pulloutofband __P((struct socket *,
-	    struct tcphdr *, struct mbuf *, int));
-void	 tcp_quench __P((struct inpcb *, int));
+u_int	 tcp_optlen (struct tcpcb *);
+int	 tcp_output (struct tcpcb *);
+void	 tcp_pulloutofband (struct socket *,
+	    struct tcphdr *, struct mbuf *, int);
+void	 tcp_quench (struct inpcb *, int);
 #ifdef INET6
-void	 tcp6_quench __P((struct in6pcb *, int));
+void	 tcp6_quench (struct in6pcb *, int);
 #endif
-int	 tcp_reass __P((struct tcpcb *, struct tcphdr *, struct mbuf *, int *));
-int	 tcp_respond __P((struct tcpcb *, struct mbuf *, struct mbuf *,
-	    struct tcphdr *, tcp_seq, tcp_seq, int));
-void	 tcp_rmx_rtt __P((struct tcpcb *));
-void	 tcp_setpersist __P((struct tcpcb *));
-void	 tcp_slowtimo __P((void));
+int	 tcp_reass (struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
+int	 tcp_respond (struct tcpcb *, struct mbuf *, struct mbuf *,
+	    struct tcphdr *, tcp_seq, tcp_seq, int);
+void	 tcp_rmx_rtt (struct tcpcb *);
+void	 tcp_setpersist (struct tcpcb *);
+void	 tcp_slowtimo (void);
 struct mbuf *
-	 tcp_template __P((struct tcpcb *));
-void	 tcp_trace __P((int, int, struct tcpcb *, struct mbuf *, int));
+	 tcp_template (struct tcpcb *);
+void	 tcp_trace (int, int, struct tcpcb *, struct mbuf *, int);
 struct tcpcb *
-	 tcp_usrclosed __P((struct tcpcb *));
-int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-int	 tcp_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
-void	 tcp_xmit_timer __P((struct tcpcb *, uint32_t));
-tcp_seq	 tcp_new_iss __P((struct tcpcb *, tcp_seq));
-tcp_seq  tcp_new_iss1 __P((void *, void *, u_int16_t, u_int16_t, size_t,
-	    tcp_seq));
+	 tcp_usrclosed (struct tcpcb *);
+int	 tcp_sysctl (int *, u_int, void *, size_t *, void *, size_t);
+int	 tcp_usrreq (struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
+void	 tcp_xmit_timer (struct tcpcb *, uint32_t);
+tcp_seq	 tcp_new_iss (struct tcpcb *, tcp_seq);
+tcp_seq  tcp_new_iss1 (void *, void *, u_int16_t, u_int16_t, size_t,
+	    tcp_seq);
 
-int	 syn_cache_add __P((struct sockaddr *, struct sockaddr *,
+int	 syn_cache_add (struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, struct socket *,
-		struct mbuf *, u_char *, int, struct tcp_opt_info *));
-void	 syn_cache_unreach __P((struct sockaddr *, struct sockaddr *,
-	   struct tcphdr *));
-struct socket *syn_cache_get __P((struct sockaddr *, struct sockaddr *,
+		struct mbuf *, u_char *, int, struct tcp_opt_info *);
+void	 syn_cache_unreach (struct sockaddr *, struct sockaddr *,
+	   struct tcphdr *);
+struct socket *syn_cache_get (struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, unsigned int,
-		struct socket *so, struct mbuf *));
-void	 syn_cache_init __P((void));
-void	 syn_cache_insert __P((struct syn_cache *, struct tcpcb *));
-struct syn_cache *syn_cache_lookup __P((struct sockaddr *, struct sockaddr *,
-		struct syn_cache_head **));
-void	 syn_cache_reset __P((struct sockaddr *, struct sockaddr *,
-		struct tcphdr *));
-int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *));
-void	 syn_cache_timer __P((void *));
-void	 syn_cache_cleanup __P((struct tcpcb *));
+		struct socket *so, struct mbuf *);
+void	 syn_cache_init (void);
+void	 syn_cache_insert (struct syn_cache *, struct tcpcb *);
+struct syn_cache *syn_cache_lookup (struct sockaddr *, struct sockaddr *,
+		struct syn_cache_head **);
+void	 syn_cache_reset (struct sockaddr *, struct sockaddr *,
+		struct tcphdr *);
+int	 syn_cache_respond (struct syn_cache *, struct mbuf *);
+void	 syn_cache_timer (void *);
+void	 syn_cache_cleanup (struct tcpcb *);
 
-int	tcp_newreno __P((struct tcpcb *, struct tcphdr *));
+int	tcp_newreno (struct tcpcb *, struct tcphdr *);
 #endif
 
 #endif /* _NETINET_TCP_VAR_H_ */
