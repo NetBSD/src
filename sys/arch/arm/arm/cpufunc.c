@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.51 2002/08/16 00:06:26 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.52 2002/08/16 15:25:53 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -94,6 +94,9 @@ int	arm_pcache_unified;
 
 int	arm_dcache_align;
 int	arm_dcache_align_mask;
+
+/* 1 == use cpu_sleep(), 0 == don't */
+int cpu_do_powersave;
 
 #ifdef CPU_ARM3
 struct cpu_functions arm3_cpufuncs = {
@@ -827,6 +830,10 @@ set_cpufuncs()
 	cputype = cpufunc_id();
 	cputype &= CPU_ID_CPU_MASK;
 
+	/*
+	 * NOTE: cpu_do_powersave defaults to off.  If we encounter a
+	 * CPU type where we want to use it by default, then we set it.
+	 */
 
 #ifdef CPU_ARM3
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
@@ -903,6 +910,10 @@ set_cpufuncs()
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
 		pmap_pte_init_generic();
+
+		/* Use powersave on this CPU. */
+		cpu_do_powersave = 1;
+
 		return 0;
 	}
 #endif	/* CPU_SA1100 */
@@ -912,6 +923,10 @@ set_cpufuncs()
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
 		pmap_pte_init_generic();
+
+		/* Use powersave on this CPU. */
+		cpu_do_powersave = 1;
+
 		return 0;
 	}
 #endif	/* CPU_SA1110 */
@@ -1020,6 +1035,10 @@ set_cpufuncs()
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
+
+		/* Use powersave on this CPU. */
+		cpu_do_powersave = 1;
+
 		return 0;
 	}
 #endif /* CPU_XSCALE_PXA2X0 */
