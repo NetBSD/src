@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.2.2.1 2004/08/22 13:44:12 tron Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.2.2.2 2004/08/22 13:45:38 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.2.2.1 2004/08/22 13:44:12 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.2.2.2 2004/08/22 13:45:38 tron Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -120,7 +120,7 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(70), 			KS_Hold_Screen,
     KC(71), 			KS_KP_Home,	KS_KP_7,
     KC(72), 			KS_KP_Up,	KS_KP_8,
-    KC(73), 			KS_KP_Prior,	KS_KP_9,
+    KC(73), KS_Cmd_ScrollFastUp, KS_KP_Prior,	KS_KP_9,
     KC(74), 			KS_KP_Subtract,
     KC(75), 			KS_KP_Left,	KS_KP_4,
     KC(76), 			KS_KP_Begin,	KS_KP_5,
@@ -128,7 +128,7 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(78), 			KS_KP_Add,
     KC(79), 			KS_KP_End,	KS_KP_1,
     KC(80), 			KS_KP_Down,	KS_KP_2,
-    KC(81), 			KS_KP_Next,	KS_KP_3,
+    KC(81), KS_Cmd_ScrollFastDown, KS_KP_Next,	KS_KP_3,
     KC(82), 			KS_KP_Insert,	KS_KP_0,
     KC(83), 			KS_KP_Delete,	KS_KP_Decimal,
     KC(87), 			KS_f11,
