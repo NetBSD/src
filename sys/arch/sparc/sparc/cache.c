@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.8 1996/05/16 15:57:08 abrown Exp $ */
+/*	$NetBSD: cache.c,v 1.9 1996/06/12 14:57:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -125,7 +125,7 @@ cache_enable()
 	if (CPU_ISSUN4M) {
 		i = lda(SRMMU_PCR, ASI_SRMMU);
 		switch (mmumod) {
-		    case SUN4M_MMU_HS:	/* HyperSPARC */
+		case SUN4M_MMU_HS:	/* HyperSPARC */
 			/*
 			 * First we determine what type of cache we have, and
 			 * setup the anti-aliasing constants appropriately.
@@ -139,25 +139,29 @@ cache_enable()
 			}
 			/* Now reset cache tag memory */
 			for (i = 0, lim = ts; i < lim; i += ls)
-			    sta(i, ASI_DCACHETAG, 0);
+				sta(i, ASI_DCACHETAG, 0);
 
 			sta(SRMMU_PCR, ASI_SRMMU, /* Enable write-back cache */
 			    lda(SRMMU_PCR, ASI_SRMMU) | SRMMU_PCR_CE |
-			    SRMMU_PCR_CM);
+				SRMMU_PCR_CM);
 			cacheinfo.c_enabled = 1;
 			vactype = VAC_NONE;
 			/* HyperSPARC uses phys. tagged cache */
 
 			/* XXX: should add support */
 			if (cacheinfo.c_hwflush)
-			    panic("cache_enable: can't handle 4M with hw-flush cache");
+				panic("cache_enable: can't handle 4M with hw-flush cache");
 
 			printf("cache enabled\n");
 			break;
 
-		    case SUN4M_MMU_SS:	/* SuperSPARC */
-			if ((cpumod & 0xf0) != (SUN4M_SS & 0xf0))
-			    break;	/* ugh, SS and MS have same MMU # */
+		case SUN4M_MMU_SS:	/* SuperSPARC */
+			if ((cpumod & 0xf0) != (SUN4M_SS & 0xf0)) {
+				printf(
+			"cache NOT enabled for %x/%x cpu/mmu combination\n",
+					cpumod, mmumod);
+				break;	/* ugh, SS and MS have same MMU # */
+			}
 			cache_alias_bits = CACHE_ALIAS_BITS_SS;
 			cache_alias_dist = CACHE_ALIAS_DIST_SS;
 
@@ -170,7 +174,7 @@ cache_enable()
 			/* Turn on caches via MMU */
 			sta(SRMMU_PCR, ASI_SRMMU,
 			    lda(SRMMU_PCR,ASI_SRMMU) | SRMMU_PCR_DCE |
-			    SRMMU_PCR_ICE);
+				SRMMU_PCR_ICE);
 			cacheinfo.c_enabled = cacheinfo.dc_enabled = 1;
 
 			/* Now try to turn on MultiCache if it exists */
@@ -180,12 +184,12 @@ cache_enable()
 				/* Multicache controller */
 				sta(MXCC_ENABLE_ADDR, ASI_CONTROL,
 				    lda(MXCC_ENABLE_ADDR, ASI_CONTROL) |
-				    MXCC_ENABLE_BIT);
+					MXCC_ENABLE_BIT);
 				cacheinfo.ec_enabled = 1;
 			}
 			printf("cache enabled\n");
 			break;
-		    case SUN4M_MMU_MS1: /* MicroSPARC */
+		case SUN4M_MMU_MS1: /* MicroSPARC */
 			/* We "flash-clear" the I/D caches. */
 			sta(0, ASI_ICACHECLR, 0);	/* clear */
 			sta(0, ASI_DCACHECLR, 0);
@@ -193,13 +197,13 @@ cache_enable()
 			/* Turn on caches via MMU */
 			sta(SRMMU_PCR, ASI_SRMMU,
 			    lda(SRMMU_PCR,ASI_SRMMU) | SRMMU_PCR_DCE |
-			    SRMMU_PCR_ICE);
+				SRMMU_PCR_ICE);
 			cacheinfo.c_enabled = cacheinfo.dc_enabled = 1;
 
 			printf("cache enabled\n");
 			break;
 
-		    default:
+		default:
 			printf("Unknown MMU architecture...cache disabled.\n");
 			/* XXX: not HyperSPARC -- guess for now */
 			cache_alias_bits = GUESS_CACHE_ALIAS_BITS;
@@ -209,7 +213,7 @@ cache_enable()
 	} else {
 
 		for (i = AC_CACHETAGS, lim = i + ts; i < lim; i += ls)
-		    sta(i, ASI_CONTROL, 0);
+			sta(i, ASI_CONTROL, 0);
 
 		stba(AC_SYSENABLE, ASI_CONTROL,
 		     lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_CACHE);
@@ -251,7 +255,7 @@ cache_flush_context()
 		ls = cacheinfo.c_linesize;
 		i = cacheinfo.c_totalsize >> cacheinfo.c_l2linesize;
 		for (; --i >= 0; p += ls)
-		    flushls_ctx(p);
+			flushls_ctx(p);
 	}
 }
 
@@ -263,7 +267,7 @@ cache_flush_context()
  * now the addresses must include the virtual region number, and
  * we use the `flush region' space.
  *
- * This function is only called on sun4's with 3-level MMUs; there's
+ * This function is only called on sun4m's or sun4's with 3-level MMUs; there's
  * no hw-flush space.
  */
 void
@@ -278,7 +282,7 @@ cache_flush_region(vreg)
 	ls = cacheinfo.c_linesize;
 	i = cacheinfo.c_totalsize >> cacheinfo.c_l2linesize;
 	for (; --i >= 0; p += ls)
-	    flushls_reg(p);
+		flushls_reg(p);
 }
 #endif
 
@@ -309,7 +313,7 @@ cache_flush_segment(vreg, vseg)
 		ls = cacheinfo.c_linesize;
 		i = cacheinfo.c_totalsize >> cacheinfo.c_l2linesize;
 		for (; --i >= 0; p += ls)
-		    flushls_seg(p);
+			flushls_seg(p);
 	}
 }
 
@@ -327,7 +331,7 @@ cache_flush_page(va)
 
 #ifdef DEBUG
 	if (va & PGOFSET)
-	    panic("cache_flush_page: asked to flush misaligned va %x",va);
+		panic("cache_flush_page: asked to flush misaligned va %x",va);
 #endif
 
 	cachestats.cs_npgflush++;
@@ -338,7 +342,7 @@ cache_flush_page(va)
 		ls = cacheinfo.c_linesize;
 		i = NBPG >> cacheinfo.c_l2linesize;
 		for (; --i >= 0; p += ls)
-		    flushls_pag(p);
+			flushls_pag(p);
 	}
 }
 
@@ -439,9 +443,9 @@ cache_flush(base, len)
 			&& (CPU_ISSUN4M || mmu_3l)
 #endif
 				)
-		    cache_flush_region(VA_VREG(base));
+			cache_flush_region(VA_VREG(base));
 		else
 #endif
-		    cache_flush_context();
+			cache_flush_context();
 	}
 }
