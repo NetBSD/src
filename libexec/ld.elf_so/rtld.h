@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.56 2002/09/24 12:52:20 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.57 2002/09/24 20:23:12 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -256,11 +256,11 @@ Obj_Entry *_rtld_load_library __P((const char *, const Obj_Entry *, int));
 /* symbol.c */
 unsigned long _rtld_elf_hash __P((const char *));
 const Elf_Sym *_rtld_symlook_obj __P((const char *, unsigned long,
-    const Obj_Entry *));
+    const Obj_Entry *, bool));
 const Elf_Sym *_rtld_find_symdef __P((unsigned long, const Obj_Entry *,
     const Obj_Entry **, bool));
 const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
-  Objlist *, const Obj_Entry **);
+  Objlist *, const Obj_Entry **, bool);
 
 /* map_object.c */
 Obj_Entry *_rtld_map_object __P((char *, int, const struct stat *));
