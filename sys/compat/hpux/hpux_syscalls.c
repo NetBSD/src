@@ -1,4 +1,4 @@
-/* $NetBSD: hpux_syscalls.c,v 1.33 2001/01/27 07:53:29 thorpej Exp $ */
+/* $NetBSD: hpux_syscalls.c,v 1.34 2001/05/30 11:37:24 mrg Exp $ */
 
 /*
  * System call names.
@@ -7,8 +7,8 @@
  * created from	NetBSD: syscalls.master,v 1.24 2001/01/27 07:53:10 thorpej Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #endif
@@ -22,7 +22,7 @@
 #include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_syscallargs.h>
 #include <machine/hpux_machdep.h>
-#endif /* _KERNEL && ! _LKM */
+#endif /* _KERNEL_OPT */
 
 const char *const hpux_syscallnames[] = {
 	"syscall",			/* 0 = syscall */

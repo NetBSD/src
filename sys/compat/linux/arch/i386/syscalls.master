@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.57 2001/05/13 20:54:43 manu Exp $
+	$NetBSD: syscalls.master,v 1.58 2001/05/30 11:37:26 mrg Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -33,7 +33,7 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
 #endif
 

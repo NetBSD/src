@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.36 2001/05/30 11:37:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -26,7 +26,7 @@
  * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
 #include "opt_execfmt.h"
 #endif

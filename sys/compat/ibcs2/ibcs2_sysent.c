@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_sysent.c,v 1.32 2001/01/27 07:25:51 thorpej Exp $ */
+/* $NetBSD: ibcs2_sysent.c,v 1.33 2001/05/30 11:37:24 mrg Exp $ */
 
 /*
  * System call switch table.
@@ -7,7 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.25 2000/12/09 07:10:35 mycroft Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #endif
 #include <sys/param.h>

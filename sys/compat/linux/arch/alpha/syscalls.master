@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33 2001/03/30 17:59:46 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.34 2001/05/30 11:37:25 mrg Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -57,7 +57,7 @@
 ; UNIMPL osf_*   = osf functions implemented in linux, not here.
 ;
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #include "opt_compat_osf1.h"

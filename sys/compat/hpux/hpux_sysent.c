@@ -1,4 +1,4 @@
-/* $NetBSD: hpux_sysent.c,v 1.35 2001/01/27 07:53:29 thorpej Exp $ */
+/* $NetBSD: hpux_sysent.c,v 1.36 2001/05/30 11:37:24 mrg Exp $ */
 
 /*
  * System call switch table.
@@ -7,7 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.24 2001/01/27 07:53:10 thorpej Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.13 2001/01/22 20:08:04 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.14 2001/05/30 11:37:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -33,7 +33,7 @@
  *	from: linux_file.c,v 1.3 1995/04/04 04:21:30 mycroft Exp
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.9 2001/05/27 21:11:53 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.10 2001/05/30 11:37:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -80,14 +80,12 @@
 /*
  * To see whether wscons is configured (for virtual console ioctl calls).
  */
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "wsdisplay.h"
 #endif
 #if (NWSDISPLAY > 0)
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
-#if defined(_KERNEL) && !defined(_LKM)
-#endif
 #endif
 
 /* 

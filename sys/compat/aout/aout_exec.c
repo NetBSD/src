@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_exec.c,v 1.9 2000/12/11 05:29:00 mycroft Exp $	*/
+/*	$NetBSD: aout_exec.c,v 1.10 2001/05/30 11:37:21 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #endif
 

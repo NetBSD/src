@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.8 2000/11/29 22:05:35 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.9 2001/05/30 11:37:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #endif
 

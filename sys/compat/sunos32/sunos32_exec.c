@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.4 2001/05/07 09:55:14 manu Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.5 2001/05/30 11:37:31 mrg Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.3 2001/04/07 12:25:15 tsutsui Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.4 2001/05/30 11:37:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #endif

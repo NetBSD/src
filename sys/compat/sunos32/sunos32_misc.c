@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.7 2001/02/07 01:34:21 mrg Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.8 2001/05/30 11:37:31 mrg Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -84,7 +84,7 @@
 
 #define COMPAT_SUNOS 1
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
 #include "opt_compat_43.h"
 #include "opt_compat_netbsd.h"
