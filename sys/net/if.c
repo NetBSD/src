@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.28 1996/02/27 08:17:08 mycroft Exp $	*/
+/*	$NetBSD: if.c,v 1.29 1996/03/05 01:56:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -608,7 +608,10 @@ ifconf(cmd, data)
 		strncpy(ifr.ifr_name, ifp->if_name, sizeof(ifr.ifr_name) - 2);
 		for (cp = ifr.ifr_name; cp < ep && *cp; cp++)
 			continue;
-		*cp++ = '0' + ifp->if_unit; *cp = '\0';
+		if (ifp->if_unit > 9)
+			*cp++ = '0' + ifp->if_unit / 10;
+		*cp++ = '0' + ifp->if_unit % 10;
+		*cp = '\0';
 		if ((ifa = ifp->if_addrlist.tqh_first) == 0) {
 			bzero((caddr_t)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 			error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
