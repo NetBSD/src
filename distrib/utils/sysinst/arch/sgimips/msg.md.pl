@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.6 2003/11/13 02:33:39 sekiya Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.7 2004/11/13 10:26:39 sekiya Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/11/20 15:53:24 soren Exp */
 
@@ -62,3 +62,6 @@ message set_kernel_1
 
 message set_kernel_2
 {Kernel (GENERIC32_IP3x)}
+
+message set_kernel_3
+{Kernel (GENERIC32_IP12)}

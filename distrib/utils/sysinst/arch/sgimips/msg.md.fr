@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.5 2003/11/13 02:33:39 sekiya Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.6 2004/11/13 10:26:39 sekiya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,3 +60,6 @@ message set_kernel_1
 
 message set_kernel_2
 {Kernel (GENERIC32_IP3x)}
+
+message set_kernel_3
+{Kernel (GENERIC32_IP12)}
