@@ -1,4 +1,4 @@
-# $NetBSD: tests,v 1.6 2001/08/27 13:35:45 enami Exp $
+# $NetBSD: tests,v 1.7 2002/02/09 15:58:35 bouyer Exp $
 
 #fill up an extent, should coalesce into one allocation
 extent test1 0 0x4f
@@ -60,4 +60,15 @@ extent test8 0 0x4f EX_NOCOALESCE
 alloc_region 0x30 0x10
 alloc_subregion 0 0xf 0x10
 alloc_subregion 0 0xf 0x10
+print
+
+#When allocating a region with a boundary constraint, check that we properly
+#detect overlaps once the candidate region has been aligned.
+#subr_extent.c prior 1.45 could corrupt the extent map in this situation
+extent test9 0 0x4f
+boundary 0
+alloc_subregion 0 0x10 4
+alloc_subregion 0xd 0x20 2
+boundary 8
+alloc_subregion 0 0x4f 8
 print
