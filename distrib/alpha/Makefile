@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1999/06/30 18:36:37 ross Exp $
+#	$NetBSD: Makefile,v 1.3 1999/09/20 08:18:31 ross Exp $
 
-SUBDIR=	instkernel floppy-GENERIC
+SUBDIR=	instkernel #floppy-GENERIC
 
 ITARGET=	${RELEASEDIR}/installation
 IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
@@ -19,7 +19,7 @@ release:
 	${IINST} instkernel/fdset/obj/disk1of2 ${ITARGET}/floppy/.
 	${IINST} instkernel/fdset/obj/disk2of2 ${ITARGET}/floppy/.
 	${IINST} instkernel/instkernel/obj/netbsd.gz ${ITARGET}/instkernel/.
-	${IINST} floppy-GENERIC/obj/GENERIC.fs ${ITARGET}/misc/.
+	#${IINST} floppy-GENERIC/obj/GENERIC.fs ${ITARGET}/misc/.
 .endif
 
 .include <bsd.subdir.mk>
