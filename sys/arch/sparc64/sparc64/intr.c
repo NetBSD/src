@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.30 2000/07/02 16:13:22 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.31 2000/07/03 17:56:08 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -256,6 +256,7 @@ intr_establish(level, ih)
 	 * and we do want to preserve order.
 	 */
 	ih->ih_pil = level; /* XXXX caller should have done this before */
+	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
 	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
 		;
@@ -318,6 +319,7 @@ softintr_establish(level, fun, arg)
 	ih->ih_fun = fun;
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
+	ih->ih_pending = 0;
 	ih->ih_clr = NULL;
 	return (void *)ih;
 }
