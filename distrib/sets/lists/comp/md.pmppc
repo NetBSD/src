@@ -1,4 +1,4 @@
-# $NetBSD: md.pmppc,v 1.8 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.pmppc,v 1.9 2005/02/17 02:24:00 briggs Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmppc				comp-c-include
 ./usr/include/pmppc/_G_config.h			comp-obsolete		obsolete
@@ -49,6 +49,7 @@
 ./usr/include/pmppc/reloc.h			comp-c-include
 ./usr/include/pmppc/setjmp.h			comp-c-include
 ./usr/include/pmppc/signal.h			comp-c-include
+./usr/include/pmppc/spr.h			comp-c-include
 ./usr/include/pmppc/stdarg.h			comp-c-include
 ./usr/include/pmppc/trap.h			comp-c-include
 ./usr/include/pmppc/types.h			comp-c-include
