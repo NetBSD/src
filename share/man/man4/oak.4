@@ -27,16 +27,16 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: oak.4,v 1.6 2001/04/11 18:54:01 wiz Exp $
+.\"	$NetBSD: oak.4,v 1.1 2003/04/17 10:11:38 wiz Exp $
 .\"
 .Dd April 6, 1999
-.Dt OAK 4 arm32
+.Dt OAK 4
 .Os
 .Sh NAME
 .Nm oak
 .Nd Oak SCSI I Card device interface
 .Sh SYNOPSIS
-.Cd "oak0 at podulebus?"
+.Cd oak0 at podulebus?
 .Sh DESCRIPTION
 The
 .Nm
@@ -45,4 +45,5 @@ interface provides access to Oak SCSI I interfaces.
 .Xr asc 4 ,
 .Xr cosc 4 ,
 .Xr csc 4 ,
+.Xr podulebus 4 ,
 .Xr ptsc 4
