@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.91.2.1 1999/11/11 21:34:23 he Exp $
+#	$NetBSD: Makefile.inc,v 1.91.2.2 2000/10/06 14:59:05 he Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -63,7 +63,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
 
-NOERR=	getegid.o geteuid.o getgid.o getpid.o getppid.o getuid.o sync.o
+NOERR=	getegid.o geteuid.o getgid.o getpid.o getppid.o getuid.o \
+	issetugid.o sync.o
 PNOERR= ${NOERR:.o=.po}
 SNOERR= ${NOERR:.o=.so}
 
