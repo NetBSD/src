@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.33 1996/09/07 12:40:28 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.34 1996/12/17 08:41:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -298,16 +298,40 @@ cons_decl(dca);
 #define	dcmcnpollc		nullcnpollc
 cons_decl(dcm);
 
+#ifdef NEWCONFIG
+#include "dvbox.h"
+#include "gbox.h"
+#include "hyper.h"
+#include "rbox.h"
+#include "topcat.h"
+#else /* ! NEWCONFIG */
+#if NGRF > 0
+#define	NDVBOX	1
+#define	NGBOX	1
+#define	NHYPER	1
+#define	NRBOX	1
+#define	NTOPCAT	1
+#endif /* NGRF > 0 */
+#endif /* NEWCONFIG */
+
 struct	consdev constab[] = {
 #if NITE > 0
-#if NGRF > 0			/* XXX */
+#if NDVBOX > 0
 	cons_init(dvbox),
+#endif
+#if NGBOX > 0
 	cons_init(gbox),
+#endif
+#if NHYPER > 0
 	cons_init(hyper),
+#endif
+#if NRBOX > 0
 	cons_init(rbox),
+#endif
+#if NTOPCAT > 0
 	cons_init(topcat),
 #endif
-#endif
+#endif /* NITE > 0 */
 #if NDCA > 0
 	cons_init(dca),
 #endif
