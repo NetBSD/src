@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.17 2002/04/09 21:17:53 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.18 2003/01/27 21:27:52 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.17 2002/04/09 21:17:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.18 2003/01/27 21:27:52 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -88,7 +88,7 @@ ata_get_params(drvp, flags, prms)
 		wdc_c.r_command = WDCC_IDENTIFY;
 		wdc_c.r_st_bmask = WDCS_DRDY;
 		wdc_c.r_st_pmask = WDCS_DRQ;
-		wdc_c.timeout = 1000; /* 1s */
+		wdc_c.timeout = 3000; /* 3s */
 	} else if (drvp->drive_flags & DRIVE_ATAPI) {
 		wdc_c.r_command = ATAPI_IDENTIFY_DEVICE;
 		wdc_c.r_st_bmask = 0;
