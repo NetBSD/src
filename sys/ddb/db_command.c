@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.35 2000/03/30 11:31:26 augustss Exp $	*/
+/*	$NetBSD: db_command.c,v 1.36 2000/04/10 02:22:13 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -35,6 +35,7 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 #include <sys/pool.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
@@ -369,6 +370,38 @@ db_page_print_cmd(addr, have_addr, count, modif)
                 full = TRUE;
 
 	uvm_page_printit((struct vm_page *) addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+void
+db_buf_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	boolean_t full = FALSE;
+        
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	vfs_buf_print((struct buf *)addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+void
+db_vnode_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	boolean_t full = FALSE;
+        
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	vfs_vnode_print((struct vnode *)addr, full, db_printf);
 }
 
 /*ARGSUSED*/

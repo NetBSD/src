@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.14 1999/10/28 06:37:32 lukem Exp $	*/
+/*	$NetBSD: db_command.h,v 1.15 2000/04/10 02:22:13 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -40,6 +40,8 @@ void db_command __P((struct db_command **, struct db_command *));
 void db_map_print_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_object_print_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_page_print_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_buf_print_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_vnode_print_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_pool_print_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_machine_commands_install __P((struct db_command *));
 void db_command_loop __P((void));
