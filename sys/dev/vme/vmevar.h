@@ -1,4 +1,4 @@
-/*	$NetBSD: vmevar.h,v 1.4 1998/02/06 00:21:49 pk Exp $	*/
+/*	$NetBSD: vmevar.h,v 1.5 1998/04/07 20:31:26 pk Exp $	*/
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@ struct vme_chipset_tag {
 				bus_space_tag_t, bus_space_handle_t *));
 	void	(*vct_unmap) __P((void *));
 	int	(*vct_mmap_cookie) __P((void *, vme_addr_t, vme_mod_t,
-				bus_space_tag_t, int *));
+				bus_space_tag_t, bus_space_handle_t *));
 
 	int	(*vct_intr_map) __P((void *, int, int, vme_intr_handle_t *));
 
