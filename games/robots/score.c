@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.4 1997/10/12 14:10:05 lukem Exp $	*/
+/*	$NetBSD: score.c,v 1.5 1997/10/12 14:16:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.4 1997/10/12 14:10:05 lukem Exp $");
+__RCSID("$NetBSD: score.c,v 1.5 1997/10/12 14:16:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,8 @@ score()
 	static int	numscores, max_uid;
 
 	Newscore = FALSE;
-	if ((inf = open(Scorefile, 2)) < 0) {
-		perror(Scorefile);
+	if ((inf = open(Scorefile, O_RDWR)) < 0) {
+		warn("opening `%s'", Scorefile);
 		return;
 	}
 
@@ -167,8 +167,8 @@ show_score()
 	int		inf;
 	static int	max_score;
 
-	if ((inf = open(Scorefile, 0)) < 0) {
-		perror(Scorefile);
+	if ((inf = open(Scorefile, O_RDONLY)) < 0) {
+		warn("opening `%s'", Scorefile);
 		return;
 	}
 
