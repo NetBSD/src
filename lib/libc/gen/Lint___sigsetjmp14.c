@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint___sigsetjmp14.c,v 1.1 1998/09/26 23:53:36 christos Exp $	*/
+/* $NetBSD: Lint___sigsetjmp14.c,v 1.1.8.1 2000/06/23 16:17:20 minoura Exp $ */
 
 /*
  * This file placed in the public domain.

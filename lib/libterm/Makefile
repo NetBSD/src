@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.22 2000/05/20 13:55:10 blymn Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2000/06/23 16:16:55 minoura Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	termcap
-CPPFLAGS+=-I. -DCM_N -DCM_GT -DCM_B -DCM_D
+CPPFLAGS+=-I${.CURDIR} -DCM_N -DCM_GT -DCM_B -DCM_D
 SRCS=	termcap.c tgoto.c tputs.c
 
 MAN=	termcap.3

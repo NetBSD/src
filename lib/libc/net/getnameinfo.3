@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnameinfo.3,v 1.7 2000/05/11 03:08:47 itojun Exp $
+.\"	$NetBSD: getnameinfo.3,v 1.7.2.1 2000/06/23 16:17:34 minoura Exp $
 .\"	$KAME: getnameinfo.3,v 1.10 2000/05/11 03:02:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -50,7 +50,7 @@
 .Fd #include <sys/socket.h>
 .Fd #include <netdb.h>
 .Ft int
-.Fn getnameinfo "const struct sockaddr *sa" "size_t salen" \
+.Fn getnameinfo "const struct sockaddr *sa" "socklen_t salen" \
 "char *host" "size_t hostlen" "char *serv" "size_t servlen" "int flags"
 .\"
 .Sh DESCRIPTION

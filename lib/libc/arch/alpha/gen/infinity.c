@@ -1,4 +1,4 @@
-/*	$NetBSD: infinity.c,v 1.5 2000/04/25 05:55:58 erh Exp $	*/
+/* $NetBSD: infinity.c,v 1.5.2.1 2000/06/23 16:17:01 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

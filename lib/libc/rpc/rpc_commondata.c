@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_commondata.c,v 1.6 1998/02/13 05:52:30 lukem Exp $	*/
+/*	$NetBSD: rpc_commondata.c,v 1.6.8.1 2000/06/23 16:17:46 minoura Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -34,7 +34,7 @@
 #if 0
 static char *sccsid = "@(#)rpc_commondata.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_commondata.c,v 1.6 1998/02/13 05:52:30 lukem Exp $");
+__RCSID("$NetBSD: rpc_commondata.c,v 1.6.8.1 2000/06/23 16:17:46 minoura Exp $");
 #endif
 #endif
 
@@ -47,4 +47,7 @@ __RCSID("$NetBSD: rpc_commondata.c,v 1.6 1998/02/13 05:52:30 lukem Exp $");
 struct opaque_auth _null_auth;
 fd_set svc_fdset;
 int svc_maxfd = -1;
+#ifndef _REENT
+#undef rpc_createerr
 struct rpc_createerr rpc_createerr;
+#endif

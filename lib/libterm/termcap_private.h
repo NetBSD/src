@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap_private.h,v 1.1 2000/04/18 14:42:42 blymn Exp $	*/
+/*	$NetBSD: termcap_private.h,v 1.1.2.1 2000/06/23 16:16:56 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -35,6 +35,8 @@
 struct tinfo
 {
 	char *info;
+	char *up; /* for use by tgoto */
+	char *bc; /* for use by tgoto */
 };
 
 
