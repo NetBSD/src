@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.7 1998/12/01 16:07:11 sommerfe Exp $	*/
+/*	$NetBSD: strftime.c,v 1.8 1999/02/07 17:33:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strftime.c	5.11 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.7 1998/12/01 16:07:11 sommerfe Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.8 1999/02/07 17:33:30 augustss Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -227,32 +227,94 @@ _fmt(format, t, pt, ptlim)
 				    pt, ptlim))
 					return (0);
 				continue;
-			case 'V':
+			case 'V':	/* ISO 8601 week number */
+			case 'G':	/* ISO 8601 year (four digits) */
+			case 'g':	/* ISO 8601 year (two digits) */
+/*
+** From Arnold Robbins' strftime version 3.0:  "the week number of the
+** year (the first Monday as the first day of week 1) as a decimal number
+** (01-53)."
+** (ado, 1993-05-24)
+**
+** From "http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html" by Markus Kuhn:
+** "Week 01 of a year is per definition the first week which has the
+** Thursday in this year, which is equivalent to the week which contains
+** the fourth day of January. In other words, the first week of a new year
+** is the week which has the majority of its days in the new year. Week 01
+** might also contain days from the previous year and the week before week
+** 01 of a year is the last week (52 or 53) of the previous year even if
+** it contains days from the new year. A week starts with Monday (day 1)
+** and ends with Sunday (day 7).  For example, the first week of the year
+** 1997 lasts from 1996-12-30 to 1997-01-05..."
+** (ado, 1996-01-02)
+*/
 				{
-				/* ISO 8601 Week Of Year:
-				 *  If the week (Monday - Sunday) containing
-				 * January 1 has four or more days in the new 
-				 * year, then it is week 1; otherwise it is 
-				 * week 53 of the previous year and the next
-				 * week is week one.
-				 */
+					int	year;
+					int	yday;
+					int	wday;
+					int	w;
 
-				int week = MON_WEEK(t);
+					year = t->tm_year + TM_YEAR_BASE;
+					yday = t->tm_yday;
+					wday = t->tm_wday;
+					for ( ; ; ) {
+						int	len;
+						int	bot;
+						int	top;
 
-				int days = (((t)->tm_yday + 7 -
-				    ((t)->tm_wday ? (t)->tm_wday - 1 : 6)) % 7);
-
-
-				if (days >= 4) {
-					week++;
-				} else if (week == 0) {
-					week = 53;
+						len = isleap(year) ?
+							DAYSPERLYEAR :
+							DAYSPERNYEAR;
+						/*
+						** What yday (-3 ... 3) does
+						** the ISO year begin on?
+						*/
+						bot = ((yday + 11 - wday) %
+							DAYSPERWEEK) - 3;
+						/*
+						** What yday does the NEXT
+						** ISO year begin on?
+						*/
+						top = bot -
+							(len % DAYSPERWEEK);
+						if (top < -3)
+							top += DAYSPERWEEK;
+						top += len;
+						if (yday >= top) {
+							++year;
+							w = 1;
+							break;
+						}
+						if (yday >= bot) {
+							w = 1 + ((yday - bot) /
+								DAYSPERWEEK);
+							break;
+						}
+						--year;
+						yday += isleap(year) ?
+							DAYSPERLYEAR :
+							DAYSPERNYEAR;
+					}
+#ifdef XPG4_1994_04_09
+					if ((w == 52
+					     && t->tm_mon == TM_JANUARY)
+					    || (w == 1
+						&& t->tm_mon == TM_DECEMBER))
+						w = 53;
+#endif /* defined XPG4_1994_04_09 */
+					if (*format == 'V') {
+						if (!_conv(w, 2, '0',
+							pt, ptlim))
+							return (0);
+					} else if (*format == 'g') {
+						if (!_conv(year % 100, 2, '0',
+							pt, ptlim))
+							return (0);
+					} else	if (!_conv(year, 4, '0',
+							pt, ptlim))
+							return (0);
 				}
-
-				if (!_conv(week, 2, '0', pt, ptlim))
-					return (0);
 				continue;
-				}
 			case 'W':
 				if (!_conv(MON_WEEK(t), 2, '0', pt, ptlim))
 					return (0);
