@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: reg.h 1.1 90/07/09
- * from: @(#)reg.h	7.1 (Berkeley) 1/7/92
- * $Id: reg.h,v 1.1.1.1 1993/10/12 03:22:41 deraadt Exp $
+ *
+ *	from: @(#)reg.h	8.2 (Berkeley) 1/11/94
+ *      $Id: reg.h,v 1.2 1994/05/27 08:41:05 glass Exp $
  */
 
 /*
@@ -128,3 +129,12 @@ int ipcreg[NIPCREG] = {
 	F24, F25, F26, F27, F28, F29, F30, F31, FSR,
 };
 #endif
+
+#ifdef LANGUAGE_C
+/*
+ * Register set accessible via /proc/$pid/reg
+ */
+struct reg {
+        int     r_regs[69];	/* numbered as above */
+};
+#endif /* LANGUAGE_C */

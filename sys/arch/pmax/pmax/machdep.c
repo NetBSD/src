@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,10 +36,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: machdep.c 1.63 91/04/24
- * from: @(#)machdep.c	7.17 (Berkeley) 2/26/93
- * $Id: machdep.c,v 1.3 1994/01/16 00:41:17 deraadt Exp $
+ *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
+ *      $Id: machdep.c,v 1.4 1994/05/27 08:42:09 glass Exp $
  */
+
+/* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,15 +57,16 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/sysctl.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
 
-#include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -145,10 +147,7 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-
-struct msgbuf *msgbufp;
-int msgbufmapped = 0;		/* set when safe to use msgbuf */
-
+int	msgbufmapped = 0;	/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	pmax_boardtype;		/* Mother board type */
@@ -156,52 +155,6 @@ u_long	le_iomem;		/* 128K for lance chip via. ASIC */
 u_long	asc_iomem;		/* and 7 * 8K buffers for the scsi */
 u_long	asic_base;		/* Base address of I/O asic */
 const	struct callback *callv;	/* pointer to PROM entry points */
-const struct callback callvec = {
-	(void *(*) __P((void *s1, void *s2, int n)))0,
-	(void *(*) __P((void *s1, int c, int n)))0,
-	(char *(*) __P((char *s1, char *s2)))DEC_PROM_STRCAT,
-	(int (*) __P((char *s1, char *s2)))DEC_PROM_STRCMP,
-	(char *(*) __P((char *s1, char *s2)))DEC_PROM_STRCPY,
-	(int (*) __P((char *s1)))DEC_PROM_STRLEN,
-	(char *(*) __P((char *s1, char *s2, int n)))0,
-	(char *(*) __P((char *s1, char *s2, int n)))0,
-	(int (*) __P((char *s1, char *s2, int n)))0,
-	(int (*) __P((void)))DEC_PROM_GETCHAR,
-	(char *(*) __P((char *s)))DEC_PROM_GETS,
-	(int (*) __P((char *s)))DEC_PROM_PUTS,
-	(int (*) __P((char *fmt, ...)))DEC_PROM_PRINTF,
-	(int (*) __P((char *s, char *fmt, ...)))0,
-	(int (*) __P((void)))0,
-	(long (*) __P((char *s, char **endptr, int base)))0,
-	(psig_t (*) __P((int sig, psig_t func)))0,
-	(int (*) __P((int sig)))0,
-	(long (*) __P((long *tod)))0,
-	(int (*) __P((jmp_buf env)))0,
-	(void (*) __P((jmp_buf env, int value)))0,
-	(int (*) __P((void)))0,
-	(int (*) __P((int b, void *buffer, int n)))0,
-	(int (*) __P((int b, void *buffer, int n)))0,
-	(int (*) __P((char *name, char *value)))DEC_PROM_SETENV2,
-	(char *(*) __P((char *name)))DEC_PROM_GETENV2,
-	(int (*) __P((char *name)))DEC_PROM_UNSETENV,
-	(u_long (*) __P((int sn)))0,
-	(void (*) __P((void)))0,
-	(void (*) __P((int delay)))0,
-	(void (*) __P((int value)))0,
-	(void (*) __P((void)))0,
-	(int (*) __P((void)))0,
-	(int (*) __P((memmap *map)))0,
-	(int (*) __P((int sn)))0,
-	(int (*) __P((int sn)))0,
-	(int (*) __P((int sn)))0,
-	(void *)0,
-	(int (*) __P((void)))0,
-	(void (*) __P((int *v, int cnt)))0,
-	(void (*) __P((void)))0,
-	(tcinfo *(*) __P(()))0,
-	(int (*) __P((char *cmd)))0,
-	(void (*) __P((char cmd)))0,
-};
 
 void	(*tc_enable_interrupt)();
 extern	int (*pmax_hardware_intr)();
@@ -211,7 +164,6 @@ int	kn02_intr(), kmin_intr(), xine_intr(), pmax_intr();
 int	kn03_intr();
 #endif
 extern	int Mach_spl0(), Mach_spl1(), Mach_spl2(), Mach_spl3(), splhigh();
-extern	int Mach_net();
 int	(*Mach_splnet)() = splhigh;
 int	(*Mach_splbio)() = splhigh;
 int	(*Mach_splimp)() = splhigh;
@@ -265,9 +217,6 @@ mach_init(argc, argv, code, cv)
 	extern char edata[], end[];
 	extern char MachUTLBMiss[], MachUTLBMissEnd[];
 	extern char MachException[], MachExceptionEnd[];
-#ifdef ATTR
-	extern char *pmap_attributes;
-#endif
 
 	/* clear the BSS segment */
 	v = (caddr_t)pmax_round_page(end);
@@ -305,11 +254,9 @@ mach_init(argc, argv, code, cv)
 					boothowto |= RB_DFLTROOT;
 					break;
 
-#ifdef RB_MINIROOT
 				case 'm': /* mini root present in memory */
 					boothowto |= RB_MINIROOT;
 					break;
-#endif
 
 				case 'n': /* ask for names */
 					boothowto |= RB_ASKNAME;
@@ -322,7 +269,7 @@ mach_init(argc, argv, code, cv)
 		}
 	}
 
-#if defined (MFS) && defined(RB_MINIROOT)
+#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
@@ -355,7 +302,8 @@ mach_init(argc, argv, code, cv)
 	 * This could be used for an idle process.
 	 */
 	nullproc.p_addr = (struct user *)v;
-	nullproc.p_md.md_regs = ((struct user *)v)->u_pcb.pcb_regs;
+	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
+	bcopy("nullproc", nullproc.p_comm, sizeof("nullproc"));
 	for (i = 0; i < UPAGES; i++) {
 		nullproc.p_md.md_upte[i] = firstaddr | PG_V | PG_M;
 		firstaddr += NBPG;
@@ -429,9 +377,13 @@ mach_init(argc, argv, code, cv)
 		volatile int *csr_addr =
 			(volatile int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CSR);
 
-		/* disable all TURBOchannel interrupts */
+		/*
+		 * Enable ECC memory correction, turn off LEDs, and
+		 * disable all TURBOchannel interrupts.
+		 */
 		i = *csr_addr;
-		*csr_addr = i & ~(KN02_CSR_WRESERVED | 0xFF);
+		*csr_addr = (i & ~(KN02_CSR_WRESERVED | KN02_CSR_IOINTEN)) |
+			KN02_CSR_CORRECT | 0xff;
 
 		tc_slot_hand_fill = kn02_slot_hand_fill;
 		pmax_hardware_intr = kn02_intr;
@@ -508,12 +460,12 @@ mach_init(argc, argv, code, cv)
 		tc_slot_hand_fill = xine_slot_hand_fill;
 		pmax_hardware_intr = xine_intr;
 		tc_enable_interrupt = xine_enable_intr;
-		Mach_splnet = Mach_net;
+		Mach_splnet = Mach_spl3;
 		Mach_splbio = Mach_spl3;
 		Mach_splimp = Mach_spl3;
 		Mach_spltty = Mach_spl3;
 		Mach_splclock = Mach_spl1;
-		Mach_splstatclock = Mach_spl0;
+		Mach_splstatclock = Mach_spl1;
 		Mach_clock_addr = (volatile struct chiptime *)
 			MACH_PHYS_TO_UNCACHED(XINE_SYS_CLOCK);
 
@@ -525,21 +477,10 @@ mach_init(argc, argv, code, cv)
 		/*
 		 * Initialize interrupts.
 		 */
-		*(volatile u_int *)ASIC_REG_IMSK(asic_base) = XINE_IM0;
-		*(volatile u_int *)ASIC_REG_INTR(asic_base) = 0;
-#ifdef GPROF
-		*(volatile u_int *)MACH_PHYS_TO_UNCACHED(XINE_REG_MSR) |=
-			XINE_MSR_10_1_MS_EN;
-		stathz = 100;
-		profhz = 1000;
-#else
-		*(volatile u_int *)MACH_PHYS_TO_UNCACHED(XINE_REG_MSR) |=
-			(XINE_MSR_10_1_MS | XINE_MSR_10_1_MS_EN);
-		stathz = 100;
-		profhz = 100;
-#endif	/* GPROF */
+		*(u_int *)ASIC_REG_IMSK(asic_base) = XINE_IM0;
+		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
 		/* clear any memory errors from probes */
-		*(volatile u_int *)MACH_PHYS_TO_UNCACHED(XINE_REG_TIMEOUT) = 0;
+		*(unsigned *)MACH_PHYS_TO_UNCACHED(XINE_REG_TIMEOUT) = 0;
 		strcpy(cpu_model, "5000/25");
 		break;
 
@@ -589,21 +530,24 @@ mach_init(argc, argv, code, cv)
 
 	/*
 	 * Find out how much memory is available.
+	 * Be careful to save and restore the original contents for msgbuf.
 	 */
 	physmem = btoc(v - KERNBASE);
 	cp = (char *)MACH_PHYS_TO_UNCACHED(physmem << PGSHIFT);
 	while (cp < (char *)MACH_MAX_MEM_ADDR) {
 		if (badaddr(cp, 4))
 			break;
+		i = *(int *)cp;
 		*(int *)cp = 0xa5a5a5a5;
 		/*
-		 * Data will persist on the bus if we read it right
-		 * away. Have to be tricky here.
+		 * Data will persist on the bus if we read it right away.
+		 * Have to be tricky here.
 		 */
 		((int *)cp)[4] = 0x5a5a5a5a;
 		MachEmptyWriteBuffer();
 		if (*(int *)cp != 0xa5a5a5a5)
 			break;
+		*(int *)cp = i;
 		cp += NBPG;
 		physmem++;
 	}
@@ -664,10 +608,6 @@ mach_init(argc, argv, code, cv)
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
-#ifdef ATTR
-	/* this is allocated here just to save a few bytes */
-	valloc(pmap_attributes, char, physmem);
-#endif
 
 	/*
 	 * Determine how many buffers to allocate.
@@ -694,13 +634,12 @@ mach_init(argc, argv, code, cv)
 	/*
 	 * Clear allocated memory.
 	 */
-	v = (caddr_t)pmax_round_page(v);
 	bzero(start, v - start);
 
 	/*
 	 * Initialize the virtual memory system.
 	 */
-	pmap_bootstrap((vm_offset_t)MACH_CACHED_TO_PHYS(v));
+	pmap_bootstrap((vm_offset_t)v);
 }
 
 /*
@@ -708,7 +647,6 @@ mach_init(argc, argv, code, cv)
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
-void
 consinit()
 {
 	register int kbd, crt;
@@ -883,22 +821,17 @@ remcons:
  * cpu_startup: allocate memory for variable-sized tables,
  * initialize cpu, and do autoconfiguration.
  */
-void
 cpu_startup()
 {
 	register unsigned i;
 	register caddr_t v;
 	int base, residual;
-	extern long Usrptsize;
-	extern struct map *useriomap;
+	vm_offset_t minaddr, maxaddr;
+	vm_size_t size;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
-#endif
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
 
-#ifdef DEBUG
 	pmapdebug = 0;
 #endif
 
@@ -915,7 +848,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-				   &maxaddr, size, FALSE);
+				   &maxaddr, size, TRUE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
@@ -938,14 +871,12 @@ cpu_startup()
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
-#if 0
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
-#endif
+				 16 * NCARGS, TRUE);
 	/*
 	 * Allocate a submap for physio
 	 */
@@ -972,7 +903,7 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(vm_page_free_count));
+	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 	/*
@@ -992,20 +923,46 @@ cpu_startup()
 }
 
 /*
+ * machine dependent system variables.
+ */
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab.cn_dev,
+		    sizeof cn_tab.cn_dev));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
+/*
  * Set registers on exec.
  * Clear all registers except sp, pc.
  */
-void
-setregs(p, entry, stack, retval)
+setregs(p, entry, retval)
 	register struct proc *p;
 	u_long entry;
-	u_long stack;
 	int retval[2];
 {
+	int sp = p->p_md.md_regs[SP];
 	extern struct proc *machFPCurProcPtr;
 
 	bzero((caddr_t)p->p_md.md_regs, (FSR + 1) * sizeof(int));
-	p->p_md.md_regs[SP] = stack;
+	p->p_md.md_regs[SP] = sp;
 	p->p_md.md_regs[PC] = entry & ~3;
 	p->p_md.md_regs[PS] = PSL_USERSET;
 	p->p_md.md_flags & ~MDP_FPUSED;
@@ -1051,7 +1008,7 @@ sendsig(catcher, sig, mask, code)
 	extern char sigcode[], esigcode[];
 
 	regs = p->p_md.md_regs;
-	oonstack = psp->ps_onstack;
+	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in data space, the
@@ -1060,9 +1017,12 @@ sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sigframe);
-	if (!oonstack && (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigsp - fsize);
-		psp->ps_onstack = 1;
+	if ((psp->ps_flags & SAS_ALTSTACK) &&
+	    (psp->ps_sigstk.ss_flags & SA_ONSTACK) == 0 &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+					 psp->ps_sigstk.ss_size - fsize);
+		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sigframe *)(regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -1123,7 +1083,7 @@ sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_FOLLOW) ||
 	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
-			p->p_pid, sig);
+		       p->p_pid, sig);
 #endif
 }
 
@@ -1178,7 +1138,10 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_onstack = scp->sc_onstack & 1;
+	if (scp->sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	regs[PC] = scp->sc_pc;
 	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs[1],
@@ -1191,7 +1154,6 @@ sigreturn(p, uap, retval)
 
 int	waittime = -1;
 
-void
 boot(howto)
 	register int howto;
 {
@@ -1205,9 +1167,8 @@ boot(howto)
 		stacktrace();
 #endif
 
-	howto |= RB_HALT; /* XXX */
 	boothowto = howto;
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		register struct buf *bp;
 		int iter, nbusy;
 
@@ -1270,7 +1231,7 @@ boot(howto)
 	/*NOTREACHED*/
 }
 
-int	dumpmag = 0x8fca0101;	/* magic number for savecore */
+int	dumpmag = (int)0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
@@ -1484,45 +1445,6 @@ pmax_slot_hand_fill()
 		}
 	}
 }
-
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	return (ENOEXEC);
-}
-
-int
-ptrace_set_pc(p, addr)
-	struct proc *p;
-	u_long addr;
-{
-	/* IMPLEMENT! */
-}
-
-int
-ptrace_getregs(p, addr)
-	struct proc *p;
-	u_long addr;
-{
-	/* IMPLEMENT! */
-}
-
-int
-ptrace_setregs(p, addr)
-	struct proc *p;
-	u_long addr;
-{
-	/* IMPLEMENT! */
-}
-
-int
-ptrace_single_step(p)
-struct proc *p;
-{
-	/* IMPLEMENT! */
-}
-
 
 #ifdef DS5000
 /* 

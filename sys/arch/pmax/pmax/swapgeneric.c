@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)swapgeneric.c	7.3 (Berkeley) 10/11/92
- * $Id: swapgeneric.c,v 1.1.1.1 1993/10/12 03:22:33 deraadt Exp $
+ *	from: @(#)swapgeneric.c	8.1 (Berkeley) 6/16/93
+ *      $Id: swapgeneric.c,v 1.2 1994/05/27 08:42:18 glass Exp $
  */
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ dev_t	dumpdev = NODEV;
 int	nswap;
 struct	swdevt swdevt[] = {
 	{ -1,	1,	0 },
-	{ 0,	0,	0 },
+	{ NODEV,	0,	0 },
 };
 int	dmmin, dmmax, dmtext;
 
