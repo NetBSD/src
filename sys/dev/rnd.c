@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.14 1999/02/28 19:01:30 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.15 1999/04/01 19:07:40 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,6 +149,11 @@ static inline u_int32_t rnd_estimate_entropy(rndsource_t *, u_int32_t);
 static inline u_int32_t rnd_timestamp(void);
 static 	      void	rnd_timeout(void *);
 
+static int		rnd_ready = 0;
+static int		rnd_have_entropy = 0;
+
+LIST_HEAD(, __rndsource_element)	rnd_sources;
+
 /*
  * Generate a 32-bit timestamp.  This should be more machine dependant,
  * using cycle counters and the like when possible.
@@ -184,6 +189,11 @@ rnd_wakeup_readers()
 			wakeup(&rnd_selq);
 		}
 		selwakeup(&rnd_selq);
+
+		/*
+		 * Allow open of /dev/random now, too.
+		 */
+		rnd_have_entropy = 1;
 	}
 }
 
@@ -238,10 +248,6 @@ rnd_estimate_entropy(rs, t)
 	return 1;
 }
 
-static int		rnd_ready;
-
-LIST_HEAD(, __rndsource_element)	rnd_sources;
-
 /*
  * attach the random device, and initialize the global random pool
  * for our use.
@@ -286,8 +292,20 @@ rndopen(dev, flags, ifmt, p)
 	if (rnd_ready == 0)
 		return (ENXIO);
 
-	if (minor(dev) == RND_DEV_RANDOM || minor(dev) == RND_DEV_URANDOM)
-		return 0;
+	if (minor(dev) == RND_DEV_URANDOM)
+		return (0);
+
+	/*
+	 * If this is the strong random device and we have never collected
+	 * entropy (or have not yet) don't allow it to be opened.  This will
+	 * prevent waiting forever for something that just will not appear.
+	 */
+	if (minor(dev) == RND_DEV_RANDOM) {
+		if (rnd_have_entropy == 0)
+			return (ENXIO);
+		else
+			return (0);
+	}
 
 	return (ENXIO);
 }
@@ -666,7 +684,7 @@ rnd_sample_allocate(rndsource_t *source)
 }
 
 /*
- * don't want on allocation.  to be used in an interrupt context.
+ * don't wait on allocation.  to be used in an interrupt context.
  */
 static rnd_sample_t *
 rnd_sample_allocate_isr(rndsource_t *source)
