@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.5 2000/12/20 10:57:38 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.6 2001/01/07 15:56:03 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.5 2000/12/20 10:57:38 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.6 2001/01/07 15:56:03 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -336,13 +336,14 @@ podulebus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 
 struct irq_handler *
 podulebus_irq_establish(struct device *self, int slot, int ipl,
-			int (*func)(void *), void *arg)
+			int (*func)(void *), void *arg, char const *name)
 {
 
 	/* XXX: support for checking IRQ bit on podule? */
 #if NUNIXBP > 0
 	if (unixbp_cd.cd_ndevs > 0 && unixbp_cd.cd_devs[0] != NULL)
-		return irq_establish(IRQ_UNIXBP_BASE + slot, ipl, func, arg);
+		return irq_establish(IRQ_UNIXBP_BASE + slot, ipl, func, arg,
+		    name);
 #endif
-	return irq_establish(IRQ_PIRQ, ipl, func, arg);
+	return irq_establish(IRQ_PIRQ, ipl, func, arg, name);
 }

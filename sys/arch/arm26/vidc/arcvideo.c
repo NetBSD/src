@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.8 2001/01/07 15:36:35 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.9 2001/01/07 15:56:03 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.8 2001/01/07 15:36:35 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.9 2001/01/07 15:56:03 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -157,8 +157,8 @@ arcvideo_attach(struct device *parent, struct device *self, void *aux)
 	if (ioc_cd.cd_ndevs > 0 && ioc_cd.cd_devs[0] != NULL) {
 		/* ioc0 exists */
 		sc->sc_ioc = ioc_cd.cd_devs[0];
-		sc->sc_irq = irq_establish(IOC_IRQ_IR, IPL_TTY,
-					       arcvideo_intr, self);
+		sc->sc_irq = irq_establish(IOC_IRQ_IR, IPL_TTY, arcvideo_intr,
+		    self, self->dv_xname);
 		if (bootverbose)
 			printf(": VSYNC interrupts at %s",
 			    irq_string(sc->sc_irq));
