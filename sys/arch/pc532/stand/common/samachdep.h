@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.2 2003/08/07 16:29:04 agc Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.3 2003/12/06 13:09:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #define	NSCSI		1
-#define NSD		8
+#define	NSD		8
 
 extern	int howto;
 extern	u_int bootdev;
@@ -40,17 +40,17 @@ extern	u_int bootdev;
 extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
 	    bootprog_maker[];
 
-int	tgetchar __P((void));
-int	tgets __P((char *));
+int	tgetchar(void);
+int	tgets(char *);
 
 struct open_file;
 
-int	mdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	mdopen __P((struct open_file *, ...));
-int	mdclose __P((struct open_file *));
-#define mdioctl		noioctl
+int	mdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	mdopen(struct open_file *, ...);
+int	mdclose(struct open_file *);
+#define	mdioctl		noioctl
 
-int	sdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	sdopen __P((struct open_file *, ...));
-int	sdclose __P((struct open_file *));
+int	sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	sdopen(struct open_file *, ...);
+int	sdclose(struct open_file *);
 #define	sdioctl		noioctl
