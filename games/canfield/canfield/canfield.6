@@ -1,4 +1,4 @@
-.\"	$NetBSD: canfield.6,v 1.7 2001/04/02 22:47:30 wiz Exp $
+.\"	$NetBSD: canfield.6,v 1.8 2002/09/26 18:32:00 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,32 +61,28 @@ keep them open until he wishes to use them.
 .Pp
 Cards are dealt from the hand to the talon by threes
 and this repeats until there are no more cards in the hand
-or the player quits. To have cards dealt onto the talon the
-player types
+or the player quits.
+To have cards dealt onto the talon the player types
 .Sq Ic ht
-for his move. Foundation base cards are
-also automatically moved to the foundation when they become
-available.
+for his move.
+Foundation base cards are also automatically moved to the foundation
+when they become available.
 .Pp
 The command
 .Sq Ic c
 causes
 .Nm
-to maintain card counting statistics
-on the bottom of the screen.
-When properly used this can greatly increase one's chances of
-winning.
+to maintain card counting statistics on the bottom of the screen.
+When properly used this can greatly increase one's chances of winning.
 .Pp
 The rules for betting are somewhat less strict than
 those used in the official version of the game.
 The initial deal costs $13.
 You may quit at this point or inspect the game.
 Inspection costs $13 and allows you to make as many
-moves as possible without moving any cards from your hand
-to the talon.
+moves as possible without moving any cards from your hand to the talon.
 (The initial deal places three cards on the talon;
-if all these cards are used,
-three more are made available.)
+if all these cards are used, three more are made available.)
 Finally, if the game seems interesting,
 you must pay the final installment of $26.
 At this point you are
@@ -96,8 +92,7 @@ card that is moved to the foundation.
 Each run through the hand after the first costs $5.
 The card counting feature
 costs $1 for each unknown card that is identified.
-If the information is toggled on,
-you are only charged for cards
+If the information is toggled on, you are only charged for cards
 that became visible since it was last turned on.
 Thus the maximum cost of information is $34.
 Playing time is charged at a rate of $1 per minute.
@@ -107,8 +102,7 @@ With no arguments, the program
 prints out the current status of your canfield account.
 If a
 .Ar user
-name is specified,
-it prints out the status of their canfield account.
+name is specified, it prints out the status of their canfield account.
 If the
 .Fl a
 flag is specified,
