@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.6.2.1 1997/10/22 06:26:50 thorpej Exp $	*/
+/*	$NetBSD: vis.h,v 1.6.2.2 1997/11/04 23:38:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,7 +84,7 @@ int	strunvis __P((char *, const char *));
 int	unvis __P((char *, char, int *, int));
 int	__unvis13 __P((char *, int, int *, int));
 #else
-int	unvis __P((char *, int, int *, int))	__RENAME("__unvis13");
+int	unvis __P((char *, int, int *, int))	__RENAME(__unvis13);
 #endif
 __END_DECLS
 
