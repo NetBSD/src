@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17 1997/02/04 06:49:10 mark Exp $	*/
+/*	$NetBSD: locore.S,v 1.18 1997/02/10 03:50:55 mark Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -35,58 +35,13 @@
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/cpu.h>
+#include <machine/frame.h>
 #include <machine/param.h>
 #include <sys/syscall.h>
 
 /* What size should this really be ? It is only used by init_arm() */
 
 #define INIT_ARM_STACK_SIZE	2048
-
-#if 1
-
-#define PUSHFRAME \
-	str	lr, [sp, #-4]!;		/* Push the return address */ \
-	sub	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
-	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
-	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
-	add	r0, sp, #(4*13);	/* Adjust the stack pointer */ \
-	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
-        mov     r0, r0;                 /* NOP for previous instruction */ \
-	mrs	r0, spsr_all;		/* Put the SPSR on the stack */ \
-	str	r0, [sp, #-4]!;
-
-/*
- * PULLFRAME - macro to pull a trap frame from the stack in the current mode
- * Since the current mode is used, the SVC R14 field is ignored.
- */
-
-#define PULLFRAME \
-        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */ \
-        msr     spsr_all, r0; \
-        ldmia   sp, {r0-r14}^;		/* Restore the registers (user mode) */ \
-        mov     r0, r0;                 /* NOP for previous instruction */ \
-	add	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
- 	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
- 	ldr	lr, [sp], #0x0004;	/* Pull the return address */
-
-#else
-#define PUSHFRAME \
-	str	lr, [sp, #-4]!;		/* Push the return address */ \
-	sub	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
-	stmdb	sp, {r0-r14}^;		/* Push the user mode registers */ \
-	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
-	mrs	r0, spsr_all;		/* Put the SPSR on the stack */ \
-	str	r0, [sp, #-4]!;
-
-#define PULLFRAME \
-        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */ \
-        msr     spsr_all, r0; \
-	add	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
-        ldmdb   sp, {r0-r14}^;		/* Restore the registers (user mode) */ \
-        mov     r0, r0;                 /* NOP for previous instruction */ \
- 	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
- 	ldr	lr, [sp], #0x0004;	/* Pull the return address */
-#endif
 
 /* register equates */
 fp	.req	r11
@@ -614,3 +569,5 @@ _atomic_clear_bit:
 
 	msr	cpsr_all, r2
 	mov	pc, lr
+
+/* End of locore.S */
