@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.241 2004/10/15 07:19:01 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.242 2004/10/15 07:22:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.241 2004/10/15 07:19:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.242 2004/10/15 07:22:02 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -108,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.241 2004/10/15 07:19:01 thorpej Exp 
 #include <sys/disklabel.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/disk.h>
 #include <sys/exec.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
