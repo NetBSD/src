@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.90 2002/07/11 10:37:26 pooka Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.91 2002/08/06 13:58:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.90 2002/07/11 10:37:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.91 2002/08/06 13:58:08 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -381,6 +381,8 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	if (flags & FORK_SHAREFILES)
 		fdshare(p1, p2);
+	else if (flags & FORK_CLEANFILES)
+		p2->p_fd = fdinit(p1);
 	else
 		p2->p_fd = fdcopy(p1);
 
