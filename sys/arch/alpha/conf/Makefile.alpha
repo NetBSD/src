@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.63 2001/05/08 05:47:35 ross Exp $
+# $NetBSD: Makefile.alpha,v 1.64 2001/05/14 19:49:03 ross Exp $
 
 # Makefile for NetBSD
 #
@@ -51,7 +51,7 @@ CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-fp-regs ${${<:T:R}_G} 
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-fp-regs
 AFLAGS=		-traditional -D_LOCORE
 LOADADDRESS?=	fffffc0000300000
 LINKFLAGS=	-N -Ttext ${LOADADDRESS} -e __transfer -G 4
@@ -78,7 +78,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
-NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${${<:T:R}_G} -c $<
 NOPROF_C=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's,^\#.*,,' | ${AS} -o ${.TARGET}
 
