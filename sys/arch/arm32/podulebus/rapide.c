@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.10 1998/10/12 16:09:11 bouyer Exp $	*/
+/*	$NetBSD: rapide.c,v 1.11 1998/11/22 14:36:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -105,7 +105,7 @@
 
 struct rapide_softc {
 	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
-	struct channel_softc	wdc_channel[2];	/* channels definition */
+	struct channel_softc	*wdc_chanarray[2]; /* channels definition */
 	podule_t 		*sc_podule;		/* Our podule info */
 	int 			sc_podule_number;	/* Our podule number */
 	int			sc_intr_enable_mask;	/* Global intr mask */
@@ -113,6 +113,7 @@ struct rapide_softc {
 	bus_space_tag_t		sc_ctliot;		/* Bus tag */
 	bus_space_handle_t	sc_ctlioh;		/* control handler */
 	struct rapide_channel {
+		struct channel_softc wdc_channel; /* generic part */
 		irqhandler_t	rc_ih;			/* interrupt handler */
 		int		rc_irqmask;	/* IRQ mask for this channel */
 	} rapide_channels[2];
@@ -195,6 +196,7 @@ rapide_attach(parent, self, aux)
 	bus_space_handle_t ctlioh;
 	u_int iobase;
 	int channel;
+	struct rapide_channel *rcp;
 	struct channel_softc *cp;
 	irqhandler_t *ihp;
 
@@ -243,10 +245,13 @@ rapide_attach(parent, self, aux)
 	/* Fill in wdc and channel infos */
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.pio_mode = 0;
-	sc->sc_wdcdev.channels = sc->wdc_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = 2;
 	for (channel = 0 ; channel < 2; channel++) {
-		cp = &sc->wdc_channel[channel];
+		rcp = &sc->rapide_channels[channel];
+		sc->wdc_chanarray[channel] = &rcp->wdc_channel;
+		cp = &rcp->wdc_channel;
+
 		cp->channel = channel;
 		cp->wdc = &sc->sc_wdcdev;
 		cp->ch_queue = malloc(sizeof(struct channel_queue),
@@ -278,27 +283,24 @@ rapide_attach(parent, self, aux)
 			continue;
 		}
 		/* Disable interrupts and clear any pending interrupts */
-		sc->rapide_channels[channel].rc_irqmask =
-		    rapide_info[channel].irq_mask;
-		sc->sc_intr_enable_mask &=
-		    ~sc->rapide_channels[channel].rc_irqmask;
+		rcp->rc_irqmask = rapide_info[channel].irq_mask;
+		sc->sc_intr_enable_mask &= ~rcp->rc_irqmask;
 		bus_space_write_1(iot, sc->sc_ctlioh, IRQ_MASK_REGISTER_OFFSET,
 		    sc->sc_intr_enable_mask);
 		/* XXX - Issue 1 cards will need to clear any pending interrupts */
 		wdcattach(cp);
-		ihp = &sc->rapide_channels[channel].rc_ih;
+		ihp = &rcp->rc_ih;
 		ihp->ih_func = rapide_intr;
-		ihp->ih_arg = cp;
+		ihp->ih_arg = rcp;
 		ihp->ih_level = IPL_BIO;
 		ihp->ih_name = "rapide";
 		ihp->ih_maskaddr = pa->pa_podule->irq_addr;
-		ihp->ih_maskbits = sc->rapide_channels[channel].rc_irqmask;
+		ihp->ih_maskbits = rcp->rc_irqmask;
 		if (irq_claim(sc->sc_podule->interrupt, ihp))
 			panic("%s: Cannot claim interrupt %d\n",
 			    self->dv_xname, sc->sc_podule->interrupt);
 		/* clear any pending interrupts and enable interrupts */
-		sc->sc_intr_enable_mask |=
-		    sc->rapide_channels[channel].rc_irqmask;
+		sc->sc_intr_enable_mask |= rcp->rc_irqmask;
 		bus_space_write_1(iot, sc->sc_ctlioh,
 		    IRQ_MASK_REGISTER_OFFSET, sc->sc_intr_enable_mask);
 		/* XXX - Issue 1 cards will need to clear any pending interrupts */
@@ -333,16 +335,15 @@ int
 rapide_intr(arg)
 	void *arg;
 {
-	struct channel_softc *chp = arg;
-	struct rapide_softc *sc = (struct rapide_softc *)chp->wdc;
-	irqhandler_t *ihp = &sc->rapide_channels[chp->channel].rc_ih;
+	struct rapide_channel *rcp = arg;
+	irqhandler_t *ihp = &rcp->rc_ih;
 	volatile u_char *intraddr = (volatile u_char *)ihp->ih_maskaddr;
 
 	/* XXX - Issue 1 cards will need to clear the interrupt */
 
 	/* XXX - not bus space yet - should really be handled by podulebus */
 	if ((*intraddr) & ihp->ih_maskbits)
-		wdcintr(chp);
+		wdcintr(&rcp->wdc_channel);
 
 	return(0);
 }
