@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.10 1997/10/19 08:13:42 mrg Exp $	*/
+/*	$NetBSD: net.c,v 1.11 1997/11/24 22:03:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)net.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: net.c,v 1.10 1997/10/19 08:13:42 mrg Exp $");
+__RCSID("$NetBSD: net.c,v 1.11 1997/11/24 22:03:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,6 +152,5 @@ netfinger(name)
 		}
 	if (lastc != '\n')
 		putchar('\n');
-	putchar('\n');
 	(void)fclose(fp);
 }
