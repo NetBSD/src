@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.4 2001/11/18 09:22:32 wdk Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.5 2001/11/28 10:19:15 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.4 2001/11/18 09:22:32 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.5 2001/11/28 10:19:15 wdk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.4 2001/11/18 09:22:32 wdk E
 #include <mips/locore.h>
 #include <mips/psl.h>
 #include <mips/pte.h>
+#include <mips/frame.h>
 #include <mips/userret.h>
 #include <machine/cpu.h>		/* declaration of of cpu_id */
 
@@ -652,18 +653,6 @@ setregs(l, pack, stack)
 	l->l_md.md_flags &= ~MDP_FPUSED;
 	l->l_md.md_ss_addr = 0;
 }
-
-/*
- * WARNING: code in locore.s assumes the layout shown for sf_signum
- * thru sf_handler so... don't screw with them!
- */
-struct sigframe {
-	int	sf_signum;		/* signo for handler */
-	int	sf_code;		/* additional info for handler */
-	struct	sigcontext *sf_scp;	/* context ptr for handler */
-	sig_t	sf_handler;		/* handler addr for u_sigc */
-	struct	sigcontext sf_sc;	/* actual context */
-};
 
 #ifdef DEBUG
 int sigdebug = 0;
@@ -1371,6 +1360,7 @@ cpu_upcall(struct lwp *l)
 	struct proc *p = l->l_proc;
 	
 	struct sadata *sd = p->p_sa;
+	struct saframe *sf, frame;
 	struct sa_t **sapp, *sap;
 	struct sa_t self_sa, e_sa, int_sa;
 	struct sa_t *sas[3];
@@ -1382,8 +1372,6 @@ cpu_upcall(struct lwp *l)
 	int i, nsas, nevents, nint;
 
 	extern char sigcode[], upcallcode[];
-	extern struct pool siginfo_pool;
-
 
 	f = (struct frame *)l->l_md.md_regs;
 
@@ -1457,41 +1445,50 @@ cpu_upcall(struct lwp *l)
 	}
 
 	/* Copy out the arg, if any */
-	/* xxx assume alignment works out; everything so far has been
+	/* XXX Assume alignment works out; everything so far has been
 	 * a structure, so...
 	 */
 	if (sau->sau_arg) {
 		ap = (char *)sapp - sau->sau_argsize;
+		sf = (struct saframe *)ap - 1;
 		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
 			/* Copying onto the stack didn't work. Die. */
+			sadata_upcall_free(sau);
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
 	} else {
 		ap = 0;
+		sf = (struct saframe *)sapp - 1;
+	}
+
+#if 0 /* First 4 args in regs (see below). */
+	frame.sa_type = sau->sau_type;
+	frame.sa_sas = sapp;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = nint;
+#endif
+	frame.sa_arg = ap;
+	frame.sa_upcall = sd->sa_upcall;
+
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		sadata_upcall_free(sau);
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
 	}
 
 	f->f_regs[PC] = ((u_int32_t)p->p_sigctx.ps_sigcode) +
 	    ((u_int32_t)upcallcode - (u_int32_t)sigcode);
+	f->f_regs[SP] = (u_int32_t)sf;
 	f->f_regs[A0] = sau->sau_type;
 	f->f_regs[A1] = (u_int32_t)sapp;
 	f->f_regs[A2] = nevents;
 	f->f_regs[A3] = nint;
-	f->f_regs[T0] = (u_int32_t)ap;	/* XXX */
-	f->f_regs[T1] = (u_int32_t)sd->sa_upcall;  /* t1=Upcall function*/
+	f->f_regs[S8] = 0;
+	f->f_regs[T9] = (u_int32_t)sd->sa_upcall;  /* t9=Upcall function*/
 
-	/* XXX we have to know what the origin of arg is in order to
-	 * do the right thing here. Sucks to be a non-garbage-collected
-	 * kernel.
-	 */
-	if (sau->sau_arg) {
-		if (sau->sau_type == SA_UPCALL_SIGNAL)
-			pool_put(&siginfo_pool, sau->sau_arg);
-		else
-			panic("cpu_upcall: unknown type of non-null arg");
-	}
-
-	pool_put(&saupcall_pool, sau);
+	sadata_upcall_free(sau);
 }
 
 
