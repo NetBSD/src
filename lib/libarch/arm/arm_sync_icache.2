@@ -1,4 +1,4 @@
-.\"	$NetBSD: arm_sync_icache.2,v 1.2 2002/10/01 15:58:37 wiz Exp $
+.\"	$NetBSD: arm_sync_icache.2,v 1.3 2002/10/02 10:34:23 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Mark Brinicombe
 .\" All rights reserved.
@@ -45,12 +45,12 @@
 .Sh DESCRIPTION
 .Fn arm_sync_icache
 will make sure that all the entries in the processor instruction cache
-are synchorised with main memory and that any data in a write back cache
+are synchronized with main memory and that any data in a write back cache
 has been cleaned.
 Some ARM processors (e.g. SA110) have separate instruction and data
 caches thus any dynamically generated or modified code needs to be
 written back from any data caches to main memory and the instruction
-cache needs to be synchronised with main memory.
+cache needs to be synchronized with main memory.
 .Pp
 On such processors
 .Fn arm_sync_icache
@@ -63,7 +63,7 @@ The routine takes a start address
 .Fa addr
 and a length
 .Fa len
-to describe the area of memory that needs to be cleaned and synchronised.
+to describe the area of memory that needs to be cleaned and synchronized.
 .Sh ERRORS
 .Fn arm_sync_icache
 will never fail so will always return 0.
