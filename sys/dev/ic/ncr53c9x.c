@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.28 1998/11/19 21:53:00 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.29 1998/11/30 07:34:06 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1119,8 +1119,10 @@ gotit:
 				if (sc->sc_minsync == 0 ||
 				    ti->offset == 0 ||
 				    ti->period > 124) {
-					printf("%s:%d: async\n", "esp",
-						ecb->xs->sc_link->scsipi_scsi.target);
+#ifdef NCR53C9X_DEBUG
+					scsi_print_addr(ecb->xs->sc_link);
+					printf("async mode\n");
+#endif
 					if ((sc->sc_flags&NCR_SYNCHNEGO)
 					    == 0) {
 						/*
