@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.1.4.1 1996/05/27 01:12:06 is Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.1.4.2 1996/06/04 09:01:21 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -592,7 +592,7 @@ et_blank(gp, on)
         struct grf_softc *gp;
         int *on;
 {
-        WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on ? 0x21 : 0x01);
+        WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on ? 0x01 : 0x21);
         return(0);
 }
         
