@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2002/02/27 17:57:05 tv Exp $
+#	$NetBSD: Makefile,v 1.19 2002/02/27 17:58:52 tv Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -37,7 +37,7 @@ runtime-info.h:
 
 .include <bsd.lib.mk>
 
-${OBJS}: ${.CURDIR}/${MACHINE_ARCH}.mk runtime-info.h
+${OBJS} ${POBJS} ${SOBJS}: runtime-info.h
 
 .else
 #
