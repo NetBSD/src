@@ -1,4 +1,4 @@
-#	$NetBSD: genlintstub.awk,v 1.3 2001/05/16 03:58:14 perry Exp $
+#	$NetBSD: genlintstub.awk,v 1.4 2001/05/16 04:17:04 perry Exp $
 #
 # Copyright 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -47,6 +47,12 @@
 # kernel has declared as char * and such, like various bits of
 # trampoline code.
 #
+# /* LINTSTUB: include foo */
+# Turns into a literal `#include foo' line in the source. Useful for
+# making sure the stubs are checked against system prototypes like
+# systm.h, cpu.h, etc., and to make sure that various types are
+# properly declared.
+#
 # /* LINTSTUB: Ignore */
 # This is used as an indicator to humans (and possible future
 # automatic tools) that the entry is only used internally by other .S
@@ -62,10 +68,7 @@ BEGIN	{
 		printf "/* This file was automatically generated. */\n";
 		printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
 		printf "/* DO NOT EDIT! DO NOT EDIT! DO NOT EDIT! */\n";
-		# Do we really want this? I figure it will catch a lot
-		# of stuff early on (while processing the same file
-		# rather than in a later lint pass) and is thus worth it.
-		printf "\n#include <sys/systm.h>\n\n\n";
+		printf "\n\n";
 	}
 
 
@@ -114,6 +117,11 @@ BEGIN	{
 /^\/\* LINTSTUB: Var:/ { 
 	  printf "ERROR: bad variable declaration: %s\n", $0 > "/dev/stderr";
 	  exit 1;
+	}
+
+/^\/\* LINTSTUB: include[ \t]+.*\*\/[ \t]*$/ {
+		printf "#include %s\n", $4;
+		next;
 	}
 
 /^\/\* LINTSTUB: Ignore.*\*\/[ \t]*$/ { next; }
