@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.481 2002/05/29 19:15:16 christos Exp $
+# $NetBSD: mi,v 1.482 2002/05/31 12:21:09 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -844,6 +844,9 @@
 ./usr/share/man/cat4/pmax/pm.0			man-sys-catman
 ./usr/share/man/cat4/pmax/sii.0			man-sys-catman
 ./usr/share/man/cat4/pmax/xcfb.0		man-sys-catman
+./usr/share/man/cat4/pmppc/cpc.0		man-sys-catman
+./usr/share/man/cat4/pmppc/mainbus.0		man-sys-catman
+./usr/share/man/cat4/pmppc/rtc.0		man-sys-catman
 ./usr/share/man/cat4/pms.0			man-sys-catman
 ./usr/share/man/cat4/pmsi.0			man-sys-catman
 ./usr/share/man/cat4/pnaphy.0			man-sys-catman
@@ -1545,6 +1548,8 @@
 ./usr/share/man/cat8/pmax/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/pmax/boot.0		man-sys-catman
 ./usr/share/man/cat8/pmax/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/pmppc/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/pmppc/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/poweroff.0			man-sysutil-catman
 ./usr/share/man/cat8/pppd.0			man-ppp-catman
 ./usr/share/man/cat8/pppdump.0			man-ppp-catman
@@ -2555,6 +2560,9 @@
 ./usr/share/man/man4/pmax/pm.4			man-sys-man
 ./usr/share/man/man4/pmax/sii.4			man-sys-man
 ./usr/share/man/man4/pmax/xcfb.4		man-sys-man
+./usr/share/man/man4/pmppc/cpc.4		man-sys-man
+./usr/share/man/man4/pmppc/mainbus.4		man-sys-man
+./usr/share/man/man4/pmppc/rtc.4		man-sys-man
 ./usr/share/man/man4/pms.4			man-sys-man
 ./usr/share/man/man4/pmsi.4			man-sys-man
 ./usr/share/man/man4/pnaphy.4			man-sys-man
@@ -3256,6 +3264,8 @@
 ./usr/share/man/man8/pmax/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/pmax/boot.8		man-sys-man
 ./usr/share/man/man8/pmax/makedev.8		man-sysutil-man
+./usr/share/man/man8/pmppc/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/pmppc/makedev.8		man-sysutil-man
 ./usr/share/man/man8/poweroff.8			man-sysutil-man
 ./usr/share/man/man8/pppd.8			man-ppp-man
 ./usr/share/man/man8/pppoectl.8			man-isdn-man
