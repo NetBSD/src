@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4.10.2 2002/05/16 15:47:09 gehenna Exp $	*/
+/*	$NetBSD: fd.c,v 1.4.10.3 2002/05/16 15:48:10 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1580,7 +1580,7 @@ load_memory_disc_from_floppy(md, dev)
 	int type;
 	int floppysize;
 
-	if (major(dev) != 17)	/* XXX - nice if the major was defined elsewhere */
+	if (bdevsw_lookup(dev) != &fd_bdevsw)
 		return(EINVAL);
 
 	if (md->md_type == MD_UNCONFIGURED || md->md_addr == 0)
