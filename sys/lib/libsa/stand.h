@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.21 1997/06/13 14:30:44 drochner Exp $	*/
+/*	$NetBSD: stand.h,v 1.22 1997/06/26 19:17:40 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -108,6 +108,9 @@ extern struct open_file files[];
 #define isdigit(c)	((c) >= '0' && (c) <= '9')
 
 int	devopen __P((struct open_file *, const char *, char **));
+#ifdef HEAP_VARIABLE
+void	setheap __P((void *, void *));
+#endif
 void	*alloc __P((unsigned int));
 void	free __P((void *, unsigned int));
 struct	disklabel;

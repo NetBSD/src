@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.8 1997/06/13 14:28:52 drochner Exp $	*/
+/*	$NetBSD: alloc.c,v 1.9 1997/06/26 19:19:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -117,6 +117,16 @@ static char *top = (char*)HEAP_START;
 #else
 extern char end[];
 static char *top = end;
+#endif
+#ifdef HEAP_VARIABLE
+static char *heaplimit;
+void setheap(start, limit)
+void *start, *limit;
+{
+    top = start;
+    heaplimit = limit;
+}
+#define HEAP_LIMIT heaplimit
 #endif
 
 void *
