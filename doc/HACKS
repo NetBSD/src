@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.27 2003/12/07 19:58:25 scw Exp $
+# $NetBSD: HACKS,v 1.28 2003/12/07 21:13:39 scw Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -299,6 +299,17 @@ port	sh5
 		Gcc3 for sh5 gets an ICE compiling reload1.c at -O2.
 		Drop to -O1 for now when building for sh5.
 	kcah
+
+	hack	gcc 3.3.2 on sh5 - ICE compiling elf32.c/elf64.c at -O2
+	cdate	Sun Dec  7 21:10:46 GMT 2003
+	who	scw
+	file	gnu/lib/libbfd/Makefile : 1.39
+	descr
+		Gcc3 for sh5 gets an ICE compiling libbfd's elf32.c
+		and elf64.c at -O2.
+		Drop to -O1 for now when building for sh5.
+	kcah
+
 
 	hack	gcc 3.3.2 on sh5 - fatal warning compiling function.c
 	cdate	Sun Dec  7 19:44:05 GMT 2003
