@@ -1,15 +1,17 @@
-#	$NetBSD: Makefile,v 1.15 2001/01/04 08:08:39 itojun Exp $
+#	$NetBSD: Makefile,v 1.16 2001/01/08 08:30:00 itojun Exp $
 #
 
 .include <bsd.own.mk>
 
 # Override to make a cross assembler.
-.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
-TARGET_ARCH ?=	mips
-.elif ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el"
-TARGET_ARCH ?=	sh3
+.if exists(${.CURDIR}/arch/${MACHINE_ARCH})
+TARGET_ARCH= ${MACHINE_ARCH}
+.elif exists(${.CURDIR}/arch/${MACHINE_CPU})
+TARGET_ARCH= ${MACHINE_CPU}
 .else
-TARGET_ARCH ?=	${MACHINE_ARCH}
+.BEGIN:
+	@echo no arch/${MACHINE_ARCH} nor arch/${MACHINE_CPU} exists
+	@false
 .endif
 
 .if (${MACHINE_ARCH} != "m68k" && ${MACHINE_ARCH} != "ns32k") ||	\
