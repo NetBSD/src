@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.1 1998/12/02 22:47:19 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.2 1998/12/09 00:18:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,8 @@ ucom_match(parent, match, aux)
 	if (!uaa->iface)
 		return (UMATCH_NONE);
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id->bInterfaceClass != UCLASS_CDC ||
+	if (id &&
+	    id->bInterfaceClass != UCLASS_CDC ||
 	    id->bInterfaceSubClass != USUBCLASS_MODEM)
 		return (UMATCH_NONE);
 	return (UMATCH_IFACECLASS_IFACESUBCLASS);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.6 1998/12/08 15:12:24 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.7 1998/12/09 00:18:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,7 +134,8 @@ ulpt_match(parent, match, aux)
 	if (!uaa->iface)
 		return (UMATCH_NONE);
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id->bInterfaceClass == UCLASS_PRINTER &&
+	if (id &&
+	    id->bInterfaceClass == UCLASS_PRINTER &&
 	    id->bInterfaceSubClass == USUBCLASS_PRINTER &&
 	    (id->bInterfaceProtocol == UPROTO_PRINTER_UNI ||
 	     id->bInterfaceProtocol == UPROTO_PRINTER_BI))

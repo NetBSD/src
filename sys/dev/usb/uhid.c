@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.9 1998/12/03 20:43:19 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.10 1998/12/09 00:18:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -345,7 +345,7 @@ uhidread(dev, uio, flag)
 		return (uiomove(buffer, sc->sc_isize, uio));
 	}
 
-	s = spltty();
+	s = splusb();
 	while (sc->sc_q.c_cc == 0) {
 		if (flag & IO_NDELAY) {
 			splx(s);
@@ -510,7 +510,7 @@ uhidpoll(dev, events, p)
 	if (sc->sc_disconnected)
 		return (EIO);
 
-	s = spltty();
+	s = splusb();
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
 	if (events & (POLLIN | POLLRDNORM)) {

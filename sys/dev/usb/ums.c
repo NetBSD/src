@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.13 1998/12/02 22:54:53 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.14 1998/12/09 00:18:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ ums_match(parent, match, aux)
 	if (!uaa->iface)
 		return (UMATCH_NONE);
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id->bInterfaceClass != UCLASS_HID)
+	if (!id || id->bInterfaceClass != UCLASS_HID)
 		return (UMATCH_NONE);
 
 	r = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.1 1998/12/08 15:39:00 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.2 1998/12/09 00:18:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (ugendebug) printf x
 #define DPRINTFN(n,x)	if (ugendebug>(n)) printf x
-int	ugendebug = 10;
+int	ugendebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -108,7 +108,7 @@ void ugen_disco __P((void *));
 int ugen_set_config __P((struct ugen_softc *sc, int configno));
 usb_config_descriptor_t *ugen_get_cdesc __P((struct ugen_softc *sc, int index, int *lenp));
 usbd_status ugen_set_interface __P((struct ugen_softc *, int, int));
-int ugen_get_alt_index __P((struct ugen_softc *sc, usb_config_descriptor_t *cdesc, int ifaceidx));
+int ugen_get_alt_index __P((struct ugen_softc *sc, int ifaceidx));
 
 #define UGENUNIT(n) (((n) >> 4) & 0xf)
 #define UGENENDPOINT(n) ((n) & 0xf)
@@ -366,7 +366,7 @@ ugenread(dev, uio, flag)
 	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_INTERRUPT:
 		/* Block until activity occured. */
-		s = spltty();
+		s = splusb();
 		while (sce->q.c_cc == 0) {
 			if (flag & IO_NDELAY) {
 				splx(s);
@@ -623,36 +623,17 @@ ugen_get_cdesc(sc, index, lenp)
 }
 
 int
-ugen_get_alt_index(sc, cdesc, ifaceidx)
+ugen_get_alt_index(sc, ifaceidx)
 	struct ugen_softc *sc;
-	usb_config_descriptor_t *cdesc;
 	int ifaceidx;
 {
-	u_int8_t alt;
 	usbd_interface_handle iface;
-	usb_interface_descriptor_t *idesc;
-	int altidx, nalt;
 	usbd_status r;
 
-	cdesc = usbd_get_config_descriptor(sc->sc_udev);
 	r = usbd_device2interface_handle(sc->sc_udev, ifaceidx, &iface);
 	if (r != USBD_NORMAL_COMPLETION)
-		return (-1);
-	r = usbd_get_interface(iface, &alt);
-	if (r != USBD_NORMAL_COMPLETION)
-		return (-1);
-	nalt = usbd_get_no_alt(iface);
-	for (altidx = 0; altidx < nalt; altidx++) {
-		idesc = usbd_find_idesc(cdesc, ifaceidx, altidx);
-		if (!idesc) {
-			DPRINTF(("ugen_get_alt_index: ifaceidx=%d altidx=%d failed\n", ifaceidx, altidx));
 			return (-1);
-		}
-		DPRINTF(("ugen_get_alt_index: ifaceidx=%d altidx=%d alt=%d(%d)\n", ifaceidx, altidx, idesc->bAlternateSetting, alt));
-		if (idesc->bAlternateSetting == alt)
-			return (altidx);
-	}
-	return (-1);
+	return (usbd_get_interface_altindex(iface));
 }
 
 int
@@ -674,11 +655,20 @@ ugenioctl(dev, cmd, addr, flag, p)
 	struct usb_endpoint_desc *ed;
 	usb_endpoint_descriptor_t *edesc;
 	struct usb_alt_interface *ai;
+	struct usb_string_desc *si;
 	u_int8_t conf, alt;
 
 	DPRINTFN(5, ("ugenioctl: cmd=%08lx\n", cmd));
 	if (sc->sc_disconnected)
 		return (EIO);
+
+	switch (cmd) {
+	case FIONBIO:
+		/* All handled in the upper FS layer. */
+		return (0);
+	default:
+		break;
+	}
 
 	if (endpt != USB_CONTROL_ENDPOINT)
 		return (EINVAL);
@@ -691,6 +681,8 @@ ugenioctl(dev, cmd, addr, flag, p)
 		*(int *)addr = conf;
 		break;
 	case USB_SET_CONFIG:
+		if (!(flag & FWRITE))
+			return (EPERM);
 		r = usbd_set_config_no(sc->sc_udev, *(int *)addr, 0);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (EIO);
@@ -702,9 +694,13 @@ ugenioctl(dev, cmd, addr, flag, p)
 		if (r != USBD_NORMAL_COMPLETION)
 			return (EINVAL);
 		idesc = usbd_get_interface_descriptor(iface);
+		if (!idesc)
+			return (EIO);
 		ai->alt_no = idesc->bAlternateSetting;
 		break;
 	case USB_SET_ALTINTERFACE:
+		if (!(flag & FWRITE))
+			return (EPERM);
 		ai = (struct usb_alt_interface *)addr;
 		r = usbd_device2interface_handle(sc->sc_udev, 
 						 ai->interface_index, &iface);
@@ -716,11 +712,13 @@ ugenioctl(dev, cmd, addr, flag, p)
 		break;
 	case USB_GET_NO_ALT:
 		ai = (struct usb_alt_interface *)addr;
-		r = usbd_device2interface_handle(sc->sc_udev, 
-						 ai->interface_index, &iface);
-		if (r != USBD_NORMAL_COMPLETION)
+		cdesc = ugen_get_cdesc(sc, ai->config_index, 0);
+		if (!cdesc)
 			return (EINVAL);
-		ai->alt_no = usbd_get_no_alt(iface);
+		idesc = usbd_find_idesc(cdesc, ai->interface_index, 0);
+		if (!idesc)
+			return (EINVAL);
+		ai->alt_no = usbd_get_no_alts(cdesc, idesc->bInterfaceNumber);
 		break;
 	case USB_GET_DEVICE_DESC:
 		*(usb_device_descriptor_t *)addr =
@@ -741,7 +739,7 @@ ugenioctl(dev, cmd, addr, flag, p)
 			return (EINVAL);
 		if (id->config_index == USB_CURRENT_CONFIG_INDEX &&
 		    id->alt_index == USB_CURRENT_ALT_INDEX)
-			alt = ugen_get_alt_index(sc, cdesc, id->interface_index);
+			alt = ugen_get_alt_index(sc, id->interface_index);
 		else
 			alt = id->alt_index;
 		idesc = usbd_find_idesc(cdesc, id->interface_index, alt);
@@ -759,7 +757,7 @@ ugenioctl(dev, cmd, addr, flag, p)
 			return (EINVAL);
 		if (ed->config_index == USB_CURRENT_CONFIG_INDEX &&
 		    ed->alt_index == USB_CURRENT_ALT_INDEX)
-			alt = ugen_get_alt_index(sc, cdesc, ed->interface_index);
+			alt = ugen_get_alt_index(sc, ed->interface_index);
 		else
 			alt = ed->alt_index;
 		edesc = usbd_find_edesc(cdesc, ed->interface_index, 
@@ -795,6 +793,12 @@ ugenioctl(dev, cmd, addr, flag, p)
 		free(cdesc, M_TEMP);
 		return (error);
 	}
+	case USB_GET_STRING_DESC:
+		si = (struct usb_string_desc *)addr;
+		r = usbd_get_string_desc(sc->sc_udev, si->string_index, si->language_id, &si->desc);
+		if (r != USBD_NORMAL_COMPLETION)
+			return (EINVAL);
+		break;
 	case USB_DO_REQUEST:
 	{
 		struct usb_ctl_request *ur = (void *)addr;
@@ -805,6 +809,8 @@ ugenioctl(dev, cmd, addr, flag, p)
 		usbd_status r;
 		int error = 0;
 
+		if (!(flag & FWRITE))
+			return (EPERM);
 		/* Avoid requests that would damage the bus integrity. */
 		if ((ur->request.bmRequestType == UT_WRITE_DEVICE &&
 		     ur->request.bRequest == UR_SET_ADDRESS) ||
@@ -852,6 +858,10 @@ ugenioctl(dev, cmd, addr, flag, p)
 			free(ptr, M_TEMP);
 		return (error);
 	}
+	case USB_GET_DEVICEINFO:
+		usbd_fill_deviceinfo(sc->sc_udev,
+				     (struct usb_device_info *)addr);
+		break;
 	default:
 		return (EINVAL);
 	}
@@ -866,22 +876,34 @@ ugenpoll(dev, events, p)
 {
 	struct ugen_softc *sc = ugen_cd.cd_devs[UGENUNIT(dev)];
 	/* XXX */
-	struct ugen_endpoint *sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
+	struct ugen_endpoint *sce;
 	int revents = 0;
 	int s;
 
 	if (sc->sc_disconnected)
 		return (EIO);
 
-	s = spltty();
-	switch (0 /*XXXsce->sc_pipekind*/) {
+	s = splusb();
+	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_INTERRUPT:
+		sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
 		if (events & (POLLIN | POLLRDNORM)) {
 			if (sce->q.c_cc > 0)
 				revents |= events & (POLLIN | POLLRDNORM);
 			else
 				selrecord(p, &sce->rsel);
 		}
+		break;
+	case UE_BULK:
+		/* 
+		 * We have no easy way of determining if a read will
+		 * yield any data or a write will happen.
+		 * Pretend they will.
+		 */
+		revents |= events & 
+			   (POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM);
+		break;
+	default:
 		break;
 	}
 	splx(s);
