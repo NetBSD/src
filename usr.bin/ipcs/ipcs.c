@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.27 2002/05/21 01:10:06 simonb Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.27.2.1 2003/12/24 04:44:48 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -603,7 +603,7 @@ sem_sysctl(void)
 	}
 	if (!valid) {
 		fprintf(stderr,
-		    "SVID shared memory facility not configured in the system\n");
+		    "SVID semaphores facility not configured in the system\n");
 		return;
 	}
 
