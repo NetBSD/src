@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.185 2004/08/07 17:12:44 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.186 2004/08/10 00:57:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.185 2004/08/07 17:12:44 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.186 2004/08/10 00:57:20 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -665,8 +665,8 @@ wi_rssdescs_reset(struct ieee80211com *ic, struct wi_rssdesc (*rssd)[WI_NTXRSS],
 			printf("%s: cleaning outstanding rssadapt "
 			    "descriptor for %s\n",
 			    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
-		if (ni != NULL && ni != ic->ic_bss)
-			ieee80211_free_node(ic, ni);
+		if (ni != NULL)
+			ieee80211_release_node(ic, ni);
 	}
 	memset(*txpending, 0, sizeof(*txpending));
 	wi_rssdescs_init(rssd, rssdfree);
@@ -1179,8 +1179,8 @@ wi_start(struct ifnet *ifp)
 		id->id_node = ni;
 		continue;
 next:
-		if (ni != NULL && ni != ic->ic_bss)
-			ieee80211_free_node(ic, ni);
+		if (ni != NULL)
+			ieee80211_release_node(ic, ni);
 	}
 }
 
@@ -1600,12 +1600,9 @@ wi_rx_intr(struct wi_softc *sc)
 	/*
 	 * The frame may have caused the node to be marked for
 	 * reclamation (e.g. in response to a DEAUTH message)
-	 * so use free_node here instead of unref_node.
+	 * so use release_node here instead of unref_node.
 	 */
-	if (ni == ic->ic_bss)
-		ieee80211_unref_node(&ni);
-	else
-		ieee80211_free_node(ic, ni);
+	ieee80211_release_node(ic, ni);
 }
 
 STATIC void
@@ -1681,8 +1678,8 @@ wi_tx_ex_intr(struct wi_softc *sc)
 		    __func__, id->id_rateidx);
 		sc->sc_txpending[id->id_rateidx] = 0;
 	}
-	if (ni != NULL && ni != ic->ic_bss)
-		ieee80211_free_node(ic, ni);
+	if (ni != NULL)
+		ieee80211_release_node(ic, ni);
 	SLIST_INSERT_HEAD(&sc->sc_rssdfree, rssd, rd_next);
 out:
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1811,8 +1808,8 @@ wi_tx_intr(struct wi_softc *sc)
 		    __func__, id->id_rateidx);
 		sc->sc_txpending[id->id_rateidx] = 0;
 	}
-	if (ni != NULL && ni != ic->ic_bss)
-		ieee80211_free_node(ic, ni);
+	if (ni != NULL)
+		ieee80211_release_node(ic, ni);
 	SLIST_INSERT_HEAD(&sc->sc_rssdfree, rssd, rd_next);
 out:
 	ifp->if_flags &= ~IFF_OACTIVE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.17 2004/07/28 08:12:49 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.18 2004/08/10 00:57:22 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -169,7 +169,11 @@ struct ieee80211com {
 					const struct ieee80211_node *);
 	u_int8_t		(*ic_node_getrssi)(struct ieee80211com *,
 					struct ieee80211_node *);
-	TAILQ_HEAD(, ieee80211_node) ic_node;	/* information of all nodes */
+	TAILQ_HEAD(, ieee80211_node) ic_node;	/* information of all nodes
+						 * LRU at tail
+						 */
+	int			ic_nnodes;	/* length of ic_nnodes */
+	int			ic_max_nnodes;	/* max length of ic_nnodes */
 	LIST_HEAD(, ieee80211_node) ic_hash[IEEE80211_NODE_HASHSIZE];
 	u_int16_t		ic_lintval;	/* listen interval */
 	u_int16_t		ic_holdover;	/* PM hold over duration */
@@ -312,6 +316,6 @@ extern int ieee80211_debug;
 #define	IEEE80211_DPRINTF(_ic, _fmt, ...)
 #endif
 
-extern	int ieee80211_inact_max;
+extern	int ieee80211_cache_size;
 
 #endif /* _NET80211_IEEE80211_VAR_H_ */
