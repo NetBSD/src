@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.102 1994/12/10 00:28:18 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.103 1995/01/15 00:52:21 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -599,12 +599,13 @@ reloc_gdt:
 #if defined(I486_CPU) || defined(I586_CPU)
 	/*
 	 * Now we've run main() and determined what CPU type we are, so we can
-	 * enable WP mode on i486 CPUs and above.
+	 * enable ring 0 write protection and outer ring alignment checking on
+	 * i486 CPUs and above.
 	 */
 	cmpl	$CPUCLASS_386,_cpu_class
-	je	1f			# 386s can't handle WP mode
-	movl	%cr0,%eax		# get control word
-	orl	$CR0_WP,%eax		# enable ring 0 Write Protection
+	je	1f
+	movl	%cr0,%eax
+	orl	$CR0_WP|CR0_AM,%eax
 	movl	%eax,%cr0
 1:
 #endif
@@ -1943,14 +1944,13 @@ calltrap:
 	movl	_cpl,%ebx
 #endif /* DIAGNOSTIC */
 	call	_trap
-2:	/*
-	 * Check for ASTs.
-	 */
+2:	/* Check for ASTs on exit to user mode. */
 	cli
+	cmpb	$0,_astpending
+	je	1f
 	testb	$SEL_RPL_MASK,TF_CS(%esp)
 	jz	1f
-	btrl	$0,_astpending
-	jnc	1f
+	movb	$0,_astpending
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap
@@ -1992,9 +1992,9 @@ IDTVEC(osyscall)
 	/* Set eflags in trap frame. */
 	pushfl
 	popl	8(%esp)
-	/* Turn off trace bit. */
+	/* Turn off trace flag and nested task. */
 	pushfl
-	andb	$~(PSL_T>>8),1(%esp)
+	andb	$~((PSL_T|PSL_NT)>>8),1(%esp)
 	popfl
 	pushl	$7		# size of instruction for restart
 	jmp	syscall1
@@ -2011,14 +2011,14 @@ syscall1:
 	movl	_cpl,%ebx
 #endif /* DIAGNOSTIC */
 	call	_syscall
-2:	/*
-	 * Check for ASTs.
-	 */
+2:	/* Check for ASTs on exit to user mode. */
 	cli
+	cmpb	$0,_astpending
+	je	1f
 	/* Always returning to user mode here. */
-	btrl	$0,_astpending
-	jnc	1f
+	movb	$0,_astpending
 	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_trap
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
@@ -2037,6 +2037,15 @@ syscall1:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
+
+ENTRY(resume_iret)
+	ZTRAP(T_PROTFLT)
+ENTRY(resume_pop_ds)
+	movl	$KDSEL,%eax
+	movl	%ax,%es
+ENTRY(resume_pop_es)
+	movl	$T_PROTFLT,TF_TRAPNO(%esp)
+	jmp	calltrap
 
 #include <i386/isa/vector.s>
 #include <i386/isa/icu.s>
