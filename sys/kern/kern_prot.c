@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.44 1998/03/01 02:22:29 fvdl Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.45 1998/06/25 22:50:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -43,6 +43,8 @@
 /*
  * System calls related to processes and protection
  */
+
+#include "opt_compat_freebsd.h"
 
 #include <sys/param.h>
 #include <sys/acct.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.41 1998/03/22 00:55:38 mycroft Exp $	*/
+/*	$NetBSD: tty.h,v 1.42 1998/06/25 22:49:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -266,6 +266,10 @@ int	cttypoll __P((dev_t, int, struct proc *));
 
 int	clalloc __P((struct clist *, int, int));
 void	clfree __P((struct clist *));
+
+#if !defined(_LKM)
+#include "opt_compat_freebsd.h"
+#endif
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
     defined(COMPAT_FREEBSD)

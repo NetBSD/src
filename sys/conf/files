@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.198 1998/06/25 22:16:01 thorpej Exp $
+#	$NetBSD: files,v 1.199 1998/06/25 22:49:18 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -24,6 +24,9 @@ defopt	NFSSERVER
 defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
 
 defopt	opt_execfmt.h	EXEC_AOUT EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT
+
+# compatibility options
+defopt	COMPAT_FREEBSD
 
 # networking options
 defopt	GATEWAY
