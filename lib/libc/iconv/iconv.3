@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.9 2004/01/24 15:33:43 wiz Exp $
+.\" $NetBSD: iconv.3,v 1.10 2004/08/01 17:07:15 tshiozak Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Ft int
 .Fn iconv_close "iconv_t cd"
 .Ft size_t
-.Fn iconv "iconv_t cd" "const char ** restrict src" "size_t * restrict srcleft" "char ** restrict dst" "size_t * restrict dstleft"
+.Fn iconv "iconv_t cd" "char ** restrict src" "size_t * restrict srcleft" "char ** restrict dst" "size_t * restrict dstleft"
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
 The
