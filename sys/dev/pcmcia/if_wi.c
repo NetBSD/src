@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.10 2000/03/02 05:54:22 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.11 2000/03/02 10:29:22 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.10 2000/03/02 05:54:22 enami Exp $
+ *	$Id: if_wi.c,v 1.11 2000/03/02 10:29:22 enami Exp $
  */
 
 /*
@@ -116,7 +116,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.10 2000/03/02 05:54:22 enami Exp $";
+	"$Id: if_wi.c,v 1.11 2000/03/02 10:29:22 enami Exp $";
 #endif
 
 #ifdef foo
@@ -1109,6 +1109,7 @@ static int wi_ioctl(ifp, command, data)
 	struct ifreq		*ifr;
 	struct proc *p = curproc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct wi_ssid ssid, *ws;
 	u_int8_t nwid[IEEE80211_NWID_LEN + 1];
 
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
@@ -1248,24 +1249,32 @@ static int wi_ioctl(ifp, command, data)
 		break;
 	case SIOCG80211NWID:
 		/*
-		 * Actually, the ESS-ID is a variable length octet string
-		 * up to 32 bytes, and we should have a way to pass length
+		 * Actually, the SSID is a variable length octet sequence
+		 * up to 32 octets, and we should have a way to pass length
 		 * separately.  But for now, we treat as if it is terminated
 		 * by NUL.  XXX.
 		 */
 		if (sc->sc_enabled == 0)
 			/* Return the desried ID */
-			error = copyout(&sc->wi_netid.ws_id, ifr->ifr_data,
-			    IEEE80211_NWID_LEN);		/* XXX */
+			ws = &sc->wi_netid;
 		else {
 			wreq.wi_type = WI_RID_CURRENT_SSID;
 			wreq.wi_len = WI_MAX_DATALEN;
 			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq) ||
 			    wreq.wi_val[0] > IEEE80211_NWID_LEN)
 				error = EINVAL;
-			else
-				error = copyout(&wreq.wi_val[1], ifr->ifr_data,
-				    IEEE80211_NWID_LEN);	/* XXX */
+			else {
+				ws = &ssid;
+				wi_set_ssid(ws, (u_int8_t *)&wreq.wi_val[1],
+				    wreq.wi_val[0]);
+			}
+		}
+		if (error == 0) {
+			/* The caller expects NUL terminated. XXX */
+			if (ws->ws_len < IEEE80211_NWID_LEN)
+				ws->ws_id[ws->ws_len] = 0;
+			error = copyout(ws->ws_id, ifr->ifr_data,
+			    IEEE80211_NWID_LEN);
 		}
 		break;
 	case SIOCS80211NWID:
@@ -1621,8 +1630,6 @@ wi_set_ssid(ws, id, len)
 		return (EINVAL);
 	ws->ws_len = len;
 	memcpy(ws->ws_id, id, len);
-	if (len < IEEE80211_NWID_LEN)			/* XXX */
-		ws->ws_id[len] = 0;			/* XXX */
 	return (0);
 }
 
