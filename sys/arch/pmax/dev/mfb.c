@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.26 1997/06/22 07:42:31 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.27 1997/06/30 22:09:01 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -259,10 +259,7 @@ mfbattach(parent, self, aux)
 	 * XXX Should store cmap updates in softc and apply in the
 	 * interrupt handler, which interrupts during vertical-retrace.
 	 */
-	if (pmax_boardtype == DS_3MIN) {
-		tc_intr_establish(parent, (void*)ta->ta_cookie, TC_IPL_NONE,
-					mfb_intr, fi);
-	}
+	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, mfb_intr, fi);
 	printf("\n");
 }
 
@@ -773,7 +770,7 @@ int
 mfb_intr(sc)
 	void *sc;
 {
-	struct fbinfo *fi = /* XXX (struct fbinfo *)sc */ &mfbfi;
+	struct fbinfo *fi = (struct fbinfo *)sc;
 	volatile int junk;
 	char *slot_addr = (((char *)fi->fi_base) - MFB_OFFSET_BT431);
 
