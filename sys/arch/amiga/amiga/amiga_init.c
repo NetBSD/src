@@ -1,5 +1,11 @@
-/*	$Id: amiga_init.c,v 1.2 1993/08/02 17:51:47 mycroft Exp $ */
+<<<<<<< amiga_init.c
+/*	$Id: amiga_init.c,v 1.3 1993/09/02 18:05:24 mw Exp $ */
 
+||||||| 1.1.1.2
+=======
+/* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist */
+
+>>>>>>> /tmp/T4009411
 #include "pte.h"
 #include "machine/cpu.h"
 #include "param.h"
@@ -22,12 +28,12 @@
 #include "vm/pmap.h"
 #include "sys/dkbad.h"
 #include "sys/reboot.h"
+#include "sys/exec.h"
 
 #include "custom.h"
 #include "cia.h" 
 
-#include <libraries/configregs.h>
-#include <libraries/configvars.h>
+#include "configdev.h"
 
 #ifdef DEBUG
 #include "color.h"
@@ -45,7 +51,10 @@ extern int page_shift;
 extern vm_size_t page_size, page_mask;
 
 /* virtual addresses specific to the AMIGA */
-u_int CIAADDR, CUSTOMADDR, SCSIADDR;
+u_int CIAADDR, CUSTOMADDR; /* SCSIADDR;*/
+
+/* virtual address space(s) allocated to boards */
+caddr_t ZORRO2ADDR;  /* add one for zorro3 if necessary */
 
 u_int CHIPMEMADDR;
 
@@ -75,6 +84,13 @@ void *chipmem_steal(long amount)
   return(ptr);
 }
 
+
+/* This stuff is for reloading new kernels through /dev/reload.  */
+static struct exec kernel_exec;
+static u_char *kernel_image;
+static u_long kernel_text_size, kernel_load_ofs;
+
+u_long orig_fastram_start, orig_fastram_size, orig_chipram_size;
 
 
 /* this is the C-level entry function, it's called from locore.s.
@@ -106,19 +122,19 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
   extern u_int protorp[2];
   u_int tc;
   u_int hw_va;
-  u_int chip_pt, custom_pt, cia_pt, scsi_pt;
+  u_int chip_pt, cia_pt;
+#if 0
+  u_int custom_pt, scsi_pt;
+#else
+  u_int zorro2_pt;
+#endif
   u_int end_loaded;
 
+  orig_fastram_start = fastram_start;
+  orig_fastram_size = fastram_size;
+  orig_chipram_size = chipram_size;
+
   chipmem_end = chipram_size;
-
-  /* as soon as possible open a new display, or we'll lose memory contents
-     due to lack of refresh */
-/*  screen_init ();*/
-
-#if 0 
- printf ("\nid=%d, fstart=$%lx, fsize=$%lx, csize=$%lx\n", 
-	  id, fastram_start, fastram_size, chipram_size);
-#endif
 
   /* the kernel ends at end(), plus the ConfigDev structures we placed 
      there in the loader. Correct for this now. */
@@ -126,11 +142,13 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
   ConfigDev = (struct ConfigDev *) ((int)end + 4);
   end_loaded = (u_int)end + 4 + num_ConfigDev * sizeof(struct ConfigDev);
   
+#if 0
   /* XXX */
   {
     extern int boothowto;
     boothowto = RB_SINGLE;
   }
+#endif
 
 /*  printf ("numCD=%d, end=0x%x, end_loaded=0x%x\n", num_ConfigDev, end, end_loaded);*/
 
@@ -151,20 +169,18 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
   /* allocate the kernel segment table */
   Sysseg    = vstart;
   Sysseg_pa = pstart;
-#if 0
-  vstart   += AMIGA_STSIZE;
-  pstart   += AMIGA_STSIZE;
-  avail    -= AMIGA_STSIZE;
-#else
   vstart   += AMIGA_PAGE_SIZE;
   pstart   += AMIGA_PAGE_SIZE;
   avail    -= AMIGA_PAGE_SIZE;
-#endif
   
   /* allocate initial page table pages */
   pagetable       = vstart;
   pagetable_pa    = pstart;
+#if 0
   pagetable_extra = CHIPMEMSIZE + CIASIZE + CUSTOMSIZE + SCSISIZE;
+#else
+    pagetable_extra = CHIPMEMSIZE + CIASIZE + ZORRO2SIZE;
+#endif
   pagetable_size  = (Sysptsize + (pagetable_extra + NPTEPG-1)/NPTEPG) << PGSHIFT;
   vstart         += pagetable_size;
   pstart         += pagetable_size;
@@ -173,23 +189,12 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
   /* allocate kernel page table map */
   Sysptmap    = vstart;
   Sysptmap_pa = pstart;
-#if 0
-  vstart   += AMIGA_STSIZE;
-  pstart   += AMIGA_STSIZE;
-  avail    -= AMIGA_STSIZE;
-#else
   vstart   += AMIGA_PAGE_SIZE;
   pstart   += AMIGA_PAGE_SIZE;
   avail    -= AMIGA_PAGE_SIZE;
-#endif
 
   /* set Sysmap; mapped after page table pages */
   Sysmap = (typeof (Sysmap)) (pagetable_size << (SEGSHIFT - PGSHIFT));
-
-#if 0  
-  printf ("Sysseg = $%lx, PT = $%lx, Sysptmap = $%lx, PT-size = $%lx, Sysmap = $%lx\n",
-	  Sysseg, pagetable_pa, Sysptmap, pagetable_size, Sysmap);
-#endif
 
   /* initialize segment table and page table map */
   sg_proto = pagetable_pa | SG_RW | SG_V;
@@ -267,8 +272,9 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
       *pg++     = pg_proto;
       pg_proto += AMIGA_PAGE_SIZE;
     }
-  pg_proto = CUSTOMBASE | PG_RW | PG_CI | PG_V;
-  custom_pt  = (u_int) pg;
+#if 0
+  pg_proto  = CUSTOMBASE | PG_RW | PG_CI | PG_V;
+  custom_pt = (u_int) pg;
   while (pg_proto < CUSTOMTOP)
     {
       *pg++     = pg_proto;
@@ -281,6 +287,15 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
       *pg++     = pg_proto;
       pg_proto += AMIGA_PAGE_SIZE;
     }
+#else
+  pg_proto  = ZORRO2BASE | PG_RW | PG_CI | PG_V;
+  zorro2_pt = (u_int) pg;
+  while (pg_proto < ZORRO2TOP)
+    {
+      *pg++     = pg_proto;
+      pg_proto += AMIGA_PAGE_SIZE;
+    }
+#endif
 
   /* Setup page table for process 0.
   
@@ -317,103 +332,29 @@ start_c (int id, u_int fastram_start, u_int fastram_size, u_int chipram_size)
   vstart    += UPAGES * AMIGA_PAGE_SIZE;
   avail     -= UPAGES * AMIGA_PAGE_SIZE;
 
-#if notnow
-  /* copy over the kernel (and all now initialized variables) to fastram.
-     DONT use bcopy(), this beast is much larger than 128k ! */
-  {
-    register u_int *lp = 0, *le = (u_int *) end_loaded, *fp = (u_int *) fastram_start;
-    while (lp < le)
-      *fp++ = *lp++;
-  }
-
-  serspit ('G');
-  ROLLCOLOR(COL_YELLOW);
-
-  /* prepare to enable the MMU */
-
-  /* create SRP */
-  protorp[0] = 0x80000202;	/* nolimit + share global + 4 byte PTEs */
-  protorp[1] = Sysseg_pa;	/* + segtable address */
-  /* load SRP into MMU */
-  asm volatile ("pmove %0@,srp" : : "a" (protorp));
-  /* setup TC register. */
-  tc = 0x82d08b00;	/* enable_cpr, enable_srp, pagesize=8k, A=8bits, B=11bits */
-  /* load it */
-  asm volatile ("pmove %0@,tc" : : "a" (&tc));
-
-  /* Now running mapped */
-#endif
-
   /* init mem sizes */
   maxmem  = pend >> PGSHIFT;
   lowram  = fastram_start >> PGSHIFT;
   physmem = fastram_size >> PGSHIFT;
   
-#if 0
-  printf ("maxmem = $%lx[$%lx], lowram = $%lx[$%lx], physmem = $%lx[$%lx]\n",
-	  maxmem, maxmem << PGSHIFT,
-	  lowram, lowram << PGSHIFT,
-	  physmem, physmem << PGSHIFT);
-#endif
-
   /* get the pmap module in sync with reality. */
   pmap_bootstrap (pstart, fastram_start);
-
-#if vmem_not_initialized
-
-  hw_va = virtual_avail;
-#define MAPHARD(va, p, l) \
-  (va) = (caddr_t) hw_va; hw_va = pmap_map (hw_va, (p), (p) + (l), VM_PROT_READ|VM_PROT_WRITE)
-
-  MAPHARD (CHIPMEMADDR,		0x0,	chipram_size);
-  MAPHARD (CIAADDR,	   0xbfd000,	AMIGA_PAGE_SIZE);
-  MAPHARD (CUSTOMADDR,	   0xdff000,	AMIGA_PAGE_SIZE);
-
-#if    defined(A3000)
-  MAPHARD (SCSIADDR,	   0xdd0000,	AMIGA_PAGE_SIZE);
-#elif defined(GVP11)
-  MAPHARD (SCSIADDR,	   ????????,	AMIGA_PAGE_SIZE);
-#elif defined(A2091)
-  MAPHARD (SCSIADDR,	   ????????,	AMIGA_PAGE_SIZE);
-#else
-  SCSIADDR = 0;	/* cause kernel page fault if it's accessed */
-#endif
-
-  virtual_avail = hw_va;
-
-#else
 
   /* record base KVA of IO spaces which are just before Sysmap */
   CHIPMEMADDR = (u_int)Sysmap - pagetable_extra * AMIGA_PAGE_SIZE;
   CIAADDR     = CHIPMEMADDR + CHIPMEMSIZE*AMIGA_PAGE_SIZE;
+  ZORRO2ADDR  = CIAADDR + CIASIZE*AMIGA_PAGE_SIZE;
+  CIAADDR    += AMIGA_PAGE_SIZE/2; /* not on 8k boundery :-( */
+
+  /* just setup the custom chips address, other addresses (like SCSI on
+     A3000, clock, etc.) moved to device drivers where they belong */
+  CUSTOMADDR  = ZORRO2ADDR - ZORRO2BASE + CUSTOMBASE;
+
+#if 0
   CUSTOMADDR  = CIAADDR + CIASIZE*AMIGA_PAGE_SIZE;
   SCSIADDR    = CUSTOMADDR + CUSTOMSIZE*AMIGA_PAGE_SIZE;
   CIAADDR    += AMIGA_PAGE_SIZE/2; /* not on 8k boundery :-( */
   CUSTOMADDR += AMIGA_PAGE_SIZE/2; /* not on 8k boundery */
-
-#endif
-
-#if 0
-  printf ("CIAbase=$%lx, CUSTOMbase=$%lx, CHIPMEMbase=$%lx, SCSIbase=$%lx\n",
-	  CIAADDR, CUSTOMADDR, CHIPMEMADDR, SCSIADDR);
-
-  printf ("Should be: Cia=$%lx, Custom=$%lx, Chip=$%lx, Scsi=$%lx\n",
-	  ((cia_pt - pagetable_pa)>>2)<<PGSHIFT,
-	  ((custom_pt - pagetable_pa)>>2)<<PGSHIFT,
-	  ((chip_pt - pagetable_pa)>>2)<<PGSHIFT,
-	  ((scsi_pt - pagetable_pa)>>2)<<PGSHIFT);
-
-  dump_segtable (Sysseg_pa);
-
-  printf ("Cia=$%lx, Custom=$%lx, Chip=$%lx, Scsi=$%lx\n",
-	  vmtophys(Sysseg_pa, CIAADDR),
-	  vmtophys(Sysseg_pa, CUSTOMADDR),
-	  vmtophys(Sysseg_pa, CHIPMEMADDR),
-	  vmtophys(Sysseg_pa, SCSIADDR));
-
-  printf ("Custom: "); dump_pagetable (CUSTOMADDR, custom_pt, 1);
-  printf ("U-area: $%lx -> $%lx\n",-(UPAGES*NBPG), vmtophys(Sysseg_pa, -(UPAGES*NBPG)));
-  printf ("U-area2:$%lx -> $%lx\n", proc0paddr, vmtophys(Sysseg_pa, proc0paddr));
 #endif
 
   /* set this before copying the kernel, so the variable is updated in
@@ -534,4 +475,105 @@ vmtophys (u_int *ste, u_int vm)
 }
 
 #endif
+
+
+/*** Kernel reloading code ***/
+/* This supports the /dev/reload device, major 2, minor 20,
+   hooked into mem.c.  Author: Bryan Ford.  */
+
+/* This is called below to find out how much magic storage
+   will be needed after a kernel image to be reloaded.  */
+static int kernel_image_magic_size()
+{
+  return 4 + num_ConfigDev * sizeof(struct ConfigDev);
+}
+
+/* This actually copies the magic information.  */
+static void kernel_image_magic_copy(u_char *dest)
+{
+  *((int*)dest) = num_ConfigDev;
+  dest += 4;
+  bcopy(ConfigDev, dest, num_ConfigDev * sizeof(struct ConfigDev));
+}
+
+#undef __LDPGSZ
+#define __LDPGSZ 8192 /* XXX ??? */
+
+int kernel_reload_write(struct uio *uio)
+{
+  struct iovec *iov = uio->uio_iov;
+  int error;
+
+  if (kernel_image == 0)
+    {
+      /* We have to get at least the whole exec header
+	 in the first write.  */
+      if (iov->iov_len < sizeof(kernel_exec))
+	return EFAULT;		/* XXX */
+
+      /* Pull in the exec header and check it.  */
+      error = uiomove(&kernel_exec, sizeof(kernel_exec), uio);
+      if (error == 0)
+	{
+#if 0 /* XXX??? */
+	  if (kernel_exec.a_magic != NMAGIC)
+	    return EFAULT;	/* XXX */
+#endif
+	  printf("loading kernel %d+%d+%d\n", kernel_exec.a_text, kernel_exec.a_data, kernel_exec.a_bss);
+
+	  /* Looks good - allocate memory for a kernel image.  */
+	  kernel_text_size = (kernel_exec.a_text
+			      + __LDPGSZ - 1) & (-__LDPGSZ);
+	  kernel_image = malloc(kernel_text_size + kernel_exec.a_data
+				+ kernel_exec.a_bss
+				+ kernel_image_magic_size(),
+				M_TEMP, M_WAITOK);
+	  kernel_load_ofs = 0;
+	}
+    }
+  else
+    {
+      int c;
+
+      /* Continue loading in the kernel image.  */
+      if (kernel_load_ofs < kernel_exec.a_text)
+	{
+	  c = MIN(iov->iov_len, kernel_exec.a_text - kernel_load_ofs);
+	}
+      else
+	{
+	  if (kernel_load_ofs == kernel_exec.a_text)
+	    kernel_load_ofs = kernel_text_size;
+	  c = MIN(iov->iov_len,
+		  kernel_text_size + kernel_exec.a_data - kernel_load_ofs);
+	}
+      error = uiomove(kernel_image + kernel_load_ofs, (int)c, uio);
+      if (error == 0)
+	{
+	  kernel_load_ofs += c;
+	  if (kernel_load_ofs == kernel_text_size + kernel_exec.a_data)
+	    {
+
+	      /* Put the finishing touches on the kernel image.  */
+	      for(c = 0; c < kernel_exec.a_bss; c++)
+		kernel_image[kernel_text_size + kernel_exec.a_data + c] = 0;
+	      kernel_image_magic_copy(kernel_image + kernel_text_size
+				      + kernel_exec.a_data
+				      + kernel_exec.a_bss);
+
+	      /* Get everything in a clean state for rebooting.  */
+	      bootsync();
+
+	      /* Start the new kernel with code in locore.s.  */
+	      kernel_reload(kernel_image,
+			    (kernel_text_size + kernel_exec.a_data
+			     + kernel_exec.a_bss + kernel_image_magic_size()),
+			    kernel_exec.a_entry,
+			    orig_fastram_start, orig_fastram_size,
+			    orig_chipram_size);
+	    }
+	}
+    }
+  return error;
+}
 

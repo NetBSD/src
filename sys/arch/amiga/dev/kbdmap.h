@@ -1,4 +1,4 @@
-/*	$Id: kbdmap.h,v 1.2 1993/08/02 18:33:38 mycroft Exp $ */
+/*	$Id: kbdmap.h,v 1.3 1993/09/02 18:08:08 mw Exp $ */
 
 #define NUL	0
 #define SOH	1
@@ -104,6 +104,6 @@ struct kbdmap {
 
 #ifdef KERNEL
 /* XXX: ITE interface */
-extern struct kbdmap kbdmap;
+extern struct kbdmap kbdmap, ascii_kbdmap;
 extern unsigned char acctable[KBD_NUM_ACC][64];
 #endif

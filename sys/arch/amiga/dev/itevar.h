@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: itevar.h 1.1 90/07/09
  *	from: @(#)itevar.h	7.2 (Berkeley) 11/4/90
- *	$Id: itevar.h,v 1.2 1993/08/01 19:23:12 mycroft Exp $
+ *	$Id: itevar.h,v 1.3 1993/09/02 18:08:05 mw Exp $
  */
 
 #define UNIT(dev)       minor(dev)
@@ -57,6 +57,7 @@ struct itesw {
 struct ite_softc {
 	int	flags;
 	int	type;
+	int	open_cnt;
 	struct grf_softc *grf;
 	void	*priv;
 	short	curx, cury;
@@ -72,14 +73,15 @@ struct ite_softc {
 	short	planemask;
 	short	pos;
 	char	imode, fpd, hold;
-	u_char  escape;
+	u_char  escape, cursor_opt, key_repeat;
 	/* not currently used, but maintained */
 	char	GL, GR, G0, G1, G2, G3;
-	char	linefeed_newline;
-	char	argbuf[ARGBUF_SIZE], *ap;
+	char	linefeed_newline, auto_wrap;
+	char	cursor_appmode, keypad_appmode;
+	char	argbuf[ARGBUF_SIZE], *ap, *tabs;
 	char	emul_level, eightbit_C1;
 	int	top_margin, bottom_margin, inside_margins;
-	short	save_curx, save_cury;
+	short	save_curx, save_cury, save_attribute;
 };
 
 /* emulation levels: */
@@ -98,7 +100,9 @@ struct ite_softc {
 /* Types - indices into itesw */
 #define ITE_CUSTOMCHIPS	0
 #define ITE_TIGA_A2410	1
+#define ITE_RETINA	2
 
+#ifdef DO_WEIRD_ATTRIBUTES
 #define attrloc(ip, y, x) \
 	(ip->attrbuf + ((y) * ip->cols) + (x))
 
@@ -115,6 +119,14 @@ struct ite_softc {
 
 #define attrset(ip, attr) \
 	((* (u_char *) attrloc(ip, ip->cury, ip->curx)) = attr)
+#else
+#define attrloc(ip, y, x) 0
+#define attrclr(ip, sy, sx, h, w)
+#define attrmov(ip, sy, sx, dy, dx, h, w)
+#define attrtest(ip, attr) 0
+#define attrset(ip, attr)
+#endif
+
   
 /*
  * X and Y location of character 'c' in the framebuffer, in pixels.
@@ -131,7 +143,7 @@ struct ite_softc {
 #define	ATTR_UL		0x2		/* underline */
 #define ATTR_BOLD	0x4		/* bold */
 #define ATTR_BLINK	0x8		/* blink */
-#define ATTR_ALL	(ATTR_INV | ATTR_UL)
+#define ATTR_ALL	(ATTR_INV | ATTR_UL|ATTR_BOLD|ATTR_BLINK)
 
 /* Keyboard attributes */
 #define ATTR_KPAD	0x80		/* keypad transmit */
@@ -149,7 +161,8 @@ struct ite_softc {
 #define DRAW_CURSOR	0x05
 #define ERASE_CURSOR    0x06
 #define MOVE_CURSOR	0x07
-
+#define START_CURSOROPT	0x08	/* at start of output. May disable cursor */
+#define END_CURSOROPT	0x09	/* at end, make sure cursor state is ok */
 
 /* special key codes */
 #define KBD_LEFT_SHIFT	0x60

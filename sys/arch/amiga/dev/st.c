@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: st.c 1.8 90/10/14
  *	from: @(#)st.c	7.3 (Berkeley) 5/4/91
- *	$Id: st.c,v 1.2 1993/08/01 19:23:22 mycroft Exp $
+ *	$Id: st.c,v 1.3 1993/09/02 18:08:16 mw Exp $
  */
 
 /*
@@ -281,10 +281,10 @@ stident(sc, ad)
 
 	inqlen = 0x05; /* min */
 	st_inq.cdb[4] = 0x05;
-	stat = scsi_immed_command(slave, &st_inq, 
+	stat = scsi_immed_command(ctlr, slave, unit, &st_inq, 
 				  (u_char *)&st_inqbuf, inqlen, B_READ);
 	/* do twice as first command on some scsi tapes always fails */
-	stat = scsi_immed_command(slave, &st_inq, 
+	stat = scsi_immed_command(ctlr, slave, unit, &st_inq, 
 				  (u_char *)&st_inqbuf, inqlen, B_READ);
 	if (stat == -1)
 		goto failed;
@@ -299,7 +299,7 @@ stident(sc, ad)
 	inqlen = 0x05 + st_inqbuf.inqbuf.len;
 	st_inq.cdb[4] = inqlen;
 	bzero(&st_inqbuf, sizeof(st_inqbuf));
-	stat = scsi_immed_command(slave, &st_inq, 
+	stat = scsi_immed_command(ctlr, slave, unit, &st_inq, 
 				  (u_char *)&st_inqbuf, inqlen, B_READ);
 
 	if (st_inqbuf.inqbuf.len >= 28) {
@@ -341,7 +341,8 @@ stident(sc, ad)
 		sc->sc_datalen[CMD_INQUIRY] = 36;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (bcmp("Python 25501", &idstr[8], 12) == 0) {
+	} else if (bcmp("Python 27216", &idstr[8], 12) == 0
+		   || bcmp("Python 25501", &idstr[8], 12) == 0) {
 		sc->sc_tapeid = MT_ISPYTHON;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
 		sc->sc_datalen[CMD_INQUIRY] = 36;
@@ -349,7 +350,7 @@ stident(sc, ad)
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
 	} else if (bcmp("HP35450A", &idstr[8], 8) == 0) {
 		/* XXX "extra" stat makes the HP drive happy at boot time */
-		stat = scsi_test_unit_rdy(slave);
+		stat = scsi_test_unit_rdy(ctlr, slave, unit);
 		sc->sc_tapeid = MT_ISHPDAT;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
 		sc->sc_datalen[CMD_INQUIRY] = 36;
@@ -439,13 +440,13 @@ stopen(dev, flag, type, p)
 	/* do a mode sense to get current */
 	modlen = sc->sc_datalen[CMD_MODE_SENSE];
 	modsense.cdb[4] = modlen;
-	stat = scsi_immed_command(slave, &modsense,
+	stat = scsi_immed_command(ctlr, slave, unit, &modsense,
 				  (u_char *)&mode, modlen, B_READ);
 
 	/* do a mode sense to get current */
 	modlen = sc->sc_datalen[CMD_MODE_SENSE];
 	modsense.cdb[4] = modlen;
-	stat = scsi_immed_command(slave, &modsense,
+	stat = scsi_immed_command(ctlr, slave, unit, &modsense,
 				  (u_char *)&mode, modlen, B_READ);
 
 	/* set record length */
@@ -543,7 +544,7 @@ stopen(dev, flag, type, p)
 	/* mode select */
 	count = 0;
 retryselect:
-	stat = scsi_immed_command(slave, &modsel,
+	stat = scsi_immed_command(ctlr, slave, unit, &modsel,
 				  (u_char *)&msd, modlen, B_WRITE);
 	/*
 	 * First command after power cycle, bus reset or tape change 
@@ -552,7 +553,7 @@ retryselect:
 	if (stat == STS_CHECKCOND) {
 		sc->sc_filepos = 0;
 		stxsense(ctlr, slave, unit, sc);
-		stat = scsi_immed_command(slave, &modsel,
+		stat = scsi_immed_command(ctlr, slave, unit, &modsel,
 					  (u_char *)&msd, modlen, B_WRITE);
 #ifdef DEBUG
 		if (stat && (st_debug & ST_OPEN))
@@ -584,7 +585,7 @@ retryselect:
 	}
 
 	/* drive ready ? */
-	stat = scsi_test_unit_rdy(slave);
+	stat = scsi_test_unit_rdy(ctlr, slave, unit);
 
 	if (stat == STS_CHECKCOND) {
 		stxsense(ctlr, slave, unit, sc);
@@ -606,7 +607,7 @@ retryselect:
 			break;
 		case MT_ISAR:
 			if (xsense->sc_xsense.key == XSK_UNTATTEN)
-				stat = scsi_test_unit_rdy(slave);
+				stat = scsi_test_unit_rdy(ctlr, slave, unit);
 			if (stat == STS_CHECKCOND) {
 				stxsense(ctlr, slave, unit, sc);
 				if (xsense->sc_xsense.key)
@@ -621,7 +622,7 @@ retryselect:
 		case MT_ISPYTHON:
 		case MT_ISWANGTEK:
 			if (xsense->sc_xsense.key == XSK_UNTATTEN)
-				stat = scsi_test_unit_rdy(slave);
+				stat = scsi_test_unit_rdy(ctlr, slave, unit);
 			if (stat == STS_CHECKCOND) {
 				stxsense(ctlr, slave, unit, sc);
 				if (xsense->sc_xsense.key)
@@ -640,7 +641,7 @@ retryselect:
 	/* mode sense */
 	modlen = sc->sc_datalen[CMD_MODE_SENSE];
 	modsense.cdb[4] = modlen;
-	stat = scsi_immed_command(slave, &modsense,
+	stat = scsi_immed_command(ctlr, slave, unit, &modsense,
 				  (u_char *)&mode, modlen, B_READ);
 #ifdef DEBUG
 	if (st_debug & ST_OPENSTAT)
@@ -828,7 +829,7 @@ stgo(unit)
 			printf("stgo%d: odd count %d using manual transfer\n",
 			       unit, bp->b_bcount);
 #endif
-		stat = scsi_tt_oddio(am->amiga_slave,
+		stat = scsi_tt_oddio(am->amiga_ctlr, am->amiga_slave, sc->sc_punit,
 				     bp->b_un.b_addr, bp->b_bcount,
 				     bp->b_flags, 1);
 		if (stat == 0) {
@@ -836,7 +837,7 @@ stgo(unit)
 			stfinish(unit, sc, bp);
 		}
 	} else
-		stat = scsigo(am->amiga_ctlr, am->amiga_slave, 
+		stat = scsigo(am->amiga_ctlr, am->amiga_slave, sc->sc_punit,
 			      bp, cmd, pad);
 	if (stat) {
 		bp->b_error = EIO;
@@ -1069,10 +1070,12 @@ stintr(unit, stat)
 					       UNIT(bp->b_dev),
 					       bp->b_bcount - bp->b_resid);
 #endif
-				stat = scsi_tt_oddio(am->amiga_slave,
-						     0, -1, 0, 0);
+				stat = scsi_tt_oddio(am->amiga_ctlr, am->amiga_slave,
+						     sc->sc_punit, 0, -1, 0, 0);
 				if (stat == 0)
-					stat = scsi_tt_oddio(am->amiga_slave,
+					stat = scsi_tt_oddio(am->amiga_ctlr,
+							     am->amiga_slave,
+							     sc->sc_punit,
 							     bp->b_un.b_addr,
 							     bp->b_bcount - bp->b_resid,
 							     bp->b_flags, 0);
@@ -1277,7 +1280,7 @@ stxsense(ctlr, slave, unit, sc)
 
 	sensebuf = (u_char *)&st_xsense[sc->sc_dq.dq_unit];
 	len = sc->sc_datalen[CMD_REQUEST_SENSE];
-	scsi_request_sense(slave, sensebuf, len);
+	scsi_request_sense(ctlr, slave, unit, sensebuf, len);
 }
 
 prtkey(unit, sc)

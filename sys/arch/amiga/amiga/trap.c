@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.2 1993/08/01 19:22:53 mycroft Exp $
+ *	$Id: trap.c,v 1.3 1993/09/02 18:05:39 mw Exp $
  */
 
 #include "param.h"
@@ -542,6 +542,13 @@ syscall(code, frame)
 
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
+#if 0
+{
+int arg;
+extern char *syscallnames[];
+printf("{%d %s} ", p->p_pid, syscallnames[code]);
+}
+#endif
 	error = (*callp->sy_call)(p, &args, rval);
 #if 0
 {
