@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.14.2.2 2004/06/24 08:16:18 tron Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.14.2.3 2004/06/24 08:39:38 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -229,7 +229,8 @@ typedef struct {
 #define EHCI_QTD_GET_BYTES(x)	(((x) >> 16) &  0x7fff)
 #define EHCI_QTD_SET_BYTES(x)	((x) << 16)
 #define EHCI_QTD_GET_TOGGLE(x)	(((x) >> 31) &  0x1)
-#define EHCI_QTD_TOGGLE		0x80000000
+#define	EHCI_QTD_SET_TOGGLE(x)	((x) << 31)
+#define EHCI_QTD_TOGGLE_MASK	0x80000000
 	ehci_physaddr_t	qtd_buffer[EHCI_QTD_NBUFFERS];
 	ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
 } ehci_qtd_t;
