@@ -1,3 +1,5 @@
+/*	$NetBSD: reg.h,v 1.4 1994/10/26 21:09:57 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah Hdr: reg.h 1.1 90/07/09
  *
- *	from: @(#)reg.h	8.2 (Berkeley) 1/11/94
- *      $Id: reg.h,v 1.3 1994/05/27 09:02:12 glass Exp $
+ *	@(#)reg.h	8.2 (Berkeley) 1/11/94
  */
 
 /*

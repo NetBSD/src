@@ -1,3 +1,5 @@
+/*	$NetBSD: pcb.h,v 1.4 1994/10/26 21:09:49 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah Hdr: pcb.h 1.13 89/04/23
  *
- *	from: @(#)pcb.h	8.1 (Berkeley) 6/10/93
- *      $Id: pcb.h,v 1.3 1994/05/27 09:01:37 glass Exp $
+ *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: pmioctl.h,v 1.4 1994/10/26 21:09:51 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pmioctl.h	8.1 (Berkeley) 6/10/93
- *      $Id: pmioctl.h,v 1.3 1994/05/27 09:01:44 glass Exp $
+ *	@(#)pmioctl.h	8.1 (Berkeley) 6/10/93
  *
  * graphics.h --
  *
@@ -62,7 +63,6 @@
  *
  * from: Header: devSerialPmax.c,
  *	v 1.4 89/05/22 13:31:07 mnelson Exp  SPRITE (DECWRL)
- * $Id: pmioctl.h,v 1.3 1994/05/27 09:01:44 glass Exp $
  */
 
 #include <sys/ioctl.h>

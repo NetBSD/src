@@ -1,3 +1,5 @@
+/*	$NetBSD: aout_machdep.h,v 1.5 1994/10/26 21:09:39 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)exec.h	8.1 (Berkeley) 6/10/93
- *      $Id: aout_machdep.h,v 1.4 1994/05/27 09:00:56 glass Exp $
+ *	@(#)exec.h	8.1 (Berkeley) 6/10/93
  */
 
 #define	__LDPGSZ	4096
