@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.3 2002/03/28 20:04:27 uwe Exp $ */
+/*	$NetBSD: timer.c,v 1.4 2002/07/14 19:42:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -375,7 +375,7 @@ timerattach(cntreg, limreg)
 			break;
 	}
 
-	printf(" delay constant %d\n", timerblurb);
+	printf(": delay constant %d\n", timerblurb);
 
 #if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4OR4C) {
@@ -437,7 +437,7 @@ timerattach_msiiep(parent, self, aux)
 		if (t >= 100)
 			break;
 	}
-	printf(" delay constant %d\n", timerblurb);
+	printf(": delay constant %d\n", timerblurb);
 
 	/*
 	 * Set counter interrupt priority assignment:
