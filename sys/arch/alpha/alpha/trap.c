@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.67 2001/03/15 06:10:33 chs Exp $ */
+/* $NetBSD: trap.c,v 1.68 2001/04/20 00:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2001/03/15 06:10:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68 2001/04/20 00:10:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,10 +335,6 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			int s;
 #endif
 
-#if defined(MULTIPROCESSOR)
-			/* Block IPIs while we clean house. */
-			s = splhigh();
-#endif
 			/*
 			 * on exit from the kernel, if proc == fpcurproc,
 			 * FP is enabled.
@@ -351,9 +347,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 	
 			if (ci->ci_fpcurproc != NULL)
 				fpusave_cpu(ci, 1);
-#if defined(MULTIPROCESSOR)
-			splx(s);
-#endif
+
 			KDASSERT(ci->ci_fpcurproc == NULL);
 
 #if defined(MULTIPROCESSOR)
@@ -363,15 +357,12 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
 #endif
 
-#if defined(MULTIPROCESSOR)
-			s = splhigh();
-#endif
+			FPCPU_LOCK(&p->p_addr->u_pcb, s);
+
 			p->p_addr->u_pcb.pcb_fpcpu = ci;
 			ci->ci_fpcurproc = p;
-#if defined(MULTIPROCESSOR)
-			splx(s);
-			alpha_mb();
-#endif
+
+			FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
 
 			alpha_pal_wrfen(1);
 			restorefpstate(&p->p_addr->u_pcb.pcb_fp);
