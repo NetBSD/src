@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.2 1999/02/18 23:41:40 mycroft Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -227,7 +227,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	else if (pf->cfe->flags & PCMCIA_CFE_IRQPULSE)
 		ist = IST_PULSE;
 	else
-		ist = IST_LEVEL;
+		ist = IST_EDGE;
 
 	if (isa_intr_alloc(ic,
 	    PCIC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask, ist, &irq))
@@ -238,7 +238,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 
 	reg = pcic_read(h, PCIC_INTR);
 	reg &= ~PCIC_INTR_IRQ_MASK;
-	reg |= irq;
+	reg |= irq | PCIC_INTR_ENABLE;
 	pcic_write(h, PCIC_INTR, reg);
 
 	h->ih_irq = irq;
