@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.1 1997/05/13 17:35:55 augustss Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.2 1997/05/19 16:32:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -143,6 +143,7 @@ rdfield(struct field *p, char *q, char *sep)
 			warnx("Bad enum value %s", q);
 		break;
 	case AUDIO_MIXER_SET:
+		m->un.mask = 0;
 		for(v = 0; q && *q; q = s) {
 			s = strchr(q, ',');
 			if (s)
@@ -151,9 +152,9 @@ rdfield(struct field *p, char *q, char *sep)
 				if (strcmp(p->infp->un.s.member[i].label.name, q) == 0)
 					break;
 			if (i < p->infp->un.s.num_mem)
-				m->un.mask = 1 << i;
+				m->un.mask |= 1 << i;
 			else
-				warnx("Bad enum value %s", q);
+				warnx("Bad set value %s", q);
 		}
 		break;
 	case AUDIO_MIXER_VALUE:
