@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: MAKEDEV2manpage.pl,v 1.8 2001/09/05 23:53:22 wiz Exp $
+#	$NetBSD: MAKEDEV2manpage.pl,v 1.9 2001/09/08 01:30:22 wiz Exp $
 #
 # Copyright (c) 1999
 #	Hubert Feyrer <hubertf@netbsd.org>.  All rights reserved.
@@ -127,6 +127,9 @@ sub do_devices
     $l = read1line();
     do {
 	$l =~ s/#\s+//;
+	if ($l =~ /[^\s]:$/) {
+		$l =~ s/(.)$/ \1/;
+	}
 	print MANPAGE ".It $l";     # Print section heading
 
 	$l = read1line();
