@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2004/12/28 17:56:40 joff Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,6 +54,7 @@
 #define SET_KERNEL_3_NAME	"kern-IQ80310"
 #define SET_KERNEL_4_NAME	"kern-IQ80321"
 #define SET_KERNEL_5_NAME	"kern-TEAMASA_NPWR"
+#define SET_KERNEL_6_NAME	"kern-TS7200"
 
 #define MD_SETS_SELECTED (SET_SYSTEM)
 
