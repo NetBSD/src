@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2004/08/04 09:38:56 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -14,10 +14,6 @@ BUILDTARGETS+=  obj
 BUILDTARGETS+=	includes
 .endif
 BUILDTARGETS+=	do-tools
-BUILDTARGETS+=	do-lib-X11 do-lib-ICE do-lib-Xau
-BUILDTARGETS+=	do-lib-SM do-lib-Xext
-BUILDTARGETS+=	do-lib-Xt do-lib-Xpm do-lib-Xrender do-lib-GL
-BUILDTARGETS+=	do-lib-Xmu do-lib-dps do-lib-expat
 BUILDTARGETS+=	do-lib
 BUILDTARGETS+=	do-build
 
