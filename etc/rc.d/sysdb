@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.10 2002/09/16 02:23:31 perry Exp $
+# $NetBSD: sysdb,v 1.11 2002/10/08 16:21:52 atatat Exp $
 #
 
 # PROVIDE: sysdb
@@ -12,18 +12,40 @@
 name="sysdb"
 start_cmd="sysdb_start"
 stop_cmd=":"
+extra_commands="kvmdb devdb utmp"
+kvmdb_cmd="build_kvmdb"
+devdb_cmd="build_devdb"
+utmp_cmd="build_utmp"
 
 sysdb_start()
+{
+	echo "Building databases..."
+	build_kvmdb
+	build_devdb
+	build_utmp
+}
+
+build_kvmdb()
 {
 	#	Build ps databases. If this kernel supports
 	#	machdep.booted_kernel, use that to build the KVM db so dmesg
 	#	will run work when we boot /netbsd.new, etc.
 	#
-	echo "Building databases..."
 	booted_kernel=`sysctl -n machdep.booted_kernel 2>/dev/null`
 	kvm_mkdb "${booted_kernel:-/netbsd}"
-	dev_mkdb
+}
 
+build_devdb()
+{
+	if [ /var/run/dev.db -nt /dev ]; then
+		# it's fine
+	else
+		dev_mkdb
+	fi
+}
+
+build_utmp()
+{
 	#	Re-create /var/run/utmp and /var/run/utmpx, which are
 	#	deleted by mountcritlocal but can't be recreated by it
 	#	because install and chown may not be available then
