@@ -1,11 +1,11 @@
-#	$Id: Makefile.inc,v 1.2 1993/10/13 11:36:29 cgd Exp $
+#	$Id: Makefile.inc,v 1.3 1993/10/23 02:33:13 cgd Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
 C_SA_DIR=	$S/lib/libc_sa
 
-.if exists($(C_SA_DIR)/obj)
-C_SA_LIBDIR=	$(C_SA_DIR)/obj
+.if exists($(C_SA_DIR)/obj.${MACHINE})
+C_SA_LIBDIR=	$(C_SA_DIR)/obj.${MACHINE}
 .else
 C_SA_LIBDIR=	$(C_SA_DIR)
 .endif

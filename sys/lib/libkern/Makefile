@@ -1,7 +1,8 @@
-#	$Id: Makefile,v 1.2 1993/10/13 05:55:19 cgd Exp $
+#	$Id: Makefile,v 1.3 1993/10/23 02:33:18 cgd Exp $
 
 LIB=	kern
 NOPIC=
+OBJMACHINE=
 
 .if exists (${.CURDIR}/${MACHINE}/Makefile.inc)
 .PATH:	${.CURDIR}/${MACHINE}
