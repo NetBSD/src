@@ -1,0 +1,9 @@
+| $NetBSD: !Edit,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+|
+| !Edit file for !BtNetBSD application
+|
+
+Set BtNetBSD$Dir <Obey$Dir>
+
+Filer_OpenDir <BtNetBSD$Dir>
+Filer_Run <BtNetBSD$Dir>.fastboot
