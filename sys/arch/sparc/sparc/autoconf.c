@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.2 1993/10/11 02:16:12 deraadt Exp $
+ * $Id: autoconf.c,v 1.3 1993/10/16 07:23:10 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -84,10 +84,6 @@ static	int findblkmajor __P((struct dkdevice *));
 static	struct device *getdisk __P((char *, int, int, dev_t *));
 
 struct	bootpath bootpath[8];
-
-/* TDR -- this is a hack, and the entire file needs redoing */
-extern int ufs_mountroot();
-int (*mountroot)() = ufs_mountroot;
 
 /*
  * Most configuration on the SPARC is done by matching OPENPROM Forth
