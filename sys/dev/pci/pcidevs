@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.122 1999/05/23 21:26:54 veego Exp $
+$NetBSD: pcidevs,v 1.123 1999/05/27 02:51:19 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -964,6 +964,7 @@ product OLICOM OC2326	0x0014	Olicom OC-2326 10/100-TX Ethernet
 product SUN EBUS	0x1000	SPARC Ebus
 product SUN HMENETWORK	0x1001	SUNW,hme compatible Ethernet
 product SUN SIMBA	0x5000	Simba PCI bus
+product SUN US_IIi	0xa000	UltraSPARC IIi PCI bus
 
 /* NCR/Symbios Logic products */
 product SYMBIOS 810	0x0001	53c810
