@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.70 2004/03/21 20:01:41 dsl Exp $	*/
+/*	$NetBSD: setup.c,v 1.71 2004/04/12 06:28:05 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.70 2004/03/21 20:01:41 dsl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.71 2004/04/12 06:28:05 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -721,7 +721,7 @@ readsb(listerr)
 			for ( ; olp < endlp; olp++, nlp++) {
 				if (*olp == *nlp)
 					continue;
-				printf("offset %#x, original 0x%08x, alternate"
+				printf("offset %#x, original 0x%08x, alternate "
 				       "0x%08x\n",
 				    (int)((uint8_t *)olp-(uint8_t *)sblock),
 				    *olp, *nlp);
