@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clnp_input.c	7.13 (Berkeley) 5/6/91
- *	$Id: clnp_input.c,v 1.2 1993/05/20 05:26:51 cgd Exp $
+ *	$Id: clnp_input.c,v 1.3 1993/05/21 12:50:54 cgd Exp $
  */
 
 /***********************************************************
@@ -534,21 +534,60 @@ struct snpa_hdr	*shp;	/* subnetwork header */
 		IFDEBUG(D_INPUT)
 			printf("clnp_input: echoing packet\n");
 		ENDDEBUG
-		/*
-		 *	Switch the source and destination address,
-		 */
-		hoff = (caddr_t)clnp + sizeof(struct clnp_fixed);
-		CLNP_INSERT_ADDR(hoff, src);
-		CLNP_INSERT_ADDR(hoff, dst);
-		clnp->cnf_type &= ~CNF_TYPE;
-		clnp->cnf_type |= CLNP_ECR;
+		{
+			/*
+			 * Echo whole datagram in a new datagram, as per RFC 1139
+			 * and ISO/IEC 8473-1, 2nd edition.
+			 */
+			static struct clnp_fixed ecr_template = {
+				ISO8473_CLNP,	/* network identifier */
+				0,				/* length */
+				ISO8473_V1,		/* version */
+				CLNP_TTL,		/* ttl */
+				CLNP_ECR|CNF_SEG_OK,/* type & flags */
+				0,				/* segment length */
+				0				/* checksum */
+			};
+			struct clnp_segment		*seg;
+			register struct mbuf	*mnew;
 
-		/*
-		 *	Forward back to sender
-		 */
-		clnp_forward(m, (int)
-			(clnp->cnf_type & CNF_SEG_OK ? seg_part.cng_tot_len : seg_len),
-			&src, oidxp, seg_off, 0);
+			/* Get header */
+			MGETHDR(mnew, M_DONTWAIT, MT_HEADER);
+			if (mnew == 0) {
+				m_freem(m);
+				INCSTAT(cns_odropped);
+				return;
+			}
+			mnew->m_next = m; /* chain in old datagram */
+
+			/* construct new CLNP PDU header */
+			clnp = mtod(mnew, struct clnp_fixed *);
+			*clnp = ecr_template;
+			hoff = (caddr_t)clnp + sizeof(struct clnp_fixed);
+
+			/* Insert addresses in reverse order from original PDU */
+			CLNP_INSERT_ADDR(hoff, src);
+			CLNP_INSERT_ADDR(hoff, dst);
+			/* Insert empty segmentation part */
+			seg = (struct clnp_segment*) hoff;
+			bzero((caddr_t)seg, sizeof(struct clnp_segment));
+			/* increment offset accordingly */
+			hoff += sizeof(struct clnp_segment);
+
+			/* Calculate length */
+			clnp->cnf_hdr_len = mnew->m_len = (u_char)(hoff - (caddr_t)clnp);
+			seg_len += clnp->cnf_hdr_len;
+			/* Stuff in packet at various places... */
+			seg->cng_tot_len = seg_len;
+			clnp->cnf_seglen_msb = (seg_len & 0xff00) >> 8;
+			clnp->cnf_seglen_lsb = (seg_len & 0x00ff);
+
+			/*
+			 * Forward (umm... really send new PDU) back to sender
+			 */
+			clnp_forward(mnew, (int)seg_len, &src, (struct clnp_optidx *)0,
+					/*seg_off*/0, (struct snpa_hdr *)0);
+		}
 		break;
 
 	default:
