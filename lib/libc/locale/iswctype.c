@@ -51,26 +51,6 @@ static char sccsid[] = "@(#)iswctype.c	8.3 (Berkeley) 2/24/94";
 #define _BSD_RUNE_T_    int
 #define _BSD_CT_RUNE_T_ _rune_t
 #include "runetype.h"
-#define	_A	___A
-#define	_C	___C
-#define	_D	___D
-#define	_G	___G
-#define	_L	___L
-#define	_P	___P
-#define	_S	___S
-#define	_U	___U
-#define	_X	___X
-#define	_B	___B
-#define	_R	___R
-#define	_I	___I
-#define	_T	___T
-#define	_Q	___Q
-#define	_SWM	___SWM
-#define	_SWS	___SWS
-#define	_SW0	___SW0
-#define	_SW1	___SW1
-#define	_SW2	___SW2
-#define	_SW3	___SW3
 #endif
 
 #undef iswalnum
@@ -78,7 +58,7 @@ int
 iswalnum(c)
 	wint_t c;
 {
-	return (__istype_w((c), _A)|__isctype_w((c), _D));
+	return (__istype_w((c), _CTYPE_A)|__isctype_w((c), _CTYPE_D));
 }
 
 #undef iswalpha
@@ -86,7 +66,7 @@ int
 iswalpha(c)
 	wint_t c;
 {
-	return (__istype_w((c), _A));
+	return (__istype_w((c), _CTYPE_A));
 }
 
 #undef iswcntrl
@@ -94,7 +74,7 @@ int
 iswcntrl(c)
 	wint_t c;
 {
-	return (__istype_w((c), _C));
+	return (__istype_w((c), _CTYPE_C));
 }
 
 #undef iswdigit
@@ -102,7 +82,7 @@ int
 iswdigit(c)
 	wint_t c;
 {
-	return (__isctype_w((c), _D));
+	return (__isctype_w((c), _CTYPE_D));
 }
 
 #undef iswgraph
@@ -110,7 +90,7 @@ int
 iswgraph(c)
 	wint_t c;
 {
-	return (__istype_w((c), _G));
+	return (__istype_w((c), _CTYPE_G));
 }
 
 #undef iswlower
@@ -118,7 +98,7 @@ int
 iswlower(c)
 	wint_t c;
 {
-	return (__istype_w((c), _L));
+	return (__istype_w((c), _CTYPE_L));
 }
 
 #undef iswprint
@@ -126,7 +106,7 @@ int
 iswprint(c)
 	wint_t c;
 {
-	return (__istype_w((c), _R));
+	return (__istype_w((c), _CTYPE_R));
 }
 
 #undef iswpunct
@@ -134,7 +114,7 @@ int
 iswpunct(c)
 	wint_t c;
 {
-	return (__istype_w((c), _P));
+	return (__istype_w((c), _CTYPE_P));
 }
 
 #undef iswspace
@@ -142,7 +122,7 @@ int
 iswspace(c)
 	wint_t c;
 {
-	return (__istype_w((c), _S));
+	return (__istype_w((c), _CTYPE_S));
 }
 
 #undef iswupper
@@ -150,7 +130,7 @@ int
 iswupper(c)
 	wint_t c;
 {
-	return (__istype_w((c), _U));
+	return (__istype_w((c), _CTYPE_U));
 }
 
 #undef iswxdigit
@@ -158,7 +138,7 @@ int
 iswxdigit(c)
 	wint_t c;
 {
-	return (__isctype_w((c), _X));
+	return (__isctype_w((c), _CTYPE_X));
 }
 
 #undef towlower
@@ -182,6 +162,6 @@ int
 wcwidth(c)
 	wint_t c;
 {
-        return ((unsigned)__maskrune_w((c), _SWM)>>_SWS);
+        return ((unsigned)__maskrune_w((c), _CTYPE_SWM)>>_CTYPE_SWS);
 }
 

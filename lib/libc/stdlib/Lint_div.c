@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_div.c,v 1.1 1997/11/06 00:51:36 cgd Exp $	*/
+/* $NetBSD: Lint_div.c,v 1.1.10.1 2000/06/23 16:59:09 minoura Exp $ */
 
 /*
  * This file placed in the public domain.

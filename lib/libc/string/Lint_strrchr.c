@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_strrchr.c,v 1.1 1997/11/06 00:52:38 cgd Exp $	*/
+/* $NetBSD: Lint_strrchr.c,v 1.1.10.1 2000/06/23 16:59:18 minoura Exp $ */
 
 /*
  * This file placed in the public domain.

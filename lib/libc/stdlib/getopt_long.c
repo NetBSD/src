@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.5 2000/04/02 22:04:06 christos Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.5.2.1 2000/06/23 16:59:10 minoura Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.5 2000/04/02 22:04:06 christos Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.5.2.1 2000/06/23 16:59:10 minoura Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -92,10 +92,12 @@ static int nonopt_start = -1; /* first non option argument (for permute) */
 static int nonopt_end = -1;   /* first option after non options (for permute) */
 
 /* Error messages */
-static const char recarg[] = "option requires an argument -- %c";
+static const char recargchar[] = "option requires an argument -- %c";
+static const char recargstring[] = "option requires an argument -- %s";
 static const char ambig[] = "ambiguous option -- %.*s";
 static const char noarg[] = "option doesn't take an argument -- %.*s";
-static const char illopt[] = "illegal option -- %s";
+static const char illoptchar[] = "illegal option -- %c";
+static const char illoptstring[] = "illegal option -- %s";
 
 
 extern char *__progname;
@@ -246,7 +248,7 @@ start:
 		if (!*place)
 			++optind;
 		if (PRINT_ERROR)
-			warnx(illopt, optchar);
+			warnx(illoptchar, optchar);
 		optopt = optchar;
 		return BADCH;
 	}
@@ -258,7 +260,7 @@ start:
 		if (++optind >= nargc) {	/* no arg */
 			place = EMSG;
 			if (PRINT_ERROR)
-				warnx(recarg, optchar);
+				warnx(recargchar, optchar);
 			optopt = optchar;
 			/* XXX: GNU returns '?' if options[0] != ':' */
 			return BADARG;
@@ -282,7 +284,7 @@ start:
 			if (++optind >= nargc) {	/* no arg */
 				place = EMSG;
 				if (PRINT_ERROR)
-					warnx(recarg, optchar);
+					warnx(recargchar, optchar);
 				optopt = optchar;
 				/* XXX: GNU returns '?' if options[0] != ':' */
 				return BADARG;
@@ -439,7 +441,7 @@ getopt_long(nargc, nargv, options, long_options, idx)
 				 * indicates no error should be generated
 				 */
 				if (PRINT_ERROR)
-					warnx(recarg, current_argv);
+					warnx(recargstring, current_argv);
 				/*
 				 * XXX: GNU sets optopt to val regardless
 				 * of flag
@@ -454,7 +456,7 @@ getopt_long(nargc, nargv, options, long_options, idx)
 			}
 		} else {			/* unknown option */
 			if (PRINT_ERROR)
-				warnx(illopt, current_argv);
+				warnx(illoptstring, current_argv);
 			optopt = 0;
 			return BADCH;
 		}

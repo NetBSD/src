@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: runeglue.c,v 1.2 2000/02/01 14:58:31 cvscitrus Exp
+ *	from: Id: runeglue.c,v 1.3 2000/06/18 21:29:43 tshiozak Exp 
  */
 
 /*
@@ -62,21 +62,21 @@ __runetable_to_netbsd_ctype()
     __current_tolower[0] = EOF;
     for (i=0; i<_CTYPE_NUM_CHARS; i++) {
         __current_ctype[i+1]=0;
-        if ( _CurrentRuneLocale->__runetype[i]&___U )
+        if ( _CurrentRuneLocale->__runetype[i]&_CTYPE_U )
             __current_ctype[i+1]|=_U;
-        if ( _CurrentRuneLocale->__runetype[i]&___L )
+        if ( _CurrentRuneLocale->__runetype[i]&_CTYPE_L )
             __current_ctype[i+1]|=_L;
-        if ( _CurrentRuneLocale->__runetype[i]&___D )
+        if ( _CurrentRuneLocale->__runetype[i]&_CTYPE_D )
             __current_ctype[i+1]|=_N;
-        if ( _CurrentRuneLocale->__runetype[i]&___S )
+        if ( _CurrentRuneLocale->__runetype[i]&_CTYPE_S )
             __current_ctype[i+1]|=_S;
-        if ( _CurrentRuneLocale->__runetype[i]&___P )
+        if ( _CurrentRuneLocale->__runetype[i]&_CTYPE_P )
             __current_ctype[i+1]|=_P;
-        if ( _CurrentRuneLocale->__runetype[i]&___C )
+        if ( _CurrentRuneLocale->__runetype[i]&_CTYPE_C )
             __current_ctype[i+1]|=_C;
-        if ( _CurrentRuneLocale->__runetype[i]&___X )
+        if ( _CurrentRuneLocale->__runetype[i]&_CTYPE_X )
             __current_ctype[i+1]|=_X;
-        if ( _CurrentRuneLocale->__runetype[i]&___B )
+        if ( _CurrentRuneLocale->__runetype[i]&_CTYPE_B )
             __current_ctype[i+1]|=_B;
         __current_toupper[i+1] = (short)_CurrentRuneLocale->__mapupper[i];
         __current_tolower[i+1] = (short)_CurrentRuneLocale->__maplower[i];

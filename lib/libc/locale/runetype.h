@@ -99,49 +99,27 @@ typedef struct {
 	_rune_t		__invalid_rune;
 
 	unsigned long	__runetype[_CACHED_RUNES];
-#if defined(__FreeBSD__)
-#define	_A	0x00000100L		/* Alpha */
-#define	_C	0x00000200L		/* Control */
-#define	_D	0x00000400L		/* Digit */
-#define	_G	0x00000800L		/* Graph */
-#define	_L	0x00001000L		/* Lower */
-#define	_P	0x00002000L		/* Punct */
-#define	_S	0x00004000L		/* Space */
-#define	_U	0x00008000L		/* Upper */
-#define	_X	0x00010000L		/* X digit */
-#define	_B	0x00020000L		/* Blank */
-#define	_R	0x00040000L		/* Print */
-#define	_I	0x00080000L		/* Ideogram */
-#define	_T	0x00100000L		/* Special */
-#define	_Q	0x00200000L		/* Phonogram */
-#define	_SWM	0xc0000000L		/* Mask to get screen width data */
-#define	_SWS	30			/* Bits to shift to get width */
-#define	_SW0	0x00000000L		/* 0 width character */
-#define	_SW1	0x40000000L		/* 1 width character */
-#define	_SW2	0x80000000L		/* 2 width character */
-#define	_SW3	0xc0000000L		/* 3 width character */
-#else  /* __FreeBSD__ */
-#define	___A	0x00000100L		/* Alpha */
-#define	___C	0x00000200L		/* Control */
-#define	___D	0x00000400L		/* Digit */
-#define	___G	0x00000800L		/* Graph */
-#define	___L	0x00001000L		/* Lower */
-#define	___P	0x00002000L		/* Punct */
-#define	___S	0x00004000L		/* Space */
-#define	___U	0x00008000L		/* Upper */
-#define	___X	0x00010000L		/* X digit */
-#define	___B	0x00020000L		/* Blank */
-#define	___R	0x00040000L		/* Print */
-#define	___I	0x00080000L		/* Ideogram */
-#define	___T	0x00100000L		/* Special */
-#define	___Q	0x00200000L		/* Phonogram */
-#define	___SWM	0xc0000000L		/* Mask to get screen width data */
-#define	___SWS	30			/* Bits to shift to get width */
-#define	___SW0	0x00000000L		/* 0 width character */
-#define	___SW1	0x40000000L		/* 1 width character */
-#define	___SW2	0x80000000L		/* 2 width character */
-#define	___SW3	0xc0000000L		/* 3 width character */
-#endif /* __FreeBSD__ */
+
+#define	_CTYPE_A	0x00000100L	/* Alpha */
+#define	_CTYPE_C	0x00000200L	/* Control */
+#define	_CTYPE_D	0x00000400L	/* Digit */
+#define	_CTYPE_G	0x00000800L	/* Graph */
+#define	_CTYPE_L	0x00001000L	/* Lower */
+#define	_CTYPE_P	0x00002000L	/* Punct */
+#define	_CTYPE_S	0x00004000L	/* Space */
+#define	_CTYPE_U	0x00008000L	/* Upper */
+#define	_CTYPE_X	0x00010000L	/* X digit */
+#define	_CTYPE_B	0x00020000L	/* Blank */
+#define	_CTYPE_R	0x00040000L	/* Print */
+#define	_CTYPE_I	0x00080000L	/* Ideogram */
+#define	_CTYPE_T	0x00100000L	/* Special */
+#define	_CTYPE_Q	0x00200000L	/* Phonogram */
+#define	_CTYPE_SWM	0xc0000000L	/* Mask to get screen width data */
+#define	_CTYPE_SWS	30		/* Bits to shift to get width */
+#define	_CTYPE_SW0	0x00000000L	/* 0 width character */
+#define	_CTYPE_SW1	0x40000000L	/* 1 width character */
+#define	_CTYPE_SW2	0x80000000L	/* 2 width character */
+#define	_CTYPE_SW3	0xc0000000L	/* 3 width character */
 	_rune_t		__maplower[_CACHED_RUNES];
 	_rune_t		__mapupper[_CACHED_RUNES];
 

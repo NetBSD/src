@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.51 2000/05/08 13:38:44 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.51.2.1 2000/06/23 16:58:53 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #define authunix_create_default _authunix_create_default
 #define basename		_basename
 #define bindresvport		_bindresvport
+#define bindresvport_sa		_bindresvport_sa
 #define bm_comp			_bm_comp
 #define bm_exec			_bm_exec
 #define bm_free			_bm_free
@@ -104,12 +105,18 @@
 #define cgetustr		_cgetustr
 #define clnt_broadcast		_clnt_broadcast
 #define clnt_create		_clnt_create
+#define clnt_create_vers	_clnt_create_vers
+#define clnt_dg_create		_clnt_dg_create
 #define clnt_pcreateerror	_clnt_pcreateerror
 #define clnt_perrno		_clnt_perrno
 #define clnt_perror		_clnt_perror
+#define clnt_raw_create		_clnt_raw_create
+#define clnt_tli_create		_clnt_tli_create
+#define clnt_tp_create		_clnt_tp_create
 #define clnt_spcreateerror	_clnt_spcreateerror
 #define clnt_sperrno		_clnt_sperrno
 #define clnt_sperror		_clnt_sperror
+#define clnt_vc_create		_clnt_vc_create
 #define clntraw_create		_clntraw_create
 #define clnttcp_create		_clnttcp_create
 #define clntudp_bufcreate	_clntudp_bufcreate
@@ -138,6 +145,7 @@
 #define endfsent		_endfsent
 #define endgrent		_endgrent
 #define endhostent		_endhostent
+#define endnetconfig		_endnetconfig
 #define endnetent		_endnetent
 #define endnetgrent		_endnetgrent
 #define endprotoent		_endprotoent
@@ -160,6 +168,7 @@
 #define fdopen			_fdopen
 #define fgetln			_fgetln
 #define fnmatch			_fnmatch
+#define freenetconfigent	_freenetconfigent
 #define freeaddrinfo		_freeaddrinfo
 #define freeifaddrs		_freeifaddrs
 #define ftok			_ftok
@@ -194,8 +203,11 @@
 #define getnameinfo		_getnameinfo
 #define getnetbyaddr		_getnetbyaddr
 #define getnetbyname		_getnetbyname
+#define getnetconfig		_getnetconfig
+#define getnetconfigent		_getnetconfigent
 #define getnetent		_getnetent
 #define getnetgrent		_getnetgrent
+#define getnetpath		_getnetpath
 #define getopt			_getopt
 #define getopt_long		_getopt_long
 #define getpagesize		_getpagesize
@@ -291,6 +303,8 @@
 #define mpool_put		_mpool_put
 #define mpool_sync		_mpool_sync
 #define mrand48			_mrand48
+#define nc_perror		_nc_perror
+#define nc_sperror		_nc_sperror
 #define nice			_nice
 #if 0
 #define nlist			_nlist
@@ -329,6 +343,17 @@
 #define res_query		_res_query
 #define res_search		_res_search
 #define rewinddir		_rewinddir
+#define rpc_broadcast		_rpc_broadcast
+#define rpc_broadcast_exp	_rpc_broadcast_exp
+#define rpc_call		_rpc_call
+#define rpc_reg			_rpc_reg
+#define rpcb_getmaps		_rpcb_getmaps
+#define rpcb_gettime		_rpcb_gettime
+#define rpcb_rmtcall		_rpcb_rmtcall
+#define rpcb_set		_rpcb_set
+#define rpcb_taddr2uaddr	_rpcb_taddr2uaddr
+#define rpcb_uaddr2taddr	_rpcb_uaddr2taddr
+#define rpcb_unset		_rpcb_unset
 #define scandir			_scandir
 #define seed48			_seed48
 #define seekdir			_seekdir
@@ -342,9 +367,11 @@
 #define sethostname		_sethostname
 #define setlogmask		_setlogmask
 #define setmode			_setmode
+#define setnetconfig		_setnetconfig
 #define setnetent		_setnetent
 #define setnetgrent		_setnetgrent
 #define setpassent		_setpassent
+#define setnetpath		_setnetpath
 #define setproctitle		_setproctitle
 #define setprotoent		_setprotoent
 #define setpwent		_setpwent
@@ -378,12 +405,24 @@
 #define strunvis		_strunvis
 #define strvis			_strvis
 #define strvisx			_strvisx
+#define svc_auth_reg		_svc_auth_reg
+#define svc_create		_svc_create
+#define svc_dg_create		_svc_dg_create
+#define svc_exit		_svc_exit
+#define svc_fd_create		_svc_fd_create
 #define svc_getreq		_svc_getreq
 #define svc_getreqset		_svc_getreqset
+#define svc_getreq_common	_svc_getreq_common
+#define svc_raw_create		_svc_raw_create
 #define svc_register		_svc_register
+#define svc_reg			_svc_reg
 #define svc_run			_svc_run
 #define svc_sendreply		_svc_sendreply
+#define svc_tli_create		_svc_tli_create
+#define svc_tp_create		_svc_tp_create
 #define svc_unregister		_svc_unregister
+#define svc_unreg		_svc_unreg
+#define svc_vc_create		_svc_vc_create
 #define svcerr_auth		_svcerr_auth
 #define svcerr_decode		_svcerr_decode
 #define svcerr_noproc		_svcerr_noproc
@@ -462,6 +501,7 @@
 #define xdr_long		_xdr_long
 #define	xdr_longlong_t		_xdr_longlong_t
 #define xdr_mapname		_xdr_mapname
+#define xdr_netbuf		_xdr_netbuf
 #define xdr_netobj		_xdr_netobj
 #define xdr_opaque		_xdr_opaque
 #define xdr_opaque_auth		_xdr_opaque_auth
@@ -474,6 +514,22 @@
 #define xdr_replymsg		_xdr_replymsg
 #define xdr_rmtcall_args	_xdr_rmtcall_args
 #define xdr_rmtcallres		_xdr_rmtcallres
+#define xdr_rpcb		_xdr_rpcb
+#define xdr_rpcb_entry		_xdr_rpcb_entry
+#define xdr_rpcb_entry_list_ptr	_xdr_rpcb_entry_list_ptr
+#define xdr_rpcb_rmtcallargs	_xdr_rpcb_rmtcallargs
+#define xdr_rpcb_rmtcallres	_xdr_rpcb_rmtcallres
+#define xdr_rpcb_stat		_xdr_rpcb_stat
+#define xdr_rpcb_stat_byvers	_xdr_rpcb_stat_byvers
+#define xdr_rpcblist		_xdr_rpcblist
+#define xdr_rpcblist_ptr	_xdr_rpcblist_ptr
+#define xdr_rpcbs_addrlist	_xdr_rpcbs_addrlist
+#define xdr_rpcbs_addrlist_ptr	_xdr_rpcbs_addrlist_ptr
+#define xdr_rpcbs_proc		_xdr_rpcbs_proc
+#define xdr_rpcbs_rmtcalllist	_xdr_rpcbs_rmtcalllist
+#define xdr_rpcbs_rmtcalllist_ptr	_xdr_rpcbs_rmtcalllist_ptr
+#define xdr_rpcbs		_xdr_rpcbs
+#define xdr_rpcbs		_xdr_rpcbs
 #define xdr_short		_xdr_short
 #define xdr_string		_xdr_string
 #define xdr_u_char		_xdr_u_char
