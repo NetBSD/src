@@ -86,13 +86,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strtod.c,v 1.7 1993/11/11 02:08:55 jtc Exp $";
+static char *rcsid = "$Id: strtod.c,v 1.8 1993/12/03 03:30:16 briggs Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef i386
 #define IEEE_8087
 #endif
-#if defined(hp300) || defined(sparc) || defined(amiga)
+#if defined(hp300) || defined(sparc) || defined(amiga) || defined(mc68000)
 #define IEEE_MC68k
 #endif
 #ifdef vax
