@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.7 1995/03/21 18:48:47 mycroft Exp $	*/
+/*	$NetBSD: tape.c,v 1.8 1997/04/10 05:36:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.7 1995/03/21 18:48:47 mycroft Exp $";
+static char rcsid[] = "$NetBSD: tape.c,v 1.8 1997/04/10 05:36:26 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static char rcsid[] = "$NetBSD: tape.c,v 1.7 1995/03/21 18:48:47 mycroft Exp $";
 #ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #else
 int	write(), read();
@@ -120,6 +121,9 @@ struct slave {
 struct slave *slp;
 
 char	(*nextblock)[TP_BSIZE];
+
+static time_t tstart_volume;	/* time of volume start */
+static int tapea_volume;	/* value of spcl.c_tapea at volume start */
 
 int master;		/* pid of master, for sending error signals */
 int tenths;		/* length of tape used per block written */
@@ -237,6 +241,30 @@ sigpipe(signo)
 {
 
 	quit("Broken pipe\n");
+}
+
+/*
+ * do_stats --
+ *	Update xferrate stats
+ */
+time_t
+do_stats()
+{
+	time_t tnow, ttaken;
+	int blocks;
+
+	(void)time(&tnow);
+	ttaken = tnow - tstart_volume;
+	blocks = spcl.c_tapea - tapea_volume;
+	msg("Volume %d completed at: %s", tapeno, ctime(&tnow));
+	if (ttaken > 0) {
+		msg("Volume %d took %d:%02d:%02d\n", tapeno,
+		    ttaken / 3600, (ttaken % 3600) / 60, ttaken % 60); 
+		msg("Volume %d transfer rate: %ldK/s\n", tapeno,
+		    blocks / ttaken);
+		xferrate += blocks / ttaken;
+	}
+	return(tnow);
 }
 
 static void
@@ -373,6 +401,7 @@ void
 close_rewind()
 {
 	trewind();
+	(void)do_stats();
 	if (nexttape)
 		return;
 	if (!nogripe) {
@@ -518,6 +547,8 @@ startnewtape(top)
 
 	interrupt_save = signal(SIGINT, SIG_IGN);
 	parentpid = getpid();
+	tapea_volume = spcl.c_tapea;
+	(void)time(&tstart_volume);
 
 restore_check_point:
 	(void)signal(SIGINT, interrupt_save);
@@ -630,6 +661,7 @@ restore_check_point:
 		spcl.c_flags |= DR_NEWHEADER;
 		writeheader((ino_t)slp->inode);
 		spcl.c_flags &=~ DR_NEWHEADER;
+		msg("Volume %d started at: %s", tapeno, ctime(&tstart_volume));
 		if (tapeno > 1)
 			msg("Volume %d begins with blocks from inode %d\n",
 				tapeno, slp->inode);
