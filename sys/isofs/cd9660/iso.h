@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.14 1996/10/25 23:14:03 cgd Exp $	*/
+/*	$NetBSD: iso.h,v 1.15 1996/12/22 10:10:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -167,7 +167,7 @@ struct iso_mnt {
 #define blksize(imp, ip, lbn)	((imp)->logical_block_size)
 
 int cd9660_mount __P((struct mount *,
-	    char *, caddr_t, struct nameidata *, struct proc *));
+	    const char *, void *, struct nameidata *, struct proc *));
 int cd9660_start __P((struct mount *, int, struct proc *));
 int cd9660_unmount __P((struct mount *, int, struct proc *));
 int cd9660_root __P((struct mount *, struct vnode **));

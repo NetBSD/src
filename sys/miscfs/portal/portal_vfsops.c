@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.15 1996/12/22 10:10:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <miscfs/portal/portal.h>
 
 void	portal_init __P((void));
-int	portal_mount __P((struct mount *, char *, caddr_t,
+int	portal_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct proc *));
 int	portal_start __P((struct mount *, int, struct proc *));
 int	portal_unmount __P((struct mount *, int, struct proc *));
@@ -88,8 +88,8 @@ portal_init()
 int
 portal_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
-	caddr_t data;
+	const char *path;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {

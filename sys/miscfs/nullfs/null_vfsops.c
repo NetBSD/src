@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.13 1996/10/13 02:21:34 christos Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.14 1996/12/22 10:10:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
 #include <sys/malloc.h>
 #include <miscfs/nullfs/null.h>
 
-int	nullfs_mount __P((struct mount *, char *, caddr_t,
+int	nullfs_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct proc *));
 int	nullfs_start __P((struct mount *, int, struct proc *));
 int	nullfs_unmount __P((struct mount *, int, struct proc *));
@@ -74,8 +74,8 @@ int	nullfs_vptofh __P((struct vnode *, struct fid *));
 int
 nullfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
-	caddr_t data;
+	const char *path;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {

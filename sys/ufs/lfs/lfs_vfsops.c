@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.11 1996/03/25 12:53:35 pk Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.12 1996/12/22 10:10:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -93,8 +93,8 @@ lfs_mountroot()
 int
 lfs_mount(mp, path, data, ndp, p)
 	register struct mount *mp;
-	char *path;
-	caddr_t data;
+	const char *path;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {

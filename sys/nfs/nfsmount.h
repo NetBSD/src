@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.12 1996/12/03 00:22:50 thorpej Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.13 1996/12/22 10:10:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -100,10 +100,11 @@ struct	nfsmount {
 /*
  * Prototypes for NFS mount operations
  */
-int	nfs_mount __P((struct mount *mp, char *path, caddr_t data,
+int	nfs_mount __P((struct mount *mp, const char *path, void *data,
 		struct nameidata *ndp, struct proc *p));
 int	mountnfs __P((struct nfs_args *argp, struct mount *mp,
-		struct mbuf *nam, char *pth, char *hst, struct vnode **vpp));
+		struct mbuf *nam, const char *pth, const char *hst,
+		struct vnode **vpp));
 int	nfs_mountroot __P((void));
 void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *));
 int	nfs_start __P((struct mount *mp, int flags, struct proc *p));

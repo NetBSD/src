@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.5 1996/09/01 23:49:18 mycroft Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.6 1996/12/22 10:10:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -86,7 +86,7 @@ void ffs_setblock __P((struct fs *, unsigned char *, daddr_t));
 
 /* ffs_vfsops.c */
 int ffs_mountroot __P((void));
-int ffs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
+int ffs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		   struct proc *));
 int ffs_reload __P((struct mount *, struct ucred *, struct proc *));
 int ffs_mountfs __P((struct vnode *, struct mount *, struct proc *));
