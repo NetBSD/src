@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.19 2004/11/14 02:48:27 nathanw Exp $
+# $NetBSD: md.macppc,v 1.20 2004/11/14 19:53:59 nathanw Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xmacppc
@@ -118,6 +118,7 @@
 ./usr/X11R6/lib/modules/drivers/tdfx_drv.o
 ./usr/X11R6/lib/modules/drivers/trident_drv.o
 ./usr/X11R6/lib/modules/drivers/vga_drv.o
+./usr/X11R6/lib/modules/drivers/wsfb.o	xserver-obsolete	obsolete
 ./usr/X11R6/lib/modules/drivers/wsfb_drv.o
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
 ./usr/X11R6/lib/modules/extensions/libdbe.a
