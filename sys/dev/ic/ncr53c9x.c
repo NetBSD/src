@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.111 2004/05/03 12:25:34 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.112 2004/09/10 23:44:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.111 2004/05/03 12:25:34 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.112 2004/09/10 23:44:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,6 +444,10 @@ ncr53c9x_init(sc, doreset)
 		/* All instances share this pool */
 		pool_init(&ecb_pool, sizeof(struct ncr53c9x_ecb), 0, 0, 0,
 		    "ncr53c9x_ecb", NULL);
+		/* make sure to always have some items to play with */
+		if (pool_prime(&ecb_pool, 1) == ENOMEM) {
+			printf("WARNING: not enough memory for ncr53c9x_ecb\n");
+		}
 		ecb_pool_initialized = 1;
 	}
 
@@ -858,7 +862,8 @@ ncr53c9x_scsipi_request(chan, req, arg)
 		ecb = ncr53c9x_get_ecb(sc, xs->xs_control);
 		/*
 		 * This should never happen as we track resources
-		 * in the mid-layer.
+		 * in the mid-layer, but for now it can as pool_get()
+		 * can fail.
 		 */
 		if (ecb == NULL) {
 			scsipi_printaddr(periph);
