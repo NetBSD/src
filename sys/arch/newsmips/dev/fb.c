@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.7 2000/11/15 14:43:44 tsubai Exp $	*/
+/*	$NetBSD: fb.c,v 1.8 2000/11/15 15:01:14 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -67,7 +67,7 @@ int fb_show_screen(void *, void *, int, void (*)(void *, int, int), void *);
 
 void fb_cnattach(void);
 
-static void fb253_init(int);
+static void fb253_init();
 
 struct cfattach fb_ca = {
 	sizeof(struct fb_softc), fb_match, fb_attach,
@@ -155,7 +155,7 @@ fb_attach(parent, self, aux)
 		/* clear screen */
 		(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, 0);
 
-		fb253_init(id);
+		fb253_init();
 	}
 	sc->sc_dc = dc;
 
@@ -261,11 +261,8 @@ fb_ioctl(v, cmd, data, flag, p)
 		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF) {
 			volatile u_short *ctlreg = NWB253_CTLREG;
 			*ctlreg = 0;			/* stop crtc */
-		} else {
-			volatile u_short *ctlreg = NWB253_CTLREG;
-			int id = (*ctlreg >> 8) & 0xf;
-			fb253_init(id);
-		}
+		} else
+			fb253_init();
 		return 0;
 
 	case WSDISPLAYIO_GETCMAP:
@@ -437,11 +434,11 @@ static u_char
 };
 
 static void
-fb253_init(id)
-	int id;
+fb253_init()
 {
 	volatile u_short *ctlreg = NWB253_CTLREG;
 	volatile u_short *crtreg = NWB253_CRTREG;
+	int id = (*ctlreg >> 8) & 0xf;
 	u_char *p;
 	int i;
 
