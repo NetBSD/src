@@ -40,8 +40,10 @@ instead of `ok', type:
     ok setenv sunmon-compat? false
     ok
 
-This is needed because netbsd cannot handle the old-mode yet, and will
-firework on you.
+This is needed because the NetBSD kernel relies on functionality provided
+by OpenBOOT ROMs -- the ability to pass down Forth commands and have them
+executed in the ROM -- that appears to go away when the OpenBOOT ROM
+operates in `old monitor compatibility' mode.
 
 Also, you cannot use the security modes of the sparc OpenBOOT ROM.
 
