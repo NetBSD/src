@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.28 1994/06/15 19:38:05 deraadt Exp $
+ * $Id: sun_misc.c,v 1.29 1994/06/22 08:24:53 pk Exp $
  */
 
 /*
@@ -251,6 +251,7 @@ sun_mount(p, uap, retval)
 		sa.sa_len = sizeof(sain);
 		uap->data = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
 		na.addr = (struct sockaddr *)((int)uap->data + sizeof na);
+		na.addrlen = sizeof(struct sockaddr);
 		na.sotype = SOCK_DGRAM;
 		na.proto = IPPROTO_UDP;
 		na.fh = (nfsv2fh_t *)sna.fh;
