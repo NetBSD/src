@@ -11,7 +11,7 @@
 /* This file contains variables which weren't happy anyplace else */
 
 #ifndef lint
-static char rcsid[] = "$Id: vars.c,v 1.3 1993/08/02 17:54:12 mycroft Exp $";
+static char rcsid[] = "$Id: vars.c,v 1.4 1993/11/03 08:27:14 cgd Exp $";
 #endif /* not lint */
 
 
@@ -56,7 +56,7 @@ int		bavar;		/* used only in BeforeAfter macros */
 /* used to detect changes that invalidate cached text/blocks */
 long		changes;	/* incremented when file is changed */
 int		significant;	/* boolean: was a *REAL* change made? */
-int		exitcode = 1;	/* 0=overwritten, 1=not updated, else error */
+int		exitcode;	/* 0=overwritten, 1=error */
 
 /* used to support the pfetch() macro */
 int		plen;		/* length of the line */
