@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.12 1998/07/21 00:23:18 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.13 1998/07/21 00:24:45 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -341,9 +341,6 @@ struct cs_xmit_early {
 struct cfattach cs_ca = {
 	sizeof(struct cs_softc), csProbe, csAttach
 };
-
-int csdebug = 0x00000000;	/* debug status, used with kerndebug
-				 * macros */
 
 int 
 csProbe(parent, cf, aux)
