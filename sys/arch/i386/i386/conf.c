@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.151 2002/01/01 21:54:21 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.152 2002/01/04 02:59:54 deberg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.151 2002/01/01 21:54:21 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.152 2002/01/04 02:59:54 deberg Exp $");
 
 #include "opt_compat_svr4.h"
 
@@ -195,6 +195,8 @@ cdev_decl(urio);
 cdev_decl(uscanner);
 #include "vcoda.h"
 cdev_decl(vc_nb_);
+#include "netsmb.h"
+cdev_decl(nsmb_dev_);
 
 #include "ipfilter.h"
 #include "satlink.h"
@@ -353,6 +355,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ir_init(NIRFRAMEDRV,irframe),/* 85: IrDA frame driver */
 	cdev_ir_init(NCIR,cir),		/* 86: Consumer Ir */
 	cdev_radio_init(NRADIO,radio),	/* 87: generic radio I/O */
+	cdev_netsmb_init(NNETSMB,nsmb_dev_),/* 88: SMB */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -482,6 +485,7 @@ static int chrtoblktbl[] = {
 	/* 85 */	NODEV,
 	/* 86 */	NODEV,
 	/* 87 */	NODEV,
+	/* 88 */	NODEV,
 };
 
 /*
