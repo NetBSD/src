@@ -527,6 +527,7 @@ int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
 
 int X509V3_extensions_print(BIO *out, char *title, STACK_OF(X509_EXTENSION) *exts, unsigned long flag, int indent);
 
+int X509_check_ca(X509 *x);
 int X509_check_purpose(X509 *x, int id, int ca);
 int X509_supported_extension(X509_EXTENSION *ex);
 int X509_PURPOSE_set(int *p, int purpose);
@@ -564,6 +565,7 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_F_DO_EXT_I2D				 135
 #define X509V3_F_HEX_TO_STRING				 111
 #define X509V3_F_I2S_ASN1_ENUMERATED			 121
+#define X509V3_F_I2S_ASN1_IA5STRING			 142
 #define X509V3_F_I2S_ASN1_INTEGER			 120
 #define X509V3_F_I2V_AUTHORITY_INFO_ACCESS		 138
 #define X509V3_F_NOTICE_SECTION				 132
