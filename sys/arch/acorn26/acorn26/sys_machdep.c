@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1 2002/03/24 15:46:48 bjh21 Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2 2002/04/01 17:43:10 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1 2002/03/24 15:46:48 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2 2002/04/01 17:43:10 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/mount.h>
@@ -61,8 +61,8 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
-	case ARM32_SYNC_ICACHE:
-	case ARM32_DRAIN_WRITEBUF:
+	case ARM_SYNC_ICACHE:
+	case ARM_DRAIN_WRITEBUF:
 		/* These are both no-ops on arm26. */
 		break;
 	default:
