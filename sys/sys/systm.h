@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.57 1996/09/30 16:03:15 ws Exp $	*/
+/*	$NetBSD: systm.h,v 1.58 1996/10/10 19:25:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -150,11 +150,11 @@ void	panic __P((const char *, ...))
 #else
     __attribute__((__noreturn__));
 #endif
-void	printf __P((const char *, ...))
+void	kprintf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	uprintf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
-int	sprintf __P((char *buf, const char *, ...))
+int	ksprintf __P((char *buf, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
 void	ttyprintf __P((struct tty *, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
@@ -178,24 +178,27 @@ void    *memset __P((void *, int, size_t));
 #define bcmp(s,t,n)	memcmp(s,t,n)
 #endif
 
-int	copystr __P((void *kfaddr, void *kdaddr, size_t len, size_t *done));
-int	copyinstr __P((void *udaddr, void *kaddr, size_t len, size_t *done));
-int	copyoutstr __P((void *kaddr, void *udaddr, size_t len, size_t *done));
-int	copyin __P((void *udaddr, void *kaddr, size_t len));
-int	copyout __P((void *kaddr, void *udaddr, size_t len));
+int	copystr __P((const void *, void *, size_t, size_t *));
+int	copyinstr __P((const void *, void *, size_t, size_t *));
+int	copyoutstr __P((const void *, void *, size_t, size_t *));
+int	copyin __P((const void *, void *, size_t));
+int	copyout __P((const void *, void *, size_t));
 
-int	fubyte __P((void *base));
-#ifdef notdef
-int	fuibyte __P((void *base));
-#endif
-int	subyte __P((void *base, int byte));
-int	suibyte __P((void *base, int byte));
-long	fuword __P((void *base));
-long	fuiword __P((void *base));
-int	suword __P((void *base, long word));
-int	suiword __P((void *base, long word));
-int	fuswintr __P((caddr_t));
-int	suswintr __P((caddr_t, u_int));
+int	subyte __P((void *, int));
+int	suibyte __P((void *, int));
+int	susword __P((void *, short));
+int	suisword __P((void *, short));
+int	suswintr __P((void *, short));
+int	suword __P((void *, long));
+int	suiword __P((void *, long));
+
+int	fubyte __P((const void *));
+int	fuibyte __P((const void *));
+short	fusword __P((const void *));
+short	fuisword __P((const void *));
+short	fuswintr __P((const void *));
+long	fuword __P((const void *));
+long	fuiword __P((const void *));
 
 struct timeval;
 int	hzto __P((struct timeval *tv));
