@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.2 2002/08/11 19:39:37 fredette Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.3 2002/08/11 19:53:41 fredette Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -61,6 +61,7 @@
 
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>
+#include <hp700/hp700/machdep.h>
 
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
@@ -132,9 +133,6 @@ void ie_gsc_reset __P((struct ie_softc *sc, int what));
 void ie_gsc_attend __P((struct ie_softc *, int));
 void ie_gsc_run __P((struct ie_softc *sc));
 void ie_gsc_port __P((struct ie_softc *sc, u_int));
-#ifdef USELEDS
-int ie_gsc_intrhook __P((struct ie_softc *sc, int what));
-#endif
 u_int16_t ie_gsc_read16 __P((struct ie_softc *sc, int offset));
 void ie_gsc_write16 __P((struct ie_softc *sc, int offset, u_int16_t v));
 void ie_gsc_write24 __P((struct ie_softc *sc, int offset, int addr));
@@ -244,27 +242,6 @@ ie_gsc_port(sc, cmd)
 	}
 }
 
-#ifdef USELEDS
-int
-ie_gsc_intrhook(sc, where)
-	struct ie_softc *sc;
-	int where;
-{
-	switch (where) {
-	case INTR_ENTER:
-		/* turn it on */
-		break;
-	case INTR_LOOP:
-		/* quick drop and raise */
-		break;
-	case INTR_EXIT:
-		/* drop it */
-		break;
-	}
-	return 0;
-}
-#endif
-
 u_int16_t
 ie_gsc_read16(sc, offset)
 	struct ie_softc *sc;
@@ -328,6 +305,7 @@ ie_gsc_memcopyin(sc, p, offset, size)
 	memcpy (p, (void *)((caddr_t)sc->sc_maddr + offset), size);
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
 			BUS_DMASYNC_PREREAD);
+	hp700_led_blink(HP700_LED_NETRCV);
 }
 
 void
@@ -342,6 +320,7 @@ ie_gsc_memcopyout(sc, p, offset, size)
 	memcpy ((void *)((caddr_t)sc->sc_maddr + offset), p, size);
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
 			BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	hp700_led_blink(HP700_LED_NETSND);
 }
 
 /*
@@ -516,11 +495,7 @@ ie_gsc_attach(parent, self, aux)
 	sc->ie_bus_read16 = ie_gsc_read16;
 	sc->ie_bus_write16 = ie_gsc_write16;
 	sc->ie_bus_write24 = ie_gsc_write24;
-#ifdef USELEDS
-	sc->intrhook = ie_gsc_intrhook;
-#else
 	sc->intrhook = NULL;
-#endif
 
 	/* Clear all RAM. */
 	memset(sc->sc_maddr, 0, sc->sc_msize);
