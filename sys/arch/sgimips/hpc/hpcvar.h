@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcvar.h,v 1.4 2002/03/13 13:12:27 simonb Exp $	*/
+/*	$NetBSD: hpcvar.h,v 1.5 2003/11/22 03:58:52 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -29,6 +29,11 @@
 
 #ifndef _ARCH_SGIMIPS_HPC_HPCVAR_H_
 #define	_ARCH_SGIMIPS_HPC_HPCVAR_H_
+
+#define HPCDEV_IP12		(1U << 0)	/* Indigo R3k, 4D/3x */
+#define HPCDEV_IP20		(1U << 1)	/* Indigo R4k */
+#define HPCDEV_IP22		(1U << 2)	/* Indigo2 */
+#define HPCDEV_IP24		(1U << 3)	/* Indy */
 
 struct hpc_attach_args {
 	const char		*ha_name;	/* name of device */
