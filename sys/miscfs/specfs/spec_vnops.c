@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.16 1994/06/29 06:35:03 cgd Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.16.2.1 1994/07/16 21:03:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -218,7 +218,7 @@ spec_read(ap)
  	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn, nextbn;
-	long bsize, bscale;
+	long bsize, bscale, ssize;
 	struct partinfo dpart;
 	int n, on, majordev, (*ioctl)();
 	int error = 0;
@@ -246,16 +246,21 @@ spec_read(ap)
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
+		ssize = DEV_BSIZE;
 		dev = vp->v_rdev;
 		if ((majordev = major(dev)) < nblkdev &&
 		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
-		    (*ioctl)(dev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0 &&
-		    dpart.part->p_fstype == FS_BSDFFS &&
-		    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
-			bsize = dpart.part->p_frag * dpart.part->p_fsize;
-		bscale = bsize / DEV_BSIZE;
+		    (*ioctl)(dev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
+			if (dpart.part->p_fstype == FS_BSDFFS &&
+			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
+				bsize = dpart.part->p_frag *
+				    dpart.part->p_fsize;
+			if (dpart.disklab->d_secsize != 0)
+				ssize = dpart.disklab->d_secsize;
+		}
+		bscale = bsize / ssize;
 		do {
-			bn = (uio->uio_offset / DEV_BSIZE) &~ (bscale - 1);
+			bn = (uio->uio_offset / ssize) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
 			n = min((unsigned)(bsize - on), uio->uio_resid);
 			if (vp->v_lastr + bscale == bn) {
@@ -300,7 +305,7 @@ spec_write(ap)
 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn;
-	int bsize, blkmask;
+	int bsize, blkmask, ssize;
 	struct partinfo dpart;
 	register int n, on;
 	int error = 0;
@@ -327,16 +332,19 @@ spec_write(ap)
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
+		ssize = DEV_BSIZE;
 		if ((*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev, DIOCGPART,
 		    (caddr_t)&dpart, FREAD, p) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
 				    dpart.part->p_fsize;
+			if (dpart.disklab->d_secsize != 0)
+				ssize = dpart.disklab->d_secsize;
 		}
-		blkmask = (bsize / DEV_BSIZE) - 1;
+		blkmask = (bsize / ssize) - 1;
 		do {
-			bn = (uio->uio_offset / DEV_BSIZE) &~ blkmask;
+			bn = (uio->uio_offset / ssize) &~ blkmask;
 			on = uio->uio_offset % bsize;
 			n = min((unsigned)(bsize - on), uio->uio_resid);
 			if (n == bsize)
