@@ -1,7 +1,7 @@
-/*	$NetBSD: cpuconf.h,v 1.4 2002/08/07 05:14:59 briggs Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.5 2003/04/09 02:34:31 thorpej Exp $	*/
 
 /*
- * Copyright (c 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
