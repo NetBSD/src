@@ -33,7 +33,7 @@
  *	@(#)if_le.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: if_le.c,v 1.23 93/04/21 02:39:38 torek Exp 
- * $Id: if_le.c,v 1.3 1993/11/05 10:51:50 deraadt Exp $
+ * $Id: if_le.c,v 1.4 1994/01/24 00:30:29 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -689,10 +689,11 @@ leread(sc, pkt, len)
 	struct mbuf *m;
 	struct ifqueue *inq;
 	int flags;
+	u_short etype;
 
 	ifp->if_ipackets++;
 	et = (struct ether_header *)pkt;
-	et->ether_type = ntohs((u_short)et->ether_type);
+	etype = ntohs(et->ether_type);
 	/* adjust input length to account for header and CRC */
 	len -= sizeof(struct ether_header) + 4;
 
@@ -742,7 +743,7 @@ leread(sc, pkt, len)
 	}
 	/* XXX end of code from ether_input() */
 
-	switch (et->ether_type) {
+	switch (etype) {
 
 #ifdef INET
 	case ETHERTYPE_IP:
