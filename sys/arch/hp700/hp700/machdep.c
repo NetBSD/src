@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2003/08/31 01:26:32 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2003/11/01 18:23:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2003/08/31 01:26:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2003/11/01 18:23:37 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -874,7 +874,7 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *)(void *)&buffers, round_page(size),
 	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 	    UVM_INH_NONE, UVM_ADV_NORMAL, 0)) != 0)
 		panic("cpu_startup: cannot allocate VM for buffers");
@@ -1197,6 +1197,7 @@ hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa,
 	 */
 	btlb_slot_end = btlb_slots + btlb_slots_count;
 	total_mapped_frames = 0;
+	btlb_slot_best_score = 0;
 	while (need_dbtlb || need_ibtlb) {
 
 		/*

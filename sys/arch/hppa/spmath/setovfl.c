@@ -1,4 +1,4 @@
-/*	$NetBSD: setovfl.c,v 1.2 2003/07/15 02:29:42 lukem Exp $	*/
+/*	$NetBSD: setovfl.c,v 1.3 2003/11/01 18:23:38 matt Exp $	*/
 
 /*	$OpenBSD: setovfl.c,v 1.4 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,44 +42,45 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: setovfl.c,v 1.2 2003/07/15 02:29:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: setovfl.c,v 1.3 2003/11/01 18:23:38 matt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
 #include "../spmath/dbl_float.h"
 
-sgl_floating_point sgl_setoverflow(sign)
-
-unsigned int sign;
+sgl_floating_point
+sgl_setoverflow(sign)
+	unsigned int sign;
 {
 	sgl_floating_point result;
 
 	/* set result to infinity or largest number */
-	/* ignore for now
+#if 0
 	switch (Rounding_mode()) {
 		case ROUNDPLUS:
 			if (sign) {
 				Sgl_setlargestnegative(result);
-			}
-			else {
+			} else {
 				Sgl_setinfinitypositive(result);
 			}
 			break;
 		case ROUNDMINUS:
 			if (sign==0) {
 				Sgl_setlargestpositive(result);
-			}
-			else {
+			} else {
 				Sgl_setinfinitynegative(result);
 			}
 			break;
 		case ROUNDNEAREST:
 			Sgl_setinfinity(result,sign);
 			break;
+		default:
 		case ROUNDZERO:
 			Sgl_setlargest(result,sign);
+			break;
 	}
-	*/
+#endif
+	Sgl_setinfinity(result,sign);
 	return(result);
 }
 

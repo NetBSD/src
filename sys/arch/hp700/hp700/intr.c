@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5 2003/06/16 20:01:00 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.6 2003/11/01 18:23:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2003/06/16 20:01:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2003/11/01 18:23:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -370,6 +370,7 @@ hp700_intr_init(void)
 	 */
 	cpl = -1;
 	ipending = 0;
+	eiem = 0;
 	for (idx = 0; idx < HP700_INT_BITS; idx++) {
 		int_reg = hp700_int_regs[idx];
 		if (int_reg == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 2003/08/07 16:27:44 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 2003/11/01 18:23:37 matt Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.6 2003/08/07 16:27:44 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.7 2003/11/01 18:23:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -777,6 +777,8 @@ writedisklabel(dev, strat, lp, osdep)
 	 * think it might be useful to reprobe if someone has written
 	 * a newer disklabel of another type with disklabel(8) and -r.
 	 */
+	labeloffset = -1;
+	endian = BIG_ENDIAN;
 	for (tp = probe_order; msg && *tp != -1; tp++) {
 		dl = *lp;
 		switch (*tp) {
@@ -816,8 +818,11 @@ writedisklabel(dev, strat, lp, osdep)
 			break;
 
 		default:
-			panic("unrecognized disklabel tag %d", *tp);
+			break;
 		}
+	}
+	if (labeloffset == -1) {
+		return EINVAL;
 	}
 
 	if (msg) {

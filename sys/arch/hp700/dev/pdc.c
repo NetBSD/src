@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.9 2003/07/15 02:29:24 lukem Exp $	*/
+/*	$NetBSD: pdc.c,v 1.10 2003/11/01 18:23:37 matt Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.9 2003/07/15 02:29:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.10 2003/11/01 18:23:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,8 @@ pdcopen(dev, flag, mode, p)
 	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag)) {
 		splx(s);
 		return EBUSY;
-	}
+	} else
+		setuptimeout = 0;
 	tp->t_state |= TS_CARR_ON;
 
 	splx(s);
