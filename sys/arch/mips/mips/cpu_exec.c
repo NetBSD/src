@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.42 2003/08/07 16:28:30 agc Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.43 2003/08/11 13:27:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.42 2003/08/07 16:28:30 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.43 2003/08/11 13:27:58 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -118,7 +118,7 @@ cpu_exec_aout_makecmds(p, epp)
 	    epp->ep_daddr + hdr->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return (*epp->ep_esch->ep_setup_stack)(p, epp);
 #endif
 }
 
