@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.49 1998/11/01 18:30:26 christos Exp $	 */
+/* $NetBSD: mountd.c,v 1.50 1998/11/02 15:38:26 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.49 1998/11/01 18:30:26 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.50 1998/11/02 15:38:26 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1013,6 +1013,7 @@ nextline:
 			free_dir(dirhead);
 			dirhead = NULL;
 		}
+		free(line);
 	}
 	(void)fclose(exp_file);
 }
