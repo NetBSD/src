@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 2003/01/18 06:23:30 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 2003/03/11 10:40:16 hannken Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,8 +65,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#undef PPC_4XX_NOCACHE
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1165,8 +1163,10 @@ void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
 	struct pmap *pm = p->p_vmspace->vm_map.pmap;
-	int msr, ctx, opid;
+	int msr, ctx, opid, step;
 
+
+	step = CACHELINESIZE;
 
 	/*
 	 * Need to turn off IMMU and switch to user context.
@@ -1188,14 +1188,14 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		"1:"
 		"dcbf 0,%3;"
 		"icbi 0,%3;"
-		"addi %3,%3,32;"
-		"addic. %4,%4,-32;"
+		"add %3,%3,%5;"
+		"addc. %4,%4,%6;"
 		"bge 1b;"
 		"mtpid %1;"
 		"mtmsr %0;"
 		"sync; isync"
 		: "=&r" (msr), "=&r" (opid)
-		: "r" (ctx), "r" (va), "r" (len));
+		: "r" (ctx), "r" (va), "r" (len), "r" (step), "r" (-step));
 }
 
 

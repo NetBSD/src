@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.6 2002/10/02 15:52:27 thorpej Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.7 2003/03/11 10:40:16 hannken Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,8 +42,8 @@
 #include <sys/device.h>
 #include <sys/properties.h>
 
-#include <machine/dcr.h>
 #include <machine/cpu.h>
+#include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 

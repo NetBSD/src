@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2002/12/09 12:28:13 scw Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2003/03/11 10:40:17 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -164,6 +164,8 @@ static __inline void bus_space_copy_region_4(bus_space_tag_t,
 
 extern void *mapiodev(paddr_t, psize_t, int);
 extern int fake_mapiodev;
+
+#define bus_space_vaddr(t, h) ((void *)(__BA(t, h, 0)))
 
 static __inline int
 bus_space_map(t, addr, size, flags, bshp)

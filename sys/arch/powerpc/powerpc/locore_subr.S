@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.10 2003/02/21 15:14:08 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.11 2003/03/11 10:40:17 hannken Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -354,12 +354,11 @@ switch_return:
 	lwz	4,PM_CTX(3)
 	cmpwi	4,0
 #	mtspr	SPR_SPR0,4		/* Always keep the current ctx here */
-	mr	3,30			/* restore return value */
 	bne	1f
 	bl	_C_LABEL(ctx_alloc)
-	mr	3,30			/* restore return value */
 	b	0b			/* reload */
 1:
+	mr	3,30			/* restore return value */
 #else /* PPC_OEA */
 	mr	3,30			/* restore return value */
 #endif

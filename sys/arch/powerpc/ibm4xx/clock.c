@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2002/08/27 12:23:06 scw Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2003/03/11 10:40:16 hannken Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -37,7 +37,7 @@
 #include <sys/systm.h>
 #include <sys/properties.h>
 
-#include <machine/dcr.h>
+#include <machine/cpu.h>
 
 #include <powerpc/spr.h>
 
@@ -88,7 +88,7 @@ decr_intr(struct clockframe *frame)
 	if (!ticks_per_intr)
 		return;
 
-	asm volatile("mftb %0":"=r"(tick):);
+	tick = mftbl();
 	mtspr(SPR_TSR, TSR_PIS);	/* Clear TSR[PIS] */
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
@@ -133,7 +133,7 @@ cpu_initclocks(void)
 	ticks_per_intr = ticks_per_sec / hz;
 	stathz = profhz = ticks_per_sec / (1 << PERIOD_POWER);
 	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz, ticks_per_intr);
-	asm volatile ("mftb %0" : "=r"(lasttb));
+	lasttb = mftbl();
 	mtspr(SPR_PIT, ticks_per_intr);
 	/* Enable PIT & FIT(2^17c = 0.655ms) interrupts and auto-reload */
 	mtspr(SPR_TCR, TCR_PIE | TCR_ARE | TCR_FIE | TCR_PERIOD);
@@ -163,7 +163,7 @@ microtime(struct timeval *tvp)
 	int msr;
 
 	asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr) :);
-	asm ("mftb %0" : "=r"(tb));
+	tb = mftbl();
 	ticks = (tb - lasttb) * ns_per_tick;
 	*tvp = time;
 	asm volatile ("mtmsr %0" :: "r"(msr));
@@ -189,9 +189,24 @@ delay(unsigned int n)
 	tb += (n * 1000ULL + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
-		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
-		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
+	asm volatile (
+#ifdef PPC_IBM403
+	    "1:	mftbhi %0	\n"
+#else
+	    "1:	mftbu %0	\n"
+#endif
+	    "	cmplw %0,%1	\n"
+	    "	blt 1b		\n"
+	    "	bgt 2f		\n"
+#ifdef PPC_IBM403
+	    "	mftblo %0	\n"
+#else
+	    "	mftb %0		\n"
+#endif
+	    "	cmplw %0,%2	\n"
+	    "	blt 1b		\n"
+	    "2: 		\n"
+	    : "=r"(scratch) : "r"(tbh), "r"(tbl) : "cr0");
 }
 
 /*
