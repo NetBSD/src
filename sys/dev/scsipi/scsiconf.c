@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.200 2003/02/10 08:10:51 pk Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.201 2003/03/14 22:17:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.200 2003/02/10 08:10:51 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.201 2003/03/14 22:17:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,14 @@ scsibus_config(chan, arg)
 #ifndef SCSI_DELAY
 #define SCSI_DELAY 2
 #endif
+	if ((chan->chan_flags & SCSIPI_CHAN_NOSETTLE) == 0 &&
+	    SCSI_DELAY > 0) {
+		printf("%s: waiting %d seconds for devices to settle...\n",
+		    sc->sc_dev.dv_xname, SCSI_DELAY);
+		/* ...an identifier we know no one will use... */
+		(void) tsleep(scsibus_config, PRIBIO,
+		    "scsidly", SCSI_DELAY * hz);
+	}
 
 	/* Make sure the devices probe in scsibus order to avoid jitter. */
 	simple_lock(&scsibus_interlock);
@@ -219,15 +227,6 @@ scsibus_config(chan, arg)
 	}
 
 	simple_unlock(&scsibus_interlock);
-
-	if ((chan->chan_flags & SCSIPI_CHAN_NOSETTLE) == 0 &&
-	    SCSI_DELAY > 0) {
-		printf("%s: waiting %d seconds for devices to settle...\n",
-		    sc->sc_dev.dv_xname, SCSI_DELAY);
-		/* ...an identifier we know no one will use... */
-		(void) tsleep(scsibus_config, PRIBIO,
-		    "scsidly", SCSI_DELAY * hz);
-	}
 
 	scsi_probe_bus(sc, -1, -1);
 
