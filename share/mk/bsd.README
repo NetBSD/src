@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.51 1999/07/26 02:01:47 mrg Exp $
+#	$NetBSD: bsd.README,v 1.52 1999/08/21 06:19:33 simonb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -71,6 +71,9 @@ BUILD 		If defined, 'make install' checks that the targets in the
 UPDATE 		If defined, 'make install' only installs targets that are
 		more recently modified in the source directories that their
 		installed counterparts.
+
+UNPRIVILEGED	If defined, don't set the owner/group/mode when installing
+		files or directories.  This allows a non-root "make install".
 
 MKCATPAGES	If "no", don't build or install the catman pages.
 
