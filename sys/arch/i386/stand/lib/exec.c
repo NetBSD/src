@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.10 1999/04/08 18:21:15 drochner Exp $	 */
+/*	$NetBSD: exec.c,v 1.11 1999/04/14 11:19:23 drochner Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -60,6 +60,8 @@
 #include "bootinfo.h"
 
 #ifdef COMPAT_OLDBOOT
+static int dev2major __P((char *, int *));
+
 static int
 dev2major(devname, major)
 	char           *devname;
