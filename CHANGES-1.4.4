@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.16 2001/07/29 20:55:19 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.17 2002/01/14 15:23:57 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -354,3 +354,51 @@ sys/arch/i386/i386/sys_machdep.c		1.58 via patch
 sys/kern/uipc_syscalls.c			patch
 
   Add required include files to make this compile again.
+
+sys/arch/i386/i386/vm86.c			1.24
+
+  Rework how user-mode instructions and stack fetches are done.
+  Also fix another vm86 protocol bug.
+
+sbin/route/route.c				1.46
+
+  Fix problem where an output message would be stuck in stdio buffers
+  until the next one arrived.
+
+bin/sh/expand.c					1.52
+
+  Do not truncate expr > 10 digits.  Fixes PR#13943.
+
+sys/uvm/uvm_map.c				1.76 via patch
+
+  Let uvm_map_extract() set the lower bound on the kernel address
+  range itself, instead of having its callers do that.  Fixes
+  PR#11972.
+
+gnu/libexec/uucp/uuxqt/uuxqt.c			1.4
+
+  Pay more attention to command line parsing of long options.
+  Plugs security hole.  Fixes SA#2001-019.
+
+lib/libc/stdlib/random.c			1.20 via patch
+
+  Make this work on LP64 platforms.  Fixes krb5-enabled logins on
+  Alpha.
+
+lib/libc/stdlib/random.3			1.13
+
+  Note alignment requirement of the state array passed to initstate(3).
+  This was formerly only documented in the comments in the code.
+
+sys/kern/kern_exec.c				1.149-1.150 via patch
+sys/kern/sys_process.c				1.72
+sys/sys/proc.h					1.136 via patch
+lib/libc/sys/ptrace.2				1.16
+sys/miscfs/procfs/procfs_ctl.c			1.22
+sys/miscfs/procfs/procfs_mem.c			1.30
+sys/miscfs/procfs/procfs_regs.c			1.15
+sys/miscfs/procfs/procfs_vnops.c		1.88 via patch
+
+  Fix a ptrace/execve race condition which could be used to modify
+  the child process' image during execve.  This would be a security
+  issue due to setuid programs.
