@@ -1,4 +1,4 @@
-/* $NetBSD: tadpolectl.c,v 1.1 1999/12/17 05:30:03 garbled Exp $ */
+/* $NetBSD: tadpolectl.c,v 1.2 1999/12/20 09:51:53 jdc Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,13 +46,16 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/envsys.h>
-#include <sys/apmvar.h>
+#include <machine/apmvar.h>
 #include <machine/tctrl.h>
 
 int aflag, nflag, wflag, dev;
 
 #define PROTO(x) int x __P((int, int, int));
+void usage __P((void));
+static void parse __P((char *));
 char *dashdot __P((char *));
+int main __P((int, char *[]));
 PROTO(hw_version)
 PROTO(hw_microcontroller_version)
 PROTO(hw_poweroncycles)
