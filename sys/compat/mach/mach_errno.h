@@ -1,4 +1,4 @@
-	/*	$NetBSD: mach_errno.h,v 1.2 2002/11/12 05:18:31 manu Exp $ */
+	/*	$NetBSD: mach_errno.h,v 1.3 2002/11/28 21:21:32 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -99,11 +99,12 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_error_reply_t;
 
-#define MACH_MSG_ERROR(msgh,req,rep,error) \
+#define MACH_MSG_ERROR(msgh,req,rep,error,maxlen,dst) \
     mach_msg_error((msgh), (mach_msg_header_t *)(req), \
-    (mach_error_reply_t *)(rep), (error))
+    (mach_error_reply_t *)(rep), (error), (maxlen), \
+    (mach_msg_header_t *)(dst))
 
-int mach_msg_error __P((mach_msg_header_t *, 
-    mach_msg_header_t *, mach_error_reply_t *, int));
+int mach_msg_error(mach_msg_header_t *, mach_msg_header_t *, 
+    mach_error_reply_t *, int, size_t, mach_msg_header_t *);
 
 #endif	/* _MACH_ERRNO_H_ */
