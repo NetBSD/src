@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_ds.c,v 1.8 1999/04/13 03:22:00 ad Exp $	*/
+/*	$NetBSD: pm_ds.c,v 1.9 1999/07/16 14:23:47 ad Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -123,13 +123,7 @@ pm_ds_attach(parent, self, aux)
 	/*struct ibus_attach_args *ia = aux;*/
 	/*caddr_t pmaddr = (caddr_t)ia->ia_addr;*/
 
-	/* don't init twice */
-	if (pmfi.fi_pixels != NULL)
-		printf (": (%dx%dx%d) (console)",
-			pmfi.fi_type.fb_width,
-			pmfi.fi_type.fb_height,
-			pmfi.fi_type.fb_depth);
-	else if (!pminit(&pmfi, 0, 0))
+	if (!pminit(&pmfi, 0, 0))
 		return;
 
 	/* no interrupts for PM */
