@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.60 2000/06/04 22:22:12 gmcgarry Exp $	*/
+/*	$NetBSD: pciide.c,v 1.61 2000/06/06 17:34:22 thorpej Exp $	*/
 
 
 /*
@@ -116,6 +116,8 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_acer_reg.h>
 #include <dev/pci/pciide_pdc202xx_reg.h>
 #include <dev/pci/pciide_opti_reg.h>
+
+#include <dev/pci/cy82c693var.h>
 
 /* inlines for reading/writing 8-bit PCI registers */
 static __inline u_int8_t pciide_pci_read __P((pci_chipset_tag_t, pcitag_t,
@@ -305,7 +307,7 @@ const struct pciide_product_desc pciide_via_products[] =  {
 const struct pciide_product_desc pciide_cypress_products[] =  {
 	{ PCI_PRODUCT_CONTAQ_82C693,
 	  0,
-	  "Contaq Microsystems CY82C693 IDE Controller",
+	  "Cypress CY82C693 IDE Controller",
 	  cy693_chip_map,
 	},
 	{ 0,
@@ -2177,7 +2179,6 @@ cy693_chip_map(sc, pa)
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
 				    sc->sc_tag, PCI_CLASS_REG));
-	int compatchan;
 	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -2188,9 +2189,9 @@ cy693_chip_map(sc, pa)
 	 * the real channel
 	 */
 	if (pa->pa_function == 1) {
-		compatchan = 0;
+		sc->sc_cy_compatchan = 0;
 	} else if (pa->pa_function == 2) {
-		compatchan = 1;
+		sc->sc_cy_compatchan = 1;
 	} else {
 		printf("%s: unexpected PCI function %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, pa->pa_function);
@@ -2206,6 +2207,13 @@ cy693_chip_map(sc, pa)
 		sc->sc_dma_ok = 0;
 	}
 	printf("\n");
+
+	sc->sc_cy_handle = cy82c693_init(pa->pa_iot);
+	if (sc->sc_cy_handle == NULL) {
+		printf("%s: unable to map hyperCache control registers\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname);
+		sc->sc_dma_ok = 0;
+	}
 
 	if (sc->sc_dma_ok)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
@@ -2242,7 +2250,7 @@ cy693_chip_map(sc, pa)
 		    pciide_pci_intr);
 	} else {
 		printf("compatibility");
-		cp->hw_ok = pciide_mapregs_compat(pa, cp, compatchan,
+		cp->hw_ok = pciide_mapregs_compat(pa, cp, sc->sc_cy_compatchan,
 		    &cmdsize, &ctlsize);
 	}
 	printf(" mode\n");
@@ -2253,7 +2261,7 @@ cy693_chip_map(sc, pa)
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    PCI_COMMAND_STATUS_REG, 0);
 	}
-	pciide_map_compat_intr(pa, cp, compatchan, interface);
+	pciide_map_compat_intr(pa, cp, sc->sc_cy_compatchan, interface);
 	if (cp->hw_ok == 0)
 		return;
 	WDCDEBUG_PRINT(("cy693_chip_map: old timings reg 0x%x\n",
@@ -2304,7 +2312,19 @@ cy693_setup_channel(chp)
 	pci_conf_write(sc->sc_pc, sc->sc_tag, CY_CMD_CTRL, cy_cmd_ctrl);
 	chp->ch_drive[0].DMA_mode = dma_mode;
 	chp->ch_drive[1].DMA_mode = dma_mode;
+
+	if (dma_mode == -1)
+		dma_mode = 0;
+
+	if (sc->sc_cy_handle != NULL) {
+		/* Note: `multiple' is implied. */
+		cy82c693_write(sc->sc_cy_handle,
+		    (sc->sc_cy_compatchan == 0) ?
+		    CY_DMA_IDX_PRIMARY : CY_DMA_IDX_SECONDARY, dma_mode);
+	}
+
 	pciide_print_modes(cp);
+
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
