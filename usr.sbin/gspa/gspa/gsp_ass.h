@@ -1,3 +1,4 @@
+/*	$NetBSD: gsp_ass.h,v 1.3 1997/10/17 06:58:49 lukem Exp $	*/
 /*
  * GSP assembler - definitions
  *
@@ -124,37 +125,45 @@ typedef struct operand {
 #define REGFILE	0x60		/* r1 and r2 are in the same file */
 
 /* Prototypes */
-void statement(char *opcode, operand operands);
+operand abs_adr(expr);
+operand add_operand(operand, operand);
+char *alloc(size_t nbytes);
+expr bexpr(int, expr, expr);
 void do_asg(char *, expr, int flags);
+void do_list_pc(void);
+void do_show_val(int32_t);
+int eval_expr(expr, int32_t *, unsigned *);
+operand expr_op(expr);
+expr fold(expr);
+void free_expr(expr);
+void free_operands(operand);
+int get_line(char *lp, int maxlen);
+expr here_expr(void);
+expr id_expr(char *);
+void lex_init(char *line);
+void list_error(char *);
+void listing(void);
+symbol lookup(char *id, bool makeit);
+expr num_expr(int);
+void p1err(char *fmt, ...);
+void perr(char *fmt, ...);
+void pseudo(int code, operand operands);
+void push_input(char *fn);
+void putcode(u_int16_t *, int);
+operand reg_ind(int, int);
+operand reg_index(int, expr);
+operand reg_indxy(int, char *);
+operand reg_op(int reg);
+void reset_numeric_labels(void);
 void set_label(char *);
 void set_numeric_label(int);
-void reset_numeric_labels(void);
-operand reg_op(int reg);
-operand expr_op(expr);
+void start_at(int32_t);
+void statement(char *opcode, operand operands);
 operand string_op(char *);
-operand abs_adr(expr);
-operand reg_ind(int, int);
-operand reg_indxy(int, char *);
-operand reg_index(int, expr);
-operand add_operand(operand, operand);
-expr id_expr(char *);
-expr num_expr(int);
-expr here_expr(void);
-expr bexpr(int, expr, expr);
-void free_operands(operand);
-void free_expr(expr);
+void ucasify(char *);
+void yyerror(char *err);
+int yylex(void);
 
-void perr(char *fmt, ...);
-void p1err(char *fmt, ...);
-int get_line(char *lp, int maxlen);
-char *alloc(size_t nbytes);
-
-symbol lookup(char *id, bool makeit);
-expr fold(expr);
-int eval_expr(expr, int32_t *, unsigned *);
-void pseudo(int code, operand operands);
-
-void putcode(u_int16_t *, int);
 
 extern unsigned pc;
 extern short pass2;
