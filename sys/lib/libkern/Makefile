@@ -1,31 +1,28 @@
-#	$NetBSD: Makefile,v 1.19 1995/02/13 21:48:17 cgd Exp $
+#	$NetBSD: Makefile,v 1.20 1995/06/24 20:31:12 christos Exp $
 
 LIB=	kern
 NOPIC=
-OBJMACHINE=
-CFLAGS= -O3 -I${.CURDIR} -Imachine/.. -I. -I${.CURDIR}/../..
 
-machine-links:
-	-@rm -f machine && \
-	    ln -s ${.CURDIR}/../../arch/${MACHINE}/include machine
-	-@rm -f ${MACHINE_ARCH} && \
-	    ln -s ${.CURDIR}/../../arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+DIR=${KERNREL}/${KERNDIR}
 
-lib${LIB}.a lib${LIB}_p.a::	machine-links
-
-.if exists (${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
-.PATH:	${.CURDIR}/arch/${MACHINE_ARCH}
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
+.if exists (${DIR}/arch/${MACHINE_ARCH}/Makefile.inc)
+.PATH:	${DIR}/arch/${MACHINE_ARCH}
+.include "${DIR}/arch/${MACHINE_ARCH}/Makefile.inc"
 .endif
 
-LIBC=	${.CURDIR}/../../../lib/libc
+LIBC=	${DIR}/../../../lib/libc
+
 .PATH: ${LIBC}/string ${LIBC}/arch/${MACHINE_ARCH}/string
 .PATH: ${LIBC}/net ${LIBC}/arch/${MACHINE_ARCH}/net
 .PATH: ${LIBC}/gen ${LIBC}/arch/${MACHINE_ARCH}/gen
 .PATH: ${LIBC}/stdlib ${LIBC}/arch/${MACHINE_ARCH}/stdlib
 .PATH: ${LIBC}/sys ${LIBC}/arch/${MACHINE_ARCH}/sys
+.PATH: ${DIR}
+
 AINC+=	-I${LIBC}/arch/${MACHINE_ARCH}
-CFLAGS+= -I${.CURDIR}/arch/${MACHINE_ARCH}
+CC = ${KERNCC}
+CFLAGS += -I${DIR}/arch/${MACHINE_ARCH} \
+	${KERNCFLAGS:S/-D_KERNEL//:S@-I.@-I${KERNREL}/.@g}
 
 .if (${MACHINE_ARCH} != "alpha")
 # Quad support
@@ -41,8 +38,6 @@ SRCS+=	mcount.c
 # mcount cannot be compiled with profiling
 mcount.po: mcount.o
 	cp mcount.o mcount.po
-
-CLEANFILES+= machine ${MACHINE_ARCH}
 
 install:
 
