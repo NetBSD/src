@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.81 1997/04/03 14:24:45 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.82 1997/04/04 15:10:34 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1353,6 +1353,9 @@ sleep:
 		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 		    carrier ? ttyin : ttopen, slp);
 		splx(s);
+		/* VMIN == 0: any quantity read satisfies */
+		if (cc[VMIN] == 0 && error == EWOULDBLOCK)
+			return (0);
 		if (error && error != EWOULDBLOCK)
 			return (error);
 		goto loop;
