@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.6 1996/10/22 19:41:47 explorer Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.7 1997/01/22 01:34:11 cgd Exp $
 
 S!=	cd ${.CURDIR}/..;pwd
 
@@ -39,12 +39,15 @@ machine:
 	ln -s machine ${MACHINE}
 
 .if !target(clean)
-clean: _SUBDIRUSE
+cleankmod:
 	rm -f a.out [Ee]rrs mklog core *.core \
 		${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
-.endif
 
+clean: _SUBDIRUSE cleankmod
+cleandir: _SUBDIRUSE cleankmod
+.else
 cleandir: _SUBDIRUSE clean
+.endif
 
 #
 # if no beforedepend target is defined, generate an empty target here
