@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.27 2004/06/07 17:36:38 yamt Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.28 2004/06/11 12:34:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.27 2004/06/07 17:36:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.28 2004/06/11 12:34:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,6 +363,7 @@ umap_lookup(v)
 	ap->a_dvp = ldvp;
 	error = VCALL(ldvp, ap->a_desc->vdesc_offset, ap);
 	vp = *ap->a_vpp;
+	*ap->a_vpp = NULL;
 
 	if (error == EJUSTRETURN && (cnf & ISLASTCN) &&
 	    (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
