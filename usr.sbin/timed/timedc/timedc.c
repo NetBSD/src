@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.10 2003/08/07 11:25:48 agc Exp $	*/
+/*	$NetBSD: timedc.c,v 1.11 2003/10/13 06:14:04 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.10 2003/08/07 11:25:48 agc Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.11 2003/10/13 06:14:04 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,8 @@ int trace = 0;
 FILE *fd = 0;
 int	margc;
 int	fromatty;
-char	*margv[20];
+#define MAX_MARGV	20
+char	*margv[MAX_MARGV];
 char	cmdline[200];
 jmp_buf	toplevel;
 static struct cmd *getcmd(char *);
@@ -109,7 +110,10 @@ main(int argc, char *argv[])
 			quit(0, NULL);
 		if (cmdline[0] == 0)
 			break;
-		makeargv();
+		if (makeargv()) {
+			printf("?Too many arguments\n");
+			continue;
+		}
 		if (margv[0] == 0)
 			continue;
 		c = getcmd(margv[0]);
@@ -173,14 +177,14 @@ getcmd(char *name)
 /*
  * Slice a string up into argc/argv.
  */
-void
+int
 makeargv(void)
 {
 	register char *cp;
 	register char **argp = margv;
 
 	margc = 0;
-	for (cp = cmdline; *cp;) {
+	for (cp = cmdline; cp < margv[MAX_MARGV - 1] && *cp;) {
 		while (isspace(*cp))
 			cp++;
 		if (*cp == '\0')
@@ -193,7 +197,10 @@ makeargv(void)
 			break;
 		*cp++ = '\0';
 	}
+	if (margc == MAX_MARGV - 1)
+		return 1;
 	*argp++ = 0;
+	return 0;
 }
 
 #define HELPINDENT (sizeof ("directory"))
