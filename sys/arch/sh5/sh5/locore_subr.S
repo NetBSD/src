@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.4 2002/08/30 10:45:31 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.5 2002/08/31 08:42:00 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -243,14 +243,18 @@ ENTRY_NOPROFILE(_cpu_intr_set)
  * the lowered spl permits them.
  */
 ENTRY_NOPROFILE(splx)
+	ptabs/l	r18, tr0
+	pta/u	Lcheck_softint_lower, tr1
 	getcon	sr, r4
-	LEAF(Lcheck_softint_loweripl, r0)
-	ptabs/l	r0, tr0
+	LEA(_C_LABEL(ssir), r0)		/* Get bitmap of pending soft ints */
 	movi	SH5_CONREG_SR_IMASK_ALL, r3
 	shlli	r2, SH5_CONREG_SR_IMASK_SHIFT, r2
 	andc	r4, r3, r4
 	and	r2, r3, r2
 	or	r4, r2, r2
+	ld.l	r0, 0, r1
+	bne/u	r1, r63, tr1		/* Go deal with them if any pending */
+	putcon	r2, sr			/* Restore interrupt level */
 	blink	tr0, r63
 
 
