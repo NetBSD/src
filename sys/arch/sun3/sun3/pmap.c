@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.14 1993/10/12 05:27:12 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.15 1993/11/23 05:29:14 glass Exp $
  */
 #include "systm.h"
 #include "param.h"
@@ -344,6 +344,7 @@ void set_pte_val(pmap, va,pte)
 outta_here:
     PMAP_UNLOCK();
 }
+
 void context_allocate(pmap)
      pmap_t pmap;
 {
@@ -351,6 +352,9 @@ void context_allocate(pmap)
     int s;
 
     PMAP_LOCK();
+#ifdef CONTEXT_DEBUG    
+    printf("context_allocate: for pmap %x\n", pmap);
+#endif
     if (pmap->pm_context)
 	panic("pmap: pmap already has context allocated to it");
     if (queue_empty(&context_free_queue)) { /* steal one from active*/
@@ -358,6 +362,10 @@ void context_allocate(pmap)
 	    panic("pmap: no contexts to be found");
 	dequeue_first(context, context_t, &context_active_queue);
 	context_free(context->context_upmap);
+#ifdef CONTEXT_DEBUG    
+    printf("context_allocate: pmap %x, stealing context %x num %d\n",
+	   pmap, context, context->context_num);
+#endif
     } else 
 	dequeue_first(context, context_t, &context_free_queue);	
     enqueue_tail(&context_active_queue,context);
@@ -365,6 +373,10 @@ void context_allocate(pmap)
 	panic("pmap: context in use???");
     pmap->pm_context = context;
     context->context_upmap = pmap;
+#ifdef CONTEXT_DEBUG    
+    printf("context_allocate: pmap %x associated with context %x num %d\n",
+	   pmap, context, context->context_num);
+#endif
     PMAP_UNLOCK();
 }
 void context_free(pmap)		/* :) */
@@ -376,6 +388,10 @@ void context_free(pmap)		/* :) */
     vm_offset_t va;
 
     PMAP_LOCK();
+#ifdef CONTEXT_DEBUG
+    printf("context_free: freeing pmap %x of context %x num %d\n",
+	   pmap, pmap->pm_context, pmap->pm_context->context_num);
+#endif
     saved_context = get_context();
     if (!pmap->pm_context)
 	panic("pmap: can't free a non-existent context");
@@ -386,10 +402,14 @@ void context_free(pmap)		/* :) */
 	set_segmap(va, SEGINV);
 	if (pmap->pm_segmap[i] != SEGINV) 
 	    pmeg_release(pmeg_p(pmap->pm_segmap[i]));
+	va += NBSG;
     }
     set_context(saved_context);
     enqueue_tail(&context_free_queue, context);
     pmap->pm_context = NULL;
+#ifdef CONTEXT_DEBUG
+    printf("context_free: pmap %x context removed\n", pmap);
+#endif
     PMAP_UNLOCK();
 }
 
@@ -404,6 +424,9 @@ void context_init()
 	context_array[i].context_num = i;
 	context_array[i].context_upmap = NULL;
 	enqueue_tail(&context_free_queue, (queue_entry_t) &context_array[i]);
+#ifdef CONTEXT_DEBUG
+	printf("context_init: context num %d is %x\n", i, &context_array[i]);
+#endif
     }
 }
 
@@ -649,7 +672,7 @@ void pv_remove_all(pa)
 {
     pv_entry_t npv,head,last;
 
-    if (!pv_initialized) return 0;
+    if (!pv_initialized) return;
     head = pa_to_pvp(pa);
     for (npv = head ; npv != NULL; last= npv, npv = npv->pv_next ) {
 	if (npv->pv_pmap == NULL) continue; /* empty */
@@ -936,7 +959,7 @@ pmap_create(size)
     pmap_t pmap;
 
     if (size)
-	panic("pmap: asked for a software map????");
+	return NULL;
     pmap = (pmap_t) malloc(sizeof(struct pmap), M_VMPMAP, M_WAITOK);
     pmap_common_init(pmap);
     pmap_user_pmap_init(pmap);
@@ -1037,7 +1060,7 @@ void pmap_remove_range_mmu(pmap, sva, eva)
     vm_offset_t va,pte;
     
     saved_context = get_context();
-    if (pmap != kernel_pmap)
+    if (pmap != kernel_pmap) 
 	set_context(pmap->pm_context->context_num);
 
     sme = get_segmap(sva);
@@ -1155,6 +1178,9 @@ void pmap_remove(pmap, sva, eva)
     pmeg_t pmegp;
     int s;
     /* some form of locking?, when where. */
+
+    if (pmap == NULL)
+	return;
 
     /* do something about contexts */
     if (pmap == kernel_pmap) {

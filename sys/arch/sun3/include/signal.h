@@ -1,12 +1,6 @@
 /*
- * Copyright (c) 1993 Adam Glass
- * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
+ * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
  * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,33 +30,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: pcb.h 1.13 89/04/23$
- *
- *	from: @(#)pcb.h	7.4 (Berkeley) 5/4/91
- *	pcb.h,v 1.2 1993/05/22 07:58:27 cgd Exp
+ *	from: @(#)signal.h	7.16 (Berkeley) 3/17/91
+ *	$Id: signal.h,v 1.1 1993/11/23 05:28:59 glass Exp $
  */
 
-#include <machine/frame.h>
+#ifndef _MACHINE_SIGNAL_H_
+#define _MACHINE_SIGNAL_H_
+
+typedef int sig_atomic_t;
 
 /*
- * Sun3 (close to but not exactly the same as the hp300) process control block
+ * Get the "code" values
  */
-struct pcb
-{
-	short	pcb_flags;	/* misc. process flags (+0) */
-	short	pcb_ps; 	/* processor status word (+2) */
-	int	pcb_ustp;	/* user segment table pointer (+4) (not used)*/
-	int	pcb_usp;	/* user stack pointer (+8) */
-	int	pcb_regs[12];	/* D2-D7, A2-A7 (+C) */
-	vm_offset_t pcb_upte[3]; /* ptes for u-area */
-	caddr_t	pcb_onfault;	/* for copyin/out faults */
-	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
-	int	pcb_exec[16];	/* exec structure for core dumps */
+#include <machine/trap.h>
+
+/*
+ * Information pushed on stack when a signal is delivered.
+ * This is used by the kernel to restore state following
+ * execution of the signal handler.  It is also made available
+ * to the handler to allow it to restore state properly if
+ * a non-standard exit is performed.
+ */
+struct	sigcontext {
+	int	sc_onstack;		/* sigstack state to restore */
+	int	sc_mask;		/* signal mask to restore */
+	int	sc_sp;			/* sp to restore */
+	int	sc_fp;			/* fp to restore */
+	int	sc_ap;			/* ap to restore */
+	int	sc_pc;			/* pc to restore */
+	int	sc_ps;			/* psl to restore */
 };
 
-/* flags */
-
-#define PCB_HPUXMMAP	0x0010	/* VA space is multiple mapped */
-#define PCB_HPUXTRACE	0x0020	/* being traced by an HPUX process */
-#define PCB_HPUXBIN	0x0040	/* loaded from an HPUX format binary */
-				/* note: does NOT imply SHPUX */
+#endif	/* _MACHINE_SIGNAL_H_ */
