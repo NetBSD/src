@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.9 2003/04/29 15:11:45 scw Exp $	*/
+/*	$NetBSD: extintr.c,v 1.10 2003/05/16 21:38:50 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -208,6 +208,7 @@ const imask_t    imres       =
 
 #ifdef DEBUG
 struct intrframe *intrframe = 0; 
+static int intr_depth;
 #define EXTINTR_SANITY_SZ	16
 struct {
 	unsigned int ipl;
@@ -218,7 +219,8 @@ struct {
 	if (intr_depth < EXTINTR_SANITY_SZ) { \
 		extintr_sanity[intr_depth].ipl = ci->ci_cpl; \
 		imask_dup_v(&extintr_sanity[intr_depth].oimen, &imen); \
-	}
+	} \
+	intr_depth++
 #else
 #define EXTINTR_SANITY()
 #endif	/* DEBUG */
@@ -656,6 +658,7 @@ void
 ext_intr(struct intrframe *frame)
 {
 #ifdef DEBUG
+	struct cpu_info * const ci = curcpu();
 	struct intrframe *oframe;
 #endif
 	EXT_INTR_STATS_DECL(tstart);
@@ -685,6 +688,7 @@ ext_intr(struct intrframe *frame)
 	}
 #ifdef DEBUG
 	intrframe = oframe;
+	intr_depth--;
 #endif
 }
 
