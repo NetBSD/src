@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.54 1998/04/09 21:11:23 thorpej Exp $
+	$NetBSD: INSTALL,v 1.55 1998/04/22 22:08:06 thorpej Exp $
 
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -632,6 +632,7 @@ Erik Fair		<fair@NetBSD.ORG>
 Hubert Feyrer		<hubertf@NetBSD.ORG>
 Thorsten Frueauf	<frueauf@NetBSD.ORG>
 Brian R. Gaeke		<brg@dgate.org>
+Thomas Gerner		<thomas@NetBSD.ORG>
 Justin Gibbs		<gibbs@NetBSD.ORG>
 Adam Glass		<glass@NetBSD.ORG>
 Michael Graff		<explorer@NetBSD.ORG>
@@ -639,6 +640,7 @@ Brad Grantham		<grantham@tenon.com>
 Matthew Green		<mrg@NetBSD.ORG>
 Juergen Hannken-Illjes	<hannken@NetBSD.ORG>
 Michael L. Hitch	<osymh@NetBSD.ORG>
+Ken Hornstein		<kenh@NetBSD.ORG>
 Marc Horowitz		<marc@NetBSD.ORG>
 Matthew Jacob		<mjacob@NetBSD.ORG>
 Lonhyn T. Jasinskyj	<lonhyn@NetBSD.ORG>
