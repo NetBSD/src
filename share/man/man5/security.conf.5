@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.18 2003/02/13 02:12:07 jhawk Exp $
+.\"	$NetBSD: security.conf.5,v 1.19 2003/02/13 02:42:37 jhawk Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -157,6 +157,10 @@ This includes files such as
 .Pp
 The variables described below can be set to modify the tests:
 .Bl -tag -width check_network
+.It Sy check_mtree_follow_symlinks
+During the
+.Sy check_mtree
+phase, instruct mtree to follow symbolic links.
 .It Sy check_passwd_nowarn_shells
 If
 .Sy check_passwd
