@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: socket.c,v 1.3 2003/12/04 17:17:36 drochner Exp $	*/
 
 /*  Copyright (C) 1996, 2000 N.M. Maclaren
     Copyright (C) 1996, 2000 The University of Cambridge
@@ -32,6 +32,8 @@ static struct sockaddr_storage here[MAX_SOCKETS], there[MAX_SOCKETS];
 static struct sockaddr_in here[MAX_SOCKETS], there[MAX_SOCKETS];
 #endif
 
+void display_in_hex(const void *, int);
+void display_sock_in_hex(struct sockaddr_storage *);
 
 /* There needs to be some disgusting grobble for handling timeouts, that is
 identical to the grobble in internet.c. */
@@ -65,7 +67,7 @@ void display_in_hex (const void *data, int length) {
 #ifdef HAVE_IPV6
 
 void display_sock_in_hex (struct sockaddr_storage *sock) {
-    int family, len;
+    int family;
     struct sockaddr_in *sin;
     struct sockaddr_in6 *sin6;
 
