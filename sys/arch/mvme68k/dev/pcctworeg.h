@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctworeg.h,v 1.4 2000/03/18 22:33:03 scw Exp $ */
+/*	$NetBSD: pcctworeg.h,v 1.5 2000/07/25 20:52:28 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 
 /*
  * Offsets to the various devices which hang off the PCCChip2.
+ * Note that these are offsets from the base of the PCCChip2's
+ * own registers.
  */
 #define PCCTWO_REG_OFF	    0x00000	/* Offset of PCCChip2's own registers */
 #define PCCTWO_LPT_OFF	    0x00000	/* Offset of parallel port registers */
@@ -60,7 +62,7 @@
  * (The physical address of the boot device's registers are passed in
  * from the Boot ROM)
  */
-#define PCCTWO_PADDR(off)	((void *)(0xfff40000u + (off)))
+#define PCCTWO_PADDR(off)	((void *)(0xfff42000u + (off)))
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.21 2000/03/18 22:33:03 scw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.22 2000/07/25 20:52:27 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -223,10 +223,6 @@ le_pcc_attach(parent, self, aux)
 	sc->sc_hwinit = NULL;
 
 	am7990_config(&lsc->sc_am7990);
-
-	/* Are we the boot device? */
-	if (PCC_PADDR(pa->pa_offset) == bootaddr)
-		booted_device = self;
 
 	pccintr_establish(PCCV_LE, am7990_intr, pa->pa_ipl, sc);
 

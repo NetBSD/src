@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.4 2000/03/18 22:33:03 scw Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.5 2000/07/25 20:52:28 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,7 +122,6 @@ ncrsc_pcctwo_attach(parent, self, args)
 	struct siop_softc *sc;
 	bus_space_handle_t bush;
 	int clk, ctest7;
-	int tmp;
 
 	pa = (struct pcctwo_attach_args *) args;
 	sc = (struct siop_softc *) self;
@@ -174,18 +173,7 @@ ncrsc_pcctwo_attach(parent, self, args)
 	pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ICSR,
 	    pa->pa_ipl | PCCTWO_ICR_IEN);
 
-	/*
-	 * Attach all scsi units on us, watching for boot device
-	 * (see dk_establish).
-	 */
-	tmp = bootpart;
-
-	if (PCCTWO_PADDR(pa->pa_offset) != bootaddr)
-		bootpart = -1;	/* Invalid flag to dk_establish */
-
 	(void) config_found(self, &sc->sc_link, scsiprint);
-
-	bootpart = tmp;		/* Restore old value */
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.17 2000/03/18 22:33:05 scw Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.18 2000/07/25 20:52:29 scw Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -173,15 +173,7 @@ wdsc_pcc_attach(pdp, dp, auxp)
     pcc_reg_write(sys_pcc, PCCREG_SCSI_INTR_CTRL,
         sc->sc_ipl | PCC_IENABLE | PCC_ICLEAR);
 
-    /*
-     * Attach all scsi units on us, watching for boot device
-     * (see dk_establish).
-     */
-    tmp = bootpart;
-    if (PCC_PADDR(pa->pa_offset) != bootaddr) 
-	bootpart = -1;		/* invalid flag to dk_establish */
     (void)config_found(dp, &sc->sc_link, scsiprint);
-    bootpart = tmp;		/* restore old value */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 2000/03/18 22:33:06 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19 2000/07/25 20:52:31 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -58,44 +58,6 @@ static void printlp __P((struct disklabel *lp, char *str));
 static void printclp __P((struct cpu_disklabel *clp, char *str));
 #endif
 
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	struct scsibus_softc *sbsc;
-	int target, lun;
-
-	if (bootpart == -1) /* ignore flag from controller driver? */
-		return;
-
-	/*
- 	 * scsi: sd,cd
- 	 */
-
-	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
-	    strncmp("cd", dev->dv_xname, 2) == 0) {
-
-        	sbsc = (struct scsibus_softc *)dev->dv_parent;
-		target = bootctrllun % 8; /* XXX: 147 only */
-		lun = bootdevlun; /* XXX: 147, untested */
-
-		/* 
-		 * XXX: on the 167: 
-		 * ignore bootctrllun
-		 * target = bootdevlun / 10
-		 * lun = bootdevlun % 10
-		 */
-
-        	if (sbsc->sc_link[target][lun] != NULL &&
-            	    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
-			booted_device = dev;
-                	return;
-		}
-        }
-
-	return;
-}
 
 /*
  * Attempt to read a disk label from a device
