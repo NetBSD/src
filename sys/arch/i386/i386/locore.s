@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.81 1994/09/07 20:32:00 mycroft Exp $
+ *	$Id: locore.s,v 1.82 1994/09/08 21:56:14 mycroft Exp $
  */
 
 /*
@@ -1468,11 +1468,11 @@ ENTRY(setrunqueue)
 	shrl	$2,%edx
 	btsl	%edx,_whichqs		# set q full bit
 	leal	_qs(,%edx,8),%edx	# locate q hdr
-	movl	%edx,P_FORW(%eax)	# link process on tail of q
 	movl	P_BACK(%edx),%ecx
+	movl	%edx,P_FORW(%eax)	# link process on tail of q
 	movl	%eax,P_BACK(%edx)
-	movl	%ecx,P_BACK(%eax)
 	movl	%eax,P_FORW(%ecx)
+	movl	%ecx,P_BACK(%eax)
 	ret
 #ifdef DIAGNOSTIC
 1:	pushl	$2f
@@ -1496,9 +1496,9 @@ ENTRY(remrq)
 #endif /* DIAGNOSTIC */
 	movl	P_FORW(%esi),%ecx	# unlink process
 	movl	P_BACK(%esi),%edx
-	movl	%edx,P_BACK(%ecx)
 	movl	%ecx,P_FORW(%edx)
-	movl	$0,P_BACK(%esi)	# zap reverse link to indicate off list
+	movl	%edx,P_BACK(%ecx)
+	movl	$0,P_BACK(%esi)		# zap reverse link to indicate off list
 	cmpl	%edx,%ecx		# q still has something?
 	jne	2f
 	btrl	%eax,_whichqs		# no; clear bit
@@ -1576,22 +1576,19 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	movl	P_FORW(%eax),%edi	# unlink from front of process q
 #ifdef	DIAGNOSTIC
-	cmpl	%edi,%eax		# linked to self (e.g. nothing queued)?
+	cmpl	%edi,%eax		# linked to self (i.e. nothing queued)?
 	je	_switch_error		# not possible
 #endif /* DIAGNOSTIC */
 	movl	P_FORW(%edi),%edx
 	movl	%edx,P_FORW(%eax)
+	movl	%eax,P_BACK(%edx)
 
 	cmpl	%edx,%eax		# q empty
 	jne	3f
 	btrl	%ebx,%ecx		# yes, clear to indicate empty
-
-3:	movl	P_BACK(%edi),%eax
-	movl	%eax,P_BACK(%edx)
-
 	movl	%ecx,_whichqs		# update q status
 
-	/* We just did it. */
+3:	/* We just did it. */
 	xorl	%eax,%eax
 	movl	%eax,_want_resched
 
