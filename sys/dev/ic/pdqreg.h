@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqreg.h,v 1.4 1996/05/20 00:26:23 thorpej Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.5 1996/08/27 00:51:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,6 +35,7 @@
 #ifndef _PDQREG_H
 #define	_PDQREG_H
 
+#ifndef __NetBSD__
 #include <stddef.h>
 #if defined(PDQTEST) && !defined(PDQ_NDEBUG)
 #include <assert.h>
@@ -42,6 +43,17 @@
 #else
 #define	PDQ_ASSERT(x)	do { } while(0)
 #endif
+#else /* __NetBSD__ */
+/*
+ * Including user-land headers in kernel code is not allowed in NetBSD.
+ */
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+#ifdef PDQ_NDEBUG
+#undef NDEBUG
+#define NDEBUG
+#endif
+#define	PDQ_ASSERT	assert
+#endif /* __NetBSD__ */
 
 #define	PDQ_RING_SIZE(array)	((sizeof(array) / sizeof(array[0])))
 #define	PDQ_ARRAY_SIZE(array)	((sizeof(array) / sizeof(array[0])))
