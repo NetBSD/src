@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.18 2001/01/13 20:21:56 soren Exp $	*/
+/*	$NetBSD: sort.c,v 1.19 2001/02/07 19:47:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.18 2001/01/13 20:21:56 soren Exp $");
+__RCSID("$NetBSD: sort.c,v 1.19 2001/02/07 19:47:44 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ main(argc, argv)
 			d_mask['\t'] &= ~FLD_D;
 			d_mask[(u_char)*optarg] |= FLD_D;
 			if (d_mask[(u_char)*optarg] & REC_D_F)
-				err(2, "record/field delimiter clash");
+				errx(2, "record/field delimiter clash");
 			break;
 		case 'T':
 			if (REC_D != '\n')
