@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: isofs_rrip.c,v 1.7 1994/03/02 19:05:20 ws Exp $
+ *	$Id: isofs_rrip.c,v 1.8 1994/03/13 17:24:23 ws Exp $
  */
 
 #include <sys/param.h>
@@ -502,6 +502,9 @@ isofs_rrip_loop(isodir,ana,table)
 				result &= ~ISO_SUSP_STOP;
 				break;
 			}
+			/* plausibility check */
+			if (isonum_711(phead->length) < sizeof(*phead))
+				break;
 			/*
 			 * move to next SUSP
 			 * Hopefully this works with newer versions, too
