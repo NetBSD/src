@@ -1,5 +1,5 @@
-.\" $NetBSD: iwm.4,v 1.7 2001/06/05 12:30:46 wiz Exp $
-.\"	$Id: iwm.4,v 1.7 2001/06/05 12:30:46 wiz Exp $
+.\" $NetBSD: iwm.4,v 1.8 2002/01/15 01:47:22 wiz Exp $
+.\"	$Id: iwm.4,v 1.8 2002/01/15 01:47:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
 .\"
@@ -57,15 +57,11 @@ The following formats are supported:
 .Pp
 (The above table describes the logical mapping as implemented by the
 driver; the physical layout of GCR floppies has 8..12 sectors per track.)
-.\"
 .Sh FORMATTING
 The
 .Nm
 driver does currently not support floppy disk formatting.
-.\"
 .Sh SEE ALSO
-.\" Cross-references should be ordered by section (low to high), then in
-.\"     alphabetical order.
 Apple Computer, Inc.: "Inside Macintosh", Vol III-33f. (Addison-Wesley)
 .Pp
 Apple Computer, Inc.: "New Technical Notes DV 17 - Sony Driver"
@@ -73,24 +69,20 @@ Apple Computer, Inc.: "New Technical Notes DV 17 - Sony Driver"
 Neil Parker: "iwmstuff"
 .Pp
 .Xr eject 1
-.\"
 .Sh HISTORY
 The
 .Nm
 interface first appeared in
 .Nx 1.4 .
-.\"
 .Sh AUTHORS
 Hauke Fath put together the beginnings of the
 .Nm
 driver in 1996 from the sparse documentation in "Inside Macintosh",
 Neil Parker's "iwmstuff" documentation for the Apple IIgs and a long,
 hard look at the .Sony driver.
-.\"
 .Sh BUGS
 The FFS code is incapable of dealing with a varying number of
 sectors per track. We have to fake a mapping and so lose FFS support
 for hardware parameters like transition times.
 .Pp
 The driver only supports an obsolete format.
-
