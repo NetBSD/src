@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.11 2002/06/14 23:14:18 simonb Exp $ */
+/* $NetBSD: mkdep.c,v 1.12 2003/01/16 08:05:09 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mkdep.c,v 1.11 2002/06/14 23:14:18 simonb Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.12 2003/01/16 08:05:09 msaitoh Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: mkdep.c,v 1.11 2002/06/14 23:14:18 simonb Exp $");
 #include <err.h>
 #include <locale.h>
 #include <paths.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,6 +67,10 @@ __RCSID("$NetBSD: mkdep.c,v 1.11 2002/06/14 23:14:18 simonb Exp $");
 #define DEFAULT_PATH		_PATH_DEFPATH
 #define DEFAULT_FILENAME	".depend"
 
+int tmpfd;
+char tmpfilename[MAXPATHLEN];
+
+static void	finish __P((int));
 static void	usage __P((void));
 int		main __P((int, char **));
 
@@ -78,15 +83,27 @@ usage()
 	exit(EXIT_FAILURE);
 }
 
+void
+finish(signo)
+	int signo;
+{
+
+	if (tmpfd != -1) {
+		(void)close(tmpfd);
+		(void)unlink(tmpfilename);
+	}
+	exit(EXIT_FAILURE);
+}
+
 int
 main(argc, argv)
 	int     argc;
 	char  **argv;
 {
 	/* LINTED local definition of index */
-	int 	aflag, pflag, index, tmpfd, status;
+	int 	aflag, pflag, index, status;
 	pid_t	cpid, pid;
-	char   *filename, *CC, *pathname, tmpfilename[MAXPATHLEN], **args;
+	char   *filename, *CC, *pathname, **args;
 	const char *tmpdir;
 	/* LINTED local definition of tmpfile */
 	FILE   *tmpfile, *dependfile;
@@ -139,6 +156,12 @@ main(argc, argv)
 		tmpdir = _PATH_TMP;
 	(void)snprintf(tmpfilename, sizeof (tmpfilename), "%s/%s", tmpdir,
 	    "mkdepXXXXXX");
+	/* set signal handler */
+	tmpfd = -1;
+	(void)signal(SIGINT, finish);
+	(void)signal(SIGHUP, finish);
+	(void)signal(SIGQUIT, finish);
+	(void)signal(SIGTERM, finish);
 	if ((tmpfd = mkstemp (tmpfilename)) < 0) {
 		warn("unable to create temporary file %s", tmpfilename);
 		exit(EXIT_FAILURE);
