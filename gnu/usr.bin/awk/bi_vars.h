@@ -12,12 +12,15 @@ the GNU General Public License, version 2, 1991.
 
 
 /* $Log: bi_vars.h,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:57:05  jtc
+/* Updated to mawk 1.1.4
 /*
- * Revision 5.1  91/12/05  07:59:05  brennan
+ * Revision 5.2  1992/07/10  16:17:10  brennan
+ * MsDOS: remove NO_BINMODE macro
+ *
+ * Revision 5.1  1991/12/05  07:59:05  brennan
  * 1.1 pre-release
- * 
+ *
 */
 
 
@@ -43,7 +46,7 @@ the GNU General Public License, version 2, 1991.
 #define  RSTART    (bi_vars+7)
 #define  SUBSEP    (bi_vars+8)
 
-#if  MSDOS  &&  NO_BINMODE==0
+#if  MSDOS 
 #define  BINMODE   (bi_vars+9)
 #define  NUM_BI_VAR  10
 #else

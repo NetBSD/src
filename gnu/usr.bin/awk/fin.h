@@ -11,12 +11,12 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /*$Log: fin.h,v $
-/*Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*initial import of 386bsd-0.1 sources
+/*Revision 1.2  1993/07/02 23:57:24  jtc
+/*Updated to mawk 1.1.4
 /*
- * Revision 5.2  92/01/06  08:16:24  brennan
+ * Revision 5.2  1992/01/06  08:16:24  brennan
  * setmode() proto for MSDOS
- * 
+ *
  * Revision 5.1  91/12/05  07:59:20  brennan
  * 1.1 pre-release
  * 

@@ -11,12 +11,29 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /* $Log: field.c,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:57:17  jtc
+/* Updated to mawk 1.1.4
 /*
- * Revision 5.1  91/12/05  07:55:57  brennan
+ * Revision 5.4.1.2  1993/01/20  12:53:08  mike
+ * d_to_l()
+ *
+ * Revision 5.4.1.1  1993/01/15  03:33:42  mike
+ * patch3: safer double to int conversion
+ *
+ * Revision 5.4  1992/11/29  22:52:11  mike
+ * double->string conversions uses long ints for 16/32 bit
+ * compatibility.
+ * Fixed small LM_DOS bozo.
+ *
+ * Revision 5.3  1992/08/17  14:21:10  brennan
+ * patch2: After parsing, only bi_sprintf() uses string_buff.
+ *
+ * Revision 5.2  1992/07/10  16:17:10  brennan
+ * MsDOS: remove NO_BINMODE macro
+ *
+ * Revision 5.1  1991/12/05  07:55:57  brennan
  * 1.1 pre-release
- * 
+ *
 */
 
 
@@ -254,7 +271,11 @@ void  field_assign( fp, cp)
   if ( nf < 0 )  split_field0() ;
 
 #if  LM_DOS
-  if ( !SAMESEG(fp,field) )  goto lm_dos_label ;
+  if ( !SAMESEG(fp,field) )
+  { 
+    i = -1 ;
+    goto lm_dos_label ;
+  }
 #endif
 
   switch( i = (fp - field) )
@@ -266,7 +287,7 @@ void  field_assign( fp, cp)
         (void) cellcpy(NF, cellcpy(&c,cp) ) ;
         if ( c.type != C_DOUBLE )  cast1_to_d(&c) ;
 
-        if ( (j = (int) c.dval) < 0 )
+        if ( (j = d_to_i(c.dval)) < 0 )
             rt_error("negative value assigned to NF") ;
 
         if ( j > nf )
@@ -315,11 +336,12 @@ void  field_assign( fp, cp)
           /* It's a string, but if it's really goofy and CONVFMT,
 	     it could still damage us. Test it .
 	  */
-          string_buff[256] = 0 ;
-          (void) sprintf(string_buff, 
-             string(fp)->str, 3.1459) ;
-          if ( string_buff[256] )
-                rt_error("CONVFMT assigned unusable value") ;
+          char xbuff[512] ;
+
+	  xbuff[256] = 0 ;
+          (void) sprintf( xbuff, string(fp)->str, 3.1459) ;
+          if ( xbuff[256] ) 
+	      rt_error("CONVFMT assigned unusable value") ;
         }
         break ;
 
@@ -403,19 +425,22 @@ static void  build_field0()
       if ( cp->type < C_STRING ) 
       { /* use the string field temporarily */
         if ( cp->type == C_NOINIT )
-	{ cp->ptr = (PTR) &null_str ;
+	{ 
+	  cp->ptr = (PTR) &null_str ;
 	  null_str.ref_cnt++ ;
         }
 	else /* its a double */
-	{ int ival ;
+	{ 
+	  long ival ;
+	  char xbuff[260] ;
 
-	  if ( (double)(ival = (int)cp->dval) == cp->dval )
-	    (void) sprintf(string_buff, "%d", ival) ;
+	  ival = d_to_l(cp->dval) ;
+	  if ( ival == cp->dval )
+	    (void) sprintf(xbuff, INT_FMT, ival) ;
 	  else
-	    (void) sprintf(string_buff,
-			   string(CONVFMT)->str, cp->dval) ;
+	    (void) sprintf(xbuff, string(CONVFMT)->str, cp->dval) ;
 
-	  cp->ptr = (PTR) new_STRING(string_buff) ;
+	  cp->ptr = (PTR) new_STRING(xbuff) ;
         }
       }
 
@@ -572,13 +597,13 @@ static void  load_field_ov()
 }
 
 
-#if  MSDOS && NO_BINMODE==0
+#if  MSDOS 
 
 int binmode()  /* read current value of BINMODE */
 { CELL c ;
   
   cast1_to_d(cellcpy(&c, BINMODE)) ;
-  return  (int) c.dval ;
+  return  d_to_i(c.dval) ;
 }
 
 /* set BINMODE and RS and ORS 

@@ -1,7 +1,7 @@
 
 /********************************************
 error.c
-copyright 1991, Michael D. Brennan
+copyright 1991, 1992 Michael D. Brennan
 
 This is a source file for mawk, an implementation of
 the AWK programming language.
@@ -12,28 +12,47 @@ the GNU General Public License, version 2, 1991.
 
 
 /* $Log: error.c,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:57:12  jtc
+/* Updated to mawk 1.1.4
 /*
- * Revision 5.1  91/12/05  07:55:48  brennan
+ * Revision 5.3  1993/01/22  14:55:46  mike
+ * trivial change for unexpected_char()
+ *
+ * Revision 5.2  1992/10/02  23:26:04  mike
+ * using vargs.h
+ *
+ * Revision 5.1  1991/12/05  07:55:48  brennan
  * 1.1 pre-release
- * 
+ *
 */
 
 
 #include  "mawk.h"
 #include  "scan.h"
 #include  "bi_vars.h"
+#include  "vargs.h"
+
 
 #ifndef  EOF
 #define  EOF  (-1)
 #endif
 
-/* statics */
 static void  PROTO( rt_where, (void) ) ;
 static void  PROTO( unexpected_char, (void) ) ;
 static void  PROTO( missing, (int, char *, int) ) ;
 static char *PROTO( type_to_str, (int) ) ;
+
+#if HAVE_STRERROR == 0
+#define strerror(n) ((n)>0&&(n)<sys_nerr?sys_errlist[n]:(char*)0)
+extern int sys_nerr ;
+extern char *sys_errlist[];
+#endif
+
+
+#ifdef  USE_SIMPLE_VFPRINTF
+#define  vfprintf  simple_vfprintf
+#endif
+
 
 extern int NR_flag ; /* on if tracking NR */
 
@@ -178,39 +197,26 @@ done :
   if ( ++compile_error_count == MAX_COMPILE_ERRORS ) mawk_exit(1) ;
 }
 
-/* system provided errnos and messages */
-#ifndef MSDOS_MSC       /* don't need the declarations */
-#ifndef THINK_C         /* don't WANT the declarations */
-extern int sys_nerr ;
-extern char *sys_errlist[] ;
-#endif
-#endif
-
-#if  HAVE_STDARG_H
-#include <stdarg.h>
 
 /* generic error message with a hook into the system error 
    messages if errnum > 0 */
 
-void  errmsg(int errnum, char *format, ...)
-{ va_list args ;
+void  errmsg VA_ALIST2(int , errnum, char *, format)
+  va_list args ;
 
   fprintf(stderr, "%s: " , progname) ;
-  va_start(args, format) ;
+
+  VA_START2(args, int, errnum, char *, format) ;
   (void) vfprintf(stderr, format, args) ;
   va_end(args) ;
-#ifdef THINK_C
-  if ( errnum > 0 )
-    fprintf(stderr, " (%s)" , strerror(errnum) ) ;
-#else
-  if ( errnum > 0 && errnum < sys_nerr )
-    fprintf(stderr, " (%s)" , sys_errlist[errnum]) ;
-#endif
+
+  if ( errnum > 0 ) fprintf(stderr, " (%s)" , strerror(errnum) ) ;
+
   fprintf( stderr, "\n") ;
 }
 
-void  compile_error(char *format, ...)
-{ va_list args ;
+void  compile_error  VA_ALIST(char *, format)
+  va_list args ;
   char *s0, *s1 ;
 
   /* with multiple program files put program name in
@@ -221,18 +227,18 @@ void  compile_error(char *format, ...)
   { s0 = s1 = "" ; }
 
   fprintf(stderr, "%s: %s%sline %u: " , progname, s0, s1,token_lineno) ;
-  va_start(args, format) ;
+  VA_START(args, char *, format) ;
   vfprintf(stderr, format, args) ;
   va_end(args) ;
   fprintf(stderr, "\n") ;
   if ( ++compile_error_count == MAX_COMPILE_ERRORS ) mawk_exit(1) ;
 }
 
-void  rt_error( char *format, ...)
-{ va_list args ;
+void  rt_error VA_ALIST( char *, format)
+  va_list args ;
 
   fprintf(stderr, "%s: run time error: " , progname ) ;
-  va_start(args, format) ;
+  VA_START(args, char *, format) ;
   vfprintf(stderr, format, args) ;
   va_end(args) ;
   putc('\n',stderr) ;
@@ -240,77 +246,20 @@ void  rt_error( char *format, ...)
   mawk_exit(1) ;
 }
 
-#else
-
-#include <varargs.h>
-
-/*  void errmsg(errnum, format, ...) */
-
-void  errmsg( va_alist)
-  va_dcl
-{ va_list ap ;
-  int errnum ;
-  char *format ;
-
-  fprintf(stderr, "%s: " , progname) ;
-  va_start(ap) ;
-  errnum = va_arg(ap, int) ;
-  format = va_arg(ap, char *) ;
-  (void) vfprintf(stderr, format, ap) ;
-#ifdef THINK_C
-  if ( errnum > 0 )
-    fprintf(stderr, " (%s)" , strerror(errnum) ) ;
-#else
-  if ( errnum > 0 && errnum < sys_nerr )
-    fprintf(stderr, " (%s)" , sys_errlist[errnum]) ;
-#endif
-  fprintf( stderr, "\n") ;
-}
-
-void compile_error( va_alist )
-  va_dcl
-{ va_list args ;
-  char *format ;
-  char *s0, *s1 ;
-
-  if ( pfile_name ) /* print program filename too */
-  { s0 = pfile_name ; s1 = ": " ; }
-  else s0 = s1 = "" ;
-
-  fprintf(stderr, "%s: %s%sline %u: " , progname, s0, s1,token_lineno) ;
-  va_start(args) ;
-  format = va_arg(args, char *) ;
-  vfprintf(stderr, format, args) ;
-  va_end(args) ;
-  fprintf(stderr, "\n") ;
-  if ( ++compile_error_count == MAX_COMPILE_ERRORS ) mawk_exit(1) ;
-}
-
-void  rt_error( va_alist )
-  va_dcl
-{ va_list args ;
-  char *format ;
-
-  fprintf(stderr, "%s: run time error: " , progname ) ;
-  va_start(args) ;
-  format = va_arg(args, char *) ;
-  vfprintf(stderr, format, args) ;
-  va_end(args) ;
-  putc('\n',stderr) ;
-  rt_where() ;
-  mawk_exit(1) ;
-}
-
-#endif
 
 void bozo(s)
   char *s ;
-{ errmsg(0, "bozo: %s" , s) ; mawk_exit(1) ; }
+{ 
+  errmsg(0, "bozo: %s" , s) ; 
+  mawk_exit(1) ;
+}
 
 void overflow(s, size)
   char *s ; unsigned size ;
-{ errmsg(0 , "program limit exceeded: %s size=%u", s, size) ;
-  mawk_exit(1) ; }
+{ 
+  errmsg(0 , "program limit exceeded: %s size=%u", s, size) ;
+  mawk_exit(1) ; 
+}
 
 
 /* print as much as we know about where a rt error occured */
@@ -340,7 +289,7 @@ static void unexpected_char()
 { int c = yylval.ival ;
 
   fprintf(stderr, "%s: %u: ", progname, token_lineno) ;
-  if ( c > ' ')
+  if ( c > ' ' && c < 127 )
       fprintf(stderr, "unexpected character '%c'\n" , c) ;
   else
       fprintf(stderr, "unexpected character 0x%02x\n" , c) ;
@@ -368,5 +317,77 @@ void type_error(p)
 { compile_error("illegal reference to %s %s", 
     type_to_str(p->type) , p->name) ;
 }
+
+
+
+
+#ifdef  USE_SIMPLE_VFPRINTF
+
+/* a minimal vfprintf  */
+int simple_vfprintf( fp, format, argp)
+  FILE *fp ;
+  char *format ; 
+  va_list  argp ;
+{ 
+  char *q , *p, *t ;
+  int l_flag ;
+  char xbuff[64] ;
+
+  q = format ;
+  xbuff[0] = '%' ;
+
+  while ( *q != 0 )
+  { 
+    if ( *q != '%' )
+    {
+      putc(*q, fp) ; q++ ; continue ;
+    }
+
+    /* mark the start with p */
+    p = ++q ;  t = xbuff + 1 ;
+
+    if ( *q == '-' )  *t++ = *q++ ;
+    while ( scan_code[*(unsigned char*)q] == SC_DIGIT ) *t++ = *q++ ;
+    if ( *q == '.' )
+    { *t++ = *q++ ;
+      while ( scan_code[*(unsigned char*)q] == SC_DIGIT ) *t++ = *q++ ;
+    }
+
+    if ( *q == 'l' )  { l_flag = 1 ; *t++ = *q++ ; }
+    else l_flag = 0 ;
+
+    
+    *t = *q++ ; t[1] = 0 ;
+
+    switch( *t )
+    {
+      case 'c' :  
+      case 'd' :
+      case 'o' :
+      case 'x' :
+      case 'u' :
+           if ( l_flag )  fprintf(fp, xbuff, va_arg(argp,long) ) ;
+           else  fprintf(fp, xbuff, va_arg(argp, int)) ;
+           break ;
+
+      case  's' :
+           fprintf(fp, xbuff, va_arg(argp, char*)) ;
+           break ;
+
+      case  'g' :
+      case  'f' :
+           fprintf(fp, xbuff, va_arg(argp, double)) ;
+           break ;
+
+      default:
+           putc('%', fp) ; 
+           q = p ;
+           break ;
+    }
+  }
+  return 0 ; /* shut up */
+}
+
+#endif  /* USE_SIMPLE_VFPRINTF */
 
 

@@ -1,7 +1,7 @@
 
 /********************************************
 array.c
-copyright 1991, Michael D. Brennan
+copyright 1991, 1992.  Michael D. Brennan
 
 This is a source file for mawk, an implementation of
 the AWK programming language.
@@ -11,9 +11,23 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /* $Log: array.c,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:56:57  jtc
+/* Updated to mawk 1.1.4
 /*
+ * Revision 5.3.1.1  1993/01/20  12:24:25  mike
+ * patch3: safer double to int conversions
+ *
+ * Revision 5.3  1992/11/28  23:48:42  mike
+ * For internal conversion numeric->string, when testing
+ * if integer, use longs instead of ints so 16 and 32 bit
+ * systems behave the same
+ *
+ * Revision 5.2  1992/04/07  17:17:31  brennan
+ * patch 2
+ * n = split(s,A,r)
+ * delete A[i] if i not in 1..n
+ * This is consistent with [ng]?awk
+ *
  * Revision 5.1  91/12/05  07:55:32  brennan
  * 1.1 pre-release
  * 
@@ -30,9 +44,10 @@ the GNU General Public License, version 2, 1991.
 #define   NO_IVAL       (-1)
 
 static ANODE *PROTO(find_by_sval, (ARRAY, STRING *, int) ) ;
-static ANODE *PROTO(find_by_index, (ARRAY, int,int,int) ) ;
+static ANODE *PROTO(find_by_index, (ARRAY, int,long,int) ) ;
 static ANODE *PROTO(find_by_dval, (ARRAY, double, int)) ;
 static void PROTO(load_array_ov, (ARRAY) ) ;
+static void PROTO(ilist_delete, (ARRAY, ANODE*)) ;
 
 
 extern unsigned hash() ;
@@ -62,17 +77,19 @@ static  ANODE *find_by_sval(A, sval, cflag)
    register ANODE *p = A[h].link ;
    ANODE *q = 0 ; /* holds first deleted ANODE */
 
-   while ( p )
-   {
+   while ( 1 )
+     if ( !p )  goto not_there ;
+     else 
      if ( p->sval )
-     { if ( strcmp(s,p->sval->str) == 0 )  return p ; }
-     else /* its deleted, mark with q */
-     if ( ! q )  q = p ;  
+	if ( strcmp(s,p->sval->str) == 0 )  return p ;
+	else  p = p->link ;
+     else { q = p ; p = p->link ; break ; }
+	
+   while ( p )  /* q is now set */
+     if ( p->sval && strcmp(s,p->sval->str) == 0 )  return p ; 
+     else  p = p->link ;
 
-     p = p->link ;
-   }
-
-   /* not there */
+not_there :
    if ( cflag )
    {
        if ( q )  p = q ; /* reuse the deleted node q */
@@ -91,9 +108,16 @@ static  ANODE *find_by_sval(A, sval, cflag)
 }
 
 
+/* find an array by (long) integer ival.
+   Caller has already computed the hash value index.
+   (This allows fast insertion for split())
+*/
+
 static ANODE  *find_by_index(A, index, ival, flag)
   ARRAY  A ;
-  int index, ival, flag ;
+  int index; 
+  long ival; 
+  int flag ;
 {
   register ANODE *p = A[index].ilink ;
   ANODE *q = 0 ; /* trails p */
@@ -109,10 +133,11 @@ static ANODE  *find_by_index(A, index, ival, flag)
 
    /* not there, still need to look by sval */
    
-   { char xbuff[16] ;
+   { /* convert to string */
+     char xbuff[16] ;
      STRING *sval ;
      char *s = xbuff+14 ;
-     int x = ival ;
+     long x = ival ;
 
      xbuff[15] = 0 ;
 
@@ -136,19 +161,24 @@ found : /* put p at front */
 static ANODE *find_by_dval(A, d, flag)
   ARRAY A ;
   double d ;
+  int flag ;
 {
-  int ival ;
+  long lval ;
   ANODE *p ;
   char xbuff[260] ;
   STRING *sval ;
   
 
-  if ( (double)(ival = (int)d) == d ) /* integer valued */
+  lval = d_to_l(d) ;
+  if ( (double)lval == d ) /* integer valued */
   {
-    if ( ival >= 0 )  
-            return  find_by_index(A, ival%A_HASH_PRIME, ival, flag) ;
-    
-    (void) sprintf(xbuff, "%d", ival) ;
+    if ( lval >= 0 )  
+    {
+            return 
+	    find_by_index(A, (int)(lval%A_HASH_PRIME), lval, flag) ;
+    }
+    else
+    (void) sprintf(xbuff, INT_FMT, lval) ;
   } 
   else (void) sprintf(xbuff, string(CONVFMT)->str, d) ;
 
@@ -195,8 +225,9 @@ void  array_delete(A, cp)
   {
     case C_DOUBLE :
         ap = find_by_dval(A, cp->dval, NO_CREATE) ;
+	/* cut the ilink */
         if ( ap && ap->ival >= 0 ) /* must be at front */
-                A[ap->ival%A_HASH_PRIME].ilink = ap->ilink ;
+                A[(int)(ap->ival%A_HASH_PRIME)].ilink = ap->ilink ;
         break ;
 
     case  C_NOINIT :
@@ -205,16 +236,13 @@ void  array_delete(A, cp)
 
     default :
         ap = find_by_sval(A, string(cp), NO_CREATE) ;
-        if ( ap && ap->ival >= 0 )
-        {
-          int index = ap->ival % A_HASH_PRIME ;
-
-          ap = find_by_index(A, index, ap->ival, NO_CREATE) ;
-          A[index].ilink = ap->ilink ;
-        }
+        if ( ap && ap->ival >= 0 ) ilist_delete(A, ap) ;
         break ;
   }
 
+  
+  /* delete -- leave the empty ANODE so for(i in A)
+     works */
   if ( ap )
   { free_STRING(ap->sval) ; ap->sval = (STRING *) 0 ;
     cell_destroy(ap->cp)  ; zfree(ap->cp, sizeof(CELL)) ;
@@ -241,7 +269,7 @@ static void  load_array_ov(A)
 
   while( 1 )
   {
-    cp = find_by_index(A, index, cnt, NO_MOVE) ->cp ;
+    cp = find_by_index(A, index, (long)cnt, NO_MOVE) ->cp ;
     cell_destroy(cp) ;
     cp->type = C_MBSTRN ;
     cp->ptr = (PTR) p->sval ;
@@ -252,6 +280,23 @@ static void  load_array_ov(A)
     cnt++ ;
     if ( ++index == A_HASH_PRIME )  index = 0 ;
   }
+}
+
+/* delete an ANODE from the ilist that is known
+   to be there */
+
+static  void  ilist_delete(A, d) 
+  ARRAY A ;
+  ANODE *d ;
+{
+  int index = d->ival % A_HASH_PRIME ;
+  register ANODE *p = A[index].ilink ;
+  register ANODE *q = (ANODE *) 0 ;
+
+  while ( p != d ) { q = p ; p = p->ilink ; }
+
+  if ( q )  q->ilink = p->ilink ;
+  else  A[index].ilink = p->ilink ;
 }
 
 
@@ -266,6 +311,28 @@ void  load_array( A, cnt)
   register CELL *cp ;
   register int index ;
 
+  { /* clear A , leaving only A[1]..A[cnt] (if exist) */
+    int i ;
+    ANODE *p ;
+
+    for( i = 0 ; i < A_HASH_PRIME ; i++ )
+    {
+      p = A[i].link ;
+      while ( p )
+      {
+	if ( p->sval && (p->ival <= 0 || p->ival > cnt) )
+	{
+	  if (p->ival >= 0) ilist_delete(A, p) ;
+
+	  free_STRING(p->sval) ;
+	  p->sval = (STRING *) 0 ;
+	  cell_destroy(p->cp) ;
+	  ZFREE(p->cp) ;
+	}
+	p = p->link ;
+      }
+    }
+  }
   if ( cnt > MAX_SPLIT )
   {
     load_array_ov(A) ;
@@ -276,7 +343,7 @@ void  load_array( A, cnt)
 
   while ( cnt )
   {
-    cp = find_by_index(A, index, cnt, NO_MOVE) ->cp  ;
+    cp = find_by_index(A, index, (long) cnt, NO_MOVE) ->cp  ;
     cell_destroy(cp) ;
     cp->type = C_MBSTRN ;
     cp->ptr = (PTR) split_buff[--cnt] ;
@@ -401,4 +468,3 @@ int  inc_aloop_state( ap )
     p = p->link ;
   }
 }
-

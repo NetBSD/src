@@ -11,12 +11,18 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /*$Log: symtype.h,v $
-/*Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*initial import of 386bsd-0.1 sources
+/*Revision 1.2  1993/07/02 23:57:58  jtc
+/*Updated to mawk 1.1.4
 /*
- * Revision 5.1  91/12/05  07:59:37  brennan
+ * Revision 5.3  1992/12/17  02:48:01  mike
+ * 1.1.2d changes for DOS
+ *
+ * Revision 5.2  1992/07/08  15:44:44  brennan
+ * patch2: length returns.  I am a wimp
+ *
+ * Revision 5.1  1991/12/05  07:59:37  brennan
  * 1.1 pre-release
- * 
+ *
 */
 
 /* types related to symbols are defined here */
@@ -43,7 +49,7 @@ unsigned char min_args, max_args ;
 typedef  struct anode {
 struct anode *link , *ilink ;
 STRING *sval ;
-int     ival ;
+long     ival ;
 CELL   *cp ;
 }  ANODE ;
 
@@ -113,9 +119,10 @@ void  PROTO( fdump, (void) ) ;
 #define  ST_FUNCT   6
 #define  ST_NR      7  /*  NR is special */
 #define  ST_ENV     8  /* and so is ENVIRON */
-#define  ST_LOCAL_NONE  9
-#define  ST_LOCAL_VAR   10
-#define  ST_LOCAL_ARRAY 11
+#define  ST_LENGTH  9  /* ditto and bozo */
+#define  ST_LOCAL_NONE  10
+#define  ST_LOCAL_VAR   11
+#define  ST_LOCAL_ARRAY 12
 
 #define  is_local(stp)   ((stp)->type>=ST_LOCAL_NONE)
 

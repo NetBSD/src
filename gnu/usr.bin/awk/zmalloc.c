@@ -11,12 +11,16 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /*$Log: zmalloc.c,v $
-/*Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*initial import of 386bsd-0.1 sources
+/*Revision 1.2  1993/07/02 23:58:03  jtc
+/*Updated to mawk 1.1.4
 /*
- * Revision 5.1  91/12/05  07:56:35  brennan
+ * Revision 5.1.1.1  1993/02/06  11:12:19  mike
+ * fix bug in reuse of parser table memory
+ * for most users ifdef the mess out
+ *
+ * Revision 5.1  1991/12/05  07:56:35  brennan
  * 1.1 pre-release
- * 
+ *
 */
 
 /*  zmalloc.c  */
@@ -86,20 +90,36 @@ PTR   bmalloc( blocks )
   { pool[blocks-1] = p->link ; return (PTR) p ; }
 
   if ( blocks > amt_avail )
-  { if ( amt_avail ) /* free avail */
-    { avail->link = pool[--amt_avail] ; pool[amt_avail] = avail ; }
+  { 
+    if ( amt_avail != 0 ) /* free avail */
+    { 
+      avail->link = pool[--amt_avail] ;
+      pool[amt_avail] = avail ;
+    }
 
+#if MSDOS || HAVE_SMALL_MEMORY
+/* this hack is dangerous (I've blown it twice), not portable,
+   and counts on byacc not changing, but it is a big win on
+   DOS.  On paged vmem systems it is a nop so ifdef it out.
+*/
     /* use parser tables first */
-    if ( yacc_memp->zblocks >= blocks )
-    { avail = (ZBLOCK *) yacc_memp->mem ;
+    if ( yacc_memp->zblocks > blocks )
+    { 
+      avail = (ZBLOCK *) yacc_memp->mem ;
       amt_avail = yacc_memp++ -> zblocks ;
       /* make sure its -- aligned */
-      if ( (int) avail & 7 )
-      { avail = (ZBLOCK*)((char *)avail + 8 - ((int)avail&7)) ;
-	amt_avail-- ;
+      {
+	int k = (int) avail & 7 ;
+        if ( k )
+        { 
+	  avail = (ZBLOCK*)((char *)avail + (8-k)) ;
+	  amt_avail-- ;
+	}
       }
     }
     else
+#endif
+
     if ( !(avail = (ZBLOCK *) malloc(SIZE_T(CHUNK*ZBLOCKSZ))) )
     { /* if we get here, almost out of memory */
         amt_avail = 0 ;   
