@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: scsiconf.c,v 1.9.3.5 1993/11/24 23:00:01 mycroft Exp $
+ *      $Id: scsiconf.c,v 1.9.3.6 1993/11/25 03:04:46 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -45,43 +45,17 @@
 #define	NSCAN 0
 #endif /* TFS */
 
-#if NSD > 0
-extern  sdattach();
-#endif	/* NSD */
-#if NST > 0
-extern  stattach();
-#endif	/* NST */
-#if NCH > 0
-extern  chattach();
-#endif	/* NCH */
-#if NCD > 0
-extern  cdattach();
-#endif	/* NCD */
-#if NBLL > 0
-extern  bllattach();
-#endif	/* NBLL */
-#if NCALS > 0
-extern  calsattach();
-#endif	/* NCALS */
-#if NKIL > 0
-extern  kil_attach();
-#endif	/* NKIL */
-#if NUK > 0
-extern  ukattach();
-#endif	/* NUK */
-
 /*
  * The structure of known drivers for autoconfiguration
  */
 struct scsidevs {
+	char   *devname;
 	u_int32 type;
 	boolean removable;
+	char    flags;		/* 1 show my comparisons during boot(debug) */
 	char   *manufacturer;
 	char   *model;
 	char   *version;
-	        int(*attach_rtn) ();
-	char   *devname;
-	char    flags;		/* 1 show my comparisons during boot(debug) */
 };
 
 #define SC_SHOWME	0x01
@@ -90,68 +64,47 @@ struct scsidevs {
 
 #if	NUK > 0
 static struct scsidevs unknowndev = {
-	-1, 0, "standard", "any"
-	    ,"any", ukattach, "uk", SC_MORE_LUS
+	"uk", -1, 0, SC_MORE_LUS,
+	"standard", "any", "any"
 };
 #endif 	/*NUK*/
-static struct scsidevs knowndevs[] =
-{
+
+static struct scsidevs knowndevs[] = {
 #if NSD > 0
-	{
-		T_DIRECT, T_FIXED, "standard", "any"
-		    ,"any", sdattach, "sd", SC_ONE_LU
-	},
-	{
-		T_DIRECT, T_FIXED, "MAXTOR  ", "XT-4170S        "
-		    ,"B5A ", sdattach, "mx1", SC_ONE_LU
-	},
+	{ "sd", T_DIRECT, T_FIXED, SC_ONE_LU,
+	  "standard", "any", "any" },
+	{ "sd", T_DIRECT, T_FIXED, SC_ONE_LU,
+	  "MAXTOR  ", "XT-4170S        ", "B5A " },
 #endif	/* NSD */
 #if NST > 0
-	{
-		T_SEQUENTIAL, T_REMOV, "standard", "any"
-		    ,"any", stattach, "st", SC_ONE_LU
-	},
+	{ "st", T_SEQUENTIAL, T_REMOV, SC_ONE_LU,
+	  "standard", "any", "any" },
 #endif	/* NST */
 #if NCALS > 0
-	{
-		T_PROCESSOR, T_FIXED, "standard", "any"
-		    ,"any", calsattach, "cals", SC_MORE_LUS
-	},
+	{ "cals", T_PROCESSOR, T_FIXED, SC_MORE_LUS,
+	  "standard", "any", "any" },
 #endif	/* NCALS */
 #if NCH > 0
-	{
-		T_CHANGER, T_REMOV, "standard", "any"
-		    ,"any", chattach, "ch", SC_ONE_LU
-	},
+	{ "ch", T_CHANGER, T_REMOV, SC_ONE_LU,
+	  "standard", "any", "any" },
 #endif	/* NCH */
 #if NCD > 0
 #ifndef UKTEST	/* make cdroms unrecognised to test the uk driver */
-	{
-		T_READONLY, T_REMOV, "SONY    ", "CD-ROM CDU-8012 "
-		    ,"3.1a", cdattach, "cd", SC_ONE_LU
-	},
-	{
-		T_READONLY, T_REMOV, "PIONEER ", "CD-ROM DRM-600  "
-		    ,"any", cdattach, "cd", SC_MORE_LUS
-	},
+	{ "cd", T_READONLY, T_REMOV, SC_ONE_LU,
+	  "SONY    ", "CD-ROM CDU-8012 ", "3.1a" },
+	{ "cd", T_READONLY, T_REMOV, SC_MORE_LUS,
+	  "PIONEER ", "CD-ROM DRM-600  ", "any" },
 #endif
 #endif	/* NCD */
 #if NBLL > 0
-	{
-		T_PROCESSOR, T_FIXED, "AEG     ", "READER          "
-		    ,"V1.0", bllattach, "bll", SC_MORE_LUS
-	},
+	{ "bll", T_PROCESSOR, T_FIXED, SC_MORE_LUS,
+	  "AEG     ", "READER          ", "V1.0" },
 #endif	/* NBLL */
 #if NKIL > 0
-	{
-		T_SCANNER, T_FIXED, "KODAK   ", "IL Scanner 900  "
-		    ,"any", kil_attach, "kil", SC_ONE_LU
-	},
+	{ "kil", T_SCANNER, T_FIXED, SC_ONE_LU,
+	  "KODAK   ", "IL Scanner 900  ", "any" },
 #endif	/* NKIL */
-
-	{
-		0
-	}
+	{ 0 }
 };
 
 /*
@@ -327,7 +280,7 @@ scsi_probe_bus(bus, targ, lun)
 			 * structure just for the config_search().
 			 */
 			if (bestmatch) {
-				sc_link->fordriver = bestmatch->attach_rtn;
+				sc_link->fordriver = bestmatch->devname;
 				if (config_found((struct device *)scsi,
 						 sc_link, NULL)) {
 					scsi->sc_link[targ][lun] = sc_link;
@@ -352,9 +305,9 @@ scsi_targmatch(parent, cf, aux)
 	void *aux;
 {
 	struct scsi_link *sc_link = aux;
-	void (*attach_rtn) () = sc_link->fordriver;
+	char *devname = sc_link->fordriver;
 
-	if (cf->cf_driver->cd_attach != attach_rtn)
+	if (strcmp(cf->cf_driver->cd_name, devname))
 		return 0;
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != sc_link->target)
 		return 0;
