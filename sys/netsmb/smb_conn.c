@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.16 2004/05/28 09:38:13 itojun Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.17 2004/06/24 16:45:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.16 2004/05/28 09:38:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.17 2004/06/24 16:45:47 drochner Exp $");
 
 /*
  * Connection engine.
@@ -126,17 +126,19 @@ static int
 smb_sm_lookupint(struct smb_vcspec *vcspec, struct smb_sharespec *shspec,
 	struct smb_cred *scred,	struct smb_vc **vcpp)
 {
-	struct smb_vc *vcp;
+	struct smb_connobj *ocp;
 	int exact = 1;
 	int fail = 1;
 
 	vcspec->shspec = shspec;
-	SMBCO_FOREACH((struct smb_connobj*)vcp, &smb_vclist) {
+	SMBCO_FOREACH(ocp, &smb_vclist) {
+		struct smb_vc *vcp = (struct smb_vc *)ocp;
+
 		if (smb_vc_lock(vcp, LK_EXCLUSIVE) != 0)
 			continue;
 
 		do {
-			if ((vcp->obj.co_flags & SMBV_PRIVATE) ||
+			if ((ocp->co_flags & SMBV_PRIVATE) ||
 			    !CONNADDREQ(vcp->vc_paddr, vcspec->sap) ||
 			    strcmp(vcp->vc_username, vcspec->username) != 0)
 				break;
@@ -588,12 +590,14 @@ int
 smb_vc_lookupshare(struct smb_vc *vcp, struct smb_sharespec *dp,
 	struct smb_cred *scred,	struct smb_share **sspp)
 {
+	struct smb_connobj *osp;
 	struct smb_share *ssp = NULL;
 	int error;
 
 	*sspp = NULL;
 	dp->scred = scred;
-	SMBCO_FOREACH((struct smb_connobj*)ssp, VCTOCP(vcp)) {
+	SMBCO_FOREACH(osp, VCTOCP(vcp)) {
+		ssp = (struct smb_share *)osp;
 		error = smb_share_lock(ssp, LK_EXCLUSIVE);
 		if (error)
 			continue;
