@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.14 1999/01/26 01:34:25 hubertf Exp $
+.\"	$NetBSD: install.1,v 1.15 1999/02/04 11:56:48 christos Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@
 .Op Fl S Ar stripflag
 .Ar file1 file2
 .Nm ""
-.Op Fl bcps
+.Op Fl bcprs
 .Op Fl B Ar suffix
 .Op Fl f Ar flags
 .Op Fl m Ar mode
@@ -151,6 +151,10 @@ are hard links for files on the same filesystem, symbolic otherwise.
 Specify an owner.
 .It Fl p
 Preserve the source files access and modification times.
+.It Fl r
+Install to a temporary file and then rename the file to its final destination
+name. This can be used for precious files, to avoid truncation of the original
+when error conditions (filesystem full etc.) occur.
 .It Fl s
 .Nm
 exec's the command
