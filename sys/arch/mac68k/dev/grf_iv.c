@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.20 1997/04/21 00:57:59 briggs Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.21 1997/06/10 19:01:35 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -179,7 +179,7 @@ grfiv_attach(parent, self, aux)
 	gm->hres = 80;		/* XXX Hack */
 	gm->vres = 80;		/* XXX Hack */
 	gm->fbsize = gm->rowbytes * gm->height;
-	gm->fbbase = (caddr_t) mac68k_trunc_page(mac68k_vidlog);
+	gm->fbbase = (caddr_t) m68k_trunc_page(mac68k_vidlog);
 	gm->fboff = mac68k_vidlog & PGOFSET;
 
 	/* Perform common video attachment. */
