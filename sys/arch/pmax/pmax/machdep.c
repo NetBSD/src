@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 1998/03/31 11:32:52 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 1998/04/19 01:48:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 1998/03/31 11:32:52 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 1998/04/19 01:48:35 jonathan Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -857,6 +857,14 @@ clkread()
 	register u_long usec, cycles;	/* really 32 bits? */
 #endif
 
+#if defined(DEC_3MIN)
+	if (systype == DS_3MIN && CPUISMIPS3) {
+		extern u_int32_t mips3_cycle_count __P((void));
+		register u_int32_t mips3_cycles =
+		    mips3_cycle_count() - (u_int32_t)latched_cycle_cnt;
+		return ((mips3_cycles / cpu_mhz);
+	else
+#endif
 #ifdef DEC_MAXINE
 	if (systype == DS_MAXINE)
 		return (*(u_long*)(MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR)) -
@@ -971,6 +979,7 @@ initcpu()
 	return (i);
 #endif
 }
+
 
 /*
  * Convert an ASCII string into an integer.

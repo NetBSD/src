@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.42 1998/03/12 05:45:06 thorpej Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.43 1998/04/19 01:48:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2281,6 +2281,62 @@ NLEAF(mips3_cpu_switch_resume)
 	j	ra
 	li	v0, 1				# possible return to 'savectx()'
 END(mips3_cpu_switch_resume)
+
+
+/*----------------------------------------------------------------------------
+ *
+ * mips3_cycle_count --
+ *
+ *	u_int32_t mips3_cycle_count(void)
+ *
+ *	read 32-bit cycle-counter clock in coprocessor 0.
+ *
+ * Results:
+ *	returns 32-bit clock value, incremented automatically by CPU 
+ *	at nominal cycle rate (i.e., half the maximum issue rate.)
+ *
+ * Side effects:
+ *	none.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(mips3_cycle_count)
+	mfc0	v0,	MIPS_COP_0_COUNT
+	nop
+	nop
+	j	ra
+	nop
+END(mips3_cycle_count)
+
+/*
+ * Read compare register.
+ *
+ * On mips3, generates a hardint 5 interrupt request is generated
+ * each time the COUNT register increments past the COMPARE register.
+ *
+ * (The mips interrupt mask defintions currently leaves this interrupt
+ * unconditionally  masked out on mips3 CPUs.)
+ */
+LEAF(mips3_read_compare)
+	mfc0	v0,	MIPS_COP_0_COMPARE
+	nop
+	j	ra
+	nop
+END(mips3_read_compare)
+
+
+/*
+ * Write value to compare register.
+ *
+ * Side Effects:	
+ *	Clears interrupt request from cycle-counter clock.
+ */
+LEAF(mips3_write_compare)
+	mtc0	a0,	MIPS_COP_0_COMPARE
+	nop
+	j	ra
+	nop
+END(mips3_write_compare)
 
 /*----------------------------------------------------------------------------
  *
