@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.13 1998/08/14 16:50:04 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.13.6.1 2000/01/31 19:19:53 he Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.13 1998/08/14 16:50:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.13.6.1 2000/01/31 19:19:53 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ void	(*cia_tlb_invalidate_fn) __P((void));
 #define	CIA_TLB_INVALIDATE()	(*cia_tlb_invalidate_fn)()
 
 struct alpha_sgmap cia_pyxis_bug_sgmap;
-#define	CIA_PYXIS_BUG_BASE	(1*128*1024)
+#define	CIA_PYXIS_BUG_BASE	(128*1024*1024)
 #define	CIA_PYXIS_BUG_SIZE	(2*1024*1024)
 
 void
