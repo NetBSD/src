@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtio.h	7.6 (Berkeley) 2/5/91
- *	$Id: mtio.h,v 1.3.4.1 1993/11/25 20:17:45 mycroft Exp $
+ *	$Id: mtio.h,v 1.3.4.2 1993/12/10 12:08:40 cgd Exp $
  */
 
 #ifndef _SYS_MTIO_H_
@@ -58,7 +58,7 @@ struct mtop {
 #define MTNOP		7	/* no operation, sets status only */
 #define MTCACHE		8	/* enable controller cache */
 #define MTNOCACHE	9	/* disable controller cache */
-#if defined(__386BSD__)
+#if defined(__NetBSD__)
 
 /* Set block size for device. If device is a variable size dev		*/
 /* a non zero parameter will change the device to a fixed block size	*/
@@ -83,7 +83,7 @@ struct mtget {
 	short	mt_erreg;	/* ``error'' register */
 /* end device-dependent registers */
 	short	mt_resid;	/* residual count */
-#if defined (__386BSD__)
+#if defined (__NetBSD__)
 	daddr_t mt_blksiz;	/* presently operatin blocksize */
 	daddr_t mt_density;	/* presently operatin density */
 	daddr_t mt_blksiz0;	/* blocksize for mode 0 */
