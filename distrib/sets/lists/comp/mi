@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.756 2005/01/10 00:20:21 he Exp $
+#	$NetBSD: mi,v 1.757 2005/01/11 01:00:49 joff Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -198,6 +198,7 @@
 ./usr/include/dev/ic/elink3reg.h		comp-obsolete		obsolete
 ./usr/include/dev/ic/elink3var.h		comp-obsolete		obsolete
 ./usr/include/dev/ic/hayespreg.h		comp-obsolete		obsolete
+./usr/include/dev/ic/hd44780var.h		comp-c-include
 ./usr/include/dev/ic/i8042reg.h			comp-obsolete		obsolete
 ./usr/include/dev/ic/i82365reg.h		comp-obsolete		obsolete
 ./usr/include/dev/ic/i82365var.h		comp-obsolete		obsolete
