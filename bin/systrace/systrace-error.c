@@ -1,16 +1,16 @@
-/*	$NetBSD: systrace-error.c,v 1.1 2002/06/17 16:29:10 christos Exp $	*/
+/*	$NetBSD: systrace-error.c,v 1.2 2002/12/05 19:33:39 provos Exp $	*/
 /*	$OpenBSD: systrace-error.c,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or withou
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 1. Redistributions of source code must retain the above copyrigh
+ * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyrigh
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: systrace-error.c,v 1.1 2002/06/17 16:29:10 christos Exp $");
+__RCSID("$NetBSD: systrace-error.c,v 1.2 2002/12/05 19:33:39 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
