@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: keyblock.c,v 1.1.1.2 2000/08/02 19:59:30 assar Exp $");
+RCSID("$Id: keyblock.c,v 1.1.1.3 2001/06/19 22:08:20 assar Exp $");
 
 void
 krb5_free_keyblock_contents(krb5_context context,
@@ -72,8 +72,10 @@ krb5_copy_keyblock (krb5_context context,
     krb5_keyblock *k;
 
     k = malloc (sizeof(*k));
-    if (k == NULL)
+    if (k == NULL) {
+	krb5_set_error_string(context, "malloc: out of memory");
 	return ENOMEM;
+    }
     *to = k;
     return krb5_copy_keyblock_contents (context, inblock, k);
 }

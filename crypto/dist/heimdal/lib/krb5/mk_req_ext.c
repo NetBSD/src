@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: mk_req_ext.c,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $");
+RCSID("$Id: mk_req_ext.c,v 1.1.1.4 2001/06/19 22:08:22 assar Exp $");
 
 krb5_error_code
 krb5_mk_req_internal(krb5_context context,
@@ -99,6 +99,7 @@ krb5_mk_req_internal(krb5_context context,
 	  /* this is to make DCE secd (and older MIT kdcs?) happy */
 	  ret = krb5_create_checksum(context, 
 				     NULL,
+				     0,
 				     CKSUMTYPE_RSA_MD4,
 				     in_data->data,
 				     in_data->length,
@@ -112,6 +113,7 @@ krb5_mk_req_internal(krb5_context context,
 	  ret = krb5_create_checksum(context, 
 				     crypto,
 				     checksum_usage,
+				     0,
 				     in_data->data,
 				     in_data->length,
 				     &c);
