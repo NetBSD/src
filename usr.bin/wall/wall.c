@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.8 1997/06/29 18:28:20 christos Exp $	*/
+/*	$NetBSD: wall.c,v 1.9 1997/10/20 03:13:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.8 1997/06/29 18:28:20 christos Exp $");
+__RCSID("$NetBSD: wall.c,v 1.9 1997/10/20 03:13:34 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: wall.c,v 1.8 1997/06/29 18:28:20 christos Exp $");
 #include <sys/time.h>
 #include <sys/uio.h>
 
+#include <err.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -89,7 +90,7 @@ main(argc, argv)
 	struct passwd *pep = getpwnam("nobody");
 	char line[sizeof(utmp.ut_line) + 1];
 
-	while ((ch = getopt(argc, argv, "n")) != EOF)
+	while ((ch = getopt(argc, argv, "n")) != -1)
 		switch (ch) {
 		case 'n':
 			/* undoc option for shutdown: suppress banner */
@@ -109,10 +110,8 @@ usage:
 
 	makemsg(*argv);
 
-	if (!(fp = fopen(_PATH_UTMP, "r"))) {
-		(void)fprintf(stderr, "wall: cannot read %s.\n", _PATH_UTMP);
-		exit(1);
-	}
+	if (!(fp = fopen(_PATH_UTMP, "r")))
+		err(1, "cannot read %s", _PATH_UTMP);
 	iov.iov_base = mbuf;
 	iov.iov_len = mbufsize;
 	/* NOSTRICT */
@@ -123,7 +122,7 @@ usage:
 		strncpy(line, utmp.ut_line, sizeof(utmp.ut_line));
 		line[sizeof(utmp.ut_line)] = '\0';
 		if ((p = ttymsg(&iov, 1, line, 60*5)) != NULL)
-			(void)fprintf(stderr, "wall: %s\n", p);
+			warnx("%s", p);
 	}
 	exit(0);
 }
@@ -142,10 +141,8 @@ makemsg(fname)
 	char *p, *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[15];
 
 	(void)snprintf(tmpname, sizeof tmpname, "%s/wall.XXXXXX", _PATH_TMP);
-	if (!(fd = mkstemp(tmpname)) || !(fp = fdopen(fd, "r+"))) {
-		(void)fprintf(stderr, "wall: can't open temporary file.\n");
-		exit(1);
-	}
+	if (!(fd = mkstemp(tmpname)) || !(fp = fdopen(fd, "r+")))
+		err(1, "can't open temporary file");
 	(void)unlink(tmpname);
 
 	if (!nobanner) {
@@ -172,10 +169,8 @@ makemsg(fname)
 	}
 	(void)fprintf(fp, "%79s\r\n", " ");
 
-	if (fname && !(freopen(fname, "r", stdin))) {
-		(void)fprintf(stderr, "wall: can't read %s.\n", fname);
-		exit(1);
-	}
+	if (fname && !(freopen(fname, "r", stdin)))
+		err(1, "can't read %s", fname);
 	while (fgets(lbuf, sizeof(lbuf), stdin))
 		for (cnt = 0, p = lbuf; (ch = *p) != '\0'; ++p, ++cnt) {
 			if (cnt == 79 || ch == '\n') {
@@ -191,18 +186,12 @@ makemsg(fname)
 	(void)fprintf(fp, "%79s\r\n", " ");
 	rewind(fp);
 
-	if (fstat(fd, &sbuf)) {
-		(void)fprintf(stderr, "wall: can't stat temporary file.\n");
-		exit(1);
-	}
+	if (fstat(fd, &sbuf))
+		err(1, "can't stat temporary file");
 	mbufsize = sbuf.st_size;
-	if (!(mbuf = malloc((u_int)mbufsize))) {
-		(void)fprintf(stderr, "wall: out of memory.\n");
-		exit(1);
-	}
-	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize) {
-		(void)fprintf(stderr, "wall: can't read temporary file.\n");
-		exit(1);
-	}
+	if (!(mbuf = malloc((u_int)mbufsize)))
+		err(1, "malloc");
+	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize)
+		err(1, "can't read temporary file");
 	(void)close(fd);
 }
