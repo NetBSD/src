@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.13 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.14 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.13 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.14 2003/12/30 21:59:03 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -63,15 +63,13 @@ static void rf_ShutdownReconEvent(void *);
 static RF_ReconEvent_t *
 GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type);
 
-static void rf_ShutdownReconEvent(ignored)
-	void   *ignored;
+static void rf_ShutdownReconEvent(void *ignored)
 {
 	pool_destroy(&rf_revent_pool);
 }
 
 int 
-rf_ConfigureReconEvent(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureReconEvent(RF_ShutdownList_t **listp)
 {
 	int     rc;
 
@@ -95,10 +93,8 @@ rf_ConfigureReconEvent(listp)
  * or will return an event if it is not */
 
 RF_ReconEvent_t *
-rf_GetNextReconEvent(reconDesc, continueFunc, continueArg)
-	RF_RaidReconDesc_t *reconDesc;
-	void    (*continueFunc) (void *);
-	void   *continueArg;
+rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc,
+		     void (*continueFunc)(void *), void *continueArg)
 {
 	RF_Raid_t *raidPtr = reconDesc->raidPtr;
 	RF_ReconCtrl_t *rctrl = raidPtr->reconControl;
@@ -173,11 +169,8 @@ rf_GetNextReconEvent(reconDesc, continueFunc, continueArg)
 }
 /* enqueues a reconstruction event on the indicated queue */
 void 
-rf_CauseReconEvent(raidPtr, col, arg, type)
-	RF_Raid_t *raidPtr;
-	RF_RowCol_t col;
-	void   *arg;
-	RF_Revent_t type;
+rf_CauseReconEvent(RF_Raid_t *raidPtr, RF_RowCol_t col, void *arg, 
+		   RF_Revent_t type)
 {
 	RF_ReconCtrl_t *rctrl = raidPtr->reconControl;
 	RF_ReconEvent_t *event = GetReconEventDesc(col, arg, type);
@@ -198,10 +191,7 @@ rf_CauseReconEvent(raidPtr, col, arg, type)
 }
 /* allocates and initializes a recon event descriptor */
 static RF_ReconEvent_t *
-GetReconEventDesc(col, arg, type)
-	RF_RowCol_t col;
-	void   *arg;
-	RF_Revent_t type;
+GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type)
 {
 	RF_ReconEvent_t *t;
 
@@ -216,8 +206,7 @@ GetReconEventDesc(col, arg, type)
 }
 
 void 
-rf_FreeReconEventDesc(event)
-	RF_ReconEvent_t *event;
+rf_FreeReconEventDesc(RF_ReconEvent_t *event)
 {
 	pool_put(&rf_revent_pool, event);
 }

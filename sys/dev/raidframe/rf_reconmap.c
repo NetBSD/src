@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.21 2003/12/29 05:01:14 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.22 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.21 2003/12/29 05:01:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.22 2003/12/30 21:59:03 oster Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -78,16 +78,15 @@ static void PrintList(RF_ReconMapListElem_t * listPtr);
  *
  * Creates and initializes new Reconstruction map
  *
+ * ru_sectors   - size of reconstruction unit in sectors
+ * disk_sectors - size of disk in sectors
+ * spareUnitsPerDisk - zero unless distributed sparing
  *-------------------------------------------------------------------------*/
 
 RF_ReconMap_t *
-rf_MakeReconMap(raidPtr, ru_sectors, disk_sectors, spareUnitsPerDisk)
-	RF_Raid_t *raidPtr;
-	RF_SectorCount_t ru_sectors;	/* size of reconstruction unit in
-					 * sectors */
-	RF_SectorCount_t disk_sectors;	/* size of disk in sectors */
-	RF_ReconUnitCount_t spareUnitsPerDisk;	/* zero unless distributed
-						 * sparing */
+rf_MakeReconMap(RF_Raid_t *raidPtr, RF_SectorCount_t ru_sectors, 
+		RF_SectorCount_t disk_sectors,
+		RF_ReconUnitCount_t spareUnitsPerDisk)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_ReconUnitCount_t num_rus = layoutPtr->stripeUnitsPerDisk / layoutPtr->SUsPerRU;
@@ -135,11 +134,8 @@ rf_MakeReconMap(raidPtr, ru_sectors, disk_sectors, spareUnitsPerDisk)
  *-------------------------------------------------------------------------*/
 
 void 
-rf_ReconMapUpdate(raidPtr, mapPtr, startSector, stopSector)
-	RF_Raid_t *raidPtr;
-	RF_ReconMap_t *mapPtr;
-	RF_SectorNum_t startSector;
-	RF_SectorNum_t stopSector;
+rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
+		  RF_SectorNum_t startSector, RF_SectorNum_t stopSector)
 {
 	RF_SectorCount_t sectorsPerReconUnit = mapPtr->sectorsPerReconUnit;
 	RF_SectorNum_t i, first_in_RU, last_in_RU;
@@ -196,10 +192,7 @@ rf_ReconMapUpdate(raidPtr, mapPtr, startSector, stopSector)
  *-------------------------------------------------------------------------*/
 
 static void 
-compact_stat_entry(raidPtr, mapPtr, i)
-	RF_Raid_t *raidPtr;
-	RF_ReconMap_t *mapPtr;
-	int     i;
+compact_stat_entry(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr, int i)
 {
 	RF_SectorCount_t sectorsPerReconUnit = mapPtr->sectorsPerReconUnit;
 	RF_ReconMapListElem_t *p = mapPtr->status[i];
@@ -216,9 +209,7 @@ compact_stat_entry(raidPtr, mapPtr, i)
 }
 
 static void 
-crunch_list(mapPtr, listPtr)
-	RF_ReconMap_t *mapPtr;
-	RF_ReconMapListElem_t *listPtr;
+crunch_list(RF_ReconMap_t *mapPtr, RF_ReconMapListElem_t *listPtr)
 {
 	RF_ReconMapListElem_t *pt, *p = listPtr;
 
@@ -245,11 +236,8 @@ crunch_list(mapPtr, listPtr)
  *-------------------------------------------------------------------------*/
 
 static RF_ReconMapListElem_t *
-MakeReconMapListElem(
-    RF_ReconMap_t *mapPtr,
-    RF_SectorNum_t startSector,
-    RF_SectorNum_t stopSector,
-    RF_ReconMapListElem_t * next)
+MakeReconMapListElem(RF_ReconMap_t *mapPtr, RF_SectorNum_t startSector,
+		     RF_SectorNum_t stopSector, RF_ReconMapListElem_t *next)
 {
 	RF_ReconMapListElem_t *p;
 
@@ -270,9 +258,7 @@ MakeReconMapListElem(
  *-------------------------------------------------------------------------*/
 
 static void 
-FreeReconMapListElem(mapPtr, p)
-	RF_ReconMap_t *mapPtr;
-	RF_ReconMapListElem_t *p;
+FreeReconMapListElem(RF_ReconMap_t *mapPtr, RF_ReconMapListElem_t *p)
 {
 	pool_put(&mapPtr->elem_pool, p);
 }
@@ -283,8 +269,7 @@ FreeReconMapListElem(mapPtr, p)
  *
  *-------------------------------------------------------------------------*/
 void 
-rf_FreeReconMap(mapPtr)
-	RF_ReconMap_t *mapPtr;
+rf_FreeReconMap(RF_ReconMap_t *mapPtr)
 {
 	RF_ReconMapListElem_t *p, *q;
 	RF_ReconUnitCount_t numRUs;
@@ -314,9 +299,7 @@ rf_FreeReconMap(mapPtr)
  *-------------------------------------------------------------------------*/
 
 int 
-rf_CheckRUReconstructed(mapPtr, startSector)
-	RF_ReconMap_t *mapPtr;
-	RF_SectorNum_t startSector;
+rf_CheckRUReconstructed(RF_ReconMap_t *mapPtr, RF_SectorNum_t startSector)
 {
 	RF_ReconMapListElem_t *l;	/* used for searching */
 	RF_ReconUnitNum_t i;
@@ -327,8 +310,7 @@ rf_CheckRUReconstructed(mapPtr, startSector)
 }
 
 RF_ReconUnitCount_t 
-rf_UnitsLeftToReconstruct(mapPtr)
-	RF_ReconMap_t *mapPtr;
+rf_UnitsLeftToReconstruct(RF_ReconMap_t *mapPtr)
 {
 	RF_ASSERT(mapPtr != NULL);
 	return (mapPtr->unitsLeft);
@@ -336,8 +318,7 @@ rf_UnitsLeftToReconstruct(mapPtr)
 
 #if 0
 static void 
-PrintList(listPtr)
-	RF_ReconMapListElem_t *listPtr;
+PrintList(RF_ReconMapListElem_t *listPtr)
 {
 	while (listPtr) {
 		printf("%d,%d -> ", (int) listPtr->startSector, 
@@ -348,10 +329,7 @@ PrintList(listPtr)
 }
 
 void 
-rf_PrintReconMap(raidPtr, mapPtr, fcol)
-	RF_Raid_t *raidPtr;
-	RF_ReconMap_t *mapPtr;
-	RF_RowCol_t fcol;
+rf_PrintReconMap(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr, RF_RowCol_t fcol)
 {
 	RF_ReconUnitCount_t numRUs;
 	RF_ReconMapListElem_t *p;
@@ -378,9 +356,7 @@ rf_PrintReconMap(raidPtr, mapPtr, fcol)
 
 #if RF_DEBUG_RECON
 void 
-rf_PrintReconSchedule(mapPtr, starttime)
-	RF_ReconMap_t *mapPtr;
-	struct timeval *starttime;
+rf_PrintReconSchedule(RF_ReconMap_t *mapPtr, struct timeval *starttime)
 {
 	static int old_pctg = -1;
 	struct timeval tv, diff;
