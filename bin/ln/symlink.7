@@ -1,4 +1,4 @@
-.\"	$NetBSD: symlink.7,v 1.7 1998/02/06 05:39:47 perry Exp $
+.\"	$NetBSD: symlink.7,v 1.8 1998/12/13 19:34:44 fair Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,14 +43,17 @@
 Symbolic links are files that act as pointers to other files.
 To understand their behavior, you must first understand how hard links
 work.
+.Pp
 A hard link to a file is indistinguishable from the original file because
 it is a reference to the object underlying the original file name.
 Changes to a file are independent of the name used to reference the
 file.
 Hard links may not refer to directories and may not reference files
 on different file systems.
+.Pp
 A symbolic link contains the name of the file to which it is linked,
-i.e. it is a pointer to another name, and not to an underlying object.
+i.e.
+it is a pointer to another name, and not to an underlying object.
 For this reason, symbolic links may reference directories and may span
 file systems.
 .Pp
@@ -68,16 +71,17 @@ Symbolic links are handled either by operating on the link itself,
 or by operating on the object referenced by the link.
 In the latter case,
 an application or system call is said to
-.Dq follow
+.Qq follow
 the link.
+.Pp
 Symbolic links may reference other symbolic links,
 in which case the links are dereferenced until an object that is
 not a symbolic link is found,
 a symbolic link which references a file which doesn't exist is found,
 or a loop is detected.
-(Loop detection is done by placing an upper limit on the number of
+Loop detection is done by placing an upper limit on the number of
 links that may be followed, and an error results if this limit is
-exceeded.)
+exceeded.
 .Pp
 There are three separate areas that need to be discussed.
 They are as follows:
@@ -99,17 +103,19 @@ system calls.
 .Pp
 Except as noted below, all system calls follow symbolic links.
 For example, if there were a symbolic link
-.Dq Li slink
+.Qq Li slink
 which pointed to a file named
-.Dq Li afile ,
+.Qq Li afile ,
 the system call
-.Dq Li open("slink" ...)
+.Qq Li open("slink" ...)
 would return a file descriptor to the file
-.Dq afile .
+.Qq afile .
 .Pp
-There are four system calls that do not follow links, and which operate
+There are six system calls that do not follow links, and which operate
 on the symbolic link itself.
 They are:
+.Xr lchmod 2 ,
+.Xr lchown 2 ,
 .Xr lstat 2 ,
 .Xr readlink 2 ,
 .Xr rename 2 ,
@@ -128,6 +134,25 @@ system differs from historical
 systems in that the system call
 .Xr chown 2
 has been changed to follow symbolic links.
+.Pp
+If the filesystem is mounted with the
+.Em symperm
+.Xr mount 8
+option, the symbolic link file permission bits have the following effects:
+.Pp
+The
+.Xr readlink 2
+system call requires read permissions on the symbolic link.
+.Pp
+System calls that follow symbolic links will fail without execute/search
+permissions on all the symbolic links followed.
+.Pp
+The write, sticky, set-user-ID-on-execution and set-group-ID-on-execution
+symbolic link mode bits have no effect on any system calls
+.Po
+including
+.Xr execve 2
+.Pc .
 .Ss Commands not traversing a file tree.
 The second area is symbolic links, specified as command line file
 name arguments, to commands which are not traversing a file tree.
@@ -135,38 +160,39 @@ name arguments, to commands which are not traversing a file tree.
 Except as noted below, commands follow symbolic links named as command
 line arguments.
 For example, if there were a symbolic link 
-.Dq Li slink
+.Qq Li slink
 which pointed to a file named
-.Dq Li afile ,
+.Qq Li afile ,
 the command
-.Dq Li cat slink
+.Qq Li cat slink
 would display the contents of the file
-.Dq Li afile .
+.Qq Li afile .
 .Pp
 It is important to realize that this rule includes commands which may
-optionally traverse file trees, e.g. the command
-.Dq Li "chown file"
+optionally traverse file trees, e.g.
+the command
+.Qq Li "chown file"
 is included in this rule, while the command
-.Dq Li "chown -R file"
-is not.
-(The latter is described in the third area, below.)
+.Qq Li "chown -R file"
+is not
+(The latter is described in the third area, below).
 .Pp
 If it is explicitly intended that the command operate on the symbolic
 link instead of following the symbolic link, e.g., it is desired that
-.Dq Li "file slink"
+.Qq Li "file slink"
 display the type of file that
-.Dq Li slink
+.Qq Li slink
 is, whether it is a symbolic link or not, the
 .Fl h
 option should be used.
 In the above example,
-.Dq Li "file slink"
+.Qq Li "file slink"
 would report the type of the file referenced by
-.Dq Li slink ,
+.Qq Li slink ,
 while
-.Dq Li "file -h slink"
+.Qq Li "file -h slink"
 would report that
-.Dq Li slink
+.Qq Li slink
 was a symbolic link.
 .Pp
 There are three exceptions to this rule.
@@ -178,14 +204,15 @@ commands do not follow symbolic links named as arguments,
 but respectively attempt to rename and delete them.
 (Note, if the symbolic link references a file via a relative path,
 moving it to another directory may very well cause it to stop working,
-since the path may no longer be correct.)
+since the path may no longer be correct).
 .Pp
 The
 .Xr ls 1
 command is also an exception to this rule.
 For compatibility with historic systems (when
 .Nm ls
-is not doing a tree walk, i.e. the
+is not doing a tree walk, i.e.
+the
 .Fl R
 option is not specified),
 the
@@ -208,7 +235,7 @@ always follows symbolic links.
 is the only command where the
 .Fl L
 option affects its behavior even though it is not doing a walk of
-a file tree.)
+a file tree).
 .Pp
 The
 .Bx 4.4
@@ -245,36 +272,38 @@ Operations that apply to symbolic links are performed on the links
 themselves, but otherwise the links are ignored.
 .Pp
 For example, the command
-.Dq Li "chown -R user slink directory"
+.Qq Li "chown -R user slink directory"
 will ignore
-.Dq Li slink ,
-because symbolic links in this system do not have owners.
+.Qq Li slink ,
+because the
+.Fl h
+flag must be used to change owners of symbolic links.
 Any symbolic links encountered during the tree traversal will also be
 ignored.
 The command
-.Dq Li "rm -r slink directory"
+.Qq Li "rm -r slink directory"
 will remove
-.Dq Li slink ,
+.Qq Li slink ,
 as well as any symbolic links encountered in the tree traversal of
-.Dq Li directory ,
+.Qq Li directory ,
 because symbolic links may be removed.
 In no case will either
 .Nm chown
 or
 .Nm rm
 affect the file which
-.Dq Li slink
+.Qq Li slink
 references in any way.
 .Pp
 The second rule applies to symbolic links that reference files of type
 directory.
 Symbolic links which reference files of type directory are never
-.Dq followed
+.Qq followed
 by default.
 This is often referred to as a
-.Dq physical
+.Qq physical
 walk, as opposed to a
-.Dq logical
+.Qq logical
 walk (where symbolic links referencing directories are followed).
 .Pp
 As consistently as possible, you can make commands doing a file tree
@@ -282,7 +311,7 @@ walk follow any symbolic links named on the command line, regardless
 of the type of file they reference, by specifying the
 .Fl H 
 (for
-.Dq half\-logical )
+.Qq half\-logical )
 flag.
 This flag is intended to make the command line name space look
 like the logical name space.
@@ -290,12 +319,12 @@ like the logical name space.
 .Fl H
 flag will be ignored if the
 .Fl R
-flag is not also specified.)
+flag is not also specified).
 .Pp
 For example, the command
-.Dq Li "chown -HR user slink"
+.Qq Li "chown -HR user slink"
 will traverse the file hierarchy rooted in the file pointed to by
-.Dq Li slink .
+.Qq Li slink .
 Note, the
 .Fl H
 is not the same as the previously discussed
@@ -314,7 +343,7 @@ any symbolic links encountered during the traversal, regardless of
 the type of file they reference, by specifying the
 .Fl L
 (for
-.Dq logical )
+.Qq logical )
 flag.
 This flag is intended to make the entire name space look like
 the logical name space.
@@ -322,14 +351,14 @@ the logical name space.
 .Fl L
 flag will be ignored if the
 .Fl R
-flag is not also specified.)
+flag is not also specified).
 .Pp
 For example, the command
-.Dq Li "chown -LR user slink"
+.Qq Li "chown -LR user slink"
 will change the owner of the file referenced by
-.Dq Li slink .
+.Qq Li slink .
 If
-.Dq Li slink
+.Qq Li slink
 references a directory,
 .Nm chown
 will traverse the file hierarchy rooted in the directory that it
@@ -337,13 +366,13 @@ references.
 In addition, if any symbolic links are encountered in any file tree that
 .Nm chown
 traverses, they will be treated in the same fashion as
-.Dq Li slink .
+.Qq Li slink .
 .Pp
 As consistently as possible, you can specify the default behavior by
 specifying the
 .Fl P
 (for
-.Dq physical )
+.Qq physical )
 flag.
 This flag is intended to make the entire name space look like the
 physical name space.
@@ -417,11 +446,17 @@ options.
 .Xr pax 1 ,
 .Xr rm 1 ,
 .Xr tar 1 ,
+.Xr chown 2 ,
+.Xr execve 2 ,
+.Xr lchmod 2 ,
+.Xr lchown 2 ,
 .Xr lstat 2 ,
+.Xr mount 2 ,
 .Xr readlink 2 ,
 .Xr rename 2 ,
 .Xr symlink 2 ,
 .Xr unlink 2 ,
 .Xr fts 3 ,
 .Xr remove 3 ,
-.Xr chown 8
+.Xr chown 8 ,
+.Xr mount 8 .
