@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.97 2003/07/25 22:02:53 cyber Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.98 2003/07/26 15:42:24 he Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -116,8 +116,9 @@ usr.bin/cdplay/cdplay.c				1.22
 sys/arch/mac68k/dev/akbdmap.h			1.4
 sys/arch/macppc/dev/akbdmap.h			1.5
 
-Merged mac68k and macppc keyboards, since they are the same. The file
-could move to <arch/mac> if one day we create it.
+	Merged mac68k and macppc keyboards, since they are the
+	same. The file could move to <arch/mac> if one day we create
+	it.
 
 	Added a french keyboard layout.
 	Fixed french keymap: option was not mapped correctly, thus making
@@ -459,7 +460,7 @@ share/misc/na.phone				1.16-1.18 (via patch)
 
 share/man/man8/man8.sun2/boot.8			1.1-1.4 (new)
 share/man/man8/man8.sun2/Makefile		1.2
-src/distrib/sets/lists/man/mi			1.573
+distrib/sets/lists/man/mi			1.573
 
 	Added a boot(8) man page for sun2.
 
@@ -1030,12 +1031,12 @@ sys/netinet/ip_output.c				1.106-1.107
 	freebsd code somehow crept in
 	[itojun, ticket #1358]
 
-src/sys/netinet/igmp.c				patch
+sys/netinet/igmp.c				patch
 
 	Make it compilable.
 	[itojun, ticket #1360]
 
-src/sys/netinet/in.c				patch
+sys/netinet/in.c				patch
 
 	Make it compilable.
 	[itojun, ticket #1361]
