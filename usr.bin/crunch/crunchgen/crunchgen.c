@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.21 2001/09/24 00:40:35 tls Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.22 2001/09/24 01:05:47 tls Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.21 2001/09/24 00:40:35 tls Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.22 2001/09/24 01:05:47 tls Exp $");
 #endif
 
 #include <stdlib.h>
@@ -827,7 +827,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	fprintf(outmk, "%s_OBJS=", p->ident);
 	output_strlst(outmk, p->objs);
 	fprintf(outmk, "%s_make:\n", p->ident);
-	fprintf(outmk, "\t(cd $(%s_SRCDIR); %s clean ; %s DBG=${DBG} $(%s_OBJS))\n\n", 
+	fprintf(outmk, "\t(cd $(%s_SRCDIR); %s cleanobjs ; %s DBG=${DBG} $(%s_OBJS))\n\n", 
 		p->ident, makebin, makebin, p->ident);
     }
     else
