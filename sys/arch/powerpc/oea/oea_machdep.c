@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.13 2003/12/30 12:33:19 pk Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.14 2004/01/31 14:12:33 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.13 2003/12/30 12:33:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.14 2004/01/31 14:12:33 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -452,8 +452,8 @@ oea_batinit(paddr_t pa, ...)
 	 * four entries are accessed through the IBAT[0-3] SPRs.
 	 *
 	 * Also, while the 601 does distinguish between supervisor/user
-	 * protection keys, it does _not_ distinguish distinguish between  
-	 * validity in supervisor/user mode.
+	 * protection keys, it does _not_ distinguish between validity in
+	 * supervisor/user mode.
 	 */
 	if ((msr & (PSL_IR|PSL_DR)) == 0) {
 		if (cpuvers == MPC601) {
