@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.39 2003/04/29 01:49:34 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.40 2003/09/30 09:35:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.39 2003/04/29 01:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.40 2003/09/30 09:35:15 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.39 2003/04/29 01:49:34 thorpej Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-
-#include <dev/i2c/i2c_bus.h>
 
 #include <dev/mii/tlphyreg.h>
 #include <dev/mii/tlphyvar.h>
