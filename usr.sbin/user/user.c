@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.2 1999/12/06 22:29:02 simonb Exp $ */
+/* $NetBSD: user.c,v 1.3 1999/12/06 23:11:27 simonb Exp $ */
 
 /*
  * Copyright © 1999 Alistair G. Crooks.  All rights reserved.
@@ -1031,7 +1031,7 @@ userdel(int argc, char **argv)
 	}
 #endif
 	if (argc == optind) {
-		usage("usermod");
+		usage("userdel");
 	}
 	if ((pwp = getpwnam(argv[optind])) == (struct passwd *) NULL) {
 		warn("No such user `%s'", argv[optind]);
@@ -1174,7 +1174,7 @@ groupmod(int argc, char **argv)
 		}
 	}
 	if (argc == optind) {
-		usage("userdel");
+		usage("groupmod");
 	}
 	if (gid < 0 && newname == (char *) NULL) {
 		err(EXIT_FAILURE, "Nothing to change");
