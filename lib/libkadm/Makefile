@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2002/08/19 13:35:07 lukem Exp $
+# $NetBSD: Makefile,v 1.13 2002/08/29 01:31:29 itojun Exp $
 
 NOLINT=		# defined
 
@@ -38,7 +38,6 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/krb4/lib/kadm			\
 	-I${DIST}/krb4/lib/kdb			\
 	-I${DIST}/krb4/lib/krb			\
-	-I${DIST}/openssl/crypto/des		\
 	-I${DIST}/heimdal/lib/com_err		\
 	-I${LIBKRBINC}				\
 	-I${NETBSDSRCDIR}/include/heimdal	\
