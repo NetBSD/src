@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.19 2002/03/16 20:43:50 christos Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.20 2002/03/24 15:03:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.19 2002/03/16 20:43:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.20 2002/03/24 15:03:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +335,7 @@ hpux_sys_fcntl(p, v, retval)
 
 	case F_GETLK:
 		if (fp->f_type != DTYPE_VNODE)
-		return (EBADF);
+			return (EBADF);
 
 		vp = (struct vnode *)fp->f_data;
 
