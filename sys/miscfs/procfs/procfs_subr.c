@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.32 2000/11/08 14:28:14 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.33 2000/11/24 18:58:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -108,7 +108,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 
 	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, vpp)) != 0) {
 		*vpp = NULL;
-		lockmgr(&pfs_hashlock, LK_RELEASE, 0);
+		lockmgr(&pfs_hashlock, LK_RELEASE, NULL);
 		return (error);
 	}
 	vp = *vpp;
@@ -167,7 +167,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 	}
 
 	procfs_hashins(pfs);
-	lockmgr(&pfs_hashlock, LK_RELEASE, 0);
+	lockmgr(&pfs_hashlock, LK_RELEASE, NULL);
 
 	return (error);
 }
