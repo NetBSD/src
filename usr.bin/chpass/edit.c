@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.13 2002/08/08 04:49:26 enami Exp $	*/
+/*	$NetBSD: edit.c,v 1.14 2002/11/16 15:59:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: edit.c,v 1.13 2002/08/08 04:49:26 enami Exp $");
+__RCSID("$NetBSD: edit.c,v 1.14 2002/11/16 15:59:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,6 +132,10 @@ display(tempname, fd, pw)
 	else
 		list[E_SHELL].restricted = 1;
 	bp = strdup(pw->pw_gecos);
+	if (!bp) {
+		err(1, "strdup");
+		/*NOTREACHED*/
+	}
 	p = strsep(&bp, ",");
 	(void)fprintf(fp, "Full Name: %s\n", p ? p : "");
 	p = strsep(&bp, ",");

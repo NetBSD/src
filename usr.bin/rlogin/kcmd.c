@@ -1,4 +1,4 @@
-/*	$NetBSD: kcmd.c,v 1.9 2002/06/14 00:55:47 wiz Exp $	*/
+/*	$NetBSD: kcmd.c,v 1.10 2002/11/16 15:59:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
 #else
-__RCSID("$NetBSD: kcmd.c,v 1.9 2002/06/14 00:55:47 wiz Exp $");
+__RCSID("$NetBSD: kcmd.c,v 1.10 2002/11/16 15:59:30 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,8 @@ kcmd(sock, ahost, rport, locuser, remuser, cmd, fd2p, ticket, service, realm,
 	}
 
 	host_save = strdup(hp->h_name);
+	if (!host_save)
+		return (-1);
 	*ahost = host_save;
 
 #ifdef KERBEROS
