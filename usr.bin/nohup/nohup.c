@@ -1,4 +1,4 @@
-/*	$NetBSD: nohup.c,v 1.7 1997/10/19 10:23:35 lukem Exp $	*/
+/*	$NetBSD: nohup.c,v 1.8 1997/12/23 18:21:34 ross Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-__RCSID("$NetBSD: nohup.c,v 1.7 1997/10/19 10:23:35 lukem Exp $");
+__RCSID("$NetBSD: nohup.c,v 1.8 1997/12/23 18:21:34 ross Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,7 +93,7 @@ main(argc, argv)
 	(void)signal(SIGHUP, SIG_IGN);
 
 	execvp(argv[1], &argv[1]);
-	exit_status = (errno = ENOENT) ? EXIT_NOTFOUND : EXIT_NOEXEC;
+	exit_status = (errno == ENOENT) ? EXIT_NOTFOUND : EXIT_NOEXEC;
 	(void)fprintf(stderr, "nohup: %s: %s\n", argv[1], strerror(errno));
 	exit(exit_status);
 }
