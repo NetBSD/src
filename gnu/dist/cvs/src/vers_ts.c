@@ -204,11 +204,10 @@ Version_TS (finfo, options, tag, date, force_tag_match, set_time)
 		struct utimbuf t;
 
 		memset (&t, 0, sizeof (t));
-		t.modtime =
-		    RCS_getrevtime (rcsdata, vers_ts->vn_rcs, 0, 0);
+		t.modtime = RCS_getrevtime (rcsdata, vers_ts->vn_rcs, 0, 0);
 		if (t.modtime != (time_t) -1)
 		{
-		    t.actime = t.modtime;
+		    (void) time (&t.actime);
 
 #ifdef UTIME_EXPECTS_WRITABLE
 		    if (!iswritable (finfo->file))
@@ -226,7 +225,7 @@ Version_TS (finfo, options, tag, date, force_tag_match, set_time)
 		    (void) utime (finfo->file, &t);
 
 #ifdef UTIME_EXPECTS_WRITABLE
-		    if (change_it_back == 1)
+		    if (change_it_back)
 		    {
 			xchmod (finfo->file, 0);
 			change_it_back = 0;
