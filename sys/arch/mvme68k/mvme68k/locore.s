@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.81 2001/06/10 17:03:01 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.82 2001/06/10 17:31:38 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -461,6 +461,7 @@ L1x7jump:
 Le1x7jump:
 	.even
 
+	.text
 #endif
 
 #if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
