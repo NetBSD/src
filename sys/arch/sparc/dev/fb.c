@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.32 1999/05/18 18:13:39 thorpej Exp $ */
+/*	$NetBSD: fb.c,v 1.33 1999/05/18 21:36:21 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -417,7 +417,7 @@ fbrcons_init(fb)
 		panic("fbrcons_init: rasops_init failed!");
 	
 	rc->rc_ops = &ri->ri_ops;
-	rc->rc_cookie = &ri;
+	rc->rc_cookie = ri;
 	rc->rc_bell = fb_bell;
 	rcons_init(rc);
 
