@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.27 2004/03/26 17:34:18 drochner Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.28 2004/04/17 08:47:15 matt Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.27 2004/03/26 17:34:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28 2004/04/17 08:47:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	for (i = 0; i < 32; i++) 
 		linux_regs.lgpr[i] = tf->fixreg[i];
 	linux_regs.lnip = tf->srr0;	
-	linux_regs.lmsr = tf->srr1;
+	linux_regs.lmsr = tf->srr1 & PSL_USERSRR1;
 	linux_regs.lorig_gpr3 = tf->fixreg[3]; /* XXX Is that right? */
 	linux_regs.lctr = tf->ctr;
 	linux_regs.llink = tf->lr;
@@ -195,8 +195,8 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	memset(&frame, 0, sizeof(frame));
 	memcpy(&frame.lgp_regs, &linux_regs, sizeof(linux_regs));
 
-	save_fpu_lwp(curlwp);
-	memcpy(&frame.lfp_regs, curpcb->pcb_fpu.fpr, sizeof(frame.lfp_regs));
+	save_fpu_lwp(curlwp, FPU_SAVE);
+	memcpy(&frame.lfp_regs, curpcb->pcb_fpu.fpreg, sizeof(frame.lfp_regs));
 
 	/*
 	 * Copy Linux's signal trampoline on the user stack It should not
@@ -300,11 +300,6 @@ linux_sys_rt_sigreturn(l, v, retval)
 		return (EFAULT);
 
 	/*
-	 * Make sure, fpu is sync'ed
-	 */
-	save_fpu_lwp(curlwp);
-
-	/*
 	 *  Restore register context.
 	 */
 	if (copyin((caddr_t)sigframe.luc.luc_context.lregs,
@@ -318,7 +313,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	    (unsigned long)tf, (unsigned long)scp);
 #endif
 
-	if ((lregs->lmsr & PSL_USERSTATIC) !=  (tf->srr1 & PSL_USERSTATIC))
+	if (!PSL_USEROK_P(lregs->lmsr))
 		return (EINVAL);  
 
 	for (i = 0; i < 32; i++) 
@@ -330,8 +325,13 @@ linux_sys_rt_sigreturn(l, v, retval)
 	tf->srr0 = lregs->lnip;
 	tf->srr1 = lregs->lmsr;
 
-	memcpy(curpcb->pcb_fpu.fpr, (caddr_t)&sregs.lfp_regs,
-	       sizeof(curpcb->pcb_fpu.fpr));
+	/*
+	 * Make sure the fpu state is discarded
+	 */
+	save_fpu_lwp(curlwp, FPU_DISCARD);
+
+	memcpy(curpcb->pcb_fpu.fpreg, (caddr_t)&sregs.lfp_regs,
+	       sizeof(curpcb->pcb_fpu.fpreg));
 
 	/* 
 	 * Restore signal stack. 
@@ -390,11 +390,6 @@ linux_sys_sigreturn(l, v, retval)
 		return (EFAULT);
 
 	/*
-	 * Make sure, fpu is in sync
-	 */
-	save_fpu_lwp(curlwp);
-
-	/*
 	 *  Restore register context.
 	 */
 	if (copyin((caddr_t)context.lregs, &sregs, sizeof(sregs)))
@@ -407,7 +402,7 @@ linux_sys_sigreturn(l, v, retval)
 	    (unsigned long)tf, (unsigned long)scp);
 #endif
 
-	if ((lregs->lmsr & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
+	if (!PSL_USEROK_P(lregs->lmsr))
 		return (EINVAL);  
 
 	for (i = 0; i < 32; i++) 
@@ -419,8 +414,13 @@ linux_sys_sigreturn(l, v, retval)
 	tf->srr0 = lregs->lnip;
 	tf->srr1 = lregs->lmsr;
 
-	memcpy(curpcb->pcb_fpu.fpr, (caddr_t)&sregs.lfp_regs,
-	       sizeof(curpcb->pcb_fpu.fpr));
+	/*
+	 * Make sure the fpu state is discarded
+	 */
+	save_fpu_lwp(curlwp, FPU_DISCARD);
+
+	memcpy(curpcb->pcb_fpu.fpreg, (caddr_t)&sregs.lfp_regs,
+	       sizeof(curpcb->pcb_fpu.fpreg));
 
 	/* 
 	 * Restore signal stack. 
