@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2001/10/24 19:43:40 briggs Exp $ */
+/*	$NetBSD: md.c,v 1.2 2002/08/02 05:11:34 grant Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -155,6 +155,8 @@ editlab:
 
 	/* Standard fstypes */
 	bsdlabel[A].pi_fstype = FS_BSDFFS;
+	bsdlabel[A].pi_bsize  = 8192;
+	bsdlabel[A].pi_fsize  = 1024;
 	bsdlabel[B].pi_fstype = FS_SWAP;
 	bsdlabel[E].pi_fstype = FS_UNUSED;
 	bsdlabel[F].pi_fstype = FS_UNUSED;
