@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.19 1997/11/06 10:07:33 fair Exp $
+.\"	$NetBSD: ping.8,v 1.20 1998/02/06 06:02:01 perry Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -334,10 +334,11 @@ specification states that the
 field for
 .Tn TCP
 packets should
-be set to 60, but many systems use smaller values (4.3
-.Tn BSD
-uses 30, 4.2 used
-15).
+be set to 60, but many systems use smaller values (
+.Bx 4.3
+uses 30, 
+.Bx 4.2
+used 15).
 .Pp
 The maximum possible value of this field is 255, and most Unix systems set
 the
