@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.1.1.3 2004/07/28 22:49:05 heas Exp $
+.\"	$NetBSD: postconf.5,v 1.2 2004/09/04 23:33:07 lukem Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -385,7 +385,7 @@ and changed the default to none.
 Specify a list of network/netmask patterns, separated by commas
 and/or whitespace. The mask specifies the number of bits in the
 network part of a host address. You can also specify hostnames or
-.domain names (the initial dot causes the domain to match any name
+\&.domain names (the initial dot causes the domain to match any name
 below it),  "/file/name" or "type:table" patterns.  A "/file/name"
 pattern is replaced by its contents; a "type:table" lookup table
 is matched when a table entry matches a lookup string (the lookup
@@ -2905,7 +2905,7 @@ is backwards compatible with Postfix 2.0.
 Specify a list of network/netmask patterns, separated by commas
 and/or whitespace. The mask specifies the number of bits in the
 network part of a host address. You can also specify hostnames or
-.domain names (the initial dot causes the domain to match any name
+\&.domain names (the initial dot causes the domain to match any name
 below it),  "/file/name" or "type:table" patterns.  A "/file/name"
 pattern is replaced by its contents; a "type:table" lookup table
 is matched when a table entry matches a lookup string (the lookup
@@ -2925,7 +2925,7 @@ By default, no clients are allowed to specify XCLIENT.
 Specify a list of network/netmask patterns, separated by commas
 and/or whitespace. The mask specifies the number of bits in the
 network part of a host address. You can also specify hostnames or
-.domain names (the initial dot causes the domain to match any name
+\&.domain names (the initial dot causes the domain to match any name
 below it),  "/file/name" or "type:table" patterns.  A "/file/name"
 pattern is replaced by its contents; a "type:table" lookup table
 is matched when a table entry matches a lookup string (the lookup
@@ -2944,7 +2944,7 @@ By default, no clients are allowed to specify XFORWARD.
 Specify a list of network/netmask patterns, separated by commas
 and/or whitespace. The mask specifies the number of bits in the
 network part of a host address. You can also specify hostnames or
-.domain names (the initial dot causes the domain to match any name
+\&.domain names (the initial dot causes the domain to match any name
 below it),  "/file/name" or "type:table" patterns.  A "/file/name"
 pattern is replaced by its contents; a "type:table" lookup table
 is matched when a table entry matches a lookup string (the lookup
