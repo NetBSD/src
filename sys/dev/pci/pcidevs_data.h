@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.339 2001/06/28 04:45:57 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.340 2001/06/30 01:04:25 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.335 2001/06/28 04:45:09 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.336 2001/06/30 01:03:59 thorpej Exp 
  */
 
 /*
@@ -2146,16 +2146,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Viper/PCI",
 	},
 	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE550TX,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DL1002,
 	    0,
 	    "D-Link Systems",
-	    "DFE-550TX 10/100 Ethernet",
+	    "DL-1002 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS,
 	    0,
 	    "D-Link Systems",
 	    "DFE-530TXPLUS 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DL4000,
+	    0,
+	    "D-Link Systems",
+	    "DL-4000 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
@@ -4936,6 +4942,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "ST201 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST2021,
+	    0,
+	    "Sundance Technology",
+	    "ST2021 Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
 	    0,
 	    "Surecom Technology",
@@ -4988,6 +5000,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Tamarack Microelectronics, Inc.",
 	    "Tamarack TC9021 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021_ALT,
+	    0,
+	    "Tamarack Microelectronics, Inc.",
+	    "Tamarack TC9021 Gigabit Ethernet (alt ID)",
 	},
 	{
 	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290,
