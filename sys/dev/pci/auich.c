@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.33 2003/01/21 16:05:21 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.34 2003/01/28 02:09:34 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.33 2003/01/21 16:05:21 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.34 2003/01/28 02:09:34 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,6 +211,8 @@ struct auich_softc {
 	/* SiS 7012 hack */
 	int  sc_sample_size;
 	int  sc_sts_reg;
+	/* 440MX workaround */
+	int  sc_dmamap_flags;
 
 	void (*sc_pintr)(void *);
 	void *sc_parg;
@@ -446,7 +448,13 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	    && d->product == PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC) {
 		sc->sc_ignore_codecready = TRUE;
 	}
-
+	/* Workaround for a 440MX B-stepping erratum */
+	sc->sc_dmamap_flags = BUS_DMA_COHERENT;
+	if (d->vendor == PCI_VENDOR_INTEL
+	    && d->product == PCI_PRODUCT_INTEL_82440MX_ACA) {
+		sc->sc_dmamap_flags |= BUS_DMA_NOCACHE;
+		printf("%s: DMA bug workaround enabled\n", sc->sc_dev.dv_xname);
+	}
 
 	/* Set up DMA lists. */
 	sc->ptr_pcmo = sc->ptr_pcmi = sc->ptr_mici = 0;
@@ -1230,7 +1238,7 @@ auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
 		return (error);
 
 	error = bus_dmamem_map(sc->dmat, p->segs, p->nsegs, p->size,
-			       &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+			       &p->addr, BUS_DMA_NOWAIT|sc->sc_dmamap_flags);
 	if (error)
 		goto free;
 
@@ -1286,7 +1294,7 @@ auich_alloc_cdata(struct auich_softc *sc)
 	if ((error = bus_dmamem_map(sc->dmat, &seg, rseg,
 				    sizeof(struct auich_cdata),
 				    (caddr_t *) &sc->sc_cdata,
-				    BUS_DMA_COHERENT)) != 0) {
+				    sc->sc_dmamap_flags)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
