@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.139 1999/05/06 00:08:23 thorpej Exp $
+# $NetBSD: mi,v 1.140 1999/05/11 20:20:02 veego Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -260,7 +260,6 @@
 ./usr/include/dev/rcons
 ./usr/include/dev/rcons/raster.h
 ./usr/include/dev/rcons/rcons.h
-./usr/include/dev/rcons/rcons_subr.h
 ./usr/include/dev/sbus
 ./usr/include/dev/sbus/mbppio.h
 ./usr/include/dev/scsipi
@@ -297,8 +296,6 @@
 ./usr/include/dev/tc/if_levar.h
 ./usr/include/dev/tc/ioasicreg.h
 ./usr/include/dev/tc/ioasicvar.h
-./usr/include/dev/tc/sticreg.h
-./usr/include/dev/tc/sticvar.h
 ./usr/include/dev/tc/tcdevs.h
 ./usr/include/dev/tc/tcdevs_data.h
 ./usr/include/dev/tc/tcreg.h
@@ -1112,6 +1109,17 @@
 ./usr/share/ldscripts/i386nbsd.xn
 ./usr/share/ldscripts/i386nbsd.xr
 ./usr/share/ldscripts/i386nbsd.xu
+./usr/share/ldscripts/m68kelf.x
+./usr/share/ldscripts/m68kelf.xbn
+./usr/share/ldscripts/m68kelf.xn
+./usr/share/ldscripts/m68kelf.xr
+./usr/share/ldscripts/m68kelf.xs
+./usr/share/ldscripts/m68kelf.xu
+./usr/share/ldscripts/m68knbsd.x
+./usr/share/ldscripts/m68knbsd.xbn
+./usr/share/ldscripts/m68knbsd.xn
+./usr/share/ldscripts/m68knbsd.xr
+./usr/share/ldscripts/m68knbsd.xu
 ./usr/share/ldscripts/sparcnbsd.x
 ./usr/share/ldscripts/sparcnbsd.xbn
 ./usr/share/ldscripts/sparcnbsd.xn
