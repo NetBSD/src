@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.29 2000/05/22 10:18:46 elric Exp $	*/
+/*	$NetBSD: exec.c,v 1.30 2000/07/03 03:26:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.29 2000/05/22 10:18:46 elric Exp $");
+__RCSID("$NetBSD: exec.c,v 1.30 2000/07/03 03:26:19 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -875,7 +875,7 @@ typecmd(argc, argv)
 {
 	struct cmdentry entry;
 	struct tblentry *cmdp;
-	char **pp;
+	char * const *pp;
 	struct alias *ap;
 	int i;
 	int err = 0;
@@ -884,7 +884,7 @@ typecmd(argc, argv)
 	for (i = 1; i < argc; i++) {
 		out1str(argv[i]);
 		/* First look at the keywords */
-		for (pp = (char **)parsekwd; *pp; pp++)
+		for (pp = parsekwd; *pp; pp++)
 			if (**pp == *argv[i] && equal(*pp, argv[i]))
 				break;
 

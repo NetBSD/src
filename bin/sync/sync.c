@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.9 1997/11/05 21:19:04 cgd Exp $	*/
+/*	$NetBSD: sync.c,v 1.10 2000/07/03 03:26:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,10 +43,11 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)sync.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sync.c,v 1.9 1997/11/05 21:19:04 cgd Exp $");
+__RCSID("$NetBSD: sync.c,v 1.10 2000/07/03 03:26:20 matt Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <unistd.h>
 
 int main __P((int, char *[]));
