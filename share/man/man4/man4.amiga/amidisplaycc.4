@@ -1,14 +1,12 @@
-.\" $NetBSD: amidisplaycc.4,v 1.4 2001/06/13 23:38:29 wiz Exp $
+.\" $NetBSD: amidisplaycc.4,v 1.5 2002/01/15 01:12:34 wiz Exp $
 .Dd September 3, 2000
 .Dt AMIDISPLAYCC 4 amiga
 .Sh NAME
 .Nm amidisplaycc
 .Nd wscons interface to amiga custom chips drivers
-.\"
 .Sh SYNOPSIS
 .Cd amidisplaycc0 at mainbus0
 .Cd wsdisplay0 at amidisplaycc0
-.\"
 .Sh DESCRIPTION
 This device acts as an adapter between the
 .Xr wscons 4
@@ -34,19 +32,38 @@ the available chip memory. Each virtual screen can have a
 different display mode. The available display modes are listed
 below. Other modes can easily be added to the kernel. The default
 mode is 640x400x1.
-.Pp
-640x200x1, 640x200x2, 640x200x3, 640x200x4,
-.Pp
-640x400x1, 640x400x2, 640x400x3, 640x400x4,
-.Pp
-640x480x1, 640x480x2, 640x480x3, 640x480x4,
+.Bl -bullet -offset indent -compact
+.It
+640x200x1
+.It
+640x200x2
+.It
+640x200x3
+.It
+640x200x4
+.It
+640x400x1
+.It
+640x400x2
+.It
+640x400x3
+.It
+640x400x4
+.It
+640x480x1
+.It
+640x480x2
+.It
+640x480x3
+.It
+640x480x4
+.El
 .Pp
 Palette is the default palette compiled in the kernel, and currently
 cannot be changed runtime.
 .Pp
 Also, the font is the 8x8 font compiled into the kernel, and cannot
 be changed runtime.
-.\"
 .Sh SEE ALSO
-.Xr wscons 4
+.Xr wscons 4 ,
 .Xr wsdisplay 4
