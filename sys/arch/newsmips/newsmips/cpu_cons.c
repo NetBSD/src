@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.3 1999/12/22 05:55:26 tsubai Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.4 2000/10/12 03:08:58 onoe Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,6 +63,7 @@
 
 struct consdev *cn_tab = NULL;
 extern struct consdev consdev_bm, consdev_zs, consdev_zs_ap;
+extern struct fbdev *consfb;
 
 int tty00_is_console = 0;
 
@@ -97,32 +98,26 @@ consinit()
 	if (systype == NEWS3400) {
 		int dipsw = (int)*(volatile u_char *)DIP_SWITCH;
 #if NFB > 0
+		if ((dipsw & SW_CONSOLE) != 0) {
 #if defined(news3200) || defined(news3400)	/* KU:XXX */
-		fbbm_probe(dipsw|2);
+			fbbm_probe(dipsw|2);
 #else
-		fbbm_probe(dipsw);
+			fbbm_probe(dipsw);
 #endif
-		vt100_open();
-		setup_fnt();
-		setup_fnt24();
-#else
-		dipsw &= ~SW_CONSOLE;
-#endif /* NFB */
-
-		switch (dipsw & SW_CONSOLE) {
-		case 0:
-			tty00_is_console = 1;
-			cn_tab = &consdev_zs;
-			(*cn_tab->cn_init)(cn_tab);
-			break;
-
-		default:
-#if NFB > 0
-			cn_tab = &consdev_bm;
-			(*cn_tab->cn_init)(cn_tab);
-#endif
-			break;
+			if (consfb != NULL) {
+				vt100_open();
+				setup_fnt();
+				setup_fnt24();
+				cn_tab = &consdev_bm;
+				(*cn_tab->cn_init)(cn_tab);
+				return;
+			}
 		}
+#endif /* NFB */
+		dipsw &= ~SW_CONSOLE;
+		tty00_is_console = 1;
+		cn_tab = &consdev_zs;
+		(*cn_tab->cn_init)(cn_tab);
 	}
 #endif
 }
