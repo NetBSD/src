@@ -36,8 +36,12 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* ARM6 family default cpu.  */
 #define SUBTARGET_CPU_DEFAULT TARGET_CPU_arm6
 
-/* Default is to use APCS-32 mode.  */
-#define TARGET_DEFAULT ARM_FLAG_APCS_32
+/* Default is to use soft float and APCS-32 mode.  */
+#if 0 /* XXX soft float doesn't seem to work! */
+#define TARGET_DEFAULT (ARM_FLAG_APCS_32 | ARM_FLAG_SOFT_FLOAT)
+#else
+#define TARGET_DEFAULT (ARM_FLAG_APCS_32)
+#endif
 
 #include "arm/aout.h"
 
@@ -46,23 +50,43 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <netbsd.h>
 
-/* Some defines for CPP.
-   arm32 is the NetBSD port name, so we always define arm32 and __arm32__.  */
+/* On the ARM `@' introduces a comment, so we must use something else
+   for .type directives.  */
+#undef TYPE_OPERAND_FMT
+/* XXX our arm assembler seems to really want # for type specs -- cgd */
+#define TYPE_OPERAND_FMT "#%s"
+
+/* The NetBSD/arm32 assembler (or, at least the one that I have) doesn't
+   seem to do the right thing with weak references, which causes libgcc
+   c++ function lossage. */
+#undef ASM_WEAKEN_LABEL
+
+/* Some defines for CPP.  arm32 is the NetBSD port name, so we always (only)
+   define __arm32__ and __NetBSD__, and add __KPRINTF_ATTRIBUTE__ since
+   this compiler is hacked with the NetBSD kprintf attribute mods. */
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "\
--Dunix -Driscbsd -Darm32 -D__arm32__ -D__NetBSD__ \
--Asystem(unix) -Asystem(NetBSD) -Acpu(arm) -Amachine(arm)"
+#define CPP_PREDEFINES "-D__arm32__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__"
 
 /* Define _POSIX_SOURCE if necessary.  */
-#undef CPP_SPEC
-#define CPP_SPEC "\
-%(cpp_cpu_arch) %(cpp_apcs_pc) %(cpp_float) %(cpp_endian) \
-%{posix:-D_POSIX_SOURCE} \
-"
+#undef SUBTARGET_CPP_SPEC
+#define SUBTARGET_CPP_SPEC	"%{posix:-D_POSIX_SOURCE}"
 
 /* Because TARGET_DEFAULT sets ARM_FLAG_APCS_32 */
 #undef CPP_APCS_PC_DEFAULT_SPEC
 #define CPP_APCS_PC_DEFAULT_SPEC "-D__APCS_32__"
+
+#if 0 /* XXX soft float doesn't seem to work! */
+/* Because TARGET_DEFAULT sets ARM_FLAG_SOFT_FLOAT */
+#undef CPP_FLOAT_DEFAULT_SPEC
+#define CPP_FLOAT_DEFAULT_SPEC "-D__SOFTFP__"
+#endif
+
+/* Pass -X to the linker so that it will strip symbols starting with 'L' */
+#undef LINK_SPEC
+#define LINK_SPEC "\
+-X %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} \
+%{static:-Bstatic} %{assert*} \
+"
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "unsigned int"
@@ -133,5 +157,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Until they use ELF or something that handles dwarf2 unwinds
    and initialization stuff better.  */
-#define DWARF2_UNWIND_INFO 0
+#undef DWARF2_UNWIND_INFO
+/* #define DWARF2_UNWIND_INFO 0 */
 
