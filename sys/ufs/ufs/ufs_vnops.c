@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.7 1994/12/24 16:44:45 ws Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.8 1994/12/27 19:55:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1109,6 +1109,8 @@ bad:
 		vput(ITOV(xp));
 	vput(ITOV(dp));
 out:
+	if (doingdirectory)
+		ip->i_flag &= ~IN_RENAME;
 	if (VOP_LOCK(fvp) == 0) {
 		ip->i_nlink--;
 		ip->i_flag |= IN_CHANGE;
