@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.142 2004/03/14 01:08:47 cl Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.143 2004/05/12 20:13:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.142 2004/03/14 01:08:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.143 2004/05/12 20:13:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -125,7 +125,7 @@ void endtsleep(void *);
 __inline void sa_awaken(struct lwp *);
 __inline void awaken(struct lwp *);
 
-struct callout schedcpu_ch = CALLOUT_INITIALIZER;
+struct callout schedcpu_ch = CALLOUT_INITIALIZER_SETFUNC(schedcpu, NULL);
 
 
 
@@ -317,7 +317,7 @@ schedcpu(void *arg)
 	proclist_unlock_read();
 	uvm_meter();
 	wakeup((caddr_t)&lbolt);
-	callout_reset(&schedcpu_ch, hz, schedcpu, NULL);
+	callout_schedule(&schedcpu_ch, hz);
 }
 
 /*
