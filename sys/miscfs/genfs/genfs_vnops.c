@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.47 2002/02/12 01:08:12 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.48 2002/02/13 05:20:41 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.47 2002/02/12 01:08:12 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.48 2002/02/13 05:20:41 enami Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1172,8 +1172,8 @@ genfs_putpages(v)
 				else
 					memset(&pgs[npages - nback], 0,
 					    nback * sizeof(pgs[0]));
+				n -= nback;
 			}
-			n -= nback;
 
 			/*
 			 * then plug in our page of interest.
