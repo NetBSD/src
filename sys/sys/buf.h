@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.44 2000/11/27 08:39:51 chs Exp $	*/
+/*	$NetBSD: buf.h,v 1.45 2000/11/27 18:26:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -162,6 +162,7 @@ extern struct bio_ops {
  	int	(*io_sync) __P((struct mount *));
 	void	(*io_movedeps) __P((struct buf *, struct buf *));
 	int	(*io_countdeps) __P((struct buf *, int));
+	void	(*io_pageiodone) __P((struct buf *));
 } bioops;
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.35 2000/11/27 08:40:05 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
  *
@@ -808,10 +808,8 @@ uvm_aio_aiodone(bp)
 	release = (bp->b_flags & (B_ERROR|B_READ)) == (B_ERROR|B_READ);
 	write = (bp->b_flags & B_READ) == 0;
 	/* XXXUBC B_NOCACHE is for swap pager, should be done differently */
-	if (write && !(bp->b_flags & B_NOCACHE)) {
-		/* XXXUBC */
-		void softdep_pageiodone(struct buf *);
-		softdep_pageiodone(bp);
+	if (write && !(bp->b_flags & B_NOCACHE) && bioops.io_pageiodone) {
+		(*bioops.io_pageiodone)(bp);
 	}
 
 	uobj = NULL;
