@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.15 2002/06/02 15:45:58 itojun Exp $	*/
+/*	$NetBSD: mroute.c,v 1.16 2003/04/15 08:07:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mroute.c,v 1.15 2002/06/02 15:45:58 itojun Exp $");
+__RCSID("$NetBSD: mroute.c,v 1.16 2003/04/15 08:07:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ static char *
 pktscale(n)
 	u_long n;
 {
-	static char buf[8];
+	static char buf[20];
 	char t;
 
 	if (n < 1024)
