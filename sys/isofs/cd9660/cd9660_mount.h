@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_mount.h,v 1.3 1999/07/13 11:12:05 scw Exp $	*/
+/*	$NetBSD: cd9660_mount.h,v 1.4 2000/05/27 16:03:55 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -43,11 +43,12 @@
  * Arguments to mount ISO 9660 filesystems.
  */
 struct iso_args {
-	char	*fspec;			/* block special device to mount */
+	const char	*fspec;		/* block special device to mount */
 	struct	export_args export;	/* network export info */
 	int	flags;			/* mounting flags, see below */
 };
-#define	ISOFSMNT_NORRIP	0x00000001	/* disable Rock Ridge Ext.*/
-#define	ISOFSMNT_GENS	0x00000002	/* enable generation numbers */
-#define	ISOFSMNT_EXTATT	0x00000004	/* enable extended attributes */
-#define	ISOFSMNT_NOJOLIET 0x00000008	/* disable Joliet extensions */
+#define	ISOFSMNT_NORRIP		0x00000001 /* disable Rock Ridge Ext.*/
+#define	ISOFSMNT_GENS		0x00000002 /* enable generation numbers */
+#define	ISOFSMNT_EXTATT		0x00000004 /* enable extended attributes */
+#define	ISOFSMNT_NOJOLIET	0x00000008 /* disable Joliet extensions */
+#define	ISOFSMNT_NOCASETRANS	0x00000010 /* do not make names lower case */
