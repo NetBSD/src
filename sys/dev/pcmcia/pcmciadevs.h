@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.201 2004/07/17 19:55:28 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.202 2004/08/05 17:24:00 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.200 2004/07/17 19:55:14 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.201 2004/08/05 17:23:47 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -98,6 +98,7 @@
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
+#define	PCMCIA_VENDOR_ASUSTEK	0x02aa	/* Asustek Computer */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
 #define	PCMCIA_VENDOR_ACTIONTEC	0x1668	/* ACTIONTEC */
@@ -202,6 +203,11 @@
 #define	PCMCIA_CIS_ARTEM_ONAIR	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ARTEM_ONAIR	0x0001
 #define	PCMCIA_STR_ARTEM_ONAIR	"ARtem Onair Wireless LAN"
+
+/* Asustek */
+#define	PCMCIA_CIS_ASUSTEK_WL_100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ASUSTEK_WL_100	0x0002
+#define	PCMCIA_STR_ASUSTEK_WL_100	"SpaceLink WL-100 Wireless LAN"
 
 /* Bay Networks */
 #define	PCMCIA_CIS_BAY_STACK_650	{ NULL, NULL, NULL, NULL }
