@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.83 1998/01/25 16:47:21 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.84 1998/01/28 00:15:09 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -255,7 +255,6 @@ bootstrap()
 		register u_int pte;
 		register int i;
 		extern void setpte4m __P((u_int, u_int));
-		extern struct timer_4m *timerreg4m;
 
 		if ((node = opennode("/obio/interrupt")) == 0)
 		    if ((node=search_prom(findroot(),"interrupt"))==0)
@@ -305,29 +304,6 @@ bootstrap()
 		       *(int*)ICR_SI_PEND);
 */
 #endif
-
-		/*
-		 * Now map in the counters
-		 * (XXX: fix for multiple CPUs! We assume 1)
-		 * The processor register is the first; the system is the last.
-		 * See also timerattach() in clock.c.
-		 * This shouldn't be necessary; we ought to keep interrupts off
-		 * and/or disable the (level 14) counter...
-		 */
-
-		if ((node = opennode("/obio/counter")) == 0)
-		    if ((node=search_prom(findroot(),"counter"))==0)
-			panic("bootstrap: could not find counter in OPENPROM");
-
-		if (!romprop(&ra, "counter", node))
-			panic("bootstrap: could not find counter properties");
-
-		cpuinfo.counterreg_4m = (struct counter_4m *)ra.ra_vaddrs[0];
-		timerreg4m = (struct timer_4m *)ra.ra_vaddrs[ra.ra_nvaddrs-1];
-		for (i = 0; i < ra.ra_nvaddrs - 1; i++) {
-			extern void stopcounter __P((struct counter_4m *));
-			stopcounter((struct counter_4m *)ra.ra_vaddrs[i]);
-		}
 	}
 #endif /* SUN4M */
 
