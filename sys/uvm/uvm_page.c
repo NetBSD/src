@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.2 1998/02/06 22:32:13 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.3 1998/02/07 02:34:08 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -334,6 +334,13 @@ vm_offset_t *kvm_startp, *kvm_endp;
    */
 
   simple_lock_init(&uvm.pagedaemon_lock);
+
+  /*
+   * step 7: init reserve thresholds
+   * XXXCDC - values may need adjusting
+   */
+  uvmexp.reserve_pagedaemon = 1;
+  uvmexp.reserve_kernel = 5;
 
   /*
    * done!
@@ -789,7 +796,7 @@ vm_offset_t off;
 struct vm_anon *anon;
 
 {
-  int s, nfree;
+  int s;
   struct vm_page *pg;
 
 #ifdef DIAGNOSTIC
@@ -802,23 +809,9 @@ struct vm_anon *anon;
 
   uvm_lock_fpageq();		/* lock free page queue */
 
-  if ((pg = uvm.page_free.tqh_first) == NULL) {
-    uvm_unlock_fpageq();
-    splx(s);
-    /* XXX: not waking pagedaemon, ok to assume it is already going? */
-    return(NULL);
-  }
-
-  TAILQ_REMOVE(&uvm.page_free, pg, pageq);
-  nfree = --uvmexp.free;
-
-  uvm_unlock_fpageq();		/* unlock free page queue */
-  splx(s);
-
   /*
    * check to see if we need to generate some free pages waking
    * the pagedaemon.
-   * XXX: we read uvm.free without locking
    */
 
   if (uvmexp.free < uvmexp.freemin ||
@@ -826,6 +819,32 @@ struct vm_anon *anon;
 
     thread_wakeup(&uvm.pagedaemon);
   }
+
+  /*
+   * fail if any of these conditions is true:
+   * [1]  there really are no free pages, or
+   * [2]  only kernel "reserved" pages remain and
+   *        the page isn't being allocated to a kernel object.
+   * [3]  only pagedaemon "reserved" pages remain and
+   *        the requestor isn't the pagedaemon.
+   */
+
+  pg = uvm.page_free.tqh_first;
+  if (pg == NULL || 
+      (uvmexp.free <= uvmexp.reserve_kernel &&
+       !(obj && obj->uo_refs == UVM_OBJ_KERN)) ||
+      (uvmexp.free <= uvmexp.reserve_pagedaemon &&
+       !(obj == uvmexp.kmem_object && curproc == uvm.pagedaemon_proc))) {
+    uvm_unlock_fpageq();
+    splx(s);
+    return(NULL);
+  }
+
+  TAILQ_REMOVE(&uvm.page_free, pg, pageq);
+  uvmexp.free--;
+
+  uvm_unlock_fpageq();		/* unlock free page queue */
+  splx(s);
 
   pg->offset = off;
   pg->uobject = obj;
@@ -978,6 +997,15 @@ struct vm_page *pg;
   }
 
   /*
+   * if the page was wired, unwire it now.
+   */
+  if (pg->wire_count)
+  {
+      pg->wire_count = 0;
+      uvmexp.wired--;
+  }
+
+  /*
    * and put on free queue 
    */
 
@@ -985,10 +1013,14 @@ struct vm_page *pg;
   uvm_lock_fpageq();
   TAILQ_INSERT_TAIL(&uvm.page_free, pg, pageq);
   pg->pqflags = PQ_FREE;
+#ifdef DEBUG
+  pg->uobject = (void *)0xdeadbeef;
+  pg->offset = 0xdeadbeef;
+  pg->uanon = (void *)0xdeadbeef;
+#endif
   uvmexp.free++;
   uvm_unlock_fpageq();
   splx(s);
-
 }
 
 #if defined(UVM_PAGE_TRKOWN)
