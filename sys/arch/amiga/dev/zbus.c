@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.3 1995/02/12 19:19:32 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.4 1995/04/23 16:20:47 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -124,7 +124,13 @@ static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 static struct preconfdata preconftab[] = {
 	{ 18260, 6, 0 },
 	/* Retina BLT Z3 */
-	{ 18260, 16, 0}
+	{ 18260, 16, 0},
+	{2167,	11, 0},	/* Picasso-II mem*/
+	{2167,	12, 0},	/* regs */
+	{2193,	2, 0},	/* Spectrum mem */
+	{2193,	1, 0},	/* Spectrum regs */
+	{2195,	5, 0},	/* Piccolo mem */
+	{2195,	6, 0}	/* Piccolo regs */
 };
 static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
