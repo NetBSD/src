@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.49 2000/10/02 19:48:34 cgd Exp $	*/
+/*	$NetBSD: config.h,v 1.50 2000/10/02 19:59:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,12 +68,19 @@
 #endif
 
 #ifdef	MAKE_BOOTSTRAP
+#undef	dev_t
+#undef	NODEV
 #undef	major
 #undef	minor
 #undef	makedev
-#define	major(x)	((int)(((u_int)(x) >> 8) & 0xff))
-#define	minor(x)	((int)((x) & 0xff))
-#define	makedev(x,y)	((int)(((x) << 8) | (y)))
+#define	dev_t		int		/* XXX: assumes int is 32 bits */
+#define	NODEV		((dev_t)-1)
+#define major(x)        ((int)((((x) & 0x000fff00) >>  8)))
+#define minor(x)        ((int)((((x) & 0xfff00000) >> 12) | \
+			       (((x) & 0x000000ff) >>  0)))
+#define makedev(x,y)    ((dev_t)((((x) <<  8) & 0x000fff00) | \
+                                 (((y) << 12) & 0xfff00000) | \
+                                 (((y) <<  0) & 0x000000ff))) 
 #endif	/* MAKE_BOOTSTRAP */
 
 #define ARRCHR '#'
