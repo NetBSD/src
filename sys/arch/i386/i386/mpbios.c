@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.1.2.11 2001/01/10 04:38:33 sommerfeld Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.1.2.12 2001/05/12 22:28:15 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -451,7 +451,8 @@ static struct mpbios_baseentry mp_conf[] =
 	{4, 8, 0, "lint"},
 };
 
-struct mp_bus *mp_busses; 
+struct mp_bus *mp_busses;
+int mp_nbus;
 struct mp_intr_map *mp_intrs;
 
 struct mp_intr_map *lapic_ints[2]; /* XXX */
@@ -587,6 +588,12 @@ mpbios_scan(self)
 				break;
 			}
 			mp_conf[type].count++;
+			if (type == MPS_MCT_BUS) {
+				const struct mpbios_bus *bp =
+				    (const struct mpbios_bus *)position;
+				if (bp->bus_id >= mp_nbus)
+					mp_nbus = bp->bus_id + 1;
+			}
 			/*
 			 * Count actual interrupt instances.
 			 * dst_apic_id of MPS_ALL_APICS means "wired to all
@@ -606,8 +613,9 @@ mpbios_scan(self)
 			position += mp_conf[type].length;
 		}
 
-		mp_busses = malloc(sizeof(struct mp_bus)*
-		    mp_conf[MPS_MCT_BUS].count, M_DEVBUF, M_NOWAIT);
+		mp_busses = malloc(sizeof(struct mp_bus)*mp_nbus,
+		    M_DEVBUF, M_NOWAIT);
+		memset(mp_busses, 0, sizeof(struct mp_bus) * mp_nbus);
 		mp_intrs = malloc(sizeof(struct mp_intr_map)*intr_cnt,
 		    M_DEVBUF, M_NOWAIT);
 		
@@ -893,37 +901,51 @@ mpbios_bus(ent, self)
 	struct device *self;
 {
 	const struct mpbios_bus *entry = (const struct mpbios_bus *)ent;
-	/* XXX should also add EISA support here. */
-	mp_busses[entry->bus_id].mb_intrs = NULL;
+	int bus_id = entry->bus_id;
+
+	printf("mpbios: bus %d is type %6.6s\n", bus_id, entry->bus_type);
+	
+#ifdef DIAGNOSTIC
+	/*
+	 * This "should not happen" unless the table changes out
+	 * from underneath us
+	 */
+	if (bus_id >= mp_nbus) {
+		panic("mpbios: bus number %d out of range?? (type %6.6s)\n",
+		    bus_id, entry->bus_type);
+	}
+#endif
+	
+	mp_busses[bus_id].mb_intrs = NULL;
 	
 	if (memcmp(entry->bus_type, "PCI   ", 6) == 0) {
-		mp_busses[entry->bus_id].mb_name = "pci";
-		mp_busses[entry->bus_id].mb_idx = entry->bus_id;
-		mp_busses[entry->bus_id].mb_intr_print = mp_print_pci_intr;
-		mp_busses[entry->bus_id].mb_intr_cfg = mp_cfg_pci_intr;
+		mp_busses[bus_id].mb_name = "pci";
+		mp_busses[bus_id].mb_idx = bus_id;
+		mp_busses[bus_id].mb_intr_print = mp_print_pci_intr;
+		mp_busses[bus_id].mb_intr_cfg = mp_cfg_pci_intr;
 	} else if (memcmp(entry->bus_type, "EISA  ", 6) == 0) {
-		mp_busses[entry->bus_id].mb_name = "eisa";
-		mp_busses[entry->bus_id].mb_idx = entry->bus_id;
-		mp_busses[entry->bus_id].mb_intr_print = mp_print_eisa_intr;
-		mp_busses[entry->bus_id].mb_intr_cfg = mp_cfg_eisa_intr;
+		mp_busses[bus_id].mb_name = "eisa";
+		mp_busses[bus_id].mb_idx = bus_id;
+		mp_busses[bus_id].mb_intr_print = mp_print_eisa_intr;
+		mp_busses[bus_id].mb_intr_cfg = mp_cfg_eisa_intr;
 
-		mp_busses[entry->bus_id].mb_data =
+		mp_busses[bus_id].mb_data =
 		    inb(ELCR0) | (inb(ELCR1) << 8);
 
 		if (mp_eisa_bus != -1)
 			printf("oops: multiple isa busses?\n");
 		else
-			mp_eisa_bus = entry->bus_id;
+			mp_eisa_bus = bus_id;
 		
 	} else if (memcmp(entry->bus_type, "ISA   ", 6) == 0) {
-		mp_busses[entry->bus_id].mb_name = "isa";
-		mp_busses[entry->bus_id].mb_idx = 0; /* XXX */
-		mp_busses[entry->bus_id].mb_intr_print = mp_print_isa_intr;
-		mp_busses[entry->bus_id].mb_intr_cfg = mp_cfg_isa_intr;
+		mp_busses[bus_id].mb_name = "isa";
+		mp_busses[bus_id].mb_idx = 0; /* XXX */
+		mp_busses[bus_id].mb_intr_print = mp_print_isa_intr;
+		mp_busses[bus_id].mb_intr_cfg = mp_cfg_isa_intr;
 		if (mp_isa_bus != -1)
 			printf("oops: multiple isa busses?\n");
 		else
-			mp_isa_bus = entry->bus_id;
+			mp_isa_bus = bus_id;
 	} else {
 		printf("%s: unsupported bus type %6.6s\n", self->dv_xname,
 		    entry->bus_type);
