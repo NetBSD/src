@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.2 1997/07/20 13:33:22 mrg Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.3 1997/07/31 23:43:26 thorpej Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -47,10 +47,11 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.2 1997/07/20 13:33:22 mrg Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.3 1997/07/31 23:43:26 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -65,14 +66,20 @@ __RCSID("$NetBSD: getnetnamadr.c,v 1.2 1997/07/20 13:33:22 mrg Exp $");
 #include <errno.h>
 #include <string.h>
 
+#ifdef __weak_alias
+__weak_alias(getnetbyaddr,_getnetbyaddr);
+__weak_alias(getnetbyname,_getnetbyname);
+#endif
+
 extern int h_errno;
 
 #if defined(mips) && defined(SYSTYPE_BSD43)
 extern int errno;
 #endif
 
-struct netent *_getnetbyaddr __P((long net, int type));
-struct netent *_getnetbyname __P((const char *name));
+/* XXX private header! */
+struct netent *__getnetbyaddr __P((long net, int type));
+struct netent *__getnetbyname __P((const char *name));
 
 #define BYADDR 0
 #define BYNAME 1
@@ -215,82 +222,121 @@ getnetbyaddr(net, net_type)
 	register int net_type;
 {
 	unsigned int netbr[4];
-	int nn, anslen;
+	int nn, anslen, i;
 	querybuf buf;
 	char qbuf[MAXDNAME];
 	unsigned long net2;
 	struct netent *net_entry;
+	char lookups[MAXDNSLUS];
 
 	if (net_type != AF_INET)
-		return (_getnetbyaddr(net, net_type));
+		return (__getnetbyaddr(net, net_type));
 
-	for (nn = 4, net2 = net; net2; net2 >>= 8)
-		netbr[--nn] = net2 & 0xff;
-	switch (nn) {
-	case 3: 	/* Class A */
-		sprintf(qbuf, "0.0.0.%u.in-addr.arpa", netbr[3]);
-		break;
-	case 2: 	/* Class B */
-		sprintf(qbuf, "0.0.%u.%u.in-addr.arpa", netbr[3], netbr[2]);
-		break;
-	case 1: 	/* Class C */
-		sprintf(qbuf, "0.%u.%u.%u.in-addr.arpa", netbr[3], netbr[2],
-		    netbr[1]);
-		break;
-	case 0: 	/* Class D - E */
-		sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa", netbr[3], netbr[2],
-		    netbr[1], netbr[0]);
-		break;
-	}
-	anslen = res_query(qbuf, C_IN, T_PTR, (u_char *)&buf, sizeof(buf));
-	if (anslen < 0) {
-#ifdef DEBUG
-		if (_res.options & RES_DEBUG)
-			printf("res_query failed\n");
-#endif
-		if (errno == ECONNREFUSED)
-			return (_getnetbyaddr(net, net_type));
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+		h_errno = NETDB_INTERNAL;
 		return (NULL);
 	}
-	net_entry = getnetanswer(&buf, anslen, BYADDR);
-	if (net_entry) {
-		unsigned u_net = net;	/* maybe net should be unsigned ? */
 
-		/* Strip trailing zeros */
-		while ((u_net & 0xff) == 0 && u_net != 0)
-			u_net >>= 8;
-		net_entry->n_net = u_net;
-		return (net_entry);
+	memcpy(lookups, _res.lookups, sizeof(lookups));
+	if (lookups[0] == '\0')
+		strncpy(lookups, "bf", sizeof(lookups));
+
+	net_entry = NULL;
+	for (i = 0; i < MAXDNSLUS && net_entry == NULL && lookups[i]; i++) {
+		switch (lookups[i]) {
+		case 'b':
+			for (nn = 4, net2 = net; net2; net2 >>= 8)
+				netbr[--nn] = net2 & 0xff;
+			switch (nn) {
+			case 3: 	/* Class A */
+				sprintf(qbuf, "0.0.0.%u.in-addr.arpa",
+				    netbr[3]);
+				break;
+			case 2: 	/* Class B */
+				sprintf(qbuf, "0.0.%u.%u.in-addr.arpa",
+				    netbr[3], netbr[2]);
+				break;
+			case 1: 	/* Class C */
+				sprintf(qbuf, "0.%u.%u.%u.in-addr.arpa",
+				    netbr[3], netbr[2], netbr[1]);
+				break;
+			case 0: 	/* Class D - E */
+				sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa",
+				     netbr[3], netbr[2], netbr[1], netbr[0]);
+				break;
+			}
+			anslen = res_query(qbuf, C_IN, T_PTR, (u_char *)&buf,
+			    sizeof(buf));
+			if (anslen < 0) {
+#ifdef DEBUG
+				if (_res.options & RES_DEBUG)
+					printf("res_query failed\n");
+#endif
+				break;
+			}
+			net_entry = getnetanswer(&buf, anslen, BYADDR);
+			if (net_entry) {
+				/* maybe net should be unsigned? */
+				unsigned u_net = net;
+
+				/* Strip trailing zeros */
+				while ((u_net & 0xff) == 0 && u_net != 0)
+					u_net >>= 8;
+				net_entry->n_net = u_net;
+				break;
+			}
+			break;
+
+		case 'f':
+			net_entry = __getnetbyaddr(net, net_type);
+			break;
+		}
 	}
-	return (_getnetbyaddr(net, net_type));
+
+	return (net_entry);
 }
 
 struct netent *
 getnetbyname(net)
 	register const char *net;
 {
-	int anslen;
+	int anslen, i;
 	querybuf buf;
 	char qbuf[MAXDNAME];
 	struct netent *net_entry;
+	char lookups[MAXDNSLUS];
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (NULL);
 	}
-	strcpy(&qbuf[0], net);
-	anslen = res_search(qbuf, C_IN, T_PTR, (u_char *)&buf, sizeof(buf));
-	if (anslen < 0) {
+
+	memcpy(lookups, _res.lookups, sizeof(lookups));
+	if (lookups[0] == '\0')
+		strncpy(lookups, "bf", sizeof(lookups));
+
+	net_entry = NULL;
+	for (i = 0; i < MAXDNSLUS && net_entry == NULL && lookups[i]; i++) {
+		switch (lookups[i]) {
+		case 'b':
+			strcpy(&qbuf[0], net);
+			anslen = res_search(qbuf, C_IN, T_PTR, (u_char *)&buf,
+			    sizeof(buf));
+			if (anslen < 0) {
 #ifdef DEBUG
-		if (_res.options & RES_DEBUG)
-			printf("res_query failed\n");
+				if (_res.options & RES_DEBUG)
+					printf("res_query failed\n");
 #endif
-		if (errno == ECONNREFUSED)
-			return (_getnetbyname(net));
-		return (_getnetbyname(net));
+				break;
+			}
+			net_entry = getnetanswer(&buf, anslen, BYNAME);
+			break;
+		
+		case 'f':
+			net_entry = __getnetbyname(net);
+			break;
+		}
 	}
-	net_entry = getnetanswer(&buf, anslen, BYNAME);
-	if (net_entry)
-		return (net_entry);
-	return (_getnetbyname(net));
+
+	return (net_entry);
 }
