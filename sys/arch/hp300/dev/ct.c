@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.40 2005/02/05 16:19:35 chs Exp $	*/
+/*	$NetBSD: ct.c,v 1.41 2005/03/14 12:50:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.40 2005/02/05 16:19:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.41 2005/03/14 12:50:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.40 2005/02/05 16:19:35 chs Exp $");
 #include <hp300/dev/hpibvar.h>
 
 #include <hp300/dev/ctreg.h>
+
+#include "ioconf.h"
 
 /* number of eof marks to remember */
 #define EOFS	128
@@ -149,8 +151,6 @@ static void	ctattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ct, sizeof(struct ct_softc),
     ctmatch, ctattach, NULL, NULL);
-
-extern struct cfdriver ct_cd;
 
 static dev_type_open(ctopen);
 static dev_type_close(ctclose);
