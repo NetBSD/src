@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.17 1996/02/02 02:33:34 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.18 1996/03/18 01:39:47 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -458,10 +458,15 @@ int	ascmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	ascattach __P((struct device *parent, struct device *self, void *aux));
 int	ascprint(void*, char*);
 
-extern struct cfdriver asccd;
-struct cfdriver asccd = {
-	NULL, "asc", ascmatch, ascattach, DV_DULL, sizeof(struct asc_softc)
+struct cfattach asc_ca = {
+	sizeof(struct asc_softc), ascmatch, ascattach
 };
+
+extern struct cfdriver asc_cd;
+struct cfdriver asc_cd = {
+	NULL, "as", DV_DULL
+};
+
 
 #ifdef USE_NEW_SCSI
 /* Glue to the machine-independent scsi */
@@ -503,7 +508,7 @@ ascmatch(parent, match, aux)
 	struct confargs *ca = aux;
 	void *ascaddr;
 
-	/*if (parent->dv_cfdata->cf_driver == &ioasiccd) */
+	/*if (parent->dv_cfdata->cf_driver == &ioasic_cd) */
 	if (!TC_BUS_MATCHNAME(ca, "asc") && !TC_BUS_MATCHNAME(ca, "PMAZ-AA "))
 		return (0);
 
@@ -515,7 +520,7 @@ ascmatch(parent, match, aux)
 	return (1);
 }
 
-extern struct cfdriver ioasiccd; /* XXX */
+extern struct cfdriver ioasic_cd; /* XXX */
 
 void
 ascattach(parent, self, aux)
@@ -546,7 +551,7 @@ ascattach(parent, self, aux)
 	 * (2) timing based on turbochannel frequency
 	 */
 
-	if (asc->sc_dev.dv_parent->dv_cfdata->cf_driver == &ioasiccd) {
+	if (asc->sc_dev.dv_parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		asc->buff = (u_char *)MACH_PHYS_TO_UNCACHED(asc_iomem);
 		bufsiz = 8192;
 		*((volatile int *)IOASIC_REG_SCSI_DMAPTR(ioasic_base)) = -1;
@@ -692,7 +697,7 @@ asc_start(scsicmd)
 	register ScsiCmd *scsicmd;	/* command to start */
 {
 	register struct pmax_scsi_device *sdp = scsicmd->sd;
-	register asc_softc_t asc = asccd.cd_devs[sdp->sd_ctlr];
+	register asc_softc_t asc = asc_cd.cd_devs[sdp->sd_ctlr];
 	int s;
 
 	s = splbio();
@@ -2154,7 +2159,7 @@ asic_dma_end(asc, state, flag)
 void
 asc_dma_intr()
 {
-	asc_softc_t asc =  &asccd.cd_devs[0]; /*XXX*/
+	asc_softc_t asc =  &asc_cd.cd_devs[0]; /*XXX*/
 	u_int next_phys;
 
 	asc->dma_xfer -= NBPG;
