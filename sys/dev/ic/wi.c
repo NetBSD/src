@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.138 2003/10/24 23:58:22 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.139 2003/11/01 23:57:05 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.138 2003/10/24 23:58:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.139 2003/11/01 23:57:05 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1961,6 +1961,10 @@ wi_write_txrate(struct wi_softc *sc, int rate)
 	if (sc->sc_tx_rate == hwrate)
 		return 0;
 
+	if (sc->sc_if.if_flags & IFF_DEBUG)
+		printf("%s: tx rate %d -> %d (%d)\n", __func__, sc->sc_tx_rate,
+		    hwrate, rate);
+
 	sc->sc_tx_rate = hwrate;
 
 	return wi_write_val(sc, WI_RID_TX_RATE, sc->sc_tx_rate);
@@ -1980,8 +1984,7 @@ wi_cfg_txrate(struct wi_softc *sc)
 	if (ic->ic_fixed_rate < 0)
 		rate = 0;	/* auto */
 	else
-		rate = (rs->rs_rates[ic->ic_fixed_rate] &
-		    IEEE80211_RATE_VAL) / 2;
+		rate = rs->rs_rates[ic->ic_fixed_rate];
 
 	return wi_write_txrate(sc, rate);
 }
