@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 1999/03/26 06:54:40 dbj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2001/05/12 22:35:30 chs Exp $	*/
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1994 Rolf Grossmann
@@ -39,8 +39,7 @@ char *mg;
 
 #define	MON(type, off) (*(type *)((u_int) (mg) + off))
 
-extern char *entry_point;
-
+extern int entry_point;
 
 #ifdef DEBUG
 int debug = 1;
@@ -57,16 +56,16 @@ int debug = 0;
 void
 machdep_start(char *entry, int howto, char *loadaddr, char *ssym, char *esym)
 {
-  DPRINTF(("machdep_start(entry=0x%lx,howto=0x%x,loadaddr=0x%lx,ssym=0x%lx,esym=0x%lx\n",
-           (u_long)entry,howto,(u_long)loadaddr,(u_long)ssym,(u_long)esym));
-  MON(int,MG_boot_how) = howto;
-  entry_point = entry + (long)loadaddr;
-  DPRINTF(("start=0x%lx\n", (u_long)entry_point));
-  
-  /* @@@ hack to pass esym to kernel */
-  *((u_int *)loadaddr) = (u_int)esym;
+	DPRINTF(("machdep_start(entry=%p,howto=0x%x,loadaddr=%p,ssym=%p,esym=%p\n",
+		 entry, howto, loadaddr, ssym, esym));
+	MON(int,MG_boot_how) = howto;
+	entry_point = (int)entry + (int)loadaddr;
+	DPRINTF(("start=0x%lx\n", (u_long)entry_point));
 
-  /* return to exec, so that main can return entry point */
+	/* @@@ hack to pass esym to kernel */
+	*((u_int *)loadaddr) = (u_int)esym;
+
+	/* return to exec, so that main can return entry point */
 }
 
 typedef int (*getcptr)(void);
@@ -75,33 +74,33 @@ typedef int (*putcptr)(int);
 int
 getchar(void)
 {
-  return(MON(getcptr,MG_getc)());
+	return(MON(getcptr,MG_getc)());
 }
 
 void
 putchar(int c)
 {
-  MON(putcptr,MG_putc)(c);
+	MON(putcptr,MG_putc)(c);
 }
 
 __dead void
 _rtt(void)
 {
-    extern __dead void _halt __P((void)) __attribute__((noreturn));
+	extern __dead void _halt __P((void)) __attribute__((noreturn));
 
-    printf("Press any key to halt.\n");
-    getchar();
-    _halt();
-    /* NOTREACHED */
+	printf("Press any key to halt.\n");
+	getchar();
+	_halt();
+	/* NOTREACHED */
 }
 
 struct trapframe {
-    int dregs[8];
-    int aregs[8];
-    short sr;
-    int pc;
-    short frame;
-    char info[0];
+	int dregs[8];
+	int aregs[8];
+	short sr;
+	int pc;
+	short frame;
+	char info[0];
 };
 
 int trap __P((struct trapframe *fp));
@@ -109,20 +108,20 @@ int trap __P((struct trapframe *fp));
 int
 trap(struct trapframe *fp)
 {
-    static int intrap = 0;
+	static int intrap = 0;
 
-    if (intrap)
+	if (intrap)
+		return 0;
+	intrap = 1;
+	printf("Got unexpected trap: format=%x vector=%x sr=%x pc=%x\n",
+	       (fp->frame>>12)&0xF, fp->frame&0xFFF, fp->sr, fp->pc);
+	printf("dregs: %x %x %x %x %x %x %x %x\n",
+	       fp->dregs[0], fp->dregs[1], fp->dregs[2], fp->dregs[3], 
+	       fp->dregs[4], fp->dregs[5], fp->dregs[6], fp->dregs[7]);
+	printf("aregs: %x %x %x %x %x %x %x %x\n",
+	       fp->aregs[0], fp->aregs[1], fp->aregs[2], fp->aregs[3], 
+	       fp->aregs[4], fp->aregs[5], fp->aregs[6], fp->aregs[7]);
+	intrap = 0;
+	printf("Halting.\n");
 	return 0;
-    intrap = 1;
-    printf("Got unexpected trap: format=%x vector=%x sr=%x pc=%x\n",
-	   (fp->frame>>12)&0xF, fp->frame&0xFFF, fp->sr, fp->pc);
-    printf("dregs: %x %x %x %x %x %x %x %x\n",
-	   fp->dregs[0], fp->dregs[1], fp->dregs[2], fp->dregs[3], 
-	   fp->dregs[4], fp->dregs[5], fp->dregs[6], fp->dregs[7]);
-    printf("aregs: %x %x %x %x %x %x %x %x\n",
-	   fp->aregs[0], fp->aregs[1], fp->aregs[2], fp->aregs[3], 
-	   fp->aregs[4], fp->aregs[5], fp->aregs[6], fp->aregs[7]);
-    intrap = 0;
-    printf("Halting.\n");
-    return 0;
 }
