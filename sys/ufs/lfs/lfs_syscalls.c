@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.33 1999/07/08 01:06:06 wrstuden Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.34 1999/11/09 02:21:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ sys_lfs_markv(p, v, retval)
 			 * Finish the old file, if there was one.  The presence
 			 * of a usable vnode in vp is signaled by a valid v_daddr.
 			 */
-			if(v_daddr != LFS_UNUSED_DADDR) {
+			if(v_daddr > 0) {
 #ifdef DEBUG_LFS
 				if(ip->i_flag & (IN_MODIFIED|IN_CLEANING))
 					iwritten++;
@@ -279,8 +279,7 @@ sys_lfs_markv(p, v, retval)
 			{
 				continue;
 			}
-			if (v_daddr == LFS_UNUSED_DADDR
-			    && blkp->bi_daddr != LFS_FORCE_WRITE)
+			if (v_daddr <= 0 && blkp->bi_daddr != LFS_FORCE_WRITE)
 			{
 				continue;
 			}
@@ -399,13 +398,14 @@ sys_lfs_markv(p, v, retval)
 			}
 			splx(s);
 		}
-		if (blkp->bi_lbn >= 0)	{ /* Data Block */
-			/* XXX KS - should we use incore here, or just always use getblk()? */
+		if (blkp->bi_lbn >= 0 && vp != fs->lfs_ivnode)	{
+			/* True data blocks: we can use fake blocks */
 			bp = lfs_fakebuf(vp, blkp->bi_lbn,
 					 blkp->bi_size, blkp->bi_bp);
 			/* Pretend we used bread() to get it */
 			bp->b_blkno = blkp->bi_daddr;
-		} else {	/* Indirect block */
+		} else {
+			/* Metadata: indir block or ifile data */
 			bp = getblk(vp, blkp->bi_lbn, blkp->bi_size, 0, 0);
 			if (!(bp->b_flags & (B_DONE|B_DELWRI))) { /* B_CACHE */
 				/*
