@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.1 1998/04/23 09:26:26 leo Exp $	*/
+/*	$NetBSD: et4000.c,v 1.2 1998/09/14 14:25:38 leo Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -296,13 +296,23 @@ et_detect(iot, memt, ioh, memh, memsize)
 		return(0);
 	}
 
+	/* Set up video memory so we can read & write it */
+	bus_space_write_1(*iot, *ioh, 0x3c4, 0x04);
+	bus_space_write_1(*iot, *ioh, 0x3c5, 0x0e);
+	bus_space_write_1(*iot, *ioh, 0x3ce, 0x01);
+	bus_space_write_1(*iot, *ioh, 0x3cf, 0x00);
+	bus_space_write_1(*iot, *ioh, 0x3ce, 0x03);
+	bus_space_write_1(*iot, *ioh, 0x3cf, 0x00);
+	bus_space_write_1(*iot, *ioh, 0x3ce, 0x05);
+	bus_space_write_1(*iot, *ioh, 0x3cf, 0x40);
+
 #define TEST_PATTERN 0xa5a5a5a5
 
 	bus_space_write_4(*memt, *memh, 0x0, TEST_PATTERN);
 	if (bus_space_read_4(*memt, *memh, 0x0) != TEST_PATTERN)
 	{
 #ifdef DEBUG_ET4000
-		printf("et4000: Video base read failed\n");
+		printf("et4000: Video base write/read failed\n");
 #endif
 		et_stop(iot, ioh, &vgabase, &saved);
 		return(0);
@@ -311,7 +321,7 @@ et_detect(iot, memt, ioh, memh, memsize)
 	if (bus_space_read_4(*memt, *memh, memsize - 4) != TEST_PATTERN)
 	{
 #ifdef DEBUG_ET4000
-		printf("et4000: Video top read failed\n");
+		printf("et4000: Video top write/read failed\n");
 #endif
 		et_stop(iot, ioh, &vgabase, &saved);
 		return(0);
