@@ -1,4 +1,4 @@
-/*	$NetBSD: logname.c,v 1.5 1994/12/22 06:33:42 jtc Exp $	*/
+/*	$NetBSD: logname.c,v 1.6 1994/12/22 06:39:32 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,11 +43,12 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)logname.c	8.2 (Berkeley) 4/3/94";
 #endif
-static char rcsid[] = "$NetBSD: logname.c,v 1.5 1994/12/22 06:33:42 jtc Exp $";
+static char rcsid[] = "$NetBSD: logname.c,v 1.6 1994/12/22 06:39:32 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <locale.h>
 #include <unistd.h>
 #include <err.h>
 
@@ -61,14 +62,20 @@ main(argc, argv)
 	int ch;
 	char *p;
 
+	setlocale(LC_ALL, "");
+
 	while ((ch = getopt(argc, argv, "")) != EOF)
 		switch (ch) {
 		case '?':
 		default:
 			usage();
+			/* NOTREACHED */
 		}
-	argc -= optind;
-	argv += optind;
+
+	if (argc != optind) {
+		usage();
+		/* NOTREACHED */
+	}
 
 	if ((p = getlogin()) == NULL)
 		err(1, NULL);
