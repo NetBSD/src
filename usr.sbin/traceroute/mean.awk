@@ -1,7 +1,7 @@
 #!/bin/awk -f
 #
-# Copyright (c) 1990 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1990, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # This code is derived from software contributed to Berkeley by
 # Van Jacobson.
@@ -34,7 +34,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)mean.awk	5.2 (Berkeley) 4/28/90
+#	from: @(#)mean.awk	8.1 (Berkeley) 6/6/93
+#	$Id: mean.awk,v 1.2 1994/05/16 19:15:58 mycroft Exp $
 #
 /^ *[0-9]/	{
 	# print out the average time to each hop along a route.
