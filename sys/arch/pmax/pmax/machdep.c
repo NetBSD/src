@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 1997/06/16 03:29:14 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 1997/06/16 09:19:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -609,7 +609,11 @@ mach_init(argc, argv, code, cv)
 		    (u_int*)MACH_PHYS_TO_UNCACHED(KMIN_REG_TIMEOUT);
 		(*Mach_reset_addr) = 0;
 
+#ifdef MIPS3
+		strcpy(cpu_model, "5000/150");	/* XXX */
+#else
 		strcpy(cpu_model, "5000/1xx");
+#endif
 
 		/*
 		 * The kmin memory hardware seems to wrap  memory addresses
