@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.5 1996/04/18 08:52:04 leo Exp $	*/
+/*	$NetBSD: itevar.h,v 1.6 1996/10/11 20:50:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -93,6 +93,8 @@ struct ite_softc {
 	int			save_curx;
 	int			cury;
 	int			save_cury;
+	int			(*itexx_ioctl) __P((struct ite_softc *, u_long,
+						caddr_t, int, struct proc *));
 };
 
 enum ite_flags {
@@ -207,8 +209,6 @@ void	ite_filter __P((u_int ,enum caller));
 /* ite_cc functions */
 int	grfcc_cnprobe __P((void));
 void	grfcc_iteinit __P((struct grf_softc *));
-int	ite_grf_ioctl __P((struct ite_softc *, u_long, caddr_t, int,
-							struct proc *));
 #endif /* _KERNEL */
 
 #endif /* _ITEVAR_H */
