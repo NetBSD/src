@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410reg.h,v 1.4 2003/09/03 03:11:50 mycroft Exp $ */
+/* $NetBSD: s3c2410reg.h,v 1.5 2004/02/12 03:47:29 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -37,7 +37,7 @@
  *  S3C2410X User's Manual 
  */
 #ifndef _ARM_S3C2XX0_S3C2410REG_H_
-#define _ARM_S3C2XX0_S3C2410REG_H_
+#define	_ARM_S3C2XX0_S3C2410REG_H_
 
 /* common definitions for S3C2800, S3C2400 and S3C2410 */
 #include <arm/s3c2xx0/s3c2xx0reg.h>
@@ -48,31 +48,31 @@
  * Memory Map
  */
 #define	S3C2410_BANK_SIZE 	0x08000000
-#define S3C2410_BANK_START(n)	(S3C2410_BANK_SIZE*(n))
-#define S3C2410_SDRAM_START	S3C2410_BANK_START(6)
+#define	S3C2410_BANK_START(n)	(S3C2410_BANK_SIZE*(n))
+#define	S3C2410_SDRAM_START	S3C2410_BANK_START(6)
 
 /*
  * Physical address of integrated peripherals
  */
-#define S3C2410_MEMCTL_BASE	0x48000000 /* memory controller */
+#define	S3C2410_MEMCTL_BASE	0x48000000 /* memory controller */
 #define	S3C2410_USBHC_BASE 	0x49000000 /* USB Host controller */
-#define S3C2410_INTCTL_BASE	0x4a000000 /* Interrupt controller */
-#define S3C2410_DMAC_BASE	0x4b000000
-#define S3C2410_DMAC_SIZE 	0xe4
-#define S3C2410_CLKMAN_BASE	0x4c000000 /* clock & power management */
+#define	S3C2410_INTCTL_BASE	0x4a000000 /* Interrupt controller */
+#define	S3C2410_DMAC_BASE	0x4b000000
+#define	S3C2410_DMAC_SIZE 	0xe4
+#define	S3C2410_CLKMAN_BASE	0x4c000000 /* clock & power management */
 #define	S3C2410_LCDC_BASE 	0x4d000000 /* LCD controller */
 #define	S3C2410_NANDFC_BASE	0x4e000000 /* NAND Flash controller */
 #define	S3C2410_NANDFC_SIZE	0x18
-#define S3C2410_UART0_BASE	0x50000000
-#define S3C2410_UART_BASE(n)	(S3C2410_UART0_BASE+0x4000*(n))
+#define	S3C2410_UART0_BASE	0x50000000
+#define	S3C2410_UART_BASE(n)	(S3C2410_UART0_BASE+0x4000*(n))
 #define	S3C2410_TIMER_BASE 	0x51000000
 #define	S3C2410_USBDC_BASE 	0x5200140
 #define	S3C2410_USBDC_SIZE 	0x130
 #define	S3C2410_WDT_BASE 	0x53000000
 #define	S3C2410_IIC_BASE 	0x54000000
 #define	S3C2410_IIS_BASE 	0x55000000
-#define S3C2410_GPIO_BASE	0x56000000
-#define S3C2410_GPIO_SIZE	0xb4
+#define	S3C2410_GPIO_BASE	0x56000000
+#define	S3C2410_GPIO_SIZE	0xb4
 #define	S3C2410_ADC_BASE 	0x58000000
 #define	S3C2410_ADC_SIZE 	0x14
 #define	S3C2410_SPI0_BASE 	0x59000000
@@ -90,7 +90,7 @@
  * that are OR-ed into main interrupt sources, and controlled via
  * SUBSRCPND and  SUBSRCMSK registers */
 
-#define S3C2410_SUBIRQ_MIN	32
+#define	S3C2410_SUBIRQ_MIN	32
 #define	S3C2410_SUBIRQ_MAX	(32+10)
 
 /* cascaded to INT_ADCTC */
@@ -109,7 +109,7 @@
 #define	S3C2410_INT_TXD0	(S3C2410_SUBIRQ_MIN+1)	/* UART0 Tx interrupt */
 #define	S3C2410_INT_RXD0	(S3C2410_SUBIRQ_MIN+0)	/* UART0 Rx interrupt */
 
-#define S3C2410_INTCTL_SIZE	0x20
+#define	S3C2410_INTCTL_SIZE	0x20
 
 
 /* Clock control */
@@ -125,15 +125,15 @@
 #define	 CLKCON_GPIO 	(1<<13)
 #define	 CLKCON_UART2 	(1<<12)
 #define	 CLKCON_UART1 	(1<<11)
-#define  CLKCON_UART0	(1<<10)	/* PCLK to UART0 */
-#define  CLKCON_SDI	(1<<9)
-#define  CLKCON_TIMER	(1<<8)	/* PCLK to TIMER */
+#define	 CLKCON_UART0	(1<<10)	/* PCLK to UART0 */
+#define	 CLKCON_SDI	(1<<9)
+#define	 CLKCON_TIMER	(1<<8)	/* PCLK to TIMER */
 #define	 CLKCON_USBD	(1<<7)	/* PCLK to USB device controller */
 #define	 CLKCON_USBH	(1<<6)	/* PCLK to USB host controller */
 #define	 CLKCON_LCDC	(1<<5)	/* PCLK to LCD controller */
-#define  CLKCON_NANDFC	(1<<4)	/* PCLK to NAND Flash controller */
-#define  CLKCON_IDLE	(1<<2)	/* 1=transition to IDLE mode */
-#define  CLKCON_STOP	(1<<0)	/* 1=transition to STOP mode */
+#define	 CLKCON_NANDFC	(1<<4)	/* PCLK to NAND Flash controller */
+#define	 CLKCON_IDLE	(1<<2)	/* 1=transition to IDLE mode */
+#define	 CLKCON_STOP	(1<<0)	/* 1=transition to STOP mode */
 #define	CLKMAN_CLKSLOW	0x10
 #define	CLKMAN_CLKDIVN	0x14
 #define	 CLKDIVN_HDIVN	(1<<1)	/* hclk=fclk/2 */
@@ -148,26 +148,26 @@
 #define	NANDFC_NFECC	0x14	/* ecc */
 
 /* GPIO */
-#define GPIO_PACON	0x00	/* port A configuration */
-#define  PCON_INPUT	0	/* Input port */
-#define  PCON_OUTPUT	1	/* Output port */
-#define  PCON_ALTFUN	2	/* Alternate function */
-#define GPIO_PADAT	0x04	/* port A data */
-#define GPIO_PBCON	0x10
-#define GPIO_PBDAT	0x14
+#define	GPIO_PACON	0x00	/* port A configuration */
+#define	 PCON_INPUT	0	/* Input port */
+#define	 PCON_OUTPUT	1	/* Output port */
+#define	 PCON_ALTFUN	2	/* Alternate function */
+#define	GPIO_PADAT	0x04	/* port A data */
+#define	GPIO_PBCON	0x10
+#define	GPIO_PBDAT	0x14
 #define	GPIO_PBUP 	0x18
-#define GPIO_PCCON	0x20
-#define GPIO_PCDAT	0x24
-#define GPIO_PCUP	0x28
-#define GPIO_PDCON	0x30
-#define GPIO_PDDAT	0x34
-#define GPIO_PDUP	0x38
-#define GPIO_PECON	0x40
-#define GPIO_PEDAT	0x44
-#define GPIO_PEUP	0x48
-#define GPIO_PFCON	0x50
-#define GPIO_PFDAT	0x54
-#define GPIO_PFUP	0x58
+#define	GPIO_PCCON	0x20
+#define	GPIO_PCDAT	0x24
+#define	GPIO_PCUP	0x28
+#define	GPIO_PDCON	0x30
+#define	GPIO_PDDAT	0x34
+#define	GPIO_PDUP	0x38
+#define	GPIO_PECON	0x40
+#define	GPIO_PEDAT	0x44
+#define	GPIO_PEUP	0x48
+#define	GPIO_PFCON	0x50
+#define	GPIO_PFDAT	0x54
+#define	GPIO_PFUP	0x58
 #define	GPIO_PGCON	0x60
 #define	GPIO_PGDAT	0x64
 #define	GPIO_PGUP	0x68
@@ -183,11 +183,11 @@
 #define	GPIO_GSTATUS0	0xac	/* external pin status */
 #define	GPIO_GSTATUS1	0xb0	/* external pin status */
 
-#define  EXTINTR_LOW	 0x00
-#define  EXTINTR_HIGH	 0x01
-#define  EXTINTR_FALLING 0x02
-#define  EXTINTR_RISING  0x04
-#define  EXTINTR_BOTH    0x06
+#define	 EXTINTR_LOW	 0x00
+#define	 EXTINTR_HIGH	 0x01
+#define	 EXTINTR_FALLING 0x02
+#define	 EXTINTR_RISING  0x04
+#define	 EXTINTR_BOTH    0x06
 
 /* SD interface */
 /* XXX */
