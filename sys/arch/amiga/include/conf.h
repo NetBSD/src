@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.7 1998/10/10 02:00:49 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.8 2001/03/21 23:42:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Bernd Ernesti.  All rights reserved.
@@ -55,12 +55,6 @@ cdev_decl(fd);
 /* open, close, read, write, ioctl -- XXX should be a generic device */
 #define	cdev_par_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
-
-/* open, close, write, ioctl -- XXX should be a generic device */
-#define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
 
