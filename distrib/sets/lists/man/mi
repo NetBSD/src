@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.707 2004/06/25 16:25:00 itojun Exp $
+# $NetBSD: mi,v 1.708 2004/06/25 16:32:28 wiz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1464,6 +1464,7 @@
 ./usr/share/man/cat5/resolv.conf.0		man-net-catman		.cat
 ./usr/share/man/cat5/rhosts.0			man-netutil-catman	.cat
 ./usr/share/man/cat5/rndc.conf.0		man-bind-catman		.cat
+./usr/share/man/cat5/route.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/rpc.0			man-net-catman		.cat
 ./usr/share/man/cat5/rtadvd.conf.0		man-router-catman	.cat
 ./usr/share/man/cat5/securenet.0		man-obsolete		obsolete
@@ -3583,6 +3584,7 @@
 ./usr/share/man/man5/resolv.conf.5		man-net-man		.man
 ./usr/share/man/man5/rhosts.5			man-netutil-man		.man
 ./usr/share/man/man5/rndc.conf.5		man-bind-man		.man
+./usr/share/man/man5/route.conf.5		man-sys-man		.man
 ./usr/share/man/man5/rpc.5			man-net-man		.man
 ./usr/share/man/man5/rtadvd.conf.5		man-router-man		.man
 ./usr/share/man/man5/securenet.5		man-obsolete		obsolete
