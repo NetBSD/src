@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.2 2003/09/23 23:21:06 lukem Exp $
+#	$NetBSD: Makefile.Xserver,v 1.3 2003/10/24 14:50:51 lukem Exp $
 
 .PATH:		${NETBSDSRCDIR}/x11/Xserver/Xserver
 
@@ -8,9 +8,12 @@
 		hw/xnest hw/vfb \
 		\
 		dix/xpstubs 
+.if !defined(LIBDIR.${_SL})
 LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/x11/Xserver/${_SL} && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=LIBDIR.${_SL}
 LDADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
 DPADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
+.endif
 .endfor
 
 LIBCWRAPPER=	${LIBDIR.os}/libc_wrapper.o
