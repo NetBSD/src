@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 2002/03/15 13:31:08 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 2003/02/23 23:23:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,14 +85,16 @@ int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 #ifndef LIBSA_SINGLE_FILESYSTEM
 #ifdef LIBSA_NO_FS_CLOSE
 #define ufs_close	0
-#define lfs_close	0
+#define lfsv1_close	0
+#define lfsv2_close	0
 #define cd9660_close	0
 #define ustarfs_close	0
 #define nfs_close	0
 #endif
 #ifdef LIBSA_NO_FS_WRITE
 #define ufs_write	0
-#define lfs_write	0
+#define lfsv1_write	0
+#define lfsv2_write	0
 #define cd9660_write	0
 #define ustarfs_write	0
 #define nfs_write	0
@@ -100,7 +102,10 @@ int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
 struct fs_ops file_system[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
-	{ lfs_open, lfs_close, lfs_read, lfs_write, lfs_seek, lfs_stat },
+	{ lfsv1_open, lfsv1_close, lfsv1_read, lfsv1_write, lfsv1_seek,
+	    lfsv1_stat },
+	{ lfsv2_open, lfsv2_close, lfsv2_read, lfsv2_write, lfsv2_seek,
+	    lfsv2_stat },
 	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	    cd9660_stat },
 	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write,
