@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.16.2.3 2000/01/31 21:04:59 he Exp $
+.\" $NetBSD: pkg_create.1,v 1.16.2.4 2000/07/31 18:18:38 he Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -148,7 +148,7 @@ parent directories.
 Store the given file for later querying with the
 .Xr pkg_info 1 
 .Ar -S
-flag. The file is expected to contain the the size (in bytes) of all files of
+flag. The file is expected to contain the size (in bytes) of all files of
 this package plus any required packages added up and stored as a
 ASCII string, terminated by a newline.
 .It Fl X Ar excludefile
@@ -456,7 +456,7 @@ and so cannot co-exist on the same system.
 .Xr pkg_admin 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
-.Xr sysconf 3 .
+.Xr sysconf 3
 .Sh HISTORY
 The
 .Nm
