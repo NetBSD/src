@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.1 2003/08/10 21:17:09 matt Exp $ */
+/*	$NetBSD: memset.S,v 1.2 2003/08/27 17:37:43 matt Exp $ */
 
 /*-
  * Copyright (C) 2003	Matt Thomas <matt@3am-software.com>
@@ -80,7 +80,7 @@ complex_fill:
 		andi.	r_tmp, r_dst, 0x02
 		beq	word_fill		/* aligned to word? */
 half_fill:
-		stw	r_val, 0(r_dst)
+		sth	r_val, 0(r_dst)
 		addi	r_dst, r_dst, 2
 		subi	r_len, r_len, 2		/* subtract halfword */
 
