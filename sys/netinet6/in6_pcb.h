@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.15 2001/02/11 06:49:52 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.16 2001/02/11 06:50:59 itojun Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -110,7 +110,9 @@ struct	in6pcb {
 	int	in6p_cksum;		/* IPV6_CHECKSUM setsockopt */
 };
 
+#ifdef _KERNEL
 #define in6p_ip6_nxt in6p_ip6.ip6_nxt  /* for KAME src sync over BSD*'s */
+#endif
 
 /*
  * Flags in in6p_flags
