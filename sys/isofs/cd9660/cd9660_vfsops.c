@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.25 1997/01/31 02:23:25 thorpej Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -105,8 +105,8 @@ cd9660_mountroot()
 	/*
 	 * Get vnodes for swapdev and rootdev.
 	 */
-	if (bdevvp(swapdev, &swapdev_vp) || bdevvp(rootdev, &rootvp))
-		panic("cd9660_mountroot: can't setup bdevvp's");
+	if (bdevvp(rootdev, &rootvp))
+		panic("cd9660_mountroot: can't setup rootvp");
 
 	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
