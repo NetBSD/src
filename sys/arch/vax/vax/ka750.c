@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.13 1996/07/20 18:14:53 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.14 1996/08/20 14:13:56 ragge Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -81,6 +81,30 @@ ka750_conf(parent, self, aux)
 	ctuattach();
 }
 
+static int ka750_memmatch __P((struct  device  *, void  *, void *));
+static void ka750_memenable __P((struct  device  *, struct  device  *, void *));
+
+struct  cfattach mem_cmi_ca = {
+        sizeof(struct device), ka750_memmatch, ka750_memenable
+};
+
+int
+ka750_memmatch(parent, gcf, aux)
+        struct  device  *parent;
+        void    *gcf, *aux;
+{
+	struct  sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct  cfdata  *cf = gcf;
+
+        if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1))
+                return 0;
+
+	if (sa->type != NEX_MEM16)
+		return 0;
+
+	return 1;
+}
+
 extern volatile caddr_t mcraddr[];
 
 struct	mcr750 {
@@ -103,12 +127,13 @@ struct	mcr750 {
 
 /* enable crd interrupts */
 void
-ka750_memenable(sa,self)
-	struct sbi_attach_args *sa;
-	struct device *self;
+ka750_memenable(parent, self, aux)
+        struct  device  *parent, *self;
+        void    *aux;
 {
-	int k, l, m, cardinfo;
+	struct  sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	struct mcr750 *mcr = (struct mcr750 *)sa->nexaddr;
+	int k, l, m, cardinfo;
 	
 	mcraddr[self->dv_unit] = (caddr_t)sa->nexaddr;
 
@@ -221,7 +246,6 @@ void
 ka750_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail;
-	extern	struct nexus *nexus;
 	int	junk;
 
 	/*
@@ -235,3 +259,87 @@ ka750_steal_pages()
 	    VM_PROT_READ|VM_PROT_WRITE);
 }
 
+static  int cmi_print __P((void *, char *));
+static  int cmi_match __P((struct device *, void *, void *));
+static  void cmi_attach __P((struct device *, struct device *, void*));
+
+struct  cfdriver cmi_cd = {
+        NULL, "cmi", DV_DULL
+};      
+
+struct  cfattach cmi_ca = {
+        sizeof(struct device), cmi_match, cmi_attach
+};
+
+int
+cmi_print(aux, name)
+        void *aux;
+        char *name;
+{
+        struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+
+        if (name)
+		printf("unknown device 0x%x at %s", sa->type, name);
+
+        printf(" tr%d", sa->nexnum);
+        return (UNCONF);
+}
+
+
+int
+cmi_match(parent, cf, aux)
+        struct  device  *parent;
+        void    *cf, *aux;
+{
+        struct bp_conf *bp = aux;
+
+        if (strcmp(bp->type, "cmi"))
+                return 0;
+        return 1;
+}
+
+void
+cmi_attach(parent, self, aux)
+        struct  device  *parent, *self;
+        void    *aux;
+{
+        u_int   nexnum, maxnex, minnex;
+        struct  sbi_attach_args sa;
+
+	printf("I\n");
+	/*
+	 * Probe for memory, can be in the first 4 slots.
+	 */
+	for (sa.nexnum = 0; sa.nexnum < 4; sa.nexnum++) {
+		if (badaddr((caddr_t)&nexus[sa.nexnum], 4))
+			continue;
+
+		sa.nexaddr = nexus + sa.nexnum;
+		sa.type = NEX_MEM16;
+		config_found(self, (void*)&sa, cmi_print);
+	}
+
+	/*
+	 * Probe for mba's, can be in slot 4 - 7.
+	 */
+	for (sa.nexnum = 4; sa.nexnum < 7; sa.nexnum++) {
+		if (badaddr((caddr_t)&nexus[sa.nexnum], 4))
+			continue;
+
+		sa.nexaddr = nexus + sa.nexnum;
+		sa.type = NEX_MBA;
+		config_found(self, (void*)&sa, cmi_print);
+	}
+
+	/*
+	 * There are always one generic UBA, and maybe an optional.
+	 */
+	sa.nexnum = 8;
+	sa.nexaddr = nexus + sa.nexnum;
+	sa.type = NEX_UBA0;
+	config_found(self, (void*)&sa, cmi_print);
+	sa.type = NEX_UBA1;
+	if (badaddr((caddr_t)&nexus[++sa.nexnum], 4) == 0)
+		config_found(self, (void*)&sa, cmi_print);
+
+}

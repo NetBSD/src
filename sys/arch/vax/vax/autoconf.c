@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 1996/07/20 18:15:00 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 1996/08/20 14:13:59 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -56,6 +56,8 @@
 
 #include <vm/vm.h>
 
+struct nexus *nexus;
+
 #define BACKPLANE	0
 #define BIBUSS		1
 #define SBIBUSS		2
@@ -80,19 +82,6 @@ void	ka780_memenable __P((struct sbi_attach_args *, void *));
 void	ka780_memerr __P((void));
 int	ka780_mchk __P((caddr_t));
 void	ka780_steal_pages __P((void));
-#endif
-
-#ifdef	VAX750
-int	nexty750[]={ NEX_MEM16, NEX_MEM16,	NEX_MEM16,	NEX_MEM16,
-		NEX_MBA,	NEX_MBA,	NEX_MBA,	NEX_MBA,
-		NEX_UBA0,	NEX_UBA1,	NEX_ANY,	NEX_ANY,
-		NEX_ANY,	NEX_ANY,	NEX_ANY,	NEX_ANY};
-#endif
-#if VAX730
-int   nexty730[NNEX730] = {
-	NEX_MEM16,	NEX_ANY,	NEX_ANY,	NEX_ANY,
-	NEX_ANY,	NEX_ANY,	NEX_ANY,	NEX_ANY,
-};
 #endif
 
 struct	cpu_dep cpu_calls[]={
@@ -182,6 +171,7 @@ configure()
 	 * parameter based on device(s) used.
 	 */
 	gencnslask(); /* XXX inte g|ras h{r */
+	dzcnslask(); /* XXX inte g|ras h{r */
 	swapconf();
 	cold = 0;
 	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
@@ -225,30 +215,44 @@ backplane_attach(parent, self, hej)
 	void	*hej;
 {
 	struct bp_conf bp;
-	int i, ccpu = 0, cmem = 0, cbi = 0, csbi = 0, cvsbus = 0;
 
 	printf("\n");
+	bp.partyp = BACKPLANE;
 
-	switch (vax_cputype) {
-	case VAX_750:
-	case VAX_650:
-	case VAX_78032:
-	case VAX_780:
-		ccpu = csbi = 1;
-		break;
-
-	case VAX_8600:
-		cmem = ccpu = 1;
-		break;
-	default:
-		break;
+	if (vax_bustype & VAX_CPUBUS) {
+		bp.type = "cpu";
+		bp.num = 0;
+		config_found(self, &bp, printut);
 	}
 	if (vax_bustype & VAX_VSBUS) {
-		ccpu = 1;
-		cvsbus = 1;
+		bp.type = "vsbus";
+		bp.num = 0;
+		config_found(self, &bp, printut);
 	}
-
-	bp.partyp = BACKPLANE;
+	if (vax_bustype & VAX_SBIBUS) {
+		bp.type = "sbi";
+		bp.num = 0;
+		config_found(self, &bp, printut);
+	}
+	if (vax_bustype & VAX_CMIBUS) {
+		bp.type = "cmi";
+		bp.num = 0;
+		config_found(self, &bp, printut);
+	}
+	if (vax_bustype & VAX_UNIBUS) {
+		bp.type = "uba";
+		bp.num = 0;
+		config_found(self, &bp, printut);
+	}
+#if VAX8600
+	if (vax_bustype & VAX_MEMBUS) {
+		bp.type = "mem";
+		bp.num = 0;
+		config_found(self, &bp, printut);
+	}
+	if (vax_cputype == VAX_8600)
+		find_sbi(self, &bp, printut);
+#endif
 
 #if VAX8200 || VAX8800
 	bp.type = "bi";
@@ -283,30 +287,6 @@ backplane_attach(parent, self, hej)
 	}
 #endif
 
-	bp.type = "cpu";
-	for (i = 0; i < ccpu; i++) {
-		bp.num = i;
-		config_found(self, &bp, printut);
-	}
-	bp.type = "mem";
-	for (i = 0; i < cmem; i++) {
-		bp.num = i;
-		config_found(self, &bp, printut);
-	}
-	bp.type = "sbi";
-	for(i = 0; i < csbi; i++) {
-		bp.num = i;
-		config_found(self, &bp, printut);
-	}
-	bp.type = "vsbus";
-	for(i = 0; i < cvsbus; i++) {
-		bp.num = i;
-		config_found(self, &bp, printut);
-	}
-#if VAX8600
-	if (vax_cputype == VAX_8600)
-		find_sbi(self, &bp, printut);
-#endif
 }
 
 #if VAX8600
@@ -458,20 +438,7 @@ mem_attach(parent, self, aux)
 	sc->sc_memtype = sa->nexinfo;
 	sc->sc_memnr = sa->type;
 
-	switch (vax_cputype) {
-#ifdef VAX750
-	case VAX_750:
-		ka750_memenable(sa, (void *)sc);
-		break;
-#endif
-#ifdef VAX780
-	case VAX_780:
-		ka780_memenable(sa, sc);
-		break;
-#endif
-	default:
-		break;
-	}
+	ka780_memenable(sa, sc);
 
 }
 
@@ -496,9 +463,9 @@ struct	cfdriver mem_cd = {
 };
 
 struct	cfattach mem_backplane_ca = {
-	sizeof(struct device), mem_match, mem_attach
+	sizeof(struct mem_softc), mem_match, mem_attach
 };
 
 struct	cfattach mem_sbi_ca = {
-	sizeof(struct device), mem_match, mem_attach
+	sizeof(struct mem_softc), mem_match, mem_attach
 };
