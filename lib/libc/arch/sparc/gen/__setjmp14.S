@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.2 2003/08/07 16:42:23 agc Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.3 2004/03/22 12:35:04 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: __setjmp14.S,v 1.2 2003/08/07 16:42:23 agc Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.3 2004/03/22 12:35:04 pk Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,30 +87,3 @@ ENTRY(__setjmp14)
 	retl			/* return 0 */
 	 clr	%o0
 
-/*
- * All we need to do here is force sigreturn to load a new stack pointer,
- * new <pc,npc>, and appropriate %o0 return value from the sigcontext built
- * in setjmp.  The %i and %l registers will be reloaded from the place to
- * which %sp points, due to sigreturn() semantics (sigreturn does not modify
- * the window pointer in the psr, hence it must force all windows to reload).
- */
-ENTRY(__longjmp14)
-	save	%sp, -96, %sp
-	ld	[%i0 + 8], %o2	/* make sure sc->sc_sp, sc->sc_fp nonzero */
-	ld	[%i0 + 24], %o3
-	orcc	%o2, %o3, %g0
-	bz	Lbotch
-	 tst	%i1		/* if (v == 0) v = 1; */
-	bz,a	1f
-	 mov	1, %i1
-1:
-	st	%i1, [%i0 + 28]	/* sc.sc_o0 = v; */
-	mov	SYS___sigreturn14, %g1
-	mov	%i0, %o0
-	t	ST_SYSCALL	/* sigreturn(scp); */
-
-Lbotch:
-	/* oops, caller botched it */
-	call	_C_LABEL(longjmperror)
-	 nop
-	unimp	0
