@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.17 1999/01/24 19:51:16 christos Exp $	*/
+/*	$NetBSD: fstab.c,v 1.18 1999/01/26 02:23:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.17 1999/01/24 19:51:16 christos Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.18 1999/01/26 02:23:34 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -160,7 +160,7 @@ fstabscan()
 			return 1;
 
 bad:
-		warnx("%s, %d: Missing fields", _fs_file, _fs_lineno);
+		warnx("%s, %lu: Missing fields", _fs_file, (u_long)_fs_lineno);
 	}
 	/* NOTREACHED */
 }
