@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.2 2002/06/11 01:11:40 lukem Exp $
+$NetBSD: pcidevs,v 1.428.2.3 2002/06/11 01:27:06 lukem Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1649,6 +1649,7 @@ product NETGEAR MA301		0x4100	MA301 PCI IEEE 802.11b
 
 /* Netmos products */
 product NETMOS NM9835	0x9835	Dual UART and 1284 Printer port
+product NETMOS NM9845	0x9845	Quad UART and 1284 Printer port
 
 /* Network Security Technologies, Inc. */
 product NETSEC 7751		0x7751	7751
