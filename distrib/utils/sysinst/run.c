@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.38 2003/02/09 16:31:05 martin Exp $	*/
+/*	$NetBSD: run.c,v 1.39 2003/06/03 11:54:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,8 +72,8 @@
  */
 static int launch_subwin (WINDOW *actionwin, char **args, struct winsize *win,
 				int display, const char **errstr);
-int log_flip (menudesc *);
-int script_flip (menudesc *);
+int log_flip (menudesc *, menu_ent *, void *);
+int script_flip (menudesc *, menu_ent *, void *);
 
 #define BUFSIZE 4096
 
@@ -98,13 +98,13 @@ do_logging(void)
 			(void)fprintf(logfp, "Dynamic menu creation failed.\n");
 		exit(EXIT_FAILURE);
 	}
-	process_menu(menu_no);
+	process_menu(menu_no, NULL);
 	free_menu(menu_no);
 }
 
 int
 /*ARGSUSED*/
-log_flip(menudesc *m)
+log_flip(menudesc *m, menu_ent *opt, void *arg)
 {
 	time_t tloc;
 
@@ -132,7 +132,7 @@ log_flip(menudesc *m)
 
 int
 /*ARGSUSED*/
-script_flip(menudesc *m)
+script_flip(menudesc *m, menu_ent *opt, void *arg)
 {
 	time_t tloc;
 
@@ -586,7 +586,7 @@ done:
 		exit(ret);
 	if (ret && errmsg != MSG_NONE) {
 		msg_display(errmsg, scmd);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 	}
 	return(ret);
 }
