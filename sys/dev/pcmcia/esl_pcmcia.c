@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.3 2001/09/29 19:30:29 augustss Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.4 2001/11/13 07:26:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -32,6 +32,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.4 2001/11/13 07:26:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.28 2001/07/26 22:54:34 wiz Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.29 2001/11/13 07:26:33 lukem Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -54,6 +54,9 @@
  *	added to support a requirement of the newest Windows drivers for
  *	the RayLink.  Tested with Aviator Pro (firmware 5.63) on Win98.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.29 2001/11/13 07:26:33 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
