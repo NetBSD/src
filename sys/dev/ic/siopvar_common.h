@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.15 2002/04/23 10:06:44 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.16 2002/04/23 10:38:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -29,6 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "opt_siop.h"
 
 /* common struct and routines used by siop and esiop */
 
