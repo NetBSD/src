@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.22 1993/12/15 00:53:29 mycroft Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.23 1994/01/07 19:10:06 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -674,8 +674,6 @@ kvm_getu(p)
 	}
 	pcbpf = (int) btop(p->p_addr);	/* what should this be really? */
 
-	kp->kp_eproc.e_vm.vm_rssize =
-	    kp->kp_eproc.e_vm.vm_pmap.pm_stats.resident_count; /* XXX */
 	return(&user.user);
 }
 
