@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.2 2002/07/10 13:09:04 scw Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/07/11 14:23:05 scw Exp $
 
-SRCS+=	alloca.S \
+SRCS+=	__setjmp14.S __sigsetjmp14.S _setjmp.S \
+	alloca.S \
 	byte_swap_2.S byte_swap_4.S byte_swap_8.S \
 	fabs.S flt_rounds.S \
-	sigsetjmp.S _setjmp.S
 
 SRCS+=	ieee754_frexp.c ieee754_infinity.c ieee754_isinf.c ieee754_isnan.c \
 	ieee754_ldexp.c ieee754_modf.c ieee754_nanf.c
