@@ -31,27 +31,27 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.6 1994/02/11 06:59:38 chopps Exp $
+ *	$Id: genassym.c,v 1.7 1994/02/13 21:13:21 chopps Exp $
  */
 
 #define KERNEL
 
-#include "sys/param.h"
-#include "sys/buf.h"
-#include "sys/vmmeter.h"
-#include "sys/proc.h"
-#include "sys/mbuf.h"
-#include "sys/msgbuf.h"
-#include "machine/cpu.h"
-#include "machine/trap.h"
-#include "machine/psl.h"
-#include "machine/reg.h"
-#include "machine/vmparam.h"
-#include "sys/syscall.h"
-#include "vm/vm.h"
-#include "sys/user.h"
-#include "pte.h"
-#include "cia.h"
+#include <sys/param.h>
+#include <sys/buf.h>
+#include <sys/vmmeter.h>
+#include <sys/proc.h>
+#include <sys/mbuf.h>
+#include <sys/msgbuf.h>
+#include <machine/cpu.h>
+#include <machine/trap.h>
+#include <machine/psl.h>
+#include <machine/reg.h>
+#include <machine/vmparam.h>
+#include <sys/syscall.h>
+#include <vm/vm.h>
+#include <sys/user.h>
+#include <machine/pte.h>
+#include <amiga/amiga/cia.h>
 
 main()
 {

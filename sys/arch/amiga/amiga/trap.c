@@ -38,35 +38,35 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.9 1994/02/11 07:00:06 chopps Exp $
+ *	$Id: trap.c,v 1.10 1994/02/13 21:13:30 chopps Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "acct.h"
-#include "kernel.h"
-#include "signalvar.h"
-#include "resourcevar.h"
-#include "syslog.h"
-#include "user.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/acct.h>
+#include <sys/kernel.h>
+#include <sys/signalvar.h>
+#include <sys/resourcevar.h>
+#include <sys/syslog.h>
+#include <sys/user.h>
 #ifdef KTRACE
-#include "ktrace.h"
+#include <sys/ktrace.h>
 #endif
 
-#include "machine/psl.h"
-#include "machine/trap.h"
-#include "machine/cpu.h"
-#include "machine/reg.h"
-#include "machine/mtpr.h"
-#include "pte.h"
+#include <machine/psl.h>
+#include <machine/trap.h>
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/mtpr.h>
+#include <machine/pte.h>
 
-#include "vm/vm.h"
-#include "vm/pmap.h"
-#include "vmmeter.h"
+#include <vm/vm.h>
+#include <vm/pmap.h>
+#include <sys/vmmeter.h>
 
 #ifdef COMPAT_SUNOS
-#include "compat/sunos/sun_syscall.h"
+#include <compat/sunos/sun_syscall.h>
 #endif
 
 struct	sysent	sysent[];

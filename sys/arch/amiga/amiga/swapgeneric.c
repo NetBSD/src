@@ -31,16 +31,16 @@
  * SUCH DAMAGE.
  *
  *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.6 1994/02/11 06:59:57 chopps Exp $
+ *	$Id: swapgeneric.c,v 1.7 1994/02/13 21:13:28 chopps Exp $
  */
 
-#include "sys/param.h"
-#include "sys/conf.h"
-#include "sys/buf.h"
-#include "sys/systm.h"
-#include "sys/reboot.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/reboot.h>
 
-#include "../dev/device.h"
+#include <amiga/dev/device.h>
 
 extern int ufs_mountroot();
 int (*mountroot)() = ufs_mountroot;

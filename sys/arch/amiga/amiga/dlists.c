@@ -27,10 +27,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: dlists.c,v 1.2 1994/01/29 06:58:57 chopps Exp $
+ *	$Id: dlists.c,v 1.3 1994/02/13 21:13:20 chopps Exp $
  */
 
-#include "dlists.h"
+#include <amiga/amiga/dlists.h>
 
 void
 dinit_list (dll_list_t *list)

@@ -38,21 +38,21 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.5 1994/02/11 07:00:09 chopps Exp $
+ *	$Id: vm_machdep.c,v 1.6 1994/02/13 21:13:32 chopps Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "malloc.h"
-#include "buf.h"
-#include "user.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/buf.h>
+#include <sys/user.h>
 
-#include "../include/cpu.h"
+#include <machine/cpu.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "pte.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <machine/pte.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.

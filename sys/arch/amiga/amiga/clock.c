@@ -38,19 +38,19 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.5 1994/02/11 06:59:26 chopps Exp $
+ *	$Id: clock.c,v 1.6 1994/02/13 21:13:16 chopps Exp $
  */
 
-#include "param.h"
-#include "kernel.h"
-#include "custom.h"
-#include "cia.h"
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <amiga/amiga/custom.h>
+#include <amiga/amiga/cia.h>
 
-#include "../include/psl.h"
-#include "../include/cpu.h"
+#include <machine/psl.h>
+#include <machine/cpu.h>
 
 #if defined(GPROF) && defined(PROFTIMER)
-#include "sys/gprof.h"
+#include <sys/gprof.h>
 #endif
 
 /* the clocks run at NTSC: 715.909kHz or PAL: 709.379kHz. 
@@ -183,15 +183,15 @@ DELAY (mic)
  * (PROFTIMER code above).  Care should be taken when both uses are
  * configured as only a token effort is made to avoid conflicting use.
  */
-#include "sys/proc.h"
-#include "sys/resourcevar.h"
-#include "sys/ioctl.h"
-#include "sys/malloc.h"
-#include "vm/vm.h"
-#include "clockioctl.h"
-#include "sys/specdev.h"
-#include "sys/vnode.h"
-#include "sys/mman.h"
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/ioctl.h>
+#include <sys/malloc.h>
+#include <vm/vm.h>
+#include <amiga/amiga/clockioctl.h>
+#include <sys/specdev.h>
+#include <sys/vnode.h>
+#include <sys/mman.h>
 
 int clockon = 0;		/* non-zero if high-res timer enabled */
 #ifdef PROFTIMER

@@ -31,20 +31,20 @@
  * SUCH DAMAGE.
  *
  *	@(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
- *	$Id: sys_machdep.c,v 1.4 1994/02/11 07:00:03 chopps Exp $
+ *	$Id: sys_machdep.c,v 1.5 1994/02/13 21:13:29 chopps Exp $
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/ioctl.h"
-#include "sys/file.h"
-#include "sys/time.h"
-#include "sys/proc.h"
-#include "sys/uio.h"
-#include "sys/kernel.h"
-#include "sys/mtio.h"
-#include "sys/buf.h"
-#include "sys/trace.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/time.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/mtio.h>
+#include <sys/buf.h>
+#include <sys/trace.h>
 
 #ifdef TRACE
 int	nvualarm;
@@ -101,7 +101,7 @@ vdoualarm(arg)
 }
 #endif
 
-#include "../include/cpu.h"
+#include <machine/cpu.h>
 
 /* XXX should be in an include file somewhere */
 #define CC_PURGE	1

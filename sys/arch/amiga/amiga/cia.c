@@ -12,13 +12,13 @@
  *  dispatch_cia_ints() afterwards with bits in the mask
  *  register your code didn't already deal with. 
  *
- *	$Id: cia.c,v 1.2 1994/02/11 06:59:24 chopps Exp $
+ *	$Id: cia.c,v 1.3 1994/02/13 21:13:15 chopps Exp $
  */
 
 
-#include "types.h"
-#include "cdefs.h"
-#include "cia.h"
+#include <sys/types.h>
+#include <sys/cdefs.h>
+#include <amiga/amiga/cia.h>
 #include "par.h"
 #include "ite.h"
 

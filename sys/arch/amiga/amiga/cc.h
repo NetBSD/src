@@ -27,41 +27,175 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cc.h,v 1.2 1994/02/11 06:59:23 chopps Exp $
+ *	$Id: cc.h,v 1.3 1994/02/13 21:13:12 chopps Exp $
  */
 
 #if ! defined (_CC_H)
 #define _CC_H
 
-#include <sys/types.h>
-#include "cc_types.h"
-#include "dlists.h"
-#include "custom.h"
+#include <amiga/amiga/cc_registers.h>
 
-#include "cc_vbl.h"
-#include "cc_audio.h"
-#include "cc_chipmem.h"
-#include "cc_copper.h"
-#include "cc_blitter.h"
-
-void custom_chips_init (void);
 #if ! defined (HIADDR)
-#define HIADDR(x) \
-        (u_word)((((unsigned long)(x))>>16)&0xffff)
+#define HIADDR(x) (u_short)((((unsigned long)(x))>>16)&0xffff)
 #endif 
 #if ! defined (LOADDR)
-#define LOADDR(x) \
-        (u_word)(((unsigned long)(x))&0xffff)
+#define LOADDR(x) (u_short)(((unsigned long)(x))&0xffff)
 #endif
 
-#if defined (AMIGA_TEST)
-void cc_deinit (void);
-int  nothing (void);
-void amiga_test_panic (char *,...);
-#define splhigh nothing
-#define splx(x) 
-#define panic amiga_test_panic
-#endif
+/*
+ * Vertical blank iterrupt sever chains.
+ */
+
+struct vbl_node {
+    dll_node_t node;			/* Private. */
+    short   priority;			/* Private. */
+    short   flags;			/* Private. */
+    void  (*function)(register void *);	/* put your function pointer here. */
+    void   *data;			/* functions data. */
+};
+
+enum vbl_node_bits {
+    VBLNB_OFF,					  /* don't call me right now. */
+    VBLNB_TURNOFF,				  /* turn function off. */
+    VBLNB_REMOVE,				  /* remove me on next vbl round and clear flag. */
+};
+
+enum vlb_node_flags {
+    VBLNF_OFF = 1 << VBLNB_OFF,
+    VBLNF_TURNOFF = 1 << VBLNB_TURNOFF,
+    VBLNF_REMOVE = 1 << VBLNB_REMOVE,		  
+};    
+
+/*
+ * Blitter stuff.
+ */
+
+#define BLT_SHIFT_MASK(shift) (0xf&shift)
+
+#define MAKEBOOL(val) (val ? 1 : 0)
+
+#define DMAADDR(lng) (u_long)(((0x7 & lng) << 16)|(lng & 0xffff))
+
+#define MAKE_BLTCON0(shift_a, use_a, use_b, use_c, use_d, minterm) \
+        ((0x0000) | (BLT_SHIFT_MASK(shift_a) << 12) | \
+	 (use_a << 11) |  (use_b << 10) |  (use_c << 9) |  (use_d << 8) | \
+	 (minterm))
+
+#define MAKE_BLTCON1(shift_b, efe, ife, fc, desc)  \
+        ((0x0000) | (BLT_SHIFT_MASK(shift_b) << 12) | (efe << 4) | \
+	 (ife << 3) | (fc << 2) | (desc << 1))
+
+/*
+ * Copper stuff.
+ */
+
+typedef struct copper_list {
+    union j {
+	struct k {
+	    u_short opcode;
+	    u_short operand;
+	} inst;
+	u_long data;
+    } cp;
+} cop_t;
+
+#define CI_MOVE(x)   (0x7ffe & x)
+#define CI_WAIT(h,v) (((0x7f&v)<<8)|(0xfe&h)|(0x0001))
+#define CI_SKIP(x)   (((0x7f&v)<<8)|(0xfe&h)|(0x0001))
+
+#define CD_MOVE(x) (x)
+#define CD_WAIT(x) (x & 0xfffe)
+#define CD_SKIP(x) (x|0x0001)
+
+#define CBUMP(c) (c++)
+
+#define CMOVE(c,r,v) do { \
+			    c->cp.data=((CI_MOVE(r)<<16)|(CD_MOVE(v))); \
+		            CBUMP (c); \
+		        } while(0)
+#define CWAIT(c,h,v) do { \
+			    c->cp.data=((CI_WAIT(h,v) << 16)|CD_WAIT(0xfffe)); \
+		            CBUMP (c); \
+		        } while(0)
+#define CSKIP(c,h,v) do { \
+			    c->cp.data=((CI_SKIP(h,v)<<16)|CD_SKIP(0xffff)); \
+		            CBUMP (c); \
+		        } while(0)
+#define CEND(c) do { \
+			    c->cp.data=0xfffffffe; \
+		            CBUMP (c); \
+		        } while(0)
+
+/*
+ * Chipmem allocator stuff.
+ */
+
+typedef struct mem_node {
+    dll_node_t node;				  /* allways set. */
+    dll_node_t free;				  /* only set when nodes are available */
+    u_long   size;				  /* indicates size of memory following node. */
+} mem_node_t;
+
+typedef struct mem_list {
+    dll_list_t free_list;
+    dll_list_t node_list;
+    u_long   free_nodes;
+    u_long   alloc_nodes;
+    u_long   total;				  /* total free. */
+    u_long   size;				  /* size of it all. */
+    u_char  *memory;				  /* all the memory. */
+} mem_list_t;
+
+#define CM_BLOCKSIZE 0x4
+#define CM_BLOCKMASK (~(CM_BLOCKSIZE - 1))
+
+#define MNODE_FROM_FREE(n) ((mem_node_t *)(((u_long)n) - offsetof (mem_node_t, free)))
+#define MNODES_MEM(mn) ((u_char *)(&mn[1]))
+
+extern caddr_t CHIPMEMADDR;
+#define PREP_DMA_MEM(mem) (void *)((caddr_t)mem - CHIPMEMADDR)
+
+
+/*
+ * Prototypes.
+ */
+
+#if defined (__STDC__)
+void custom_chips_init (void);
+/* vertical blank server chain */
+void cc_init_vbl (void);
+void add_vbl_function (struct vbl_node *n, short priority, void *data);
+void remove_vbl_function (struct vbl_node *n);
+void wait_for_vbl_function_removal (struct vbl_node *n);
+void turn_vbl_function_off (struct vbl_node *n);
+void turn_vbl_function_on (struct vbl_node *n);
+/* blitter */
+void cc_init_blitter (void);
+int is_blitter_busy (void);
+void wait_blit (void);
+void blitter_handler (void);
+void do_blit (u_short size);
+void set_blitter_control (u_short con0, u_short con1);
+void set_blitter_mods (u_short a, u_short b, u_short c, u_short d);
+void set_blitter_masks (u_short fm, u_short lm);
+void set_blitter_data (u_short da, u_short db, u_short dc);
+void set_blitter_pointers (void *a, void *b, void *c, void *d);
+/* copper */
+void install_copper_list (cop_t *l);
+cop_t *find_copper_inst (cop_t *l, u_short inst);
+void cc_init_copper (void);
+void copper_handler (void);
+/* audio */
+void cc_init_audio (void);
+void play_sample (u_short len, u_short *data, u_short period, u_short volume, u_short channels, u_long count);
+void audio_handler (void);
+/* chipmem */
+void cc_init_chipmem (void);
+void * alloc_chipmem (u_long size);
+void free_chipmem (void *m);
+u_long avail_chipmem (int largest);
+u_long sizeof_chipmem (void *m);
+#endif /* __STDC__ */
 
 #endif /* _CC_H */
 

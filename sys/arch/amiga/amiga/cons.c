@@ -38,19 +38,19 @@
  * from: Utah $Hdr: cons.c 1.1 90/07/09$
  *
  *	@(#)cons.c	7.6 (Berkeley) 5/4/91
- *	$Id: cons.c,v 1.5 1994/02/11 06:59:32 chopps Exp $
+ *	$Id: cons.c,v 1.6 1994/02/13 21:13:17 chopps Exp $
  */
 
-#include "sys/param.h"
-#include "sys/proc.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/file.h"
-#include "sys/conf.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/file.h>
+#include <sys/conf.h>
 
-#include "cons.h"
+#include <amiga/amiga/cons.h>
 
 int sercnprobe(), sercninit(), sercngetc(), sercnputc();
 #include "ite.h"
