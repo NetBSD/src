@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.25 1999/05/11 11:02:54 drochner Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.26 1999/06/06 22:14:53 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 	size_t sz = storagesize;
 	struct extent_region *rp;
 	int fixed_extent = (storage != NULL);
+	int s;
 
 #ifdef DIAGNOSTIC
 	/* Check arguments. */
@@ -164,9 +165,12 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 			LIST_INSERT_HEAD(&fex->fex_freelist, rp, er_link);
 		}
 	} else {
-		if ((expool == NULL) &&
-		    !expool_create())
-			return NULL;
+		s = splhigh();
+		if (expool == NULL)
+			expool_create();
+		splx(s);
+		if (expool == NULL)
+			return (NULL);
 
 		ex = (struct extent *)malloc(sizeof(struct extent),
 		    mtype, (flags & EX_WAITOK) ? M_WAITOK : M_NOWAIT);
@@ -991,6 +995,7 @@ extent_alloc_region_descriptor(ex, flags)
 {
 	struct extent_region *rp;
 	int exflags;
+	int s;
 
 	/*
 	 * XXX Make a static, create-time flags word, so we don't
@@ -1034,11 +1039,14 @@ extent_alloc_region_descriptor(ex, flags)
 	}
 
  alloc:
-	if ((expool == NULL) &&
-	    !expool_create())
+	s = splhigh();
+	if (expool == NULL && !expool_create()) {
+		splx(s);
 		return (NULL);
+	}
 
 	rp = pool_get(expool, (flags & EX_WAITOK) ? PR_WAITOK : 0);
+	splx(s);
 
 	if (rp != NULL)
 		rp->er_flags = ER_ALLOC;
@@ -1055,6 +1063,7 @@ extent_free_region_descriptor(ex, rp)
 	struct extent *ex;
 	struct extent_region *rp;
 {
+	int s;
 
 	if (ex->ex_flags & EXF_FIXED) {
 		struct extent_fixed *fex = (struct extent_fixed *)ex;
@@ -1072,7 +1081,9 @@ extent_free_region_descriptor(ex, rp)
 				    er_link);
 				goto wake_em_up;
 			} else {
+				s = splhigh();
 				pool_put(expool, rp);
+				splx(s);
 			}
 		} else {
 			/* Clear all flags. */
@@ -1091,7 +1102,9 @@ extent_free_region_descriptor(ex, rp)
 	/*
 	 * We know it's dynamically allocated if we get here.
 	 */
+	s = splhigh();
 	pool_put(expool, rp);
+	splx(s);
 }
 
 void
