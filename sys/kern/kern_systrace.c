@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.37 2004/03/14 00:48:58 cl Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.37.2.1 2004/04/16 22:29:57 jmc Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.37 2004/03/14 00:48:58 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.37.2.1 2004/04/16 22:29:57 jmc Exp $");
 
 #include "opt_systrace.h"
 
@@ -116,6 +116,7 @@ struct str_policy {
 #define STR_PROC_NEEDSEQNR	0x10	/* Answer must quote seqnr */
 #define STR_PROC_SETEUID	0x20	/* Elevate privileges */
 #define STR_PROC_SETEGID	0x40
+#define STR_PROC_DIDSETUGID	0x80
 
 struct str_process {
 	TAILQ_ENTRY(str_process) next;
@@ -806,12 +807,17 @@ systrace_enter(struct proc *p, register_t code, void *v)
 
 	/* Elevate privileges as desired */
 	if (issuser) {
-		if (ISSET(strp->flags, STR_PROC_SETEUID))
+		if (ISSET(strp->flags, STR_PROC_SETEUID)) {
 			strp->saveuid = systrace_seteuid(p, strp->seteuid);
-		if (ISSET(strp->flags, STR_PROC_SETEGID))
+			SET(strp->flags, STR_PROC_DIDSETUGID);
+		}
+		if (ISSET(strp->flags, STR_PROC_SETEGID)) {
 			strp->savegid = systrace_setegid(p, strp->setegid);
+			SET(strp->flags, STR_PROC_DIDSETUGID);
+		}
 	} else
-		CLR(strp->flags, STR_PROC_SETEUID|STR_PROC_SETEGID);
+		CLR(strp->flags,
+		    STR_PROC_SETEUID|STR_PROC_SETEGID|STR_PROC_DIDSETUGID);
 
  out:
 	systrace_unlock();
@@ -838,16 +844,18 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 
 	/* Return to old privileges */
 	pc = p->p_cred;
-	if (ISSET(strp->flags, STR_PROC_SETEUID)) {
-		if (pc->pc_ucred->cr_uid == strp->seteuid)
-			systrace_seteuid(p, strp->saveuid);
-		CLR(strp->flags, STR_PROC_SETEUID);
+	if (ISSET(strp->flags, STR_PROC_DIDSETUGID)) {
+		if (ISSET(strp->flags, STR_PROC_SETEUID)) {
+			if (pc->pc_ucred->cr_uid == strp->seteuid)
+				systrace_seteuid(p, strp->saveuid);
+		}
+		if (ISSET(strp->flags, STR_PROC_SETEGID)) {
+			if (pc->pc_ucred->cr_gid == strp->setegid)
+				systrace_setegid(p, strp->savegid);
+		}
 	}
-	if (ISSET(strp->flags, STR_PROC_SETEGID)) {
-		if (pc->pc_ucred->cr_gid == strp->setegid)
-			systrace_setegid(p, strp->savegid);
-		CLR(strp->flags, STR_PROC_SETEGID);
-	}
+	CLR(strp->flags,
+	    STR_PROC_SETEUID|STR_PROC_SETEGID|STR_PROC_DIDSETUGID);
 
 	systrace_replacefree(strp);
 
