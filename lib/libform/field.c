@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.3 2001/01/16 01:02:47 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.4 2001/01/30 06:33:51 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -529,11 +529,14 @@ new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 		return NULL;
 	}
 
-	  /* Initialise the string pointers... */
+	  /* Initialise the strings to a zero length string */
 	for (i = 0; i < nbuf + 1; i++) {
-		new->buffers[i].string = NULL;
+		if ((new->buffers[i].string =
+		     (char *) malloc(sizeof(char))) == NULL)
+			return NULL;
+		new->buffers[i].string[0] = '\0';
 		new->buffers[i].length = 0;
-		
+		new->buffers[i].allocated = 1;
 	}
 	
 	return new;
