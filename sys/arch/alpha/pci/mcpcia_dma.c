@@ -1,13 +1,12 @@
-/* $NetBSD: mcpcia_dma.c,v 1.6 1998/08/14 16:50:04 thorpej Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.7 1998/08/15 20:42:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center. This code happens to have been written
- * by Matthew Jacob for NASA/Ames.
+ * by Jason R. Thorpe and Matthew Jacob of the Numerical Aerospace Simulation
+ * Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.6 1998/08/14 16:50:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.7 1998/08/15 20:42:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
