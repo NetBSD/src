@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.10 1999/05/13 21:58:35 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11 1999/05/26 22:07:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -225,7 +225,9 @@ cpu_coredump(p, vp, cred, chdr)
 }
 
 /*
- * Map an IO request into kernel virtual address space.
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().   
  */
 void
 vmapbuf(bp, len)
