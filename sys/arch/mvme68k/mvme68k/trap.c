@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 2000/12/02 13:45:14 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.51 2000/12/02 17:00:46 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,6 +91,10 @@
 
 #ifdef COMPAT_LINUX
 extern struct emul emul_linux;
+#endif
+
+#ifdef COMPAT_AOUT_M68K
+extern struct emul emul_netbsd_aoutm68k;
 #endif
 
 int	writeback __P((struct frame *fp, int docachepush));
@@ -1131,8 +1135,16 @@ syscall(code, frame)
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
-		frame.f_regs[D0] = frame.f_regs[A0] = rval[0];
+		frame.f_regs[D0] = rval[0];
 		frame.f_regs[D1] = rval[1];
+#ifdef COMPAT_AOUT_M68K
+		/*
+		 * Some pre-m68k ELF libc assembler stubs assume
+		 * %a0 is preserved across system calls...
+		 */
+		if (p->p_emul != &emul_netbsd_aoutm68k)
+			frame.f_regs[A0] = rval[0];
+#endif
 		frame.f_sr &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
