@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 1998/11/11 06:41:28 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 1999/01/02 13:42:17 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,6 +120,8 @@ int	want_resched;	/* resched() was called */
 #ifdef _KERNEL
 extern	volatile char *intiobase;
 extern  volatile char *intiolimit;
+extern	volatile char *videobase;
+extern  volatile char *videolimit;
 extern	void (*vectab[]) __P((void));
 
 struct frame;
@@ -363,7 +365,9 @@ void	child_return __P((void *));
 
 #define	INTIOBASE	(0x02000000)
 #define	INTIOTOP	(0x02120000)
-
+#define VIDEOBASE       (0x0b000000)
+#define VIDEOTOP        (0x0b03a800)
+                                     
 #define NEXT_INTR_BITS \
 "\20\40NMI\37PFAIL\36TIMER\35ENETX_DMA\34ENETR_DMA\33SCSI_DMA\32DISK_DMA\31PRINTER_DMA\30SOUND_OUT_DMA\27SOUND_IN_DMA\26SCC_DMA\25DSP_DMA\24M2R_DMA\23R2M_DMA\22SCC\21REMOTE\20BUS\17DSP_4\16DISK|C16_VIDEO\15SCSI\14PRINTER\13ENETX\12ENETR\11SOUND_OVRUN\10PHONE\07DSP_3\06VIDEO\05MONITOR\04KYBD_MOUSE\03POWER\02SOFTINT1\01SOFTINT0"
 
@@ -382,5 +386,13 @@ void	child_return __P((void *));
 #define	IIOP(va)	((int)(va)-(int)intiobase+INTIOBASE)
 #define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
 #define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 2mb */
+
+/* video fb space */
+#define	ISVIDEOVA(va) \
+	((char *)(va) >= videobase && (char *)(va) < videolimit)
+#define	VIDEOV(pa)	((int)(pa)-VIDEOBASE+(int)videobase)
+#define	VIDEOP(va)	((int)(va)-(int)videobase+VIDEOBASE)
+#define	VIDEOPOFF(pa)	((int)(pa)-VIDEOBASE)
+#define	VIDEOMAPSIZE	btoc(VIDEOTOP-VIDEOBASE)	/* who cares */
 
 #endif	/* _CPU_MACHINE_ */
