@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.92.2.7 2004/09/21 13:38:38 skrll Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.92.2.8 2005/02/07 16:56:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.92.2.7 2004/09/21 13:38:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.92.2.8 2005/02/07 16:56:03 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1614,7 +1614,7 @@ nfs_exit(p, v)
 	int s = splsoftnet();
 
 	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
-		if (rp->r_lwp->l_proc == p)
+		if (rp->r_lwp && rp->r_lwp->l_proc == p)
 			TAILQ_REMOVE(&nfs_reqq, rp, r_chain);
 	}
 	splx(s);
