@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.11 2003/10/16 09:13:30 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.12 2003/10/16 09:31:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.11 2003/10/16 09:13:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.12 2003/10/16 09:31:08 dyoung Exp $");
 #endif
 
 /*
@@ -2185,6 +2185,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			return ENOMEM;
 		}
 		ivp = hdrbuf + hdrlen;
+		wh = mtod(m0, struct ieee80211_frame *);
 		/*
 		 * XXX
 		 * IV must not duplicate during the lifetime of the key.
