@@ -1,4 +1,4 @@
-#	$NetBSD: VME177,v 1.3 2000/11/25 21:46:43 scw Exp $
+#	$NetBSD: VME177,v 1.4 2000/12/07 08:40:06 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -35,6 +35,7 @@ options 	INET
 #options        TPIP
 #options        EON
 
+options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 #options 	COMPAT_14, COMPAT_13, COMPAT_12
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries

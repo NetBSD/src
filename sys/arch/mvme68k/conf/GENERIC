@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.20 2000/11/25 21:46:42 scw Exp $
+#	$NetBSD: GENERIC,v 1.21 2000/12/07 08:40:06 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.20 $"
+#ident 		"GENERIC-$Revision: 1.21 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -50,6 +50,7 @@ options 	INET6		# IPV6
 #options        TPIP
 #options        EON
 
+options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 options 	COMPAT_09, COMPAT_10, COMPAT_11
 options 	COMPAT_12, COMPAT_13, COMPAT_14, COMPAT_15
 #options 	COMPAT_SUNOS
