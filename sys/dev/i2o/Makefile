@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2000/11/08 19:45:30 ad Exp $
+#	$NetBSD: Makefile,v 1.2 2000/11/09 12:34:05 ad Exp $
 
 INCSDIR= /usr/include/dev/i2o
 
-INCS=	i2o.h iopreg.h iopspvar.h iopvar.h
+INCS=	i2o.h iopvar.h
 
 .include <bsd.kinc.mk>
