@@ -1,5 +1,5 @@
-/*	$NetBSD: nd6.h,v 1.28 2002/05/30 05:06:29 itojun Exp $	*/
-/*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.29 2002/06/05 01:10:54 itojun Exp $	*/
+/*	$KAME: nd6.h,v 1.93 2002/06/05 00:56:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,9 @@ struct nd_ifinfo {
 	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->nd_ifinfo)
 #define IN6_LINKMTU(ifp) \
 	((ND_IFINFO(ifp)->linkmtu && ND_IFINFO(ifp)->linkmtu < (ifp)->if_mtu) \
-		? ND_IFINFO(ifp)->linkmtu : (ifp)->if_mtu)
+	    ? ND_IFINFO(ifp)->linkmtu \
+	    : ((ND_IFINFO(ifp)->maxmtu < (ifp)->if_mtu) \
+		? ND_IFINFO(ifp)->maxmtu : (ifp)->if_mtu))
 #endif
 
 struct in6_nbrinfo {
