@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.10 1998/02/03 18:44:15 perry Exp $	*/
+/*	$NetBSD: getenv.c,v 1.11 1998/09/11 21:03:18 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,13 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.10 1998/02/03 18:44:15 perry Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.11 1998/09/11 21:03:18 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include <string.h>
 #include "local.h"
+#include "reentrant.h"
+
+#ifdef _REENT
+rwlock_t __environ_lock = RWLOCK_INITIALIZER;
+#endif
 
 /*
  * getenv --
@@ -55,8 +60,12 @@ getenv(name)
 	const char *name;
 {
 	int offset;
+	char *result;
 
-	return (__findenv(name, &offset));
+	rwlock_rdlock(&__environ_lock);
+	result = __findenv(name, &offset);
+	rwlock_unlock(&__environ_lock);
+	return (result);
 }
 
 /*
