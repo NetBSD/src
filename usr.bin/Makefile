@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.27 1993/09/23 21:07:37 jtc Exp $
+#	$Id: Makefile,v 1.28 1993/11/03 15:25:15 mycroft Exp $
 
 SUBDIR=	ar asa biff basename cal calendar cap_mkdb \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
@@ -15,7 +15,7 @@ SUBDIR=	ar asa biff basename cal calendar cap_mkdb \
 	sccs script sed shar showmount size soelim split strings \
 	strip su symorder tail talk tcopy tee telnet tftp time \
 	tip tn3270 touch tput tr true tset tsort tty ul uname unexpand \
-	unifdef uniq unvis users uudecode uuencode vacation vgrind vis \
+	unifdef uniq units unvis users uudecode uuencode vacation vgrind vis \
 	vmstat w wall wc what whereis which who whoami whois window write \
 	xargs xinstall xstr yacc yes
 
