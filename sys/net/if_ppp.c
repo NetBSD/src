@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.58 2000/03/30 09:45:36 augustss Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.59 2000/10/02 03:54:10 itojun Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -78,7 +78,9 @@
 #include "ppp.h"
 #if NPPP > 0
 
+#ifdef INET
 #define VJC
+#endif
 #define PPP_COMPRESS
 
 #include "opt_inet.h"
@@ -103,17 +105,11 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
+#ifdef INET
 #include <netinet/ip.h>
-#else
-#ifdef _KERNEL
-#ifdef VJC
-#error ppp device with VJC assumes INET
-#endif
-#endif
 #endif
 
 #include "bpfilter.h"
@@ -718,7 +714,9 @@ pppoutput(ifp, m0, dst, rtp)
     int protocol, address, control;
     u_char *cp;
     int s, error;
+#ifdef INET
     struct ip *ip;
+#endif
     struct ifqueue *ifq;
     enum NPmode mode;
     int len;
@@ -1283,11 +1281,14 @@ ppp_inproc(sc, m)
 {
     struct ifnet *ifp = &sc->sc_if;
     struct ifqueue *inq;
-    int s, ilen, xlen, proto, rv;
+    int s, ilen, proto, rv;
     u_char *cp, adrs, ctrl;
     struct mbuf *mp, *dmp = NULL;
+#ifdef VJC
+    int xlen;
     u_char *iphdr;
     u_int hlen;
+#endif
 
     sc->sc_stats.ppp_ipackets++;
 
