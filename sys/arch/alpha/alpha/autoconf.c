@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.34 1999/06/07 20:16:09 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.35 1999/09/15 18:10:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34 1999/06/07 20:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.35 1999/09/15 18:10:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,11 +70,11 @@ void	parse_prom_bootdev __P((void));
 int	atoi __P((char *));
 
 /*
- * configure:
+ * cpu_configure:
  * called at boot time, configure all devices on system
  */
 void
-configure()
+cpu_configure()
 {
 
 	parse_prom_bootdev();
