@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2000/01/25 22:13:20 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 2001/11/08 06:32:02 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,6 +141,15 @@ int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
 
 void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
+
+/*
+ *	void *bus_space_vaddr __P((bus_space_tag_t, bus_space_handle_t));
+ *
+ * Get the kernel virtual address for the mapped bus space.
+ * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
+ *  (XXX not enforced)
+ */
+#define bus_space_vaddr(t, h)	(h)
 
 /*
  *	int hp300_bus_space_probe __P((bus_space_tag_t t,
