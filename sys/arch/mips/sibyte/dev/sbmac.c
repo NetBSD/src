@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.15 2004/03/18 05:57:58 simonb Exp $ */
+/* $NetBSD: sbmac.c,v 1.16 2004/03/18 06:30:03 cgd Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.15 2004/03/18 05:57:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.16 2004/03/18 06:30:03 cgd Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -628,7 +628,6 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		 * The head mbuf will have SOP set.
 		 */
 		dsc->dscr_a = KVTOPHYS(mtod(m,caddr_t)) |
-		    M_DMA_DSCRA_INTERRUPT |
 		    M_DMA_ETHTX_SOP;
 
 		/*
@@ -639,8 +638,8 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
 		    V_DMA_DSCRB_A_SIZE((m->m_len +
 		      (mtod(m,unsigned int) & 0x0000001F))) |
-		    V_DMA_DSCRB_PKT_SIZE_MSB( (m->m_pkthdr.len & 0xB000) ) |
-		    V_DMA_DSCRB_PKT_SIZE(m->m_pkthdr.len);
+		    V_DMA_DSCRB_PKT_SIZE_MSB((m->m_pkthdr.len & 0xc000) >> 14) |
+		    V_DMA_DSCRB_PKT_SIZE(m->m_pkthdr.len & 0x3fff);
 
 		d->sbdma_addptr = nextdsc;
 		origdesc = prevdsc = dsc;
@@ -685,7 +684,7 @@ again:
 			/*
 			 * fill in the descriptor
 			 */
-			dsc->dscr_a = addr | M_DMA_DSCRA_INTERRUPT;
+			dsc->dscr_a = addr;
 
 			/*
 			 * transmitting: set outbound options,buffer A
@@ -720,8 +719,11 @@ again:
 			}
 
 		}
-		/*Set head mbuf to last context index*/
+		/* Set head mbuf to last context index */
 		d->sbdma_ctxtable[prevdsc-d->sbdma_dscrtable] = m;
+
+		/* Interrupt on last dscr of packet.  */
+	        prevdsc->dscr_a |= M_DMA_DSCRA_INTERRUPT;
 	} else {
 		struct mbuf *m_new = NULL;
 		/*
