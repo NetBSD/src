@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.20.4.3 1996/06/03 20:47:51 thorpej Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.20.4.4 1996/07/30 17:16:14 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypbind.c,v 1.20.4.3 1996/06/03 20:47:51 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ypbind.c,v 1.20.4.4 1996/07/30 17:16:14 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -94,7 +94,7 @@ int ypsetmode = YPSET_NO;
 int rpcsock, pingsock;
 struct rmtcallargs rmtca;
 struct rmtcallres rmtcr;
-char rmtcr_outval;
+bool_t rmtcr_outval;
 u_long rmtcr_port;
 SVCXPRT *udptransp, *tcptransp;
 
