@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_bigkey.c,v 1.14 1999/07/29 07:48:03 mycroft Exp $	*/
+/*	$NetBSD: hash_bigkey.c,v 1.14.12.1 2004/04/06 05:43:23 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-__RCSID("$NetBSD: hash_bigkey.c,v 1.14 1999/07/29 07:48:03 mycroft Exp $");
+__RCSID("$NetBSD: hash_bigkey.c,v 1.14.12.1 2004/04/06 05:43:23 jmc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -488,7 +488,7 @@ collect_data(hashp, bufp, len, set)
 		totlen = len + mylen;
 		if (hashp->tmp_buf)
 			free(hashp->tmp_buf);
-		if ((hashp->tmp_buf = (char *)malloc((size_t)totlen)) == NULL)
+		if ((hashp->tmp_buf = calloc(1, (size_t)totlen)) == NULL)
 			return (-1);
 		if (set) {
 			hashp->cndx = 1;
@@ -564,7 +564,7 @@ collect_key(hashp, bufp, len, val, set)
 	if (bp[2] == FULL_KEY || bp[2] == FULL_KEY_DATA) {    /* End of Key. */
 		if (hashp->tmp_key != NULL)
 			free(hashp->tmp_key);
-		if ((hashp->tmp_key = (char *)malloc((size_t)totlen)) == NULL)
+		if ((hashp->tmp_key = calloc(1, (size_t)totlen)) == NULL)
 			return (-1);
 		if (__big_return(hashp, bufp, 1, val, set))
 			return (-1);
