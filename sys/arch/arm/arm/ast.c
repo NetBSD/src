@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.2.2.7 2002/06/24 22:03:45 nathanw Exp $	*/
+/*	$NetBSD: ast.c,v 1.2.2.8 2002/09/26 20:04:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -86,7 +86,7 @@ userret(struct lwp *l)
 		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
+	while (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;

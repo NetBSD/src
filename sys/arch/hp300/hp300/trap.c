@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91.4.9 2002/09/17 21:14:39 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.91.4.10 2002/09/26 20:04:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91.4.9 2002/09/17 21:14:39 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91.4.10 2002/09/26 20:04:46 nathanw Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -206,7 +206,7 @@ again:
 		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
+	while (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35.4.9 2002/09/17 21:16:45 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.35.4.10 2002/09/26 20:04:51 nathanw Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -218,7 +218,7 @@ again:
 		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
+	while (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66.8.8 2002/08/01 02:44:02 nathanw Exp $     */
+/*	$NetBSD: trap.c,v 1.66.8.9 2002/09/26 20:04:54 nathanw Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -134,6 +134,10 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 			postsig(sig);
 	}
 
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
 	/*
 	 * If profiling, charge system time to the trapped pc.
 	 */
@@ -144,7 +148,7 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 		    (int)(p->p_sticks - oticks) * psratio);
 	}
 	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
+	while (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;

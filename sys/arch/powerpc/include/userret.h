@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.2.2.5 2002/08/09 19:37:14 nathanw Exp $	*/
+/*	$NetBSD: userret.h,v 1.2.2.6 2002/09/26 20:04:43 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,7 +56,7 @@ userret(struct lwp *l, struct trapframe *frame)
 		(l->l_proc->p_userret)(l, l->l_proc->p_userret_arg);
 
 	/* Invoke any pending upcalls */
-	if (l->l_flag & L_SA_UPCALL)
+	while (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	pcb = &l->l_addr->u_pcb;
