@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.20 2002/03/17 19:40:32 atatat Exp $ */
+/*	$NetBSD: view.c,v 1.20.4.1 2002/05/16 16:11:51 gehenna Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.20 2002/03/17 19:40:32 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.20.4.1 2002/05/16 16:11:51 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,13 +49,11 @@ __KERNEL_RCSID(0, "$NetBSD: view.c,v 1.20 2002/03/17 19:40:32 atatat Exp $");
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 #include <machine/cpu.h>
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/viewioctl.h>
 #include <amiga/dev/viewvar.h>
-
-#include <sys/conf.h>
-#include <machine/conf.h>
 
 #include "view.h"
 
@@ -76,6 +74,17 @@ int view_default_y;
 int view_default_width = 640;
 int view_default_height = 400;
 int view_default_depth = 2;
+
+dev_type_open(viewopen);
+dev_type_close(viewclose);
+dev_type_ioctl(viewioctl);
+dev_type_poll(viewpoll);
+dev_type_mmap(viewmmap);
+
+const struct cdevsw view_cdevsw = {
+	viewopen, viewclose, nullread, nullwrite, viewioctl,
+	nostop, notty, viewpoll, viewmmap,
+};
 
 /*
  *  functions for probeing.

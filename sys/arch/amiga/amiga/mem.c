@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.34 2002/03/25 13:14:10 aymeric Exp $	*/
+/*	$NetBSD: mem.c,v 1.34.2.1 2002/05/16 16:11:50 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.34 2002/03/25 13:14:10 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.34.2.1 2002/05/16 16:11:50 gehenna Exp $");
 
 /*
  * Memory special file
@@ -53,37 +53,28 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.34 2002/03/25 13:14:10 aymeric Exp $");
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
-#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
+
+#define	DEV_RELOAD	20	/* minor device 20  is magic memory
+				 * which you can write a kernel image to,
+				 * causing a reboot into that kernel
+				 */
 
 extern int kernel_reload_write(struct uio *uio);
 extern u_int lowram;
 static caddr_t devzeropage;
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t		dev;
-	int		flag, mode;
-	struct proc	*p;
-{
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
 
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t		dev;
-	int		flag, mode;
-	struct proc	*p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 /*ARGSUSED*/
 int
@@ -221,14 +212,4 @@ unlock:
 		physlock = 0;
 	}
 	return (error);
-}
-
-paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
-{
-
-	return (-1);
 }
