@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 1998/02/05 07:57:58 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.102 1998/02/08 06:15:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -340,7 +340,7 @@ cpu_startup()
 	 */
 #if defined(UVM)
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-                                 16*NCARGS, TRUE, NULL);
+                                 16*NCARGS, TRUE, FALSE, NULL);
 #else
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
@@ -380,7 +380,7 @@ cpu_startup()
 	 */
 #if defined(UVM)
         mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
-            VM_MBUF_SIZE, FALSE, NULL);
+            VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);

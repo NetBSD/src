@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.4 1998/02/07 11:08:47 mrg Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.5 1998/02/08 06:15:59 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -380,19 +380,24 @@ vm_offset_t start, end;
  * is allocated all references to that area of VM must go through it.  this
  * allows the locking of VAs in kernel_map to be broken up into regions.
  *
+ * => if `fixed' is true, *min specifies where the region described
+ *      by the submap must start
  * => if submap is non NULL we use that as the submap, otherwise we
  *	alloc a new map
  */
 
-struct vm_map *uvm_km_suballoc(map, min, max, size, pageable, submap)
+struct vm_map *uvm_km_suballoc(map, min, max, size, pageable, fixed, submap)
 
 struct vm_map *map;
 vm_offset_t *min, *max;		/* OUT, OUT */
 vm_size_t size;
 boolean_t pageable;
+boolean_t fixed;
 struct vm_map *submap;
 
 {
+  int mapflags = UVM_FLAG_NOMERGE | (fixed ? UVM_FLAG_FIXED : 0);
+
   size = round_page(size);	/* round up to pagesize */
 
   /*
@@ -401,7 +406,7 @@ struct vm_map *submap;
 
   if (uvm_map(map, min, size, NULL, UVM_UNKNOWN_OFFSET, 
 	      UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-			  UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != KERN_SUCCESS) {
+			  UVM_ADV_RANDOM, mapflags)) != KERN_SUCCESS) {
     panic("uvm_km_suballoc: unable to allocate space in parent map");
   }
 
