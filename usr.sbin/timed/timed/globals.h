@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.4 1997/10/17 08:56:00 mrg Exp $	*/
+/*	$NetBSD: globals.h,v 1.5 2000/01/21 17:08:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include <sys/param.h>
@@ -68,7 +68,6 @@
 #define	SECDAY	(24*SECHR)
 #endif /* sgi */
 
-extern int errno;
 extern int sock;
 
 /* Best expected round trip for a measurement.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_util.c,v 1.3 1998/03/06 18:17:22 christos Exp $	*/
+/*	$NetBSD: ntp_util.c,v 1.4 2000/01/21 17:08:40 mycroft Exp $	*/
 
 /*
  * ntp_util.c - stuff I didn't have any other place for
@@ -77,9 +77,9 @@ static FILEGEN rawstats;
  * We query the errno to see what kind of error occured
  * when opening the drift file.
  */
-#ifndef SYS_WINNT
+#ifdef NEED_DECLARATION_ERRNO
 extern int errno;
-#endif /* SYS_WINNT */
+#endif /* NEED_DECLARATION_ERRNO */
 
 /*
  * This controls whether stats are written to the fileset. Provided

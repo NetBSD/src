@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.19 1999/12/16 17:29:53 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.20 2000/01/21 17:08:37 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -241,7 +241,6 @@ getprivs(id, quotatype)
 	int qcmd, qupsize, fd;
 	char *qfpathname;
 	static int warned = 0;
-	extern int errno;
 
 	setfsent();
 	quptail = NULL;
