@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.15 2002/05/02 13:04:10 wiz Exp $	*/
+/*	$NetBSD: finger.c,v 1.16 2002/08/02 00:10:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,7 +56,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.15 2002/05/02 13:04:10 wiz Exp $");
+__RCSID("$NetBSD: finger.c,v 1.16 2002/08/02 00:10:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,8 @@ __RCSID("$NetBSD: finger.c,v 1.15 2002/05/02 13:04:10 wiz Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <utmp.h>
+
+#include "utmpentry.h"
 
 #include "finger.h"
 #include "extern.h"
@@ -95,6 +96,7 @@ DB *db;
 time_t now;
 int entries, gflag, lflag, mflag, oflag, sflag, pplan;
 char tbuf[1024];
+struct utmpentry *ehead;
 
 static void loginlist __P((void));
 static void userlist __P((int, char **));
@@ -143,6 +145,7 @@ main(argc, argv)
 
 	(void)time(&now);
 	setpassent(1);
+	entries = getutentries(NULL, &ehead);
 	if (!*argv) {
 		/*
 		 * Assign explicit "small" format if no names given and -l
@@ -179,23 +182,16 @@ loginlist()
 	PERSON *pn;
 	DBT data, key;
 	struct passwd *pw;
-	struct utmp user;
 	int r, sflag;
-	char name[UT_NAMESIZE + 1];
+	struct utmpentry *ep;
 
-	if (!freopen(_PATH_UTMP, "r", stdin))
-		err(1, "cant read %s", _PATH_UTMP);
-	name[UT_NAMESIZE] = '\0';
-	while (fread((char *)&user, sizeof(user), 1, stdin) == 1) {
-		if (!user.ut_name[0])
-			continue;
-		if ((pn = find_person(user.ut_name)) == NULL) {
-			memcpy(name, user.ut_name, UT_NAMESIZE);
-			if ((pw = getpwnam(name)) == NULL)
+	for (ep = ehead; ep; ep = ep->next) {
+		if ((pn = find_person(ep->name)) == NULL) {
+			if ((pw = getpwnam(ep->name)) == NULL)
 				continue;
 			pn = enter_person(pw);
 		}
-		enter_where(&user, pn);
+		enter_where(ep, pn);
 	}
 	if (db && lflag)
 		for (sflag = R_FIRST;; sflag = R_NEXT) {
@@ -218,10 +214,10 @@ userlist(argc, argv)
 {
 	register PERSON *pn;
 	DBT data, key;
-	struct utmp user;
 	struct passwd *pw;
 	int r, sflag, *used, *ip;
 	char **ap, **nargv, **np, **p;
+	struct utmpentry *ep;
 
 	if ((nargv = malloc((argc+1) * sizeof(char *))) == NULL ||
 	    (used = calloc(argc, sizeof(int))) == NULL)
@@ -276,14 +272,10 @@ net:
 	 * Scan thru the list of users currently logged in, saving
 	 * appropriate data whenever a match occurs.
 	 */
-	if (!freopen(_PATH_UTMP, "r", stdin))
-		err(1, "%s", _PATH_UTMP);
-	while (fread((char *)&user, sizeof(user), 1, stdin) == 1) {
-		if (!user.ut_name[0])
+	for (ep = ehead; ep; ep = ep->next) {
+		if ((pn = find_person(ep->name)) == NULL)
 			continue;
-		if ((pn = find_person(user.ut_name)) == NULL)
-			continue;
-		enter_where(&user, pn);
+		enter_where(ep, pn);
 	}
 	if (db)
 		for (sflag = R_FIRST;; sflag = R_NEXT) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.14 2000/07/07 15:13:22 itojun Exp $	*/
+/*	$NetBSD: net.c,v 1.15 2002/08/02 00:10:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)net.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: net.c,v 1.14 2000/07/07 15:13:22 itojun Exp $");
+__RCSID("$NetBSD: net.c,v 1.15 2002/08/02 00:10:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,15 +53,17 @@ __RCSID("$NetBSD: net.c,v 1.14 2000/07/07 15:13:22 itojun Exp $");
 #include <arpa/inet.h>
 
 #include <netdb.h>
+#include <time.h>
 #include <db.h>
 #include <unistd.h>
 #include <pwd.h>
-#include <utmp.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <err.h>
+
+#include "utmpentry.h"
 
 #include "finger.h"
 #include "extern.h"
