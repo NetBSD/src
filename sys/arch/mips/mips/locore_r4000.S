@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.11 1995/04/28 03:10:41 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.12 1995/04/28 23:17:51 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2967,23 +2967,32 @@ END(MachFlushICache)
 LEAF(MachFlushDCache)
 	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
-
-	la	v1, 1f
-	or	v1, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
-	j	v1
 	nop
 1:
 	bc0f	1b				# make sure stores are complete
+# BUG: should drain write buffer.
+# The insn above does not work on some all DEC machines, or all variants
+# of the mips architecture.
 	li	v1, MACH_SR_ISOL_CACHES
 	mtc0	v1, MACH_COP_0_STATUS_REG
 	nop
-	addu	a1, a1, a0			# compute ending address
+	addu	t1, a1, a0			# compute ending address
 1:
-	addu	a0, a0, 4
-	bne	a0, a1, 1b
+	sb	zero, 0(a0)
+	sb	zero, 4(a0)
+	sb	zero, 8(a0)
+	sb	zero, 12(a0)
+	sb	zero, 16(a0)
+	sb	zero, 20(a0)
+	sb	zero, 24(a0)
+	addu	a0, 32
+	bltu	a0, t1, 1b
 	sb	zero, -4(a0)
 
+	nop					# drain pipeline
+	nop
 	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts
+	nop
 	j	ra				# return and run cached
 	nop
 END(MachFlushDCache)
