@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.5.10.2 1997/05/24 04:50:05 lukem Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.5.10.3 1997/05/26 16:33:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getusershell.c,v 1.5.10.2 1997/05/24 04:50:05 lukem Exp $";
+static char rcsid[] = "$NetBSD: getusershell.c,v 1.5.10.3 1997/05/26 16:33:39 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -209,6 +209,7 @@ _nis_initshells(rv, cb_data, ap)
 		int	 keylen, datalen;
 		int	 r;
 
+		key = data = NULL;
 		if (ypcur) {
 			r = yp_next(ypdomain, "shells", ypcur, ypcurlen,
 					&key, &keylen, &data, &datalen);
@@ -246,9 +247,11 @@ initshells()
 {
 	static ns_dtab dtab;
 
-	NS_FILES_CB(dtab, _local_initshells, NULL);
-	NS_DNS_CB(dtab, _dns_initshells, NULL);
-	NS_NIS_CB(dtab, _nis_initshells, NULL);
+	if (dtab[NS_FILES].cb == NULL) {
+		NS_FILES_CB(dtab, _local_initshells, NULL);
+		NS_DNS_CB(dtab, _dns_initshells, NULL);
+		NS_NIS_CB(dtab, _nis_initshells, NULL);
+	}
 
 	sl_free(sl, 1);
 	sl = sl_init();
