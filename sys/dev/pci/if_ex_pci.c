@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.9 1999/11/30 19:16:51 drochner Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.10 2000/01/13 23:26:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ const struct ex_pci_product {
 	  "3c905B-FX 10/100 Ethernet" },
 
 	/* XXX Internal PHY? */
-	{ PCI_PRODUCT_3COM_3C980SRV,	EX_CONF_90XB|EX_CONF_MII,
+	{ PCI_PRODUCT_3COM_3C980SRV,	EX_CONF_90XB,
 	  "3c980 Server Adapter 10/100 Ethernet" },
 	{ PCI_PRODUCT_3COM_3C905CTX,	EX_CONF_90XB|EX_CONF_MII,
 	  "3c905C-TX 10/100 Ethernet with mngmt" },
