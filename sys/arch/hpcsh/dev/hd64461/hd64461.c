@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.6 2002/03/24 18:21:26 uch Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.7 2002/03/28 15:26:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -39,10 +39,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/boot_flag.h>
 
-#include <sh3/exception.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/debug.h>
@@ -50,7 +48,6 @@
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64461/hd64461reg.h>
 #include <hpcsh/dev/hd64461/hd64461intcreg.h>
-#include <hpcsh/dev/hd64461/hd64461intcvar.h>
 
 /* HD64461 modules. INTC, TIMER, POWER modules are included in hd64461if */
 STATIC struct hd64461_module {
@@ -66,46 +63,20 @@ STATIC struct hd64461_module {
 #define HD64461_NMODULE							\
 	(sizeof hd64461_modules / sizeof(struct hd64461_module))
 
-struct hd64461_intr_entry {
-	int (*func)(void *);
-	void *arg;
-	int priority;
-	const u_int16_t mask;
-} hd64461_intr_entry[] = {
-#define IRQ_ENTRY(x)	[HD64461_IRQ_##x] = { 0, 0, 0, HD64461_INTC_##x }
-	IRQ_ENTRY(PCC0),
-	IRQ_ENTRY(PCC1),
-	IRQ_ENTRY(AFE),
-	IRQ_ENTRY(GPIO),
-	IRQ_ENTRY(TMU0),
-	IRQ_ENTRY(TMU1),
-	IRQ_ENTRY(IRDA),
-	IRQ_ENTRY(UART)
-#undef IRQ_ENTRY
-};
-
-struct hd64461_softc {
-	struct device sc_dev;
-};
-
 STATIC int hd64461_match(struct device *, struct cfdata *, void *);
 STATIC void hd64461_attach(struct device *, struct device *, void *);
 STATIC int hd64461_print(void *, const char *);
+#ifdef DEBUG
+STATIC void hd64461_info(void);
+#endif
 
 struct cfattach hd64461if_ca = {
-	sizeof(struct hd64461_softc), hd64461_match, hd64461_attach
+	sizeof(struct device), hd64461_match, hd64461_attach
 };
-
-STATIC void hd64461_module_attach(struct hd64461_softc *);
-STATIC int hd64461_intr(void *);
-#ifdef DEBUG
-STATIC void hd64461_info(struct hd64461_softc *);
-#endif
 
 int
 hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	static int match;
 
 	switch (cpu_product) {
 	default:
@@ -117,9 +88,6 @@ hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 		break;
 	}
 
-	if (match++)	
-		return (0);	/* only one instance */
-
 	if (strcmp("hd64461if", cf->cf_driver->cd_name))
 		return (0);
 
@@ -129,37 +97,24 @@ hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 hd64461_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct hd64461_softc *sc = (struct hd64461_softc *)self;
+	struct hd64461_attach_args ha;
+	struct hd64461_module *module;
+	int i;
 
 	printf("\n");
 #ifdef DEBUG
 	if (bootverbose)
-		hd64461_info(sc);
+		hd64461_info();
 #endif
-	/* mask all interrupt */
-	hd64461_reg_write_2(HD64461_INTCNIMR_REG16, 0xffff);
 
-	intc_intr_establish(SH7709_INTEVT2_IRQ4, IST_EDGE, IPL_NET,
-	    hd64461_intr, sc);
-
-	hd64461_module_attach(sc);
-}
-
-void
-hd64461_module_attach(struct hd64461_softc *sc)
-{
-	struct hd64461_attach_args ha;
-	struct hd64461_module *module;
-	int i;
-	
-	/* attach all sub modules */
+	/* Attach all sub modules */
 	for (i = 0, module = hd64461_modules; i < HD64461_NMODULE;
 	    i++, module++) {
 		if (module->name == 0)
 			continue;
 		ha.ha_module_id = i;
-		config_found(&sc->sc_dev, &ha, hd64461_print);
-	}	
+		config_found(self, &ha, hd64461_print);
+	}
 }
 
 int
@@ -174,81 +129,9 @@ hd64461_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-void *
-hd64461_intr_establish(enum hd64461_irq irq, int mode, int level,
-    int (*func)(void *), void *arg)
-{
-	struct hd64461_intr_entry *entry = &hd64461_intr_entry[irq];
-	u_int16_t r;
-	int s;
-
-	s = splhigh();
-
-	entry->func = func;
-	entry->arg = arg;
-	entry->priority = level;
-
-	/* enable interrupt */
-	r = hd64461_reg_read_2(HD64461_INTCNIMR_REG16);
-	r &= ~entry->mask;
-	hd64461_reg_write_2(HD64461_INTCNIMR_REG16, r);
-
-	splx(s);
-
-	return (void *)irq;
-}
-
-void
-hd64461_intr_disestablish(void *handle)
-{
-	int irq = (int)handle;
-	struct hd64461_intr_entry *entry = &hd64461_intr_entry[irq];
-	u_int16_t r;
-	int s;
-	
-	s = splhigh();	
-
-	/* disable interrupt */
-	r = hd64461_reg_read_2(HD64461_INTCNIMR_REG16);
-	r |= entry->mask;
-	hd64461_reg_write_2(HD64461_INTCNIMR_REG16, r);
-
-	entry->func = 0;
-
-	splx(s);
-}
-
-int
-hd64461_intr(void *arg)
-{
-	struct hd64461_intr_entry *entry = hd64461_intr_entry;
-	u_int16_t r, m, cause;
-	int i;
-
-	r = hd64461_reg_read_2(HD64461_INTCNIRR_REG16);
-	m = hd64461_reg_read_2(HD64461_INTCNIMR_REG16);
-	cause = r & ~m;
-
-	/* XXX priority */
-	hd64461_reg_write_2(HD64461_INTCNIMR_REG16, 0xffff);
-
-	/* XXX priority */
-	for (i = 0; i < HD64461_IRQ_MAX; i++, entry++) {
-		if (entry->func == 0)
-			continue;
-		if (cause & entry->mask) {
-			(*entry->func)(entry->arg);
-		}
-	}
-
-	hd64461_reg_write_2(HD64461_INTCNIMR_REG16, m);
-
-	return 0;
-}
-
 #ifdef DEBUG
 void
-hd64461_info(struct hd64461_softc *sc)
+hd64461_info()
 {
 	u_int16_t r16;
 

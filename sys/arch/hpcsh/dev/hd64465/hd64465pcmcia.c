@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.3 2002/02/28 01:57:00 uch Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.4 2002/03/28 15:27:02 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 
 #include <hpcsh/dev/hd64465/hd64465reg.h>
 #include <hpcsh/dev/hd64465/hd64465var.h>
+#include <hpcsh/dev/hd64465/hd64465intcreg.h>
 #include <hpcsh/dev/hd64461/hd64461pcmciareg.h>
 
 #include "locators.h"
@@ -365,8 +366,8 @@ hd64465pcmcia_attach_channel(struct hd64465pcmcia_softc *sc, int channel)
 	    baseaddr + 0x01000000 * 2, ch->ch_iosize);
 
 	/* Interrupt */
-	hd64465_intr_establish(channel ? HD64465_IRQ_PCC1 : HD64465_IRQ_PCC0,
-	    IST_EDGE, IPL_TTY, hd64465pcmcia_intr, ch);
+	hd64465_intr_establish(channel ? HD64465_PCC1 : HD64465_PCC0,
+	    IST_LEVEL, IPL_TTY, hd64465pcmcia_intr, ch);
 
 	paa.paa_busname = "pcmcia";
 	paa.pch = (pcmcia_chipset_handle_t)ch;
@@ -469,6 +470,9 @@ hd64465pcmcia_chip_intr_establish(pcmcia_chipset_handle_t pch,
 	u_int8_t r;
 	int s = splhigh();
 
+	hd6446x_intr_priority(ch->ch_channel == 0 ? HD64465_PCC0 : HD64465_PCC1,
+	    ipl);
+
 	ch->ch_ih_card_func = ih_func;
 	ch->ch_ih_card_arg = ih_arg;
 
@@ -492,6 +496,9 @@ hd64465pcmcia_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 	bus_addr_t cscier = HD64461_PCCCSCIER(channel);
 	int s = splhigh();
 	u_int8_t r;
+
+	hd6446x_intr_priority(ch->ch_channel == 0 ? HD64465_PCC0 : HD64465_PCC1,
+	    IPL_TTY);
 
 	/* Disable card interrupt */
 	r = hd64465_reg_read_1(cscier);

@@ -1,7 +1,7 @@
-/*	$NetBSD: hd64461var.h,v 1.2 2002/03/28 15:27:01 uch Exp $	*/
+/*	$NetBSD: hd6446xintcreg.h,v 1.1 2002/03/28 15:27:04 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,39 +36,5 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HPCSH_DEV_HD64461VAR_H_
-#define _HPCSH_DEV_HD64461VAR_H_
-/*
- * HD64461 register access macro.
- */
-#define hd64461_reg_read_1(r)		(*((volatile u_int8_t *)(r)))
-#define hd64461_reg_write_1(r, v)	(*((volatile u_int8_t *)(r)) = (v))
-#define hd64461_reg_read_2(r)		(*((volatile u_int16_t *)(r)))
-#define hd64461_reg_write_2(r, v)	(*((volatile u_int16_t *)(r)) = (v))
-
-/*
- * HD64461 modules canonical ID.
- */
-enum hd64461_module_id {
-	HD64461_MODULE_INTERFACE,
-	HD64461_MODULE_INTC,
-	HD64461_MODULE_POWER,
-	HD64461_MODULE_TIMER,
-	HD64461_MODULE_VIDEO,
-	HD64461_MODULE_PCMCIA,
-	HD64461_MODULE_GPIO,
-	HD64461_MODULE_AFE,
-	HD64461_MODULE_UART,
-	HD64461_MODULE_FIR
-};
-
-struct hd64461_attach_args {
-	enum hd64461_module_id  ha_module_id;
-};
-
-/*
- * Interrupt staff.
- */
-#include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
-
-#endif /* !_HPCSH_DEV_HD64461VAR_H_ */
+#define HD6446X_NIMR			0xb0005002
+#define HD6446X_NIRR			0xb0005000

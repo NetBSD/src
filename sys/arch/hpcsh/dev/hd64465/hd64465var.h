@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465var.h,v 1.1 2002/02/11 17:27:16 uch Exp $	*/
+/*	$NetBSD: hd64465var.h,v 1.2 2002/03/28 15:27:02 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _HPCSH_DEV_HD64465VAR_H_
+#define _HPCSH_DEV_HD64465VAR_H_
 /*
  * HD64465 register access macro.
  */
@@ -68,28 +70,12 @@ struct hd64465_attach_args {
 	enum hd64465_module_id  ha_module_id;
 };
 
-enum hd64465_irq {
-	HD64465_IRQ_PS2KB = 0,
-	HD64465_IRQ_PCC0,
-	HD64465_IRQ_PCC1,
-	HD64465_IRQ_AFE,
-	HD64465_IRQ_GPIO,
-	HD64465_IRQ_TMU0,
-	HD64465_IRQ_TMU1,
-	HD64465_IRQ_KBC,
-	HD64465_IRQ_PS2MS,
-	HD64465_IRQ_IRDA,
-	HD64465_IRQ_UART,
-	HD64465_IRQ_PPR,
-	HD64465_IRQ_SCDI,
-	HD64465_IRQ_OHCI,
-	HD64465_IRQ_ADC,
-};
-
-void hd64465_intr_disable(void);
-void hd64465_intr_mask(void);
-void hd64465_intr_unmask(void);
-void hd64465_intr_reboot(void);
-void *hd64465_intr_establish(enum hd64465_irq, int, int, int (*)(void *),
-    void *);
+/*
+ * Interrupt staff.
+ */
+#include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
+void *hd64465_intr_establish(int, int, int, int (*)(void *), void *);
 void hd64465_intr_disestablish(void *);
+void hd64465_shutdown(void);
+
+#endif /* !_HPCSH_DEV_HD64465VAR_H_ */

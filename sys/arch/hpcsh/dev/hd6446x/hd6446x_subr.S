@@ -1,9 +1,9 @@
-/*	$NetBSD: hd64461var.h,v 1.2 2002/03/28 15:27:01 uch Exp $	*/
+/*	$NetBSD: hd6446x_subr.S,v 1.1 2002/03/28 15:27:03 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
+ *	
  * This code is derived from software contributed to The NetBSD Foundation
  * by UCHIYAMA Yasushi.
  *
@@ -36,39 +36,65 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HPCSH_DEV_HD64461VAR_H_
-#define _HPCSH_DEV_HD64461VAR_H_
-/*
- * HD64461 register access macro.
+#include <sh3/asm.h>
+#include <sh3/locore.h>
+#include <hpcsh/dev/hd6446x/hd6446xintcreg.h>
+
+/*	
+ * int hd6446x_intr_raise(int s):
+ *	raise SR.IMASK and HD6446x ICU interrupt mask to 's'.
+ *	if current SR.IMASK is greater equal 's',nothing to do.
+ *	Returns previous SR.IMASK.
  */
-#define hd64461_reg_read_1(r)		(*((volatile u_int8_t *)(r)))
-#define hd64461_reg_write_1(r, v)	(*((volatile u_int8_t *)(r)) = (v))
-#define hd64461_reg_read_2(r)		(*((volatile u_int16_t *)(r)))
-#define hd64461_reg_write_2(r, v)	(*((volatile u_int16_t *)(r)) = (v))
+NENTRY(hd6446x_intr_raise)
+	stc	sr,	r2
+	mov	#0x78,	r1
+	mov	r2,	r0
+	shll	r1		/* r1 = 0xf0 */
+	and	r1,	r0	/* r0 = SR & 0xf0 */
+	cmp/ge	r4,	r0	/* r0 >= r4 ? T = 1 */
+	bt/s	1f
+	 not	r1,	r1	/* r1 = 0xffffff0f */
+	and	r1,	r2	/* r2 = SR & ~0xf0 */
+	mov	r4,	r1
+	or	r2,	r1	/* r1 = (SR & ~0xf0) | s */
+	ldc	r1,	sr	/* SR = r1 */
+	shlr2	r4
+	shlr	r4
+	mov.l	2f,	r1
+	add	r4,	r1
+	mov.w	@r1,	r2	/* r2 = hd6446x_imask[s >> 4] */
+	mov.l	3f,	r1
+	mov.w	r2,	@r1	/* Set new interrupt mask to HD6446x */
+1:	rts
+	 nop	/* return (SR & 0xf0) */
+	.align	2
+2:	.long	_C_LABEL(hd6446x_imask)
+3:	.long	HD6446X_NIMR
 
 /*
- * HD64461 modules canonical ID.
- */
-enum hd64461_module_id {
-	HD64461_MODULE_INTERFACE,
-	HD64461_MODULE_INTC,
-	HD64461_MODULE_POWER,
-	HD64461_MODULE_TIMER,
-	HD64461_MODULE_VIDEO,
-	HD64461_MODULE_PCMCIA,
-	HD64461_MODULE_GPIO,
-	HD64461_MODULE_AFE,
-	HD64461_MODULE_UART,
-	HD64461_MODULE_FIR
-};
-
-struct hd64461_attach_args {
-	enum hd64461_module_id  ha_module_id;
-};
-
-/*
- * Interrupt staff.
- */
-#include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
-
-#endif /* !_HPCSH_DEV_HD64461VAR_H_ */
+ * int hd6446x_intr_resume(int s):
+ *	Set SR.IMASK and HD6446x interrupt mask register to
+ *	's' interrupt level. Returns previous SR.IMASK.
+ */ 	
+NENTRY(hd6446x_intr_resume)
+	mov	r4,	r0
+	shlr2	r0
+	shlr	r0
+	mov.l	2f,	r1
+	add	r0,	r1
+	mov.w	@r1,	r2	/* r2 = hd6446x_imask[s >> 4] */
+	mov.l	3f,	r1
+	mov.w	r2,	@r1	/* Set new interrupt mask to HD6446x */
+	stc	sr,	r0	/* r0 = SR */
+	mov	#0x78,	r2
+	shll	r2		/* r2 = 0x000000f0 */
+	not	r2,	r1	/* r1 = 0xffffff0f */
+	and	r0,	r1	/* r1 = (SR & ~0xf0) */
+	or	r1,	r4	/* r4 = (SR & ~0xf0) | level */
+	ldc	r4,	sr	/* Set new IMASK to SR */
+	rts
+	 and	r2,	r0	/* return (SR & 0xf0) */
+	.align	2
+2:	.long	_C_LABEL(hd6446x_imask)
+3:	.long	HD6446X_NIMR

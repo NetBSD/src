@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2002/03/24 18:21:12 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2002/03/28 15:27:05 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -87,6 +87,8 @@
 #include <machine/kloader.h>
 #include <machine/intr.h>
 
+#include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
+#include <hpcsh/dev/hd6446x/hd6446xintcreg.h>
 #include <hpcsh/dev/hd64465/hd64465var.h>
 
 #ifdef DEBUG
@@ -188,10 +190,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
 	else if (platid_match(&platid, &platid_mask_CPU_SH_4))
 		sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
-
-#if NHD64465IF > 0
-	hd64465_intr_disable();
-#endif
 
 	/* Start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
@@ -401,7 +399,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 #if NHD64465IF > 0
-	hd64465_intr_reboot();
+	hd64465_shutdown();
 #endif
 
 	cpu_reset();
@@ -569,7 +567,8 @@ void
 intc_intr(int ssr, int spc, int ssp)
 {
 	struct intc_intrhand *ih;
-	int s, evtcode;
+	int evtcode;
+	u_int16_t r;
 
 	evtcode = _reg_read_4(CPU_IS_SH3 ? SH7709_INTEVT2 : SH4_INTEVT);
 
@@ -581,18 +580,36 @@ intc_intr(int ssr, int spc, int ssp)
 	 * SH3 may or may not cause TLB miss when access stack.)
 	 * Enable higher level interrupt here.
 	 */
-	s = _cpu_intr_resume(ih->ih_level);//XXX cascaded ICU mask
+	r = _reg_read_2(HD6446X_NIRR);
 
-	if (evtcode == SH_INTEVT_TMU0_TUNI0) {	/* hardclock */
+	splx(ih->ih_level);
+
+	if (evtcode == SH_INTEVT_TMU0_TUNI0) {
 		struct clockframe cf;
 		cf.spc = spc;
 		cf.ssr = ssr;
 		cf.ssp = ssp;
 		(*ih->ih_func)(&cf);
+		__dbg_heart_beat(HEART_BEAT_RED);
+	} else if (evtcode == 
+	    (CPU_IS_SH3 ? SH7709_INTEVT2_IRQ4 : SH_INTEVT_IRL11)) {
+		int cause = r & hd6446x_ienable;
+		struct hd6446x_intrhand *hh = &hd6446x_intrhand[ffs(cause) - 1];
+		if (cause == 0) {
+			printf("masked HD6446x interrupt.0x%04x\n", r);
+			_reg_write_2(HD6446X_NIRR, 0x0000);
+			goto ret;
+		}
+		/* Enable higher level interrupt*/
+		hd6446x_intr_resume(hh->hh_ipl);
+		KDASSERT(hh->hh_func != NULL);
+		(*hh->hh_func)(hh->hh_arg);
+		__dbg_heart_beat(HEART_BEAT_GREEN);
 	} else {
 		(*ih->ih_func)(ih->ih_arg);
+		__dbg_heart_beat(HEART_BEAT_BLUE);
 	}
-
+ ret:
 	/* Return to old interrupt level. */
-	_cpu_intr_resume(ssr & 0xf0);//XXX cascaded ICU mask.
+	splx(ssr & 0xf0);
 }

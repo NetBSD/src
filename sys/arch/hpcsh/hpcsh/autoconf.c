@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2002/03/24 18:21:12 uch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2002/03/28 15:27:04 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,10 +48,15 @@
 #include <sys/disklabel.h>
 #include <sys/device.h>
 
+#include <sh3/exception.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <machine/config_hook.h>
 #include <machine/autoconf.h>
+
+#include <hpcsh/dev/hd64461/hd64461var.h>
+#include <hpcsh/dev/hd64465/hd64465var.h>
 
 static struct device *booted_device;
 static int booted_partition;
@@ -61,11 +66,19 @@ static void get_device(char *name);
 void
 cpu_configure()
 {
-	/* Kick off autoconfiguration. */
-	(void)splhigh();
 
-	softintr_init();
 	config_hook_init();
+	softintr_init();
+	hd6446x_intr_init();
+	if (CPU_IS_SH3)	/* Jornada 690, HP620LX, HPW-50PA */
+		intc_intr_establish(SH7709_INTEVT2_IRQ4, IST_LEVEL, IPL_TTY,
+		    (void *)1/* fake. see intc_intr(). */, 0);
+	else	/* HPW-650PA */
+		intc_intr_establish(SH_INTEVT_IRL11, IST_LEVEL, IPL_TTY,
+		    (void *)1/* fake. see intc_intr(). */, 0);
+
+	/* Kick off autoconfiguration. */
+	splhigh();
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
