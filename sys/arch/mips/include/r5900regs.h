@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.3 2002/01/02 12:36:20 uch Exp $	*/
+/*	$NetBSD: r5900regs.h,v 1.1 2002/03/05 16:04:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,40 +36,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef _KERNEL
-/* R5900 has Enable Interrupt Enable bit. */
-#undef	MIPS_SR_INT_IE
-#define MIPS_SR_INT_IE			0x00010001	/* EIE + IE */
-
 #undef COP0_SYNC
-#define COP0_SYNC	sync.p 
+#define	COP0_SYNC	sync.p 
 
 /* 
  * R5900 has INT5,1,0 only don't support software interrupt 
  * MIPS_SOFT_INT_MASK_1 and MIPS_SOFT_INT_MASK_1 are emulated by kernel.
  */
 #undef MIPS_INT_MASK
-#define MIPS_INT_MASK		0x0c00
+#define	MIPS_INT_MASK		0x0c00
 #undef MIPS_HARD_INT_MASK
-#define MIPS_HARD_INT_MASK	0x0c00
+#define	MIPS_HARD_INT_MASK	0x0c00
 
-#undef MIPS_COP_0_LLADDR
-#undef MIPS_COP_0_WATCH_LO
-#undef MIPS_COP_0_WATCH_HI
-#undef MIPS_COP_0_TLB_XCONTEXT
-#undef MIPS_COP_0_ECC
-#undef MIPS_COP_0_CACHE_ERR
-#undef MIPS_COP_0_DESAVE
-
-/* Exception vector */
-#define R5900_TLB_REFIL_EXC_VEC		0x80000000
-#define R5900_COUNTER_EXC_VEC		0x80000080
-#define R5900_DEBUG_EXC_VEC		0x80000100
-#define R5900_COMMON_EXC_VEC		0x80000180
-#define R5900_INTERRUPT_EXC_VEC		0x80000200
-
-/* MMU  R5900 support 32bit-mode only */
-#define dmtc0	mtc0
-#define dmfc0	mfc0
-
-#endif /* _KERNEL */
+/* 
+ * The R5900 doesn't have 
+ *    
+ * LLADDR
+ * WATCH_LO
+ * WATCH_HI
+ * TLB_XCONTEXT
+ * ECC
+ * CACHE_ERR
+ * DESAVE
+ *  registers.
+ */
