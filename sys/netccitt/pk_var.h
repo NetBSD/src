@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_var.h,v 1.6 1995/03/26 20:33:45 jtc Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.7 1995/06/13 09:07:37 mycroft Exp $	*/
 
 /* 
  * Copyright (c) Computing Centre, University of British Columbia, 1985 
@@ -150,8 +150,7 @@ struct x25_ifaddr {
  * packet switching via X.25 virtual circuits.
  */
 struct llinfo_x25 {
-	struct	llinfo_x25 *lx_next;	/* chain together in linked list */
-	struct	llinfo_x25 *lx_prev;	/* chain together in linked list */
+	LIST_ENTRY(llinfo_x25) lx_list;
 	struct	rtentry *lx_rt;		/* back pointer to route */
 	struct	pklcd *lx_lcd;		/* local connection block */
 	struct	x25_ifaddr *lx_ia;	/* may not be same as rt_ifa */
