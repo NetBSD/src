@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.10 2003/11/18 19:46:37 itojun Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.11 2003/11/19 15:46:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.10 2003/11/18 19:46:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.11 2003/11/19 15:46:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,7 +446,7 @@ exec_ibcs2_coff_prep_zmagic(p, epp, fp, ap)
 		size_t resid;
 		struct coff_slhdr *slhdr;
 		char *buf, *bufp;
-		long len = sh.s_size, path_index, entry_len;
+		size_t len = sh.s_size, path_index, entry_len;
 
 		if (len > 64 * 1024)
 			return ENOEXEC;
