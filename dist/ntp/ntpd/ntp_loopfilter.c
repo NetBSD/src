@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.4 2003/12/04 17:22:31 drochner Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -276,24 +276,6 @@ local_clock(
 	}
 
 	/*
-	 * If the clock has never been set, set it and initialize the
-	 * discipline parameters. We then switch to frequency mode to
-	 * speed the inital convergence process. If lucky, after an hour
-	 * the ntp.drift file is created and initialized and we don't
-	 * get here again.
-	 */
-	if (state == S_NSET) {
-		if (fabs(fp_offset) > clock_max && clock_max > 0) {
-			step_systime(fp_offset);
-			msyslog(LOG_NOTICE, "time reset %+.6f s",
-			    fp_offset);
-			reinit_timer();
-		}
-		rstclock(S_FREQ, peer->epoch, 0);
-		return (1);
-	}
-
-	/*
 	 * Update the jitter estimate.
 	 */
 	oerror = sys_jitter;
@@ -353,7 +335,7 @@ local_clock(
 		 * to S_FREQ state.
 		 */
 		case S_TSET:
-			state = S_FREQ;
+			rstclock(S_FREQ, peer->epoch, fp_offset);
 			break;
 
 		/*
@@ -375,6 +357,7 @@ local_clock(
 		case S_FREQ:
 			if (mu < clock_minstep)
 				return (0);
+
 			/* fall through to S_SPIK */
 
 		/*
@@ -388,21 +371,32 @@ local_clock(
 			/* fall through to default */
 
 		/*
-		 * We get here directly in S_FSET state and indirectly
-		 * from S_FREQ and S_SPIK states. The clock is either
-		 * reset or shaken, but never stirred.
+		 * We get here directly in S_NSET and S_FSET states and
+		 * indirectly from S_FREQ and S_SPIK states. The clock
+		 * is either reset or shaken, but never stirred.
 		 */
 		default:
 			step_systime(fp_offset);
 			msyslog(LOG_NOTICE, "time reset %+.6f s",
 			    fp_offset);
 			reinit_timer();
-			rstclock(S_TSET, peer->epoch, 0);
+			if (state == S_NSET)
+				rstclock(S_FREQ, peer->epoch, 0);
+			else
+				rstclock(S_TSET, peer->epoch, 0);
 			retval = 1;
 			break;
 		}
 	} else {
 		switch (state) {
+
+		/*
+		 * If the frequency has not been initialized from the
+		 * file, drop everything until it is.
+		 */
+		case S_NSET:
+			rstclock(S_FREQ, peer->epoch, fp_offset);
+			break;
 
 		/*
 		 * In S_FSET state this is the first update. Adjust the
@@ -665,7 +659,7 @@ local_clock(
 				tc_counter = CLOCK_LIMIT;
 				if (sys_poll < peer->maxpoll) {
 					tc_counter = 0;
-					sys_poll++;
+ 					sys_poll++;
 				}
 			}
 		} else {
@@ -788,8 +782,8 @@ rstclock(
 	last_offset = clock_offset = offset;
 #ifdef DEBUG
 	if (debug)
-		printf("local_clock: at %lu state %d\n", last_time,
-		    trans);
+		printf("local_clock: time %lu offset %.6f state %d\n",
+		    last_time, last_offset, trans);
 #endif
 }
 
