@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.9 1998/09/02 19:51:06 drochner Exp $ */
+/* $NetBSD: tga.c,v 1.10 1998/11/19 15:38:25 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -429,7 +429,7 @@ tga_mmap(v, offset, prot)
 #ifdef __alpha__
 	struct tga_softc *sc = v;
 
-	if (offset > sc->sc_dc->dc_tgaconf->tgac_cspace_size)
+	if (offset >= sc->sc_dc->dc_tgaconf->tgac_cspace_size || offset < 0)
 		return -1;
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
 #else

@@ -1,4 +1,4 @@
-/* $NetBSD: wscons.c,v 1.17 1998/03/21 22:52:59 mycroft Exp $ */
+/* $NetBSD: wscons.c,v 1.18 1998/11/19 15:38:21 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: wscons.c,v 1.17 1998/03/21 22:52:59 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wscons.c,v 1.18 1998/11/19 15:38:21 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -375,7 +375,7 @@ wsconsmmap(dev, offset, prot)
 {
 	struct wscons_softc *sc = wscons_cd.cd_devs[WSCUNIT(dev)];
 
-	if (sc->sc_ioctl != NULL)
+	if (sc->sc_ioctl != NULL && offset >= 0)
 		return (*sc->sc_mmap)(sc->sc_dev.dv_parent, offset, prot);
 	else
 		return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.2 1998/08/13 02:10:41 eeh Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.3 1998/11/19 15:38:24 mrg Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -582,6 +582,9 @@ cgfourteenmmap(dev, off, prot)
 
 	if (off & PGOFSET)
 		panic("cgfourteenmmap");
+
+	if (off < 0)
+		return (-1);
 
 #if defined(DEBUG) && defined(CG14_MAP_REGS) /* XXX: security hole */
 	/*

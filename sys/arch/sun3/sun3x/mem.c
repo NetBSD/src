@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 1998/06/09 20:47:18 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 1998/11/19 15:38:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -246,7 +246,7 @@ mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register int v = off;
+	register u_int v = off;
 
 	/*
 	 * Check address validity.
