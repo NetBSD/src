@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2001/11/14 18:15:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2002/03/05 16:13:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2001/11/14 18:15:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2002/03/05 16:13:57 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -85,7 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2001/11/14 18:15:31 thorpej Exp $")
 #include <machine/bootinfo.h>
 #include <machine/apbus.h>
 #include <machine/apcall.h>
-#include <mips/locore.h>		/* wbflush() */
+
+#include <mips/cache.h>
+#include <mips/locore.h>
 
 #define	_NEWSMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -403,6 +405,14 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 		printf("kernel not configured for systype %d\n", systype);
 		break;
 	}
+}
+
+void
+mips_machdep_cache_config(void)
+{
+	/* All r4k news boxen have a 1MB L2 cache. */
+	if (CPUISMIPS3)
+		mips_sdcache_size = 1024 * 1024;
 }
 
 /*
