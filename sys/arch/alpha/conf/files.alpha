@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.43 1997/04/06 23:03:13 cgd Exp $
+# $NetBSD: files.alpha,v 1.44 1997/04/10 23:09:33 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -6,6 +6,20 @@
 maxpartitions 8
 
 maxusers 2 8 64
+
+# CPU support option headers
+defopt	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
+defopt	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
+defopt	DEC_3000_300	# Pelican etc:	3000/300*
+defopt	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+defopt	DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
+defopt	DEC_EB164	# EB164:	AlphaPC 164
+defopt	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
+defopt	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
+defopt	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
+
+# Miscellaneous CPU-specific option headers
+defopt	FIX_UNALIGNED_VAX_FP
 
 # a wscons output device; used later, but needs to be near the top for
 # common file (e.g. vga) definitions.
@@ -218,6 +232,19 @@ file	arch/alpha/pci/cia_bus_io.c	cia
 file	arch/alpha/pci/cia_bus_mem.c	cia
 file	arch/alpha/pci/cia_pci.c	cia
 
+device	dwlpx:	pcibus
+attach	dwlpx at kft
+file	arch/alpha/pci/dwlpx.c		dwlpx
+file	arch/alpha/pci/dwlpx_pci.c	dwlpx
+file	arch/alpha/pci/pci_kn8ae.c	dwlpx
+file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
+file	arch/alpha/pci/dwlpx_bus_io.c	dwlpx
+
+# common support files
+file	arch/alpha/pci/pci_swiz_io_common.c	apecs | cia | dwlpx | lca
+file	arch/alpha/pci/pci_swiz_mem_common.c	apecs | cia | dwlpx | lca
+
+# CPU support files
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
 file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
 file	arch/alpha/pci/pci_eb164.c	dec_eb164
@@ -226,13 +253,6 @@ file	arch/alpha/pci/pci_eb64plus.c	dec_eb64plus
 file	arch/alpha/pci/pci_eb64plus_intr.s dec_eb64plus
 file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
 
-device	dwlpx:	pcibus
-attach	dwlpx at kft
-file	arch/alpha/pci/dwlpx.c		dwlpx
-file	arch/alpha/pci/dwlpx_pci.c	dwlpx
-file	arch/alpha/pci/pci_kn8ae.c	dwlpx
-file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
-file	arch/alpha/pci/dwlpx_bus_io.c	dwlpx
 
 #
 # PCI Bus devices
@@ -275,7 +295,6 @@ file	arch/alpha/tlsb/mcclock_tlsb.c	mcclock_tlsb
 #
 # Standard files
 #
-
 file	arch/alpha/alpha/autoconf.c
 file	arch/alpha/alpha/clock.c
 file	arch/alpha/alpha/conf.c
@@ -294,20 +313,14 @@ file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
 file	dev/cons.c
 
-
-#
-# Optional/miscellaneous files
-#
-
-file	arch/alpha/alpha/in_cksum.c		inet & !generic_in_cksum
-file	netinet/in_cksum.c			inet & generic_in_cksum
+# Network protocol checksum routines
+file	arch/alpha/alpha/in_cksum.c		inet
 file	netns/ns_cksum.c			ns
 
-# XXX
+# PROM console support (for ports that don't have native console support)
 file	arch/alpha/alpha/promcons.c
 
-# XXX
-file	arch/alpha/alpha/cpuconf.c
+# CPU support
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50	needs-flag
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag
 file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500	needs-flag
