@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.1 1997/10/14 11:06:56 mark Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.2 1998/01/18 03:39:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -139,9 +139,9 @@ dma_intr(dp)
 	struct dma_ctrl *dp;
 {
 	u_char status = (*dp->dc_st) & DMA_ST_MASK;
-	vm_offset_t	cur, end;
+	vm_offset_t cur;
 	int len;
-	int bufap;
+	int bufap = 0;
 
 #ifdef DMA_DEBUG
 	printf("dma_intr() status = 0x%02x\n", status);
