@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.13 1995/01/08 21:31:34 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.14 1995/01/09 01:04:18 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -812,16 +812,26 @@ svr4_setinfo(pid, st, s)
 
 	bzero(&i, sizeof(i));
 
-	if (WIFSTOPPED(st))
-	    i.si_signo = WSTOPSIG(st);
-	else
-	    i.si_signo = WTERMSIG(st);
-
-	if (WIFEXITED(st))
+	if (WIFEXITED(st)) {
 	    i.si_errno = WEXITSTATUS(st);
+	    i.si_code = SVR4_CLD_EXITED;
+	}
+	else if (WIFSTOPPED(st)) {
+	    i.si_signo = WSTOPSIG(st);
+	    if (i.si_signo == SIGCONT)
+		i.si_code = SVR4_CLD_CONTINUED;
+	    else
+		i.si_code = SVR4_CLD_STOPPED;
+	}
+	else {
+	    i.si_signo = WTERMSIG(st);
+	    i.si_code = SVR4_CLD_KILLED;
+	}
 
-	if (WCOREDUMP(st))
+	if (WCOREDUMP(st)) {
 	    i.si_addr = (svr4_caddr_t) 0xfeedbeef;
+	    i.si_code = SVR4_CLD_DUMPED;
+	}
 
 	i.si_pid = pid;
 	i.si_uid = 0; /* XXX: */
@@ -881,8 +891,10 @@ loop:
 				return error;
 
 
-		        if ((SCARG(uap, options) & SVR4_WNOWAIT))
+		        if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
+				DPRINTF(("Don't wait\n"));
 				return 0;
+			}
 
 			/*
 			 * If we got the child via a ptrace 'attach',
@@ -942,6 +954,8 @@ loop:
 			DPRINTF(("jobcontrol %d\n", q->p_pid));
 		        if (((SCARG(uap, options) & SVR4_WNOWAIT)) == 0)
 				q->p_flag |= P_WAITED;
+			else
+				DPRINTF(("Don't wait\n"));
 			*retval = 0;
 			return svr4_setinfo(q->p_pid, W_STOPCODE(q->p_xstat),
 					    SCARG(uap, info));
@@ -953,7 +967,9 @@ loop:
 
 	if (SCARG(uap, options) & SVR4_WNOHANG) {
 		*retval = 0;
-		return 0;
+		if ((error = svr4_setinfo(-1, 0, SCARG(uap, info))) != 0)
+			return error;
+		return ECHILD;
 	}
 
 	if (error = tsleep((caddr_t)p, PWAIT | PCATCH, "svr4_wait", 0))
