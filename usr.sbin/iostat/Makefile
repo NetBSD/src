@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.16 1997/10/25 06:58:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2001/02/04 14:42:31 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	iostat
 MAN=	iostat.8
+
+.if ${MACHINE} == "sparc64"
+CFLAGS+=	-msoft-quad-float
+.endif
 
 .PATH:	${.CURDIR}/../../usr.bin/vmstat
 
