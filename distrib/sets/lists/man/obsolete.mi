@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.53 2002/09/21 07:16:40 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.54 2002/10/14 06:31:41 takemura Exp $
 /usr/share/info/g++FAQ.info
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
@@ -80,6 +80,7 @@
 /usr/share/man/cat8/greconfig.0
 /usr/share/man/cat8/grfconfig.0
 /usr/share/man/cat8/htable.0
+/usr/share/man/cat8/i386/apm.0
 /usr/share/man/cat8/i386/apmd.0
 /usr/share/man/cat8/i386/bad144.0
 /usr/share/man/cat8/i386/ispcvt.0
@@ -87,6 +88,7 @@
 /usr/share/man/cat8/i386/reboot.0
 /usr/share/man/cat8/i386/reboot_i386.0
 /usr/share/man/cat8/i386/vgaio.0
+/usr/share/man/cat8/i386/zzz.0
 /usr/share/man/cat8/ispppcontrol.0
 /usr/share/man/cat8/kfd.0
 /usr/share/man/cat8/mtrace6.0
@@ -191,6 +193,7 @@
 /usr/share/man/man8/greconfig.8
 /usr/share/man/man8/grfconfig.8
 /usr/share/man/man8/htable.8
+/usr/share/man/man8/i386/apm.8
 /usr/share/man/man8/i386/apmd.8
 /usr/share/man/man8/i386/bad144.8
 /usr/share/man/man8/i386/ispcvt.8
@@ -198,6 +201,7 @@
 /usr/share/man/man8/i386/reboot.8
 /usr/share/man/man8/i386/reboot_i386.8
 /usr/share/man/man8/i386/vgaio.8
+/usr/share/man/man8/i386/zzz.8
 /usr/share/man/man8/ispppcontrol.8
 /usr/share/man/man8/kfd.8
 /usr/share/man/man8/mtrace6.8
