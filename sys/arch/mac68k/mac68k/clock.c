@@ -73,7 +73,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *   from: @(#)clock.c   7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.5 1994/05/06 17:39:39 briggs Exp $
+ *	$Id: clock.c,v 1.6 1994/07/10 16:58:05 briggs Exp $
  */
 
 #if !defined(STANDALONE)
@@ -249,7 +249,7 @@ void profclock(clockframe *pclk)
     */
    if (USERMODE(pclk->ps)) {
       if (p->p_stats.p_prof.pr_scale)
-         addupc(pclk->pc, &curproc->p_stats.p_prof, 1);
+	 addupc_task(&curproc, pclk->pc, 1);
    }
    /*
     * Came from kernel (supervisor) mode.
