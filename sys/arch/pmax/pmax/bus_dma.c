@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9 1998/09/21 23:02:49 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.10 1999/01/06 04:18:53 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,17 +56,16 @@
 #include <uvm/uvm_extern.h>
 #endif
 
-#include <mips/cpuregs.h>
 #include <mips/locore.h>
 
 #define _PMAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 int	_bus_dmamap_load_buffer __P((bus_dmamap_t,
-	    void *, bus_size_t, struct proc *, int, vm_offset_t *,
+	    void *, bus_size_t, struct proc *, int, vaddr_t *,
 	    int *, int));
 
-extern	vm_offset_t kvtophys __P((vm_offset_t));	/* XXX */
+extern	paddr_t kvtophys __P((vaddr_t));	/* XXX */
 
 /*
  * The default DMA tag for all busses on the DECstation.
@@ -164,13 +163,13 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	vm_offset_t *lastaddrp;
+	vaddr_t *lastaddrp;
 	int *segp;
 	int first;
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
-	vm_offset_t vaddr = (vm_offset_t)buf;
+	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 
 	lastaddr = *lastaddrp;
@@ -258,7 +257,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	vaddr_t lastaddr;
 	int seg, error;
 
 	/*
@@ -300,7 +299,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	struct mbuf *m0;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	vaddr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
 
@@ -343,7 +342,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	vaddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
@@ -554,8 +553,9 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags; 
 {
-	extern vm_offset_t avail_start, avail_end;
-	vm_offset_t curaddr, lastaddr, high;
+	extern paddr_t avail_start, avail_end;
+	vaddr_t curaddr, lastaddr;
+	psize_t high;
 	vm_page_t m;    
 	struct pglist mlist;
 	int curseg, error;
@@ -661,7 +661,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;  
 	int flags;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
 
@@ -735,9 +735,9 @@ _bus_dmamem_unmap(t, kva, size)
 
 	size = round_page(size);
 #if defined(UVM)
-	uvm_km_free(kernel_map, (vm_offset_t)kva, size);
+	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 #else
-	kmem_free(kernel_map, (vm_offset_t)kva, size);
+	kmem_free(kernel_map, (vaddr_t)kva, size);
 #endif
 }
 

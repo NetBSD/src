@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 1998/09/02 06:41:22 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 1999/01/06 04:18:53 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 1998/09/02 06:41:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 1999/01/06 04:18:53 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -253,7 +253,7 @@ mach_init(argc, argv, code, cv)
 	register int i;
 	u_long first, last;
 	caddr_t kernend, v;
-	vm_size_t size;
+	unsigned size;
 	extern char edata[], end[];
 
 	/* clear the BSS segment */
@@ -416,7 +416,7 @@ mach_init(argc, argv, code, cv)
 	 * Find out how much memory is available.
 	 * Be careful to save and restore the original contents for msgbuf.
 	 */
-	physmem = btoc((vm_offset_t)kernend - MIPS_KSEG0_START);
+	physmem = btoc((vaddr_t)kernend - MIPS_KSEG0_START);
 	cp = (char *)MIPS_PHYS_TO_KSEG1(physmem << PGSHIFT);	
 	while (cp < (char *)physmem_boardmax) {
 	  	int j;
@@ -472,7 +472,7 @@ mach_init(argc, argv, code, cv)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (vm_size_t)allocsys(0);
+	size = (unsigned)allocsys(0);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL); 
 	if ((allocsys(v) - v) != size)
 		panic("mach_init: table size inconsistency");
@@ -491,10 +491,10 @@ mach_init(argc, argv, code, cv)
 void
 cpu_startup()
 {
-	register unsigned i;
+	unsigned i;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -518,16 +518,16 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 #if defined(UVM)
-	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
 #else
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
 				   &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	minaddr = (vaddr_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 #endif /* UVM */
@@ -535,8 +535,8 @@ cpu_startup()
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
 #if defined(UVM)
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
 		/*
@@ -545,7 +545,7 @@ cpu_startup()
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vaddr_t)buffers + (i * MAXBSIZE);
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -563,8 +563,8 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 #else /* ! UVM */
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -573,7 +573,7 @@ cpu_startup()
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -605,10 +605,10 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			         VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
 	/*
@@ -654,7 +654,7 @@ cpu_startup()
 	 * contiguous and aligned on a 128k boundary.
 	 */
 	{
-		extern vm_offset_t avail_start, avail_end;
+		extern paddr_t avail_start, avail_end;
 		struct pglist mlist;
 
 		TAILQ_INIT(&mlist);
