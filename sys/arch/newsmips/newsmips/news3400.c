@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.1 1999/12/22 05:53:21 tsubai Exp $	*/
+/*	$NetBSD: news3400.c,v 1.2 2000/04/14 10:11:07 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -28,33 +28,38 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 
 #include <machine/adrsmap.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/psl.h>
 #include <newsmips/newsmips/machid.h>
 
 void level0_intr __P((void));
 void level1_intr __P((void));
 void hb_intr_dispatch __P((int));
+void MachFPInterrupt __P((unsigned, unsigned, unsigned, struct frame *));
 
 static int badaddr_flag;
+
+#define INT_MASK_FPU MIPS_INT_MASK_3
 
 /*
  * Handle news3400 interrupts.
  */
-int
-news3400_intr(mask, pc, status, cause)
-	u_int mask;
-	u_int pc;	/* program counter where to continue */
+void
+news3400_intr(status, cause, pc, ipending)
 	u_int status;	/* status register at time of the exception */
 	u_int cause;	/* cause register at time of exception */
+	u_int pc;	/* program counter where to continue */
+	u_int ipending;
 {
 	struct clockframe cf;
 
 	/* handle clock interrupts ASAP */
-	if (mask & MIPS_INT_MASK_2) {
+	if (ipending & MIPS_INT_MASK_2) {
 		register int stat;
 
 		stat = *(volatile u_char *)INTST0;
@@ -75,32 +80,43 @@ news3400_intr(mask, pc, status, cause)
 		cause &= ~MIPS_INT_MASK_2;
 	}
 	/* If clock interrupts were enabled, re-enable them ASAP. */
-	splx(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
+	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
-	if (mask & MIPS_INT_MASK_5) {
+	if (ipending & MIPS_INT_MASK_5) {
 		*(volatile char *)INTCLR0 = INTCLR0_PERR;
 		printf("Memory error interrupt(?) at 0x%x\n", pc);
 		cause &= ~MIPS_INT_MASK_5;
 	}
 
 	/* asynchronous bus error */
-	if (mask & MIPS_INT_MASK_4) {
+	if (ipending & MIPS_INT_MASK_4) {
 		*(volatile char *)INTCLR0 = INTCLR0_BERR;
 		cause &= ~MIPS_INT_MASK_4;
 		badaddr_flag = 1;
 	}
 
-	if (mask & MIPS_INT_MASK_1) {
+	if (ipending & MIPS_INT_MASK_1) {
 		level1_intr();
 		cause &= ~MIPS_INT_MASK_1;
 	}
 
-	if (mask & MIPS_INT_MASK_0) {
+	if (ipending & MIPS_INT_MASK_0) {
 		level0_intr();
 		cause &= ~MIPS_INT_MASK_0;
 	}
 
-	return (status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE;
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
+	/* FPU nofiticaition */
+	if (ipending & INT_MASK_FPU) {
+		if (!USERMODE(status))
+			panic("kernel used FPU: PC %x, CR %x, SR %x",
+			      pc, cause, status);
+
+		intrcnt[FPU_INTR]++;
+		/* dealfpu(status, cause, pc); */
+		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
+	}
 }
 
 #define LEVEL0_MASK \

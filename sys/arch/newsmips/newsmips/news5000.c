@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.3 1999/12/23 11:45:32 tsubai Exp $	*/
+/*	$NetBSD: news5000.c,v 1.4 2000/04/14 10:11:07 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -43,14 +43,14 @@ static void level0_intr __P((void));
 /*
  * Handle news5000 interrupts.
  */
-int
-news5000_intr(mask, pc, status, cause)
-	u_int mask;
-	u_int pc;	/* program counter where to continue */
+void
+news5000_intr(status, cause, pc, ipending)
 	u_int status;	/* status register at time of the exception */
 	u_int cause;	/* cause register at time of exception */
+	u_int pc;	/* program counter where to continue */
+	u_int ipending;
 {
-	if (mask & MIPS_INT_MASK_2) {
+	if (ipending & MIPS_INT_MASK_2) {
 #ifdef DEBUG
 		static int l2cnt = 0;
 #endif
@@ -84,9 +84,9 @@ news5000_intr(mask, pc, status, cause)
 		cause &= ~MIPS_INT_MASK_2;
 	}
 	/* If clock interrupts were enabled, re-enable them ASAP. */
-	splx(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
+	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
-	if (mask & MIPS_INT_MASK_5) {
+	if (ipending & MIPS_INT_MASK_5) {
 		u_int int5stat = *(volatile u_int *)NEWS5000_INTST5;
 		printf("level5 interrupt (%08x)\n", int5stat);
 
@@ -94,7 +94,7 @@ news5000_intr(mask, pc, status, cause)
 		cause &= ~MIPS_INT_MASK_5;
 	}
 
-	if (mask & MIPS_INT_MASK_4) {
+	if (ipending & MIPS_INT_MASK_4) {
 		u_int int4stat = *(volatile u_int *)NEWS5000_INTST4;
 		printf("level4 interrupt (%08x)\n", int4stat);
 
@@ -102,7 +102,7 @@ news5000_intr(mask, pc, status, cause)
 		cause &= ~MIPS_INT_MASK_4;
 	}
 
-	if (mask & MIPS_INT_MASK_3) {
+	if (ipending & MIPS_INT_MASK_3) {
 		u_int int3stat = *(volatile u_int *)NEWS5000_INTST3;
 		printf("level3 interrupt (%08x)\n", int3stat);
 
@@ -110,19 +110,19 @@ news5000_intr(mask, pc, status, cause)
 		cause &= ~MIPS_INT_MASK_3;
 	}
 
-	if (mask & MIPS_INT_MASK_1) {
+	if (ipending & MIPS_INT_MASK_1) {
 		level1_intr();
 		apbus_wbflush();
 		cause &= ~MIPS_INT_MASK_1;
 	}
 
-	if (mask & MIPS_INT_MASK_0) {
+	if (ipending & MIPS_INT_MASK_0) {
 		level0_intr();
 		apbus_wbflush();
 		cause &= ~MIPS_INT_MASK_0;
 	}
 
-	return (status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE;
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }
 
 
