@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.59 2002/12/06 02:20:00 thorpej Exp $	*/
+/*	$NetBSD: savecore.c,v 1.60 2003/05/18 02:11:13 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.59 2002/12/06 02:20:00 thorpej Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.60 2003/05/18 02:11:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -618,15 +618,18 @@ find_dev(dev_t dev, int type)
 	DIR *dfd;
 	struct dirent *dir;
 	struct stat sb;
-	char *dp, device[MAXPATHLEN + 1];
+	char *dp, device[MAXPATHLEN + 1], *p;
+	size_t l;
 
 	if ((dfd = opendir(_PATH_DEV)) == NULL) {
 		syslog(LOG_ERR, "%s: %m", _PATH_DEV);
 		exit(1);
 	}
-	(void)strcpy(device, _PATH_DEV);
+	strlcpy(device, _PATH_DEV, sizeof(device));
+	p = &device[strlen(device)];
+	l = sizeof(device) - strlen(device);
 	while ((dir = readdir(dfd))) {
-		(void)strcpy(device + sizeof(_PATH_DEV) - 1, dir->d_name);
+		strlcpy(p, dir->d_name, l);
 		if (lstat(device, &sb)) {
 			syslog(LOG_ERR, "%s: %m", device);
 			continue;
