@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.11 2004/01/09 23:31:37 oster Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.12 2004/01/10 00:53:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.11 2004/01/09 23:31:37 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.12 2004/01/10 00:53:08 oster Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -342,7 +342,6 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 #ifdef RAID_DIAGNOSTIC
 	long    nfaults = qfuncs ? 2 : 1;
 #endif /* RAID_DIAGNOSTIC */
-	int     lu_flag = 0;	/* lock/unlock flag */
 
 	if (rf_dagDebug)
 		printf("[Creating parity-logging small-write DAG]\n");
@@ -361,8 +360,6 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	 * parity unit a block and unblock node (2) a terminator node if
 	 * atomic RMW an unlock node for each data unit, redundancy unit */
 	totalNumNodes = (2 * numDataNodes) + numParityNodes + (2 * numParityNodes) + 3;
-	if (lu_flag)
-		totalNumNodes += numDataNodes;
 
 	nNodes = numDataNodes + numParityNodes;
 
@@ -390,10 +387,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	i += numParityNodes;
 	termNode = &nodes[i];
 	i += 1;
-	if (lu_flag) {
-		unlockDataNodes = &nodes[i];
-		i += numDataNodes;
-	}
+
 	RF_ASSERT(i == totalNumNodes);
 
 	/* Step 3. initialize the nodes */
@@ -415,7 +409,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 		readDataNodes[i].params[1].p = rf_AllocBuffer(raidPtr, dag_h, pda, allocList);	/* buffer to hold old
 												 * data */
 		readDataNodes[i].params[2].v = parityStripeID;
-		readDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, lu_flag, 0, which_ru);
+		readDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
 		pda = pda->next;
 		readDataNodes[i].propList[0] = NULL;
 		readDataNodes[i].propList[1] = NULL;
@@ -448,13 +442,6 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 		writeDataNodes[i].params[2].v = parityStripeID;
 		writeDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
 
-		if (lu_flag) {
-			/* initialize node to unlock the disk queue */
-			rf_InitNode(&unlockDataNodes[i], rf_wait, RF_FALSE, rf_DiskUnlockFunc, rf_DiskUnlockUndoFunc, rf_GenericWakeupFunc, 1, 1, 2, 0, dag_h, "Und", allocList);
-			unlockDataNodes[i].params[0].p = pda;	/* physical disk addr
-								 * desc */
-			unlockDataNodes[i].params[1].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, lu_flag, which_ru);
-		}
 		pda = pda->next;
 	}
 
@@ -607,28 +594,12 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	}
 
 	for (i = 0; i < numDataNodes; i++) {
-		if (lu_flag) {
-			/* connect write new data nodes to unlock nodes */
-			RF_ASSERT(writeDataNodes[i].numSuccedents == 1);
-			RF_ASSERT(unlockDataNodes[i].numAntecedents == 1);
-			writeDataNodes[i].succedents[0] = &unlockDataNodes[i];
-			unlockDataNodes[i].antecedents[0] = &writeDataNodes[i];
-			unlockDataNodes[i].antType[0] = rf_control;
-
-			/* connect unlock nodes to unblock node */
-			RF_ASSERT(unlockDataNodes[i].numSuccedents == 1);
-			RF_ASSERT(unblockNode->numAntecedents == (numDataNodes + (nfaults * numParityNodes)));
-			unlockDataNodes[i].succedents[0] = unblockNode;
-			unblockNode->antecedents[i] = &unlockDataNodes[i];
-			unblockNode->antType[i] = rf_control;
-		} else {
-			/* connect write new data nodes to unblock node */
-			RF_ASSERT(writeDataNodes[i].numSuccedents == 1);
-			RF_ASSERT(unblockNode->numAntecedents == (numDataNodes + (nfaults * numParityNodes)));
-			writeDataNodes[i].succedents[0] = unblockNode;
-			unblockNode->antecedents[i] = &writeDataNodes[i];
-			unblockNode->antType[i] = rf_control;
-		}
+		/* connect write new data nodes to unblock node */
+		RF_ASSERT(writeDataNodes[i].numSuccedents == 1);
+		RF_ASSERT(unblockNode->numAntecedents == (numDataNodes + (nfaults * numParityNodes)));
+		writeDataNodes[i].succedents[0] = unblockNode;
+		unblockNode->antecedents[i] = &writeDataNodes[i];
+		unblockNode->antType[i] = rf_control;
 	}
 
 	/* connect write new parity nodes to unblock node */
