@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.4 1997/10/13 03:48:49 lukem Exp $ */
+/*	$NetBSD: mkalias.c,v 1.4.2.1 1997/11/28 09:33:51 mellon Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.4 1997/10/13 03:48:49 lukem Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.4.2.1 1997/11/28 09:33:51 mellon Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: mkalias.c,v 1.4 1997/10/13 03:48:49 lukem Exp $");
 
 #include <rpc/rpc.h>
 
+#include "protos.h"
 #include "ypdb.h"
 #include "ypdef.h"
 
@@ -324,7 +325,7 @@ main(argc, argv)
 	}
 
 	if (new_db != NULL) {
-	  	gethostname(myname, sizeof(myname) - 1);
+	  	localhostname(myname, sizeof(myname) - 1);
 		key.dptr = YP_MASTER_KEY;
 		key.dsize = strlen(YP_MASTER_KEY);
 		val.dptr = myname;
