@@ -1,4 +1,4 @@
-/*	$NetBSD: fontconv.c,v 1.2 2000/01/05 18:49:13 ad Exp $	*/
+/*	$NetBSD: fontconv.c,v 1.1 2001/02/22 18:37:55 uch Exp $	*/
 
 #include <stdio.h>
 
