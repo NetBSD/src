@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.1.2.1 2001/11/08 05:37:36 briggs Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.1.2.1 2001/11/09 20:15:25 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$NetBSD: getcontext.S,v 1.1.2.1 2001/11/08 05:37:36 briggs Exp $"
+	.asciz "$NetBSD: getcontext.S,v 1.1.2.1 2001/11/09 20:15:25 briggs Exp $"
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
