@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)slattach.c	8.2 (Berkeley) 1/7/94";*/
-static char *rcsid = "$Id: slattach.c,v 1.12 1994/09/23 01:39:04 mycroft Exp $";
+static char *rcsid = "$Id: slattach.c,v 1.13 1994/10/31 04:38:09 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,6 +57,7 @@ static char *rcsid = "$Id: slattach.c,v 1.12 1994/09/23 01:39:04 mycroft Exp $";
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <termios.h>
 
 int	speed = 9600;
