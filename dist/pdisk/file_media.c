@@ -60,7 +60,7 @@
 #ifdef __linux__
 #define LOFF_MAX 9223372036854775807LL
 extern __loff_t llseek __P ((int __fd, __loff_t __offset, int __whence));
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__APPLE__)
 #define loff_t off_t
 #define llseek lseek
 #define LOFF_MAX LLONG_MAX
