@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.3 1999/03/22 18:16:40 garbled Exp $
+.\"	$NetBSD: menuc.1,v 1.4 1999/12/31 04:03:18 garbled Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -53,6 +53,20 @@ The standard root name of the files is
 The 
 .Fl o Ar name
 can be used to specify a different root name.
+.Sh ENVIRONMENT
+.Bl -tag -width MENUDEF
+.It Ev MENUDEF
+Can be set to point to a different set of 
+definition files for
+.Nm menuc .
+The current location defaults to
+.Pa /usr/share/misc .
+.El
+.Sh FILES
+.Bl -item -width /usr/share/misc/menu_sys.def
+.It
+.Pa /usr/share/misc/menu_sys.def
+.El
 .Sh SOURCE DESCRIPTION
 At the current time, this is not documented.  You need to read the
 source code.
