@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.88 2004/03/29 04:59:03 atatat Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.89 2004/04/20 22:54:31 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.88 2004/03/29 04:59:03 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.89 2004/04/20 22:54:31 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -155,7 +155,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.88 2004/03/29 04:59:03 atatat Exp $
 /*
  * TCP protocol interface to socket abstraction.
  */
-extern	char *tcpstates[];
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
