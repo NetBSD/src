@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.3 2001/02/14 17:59:38 msaitoh Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.4 2001/10/16 02:07:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -52,7 +52,7 @@
 #define	ROL	\
 	shll8	reg_sum
 
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 #define	ADDB	\
 	mov.b	@reg_w+,reg_tmp0	; \
 	ROL				; \
