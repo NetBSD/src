@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.31 1998/07/06 06:59:36 mrg Exp $	*/
+/*	$NetBSD: net.c,v 1.32 1998/08/05 07:44:58 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -244,7 +244,7 @@ config_network()
 
 	/* Set a default route if one was given */
 	if (strcmp(net_defroute, "") != 0) {
-		run_prog("/sbin/route -f > /dev/null 2> /dev/null");
+		run_prog("/sbin/route -n flush > /dev/null 2> /dev/null");
 		run_prog("/sbin/route -n add default %s > /dev/null 2> /dev/null",
 			  net_defroute);
 	}
