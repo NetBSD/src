@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.11 2004/01/02 21:41:08 oster Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.12 2004/02/29 20:11:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.11 2004/01/02 21:41:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.12 2004/02/29 20:11:26 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -175,84 +175,85 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 			RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
 		*createFunc = NULL;
 		return;
-	} else
-		if (asmap->numDataFailed + asmap->numParityFailed == 1) {
+	}
 
-			/* if under recon & already reconstructed, redirect
-			 * the access to the spare drive and eliminate the
-			 * failure indication */
-			failedPDA = asmap->failedPDAs[0];
-			fcol = failedPDA->col;
-			rstat = raidPtr->status;
-			prior_recon = (rstat == rf_rs_reconfigured) || (
+	if (asmap->numDataFailed + asmap->numParityFailed == 1) {
+		
+		/* if under recon & already reconstructed, redirect
+		 * the access to the spare drive and eliminate the
+		 * failure indication */
+		failedPDA = asmap->failedPDAs[0];
+		fcol = failedPDA->col;
+		rstat = raidPtr->status;
+		prior_recon = (rstat == rf_rs_reconfigured) || (
 			    (rstat == rf_rs_reconstructing) ?
 			    rf_CheckRUReconstructed(raidPtr->reconControl->reconMap, failedPDA->startSector) : 0
 			    );
-			if (prior_recon) {
-				RF_RowCol_t oc = failedPDA->col;
-				RF_SectorNum_t oo = failedPDA->startSector;
-
-				if (layoutPtr->map->flags & RF_DISTRIBUTE_SPARE) {	/* redirect to dist
-											 * spare space */
-
-					if (failedPDA == asmap->parityInfo) {
-
-						/* parity has failed */
-						(layoutPtr->map->MapParity) (raidPtr, failedPDA->raidAddress,
-						    &failedPDA->col, &failedPDA->startSector, RF_REMAP);
-
-						if (asmap->parityInfo->next) {	/* redir 2nd component,
-										 * if any */
-							RF_PhysDiskAddr_t *p = asmap->parityInfo->next;
-							RF_SectorNum_t SUoffs = p->startSector % layoutPtr->sectorsPerStripeUnit;
-							p->col = failedPDA->col;
-							p->startSector = rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, failedPDA->startSector) +
-							    SUoffs;	/* cheating:
-									 * startSector is not
-									 * really a RAID address */
-						}
-					} else
-						if (asmap->parityInfo->next && failedPDA == asmap->parityInfo->next) {
-							RF_ASSERT(0);	/* should not ever
-									 * happen */
-						} else {
-
-							/* data has failed */
-							(layoutPtr->map->MapSector) (raidPtr, failedPDA->raidAddress,
-							    &failedPDA->col, &failedPDA->startSector, RF_REMAP);
-
-						}
-
-				} else {	/* redirect to dedicated spare
-						 * space */
-
-					failedPDA->col = raidPtr->Disks[fcol].spareCol;
-
-					/* the parity may have two distinct
-					 * components, both of which may need
-					 * to be redirected */
-					if (asmap->parityInfo->next) {
-						if (failedPDA == asmap->parityInfo) {
-							failedPDA->next->col = failedPDA->col;
-						} else
-							if (failedPDA == asmap->parityInfo->next) {	/* paranoid:  should
-													 * never occur */
-								asmap->parityInfo->col = failedPDA->col;
-							}
+		if (prior_recon) {
+			RF_RowCol_t oc = failedPDA->col;
+			RF_SectorNum_t oo = failedPDA->startSector;
+			
+			if (layoutPtr->map->flags & RF_DISTRIBUTE_SPARE) {	/* redirect to dist
+										 * spare space */
+				
+				if (failedPDA == asmap->parityInfo) {
+					
+					/* parity has failed */
+					(layoutPtr->map->MapParity) (raidPtr, failedPDA->raidAddress,
+								     &failedPDA->col, &failedPDA->startSector, RF_REMAP);
+					
+					if (asmap->parityInfo->next) {	/* redir 2nd component,
+									 * if any */
+						RF_PhysDiskAddr_t *p = asmap->parityInfo->next;
+						RF_SectorNum_t SUoffs = p->startSector % layoutPtr->sectorsPerStripeUnit;
+						p->col = failedPDA->col;
+						p->startSector = rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, failedPDA->startSector) +
+							SUoffs;	/* cheating:
+								 * startSector is not
+								 * really a RAID address */
 					}
+				} else
+					if (asmap->parityInfo->next && failedPDA == asmap->parityInfo->next) {
+						RF_ASSERT(0);	/* should not ever
+								 * happen */
+					} else {
+						
+						/* data has failed */
+						(layoutPtr->map->MapSector) (raidPtr, failedPDA->raidAddress,
+									     &failedPDA->col, &failedPDA->startSector, RF_REMAP);
+						
+					}
+				
+			} else {	/* redirect to dedicated spare
+					 * space */
+				
+				failedPDA->col = raidPtr->Disks[fcol].spareCol;
+				
+				/* the parity may have two distinct
+				 * components, both of which may need
+				 * to be redirected */
+				if (asmap->parityInfo->next) {
+					if (failedPDA == asmap->parityInfo) {
+						failedPDA->next->col = failedPDA->col;
+					} else
+						if (failedPDA == asmap->parityInfo->next) {	/* paranoid:  should
+												 * never occur */
+							asmap->parityInfo->col = failedPDA->col;
+						}
 				}
-
-				RF_ASSERT(failedPDA->col != -1);
-
-				if (rf_dagDebug || rf_mapDebug) {
-					printf("raid%d: Redirected type '%c' c %d o %ld -> c %d o %ld\n",
-					       raidPtr->raidid, type, oc, 
-					       (long) oo, failedPDA->col,
-					       (long) failedPDA->startSector);
-				}
-				asmap->numDataFailed = asmap->numParityFailed = 0;
 			}
+			
+			RF_ASSERT(failedPDA->col != -1);
+			
+			if (rf_dagDebug || rf_mapDebug) {
+				printf("raid%d: Redirected type '%c' c %d o %ld -> c %d o %ld\n",
+				       raidPtr->raidid, type, oc, 
+				       (long) oo, failedPDA->col,
+				       (long) failedPDA->startSector);
+			}
+			asmap->numDataFailed = asmap->numParityFailed = 0;
 		}
+	}
 	/* all dags begin/end with block/unblock node therefore, hdrSucc &
 	 * termAnt counts should always be 1 also, these counts should not be
 	 * visible outside dag creation routines - manipulating the counts
