@@ -902,9 +902,15 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 { if (GET_CODE (EXP) == SET)					\
     { if (GET_CODE (SET_SRC (EXP)) == CALL)			\
 	CC_STATUS_INIT;						\
+      else if (GET_CODE (SET_SRC (EXP)) == COMPARE		\
+	       || GET_CODE (SET_SRC (EXP)) == PLUS		\
+	       || GET_CODE (SET_SRC (EXP)) == MINUS)		\
+	{ cc_status.flags = 0;					\
+	  cc_status.value1 = SET_DEST (EXP);			\
+	  cc_status.value2 = SET_SRC (EXP); }			\
       else if (GET_CODE (SET_DEST (EXP)) != ZERO_EXTRACT	\
 	       && GET_CODE (SET_DEST (EXP)) != PC)		\
-	{ cc_status.flags = 0;					\
+	{ cc_status.flags = CC_NO_OVERFLOW;			\
 	  cc_status.value1 = SET_DEST (EXP);			\
 	  cc_status.value2 = SET_SRC (EXP); } }			\
   else if (GET_CODE (EXP) == PARALLEL				\
@@ -913,7 +919,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
       if (GET_CODE (SET_SRC (XVECEXP (EXP, 0, 0))) == CALL)	\
 	CC_STATUS_INIT;					        \
       else if (GET_CODE (SET_DEST (XVECEXP (EXP, 0, 0))) != PC) \
-	{ cc_status.flags = 0;					\
+	{ cc_status.flags = CC_NO_OVERFLOW;			\
 	  cc_status.value1 = SET_DEST (XVECEXP (EXP, 0, 0));	\
 	  cc_status.value2 = SET_SRC (XVECEXP (EXP, 0, 0)); }   \
       else							\
