@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2001/06/15 17:48:13 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2002/03/04 02:19:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -461,7 +461,6 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	extern int cold;
 
 #if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
 	(void)&howto;

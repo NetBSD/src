@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4 2002/02/10 12:26:03 chris Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5 2002/03/04 02:19:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -386,7 +387,6 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 {
 	struct irqhandler **p, *q, *ih;
 	static struct irqhandler fakehand = {fakeintr};
-	extern int cold;
 
 /*	printf("isa_intr_establish(%d, %d, %d)\n", irq, type, level);*/
 

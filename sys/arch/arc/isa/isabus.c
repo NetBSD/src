@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.15 2001/06/13 15:03:25 soda Exp $	*/
+/*	$NetBSD: isabus.c,v 1.16 2002/03/04 02:19:07 simonb Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -299,7 +299,6 @@ isabr_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {NULL, fakeintr};
-	extern int cold;
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
@@ -461,7 +460,6 @@ sysbeep(pitch, period)
 {
 	static int last_pitch, last_period;
 	int s;
-	extern int cold;
 
 	if (cold)
 		return;		/* Can't beep yet. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.17 2002/01/14 13:32:44 tsutsui Exp $	*/
+/*	$NetBSD: mscp.c,v 1.18 2002/03/04 02:19:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -44,10 +44,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.17 2002/01/14 13:32:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.18 2002/03/04 02:19:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -142,7 +143,6 @@ mscp_dorsp(mi)
 	struct mscp_xi *mxi;
 	int nextrsp;
 	int st, error;
-	extern int cold;
 	extern struct mscp slavereply;
 
 	nextrsp = mi->mi_rsp.mri_next;
