@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.25 2003/04/28 23:16:13 bjh21 Exp $	*/
+/*	$NetBSD: math.h,v 1.26 2003/05/17 20:42:28 thorpej Exp $	*/
 
 /*
  * ====================================================
@@ -31,7 +31,13 @@ union __double_u {
 	double __val;
 };
 
-#include <machine/math.h>		/* may use __float_u or __double_u */
+union __long_double_u {
+	unsigned char __dummy[sizeof(long double)];
+	long double __val;
+};
+
+#include <machine/math.h>		/* may use __float_u, __double_u,
+					   or __long_double_u */
 
 /*
  * ANSI/POSIX
@@ -157,6 +163,9 @@ double	erfc __P((double));
 double	gamma __P((double));
 double	hypot __P((double, double));
 int	isnan __P((double));
+#if defined(_LIBC)
+int	isnanl __P((long double));
+#endif
 int	finite __P((double));
 double	j0 __P((double));
 double	j1 __P((double));
@@ -220,6 +229,9 @@ double	lgamma_r __P((double, int *));
 
 #if defined(_NETBSD_SOURCE)
 int	isinf __P((double));
+#if defined(_LIBC)
+int	isinfl __P((long double));
+#endif
 
 /* float versions of ANSI/POSIX functions */
 float	acosf __P((float));
