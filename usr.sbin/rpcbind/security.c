@@ -1,4 +1,4 @@
-/*	$NetBSD: security.c,v 1.3 2000/06/04 12:06:44 fvdl Exp $	*/
+/*	$NetBSD: security.c,v 1.4 2000/06/08 08:21:42 fvdl Exp $	*/
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -134,14 +134,14 @@ is_loopback(struct netbuf *nbuf)
 			return 0;
 		sin = (struct sockaddr_in *)addr;
         	return ((sin->sin_addr.s_addr == htonl(INADDR_LOOPBACK)) &&
-		    (sin->sin_port < IPPORT_RESERVED));
+		    (htons(sin->sin_port) < IPPORT_RESERVED));
 #ifdef INET6
 	case AF_INET6:
 		if (!oldstyle_local)
 			return 0;
 		sin6 = (struct sockaddr_in6 *)addr;
 		return (IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr) &&
-		    (sin6->sin6_port < IPPORT_RESERVED));
+		    (htons(sin6->sin6_port) < IPV6PORT_RESERVED));
 #endif
 	case AF_LOCAL:
 		return 1;
