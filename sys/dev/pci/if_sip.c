@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.11.4.8 2002/03/27 09:50:43 he Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.11.4.9 2003/09/08 07:08:56 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -1589,6 +1589,12 @@ sip_init(sc)
 	 */
 	sc->sc_rxcfg = RXCFG_MXDMA_512 |
 	    (sc->sc_rx_drain_thresh << RXCFG_DRTH_SHIFT);
+	/*
+	 * Accept packets >1518 bytes (including FCS) so we can handle
+	 * 802.1q-tagged frames properly.
+	 */
+	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU)
+		sc->sc_rxcfg |= RXCFG_ALP;
 	bus_space_write_4(st, sh, SIP_RXCFG, sc->sc_rxcfg);
 
 	/* Set up the receive filter. */
