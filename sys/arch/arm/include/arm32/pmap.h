@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2001/05/26 21:27:05 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 2001/06/22 09:12:11 chris Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -60,10 +60,8 @@ struct l1pt {
 struct pmap {
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
 	struct l1pt		*pm_l1pt;	/* L1 descriptor */
-	void			*pm_unused1;	/* Reserved for l2 map */
 	paddr_t			pm_pptpt;	/* PA of pt's page table */
 	vaddr_t			pm_vptpt;	/* VA of pt's page table */
-	short			pm_dref;	/* page directory ref count */
 	short			pm_count;	/* pmap reference count */
 	struct simplelock	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
