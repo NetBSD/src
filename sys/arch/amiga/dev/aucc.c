@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.9 1997/07/09 22:37:08 is Exp $	*/
+/*	$NetBSD: aucc.c,v 1.10 1997/07/10 22:18:42 is Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -575,7 +575,9 @@ aucc_start_output(addr, p, cc, intr, arg)
 
 	DPRINTF(("sa_start_output: cc=%d %p (%p)\n", cc, intr, arg));
 
-	mask &=masks[sc->sc_channels-1]; /* we use first sc_channels channels */
+	if (sc->sc_channels > 1)
+		mask &=masks[sc->sc_channels-1];
+		/* we use first sc_channels channels */
 	if (mask==0) /* active and used channels are disjoint */
 		return EINVAL;
 
@@ -770,13 +772,25 @@ aucc_set_port(addr, cp)
 		if ((i<1)||(i>4))
 			return EINVAL;
 
+#ifdef __XXXwhatsthat
 		if (cp->dev!=AUCC_VOLUME)
 			return EINVAL;
+#endif
 
 		/* set volume for channel 0..i-1 */
-		for (j=0;j<i;j++)
-	 		sc->sc_channel[j].nd_volume=cp->un.value.level[j]>>2;
-			break;
+		if (i>1)
+			for (j=0;j<i;j++)
+	 			sc->sc_channel[j].nd_volume =
+				    cp->un.value.level[j]>>2;
+		else if (sc->sc_channels > 1)
+			for (j=0; j<sc->sc_channels; j++)
+	 			sc->sc_channel[j].nd_volume =
+				    cp->un.value.level[0]>>2;
+		else
+			for (j=0; j<4; j++)
+	 			sc->sc_channel[j].nd_volume =
+				    cp->un.value.level[0]>>2;
+		break;
 
 	default:
 		return EINVAL;
@@ -809,7 +823,9 @@ aucc_get_port(addr, cp)
 			return EINVAL;
 
 		for (j=0;j<i;j++)
-			cp->un.value.level[j]=sc->sc_channel[j].nd_volume<<2;
+			cp->un.value.level[j] =
+			    (sc->sc_channel[j].nd_volume<<2) +
+			    (sc->sc_channel[j].nd_volume>>4);
 		break;
 
 	default:
