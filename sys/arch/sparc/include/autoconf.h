@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.27 1998/08/21 14:12:18 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.28 1998/08/30 21:31:24 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ int	obio_find_rom_map __P((bus_addr_t, bus_type_t, int,
  * length; the others convert or make some other guarantee.
  */
 int	getproplen __P((int node, char *name));
-int	getprop __P((int node, char *name, void *buf, int bufsiz));
+int	getprop __P((int, char *, int, int *, void **));
 char	*getpropstring __P((int node, char *name));
 int	getpropint __P((int node, char *name, int deflt));
 
@@ -175,7 +175,6 @@ int	getpropint __P((int node, char *name, int deflt));
 extern int optionsnode;
 
 	/* new interfaces: */
-int	getpropA __P((int, char *, int, int *, void **));
 char	*getpropstringA __P((int, char *, char *));
 
 /*
