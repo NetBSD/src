@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.7,v 1.1 1999/10/06 17:05:42 jdolecek Exp $
+.\"	$NetBSD: signal.7,v 1.2 2000/05/22 08:55:57 jhawk Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,7 +85,7 @@ call (formerly
 .It Li SIGPWR Ta "discard signal" Ta "power failure/restart"
 .El
 .Sh STANDARDS
-The signals conform to
+These signals conform to
 .St -p1003.1-90 ,
 with the exception of
 .Dv SIGTRAP ,
@@ -103,14 +103,17 @@ and
 .Dv SIGINFO
 which are Berkeley extensions (available on most
 .Bx Ns \-derived
-systems)
-and
+systems), and
 .Dv SIGPWR
-which comes from System V. On NetBSD,
+which comes from System V.
+.Sh HISTORY
 .Dv SIGPWR
-was introduced in version 1.4.
+was introduced in
+.Nx 1.4 .
 .Sh NOTES
-The current NetBSD kernel never generates the
+The current
+.Nx
+kernel never generates the
 .Dv SIGPWR
 signal.
 .Sh SEE ALSO
