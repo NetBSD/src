@@ -31,12 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_prot.c	7.21 (Berkeley) 5/3/91
- *	$Id: setreuid.c,v 1.2 1994/04/10 06:32:44 cgd Exp $
+ *	$Id: setreuid.c,v 1.3 1994/04/24 01:00:40 mycroft Exp $
  */
 
 #include <sys/types.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/uio.h>
 
 extern int __setreuid __P((uid_t, uid_t));
 
@@ -46,11 +47,19 @@ setreuid(ruid, euid)
 {
 	static int warned;
 	static char w[] =
-	    "warning: this program uses setreuid(), which is deprecated.\r\n";
+	    ": warning: this program uses setreuid(), which is deprecated.\r\n";
 
 	if (!warned) {
-		(void) write(STDERR_FILENO, w, sizeof(w) - 1);
+		struct iovec iov[2];
+		extern char *__progname;	/* in crt0 */
+
+		iov[0].iov_base = __progname;
+		iov[0].iov_len = strlen(__progname);
+		iov[1].iov_base = w;
+		iov[1].iov_len = strlen(w);
+		(void) writev(STDERR_FILENO, iov, 2);
 		warned = 1;
 	}
+
 	return (__setreuid(ruid, euid));
 }
