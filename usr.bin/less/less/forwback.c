@@ -1,7 +1,7 @@
-/*	$NetBSD: forwback.c,v 1.4 1998/02/22 14:57:29 christos Exp $	*/
+/*	$NetBSD: forwback.c,v 1.5 1999/04/06 05:57:35 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -161,11 +161,6 @@ forw(n, pos, force, only_last, nblank)
 		} else
 		{
 			clear_bot();
-			/*
-			 * Remove the top n lines and scroll the rest
-			 * upward, leaving cursor at first new blank line.
-			 */
-			remove_top(n);
 		}
 
 		if (pos != position(BOTTOM_PLUS_ONE) || empty_screen())

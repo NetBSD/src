@@ -1,7 +1,7 @@
-/*	$NetBSD: lesskey.c,v 1.2 1998/02/22 14:57:32 christos Exp $	*/
+/*	$NetBSD: lesskey.c,v 1.3 1999/04/06 05:57:36 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -703,6 +703,27 @@ main(argc, argv)
 	FILE *desc;
 	FILE *out;
 	char line[200];
+
+#ifdef WIN32
+	if (getenv("HOME") == NULL)
+	{
+		/*
+		 * If there is no HOME environment variable,
+		 * try the concatenation of HOMEDRIVE + HOMEPATH.
+		 */
+		char *drive = getenv("HOMEDRIVE");
+		char *path  = getenv("HOMEPATH");
+		if (drive != NULL && path != NULL)
+		{
+			char *env = (char *) calloc(strlen(drive) + 
+					strlen(path) + 6, sizeof(char));
+			strcpy(env, "PATH=");
+			strcat(env, drive);
+			strcat(env, path);
+			putenv(env);
+		}
+	}
+#endif /* WIN32 */
 
 	/*
 	 * Process command line arguments.

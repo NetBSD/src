@@ -1,7 +1,7 @@
-/*	$NetBSD: charset.c,v 1.2 1998/02/22 14:57:28 christos Exp $	*/
+/*	$NetBSD: charset.c,v 1.3 1999/04/06 05:57:35 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,11 +47,13 @@ struct charset {
 	char *desc;
 } charsets[] = {
 	{ "ascii",	"8bcccbcc18b95.b"		},
-	{ "latin1",	"8bcccbcc18b95.33b."		},
 	{ "dos",	"8bcccbcc12bc5b95.b."		},
+	{ "ebcdic",	"5bc6bcc7bcc41b.9b7.9b5.b..8b6.10b6.b9.7b9.8b8.17b3.3b9.7b9.8b8.6b10.b.b.b." },
+	{ "iso8859",	"8bcccbcc18b95.33b."		},
 	{ "koi8-r",	"8bcccbcc18b95.b128."		},
+	{ "latin1",	"8bcccbcc18b95.33b."		},
 	{ "next",	"8bcccbcc18b95.bb125.bb"	},
-	{ NULL }
+	{ NULL, NULL }
 };
 
 #define	IS_BINARY_CHAR	01

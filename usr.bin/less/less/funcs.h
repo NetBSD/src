@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.h,v 1.2 1998/02/22 14:57:30 christos Exp $	*/
+/*	$NetBSD: funcs.h,v 1.3 1999/04/06 05:57:35 mrg Exp $	*/
 
 
 /* brac.c */
@@ -127,6 +127,7 @@ public void set_filestate __P((IFILE, void *));
 public void if_dump __P((void));
 
 /* input.c */
+public void set_attnpos __P((POSITION));
 public POSITION forw_line __P((POSITION));
 public POSITION back_line __P((POSITION));
 
@@ -162,7 +163,6 @@ public int pipe_data __P((char *, POSITION, POSITION));
 
 /* main.c */
 int main __P((int, char *[]));
-public void strtcpy __P((char *, char *, unsigned int));
 public char *save __P((char *));
 public VOID_POINTER ecalloc __P((int, unsigned int));
 public char *skipsp __P((char *));
@@ -283,6 +283,7 @@ public void chg_caseless __P((void));
 public void chg_hilite __P((void));
 public int search __P((int, char *, int));
 public void prep_hilite __P((POSITION, POSITION, int));
+public void clear_attn __P((void));
 
 /* signal.c */
 public RETSIGTYPE winch __P((int));

@@ -1,7 +1,7 @@
-/*	$NetBSD: brac.c,v 1.2 1998/02/22 14:57:28 christos Exp $	*/
+/*	$NetBSD: brac.c,v 1.3 1999/04/06 05:57:34 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
