@@ -1,3 +1,5 @@
+/*	$NetBSD: null_vfsops.c,v 1.2 1994/06/29 06:34:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  *
  *	from: Id: lofs_vfsops.c,v 1.9 1992/05/30 10:26:24 jsp Exp
  *	from: @(#)lofs_vfsops.c	1.2 (Berkeley) 6/18/92
- *	from: @(#)null_vfsops.c	8.2 (Berkeley) 1/21/94
- *	$Id: null_vfsops.c,v 1.1 1994/06/08 11:33:25 mycroft Exp $
+ *	@(#)null_vfsops.c	8.2 (Berkeley) 1/21/94
  */
 
 /*

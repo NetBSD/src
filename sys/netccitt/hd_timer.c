@@ -1,3 +1,5 @@
+/*	$NetBSD: hd_timer.c,v 1.5 1994/06/29 06:37:15 cgd Exp $	*/
+
 /*
  * Copyright (c) University of British Columbia, 1984
  * Copyright (c) 1990, 1993
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hd_timer.c	8.1 (Berkeley) 6/10/93
- *	$Id: hd_timer.c,v 1.4 1994/05/13 06:04:23 mycroft Exp $
+ *	@(#)hd_timer.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: portal.h,v 1.4 1994/06/29 06:34:37 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: portal.h,v 1.3 1992/05/30 10:05:24 jsp Exp
- *	from: @(#)portal.h	8.4 (Berkeley) 1/21/94
- *	$Id: portal.h,v 1.3 1994/06/08 11:33:28 mycroft Exp $
+ *	@(#)portal.h	8.4 (Berkeley) 1/21/94
  */
 
 struct portal_args {

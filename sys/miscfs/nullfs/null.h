@@ -1,3 +1,5 @@
+/*	$NetBSD: null.h,v 1.2 1994/06/29 06:34:31 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: lofs.h,v 1.8 1992/05/30 10:05:43 jsp Exp
- *	from: @(#)null.h	8.2 (Berkeley) 1/21/94
- *	$Id: null.h,v 1.1 1994/06/08 11:33:23 mycroft Exp $
+ *	@(#)null.h	8.2 (Berkeley) 1/21/94
  */
 
 struct null_args {

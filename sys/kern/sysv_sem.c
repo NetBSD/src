@@ -1,11 +1,11 @@
+/*	$NetBSD: sysv_sem.c,v 1.9 1994/06/29 06:33:15 cgd Exp $	*/
+
 /*
  * Implementation of SVID semaphores
  *
  * Author:  Daniel Boulet
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
- *
- *	$Id: sysv_sem.c,v 1.8 1994/05/25 08:15:49 mycroft Exp $
  */
 
 #include <sys/param.h>

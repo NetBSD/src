@@ -1,3 +1,5 @@
+/*	$NetBSD: exec_aout.c,v 1.10 1994/06/29 06:32:06 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: exec_aout.c,v 1.9 1994/01/28 23:46:59 jtc Exp $
  */
 
 #include <sys/param.h>

@@ -1,6 +1,7 @@
+/*	$NetBSD: README.packet,v 1.4 1994/06/29 06:36:59 cgd Exp $	*/
+
 /*
- * from: @(#)README.packet	8.1 (Berkeley) 6/10/93
- * $Id: README.packet,v 1.3 1994/05/13 06:04:11 mycroft Exp $
+ * @(#)README.packet	8.1 (Berkeley) 6/10/93
  *
  *   X.25 NETWORK PACKET LEVEL:
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: fat.h,v 1.2 1994/06/29 06:35:33 cgd Exp $	*/
+
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -12,8 +14,6 @@
  * any damages caused by this software.
  * 
  * October 1992
- * 
- *	$Id: fat.h,v 1.1 1993/08/13 11:35:33 cgd Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: in.c,v 1.14 1994/06/29 06:38:00 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)in.c	8.2 (Berkeley) 11/15/93
- *	$Id: in.c,v 1.13 1994/06/21 03:54:30 chopps Exp $
+ *	@(#)in.c	8.2 (Berkeley) 11/15/93
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: db_sym.h,v 1.5 1994/06/29 06:31:19 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -25,7 +27,6 @@
  *
  * 	Author: Alessandro Forin, Carnegie Mellon University
  *	Date:	8/90
- *	$Id: db_sym.h,v 1.4 1994/02/15 14:50:46 mycroft Exp $
  */
 
 /*

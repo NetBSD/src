@@ -1,5 +1,5 @@
-	$Id: syscalls.master,v 1.16 1994/06/14 10:51:12 chopps Exp $
-;	from: @(#)syscalls.master	8.1 (Berkeley) 7/19/93
+	$NetBSD: syscalls.master,v 1.17 1994/06/29 06:30:25 cgd Exp $
+;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created sun_sysent.c, sun_syscalls.c and sun_syscall.h.
 

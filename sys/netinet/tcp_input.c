@@ -1,3 +1,5 @@
+/*	$NetBSD: tcp_input.c,v 1.10 1994/06/29 06:38:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tcp_input.c	8.5 (Berkeley) 4/10/94
- *	$Id: tcp_input.c,v 1.9 1994/05/13 06:06:39 mycroft Exp $
+ *	@(#)tcp_input.c	8.5 (Berkeley) 4/10/94
  */
 
 #ifndef TUBA_INCLUDE

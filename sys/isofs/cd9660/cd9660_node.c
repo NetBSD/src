@@ -1,4 +1,5 @@
-/* NetBSD $Id: cd9660_node.c,v 1.3 1994/06/27 19:41:03 cgd Exp $ */
+/*	$NetBSD: cd9660_node.c,v 1.4 1994/06/29 06:31:45 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
  *	The Regents of the University of California.  All rights reserved.

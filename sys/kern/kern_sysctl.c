@@ -1,3 +1,5 @@
+/*	$NetBSD: kern_sysctl.c,v 1.2 1994/06/29 06:32:47 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_sysctl.c	8.4 (Berkeley) 4/14/94
- *	$Id: kern_sysctl.c,v 1.1 1994/05/06 22:43:23 cgd Exp $
+ *	@(#)kern_sysctl.c	8.4 (Berkeley) 4/14/94
  */
 
 /*

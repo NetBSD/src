@@ -1,3 +1,5 @@
+/*	$NetBSD: kernfs.h,v 1.8 1994/06/29 06:34:26 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kernfs.h	8.5 (Berkeley) 6/15/94
- *	$Id: kernfs.h,v 1.7 1994/06/15 22:54:38 mycroft Exp $
+ *	@(#)kernfs.h	8.5 (Berkeley) 6/15/94
  */
 
 #define	_PATH_KERNFS	"/kern"		/* Default mountpoint */

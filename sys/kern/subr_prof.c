@@ -1,3 +1,5 @@
+/*	$NetBSD: subr_prof.c,v 1.3 1994/06/29 06:33:01 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)subr_prof.c	8.3 (Berkeley) 9/23/93
- *	$Id: subr_prof.c,v 1.2 1994/05/07 00:55:46 cgd Exp $
+ *	@(#)subr_prof.c	8.3 (Berkeley) 9/23/93
  */
 
 #include <sys/param.h>

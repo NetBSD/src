@@ -1,3 +1,5 @@
+/*	$NetBSD: exec_ecoff.c,v 1.3 1994/06/29 06:32:10 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Adam Glass
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -27,8 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: exec_ecoff.c,v 1.2 1994/05/28 20:21:30 glass Exp $
  */
 
 #include <sys/param.h>

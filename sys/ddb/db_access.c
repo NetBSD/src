@@ -1,3 +1,5 @@
+/*	$NetBSD: db_access.c,v 1.5 1994/06/29 06:30:55 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -25,7 +27,6 @@
  *
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
- *	$Id: db_access.c,v 1.4 1994/01/31 23:55:06 mycroft Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: bpf_filter.c,v 1.6 1994/06/29 06:35:56 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)bpf_filter.c	8.1 (Berkeley) 6/10/93
- *	$Id: bpf_filter.c,v 1.5 1994/05/13 06:02:22 mycroft Exp $
+ *	@(#)bpf_filter.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

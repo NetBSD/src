@@ -1,4 +1,5 @@
-/* NetBSD $Id: advfsops.c,v 1.3 1994/06/27 19:27:44 cgd Exp $ */
+/*	$NetBSD: advfsops.c,v 1.4 1994/06/29 06:29:30 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.

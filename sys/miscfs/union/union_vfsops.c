@@ -1,3 +1,5 @@
+/*	$NetBSD: union_vfsops.c,v 1.4 1994/06/29 06:35:24 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 The Regents of the University of California.
  * Copyright (c) 1994 Jan-Simon Pendry.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)union_vfsops.c	8.10 (Berkeley) 5/24/94
- *	$Id: union_vfsops.c,v 1.3 1994/06/17 15:21:37 mycroft Exp $
+ *	@(#)union_vfsops.c	8.10 (Berkeley) 5/24/94
  */
 
 /*

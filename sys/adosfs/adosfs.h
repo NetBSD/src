@@ -1,4 +1,5 @@
-/* NetBSD $Id: adosfs.h,v 1.3 1994/06/27 19:27:40 cgd Exp $ */
+/*	$NetBSD: adosfs.h,v 1.4 1994/06/29 06:29:27 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.

@@ -1,4 +1,5 @@
-/* NetBSD $Id: cons.h,v 1.5 1994/06/27 19:49:47 cgd Exp $ */
+/*	$NetBSD: cons.h,v 1.6 1994/06/29 06:31:34 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993

@@ -1,3 +1,5 @@
+/*	$NetBSD: kern_acct.c,v 1.30 1994/06/29 06:32:17 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,8 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_acct.c	8.1 (Berkeley) 6/14/93
- *	$Id: kern_acct.c,v 1.29 1994/06/19 22:58:29 cgd Exp $
+ *	@(#)kern_acct.c	8.1 (Berkeley) 6/14/93
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: exec_script.c,v 1.8 1994/06/29 06:32:12 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: exec_script.c,v 1.7 1994/06/08 11:28:29 mycroft Exp $
  */
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)

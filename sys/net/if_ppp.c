@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ppp.c,v 1.14 1994/06/29 06:36:16 cgd Exp $	*/
+
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
  *
@@ -69,7 +71,6 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.13 1994/06/20 00:35:39 paulus Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "ppp.h"

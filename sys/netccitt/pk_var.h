@@ -1,3 +1,5 @@
+/*	$NetBSD: pk_var.h,v 1.5 1994/06/29 06:37:43 cgd Exp $	*/
+
 /* 
  * Copyright (c) Computing Centre, University of British Columbia, 1985 
  * Copyright (C) Computer Science Department IV, 
@@ -38,8 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pk_var.h	8.1 (Berkeley) 6/10/93
- *	$Id: pk_var.h,v 1.4 1994/05/13 06:05:04 mycroft Exp $
+ *	@(#)pk_var.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

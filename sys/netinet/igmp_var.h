@@ -1,3 +1,5 @@
+/*	$NetBSD: igmp_var.h,v 1.6 1994/06/29 06:37:59 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 Stephen Deering.
  * Copyright (c) 1992, 1993
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)igmp_var.h	8.1 (Berkeley) 7/19/93
- *	$Id: igmp_var.h,v 1.5 1994/05/13 06:06:01 mycroft Exp $
+ *	@(#)igmp_var.h	8.1 (Berkeley) 7/19/93
  */
 
 /*

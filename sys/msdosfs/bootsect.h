@@ -1,3 +1,5 @@
+/*	$NetBSD: bootsect.h,v 1.4 1994/06/29 06:35:28 cgd Exp $	*/
+
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -12,8 +14,6 @@
  * any damages caused by this software.
  * 
  * October 1992
- * 
- *	$Id: bootsect.h,v 1.3 1993/12/01 22:42:29 cgd Exp $
  */
 
 /*

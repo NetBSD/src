@@ -1,3 +1,5 @@
+/*	$NetBSD: umap_subr.c,v 1.2 1994/06/29 06:35:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: lofs_subr.c, v 1.11 1992/05/30 10:05:43 jsp Exp
- *	from: @(#)umap_subr.c	8.6 (Berkeley) 1/26/94
- *	$Id: umap_subr.c,v 1.1 1994/06/08 11:33:51 mycroft Exp $
+ *	@(#)umap_subr.c	8.6 (Berkeley) 1/26/94
  */
 
 #include <sys/param.h>

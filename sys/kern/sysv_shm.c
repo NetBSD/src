@@ -1,3 +1,5 @@
+/*	$NetBSD: sysv_shm.c,v 1.22 1994/06/29 06:33:17 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
  *

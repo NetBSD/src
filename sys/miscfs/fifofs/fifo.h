@@ -1,3 +1,5 @@
+/*	$NetBSD: fifo.h,v 1.8 1994/06/29 06:34:22 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fifo.h	8.2 (Berkeley) 2/2/94
- *	$Id: fifo.h,v 1.7 1994/06/08 11:33:16 mycroft Exp $
+ *	@(#)fifo.h	8.2 (Berkeley) 2/2/94
  */
 
 #ifdef FIFO

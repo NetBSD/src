@@ -1,3 +1,5 @@
+/*	$NetBSD: kern_malloc.c,v 1.9 1994/06/29 06:32:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1987, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_malloc.c	8.3 (Berkeley) 1/4/94
- *	$Id: kern_malloc.c,v 1.8 1994/05/13 08:32:17 cgd Exp $
+ *	@(#)kern_malloc.c	8.3 (Berkeley) 1/4/94
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: igmp.h,v 1.4 1994/06/29 06:37:58 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 Stephen Deering.
  * Copyright (c) 1992, 1993
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)igmp.h	8.1 (Berkeley) 6/10/93
- *	$Id: igmp.h,v 1.3 1994/05/13 06:06:00 mycroft Exp $
+ *	@(#)igmp.h	8.1 (Berkeley) 6/10/93
  */
 
 /* Internet Group Management Protocol (IGMP) definitions. */

@@ -1,3 +1,5 @@
+/*	$NetBSD: sysv_msg.c,v 1.9 1994/06/29 06:33:13 cgd Exp $	*/
+
 /*
  * Implementation of SVID messages
  *
@@ -15,8 +17,6 @@
  * but requiring it would be too onerous.
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
- *
- *	$Id: sysv_msg.c,v 1.8 1994/05/25 08:17:01 mycroft Exp $
  */
 
 #include <sys/param.h>

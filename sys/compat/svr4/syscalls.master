@@ -1,5 +1,5 @@
-	$Id: syscalls.master,v 1.1 1994/05/22 10:04:45 deraadt Exp $
-;	from: @(#)syscalls.master	8.1 (Berkeley) 7/19/93
+	$NetBSD: syscalls.master,v 1.2 1994/06/29 06:30:37 cgd Exp $
+;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created svr4_sysent.c, svr4_syscalls.c and svr4_syscall.h.
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: fdesc.h,v 1.5 1994/06/29 06:34:14 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: fdesc.h,v 1.8 1993/04/06 15:28:33 jsp Exp
- *	from: @(#)fdesc.h	8.5 (Berkeley) 1/21/94
- *	$Id: fdesc.h,v 1.4 1994/06/08 11:33:12 mycroft Exp $
+ *	@(#)fdesc.h	8.5 (Berkeley) 1/21/94
  */
 
 #ifdef KERNEL

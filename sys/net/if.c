@@ -1,3 +1,5 @@
+/*	$NetBSD: if.c,v 1.16 1994/06/29 06:36:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1980, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if.c	8.3 (Berkeley) 1/4/94
- *	$Id: if.c,v 1.15 1994/05/13 06:02:26 mycroft Exp $
+ *	@(#)if.c	8.3 (Berkeley) 1/4/94
  */
 
 #include <sys/param.h>

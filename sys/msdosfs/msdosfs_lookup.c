@@ -1,3 +1,5 @@
+/*	$NetBSD: msdosfs_lookup.c,v 1.10 1994/06/29 06:35:40 cgd Exp $	*/
+
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -12,8 +14,6 @@
  * any damages caused by this software.
  * 
  * October 1992
- * 
- *	$Id: msdosfs_lookup.c,v 1.9 1994/04/25 03:50:10 cgd Exp $
  */
 
 #include <sys/param.h>

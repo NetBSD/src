@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ethersubr.c,v 1.9 1994/06/29 06:36:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.

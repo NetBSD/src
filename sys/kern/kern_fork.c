@@ -1,3 +1,5 @@
+/*	$NetBSD: kern_fork.c,v 1.19 1994/06/29 06:32:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_fork.c	8.6 (Berkeley) 4/8/94
- *	$Id: kern_fork.c,v 1.18 1994/06/15 19:59:21 mycroft Exp $
+ *	@(#)kern_fork.c	8.6 (Berkeley) 4/8/94
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: procfs_status.c,v 1.9 1994/06/29 06:34:56 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
  * Copyright (c) 1993
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)procfs_status.c	8.4 (Berkeley) 6/15/94
- *	$Id: procfs_status.c,v 1.8 1994/06/15 22:59:10 mycroft Exp $
+ *	@(#)procfs_status.c	8.4 (Berkeley) 6/15/94
  */
 
 #include <sys/param.h>

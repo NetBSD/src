@@ -1,3 +1,5 @@
+/*	$NetBSD: hd_var.h,v 1.5 1994/06/29 06:37:16 cgd Exp $	*/
+
 /*
  * Copyright (c) University of British Columbia, 1984
  * Copyright (c) 1990, 1993
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hd_var.h	8.1 (Berkeley) 6/10/93
- *	$Id: hd_var.h,v 1.4 1994/05/13 06:04:24 mycroft Exp $
+ *	@(#)hd_var.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

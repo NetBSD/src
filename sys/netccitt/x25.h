@@ -1,3 +1,5 @@
+/*	$NetBSD: x25.h,v 1.5 1994/06/29 06:37:45 cgd Exp $	*/
+
 /*
  * Copyright (c) University of British Columbia, 1984
  * Copyright (c) 1990, 1992, 1993
@@ -37,8 +39,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)x25.h	8.1 (Berkeley) 6/10/93
- *	$Id: x25.h,v 1.4 1994/05/13 06:05:06 mycroft Exp $
+ *	@(#)x25.h	8.1 (Berkeley) 6/10/93
  */
 
 #ifdef KERNEL

@@ -1,3 +1,5 @@
+/*	$NetBSD: uipc_syscalls.c,v 1.8 1994/06/29 06:33:41 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)uipc_syscalls.c	8.4 (Berkeley) 2/21/94
- *	$Id: uipc_syscalls.c,v 1.7 1994/05/04 10:27:20 mycroft Exp $
+ *	@(#)uipc_syscalls.c	8.4 (Berkeley) 2/21/94
  */
 
 #include <sys/param.h>

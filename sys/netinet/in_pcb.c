@@ -1,3 +1,5 @@
+/*	$NetBSD: in_pcb.c,v 1.11 1994/06/29 06:38:06 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)in_pcb.c	8.2 (Berkeley) 1/4/94
- *	$Id: in_pcb.c,v 1.10 1994/05/13 06:06:07 mycroft Exp $
+ *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
  */
 
 #include <sys/param.h>

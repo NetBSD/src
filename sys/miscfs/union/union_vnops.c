@@ -1,3 +1,5 @@
+/*	$NetBSD: union_vnops.c,v 1.4 1994/06/29 06:35:26 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
  * Copyright (c) 1992, 1993, 1994 Jan-Simon Pendry.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)union_vnops.c	8.15 (Berkeley) 6/4/94
- *	$Id: union_vnops.c,v 1.3 1994/06/17 15:21:39 mycroft Exp $
+ *	@(#)union_vnops.c	8.15 (Berkeley) 6/4/94
  */
 
 #include <sys/param.h>

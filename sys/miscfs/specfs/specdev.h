@@ -1,3 +1,5 @@
+/*	$NetBSD: specdev.h,v 1.8 1994/06/29 06:35:06 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)specdev.h	8.2 (Berkeley) 2/2/94
- *	$Id: specdev.h,v 1.7 1994/06/08 11:33:48 mycroft Exp $
+ *	@(#)specdev.h	8.2 (Berkeley) 2/2/94
  */
 
 /*

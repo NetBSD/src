@@ -1,3 +1,5 @@
+/*	$NetBSD: uipc_socket.c,v 1.16 1994/06/29 06:33:37 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)uipc_socket.c	8.3 (Berkeley) 4/15/94
- *	$Id: uipc_socket.c,v 1.15 1994/05/13 06:01:37 mycroft Exp $
+ *	@(#)uipc_socket.c	8.3 (Berkeley) 4/15/94
  */
 
 #include <sys/param.h>

@@ -1,5 +1,6 @@
 #!/bin/sh -
-# NetBSD $Id: newvers.sh,v 1.15 1994/06/27 19:44:05 cgd Exp $
+#
+#	$NetBSD: newvers.sh,v 1.16 1994/06/29 06:30:49 cgd Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.

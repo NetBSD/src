@@ -1,3 +1,5 @@
+/*	$NetBSD: sunos_misc.c,v 1.30 1994/06/29 06:30:20 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +43,7 @@
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
- * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sunos_misc.c,v 1.29 1994/06/22 08:24:53 pk Exp $
+ *	Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  */
 
 /*

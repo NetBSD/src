@@ -1,3 +1,5 @@
+/*	$NetBSD: procfs_mem.c,v 1.6 1994/06/29 06:34:50 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
  * Copyright (c) 1993 Sean Eric Fagan
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)procfs_mem.c	8.5 (Berkeley) 6/15/94
- *	$Id: procfs_mem.c,v 1.5 1994/06/15 22:59:06 mycroft Exp $
+ *	@(#)procfs_mem.c	8.5 (Berkeley) 6/15/94
  */
 
 /*

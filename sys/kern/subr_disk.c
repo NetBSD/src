@@ -1,3 +1,5 @@
+/*	$NetBSD: subr_disk.c,v 1.12 1994/06/29 06:32:56 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_disksubr.c	8.5 (Berkeley) 1/21/94
- *	$Id: subr_disk.c,v 1.11 1994/05/19 03:43:13 mycroft Exp $
+ *	@(#)ufs_disksubr.c	8.5 (Berkeley) 1/21/94
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: fdesc_vfsops.c,v 1.13 1994/06/29 06:34:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: fdesc_vfsops.c,v 1.9 1993/04/06 15:28:33 jsp Exp
- *	from: @(#)fdesc_vfsops.c	8.4 (Berkeley) 1/21/94
- *	$Id: fdesc_vfsops.c,v 1.12 1994/06/08 11:33:13 mycroft Exp $
+ *	@(#)fdesc_vfsops.c	8.4 (Berkeley) 1/21/94
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: radix.c,v 1.7 1994/06/29 06:36:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)radix.c	8.2 (Berkeley) 1/4/94
- *	$Id: radix.c,v 1.6 1994/05/13 06:03:03 mycroft Exp $
+ *	@(#)radix.c	8.2 (Berkeley) 1/4/94
  */
 
 /*

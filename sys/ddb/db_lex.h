@@ -1,3 +1,5 @@
+/*	$NetBSD: db_lex.h,v 1.4 1994/06/29 06:31:11 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -25,7 +27,6 @@
  *
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
- *	$Id: db_lex.h,v 1.3 1994/02/15 14:50:44 mycroft Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: msdosfs_denode.c,v 1.5 1994/06/29 06:35:37 cgd Exp $	*/
+
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -12,8 +14,6 @@
  * any damages caused by this software.
  * 
  * October 1992
- * 
- *	$Id: msdosfs_denode.c,v 1.4 1994/04/25 03:50:08 cgd Exp $
  */
 
 #include <sys/param.h>

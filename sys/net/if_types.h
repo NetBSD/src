@@ -1,3 +1,5 @@
+/*	$NetBSD: if_types.h,v 1.6 1994/06/29 06:36:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_types.h	8.2 (Berkeley) 4/20/94
- *	$Id: if_types.h,v 1.5 1994/05/13 06:02:58 mycroft Exp $
+ *	@(#)if_types.h	8.2 (Berkeley) 4/20/94
  */
 
 /*

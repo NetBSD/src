@@ -33,7 +33,7 @@ copyright='
  * SUCH DAMAGE.
  */
 '
-SCRIPT_ID='$Id: vnode_if.sh,v 1.3 1994/06/15 18:13:31 gwr Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.4 1994/06/29 06:34:06 cgd Exp $'
 
 # Script to produce VFS front-end sugar.
 #

@@ -1,3 +1,5 @@
+/*	$NetBSD: subr_autoconf.c,v 1.9 1994/06/29 06:32:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,8 +42,8 @@
  * SUCH DAMAGE.
  *
  * from: Header: subr_autoconf.c,v 1.12 93/02/01 19:31:48 torek Exp  (LBL)
- *	from: @(#)subr_autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: subr_autoconf.c,v 1.8 1994/05/20 04:31:22 cgd Exp $
+ *
+ *	@(#)subr_autoconf.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

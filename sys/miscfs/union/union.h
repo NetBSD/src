@@ -1,3 +1,5 @@
+/*	$NetBSD: union.h,v 1.4 1994/06/29 06:35:19 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 The Regents of the University of California.
  * Copyright (c) 1994 Jan-Simon Pendry.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)union.h	8.5 (Berkeley) 5/17/94
- *	$Id: union.h,v 1.3 1994/06/17 15:21:33 mycroft Exp $
+ *	@(#)union.h	8.5 (Berkeley) 5/17/94
  */
 
 struct union_args {

@@ -1,4 +1,5 @@
-/* NetBSD $Id: cd9660_bmap.c,v 1.2 1994/06/27 19:41:00 cgd Exp $ */
+/*	$NetBSD: cd9660_bmap.c,v 1.3 1994/06/29 06:31:42 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: portal_vnops.c,v 1.6 1994/06/29 06:34:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: portal_vnops.c,v 1.4 1992/05/30 10:05:24 jsp Exp
- *	from: @(#)portal_vnops.c	8.8 (Berkeley) 1/21/94
- *	$Id: portal_vnops.c,v 1.5 1994/06/08 11:33:30 mycroft Exp $
+ *	@(#)portal_vnops.c	8.8 (Berkeley) 1/21/94
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: spec_vnops.c,v 1.16 1994/06/29 06:35:03 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)spec_vnops.c	8.6 (Berkeley) 4/9/94
- *	$Id: spec_vnops.c,v 1.15 1994/06/08 11:33:47 mycroft Exp $
+ *	@(#)spec_vnops.c	8.6 (Berkeley) 4/9/94
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: kern_lkm.c,v 1.18 1994/06/29 06:32:31 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * Copyright (c) 1992 Terrence R. Lambert.
@@ -29,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: kern_lkm.c,v 1.17 1994/06/08 11:28:38 mycroft Exp $
  */
 
 /*

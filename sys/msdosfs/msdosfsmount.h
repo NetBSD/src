@@ -1,3 +1,5 @@
+/*	$NetBSD: msdosfsmount.h,v 1.4 1994/06/29 06:35:47 cgd Exp $	*/
+
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -12,8 +14,6 @@
  * any damages caused by this software.
  * 
  * October 1992
- * 
- *	$Id: msdosfsmount.h,v 1.3 1994/04/07 07:30:33 cgd Exp $
  */
 
 /*

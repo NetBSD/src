@@ -1,3 +1,5 @@
+/*	$NetBSD: msdosfs_vfsops.c,v 1.15 1994/06/29 06:35:42 cgd Exp $	*/
+
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -12,8 +14,6 @@
  * any damages caused by this software.
  * 
  * October 1992
- * 
- *	$Id: msdosfs_vfsops.c,v 1.14 1994/04/25 03:50:12 cgd Exp $
  */
 
 #include <sys/param.h>
