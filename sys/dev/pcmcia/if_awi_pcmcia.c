@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.4 1999/11/05 05:13:36 sommerfeld Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.5 1999/11/06 16:43:54 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,6 +124,18 @@ struct cfattach awi_pcmcia_ca = {
 #define	PCMCIA_PRODUCT_BAY_STACK_650	0x804
 #endif
 
+/*
+ *  XXX following is common to most PCMCIA NIC's and belongs
+ * in common code
+ */
+
+struct awi_pcmcia_get_enaddr_args {
+	int got_enaddr;
+	u_int8_t enaddr[ETHER_ADDR_LEN];
+};
+int	awi_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
+
+
 int
 awi_pcmcia_enable(sc)
 	struct awi_softc *sc;
@@ -235,6 +247,7 @@ awi_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_mem_handle memh;
+	struct awi_pcmcia_get_enaddr_args pgea;
 	bus_addr_t memoff;
 	int memwin;
 
@@ -308,7 +321,24 @@ awi_pcmcia_attach(parent, self, aux)
 	sc->sc_enable = awi_pcmcia_enable;
 	sc->sc_disable = awi_pcmcia_disable;
 
-	awi_attach(sc);
+	/* Read station address. */
+	pgea.got_enaddr = 0;
+	if (pcmcia_scan_cis(parent, awi_pcmcia_get_enaddr, &pgea) == -1) {
+		printf("%s: Couldn't read CIS to get ethernet address\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	} else if (!pgea.got_enaddr) {
+		printf("%s: Couldn't get ethernet address from CIS\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	} else
+#ifdef DIAGNOSTIC
+		printf("%s: Ethernet address from CIS: %s\n",
+		    sc->sc_dev.dv_xname, ether_sprintf(pgea.enaddr))
+#endif
+		;
+
+	awi_attach(sc, pgea.enaddr);
 
 	sc->sc_state = AWI_ST_OFF;
 
@@ -340,4 +370,34 @@ awi_pcmcia_detach(self, flags)
 #else
 	return (EBUSY);
 #endif
+}
+
+/*
+ * XXX copied verbatim from if_mbe_pcmcia.c.
+ * this function should be in common pcmcia code..
+ */
+
+int
+awi_pcmcia_get_enaddr(tuple, arg)
+	struct pcmcia_tuple *tuple;
+	void *arg;
+{
+	struct awi_pcmcia_get_enaddr_args *p = arg;
+	int i;
+
+	if (tuple->code == PCMCIA_CISTPL_FUNCE) {
+		if (tuple->length < 2) /* sub code and ether addr length */
+			return (0);
+
+		if ((pcmcia_tuple_read_1(tuple, 0) !=
+			PCMCIA_TPLFE_TYPE_LAN_NID) ||
+		    (pcmcia_tuple_read_1(tuple, 1) != ETHER_ADDR_LEN))
+			return (0);
+
+		for (i = 0; i < ETHER_ADDR_LEN; i++)
+			p->enaddr[i] = pcmcia_tuple_read_1(tuple, i + 2);
+		p->got_enaddr = 1;
+		return (1);
+	}
+	return (0);
 }
