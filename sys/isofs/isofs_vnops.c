@@ -1,26 +1,26 @@
 /*
- *	$Id: isofs_vnops.c,v 1.8.2.1 1993/09/24 08:50:09 mycroft Exp $
+ *	$Id: isofs_vnops.c,v 1.8.2.2 1993/11/12 06:11:47 cgd Exp $
  */
-#include "param.h"
-#include "systm.h"
-#include "namei.h"
-#include "resourcevar.h"
-#include "kernel.h"
-#include "file.h"
-#include "stat.h"
-#include "buf.h"
-#include "proc.h"
-#include "conf.h"
-#include "mount.h"
-#include "vnode.h"
-#include "specdev.h"
-#include "fifo.h"
-#include "malloc.h"
-#include "dir.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/namei.h>
+#include <sys/resourcevar.h>
+#include <sys/kernel.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/conf.h>
+#include <sys/mount.h>
+#include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h>
+#include <miscfs/fifofs/fifo.h>
+#include <sys/malloc.h>
+#include <sys/dir.h>
 
-#include "iso.h"
-#include "isofs_node.h"
-#include "iso_rrip.h"
+#include <isofs/iso.h>
+#include <isofs/isofs_node.h>
+#include <isofs/iso_rrip.h>
 
 /*
  * Mknod vnode call
